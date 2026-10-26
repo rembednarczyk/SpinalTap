@@ -73,15 +73,16 @@ describe("fixer conversation", () => {
     ]);
   });
 
-  it("after the quest, Kaito uses the alias", () => {
+  it("after the quest, Kaito uses the alias when offering more work", () => {
     const { runtime } = setup();
     const domain = createDomainState();
     const view = runtime.start("fixer", {
       ...domain,
       quests: { m0_first_contract: { status: "completed" } },
       character: { ...domain.character, alias: "Seki Senshi" },
+      contracts: { active: null, completed: 1 },
     });
-    expect(view.lines[0]?.text).toBe("Na dziś koniec, Seki Senshi. Odpocznij, póki możesz.");
+    expect(view.lines[0]?.text).toBe("Hebi znowu wystawili ludzi na moją ulicę. Robota czeka, Seki Senshi.");
   });
 });
 
@@ -111,5 +112,58 @@ describe("state persistence", () => {
     expect(other.saveState()).toBe(json);
     other.resetState();
     expect(other.saveState()).not.toBe(json);
+  });
+});
+
+describe("fixer contracts (M1)", () => {
+  const afterM0 = (contracts: DomainState["contracts"]): DomainState => {
+    const d = createDomainState();
+    return {
+      ...d,
+      quests: { m0_first_contract: { status: "completed" } },
+      character: { ...d.character, alias: "Seki Senshi" },
+      contracts,
+    };
+  };
+
+  it("offers a job and accepts it", () => {
+    const { runtime, commands } = setup();
+    const view = runtime.start("fixer", afterM0({ active: null, completed: 0 }));
+    expect(view.choices.map((c) => c.text)).toEqual([
+      "Biorę robotę.",
+      "Jeśli chcesz lepszego sprzętu, idź do doktora Mori.",
+      "Nie dziś.",
+    ]);
+    expect(runtime.choose(0).ended).toBe(true);
+    expect(commands).toEqual([{ type: "accept-contract" }]);
+  });
+
+  it("points to the ripperdoc and comes back to the offer", () => {
+    const { runtime } = setup();
+    runtime.start("fixer", afterM0({ active: null, completed: 0 }));
+    const view = runtime.choose(1);
+    expect(view.lines.some((l) => l.text.includes("doktora Mori"))).toBe(true);
+    expect(view.choices).toHaveLength(3);
+  });
+
+  it("names the site of a running contract", () => {
+    const { runtime } = setup();
+    const view = runtime.start(
+      "fixer",
+      afterM0({ active: { id: "c1", siteId: "east_lot", targets: 2, reward: 500, status: "active" }, completed: 0 }),
+    );
+    expect(view.lines[0]?.text).toContain("parking przy furgonetce");
+    expect(view.ended).toBe(true);
+  });
+
+  it("pays for a cleared contract and offers the next one", () => {
+    const { runtime, commands } = setup();
+    const view = runtime.start(
+      "fixer",
+      afterM0({ active: { id: "c3", siteId: "car_wash", targets: 3, reward: 800, status: "cleared" }, completed: 2 }),
+    );
+    expect(commands).toEqual([{ type: "complete-contract" }]);
+    expect(view.lines.some((l) => l.text.includes("nie chybia"))).toBe(true);
+    expect(view.choices[0]?.text).toBe("Biorę robotę.");
   });
 });

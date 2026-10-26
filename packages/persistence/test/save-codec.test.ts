@@ -69,7 +69,24 @@ describe("migrations", () => {
 
   it("tolerates a v1 save with missing optional sections", () => {
     const m = migrate({ version: 1, seed: 5 });
-    expect(m).toMatchObject({ version: 2, rngState: 5, entities: [], domain: { wallet: { eddies: 0 } } });
+    expect(m).toMatchObject({ version: 3, rngState: 5, entities: [], domain: { wallet: { eddies: 0 }, inventory: { medkit: 1 } } });
+  });
+
+  it("upgrades an M0 (v2) save with the M1 starter kit", () => {
+    const s = snapshot();
+    const { inventory: _i, contracts: _c, ability: _a, ...domain } = s.domain;
+    const loaded = decodeSave("m0", wrap({ ...s, version: 2, domain }));
+    expect(loaded.domain.inventory).toEqual({ medkit: 1 });
+    expect(loaded.domain.contracts).toEqual({ active: null, completed: 0 });
+    expect(loaded.domain.ability).toEqual({ activeTime: 0, cooldown: 0 });
+    expect(loaded.domain.flags).toEqual(s.domain.flags);
+  });
+
+  it("keeps an active contract through the round trip", () => {
+    const s = snapshot();
+    const contract = { id: "c2", siteId: "east_lot" as const, targets: 3, reward: 700, status: "active" as const };
+    const withContract = { ...s, domain: { ...s.domain, contracts: { active: contract, completed: 1 } } };
+    expect(decodeSave("c", encodeSave(withContract)).domain.contracts.active).toEqual(contract);
   });
 });
 
@@ -93,6 +110,12 @@ describe("schema validation", () => {
     ["flags", { flags: [1] }],
     ["preferences", { preferences: { cameraMode: "VR" } }],
     ["reputation", { reputation: { fixers: 0 } }],
+    ["inventory", { inventory: { medkit: -1 } }],
+    ["inventory", { inventory: { rocket: 1 } }],
+    ["contracts", { contracts: { active: null, completed: 0.5 } }],
+    ["contracts", { contracts: { active: { id: "c1", siteId: "moon", targets: 2, reward: 1, status: "active" }, completed: 0 } }],
+    ["contracts", { contracts: { active: { id: "c1", siteId: "east_lot", targets: 2, reward: 1, status: "done" }, completed: 0 } }],
+    ["ability", { ability: { activeTime: "x", cooldown: 0 } }],
     ["cyberware", { character: { alias: null, memories: [], cyberware: { optics: "fake" } } }],
   ])("rejects bad domain %s", (_name, patch) => {
     const s = snapshot();

@@ -2,6 +2,7 @@ import { Compiler, type Story } from "inkjs/full";
 import {
   type DomainState,
   type GameCommand,
+  CONTRACT_SITES,
   QUEST_DEFINITIONS,
   currentStep,
   hasFlag,
@@ -61,6 +62,10 @@ export class NarrativeRuntime {
     this.pendingFlags = new Set();
     this.story.variablesState.$("quest_step", activeMainStep(domain));
     this.story.variablesState.$("alias", domain.character.alias ?? "");
+    const contract = domain.contracts.active;
+    this.story.variablesState.$("contract_state", contract?.status ?? "");
+    this.story.variablesState.$("contract_site", contract ? CONTRACT_SITES[contract.siteId].label : "");
+    this.story.variablesState.$("contracts_done", domain.contracts.completed);
     this.story.ChoosePathString(dialogueId);
     return this.continue();
   }
@@ -119,6 +124,8 @@ export class NarrativeRuntime {
       if (this.domain) this.domain = { ...this.domain, character: { ...this.domain.character, alias } };
       this.emit({ type: "set-alias", alias });
     });
+    this.story.BindExternalFunction("accept_contract", () => this.emit({ type: "accept-contract" }));
+    this.story.BindExternalFunction("complete_contract", () => this.emit({ type: "complete-contract" }));
     this.story.BindExternalFunction("unlock_memory", (id: string) => {
       if (!isMemoryId(id)) throw new Error(`ink: unknown memory "${id}"`);
       this.emit({ type: "unlock-memory", memoryId: id });

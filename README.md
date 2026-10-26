@@ -2,7 +2,7 @@
 
 Cyberpunkowy sandbox 3D w przeglądarce: FPP z przełączaniem na TPP, cel shading w duchu anime. Bohaterka budzi się po wypadku bez pamięci własnego imienia; fixer Kaito nazywa ją **Seki Senshi**.
 
-Repozytorium realizuje [plan architektury](docs/seki-senshi-plan.md). Obecny stan to **M0, pionowy wycinek**: jeden dystrykt (Shinsekai, kwartał 7), pętla od wejścia gracza do zapisu przechodząca przez wszystkie warstwy.
+Repozytorium realizuje [plan architektury](docs/seki-senshi-plan.md). Obecny stan to **M1, pętla rdzenia** zbudowana na pionowym wycinku M0: jeden dystrykt (Shinsekai, kwartał 7), kontrakty od fixera, klinika z cyberware i zdolność aktywna.
 
 ![Kadr referencyjny NPR](e2e/__snapshots__/npr-perf.spec.ts/reference-m0.png)
 
@@ -29,10 +29,13 @@ Parametry URL: `?seed=123` (stałe ziarno nowej gry), `?reference` (deterministy
 | E | rozmowa |
 | 1–4 | wybór kwestii w dialogu |
 | V | FPP / TPP |
+| Q | zdolność cyberware (po wszczepieniu Akceleratora Kairos) |
+| H | apteczka |
+| Tab | karta postaci |
 | F5 / F9 | szybki zapis / odczyt |
 | Esc | pauza (zapis do slotów, wczytywanie) |
 
-Pad (standard mapping): lewa gałka ruch, prawa rozglądanie, RT strzał, A rozmowa, Y kamera, L3 sprint.
+Pad (standard mapping): lewa gałka ruch, prawa rozglądanie, RT strzał, A rozmowa, Y kamera, RB zdolność, X apteczka, L3 sprint.
 
 ## Co jest w M0
 
@@ -42,6 +45,14 @@ Pad (standard mapping): lewa gałka ruch, prawa rozglądanie, RT strzał, A rozm
 - Reputacja (Sieć Kaito, Hebi, mieszkańcy), eddies, cyberware w domenie.
 - Zapis i odczyt: 3 sloty + szybki zapis w IndexedDB, suma kontrolna, migracje schematu, obsługa uszkodzonych zapisów.
 - NPR: toon shading z pasmami światła, rim light, kontury inverted-hull na postaciach, neony z bloomem, deszcz, grading.
+
+## Co doszło w M1
+
+- Po pierwszym zleceniu Kaito oferuje kontrakty proceduralne: 2–4 gangerów Hebi w jednym z czterech miejsc dzielnicy, coraz twardszych z każdym wykonanym zleceniem. Zapłata zależy od reputacji u Kaito.
+- Klinika doktora Mori (naprzeciwko baru): cztery implanty do kupienia i wszczepienia oraz apteczki.
+- Akcelerator Kairos daje zdolność aktywną: przez 4 sekundy przeciwnicy poruszają się i strzelają w 30% tempa.
+- Trafienia w głowę (×1,6), apteczki (+40 HP), karta postaci z cyberware, wspomnieniami i reputacją.
+- Zapis v3 z migracją starszych zapisów.
 
 ## Struktura
 
@@ -68,6 +79,7 @@ pnpm depcheck       # dependency-cruiser: kierunek zależności, brak cykli
 pnpm test:coverage  # vitest + progi pokrycia (core 95%)
 pnpm test:e2e       # Playwright na zbudowanej aplikacji (wymaga pnpm build)
 pnpm ci             # wszystko po kolei
+pnpm artifact       # build + strona do publikacji jako artefakt claude.ai (katalog artifact/)
 ```
 
 Testy obejmują m.in. pełną pętlę M0 bez przeglądarki (`packages/app/test/m0-loop.test.ts`), determinizm i złoty hash replayu (`packages/sim/test/determinism.test.ts`), kontrakt `PersistencePort` dla pamięci i IndexedDB oraz migrację zapisu z v1.

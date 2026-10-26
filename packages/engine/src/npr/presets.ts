@@ -41,6 +41,9 @@ export const PRESETS = {
   umeCoat: { base: "#b9a68a", ...CHAR },
   umeHair: { base: "#c9c9cf", ...CHAR },
   umbrella: { base: "#c23b4f", ...CHAR },
+  // Ripperdoc.
+  docCoat: { base: "#aeb8bd", ...CHAR },
+  docGoggles: { base: "#000000", emissive: "#39ffd0", rimStrength: 0, outline: false },
 } as const satisfies Record<string, ToonPreset>;
 
 export type PresetName = keyof typeof PRESETS;

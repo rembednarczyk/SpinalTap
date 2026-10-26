@@ -1,5 +1,9 @@
 import {
+  ABILITY_CATALOG,
   type AudioPort,
+  type CyberwareId,
+  type ItemId,
+  loadoutAbility,
   CorruptSaveError,
   type DomainEvents,
   EMPTY_INPUT,
@@ -11,7 +15,7 @@ import {
 } from "@seki/core";
 import { type DialogueView, NarrativeRuntime } from "@seki/narrative";
 import { RenderSync, Simulation } from "@seki/sim";
-import { type Screen, type UiIntents, type UiStore, dismissToast, patchUi, pushToast } from "@seki/ui";
+import { type AbilityVm, type Screen, type UiIntents, type UiStore, dismissToast, patchUi, pushToast } from "@seki/ui";
 import { bindEventPresenter } from "./event-presenter";
 import { describeObjective, saveLabel } from "./objective";
 
@@ -40,6 +44,8 @@ export class GameSession implements UiIntents {
   private readonly renderSync: RenderSync;
   private simulation: Simulation;
   private dialogueOpen = false;
+  private shopOpen = false;
+  private lastAbilityVm: AbilityVm | null = null;
 
   constructor(private readonly deps: GameSessionDeps) {
     this.narrative = new NarrativeRuntime(deps.story, (cmd) => this.simulation.enqueue(cmd));
@@ -48,6 +54,7 @@ export class GameSession implements UiIntents {
     bindEventPresenter(this.bus, deps.render, deps.audio, deps.ui, {
       playerId: () => this.simulation.player()?.id ?? null,
       onDialogue: (id) => this.openDialogue(id),
+      onShop: () => this.openShop(),
       onPlayerDied: () => this.setScreen("dead"),
     });
     void this.refreshSlots();
@@ -63,7 +70,7 @@ export class GameSession implements UiIntents {
 
   /** True while the player is in control (playing, no dialogue). */
   get inControl(): boolean {
-    return this.screen === "playing" && !this.dialogueOpen;
+    return this.screen === "playing" && !this.dialogueOpen && !this.shopOpen;
   }
 
   /** The simulation only advances while playing; dialogue freezes the player but not the world. */
@@ -94,7 +101,26 @@ export class GameSession implements UiIntents {
       objective,
       cameraMode: sim.domain.preferences.cameraMode,
       memories: sim.domain.character.memories,
+      medkits: sim.domain.inventory.medkit ?? 0,
+      ability: this.abilityVm(),
+      cyberware: sim.domain.character.cyberware,
+      reputation: sim.domain.reputation,
+      contractsDone: sim.domain.contracts.completed,
     });
+  }
+
+  private abilityVm(): AbilityVm | null {
+    const id = loadoutAbility(this.simulation.domain.character.cyberware);
+    if (!id) return null;
+    const def = ABILITY_CATALOG[id];
+    const s = this.simulation.domain.ability;
+    // Rounded so the store only changes ~10 times a second, not every frame.
+    const round = (n: number) => Math.ceil(n * 10) / 10;
+    const next = { name: def.name, activeTime: round(s.activeTime), cooldown: round(s.cooldown), cooldownTotal: def.cooldown };
+    const prev = this.lastAbilityVm;
+    if (prev && prev.name === next.name && prev.activeTime === next.activeTime && prev.cooldown === next.cooldown) return prev;
+    this.lastAbilityVm = next;
+    return next;
   }
 
   // ---- UiIntents ----
@@ -111,7 +137,23 @@ export class GameSession implements UiIntents {
   }
 
   pause(): void {
-    if (this.screen === "playing" && !this.dialogueOpen) this.setScreen("paused");
+    if (this.inControl) this.setScreen("paused");
+  }
+
+  buyCyberware(id: CyberwareId): void {
+    if (this.shopOpen) this.simulation.enqueue({ type: "buy-cyberware", cyberwareId: id });
+  }
+
+  buyItem(id: ItemId): void {
+    if (this.shopOpen) this.simulation.enqueue({ type: "buy-item", itemId: id });
+  }
+
+  closeShop(): void {
+    if (!this.shopOpen) return;
+    this.shopOpen = false;
+    patchUi(this.deps.ui, { shopOpen: false });
+    this.simulation.enqueue({ type: "end-dialogue" });
+    this.deps.onFocusChange?.(this.inControl);
   }
 
   quitToTitle(): void {
@@ -149,7 +191,7 @@ export class GameSession implements UiIntents {
   }
 
   async saveAsync(slot: string): Promise<boolean> {
-    if (this.dialogueOpen || this.screen === "dead" || this.screen === "title") {
+    if (this.dialogueOpen || this.shopOpen || this.screen === "dead" || this.screen === "title") {
       pushToastTimed(this.deps.ui, "system", "Nie można teraz zapisać");
       return false;
     }
@@ -209,9 +251,16 @@ export class GameSession implements UiIntents {
     this.deps.onFocusChange?.(false);
   }
 
+  private openShop(): void {
+    this.shopOpen = true;
+    patchUi(this.deps.ui, { shopOpen: true, prompt: null });
+    this.deps.onFocusChange?.(false);
+  }
+
   private closeDialogueSilently(): void {
     this.dialogueOpen = false;
-    patchUi(this.deps.ui, { dialogue: null });
+    this.shopOpen = false;
+    patchUi(this.deps.ui, { dialogue: null, shopOpen: false });
   }
 
   private replaceSimulation(next: Simulation): void {

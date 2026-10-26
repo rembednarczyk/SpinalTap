@@ -1,5 +1,7 @@
 import {
   FACTIONS,
+  isContractSiteId,
+  isItemId,
   SAVE_SCHEMA_VERSION,
   type SaveSnapshot,
   isCyberwareId,
@@ -37,6 +39,22 @@ export const findSchemaError = (s: Json): string | null => {
   }
   if (!Array.isArray(d.flags) || !d.flags.every((f) => typeof f === "string")) return "flags";
   if (!isObject(d.preferences) || (d.preferences.cameraMode !== "FPP" && d.preferences.cameraMode !== "TPP")) return "preferences";
+  if (!isObject(d.inventory)) return "inventory";
+  for (const [id, n] of Object.entries(d.inventory)) {
+    if (!isItemId(id) || !Number.isInteger(n) || (n as number) < 0) return "inventory";
+  }
+  const contracts = d.contracts;
+  if (!isObject(contracts) || !Number.isInteger(contracts.completed) || (contracts.completed as number) < 0) return "contracts";
+  const active = contracts.active;
+  if (active !== null) {
+    if (!isObject(active) || typeof active.id !== "string" || typeof active.siteId !== "string" || !isContractSiteId(active.siteId)) {
+      return "contracts";
+    }
+    if (!Number.isInteger(active.targets) || !Number.isInteger(active.reward) || (active.status !== "active" && active.status !== "cleared")) {
+      return "contracts";
+    }
+  }
+  if (!isObject(d.ability) || !isNum(d.ability.activeTime) || !isNum(d.ability.cooldown)) return "ability";
   if (!(s.narrative === null || typeof s.narrative === "string")) return "narrative";
   if (!isObject(s.meta) || typeof s.meta.label !== "string" || typeof s.meta.objective !== "string") return "meta";
   return null;

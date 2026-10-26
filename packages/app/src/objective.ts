@@ -1,4 +1,4 @@
-import { type DomainState, QUEST_DEFINITIONS, currentStep } from "@seki/core";
+import { type DomainState, QUEST_DEFINITIONS, contractObjective, currentStep } from "@seki/core";
 
 /** Main-quest title and objective for the HUD. */
 export const describeObjective = (domain: DomainState): { title: string | null; objective: string | null } => {
@@ -6,7 +6,11 @@ export const describeObjective = (domain: DomainState): { title: string | null; 
     if (!q.main) continue;
     const progress = domain.quests[q.id];
     if (!progress) continue;
-    if (progress.status === "completed") return { title: q.title, objective: "Zlecenie wykonane. Kaito ma dla ciebie więcej roboty jutro." };
+    if (progress.status === "completed") {
+      const contract = domain.contracts.active;
+      if (contract) return { title: `Kontrakt ${contract.id.slice(1)} · Kaito`, objective: contractObjective(contract) };
+      return { title: "Wolna ręka", objective: "Kaito ma kolejne kontrakty. Mori sprzedaje cyberware." };
+    }
     return { title: q.title, objective: currentStep(domain.quests, q)?.objective ?? null };
   }
   return { title: null, objective: null };

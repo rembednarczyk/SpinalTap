@@ -8,7 +8,11 @@ import {
   type InputFrame,
   type SaveSnapshot,
   SAVE_SCHEMA_VERSION,
+  buyCyberware,
+  buyItem,
   createDomainState,
+  credit,
+  generateContract,
   setAlias,
 } from "@seki/core";
 import type { World } from "miniplex";
@@ -17,7 +21,7 @@ import { createSystems } from "./systems";
 import type { Entity } from "./world/components";
 import type { DomainHolder, SessionState, SimContext, System } from "./world/context";
 import { adjustReputation, grantMemory, raiseFlag } from "./world/domain-ops";
-import { createDistrictWorld } from "./world/factory";
+import { type IdAllocator, createDistrictWorld, spawnContractTargets } from "./world/factory";
 
 export const SIM_HZ = 60;
 export const SIM_DT = 1 / SIM_HZ;
@@ -40,6 +44,7 @@ export class Simulation {
   private readonly holder: DomainHolder;
   private readonly systems: readonly System[] = createSystems();
   private readonly commands: GameCommand[] = [];
+  private readonly ids: IdAllocator;
   private tickCount = 0;
 
   private constructor(seed: number, domain: DomainState, bus: EventBus<DomainEvents>) {
@@ -47,7 +52,9 @@ export class Simulation {
     this.bus = bus;
     this.rng = new SeededRandom(seed);
     this.holder = { domain, flagsDirty: false };
-    this.world = createDistrictWorld(domain);
+    const built = createDistrictWorld(domain);
+    this.world = built.world;
+    this.ids = built.ids;
   }
 
   static create(options: SimulationOptions): Simulation {
@@ -113,7 +120,8 @@ export class Simulation {
 
   snapshot(narrative: string | null, label: string, objective: string): SaveSnapshot {
     const entities: EntitySnapshot[] = [];
-    for (const e of this.world) {
+    // Sorted by key: world iteration order is not stable across removals.
+    for (const e of [...this.world].sort((a, b) => (a.key ?? "").localeCompare(b.key ?? ""))) {
       if (!e.key) continue;
       entities.push({
         key: e.key,
@@ -154,6 +162,55 @@ export class Simulation {
       case "end-dialogue":
         this.session.dialogueActive = false;
         break;
+      case "buy-cyberware": {
+        const domain = this.holder.domain;
+        const r = buyCyberware(domain.wallet, domain.character, cmd.cyberwareId);
+        if (!r.ok) {
+          ctx.bus.emit("PurchaseFailed", { reason: r.reason });
+          break;
+        }
+        this.holder.domain = { ...domain, wallet: r.wallet, character: r.character };
+        if (r.price > 0) ctx.bus.emit("EddiesChanged", { balance: r.wallet.eddies, delta: -r.price });
+        ctx.bus.emit("CyberwareInstalled", { cyberwareId: cmd.cyberwareId, replaced: r.replaced, price: r.price });
+        break;
+      }
+      case "buy-item": {
+        const domain = this.holder.domain;
+        const r = buyItem(domain.wallet, domain.inventory, cmd.itemId);
+        if (!r.ok) {
+          ctx.bus.emit("PurchaseFailed", { reason: r.reason });
+          break;
+        }
+        this.holder.domain = { ...domain, wallet: r.wallet, inventory: r.inventory };
+        ctx.bus.emit("EddiesChanged", { balance: r.wallet.eddies, delta: -r.price });
+        ctx.bus.emit("ItemBought", { itemId: cmd.itemId, price: r.price });
+        break;
+      }
+      case "accept-contract": {
+        const domain = this.holder.domain;
+        if (domain.contracts.active) break;
+        const contract = generateContract(domain.contracts, this.rng, domain.reputation.fixers);
+        this.holder.domain = { ...domain, contracts: { ...domain.contracts, active: contract } };
+        spawnContractTargets(this.world, this.ids, this.holder.domain, contract);
+        ctx.bus.emit("ContractAccepted", { contract });
+        break;
+      }
+      case "complete-contract": {
+        const domain = this.holder.domain;
+        const contract = domain.contracts.active;
+        if (contract?.status !== "cleared") break;
+        const paid = credit(domain.wallet, contract.reward);
+        this.holder.domain = {
+          ...domain,
+          wallet: paid.ok ? paid.wallet : domain.wallet,
+          contracts: { active: null, completed: domain.contracts.completed + 1 },
+        };
+        if (paid.ok) ctx.bus.emit("EddiesChanged", { balance: paid.wallet.eddies, delta: contract.reward });
+        adjustReputation(ctx, "fixers", 3);
+        adjustReputation(ctx, "hebi", -5);
+        ctx.bus.emit("ContractCompleted", { contract, reward: contract.reward });
+        break;
+      }
     }
   }
 }

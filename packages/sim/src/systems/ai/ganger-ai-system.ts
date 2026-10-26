@@ -5,6 +5,8 @@ import { WEAPONS, normalize, sub, type EntityId } from "@seki/core";
 import type { Entity } from "../../world/components";
 import type { SimContext, System } from "../../world/context";
 import { chestOf, eyeOf, lineOfSight } from "../../world/hitscan";
+import { inCreationOrder } from "../../world/ordering";
+import { worldTimeScale } from "../ability-system";
 import { fireShot } from "../combat-system";
 import { GANGER_TREE } from "./ganger-tree";
 
@@ -24,6 +26,8 @@ interface Perception {
 class GangerAgent {
   ctx: SimContext | null = null;
   self: Ganger | null = null;
+  /** Local time scale (the player's overdrive slows gangers down). */
+  timeScale = 1;
   seen: Perception = { player: null, distance: Infinity, visible: false };
 
   SeesPlayer = (): boolean => this.seen.visible;
@@ -79,7 +83,7 @@ class GangerAgent {
     let delta = (desired - self.yaw) % (Math.PI * 2);
     if (delta > Math.PI) delta -= Math.PI * 2;
     if (delta < -Math.PI) delta += Math.PI * 2;
-    const maxTurn = TURN_RATE * ctx.dt;
+    const maxTurn = TURN_RATE * ctx.dt * this.timeScale;
     self.yaw += Math.max(-maxTurn, Math.min(maxTurn, delta));
   }
 }
@@ -92,7 +96,8 @@ export const createGangerAiSystem = (): System => {
     run(ctx) {
       const player = ctx.session.gameOver ? null : (ctx.world.with("player").first ?? null);
       const alive = new Set<EntityId>();
-      for (const g of ctx.world.with("ai", "velocity")) {
+      const timeScale = worldTimeScale(ctx);
+      for (const g of inCreationOrder(ctx.world.with("ai", "velocity"))) {
         alive.add(g.id);
         let brain = trees.get(g.id);
         if (!brain) {
@@ -106,6 +111,7 @@ export const createGangerAiSystem = (): System => {
         brain.agent.ctx = ctx;
         brain.agent.self = g;
         brain.agent.seen = { player, distance, visible };
+        brain.agent.timeScale = timeScale;
         brain.tree.step();
       }
       for (const id of [...trees.keys()]) if (!alive.has(id)) trees.delete(id);

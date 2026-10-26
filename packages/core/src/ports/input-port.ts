@@ -14,6 +14,10 @@ export interface InputFrame {
   readonly interact: boolean;
   /** Edge-triggered. */
   readonly toggleCamera: boolean;
+  /** Edge-triggered: use the installed active cyberware ability. */
+  readonly ability: boolean;
+  /** Edge-triggered: use a medkit. */
+  readonly useItem: boolean;
 }
 
 export const EMPTY_INPUT: InputFrame = Object.freeze({
@@ -25,6 +29,8 @@ export const EMPTY_INPUT: InputFrame = Object.freeze({
   fire: false,
   interact: false,
   toggleCamera: false,
+  ability: false,
+  useItem: false,
 });
 
 export interface InputPort {

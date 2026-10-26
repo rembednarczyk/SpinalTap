@@ -1,4 +1,4 @@
-import type { Vec3, ViewDescriptor } from "@seki/core";
+import type { ContractSiteId, Vec3, ViewDescriptor } from "@seki/core";
 import { M0_TARGET_TAG } from "@seki/core";
 
 /**
@@ -81,6 +81,7 @@ export const DISTRICT_M0_PROPS: readonly StaticProp[] = [
   neon(6.9, 14, 20, v(0.15, 8, 1.6), "#b46cff", "KUSURI"),
   neon(-6.9, 7, 24, v(0.15, 1.2, 6), "#39ff8a", "PACHINKO"),
   neon(0, 4, 49.9, v(9, 1.2, 0.15), "#ff4040", "MYJNIA 24H"),
+  neon(-6.9, 3.4, 2.4, v(0.15, 0.9, 3.4), "#39ffd0", "KLINIKA"),
   // Street lamps (each one is also a point light).
   lamp(-6.4, -22, "#9ad7ff"),
   lamp(6.4, -6, "#ff9ad0"),
@@ -94,6 +95,17 @@ export const PLAYER_SPAWN: ActorSpawn = { key: "player", position: v(0, 0, -28),
 export const FIXER_SPAWN: ActorSpawn = { key: "fixer", position: v(6.2, 0, 1.5), yaw: -Math.PI / 2 };
 
 export const CIVILIAN_SPAWN: ActorSpawn = { key: "ume", position: v(-5.4, 0, -13), yaw: Math.PI / 2 };
+
+/** Doktor Mori, the ripperdoc, in front of the clinic on the west side. */
+export const RIPPERDOC_SPAWN: ActorSpawn = { key: "mori", position: v(-6.2, 0, 2.4), yaw: Math.PI / 2 };
+
+/** Spawn points for procedural fixer contracts (up to four targets per site). */
+export const CONTRACT_SITE_SPAWNS: Readonly<Record<ContractSiteId, readonly Vec3[]>> = {
+  east_lot: [v(10.5, 0, -15.5), v(13.5, 0, -8.5), v(16, 0, -14), v(9.5, 0, -9)],
+  koi_back: [v(3, 0, 12), v(-3, 0, 14.5), v(5, 0, 17), v(-1, 0, 10)],
+  car_wash: [v(1, 0, 43), v(-2.5, 0, 39.5), v(4, 0, 47), v(-4, 0, 47)],
+  south_gate: [v(-4, 0, -33), v(4.5, 0, -34.5), v(-1, 0, -35), v(6.5, 0, -33.5)],
+};
 
 export interface GangerSpawn extends ActorSpawn {
   readonly tag: string | null;

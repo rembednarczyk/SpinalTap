@@ -21,6 +21,7 @@ export interface GangerAi {
 }
 
 export interface Interactable {
+  readonly kind: "dialogue" | "shop";
   readonly dialogueId: string;
   readonly prompt: string;
   readonly radius: number;

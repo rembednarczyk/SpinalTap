@@ -1,4 +1,4 @@
-import type { CameraMode, SaveSlotInfo } from "@seki/core";
+import type { CameraMode, CyberwareLoadout, ReputationState, SaveSlotInfo } from "@seki/core";
 import { createStore, type StoreApi } from "zustand/vanilla";
 
 export type Screen = "title" | "playing" | "paused" | "dead";
@@ -14,9 +14,17 @@ export interface DialogueVm {
   readonly ended: boolean;
 }
 
+export interface AbilityVm {
+  readonly name: string;
+  /** Seconds left while active, 0 otherwise. */
+  readonly activeTime: number;
+  readonly cooldown: number;
+  readonly cooldownTotal: number;
+}
+
 export interface Toast {
   readonly id: number;
-  readonly kind: "quest" | "memory" | "money" | "reputation" | "system";
+  readonly kind: "quest" | "memory" | "money" | "reputation" | "system" | "cyberware";
   readonly title: string;
   readonly text: string;
 }
@@ -41,6 +49,12 @@ export interface UiState {
   readonly memories: readonly string[];
   readonly hasSaves: boolean;
   readonly busy: boolean;
+  readonly medkits: number;
+  readonly ability: AbilityVm | null;
+  readonly cyberware: CyberwareLoadout;
+  readonly reputation: ReputationState;
+  readonly contractsDone: number;
+  readonly shopOpen: boolean;
 }
 
 export const initialUiState: UiState = {
@@ -61,6 +75,12 @@ export const initialUiState: UiState = {
   memories: [],
   hasSaves: false,
   busy: false,
+  medkits: 0,
+  ability: null,
+  cyberware: {},
+  reputation: { fixers: 0, hebi: 0, civilians: 0 },
+  contractsDone: 0,
+  shopOpen: false,
 };
 
 export type UiStore = StoreApi<UiState>;

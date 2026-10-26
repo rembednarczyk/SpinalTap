@@ -1,3 +1,4 @@
+import type { AbilityId } from "../abilities/abilities";
 import type { StatModifiers } from "../character/stats";
 
 export type CyberwareSlot = "optics" | "nervous" | "skeleton" | "arms";
@@ -7,7 +8,10 @@ export interface CyberwareDefinition {
   readonly name: string;
   readonly slot: CyberwareSlot;
   readonly price: number;
+  readonly description: string;
   readonly modifiers: StatModifiers;
+  /** Active ability granted while installed. */
+  readonly ability?: AbilityId;
 }
 
 export const CYBERWARE_CATALOG = {
@@ -16,21 +20,41 @@ export const CYBERWARE_CATALOG = {
     name: "Optyka Hitomi Mk1",
     slot: "optics",
     price: 0,
+    description: "Optyka startowa. Szansa na krytyk +4%.",
     modifiers: { critChance: 0.04 },
   },
   subdermal_weave: {
     id: "subdermal_weave",
     name: "Splot podskórny",
     slot: "skeleton",
-    price: 900,
+    price: 650,
+    description: "Siatka z polimeru pod skórą. Pancerz +4, maks. HP +15.",
     modifiers: { armor: 4, maxHp: 15 },
   },
   synapse_booster: {
     id: "synapse_booster",
     name: "Wzmacniacz synaps",
     slot: "nervous",
-    price: 1400,
+    price: 900,
+    description: "Szybsze przetwarzanie celu. Mnożnik krytyka +0,4.",
     modifiers: { critMultiplier: 0.4 },
+  },
+  kairos_overclock: {
+    id: "kairos_overclock",
+    name: "Akcelerator Kairos",
+    slot: "nervous",
+    price: 1100,
+    description: "Aktywny [Q]: przez 4 s świat zwalnia do 30%. Odnowienie 16 s.",
+    modifiers: {},
+    ability: "reflex_overdrive",
+  },
+  steady_grip: {
+    id: "steady_grip",
+    name: "Stabilizator chwytu",
+    slot: "arms",
+    price: 500,
+    description: "Mniej odrzutu, pewniejszy strzał. Obrażenia +4.",
+    modifiers: { damageBonus: 4 },
   },
 } as const satisfies Record<string, CyberwareDefinition>;
 
@@ -62,3 +86,13 @@ export const loadoutModifiers = (loadout: CyberwareLoadout): StatModifiers[] =>
   Object.values(loadout)
     .filter((id): id is CyberwareId => id !== undefined)
     .map((id) => CYBERWARE_CATALOG[id].modifiers);
+
+/** The active ability of the installed implants, if any. */
+export const loadoutAbility = (loadout: CyberwareLoadout): AbilityId | null => {
+  for (const id of Object.values(loadout)) {
+    if (id === undefined) continue;
+    const def: CyberwareDefinition = CYBERWARE_CATALOG[id];
+    if (def.ability) return def.ability;
+  }
+  return null;
+};

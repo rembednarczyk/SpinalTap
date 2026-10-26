@@ -17,7 +17,7 @@ export interface Transform {
 /** What the presentation layer should build for an entity. Pure data, engine-agnostic. */
 export type ViewDescriptor =
   | { readonly kind: "heroine" }
-  | { readonly kind: "npc"; readonly preset: "fixer" | "civilian" }
+  | { readonly kind: "npc"; readonly preset: "fixer" | "civilian" | "ripperdoc" }
   | { readonly kind: "enemy"; readonly preset: "ganger" }
   | {
       readonly kind: "block";
@@ -36,7 +36,9 @@ export type ViewDescriptor =
 export type EffectDescriptor =
   | { readonly kind: "muzzle-flash"; readonly shooterId: EntityId; readonly from: Vec3; readonly to: Vec3 }
   | { readonly kind: "hit-spark"; readonly at: Vec3; readonly critical: boolean }
-  | { readonly kind: "memory-glitch" };
+  | { readonly kind: "memory-glitch" }
+  | { readonly kind: "overdrive"; readonly active: boolean }
+  | { readonly kind: "heal" };
 
 export type AudioCue =
   | "shot"
@@ -48,4 +50,8 @@ export type AudioCue =
   | "ui-select"
   | "quest-update"
   | "memory"
-  | "save";
+  | "save"
+  | "purchase"
+  | "denied"
+  | "heal"
+  | "overdrive";

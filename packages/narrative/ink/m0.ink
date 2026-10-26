@@ -4,12 +4,17 @@
 
 VAR quest_step = ""
 VAR alias = ""
+VAR contract_state = ""
+VAR contract_site = ""
+VAR contracts_done = 0
 
 EXTERNAL set_flag(name)
 EXTERNAL has_flag(name)
 EXTERNAL change_rep(faction, delta)
 EXTERNAL set_alias(name)
 EXTERNAL unlock_memory(id)
+EXTERNAL accept_contract()
+EXTERNAL complete_contract()
 
 === fixer ===
 {
@@ -70,8 +75,42 @@ KAITO: I jeszcze jedno, Seki. Ktoś już pytał o kobietę z wraku. Nie tylko ja
 -> END
 
 = after
-KAITO: Na dziś koniec, {alias}. Odpocznij, póki możesz.
+{
+- contract_state == "cleared": -> contract_payday
+- contract_state == "active": -> contract_running
+- else: -> contract_offer
+}
+
+= contract_offer
+{ contracts_done == 0:
+    KAITO: Hebi nie wybaczą ci kuriera. To znaczy, że będą się kręcić po dzielnicy. A ja mam klientów, którzy płacą za ciszę.
+- else:
+    KAITO: Hebi znowu wystawili ludzi na moją ulicę. Robota czeka, {alias}.
+}
++ [Biorę robotę.]
+    SEKI: Biorę.
+    ~ accept_contract()
+    KAITO: Lokalizację wysłałem ci na optykę. Wróć, jak będzie po wszystkim.
+    -> END
++ [Jeśli chcesz lepszego sprzętu, idź do doktora Mori.]
+    SEKI: Gdzie tu się można podrasować?
+    KAITO: Klinika doktora Mori, naprzeciwko baru. Bierze gotówkę i nie zadaje pytań.
+    -> contract_offer
++ [Nie dziś.]
+    KAITO: Twoja strata. Hebi nie biorą wolnego.
+    -> END
+
+= contract_running
+KAITO: Kontrakt dalej otwarty. Cel: {contract_site}.
 -> END
+
+= contract_payday
+KAITO: Czysta robota. Klienci są zadowoleni, a ja razem z nimi.
+~ complete_contract()
+{ contracts_done >= 2:
+    KAITO: Zaczynasz mieć opinię, Seki. Ludzie pytają o kobietę z wraku, która nie chybia.
+}
+-> contract_offer
 
 === ume ===
 { has_flag("ume_memory"):

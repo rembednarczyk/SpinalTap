@@ -1,6 +1,6 @@
 import { useUi } from "../use-ui";
 
-const ICON: Record<string, string> = { quest: "◆", memory: "◎", money: "€$", reputation: "▲", system: "■" };
+const ICON: Record<string, string> = { quest: "◆", memory: "◎", money: "€$", reputation: "▲", system: "■", cyberware: "⌬" };
 
 export const Toasts = () => {
   const toasts = useUi((s) => s.toasts);

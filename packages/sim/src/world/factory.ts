@@ -1,11 +1,13 @@
-import type { DomainState, EntityId, Vec3 } from "@seki/core";
+import { type Contract, type DomainState, type EntityId, type Vec3, contractTag } from "@seki/core";
 import { World } from "miniplex";
 import {
   CIVILIAN_SPAWN,
+  CONTRACT_SITE_SPAWNS,
   DISTRICT_M0_PROPS,
   FIXER_SPAWN,
   GANGER_SPAWNS,
   PLAYER_SPAWN,
+  RIPPERDOC_SPAWN,
   type ActorSpawn,
 } from "../content/district-m0";
 import { aabbFromCenter } from "./collision";
@@ -43,14 +45,45 @@ const at = (p: Vec3): Pick<Entity, "position" | "prevPosition" | "yaw" | "prevYa
   pitch: 0,
 });
 
+const isDead = (domain: DomainState, key: string): boolean => domain.flags.includes(`dead:${key}`);
+
+const ganger = (ids: IdAllocator, spawn: ActorSpawn, tag: string | null, maxHp: number): Entity => {
+  const e: Entity = {
+    ...actor(ids, spawn),
+    view: { kind: "enemy", preset: "ganger" },
+    faction: "hebi",
+    velocity: { x: 0, y: 0, z: 0 },
+    health: { current: maxHp, max: maxHp },
+    combatant: { weapon: "gangerSmg", cooldown: 0 },
+    ai: { home: spawn.position, aggroRange: 17, attackRange: 15, alerted: false },
+  };
+  if (tag) e.tag = tag;
+  return e;
+};
+
+/** Contract targets get tougher as Seki completes more jobs. */
+export const contractGangerHp = (completed: number): number => GANGER_MAX_HP + Math.min(60, completed * 10);
+
+/** Adds the still-living targets of a contract. Used on acceptance and when rebuilding after a load. */
+export const spawnContractTargets = (world: World<Entity>, ids: IdAllocator, domain: DomainState, contract: Contract): void => {
+  const points = CONTRACT_SITE_SPAWNS[contract.siteId];
+  for (let i = 0; i < contract.targets; i++) {
+    const key = `${contract.id}-g${i}`;
+    const position = points[i % points.length];
+    if (!position || isDead(domain, key)) continue;
+    // Face the street centre line.
+    const yaw = Math.atan2(-position.x, 0.001);
+    world.add(ganger(ids, { key, position, yaw }, contractTag(contract.id), contractGangerHp(domain.contracts.completed)));
+  }
+};
+
 /**
  * Builds the M0 district. Entities whose `dead:<key>` flag is set are skipped, so the same
  * factory serves both a new game and a load.
  */
-export const createDistrictWorld = (domain: DomainState): World<Entity> => {
+export const createDistrictWorld = (domain: DomainState): { world: World<Entity>; ids: IdAllocator } => {
   const world = new World<Entity>();
   const ids = new IdAllocator();
-  const isDead = (key: string): boolean => domain.flags.includes(`dead:${key}`);
 
   for (const prop of DISTRICT_M0_PROPS) {
     const e: Entity = { id: ids.take(), ...at(prop.center), view: prop.view };
@@ -71,29 +104,29 @@ export const createDistrictWorld = (domain: DomainState): World<Entity> => {
     ...actor(ids, FIXER_SPAWN),
     view: { kind: "npc", preset: "fixer" },
     faction: "fixers",
-    interactable: { dialogueId: "fixer", prompt: "Rozmawiaj z Kaito", radius: 2.6 },
+    interactable: { kind: "dialogue", dialogueId: "fixer", prompt: "Rozmawiaj z Kaito", radius: 2.6 },
   });
 
   world.add({
     ...actor(ids, CIVILIAN_SPAWN),
     view: { kind: "npc", preset: "civilian" },
     faction: "civilians",
-    interactable: { dialogueId: "ume", prompt: "Rozmawiaj z babcią Ume", radius: 2.4 },
+    interactable: { kind: "dialogue", dialogueId: "ume", prompt: "Rozmawiaj z babcią Ume", radius: 2.4 },
+  });
+
+  world.add({
+    ...actor(ids, RIPPERDOC_SPAWN),
+    view: { kind: "npc", preset: "ripperdoc" },
+    faction: "civilians",
+    interactable: { kind: "shop", dialogueId: "mori", prompt: "Klinika doktora Mori", radius: 2.4 },
   });
 
   for (const g of GANGER_SPAWNS) {
-    if (isDead(g.key)) continue;
-    const e: Entity = {
-      ...actor(ids, g),
-      view: { kind: "enemy", preset: "ganger" },
-      faction: "hebi",
-      velocity: { x: 0, y: 0, z: 0 },
-      health: { current: GANGER_MAX_HP, max: GANGER_MAX_HP },
-      combatant: { weapon: "gangerSmg", cooldown: 0 },
-      ai: { home: g.position, aggroRange: 17, attackRange: 15, alerted: false },
-    };
-    if (g.tag) e.tag = g.tag;
-    world.add(e);
+    if (isDead(domain, g.key)) continue;
+    world.add(ganger(ids, g, g.tag, GANGER_MAX_HP));
   }
-  return world;
+
+  const contract = domain.contracts.active;
+  if (contract?.status === "active") spawnContractTargets(world, ids, domain, contract);
+  return { world, ids };
 };

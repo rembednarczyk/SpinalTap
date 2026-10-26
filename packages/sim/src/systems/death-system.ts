@@ -1,16 +1,27 @@
-import { killedFlag } from "@seki/core";
+import { contractTag, killedFlag } from "@seki/core";
 import type { Entity } from "../world/components";
 import type { System } from "../world/context";
 import { raiseFlag } from "../world/domain-ops";
+import { inCreationOrder } from "../world/ordering";
 
 export const deadFlag = (key: string): string => `dead:${key}`;
 
 /** Removes killed NPCs (recording it in flags) and ends the run when the player flatlines. */
+const checkContractCleared = (ctx: Parameters<System["run"]>[0]): void => {
+  const contract = ctx.state.domain.contracts.active;
+  if (contract?.status !== "active") return;
+  const tag = contractTag(contract.id);
+  for (const e of ctx.world.with("health")) if (e.tag === tag) return;
+  const cleared = { ...contract, status: "cleared" as const };
+  ctx.state.domain = { ...ctx.state.domain, contracts: { ...ctx.state.domain.contracts, active: cleared } };
+  ctx.bus.emit("ContractCleared", { contract: cleared });
+};
+
 export const deathSystem: System = {
   name: "death",
   run(ctx) {
     const dead: Entity[] = [];
-    for (const e of ctx.world.with("health")) if (e.health.current <= 0) dead.push(e);
+    for (const e of inCreationOrder(ctx.world.with("health"))) if (e.health.current <= 0) dead.push(e);
     for (const e of dead) {
       if (e.player) {
         if (!ctx.session.gameOver) {
@@ -24,5 +35,6 @@ export const deathSystem: System = {
       ctx.bus.emit("EntityKilled", { entityId: e.id, tag: e.tag ?? null });
       ctx.world.remove(e);
     }
+    if (dead.length > 0) checkContractCleared(ctx);
   },
 };

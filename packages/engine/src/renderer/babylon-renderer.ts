@@ -5,7 +5,7 @@ import { Effects } from "../effects/effects";
 import { createRain } from "../effects/rain";
 import { Grading } from "../npr/grading";
 import { ToonMaterials } from "../npr/toon-material";
-import { type CharacterRig, animateRig, buildCivilian, buildFixer, buildGanger, buildHeroine } from "./characters";
+import { type CharacterRig, animateRig, buildCivilian, buildFixer, buildGanger, buildHeroine, buildRipperdoc } from "./characters";
 import { type PropView, buildBlock, buildLamp, buildNeon } from "./props";
 import type { Stage } from "./stage";
 
@@ -45,7 +45,15 @@ export class BabylonRenderer implements RenderPort {
       case "npc":
       case "enemy": {
         const build =
-          view.kind === "heroine" ? buildHeroine : view.kind === "enemy" ? buildGanger : view.preset === "fixer" ? buildFixer : buildCivilian;
+          view.kind === "heroine"
+            ? buildHeroine
+            : view.kind === "enemy"
+              ? buildGanger
+              : view.preset === "fixer"
+                ? buildFixer
+                : view.preset === "ripperdoc"
+                  ? buildRipperdoc
+                  : buildCivilian;
         const rig = build(scene, this.materials, name);
         this.entities.set(id, { kind: "character", rig, transform: t });
         this.applyTransform(rig, t);
@@ -113,6 +121,13 @@ export class BabylonRenderer implements RenderPort {
         return;
       case "memory-glitch":
         this.grading.glitch();
+        return;
+      case "overdrive":
+        this.grading.setOverdrive(effect.active);
+        if (this.rain) this.rain.system.updateSpeed = effect.active ? 1 / 200 : 1 / 60;
+        return;
+      case "heal":
+        this.grading.pulse();
         return;
     }
   }

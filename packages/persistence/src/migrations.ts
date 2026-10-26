@@ -27,6 +27,20 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
       },
     };
   },
+  // v2 (M0): no inventory, fixer contracts or ability state. Old saves get the M1 starter kit.
+  2: (old) => {
+    const domain = isObject(old.domain) ? old.domain : {};
+    return {
+      ...old,
+      version: 3,
+      domain: {
+        ...domain,
+        inventory: isObject(domain.inventory) ? domain.inventory : { medkit: 1 },
+        contracts: isObject(domain.contracts) ? domain.contracts : { active: null, completed: 0 },
+        ability: isObject(domain.ability) ? domain.ability : { activeTime: 0, cooldown: 0 },
+      },
+    };
+  },
 };
 
 export class MigrationError extends Error {}

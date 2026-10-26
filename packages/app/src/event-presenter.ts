@@ -1,4 +1,13 @@
-import { type AudioPort, type DomainEvents, type EntityId, type EventBus, FACTIONS, type RenderPort } from "@seki/core";
+import {
+  type AudioPort,
+  CYBERWARE_CATALOG,
+  type DomainEvents,
+  type EntityId,
+  type EventBus,
+  FACTIONS,
+  ITEM_CATALOG,
+  type RenderPort,
+} from "@seki/core";
 import { type UiStore, dismissToast, patchUi, pushToast } from "@seki/ui";
 
 const TOAST_MS = 4500;
@@ -6,6 +15,7 @@ const TOAST_MS = 4500;
 export interface PresenterHooks {
   playerId(): EntityId | null;
   onDialogue(dialogueId: string): void;
+  onShop(): void;
   onPlayerDied(): void;
 }
 
@@ -32,13 +42,13 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
         audio.play("hurt");
       } else if (isPlayer(e.sourceId)) {
         patchUi(ui, { hitMarker: ui.getState().hitMarker + 1 });
-        audio.play(e.critical ? "critical" : "hit");
+        audio.play(e.critical || e.headshot ? "critical" : "hit");
       }
     }),
     bus.on("EntityKilled", () => audio.play("kill")),
     bus.on("PlayerDied", () => hooks.onPlayerDied()),
     bus.on("InteractionFocusChanged", (e) => patchUi(ui, { prompt: e.prompt })),
-    bus.on("InteractionStarted", (e) => hooks.onDialogue(e.dialogueId)),
+    bus.on("InteractionStarted", (e) => (e.kind === "shop" ? hooks.onShop() : hooks.onDialogue(e.dialogueId))),
     bus.on("CameraModeChanged", (e) => render.setCameraMode(e.mode)),
     bus.on("QuestAdvanced", (e) => {
       toast("quest", "Zadanie zaktualizowane", e.objective);
@@ -48,7 +58,41 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
       toast("quest", "Zlecenie wykonane", e.title);
       audio.play("quest-update");
     }),
-    bus.on("EddiesChanged", (e) => toast("money", `+${e.delta.toLocaleString("pl-PL")} €$`, "Przelew od Kaito")),
+    bus.on("EddiesChanged", (e) => {
+      if (e.delta > 0) toast("money", `+${e.delta.toLocaleString("pl-PL")} €$`, "Przelew od Kaito");
+    }),
+    bus.on("CyberwareInstalled", (e) => {
+      const def = CYBERWARE_CATALOG[e.cyberwareId];
+      toast("cyberware", `Wszczepiono: ${def.name}`, e.replaced ? `Usunięto: ${CYBERWARE_CATALOG[e.replaced].name}` : def.description);
+      audio.play("purchase");
+    }),
+    bus.on("ItemBought", (e) => {
+      toast("system", `Kupiono: ${ITEM_CATALOG[e.itemId].name}`, `-${e.price} €$`);
+      audio.play("purchase");
+    }),
+    bus.on("PurchaseFailed", (e) => {
+      const text = { "insufficient-funds": "Za mało eddies.", "already-installed": "To już masz.", "inventory-full": "Nie uniesiesz więcej." }[e.reason];
+      toast("system", "Mori kręci głową", text);
+      audio.play("denied");
+    }),
+    bus.on("ItemUsed", (e) => {
+      toast("system", `${ITEM_CATALOG[e.itemId].name}: +${e.healed} HP`);
+      render.playEffect({ kind: "heal" });
+      audio.play("heal");
+    }),
+    bus.on("AbilityActivated", () => {
+      render.playEffect({ kind: "overdrive", active: true });
+      audio.play("overdrive");
+    }),
+    bus.on("AbilityEnded", () => render.playEffect({ kind: "overdrive", active: false })),
+    bus.on("ContractAccepted", (e) => {
+      toast("quest", "Nowy kontrakt", `Cele: ${e.contract.targets}. Stawka: ${e.contract.reward} €$`);
+      audio.play("quest-update");
+    }),
+    bus.on("ContractCleared", () => {
+      toast("quest", "Cel zneutralizowany", "Wróć do Kaito po zapłatę");
+      audio.play("quest-update");
+    }),
     bus.on("ReputationChanged", (e) => {
       if (e.delta !== 0) toast("reputation", `${FACTIONS[e.faction]} ${e.delta > 0 ? "+" : ""}${e.delta}`, "Reputacja");
     }),

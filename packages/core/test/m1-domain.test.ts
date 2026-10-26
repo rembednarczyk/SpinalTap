@@ -1,0 +1,130 @@
+import { describe, expect, it } from "vitest";
+import {
+  ABILITY_CATALOG,
+  CONTRACT_SITE_IDS,
+  CYBERWARE_CATALOG,
+  EMPTY_CONTRACTS,
+  HEADSHOT_MULTIPLIER,
+  IDLE_ABILITY,
+  MAX_STACK,
+  WEAPONS,
+  activate,
+  addItem,
+  buyCyberware,
+  buyItem,
+  contractObjective,
+  contractTag,
+  createCharacter,
+  enemyTimeScale,
+  generateContract,
+  isContractSiteId,
+  isItemId,
+  itemCount,
+  loadoutAbility,
+  resolveAttack,
+  takeItem,
+  tickAbility,
+} from "../src";
+import { sequenceRng } from "./helpers";
+
+describe("inventory", () => {
+  it("adds up to the stack limit and takes down to zero", () => {
+    expect(addItem({}, "medkit", 2)).toEqual({ medkit: 2 });
+    expect(addItem({ medkit: MAX_STACK }, "medkit")).toBeNull();
+    expect(addItem({}, "medkit", 0)).toBeNull();
+    expect(takeItem({ medkit: 1 }, "medkit")).toEqual({ medkit: 0 });
+    expect(takeItem({}, "medkit")).toBeNull();
+    expect(itemCount({}, "medkit")).toBe(0);
+    expect(isItemId("medkit")).toBe(true);
+    expect(isItemId("grenade")).toBe(false);
+  });
+});
+
+describe("ripperdoc", () => {
+  it("charges and installs, replacing the implant in the same slot", () => {
+    const c = createCharacter();
+    const r = buyCyberware({ eddies: 2000 }, { ...c, cyberware: { ...c.cyberware, nervous: "synapse_booster" } }, "kairos_overclock");
+    expect(r).toMatchObject({ ok: true, wallet: { eddies: 900 }, replaced: "synapse_booster", price: 1100 });
+    if (r.ok) expect(r.character.cyberware.nervous).toBe("kairos_overclock");
+  });
+
+  it("refuses a duplicate install and an empty wallet", () => {
+    const c = createCharacter();
+    expect(buyCyberware({ eddies: 9999 }, c, "hitomi_optics_mk1")).toEqual({ ok: false, reason: "already-installed" });
+    expect(buyCyberware({ eddies: 10 }, c, "subdermal_weave")).toEqual({ ok: false, reason: "insufficient-funds" });
+  });
+
+  it("installs free implants without charging", () => {
+    const c = { ...createCharacter(), cyberware: {} };
+    expect(buyCyberware({ eddies: 0 }, c, "hitomi_optics_mk1")).toMatchObject({ ok: true, wallet: { eddies: 0 } });
+  });
+
+  it("sells medkits while there is room and money", () => {
+    expect(buyItem({ eddies: 100 }, {}, "medkit")).toEqual({ ok: true, wallet: { eddies: 10 }, inventory: { medkit: 1 }, price: 90 });
+    expect(buyItem({ eddies: 10 }, {}, "medkit")).toEqual({ ok: false, reason: "insufficient-funds" });
+    expect(buyItem({ eddies: 1000 }, { medkit: MAX_STACK }, "medkit")).toEqual({ ok: false, reason: "inventory-full" });
+  });
+
+  it("every implant has a description and a non-negative price", () => {
+    for (const def of Object.values(CYBERWARE_CATALOG)) {
+      expect(def.description.length).toBeGreaterThan(10);
+      expect(def.price).toBeGreaterThanOrEqual(0);
+    }
+  });
+});
+
+describe("abilities", () => {
+  const def = ABILITY_CATALOG.reflex_overdrive;
+
+  it("is granted by the Kairos implant only", () => {
+    expect(loadoutAbility({ nervous: "kairos_overclock" })).toBe("reflex_overdrive");
+    expect(loadoutAbility({ optics: "hitomi_optics_mk1" })).toBeNull();
+  });
+
+  it("activates, slows enemies, expires and cools down", () => {
+    const on = activate(IDLE_ABILITY, def);
+    expect(on).toEqual({ activeTime: def.duration, cooldown: def.cooldown });
+    expect(enemyTimeScale(on!, def)).toBe(def.enemyTimeScale);
+    expect(activate(on!, def)).toBeNull();
+    const later = tickAbility(on!, def.duration);
+    expect(enemyTimeScale(later, def)).toBe(1);
+    expect(activate(later, def)).toBeNull();
+    expect(activate(tickAbility(later, def.cooldown), def)).not.toBeNull();
+    expect(tickAbility(IDLE_ABILITY, 1)).toBe(IDLE_ABILITY);
+    expect(enemyTimeScale(on!, null)).toBe(1);
+  });
+});
+
+describe("contracts", () => {
+  it("generates a contract from two random numbers", () => {
+    const c = generateContract(EMPTY_CONTRACTS, sequenceRng(0, 0.99), 0);
+    expect(c).toEqual({ id: "c1", siteId: CONTRACT_SITE_IDS[0], targets: 3, reward: 625, status: "active" });
+    expect(isContractSiteId(c.siteId)).toBe(true);
+    expect(isContractSiteId("moon")).toBe(false);
+  });
+
+  it("grows with experience and caps at four targets", () => {
+    const c = generateContract({ active: null, completed: 9 }, sequenceRng(0.99, 0.99), 100);
+    expect(c.id).toBe("c10");
+    expect(c.siteId).toBe(CONTRACT_SITE_IDS.at(-1));
+    expect(c.targets).toBe(4);
+    expect(c.reward).toBe(1125);
+  });
+
+  it("describes the objective for both states", () => {
+    const c = generateContract(EMPTY_CONTRACTS, sequenceRng(0, 0), 0);
+    expect(contractObjective(c)).toContain("(2)");
+    expect(contractObjective({ ...c, status: "cleared" })).toContain("Wróć do Kaito");
+    expect(contractTag("c3")).toBe("contract:c3");
+  });
+});
+
+describe("headshots", () => {
+  it("multiply damage", () => {
+    const a = { weapon: WEAPONS.pistol, critChance: 0, critMultiplier: 2, damageBonus: 0 };
+    const body = resolveAttack(a, { armor: 0 }, sequenceRng(0, 0.9));
+    const head = resolveAttack(a, { armor: 0 }, sequenceRng(0, 0.9), true);
+    expect(body).toEqual({ hit: true, critical: false, damage: 22 });
+    expect(head).toEqual({ hit: true, critical: false, damage: Math.round(22 * HEADSHOT_MULTIPLIER) });
+  });
+});

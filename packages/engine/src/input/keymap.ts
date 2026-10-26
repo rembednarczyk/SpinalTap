@@ -1,6 +1,6 @@
 import type { InputFrame } from "@seki/core";
 
-export type Action = "forward" | "back" | "left" | "right" | "sprint" | "fire" | "interact" | "toggleCamera";
+export type Action = "forward" | "back" | "left" | "right" | "sprint" | "fire" | "interact" | "toggleCamera" | "ability" | "useItem";
 
 /** Action → physical codes (KeyboardEvent.code, or "Mouse0".."Mouse2"). Remappable at runtime. */
 export type KeyMap = Readonly<Record<Action, readonly string[]>>;
@@ -14,6 +14,8 @@ export const DEFAULT_KEYMAP: KeyMap = {
   fire: ["Mouse0"],
   interact: ["KeyE"],
   toggleCamera: ["KeyV"],
+  ability: ["KeyQ"],
+  useItem: ["KeyH"],
 };
 
 export const remap = (map: KeyMap, action: Action, codes: readonly string[]): KeyMap => ({ ...map, [action]: codes });
@@ -42,6 +44,8 @@ export const mapKeyboardMouse = (keys: KeyState, look: LookDelta, map: KeyMap = 
   fire: any(keys.held, map.fire),
   interact: any(keys.pressed, map.interact),
   toggleCamera: any(keys.pressed, map.toggleCamera),
+  ability: any(keys.pressed, map.ability),
+  useItem: any(keys.pressed, map.useItem),
 });
 
 export interface PadState {
@@ -70,6 +74,8 @@ export const mapGamepad = (pad: PadState, dt: number): InputFrame => ({
   fire: pad.buttons[7] ?? false,
   interact: pad.pressed[0] ?? false,
   toggleCamera: pad.pressed[3] ?? false,
+  ability: pad.pressed[5] ?? false,
+  useItem: pad.pressed[2] ?? false,
 });
 
 /** Combines devices: axes are summed and clamped, buttons are OR-ed. */
@@ -82,4 +88,6 @@ export const mergeFrames = (a: InputFrame, b: InputFrame): InputFrame => ({
   fire: a.fire || b.fire,
   interact: a.interact || b.interact,
   toggleCamera: a.toggleCamera || b.toggleCamera,
+  ability: a.ability || b.ability,
+  useItem: a.useItem || b.useItem,
 });

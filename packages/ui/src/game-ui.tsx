@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { DialoguePanel } from "./dialogue/dialogue-panel";
 import { Hud } from "./hud/hud";
+import { CharacterPanel } from "./menus/character-panel";
+import { ShopPanel } from "./shop/shop-panel";
 import type { UiIntents } from "./intents";
 import { DeathScreen } from "./menus/death-screen";
 import { PauseMenu } from "./menus/pause-menu";
@@ -14,6 +16,8 @@ const Screens = () => {
     <>
       {screen !== "title" && <Hud />}
       {screen === "playing" && <DialoguePanel />}
+      {screen === "playing" && <ShopPanel />}
+      {screen === "playing" && <CharacterPanel />}
       {screen === "title" && <TitleScreen />}
       {screen === "paused" && <PauseMenu />}
       {screen === "dead" && <DeathScreen />}

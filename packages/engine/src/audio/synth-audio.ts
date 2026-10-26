@@ -36,6 +36,16 @@ export const CUES: Readonly<Record<AudioCue, readonly Voice[]>> = {
     { type: "noise", freq: 0, dur: 0.6, gain: 0.08, filter: 6000 },
   ],
   save: [{ type: "square", freq: 1200, dur: 0.04, gain: 0.06 }],
+  purchase: [
+    { type: "triangle", freq: 1320, dur: 0.06, gain: 0.14 },
+    { type: "triangle", freq: 1760, start: 0.07, dur: 0.1, gain: 0.14 },
+  ],
+  denied: [{ type: "square", freq: 180, dur: 0.16, gain: 0.1, filter: 1200 }],
+  heal: [{ type: "sine", freq: 520, to: 880, dur: 0.35, gain: 0.14 }],
+  overdrive: [
+    { type: "sawtooth", freq: 220, to: 55, dur: 0.6, gain: 0.16, filter: 1600 },
+    { type: "sine", freq: 110, dur: 0.9, gain: 0.12 },
+  ],
 };
 
 /**

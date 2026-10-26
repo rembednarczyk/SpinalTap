@@ -75,3 +75,23 @@ test.describe("M0 smoke", () => {
     expect((await gameState(page)).cameraMode).toBe("FPP");
   });
 });
+
+test("ripperdoc clinic sells a medkit through the UI", async ({ page }) => {
+  await page.goto("/?seed=7");
+  await waitForGame(page);
+  await page.getByRole("button", { name: "Nowa gra" }).click();
+  await freeze(page);
+  await teleport(page, -4.6, 2.4, -Math.PI / 2);
+  await step(page, 1);
+  await expect(page.getByTestId("prompt")).toContainText("Mori");
+  await step(page, 1, { interact: true });
+  const shop = page.getByTestId("shop");
+  await expect(shop).toBeVisible();
+  await expect(shop.getByRole("button", { name: /Wszczep · 650/ })).toBeDisabled();
+  await shop.getByRole("button", { name: /Kup · 90/ }).click();
+  await step(page, 1);
+  await expect(page.getByTestId("gear")).toContainText("Apteczki × 2");
+  expect((await gameState(page)).eddies).toBe(30);
+  await shop.getByRole("button", { name: /Wyjdź z kliniki/ }).click();
+  await expect(shop).toBeHidden();
+});

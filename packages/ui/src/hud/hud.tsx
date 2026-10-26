@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useUi } from "../use-ui";
+import { AbilityWidget } from "./ability-widget";
 import { Toasts } from "./toasts";
 
 const Crosshair = () => {
@@ -52,7 +53,8 @@ export const Hud = () => {
           <div>{objective}</div>
         </div>
       )}
-      <div className="hud__camera">{cameraMode} · [V]</div>
+      <AbilityWidget />
+      <div className="hud__camera">{cameraMode} · [V] · [Tab] postać</div>
       {prompt && (
         <div className="hud__prompt" data-testid="prompt">
           <kbd>E</kbd> {prompt}

@@ -42,16 +42,21 @@ export const mitigate = (raw: number, armor: number): number =>
  * Resolves a single attack. Consumes exactly two random numbers (hit roll, crit roll)
  * regardless of the outcome, so the RNG stream stays aligned between runs.
  */
+/** Extra multiplier for hits in the head zone. */
+export const HEADSHOT_MULTIPLIER = 1.6;
+
 export const resolveAttack = (
   attacker: AttackerProfile,
   defender: DefenderProfile,
   rng: RandomPort,
+  headshot = false,
 ): AttackOutcome => {
   const hitRoll = rng.next();
   const critRoll = rng.next();
   if (hitRoll >= attacker.weapon.accuracy) return { hit: false };
   const critical = critRoll < attacker.critChance;
-  const raw = (attacker.weapon.baseDamage + attacker.damageBonus) * (critical ? attacker.critMultiplier : 1);
+  const raw =
+    (attacker.weapon.baseDamage + attacker.damageBonus) * (critical ? attacker.critMultiplier : 1) * (headshot ? HEADSHOT_MULTIPLIER : 1);
   return { hit: true, critical, damage: Math.round(mitigate(raw, defender.armor)) };
 };
 

@@ -27,7 +27,7 @@ export const interactionSystem: System = {
       session.dialogueActive = true;
       session.focusId = null;
       ctx.bus.emit("InteractionFocusChanged", { targetId: null, prompt: null });
-      ctx.bus.emit("InteractionStarted", { targetId: best.id, dialogueId: best.interactable.dialogueId });
+      ctx.bus.emit("InteractionStarted", { targetId: best.id, dialogueId: best.interactable.dialogueId, kind: best.interactable.kind });
     }
   },
 };

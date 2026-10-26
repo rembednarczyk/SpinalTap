@@ -156,6 +156,19 @@ export const buildCivilian = (scene: Scene, materials: ToonMaterials, name: stri
   return finish(root, b, h, false);
 };
 
+export const buildRipperdoc = (scene: Scene, materials: ToonMaterials, name: string): CharacterRig => {
+  const root = new TransformNode(name, scene);
+  const b = new RigBuilder(scene, materials, name);
+  const h = humanoid(b, root, { skin: "fixerSkin", top: "docCoat", legs: "heroineLegs" }, { width: 0.95, height: 1.7 });
+  // Long surgical coat and magnifier goggles.
+  b.part({ kind: "cylinder", height: 0.7 * h.s, top: 0.36, bottom: 0.44 }, "docCoat", h.body, 0, 0.72 * h.s, 0);
+  b.part({ kind: "box", w: 0.2, h: 0.05, d: 0.05 }, "docGoggles", h.body, 0, 1.7 * h.s, 0.12);
+  b.part({ kind: "sphere", diameter: 0.16 }, "umeHair", h.body, 0, 1.78 * h.s, -0.06);
+  h.armL.rotation.x = -0.4;
+  h.armR.rotation.x = -0.4;
+  return finish(root, b, h, false);
+};
+
 /** Advances the walk cycle from the entity's horizontal speed. */
 export const animateRig = (rig: CharacterRig, speed: number, dt: number): void => {
   const amount = Math.min(1, speed / 4.2);

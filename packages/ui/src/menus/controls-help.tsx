@@ -5,6 +5,9 @@ const CONTROLS: [string, string][] = [
   ["LPM", "strzał"],
   ["E", "interakcja"],
   ["V", "FPP / TPP"],
+  ["Q", "zdolność cyberware"],
+  ["H", "apteczka"],
+  ["Tab", "karta postaci"],
   ["F5 / F9", "szybki zapis / odczyt"],
   ["Esc", "pauza"],
 ];

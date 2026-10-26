@@ -11,5 +11,6 @@
 | [0007](0007-budzety-wydajnosci.md) | Budżety wydajności M0 | Zaakceptowana (do rewizji po profilowaniu na sprzęcie) |
 | [0008](0008-kolizje-deterministyczne-havok-odlozony.md) | Kolizje w `sim`, Havok odłożony | Zaakceptowana |
 | [0009](0009-audio-syntezowane.md) | Audio syntezowane w WebAudio | Zaakceptowana |
+| [0010](0010-petla-m1-kontrakty-cyberware.md) | Pętla M1: kontrakty, klinika, zdolność aktywna | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.

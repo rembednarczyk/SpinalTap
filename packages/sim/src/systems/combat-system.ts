@@ -2,9 +2,12 @@ import { WEAPONS, applyDamage, directionFromAngles, resolveAttack, type RandomPo
 import type { Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { aimOrigin, hitscan, type HitscanResult } from "../world/hitscan";
+import { worldTimeScale } from "./ability-system";
 import { statsFor } from "./player-control-system";
 
 const ALERT_RADIUS = 22;
+/** Share of body height above which a hit counts as a headshot. */
+export const HEAD_ZONE = 0.83;
 
 export interface ShotRequest {
   readonly shooter: Entity;
@@ -29,10 +32,12 @@ export const fireShot = (ctx: SimContext, shot: ShotRequest, rng: RandomPort): H
   alertNearbyGangers(ctx, shot.origin);
   const target = result.entity;
   if (!target?.health) return result;
+  const headshot = !!target.body && result.point.y - target.position.y >= target.body.height * HEAD_ZONE;
   const outcome = resolveAttack(
     { weapon, critChance: shot.critChance, critMultiplier: shot.critMultiplier, damageBonus: shot.damageBonus },
     { armor: armorOf(ctx, target) },
     rng,
+    headshot,
   );
   if (!outcome.hit) return result;
   target.health = applyDamage(target.health, outcome.damage);
@@ -41,6 +46,7 @@ export const fireShot = (ctx: SimContext, shot: ShotRequest, rng: RandomPort): H
     targetId: target.id,
     amount: outcome.damage,
     critical: outcome.critical,
+    headshot,
     at: result.point,
   });
   return result;
@@ -56,7 +62,8 @@ const alertNearbyGangers = (ctx: SimContext, at: { x: number; z: number }): void
 export const combatSystem: System = {
   name: "combat",
   run(ctx) {
-    for (const e of ctx.world.with("combatant")) e.combatant.cooldown = Math.max(0, e.combatant.cooldown - ctx.dt);
+    const enemyDt = ctx.dt * worldTimeScale(ctx);
+    for (const e of ctx.world.with("combatant")) e.combatant.cooldown = Math.max(0, e.combatant.cooldown - (e.player ? ctx.dt : enemyDt));
     if (ctx.session.dialogueActive || ctx.session.gameOver || !ctx.input.fire) return;
     for (const p of ctx.world.with("player", "combatant")) {
       if (p.combatant.cooldown > 0) continue;

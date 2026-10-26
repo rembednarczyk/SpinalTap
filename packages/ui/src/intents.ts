@@ -1,3 +1,5 @@
+import type { CyberwareId, ItemId } from "@seki/core";
+
 /** Everything the UI can ask the game to do. Implemented by the app composition root. */
 export interface UiIntents {
   newGame(): void;
@@ -8,4 +10,7 @@ export interface UiIntents {
   choose(index: number): void;
   closeDialogue(): void;
   quitToTitle(): void;
+  buyCyberware(id: CyberwareId): void;
+  buyItem(id: ItemId): void;
+  closeShop(): void;
 }

@@ -8,6 +8,11 @@ export class Grading {
   readonly pipeline: DefaultRenderingPipeline;
   private glitchTime = 0;
   private static readonly GLITCH_DURATION = 1.4;
+  private readonly curves: ColorCurves;
+  /** 0..1 blend towards the overdrive look. */
+  private overdrive = 0;
+  private overdriveTarget = 0;
+  private pulseTime = 0;
 
   constructor(scene: Scene, camera: Camera, options: { reference: boolean }) {
     const p = new DefaultRenderingPipeline("grading", false, scene, [camera]);
@@ -29,6 +34,7 @@ export class Grading {
     curves.highlightsDensity = 12;
     curves.highlightsSaturation = 10;
     ip.colorCurves = curves;
+    this.curves = curves;
     p.chromaticAberrationEnabled = true;
     p.chromaticAberration.aberrationAmount = 0;
     p.grainEnabled = !options.reference;
@@ -41,13 +47,28 @@ export class Grading {
     this.glitchTime = Grading.GLITCH_DURATION;
   }
 
+  /** Reflex overdrive: drained colour, cold tint, fringing at the edges. */
+  setOverdrive(active: boolean): void {
+    this.overdriveTarget = active ? 1 : 0;
+  }
+
+  /** Short bright pulse (medkit). */
+  pulse(): void {
+    this.pulseTime = 0.35;
+  }
+
   update(dt: number): void {
-    if (this.glitchTime <= 0) return;
+    this.overdrive += Math.sign(this.overdriveTarget - this.overdrive) * Math.min(Math.abs(this.overdriveTarget - this.overdrive), dt * 4);
+    this.pulseTime = Math.max(0, this.pulseTime - dt);
     this.glitchTime = Math.max(0, this.glitchTime - dt);
     const t = this.glitchTime / Grading.GLITCH_DURATION;
-    const pulse = Math.sin(t * Math.PI) * (0.6 + 0.4 * Math.sin(t * 60));
-    this.pipeline.chromaticAberration.aberrationAmount = 70 * pulse;
-    this.pipeline.grain.intensity = 6 + 40 * pulse;
-    this.pipeline.imageProcessing.exposure = 1.08 + 0.35 * pulse;
+    const glitch = this.glitchTime > 0 ? Math.sin(t * Math.PI) * (0.6 + 0.4 * Math.sin(t * 60)) : 0;
+    const od = this.overdrive;
+    this.curves.globalSaturation = -18 - 55 * od;
+    this.curves.globalHue = 200;
+    this.curves.globalDensity = 30 * od;
+    this.pipeline.chromaticAberration.aberrationAmount = 70 * glitch + 28 * od;
+    this.pipeline.grain.intensity = 6 + 40 * glitch;
+    this.pipeline.imageProcessing.exposure = 1.08 + 0.35 * glitch + this.pulseTime * 0.8;
   }
 }

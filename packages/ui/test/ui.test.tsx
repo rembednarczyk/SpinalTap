@@ -12,6 +12,9 @@ const intents = (): UiIntents => ({
   choose: vi.fn(),
   closeDialogue: vi.fn(),
   quitToTitle: vi.fn(),
+  buyCyberware: vi.fn(),
+  buyItem: vi.fn(),
+  closeShop: vi.fn(),
 });
 
 const mount = (state: Partial<UiState> = {}) => {
@@ -139,5 +142,46 @@ describe("pause and death screens", () => {
     expect(screen.getByText("FLATLINE")).toBeTruthy();
     fireEvent.click(screen.getByText("Zacznij od nowa"));
     expect(i.newGame).toHaveBeenCalled();
+  });
+});
+
+describe("ripperdoc clinic", () => {
+  it("lists implants, disables what is installed or unaffordable, and buys", () => {
+    const { i } = mount({ screen: "playing", shopOpen: true, eddies: 700, cyberware: { skeleton: "subdermal_weave" }, medkits: 2 });
+    const shop = screen.getByTestId("shop");
+    expect(shop.textContent).toContain("Doktor Mori");
+    expect(screen.getByRole("button", { name: "Zainstalowane" }).hasAttribute("disabled")).toBe(true);
+    expect(screen.getByRole("button", { name: /Wszczep · 1100/ }).hasAttribute("disabled")).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: /Wszczep · 500/ }));
+    expect(i.buyCyberware).toHaveBeenCalledWith("steady_grip");
+    fireEvent.click(screen.getByRole("button", { name: /Kup · 90/ }));
+    expect(i.buyItem).toHaveBeenCalledWith("medkit");
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(i.closeShop).toHaveBeenCalled();
+  });
+
+  it("warns which implant a purchase replaces", () => {
+    mount({ screen: "playing", shopOpen: true, eddies: 5000, cyberware: { nervous: "synapse_booster" } });
+    expect(screen.getByText("Zastąpi: Wzmacniacz synaps")).toBeTruthy();
+  });
+});
+
+describe("gear and character sheet", () => {
+  it("shows ability cooldown and medkits", () => {
+    mount({ screen: "playing", medkits: 3, ability: { name: "Przeciążenie odruchów", activeTime: 0, cooldown: 6.2, cooldownTotal: 16 } });
+    expect(screen.getByTestId("gear").textContent).toContain("Apteczki × 3");
+    expect(screen.getByTestId("gear").textContent).toContain("7 s");
+  });
+
+  it("toggles the character sheet with Tab", () => {
+    mount({ screen: "playing", alias: "Seki Senshi", memories: ["combat_reflex"], cyberware: { optics: "hitomi_optics_mk1" }, reputation: { fixers: 20, hebi: -60, civilians: 0 } });
+    expect(screen.queryByTestId("character-panel")).toBeNull();
+    fireEvent.keyDown(window, { code: "Tab" });
+    const panel = screen.getByTestId("character-panel");
+    expect(panel.textContent).toContain("Optyka Hitomi Mk1");
+    expect(panel.textContent).toContain("Wspomnienie: odruch");
+    expect(panel.textContent).toContain("-60 · wrogość");
+    fireEvent.keyDown(window, { code: "Tab" });
+    expect(screen.queryByTestId("character-panel")).toBeNull();
   });
 });

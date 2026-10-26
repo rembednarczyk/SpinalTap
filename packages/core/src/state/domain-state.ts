@@ -4,6 +4,9 @@ import type { CameraMode } from "../ports/types";
 import { type QuestLog, startQuest } from "../quest/quest-graph";
 import { QUEST_FIRST_CONTRACT } from "../quest/definitions";
 import { type ReputationState, createReputation } from "../reputation/reputation";
+import { type AbilityState, IDLE_ABILITY } from "../abilities/abilities";
+import { type ContractLog, EMPTY_CONTRACTS } from "../contracts/contracts";
+import type { Inventory } from "../inventory/inventory";
 import type { Flags } from "./flags";
 
 export interface Preferences {
@@ -18,6 +21,9 @@ export interface DomainState {
   readonly quests: QuestLog;
   readonly flags: Flags;
   readonly preferences: Preferences;
+  readonly inventory: Inventory;
+  readonly contracts: ContractLog;
+  readonly ability: AbilityState;
 }
 
 export const createDomainState = (): DomainState => ({
@@ -27,4 +33,7 @@ export const createDomainState = (): DomainState => ({
   quests: startQuest({}, QUEST_FIRST_CONTRACT),
   flags: [],
   preferences: { cameraMode: "FPP" },
+  inventory: { medkit: 1 },
+  contracts: EMPTY_CONTRACTS,
+  ability: IDLE_ABILITY,
 });

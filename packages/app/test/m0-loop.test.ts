@@ -127,7 +127,7 @@ describe("M0 vertical slice: input → sim → narrative → domain → save →
     // 4. Save, keep playing, load: state matches the save point, narrative included.
     expect(await session.saveAsync("slot-1")).toBe(true);
     const saved = session.snapshot();
-    expect(ui.getState().slots[0]).toMatchObject({ slot: "slot-1", objective: expect.stringContaining("Zlecenie wykonane") });
+    expect(ui.getState().slots[0]).toMatchObject({ slot: "slot-1", objective: expect.stringContaining("Kaito ma kolejne kontrakty") });
     steps(session, 120, frame({ moveZ: -1 }));
     expect(await session.loadAsync("slot-1")).toBe(true);
     expect(session.snapshot().domain).toEqual(saved.domain);
@@ -136,10 +136,10 @@ describe("M0 vertical slice: input → sim → narrative → domain → save →
     expect(render.mode).toBe("TPP");
     expect(courier()).toBeUndefined();
 
-    // After the contract Kaito has a closing line using the alias.
+    // After the first contract Kaito moves on to repeatable jobs.
     teleport(session, 4.6, 1.5, Math.PI / 2);
     steps(session, 1, frame({ interact: true }));
-    expect(ui.getState().dialogue?.lines[0]?.text).toContain("Seki Senshi");
+    expect(ui.getState().dialogue?.choices[0]?.text).toBe("Biorę robotę.");
   });
 
   it("refuses to save mid-dialogue and reports corrupt or empty slots", async () => {
