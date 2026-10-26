@@ -9,8 +9,7 @@ const MOUSE_SENSITIVITY = 0.0022;
  */
 export class BrowserInput implements InputPort {
   keymap: KeyMap = DEFAULT_KEYMAP;
-  /** When false (menus, dialogue) poll() returns an empty frame and drops buffered input. */
-  enabled = false;
+  private active = false;
   private readonly held = new Set<string>();
   private readonly pressed = new Set<string>();
   private yaw = 0;
@@ -44,6 +43,20 @@ export class BrowserInput implements InputPort {
     });
   }
 
+  /** When false (menus, dialogue) poll() returns an empty frame. */
+  get enabled(): boolean {
+    return this.active;
+  }
+
+  /**
+   * Toggling drops buffered edges and mouse deltas, so the key that closed a menu or a
+   * dialogue (e.g. E) does not leak into the first gameplay frame and reopen it.
+   */
+  set enabled(value: boolean) {
+    if (value !== this.active) this.clearBuffered();
+    this.active = value;
+  }
+
   get locked(): boolean {
     return document.pointerLockElement === this.target;
   }
@@ -63,7 +76,7 @@ export class BrowserInput implements InputPort {
     const now = performance.now();
     const dt = this.lastPoll === null ? 0 : Math.min(0.1, (now - this.lastPoll) / 1000);
     this.lastPoll = now;
-    if (!this.enabled) {
+    if (!this.active) {
       this.clearBuffered();
       return EMPTY_INPUT;
     }
