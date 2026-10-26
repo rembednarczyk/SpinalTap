@@ -1,0 +1,8 @@
+{
+  "$comment": "Perf budgets for the M0 reference scenes (plan §10, ADR-0007). Frame time is measured under SwiftShader in CI, hence the generous ceiling.",
+  "scenes": {
+    "reference": { "drawCalls": 160, "activeMeshes": 80 },
+    "street-tpp": { "drawCalls": 320, "activeMeshes": 140 }
+  },
+  "frameTimeMs": 60
+}

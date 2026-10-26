@@ -1,0 +1,58 @@
+import { describe, expect, it } from "vitest";
+import { EMPTY_INPUT } from "@seki/core";
+import { CUES } from "../src/audio/synth-audio";
+import { DEFAULT_KEYMAP, PAD_DEADZONE, mapGamepad, mapKeyboardMouse, mergeFrames, remap } from "../src/input/keymap";
+
+const keys = (held: string[], pressed: string[] = []) => ({ held: new Set(held), pressed: new Set(pressed) });
+
+describe("keyboard and mouse mapping", () => {
+  it("maps WASD to move axes and cancels opposite keys", () => {
+    expect(mapKeyboardMouse(keys(["KeyW", "KeyD"]), { yaw: 0, pitch: 0 })).toMatchObject({ moveZ: 1, moveX: 1 });
+    expect(mapKeyboardMouse(keys(["KeyA", "KeyD", "KeyS"]), { yaw: 0, pitch: 0 })).toMatchObject({ moveX: 0, moveZ: -1 });
+  });
+
+  it("passes mouse look through and treats interact/camera as edges", () => {
+    const f = mapKeyboardMouse(keys(["KeyE", "Mouse0"], ["KeyV"]), { yaw: 0.1, pitch: -0.2 });
+    expect(f).toMatchObject({ lookYaw: 0.1, lookPitch: -0.2, fire: true, interact: false, toggleCamera: true });
+  });
+
+  it("supports remapping", () => {
+    const map = remap(DEFAULT_KEYMAP, "fire", ["KeyF"]);
+    expect(mapKeyboardMouse(keys(["KeyF"]), { yaw: 0, pitch: 0 }, map).fire).toBe(true);
+    expect(mapKeyboardMouse(keys(["Mouse0"]), { yaw: 0, pitch: 0 }, map).fire).toBe(false);
+  });
+});
+
+describe("gamepad mapping", () => {
+  const pad = (axes: number[], buttons: boolean[] = [], pressed: boolean[] = []) => ({ axes, buttons, pressed });
+
+  it("applies a deadzone and inverts the forward axis", () => {
+    expect(mapGamepad(pad([PAD_DEADZONE / 2, -1, 0, 0]), 1 / 60)).toMatchObject({ moveX: 0, moveZ: 1 });
+  });
+
+  it("scales look by dt and maps buttons", () => {
+    const buttons: boolean[] = [];
+    buttons[7] = true;
+    const pressed: boolean[] = [true, false, false, true];
+    const f = mapGamepad(pad([0, 0, 1, 0], buttons, pressed), 0.5);
+    expect(f.lookYaw).toBeCloseTo(1.4);
+    expect(f).toMatchObject({ fire: true, interact: true, toggleCamera: true, sprint: false });
+  });
+
+  it("merges devices", () => {
+    const f = mergeFrames({ ...EMPTY_INPUT, moveX: 1, fire: true }, { ...EMPTY_INPUT, moveX: 1, lookYaw: 0.2 });
+    expect(f).toMatchObject({ moveX: 1, fire: true, lookYaw: 0.2 });
+  });
+});
+
+describe("audio cues", () => {
+  it("defines a non-empty, audible recipe for every cue", () => {
+    for (const voices of Object.values(CUES)) {
+      expect(voices.length).toBeGreaterThan(0);
+      for (const v of voices) {
+        expect(v.dur).toBeGreaterThan(0);
+        expect(v.gain).toBeGreaterThan(0);
+      }
+    }
+  });
+});

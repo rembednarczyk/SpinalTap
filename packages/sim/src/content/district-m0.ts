@@ -1,0 +1,105 @@
+import type { Vec3, ViewDescriptor } from "@seki/core";
+import { M0_TARGET_TAG } from "@seki/core";
+
+/**
+ * Shinsekai, block 7: the M0 vertical-slice district. Pure data, consumed by the world factory.
+ * Coordinates: Y up, +Z north. The main street runs north along X ∈ [-7, 7].
+ */
+export interface StaticProp {
+  readonly center: Vec3;
+  readonly view: ViewDescriptor;
+  readonly solid: boolean;
+}
+
+export interface ActorSpawn {
+  readonly key: string;
+  readonly position: Vec3;
+  readonly yaw: number;
+}
+
+const v = (x: number, y: number, z: number): Vec3 => ({ x, y, z });
+
+const building = (x: number, z: number, w: number, h: number, d: number, material: "concrete" | "metal" | "glass" = "concrete"): StaticProp => ({
+  center: v(x, h / 2, z),
+  view: { kind: "block", size: v(w, h, d), material },
+  solid: true,
+});
+
+const crate = (x: number, z: number, w: number, h: number, d: number): StaticProp => ({
+  center: v(x, h / 2, z),
+  view: { kind: "block", size: v(w, h, d), material: "metal" },
+  solid: true,
+});
+
+const neon = (x: number, y: number, z: number, size: Vec3, color: string, label?: string): StaticProp => ({
+  center: v(x, y, z),
+  view: label === undefined ? { kind: "neon", size, color } : { kind: "neon", size, color, label },
+  solid: false,
+});
+
+const lamp = (x: number, z: number, color: string): StaticProp => ({
+  center: v(x, 0, z),
+  view: { kind: "lamp", color },
+  solid: false,
+});
+
+export const DISTRICT_M0_PROPS: readonly StaticProp[] = [
+  { center: v(0, -0.1, 7), view: { kind: "block", size: v(46, 0.2, 88), material: "asphalt" }, solid: false },
+  // Sidewalks (visual only).
+  { center: v(-7.8, 0.04, -2), view: { kind: "block", size: v(1.6, 0.08, 66), material: "concrete" }, solid: false },
+  { center: v(7.8, 0.04, -2), view: { kind: "block", size: v(1.6, 0.08, 66), material: "concrete" }, solid: false },
+  // West block.
+  building(-14, -26, 14, 18, 14),
+  building(-14, -9, 14, 26, 16, "glass"),
+  building(-14, 8, 14, 14, 14),
+  building(-14, 24, 14, 30, 14, "glass"),
+  // East block. E2 is the Neon Koi bar.
+  building(14, -25, 14, 22, 16, "glass"),
+  building(14, 2, 14, 10, 18),
+  building(14, 20, 14, 34, 12, "glass"),
+  // Northern alley behind the car wash.
+  building(-14, 40, 14, 20, 18),
+  building(15, 42, 12, 16, 14, "metal"),
+  // District bounds.
+  building(0, -37, 46, 6, 2, "metal"),
+  building(0, 51, 46, 6, 2, "metal"),
+  building(-22, 7, 2, 8, 88, "metal"),
+  building(22, 7, 2, 8, 88, "metal"),
+  // The wreck Seki wakes up next to.
+  crate(2.6, -31, 2, 1.4, 4.4),
+  // Parked van in the east lot.
+  crate(12, -12, 2.4, 2.2, 5),
+  // Alley cover.
+  crate(-3, 36, 1.6, 1.2, 1.2),
+  crate(4, 38.5, 1.2, 1.2, 2.4),
+  crate(-5, 44, 2.4, 1.4, 1.4),
+  crate(5.5, 45.5, 2, 1.5, 4.2),
+  // Neon signage.
+  neon(6.9, 6.2, 2, v(0.15, 1.6, 8), "#ff2e88", "NEON KOI"),
+  neon(-6.9, 11, -9, v(0.15, 7, 1.6), "#00e5ff", "HOTEL"),
+  neon(-6.9, 5, 8, v(0.15, 1.4, 5), "#ffb000", "RAMEN"),
+  neon(6.9, 14, 20, v(0.15, 8, 1.6), "#b46cff", "KUSURI"),
+  neon(-6.9, 7, 24, v(0.15, 1.2, 6), "#39ff8a", "PACHINKO"),
+  neon(0, 4, 49.9, v(9, 1.2, 0.15), "#ff4040", "MYJNIA 24H"),
+  // Street lamps (each one is also a point light).
+  lamp(-6.4, -22, "#9ad7ff"),
+  lamp(6.4, -6, "#ff9ad0"),
+  lamp(-6.4, 10, "#9ad7ff"),
+  lamp(6.4, 26, "#ffcf8a"),
+  lamp(-1, 40, "#ff6a6a"),
+];
+
+export const PLAYER_SPAWN: ActorSpawn = { key: "player", position: v(0, 0, -28), yaw: 0 };
+
+export const FIXER_SPAWN: ActorSpawn = { key: "fixer", position: v(6.2, 0, 1.5), yaw: -Math.PI / 2 };
+
+export const CIVILIAN_SPAWN: ActorSpawn = { key: "ume", position: v(-5.4, 0, -13), yaw: Math.PI / 2 };
+
+export interface GangerSpawn extends ActorSpawn {
+  readonly tag: string | null;
+}
+
+export const GANGER_SPAWNS: readonly GangerSpawn[] = [
+  { key: "courier", position: v(1, 0, 43), yaw: Math.PI, tag: M0_TARGET_TAG },
+  { key: "guard", position: v(-2.5, 0, 39.5), yaw: Math.PI, tag: null },
+];

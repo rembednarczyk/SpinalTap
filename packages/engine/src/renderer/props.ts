@@ -1,0 +1,121 @@
+import { Color3, DynamicTexture, type Mesh, MeshBuilder, type Scene, StandardMaterial, TransformNode, type Vector3 } from "../babylon";
+import type { ViewDescriptor } from "@seki/core";
+import type { ToonMaterials } from "../npr/toon-material";
+import type { PresetName } from "../npr/presets";
+
+export interface PropView {
+  readonly root: TransformNode;
+  /** Meshes that should bloom in the glow layer. */
+  readonly glowing: Mesh[];
+  /** Meshes that block the TPP camera. */
+  readonly blockers: Mesh[];
+  readonly light: { position: { x: number; y: number; z: number }; color: string; range: number; intensity: number } | null;
+}
+
+type Block = Extract<ViewDescriptor, { kind: "block" }>;
+type Neon = Extract<ViewDescriptor, { kind: "neon" }>;
+
+const blockPreset = (v: Block): PresetName => {
+  if (v.material === "asphalt") return "asphalt";
+  if (v.size.y < 0.2) return "sidewalk";
+  if (v.material === "concrete" && v.size.y < 4) return "metal";
+  return v.material;
+};
+
+export const buildBlock = (scene: Scene, materials: ToonMaterials, name: string, v: Block, at: Vector3): PropView => {
+  const root = new TransformNode(name, scene);
+  root.position.copyFrom(at);
+  const m = MeshBuilder.CreateBox(`${name}-mesh`, { width: v.size.x, height: v.size.y, depth: v.size.z }, scene);
+  m.parent = root;
+  m.material = materials.get(blockPreset(v));
+  m.isPickable = true;
+  m.freezeWorldMatrix();
+  return { root, glowing: [], blockers: v.size.y > 0.3 ? [m] : [], light: null };
+};
+
+const neonTexture = (scene: Scene, name: string, label: string, color: string, vertical: boolean, aspect: number): DynamicTexture => {
+  const w = vertical ? 128 : Math.min(1024, Math.round(128 * aspect));
+  const h = vertical ? Math.min(1024, Math.round(128 * aspect)) : 128;
+  const tex = new DynamicTexture(`${name}-tex`, { width: w, height: h }, scene, true);
+  const ctx = tex.getContext() as CanvasRenderingContext2D;
+  ctx.fillStyle = "#06070b";
+  ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 6;
+  ctx.strokeRect(6, 6, w - 12, h - 12);
+  ctx.fillStyle = color;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = `bold ${vertical ? 84 : 76}px "Rajdhani", "Arial Narrow", sans-serif`;
+  if (vertical) {
+    const step = h / (label.length + 1);
+    [...label].forEach((ch, i) => ctx.fillText(ch, w / 2, step * (i + 1)));
+  } else {
+    ctx.fillText(label, w / 2, h / 2 + 4, w - 30);
+  }
+  tex.update();
+  return tex;
+};
+
+export const buildNeon = (scene: Scene, name: string, v: Neon, at: Vector3): PropView => {
+  const root = new TransformNode(name, scene);
+  root.position.copyFrom(at);
+  const thinX = v.size.x <= v.size.z && v.size.x <= v.size.y;
+  const width = thinX ? v.size.z : v.size.x;
+  const height = v.size.y;
+  const plane = MeshBuilder.CreatePlane(`${name}-mesh`, { width, height }, scene);
+  plane.parent = root;
+  // Face the street: east-side signs look west, west-side signs look east, the rest look south.
+  plane.rotation.y = thinX ? (at.x > 0 ? Math.PI / 2 : -Math.PI / 2) : 0;
+  plane.isPickable = false;
+  const mat = new StandardMaterial(`${name}-mat`, scene);
+  mat.disableLighting = true;
+  const color = Color3.FromHexString(v.color);
+  if (v.label) {
+    const tex = neonTexture(scene, name, v.label, v.color, height > width, Math.max(width, height) / Math.min(width, height));
+    mat.emissiveTexture = tex;
+    mat.diffuseTexture = tex;
+  }
+  mat.emissiveColor = v.label ? Color3.White() : color;
+  mat.backFaceCulling = false;
+  plane.material = mat;
+  plane.freezeWorldMatrix();
+  const outward = thinX ? (at.x > 0 ? -1.2 : 1.2) : 0;
+  return {
+    root,
+    glowing: [plane],
+    blockers: [],
+    light: { position: { x: at.x + outward, y: at.y, z: at.z + (thinX ? 0 : -1.2) }, color: v.color, range: 11, intensity: 0.55 },
+  };
+};
+
+export const buildLamp = (scene: Scene, materials: ToonMaterials, name: string, color: string, at: Vector3): PropView => {
+  const root = new TransformNode(name, scene);
+  root.position.copyFrom(at);
+  const towardStreet = at.x > 0 ? -1 : 1;
+  const pole = MeshBuilder.CreateCylinder(`${name}-pole`, { height: 5.2, diameter: 0.14, tessellation: 10 }, scene);
+  pole.parent = root;
+  pole.position.y = 2.6;
+  pole.material = materials.get("pole");
+  const arm = MeshBuilder.CreateBox(`${name}-arm`, { width: 1.3, height: 0.08, depth: 0.1 }, scene);
+  arm.parent = root;
+  arm.position.set(towardStreet * 0.6, 5.15, 0);
+  arm.material = materials.get("pole");
+  const bulb = MeshBuilder.CreateBox(`${name}-bulb`, { width: 0.5, height: 0.07, depth: 0.22 }, scene);
+  bulb.parent = root;
+  bulb.position.set(towardStreet * 1.05, 5.07, 0);
+  const mat = new StandardMaterial(`${name}-mat`, scene);
+  mat.disableLighting = true;
+  mat.emissiveColor = Color3.FromHexString(color);
+  bulb.material = mat;
+  for (const m of [pole, arm, bulb]) {
+    m.isPickable = false;
+    m.freezeWorldMatrix();
+  }
+  return {
+    root,
+    glowing: [bulb],
+    blockers: [],
+    light: { position: { x: at.x + towardStreet * 1.05, y: 4.6, z: at.z }, color, range: 14, intensity: 0.85 },
+  };
+};

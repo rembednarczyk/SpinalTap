@@ -1,0 +1,42 @@
+import {
+  type FactionId,
+  type MemoryId,
+  MEMORY_CATALOG,
+  changeReputation,
+  contractPayout,
+  credit,
+  hasFlag,
+  hasMemory,
+  setFlag,
+  unlockMemory,
+} from "@seki/core";
+import type { SimContext } from "./context";
+
+/** Domain mutations shared by systems and command handling. Each one emits its own event. */
+export const raiseFlag = (ctx: SimContext, flag: string): void => {
+  if (hasFlag(ctx.state.domain.flags, flag)) return;
+  ctx.state.domain = { ...ctx.state.domain, flags: setFlag(ctx.state.domain.flags, flag) };
+  ctx.state.flagsDirty = true;
+};
+
+export const grantEddies = (ctx: SimContext, base: number): void => {
+  const amount = contractPayout(base, ctx.state.domain.reputation.fixers);
+  const r = credit(ctx.state.domain.wallet, amount);
+  if (!r.ok) return;
+  ctx.state.domain = { ...ctx.state.domain, wallet: r.wallet };
+  ctx.bus.emit("EddiesChanged", { balance: r.wallet.eddies, delta: amount });
+};
+
+export const adjustReputation = (ctx: SimContext, faction: FactionId, delta: number): void => {
+  const before = ctx.state.domain.reputation[faction];
+  const reputation = changeReputation(ctx.state.domain.reputation, faction, delta);
+  ctx.state.domain = { ...ctx.state.domain, reputation };
+  ctx.bus.emit("ReputationChanged", { faction, value: reputation[faction], delta: reputation[faction] - before });
+};
+
+export const grantMemory = (ctx: SimContext, id: MemoryId): void => {
+  if (hasMemory(ctx.state.domain.character, id)) return;
+  ctx.state.domain = { ...ctx.state.domain, character: unlockMemory(ctx.state.domain.character, id) };
+  const m = MEMORY_CATALOG[id];
+  ctx.bus.emit("MemoryUnlocked", { memoryId: id, title: m.title, description: m.description });
+};
