@@ -10,6 +10,8 @@ const MOUSE_SENSITIVITY = 0.0022;
 export class BrowserInput implements InputPort {
   keymap: KeyMap = DEFAULT_KEYMAP;
   private active = false;
+  /** Set when pointer lock is refused (some embedded frames): mouse look then works on plain movement. */
+  private lockUnavailable = false;
   private readonly held = new Set<string>();
   private readonly pressed = new Set<string>();
   private yaw = 0;
@@ -30,14 +32,19 @@ export class BrowserInput implements InputPort {
     });
     on("keyup", (e) => this.held.delete(e.code));
     on("blur", () => this.held.clear());
+    const onLockError = () => {
+      this.lockUnavailable = true;
+    };
+    document.addEventListener("pointerlockerror", onLockError);
+    this.disposers.push(() => document.removeEventListener("pointerlockerror", onLockError));
     on("mousedown", (e) => {
-      if (!this.locked) return;
+      if (!this.mouseActive) return;
       this.held.add(`Mouse${e.button}`);
       this.pressed.add(`Mouse${e.button}`);
     });
     on("mouseup", (e) => this.held.delete(`Mouse${e.button}`));
     on("mousemove", (e) => {
-      if (!this.locked) return;
+      if (!this.mouseActive) return;
       this.yaw += e.movementX * MOUSE_SENSITIVITY;
       this.pitch += e.movementY * MOUSE_SENSITIVITY;
     });
@@ -61,11 +68,20 @@ export class BrowserInput implements InputPort {
     return document.pointerLockElement === this.target;
   }
 
+  /** Mouse drives look and fire when locked, or always when the frame refuses pointer lock. */
+  get mouseActive(): boolean {
+    return this.locked || this.lockUnavailable;
+  }
+
   requestPointerLock(): void {
     if (this.locked) return;
-    // Some browsers return a promise that rejects when the request is not user-initiated.
-    const r = this.target.requestPointerLock() as unknown;
-    if (r instanceof Promise) r.catch(() => {});
+    try {
+      // Some browsers return a promise that rejects when the request is refused.
+      const r = this.target.requestPointerLock() as unknown;
+      if (r instanceof Promise) r.catch(() => (this.lockUnavailable = true));
+    } catch {
+      this.lockUnavailable = true;
+    }
   }
 
   releasePointerLock(): void {

@@ -6,3 +6,4 @@ test-results/
 reports/
 *.log
 .vite/
+artifact/

@@ -62,3 +62,14 @@ describe("BrowserInput (InputPort contract)", () => {
     expect(i.poll().moveX).toBe(0);
   });
 });
+
+describe("BrowserInput without pointer lock", () => {
+  it("falls back to plain mouse look and fire when the frame refuses the lock", () => {
+    const i = make();
+    document.dispatchEvent(new Event("pointerlockerror"));
+    window.dispatchEvent(new MouseEvent("mousedown", { button: 0 }));
+    const f = i.poll();
+    expect(f.fire).toBe(true);
+    expect(i.mouseActive).toBe(true);
+  });
+});

@@ -16,7 +16,8 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "ci": "pnpm typecheck && pnpm lint && pnpm depcheck && pnpm test:coverage && pnpm build && pnpm test:e2e"
+    "ci": "pnpm typecheck && pnpm lint && pnpm depcheck && pnpm test:coverage && pnpm build && pnpm test:e2e",
+    "artifact": "pnpm build && node tools/build-artifact.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
