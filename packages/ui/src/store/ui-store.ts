@@ -55,6 +55,9 @@ export interface UiState {
   readonly reputation: ReputationState;
   readonly contractsDone: number;
   readonly shopOpen: boolean;
+  readonly sheetOpen: boolean;
+  /** Toggles the character sheet (Tab or the on-screen button). */
+  readonly toggleSheet: () => void;
 }
 
 export const initialUiState: UiState = {
@@ -81,11 +84,18 @@ export const initialUiState: UiState = {
   reputation: { fixers: 0, hebi: 0, civilians: 0 },
   contractsDone: 0,
   shopOpen: false,
+  sheetOpen: false,
+  toggleSheet: () => {},
 };
 
 export type UiStore = StoreApi<UiState>;
 
-export const createUiStore = (initial: Partial<UiState> = {}): UiStore => createStore<UiState>(() => ({ ...initialUiState, ...initial }));
+export const createUiStore = (initial: Partial<UiState> = {}): UiStore =>
+  createStore<UiState>((set) => ({
+    ...initialUiState,
+    toggleSheet: () => set((s) => ({ sheetOpen: !s.sheetOpen })),
+    ...initial,
+  }));
 
 /** Applies only the fields that actually changed, so per-frame pushes do not re-render React. */
 export const patchUi = (store: UiStore, patch: Partial<UiState>): void => {

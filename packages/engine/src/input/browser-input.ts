@@ -1,7 +1,10 @@
 import { EMPTY_INPUT, type InputFrame, type InputPort } from "@seki/core";
 import { DEFAULT_KEYMAP, type KeyMap, mapGamepad, mapKeyboardMouse, mergeFrames } from "./keymap";
+import { VirtualPad } from "./virtual-pad";
 
 const MOUSE_SENSITIVITY = 0.0022;
+/** Browsers emulate mouse events after a touch; ignore them for this long. */
+const TOUCH_MOUSE_GUARD_MS = 800;
 
 /**
  * InputPort for the browser: keyboard, mouse (pointer lock) and the first standard gamepad.
@@ -9,6 +12,9 @@ const MOUSE_SENSITIVITY = 0.0022;
  */
 export class BrowserInput implements InputPort {
   keymap: KeyMap = DEFAULT_KEYMAP;
+  /** On-screen touch gamepad; merged with keyboard, mouse and physical pads. */
+  readonly virtualPad = new VirtualPad();
+  private lastTouchAt = -Infinity;
   private active = false;
   /** Set when pointer lock is refused (some embedded frames): mouse look then works on plain movement. */
   private lockUnavailable = false;
@@ -37,14 +43,17 @@ export class BrowserInput implements InputPort {
     };
     document.addEventListener("pointerlockerror", onLockError);
     this.disposers.push(() => document.removeEventListener("pointerlockerror", onLockError));
+    on("touchstart", () => {
+      this.lastTouchAt = performance.now();
+    });
     on("mousedown", (e) => {
-      if (!this.mouseActive) return;
+      if (!this.mouseActive || this.touchEmulated()) return;
       this.held.add(`Mouse${e.button}`);
       this.pressed.add(`Mouse${e.button}`);
     });
     on("mouseup", (e) => this.held.delete(`Mouse${e.button}`));
     on("mousemove", (e) => {
-      if (!this.mouseActive) return;
+      if (!this.mouseActive || this.touchEmulated()) return;
       this.yaw += e.movementX * MOUSE_SENSITIVITY;
       this.pitch += e.movementY * MOUSE_SENSITIVITY;
     });
@@ -97,16 +106,28 @@ export class BrowserInput implements InputPort {
       return EMPTY_INPUT;
     }
     const km = mapKeyboardMouse({ held: this.held, pressed: this.pressed }, { yaw: this.yaw, pitch: this.pitch }, this.keymap);
-    this.clearBuffered();
+    this.clearDeviceBuffers();
+    // The pad consumes its own edges and look deltas while polling.
+    const withTouch = mergeFrames(km, this.virtualPad.poll());
     const pad = this.pollPad(dt);
-    return pad ? mergeFrames(km, pad) : km;
+    return pad ? mergeFrames(withTouch, pad) : withTouch;
   }
 
   dispose(): void {
     for (const d of this.disposers) d();
   }
 
+  private touchEmulated(): boolean {
+    return performance.now() - this.lastTouchAt < TOUCH_MOUSE_GUARD_MS;
+  }
+
   private clearBuffered(): void {
+    this.virtualPad.flush();
+    this.clearDeviceBuffers();
+  }
+
+  /** Keyboard edges and mouse deltas only. */
+  private clearDeviceBuffers(): void {
     this.pressed.clear();
     this.yaw = 0;
     this.pitch = 0;

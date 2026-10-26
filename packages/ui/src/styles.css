@@ -358,3 +358,152 @@ kbd {
 .sheet__memories { margin: 0; padding-left: 18px; font-size: 15px; }
 .sheet__empty { margin: 0; color: var(--ink-dim); font-style: italic; }
 .sheet__hint { font-size: 13px; color: var(--ink-dim); }
+
+/* Touch gamepad */
+.touch { position: absolute; inset: 0; pointer-events: none; }
+.touch__look-zone {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 58%;
+  pointer-events: auto;
+  touch-action: none;
+}
+.touch__stick-zone {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 42%;
+  height: 72%;
+  pointer-events: auto;
+  touch-action: none;
+}
+.touch__stick-hint {
+  position: absolute;
+  left: max(56px, calc(env(safe-area-inset-left, 0px) + 40px));
+  bottom: max(48px, calc(env(safe-area-inset-bottom, 0px) + 32px));
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  border: 1px dashed var(--panel-edge);
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-dim);
+  opacity: 0.7;
+}
+.touch__stick {
+  position: fixed;
+  width: 120px;
+  height: 120px;
+  margin: -60px 0 0 -60px;
+  border-radius: 50%;
+  background: rgba(8, 14, 20, 0.45);
+  border: 1px solid var(--panel-edge);
+}
+.touch__knob {
+  position: absolute;
+  left: 34px;
+  top: 34px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(95, 242, 255, 0.35);
+  border: 1px solid var(--cyan);
+}
+.touch__btn {
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  font-family: var(--font-mono);
+  font-size: 20px;
+  color: var(--ink);
+  background: rgba(8, 14, 20, 0.55);
+  border: 1px solid var(--panel-edge);
+}
+.touch__btn--down { background: rgba(95, 242, 255, 0.3); border-color: var(--cyan); }
+.touch__actions {
+  position: absolute;
+  right: max(16px, env(safe-area-inset-right, 0px));
+  bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  width: 230px;
+  height: 210px;
+  pointer-events: none;
+}
+.touch__btn--fire { right: 8px; bottom: 18px; width: 92px; height: 92px; font-size: 30px; color: var(--magenta); border-color: rgba(255, 61, 139, 0.6); }
+.touch__btn--fire.touch__btn--down { background: rgba(255, 61, 139, 0.35); }
+.touch__btn--e { right: 112px; bottom: 8px; }
+.touch__btn--hot { border-color: var(--cyan); box-shadow: 0 0 16px rgba(95, 242, 255, 0.5); color: var(--cyan); }
+.touch__btn--q { right: 112px; bottom: 78px; color: var(--magenta); }
+.touch__btn--h { right: 40px; bottom: 122px; width: 48px; height: 48px; color: var(--ok); }
+.touch__btn--v { right: 172px; bottom: 140px; width: 44px; height: 44px; font-size: 15px; }
+.touch__top {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top, 0px));
+  right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex;
+  gap: 10px;
+}
+.touch__btn--small { position: static; width: 44px; height: 44px; font-size: 16px; border-radius: 10px; }
+
+/* Touch mode: move HUD pieces out of the thumbs' way. */
+.touch-mode .hud__wallet { right: 128px; top: 12px; }
+.touch-mode .toasts { top: 64px; }
+.touch-mode .gear { right: auto; left: 28px; bottom: auto; top: 96px; align-items: flex-start; }
+.touch-mode .hud__camera { display: none; }
+.touch-mode .hud__prompt { top: 22%; }
+
+.rotate-hint { display: none; }
+@media (orientation: portrait) {
+  .touch-mode .rotate-hint {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    font-size: 22px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    text-align: center;
+    color: var(--ink);
+    background: rgba(4, 7, 12, 0.94);
+    pointer-events: auto;
+  }
+}
+
+/* Small screens (phones in landscape) */
+@media (max-height: 500px), (max-width: 760px) {
+  .hud__identity { left: max(16px, env(safe-area-inset-left, 0px)); bottom: 12px; width: 200px; padding: 6px 10px; }
+  .hud__name { font-size: 15px; }
+  .hud__objective { left: max(16px, env(safe-area-inset-left, 0px)); top: 10px; max-width: 46vw; font-size: 14px; padding: 6px 10px; }
+  .hud__wallet { font-size: 17px; padding: 4px 10px; }
+  .toasts { width: 260px; }
+  .toast { padding: 6px 10px; }
+  .toast__text { font-size: 12px; }
+  .gear__ability { width: 220px; padding: 5px 8px; }
+  .touch-mode .gear { top: 64px; left: max(16px, env(safe-area-inset-left, 0px)); }
+  .dialogue { bottom: 8px; padding: 10px 14px; }
+  .dialogue__lines { max-height: 30vh; }
+  .dialogue__line, .dialogue__choice { font-size: 15px; }
+  .dialogue__speaker { min-width: 0; }
+  .screen { gap: 12px; }
+  .screen__heading { font-size: 28px; }
+  .title__name { font-size: clamp(32px, 8vw, 56px); }
+  .title__kanji { font-size: 18px; }
+  .menu__item { padding: 8px 14px; font-size: 16px; }
+  .controls { display: none; }
+  .sheet { top: 52px; max-height: calc(100vh - 70px); overflow-y: auto; }
+  .shop { padding: 14px 16px; }
+  .shop__title { font-size: 22px; }
+}

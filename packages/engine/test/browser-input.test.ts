@@ -73,3 +73,31 @@ describe("BrowserInput without pointer lock", () => {
     expect(i.mouseActive).toBe(true);
   });
 });
+
+describe("BrowserInput with the touch pad", () => {
+  it("merges the virtual pad into the polled frame, edges and look included", () => {
+    const i = make();
+    i.virtualPad.setStick(0, 1);
+    i.virtualPad.press("fire");
+    i.virtualPad.press("interact");
+    i.virtualPad.look(0.3, -0.1);
+    expect(i.poll()).toMatchObject({ moveZ: 1, fire: true, interact: true, lookYaw: 0.3, lookPitch: -0.1 });
+    expect(i.poll()).toMatchObject({ interact: false, lookYaw: 0 });
+  });
+
+  it("ignores the mouse events browsers emulate right after a touch", () => {
+    const i = make();
+    document.dispatchEvent(new Event("pointerlockerror"));
+    window.dispatchEvent(new Event("touchstart"));
+    window.dispatchEvent(new MouseEvent("mousedown", { button: 0 }));
+    expect(i.poll().fire).toBe(false);
+  });
+
+  it("drops touch edges while disabled", () => {
+    const i = make();
+    i.enabled = false;
+    i.virtualPad.press("interact");
+    i.enabled = true;
+    expect(i.poll().interact).toBe(false);
+  });
+});

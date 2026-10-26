@@ -37,6 +37,8 @@ Parametry URL: `?seed=123` (stałe ziarno nowej gry), `?reference` (deterministy
 
 Pad (standard mapping): lewa gałka ruch, prawa rozglądanie, RT strzał, A rozmowa, Y kamera, RB zdolność, X apteczka, L3 sprint.
 
+Telefon i tablet (wykrywane automatycznie, na komputerze można wymusić `?touch`): grę obracamy poziomo. Lewa połowa ekranu to pływająca gałka ruchu (pełne wychylenie = sprint), prawa to rozglądanie przeciąganiem. Przycisk strzału też obraca widok, gdy przesuwasz po nim palec. Obok są E, Q, apteczka (+) i kamera (V), a u góry karta postaci i pauza.
+
 ## Co jest w M0
 
 - Przebudzenie przy wraku, babcia Ume (wspomnienie „ucieczka”), fixer Kaito w barze Neon Koi.

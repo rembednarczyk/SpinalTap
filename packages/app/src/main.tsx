@@ -17,6 +17,8 @@ declare global {
 const params = new URLSearchParams(location.search);
 const reference = params.has("reference");
 const seedParam = params.get("seed");
+// Coarse pointer = phone or tablet; ?touch forces the on-screen pad (testing on desktop).
+const touchDevice = params.has("touch") || window.matchMedia("(pointer: coarse)").matches;
 
 const randomSeed = (): number => {
   const a = new Uint32Array(1);
@@ -44,6 +46,7 @@ const session = new GameSession({
   now: () => new Date(),
   onFocusChange: (wantsPointer) => {
     input.enabled = wantsPointer;
+    if (touchDevice) return;
     if (wantsPointer) input.requestPointerLock();
     else input.releasePointerLock();
   },
@@ -92,13 +95,13 @@ window.addEventListener("keydown", (e) => {
 window.addEventListener("pointerdown", () => {
   audio.unlock();
   audio.startAmbience();
-  if (session.inControl) input.requestPointerLock();
+  if (session.inControl && !touchDevice) input.requestPointerLock();
 });
 document.addEventListener("pointerlockchange", () => {
   if (!input.locked && session.inControl && !reference) session.pause();
 });
 
-createRoot(uiRoot).render(<GameUi store={ui} intents={session} />);
+createRoot(uiRoot).render(<GameUi store={ui} intents={session} touch={touchDevice ? input.virtualPad : undefined} />);
 
 const debug = createDebugApi(session, ui, loop, () => probe.sample());
 window.__seki = debug;

@@ -185,3 +185,59 @@ describe("gear and character sheet", () => {
     expect(screen.queryByTestId("character-panel")).toBeNull();
   });
 });
+
+describe("touch controls", () => {
+  const sink = () => ({ setStick: vi.fn(), look: vi.fn(), press: vi.fn(), release: vi.fn(), reset: vi.fn() });
+
+  const mountTouch = (state: Partial<UiState> = {}) => {
+    const store = createUiStore({ screen: "playing", ...state });
+    const i = intents();
+    const pad = sink();
+    const view = render(<GameUi store={store} intents={i} touch={pad} />);
+    return { store, i, pad, view };
+  };
+
+  it("shows the pad only while playing without a dialogue or the clinic", () => {
+    const { store } = mountTouch();
+    expect(screen.getByTestId("touch-controls")).toBeTruthy();
+    act(() => patchUi(store, { shopOpen: true }));
+    expect(screen.queryByTestId("touch-controls")).toBeNull();
+    act(() => patchUi(store, { shopOpen: false, screen: "paused" }));
+    expect(screen.queryByTestId("touch-controls")).toBeNull();
+  });
+
+  it("lifts every finger when the pad hides", () => {
+    const { store, pad } = mountTouch();
+    act(() => patchUi(store, { screen: "paused" }));
+    expect(pad.reset).toHaveBeenCalled();
+  });
+
+  it("presses and releases action buttons", () => {
+    const { pad } = mountTouch({ ability: { name: "X", activeTime: 0, cooldown: 0, cooldownTotal: 16 } });
+    const fire = screen.getByRole("button", { name: "Strzał" });
+    fireEvent.pointerDown(fire, { pointerId: 1 });
+    expect(pad.press).toHaveBeenCalledWith("fire");
+    fireEvent.pointerUp(fire, { pointerId: 1 });
+    expect(pad.release).toHaveBeenCalledWith("fire");
+    fireEvent.pointerDown(screen.getByRole("button", { name: "Zdolność" }), { pointerId: 2 });
+    expect(pad.press).toHaveBeenCalledWith("ability");
+  });
+
+  it("hides the ability button without the implant and pauses from the top bar", () => {
+    const { i } = mountTouch();
+    expect(screen.queryByRole("button", { name: "Zdolność" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Pauza" }));
+    expect(i.pause).toHaveBeenCalled();
+  });
+
+  it("opens the character sheet from the top bar", () => {
+    mountTouch();
+    fireEvent.click(screen.getByRole("button", { name: "Karta postaci" }));
+    expect(screen.getByTestId("character-panel")).toBeTruthy();
+  });
+
+  it("marks the document for touch layout", () => {
+    mountTouch();
+    expect(document.documentElement.classList.contains("touch-mode")).toBe(true);
+  });
+});

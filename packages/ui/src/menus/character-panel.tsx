@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { CYBERWARE_CATALOG, FACTIONS, type FactionId, MEMORY_CATALOG, type MemoryId, reputationTier } from "@seki/core";
 import { useUi } from "../use-ui";
 
@@ -12,7 +12,8 @@ const SLOTS = [
 
 /** Character sheet on Tab: implants, recovered memories, standing with factions. */
 export const CharacterPanel = () => {
-  const [open, setOpen] = useState(false);
+  const open = useUi((s) => s.sheetOpen);
+  const toggle = useUi((s) => s.toggleSheet);
   const alias = useUi((s) => s.alias);
   const loadout = useUi((s) => s.cyberware);
   const memories = useUi((s) => s.memories);
@@ -23,11 +24,11 @@ export const CharacterPanel = () => {
     const onKey = (e: KeyboardEvent) => {
       if (e.code !== "Tab") return;
       e.preventDefault();
-      if (!e.repeat) setOpen((o) => !o);
+      if (!e.repeat) toggle();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [toggle]);
 
   if (!open) return null;
   return (
