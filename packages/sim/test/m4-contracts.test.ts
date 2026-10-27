@@ -254,6 +254,21 @@ describe("protection (Hebi come for Oyaji)", () => {
     expect(sim.domain.contracts.active).toBeNull();
   });
 
+  it("is only on while Oyaji's stall is open (8:00 to 22:00)", () => {
+    const at = (hour: number, minute = 0) =>
+      withDomain(Simulation.create({ seed: 5 }), (d) => ({ ...d, clock: { seconds: (hour * 60 + minute) * 60 } }));
+    for (const [hour, minute] of [[23, 0], [7, 59], [22, 0]] as const) {
+      const sim = at(hour, minute);
+      sim.enqueue({ type: "accept-contract", kind: "protect" });
+      sim.step();
+      expect(sim.domain.contracts.active).toBeNull();
+    }
+    const morning = at(8, 0);
+    morning.enqueue({ type: "accept-contract", kind: "protect" });
+    morning.step();
+    expect(morning.domain.contracts.active?.kind).toBe("protect");
+  });
+
   it("Seki killing Oyaji is a civilian murder and fails the job too", () => {
     const sim = Simulation.create({ seed: 5 });
     toMarket(sim);

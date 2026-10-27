@@ -17,7 +17,8 @@ const takeContractCrate = (ctx: SimContext, crate: Entity): void => {
 /**
  * Tracks the nearest interactable in reach and starts a dialogue on the interact edge; a
  * pickup is taken on the spot instead. A shop whose owner's faction is hostile to the player
- * refuses instead of opening.
+ * refuses instead of opening. What an NPC on a daily plan offers can change with the hour
+ * (see the schedule system).
  */
 export const interactionSystem: System = {
   name: "interaction",
@@ -36,9 +37,11 @@ export const interactionSystem: System = {
       }
     }
     const focusId = best?.id ?? null;
-    if (focusId !== session.focusId) {
+    const prompt = best?.interactable.prompt ?? null;
+    if (focusId !== session.focusId || prompt !== session.focusPrompt) {
       session.focusId = focusId;
-      ctx.bus.emit("InteractionFocusChanged", { targetId: focusId, prompt: best?.interactable.prompt ?? null });
+      session.focusPrompt = prompt;
+      ctx.bus.emit("InteractionFocusChanged", { targetId: focusId, prompt });
     }
     if (best && ctx.input.interact) {
       const { interactable, faction } = best;
@@ -52,6 +55,7 @@ export const interactionSystem: System = {
       }
       session.dialogueActive = true;
       session.focusId = null;
+      session.focusPrompt = null;
       ctx.bus.emit("InteractionFocusChanged", { targetId: null, prompt: null });
       ctx.bus.emit("InteractionStarted", { targetId: best.id, dialogueId: interactable.dialogueId, kind: interactable.kind });
     }

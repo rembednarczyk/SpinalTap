@@ -1,6 +1,7 @@
 import { type EntityId, type EntitySnapshot, type Vec3 } from "@seki/core";
 import { PLAYER_SPAWN } from "../content/district-m0";
 import type { ActorDef, ActorSpawn, StaticProp } from "../content/builders";
+import { SCHEDULES } from "../content/schedules";
 import { aabbFromCenter } from "./collision";
 import type { Entity } from "./components";
 
@@ -70,7 +71,13 @@ export const gangerEntity = (id: EntityId, spawn: ActorSpawn, tag: string | null
 };
 
 export const actorEntity = (id: EntityId, def: ActorDef, chunk: string): Entity => {
-  if (def.kind === "ganger") return gangerEntity(id, def.spawn, def.spawn.tag, GANGER_MAX_HP, chunk);
+  const e = def.kind === "ganger" ? gangerEntity(id, def.spawn, def.spawn.tag, GANGER_MAX_HP, chunk) : npcEntity(id, def, chunk);
+  const plan = SCHEDULES[def.spawn.key];
+  if (plan) e.schedule = { def: plan, own: e.interactable ?? null, pose: null };
+  return e;
+};
+
+const npcEntity = (id: EntityId, def: ActorDef & { kind: "npc" }, chunk: string): Entity => {
   const e: Entity = { ...actor(id, def.spawn), chunk, view: { kind: "npc", preset: def.preset }, faction: def.faction };
   if (def.interactable) e.interactable = def.interactable;
   if (def.maxHp !== undefined) e.health = { current: def.maxHp, max: def.maxHp };

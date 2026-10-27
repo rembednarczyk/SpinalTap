@@ -7,6 +7,7 @@ import type { ItemId } from "../inventory/inventory";
 import type { PurchaseFailure } from "../shop/ripperdoc";
 import type { Contract, ContractFailure } from "../contracts/contracts";
 import type { EndingId, StoryChoiceId, StoryOption } from "../story/story";
+import type { GameClock } from "../time/game-clock";
 
 export interface DomainEvents {
   ShotFired: { shooterId: EntityId; from: Vec3; to: Vec3; hitEntity: EntityId | null };
@@ -47,6 +48,8 @@ export interface DomainEvents {
   ContractFailed: { contract: Contract; reason: ContractFailure };
   StoryChoiceMade: { choice: StoryChoiceId; option: StoryOption };
   EndingReached: { endingId: EndingId; title: string };
+  /** Game time jumped forward (the `wait` command); `clock` is the new time. */
+  TimeSkipped: { minutes: number; clock: GameClock };
 }
 
 /** "damage": the player was hit. "gunfire": a shot was fired close to the player. */

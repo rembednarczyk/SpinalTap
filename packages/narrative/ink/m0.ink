@@ -166,6 +166,10 @@ KAITO: Słyszałem, że robisz coś dla Hany. Skończ u niej, potem pogadamy.
     UME: Nie podchodź do mnie. Widziałam, co robisz na tej ulicy.
     -> END
 }
+// After 23:00 she stands in her doorway (daily schedule, ADR-0017).
+{ game_hour >= 23 || game_hour < 6:
+    UME: Nie śpisz, dziecko? Ja też nie. W moim wieku noc jest za długa.
+}
 { has_flag("ume_memory"):
     UME: Uważaj na siebie na dachach, dziecko. Tak jak kiedyś.
     { has_memory("courier_case") && not has_flag("ume_ren"):

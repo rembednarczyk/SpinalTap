@@ -2,6 +2,7 @@ import {
   type Contract,
   type EntityId,
   type EntitySnapshot,
+  type GameClock,
   PROTECTEE_KEY,
   type Vec3,
   contractItemKey,
@@ -26,6 +27,7 @@ import {
   propEntity,
 } from "./factory";
 import { inCreationOrder } from "./ordering";
+import { placeOnSchedule } from "./schedule";
 
 /**
  * Hysteresis: a chunk loads once the player is within `loadRadius` of its bounds and unloads
@@ -61,6 +63,10 @@ const NO_CHANGE: StreamingChange = { loaded: [], unloaded: [] };
  * and is written to saves. Two exceptions keep the rules honest: dead entities (`dead:<key>`)
  * never come back, and an alerted AI is pinned: it keeps chasing instead of vanishing with
  * its chunk. Deterministic: chunks are visited in table order and nothing here is random.
+ *
+ * Characters with a daily plan do not freeze while asleep: whenever one is spawned (a chunk
+ * loading, a new game) it is put where its plan says for the current time, so Oyaji left at
+ * his stall in the evening is found at home after midnight (ADR-0017).
  */
 export class WorldStreamer {
   private readonly content = new Map<string, Template[]>();
@@ -142,7 +148,7 @@ export class WorldStreamer {
       this.contract.push(t);
       this.byKey.set(key, t);
     }
-    if (this.resident.has(chunk)) this.spawnActors(world, flags, this.contract);
+    if (this.resident.has(chunk)) this.spawnActors(world, flags, this.contract, null);
   }
 
   /**
@@ -150,7 +156,7 @@ export class WorldStreamer {
    * order: all props first, then `between` (the player), then the characters. This keeps the
    * creation order of a fresh M0 world, which the reference frame depends on.
    */
-  loadInitial(world: World<Entity>, flags: readonly string[], focus: Vec3, initial: readonly string[], between: () => void): void {
+  loadInitial(world: World<Entity>, flags: readonly string[], focus: Vec3, initial: readonly string[], clock: GameClock, between: () => void): void {
     const wanted = new Set(initial);
     const chunks = this.chunks.filter((c) => wanted.has(c.id) || distanceToRect(focus.x, focus.z, c.bounds) <= this.radii.loadRadius);
     for (const c of chunks) {
@@ -158,7 +164,7 @@ export class WorldStreamer {
       this.spawnProps(world, c.id);
     }
     between();
-    for (const c of chunks) this.spawnActors(world, flags, this.actorsOf(c.id));
+    for (const c of chunks) this.spawnActors(world, flags, this.actorsOf(c.id), clock);
   }
 
   /** Re-applies saved entity state: live entities directly, the rest as pinned or dormant. */
@@ -186,7 +192,7 @@ export class WorldStreamer {
   }
 
   /** Loads and unloads chunks around `focus`. Unloads first, so ids never collide. */
-  update(world: World<Entity>, flags: readonly string[], focus: Vec3): StreamingChange {
+  update(world: World<Entity>, flags: readonly string[], focus: Vec3, clock: GameClock): StreamingChange {
     let unloaded: string[] | null = null;
     let loaded: string[] | null = null;
     for (const c of this.chunks) {
@@ -200,7 +206,7 @@ export class WorldStreamer {
       this.resident.add(id);
       this.spawnProps(world, id);
     }
-    for (const id of loaded ?? []) this.spawnActors(world, flags, this.actorsOf(id));
+    for (const id of loaded ?? []) this.spawnActors(world, flags, this.actorsOf(id), clock);
     return { loaded: loaded ?? [], unloaded: unloaded ?? [] };
   }
 
@@ -217,7 +223,8 @@ export class WorldStreamer {
     }
   }
 
-  private spawnActors(world: World<Entity>, flags: readonly string[], templates: readonly Template[]): void {
+  /** Spawns sleeping or new characters; with a clock, scheduled ones go where their plan says. */
+  private spawnActors(world: World<Entity>, flags: readonly string[], templates: readonly Template[], clock: GameClock | null): void {
     if (templates.length === 0) return;
     const alive = new Set<string>();
     for (const e of world) if (e.key) alive.add(e.key);
@@ -229,6 +236,7 @@ export class WorldStreamer {
         applyEntitySnapshot(e, saved);
         this.dormant.delete(t.key);
       }
+      if (clock && e.schedule) placeOnSchedule(e, e.schedule.def, clock);
       world.add(e);
       this.streamedOut.delete(t.id);
     }

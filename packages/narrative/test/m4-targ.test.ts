@@ -76,6 +76,16 @@ describe("Hana (M4, market)", () => {
     expect(view.choices.map((c) => c.text)).toEqual(["Co trzeba odzyskać?", "Nie teraz."]);
   });
 
+  it("offers no protection while Oyaji's stall is shut for the night", () => {
+    const { runtime } = setup();
+    const night = runtime.start("hana", domain({ flags: ["met_hana"], clock: { seconds: 23 * 3600 } }));
+    expect(night.choices.map((c) => c.text)).toEqual(["Co trzeba odzyskać?", "Nie teraz."]);
+    expect(text(night)).toContain("Oyaji już zamknął stragan");
+    const day = runtime.start("hana", domain({ flags: ["met_hana"], clock: { seconds: 12 * 3600 } }));
+    expect(day.choices.map((c) => c.text)).toContain("Ktoś potrzebuje ochrony?");
+    expect(text(day)).not.toContain("zamknął");
+  });
+
   it("takes Kaito's package and sends Seki back to him for the money", () => {
     const { runtime, commands } = setup();
     const view = runtime.start("hana", domain({ active: delivery("active") }));

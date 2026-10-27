@@ -12,6 +12,8 @@ import {
   contractKind,
   contractSecondsLeft,
   isContractKind,
+  dayPhase,
+  hourOf,
   hasFlag,
   hasMemory,
   isFactionId,
@@ -30,6 +32,7 @@ const SPEAKERS: Readonly<Record<string, string>> = {
   REN: "Ren",
   TECH: "Technik Kagami",
   HANA: "Hana",
+  OYAJI: "Oyaji",
 };
 const SPEAKER_RE = /^([A-Z]+):\s*(.*)$/;
 
@@ -113,6 +116,8 @@ export class NarrativeRuntime {
     }
     this.story.variablesState.$("act1_ending", resolveEnding(domain.story.choices));
     this.story.variablesState.$("story_ending", domain.story.ending ?? "");
+    this.story.variablesState.$("game_hour", hourOf(domain.clock));
+    this.story.variablesState.$("time_of_day", dayPhase(domain.clock));
     this.story.ChoosePathString(dialogueId);
     return this.continue();
   }

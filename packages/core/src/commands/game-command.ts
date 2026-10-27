@@ -25,4 +25,9 @@ export type GameCommand =
   /** Main-thread choice made in a memory flashback. The first answer sticks. */
   | { readonly type: "story-choice"; readonly choice: StoryChoiceId; readonly option: StoryOption }
   /** Closes act I: the sim resolves the ending from the recorded choices. */
-  | { readonly type: "resolve-ending" };
+  | { readonly type: "resolve-ending" }
+  /**
+   * Lets game time pass in one jump (ADR-0017), e.g. waiting for a stall to open. Whole game
+   * minutes, at least 1. NPCs following a daily plan are put where it says at the new time.
+   */
+  | { readonly type: "wait"; readonly minutes: number };

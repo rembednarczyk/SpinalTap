@@ -6,6 +6,7 @@ import type { Entity } from "../../world/components";
 import type { SimContext, System } from "../../world/context";
 import { chestOf, eyeOf, lineOfSight } from "../../world/hitscan";
 import { inCreationOrder } from "../../world/ordering";
+import { followSchedule } from "../../world/schedule";
 import { worldTimeScale } from "../ability-system";
 import { aimSpreadOf, fireShot } from "../combat-system";
 import { GANGER_TREE } from "./ganger-tree";
@@ -104,9 +105,15 @@ class GangerAgent {
     return State.SUCCEEDED;
   };
 
+  /** Holds its post, or walks its daily plan (a night patrol) when it has one. */
   HoldPosition = (): State => {
-    const { self } = this;
+    const { self, ctx } = this;
     if (!self) return State.FAILED;
+    const pose = self.schedule?.pose;
+    if (pose && ctx) {
+      followSchedule(self, pose, GANGER_SPEED, ctx.dt * this.timeScale);
+      return State.SUCCEEDED;
+    }
     const d = Math.hypot(self.ai.home.x - self.position.x, self.ai.home.z - self.position.z);
     if (d > 0.3) this.moveTowards(self.ai.home.x, self.ai.home.z);
     else self.velocity = { x: 0, y: 0, z: 0 };

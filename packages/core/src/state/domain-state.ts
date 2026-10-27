@@ -8,6 +8,7 @@ import { type AbilityState, IDLE_ABILITY } from "../abilities/abilities";
 import { type ContractLog, EMPTY_CONTRACTS } from "../contracts/contracts";
 import type { Inventory } from "../inventory/inventory";
 import { EMPTY_STORY, type StoryState } from "../story/story";
+import { type GameClock, START_CLOCK } from "../time/game-clock";
 import type { Flags } from "./flags";
 
 export interface Preferences {
@@ -27,6 +28,8 @@ export interface DomainState {
   readonly ability: AbilityState;
   /** Main-thread choices and the resolved ending. Ink variables are synced from it. */
   readonly story: StoryState;
+  /** Time of day; the simulation advances it every step. Schedules and lighting follow it. */
+  readonly clock: GameClock;
 }
 
 export const createDomainState = (): DomainState => ({
@@ -40,4 +43,5 @@ export const createDomainState = (): DomainState => ({
   contracts: EMPTY_CONTRACTS,
   ability: IDLE_ABILITY,
   story: EMPTY_STORY,
+  clock: START_CLOCK,
 });

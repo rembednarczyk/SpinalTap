@@ -70,6 +70,8 @@ export const findSchemaError = (s: Json): string | null => {
     if (!isStoryChoiceId(choice) || typeof option !== "string" || !isStoryOption(choice, option)) return "story choices";
   }
   if (!(story.ending === null || (typeof story.ending === "string" && isEndingId(story.ending)))) return "story ending";
+  const clock = d.clock;
+  if (!isObject(clock) || !Number.isInteger(clock.seconds) || (clock.seconds as number) < 0) return "clock";
   if (!(s.narrative === null || typeof s.narrative === "string")) return "narrative";
   if (!isObject(s.meta) || typeof s.meta.label !== "string" || typeof s.meta.objective !== "string") return "meta";
   return null;
