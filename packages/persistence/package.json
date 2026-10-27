@@ -1,0 +1,16 @@
+{
+  "name": "@seki/persistence",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@seki/core": "workspace:*",
+    "idb": "^8.0.4"
+  }
+}

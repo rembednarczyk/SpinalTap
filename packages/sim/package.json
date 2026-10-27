@@ -1,0 +1,17 @@
+{
+  "name": "@seki/sim",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@seki/core": "workspace:*",
+    "miniplex": "^2.0.0",
+    "mistreevous": "^4.3.1"
+  }
+}

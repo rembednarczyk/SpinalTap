@@ -1,0 +1,291 @@
+import type { EnemyTypeId, EntityId, FactionId, Health, ShopId, Slope, Vec3, ViewDescriptor, WeaponId, WeaponSlot, WeaponStats } from "@seki/core";
+import type { Aabb } from "./collision";
+
+export interface CharacterBody {
+  readonly radius: number;
+  readonly height: number;
+}
+
+/**
+ * Weapon state of a character (ADR-0015). For the player the domain is the source of truth
+ * (equipment, the weapon instance and its loaded rounds, the ammo pouch); `weapon`, `uid` and
+ * `stats` are a cache that `syncPlayerWeapon` refreshes every step. NPCs keep everything here.
+ */
+export interface Combatant {
+  /** Weapon in the active slot, null when that slot is empty. */
+  weapon: WeaponId | null;
+  /** Its effective stats (the player's with rarity and mods, NPCs' from the `npc` profile). */
+  stats: WeaponStats | null;
+  /** The player's active weapon instance; undefined before the first sync, null for NPCs. */
+  uid?: string | null;
+  slot: WeaponSlot;
+  /** Rounds in the magazine of an NPC. Not saved: NPC magazines come back full. */
+  loaded: number;
+  /** Seconds left of a reload step, 0 when not reloading. Not saved. */
+  reloading: number;
+  /** Seconds until the next shot is allowed. */
+  cooldown: number;
+  /** Weapon put away: no shots until drawn again. Presentation-only otherwise; not saved. */
+  holstered: boolean;
+  /** Seconds left of the draw; shots wait for it. */
+  drawing: number;
+  /** Extra spread from recent shots in radians; recovers over time. Not saved (ADR-0016). */
+  bloom: number;
+  /** An NPC that is fighting this step holds its weapon up (presentation only, not saved). */
+  engaged?: boolean;
+}
+
+/**
+ * Melee state of a combatant (ADR-0019): the swing in progress, the combo, the guard and
+ * stagger. Transient like the holster and the bloom: not saved, a loaded game starts idle.
+ */
+export interface MeleeState {
+  /** "windup": the swing is on its way and lands when `timer` runs out; "recovery": it landed. */
+  phase: "idle" | "windup" | "recovery";
+  /** Seconds left of the phase. */
+  timer: number;
+  /** Index of the current (or last) strike in the weapon's combo. */
+  strike: number;
+  /** Seconds left in which the next swing continues the combo. */
+  combo: number;
+  /** The attack button was held during recovery: the next swing starts right after it. */
+  queued: boolean;
+  /** Seconds left staggered: no swing, no guard, no shot, slow feet. */
+  stagger: number;
+  /** Guard up (the aim button with a melee weapon). */
+  guard: boolean;
+  /** Seconds left of the parry window opened by raising the guard. */
+  parry: number;
+  /** Seconds until raising the guard opens a parry window again. */
+  parryCooldown: number;
+  /** Knockback of an unguarded hit: ground velocity (m/s) for `time` more seconds. */
+  knock: { x: number; z: number; time: number };
+}
+
+/**
+ * How the character holds itself (ADR-0016). Transient like the holster: not saved, a loaded
+ * game starts standing.
+ */
+export interface Posture {
+  /** Wants to crouch (the input is held). */
+  crouched: boolean;
+  /** 0 standing .. 1 fully crouched, eased towards `crouched` over CROUCH_TIME. */
+  amount: number;
+  /** `amount` at the previous step, for interpolated rendering. */
+  prevAmount: number;
+  /** Sprinting this step (widens the aim cone). */
+  sprinting: boolean;
+  /** Wants to aim down sights this step (ADR-0019). */
+  aiming: boolean;
+  /** 0 from the hip .. 1 fully aimed, eased over the weapon's `ads.time`. */
+  aim: number;
+  /** `aim` at the previous step, for interpolated rendering. */
+  prevAim: number;
+}
+
+export interface GangerAi {
+  readonly home: Vec3;
+  readonly aggroRange: number;
+  readonly attackRange: number;
+  /**
+   * Set once the ganger has decided to fight the player; never resets. Gangers friendly to
+   * the player only set it when provoked (gunfire nearby or a hit).
+   */
+  alerted: boolean;
+  /**
+   * Key of the NPC this ganger was sent to kill (a protection job's wave). It goes for the
+   * victim, and turns on the player only once alerted and with the player in sight and range.
+   */
+  readonly victim?: string;
+}
+
+/** A bystander that keeps to its spot and runs from a player the street fears. Stateless by design. */
+export interface CivilianAi {
+  readonly home: Vec3;
+}
+
+/**
+ * One entry of a daily plan. From minute `at` of the day the NPC walks `path` in order,
+ * starting where the previous stop left it, and then stays at the last point facing `yaw`.
+ * A patrol (`loop`) instead keeps walking `path` as a closed loop until the next stop.
+ */
+export interface ScheduleStop {
+  /** Short name for tests and debugging ("stragan", "dom", "patrol"). */
+  readonly label: string;
+  /** Minute of the day (0–1439) the NPC sets off. */
+  readonly at: number;
+  /** Straight-line waypoints; together with the previous stop they must stay clear of solids. */
+  readonly path: readonly [Vec3, ...Vec3[]];
+  /** Facing once the NPC stands at its stop. */
+  readonly yaw: number;
+  readonly loop?: true;
+  /**
+   * What talking to the NPC means while this stop is current: an interaction that replaces
+   * the NPC's own (e.g. a closed stall), or null for none. Omitted: the NPC's own.
+   */
+  readonly interaction?: Interactable | null;
+}
+
+/** A daily plan: stops sorted by `at`, repeated every day. The day wraps from the last stop to the first. */
+export interface ScheduleDef {
+  readonly stops: readonly [ScheduleStop, ...ScheduleStop[]];
+  /** Walking speed along the path, metres per real second. */
+  readonly speed: number;
+}
+
+/** Where the plan wants the NPC right now. A pure function of the plan and the clock. */
+export interface SchedulePose {
+  readonly stop: number;
+  readonly position: Vec3;
+  /** Direction of travel while walking; the stop's facing once there. */
+  readonly heading: number;
+  /** Standing at its stop (not walking, not patrolling). */
+  readonly arrived: boolean;
+}
+
+/**
+ * A daily plan (see schedule.ts). Stateless like the rest of the AI: the pose is recomputed
+ * from the clock every step, so nothing of it is saved.
+ */
+export interface Scheduled {
+  readonly def: ScheduleDef;
+  /** The NPC's own interaction; a stop may replace it while it is current. */
+  readonly own: Interactable | null;
+  /** Where the plan wants the NPC this step; null until the schedule system first runs. */
+  pose: SchedulePose | null;
+}
+
+export interface Interactable {
+  /**
+   * "pickup": taken on the spot (a contract crate); no conversation opens. "loot": a bag;
+   * `dialogueId` is then the container key.
+   */
+  readonly kind: "dialogue" | "shop" | "pickup" | "loot" | "elevator" | "ladder";
+  /** For a shop: which one (the clinic when absent). `dialogueId` is then the shopkeeper's ink knot. */
+  readonly shopId?: ShopId;
+  /** For an elevator call button: which elevator and the level the button stands on. */
+  readonly elevator?: { readonly key: string; readonly level: number };
+  /** For a ladder's grab point: which ladder and which end (ADR-0021). */
+  readonly ladder?: { readonly key: string; readonly end: "bottom" | "top" };
+  readonly dialogueId: string;
+  readonly prompt: string;
+  readonly radius: number;
+}
+
+/**
+ * A lift platform (ADR-0020): a moving solid whose top is the floor. Not saved: it spawns at
+ * the ground level, or at the player's level when the player stands on its footprint.
+ */
+export interface Elevator {
+  readonly key: string;
+  /** Heights of the platform top at each level, lowest first. */
+  readonly levels: readonly [number, ...number[]];
+  /** Metres per second. */
+  readonly speed: number;
+  /** Level the platform is travelling to (or resting at). */
+  target: number;
+  /** Placed for the player after spawning. */
+  settled: boolean;
+}
+
+/** A barrier closing the shaft at an upper level while the platform is elsewhere. */
+export interface ElevatorGate {
+  readonly elevator: string;
+  readonly level: number;
+  /** The gate's box while closed; open, it sinks by `travel` into the floor. */
+  readonly closed: Aabb;
+  readonly travel: number;
+}
+
+/**
+ * A fire escape ladder (ADR-0021): climbed, not walked on. The climber hangs at (`x`, `z`)
+ * facing `yaw` (towards the wall), feet between `bottom` and `top`, and steps off at the top
+ * onto `exit`.
+ */
+export interface LadderDef {
+  readonly key: string;
+  readonly x: number;
+  readonly z: number;
+  readonly yaw: number;
+  readonly bottom: number;
+  readonly top: number;
+  readonly exit: Vec3;
+}
+
+/** A pull-up onto a ledge: from where the hands caught it to standing on top, over `duration` seconds. */
+export interface Mantle {
+  readonly from: Vec3;
+  readonly to: Vec3;
+  readonly duration: number;
+  t: number;
+}
+
+/** Jump timers of the player (ADR-0021). Transient like the posture: not saved. */
+export interface JumpState {
+  /** Seconds left in which a jump still counts after leaving the ground without one (coyote time). */
+  coyote: number;
+  /** Seconds left of a press made too early (in the air), so it fires on landing (jump buffer). */
+  buffer: number;
+}
+
+/** On a ladder (ADR-0021). Transient; a game saved on a ladder grabs it again on load. */
+export interface Climbing {
+  readonly ladder: string;
+  /** Climbing speed this step, m/s, positive up (for the presentation). */
+  speed: number;
+}
+
+/**
+ * One ECS entity. Components are optional fields; systems query the ones they need.
+ * Hot-path components are mutated in place for performance (see ADR-0002).
+ */
+export interface Entity {
+  readonly id: EntityId;
+  /** Stable identity across saves. Only dynamic entities have one. */
+  key?: string;
+  /** Quest tag reported in EntityKilled. */
+  tag?: string;
+  /** Streaming chunk the entity belongs to; it leaves the world when that chunk unloads. */
+  chunk?: string;
+  position: Vec3;
+  prevPosition: Vec3;
+  yaw: number;
+  prevYaw: number;
+  pitch: number;
+  velocity?: Vec3;
+  view?: ViewDescriptor;
+  /** Geometry: collides, blocks line of sight and is walked on (ADR-0020). Moves only on lifts and gates. */
+  solid?: Aabb;
+  /** Sloped top of the solid (stairs, ramps, stair railings). */
+  slope?: Slope;
+  /** Vertical speed while airborne (a fall, or a jump while positive), m/s. Transient, not saved. */
+  fall?: number;
+  /** Highest feet height of the current time in the air, for fall damage (ADR-0021). Transient. */
+  airPeak?: number;
+  /** Seconds left of the slow walk after a hard landing (ADR-0021). Transient. */
+  landing?: number;
+  jump?: JumpState;
+  climb?: Climbing;
+  /** Pulling up onto a ledge (mantle). Transient, not saved: a game saved mid-mantle loads on the ground below. */
+  mantle?: Mantle;
+  ladder?: LadderDef;
+  elevator?: Elevator;
+  gate?: ElevatorGate;
+  body?: CharacterBody;
+  posture?: Posture;
+  player?: true;
+  health?: Health;
+  /** Who dealt the last damage. Transient (never saved): death is resolved in the same step. */
+  lastHitBy?: EntityId;
+  faction?: FactionId;
+  combatant?: Combatant;
+  melee?: MeleeState;
+  ai?: GangerAi;
+  /** Enemy type (ADR-0015): weapon, outfit and loot table come from it. */
+  enemy?: { readonly type: EnemyTypeId };
+  civilian?: CivilianAi;
+  schedule?: Scheduled;
+  interactable?: Interactable;
+  /** A bag in the world; its contents live in `domain.loot` under this key. */
+  lootBag?: { readonly key: string };
+}

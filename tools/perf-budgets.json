@@ -1,0 +1,18 @@
+{
+  "$comment": "Perf budgets for the M0 reference scenes (plan \u00a710, ADR-0007). Draw calls include the colour pass, the moon shadow pass, the G-buffer for line art and character outlines. Frame time is measured under SwiftShader in CI, hence the generous ceiling. market-tpp (M2): the Targ district streamed in, Shinsekai streamed out; measured 182 draw calls / 80 active meshes. ADR-0021 (fire escape, balcony, three ladders and roof parapets on the south row): measured 248 draw calls / 109 active meshes.",
+  "scenes": {
+    "reference": {
+      "drawCalls": 130,
+      "activeMeshes": 60
+    },
+    "street-tpp": {
+      "drawCalls": 280,
+      "activeMeshes": 130
+    },
+    "market-tpp": {
+      "drawCalls": 265,
+      "activeMeshes": 118
+    }
+  },
+  "frameTimeMs": 60
+}

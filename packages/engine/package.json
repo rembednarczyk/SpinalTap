@@ -1,0 +1,18 @@
+{
+  "name": "@seki/engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@babylonjs/core": "9.32.0",
+    "@babylonjs/loaders": "9.32.0",
+    "@seki/core": "workspace:*",
+    "@seki/sim": "workspace:*"
+  }
+}
