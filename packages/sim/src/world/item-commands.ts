@@ -1,6 +1,13 @@
 import {
   type GameCommand,
+  type ItemDefId,
+  type LootLine,
   addAmmo,
+  isAmmoId,
+  removeInstance,
+  removeStack,
+  takeLoot,
+  updateContainer,
   equip,
   findItem,
   installMod,
@@ -11,11 +18,13 @@ import {
   weaponStatsOf,
 } from "@seki/core";
 import type { SimContext } from "./context";
+import { dropLoot } from "./domain-ops";
 
-type ItemCommand = Extract<GameCommand, { type: "equip-item" | "unequip-item" | "use-item" | "install-mod" | "remove-mod" }>;
+const ITEM_COMMANDS = ["equip-item", "unequip-item", "use-item", "drop-item", "install-mod", "remove-mod", "take-loot"] as const;
 
-export const isItemCommand = (cmd: GameCommand): cmd is ItemCommand =>
-  cmd.type === "equip-item" || cmd.type === "unequip-item" || cmd.type === "use-item" || cmd.type === "install-mod" || cmd.type === "remove-mod";
+type ItemCommand = Extract<GameCommand, { type: (typeof ITEM_COMMANDS)[number] }>;
+
+export const isItemCommand = (cmd: GameCommand): cmd is ItemCommand => (ITEM_COMMANDS as readonly string[]).includes(cmd.type);
 
 /**
  * Inventory commands from the menu (ADR-0015). Pure domain changes through core functions; none
@@ -63,6 +72,53 @@ export const applyItemCommand = (ctx: SimContext, cmd: ItemCommand): void => {
       ctx.state.domain = { ...domain, inventory: r.inventory };
       if (r.replaced) ctx.bus.emit("ModRemoved", { weaponUid: cmd.weaponUid, modUid: r.replaced, slot: r.slot });
       ctx.bus.emit("ModInstalled", { weaponUid: cmd.weaponUid, modUid: cmd.modUid, slot: r.slot });
+      return;
+    }
+    case "take-loot": {
+      const container = domain.loot.containers.find((c) => c.key === cmd.containerKey);
+      if (!container) return;
+      const r = takeLoot({ wallet: domain.wallet, inventory, equipment, ammo: domain.ammo }, container.lines, cmd.line);
+      if (r.taken.length === 0 && r.full.length === 0) return;
+      ctx.state.domain = {
+        ...domain,
+        wallet: r.wallet,
+        inventory: r.inventory,
+        ammo: r.ammo,
+        loot: updateContainer(domain.loot, container.key, r.left),
+      };
+      const delta = r.wallet.eddies - domain.wallet.eddies;
+      if (delta > 0) ctx.bus.emit("EddiesChanged", { balance: r.wallet.eddies, delta, source: "loot" });
+      for (const a of r.added) ctx.bus.emit("ItemAdded", { ...a, source: "loot" });
+      // A full pouch is no news (the rounds wait in the bag); a full bag is.
+      const blocked = r.full.find((id): id is ItemDefId => !isAmmoId(id));
+      if (blocked !== undefined) ctx.bus.emit("InventoryFull", { defId: blocked });
+      ctx.bus.emit("LootTaken", { containerKey: container.key, lines: r.taken, left: r.left.length });
+      return;
+    }
+    case "drop-item": {
+      const player = ctx.world.with("player").first;
+      if (!player) return;
+      let line: LootLine;
+      let next: typeof domain;
+      if ("stack" in cmd.ref) {
+        const qty = Math.floor(cmd.qty);
+        const inv = removeStack(inventory, cmd.ref.stack, qty);
+        if (!inv) return;
+        line = { kind: "stack", item: cmd.ref.stack, qty };
+        next = { ...domain, inventory: inv };
+      } else {
+        const r = removeInstance(inventory, equipment, cmd.ref.uid);
+        if (!r.ok) return;
+        line = { kind: "item", item: r.item.def, rarity: r.item.rarity, qty: 1 };
+        // Rounds in a dropped gun go back to the pouch first.
+        const ammoId = weaponStatsOf(inventory, r.item.uid)?.ammo;
+        const ammo = ammoId && (r.item.loaded ?? 0) > 0 ? addAmmo(domain.ammo, ammoId, r.item.loaded ?? 0).ammo : domain.ammo;
+        next = { ...domain, inventory: r.inventory, ammo };
+      }
+      const key = `drop:${next.loot.dropSeq}`;
+      ctx.state.domain = { ...next, loot: { ...next.loot, dropSeq: next.loot.dropSeq + 1 } };
+      ctx.bus.emit("ItemRemoved", { ref: cmd.ref, qty: line.qty, reason: "dropped" });
+      dropLoot(ctx, key, player.position, [line]);
       return;
     }
     case "remove-mod": {

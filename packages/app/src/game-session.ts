@@ -25,6 +25,7 @@ import { buildDistrictMap, createMinimapTracker } from "./minimap";
 import { needsReload, sanitizeSettings } from "./settings";
 import { describeObjective, saveLabel } from "./objective";
 import { createWeaponHud } from "./weapon-hud";
+import { createLootTracker } from "./loot-view";
 
 export interface GameSessionDeps {
   readonly render: RenderPort;
@@ -66,6 +67,9 @@ export class GameSession implements UiIntents {
   private simulation: Simulation;
   private dialogueOpen = false;
   private shopOpen = false;
+  /** Key of the bag being searched, or null. */
+  private lootKey: string | null = null;
+  private readonly lootView = createLootTracker();
   private lastAbilityVm: AbilityVm | null = null;
   private readonly journal = createJournalCache();
   private readonly minimap = createMinimapTracker();
@@ -84,6 +88,7 @@ export class GameSession implements UiIntents {
       onShop: () => this.openShop(),
       onPlayerDied: () => this.setScreen("dead"),
       onDialogueInterrupted: () => this.interruptDialogue(),
+      onLoot: (key) => this.openLoot(key),
     });
     patchUi(deps.ui, { map: buildDistrictMap(DISTRICT_M0_PROPS) });
     this.appliedSettings = deps.settings?.applied ?? deps.ui.getState().settings;
@@ -101,7 +106,7 @@ export class GameSession implements UiIntents {
 
   /** True while the player is in control (playing, no dialogue). */
   get inControl(): boolean {
-    return this.screen === "playing" && !this.dialogueOpen && !this.shopOpen;
+    return this.screen === "playing" && !this.dialogueOpen && !this.shopOpen && this.lootKey === null;
   }
 
   /** The simulation only advances while playing; dialogue freezes the player but not the world. */
@@ -154,6 +159,9 @@ export class GameSession implements UiIntents {
 
   syncHud(): void {
     const sim = this.simulation;
+    const loot = this.lootView(sim.domain, this.lootKey);
+    // The bag was emptied (or expired) while open: the panel closes and the player moves again.
+    if (this.lootKey !== null && loot === null) this.closeLoot();
     const player = sim.player();
     const { title, objective } = describeObjective(sim.domain);
     patchUi(this.deps.ui, {
@@ -169,6 +177,7 @@ export class GameSession implements UiIntents {
       medkitRoom: stackRoom(sim.domain.inventory, sim.domain.equipment, "medkit"),
       ability: this.abilityVm(),
       weapons: this.weaponHud(sim),
+      loot,
       cyberware: sim.domain.character.cyberware,
       reputation: sim.domain.reputation,
       contractsDone: sim.domain.contracts.completed,
@@ -234,6 +243,18 @@ export class GameSession implements UiIntents {
     this.deps.onFocusChange?.(this.inControl);
   }
 
+  takeLoot(line: number | "all"): void {
+    if (this.lootKey !== null) this.simulation.enqueue({ type: "take-loot", containerKey: this.lootKey, line });
+  }
+
+  closeLoot(): void {
+    if (this.lootKey === null) return;
+    this.lootKey = null;
+    patchUi(this.deps.ui, { loot: null });
+    this.simulation.enqueue({ type: "end-dialogue" });
+    this.deps.onFocusChange?.(this.inControl);
+  }
+
   changeSettings(patch: Partial<SettingsVm>): void {
     const current = this.deps.ui.getState().settings;
     const next = sanitizeSettings({ ...current, ...patch }, current);
@@ -280,7 +301,7 @@ export class GameSession implements UiIntents {
   }
 
   async saveAsync(slot: string): Promise<boolean> {
-    if (this.dialogueOpen || this.shopOpen || this.screen === "dead" || this.screen === "title") {
+    if (this.dialogueOpen || this.shopOpen || this.lootKey !== null || this.screen === "dead" || this.screen === "title") {
       pushToastTimed(this.deps.ui, "system", "Nie można teraz zapisać");
       return false;
     }
@@ -340,6 +361,12 @@ export class GameSession implements UiIntents {
     this.deps.onFocusChange?.(false);
   }
 
+  private openLoot(key: string): void {
+    this.lootKey = key;
+    patchUi(this.deps.ui, { loot: this.lootView(this.simulation.domain, key), prompt: null });
+    this.deps.onFocusChange?.(false);
+  }
+
   private openShop(): void {
     this.shopOpen = true;
     patchUi(this.deps.ui, { shopOpen: true, prompt: null });
@@ -352,7 +379,7 @@ export class GameSession implements UiIntents {
    * can start over. No end-dialogue command: the sim has already cleared the flag.
    */
   private interruptDialogue(): void {
-    if (!this.dialogueOpen && !this.shopOpen) return;
+    if (!this.dialogueOpen && !this.shopOpen && this.lootKey === null) return;
     if (this.dialogueOpen) this.narrative.interrupt();
     this.closeDialogueSilently();
     this.deps.onFocusChange?.(this.inControl);
@@ -361,7 +388,8 @@ export class GameSession implements UiIntents {
   private closeDialogueSilently(): void {
     this.dialogueOpen = false;
     this.shopOpen = false;
-    patchUi(this.deps.ui, { dialogue: null, shopOpen: false });
+    this.lootKey = null;
+    patchUi(this.deps.ui, { dialogue: null, shopOpen: false, loot: null });
   }
 
   private replaceSimulation(next: Simulation): void {

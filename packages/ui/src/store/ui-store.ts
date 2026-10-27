@@ -119,6 +119,22 @@ export interface WeaponStripVm {
   readonly holstered: boolean;
 }
 
+export interface LootLineVm {
+  /** Index in the container, for `takeLoot`. */
+  readonly index: number;
+  readonly kind: "eddies" | "ammo" | "stack" | "item";
+  readonly label: string;
+  readonly qty: number;
+  readonly rarity: Rarity | null;
+}
+
+/** The bag being searched. */
+export interface LootVm {
+  readonly key: string;
+  readonly title: string;
+  readonly lines: readonly LootLineVm[];
+}
+
 export type GraphicsQuality = "high" | "low";
 
 export interface SettingsVm {
@@ -170,6 +186,8 @@ export interface UiState {
   readonly reputation: ReputationState;
   readonly contractsDone: number;
   readonly shopOpen: boolean;
+  /** Open loot panel, or null. */
+  readonly loot: LootVm | null;
   readonly sheetOpen: boolean;
   /** Toggles the character sheet (Tab or the on-screen button). */
   readonly toggleSheet: () => void;
@@ -214,6 +232,7 @@ export const initialUiState: UiState = {
   reputation: createReputation(),
   contractsDone: 0,
   shopOpen: false,
+  loot: null,
   sheetOpen: false,
   toggleSheet: () => {},
   journal: EMPTY_JOURNAL,

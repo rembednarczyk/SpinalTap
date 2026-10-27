@@ -19,6 +19,8 @@ const intents = (): UiIntents => ({
   talkToShopkeeper: vi.fn(),
   changeSettings: vi.fn(),
   reload: vi.fn(),
+  takeLoot: vi.fn(),
+  closeLoot: vi.fn(),
 });
 
 const mount = (state: Partial<UiState> = {}) => {

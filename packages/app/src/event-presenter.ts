@@ -10,6 +10,7 @@ import {
   type RenderPort,
 } from "@seki/core";
 import { type UiStore, dismissToast, patchUi, pushToast } from "@seki/ui";
+import { lootSummary } from "./loot-view";
 
 const TOAST_MS = 4500;
 
@@ -19,6 +20,8 @@ export interface PresenterHooks {
   playerId(): EntityId | null;
   onDialogue(dialogueId: string): void;
   onShop(): void;
+  /** The player opened a bag (`key` of its container). */
+  onLoot(key: string): void;
   onPlayerDied(): void;
   /** Violence cut a conversation or the shop short; the sim has already freed the player. */
   onDialogueInterrupted(reason: DomainEvents["DialogueInterrupted"]["reason"]): void;
@@ -71,7 +74,17 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
       toast("system", "Rozmowa przerwana", e.reason === "damage" ? "Ktoś do ciebie strzela!" : "Strzały tuż obok. Nie czas na gadanie.");
     }),
     bus.on("InteractionFocusChanged", (e) => patchUi(ui, { prompt: e.prompt })),
-    bus.on("InteractionStarted", (e) => (e.kind === "shop" ? hooks.onShop() : hooks.onDialogue(e.dialogueId))),
+    bus.on("InteractionStarted", (e) => {
+      if (e.kind === "shop") hooks.onShop();
+      else if (e.kind === "loot") hooks.onLoot(e.dialogueId);
+      else hooks.onDialogue(e.dialogueId);
+    }),
+    bus.on("LootTaken", (e) => {
+      if (e.lines.length === 0) return;
+      toast("money", "Łup", lootSummary(e.lines));
+      audio.play("purchase");
+    }),
+    bus.on("LootExpired", () => toast("system", "Torba przepadła", "Ktoś był szybszy.")),
     bus.on("InteractionRefused", (e) => {
       toast("reputation", REFUSAL[e.faction] ?? `${FACTIONS[e.faction]} nie chce z tobą rozmawiać`, "Reputacja");
       audio.play("denied");
@@ -90,7 +103,7 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
       audio.play("quest-update");
     }),
     bus.on("EddiesChanged", (e) => {
-      if (e.delta > 0) toast("money", `+${e.delta.toLocaleString("pl-PL")} €$`, "Przelew od Kaito");
+      if (e.delta > 0 && e.source !== "loot") toast("money", `+${e.delta.toLocaleString("pl-PL")} €$`, "Przelew od Kaito");
     }),
     bus.on("CyberwareInstalled", (e) => {
       const def = CYBERWARE_CATALOG[e.cyberwareId];

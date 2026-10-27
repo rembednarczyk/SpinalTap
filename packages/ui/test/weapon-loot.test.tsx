@@ -18,6 +18,8 @@ const intents = (): UiIntents => ({
   talkToShopkeeper: vi.fn(),
   changeSettings: vi.fn(),
   reload: vi.fn(),
+  takeLoot: vi.fn(),
+  closeLoot: vi.fn(),
 });
 
 const pad = (): TouchPadSink => ({ setStick: vi.fn(), look: vi.fn(), press: vi.fn(), release: vi.fn(), reset: vi.fn(), selectWeaponSlot: vi.fn() });
@@ -95,5 +97,56 @@ describe("HUD weapon strip", () => {
     expect(p.press).toHaveBeenCalledWith("reload");
     fireEvent.pointerUp(reload, { pointerId: 5 });
     expect(p.release).toHaveBeenCalledWith("reload");
+  });
+});
+
+describe("loot panel", () => {
+  const loot = {
+    key: "loot:guard",
+    title: "Torba gangera",
+    lines: [
+      { index: 0, kind: "eddies" as const, label: "€$", qty: 17, rarity: null },
+      { index: 1, kind: "ammo" as const, label: "Amunicja 9 mm", qty: 9, rarity: null },
+      { index: 2, kind: "item" as const, label: "Hebi SMG", qty: 1, rarity: "rare" as const },
+    ],
+  };
+
+  it("lists the lines with quantities and rarity labels, and hides the pad", () => {
+    mount({ loot }, pad());
+    const panel = screen.getByTestId("loot");
+    expect(panel.textContent).toContain("Torba gangera");
+    const lines = screen.getAllByTestId("loot-line");
+    expect(lines).toHaveLength(3);
+    expect(lines[0]!.textContent).toContain("× 17");
+    expect(lines[2]!.textContent).toContain("rzadki");
+    expect(lines[2]!.className).toContain("rarity--rare");
+    expect(screen.queryByTestId("touch-controls")).toBeNull();
+  });
+
+  it("takes one line, all of it, or leaves", () => {
+    const { i } = mount({ loot });
+    fireEvent.click(screen.getAllByRole("button", { name: "Weź" })[1]!);
+    expect(i.takeLoot).toHaveBeenCalledWith(1);
+    fireEvent.click(screen.getByTestId("loot-take-all"));
+    expect(i.takeLoot).toHaveBeenCalledWith("all");
+    fireEvent.click(screen.getByRole("button", { name: "Zostaw" }));
+    expect(i.closeLoot).toHaveBeenCalled();
+  });
+
+  it("E takes all (a double E on a bag empties it), Esc leaves", () => {
+    const { i } = mount({ loot });
+    fireEvent.keyDown(window, { key: "e" });
+    expect(i.takeLoot).toHaveBeenCalledWith("all");
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(i.closeLoot).toHaveBeenCalled();
+    fireEvent.keyDown(window, { key: "x" });
+    expect(i.takeLoot).toHaveBeenCalledTimes(1);
+  });
+
+  it("says when the bag is empty and goes away when closed", () => {
+    const { store } = mount({ loot: { ...loot, lines: [] } });
+    expect(screen.getByTestId("loot").textContent).toContain("Pusto.");
+    act(() => patchUi(store, { loot: null }));
+    expect(screen.queryByTestId("loot")).toBeNull();
   });
 });

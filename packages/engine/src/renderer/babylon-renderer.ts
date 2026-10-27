@@ -167,6 +167,14 @@ export class BabylonRenderer implements RenderPort {
         this.entities.set(id, { kind: "prop", prop, lightKey, decor });
         return;
       }
+      case "loot": {
+        // Placeholder until the bag look (ADR-0015, E7): a small metal box through the prop path.
+        const size = { x: 0.5, y: 0.28, z: 0.36 };
+        const at = v3({ x: t.position.x, y: t.position.y + size.y / 2, z: t.position.z });
+        const prop = buildBlock(scene, this.materials, name, { kind: "block", size, material: "metal" }, at);
+        this.entities.set(id, { kind: "prop", prop, lightKey: null, decor: { meshes: [], flicker: null } });
+        return;
+      }
     }
   }
 

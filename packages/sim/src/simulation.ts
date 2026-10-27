@@ -129,6 +129,7 @@ export class Simulation {
       state: this.holder,
       session: this.session,
       rng: this.rng,
+      seed: this.seed,
       streamer: this.streamer,
       bus: this.bus,
       dt: SIM_DT,

@@ -1,4 +1,9 @@
 import {
+  LOOT_LIFETIME_SECONDS,
+  type LootContainer,
+  type LootLine,
+  addContainer,
+  bestLootRarity,
   type FactionId,
   type MemoryId,
   MEMORY_CATALOG,
@@ -59,3 +64,19 @@ export const grantMemory = (ctx: SimContext, id: MemoryId): void => {
   const m = MEMORY_CATALOG[id];
   ctx.bus.emit("MemoryUnlocked", { memoryId: id, title: m.title, description: m.description });
 };
+
+/** Puts a container into the domain (the loot system spawns its bag) and reports it. */
+export const dropLoot = (ctx: SimContext, key: string, at: { x: number; y: number; z: number }, lines: readonly LootLine[]): void => {
+  const container: LootContainer = {
+    key,
+    position: { x: at.x, y: 0, z: at.z },
+    chunk: ctx.streamer.chunkIdAt(at),
+    expiresAtTick: ctx.tick + Math.round(LOOT_LIFETIME_SECONDS / ctx.dt),
+    lines,
+  };
+  const r = addContainer(ctx.state.domain.loot, container);
+  ctx.state.domain = { ...ctx.state.domain, loot: r.loot };
+  for (const old of r.evicted) ctx.bus.emit("LootExpired", { containerKey: old.key });
+  ctx.bus.emit("LootDropped", { containerKey: key, at: container.position, best: bestLootRarity(lines) });
+};
+

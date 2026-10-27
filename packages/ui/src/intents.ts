@@ -20,4 +20,8 @@ export interface UiIntents {
   changeSettings(patch: Partial<SettingsVm>): void;
   /** Reloads the game so settings that need a restart take effect. */
   reload(): void;
+  /** Takes one line of the open bag, or everything that fits. */
+  takeLoot(line: number | "all"): void;
+  /** Leaves the bag as it is. */
+  closeLoot(): void;
 }

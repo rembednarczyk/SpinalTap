@@ -34,7 +34,8 @@ export interface DomainEvents {
   CameraModeChanged: { mode: CameraMode };
   QuestAdvanced: { questId: string; stepId: string; objective: string };
   QuestCompleted: { questId: string; title: string };
-  EddiesChanged: { balance: number; delta: number };
+  /** `source` "loot": picked up from a bag (no payment toast). */
+  EddiesChanged: { balance: number; delta: number; source?: "loot" };
   ReputationChanged: { faction: FactionId; value: number; delta: number };
   MemoryUnlocked: { memoryId: string; title: string; description: string };
   CyberwareInstalled: { cyberwareId: CyberwareId; replaced: CyberwareId | null; price: number };

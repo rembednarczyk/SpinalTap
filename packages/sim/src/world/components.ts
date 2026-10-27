@@ -65,7 +65,8 @@ export interface CivilianAi {
 }
 
 export interface Interactable {
-  readonly kind: "dialogue" | "shop";
+  /** "loot": a bag; `dialogueId` is then the container key. */
+  readonly kind: "dialogue" | "shop" | "loot";
   readonly dialogueId: string;
   readonly prompt: string;
   readonly radius: number;
@@ -103,4 +104,6 @@ export interface Entity {
   enemy?: { readonly type: EnemyTypeId };
   civilian?: CivilianAi;
   interactable?: Interactable;
+  /** A bag in the world; its contents live in `domain.loot` under this key. */
+  lootBag?: { readonly key: string };
 }

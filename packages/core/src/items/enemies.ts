@@ -1,4 +1,5 @@
 import type { FactionId } from "../reputation/reputation";
+import type { LootTableId } from "./loot";
 import type { GarmentId, WeaponId } from "./types";
 
 export type EnemyTypeId = "hebi_ganger" | "hebi_lookout" | "hebi_enforcer";
@@ -12,11 +13,13 @@ export interface EnemyType {
   readonly weapon: WeaponId;
   /** Fixed outfit: armor per zone and, later, the look. */
   readonly outfit: readonly GarmentId[];
+  /** Rolled once, at death, into a bag. */
+  readonly loot: LootTableId;
 }
 
 export const ENEMY_TYPES = {
   // Today's ganger armor (3) became the Hebi jacket with no head cover, so a head hit skips it.
-  hebi_ganger: { id: "hebi_ganger", faction: "hebi", hp: 80, weapon: "hebi_smg", outfit: ["hebi_jacket", "cargo_pants"] },
-  hebi_lookout: { id: "hebi_lookout", faction: "hebi", hp: 80, weapon: "unity9", outfit: ["hebi_jacket", "cargo_pants"] },
-  hebi_enforcer: { id: "hebi_enforcer", faction: "hebi", hp: 140, weapon: "raijin12", outfit: ["hebi_jacket", "moto_helmet", "cargo_pants"] },
+  hebi_ganger: { id: "hebi_ganger", faction: "hebi", hp: 80, weapon: "hebi_smg", outfit: ["hebi_jacket", "cargo_pants"], loot: "hebi_common" },
+  hebi_lookout: { id: "hebi_lookout", faction: "hebi", hp: 80, weapon: "unity9", outfit: ["hebi_jacket", "cargo_pants"], loot: "hebi_common" },
+  hebi_enforcer: { id: "hebi_enforcer", faction: "hebi", hp: 140, weapon: "raijin12", outfit: ["hebi_jacket", "moto_helmet", "cargo_pants"], loot: "hebi_enforcer" },
 } as const satisfies Record<EnemyTypeId, EnemyType>;
