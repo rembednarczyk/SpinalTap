@@ -1,3 +1,5 @@
+import type { ContractKind } from "../contracts/kinds";
+
 /**
  * Factions of Shinsekai, block 7. Each one is a group the player can be on good or bad
  * terms with; NPCs read their faction's standing to decide how to treat the player.
@@ -60,13 +62,48 @@ export const factionStance = (state: ReputationState, faction: FactionId): Facti
 /** Things the player does that the factions of the district notice. */
 export type ReputationCause =
   | { readonly type: "member-killed"; readonly faction: FactionId }
-  | { readonly type: "contract-completed" }
+  /** Without `kind`: an elimination (the M1 rule). */
+  | { readonly type: "contract-completed"; readonly kind?: ContractKind }
+  | { readonly type: "contract-failed"; readonly kind: ContractKind }
   | { readonly type: "clinic-purchase"; readonly kind: "cyberware" | "item" };
 
 export interface ReputationDelta {
   readonly faction: FactionId;
   readonly delta: number;
 }
+
+/**
+ * Finished jobs. Kaito's network cares about its own work; Hana's jobs are for the market, so
+ * the street notices them most. The gangers killed on the way count on their own.
+ */
+const CONTRACT_COMPLETED: Readonly<Record<ContractKind, readonly ReputationDelta[]>> = {
+  eliminate: [
+    { faction: "fixers", delta: 3 },
+    { faction: "hebi", delta: -5 },
+    { faction: "civilians", delta: 1 },
+  ],
+  delivery: [
+    { faction: "fixers", delta: 2 },
+    { faction: "civilians", delta: 1 },
+  ],
+  retrieve: [
+    { faction: "civilians", delta: 3 },
+    { faction: "hebi", delta: -4 },
+    { faction: "fixers", delta: 1 },
+  ],
+  protect: [
+    { faction: "civilians", delta: 6 },
+    { faction: "hebi", delta: -3 },
+  ],
+};
+
+/** A late package costs Kaito a client; a dead Oyaji costs the market's trust. The other kinds cannot fail. */
+const CONTRACT_FAILED: Readonly<Record<ContractKind, readonly ReputationDelta[]>> = {
+  eliminate: [],
+  delivery: [{ faction: "fixers", delta: -4 }],
+  retrieve: [],
+  protect: [{ faction: "civilians", delta: -5 }],
+};
 
 /**
  * Who reacts to a cause, and by how much. Killing a ganger makes the gang angry and the
@@ -79,11 +116,9 @@ export const reputationEffects = (cause: ReputationCause): readonly ReputationDe
       if (cause.faction === "civilians") return [{ faction: "civilians", delta: -25 }];
       return [{ faction: cause.faction, delta: -25 }, { faction: "civilians", delta: -10 }];
     case "contract-completed":
-      return [
-        { faction: "fixers", delta: 3 },
-        { faction: "hebi", delta: -5 },
-        { faction: "civilians", delta: 1 },
-      ];
+      return CONTRACT_COMPLETED[cause.kind ?? "eliminate"];
+    case "contract-failed":
+      return CONTRACT_FAILED[cause.kind];
     case "clinic-purchase":
       return [{ faction: "clinic", delta: cause.kind === "cyberware" ? 4 : 1 }];
   }

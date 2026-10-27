@@ -4,7 +4,7 @@ import type { FactionId } from "../reputation/reputation";
 import type { CyberwareId } from "../cyberware/cyberware";
 import type { ItemId } from "../inventory/inventory";
 import type { PurchaseFailure } from "../shop/ripperdoc";
-import type { Contract } from "../contracts/contracts";
+import type { Contract, ContractFailure } from "../contracts/contracts";
 import type { EndingId, StoryChoiceId, StoryOption } from "../story/story";
 
 export interface DomainEvents {
@@ -36,6 +36,8 @@ export interface DomainEvents {
   ContractAccepted: { contract: Contract };
   ContractCleared: { contract: Contract };
   ContractCompleted: { contract: Contract; reward: number };
+  /** The job fell through (delivery too late, Oyaji killed). The contract is gone; nothing is paid. */
+  ContractFailed: { contract: Contract; reason: ContractFailure };
   StoryChoiceMade: { choice: StoryChoiceId; option: StoryOption };
   EndingReached: { endingId: EndingId; title: string };
 }
