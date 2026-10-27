@@ -63,14 +63,15 @@ test("jump onto a stall counter and the fire escape onto the roof (ADR-0021)", a
   await page.getByRole("button", { name: "Nowa gra" }).click();
   await expect(page.getByTestId("hud")).toBeVisible();
 
-  // The real Space key jumps while the loop runs (after a click into the canvas gives it the keys).
+  // The real Space key jumps while the loop runs (after a click into the canvas gives it the
+  // keys). Done in Shinsekai at the start: the light scene keeps the real loop ticking even on
+  // a slow SwiftShader runner, where the first frames after streaming in the market can take
+  // seconds. The market part below is stepped from the test.
   await page.mouse.click(640, 360);
-  await teleport(page, 96, 76, NORTH);
-  // Let the market stream in and the click take the keys.
-  await expect.poll(async () => (await gameState(page)).loadedChunks).toContain("targ-south");
-  await page.waitForTimeout(500);
-  // The jump lasts 0.7 s, shorter than a few slow SwiftShader frames: record the highest point
-  // every frame instead of polling for it, and tap again if a press landed in a hitch.
+  const before = (await gameState(page)).tick;
+  await expect.poll(async () => (await gameState(page)).tick, { timeout: 60_000 }).toBeGreaterThan(before + 10);
+  // The jump lasts 0.7 s, shorter than a few slow frames: record the highest point every frame
+  // instead of polling for it, and tap again if a press landed in a hitch.
   await page.evaluate(() => {
     const w = window as unknown as { __peakY: number };
     w.__peakY = 0;
@@ -85,7 +86,7 @@ test("jump onto a stall counter and the fire escape onto the roof (ADR-0021)", a
     await page.keyboard.down("Space");
     await page.waitForTimeout(150);
     await page.keyboard.up("Space");
-    await expect.poll(peak, { timeout: 3000 }).toBeGreaterThan(0.3).catch(() => undefined);
+    await expect.poll(peak, { timeout: 8000 }).toBeGreaterThan(0.3).catch(() => undefined);
   }
   expect(await peak()).toBeGreaterThan(0.3);
   await freeze(page);
