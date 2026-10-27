@@ -59,10 +59,21 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
   nachylenie, interakcja nie sięga przez strop. Treść: estakada nad targiem jako chodnik z
   poręczami, schody od zachodu i winda towarowa z bramką na górze; kładka nad ulicą Kanałową.
 
+- **[gotowe] Ruch w pionie, dalej: skok, upadki, drabiny, AI między poziomami.** ([ADR-0021](adr/0021-skok-upadki-drabiny-nawigacja.md))
+  Skok (Spacja, A na padzie, przycisk na dotyku) z coyote time, buforem i ograniczoną kontrolą
+  w powietrzu, bez podwójnego skoku. Obrażenia od upadku powyżej 4 m przez zwykłą ścieżkę
+  obrażeń, twarde lądowanie spowalnia, dźwięki skoku i lądowania. Drabiny jako stan ruchu.
+  Treść na targu: schody przeciwpożarowe z balkonem i trzema drabinami na dwa dachy, skrytka
+  Hebi na dachu. Gangerzy gonią gracza schodami przez graf punktów przejścia (estakada, kładka),
+  strzelcy szukają pozycji do strzału, windy i drabiny zostają dla gracza. Pozy skoku, lądowania
+  i wspinaczki w rigu (też na modelach VRoid). Minimapa całego miasta z piętrami, ikonami
+  schodów, windy i drabin i wysokością gracza.
+
 ## Później
 
-- Ruch w pionie, dalej: nawigacja AI między poziomami (punkty przejścia przez schody i windy),
-  skok i obrażenia od upadku, dachy i balkony w Shinsekai, drabiny przeciwpożarowe, minimapa z piętrami.
+- Ruch w pionie, jeszcze dalej: dachy i balkony w Shinsekai 7 (scena referencyjna NPR, zmiana
+  wymaga nowej migawki), sniper Hebi na dachu targu, NPC na drabinach i w windzie (dziś
+  świadomie nie, ADR-0021), przeskok na krawędź (mantle) zamiast samego skoku.
 
 - Blend shapes twarzy (mruganie, usta w dialogu) w toon shaderze: patrz `docs/models.md`.
 - Docelowy model Seki (VRoid lub grafik) zamiast modeli zastępczych.

@@ -12,7 +12,7 @@ Symulacja była płaska: postacie stały zawsze na y = 0, bryły (`solid`) bloko
 - **Ruchome bryły w rendererze**: encja z `solid` i `velocity` jest kinematyczna; `RenderSync` wysyła jej transformacje jak postaciom, a renderer przesuwa korzeń propa (bez zamrożonej macierzy).
 - **Interakcja** sprawdza też wysokość: cel musi być w promieniu w XZ i w ±1,6 m w pionie, żeby z estakady nie rozmawiać z kimś pod nią.
 - **Treść M5 (targ)**: estakada nad targiem staje się chodnikiem z poręczami i zamkniętymi końcami, z zachodu prowadzą na nią schody wzdłuż północnej krawędzi, od południa winda towarowa z bramką na górze. Nad ulicą Kanałową kładka dla pieszych: dwa biegi schodów i pomost 5 m nad jezdnią. Torby z łupem upadają na wysokości postaci.
-- **AI** bez zmian w logice: gangerzy i cywile chodzą tym samym `movementSystem`, więc wchodzą po schodach, jeśli ich prosta ścieżka tamtędy prowadzi, ale nie szukają drogi na inny poziom. Pościg za graczem na estakadzie kończy się pod nią, a strzelanie idzie przez prawdziwe promienie 3D. Nawigacja między poziomami (punkty przejścia) jest na później.
+- **AI** bez zmian w logice: gangerzy i cywile chodzą tym samym `movementSystem`, więc wchodzą po schodach, jeśli ich prosta ścieżka tamtędy prowadzi, ale nie szukają drogi na inny poziom. Pościg za graczem na estakadzie kończy się pod nią, a strzelanie idzie przez prawdziwe promienie 3D. Nawigacja między poziomami (punkty przejścia) jest na później. Uzupełnienie: skok, obrażenia od upadku, drabiny i nawigacja NPC przez schody są w [ADR-0021](0021-skok-upadki-drabiny-nawigacja.md); zdanie wyżej o braku obrażeń od upadku jest nieaktualne.
 
 ## Konsekwencje
 - Zapis bez zmian schematu: pozycja gracza i postaci z kluczem ma już `y`.
