@@ -8,6 +8,7 @@ const CONTROLS: [string, string][] = [
   ["Q", "zdolność cyberware"],
   ["H", "apteczka"],
   ["Tab", "karta postaci"],
+  ["J", "dziennik"],
   ["F5 / F9", "szybki zapis / odczyt"],
   ["Esc", "pauza"],
 ];

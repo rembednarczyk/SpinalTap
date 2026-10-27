@@ -2,6 +2,7 @@ import { useEffect, useMemo } from "react";
 import { DialoguePanel } from "./dialogue/dialogue-panel";
 import { Hud } from "./hud/hud";
 import { CharacterPanel } from "./menus/character-panel";
+import { JournalPanel } from "./journal/journal-panel";
 import { ShopPanel } from "./shop/shop-panel";
 import { TouchControls } from "./touch/touch-controls";
 import type { TouchPadSink } from "./touch/touch-pad-sink";
@@ -23,6 +24,7 @@ const Screens = ({ touch }: { touch: TouchPadSink | undefined }) => {
       {screen === "playing" && <DialoguePanel />}
       {screen === "playing" && <ShopPanel />}
       {screen === "playing" && <CharacterPanel />}
+      {screen === "playing" && <JournalPanel />}
       {screen === "title" && <TitleScreen />}
       {screen === "paused" && <PauseMenu />}
       {screen === "dead" && <DeathScreen />}

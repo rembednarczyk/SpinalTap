@@ -15,6 +15,8 @@ const intents = (): UiIntents => ({
   buyCyberware: vi.fn(),
   buyItem: vi.fn(),
   closeShop: vi.fn(),
+  changeSettings: vi.fn(),
+  reload: vi.fn(),
 });
 
 const mount = (state: Partial<UiState> = {}) => {

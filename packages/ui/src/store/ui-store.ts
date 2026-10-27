@@ -29,6 +29,77 @@ export interface Toast {
   readonly text: string;
 }
 
+export interface JournalStepVm {
+  readonly objective: string;
+  readonly done: boolean;
+}
+
+export interface JournalQuestVm {
+  readonly id: string;
+  readonly title: string;
+  readonly kind: "main" | "side" | "contract";
+  readonly status: "active" | "completed";
+  /** Steps reached so far, in order; the current one is the last with `done: false`. */
+  readonly steps: readonly JournalStepVm[];
+}
+
+export interface JournalMemoryVm {
+  readonly id: string;
+  readonly title: string;
+  readonly description: string;
+}
+
+export interface JournalVm {
+  readonly quests: readonly JournalQuestVm[];
+  readonly memories: readonly JournalMemoryVm[];
+}
+
+export const EMPTY_JOURNAL: JournalVm = { quests: [], memories: [] };
+
+/** Axis-aligned footprint on the ground plane, in metres (x east, z north). */
+export interface MapRectVm {
+  readonly x: number;
+  readonly z: number;
+  readonly w: number;
+  readonly d: number;
+}
+
+/** Static district geometry for the minimap. Sent once at startup. */
+export interface MapVm {
+  readonly bounds: MapRectVm;
+  readonly blocks: readonly MapRectVm[];
+  readonly streets: readonly MapRectVm[];
+}
+
+export type MapMarkerKind = "fixer" | "ripperdoc" | "target";
+
+export interface MapMarkerVm {
+  readonly id: string;
+  readonly kind: MapMarkerKind;
+  readonly x: number;
+  readonly z: number;
+}
+
+export interface MapPlayerVm {
+  readonly x: number;
+  readonly z: number;
+  /** Radians; 0 looks north (+z), PI/2 east (+x). */
+  readonly yaw: number;
+}
+
+export type GraphicsQuality = "high" | "low";
+
+export interface SettingsVm {
+  readonly quality: GraphicsQuality;
+  /** Look speed multiplier, 1 = default. */
+  readonly mouseSensitivity: number;
+  readonly touchSensitivity: number;
+  /** Master volume 0..1. */
+  readonly volume: number;
+}
+
+export const DEFAULT_SETTINGS: SettingsVm = { quality: "high", mouseSensitivity: 1, touchSensitivity: 1, volume: 0.6 };
+
 export interface UiState {
   readonly screen: Screen;
   readonly hp: number;
@@ -58,6 +129,16 @@ export interface UiState {
   readonly sheetOpen: boolean;
   /** Toggles the character sheet (Tab or the on-screen button). */
   readonly toggleSheet: () => void;
+  readonly journal: JournalVm;
+  readonly journalOpen: boolean;
+  /** Toggles the journal (J or the on-screen button). Closes the character sheet. */
+  readonly toggleJournal: () => void;
+  readonly map: MapVm | null;
+  readonly mapPlayer: MapPlayerVm | null;
+  readonly mapMarkers: readonly MapMarkerVm[];
+  readonly settings: SettingsVm;
+  /** True when a saved setting only takes effect after the page is reloaded. */
+  readonly reloadNeeded: boolean;
 }
 
 export const initialUiState: UiState = {
@@ -86,6 +167,14 @@ export const initialUiState: UiState = {
   shopOpen: false,
   sheetOpen: false,
   toggleSheet: () => {},
+  journal: EMPTY_JOURNAL,
+  journalOpen: false,
+  toggleJournal: () => {},
+  map: null,
+  mapPlayer: null,
+  mapMarkers: [],
+  settings: DEFAULT_SETTINGS,
+  reloadNeeded: false,
 };
 
 export type UiStore = StoreApi<UiState>;
@@ -93,7 +182,8 @@ export type UiStore = StoreApi<UiState>;
 export const createUiStore = (initial: Partial<UiState> = {}): UiStore =>
   createStore<UiState>((set) => ({
     ...initialUiState,
-    toggleSheet: () => set((s) => ({ sheetOpen: !s.sheetOpen })),
+    toggleSheet: () => set((s) => ({ sheetOpen: !s.sheetOpen, journalOpen: false })),
+    toggleJournal: () => set((s) => ({ journalOpen: !s.journalOpen, sheetOpen: false })),
     ...initial,
   }));
 

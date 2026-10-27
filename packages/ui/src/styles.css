@@ -148,6 +148,41 @@ kbd {
 .toast__text { font-size: 14px; color: var(--ink-dim); margin-top: 2px; }
 @keyframes toast-in { from { transform: translateX(30px); opacity: 0; } to { transform: none; opacity: 1; } }
 
+/* Minimap */
+.minimap {
+  position: absolute;
+  left: 28px;
+  bottom: 112px;
+  width: 168px;
+  height: 168px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  box-shadow: 0 0 0 3px rgba(8, 14, 20, 0.5);
+  pointer-events: none;
+}
+.minimap svg { display: block; width: 100%; height: 100%; }
+.minimap__ground { fill: rgba(20, 30, 38, 0.6); }
+.minimap__street { fill: rgba(95, 242, 255, 0.12); stroke: rgba(95, 242, 255, 0.45); stroke-width: 0.3; }
+.minimap__block { fill: rgba(4, 7, 12, 0.85); stroke: rgba(95, 242, 255, 0.55); stroke-width: 0.4; }
+.minimap__cone { fill: rgba(95, 242, 255, 0.16); }
+.minimap__arrow { fill: var(--ink); }
+.minimap__marker { stroke: rgba(4, 7, 12, 0.9); stroke-width: 0.6; }
+.minimap__marker--fixer { fill: var(--amber); }
+.minimap__marker--ripperdoc { fill: #39ffd0; }
+.minimap__marker--target { fill: var(--magenta); }
+.minimap__marker--edge { opacity: 0.75; }
+.minimap__north {
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-dim);
+}
+
 /* Dialogue */
 .dialogue {
   position: absolute;
@@ -364,6 +399,51 @@ kbd {
 .sheet__empty { margin: 0; color: var(--ink-dim); font-style: italic; }
 .sheet__hint { font-size: 13px; color: var(--ink-dim); }
 
+/* Journal */
+.journal { pointer-events: auto; max-height: calc(100vh - 140px); overflow-y: auto; }
+.journal__tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.journal__tab {
+  padding: 4px 10px;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  color: var(--ink-dim);
+  background: transparent;
+  border: 1px solid var(--panel-edge);
+  cursor: pointer;
+}
+.journal__tab--on { color: var(--ink); border-color: var(--magenta); background: rgba(255, 61, 139, 0.12); }
+.journal__count { font-family: var(--font-mono); color: var(--magenta); }
+.journal__list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.journal__quest, .journal__memory { padding-left: 10px; border-left: 2px solid var(--panel-edge); }
+.journal__quest--main { border-color: var(--magenta); }
+.journal__quest--contract { border-color: var(--amber); }
+.journal__memory { border-color: var(--magenta); }
+.journal__kind { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-dim); }
+.journal__title { font-weight: 700; letter-spacing: 0.05em; }
+.journal__steps { margin: 4px 0 0; padding-left: 18px; font-size: 14px; }
+.journal__step { margin: 2px 0; }
+.journal__step--done { color: var(--ink-dim); text-decoration: line-through; }
+.journal__desc { margin: 2px 0 0; font-size: 14px; line-height: 1.35; color: var(--ink-dim); }
+
+/* Settings */
+.settings { display: flex; flex-direction: column; gap: 12px; padding: 12px 14px; background: rgba(8, 14, 20, 0.6); border: 1px solid var(--panel-edge); }
+.settings__row { display: flex; align-items: center; gap: 12px; font-size: 16px; }
+.settings__label { flex: 0 0 9em; color: var(--ink-dim); }
+.settings__slider { flex: 1; min-width: 0; accent-color: var(--cyan); pointer-events: auto; }
+.settings__value { flex: 0 0 3.5em; text-align: right; font-family: var(--font-mono); font-size: 14px; }
+.settings__choice { display: flex; gap: 6px; }
+.settings__option {
+  padding: 4px 12px;
+  font-size: 15px;
+  color: var(--ink-dim);
+  background: transparent;
+  border: 1px solid var(--panel-edge);
+  cursor: pointer;
+}
+.settings__option--on { color: var(--ink); border-color: var(--cyan); background: rgba(95, 242, 255, 0.14); }
+.settings__note { font-size: 14px; color: var(--amber); }
+.settings__note p { margin: 0 0 8px; }
+
 /* Touch gamepad */
 .touch { position: absolute; inset: 0; pointer-events: none; }
 .touch__look-zone {
@@ -462,8 +542,18 @@ kbd {
 .touch__btn--small { position: static; width: 44px; height: 44px; font-size: 16px; border-radius: 10px; }
 
 /* Touch mode: move HUD pieces out of the thumbs' way. */
-.touch-mode .hud__wallet { right: 128px; top: 12px; }
-.touch-mode .toasts { top: 64px; }
+.touch-mode .hud__wallet { right: 182px; top: 12px; }
+.touch-mode .toasts { top: 64px; right: 120px; }
+/* Under the top buttons and above the action cluster, clear of the move stick. */
+.touch-mode .minimap {
+  left: auto;
+  bottom: auto;
+  right: max(16px, env(safe-area-inset-right, 0px));
+  top: max(64px, calc(env(safe-area-inset-top, 0px) + 52px));
+  width: 88px;
+  height: 88px;
+}
+.touch-mode .minimap__north { font-size: 9px; }
 .touch-mode .gear { right: auto; left: 28px; bottom: auto; top: 96px; align-items: flex-start; }
 .touch-mode .hud__camera { display: none; }
 .touch-mode .hud__prompt { top: 22%; }
@@ -497,6 +587,8 @@ kbd {
   .toast { padding: 6px 10px; }
   .toast__text { font-size: 12px; }
   .gear__ability { width: 220px; padding: 5px 8px; }
+  .minimap { left: max(16px, env(safe-area-inset-left, 0px)); bottom: 76px; width: 120px; height: 120px; }
+  .settings__label { flex-basis: 7em; }
   .touch-mode .gear { top: 64px; left: max(16px, env(safe-area-inset-left, 0px)); }
   .dialogue { bottom: 8px; padding: 10px 14px; }
   .dialogue__lines { max-height: 30vh; }

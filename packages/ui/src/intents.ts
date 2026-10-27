@@ -1,4 +1,5 @@
 import type { CyberwareId, ItemId } from "@seki/core";
+import type { SettingsVm } from "./store/ui-store";
 
 /** Everything the UI can ask the game to do. Implemented by the app composition root. */
 export interface UiIntents {
@@ -13,4 +14,8 @@ export interface UiIntents {
   buyCyberware(id: CyberwareId): void;
   buyItem(id: ItemId): void;
   closeShop(): void;
+  /** Saves the changed settings; look sensitivity applies at once. */
+  changeSettings(patch: Partial<SettingsVm>): void;
+  /** Reloads the game so settings that need a restart take effect. */
+  reload(): void;
 }
