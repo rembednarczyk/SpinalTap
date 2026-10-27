@@ -26,9 +26,11 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
   między core, sim, UI i rendererem (co widać na postaci), etapy wdrożenia.
   Plan: [`docs/ekwipunek-i-uzbrojenie.md`](ekwipunek-i-uzbrojenie.md), decyzje w
   [ADR-0015](adr/0015-ekwipunek-uzbrojenie-loot.md).
-- **Lootowanie wrogów.** Ciało pokonanego wroga (albo upuszczona torba) jako obiekt interakcji:
+- **[gotowe] Lootowanie wrogów.** Ciało pokonanego wroga (albo upuszczona torba) jako obiekt interakcji:
   eddies, amunicja, apteczki, części i wszczepy z tabel łupów zależnych od typu wroga. Losowanie
-  przez `RandomPort`, stan zebranych łupów w zapisie.
+  przez `RandomPort`, stan zebranych łupów w zapisie. Wdrożone jako etapy E0 do E6 planu ekwipunku
+  (sloty broni, amunicja, przeładowanie, pancerz per strefa, torby z łupem, minimalny panel łupu);
+  wygląd torby i postaci (E7) oraz menu postaci (E8 i E9) czekają.
 - **Menu postaci na telefonie (i desktopie).** Ekran ekwipunku z podglądem postaci w 3D (obrót,
   aktualny wygląd z założonymi wszczepami i bronią), statystyki (HP, pancerz, celność, kryt,
   reputacja), siatka inventory z przeciąganiem lub stuknięciem, porównanie przedmiotów. Układ
