@@ -13,6 +13,7 @@ import {
   loadoutAbility,
   CorruptSaveError,
   type DomainEvents,
+  type EntityId,
   EMPTY_INPUT,
   EventBus,
   type InputFrame,
@@ -82,6 +83,8 @@ const toDialogueVm = (v: DialogueView) => ({ lines: v.lines, choices: v.choices,
 export const RECALL_CALM_TICKS = 5 * SIM_HZ;
 /** HUD zoom (share of the hip field of view) is rounded to this step, like the spread. */
 const ZOOM_STEP = 0.01;
+/** Mouth movement per character of a spoken line, seconds. */
+const TALK_SECONDS_PER_CHAR = 0.05;
 
 /** The player's current field of view as a share of the hip one: 1 + (zoom - 1) * aim (ADR-0019). */
 const aimZoomOf = (player: Entity | undefined): number => {
@@ -127,6 +130,8 @@ export class GameSession implements UiIntents {
   private readonly appliedSettings: SettingsVm;
   /** Last district the player was seen in; a change raises a toast. */
   private district: DistrictId | null = null;
+  /** Who the player is talking to (from InteractionStarted), for the mouth movement. */
+  private talkTarget: EntityId | null = null;
   /** Daylight level last sent to the renderer; null after the views were cleared. */
   private daylightSent: number | null = null;
 
@@ -134,6 +139,10 @@ export class GameSession implements UiIntents {
     this.narrative = new NarrativeRuntime(deps.story, (cmd) => this.simulation.enqueue(cmd));
     this.renderSync = new RenderSync(deps.render);
     this.simulation = Simulation.create({ seed: deps.seed(), bus: this.bus });
+    // Before the presenter, which opens the conversation on the same event.
+    this.bus.on("InteractionStarted", (e) => {
+      if (e.kind === "dialogue" || e.kind === "shop") this.talkTarget = e.targetId;
+    });
     bindEventPresenter(this.bus, deps.render, deps.audio, deps.ui, {
       playerId: () => this.simulation.player()?.id ?? null,
       onDialogue: (id) => this.openDialogue(id),
@@ -467,7 +476,7 @@ export class GameSession implements UiIntents {
   choose(index: number): void {
     if (!this.dialogueOpen) return;
     this.deps.audio.play("ui-select");
-    patchUi(this.deps.ui, { dialogue: toDialogueVm(this.narrative.choose(index)) });
+    patchUi(this.deps.ui, { dialogue: toDialogueVm(this.speak(this.narrative.choose(index))) });
   }
 
   closeDialogue(): void {
@@ -549,7 +558,8 @@ export class GameSession implements UiIntents {
 
   private openDialogue(dialogueId: string): void {
     this.dialogueOpen = true;
-    patchUi(this.deps.ui, { dialogue: toDialogueVm(this.narrative.start(dialogueId, this.simulation.domain, { tick: this.simulation.tick, ticksPerSecond: SIM_HZ })), prompt: null });
+    const view = this.narrative.start(dialogueId, this.simulation.domain, { tick: this.simulation.tick, ticksPerSecond: SIM_HZ });
+    patchUi(this.deps.ui, { dialogue: toDialogueVm(this.speak(view)), prompt: null });
     this.deps.onFocusChange?.(false);
   }
 
@@ -579,7 +589,22 @@ export class GameSession implements UiIntents {
     this.deps.onFocusChange?.(this.inControl);
   }
 
+  /**
+   * The conversation partner's mouth moves while its new lines are on screen: about one
+   * reading speed (a twentieth of a second per character), narration excluded.
+   */
+  private speak(view: DialogueView): DialogueView {
+    const target = this.talkTarget;
+    if (target !== null) {
+      const chars = view.lines.filter((l) => l.speaker !== null && l.speaker !== this.simulation.domain.character.alias).reduce((n, l) => n + l.text.length, 0);
+      this.deps.render.playEffect({ kind: "talk", entityId: target, seconds: chars === 0 ? 0 : Math.min(6, Math.max(0.6, chars * TALK_SECONDS_PER_CHAR)) });
+    }
+    return view;
+  }
+
   private closeDialogueSilently(): void {
+    if (this.talkTarget !== null) this.deps.render.playEffect({ kind: "talk", entityId: this.talkTarget, seconds: 0 });
+    this.talkTarget = null;
     if (this.characterOpen) this.closeCharacterSilently();
     this.dialogueOpen = false;
     this.shopOpen = false;

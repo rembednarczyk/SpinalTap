@@ -32,7 +32,7 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
   (sloty broni, amunicja, przeładowanie, pancerz per strefa, torby z łupem, minimalny panel łupu);
   wygląd torby i postaci (E7: broń w dłoni, kaburze i na plecach, dodatki odzieży, torba z paskiem
   w kolorze rzadkości, animacja przeładowania) gotowy; menu postaci (E8 i E9) w toku.
-- **Menu postaci na telefonie (i desktopie).** Ekran ekwipunku z podglądem postaci w 3D (obrót,
+- **[gotowe] Menu postaci na telefonie (i desktopie).** Ekran ekwipunku z podglądem postaci w 3D (obrót,
   aktualny wygląd z założonymi wszczepami i bronią), statystyki (HP, pancerz, celność, kryt,
   reputacja), siatka inventory z przeciąganiem lub stuknięciem, porównanie przedmiotów. Układ
   pod poziomy ekran telefonu z dużymi celami dotyku; spójny z kartą postaci i dziennikiem.
@@ -64,11 +64,21 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
   od właściwego mówcy, bez powtórzeń po pytaniach pobocznych, spójność z wątkiem głównym (liczba
   prób nadpisania, co Seki wie o Renie). Pilnuje tego `packages/narrative/test/dialogue-roles.test.ts`,
   który przechodzi każdą osiągalną ścieżkę wyborów.
+- **[gotowe] Mimika postaci VRoid.** Mruganie co 2–6 s i ruch ust podczas kwestii rozmówcy przez
+  morph targety VRM (`blink`, `a`, `i`, `u`, `e`, `o`) w shaderze toon; opis w `docs/models.md`.
+- **[gotowe] Odzież na modelach VRoid i w podglądzie menu.** ([ADR-0015](adr/0015-ekwipunek-uzbrojenie-loot.md), dopisek E7)
+  Hełm, wizjer i płyta kamizelki na kościach głowy i klatki ubranego modelu (na rigu
+  proceduralnym bez modelu), kolor kurtki i spodni jako przebarwienie materiałów „Tops” i
+  „Bottoms”, podgląd w menu przez te same `Loadouts` co świat.
 
 ## Później
+
+- Wygląd ekwipunku, dalej: broń w kaburze i na plecach na kościach modelu (dziś na ciele rigu),
+  hełm i kamizelka jako modele GLB zamiast brył, przebarwienie na rigu proceduralnym, wizjer
+  a implant optyki (`implants` z deskryptora jeszcze nic nie rysuje).
 
 - Ruch w pionie, dalej: nawigacja AI między poziomami (punkty przejścia przez schody i windy),
   skok i obrażenia od upadku, dachy i balkony w Shinsekai, drabiny przeciwpożarowe, minimapa z piętrami.
 
-- Blend shapes twarzy (mruganie, usta w dialogu) w toon shaderze: patrz `docs/models.md`.
-- Docelowy model Seki (VRoid lub grafik) zamiast modeli zastępczych.
+- Własne modele postaci (VRoid lub grafik) po MVP. Decyzja: obsada z próbek VRoid (CC0 / VRoid Hub license v1)
+  zostaje w MVP gry.

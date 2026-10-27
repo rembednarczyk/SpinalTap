@@ -1,4 +1,4 @@
-import { Matrix, Quaternion, type TransformNode, Vector3 } from "../babylon";
+import { Matrix, Quaternion, TransformNode, Vector3 } from "../babylon";
 import type { CharacterRig } from "./characters";
 
 const IDENTITY = Matrix.Identity();
@@ -21,6 +21,12 @@ const ALIASES: Record<Driven, readonly string[]> = {
 };
 
 const RIGHT_HAND = ["rhand", "righthand", "handr"];
+
+/** Upper torso bones, best first: garment add-ons on the chest hang from the first one found. */
+const CHEST = ["cupperchest", "upperchest", "spine2", "cchest", "chest", "spine1"];
+
+/** Bones that carry garment add-ons (ADR-0015 E7): the head and the upper chest. */
+export type AnchorBone = "head" | "chest";
 
 /** Strips the instance prefix, exporter prefixes and separators: "e3-J_Bip_L_UpperLeg" -> "lupperleg". */
 export const normaliseBoneName = (name: string, prefix = ""): string =>
@@ -78,6 +84,10 @@ export class HumanoidRetarget {
   private readonly held: { node: TransformNode; hand: TransformNode; joints: TransformNode[]; offset: Vector3 }[] = [];
   private rightHand: TransformNode | null = null;
   private rightForearm: TransformNode[] = [];
+  /** Head and chest bones with their model-space rotation at rest (rig joint at identity). */
+  private readonly anchors = new Map<AnchorBone, { bone: TransformNode; rest: Matrix }>();
+  /** Height of the head bone over the rig body's origin (the feet), in metres. */
+  private headY = 0;
 
   private constructor(private readonly root: TransformNode) {}
 
@@ -122,6 +132,11 @@ export class HumanoidRetarget {
       restOf.set(key, rest);
       self.bones.push({ node, joints: joints[key], rest });
     }
+    self.anchors.set("head", { bone: found.head!, rest: restOf.get("head")! });
+    const nodes = root.getDescendants(false).filter((n): n is TransformNode => "rotation" in n);
+    const chest = CHEST.map((alias) => nodes.find((n) => normaliseBoneName(n.name, prefix) === alias)).find((n) => n !== undefined);
+    if (chest) self.anchors.set("chest", { bone: chest, rest: self.modelRotation(chest).clone() });
+    self.headY = self.bodyPosition(found.head!).y * (Math.abs(root.scaling.y) || 1);
     self.update();
     return self;
   }
@@ -181,6 +196,36 @@ export class HumanoidRetarget {
     this.held.push({ node, hand: this.rightHand, joints: this.rightForearm, offset });
     this.update();
     return true;
+  }
+
+  /** Height of the model's head bone over its feet, in metres (to fit add-ons to the model's size). */
+  get headHeight(): number {
+    return this.headY;
+  }
+
+  /**
+   * A node on the model's head or chest bone whose frame is the rig's: at rest its axes are
+   * the rig body's (+Y up, +Z forward, the character's left at -X) and its unit is a metre, so
+   * a garment add-on authored for the rig only needs its offset from the bone. The head node
+   * turns with the head, the chest one with the torso. The caller owns and disposes the node.
+   * Null when the model has no such bone.
+   */
+  anchor(bone: AnchorBone, name: string): TransformNode | null {
+    const a = this.anchors.get(bone);
+    if (!a) return null;
+    // Wanted: anchor -> body = the rig joint's turn. The bone -> body is rest * toBody * turn, so
+    // anchor -> bone = (rest * toBody)^-1, split into the model's scale and mirror and a rotation.
+    const rs = this.root.scaling;
+    const sx = Math.sign(rs.x) || 1;
+    const sy = Math.sign(rs.y) || 1;
+    const sz = Math.sign(rs.z) || 1;
+    const scale = Math.abs(rs.x) || 1;
+    const local = Matrix.Scaling(sx, sy, sz).multiply(this.toBody.transpose()).multiply(a.rest.transpose());
+    const node = new TransformNode(name, this.root.getScene());
+    node.parent = a.bone;
+    node.rotationQuaternion = Quaternion.FromRotationMatrix(local);
+    node.scaling.set(sx / scale, sy / scale, sz / scale);
+    return node;
   }
 
   /** Stops driving a prop given to `holdInRightHand`, e.g. before it is disposed. */

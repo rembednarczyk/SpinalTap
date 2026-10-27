@@ -20,6 +20,8 @@ varying vec4 vColor;
 #endif
 #include<instancesDeclaration>
 #include<bonesDeclaration>
+#include<morphTargetsVertexGlobalDeclaration>
+#include<morphTargetsVertexDeclaration>[0..maxSimultaneousMorphTargets]
 uniform mat4 viewProjection;
 uniform mat4 shadowMatrix;
 varying vec3 vWorldPos;
@@ -27,11 +29,16 @@ varying vec3 vNormal;
 varying vec4 vShadowPos;
 
 void main(void) {
+  // Face expressions of imported models (blink, mouth) move positions only.
+  vec3 positionUpdated = position;
+  vec3 normalUpdated = normal;
+#include<morphTargetsVertexGlobal>
+#include<morphTargetsVertex>[0..maxSimultaneousMorphTargets]
 #include<instancesVertex>
 #include<bonesVertex>
-  vec4 wp = finalWorld * vec4(position, 1.0);
+  vec4 wp = finalWorld * vec4(positionUpdated, 1.0);
   vWorldPos = wp.xyz;
-  vNormal = normalize(mat3(finalWorld) * normal);
+  vNormal = normalize(mat3(finalWorld) * normalUpdated);
   vShadowPos = shadowMatrix * wp;
 #ifdef UV1
   vUV = uv;
@@ -131,7 +138,12 @@ void main(void) {
   // Cut-out hair strands, lashes and brows; the toon pass stays opaque.
   if (texel.a < 0.5) albedo = vec3(1.0, 0.0, 1.0);
 #endif
+#ifdef TINT
+  // Garment colour (ADR-0015 E7): the cloth's shading kept as brightness, the hue from baseColor.
+  albedo *= 0.3 + 0.85 * dot(texel.rgb, vec3(0.299, 0.587, 0.114));
+#else
   albedo *= texel.rgb;
+#endif
 #endif
 #ifdef VERTEXCOLOR
   albedo *= vColor.rgb;
@@ -206,13 +218,18 @@ precision highp float;
 attribute vec3 position;
 #include<instancesDeclaration>
 #include<bonesDeclaration>
+#include<morphTargetsVertexGlobalDeclaration>
+#include<morphTargetsVertexDeclaration>[0..maxSimultaneousMorphTargets]
 uniform mat4 viewProjection;
 varying float vDepth;
 
 void main(void) {
+  vec3 positionUpdated = position;
+#include<morphTargetsVertexGlobal>
+#include<morphTargetsVertex>[0..maxSimultaneousMorphTargets]
 #include<instancesVertex>
 #include<bonesVertex>
-  gl_Position = viewProjection * finalWorld * vec4(position, 1.0);
+  gl_Position = viewProjection * finalWorld * vec4(positionUpdated, 1.0);
   vDepth = gl_Position.z / gl_Position.w * 0.5 + 0.5;
 }
 `;

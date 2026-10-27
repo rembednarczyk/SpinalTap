@@ -27,7 +27,7 @@ cień, line art i animację z proceduralnego rigu, więc nie potrzebuje własnyc
 | `preset` | Preset toon (`importedCharacter` domyślnie). |
 | `idle`, `walk`, `run` | Nazwy klipów glTF. Na razie nieużywane: postać animuje rig. |
 
-Domyślna obsada zastępcza (próbki VRoid) leży w `packages/app/public/models/` z manifestem i
+Domyślna obsada (próbki VRoid, zostaje w MVP) leży w `packages/app/public/models/` z manifestem i
 README z licencjami; `?models=off` wraca do obsady proceduralnej. Scena referencyjna
 NPR zawsze używa obsady proceduralnej, żeby migawka nie zależała od pobrań.
 
@@ -60,12 +60,12 @@ NPR zawsze używa obsady proceduralnej, żeby migawka nie zależała od pobrań.
   zapisuje głębię nadmuchanego hulla. Skóra z konturem 1,8 cm zakrywa sukienkę leżącą
   centymetr nad nią. Dlatego importowane modele mają kontur wyłączony i tuszuje je post-process
   line art. Na niskiej jakości (telefony) line art jest wyłączony, więc modele nie mają konturu.
-- **Blend shapes twarzy (mruganie, usta)** jeszcze nie działają: toon shader nie ma morph
-  targetów. Pierwsza próba (standardowe include'y Babylona `morphTargetsVertex*`) została
-  wycofana, bo testy w przeglądarce się zawieszały. Później okazało się, że to samo działo się
-  bez niej przy przeciążonej maszynie, więc przyczyna nie jest ustalona. Przy ponownej próbie
-  trzymać sterowane cele zawsze aktywne (wpływ > 0), bo Babylon liczy aktywne cele do definicji
-  shadera i każde mrugnięcie wymuszałoby rekompilację.
+- **Mimika (mruganie, usta)** idzie przez morph targety VRM: `readVrmExpressions` czyta grupy
+  `blink` i samogłoski (VRM 0.x `blendShapeMaster`, VRM 1.0 `expressions.preset`), `FaceRig`
+  mruga co 2–6 s i porusza ustami, gdy aplikacja wyśle efekt `talk` przy kwestii rozmówcy.
+  Shader toon ma include'y morph targetów Babylona (tylko pozycje). Sterowane cele mają zawsze
+  wpływ > 0 i `optimizeInfluencers = false`, bo zmiana liczby aktywnych celów rekompiluje shader.
+  Pliki zawierają tylko te sześć kształtów (`tools/shrink_glb.py --keep-morphs=...`).
 - **Klipy animacji z pliku** nie są odtwarzane, bo rig daje chód, celowanie, trafienie i upadek.
 - **Wydajność:** model VRoid to około 15 draw calli plus cień. Budżet ulicy (280) mieści
   kilka takich postaci. Przy większej obsadzie potrzebne będzie LOD albo atlas materiałów.
