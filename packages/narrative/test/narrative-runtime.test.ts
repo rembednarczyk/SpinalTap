@@ -310,7 +310,7 @@ describe("act I: Echo (M3)", () => {
   });
 
   const choices = (c: DomainState["story"]["choices"]): Partial<DomainState> => ({
-    story: { choices: c, ending: null },
+    story: { choices: c, ending: null, act2Ending: null },
     flags: ["recalled:crash_night"],
   });
 
@@ -338,7 +338,7 @@ describe("act I: Echo (M3)", () => {
 
   it("after the ending Mori remembers what was decided", () => {
     const { runtime } = setup();
-    const done = (ending: "aya" | "seki") => ({ ...createDomainState(), story: { choices: {}, ending } });
+    const done = (ending: "aya" | "seki") => ({ ...createDomainState(), story: { choices: {}, ending, act2Ending: null } });
     expect(text(runtime.start("mori", done("aya")))).toContain("Aya. Jak głowa?");
     expect(text(runtime.start("mori", done("seki")))).toContain("Fiolka");
   });
