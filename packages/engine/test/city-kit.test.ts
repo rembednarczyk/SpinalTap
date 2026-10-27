@@ -149,7 +149,8 @@ describe("CityKit cells", () => {
   const materials = new ToonMaterials(scene);
 
   it("bakes the blocks of a cell into one mesh, hides their boxes and rebuilds on removal", () => {
-    const kit = new CityKit(scene, materials, null, data, { labels: false });
+    const covered: string[] = [];
+    const kit = new CityKit(scene, materials, null, data, { labels: false, onCovered: (box) => covered.push(box.name) });
     const boxA = MeshBuilder.CreateBox("a", { size: 1 }, scene);
     const boxB = MeshBuilder.CreateBox("b", { size: 1 }, scene);
     expect(kit.add(1, { style: "shop", front: "z+" }, { x: 16, y: 12, z: 6 }, { x: 76, y: 6, z: 61 }, boxA)).toBe(true);
@@ -158,6 +159,7 @@ describe("CityKit cells", () => {
     expect(kit.meshCount).toBe(1);
     expect(boxA.isVisible).toBe(false);
     expect(boxB.isVisible).toBe(false);
+    expect(covered.sort()).toEqual(["a", "b"]);
     const mesh = scene.getMeshByName("city-1:0")!;
     expect(mesh.material).toBe(kit.material);
     const verts = mesh.getTotalVertices();

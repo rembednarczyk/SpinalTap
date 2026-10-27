@@ -165,7 +165,7 @@ export class BabylonRenderer implements RenderPort {
     CityKit.load(url)
       .then((data) => {
         if (scene.isDisposed) return;
-        this.city = new CityKit(scene, this.materials, this.stage.glow, data);
+        this.city = new CityKit(scene, this.materials, this.stage.glow, data, { onCovered: (box) => this.stepBack(box) });
         this.city.setDaylight(this.daylight);
         for (const [id, p] of this.pendingSkins) this.city.add(id, p.view.skin, p.view.size, p.center, p.box);
         this.pendingSkins.clear();
@@ -175,6 +175,22 @@ export class BabylonRenderer implements RenderPort {
         this.pendingSkins.clear();
       })
       .finally(() => scene.removePendingData(token));
+  }
+
+  /**
+   * A box the kit now draws stays for the camera and the moon shadow, hidden. Its faces would
+   * sit exactly on the model's walls and speckle them with shadow acne, so it steps back a
+   * little inside them.
+   */
+  private stepBack(box: Mesh): void {
+    const size = box.getBoundingInfo().boundingBox.extendSize;
+    const inset = (half: number) => (half > 0 ? Math.max(0.5, (half - Math.min(0.25, half * 0.1)) / half) : 1);
+    box.unfreezeWorldMatrix();
+    const top = Math.min(0.3, size.y * 0.1);
+    box.scaling.set(inset(size.x), size.y > 0 ? (size.y * 2 - top) / (size.y * 2) : 1, inset(size.z));
+    box.position.y -= top / 2;
+    box.freezeWorldMatrix();
+    this.shadow.invalidateStatics();
   }
 
   /** Kit meshes built for skinned blocks (debug and tests). */

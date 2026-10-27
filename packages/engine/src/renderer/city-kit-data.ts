@@ -315,7 +315,8 @@ export const planSkin = (data: CityKitData, skin: BlockSkin, size: Vec3, center:
   const tw = W / nx;
   const td = D / nz;
   const placements: Placement[] = [];
-  const barTile = skin.style === "bar" ? Math.floor((nx - 1) / 2) : -1;
+  // A bar's storefront is the last tile of its front row.
+  const barTile = skin.style === "bar" ? nx - 1 : -1;
   const bar = all.find((m) => m.styles.includes("bar"));
   let previous = "";
   for (let j = 0; j < nz; j++) {

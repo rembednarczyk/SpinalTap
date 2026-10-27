@@ -38,6 +38,8 @@ export interface CityKitOptions {
    * have: without it the signs are blank boards.
    */
   readonly labels?: boolean;
+  /** Called when a block's box gives way to the kit (the renderer hides it and steps it back). */
+  readonly onCovered?: (box: Mesh) => void;
 }
 
 /** RGBA pixels of the sign label atlas (black boards, neon letters), or null without a canvas. */
@@ -132,9 +134,9 @@ export class CityKit {
     materials: ToonMaterials,
     private readonly glow: GlowLayer | null,
     readonly data: CityKitData,
-    options: CityKitOptions = {},
+    private readonly options: CityKitOptions = {},
   ) {
-    const { color, glow: lit } = kitTextures(data, options.labels !== false);
+    const { color, glow: lit } = kitTextures(data, this.options.labels !== false);
     const make = (pixels: Uint8Array) =>
       new RawTexture(pixels, KIT_TEXTURE.width, KIT_TEXTURE.height, Constants.TEXTUREFORMAT_RGBA, scene, true, false, Constants.TEXTURE_TRILINEAR_SAMPLINGMODE);
     this.material = materials.forCityKit(make(color));
@@ -206,7 +208,10 @@ export class CityKit {
         }
         addDecor(sink, this.data, m.plan);
         addSigns(sink, m.plan);
-        if (m.box) m.box.isVisible = false;
+        if (m.box && m.box.isVisible) {
+          m.box.isVisible = false;
+          this.options.onCovered?.(m.box);
+        }
       }
       bucket.mesh = this.mesh(`city-${key}`, sink);
     }
@@ -216,7 +221,7 @@ export class CityKit {
   setDaylight(daylight: number): void {
     const t = Math.max(0, Math.min(1, daylight));
     this.material.setFloat("selfLit", 1 - 0.5 * t);
-    const g = 0.7 * (1 - 0.7 * t);
+    const g = 0.55 * (1 - 0.7 * t);
     this.glowColor.set(g, g, g);
   }
 
