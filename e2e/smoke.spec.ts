@@ -94,4 +94,16 @@ test("ripperdoc clinic sells a medkit through the UI", async ({ page }) => {
   expect((await gameState(page)).eddies).toBe(30);
   await shop.getByRole("button", { name: /Wyjdź z kliniki/ }).click();
   await expect(shop).toBeHidden();
+
+  // The counter also leads to a conversation with Mori (ink knot "mori").
+  await step(page, 1, { interact: true });
+  await expect(shop).toBeVisible();
+  await shop.getByRole("button", { name: "Porozmawiaj z Mori" }).click();
+  await expect(shop).toBeHidden();
+  const dialogue = page.getByTestId("dialogue");
+  await expect(dialogue).toContainText("Coś boli?");
+  await dialogue.getByRole("button", { name: /Zakończ rozmowę/ }).click();
+  await expect(dialogue).toBeHidden();
+  await step(page, 1);
+  expect((await gameState(page)).dialogue).toBe(false);
 });

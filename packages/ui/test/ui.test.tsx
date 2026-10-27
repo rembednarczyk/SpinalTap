@@ -15,6 +15,7 @@ const intents = (): UiIntents => ({
   buyCyberware: vi.fn(),
   buyItem: vi.fn(),
   closeShop: vi.fn(),
+  talkToShopkeeper: vi.fn(),
 });
 
 const mount = (state: Partial<UiState> = {}) => {
@@ -156,6 +157,8 @@ describe("ripperdoc clinic", () => {
     expect(i.buyCyberware).toHaveBeenCalledWith("steady_grip");
     fireEvent.click(screen.getByRole("button", { name: /Kup · 90/ }));
     expect(i.buyItem).toHaveBeenCalledWith("medkit");
+    fireEvent.click(screen.getByRole("button", { name: "Porozmawiaj z Mori" }));
+    expect(i.talkToShopkeeper).toHaveBeenCalled();
     fireEvent.keyDown(window, { key: "Escape" });
     expect(i.closeShop).toHaveBeenCalled();
   });

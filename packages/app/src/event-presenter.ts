@@ -97,6 +97,10 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
     bus.on("ReputationChanged", (e) => {
       if (e.delta !== 0) toast("reputation", `${FACTIONS[e.faction]} ${e.delta > 0 ? "+" : ""}${e.delta}`, "Reputacja");
     }),
+    bus.on("EndingReached", (e) => {
+      toast("quest", "Koniec aktu I: Echo", `Zakończenie: ${e.title}`);
+      audio.play("quest-update");
+    }),
     bus.on("MemoryUnlocked", (e) => {
       toast("memory", e.title, e.description);
       render.playEffect({ kind: "memory-glitch" });
