@@ -28,6 +28,30 @@ const MELEE_REACH_Y = 1.2;
 /** Knee height of the "can I walk straight there" test above street level (ADR-0021). */
 const WALK_TEST_HEIGHT = 0.6;
 
+/**
+ * Sight of a corporate guard (ADR-0024). It sees in a cone in front of it, a crouching player
+ * only from half as far, and anyone standing right next to it whatever the facing (unless they
+ * crouch). Seeing fills its suspicion, faster the closer the player is; at 1 it raises the alarm.
+ * Out of sight the suspicion drains again.
+ */
+export const GUARD_CONE = 1.05;
+export const GUARD_CROUCH_SIGHT = 0.5;
+export const GUARD_NEAR = 2.2;
+const SUSPICION_RATE = 1.4;
+const SUSPICION_DECAY = 0.5;
+/** A guard on watch sweeps this far either side of its post's facing, once per `WATCH_PERIOD` seconds. */
+export const WATCH_SWEEP = 0.7;
+const WATCH_PERIOD = 8;
+
+/** Whether a cone-sighted guard notices the player this step (pure; the caller keeps the meter). */
+export const guardSees = (g: Entity, player: Entity, distance: number, inSight: boolean, sight: number): boolean => {
+  if (!inSight) return false;
+  const crouched = (player.posture?.amount ?? 0) > 0.5;
+  if (distance <= GUARD_NEAR && !crouched) return true;
+  if (distance > sight * (crouched ? GUARD_CROUCH_SIGHT : 1)) return false;
+  return Math.abs(angleTo({ x: g.position.x, z: g.position.z, yaw: g.yaw }, player.position.x, player.position.z)) <= GUARD_CONE;
+};
+
 /** A gang that wants the player dead looks for them harder. */
 export const HOSTILE_AGGRO_MULTIPLIER = 1.5;
 
@@ -167,7 +191,10 @@ class GangerAgent {
     return State.SUCCEEDED;
   };
 
-  /** Holds its post, or walks its daily plan (a night patrol) when it has one. */
+  /**
+   * Holds its post, or walks its daily plan (a night patrol) when it has one. A guard on watch
+   * looks around its post; one that half saw something turns towards it instead.
+   */
   HoldPosition = (): State => {
     const { self, ctx } = this;
     if (!self) return State.FAILED;
@@ -179,6 +206,9 @@ class GangerAgent {
     const d = Math.hypot(self.ai.home.x - self.position.x, self.ai.home.z - self.position.z);
     if (d > 0.3) this.moveTowards(self.ai.home.x, self.ai.home.z);
     else self.velocity = { x: 0, y: 0, z: 0 };
+    const watch = self.ai.watch;
+    if ((self.ai.suspicion ?? 0) > 0 && this.seen.player) this.face(this.seen.player);
+    else if (watch && ctx && d <= 0.3) self.yaw = watch.yaw + WATCH_SWEEP * Math.sin((2 * Math.PI * ctx.tick * ctx.dt) / WATCH_PERIOD + watch.phase);
     return State.SUCCEEDED;
   };
 
@@ -247,7 +277,15 @@ export const createGangerAiSystem = (): System => {
         const distance = player ? Math.hypot(player.position.x - g.position.x, player.position.z - g.position.z) : Infinity;
         const stance = factionStance(reputation, g.faction ?? "hebi");
         const aggro = effectiveAggroRange(g.ai.aggroRange, stance);
-        const visible = !!player && distance <= aggro && lineOfSight(ctx.world, eyeOf(g), chestOf(player));
+        let visible = !!player && distance <= aggro && lineOfSight(ctx.world, eyeOf(g), chestOf(player));
+        if (g.ai.cone && player && !g.ai.alerted) {
+          // A corporate guard needs a moment of looking before it believes its eyes.
+          const sees = guardSees(g, player, distance, visible, aggro);
+          const before = g.ai.suspicion ?? 0;
+          const rate = sees ? SUSPICION_RATE * (1.5 - Math.min(1, distance / aggro)) : -SUSPICION_DECAY;
+          g.ai.suspicion = Math.max(0, Math.min(1, before + rate * ctx.dt * timeScale));
+          visible = g.ai.suspicion >= 1;
+        }
         if (visible && stance !== "friendly") g.ai.alerted = true;
         brain.agent.ctx = ctx;
         brain.agent.self = g;

@@ -1,18 +1,24 @@
 import {
   type Contract,
+  ENEMY_TYPES,
+  type EnemyTypeId,
   type EntityId,
   type EntitySnapshot,
   type GameClock,
   PROTECTEE_KEY,
   type Vec3,
+  contractAlarmFlag,
+  contractEscortKey,
   contractItemKey,
   contractKind,
   contractTag,
+  contractTerminalKey,
   takenFlag,
 } from "@seki/core";
 import type { World } from "miniplex";
 import { CONTRACT_SITE_SPAWNS } from "../content/district-m0";
 import { CONTRACT_ITEM_SPOTS } from "../content/district-targ";
+import { DOKI_CONTRACT_POSTS, DOKI_ITEM_SPOTS, DOKI_TERMINAL_SPOTS, ESCORT_ROUTE } from "../content/district-doki";
 import { type ChunkDef, type DistrictId, WORLD_CHUNKS, chunkAt, distanceToRect } from "../content/world-map";
 import type { Entity } from "./components";
 import {
@@ -21,10 +27,13 @@ import {
   applyEntitySnapshot,
   contractGangerHp,
   entitySnapshotOf,
+  escortEntity,
   gangerEntity,
   isDead,
   pickupEntity,
   propEntity,
+  sniperEntity,
+  terminalEntity,
 } from "./factory";
 import { inCreationOrder } from "./ordering";
 import { placeOnSchedule } from "./schedule";
@@ -47,7 +56,12 @@ interface Template {
   /** Keyed entities carry state across unloads and saves; static props do not. */
   readonly key: string | null;
   readonly make: () => Entity;
+  /** Spawns only once this flag is up (a docks job's alarm, ADR-0024). */
+  readonly when?: string;
 }
+
+/** Docks guards get tougher with experience, from their own type's health (ADR-0024). */
+const docksGuardHp = (type: EnemyTypeId, completed: number): number => ENEMY_TYPES[type].hp + Math.min(40, completed * 5);
 
 export interface StreamingChange {
   readonly loaded: readonly string[];
@@ -136,31 +150,66 @@ export class WorldStreamer {
     const chunk = (first ? chunkAt(first.x, first.z, this.chunks) : null)?.id ?? this.chunks[0]?.id ?? "";
     for (const old of this.contract) this.byKey.delete(old.key ?? "");
     this.contract = [];
-    // A protection wave is sent at Oyaji; everyone else just holds the site.
-    const victim = contractKind(contract) === "protect" ? PROTECTEE_KEY : undefined;
+    const kind = contractKind(contract);
+    // A protection wave is sent at Oyaji, an escort's ambush at the defector; everyone else holds the site.
+    const victim = kind === "protect" ? PROTECTEE_KEY : kind === "escort" ? contractEscortKey(contract.id) : undefined;
+    const posts = DOKI_CONTRACT_POSTS[contract.siteId];
+    const tag = contractTag(contract.id);
+    const add = (t: Template): void => {
+      this.contract.push(t);
+      if (t.key) this.byKey.set(t.key, t);
+    };
     for (let i = 0; i < contract.targets; i++) {
       const position = points[i % points.length];
       if (!position) continue;
       const id = this.ids.take();
       const key = `${contract.id}-g${i}`;
+      const post = posts?.[i % posts.length];
+      if (post) {
+        // A docks post (ADR-0024): its own facing and type; an alarm post waits for the alarm.
+        const spawn = { key, position: post.at, yaw: post.yaw };
+        const hp = docksGuardHp(post.type, completed);
+        const make = (): Entity => {
+          if (post.type === "tessen_sniper") return sniperEntity(id, spawn, tag, hp, chunk);
+          const g = gangerEntity(id, spawn, tag, hp, chunk, victim, post.type);
+          // The hack's wave knows where Seki is; the office guards stand watch and look around.
+          if (g.ai && kind === "hack") g.ai.alerted = true;
+          if (g.ai && !post.onAlarm) g.ai = { ...g.ai, watch: { yaw: post.yaw, phase: i * 1.7 } };
+          return g;
+        };
+        add(post.onAlarm ? { id, chunk, key, make, when: contractAlarmFlag(contract.id) } : { id, chunk, key, make });
+        continue;
+      }
       // Face the street centre line.
       const spawn = { key, position, yaw: Math.atan2(-position.x, 0.001) };
       // Every third ganger of a wave fights hand to hand (ADR-0019).
       const type = i % 3 === 2 ? "hebi_brawler" : "hebi_ganger";
-      const make = () => gangerEntity(id, spawn, contractTag(contract.id), contractGangerHp(completed), chunk, victim, type);
-      const t: Template = { id, chunk, key, make };
-      this.contract.push(t);
-      this.byKey.set(key, t);
+      add({ id, chunk, key, make: () => gangerEntity(id, spawn, tag, contractGangerHp(completed), chunk, victim, type) });
     }
-    const crate = contractKind(contract) === "retrieve" ? CONTRACT_ITEM_SPOTS[contract.siteId] : undefined;
+    const crate = kind === "retrieve" ? CONTRACT_ITEM_SPOTS[contract.siteId] : kind === "infiltrate" ? DOKI_ITEM_SPOTS[contract.siteId] : undefined;
     if (crate) {
       const id = this.ids.take();
       const key = contractItemKey(contract.id);
-      const t: Template = { id, chunk, key, make: () => pickupEntity(id, key, crate, chunk) };
-      this.contract.push(t);
-      this.byKey.set(key, t);
+      add({ id, chunk, key, make: () => pickupEntity(id, key, crate, chunk, kind === "retrieve" ? "crate" : "data") });
+    }
+    if (kind === "escort") {
+      const id = this.ids.take();
+      const key = contractEscortKey(contract.id);
+      add({ id, chunk, key, make: () => escortEntity(id, key, ESCORT_ROUTE, chunk) });
+    }
+    const terminal = kind === "hack" ? DOKI_TERMINAL_SPOTS[contract.siteId] : undefined;
+    if (terminal) {
+      const id = this.ids.take();
+      const key = contractTerminalKey(contract.id);
+      add({ id, chunk, key, make: () => terminalEntity(id, key, terminal, chunk) });
     }
     if (this.resident.has(chunk)) this.spawnActors(world, flags, this.contract, null);
+  }
+
+  /** Spawns the contract's characters that were waiting for a flag that is now up (ADR-0024). */
+  spawnWaiting(world: World<Entity>, flags: readonly string[]): void {
+    const waiting = this.contract.filter((t) => t.when !== undefined && this.resident.has(t.chunk));
+    this.spawnActors(world, flags, waiting, null);
   }
 
   /**
@@ -242,6 +291,7 @@ export class WorldStreamer {
     for (const e of world) if (e.key) alive.add(e.key);
     for (const t of templates) {
       if (t.key === null || isDead(flags, t.key) || flags.includes(takenFlag(t.key)) || alive.has(t.key)) continue;
+      if (t.when !== undefined && !flags.includes(t.when)) continue;
       const e = t.make();
       const saved = this.dormant.get(t.key);
       if (saved) {
