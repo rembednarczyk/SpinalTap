@@ -1,6 +1,6 @@
 import { type AbstractMesh, FreeCamera, MeshBuilder, Ray, type Scene, TransformNode, Vector3 } from "../babylon";
 import { type CameraMode, type Transform, type Vec3, directionFromAngles } from "@seki/core";
-import { EYE_HEIGHT, TPP_HEIGHT_OFFSET, TPP_SHOULDER_OFFSET } from "@seki/sim";
+import { TPP_HEIGHT_OFFSET, TPP_SHOULDER_OFFSET, eyeHeightAt } from "@seki/sim";
 import { applyOutline } from "../npr/outline";
 import type { ToonMaterials } from "../npr/toon-material";
 
@@ -116,7 +116,8 @@ export class CameraRig {
 
     const { position: p, yaw, pitch } = target;
     const dir = directionFromAngles(yaw, pitch);
-    const eye = new Vector3(p.x, p.y + EYE_HEIGHT, p.z);
+    // Same curve as the simulation's aim origin, so the crosshair stays exact while crouching.
+    const eye = new Vector3(p.x, p.y + eyeHeightAt(target.crouch ?? 0), p.z);
     const shoulder = eye.add(new Vector3(Math.cos(yaw) * TPP_SHOULDER_OFFSET, TPP_HEIGHT_OFFSET, -Math.sin(yaw) * TPP_SHOULDER_OFFSET).scale(this.blend));
     const back = new Vector3(-dir.x, -dir.y, -dir.z);
 

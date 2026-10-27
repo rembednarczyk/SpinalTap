@@ -74,6 +74,25 @@ describe("HumanoidRetarget", () => {
     expect(Math.abs(hand.y - shoulder.y)).toBeLessThan(0.15);
   });
 
+  it("crouches an imported model through the rig's hips and knees", () => {
+    const scene = new Scene(new NullEngine());
+    const rig = buildHeroine(scene, new ToonMaterials(scene), "h");
+    const { root, bone } = tPose(scene);
+    const retarget = HumanoidRetarget.create(rig, root)!;
+    animateRig(rig, 0, 0.016, 0);
+    retarget.update();
+    const standingHead = worldOf(bone("J_Bip_C_Head")).y;
+    animateRig(rig, 0, 0.016, 1);
+    retarget.update();
+    const hip = worldOf(bone("J_Bip_L_UpperLeg"));
+    const knee = worldOf(bone("J_Bip_L_LowerLeg"));
+    const foot = worldOf(bone("J_Bip_L_Foot"));
+    // Thigh forward and nearly level, shin back down to the foot, the whole model lower.
+    expect(knee.z - hip.z).toBeGreaterThan(0.3);
+    expect(knee.y - foot.y).toBeGreaterThan(0.2);
+    expect(standingHead - worldOf(bone("J_Bip_C_Head")).y).toBeGreaterThan(0.3);
+  });
+
   it("holds a gun in the right hand, pointing along the aim", () => {
     const scene = new Scene(new NullEngine());
     const rig = buildHeroine(scene, new ToonMaterials(scene), "h");

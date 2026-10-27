@@ -241,7 +241,7 @@ export class BabylonRenderer implements RenderPort {
 
   /** Per-frame presentation update: animation, camera, VFX, rain. Call before scene.render(). */
   frame(dt: number): void {
-    for (const e of this.entities.values()) if (e.kind === "character") animateRig(e.rig, e.transform.speed, dt);
+    for (const e of this.entities.values()) if (e.kind === "character") animateRig(e.rig, e.transform.speed, dt, e.transform.crouch);
     for (let i = this.dying.length - 1; i >= 0; i--) {
       const rig = this.dying[i];
       if (!rig) continue;
