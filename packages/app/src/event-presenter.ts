@@ -24,6 +24,8 @@ import { type UiStore, dismissToast, patchUi, pushToast } from "@seki/ui";
 import { lootSummary } from "./loot-view";
 
 const TOAST_MS = 4500;
+/** Landings from lower than this (a kerb, a stair) make no sound of their own; footsteps cover them. */
+const LANDING_SOUND_DROP = 0.5;
 
 const REFUSAL: Partial<Record<FactionId, string>> = { clinic: "Mori zamyka drzwi kliniki", civilians: "Oyaji opuszcza roletę" };
 
@@ -125,6 +127,14 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
       }
     }),
     bus.on("EntityKilled", () => audio.play("kill")),
+    // Jumps and landings (ADR-0021): the player's own; a step off a kerb stays silent.
+    bus.on("Jumped", (e) => {
+      if (isPlayer(e.entityId)) audio.play("jump");
+    }),
+    bus.on("Landed", (e) => {
+      if (!isPlayer(e.entityId) || e.drop < LANDING_SOUND_DROP) return;
+      audio.play(e.hard ? "land-hard" : "land");
+    }),
     bus.on("PlayerDied", () => hooks.onPlayerDied()),
     bus.on("DialogueInterrupted", (e) => {
       hooks.onDialogueInterrupted(e.reason);

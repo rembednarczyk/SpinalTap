@@ -86,6 +86,18 @@ describe("weapon, loot and trade cues (E12)", () => {
     ]);
   });
 
+  it("jumps and landings: the player's own, a heavy thud for a long drop, nothing for a kerb (ADR-0021)", () => {
+    const { bus, cues } = setup();
+    const at = { x: 0, y: 0, z: 0 };
+    bus.emit("Jumped", { entityId: PLAYER, at });
+    bus.emit("Landed", { entityId: PLAYER, drop: 1.2, hard: false, damage: 0, at });
+    bus.emit("Landed", { entityId: PLAYER, drop: 9.9, hard: true, damage: 59, at });
+    bus.emit("Landed", { entityId: PLAYER, drop: 0.38, hard: false, damage: 0, at });
+    bus.emit("Jumped", { entityId: NPC, at });
+    bus.emit("Landed", { entityId: NPC, drop: 5, hard: true, damage: 10, at });
+    expect(cues).toEqual(["jump", "land", "land-hard"]);
+  });
+
   it("every new cue has a recording", () => {
     const cues = audioSampleManifest("https://example.test/audio/").cues ?? {};
     for (const cue of ["reload", "weapon-switch", "loot-pickup", "sell", "repair"] as const) expect(cues[cue]?.urls.length, cue).toBeGreaterThan(0);

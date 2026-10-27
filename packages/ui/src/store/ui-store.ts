@@ -83,11 +83,23 @@ export interface MapRectVm {
   readonly d: number;
 }
 
+/** Where the levels meet (ADR-0021): a flight of stairs, a lift or a ladder. */
+export type MapLinkKind = "stairs" | "lift" | "ladder";
+
+export interface MapLinkVm {
+  readonly kind: MapLinkKind;
+  readonly x: number;
+  readonly z: number;
+}
+
 /** Static district geometry for the minimap. Sent once at startup. */
 export interface MapVm {
   readonly bounds: MapRectVm;
   readonly blocks: readonly MapRectVm[];
   readonly streets: readonly MapRectVm[];
+  /** Walkable floors above the street (decks, walkways, balconies); lit while the player is up there. */
+  readonly decks?: readonly MapRectVm[];
+  readonly links?: readonly MapLinkVm[];
 }
 
 export type MapMarkerKind = "fixer" | "ripperdoc" | "target";
@@ -104,6 +116,8 @@ export interface MapPlayerVm {
   readonly z: number;
   /** Radians; 0 looks north (+z), PI/2 east (+x). */
   readonly yaw: number;
+  /** Height above the street in whole metres while the player is up on a level (ADR-0021); absent on the street. */
+  readonly level?: number;
 }
 
 export interface WeaponSlotVm {

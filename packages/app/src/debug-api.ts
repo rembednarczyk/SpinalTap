@@ -18,6 +18,10 @@ export interface DebugApi {
     dialogue: boolean;
     flags: readonly string[];
     player: { x: number; y: number; z: number } | null;
+    /** Ladder the player is on (ADR-0021), null off ladders. */
+    climbing: string | null;
+    /** In the air (a jump or a fall). */
+    airborne: boolean;
     district: string | null;
     loadedChunks: readonly string[];
     /** Game time, "HH:MM". */
@@ -67,6 +71,8 @@ export const createDebugApi = (
       dialogue: s.dialogue !== null,
       flags: sim.domain.flags,
       player: p ? { x: p.position.x, y: p.position.y, z: p.position.z } : null,
+      climbing: p?.climb?.ladder ?? null,
+      airborne: p?.fall !== undefined,
       district: sim.district,
       loadedChunks: sim.streamer.loadedChunks,
       clock: formatClock(sim.clock),
