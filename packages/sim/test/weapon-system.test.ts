@@ -125,6 +125,22 @@ describe("weapon slots (plan E4)", () => {
     expect(sim.player()!.combatant!.weapon).toBe("unity9");
   });
 
+  it("the mouse wheel cycles through the slots that hold a weapon, both ways", () => {
+    const sim = simWith((d) => give(d, [smg], { primary: "i4" }));
+    sim.step(input({ weaponCycle: 1 }));
+    // Secondary -> melee is empty -> primary.
+    expect(sim.domain.equipment.active).toBe("primary");
+    sim.step(input({ weaponCycle: 1 }));
+    expect(sim.domain.equipment.active).toBe("secondary");
+    sim.step(input({ weaponCycle: -1 }));
+    expect(sim.domain.equipment.active).toBe("primary");
+    // Only one weapon: nothing to cycle to.
+    const lone = Simulation.create({ seed: 5 });
+    const switched = collect(lone, "WeaponSwitched");
+    lone.step(input({ weaponCycle: 1 }));
+    expect(switched).toHaveLength(0);
+  });
+
   it("ignores an empty slot and draws a holstered weapon when its own slot is chosen", () => {
     const sim = Simulation.create({ seed: 5 });
     const switched = collect(sim, "WeaponSwitched");

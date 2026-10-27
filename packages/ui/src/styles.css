@@ -160,6 +160,25 @@ kbd {
   font-size: 18px;
 }
 
+.hud__hint {
+  position: absolute;
+  left: 50%;
+  bottom: 22%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--panel);
+  border: 1px solid var(--cyan);
+  font-size: 16px;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: hint-in 260ms ease-out;
+}
+.hud__hint-text { margin-left: 6px; color: var(--ink); }
+@keyframes hint-in { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translateX(-50%); } }
+
 .hurt-vignette {
   position: absolute;
   inset: 0;
@@ -573,6 +592,13 @@ kbd {
 }
 .settings__option--on { color: var(--ink); border-color: var(--cyan); background: rgba(95, 242, 255, 0.14); }
 .settings__note { font-size: 14px; color: var(--amber); }
+.settings__tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.keys { display: flex; flex-direction: column; gap: 8px; }
+.keys__list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; max-height: 46vh; overflow-y: auto; pointer-events: auto; }
+.keys__row { display: flex; align-items: center; gap: 10px; font-size: 15px; }
+.keys__row--listening .keys__codes { color: var(--cyan); }
+.keys__label { flex: 1; color: var(--ink-dim); }
+.keys__codes { flex: 0 0 9em; font-family: var(--font-mono); font-size: 14px; text-align: right; }
 .settings__note p { margin: 0 0 8px; }
 
 /* Touch gamepad */

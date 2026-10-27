@@ -1,4 +1,4 @@
-import type { InputFrame, WeaponSlotInput } from "@seki/core";
+import type { InputFrame, WeaponCycleInput, WeaponSlotInput } from "@seki/core";
 
 export type Action =
   | "forward"
@@ -18,9 +18,14 @@ export type Action =
   | "reload"
   | "slot1"
   | "slot2"
-  | "slot3";
+  | "slot3"
+  | "nextWeapon"
+  | "prevWeapon";
 
-/** Action → physical codes (KeyboardEvent.code, or "Mouse0".."Mouse2"). Remappable at runtime. */
+/**
+ * Action → physical codes (KeyboardEvent.code, "Mouse0".."Mouse4", or "WheelUp"/"WheelDown").
+ * Remappable at runtime (the settings' key bindings).
+ */
 export type KeyMap = Readonly<Record<Action, readonly string[]>>;
 
 export const DEFAULT_KEYMAP: KeyMap = {
@@ -34,7 +39,8 @@ export const DEFAULT_KEYMAP: KeyMap = {
   fire: ["Mouse0"],
   // Right mouse button: aim down sights, or guard with a melee weapon (ADR-0019).
   aim: ["Mouse2"],
-  interact: ["KeyE"],
+  // E, with F as the second key many PC games use for "use".
+  interact: ["KeyE", "KeyF"],
   jump: ["Space"],
   toggleCamera: ["KeyV"],
   ability: ["KeyQ"],
@@ -44,6 +50,9 @@ export const DEFAULT_KEYMAP: KeyMap = {
   slot1: ["Digit1", "Numpad1"],
   slot2: ["Digit2", "Numpad2"],
   slot3: ["Digit3", "Numpad3"],
+  // The wheel walks through the weapons that are there: down to the next, up to the previous.
+  nextWeapon: ["WheelDown"],
+  prevWeapon: ["WheelUp"],
 };
 
 export const remap = (map: KeyMap, action: Action, codes: readonly string[]): KeyMap => ({ ...map, [action]: codes });
@@ -66,6 +75,9 @@ export interface LookDelta {
 const slotPressed = (pressed: ReadonlySet<string>, map: KeyMap): WeaponSlotInput =>
   any(pressed, map.slot1) ? 1 : any(pressed, map.slot2) ? 2 : any(pressed, map.slot3) ? 3 : 0;
 
+const cyclePressed = (pressed: ReadonlySet<string>, map: KeyMap): WeaponCycleInput =>
+  any(pressed, map.nextWeapon) ? 1 : any(pressed, map.prevWeapon) ? -1 : 0;
+
 /** Keyboard + mouse state → InputFrame. Pure, so it is unit-tested without a browser. */
 export const mapKeyboardMouse = (keys: KeyState, look: LookDelta, map: KeyMap = DEFAULT_KEYMAP): InputFrame => ({
   moveX: (any(keys.held, map.right) ? 1 : 0) - (any(keys.held, map.left) ? 1 : 0),
@@ -84,6 +96,7 @@ export const mapKeyboardMouse = (keys: KeyState, look: LookDelta, map: KeyMap = 
   toggleWeapon: any(keys.pressed, map.toggleWeapon),
   reload: any(keys.pressed, map.reload),
   weaponSlot: slotPressed(keys.pressed, map),
+  weaponCycle: cyclePressed(keys.pressed, map),
 });
 
 export interface PadState {
@@ -126,6 +139,8 @@ export const mapGamepad = (pad: PadState, dt: number): InputFrame => ({
   toggleWeapon: pad.pressed[4] ?? false,
   reload: pad.pressed[13] ?? false,
   weaponSlot: padSlot(pad.pressed),
+  // Weapons are picked on the d-pad, so the pad never cycles.
+  weaponCycle: 0,
 });
 
 /** Combines devices: axes are summed and clamped, buttons are OR-ed. */
@@ -146,10 +161,12 @@ export const mergeFrames = (a: InputFrame, b: InputFrame): InputFrame => ({
   toggleWeapon: a.toggleWeapon || b.toggleWeapon,
   reload: a.reload || b.reload,
   weaponSlot: a.weaponSlot || b.weaponSlot,
+  weaponCycle: a.weaponCycle || b.weaponCycle,
 });
 
-/** How the aim button behaves: held down, or pressed once to aim and again to stop. */
-export type AimMode = "hold" | "toggle";
+/** How a button behaves: held down, or pressed once to start and again to stop. */
+export type ButtonMode = "hold" | "toggle";
+export type AimMode = ButtonMode;
 
 /**
  * Turns the raw aim button into "wants to aim" (ADR-0019). In "hold" mode it passes the button
@@ -176,5 +193,67 @@ export class AimLatch {
   reset(): void {
     this.latched = false;
     this.wasDown = false;
+  }
+}
+
+/** One hold-or-toggle button. */
+class Latch {
+  mode: ButtonMode = "hold";
+  latched = false;
+  private wasDown = false;
+
+  apply(down: boolean): boolean {
+    const pressed = down && !this.wasDown;
+    this.wasDown = down;
+    if (this.mode === "hold") {
+      this.latched = false;
+      return down;
+    }
+    if (pressed) this.latched = !this.latched;
+    return this.latched;
+  }
+
+  reset(): void {
+    this.latched = false;
+    this.wasDown = false;
+  }
+}
+
+/**
+ * Hold or toggle for aim, crouch and sprint, as PC games offer in their control settings.
+ * A toggled sprint ends when the player stops moving forward, aims, or crouches; a toggled
+ * crouch ends on a sprint or a jump. The frame then says what the player wants this tick.
+ */
+export class InputLatches {
+  private readonly aim = new Latch();
+  private readonly crouch = new Latch();
+  private readonly sprint = new Latch();
+
+  setModes(modes: { aim: ButtonMode; crouch: ButtonMode; sprint: ButtonMode }): void {
+    for (const key of ["aim", "crouch", "sprint"] as const) {
+      if (this[key].mode !== modes[key]) this[key].reset();
+      this[key].mode = modes[key];
+    }
+  }
+
+  apply(frame: InputFrame): InputFrame {
+    const aim = this.aim.apply(frame.aim);
+    let sprint = this.sprint.apply(frame.sprint);
+    if (this.sprint.mode === "toggle" && sprint && (frame.moveZ <= 0.1 || aim)) {
+      this.sprint.latched = false;
+      sprint = false;
+    }
+    let crouch = this.crouch.apply(frame.crouch);
+    if (this.crouch.mode === "toggle" && crouch && (sprint || frame.jump)) {
+      this.crouch.latched = false;
+      crouch = false;
+    }
+    return aim === frame.aim && sprint === frame.sprint && crouch === frame.crouch ? frame : { ...frame, aim, sprint, crouch };
+  }
+
+  reset(): void {
+    this.aim.reset();
+    this.crouch.reset();
+    this.sprint.reset();
   }
 }

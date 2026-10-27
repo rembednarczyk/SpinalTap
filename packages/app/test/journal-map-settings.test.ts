@@ -154,7 +154,7 @@ describe("settings", () => {
   it("round-trips through storage and survives broken or missing storage", () => {
     const st = memoryStorage();
     expect(loadSettings(st)).toEqual(DEFAULT_SETTINGS);
-    const custom = { quality: "low", aimMode: "toggle", mouseSensitivity: 2, touchSensitivity: 0.5, volume: 0.3 } as const;
+    const custom = { ...DEFAULT_SETTINGS, quality: "low", aimMode: "toggle", crouchMode: "hold", invertY: true, fov: 70, mouseSensitivity: 2, touchSensitivity: 0.5, volume: 0.3, bindings: { jump: ["KeyJ"] } } as const;
     expect(saveSettings(st, custom)).toBe(true);
     expect(loadSettings(st)).toEqual(custom);
     st.data.set(SETTINGS_KEY, "{not json");
@@ -174,12 +174,17 @@ describe("settings", () => {
   });
 
   it("clamps and fills bad values", () => {
-    expect(sanitizeSettings({ quality: "ultra", aimMode: "sometimes", mouseSensitivity: 99, touchSensitivity: "x", volume: -1 })).toEqual({
+    expect(
+      sanitizeSettings({ quality: "ultra", aimMode: "sometimes", crouchMode: 3, mouseSensitivity: 99, touchSensitivity: "x", volume: -1, fov: 200, invertY: "yes", bindings: { jump: ["Space"], fire: "Mouse0", aim: [1] } }),
+    ).toEqual({
+      ...DEFAULT_SETTINGS,
       quality: "high",
       aimMode: "hold",
       mouseSensitivity: 3,
       touchSensitivity: 1,
       volume: 0,
+      fov: 80,
+      bindings: { jump: ["Space"] },
     });
     expect(sanitizeSettings(null)).toEqual(DEFAULT_SETTINGS);
   });
@@ -190,6 +195,8 @@ describe("settings", () => {
     expect(scaleLook(EMPTY_INPUT, 2)).toBe(EMPTY_INPUT);
     const s = scaleLook(f, 2);
     expect(s).toMatchObject({ moveZ: 1, lookYaw: 0.2, lookPitch: -0.4 });
+    // Inverted Y flips only the pitch.
+    expect(scaleLook(f, 1, true)).toMatchObject({ lookYaw: 0.1, lookPitch: 0.2 });
   });
 
   it("saves every change and asks for a reload only for quality", () => {

@@ -143,12 +143,20 @@ export interface Dressing {
  * markings, puddles, rubbish, a vending machine, cables overhead). Pure presentation, merged
  * into a handful of vertex-coloured meshes.
  */
-export const createDressing = (scene: Scene, materials: ToonMaterials): Dressing => {
+export interface DressingOptions {
+  /**
+   * The city kit draws skinned buildings (ADR-0022) with their own facades, AC units and
+   * signs: leave those bare. Cables over the street, road markings and litter stay.
+   */
+  readonly skinned?: boolean;
+}
+
+export const createDressing = (scene: Scene, materials: ToonMaterials, options: DressingOptions = {}): Dressing => {
   const rand = lcg(1337);
   const main = new Batch(scene, "dressing");
   const puddles = new Batch(scene, "puddles");
   const glow = new Batch(scene, "dressing-glow");
-  const buildings = DISTRICT_M0_PROPS.filter(isBuilding);
+  const buildings = DISTRICT_M0_PROPS.filter(isBuilding).filter((b) => !(options.skinned && b.view.skin));
   // Keep facade clutter off the neon signs.
   const signs = DISTRICT_M0_PROPS.filter((p) => p.view.kind === "neon").map((p) => {
     const size = p.view.kind === "neon" ? p.view.size : { x: 0, y: 0, z: 0 };

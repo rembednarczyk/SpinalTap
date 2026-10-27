@@ -20,13 +20,13 @@ const VIEWMODEL_GUARD = { x: 0.08, y: -0.12, z: 0.5 } as const;
 const VIEW_STRIKE = 0.09;
 
 /** Field of view for an aim of 0..1 with a weapon zooming by `zoom` at full aim. */
-export const aimedFov = (aim: number, zoom: number): number => BASE_FOV * (1 + (zoom - 1) * Math.min(1, Math.max(0, aim)));
+export const aimedFov = (aim: number, zoom: number, base: number = BASE_FOV): number => base * (1 + (zoom - 1) * Math.min(1, Math.max(0, aim)));
 
 /**
  * Look speed multiplier for a field of view: zoomed in, the same hand movement turns the view
  * less, so the crosshair moves as far across the screen as from the hip.
  */
-export const lookScaleFor = (fov: number): number => Math.tan(fov / 2) / Math.tan(BASE_FOV / 2);
+export const lookScaleFor = (fov: number, base: number = BASE_FOV): number => Math.tan(fov / 2) / Math.tan(base / 2);
 
 interface ViewOffset {
   x: number;
@@ -85,6 +85,8 @@ export class CameraRig {
   /** Sprint widening of the FOV, eased; the aim zoom on top follows the simulation exactly. */
   private sprintFov = 0;
   private fov = BASE_FOV;
+  /** Hip field of view from the settings (vertical, radians); aiming and sprint work from it. */
+  baseFov = BASE_FOV;
   /** Eased 0..1 guard of the FPP melee viewmodel. */
   private guard = 0;
   private swing: { strike: number; windup: number; recovery: number; elapsed: number } | null = null;
@@ -156,7 +158,7 @@ export class CameraRig {
 
   /** Current look speed multiplier from the aim zoom (ADR-0019); 1 from the hip. */
   get lookScale(): number {
-    return lookScaleFor(this.camera.fov);
+    return lookScaleFor(this.camera.fov, this.baseFov);
   }
 
   /**
@@ -281,7 +283,7 @@ export class CameraRig {
     // Aiming down sights (ADR-0019): the zoom follows the simulation's eased aim exactly, so the
     // HUD crosshair (which uses the same numbers) stays calibrated.
     const aim = Math.min(1, Math.max(0, target.aim ?? 0));
-    const adsFov = aimedFov(aim, target.aimZoom ?? 1);
+    const adsFov = aimedFov(aim, target.aimZoom ?? 1, this.baseFov);
     let distance = TPP_DISTANCE * this.blend * (1 - TPP_ADS_PULL * smooth(aim));
     if (distance > 0.01) {
       const hit = this.scene.pickWithRay(new Ray(shoulder, back, distance + WALL_MARGIN), this.isBlocker);

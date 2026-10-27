@@ -4,12 +4,13 @@ import { loadModelManifest } from "./model-manifest";
 import { STORY_SOURCE } from "@seki/narrative";
 import { IndexedDbSaveStore, SavePersistence } from "@seki/persistence";
 import { FixedStepLoop } from "@seki/sim";
-import { DEFAULT_SETTINGS, GameUi, createUiStore } from "@seki/ui";
+import { DEFAULT_SETTINGS, GameUi, createUiStore, fovRadians } from "@seki/ui";
 import { createRoot } from "react-dom/client";
 import { browserClock } from "./browser-clock";
 import { type DebugApi, createDebugApi } from "./debug-api";
 import { GameSession } from "./game-session";
-import { type SettingsStorage, loadSettings, saveSettings, scaleLook } from "./settings";
+import { keymapFor } from "./controls";
+import { type SettingsStorage, loadHintsSeen, loadSettings, saveHintsSeen, saveSettings, scaleLook } from "./settings";
 
 declare global {
   interface Window {
@@ -40,14 +41,17 @@ const storage = ((): SettingsStorage | null => {
     return null;
   }
 })();
-const deviceDefaults = { ...DEFAULT_SETTINGS, quality: touchDevice ? "low" : "high" } as const;
+// The reference frame never shows hints (the NPR snapshot is of the scene alone).
+const deviceDefaults = { ...DEFAULT_SETTINGS, quality: touchDevice ? "low" : "high", hints: !reference } as const;
 // The reference frame ignores saved settings so the NPR snapshot never depends on the profile.
 const settings = reference ? deviceDefaults : loadSettings(storage, deviceDefaults);
 const qualityParam = params.get("quality");
 // ?quality wins over the saved setting, so tests and bug reports can force either.
 const quality = qualityParam === "low" || qualityParam === "high" ? qualityParam : settings.quality;
 const stage = new Stage(canvas, { reference, quality });
-const renderer = new BabylonRenderer(stage);
+// Buildings and vehicles from the CC0 city kit (public/city/README.md, ADR-0022); ?city=off keeps
+// the plain blocks. The reference frame uses it too: the scene is ready only once it is in.
+const renderer = new BabylonRenderer(stage, { cityKit: params.get("city") === "off" ? null : new URL("city/city-kit.glb", document.baseURI).href });
 // The character menu's 3D preview: a second scene on the same engine and canvas (ADR-0015).
 const preview = new PreviewStage(stage.engine, canvas, { quality });
 // Imported character models: models/manifest.json next to the game, ?models=<url> for another
@@ -82,6 +86,8 @@ const session = new GameSession({
   story: STORY_SOURCE,
   seed: () => (seedParam ? Number(seedParam) : reference ? 42 : randomSeed()),
   now: () => new Date(),
+  touch: touchDevice,
+  hints: { seen: loadHintsSeen(storage), save: (seen) => saveHintsSeen(storage, seen) },
   settings: {
     applied: { ...settings, quality },
     save: (next) => saveSettings(storage, next),
@@ -95,12 +101,24 @@ const session = new GameSession({
   },
 });
 
+/** Controls from the settings: key bindings, hold or toggle buttons and the field of view. */
+let controlsFor: unknown = null;
+const applyControls = (s: typeof settings) => {
+  if (controlsFor === s) return;
+  controlsFor = s;
+  input.keymap = keymapFor(s.bindings);
+  input.setButtonModes({ aim: s.aimMode, crouch: s.crouchMode, sprint: s.sprintMode });
+  renderer.rig.baseFov = fovRadians(s.fov);
+};
+
 const loop = new FixedStepLoop(browserClock, {
   update: () => {
     const s = ui.getState().settings;
-    input.aimMode = s.aimMode;
-    // Zoomed in, the look slows with the field of view (ADR-0019).
-    session.step(scaleLook(input.poll(), (touchDevice ? s.touchSensitivity : s.mouseSensitivity) * renderer.rig.lookScale));
+    applyControls(s);
+    // Zoomed in, the look slows with the field of view (ADR-0019); the ADS setting on top.
+    const zoom = renderer.rig.lookScale;
+    const ads = zoom < 0.999 ? s.adsSensitivity : 1;
+    session.step(scaleLook(input.poll(), (touchDevice ? s.touchSensitivity : s.mouseSensitivity) * zoom * ads, s.invertY));
   },
   render: (alpha) => {
     session.render(alpha);
@@ -165,6 +183,13 @@ window.addEventListener("keydown", (e) => {
     // With pointer lock the browser consumes Esc and pointerlockchange pauses instead.
     if (session.screen === "paused") session.resume();
     else if (!input.locked) session.pause();
+  } else if (e.code === "KeyP" && !e.repeat) {
+    // P pauses too, as in most PC games (Esc is taken by the browser while the mouse is locked).
+    if (session.screen === "paused") session.resume();
+    else if (session.inControl) {
+      input.releasePointerLock();
+      session.pause();
+    }
   }
 });
 window.addEventListener("pointerdown", () => {
