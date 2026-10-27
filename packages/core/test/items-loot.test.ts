@@ -45,14 +45,14 @@ describe("rollLoot", () => {
   });
 
   it("maps the draws onto eddies, entry, quantity and rarity", () => {
-    // eddies 0 -> 8; entry 0 -> 9 mm; quantity 0.99 -> 14.
+    // eddies 0 -> 10; entry 0 -> 9 mm; quantity 0.99 -> 14.
     expect(rollLoot(LOOT_TABLES.hebi_common, counting([0, 0, 0.99, 0]))).toEqual([
-      { kind: "eddies", qty: 8 },
+      { kind: "eddies", qty: 10 },
       { kind: "ammo", ammo: "9mm", qty: 14 },
     ]);
-    // eddies 0.99 -> 30; entry just under the end -> the grip stabiliser, always common.
+    // eddies 0.99 -> 34; entry just under the end -> the grip stabiliser, always common.
     expect(rollLoot(LOOT_TABLES.hebi_common, counting([0.99, 0.999, 0, 0.99]))).toEqual([
-      { kind: "eddies", qty: 30 },
+      { kind: "eddies", qty: 34 },
       { kind: "item", item: "steady_grip", rarity: "common", qty: 1 },
     ]);
     // The SMG band (weights 36+24+10+10+8 = 88 of 100) with a rare roll.
@@ -82,13 +82,13 @@ describe("rollLoot", () => {
     for (const t of Object.values(ENEMY_TYPES)) expect(LOOT_TABLES[t.loot].entries.length).toBeGreaterThan(0);
   });
 
-  it("uses the plan weights (100 in all) and 19 eddies on average (plan §5.2, §6)", () => {
+  it("uses the plan weights (100 in all) and 22 eddies on average (plan §5.2, raised in E10 for the balance)", () => {
     // Analytical: expected eddies plus the list value of the expected items, no simulation.
     const table = LOOT_TABLES.hebi_common;
     const total = table.entries.reduce((s, e) => s + e.weight, 0);
     expect(total).toBe(100);
     const eddies = (table.eddies[0] + table.eddies[1]) / 2;
-    expect(eddies).toBe(19);
+    expect(eddies).toBe(22);
   });
 });
 
