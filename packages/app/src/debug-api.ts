@@ -23,10 +23,18 @@ export interface DebugApi {
   setPaused(paused: boolean): void;
   teleport(x: number, z: number, yaw?: number, pitch?: number): void;
   step(n: number, input?: Partial<InputFrame>): void;
+  /** Fixed camera for inspection shots; null returns to the player camera. */
+  view(position: { x: number; y: number; z: number } | null, target?: { x: number; y: number; z: number }): void;
   session: GameSession;
 }
 
-export const createDebugApi = (session: GameSession, ui: UiStore, loop: FixedStepLoop, perf: () => PerfSample): DebugApi => ({
+export const createDebugApi = (
+  session: GameSession,
+  ui: UiStore,
+  loop: FixedStepLoop,
+  perf: () => PerfSample,
+  setView: DebugApi["view"],
+): DebugApi => ({
   ready: false,
   session,
   state() {
@@ -59,6 +67,7 @@ export const createDebugApi = (session: GameSession, ui: UiStore, loop: FixedSte
     p.prevYaw = yaw;
     p.pitch = pitch;
   },
+  view: setView,
   step(n, input = {}) {
     for (let i = 0; i < n; i++) session.step({ ...EMPTY_INPUT, ...input });
     session.render(0);

@@ -4,3 +4,6 @@ export * from "./lighting";
 export * from "./toon-material";
 export * from "./outline";
 export * from "./grading";
+export * from "./moon-shadow";
+export * from "./line-art";
+export * from "./speed-lines";

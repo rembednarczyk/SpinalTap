@@ -38,7 +38,9 @@ export type EffectDescriptor =
   | { readonly kind: "hit-spark"; readonly at: Vec3; readonly critical: boolean }
   | { readonly kind: "memory-glitch" }
   | { readonly kind: "overdrive"; readonly active: boolean }
-  | { readonly kind: "heal" };
+  | { readonly kind: "heal" }
+  /** The entity was hit: short recoil of the body. */
+  | { readonly kind: "flinch"; readonly entityId: EntityId };
 
 export type AudioCue =
   | "shot"

@@ -67,7 +67,7 @@ export class Grading {
     this.curves.globalSaturation = -18 - 55 * od;
     this.curves.globalHue = 200;
     this.curves.globalDensity = 30 * od;
-    this.pipeline.chromaticAberration.aberrationAmount = 70 * glitch + 28 * od;
+    this.pipeline.chromaticAberration.aberrationAmount = 70 * glitch + 10 * od;
     this.pipeline.grain.intensity = 6 + 40 * glitch;
     this.pipeline.imageProcessing.exposure = 1.08 + 0.35 * glitch + this.pulseTime * 0.8;
   }

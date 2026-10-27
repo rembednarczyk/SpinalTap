@@ -37,6 +37,7 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
     }),
     bus.on("DamageDealt", (e) => {
       render.playEffect({ kind: "hit-spark", at: e.at, critical: e.critical });
+      render.playEffect({ kind: "flinch", entityId: e.targetId });
       if (isPlayer(e.targetId)) {
         patchUi(ui, { hurtFlash: ui.getState().hurtFlash + 1 });
         audio.play("hurt");

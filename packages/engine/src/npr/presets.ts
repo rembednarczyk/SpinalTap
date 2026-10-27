@@ -6,11 +6,13 @@ export interface ToonPreset {
   readonly rimStrength?: number;
   readonly gloss?: number;
   readonly windows?: boolean;
+  /** Character fill light strength (0 = environment, no fill). */
+  readonly fill?: number;
   /** Inverted-hull outline; reserved for characters (see ADR-0003). */
   readonly outline?: boolean;
 }
 
-const CHAR = { rim: "#9ff6ff", rimStrength: 0.55, outline: true } as const;
+const CHAR = { rim: "#9ff6ff", rimStrength: 0.55, outline: true, fill: 0.55 } as const;
 
 export const PRESETS = {
   // Environment.
@@ -44,6 +46,24 @@ export const PRESETS = {
   // Ripperdoc.
   docCoat: { base: "#aeb8bd", ...CHAR },
   docGoggles: { base: "#000000", emissive: "#39ffd0", rimStrength: 0, outline: false },
+  // Anime cast (reference: 1990s cyberpunk cel animation).
+  sekiHair: { base: "#151a2e", ...CHAR, rim: "#7fa6ff", rimStrength: 0.5 },
+  sekiTop: { base: "#1c1d22", ...CHAR },
+  sekiPants: { base: "#6d6f6c", ...CHAR },
+  sekiShoes: { base: "#7a3a22", ...CHAR },
+  cyberIvory: { base: "#e2d8bb", gloss: 0.35, ...CHAR },
+  cyberCopper: { base: "#b8733c", gloss: 0.8, ...CHAR, rim: "#ffd29a" },
+  cyberDark: { base: "#2b2f36", gloss: 0.5, ...CHAR },
+  eyes: { base: "#10131b", rimStrength: 0, outline: false, fill: 0.3 },
+  lips: { base: "#a2383f", rimStrength: 0, outline: false, fill: 0.55 },
+  moriCoat: { base: "#ddd3b4", ...CHAR },
+  moriHair: { base: "#e8e6dc", ...CHAR },
+  // Merged procedural characters: colour per vertex, baked from the part presets above.
+  charVertexColor: { base: "#ffffff", ...CHAR },
+  charVertexColorFlat: { base: "#ffffff", rimStrength: 0, outline: false, fill: 0.45 },
+  // Imported glTF characters: colour comes from the model.
+  importedCharacter: { base: "#ffffff", ...CHAR },
+  importedProp: { base: "#ffffff", rimStrength: 0.12, rim: "#8fb3c9" },
 } as const satisfies Record<string, ToonPreset>;
 
 export type PresetName = keyof typeof PRESETS;

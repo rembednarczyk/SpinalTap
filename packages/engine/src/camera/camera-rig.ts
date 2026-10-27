@@ -22,6 +22,9 @@ export class CameraRig {
   private blend = 0;
   private currentDistance = 0;
   private recoil = 0;
+  private shakeAmount = 0;
+  private bobPhase = 0;
+  private fov = 1.08;
   private reference: { position: Vector3; target: Vector3 } | null = null;
   onBodyVisibility: (visible: boolean) => void = () => {};
 
@@ -84,6 +87,11 @@ export class CameraRig {
     this.recoil = 1;
   }
 
+  /** Short camera shake, e.g. when the player is hit. */
+  shake(amount: number): void {
+    this.shakeAmount = Math.min(1, this.shakeAmount + amount);
+  }
+
   update(target: Transform | null, dt: number): void {
     if (this.reference) {
       this.camera.position.copyFrom(this.reference.position);
@@ -111,8 +119,25 @@ export class CameraRig {
     // Pull in immediately, ease back out.
     this.currentDistance = distance < this.currentDistance ? distance : this.currentDistance + (distance - this.currentDistance) * Math.min(1, dt * 8);
 
-    this.camera.position.copyFrom(shoulder.add(back.scale(this.currentDistance)));
-    this.camera.rotation.set(pitch - this.recoil * 0.025, yaw, 0);
+    // Walking bob (FPP only), sprint FOV widening, hit shake.
+    const moving = Math.min(1, target.speed / 4.2);
+    this.bobPhase += dt * (6 + target.speed * 1.6) * (moving > 0.05 ? 1 : 0);
+    const bob = (1 - this.blend) * moving;
+    const sprinting = target.speed > 5.2 ? 1 : 0;
+    this.fov += (1.08 + 0.12 * sprinting - this.fov) * Math.min(1, dt * 6);
+    this.camera.fov = this.fov;
+    this.shakeAmount = Math.max(0, this.shakeAmount - dt * 3);
+    const sh = this.shakeAmount * this.shakeAmount;
+    const t = this.bobPhase;
+
+    const pos = shoulder.add(back.scale(this.currentDistance));
+    pos.y += Math.abs(Math.sin(t)) * 0.035 * bob;
+    this.camera.position.copyFrom(pos);
+    this.camera.rotation.set(
+      pitch - this.recoil * 0.025 + Math.sin(t * 2) * 0.004 * bob + Math.sin(t * 37) * 0.03 * sh,
+      yaw + Math.cos(t) * 0.005 * bob + Math.sin(t * 29 + 1.3) * 0.03 * sh,
+      Math.sin(t * 23) * 0.02 * sh,
+    );
 
     const fpp = this.blend < 0.35;
     this.viewmodel.setEnabled(fpp);

@@ -43,7 +43,7 @@ export class RenderSync {
 
   /** Despawns everything, e.g. before swapping in a freshly loaded world. */
   reset(): void {
-    for (const id of this.spawned) this.port.despawn(id);
+    this.port.clear();
     this.spawned.clear();
     this.cameraTarget = null;
   }

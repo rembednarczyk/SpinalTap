@@ -1,36 +1,72 @@
 /** Number of point lights the toon shader evaluates per fragment. */
 export const MAX_POINT_LIGHTS = 8;
 
+/**
+ * Shared vertex stage. Supports Babylon instancing and GPU skinning through the standard
+ * includes (ShaderMaterial injects INSTANCES / NUM_BONE_INFLUENCERS defines per mesh), so
+ * imported glTF characters use the same material as procedural ones.
+ */
 export const TOON_VERTEX = /* glsl */ `
 precision highp float;
 attribute vec3 position;
 attribute vec3 normal;
-uniform mat4 world;
-uniform mat4 worldViewProjection;
+#ifdef UV1
+attribute vec2 uv;
+varying vec2 vUV;
+#endif
+#ifdef VERTEXCOLOR
+attribute vec4 color;
+varying vec4 vColor;
+#endif
+#include<instancesDeclaration>
+#include<bonesDeclaration>
+uniform mat4 viewProjection;
+uniform mat4 shadowMatrix;
 varying vec3 vWorldPos;
 varying vec3 vNormal;
+varying vec4 vShadowPos;
 
 void main(void) {
-  vec4 wp = world * vec4(position, 1.0);
+#include<instancesVertex>
+#include<bonesVertex>
+  vec4 wp = finalWorld * vec4(position, 1.0);
   vWorldPos = wp.xyz;
-  vNormal = normalize(mat3(world) * normal);
-  gl_Position = worldViewProjection * vec4(position, 1.0);
+  vNormal = normalize(mat3(finalWorld) * normal);
+  vShadowPos = shadowMatrix * wp;
+#ifdef UV1
+  vUV = uv;
+#endif
+#ifdef VERTEXCOLOR
+  vColor = color;
+#endif
+  gl_Position = viewProjection * wp;
 }
 `;
 
 /**
- * Cel shading: light is quantised into two hard bands, a hard-edged rim light outlines the
- * silhouette, glossy surfaces get stepped highlights from street lights (wet asphalt), and
- * building facades get procedural lit windows. Distance fog is applied last.
+ * Cel shading after 1990s anime: two hard light bands, a hard moon shadow (cast shadow and
+ * terminator share one cool shadow colour), hard rim light, stepped highlights from street
+ * lights on wet surfaces, procedural lit windows on facades and distance fog.
  */
 export const TOON_FRAGMENT = /* glsl */ `
 precision highp float;
 varying vec3 vWorldPos;
 varying vec3 vNormal;
+varying vec4 vShadowPos;
+#ifdef UV1
+varying vec2 vUV;
+#endif
+#ifdef VERTEXCOLOR
+varying vec4 vColor;
+#endif
+#ifdef TEXTURE
+uniform sampler2D baseSampler;
+#endif
 
 uniform vec3 cameraPosition;
 uniform vec3 baseColor;
 uniform vec3 emissiveColor;
+uniform vec3 shadeColor;
 uniform vec3 sunDir;
 uniform vec3 sunColor;
 uniform vec3 ambientColor;
@@ -38,11 +74,19 @@ uniform vec3 rimColor;
 uniform float rimStrength;
 uniform float gloss;
 uniform float windows;
+/** Character fill light: a banded key from the camera side so faces read at night. */
+uniform float fill;
+uniform vec3 fillColor;
 uniform vec3 fogColor;
 uniform float fogDensity;
 uniform vec4 pointPos[${MAX_POINT_LIGHTS}];
 uniform vec4 pointColor[${MAX_POINT_LIGHTS}];
 uniform float pointCount;
+uniform sampler2D shadowSampler;
+/** x: depth bias, y: texel size, z: shadow strength (0 disables). */
+uniform vec3 shadowParams;
+/** Muzzle flash: xyz position, w intensity (0 = off). Warm, short range, no shadow. */
+uniform vec4 flashLight;
 
 float band(float x) {
   return smoothstep(0.03, 0.07, x) * 0.55 + smoothstep(0.42, 0.47, x) * 0.45;
@@ -52,10 +96,51 @@ float hash(vec2 p) {
   return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 }
 
+float shadowTap(vec2 uv, float d) {
+  return step(d, texture2D(shadowSampler, uv).r);
+}
+
+/** 1 = lit by the moon, 0 = in shadow. Bilinear PCF, then sharpened back to a hard cel edge. */
+float moonShadow() {
+  if (shadowParams.z <= 0.0) return 1.0;
+  vec3 p = vShadowPos.xyz / vShadowPos.w;
+  vec2 uv = p.xy * 0.5 + 0.5;
+  if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) return 1.0;
+  float d = p.z * 0.5 + 0.5 - shadowParams.x;
+  float t = shadowParams.y;
+  vec2 tc = uv / t - 0.5;
+  vec2 f = fract(tc);
+  vec2 base = (floor(tc) + 0.5) * t;
+  float s00 = shadowTap(base, d);
+  float s10 = shadowTap(base + vec2(t, 0.0), d);
+  float s01 = shadowTap(base + vec2(0.0, t), d);
+  float s11 = shadowTap(base + vec2(t, t), d);
+  float lit = mix(mix(s00, s10, f.x), mix(s01, s11, f.x), f.y);
+  return mix(1.0, smoothstep(0.4, 0.6, lit), shadowParams.z);
+}
+
 void main(void) {
   vec3 n = normalize(vNormal);
+  if (!gl_FrontFacing) n = -n;
   vec3 v = normalize(cameraPosition - vWorldPos);
-  vec3 lit = ambientColor + sunColor * band(max(dot(n, normalize(sunDir)), 0.0));
+
+  vec3 albedo = baseColor;
+#ifdef TEXTURE
+  albedo *= texture2D(baseSampler, vUV).rgb;
+#endif
+#ifdef VERTEXCOLOR
+  albedo *= vColor.rgb;
+#endif
+
+  float moon = band(max(dot(n, normalize(sunDir)), 0.0)) * moonShadow();
+  vec3 lit = ambientColor * (1.0 + fill) + sunColor * moon;
+  if (fill > 0.0) {
+    vec3 key = normalize(v + vec3(0.0, 0.35, 0.0));
+    // Wrapped: anything roughly facing the camera lands in the lit band (flat anime faces).
+    float k = band(max(dot(n, key), 0.0) * 0.6 + 0.4 * step(0.0, dot(n, v)));
+    lit += fillColor * k * fill;
+    moon = max(moon, k * fill * 0.8);
+  }
   vec3 spec = vec3(0.0);
 
   for (int i = 0; i < ${MAX_POINT_LIGHTS}; i++) {
@@ -74,10 +159,19 @@ void main(void) {
     }
   }
 
-  vec3 color = baseColor * lit + spec + emissiveColor;
+  if (flashLight.w > 0.0) {
+    vec3 toF = flashLight.xyz - vWorldPos;
+    float fd = length(toF);
+    float fatt = clamp(1.0 - fd / 9.0, 0.0, 1.0);
+    lit += vec3(1.0, 0.78, 0.45) * flashLight.w * band(max(dot(n, toF / max(fd, 0.001)), 0.0) * fatt * fatt * 2.0) * 1.6;
+  }
+
+  // Shadow side takes a cool tint instead of just getting darker (cel paint convention).
+  vec3 paint = mix(albedo * shadeColor, albedo, clamp(moon, 0.0, 1.0));
+  vec3 color = paint * lit + spec + emissiveColor;
 
   float fres = 1.0 - max(dot(n, v), 0.0);
-  color += rimColor * smoothstep(0.66, 0.7, fres) * rimStrength;
+  color += rimColor * smoothstep(0.66, 0.7, fres) * rimStrength * (0.35 + 0.65 * moon);
 
   if (windows > 0.5 && abs(n.y) < 0.5) {
     float u = abs(n.x) > 0.5 ? vWorldPos.z : vWorldPos.x;
@@ -94,5 +188,31 @@ void main(void) {
   float fog = 1.0 - exp(-pow(dist * fogDensity, 2.0));
   color = mix(color, fogColor, clamp(fog, 0.0, 1.0));
   gl_FragColor = vec4(color, 1.0);
+}
+`;
+
+/** Depth-only pass from the moon's orthographic camera. Same skinning path as the toon shader. */
+export const SHADOW_DEPTH_VERTEX = /* glsl */ `
+precision highp float;
+attribute vec3 position;
+#include<instancesDeclaration>
+#include<bonesDeclaration>
+uniform mat4 viewProjection;
+varying float vDepth;
+
+void main(void) {
+#include<instancesVertex>
+#include<bonesVertex>
+  gl_Position = viewProjection * finalWorld * vec4(position, 1.0);
+  vDepth = gl_Position.z / gl_Position.w * 0.5 + 0.5;
+}
+`;
+
+export const SHADOW_DEPTH_FRAGMENT = /* glsl */ `
+precision highp float;
+varying float vDepth;
+
+void main(void) {
+  gl_FragColor = vec4(vDepth, 0.0, 0.0, 1.0);
 }
 `;

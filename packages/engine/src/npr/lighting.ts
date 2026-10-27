@@ -12,6 +12,10 @@ export interface LightingRig {
   readonly ambient: string;
   readonly fogColor: string;
   readonly fogDensity: number;
+  /** Multiplier for albedo on the shadow side (cool cel shadow paint). */
+  readonly shadeTint: string;
+  /** Colour of the character fill light. */
+  readonly fillColor: string;
 }
 
 /** Night in Shinsekai: cold moonlight, violet ambient, teal haze. */
@@ -21,4 +25,6 @@ export const NIGHT_RIG: LightingRig = {
   ambient: "#3b3550",
   fogColor: "#141d26",
   fogDensity: 0.021,
+  shadeTint: "#7d7ab2",
+  fillColor: "#b9c6e0",
 };

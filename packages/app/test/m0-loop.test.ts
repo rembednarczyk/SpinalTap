@@ -25,6 +25,7 @@ class FakeRender implements RenderPort {
   spawn(id: EntityId, v: ViewDescriptor, _t: Transform) { this.views.set(id, v); }
   updateTransform() {}
   despawn(id: EntityId) { this.views.delete(id); }
+  clear() { this.views.clear(); }
   setCameraMode(m: CameraMode) { this.mode = m; }
   attachCamera() {}
   playEffect(e: EffectDescriptor) { this.effects.push(e.kind); }

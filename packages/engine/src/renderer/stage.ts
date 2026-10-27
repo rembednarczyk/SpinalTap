@@ -3,7 +3,11 @@ import { Color4, Engine, GlowLayer, Scene } from "../babylon";
 export interface StageOptions {
   /** Reference mode: deterministic frame for snapshot tests (no rain, no grain, fixed camera). */
   readonly reference: boolean;
+  /** "low" trims the expensive passes (smaller shadow map, no screen-space line art) for phones. */
+  readonly quality?: RenderQuality;
 }
+
+export type RenderQuality = "high" | "low";
 
 /** Engine + scene + glow layer. WebGL2 baseline (ADR-0004). */
 export class Stage {
@@ -15,7 +19,10 @@ export class Stage {
     readonly canvas: HTMLCanvasElement,
     readonly options: StageOptions,
   ) {
-    this.engine = new Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true, antialias: true }, true);
+    const low = options.quality === "low";
+    this.engine = new Engine(canvas, !low, { preserveDrawingBuffer: true, stencil: true, antialias: !low }, true);
+    // Phones report device pixel ratios of 2-3; cap the render resolution on low quality.
+    if (low) this.engine.setHardwareScalingLevel(Math.max(1, (window.devicePixelRatio || 1) / 1.25));
     this.scene = new Scene(this.engine);
     this.scene.clearColor = new Color4(0.06, 0.09, 0.12, 1);
     this.scene.skipPointerMovePicking = true;

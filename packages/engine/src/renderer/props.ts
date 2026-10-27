@@ -9,6 +9,8 @@ export interface PropView {
   readonly glowing: Mesh[];
   /** Meshes that block the TPP camera. */
   readonly blockers: Mesh[];
+  /** Meshes that cast the moon shadow. */
+  readonly casters: Mesh[];
   readonly light: { position: { x: number; y: number; z: number }; color: string; range: number; intensity: number } | null;
 }
 
@@ -30,7 +32,8 @@ export const buildBlock = (scene: Scene, materials: ToonMaterials, name: string,
   m.material = materials.get(blockPreset(v));
   m.isPickable = true;
   m.freezeWorldMatrix();
-  return { root, glowing: [], blockers: v.size.y > 0.3 ? [m] : [], light: null };
+  const tall = v.size.y > 0.3;
+  return { root, glowing: [], blockers: tall ? [m] : [], casters: tall ? [m] : [], light: null };
 };
 
 const neonTexture = (scene: Scene, name: string, label: string, color: string, vertical: boolean, aspect: number): DynamicTexture => {
@@ -85,6 +88,7 @@ export const buildNeon = (scene: Scene, name: string, v: Neon, at: Vector3): Pro
     root,
     glowing: [plane],
     blockers: [],
+    casters: [],
     light: { position: { x: at.x + outward, y: at.y, z: at.z + (thinX ? 0 : -1.2) }, color: v.color, range: 11, intensity: 0.55 },
   };
 };
@@ -116,6 +120,7 @@ export const buildLamp = (scene: Scene, materials: ToonMaterials, name: string, 
     root,
     glowing: [bulb],
     blockers: [],
+    casters: [pole, arm],
     light: { position: { x: at.x + towardStreet * 1.05, y: 4.6, z: at.z }, color, range: 14, intensity: 0.85 },
   };
 };

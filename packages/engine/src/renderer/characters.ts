@@ -1,35 +1,47 @@
-import { type Mesh, MeshBuilder, type Scene, TransformNode } from "../babylon";
+import { Bone, Color3, CreateLathe, Matrix, type Mesh, MeshBuilder, MeshClass, Quaternion, type Scene, Skeleton, TransformNode, Vector3, VertexBuffer } from "../babylon";
 import { applyOutline } from "../npr/outline";
-import type { PresetName } from "../npr/presets";
+import { PRESETS, type PresetName } from "../npr/presets";
 import { type ToonMaterials, presetHasOutline } from "../npr/toon-material";
 
-/** A procedurally built character with pivots for simple procedural animation. */
+/** A procedurally built character with a jointed skeleton for procedural animation. */
 export interface CharacterRig {
   readonly root: TransformNode;
+  /** Everything above the feet; bobs while walking and tips over on death. */
   readonly body: TransformNode;
+  readonly head: TransformNode;
   readonly legL: TransformNode;
   readonly legR: TransformNode;
+  readonly kneeL: TransformNode;
+  readonly kneeR: TransformNode;
   readonly armL: TransformNode;
   readonly armR: TransformNode;
+  readonly elbowL: TransformNode;
+  readonly elbowR: TransformNode;
   readonly meshes: Mesh[];
-  /** Arm that holds a weapon is posed forward instead of swinging. */
+  /** The right arm holds a weapon and is posed forward instead of swinging. */
   readonly aiming: boolean;
+  /** Arms hang slightly away from the body (radians around Z). */
+  readonly armSpread: number;
+  /** Left arm held in a fixed pose (shoulder X, elbow X), e.g. holding an umbrella. */
+  readonly leftHold: readonly [number, number] | null;
   phase: number;
+  /** Seconds alive; drives idle breathing. */
+  time: number;
+  /** 0..1 flinch after a hit, decays quickly. */
+  flinch: number;
+  /** null while alive; seconds since death otherwise. */
+  dying: number | null;
 }
 
-type Shape =
-  | { kind: "capsule"; radius: number; height: number }
-  | { kind: "sphere"; diameter: number }
-  | { kind: "box"; w: number; h: number; d: number }
-  | { kind: "cylinder"; height: number; top: number; bottom: number }
-  | { kind: "torus"; diameter: number; thickness: number };
+type Profile = readonly (readonly [radius: number, y: number])[];
 
 class RigBuilder {
   readonly meshes: Mesh[] = [];
+  readonly presets = new Map<Mesh, PresetName>();
   constructor(
-    private readonly scene: Scene,
-    private readonly materials: ToonMaterials,
-    private readonly name: string,
+    readonly scene: Scene,
+    readonly materials: ToonMaterials,
+    readonly name: string,
   ) {}
 
   node(name: string, parent: TransformNode, x = 0, y = 0, z = 0): TransformNode {
@@ -39,144 +51,522 @@ class RigBuilder {
     return n;
   }
 
-  part(shape: Shape, preset: PresetName, parent: TransformNode, x = 0, y = 0, z = 0): Mesh {
-    const id = `${this.name}-p${this.meshes.length}`;
-    let m: Mesh;
-    switch (shape.kind) {
-      case "capsule":
-        m = MeshBuilder.CreateCapsule(id, { radius: shape.radius, height: shape.height, tessellation: 12, subdivisions: 1 }, this.scene);
-        break;
-      case "sphere":
-        m = MeshBuilder.CreateSphere(id, { diameter: shape.diameter, segments: 12 }, this.scene);
-        break;
-      case "box":
-        m = MeshBuilder.CreateBox(id, { width: shape.w, height: shape.h, depth: shape.d }, this.scene);
-        break;
-      case "cylinder":
-        m = MeshBuilder.CreateCylinder(id, { height: shape.height, diameterTop: shape.top, diameterBottom: shape.bottom, tessellation: 14 }, this.scene);
-        break;
-      case "torus":
-        m = MeshBuilder.CreateTorus(id, { diameter: shape.diameter, thickness: shape.thickness, tessellation: 18 }, this.scene);
-        break;
-    }
+  private finishPart(m: Mesh, preset: PresetName, parent: TransformNode, x: number, y: number, z: number): Mesh {
     m.material = this.materials.get(preset);
     m.parent = parent;
     m.position.set(x, y, z);
     m.isPickable = false;
-    if (presetHasOutline(preset)) applyOutline(m);
+    this.presets.set(m, preset);
     this.meshes.push(m);
     return m;
   }
+
+  /** Surface of revolution around local Y. Profile points are (radius, y), bottom to top. */
+  lathe(profile: Profile, preset: PresetName, parent: TransformNode, opts: { x?: number; y?: number; z?: number; depth?: number; arc?: number; tessellation?: number } = {}): Mesh {
+    const m = CreateLathe(
+      `${this.name}-l${this.meshes.length}`,
+      {
+        shape: profile.map(([r, y]) => new Vector3(r, y, 0)),
+        tessellation: opts.tessellation ?? 16,
+        arc: opts.arc ?? 1,
+        cap: MeshClass.CAP_ALL,
+        sideOrientation: MeshClass.DOUBLESIDE,
+      },
+      this.scene,
+    );
+    if (opts.depth !== undefined) m.scaling.z = opts.depth;
+    return this.finishPart(m, preset, parent, opts.x ?? 0, opts.y ?? 0, opts.z ?? 0);
+  }
+
+  sphere(diameter: number, preset: PresetName, parent: TransformNode, x = 0, y = 0, z = 0, scale?: [number, number, number]): Mesh {
+    const m = MeshBuilder.CreateSphere(`${this.name}-s${this.meshes.length}`, { diameter, segments: 12 }, this.scene);
+    if (scale) m.scaling.set(...scale);
+    return this.finishPart(m, preset, parent, x, y, z);
+  }
+
+  box(w: number, h: number, d: number, preset: PresetName, parent: TransformNode, x = 0, y = 0, z = 0): Mesh {
+    const m = MeshBuilder.CreateBox(`${this.name}-b${this.meshes.length}`, { width: w, height: h, depth: d }, this.scene);
+    return this.finishPart(m, preset, parent, x, y, z);
+  }
+
+  cylinder(height: number, top: number, bottom: number, preset: PresetName, parent: TransformNode, x = 0, y = 0, z = 0): Mesh {
+    const m = MeshBuilder.CreateCylinder(`${this.name}-c${this.meshes.length}`, { height, diameterTop: top, diameterBottom: bottom, tessellation: 14 }, this.scene);
+    return this.finishPart(m, preset, parent, x, y, z);
+  }
+
+  torus(diameter: number, thickness: number, preset: PresetName, parent: TransformNode, x = 0, y = 0, z = 0): Mesh {
+    const m = MeshBuilder.CreateTorus(`${this.name}-t${this.meshes.length}`, { diameter, thickness, tessellation: 18 }, this.scene);
+    return this.finishPart(m, preset, parent, x, y, z);
+  }
 }
 
-interface Palette {
-  skin: PresetName;
-  top: PresetName;
-  legs: PresetName;
+/** Body measurements in metres. Defaults describe Seki: tall, long-legged, anime proportions. */
+interface Build {
+  readonly height: number;
+  readonly shoulder: number;
+  readonly hip: number;
+  readonly chest: number;
+  readonly waist: number;
+  readonly limb: number;
+  readonly female: boolean;
 }
 
-/** Shared humanoid skeleton: legs and arms on pivots, torso and head on a bobbing body node. */
-const humanoid = (b: RigBuilder, root: TransformNode, pal: Palette, build: { width: number; height: number }) => {
-  const s = build.height / 1.8;
+interface Look {
+  readonly skin: PresetName;
+  readonly top: PresetName;
+  readonly bottom: PresetName;
+  readonly shoes: PresetName;
+  /** Upper arm / forearm material; cyber arms add joints. */
+  readonly arms: PresetName | "cyber";
+  /** Long coat from chest to knees, in this material. */
+  readonly coat?: PresetName;
+  readonly face?: boolean;
+}
+
+interface Joints {
+  body: TransformNode;
+  head: TransformNode;
+  legL: TransformNode;
+  legR: TransformNode;
+  kneeL: TransformNode;
+  kneeR: TransformNode;
+  armL: TransformNode;
+  armR: TransformNode;
+  elbowL: TransformNode;
+  elbowR: TransformNode;
+  /** Scale factor relative to the 1.74 m reference build. */
+  s: number;
+}
+
+/**
+ * Jointed humanoid from surfaces of revolution: hips/knees and shoulders/elbows are separate
+ * pivots so walking bends knees and aiming straightens the gun arm.
+ */
+const humanoid = (b: RigBuilder, root: TransformNode, build: Build, look: Look): Joints => {
+  const s = build.height / 1.74;
   const body = b.node("body", root);
+
+  // Legs: thigh on the hip pivot, shin on the knee pivot.
   const hipY = 0.92 * s;
-  const legL = b.node("legL", body, -0.1 * build.width, hipY, 0);
-  const legR = b.node("legR", body, 0.1 * build.width, hipY, 0);
-  for (const leg of [legL, legR]) b.part({ kind: "capsule", radius: 0.08 * build.width, height: 0.94 * s }, pal.legs, leg, 0, -0.45 * s, 0);
-  b.part({ kind: "capsule", radius: 0.18 * build.width, height: 0.66 * s }, pal.top, body, 0, 1.24 * s, 0);
-  b.part({ kind: "cylinder", height: 0.12 * s, top: 0.09, bottom: 0.1 }, pal.skin, body, 0, 1.56 * s, 0);
-  const head = b.part({ kind: "sphere", diameter: 0.25 * s }, pal.skin, body, 0, 1.68 * s, 0.01);
-  const shoulderY = 1.46 * s;
-  const armL = b.node("armL", body, -0.24 * build.width, shoulderY, 0);
-  const armR = b.node("armR", body, 0.24 * build.width, shoulderY, 0);
-  for (const arm of [armL, armR]) b.part({ kind: "capsule", radius: 0.055 * build.width, height: 0.62 * s }, pal.top, arm, 0, -0.29 * s, 0);
-  for (const arm of [armL, armR]) b.part({ kind: "sphere", diameter: 0.1 * build.width }, pal.skin, arm, 0, -0.6 * s, 0);
-  return { body, legL, legR, armL, armR, head, s };
+  const thigh = 0.44 * s;
+  const shin = 0.42 * s;
+  const lr = build.limb;
+  const legs = ([-1, 1] as const).map((side) => {
+    const leg = b.node(side < 0 ? "legL" : "legR", body, side * build.hip * 0.55, hipY, 0);
+    b.lathe([[0.001, -thigh], [0.058 * lr, -thigh], [0.07 * lr, -thigh * 0.5], [0.082 * lr, -0.02], [0.001, 0.02]], look.bottom, leg, { depth: 0.95 });
+    const knee = b.node(side < 0 ? "kneeL" : "kneeR", leg, 0, -thigh, 0);
+    b.lathe([[0.001, -shin], [0.05 * lr, -shin], [0.056 * lr, -shin * 0.45], [0.06 * lr, 0], [0.001, 0.02]], look.bottom, knee, { depth: 0.95 });
+    b.box(0.085 * lr, 0.07, 0.22 * s, look.shoes, knee, 0, -shin - 0.02, 0.045);
+    return { leg, knee };
+  });
+
+  // Pelvis and torso: one profile from hips to the base of the neck, flattened front-to-back.
+  const chestBump = build.female ? 1.08 : 1;
+  b.lathe(
+    [
+      [0.001, 0.86 * s],
+      [build.hip * 0.86, 0.88 * s],
+      [build.hip, 0.95 * s],
+      [build.waist, 1.08 * s],
+      [build.chest * chestBump, 1.26 * s],
+      [build.chest, 1.34 * s],
+      [build.shoulder * 0.86, 1.42 * s],
+      [build.shoulder * 0.55, 1.445 * s],
+      [0.001, 1.45 * s],
+    ],
+    look.top,
+    body,
+    { depth: 0.68, tessellation: 20 },
+  );
+  // High-waisted trousers over the pelvis.
+  b.lathe(
+    [
+      [0.001, 0.85 * s],
+      [build.hip * 0.9, 0.86 * s],
+      [build.hip * 1.04, 0.95 * s],
+      [build.waist * 1.04, 1.1 * s],
+      [0.001, 1.11 * s],
+    ],
+    look.bottom,
+    body,
+    { depth: 0.72, tessellation: 20 },
+  );
+  if (look.coat) {
+    b.lathe(
+      [
+        [0.001, 0.46 * s],
+        [build.hip * 1.35, 0.46 * s],
+        [build.hip * 1.18, 0.9 * s],
+        [build.waist * 1.12, 1.1 * s],
+        [build.chest * 1.1, 1.3 * s],
+        [build.shoulder * 0.92, 1.42 * s],
+        [0.075, 1.5 * s],
+        [0.001, 1.51 * s],
+      ],
+      look.coat,
+      body,
+      { depth: 0.74, tessellation: 20 },
+    );
+  }
+
+  // Neck and head: egg-shaped skull, narrow jaw.
+  b.cylinder(0.14 * s, 0.062, 0.078, look.skin, body, 0, 1.5 * s, 0);
+  const head = b.node("head", body, 0, 1.6 * s, 0);
+  b.lathe(
+    [
+      [0.001, -0.085],
+      [0.035, -0.08],
+      [0.062, -0.04],
+      [0.074, 0.01],
+      [0.072, 0.06],
+      [0.05, 0.1],
+      [0.001, 0.115],
+    ].map(([r, y]) => [(r as number) * s, (y as number) * s] as const),
+    look.skin,
+    head,
+    { depth: 0.92, tessellation: 18 },
+  );
+  if (look.face !== false) {
+    // Anime face read at distance: two dark almond eyes, brows, small mouth.
+    for (const side of [-1, 1]) {
+      // Large almond eye tilted up at the outer corner, heavy upper lid line, thin brow.
+      const eye = b.sphere(0.034 * s, "eyes", head, side * 0.03 * s, 0.01 * s, 0.063 * s, [1, 0.5, 0.18]);
+      eye.rotation.z = side * 0.18;
+      const lid = b.box(0.036 * s, 0.006 * s, 0.006, "eyes", head, side * 0.031 * s, 0.019 * s, 0.066 * s);
+      lid.rotation.z = side * 0.2;
+      const brow = b.box(0.03 * s, 0.004 * s, 0.005, "eyes", head, side * 0.031 * s, 0.042 * s, 0.066 * s);
+      brow.rotation.z = -side * 0.12;
+    }
+    b.box(0.018 * s, 0.005 * s, 0.006, "lips", head, 0, -0.045 * s, 0.062 * s);
+  }
+
+  // Arms: upper arm on the shoulder, forearm on the elbow.
+  const upper = 0.28 * s;
+  const fore = 0.26 * s;
+  const arms = ([-1, 1] as const).map((side) => {
+    const arm = b.node(side < 0 ? "armL" : "armR", body, side * build.shoulder * 1.02, 1.42 * s, 0);
+    const elbow = b.node(side < 0 ? "elbowL" : "elbowR", arm, 0, -upper, 0);
+    if (look.arms === "cyber") {
+      // Ivory plates, copper joints, dark mechanical hands (see the clinic reference).
+      b.sphere(0.1 * s, "cyberCopper", arm, 0, 0, 0);
+      b.lathe([[0.001, -upper], [0.034 * lr, -upper], [0.043 * lr, -upper * 0.4], [0.047 * lr, -0.03], [0.001, 0]], "cyberIvory", arm);
+      b.torus(0.075 * lr, 0.012, "cyberDark", arm, 0, -upper * 0.55, 0);
+      b.sphere(0.07 * s, "cyberCopper", elbow, 0, 0, 0);
+      b.lathe([[0.001, -fore], [0.028 * lr, -fore], [0.038 * lr, -fore * 0.35], [0.034 * lr, -0.02], [0.001, 0]], "cyberIvory", elbow);
+      b.torus(0.06 * lr, 0.01, "cyberDark", elbow, 0, -fore * 0.5, 0);
+      b.torus(0.058 * lr, 0.014, "cyberCopper", elbow, 0, -fore, 0);
+      b.box(0.05 * lr, 0.085 * s, 0.03, "cyberDark", elbow, 0, -fore - 0.05 * s, 0);
+    } else {
+      b.lathe([[0.001, -upper], [0.034 * lr, -upper], [0.042 * lr, -upper * 0.4], [0.048 * lr, -0.02], [0.001, 0.02]], look.arms, arm);
+      b.lathe([[0.001, -fore], [0.028 * lr, -fore], [0.036 * lr, -fore * 0.4], [0.036 * lr, 0], [0.001, 0.01]], look.arms, elbow);
+      b.box(0.048 * lr, 0.08 * s, 0.028, look.skin, elbow, 0, -fore - 0.045 * s, 0);
+    }
+    return { arm, elbow };
+  });
+
+  const [l, r] = legs as [(typeof legs)[0], (typeof legs)[0]];
+  const [al, ar] = arms as [(typeof arms)[0], (typeof arms)[0]];
+  return { body, head, legL: l.leg, legR: r.leg, kneeL: l.knee, kneeR: r.knee, armL: al.arm, armR: ar.arm, elbowL: al.elbow, elbowR: ar.elbow, s };
 };
 
-const finish = (root: TransformNode, b: RigBuilder, parts: Omit<CharacterRig, "root" | "meshes" | "phase" | "aiming">, aiming: boolean): CharacterRig => {
-  if (aiming) parts.armR.rotation.x = -1.35;
-  return { root, meshes: b.meshes, aiming, phase: 0, ...parts };
+const EMISSIVE: ReadonlySet<PresetName> = new Set<PresetName>(["heroineVisor", "gangerMask", "docGoggles"]);
+
+/**
+ * Turns the loose parts into one skinned mesh per look group: every joint becomes a bone
+ * linked to its pivot node (so the procedural animation keeps driving it), and each part's
+ * preset colour is baked into vertex colours. A character costs 1-3 draw calls per pass
+ * instead of one per part, in every pass (colour, shadow, G-buffer, outline).
+ */
+const skinCharacter = (b: RigBuilder, root: TransformNode, joints: TransformNode[]): Mesh[] => {
+  const skeleton = new Skeleton(`${b.name}-skeleton`, `${b.name}-skeleton`, b.scene);
+  const boneOf = new Map<TransformNode, Bone>();
+  const local = (n: TransformNode) =>
+    Matrix.Compose(n.scaling, n.rotationQuaternion ?? Quaternion.FromEulerAngles(n.rotation.x, n.rotation.y, n.rotation.z), n.position);
+  // Parents before children: joints are listed in creation order, which already guarantees that.
+  for (const node of joints) {
+    const parentBone = node.parent instanceof TransformNode ? (boneOf.get(node.parent) ?? null) : null;
+    const bone = new Bone(node.name, skeleton, parentBone, local(node));
+    bone.linkTransformNode(node);
+    boneOf.set(node, bone);
+  }
+  root.computeWorldMatrix(true);
+  const rootInverse = Matrix.Invert(root.getWorldMatrix());
+
+  const groups = new Map<string, { meshes: Mesh[]; preset: PresetName | null; outline: boolean }>();
+  for (const m of b.meshes) {
+    const preset = b.presets.get(m) ?? "charVertexColor";
+    const parent = m.parent instanceof TransformNode ? m.parent : null;
+    const bone = parent ? boneOf.get(parent) : undefined;
+    if (!bone) continue;
+    // Bake into root space (the bind pose) and tag every vertex with its joint.
+    m.computeWorldMatrix(true);
+    m.bakeTransformIntoVertices(m.getWorldMatrix().multiply(rootInverse));
+    m.parent = null;
+    m.position.setAll(0);
+    m.rotation.setAll(0);
+    m.rotationQuaternion = null;
+    m.scaling.setAll(1);
+    const count = m.getTotalVertices();
+    const color = Color3.FromHexString(PRESETS[preset].base);
+    const colors = new Float32Array(count * 4);
+    const indices = new Float32Array(count * 4);
+    const weights = new Float32Array(count * 4);
+    const boneIndex = skeleton.bones.indexOf(bone);
+    for (let i = 0; i < count; i++) {
+      colors.set([color.r, color.g, color.b, 1], i * 4);
+      indices[i * 4] = boneIndex;
+      weights[i * 4] = 1;
+    }
+    m.setVerticesData(VertexBuffer.ColorKind, colors);
+    m.setVerticesData(VertexBuffer.MatricesIndicesKind, indices);
+    m.setVerticesData(VertexBuffer.MatricesWeightsKind, weights);
+    const emissive = EMISSIVE.has(preset);
+    const outline = !emissive && presetHasOutline(preset);
+    const key = emissive ? `e:${preset}` : outline ? "outlined" : "flat";
+    const g = groups.get(key) ?? { meshes: [], preset: emissive ? preset : null, outline };
+    g.meshes.push(m);
+    groups.set(key, g);
+  }
+
+  const out: Mesh[] = [];
+  for (const [key, g] of groups) {
+    const merged = MeshClass.MergeMeshes(g.meshes, true, true);
+    if (!merged) continue;
+    merged.name = `${b.name}-${key}`;
+    merged.parent = root;
+    merged.skeleton = skeleton;
+    merged.numBoneInfluencers = 1;
+    merged.isPickable = false;
+    merged.material = b.materials.get(g.preset ?? (g.outline ? "charVertexColor" : "charVertexColorFlat"));
+    if (g.outline) applyOutline(merged);
+    out.push(merged);
+  }
+  return out;
 };
 
+const finish = (root: TransformNode, b: RigBuilder, sk: Joints, opts: { aiming: boolean; armSpread: number; leftHold?: [number, number] }): CharacterRig => {
+  const { s: _s, ...joints } = sk;
+  const order = [joints.body, joints.legL, joints.kneeL, joints.legR, joints.kneeR, joints.head, joints.armL, joints.elbowL, joints.armR, joints.elbowR];
+  return {
+    root,
+    meshes: skinCharacter(b, root, order),
+    aiming: opts.aiming,
+    armSpread: opts.armSpread,
+    leftHold: opts.leftHold ?? null,
+    phase: 0,
+    time: 0,
+    flinch: 0,
+    dying: null,
+    ...joints,
+  };
+};
+
+/** Rotation that turns a lathe arc (or its opening) to face +Z. */
+const arcFacingForward = (arc: number, opening: boolean): number => {
+  const centre = opening ? (1 + arc) * Math.PI : arc * Math.PI;
+  return centre - Math.PI / 2;
+};
+
+/** Seki: black wavy bob, black tank top, grey high-waisted trousers, cybernetic arms. */
 export const buildHeroine = (scene: Scene, materials: ToonMaterials, name: string): CharacterRig => {
   const root = new TransformNode(name, scene);
   const b = new RigBuilder(scene, materials, name);
-  const h = humanoid(b, root, { skin: "skin", top: "heroineCoat", legs: "heroineLegs" }, { width: 0.92, height: 1.74 });
-  const { body, s } = h;
-  // Long coat tail and high collar.
-  b.part({ kind: "cylinder", height: 0.62 * s, top: 0.32, bottom: 0.5 }, "heroineCoat", body, 0, 0.78 * s, -0.01);
-  b.part({ kind: "cylinder", height: 0.1 * s, top: 0.2, bottom: 0.24 }, "heroineCoat", body, 0, 1.53 * s, 0);
-  // Bob haircut with straight bangs.
-  const hair = b.part({ kind: "sphere", diameter: 0.28 * s }, "heroineHair", body, 0, 1.73 * s, -0.045);
-  hair.scaling.set(1.04, 0.9, 1);
-  b.part({ kind: "box", w: 0.25 * s, h: 0.05 * s, d: 0.06 }, "heroineHair", body, 0, 1.79 * s, 0.075);
-  b.part({ kind: "box", w: 0.29 * s, h: 0.17 * s, d: 0.16 }, "heroineHair", body, 0, 1.64 * s, -0.08);
-  // Cybernetic optic line.
-  b.part({ kind: "box", w: 0.15, h: 0.018, d: 0.02 }, "heroineVisor", body, 0, 1.69 * s, 0.12);
+  const sk = humanoid(
+    b,
+    root,
+    { height: 1.74, shoulder: 0.165, hip: 0.15, chest: 0.135, waist: 0.1, limb: 1, female: true },
+    { skin: "skin", top: "sekiTop", bottom: "sekiPants", shoes: "sekiShoes", arms: "cyber" },
+  );
+  const s = sk.s;
+  // Bob: a shell open at the face, then pointed locks around the hairline (sides and back)
+  // and a few heavy bangs across the forehead. Pointed cones give the hand-drawn silhouette.
+  const bob = b.lathe(
+    [
+      [0.001, 0.13],
+      [0.06, 0.125],
+      [0.092, 0.08],
+      [0.098, 0.02],
+      [0.1, -0.03],
+      [0.098, -0.06],
+    ].map(([r, y]) => [(r as number) * s, (y as number) * s] as const),
+    "sekiHair",
+    sk.head,
+    { arc: 0.62, depth: 1.02, tessellation: 22 },
+  );
+  // A lathe arc covers angles [0, arc·2π] from +X towards +Z, and rotation.y by θ moves an
+  // angle φ to φ − θ. The opening is centred at (1 + arc)·π; turn it to face forward (+Z, 90°).
+  bob.rotation.y = arcFacingForward(0.62, true);
+  const lockCount = 11;
+  for (let i = 0; i < lockCount; i++) {
+    // Angle measured from the face (+Z); locks cover 75°..285°, i.e. sides and back only.
+    const fromFront = ((75 + (i / (lockCount - 1)) * 210) * Math.PI) / 180;
+    const dx = Math.sin(fromFront);
+    const dz = Math.cos(fromFront);
+    const len = (0.1 + ((i * 37) % 5) * 0.012) * s;
+    const lock = b.cylinder(len, 0, 0.055 * s, "sekiHair", sk.head, dx * 0.088 * s, -0.06 * s - len / 2 + 0.02 * s, dz * 0.09 * s);
+    // Tip points down and slightly outwards; alternate a little twist so the edge reads uneven.
+    lock.rotation.set(-dz * 0.25, 0, dx * 0.25 + (i % 2 ? 0.08 : -0.08));
+  }
+  for (const [x, len, tilt] of [
+    [-0.045, 0.06, 0.25],
+    [-0.012, 0.07, 0.05],
+    [0.025, 0.065, -0.2],
+    [0.055, 0.05, -0.4],
+  ] as const) {
+    // Tips stop at the brows (y ≈ 0.045) so the eyes stay visible.
+    const bang = b.cylinder(len * s, 0, 0.05 * s, "sekiHair", sk.head, x * s, (0.11 - len / 2) * s, 0.068 * s);
+    bang.rotation.set(-0.3, 0, tilt);
+  }
+  // Optic line: the cybernetic eye glint.
+  b.box(0.012, 0.012, 0.012, "heroineVisor", sk.head, 0.032 * s, 0.014 * s, 0.07 * s);
   // Pistol in the right hand.
-  b.part({ kind: "box", w: 0.05, h: 0.09, d: 0.2 }, "gun", h.armR, 0, -0.62 * s, 0.05);
-  return finish(root, b, h, true);
+  b.box(0.035, 0.07, 0.17, "gun", sk.elbowR, 0, -0.33 * s, 0.07);
+  return finish(root, b, sk, { aiming: true, armSpread: 0.07 });
 };
 
 export const buildFixer = (scene: Scene, materials: ToonMaterials, name: string): CharacterRig => {
   const root = new TransformNode(name, scene);
   const b = new RigBuilder(scene, materials, name);
-  const h = humanoid(b, root, { skin: "fixerSkin", top: "fixerJacket", legs: "fixerPants" }, { width: 1.3, height: 1.86 });
-  b.part({ kind: "box", w: 0.2, h: 0.045, d: 0.04 }, "shades", h.body, 0, 1.7 * h.s, 0.12);
-  const chain = b.part({ kind: "torus", diameter: 0.3, thickness: 0.02 }, "gold", h.body, 0, 1.47 * h.s, 0.04);
-  chain.rotation.x = 1.2;
-  h.armL.rotation.z = 0.15;
-  h.armR.rotation.z = -0.15;
-  return finish(root, b, h, false);
+  const sk = humanoid(
+    b,
+    root,
+    { height: 1.88, shoulder: 0.23, hip: 0.17, chest: 0.19, waist: 0.17, limb: 1.25, female: false },
+    { skin: "fixerSkin", top: "fixerJacket", bottom: "fixerPants", shoes: "shades", arms: "fixerJacket", face: false },
+  );
+  b.box(0.15, 0.035, 0.03, "shades", sk.head, 0, 0.015 * sk.s, 0.068 * sk.s);
+  b.box(0.03, 0.006, 0.006, "lips", sk.head, 0, -0.045 * sk.s, 0.066 * sk.s);
+  const chain = b.torus(0.26, 0.018, "gold", sk.body, 0, 1.44 * sk.s, 0.05);
+  chain.rotation.x = 1.25;
+  return finish(root, b, sk, { aiming: false, armSpread: 0.16 });
 };
 
 export const buildGanger = (scene: Scene, materials: ToonMaterials, name: string): CharacterRig => {
   const root = new TransformNode(name, scene);
   const b = new RigBuilder(scene, materials, name);
-  const h = humanoid(b, root, { skin: "skin", top: "gangerHood", legs: "gangerPants" }, { width: 1.05, height: 1.8 });
-  const hood = b.part({ kind: "sphere", diameter: 0.33 * h.s }, "gangerHood", h.body, 0, 1.7 * h.s, -0.03);
-  hood.scaling.set(1, 1.05, 1.08);
-  b.part({ kind: "box", w: 0.17, h: 0.03, d: 0.03 }, "gangerMask", h.body, 0, 1.66 * h.s, 0.13);
-  b.part({ kind: "box", w: 0.06, h: 0.12, d: 0.34 }, "gun", h.armR, 0, -0.62 * h.s, 0.1);
-  return finish(root, b, h, true);
+  const sk = humanoid(
+    b,
+    root,
+    { height: 1.8, shoulder: 0.19, hip: 0.15, chest: 0.16, waist: 0.14, limb: 1.1, female: false },
+    { skin: "skin", top: "gangerHood", bottom: "gangerPants", shoes: "gangerPants", arms: "gangerHood", face: false },
+  );
+  // Hood up, LED mask across the lower face.
+  const hood = b.sphere(0.2 * sk.s, "gangerHood", sk.head, 0, 0.015, -0.015, [1, 1.05, 1.08]);
+  hood.scaling.z = 1.05;
+  b.box(0.13, 0.03, 0.03, "gangerMask", sk.head, 0, -0.02 * sk.s, 0.07 * sk.s);
+  b.box(0.045, 0.085, 0.3, "gun", sk.elbowR, 0, -0.3 * sk.s, 0.1);
+  return finish(root, b, sk, { aiming: true, armSpread: 0.12 });
 };
 
+/** Babcia Ume: small, long beige coat, grey bun, red umbrella. */
 export const buildCivilian = (scene: Scene, materials: ToonMaterials, name: string): CharacterRig => {
   const root = new TransformNode(name, scene);
   const b = new RigBuilder(scene, materials, name);
-  const h = humanoid(b, root, { skin: "skin", top: "umeCoat", legs: "umeCoat" }, { width: 1, height: 1.52 });
-  b.part({ kind: "cylinder", height: 0.55 * h.s, top: 0.36, bottom: 0.52 }, "umeCoat", h.body, 0, 0.75 * h.s, 0);
-  b.part({ kind: "sphere", diameter: 0.15 }, "umeHair", h.body, 0, 1.86 * h.s, -0.05);
-  b.part({ kind: "sphere", diameter: 0.27 * h.s }, "umeHair", h.body, 0, 1.71 * h.s, -0.03);
-  // Umbrella held in the left hand.
-  h.armL.rotation.x = -0.6;
-  b.part({ kind: "cylinder", height: 1.1, top: 0.02, bottom: 0.02 }, "pole", h.armL, 0, -0.1, 0.2);
-  b.part({ kind: "cylinder", height: 0.32, top: 0, bottom: 1.15 }, "umbrella", h.armL, 0, 0.55, 0.2);
-  return finish(root, b, h, false);
+  const sk = humanoid(
+    b,
+    root,
+    { height: 1.5, shoulder: 0.15, hip: 0.16, chest: 0.15, waist: 0.15, limb: 1.05, female: true },
+    { skin: "skin", top: "umeCoat", bottom: "umeCoat", shoes: "sekiShoes", arms: "umeCoat", coat: "umeCoat" },
+  );
+  b.sphere(0.17 * sk.s, "umeHair", sk.head, 0, 0.03, -0.012, [1, 0.9, 1]);
+  b.sphere(0.07, "umeHair", sk.head, 0, 0.1 * sk.s, -0.07 * sk.s);
+  // Built in the neutral pose (forearm hanging): the pole runs down the forearm's axis and
+  // the canopy sits above the hand once the hold pose raises the arm.
+  // The pole continues the forearm past the hand (local -Y), the canopy's apex points the same
+  // way. The hold pose bends the elbow up, which turns local -Y skywards.
+  const fore = 0.26 * sk.s;
+  b.cylinder(0.95, 0.02, 0.02, "pole", sk.elbowL, 0, -fore - 0.42, 0);
+  b.cylinder(0.28, 1.15, 0, "umbrella", sk.elbowL, 0, -fore - 0.95, 0);
+  const rig = finish(root, b, sk, { aiming: false, armSpread: 0.1, leftHold: [-0.45, -2.35] });
+  rig.body.rotation.x = 0.08;
+  return rig;
 };
 
+/** Doktor Mori: cream surgical coat, white hair combed back, magnifier goggles. */
 export const buildRipperdoc = (scene: Scene, materials: ToonMaterials, name: string): CharacterRig => {
   const root = new TransformNode(name, scene);
   const b = new RigBuilder(scene, materials, name);
-  const h = humanoid(b, root, { skin: "fixerSkin", top: "docCoat", legs: "heroineLegs" }, { width: 0.95, height: 1.7 });
-  // Long surgical coat and magnifier goggles.
-  b.part({ kind: "cylinder", height: 0.7 * h.s, top: 0.36, bottom: 0.44 }, "docCoat", h.body, 0, 0.72 * h.s, 0);
-  b.part({ kind: "box", w: 0.2, h: 0.05, d: 0.05 }, "docGoggles", h.body, 0, 1.7 * h.s, 0.12);
-  b.part({ kind: "sphere", diameter: 0.16 }, "umeHair", h.body, 0, 1.78 * h.s, -0.06);
-  h.armL.rotation.x = -0.4;
-  h.armR.rotation.x = -0.4;
-  return finish(root, b, h, false);
+  const sk = humanoid(
+    b,
+    root,
+    { height: 1.72, shoulder: 0.18, hip: 0.15, chest: 0.16, waist: 0.15, limb: 1.05, female: false },
+    { skin: "fixerSkin", top: "moriCoat", bottom: "fixerPants", shoes: "shades", arms: "moriCoat", coat: "moriCoat", face: false },
+  );
+  b.lathe(
+    [
+      [0.001, -0.02],
+      [0.07, 0.0],
+      [0.08, 0.06],
+      [0.06, 0.11],
+      [0.001, 0.125],
+    ].map(([r, y]) => [(r as number) * sk.s, (y as number) * sk.s] as const),
+    "moriHair",
+    sk.head,
+    { z: -0.012, depth: 1.05 },
+  );
+  b.box(0.13, 0.03, 0.03, "docGoggles", sk.head, 0, 0.018 * sk.s, 0.07 * sk.s);
+  const rig = finish(root, b, sk, { aiming: false, armSpread: 0.12 });
+  // Poses go on after skinning: the bind pose must stay neutral.
+  rig.body.rotation.x = 0.1;
+  return rig;
 };
 
-/** Advances the walk cycle from the entity's horizontal speed. */
+const DEATH_FALL = 0.65;
+const DEATH_LINGER = 5.5;
+
+/** Procedural animation: walk cycle with knees and elbows, idle breathing, hit flinch, death fall. */
 export const animateRig = (rig: CharacterRig, speed: number, dt: number): void => {
+  rig.time += dt;
+  if (rig.dying !== null) {
+    rig.dying += dt;
+    const t = Math.min(1, rig.dying / DEATH_FALL);
+    const ease = t * t * (3 - 2 * t);
+    // Knees give, then the body drops backwards onto the street.
+    rig.kneeL.rotation.x = rig.kneeR.rotation.x = 1.1 * ease;
+    rig.legL.rotation.x = rig.legR.rotation.x = -0.5 * ease;
+    rig.root.rotation.x = -1.45 * ease * ease;
+    rig.armL.rotation.z = 0.9 * ease;
+    rig.armR.rotation.z = -0.9 * ease;
+    rig.armR.rotation.x = -1.42 * (1 - ease) - 0.2 * ease;
+    // After lying still for a while the body sinks out of view.
+    const sink = Math.max(0, rig.dying - DEATH_FALL - DEATH_LINGER);
+    rig.root.position.y = 0.12 * ease - sink * 0.5;
+    return;
+  }
   const amount = Math.min(1, speed / 4.2);
   rig.phase += dt * (4 + speed * 1.9) * (amount > 0.05 ? 1 : 0);
-  const swing = Math.sin(rig.phase) * 0.75 * amount;
+  const swing = Math.sin(rig.phase) * 0.7 * amount;
   rig.legL.rotation.x = swing;
   rig.legR.rotation.x = -swing;
-  rig.armL.rotation.x = -swing * 0.6;
-  if (!rig.aiming) rig.armR.rotation.x = swing * 0.6;
-  rig.body.position.y = Math.abs(Math.cos(rig.phase)) * 0.045 * amount;
+  // Knees bend on the back swing.
+  rig.kneeL.rotation.x = Math.max(0, -swing) * 1.3 + 0.04;
+  rig.kneeR.rotation.x = Math.max(0, swing) * 1.3 + 0.04;
+  if (rig.leftHold) {
+    rig.armL.rotation.x = rig.leftHold[0];
+    rig.elbowL.rotation.x = rig.leftHold[1];
+  } else {
+    rig.armL.rotation.x = -swing * 0.6;
+    rig.elbowL.rotation.x = -0.18 - Math.max(0, swing) * 0.4;
+  }
+  rig.armL.rotation.z = rig.armSpread;
+  if (rig.aiming) {
+    rig.armR.rotation.x = -1.42;
+    rig.elbowR.rotation.x = -0.05;
+    rig.armR.rotation.z = 0;
+  } else {
+    rig.armR.rotation.x = swing * 0.6;
+    rig.armR.rotation.z = -rig.armSpread;
+    rig.elbowR.rotation.x = -0.18 - Math.max(0, -swing) * 0.4;
+  }
+  const breathe = Math.sin(rig.time * 1.7) * 0.006;
+  rig.body.position.y = Math.abs(Math.cos(rig.phase)) * 0.04 * amount + breathe;
+  rig.flinch = Math.max(0, rig.flinch - dt * 5);
+  rig.body.rotation.z = Math.sin(rig.time * 30) * 0.05 * rig.flinch;
+  rig.head.rotation.x = -0.25 * rig.flinch;
 };
+
+/** Starts the death fall; the renderer disposes the rig when `deathFinished` says so. */
+export const startDeath = (rig: CharacterRig): void => {
+  if (rig.dying === null) rig.dying = 0;
+};
+
+export const deathFinished = (rig: CharacterRig): boolean => rig.dying !== null && rig.dying > DEATH_FALL + DEATH_LINGER + 1.2;

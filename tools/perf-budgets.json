@@ -1,8 +1,14 @@
 {
-  "$comment": "Perf budgets for the M0 reference scenes (plan §10, ADR-0007). Frame time is measured under SwiftShader in CI, hence the generous ceiling.",
+  "$comment": "Perf budgets for the M0 reference scenes (plan \u00a710, ADR-0007). Draw calls include the colour pass, the moon shadow pass, the G-buffer for line art and character outlines. Frame time is measured under SwiftShader in CI, hence the generous ceiling.",
   "scenes": {
-    "reference": { "drawCalls": 160, "activeMeshes": 80 },
-    "street-tpp": { "drawCalls": 320, "activeMeshes": 140 }
+    "reference": {
+      "drawCalls": 130,
+      "activeMeshes": 60
+    },
+    "street-tpp": {
+      "drawCalls": 280,
+      "activeMeshes": 130
+    }
   },
   "frameTimeMs": 60
 }

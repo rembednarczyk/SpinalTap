@@ -29,7 +29,8 @@ const randomSeed = (): number => {
 const canvas = document.getElementById("game-canvas") as HTMLCanvasElement;
 const uiRoot = document.getElementById("ui-root") as HTMLElement;
 
-const stage = new Stage(canvas, { reference });
+const quality = params.get("quality") === "low" || params.get("quality") === "high" ? (params.get("quality") as "low" | "high") : touchDevice ? "low" : "high";
+const stage = new Stage(canvas, { reference, quality });
 const renderer = new BabylonRenderer(stage);
 const input = new BrowserInput(canvas);
 const audio = new SynthAudio();
@@ -66,8 +67,13 @@ const TITLE_VIEW = { position: { x: -3.5, y: 2.2, z: -33 }, target: { x: 2, y: 3
 // Reference frame for NPR snapshots: Seki in front of Kaito under the Neon Koi sign.
 const REFERENCE_VIEW = { position: { x: 3.4, y: 1.55, z: 4.6 }, target: { x: 5.5, y: 1.15, z: 0.9 } };
 
+let lastScreen: string | null = null;
+/** Fixed camera on the title screen and in reference mode; reacts to screen changes only. */
 const applyBackdrop = () => {
-  if (ui.getState().screen === "title" || reference) {
+  const screen = ui.getState().screen;
+  if (screen === lastScreen) return;
+  lastScreen = screen;
+  if (screen === "title" || reference) {
     const view = reference ? REFERENCE_VIEW : TITLE_VIEW;
     renderer.rig.setReferenceView(view.position, view.target);
   } else {
@@ -103,7 +109,7 @@ document.addEventListener("pointerlockchange", () => {
 
 createRoot(uiRoot).render(<GameUi store={ui} intents={session} touch={touchDevice ? input.virtualPad : undefined} />);
 
-const debug = createDebugApi(session, ui, loop, () => probe.sample());
+const debug = createDebugApi(session, ui, loop, () => probe.sample(), (position, target) => renderer.rig.setReferenceView(position, target));
 window.__seki = debug;
 
 if (reference) {

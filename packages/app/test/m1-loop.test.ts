@@ -17,6 +17,7 @@ const render: RenderPort = {
   spawn() {},
   updateTransform() {},
   despawn() {},
+  clear() {},
   setCameraMode(_m: CameraMode) {},
   attachCamera() {},
   playEffect(_e: EffectDescriptor) {},
