@@ -46,6 +46,7 @@ export interface SourceMaterial {
   readonly base: string;
   readonly texture: Texture | null;
   readonly alphaTest: boolean;
+  readonly alphaBlend: boolean;
   readonly doubleSided: boolean;
   /**
    * Inverted-hull ink. Off for the face (the hull shows through the eye sockets), for
@@ -53,7 +54,21 @@ export interface SourceMaterial {
    * be the whole quad; the line-art pass still inks their silhouettes.
    */
   readonly outline: boolean;
+  /**
+   * VRoid "EyeExtra" layers (star and heart eyes) are hidden by a blend shape; the toon
+   * shader has no morph targets, so they are dropped instead.
+   */
+  readonly hidden: boolean;
+  /** Depth stacking of VRoid face layers over the face skin. */
+  readonly layer: number;
 }
+
+const FACE_LAYERS: readonly [RegExp, number][] = [
+  [/eyehighlight/i, 4],
+  [/eyeiris/i, 3],
+  [/eyeline|eyelash|brow/i, 2],
+  [/eyewhite/i, 1],
+];
 
 /** Base colour, texture and cut-out flags of a glTF material (PBR metallic-roughness or unlit). */
 export const readSourceMaterial = (material: unknown): SourceMaterial => {
@@ -73,7 +88,11 @@ export const readSourceMaterial = (material: unknown): SourceMaterial => {
     base: color.toHexString(),
     texture,
     alphaTest: mode >= 1,
+    // Back hair is BLEND in VRoid too, but it is a solid shell: keep it cut out and sorted as opaque.
+    alphaBlend: mode >= 2 && !/hair/i.test(m?.name ?? ""),
     doubleSided: m?.backFaceCulling === false,
+    hidden: /eyeextra/i.test(m?.name ?? ""),
+    layer: FACE_LAYERS.find(([re]) => re.test(m?.name ?? ""))?.[1] ?? 0,
     outline: mode < 2 && m?.backFaceCulling !== false && !/face|eye|mouth|lash|brow|highlight/i.test(m?.name ?? ""),
   };
 };
@@ -91,6 +110,7 @@ export const convertModelMaterials = (container: AssetContainer, materials: Toon
   const replaced = new Set<unknown>();
   const groups = new Map<string, AbstractMesh[]>();
   const dataIds = new Map<object, number>();
+  const dropped: AbstractMesh[] = [];
   let nextDataId = 0;
   for (const mesh of container.meshes) {
     if (!mesh.material || mesh.getTotalVertices() === 0) continue;
@@ -98,6 +118,10 @@ export const convertModelMaterials = (container: AssetContainer, materials: Toon
     replaced.add(mesh.material);
     mesh.material = materials.forImported(source.base, source.texture, preset, source);
     mesh.isPickable = false;
+    if (source.hidden) {
+      dropped.push(mesh);
+      continue;
+    }
     mesh.metadata = { ...(mesh.metadata as object | null), toonOutline: source.outline };
     // Primitives of one glTF mesh have their own Geometry but share the vertex data.
     const data = mesh.getVertexBuffer("position")?.getData() ?? mesh;
@@ -107,6 +131,10 @@ export const convertModelMaterials = (container: AssetContainer, materials: Toon
     const list = groups.get(key);
     if (list) list.push(mesh);
     else groups.set(key, [mesh]);
+  }
+  for (const m of dropped) {
+    container.meshes.splice(container.meshes.indexOf(m), 1);
+    m.dispose(false, false);
   }
   for (const list of groups.values()) {
     const [first, ...rest] = list as Mesh[];
@@ -126,9 +154,14 @@ export const convertModelMaterials = (container: AssetContainer, materials: Toon
   container.materials.length = 0;
 };
 
+/** Thin enough to stay under most clothing layers when a model opts into the hull. */
+export const IMPORTED_OUTLINE_WIDTH = 0.006;
+
 export const outlineModelMeshes = (meshes: readonly AbstractMesh[], enabled: boolean): void => {
   if (!enabled) return;
-  for (const m of meshes) if ((m.metadata as { toonOutline?: boolean } | null)?.toonOutline !== false && m.getTotalVertices() > 0) applyOutline(m);
+  for (const m of meshes) {
+    if ((m.metadata as { toonOutline?: boolean } | null)?.toonOutline !== false && m.getTotalVertices() > 0) applyOutline(m, IMPORTED_OUTLINE_WIDTH);
+  }
 };
 
 /**
@@ -151,7 +184,9 @@ export class ModelLibrary {
     if (!root) throw new Error(`Model ${spec.url} has no root node`);
     const meshes = root.getChildMeshes(false);
     for (const m of meshes) m.isPickable = false;
-    outlineModelMeshes(meshes, spec.outline ?? true);
+    // Off by default: the hull's second pass writes inflated depth that hides clothing layered
+    // a centimetre above the skin. The line-art pass inks imported models instead.
+    outlineModelMeshes(meshes, spec.outline ?? false);
     if (spec.scale !== undefined) root.scaling.scaleInPlace(spec.scale);
     if (spec.yaw) root.rotation.y += spec.yaw;
     return {

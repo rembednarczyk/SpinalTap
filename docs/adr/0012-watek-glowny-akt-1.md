@@ -1,4 +1,4 @@
-# ADR-0011: Wątek główny, akt I: wspomnienia, wybory, zakończenia
+# ADR-0012: Wątek główny, akt I: wspomnienia, wybory, zakończenia
 
 ## Kontekst
 M3 (§14): wątek główny od startu do zakończenia, progresja przez odzyskiwanie wspomnień (§1, §9), zakończenia zależne od wyborów, stan narracji w zapisach. Fragmenty wspomnień mają odblokowywać trzy rodzaje postępu: ukończone zlecenie, rozmowa z ripperdociem, zakup implantu.
@@ -10,7 +10,7 @@ M3 (§14): wątek główny od startu do zakończenia, progresja przez odzyskiwan
 - **Wybory należą do domeny**: `DomainState.story = { choices, ending }`, komenda `story-choice` (pierwsza odpowiedź jest wiążąca) i `resolve-ending`. Zakończenie liczy czysta funkcja `resolveEnding` (dwa z trzech wspomnień przyjęte jako własne: `aya`, w innym razie `seki`). Ink dostaje wybory i podgląd zakończenia jako zmienne (`choice_*`, `act1_ending`, `story_ending`) synchronizowane przed każdą rozmową; sam o zakończeniu nie decyduje.
 - **Rozmowa z Mori**: klinika zostaje interakcją typu `shop`; panel ma przycisk „Porozmawiaj z Mori” (`UiIntents.talkToShopkeeper`), który przechodzi do knota `mori`.
 - **Dialogi odblokowane wspomnieniami**: zewnętrzna funkcja ink `has_memory(id)`.
-- **Zapis v4**: pole `domain.story`; migracja v3→v4 dodaje pusty stan i startuje `m3_echo`, jeśli pierwsze zlecenie jest ukończone.
+- **Zapis v5**: pole `domain.story`; migracja v4→v5 dodaje pusty stan i startuje `m3_echo`, jeśli pierwsze zlecenie jest ukończone.
 
 ## Konsekwencje
-Złoty hash determinizmu zmienił się tylko przez nowy kształt snapshotu (wersja 4 i `story`); po usunięciu tych pól hash przebiegu jest identyczny jak wcześniej. Akceptację sprawdza `packages/app/test/m3-loop.test.ts`: od nowej gry przez M0 i trzy fragmenty do każdego zakończenia, z zapisem i odczytem w trakcie aktu i po nim.
+Złoty hash determinizmu zmienił się tylko przez nowy kształt snapshotu (wersja 5 i `story`); po usunięciu tych pól hash przebiegu jest identyczny jak wcześniej. Akceptację sprawdza `packages/app/test/m3-loop.test.ts`: od nowej gry przez M0 i trzy fragmenty do każdego zakończenia, z zapisem i odczytem w trakcie aktu i po nim.

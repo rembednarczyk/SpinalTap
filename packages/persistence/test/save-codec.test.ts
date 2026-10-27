@@ -69,7 +69,26 @@ describe("migrations", () => {
 
   it("tolerates a v1 save with missing optional sections", () => {
     const m = migrate({ version: 1, seed: 5 });
-    expect(m).toMatchObject({ version: SAVE_SCHEMA_VERSION, rngState: 5, entities: [], domain: { wallet: { eddies: 0 }, inventory: { medkit: 1 } } });
+    expect(m).toMatchObject({
+      version: SAVE_SCHEMA_VERSION,
+      rngState: 5,
+      entities: [],
+      domain: { wallet: { eddies: 0 }, inventory: { medkit: 1 }, reputation: { clinic: 0 }, story: { choices: {}, ending: null } },
+    });
+  });
+
+  it("upgrades an M1 (v3) save: the clinic becomes its own neutral faction", () => {
+    const s = snapshot();
+    const { clinic: _c, ...m1Reputation } = { ...s.domain.reputation, fixers: 12, hebi: -30, civilians: 4 };
+    const loaded = decodeSave("m1", wrap({ ...s, version: 3, domain: { ...s.domain, reputation: m1Reputation } }));
+    expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
+    expect(loaded.domain.reputation).toEqual({ fixers: 12, hebi: -30, civilians: 4, clinic: 0 });
+    expect(loaded.domain.inventory).toEqual(s.domain.inventory);
+  });
+
+  it("the v3 migration keeps an existing clinic standing and tolerates a missing reputation", () => {
+    expect(MIGRATIONS[3]?.({ version: 3, domain: { reputation: { clinic: 7 } } })).toMatchObject({ domain: { reputation: { clinic: 7 } } });
+    expect(MIGRATIONS[3]?.({ version: 3 })).toEqual({ version: 4, domain: { reputation: { clinic: 0 } } });
   });
 
   it("upgrades an M0 (v2) save with the M1 starter kit", () => {
@@ -82,22 +101,34 @@ describe("migrations", () => {
     expect(loaded.domain.flags).toEqual(s.domain.flags);
   });
 
-  it("upgrades an M1 (v3) save: empty story state, act I started when the first contract is done", () => {
+  it("upgrades an M2 (v4) save: empty story state, act I started when the first contract is done", () => {
     const s = snapshot();
     const { story: _s, ...domain } = s.domain;
-    const fresh = decodeSave("m1", wrap({ ...s, version: 3, domain }));
-    expect(fresh.version).toBe(4);
+    const fresh = decodeSave("m2", wrap({ ...s, version: 4, domain }));
+    expect(fresh.version).toBe(5);
     expect(fresh.domain.story).toEqual({ choices: {}, ending: null });
     expect(fresh.domain.quests).toEqual(s.domain.quests);
 
     const done = { ...domain, quests: { m0_first_contract: { status: "completed" } } };
-    const upgraded = decodeSave("m1", wrap({ ...s, version: 3, domain: done }));
+    const upgraded = decodeSave("m2", wrap({ ...s, version: 4, domain: done }));
     expect(upgraded.domain.quests).toEqual({ m0_first_contract: { status: "completed" }, m3_echo: { status: "active", stepIndex: 0 } });
 
     // Never resets act I progress that is already there, and tolerates a missing domain.
     const ahead = { ...domain, quests: { m0_first_contract: { status: "completed" }, m3_echo: { status: "active", stepIndex: 2 } } };
-    expect(decodeSave("m1", wrap({ ...s, version: 3, domain: ahead })).domain.quests.m3_echo).toEqual({ status: "active", stepIndex: 2 });
-    expect(MIGRATIONS[3]!({ version: 3 })).toEqual({ version: 4, domain: { quests: {}, story: { choices: {}, ending: null } } });
+    expect(decodeSave("m2", wrap({ ...s, version: 4, domain: ahead })).domain.quests.m3_echo).toEqual({ status: "active", stepIndex: 2 });
+    expect(MIGRATIONS[4]!({ version: 4 })).toEqual({ version: 5, domain: { quests: {}, story: { choices: {}, ending: null } } });
+  });
+
+  it("walks an M1 (v3) save through both steps: clinic faction (v4), then story state (v5)", () => {
+    const s = snapshot();
+    const { story: _s, ...domain } = s.domain;
+    const { clinic: _c, ...m1Reputation } = domain.reputation;
+    const m1 = { ...domain, reputation: m1Reputation, quests: { m0_first_contract: { status: "completed" } } };
+    const loaded = decodeSave("m1", wrap({ ...s, version: 3, domain: m1 }));
+    expect(loaded.version).toBe(5);
+    expect(loaded.domain.reputation.clinic).toBe(0);
+    expect(loaded.domain.story).toEqual({ choices: {}, ending: null });
+    expect(loaded.domain.quests.m3_echo).toEqual({ status: "active", stepIndex: 0 });
   });
 
   it("keeps story choices and the ending through the round trip", () => {
@@ -135,6 +166,7 @@ describe("schema validation", () => {
     ["flags", { flags: [1] }],
     ["preferences", { preferences: { cameraMode: "VR" } }],
     ["reputation", { reputation: { fixers: 0 } }],
+    ["reputation", { reputation: { fixers: 0, hebi: 0, civilians: 0 } }],
     ["inventory", { inventory: { medkit: -1 } }],
     ["inventory", { inventory: { rocket: 1 } }],
     ["contracts", { contracts: { active: null, completed: 0.5 } }],

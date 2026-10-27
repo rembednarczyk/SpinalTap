@@ -19,13 +19,14 @@ import {
   resolveEnding,
   setAlias,
   setEnding,
+  shopTerms,
 } from "@seki/core";
 import type { World } from "miniplex";
 import { SeededRandom } from "./rng/seeded-random";
 import { createSystems } from "./systems";
 import type { Entity } from "./world/components";
 import type { DomainHolder, SessionState, SimContext, System } from "./world/context";
-import { adjustReputation, grantMemory, raiseFlag, raiseProgress } from "./world/domain-ops";
+import { adjustReputation, applyReputationCause, grantMemory, raiseFlag, raiseProgress } from "./world/domain-ops";
 import { type IdAllocator, createDistrictWorld, spawnContractTargets } from "./world/factory";
 
 export const SIM_HZ = 60;
@@ -169,7 +170,7 @@ export class Simulation {
         break;
       case "buy-cyberware": {
         const domain = this.holder.domain;
-        const r = buyCyberware(domain.wallet, domain.character, cmd.cyberwareId);
+        const r = buyCyberware(domain.wallet, domain.character, cmd.cyberwareId, shopTerms(domain.reputation.clinic));
         if (!r.ok) {
           ctx.bus.emit("PurchaseFailed", { reason: r.reason });
           break;
@@ -177,12 +178,13 @@ export class Simulation {
         this.holder.domain = { ...domain, wallet: r.wallet, character: r.character };
         if (r.price > 0) ctx.bus.emit("EddiesChanged", { balance: r.wallet.eddies, delta: -r.price });
         ctx.bus.emit("CyberwareInstalled", { cyberwareId: cmd.cyberwareId, replaced: r.replaced, price: r.price });
+        if (r.price > 0) applyReputationCause(ctx, { type: "clinic-purchase", kind: "cyberware" });
         raiseProgress(ctx, "cyberware_installed");
         break;
       }
       case "buy-item": {
         const domain = this.holder.domain;
-        const r = buyItem(domain.wallet, domain.inventory, cmd.itemId);
+        const r = buyItem(domain.wallet, domain.inventory, cmd.itemId, shopTerms(domain.reputation.clinic));
         if (!r.ok) {
           ctx.bus.emit("PurchaseFailed", { reason: r.reason });
           break;
@@ -190,6 +192,7 @@ export class Simulation {
         this.holder.domain = { ...domain, wallet: r.wallet, inventory: r.inventory };
         ctx.bus.emit("EddiesChanged", { balance: r.wallet.eddies, delta: -r.price });
         ctx.bus.emit("ItemBought", { itemId: cmd.itemId, price: r.price });
+        applyReputationCause(ctx, { type: "clinic-purchase", kind: "item" });
         break;
       }
       case "accept-contract": {
@@ -212,8 +215,7 @@ export class Simulation {
           contracts: { active: null, completed: domain.contracts.completed + 1 },
         };
         if (paid.ok) ctx.bus.emit("EddiesChanged", { balance: paid.wallet.eddies, delta: contract.reward });
-        adjustReputation(ctx, "fixers", 3);
-        adjustReputation(ctx, "hebi", -5);
+        applyReputationCause(ctx, { type: "contract-completed" });
         ctx.bus.emit("ContractCompleted", { contract, reward: contract.reward });
         raiseProgress(ctx, "contract_completed");
         break;

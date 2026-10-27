@@ -7,6 +7,11 @@ VAR alias = ""
 VAR contract_state = ""
 VAR contract_site = ""
 VAR contracts_done = 0
+// Faction stances from the domain: "hostile", "neutral" or "friendly".
+VAR fixers_stance = "neutral"
+VAR hebi_stance = "neutral"
+VAR civilians_stance = "neutral"
+VAR clinic_stance = "neutral"
 
 EXTERNAL set_flag(name)
 EXTERNAL has_flag(name)
@@ -87,6 +92,15 @@ KAITO: I jeszcze jedno, Seki. Ktoś już pytał o kobietę z wraku. Nie tylko ja
 - else:
     KAITO: Hebi znowu wystawili ludzi na moją ulicę. Robota czeka, {alias}.
 }
+{
+- hebi_stance == "hostile":
+    KAITO: Hebi rozpuścili wieść, że strzelają do ciebie bez gadania. Omijaj zaułki, jeśli nie masz w nich roboty.
+- hebi_stance == "friendly":
+    KAITO: Podobno Hebi już do ciebie nie strzelają. Nie przyzwyczajaj się.
+}
+{ fixers_stance == "friendly":
+    KAITO: Klienci o ciebie pytają. Dla swoich mam lepsze stawki.
+}
 + [Biorę robotę.]
     SEKI: Biorę.
     ~ accept_contract()
@@ -122,6 +136,10 @@ KAITO: Czysta robota. Klienci są zadowoleni, a ja razem z nimi.
 -> contract_offer
 
 === ume ===
+{ civilians_stance == "hostile":
+    UME: Nie podchodź do mnie. Widziałam, co robisz na tej ulicy.
+    -> END
+}
 { has_flag("ume_memory"):
     UME: Uważaj na siebie na dachach, dziecko. Tak jak kiedyś.
     { has_memory("courier_case") && not has_flag("ume_ren"):

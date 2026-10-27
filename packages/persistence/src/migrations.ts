@@ -41,9 +41,23 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
       },
     };
   },
-  // v3 (M1): no main-thread story state. A save that already finished the first contract
-  // starts act I ("Echo") at its first step, as a live game would on completing it.
+  // v3 (M1): Doktor Mori's clinic was counted as a civilian. M2 makes it its own faction,
+  // starting neutral; the other standings carry over unchanged.
   3: (old) => {
+    const domain = isObject(old.domain) ? old.domain : {};
+    const reputation = isObject(domain.reputation) ? domain.reputation : {};
+    return {
+      ...old,
+      version: 4,
+      domain: {
+        ...domain,
+        reputation: { ...reputation, clinic: typeof reputation.clinic === "number" ? reputation.clinic : 0 },
+      },
+    };
+  },
+  // v4 (M2): no main-thread story state. A save that already finished the first contract
+  // starts act I ("Echo") at its first step, as a live game would on completing it.
+  4: (old) => {
     const domain = isObject(old.domain) ? old.domain : {};
     const quests = isObject(domain.quests) ? domain.quests : {};
     // Ids are spelled out: a migration describes the schema of its time, not today's content.
@@ -51,7 +65,7 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
     const startEcho = isObject(first) && first.status === "completed" && !("m3_echo" in quests);
     return {
       ...old,
-      version: 4,
+      version: 5,
       domain: {
         ...domain,
         quests: startEcho ? { ...quests, m3_echo: { status: "active", stepIndex: 0 } } : quests,

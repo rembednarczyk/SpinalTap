@@ -118,7 +118,9 @@ document.addEventListener("pointerlockchange", () => {
 
 createRoot(uiRoot).render(<GameUi store={ui} intents={session} touch={touchDevice ? input.virtualPad : undefined} />);
 
-const debug = createDebugApi(session, ui, loop, () => probe.sample(), (position, target) => renderer.rig.setReferenceView(position, target));
+const debug = createDebugApi(session, ui, loop, () => probe.sample(), (position, target) => renderer.rig.setReferenceView(position, target),
+  () => renderer.dressedCount,
+);
 window.__seki = debug;
 
 if (reference) {

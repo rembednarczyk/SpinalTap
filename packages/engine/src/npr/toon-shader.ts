@@ -192,7 +192,11 @@ void main(void) {
   float dist = length(cameraPosition - vWorldPos);
   float fog = 1.0 - exp(-pow(dist * fogDensity, 2.0));
   color = mix(color, fogColor, clamp(fog, 0.0, 1.0));
+#if defined(ALPHABLEND) && defined(TEXTURE)
+  gl_FragColor = vec4(color, texel.a);
+#else
   gl_FragColor = vec4(color, 1.0);
+#endif
 }
 `;
 

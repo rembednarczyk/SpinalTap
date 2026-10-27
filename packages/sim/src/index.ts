@@ -6,6 +6,14 @@ export * from "./presentation";
 export * from "./replay";
 export * from "./simulation";
 export { createSystems, deadFlag, equippedAbility, fireShot, HEAD_ZONE, statsFor, PITCH_LIMIT, SPRINT_MULTIPLIER, worldTimeScale } from "./systems";
-export { GANGER_TREE, GANGER_SPEED } from "./systems/ai";
+export {
+  CIVILIAN_FLEE_SPEED,
+  CIVILIAN_TREE,
+  FLEE_RADIUS,
+  GANGER_SPEED,
+  GANGER_TREE,
+  HOSTILE_AGGRO_MULTIPLIER,
+  effectiveAggroRange,
+} from "./systems/ai";
 export { contractGangerHp, createDistrictWorld, GANGER_MAX_HP, PLAYER_MAX_HP, spawnContractTargets } from "./world/factory";
 export type { SessionState, SimContext, System } from "./world/context";

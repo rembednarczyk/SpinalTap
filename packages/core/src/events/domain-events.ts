@@ -15,6 +15,10 @@ export interface DomainEvents {
   InteractionFocusChanged: { targetId: EntityId | null; prompt: string | null };
   /** kind "shop" opens the ripperdoc panel instead of an ink conversation. */
   InteractionStarted: { targetId: EntityId; dialogueId: string; kind: "dialogue" | "shop" };
+  /** The NPC will not deal with the player because of their faction's standing. */
+  InteractionRefused: { targetId: EntityId; dialogueId: string; faction: FactionId };
+  /** An NPC visibly reacted to the player's reputation (presentation cue only). */
+  NpcReacted: { entityId: EntityId; faction: FactionId; reaction: NpcReaction };
   CameraModeChanged: { mode: CameraMode };
   QuestAdvanced: { questId: string; stepId: string; objective: string };
   QuestCompleted: { questId: string; title: string };
@@ -33,5 +37,8 @@ export interface DomainEvents {
   StoryChoiceMade: { choice: StoryChoiceId; option: StoryOption };
   EndingReached: { endingId: EndingId; title: string };
 }
+
+/** "warn": a friendly ganger sizes the player up instead of shooting. "flee": a civilian runs away. */
+export type NpcReaction = "warn" | "flee";
 
 export type DomainEventType = keyof DomainEvents;

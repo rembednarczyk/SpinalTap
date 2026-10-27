@@ -3,6 +3,7 @@ import {
   type DomainState,
   type GameCommand,
   CONTRACT_SITES,
+  FACTION_IDS,
   QUEST_DEFINITIONS,
   STORY_CHOICES,
   type StoryChoiceId,
@@ -14,6 +15,7 @@ import {
   isStoryChoiceId,
   isStoryOption,
   resolveEnding,
+  stanceOf,
 } from "@seki/core";
 import type { DialogueLine, DialogueView } from "./dialogue-view";
 
@@ -72,6 +74,7 @@ export class NarrativeRuntime {
     this.story.variablesState.$("contract_state", contract?.status ?? "");
     this.story.variablesState.$("contract_site", contract ? CONTRACT_SITES[contract.siteId].label : "");
     this.story.variablesState.$("contracts_done", domain.contracts.completed);
+    for (const f of FACTION_IDS) this.story.variablesState.$(`${f}_stance`, stanceOf(domain.reputation[f]));
     // The domain owns the main-thread choices; ink sees them as plain string variables.
     for (const choice of Object.keys(STORY_CHOICES) as StoryChoiceId[]) {
       this.story.variablesState.$(`choice_${choice}`, domain.story.choices[choice] ?? "");
