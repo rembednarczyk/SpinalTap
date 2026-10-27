@@ -55,16 +55,27 @@ export class NarrativeRuntime {
   private dialogueId = "";
   /** Flags raised during the current conversation, visible to has_flag() before the sim applies them. */
   private pendingFlags = new Set<string>();
+  /** ink state from before the current conversation, kept until it has an effect. */
+  private checkpoint: string | null = null;
+  /** Commands the current conversation has sent. */
+  private effects = 0;
 
   constructor(
     source: string,
-    private readonly emit: (command: GameCommand) => void,
+    private readonly sink: (command: GameCommand) => void,
   ) {
     this.story = compileInk(source);
     this.bindExternals();
   }
 
+  private emit(command: GameCommand): void {
+    this.effects += 1;
+    this.sink(command);
+  }
+
   start(dialogueId: string, domain: DomainState): DialogueView {
+    this.checkpoint = this.story.state.toJson();
+    this.effects = 0;
     this.domain = domain;
     this.dialogueId = dialogueId;
     this.pendingFlags = new Set();
@@ -90,6 +101,30 @@ export class NarrativeRuntime {
     return this.continue();
   }
 
+  /**
+   * The conversation was cut short (ADR-0016). If it has not changed anything yet, ink goes
+   * back to where it was before it started (visit counts, once-only choices), so starting it
+   * again plays exactly the same. Once it has sent commands, ink keeps what it saw, matching
+   * the effects the simulation has applied, so nothing is offered or paid twice. Either way
+   * the flow is ended: no pending choices linger in the state or in a save.
+   * Returns true when the state was rolled back.
+   */
+  interrupt(): boolean {
+    const rollback = this.checkpoint !== null && this.effects === 0;
+    if (rollback && this.checkpoint !== null) this.story.state.LoadJson(this.checkpoint);
+    else this.story.state.ForceEnd();
+    this.checkpoint = null;
+    this.effects = 0;
+    this.pendingFlags = new Set();
+    this.dialogueId = "";
+    return rollback;
+  }
+
+  /** True between `start` and the end of the conversation (no choices left) or `interrupt`. */
+  get inConversation(): boolean {
+    return this.dialogueId !== "" && this.story.currentChoices.length > 0;
+  }
+
   /** ink state (visit counts, variables) as JSON, for the save snapshot. */
   saveState(): string {
     return this.story.state.toJson();
@@ -97,10 +132,12 @@ export class NarrativeRuntime {
 
   loadState(json: string): void {
     this.story.state.LoadJson(json);
+    this.checkpoint = null;
   }
 
   resetState(): void {
     this.story.ResetState();
+    this.checkpoint = null;
   }
 
   private continue(): DialogueView {

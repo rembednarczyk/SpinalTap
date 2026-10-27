@@ -1,6 +1,6 @@
 import type { InputFrame } from "@seki/core";
 
-export type Action = "forward" | "back" | "left" | "right" | "sprint" | "fire" | "interact" | "toggleCamera" | "ability" | "useItem" | "toggleWeapon";
+export type Action = "forward" | "back" | "left" | "right" | "sprint" | "crouch" | "fire" | "interact" | "toggleCamera" | "ability" | "useItem" | "toggleWeapon";
 
 /** Action → physical codes (KeyboardEvent.code, or "Mouse0".."Mouse2"). Remappable at runtime. */
 export type KeyMap = Readonly<Record<Action, readonly string[]>>;
@@ -11,6 +11,8 @@ export const DEFAULT_KEYMAP: KeyMap = {
   left: ["KeyA", "ArrowLeft"],
   right: ["KeyD", "ArrowRight"],
   sprint: ["ShiftLeft", "ShiftRight"],
+  // C only: Ctrl would turn Ctrl+W (crouch while walking) into "close the tab".
+  crouch: ["KeyC"],
   fire: ["Mouse0"],
   interact: ["KeyE"],
   toggleCamera: ["KeyV"],
@@ -42,6 +44,7 @@ export const mapKeyboardMouse = (keys: KeyState, look: LookDelta, map: KeyMap = 
   lookYaw: look.yaw,
   lookPitch: look.pitch,
   sprint: any(keys.held, map.sprint),
+  crouch: any(keys.held, map.crouch),
   fire: any(keys.held, map.fire),
   interact: any(keys.pressed, map.interact),
   toggleCamera: any(keys.pressed, map.toggleCamera),
@@ -73,6 +76,8 @@ export const mapGamepad = (pad: PadState, dt: number): InputFrame => ({
   lookYaw: dead(pad.axes[2]) * PAD_LOOK_SPEED * dt,
   lookPitch: dead(pad.axes[3]) * PAD_LOOK_SPEED * dt,
   sprint: pad.buttons[10] ?? false,
+  // B (east face button), held.
+  crouch: pad.buttons[1] ?? false,
   fire: pad.buttons[7] ?? false,
   interact: pad.pressed[0] ?? false,
   toggleCamera: pad.pressed[3] ?? false,
@@ -88,6 +93,7 @@ export const mergeFrames = (a: InputFrame, b: InputFrame): InputFrame => ({
   lookYaw: a.lookYaw + b.lookYaw,
   lookPitch: a.lookPitch + b.lookPitch,
   sprint: a.sprint || b.sprint,
+  crouch: a.crouch || b.crouch,
   fire: a.fire || b.fire,
   interact: a.interact || b.interact,
   toggleCamera: a.toggleCamera || b.toggleCamera,

@@ -35,24 +35,44 @@ kbd {
 /* HUD */
 .hud { position: absolute; inset: 0; }
 
+/* Four ticks around the aim point; --spread (set from the aim cone) pushes them apart. */
 .crosshair {
+  --gap: calc(3px + var(--spread, 0) * 50vh);
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 18px;
-  height: 18px;
-  transform: translate(-50%, -50%);
-  background:
-    linear-gradient(var(--ink), var(--ink)) center 0 / 2px 6px no-repeat,
-    linear-gradient(var(--ink), var(--ink)) center 100% / 2px 6px no-repeat,
-    linear-gradient(var(--ink), var(--ink)) 0 center / 6px 2px no-repeat,
-    linear-gradient(var(--ink), var(--ink)) 100% center / 6px 2px no-repeat;
+  width: 0;
+  height: 0;
   opacity: 0.85;
-  transition: transform 80ms ease-out;
 }
-.crosshair--hit {
-  transform: translate(-50%, -50%) rotate(45deg) scale(1.25);
-  filter: drop-shadow(0 0 4px var(--magenta));
+.crosshair__tick {
+  position: absolute;
+  background: var(--ink);
+  transition: transform 90ms ease-out, background-color 80ms;
+}
+.crosshair__tick--top,
+.crosshair__tick--bottom { left: -1px; width: 2px; height: 7px; }
+.crosshair__tick--left,
+.crosshair__tick--right { top: -1px; width: 7px; height: 2px; }
+.crosshair__tick--top { top: 0; transform: translateY(calc(-100% - var(--gap))); }
+.crosshair__tick--bottom { top: 0; transform: translateY(var(--gap)); }
+.crosshair__tick--left { left: 0; transform: translateX(calc(-100% - var(--gap))); }
+.crosshair__tick--right { left: 0; transform: translateX(var(--gap)); }
+.crosshair--crouched .crosshair__tick { background: var(--cyan); }
+.crosshair--hit { filter: drop-shadow(0 0 4px var(--magenta)); }
+.crosshair--hit .crosshair__tick { background: var(--magenta); }
+/* Head hit: red and a little X over the aim point. */
+.crosshair--head { filter: drop-shadow(0 0 5px var(--danger)); }
+.crosshair--head .crosshair__tick { background: var(--danger); }
+.crosshair__x {
+  position: absolute;
+  left: -6px;
+  top: -6px;
+  width: 12px;
+  height: 12px;
+  background:
+    linear-gradient(45deg, transparent 44%, var(--danger) 44%, var(--danger) 56%, transparent 56%),
+    linear-gradient(-45deg, transparent 44%, var(--danger) 44%, var(--danger) 56%, transparent 56%);
 }
 
 .hud__identity {
@@ -534,6 +554,8 @@ kbd {
 .touch__btn--h { right: 40px; bottom: 122px; width: 48px; height: 48px; color: var(--ok); }
 .touch__btn--v { right: 172px; bottom: 140px; width: 44px; height: 44px; font-size: 15px; }
 .touch__btn--x { right: 96px; bottom: 150px; width: 44px; height: 44px; font-size: 15px; }
+.touch__btn--c { right: 172px; bottom: 76px; width: 44px; height: 44px; font-size: 15px; }
+.touch__btn--on { background: rgba(95, 242, 255, 0.3); border-color: var(--cyan); color: var(--cyan); }
 .touch__top {
   position: absolute;
   top: max(12px, env(safe-area-inset-top, 0px));

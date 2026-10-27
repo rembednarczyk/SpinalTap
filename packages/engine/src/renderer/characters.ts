@@ -34,6 +34,8 @@ export interface CharacterRig {
   /** Left arm held in a fixed pose (shoulder X, elbow X), e.g. holding an umbrella. */
   readonly leftHold: readonly [number, number] | null;
   phase: number;
+  /** Forward stoop of the body at rest (radians around X), e.g. an old woman's bent back. */
+  stoop: number;
   /** Seconds alive; drives idle breathing. */
   time: number;
   /** 0..1 flinch after a hit, decays quickly. */
@@ -402,6 +404,7 @@ const finish = (
     armSpread: opts.armSpread,
     leftHold: opts.leftHold ?? null,
     phase: 0,
+    stoop: 0,
     time: 0,
     flinch: 0,
     dying: null,
@@ -524,7 +527,7 @@ export const buildCivilian = (scene: Scene, materials: ToonMaterials, name: stri
   b.cylinder(0.95, 0.02, 0.02, "pole", sk.elbowL, 0, -fore - 0.42, 0);
   b.cylinder(0.28, 1.15, 0, "umbrella", sk.elbowL, 0, -fore - 0.95, 0);
   const rig = finish(root, b, sk, { aiming: false, armSpread: 0.1, leftHold: [-0.45, -2.35] });
-  rig.body.rotation.x = 0.08;
+  rig.stoop = rig.body.rotation.x = 0.08;
   return rig;
 };
 
@@ -553,15 +556,62 @@ export const buildRipperdoc = (scene: Scene, materials: ToonMaterials, name: str
   b.box(0.13, 0.03, 0.03, "docGoggles", sk.head, 0, 0.018 * sk.s, 0.07 * sk.s);
   const rig = finish(root, b, sk, { aiming: false, armSpread: 0.12 });
   // Poses go on after skinning: the bind pose must stay neutral.
-  rig.body.rotation.x = 0.1;
+  rig.stoop = rig.body.rotation.x = 0.1;
   return rig;
 };
 
 const DEATH_FALL = 0.65;
 const DEATH_LINGER = 5.5;
 
-/** Procedural animation: walk cycle with knees and elbows, idle breathing, hit flinch, death fall. */
-export const animateRig = (rig: CharacterRig, speed: number, dt: number): void => {
+/** Thigh angle from vertical when fully crouched (negative: knee forward and up). */
+export const CROUCH_THIGH = -1.2;
+/** Knee bend when fully crouched. */
+export const CROUCH_KNEE = 2.0;
+/** Forward lean of the body when fully crouched. */
+export const CROUCH_LEAN = 0.35;
+
+export interface CrouchOffset {
+  /** Body drop (negative) and shift along Z that keep the feet planted at the root. */
+  readonly y: number;
+  readonly z: number;
+}
+
+/**
+ * Where the body has to go so that, with the hips leaning `lean` forward and the legs at the
+ * given thigh angle and knee bend, the feet stay on the ground under the root. Measured from
+ * the rig's own segments, so it fits every build.
+ */
+export const crouchOffset = (rig: CharacterRig, thigh: number, knee: number, lean: number): CrouchOffset => {
+  const hip = rig.legL.position.y;
+  const thighLen = -rig.kneeL.position.y;
+  const shinLen = thighLen * (0.42 / 0.44);
+  const shin = thigh + knee;
+  // A leg rotated by θ around X points along (y = -cos θ, z = -sin θ).
+  const legHeight = thighLen * Math.cos(thigh) + shinLen * Math.cos(shin);
+  const footZ = -thighLen * Math.sin(thigh) - shinLen * Math.sin(shin);
+  return {
+    y: legHeight - (thighLen + shinLen) - hip * (Math.cos(lean) - 1),
+    z: -(hip * Math.sin(lean) + footZ),
+  };
+};
+
+/** Slight knee bend of the standing pose. */
+const KNEE_REST = 0.04;
+
+/** Crouch offset relative to the standing pose (which already has the rest knee bend). */
+const crouchDelta = (rig: CharacterRig, thigh: number, knee: number, lean: number): CrouchOffset => {
+  const rest = crouchOffset(rig, 0, KNEE_REST, 0);
+  const pose = crouchOffset(rig, thigh, knee + KNEE_REST, lean);
+  return { y: pose.y - rest.y, z: pose.z - rest.z };
+};
+
+/**
+ * Procedural animation: walk cycle with knees and elbows, crouch, idle breathing, hit flinch,
+ * death fall. `crouch` is 0 standing .. 1 fully down (already eased by the simulation): hips
+ * and knees bend, the body drops and leans in with the feet planted, the head and arms keep
+ * looking and aiming forward.
+ */
+export const animateRig = (rig: CharacterRig, speed: number, dt: number, crouch = 0): void => {
   rig.time += dt;
   if (rig.dying !== null) {
     rig.dying += dt;
@@ -579,14 +629,20 @@ export const animateRig = (rig: CharacterRig, speed: number, dt: number): void =
     rig.root.position.y = 0.12 * ease - sink * 0.5;
     return;
   }
+  const c = smooth(Math.min(1, Math.max(0, crouch)));
+  const lean = CROUCH_LEAN * c;
+  const thigh = CROUCH_THIGH * c;
+  const knee = CROUCH_KNEE * c;
   const amount = Math.min(1, speed / 4.2);
   rig.phase += dt * (4 + speed * 1.9) * (amount > 0.05 ? 1 : 0);
-  const swing = Math.sin(rig.phase) * 0.7 * amount;
-  rig.legL.rotation.x = swing;
-  rig.legR.rotation.x = -swing;
+  // Short, careful steps while crouched.
+  const swing = Math.sin(rig.phase) * 0.7 * amount * (1 - 0.55 * c);
+  // Leg angles are relative to the leaning body: take the lean back out.
+  rig.legL.rotation.x = swing + thigh - lean;
+  rig.legR.rotation.x = -swing + thigh - lean;
   // Knees bend on the back swing.
-  rig.kneeL.rotation.x = Math.max(0, -swing) * 1.3 + 0.04;
-  rig.kneeR.rotation.x = Math.max(0, swing) * 1.3 + 0.04;
+  rig.kneeL.rotation.x = Math.max(0, -swing) * 1.3 + KNEE_REST + knee;
+  rig.kneeR.rotation.x = Math.max(0, swing) * 1.3 + KNEE_REST + knee;
   if (rig.leftHold) {
     rig.armL.rotation.x = rig.leftHold[0];
     rig.elbowL.rotation.x = rig.leftHold[1];
@@ -601,11 +657,18 @@ export const animateRig = (rig: CharacterRig, speed: number, dt: number): void =
     rig.armR.rotation.z = -rig.armSpread;
     rig.elbowR.rotation.x = -0.18 - Math.max(0, -swing) * 0.4;
   }
+  // Arms hang and aim in world terms, so the lean is taken out of them too.
+  rig.armL.rotation.x -= lean;
+  rig.armR.rotation.x -= lean;
+  const offset = c > 0 ? crouchDelta(rig, thigh, knee, lean) : { y: 0, z: 0 };
   const breathe = Math.sin(rig.time * 1.7) * 0.006;
-  rig.body.position.y = Math.abs(Math.cos(rig.phase)) * 0.04 * amount + breathe;
+  rig.body.position.y = Math.abs(Math.cos(rig.phase)) * 0.04 * amount * (1 - 0.5 * c) + breathe + offset.y;
+  rig.body.position.z = offset.z;
+  rig.body.rotation.x = rig.stoop + lean;
   rig.flinch = Math.max(0, rig.flinch - dt * 5);
   rig.body.rotation.z = Math.sin(rig.time * 30) * 0.05 * rig.flinch;
-  rig.head.rotation.x = -0.25 * rig.flinch;
+  // The head keeps looking ahead over the lean.
+  rig.head.rotation.x = -0.25 * rig.flinch - lean * 0.8;
 };
 
 /** Seconds to draw or holster the pistol (matches the simulation's DRAW_TIME). */

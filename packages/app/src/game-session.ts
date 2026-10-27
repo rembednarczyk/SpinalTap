@@ -16,7 +16,7 @@ import {
   recallDialogueId,
 } from "@seki/core";
 import { type DialogueView, NarrativeRuntime } from "@seki/narrative";
-import { DISTRICTS, DISTRICT_M0_PROPS, type DistrictId, RenderSync, Simulation } from "@seki/sim";
+import { DISTRICTS, DISTRICT_M0_PROPS, type DistrictId, RenderSync, SIM_HZ, Simulation } from "@seki/sim";
 import { type AbilityVm, type Screen, type SettingsVm, type UiIntents, type UiStore, dismissToast, patchUi, pushToast } from "@seki/ui";
 import { bindEventPresenter } from "./event-presenter";
 import { createJournalCache } from "./journal";
@@ -48,6 +48,11 @@ export interface SettingsHost {
 
 const toDialogueVm = (v: DialogueView) => ({ lines: v.lines, choices: v.choices, ended: v.ended });
 
+/** A flashback waits this many ticks (5 s) after the last shot near the player, unless the shooter is down. */
+export const RECALL_CALM_TICKS = 5 * SIM_HZ;
+/** HUD aim spread is rounded to this many radians, so the store changes only when the cone visibly moves. */
+const SPREAD_STEP = 0.002;
+
 /**
  * Application service: owns the running simulation and coordinates narrative, persistence
  * and UI around it. Contains no browser or Babylon code, so the whole M0 loop runs headless.
@@ -75,6 +80,7 @@ export class GameSession implements UiIntents {
       onDialogue: (id) => this.openDialogue(id),
       onShop: () => this.openShop(),
       onPlayerDied: () => this.setScreen("dead"),
+      onDialogueInterrupted: () => this.interruptDialogue(),
     });
     patchUi(deps.ui, { map: buildDistrictMap(DISTRICT_M0_PROPS) });
     this.appliedSettings = deps.settings?.applied ?? deps.ui.getState().settings;
@@ -111,11 +117,21 @@ export class GameSession implements UiIntents {
    * conversation or the clinic that triggered it). Driven by domain state, so it survives a save.
    */
   private playPendingRecall(): void {
-    if (!this.inControl || this.simulation.session.gameOver) return;
+    const session = this.simulation.session;
+    if (!this.inControl || session.gameOver) return;
     const memory = pendingRecall(this.simulation.domain);
-    if (!memory) return;
+    if (!memory || !this.calm()) return;
     this.simulation.session.dialogueActive = true;
     this.openDialogue(recallDialogueId(memory));
+  }
+
+  /** No shot near the player for RECALL_CALM_TICKS, or whoever fired it is down. */
+  private calm(): boolean {
+    const { session, tick, world } = this.simulation;
+    const threat = session.lastThreat;
+    if (threat === null || tick - threat.tick >= RECALL_CALM_TICKS) return true;
+    for (const e of world.with("health")) if (e.id === threat.sourceId) return e.health.current <= 0;
+    return true;
   }
 
   render(alpha: number): void {
@@ -151,6 +167,8 @@ export class GameSession implements UiIntents {
       cyberware: sim.domain.character.cyberware,
       reputation: sim.domain.reputation,
       contractsDone: sim.domain.contracts.completed,
+      aimSpread: Math.round(sim.aimSpread() / SPREAD_STEP) * SPREAD_STEP,
+      crouched: player?.posture?.crouched ?? false,
       journal: this.journal(sim.domain),
       ...this.minimap(sim.world, sim.domain.flags, sim.domain.contracts),
     });
@@ -321,6 +339,18 @@ export class GameSession implements UiIntents {
     this.shopOpen = true;
     patchUi(this.deps.ui, { shopOpen: true, prompt: null });
     this.deps.onFocusChange?.(false);
+  }
+
+  /**
+   * The sim ended the conversation or the shop because the player came under fire (ADR-0016):
+   * close the panel, give the controls back, and let ink drop the half-finished talk so it
+   * can start over. No end-dialogue command: the sim has already cleared the flag.
+   */
+  private interruptDialogue(): void {
+    if (!this.dialogueOpen && !this.shopOpen) return;
+    if (this.dialogueOpen) this.narrative.interrupt();
+    this.closeDialogueSilently();
+    this.deps.onFocusChange?.(this.inControl);
   }
 
   private closeDialogueSilently(): void {

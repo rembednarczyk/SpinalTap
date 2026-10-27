@@ -11,10 +11,10 @@ import { playerControlSystem } from "./player-control-system";
 import { questSystem } from "./quest-system";
 import { streamingSystem } from "./streaming-system";
 
-export { fireShot, HEAD_ZONE } from "./combat-system";
+export { aimSpreadOf, fireShot, GUNFIRE_INTERRUPT_RADIUS } from "./combat-system";
 export { equippedAbility, worldTimeScale } from "./ability-system";
 export { deadFlag } from "./death-system";
-export { statsFor, PITCH_LIMIT, SPRINT_MULTIPLIER } from "./player-control-system";
+export { statsFor, CROUCH_SPEED_MULTIPLIER, CROUCH_TIME, PITCH_LIMIT, SPRINT_MULTIPLIER } from "./player-control-system";
 
 /**
  * Explicit, fixed system order (determinism: never derived from map iteration).
