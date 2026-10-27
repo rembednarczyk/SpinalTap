@@ -5,7 +5,8 @@
  *
  * Only an alerted ganger fights. How a ganger becomes alerted depends on Hebi's stance
  * towards the player (see the ganger AI system); a ganger that sees the player without
- * being alerted just watches them.
+ * being alerted just watches them. A ganger with a victim (a protection job's wave) goes for
+ * that NPC before chasing anyone; without one, those two branches never match.
  */
 export const GANGER_TREE = `root {
   selector {
@@ -14,6 +15,15 @@ export const GANGER_TREE = `root {
       condition [SeesPlayer]
       condition [PlayerInAttackRange]
       action [ShootAtPlayer]
+    }
+    sequence {
+      condition [HasVictim]
+      condition [VictimInAttackRange]
+      action [ShootAtVictim]
+    }
+    sequence {
+      condition [HasVictim]
+      action [ChaseVictim]
     }
     sequence {
       condition [IsAlerted]

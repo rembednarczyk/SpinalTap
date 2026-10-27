@@ -25,6 +25,11 @@ export interface GangerAi {
    * the player only set it when provoked (gunfire nearby or a hit).
    */
   alerted: boolean;
+  /**
+   * Key of the NPC this ganger was sent to kill (a protection job's wave). It goes for the
+   * victim, and turns on the player only once alerted and with the player in sight and range.
+   */
+  readonly victim?: string;
 }
 
 /** A bystander that keeps to its spot and runs from a player the street fears. Stateless by design. */
@@ -33,7 +38,8 @@ export interface CivilianAi {
 }
 
 export interface Interactable {
-  readonly kind: "dialogue" | "shop";
+  /** "pickup": taken on the spot (a contract crate); no conversation opens. */
+  readonly kind: "dialogue" | "shop" | "pickup";
   readonly dialogueId: string;
   readonly prompt: string;
   readonly radius: number;
@@ -63,6 +69,8 @@ export interface Entity {
   body?: CharacterBody;
   player?: true;
   health?: Health;
+  /** Who dealt the last damage. Transient (never saved): death is resolved in the same step. */
+  lastHitBy?: EntityId;
   faction?: FactionId;
   combatant?: Combatant;
   ai?: GangerAi;
