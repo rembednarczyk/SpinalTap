@@ -7,6 +7,7 @@ const CONTROLS: [string, string][] = [
   ["V", "FPP / TPP"],
   ["Q", "zdolność cyberware"],
   ["H", "apteczka"],
+  ["I", "ekwipunek"],
   ["Tab", "karta postaci"],
   ["J", "dziennik"],
   ["F5 / F9", "szybki zapis / odczyt"],

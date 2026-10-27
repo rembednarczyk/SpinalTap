@@ -20,6 +20,17 @@ const intents = (): UiIntents => ({
   reload: vi.fn(),
   takeLoot: vi.fn(),
   closeLoot: vi.fn(),
+  openCharacterScreen: vi.fn(),
+  closeCharacterScreen: vi.fn(),
+  setPreviewViewport: vi.fn(),
+  rotatePreview: vi.fn(),
+  resetPreview: vi.fn(),
+  equip: vi.fn(),
+  unequip: vi.fn(),
+  useItem: vi.fn(),
+  dropItem: vi.fn(),
+  installMod: vi.fn(),
+  removeMod: vi.fn(),
 });
 
 const pad = (): TouchPadSink => ({ setStick: vi.fn(), look: vi.fn(), press: vi.fn(), release: vi.fn(), reset: vi.fn(), selectWeaponSlot: vi.fn() });

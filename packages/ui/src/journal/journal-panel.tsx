@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { JournalQuestVm } from "../store/ui-store";
 import { useUi } from "../use-ui";
 
@@ -31,24 +31,11 @@ const QuestList = ({ quests, empty }: { quests: readonly JournalQuestVm[]; empty
     </ul>
   );
 
-/** Journal on J: active and finished jobs with their steps, and the memories Seki got back. */
+/** Dziennik tab of the character screen (J): active and finished jobs with their steps, and the memories Seki got back. */
 export const JournalPanel = () => {
-  const open = useUi((s) => s.journalOpen);
-  const toggle = useUi((s) => s.toggleJournal);
   const journal = useUi((s) => s.journal);
   const [tab, setTab] = useState<Tab>("active");
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.code !== "KeyJ" || e.repeat) return;
-      e.preventDefault();
-      toggle();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [toggle]);
-
-  if (!open) return null;
   const active = journal.quests.filter((q) => q.status === "active");
   const done = journal.quests.filter((q) => q.status === "completed");
   const tabs: readonly (readonly [Tab, string, number])[] = [
@@ -90,7 +77,7 @@ export const JournalPanel = () => {
           </ul>
         ))}
       <div className="sheet__hint">
-        <kbd>J</kbd> zamknij · <kbd>Tab</kbd> karta postaci
+        <kbd>J</kbd> zamknij · <kbd>I</kbd> ekwipunek · <kbd>Tab</kbd> karta postaci
       </div>
     </div>
   );

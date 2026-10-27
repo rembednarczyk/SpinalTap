@@ -1,5 +1,10 @@
 import {
+  type AmmoPouch,
   type CameraMode,
+  EMPTY_EQUIPMENT,
+  EMPTY_INVENTORY,
+  type Equipment,
+  type InventoryState,
   type CyberwareLoadout,
   type DayPhase,
   type HitZone,
@@ -136,6 +141,24 @@ export interface LootVm {
   readonly lines: readonly LootLineVm[];
 }
 
+/** Tabs of the character screen (plan §7): I, Tab and J open it on theirs. */
+export type CharacterTab = "inventory" | "sheet" | "journal";
+
+/** Numbers of the stats panel, worked out by the app from the domain and the player. */
+export interface CharacterStatsVm {
+  readonly hp: number;
+  readonly maxHp: number;
+  /** Armor per hit zone, implants and clothes together. */
+  readonly armor: Readonly<Record<"head" | "torso" | "arm" | "leg", number>>;
+  /** 0..1. */
+  readonly critChance: number;
+  readonly critMultiplier: number;
+  /** Aim cone of the active weapon standing still, in degrees; null for melee or an empty hand. */
+  readonly spread: number | null;
+  /** Walk speed in m/s. */
+  readonly moveSpeed: number;
+}
+
 export type GraphicsQuality = "high" | "low";
 
 export interface SettingsVm {
@@ -189,13 +212,25 @@ export interface UiState {
   readonly shopOpen: boolean;
   /** Open loot panel, or null. */
   readonly loot: LootVm | null;
+  /** Open tab of the character screen, null while it is closed. */
+  readonly characterTab: CharacterTab | null;
+  /** Opens the screen on `tab`, or closes it when it already shows that tab. */
+  readonly toggleCharacter: (tab: CharacterTab) => void;
+  readonly closeCharacter: () => void;
+  /** The screen shows the character sheet (kept in step with `characterTab`). */
   readonly sheetOpen: boolean;
-  /** Toggles the character sheet (Tab or the on-screen button). */
+  /** Toggles the character sheet (Tab). */
   readonly toggleSheet: () => void;
   readonly journal: JournalVm;
+  /** The screen shows the journal (kept in step with `characterTab`). */
   readonly journalOpen: boolean;
-  /** Toggles the journal (J or the on-screen button). Closes the character sheet. */
+  /** Toggles the journal (J). */
   readonly toggleJournal: () => void;
+  /** The player's bag, slots and ammo pouch, straight from the domain (immutable, by reference). */
+  readonly inventory: InventoryState;
+  readonly equipment: Equipment;
+  readonly ammo: AmmoPouch;
+  readonly characterStats: CharacterStatsVm | null;
   readonly map: MapVm | null;
   readonly mapPlayer: MapPlayerVm | null;
   readonly mapMarkers: readonly MapMarkerVm[];
@@ -238,11 +273,18 @@ export const initialUiState: UiState = {
   contractsDone: 0,
   shopOpen: false,
   loot: null,
+  characterTab: null,
+  toggleCharacter: () => {},
+  closeCharacter: () => {},
   sheetOpen: false,
   toggleSheet: () => {},
   journal: EMPTY_JOURNAL,
   journalOpen: false,
   toggleJournal: () => {},
+  inventory: EMPTY_INVENTORY,
+  equipment: EMPTY_EQUIPMENT,
+  ammo: {},
+  characterStats: null,
   map: null,
   mapPlayer: null,
   mapMarkers: [],
@@ -255,13 +297,30 @@ export const initialUiState: UiState = {
 
 export type UiStore = StoreApi<UiState>;
 
+/** The tab and the two flags that mirror it. */
+export const characterTabState = (tab: CharacterTab | null): Pick<UiState, "characterTab" | "sheetOpen" | "journalOpen"> => ({
+  characterTab: tab,
+  sheetOpen: tab === "sheet",
+  journalOpen: tab === "journal",
+});
+
+/** `sheetOpen` or `journalOpen` in the initial state open the screen on that tab. */
+const initialTab = (initial: Partial<UiState>): CharacterTab | null =>
+  initial.characterTab !== undefined ? initial.characterTab : initial.sheetOpen ? "sheet" : initial.journalOpen ? "journal" : null;
+
 export const createUiStore = (initial: Partial<UiState> = {}): UiStore =>
-  createStore<UiState>((set) => ({
-    ...initialUiState,
-    toggleSheet: () => set((s) => ({ sheetOpen: !s.sheetOpen, journalOpen: false })),
-    toggleJournal: () => set((s) => ({ journalOpen: !s.journalOpen, sheetOpen: false })),
-    ...initial,
-  }));
+  createStore<UiState>((set) => {
+    const toggle = (tab: CharacterTab) => set((s) => characterTabState(s.characterTab === tab ? null : tab));
+    return {
+      ...initialUiState,
+      toggleCharacter: toggle,
+      closeCharacter: () => set(characterTabState(null)),
+      toggleSheet: () => toggle("sheet"),
+      toggleJournal: () => toggle("journal"),
+      ...initial,
+      ...characterTabState(initialTab(initial)),
+    };
+  });
 
 /** Applies only the fields that actually changed, so per-frame pushes do not re-render React. */
 export const patchUi = (store: UiStore, patch: Partial<UiState>): void => {

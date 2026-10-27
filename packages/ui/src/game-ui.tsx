@@ -1,8 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { DialoguePanel } from "./dialogue/dialogue-panel";
 import { Hud } from "./hud/hud";
-import { CharacterPanel } from "./menus/character-panel";
-import { JournalPanel } from "./journal/journal-panel";
+import { CharacterScreen } from "./menus/character-screen";
 import { ShopPanel } from "./shop/shop-panel";
 import { LootPanel } from "./loot/loot-panel";
 import { TouchControls } from "./touch/touch-controls";
@@ -17,16 +16,17 @@ import { UiContext, useUi } from "./use-ui";
 const Screens = ({ touch }: { touch: TouchPadSink | undefined }) => {
   const screen = useUi((s) => s.screen);
   const modal = useUi((s) => s.dialogue !== null || s.shopOpen || s.loot !== null);
+  // The character screen covers the whole game; the HUD under it would only show through.
+  const menu = useUi((s) => s.characterTab !== null) && screen === "playing";
   return (
     <>
-      {touch && screen === "playing" && !modal && <TouchControls pad={touch} />}
+      {touch && screen === "playing" && !modal && !menu && <TouchControls pad={touch} />}
       {touch && <div className="rotate-hint">Obróć telefon poziomo</div>}
-      {screen !== "title" && <Hud touch={touch} />}
+      {screen !== "title" && !menu && <Hud touch={touch} />}
       {screen === "playing" && <DialoguePanel />}
       {screen === "playing" && <ShopPanel />}
       {screen === "playing" && <LootPanel />}
-      {screen === "playing" && <CharacterPanel />}
-      {screen === "playing" && <JournalPanel />}
+      {screen === "playing" && <CharacterScreen />}
       {screen === "title" && <TitleScreen />}
       {screen === "paused" && <PauseMenu />}
       {screen === "dead" && <DeathScreen />}

@@ -2,6 +2,10 @@ import {
   ABILITY_CATALOG,
   type AudioPort,
   type CyberwareId,
+  type EquipSlot,
+  type GameCommand,
+  type ItemRef,
+  type ModSlot,
   type StackableId,
   stackRoom,
   loadoutAbility,
@@ -23,7 +27,20 @@ import {
 } from "@seki/core";
 import { type DialogueView, NarrativeRuntime } from "@seki/narrative";
 import { DISTRICTS, DISTRICT_M0_PROPS, type DistrictId, RenderSync, SIM_HZ, Simulation } from "@seki/sim";
-import { type AbilityVm, type Screen, type SettingsVm, type UiIntents, type UiStore, dismissToast, patchUi, pushToast } from "@seki/ui";
+import {
+  type AbilityVm,
+  type CharacterTab,
+  type PreviewRect,
+  type Screen,
+  type SettingsVm,
+  type UiIntents,
+  type UiStore,
+  characterTabState,
+  dismissToast,
+  patchUi,
+  pushToast,
+} from "@seki/ui";
+import { type PreviewHost, createAppearanceCache, createStatsCache } from "./character-view";
 import { bindEventPresenter } from "./event-presenter";
 import { createJournalCache } from "./journal";
 import { buildDistrictMap, createMinimapTracker } from "./minimap";
@@ -45,6 +62,8 @@ export interface GameSessionDeps {
   readonly onFocusChange?: (wantsPointer: boolean) => void;
   /** Where settings live (localStorage in the browser). Without it changes last for the session only. */
   readonly settings?: SettingsHost;
+  /** 3D preview of the character menu (the engine's PreviewStage in the browser). */
+  readonly preview?: PreviewHost;
 }
 
 export interface SettingsHost {
@@ -74,6 +93,15 @@ export class GameSession implements UiIntents {
   private shopOpen = false;
   /** Key of the bag being searched, or null. */
   private lootKey: string | null = null;
+  /** The character menu is open: the clock stands (ADR-0015). */
+  private characterOpen = false;
+  /**
+   * Last rectangle the menu's preview box reported. React runs the box's effect before the
+   * screen's own, so the rectangle can arrive just before the menu says it opened.
+   */
+  private previewRect: PreviewRect | null = null;
+  private readonly appearance = createAppearanceCache();
+  private readonly characterStats = createStatsCache();
   private readonly lootView = createLootTracker();
   private lastAbilityVm: AbilityVm | null = null;
   private readonly journal = createJournalCache();
@@ -111,14 +139,22 @@ export class GameSession implements UiIntents {
     return this.deps.ui.getState().screen;
   }
 
-  /** True while the player is in control (playing, no dialogue). */
+  /** True while the player is in control (playing, no dialogue, no menu). */
   get inControl(): boolean {
-    return this.screen === "playing" && !this.dialogueOpen && !this.shopOpen && this.lootKey === null;
+    return this.screen === "playing" && !this.dialogueOpen && !this.shopOpen && this.lootKey === null && !this.characterOpen;
   }
 
-  /** The simulation only advances while playing; dialogue freezes the player but not the world. */
+  /**
+   * The simulation only advances while playing; dialogue freezes the player but not the world,
+   * the character menu stops the clock.
+   */
   get running(): boolean {
-    return this.screen === "playing";
+    return this.screen === "playing" && !this.characterOpen;
+  }
+
+  /** The character menu is open; the app draws the preview instead of the game. */
+  get characterScreenOpen(): boolean {
+    return this.characterOpen;
   }
 
   step(input: InputFrame): void {
@@ -150,6 +186,8 @@ export class GameSession implements UiIntents {
   }
 
   render(alpha: number): void {
+    // Same frame as a menu command: the preview gets the new look before it draws.
+    if (this.characterOpen) this.deps.preview?.setAppearance(this.appearance(this.simulation.domain));
     this.renderSync.sync(this.simulation.world, alpha, this.simulation.streamer.streamedOut);
     this.syncTimeOfDay();
     this.announceDistrict();
@@ -185,9 +223,15 @@ export class GameSession implements UiIntents {
     if (this.lootKey !== null && loot === null) this.closeLoot();
     const player = sim.player();
     const { title, objective } = describeObjective(sim.domain, sim.tick);
+    const hp = player?.health?.current ?? 0;
+    const maxHp = player?.health?.max ?? 100;
     patchUi(this.deps.ui, {
-      hp: player?.health?.current ?? 0,
-      maxHp: player?.health?.max ?? 100,
+      hp,
+      maxHp,
+      inventory: sim.domain.inventory,
+      equipment: sim.domain.equipment,
+      ammo: sim.domain.ammo,
+      characterStats: this.characterStats(sim.domain, hp, maxHp),
       eddies: sim.domain.wallet.eddies,
       alias: sim.domain.character.alias,
       questTitle: title,
@@ -277,6 +321,84 @@ export class GameSession implements UiIntents {
     patchUi(this.deps.ui, { loot: null });
     this.simulation.enqueue({ type: "end-dialogue" });
     this.deps.onFocusChange?.(this.inControl);
+  }
+
+  // ---- character menu (plan §7, §8.5) ----
+
+  /** The UI opened the menu (I, Tab, J or the touch button) or moved to another tab. */
+  openCharacterScreen(tab: CharacterTab): void {
+    if (this.screen !== "playing" || this.dialogueOpen || this.shopOpen || this.lootKey !== null) {
+      patchUi(this.deps.ui, characterTabState(null));
+      return;
+    }
+    patchUi(this.deps.ui, { ...characterTabState(tab), prompt: null });
+    if (this.characterOpen) return;
+    this.characterOpen = true;
+    this.deps.preview?.setAppearance(this.appearance(this.simulation.domain));
+    this.deps.preview?.setViewport(this.previewRect);
+    this.deps.onFocusChange?.(false);
+  }
+
+  closeCharacterScreen(): void {
+    if (!this.characterOpen) return;
+    this.closeCharacterSilently();
+    this.deps.onFocusChange?.(this.inControl);
+  }
+
+  setPreviewViewport(rect: PreviewRect | null): void {
+    this.previewRect = rect;
+    if (this.characterOpen) this.deps.preview?.setViewport(rect);
+  }
+
+  rotatePreview(deltaYaw: number): void {
+    this.deps.preview?.rotate(deltaYaw);
+  }
+
+  resetPreview(): void {
+    this.deps.preview?.reset();
+  }
+
+  equip(uid: string, slot?: EquipSlot): void {
+    this.menuCommand(slot === undefined ? { type: "equip-item", uid } : { type: "equip-item", uid, slot });
+  }
+
+  unequip(slot: EquipSlot): void {
+    this.menuCommand({ type: "unequip-item", slot });
+  }
+
+  useItem(ref: ItemRef): void {
+    this.menuCommand({ type: "use-item", ref });
+  }
+
+  dropItem(ref: ItemRef, qty: number): void {
+    this.menuCommand({ type: "drop-item", ref, qty });
+  }
+
+  installMod(weaponUid: string, modUid: string): void {
+    this.menuCommand({ type: "install-mod", weaponUid, modUid });
+  }
+
+  removeMod(weaponUid: string, slot: ModSlot): void {
+    this.menuCommand({ type: "remove-mod", weaponUid, slot });
+  }
+
+  /**
+   * A command from the menu applies at once although the clock stands: the command phase of
+   * the next step runs now (`applyPendingCommands`), and the menu, the HUD and the preview see
+   * the result in this frame.
+   */
+  private menuCommand(cmd: GameCommand): void {
+    if (!this.characterOpen) return;
+    this.simulation.enqueue(cmd);
+    this.simulation.applyPendingCommands();
+    this.syncHud();
+    this.deps.preview?.setAppearance(this.appearance(this.simulation.domain));
+  }
+
+  private closeCharacterSilently(): void {
+    this.characterOpen = false;
+    this.deps.preview?.setViewport(null);
+    patchUi(this.deps.ui, characterTabState(null));
   }
 
   changeSettings(patch: Partial<SettingsVm>): void {
@@ -410,6 +532,7 @@ export class GameSession implements UiIntents {
   }
 
   private closeDialogueSilently(): void {
+    if (this.characterOpen) this.closeCharacterSilently();
     this.dialogueOpen = false;
     this.shopOpen = false;
     this.lootKey = null;
@@ -427,6 +550,7 @@ export class GameSession implements UiIntents {
   }
 
   private setScreen(screen: Screen): void {
+    if (screen !== "playing" && this.characterOpen) this.closeCharacterSilently();
     patchUi(this.deps.ui, { screen });
     this.deps.onFocusChange?.(this.inControl);
   }

@@ -1,5 +1,5 @@
 import { EMPTY_INPUT, type InputFrame, formatClock } from "@seki/core";
-import type { PerfSample } from "@seki/engine";
+import type { PerfSample, PreviewState } from "@seki/engine";
 import type { FixedStepLoop } from "@seki/sim";
 import type { UiStore } from "@seki/ui";
 import type { GameSession } from "./game-session";
@@ -35,6 +35,8 @@ export interface DebugApi {
   dressed(): number;
   /** Height of the game camera in metres (crouch checks). */
   cameraY(): number;
+  /** What the character menu's 3D preview shows; null without one. */
+  preview(): PreviewState | null;
   session: GameSession;
 }
 
@@ -46,6 +48,7 @@ export const createDebugApi = (
   setView: DebugApi["view"],
   dressed: () => number = () => 0,
   cameraY: () => number = () => 0,
+  preview: () => PreviewState | null = () => null,
 ): DebugApi => ({
   ready: false,
   session,
@@ -85,6 +88,7 @@ export const createDebugApi = (
   view: setView,
   dressed,
   cameraY,
+  preview,
   wait(minutes) {
     session.sim.enqueue({ type: "wait", minutes });
   },
