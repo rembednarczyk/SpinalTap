@@ -106,9 +106,17 @@ const stepMantle = (m: NonNullable<Entity["mantle"]>, e: Entity, dt: number): vo
   if (m.t >= m.duration) delete e.mantle;
 };
 
-/** A move from inside a district to a point outside every district (ADR-0021 addendum). */
-const leavesWorld = (ctx: SimContext, from: Entity["position"], to: Entity["position"]): boolean =>
-  ctx.streamer.chunkIdAt(to) === "" && ctx.streamer.chunkIdAt(from) !== "";
+/** Bounds of neighbouring districts may leave a seam this wide between them (ADR-0024). */
+const SEAM = 0.5;
+
+/**
+ * A move from inside a district to a point outside every district (ADR-0021 addendum). The
+ * seam towards a neighbouring district is not outside: it is crossed on the way there.
+ */
+const leavesWorld = (ctx: SimContext, from: Entity["position"], to: Entity["position"]): boolean => {
+  const here = ctx.streamer.chunkIdAt(from);
+  return here !== "" && ctx.streamer.chunkIdAt(to) === "" && !ctx.streamer.nearOtherChunk(to, SEAM, here);
+};
 
 /** Fall damage for a drop of `drop` metres (ADR-0021): none up to FALL_SAFE_HEIGHT, then linear. */
 export const fallDamage = (drop: number): number => (drop > FALL_SAFE_HEIGHT ? Math.round((drop - FALL_SAFE_HEIGHT) * FALL_DAMAGE_PER_METRE) : 0);

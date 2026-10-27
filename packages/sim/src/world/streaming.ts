@@ -125,6 +125,11 @@ export class WorldStreamer {
     return chunkAt(p.x, p.z, this.chunks)?.id ?? "";
   }
 
+  /** Is the point within `margin` metres of a chunk other than `except` (a seam between districts)? */
+  nearOtherChunk(p: Vec3, margin: number, except: string): boolean {
+    return this.chunks.some((c) => c.id !== except && distanceToRect(p.x, p.z, c.bounds) <= margin);
+  }
+
   /** Resident chunks, in table order. */
   get loadedChunks(): string[] {
     return this.chunks.filter((c) => this.resident.has(c.id)).map((c) => c.id);
