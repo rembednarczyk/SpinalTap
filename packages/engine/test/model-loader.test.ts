@@ -5,7 +5,7 @@ import { ToonMaterials } from "../src/npr/toon-material";
 import { loadToonModel } from "../src/renderer/model-loader";
 
 /** A single red triangle as an embedded glTF 2.0 document. */
-export const triangleGltf = (): string => {
+export const triangleGltf = (material = "red"): string => {
   const positions = new Float32Array([0, 0, 0, 1, 0, 0, 0, 1, 0]);
   const normals = new Float32Array([0, 0, 1, 0, 0, 1, 0, 0, 1]);
   const bytes = new Uint8Array(positions.byteLength + normals.byteLength);
@@ -17,7 +17,7 @@ export const triangleGltf = (): string => {
     scenes: [{ nodes: [0] }],
     nodes: [{ mesh: 0, name: "triangle" }],
     meshes: [{ primitives: [{ attributes: { POSITION: 0, NORMAL: 1 }, material: 0 }] }],
-    materials: [{ pbrMetallicRoughness: { baseColorFactor: [1, 0, 0, 1] } }],
+    materials: [{ name: material, pbrMetallicRoughness: { baseColorFactor: [1, 0, 0, 1] } }],
     buffers: [{ byteLength: bytes.byteLength, uri: `data:application/octet-stream;base64,${btoa(String.fromCharCode(...bytes))}` }],
     bufferViews: [
       { buffer: 0, byteOffset: 0, byteLength: positions.byteLength },
@@ -59,7 +59,7 @@ describe("loadToonModel", () => {
 
 describe("ModelLibrary", () => {
   it("loads a file once and hands out independent instances", async () => {
-    const { ModelLibrary, pickAnimation } = await import("../src/renderer/model-library");
+    const { ModelLibrary, pickAnimation, toonSourceOf } = await import("../src/renderer/model-library");
     const scene = new Scene(new NullEngine());
     const materials = new ToonMaterials(scene);
     const library = new ModelLibrary(scene, materials);
@@ -82,5 +82,11 @@ describe("ModelLibrary", () => {
     a.dispose();
     expect(b.root.isDisposed()).toBe(false);
     expect(pickAnimation([], spec, 3)).toBeNull();
+    // Every instance remembers what its toon material came from, so a garment tint can redo it.
+    const tops = await library.instantiate({ url: triangleGltf("F00_001_01_Tops_01_CLOTH") }, "t");
+    const source = toonSourceOf(tops.meshes.find((m) => m.getTotalVertices() > 0)!);
+    expect(source?.preset).toBe("importedCharacter");
+    expect(source?.source.garment).toBe("torso");
+    expect(toonSourceOf(b.meshes.find((m) => m.getTotalVertices() > 0)!)?.source.garment).toBeNull();
   });
 });
