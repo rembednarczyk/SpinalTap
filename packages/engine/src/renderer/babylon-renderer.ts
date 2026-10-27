@@ -1,5 +1,5 @@
 import { type AbstractMesh, type Color3, Color4, Matrix, Vector3 } from "../babylon";
-import type { CameraMode, EffectDescriptor, EntityId, RenderPort, Transform, ViewDescriptor } from "@seki/core";
+import type { CameraMode, DespawnReason, EffectDescriptor, EntityId, RenderPort, Transform, ViewDescriptor } from "@seki/core";
 import { CameraRig } from "../camera/camera-rig";
 import { Effects } from "../effects/effects";
 import { createRain } from "../effects/rain";
@@ -152,13 +152,14 @@ export class BabylonRenderer implements RenderPort {
     this.applyTransform(e.rig, t);
   }
 
-  despawn(id: EntityId): void {
+  despawn(id: EntityId, reason: DespawnReason = "removed"): void {
     const e = this.entities.get(id);
     if (!e) return;
     this.entities.delete(id);
     if (e.kind === "character") {
-      // Enemies fall over before disappearing; a reset (load, new game) clears them at once.
-      if (!this.resetting && id !== this.cameraTarget) {
+      // Enemies fall over before disappearing; a reset (load, new game) or a chunk streaming
+      // out clears them at once.
+      if (!this.resetting && reason === "removed" && id !== this.cameraTarget) {
         startDeath(e.rig);
         this.dying.push(e.rig);
       } else {
