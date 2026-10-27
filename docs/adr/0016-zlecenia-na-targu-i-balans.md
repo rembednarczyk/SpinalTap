@@ -31,4 +31,5 @@ Reputacja za ukończenie: likwidacja fixerzy +3, Hebi -5, cywile +1 (bez zmian);
 ## Konsekwencje
 - Złoty hash determinizmu bez zmian (9b3d0871): przebieg testowy nie przyjmuje zlecenia, nie wchodzi na targ i nie ma bratobójczych zabójstw.
 - Po wczytaniu zapisu z odzyskaniem w stanie `cleared` strażnicy nie wracają (jak cele wyczyszczonej likwidacji). Fala po nieudanej ochronie zostaje na targu jako zwykli gangerzy i znika po wczytaniu.
+- Wózek Hany, sama Hana i osłony przy skrytce podnoszą scenę `market-tpp` do 192 draw calls i 83 aktywnych siatek (wcześniej 182 i 80); budżet 240 i 105 zostaje bez zmian.
 - Pieniądze przestają mieć cel po kilku implantach; następny krok to nowy towar w klinice albo u Hany.
