@@ -251,6 +251,8 @@ export interface UiState {
   readonly characterTab: CharacterTab | null;
   /** Opens the screen on `tab`, or closes it when it already shows that tab. */
   readonly toggleCharacter: (tab: CharacterTab) => void;
+  /** Shows the screen on `tab`; already there, nothing changes (safe to call twice for one tap). */
+  readonly showCharacterTab: (tab: CharacterTab) => void;
   readonly closeCharacter: () => void;
   /** The screen shows the character sheet (kept in step with `characterTab`). */
   readonly sheetOpen: boolean;
@@ -312,6 +314,7 @@ export const initialUiState: UiState = {
   loot: null,
   characterTab: null,
   toggleCharacter: () => {},
+  showCharacterTab: () => {},
   closeCharacter: () => {},
   sheetOpen: false,
   toggleSheet: () => {},
@@ -351,6 +354,7 @@ export const createUiStore = (initial: Partial<UiState> = {}): UiStore =>
     return {
       ...initialUiState,
       toggleCharacter: toggle,
+      showCharacterTab: (tab: CharacterTab) => set((s) => (s.characterTab === tab ? {} : characterTabState(tab))),
       closeCharacter: () => set(characterTabState(null)),
       toggleSheet: () => toggle("sheet"),
       toggleJournal: () => toggle("journal"),

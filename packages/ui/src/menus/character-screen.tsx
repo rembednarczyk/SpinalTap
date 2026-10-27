@@ -39,6 +39,7 @@ const AmmoSummary = () => {
 export const CharacterScreen = () => {
   const tab = useUi((s) => s.characterTab);
   const toggle = useUi((s) => s.toggleCharacter);
+  const show = useUi((s) => s.showCharacterTab);
   const close = useUi((s) => s.closeCharacter);
   const modal = useUi((s) => s.dialogue !== null || s.shopOpen || s.loot !== null);
   const eddies = useUi((s) => s.eddies);
@@ -82,7 +83,9 @@ export const CharacterScreen = () => {
                 role="tab"
                 aria-selected={tab === id}
                 className={`cscreen__tab${tab === id ? " cscreen__tab--on" : ""}`}
-                onClick={() => tab !== id && toggle(id)}
+                onClick={() => show(id)}
+                // A touch switches on release: mobile Chrome does not always follow a tap with a click.
+                onPointerUp={(e) => e.pointerType === "touch" && show(id)}
               >
                 {label}
                 <kbd className="cscreen__key">{key}</kbd>
