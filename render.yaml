@@ -1,0 +1,27 @@
+# Render Blueprint: the game as a static site (Vite build, no server).
+# Render dashboard: New -> Blueprint -> this repository. Saves live in the player's browser.
+services:
+  - type: web
+    runtime: static
+    name: seki-senshi
+    branch: ccr-ec2c4269-ilh8k8
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build
+    staticPublishPath: packages/app/dist
+    pullRequestPreviewsEnabled: false
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+    headers:
+      # Hashed bundles never change; models and sounds change rarely, the page itself always revalidates.
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+      - path: /models/*
+        name: Cache-Control
+        value: public, max-age=86400
+      - path: /city/*
+        name: Cache-Control
+        value: public, max-age=86400
+      - path: /index.html
+        name: Cache-Control
+        value: no-cache
