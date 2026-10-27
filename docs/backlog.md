@@ -68,10 +68,11 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
   strzelcy szukają pozycji do strzału, windy i drabiny zostają dla gracza. Pozy skoku, lądowania
   i wspinaczki w rigu (też na modelach VRoid). Minimapa całego miasta z piętrami, ikonami
   schodów, windy i drabin i wysokością gracza.
-- **Poprawki linii dialogowych.** Jedna z odpowiedzi do fixera (Kaito) brzmi jak kwestia, którą
-  to fixer powinien powiedzieć bohaterce. Przejrzeć wszystkie rozmowy (`packages/narrative/ink`):
-  wybory gracza muszą być kwestiami Seki, kwestie NPC przypisane właściwym mówcom, bez
-  zamienionych ról, powtórzeń i urwanych wątków.
+- **[gotowe] Poprawki linii dialogowych.** Przegląd wszystkich rozmów w `packages/narrative/ink`: wybory
+  gracza to kwestie Seki (u Kaito wybór brzmiał jak jego własna rada o doktorze Mori), odpowiedzi
+  od właściwego mówcy, bez powtórzeń po pytaniach pobocznych, spójność z wątkiem głównym (liczba
+  prób nadpisania, co Seki wie o Renie). Pilnuje tego `packages/narrative/test/dialogue-roles.test.ts`,
+  który przechodzi każdą osiągalną ścieżkę wyborów.
 - **[gotowe] Mimika postaci VRoid.** Mruganie co 2–6 s i ruch ust podczas kwestii rozmówcy przez
   morph targety VRM (`blink`, `a`, `i`, `u`, `e`, `o`) w shaderze toon; opis w `docs/models.md`.
 - **[gotowe] Odzież na modelach VRoid i w podglądzie menu.** ([ADR-0015](adr/0015-ekwipunek-uzbrojenie-loot.md), dopisek E7)

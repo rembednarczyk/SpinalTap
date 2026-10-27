@@ -1,4 +1,4 @@
-// Seki Senshi — M0: "Pierwsze zlecenie".
+// Seki Senshi, M0: "Pierwsze zlecenie".
 // Speaker prefix convention: "KAITO: ...", "SEKI: ...", "UME: ...". Lines without a prefix are narration.
 // Variables below are synced from the domain before each conversation (see narrative-runtime.ts).
 
@@ -38,6 +38,7 @@ KAITO: Ripperdoc mówił, że nie przeżyjesz nocy. Pomylił się. Zdarza mu si�
 * [Co mi się stało?]
     SEKI: Co mi się stało?
     KAITO: Wypadek. Twoje auto, czyjś dron, dużo chromu na asfalcie. Resztę musisz sobie przypomnieć sama.
+    KAITO: Jestem Kaito, gdybyś pytała. Załatwiam sprawy.
 - KAITO: Potrzebujesz imienia. Ulica nie lubi pustych miejsc.
 KAITO: Ratownicy mówili, że w tym wraku walczyłaś z pasami jak z wrogiem. Seki Senshi. Wojowniczka z kroniki wypadków.
 * [Niech będzie. Seki Senshi.]
@@ -72,7 +73,7 @@ KAITO: Coś ci się przypomniało, prawda? Widzę po oczach.
     ~ change_rep("fixers", 5)
 * [Ile mi płacisz?]
     SEKI: Ile mi płacisz?
-    KAITO: Tyle, ile ustaliliśmy. Zawodowiec. Podoba mi się.
+    KAITO: Tyle, ile wart jest kurier Hebi. Wolisz gadać o pieniądzach niż o wspomnieniach? Zawodowiec. Podoba mi się.
 - ~ change_rep("hebi", -15)
 ~ set_flag("reported_back")
 KAITO: Przelew poszedł. Wróć jutro, będzie więcej.
@@ -106,6 +107,10 @@ KAITO: I jeszcze jedno, Seki. Ktoś już pytał o kobietę z wraku. Nie tylko ja
 { contracts_done >= 1 && not has_flag("met_hana"):
     KAITO: Na targu pod estakadą handluje Hana. Bierze ode mnie towar, a czasem szuka kogoś, kto umie strzelać.
 }
+-> contract_menu
+
+// The choices alone: side questions come back here without repeating Kaito's opening lines.
+= contract_menu
 + [Biorę robotę.]
     SEKI: Biorę.
     ~ accept_contract()
@@ -117,10 +122,10 @@ KAITO: I jeszcze jedno, Seki. Ktoś już pytał o kobietę z wraku. Nie tylko ja
     KAITO: Chłodzone moduły dla Hany na targu pod estakadą. Jak się nagrzeją, nikt za nie nie zapłaci.
     KAITO: Czas masz na optyce. Oddaj paczkę Hanie i wróć do mnie po pieniądze.
     -> END
-+ [Jeśli chcesz lepszego sprzętu, idź do doktora Mori.]
++ [Gdzie tu się można podrasować?]
     SEKI: Gdzie tu się można podrasować?
-    KAITO: Klinika doktora Mori, naprzeciwko baru. Bierze gotówkę i nie zadaje pytań.
-    -> contract_offer
+    KAITO: Jeśli chcesz lepszego sprzętu, idź do doktora Mori. Klinika naprzeciwko baru. Bierze gotówkę i nie zadaje pytań.
+    -> contract_menu
 + [Nie dziś.]
     KAITO: Twoja strata. Hebi nie biorą wolnego.
     -> END
@@ -129,7 +134,7 @@ KAITO: I jeszcze jedno, Seki. Ktoś już pytał o kobietę z wraku. Nie tylko ja
     SEKI: Co wiesz o Kagami Biotech?
     KAITO: Kupują od ludzi wspomnienia i sprzedają je bogatym, którzy chcą coś przeżyć bez ryzyka.
     KAITO: Ich kurierzy dobrze zarabiają. Dopóki nie zaczną pytać, co wiozą.
-    -> contract_offer
+    -> contract_menu
 
 = contract_running
 KAITO: Kontrakt dalej otwarty. Cel: {contract_site}.
@@ -203,8 +208,8 @@ UME: Widziałam, jak cię wyciągali z tego auta. Myślałam, że już po tobie.
     -> END
 
 = ren_talk
-SEKI: Pamiętasz chłopaka, z którym biegałam po dachach? Ren.
-UME: Ren Odagiri. Szukał cię, kiedy zniknęłaś. Pół roku pytał o ciebie każdego na tej ulicy.
+SEKI: Pamiętasz chłopaka imieniem Ren? Widzę go we wspomnieniach. Woziliśmy coś razem.
+UME: Ren Odagiri, ten od Hebi, z którym biegałaś po dachach. Szukał cię, kiedy zniknęłaś. Pół roku pytał o ciebie każdego na tej ulicy.
 UME: Potem przyszli ludzie w czystych butach i też o ciebie pytali. Od tamtej pory nikt Rena nie widział.
 ~ set_flag("ume_ren")
 ~ change_rep("civilians", 3)

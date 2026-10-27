@@ -129,7 +129,7 @@ MORI: Albo go zostawiam i żyjesz z tym, co jeszcze z niego wyjdzie. Prawdziwe c
     SEKI: W tamtej walizce leżał chip z moim imieniem. Kagami trzyma gdzieś resztę mnie.
 }
 { choice_name == "spoken":
-    SEKI: Na stole powiedziałam im, jak się nazywam. Czterdzieści razy próbowali to skasować i nie dali rady.
+    SEKI: Na stole powiedziałam im, jak się nazywam. Czterdzieści jeden razy próbowali to skasować i nie dali rady.
 }
 { choice_crash == "wheel":
     SEKI: Z tamtego auta wyszłam, bo sama skręciłam. Tego nikt mi nie nagrał.
@@ -163,7 +163,7 @@ Wychodzisz z kliniki lżejsza o kilka gramów. Ręce dalej wiedzą, jak celować
 -> END
 
 = after_aya
-MORI: Aya. Jak głowa? Jak zacznie dymić, przychodź od razu.
+MORI: Aya. Jak głowa? Moduł dalej coś puszcza, czy już się uspokoił?
 -> END
 
 = after_seki
