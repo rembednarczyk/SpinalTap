@@ -1,4 +1,4 @@
-import type { EnemyTypeId, EntityId, FactionId, Health, Vec3, ViewDescriptor, WeaponId, WeaponSlot, WeaponStats } from "@seki/core";
+import type { EnemyTypeId, EntityId, FactionId, Health, ShopId, Vec3, ViewDescriptor, WeaponId, WeaponSlot, WeaponStats } from "@seki/core";
 import type { Aabb } from "./collision";
 
 export interface CharacterBody {
@@ -159,6 +159,8 @@ export interface Interactable {
    * `dialogueId` is then the container key.
    */
   readonly kind: "dialogue" | "shop" | "pickup" | "loot";
+  /** For a shop: which one (the clinic when absent). `dialogueId` is then the shopkeeper's ink knot. */
+  readonly shopId?: ShopId;
   readonly dialogueId: string;
   readonly prompt: string;
   readonly radius: number;

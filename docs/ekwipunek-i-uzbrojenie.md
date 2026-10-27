@@ -510,7 +510,7 @@ Wartość łupu z jednego gangera (`hebi_common`, wartości oczekiwane):
 
 | Składnik | Gotówka po sprzedaży | Wartość użytkowa |
 |---|---|---|
-| Eddies | 19 | 19 |
+| Eddies (10 do 34 od E10, wcześniej 8 do 30) | 22 | 22 |
 | 9 mm (0,36 × 10 szt.) | 0 | 3,6 (oszczędzony zakup) |
 | Złom (0,24 × 1,5 × 12) | 4,3 | 4,3 |
 | Apteczka (0,10) | 2,2 | 9,0 |
@@ -520,9 +520,9 @@ Wartość łupu z jednego gangera (`hebi_common`, wartości oczekiwane):
 | Kurtka Hebi (0,03) | 5,4 | 5,4 |
 | Mod (0,03) | 2,3 | 2,3 |
 | Wszczep (0,01) | 1,3 | 5,0 |
-| **Razem** | **~48 €$** | **~64 €$** |
+| **Razem** | **~51 €$** | **~67 €$** |
 
-Kontrakt z 3 celami (625 €$) daje więc łup za około 145 €$ gotówki, czyli 23% wypłaty. Cel: łup
+Kontrakt z 3 celami (625 €$) daje więc łup za około 152 €$ gotówki, czyli 24% wypłaty (przy dawnych 8 do 30 eddies: 145 €$ i 23%, ale ochrona z dwoma gangerami spadała do 17%, stąd korekta w E10). Cel: łup
 w przedziale 20 do 30% wypłaty, żeby przeszukiwanie się opłacało, ale nie zastępowało zleceń.
 
 Koszty jednego kontraktu z 3 celami:

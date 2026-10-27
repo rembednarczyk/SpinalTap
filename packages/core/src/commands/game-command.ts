@@ -1,9 +1,10 @@
 import type { ContractKind } from "../contracts/kinds";
 import type { MemoryId } from "../character/memories";
-import type { CyberwareId } from "../cyberware/cyberware";
+import type { CyberwareId, CyberwareSlot } from "../cyberware/cyberware";
 import type { FactionId } from "../reputation/reputation";
+import type { ShopId, ShopItemId } from "../shop/shops";
 import type { StoryChoiceId, StoryOption } from "../story/story";
-import type { EquipSlot, ItemRef, ModSlot, StackableId } from "../items/types";
+import type { EquipSlot, ItemRef, ModSlot } from "../items/types";
 
 /**
  * Requests from outside the simulation (narrative, UI). They are queued and applied at
@@ -16,7 +17,20 @@ export type GameCommand =
   | { readonly type: "set-alias"; readonly alias: string }
   | { readonly type: "end-dialogue" }
   | { readonly type: "buy-cyberware"; readonly cyberwareId: CyberwareId }
-  | { readonly type: "buy-item"; readonly itemId: StackableId }
+  /** One entry of a shop's stock; without `shopId` the clinic (medkits, bandages). */
+  | { readonly type: "buy-item"; readonly itemId: ShopItemId; readonly shopId?: ShopId }
+  // Trading (plan §6, E10 and E11). The app sends them only while that shop's panel is open;
+  // the simulation still refuses the stall outside its hours.
+  /** Sells `qty` of a stack, or one loose piece (`qty` ignored). */
+  | { readonly type: "sell-item"; readonly shopId: ShopId; readonly ref: ItemRef; readonly qty: number }
+  /** Mends a garment at Oyaji's stall; up to `useParts` "Części broni" lower the price. */
+  | { readonly type: "repair-item"; readonly uid: string; readonly useParts: number }
+  /** The next backpack upgrade at Oyaji's stall. */
+  | { readonly type: "upgrade-capacity" }
+  /** Doktor Mori fits an implant from the bag for a fee; the replaced one goes into the bag. */
+  | { readonly type: "install-cyberware-item"; readonly uid: string }
+  /** Doktor Mori takes an implant out, free, into the bag. */
+  | { readonly type: "remove-cyberware"; readonly slot: CyberwareSlot }
   /** Without `kind`: an elimination from Kaito. */
   | { readonly type: "accept-contract"; readonly kind?: ContractKind }
   /** Hands the package of a running delivery to Hana. */

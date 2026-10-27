@@ -39,3 +39,4 @@ export {
 export { contractGangerHp, gangerEntity, GANGER_MAX_HP, idleMelee, meleeAttackRange, npcCombatant, PLAYER_MAX_HP } from "./world/factory";
 export { activeWeaponItem, loadedOf, readyToFire, reserveOf } from "./world/player-weapon";
 export type { SessionState, SimContext, System } from "./world/context";
+export { shopOpen } from "./world/trade-commands";

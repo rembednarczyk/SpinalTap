@@ -8,7 +8,11 @@ import {
   type EventBus,
   FACTIONS,
   type FactionId,
+  type PurchaseFailure,
   STACKABLE_CATALOG,
+  type ShopId,
+  itemSummary,
+  shopItemName,
   type RenderPort,
   contractClearedNote,
   contractFailureNote,
@@ -21,7 +25,26 @@ import { lootSummary } from "./loot-view";
 
 const TOAST_MS = 4500;
 
-const REFUSAL: Partial<Record<FactionId, string>> = { clinic: "Mori zamyka drzwi kliniki" };
+const REFUSAL: Partial<Record<FactionId, string>> = { clinic: "Mori zamyka drzwi kliniki", civilians: "Oyaji opuszcza roletę" };
+
+/** Who shakes their head when a trade does not happen. */
+const SHOPKEEPER: Readonly<Record<ShopId, string>> = { clinic: "Mori", oyaji: "Oyaji" };
+
+const FAILURE_TEXT: Readonly<Record<PurchaseFailure, string>> = {
+  "insufficient-funds": "Za mało eddies.",
+  "already-installed": "To już masz.",
+  "inventory-full": "Nie uniesiesz więcej.",
+  refused: "Nie obsługuję takich jak ty.",
+  closed: "Zamknięte. Wróć za dnia.",
+  "not-found": "Nie masz tego przy sobie.",
+  "in-use": "Najpierw to zdejmij.",
+  "not-sold-here": "Tego tu nie ma.",
+  "not-bought-here": "Tego nie skupuję.",
+  worthless: "Nikt za to nie zapłaci.",
+  "not-damaged": "Tu nie ma czego naprawiać.",
+  "max-capacity": "Większego plecaka nie mam.",
+  "empty-slot": "Tam nic nie siedzi.",
+};
 
 /** Body of the "new contract" toast: what is at stake and what it pays. */
 const acceptedText = (c: Contract): string => {
@@ -41,7 +64,8 @@ const acceptedText = (c: Contract): string => {
 export interface PresenterHooks {
   playerId(): EntityId | null;
   onDialogue(dialogueId: string): void;
-  onShop(): void;
+  /** A shop counter opened; `dialogueId` is its keeper's ink knot. */
+  onShop(shopId: ShopId, dialogueId: string): void;
   /** The player opened a bag (`key` of its container). */
   onLoot(key: string): void;
   onPlayerDied(): void;
@@ -71,9 +95,12 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
     }),
     bus.on("WeaponSwitched", (e) => {
       render.playEffect({ kind: "weapon", entityId: e.entityId, drawn: true, slot: e.slot });
-      if (isPlayer(e.entityId)) audio.play("ui-select");
+      if (isPlayer(e.entityId)) audio.play("weapon-switch");
     }),
-    bus.on("ReloadStarted", (e) => render.playEffect({ kind: "reload", entityId: e.entityId, duration: e.duration })),
+    bus.on("ReloadStarted", (e) => {
+      render.playEffect({ kind: "reload", entityId: e.entityId, duration: e.duration });
+      if (isPlayer(e.entityId)) audio.play("reload");
+    }),
     bus.on("InventoryFull", () => {
       toast("system", "Plecak pełny", "Zrób miejsce, zanim weźmiesz więcej.");
       audio.play("denied");
@@ -97,14 +124,14 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
     }),
     bus.on("InteractionFocusChanged", (e) => patchUi(ui, { prompt: e.prompt })),
     bus.on("InteractionStarted", (e) => {
-      if (e.kind === "shop") hooks.onShop();
+      if (e.kind === "shop") hooks.onShop(e.shopId ?? "clinic", e.dialogueId);
       else if (e.kind === "loot") hooks.onLoot(e.dialogueId);
       else hooks.onDialogue(e.dialogueId);
     }),
     bus.on("LootTaken", (e) => {
       if (e.lines.length === 0) return;
       toast("money", "Łup", lootSummary(e.lines));
-      audio.play("purchase");
+      audio.play("loot-pickup");
     }),
     bus.on("LootExpired", () => toast("system", "Torba przepadła", "Ktoś był szybszy.")),
     bus.on("InteractionRefused", (e) => {
@@ -125,20 +152,38 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
       audio.play("quest-update");
     }),
     bus.on("EddiesChanged", (e) => {
-      if (e.delta > 0 && e.source !== "loot") toast("money", `+${e.delta.toLocaleString("pl-PL")} €$`, "Przelew");
+      if (e.delta > 0 && e.source === undefined) toast("money", `+${e.delta.toLocaleString("pl-PL")} €$`, "Przelew");
     }),
     bus.on("CyberwareInstalled", (e) => {
       const def = CYBERWARE_CATALOG[e.cyberwareId];
-      toast("cyberware", `Wszczepiono: ${def.name}`, e.replaced ? `Usunięto: ${CYBERWARE_CATALOG[e.replaced].name}` : def.description);
+      const old = e.replaced ? CYBERWARE_CATALOG[e.replaced].name : null;
+      const text = old === null ? def.description : e.stowed ? `${old} wraca do plecaka` : `Usunięto: ${old}`;
+      toast("cyberware", `Wszczepiono: ${def.name}`, text);
       audio.play("purchase");
     }),
+    bus.on("CyberwareRemoved", (e) => {
+      toast("cyberware", `Wymontowano: ${CYBERWARE_CATALOG[e.cyberwareId].name}`, "Implant w plecaku");
+      audio.play("ui-select");
+    }),
     bus.on("ItemBought", (e) => {
-      toast("system", `Kupiono: ${STACKABLE_CATALOG[e.itemId].name}`, `-${e.price} €$`);
+      const qty = (e.qty ?? 1) > 1 ? ` × ${e.qty}` : "";
+      toast("system", `Kupiono: ${shopItemName(e.itemId)}${qty}`, `-${e.price} €$`);
+      audio.play("purchase");
+    }),
+    bus.on("ItemSold", (e) => {
+      toast("money", `Sprzedano: ${itemSummary(e.defId).name}${e.qty > 1 ? ` × ${e.qty}` : ""}`, `+${e.price} €$`);
+      audio.play("sell");
+    }),
+    bus.on("ItemRepaired", (e) => {
+      toast("system", `Naprawiono: ${itemSummary(e.defId).name}`, e.parts > 0 ? `-${e.price} €$, części: ${e.parts}` : `-${e.price} €$`);
+      audio.play("repair");
+    }),
+    bus.on("CapacityUpgraded", (e) => {
+      toast("system", "Większy plecak", `Miejsc: ${e.capacity}`);
       audio.play("purchase");
     }),
     bus.on("PurchaseFailed", (e) => {
-      const text = { "insufficient-funds": "Za mało eddies.", "already-installed": "To już masz.", "inventory-full": "Nie uniesiesz więcej.", refused: "Nie obsługuję takich jak ty." }[e.reason];
-      toast("system", "Mori kręci głową", text);
+      toast("system", `${SHOPKEEPER[e.shopId ?? "clinic"]} kręci głową`, FAILURE_TEXT[e.reason]);
       audio.play("denied");
     }),
     bus.on("ItemUsed", (e) => {

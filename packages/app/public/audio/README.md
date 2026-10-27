@@ -39,6 +39,11 @@ Format: OGG Vorbis, 44,1 kHz. Pliki Kenney i deszcz są skopiowane bez zmian (ju
 | `glitch-001.ogg`, `glitch-002.ogg`, `glitch-003.ogg`, `glitch-004.ogg` | Interface Sounds, `glitch_001-004.ogg` | `memory` (z syntezą, przez bitcrusher) |
 | `clinic-heal-000.ogg`, `clinic-heal-001.ogg` | Sci-fi Sounds, `forceField_000.ogg`, `forceField_001.ogg` | `heal` (klinika) |
 | `cyber-overdrive.ogg` | Sci-fi Sounds, `computerNoise_000.ogg` (pierwsze 1,2 s, mono) | `overdrive` (z syntezą) |
+| `reload-metal-000.ogg`, `reload-metal-001.ogg` | Impact Sounds, `impactMetal_light_000-001.ogg` | `reload` (przeładowanie gracza) |
+| `weapon-switch-000.ogg`, `weapon-switch-001.ogg` | Impact Sounds, `impactPlate_light_000-001.ogg` | `weapon-switch` (zmiana slotu broni) |
+| `loot-pickup-000.ogg`, `loot-pickup-001.ogg` | Impact Sounds, `impactSoft_medium_000-001.ogg` | `loot-pickup` (podniesienie łupu z torby) |
+| `sell-tin-000.ogg`, `sell-tin-001.ogg` | Impact Sounds, `impactTin_medium_000-001.ogg` | `sell` (sprzedaż, z syntezą monet) |
+| `repair-hammer-000.ogg`, `repair-hammer-001.ogg` | Impact Sounds, `impactMining_000-001.ogg` | `repair` (naprawa odzieży u Oyajiego) |
 | `rain-loop.ogg` | Rain (loopable), `1.ogg` (27 s, stereo) | pętla deszczu na szynie `ambience` (synteza pod spodem na 30%) |
 
-Łącznie ok. 0,95 MB. Nowy plik: dopisz go tutaj i w manifeście (test `packages/app/test/audio-manifest.test.ts` pilnuje obu i budżetu 4 MB).
+Łącznie ok. 1,05 MB. Nowy plik: dopisz go tutaj i w manifeście (test `packages/app/test/audio-manifest.test.ts` pilnuje obu i budżetu 4 MB).

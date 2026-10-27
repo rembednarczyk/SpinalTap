@@ -47,7 +47,7 @@ describe("the ripperdoc", () => {
     sim.step();
     const price = priceWithTerms(STACKABLE_CATALOG.medkit.value, shopTerms(60));
     expect(price).toBeLessThan(STACKABLE_CATALOG.medkit.value);
-    expect(bought).toEqual([{ itemId: "medkit", price }]);
+    expect(bought).toEqual([{ itemId: "medkit", price, shopId: "clinic", qty: 1 }]);
     expect(sim.domain.wallet.eddies).toBe(5000 - price);
   });
 
@@ -69,7 +69,7 @@ describe("the ripperdoc", () => {
     teleportPlayer(sim, { x: mori.position.x + 1.2, y: 0, z: mori.position.z });
     sim.step();
     sim.step(input({ interact: true }));
-    expect(failed).toEqual([{ reason: "refused" }]);
+    expect(failed).toEqual([{ reason: "refused", shopId: "clinic" }]);
     expect(sim.domain.wallet.eddies).toBe(5000);
     expect(refused).toEqual([{ targetId: mori.id, dialogueId: "mori", faction: "clinic" }]);
     expect(started).toHaveLength(0);
@@ -83,7 +83,7 @@ describe("the ripperdoc", () => {
     teleportPlayer(sim, { x: mori.position.x + 1.2, y: 0, z: mori.position.z });
     sim.step();
     sim.step(input({ interact: true }));
-    expect(started).toEqual([{ targetId: mori.id, dialogueId: "mori", kind: "shop" }]);
+    expect(started).toEqual([{ targetId: mori.id, dialogueId: "mori", kind: "shop", shopId: "clinic" }]);
   });
 });
 

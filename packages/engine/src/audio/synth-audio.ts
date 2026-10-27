@@ -142,6 +142,49 @@ export const CUES: Readonly<Record<AudioCue, Recipe>> = {
       { type: "noise", freq: 0, dur: 0.5, gain: 0.06, filter: 400, filterTo: 4000, filterType: "bandpass", q: 3 },
     ],
   },
+  // Magazine out, magazine in: two short metallic clicks.
+  reload: {
+    send: 0.15,
+    voices: [
+      { type: "noise", freq: 0, dur: 0.03, gain: 0.14, filter: 2600, filterType: "bandpass", q: 4, attack: 0.001 },
+      { type: "square", freq: 820, to: 520, dur: 0.03, gain: 0.05, filter: 3000, attack: 0.001 },
+      { type: "noise", freq: 0, start: 0.22, dur: 0.04, gain: 0.18, filter: 1900, filterType: "bandpass", q: 3, attack: 0.001 },
+      { type: "square", freq: 640, to: 380, start: 0.22, dur: 0.04, gain: 0.06, filter: 2400, attack: 0.001 },
+    ],
+  },
+  "weapon-switch": {
+    send: 0.1,
+    voices: [
+      { type: "noise", freq: 0, dur: 0.12, gain: 0.06, filter: 900, filterTo: 2400, filterType: "bandpass", q: 1.5, attack: 0.01 },
+      { type: "triangle", freq: 1100, to: 700, start: 0.1, dur: 0.035, gain: 0.07, attack: 0.001 },
+    ],
+  },
+  "loot-pickup": {
+    priority: PRIORITY.ui,
+    voices: [
+      { type: "noise", freq: 0, dur: 0.1, gain: 0.07, filter: 1500, filterType: "lowpass", attack: 0.005 },
+      { type: "sine", freq: 880, to: 1320, start: 0.04, dur: 0.08, gain: 0.08 },
+    ],
+  },
+  // Coins on a counter.
+  sell: {
+    priority: PRIORITY.ui,
+    voices: [
+      { type: "triangle", freq: 2093, dur: 0.05, gain: 0.1, attack: 0.001 },
+      { type: "triangle", freq: 2637, start: 0.06, dur: 0.06, gain: 0.09, attack: 0.001 },
+      { type: "triangle", freq: 3136, start: 0.11, dur: 0.12, gain: 0.07, attack: 0.001 },
+    ],
+  },
+  // A hammer on a rivet, twice.
+  repair: {
+    send: 0.2,
+    voices: [
+      { type: "noise", freq: 0, dur: 0.05, gain: 0.16, filter: 3200, filterType: "bandpass", q: 5, attack: 0.001 },
+      { type: "sine", freq: 1760, to: 1500, dur: 0.12, gain: 0.06 },
+      { type: "noise", freq: 0, start: 0.18, dur: 0.05, gain: 0.14, filter: 3000, filterType: "bandpass", q: 5, attack: 0.001 },
+      { type: "sine", freq: 1700, to: 1450, start: 0.18, dur: 0.12, gain: 0.05 },
+    ],
+  },
   // Melee (ADR-0019): an air whoosh sweeping across the stereo field, a dull clack on a guard,
   // and a bright ring for a parry.
   swing: {
