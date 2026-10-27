@@ -19,6 +19,7 @@ import {
   stairs,
   v,
 } from "./builders";
+import { DOKI_PASSAGE } from "./district-doki";
 
 /**
  * Ulica Kanałowa and Targ pod estakadą: the M2 districts north-east of Shinsekai 7.
@@ -67,6 +68,24 @@ const stall = (rng: SeededRandom, x: number, z: number, front: 1 | -1): StaticPr
   crate(x, z, 2.6, 1.0, 1.3),
   slab(x, 2.55, z + front * 0.4, v(3.2, 0.2, 2.4), pick(rng, AWNINGS)),
 ];
+
+/**
+ * Cuts a gap of [x0, x1] out of a facade row (ADR-0024): a block across it becomes the parts on
+ * either side. Applied after the generator ran, so no random number moves.
+ */
+const withPassage = (row: readonly StaticProp[], x0: number, x1: number): StaticProp[] =>
+  row.flatMap((p): StaticProp[] => {
+    if (p.view.kind !== "block") return [p];
+    const left = p.center.x - p.view.size.x / 2;
+    const right = p.center.x + p.view.size.x / 2;
+    if (right <= x0 || left >= x1) return [p];
+    const { y: h, z: d } = p.view.size;
+    const material = p.view.material;
+    const parts: StaticProp[] = [];
+    if (x0 - left > 0.01) parts.push(building((left + x0) / 2, p.center.z, x0 - left, h, d, material));
+    if (right - x1 > 0.01) parts.push(building((x1 + right) / 2, p.center.z, right - x1, h, d, material));
+    return parts;
+  });
 
 const rng = new SeededRandom(CONTENT_SEED);
 
@@ -127,8 +146,10 @@ export const KANAL_PROPS: readonly StaticProp[] = [
   building(-2, 71, 12, 18, 38),
   // South of segment B: one long block that hides Shinsekai from the eastern half of the street.
   ...facadeRow(rng, 10, 66, 63, 22, [12, 20], [16, 20]),
-  // North of segment B.
-  ...facadeRow(rng, 4, 66, 86, 8, [10, 22], [13, 17]),
+  // North of segment B, with the passage into the docks (ADR-0024).
+  ...withPassage(facadeRow(rng, 4, 66, 86, 8, [10, 22], [13, 17]), DOKI_PASSAGE.x0, DOKI_PASSAGE.x1),
+  slab((DOKI_PASSAGE.x0 + DOKI_PASSAGE.x1) / 2, 0.03, 86, v(DOKI_PASSAGE.x1 - DOKI_PASSAGE.x0, 0.06, 8), "concrete"),
+  neon((DOKI_PASSAGE.x0 + DOKI_PASSAGE.x1) / 2, 6.4, 81.9, v(4.4, 1.2, 0.15), "#39d0ff", "DOKI"),
   // Kiosk just inside the market gate: the street's view ends on it, not on the market behind.
   building(74, 78, 6, 3.2, 10, "metal"),
   // Clutter.

@@ -85,6 +85,13 @@ export const neon = (x: number, y: number, z: number, size: Vec3, color: string,
   solid: false,
 });
 
+/** Open water over the rectangle, its surface at `y` (ADR-0024). Visual only. */
+export const water = (x0: number, x1: number, z0: number, z1: number, y: number): StaticProp => ({
+  center: v((x0 + x1) / 2, y, (z0 + z1) / 2),
+  view: { kind: "water", size: v(x1 - x0, 0.01, z1 - z0) },
+  solid: false,
+});
+
 /** Street lamp; also a point light. The arm points west when x > 0. */
 export const lamp = (x: number, z: number, color: string): StaticProp => ({
   center: v(x, 0, z),

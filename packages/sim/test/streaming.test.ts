@@ -53,7 +53,7 @@ describe("world streaming: loading and unloading", () => {
     expect(sim.streamer.loadedChunks).toEqual(["shinsekai-7", "kanal"]);
     goTo(sim, 40, 78);
     expect(sim.district).toBe("kanal");
-    expect(sim.streamer.loadedChunks).toEqual(["shinsekai-7", "kanal", "targ-south", "targ-north"]);
+    expect(sim.streamer.loadedChunks).toEqual(["shinsekai-7", "kanal", "targ-south", "targ-north", "doki-yard"]);
     expect(hasKey(sim, "oyaji")).toBe(true);
     expect(hasKey(sim, "hebi-lookout")).toBe(true);
   });
