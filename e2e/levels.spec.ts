@@ -79,9 +79,8 @@ test("jump onto a stall counter and the fire escape onto the roof (ADR-0021)", a
   await teleport(page, 96.7, 69.2, Math.PI);
   await step(page, 1);
   await step(page, 1, { moveZ: 1, jump: true });
-  let top = (await gameState(page)).player!;
   for (let i = 0; i < 60 && (await gameState(page)).airborne; i++) await step(page, 1, { moveZ: 1 });
-  top = (await gameState(page)).player!;
+  const top = (await gameState(page)).player!;
   expect(top.y).toBeCloseTo(1, 3);
 
   // Fire escape: into the foot of the first ladder, up onto the balcony.
