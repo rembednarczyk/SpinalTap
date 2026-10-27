@@ -169,8 +169,12 @@ export const EMPTY_TRADE: TradeVm = { items: [], capacity: 24, freeCells: 24, we
 
 export type GraphicsQuality = "high" | "low";
 
+/** The aim button held down, or pressed once to aim and again to stop (ADR-0019). */
+export type AimMode = "hold" | "toggle";
+
 export interface SettingsVm {
   readonly quality: GraphicsQuality;
+  readonly aimMode: AimMode;
   /** Look speed multiplier, 1 = default. */
   readonly mouseSensitivity: number;
   readonly touchSensitivity: number;
@@ -178,7 +182,7 @@ export interface SettingsVm {
   readonly volume: number;
 }
 
-export const DEFAULT_SETTINGS: SettingsVm = { quality: "high", mouseSensitivity: 1, touchSensitivity: 1, volume: 0.6 };
+export const DEFAULT_SETTINGS: SettingsVm = { quality: "high", aimMode: "hold", mouseSensitivity: 1, touchSensitivity: 1, volume: 0.6 };
 
 export interface UiState {
   readonly screen: Screen;
@@ -201,6 +205,12 @@ export interface UiState {
    * changes while the cone actually moves (bloom, getting up or down, starting to run).
    */
   readonly aimSpread: number;
+  /** Aiming down sights (ADR-0019): the crosshair tightens. */
+  readonly aiming: boolean;
+  /** Current field of view as a share of the hip one (below 1 while zoomed in), quantised by the app. */
+  readonly aimZoom: number;
+  /** Guarding with a melee weapon. */
+  readonly blocking: boolean;
   /** The player is crouched (or getting down). */
   readonly crouched: boolean;
   /** Bumped when the player takes damage. */
@@ -258,6 +268,9 @@ export const initialUiState: UiState = {
   hitMarker: 0,
   hitZone: null,
   aimSpread: 0,
+  aiming: false,
+  aimZoom: 1,
+  blocking: false,
   crouched: false,
   hurtFlash: 0,
   slots: [],

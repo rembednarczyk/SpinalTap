@@ -59,6 +59,14 @@ kbd {
 .crosshair__tick--left { left: 0; transform: translateX(calc(-100% - var(--gap))); }
 .crosshair__tick--right { left: 0; transform: translateX(var(--gap)); }
 .crosshair--crouched .crosshair__tick { background: var(--cyan); }
+/* Aimed down sights: the ticks pull in (the gap follows --spread) and turn bright. */
+.crosshair--aiming { opacity: 1; }
+.crosshair--aiming .crosshair__tick { background: var(--cyan); }
+/* Melee guard: short wide brackets left and right instead of a cone. */
+.crosshair--guard .crosshair__tick--top,
+.crosshair--guard .crosshair__tick--bottom { opacity: 0; }
+.crosshair--guard .crosshair__tick--left,
+.crosshair--guard .crosshair__tick--right { width: 3px; height: 16px; top: -8px; background: var(--amber); }
 .crosshair--hit { filter: drop-shadow(0 0 4px var(--magenta)); }
 .crosshair--hit .crosshair__tick { background: var(--magenta); }
 /* Head hit: red and a little X over the aim point. */
@@ -642,6 +650,7 @@ kbd {
 .touch__btn--v { right: 172px; bottom: 140px; width: 44px; height: 44px; font-size: 15px; }
 .touch__btn--x { right: 96px; bottom: 150px; width: 44px; height: 44px; font-size: 15px; }
 .touch__btn--c { right: 172px; bottom: 76px; width: 44px; height: 44px; font-size: 15px; }
+.touch__btn--aim { right: 18px; bottom: 182px; width: 56px; height: 56px; font-size: 22px; }
 .touch__btn--r { right: 176px; bottom: 14px; width: 44px; height: 44px; font-size: 15px; color: var(--amber); }
 .touch__btn--on { background: rgba(95, 242, 255, 0.3); border-color: var(--cyan); color: var(--cyan); }
 .touch__top {

@@ -83,6 +83,7 @@ const PadButtonView = ({
   hint,
   className,
   lookToo = false,
+  testId,
 }: {
   pad: TouchPadSink;
   button: TouchButton;
@@ -90,6 +91,7 @@ const PadButtonView = ({
   hint: string;
   className: string;
   lookToo?: boolean;
+  testId?: string;
 }) => {
   const look = useLookDrag(pad);
   const [down, setDown] = useState(false);
@@ -102,6 +104,7 @@ const PadButtonView = ({
     <button
       type="button"
       aria-label={hint}
+      data-testid={testId}
       className={`touch__btn ${className}${down ? " touch__btn--down" : ""}`}
       onPointerDown={(e) => {
         e.currentTarget.setPointerCapture?.(e.pointerId);
@@ -160,6 +163,8 @@ export const TouchControls = ({ pad }: { pad: TouchPadSink }) => {
   const prompt = useUi((s) => s.prompt);
   const toggleSheet = useUi((s) => s.toggleSheet);
   const toggleJournal = useUi((s) => s.toggleJournal);
+  // Lit while aiming down sights or guarding, which in toggle mode outlasts the press.
+  const aimOn = useUi((s) => s.aiming || s.blocking);
   const look = useLookDrag(pad);
 
   // Lift every finger when the controls go away (dialogue, shop, pause).
@@ -191,6 +196,7 @@ export const TouchControls = ({ pad }: { pad: TouchPadSink }) => {
       </div>
       <div className="touch__actions">
         <PadButtonView pad={pad} button="fire" label="●" hint="Strzał" className="touch__btn--fire" lookToo />
+        <PadButtonView pad={pad} button="aim" label="◎" hint="Celuj lub blokuj" className={`touch__btn--aim${aimOn ? " touch__btn--on" : ""}`} lookToo testId="touch-aim" />
         <PadButtonView pad={pad} button="interact" label="E" hint="Interakcja" className={`touch__btn--e${prompt ? " touch__btn--hot" : ""}`} />
         {hasAbility && <PadButtonView pad={pad} button="ability" label="Q" hint="Zdolność" className="touch__btn--q" />}
         <PadButtonView pad={pad} button="useItem" label="+" hint="Apteczka" className="touch__btn--h" />
