@@ -337,3 +337,31 @@ describe("act I: Echo (M3)", () => {
     expect(() => run('~ story_choice("mood", "opened")')).toThrow(/unknown story choice/);
   });
 });
+
+describe("time of day (ADR-0015)", () => {
+  const at = (hour: number, minute = 0): DomainState => ({ ...createDomainState(), clock: { seconds: hour * 3600 + minute * 60 } });
+
+  it("Oyaji's closed stall says it is closed and when it opens", () => {
+    const { runtime, commands } = setup();
+    const view = runtime.start("oyaji_closed", at(22, 10));
+    expect(view.lines.map((l) => l.speaker)).toEqual(["Oyaji", "Oyaji"]);
+    expect(view.lines[0]?.text).toMatch(/Zamknięte/);
+    expect(view.lines[1]?.text).toMatch(/ósmej/);
+    expect(view.ended).toBe(true);
+    expect(commands).toEqual([]);
+    expect(runtime.start("oyaji_closed", at(4)).lines[0]?.text).toMatch(/O tej godzinie/);
+  });
+
+  it("a feared Seki gets nothing but a closed shutter", () => {
+    const { runtime } = setup();
+    const domain = { ...at(23), reputation: { ...createDomainState().reputation, civilians: -40 } };
+    expect(runtime.start("oyaji_closed", domain).lines).toEqual([{ speaker: "Oyaji", text: "Zamknięte. Dla ciebie zawsze zamknięte." }]);
+  });
+
+  it("Ume in her doorway late at night mentions the hour, by day she does not", () => {
+    const { runtime } = setup();
+    expect(runtime.start("ume", at(23, 30)).lines[0]?.text).toMatch(/Nie śpisz/);
+    expect(runtime.start("ume", at(12)).lines[0]?.text).toMatch(/wyciągali/);
+    expect(runtime.start("ume", createDomainState()).lines[0]?.text).toMatch(/wyciągali/);
+  });
+});
