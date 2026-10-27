@@ -296,6 +296,9 @@ MODELS = [
 ]
 
 
+SHOP_GLASS = {'win-warm': 'shop-warm', 'win-pink': 'shop-pink', 'win-teal': 'shop-teal', 'win-white': 'shop-teal'}
+
+
 def window_panes(P, idx, rng, lit_share, scale):
     """Lit or dark per window pane: panes are connected groups of window triangles."""
     keys = {}
@@ -330,9 +333,11 @@ def window_panes(P, idx, rng, lit_share, scale):
             x = rng.random()
             if area[r] > 12:
                 # Curtain walls: a lit office floor here and there, the rest dark glass.
-                roots[r] = 'office' if x < 0.3 else 'win-warm' if x < 0.4 else 'glass-blue'
+                roots[r] = 'office' if x < 0.3 else 'shop-warm' if x < 0.4 else 'glass-blue'
             else:
-                roots[r] = lit[rng.integers(len(lit))] if x < lit_share else 'glass-dark'
+                pane = lit[rng.integers(len(lit))] if x < lit_share else 'glass-dark'
+                # Storefront glass (a few square metres) would fill the wall with full glow.
+                roots[r] = SHOP_GLASS.get(pane, pane) if area[r] > 3 else pane
         out.append(roots[r])
     return out
 

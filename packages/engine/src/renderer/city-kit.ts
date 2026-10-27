@@ -93,13 +93,15 @@ const kitTextures = (data: CityKitData, labels: boolean): { color: Uint8Array; g
   data.swatches.forEach((s, i) => {
     const rgb = hexRgb(s.color).map((c) => Math.round(c * 255));
     const alpha = s.kind === "lit" ? 255 : s.kind === "tint" ? 128 : 0;
+    // Storefront glass fills whole walls: it blooms far less than a window or a neon tube.
+    const bloom = s.name.startsWith("shop-") ? 0.25 : 1;
     const x0 = (i % data.grid) * cw;
     const y0 = Math.floor(i / data.grid) * ch;
     for (let y = y0; y < y0 + ch; y++) {
       for (let x = x0; x < x0 + cw; x++) {
         const o = (y * width + x) * 4;
         color.set([rgb[0] ?? 0, rgb[1] ?? 0, rgb[2] ?? 0, alpha], o);
-        if (s.kind === "glow") glow.set([rgb[0] ?? 0, rgb[1] ?? 0, rgb[2] ?? 0, 255], o);
+        if (s.kind === "glow") glow.set([...rgb.map((c) => Math.round(c * bloom)), 255], o);
       }
     }
   });
