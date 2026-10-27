@@ -45,7 +45,13 @@ export type EffectDescriptor =
   /** The entity was hit: short recoil of the body. */
   | { readonly kind: "flinch"; readonly entityId: EntityId }
   /** The entity holstered its weapon or started drawing it. */
-  | { readonly kind: "weapon"; readonly entityId: EntityId; readonly drawn: boolean };
+  | { readonly kind: "weapon"; readonly entityId: EntityId; readonly drawn: boolean }
+  /**
+   * Time of day changed (ADR-0015). `daylight` is 0 at night and 1 by day; `hour` is the
+   * fractional hour 0–24, for presentation that wants more than the light level. Not
+   * short-lived: the latest one holds until the next.
+   */
+  | { readonly kind: "time-of-day"; readonly daylight: number; readonly hour: number };
 
 export type AudioCue =
   | "shot"

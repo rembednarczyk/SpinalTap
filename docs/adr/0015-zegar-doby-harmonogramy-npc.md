@@ -1,0 +1,20 @@
+# ADR-0015: Zegar doby i harmonogramy NPC (M2)
+
+## Kontekst
+Ostatnia część M2 (§6 „Spawn / schedule”, „NPC AI”; §14): NPC z planem dnia, interakcje zależne od pory i pora dnia widoczna w świecie. Wszystko deterministyczne, zgodne ze streamingiem (ADR-0014) i z zapisem. Renderer należy do innego obszaru, więc pora dnia musi przejść przez kontrakt w `core`.
+
+## Decyzja
+- **Zegar w domenie** (`core/time`): `DomainState.clock = { seconds }`, sekundy gry od 00:00 dnia 1. Skala: 1 minuta realna = 1 godzina gry, czyli przy 60 Hz jeden krok = jedna sekunda gry (liczby całkowite, bez dryfu). Nowa gra startuje o 21:00 (noc, jak dotąd). Czyste funkcje: `formatClock`, `dayPhase` (noc 20–5, świt 5–7, dzień 7–18, zmierzch 18–20), `daylight` (0 całą noc, 1 w dzień, wygładzone przejścia).
+- **`clockSystem`** jest pierwszy w `createSystems()`, przed streamingiem, więc reszta kroku widzi godzinę tego kroku. Zegar biegnie też w trakcie rozmowy (świat nie stoi). Nowa komenda `wait { minutes }` przeskakuje czas jednym cięciem i stawia wszystkich NPC z planem (poza zaalarmowanymi) tam, gdzie mówi plan; emituje `TimeSkipped`.
+- **Harmonogram** (`sim/src/world/schedule.ts`, dane w `sim/src/content/schedules.ts` według klucza aktora): lista przystanków `{ at, path, yaw, loop?, interaction? }`. Od minuty `at` NPC idzie prostymi odcinkami `path` od miejsca, w którym zostawił go poprzedni przystanek, potem stoi zwrócony w `yaw`; `loop` to patrol po zamkniętej pętli. Bez navmesha: ścieżki są układane z dala od brył dystryktu, a kolizje załatwia istniejący `movementSystem`.
+- **Bezstanowo**: `scheduledPose(plan, zegar)` to czysta funkcja: punkt, w którym plan chce mieć NPC teraz (odległość = prędkość × czas od początku przystanku). `scheduleSystem` (po sterowaniu gracza, przed AI) liczy pozę co krok, a AI cywila (`ReturnHome`) i gangera (`HoldPosition`) idzie za nią ze zwykłymi kolizjami. Nic z planu nie trafia do zapisu poza zegarem; ucieczka cywila i pościg zaalarmowanego gangera mają pierwszeństwo jak dotąd.
+- **Streaming**: przy każdym spawnie postaci (załadowanie chunka, nowa gra, wczytanie) `WorldStreamer` stawia NPC z planem w pozie dla bieżącej godziny, także gdy wraca z uśpienia. Oyaji zostawiony wieczorem przy straganie po północy stoi w drzwiach. Postacie żywe w chwili zapisu wracają na zapisane pozycje, więc wczytana gra liczy się dalej identycznie.
+- **Interakcje zależne od pory**: przystanek może podmienić interakcję NPC (`interaction`), np. Oyaji od 22:00 do 8:00 ma prompt „Stragan Oyajiego: zamknięte do 8:00” i knot `oyaji_closed`. `interactionSystem` emituje `InteractionFocusChanged` także wtedy, gdy zmienia się sam prompt przy tym samym celu. Ink dostaje `game_hour` i `time_of_day`.
+- **Plany M2**: babcia Ume (ulica 6:30–23:00, potem drzwi przy latarni), Oyaji (stragan 8:00–22:00, potem dom), czujka Hebi pod estakadą (posterunek w dzień, patrol wokół filarów 22:00–5:00). Kaito, Mori i gangerzy z M0 nie mają planów.
+- **Prezentacja** przez stan świata: aplikacja co klatkę czyta zegar i wysyła nowy efekt `RenderPort.playEffect({ kind: "time-of-day", daylight, hour })`, gdy poziom światła zmienia się o krok 1/64 (i po każdym `clear`). Renderer interpoluje tylko ambient, mgłę, kolor księżyca i wypełnienia między `NIGHT_RIG` a nowym `DAY_RIG`, bez zmian w shaderach; przy `daylight = 0` rig jest dokładnie `NIGHT_RIG`. HUD pokazuje zegar.
+- **Zapis v7**: `domain.clock`. Migracja v6→v7 liczy zegar z zapisanego ticka (21:00 + tick sekund), bo tak biegłby od startu każdej starszej gry.
+
+## Konsekwencje
+- Złoty hash replayu zmienił się tylko o nowe pole zapisu (9b3d0871 → 915091ee; hash z pominięciem `clock` i z wersją 6 nadal daje 9b3d0871). Skrypt testu trwa 811 kroków (13,5 minuty gry od 21:00) i nie przekracza żadnej godziny planu.
+- Scena referencyjna NPR jest nocą, więc migawka się nie zmienia.
+- Plany są zaczepione na punktach spawnu z tabel dystryktów: dystrykt decyduje, gdzie stoi postać, tabela planów, kiedy idzie gdzie indziej. Zmiana spawnu przesuwa cały plan.
