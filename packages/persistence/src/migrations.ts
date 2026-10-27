@@ -41,6 +41,20 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
       },
     };
   },
+  // v3 (M1): Doktor Mori's clinic was counted as a civilian. M2 makes it its own faction,
+  // starting neutral; the other standings carry over unchanged.
+  3: (old) => {
+    const domain = isObject(old.domain) ? old.domain : {};
+    const reputation = isObject(domain.reputation) ? domain.reputation : {};
+    return {
+      ...old,
+      version: 4,
+      domain: {
+        ...domain,
+        reputation: { ...reputation, clinic: typeof reputation.clinic === "number" ? reputation.clinic : 0 },
+      },
+    };
+  },
 };
 
 export class MigrationError extends Error {}

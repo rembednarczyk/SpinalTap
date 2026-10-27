@@ -123,7 +123,8 @@ describe("M0 vertical slice: input → sim → narrative → domain → save →
     steps(session, 1);
     expect(session.sim.domain.quests.m0_first_contract).toEqual({ status: "completed" });
     expect(session.sim.domain.wallet.eddies).toBeGreaterThan(600);
-    expect(session.sim.domain.reputation.hebi).toBe(-15);
+    // -15 from the payday conversation, -4 for the courier (ADR-0011).
+    expect(session.sim.domain.reputation.hebi).toBe(-19);
 
     // 4. Save, keep playing, load: state matches the save point, narrative included.
     expect(await session.saveAsync("slot-1")).toBe(true);

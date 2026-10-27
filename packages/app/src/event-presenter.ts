@@ -5,12 +5,15 @@ import {
   type EntityId,
   type EventBus,
   FACTIONS,
+  type FactionId,
   ITEM_CATALOG,
   type RenderPort,
 } from "@seki/core";
 import { type UiStore, dismissToast, patchUi, pushToast } from "@seki/ui";
 
 const TOAST_MS = 4500;
+
+const REFUSAL: Partial<Record<FactionId, string>> = { clinic: "Mori zamyka drzwi kliniki" };
 
 export interface PresenterHooks {
   playerId(): EntityId | null;
@@ -50,6 +53,14 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
     bus.on("PlayerDied", () => hooks.onPlayerDied()),
     bus.on("InteractionFocusChanged", (e) => patchUi(ui, { prompt: e.prompt })),
     bus.on("InteractionStarted", (e) => (e.kind === "shop" ? hooks.onShop() : hooks.onDialogue(e.dialogueId))),
+    bus.on("InteractionRefused", (e) => {
+      toast("reputation", REFUSAL[e.faction] ?? `${FACTIONS[e.faction]} nie chce z tobą rozmawiać`, "Reputacja");
+      audio.play("denied");
+    }),
+    bus.on("NpcReacted", (e) => {
+      if (e.reaction === "warn") toast("reputation", "Hebi: „Idź swoją drogą, Seki.”", "Gangerzy cię przepuszczają");
+      else toast("reputation", "Przechodnie uciekają", `${FACTIONS[e.faction]} boją się ciebie`);
+    }),
     bus.on("CameraModeChanged", (e) => render.setCameraMode(e.mode)),
     bus.on("QuestAdvanced", (e) => {
       toast("quest", "Zadanie zaktualizowane", e.objective);
@@ -72,7 +83,7 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
       audio.play("purchase");
     }),
     bus.on("PurchaseFailed", (e) => {
-      const text = { "insufficient-funds": "Za mało eddies.", "already-installed": "To już masz.", "inventory-full": "Nie uniesiesz więcej." }[e.reason];
+      const text = { "insufficient-funds": "Za mało eddies.", "already-installed": "To już masz.", "inventory-full": "Nie uniesiesz więcej.", refused: "Nie obsługuję takich jak ty." }[e.reason];
       toast("system", "Mori kręci głową", text);
       audio.play("denied");
     }),
