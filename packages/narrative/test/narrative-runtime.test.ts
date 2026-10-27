@@ -99,6 +99,41 @@ describe("Ume conversation", () => {
     expect(view.ended).toBe(true);
     expect(view.lines).toHaveLength(1);
   });
+
+  it("refuses to talk when the street fears Seki", () => {
+    const { runtime, commands } = setup();
+    const d = createDomainState();
+    const view = runtime.start("ume", { ...d, reputation: { ...d.reputation, civilians: -30 } });
+    expect(view.lines).toEqual([{ speaker: "Babcia Ume", text: "Nie podchodź do mnie. Widziałam, co robisz na tej ulicy." }]);
+    expect(view.ended).toBe(true);
+    expect(commands).toEqual([]);
+  });
+});
+
+describe("reputation in Kaito's offer", () => {
+  const offer = (reputation: Partial<DomainState["reputation"]>) => {
+    const d = createDomainState();
+    return setup().runtime.start("fixer", {
+      ...d,
+      quests: { m0_first_contract: { status: "completed" } },
+      character: { ...d.character, alias: "Seki Senshi" },
+      reputation: { ...d.reputation, ...reputation },
+    });
+  };
+  const texts = (r: Partial<DomainState["reputation"]>) => offer(r).lines.map((l) => l.text);
+
+  it("says nothing extra while everyone is neutral", () => {
+    expect(texts({})).toHaveLength(1);
+  });
+
+  it("warns about a hostile gang, or teases about a friendly one", () => {
+    expect(texts({ hebi: -20 }).some((t) => t.includes("strzelają do ciebie bez gadania"))).toBe(true);
+    expect(texts({ hebi: 20 }).some((t) => t.includes("już do ciebie nie strzelają"))).toBe(true);
+  });
+
+  it("acknowledges a good standing with the fixers", () => {
+    expect(texts({ fixers: 40 }).some((t) => t.includes("lepsze stawki"))).toBe(true);
+  });
 });
 
 describe("state persistence", () => {
