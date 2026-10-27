@@ -335,6 +335,12 @@ export class BabylonRenderer implements RenderPort {
     rig.root.dispose(false, false);
   }
 
+  /** Interpolated transform of the entity the camera follows (the player), if any. */
+  get cameraTargetTransform(): Transform | null {
+    const target = this.cameraTarget === null ? undefined : this.entities.get(this.cameraTarget);
+    return target?.kind === "character" ? target.transform : null;
+  }
+
   get entityCount(): number {
     return this.entities.size;
   }

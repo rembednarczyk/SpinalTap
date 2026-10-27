@@ -91,7 +91,7 @@ export const SettingsPanel = () => {
       <Slider id="volume" label="Głośność" value={settings.volume} min={0} max={1} step={0.05} format={percent} onChange={(v) => intents.changeSettings({ volume: v })} />
       {reloadNeeded && (
         <div className="settings__note" data-testid="settings-reload">
-          <p>Jakość grafiki i głośność zmienią się po przeładowaniu. Najpierw zapisz grę, bo niezapisany postęp przepadnie.</p>
+          <p>Jakość grafiki zmieni się po przeładowaniu. Najpierw zapisz grę, bo niezapisany postęp przepadnie.</p>
           <button type="button" className="menu__item menu__item--ghost" onClick={() => intents.reload()}>
             Przeładuj teraz
           </button>

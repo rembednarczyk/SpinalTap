@@ -40,7 +40,7 @@ export interface GameSessionDeps {
 }
 
 export interface SettingsHost {
-  /** Settings the page started with; quality and volume stay at these until a reload. */
+  /** Settings the page started with; graphics quality stays at these until a reload. */
   readonly applied: SettingsVm;
   save(next: SettingsVm): void;
   reload(): void;

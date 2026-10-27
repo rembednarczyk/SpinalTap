@@ -57,7 +57,7 @@ if (modelsParam || !reference) {
 }
 const input = new BrowserInput(canvas);
 const audio = new SynthAudio();
-audio.volume = settings.volume;
+audio.setVolume("master", settings.volume);
 const ui = createUiStore();
 const probe = new PerfProbe(stage.engine, stage.scene);
 
@@ -90,6 +90,8 @@ const loop = new FixedStepLoop(browserClock, {
   render: (alpha) => {
     session.render(alpha);
     renderer.frame(stage.engine.getDeltaTime() / 1000);
+    const player = renderer.cameraTargetTransform;
+    if (player) audio.setListener({ position: player.position, yaw: player.yaw, speed: player.speed });
     stage.scene.render();
   },
 });
@@ -114,6 +116,21 @@ const applyBackdrop = () => {
 };
 ui.subscribe(applyBackdrop);
 applyBackdrop();
+
+// Music ducks under conversations; master volume follows the settings live.
+let talking = false;
+let volume = settings.volume;
+ui.subscribe((s) => {
+  const nowTalking = s.dialogue !== null;
+  if (nowTalking !== talking) {
+    talking = nowTalking;
+    audio.setMood(talking ? "dialog" : "explore");
+  }
+  if (s.settings.volume !== volume) {
+    volume = s.settings.volume;
+    audio.setVolume("master", volume);
+  }
+});
 
 // System keys and pointer-lock driven pause.
 window.addEventListener("keydown", (e) => {

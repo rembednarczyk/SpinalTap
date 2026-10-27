@@ -48,4 +48,5 @@ export const scaleLook = (frame: InputFrame, factor: number): InputFrame =>
   factor === 1 || (frame.lookYaw === 0 && frame.lookPitch === 0) ? frame : { ...frame, lookYaw: frame.lookYaw * factor, lookPitch: frame.lookPitch * factor };
 
 /** Settings that the running game cannot change on the fly. */
-export const needsReload = (applied: SettingsVm, current: SettingsVm): boolean => applied.quality !== current.quality || applied.volume !== current.volume;
+/** Only the graphics quality needs a reload; volume and sensitivity apply at once. */
+export const needsReload = (applied: SettingsVm, current: SettingsVm): boolean => applied.quality !== current.quality;

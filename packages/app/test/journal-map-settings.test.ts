@@ -163,7 +163,7 @@ describe("settings", () => {
     expect(s).toMatchObject({ moveZ: 1, lookYaw: 0.2, lookPitch: -0.4 });
   });
 
-  it("saves every change and asks for a reload only for quality and volume", () => {
+  it("saves every change and asks for a reload only for quality", () => {
     const host = { applied: { ...DEFAULT_SETTINGS, quality: "low" as const }, save: vi.fn(), reload: vi.fn() };
     const { s, ui } = session(host);
     expect(ui.getState().settings.quality).toBe("low");
@@ -175,7 +175,7 @@ describe("settings", () => {
     s.changeSettings({ quality: "low" });
     expect(ui.getState().reloadNeeded).toBe(false);
     s.changeSettings({ volume: 0.1 });
-    expect(ui.getState().reloadNeeded).toBe(true);
+    expect(ui.getState().reloadNeeded).toBe(false);
     s.reload();
     expect(host.reload).toHaveBeenCalled();
   });
