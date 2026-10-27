@@ -33,6 +33,7 @@ const SPEAKERS: Readonly<Record<string, string>> = {
   TECH: "Technik Kagami",
   HANA: "Hana",
   OYAJI: "Oyaji",
+  GENZO: "Genzō",
 };
 const SPEAKER_RE = /^([A-Z]+):\s*(.*)$/;
 
