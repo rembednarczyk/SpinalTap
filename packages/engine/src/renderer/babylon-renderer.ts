@@ -10,6 +10,7 @@ import { NIGHT_RIG, rigForDaylight } from "../npr/lighting";
 import { MoonShadow } from "../npr/moon-shadow";
 import { ToonMaterials } from "../npr/toon-material";
 import { Atmosphere, createSplashes, createSteam } from "./atmosphere";
+import { CityKit } from "./city-kit";
 import { createDressing } from "./dressing";
 import {
   type CharacterRig,
@@ -65,6 +66,23 @@ interface Decor {
 
 const v3 = (p: { x: number; y: number; z: number }) => new Vector3(p.x, p.y, p.z);
 
+export interface RendererOptions {
+  /**
+   * URL of the city kit (ADR-0022). Skinned blocks are drawn from it once it loads; until
+   * then, and without it, they are plain boxes.
+   */
+  readonly cityKit?: string | null;
+}
+
+type BlockView = Extract<ViewDescriptor, { kind: "block" }>;
+
+/** A skinned block waiting for the city kit. */
+interface PendingSkin {
+  readonly view: BlockView & { skin: NonNullable<BlockView["skin"]> };
+  readonly center: Vector3;
+  readonly box: Mesh | null;
+}
+
 /** RenderPort over Babylon.js. Turns entity view descriptors into NPR meshes and drives the camera. */
 export class BabylonRenderer implements RenderPort {
   readonly materials: ToonMaterials;
@@ -91,7 +109,15 @@ export class BabylonRenderer implements RenderPort {
   /** Rigs whose model is still loading, so a manifest arriving meanwhile does not dress them twice. */
   private readonly loadingModels = new Set<CharacterRig>();
 
-  constructor(private readonly stage: Stage) {
+  /** Buildings and vehicles from the city kit (ADR-0022), once it has loaded. */
+  private city: CityKit | null = null;
+  private readonly pendingSkins = new Map<EntityId, PendingSkin>();
+  private daylight = 0;
+
+  constructor(
+    private readonly stage: Stage,
+    options: RendererOptions = {},
+  ) {
     const { scene } = stage;
     this.materials = new ToonMaterials(scene);
     const high = (stage.options.quality ?? "high") === "high";
@@ -115,7 +141,8 @@ export class BabylonRenderer implements RenderPort {
     if (this.lineArt) this.lineArt.geometryBuffer.renderTransparentMeshes = false;
     this.speedLines = new SpeedLines(scene, this.rig.camera);
     this.atmosphere = new Atmosphere(scene, NIGHT_RIG);
-    const dressing = createDressing(scene, this.materials);
+    // With the kit, skinned M0 buildings bring their own facades: the dressing leaves them bare.
+    const dressing = createDressing(scene, this.materials, { skinned: !!options.cityKit });
     for (const m of dressing.casters) this.shadow.addStaticCaster(m);
     for (const m of dressing.meshes) if (m.material?.name.includes("vendingGlow")) stage.glow.addIncludedOnlyMesh(m);
     this.grading = new Grading(scene, this.rig.camera, { reference: stage.options.reference });
@@ -127,6 +154,32 @@ export class BabylonRenderer implements RenderPort {
       createSteam(scene, new Vector3(1.8, 0.05, 5.5), new Color4(0.6, 0.74, 0.85, 0.3), 22);
       createSteam(scene, new Vector3(-5.2, 1.45, 44), new Color4(0.8, 0.58, 0.64, 0.26), 14);
     }
+    if (options.cityKit) this.loadCityKit(options.cityKit);
+  }
+
+  /** Loads the kit in the background; the scene is not ready (reference frames wait) until it is in. */
+  private loadCityKit(url: string): void {
+    const { scene } = this.stage;
+    const token = {};
+    scene.addPendingData(token);
+    CityKit.load(url)
+      .then((data) => {
+        if (scene.isDisposed) return;
+        this.city = new CityKit(scene, this.materials, this.stage.glow, data);
+        this.city.setDaylight(this.daylight);
+        for (const [id, p] of this.pendingSkins) this.city.add(id, p.view.skin, p.view.size, p.center, p.box);
+        this.pendingSkins.clear();
+      })
+      .catch((err: unknown) => {
+        console.warn(`[city] ${url} failed to load, keeping plain blocks`, err);
+        this.pendingSkins.clear();
+      })
+      .finally(() => scene.removePendingData(token));
+  }
+
+  /** Kit meshes built for skinned blocks (debug and tests). */
+  get cityMeshes(): number {
+    return this.city?.meshCount ?? 0;
   }
 
   spawn(id: EntityId, view: ViewDescriptor, t: Transform): void {
@@ -172,6 +225,12 @@ export class BabylonRenderer implements RenderPort {
         const lightKey = prop.light ? name : null;
         if (prop.light && lightKey) this.materials.addLight(lightKey, prop.light);
         this.entities.set(id, { kind: "prop", prop, lightKey, decor });
+        if (view.kind === "block" && view.skin) {
+          const box = (prop.root.getChildMeshes(true)[0] as Mesh | undefined) ?? null;
+          const skinned = { view: { ...view, skin: view.skin }, center: at, box };
+          if (this.city) this.city.add(id, view.skin, view.size, at, box);
+          else this.pendingSkins.set(id, skinned);
+        }
         return;
       }
       case "loot": {
@@ -214,6 +273,8 @@ export class BabylonRenderer implements RenderPort {
       }
       return;
     }
+    this.city?.remove(id);
+    this.pendingSkins.delete(id);
     for (const m of e.prop.blockers) this.blockers.delete(m);
     if (e.lightKey) this.materials.removeLight(e.lightKey);
     for (const m of e.decor.meshes) this.atmosphere.removeDecoration(m);
@@ -310,6 +371,8 @@ export class BabylonRenderer implements RenderPort {
         const rig = rigForDaylight(effect.daylight);
         this.materials.setRig(rig);
         this.atmosphere.setDaylight(rig, effect.daylight);
+        this.daylight = effect.daylight;
+        this.city?.setDaylight(effect.daylight);
         return;
       }
     }
@@ -317,6 +380,7 @@ export class BabylonRenderer implements RenderPort {
 
   /** Per-frame presentation update: animation, camera, VFX, rain. Call before scene.render(). */
   frame(dt: number): void {
+    this.city?.flush();
     for (const e of this.entities.values()) {
       if (e.kind === "character") {
         const t = e.transform;

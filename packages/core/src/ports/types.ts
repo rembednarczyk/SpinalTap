@@ -53,6 +53,11 @@ export type ViewDescriptor =
        * height and rungs across its wider horizontal side. Not walkable; the ladder is climbed.
        */
       readonly rungs?: number;
+      /**
+       * Look of a building or a vehicle (ADR-0022): the renderer may draw it from a model kit
+       * instead of a plain box. Collision stays the box; without a kit the box is drawn.
+       */
+      readonly skin?: BlockSkin;
     }
   | {
       readonly kind: "neon";
@@ -63,6 +68,37 @@ export type ViewDescriptor =
   | { readonly kind: "lamp"; readonly color: string }
   /** A bag dropped by a defeated enemy (ADR-0015). `best` is the rarest item inside, for the neon strip. */
   | { readonly kind: "loot"; readonly style: "bag"; readonly best: Rarity | null };
+
+/** What a skinned block stands for (ADR-0022). */
+export type BlockStyle =
+  /** Ground-floor shops under flats. */
+  | "shop"
+  /** A bar or a club: a lit storefront with its own neon. */
+  | "bar"
+  /** Plain flats. */
+  | "tenement"
+  /** A high-rise with glass or office floors. */
+  | "tower"
+  | "van"
+  | "car"
+  /** A burnt-out car. */
+  | "wreck"
+  | "dumpster";
+
+/** The side of a block that faces the street (a vehicle's bonnet), as the world axis it points along. */
+export type BlockFront = "x+" | "x-" | "z+" | "z-";
+
+export interface BlockSkin {
+  readonly style: BlockStyle;
+  readonly front: BlockFront;
+  /**
+   * Distance from the front to the facade across the street, metres. When set, the renderer
+   * may hang cables and signs over the street.
+   */
+  readonly street?: number;
+  /** False where the content hangs its own neon on the facade: no generic shop signs then. */
+  readonly signs?: boolean;
+}
 
 /**
  * Sloped top of a block (ADR-0020): it rises linearly along `axis` towards `dir`, from

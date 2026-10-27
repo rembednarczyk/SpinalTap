@@ -68,6 +68,8 @@ export const PRESETS = {
   // Imported glTF characters: colour comes from the model.
   importedCharacter: { base: "#ffffff", ...CHAR },
   importedProp: { base: "#ffffff", rimStrength: 0.12, rim: "#8fb3c9" },
+  // City kit buildings and vehicles (ADR-0022): colour from the swatch palette.
+  cityKit: { base: "#ffffff", gloss: 0.12, rimStrength: 0.1, rim: "#8fb3c9" },
 } as const satisfies Record<string, ToonPreset>;
 
 export type PresetName = keyof typeof PRESETS;

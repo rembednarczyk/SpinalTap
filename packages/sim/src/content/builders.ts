@@ -1,4 +1,4 @@
-import type { FactionId, Vec3, ViewDescriptor } from "@seki/core";
+import type { BlockSkin, BlockStyle, FactionId, BlockFront, Vec3, ViewDescriptor } from "@seki/core";
 import type { Interactable, LadderDef } from "../world/components";
 
 /** Shared vocabulary of the content tables. Coordinates: Y up, +Z north, yaw 0 faces +Z. */
@@ -56,15 +56,26 @@ export type BlockMaterial = "concrete" | "metal" | "glass" | "asphalt";
 
 export const v = (x: number, y: number, z: number): Vec3 => ({ x, y, z });
 
-export const building = (x: number, z: number, w: number, h: number, d: number, material: BlockMaterial = "concrete"): StaticProp => ({
+/**
+ * A skin for a block (ADR-0022): what it looks like, which side faces the street and, optionally,
+ * how far the facades across the street are and whether the renderer may hang its own signs.
+ */
+export const skin = (style: BlockStyle, front: BlockFront, extra: { readonly street?: number; readonly signs?: boolean } = {}): BlockSkin => ({
+  style,
+  front,
+  ...(extra.street === undefined ? {} : { street: extra.street }),
+  ...(extra.signs === undefined ? {} : { signs: extra.signs }),
+});
+
+export const building = (x: number, z: number, w: number, h: number, d: number, material: BlockMaterial = "concrete", look?: BlockSkin): StaticProp => ({
   center: v(x, h / 2, z),
-  view: { kind: "block", size: v(w, h, d), material },
+  view: look ? { kind: "block", size: v(w, h, d), material, skin: look } : { kind: "block", size: v(w, h, d), material },
   solid: true,
 });
 
-export const crate = (x: number, z: number, w: number, h: number, d: number): StaticProp => ({
+export const crate = (x: number, z: number, w: number, h: number, d: number, look?: BlockSkin): StaticProp => ({
   center: v(x, h / 2, z),
-  view: { kind: "block", size: v(w, h, d), material: "metal" },
+  view: look ? { kind: "block", size: v(w, h, d), material: "metal", skin: look } : { kind: "block", size: v(w, h, d), material: "metal" },
   solid: true,
 });
 

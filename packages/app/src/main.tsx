@@ -47,7 +47,9 @@ const qualityParam = params.get("quality");
 // ?quality wins over the saved setting, so tests and bug reports can force either.
 const quality = qualityParam === "low" || qualityParam === "high" ? qualityParam : settings.quality;
 const stage = new Stage(canvas, { reference, quality });
-const renderer = new BabylonRenderer(stage);
+// Buildings and vehicles from the CC0 city kit (public/city/README.md, ADR-0022); ?city=off keeps
+// the plain blocks. The reference frame uses it too: the scene is ready only once it is in.
+const renderer = new BabylonRenderer(stage, { cityKit: params.get("city") === "off" ? null : new URL("city/city-kit.glb", document.baseURI).href });
 // The character menu's 3D preview: a second scene on the same engine and canvas (ADR-0015).
 const preview = new PreviewStage(stage.engine, canvas, { quality });
 // Imported character models: models/manifest.json next to the game, ?models=<url> for another
