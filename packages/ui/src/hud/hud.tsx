@@ -1,19 +1,43 @@
-import { useEffect, useState } from "react";
+import { type CSSProperties, useEffect, useState } from "react";
 import { useUi } from "../use-ui";
 import { AbilityWidget } from "./ability-widget";
 import { Minimap } from "./minimap";
 import { Toasts } from "./toasts";
 
+/** Vertical field of view of the game camera in radians (engine CameraRig). */
+export const HUD_CAMERA_FOV = 1.08;
+
+/** Aim cone half-angle -> tick offset as a share of half the viewport height. */
+export const spreadToScreen = (spread: number): number => Math.tan(Math.max(0, spread)) / Math.tan(HUD_CAMERA_FOV / 2);
+
+/**
+ * Four ticks that sit where the aim cone meets the screen: they spread apart while moving
+ * and after shots, and pull in while crouched. A confirmed hit flashes them, a head hit red.
+ */
 const Crosshair = () => {
   const hit = useUi((s) => s.hitMarker);
-  const [flash, setFlash] = useState(false);
+  const zone = useUi((s) => s.hitZone);
+  const spread = useUi((s) => s.aimSpread);
+  const crouched = useUi((s) => s.crouched);
+  const [flash, setFlash] = useState<"hit" | "head" | null>(null);
   useEffect(() => {
     if (hit === 0) return;
-    setFlash(true);
-    const t = setTimeout(() => setFlash(false), 120);
+    const head = zone === "head";
+    setFlash(head ? "head" : "hit");
+    const t = setTimeout(() => setFlash(null), head ? 220 : 120);
     return () => clearTimeout(t);
-  }, [hit]);
-  return <div className={`crosshair${flash ? " crosshair--hit" : ""}`} data-testid="crosshair" />;
+  }, [hit, zone]);
+  const cls = ["crosshair", crouched && "crosshair--crouched", flash && "crosshair--hit", flash === "head" && "crosshair--head"].filter(Boolean).join(" ");
+  const style = { "--spread": spreadToScreen(spread).toFixed(4) } as CSSProperties;
+  return (
+    <div className={cls} style={style} data-testid="crosshair" data-spread={spread.toFixed(3)}>
+      <span className="crosshair__tick crosshair__tick--top" />
+      <span className="crosshair__tick crosshair__tick--bottom" />
+      <span className="crosshair__tick crosshair__tick--left" />
+      <span className="crosshair__tick crosshair__tick--right" />
+      {flash === "head" && <span className="crosshair__x" />}
+    </div>
+  );
 };
 
 const HurtVignette = () => {
@@ -56,7 +80,7 @@ export const Hud = () => {
       )}
       <AbilityWidget />
       <Minimap />
-      <div className="hud__camera">{cameraMode} · [V] · [X] broń · [Tab] postać · [J] dziennik</div>
+      <div className="hud__camera">{cameraMode} · [V] · [X] broń · [C] kucanie · [Tab] postać · [J] dziennik</div>
       {prompt && (
         <div className="hud__prompt" data-testid="prompt">
           <kbd>E</kbd> {prompt}

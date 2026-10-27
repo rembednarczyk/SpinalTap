@@ -65,11 +65,11 @@ const talkToKaito = (s: GameSession) => {
   steps(s, 1, frame({ interact: true }));
 };
 
-/** Stands 4 m in front of the target (FPP) and fires until it drops; returns plain body-hit damage (no crits, no headshots). */
+/** Stands 4 m in front of the target (FPP) and fires until it drops; returns plain torso-hit damage (no crits, no other zones). */
 const shootDown = (s: GameSession, key: string): number[] => {
   const hits: number[] = [];
   const off = s.bus.on("DamageDealt", (e) => {
-    if (e.targetId !== s.sim.player()?.id && !e.critical && !e.headshot) hits.push(e.amount);
+    if (e.targetId !== s.sim.player()?.id && !e.critical && e.zone === "torso") hits.push(e.amount);
   });
   for (let i = 0; i < 2000; i++) {
     const t = [...s.sim.world].find((e) => e.key === key);
@@ -134,8 +134,9 @@ describe("M1 acceptance: contract → eddies → cyberware → stronger in comba
     const next = session.sim.domain.contracts.active!;
     const nextTargets = [...session.sim.world].filter((e) => e.tag === contractTag(next.id)).map((e) => e.key!);
     const upgradedHits = nextTargets.flatMap((k) => shootDown(session, k));
-    expect(new Set(baseHits)).toEqual(new Set([22]));
-    expect(new Set(upgradedHits)).toEqual(new Set([26]));
+    // 22 + 3 (memory) through the ganger's vest (armor 2, torso +3); the grip adds 4.
+    expect(new Set(baseHits)).toEqual(new Set([20]));
+    expect(new Set(upgradedHits)).toEqual(new Set([24]));
   });
 
   it("blocks saving while the clinic is open", async () => {

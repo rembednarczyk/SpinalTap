@@ -7,7 +7,7 @@ import type { SimContext, System } from "../../world/context";
 import { chestOf, eyeOf, lineOfSight } from "../../world/hitscan";
 import { inCreationOrder } from "../../world/ordering";
 import { worldTimeScale } from "../ability-system";
-import { fireShot } from "../combat-system";
+import { aimSpreadOf, fireShot } from "../combat-system";
 import { GANGER_TREE } from "./ganger-tree";
 
 export const GANGER_SPEED = 3.1;
@@ -75,7 +75,8 @@ class GangerAgent {
     const combatant = self.combatant;
     if (combatant && combatant.cooldown <= 0) {
       const origin = eyeOf(self);
-      fireShot(ctx, { shooter: self, origin, dir: normalize(sub(chestOf(target), origin)), ...GANGER_CRIT }, ctx.rng);
+      const dir = normalize(sub(chestOf(target), origin));
+      fireShot(ctx, { shooter: self, origin, dir, spread: aimSpreadOf(self, null), ...GANGER_CRIT }, ctx.rng);
       // Stagger the next burst so the two gangers do not fire in lockstep.
       combatant.cooldown = WEAPONS[combatant.weapon].cooldown + ctx.rng.next() * 0.5;
     }

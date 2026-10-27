@@ -71,6 +71,14 @@ describe("ModelLibrary", () => {
     expect(ma.material?.name).toContain("#FF0000");
     // Imported characters are inked by the line-art pass; the hull is opt-in.
     expect(ma.renderOutline).toBeFalsy();
+    // A pooled instance gets its bind pose back.
+    const node = a.root.getChildren()[0] as unknown as { rotation: { x: number }; position: { y: number } };
+    node.rotation.x = 1.2;
+    node.position.y = 3;
+    a.resetPose();
+    expect(node.rotation.x).toBe(0);
+    expect(node.position.y).toBe(0);
+    expect(a.prefix).toBe("a-");
     a.dispose();
     expect(b.root.isDisposed()).toBe(false);
     expect(pickAnimation([], spec, 3)).toBeNull();

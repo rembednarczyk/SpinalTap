@@ -271,13 +271,16 @@ describe("protection (Hebi come for Oyaji)", () => {
     const sim = friendlyHebi(Simulation.create({ seed: 5 }));
     toMarket(sim);
     accept(sim, "protect");
-    run(sim, 300);
-    expect(byKey(sim, "oyaji")!.health!.current).toBeLessThan(OYAJI_MAX_HP);
+    // Saved while the wave walks in, before anyone fires: weapon bloom is transient and not saved (ADR-0016).
+    const shots = collect(sim, "ShotFired");
+    run(sim, 60);
+    expect(shots).toHaveLength(0);
     const restored = reload(sim);
-    expect(byKey(restored, "oyaji")!.health).toEqual(byKey(sim, "oyaji")!.health);
     expect(hash(restored)).toBe(hash(sim));
-    run(sim, 600);
-    run(restored, 600);
+    run(sim, 900);
+    run(restored, 900);
+    expect(byKey(sim, "oyaji")?.health?.current ?? 0).toBeLessThan(OYAJI_MAX_HP);
+    expect(byKey(restored, "oyaji")?.health).toEqual(byKey(sim, "oyaji")?.health);
     expect(hash(restored)).toBe(hash(sim));
   });
 });

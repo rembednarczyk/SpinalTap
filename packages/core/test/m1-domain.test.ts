@@ -4,10 +4,8 @@ import {
   ELIMINATION_SITE_IDS,
   CYBERWARE_CATALOG,
   EMPTY_CONTRACTS,
-  HEADSHOT_MULTIPLIER,
   IDLE_ABILITY,
   MAX_STACK,
-  WEAPONS,
   activate,
   addItem,
   buyCyberware,
@@ -21,7 +19,6 @@ import {
   isItemId,
   itemCount,
   loadoutAbility,
-  resolveAttack,
   takeItem,
   tickAbility,
 } from "../src";
@@ -116,15 +113,5 @@ describe("contracts", () => {
     expect(contractObjective(c)).toContain("(2)");
     expect(contractObjective({ ...c, status: "cleared" })).toContain("Wróć do Kaito");
     expect(contractTag("c3")).toBe("contract:c3");
-  });
-});
-
-describe("headshots", () => {
-  it("multiply damage", () => {
-    const a = { weapon: WEAPONS.pistol, critChance: 0, critMultiplier: 2, damageBonus: 0 };
-    const body = resolveAttack(a, { armor: 0 }, sequenceRng(0, 0.9));
-    const head = resolveAttack(a, { armor: 0 }, sequenceRng(0, 0.9), true);
-    expect(body).toEqual({ hit: true, critical: false, damage: 22 });
-    expect(head).toEqual({ hit: true, critical: false, damage: Math.round(22 * HEADSHOT_MULTIPLIER) });
   });
 });

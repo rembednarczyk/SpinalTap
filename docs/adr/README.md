@@ -16,6 +16,8 @@
 | [0012](0012-watek-glowny-akt-1.md) | Wątek główny, akt I: wspomnienia, wybory, zakończenia | Zaakceptowana |
 | [0013](0013-audio-scena-muzyka-miks.md) | Scena audio: muzyka warstwowa, ambient pozycyjny, miks | Zaakceptowana |
 | [0014](0014-world-streaming-chunki.md) | World streaming: chunki z histerezą, drugi dystrykt | Zaakceptowana |
-| [0016](0016-zlecenia-na-targu-i-balans.md) | Zlecenia na targu (kurs, odzyskanie, ochrona) i balans M4 | Zaakceptowana |
+| [0015](0015-ekwipunek-uzbrojenie-loot.md) | Ekwipunek, uzbrojenie i łupy: sloty, amunicja, pancerz per strefa, torby, podgląd 3D | Proponowana |
+| [0016](0016-postawa-rozrzut-strefy-trafien.md) | Postawa, rozrzut broni, strefy trafień, przerywanie rozmowy | Zaakceptowana |
+| [0018](0018-zlecenia-na-targu-i-balans.md) | Zlecenia na targu (kurs, odzyskanie, ochrona) i balans M4 | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.

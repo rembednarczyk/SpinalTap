@@ -1,6 +1,6 @@
 import { type AbstractMesh, FreeCamera, MeshBuilder, Ray, type Scene, TransformNode, Vector3 } from "../babylon";
 import { type CameraMode, type Transform, type Vec3, directionFromAngles } from "@seki/core";
-import { EYE_HEIGHT, TPP_HEIGHT_OFFSET, TPP_SHOULDER_OFFSET } from "@seki/sim";
+import { TPP_HEIGHT_OFFSET, TPP_SHOULDER_OFFSET, eyeHeightAt } from "@seki/sim";
 import { applyOutline } from "../npr/outline";
 import type { ToonMaterials } from "../npr/toon-material";
 
@@ -43,23 +43,45 @@ export class CameraRig {
     this.viewmodel = new TransformNode("viewmodel", scene);
     this.viewmodel.parent = this.camera;
     // Kept compact and at least ~25 cm from the eye so perspective does not blow it up.
-    const sleeve = MeshBuilder.CreateBox("vm-sleeve", { width: 0.07, height: 0.07, depth: 0.14 }, scene);
-    sleeve.material = materials.get("heroineCoat");
+    // Seki's cybernetic forearm: ivory shell, copper wrist ring, ivory hand.
+    const sleeve = MeshBuilder.CreateCylinder("vm-sleeve", { height: 0.2, diameterTop: 0.052, diameterBottom: 0.066, tessellation: 12 }, scene);
+    sleeve.material = materials.get("cyberIvory");
     sleeve.parent = this.viewmodel;
-    sleeve.position.set(0, -0.015, -0.1);
-    const hand = MeshBuilder.CreateSphere("vm-hand", { diameter: 0.07, segments: 10 }, scene);
-    hand.material = materials.get("skin");
+    sleeve.rotation.x = Math.PI / 2;
+    sleeve.position.set(0, -0.02, -0.11);
+    const wrist = MeshBuilder.CreateTorus("vm-wrist", { diameter: 0.054, thickness: 0.012, tessellation: 16 }, scene);
+    wrist.material = materials.get("cyberCopper");
+    wrist.parent = this.viewmodel;
+    wrist.rotation.x = Math.PI / 2;
+    wrist.position.set(0, -0.015, -0.01);
+    const hand = MeshBuilder.CreateSphere("vm-hand", { diameter: 0.06, segments: 10 }, scene);
+    hand.material = materials.get("cyberIvory");
     hand.parent = this.viewmodel;
-    hand.position.set(0, 0, 0);
+    hand.scaling.set(0.85, 1, 1.15);
+    hand.position.set(0, 0, 0.02);
     const gun = MeshBuilder.CreateBox("vm-gun", { width: 0.035, height: 0.065, depth: 0.19 }, scene);
     gun.material = materials.get("gun");
     gun.parent = this.viewmodel;
     gun.position.set(0, 0.04, 0.07);
-    for (const m of [sleeve, hand, gun]) {
+    this.placeholderGun = gun;
+    for (const m of [sleeve, wrist, hand, gun]) {
       m.isPickable = false;
       applyOutline(m, 0.004);
     }
     this.viewmodel.position.set(VIEWMODEL.x, VIEWMODEL.y, VIEWMODEL.z);
+  }
+
+  private placeholderGun: AbstractMesh | null = null;
+
+  /** Node a weapon model is mounted under in the FPP viewmodel. */
+  get weaponMount(): TransformNode {
+    return this.viewmodel;
+  }
+
+  /** Drops the box pistol once a weapon model is mounted. */
+  hidePlaceholderGun(): void {
+    this.placeholderGun?.dispose();
+    this.placeholderGun = null;
   }
 
   setMode(mode: CameraMode): void {
@@ -116,7 +138,8 @@ export class CameraRig {
 
     const { position: p, yaw, pitch } = target;
     const dir = directionFromAngles(yaw, pitch);
-    const eye = new Vector3(p.x, p.y + EYE_HEIGHT, p.z);
+    // Same curve as the simulation's aim origin, so the crosshair stays exact while crouching.
+    const eye = new Vector3(p.x, p.y + eyeHeightAt(target.crouch ?? 0), p.z);
     const shoulder = eye.add(new Vector3(Math.cos(yaw) * TPP_SHOULDER_OFFSET, TPP_HEIGHT_OFFSET, -Math.sin(yaw) * TPP_SHOULDER_OFFSET).scale(this.blend));
     const back = new Vector3(-dir.x, -dir.y, -dir.z);
 

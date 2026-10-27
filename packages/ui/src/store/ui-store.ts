@@ -1,4 +1,4 @@
-import { type CameraMode, type CyberwareLoadout, type ReputationState, type SaveSlotInfo, createReputation } from "@seki/core";
+import { type CameraMode, type CyberwareLoadout, type HitZone, type ReputationState, type SaveSlotInfo, createReputation } from "@seki/core";
 import { createStore, type StoreApi } from "zustand/vanilla";
 
 export type Screen = "title" | "playing" | "paused" | "dead";
@@ -114,6 +114,15 @@ export interface UiState {
   readonly toasts: readonly Toast[];
   /** Bumped on every confirmed hit; the crosshair animates on change. */
   readonly hitMarker: number;
+  /** Body part of the last confirmed hit; a head hit flashes the crosshair red. */
+  readonly hitZone: HitZone | null;
+  /**
+   * Half-angle of the player's aim cone in radians, quantised by the app so the store only
+   * changes while the cone actually moves (bloom, getting up or down, starting to run).
+   */
+  readonly aimSpread: number;
+  /** The player is crouched (or getting down). */
+  readonly crouched: boolean;
   /** Bumped when the player takes damage. */
   readonly hurtFlash: number;
   readonly slots: readonly SaveSlotInfo[];
@@ -154,6 +163,9 @@ export const initialUiState: UiState = {
   dialogue: null,
   toasts: [],
   hitMarker: 0,
+  hitZone: null,
+  aimSpread: 0,
+  crouched: false,
   hurtFlash: 0,
   slots: [],
   memories: [],

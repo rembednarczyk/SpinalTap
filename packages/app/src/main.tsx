@@ -1,4 +1,5 @@
 import { BabylonRenderer, BrowserInput, PerfProbe, Stage, SynthAudio } from "@seki/engine";
+import { audioSampleManifest } from "./audio-manifest";
 import { loadModelManifest } from "./model-manifest";
 import { STORY_SOURCE } from "@seki/narrative";
 import { IndexedDbSaveStore, SavePersistence } from "@seki/persistence";
@@ -47,16 +48,22 @@ const qualityParam = params.get("quality");
 const quality = qualityParam === "low" || qualityParam === "high" ? qualityParam : settings.quality;
 const stage = new Stage(canvas, { reference, quality });
 const renderer = new BabylonRenderer(stage);
-// Imported character models are opt-in: models/manifest.json next to the game, or ?models=<url>.
-// The reference frame stays procedural so the NPR snapshot does not depend on downloads.
+// Imported character models: models/manifest.json next to the game, ?models=<url> for another
+// cast, ?models=off for the procedural one. The reference frame stays procedural so the NPR
+// snapshot does not depend on downloads; perf tests pass `off` for the same reason.
 const modelsParam = params.get("models");
-if (modelsParam || !reference) {
+if (modelsParam !== "off" && (modelsParam || !reference)) {
   void loadModelManifest(modelsParam ?? "./models/manifest.json").then((m) => {
     if (Object.keys(m).length > 0) renderer.setCharacterModels(m);
   });
+  // CC0 weapon models replace the box pistols (see public/weapons/README.md).
+  const weapons = new URL("weapons/", document.baseURI);
+  renderer.setWeaponModels({ pistol: new URL("pistol.glb", weapons).href, smg: new URL("smg.glb", weapons).href });
 }
 const input = new BrowserInput(canvas);
-const audio = new SynthAudio();
+// Recorded CC0 sounds from public/audio, loaded after the first gesture; ?audio=off keeps the
+// pure synth. Anything missing or undecodable (e.g. Vorbis on old Safari) is synthesized.
+const audio = new SynthAudio({ samples: params.get("audio") === "off" ? {} : audioSampleManifest(new URL("audio/", document.baseURI).href) });
 audio.setVolume("master", settings.volume);
 const ui = createUiStore();
 const probe = new PerfProbe(stage.engine, stage.scene);
@@ -160,6 +167,7 @@ createRoot(uiRoot).render(<GameUi store={ui} intents={session} touch={touchDevic
 
 const debug = createDebugApi(session, ui, loop, () => probe.sample(), (position, target) => renderer.rig.setReferenceView(position, target),
   () => renderer.dressedCount,
+  () => renderer.rig.camera.position.y,
 );
 window.__seki = debug;
 

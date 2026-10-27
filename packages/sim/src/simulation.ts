@@ -26,7 +26,7 @@ import {
 } from "@seki/core";
 import { World } from "miniplex";
 import { SeededRandom } from "./rng/seeded-random";
-import { createSystems } from "./systems";
+import { aimSpreadOf, createSystems, statsFor } from "./systems";
 import type { Entity } from "./world/components";
 import type { DomainHolder, SessionState, SimContext, System } from "./world/context";
 import { deadFlag } from "./systems/death-system";
@@ -52,7 +52,7 @@ export class Simulation {
   readonly bus: EventBus<DomainEvents>;
   readonly seed: number;
   readonly world: World<Entity>;
-  readonly session: SessionState = { dialogueActive: false, gameOver: false, focusId: null };
+  readonly session: SessionState = { dialogueActive: false, gameOver: false, focusId: null, lastThreat: null };
   private readonly rng: SeededRandom;
   private readonly holder: DomainHolder;
   private readonly systems: readonly System[] = createSystems();
@@ -105,6 +105,12 @@ export class Simulation {
 
   player(): Entity | undefined {
     return this.world.with("player").first;
+  }
+
+  /** Half-angle of the player's aim cone in radians right now (HUD crosshair); 0 without a player. */
+  aimSpread(): number {
+    const p = this.player();
+    return p ? aimSpreadOf(p, statsFor(this.holder.domain.character)) : 0;
   }
 
   /** District the player stands in, or null between chunk bounds. */

@@ -32,7 +32,7 @@ test("reference scene stays within the perf budget", async ({ page }) => {
 });
 
 test("street view in TPP stays within the perf budget", async ({ page }) => {
-  await page.goto("/?seed=3");
+  await page.goto("/?seed=3&models=off");
   await waitForGame(page);
   await page.getByRole("button", { name: "Nowa gra" }).click();
   await freeze(page);
@@ -47,7 +47,7 @@ test("street view in TPP stays within the perf budget", async ({ page }) => {
 });
 
 test("market under the overpass in TPP stays within the perf budget", async ({ page }) => {
-  await page.goto("/?seed=3");
+  await page.goto("/?seed=3&models=off");
   await waitForGame(page);
   await page.getByRole("button", { name: "Nowa gra" }).click();
   await freeze(page);

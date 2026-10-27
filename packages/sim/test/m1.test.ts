@@ -181,17 +181,18 @@ describe("headshots", () => {
   it("deal more damage than body shots", () => {
     const damage = (pitch: number) => {
       const sim = Simulation.create({ seed: 5 });
-      const hits = collect<{ amount: number; headshot: boolean; critical: boolean }>(sim, "DamageDealt");
+      const all = collect<{ amount: number; zone: string; critical: boolean; sourceId: number }>(sim, "DamageDealt");
+      const hits = () => all.filter((h) => h.sourceId === sim.player()!.id);
       const guard = byKey(sim, "guard")!;
       teleportPlayer(sim, { x: guard.position.x, y: 0, z: guard.position.z - 4 }, 0, pitch);
-      for (let i = 0; i < 40 && hits.length === 0; i++) sim.step(input({ fire: true }));
-      return hits[0]!;
+      for (let i = 0; i < 40 && hits().length === 0; i++) sim.step(input({ fire: true }));
+      return hits()[0]!;
     };
-    // Eye at 1.62 m: aim slightly up for the head (>1.49 m at 4 m), down for the chest.
-    const head = damage(-0.02);
+    // Eye at 1.62 m: aim slightly up for the head (>1.58 m at 4 m), down for the chest.
+    const head = damage(-0.03);
     const body = damage(0.1);
-    expect(head.headshot).toBe(true);
-    expect(body.headshot).toBe(false);
+    expect(head.zone).toBe("head");
+    expect(body.zone).toBe("torso");
     expect(head.amount).toBeGreaterThan(body.amount);
   });
 });

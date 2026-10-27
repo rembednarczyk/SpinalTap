@@ -12,6 +12,11 @@ export interface Transform {
   readonly pitch: number;
   /** Horizontal speed in m/s, used by the presentation layer for procedural animation. */
   readonly speed: number;
+  /**
+   * 0 standing .. 1 fully crouched, eased by the simulation (ADR-0016). Drives the crouch pose
+   * and the eye height. Absent means standing.
+   */
+  readonly crouch?: number;
 }
 
 /** What the presentation layer should build for an entity. Pure data, engine-agnostic. */

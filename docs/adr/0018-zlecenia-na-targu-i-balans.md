@@ -1,4 +1,4 @@
-# ADR-0016: Zlecenia na targu i balans (M4)
+# ADR-0018: Zlecenia na targu i balans (M4)
 
 ## Kontekst
 M4 (§14): więcej zleceń i lokacji, balans. Do M3 jedynym zleceniem była likwidacja od Kaito w Shinsekai 7, a Targ pod estakadą (ADR-0014) nie miał żadnej roboty. Nowe zlecenia mają korzystać z istniejących mechanik (rozmowa, ruch, walka, streaming, zapis) i nie zmieniać schematu zapisu, jeśli się da.

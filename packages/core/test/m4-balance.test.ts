@@ -11,7 +11,7 @@ import {
 import { sequenceRng } from "./helpers";
 
 /**
- * Balance guard rails from ADR-0016, at neutral standing and before experience grows the jobs.
+ * Balance guard rails from ADR-0018, at neutral standing and before experience grows the jobs.
  * If one of these fails, a price or a payout moved: update the ADR together with the numbers.
  */
 const ctx = { log: EMPTY_CONTRACTS, reputation: createReputation(), flags: [], tick: 0, ticksPerSecond: 60 } as const;
@@ -29,7 +29,7 @@ const payouts = (kind: ContractKind): number[] => {
 
 const mean = (xs: readonly number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
 
-describe("balance (ADR-0016)", () => {
+describe("balance (ADR-0018)", () => {
   it("pay ranges per kind", () => {
     expect(Object.fromEntries(CONTRACT_KIND_IDS.map((k) => [k, payouts(k)]))).toEqual({
       eliminate: [500, 625],

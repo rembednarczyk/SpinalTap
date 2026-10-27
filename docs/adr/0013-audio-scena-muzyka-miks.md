@@ -12,3 +12,9 @@ ADR-0009 dał jednorazowe cue i zapętlony szum deszczu. Do „wysycenia” dźw
 
 ## Konsekwencje
 Aplikacja (Infra) podpina później: `setListener` w każdej klatce renderu, `setMood("dialog"/"explore")` przy otwieraniu i zamykaniu dialogu, `setVolume` w ustawieniach. Do tego czasu działa ambient, muzyka z wykrywaniem walki i nowe SFX.
+
+## Dopisek: nagrania CC0 obok syntezy
+- `SynthAudio` przyjmuje opcjonalny `AudioSampleManifest` (cue → zestaw wariantów, kroki, pętla deszczu). Manifest z URL-ami buduje aplikacja (`packages/app/src/audio-manifest.ts`, pliki w `packages/app/public/audio` z README licencji); engine nie zna ścieżek. `?audio=off` zostawia samą syntezę.
+- `SampleBank` pobiera i dekoduje (`fetch` + `decodeAudioData`) każdy URL raz, leniwie po `unlock()`, z cache. Nagranie gra przez tę samą pulę głosów, szynę, panoramę i wysyłkę pogłosu co synteza; wariant losowany bez powtórzenia poprzedniego, wysokość 1 ± `pitch`. Zestaw może mieć `layerSynth`, wtedy synteza gra pod nagraniem.
+- Dopóki nagranie się nie zdekoduje, albo gdy plik jest niedostępny lub nie do zdekodowania (np. Vorbis w starym Safari), cue i kroki są syntezowane. Zapętlone nagranie deszczu wchodzi na szynę `ambience` z narastaniem, a syntetyczny szum deszczu zostaje pod nim ciszej (`synthLevel`).
+- Typ `AudioCue` bez zmian, więc `sim` i złoty hash nie są dotknięte.

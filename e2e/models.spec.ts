@@ -1,11 +1,11 @@
 import { expect, test } from "@playwright/test";
 import { freeze, step, waitForGame } from "./helpers";
 
-test("imported VRoid model dresses the heroine and follows the rig", async ({ page }) => {
+test("placeholder VRoid cast dresses the characters", async ({ page }) => {
   test.setTimeout(150_000);
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto("/?seed=11&models=./models/test/manifest.json");
+  await page.goto("/?seed=11");
   await waitForGame(page);
   await page.getByRole("button", { name: "Nowa gra" }).click({ timeout: 60_000 });
   await freeze(page);

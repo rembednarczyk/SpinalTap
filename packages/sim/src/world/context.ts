@@ -9,6 +9,8 @@ export interface SessionState {
   dialogueActive: boolean;
   gameOver: boolean;
   focusId: EntityId | null;
+  /** The last shot that hurt or nearly hit the player, or was fired close by; null if none. */
+  lastThreat: { readonly tick: number; readonly sourceId: EntityId } | null;
 }
 
 /** Mutable holder for the immutable domain state, plus a dirty marker for quest evaluation. */
