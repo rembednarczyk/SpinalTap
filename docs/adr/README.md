@@ -12,5 +12,6 @@
 | [0008](0008-kolizje-deterministyczne-havok-odlozony.md) | Kolizje w `sim`, Havok odłożony | Zaakceptowana |
 | [0009](0009-audio-syntezowane.md) | Audio syntezowane w WebAudio | Zaakceptowana |
 | [0010](0010-petla-m1-kontrakty-cyberware.md) | Pętla M1: kontrakty, klinika, zdolność aktywna | Zaakceptowana |
+| [0011](0011-watek-glowny-akt-1.md) | Wątek główny, akt I: wspomnienia, wybory, zakończenia | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.
