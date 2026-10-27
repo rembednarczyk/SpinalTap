@@ -14,11 +14,13 @@ import {
   TARG_SOUTH_BOUNDS,
   TARG_SOUTH_PROPS,
 } from "./district-targ";
+import { DOKI_NAV, DOKI_QUAY_ACTORS, DOKI_QUAY_BOUNDS, DOKI_QUAY_PROPS, DOKI_YARD_ACTORS, DOKI_YARD_BOUNDS, DOKI_YARD_PROPS } from "./district-doki";
 
 export const DISTRICTS = {
   "shinsekai-7": { name: "Shinsekai, kwartał 7" },
   kanal: { name: "Ulica Kanałowa" },
   targ: { name: "Targ pod estakadą" },
+  doki: { name: "Doki Tessen" },
 } as const;
 
 export type DistrictId = keyof typeof DISTRICTS;
@@ -41,10 +43,13 @@ export const WORLD_CHUNKS: readonly ChunkDef[] = [
   { id: "kanal", district: "kanal", bounds: KANAL_BOUNDS, props: KANAL_PROPS, actors: [] },
   { id: "targ-south", district: "targ", bounds: TARG_SOUTH_BOUNDS, props: TARG_SOUTH_PROPS, actors: TARG_SOUTH_ACTORS },
   { id: "targ-north", district: "targ", bounds: TARG_NORTH_BOUNDS, props: TARG_NORTH_PROPS, actors: TARG_NORTH_ACTORS },
+  // ADR-0024: north of Ulica Kanałowa, through the passage in its north row.
+  { id: "doki-yard", district: "doki", bounds: DOKI_YARD_BOUNDS, props: DOKI_YARD_PROPS, actors: DOKI_YARD_ACTORS },
+  { id: "doki-quay", district: "doki", bounds: DOKI_QUAY_BOUNDS, props: DOKI_QUAY_PROPS, actors: DOKI_QUAY_ACTORS },
 ];
 
 /** Level graph of the whole city (ADR-0021). Shinsekai 7 is flat and has none. */
-export const WORLD_NAV: NavGraph = mergeNav(KANAL_NAV, TARG_NAV);
+export const WORLD_NAV: NavGraph = mergeNav(KANAL_NAV, TARG_NAV, DOKI_NAV);
 
 /** Stashes on roofs, placed once when the player first comes near (ADR-0021). */
 export const WORLD_STASHES: readonly RoofStash[] = [TARG_ROOF_STASH];

@@ -25,5 +25,6 @@
 | [0021](0021-skok-upadki-drabiny-nawigacja.md) | Skok, obrażenia od upadku, drabiny, nawigacja NPC między poziomami | Zaakceptowana |
 | [0022](0022-budynki-z-zestawu-cc0.md) | Budynki i pojazdy z zestawu CC0 (city kit): skin bloku, paleta, komórki 64 m | Zaakceptowana |
 | [0023](0023-watek-glowny-akt-2.md) | Wątek główny, akt II „Lustro”: Ren, archiwum Kagami, trzy zakończenia | Zaakceptowana |
+| [0024](0024-doki-zlecenia-snajper-ochrona.md) | Doki Tessen: eskorta, infiltracja, włamanie, snajper i ochrona korporacji, zapis v9 | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.

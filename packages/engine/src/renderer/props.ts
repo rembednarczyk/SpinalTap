@@ -17,6 +17,54 @@ export interface PropView {
 type Block = Extract<ViewDescriptor, { kind: "block" }>;
 type Neon = Extract<ViewDescriptor, { kind: "neon" }>;
 type Loot = Extract<ViewDescriptor, { kind: "loot" }>;
+type Water = Extract<ViewDescriptor, { kind: "water" }>;
+
+/** Mist layers over open water (ADR-0024): heights above the surface and opacity, lowest first. */
+const MIST_LAYERS: readonly (readonly [height: number, alpha: number])[] = [
+  [0.5, 0.16],
+  [1.7, 0.09],
+  [3.4, 0.05],
+];
+
+/** One mist material per scene and layer, shared by every water surface (streaming adds and removes them). */
+const mistMaterials = new WeakMap<Scene, StandardMaterial[]>();
+const mistMaterial = (scene: Scene, layer: number): StandardMaterial => {
+  let list = mistMaterials.get(scene);
+  if (!list) mistMaterials.set(scene, (list = []));
+  let m = list[layer];
+  if (!m) {
+    m = new StandardMaterial(`mist-${layer}`, scene);
+    m.disableLighting = true;
+    m.emissiveColor = Color3.FromHexString("#6f8aa0");
+    m.alpha = MIST_LAYERS[layer]?.[1] ?? 0.05;
+    m.backFaceCulling = false;
+    list[layer] = m;
+  }
+  return m;
+};
+
+/**
+ * Open water (ADR-0024): a dark glossy plane that catches the quay lights, and a few layers of
+ * thin mist above it that thicken towards the surface. Nothing to collide with or cast shadows.
+ */
+export const buildWater = (scene: Scene, materials: ToonMaterials, name: string, v: Water, at: Vector3): PropView => {
+  const root = new TransformNode(name, scene);
+  root.position.copyFrom(at);
+  const surface = MeshBuilder.CreateGround(`${name}-mesh`, { width: v.size.x, height: v.size.z, subdivisions: 1 }, scene);
+  surface.parent = root;
+  surface.material = materials.get("water");
+  surface.isPickable = false;
+  surface.freezeWorldMatrix();
+  MIST_LAYERS.forEach(([height], i) => {
+    const mist = MeshBuilder.CreateGround(`${name}-mist${i}`, { width: v.size.x, height: v.size.z, subdivisions: 1 }, scene);
+    mist.parent = root;
+    mist.position.y = height;
+    mist.material = mistMaterial(scene, i);
+    mist.isPickable = false;
+    mist.freezeWorldMatrix();
+  });
+  return { root, glowing: [], blockers: [], casters: [], light: null };
+};
 
 /** Strip colour per best rarity in a loot bag; the same hues as the UI rarity frames. */
 const LOOT_STRIP: Readonly<Record<NonNullable<Loot["best"]> | "none", string>> = {

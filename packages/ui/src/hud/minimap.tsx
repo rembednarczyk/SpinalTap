@@ -33,6 +33,7 @@ const rect = (r: MapRectVm, className: string, key?: number) => (
 const District = memo(({ map }: { map: MapVm }) => (
   <>
     {rect(map.bounds, "minimap__ground")}
+    {map.water?.map((w, i) => rect(w, "minimap__water", i))}
     {map.streets.map((s, i) => rect(s, "minimap__street", i))}
     {map.blocks.map((b, i) => rect(b, "minimap__block", i))}
     {map.decks?.map((d, i) => rect(d, "minimap__deck", i))}

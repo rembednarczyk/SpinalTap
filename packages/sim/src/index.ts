@@ -49,8 +49,35 @@ export {
   GANGER_TREE,
   HOSTILE_AGGRO_MULTIPLIER,
   effectiveAggroRange,
+  ESCORT_FOLLOW_RADIUS,
+  ESCORT_SPEED,
+  GUARD_CONE,
+  GUARD_CROUCH_SIGHT,
+  GUARD_NEAR,
+  SNIPER_AIM_TIME,
+  SNIPER_RETREAT_RADIUS,
+  WATCH_SWEEP,
+  guardSees,
+  nextOnRoute,
+  retreatPerch,
 } from "./systems/ai";
-export { contractGangerHp, gangerEntity, GANGER_MAX_HP, idleMelee, meleeAttackRange, npcCombatant, PLAYER_MAX_HP } from "./world/factory";
+export {
+  contractGangerHp,
+  ESCORT_MAX_HP,
+  escortEntity,
+  gangerEntity,
+  GANGER_MAX_HP,
+  GUARD_SIGHT,
+  idleMelee,
+  meleeAttackRange,
+  nearestPerch,
+  npcCombatant,
+  PLAYER_MAX_HP,
+  sniperEntity,
+  terminalEntity,
+} from "./world/factory";
+export { ESCORT_ARRIVE, HACK_RANGE } from "./systems/contract-system";
+export { firingPosition, routeAcrossLevels } from "./world/nav";
 export { activeWeaponItem, loadedOf, readyToFire, reserveOf } from "./world/player-weapon";
 export type { SessionState, SimContext, System } from "./world/context";
 export { shopOpen } from "./world/trade-commands";

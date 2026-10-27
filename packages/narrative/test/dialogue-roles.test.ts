@@ -76,6 +76,16 @@ const CLEANERS_DEAD = ["dead:kagami-cleaner-1", "dead:kagami-cleaner-2", "dead:k
 const delivery = (status: Contract["status"]): Contract => ({ id: "c2", kind: "delivery", siteId: "hana_stall", targets: 0, reward: 325, status, deadlineTick: 6000 });
 const retrieve = (status: Contract["status"]): Contract => ({ id: "c2", kind: "retrieve", siteId: "hebi_stash", targets: 2, reward: 470, status });
 const hit = (status: Contract["status"]): Contract => ({ id: "c1", siteId: "car_wash", targets: 2, reward: 500, status });
+const hack = (status: Contract["status"], progress?: number): Contract => ({
+  id: "c3",
+  kind: "hack",
+  siteId: "quay_terminal",
+  targets: 3,
+  reward: 700,
+  status,
+  ...(progress === undefined ? {} : { progress, away: 0 }),
+});
+const escort = (status: Contract["status"]): Contract => ({ id: "c3", kind: "escort", siteId: "docks_escort", targets: 2, reward: 580, status });
 
 interface Scenario {
   readonly name: string;
@@ -119,6 +129,11 @@ const SCENARIOS: readonly Scenario[] = [
   { name: "Hana, payday", knot: "hana", domain: afterM0({ flags: ["met_hana"] }, retrieve("cleared")), npcs: ["Hana"] },
   { name: "Hana, delivery", knot: "hana", domain: afterM0({}, delivery("active")), npcs: ["Hana"] },
   { name: "Oyaji, stall", knot: "oyaji", domain: afterM0(), npcs: ["Oyaji"] },
+  { name: "Genzō, first offer", knot: "genzo", domain: afterM0(), npcs: ["Genzō"] },
+  { name: "Genzō, known, Tessen hostile", knot: "genzo", domain: afterM0({ flags: ["met_genzo"], reputation: { ...createDomainState().reputation, tessen: -40 } }), npcs: ["Genzō"] },
+  { name: "Genzō, payday", knot: "genzo", domain: afterM0({ flags: ["met_genzo"] }, escort("cleared")), npcs: ["Genzō"] },
+  { name: "Genzō, hack running", knot: "genzo", domain: afterM0({}, hack("active", 600)), npcs: ["Genzō"] },
+  { name: "Genzō, busy for Hana", knot: "genzo", domain: afterM0({}, retrieve("active")), npcs: ["Genzō"] },
   { name: "Oyaji, closed", knot: "oyaji_closed", domain: { ...afterM0(), clock: { seconds: 23 * 3600 } }, npcs: ["Oyaji"] },
   { name: "flashback: case", knot: "recall_courier_case", domain: echo(0), npcs: ["Ren"], actions: true },
   { name: "flashback: table", knot: "recall_operating_table", domain: echo(0), npcs: ["Technik Kagami", "Doktor Mori"], actions: true },

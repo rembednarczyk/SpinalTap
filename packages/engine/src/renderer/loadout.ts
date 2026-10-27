@@ -135,6 +135,7 @@ export const GARMENT_TINT: Readonly<Record<PaletteKey, string | null>> = {
   "jacket-seki": null,
   cargo: null,
   "jacket-hebi": "#4fa85c",
+  "jacket-tessen": "#2f4a6b",
   vest: "#6b7352",
   kevlar: "#56627a",
 };

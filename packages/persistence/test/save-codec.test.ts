@@ -91,7 +91,7 @@ describe("migrations", () => {
     const { clinic: _c, ...m1Reputation } = { ...s.domain.reputation, fixers: 12, hebi: -30, civilians: 4 };
     const loaded = decodeSave("m1", wrap({ ...s, version: 3, domain: { ...s.domain, reputation: m1Reputation } }));
     expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
-    expect(loaded.domain.reputation).toEqual({ fixers: 12, hebi: -30, civilians: 4, clinic: 0, kagami: 0 });
+    expect(loaded.domain.reputation).toEqual({ fixers: 12, hebi: -30, civilians: 4, clinic: 0, kagami: 0, tessen: 0 });
     expect(loaded.domain.inventory).toEqual(s.domain.inventory);
   });
 
@@ -455,5 +455,41 @@ describe("act II migration (v8 to v9, ADR-0023)", () => {
     expect(decodeSave("st", encodeSave({ ...s, domain: { ...s.domain, story } })).domain.story).toEqual(story);
     const bad = { ...s, domain: { ...s.domain, story: { ...story, act2Ending: "aya" } } };
     expect(findSchemaError(bad as unknown as Record<string, unknown>)).toBe("story ending");
+  });
+});
+
+describe("Tessen standing (v9 to v10, ADR-0024)", () => {
+  /** What v9 wrote: no Tessen. */
+  const v9Payload = () => {
+    const s = snapshot();
+    const { tessen: _t, ...reputation } = s.domain.reputation;
+    return { ...s, version: 9, domain: { ...s.domain, reputation: { ...reputation, hebi: -12 } } };
+  };
+
+  it("adds a neutral Tessen and keeps the other standings", () => {
+    const loaded = decodeSave("v9", wrap(v9Payload()));
+    expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
+    expect(loaded.domain.reputation).toEqual({ fixers: 0, hebi: -12, civilians: 0, clinic: 0, kagami: 0, tessen: 0 });
+  });
+
+  it("tolerates a missing domain and keeps a standing that is already there", () => {
+    expect(MIGRATIONS[9]!({ version: 9 })).toEqual({ version: 10, domain: { reputation: { tessen: 0 } } });
+    expect(MIGRATIONS[9]!({ version: 9, domain: { reputation: { tessen: -20 } } })).toMatchObject({ domain: { reputation: { tessen: -20 } } });
+  });
+
+  it("a save without Tessen is rejected unless migrated", () => {
+    const { version: _v, ...rest } = v9Payload();
+    expect(findSchemaError({ ...rest, version: SAVE_SCHEMA_VERSION } as unknown as Record<string, unknown>)).toBe("reputation");
+  });
+
+  it("checks a hack's clock when it is there", () => {
+    const s = snapshot();
+    const hack = { id: "c4", kind: "hack", siteId: "quay_terminal", targets: 3, reward: 700, status: "active", progress: 120, away: 0 } as const;
+    const withHack = { ...s, domain: { ...s.domain, contracts: { active: hack, completed: 3 } } };
+    expect(decodeSave("hack", encodeSave(withHack)).domain.contracts.active).toEqual(hack);
+    for (const bad of [-1, 1.5, "3"]) {
+      const broken = { ...withHack, domain: { ...withHack.domain, contracts: { active: { ...hack, progress: bad }, completed: 3 } } };
+      expect(findSchemaError(broken as unknown as Record<string, unknown>)).toBe("contract progress");
+    }
   });
 });

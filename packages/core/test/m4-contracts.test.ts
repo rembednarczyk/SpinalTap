@@ -38,7 +38,7 @@ const countingRng = () => {
 
 describe("contract kinds (M4)", () => {
   it("knows its kinds and who hands them out", () => {
-    expect(CONTRACT_KIND_IDS).toEqual(["eliminate", "delivery", "retrieve", "protect"]);
+    expect(CONTRACT_KIND_IDS).toEqual(["eliminate", "delivery", "retrieve", "protect", "escort", "infiltrate", "hack"]);
     expect(isContractKind("protect")).toBe(true);
     expect(isContractKind("heist")).toBe(false);
     const delivery = generateContractOfKind("delivery", ctx(), sequenceRng(0));
@@ -67,7 +67,7 @@ describe("contract kinds (M4)", () => {
         return [k, c.used()];
       }),
     );
-    expect(draws).toEqual({ eliminate: 2, delivery: 1, retrieve: 1, protect: 2 });
+    expect(draws).toEqual({ eliminate: 2, delivery: 1, retrieve: 1, protect: 2, escort: 1, infiltrate: 1, hack: 1 });
   });
 
   it("a delivery runs against the clock: tighter limits pay more", () => {
@@ -113,7 +113,7 @@ describe("contract kinds (M4)", () => {
     expect(contractObjective(protect!)).toContain("Obroń Oyaji");
     expect(contractObjective({ ...delivery!, status: "cleared" })).toBe("Paczka oddana. Wróć do Kaito po zapłatę");
     expect(contractObjective({ ...retrieve!, status: "cleared" })).toBe("Skrzynka zabrana. Wróć do Hany po zapłatę");
-    expect(kinds.map(contractClearedNote)).toHaveLength(4);
+    expect(new Set(kinds.map(contractClearedNote)).size).toBe(CONTRACT_KIND_IDS.length);
     expect(contractClearedNote(protect!)).toContain("Oyaji");
     expect(contractFailureNote("timeout")).toContain("na czas");
     expect(contractFailureNote("protectee-killed")).toContain("Oyaji");

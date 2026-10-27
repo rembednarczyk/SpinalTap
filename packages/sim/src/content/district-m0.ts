@@ -1,6 +1,7 @@
 import type { ContractSiteId, Vec3 } from "@seki/core";
 import { M0_TARGET_TAG } from "@seki/core";
 import { TARG_CONTRACT_SITE_SPAWNS } from "./district-targ";
+import { DOKI_CONTRACT_SITE_SPAWNS } from "./district-doki";
 import { type ActorDef, type ActorSpawn, type GangerSpawn, type Rect, type StaticProp, building, crate, lamp, neon, skin, v } from "./builders";
 
 /** Width of the main street between the facades (X from -7 to 7). */
@@ -74,6 +75,7 @@ export const RIPPERDOC_SPAWN: ActorSpawn = { key: "mori", position: v(-6.2, 0, 2
 /** Spawn points for procedural contracts (up to four gangers per site), the market's included. */
 export const CONTRACT_SITE_SPAWNS: Readonly<Record<ContractSiteId, readonly Vec3[]>> = {
   ...TARG_CONTRACT_SITE_SPAWNS,
+  ...DOKI_CONTRACT_SITE_SPAWNS,
   east_lot: [v(10.5, 0, -15.5), v(13.5, 0, -8.5), v(16, 0, -14), v(9.5, 0, -9)],
   koi_back: [v(3, 0, 12), v(-3, 0, 14.5), v(5, 0, 17), v(-1, 0, 10)],
   car_wash: [v(1, 0, 43), v(-2.5, 0, 39.5), v(4, 0, 47), v(-4, 0, 47)],

@@ -63,3 +63,22 @@ test("market under the overpass in TPP stays within the perf budget", async ({ p
   expect(sample.activeMeshes).toBeLessThanOrEqual(budgets.scenes["market-tpp"]!.activeMeshes);
   expect(sample.frameTimeMs).toBeLessThanOrEqual(budgets.frameTimeMs);
 });
+
+test("docks at night in TPP stay within the perf budget", async ({ page }) => {
+  await page.goto("/?seed=3&models=off");
+  await waitForGame(page);
+  await page.getByRole("button", { name: "Nowa gra" }).click();
+  await freeze(page);
+  await step(page, 1, { toggleCamera: true });
+  // East end of the quay, looking west along the fence: water and mist, the crane, the office.
+  await teleport(page, 27, 145, -Math.PI / 2);
+  await step(page, 30, { moveZ: 1 });
+  const loaded = (await gameState(page)).loadedChunks;
+  expect(loaded).toEqual(["doki-yard", "doki-quay"]);
+  await page.waitForTimeout(1500);
+  const sample = await perf(page);
+  report.docks = sample;
+  expect(sample.drawCalls).toBeLessThanOrEqual(budgets.scenes.docks!.drawCalls);
+  expect(sample.activeMeshes).toBeLessThanOrEqual(budgets.scenes.docks!.activeMeshes);
+  expect(sample.frameTimeMs).toBeLessThanOrEqual(budgets.frameTimeMs);
+});

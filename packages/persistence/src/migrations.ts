@@ -151,6 +151,17 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
       },
     };
   },
+  // v9 -> v10 (ADR-0024): the docks bring Tessen's security as a faction, starting neutral.
+  // Nothing before v10 could touch it; the other standings carry over unchanged.
+  9: (old) => {
+    const domain = isObject(old.domain) ? old.domain : {};
+    const reputation = isObject(domain.reputation) ? domain.reputation : {};
+    return {
+      ...old,
+      version: 10,
+      domain: { ...domain, reputation: { ...reputation, tessen: typeof reputation.tessen === "number" ? reputation.tessen : 0 } },
+    };
+  },
 };
 
 export class MigrationError extends Error {}
