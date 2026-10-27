@@ -82,6 +82,23 @@ kbd {
   border-right: 3px solid var(--amber);
 }
 .hud__currency { color: var(--amber); }
+.hud__clock {
+  position: absolute;
+  right: 28px;
+  top: 72px;
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink-dim);
+  padding: 4px 12px;
+  background: var(--panel);
+  border-right: 3px solid var(--panel-edge);
+}
+.hud__clock-time { font-size: 17px; color: var(--ink); }
+.hud__clock--day, .hud__clock--dawn { border-right-color: var(--amber); }
+.hud__clock--night, .hud__clock--dusk { border-right-color: var(--magenta); }
 
 .hud__objective {
   position: absolute;
@@ -545,6 +562,7 @@ kbd {
 
 /* Touch mode: move HUD pieces out of the thumbs' way. */
 .touch-mode .hud__wallet { right: 182px; top: 12px; }
+.touch-mode .hud__clock { right: 182px; top: 56px; }
 .touch-mode .toasts { top: 64px; right: 120px; }
 /* Under the top buttons and above the action cluster, clear of the move stick. */
 .touch-mode .minimap {
