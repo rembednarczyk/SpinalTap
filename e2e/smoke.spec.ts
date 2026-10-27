@@ -107,3 +107,56 @@ test("ripperdoc clinic sells a medkit through the UI", async ({ page }) => {
   await step(page, 1);
   expect((await gameState(page)).dialogue).toBe(false);
 });
+
+test("journal, minimap and settings", async ({ page }) => {
+  // Two cold page loads; on a busy CI runner they alone can take a minute.
+  test.slow();
+  await page.goto("/?seed=7");
+  await waitForGame(page);
+  await page.getByRole("button", { name: "Nowa gra" }).click();
+  await freeze(page);
+  await step(page, 1);
+
+  await expect(page.getByTestId("minimap")).toBeVisible();
+  await expect(page.getByTestId("minimap-marker-fixer")).toHaveCount(1);
+  await expect(page.getByTestId("minimap-marker-target")).toHaveCount(1);
+
+  await page.keyboard.press("KeyJ");
+  const journal = page.getByTestId("journal");
+  await expect(journal).toBeVisible();
+  await expect(journal).toContainText("Pierwsze zlecenie");
+  await expect(journal).toContainText("Znajdź fixera");
+  await page.keyboard.press("KeyJ");
+  await expect(journal).toBeHidden();
+
+  // Headless Chromium may hold the pointer lock, which swallows Esc; pause through the session.
+  await page.evaluate(() => window.__seki!.session.pause());
+  await expect(page.getByTestId("pause-menu")).toBeVisible();
+  await page.getByRole("button", { name: "Ustawienia" }).click();
+  await page.getByRole("radio", { name: "Niska" }).click();
+  await expect(page.getByTestId("settings-reload")).toBeVisible();
+  await page.reload();
+  await waitForGame(page);
+  expect(await page.evaluate(() => (JSON.parse(localStorage.getItem("seki.settings.v1") ?? "{}") as { quality?: string }).quality)).toBe("low");
+});
+
+test("touch layout keeps the minimap off the pad", async ({ page }) => {
+  await page.setViewportSize({ width: 844, height: 390 });
+  await page.goto("/?seed=7&touch");
+  await waitForGame(page);
+  await page.getByRole("button", { name: "Nowa gra" }).click();
+  await freeze(page);
+  await step(page, 1);
+  const map = await page.getByTestId("minimap").boundingBox();
+  expect(map).not.toBeNull();
+  expect(map!.width).toBeLessThan(100);
+  const pad = page.getByTestId("touch-controls").getByRole("button");
+  const count = await pad.count();
+  expect(count).toBeGreaterThan(4);
+  for (let i = 0; i < count; i++) {
+    const b = await pad.nth(i).boundingBox();
+    if (!b) continue;
+    const overlaps = map!.x < b.x + b.width && b.x < map!.x + map!.width && map!.y < b.y + b.height && b.y < map!.y + map!.height;
+    expect(overlaps, `minimap overlaps ${await pad.nth(i).getAttribute("aria-label")}`).toBe(false);
+  }
+});

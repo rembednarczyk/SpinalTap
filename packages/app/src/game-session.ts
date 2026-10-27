@@ -16,9 +16,12 @@ import {
   recallDialogueId,
 } from "@seki/core";
 import { type DialogueView, NarrativeRuntime } from "@seki/narrative";
-import { RenderSync, Simulation } from "@seki/sim";
-import { type AbilityVm, type Screen, type UiIntents, type UiStore, dismissToast, patchUi, pushToast } from "@seki/ui";
+import { DISTRICT_M0_PROPS, RenderSync, Simulation } from "@seki/sim";
+import { type AbilityVm, type Screen, type SettingsVm, type UiIntents, type UiStore, dismissToast, patchUi, pushToast } from "@seki/ui";
 import { bindEventPresenter } from "./event-presenter";
+import { createJournalCache } from "./journal";
+import { buildDistrictMap, createMinimapTracker } from "./minimap";
+import { needsReload, sanitizeSettings } from "./settings";
 import { describeObjective, saveLabel } from "./objective";
 
 export interface GameSessionDeps {
@@ -32,6 +35,15 @@ export interface GameSessionDeps {
   readonly now: () => Date;
   /** Called after every screen or dialogue change, e.g. to grab or release the pointer. */
   readonly onFocusChange?: (wantsPointer: boolean) => void;
+  /** Where settings live (localStorage in the browser). Without it changes last for the session only. */
+  readonly settings?: SettingsHost;
+}
+
+export interface SettingsHost {
+  /** Settings the page started with; quality and volume stay at these until a reload. */
+  readonly applied: SettingsVm;
+  save(next: SettingsVm): void;
+  reload(): void;
 }
 
 const toDialogueVm = (v: DialogueView) => ({ lines: v.lines, choices: v.choices, ended: v.ended });
@@ -48,6 +60,9 @@ export class GameSession implements UiIntents {
   private dialogueOpen = false;
   private shopOpen = false;
   private lastAbilityVm: AbilityVm | null = null;
+  private readonly journal = createJournalCache();
+  private readonly minimap = createMinimapTracker();
+  private readonly appliedSettings: SettingsVm;
 
   constructor(private readonly deps: GameSessionDeps) {
     this.narrative = new NarrativeRuntime(deps.story, (cmd) => this.simulation.enqueue(cmd));
@@ -59,6 +74,9 @@ export class GameSession implements UiIntents {
       onShop: () => this.openShop(),
       onPlayerDied: () => this.setScreen("dead"),
     });
+    patchUi(deps.ui, { map: buildDistrictMap(DISTRICT_M0_PROPS) });
+    this.appliedSettings = deps.settings?.applied ?? deps.ui.getState().settings;
+    patchUi(deps.ui, { settings: this.appliedSettings, reloadNeeded: false });
     void this.refreshSlots();
   }
 
@@ -121,6 +139,8 @@ export class GameSession implements UiIntents {
       cyberware: sim.domain.character.cyberware,
       reputation: sim.domain.reputation,
       contractsDone: sim.domain.contracts.completed,
+      journal: this.journal(sim.domain),
+      ...this.minimap(sim.world, sim.domain.flags, sim.domain.contracts),
     });
   }
 
@@ -177,6 +197,17 @@ export class GameSession implements UiIntents {
     patchUi(this.deps.ui, { shopOpen: false });
     this.simulation.enqueue({ type: "end-dialogue" });
     this.deps.onFocusChange?.(this.inControl);
+  }
+
+  changeSettings(patch: Partial<SettingsVm>): void {
+    const current = this.deps.ui.getState().settings;
+    const next = sanitizeSettings({ ...current, ...patch }, current);
+    patchUi(this.deps.ui, { settings: next, reloadNeeded: needsReload(this.appliedSettings, next) });
+    this.deps.settings?.save(next);
+  }
+
+  reload(): void {
+    this.deps.settings?.reload();
   }
 
   quitToTitle(): void {

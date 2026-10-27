@@ -3,11 +3,12 @@ import { loadModelManifest } from "./model-manifest";
 import { STORY_SOURCE } from "@seki/narrative";
 import { IndexedDbSaveStore, SavePersistence } from "@seki/persistence";
 import { FixedStepLoop } from "@seki/sim";
-import { GameUi, createUiStore } from "@seki/ui";
+import { DEFAULT_SETTINGS, GameUi, createUiStore } from "@seki/ui";
 import { createRoot } from "react-dom/client";
 import { browserClock } from "./browser-clock";
 import { type DebugApi, createDebugApi } from "./debug-api";
 import { GameSession } from "./game-session";
+import { type SettingsStorage, loadSettings, saveSettings, scaleLook } from "./settings";
 
 declare global {
   interface Window {
@@ -30,7 +31,20 @@ const randomSeed = (): number => {
 const canvas = document.getElementById("game-canvas") as HTMLCanvasElement;
 const uiRoot = document.getElementById("ui-root") as HTMLElement;
 
-const quality = params.get("quality") === "low" || params.get("quality") === "high" ? (params.get("quality") as "low" | "high") : touchDevice ? "low" : "high";
+// Accessing localStorage itself throws when site data is blocked.
+const storage = ((): SettingsStorage | null => {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+})();
+const deviceDefaults = { ...DEFAULT_SETTINGS, quality: touchDevice ? "low" : "high" } as const;
+// The reference frame ignores saved settings so the NPR snapshot never depends on the profile.
+const settings = reference ? deviceDefaults : loadSettings(storage, deviceDefaults);
+const qualityParam = params.get("quality");
+// ?quality wins over the saved setting, so tests and bug reports can force either.
+const quality = qualityParam === "low" || qualityParam === "high" ? qualityParam : settings.quality;
 const stage = new Stage(canvas, { reference, quality });
 const renderer = new BabylonRenderer(stage);
 // Imported character models are opt-in: models/manifest.json next to the game, or ?models=<url>.
@@ -43,6 +57,7 @@ if (modelsParam || !reference) {
 }
 const input = new BrowserInput(canvas);
 const audio = new SynthAudio();
+audio.volume = settings.volume;
 const ui = createUiStore();
 const probe = new PerfProbe(stage.engine, stage.scene);
 
@@ -54,6 +69,11 @@ const session = new GameSession({
   story: STORY_SOURCE,
   seed: () => (seedParam ? Number(seedParam) : reference ? 42 : randomSeed()),
   now: () => new Date(),
+  settings: {
+    applied: { ...settings, quality },
+    save: (next) => saveSettings(storage, next),
+    reload: () => location.reload(),
+  },
   onFocusChange: (wantsPointer) => {
     input.enabled = wantsPointer;
     if (touchDevice) return;
@@ -63,7 +83,10 @@ const session = new GameSession({
 });
 
 const loop = new FixedStepLoop(browserClock, {
-  update: () => session.step(input.poll()),
+  update: () => {
+    const s = ui.getState().settings;
+    session.step(scaleLook(input.poll(), touchDevice ? s.touchSensitivity : s.mouseSensitivity));
+  },
   render: (alpha) => {
     session.render(alpha);
     renderer.frame(stage.engine.getDeltaTime() / 1000);
