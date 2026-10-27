@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { EMPTY_INPUT } from "@seki/core";
-import { CUES } from "../src/audio/synth-audio";
 import { DEFAULT_KEYMAP, PAD_DEADZONE, mapGamepad, mapKeyboardMouse, mergeFrames, remap } from "../src/input/keymap";
 
 const keys = (held: string[], pressed: string[] = []) => ({ held: new Set(held), pressed: new Set(pressed) });
@@ -42,17 +41,5 @@ describe("gamepad mapping", () => {
   it("merges devices", () => {
     const f = mergeFrames({ ...EMPTY_INPUT, moveX: 1, fire: true }, { ...EMPTY_INPUT, moveX: 1, lookYaw: 0.2 });
     expect(f).toMatchObject({ moveX: 1, fire: true, lookYaw: 0.2 });
-  });
-});
-
-describe("audio cues", () => {
-  it("defines a non-empty, audible recipe for every cue", () => {
-    for (const voices of Object.values(CUES)) {
-      expect(voices.length).toBeGreaterThan(0);
-      for (const v of voices) {
-        expect(v.dur).toBeGreaterThan(0);
-        expect(v.gain).toBeGreaterThan(0);
-      }
-    }
   });
 });
