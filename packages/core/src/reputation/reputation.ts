@@ -13,6 +13,8 @@ export const FACTIONS = {
   civilians: "Mieszkańcy Shinsekai",
   /** Doktor Mori's ripperdoc clinic. */
   clinic: "Klinika Mori",
+  /** Tessen Kōgyō, the corporation that runs the docks, and its private security (ADR-0024). */
+  tessen: "Ochrona Tessen",
 } as const;
 
 export type FactionId = keyof typeof FACTIONS;
@@ -34,7 +36,7 @@ export type ReputationTier = "hostile" | "wary" | "neutral" | "friendly" | "trus
  */
 export type FactionStance = "hostile" | "neutral" | "friendly";
 
-export const createReputation = (): ReputationState => ({ fixers: 0, hebi: 0, civilians: 0, clinic: 0 });
+export const createReputation = (): ReputationState => ({ fixers: 0, hebi: 0, civilians: 0, clinic: 0, tessen: 0 });
 
 export const changeReputation = (state: ReputationState, faction: FactionId, delta: number): ReputationState => ({
   ...state,
@@ -95,14 +97,41 @@ const CONTRACT_COMPLETED: Readonly<Record<ContractKind, readonly ReputationDelta
     { faction: "civilians", delta: 6 },
     { faction: "hebi", delta: -3 },
   ],
+  // Genzō's jobs in the docks (ADR-0024): the corporation notices what goes missing.
+  escort: [
+    { faction: "civilians", delta: 3 },
+    { faction: "fixers", delta: 1 },
+    { faction: "tessen", delta: -3 },
+  ],
+  infiltrate: [
+    { faction: "fixers", delta: 3 },
+    { faction: "tessen", delta: -1 },
+  ],
+  hack: [
+    { faction: "fixers", delta: 2 },
+    { faction: "tessen", delta: -5 },
+  ],
 };
 
-/** A late package costs Kaito a client; a dead Oyaji costs the market's trust. The other kinds cannot fail. */
+/**
+ * A late package costs Kaito a client; a dead Oyaji costs the market's trust; a botched docks
+ * job costs Genzō (part of Kaito's network) face. Eliminations and retrievals cannot fail.
+ */
 const CONTRACT_FAILED: Readonly<Record<ContractKind, readonly ReputationDelta[]>> = {
   eliminate: [],
   delivery: [{ faction: "fixers", delta: -4 }],
   retrieve: [],
   protect: [{ faction: "civilians", delta: -5 }],
+  escort: [
+    { faction: "civilians", delta: -3 },
+    { faction: "fixers", delta: -2 },
+  ],
+  // Seen in the office: Tessen knows the face now.
+  infiltrate: [
+    { faction: "fixers", delta: -3 },
+    { faction: "tessen", delta: -5 },
+  ],
+  hack: [{ faction: "fixers", delta: -3 }],
 };
 
 /**
@@ -114,6 +143,8 @@ export const reputationEffects = (cause: ReputationCause): readonly ReputationDe
     case "member-killed":
       if (cause.faction === "hebi") return [{ faction: "hebi", delta: -4 }, { faction: "civilians", delta: -1 }];
       if (cause.faction === "civilians") return [{ faction: "civilians", delta: -25 }];
+      // A corporate guard: the corporation remembers, the street does not mourn.
+      if (cause.faction === "tessen") return [{ faction: "tessen", delta: -4 }];
       return [{ faction: cause.faction, delta: -25 }, { faction: "civilians", delta: -10 }];
     case "contract-completed":
       return CONTRACT_COMPLETED[cause.kind ?? "eliminate"];

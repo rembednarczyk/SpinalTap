@@ -61,6 +61,11 @@ export type ViewDescriptor =
       readonly label?: string;
     }
   | { readonly kind: "lamp"; readonly color: string }
+  /**
+   * Open water (ADR-0024): a dark plane at the block's top, with mist over it. Not walkable and
+   * never solid; the edge it lies beyond is railed off.
+   */
+  | { readonly kind: "water"; readonly size: Vec3 }
   /** A bag dropped by a defeated enemy (ADR-0015). `best` is the rarest item inside, for the neon strip. */
   | { readonly kind: "loot"; readonly style: "bag"; readonly best: Rarity | null };
 

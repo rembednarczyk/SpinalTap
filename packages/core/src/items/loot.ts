@@ -54,7 +54,7 @@ export interface LootTable {
   readonly entries: readonly WeightedLootEntry[];
 }
 
-export type LootTableId = "hebi_common" | "hebi_enforcer";
+export type LootTableId = "hebi_common" | "hebi_enforcer" | "tessen_guard" | "tessen_sniper";
 
 /** Faction base table (plan §5.2). Mods share one weight of 3 between the three of them. */
 const HEBI_COMMON: readonly WeightedLootEntry[] = [
@@ -71,6 +71,20 @@ const HEBI_COMMON: readonly WeightedLootEntry[] = [
   { item: "steady_grip", weight: 1, qty: [1, 1], rarity: "common" },
 ];
 
+/** Corporate stores (ADR-0024): rifle rounds and medical supplies, the odd plate or chip. */
+const TESSEN_COMMON: readonly WeightedLootEntry[] = [
+  { item: "556", weight: 34, qty: [10, 20] },
+  { item: "medkit", weight: 14, qty: [1, 1] },
+  { item: "datachip", weight: 12, qty: [1, 1] },
+  { item: "bandage", weight: 10, qty: [1, 2] },
+  { item: "weapon_parts", weight: 10, qty: [1, 2] },
+  { item: "tessen_ar5", weight: 4, qty: [1, 1], rarity: "roll" },
+  { item: "kevlar_pants", weight: 3, qty: [1, 1], rarity: "roll" },
+  { item: "tessen_vest", weight: 2, qty: [1, 1], rarity: "roll" },
+  { item: "holo_sight", weight: 2, qty: [1, 1] },
+  { item: "suppressor", weight: 1, qty: [1, 1] },
+];
+
 export const LOOT_TABLES: Readonly<Record<LootTableId, LootTable>> = {
   hebi_common: { eddies: [10, 34], guaranteed: [], rolls: 1, entries: HEBI_COMMON },
   hebi_enforcer: {
@@ -81,6 +95,13 @@ export const LOOT_TABLES: Readonly<Record<LootTableId, LootTable>> = {
     ],
     rolls: 3,
     entries: HEBI_COMMON,
+  },
+  tessen_guard: { eddies: [25, 60], guaranteed: [], rolls: 2, entries: TESSEN_COMMON },
+  tessen_sniper: {
+    eddies: [30, 70],
+    guaranteed: [{ item: "556", qty: [6, 12] }],
+    rolls: 1,
+    entries: [...TESSEN_COMMON, { item: "kagero_dmr", weight: 6, qty: [1, 1], rarity: "roll" }],
   },
 };
 

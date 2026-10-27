@@ -80,7 +80,7 @@ describe("effective weapon", () => {
   });
 
   it("NPCs without a profile use the plain weapon", () => {
-    expect(npcWeapon("tessen_ar5")).toEqual(effectiveWeapon("tessen_ar5", "common"));
+    expect(npcWeapon("oni44")).toEqual(effectiveWeapon("oni44", "common"));
     expect(npcWeapon("unity9")).toMatchObject({ damage: 14, interval: 1.1 });
   });
 

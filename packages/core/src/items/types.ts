@@ -11,11 +11,20 @@ export type Rarity = "common" | "uncommon" | "rare" | "unique";
 
 export type ItemCategory = "weapon" | "ammo" | "consumable" | "garment" | "cyberware" | "mod" | "junk";
 
-export type WeaponId = "unity9" | "oni44" | "hebi_smg" | "raijin12" | "tessen_ar5" | "baton" | "shirasaya";
+export type WeaponId = "unity9" | "oni44" | "hebi_smg" | "raijin12" | "tessen_ar5" | "kagero_dmr" | "baton" | "shirasaya";
 export type AmmoId = "9mm" | "44" | "12g" | "556";
 export type ConsumableId = "medkit" | "bandage";
 export type JunkId = "scrap" | "weapon_parts" | "datachip";
-export type GarmentId = "seki_jacket" | "cargo_pants" | "tactical_visor" | "moto_helmet" | "hebi_jacket" | "ballistic_vest" | "kevlar_pants";
+export type GarmentId =
+  | "seki_jacket"
+  | "cargo_pants"
+  | "tactical_visor"
+  | "moto_helmet"
+  | "hebi_jacket"
+  | "ballistic_vest"
+  | "kevlar_pants"
+  | "tessen_vest"
+  | "tessen_helmet";
 export type ModId = "suppressor" | "holo_sight" | "extended_mag";
 
 /** Items without state of their own: counted per id. */
@@ -36,7 +45,7 @@ export type ItemRef = { readonly uid: string } | { readonly stack: StackableId }
 export type WeaponLook = "pistol" | "revolver" | "smg" | "shotgun" | "rifle" | "baton" | "blade";
 
 /** Colour slot of the procedural rig that a garment recolours. */
-export type PaletteKey = "jacket-seki" | "jacket-hebi" | "cargo" | "kevlar" | "vest";
+export type PaletteKey = "jacket-seki" | "jacket-hebi" | "jacket-tessen" | "cargo" | "kevlar" | "vest";
 export type AttachPoint = "head" | "eyes" | "chest" | "back" | "hipR" | "hipL" | "thighL" | "handR";
 export type GarmentMeshId = "visor" | "helmet" | "vest-plate";
 

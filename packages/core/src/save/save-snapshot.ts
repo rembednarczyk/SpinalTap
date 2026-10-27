@@ -1,8 +1,11 @@
 import type { Vec3 } from "../math/vec3";
 import type { DomainState } from "../state/domain-state";
 
-/** v8: inventory, weapons and loot (ADR-0015), after the day clock of v7 (ADR-0017). */
-export const SAVE_SCHEMA_VERSION = 8;
+/**
+ * v9: Tessen's standing in the reputation (the docks, ADR-0024), after the inventory, weapons
+ * and loot of v8 (ADR-0015).
+ */
+export const SAVE_SCHEMA_VERSION = 9;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {

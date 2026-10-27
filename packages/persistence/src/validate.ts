@@ -60,6 +60,11 @@ export const findSchemaError = (s: Json): string | null => {
     // M4 fields are optional, so v6 saves from before them stay valid as they are.
     if (active.kind !== undefined && (typeof active.kind !== "string" || !isContractKind(active.kind))) return "contract kind";
     if (active.deadlineTick !== undefined && (!Number.isInteger(active.deadlineTick) || (active.deadlineTick as number) < 0)) return "contract deadline";
+    // A hack's clock (ADR-0024): ticks connected and ticks away, both whole and not negative.
+    for (const field of ["progress", "away"] as const) {
+      const n = active[field];
+      if (n !== undefined && (!Number.isInteger(n) || (n as number) < 0)) return "contract progress";
+    }
   }
   if (!isObject(d.ability) || !isNum(d.ability.activeTime) || !isNum(d.ability.cooldown)) return "ability";
   const story = d.story;

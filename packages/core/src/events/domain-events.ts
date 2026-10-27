@@ -64,6 +64,13 @@ export interface DomainEvents {
   ContractCompleted: { contract: Contract; reward: number };
   /** The job fell through (delivery too late, Oyaji killed). The contract is gone; nothing is paid. */
   ContractFailed: { contract: Contract; reason: ContractFailure };
+  /** A docks job's second phase began (ADR-0024): the escort's ambush, the hack's wave. */
+  ContractAlarm: { contract: Contract };
+  /**
+   * A sniper (ADR-0024) started aiming at `targetId`: its laser is on and it fires in `duration`
+   * seconds unless the target breaks the line. `duration` 0 turns the laser off (shot, lost sight).
+   */
+  SniperAimed: { entityId: EntityId; targetId: EntityId; duration: number };
   StoryChoiceMade: { choice: StoryChoiceId; option: StoryOption };
   EndingReached: { endingId: EndingId; title: string };
   /** Game time jumped forward (the `wait` command); `clock` is the new time. */

@@ -91,7 +91,7 @@ describe("migrations", () => {
     const { clinic: _c, ...m1Reputation } = { ...s.domain.reputation, fixers: 12, hebi: -30, civilians: 4 };
     const loaded = decodeSave("m1", wrap({ ...s, version: 3, domain: { ...s.domain, reputation: m1Reputation } }));
     expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
-    expect(loaded.domain.reputation).toEqual({ fixers: 12, hebi: -30, civilians: 4, clinic: 0 });
+    expect(loaded.domain.reputation).toEqual({ fixers: 12, hebi: -30, civilians: 4, clinic: 0, tessen: 0 });
     expect(loaded.domain.inventory).toEqual(s.domain.inventory);
   });
 
@@ -402,6 +402,42 @@ describe("inventory migration (v7 to v8, ADR-0015)", () => {
     for (const line of [{ kind: "ammo", ammo: "rocket", qty: 1 }, { kind: "stack", item: "rocket", qty: 1 }, { kind: "item", item: "baton", rarity: "common", qty: 2 }, { kind: "gift", qty: 1 }]) {
       const bag = { ...s, domain: { ...s.domain, loot: { dropSeq: 0, containers: [{ key: "k", position: { x: 0, y: 0, z: 0 }, chunk: "", expiresAtTick: 1, lines: [line] }] } } };
       expect(findSchemaError(bag as unknown as Record<string, unknown>)).toBe("loot container");
+    }
+  });
+});
+
+describe("Tessen standing (v8 to v9, ADR-0024)", () => {
+  /** What v8 wrote: four factions, no Tessen. */
+  const v8Payload = () => {
+    const s = snapshot();
+    const { tessen: _t, ...reputation } = s.domain.reputation;
+    return { ...s, version: 8, domain: { ...s.domain, reputation: { ...reputation, hebi: -12 } } };
+  };
+
+  it("adds a neutral Tessen and keeps the other standings", () => {
+    const loaded = decodeSave("v8", wrap(v8Payload()));
+    expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
+    expect(loaded.domain.reputation).toEqual({ fixers: 0, hebi: -12, civilians: 0, clinic: 0, tessen: 0 });
+  });
+
+  it("tolerates a missing domain and keeps a standing that is already there", () => {
+    expect(MIGRATIONS[8]!({ version: 8 })).toEqual({ version: 9, domain: { reputation: { tessen: 0 } } });
+    expect(MIGRATIONS[8]!({ version: 8, domain: { reputation: { tessen: -20 } } })).toMatchObject({ domain: { reputation: { tessen: -20 } } });
+  });
+
+  it("a save without Tessen is rejected unless migrated", () => {
+    const { version: _v, ...rest } = v8Payload();
+    expect(findSchemaError({ ...rest, version: SAVE_SCHEMA_VERSION } as unknown as Record<string, unknown>)).toBe("reputation");
+  });
+
+  it("checks a hack's clock when it is there", () => {
+    const s = snapshot();
+    const hack = { id: "c4", kind: "hack", siteId: "quay_terminal", targets: 3, reward: 700, status: "active", progress: 120, away: 0 } as const;
+    const withHack = { ...s, domain: { ...s.domain, contracts: { active: hack, completed: 3 } } };
+    expect(decodeSave("hack", encodeSave(withHack)).domain.contracts.active).toEqual(hack);
+    for (const bad of [-1, 1.5, "3"]) {
+      const broken = { ...withHack, domain: { ...withHack.domain, contracts: { active: { ...hack, progress: bad }, completed: 3 } } };
+      expect(findSchemaError(broken as unknown as Record<string, unknown>)).toBe("contract progress");
     }
   });
 });
