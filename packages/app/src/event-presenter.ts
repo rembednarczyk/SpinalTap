@@ -72,7 +72,7 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
       audio.play("purchase");
     }),
     bus.on("PurchaseFailed", (e) => {
-      const text = { "insufficient-funds": "Za mało eddies.", "already-installed": "To już masz.", "inventory-full": "Nie uniesiesz więcej." }[e.reason];
+      const text = { "insufficient-funds": "Za mało eddies.", "already-installed": "To już masz.", "inventory-full": "Nie uniesiesz więcej.", refused: "Nie obsługuję takich jak ty." }[e.reason];
       toast("system", "Mori kręci głową", text);
       audio.play("denied");
     }),

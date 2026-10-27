@@ -69,7 +69,26 @@ describe("migrations", () => {
 
   it("tolerates a v1 save with missing optional sections", () => {
     const m = migrate({ version: 1, seed: 5 });
-    expect(m).toMatchObject({ version: 3, rngState: 5, entities: [], domain: { wallet: { eddies: 0 }, inventory: { medkit: 1 } } });
+    expect(m).toMatchObject({
+      version: SAVE_SCHEMA_VERSION,
+      rngState: 5,
+      entities: [],
+      domain: { wallet: { eddies: 0 }, inventory: { medkit: 1 }, reputation: { clinic: 0 } },
+    });
+  });
+
+  it("upgrades an M1 (v3) save: the clinic becomes its own neutral faction", () => {
+    const s = snapshot();
+    const { clinic: _c, ...m1Reputation } = { ...s.domain.reputation, fixers: 12, hebi: -30, civilians: 4 };
+    const loaded = decodeSave("m1", wrap({ ...s, version: 3, domain: { ...s.domain, reputation: m1Reputation } }));
+    expect(loaded.version).toBe(4);
+    expect(loaded.domain.reputation).toEqual({ fixers: 12, hebi: -30, civilians: 4, clinic: 0 });
+    expect(loaded.domain.inventory).toEqual(s.domain.inventory);
+  });
+
+  it("the v3 migration keeps an existing clinic standing and tolerates a missing reputation", () => {
+    expect(MIGRATIONS[3]?.({ version: 3, domain: { reputation: { clinic: 7 } } })).toMatchObject({ domain: { reputation: { clinic: 7 } } });
+    expect(MIGRATIONS[3]?.({ version: 3 })).toEqual({ version: 4, domain: { reputation: { clinic: 0 } } });
   });
 
   it("upgrades an M0 (v2) save with the M1 starter kit", () => {
@@ -110,6 +129,7 @@ describe("schema validation", () => {
     ["flags", { flags: [1] }],
     ["preferences", { preferences: { cameraMode: "VR" } }],
     ["reputation", { reputation: { fixers: 0 } }],
+    ["reputation", { reputation: { fixers: 0, hebi: 0, civilians: 0 } }],
     ["inventory", { inventory: { medkit: -1 } }],
     ["inventory", { inventory: { rocket: 1 } }],
     ["contracts", { contracts: { active: null, completed: 0.5 } }],

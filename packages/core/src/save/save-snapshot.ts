@@ -1,7 +1,7 @@
 import type { Vec3 } from "../math/vec3";
 import type { DomainState } from "../state/domain-state";
 
-export const SAVE_SCHEMA_VERSION = 3;
+export const SAVE_SCHEMA_VERSION = 4;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {

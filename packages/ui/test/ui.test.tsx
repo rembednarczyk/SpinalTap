@@ -174,7 +174,7 @@ describe("gear and character sheet", () => {
   });
 
   it("toggles the character sheet with Tab", () => {
-    mount({ screen: "playing", alias: "Seki Senshi", memories: ["combat_reflex"], cyberware: { optics: "hitomi_optics_mk1" }, reputation: { fixers: 20, hebi: -60, civilians: 0 } });
+    mount({ screen: "playing", alias: "Seki Senshi", memories: ["combat_reflex"], cyberware: { optics: "hitomi_optics_mk1" }, reputation: { fixers: 20, hebi: -60, civilians: 0, clinic: 0 } });
     expect(screen.queryByTestId("character-panel")).toBeNull();
     fireEvent.keyDown(window, { code: "Tab" });
     const panel = screen.getByTestId("character-panel");
