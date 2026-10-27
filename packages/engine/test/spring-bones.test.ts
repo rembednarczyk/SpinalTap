@@ -1,6 +1,6 @@
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import { describe, expect, it } from "vitest";
-import { Quaternion, Scene, TransformNode, Vector3 } from "../src/babylon";
+import { Quaternion, Scene, TransformNode } from "../src/babylon";
 import { SpringBones } from "../src/renderer/spring-bones";
 
 /** glTF-like root (mirror + 180°) with a head and a two-joint hair strand hanging down. */
