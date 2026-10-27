@@ -31,6 +31,12 @@ const UNIFORMS = [
 
 const hex = (h: string): Color3 => Color3.FromHexString(h);
 
+/**
+ * Lights farther than this from the camera only get a shader slot when nearer ones leave one
+ * free. Wide enough that within one district the selection is the plain registration order.
+ */
+export const LIGHT_SLOT_DISTANCE = 50;
+
 const SAMPLERS = ["shadowSampler", "baseSampler"];
 
 export interface ImportedMaterialOptions {
@@ -56,6 +62,9 @@ export interface ShadowBinding {
 export class ToonMaterials {
   private readonly materials = new Map<string, ShaderMaterial>();
   private readonly lights = new Map<string, PointLightDef>();
+  /** Lights bound to the shader's point slots, in slot order. */
+  private active: PointLightDef[] = [];
+  private focus: { x: number; z: number } | null = null;
   private shadow: ShadowBinding | null = null;
 
   constructor(
@@ -119,19 +128,44 @@ export class ToonMaterials {
     return m;
   }
 
+  /**
+   * Registers a point light. Only MAX_POINT_LIGHTS fit the shader: slots go in registration
+   * order, first to lights within LIGHT_SLOT_DISTANCE of the focus (the camera), then to the
+   * rest. Lights that do not fit wait and take a slot when one frees up, e.g. when the
+   * district they shadowed streams out.
+   */
   addLight(key: string, light: PointLightDef): void {
-    if (this.lights.size >= MAX_POINT_LIGHTS && !this.lights.has(key)) return;
     this.lights.set(key, light);
-    for (const m of this.materials.values()) this.applyLights(m);
+    this.refreshLights();
   }
 
   removeLight(key: string): void {
     if (!this.lights.delete(key)) return;
-    for (const m of this.materials.values()) this.applyLights(m);
+    this.refreshLights();
   }
 
+  /** Moves the point slot selection to a new viewpoint. Cheap when nothing changes. */
+  setLightFocus(x: number, z: number): void {
+    this.focus = { x, z };
+    this.refreshLights();
+  }
+
+  /** Lights currently bound to shader slots. */
   get lightCount(): number {
-    return this.lights.size;
+    return this.active.length;
+  }
+
+  private refreshLights(): void {
+    const near: PointLightDef[] = [];
+    const far: PointLightDef[] = [];
+    const f = this.focus;
+    for (const l of this.lights.values()) {
+      (f === null || Math.hypot(l.position.x - f.x, l.position.z - f.z) <= LIGHT_SLOT_DISTANCE ? near : far).push(l);
+    }
+    const next = [...near, ...far].slice(0, MAX_POINT_LIGHTS);
+    if (next.length === this.active.length && next.every((l, i) => l === this.active[i])) return;
+    this.active = next;
+    for (const m of this.materials.values()) this.applyLights(m);
   }
 
   setRig(rig: LightingRig): void {
@@ -188,7 +222,7 @@ export class ToonMaterials {
   private applyLights(m: ShaderMaterial): void {
     const pos: number[] = [];
     const col: number[] = [];
-    for (const l of this.lights.values()) {
+    for (const l of this.active) {
       const c = hex(l.color);
       pos.push(l.position.x, l.position.y, l.position.z, l.range);
       col.push(c.r, c.g, c.b, l.intensity);
@@ -200,7 +234,7 @@ export class ToonMaterials {
     }
     m.setArray4("pointPos", pos);
     m.setArray4("pointColor", col);
-    m.setFloat("pointCount", this.lights.size);
+    m.setFloat("pointCount", this.active.length);
   }
 }
 

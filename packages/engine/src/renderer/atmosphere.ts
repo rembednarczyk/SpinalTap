@@ -241,6 +241,18 @@ export class Atmosphere {
     this.flickers.push({ material, base: material.emissiveColor.clone(), seed });
   }
 
+  /** Takes back a light cone or reflection (its prop streamed out). Shared materials stay. */
+  removeDecoration(mesh: Mesh): void {
+    const i = this.decorative.indexOf(mesh);
+    if (i >= 0) this.decorative.splice(i, 1);
+    mesh.dispose();
+  }
+
+  removeFlicker(material: { emissiveColor: Color3 }): void {
+    const i = this.flickers.findIndex((f) => f.material === material);
+    if (i >= 0) this.flickers.splice(i, 1);
+  }
+
   update(dt: number, frozen: boolean): void {
     if (frozen) return;
     this.time += dt;
