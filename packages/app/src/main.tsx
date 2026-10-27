@@ -1,4 +1,5 @@
 import { BabylonRenderer, BrowserInput, PerfProbe, Stage, SynthAudio } from "@seki/engine";
+import { audioSampleManifest } from "./audio-manifest";
 import { loadModelManifest } from "./model-manifest";
 import { STORY_SOURCE } from "@seki/narrative";
 import { IndexedDbSaveStore, SavePersistence } from "@seki/persistence";
@@ -56,7 +57,9 @@ if (modelsParam || !reference) {
   });
 }
 const input = new BrowserInput(canvas);
-const audio = new SynthAudio();
+// Recorded CC0 sounds from public/audio, loaded after the first gesture; ?audio=off keeps the
+// pure synth. Anything missing or undecodable (e.g. Vorbis on old Safari) is synthesized.
+const audio = new SynthAudio({ samples: params.get("audio") === "off" ? {} : audioSampleManifest(new URL("audio/", document.baseURI).href) });
 audio.setVolume("master", settings.volume);
 const ui = createUiStore();
 const probe = new PerfProbe(stage.engine, stage.scene);
