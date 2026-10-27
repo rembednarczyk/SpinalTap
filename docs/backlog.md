@@ -20,11 +20,13 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
   tułowia, wyższe kolana, mocniejsza praca rąk, faza lotu), z płynnym przejściem chód → bieg.
   Działa też na modelach importowanych przez retarget, a broń w biegu trzymana nisko.
 
-- **Plan systemu ekwipunku i uzbrojenia (dokument + ADR), przed lootem i menu.** Model przedmiotów
+- **[gotowe] Plan systemu ekwipunku i uzbrojenia (dokument + ADR), przed lootem i menu.** Model przedmiotów
   (typy, rzadkość, statystyki, stackowanie, waga lub sloty), sloty uzbrojenia (broń główna,
   boczna, wręcz), amunicja i przeładowanie, modyfikacje broni, odzież i pancerz per strefa ciała
   (pod hitboxy), wszczepy a ekwipunek, tabele łupów, sklepy i ceny, zapis i migracje, kontrakty
   między core, sim, UI i rendererem (co widać na postaci), etapy wdrożenia.
+  Plan: [`docs/ekwipunek-i-uzbrojenie.md`](ekwipunek-i-uzbrojenie.md), decyzje w
+  [ADR-0015](adr/0015-ekwipunek-uzbrojenie-loot.md).
 - **Lootowanie wrogów.** Ciało pokonanego wroga (albo upuszczona torba) jako obiekt interakcji:
   eddies, amunicja, apteczki, części i wszczepy z tabel łupów zależnych od typu wroga. Losowanie
   przez `RandomPort`, stan zebranych łupów w zapisie.
