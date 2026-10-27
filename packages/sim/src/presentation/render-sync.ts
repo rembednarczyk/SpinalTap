@@ -44,6 +44,9 @@ export class RenderSync {
         speed: e.velocity ? Math.hypot(e.velocity.x, e.velocity.z) : 0,
         ...(e.posture ? { crouch: e.posture.prevAmount + (e.posture.amount - e.posture.prevAmount) * alpha } : {}),
         ...aimOf(e, alpha),
+        // Jumps, falls and ladders (ADR-0021).
+        ...(e.fall !== undefined ? { air: e.fall } : {}),
+        ...(e.climb ? { climb: e.climb.speed } : {}),
       };
       if (!this.spawned.has(e.id)) {
         this.spawned.add(e.id);

@@ -54,6 +54,9 @@ export const playerEntity = (id: EntityId): Entity => ({
   posture: { crouched: false, amount: 0, prevAmount: 0, sprinting: false, aiming: false, aim: 0, prevAim: 0 },
 });
 
+/** Reach of a ladder's grab points, metres. */
+const LADDER_REACH = 1.1;
+
 /** Reach of a lift's call button, metres. */
 const BUTTON_REACH = 3;
 
@@ -73,6 +76,18 @@ export const propEntity = (id: EntityId, prop: StaticProp, chunk: string): Entit
   } else if (m?.kind === "button") {
     // Hung about 1.2 m above its level's floor: the interaction's height check keeps it to that level.
     e.interactable = { kind: "elevator", elevator: { key: m.elevator, level: m.level }, dialogueId: m.elevator, prompt: "Winda", radius: BUTTON_REACH };
+  } else if (m?.kind === "ladder") {
+    e.ladder = m.ladder;
+  } else if (m?.kind === "ladder-end") {
+    // A grab point is a place, not a thing: nothing to draw.
+    delete e.view;
+    e.interactable = {
+      kind: "ladder",
+      ladder: { key: m.ladder, end: m.end },
+      dialogueId: m.ladder,
+      prompt: m.end === "bottom" ? "Wspinaj się" : "Zejdź po drabinie",
+      radius: LADDER_REACH,
+    };
   }
   return e;
 };

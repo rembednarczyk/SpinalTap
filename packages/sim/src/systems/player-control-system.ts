@@ -11,7 +11,9 @@ import {
 } from "@seki/core";
 import type { Entity } from "../world/components";
 import { knockbackVelocity } from "../world/knockback";
-import type { System } from "../world/context";
+import type { SimContext, System } from "../world/context";
+import { overFootprint } from "../world/collision";
+import { restingLevel } from "./elevator-system";
 
 export const PITCH_LIMIT = 1.25;
 export const SPRINT_MULTIPLIER = 1.65;
@@ -45,6 +47,45 @@ export const playerStatsOf = (domain: DomainState): DerivedStats => {
     cachedPlayer = deriveStats(domain.character, garmentModifiers(wornGarments(domain.inventory, domain.equipment)));
   }
   return cachedPlayer;
+};
+
+/** Take-off speed of a jump, m/s: about 1.2 m of clearance under GRAVITY (ADR-0021). */
+export const JUMP_SPEED = 7;
+/** Seconds after leaving an edge in which a jump still counts (coyote time). */
+export const COYOTE_TIME = 0.12;
+/** Seconds a jump pressed too early waits for the ground (jump buffer). */
+export const JUMP_BUFFER = 0.12;
+/** How fast the player can change horizontal velocity in the air, m/s². On the ground it is instant. */
+export const AIR_ACCEL = 7;
+/** Walk speed multiplier for the moment after a hard landing. */
+export const LANDING_SLOW_MULTIPLIER = 0.4;
+
+/** Standing on a lift platform that is on its way: riders hold still (ADR-0020), so no jump either. */
+const ridingMovingLift = (ctx: SimContext, p: Entity): boolean => {
+  for (const l of ctx.world.with("elevator", "solid")) {
+    if (restingLevel(l) === null && overFootprint(l.solid, p.position.x, p.position.z) && Math.abs(p.position.y - l.solid.max.y) < 0.05) return true;
+  }
+  return false;
+};
+
+/**
+ * The jump button (ADR-0021): a press is kept for JUMP_BUFFER, and it takes off while the
+ * player is on the ground or left it without a jump less than COYOTE_TIME ago. One jump per
+ * time in the air: no double jump. Not on a ladder (the ladder lets go instead), not while
+ * staggered, not on a moving lift.
+ */
+const updateJump = (ctx: SimContext, p: Entity, frozen: boolean): void => {
+  const j = (p.jump ??= { coyote: 0, buffer: 0 });
+  const grounded = p.fall === undefined && !p.climb;
+  j.coyote = grounded ? COYOTE_TIME : Math.max(0, j.coyote - ctx.dt);
+  j.buffer = ctx.input.jump && !frozen && !p.climb ? JUMP_BUFFER : Math.max(0, j.buffer - ctx.dt);
+  if (j.buffer <= 0 || j.coyote <= 0 || frozen || (p.melee?.stagger ?? 0) > 0) return;
+  if (ridingMovingLift(ctx, p)) return;
+  j.buffer = 0;
+  j.coyote = 0;
+  p.fall = JUMP_SPEED;
+  p.airPeak = p.position.y;
+  ctx.bus.emit("Jumped", { entityId: p.id, at: p.position });
 };
 
 /** Seconds to aim when the weapon has no ADS profile (never used by the catalog's firearms). */
@@ -109,6 +150,12 @@ export const playerControlSystem: System = {
         posture.sprinting = false;
       }
       updateAimAndGuard(p, input.aim, frozen, ctx.dt);
+      updateJump(ctx, p, frozen);
+      const landingSlow = (p.landing ?? 0) > 0;
+      if (p.landing !== undefined) {
+        p.landing -= ctx.dt;
+        if (p.landing <= 0) delete p.landing;
+      }
       if (frozen) {
         p.velocity = { x: 0, y: 0, z: 0 };
         continue;
@@ -129,12 +176,23 @@ export const playerControlSystem: System = {
       const crouchSlow = 1 + (CROUCH_SPEED_MULTIPLIER - 1) * (posture?.amount ?? 0);
       const aimSlow = 1 + ((weapon?.ads?.move ?? 1) - 1) * (posture?.aim ?? 0);
       const guardSlow = guarding && weapon?.melee ? weapon.melee.block.move : 1;
-      const speed = stats.moveSpeed * (sprinting ? SPRINT_MULTIPLIER : crouchSlow * aimSlow * guardSlow) * (staggered ? STAGGER_MOVE : 1);
+      const speed =
+        stats.moveSpeed * (sprinting ? SPRINT_MULTIPLIER : crouchSlow * aimSlow * guardSlow) * (staggered ? STAGGER_MOVE : 1) * (landingSlow ? LANDING_SLOW_MULTIPLIER : 1);
       const sin = Math.sin(p.yaw);
       const cos = Math.cos(p.yaw);
       // Forward = (sin, cos); right = (cos, -sin).
       const knock = knockbackVelocity(p);
-      p.velocity = { x: (sin * nz + cos * nx) * speed + knock.x, y: 0, z: (cos * nz - sin * nx) * speed + knock.z };
+      const want = { x: (sin * nz + cos * nx) * speed + knock.x, z: (cos * nz - sin * nx) * speed + knock.z };
+      if (p.fall === undefined) {
+        p.velocity = { x: want.x, y: 0, z: want.z };
+        continue;
+      }
+      // In the air the take-off momentum carries on; the stick only nudges it (ADR-0021).
+      const dx = want.x - p.velocity.x;
+      const dz = want.z - p.velocity.z;
+      const change = Math.hypot(dx, dz);
+      const k = change > AIR_ACCEL * ctx.dt ? (AIR_ACCEL * ctx.dt) / change : 1;
+      p.velocity = { x: p.velocity.x + dx * k, y: 0, z: p.velocity.z + dz * k };
     }
   },
 };

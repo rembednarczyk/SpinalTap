@@ -1,4 +1,6 @@
-import { type LootContainer, bestLootRarity, expireContainers } from "@seki/core";
+import { type LootContainer, addContainer, bestLootRarity, expireContainers, hasFlag } from "@seki/core";
+import { WORLD_STASHES } from "../content/world-map";
+import { raiseFlag } from "../world/domain-ops";
 import type { Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
 
@@ -31,8 +33,38 @@ const bagEntity = (id: number, c: LootContainer): Entity => {
 export const lootSystem: System = {
   name: "loot",
   run(ctx) {
+    placeStashes(ctx);
     syncBags(ctx);
   },
+};
+
+/** The player comes this close (horizontally) before a roof stash is put in place. */
+const STASH_PLACE_RADIUS = 40;
+
+export const stashFlag = (key: string): string => `placed:${key}`;
+
+/**
+ * Roof stashes (ADR-0021) are ordinary containers that never expire, put into the domain the
+ * first time the player comes near. The flag records it, so a taken stash never comes back and
+ * a saved game keeps both without a schema change.
+ */
+const placeStashes = (ctx: SimContext): void => {
+  const player = ctx.world.with("player").first;
+  if (!player) return;
+  for (const s of WORLD_STASHES) {
+    if (Math.hypot(player.position.x - s.at.x, player.position.z - s.at.z) > STASH_PLACE_RADIUS) continue;
+    if (hasFlag(ctx.state.domain.flags, stashFlag(s.key))) continue;
+    raiseFlag(ctx, stashFlag(s.key));
+    const r = addContainer(ctx.state.domain.loot, {
+      key: s.key,
+      position: { x: s.at.x, y: s.at.y, z: s.at.z },
+      chunk: ctx.streamer.chunkIdAt(s.at),
+      expiresAtTick: Number.MAX_SAFE_INTEGER,
+      lines: s.lines,
+    });
+    ctx.state.domain = { ...ctx.state.domain, loot: r.loot };
+    for (const old of r.evicted) ctx.bus.emit("LootExpired", { containerKey: old.key });
+  }
 };
 
 export const syncBags = (ctx: SimContext): void => {

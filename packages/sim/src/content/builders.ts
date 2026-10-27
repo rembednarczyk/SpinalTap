@@ -1,5 +1,5 @@
 import type { FactionId, Vec3, ViewDescriptor } from "@seki/core";
-import type { Interactable } from "../world/components";
+import type { Interactable, LadderDef } from "../world/components";
 
 /** Shared vocabulary of the content tables. Coordinates: Y up, +Z north, yaw 0 faces +Z. */
 export interface StaticProp {
@@ -14,7 +14,10 @@ export interface StaticProp {
 export type Mechanism =
   | { readonly kind: "platform"; readonly key: string; readonly levels: readonly [number, ...number[]]; readonly speed: number }
   | { readonly kind: "gate"; readonly elevator: string; readonly level: number; readonly travel: number }
-  | { readonly kind: "button"; readonly elevator: string; readonly level: number };
+  | { readonly kind: "button"; readonly elevator: string; readonly level: number }
+  /** A fire escape ladder (ADR-0021) and the grab points at its ends. */
+  | { readonly kind: "ladder"; readonly ladder: LadderDef }
+  | { readonly kind: "ladder-end"; readonly ladder: string; readonly end: "bottom" | "top" };
 
 export interface ActorSpawn {
   readonly key: string;
@@ -158,3 +161,56 @@ export const liftParts = (l: LiftDef): StaticProp[] => {
     })),
   ];
 };
+
+/** Rung spacing of a ladder, metres. */
+const RUNG_SPACING = 0.3;
+/** The ladder hangs this far in front of the climber's centre (between her and the wall). */
+const LADDER_OFFSET = 0.32;
+/** Rails reach this far above the top, as a handhold for stepping off. */
+const LADDER_HANDHOLD = 1;
+
+/**
+ * A fire escape ladder (ADR-0021): the visual rails and rungs (not solid, the wall behind is),
+ * and the two grab points the interact key uses, at the foot and where the climber steps off at
+ * the top.
+ */
+export const ladderParts = (l: LadderDef): StaticProp[] => {
+  const alongX = Math.abs(Math.sin(l.yaw)) > 0.5;
+  const h = l.top - l.bottom + LADDER_HANDHOLD;
+  const size = alongX ? v(0.08, h, 0.6) : v(0.6, h, 0.08);
+  const rungs = Math.max(2, Math.round(h / RUNG_SPACING));
+  return [
+    {
+      center: v(l.x + Math.sin(l.yaw) * LADDER_OFFSET, l.bottom + h / 2, l.z + Math.cos(l.yaw) * LADDER_OFFSET),
+      view: { kind: "block", size, material: "metal", rungs },
+      solid: false,
+      mechanism: { kind: "ladder", ladder: l },
+    },
+    { center: v(l.x, l.bottom, l.z), view: { kind: "block", size: v(0.01, 0.01, 0.01), material: "metal" }, solid: false, mechanism: { kind: "ladder-end", ladder: l.key, end: "bottom" } },
+    { center: l.exit, view: { kind: "block", size: v(0.01, 0.01, 0.01), material: "metal" }, solid: false, mechanism: { kind: "ladder-end", ladder: l.key, end: "top" } },
+  ];
+};
+
+/** A transition point of the level graph (ADR-0021): `at.y` is the floor height there. */
+export interface NavNode {
+  readonly id: string;
+  readonly at: Vec3;
+}
+
+/**
+ * A straight walk between two nodes. `via` is the footprint of the flight of stairs the edge
+ * climbs: anyone standing in it is on the way between the two ends.
+ */
+export interface NavEdge {
+  readonly a: string;
+  readonly b: string;
+  readonly via?: Rect;
+}
+
+/** Where NPCs can change level in a district: stairs and the floor around them. No lifts, no ladders. */
+export interface NavGraph {
+  readonly nodes: readonly NavNode[];
+  readonly edges: readonly NavEdge[];
+}
+
+export const mergeNav = (...graphs: readonly NavGraph[]): NavGraph => ({ nodes: graphs.flatMap((g) => g.nodes), edges: graphs.flatMap((g) => g.edges) });

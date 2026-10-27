@@ -3,6 +3,7 @@ import type { Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { clearContract, raiseFlag } from "../world/domain-ops";
 import { callElevator } from "./elevator-system";
+import { grabLadder } from "./ladder-system";
 
 /** Picking up the crate of the running retrieval job: it leaves the world and the job is cleared. */
 const takeContractCrate = (ctx: SimContext, crate: Entity): void => {
@@ -34,6 +35,8 @@ export const interactionSystem: System = {
     let best: (Entity & { interactable: NonNullable<Entity["interactable"]> }) | null = null;
     let bestDist = Infinity;
     for (const e of world.with("interactable")) {
+      // On a ladder the only way off is up, down or a jump.
+      if (e.interactable.kind === "ladder" && player.climb) continue;
       const d = Math.hypot(e.position.x - player.position.x, e.position.z - player.position.z);
       // Not through a floor: from the overpass nobody below is in reach (ADR-0020).
       if (Math.abs(e.position.y - player.position.y) > INTERACT_REACH_Y) continue;
@@ -53,6 +56,10 @@ export const interactionSystem: System = {
       const { interactable, faction } = best;
       if (interactable.kind === "elevator") {
         callElevator(ctx, interactable, player);
+        return;
+      }
+      if (interactable.kind === "ladder") {
+        if (interactable.ladder) grabLadder(ctx, player, interactable.ladder.key, interactable.ladder.end);
         return;
       }
       if (interactable.kind === "pickup") {

@@ -7,6 +7,18 @@ export * from "./replay";
 export * from "./simulation";
 export {
   aimSpreadOf,
+  AIR_ACCEL,
+  CLIMB_SPEED,
+  COYOTE_TIME,
+  FALL_DAMAGE_PER_METRE,
+  FALL_SAFE_HEIGHT,
+  GRAVITY,
+  HARD_LANDING_HEIGHT,
+  JUMP_BUFFER,
+  JUMP_SPEED,
+  LANDING_SLOW_MULTIPLIER,
+  fallDamage,
+  grabLadder,
   meleeSystem,
   startSwing,
   stagger,
