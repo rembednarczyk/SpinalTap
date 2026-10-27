@@ -4,3 +4,6 @@ export * from "./props";
 export * from "./babylon-renderer";
 export * from "./atmosphere";
 export * from "./dressing";
+export * from "./model-loader";
+export * from "./model-library";
+export * from "./model-rig";

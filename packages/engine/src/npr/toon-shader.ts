@@ -126,7 +126,12 @@ void main(void) {
 
   vec3 albedo = baseColor;
 #ifdef TEXTURE
-  albedo *= texture2D(baseSampler, vUV).rgb;
+  vec4 texel = texture2D(baseSampler, vUV);
+#ifdef ALPHATEST
+  // Cut-out hair strands, lashes and brows; the toon pass stays opaque.
+  if (texel.a < 0.5) albedo = vec3(1.0, 0.0, 1.0);
+#endif
+  albedo *= texel.rgb;
 #endif
 #ifdef VERTEXCOLOR
   albedo *= vColor.rgb;

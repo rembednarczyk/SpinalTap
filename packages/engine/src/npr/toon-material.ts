@@ -33,6 +33,12 @@ const hex = (h: string): Color3 => Color3.FromHexString(h);
 
 const SAMPLERS = ["shadowSampler", "baseSampler"];
 
+export interface ImportedMaterialOptions {
+  /** Discard texels with alpha below 0.5 (glTF MASK and BLEND materials). */
+  readonly alphaTest?: boolean;
+  readonly doubleSided?: boolean;
+}
+
 export interface ShadowBinding {
   readonly texture: BaseTexture;
   readonly matrix: Matrix;
@@ -65,9 +71,14 @@ export class ToonMaterials {
    * Toon material for an imported mesh: base colour (and optional texture) from the source
    * material, everything else from a preset. Cached so equal inputs share one material.
    */
-  forImported(base: string, texture: Texture | null, preset: PresetName = "importedCharacter"): ShaderMaterial {
-    const key = `imp:${preset}:${base}:${texture?.uniqueId ?? "-"}`;
-    return this.cached(key, () => this.create(key, { ...PRESETS[preset], base }, texture));
+  forImported(base: string, texture: Texture | null, preset: PresetName = "importedCharacter", options: ImportedMaterialOptions = {}): ShaderMaterial {
+    const cut = options.alphaTest === true && texture !== null;
+    const key = `imp:${preset}:${base}:${texture?.uniqueId ?? "-"}${cut ? ":cut" : ""}${options.doubleSided ? ":2s" : ""}`;
+    return this.cached(key, () => {
+      const m = this.create(key, { ...PRESETS[preset], base }, texture, cut);
+      if (options.doubleSided) m.backFaceCulling = false;
+      return m;
+    });
   }
 
   setShadow(shadow: ShadowBinding | null): void {
@@ -128,7 +139,7 @@ export class ToonMaterials {
     for (const m of this.materials.values()) this.applyRig(m);
   }
 
-  private create(name: string, p: ToonPreset, texture: Texture | null = null): ShaderMaterial {
+  private create(name: string, p: ToonPreset, texture: Texture | null = null, alphaTest = false): ShaderMaterial {
     const m = new ShaderMaterial(
       `toon-${name}`,
       this.scene,
@@ -137,7 +148,7 @@ export class ToonMaterials {
         attributes: texture ? ["position", "normal", "uv"] : ["position", "normal"],
         uniforms: [...UNIFORMS],
         samplers: [...SAMPLERS],
-        defines: texture ? ["UV1", "TEXTURE"] : [],
+        defines: texture ? ["UV1", "TEXTURE", ...(alphaTest ? ["ALPHATEST"] : [])] : [],
       },
     );
     if (texture) m.setTexture("baseSampler", texture);

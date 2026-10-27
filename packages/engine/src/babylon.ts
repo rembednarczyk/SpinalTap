@@ -36,6 +36,14 @@ export { VertexBuffer } from "@babylonjs/core/Buffers/buffer";
 export { Bone } from "@babylonjs/core/Bones/bone";
 export { Skeleton } from "@babylonjs/core/Bones/skeleton";
 export { Quaternion } from "@babylonjs/core/Maths/math.vector";
+export { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
+export type { AssetContainer } from "@babylonjs/core/assetContainer";
+export type { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
+
+/** glTF 2.0 support is loaded on demand so the base bundle stays small. */
+export const loadGltfPlugin = async (): Promise<void> => {
+  await import("@babylonjs/loaders/glTF/2.0");
+};
 
 import "@babylonjs/core/Rendering/outlineRenderer";
 import "@babylonjs/core/Rendering/geometryBufferRendererSceneComponent";

@@ -12,11 +12,32 @@ import { ToonMaterials } from "../npr/toon-material";
 import { Atmosphere, createSplashes, createSteam } from "./atmosphere";
 import { createDressing } from "./dressing";
 import { type CharacterRig, animateRig, deathFinished, startDeath, buildCivilian, buildFixer, buildGanger, buildHeroine, buildRipperdoc } from "./characters";
+import { type CharacterModelKey, type CharacterModelManifest, type ModelInstance, ModelLibrary } from "./model-library";
+import { HumanoidRetarget } from "./model-rig";
 import { type PropView, buildBlock, buildLamp, buildNeon } from "./props";
 import type { Stage } from "./stage";
 
+/** An imported model dressed over a procedural rig, which keeps animating invisibly. */
+interface Dressed {
+  readonly model: ModelInstance;
+  readonly retarget: HumanoidRetarget;
+}
+
+const modelKeyOf = (view: ViewDescriptor): CharacterModelKey | null => {
+  switch (view.kind) {
+    case "heroine":
+      return "heroine";
+    case "enemy":
+      return "ganger";
+    case "npc":
+      return view.preset === "fixer" ? "fixer" : view.preset === "ripperdoc" ? "ripperdoc" : "civilian";
+    default:
+      return null;
+  }
+};
+
 type Spawned =
-  | { kind: "character"; rig: CharacterRig; transform: Transform }
+  | { kind: "character"; rig: CharacterRig; transform: Transform; model: CharacterModelKey | null; name: string }
   | { kind: "prop"; prop: PropView; lightKey: string | null };
 
 const v3 = (p: { x: number; y: number; z: number }) => new Vector3(p.x, p.y, p.z);
@@ -38,6 +59,9 @@ export class BabylonRenderer implements RenderPort {
   private readonly dying: CharacterRig[] = [];
   private readonly blockers = new Set<AbstractMesh>();
   private cameraTarget: EntityId | null = null;
+  private readonly library: ModelLibrary;
+  private models: CharacterModelManifest = {};
+  private readonly dressed = new Map<CharacterRig, Dressed>();
 
   constructor(private readonly stage: Stage) {
     const { scene } = stage;
@@ -51,6 +75,7 @@ export class BabylonRenderer implements RenderPort {
       bias: high ? 0.0012 : 0.002,
       strength: 0.9,
     });
+    this.library = new ModelLibrary(scene, this.materials);
     this.rig = new CameraRig(scene, this.materials, (m) => this.blockers.has(m));
     this.rig.onBodyVisibility = (visible) => this.setPlayerBodyVisible(visible);
     // Line art must be attached before the grading pipeline so the ink gets graded too.
@@ -92,8 +117,10 @@ export class BabylonRenderer implements RenderPort {
                   : buildCivilian;
         const rig = build(scene, this.materials, name);
         for (const m of rig.meshes) this.shadow.addCaster(m);
-        this.entities.set(id, { kind: "character", rig, transform: t });
+        const model = modelKeyOf(view);
+        this.entities.set(id, { kind: "character", rig, transform: t, model, name });
         this.applyTransform(rig, t);
+        this.dress(rig, model, name);
         return;
       }
       case "block":
@@ -135,7 +162,7 @@ export class BabylonRenderer implements RenderPort {
         startDeath(e.rig);
         this.dying.push(e.rig);
       } else {
-        e.rig.root.dispose(false, false);
+        this.disposeRig(e.rig);
       }
       return;
     }
@@ -193,10 +220,11 @@ export class BabylonRenderer implements RenderPort {
       if (!rig) continue;
       animateRig(rig, 0, dt);
       if (deathFinished(rig)) {
-        rig.root.dispose(false, false);
+        this.disposeRig(rig);
         this.dying.splice(i, 1);
       }
     }
+    for (const d of this.dressed.values()) d.retarget.update();
     const target = this.cameraTarget === null ? undefined : this.entities.get(this.cameraTarget);
     this.rig.update(target?.kind === "character" ? target.transform : null, dt);
     // Shadow follows what the camera looks at: the player, or the fixed reference view.
@@ -223,8 +251,44 @@ export class BabylonRenderer implements RenderPort {
   clear(): void {
     this.resetting = true;
     for (const id of [...this.entities.keys()]) this.despawn(id);
-    for (const rig of this.dying.splice(0)) rig.root.dispose(false, false);
+    for (const rig of this.dying.splice(0)) this.disposeRig(rig);
     this.resetting = false;
+  }
+
+  /** Imported character models (models/manifest.json); characters on screen are dressed too. */
+  setCharacterModels(manifest: CharacterModelManifest): void {
+    this.models = manifest;
+    for (const e of this.entities.values()) if (e.kind === "character" && !this.dressed.has(e.rig)) this.dress(e.rig, e.model, e.name);
+  }
+
+  get dressedCount(): number {
+    return this.dressed.size;
+  }
+
+  /** Loads the model in the background and swaps it in once ready, if the rig still exists. */
+  private dress(rig: CharacterRig, key: CharacterModelKey | null, name: string): void {
+    const spec = key ? this.models[key] : undefined;
+    if (!spec) return;
+    this.library
+      .instantiate(spec, `${name}-m`)
+      .then((model) => {
+        if (rig.root.isDisposed()) return model.dispose();
+        const retarget = HumanoidRetarget.create(rig, model.root, `${name}-m-`);
+        if (!retarget) {
+          console.warn(`[models] ${spec.url}: no humanoid bones found, keeping the procedural ${key}`);
+          return model.dispose();
+        }
+        for (const m of rig.meshes) m.setEnabled(false);
+        for (const m of model.meshes) if (m.getTotalVertices() > 0) this.shadow.addCaster(m);
+        this.dressed.set(rig, { model, retarget });
+      })
+      .catch((err: unknown) => console.warn(`[models] ${spec.url} failed to load`, err));
+  }
+
+  private disposeRig(rig: CharacterRig): void {
+    this.dressed.get(rig)?.model.dispose();
+    this.dressed.delete(rig);
+    rig.root.dispose(false, false);
   }
 
   get entityCount(): number {

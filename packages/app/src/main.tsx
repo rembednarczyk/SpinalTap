@@ -1,4 +1,5 @@
 import { BabylonRenderer, BrowserInput, PerfProbe, Stage, SynthAudio } from "@seki/engine";
+import { loadModelManifest } from "./model-manifest";
 import { STORY_SOURCE } from "@seki/narrative";
 import { IndexedDbSaveStore, SavePersistence } from "@seki/persistence";
 import { FixedStepLoop } from "@seki/sim";
@@ -32,6 +33,14 @@ const uiRoot = document.getElementById("ui-root") as HTMLElement;
 const quality = params.get("quality") === "low" || params.get("quality") === "high" ? (params.get("quality") as "low" | "high") : touchDevice ? "low" : "high";
 const stage = new Stage(canvas, { reference, quality });
 const renderer = new BabylonRenderer(stage);
+// Imported character models are opt-in: models/manifest.json next to the game, or ?models=<url>.
+// The reference frame stays procedural so the NPR snapshot does not depend on downloads.
+const modelsParam = params.get("models");
+if (modelsParam || !reference) {
+  void loadModelManifest(modelsParam ?? "./models/manifest.json").then((m) => {
+    if (Object.keys(m).length > 0) renderer.setCharacterModels(m);
+  });
+}
 const input = new BrowserInput(canvas);
 const audio = new SynthAudio();
 const ui = createUiStore();
