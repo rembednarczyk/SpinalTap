@@ -137,6 +137,9 @@ SWATCHES = [
     ('win-warm', '#ffc27a', 'glow'),
     ('win-teal', '#7ff3ff', 'glow'),
     ('win-pink', '#ff8fd8', 'glow'),
+    ('shop-warm', '#a87a4c', 'glow'),     # big shop windows: dimmer, they fill whole walls
+    ('shop-pink', '#b8579a', 'glow'),
+    ('shop-teal', '#3b9ea6', 'glow'),
     ('win-white', '#c9dcf2', 'glow'),
     ('neon-pink', '#ff2e88', 'glow'),
     ('neon-cyan', '#00e5ff', 'glow'),
@@ -217,7 +220,7 @@ def kenney_building_role(rgb):
     if 30 <= hd < 60 and s > 0.5:
         return 'fabric-amber'
     if 12 <= hd < 30 and s > 0.5 and v > 0.85:
-        return 'win-warm'
+        return 'shop-warm'
     if 12 <= hd < 40:
         return 'brick'
     if hd >= 330 or hd < 12:
@@ -249,7 +252,7 @@ NEON_TOWN_ROLES = {
     'window-lightsoff': 'glass-dark', 'window-lightson': 'window', 'doors': 'door', 'black': 'dark',
     'metallic': 'metal', 'bar-walls': 'wall', 'store-walls': 'wall', 'pharmacy-walls': 'wall',
     'bank-walls': 'wall', 'pharmacy-frames': 'trim-light', 'store-sign': 'trim-light',
-    'bar-lights': 'win-pink', 'store-lights': 'win-warm', 'pharmacy-lights': 'win-teal',
+    'bar-lights': 'shop-pink', 'store-lights': 'shop-warm', 'pharmacy-lights': 'shop-teal',
     'bar-sign-arrow': 'neon-blue', 'bar-sign-text': 'neon-red', 'store-sign-light': 'neon-cyan',
     'pharmacy-sign': 'neon-green', 'bank-sign': 'neon-green', 'bank-windows': 'office',
     'trash container': 'dumpster',
