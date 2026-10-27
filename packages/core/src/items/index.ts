@@ -2,3 +2,5 @@ export * from "./types";
 export * from "./rarity";
 export * from "./catalog";
 export * from "./inventory";
+export * from "./weapons";
+export * from "./armor";

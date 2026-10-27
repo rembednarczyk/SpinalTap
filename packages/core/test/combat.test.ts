@@ -23,7 +23,7 @@ import {
 } from "../src";
 import { sequenceRng } from "./helpers";
 
-const attacker: AttackerProfile = { weapon: WEAPONS.pistol, critChance: 0.1, critMultiplier: 2, damageBonus: 0 };
+const attacker: AttackerProfile = { damage: WEAPONS.pistol.baseDamage, critChance: 0.1, critMultiplier: 2, damageBonus: 0 };
 
 describe("combat rules", () => {
   it("deals base damage reduced by armor on a torso hit", () => {

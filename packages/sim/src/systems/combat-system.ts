@@ -99,7 +99,7 @@ export const fireShot = (ctx: SimContext, shot: ShotRequest, rng: RandomPort): H
   let hurtPlayer = false;
   if (target?.health && result.zone) {
     const outcome = resolveAttack(
-      { weapon, critChance: shot.critChance, critMultiplier: shot.critMultiplier, damageBonus: shot.damageBonus },
+      { damage: weapon.baseDamage, critChance: shot.critChance, critMultiplier: shot.critMultiplier, damageBonus: shot.damageBonus },
       defenderOf(ctx, target),
       rng,
       result.zone,

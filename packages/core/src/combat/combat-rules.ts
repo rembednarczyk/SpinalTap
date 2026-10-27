@@ -13,7 +13,10 @@ export interface Weapon {
 }
 
 export interface AttackerProfile {
-  readonly weapon: Weapon;
+  /** Damage per projectile before zone, crit and armor. */
+  readonly damage: number;
+  /** Per-zone multipliers of the weapon; ZONE_MULTIPLIERS when absent. */
+  readonly zones?: Readonly<Record<HitZone, number>>;
   readonly critChance: number;
   readonly critMultiplier: number;
   readonly damageBonus: number;
@@ -79,7 +82,7 @@ export const DRAW_TIME = 0.4;
  */
 export const resolveAttack = (attacker: AttackerProfile, defender: DefenderProfile, rng: RandomPort, zone: HitZone = "torso"): AttackOutcome => {
   const critical = rng.next() < attacker.critChance;
-  const raw = (attacker.weapon.baseDamage + attacker.damageBonus) * (critical ? attacker.critMultiplier : 1) * ZONE_MULTIPLIERS[zone];
+  const raw = (attacker.damage + attacker.damageBonus) * (critical ? attacker.critMultiplier : 1) * (attacker.zones ?? ZONE_MULTIPLIERS)[zone];
   return { critical, zone, damage: Math.round(mitigate(raw, armorFor(defender, zone))) };
 };
 
