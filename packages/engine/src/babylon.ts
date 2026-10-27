@@ -3,7 +3,9 @@
  * the side-effect imports at the bottom register the scene components the engine uses.
  */
 export { Engine } from "@babylonjs/core/Engines/engine";
+export { EngineStore } from "@babylonjs/core/Engines/engineStore";
 export { Scene } from "@babylonjs/core/scene";
+export { Viewport } from "@babylonjs/core/Maths/math.viewport";
 export { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
 export { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
 export { GlowLayer } from "@babylonjs/core/Layers/glowLayer";

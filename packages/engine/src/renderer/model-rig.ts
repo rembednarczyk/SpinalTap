@@ -183,6 +183,12 @@ export class HumanoidRetarget {
     return true;
   }
 
+  /** Stops driving a prop given to `holdInRightHand`, e.g. before it is disposed. */
+  release(node: TransformNode): void {
+    const i = this.held.findIndex((h) => h.node === node);
+    if (i >= 0) this.held.splice(i, 1);
+  }
+
   private updateFrame(): void {
     const r = this.root;
     const s = r.scaling;
