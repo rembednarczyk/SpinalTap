@@ -1,6 +1,6 @@
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import { describe, expect, it } from "vitest";
-import { Quaternion, Scene, TransformNode, type Vector3 } from "../src/babylon";
+import { Quaternion, Scene, TransformNode, Vector3 } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
 import { animateRig, buildCivilian, buildHeroine } from "../src/renderer/characters";
 import { HumanoidRetarget, normaliseBoneName } from "../src/renderer/model-rig";
@@ -71,6 +71,23 @@ describe("HumanoidRetarget", () => {
     const hand = worldOf(bone("J_Bip_R_Hand"));
     expect(hand.z - shoulder.z).toBeGreaterThan(0.4);
     expect(Math.abs(hand.y - shoulder.y)).toBeLessThan(0.15);
+  });
+
+  it("holds a gun in the right hand, pointing along the aim", () => {
+    const scene = new Scene(new NullEngine());
+    const rig = buildHeroine(scene, new ToonMaterials(scene), "h");
+    const { root, bone } = tPose(scene);
+    const retarget = HumanoidRetarget.create(rig, root)!;
+    animateRig(rig, 0, 0.016);
+    const gun = new TransformNode("gun", scene);
+    // Rig forearm axes: -Y runs from the elbow to the fingers.
+    expect(retarget.holdInRightHand(gun, new Vector3(0, -0.1, 0))).toBe(true);
+    const hand = worldOf(bone("J_Bip_R_Hand"));
+    const at = worldOf(gun);
+    expect(Vector3.Distance(hand, at)).toBeCloseTo(0.1, 1);
+    expect(at.z).toBeGreaterThan(hand.z);
+    const forward = Vector3.TransformNormal(new Vector3(0, -1, 0), gun.getWorldMatrix()).normalize();
+    expect(forward.z).toBeGreaterThan(0.9);
   });
 
   it("refuses models without a humanoid skeleton", () => {

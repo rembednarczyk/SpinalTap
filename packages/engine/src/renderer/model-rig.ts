@@ -20,6 +20,8 @@ const ALIASES: Record<Driven, readonly string[]> = {
   lowerArmR: ["rlowerarm", "rightforearm", "rightlowerarm", "forearmr", "lowerarmr"],
 };
 
+const RIGHT_HAND = ["rhand", "righthand", "handr"];
+
 /** Strips the instance prefix, exporter prefixes and separators: "e3-J_Bip_L_UpperLeg" -> "lupperleg". */
 export const normaliseBoneName = (name: string, prefix = ""): string =>
   (name.startsWith(prefix) ? name.slice(prefix.length) : name)
@@ -73,6 +75,9 @@ export class HumanoidRetarget {
   /** Model space -> body space (rotation, possibly mirrored by the glTF handedness flip). */
   private readonly toBody = new Matrix();
   private readonly memo = new Map<TransformNode, Matrix>();
+  private readonly held: { node: TransformNode; hand: TransformNode; joints: TransformNode[]; offset: Vector3 }[] = [];
+  private rightHand: TransformNode | null = null;
+  private rightForearm: TransformNode[] = [];
 
   private constructor(private readonly root: TransformNode) {}
 
@@ -81,6 +86,8 @@ export class HumanoidRetarget {
     const found = findHumanoidBones(root.getDescendants(false).filter((n): n is TransformNode => "rotation" in n), prefix);
     if (!DRIVEN.every((k) => found[k])) return null;
     const self = new HumanoidRetarget(root);
+    self.rightHand = found.lowerArmR!.getChildren((n): n is TransformNode => RIGHT_HAND.includes(normaliseBoneName(n.name, prefix)), true)[0] ?? null;
+    self.rightForearm = [rig.armR, rig.elbowR];
     root.parent = rig.body;
     root.position.setAll(0);
     self.updateFrame();
@@ -143,6 +150,37 @@ export class HumanoidRetarget {
       else b.node.rotationQuaternion = q.clone();
       this.memo.delete(b.node);
     }
+    for (const h of this.held) {
+      // The prop follows the rig's forearm (gun along the aim) and sits at the model's hand:
+      // world = D (forearm turn in body space) = S * R * handRot * toBody, where S undoes the
+      // model's scale and glTF mirror so that R stays a proper rotation.
+      Matrix.IdentityToRef(delta);
+      for (let i = h.joints.length - 1; i >= 0; i--) delta.multiplyToRef(localRotation(h.joints[i]!, joint), delta);
+      delta.multiplyToRef(this.toBody.transpose(), tmp);
+      const hand = this.modelRotation(h.hand).transpose();
+      const rs = this.root.scaling;
+      const scale = Math.abs(rs.x) || 1;
+      const flip = Matrix.Scaling(Math.sign(rs.x) || 1, Math.sign(rs.y) || 1, Math.sign(rs.z) || 1);
+      flip.multiply(tmp).multiplyToRef(hand, local);
+      q.copyFrom(Quaternion.FromRotationMatrix(local));
+      if (h.node.rotationQuaternion) h.node.rotationQuaternion.copyFrom(q);
+      else h.node.rotationQuaternion = q.clone();
+      Vector3.TransformNormalToRef(Vector3.TransformNormal(h.offset, tmp), hand, h.node.position);
+      h.node.position.scaleInPlace(1 / scale);
+      h.node.scaling.set((Math.sign(rs.x) || 1) / scale, (Math.sign(rs.y) || 1) / scale, (Math.sign(rs.z) || 1) / scale);
+    }
+  }
+
+  /**
+   * Puts a prop (the heroine's gun) in the model's right hand. The prop's axes are the rig
+   * forearm's: -Y runs from the elbow to the fingers, so along the aim. `offset` is in them. Returns false if the model has no hand bone.
+   */
+  holdInRightHand(node: TransformNode, offset: Vector3): boolean {
+    if (!this.rightHand) return false;
+    node.parent = this.rightHand;
+    this.held.push({ node, hand: this.rightHand, joints: this.rightForearm, offset });
+    this.update();
+    return true;
   }
 
   private updateFrame(): void {
