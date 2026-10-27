@@ -13,6 +13,8 @@ const sprint = async (page: Page, yaw: number, done: (p: { x: number; z: number 
 };
 
 test("walks from Shinsekai into the market without a reload; a save there loads back there", async ({ page }) => {
+  // About 120 m of simulated walking, one evaluate per quarter second of game time.
+  test.slow();
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/?seed=5");
