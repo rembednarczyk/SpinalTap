@@ -13,6 +13,8 @@ export const FACTIONS = {
   civilians: "Mieszkańcy Shinsekai",
   /** Doktor Mori's ripperdoc clinic. */
   clinic: "Klinika Mori",
+  /** The corporation that records and rewrites memories (act II, ADR-0023). */
+  kagami: "Kagami Biotech",
 } as const;
 
 export type FactionId = keyof typeof FACTIONS;
@@ -34,7 +36,7 @@ export type ReputationTier = "hostile" | "wary" | "neutral" | "friendly" | "trus
  */
 export type FactionStance = "hostile" | "neutral" | "friendly";
 
-export const createReputation = (): ReputationState => ({ fixers: 0, hebi: 0, civilians: 0, clinic: 0 });
+export const createReputation = (): ReputationState => ({ fixers: 0, hebi: 0, civilians: 0, clinic: 0, kagami: 0 });
 
 export const changeReputation = (state: ReputationState, faction: FactionId, delta: number): ReputationState => ({
   ...state,
@@ -114,6 +116,8 @@ export const reputationEffects = (cause: ReputationCause): readonly ReputationDe
     case "member-killed":
       if (cause.faction === "hebi") return [{ faction: "hebi", delta: -4 }, { faction: "civilians", delta: -1 }];
       if (cause.faction === "civilians") return [{ faction: "civilians", delta: -25 }];
+      // Corporate cleaners: the street does not mourn them.
+      if (cause.faction === "kagami") return [{ faction: "kagami", delta: -6 }];
       return [{ faction: cause.faction, delta: -25 }, { faction: "civilians", delta: -10 }];
     case "contract-completed":
       return CONTRACT_COMPLETED[cause.kind ?? "eliminate"];

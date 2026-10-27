@@ -263,7 +263,7 @@ describe("ripperdoc clinic", () => {
   });
 
   it("gives a regular the discount, and charges a distrusted customer extra", () => {
-    const rep = (clinic: number) => ({ fixers: 0, hebi: 0, civilians: 0, clinic });
+    const rep = (clinic: number) => ({ fixers: 0, hebi: 0, civilians: 0, clinic, kagami: 0 });
     mount({ screen: "playing", shopOpen: true, eddies: 5000, reputation: rep(60) });
     expect(screen.getByTestId("shop-terms").textContent).toBe("Stała klientka · rabat 20%");
     expect(screen.getByRole("button", { name: /Kup · 72 €\$/ })).toBeTruthy();
@@ -289,7 +289,7 @@ describe("gear and character sheet", () => {
   });
 
   it("toggles the character sheet with Tab", () => {
-    mount({ screen: "playing", alias: "Seki Senshi", memories: ["combat_reflex"], cyberware: { optics: "hitomi_optics_mk1" }, reputation: { fixers: 20, hebi: -60, civilians: 0, clinic: 0 } });
+    mount({ screen: "playing", alias: "Seki Senshi", memories: ["combat_reflex"], cyberware: { optics: "hitomi_optics_mk1" }, reputation: { fixers: 20, hebi: -60, civilians: 0, clinic: 0, kagami: 0 } });
     expect(screen.queryByTestId("character-panel")).toBeNull();
     fireEvent.keyDown(window, { code: "Tab" });
     const panel = screen.getByTestId("character-panel");

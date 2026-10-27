@@ -134,6 +134,7 @@ describe("act I quest (Echo)", () => {
     expect(step()).toBe("decide");
     advance(recalledFlag("crash_night"));
     expect(log[QUEST_ECHO.id]).toEqual({ status: "completed" });
-    expect(activeMainStep(log, QUEST_DEFINITIONS)).toBeNull();
+    // Act II follows straight away (ADR-0023).
+    expect(activeMainStep(log, QUEST_DEFINITIONS)?.step.id).toBe("ren_trail");
   });
 });

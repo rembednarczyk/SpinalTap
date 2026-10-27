@@ -6,7 +6,7 @@ import type { CyberwareId, CyberwareSlot } from "../cyberware/cyberware";
 import type { PurchaseFailure } from "../shop/ripperdoc";
 import type { ShopId, ShopItemId } from "../shop/shops";
 import type { Contract, ContractFailure } from "../contracts/contracts";
-import type { EndingId, StoryChoiceId, StoryOption } from "../story/story";
+import type { ActTwoEndingId, EndingId, StoryChoiceId, StoryOption } from "../story/story";
 import type { ConsumableId, EquipSlot, ItemDefId, ItemRef, LootLine, ModSlot, Rarity, WeaponId, WeaponSlot } from "../items/types";
 import type { GameClock } from "../time/game-clock";
 
@@ -65,7 +65,7 @@ export interface DomainEvents {
   /** The job fell through (delivery too late, Oyaji killed). The contract is gone; nothing is paid. */
   ContractFailed: { contract: Contract; reason: ContractFailure };
   StoryChoiceMade: { choice: StoryChoiceId; option: StoryOption };
-  EndingReached: { endingId: EndingId; title: string };
+  EndingReached: { act: 1 | 2; endingId: EndingId | ActTwoEndingId; title: string };
   /** Game time jumped forward (the `wait` command); `clock` is the new time. */
   TimeSkipped: { minutes: number; clock: GameClock };
   // Inventory, weapons and loot (ADR-0015).
