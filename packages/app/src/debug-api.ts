@@ -27,6 +27,8 @@ export interface DebugApi {
   step(n: number, input?: Partial<InputFrame>): void;
   /** Fixed camera for inspection shots; null returns to the player camera. */
   view(position: { x: number; y: number; z: number } | null, target?: { x: number; y: number; z: number }): void;
+  /** Characters currently wearing an imported model. */
+  dressed(): number;
   session: GameSession;
 }
 
@@ -36,6 +38,7 @@ export const createDebugApi = (
   loop: FixedStepLoop,
   perf: () => PerfSample,
   setView: DebugApi["view"],
+  dressed: () => number = () => 0,
 ): DebugApi => ({
   ready: false,
   session,
@@ -72,6 +75,7 @@ export const createDebugApi = (
     p.pitch = pitch;
   },
   view: setView,
+  dressed,
   step(n, input = {}) {
     for (let i = 0; i < n; i++) session.step({ ...EMPTY_INPUT, ...input });
     session.render(0);

@@ -42,7 +42,11 @@ const SAMPLERS = ["shadowSampler", "baseSampler"];
 export interface ImportedMaterialOptions {
   /** Discard texels with alpha below 0.5 (glTF MASK and BLEND materials). */
   readonly alphaTest?: boolean;
+  /** Real alpha blending (glTF BLEND), for thin layers over an opaque surface. Wins over alphaTest. */
+  readonly alphaBlend?: boolean;
   readonly doubleSided?: boolean;
+  /** Stacking order of coplanar face layers (eye white < iris < highlight); 0 for the rest. */
+  readonly layer?: number;
 }
 
 export interface ShadowBinding {
@@ -81,11 +85,17 @@ export class ToonMaterials {
    * material, everything else from a preset. Cached so equal inputs share one material.
    */
   forImported(base: string, texture: Texture | null, preset: PresetName = "importedCharacter", options: ImportedMaterialOptions = {}): ShaderMaterial {
-    const cut = options.alphaTest === true && texture !== null;
-    const key = `imp:${preset}:${base}:${texture?.uniqueId ?? "-"}${cut ? ":cut" : ""}${options.doubleSided ? ":2s" : ""}`;
+    const blend = options.alphaBlend === true && texture !== null;
+    const cut = !blend && options.alphaTest === true && texture !== null;
+    const key = `imp:${preset}:${base}:${texture?.uniqueId ?? "-"}${cut ? ":cut" : ""}${blend ? ":blend" : ""}${options.doubleSided ? ":2s" : ""}${options.layer ? `:L${options.layer}` : ""}`;
     return this.cached(key, () => {
-      const m = this.create(key, { ...PRESETS[preset], base }, texture, cut);
+      const m = this.create(key, { ...PRESETS[preset], base }, texture, cut ? "ALPHATEST" : blend ? "ALPHABLEND" : null);
       if (options.doubleSided) m.backFaceCulling = false;
+      if (options.layer) {
+        // Polygon offset, so the nearer layer wins the depth test whatever the draw order.
+        m.zOffset = -options.layer;
+        m.zOffsetUnits = -4 * options.layer;
+      }
       return m;
     });
   }
@@ -173,7 +183,7 @@ export class ToonMaterials {
     for (const m of this.materials.values()) this.applyRig(m);
   }
 
-  private create(name: string, p: ToonPreset, texture: Texture | null = null, alphaTest = false): ShaderMaterial {
+  private create(name: string, p: ToonPreset, texture: Texture | null = null, alpha: "ALPHATEST" | "ALPHABLEND" | null = null): ShaderMaterial {
     const m = new ShaderMaterial(
       `toon-${name}`,
       this.scene,
@@ -182,7 +192,8 @@ export class ToonMaterials {
         attributes: texture ? ["position", "normal", "uv"] : ["position", "normal"],
         uniforms: [...UNIFORMS],
         samplers: [...SAMPLERS],
-        defines: texture ? ["UV1", "TEXTURE", ...(alphaTest ? ["ALPHATEST"] : [])] : [],
+        defines: texture ? ["UV1", "TEXTURE", ...(alpha ? [alpha] : [])] : [],
+        needAlphaBlending: alpha === "ALPHABLEND",
       },
     );
     if (texture) m.setTexture("baseSampler", texture);

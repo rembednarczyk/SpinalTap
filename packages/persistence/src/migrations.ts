@@ -41,11 +41,43 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
       },
     };
   },
-  // v3 (M1): one district, no world streaming. An empty chunk list is valid: the simulation
-  // loads whatever lies around the saved player position, which for v3 is always Shinsekai 7.
-  3: (old) => ({
+  // v3 (M1): Doktor Mori's clinic was counted as a civilian. M2 makes it its own faction,
+  // starting neutral; the other standings carry over unchanged.
+  3: (old) => {
+    const domain = isObject(old.domain) ? old.domain : {};
+    const reputation = isObject(domain.reputation) ? domain.reputation : {};
+    return {
+      ...old,
+      version: 4,
+      domain: {
+        ...domain,
+        reputation: { ...reputation, clinic: typeof reputation.clinic === "number" ? reputation.clinic : 0 },
+      },
+    };
+  },
+  // v4 (M2): no main-thread story state. A save that already finished the first contract
+  // starts act I ("Echo") at its first step, as a live game would on completing it.
+  4: (old) => {
+    const domain = isObject(old.domain) ? old.domain : {};
+    const quests = isObject(domain.quests) ? domain.quests : {};
+    // Ids are spelled out: a migration describes the schema of its time, not today's content.
+    const first = quests.m0_first_contract;
+    const startEcho = isObject(first) && first.status === "completed" && !("m3_echo" in quests);
+    return {
+      ...old,
+      version: 5,
+      domain: {
+        ...domain,
+        quests: startEcho ? { ...quests, m3_echo: { status: "active", stepIndex: 0 } } : quests,
+        story: isObject(domain.story) ? domain.story : { choices: {}, ending: null },
+      },
+    };
+  },
+  // v5 (M3): one district, no world streaming. An empty chunk list is valid: the simulation
+  // loads whatever lies around the saved player position, which before v6 is always Shinsekai 7.
+  5: (old) => ({
     ...old,
-    version: 4,
+    version: 6,
     streaming: isObject(old.streaming) ? old.streaming : { loadedChunks: [] },
   }),
 };

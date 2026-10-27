@@ -26,6 +26,8 @@ export type ActorDef =
       readonly preset: "fixer" | "civilian" | "ripperdoc";
       readonly faction: FactionId;
       readonly interactable?: Interactable;
+      /** Bystander AI: keeps to its spot, flees a player the street fears. */
+      readonly bystander?: true;
     }
   | { readonly kind: "ganger"; readonly spawn: GangerSpawn };
 

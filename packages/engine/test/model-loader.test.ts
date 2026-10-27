@@ -69,7 +69,8 @@ describe("ModelLibrary", () => {
     expect(a.root.scaling.x).toBeCloseTo(1.5);
     const ma = a.meshes.find((m) => m.getTotalVertices() > 0)!;
     expect(ma.material?.name).toContain("#FF0000");
-    expect(ma.renderOutline).toBe(true);
+    // Imported characters are inked by the line-art pass; the hull is opt-in.
+    expect(ma.renderOutline).toBeFalsy();
     a.dispose();
     expect(b.root.isDisposed()).toBe(false);
     expect(pickAnimation([], spec, 3)).toBeNull();

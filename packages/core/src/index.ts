@@ -14,3 +14,4 @@ export * from "./inventory";
 export * from "./abilities";
 export * from "./shop";
 export * from "./contracts";
+export * from "./story";

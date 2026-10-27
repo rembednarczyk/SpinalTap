@@ -51,7 +51,8 @@ describe("quest graph", () => {
   it("completes several steps in one evaluation when all flags are present", () => {
     const flags = ["met_fixer", killedFlag(M0_TARGET_TAG), "reported_back"];
     const r = evaluateQuests(startQuest({}, QUEST_FIRST_CONTRACT), QUEST_DEFINITIONS, flags);
-    expect(r.transitions.map((t) => t.type)).toEqual(["advanced", "advanced", "completed"]);
+    // Finishing the first contract starts act I of the main thread.
+    expect(r.transitions.map((t) => t.type)).toEqual(["advanced", "advanced", "completed", "started"]);
   });
 
   it("treats completed as terminal and ignores inactive quests", () => {

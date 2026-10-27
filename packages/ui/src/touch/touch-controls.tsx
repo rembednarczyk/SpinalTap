@@ -113,6 +113,9 @@ const PadButtonView = ({
       onPointerUp={up}
       onPointerCancel={up}
       onContextMenu={(e) => e.preventDefault()}
+      // Swallow the compatibility click: when the press opens a dialogue, the pad hides and the
+      // click would land on whatever appeared under the thumb (the first dialogue choice).
+      onTouchEnd={(e) => e.preventDefault()}
     >
       {label}
     </button>

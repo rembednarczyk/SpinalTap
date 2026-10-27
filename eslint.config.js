@@ -8,7 +8,7 @@ const nondeterminism = [
 ];
 
 export default tseslint.config(
-  { ignores: ["**/dist/**", "**/coverage/**", "reports/**", "playwright-report/**", "test-results/**", "node_modules/**"] },
+  { ignores: ["**/dist/**", "**/coverage/**", "reports/**", "playwright-report/**", "test-results/**", "node_modules/**", ".claude/**"] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

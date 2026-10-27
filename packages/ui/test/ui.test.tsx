@@ -15,6 +15,7 @@ const intents = (): UiIntents => ({
   buyCyberware: vi.fn(),
   buyItem: vi.fn(),
   closeShop: vi.fn(),
+  talkToShopkeeper: vi.fn(),
 });
 
 const mount = (state: Partial<UiState> = {}) => {
@@ -156,8 +157,29 @@ describe("ripperdoc clinic", () => {
     expect(i.buyCyberware).toHaveBeenCalledWith("steady_grip");
     fireEvent.click(screen.getByRole("button", { name: /Kup · 90/ }));
     expect(i.buyItem).toHaveBeenCalledWith("medkit");
+    fireEvent.click(screen.getByRole("button", { name: "Porozmawiaj z Mori" }));
+    expect(i.talkToShopkeeper).toHaveBeenCalled();
     fireEvent.keyDown(window, { key: "Escape" });
     expect(i.closeShop).toHaveBeenCalled();
+  });
+
+  it("shows list prices and no note at neutral standing", () => {
+    mount({ screen: "playing", shopOpen: true, eddies: 5000 });
+    expect(screen.queryByTestId("shop-terms")).toBeNull();
+    expect(screen.getByRole("button", { name: /Kup · 90 €\$/ })).toBeTruthy();
+  });
+
+  it("gives a regular the discount, and charges a distrusted customer extra", () => {
+    const rep = (clinic: number) => ({ fixers: 0, hebi: 0, civilians: 0, clinic });
+    mount({ screen: "playing", shopOpen: true, eddies: 5000, reputation: rep(60) });
+    expect(screen.getByTestId("shop-terms").textContent).toBe("Stała klientka · rabat 20%");
+    expect(screen.getByRole("button", { name: /Kup · 72 €\$/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Wszczep · 400 €\$/ })).toBeTruthy();
+    cleanup();
+    mount({ screen: "playing", shopOpen: true, eddies: 600, reputation: rep(-20) });
+    expect(screen.getByTestId("shop-terms").textContent).toBe("Klinika ci nie ufa · dopłata 25%");
+    // 500 list, 625 with the surcharge: no longer affordable with 600.
+    expect(screen.getByRole("button", { name: /Wszczep · 625 €\$/ }).hasAttribute("disabled")).toBe(true);
   });
 
   it("warns which implant a purchase replaces", () => {
@@ -174,13 +196,17 @@ describe("gear and character sheet", () => {
   });
 
   it("toggles the character sheet with Tab", () => {
-    mount({ screen: "playing", alias: "Seki Senshi", memories: ["combat_reflex"], cyberware: { optics: "hitomi_optics_mk1" }, reputation: { fixers: 20, hebi: -60, civilians: 0 } });
+    mount({ screen: "playing", alias: "Seki Senshi", memories: ["combat_reflex"], cyberware: { optics: "hitomi_optics_mk1" }, reputation: { fixers: 20, hebi: -60, civilians: 0, clinic: 0 } });
     expect(screen.queryByTestId("character-panel")).toBeNull();
     fireEvent.keyDown(window, { code: "Tab" });
     const panel = screen.getByTestId("character-panel");
     expect(panel.textContent).toContain("Optyka Hitomi Mk1");
     expect(panel.textContent).toContain("Wspomnienie: odruch");
     expect(panel.textContent).toContain("-60 · wrogość");
+    expect(screen.getByTestId("rep-hebi").textContent).toContain("Polują na ciebie");
+    expect(screen.getByTestId("rep-fixers").textContent).toContain("Kaito płaci więcej");
+    expect(screen.getByTestId("rep-clinic").textContent).toContain("Klinika Mori");
+    expect(screen.getByTestId("rep-clinic").textContent).toContain("Ceny katalogowe");
     fireEvent.keyDown(window, { code: "Tab" });
     expect(screen.queryByTestId("character-panel")).toBeNull();
   });

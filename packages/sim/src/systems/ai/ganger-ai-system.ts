@@ -1,7 +1,7 @@
 import { BehaviourTree, State } from "mistreevous";
 
 type Agent = ConstructorParameters<typeof BehaviourTree>[1];
-import { WEAPONS, normalize, sub, type EntityId } from "@seki/core";
+import { WEAPONS, factionStance, normalize, sub, type EntityId, type FactionStance } from "@seki/core";
 import type { Entity } from "../../world/components";
 import type { SimContext, System } from "../../world/context";
 import { chestOf, eyeOf, lineOfSight } from "../../world/hitscan";
@@ -13,6 +13,12 @@ import { GANGER_TREE } from "./ganger-tree";
 export const GANGER_SPEED = 3.1;
 const TURN_RATE = 6;
 const GANGER_CRIT = { critChance: 0.05, critMultiplier: 1.5, damageBonus: 0 };
+/** A gang that wants the player dead looks for them harder. */
+export const HOSTILE_AGGRO_MULTIPLIER = 1.5;
+
+/** Aggro range under a given Hebi stance. */
+export const effectiveAggroRange = (base: number, stance: FactionStance): number =>
+  stance === "hostile" ? base * HOSTILE_AGGRO_MULTIPLIER : base;
 
 type Ganger = Entity & { ai: NonNullable<Entity["ai"]>; velocity: NonNullable<Entity["velocity"]> };
 
@@ -29,6 +35,8 @@ class GangerAgent {
   /** Local time scale (the player's overdrive slows gangers down). */
   timeScale = 1;
   seen: Perception = { player: null, distance: Infinity, visible: false };
+  /** Presentation memory only: the warning cue fires once per ganger, it never feeds back into the state. */
+  warned = false;
 
   SeesPlayer = (): boolean => this.seen.visible;
   PlayerAlive = (): boolean => this.seen.player !== null;
@@ -55,6 +63,19 @@ class GangerAgent {
     if (!self || !seen.player) return State.FAILED;
     this.moveTowards(seen.player.position.x, seen.player.position.z);
     this.face(seen.player);
+    return State.SUCCEEDED;
+  };
+
+  /** A friendly ganger that is not provoked stops and keeps an eye on the player. */
+  WatchPlayer = (): State => {
+    const { ctx, self, seen } = this;
+    if (!ctx || !self || !seen.player) return State.FAILED;
+    self.velocity = { x: 0, y: 0, z: 0 };
+    this.face(seen.player);
+    if (!this.warned) {
+      this.warned = true;
+      ctx.bus.emit("NpcReacted", { entityId: self.id, faction: self.faction ?? "hebi", reaction: "warn" });
+    }
     return State.SUCCEEDED;
   };
 
@@ -88,7 +109,11 @@ class GangerAgent {
   }
 }
 
-/** Drives every ganger through its behaviour tree. One tree per entity, created lazily. */
+/**
+ * Drives every ganger through its behaviour tree. One tree per entity, created lazily.
+ * Hebi's stance decides what seeing the player means: hostile and neutral gangers attack on
+ * sight (hostile ones from further away), friendly ones only watch until provoked.
+ */
 export const createGangerAiSystem = (): System => {
   const trees = new Map<EntityId, { tree: BehaviourTree; agent: GangerAgent }>();
   return {
@@ -97,6 +122,7 @@ export const createGangerAiSystem = (): System => {
       const player = ctx.session.gameOver ? null : (ctx.world.with("player").first ?? null);
       const alive = new Set<EntityId>();
       const timeScale = worldTimeScale(ctx);
+      const reputation = ctx.state.domain.reputation;
       for (const g of inCreationOrder(ctx.world.with("ai", "velocity"))) {
         alive.add(g.id);
         let brain = trees.get(g.id);
@@ -106,8 +132,10 @@ export const createGangerAiSystem = (): System => {
           trees.set(g.id, brain);
         }
         const distance = player ? Math.hypot(player.position.x - g.position.x, player.position.z - g.position.z) : Infinity;
-        const visible = !!player && distance <= g.ai.aggroRange && lineOfSight(ctx.world, eyeOf(g), chestOf(player));
-        if (visible) g.ai.alerted = true;
+        const stance = factionStance(reputation, g.faction ?? "hebi");
+        const aggro = effectiveAggroRange(g.ai.aggroRange, stance);
+        const visible = !!player && distance <= aggro && lineOfSight(ctx.world, eyeOf(g), chestOf(player));
+        if (visible && stance !== "friendly") g.ai.alerted = true;
         brain.agent.ctx = ctx;
         brain.agent.self = g;
         brain.agent.seen = { player, distance, visible };

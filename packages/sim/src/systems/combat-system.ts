@@ -41,6 +41,8 @@ export const fireShot = (ctx: SimContext, shot: ShotRequest, rng: RandomPort): H
   );
   if (!outcome.hit) return result;
   target.health = applyDamage(target.health, outcome.damage);
+  // Getting shot provokes any AI, whatever it thought of the shooter before.
+  if (target.ai) target.ai.alerted = true;
   ctx.bus.emit("DamageDealt", {
     sourceId: shot.shooter.id,
     targetId: target.id,

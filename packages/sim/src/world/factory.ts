@@ -72,6 +72,10 @@ export const actorEntity = (id: EntityId, def: ActorDef, chunk: string): Entity 
   if (def.kind === "ganger") return gangerEntity(id, def.spawn, def.spawn.tag, GANGER_MAX_HP, chunk);
   const e: Entity = { ...actor(id, def.spawn), chunk, view: { kind: "npc", preset: def.preset }, faction: def.faction };
   if (def.interactable) e.interactable = def.interactable;
+  if (def.bystander) {
+    e.velocity = { x: 0, y: 0, z: 0 };
+    e.civilian = { home: def.spawn.position };
+  }
   return e;
 };
 

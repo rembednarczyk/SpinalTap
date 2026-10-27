@@ -1,4 +1,4 @@
-import type { CameraMode, CyberwareLoadout, ReputationState, SaveSlotInfo } from "@seki/core";
+import { type CameraMode, type CyberwareLoadout, type ReputationState, type SaveSlotInfo, createReputation } from "@seki/core";
 import { createStore, type StoreApi } from "zustand/vanilla";
 
 export type Screen = "title" | "playing" | "paused" | "dead";
@@ -81,7 +81,7 @@ export const initialUiState: UiState = {
   medkits: 0,
   ability: null,
   cyberware: {},
-  reputation: { fixers: 0, hebi: 0, civilians: 0 },
+  reputation: createReputation(),
   contractsDone: 0,
   shopOpen: false,
   sheetOpen: false,

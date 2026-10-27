@@ -12,6 +12,8 @@ import {
   type PersistencePort,
   type RenderPort,
   type SaveSnapshot,
+  pendingRecall,
+  recallDialogueId,
 } from "@seki/core";
 import { type DialogueView, NarrativeRuntime } from "@seki/narrative";
 import { DISTRICTS, type DistrictId, RenderSync, Simulation } from "@seki/sim";
@@ -83,6 +85,19 @@ export class GameSession implements UiIntents {
   step(input: InputFrame): void {
     if (!this.running) return;
     this.simulation.step(this.inControl ? input : EMPTY_INPUT);
+    this.playPendingRecall();
+  }
+
+  /**
+   * A recovered memory plays as a flashback as soon as the player is free again (after the
+   * conversation or the clinic that triggered it). Driven by domain state, so it survives a save.
+   */
+  private playPendingRecall(): void {
+    if (!this.inControl || this.simulation.session.gameOver) return;
+    const memory = pendingRecall(this.simulation.domain);
+    if (!memory) return;
+    this.simulation.session.dialogueActive = true;
+    this.openDialogue(recallDialogueId(memory));
   }
 
   render(alpha: number): void {
@@ -158,6 +173,14 @@ export class GameSession implements UiIntents {
 
   buyItem(id: ItemId): void {
     if (this.shopOpen) this.simulation.enqueue({ type: "buy-item", itemId: id });
+  }
+
+  /** From the clinic counter straight into a conversation with doktor Mori (ink knot `mori`). */
+  talkToShopkeeper(): void {
+    if (!this.shopOpen) return;
+    this.shopOpen = false;
+    patchUi(this.deps.ui, { shopOpen: false });
+    this.openDialogue("mori");
   }
 
   closeShop(): void {

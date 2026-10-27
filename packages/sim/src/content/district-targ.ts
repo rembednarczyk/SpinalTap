@@ -149,7 +149,7 @@ export const TARG_NORTH_PROPS: readonly StaticProp[] = [
 ];
 
 export const TARG_SOUTH_ACTORS: readonly ActorDef[] = [
-  { kind: "npc", spawn: { key: "oyaji", position: v(OYAJI_STALL.x, 0, OYAJI_STALL.z - 1.4), yaw: 0 }, preset: "civilian", faction: "civilians" },
+  { kind: "npc", spawn: { key: "oyaji", position: v(OYAJI_STALL.x, 0, OYAJI_STALL.z - 1.4), yaw: 0 }, preset: "civilian", faction: "civilians", bystander: true },
 ];
 
 export const TARG_NORTH_ACTORS: readonly ActorDef[] = [

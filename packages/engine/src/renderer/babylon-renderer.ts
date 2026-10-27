@@ -1,4 +1,5 @@
-import { type AbstractMesh, type Color3, Color4, Matrix, type Mesh, Vector3 } from "../babylon";
+import { type AbstractMesh, type Color3, Color4, Matrix, type Mesh, MeshBuilder, Vector3 } from "../babylon";
+import { applyOutline } from "../npr/outline";
 import type { CameraMode, DespawnReason, EffectDescriptor, EntityId, RenderPort, Transform, ViewDescriptor } from "@seki/core";
 import { CameraRig } from "../camera/camera-rig";
 import { Effects } from "../effects/effects";
@@ -68,6 +69,8 @@ export class BabylonRenderer implements RenderPort {
   private readonly library: ModelLibrary;
   private models: CharacterModelManifest = {};
   private readonly dressed = new Map<CharacterRig, Dressed>();
+  /** Rigs whose model is still loading, so a manifest arriving meanwhile does not dress them twice. */
+  private readonly loadingModels = new Set<CharacterRig>();
 
   constructor(private readonly stage: Stage) {
     const { scene } = stage;
@@ -281,9 +284,11 @@ export class BabylonRenderer implements RenderPort {
   private dress(rig: CharacterRig, key: CharacterModelKey | null, name: string): void {
     const spec = key ? this.models[key] : undefined;
     if (!spec) return;
+    this.loadingModels.add(rig);
     this.library
       .instantiate(spec, `${name}-m`)
       .then((model) => {
+        this.loadingModels.delete(rig);
         if (rig.root.isDisposed()) return model.dispose();
         const retarget = HumanoidRetarget.create(rig, model.root, `${name}-m-`);
         if (!retarget) {
@@ -291,10 +296,28 @@ export class BabylonRenderer implements RenderPort {
           return model.dispose();
         }
         for (const m of rig.meshes) m.setEnabled(false);
+        if (rig.aiming) this.arm(model, retarget);
         for (const m of model.meshes) if (m.getTotalVertices() > 0) this.shadow.addCaster(m);
         this.dressed.set(rig, { model, retarget });
       })
-      .catch((err: unknown) => console.warn(`[models] ${spec.url} failed to load`, err));
+      .catch((err: unknown) => {
+        this.loadingModels.delete(rig);
+        console.warn(`[models] ${spec.url} failed to load`, err);
+      });
+  }
+
+  /** The procedural gun is baked into the hidden rig mesh; a dressed shooter gets its own. */
+  private arm(model: ModelInstance, retarget: HumanoidRetarget): void {
+    const gun = MeshBuilder.CreateBox(`${model.root.name}-gun`, { width: 0.035, height: 0.2, depth: 0.06 }, this.stage.scene);
+    gun.material = this.materials.get("gun");
+    gun.isPickable = false;
+    applyOutline(gun);
+    if (!retarget.holdInRightHand(gun, new Vector3(0, -0.1, 0.03))) {
+      gun.dispose();
+      return;
+    }
+    model.meshes.push(gun);
+    this.shadow.addCaster(gun);
   }
 
   private disposeRig(rig: CharacterRig): void {

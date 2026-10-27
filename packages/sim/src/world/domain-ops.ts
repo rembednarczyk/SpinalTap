@@ -2,11 +2,17 @@ import {
   type FactionId,
   type MemoryId,
   MEMORY_CATALOG,
+  type ProgressEvent,
+  QUEST_DEFINITIONS,
+  type ReputationCause,
   changeReputation,
   contractPayout,
   credit,
+  currentStep,
+  progressFlag,
   hasFlag,
   hasMemory,
+  reputationEffects,
   setFlag,
   unlockMemory,
 } from "@seki/core";
@@ -19,7 +25,15 @@ export const raiseFlag = (ctx: SimContext, flag: string): void => {
   ctx.state.flagsDirty = true;
 };
 
-export const grantEddies = (ctx: SimContext, base: number): void => {
+/** Raises the step-scoped flag of `event` for the current step of every active quest. */
+export const raiseProgress = (ctx: SimContext, event: ProgressEvent): void => {
+  for (const quest of QUEST_DEFINITIONS) {
+    const step = currentStep(ctx.state.domain.quests, quest);
+    if (step) raiseFlag(ctx, progressFlag(event, step.id));
+  }
+};
+
+export const grantEddies =(ctx: SimContext, base: number): void => {
   const amount = contractPayout(base, ctx.state.domain.reputation.fixers);
   const r = credit(ctx.state.domain.wallet, amount);
   if (!r.ok) return;
@@ -32,6 +46,11 @@ export const adjustReputation = (ctx: SimContext, faction: FactionId, delta: num
   const reputation = changeReputation(ctx.state.domain.reputation, faction, delta);
   ctx.state.domain = { ...ctx.state.domain, reputation };
   ctx.bus.emit("ReputationChanged", { faction, value: reputation[faction], delta: reputation[faction] - before });
+};
+
+/** Applies every faction's reaction to something the player did, in the order the rule table lists them. */
+export const applyReputationCause = (ctx: SimContext, cause: ReputationCause): void => {
+  for (const { faction, delta } of reputationEffects(cause)) adjustReputation(ctx, faction, delta);
 };
 
 export const grantMemory = (ctx: SimContext, id: MemoryId): void => {

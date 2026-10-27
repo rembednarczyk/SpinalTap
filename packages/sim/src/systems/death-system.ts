@@ -1,12 +1,11 @@
 import { killedFlag } from "@seki/core";
 import type { Entity } from "../world/components";
 import type { System } from "../world/context";
-import { raiseFlag } from "../world/domain-ops";
+import { applyReputationCause, raiseFlag } from "../world/domain-ops";
 import { inCreationOrder } from "../world/ordering";
 
 export const deadFlag = (key: string): string => `dead:${key}`;
 
-/** Removes killed NPCs (recording it in flags) and ends the run when the player flatlines. */
 const checkContractCleared = (ctx: Parameters<System["run"]>[0]): void => {
   const contract = ctx.state.domain.contracts.active;
   if (contract?.status !== "active") return;
@@ -18,6 +17,10 @@ const checkContractCleared = (ctx: Parameters<System["run"]>[0]): void => {
   ctx.bus.emit("ContractCleared", { contract: cleared });
 };
 
+/**
+ * Removes killed NPCs (recording it in flags and in their faction's standing) and ends the
+ * run when the player flatlines.
+ */
 export const deathSystem: System = {
   name: "death",
   run(ctx) {
@@ -33,6 +36,7 @@ export const deathSystem: System = {
       }
       if (e.key) raiseFlag(ctx, deadFlag(e.key));
       if (e.tag) raiseFlag(ctx, killedFlag(e.tag));
+      if (e.faction) applyReputationCause(ctx, { type: "member-killed", faction: e.faction });
       ctx.bus.emit("EntityKilled", { entityId: e.id, tag: e.tag ?? null });
       ctx.world.remove(e);
     }
