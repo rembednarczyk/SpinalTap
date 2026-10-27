@@ -1,6 +1,18 @@
-import { type Contract, type EntityId, type EntitySnapshot, type GameClock, type Vec3, contractTag } from "@seki/core";
+import {
+  type Contract,
+  type EntityId,
+  type EntitySnapshot,
+  type GameClock,
+  PROTECTEE_KEY,
+  type Vec3,
+  contractItemKey,
+  contractKind,
+  contractTag,
+  takenFlag,
+} from "@seki/core";
 import type { World } from "miniplex";
 import { CONTRACT_SITE_SPAWNS } from "../content/district-m0";
+import { CONTRACT_ITEM_SPOTS } from "../content/district-targ";
 import { type ChunkDef, type DistrictId, WORLD_CHUNKS, chunkAt, distanceToRect } from "../content/world-map";
 import type { Entity } from "./components";
 import {
@@ -11,6 +23,7 @@ import {
   entitySnapshotOf,
   gangerEntity,
   isDead,
+  pickupEntity,
   propEntity,
 } from "./factory";
 import { inCreationOrder } from "./ordering";
@@ -113,6 +126,8 @@ export class WorldStreamer {
     const chunk = (first ? chunkAt(first.x, first.z, this.chunks) : null)?.id ?? this.chunks[0]?.id ?? "";
     for (const old of this.contract) this.byKey.delete(old.key ?? "");
     this.contract = [];
+    // A protection wave is sent at Oyaji; everyone else just holds the site.
+    const victim = contractKind(contract) === "protect" ? PROTECTEE_KEY : undefined;
     for (let i = 0; i < contract.targets; i++) {
       const position = points[i % points.length];
       if (!position) continue;
@@ -120,7 +135,16 @@ export class WorldStreamer {
       const key = `${contract.id}-g${i}`;
       // Face the street centre line.
       const spawn = { key, position, yaw: Math.atan2(-position.x, 0.001) };
-      const t: Template = { id, chunk, key, make: () => gangerEntity(id, spawn, contractTag(contract.id), contractGangerHp(completed), chunk) };
+      const make = () => gangerEntity(id, spawn, contractTag(contract.id), contractGangerHp(completed), chunk, victim);
+      const t: Template = { id, chunk, key, make };
+      this.contract.push(t);
+      this.byKey.set(key, t);
+    }
+    const crate = contractKind(contract) === "retrieve" ? CONTRACT_ITEM_SPOTS[contract.siteId] : undefined;
+    if (crate) {
+      const id = this.ids.take();
+      const key = contractItemKey(contract.id);
+      const t: Template = { id, chunk, key, make: () => pickupEntity(id, key, crate, chunk) };
       this.contract.push(t);
       this.byKey.set(key, t);
     }
@@ -154,7 +178,7 @@ export class WorldStreamer {
         continue;
       }
       const t = this.byKey.get(s.key);
-      if (!t || isDead(flags, s.key)) continue;
+      if (!t || isDead(flags, s.key) || flags.includes(takenFlag(s.key))) continue;
       if (s.alerted) {
         // It was chasing the player when the save was made: pinned, alive outside its chunk.
         const pinned = t.make();
@@ -205,7 +229,7 @@ export class WorldStreamer {
     const alive = new Set<string>();
     for (const e of world) if (e.key) alive.add(e.key);
     for (const t of templates) {
-      if (t.key === null || isDead(flags, t.key) || alive.has(t.key)) continue;
+      if (t.key === null || isDead(flags, t.key) || flags.includes(takenFlag(t.key)) || alive.has(t.key)) continue;
       const e = t.make();
       const saved = this.dormant.get(t.key);
       if (saved) {

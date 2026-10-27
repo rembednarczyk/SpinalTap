@@ -2,6 +2,7 @@ import type { System } from "../world/context";
 import { createCivilianAiSystem, createGangerAiSystem } from "./ai";
 import { abilitySystem } from "./ability-system";
 import { combatSystem } from "./combat-system";
+import { contractSystem } from "./contract-system";
 import { deathSystem } from "./death-system";
 import { interactionSystem } from "./interaction-system";
 import { interpolationSystem } from "./interpolation-system";
@@ -37,5 +38,6 @@ export const createSystems = (): readonly System[] => [
   combatSystem,
   interactionSystem,
   deathSystem,
+  contractSystem,
   questSystem,
 ];

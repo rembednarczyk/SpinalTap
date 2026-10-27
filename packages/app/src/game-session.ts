@@ -173,7 +173,7 @@ export class GameSession implements UiIntents {
   syncHud(): void {
     const sim = this.simulation;
     const player = sim.player();
-    const { title, objective } = describeObjective(sim.domain);
+    const { title, objective } = describeObjective(sim.domain, sim.tick);
     patchUi(this.deps.ui, {
       hp: player?.health?.current ?? 0,
       maxHp: player?.health?.max ?? 100,
@@ -355,7 +355,7 @@ export class GameSession implements UiIntents {
 
   private openDialogue(dialogueId: string): void {
     this.dialogueOpen = true;
-    patchUi(this.deps.ui, { dialogue: toDialogueVm(this.narrative.start(dialogueId, this.simulation.domain)), prompt: null });
+    patchUi(this.deps.ui, { dialogue: toDialogueVm(this.narrative.start(dialogueId, this.simulation.domain, { tick: this.simulation.tick, ticksPerSecond: SIM_HZ })), prompt: null });
     this.deps.onFocusChange?.(false);
   }
 

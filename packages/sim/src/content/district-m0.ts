@@ -1,5 +1,6 @@
 import type { ContractSiteId, Vec3 } from "@seki/core";
 import { M0_TARGET_TAG } from "@seki/core";
+import { TARG_CONTRACT_SITE_SPAWNS } from "./district-targ";
 import { type ActorDef, type ActorSpawn, type GangerSpawn, type Rect, type StaticProp, building, crate, lamp, neon, v } from "./builders";
 
 /**
@@ -66,8 +67,9 @@ export const CIVILIAN_SPAWN: ActorSpawn = { key: "ume", position: v(-5.4, 0, -13
 /** Doktor Mori, the ripperdoc, in front of the clinic on the west side. */
 export const RIPPERDOC_SPAWN: ActorSpawn = { key: "mori", position: v(-6.2, 0, 2.4), yaw: Math.PI / 2 };
 
-/** Spawn points for procedural fixer contracts (up to four targets per site). */
+/** Spawn points for procedural contracts (up to four gangers per site), the market's included. */
 export const CONTRACT_SITE_SPAWNS: Readonly<Record<ContractSiteId, readonly Vec3[]>> = {
+  ...TARG_CONTRACT_SITE_SPAWNS,
   east_lot: [v(10.5, 0, -15.5), v(13.5, 0, -8.5), v(16, 0, -14), v(9.5, 0, -9)],
   koi_back: [v(3, 0, 12), v(-3, 0, 14.5), v(5, 0, 17), v(-1, 0, 10)],
   car_wash: [v(1, 0, 43), v(-2.5, 0, 39.5), v(4, 0, 47), v(-4, 0, 47)],

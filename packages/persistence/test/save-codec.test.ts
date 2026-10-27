@@ -182,6 +182,13 @@ describe("migrations", () => {
     const withContract = { ...s, domain: { ...s.domain, contracts: { active: contract, completed: 1 } } };
     expect(decodeSave("c", encodeSave(withContract)).domain.contracts.active).toEqual(contract);
   });
+
+  it("keeps a market contract (M4 fields) through the round trip without a schema bump", () => {
+    const s = snapshot();
+    const contract = { id: "c3", kind: "delivery" as const, siteId: "hana_stall" as const, targets: 0, reward: 325, status: "active" as const, deadlineTick: 4800 };
+    const withContract = { ...s, domain: { ...s.domain, contracts: { active: contract, completed: 2 } } };
+    expect(decodeSave("c", encodeSave(withContract)).domain.contracts.active).toEqual(contract);
+  });
 });
 
 describe("schema validation", () => {
@@ -213,6 +220,8 @@ describe("schema validation", () => {
     ["contracts", { contracts: { active: null, completed: 0.5 } }],
     ["contracts", { contracts: { active: { id: "c1", siteId: "moon", targets: 2, reward: 1, status: "active" }, completed: 0 } }],
     ["contracts", { contracts: { active: { id: "c1", siteId: "east_lot", targets: 2, reward: 1, status: "done" }, completed: 0 } }],
+    ["contract kind", { contracts: { active: { id: "c1", kind: "heist", siteId: "east_lot", targets: 2, reward: 1, status: "active" }, completed: 0 } }],
+    ["contract deadline", { contracts: { active: { id: "c1", kind: "delivery", siteId: "hana_stall", targets: 0, reward: 1, status: "active", deadlineTick: 1.5 }, completed: 0 } }],
     ["ability", { ability: { activeTime: "x", cooldown: 0 } }],
     ["cyberware", { character: { alias: null, memories: [], cyberware: { optics: "fake" } } }],
     ["story", { story: null }],

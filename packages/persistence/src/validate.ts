@@ -1,5 +1,6 @@
 import {
   FACTIONS,
+  isContractKind,
   isContractSiteId,
   isItemId,
   SAVE_SCHEMA_VERSION,
@@ -58,6 +59,9 @@ export const findSchemaError = (s: Json): string | null => {
     if (!Number.isInteger(active.targets) || !Number.isInteger(active.reward) || (active.status !== "active" && active.status !== "cleared")) {
       return "contracts";
     }
+    // M4 fields are optional, so v6 saves from before them stay valid as they are.
+    if (active.kind !== undefined && (typeof active.kind !== "string" || !isContractKind(active.kind))) return "contract kind";
+    if (active.deadlineTick !== undefined && (!Number.isInteger(active.deadlineTick) || (active.deadlineTick as number) < 0)) return "contract deadline";
   }
   if (!isObject(d.ability) || !isNum(d.ability.activeTime) || !isNum(d.ability.cooldown)) return "ability";
   const story = d.story;

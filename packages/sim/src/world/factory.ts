@@ -55,7 +55,7 @@ export const propEntity = (id: EntityId, prop: StaticProp, chunk: string): Entit
   return e;
 };
 
-export const gangerEntity = (id: EntityId, spawn: ActorSpawn, tag: string | null, maxHp: number, chunk: string): Entity => {
+export const gangerEntity = (id: EntityId, spawn: ActorSpawn, tag: string | null, maxHp: number, chunk: string, victim?: string): Entity => {
   const e: Entity = {
     ...actor(id, spawn),
     chunk,
@@ -64,7 +64,7 @@ export const gangerEntity = (id: EntityId, spawn: ActorSpawn, tag: string | null
     velocity: { x: 0, y: 0, z: 0 },
     health: { current: maxHp, max: maxHp },
     combatant: { weapon: "gangerSmg", cooldown: 0, holstered: false, drawing: 0, bloom: 0 },
-    ai: { home: spawn.position, aggroRange: 17, attackRange: 15, alerted: false },
+    ai: { home: spawn.position, aggroRange: 17, attackRange: 15, alerted: false, ...(victim ? { victim } : {}) },
   };
   if (tag) e.tag = tag;
   return e;
@@ -80,12 +80,26 @@ export const actorEntity = (id: EntityId, def: ActorDef, chunk: string): Entity 
 const npcEntity = (id: EntityId, def: ActorDef & { kind: "npc" }, chunk: string): Entity => {
   const e: Entity = { ...actor(id, def.spawn), chunk, view: { kind: "npc", preset: def.preset }, faction: def.faction };
   if (def.interactable) e.interactable = def.interactable;
+  if (def.maxHp !== undefined) e.health = { current: def.maxHp, max: def.maxHp };
   if (def.bystander) {
     e.velocity = { x: 0, y: 0, z: 0 };
     e.civilian = { home: def.spawn.position };
   }
   return e;
 };
+
+/** Size of a contract crate. */
+const CRATE = { x: 0.9, y: 0.6, z: 0.6 } as const;
+
+/** The crate of a retrieval contract: picked up with the interact key, no conversation. */
+export const pickupEntity = (id: EntityId, key: string, position: Vec3, chunk: string): Entity => ({
+  id,
+  key,
+  chunk,
+  ...at(position),
+  view: { kind: "block", size: CRATE, material: "glass" },
+  interactable: { kind: "pickup", dialogueId: key, prompt: "Zabierz skrzynkę Hany", radius: 1.8 },
+});
 
 /** Contract targets get tougher as Seki completes more jobs. */
 export const contractGangerHp = (completed: number): number => GANGER_MAX_HP + Math.min(60, completed * 10);

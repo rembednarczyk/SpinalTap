@@ -2,12 +2,16 @@ import { Compiler, type Story } from "inkjs/full";
 import {
   type DomainState,
   type GameCommand,
+  CONTRACT_KINDS,
   CONTRACT_SITES,
   FACTION_IDS,
   QUEST_DEFINITIONS,
   STORY_CHOICES,
   type StoryChoiceId,
   activeMainStep,
+  contractKind,
+  contractSecondsLeft,
+  isContractKind,
   dayPhase,
   hourOf,
   hasFlag,
@@ -27,11 +31,18 @@ const SPEAKERS: Readonly<Record<string, string>> = {
   MORI: "Doktor Mori",
   REN: "Ren",
   TECH: "Technik Kagami",
+  HANA: "Hana",
   OYAJI: "Oyaji",
 };
 const SPEAKER_RE = /^([A-Z]+):\s*(.*)$/;
 
 export class InkCompileError extends Error {}
+
+/** Simulation time for a conversation (narrative does not depend on sim, so the rate comes along). */
+export interface ConversationClock {
+  readonly tick: number;
+  readonly ticksPerSecond: number;
+}
 
 export const compileInk = (source: string): Story => {
   const compiler = new Compiler(source);
@@ -76,7 +87,11 @@ export class NarrativeRuntime {
     this.sink(command);
   }
 
-  start(dialogueId: string, domain: DomainState): DialogueView {
+  /**
+   * Opens the knot `dialogueId`. `clock` (the simulation tick and rate) lets the dialogue read
+   * how much time a delivery has left; without it the time reads as 0.
+   */
+  start(dialogueId: string, domain: DomainState, clock?: ConversationClock): DialogueView {
     this.checkpoint = this.story.state.toJson();
     this.effects = 0;
     this.domain = domain;
@@ -88,6 +103,12 @@ export class NarrativeRuntime {
     this.story.variablesState.$("contract_state", contract?.status ?? "");
     this.story.variablesState.$("contract_site", contract ? CONTRACT_SITES[contract.siteId].label : "");
     this.story.variablesState.$("contracts_done", domain.contracts.completed);
+    const kind = contract ? contractKind(contract) : null;
+    this.story.variablesState.$("contract_kind", kind ?? "");
+    this.story.variablesState.$("contract_giver", kind ? CONTRACT_KINDS[kind].giver : "");
+    this.story.variablesState.$("contract_reward", contract?.reward ?? 0);
+    const left = contract && clock ? contractSecondsLeft(contract, clock.tick, clock.ticksPerSecond) : null;
+    this.story.variablesState.$("contract_time_left", left ?? 0);
     for (const f of FACTION_IDS) this.story.variablesState.$(`${f}_stance`, stanceOf(domain.reputation[f]));
     // The domain owns the main-thread choices; ink sees them as plain string variables.
     for (const choice of Object.keys(STORY_CHOICES) as StoryChoiceId[]) {
@@ -183,6 +204,11 @@ export class NarrativeRuntime {
     });
     this.story.BindExternalFunction("accept_contract", () => this.emit({ type: "accept-contract" }));
     this.story.BindExternalFunction("complete_contract", () => this.emit({ type: "complete-contract" }));
+    this.story.BindExternalFunction("offer_contract", (kind: string) => {
+      if (!isContractKind(kind)) throw new Error(`ink: unknown contract kind "${kind}"`);
+      this.emit({ type: "accept-contract", kind });
+    });
+    this.story.BindExternalFunction("deliver_contract", () => this.emit({ type: "deliver-contract" }));
     this.story.BindExternalFunction("unlock_memory", (id: string) => {
       if (!isMemoryId(id)) throw new Error(`ink: unknown memory "${id}"`);
       this.emit({ type: "unlock-memory", memoryId: id });

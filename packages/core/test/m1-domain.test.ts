@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   ABILITY_CATALOG,
-  CONTRACT_SITE_IDS,
+  ELIMINATION_SITE_IDS,
   CYBERWARE_CATALOG,
   EMPTY_CONTRACTS,
   IDLE_ABILITY,
@@ -95,7 +95,7 @@ describe("abilities", () => {
 describe("contracts", () => {
   it("generates a contract from two random numbers", () => {
     const c = generateContract(EMPTY_CONTRACTS, sequenceRng(0, 0.99), 0);
-    expect(c).toEqual({ id: "c1", siteId: CONTRACT_SITE_IDS[0], targets: 3, reward: 625, status: "active" });
+    expect(c).toEqual({ id: "c1", siteId: ELIMINATION_SITE_IDS[0], targets: 3, reward: 625, status: "active" });
     expect(isContractSiteId(c.siteId)).toBe(true);
     expect(isContractSiteId("moon")).toBe(false);
   });
@@ -103,7 +103,7 @@ describe("contracts", () => {
   it("grows with experience and caps at four targets", () => {
     const c = generateContract({ active: null, completed: 9 }, sequenceRng(0.99, 0.99), 100);
     expect(c.id).toBe("c10");
-    expect(c.siteId).toBe(CONTRACT_SITE_IDS.at(-1));
+    expect(c.siteId).toBe(ELIMINATION_SITE_IDS.at(-1));
     expect(c.targets).toBe(4);
     expect(c.reward).toBe(1125);
   });

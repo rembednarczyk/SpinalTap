@@ -16,8 +16,12 @@ import {
   buyCyberware,
   buyItem,
   createDomainState,
+  PROTECTEE_KEY,
+  contractKind,
   credit,
-  generateContract,
+  generateContractOfKind,
+  hasFlag,
+  minuteOfDay,
   recordChoice,
   resolveEnding,
   setAlias,
@@ -29,8 +33,10 @@ import { SeededRandom } from "./rng/seeded-random";
 import { aimSpreadOf, createSystems, statsFor } from "./systems";
 import type { Entity } from "./world/components";
 import type { DomainHolder, SessionState, SimContext, System } from "./world/context";
-import { adjustReputation, applyReputationCause, grantMemory, raiseFlag, raiseProgress } from "./world/domain-ops";
+import { deadFlag } from "./systems/death-system";
+import { adjustReputation, applyReputationCause, clearContract, grantMemory, raiseFlag, raiseProgress } from "./world/domain-ops";
 import { PLAYER_SPAWN } from "./content/district-m0";
+import { OYAJI_HOURS } from "./content/schedules";
 import type { DistrictId } from "./content/world-map";
 import { IdAllocator, entitySnapshotOf, playerEntity } from "./world/factory";
 import { WorldStreamer } from "./world/streaming";
@@ -38,6 +44,12 @@ import { inCreationOrder } from "./world/ordering";
 import { placeOnSchedule } from "./world/schedule";
 
 export const SIM_HZ = 60;
+
+/** Protection jobs are offered while Oyaji keeps his stall open (ADR-0018). */
+export const oyajiStallOpen = (clock: DomainState["clock"]): boolean => {
+  const m = minuteOfDay(clock);
+  return m >= OYAJI_HOURS.open && m < OYAJI_HOURS.close;
+};
 export const SIM_DT = 1 / SIM_HZ;
 
 export interface SimulationOptions {
@@ -165,6 +177,11 @@ export class Simulation {
     };
   }
 
+  /** Oyaji has patched himself up since the last raid (only matters while he is in the world). */
+  private patchUpProtectee(): void {
+    for (const e of this.world.with("health")) if (e.key === PROTECTEE_KEY) e.health = { ...e.health, current: e.health.max };
+  }
+
   private apply(ctx: SimContext, cmd: GameCommand): void {
     switch (cmd.type) {
       case "set-flag":
@@ -211,11 +228,25 @@ export class Simulation {
       }
       case "accept-contract": {
         const domain = this.holder.domain;
+        const kind = cmd.kind ?? "eliminate";
         if (domain.contracts.active) break;
-        const contract = generateContract(domain.contracts, this.rng, domain.reputation.fixers);
+        // Nobody to protect once Oyaji is dead, and Hebi raid his stall only while it is open.
+        if (kind === "protect" && (hasFlag(domain.flags, deadFlag(PROTECTEE_KEY)) || !oyajiStallOpen(domain.clock))) break;
+        const contract = generateContractOfKind(
+          kind,
+          { log: domain.contracts, reputation: domain.reputation, flags: domain.flags, tick: ctx.tick, ticksPerSecond: SIM_HZ },
+          this.rng,
+        );
         this.holder.domain = { ...domain, contracts: { ...domain.contracts, active: contract } };
+        if (kind === "protect") this.patchUpProtectee();
         this.streamer.registerContract(this.world, this.holder.domain.flags, domain.contracts.completed, contract);
         ctx.bus.emit("ContractAccepted", { contract });
+        break;
+      }
+      case "deliver-contract": {
+        const contract = this.holder.domain.contracts.active;
+        if (contract?.status !== "active" || contractKind(contract) !== "delivery") break;
+        clearContract(ctx);
         break;
       }
       case "complete-contract": {
@@ -229,7 +260,7 @@ export class Simulation {
           contracts: { active: null, completed: domain.contracts.completed + 1 },
         };
         if (paid.ok) ctx.bus.emit("EddiesChanged", { balance: paid.wallet.eddies, delta: contract.reward });
-        applyReputationCause(ctx, { type: "contract-completed" });
+        applyReputationCause(ctx, { type: "contract-completed", kind: contractKind(contract) });
         ctx.bus.emit("ContractCompleted", { contract, reward: contract.reward });
         raiseProgress(ctx, "contract_completed");
         break;

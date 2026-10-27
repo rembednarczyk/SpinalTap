@@ -52,7 +52,7 @@ export const CharacterPanel = () => {
   return (
     <div className="sheet" data-testid="character-panel">
       <h2 className="sheet__name">{alias ?? "Nieznana"}</h2>
-      <div className="sheet__sub">Kontrakty dla Kaito: {contractsDone}</div>
+      <div className="sheet__sub">Wykonane kontrakty: {contractsDone}</div>
       <section>
         <h3 className="sheet__h">Cyberware</h3>
         <dl className="sheet__list">

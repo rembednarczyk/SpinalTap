@@ -28,6 +28,8 @@ export type ActorDef =
       readonly interactable?: Interactable;
       /** Bystander AI: keeps to its spot, flees a player the street fears. */
       readonly bystander?: true;
+      /** Gives the NPC health, so it can be hurt and killed. NPCs without it cannot be. */
+      readonly maxHp?: number;
     }
   | { readonly kind: "ganger"; readonly spawn: GangerSpawn };
 

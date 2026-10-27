@@ -19,5 +19,6 @@
 | [0015](0015-ekwipunek-uzbrojenie-loot.md) | Ekwipunek, uzbrojenie i łupy: sloty, amunicja, pancerz per strefa, torby, podgląd 3D | Proponowana |
 | [0016](0016-postawa-rozrzut-strefy-trafien.md) | Postawa, rozrzut broni, strefy trafień, przerywanie rozmowy | Zaakceptowana |
 | [0017](0017-zegar-doby-harmonogramy-npc.md) | Zegar doby, harmonogramy NPC, pora dnia w renderze | Zaakceptowana |
+| [0018](0018-zlecenia-na-targu-i-balans.md) | Zlecenia na targu (kurs, odzyskanie, ochrona) i balans M4 | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.

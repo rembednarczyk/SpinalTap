@@ -1,3 +1,4 @@
+import type { ContractKind } from "../contracts/kinds";
 import type { MemoryId } from "../character/memories";
 import type { CyberwareId } from "../cyberware/cyberware";
 import type { ItemId } from "../inventory/inventory";
@@ -16,7 +17,10 @@ export type GameCommand =
   | { readonly type: "end-dialogue" }
   | { readonly type: "buy-cyberware"; readonly cyberwareId: CyberwareId }
   | { readonly type: "buy-item"; readonly itemId: ItemId }
-  | { readonly type: "accept-contract" }
+  /** Without `kind`: an elimination from Kaito. */
+  | { readonly type: "accept-contract"; readonly kind?: ContractKind }
+  /** Hands the package of a running delivery to Hana. */
+  | { readonly type: "deliver-contract" }
   | { readonly type: "complete-contract" }
   /** Main-thread choice made in a memory flashback. The first answer sticks. */
   | { readonly type: "story-choice"; readonly choice: StoryChoiceId; readonly option: StoryOption }

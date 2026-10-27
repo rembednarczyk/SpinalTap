@@ -1,12 +1,20 @@
-import { type DomainState, QUEST_DEFINITIONS, activeMainStep, contractObjective } from "@seki/core";
+import { type Contract, type DomainState, QUEST_DEFINITIONS, activeMainStep, contractGiver, contractObjective, contractSecondsLeft, hasFlag } from "@seki/core";
+import { SIM_HZ } from "@seki/sim";
 
 /** Main steps that are about fixer work: while a contract runs, the HUD shows the contract itself. */
 const CONTRACT_STEPS: ReadonlySet<string> = new Set(["echo_contract"]);
 
-/** Main-quest title and objective for the HUD. */
-export const describeObjective = (domain: DomainState): { title: string | null; objective: string | null } => {
+/** "Kontrakt 3 · Hana": the number and who gave it. */
+export const contractTitle = (c: Contract): string => `Kontrakt ${c.id.slice(1)} · ${contractGiver(c).name}`;
+
+/**
+ * Main-quest title and objective for the HUD. With `tick` a running delivery shows its clock;
+ * the save label leaves it out.
+ */
+export const describeObjective = (domain: DomainState, tick: number | null = null): { title: string | null; objective: string | null } => {
   const contract = domain.contracts.active;
-  const contractView = contract ? { title: `Kontrakt ${contract.id.slice(1)} · Kaito`, objective: contractObjective(contract) } : null;
+  const left = contract && tick !== null ? contractSecondsLeft(contract, tick, SIM_HZ) : null;
+  const contractView = contract ? { title: contractTitle(contract), objective: contractObjective(contract, left) } : null;
   const main = activeMainStep(domain.quests, QUEST_DEFINITIONS);
   if (main) {
     if (contractView && CONTRACT_STEPS.has(main.step.id)) return contractView;
@@ -14,7 +22,8 @@ export const describeObjective = (domain: DomainState): { title: string | null; 
   }
   const started = QUEST_DEFINITIONS.some((q) => q.main && domain.quests[q.id]);
   if (!started) return { title: null, objective: null };
-  return contractView ?? { title: "Wolna ręka", objective: "Kaito ma kolejne kontrakty. Mori sprzedaje cyberware." };
+  const work = hasFlag(domain.flags, "met_hana") ? "Kaito ma kolejne kontrakty, Hana z targu też." : "Kaito ma kolejne kontrakty.";
+  return contractView ?? { title: "Wolna ręka", objective: `${work} Mori sprzedaje cyberware.` };
 };
 
 export const saveLabel = (date: Date): string =>
