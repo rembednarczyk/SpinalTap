@@ -1,4 +1,4 @@
-import { type EntityId, type EntitySnapshot, type Vec3, type WeaponId, npcWeapon } from "@seki/core";
+import { ENEMY_TYPES, type EnemyTypeId, type EntityId, type EntitySnapshot, type Vec3, type WeaponId, npcWeapon } from "@seki/core";
 import { PLAYER_SPAWN } from "../content/district-m0";
 import type { ActorDef, ActorSpawn, StaticProp } from "../content/builders";
 import { aabbFromCenter } from "./collision";
@@ -61,15 +61,24 @@ export const npcCombatant = (weapon: WeaponId): Combatant => {
   return { weapon, stats, uid: null, slot: stats.slot, loaded: stats.magazine, reloading: 0, cooldown: 0, holstered: false, drawing: 0, bloom: 0 };
 };
 
-export const gangerEntity = (id: EntityId, spawn: ActorSpawn, tag: string | null, maxHp: number, chunk: string): Entity => {
+export const gangerEntity = (
+  id: EntityId,
+  spawn: ActorSpawn,
+  tag: string | null,
+  maxHp: number,
+  chunk: string,
+  type: EnemyTypeId = "hebi_ganger",
+): Entity => {
+  const def = ENEMY_TYPES[type];
   const e: Entity = {
     ...actor(id, spawn),
     chunk,
     view: { kind: "enemy", preset: "ganger" },
-    faction: "hebi",
+    faction: def.faction,
+    enemy: { type },
     velocity: { x: 0, y: 0, z: 0 },
     health: { current: maxHp, max: maxHp },
-    combatant: npcCombatant("hebi_smg"),
+    combatant: npcCombatant(def.weapon),
     ai: { home: spawn.position, aggroRange: 17, attackRange: 15, alerted: false },
   };
   if (tag) e.tag = tag;

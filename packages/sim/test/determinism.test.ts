@@ -40,7 +40,7 @@ describe("determinism", () => {
   });
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
-    expect(hashOf(runReplay(1234, script()))).toMatchInlineSnapshot(`"214f4d90"`);
+    expect(hashOf(runReplay(1234, script()))).toMatchInlineSnapshot(`"95bb028c"`);
   });
 
   it("a loaded snapshot continues exactly like the original run", () => {

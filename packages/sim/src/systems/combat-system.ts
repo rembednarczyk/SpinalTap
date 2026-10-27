@@ -1,5 +1,12 @@
 import {
+  ENEMY_TYPES,
   type DefenderProfile,
+  type EnemyTypeId,
+  type HitZone,
+  defenseOf,
+  outfitDefense,
+  wearGarments,
+  wornGarments,
   type DerivedStats,
   type DialogueInterruptReason,
   type Vec3,
@@ -16,14 +23,19 @@ import type { SimContext, System } from "../world/context";
 import { crouchOf } from "../world/hitboxes";
 import { aimOrigin, chestOf, hitscan, type HitscanResult } from "../world/hitscan";
 import { consumeRound, loadedOf, readyToFire } from "../world/player-weapon";
-import { statsFor } from "./player-control-system";
+import { playerStatsOf } from "./player-control-system";
 
 /** An enemy firing this close to the player breaks off a conversation (metres). */
 export const GUNFIRE_INTERRUPT_RADIUS = 8;
 /** A shot passing this close to the player's chest counts as fired at them (metres). */
 const NEAR_MISS_RADIUS = 1.5;
-/** Gangers wear a vest over the torso. */
-const GANGER_ARMOR: DefenderProfile = { armor: 2, zoneArmor: { torso: 3 } };
+/** Armor of each enemy type's fixed outfit, resolved once. */
+const OUTFIT_DEFENSE = new Map<EnemyTypeId, DefenderProfile>();
+const enemyDefense = (type: EnemyTypeId): DefenderProfile => {
+  let d = OUTFIT_DEFENSE.get(type);
+  if (!d) OUTFIT_DEFENSE.set(type, (d = outfitDefense(ENEMY_TYPES[type].outfit)));
+  return d;
+};
 
 export interface ShotRequest {
   readonly shooter: Entity;
@@ -37,12 +49,23 @@ export interface ShotRequest {
   readonly damageBonus: number;
 }
 
+/**
+ * Armor per zone (ADR-0015): the player's implants and memories everywhere plus the clothes on
+ * the zone hit; an enemy's fixed outfit; nothing for anyone else.
+ */
 const defenderOf = (ctx: SimContext, target: Entity): DefenderProfile => {
   if (target.player) {
-    const stats = statsFor(ctx.state.domain.character);
-    return { armor: stats.armor, zoneArmor: { head: stats.headArmor } };
+    const { inventory, equipment } = ctx.state.domain;
+    return defenseOf(playerStatsOf(ctx.state.domain), wornGarments(inventory, equipment));
   }
-  return target.ai ? GANGER_ARMOR : { armor: 0 };
+  return target.enemy ? enemyDefense(target.enemy.type) : { armor: 0 };
+};
+
+/** A hit on the player wears the clothes covering that zone. */
+const wearPlayerClothes = (ctx: SimContext, zone: HitZone): void => {
+  const domain = ctx.state.domain;
+  const inventory = wearGarments(domain.inventory, domain.equipment, zone);
+  if (inventory !== domain.inventory) ctx.state.domain = { ...domain, inventory };
 };
 
 /**
@@ -112,7 +135,10 @@ export const fireShot = (ctx: SimContext, shot: ShotRequest, rng: RandomPort): H
       result.zone,
     );
     target.health = applyDamage(target.health, outcome.damage);
-    if (target.player) hurtPlayer = true;
+    if (target.player) {
+      hurtPlayer = true;
+      wearPlayerClothes(ctx, outcome.zone);
+    }
     // Getting shot provokes any AI, whatever it thought of the shooter before.
     if (target.ai) target.ai.alerted = true;
     ctx.bus.emit("DamageDealt", {
@@ -154,7 +180,7 @@ export const combatSystem: System = {
       if (!readyToFire(p.combatant, loadedOf(ctx, p))) continue;
       // A shotgun with a shell in gives way to the trigger mid-reload.
       p.combatant.reloading = 0;
-      const stats = statsFor(ctx.state.domain.character);
+      const stats = playerStatsOf(ctx.state.domain);
       fireShot(
         ctx,
         {

@@ -23,7 +23,7 @@ import {
 } from "@seki/core";
 import { World } from "miniplex";
 import { SeededRandom } from "./rng/seeded-random";
-import { aimSpreadOf, createSystems, statsFor } from "./systems";
+import { aimSpreadOf, createSystems, playerStatsOf } from "./systems";
 import type { Entity } from "./world/components";
 import type { DomainHolder, SessionState, SimContext, System } from "./world/context";
 import { adjustReputation, applyReputationCause, grantMemory, raiseFlag, raiseProgress } from "./world/domain-ops";
@@ -109,7 +109,7 @@ export class Simulation {
   /** Half-angle of the player's aim cone in radians right now (HUD crosshair); 0 without a player. */
   aimSpread(): number {
     const p = this.player();
-    return p ? aimSpreadOf(p, statsFor(this.holder.domain.character)) : 0;
+    return p ? aimSpreadOf(p, playerStatsOf(this.holder.domain)) : 0;
   }
 
   /** District the player stands in, or null between chunk bounds. */

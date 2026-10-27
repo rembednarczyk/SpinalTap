@@ -14,6 +14,7 @@ export {
   equippedAbility,
   fireShot,
   GUNFIRE_INTERRUPT_RADIUS,
+  playerStatsOf,
   statsFor,
   PITCH_LIMIT,
   SPRINT_MULTIPLIER,

@@ -42,6 +42,8 @@ const setup = async () => {
       quests: { m0_first_contract: { status: "completed" } },
       flags: ["dead:courier", "dead:guard", "killed:hebi_courier", "met_fixer", "reported_back"],
       wallet: { eddies: 645 },
+      // Two contracts on one pouch of 9 mm: a full one, so ammo does not decide this test.
+      ammo: { "9mm": 180 },
     },
   });
   await session.loadAsync("m0-done");
@@ -66,7 +68,11 @@ const talkToKaito = (s: GameSession) => {
   steps(s, 1, frame({ interact: true }));
 };
 
-/** Stands 4 m in front of the target (FPP) and fires until it drops; returns plain torso-hit damage (no crits, no other zones). */
+/**
+ * Brings the target to the open street by the spawn, stands 4 m in front of it (FPP) and fires
+ * until it drops; returns plain torso-hit damage (no crits, no other zones). The contract site
+ * depends on the RNG stream, and cover there must not decide the numbers.
+ */
 const shootDown = (s: GameSession, key: string): number[] => {
   const hits: number[] = [];
   const off = s.bus.on("DamageDealt", (e) => {
@@ -75,7 +81,9 @@ const shootDown = (s: GameSession, key: string): number[] => {
   for (let i = 0; i < 2000; i++) {
     const t = [...s.sim.world].find((e) => e.key === key);
     if (!t) break;
-    teleport(s, t.position.x, t.position.z - 4, 0, 0.1);
+    t.position = { x: 0, y: 0, z: -16 };
+    t.prevPosition = t.position;
+    teleport(s, 0, -20, 0, 0.1);
     s.step(frame({ fire: true }));
   }
   off();
@@ -135,9 +143,9 @@ describe("M1 acceptance: contract → eddies → cyberware → stronger in comba
     const next = session.sim.domain.contracts.active!;
     const nextTargets = [...session.sim.world].filter((e) => e.tag === contractTag(next.id)).map((e) => e.key!);
     const upgradedHits = nextTargets.flatMap((k) => shootDown(session, k));
-    // 22 + 3 (memory) through the ganger's vest (armor 2, torso +3); the grip adds 4.
-    expect(new Set(baseHits)).toEqual(new Set([20]));
-    expect(new Set(upgradedHits)).toEqual(new Set([24]));
+    // 22 + 3 (memory) through the ganger's Hebi jacket (torso 3, ADR-0015); the grip adds 4.
+    expect(new Set(baseHits)).toEqual(new Set([22]));
+    expect(new Set(upgradedHits)).toEqual(new Set([26]));
   });
 
   it("blocks saving while the clinic is open", async () => {

@@ -15,7 +15,7 @@ import { weaponSystem } from "./weapon-system";
 export { aimSpreadOf, fireShot, GUNFIRE_INTERRUPT_RADIUS } from "./combat-system";
 export { equippedAbility, worldTimeScale } from "./ability-system";
 export { deadFlag } from "./death-system";
-export { statsFor, CROUCH_SPEED_MULTIPLIER, CROUCH_TIME, PITCH_LIMIT, SPRINT_MULTIPLIER } from "./player-control-system";
+export { playerStatsOf, statsFor, CROUCH_SPEED_MULTIPLIER, CROUCH_TIME, PITCH_LIMIT, SPRINT_MULTIPLIER } from "./player-control-system";
 
 /**
  * Explicit, fixed system order (determinism: never derived from map iteration).

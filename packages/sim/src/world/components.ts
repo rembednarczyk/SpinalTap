@@ -1,4 +1,4 @@
-import type { EntityId, FactionId, Health, Vec3, ViewDescriptor, WeaponId, WeaponSlot, WeaponStats } from "@seki/core";
+import type { EnemyTypeId, EntityId, FactionId, Health, Vec3, ViewDescriptor, WeaponId, WeaponSlot, WeaponStats } from "@seki/core";
 import type { Aabb } from "./collision";
 
 export interface CharacterBody {
@@ -99,6 +99,8 @@ export interface Entity {
   faction?: FactionId;
   combatant?: Combatant;
   ai?: GangerAi;
+  /** Enemy type (ADR-0015): weapon, outfit and loot table come from it. */
+  enemy?: { readonly type: EnemyTypeId };
   civilian?: CivilianAi;
   interactable?: Interactable;
 }
