@@ -1,6 +1,7 @@
 import { type CSSProperties, useEffect, useState } from "react";
 import type { DayPhase } from "@seki/core";
-import { fovRadians } from "../store/ui-store";
+import { keyLabel } from "../menus/key-label";
+import { type ControlBindingVm, fovRadians } from "../store/ui-store";
 import { useUi } from "../use-ui";
 import { AbilityWidget } from "./ability-widget";
 import { Minimap } from "./minimap";
@@ -75,6 +76,26 @@ const Clock = () => {
   );
 };
 
+/** The first key bound to a control, as a label, or `fallback` before the bindings arrive. */
+const keyOf = (controls: readonly ControlBindingVm[], action: string, fallback: string): string => {
+  const code = controls.find((c) => c.action === action)?.codes[0];
+  return code ? keyLabel(code) : fallback;
+};
+
+/** A first-run hint: the keys to press and what they do, low in the middle of the screen. */
+const Hint = () => {
+  const hint = useUi((s) => s.hint);
+  if (!hint) return null;
+  return (
+    <div className="hud__hint" data-testid="hint" key={hint.id}>
+      {hint.keys.map((k) => (
+        <kbd key={k}>{keyLabel(k)}</kbd>
+      ))}
+      <span className="hud__hint-text">{hint.text}</span>
+    </div>
+  );
+};
+
 export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
   const hp = useUi((s) => s.hp);
   const maxHp = useUi((s) => s.maxHp);
@@ -84,6 +105,7 @@ export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
   const objective = useUi((s) => s.objective);
   const cameraMode = useUi((s) => s.cameraMode);
   const prompt = useUi((s) => s.prompt);
+  const controls = useUi((s) => s.controls);
   const hpPct = Math.max(0, Math.min(100, (hp / Math.max(1, maxHp)) * 100));
 
   return (
@@ -112,12 +134,15 @@ export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
       <AbilityWidget />
       <WeaponStrip pad={touch} />
       <Minimap />
-      <div className="hud__camera">{cameraMode} · [V] · [X] broń · [1-3] slot · [R] przeładuj · [C] kucanie · [Spacja] skok · [I] ekwipunek · [Tab] karta · [J] dziennik</div>
+      <div className="hud__camera">
+        {cameraMode} · [{keyOf(controls, "toggleCamera", "V")}]
+      </div>
       {prompt && (
         <div className="hud__prompt" data-testid="prompt">
-          <kbd>E</kbd> {prompt}
+          {!touch && <kbd>{keyOf(controls, "interact", "E")}</kbd>} {prompt}
         </div>
       )}
+      <Hint />
       <Toasts />
     </div>
   );

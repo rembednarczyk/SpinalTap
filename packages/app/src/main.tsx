@@ -10,7 +10,7 @@ import { browserClock } from "./browser-clock";
 import { type DebugApi, createDebugApi } from "./debug-api";
 import { GameSession } from "./game-session";
 import { keymapFor } from "./controls";
-import { type SettingsStorage, loadSettings, saveSettings, scaleLook } from "./settings";
+import { type SettingsStorage, loadHintsSeen, loadSettings, saveHintsSeen, saveSettings, scaleLook } from "./settings";
 
 declare global {
   interface Window {
@@ -41,7 +41,8 @@ const storage = ((): SettingsStorage | null => {
     return null;
   }
 })();
-const deviceDefaults = { ...DEFAULT_SETTINGS, quality: touchDevice ? "low" : "high" } as const;
+// The reference frame never shows hints (the NPR snapshot is of the scene alone).
+const deviceDefaults = { ...DEFAULT_SETTINGS, quality: touchDevice ? "low" : "high", hints: !reference } as const;
 // The reference frame ignores saved settings so the NPR snapshot never depends on the profile.
 const settings = reference ? deviceDefaults : loadSettings(storage, deviceDefaults);
 const qualityParam = params.get("quality");
@@ -85,6 +86,8 @@ const session = new GameSession({
   story: STORY_SOURCE,
   seed: () => (seedParam ? Number(seedParam) : reference ? 42 : randomSeed()),
   now: () => new Date(),
+  touch: touchDevice,
+  hints: { seen: loadHintsSeen(storage), save: (seen) => saveHintsSeen(storage, seen) },
   settings: {
     applied: { ...settings, quality },
     save: (next) => saveSettings(storage, next),

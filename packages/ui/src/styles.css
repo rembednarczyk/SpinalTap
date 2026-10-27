@@ -160,6 +160,25 @@ kbd {
   font-size: 18px;
 }
 
+.hud__hint {
+  position: absolute;
+  left: 50%;
+  bottom: 22%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--panel);
+  border: 1px solid var(--cyan);
+  font-size: 16px;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: hint-in 260ms ease-out;
+}
+.hud__hint-text { margin-left: 6px; color: var(--ink); }
+@keyframes hint-in { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translateX(-50%); } }
+
 .hurt-vignette {
   position: absolute;
   inset: 0;

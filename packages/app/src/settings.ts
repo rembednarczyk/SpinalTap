@@ -74,3 +74,23 @@ export const scaleLook = (frame: InputFrame, factor: number, invertY = false): I
 /** Settings that the running game cannot change on the fly. */
 /** Only the graphics quality needs a reload; volume and sensitivity apply at once. */
 export const needsReload = (applied: SettingsVm, current: SettingsVm): boolean => applied.quality !== current.quality;
+
+export const HINTS_KEY = "seki.hints.v1";
+
+/** Ids of the first-run hints already seen; empty when storage is missing or broken. */
+export const loadHintsSeen = (storage: SettingsStorage | null): string[] => {
+  try {
+    const raw = JSON.parse(storage?.getItem(HINTS_KEY) ?? "[]") as unknown;
+    return Array.isArray(raw) ? raw.filter((x): x is string => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+};
+
+export const saveHintsSeen = (storage: SettingsStorage | null, seen: readonly string[]): void => {
+  try {
+    storage?.setItem(HINTS_KEY, JSON.stringify(seen));
+  } catch {
+    // The hints come back next time; nothing else depends on them.
+  }
+};
