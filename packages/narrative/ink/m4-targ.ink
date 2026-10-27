@@ -46,7 +46,7 @@ EXTERNAL deliver_contract()
     SEKI: Co trzeba odzyskać?
     ~ offer_contract("retrieve")
     HANA: Hebi zabrali mi skrzynkę z towarem. Trzymają ją pod estakadą, przy wschodniej ścianie, i pilnuje jej kilku chłopaków.
-    HANA: Nikogo nie musisz zabijać. Masz wrócić ze skrzynką.
+    HANA: Wróć ze skrzynką. Co zrobisz ze strażnikami, to już twoja sprawa.
     -> END
 + { not has_flag("dead:oyaji") } [Ktoś potrzebuje ochrony?]
     SEKI: Ktoś potrzebuje ochrony?
