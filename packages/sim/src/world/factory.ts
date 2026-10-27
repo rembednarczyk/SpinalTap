@@ -133,7 +133,12 @@ export const gangerEntity = (
 };
 
 export const actorEntity = (id: EntityId, def: ActorDef, chunk: string): Entity => {
-  const e = def.kind === "ganger" ? gangerEntity(id, def.spawn, def.spawn.tag, GANGER_MAX_HP, chunk) : npcEntity(id, def, chunk);
+  const e =
+    def.kind === "ganger"
+      ? def.enemy
+        ? gangerEntity(id, def.spawn, def.spawn.tag, ENEMY_TYPES[def.enemy].hp, chunk, undefined, def.enemy)
+        : gangerEntity(id, def.spawn, def.spawn.tag, GANGER_MAX_HP, chunk)
+      : npcEntity(id, def, chunk);
   const plan = SCHEDULES[def.spawn.key];
   if (plan) e.schedule = { def: plan, own: e.interactable ?? null, pose: null };
   return e;

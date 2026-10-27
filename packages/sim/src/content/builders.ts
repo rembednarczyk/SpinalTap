@@ -1,4 +1,4 @@
-import type { FactionId, Vec3, ViewDescriptor } from "@seki/core";
+import type { EnemyTypeId, FactionId, Vec3, ViewDescriptor } from "@seki/core";
 import type { Interactable, LadderDef } from "../world/components";
 
 /** Shared vocabulary of the content tables. Coordinates: Y up, +Z north, yaw 0 faces +Z. */
@@ -30,9 +30,22 @@ export interface GangerSpawn extends ActorSpawn {
 }
 
 /** A keyed character placed by content. Its state survives unloading and saves. */
+/**
+ * When a keyed actor is in the world (ADR-0023): every flag of `all` is set and none of `none`.
+ * Without it the actor is always there. Streaming adds and removes actors as the flags change.
+ */
+export interface Presence {
+  readonly all?: readonly string[];
+  readonly none?: readonly string[];
+}
+
+export const isPresent = (presence: Presence | undefined, flags: readonly string[]): boolean =>
+  !presence || ((presence.all ?? []).every((f) => flags.includes(f)) && !(presence.none ?? []).some((f) => flags.includes(f)));
+
 export type ActorDef =
   | {
       readonly kind: "npc";
+      readonly when?: Presence;
       readonly spawn: ActorSpawn;
       readonly preset: "fixer" | "civilian" | "ripperdoc";
       readonly faction: FactionId;
@@ -42,7 +55,13 @@ export type ActorDef =
       /** Gives the NPC health, so it can be hurt and killed. NPCs without it cannot be. */
       readonly maxHp?: number;
     }
-  | { readonly kind: "ganger"; readonly spawn: GangerSpawn };
+  | {
+      readonly kind: "ganger";
+      readonly spawn: GangerSpawn;
+      readonly when?: Presence;
+      /** Enemy type and its health; without it a Hebi ganger with the default health. */
+      readonly enemy?: EnemyTypeId;
+    };
 
 /** Axis-aligned rectangle on the XZ plane. */
 export interface Rect {
