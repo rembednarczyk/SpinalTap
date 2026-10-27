@@ -84,7 +84,7 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
   optyka jako świecące paski przy kącikach oczu, cyberramię jako miedziane pierścienie na prawym
   przedramieniu, na modelu i na rigu.
 
-- **Budynki i dekoracje z assetów, dostrojone do cyberpunku.** Zamiast gołych brył: fasady, sklepy,
+- **[gotowe] Budynki i dekoracje z assetów, dostrojone do cyberpunku.** (ADR-0022, `packages/app/public/city`) Zamiast gołych brył: fasady, sklepy,
   bary i wieżowce z paczek CC0 z przeglądu (`docs/assets-research.md`): Neon Town (neony, bar,
   sklepy), Kenney City Kit Commercial (budynki, wieżowce w tle) i Roads (chodniki, latarnie,
   kontenery, kable), Car Kit (zaparkowane auta). Inne stylistyki przemalowane na noc, teal i
