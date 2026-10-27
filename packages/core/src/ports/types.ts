@@ -18,6 +18,15 @@ export interface Transform {
    * and the eye height. Absent means standing.
    */
   readonly crouch?: number;
+  /**
+   * 0 from the hip .. 1 aimed (ADR-0019): the player's eased aim down sights, an NPC's 1 while
+   * it fights. Absent means 0.
+   */
+  readonly aim?: number;
+  /** Field of view multiplier at full aim for the weapon in hand (the camera zooms by it). */
+  readonly aimZoom?: number;
+  /** 1 while guarding with a melee weapon. Absent means 0. */
+  readonly guard?: number;
 }
 
 /** What the presentation layer should build for an entity. Pure data, engine-agnostic. */
@@ -56,6 +65,12 @@ export type EffectDescriptor =
   | { readonly kind: "weapon"; readonly entityId: EntityId; readonly drawn: boolean; readonly slot?: WeaponSlot }
   /** The entity started reloading; the animation should last `duration` seconds. */
   | { readonly kind: "reload"; readonly entityId: EntityId; readonly duration: number }
+  /** A melee swing (ADR-0019): `strike` of the combo, landing after `windup`, then `recovery`. */
+  | { readonly kind: "melee"; readonly entityId: EntityId; readonly strike: number; readonly windup: number; readonly recovery: number }
+  /** Knocked off balance for `duration` seconds. */
+  | { readonly kind: "stagger"; readonly entityId: EntityId; readonly duration: number }
+  /** The entity's guard took a blow at `at`; `parried` for a perfect block. */
+  | { readonly kind: "block"; readonly entityId: EntityId; readonly parried: boolean; readonly at: Vec3 }
   /**
    * Time of day changed (ADR-0017). `daylight` is 0 at night and 1 by day; `hour` is the
    * fractional hour 0–24, for presentation that wants more than the light level. Not
@@ -92,4 +107,7 @@ export type AudioCue =
   | "purchase"
   | "denied"
   | "heal"
-  | "overdrive";
+  | "overdrive"
+  | "swing"
+  | "block"
+  | "parry";

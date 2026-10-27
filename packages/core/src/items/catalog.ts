@@ -252,6 +252,60 @@ export interface NpcWeaponProfile {
   readonly spread: SpreadProfile;
 }
 
+/**
+ * Aiming down sights (ADR-0019). Every value applies at full aim; the simulation eases the aim
+ * in over `time` and scales each one with it.
+ */
+export interface AdsProfile {
+  /** Field of view multiplier (below 1 zooms in). */
+  readonly zoom: number;
+  /** Seconds from the hip to full aim (and back). */
+  readonly time: number;
+  /** Multiplier on the aim cone. */
+  readonly spread: number;
+  /** Multiplier on walking speed. */
+  readonly move: number;
+}
+
+/** One swing of a melee combo (ADR-0019). */
+export interface MeleeStrike {
+  /** Multiplier on the weapon's damage. */
+  readonly damage: number;
+  /** Seconds from the start of the swing to the moment it lands. */
+  readonly windup: number;
+  /** Seconds after it lands before the next action. */
+  readonly recovery: number;
+  /** Seconds a target that took the hit unguarded is staggered. */
+  readonly stagger: number;
+}
+
+/** Guard with a melee weapon (the aim button). */
+export interface BlockProfile {
+  /** Half-angle of the guarded cone in front of the defender, radians. */
+  readonly arc: number;
+  /** Damage multiplier for a blocked melee hit. */
+  readonly melee: number;
+  /** Damage multiplier for a blocked shot: a blade does not stop bullets. */
+  readonly projectile: number;
+  /** Walking speed multiplier while guarding. */
+  readonly move: number;
+  /** Seconds after raising the guard in which a melee hit is parried. */
+  readonly parryWindow: number;
+  /** Seconds a parried attacker is stunned. */
+  readonly parryStun: number;
+}
+
+export interface MeleeProfile {
+  readonly combo: readonly [MeleeStrike, ...MeleeStrike[]];
+  /** Half-angle of the swing arc in front of the attacker, radians. */
+  readonly arc: number;
+  /** Seconds after a strike's recovery in which the next one continues the combo. */
+  readonly comboWindow: number;
+  /** Windup of an NPC's swing (a readable telegraph), replacing the strike's own. */
+  readonly npcWindup: number;
+  readonly block: BlockProfile;
+}
+
 export interface WeaponDefinition {
   readonly id: WeaponId;
   readonly name: string;
@@ -281,6 +335,10 @@ export interface WeaponDefinition {
   readonly value: number;
   readonly look: WeaponLook;
   readonly npc?: NpcWeaponProfile;
+  /** Firearms aim down sights. */
+  readonly ads?: AdsProfile;
+  /** Melee weapons swing in combos and guard. */
+  readonly melee?: MeleeProfile;
 }
 
 const PISTOL_SPREAD: SpreadProfile = { base: 0.02, crouch: 0.4, move: 0.03, sprint: 0.06, bloomPerShot: 0.018, bloomMax: 0.06, recovery: 0.07 };
@@ -289,6 +347,8 @@ const GANGER_SMG_SPREAD: SpreadProfile = { base: 0.055, crouch: 0.6, move: 0.04,
 const NO_SPREAD: SpreadProfile = { base: 0, crouch: 1, move: 0, sprint: 0, bloomPerShot: 0, bloomMax: 0, recovery: 1 };
 const ALL_MODS: readonly ModSlot[] = ["muzzle", "sight", "magazine"];
 const GUNSHOT_ALERT = 22;
+/** Guard shared by the melee weapons; the blade parries a little longer. */
+const MELEE_BLOCK: BlockProfile = { arc: 1.05, melee: 0.25, projectile: 0.7, move: 0.55, parryWindow: 0.18, parryStun: 1.2 };
 const MELEE_ALERT = 4;
 
 export const WEAPON_CATALOG = {
@@ -314,6 +374,7 @@ export const WEAPON_CATALOG = {
     value: 400,
     look: "pistol",
     npc: { damage: 14, interval: 1.1, range: 40, spread: { ...GANGER_SMG_SPREAD, base: 0.045 } },
+    ads: { zoom: 0.8, time: 0.16, spread: 0.5, move: 0.75 },
   },
   oni44: {
     id: "oni44",
@@ -336,6 +397,7 @@ export const WEAPON_CATALOG = {
     alertRadius: GUNSHOT_ALERT,
     value: 1300,
     look: "revolver",
+    ads: { zoom: 0.78, time: 0.2, spread: 0.45, move: 0.7 },
   },
   hebi_smg: {
     id: "hebi_smg",
@@ -359,6 +421,7 @@ export const WEAPON_CATALOG = {
     value: 700,
     look: "smg",
     npc: { damage: 7, interval: 0.9, range: 18, spread: GANGER_SMG_SPREAD },
+    ads: { zoom: 0.72, time: 0.2, spread: 0.6, move: 0.75 },
   },
   raijin12: {
     id: "raijin12",
@@ -382,6 +445,7 @@ export const WEAPON_CATALOG = {
     value: 1200,
     look: "shotgun",
     npc: { damage: 6, interval: 1.4, range: 12, spread: { base: 0.11, crouch: 0.85, move: 0.03, sprint: 0.06, bloomPerShot: 0.02, bloomMax: 0.04, recovery: 0.05 } },
+    ads: { zoom: 0.85, time: 0.26, spread: 0.8, move: 0.7 },
   },
   tessen_ar5: {
     id: "tessen_ar5",
@@ -404,6 +468,7 @@ export const WEAPON_CATALOG = {
     alertRadius: GUNSHOT_ALERT,
     value: 1800,
     look: "rifle",
+    ads: { zoom: 0.55, time: 0.28, spread: 0.35, move: 0.6 },
   },
   baton: {
     id: "baton",
@@ -426,6 +491,17 @@ export const WEAPON_CATALOG = {
     alertRadius: MELEE_ALERT,
     value: 250,
     look: "baton",
+    melee: {
+      combo: [
+        { damage: 1, windup: 0.16, recovery: 0.3, stagger: 0.45 },
+        { damage: 1, windup: 0.14, recovery: 0.3, stagger: 0.45 },
+        { damage: 1.5, windup: 0.24, recovery: 0.5, stagger: 0.8 },
+      ],
+      arc: 0.9,
+      comboWindow: 0.45,
+      npcWindup: 0.5,
+      block: MELEE_BLOCK,
+    },
   },
   shirasaya: {
     id: "shirasaya",
@@ -448,6 +524,17 @@ export const WEAPON_CATALOG = {
     alertRadius: MELEE_ALERT,
     value: 1500,
     look: "blade",
+    melee: {
+      combo: [
+        { damage: 1, windup: 0.15, recovery: 0.32, stagger: 0.4 },
+        { damage: 1.1, windup: 0.15, recovery: 0.34, stagger: 0.4 },
+        { damage: 1.6, windup: 0.26, recovery: 0.55, stagger: 0.75 },
+      ],
+      arc: 0.75,
+      comboWindow: 0.4,
+      npcWindup: 0.45,
+      block: { ...MELEE_BLOCK, parryWindow: 0.22 },
+    },
   },
 } as const satisfies Record<WeaponId, WeaponDefinition>;
 

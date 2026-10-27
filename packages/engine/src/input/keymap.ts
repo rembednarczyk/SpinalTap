@@ -8,6 +8,7 @@ export type Action =
   | "sprint"
   | "crouch"
   | "fire"
+  | "aim"
   | "interact"
   | "toggleCamera"
   | "ability"
@@ -30,6 +31,8 @@ export const DEFAULT_KEYMAP: KeyMap = {
   // C only: Ctrl would turn Ctrl+W (crouch while walking) into "close the tab".
   crouch: ["KeyC"],
   fire: ["Mouse0"],
+  // Right mouse button: aim down sights, or guard with a melee weapon (ADR-0019).
+  aim: ["Mouse2"],
   interact: ["KeyE"],
   toggleCamera: ["KeyV"],
   ability: ["KeyQ"],
@@ -70,6 +73,7 @@ export const mapKeyboardMouse = (keys: KeyState, look: LookDelta, map: KeyMap = 
   sprint: any(keys.held, map.sprint),
   crouch: any(keys.held, map.crouch),
   fire: any(keys.held, map.fire),
+  aim: any(keys.held, map.aim),
   interact: any(keys.pressed, map.interact),
   toggleCamera: any(keys.pressed, map.toggleCamera),
   ability: any(keys.pressed, map.ability),
@@ -108,6 +112,8 @@ export const mapGamepad = (pad: PadState, dt: number): InputFrame => ({
   // B (east face button), held.
   crouch: pad.buttons[1] ?? false,
   fire: pad.buttons[7] ?? false,
+  // Left trigger.
+  aim: pad.buttons[6] ?? false,
   interact: pad.pressed[0] ?? false,
   toggleCamera: pad.pressed[3] ?? false,
   ability: pad.pressed[5] ?? false,
@@ -126,6 +132,7 @@ export const mergeFrames = (a: InputFrame, b: InputFrame): InputFrame => ({
   sprint: a.sprint || b.sprint,
   crouch: a.crouch || b.crouch,
   fire: a.fire || b.fire,
+  aim: a.aim || b.aim,
   interact: a.interact || b.interact,
   toggleCamera: a.toggleCamera || b.toggleCamera,
   ability: a.ability || b.ability,
@@ -134,3 +141,34 @@ export const mergeFrames = (a: InputFrame, b: InputFrame): InputFrame => ({
   reload: a.reload || b.reload,
   weaponSlot: a.weaponSlot || b.weaponSlot,
 });
+
+/** How the aim button behaves: held down, or pressed once to aim and again to stop. */
+export type AimMode = "hold" | "toggle";
+
+/**
+ * Turns the raw aim button into "wants to aim" (ADR-0019). In "hold" mode it passes the button
+ * through; in "toggle" mode each press flips the aim. `reset` drops a latched aim, e.g. when
+ * the game loses focus, so a menu never leaves the player aiming.
+ */
+export class AimLatch {
+  mode: AimMode = "hold";
+  private latched = false;
+  private wasDown = false;
+
+  apply(frame: InputFrame): InputFrame {
+    const down = frame.aim;
+    const pressed = down && !this.wasDown;
+    this.wasDown = down;
+    if (this.mode === "hold") {
+      this.latched = false;
+      return frame;
+    }
+    if (pressed) this.latched = !this.latched;
+    return frame.aim === this.latched ? frame : { ...frame, aim: this.latched };
+  }
+
+  reset(): void {
+    this.latched = false;
+    this.wasDown = false;
+  }
+}

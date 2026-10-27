@@ -66,6 +66,15 @@ export interface DomainEvents {
   WeaponSwitched: { entityId: EntityId; slot: WeaponSlot; weapon: WeaponId };
   ReloadStarted: { entityId: EntityId; duration: number };
   ReloadFinished: { entityId: EntityId; loaded: number };
+  // Melee (ADR-0019).
+  /** A swing started; it lands after `windup` seconds and is followed by `recovery`. */
+  MeleeSwing: { entityId: EntityId; strike: number; windup: number; recovery: number };
+  /** A swing landed: `hits` bodies taken (0 for a miss). */
+  MeleeStrike: { entityId: EntityId; strike: number; hits: number };
+  /** A guard met an attack; a parried melee blow did no damage and stunned the attacker. */
+  AttackBlocked: { attackerId: EntityId; defenderId: EntityId; parried: boolean; kind: "melee" | "projectile"; at: Vec3 };
+  /** Knocked off balance: whatever it was doing (a swing, a guard) is cut short. */
+  Staggered: { entityId: EntityId; duration: number; cause: "hit" | "parry" };
   LootDropped: { containerKey: string; at: Vec3; best: Rarity | null };
   /** `lines` were moved to the player; `left` lines stayed in the container. */
   LootTaken: { containerKey: string; lines: readonly LootLine[]; left: number };

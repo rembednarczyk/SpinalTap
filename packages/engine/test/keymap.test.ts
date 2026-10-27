@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { EMPTY_INPUT } from "@seki/core";
-import { DEFAULT_KEYMAP, PAD_DEADZONE, mapGamepad, mapKeyboardMouse, mergeFrames, remap } from "../src/input/keymap";
+import { AimLatch, DEFAULT_KEYMAP, PAD_DEADZONE, mapGamepad, mapKeyboardMouse, mergeFrames, remap } from "../src/input/keymap";
 
 const keys = (held: string[], pressed: string[] = []) => ({ held: new Set(held), pressed: new Set(pressed) });
 
@@ -77,5 +77,36 @@ describe("gamepad mapping", () => {
     const f = mergeFrames({ ...EMPTY_INPUT, moveX: 1, fire: true }, { ...EMPTY_INPUT, moveX: 1, lookYaw: 0.2, reload: true, weaponSlot: 3 });
     expect(f).toMatchObject({ moveX: 1, fire: true, lookYaw: 0.2, reload: true, weaponSlot: 3 });
     expect(mergeFrames({ ...EMPTY_INPUT, weaponSlot: 1 }, { ...EMPTY_INPUT, weaponSlot: 2 }).weaponSlot).toBe(1);
+  });
+});
+
+describe("aim button (ADR-0019)", () => {
+  it("aims while the right mouse button or the left trigger is held", () => {
+    expect(mapKeyboardMouse(keys(["Mouse2"]), { yaw: 0, pitch: 0 }).aim).toBe(true);
+    expect(mapKeyboardMouse(keys(["Mouse0"]), { yaw: 0, pitch: 0 }).aim).toBe(false);
+    const buttons: boolean[] = [];
+    buttons[6] = true;
+    expect(mapGamepad({ axes: [0, 0, 0, 0], buttons, pressed: [] }, 1 / 60).aim).toBe(true);
+    expect(mergeFrames(EMPTY_INPUT, { ...EMPTY_INPUT, aim: true }).aim).toBe(true);
+  });
+
+  it("passes the button through in hold mode", () => {
+    const latch = new AimLatch();
+    expect(latch.apply({ ...EMPTY_INPUT, aim: true }).aim).toBe(true);
+    expect(latch.apply(EMPTY_INPUT).aim).toBe(false);
+  });
+
+  it("flips the aim on each press in toggle mode and forgets it on reset", () => {
+    const latch = new AimLatch();
+    latch.mode = "toggle";
+    const down = { ...EMPTY_INPUT, aim: true };
+    expect(latch.apply(down).aim).toBe(true);
+    expect(latch.apply(down).aim).toBe(true);
+    expect(latch.apply(EMPTY_INPUT).aim).toBe(true);
+    expect(latch.apply(down).aim).toBe(false);
+    expect(latch.apply(EMPTY_INPUT).aim).toBe(false);
+    latch.apply(down);
+    latch.reset();
+    expect(latch.apply(EMPTY_INPUT).aim).toBe(false);
   });
 });

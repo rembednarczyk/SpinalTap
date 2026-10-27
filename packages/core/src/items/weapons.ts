@@ -1,6 +1,6 @@
 import { type HitZone, ZONE_MULTIPLIERS } from "../combat/combat-rules";
 import type { SpreadProfile } from "../combat/spread";
-import { MOD_CATALOG, WEAPON_CATALOG, type WeaponDefinition, isModId, isWeaponId } from "./catalog";
+import { type AdsProfile, MOD_CATALOG, type MeleeProfile, WEAPON_CATALOG, type WeaponDefinition, isModId, isWeaponId } from "./catalog";
 import { type Equipment, type InventoryState, findItem, freeCells, isPlaced, updateItem } from "./inventory";
 import { RARITY } from "./rarity";
 import type { AmmoId, ModId, ModSlot, Rarity, WeaponId, WeaponLook, WeaponSlot } from "./types";
@@ -27,11 +27,18 @@ export interface WeaponStats {
   /** Damage multiplier per hit zone (ADR-0016 by default). */
   readonly zones: Readonly<Record<HitZone, number>>;
   readonly look: WeaponLook;
+  /** Aim down sights; null for melee weapons. */
+  readonly ads: AdsProfile | null;
+  /** Combo and guard; null for firearms (ADR-0019). */
+  readonly melee: MeleeProfile | null;
 }
 
 /** Pellets of a shotgun hitting the head are less of a jackpot than a single bullet. */
 const ZONES_BY_WEAPON: Partial<Record<WeaponId, Readonly<Record<HitZone, number>>>> = {
   raijin12: { head: 1.25, torso: 1, arm: 0.65, leg: 0.7 },
+  // Plan §3.2: a blow to the head hurts, limbs take a little more than from a bullet.
+  baton: { head: 1.3, torso: 1, arm: 0.8, leg: 0.8 },
+  shirasaya: { head: 1.5, torso: 1, arm: 0.8, leg: 0.8 },
 };
 
 const base = (def: WeaponDefinition): WeaponStats => ({
@@ -51,6 +58,8 @@ const base = (def: WeaponDefinition): WeaponStats => ({
   alertRadius: def.alertRadius,
   zones: ZONES_BY_WEAPON[def.id] ?? ZONE_MULTIPLIERS,
   look: def.look,
+  ads: def.ads ?? null,
+  melee: def.melee ?? null,
 });
 
 /** Stats of a player's weapon with its rarity and mounted mods. Pure, shared by sim and UI. */

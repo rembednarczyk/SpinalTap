@@ -12,6 +12,11 @@ export interface InputFrame {
   /** Held: crouch while true (touch controls latch it). */
   readonly crouch: boolean;
   readonly fire: boolean;
+  /**
+   * Held: aim down sights with a firearm, guard with a melee weapon (ADR-0019). A "toggle"
+   * setting is resolved by the input adapter, so the frame always says "wants to aim now".
+   */
+  readonly aim: boolean;
   /** Edge-triggered: true only on the tick the button went down. */
   readonly interact: boolean;
   /** Edge-triggered. */
@@ -38,6 +43,7 @@ export const EMPTY_INPUT: InputFrame = Object.freeze({
   sprint: false,
   crouch: false,
   fire: false,
+  aim: false,
   interact: false,
   toggleCamera: false,
   ability: false,

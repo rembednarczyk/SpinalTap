@@ -69,3 +69,13 @@ describe("VirtualPad", () => {
     expect(pad.poll()).toMatchObject({ moveZ: 0, fire: false, lookYaw: 0 });
   });
 });
+
+describe("virtual pad aim button (ADR-0019)", () => {
+  it("aims while the aim button is held", () => {
+    const pad = new VirtualPad();
+    pad.press("aim");
+    expect(pad.poll().aim).toBe(true);
+    pad.release("aim");
+    expect(pad.poll().aim).toBe(false);
+  });
+});
