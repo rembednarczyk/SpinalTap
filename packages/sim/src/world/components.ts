@@ -212,6 +212,14 @@ export interface LadderDef {
   readonly exit: Vec3;
 }
 
+/** A pull-up onto a ledge: from where the hands caught it to standing on top, over `duration` seconds. */
+export interface Mantle {
+  readonly from: Vec3;
+  readonly to: Vec3;
+  readonly duration: number;
+  t: number;
+}
+
 /** Jump timers of the player (ADR-0021). Transient like the posture: not saved. */
 export interface JumpState {
   /** Seconds left in which a jump still counts after leaving the ground without one (coyote time). */
@@ -258,6 +266,8 @@ export interface Entity {
   landing?: number;
   jump?: JumpState;
   climb?: Climbing;
+  /** Pulling up onto a ledge (mantle). Transient, not saved: a game saved mid-mantle loads on the ground below. */
+  mantle?: Mantle;
   ladder?: LadderDef;
   elevator?: Elevator;
   gate?: ElevatorGate;

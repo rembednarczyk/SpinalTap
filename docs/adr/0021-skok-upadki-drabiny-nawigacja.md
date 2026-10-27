@@ -19,3 +19,8 @@ ADR-0020 dał poziomy (schody, winda, kładka, estakada), ale tylko gracz z nich
 - Graf jest ręczny: nowe schody w treści potrzebują dwóch węzłów i krawędzi z `via`. Węzły widoku przy dachach też są ręczne.
 - Kolizja postać z postacią dalej pomija pary o różnicy wysokości większej niż wzrost, więc skok nad czyjąś głową nie odpycha.
 - Pad: interakcja przeszła z A na X. Ekran sterowania i podpowiedź HUD wymieniają Spację.
+
+## Dopisek: przeskok na krawędź (mantle)
+- Gracz w powietrzu (po skoku albo w trakcie spadania), który pcha się na bryłę o wierzchu od `STEP_HEIGHT` do `MANTLE_REACH` (1,3 m) nad stopami, z miejscem do stania na jej wierzchu (podłoga tam to ten wierzch, nad nim wzrost postaci wolny), łapie krawędź i podciąga się w `MANTLE_TIME` (0,5 s): dwie trzecie czasu w górę, reszta na krawędź, z wygładzeniem. Ze skoku na płaskim to murki do ok. 2,5 m.
+- W trakcie: brak skoku, strzału i ciosu; ruch prowadzi system ruchu (jak drabina). Zdarzenie `Mantled`, dźwięk lekkiego lądowania. Renderer dostaje pozę drabiny (`climb`).
+- Tylko gracz; NPC dalej chodzą schodami. Stan przejściowy, nie zapisywany: gra zapisana w trakcie wczytuje się z gracza w ostatniej pozycji, skąd spada na ziemię albo stoi na krawędzi.

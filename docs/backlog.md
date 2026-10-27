@@ -90,6 +90,8 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
   kontenery, kable), Car Kit (zaparkowane auta). Inne stylistyki przemalowane na noc, teal i
   magentę przez toon shader, z dołożonymi neonami, kablami i klimatyzatorami. Kolizje zostają
   bryłami w sim; budżety draw calli i migawka NPR pilnują wydajności i looku.
+- **[gotowe] Przeskok na krawędź (mantle).** Skok przy murku do ok. 2,5 m kończy się podciągnięciem
+  na jego wierzch w pół sekundy (dopisek w ADR-0021); bez strzału i skoku w trakcie.
 
 ## Później
 
@@ -98,7 +100,7 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
 
 - Ruch w pionie, jeszcze dalej: dachy i balkony w Shinsekai 7 (scena referencyjna NPR, zmiana
   wymaga nowej migawki), sniper Hebi na dachu targu, NPC na drabinach i w windzie (dziś
-  świadomie nie, ADR-0021), przeskok na krawędź (mantle) zamiast samego skoku.
+  świadomie nie, ADR-0021).
 
 - Własne modele postaci (VRoid lub grafik) po MVP. Decyzja: obsada z próbek VRoid (CC0 / VRoid Hub license v1)
   zostaje w MVP gry.

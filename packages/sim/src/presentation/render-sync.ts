@@ -47,6 +47,8 @@ export class RenderSync {
         // Jumps, falls and ladders (ADR-0021).
         ...(e.fall !== undefined ? { air: e.fall } : {}),
         ...(e.climb ? { climb: e.climb.speed } : {}),
+        // A pull-up onto a ledge borrows the ladder pose: arms up, the body rising.
+        ...(e.mantle ? { climb: 1.5 } : {}),
       };
       if (!this.spawned.has(e.id)) {
         this.spawned.add(e.id);

@@ -38,7 +38,7 @@ export {
   PITCH_LIMIT,
   SPRINT_MULTIPLIER,
 } from "./player-control-system";
-export { FALL_DAMAGE_PER_METRE, FALL_SAFE_HEIGHT, GRAVITY, HARD_LANDING_HEIGHT, fallDamage } from "./movement-system";
+export { FALL_DAMAGE_PER_METRE, FALL_SAFE_HEIGHT, GRAVITY, HARD_LANDING_HEIGHT, MANTLE_REACH, MANTLE_TIME, fallDamage } from "./movement-system";
 export { CLIMB_SPEED, grabLadder } from "./ladder-system";
 
 /**

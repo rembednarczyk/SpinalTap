@@ -199,7 +199,7 @@ export const combatSystem: System = {
     if (ctx.session.dialogueActive || ctx.session.gameOver || !ctx.input.fire) return;
     for (const p of ctx.world.with("player", "combatant")) {
       // Melee weapons swing in the melee system; nobody fires while staggered or on a ladder.
-      if (p.combatant.stats?.melee || (p.melee?.stagger ?? 0) > 0 || p.climb) continue;
+      if (p.combatant.stats?.melee || (p.melee?.stagger ?? 0) > 0 || p.climb || p.mantle) continue;
       if (!readyToFire(p.combatant, loadedOf(ctx, p))) continue;
       // A shotgun with a shell in gives way to the trigger mid-reload.
       p.combatant.reloading = 0;

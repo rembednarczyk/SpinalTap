@@ -76,9 +76,9 @@ const ridingMovingLift = (ctx: SimContext, p: Entity): boolean => {
  */
 const updateJump = (ctx: SimContext, p: Entity, frozen: boolean): void => {
   const j = (p.jump ??= { coyote: 0, buffer: 0 });
-  const grounded = p.fall === undefined && !p.climb;
+  const grounded = p.fall === undefined && !p.climb && !p.mantle;
   j.coyote = grounded ? COYOTE_TIME : Math.max(0, j.coyote - ctx.dt);
-  j.buffer = ctx.input.jump && !frozen && !p.climb ? JUMP_BUFFER : Math.max(0, j.buffer - ctx.dt);
+  j.buffer = ctx.input.jump && !frozen && !p.climb && !p.mantle ? JUMP_BUFFER : Math.max(0, j.buffer - ctx.dt);
   if (j.buffer <= 0 || j.coyote <= 0 || frozen || (p.melee?.stagger ?? 0) > 0) return;
   if (ridingMovingLift(ctx, p)) return;
   j.buffer = 0;

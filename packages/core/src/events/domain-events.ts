@@ -98,6 +98,8 @@ export interface DomainEvents {
    * threshold. The damage itself also goes out as `DamageDealt` (zone "leg", source = target).
    */
   Landed: { entityId: EntityId; drop: number; hard: boolean; damage: number; at: Vec3 };
+  /** Caught a ledge in the air and pulls up onto it, ending at `at`. */
+  Mantled: { entityId: EntityId; at: Vec3 };
   /** Got on (`on`) or off a ladder. */
   LadderClimb: { entityId: EntityId; ladder: string; on: boolean };
   LootDropped: { containerKey: string; at: Vec3; best: Rarity | null };

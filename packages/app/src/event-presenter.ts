@@ -131,6 +131,10 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
     bus.on("Jumped", (e) => {
       if (isPlayer(e.entityId)) audio.play("jump");
     }),
+    // Hands and boots on the ledge edge: a light landing.
+    bus.on("Mantled", (e) => {
+      if (isPlayer(e.entityId)) audio.play("land");
+    }),
     bus.on("Landed", (e) => {
       if (!isPlayer(e.entityId) || e.drop < LANDING_SOUND_DROP) return;
       audio.play(e.hard ? "land-hard" : "land");

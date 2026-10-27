@@ -58,6 +58,54 @@ const ceilingAt = (solids: readonly Solid[], x: number, z: number, head: number)
   return ceiling;
 };
 
+/** Ledges the hands catch in the air: their top from a step above the feet up to this (ADR-0021 addendum). */
+export const MANTLE_REACH = 1.3;
+/** Seconds of a pull-up: the first part lifts, the rest steps onto the ledge. */
+export const MANTLE_TIME = 0.5;
+const MANTLE_LIFT = 0.65;
+/** How far onto the ledge the pull-up ends, beyond the body's radius. */
+const MANTLE_INSET = 0.12;
+
+/**
+ * A ledge in front of an airborne player moving into it (ADR-0021 addendum): a solid that
+ * blocks at `to`, whose top is a step to MANTLE_REACH above the feet, with room to stand on it.
+ * Returns where the pull-up ends, or null.
+ */
+const ledgeAhead = (solids: readonly Solid[], e: Entity & { body: NonNullable<Entity["body"]> }, x: number, z: number, vx: number, vz: number): Entity["position"] | null => {
+  const speed = Math.hypot(vx, vz);
+  if (speed < 0.5) return null;
+  const feet = e.position.y;
+  const [dx, dz] = [vx / speed, vz / speed];
+  for (const s of solids) {
+    if (!blocks(s, x, z, e.body.radius, feet, e.body.height)) continue;
+    // A point just over the edge, past the body's radius, in the direction of travel.
+    const reach = e.body.radius + MANTLE_INSET;
+    const tx = e.position.x + dx * (reach + e.body.radius);
+    const tz = e.position.z + dz * (reach + e.body.radius);
+    if (!overFootprint(s.solid, tx, tz)) continue;
+    const top = topAt(s.solid, s.slope, tx, tz);
+    if (top - feet <= STEP_HEIGHT || top - feet > MANTLE_REACH) continue;
+    if (groundAt(solids, tx, tz, top) !== top || ceilingAt(solids, tx, tz, top) < top + e.body.height) continue;
+    return { x: tx, y: top, z: tz };
+  }
+  return null;
+};
+
+/** Moves a pull-up on; at its end the character stands on the ledge. */
+const stepMantle = (m: NonNullable<Entity["mantle"]>, e: Entity, dt: number): void => {
+  m.t = Math.min(m.duration, m.t + dt);
+  const f = m.t / m.duration;
+  const lift = Math.min(1, f / MANTLE_LIFT);
+  const over = Math.max(0, (f - MANTLE_LIFT) / (1 - MANTLE_LIFT));
+  const ease = (v: number) => v * v * (3 - 2 * v);
+  e.position = {
+    x: m.from.x + (m.to.x - m.from.x) * ease(over),
+    y: m.from.y + (m.to.y - m.from.y) * ease(lift),
+    z: m.from.z + (m.to.z - m.from.z) * ease(over),
+  };
+  if (m.t >= m.duration) delete e.mantle;
+};
+
 /** Fall damage for a drop of `drop` metres (ADR-0021): none up to FALL_SAFE_HEIGHT, then linear. */
 export const fallDamage = (drop: number): number => (drop > FALL_SAFE_HEIGHT ? Math.round((drop - FALL_SAFE_HEIGHT) * FALL_DAMAGE_PER_METRE) : 0);
 
@@ -99,12 +147,27 @@ export const movementSystem: System = {
     for (const e of inCreationOrder(world.with("velocity", "body"))) {
       if (e.climb) continue;
       const dt = e.player ? ctx.dt : enemyDt;
+      if (e.mantle) {
+        stepMantle(e.mantle, e, dt);
+        continue;
+      }
       const feet = e.position.y;
       let x = e.position.x;
       let z = e.position.z;
       if (e.velocity.x !== 0 || e.velocity.z !== 0) {
         x += e.velocity.x * dt;
         z += e.velocity.z * dt;
+        // In the air, pressing into a ledge within reach: pull up onto it instead of sliding down.
+        if (e.player && e.fall !== undefined) {
+          const to = ledgeAhead(solids, e, x, z, e.velocity.x, e.velocity.z);
+          if (to) {
+            e.mantle = { from: e.position, to, duration: MANTLE_TIME, t: 0 };
+            delete e.fall;
+            delete e.airPeak;
+            ctx.bus.emit("Mantled", { entityId: e.id, at: to });
+            continue;
+          }
+        }
         for (let i = 0; i < ITERATIONS; i++) {
           for (const s of solids) if (blocks(s, x, z, e.body.radius, feet, e.body.height)) ({ x, z } = resolveCircleAabb(x, z, e.body.radius, s.solid));
           for (const other of bodies) {
