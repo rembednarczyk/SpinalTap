@@ -67,10 +67,27 @@ test("jump onto a stall counter and the fire escape onto the roof (ADR-0021)", a
   await page.mouse.click(640, 360);
   await teleport(page, 96, 76, NORTH);
   // Let the market stream in and the click take the keys.
+  await expect.poll(async () => (await gameState(page)).loadedChunks).toContain("targ-south");
   await page.waitForTimeout(500);
-  await page.keyboard.down("Space");
-  await expect.poll(async () => (await gameState(page)).player!.y, { timeout: 5000, intervals: [16] }).toBeGreaterThan(0.3);
-  await page.keyboard.up("Space");
+  // The jump lasts 0.7 s, shorter than a few slow SwiftShader frames: record the highest point
+  // every frame instead of polling for it, and tap again if a press landed in a hitch.
+  await page.evaluate(() => {
+    const w = window as unknown as { __peakY: number };
+    w.__peakY = 0;
+    const sample = () => {
+      w.__peakY = Math.max(w.__peakY, window.__seki!.state().player!.y);
+      requestAnimationFrame(sample);
+    };
+    requestAnimationFrame(sample);
+  });
+  const peak = () => page.evaluate(() => (window as unknown as { __peakY: number }).__peakY);
+  for (let i = 0; i < 4 && (await peak()) <= 0.3; i++) {
+    await page.keyboard.down("Space");
+    await page.waitForTimeout(150);
+    await page.keyboard.up("Space");
+    await expect.poll(peak, { timeout: 3000 }).toBeGreaterThan(0.3).catch(() => undefined);
+  }
+  expect(await peak()).toBeGreaterThan(0.3);
   await freeze(page);
   await step(page, 90);
   expect((await gameState(page)).player!.y).toBe(0);
