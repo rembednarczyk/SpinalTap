@@ -73,6 +73,7 @@ describe("migrations", () => {
       version: SAVE_SCHEMA_VERSION,
       rngState: 5,
       entities: [],
+      streaming: { loadedChunks: [] },
       domain: { wallet: { eddies: 0 }, inventory: { medkit: 1 }, reputation: { clinic: 0 }, story: { choices: {}, ending: null } },
     });
   });
@@ -105,7 +106,7 @@ describe("migrations", () => {
     const s = snapshot();
     const { story: _s, ...domain } = s.domain;
     const fresh = decodeSave("m2", wrap({ ...s, version: 4, domain }));
-    expect(fresh.version).toBe(5);
+    expect(fresh.version).toBe(SAVE_SCHEMA_VERSION);
     expect(fresh.domain.story).toEqual({ choices: {}, ending: null });
     expect(fresh.domain.quests).toEqual(s.domain.quests);
 
@@ -125,7 +126,7 @@ describe("migrations", () => {
     const { clinic: _c, ...m1Reputation } = domain.reputation;
     const m1 = { ...domain, reputation: m1Reputation, quests: { m0_first_contract: { status: "completed" } } };
     const loaded = decodeSave("m1", wrap({ ...s, version: 3, domain: m1 }));
-    expect(loaded.version).toBe(5);
+    expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
     expect(loaded.domain.reputation.clinic).toBe(0);
     expect(loaded.domain.story).toEqual({ choices: {}, ending: null });
     expect(loaded.domain.quests.m3_echo).toEqual({ status: "active", stepIndex: 0 });
@@ -136,6 +137,20 @@ describe("migrations", () => {
     const story = { choices: { case: "opened" as const, name: "silent" as const, crash: "wheel" as const }, ending: "aya" as const };
     const withStory = { ...s, domain: { ...s.domain, story } };
     expect(decodeSave("st", encodeSave(withStory)).domain.story).toEqual(story);
+  });
+
+  it("upgrades an M3 (v5) save to world streaming with nothing preloaded", () => {
+    const { streaming: _s, ...v5 } = snapshot();
+    const loaded = decodeSave("m3", wrap({ ...v5, version: 5 }));
+    expect(loaded.version).toBe(6);
+    expect(loaded.streaming).toEqual({ loadedChunks: [] });
+    expect(loaded.entities).toEqual(v5.entities);
+    expect(loaded.domain).toEqual(v5.domain);
+  });
+
+  it("keeps the streaming state of a current save through the round trip", () => {
+    const s = snapshot({ streaming: { loadedChunks: ["kanal", "targ-south"] } });
+    expect(decodeSave("s", encodeSave(s)).streaming.loadedChunks).toEqual(["kanal", "targ-south"]);
   });
 
   it("keeps an active contract through the round trip", () => {
@@ -156,6 +171,9 @@ describe("schema validation", () => {
     ["narrative", { narrative: 5 }],
     ["meta", { meta: { label: 1 } }],
     ["entities", { entities: {} }],
+    ["streaming", { streaming: null }],
+    ["streaming", { streaming: { loadedChunks: "kanal" } }],
+    ["streaming", { streaming: { loadedChunks: [3] } }],
   ])("rejects a bad %s", (_name, patch) => {
     expect(findSchemaError({ ...snapshot(), ...patch } as unknown as Record<string, unknown>)).not.toBeNull();
   });

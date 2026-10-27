@@ -1,6 +1,6 @@
-import { type AbstractMesh, type Color3, Color4, Matrix, MeshBuilder, Vector3 } from "../babylon";
+import { type AbstractMesh, type Color3, Color4, Matrix, type Mesh, MeshBuilder, Vector3 } from "../babylon";
 import { applyOutline } from "../npr/outline";
-import type { CameraMode, EffectDescriptor, EntityId, RenderPort, Transform, ViewDescriptor } from "@seki/core";
+import type { CameraMode, DespawnReason, EffectDescriptor, EntityId, RenderPort, Transform, ViewDescriptor } from "@seki/core";
 import { CameraRig } from "../camera/camera-rig";
 import { Effects } from "../effects/effects";
 import { createRain } from "../effects/rain";
@@ -44,7 +44,13 @@ const modelKeyOf = (view: ViewDescriptor): CharacterModelKey | null => {
 
 type Spawned =
   | { kind: "character"; rig: CharacterRig; transform: Transform; model: CharacterModelKey | null; name: string }
-  | { kind: "prop"; prop: PropView; lightKey: string | null };
+  | { kind: "prop"; prop: PropView; lightKey: string | null; decor: Decor };
+
+/** Atmosphere pieces added for a prop, taken back when the prop goes (world streaming). */
+interface Decor {
+  readonly meshes: Mesh[];
+  readonly flicker: { emissiveColor: Color3 } | null;
+}
 
 const v3 = (p: { x: number; y: number; z: number }) => new Vector3(p.x, p.y, p.z);
 
@@ -144,10 +150,10 @@ export class BabylonRenderer implements RenderPort {
         for (const m of prop.glowing) this.stage.glow.addIncludedOnlyMesh(m);
         for (const m of prop.blockers) this.blockers.add(m);
         for (const m of prop.casters) this.shadow.addStaticCaster(m);
-        this.decorateProp(name, view, at, prop);
+        const decor = this.decorateProp(name, view, at, prop);
         const lightKey = prop.light ? name : null;
         if (prop.light && lightKey) this.materials.addLight(lightKey, prop.light);
-        this.entities.set(id, { kind: "prop", prop, lightKey });
+        this.entities.set(id, { kind: "prop", prop, lightKey, decor });
         return;
       }
     }
@@ -160,13 +166,14 @@ export class BabylonRenderer implements RenderPort {
     this.applyTransform(e.rig, t);
   }
 
-  despawn(id: EntityId): void {
+  despawn(id: EntityId, reason: DespawnReason = "removed"): void {
     const e = this.entities.get(id);
     if (!e) return;
     this.entities.delete(id);
     if (e.kind === "character") {
-      // Enemies fall over before disappearing; a reset (load, new game) clears them at once.
-      if (!this.resetting && id !== this.cameraTarget) {
+      // Enemies fall over before disappearing; a reset (load, new game) or a chunk streaming
+      // out clears them at once.
+      if (!this.resetting && reason === "removed" && id !== this.cameraTarget) {
         startDeath(e.rig);
         this.dying.push(e.rig);
       } else {
@@ -176,6 +183,10 @@ export class BabylonRenderer implements RenderPort {
     }
     for (const m of e.prop.blockers) this.blockers.delete(m);
     if (e.lightKey) this.materials.removeLight(e.lightKey);
+    for (const m of e.decor.meshes) this.atmosphere.removeDecoration(m);
+    if (e.decor.flicker) this.atmosphere.removeFlicker(e.decor.flicker);
+    // Glowing parts (neon faces, lamp bulbs) own their material and texture; the rest share toon presets.
+    for (const m of e.prop.glowing) m.material?.dispose(false, true);
     e.prop.root.dispose(false, false);
   }
 
@@ -250,6 +261,7 @@ export class BabylonRenderer implements RenderPort {
     // Shadow follows what the camera looks at: the player, or the fixed reference view.
     const focus = target?.kind === "character" ? target.transform.position : this.rig.camera.position;
     const moved = this.shadow.update(focus);
+    this.materials.setLightFocus(this.rig.camera.position.x, this.rig.camera.position.z);
     if (moved) this.materials.setShadowMatrix(moved);
     this.effects.update(dt);
     if (this.flash) {
@@ -346,22 +358,25 @@ export class BabylonRenderer implements RenderPort {
   }
 
   /** Light shafts, wet-street reflections and flicker for lamps and neon signs. */
-  private decorateProp(name: string, view: ViewDescriptor, at: Vector3, prop: PropView): void {
+  private decorateProp(name: string, view: ViewDescriptor, at: Vector3, prop: PropView): Decor {
     if (view.kind === "lamp" && prop.light) {
       const l = prop.light.position;
-      this.atmosphere.addLightCone(`${name}-cone`, new Vector3(l.x, 5.05, l.z), view.color);
-      this.atmosphere.addReflection(`${name}-refl`, new Vector3(l.x, 0, l.z), new Vector3(-Math.sign(at.x) || 1, 0, 0), 1.4, 5, view.color, 0.35);
-      return;
+      const cone = this.atmosphere.addLightCone(`${name}-cone`, new Vector3(l.x, 5.05, l.z), view.color);
+      const refl = this.atmosphere.addReflection(`${name}-refl`, new Vector3(l.x, 0, l.z), new Vector3(-Math.sign(at.x) || 1, 0, 0), 1.4, 5, view.color, 0.35);
+      return { meshes: [cone, refl], flicker: null };
     }
-    if (view.kind !== "neon") return;
+    if (view.kind !== "neon") return { meshes: [], flicker: null };
     const thinX = view.size.x <= view.size.z && view.size.x <= view.size.y;
     const towards = thinX ? new Vector3(at.x > 0 ? -1 : 1, 0, 0) : new Vector3(0, 0, -1);
     const width = thinX ? view.size.z : view.size.x;
-    this.atmosphere.addReflection(`${name}-refl`, new Vector3(at.x, 0, at.z), towards, Math.max(1.2, width), 7, view.color, 0.55);
+    const refl = this.atmosphere.addReflection(`${name}-refl`, new Vector3(at.x, 0, at.z), towards, Math.max(1.2, width), 7, view.color, 0.55);
     const sign = prop.glowing[0]?.material as unknown as { emissiveColor?: Color3 } | null;
     if (sign?.emissiveColor && (view.label === "HOTEL" || view.label === "KUSURI")) {
-      this.atmosphere.addFlicker(sign as { emissiveColor: Color3 }, view.label.length);
+      const flicker = sign as { emissiveColor: Color3 };
+      this.atmosphere.addFlicker(flicker, view.label.length);
+      return { meshes: [refl], flicker };
     }
+    return { meshes: [refl], flicker: null };
   }
 
   private applyTransform(rig: CharacterRig, t: Transform): void {

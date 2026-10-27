@@ -32,6 +32,9 @@ export type ViewDescriptor =
     }
   | { readonly kind: "lamp"; readonly color: string };
 
+/** Why a view goes away: killed or otherwise removed from the world, or streamed out with its chunk. */
+export type DespawnReason = "removed" | "unloaded";
+
 /** Short-lived presentation effects triggered by domain events. */
 export type EffectDescriptor =
   | { readonly kind: "muzzle-flash"; readonly shooterId: EntityId; readonly from: Vec3; readonly to: Vec3 }

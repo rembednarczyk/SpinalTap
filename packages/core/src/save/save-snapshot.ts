@@ -1,7 +1,7 @@
 import type { Vec3 } from "../math/vec3";
 import type { DomainState } from "../state/domain-state";
 
-export const SAVE_SCHEMA_VERSION = 5;
+export const SAVE_SCHEMA_VERSION = 6;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {
@@ -15,13 +15,21 @@ export interface EntitySnapshot {
   readonly alerted: boolean;
 }
 
+/** World streaming state: which chunks are resident. Their content is rebuilt from the content tables. */
+export interface StreamingSnapshot {
+  /** Loaded chunk ids, in content-table order. Unknown ids are ignored on load. */
+  readonly loadedChunks: readonly string[];
+}
+
 export interface SaveSnapshot {
   readonly version: typeof SAVE_SCHEMA_VERSION;
   readonly seed: number;
   /** Internal RNG state, so a loaded game continues the same random stream. */
   readonly rngState: number;
   readonly tick: number;
+  /** Live keyed entities plus the ones asleep in unloaded chunks. */
   readonly entities: readonly EntitySnapshot[];
+  readonly streaming: StreamingSnapshot;
   readonly domain: DomainState;
   /** Serialized ink story state (inkjs JSON). */
   readonly narrative: string | null;

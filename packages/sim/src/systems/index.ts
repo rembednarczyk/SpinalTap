@@ -9,6 +9,7 @@ import { itemSystem } from "./item-system";
 import { movementSystem } from "./movement-system";
 import { playerControlSystem } from "./player-control-system";
 import { questSystem } from "./quest-system";
+import { streamingSystem } from "./streaming-system";
 
 export { fireShot, HEAD_ZONE } from "./combat-system";
 export { equippedAbility, worldTimeScale } from "./ability-system";
@@ -20,6 +21,7 @@ export { statsFor, PITCH_LIMIT, SPRINT_MULTIPLIER } from "./player-control-syste
  * Returns fresh instances because some systems keep per-simulation caches.
  */
 export const createSystems = (): readonly System[] => [
+  streamingSystem,
   interpolationSystem,
   abilitySystem,
   itemSystem,

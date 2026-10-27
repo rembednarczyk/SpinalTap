@@ -2,6 +2,7 @@ import type { DomainEvents, DomainState, EntityId, EventBus, InputFrame } from "
 import type { World } from "miniplex";
 import type { SeededRandom } from "../rng/seeded-random";
 import type { Entity } from "./components";
+import type { WorldStreamer } from "./streaming";
 
 /** Transient per-session flags that are not part of the domain model. */
 export interface SessionState {
@@ -21,6 +22,7 @@ export interface SimContext {
   readonly state: DomainHolder;
   readonly session: SessionState;
   readonly rng: SeededRandom;
+  readonly streamer: WorldStreamer;
   readonly bus: EventBus<DomainEvents>;
   readonly dt: number;
   readonly tick: number;

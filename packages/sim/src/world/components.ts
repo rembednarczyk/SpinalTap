@@ -49,6 +49,8 @@ export interface Entity {
   key?: string;
   /** Quest tag reported in EntityKilled. */
   tag?: string;
+  /** Streaming chunk the entity belongs to; it leaves the world when that chunk unloads. */
+  chunk?: string;
   position: Vec3;
   prevPosition: Vec3;
   yaw: number;

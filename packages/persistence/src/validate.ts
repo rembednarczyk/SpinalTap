@@ -27,6 +27,8 @@ export const findSchemaError = (s: Json): string | null => {
     if (!isNum(e.yaw) || !isNum(e.pitch) || !isNum(e.cooldown) || typeof e.alerted !== "boolean") return `entity ${e.key}`;
     if (e.hp !== null && !isNum(e.hp)) return `entity ${e.key} hp`;
   }
+  const st = s.streaming;
+  if (!isObject(st) || !Array.isArray(st.loadedChunks) || !st.loadedChunks.every((c) => typeof c === "string")) return "streaming";
   const d = s.domain;
   if (!isObject(d)) return "domain";
   const c = d.character;

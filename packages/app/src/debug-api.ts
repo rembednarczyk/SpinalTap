@@ -18,6 +18,8 @@ export interface DebugApi {
     dialogue: boolean;
     flags: readonly string[];
     player: { x: number; z: number } | null;
+    district: string | null;
+    loadedChunks: readonly string[];
   };
   perf(): PerfSample;
   setPaused(paused: boolean): void;
@@ -55,6 +57,8 @@ export const createDebugApi = (
       dialogue: s.dialogue !== null,
       flags: sim.domain.flags,
       player: p ? { x: p.position.x, z: p.position.z } : null,
+      district: sim.district,
+      loadedChunks: sim.streamer.loadedChunks,
     };
   },
   perf,

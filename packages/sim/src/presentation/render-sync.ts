@@ -4,7 +4,8 @@ import type { Entity } from "../world/components";
 
 /**
  * Mirrors the ECS world into a RenderPort: spawns new views, despawns removed ones and
- * pushes interpolated transforms for moving entities.
+ * pushes interpolated transforms for moving entities. Entities listed in `streamedOut`
+ * (asleep in an unloaded chunk) are despawned as "unloaded", everything else as "removed".
  */
 export class RenderSync {
   private readonly spawned = new Set<EntityId>();
@@ -12,7 +13,7 @@ export class RenderSync {
 
   constructor(private readonly port: RenderPort) {}
 
-  sync(world: World<Entity>, alpha: number): void {
+  sync(world: World<Entity>, alpha: number, streamedOut?: ReadonlySet<EntityId>): void {
     const seen = new Set<EntityId>();
     for (const e of world.with("view")) {
       seen.add(e.id);
@@ -37,7 +38,7 @@ export class RenderSync {
     for (const id of [...this.spawned]) {
       if (seen.has(id)) continue;
       this.spawned.delete(id);
-      this.port.despawn(id);
+      this.port.despawn(id, streamedOut?.has(id) ? "unloaded" : "removed");
     }
   }
 

@@ -15,5 +15,5 @@ export {
   HOSTILE_AGGRO_MULTIPLIER,
   effectiveAggroRange,
 } from "./systems/ai";
-export { contractGangerHp, createDistrictWorld, GANGER_MAX_HP, PLAYER_MAX_HP, spawnContractTargets } from "./world/factory";
+export { contractGangerHp, GANGER_MAX_HP, PLAYER_MAX_HP } from "./world/factory";
 export type { SessionState, SimContext, System } from "./world/context";

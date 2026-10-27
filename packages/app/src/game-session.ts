@@ -16,7 +16,7 @@ import {
   recallDialogueId,
 } from "@seki/core";
 import { type DialogueView, NarrativeRuntime } from "@seki/narrative";
-import { DISTRICT_M0_PROPS, RenderSync, Simulation } from "@seki/sim";
+import { DISTRICTS, DISTRICT_M0_PROPS, type DistrictId, RenderSync, Simulation } from "@seki/sim";
 import { type AbilityVm, type Screen, type SettingsVm, type UiIntents, type UiStore, dismissToast, patchUi, pushToast } from "@seki/ui";
 import { bindEventPresenter } from "./event-presenter";
 import { createJournalCache } from "./journal";
@@ -63,6 +63,8 @@ export class GameSession implements UiIntents {
   private readonly journal = createJournalCache();
   private readonly minimap = createMinimapTracker();
   private readonly appliedSettings: SettingsVm;
+  /** Last district the player was seen in; a change raises a toast. */
+  private district: DistrictId | null = null;
 
   constructor(private readonly deps: GameSessionDeps) {
     this.narrative = new NarrativeRuntime(deps.story, (cmd) => this.simulation.enqueue(cmd));
@@ -117,8 +119,18 @@ export class GameSession implements UiIntents {
   }
 
   render(alpha: number): void {
-    this.renderSync.sync(this.simulation.world, alpha);
+    this.renderSync.sync(this.simulation.world, alpha, this.simulation.streamer.streamedOut);
+    this.announceDistrict();
     this.syncHud();
+  }
+
+  /** Names the district when the player crosses into another one (streaming itself is silent). */
+  private announceDistrict(): void {
+    const next = this.simulation.district;
+    if (next === null || next === this.district) return;
+    const first = this.district === null;
+    this.district = next;
+    if (!first && this.screen === "playing") pushToastTimed(this.deps.ui, "system", DISTRICTS[next].name);
   }
 
   syncHud(): void {
@@ -320,6 +332,7 @@ export class GameSession implements UiIntents {
   private replaceSimulation(next: Simulation): void {
     this.renderSync.reset();
     this.simulation = next;
+    this.district = next.district;
     this.deps.render.setCameraMode(next.domain.preferences.cameraMode);
     patchUi(this.deps.ui, { prompt: null, toasts: [] });
     this.render(0);

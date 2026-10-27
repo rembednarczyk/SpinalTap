@@ -15,5 +15,6 @@
 | [0011](0011-frakcje-i-reputacja-m2.md) | Frakcje i reputacja M2, reakcje NPC | Zaakceptowana |
 | [0012](0012-watek-glowny-akt-1.md) | Wątek główny, akt I: wspomnienia, wybory, zakończenia | Zaakceptowana |
 | [0013](0013-audio-scena-muzyka-miks.md) | Scena audio: muzyka warstwowa, ambient pozycyjny, miks | Zaakceptowana |
+| [0014](0014-world-streaming-chunki.md) | World streaming: chunki z histerezą, drugi dystrykt | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.

@@ -9,6 +9,7 @@ export const snapshot = (overrides: Partial<SaveSnapshot> = {}): SaveSnapshot =>
     { key: "player", position: { x: 1, y: 0, z: -3.5 }, yaw: 0.4, pitch: -0.1, hp: 77, cooldown: 0, alerted: false },
     { key: "guard", position: { x: -2, y: 0, z: 40 }, yaw: 3.1, pitch: 0, hp: 80, cooldown: 0.2, alerted: true },
   ],
+  streaming: { loadedChunks: ["shinsekai-7", "kanal"] },
   domain: { ...createDomainState(), flags: ["met_fixer"], preferences: { cameraMode: "TPP" } },
   narrative: '{"inkSaveVersion":10}',
   meta: { label: "26.10 22:30", objective: "Zneutralizuj kuriera" },
