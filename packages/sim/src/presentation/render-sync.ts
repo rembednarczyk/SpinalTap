@@ -1,4 +1,4 @@
-import { type EntityId, type RenderPort, type Transform, lerp, lerpAngle } from "@seki/core";
+import { type AppearanceDescriptor, type DomainState, ENEMY_TYPES, type EntityId, type RenderPort, type Transform, appearanceOf, appearanceOfEnemy, lerp, lerpAngle, sameAppearance } from "@seki/core";
 import type { World } from "miniplex";
 import type { Entity } from "../world/components";
 
@@ -10,10 +10,13 @@ import type { Entity } from "../world/components";
 export class RenderSync {
   private readonly spawned = new Set<EntityId>();
   private cameraTarget: EntityId | null = null;
+  /** Last appearance sent per entity; a new one goes out only when it differs (ADR-0015). */
+  private readonly looks = new Map<EntityId, AppearanceDescriptor>();
+  private playerLook: { inv: unknown; eq: unknown; look: AppearanceDescriptor } | null = null;
 
   constructor(private readonly port: RenderPort) {}
 
-  sync(world: World<Entity>, alpha: number, streamedOut?: ReadonlySet<EntityId>): void {
+  sync(world: World<Entity>, alpha: number, streamedOut?: ReadonlySet<EntityId>, domain?: DomainState): void {
     const seen = new Set<EntityId>();
     for (const e of world.with("view")) {
       seen.add(e.id);
@@ -31,6 +34,11 @@ export class RenderSync {
       } else if (moving) {
         this.port.updateTransform(e.id, transform);
       }
+      const look = this.appearanceFor(e, domain);
+      if (look && !sameAppearance(this.looks.get(e.id) ?? null, look)) {
+        this.looks.set(e.id, look);
+        this.port.setAppearance(e.id, look);
+      }
       if (e.player && this.cameraTarget !== e.id) {
         this.cameraTarget = e.id;
         this.port.attachCamera(e.id);
@@ -39,6 +47,7 @@ export class RenderSync {
     for (const id of [...this.spawned]) {
       if (seen.has(id)) continue;
       this.spawned.delete(id);
+      this.looks.delete(id);
       this.port.despawn(id, streamedOut?.has(id) ? "unloaded" : "removed");
     }
   }
@@ -47,6 +56,21 @@ export class RenderSync {
   reset(): void {
     this.port.clear();
     this.spawned.clear();
+    this.looks.clear();
+    this.playerLook = null;
     this.cameraTarget = null;
+  }
+
+  /** The player's look follows the equipment; an enemy's comes from its type. */
+  private appearanceFor(e: Entity, domain: DomainState | undefined): AppearanceDescriptor | null {
+    if (e.player && domain) {
+      const p = this.playerLook;
+      if (p && p.inv === domain.inventory && p.eq === domain.equipment) return p.look;
+      const look = appearanceOf(domain.inventory, domain.equipment);
+      this.playerLook = { inv: domain.inventory, eq: domain.equipment, look };
+      return look;
+    }
+    if (e.enemy) return appearanceOfEnemy(ENEMY_TYPES[e.enemy.type]);
+    return null;
   }
 }

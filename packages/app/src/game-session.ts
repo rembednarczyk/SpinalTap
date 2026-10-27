@@ -150,7 +150,7 @@ export class GameSession implements UiIntents {
   }
 
   render(alpha: number): void {
-    this.renderSync.sync(this.simulation.world, alpha, this.simulation.streamer.streamedOut);
+    this.renderSync.sync(this.simulation.world, alpha, this.simulation.streamer.streamedOut, this.simulation.domain);
     this.syncTimeOfDay();
     this.announceDistrict();
     this.syncHud();

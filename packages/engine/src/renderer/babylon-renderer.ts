@@ -1,5 +1,4 @@
-import { type AbstractMesh, type Color3, Color4, Matrix, type Mesh, MeshBuilder, TransformNode, Vector3 } from "../babylon";
-import { applyOutline } from "../npr/outline";
+import { type AbstractMesh, type Color3, Color4, Matrix, type Mesh, TransformNode, Vector3 } from "../babylon";
 import type { AppearanceDescriptor, CameraMode, DespawnReason, EffectDescriptor, EntityId, RenderPort, Transform, ViewDescriptor } from "@seki/core";
 import { CameraRig } from "../camera/camera-rig";
 import { Effects } from "../effects/effects";
@@ -12,12 +11,13 @@ import { MoonShadow } from "../npr/moon-shadow";
 import { ToonMaterials } from "../npr/toon-material";
 import { Atmosphere, createSplashes, createSteam } from "./atmosphere";
 import { createDressing } from "./dressing";
-import { type CharacterRig, animateRig, deathFinished, raiseWeapon, setWeaponDrawn, startDeath, buildCivilian, buildFixer, buildGanger, buildHeroine, buildRipperdoc } from "./characters";
+import { type CharacterRig, animateRig, deathFinished, raiseWeapon, setWeaponDrawn, startDeath, startReload, buildCivilian, buildFixer, buildGanger, buildHeroine, buildRipperdoc } from "./characters";
 import { type CharacterModelKey, type CharacterModelManifest, type ModelInstance, ModelLibrary } from "./model-library";
 import { HumanoidRetarget } from "./model-rig";
 import { SpringBones, humanoidColliders } from "./spring-bones";
-import { type WeaponKind, type WeaponManifest, WeaponMounts } from "./weapon-mount";
-import { type PropView, buildBlock, buildLamp, buildNeon } from "./props";
+import { type WeaponManifest, WeaponMounts } from "./weapon-mount";
+import { Loadouts } from "./loadout";
+import { type PropView, buildBlock, buildLamp, buildLootBag, buildNeon } from "./props";
 import type { Stage } from "./stage";
 
 /** An imported model dressed over a procedural rig, which keeps animating invisibly. */
@@ -76,10 +76,8 @@ export class BabylonRenderer implements RenderPort {
   private cameraTarget: EntityId | null = null;
   private readonly library: ModelLibrary;
   private readonly weapons: WeaponMounts;
-  /** Weapon model each armed character carries (the heroine a pistol, gangers an SMG). */
-  private readonly weaponOf = new Map<CharacterRig, WeaponKind>();
-  /** Mounted weapon models in hand and holster: only the one in use is enabled (a zero scale still draws). */
-  private readonly weaponPivots = new Map<CharacterRig, { hand: TransformNode; hip: TransformNode }>();
+  /** Weapons and garment add-ons per character, from `setAppearance`. */
+  private readonly loadouts: Loadouts;
   private models: CharacterModelManifest = {};
   private readonly dressed = new Map<CharacterRig, Dressed>();
   /** Rigs whose model is still loading, so a manifest arriving meanwhile does not dress them twice. */
@@ -99,6 +97,9 @@ export class BabylonRenderer implements RenderPort {
     });
     this.library = new ModelLibrary(scene, this.materials);
     this.weapons = new WeaponMounts(this.library);
+    this.loadouts = new Loadouts(scene, this.materials, this.weapons, (meshes) => {
+      for (const m of meshes) this.shadow.addCaster(m);
+    });
     this.rig = new CameraRig(scene, this.materials, (m) => this.blockers.has(m));
     this.rig.onBodyVisibility = (visible) => this.setPlayerBodyVisible(visible);
     // Line art must be attached before the grading pipeline so the ink gets graded too.
@@ -144,10 +145,6 @@ export class BabylonRenderer implements RenderPort {
         this.entities.set(id, { kind: "character", rig, transform: t, model, name });
         this.applyTransform(rig, t);
         this.dress(rig, model, name);
-        if (rig.gunHand) {
-          this.weaponOf.set(rig, view.kind === "heroine" ? "pistol" : "smg");
-          this.equipWeapon(rig, name);
-        }
         return;
       }
       case "block":
@@ -170,10 +167,8 @@ export class BabylonRenderer implements RenderPort {
         return;
       }
       case "loot": {
-        // Placeholder until the bag look (ADR-0015, E7): a small metal box through the prop path.
-        const size = { x: 0.5, y: 0.28, z: 0.36 };
-        const at = v3({ x: t.position.x, y: t.position.y + size.y / 2, z: t.position.z });
-        const prop = buildBlock(scene, this.materials, name, { kind: "block", size, material: "metal" }, at);
+        const prop = buildLootBag(scene, this.materials, name, view, v3(t.position));
+        for (const m of prop.glowing) this.stage.glow.addIncludedOnlyMesh(m);
         this.entities.set(id, { kind: "prop", prop, lightKey: null, decor: { meshes: [], flicker: null } });
         return;
       }
@@ -220,7 +215,6 @@ export class BabylonRenderer implements RenderPort {
   }
 
   /** Outfits and stowed weapons arrive with the appearance work (ADR-0015, stage E7). */
-  setAppearance(_id: EntityId, _appearance: AppearanceDescriptor): void {}
 
   playEffect(effect: EffectDescriptor): void {
     switch (effect.kind) {
@@ -254,6 +248,12 @@ export class BabylonRenderer implements RenderPort {
         if (effect.entityId === this.cameraTarget) this.rig.setWeaponDrawn(effect.drawn);
         return;
       }
+      case "reload": {
+        const e = this.entities.get(effect.entityId);
+        if (e?.kind === "character") startReload(e.rig, effect.duration);
+        if (effect.entityId === this.cameraTarget) this.rig.startReload(effect.duration);
+        return;
+      }
       case "flinch": {
         const e = this.entities.get(effect.entityId);
         if (e?.kind === "character") e.rig.flinch = 1;
@@ -282,18 +282,12 @@ export class BabylonRenderer implements RenderPort {
         this.dying.splice(i, 1);
       }
     }
-    for (const [rig, d] of this.dressed) {
+    for (const d of this.dressed.values()) {
       d.retarget.update();
       d.springs?.update(dt);
-      d.gun?.setEnabled(rig.drawn >= 0.5);
     }
-    for (const [rig, w] of this.weaponPivots) {
-      // A dressed character shows the weapon in the model's hand; the rig's own copies stay off.
-      const shown = !this.dressed.has(rig);
-      const drawn = rig.drawn >= 0.5;
-      if (w.hand.isEnabled() !== (shown && drawn)) w.hand.setEnabled(shown && drawn);
-      if (w.hip.isEnabled() !== (shown && !drawn)) w.hip.setEnabled(shown && !drawn);
-    }
+    for (const e of this.entities.values()) if (e.kind === "character") this.loadouts.update(e.rig, this.dressed.has(e.rig));
+    for (const rig of this.dying) this.loadouts.update(rig, this.dressed.has(rig));
     const target = this.cameraTarget === null ? undefined : this.entities.get(this.cameraTarget);
     this.rig.update(target?.kind === "character" ? target.transform : null, dt);
     // Shadow follows what the camera looks at: the player, or the fixed reference view.
@@ -331,7 +325,9 @@ export class BabylonRenderer implements RenderPort {
    */
   setWeaponModels(manifest: WeaponManifest): void {
     this.weapons.setManifest(manifest);
-    for (const e of this.entities.values()) if (e.kind === "character" && e.rig.gunHand) this.equipWeapon(e.rig, e.name);
+    const names = new Map<CharacterRig, string>();
+    for (const e of this.entities.values()) if (e.kind === "character") names.set(e.rig, e.name);
+    this.loadouts.remountAll(names);
     if (this.weapons.has("pistol")) {
       void this.weapons.mount(this.rig.weaponMount, "pistol", "vm-weapon", "view").then((pivot) => {
         if (pivot) this.rig.hidePlaceholderGun();
@@ -339,19 +335,11 @@ export class BabylonRenderer implements RenderPort {
     }
   }
 
-  /** Mounts the rig's weapon model in hand and holster; the box pistols go once both are in. */
-  private equipWeapon(rig: CharacterRig, name: string): void {
-    const kind = this.weaponOf.get(rig);
-    if (!kind || !rig.gunHand || !rig.gunHip || !this.weapons.has(kind)) return;
-    void Promise.all([
-      this.weapons.mount(rig.gunHand, kind, `${name}-w-hand`, "hand"),
-      this.weapons.mount(rig.gunHip, kind, `${name}-w-hip`, "hand"),
-    ]).then(([hand, hip]) => {
-      if (!hand || !hip) return;
-      for (const box of rig.gunBoxes) box.scaling.setAll(0);
-      this.weaponPivots.set(rig, { hand, hip });
-      for (const pivot of [hand, hip]) for (const m of pivot.getChildMeshes(false)) if (m.getTotalVertices() > 0) this.shadow.addCaster(m);
-    });
+  /** What a character wears and carries (ADR-0015): weapons in hand, holster and on the back, garment add-ons. */
+  setAppearance(id: EntityId, appearance: AppearanceDescriptor): void {
+    const e = this.entities.get(id);
+    if (e?.kind !== "character" || !e.rig.aiming) return;
+    this.loadouts.set(e.rig, appearance, e.name);
   }
 
   /** Imported character models (models/manifest.json); characters on screen are dressed too. */
@@ -426,21 +414,7 @@ export class BabylonRenderer implements RenderPort {
       holder.dispose();
       return null;
     }
-    const box = MeshBuilder.CreateBox(`${model.root.name}-gunbox`, { width: 0.035, height: 0.2, depth: 0.06 }, this.stage.scene);
-    box.material = this.materials.get("gun");
-    box.isPickable = false;
-    box.parent = holder;
-    box.position.set(0, -0.1, 0.03);
-    applyOutline(box);
-    this.shadow.addCaster(box);
-    const kind = this.weaponOf.get(rig);
-    if (kind) {
-      void this.weapons.mount(holder, kind, `${model.root.name}-w`, "hand").then((pivot) => {
-        if (!pivot) return;
-        box.dispose();
-        for (const m of pivot.getChildMeshes(false)) if (m.getTotalVertices() > 0) this.shadow.addCaster(m);
-      });
-    }
+    this.loadouts.setModelHand(rig, holder, model.root.name);
     return holder;
   }
 
@@ -451,8 +425,8 @@ export class BabylonRenderer implements RenderPort {
       this.releaseModel(d.model, d.url);
     }
     this.dressed.delete(rig);
-    this.weaponOf.delete(rig);
-    this.weaponPivots.delete(rig);
+    this.loadouts.setModelHand(rig, null, "");
+    this.loadouts.dispose(rig);
     rig.root.dispose(false, false);
   }
 

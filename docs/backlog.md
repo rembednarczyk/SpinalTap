@@ -30,11 +30,24 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
   eddies, amunicja, apteczki, części i wszczepy z tabel łupów zależnych od typu wroga. Losowanie
   przez `RandomPort`, stan zebranych łupów w zapisie. Wdrożone jako etapy E0 do E6 planu ekwipunku
   (sloty broni, amunicja, przeładowanie, pancerz per strefa, torby z łupem, minimalny panel łupu);
-  wygląd torby i postaci (E7) oraz menu postaci (E8 i E9) czekają.
+  wygląd torby i postaci (E7: broń w dłoni, kaburze i na plecach, dodatki odzieży, torba z paskiem
+  w kolorze rzadkości, animacja przeładowania) gotowy; menu postaci (E8 i E9) w toku.
 - **Menu postaci na telefonie (i desktopie).** Ekran ekwipunku z podglądem postaci w 3D (obrót,
   aktualny wygląd z założonymi wszczepami i bronią), statystyki (HP, pancerz, celność, kryt,
   reputacja), siatka inventory z przeciąganiem lub stuknięciem, porównanie przedmiotów. Układ
   pod poziomy ekran telefonu z dużymi celami dotyku; spójny z kartą postaci i dziennikiem.
+- **Celowanie prawym przyciskiem myszy (ADS).** PPM przytrzymany: zbliżenie widoku (FOV) i broń
+  podniesiona do oka w FPP, w TPP kamera przez ramię. Parametry per broń w katalogu: zoom (pistolet
+  małe, SMG średnie, karabin duże), czas wejścia w celowanie, mniejszy rozrzut i wolniejszy ruch
+  podczas celowania, czułość myszy skalowana zoomem. Celownik zwęża się jak przy kucaniu. Na
+  telefonie przycisk celowania (przytrzymaj lub przełącz, w ustawieniach). Wejście jako pole
+  `aim` w `InputFrame`, stan w sim, deterministycznie.
+- **Broń biała.** Pałka i ostrze z katalogu jako pełnoprawne bronie slotu „wręcz”: atak lekki (LPM)
+  z krótkim combo, trafienie łukiem przed postacią w zasięgu broni, obrażenia per strefa ciała,
+  odrzut i przerwanie akcji trafionego. PPM przy broni białej to blok: zmniejsza obrażenia z
+  przodu, kosztuje wytrzymałość lub ma limit, blok w dobrym momencie (parry) ogłusza
+  przeciwnika wręcz. Animacje zamachu i bloku w rigu (i retarget na modele), dźwięki uderzeń.
+  AI: wrogowie z bronią białą skracają dystans, gracz może ich blokować.
 
 ## Później
 

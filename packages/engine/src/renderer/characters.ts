@@ -31,6 +31,9 @@ export interface CharacterRig {
   /** 0 low ready (muzzle down, arm loose) .. 1 aimed; raised by a shot, lowered after `aimHold`. */
   aim: number;
   aimHold: number;
+  /** Seconds left of a reload, and its full length; 0 when not reloading. */
+  reload: number;
+  reloadTotal: number;
   /** Arms hang slightly away from the body (radians around Z). */
   readonly armSpread: number;
   /** Left arm held in a fixed pose (shoulder X, elbow X), e.g. holding an umbrella. */
@@ -406,6 +409,8 @@ const finish = (
     drawTarget: true,
     aim: 0,
     aimHold: 0,
+    reload: 0,
+    reloadTotal: 0,
     aiming: opts.aiming,
     armSpread: opts.armSpread,
     leftHold: opts.leftHold ?? null,
@@ -729,7 +734,12 @@ const poseWeaponArms = (rig: CharacterRig, swing: number, amount: number, dt: nu
   // At a run the pistol is carried close to the chest, muzzle down, still moving with the stride.
   const lowReady: ArmPose = { armX: -0.32 + swing * (0.22 + 0.12 * run) - 0.1 * run, armZ: -0.06 - 0.12 * run, elbowX: -0.62 + sway * 0.12 - 0.55 * run };
   const aimed: ArmPose = { armX: -1.42 + Math.abs(sway) * 0.05, armZ: 0, elbowX: -0.05 };
-  const ready = mixPose(lowReady, aimed, smooth(rig.aim));
+  // Reloading: pistol down to the chest, tipped in, while the left hand fetches a magazine.
+  rig.reload = Math.max(0, rig.reload - dt);
+  const reloading = rig.reloadTotal > 0 && rig.reload > 0 ? Math.sin(Math.PI * (1 - rig.reload / rig.reloadTotal)) : 0;
+  if (reloading > 0) rig.aim *= 1 - reloading;
+  const chest: ArmPose = { armX: -0.55, armZ: -0.18, elbowX: -1.35 };
+  const ready = mixPose(mixPose(lowReady, aimed, smooth(rig.aim)), chest, reloading);
   const d = rig.drawn;
   const pose = d < 0.5 ? mixPose(free, reach, smooth(d / 0.5)) : mixPose(reach, ready, smooth((d - 0.5) / 0.5));
   rig.armR.rotation.x = pose.armX;
@@ -738,6 +748,12 @@ const poseWeaponArms = (rig: CharacterRig, swing: number, amount: number, dt: nu
   rig.gunHand?.scaling.setAll(d >= 0.5 ? 1 : 0);
   rig.gunHip?.scaling.setAll(d >= 0.5 ? 0 : 1);
 
+  if (reloading > 0 && !rig.leftHold) {
+    rig.armL.rotation.x += (-1.05 - rig.armL.rotation.x) * reloading;
+    rig.armL.rotation.z += (0.5 - rig.armL.rotation.z) * reloading;
+    rig.elbowL.rotation.x += (-1.5 - rig.elbowL.rotation.x) * reloading;
+    return;
+  }
   // Support hand under the pistol while aiming.
   const support = smooth(rig.aim) * (d >= 0.5 ? 1 : 0);
   if (support > 0 && !rig.leftHold) {
@@ -750,6 +766,11 @@ const poseWeaponArms = (rig: CharacterRig, swing: number, amount: number, dt: nu
 /** Holsters or draws the pistol (animated). */
 export const setWeaponDrawn = (rig: CharacterRig, drawn: boolean): void => {
   rig.drawTarget = drawn;
+};
+
+/** Plays the reload for `seconds`. */
+export const startReload = (rig: CharacterRig, seconds: number): void => {
+  rig.reload = rig.reloadTotal = Math.max(0.1, seconds);
 };
 
 /** Brings the weapon up to aim for a moment, e.g. on a shot. */

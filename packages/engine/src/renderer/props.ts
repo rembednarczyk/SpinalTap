@@ -1,4 +1,4 @@
-import { Color3, DynamicTexture, type Mesh, MeshBuilder, type Scene, StandardMaterial, TransformNode, type Vector3 } from "../babylon";
+import { Color3, DynamicTexture, type Mesh, MeshBuilder, type Scene, StandardMaterial, TransformNode, Vector3 } from "../babylon";
 import type { ViewDescriptor } from "@seki/core";
 import type { ToonMaterials } from "../npr/toon-material";
 import type { PresetName } from "../npr/presets";
@@ -16,6 +16,39 @@ export interface PropView {
 
 type Block = Extract<ViewDescriptor, { kind: "block" }>;
 type Neon = Extract<ViewDescriptor, { kind: "neon" }>;
+type Loot = Extract<ViewDescriptor, { kind: "loot" }>;
+
+/** Strip colour per best rarity in a loot bag; the same hues as the UI rarity frames. */
+const LOOT_STRIP: Readonly<Record<NonNullable<Loot["best"]> | "none", string>> = {
+  none: "#8a93a6",
+  common: "#c9d1e0",
+  uncommon: "#5ff2ff",
+  rare: "#ff3d8b",
+  unique: "#ffbf4a",
+};
+
+/** A dark duffel bag with a neon strip in the colour of the best item inside (ADR-0015). */
+export const buildLootBag = (scene: Scene, materials: ToonMaterials, name: string, v: Loot, at: Vector3): PropView => {
+  const root = new TransformNode(name, scene);
+  root.position.copyFrom(at);
+  const bag = MeshBuilder.CreateCapsule(`${name}-mesh`, { radius: 0.15, height: 0.56, orientation: Vector3.Right(), tessellation: 10, subdivisions: 1 }, scene);
+  bag.parent = root;
+  bag.position.y = 0.14;
+  bag.scaling.set(1, 0.85, 1);
+  bag.material = materials.get("cyberDark");
+  bag.isPickable = true;
+  bag.freezeWorldMatrix();
+  const strip = MeshBuilder.CreateBox(`${name}-strip`, { width: 0.5, height: 0.03, depth: 0.012 }, scene);
+  strip.parent = root;
+  strip.position.set(0, 0.2, -0.13);
+  strip.isPickable = false;
+  const mat = new StandardMaterial(`${name}-strip-mat`, scene);
+  mat.disableLighting = true;
+  mat.emissiveColor = Color3.FromHexString(LOOT_STRIP[v.best ?? "none"]);
+  strip.material = mat;
+  strip.freezeWorldMatrix();
+  return { root, glowing: [strip], blockers: [], casters: [bag], light: null };
+};
 
 const blockPreset = (v: Block): PresetName => {
   if (v.material === "asphalt") return "asphalt";

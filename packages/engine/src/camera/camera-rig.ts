@@ -113,6 +113,14 @@ export class CameraRig {
   /** 0 holstered (viewmodel out of view) .. 1 drawn; eased towards `weaponDrawn`. */
   private draw = 1;
 
+  private reload = 0;
+  private reloadTotal = 0;
+
+  /** Plays the FPP reload: the weapon dips and rolls in for `seconds`. */
+  startReload(seconds: number): void {
+    this.reload = this.reloadTotal = Math.max(0.1, seconds);
+  }
+
   /** Holster or draw the FPP weapon; the viewmodel drops out of view or comes back up. */
   setWeaponDrawn(drawn: boolean): void {
     this.weaponDrawn = drawn;
@@ -173,14 +181,16 @@ export class CameraRig {
 
     const fpp = this.blend < 0.35;
     this.draw += Math.sign((this.weaponDrawn ? 1 : 0) - this.draw) * Math.min(Math.abs((this.weaponDrawn ? 1 : 0) - this.draw), dt / 0.35);
-    const away = 1 - this.draw * this.draw * (3 - 2 * this.draw);
+    this.reload = Math.max(0, this.reload - dt);
+    const reloading = this.reloadTotal > 0 && this.reload > 0 ? Math.sin(Math.PI * (1 - this.reload / this.reloadTotal)) : 0;
+    const away = 1 - this.draw * this.draw * (3 - 2 * this.draw) + reloading * 0.35;
     this.viewmodel.setEnabled(fpp && this.draw > 0.02);
     // Weapon sways with the walk, sinks and tips down when put away.
     this.viewmodel.position.x = VIEWMODEL.x + Math.sin(t) * 0.012 * bob;
     this.viewmodel.position.y = VIEWMODEL.y - Math.abs(Math.cos(t)) * 0.01 * bob - away * 0.32;
     this.viewmodel.position.z = VIEWMODEL.z - this.recoil * 0.035;
     this.viewmodel.rotation.x = -this.recoil * 0.25 + away * 0.9;
-    this.viewmodel.rotation.z = Math.sin(t) * 0.02 * bob;
+    this.viewmodel.rotation.z = Math.sin(t) * 0.02 * bob + reloading * 0.7;
     this.onBodyVisibility(!fpp);
   }
 }
