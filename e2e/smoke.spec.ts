@@ -3,6 +3,9 @@ import { freeze, gameState, step, teleport, waitForGame } from "./helpers";
 
 test.describe("M0 smoke", () => {
   test("title → new game → dialogue → quicksave/quickload → reload and load from IndexedDB", async ({ page }) => {
+    // Two cold boots (the first load and the reload), each about a minute on a CI runner with
+    // the VRoid cast and the city kit: more than the default 90 s.
+    test.setTimeout(180_000);
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(e.message));
     await page.goto("/?seed=7");
