@@ -191,3 +191,29 @@ describe("crouch pose", () => {
     expect(ume.body.rotation.x).toBeCloseTo(0.08);
   });
 });
+
+describe("run cycle", () => {
+  const sample = (speed: number) => {
+    const scene = new Scene(new NullEngine());
+    const rig = buildFixer(scene, new ToonMaterials(scene), "f");
+    let knee = 0;
+    let elbow = 0;
+    let lean = 0;
+    for (let i = 0; i < 120; i++) {
+      animateRig(rig, speed, 1 / 60);
+      knee = Math.max(knee, rig.kneeL.rotation.x, rig.kneeR.rotation.x);
+      elbow = Math.min(elbow, rig.elbowL.rotation.x);
+      lean = Math.max(lean, rig.body.rotation.x);
+    }
+    return { knee, elbow, lean };
+  };
+
+  it("sprints with higher heels, pumping bent arms and a forward lean", () => {
+    const walk = sample(4.2);
+    const run = sample(6.9);
+    expect(run.knee).toBeGreaterThan(walk.knee + 0.4);
+    expect(run.elbow).toBeLessThan(-1.2);
+    expect(walk.elbow).toBeGreaterThan(-0.7);
+    expect(run.lean).toBeGreaterThan(walk.lean + 0.15);
+  });
+});

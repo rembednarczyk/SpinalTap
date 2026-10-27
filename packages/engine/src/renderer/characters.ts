@@ -575,6 +575,11 @@ export const CROUCH_THIGH = -1.2;
 export const CROUCH_KNEE = 2.0;
 /** Forward lean of the body when fully crouched. */
 export const CROUCH_LEAN = 0.35;
+/** Speeds (m/s) where the walk starts turning into a run and where the run is full. */
+const RUN_FROM = 5;
+const RUN_FULL = 6.6;
+/** Forward lean of the body at a full run (radians). */
+const RUN_LEAN = 0.24;
 
 export interface CrouchOffset {
   /** Body drop (negative) and shift along Z that keep the feet planted at the root. */
@@ -636,39 +641,46 @@ export const animateRig = (rig: CharacterRig, speed: number, dt: number, crouch 
     return;
   }
   const c = smooth(Math.min(1, Math.max(0, crouch)));
-  const lean = CROUCH_LEAN * c;
+  // 0 walking .. 1 sprinting: longer stride, forward lean, pumping arms, a flight phase.
+  const run = smooth(Math.min(1, Math.max(0, (speed - RUN_FROM) / (RUN_FULL - RUN_FROM)))) * (1 - c);
+  const lean = CROUCH_LEAN * c + RUN_LEAN * run;
   const thigh = CROUCH_THIGH * c;
   const knee = CROUCH_KNEE * c;
   const amount = Math.min(1, speed / 4.2);
   rig.phase += dt * (4 + speed * 1.9) * (amount > 0.05 ? 1 : 0);
   // Short, careful steps while crouched.
-  const swing = Math.sin(rig.phase) * 0.7 * amount * (1 - 0.55 * c);
+  const swing = Math.sin(rig.phase) * (0.7 + 0.32 * run) * amount * (1 - 0.55 * c);
   // Leg angles are relative to the leaning body: take the lean back out.
   rig.legL.rotation.x = swing + thigh - lean;
   rig.legR.rotation.x = -swing + thigh - lean;
   // Knees bend on the back swing.
-  rig.kneeL.rotation.x = Math.max(0, -swing) * 1.3 + KNEE_REST + knee;
-  rig.kneeR.rotation.x = Math.max(0, swing) * 1.3 + KNEE_REST + knee;
+  // Knees bend on the back swing; at a run the heel kicks up high and the front knee stays soft.
+  const kick = 1.3 + 1.1 * run;
+  rig.kneeL.rotation.x = Math.max(0, -swing) * kick + Math.max(0, swing) * 0.45 * run + KNEE_REST + knee;
+  rig.kneeR.rotation.x = Math.max(0, swing) * kick + Math.max(0, -swing) * 0.45 * run + KNEE_REST + knee;
   if (rig.leftHold) {
     rig.armL.rotation.x = rig.leftHold[0];
     rig.elbowL.rotation.x = rig.leftHold[1];
   } else {
-    rig.armL.rotation.x = -swing * 0.6;
-    rig.elbowL.rotation.x = -0.18 - Math.max(0, swing) * 0.4;
+    // Walking arms swing loose; running arms pump, bent at the elbow.
+    rig.armL.rotation.x = -swing * (0.6 + 0.5 * run);
+    rig.elbowL.rotation.x = -0.18 - Math.max(0, swing) * 0.4 * (1 - run) - 1.25 * run;
   }
   rig.armL.rotation.z = rig.armSpread;
-  if (rig.aiming) poseWeaponArms(rig, swing, amount, dt);
+  if (rig.aiming) poseWeaponArms(rig, swing, amount, dt, run);
   else {
-    rig.armR.rotation.x = swing * 0.6;
+    rig.armR.rotation.x = swing * (0.6 + 0.5 * run);
     rig.armR.rotation.z = -rig.armSpread;
-    rig.elbowR.rotation.x = -0.18 - Math.max(0, -swing) * 0.4;
+    rig.elbowR.rotation.x = -0.18 - Math.max(0, -swing) * 0.4 * (1 - run) - 1.25 * run;
   }
   // Arms hang and aim in world terms, so the lean is taken out of them too.
   rig.armL.rotation.x -= lean;
   rig.armR.rotation.x -= lean;
   const offset = c > 0 ? crouchDelta(rig, thigh, knee, lean) : { y: 0, z: 0 };
   const breathe = Math.sin(rig.time * 1.7) * 0.006;
-  rig.body.position.y = Math.abs(Math.cos(rig.phase)) * 0.04 * amount * (1 - 0.5 * c) + breathe + offset.y;
+  // Bob: a soft dip at a walk, a push-off and flight at a run.
+  const bob = Math.abs(Math.cos(rig.phase)) * (0.04 + 0.05 * run) * amount * (1 - 0.5 * c) - 0.03 * run;
+  rig.body.position.y = bob + breathe + offset.y;
   rig.body.position.z = offset.z;
   rig.body.rotation.x = rig.stoop + lean;
   rig.flinch = Math.max(0, rig.flinch - dt * 5);
@@ -703,7 +715,7 @@ const smooth = (t: number): number => t * t * (3 - 2 * t);
  * hip, then brings the pistol up; holstering plays the same backwards. The pistol swaps from
  * holster to hand at the middle of the move.
  */
-const poseWeaponArms = (rig: CharacterRig, swing: number, amount: number, dt: number): void => {
+const poseWeaponArms = (rig: CharacterRig, swing: number, amount: number, dt: number, run = 0): void => {
   const target = rig.drawTarget ? 1 : 0;
   rig.drawn += Math.sign(target - rig.drawn) * Math.min(Math.abs(target - rig.drawn), dt / DRAW_SECONDS);
   rig.aimHold = Math.max(0, rig.aimHold - dt);
@@ -712,9 +724,10 @@ const poseWeaponArms = (rig: CharacterRig, swing: number, amount: number, dt: nu
   rig.aim += (aimTarget - rig.aim) * Math.min(1, dt * (aimTarget > rig.aim ? 14 : 3));
 
   const sway = Math.cos(rig.phase) * amount;
-  const free: ArmPose = { armX: swing * 0.6, armZ: -rig.armSpread, elbowX: -0.18 - Math.max(0, -swing) * 0.4 };
+  const free: ArmPose = { armX: swing * (0.6 + 0.5 * run), armZ: -rig.armSpread, elbowX: -0.18 - Math.max(0, -swing) * 0.4 * (1 - run) - 1.25 * run };
   const reach: ArmPose = { armX: 0.12, armZ: -0.32, elbowX: -0.55 };
-  const lowReady: ArmPose = { armX: -0.32 + swing * 0.22, armZ: -0.06, elbowX: -0.62 + sway * 0.12 };
+  // At a run the pistol is carried close to the chest, muzzle down, still moving with the stride.
+  const lowReady: ArmPose = { armX: -0.32 + swing * (0.22 + 0.12 * run) - 0.1 * run, armZ: -0.06 - 0.12 * run, elbowX: -0.62 + sway * 0.12 - 0.55 * run };
   const aimed: ArmPose = { armX: -1.42 + Math.abs(sway) * 0.05, armZ: 0, elbowX: -0.05 };
   const ready = mixPose(lowReady, aimed, smooth(rig.aim));
   const d = rig.drawn;
