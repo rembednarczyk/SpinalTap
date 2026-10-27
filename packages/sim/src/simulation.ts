@@ -146,7 +146,25 @@ export class Simulation {
 
   /** Advances the simulation by one fixed step of SIM_DT seconds. */
   step(input: InputFrame = EMPTY_INPUT): void {
-    const ctx: SimContext = {
+    const ctx = this.context(input);
+    this.applyCommands(ctx);
+    for (const system of this.systems) system.run(ctx);
+    this.tickCount += 1;
+  }
+
+  /**
+   * Runs only the command phase of the next step, now (ADR-0015): the character menu stops the
+   * clock, yet what the player equips or uses there shows at once. The context is the one the
+   * next step would build (same tick), so the outcome is the same as leaving the commands for
+   * that step; menu commands use neither randomness nor time. A replay records them in the
+   * frame of the next step, as before.
+   */
+  applyPendingCommands(): void {
+    if (this.commands.length > 0) this.applyCommands(this.context(EMPTY_INPUT));
+  }
+
+  private context(input: InputFrame): SimContext {
+    return {
       world: this.world,
       state: this.holder,
       session: this.session,
@@ -158,9 +176,10 @@ export class Simulation {
       tick: this.tickCount,
       input,
     };
+  }
+
+  private applyCommands(ctx: SimContext): void {
     for (const cmd of this.commands.splice(0)) this.apply(ctx, cmd);
-    for (const system of this.systems) system.run(ctx);
-    this.tickCount += 1;
   }
 
   snapshot(narrative: string | null, label: string, objective: string): SaveSnapshot {
