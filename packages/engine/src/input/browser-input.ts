@@ -33,6 +33,8 @@ export class BrowserInput implements InputPort {
       this.disposers.push(() => window.removeEventListener(type, fn));
     };
     on("keydown", (e) => {
+      // Space jumps in play; it must not also scroll the page or press a focused button.
+      if (this.active && e.code === "Space") e.preventDefault();
       if (e.repeat) return;
       this.held.add(e.code);
       this.pressed.add(e.code);

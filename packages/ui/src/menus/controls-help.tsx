@@ -1,6 +1,8 @@
 const CONTROLS: [string, string][] = [
   ["WASD", "ruch"],
   ["Shift", "sprint"],
+  ["Spacja", "skok (pad: A)"],
+  ["C", "kucanie"],
   ["Mysz", "rozglądanie"],
   ["LPM", "strzał"],
   ["E", "interakcja"],

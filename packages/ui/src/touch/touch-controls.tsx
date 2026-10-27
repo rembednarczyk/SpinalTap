@@ -200,6 +200,7 @@ export const TouchControls = ({ pad }: { pad: TouchPadSink }) => {
         <PadButtonView pad={pad} button="toggleCamera" label="V" hint="Kamera FPP/TPP" className="touch__btn--v" />
         <PadButtonView pad={pad} button="toggleWeapon" label="X" hint="Schowaj lub wyciągnij broń" className="touch__btn--x" />
         <PadButtonView pad={pad} button="reload" label="R" hint="Przeładuj" className="touch__btn--r" />
+        <PadButtonView pad={pad} button="jump" label="⤒" hint="Skok" className="touch__btn--jump" testId="touch-jump" />
         <CrouchToggle pad={pad} />
       </div>
     </div>
