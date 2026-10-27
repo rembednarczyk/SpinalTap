@@ -162,8 +162,8 @@ export const KANAL_NAV: NavGraph = {
 
 export const KANAL_PROPS: readonly StaticProp[] = [
   slab(29, -0.1, 71, v(74, 0.2, 40), "asphalt"),
-  // Strip of road under the market gate, a hair lower than the market's own ground.
-  slab(72, -0.12, 78, v(12, 0.2, 12), "asphalt"),
+  // Strip of road under the market gate, below the market's own ground (6 cm: no z-fighting).
+  slab(72, -0.16, 78, v(12, 0.2, 12), "asphalt"),
   slab(35, 0.04, 81.2, v(62, 0.08, 1.6), "concrete"),
   // West of segment A, closing the bend.
   building(-2, 71, 12, 18, 38, "concrete", skin("tenement", "x+", { street: 6 })),
@@ -361,7 +361,8 @@ const overpass = (): StaticProp[] => {
         { level: 1, at: v(lift.x0 - 0.2, top + 1.25, 86.6) },
       ],
     }),
-    neon(lift.x1 + 0.45, 3, 85.6, v(0.15, 2.2, 0.8), "#ffb000", "LIFT"),
+    // On the west wall of the shaft: thin-in-X signs face west (props.ts), towards the stairs.
+    neon(lift.x0 - 0.45, 3, 85.6, v(0.15, 2.2, 0.8), "#ffb000", "LIFT"),
   ];
 };
 
@@ -467,7 +468,7 @@ export const TARG_SOUTH_ACTORS: readonly ActorDef[] = [
     bystander: true,
     maxHp: OYAJI_MAX_HP,
     // By day the stall (plan §6); from 22:00 the schedule swaps in `oyaji_closed`.
-    interactable: { kind: "shop", shopId: "oyaji", dialogueId: "oyaji", prompt: "Stragan Oyajiego", radius: 2.4 },
+    interactable: { kind: "shop", shopId: "oyaji", dialogueId: "oyaji", prompt: "Stragan Oyajiego", radius: 3 },
   },
   {
     kind: "npc",

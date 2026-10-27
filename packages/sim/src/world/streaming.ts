@@ -134,8 +134,17 @@ export class WorldStreamer {
     return this.resident.has(chunkId);
   }
 
+  /**
+   * District named for the point. Streaming bounds overlap at the seams (Kanałowa runs on
+   * under the market gate), so the last chunk in table order wins: a later district is laid
+   * over its neighbour's margin.
+   */
   districtAt(p: Vec3): DistrictId | null {
-    return chunkAt(p.x, p.z, this.chunks)?.district ?? null;
+    for (let i = this.chunks.length - 1; i >= 0; i--) {
+      const c = this.chunks[i];
+      if (c && distanceToRect(p.x, p.z, c.bounds) === 0) return c.district;
+    }
+    return null;
   }
 
   /** State of keyed entities asleep in unloaded chunks, sorted by key. */

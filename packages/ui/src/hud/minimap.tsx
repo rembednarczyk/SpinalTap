@@ -6,7 +6,7 @@ import { useUi } from "../use-ui";
 export const MINIMAP_RANGE = 32;
 const EDGE = MINIMAP_RANGE - 2.5;
 
-const LABEL: Record<MapMarkerKind, string> = { fixer: "Kaito", ripperdoc: "Mori", target: "Cel" };
+const LABEL: Record<MapMarkerKind, string> = { fixer: "Zlecenia", ripperdoc: "Klinika Mori", vendor: "Sklep", target: "Cel" };
 
 const LINK_LABEL: Record<MapLinkKind, string> = { stairs: "Schody", lift: "Winda", ladder: "Drabina" };
 

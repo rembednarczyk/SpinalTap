@@ -104,7 +104,7 @@ export interface MapVm {
   readonly water?: readonly MapRectVm[];
 }
 
-export type MapMarkerKind = "fixer" | "ripperdoc" | "target";
+export type MapMarkerKind = "fixer" | "ripperdoc" | "vendor" | "target";
 
 export interface MapMarkerVm {
   readonly id: string;

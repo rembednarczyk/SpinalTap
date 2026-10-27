@@ -68,7 +68,8 @@ const ANGLE_SNAP = Math.PI / 90;
 const snap = (v: number, step: number) => Math.round(v / step) * step;
 
 const markerKind = (e: Entity, targetTags: ReadonlySet<string>): MapMarkerVm["kind"] | null => {
-  if (e.interactable?.kind === "shop") return "ripperdoc";
+  // Mori's clinic; every other shop (Oyaji's stall) is a vendor.
+  if (e.interactable?.kind === "shop") return e.interactable.dialogueId === "mori" ? "ripperdoc" : "vendor";
   // The contract givers: Kaito, Hana on the market, Genzō in the docks.
   if (e.interactable?.dialogueId === "fixer" || e.interactable?.dialogueId === "hana" || e.interactable?.dialogueId === "genzo") return "fixer";
   // The defector of an escort and the terminal of a hack (ADR-0024).

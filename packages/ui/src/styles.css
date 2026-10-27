@@ -251,6 +251,7 @@ kbd {
 .minimap__marker { stroke: rgba(4, 7, 12, 0.9); stroke-width: 0.6; }
 .minimap__marker--fixer { fill: var(--amber); }
 .minimap__marker--ripperdoc { fill: #39ffd0; }
+.minimap__marker--vendor { fill: #b48cff; }
 .minimap__marker--target { fill: var(--magenta); }
 .minimap__marker--edge { opacity: 0.75; }
 .minimap__north {

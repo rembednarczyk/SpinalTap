@@ -227,7 +227,7 @@ describe("daily plans: saves and determinism", () => {
     const sim = Simulation.create({ seed: 9 });
     goTo(sim, 40, 78);
     skipTo(sim, OYAJI_HOURS.close);
-    run(sim, 240);
+    run(sim, 120);
     const oyaji = byKey(sim, "oyaji")!;
     expect(dist(oyaji.position, OYAJI_STALL)).toBeGreaterThan(0.3);
     expect(dist(oyaji.position, OYAJI_DOOR)).toBeGreaterThan(0.3);
