@@ -160,12 +160,12 @@ const crane = (): StaticProp[] => {
 
 /** The quay edge and the pier, fenced; the boat that takes Mika away; the water and the far ship. */
 const waterfront = (): StaticProp[] => [
-  deck(-38, -2, QUAY_EDGE, QUAY_EDGE + 0.2, FENCE, FENCE, "glass"),
-  deck(6, 32, QUAY_EDGE, QUAY_EDGE + 0.2, FENCE, FENCE, "glass"),
+  deck(-38, -2, QUAY_EDGE, QUAY_EDGE + 0.2, FENCE, FENCE, "metal"),
+  deck(6, 32, QUAY_EDGE, QUAY_EDGE + 0.2, FENCE, FENCE, "metal"),
   slab(2, 0.05, 161, v(8, 0.1, 22), "metal"),
-  deck(-2.2, -2, QUAY_EDGE, 172, FENCE, FENCE, "glass"),
-  deck(6, 6.2, QUAY_EDGE, 172, FENCE, FENCE, "glass"),
-  deck(-2.2, 6.2, 172, 172.2, FENCE, FENCE, "glass"),
+  deck(-2.2, -2, QUAY_EDGE, 172, FENCE, FENCE, "metal"),
+  deck(6, 6.2, QUAY_EDGE, 172, FENCE, FENCE, "metal"),
+  deck(-2.2, 6.2, 172, 172.2, FENCE, FENCE, "metal"),
   // Bollards at the end of the pier.
   crate(-0.8, 170.8, 0.5, 0.7, 0.5),
   crate(4.8, 170.8, 0.5, 0.7, 0.5),
