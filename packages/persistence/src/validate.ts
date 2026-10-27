@@ -1,5 +1,6 @@
 import {
   FACTIONS,
+  isContractKind,
   isContractSiteId,
   SAVE_SCHEMA_VERSION,
   type SaveSnapshot,
@@ -56,6 +57,9 @@ export const findSchemaError = (s: Json): string | null => {
     if (!Number.isInteger(active.targets) || !Number.isInteger(active.reward) || (active.status !== "active" && active.status !== "cleared")) {
       return "contracts";
     }
+    // M4 fields are optional, so v6 saves from before them stay valid as they are.
+    if (active.kind !== undefined && (typeof active.kind !== "string" || !isContractKind(active.kind))) return "contract kind";
+    if (active.deadlineTick !== undefined && (!Number.isInteger(active.deadlineTick) || (active.deadlineTick as number) < 0)) return "contract deadline";
   }
   if (!isObject(d.ability) || !isNum(d.ability.activeTime) || !isNum(d.ability.cooldown)) return "ability";
   const story = d.story;
@@ -64,6 +68,8 @@ export const findSchemaError = (s: Json): string | null => {
     if (!isStoryChoiceId(choice) || typeof option !== "string" || !isStoryOption(choice, option)) return "story choices";
   }
   if (!(story.ending === null || (typeof story.ending === "string" && isEndingId(story.ending)))) return "story ending";
+  const clock = d.clock;
+  if (!isObject(clock) || !Number.isInteger(clock.seconds) || (clock.seconds as number) < 0) return "clock";
   if (!(s.narrative === null || typeof s.narrative === "string")) return "narrative";
   if (!isObject(s.meta) || typeof s.meta.label !== "string" || typeof s.meta.objective !== "string") return "meta";
   return null;

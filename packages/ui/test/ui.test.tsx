@@ -125,6 +125,17 @@ describe("HUD", () => {
     for (let n = 0; n < 6; n++) pushToast(store, { kind: "system", title: `t${n}`, text: "" });
     expect(store.getState().toasts.map((t) => t.title)).toEqual(["t2", "t3", "t4", "t5"]);
   });
+
+  it("shows the game clock with the day and the phase of the day", () => {
+    mount({ screen: "playing" });
+    expect(screen.queryByTestId("clock")).toBeNull();
+    cleanup();
+    const { store } = mount({ screen: "playing", clock: "21:00", day: 1, dayPhase: "night" });
+    expect(screen.getByTestId("clock").textContent).toBe("Dzień 1noc21:00");
+    act(() => patchUi(store, { clock: "07:30", day: 2, dayPhase: "day" }));
+    expect(screen.getByTestId("clock").textContent).toBe("Dzień 2dzień07:30");
+    expect(screen.getByTestId("clock").className).toContain("hud__clock--day");
+  });
 });
 
 describe("patchUi", () => {

@@ -2,6 +2,7 @@ import type { System } from "../world/context";
 import { createCivilianAiSystem, createGangerAiSystem } from "./ai";
 import { abilitySystem } from "./ability-system";
 import { combatSystem } from "./combat-system";
+import { contractSystem } from "./contract-system";
 import { deathSystem } from "./death-system";
 import { interactionSystem } from "./interaction-system";
 import { interpolationSystem } from "./interpolation-system";
@@ -12,11 +13,14 @@ import { questSystem } from "./quest-system";
 import { streamingSystem } from "./streaming-system";
 import { weaponSystem } from "./weapon-system";
 import { lootSystem } from "./loot-system";
+import { clockSystem } from "./clock-system";
+import { scheduleSystem } from "./schedule-system";
 
 export { aimSpreadOf, fireShot, GUNFIRE_INTERRUPT_RADIUS } from "./combat-system";
 export { equippedAbility, worldTimeScale } from "./ability-system";
 export { deadFlag } from "./death-system";
 export { LOOT_REACH, syncBags } from "./loot-system";
+export { gameSecondsPerStep } from "./clock-system";
 export { playerStatsOf, statsFor, CROUCH_SPEED_MULTIPLIER, CROUCH_TIME, PITCH_LIMIT, SPRINT_MULTIPLIER } from "./player-control-system";
 
 /**
@@ -24,11 +28,13 @@ export { playerStatsOf, statsFor, CROUCH_SPEED_MULTIPLIER, CROUCH_TIME, PITCH_LI
  * Returns fresh instances because some systems keep per-simulation caches.
  */
 export const createSystems = (): readonly System[] => [
+  clockSystem,
   streamingSystem,
   interpolationSystem,
   abilitySystem,
   itemSystem,
   playerControlSystem,
+  scheduleSystem,
   createGangerAiSystem(),
   createCivilianAiSystem(),
   movementSystem,
@@ -37,5 +43,6 @@ export const createSystems = (): readonly System[] => [
   interactionSystem,
   deathSystem,
   lootSystem,
+  contractSystem,
   questSystem,
 ];

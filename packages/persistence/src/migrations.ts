@@ -80,14 +80,20 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
     version: 6,
     streaming: isObject(old.streaming) ? old.streaming : { loadedChunks: [] },
   }),
-  // v6 -> v7 and v7 -> v8 are reserved for the day schedules and the market contracts, built
-  // in parallel. Until those land they only bump the version; at merge their real steps
-  // replace these placeholders and the inventory step below moves to the last number.
-  6: (old) => ({ ...old, version: 7 }),
-  7: (old) => ({ ...old, version: 8 }),
-  // v8 -> v9 (ADR-0015): the medkit counter becomes the slot inventory, and every save gets
+  // v6 (M2 streaming): no day clock. Before v7 every game started at 21:00 and the clock would
+  // have advanced one game second per 60 Hz tick, so the saved tick tells the time it was.
+  6: (old) => {
+    const domain = isObject(old.domain) ? old.domain : {};
+    const tick = typeof old.tick === "number" && Number.isInteger(old.tick) && old.tick >= 0 ? old.tick : 0;
+    return {
+      ...old,
+      version: 7,
+      domain: { ...domain, clock: isObject(domain.clock) ? domain.clock : { seconds: 21 * 3600 + tick } },
+    };
+  },
+  // v7 -> v8 (ADR-0015): the medkit counter becomes the slot inventory, and every save gets
   // the starter weapon and clothes, worn, plus 48 rounds of 9 mm and no loot lying around.
-  8: (old) => {
+  7: (old) => {
     const domain = isObject(old.domain) ? old.domain : {};
     const inv = isObject(domain.inventory) ? domain.inventory : {};
     // Ids and numbers are spelled out: a migration describes the schema of its time.
@@ -95,7 +101,7 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
     const medkits = typeof inv.medkit === "number" && Number.isInteger(inv.medkit) && inv.medkit > 0 ? inv.medkit : 0;
     return {
       ...old,
-      version: 9,
+      version: 8,
       domain: {
         ...domain,
         inventory: upgraded

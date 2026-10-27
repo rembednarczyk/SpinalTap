@@ -55,7 +55,13 @@ export type EffectDescriptor =
   /** The entity holstered its weapon or started drawing it. */
   | { readonly kind: "weapon"; readonly entityId: EntityId; readonly drawn: boolean; readonly slot?: WeaponSlot }
   /** The entity started reloading; the animation should last `duration` seconds. */
-  | { readonly kind: "reload"; readonly entityId: EntityId; readonly duration: number };
+  | { readonly kind: "reload"; readonly entityId: EntityId; readonly duration: number }
+  /**
+   * Time of day changed (ADR-0017). `daylight` is 0 at night and 1 by day; `hour` is the
+   * fractional hour 0–24, for presentation that wants more than the light level. Not
+   * short-lived: the latest one holds until the next.
+   */
+  | { readonly kind: "time-of-day"; readonly daylight: number; readonly hour: number };
 
 /**
  * What a character wears and carries (ADR-0015): weapons per slot (the active one in hand,

@@ -1,11 +1,8 @@
 import type { Vec3 } from "../math/vec3";
 import type { DomainState } from "../state/domain-state";
 
-/**
- * v9: inventory, weapons and loot (ADR-0015). v7 and v8 are reserved for the day schedules
- * and the market contracts, developed in parallel; the final numbering is set when merging.
- */
-export const SAVE_SCHEMA_VERSION = 9;
+/** v8: inventory, weapons and loot (ADR-0015), after the day clock of v7 (ADR-0017). */
+export const SAVE_SCHEMA_VERSION = 8;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {

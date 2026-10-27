@@ -1,4 +1,5 @@
 import { SeededRandom } from "../rng/seeded-random";
+import type { ContractSiteId, Vec3 } from "@seki/core";
 import { type ActorDef, type BlockMaterial, type Rect, type StaticProp, building, crate, lamp, neon, slab, v } from "./builders";
 
 /**
@@ -87,6 +88,9 @@ export const TARG_NORTH_BOUNDS: Rect = { minX: 66, maxX: 126, minZ: 82, maxZ: 11
 /** Oyaji keeps the first stall of the southern row. */
 const OYAJI_STALL = { x: 80, z: 68 } as const;
 
+/** Hana sells parts from a handcart in the middle of the market, facing the gate. */
+const HANA_SPOT = { x: 92, z: 74 } as const;
+
 const southStalls = (): StaticProp[] => {
   const out = stall(rng, OYAJI_STALL.x, OYAJI_STALL.z, 1);
   for (let x = OYAJI_STALL.x + between(rng, 7, 9); x < 108; x += between(rng, 7, 9)) out.push(...stall(rng, x, OYAJI_STALL.z, 1));
@@ -103,6 +107,8 @@ export const TARG_SOUTH_PROPS: readonly StaticProp[] = [
   ...facadeRow(rng, 114, 124, 64, 12, [12, 20], [10, 10]),
   ...facadeRow(rng, 114, 124, 77, 14, [12, 20], [10, 10]),
   ...southStalls(),
+  // Hana's handcart, just east of where she stands.
+  crate(HANA_SPOT.x + 1.3, HANA_SPOT.z, 0.9, 1.0, 1.8),
   neon(113.9, 7, 66, v(0.15, 6, 1.4), "#ff2e88", "TAKO"),
   neon(113.9, 5.5, 78, v(0.15, 5.4, 1.2), "#39ff8a", "PACHI"),
   neon(OYAJI_STALL.x, 2.2, OYAJI_STALL.z + 0.7, v(2.4, 0.18, 0.1), pick(rng, STRIPS)),
@@ -144,14 +150,50 @@ export const TARG_NORTH_PROPS: readonly StaticProp[] = [
   ...[78, 96, 114].flatMap((x) => [building(x, 88.5, 1.4, 8.5, 1.4), building(x, 95.5, 1.4, 8.5, 1.4)]),
   neon(96, 7.4, 86.9, v(8, 1.4, 0.15), "#ffb000", "TARG"),
   ...northStalls(),
+  // Hebi stash in the east corner under the highway: cover in front of the crate.
+  crate(119.8, 92, 1.0, 1.1, 2.4),
+  crate(122.5, 96.6, 1.6, 1.4, 1.4),
   ...facadeRow(rng, 68, 124, 110, 8, [10, 18]),
   lamp(116, 99, "#ffcf8a"),
 ];
 
+/** Oyaji can be hurt: Hebi come for him in Hana's protection jobs. */
+export const OYAJI_MAX_HP = 120;
+
 export const TARG_SOUTH_ACTORS: readonly ActorDef[] = [
-  { kind: "npc", spawn: { key: "oyaji", position: v(OYAJI_STALL.x, 0, OYAJI_STALL.z - 1.4), yaw: 0 }, preset: "civilian", faction: "civilians", bystander: true },
+  {
+    kind: "npc",
+    spawn: { key: "oyaji", position: v(OYAJI_STALL.x, 0, OYAJI_STALL.z - 1.4), yaw: 0 },
+    preset: "civilian",
+    faction: "civilians",
+    bystander: true,
+    maxHp: OYAJI_MAX_HP,
+  },
+  {
+    kind: "npc",
+    spawn: { key: "hana", position: v(HANA_SPOT.x, 0, HANA_SPOT.z), yaw: -Math.PI / 2 },
+    preset: "civilian",
+    faction: "civilians",
+    interactable: { kind: "dialogue", dialogueId: "hana", prompt: "Rozmawiaj z Haną", radius: 2.4 },
+  },
 ];
 
 export const TARG_NORTH_ACTORS: readonly ActorDef[] = [
   { kind: "ganger", spawn: { key: "hebi-lookout", position: v(104, 0, 92), yaw: Math.PI, tag: null } },
 ];
+
+/**
+ * Spawn points of the market jobs, four per site like the M1 sites. A delivery spawns nobody;
+ * its points are around Hana's cart, kept for symmetry.
+ */
+export const TARG_CONTRACT_SITE_SPAWNS: Readonly<Record<"hana_stall" | "hebi_stash" | "raid_north" | "raid_east", readonly Vec3[]>> = {
+  hana_stall: [v(90.5, 0, 74), v(90.5, 0, 75.5), v(90.5, 0, 72.5), v(89, 0, 74)],
+  hebi_stash: [v(118, 0, 89), v(119.5, 0, 95.5), v(116.5, 0, 92.5), v(121.5, 0, 88)],
+  raid_north: [v(90, 0, 91), v(94, 0, 93), v(98, 0, 90.5), v(86, 0, 92.5)],
+  raid_east: [v(110, 0, 74), v(111.5, 0, 78), v(108.5, 0, 71.5), v(112, 0, 81)],
+};
+
+/** Where the crate of a retrieval job lies (centre of the box). */
+export const CONTRACT_ITEM_SPOTS: Readonly<Partial<Record<ContractSiteId, Vec3>>> = {
+  hebi_stash: v(122.2, 0.3, 92),
+};

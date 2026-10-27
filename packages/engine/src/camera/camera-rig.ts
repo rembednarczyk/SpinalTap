@@ -43,20 +43,28 @@ export class CameraRig {
     this.viewmodel = new TransformNode("viewmodel", scene);
     this.viewmodel.parent = this.camera;
     // Kept compact and at least ~25 cm from the eye so perspective does not blow it up.
-    const sleeve = MeshBuilder.CreateBox("vm-sleeve", { width: 0.07, height: 0.07, depth: 0.14 }, scene);
-    sleeve.material = materials.get("heroineCoat");
+    // Seki's cybernetic forearm: ivory shell, copper wrist ring, ivory hand.
+    const sleeve = MeshBuilder.CreateCylinder("vm-sleeve", { height: 0.2, diameterTop: 0.052, diameterBottom: 0.066, tessellation: 12 }, scene);
+    sleeve.material = materials.get("cyberIvory");
     sleeve.parent = this.viewmodel;
-    sleeve.position.set(0, -0.015, -0.1);
-    const hand = MeshBuilder.CreateSphere("vm-hand", { diameter: 0.07, segments: 10 }, scene);
-    hand.material = materials.get("skin");
+    sleeve.rotation.x = Math.PI / 2;
+    sleeve.position.set(0, -0.02, -0.11);
+    const wrist = MeshBuilder.CreateTorus("vm-wrist", { diameter: 0.054, thickness: 0.012, tessellation: 16 }, scene);
+    wrist.material = materials.get("cyberCopper");
+    wrist.parent = this.viewmodel;
+    wrist.rotation.x = Math.PI / 2;
+    wrist.position.set(0, -0.015, -0.01);
+    const hand = MeshBuilder.CreateSphere("vm-hand", { diameter: 0.06, segments: 10 }, scene);
+    hand.material = materials.get("cyberIvory");
     hand.parent = this.viewmodel;
-    hand.position.set(0, 0, 0);
+    hand.scaling.set(0.85, 1, 1.15);
+    hand.position.set(0, 0, 0.02);
     const gun = MeshBuilder.CreateBox("vm-gun", { width: 0.035, height: 0.065, depth: 0.19 }, scene);
     gun.material = materials.get("gun");
     gun.parent = this.viewmodel;
     gun.position.set(0, 0.04, 0.07);
     this.placeholderGun = gun;
-    for (const m of [sleeve, hand, gun]) {
+    for (const m of [sleeve, wrist, hand, gun]) {
       m.isPickable = false;
       applyOutline(m, 0.004);
     }

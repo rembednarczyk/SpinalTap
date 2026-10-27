@@ -1,5 +1,7 @@
 import {
   type AudioPort,
+  CONTRACT_KINDS,
+  type Contract,
   CYBERWARE_CATALOG,
   type DomainEvents,
   type EntityId,
@@ -8,6 +10,11 @@ import {
   type FactionId,
   STACKABLE_CATALOG,
   type RenderPort,
+  contractClearedNote,
+  contractFailureNote,
+  contractGiver,
+  contractKind,
+  formatClock,
 } from "@seki/core";
 import { type UiStore, dismissToast, patchUi, pushToast } from "@seki/ui";
 import { lootSummary } from "./loot-view";
@@ -15,6 +22,21 @@ import { lootSummary } from "./loot-view";
 const TOAST_MS = 4500;
 
 const REFUSAL: Partial<Record<FactionId, string>> = { clinic: "Mori zamyka drzwi kliniki" };
+
+/** Body of the "new contract" toast: what is at stake and what it pays. */
+const acceptedText = (c: Contract): string => {
+  const pay = `Stawka: ${c.reward} €$`;
+  switch (contractKind(c)) {
+    case "delivery":
+      return `Paczka dla Hany na targu. ${pay}`;
+    case "retrieve":
+      return `Strażnicy: ${c.targets}. ${pay}`;
+    case "protect":
+      return `Hebi idą po Oyaji: ${c.targets}. ${pay}`;
+    case "eliminate":
+      return `Cele: ${c.targets}. ${pay}`;
+  }
+};
 
 export interface PresenterHooks {
   playerId(): EntityId | null;
@@ -103,7 +125,7 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
       audio.play("quest-update");
     }),
     bus.on("EddiesChanged", (e) => {
-      if (e.delta > 0 && e.source !== "loot") toast("money", `+${e.delta.toLocaleString("pl-PL")} €$`, "Przelew od Kaito");
+      if (e.delta > 0 && e.source !== "loot") toast("money", `+${e.delta.toLocaleString("pl-PL")} €$`, "Przelew");
     }),
     bus.on("CyberwareInstalled", (e) => {
       const def = CYBERWARE_CATALOG[e.cyberwareId];
@@ -130,12 +152,16 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
     }),
     bus.on("AbilityEnded", () => render.playEffect({ kind: "overdrive", active: false })),
     bus.on("ContractAccepted", (e) => {
-      toast("quest", "Nowy kontrakt", `Cele: ${e.contract.targets}. Stawka: ${e.contract.reward} €$`);
+      toast("quest", `Nowy kontrakt: ${CONTRACT_KINDS[contractKind(e.contract)].title}`, acceptedText(e.contract));
       audio.play("quest-update");
     }),
-    bus.on("ContractCleared", () => {
-      toast("quest", "Cel zneutralizowany", "Wróć do Kaito po zapłatę");
+    bus.on("ContractCleared", (e) => {
+      toast("quest", contractClearedNote(e.contract), `Wróć do ${contractGiver(e.contract).genitive} po zapłatę`);
       audio.play("quest-update");
+    }),
+    bus.on("ContractFailed", (e) => {
+      toast("quest", "Kontrakt przepadł", contractFailureNote(e.reason));
+      audio.play("denied");
     }),
     bus.on("ReputationChanged", (e) => {
       if (e.delta !== 0) toast("reputation", `${FACTIONS[e.faction]} ${e.delta > 0 ? "+" : ""}${e.delta}`, "Reputacja");
@@ -144,6 +170,7 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
       toast("quest", "Koniec aktu I: Echo", `Zakończenie: ${e.title}`);
       audio.play("quest-update");
     }),
+    bus.on("TimeSkipped", (e) => toast("system", `Mija czas: ${formatClock(e.clock)}`, `${Math.floor(e.minutes / 60)} h ${e.minutes % 60} min później`)),
     bus.on("MemoryUnlocked", (e) => {
       toast("memory", e.title, e.description);
       render.playEffect({ kind: "memory-glitch" });

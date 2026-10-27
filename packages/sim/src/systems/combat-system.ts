@@ -135,6 +135,7 @@ export const fireShot = (ctx: SimContext, shot: ShotRequest, rng: RandomPort): H
       result.zone,
     );
     target.health = applyDamage(target.health, outcome.damage);
+    target.lastHitBy = shot.shooter.id;
     if (target.player) {
       hurtPlayer = true;
       wearPlayerClothes(ctx, outcome.zone);

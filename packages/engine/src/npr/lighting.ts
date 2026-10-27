@@ -28,3 +28,41 @@ export const NIGHT_RIG: LightingRig = {
   shadeTint: "#7d7ab2",
   fillColor: "#b9c6e0",
 };
+
+/** Overcast day over Shinsekai: flat grey-blue light, thin haze. The neon still carries the colour. */
+export const DAY_RIG: LightingRig = {
+  sunDir: NIGHT_RIG.sunDir,
+  sunColor: "#c4cad6",
+  ambient: "#80869a",
+  fogColor: "#6f7e8c",
+  fogDensity: 0.011,
+  shadeTint: "#9496c2",
+  fillColor: "#e2e7f0",
+};
+
+const channel = (hex: string, i: number): number => parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16);
+
+/** Mixes two "#rrggbb" colours. */
+export const mixHex = (a: string, b: string, t: number): string =>
+  `#${[0, 1, 2]
+    .map((i) => Math.round(channel(a, i) + (channel(b, i) - channel(a, i)) * t).toString(16).padStart(2, "0"))
+    .join("")}`;
+
+/**
+ * The light rig for a daylight level (0 night, 1 day; ADR-0017). Only colours and fog density
+ * move; the moon direction stays, so shadows do not swing. Exactly NIGHT_RIG at 0.
+ */
+export const rigForDaylight = (daylight: number): LightingRig => {
+  const t = Math.max(0, Math.min(1, daylight));
+  if (t === 0) return NIGHT_RIG;
+  if (t === 1) return DAY_RIG;
+  return {
+    sunDir: NIGHT_RIG.sunDir,
+    sunColor: mixHex(NIGHT_RIG.sunColor, DAY_RIG.sunColor, t),
+    ambient: mixHex(NIGHT_RIG.ambient, DAY_RIG.ambient, t),
+    fogColor: mixHex(NIGHT_RIG.fogColor, DAY_RIG.fogColor, t),
+    fogDensity: NIGHT_RIG.fogDensity + (DAY_RIG.fogDensity - NIGHT_RIG.fogDensity) * t,
+    shadeTint: mixHex(NIGHT_RIG.shadeTint, DAY_RIG.shadeTint, t),
+    fillColor: mixHex(NIGHT_RIG.fillColor, DAY_RIG.fillColor, t),
+  };
+};

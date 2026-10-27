@@ -1,4 +1,5 @@
 import { type CSSProperties, useEffect, useState } from "react";
+import type { DayPhase } from "@seki/core";
 import { useUi } from "../use-ui";
 import { AbilityWidget } from "./ability-widget";
 import { Minimap } from "./minimap";
@@ -47,6 +48,23 @@ const HurtVignette = () => {
   return hurt > 0 ? <div key={hurt} className="hurt-vignette" /> : null;
 };
 
+const PHASE_LABELS: Readonly<Record<DayPhase, string>> = { night: "noc", dawn: "świt", day: "dzień", dusk: "zmierzch" };
+
+/** Game time of day, e.g. "Dzień 2 · noc 01:40". */
+const Clock = () => {
+  const clock = useUi((s) => s.clock);
+  const day = useUi((s) => s.day);
+  const phase = useUi((s) => s.dayPhase);
+  if (!clock) return null;
+  return (
+    <div className={`hud__clock hud__clock--${phase}`} data-testid="clock" aria-label="Czas gry">
+      <span className="hud__clock-day">Dzień {day}</span>
+      <span className="hud__clock-phase">{PHASE_LABELS[phase]}</span>
+      <span className="hud__clock-time">{clock}</span>
+    </div>
+  );
+};
+
 export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
   const hp = useUi((s) => s.hp);
   const maxHp = useUi((s) => s.maxHp);
@@ -74,6 +92,7 @@ export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
       <div className="hud__wallet" data-testid="eddies">
         <span className="hud__currency">€$</span> {eddies.toLocaleString("pl-PL")}
       </div>
+      <Clock />
       {objective && (
         <div className="hud__objective" data-testid="objective">
           <div className="hud__quest-title">{questTitle}</div>

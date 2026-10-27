@@ -81,7 +81,9 @@ KAITO: I jeszcze jedno, Seki. Ktoś już pytał o kobietę z wraku. Nie tylko ja
 
 = after
 {
+- contract_giver == "hana": -> busy_for_hana
 - contract_state == "cleared": -> contract_payday
+- contract_kind == "delivery": -> delivery_running
 - contract_state == "active": -> contract_running
 - else: -> contract_offer
 }
@@ -101,10 +103,19 @@ KAITO: I jeszcze jedno, Seki. Ktoś już pytał o kobietę z wraku. Nie tylko ja
 { fixers_stance == "friendly":
     KAITO: Klienci o ciebie pytają. Dla swoich mam lepsze stawki.
 }
+{ contracts_done >= 1 && not has_flag("met_hana"):
+    KAITO: Na targu pod estakadą handluje Hana. Bierze ode mnie towar, a czasem szuka kogoś, kto umie strzelać.
+}
 + [Biorę robotę.]
     SEKI: Biorę.
     ~ accept_contract()
     KAITO: Lokalizację wysłałem ci na optykę. Wróć, jak będzie po wszystkim.
+    -> END
++ { contracts_done >= 1 } [Masz coś do przewiezienia?]
+    SEKI: Masz coś do przewiezienia?
+    ~ offer_contract("delivery")
+    KAITO: Chłodzone moduły dla Hany na targu pod estakadą. Jak się nagrzeją, nikt za nie nie zapłaci.
+    KAITO: Czas masz na optyce. Oddaj paczkę Hanie i wróć do mnie po pieniądze.
     -> END
 + [Jeśli chcesz lepszego sprzętu, idź do doktora Mori.]
     SEKI: Gdzie tu się można podrasować?
@@ -124,8 +135,23 @@ KAITO: I jeszcze jedno, Seki. Ktoś już pytał o kobietę z wraku. Nie tylko ja
 KAITO: Kontrakt dalej otwarty. Cel: {contract_site}.
 -> END
 
+= delivery_running
+KAITO: Moduły miały już być u Hany. Targ pod estakadą, za Ulicą Kanałową.
+{ contract_time_left > 0:
+    KAITO: Zostało ci {contract_time_left} s. Nie stój tu.
+}
+-> END
+
+= busy_for_hana
+KAITO: Słyszałem, że robisz coś dla Hany. Skończ u niej, potem pogadamy.
+-> END
+
 = contract_payday
-KAITO: Czysta robota. Klienci są zadowoleni, a ja razem z nimi.
+{ contract_kind == "delivery":
+    KAITO: Hana pisze, że moduły doszły zimne. Tak ma wyglądać każdy kurs.
+- else:
+    KAITO: Czysta robota. Klienci są zadowoleni, a ja razem z nimi.
+}
 ~ complete_contract()
 { quest_step == "echo_contract":
     KAITO: Hej. Gdzie odpłynęłaś? Patrzysz przeze mnie jak przez szybę.
@@ -139,6 +165,10 @@ KAITO: Czysta robota. Klienci są zadowoleni, a ja razem z nimi.
 { civilians_stance == "hostile":
     UME: Nie podchodź do mnie. Widziałam, co robisz na tej ulicy.
     -> END
+}
+// After 23:00 she stands in her doorway (daily schedule, ADR-0017).
+{ game_hour >= 23 || game_hour < 6:
+    UME: Nie śpisz, dziecko? Ja też nie. W moim wieku noc jest za długa.
 }
 { has_flag("ume_memory"):
     UME: Uważaj na siebie na dachach, dziecko. Tak jak kiedyś.

@@ -7,7 +7,7 @@ import { createRain } from "../effects/rain";
 import { Grading } from "../npr/grading";
 import { LineArt } from "../npr/line-art";
 import { SpeedLines } from "../npr/speed-lines";
-import { NIGHT_RIG } from "../npr/lighting";
+import { NIGHT_RIG, rigForDaylight } from "../npr/lighting";
 import { MoonShadow } from "../npr/moon-shadow";
 import { ToonMaterials } from "../npr/toon-material";
 import { Atmosphere, createSplashes, createSteam } from "./atmosphere";
@@ -78,6 +78,8 @@ export class BabylonRenderer implements RenderPort {
   private readonly weapons: WeaponMounts;
   /** Weapon model each armed character carries (the heroine a pistol, gangers an SMG). */
   private readonly weaponOf = new Map<CharacterRig, WeaponKind>();
+  /** Mounted weapon models in hand and holster: only the one in use is enabled (a zero scale still draws). */
+  private readonly weaponPivots = new Map<CharacterRig, { hand: TransformNode; hip: TransformNode }>();
   private models: CharacterModelManifest = {};
   private readonly dressed = new Map<CharacterRig, Dressed>();
   /** Rigs whose model is still loading, so a manifest arriving meanwhile does not dress them twice. */
@@ -258,6 +260,13 @@ export class BabylonRenderer implements RenderPort {
         if (effect.entityId === this.cameraTarget) this.rig.shake(0.6);
         return;
       }
+      case "time-of-day": {
+        // The app sends this only when the light level moves a step, so re-applying is cheap.
+        const rig = rigForDaylight(effect.daylight);
+        this.materials.setRig(rig);
+        this.atmosphere.setDaylight(rig, effect.daylight);
+        return;
+      }
     }
   }
 
@@ -277,6 +286,13 @@ export class BabylonRenderer implements RenderPort {
       d.retarget.update();
       d.springs?.update(dt);
       d.gun?.setEnabled(rig.drawn >= 0.5);
+    }
+    for (const [rig, w] of this.weaponPivots) {
+      // A dressed character shows the weapon in the model's hand; the rig's own copies stay off.
+      const shown = !this.dressed.has(rig);
+      const drawn = rig.drawn >= 0.5;
+      if (w.hand.isEnabled() !== (shown && drawn)) w.hand.setEnabled(shown && drawn);
+      if (w.hip.isEnabled() !== (shown && !drawn)) w.hip.setEnabled(shown && !drawn);
     }
     const target = this.cameraTarget === null ? undefined : this.entities.get(this.cameraTarget);
     this.rig.update(target?.kind === "character" ? target.transform : null, dt);
@@ -333,6 +349,7 @@ export class BabylonRenderer implements RenderPort {
     ]).then(([hand, hip]) => {
       if (!hand || !hip) return;
       for (const box of rig.gunBoxes) box.scaling.setAll(0);
+      this.weaponPivots.set(rig, { hand, hip });
       for (const pivot of [hand, hip]) for (const m of pivot.getChildMeshes(false)) if (m.getTotalVertices() > 0) this.shadow.addCaster(m);
     });
   }
@@ -435,6 +452,7 @@ export class BabylonRenderer implements RenderPort {
     }
     this.dressed.delete(rig);
     this.weaponOf.delete(rig);
+    this.weaponPivots.delete(rig);
     rig.root.dispose(false, false);
   }
 

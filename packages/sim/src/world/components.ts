@@ -57,6 +57,11 @@ export interface GangerAi {
    * the player only set it when provoked (gunfire nearby or a hit).
    */
   alerted: boolean;
+  /**
+   * Key of the NPC this ganger was sent to kill (a protection job's wave). It goes for the
+   * victim, and turns on the player only once alerted and with the player in sight and range.
+   */
+  readonly victim?: string;
 }
 
 /** A bystander that keeps to its spot and runs from a player the street fears. Stateless by design. */
@@ -64,9 +69,63 @@ export interface CivilianAi {
   readonly home: Vec3;
 }
 
+/**
+ * One entry of a daily plan. From minute `at` of the day the NPC walks `path` in order,
+ * starting where the previous stop left it, and then stays at the last point facing `yaw`.
+ * A patrol (`loop`) instead keeps walking `path` as a closed loop until the next stop.
+ */
+export interface ScheduleStop {
+  /** Short name for tests and debugging ("stragan", "dom", "patrol"). */
+  readonly label: string;
+  /** Minute of the day (0–1439) the NPC sets off. */
+  readonly at: number;
+  /** Straight-line waypoints; together with the previous stop they must stay clear of solids. */
+  readonly path: readonly [Vec3, ...Vec3[]];
+  /** Facing once the NPC stands at its stop. */
+  readonly yaw: number;
+  readonly loop?: true;
+  /**
+   * What talking to the NPC means while this stop is current: an interaction that replaces
+   * the NPC's own (e.g. a closed stall), or null for none. Omitted: the NPC's own.
+   */
+  readonly interaction?: Interactable | null;
+}
+
+/** A daily plan: stops sorted by `at`, repeated every day. The day wraps from the last stop to the first. */
+export interface ScheduleDef {
+  readonly stops: readonly [ScheduleStop, ...ScheduleStop[]];
+  /** Walking speed along the path, metres per real second. */
+  readonly speed: number;
+}
+
+/** Where the plan wants the NPC right now. A pure function of the plan and the clock. */
+export interface SchedulePose {
+  readonly stop: number;
+  readonly position: Vec3;
+  /** Direction of travel while walking; the stop's facing once there. */
+  readonly heading: number;
+  /** Standing at its stop (not walking, not patrolling). */
+  readonly arrived: boolean;
+}
+
+/**
+ * A daily plan (see schedule.ts). Stateless like the rest of the AI: the pose is recomputed
+ * from the clock every step, so nothing of it is saved.
+ */
+export interface Scheduled {
+  readonly def: ScheduleDef;
+  /** The NPC's own interaction; a stop may replace it while it is current. */
+  readonly own: Interactable | null;
+  /** Where the plan wants the NPC this step; null until the schedule system first runs. */
+  pose: SchedulePose | null;
+}
+
 export interface Interactable {
-  /** "loot": a bag; `dialogueId` is then the container key. */
-  readonly kind: "dialogue" | "shop" | "loot";
+  /**
+   * "pickup": taken on the spot (a contract crate); no conversation opens. "loot": a bag;
+   * `dialogueId` is then the container key.
+   */
+  readonly kind: "dialogue" | "shop" | "pickup" | "loot";
   readonly dialogueId: string;
   readonly prompt: string;
   readonly radius: number;
@@ -97,12 +156,15 @@ export interface Entity {
   posture?: Posture;
   player?: true;
   health?: Health;
+  /** Who dealt the last damage. Transient (never saved): death is resolved in the same step. */
+  lastHitBy?: EntityId;
   faction?: FactionId;
   combatant?: Combatant;
   ai?: GangerAi;
   /** Enemy type (ADR-0015): weapon, outfit and loot table come from it. */
   enemy?: { readonly type: EnemyTypeId };
   civilian?: CivilianAi;
+  schedule?: Scheduled;
   interactable?: Interactable;
   /** A bag in the world; its contents live in `domain.loot` under this key. */
   lootBag?: { readonly key: string };

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { CorruptSaveError, SAVE_SCHEMA_VERSION, createDomainState } from "@seki/core";
 import { MIGRATIONS, checksum, decodeSave, encodeSave, findSchemaError, migrate, sanitizeItems } from "../src";
-import { snapshot, v1Payload, v6Payload } from "./fixtures";
+import { snapshot, v1Payload, v6Payload, v7Payload } from "./fixtures";
 
 const wrap = (payload: unknown) => {
   const text = JSON.stringify(payload);
@@ -156,6 +156,29 @@ describe("migrations", () => {
     expect(loaded.domain).toEqual(v5.domain);
   });
 
+  it("upgrades an M2 streaming (v6) save to the day clock, telling the time from the saved tick", () => {
+    const s = snapshot({ tick: 5400 });
+    const { clock: _c, ...v6Domain } = s.domain;
+    const loaded = decodeSave("m2", wrap({ ...s, version: 6, domain: v6Domain }));
+    expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
+    // 21:00 plus 5400 ticks of one game second each: 22:30.
+    expect(loaded.domain.clock).toEqual({ seconds: 21 * 3600 + 5400 });
+    expect(loaded.domain).toEqual({ ...v6Domain, clock: { seconds: 81000 } });
+    expect(loaded.entities).toEqual(s.entities);
+    expect(loaded.streaming).toEqual(s.streaming);
+  });
+
+  it("the v6 migration keeps an existing clock and tolerates a missing tick or domain", () => {
+    expect(MIGRATIONS[6]!({ version: 6, domain: { clock: { seconds: 5 } } })).toEqual({ version: 7, domain: { clock: { seconds: 5 } } });
+    expect(MIGRATIONS[6]!({ version: 6, tick: -3 })).toEqual({ version: 7, tick: -3, domain: { clock: { seconds: 75600 } } });
+  });
+
+  it("keeps the clock of a current save through the round trip", () => {
+    const s = snapshot();
+    const later = { ...s, domain: { ...s.domain, clock: { seconds: 200_000 } } };
+    expect(decodeSave("t", encodeSave(later)).domain.clock).toEqual({ seconds: 200_000 });
+  });
+
   it("keeps the streaming state of a current save through the round trip", () => {
     const s = snapshot({ streaming: { loadedChunks: ["kanal", "targ-south"] } });
     expect(decodeSave("s", encodeSave(s)).streaming.loadedChunks).toEqual(["kanal", "targ-south"]);
@@ -165,6 +188,13 @@ describe("migrations", () => {
     const s = snapshot();
     const contract = { id: "c2", siteId: "east_lot" as const, targets: 3, reward: 700, status: "active" as const };
     const withContract = { ...s, domain: { ...s.domain, contracts: { active: contract, completed: 1 } } };
+    expect(decodeSave("c", encodeSave(withContract)).domain.contracts.active).toEqual(contract);
+  });
+
+  it("keeps a market contract (M4 fields) through the round trip without a schema bump", () => {
+    const s = snapshot();
+    const contract = { id: "c3", kind: "delivery" as const, siteId: "hana_stall" as const, targets: 0, reward: 325, status: "active" as const, deadlineTick: 4800 };
+    const withContract = { ...s, domain: { ...s.domain, contracts: { active: contract, completed: 2 } } };
     expect(decodeSave("c", encodeSave(withContract)).domain.contracts.active).toEqual(contract);
   });
 });
@@ -215,6 +245,8 @@ describe("schema validation", () => {
     ["contracts", { contracts: { active: null, completed: 0.5 } }],
     ["contracts", { contracts: { active: { id: "c1", siteId: "moon", targets: 2, reward: 1, status: "active" }, completed: 0 } }],
     ["contracts", { contracts: { active: { id: "c1", siteId: "east_lot", targets: 2, reward: 1, status: "done" }, completed: 0 } }],
+    ["contract kind", { contracts: { active: { id: "c1", kind: "heist", siteId: "east_lot", targets: 2, reward: 1, status: "active" }, completed: 0 } }],
+    ["contract deadline", { contracts: { active: { id: "c1", kind: "delivery", siteId: "hana_stall", targets: 0, reward: 1, status: "active", deadlineTick: 1.5 }, completed: 0 } }],
     ["ability", { ability: { activeTime: "x", cooldown: 0 } }],
     ["cyberware", { character: { alias: null, memories: [], cyberware: { optics: "fake" } } }],
     ["story", { story: null }],
@@ -223,6 +255,9 @@ describe("schema validation", () => {
     ["story choices", { story: { choices: { case: "wheel" }, ending: null } }],
     ["story choices", { story: { choices: { case: 1 }, ending: null } }],
     ["story ending", { story: { choices: {}, ending: "happy" } }],
+    ["clock", { clock: null }],
+    ["clock", { clock: { seconds: 1.5 } }],
+    ["clock", { clock: { seconds: -60 } }],
     ["story ending", { story: { choices: {}, ending: 0 } }],
   ])("rejects bad domain %s", (_name, patch) => {
     const s = snapshot();
@@ -230,7 +265,7 @@ describe("schema validation", () => {
   });
 });
 
-describe("inventory migration (v8 to v9, ADR-0015)", () => {
+describe("inventory migration (v7 to v8, ADR-0015)", () => {
   it("turns a v6 medkit counter into the slot inventory with the starter weapon and clothes", () => {
     const loaded = decodeSave("v6", wrap(v6Payload(3)));
     expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
@@ -254,17 +289,24 @@ describe("inventory migration (v8 to v9, ADR-0015)", () => {
     expect(loaded.domain.inventory.items).toEqual(fresh.inventory.items);
   });
 
-  it("walks a v8 save (the placeholder steps) and an empty medkit counter", () => {
-    const v8 = { ...v6Payload(0), version: 8 };
-    const loaded = decodeSave("v8", wrap(v8));
+  it("upgrades a v7 save with the day clock, keeping the clock, and an empty medkit counter", () => {
+    const v7 = v7Payload(0);
+    const loaded = decodeSave("v7", wrap(v7));
+    expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
     expect(loaded.domain.inventory.stacks).toEqual({});
-    expect(MIGRATIONS[6]!({ version: 6, x: 1 })).toEqual({ version: 7, x: 1 });
-    expect(MIGRATIONS[7]!({ version: 7 })).toEqual({ version: 8 });
+    expect(loaded.domain.clock).toEqual(v7.domain.clock);
+    expect(loaded.domain.equipment.secondary).toBe("i1");
+  });
+
+  it("a v6 save gets both the clock (v7) and the inventory (v8)", () => {
+    const loaded = decodeSave("v6", wrap(v6Payload(1)));
+    expect(loaded.domain.clock).toBeDefined();
+    expect(loaded.domain.inventory.stacks).toEqual({ medkit: 1 });
   });
 
   it("chains every old version to the current one", () => {
-    for (const version of [2, 3, 4, 5, 6, 7, 8]) {
-      const loaded = decodeSave(`v${version}`, wrap({ ...v6Payload(2), version }));
+    for (const version of [2, 3, 4, 5, 6, 7]) {
+      const loaded = decodeSave(`v${version}`, wrap({ ...(version < 7 ? v6Payload(2) : v7Payload(2)), version }));
       expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
       expect(loaded.domain.inventory.stacks.medkit).toBe(2);
       expect(loaded.domain.equipment.secondary).toBe("i1");
@@ -272,11 +314,11 @@ describe("inventory migration (v8 to v9, ADR-0015)", () => {
   });
 
   it("tolerates a missing domain and keeps sections that already exist", () => {
-    expect(MIGRATIONS[8]!({ version: 8 })).toMatchObject({ version: 9, domain: { inventory: { stacks: {} }, ammo: { "9mm": 48 } } });
+    expect(MIGRATIONS[7]!({ version: 7 })).toMatchObject({ version: 8, domain: { inventory: { stacks: {} }, ammo: { "9mm": 48 } } });
     const current = snapshot();
-    const again = MIGRATIONS[8]!({ ...current, version: 8 } as unknown as Record<string, unknown>);
+    const again = MIGRATIONS[7]!({ ...current, version: 7 } as unknown as Record<string, unknown>);
     expect(again.domain).toEqual(current.domain);
-    expect(MIGRATIONS[8]!({ version: 8, domain: { inventory: { medkit: 1.5 } } })).toMatchObject({ domain: { inventory: { stacks: {} } } });
+    expect(MIGRATIONS[7]!({ version: 7, domain: { inventory: { medkit: 1.5 } } })).toMatchObject({ domain: { inventory: { stacks: {} } } });
   });
 
   it("round-trips weapons, mods, ammo and a bag in an unloaded chunk", () => {

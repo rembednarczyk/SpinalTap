@@ -43,7 +43,8 @@ test.describe("M0 smoke", () => {
     await step(page, 120, { moveZ: -1 });
     expect((await gameState(page)).player).not.toEqual(saved.player);
     await page.keyboard.press("F9");
-    await expect(page.getByText("Wczytano grę")).toBeVisible();
+    // Wait for the loaded state itself: under load the re-dressing hitch can outlast the toast.
+    await expect.poll(async () => (await gameState(page)).player, { timeout: 30_000 }).toEqual(saved.player);
     const loaded = await gameState(page);
     expect(loaded.player).toEqual(saved.player);
     expect(loaded.flags).toEqual(saved.flags);
@@ -176,6 +177,9 @@ test("touch layout keeps the weapon strip off the pad and the minimap", async ({
     a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
   const map = await page.getByTestId("minimap").boundingBox();
   expect(overlap(strip!, map!), "weapon strip overlaps the minimap").toBe(false);
+  const clock = await page.getByTestId("clock").boundingBox();
+  expect(overlap(strip!, clock!), "weapon strip overlaps the clock").toBe(false);
+  expect(overlap(clock!, map!), "clock overlaps the minimap").toBe(false);
   const pad = page.getByTestId("touch-controls").getByRole("button");
   const count = await pad.count();
   expect(count).toBeGreaterThan(4);

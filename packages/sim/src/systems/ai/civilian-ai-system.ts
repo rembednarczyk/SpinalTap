@@ -3,6 +3,7 @@ import { type EntityId, factionStance } from "@seki/core";
 import type { Entity } from "../../world/components";
 import type { SimContext, System } from "../../world/context";
 import { inCreationOrder } from "../../world/ordering";
+import { followSchedule } from "../../world/schedule";
 import { CIVILIAN_TREE } from "./civilian-tree";
 
 type Agent = ConstructorParameters<typeof BehaviourTree>[1];
@@ -11,6 +12,8 @@ type Agent = ConstructorParameters<typeof BehaviourTree>[1];
 export const FLEE_RADIUS = 7;
 export const CIVILIAN_FLEE_SPEED = 3.4;
 const CIVILIAN_WALK_SPEED = 1.4;
+/** Fastest a civilian hurries to catch up with its daily plan (after fleeing, say). */
+const CIVILIAN_SCHEDULE_SPEED = 1.6;
 const HOME_TOLERANCE = 0.3;
 
 type Civilian = Entity & { civilian: NonNullable<Entity["civilian"]>; velocity: NonNullable<Entity["velocity"]> };
@@ -43,10 +46,16 @@ class CivilianAgent {
     return State.SUCCEEDED;
   };
 
+  /** Back to the spot: wherever the daily plan says right now, or the fixed home without one. */
   ReturnHome = (): State => {
-    const { self } = this;
+    const { self, ctx } = this;
     if (!self) return State.FAILED;
     this.fleeing = false;
+    const pose = self.schedule?.pose;
+    if (pose && ctx) {
+      followSchedule(self, pose, CIVILIAN_SCHEDULE_SPEED, ctx.dt);
+      return State.SUCCEEDED;
+    }
     const dx = self.civilian.home.x - self.position.x;
     const dz = self.civilian.home.z - self.position.z;
     const d = Math.hypot(dx, dz);
@@ -63,6 +72,7 @@ class CivilianAgent {
 /**
  * Bystanders react to the street's opinion of the player: when the civilians' stance is
  * hostile they keep their distance, otherwise they stay at (or walk back to) their spot.
+ * A bystander with a daily plan walks it instead of standing at one spot.
  * Uses no randomness, so it cannot shift the RNG stream of the combat systems.
  */
 export const createCivilianAiSystem = (): System => {

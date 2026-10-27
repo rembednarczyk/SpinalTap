@@ -4,6 +4,7 @@ import {
   type LootLine,
   addContainer,
   bestLootRarity,
+  type ContractFailure,
   type FactionId,
   type MemoryId,
   MEMORY_CATALOG,
@@ -11,6 +12,8 @@ import {
   QUEST_DEFINITIONS,
   type ReputationCause,
   changeReputation,
+  contractFailedFlag,
+  contractKind,
   contractPayout,
   credit,
   currentStep,
@@ -38,7 +41,7 @@ export const raiseProgress = (ctx: SimContext, event: ProgressEvent): void => {
   }
 };
 
-export const grantEddies =(ctx: SimContext, base: number): void => {
+export const grantEddies = (ctx: SimContext, base: number): void => {
   const amount = contractPayout(base, ctx.state.domain.reputation.fixers);
   const r = credit(ctx.state.domain.wallet, amount);
   if (!r.ok) return;
@@ -80,3 +83,24 @@ export const dropLoot = (ctx: SimContext, key: string, at: { x: number; y: numbe
   ctx.bus.emit("LootDropped", { containerKey: key, at: container.position, best: bestLootRarity(lines) });
 };
 
+/** Marks the running contract's job as done (status "cleared"); the giver pays on the next talk. */
+export const clearContract = (ctx: SimContext): void => {
+  const contract = ctx.state.domain.contracts.active;
+  if (contract?.status !== "active") return;
+  const cleared = { ...contract, status: "cleared" as const };
+  ctx.state.domain = { ...ctx.state.domain, contracts: { ...ctx.state.domain.contracts, active: cleared } };
+  ctx.bus.emit("ContractCleared", { contract: cleared });
+};
+
+/**
+ * Drops the running contract without pay. Its id is marked failed and never reused, so the
+ * dead flags of its gangers cannot leak into a later contract.
+ */
+export const failContract = (ctx: SimContext, reason: ContractFailure): void => {
+  const contract = ctx.state.domain.contracts.active;
+  if (!contract) return;
+  ctx.state.domain = { ...ctx.state.domain, contracts: { ...ctx.state.domain.contracts, active: null } };
+  raiseFlag(ctx, contractFailedFlag(contract.id));
+  applyReputationCause(ctx, { type: "contract-failed", kind: contractKind(contract) });
+  ctx.bus.emit("ContractFailed", { contract, reason });
+};

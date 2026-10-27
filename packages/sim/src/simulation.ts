@@ -5,16 +5,23 @@ import {
   type DomainState,
   EMPTY_INPUT,
   type EntitySnapshot,
+  type GameClock,
   EventBus,
   type GameCommand,
   type InputFrame,
   type SaveSnapshot,
   SAVE_SCHEMA_VERSION,
+  SECONDS_PER_MINUTE,
+  advanceClock,
   buyCyberware,
   buyItem,
   createDomainState,
+  PROTECTEE_KEY,
+  contractKind,
   credit,
-  generateContract,
+  generateContractOfKind,
+  hasFlag,
+  minuteOfDay,
   recordChoice,
   resolveEnding,
   setAlias,
@@ -26,15 +33,25 @@ import { SeededRandom } from "./rng/seeded-random";
 import { aimSpreadOf, createSystems, playerStatsOf } from "./systems";
 import type { Entity } from "./world/components";
 import type { DomainHolder, SessionState, SimContext, System } from "./world/context";
-import { adjustReputation, applyReputationCause, grantMemory, raiseFlag, raiseProgress } from "./world/domain-ops";
+import { deadFlag } from "./systems/death-system";
+import { adjustReputation, applyReputationCause, clearContract, grantMemory, raiseFlag, raiseProgress } from "./world/domain-ops";
 import { PLAYER_SPAWN } from "./content/district-m0";
+import { OYAJI_HOURS } from "./content/schedules";
 import type { DistrictId } from "./content/world-map";
 import { IdAllocator, entitySnapshotOf, playerEntity } from "./world/factory";
 import { WorldStreamer } from "./world/streaming";
 import { applyItemCommand, isItemCommand } from "./world/item-commands";
 import { syncPlayerWeapon } from "./world/player-weapon";
+import { inCreationOrder } from "./world/ordering";
+import { placeOnSchedule } from "./world/schedule";
 
 export const SIM_HZ = 60;
+
+/** Protection jobs are offered while Oyaji keeps his stall open (ADR-0018). */
+export const oyajiStallOpen = (clock: DomainState["clock"]): boolean => {
+  const m = minuteOfDay(clock);
+  return m >= OYAJI_HOURS.open && m < OYAJI_HOURS.close;
+};
 export const SIM_DT = 1 / SIM_HZ;
 
 export interface SimulationOptions {
@@ -50,7 +67,7 @@ export class Simulation {
   readonly bus: EventBus<DomainEvents>;
   readonly seed: number;
   readonly world: World<Entity>;
-  readonly session: SessionState = { dialogueActive: false, gameOver: false, focusId: null, lastThreat: null };
+  readonly session: SessionState = { dialogueActive: false, gameOver: false, focusId: null, focusPrompt: null, lastThreat: null };
   private readonly rng: SeededRandom;
   private readonly holder: DomainHolder;
   private readonly systems: readonly System[] = createSystems();
@@ -74,7 +91,7 @@ export class Simulation {
     const contract = domain.contracts.active;
     if (contract?.status === "active") this.streamer.registerContract(this.world, domain.flags, domain.contracts.completed, contract);
     const focus = saved?.entities.find((e) => e.key === "player")?.position ?? PLAYER_SPAWN.position;
-    this.streamer.loadInitial(this.world, domain.flags, focus, saved?.streaming.loadedChunks ?? [], () => this.world.add(player));
+    this.streamer.loadInitial(this.world, domain.flags, focus, saved?.streaming.loadedChunks ?? [], domain.clock, () => this.world.add(player));
     if (player.combatant) syncPlayerWeapon(domain, player.combatant);
   }
 
@@ -96,6 +113,11 @@ export class Simulation {
 
   get tick(): number {
     return this.tickCount;
+  }
+
+  /** Time of day (domain state, advanced every step). */
+  get clock(): GameClock {
+    return this.holder.domain.clock;
   }
 
   get rngState(): number {
@@ -159,6 +181,11 @@ export class Simulation {
     };
   }
 
+  /** Oyaji has patched himself up since the last raid (only matters while he is in the world). */
+  private patchUpProtectee(): void {
+    for (const e of this.world.with("health")) if (e.key === PROTECTEE_KEY) e.health = { ...e.health, current: e.health.max };
+  }
+
   private apply(ctx: SimContext, cmd: GameCommand): void {
     if (isItemCommand(cmd)) {
       applyItemCommand(ctx, cmd);
@@ -209,11 +236,25 @@ export class Simulation {
       }
       case "accept-contract": {
         const domain = this.holder.domain;
+        const kind = cmd.kind ?? "eliminate";
         if (domain.contracts.active) break;
-        const contract = generateContract(domain.contracts, this.rng, domain.reputation.fixers);
+        // Nobody to protect once Oyaji is dead, and Hebi raid his stall only while it is open.
+        if (kind === "protect" && (hasFlag(domain.flags, deadFlag(PROTECTEE_KEY)) || !oyajiStallOpen(domain.clock))) break;
+        const contract = generateContractOfKind(
+          kind,
+          { log: domain.contracts, reputation: domain.reputation, flags: domain.flags, tick: ctx.tick, ticksPerSecond: SIM_HZ },
+          this.rng,
+        );
         this.holder.domain = { ...domain, contracts: { ...domain.contracts, active: contract } };
+        if (kind === "protect") this.patchUpProtectee();
         this.streamer.registerContract(this.world, this.holder.domain.flags, domain.contracts.completed, contract);
         ctx.bus.emit("ContractAccepted", { contract });
+        break;
+      }
+      case "deliver-contract": {
+        const contract = this.holder.domain.contracts.active;
+        if (contract?.status !== "active" || contractKind(contract) !== "delivery") break;
+        clearContract(ctx);
         break;
       }
       case "complete-contract": {
@@ -227,7 +268,7 @@ export class Simulation {
           contracts: { active: null, completed: domain.contracts.completed + 1 },
         };
         if (paid.ok) ctx.bus.emit("EddiesChanged", { balance: paid.wallet.eddies, delta: contract.reward });
-        applyReputationCause(ctx, { type: "contract-completed" });
+        applyReputationCause(ctx, { type: "contract-completed", kind: contractKind(contract) });
         ctx.bus.emit("ContractCompleted", { contract, reward: contract.reward });
         raiseProgress(ctx, "contract_completed");
         break;
@@ -237,6 +278,18 @@ export class Simulation {
         if (story === this.holder.domain.story) break;
         this.holder.domain = { ...this.holder.domain, story };
         ctx.bus.emit("StoryChoiceMade", { choice: cmd.choice, option: cmd.option });
+        break;
+      }
+      case "wait": {
+        const minutes = Math.floor(cmd.minutes);
+        if (!(minutes >= 1)) break;
+        const clock = advanceClock(this.holder.domain.clock, minutes * SECONDS_PER_MINUTE);
+        this.holder.domain = { ...this.holder.domain, clock };
+        // A cut, not a fast-forward: everyone on a daily plan is where it says at the new time.
+        for (const e of inCreationOrder(this.world.with("schedule"))) {
+          if (!e.ai?.alerted) placeOnSchedule(e, e.schedule.def, clock);
+        }
+        ctx.bus.emit("TimeSkipped", { minutes, clock });
         break;
       }
       case "resolve-ending": {
