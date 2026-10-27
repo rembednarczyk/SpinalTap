@@ -10,6 +10,7 @@ import { NIGHT_RIG } from "../npr/lighting";
 import { MoonShadow } from "../npr/moon-shadow";
 import { ToonMaterials } from "../npr/toon-material";
 import { Atmosphere, createSplashes, createSteam } from "./atmosphere";
+import { createDressing } from "./dressing";
 import { type CharacterRig, animateRig, deathFinished, startDeath, buildCivilian, buildFixer, buildGanger, buildHeroine, buildRipperdoc } from "./characters";
 import { type PropView, buildBlock, buildLamp, buildNeon } from "./props";
 import type { Stage } from "./stage";
@@ -57,6 +58,9 @@ export class BabylonRenderer implements RenderPort {
     if (this.lineArt) this.lineArt.geometryBuffer.renderTransparentMeshes = false;
     this.speedLines = new SpeedLines(scene, this.rig.camera);
     this.atmosphere = new Atmosphere(scene, NIGHT_RIG);
+    const dressing = createDressing(scene, this.materials);
+    for (const m of dressing.casters) this.shadow.addStaticCaster(m);
+    for (const m of dressing.meshes) if (m.material?.name.includes("vendingGlow")) stage.glow.addIncludedOnlyMesh(m);
     this.grading = new Grading(scene, this.rig.camera, { reference: stage.options.reference });
     this.effects = new Effects(scene, stage.glow);
     this.rain = stage.options.reference ? null : createRain(scene);

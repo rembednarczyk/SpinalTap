@@ -10,6 +10,8 @@ import {
   type Scene,
   ShaderMaterial,
   Vector3,
+  VertexBuffer,
+  VertexData,
 } from "../babylon";
 import type { LightingRig } from "./lighting";
 import { SHADOW_DEPTH_FRAGMENT, SHADOW_DEPTH_VERTEX } from "./toon-shader";
@@ -145,13 +147,25 @@ export class MoonShadow {
     }
     const sources = [...this.statics].filter((m): m is MeshClass => m instanceof MeshClass && !m.isDisposed());
     if (sources.length === 0) return;
+    // Depth only needs positions: rebuild each caster as bare world-space geometry so meshes
+    // with different attribute sets (colours, UVs) can be merged.
     const clones = sources.map((m) => {
-      const c = m.clone(`${m.name}-shadow`, null, true, false);
-      c.parent = null;
-      c.position.copyFrom(m.getAbsolutePosition());
-      c.rotationQuaternion = null;
-      c.rotation.copyFrom(m.absoluteRotationQuaternion.toEulerAngles());
-      c.scaling.copyFrom(m.absoluteScaling);
+      m.computeWorldMatrix(true);
+      const positions = m.getVerticesData(VertexBuffer.PositionKind) ?? [];
+      const world = m.getWorldMatrix();
+      const out = new Float32Array(positions.length);
+      const v = new Vector3();
+      for (let i = 0; i < positions.length; i += 3) {
+        Vector3.TransformCoordinatesFromFloatsToRef(positions[i] ?? 0, positions[i + 1] ?? 0, positions[i + 2] ?? 0, world, v);
+        out[i] = v.x;
+        out[i + 1] = v.y;
+        out[i + 2] = v.z;
+      }
+      const data = new VertexData();
+      data.positions = out;
+      data.indices = m.getIndices() ?? [];
+      const c = new MeshClass(`${m.name}-shadow`, this.scene);
+      data.applyToMesh(c);
       return c;
     });
     const merged = MeshClass.MergeMeshes(clones, true, true);
