@@ -93,6 +93,25 @@ describe("HumanoidRetarget", () => {
     expect(standingHead - worldOf(bone("J_Bip_C_Head")).y).toBeGreaterThan(0.3);
   });
 
+  it("jumps and climbs an imported model through the same joints (ADR-0021)", () => {
+    const scene = new Scene(new NullEngine());
+    const rig = buildHeroine(scene, new ToonMaterials(scene), "h");
+    const { root, bone } = tPose(scene);
+    const retarget = HumanoidRetarget.create(rig, root)!;
+    for (let i = 0; i < 20; i++) animateRig(rig, 0, 1 / 60, 0, {}, { air: 6 });
+    retarget.update();
+    // Tucked: the knee comes up and forward of the hip.
+    const hip = worldOf(bone("J_Bip_L_UpperLeg"));
+    const knee = worldOf(bone("J_Bip_L_LowerLeg"));
+    expect(knee.z - hip.z).toBeGreaterThan(0.15);
+    for (let i = 0; i < 40; i++) animateRig(rig, 0, 1 / 60, 0, {}, { climb: 2 });
+    retarget.update();
+    // On a ladder the left hand is above the shoulder.
+    const shoulder = worldOf(bone("J_Bip_L_UpperArm"));
+    const hand = worldOf(bone("J_Bip_L_Hand"));
+    expect(hand.y - shoulder.y).toBeGreaterThan(0.25);
+  });
+
   it("holds a gun in the right hand, pointing along the aim", () => {
     const scene = new Scene(new NullEngine());
     const rig = buildHeroine(scene, new ToonMaterials(scene), "h");

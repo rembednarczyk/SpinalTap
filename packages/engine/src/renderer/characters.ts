@@ -56,6 +56,15 @@ export interface CharacterRig {
   flinch: number;
   /** null while alive; seconds since death otherwise. */
   dying: number | null;
+  /** Vertical speed last frame while airborne, null on the ground (ADR-0021). */
+  lastAir: number | null;
+  /** 0..1 blend of the jump pose, eased in on take-off and out on landing. */
+  airBlend: number;
+  /** 0..1 knee dip after landing, stronger after a long drop; decays. */
+  landing: number;
+  /** 0..1 blend of the ladder pose, and the phase of the hand-over-hand cycle. */
+  climbBlend: number;
+  climbPhase: number;
 }
 
 /** A melee swing in progress: strike `strike` of the combo, timed like the simulation's. */
@@ -441,6 +450,11 @@ const finish = (
     time: 0,
     flinch: 0,
     dying: null,
+    lastAir: null,
+    airBlend: 0,
+    landing: 0,
+    climbBlend: 0,
+    climbPhase: 0,
     ...joints,
   };
 };
@@ -649,6 +663,49 @@ export interface RigCombat {
   readonly guard?: number;
 }
 
+/** Jumps, falls and ladders from the simulation (`Transform.air`, `Transform.climb`, ADR-0021). */
+export interface RigMotion {
+  /** Vertical speed while airborne, m/s; absent on the ground. */
+  readonly air?: number;
+  /** Climbing speed on a ladder, m/s; absent off it. */
+  readonly climb?: number;
+}
+
+/** Take-off speed the jump pose is scaled to (the simulation's JUMP_SPEED). */
+const AIR_REF = 7;
+/** Blend speeds of the jump and ladder poses, per second. */
+const AIR_BLEND_IN = 14;
+const AIR_BLEND_OUT = 10;
+const CLIMB_BLEND = 8;
+/** How long a landing dip lasts (1 / rate), and how deep it goes at full strength (as a crouch amount). */
+const LANDING_RECOVER = 3.2;
+export const LANDING_DIP = 0.6;
+/** A drop landing at this speed (m/s) gives the full dip. */
+const LANDING_FULL = 14;
+
+/** Thigh and knee of the jump pose: tucked on the way up, reaching for the ground on the way down. */
+export const jumpLegs = (air: number): { thigh: number; knee: number } => {
+  const up = Math.max(0, Math.min(1, air / AIR_REF));
+  const down = Math.max(0, Math.min(1, -air / AIR_REF));
+  return { thigh: -0.75 * up - 0.3 * down, knee: 1.25 * up + 0.35 * down + 0.2 };
+};
+
+/** Hand over hand, foot over foot: the ladder pose at phase `p`. */
+const climbPose = (rig: CharacterRig, w: number): void => {
+  const s = Math.sin(rig.climbPhase);
+  const mix = (from: number, to: number) => from + (to - from) * w;
+  rig.armL.rotation.x = mix(rig.armL.rotation.x, -2.5 + 0.4 * s);
+  rig.armR.rotation.x = mix(rig.armR.rotation.x, -2.5 - 0.4 * s);
+  rig.armL.rotation.z = mix(rig.armL.rotation.z, 0.12);
+  rig.armR.rotation.z = mix(rig.armR.rotation.z, -0.12);
+  rig.elbowL.rotation.x = mix(rig.elbowL.rotation.x, -0.55 - 0.35 * Math.max(0, -s));
+  rig.elbowR.rotation.x = mix(rig.elbowR.rotation.x, -0.55 - 0.35 * Math.max(0, s));
+  rig.legL.rotation.x = mix(rig.legL.rotation.x, -0.55 - 0.5 * Math.max(0, s));
+  rig.legR.rotation.x = mix(rig.legR.rotation.x, -0.55 - 0.5 * Math.max(0, -s));
+  rig.kneeL.rotation.x = mix(rig.kneeL.rotation.x, 0.9 + 0.7 * Math.max(0, s));
+  rig.kneeR.rotation.x = mix(rig.kneeR.rotation.x, 0.9 + 0.7 * Math.max(0, -s));
+};
+
 /**
  * Procedural animation: walk cycle with knees and elbows, crouch, idle breathing, hit flinch,
  * death fall. `crouch` is 0 standing .. 1 fully down (already eased by the simulation): hips
@@ -656,7 +713,7 @@ export interface RigCombat {
  * looking and aiming forward. `combat` holds the weapon up while aiming (ADR-0019) and raises
  * a melee guard; melee swings and staggers come from `startSwing` and `startStagger`.
  */
-export const animateRig = (rig: CharacterRig, speed: number, dt: number, crouch = 0, combat: RigCombat = {}): void => {
+export const animateRig = (rig: CharacterRig, speed: number, dt: number, crouch = 0, combat: RigCombat = {}, motion: RigMotion = {}): void => {
   rig.time += dt;
   if (rig.dying !== null) {
     rig.dying += dt;
@@ -674,7 +731,20 @@ export const animateRig = (rig: CharacterRig, speed: number, dt: number, crouch 
     rig.root.position.y = 0.12 * ease - sink * 0.5;
     return;
   }
-  const c = smooth(Math.min(1, Math.max(0, crouch)));
+  // Airborne and on ladders (ADR-0021): the walk cycle gives way to the jump or ladder pose; a
+  // landing dips the knees like a short crouch, deeper after a long drop.
+  const air = motion.air;
+  const climbing = motion.climb !== undefined;
+  if (air === undefined && rig.lastAir !== null && !climbing) rig.landing = Math.min(1, 0.3 + Math.max(0, -rig.lastAir) / LANDING_FULL);
+  rig.lastAir = climbing ? null : (air ?? null);
+  rig.landing = Math.max(0, rig.landing - dt * LANDING_RECOVER);
+  const airTarget = air !== undefined && !climbing ? 1 : 0;
+  rig.airBlend += (airTarget - rig.airBlend) * Math.min(1, dt * (airTarget > rig.airBlend ? AIR_BLEND_IN : AIR_BLEND_OUT));
+  rig.climbBlend += ((climbing ? 1 : 0) - rig.climbBlend) * Math.min(1, dt * CLIMB_BLEND);
+  if (climbing) rig.climbPhase += dt * Math.abs(motion.climb ?? 0) * 3.4;
+  const still = Math.max(rig.airBlend, rig.climbBlend);
+  speed *= 1 - still;
+  const c = smooth(Math.min(1, Math.max(0, Math.max(crouch, rig.landing * LANDING_DIP))));
   // 0 walking .. 1 sprinting: longer stride, forward lean, pumping arms, a flight phase.
   const run = smooth(Math.min(1, Math.max(0, (speed - RUN_FROM) / (RUN_FULL - RUN_FROM)))) * (1 - c);
   const lean = CROUCH_LEAN * c + RUN_LEAN * run;
@@ -711,6 +781,23 @@ export const animateRig = (rig: CharacterRig, speed: number, dt: number, crouch 
   // Arms hang and aim in world terms, so the lean is taken out of them too.
   rig.armL.rotation.x -= lean;
   rig.armR.rotation.x -= lean;
+  if (rig.airBlend > 0.001) {
+    // One knee leads: the jump reads as a step into the air, not a hop on both feet.
+    const legs = jumpLegs(air ?? rig.lastAir ?? 0);
+    const w = rig.airBlend;
+    rig.legL.rotation.x += w * legs.thigh;
+    rig.legR.rotation.x += w * legs.thigh * 0.55;
+    rig.kneeL.rotation.x += w * legs.knee;
+    rig.kneeR.rotation.x += w * legs.knee * 0.7;
+    // Arms out for balance; a weapon arm stays where it aims.
+    rig.armL.rotation.x -= w * 0.45;
+    rig.armL.rotation.z += w * 0.35;
+    if (!rig.aiming) {
+      rig.armR.rotation.x -= w * 0.45;
+      rig.armR.rotation.z -= w * 0.35;
+    }
+  }
+  if (rig.climbBlend > 0.001) climbPose(rig, rig.climbBlend);
   const offset = c > 0 ? crouchDelta(rig, thigh, knee, lean) : { y: 0, z: 0 };
   const breathe = Math.sin(rig.time * 1.7) * 0.006;
   // Bob: a soft dip at a walk, a push-off and flight at a run.

@@ -84,6 +84,33 @@ const buildSteps = (scene: Scene, name: string, size: Block["size"], slope: Slop
   return merged;
 };
 
+/** Rail and rung thickness of a ladder, metres. */
+const LADDER_BAR = 0.05;
+
+/**
+ * A fire escape ladder (ADR-0021): two side rails along the height and `rungs` bars across
+ * the wider horizontal side, merged into one mesh.
+ */
+const buildLadder = (scene: Scene, name: string, size: Block["size"], rungs: number): Mesh => {
+  const alongX = size.x >= size.z;
+  const width = alongX ? size.x : size.z;
+  const parts: Mesh[] = [];
+  for (const side of [-1, 1]) {
+    const rail = MeshBuilder.CreateBox(`${name}-rail${side}`, { width: LADDER_BAR, height: size.y, depth: LADDER_BAR }, scene);
+    rail.position.set(alongX ? (side * (width - LADDER_BAR)) / 2 : 0, 0, alongX ? 0 : (side * (width - LADDER_BAR)) / 2);
+    parts.push(rail);
+  }
+  for (let i = 0; i < rungs; i++) {
+    const rung = MeshBuilder.CreateBox(`${name}-rung${i}`, alongX ? { width, height: LADDER_BAR * 0.8, depth: LADDER_BAR * 0.8 } : { width: LADDER_BAR * 0.8, height: LADDER_BAR * 0.8, depth: width }, scene);
+    rung.position.y = -size.y / 2 + ((i + 0.5) / rungs) * size.y;
+    parts.push(rung);
+  }
+  const merged = MeshClass.MergeMeshes(parts, true);
+  if (!merged) throw new Error(`ladder ${name}: nothing to merge`);
+  merged.name = `${name}-mesh`;
+  return merged;
+};
+
 /** A box whose top slopes (a stair railing, a ramp): the top vertices follow the slope. */
 const buildWedge = (scene: Scene, name: string, size: Block["size"], slope: Slope): Mesh => {
   const m = MeshBuilder.CreateBox(`${name}-mesh`, { width: size.x, height: size.y, depth: size.z, updatable: true }, scene);
@@ -107,7 +134,9 @@ const buildWedge = (scene: Scene, name: string, size: Block["size"], slope: Slop
 export const buildBlock = (scene: Scene, materials: ToonMaterials, name: string, v: Block, at: Vector3): PropView => {
   const root = new TransformNode(name, scene);
   root.position.copyFrom(at);
-  const m = v.slope
+  const m = v.rungs
+    ? buildLadder(scene, name, v.size, v.rungs)
+    : v.slope
     ? v.slope.steps
       ? buildSteps(scene, name, v.size, { ...v.slope, steps: v.slope.steps })
       : buildWedge(scene, name, v.size, v.slope)

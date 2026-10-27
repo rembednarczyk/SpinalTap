@@ -32,4 +32,18 @@ describe("sloped blocks (ADR-0020)", () => {
     expect(lowEnd).toBeCloseTo(-size.y / 2 + 1, 5);
     expect(highEnd).toBeCloseTo(size.y / 2, 5);
   });
+
+  it("draws a ladder as one merged mesh of two rails and its rungs (ADR-0021)", () => {
+    const prop = buildBlock(scene, materials, "ld", { kind: "block", size: { x: 0.6, y: 5, z: 0.08 }, material: "metal", rungs: 16 }, Vector3.Zero());
+    const meshes = prop.root.getChildMeshes();
+    expect(meshes).toHaveLength(1);
+    const box = meshes[0]!.getBoundingInfo().boundingBox;
+    expect(box.maximum.y - box.minimum.y).toBeCloseTo(5, 5);
+    expect(box.maximum.x - box.minimum.x).toBeCloseTo(0.6, 5);
+    // 18 boxes of 24 vertices each.
+    expect(meshes[0]!.getTotalVertices()).toBe(18 * 24);
+    const side = buildBlock(scene, materials, "ld2", { kind: "block", size: { x: 0.08, y: 3, z: 0.6 }, material: "metal", rungs: 10 }, Vector3.Zero());
+    const b2 = side.root.getChildMeshes()[0]!.getBoundingInfo().boundingBox;
+    expect(b2.maximum.z - b2.minimum.z).toBeCloseTo(0.6, 5);
+  });
 });
