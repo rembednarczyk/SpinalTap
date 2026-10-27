@@ -12,6 +12,7 @@ import {
   lamp,
   neon,
   rail,
+  skin,
   slab,
   stairRail,
   stairs,
@@ -98,7 +99,8 @@ const containerClimb = (): StaticProp[] => {
 const warehouse = (): StaticProp[] => {
   const top = WAREHOUSE_TOP;
   return [
-    building(-28, 107, 20, top, 26, "metal"),
+    // Offices over the loading bays, from the city kit (ADR-0022); its own signs stay off.
+    building(-28, 107, 20, top, 26, "metal", skin("tenement", "x+", { signs: false })),
     stairs(-17.8, -16.2, 97, 115, 0, top, "z", 1),
     stairRail(-16.2, -16, 97, 115, 0, top, "z", 1),
     deck(-18, -16, 115, 117.2, top, 0.4),
@@ -179,14 +181,15 @@ export const DOKI_YARD_PROPS: readonly StaticProp[] = [
   ...containers(),
   ...containerClimb(),
   // Genzō's corner by the passage: a container office, a fire barrel, a sign.
-  building(19, 100.5, 6, 2.8, 3, "metal"),
+  building(19, 100.5, 6, 2.8, 3, "metal", skin("shop", "z-", { signs: false })),
   crate(23.2, 97.4, 0.7, 0.9, 0.7),
   neon(19, 2.3, 98.9, v(3.2, 0.7, 0.15), "#ffb000", "KAIUN"),
   lamp(25.5, 95, SODIUM),
   lamp(13, 112, "#9ad7ff"),
-  // Pallets by the east wall.
+  // Pallets by the east wall, a car parked by the crane stairs.
   crate(29.5, 108, 2.4, 1.2, 3.2),
   crate(29.8, 116, 2, 2.2, 2),
+  crate(27, 120, 2, 1.5, 4.2, skin("car", "z-")),
 ];
 
 export const DOKI_QUAY_PROPS: readonly StaticProp[] = [
@@ -197,6 +200,9 @@ export const DOKI_QUAY_PROPS: readonly StaticProp[] = [
   // Cover around the terminal under the crane, and two containers on the west quay.
   crate(5.5, 132.5, 2.4, 1.2, 1.2),
   crate(11, 130, 1.4, 1.1, 1.4),
+  // A skip by the office and Tessen's van by the east fence: cover on the way in.
+  crate(-14, 127, 2.4, 1.4, 1.4, skin("dumpster", "z-")),
+  crate(28.5, 140, 2.4, 2.2, 5, skin("van", "z+")),
   ...container(-10, 145.2, false),
   ...container(-16, 145.2, true, "glass"),
   lamp(-8, 147.5, SODIUM),
