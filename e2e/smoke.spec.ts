@@ -43,7 +43,8 @@ test.describe("M0 smoke", () => {
     await step(page, 120, { moveZ: -1 });
     expect((await gameState(page)).player).not.toEqual(saved.player);
     await page.keyboard.press("F9");
-    await expect(page.getByText("Wczytano grę")).toBeVisible();
+    // Wait for the loaded state itself: under load the re-dressing hitch can outlast the toast.
+    await expect.poll(async () => (await gameState(page)).player, { timeout: 30_000 }).toEqual(saved.player);
     const loaded = await gameState(page);
     expect(loaded.player).toEqual(saved.player);
     expect(loaded.flags).toEqual(saved.flags);
