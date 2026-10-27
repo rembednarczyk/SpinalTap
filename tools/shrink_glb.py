@@ -8,19 +8,45 @@ jl = struct.unpack('<I', d[12:16])[0]
 j = json.loads(d[20:20 + jl])
 bin_start = 20 + jl + 8
 blob = d[bin_start:bin_start + struct.unpack('<I', d[20 + jl:24 + jl])[0]]
-# Optional: drop morph targets (the toon shader has none yet) and every buffer view nothing uses.
-if '--strip-morphs' in sys.argv:
-    for mesh in j.get('meshes', []):
-        mesh.pop('weights', None)
-        mesh.get('extras', {}).pop('targetNames', None)
+# Morph targets: `--strip-morphs` drops them all; `--keep-morphs=blink,a,i,u,e,o` keeps only the
+# targets the named VRM 0.x blend shape groups bind, positions only, and rewires the binds.
+# Either way every accessor and buffer view nothing uses afterwards is dropped.
+keep_arg = next((a.split('=', 1)[1] for a in sys.argv if a.startswith('--keep-morphs=')), None)
+if '--strip-morphs' in sys.argv or keep_arg is not None:
+    keep_groups = set(keep_arg.split(',')) if keep_arg else set()
+    vrm = j.get('extensions', {}).get('VRM', {})
+    groups = vrm.get('blendShapeMaster', {}).get('blendShapeGroups', [])
+    wanted = {}  # mesh index -> sorted old target indices
+    for g in groups:
+        if g.get('presetName') in keep_groups or g.get('name', '').lower() in keep_groups:
+            for b in g.get('binds', []):
+                wanted.setdefault(b['mesh'], set()).add(b['index'])
+    remap = {m: {old: new for new, old in enumerate(sorted(ix))} for m, ix in wanted.items()}
+    for mi, mesh in enumerate(j.get('meshes', [])):
+        keep = sorted(wanted.get(mi, ()))
+        names = mesh.get('extras', {}).get('targetNames')
+        if keep:
+            if 'weights' in mesh: mesh['weights'] = [0.0 for _ in keep]
+            if names: mesh['extras']['targetNames'] = [names[i] for i in keep]
+        else:
+            mesh.pop('weights', None)
+            mesh.get('extras', {}).pop('targetNames', None)
         for prim in mesh['primitives']:
-            prim.pop('targets', None)
-            prim.get('extras', {}).pop('targetNames', None)
+            targets = prim.pop('targets', None)
+            pnames = prim.get('extras', {}).pop('targetNames', None)
+            if keep and targets:
+                prim['targets'] = [{'POSITION': targets[i]['POSITION']} for i in keep]
+                if pnames: prim['extras']['targetNames'] = [pnames[i] for i in keep]
+    for g in groups:
+        kept = g.get('presetName') in keep_groups or g.get('name', '').lower() in keep_groups
+        g['binds'] = [{**b, 'index': remap[b['mesh']][b['index']]} for b in g.get('binds', [])] if kept else []
+        if not kept: g['materialValues'] = []
     used_acc = set()
     for mesh in j.get('meshes', []):
         for prim in mesh['primitives']:
             used_acc.update(prim['attributes'].values())
             if 'indices' in prim: used_acc.add(prim['indices'])
+            for t in prim.get('targets', []): used_acc.update(t.values())
     for skin in j.get('skins', []):
         if 'inverseBindMatrices' in skin: used_acc.add(skin['inverseBindMatrices'])
     for anim in j.get('animations', []):
@@ -32,6 +58,7 @@ if '--strip-morphs' in sys.argv:
         for prim in mesh['primitives']:
             prim['attributes'] = {k: remap_acc(v) for k, v in prim['attributes'].items()}
             if 'indices' in prim: prim['indices'] = remap_acc(prim['indices'])
+            if 'targets' in prim: prim['targets'] = [{k: remap_acc(v) for k, v in t.items()} for t in prim['targets']]
     for skin in j.get('skins', []):
         if 'inverseBindMatrices' in skin: skin['inverseBindMatrices'] = remap_acc(skin['inverseBindMatrices'])
     for anim in j.get('animations', []):
@@ -44,10 +71,6 @@ if '--strip-morphs' in sys.argv:
         if 'bufferView' in a: a['bufferView'] = view_map[a['bufferView']]
     for im in j.get('images', []):
         if 'bufferView' in im: im['bufferView'] = view_map[im['bufferView']]
-    # Blend shape groups point at targets that are gone.
-    vrm = j.get('extensions', {}).get('VRM', {})
-    for g in vrm.get('blendShapeMaster', {}).get('blendShapeGroups', []):
-        g['binds'] = []
 views = j['bufferViews']
 image_views = {im['bufferView'] for im in j.get('images', []) if 'bufferView' in im}
 new = bytearray()

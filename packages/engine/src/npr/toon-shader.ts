@@ -20,6 +20,8 @@ varying vec4 vColor;
 #endif
 #include<instancesDeclaration>
 #include<bonesDeclaration>
+#include<morphTargetsVertexGlobalDeclaration>
+#include<morphTargetsVertexDeclaration>[0..maxSimultaneousMorphTargets]
 uniform mat4 viewProjection;
 uniform mat4 shadowMatrix;
 varying vec3 vWorldPos;
@@ -27,11 +29,16 @@ varying vec3 vNormal;
 varying vec4 vShadowPos;
 
 void main(void) {
+  // Face expressions of imported models (blink, mouth) move positions only.
+  vec3 positionUpdated = position;
+  vec3 normalUpdated = normal;
+#include<morphTargetsVertexGlobal>
+#include<morphTargetsVertex>[0..maxSimultaneousMorphTargets]
 #include<instancesVertex>
 #include<bonesVertex>
-  vec4 wp = finalWorld * vec4(position, 1.0);
+  vec4 wp = finalWorld * vec4(positionUpdated, 1.0);
   vWorldPos = wp.xyz;
-  vNormal = normalize(mat3(finalWorld) * normal);
+  vNormal = normalize(mat3(finalWorld) * normalUpdated);
   vShadowPos = shadowMatrix * wp;
 #ifdef UV1
   vUV = uv;
@@ -206,13 +213,18 @@ precision highp float;
 attribute vec3 position;
 #include<instancesDeclaration>
 #include<bonesDeclaration>
+#include<morphTargetsVertexGlobalDeclaration>
+#include<morphTargetsVertexDeclaration>[0..maxSimultaneousMorphTargets]
 uniform mat4 viewProjection;
 varying float vDepth;
 
 void main(void) {
+  vec3 positionUpdated = position;
+#include<morphTargetsVertexGlobal>
+#include<morphTargetsVertex>[0..maxSimultaneousMorphTargets]
 #include<instancesVertex>
 #include<bonesVertex>
-  gl_Position = viewProjection * finalWorld * vec4(position, 1.0);
+  gl_Position = viewProjection * finalWorld * vec4(positionUpdated, 1.0);
   vDepth = gl_Position.z / gl_Position.w * 0.5 + 0.5;
 }
 `;

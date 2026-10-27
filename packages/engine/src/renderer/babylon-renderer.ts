@@ -271,6 +271,11 @@ export class BabylonRenderer implements RenderPort {
         if (effect.entityId === this.cameraTarget) this.rig.setWeaponDrawn(effect.drawn);
         return;
       }
+      case "talk": {
+        const e = this.entities.get(effect.entityId);
+        if (e?.kind === "character") this.dressed.get(e.rig)?.model.face?.talk(effect.seconds);
+        return;
+      }
       case "reload": {
         const e = this.entities.get(effect.entityId);
         if (e?.kind === "character") startReload(e.rig, effect.duration);
@@ -329,6 +334,7 @@ export class BabylonRenderer implements RenderPort {
     for (const d of this.dressed.values()) {
       d.retarget.update();
       d.springs?.update(dt);
+      d.model.face?.update(dt);
     }
     for (const e of this.entities.values()) if (e.kind === "character") this.loadouts.update(e.rig, this.dressed.has(e.rig));
     for (const rig of this.dying) this.loadouts.update(rig, this.dressed.has(rig));
