@@ -9,6 +9,8 @@ export interface SessionState {
   dialogueActive: boolean;
   gameOver: boolean;
   focusId: EntityId | null;
+  /** Prompt shown for the focused entity; it can change while focus stays (a stall closing). */
+  focusPrompt: string | null;
 }
 
 /** Mutable holder for the immutable domain state, plus a dirty marker for quest evaluation. */

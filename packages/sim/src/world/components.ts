@@ -1,5 +1,6 @@
 import type { EntityId, FactionId, Health, Vec3, ViewDescriptor } from "@seki/core";
 import type { Aabb } from "./collision";
+import type { ScheduleDef, SchedulePose } from "./schedule";
 
 export interface CharacterBody {
   readonly radius: number;
@@ -30,6 +31,18 @@ export interface GangerAi {
 /** A bystander that keeps to its spot and runs from a player the street fears. Stateless by design. */
 export interface CivilianAi {
   readonly home: Vec3;
+}
+
+/**
+ * A daily plan (see schedule.ts). Stateless like the rest of the AI: the pose is recomputed
+ * from the clock every step, so nothing of it is saved.
+ */
+export interface Scheduled {
+  readonly def: ScheduleDef;
+  /** The NPC's own interaction; a stop may replace it while it is current. */
+  readonly own: Interactable | null;
+  /** Where the plan wants the NPC this step; null until the schedule system first runs. */
+  pose: SchedulePose | null;
 }
 
 export interface Interactable {
@@ -67,5 +80,6 @@ export interface Entity {
   combatant?: Combatant;
   ai?: GangerAi;
   civilian?: CivilianAi;
+  schedule?: Scheduled;
   interactable?: Interactable;
 }

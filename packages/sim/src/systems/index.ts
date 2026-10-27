@@ -10,10 +10,13 @@ import { movementSystem } from "./movement-system";
 import { playerControlSystem } from "./player-control-system";
 import { questSystem } from "./quest-system";
 import { streamingSystem } from "./streaming-system";
+import { clockSystem } from "./clock-system";
+import { scheduleSystem } from "./schedule-system";
 
 export { fireShot, HEAD_ZONE } from "./combat-system";
 export { equippedAbility, worldTimeScale } from "./ability-system";
 export { deadFlag } from "./death-system";
+export { gameSecondsPerStep } from "./clock-system";
 export { statsFor, PITCH_LIMIT, SPRINT_MULTIPLIER } from "./player-control-system";
 
 /**
@@ -21,11 +24,13 @@ export { statsFor, PITCH_LIMIT, SPRINT_MULTIPLIER } from "./player-control-syste
  * Returns fresh instances because some systems keep per-simulation caches.
  */
 export const createSystems = (): readonly System[] => [
+  clockSystem,
   streamingSystem,
   interpolationSystem,
   abilitySystem,
   itemSystem,
   playerControlSystem,
+  scheduleSystem,
   createGangerAiSystem(),
   createCivilianAiSystem(),
   movementSystem,

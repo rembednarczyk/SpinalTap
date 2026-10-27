@@ -8,6 +8,6 @@ export const streamingSystem: System = {
   name: "streaming",
   run(ctx) {
     const player = ctx.world.with("player").first;
-    if (player) ctx.streamer.update(ctx.world, ctx.state.domain.flags, player.position);
+    if (player) ctx.streamer.update(ctx.world, ctx.state.domain.flags, player.position, ctx.state.domain.clock);
   },
 };
