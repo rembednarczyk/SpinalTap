@@ -12,7 +12,7 @@ export const perf = (page: Page) => page.evaluate(() => window.__seki!.perf());
 export const step = (page: Page, n: number, input: Record<string, unknown> = {}) =>
   page.evaluate(([count, frame]) => window.__seki!.step(count as number, frame as Record<string, unknown>), [n, input] as const);
 
-export const teleport = (page: Page, x: number, z: number, yaw = 0, pitch = 0) =>
-  page.evaluate(([a, b, c, d]) => window.__seki!.teleport(a, b, c, d), [x, z, yaw, pitch] as const);
+export const teleport = (page: Page, x: number, z: number, yaw = 0, pitch = 0, y = 0) =>
+  page.evaluate(([a, b, c, d, e]) => window.__seki!.teleport(a, b, c, d, e), [x, z, yaw, pitch, y] as const);
 
 export const freeze = (page: Page) => page.evaluate(() => window.__seki!.setPaused(true));

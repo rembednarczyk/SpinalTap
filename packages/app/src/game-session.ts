@@ -24,8 +24,7 @@ import {
   dayPhase,
   daylight,
   formatClock,
-  pendingRecall,
-  recallDialogueId,
+  pendingScene,
   secondOfDay,
 } from "@seki/core";
 import { type DialogueView, NarrativeRuntime } from "@seki/narrative";
@@ -192,15 +191,16 @@ export class GameSession implements UiIntents {
 
   /**
    * A recovered memory plays as a flashback as soon as the player is free again (after the
-   * conversation or the clinic that triggered it). Driven by domain state, so it survives a save.
+   * conversation or the clinic that triggered it), and so does the opening of act II. Driven
+   * by domain state, so it survives a save.
    */
   private playPendingRecall(): void {
     const session = this.simulation.session;
     if (!this.inControl || session.gameOver) return;
-    const memory = pendingRecall(this.simulation.domain);
-    if (!memory || !this.calm()) return;
+    const scene = pendingScene(this.simulation.domain);
+    if (!scene || !this.calm()) return;
     this.simulation.session.dialogueActive = true;
-    this.openDialogue(recallDialogueId(memory));
+    this.openDialogue(scene);
   }
 
   /** No shot near the player for RECALL_CALM_TICKS, or whoever fired it is down. */
@@ -530,11 +530,7 @@ export class GameSession implements UiIntents {
         pushToastTimed(this.deps.ui, "system", "Pusty slot", slot);
         return false;
       }
-      this.closeDialogueSilently();
-      this.replaceSimulation(Simulation.fromSnapshot(snapshot, this.bus));
-      if (snapshot.narrative) this.narrative.loadState(snapshot.narrative);
-      else this.narrative.resetState();
-      this.setScreen("playing");
+      this.restore(snapshot);
       pushToastTimed(this.deps.ui, "system", "Wczytano grę", snapshot.meta.label);
       return true;
     } catch (e) {
@@ -544,6 +540,15 @@ export class GameSession implements UiIntents {
     } finally {
       patchUi(this.deps.ui, { busy: false });
     }
+  }
+
+  /** Replaces the running game with `snapshot`, ink state included: a load without the slot. */
+  restore(snapshot: SaveSnapshot): void {
+    this.closeDialogueSilently();
+    this.replaceSimulation(Simulation.fromSnapshot(snapshot, this.bus));
+    if (snapshot.narrative) this.narrative.loadState(snapshot.narrative);
+    else this.narrative.resetState();
+    this.setScreen("playing");
   }
 
   async refreshSlots(): Promise<void> {

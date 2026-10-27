@@ -234,7 +234,7 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
       if (e.delta !== 0) toast("reputation", `${FACTIONS[e.faction]} ${e.delta > 0 ? "+" : ""}${e.delta}`, "Reputacja");
     }),
     bus.on("EndingReached", (e) => {
-      toast("quest", "Koniec aktu I: Echo", `Zakończenie: ${e.title}`);
+      toast("quest", e.act === 2 ? "Koniec aktu II: Lustro" : "Koniec aktu I: Echo", `Zakończenie: ${e.title}`);
       audio.play("quest-update");
     }),
     bus.on("TimeSkipped", (e) => toast("system", `Mija czas: ${formatClock(e.clock)}`, `${Math.floor(e.minutes / 60)} h ${e.minutes % 60} min później`)),
