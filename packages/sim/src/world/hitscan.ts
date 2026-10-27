@@ -1,6 +1,6 @@
 import type { CameraMode, EntityId, HitZone, Vec3 } from "@seki/core";
 import type { World } from "miniplex";
-import { type Aabb, rayAabb } from "./collision";
+import { type Aabb, rayAabb, raySolid } from "./collision";
 import type { Entity } from "./components";
 import { bodyHeightOf, crouchOf, rayHitboxes } from "./hitboxes";
 
@@ -31,7 +31,7 @@ export const hitscan = (world: World<Entity>, origin: Vec3, dir: Vec3, maxDist: 
   let hitEntity: Entity | null = null;
   let zone: HitZone | null = null;
   for (const e of world.with("solid")) {
-    const t = rayAabb(origin, dir, e.solid, best);
+    const t = raySolid(origin, dir, e.solid, e.slope, best);
     if (t !== null && t < best) best = t;
   }
   for (const e of world.with("body", "health")) {
@@ -62,7 +62,7 @@ export const lineOfSight = (world: World<Entity>, from: Vec3, to: Vec3): boolean
   if (len < 1e-6) return true;
   const dir = { x: dx / len, y: dy / len, z: dz / len };
   for (const e of world.with("solid")) {
-    if (rayAabb(from, dir, e.solid, len) !== null) return false;
+    if (raySolid(from, dir, e.solid, e.slope, len) !== null) return false;
   }
   return true;
 };

@@ -72,7 +72,7 @@ export const grantMemory = (ctx: SimContext, id: MemoryId): void => {
 export const dropLoot = (ctx: SimContext, key: string, at: { x: number; y: number; z: number }, lines: readonly LootLine[]): void => {
   const container: LootContainer = {
     key,
-    position: { x: at.x, y: 0, z: at.z },
+    position: { x: at.x, y: at.y, z: at.z },
     chunk: ctx.streamer.chunkIdAt(at),
     expiresAtTick: ctx.tick + Math.round(LOOT_LIFETIME_SECONDS / ctx.dt),
     lines,

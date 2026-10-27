@@ -50,9 +50,26 @@ export const playerEntity = (id: EntityId): Entity => ({
   posture: { crouched: false, amount: 0, prevAmount: 0, sprinting: false },
 });
 
+/** Reach of a lift's call button, metres. */
+const BUTTON_REACH = 3;
+
 export const propEntity = (id: EntityId, prop: StaticProp, chunk: string): Entity => {
   const e: Entity = { id, ...at(prop.center), view: prop.view, chunk };
-  if (prop.solid && prop.view.kind === "block") e.solid = aabbFromCenter(prop.center, prop.view.size);
+  if (prop.solid && prop.view.kind === "block") {
+    e.solid = aabbFromCenter(prop.center, prop.view.size);
+    if (prop.view.slope) e.slope = prop.view.slope;
+  }
+  const m = prop.mechanism;
+  if (m?.kind === "platform" && e.solid) {
+    e.elevator = { key: m.key, levels: m.levels, speed: m.speed, target: 0, settled: false };
+    e.velocity = { x: 0, y: 0, z: 0 };
+  } else if (m?.kind === "gate" && e.solid) {
+    e.gate = { elevator: m.elevator, level: m.level, closed: e.solid, travel: m.travel };
+    e.velocity = { x: 0, y: 0, z: 0 };
+  } else if (m?.kind === "button") {
+    // Hung about 1.2 m above its level's floor: the interaction's height check keeps it to that level.
+    e.interactable = { kind: "elevator", elevator: { key: m.elevator, level: m.level }, dialogueId: m.elevator, prompt: "Winda", radius: BUTTON_REACH };
+  }
   return e;
 };
 

@@ -49,7 +49,16 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
   przeciwnika wręcz. Animacje zamachu i bloku w rigu (i retarget na modele), dźwięki uderzeń.
   AI: wrogowie z bronią białą skracają dystans, gracz może ich blokować.
 
+- **[gotowe] Ruch w pionie: schody, windy, mosty.** ([ADR-0020](adr/0020-poziomy-schody-windy-mosty.md))
+  Bryły są podłogą (wejście na stopień do 0,45 m, schodzenie bez spadania, grawitacja przy
+  zejściu z krawędzi), schody i poręcze jako rampy, promienie strzałów i linia wzroku liczą
+  nachylenie, interakcja nie sięga przez strop. Treść: estakada nad targiem jako chodnik z
+  poręczami, schody od zachodu i winda towarowa z bramką na górze; kładka nad ulicą Kanałową.
+
 ## Później
+
+- Ruch w pionie, dalej: nawigacja AI między poziomami (punkty przejścia przez schody i windy),
+  skok i obrażenia od upadku, dachy i balkony w Shinsekai, drabiny przeciwpożarowe, minimapa z piętrami.
 
 - Blend shapes twarzy (mruganie, usta w dialogu) w toon shaderze: patrz `docs/models.md`.
 - Docelowy model Seki (VRoid lub grafik) zamiast modeli zastępczych.

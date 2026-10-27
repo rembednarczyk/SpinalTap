@@ -17,7 +17,7 @@ export interface DebugApi {
     tick: number;
     dialogue: boolean;
     flags: readonly string[];
-    player: { x: number; z: number } | null;
+    player: { x: number; y: number; z: number } | null;
     district: string | null;
     loadedChunks: readonly string[];
     /** Game time, "HH:MM". */
@@ -66,7 +66,7 @@ export const createDebugApi = (
       tick: sim.tick,
       dialogue: s.dialogue !== null,
       flags: sim.domain.flags,
-      player: p ? { x: p.position.x, z: p.position.z } : null,
+      player: p ? { x: p.position.x, y: p.position.y, z: p.position.z } : null,
       district: sim.district,
       loadedChunks: sim.streamer.loadedChunks,
       clock: formatClock(sim.clock),

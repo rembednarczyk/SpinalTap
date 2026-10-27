@@ -29,6 +29,8 @@ export type ViewDescriptor =
       readonly kind: "block";
       readonly size: Vec3;
       readonly material: "concrete" | "metal" | "asphalt" | "glass";
+      /** A ramp, stairs or a stair railing: the top slopes instead of being flat (ADR-0020). */
+      readonly slope?: Slope;
     }
   | {
       readonly kind: "neon";
@@ -39,6 +41,18 @@ export type ViewDescriptor =
   | { readonly kind: "lamp"; readonly color: string }
   /** A bag dropped by a defeated enemy (ADR-0015). `best` is the rarest item inside, for the neon strip. */
   | { readonly kind: "loot"; readonly style: "bag"; readonly best: Rarity | null };
+
+/**
+ * Sloped top of a block (ADR-0020): it rises linearly along `axis` towards `dir`, from
+ * `low` above the block's bottom at the low end to the full height at the high end.
+ * `steps` > 0 draws it as that many stairs; the walkable surface is still the ramp.
+ */
+export interface Slope {
+  readonly axis: "x" | "z";
+  readonly dir: 1 | -1;
+  readonly low: number;
+  readonly steps?: number;
+}
 
 /** Why a view goes away: killed or otherwise removed from the world, or streamed out with its chunk. */
 export type DespawnReason = "removed" | "unloaded";

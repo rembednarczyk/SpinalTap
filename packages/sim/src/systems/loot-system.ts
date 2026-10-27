@@ -6,7 +6,7 @@ import type { SimContext, System } from "../world/context";
 export const LOOT_REACH = 1.6;
 
 const bagEntity = (id: number, c: LootContainer): Entity => {
-  const position = { x: c.position.x, y: 0, z: c.position.z };
+  const position = { x: c.position.x, y: c.position.y, z: c.position.z };
   const e: Entity = {
     id,
     position,

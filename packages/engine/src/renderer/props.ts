@@ -1,4 +1,4 @@
-import { Color3, DynamicTexture, type Mesh, MeshBuilder, type Scene, StandardMaterial, TransformNode, Vector3 } from "../babylon";
+import { Color3, DynamicTexture, type Mesh, MeshBuilder, MeshClass, type Scene, StandardMaterial, TransformNode, Vector3, VertexBuffer, VertexData } from "../babylon";
 import type { ViewDescriptor } from "@seki/core";
 import type { ToonMaterials } from "../npr/toon-material";
 import type { PresetName } from "../npr/presets";
@@ -57,10 +57,61 @@ const blockPreset = (v: Block): PresetName => {
   return v.material;
 };
 
+type Slope = NonNullable<Block["slope"]>;
+
+/** 0 at the slope's low end .. 1 at its high end, for a local coordinate along its axis. */
+const slopeT = (slope: Slope, local: number, length: number): number => {
+  const f = Math.max(0, Math.min(1, local / length + 0.5));
+  return slope.dir === 1 ? f : 1 - f;
+};
+
+/** Stairs: one box per step, merged; each step's tread sits at the ramp height mid-step (ADR-0020). */
+const buildSteps = (scene: Scene, name: string, size: Block["size"], slope: Slope & { steps: number }): Mesh => {
+  const along = slope.axis === "x" ? size.x : size.z;
+  const run = along / slope.steps;
+  const parts: Mesh[] = [];
+  for (let i = 0; i < slope.steps; i++) {
+    const t = (i + 0.5) / slope.steps;
+    const h = Math.max(0.02, slope.low + (size.y - slope.low) * t);
+    const local = (slope.dir === 1 ? t - 0.5 : 0.5 - t) * along;
+    const step = MeshBuilder.CreateBox(`${name}-step${i}`, slope.axis === "x" ? { width: run, height: h, depth: size.z } : { width: size.x, height: h, depth: run }, scene);
+    step.position.set(slope.axis === "x" ? local : 0, h / 2 - size.y / 2, slope.axis === "z" ? local : 0);
+    parts.push(step);
+  }
+  const merged = MeshClass.MergeMeshes(parts, true);
+  if (!merged) throw new Error(`stairs ${name}: nothing to merge`);
+  merged.name = `${name}-mesh`;
+  return merged;
+};
+
+/** A box whose top slopes (a stair railing, a ramp): the top vertices follow the slope. */
+const buildWedge = (scene: Scene, name: string, size: Block["size"], slope: Slope): Mesh => {
+  const m = MeshBuilder.CreateBox(`${name}-mesh`, { width: size.x, height: size.y, depth: size.z, updatable: true }, scene);
+  const pos = m.getVerticesData(VertexBuffer.PositionKind);
+  const indices = m.getIndices();
+  if (!pos || !indices) return m;
+  const length = slope.axis === "x" ? size.x : size.z;
+  for (let i = 0; i < pos.length; i += 3) {
+    if ((pos[i + 1] ?? 0) <= 0) continue;
+    const t = slopeT(slope, (slope.axis === "x" ? pos[i] : pos[i + 2]) ?? 0, length);
+    pos[i + 1] = -size.y / 2 + slope.low + (size.y - slope.low) * t;
+  }
+  const normals: number[] = [];
+  VertexData.ComputeNormals(pos, indices, normals);
+  m.updateVerticesData(VertexBuffer.PositionKind, pos);
+  m.updateVerticesData(VertexBuffer.NormalKind, normals);
+  m.refreshBoundingInfo();
+  return m;
+};
+
 export const buildBlock = (scene: Scene, materials: ToonMaterials, name: string, v: Block, at: Vector3): PropView => {
   const root = new TransformNode(name, scene);
   root.position.copyFrom(at);
-  const m = MeshBuilder.CreateBox(`${name}-mesh`, { width: v.size.x, height: v.size.y, depth: v.size.z }, scene);
+  const m = v.slope
+    ? v.slope.steps
+      ? buildSteps(scene, name, v.size, { ...v.slope, steps: v.slope.steps })
+      : buildWedge(scene, name, v.size, v.slope)
+    : MeshBuilder.CreateBox(`${name}-mesh`, { width: v.size.x, height: v.size.y, depth: v.size.z }, scene);
   m.parent = root;
   m.material = materials.get(blockPreset(v));
   m.isPickable = true;

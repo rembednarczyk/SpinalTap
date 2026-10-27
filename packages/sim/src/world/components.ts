@@ -1,4 +1,4 @@
-import type { EnemyTypeId, EntityId, FactionId, Health, ShopId, Vec3, ViewDescriptor, WeaponId, WeaponSlot, WeaponStats } from "@seki/core";
+import type { EnemyTypeId, EntityId, FactionId, Health, ShopId, Slope, Vec3, ViewDescriptor, WeaponId, WeaponSlot, WeaponStats } from "@seki/core";
 import type { Aabb } from "./collision";
 
 export interface CharacterBody {
@@ -125,12 +125,39 @@ export interface Interactable {
    * "pickup": taken on the spot (a contract crate); no conversation opens. "loot": a bag;
    * `dialogueId` is then the container key.
    */
-  readonly kind: "dialogue" | "shop" | "pickup" | "loot";
+  readonly kind: "dialogue" | "shop" | "pickup" | "loot" | "elevator";
   /** For a shop: which one (the clinic when absent). `dialogueId` is then the shopkeeper's ink knot. */
   readonly shopId?: ShopId;
+  /** For an elevator call button: which elevator and the level the button stands on. */
+  readonly elevator?: { readonly key: string; readonly level: number };
   readonly dialogueId: string;
   readonly prompt: string;
   readonly radius: number;
+}
+
+/**
+ * A lift platform (ADR-0020): a moving solid whose top is the floor. Not saved: it spawns at
+ * the ground level, or at the player's level when the player stands on its footprint.
+ */
+export interface Elevator {
+  readonly key: string;
+  /** Heights of the platform top at each level, lowest first. */
+  readonly levels: readonly [number, ...number[]];
+  /** Metres per second. */
+  readonly speed: number;
+  /** Level the platform is travelling to (or resting at). */
+  target: number;
+  /** Placed for the player after spawning. */
+  settled: boolean;
+}
+
+/** A barrier closing the shaft at an upper level while the platform is elsewhere. */
+export interface ElevatorGate {
+  readonly elevator: string;
+  readonly level: number;
+  /** The gate's box while closed; open, it sinks by `travel` into the floor. */
+  readonly closed: Aabb;
+  readonly travel: number;
 }
 
 /**
@@ -152,8 +179,14 @@ export interface Entity {
   pitch: number;
   velocity?: Vec3;
   view?: ViewDescriptor;
-  /** Static geometry: collides and blocks line of sight, never moves. */
+  /** Geometry: collides, blocks line of sight and is walked on (ADR-0020). Moves only on lifts and gates. */
   solid?: Aabb;
+  /** Sloped top of the solid (stairs, ramps, stair railings). */
+  slope?: Slope;
+  /** Vertical speed while falling, m/s (negative down). Transient, not saved. */
+  fall?: number;
+  elevator?: Elevator;
+  gate?: ElevatorGate;
   body?: CharacterBody;
   posture?: Posture;
   player?: true;

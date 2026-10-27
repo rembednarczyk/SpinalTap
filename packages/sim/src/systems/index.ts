@@ -4,6 +4,7 @@ import { abilitySystem } from "./ability-system";
 import { combatSystem } from "./combat-system";
 import { contractSystem } from "./contract-system";
 import { deathSystem } from "./death-system";
+import { elevatorSystem } from "./elevator-system";
 import { interactionSystem } from "./interaction-system";
 import { interpolationSystem } from "./interpolation-system";
 import { itemSystem } from "./item-system";
@@ -37,6 +38,7 @@ export const createSystems = (): readonly System[] => [
   scheduleSystem,
   createGangerAiSystem(),
   createCivilianAiSystem(),
+  elevatorSystem,
   movementSystem,
   weaponSystem,
   combatSystem,

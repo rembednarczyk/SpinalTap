@@ -1,4 +1,4 @@
-import type { Vec3 } from "@seki/core";
+import type { Slope, Vec3 } from "@seki/core";
 
 /** Axis-aligned box, described by its minimum and maximum corners. */
 export interface Aabb {
@@ -60,4 +60,61 @@ export const rayAabb = (origin: Vec3, dir: Vec3, box: Aabb, maxDist: number): nu
     if (tmin > tmax) return null;
   }
   return tmin;
+};
+
+/** Entry and exit distances of a ray through a box, or null when it misses within `maxDist`. */
+export const rayAabbRange = (origin: Vec3, dir: Vec3, box: Aabb, maxDist: number): readonly [number, number] | null => {
+  let tmin = 0;
+  let tmax = maxDist;
+  for (const axis of ["x", "y", "z"] as const) {
+    const o = origin[axis];
+    const d = dir[axis];
+    const lo = box.min[axis];
+    const hi = box.max[axis];
+    if (Math.abs(d) < 1e-9) {
+      if (o < lo || o > hi) return null;
+      continue;
+    }
+    let t1 = (lo - o) / d;
+    let t2 = (hi - o) / d;
+    if (t1 > t2) [t1, t2] = [t2, t1];
+    tmin = Math.max(tmin, t1);
+    tmax = Math.min(tmax, t2);
+    if (tmin > tmax) return null;
+  }
+  return [tmin, tmax];
+};
+
+/** Height of a box's top at a point of its footprint (clamped into it); sloped tops rise linearly (ADR-0020). */
+export const topAt = (box: Aabb, slope: Slope | undefined, x: number, z: number): number => {
+  if (!slope) return box.max.y;
+  const p = slope.axis === "x" ? x : z;
+  const lo = box.min[slope.axis];
+  const span = box.max[slope.axis] - lo;
+  const f = span <= 0 ? 1 : Math.max(0, Math.min(1, (p - lo) / span));
+  const t = slope.dir === 1 ? f : 1 - f;
+  const base = box.min.y + slope.low;
+  return base + (box.max.y - base) * t;
+};
+
+/** True when the point lies inside the box's footprint on the XZ plane. */
+export const overFootprint = (box: Aabb, x: number, z: number, margin = 0): boolean =>
+  x >= box.min.x - margin && x <= box.max.x + margin && z >= box.min.z - margin && z <= box.max.z + margin;
+
+/**
+ * Ray against a solid: a plain box, or a wedge under a sloped top. Inside the box, the gap
+ * between the ray and the slope is linear in the distance, so the first point below the top
+ * is one division away.
+ */
+export const raySolid = (origin: Vec3, dir: Vec3, box: Aabb, slope: Slope | undefined, maxDist: number): number | null => {
+  if (!slope) return rayAabb(origin, dir, box, maxDist);
+  const range = rayAabbRange(origin, dir, box, maxDist);
+  if (!range) return null;
+  const [t0, t1] = range;
+  const gap = (t: number) => origin.y + dir.y * t - topAt(box, slope, origin.x + dir.x * t, origin.z + dir.z * t);
+  const g0 = gap(t0);
+  if (g0 <= 0) return t0;
+  const g1 = gap(t1);
+  if (g1 > 0) return null;
+  return t0 + ((t1 - t0) * g0) / (g0 - g1);
 };

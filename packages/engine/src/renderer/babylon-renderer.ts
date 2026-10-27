@@ -177,6 +177,14 @@ export class BabylonRenderer implements RenderPort {
 
   updateTransform(id: EntityId, t: Transform): void {
     const e = this.entities.get(id);
+    if (e?.kind === "prop") {
+      // A lift platform or gate (ADR-0020): props are built frozen, so thaw on the first move.
+      const root = e.prop.root;
+      if (root.position.x === t.position.x && root.position.y === t.position.y && root.position.z === t.position.z) return;
+      for (const m of root.getChildMeshes(false)) if (m.isWorldMatrixFrozen) m.unfreezeWorldMatrix();
+      root.position.set(t.position.x, t.position.y, t.position.z);
+      return;
+    }
     if (e?.kind !== "character") return;
     e.transform = t;
     this.applyTransform(e.rig, t);

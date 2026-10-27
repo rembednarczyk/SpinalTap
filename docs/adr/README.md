@@ -20,5 +20,6 @@
 | [0016](0016-postawa-rozrzut-strefy-trafien.md) | Postawa, rozrzut broni, strefy trafień, przerywanie rozmowy | Zaakceptowana |
 | [0017](0017-zegar-doby-harmonogramy-npc.md) | Zegar doby, harmonogramy NPC, pora dnia w renderze | Zaakceptowana |
 | [0018](0018-zlecenia-na-targu-i-balans.md) | Zlecenia na targu (kurs, odzyskanie, ochrona) i balans M4 | Zaakceptowana |
+| [0020](0020-poziomy-schody-windy-mosty.md) | Poziomy: schody, windy, mosty, grawitacja, rampy w promieniach | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.

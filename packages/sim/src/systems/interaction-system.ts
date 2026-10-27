@@ -2,6 +2,7 @@ import { contractItemKey, contractKind, shopTerms, takenFlag } from "@seki/core"
 import type { Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { clearContract, raiseFlag } from "../world/domain-ops";
+import { callElevator } from "./elevator-system";
 
 /** Picking up the crate of the running retrieval job: it leaves the world and the job is cleared. */
 const takeContractCrate = (ctx: SimContext, crate: Entity): void => {
@@ -13,6 +14,9 @@ const takeContractCrate = (ctx: SimContext, crate: Entity): void => {
   ctx.bus.emit("InteractionFocusChanged", { targetId: null, prompt: null });
   clearContract(ctx);
 };
+
+/** Vertical reach of the interact key, metres between feet (or the button's base). */
+const INTERACT_REACH_Y = 1.6;
 
 /**
  * Tracks the nearest interactable in reach and starts a dialogue on the interact edge; a
@@ -31,6 +35,8 @@ export const interactionSystem: System = {
     let bestDist = Infinity;
     for (const e of world.with("interactable")) {
       const d = Math.hypot(e.position.x - player.position.x, e.position.z - player.position.z);
+      // Not through a floor: from the overpass nobody below is in reach (ADR-0020).
+      if (Math.abs(e.position.y - player.position.y) > INTERACT_REACH_Y) continue;
       if (d <= e.interactable.radius && d < bestDist) {
         best = e;
         bestDist = d;
@@ -45,6 +51,10 @@ export const interactionSystem: System = {
     }
     if (best && ctx.input.interact) {
       const { interactable, faction } = best;
+      if (interactable.kind === "elevator") {
+        callElevator(ctx, interactable, player);
+        return;
+      }
       if (interactable.kind === "pickup") {
         takeContractCrate(ctx, best);
         return;

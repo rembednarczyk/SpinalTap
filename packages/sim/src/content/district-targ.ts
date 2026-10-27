@@ -1,6 +1,6 @@
 import { SeededRandom } from "../rng/seeded-random";
 import type { ContractSiteId, Vec3 } from "@seki/core";
-import { type ActorDef, type BlockMaterial, type Rect, type StaticProp, building, crate, lamp, neon, slab, v } from "./builders";
+import { type ActorDef, type BlockMaterial, type Rect, type StaticProp, building, crate, deck, lamp, liftParts, neon, rail, slab, stairRail, stairs, v } from "./builders";
 
 /**
  * Ulica Kanałowa and Targ pod estakadą: the M2 districts north-east of Shinsekai 7.
@@ -56,6 +56,28 @@ const rng = new SeededRandom(CONTENT_SEED);
 
 export const KANAL_BOUNDS: Rect = { minX: -8, maxX: 78, minZ: 52, maxZ: 90 };
 
+/** Height of the footbridge walkway over Ulica Kanałowa. */
+export const FOOTBRIDGE_TOP = 5;
+
+/**
+ * Footbridge across segment B (ADR-0020): a walkway 5 m over the road at X ∈ [52, 54], reached
+ * by a flight of stairs along each kerb, both with a railing on the road side.
+ */
+const footbridge = (): StaticProp[] => {
+  const top = FOOTBRIDGE_TOP;
+  return [
+    deck(52, 54, 74.2, 81.8, top),
+    stairs(44, 52, 74.2, 75.8, 0, top, "x", 1),
+    stairRail(44, 52, 75.8, 76, 0, top, "x", 1),
+    stairs(54, 62, 80.2, 81.8, 0, top, "x", -1),
+    stairRail(54, 62, 80, 80.2, 0, top, "x", -1),
+    rail(51.8, 52, 75.8, 82, top),
+    rail(54, 54.2, 74, 80.2, top),
+    rail(52, 54, 74, 74.2, top),
+    rail(52, 54, 81.8, 82, top),
+  ];
+};
+
 export const KANAL_PROPS: readonly StaticProp[] = [
   slab(29, -0.1, 71, v(74, 0.2, 40), "asphalt"),
   // Strip of road under the market gate, a hair lower than the market's own ground.
@@ -78,6 +100,7 @@ export const KANAL_PROPS: readonly StaticProp[] = [
   neon(44, 7, 81.9, v(5, 1.4, 0.15), "#00e5ff", "DENKI"),
   lamp(9.3, 67, "#9ad7ff"),
   lamp(50, 81.2, "#ffcf8a"),
+  ...footbridge(),
 ];
 
 // ---------------------------------------------------------------- Targ pod estakadą
@@ -138,15 +161,63 @@ const northStalls = (): StaticProp[] => {
   return out;
 };
 
+/** Top of the highway deck. */
+export const OVERPASS_TOP = 9.9;
+
+/**
+ * The highway deck as a walkway (ADR-0020): railings with two openings, closed ends, stairs
+ * up from the west along its north edge, and a freight lift on the south side.
+ */
+const overpass = (): StaticProp[] => {
+  const top = OVERPASS_TOP;
+  // Stairs x ∈ [70.4, 86] between their own railings, then a landing flush with the deck.
+  const stairX: readonly [number, number] = [70.4, 86];
+  const landing: readonly [number, number] = [86, 88.4];
+  const lift = { x0: 106.8, x1: 109.2 } as const;
+  return [
+    deck(66, 126, 87, 97, top, 1.4),
+    // North railing, open onto the landing; south railing, open onto the lift gate.
+    rail(66, landing[0], 96.8, 97, top),
+    rail(landing[1], 126, 96.8, 97, top),
+    rail(66, lift.x0, 87, 87.2, top),
+    rail(lift.x1, 126, 87, 87.2, top),
+    rail(66, 66.2, 87.2, 96.8, top),
+    rail(125.8, 126, 87.2, 96.8, top),
+    stairs(stairX[0], stairX[1], 97.2, 99, 0, top, "x", 1),
+    stairRail(stairX[0], stairX[1], 97, 97.2, 0, top, "x", 1),
+    stairRail(stairX[0], stairX[1], 99, 99.2, 0, top, "x", 1),
+    deck(landing[0], landing[1], 97, 99, top, 0.4),
+    rail(landing[0], landing[1] + 0.2, 99, 99.2, top),
+    rail(landing[1], landing[1] + 0.2, 96.8, 99, top),
+    // Freight lift: an open shaft between two walls, a rail on the far side up top.
+    building(lift.x0 - 0.2, 85.7, 0.4, top + 1.2, 2.6),
+    building(lift.x1 + 0.2, 85.7, 0.4, top + 1.2, 2.6),
+    rail(lift.x0, lift.x1, 84.2, 84.4, top),
+    ...liftParts({
+      key: "targ-lift",
+      x0: lift.x0,
+      x1: lift.x1,
+      z0: 84.4,
+      // Flush with the deck edge, so stepping off at the top never crosses a gap.
+      z1: 87,
+      levels: [0.15, top],
+      gates: [{ level: 1, x0: lift.x0, x1: lift.x1, z0: 87, z1: 87.2 }],
+      buttons: [
+        { level: 0, at: v(lift.x0 - 0.2, 1.25, 84.25) },
+        { level: 1, at: v(lift.x0 - 0.2, top + 1.25, 86.6) },
+      ],
+    }),
+    neon(lift.x1 + 0.45, 3, 85.6, v(0.15, 2.2, 0.8), "#ffb000", "LIFT"),
+  ];
+};
+
 export const TARG_NORTH_PROPS: readonly StaticProp[] = [
   slab(96, -0.1, 100, v(60, 0.2, 32), "asphalt"),
   building(67, 99, 2, 8, 34, "metal"),
   building(96, 115, 60, 6, 2, "metal"),
   building(125, 100, 2, 8, 32, "metal"),
-  // The elevated highway: a deck on six pillars, walkable underneath.
-  slab(96, 9.2, 92, v(60, 1.4, 10), "concrete"),
-  slab(96, 10.3, 87.1, v(60, 0.8, 0.2), "metal"),
-  slab(96, 10.3, 96.9, v(60, 0.8, 0.2), "metal"),
+  // The elevated highway: a deck on six pillars, walkable underneath and, since ADR-0020, on top.
+  ...overpass(),
   ...[78, 96, 114].flatMap((x) => [building(x, 88.5, 1.4, 8.5, 1.4), building(x, 95.5, 1.4, 8.5, 1.4)]),
   neon(96, 7.4, 86.9, v(8, 1.4, 0.15), "#ffb000", "TARG"),
   ...northStalls(),
