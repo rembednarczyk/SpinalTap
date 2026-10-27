@@ -23,7 +23,9 @@ import {
   SNIPER_PERCHES,
   Simulation,
   WAREHOUSE_TOP,
+  WORLD_CHUNKS,
   WORLD_NAV,
+  type Rect,
   routeAcrossLevels,
   sniperEntity,
   stateHash,
@@ -83,6 +85,40 @@ describe("streaming into the docks (ADR-0024)", () => {
     expect(byKey(sim, "genzo")).toBeUndefined();
     toGenzo(sim);
     expect(byKey(sim, "genzo")!.position).toEqual(GENZO_SPOT);
+  });
+
+  it("the docks chunks do not overlap any other chunk; the street's level graph leads in", () => {
+    const docks = WORLD_CHUNKS.filter((c) => c.district === "doki");
+    expect(docks.map((c) => c.id)).toEqual(["doki-yard", "doki-quay"]);
+    const overlap = (a: Rect, b: Rect) => a.minX < b.maxX && b.minX < a.maxX && a.minZ < b.maxZ && b.minZ < a.maxZ;
+    for (const d of docks) for (const c of WORLD_CHUNKS) if (c !== d) expect(overlap(d.bounds, c.bounds), `${d.id} / ${c.id}`).toBe(false);
+    const sim = Simulation.create({ seed: 2 });
+    teleportPlayer(sim, at(40, 78), 0);
+    sim.step();
+    // From the street up onto the warehouse roof: through the passage, not straight at it.
+    const route = routeAcrossLevels(sim.world, WORLD_NAV, at(40, 78), at(-30, 108, WAREHOUSE_TOP));
+    expect(route).not.toBeNull();
+    expect(route!.next.z).toBeLessThan(90);
+  });
+
+  it("a jump from the warehouse roof does not clear its outer parapet", () => {
+    const sim = Simulation.create({ seed: 2 });
+    toGenzo(sim);
+    teleportPlayer(sim, at(-35.5, 107, WAREHOUSE_TOP), -Math.PI / 2);
+    for (let i = 0; i < 6; i++) {
+      sim.step(input({ jump: true, moveZ: 1, sprint: true }));
+      run(sim, 50, input({ moveZ: 1, sprint: true }));
+    }
+    const p = sim.player()!.position;
+    expect(p.x).toBeGreaterThan(-38);
+    expect(p.y).toBeCloseTo(WAREHOUSE_TOP, 1);
+  });
+
+  it("the minimap's ground plate is still Shinsekai's street, not the docks' larger yard", () => {
+    const flats = WORLD_CHUNKS.flatMap((c) => c.props).filter((p) => !p.solid && p.view.kind === "block" && p.view.size.y <= 0.3);
+    const area = (p: (typeof flats)[number]) => (p.view.kind === "block" ? p.view.size.x * p.view.size.z : 0);
+    const ground = flats.reduce((best, p) => (area(p) > area(best) ? p : best));
+    expect(WORLD_CHUNKS[0]!.props).toContain(ground);
   });
 
   it("the level graph takes NPCs up the warehouse stairs and onto the crane", () => {

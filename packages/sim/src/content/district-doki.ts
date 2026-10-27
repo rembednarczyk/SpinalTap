@@ -32,9 +32,16 @@ import {
  */
 
 /** The yard: from the street's north row to the start of the quay. */
-export const DOKI_YARD_BOUNDS: Rect = { minX: -40, maxX: 34, minZ: 90, maxZ: 124 };
+export const DOKI_YARD_BOUNDS: Rect = { minX: -40, maxX: 34, minZ: 90.2, maxZ: 124 };
 /** The quay, the pier and the water in front of it. */
-export const DOKI_QUAY_BOUNDS: Rect = { minX: -40, maxX: 34, minZ: 124, maxZ: 218 };
+export const DOKI_QUAY_BOUNDS: Rect = { minX: -40, maxX: 34, minZ: 124.2, maxZ: 218 };
+
+/**
+ * Parapet on the outer edges of the warehouse roof: higher than a jump clears (about 1.7 m),
+ * so nobody hops from the roof onto the crown of the district walls. The edges over the yard
+ * keep the usual 1.05 m: a drop there lands inside the map, and the sniper sees over them.
+ */
+const OUTER_PARAPET = 1.9;
 
 /** Gap in the north row of Ulica Kanałowa that leads into the docks. */
 export const DOKI_PASSAGE = { x0: 24, x1: 30 } as const;
@@ -106,9 +113,9 @@ const warehouse = (): StaticProp[] => {
     deck(-18, -16, 115, 117.2, top, 0.4),
     rail(-16, -15.8, 115, 117.4, top),
     rail(-18, -15.8, 117.2, 117.4, top),
-    rail(-38, -18, 94, 94.2, top),
+    rail(-38, -18, 94, 94.2, top, OUTER_PARAPET),
     rail(-38, -18, 119.8, 120, top),
-    rail(-38, -37.8, 94.2, 119.8, top),
+    rail(-38, -37.8, 94.2, 119.8, top, OUTER_PARAPET),
     // East parapet, open onto the landing at the head of the stairs.
     rail(-18.2, -18, 94.2, 115, top),
     rail(-18.2, -18, 117.2, 119.8, top),
@@ -204,7 +211,8 @@ export const DOKI_QUAY_PROPS: readonly StaticProp[] = [
   crate(-14, 127, 2.4, 1.4, 1.4, skin("dumpster", "z-")),
   crate(28.5, 140, 2.4, 2.2, 5, skin("van", "z+")),
   ...container(-10, 145.2, false),
-  ...container(-16, 145.2, true, "glass"),
+  // Single, not stacked: nothing on the quay is high enough to jump the fence from.
+  ...container(-16, 145.2, false, "glass"),
   lamp(-8, 147.5, SODIUM),
   lamp(28, 133, SODIUM),
   ...waterfront(),
@@ -217,6 +225,8 @@ export const DOKI_QUAY_PROPS: readonly StaticProp[] = [
  */
 export const DOKI_NAV: NavGraph = {
   nodes: [
+    // On Ulica Kanałowa in front of the passage: joins this graph to the street's (KANAL_NAV).
+    { id: "doki-passage-s", at: v(27, 0, 79) },
     { id: "doki-gate", at: v(27, 0, 93) },
     { id: "doki-yard-s", at: v(13, 0, 96) },
     { id: "doki-yard-e", at: v(17, 0, 106) },
@@ -235,6 +245,8 @@ export const DOKI_NAV: NavGraph = {
     { id: "doki-crane-deck", at: v(20.5, CRANE_TOP, 141) },
   ],
   edges: [
+    { a: "kanal-street-w", b: "doki-passage-s" },
+    { a: "doki-passage-s", b: "doki-gate" },
     { a: "doki-gate", b: "doki-yard-s" },
     { a: "doki-yard-s", b: "doki-yard-e" },
     { a: "doki-yard-e", b: "doki-yard-n" },
