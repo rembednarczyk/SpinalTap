@@ -47,6 +47,10 @@ NPR zawsze używa obsady proceduralnej, żeby migawka nie zależała od pobrań.
    nazwy kości VRoid (`J_Bip_*`), Mixamo i Blendera. T-pose i A-pose są sprowadzane do rąk
    opuszczonych, a modele VRM 0.x zwrócone tyłem są obracane automatycznie.
 4. Postać strzelająca dostaje broń w kości prawej dłoni, ułożoną wzdłuż przedramienia rigu.
+5. `SpringBones` porusza włosami i ubraniem (kości `HairJoint-*` i `J_Sec_*`) algorytmem
+   sprężyn VRM: bezwładność, opór, sztywność i lekka grawitacja, z limitem wychylenia.
+   Końcówki w 75% podążają za ruchem postaci, żeby przy biegu włosy nie stawały dęba. Sfery
+   kolizji na głowie, klatce i udach trzymają włosy z dala od twarzy, a spódnicę od nóg.
 
 ## Ograniczenia i pułapki
 
@@ -54,12 +58,14 @@ NPR zawsze używa obsady proceduralnej, żeby migawka nie zależała od pobrań.
   zapisuje głębię nadmuchanego hulla. Skóra z konturem 1,8 cm zakrywa sukienkę leżącą
   centymetr nad nią. Dlatego importowane modele mają kontur wyłączony i tuszuje je post-process
   line art. Na niskiej jakości (telefony) line art jest wyłączony, więc modele nie mają konturu.
-- **Blend shapes twarzy (mruganie, usta)** nie działają: toon shader nie ma morph targetów.
-  Pierwsza próba (standardowe include'y Babylona `morphTargetsVertex*`) dawała w SwiftShaderze
-  wielosekundowe zawieszenia i crash karty przy 41 celach twarzy VRoid. Do zbadania na
-  prawdziwym GPU, z `numMaxInfluencers` ustawionym na stałe, żeby definicje się nie zmieniały.
-- **Fizyka włosów i spódnic (spring bones VRM)** nie jest symulowana; kości `J_Sec_*` idą
-  sztywno za rodzicem.
+- **Blend shapes twarzy (mruganie, usta)** jeszcze nie działają: toon shader nie ma morph
+  targetów. Pierwsza próba (standardowe include'y Babylona `morphTargetsVertex*`) została
+  wycofana, bo testy w przeglądarce się zawieszały. Później okazało się, że to samo działo się
+  bez niej przy przeciążonej maszynie, więc przyczyna nie jest ustalona. Przy ponownej próbie
+  trzymać sterowane cele zawsze aktywne (wpływ > 0), bo Babylon liczy aktywne cele do definicji
+  shadera i każde mrugnięcie wymuszałoby rekompilację.
+- **Parametry sprężyn z pliku VRM** (`secondaryAnimation`) nie są czytane; wszystkie łańcuchy
+  mają jedne ustawienia (`DEFAULT_SPRING`).
 - **Klipy animacji z pliku** nie są odtwarzane, bo rig daje chód, celowanie, trafienie i upadek.
 - **Wydajność:** model VRoid to około 15 draw calli plus cień. Budżet ulicy (280) mieści
   kilka takich postaci. Przy większej obsadzie potrzebne będzie LOD albo atlas materiałów.

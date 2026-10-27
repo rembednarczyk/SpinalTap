@@ -7,3 +7,4 @@ export * from "./dressing";
 export * from "./model-loader";
 export * from "./model-library";
 export * from "./model-rig";
+export * from "./spring-bones";

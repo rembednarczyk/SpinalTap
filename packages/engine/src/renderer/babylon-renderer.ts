@@ -15,6 +15,7 @@ import { createDressing } from "./dressing";
 import { type CharacterRig, animateRig, deathFinished, startDeath, buildCivilian, buildFixer, buildGanger, buildHeroine, buildRipperdoc } from "./characters";
 import { type CharacterModelKey, type CharacterModelManifest, type ModelInstance, ModelLibrary } from "./model-library";
 import { HumanoidRetarget } from "./model-rig";
+import { SpringBones, humanoidColliders } from "./spring-bones";
 import { type PropView, buildBlock, buildLamp, buildNeon } from "./props";
 import type { Stage } from "./stage";
 
@@ -22,6 +23,8 @@ import type { Stage } from "./stage";
 interface Dressed {
   readonly model: ModelInstance;
   readonly retarget: HumanoidRetarget;
+  /** Hair and cloth secondary motion, if the model has such bones. */
+  readonly springs: SpringBones | null;
 }
 
 const modelKeyOf = (view: ViewDescriptor): CharacterModelKey | null => {
@@ -227,7 +230,10 @@ export class BabylonRenderer implements RenderPort {
         this.dying.splice(i, 1);
       }
     }
-    for (const d of this.dressed.values()) d.retarget.update();
+    for (const d of this.dressed.values()) {
+      d.retarget.update();
+      d.springs?.update(dt);
+    }
     const target = this.cameraTarget === null ? undefined : this.entities.get(this.cameraTarget);
     this.rig.update(target?.kind === "character" ? target.transform : null, dt);
     // Shadow follows what the camera looks at: the player, or the fixed reference view.
@@ -286,7 +292,8 @@ export class BabylonRenderer implements RenderPort {
         for (const m of rig.meshes) m.setEnabled(false);
         if (rig.aiming) this.arm(model, retarget);
         for (const m of model.meshes) if (m.getTotalVertices() > 0) this.shadow.addCaster(m);
-        this.dressed.set(rig, { model, retarget });
+        const springs = SpringBones.create(model.root, humanoidColliders(model.root, `${name}-m-`));
+        this.dressed.set(rig, { model, retarget, springs });
       })
       .catch((err: unknown) => {
         this.loadingModels.delete(rig);
