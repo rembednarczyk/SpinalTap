@@ -43,6 +43,7 @@ import {
   patchUi,
   pushToast,
 } from "@seki/ui";
+import { bindKey, controlsVm } from "./controls";
 import { type PreviewHost, createAppearanceCache, createStatsCache } from "./character-view";
 import { bindEventPresenter } from "./event-presenter";
 import { createJournalCache } from "./journal";
@@ -154,7 +155,7 @@ export class GameSession implements UiIntents {
     // The whole city, so the map keeps working past Shinsekai (the market deck, the footbridge, ADR-0021).
     patchUi(deps.ui, { map: buildDistrictMap(WORLD_CHUNKS.flatMap((c) => c.props)) });
     this.appliedSettings = deps.settings?.applied ?? deps.ui.getState().settings;
-    patchUi(deps.ui, { settings: this.appliedSettings, reloadNeeded: false });
+    patchUi(deps.ui, { settings: this.appliedSettings, controls: controlsVm(this.appliedSettings.bindings), reloadNeeded: false });
     void this.refreshSlots();
   }
 
@@ -460,8 +461,16 @@ export class GameSession implements UiIntents {
   changeSettings(patch: Partial<SettingsVm>): void {
     const current = this.deps.ui.getState().settings;
     const next = sanitizeSettings({ ...current, ...patch }, current);
-    patchUi(this.deps.ui, { settings: next, reloadNeeded: needsReload(this.appliedSettings, next) });
+    patchUi(this.deps.ui, { settings: next, controls: controlsVm(next.bindings), reloadNeeded: needsReload(this.appliedSettings, next) });
     this.deps.settings?.save(next);
+  }
+
+  bindKey(action: string, code: string): void {
+    this.changeSettings({ bindings: bindKey(this.deps.ui.getState().settings.bindings, action, code) });
+  }
+
+  resetControls(): void {
+    this.changeSettings({ bindings: {} });
   }
 
   reload(): void {

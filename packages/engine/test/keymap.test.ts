@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { EMPTY_INPUT } from "@seki/core";
-import { AimLatch, DEFAULT_KEYMAP, PAD_DEADZONE, mapGamepad, mapKeyboardMouse, mergeFrames, remap } from "../src/input/keymap";
+import { AimLatch, DEFAULT_KEYMAP, InputLatches, PAD_DEADZONE, mapGamepad, mapKeyboardMouse, mergeFrames, remap } from "../src/input/keymap";
 
 const keys = (held: string[], pressed: string[] = []) => ({ held: new Set(held), pressed: new Set(pressed) });
 
@@ -119,5 +119,47 @@ describe("aim button (ADR-0019)", () => {
     latch.apply(down);
     latch.reset();
     expect(latch.apply(EMPTY_INPUT).aim).toBe(false);
+  });
+});
+
+describe("PC controls (wheel, F, hold or toggle)", () => {
+  const keys = (held: string[], pressed: string[] = []) => ({ held: new Set(held), pressed: new Set(pressed) });
+  const still = { yaw: 0, pitch: 0 };
+
+  it("turns wheel notches into weapon cycling and F into interact", () => {
+    expect(mapKeyboardMouse(keys([], ["WheelDown"]), still).weaponCycle).toBe(1);
+    expect(mapKeyboardMouse(keys([], ["WheelUp"]), still).weaponCycle).toBe(-1);
+    expect(mapKeyboardMouse(keys([]), still).weaponCycle).toBe(0);
+    expect(mapKeyboardMouse(keys([], ["KeyF"]), still).interact).toBe(true);
+    expect(mergeFrames({ ...EMPTY_INPUT, weaponCycle: -1 }, EMPTY_INPUT).weaponCycle).toBe(-1);
+  });
+
+  it("toggles crouch with a press and drops it on a sprint or a jump", () => {
+    const l = new InputLatches();
+    l.setModes({ aim: "hold", crouch: "toggle", sprint: "hold" });
+    expect(l.apply({ ...EMPTY_INPUT, crouch: true }).crouch).toBe(true);
+    expect(l.apply(EMPTY_INPUT).crouch).toBe(true);
+    expect(l.apply({ ...EMPTY_INPUT, crouch: true }).crouch).toBe(false);
+    l.apply({ ...EMPTY_INPUT, crouch: false });
+    l.apply({ ...EMPTY_INPUT, crouch: true });
+    expect(l.apply(EMPTY_INPUT).crouch).toBe(true);
+    expect(l.apply({ ...EMPTY_INPUT, jump: true }).crouch).toBe(false);
+    expect(l.apply(EMPTY_INPUT).crouch).toBe(false);
+  });
+
+  it("toggles sprint until the player stops moving forward or aims", () => {
+    const l = new InputLatches();
+    l.setModes({ aim: "hold", crouch: "hold", sprint: "toggle" });
+    const run = { ...EMPTY_INPUT, moveZ: 1 };
+    expect(l.apply({ ...run, sprint: true }).sprint).toBe(true);
+    expect(l.apply(run).sprint).toBe(true);
+    expect(l.apply(EMPTY_INPUT).sprint).toBe(false);
+    expect(l.apply(run).sprint).toBe(false);
+    l.apply({ ...run, sprint: true });
+    expect(l.apply({ ...run, aim: true }).sprint).toBe(false);
+    // Hold mode passes the key through.
+    l.setModes({ aim: "hold", crouch: "hold", sprint: "hold" });
+    expect(l.apply({ ...run, sprint: true }).sprint).toBe(true);
+    expect(l.apply(run).sprint).toBe(false);
   });
 });

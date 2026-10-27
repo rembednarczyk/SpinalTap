@@ -12,15 +12,35 @@ const clamp = (v: unknown, min: number, max: number, fallback: number): number =
 const isQuality = (v: unknown): v is GraphicsQuality => v === "high" || v === "low";
 const isAimMode = (v: unknown): v is AimMode => v === "hold" || v === "toggle";
 
+/** Vertical field of view the settings allow, degrees. */
+export const FOV_RANGE: readonly [number, number] = [50, 80];
+
+/** Only string lists of at most three codes per action survive. */
+const sanitizeBindings = (raw: unknown): Record<string, readonly string[]> => {
+  if (typeof raw !== "object" || raw === null) return {};
+  const out: Record<string, readonly string[]> = {};
+  for (const [action, codes] of Object.entries(raw as Record<string, unknown>)) {
+    if (Array.isArray(codes) && codes.length <= 3 && codes.every((c) => typeof c === "string" && c.length > 0 && c.length < 32)) out[action] = codes as string[];
+  }
+  return out;
+};
+
 /** Fills gaps and clamps ranges, so a hand-edited or old entry never breaks the game. */
 export const sanitizeSettings = (raw: unknown, defaults: SettingsVm = DEFAULT_SETTINGS): SettingsVm => {
   const r = typeof raw === "object" && raw !== null ? (raw as Record<string, unknown>) : {};
   return {
     quality: isQuality(r.quality) ? r.quality : defaults.quality,
     aimMode: isAimMode(r.aimMode) ? r.aimMode : defaults.aimMode,
+    crouchMode: isAimMode(r.crouchMode) ? r.crouchMode : defaults.crouchMode,
+    sprintMode: isAimMode(r.sprintMode) ? r.sprintMode : defaults.sprintMode,
     mouseSensitivity: clamp(r.mouseSensitivity, 0.2, 3, defaults.mouseSensitivity),
+    adsSensitivity: clamp(r.adsSensitivity, 0.3, 2, defaults.adsSensitivity),
+    invertY: typeof r.invertY === "boolean" ? r.invertY : defaults.invertY,
     touchSensitivity: clamp(r.touchSensitivity, 0.2, 3, defaults.touchSensitivity),
+    fov: Math.round(clamp(r.fov, FOV_RANGE[0], FOV_RANGE[1], defaults.fov)),
     volume: clamp(r.volume, 0, 1, defaults.volume),
+    bindings: sanitizeBindings(r.bindings),
+    hints: typeof r.hints === "boolean" ? r.hints : defaults.hints,
   };
 };
 
@@ -45,9 +65,11 @@ export const saveSettings = (storage: SettingsStorage | null, settings: Settings
   }
 };
 
-/** Scales look deltas; movement and buttons pass through untouched. */
-export const scaleLook = (frame: InputFrame, factor: number): InputFrame =>
-  factor === 1 || (frame.lookYaw === 0 && frame.lookPitch === 0) ? frame : { ...frame, lookYaw: frame.lookYaw * factor, lookPitch: frame.lookPitch * factor };
+/** Scales look deltas (and flips the pitch for an inverted Y); movement and buttons pass through untouched. */
+export const scaleLook = (frame: InputFrame, factor: number, invertY = false): InputFrame =>
+  (factor === 1 && !invertY) || (frame.lookYaw === 0 && frame.lookPitch === 0)
+    ? frame
+    : { ...frame, lookYaw: frame.lookYaw * factor, lookPitch: frame.lookPitch * factor * (invertY ? -1 : 1) };
 
 /** Settings that the running game cannot change on the fly. */
 /** Only the graphics quality needs a reload; volume and sensitivity apply at once. */

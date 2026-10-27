@@ -81,6 +81,7 @@ export class VirtualPad {
       toggleWeapon: edge("toggleWeapon"),
       reload: edge("reload"),
       weaponSlot: this.slot,
+      weaponCycle: 0,
     };
     this.flush();
     return frame;

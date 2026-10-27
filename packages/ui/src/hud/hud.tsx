@@ -1,5 +1,6 @@
 import { type CSSProperties, useEffect, useState } from "react";
 import type { DayPhase } from "@seki/core";
+import { fovRadians } from "../store/ui-store";
 import { useUi } from "../use-ui";
 import { AbilityWidget } from "./ability-widget";
 import { Minimap } from "./minimap";
@@ -7,14 +8,14 @@ import { Toasts } from "./toasts";
 import { WeaponStrip } from "./weapon-strip";
 import type { TouchPadSink } from "../touch/touch-pad-sink";
 
-/** Vertical field of view of the game camera in radians (engine CameraRig). */
+/** Default vertical field of view of the game camera in radians (engine CameraRig; the settings change it). */
 export const HUD_CAMERA_FOV = 1.08;
 
 /**
  * Aim cone half-angle -> tick offset as a share of half the viewport height. `zoom` is the
  * current field of view as a share of the hip one (aiming down sights narrows it).
  */
-export const spreadToScreen = (spread: number, zoom = 1): number => Math.tan(Math.max(0, spread)) / Math.tan((HUD_CAMERA_FOV * zoom) / 2);
+export const spreadToScreen = (spread: number, zoom = 1, fov = HUD_CAMERA_FOV): number => Math.tan(Math.max(0, spread)) / Math.tan((fov * zoom) / 2);
 
 /**
  * Four ticks that sit where the aim cone meets the screen: they spread apart while moving
@@ -29,6 +30,8 @@ const Crosshair = () => {
   const aiming = useUi((s) => s.aiming);
   const zoom = useUi((s) => s.aimZoom);
   const blocking = useUi((s) => s.blocking);
+  // The camera's hip field of view follows the settings.
+  const fov = useUi((s) => fovRadians(s.settings.fov));
   const [flash, setFlash] = useState<"hit" | "head" | null>(null);
   useEffect(() => {
     if (hit === 0) return;
@@ -38,7 +41,7 @@ const Crosshair = () => {
     return () => clearTimeout(t);
   }, [hit, zone]);
   const cls = ["crosshair", crouched && "crosshair--crouched", aiming && "crosshair--aiming", blocking && "crosshair--guard", flash && "crosshair--hit", flash === "head" && "crosshair--head"].filter(Boolean).join(" ");
-  const style = { "--spread": spreadToScreen(spread, zoom).toFixed(4) } as CSSProperties;
+  const style = { "--spread": spreadToScreen(spread, zoom, fov).toFixed(4) } as CSSProperties;
   return (
     <div className={cls} style={style} data-testid="crosshair" data-spread={spread.toFixed(3)}>
       <span className="crosshair__tick crosshair__tick--top" />

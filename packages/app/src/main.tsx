@@ -4,11 +4,12 @@ import { loadModelManifest } from "./model-manifest";
 import { STORY_SOURCE } from "@seki/narrative";
 import { IndexedDbSaveStore, SavePersistence } from "@seki/persistence";
 import { FixedStepLoop } from "@seki/sim";
-import { DEFAULT_SETTINGS, GameUi, createUiStore } from "@seki/ui";
+import { DEFAULT_SETTINGS, GameUi, createUiStore, fovRadians } from "@seki/ui";
 import { createRoot } from "react-dom/client";
 import { browserClock } from "./browser-clock";
 import { type DebugApi, createDebugApi } from "./debug-api";
 import { GameSession } from "./game-session";
+import { keymapFor } from "./controls";
 import { type SettingsStorage, loadSettings, saveSettings, scaleLook } from "./settings";
 
 declare global {
@@ -97,12 +98,24 @@ const session = new GameSession({
   },
 });
 
+/** Controls from the settings: key bindings, hold or toggle buttons and the field of view. */
+let controlsFor: unknown = null;
+const applyControls = (s: typeof settings) => {
+  if (controlsFor === s) return;
+  controlsFor = s;
+  input.keymap = keymapFor(s.bindings);
+  input.setButtonModes({ aim: s.aimMode, crouch: s.crouchMode, sprint: s.sprintMode });
+  renderer.rig.baseFov = fovRadians(s.fov);
+};
+
 const loop = new FixedStepLoop(browserClock, {
   update: () => {
     const s = ui.getState().settings;
-    input.aimMode = s.aimMode;
-    // Zoomed in, the look slows with the field of view (ADR-0019).
-    session.step(scaleLook(input.poll(), (touchDevice ? s.touchSensitivity : s.mouseSensitivity) * renderer.rig.lookScale));
+    applyControls(s);
+    // Zoomed in, the look slows with the field of view (ADR-0019); the ADS setting on top.
+    const zoom = renderer.rig.lookScale;
+    const ads = zoom < 0.999 ? s.adsSensitivity : 1;
+    session.step(scaleLook(input.poll(), (touchDevice ? s.touchSensitivity : s.mouseSensitivity) * zoom * ads, s.invertY));
   },
   render: (alpha) => {
     session.render(alpha);
@@ -167,6 +180,13 @@ window.addEventListener("keydown", (e) => {
     // With pointer lock the browser consumes Esc and pointerlockchange pauses instead.
     if (session.screen === "paused") session.resume();
     else if (!input.locked) session.pause();
+  } else if (e.code === "KeyP" && !e.repeat) {
+    // P pauses too, as in most PC games (Esc is taken by the browser while the mouse is locked).
+    if (session.screen === "paused") session.resume();
+    else if (session.inControl) {
+      input.releasePointerLock();
+      session.pause();
+    }
   }
 });
 window.addEventListener("pointerdown", () => {
