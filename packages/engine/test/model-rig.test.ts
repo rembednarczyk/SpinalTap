@@ -1,6 +1,6 @@
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import { describe, expect, it } from "vitest";
-import { Quaternion, Scene, TransformNode, Vector3 } from "../src/babylon";
+import { Quaternion, Scene, TransformNode, type Vector3 } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
 import { animateRig, buildCivilian, buildHeroine } from "../src/renderer/characters";
 import { HumanoidRetarget, normaliseBoneName } from "../src/renderer/model-rig";
