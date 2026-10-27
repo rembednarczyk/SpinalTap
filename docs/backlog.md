@@ -13,8 +13,8 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
   - muzyka do rozważenia: T&T Free Cyberpunk Pack 2, Mirrorshade.
 
   Odtwarzanie przez istniejący `AudioPort` i szyny miksu (ADR-0013). Pliki skompresowane (OGG/MP3), licencje w README katalogu.
-- **Broń z publicznych assetów.** Pistolet i SMG z Quaternius Ultimate Gun Pack (CC0, FBX/OBJ, potrzebna
-  konwersja do glTF) zamiast pudełek: w dłoni rigu, w kaburze, w viewmodelu FPP i u modeli
+- **Broń z publicznych assetów.** [assety gotowe: `packages/app/public/weapons`, konwersja `tools/obj2glb.py`;
+  podpięcie czeka na scalenie pakietu walki] Pistolet i SMG z Quaternius Ultimate Gun Pack (CC0) zamiast pudełek: w dłoni rigu, w kaburze, w viewmodelu FPP i u modeli
   importowanych. Zachować toon shading i outline.
 - **Animacja biegania.** Osobny cykl dla sprintu w rigu proceduralnym (dłuższy krok, pochylenie
   tułowia, wyższe kolana, mocniejsza praca rąk, faza lotu), z płynnym przejściem chód → bieg.
