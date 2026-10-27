@@ -4,7 +4,7 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
 
 ## Następne
 
-- **Dźwięki z publicznych assetów.** Podmienić lub uzupełnić syntezowane SFX nagraniami CC0 ze
+- **[gotowe] Dźwięki z publicznych assetów.** Podmienić lub uzupełnić syntezowane SFX nagraniami CC0 ze
   skanu w `docs/assets-research.md` §6:
   - strzały pistoletu i SMG z The Free Firearm Sound Library (wybrane pliki, nie cała paczka);
   - trafienia i kroki z Kenney Impact Sounds;
@@ -13,8 +13,7 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
   - muzyka do rozważenia: T&T Free Cyberpunk Pack 2, Mirrorshade.
 
   Odtwarzanie przez istniejący `AudioPort` i szyny miksu (ADR-0013). Pliki skompresowane (OGG/MP3), licencje w README katalogu.
-- **Broń z publicznych assetów.** [assety gotowe: `packages/app/public/weapons`, konwersja `tools/obj2glb.py`;
-  podpięcie czeka na scalenie pakietu walki] Pistolet i SMG z Quaternius Ultimate Gun Pack (CC0) zamiast pudełek: w dłoni rigu, w kaburze, w viewmodelu FPP i u modeli
+- **[gotowe] Broń z publicznych assetów.** (`packages/app/public/weapons`, `WeaponMounts`) Pistolet i SMG z Quaternius Ultimate Gun Pack (CC0) zamiast pudełek: w dłoni rigu, w kaburze, w viewmodelu FPP i u modeli
   importowanych. Zachować toon shading i outline.
 - **Animacja biegania.** Osobny cykl dla sprintu w rigu proceduralnym (dłuższy krok, pochylenie
   tułowia, wyższe kolana, mocniejsza praca rąk, faza lotu), z płynnym przejściem chód → bieg.
