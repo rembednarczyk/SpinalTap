@@ -47,10 +47,11 @@ const qualityParam = params.get("quality");
 const quality = qualityParam === "low" || qualityParam === "high" ? qualityParam : settings.quality;
 const stage = new Stage(canvas, { reference, quality });
 const renderer = new BabylonRenderer(stage);
-// Imported character models are opt-in: models/manifest.json next to the game, or ?models=<url>.
-// The reference frame stays procedural so the NPR snapshot does not depend on downloads.
+// Imported character models: models/manifest.json next to the game, ?models=<url> for another
+// cast, ?models=off for the procedural one. The reference frame stays procedural so the NPR
+// snapshot does not depend on downloads; perf tests pass `off` for the same reason.
 const modelsParam = params.get("models");
-if (modelsParam || !reference) {
+if (modelsParam !== "off" && (modelsParam || !reference)) {
   void loadModelManifest(modelsParam ?? "./models/manifest.json").then((m) => {
     if (Object.keys(m).length > 0) renderer.setCharacterModels(m);
   });

@@ -27,6 +27,8 @@ interface Dressed {
   readonly springs: SpringBones | null;
   /** Pistol in the model's hand, shown while the rig has it drawn. */
   gun: AbstractMesh | null;
+  /** Pool key: the model file. */
+  readonly url: string;
 }
 
 const modelKeyOf = (view: ViewDescriptor): CharacterModelKey | null => {
@@ -301,29 +303,52 @@ export class BabylonRenderer implements RenderPort {
   private dress(rig: CharacterRig, key: CharacterModelKey | null, name: string): void {
     const spec = key ? this.models[key] : undefined;
     if (!spec) return;
+    // A model released by a cleared scene (new game, load, streaming) is reused at once.
+    const pooled = this.modelPool.get(spec.url)?.pop();
+    if (pooled) {
+      this.attachModel(rig, pooled, spec.url, key);
+      return;
+    }
     this.loadingModels.add(rig);
     this.library
       .instantiate(spec, `${name}-m`)
       .then((model) => {
         this.loadingModels.delete(rig);
-        if (rig.root.isDisposed()) return model.dispose();
-        const retarget = HumanoidRetarget.create(rig, model.root, `${name}-m-`);
-        if (!retarget) {
-          console.warn(`[models] ${spec.url}: no humanoid bones found, keeping the procedural ${key}`);
-          return model.dispose();
-        }
-        for (const m of rig.meshes) m.setEnabled(false);
-        for (const m of model.meshes) if (m.getTotalVertices() > 0) this.shadow.addCaster(m);
-        const prefix = `${name}-m-`;
-        const springs = SpringBones.create(model.root, { vrm: model.springs, prefix, colliders: humanoidColliders(model.root, prefix) });
-        const dressed: Dressed = { model, retarget, springs, gun: null };
-        this.dressed.set(rig, dressed);
-        if (rig.aiming) dressed.gun = this.arm(model, retarget);
+        if (rig.root.isDisposed()) return this.releaseModel(model, spec.url);
+        this.attachModel(rig, model, spec.url, key);
       })
       .catch((err: unknown) => {
         this.loadingModels.delete(rig);
         console.warn(`[models] ${spec.url} failed to load`, err);
       });
+  }
+
+  private readonly modelPool = new Map<string, ModelInstance[]>();
+
+  private attachModel(rig: CharacterRig, model: ModelInstance, url: string, key: CharacterModelKey | null): void {
+    model.root.setEnabled(true);
+    const retarget = HumanoidRetarget.create(rig, model.root, model.prefix);
+    if (!retarget) {
+      console.warn(`[models] ${url}: no humanoid bones found, keeping the procedural ${key}`);
+      model.dispose();
+      return;
+    }
+    for (const m of rig.meshes) m.setEnabled(false);
+    for (const m of model.meshes) if (m.getTotalVertices() > 0) this.shadow.addCaster(m);
+    const springs = SpringBones.create(model.root, { vrm: model.springs, prefix: model.prefix, colliders: humanoidColliders(model.root, model.prefix) });
+    const dressed: Dressed = { model, retarget, springs, gun: null, url };
+    this.dressed.set(rig, dressed);
+    if (rig.aiming) dressed.gun = this.arm(model, retarget);
+  }
+
+  /** Detaches a model, resets its pose and keeps it for the next character of the same look. */
+  private releaseModel(model: ModelInstance, url: string): void {
+    model.root.parent = null;
+    model.root.setEnabled(false);
+    model.resetPose();
+    const pool = this.modelPool.get(url) ?? [];
+    pool.push(model);
+    this.modelPool.set(url, pool);
   }
 
   /** The procedural gun is baked into the hidden rig mesh; a dressed shooter gets its own. */
@@ -342,7 +367,15 @@ export class BabylonRenderer implements RenderPort {
   }
 
   private disposeRig(rig: CharacterRig): void {
-    this.dressed.get(rig)?.model.dispose();
+    const d = this.dressed.get(rig);
+    if (d) {
+      if (d.gun) {
+        const i = d.model.meshes.indexOf(d.gun);
+        if (i >= 0) d.model.meshes.splice(i, 1);
+        d.gun.dispose();
+      }
+      this.releaseModel(d.model, d.url);
+    }
     this.dressed.delete(rig);
     rig.root.dispose(false, false);
   }

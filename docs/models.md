@@ -27,8 +27,8 @@ cień, line art i animację z proceduralnego rigu, więc nie potrzebuje własnyc
 | `preset` | Preset toon (`importedCharacter` domyślnie). |
 | `idle`, `walk`, `run` | Nazwy klipów glTF. Na razie nieużywane: postać animuje rig. |
 
-Testowy model VRoid leży w `packages/app/public/models/test/` i włącza się przez
-`?models=./models/test/manifest.json` (licencja w README tego katalogu). Scena referencyjna
+Domyślna obsada zastępcza (próbki VRoid) leży w `packages/app/public/models/` z manifestem i
+README z licencjami; `?models=off` wraca do obsady proceduralnej. Scena referencyjna
 NPR zawsze używa obsady proceduralnej, żeby migawka nie zależała od pobrań.
 
 ## Jak to działa
