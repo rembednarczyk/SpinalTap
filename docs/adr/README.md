@@ -24,5 +24,6 @@
 | [0020](0020-poziomy-schody-windy-mosty.md) | Poziomy: schody, windy, mosty, grawitacja, rampy w promieniach | Zaakceptowana |
 | [0021](0021-skok-upadki-drabiny-nawigacja.md) | Skok, obrażenia od upadku, drabiny, nawigacja NPC między poziomami | Zaakceptowana |
 | [0022](0022-budynki-z-zestawu-cc0.md) | Budynki i pojazdy z zestawu CC0 (city kit): skin bloku, paleta, komórki 64 m | Zaakceptowana |
+| [0024](0024-doki-zlecenia-snajper-ochrona.md) | Doki Tessen: eskorta, infiltracja, włamanie, snajper i ochrona korporacji, zapis v9 | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.
