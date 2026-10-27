@@ -1,4 +1,4 @@
-import { type CameraMode, type CyberwareLoadout, type HitZone, type ReputationState, type SaveSlotInfo, createReputation } from "@seki/core";
+import { type CameraMode, type CyberwareLoadout, type DayPhase, type HitZone, type ReputationState, type SaveSlotInfo, createReputation } from "@seki/core";
 import { createStore, type StoreApi } from "zustand/vanilla";
 
 export type Screen = "title" | "playing" | "paused" | "dead";
@@ -148,6 +148,10 @@ export interface UiState {
   readonly settings: SettingsVm;
   /** True when a saved setting only takes effect after the page is reloaded. */
   readonly reloadNeeded: boolean;
+  /** Game time as "HH:MM"; null before a game runs. */
+  readonly clock: string | null;
+  readonly day: number;
+  readonly dayPhase: DayPhase;
 }
 
 export const initialUiState: UiState = {
@@ -187,6 +191,9 @@ export const initialUiState: UiState = {
   mapMarkers: [],
   settings: DEFAULT_SETTINGS,
   reloadNeeded: false,
+  clock: null,
+  day: 1,
+  dayPhase: "night",
 };
 
 export type UiStore = StoreApi<UiState>;

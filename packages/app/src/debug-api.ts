@@ -1,4 +1,4 @@
-import { EMPTY_INPUT, type InputFrame } from "@seki/core";
+import { EMPTY_INPUT, type InputFrame, formatClock } from "@seki/core";
 import type { PerfSample } from "@seki/engine";
 import type { FixedStepLoop } from "@seki/sim";
 import type { UiStore } from "@seki/ui";
@@ -20,11 +20,15 @@ export interface DebugApi {
     player: { x: number; z: number } | null;
     district: string | null;
     loadedChunks: readonly string[];
+    /** Game time, "HH:MM". */
+    clock: string;
   };
   perf(): PerfSample;
   setPaused(paused: boolean): void;
   teleport(x: number, z: number, yaw?: number, pitch?: number): void;
   step(n: number, input?: Partial<InputFrame>): void;
+  /** Lets game time pass (the wait command), applied on the next step. */
+  wait(minutes: number): void;
   /** Fixed camera for inspection shots; null returns to the player camera. */
   view(position: { x: number; y: number; z: number } | null, target?: { x: number; y: number; z: number }): void;
   /** Characters currently wearing an imported model. */
@@ -62,6 +66,7 @@ export const createDebugApi = (
       player: p ? { x: p.position.x, z: p.position.z } : null,
       district: sim.district,
       loadedChunks: sim.streamer.loadedChunks,
+      clock: formatClock(sim.clock),
     };
   },
   perf,
@@ -80,6 +85,9 @@ export const createDebugApi = (
   view: setView,
   dressed,
   cameraY,
+  wait(minutes) {
+    session.sim.enqueue({ type: "wait", minutes });
+  },
   step(n, input = {}) {
     for (let i = 0; i < n; i++) session.step({ ...EMPTY_INPUT, ...input });
     session.render(0);

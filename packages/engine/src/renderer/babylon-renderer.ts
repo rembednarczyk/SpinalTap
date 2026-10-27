@@ -7,7 +7,7 @@ import { createRain } from "../effects/rain";
 import { Grading } from "../npr/grading";
 import { LineArt } from "../npr/line-art";
 import { SpeedLines } from "../npr/speed-lines";
-import { NIGHT_RIG } from "../npr/lighting";
+import { NIGHT_RIG, rigForDaylight } from "../npr/lighting";
 import { MoonShadow } from "../npr/moon-shadow";
 import { ToonMaterials } from "../npr/toon-material";
 import { Atmosphere, createSplashes, createSteam } from "./atmosphere";
@@ -245,6 +245,13 @@ export class BabylonRenderer implements RenderPort {
         const e = this.entities.get(effect.entityId);
         if (e?.kind === "character") e.rig.flinch = 1;
         if (effect.entityId === this.cameraTarget) this.rig.shake(0.6);
+        return;
+      }
+      case "time-of-day": {
+        // The app sends this only when the light level moves a step, so re-applying is cheap.
+        const rig = rigForDaylight(effect.daylight);
+        this.materials.setRig(rig);
+        this.atmosphere.setDaylight(rig, effect.daylight);
         return;
       }
     }

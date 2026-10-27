@@ -8,6 +8,7 @@ import {
   type FactionId,
   ITEM_CATALOG,
   type RenderPort,
+  formatClock,
 } from "@seki/core";
 import { type UiStore, dismissToast, patchUi, pushToast } from "@seki/ui";
 
@@ -122,6 +123,7 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
       toast("quest", "Koniec aktu I: Echo", `Zakończenie: ${e.title}`);
       audio.play("quest-update");
     }),
+    bus.on("TimeSkipped", (e) => toast("system", `Mija czas: ${formatClock(e.clock)}`, `${Math.floor(e.minutes / 60)} h ${e.minutes % 60} min później`)),
     bus.on("MemoryUnlocked", (e) => {
       toast("memory", e.title, e.description);
       render.playEffect({ kind: "memory-glitch" });

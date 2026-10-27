@@ -12,6 +12,7 @@ export {
   CROUCH_TIME,
   deadFlag,
   equippedAbility,
+  gameSecondsPerStep,
   fireShot,
   GUNFIRE_INTERRUPT_RADIUS,
   statsFor,

@@ -142,10 +142,33 @@ describe("migrations", () => {
   it("upgrades an M3 (v5) save to world streaming with nothing preloaded", () => {
     const { streaming: _s, ...v5 } = snapshot();
     const loaded = decodeSave("m3", wrap({ ...v5, version: 5 }));
-    expect(loaded.version).toBe(6);
+    expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
     expect(loaded.streaming).toEqual({ loadedChunks: [] });
     expect(loaded.entities).toEqual(v5.entities);
     expect(loaded.domain).toEqual(v5.domain);
+  });
+
+  it("upgrades an M2 streaming (v6) save to the day clock, telling the time from the saved tick", () => {
+    const s = snapshot({ tick: 5400 });
+    const { clock: _c, ...v6Domain } = s.domain;
+    const loaded = decodeSave("m2", wrap({ ...s, version: 6, domain: v6Domain }));
+    expect(loaded.version).toBe(7);
+    // 21:00 plus 5400 ticks of one game second each: 22:30.
+    expect(loaded.domain.clock).toEqual({ seconds: 21 * 3600 + 5400 });
+    expect(loaded.domain).toEqual({ ...v6Domain, clock: { seconds: 81000 } });
+    expect(loaded.entities).toEqual(s.entities);
+    expect(loaded.streaming).toEqual(s.streaming);
+  });
+
+  it("the v6 migration keeps an existing clock and tolerates a missing tick or domain", () => {
+    expect(MIGRATIONS[6]!({ version: 6, domain: { clock: { seconds: 5 } } })).toEqual({ version: 7, domain: { clock: { seconds: 5 } } });
+    expect(MIGRATIONS[6]!({ version: 6, tick: -3 })).toEqual({ version: 7, tick: -3, domain: { clock: { seconds: 75600 } } });
+  });
+
+  it("keeps the clock of a current save through the round trip", () => {
+    const s = snapshot();
+    const later = { ...s, domain: { ...s.domain, clock: { seconds: 200_000 } } };
+    expect(decodeSave("t", encodeSave(later)).domain.clock).toEqual({ seconds: 200_000 });
   });
 
   it("keeps the streaming state of a current save through the round trip", () => {
@@ -198,6 +221,9 @@ describe("schema validation", () => {
     ["story choices", { story: { choices: { case: "wheel" }, ending: null } }],
     ["story choices", { story: { choices: { case: 1 }, ending: null } }],
     ["story ending", { story: { choices: {}, ending: "happy" } }],
+    ["clock", { clock: null }],
+    ["clock", { clock: { seconds: 1.5 } }],
+    ["clock", { clock: { seconds: -60 } }],
     ["story ending", { story: { choices: {}, ending: 0 } }],
   ])("rejects bad domain %s", (_name, patch) => {
     const s = snapshot();

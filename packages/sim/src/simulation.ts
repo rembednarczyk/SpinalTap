@@ -5,11 +5,14 @@ import {
   type DomainState,
   EMPTY_INPUT,
   type EntitySnapshot,
+  type GameClock,
   EventBus,
   type GameCommand,
   type InputFrame,
   type SaveSnapshot,
   SAVE_SCHEMA_VERSION,
+  SECONDS_PER_MINUTE,
+  advanceClock,
   buyCyberware,
   buyItem,
   createDomainState,
@@ -31,6 +34,8 @@ import { PLAYER_SPAWN } from "./content/district-m0";
 import type { DistrictId } from "./content/world-map";
 import { IdAllocator, entitySnapshotOf, playerEntity } from "./world/factory";
 import { WorldStreamer } from "./world/streaming";
+import { inCreationOrder } from "./world/ordering";
+import { placeOnSchedule } from "./world/schedule";
 
 export const SIM_HZ = 60;
 export const SIM_DT = 1 / SIM_HZ;
@@ -48,7 +53,7 @@ export class Simulation {
   readonly bus: EventBus<DomainEvents>;
   readonly seed: number;
   readonly world: World<Entity>;
-  readonly session: SessionState = { dialogueActive: false, gameOver: false, focusId: null, lastThreat: null };
+  readonly session: SessionState = { dialogueActive: false, gameOver: false, focusId: null, focusPrompt: null, lastThreat: null };
   private readonly rng: SeededRandom;
   private readonly holder: DomainHolder;
   private readonly systems: readonly System[] = createSystems();
@@ -72,7 +77,7 @@ export class Simulation {
     const contract = domain.contracts.active;
     if (contract?.status === "active") this.streamer.registerContract(this.world, domain.flags, domain.contracts.completed, contract);
     const focus = saved?.entities.find((e) => e.key === "player")?.position ?? PLAYER_SPAWN.position;
-    this.streamer.loadInitial(this.world, domain.flags, focus, saved?.streaming.loadedChunks ?? [], () => this.world.add(player));
+    this.streamer.loadInitial(this.world, domain.flags, focus, saved?.streaming.loadedChunks ?? [], domain.clock, () => this.world.add(player));
   }
 
   static create(options: SimulationOptions): Simulation {
@@ -93,6 +98,11 @@ export class Simulation {
 
   get tick(): number {
     return this.tickCount;
+  }
+
+  /** Time of day (domain state, advanced every step). */
+  get clock(): GameClock {
+    return this.holder.domain.clock;
   }
 
   get rngState(): number {
@@ -229,6 +239,18 @@ export class Simulation {
         if (story === this.holder.domain.story) break;
         this.holder.domain = { ...this.holder.domain, story };
         ctx.bus.emit("StoryChoiceMade", { choice: cmd.choice, option: cmd.option });
+        break;
+      }
+      case "wait": {
+        const minutes = Math.floor(cmd.minutes);
+        if (!(minutes >= 1)) break;
+        const clock = advanceClock(this.holder.domain.clock, minutes * SECONDS_PER_MINUTE);
+        this.holder.domain = { ...this.holder.domain, clock };
+        // A cut, not a fast-forward: everyone on a daily plan is where it says at the new time.
+        for (const e of inCreationOrder(this.world.with("schedule"))) {
+          if (!e.ai?.alerted) placeOnSchedule(e, e.schedule.def, clock);
+        }
+        ctx.bus.emit("TimeSkipped", { minutes, clock });
         break;
       }
       case "resolve-ending": {

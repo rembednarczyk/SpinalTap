@@ -80,6 +80,17 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
     version: 6,
     streaming: isObject(old.streaming) ? old.streaming : { loadedChunks: [] },
   }),
+  // v6 (M2 streaming): no day clock. Before v7 every game started at 21:00 and the clock would
+  // have advanced one game second per 60 Hz tick, so the saved tick tells the time it was.
+  6: (old) => {
+    const domain = isObject(old.domain) ? old.domain : {};
+    const tick = typeof old.tick === "number" && Number.isInteger(old.tick) && old.tick >= 0 ? old.tick : 0;
+    return {
+      ...old,
+      version: 7,
+      domain: { ...domain, clock: isObject(domain.clock) ? domain.clock : { seconds: 21 * 3600 + tick } },
+    };
+  },
 };
 
 export class MigrationError extends Error {}

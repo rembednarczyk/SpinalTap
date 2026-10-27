@@ -9,6 +9,8 @@ export interface SessionState {
   dialogueActive: boolean;
   gameOver: boolean;
   focusId: EntityId | null;
+  /** Prompt shown for the focused entity; it can change while focus stays (a stall closing). */
+  focusPrompt: string | null;
   /** The last shot that hurt or nearly hit the player, or was fired close by; null if none. */
   lastThreat: { readonly tick: number; readonly sourceId: EntityId } | null;
 }
