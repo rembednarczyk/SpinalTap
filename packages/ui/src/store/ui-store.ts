@@ -3,9 +3,13 @@ import {
   type CyberwareLoadout,
   type DayPhase,
   type HitZone,
+  type ItemCategory,
+  type ItemDefId,
+  type ItemRef,
   type Rarity,
   type ReputationState,
   type SaveSlotInfo,
+  type ShopId,
   type WeaponSlot,
   createReputation,
 } from "@seki/core";
@@ -136,6 +140,33 @@ export interface LootVm {
   readonly lines: readonly LootLineVm[];
 }
 
+/** A piece the player carries, as a shop counter shows it. Prices are quoted with the core functions. */
+export interface TradeItemVm {
+  /** Uid of an instance or id of a stack. */
+  readonly key: string;
+  readonly ref: ItemRef;
+  readonly defId: ItemDefId;
+  readonly name: string;
+  readonly category: ItemCategory;
+  /** Null for stacks. */
+  readonly rarity: Rarity | null;
+  readonly qty: number;
+  /** Garments only. */
+  readonly condition: number | null;
+  /** Equipped, mounted or carrying mods: it cannot be sold until it is taken off. */
+  readonly inUse: boolean;
+}
+
+/** What the open shop needs to know about the bag. */
+export interface TradeVm {
+  readonly items: readonly TradeItemVm[];
+  readonly capacity: number;
+  readonly freeCells: number;
+  readonly weaponParts: number;
+}
+
+export const EMPTY_TRADE: TradeVm = { items: [], capacity: 24, freeCells: 24, weaponParts: 0 };
+
 export type GraphicsQuality = "high" | "low";
 
 export interface SettingsVm {
@@ -187,6 +218,10 @@ export interface UiState {
   readonly reputation: ReputationState;
   readonly contractsDone: number;
   readonly shopOpen: boolean;
+  /** Which counter the shop panel shows while `shopOpen`. */
+  readonly shopId: ShopId;
+  /** The bag as the open shop sees it (kept fresh only while a shop is open). */
+  readonly trade: TradeVm;
   /** Open loot panel, or null. */
   readonly loot: LootVm | null;
   readonly sheetOpen: boolean;
@@ -237,6 +272,8 @@ export const initialUiState: UiState = {
   reputation: createReputation(),
   contractsDone: 0,
   shopOpen: false,
+  shopId: "clinic",
+  trade: EMPTY_TRADE,
   loot: null,
   sheetOpen: false,
   toggleSheet: () => {},
