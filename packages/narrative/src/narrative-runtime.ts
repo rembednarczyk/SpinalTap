@@ -4,14 +4,26 @@ import {
   type GameCommand,
   CONTRACT_SITES,
   QUEST_DEFINITIONS,
-  currentStep,
+  STORY_CHOICES,
+  type StoryChoiceId,
+  activeMainStep,
   hasFlag,
+  hasMemory,
   isFactionId,
   isMemoryId,
+  isStoryChoiceId,
+  isStoryOption,
+  resolveEnding,
 } from "@seki/core";
 import type { DialogueLine, DialogueView } from "./dialogue-view";
 
-const SPEAKERS: Readonly<Record<string, string>> = { KAITO: "Kaito", UME: "Babcia Ume" };
+const SPEAKERS: Readonly<Record<string, string>> = {
+  KAITO: "Kaito",
+  UME: "Babcia Ume",
+  MORI: "Doktor Mori",
+  REN: "Ren",
+  TECH: "Technik Kagami",
+};
 const SPEAKER_RE = /^([A-Z]+):\s*(.*)$/;
 
 export class InkCompileError extends Error {}
@@ -29,13 +41,7 @@ export const compileInk = (source: string): Story => {
 };
 
 /** The main-quest step id the ink scripts branch on. */
-const activeMainStep = (domain: DomainState): string => {
-  for (const q of QUEST_DEFINITIONS) {
-    const step = currentStep(domain.quests, q);
-    if (q.main && step) return step.id;
-  }
-  return "";
-};
+const mainStepId = (domain: DomainState): string => activeMainStep(domain.quests, QUEST_DEFINITIONS)?.step.id ?? "";
 
 /**
  * Runs ink conversations. Domain state flows in through synced ink variables and has_flag();
@@ -60,12 +66,18 @@ export class NarrativeRuntime {
     this.domain = domain;
     this.dialogueId = dialogueId;
     this.pendingFlags = new Set();
-    this.story.variablesState.$("quest_step", activeMainStep(domain));
+    this.story.variablesState.$("quest_step", mainStepId(domain));
     this.story.variablesState.$("alias", domain.character.alias ?? "");
     const contract = domain.contracts.active;
     this.story.variablesState.$("contract_state", contract?.status ?? "");
     this.story.variablesState.$("contract_site", contract ? CONTRACT_SITES[contract.siteId].label : "");
     this.story.variablesState.$("contracts_done", domain.contracts.completed);
+    // The domain owns the main-thread choices; ink sees them as plain string variables.
+    for (const choice of Object.keys(STORY_CHOICES) as StoryChoiceId[]) {
+      this.story.variablesState.$(`choice_${choice}`, domain.story.choices[choice] ?? "");
+    }
+    this.story.variablesState.$("act1_ending", resolveEnding(domain.story.choices));
+    this.story.variablesState.$("story_ending", domain.story.ending ?? "");
     this.story.ChoosePathString(dialogueId);
     return this.continue();
   }
@@ -130,5 +142,18 @@ export class NarrativeRuntime {
       if (!isMemoryId(id)) throw new Error(`ink: unknown memory "${id}"`);
       this.emit({ type: "unlock-memory", memoryId: id });
     });
+    this.story.BindExternalFunction(
+      "has_memory",
+      (id: string) => {
+        if (!isMemoryId(id)) throw new Error(`ink: unknown memory "${id}"`);
+        return !!this.domain && hasMemory(this.domain.character, id);
+      },
+      true,
+    );
+    this.story.BindExternalFunction("story_choice", (choice: string, option: string) => {
+      if (!isStoryChoiceId(choice) || !isStoryOption(choice, option)) throw new Error(`ink: unknown story choice "${choice}=${option}"`);
+      this.emit({ type: "story-choice", choice, option });
+    });
+    this.story.BindExternalFunction("end_act", () => this.emit({ type: "resolve-ending" }));
   }
 }
