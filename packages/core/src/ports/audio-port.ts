@@ -22,7 +22,7 @@ export interface AudioListenerPose {
 }
 
 /**
- * Continuous audio state (ADR-0012): music mood, listener for positional ambience and
+ * Continuous audio state (ADR-0013): music mood, listener for positional ambience and
  * footsteps, bus volumes for the settings screen. Separate from `AudioPort` so one-shot cues
  * stay a one-method contract and fakes in tests stay trivial.
  */

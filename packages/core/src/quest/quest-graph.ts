@@ -22,6 +22,8 @@ export interface QuestDefinition {
   readonly id: string;
   readonly title: string;
   readonly main: boolean;
+  /** Id of the quest whose completion starts this one. Without it the quest is started explicitly. */
+  readonly startsAfter?: string;
   readonly steps: readonly QuestStep[];
 }
 
@@ -32,8 +34,16 @@ export type QuestProgress =
 export type QuestLog = Readonly<Record<string, QuestProgress>>;
 
 export type QuestTransition =
-  | { readonly type: "advanced"; readonly questId: string; readonly step: QuestStep; readonly rewards: readonly QuestReward[] }
+  | { readonly type: "started" | "advanced"; readonly questId: string; readonly step: QuestStep; readonly rewards: readonly QuestReward[] }
   | { readonly type: "completed"; readonly questId: string; readonly title: string; readonly rewards: readonly QuestReward[] };
+
+/**
+ * Domain facts that only count for the quest step active when they happen ("buy an implant
+ * now", not "have bought one at some point"). The sim raises one flag per active step.
+ */
+export type ProgressEvent = "contract_completed" | "cyberware_installed";
+
+export const progressFlag = (event: ProgressEvent, stepId: string): string => `${event}@${stepId}`;
 
 export const evaluateCondition = (cond: QuestCondition, flags: Flags): boolean =>
   cond.type === "flag" ? hasFlag(flags, cond.flag) : cond.of.every((c) => evaluateCondition(c, flags));
@@ -44,6 +54,8 @@ export const startQuest = (log: QuestLog, quest: QuestDefinition): QuestLog =>
 /**
  * Advances every active quest as far as the current flags allow. A single call can
  * complete several steps in order; steps are never skipped and "completed" is terminal.
+ * Completing a quest starts its follow-ups (`startsAfter`); a follow-up listed later in
+ * `definitions` is evaluated in the same call.
  */
 export const evaluateQuests = (
   log: QuestLog,
@@ -65,6 +77,12 @@ export const evaluateQuests = (
       } else {
         progress = { status: "completed" };
         transitions.push({ type: "completed", questId: quest.id, title: quest.title, rewards: step.rewards });
+        for (const follow of definitions) {
+          const first = follow.steps[0];
+          if (follow.startsAfter !== quest.id || next[follow.id] || !first) continue;
+          next[follow.id] = { status: "active", stepIndex: 0 };
+          transitions.push({ type: "started", questId: follow.id, step: first, rewards: [] });
+        }
       }
       next[quest.id] = progress;
     }
@@ -75,4 +93,16 @@ export const evaluateQuests = (
 export const currentStep = (log: QuestLog, quest: QuestDefinition): QuestStep | null => {
   const progress = log[quest.id];
   return progress?.status === "active" ? (quest.steps[progress.stepIndex] ?? null) : null;
+};
+
+/** The current step of the active main quest, if any. Main quests run one after another. */
+export const activeMainStep = (
+  log: QuestLog,
+  definitions: readonly QuestDefinition[],
+): { readonly quest: QuestDefinition; readonly step: QuestStep } | null => {
+  for (const quest of definitions) {
+    const step = quest.main ? currentStep(log, quest) : null;
+    if (step) return { quest, step };
+  }
+  return null;
 };

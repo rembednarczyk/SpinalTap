@@ -27,7 +27,7 @@ export const questSystem: System = {
     ctx.state.domain = { ...ctx.state.domain, quests: log };
     for (const t of transitions) {
       for (const r of t.rewards) applyReward(ctx, r);
-      if (t.type === "advanced") ctx.bus.emit("QuestAdvanced", { questId: t.questId, stepId: t.step.id, objective: t.step.objective });
+      if (t.type !== "completed") ctx.bus.emit("QuestAdvanced", { questId: t.questId, stepId: t.step.id, objective: t.step.objective });
       else ctx.bus.emit("QuestCompleted", { questId: t.questId, title: t.title });
     }
   },

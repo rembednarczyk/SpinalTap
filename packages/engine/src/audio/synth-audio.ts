@@ -200,7 +200,7 @@ const defaultContext = (): AudioContext | null => {
 };
 
 /**
- * AudioPort and AudioScenePort on raw WebAudio (ADR-0009, ADR-0012). Everything is
+ * AudioPort and AudioScenePort on raw WebAudio (ADR-0009, ADR-0013). Everything is
  * synthesized: cues from recipes, a procedural synthwave loop with mood layers, rain, traffic,
  * neon hum and steam that follow the listener. The context is created on the first user
  * gesture; without WebAudio every method is a silent no-op.

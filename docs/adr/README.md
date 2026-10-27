@@ -13,6 +13,7 @@
 | [0009](0009-audio-syntezowane.md) | Audio syntezowane w WebAudio | Zaakceptowana |
 | [0010](0010-petla-m1-kontrakty-cyberware.md) | Pętla M1: kontrakty, klinika, zdolność aktywna | Zaakceptowana |
 | [0011](0011-frakcje-i-reputacja-m2.md) | Frakcje i reputacja M2, reakcje NPC | Zaakceptowana |
-| [0012](0012-audio-scena-muzyka-miks.md) | Scena audio: muzyka warstwowa, ambient pozycyjny, miks | Zaakceptowana |
+| [0012](0012-watek-glowny-akt-1.md) | Wątek główny, akt I: wspomnienia, wybory, zakończenia | Zaakceptowana |
+| [0013](0013-audio-scena-muzyka-miks.md) | Scena audio: muzyka warstwowa, ambient pozycyjny, miks | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.

@@ -13,4 +13,6 @@ export interface UiIntents {
   buyCyberware(id: CyberwareId): void;
   buyItem(id: ItemId): void;
   closeShop(): void;
+  /** Leaves the clinic counter for a conversation with the ripperdoc. */
+  talkToShopkeeper(): void;
 }

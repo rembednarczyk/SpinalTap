@@ -2,6 +2,7 @@ import type { MemoryId } from "../character/memories";
 import type { CyberwareId } from "../cyberware/cyberware";
 import type { ItemId } from "../inventory/inventory";
 import type { FactionId } from "../reputation/reputation";
+import type { StoryChoiceId, StoryOption } from "../story/story";
 
 /**
  * Requests from outside the simulation (narrative, UI). They are queued and applied at
@@ -16,4 +17,8 @@ export type GameCommand =
   | { readonly type: "buy-cyberware"; readonly cyberwareId: CyberwareId }
   | { readonly type: "buy-item"; readonly itemId: ItemId }
   | { readonly type: "accept-contract" }
-  | { readonly type: "complete-contract" };
+  | { readonly type: "complete-contract" }
+  /** Main-thread choice made in a memory flashback. The first answer sticks. */
+  | { readonly type: "story-choice"; readonly choice: StoryChoiceId; readonly option: StoryOption }
+  /** Closes act I: the sim resolves the ending from the recorded choices. */
+  | { readonly type: "resolve-ending" };

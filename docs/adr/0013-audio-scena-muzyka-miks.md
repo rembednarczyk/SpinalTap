@@ -1,4 +1,4 @@
-# ADR-0012: Scena audio: muzyka warstwowa, ambient pozycyjny, miks
+# ADR-0013: Scena audio: muzyka warstwowa, ambient pozycyjny, miks
 
 ## Kontekst
 ADR-0009 dał jednorazowe cue i zapętlony szum deszczu. Do „wysycenia” dźwięku potrzebny jest stan ciągły: nastrój muzyki (eksploracja, walka, overdrive, dialog), pozycja słuchacza (buczenie neonów, para z włazów, kroki zależne od prędkości) i głośności szyn do ustawień. Nadal bez plików audio.

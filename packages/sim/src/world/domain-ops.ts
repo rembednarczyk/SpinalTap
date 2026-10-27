@@ -2,10 +2,14 @@ import {
   type FactionId,
   type MemoryId,
   MEMORY_CATALOG,
+  type ProgressEvent,
+  QUEST_DEFINITIONS,
   type ReputationCause,
   changeReputation,
   contractPayout,
   credit,
+  currentStep,
+  progressFlag,
   hasFlag,
   hasMemory,
   reputationEffects,
@@ -21,7 +25,15 @@ export const raiseFlag = (ctx: SimContext, flag: string): void => {
   ctx.state.flagsDirty = true;
 };
 
-export const grantEddies = (ctx: SimContext, base: number): void => {
+/** Raises the step-scoped flag of `event` for the current step of every active quest. */
+export const raiseProgress = (ctx: SimContext, event: ProgressEvent): void => {
+  for (const quest of QUEST_DEFINITIONS) {
+    const step = currentStep(ctx.state.domain.quests, quest);
+    if (step) raiseFlag(ctx, progressFlag(event, step.id));
+  }
+};
+
+export const grantEddies =(ctx: SimContext, base: number): void => {
   const amount = contractPayout(base, ctx.state.domain.reputation.fixers);
   const r = credit(ctx.state.domain.wallet, amount);
   if (!r.ok) return;

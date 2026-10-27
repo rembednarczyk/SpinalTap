@@ -113,6 +113,12 @@ KAITO: I jeszcze jedno, Seki. Ktoś już pytał o kobietę z wraku. Nie tylko ja
 + [Nie dziś.]
     KAITO: Twoja strata. Hebi nie biorą wolnego.
     -> END
+// Unlocked by the "stół" memory (act I, m3-echo.ink).
+* { has_memory("operating_table") } [Co wiesz o Kagami Biotech?]
+    SEKI: Co wiesz o Kagami Biotech?
+    KAITO: Kupują od ludzi wspomnienia i sprzedają je bogatym, którzy chcą coś przeżyć bez ryzyka.
+    KAITO: Ich kurierzy dobrze zarabiają. Dopóki nie zaczną pytać, co wiozą.
+    -> contract_offer
 
 = contract_running
 KAITO: Kontrakt dalej otwarty. Cel: {contract_site}.
@@ -121,6 +127,9 @@ KAITO: Kontrakt dalej otwarty. Cel: {contract_site}.
 = contract_payday
 KAITO: Czysta robota. Klienci są zadowoleni, a ja razem z nimi.
 ~ complete_contract()
+{ quest_step == "echo_contract":
+    KAITO: Hej. Gdzie odpłynęłaś? Patrzysz przeze mnie jak przez szybę.
+}
 { contracts_done >= 2:
     KAITO: Zaczynasz mieć opinię, Seki. Ludzie pytają o kobietę z wraku, która nie chybia.
 }
@@ -133,6 +142,9 @@ KAITO: Czysta robota. Klienci są zadowoleni, a ja razem z nimi.
 }
 { has_flag("ume_memory"):
     UME: Uważaj na siebie na dachach, dziecko. Tak jak kiedyś.
+    { has_memory("courier_case") && not has_flag("ume_ren"):
+        -> ren
+    }
     -> END
 }
 UME: Widziałam, jak cię wyciągali z tego auta. Myślałam, że już po tobie.
@@ -150,3 +162,20 @@ UME: Widziałam, jak cię wyciągali z tego auta. Myślałam, że już po tobie.
     -> END
 * [Muszę iść.]
     -> END
+* { has_memory("courier_case") && not has_flag("ume_ren") } [Pamiętasz Rena?]
+    -> ren_talk
+
+// Unlocked by the "walizka" memory (act I, m3-echo.ink).
+= ren
++ [Pamiętasz Rena?]
+    -> ren_talk
++ [Muszę iść.]
+    -> END
+
+= ren_talk
+SEKI: Pamiętasz chłopaka, z którym biegałam po dachach? Ren.
+UME: Ren Odagiri. Szukał cię, kiedy zniknęłaś. Pół roku pytał o ciebie każdego na tej ulicy.
+UME: Potem przyszli ludzie w czystych butach i też o ciebie pytali. Od tamtej pory nikt Rena nie widział.
+~ set_flag("ume_ren")
+~ change_rep("civilians", 3)
+-> END
