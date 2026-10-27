@@ -1,48 +1,12 @@
-import type { ContractSiteId, Vec3, ViewDescriptor } from "@seki/core";
+import type { ContractSiteId, Vec3 } from "@seki/core";
 import { M0_TARGET_TAG } from "@seki/core";
+import { type ActorDef, type ActorSpawn, type GangerSpawn, type Rect, type StaticProp, building, crate, lamp, neon, v } from "./builders";
 
 /**
  * Shinsekai, block 7: the M0 vertical-slice district. Pure data, consumed by the world factory.
- * Coordinates: Y up, +Z north. The main street runs north along X ∈ [-7, 7].
+ * Coordinates: Y up, +Z north. The main street runs north along X ∈ [-7, 7]. A gap in the
+ * north wall behind the car wash (X ∈ [4.8, 9]) leads onto Ulica Kanałowa.
  */
-export interface StaticProp {
-  readonly center: Vec3;
-  readonly view: ViewDescriptor;
-  readonly solid: boolean;
-}
-
-export interface ActorSpawn {
-  readonly key: string;
-  readonly position: Vec3;
-  readonly yaw: number;
-}
-
-const v = (x: number, y: number, z: number): Vec3 => ({ x, y, z });
-
-const building = (x: number, z: number, w: number, h: number, d: number, material: "concrete" | "metal" | "glass" = "concrete"): StaticProp => ({
-  center: v(x, h / 2, z),
-  view: { kind: "block", size: v(w, h, d), material },
-  solid: true,
-});
-
-const crate = (x: number, z: number, w: number, h: number, d: number): StaticProp => ({
-  center: v(x, h / 2, z),
-  view: { kind: "block", size: v(w, h, d), material: "metal" },
-  solid: true,
-});
-
-const neon = (x: number, y: number, z: number, size: Vec3, color: string, label?: string): StaticProp => ({
-  center: v(x, y, z),
-  view: label === undefined ? { kind: "neon", size, color } : { kind: "neon", size, color, label },
-  solid: false,
-});
-
-const lamp = (x: number, z: number, color: string): StaticProp => ({
-  center: v(x, 0, z),
-  view: { kind: "lamp", color },
-  solid: false,
-});
-
 export const DISTRICT_M0_PROPS: readonly StaticProp[] = [
   { center: v(0, -0.1, 7), view: { kind: "block", size: v(46, 0.2, 88), material: "asphalt" }, solid: false },
   // Sidewalks (visual only).
@@ -62,7 +26,10 @@ export const DISTRICT_M0_PROPS: readonly StaticProp[] = [
   building(15, 42, 12, 16, 14, "metal"),
   // District bounds.
   building(0, -37, 46, 6, 2, "metal"),
-  building(0, 51, 46, 6, 2, "metal"),
+  // North wall, split around the passage to Ulica Kanałowa (X ∈ [4.8, 9]). Under 8 m, so the
+  // engine's set dressing does not treat the pieces as buildings.
+  building(-9.1, 51, 27.8, 6, 2, "metal"),
+  building(16, 51, 14, 6, 2, "metal"),
   building(-22, 7, 2, 8, 88, "metal"),
   building(22, 7, 2, 8, 88, "metal"),
   // The wreck Seki wakes up next to.
@@ -107,11 +74,36 @@ export const CONTRACT_SITE_SPAWNS: Readonly<Record<ContractSiteId, readonly Vec3
   south_gate: [v(-4, 0, -33), v(4.5, 0, -34.5), v(-1, 0, -35), v(6.5, 0, -33.5)],
 };
 
-export interface GangerSpawn extends ActorSpawn {
-  readonly tag: string | null;
-}
-
 export const GANGER_SPAWNS: readonly GangerSpawn[] = [
   { key: "courier", position: v(1, 0, 43), yaw: Math.PI, tag: M0_TARGET_TAG },
   { key: "guard", position: v(-2.5, 0, 39.5), yaw: Math.PI, tag: null },
 ];
+
+/** Every keyed character of the district, in creation order. */
+export const DISTRICT_M0_ACTORS: readonly ActorDef[] = [
+  {
+    kind: "npc",
+    spawn: FIXER_SPAWN,
+    preset: "fixer",
+    faction: "fixers",
+    interactable: { kind: "dialogue", dialogueId: "fixer", prompt: "Rozmawiaj z Kaito", radius: 2.6 },
+  },
+  {
+    kind: "npc",
+    spawn: CIVILIAN_SPAWN,
+    preset: "civilian",
+    faction: "civilians",
+    interactable: { kind: "dialogue", dialogueId: "ume", prompt: "Rozmawiaj z babcią Ume", radius: 2.4 },
+  },
+  {
+    kind: "npc",
+    spawn: RIPPERDOC_SPAWN,
+    preset: "ripperdoc",
+    faction: "civilians",
+    interactable: { kind: "shop", dialogueId: "mori", prompt: "Klinika doktora Mori", radius: 2.4 },
+  },
+  ...GANGER_SPAWNS.map((spawn): ActorDef => ({ kind: "ganger", spawn })),
+];
+
+/** Footprint of the district including its outer walls. */
+export const DISTRICT_M0_BOUNDS: Rect = { minX: -23, maxX: 23, minZ: -38, maxZ: 52 };

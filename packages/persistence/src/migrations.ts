@@ -41,6 +41,13 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
       },
     };
   },
+  // v3 (M1): one district, no world streaming. An empty chunk list is valid: the simulation
+  // loads whatever lies around the saved player position, which for v3 is always Shinsekai 7.
+  3: (old) => ({
+    ...old,
+    version: 4,
+    streaming: isObject(old.streaming) ? old.streaming : { loadedChunks: [] },
+  }),
 };
 
 export class MigrationError extends Error {}

@@ -15,13 +15,16 @@ import {
   generateContract,
   setAlias,
 } from "@seki/core";
-import type { World } from "miniplex";
+import { World } from "miniplex";
 import { SeededRandom } from "./rng/seeded-random";
 import { createSystems } from "./systems";
 import type { Entity } from "./world/components";
 import type { DomainHolder, SessionState, SimContext, System } from "./world/context";
 import { adjustReputation, grantMemory, raiseFlag } from "./world/domain-ops";
-import { type IdAllocator, createDistrictWorld, spawnContractTargets } from "./world/factory";
+import { PLAYER_SPAWN } from "./content/district-m0";
+import type { DistrictId } from "./content/world-map";
+import { IdAllocator, entitySnapshotOf, playerEntity } from "./world/factory";
+import { WorldStreamer } from "./world/streaming";
 
 export const SIM_HZ = 60;
 export const SIM_DT = 1 / SIM_HZ;
@@ -44,17 +47,26 @@ export class Simulation {
   private readonly holder: DomainHolder;
   private readonly systems: readonly System[] = createSystems();
   private readonly commands: GameCommand[] = [];
-  private readonly ids: IdAllocator;
+  readonly streamer: WorldStreamer;
   private tickCount = 0;
 
-  private constructor(seed: number, domain: DomainState, bus: EventBus<DomainEvents>) {
+  /**
+   * Builds the world around `focus`: the player first in id order, then every chunk's content
+   * (ids reserved up front, see WorldStreamer), then the targets of an active contract.
+   */
+  private constructor(seed: number, domain: DomainState, bus: EventBus<DomainEvents>, saved?: SaveSnapshot) {
     this.seed = seed;
     this.bus = bus;
     this.rng = new SeededRandom(seed);
     this.holder = { domain, flagsDirty: false };
-    const built = createDistrictWorld(domain);
-    this.world = built.world;
-    this.ids = built.ids;
+    this.world = new World<Entity>();
+    const ids = new IdAllocator();
+    const player = playerEntity(ids.take());
+    this.streamer = new WorldStreamer(ids);
+    const contract = domain.contracts.active;
+    if (contract?.status === "active") this.streamer.registerContract(this.world, domain.flags, domain.contracts.completed, contract);
+    const focus = saved?.entities.find((e) => e.key === "player")?.position ?? PLAYER_SPAWN.position;
+    this.streamer.loadInitial(this.world, domain.flags, focus, saved?.streaming.loadedChunks ?? [], () => this.world.add(player));
   }
 
   static create(options: SimulationOptions): Simulation {
@@ -62,22 +74,10 @@ export class Simulation {
   }
 
   static fromSnapshot(snapshot: SaveSnapshot, bus?: EventBus<DomainEvents>): Simulation {
-    const sim = new Simulation(snapshot.seed, snapshot.domain, bus ?? new EventBus<DomainEvents>());
+    const sim = new Simulation(snapshot.seed, snapshot.domain, bus ?? new EventBus<DomainEvents>(), snapshot);
     sim.rng.setState(snapshot.rngState);
     sim.tickCount = snapshot.tick;
-    const byKey = new Map(snapshot.entities.map((e) => [e.key, e]));
-    for (const e of sim.world) {
-      const s = e.key ? byKey.get(e.key) : undefined;
-      if (!s) continue;
-      e.position = s.position;
-      e.prevPosition = s.position;
-      e.yaw = s.yaw;
-      e.prevYaw = s.yaw;
-      e.pitch = s.pitch;
-      if (e.health && s.hp !== null) e.health = { ...e.health, current: s.hp };
-      if (e.combatant) e.combatant.cooldown = s.cooldown;
-      if (e.ai) e.ai.alerted = s.alerted;
-    }
+    sim.streamer.restoreEntities(sim.world, snapshot.domain.flags, snapshot.entities);
     return sim;
   }
 
@@ -97,6 +97,12 @@ export class Simulation {
     return this.world.with("player").first;
   }
 
+  /** District the player stands in, or null between chunk bounds. */
+  get district(): DistrictId | null {
+    const p = this.player();
+    return p ? this.streamer.districtAt(p.position) : null;
+  }
+
   enqueue(command: GameCommand): void {
     this.commands.push(command);
   }
@@ -108,6 +114,7 @@ export class Simulation {
       state: this.holder,
       session: this.session,
       rng: this.rng,
+      streamer: this.streamer,
       bus: this.bus,
       dt: SIM_DT,
       tick: this.tickCount,
@@ -119,26 +126,17 @@ export class Simulation {
   }
 
   snapshot(narrative: string | null, label: string, objective: string): SaveSnapshot {
-    const entities: EntitySnapshot[] = [];
+    const entities: EntitySnapshot[] = [...this.streamer.dormantSnapshots()];
+    for (const e of this.world) if (e.key) entities.push(entitySnapshotOf({ ...e, key: e.key }));
     // Sorted by key: world iteration order is not stable across removals.
-    for (const e of [...this.world].sort((a, b) => (a.key ?? "").localeCompare(b.key ?? ""))) {
-      if (!e.key) continue;
-      entities.push({
-        key: e.key,
-        position: e.position,
-        yaw: e.yaw,
-        pitch: e.pitch,
-        hp: e.health?.current ?? null,
-        cooldown: e.combatant?.cooldown ?? 0,
-        alerted: e.ai?.alerted ?? false,
-      });
-    }
+    entities.sort((a, b) => a.key.localeCompare(b.key));
     return {
       version: SAVE_SCHEMA_VERSION,
       seed: this.seed,
       rngState: this.rng.getState(),
       tick: this.tickCount,
       entities,
+      streaming: { loadedChunks: this.streamer.loadedChunks },
       domain: this.holder.domain,
       narrative,
       meta: { label, objective },
@@ -191,7 +189,7 @@ export class Simulation {
         if (domain.contracts.active) break;
         const contract = generateContract(domain.contracts, this.rng, domain.reputation.fixers);
         this.holder.domain = { ...domain, contracts: { ...domain.contracts, active: contract } };
-        spawnContractTargets(this.world, this.ids, this.holder.domain, contract);
+        this.streamer.registerContract(this.world, this.holder.domain.flags, domain.contracts.completed, contract);
         ctx.bus.emit("ContractAccepted", { contract });
         break;
       }

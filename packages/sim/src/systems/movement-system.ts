@@ -11,7 +11,9 @@ export const movementSystem: System = {
   run(ctx) {
     const { world } = ctx;
     const enemyDt = ctx.dt * worldTimeScale(ctx);
-    const solids = [...world.with("solid")];
+    // Creation order, not world order: chunks streamed back in are appended to the world, and
+    // push-out against overlapping boxes depends on the order they are visited.
+    const solids = inCreationOrder(world.with("solid"));
     const bodies = inCreationOrder(world.with("body"));
     for (const e of inCreationOrder(world.with("velocity", "body"))) {
       if (e.velocity.x === 0 && e.velocity.z === 0) continue;

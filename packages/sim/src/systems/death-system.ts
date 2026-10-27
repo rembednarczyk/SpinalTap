@@ -1,4 +1,4 @@
-import { contractTag, killedFlag } from "@seki/core";
+import { killedFlag } from "@seki/core";
 import type { Entity } from "../world/components";
 import type { System } from "../world/context";
 import { raiseFlag } from "../world/domain-ops";
@@ -10,8 +10,9 @@ export const deadFlag = (key: string): string => `dead:${key}`;
 const checkContractCleared = (ctx: Parameters<System["run"]>[0]): void => {
   const contract = ctx.state.domain.contracts.active;
   if (contract?.status !== "active") return;
-  const tag = contractTag(contract.id);
-  for (const e of ctx.world.with("health")) if (e.tag === tag) return;
+  // Judged by flags, not by the world: targets asleep in an unloaded chunk are still alive.
+  const flags = ctx.state.domain.flags;
+  for (let i = 0; i < contract.targets; i++) if (!flags.includes(deadFlag(`${contract.id}-g${i}`))) return;
   const cleared = { ...contract, status: "cleared" as const };
   ctx.state.domain = { ...ctx.state.domain, contracts: { ...ctx.state.domain.contracts, active: cleared } };
   ctx.bus.emit("ContractCleared", { contract: cleared });

@@ -69,7 +69,13 @@ describe("migrations", () => {
 
   it("tolerates a v1 save with missing optional sections", () => {
     const m = migrate({ version: 1, seed: 5 });
-    expect(m).toMatchObject({ version: 3, rngState: 5, entities: [], domain: { wallet: { eddies: 0 }, inventory: { medkit: 1 } } });
+    expect(m).toMatchObject({
+      version: SAVE_SCHEMA_VERSION,
+      rngState: 5,
+      entities: [],
+      streaming: { loadedChunks: [] },
+      domain: { wallet: { eddies: 0 }, inventory: { medkit: 1 } },
+    });
   });
 
   it("upgrades an M0 (v2) save with the M1 starter kit", () => {
@@ -80,6 +86,20 @@ describe("migrations", () => {
     expect(loaded.domain.contracts).toEqual({ active: null, completed: 0 });
     expect(loaded.domain.ability).toEqual({ activeTime: 0, cooldown: 0 });
     expect(loaded.domain.flags).toEqual(s.domain.flags);
+  });
+
+  it("upgrades an M1 (v3) save to world streaming with nothing preloaded", () => {
+    const { streaming: _s, ...v3 } = snapshot();
+    const loaded = decodeSave("m1", wrap({ ...v3, version: 3 }));
+    expect(loaded.version).toBe(4);
+    expect(loaded.streaming).toEqual({ loadedChunks: [] });
+    expect(loaded.entities).toEqual(v3.entities);
+    expect(loaded.domain).toEqual(v3.domain);
+  });
+
+  it("keeps the streaming state of a current save through the round trip", () => {
+    const s = snapshot({ streaming: { loadedChunks: ["kanal", "targ-south"] } });
+    expect(decodeSave("s", encodeSave(s)).streaming.loadedChunks).toEqual(["kanal", "targ-south"]);
   });
 
   it("keeps an active contract through the round trip", () => {
@@ -100,6 +120,9 @@ describe("schema validation", () => {
     ["narrative", { narrative: 5 }],
     ["meta", { meta: { label: 1 } }],
     ["entities", { entities: {} }],
+    ["streaming", { streaming: null }],
+    ["streaming", { streaming: { loadedChunks: "kanal" } }],
+    ["streaming", { streaming: { loadedChunks: [3] } }],
   ])("rejects a bad %s", (_name, patch) => {
     expect(findSchemaError({ ...snapshot(), ...patch } as unknown as Record<string, unknown>)).not.toBeNull();
   });
