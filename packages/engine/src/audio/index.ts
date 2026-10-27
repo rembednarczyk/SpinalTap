@@ -4,3 +4,4 @@ export * from "./mixer";
 export * from "./voice-pool";
 export * from "./spatial";
 export * from "./footsteps";
+export * from "./samples";
