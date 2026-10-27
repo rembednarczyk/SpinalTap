@@ -7,6 +7,10 @@ export * from "./replay";
 export * from "./simulation";
 export {
   aimSpreadOf,
+  meleeSystem,
+  startSwing,
+  stagger,
+  NPC_CRIT,
   createSystems,
   CROUCH_SPEED_MULTIPLIER,
   CROUCH_TIME,
@@ -26,10 +30,12 @@ export {
   CIVILIAN_TREE,
   FLEE_RADIUS,
   GANGER_SPEED,
+  MELEE_CHASE_SPEED,
+  MELEE_REST,
   GANGER_TREE,
   HOSTILE_AGGRO_MULTIPLIER,
   effectiveAggroRange,
 } from "./systems/ai";
-export { contractGangerHp, GANGER_MAX_HP, PLAYER_MAX_HP } from "./world/factory";
+export { contractGangerHp, gangerEntity, GANGER_MAX_HP, idleMelee, meleeAttackRange, npcCombatant, PLAYER_MAX_HP } from "./world/factory";
 export { activeWeaponItem, loadedOf, readyToFire, reserveOf } from "./world/player-weapon";
 export type { SessionState, SimContext, System } from "./world/context";

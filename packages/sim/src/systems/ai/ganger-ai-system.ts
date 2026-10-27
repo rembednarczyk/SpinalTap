@@ -1,20 +1,25 @@
 import { BehaviourTree, State } from "mistreevous";
 
 type Agent = ConstructorParameters<typeof BehaviourTree>[1];
-import { factionStance, normalize, sub, type EntityId, type FactionStance } from "@seki/core";
+import { angleTo, factionStance, normalize, strikeAt, sub, type EntityId, type FactionStance } from "@seki/core";
 import type { Entity } from "../../world/components";
 import type { SimContext, System } from "../../world/context";
 import { chestOf, eyeOf, lineOfSight } from "../../world/hitscan";
 import { inCreationOrder } from "../../world/ordering";
 import { followSchedule } from "../../world/schedule";
 import { worldTimeScale } from "../ability-system";
-import { aimSpreadOf, fireShot } from "../combat-system";
+import { NPC_CRIT, aimSpreadOf, fireShot } from "../combat-system";
+import { startSwing } from "../melee-system";
 import { readyToFire } from "../../world/player-weapon";
 import { GANGER_TREE } from "./ganger-tree";
 
 export const GANGER_SPEED = 3.1;
+/** A ganger with a melee weapon runs at whoever it fights to close the distance (ADR-0019). */
+export const MELEE_CHASE_SPEED = 3.9;
+/** Pause after a melee swing's recovery before the next one, plus up to `MELEE_REST_JITTER`. */
+export const MELEE_REST = 0.45;
+const MELEE_REST_JITTER = 0.4;
 const TURN_RATE = 6;
-const GANGER_CRIT = { critChance: 0.05, critMultiplier: 1.5, damageBonus: 0 };
 /** A gang that wants the player dead looks for them harder. */
 export const HOSTILE_AGGRO_MULTIPLIER = 1.5;
 
@@ -75,10 +80,24 @@ class GangerAgent {
     self.velocity = { x: 0, y: 0, z: 0 };
     this.face(target);
     const combatant = self.combatant;
+    if (combatant) combatant.engaged = true;
+    const melee = combatant?.stats?.melee;
+    if (melee && combatant && self.melee) {
+      // Swing once it faces the target well inside the arc; the windup telegraphs the blow.
+      const m = self.melee;
+      const facing = Math.abs(angleTo({ x: self.position.x, z: self.position.z, yaw: self.yaw }, target.position.x, target.position.z));
+      if (m.phase === "idle" && m.stagger === 0 && facing <= melee.arc * 0.5 && readyToFire(combatant, combatant.loaded)) {
+        // Alternate the first two swings of the combo, so the blows read differently.
+        const strike = (m.strike + 1) % Math.min(2, melee.combo.length);
+        startSwing(ctx, self.id, m, melee, strike, melee.npcWindup);
+        combatant.cooldown = melee.npcWindup + strikeAt(melee, strike).recovery + MELEE_REST + ctx.rng.next() * MELEE_REST_JITTER;
+      }
+      return State.SUCCEEDED;
+    }
     if (combatant && readyToFire(combatant, combatant.loaded)) {
       const origin = eyeOf(self);
       const dir = normalize(sub(chestOf(target), origin));
-      fireShot(ctx, { shooter: self, origin, dir, spread: aimSpreadOf(self, null), ...GANGER_CRIT }, ctx.rng);
+      fireShot(ctx, { shooter: self, origin, dir, spread: aimSpreadOf(self, null), ...NPC_CRIT }, ctx.rng);
       // Stagger the next burst so the two gangers do not fire in lockstep.
       combatant.cooldown += ctx.rng.next() * 0.5;
     }
@@ -127,7 +146,8 @@ class GangerAgent {
     const dx = x - self.position.x;
     const dz = z - self.position.z;
     const d = Math.hypot(dx, dz);
-    self.velocity = d < 1e-6 ? { x: 0, y: 0, z: 0 } : { x: (dx / d) * GANGER_SPEED, y: 0, z: (dz / d) * GANGER_SPEED };
+    const speed = self.combatant?.stats?.melee ? MELEE_CHASE_SPEED : GANGER_SPEED;
+    self.velocity = d < 1e-6 ? { x: 0, y: 0, z: 0 } : { x: (dx / d) * speed, y: 0, z: (dz / d) * speed };
   }
 
   private face(target: Entity): void {
@@ -193,6 +213,14 @@ export const createGangerAiSystem = (): System => {
         const victim = g.ai.victim ? (victims.get(g.ai.victim) ?? null) : null;
         brain.agent.target = victim ? perceiveVictim(ctx, g, victim) : NO_VICTIM;
         brain.agent.timeScale = timeScale;
+        if (g.combatant) g.combatant.engaged = false;
+        // Off balance or committed to a swing: it stands where it is and the tree waits.
+        const m = g.melee;
+        if (m && (m.stagger > 0 || m.phase !== "idle")) {
+          g.velocity = { x: 0, y: 0, z: 0 };
+          if (g.combatant) g.combatant.engaged = m.stagger === 0;
+          continue;
+        }
         brain.tree.step();
       }
       for (const id of [...trees.keys()]) if (!alive.has(id)) trees.delete(id);

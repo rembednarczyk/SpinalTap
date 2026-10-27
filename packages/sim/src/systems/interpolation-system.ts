@@ -7,7 +7,10 @@ export const interpolationSystem: System = {
     for (const e of world.with("velocity")) {
       e.prevPosition = e.position;
       e.prevYaw = e.yaw;
-      if (e.posture) e.posture.prevAmount = e.posture.amount;
+      if (e.posture) {
+        e.posture.prevAmount = e.posture.amount;
+        e.posture.prevAim = e.posture.aim;
+      }
     }
   },
 };

@@ -139,16 +139,17 @@ describe("weapon slots (plan E4)", () => {
     expect(sim.player()!.combatant!.holstered).toBe(false);
   });
 
-  it("a melee weapon needs no ammo and reaches only arm's length", () => {
+  it("a melee weapon needs no ammo and swings instead of shooting (ADR-0019)", () => {
     const baton: ItemInstance = { uid: "i4", def: "baton", rarity: "common" };
     const sim = simWith((d) => give({ ...d, ammo: {} }, [baton], { melee: "i4" }));
-    const shots = collect<{ from: { z: number }; to: { z: number } }>(sim, "ShotFired");
+    const shots = collect(sim, "ShotFired");
+    const swings = collect(sim, "MeleeSwing");
     const started = collect(sim, "ReloadStarted");
     sim.step(input({ weaponSlot: 3 }));
     run(sim, ticks(0.6));
     run(sim, ticks(1.3), input({ fire: true, reload: true }));
-    expect(shots.length).toBeGreaterThanOrEqual(2);
-    expect(Math.abs(shots[0]!.to.z - shots[0]!.from.z)).toBeLessThanOrEqual(2.2 + 1e-6);
+    expect(swings.length).toBeGreaterThanOrEqual(2);
+    expect(shots).toHaveLength(0);
     expect(started).toHaveLength(0);
     expect(sim.aimSpread()).toBe(0);
   });

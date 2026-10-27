@@ -12,7 +12,9 @@ import {
   type Vec3,
   addBloom,
   applyDamage,
+  angleTo,
   directionFromAngles,
+  guardOutcome,
   resolveAttack,
   sampleCone,
   spreadAngle,
@@ -24,6 +26,9 @@ import { crouchOf } from "../world/hitboxes";
 import { aimOrigin, chestOf, hitscan, type HitscanResult } from "../world/hitscan";
 import { consumeRound, loadedOf, readyToFire } from "../world/player-weapon";
 import { playerStatsOf } from "./player-control-system";
+
+/** Crit chances of NPC attacks (shots and swings). */
+export const NPC_CRIT = { critChance: 0.05, critMultiplier: 1.5, damageBonus: 0 } as const;
 
 /** An enemy firing this close to the player breaks off a conversation (metres). */
 export const GUNFIRE_INTERRUPT_RADIUS = 8;
@@ -53,7 +58,7 @@ export interface ShotRequest {
  * Armor per zone (ADR-0015): the player's implants and memories everywhere plus the clothes on
  * the zone hit; an enemy's fixed outfit; nothing for anyone else.
  */
-const defenderOf = (ctx: SimContext, target: Entity): DefenderProfile => {
+export const defenderOf = (ctx: SimContext, target: Entity): DefenderProfile => {
   if (target.player) {
     const { inventory, equipment } = ctx.state.domain;
     return defenseOf(playerStatsOf(ctx.state.domain), wornGarments(inventory, equipment));
@@ -62,7 +67,7 @@ const defenderOf = (ctx: SimContext, target: Entity): DefenderProfile => {
 };
 
 /** A hit on the player wears the clothes covering that zone. */
-const wearPlayerClothes = (ctx: SimContext, zone: HitZone): void => {
+export const wearPlayerClothes = (ctx: SimContext, zone: HitZone): void => {
   const domain = ctx.state.domain;
   const inventory = wearGarments(domain.inventory, domain.equipment, zone);
   if (inventory !== domain.inventory) ctx.state.domain = { ...domain, inventory };
@@ -82,6 +87,8 @@ export const aimSpreadOf = (e: Entity, stats: Pick<DerivedStats, "moveSpeed" | "
     sprinting: e.posture?.sprinting ?? false,
     bloom: e.combatant.bloom,
     aimStability: stats?.aimStability ?? 0,
+    aim: e.posture?.aim ?? 0,
+    aimMultiplier: weapon.ads?.spread ?? 1,
   });
 };
 
@@ -97,7 +104,7 @@ const pointSegmentDistance = (p: Vec3, a: Vec3, b: Vec3): number => {
  * Violence near the player: remembered as the last threat (the app waits for calm before a
  * flashback) and, during a conversation or at the shop counter, ends it (ADR-0016).
  */
-const threaten = (ctx: SimContext, reason: DialogueInterruptReason, sourceId: number): void => {
+export const threaten = (ctx: SimContext, reason: DialogueInterruptReason, sourceId: number): void => {
   ctx.session.lastThreat = { tick: ctx.tick, sourceId };
   if (!ctx.session.dialogueActive || ctx.session.gameOver) return;
   ctx.session.dialogueActive = false;
@@ -128,12 +135,15 @@ export const fireShot = (ctx: SimContext, shot: ShotRequest, rng: RandomPort): H
     farthest = result.point;
     const target = result.entity;
     if (!target?.health || !result.zone) continue;
+    // A raised melee guard takes some of a shot coming from the front (ADR-0019).
+    const guard = guardAgainst(target, shot.origin, "projectile");
     const outcome = resolveAttack(
-      { damage: weapon.damage, zones: weapon.zones, critChance: shot.critChance, critMultiplier: shot.critMultiplier, damageBonus: shot.damageBonus },
+      { damage: weapon.damage * guard.multiplier, zones: weapon.zones, critChance: shot.critChance, critMultiplier: shot.critMultiplier, damageBonus: shot.damageBonus * guard.multiplier },
       defenderOf(ctx, target),
       rng,
       result.zone,
     );
+    if (guard.blocked) ctx.bus.emit("AttackBlocked", { attackerId: shot.shooter.id, defenderId: target.id, parried: false, kind: "projectile", at: result.point });
     target.health = applyDamage(target.health, outcome.damage);
     target.lastHitBy = shot.shooter.id;
     if (target.player) {
@@ -166,10 +176,20 @@ export const fireShot = (ctx: SimContext, shot: ShotRequest, rng: RandomPort): H
   return result;
 };
 
-const alertNearbyGangers = (ctx: SimContext, at: { x: number; z: number }, radius: number): void => {
+export const alertNearbyGangers = (ctx: SimContext, at: { x: number; z: number }, radius: number): void => {
   for (const g of ctx.world.with("ai")) {
     if (Math.hypot(g.position.x - at.x, g.position.z - at.z) <= radius) g.ai.alerted = true;
   }
+};
+
+/**
+ * What the target's guard does with an attack from `from`: its melee weapon's block profile,
+ * whether the guard is up and the parry window, against the angle off its facing.
+ */
+export const guardAgainst = (target: Entity, from: Vec3, kind: "melee" | "projectile") => {
+  const block = target.combatant?.stats?.melee?.block ?? null;
+  const m = target.melee;
+  return guardOutcome(block, m?.guard ?? false, m?.parry ?? 0, kind, angleTo({ x: target.position.x, z: target.position.z, yaw: target.yaw }, from.x, from.z));
 };
 
 /** The player's trigger. Timers, holster, slots and reloads are handled by `weapon` just before. */
@@ -178,6 +198,8 @@ export const combatSystem: System = {
   run(ctx) {
     if (ctx.session.dialogueActive || ctx.session.gameOver || !ctx.input.fire) return;
     for (const p of ctx.world.with("player", "combatant")) {
+      // Melee weapons swing in the melee system; nobody fires while staggered.
+      if (p.combatant.stats?.melee || (p.melee?.stagger ?? 0) > 0) continue;
       if (!readyToFire(p.combatant, loadedOf(ctx, p))) continue;
       // A shotgun with a shell in gives way to the trigger mid-reload.
       p.combatant.reloading = 0;
