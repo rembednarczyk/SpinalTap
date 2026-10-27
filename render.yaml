@@ -4,7 +4,7 @@ services:
   - type: web
     runtime: static
     name: seki-senshi
-    branch: ccr-ec2c4269-ilh8k8
+    branch: main
     buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build
     staticPublishPath: packages/app/dist
     pullRequestPreviewsEnabled: false
