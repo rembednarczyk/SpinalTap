@@ -25,7 +25,7 @@ import {
   secondOfDay,
 } from "@seki/core";
 import { type DialogueView, NarrativeRuntime } from "@seki/narrative";
-import { DISTRICTS, DISTRICT_M0_PROPS, type DistrictId, RenderSync, SIM_HZ, Simulation } from "@seki/sim";
+import { DISTRICTS, DISTRICT_M0_PROPS, type DistrictId, type Entity, RenderSync, SIM_HZ, Simulation } from "@seki/sim";
 import { type AbilityVm, type Screen, type SettingsVm, type UiIntents, type UiStore, dismissToast, patchUi, pushToast } from "@seki/ui";
 import { bindEventPresenter } from "./event-presenter";
 import { createJournalCache } from "./journal";
@@ -62,6 +62,16 @@ const toDialogueVm = (v: DialogueView) => ({ lines: v.lines, choices: v.choices,
 
 /** A flashback waits this many ticks (5 s) after the last shot near the player, unless the shooter is down. */
 export const RECALL_CALM_TICKS = 5 * SIM_HZ;
+/** HUD zoom (share of the hip field of view) is rounded to this step, like the spread. */
+const ZOOM_STEP = 0.01;
+
+/** The player's current field of view as a share of the hip one: 1 + (zoom - 1) * aim (ADR-0019). */
+const aimZoomOf = (player: Entity | undefined): number => {
+  const zoom = player?.combatant?.stats?.ads?.zoom ?? 1;
+  const aim = player?.posture?.aim ?? 0;
+  return Math.round((1 + (zoom - 1) * aim) / ZOOM_STEP) * ZOOM_STEP;
+};
+
 /** HUD aim spread is rounded to this many radians, so the store changes only when the cone visibly moves. */
 const SPREAD_STEP = 0.002;
 
@@ -213,6 +223,9 @@ export class GameSession implements UiIntents {
       contractsDone: sim.domain.contracts.completed,
       aimSpread: Math.round(sim.aimSpread() / SPREAD_STEP) * SPREAD_STEP,
       crouched: player?.posture?.crouched ?? false,
+      aiming: player?.posture?.aiming ?? false,
+      aimZoom: aimZoomOf(player),
+      blocking: player?.melee?.guard ?? false,
       journal: this.journal(sim.domain),
       clock: formatClock(sim.clock),
       day: dayOf(sim.clock),

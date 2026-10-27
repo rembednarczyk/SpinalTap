@@ -92,7 +92,9 @@ const session = new GameSession({
 const loop = new FixedStepLoop(browserClock, {
   update: () => {
     const s = ui.getState().settings;
-    session.step(scaleLook(input.poll(), touchDevice ? s.touchSensitivity : s.mouseSensitivity));
+    input.aimMode = s.aimMode;
+    // Zoomed in, the look slows with the field of view (ADR-0019).
+    session.step(scaleLook(input.poll(), (touchDevice ? s.touchSensitivity : s.mouseSensitivity) * renderer.rig.lookScale));
   },
   render: (alpha) => {
     session.render(alpha);

@@ -1,5 +1,5 @@
 import type { InputFrame } from "@seki/core";
-import { DEFAULT_SETTINGS, type GraphicsQuality, type SettingsVm } from "@seki/ui";
+import { type AimMode, DEFAULT_SETTINGS, type GraphicsQuality, type SettingsVm } from "@seki/ui";
 
 export const SETTINGS_KEY = "seki.settings.v1";
 
@@ -10,12 +10,14 @@ const clamp = (v: unknown, min: number, max: number, fallback: number): number =
   typeof v === "number" && Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback;
 
 const isQuality = (v: unknown): v is GraphicsQuality => v === "high" || v === "low";
+const isAimMode = (v: unknown): v is AimMode => v === "hold" || v === "toggle";
 
 /** Fills gaps and clamps ranges, so a hand-edited or old entry never breaks the game. */
 export const sanitizeSettings = (raw: unknown, defaults: SettingsVm = DEFAULT_SETTINGS): SettingsVm => {
   const r = typeof raw === "object" && raw !== null ? (raw as Record<string, unknown>) : {};
   return {
     quality: isQuality(r.quality) ? r.quality : defaults.quality,
+    aimMode: isAimMode(r.aimMode) ? r.aimMode : defaults.aimMode,
     mouseSensitivity: clamp(r.mouseSensitivity, 0.2, 3, defaults.mouseSensitivity),
     touchSensitivity: clamp(r.touchSensitivity, 0.2, 3, defaults.touchSensitivity),
     volume: clamp(r.volume, 0, 1, defaults.volume),

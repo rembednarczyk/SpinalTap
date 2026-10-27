@@ -127,7 +127,7 @@ describe("settings", () => {
   it("round-trips through storage and survives broken or missing storage", () => {
     const st = memoryStorage();
     expect(loadSettings(st)).toEqual(DEFAULT_SETTINGS);
-    const custom = { quality: "low", mouseSensitivity: 2, touchSensitivity: 0.5, volume: 0.3 } as const;
+    const custom = { quality: "low", aimMode: "toggle", mouseSensitivity: 2, touchSensitivity: 0.5, volume: 0.3 } as const;
     expect(saveSettings(st, custom)).toBe(true);
     expect(loadSettings(st)).toEqual(custom);
     st.data.set(SETTINGS_KEY, "{not json");
@@ -147,8 +147,9 @@ describe("settings", () => {
   });
 
   it("clamps and fills bad values", () => {
-    expect(sanitizeSettings({ quality: "ultra", mouseSensitivity: 99, touchSensitivity: "x", volume: -1 })).toEqual({
+    expect(sanitizeSettings({ quality: "ultra", aimMode: "sometimes", mouseSensitivity: 99, touchSensitivity: "x", volume: -1 })).toEqual({
       quality: "high",
+      aimMode: "hold",
       mouseSensitivity: 3,
       touchSensitivity: 1,
       volume: 0,
