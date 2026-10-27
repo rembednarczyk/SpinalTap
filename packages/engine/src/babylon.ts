@@ -27,6 +27,7 @@ export { ParticleSystem } from "@babylonjs/core/Particles/particleSystem";
 export { SceneInstrumentation } from "@babylonjs/core/Instrumentation/sceneInstrumentation";
 export { RenderTargetTexture } from "@babylonjs/core/Materials/Textures/renderTargetTexture";
 export { Texture } from "@babylonjs/core/Materials/Textures/texture";
+export { RawTexture } from "@babylonjs/core/Materials/Textures/rawTexture";
 export type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
 export { Constants } from "@babylonjs/core/Engines/constants";
 export { Camera as CameraClass } from "@babylonjs/core/Cameras/camera";

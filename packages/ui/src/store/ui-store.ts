@@ -214,14 +214,62 @@ export type AimMode = "hold" | "toggle";
 export interface SettingsVm {
   readonly quality: GraphicsQuality;
   readonly aimMode: AimMode;
+  /** Crouch key: held, or pressed once to crouch and again to stand (PC default). */
+  readonly crouchMode: AimMode;
+  /** Sprint key: held (default), or pressed once to run until stopping. */
+  readonly sprintMode: AimMode;
   /** Look speed multiplier, 1 = default. */
   readonly mouseSensitivity: number;
+  /** Extra look speed multiplier while aiming down sights (on top of the zoom's own slowdown). */
+  readonly adsSensitivity: number;
+  /** Mouse up looks down. */
+  readonly invertY: boolean;
   readonly touchSensitivity: number;
+  /** Vertical field of view in degrees from the hip. */
+  readonly fov: number;
   /** Master volume 0..1. */
   readonly volume: number;
+  /** Key bindings that differ from the defaults: action id -> codes. */
+  readonly bindings: Readonly<Record<string, readonly string[]>>;
+  /** First-run hints (controls, interactions) shown while playing. */
+  readonly hints: boolean;
 }
 
-export const DEFAULT_SETTINGS: SettingsVm = { quality: "high", aimMode: "hold", mouseSensitivity: 1, touchSensitivity: 1, volume: 0.6 };
+/** Vertical field of view of the camera by default, degrees (shown rounded; it is 1.08 rad). */
+export const DEFAULT_FOV = 62;
+
+/** The settings' field of view in radians; the default is exactly the camera's 1.08 rad, so the NPR reference frame never moves. */
+export const fovRadians = (degrees: number): number => (degrees === DEFAULT_FOV ? 1.08 : (degrees * Math.PI) / 180);
+
+export const DEFAULT_SETTINGS: SettingsVm = {
+  quality: "high",
+  aimMode: "hold",
+  crouchMode: "toggle",
+  sprintMode: "hold",
+  mouseSensitivity: 1,
+  adsSensitivity: 1,
+  invertY: false,
+  touchSensitivity: 1,
+  fov: DEFAULT_FOV,
+  volume: 0.6,
+  bindings: {},
+  hints: true,
+};
+
+/** A first-run hint: the keys (as labels) and the action, e.g. ["W", "A", "S", "D"] "ruch". */
+export interface HintVm {
+  readonly id: string;
+  readonly keys: readonly string[];
+  readonly text: string;
+}
+
+/** One remappable control, as the settings list shows it (the app fills the list from the engine's key map). */
+export interface ControlBindingVm {
+  readonly action: string;
+  readonly label: string;
+  /** Current codes (defaults or the player's), e.g. "KeyW", "Mouse0", "WheelDown". */
+  readonly codes: readonly string[];
+}
 
 export interface UiState {
   readonly screen: Screen;
@@ -298,6 +346,10 @@ export interface UiState {
   readonly mapPlayer: MapPlayerVm | null;
   readonly mapMarkers: readonly MapMarkerVm[];
   readonly settings: SettingsVm;
+  /** Remappable controls with their current keys, for the settings and the help screen. */
+  readonly controls: readonly ControlBindingVm[];
+  /** First-run hint on screen: keys to press and what they do (null when none). */
+  readonly hint: HintVm | null;
   /** True when a saved setting only takes effect after the page is reloaded. */
   readonly reloadNeeded: boolean;
   /** Game time as "HH:MM"; null before a game runs. */
@@ -358,6 +410,8 @@ export const initialUiState: UiState = {
   mapPlayer: null,
   mapMarkers: [],
   settings: DEFAULT_SETTINGS,
+  controls: [],
+  hint: null,
   reloadNeeded: false,
   clock: null,
   day: 1,

@@ -29,5 +29,16 @@ const files = Object.fromEntries(
     .filter((f) => !f.endsWith(".css"))
     .map((f) => [`assets/${f}`, `${dist}/assets/${f}`]),
 );
+// Recorded sounds go along. The artifact host serves no 3D model types (.glb, .vrm), so the city
+// kit, the VRoid cast and the weapon models stay out: there the game falls back to the plain
+// blocks, the procedural cast and the box guns. A full build needs a regular static host.
+const MEDIA = { ".ogg": "audio/ogg" };
+for (const dir of ["audio"]) {
+  for (const f of readdirSync(`${dist}/${dir}`)) {
+    const ext = f.slice(f.lastIndexOf("."));
+    const contentType = MEDIA[ext];
+    if (contentType) files[`${dir}/${f}`] = { from: `${dist}/${dir}/${f}`, contentType };
+  }
+}
 writeFileSync("artifact/files.json", JSON.stringify(files));
 console.log(`artifact/index.html + ${Object.keys(files).length} asset files`);

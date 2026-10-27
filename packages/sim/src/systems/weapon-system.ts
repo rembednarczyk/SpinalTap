@@ -85,6 +85,22 @@ const selectSlot = (ctx: SimContext, p: Armed, index: number): void => {
   ctx.bus.emit("WeaponSwitched", { entityId: p.id, slot, weapon: stats.id });
 };
 
+/**
+ * The slot input `step` places away from the active one, wrapping round and skipping empty
+ * slots (mouse wheel). 0 when no other slot holds a weapon.
+ */
+const cycledSlot = (ctx: SimContext, step: 1 | -1): 0 | 1 | 2 | 3 => {
+  const domain = ctx.state.domain;
+  const order = [1, 2, 3] as const;
+  const current = order.findIndex((i) => SLOT_BY_INPUT[i] === domain.equipment.active);
+  for (let k = 1; k < order.length; k++) {
+    const i = order[(current + step * k + order.length * 2) % order.length] ?? 1;
+    const slot = SLOT_BY_INPUT[i];
+    if (slot && activeWeaponItem(domain, slot)) return i;
+  }
+  return 0;
+};
+
 const handlePlayer = (ctx: SimContext, p: Armed): void => {
   const c = p.combatant;
   const { input, session } = ctx;
@@ -94,6 +110,10 @@ const handlePlayer = (ctx: SimContext, p: Armed): void => {
     return;
   }
   if (input.weaponSlot !== 0) selectSlot(ctx, p, input.weaponSlot);
+  else if (input.weaponCycle !== 0) {
+    const next = cycledSlot(ctx, input.weaponCycle);
+    if (next !== 0) selectSlot(ctx, p, next);
+  }
   if (input.toggleWeapon || (c.holstered && input.fire)) toggleHolster(ctx, p);
   if (p.posture?.sprinting) cancelReload(p);
   else if (input.reload) startReload(ctx, p);

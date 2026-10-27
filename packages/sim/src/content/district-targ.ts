@@ -1,5 +1,5 @@
 import { SeededRandom } from "../rng/seeded-random";
-import type { ContractSiteId, LootLine, Vec3 } from "@seki/core";
+import type { BlockStyle, ContractSiteId, BlockFront, LootLine, Vec3 } from "@seki/core";
 import {
   type ActorDef,
   type BlockMaterial,
@@ -14,6 +14,7 @@ import {
   liftParts,
   neon,
   rail,
+  skin,
   slab,
   stairRail,
   stairs,
@@ -37,7 +38,14 @@ const CONTENT_SEED = 0x7a26;
 const pick = <T>(rng: SeededRandom, items: readonly [T, ...T[]]): T => items[Math.floor(rng.next() * items.length)] ?? items[0];
 const between = (rng: SeededRandom, lo: number, hi: number): number => Math.round((lo + rng.next() * (hi - lo)) * 10) / 10;
 
-/** Buildings side by side along X, covering [x0, x1] exactly. */
+/** Look of a row building (ADR-0022), from what the generator already picked: no extra draws. */
+const styleOf = (material: BlockMaterial, height: number): BlockStyle =>
+  material === "glass" ? (height >= 14 ? "tower" : "shop") : material === "metal" || height >= 15 ? "tenement" : "shop";
+
+/**
+ * Buildings side by side along X, covering [x0, x1] exactly. `front` is the side facing the
+ * street and `street` the distance to the facades across it (ADR-0022).
+ */
 const facadeRow = (
   rng: SeededRandom,
   x0: number,
@@ -45,7 +53,9 @@ const facadeRow = (
   z: number,
   depth: number,
   heights: readonly [number, number],
-  widths: readonly [number, number] = [12, 18],
+  widths: readonly [number, number],
+  front: BlockFront,
+  street?: number,
 ): StaticProp[] => {
   const out: StaticProp[] = [];
   let x = x0;
@@ -54,7 +64,8 @@ const facadeRow = (
     // Never leave a sliver narrower than the minimum width at the end of the row.
     if (x1 - x - w < widths[0]) w = x1 - x;
     const material: BlockMaterial = pick(rng, ["concrete", "concrete", "glass", "metal"]);
-    out.push(building(x + w / 2, z, w, between(rng, heights[0], heights[1]), depth, material));
+    const h = between(rng, heights[0], heights[1]);
+    out.push(building(x + w / 2, z, w, h, depth, material, skin(styleOf(material, h), front, street === undefined ? {} : { street })));
     x += w;
   }
   return out;
@@ -80,10 +91,10 @@ const withPassage = (row: readonly StaticProp[], x0: number, x1: number): Static
     const right = p.center.x + p.view.size.x / 2;
     if (right <= x0 || left >= x1) return [p];
     const { y: h, z: d } = p.view.size;
-    const material = p.view.material;
+    const { material, skin: look } = p.view;
     const parts: StaticProp[] = [];
-    if (x0 - left > 0.01) parts.push(building((left + x0) / 2, p.center.z, x0 - left, h, d, material));
-    if (right - x1 > 0.01) parts.push(building((x1 + right) / 2, p.center.z, right - x1, h, d, material));
+    if (x0 - left > 0.01) parts.push(building((left + x0) / 2, p.center.z, x0 - left, h, d, material, look));
+    if (right - x1 > 0.01) parts.push(building((x1 + right) / 2, p.center.z, right - x1, h, d, material, look));
     return parts;
   });
 
@@ -143,19 +154,20 @@ export const KANAL_PROPS: readonly StaticProp[] = [
   slab(72, -0.12, 78, v(12, 0.2, 12), "asphalt"),
   slab(35, 0.04, 81.2, v(62, 0.08, 1.6), "concrete"),
   // West of segment A, closing the bend.
-  building(-2, 71, 12, 18, 38),
+  building(-2, 71, 12, 18, 38, "concrete", skin("tenement", "x+", { street: 6 })),
   // South of segment B: one long block that hides Shinsekai from the eastern half of the street.
-  ...facadeRow(rng, 10, 66, 63, 22, [12, 20], [16, 20]),
+  ...facadeRow(rng, 10, 66, 63, 22, [12, 20], [16, 20], "z+", 8),
   // North of segment B, with the passage into the docks (ADR-0024).
-  ...withPassage(facadeRow(rng, 4, 66, 86, 8, [10, 22], [13, 17]), DOKI_PASSAGE.x0, DOKI_PASSAGE.x1),
+  ...withPassage(facadeRow(rng, 4, 66, 86, 8, [10, 22], [13, 17], "z-", 8), DOKI_PASSAGE.x0, DOKI_PASSAGE.x1),
   slab((DOKI_PASSAGE.x0 + DOKI_PASSAGE.x1) / 2, 0.03, 86, v(DOKI_PASSAGE.x1 - DOKI_PASSAGE.x0, 0.06, 8), "concrete"),
   neon((DOKI_PASSAGE.x0 + DOKI_PASSAGE.x1) / 2, 6.4, 81.9, v(4.4, 1.2, 0.15), "#39d0ff", "DOKI"),
   // Kiosk just inside the market gate: the street's view ends on it, not on the market behind.
   building(74, 78, 6, 3.2, 10, "metal"),
   // Clutter.
-  crate(8.7, 58, 1.4, 1.3, 2.6),
+  crate(8.7, 58, 1.4, 1.3, 2.6, skin("dumpster", "x-")),
   crate(5.2, 70, 0.9, 1.1, 0.9),
-  crate(30, 76.4, 6, 2.6, 2.2),
+  // A box truck parked on the south kerb.
+  crate(30, 76.4, 6, 2.6, 2.2, skin("van", "x+")),
   neon(9.9, 6, 62, v(0.15, 4.5, 1.4), "#ffb000", "SAKE"),
   neon(13, 5.2, 81.9, v(7, 1.3, 0.15), "#ff2e88", "KARAOKE"),
   neon(44, 7, 81.9, v(5, 1.4, 0.15), "#00e5ff", "DENKI"),
@@ -182,7 +194,7 @@ const southStalls = (): StaticProp[] => {
 };
 
 // Evaluated here, in the order the table used to: the generator's sequence stays the same.
-const SOUTH_ROW = facadeRow(rng, 68, 114, 61, 6, [8, 16], [10, 16]);
+const SOUTH_ROW = facadeRow(rng, 68, 114, 61, 6, [8, 16], [10, 16], "z+");
 
 /** The south row's facade at `x`: its extent along X and its roof height. */
 const southBlock = (x: number): { x0: number; x1: number; top: number } => {
@@ -256,8 +268,8 @@ export const TARG_SOUTH_PROPS: readonly StaticProp[] = [
   building(96, 57, 60, 6, 2, "metal"),
   building(125, 70, 2, 8, 28, "metal"),
   ...SOUTH_ROW,
-  ...facadeRow(rng, 114, 124, 64, 12, [12, 20], [10, 10]),
-  ...facadeRow(rng, 114, 124, 77, 14, [12, 20], [10, 10]),
+  ...facadeRow(rng, 114, 124, 64, 12, [12, 20], [10, 10], "x-"),
+  ...facadeRow(rng, 114, 124, 77, 14, [12, 20], [10, 10], "x-"),
   ...southStalls(),
   // Hana's handcart, just east of where she stands.
   crate(HANA_SPOT.x + 1.3, HANA_SPOT.z, 0.9, 1.0, 1.8),
@@ -354,7 +366,7 @@ export const TARG_NORTH_PROPS: readonly StaticProp[] = [
   // Hebi stash in the east corner under the highway: cover in front of the crate.
   crate(119.8, 92, 1.0, 1.1, 2.4),
   crate(122.5, 96.6, 1.6, 1.4, 1.4),
-  ...facadeRow(rng, 68, 124, 110, 8, [10, 18]),
+  ...facadeRow(rng, 68, 124, 110, 8, [10, 18], [12, 18], "z-"),
   lamp(116, 99, "#ffcf8a"),
 ];
 

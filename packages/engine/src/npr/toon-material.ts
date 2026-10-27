@@ -27,6 +27,7 @@ const UNIFORMS = [
   "pointPos",
   "pointColor",
   "pointCount",
+  "selfLit",
 ];
 
 const hex = (h: string): Color3 => Color3.FromHexString(h);
@@ -102,6 +103,18 @@ export class ToonMaterials {
         m.zOffset = -options.layer;
         m.zOffsetUnits = -4 * options.layer;
       }
+      return m;
+    });
+  }
+
+  /**
+   * The city kit's material (ADR-0022): colour from the swatch palette, whose alpha marks
+   * tinted walls (vertex colour) and self-lit swatches (windows, neon). One per palette.
+   */
+  forCityKit(palette: BaseTexture): ShaderMaterial {
+    return this.cached(`city:${palette.uniqueId}`, () => {
+      const m = this.create("cityKit", PRESETS.cityKit, palette as Texture, null, false, ["CITYKIT"]);
+      m.setFloat("selfLit", 1);
       return m;
     });
   }
@@ -189,7 +202,7 @@ export class ToonMaterials {
     for (const m of this.materials.values()) this.applyRig(m);
   }
 
-  private create(name: string, p: ToonPreset, texture: Texture | null = null, alpha: "ALPHATEST" | "ALPHABLEND" | null = null, tint = false): ShaderMaterial {
+  private create(name: string, p: ToonPreset, texture: Texture | null = null, alpha: "ALPHATEST" | "ALPHABLEND" | null = null, tint = false, extra: readonly string[] = []): ShaderMaterial {
     const m = new ShaderMaterial(
       `toon-${name}`,
       this.scene,
@@ -198,7 +211,7 @@ export class ToonMaterials {
         attributes: texture ? ["position", "normal", "uv"] : ["position", "normal"],
         uniforms: [...UNIFORMS],
         samplers: [...SAMPLERS],
-        defines: texture ? ["UV1", "TEXTURE", ...(alpha ? [alpha] : []), ...(tint ? ["TINT"] : [])] : [],
+        defines: texture ? ["UV1", "TEXTURE", ...(alpha ? [alpha] : []), ...(tint ? ["TINT"] : []), ...extra] : [...extra],
         needAlphaBlending: alpha === "ALPHABLEND",
       },
     );

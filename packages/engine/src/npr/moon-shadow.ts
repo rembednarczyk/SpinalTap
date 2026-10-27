@@ -110,6 +110,11 @@ export class MoonShadow {
     });
   }
 
+  /** A static caster changed shape: the merged proxy is rebuilt on the next update. */
+  invalidateStatics(): void {
+    this.staticDirty = true;
+  }
+
   /**
    * Recentres the shadow on the focus point. Returns the light matrix when it changed (the
    * caller pushes it to the receiving materials), otherwise null.

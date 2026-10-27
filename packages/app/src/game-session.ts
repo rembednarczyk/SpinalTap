@@ -43,6 +43,8 @@ import {
   patchUi,
   pushToast,
 } from "@seki/ui";
+import { bindKey, controlsVm, keymapFor } from "./controls";
+import { type HintDef, HintTracker } from "./hints";
 import { type PreviewHost, createAppearanceCache, createStatsCache } from "./character-view";
 import { bindEventPresenter } from "./event-presenter";
 import { createJournalCache } from "./journal";
@@ -68,6 +70,15 @@ export interface GameSessionDeps {
   readonly settings?: SettingsHost;
   /** 3D preview of the character menu (the engine's PreviewStage in the browser). */
   readonly preview?: PreviewHost;
+  /** First-run hints already seen, and where to keep them (localStorage in the browser). */
+  readonly hints?: HintsHost;
+  /** Touch controls on screen: hints use touch words instead of keys. */
+  readonly touch?: boolean;
+}
+
+export interface HintsHost {
+  readonly seen: readonly string[];
+  save(seen: readonly string[]): void;
 }
 
 export interface SettingsHost {
@@ -130,6 +141,10 @@ export class GameSession implements UiIntents {
   private readonly appliedSettings: SettingsVm;
   /** Last district the player was seen in; a change raises a toast. */
   private district: DistrictId | null = null;
+  private readonly hints: HintTracker;
+  /** Hint shown last, so the store changes only when it does. */
+  private hintShown: HintDef | null = null;
+  private lastPlayerPos: { x: number; z: number } | null = null;
   /** Who the player is talking to (from InteractionStarted), for the mouth movement. */
   private talkTarget: EntityId | null = null;
   /** Daylight level last sent to the renderer; null after the views were cleared. */
@@ -139,6 +154,10 @@ export class GameSession implements UiIntents {
     this.narrative = new NarrativeRuntime(deps.story, (cmd) => this.simulation.enqueue(cmd));
     this.renderSync = new RenderSync(deps.render);
     this.simulation = Simulation.create({ seed: deps.seed(), bus: this.bus });
+    this.hints = new HintTracker(new Set(deps.hints?.seen ?? []), (seen) => deps.hints?.save(seen), () => this.simulation.player()?.id ?? null);
+    for (const type of ["InteractionFocusChanged", "InteractionStarted", "ContractAccepted", "ShotFired", "LootDropped", "LootTaken", "WeaponSwitched", "QuestAdvanced"] as const) {
+      this.bus.on(type, (e) => this.hints.onEvent(type, e));
+    }
     // Before the presenter, which opens the conversation on the same event.
     this.bus.on("InteractionStarted", (e) => {
       if (e.kind === "dialogue" || e.kind === "shop") this.talkTarget = e.targetId;
@@ -154,7 +173,7 @@ export class GameSession implements UiIntents {
     // The whole city, so the map keeps working past Shinsekai (the market deck, the footbridge, ADR-0021).
     patchUi(deps.ui, { map: buildDistrictMap(WORLD_CHUNKS.flatMap((c) => c.props)) });
     this.appliedSettings = deps.settings?.applied ?? deps.ui.getState().settings;
-    patchUi(deps.ui, { settings: this.appliedSettings, reloadNeeded: false });
+    patchUi(deps.ui, { settings: this.appliedSettings, controls: controlsVm(this.appliedSettings.bindings), reloadNeeded: false });
     void this.refreshSlots();
   }
 
@@ -188,6 +207,30 @@ export class GameSession implements UiIntents {
     if (!this.running) return;
     this.simulation.step(this.inControl ? input : EMPTY_INPUT);
     this.playPendingRecall();
+    this.stepHints();
+  }
+
+  /** First-run hints follow play; the store hears only about changes. */
+  private stepHints(): void {
+    const player = this.simulation.player();
+    const p = player?.position ?? null;
+    const last = this.lastPlayerPos;
+    const moved = p && last ? Math.hypot(p.x - last.x, p.z - last.z) : 0;
+    this.lastPlayerPos = p ? { x: p.x, z: p.z } : null;
+    this.hints.tick({ dt: 1 / SIM_HZ, inControl: this.inControl, moved: moved < 2 ? moved : 0, sprinting: player?.posture?.sprinting ?? false, characterOpen: this.characterOpen });
+    const settings = this.deps.ui.getState().settings;
+    const hint = settings.hints && this.inControl ? this.hints.active : null;
+    if (hint === this.hintShown) return;
+    this.hintShown = hint;
+    patchUi(this.deps.ui, { hint: hint ? this.hintVm(hint, settings.bindings) : null });
+  }
+
+  /** Keys of a hint through the player's bindings (first key of each control). */
+  private hintVm(h: HintDef, bindings: SettingsVm["bindings"]) {
+    if (this.deps.touch) return { id: h.id, keys: [], text: h.touchText ?? h.text };
+    const map = keymapFor(bindings);
+    const keys = h.keys.map((k) => (k.startsWith("code:") ? k.slice(5) : (map[k as keyof typeof map]?.[0] ?? ""))).filter(Boolean);
+    return { id: h.id, keys, text: h.text };
   }
 
   /**
@@ -306,6 +349,7 @@ export class GameSession implements UiIntents {
   newGame(): void {
     this.replaceSimulation(Simulation.create({ seed: this.deps.seed(), bus: this.bus }));
     this.narrative.resetState();
+    this.hints.start();
     this.setScreen("playing");
     pushToastTimed(this.deps.ui, "system", "Shinsekai, kwartał 7", "Budzisz się obok wraku. Nie pamiętasz swojego imienia.");
   }
@@ -460,8 +504,16 @@ export class GameSession implements UiIntents {
   changeSettings(patch: Partial<SettingsVm>): void {
     const current = this.deps.ui.getState().settings;
     const next = sanitizeSettings({ ...current, ...patch }, current);
-    patchUi(this.deps.ui, { settings: next, reloadNeeded: needsReload(this.appliedSettings, next) });
+    patchUi(this.deps.ui, { settings: next, controls: controlsVm(next.bindings), reloadNeeded: needsReload(this.appliedSettings, next) });
     this.deps.settings?.save(next);
+  }
+
+  bindKey(action: string, code: string): void {
+    this.changeSettings({ bindings: bindKey(this.deps.ui.getState().settings.bindings, action, code) });
+  }
+
+  resetControls(): void {
+    this.changeSettings({ bindings: {} });
   }
 
   reload(): void {

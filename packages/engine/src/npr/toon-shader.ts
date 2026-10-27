@@ -94,6 +94,8 @@ uniform sampler2D shadowSampler;
 uniform vec3 shadowParams;
 /** Muzzle flash: xyz position, w intensity (0 = off). Warm, short range, no shadow. */
 uniform vec4 flashLight;
+/** City kit: brightness of self-lit swatches (1 at night, dimmer by day). */
+uniform float selfLit;
 
 float band(float x) {
   return smoothstep(0.03, 0.07, x) * 0.55 + smoothstep(0.42, 0.47, x) * 0.45;
@@ -145,8 +147,18 @@ void main(void) {
   albedo *= texel.rgb;
 #endif
 #endif
+#ifdef CITYKIT
+  // City kit palette (ADR-0022): alpha 0.5 marks walls and paint tinted per building by the
+  // vertex colour, alpha 0 self-lit windows and neon.
+  float tinted = step(0.3, texel.a) * (1.0 - step(0.75, texel.a));
+  float selfLitMask = 1.0 - step(0.25, texel.a);
+#ifdef VERTEXCOLOR
+  albedo *= mix(vec3(1.0), vColor.rgb, tinted);
+#endif
+#else
 #ifdef VERTEXCOLOR
   albedo *= vColor.rgb;
+#endif
 #endif
 
   float moon = band(max(dot(n, normalize(sunDir)), 0.0)) * moonShadow();
@@ -201,8 +213,15 @@ void main(void) {
     color = mix(color, winColor * 0.85, inWin * step(0.62, h));
   }
 
+#ifdef CITYKIT
+  // Lit windows and neon keep their colour and carry a little further through the haze.
+  color = mix(color, texel.rgb * selfLit, selfLitMask);
+#endif
   float dist = length(cameraPosition - vWorldPos);
   float fog = 1.0 - exp(-pow(dist * fogDensity, 2.0));
+#ifdef CITYKIT
+  fog *= 1.0 - 0.35 * selfLitMask;
+#endif
   color = mix(color, fogColor, clamp(fog, 0.0, 1.0));
 #if defined(ALPHABLEND) && defined(TEXTURE)
   gl_FragColor = vec4(color, texel.a);

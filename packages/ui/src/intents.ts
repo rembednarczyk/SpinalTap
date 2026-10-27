@@ -37,6 +37,10 @@ export interface UiIntents {
   talkToShopkeeper(): void;
   /** Saves the changed settings; look sensitivity applies at once. */
   changeSettings(patch: Partial<SettingsVm>): void;
+  /** Binds a key (KeyboardEvent.code, "MouseN", "WheelUp"/"WheelDown") to a control, taking it off any other. */
+  bindKey(action: string, code: string): void;
+  /** Every control back to its default keys. */
+  resetControls(): void;
   /** Reloads the game so settings that need a restart take effect. */
   reload(): void;
   /** Takes one line of the open bag, or everything that fits. */

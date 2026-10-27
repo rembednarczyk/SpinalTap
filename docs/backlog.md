@@ -84,7 +84,7 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
   optyka jako świecące paski przy kącikach oczu, cyberramię jako miedziane pierścienie na prawym
   przedramieniu, na modelu i na rigu.
 
-- **Budynki i dekoracje z assetów, dostrojone do cyberpunku.** Zamiast gołych brył: fasady, sklepy,
+- **[gotowe] Budynki i dekoracje z assetów, dostrojone do cyberpunku.** (ADR-0022, `packages/app/public/city`) Zamiast gołych brył: fasady, sklepy,
   bary i wieżowce z paczek CC0 z przeglądu (`docs/assets-research.md`): Neon Town (neony, bar,
   sklepy), Kenney City Kit Commercial (budynki, wieżowce w tle) i Roads (chodniki, latarnie,
   kontenery, kable), Car Kit (zaparkowane auta). Inne stylistyki przemalowane na noc, teal i
@@ -92,8 +92,17 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
   bryłami w sim; budżety draw calli i migawka NPR pilnują wydajności i looku.
 - **[gotowe] Przeskok na krawędź (mantle).** Skok przy murku do ok. 2,5 m kończy się podciągnięciem
   na jego wierzch w pół sekundy (dopisek w ADR-0021); bez strzału i skoku w trakcie.
+- **[gotowe] Sterowanie PC według standardu i pierwsze uruchomienie.** Kółko myszy zmienia broń,
+  F jako druga interakcja, P pauzuje, kucanie domyślnie przełączane, sprint i celowanie do wyboru
+  (przytrzymaj albo przełącz), surowe wejście myszy, czułość przy celowaniu, odwrócona oś Y,
+  pole widzenia 50–80°, zmiana klawiszy w ustawieniach (bez kolizji, klawisze menu zastrzeżone).
+  Podpowiedzi przy pierwszej grze: ruch, sprint i skok, rozmowa, walka, torba, ekwipunek,
+  dziennik; jedna naraz, z klawiszy gracza, zapamiętane, do wyłączenia; słowa dotykowe na telefonie.
 
 ## Później
+
+- Witryna obok Neon Koi w scenie referencyjnej to duża płaska bursztynowa plama: dodać
+  podział szyby, wnętrze albo szyld.
 
 - Wygląd ekwipunku, dalej: hełm i kamizelka jako modele GLB zamiast brył, przebarwienie na rigu
   proceduralnym, wszczepy szkieletu i układu nerwowego (dziś widać tylko optykę i ramię).

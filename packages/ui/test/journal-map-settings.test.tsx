@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { GameUi, type JournalVm, type MapVm, type UiIntents, type UiState, createUiStore, patchUi } from "../src";
+import { DEFAULT_SETTINGS, GameUi, type JournalVm, type MapVm, type UiIntents, type UiState, createUiStore, patchUi } from "../src";
 import { MINIMAP_RANGE, markerOffset } from "../src/hud/minimap";
 
 /** Every intent is a spy, including ones added later. */
@@ -170,23 +170,52 @@ describe("settings", () => {
   };
 
   it("shows the current values and sends changes as intents", () => {
-    const { i } = openSettings({ settings: { quality: "high", aimMode: "hold", mouseSensitivity: 1.5, touchSensitivity: 0.8, volume: 0.4 } });
+    const { i } = openSettings({ settings: { ...DEFAULT_SETTINGS, quality: "high", aimMode: "hold", mouseSensitivity: 1.5, touchSensitivity: 0.8, volume: 0.4 } });
+    // General: graphics, sound, hints, touch.
     expect(screen.getByRole("radio", { name: "Wysoka" }).getAttribute("aria-checked")).toBe("true");
-    expect(screen.getByLabelText(/Czułość myszy/)).toHaveProperty("value", "1.5");
     expect(screen.getByTestId("settings").textContent).toContain("40%");
     expect(screen.getByTestId("settings").textContent).toContain("0,8×");
     fireEvent.click(screen.getByRole("radio", { name: "Niska" }));
     expect(i.changeSettings).toHaveBeenCalledWith({ quality: "low" });
-    expect(screen.getByRole("radio", { name: "Przytrzymaj" }).getAttribute("aria-checked")).toBe("true");
-    fireEvent.click(screen.getByRole("radio", { name: "Przełącz" }));
-    expect(i.changeSettings).toHaveBeenCalledWith({ aimMode: "toggle" });
-    fireEvent.change(screen.getByLabelText(/Czułość myszy/), { target: { value: "2" } });
-    expect(i.changeSettings).toHaveBeenCalledWith({ mouseSensitivity: 2 });
     fireEvent.change(screen.getByLabelText(/Czułość dotyku/), { target: { value: "1.2" } });
     expect(i.changeSettings).toHaveBeenCalledWith({ touchSensitivity: 1.2 });
     fireEvent.change(screen.getByLabelText(/Głośność/), { target: { value: "0.25" } });
     expect(i.changeSettings).toHaveBeenCalledWith({ volume: 0.25 });
+    // Mouse and camera.
+    fireEvent.click(screen.getByRole("tab", { name: "Mysz i kamera" }));
+    expect(screen.getByLabelText(/Czułość myszy/)).toHaveProperty("value", "1.5");
+    fireEvent.change(screen.getByLabelText(/Czułość myszy/), { target: { value: "2" } });
+    expect(i.changeSettings).toHaveBeenCalledWith({ mouseSensitivity: 2 });
+    const aim = screen.getByRole("radiogroup", { name: "Celowanie (PPM)" });
+    fireEvent.click(within(aim).getByRole("radio", { name: "Przełącz" }));
+    expect(i.changeSettings).toHaveBeenCalledWith({ aimMode: "toggle" });
+    fireEvent.click(within(screen.getByRole("radiogroup", { name: "Kucanie" })).getByRole("radio", { name: "Przytrzymaj" }));
+    expect(i.changeSettings).toHaveBeenCalledWith({ crouchMode: "hold" });
+    fireEvent.click(within(screen.getByRole("radiogroup", { name: "Odwróć oś Y" })).getByRole("radio", { name: "Tak" }));
+    expect(i.changeSettings).toHaveBeenCalledWith({ invertY: true });
+    fireEvent.change(screen.getByLabelText(/Pole widzenia/), { target: { value: "70" } });
+    expect(i.changeSettings).toHaveBeenCalledWith({ fov: 70 });
     expect(screen.queryByTestId("settings-reload")).toBeNull();
+  });
+
+  it("rebinds a key by pressing it, refuses menu keys and resets to defaults", () => {
+    const controls = [
+      { action: "jump", label: "Skok", codes: ["Space"] },
+      { action: "fire", label: "Strzał / cios", codes: ["Mouse0"] },
+    ];
+    const { i } = openSettings({ controls });
+    fireEvent.click(screen.getByRole("tab", { name: "Klawisze" }));
+    expect(screen.getByTestId("key-bindings").textContent).toContain("Spacja");
+    expect(screen.getByTestId("key-bindings").textContent).toContain("LPM");
+    fireEvent.click(screen.getByRole("button", { name: "Zmień klawisz: Skok" }));
+    expect(screen.getByTestId("key-bindings").textContent).toContain("Naciśnij klawisz");
+    fireEvent.keyDown(window, { code: "KeyP" });
+    expect(i.bindKey).not.toHaveBeenCalled();
+    expect(screen.getByTestId("key-bindings").textContent).toContain("zajęty przez menu");
+    fireEvent.keyDown(window, { code: "KeyG" });
+    expect(i.bindKey).toHaveBeenCalledWith("jump", "KeyG");
+    fireEvent.click(screen.getByText("Przywróć domyślne klawisze"));
+    expect(i.resetControls).toHaveBeenCalled();
   });
 
   it("offers a reload when a change needs one, and goes back to the menu", () => {

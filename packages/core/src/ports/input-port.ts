@@ -33,7 +33,11 @@ export interface InputFrame {
   readonly reload: boolean;
   /** Edge-triggered weapon slot choice: 1 primary, 2 secondary, 3 melee, 0 no change. */
   readonly weaponSlot: WeaponSlotInput;
+  /** Edge-triggered: next (1) or previous (-1) weapon slot that holds a weapon, 0 none (mouse wheel). */
+  readonly weaponCycle: WeaponCycleInput;
 }
+
+export type WeaponCycleInput = -1 | 0 | 1;
 
 export type WeaponSlotInput = 0 | 1 | 2 | 3;
 
@@ -54,6 +58,7 @@ export const EMPTY_INPUT: InputFrame = Object.freeze({
   toggleWeapon: false,
   reload: false,
   weaponSlot: 0,
+  weaponCycle: 0,
 });
 
 export interface InputPort {
