@@ -5,3 +5,4 @@ export * from "./ordering";
 export * from "./streaming";
 export * from "./hitboxes";
 export * from "./schedule";
+export * from "./knockback";

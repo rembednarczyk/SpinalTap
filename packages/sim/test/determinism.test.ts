@@ -87,7 +87,7 @@ describe("determinism", () => {
     // Swings both ways, a blocked blow and staggers: the duel exercises the whole package.
     for (const t of ["MeleeSwing", "AttackBlocked", "Staggered", "DamageDealt"]) expect(seen).toContain(t);
     expect(hashOf(sim)).toBe(hashOf(duel().sim));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"e530d837"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"4ddb6f18"`);
   });
 
   it("restores killed NPCs as absent", () => {

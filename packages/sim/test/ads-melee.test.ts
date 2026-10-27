@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BASE_STATS, type DomainState, type ItemInstance, PARRY_COOLDOWN, WEAPON_CATALOG } from "@seki/core";
-import { MELEE_CHASE_SPEED, RenderSync, SIM_DT, SPRINT_MULTIPLIER, Simulation, aimSpreadOf, gangerEntity, idleMelee, playerStatsOf, type Entity } from "../src";
+import { KNOCKBACK_SPEED, KNOCKBACK_TIME, MELEE_CHASE_SPEED, RenderSync, SIM_DT, SPRINT_MULTIPLIER, Simulation, aimSpreadOf, gangerEntity, idleMelee, playerStatsOf, type Entity } from "../src";
 import { byKey, collect, input, run, teleportPlayer } from "./helpers";
 
 const ticks = (seconds: number) => Math.ceil(seconds / SIM_DT - 1e-9);
@@ -203,6 +203,24 @@ describe("melee combo and arc (ADR-0019)", () => {
     run(sim, ticks(BATON.combo[0].windup) + 1);
     expect(staggered).toEqual([{ entityId: t.id, duration: BATON.combo[0].stagger, cause: "hit" }]);
     expect(t.melee!.phase).toBe("idle");
+  });
+});
+
+describe("knockback (ADR-0019)", () => {
+  it("an unguarded hit shoves the brawler back and it stands staggered", () => {
+    const sim = simWith(withBaton);
+    run(sim, ticks(0.4));
+    const b = brawler(sim, 1.6);
+    const z0 = b.position.z;
+    sim.step(input({ fire: true }));
+    run(sim, ticks(BATON.combo[0].windup) + 1);
+    expect(b.melee!.stagger).toBeGreaterThan(0);
+    run(sim, ticks(KNOCKBACK_TIME) + 1);
+    // About speed x time / 2 metres, away from the player (north).
+    expect(b.position.z - z0).toBeGreaterThan((KNOCKBACK_SPEED * KNOCKBACK_TIME) / 3);
+    const z1 = b.position.z;
+    run(sim, 5);
+    expect(b.position.z).toBeCloseTo(z1);
   });
 });
 

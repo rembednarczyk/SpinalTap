@@ -58,6 +58,8 @@ export interface MeleeState {
   parry: number;
   /** Seconds until raising the guard opens a parry window again. */
   parryCooldown: number;
+  /** Knockback of an unguarded hit: ground velocity (m/s) for `time` more seconds. */
+  knock: { x: number; z: number; time: number };
 }
 
 /**

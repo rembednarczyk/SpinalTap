@@ -3,6 +3,7 @@ import type { Entity, MeleeState } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { bodyHeightOf } from "../world/hitboxes";
 import { chestOf, eyeOf, lineOfSight } from "../world/hitscan";
+import { KNOCKBACK_SPEED, KNOCKBACK_TIME } from "../world/knockback";
 import { inCreationOrder } from "../world/ordering";
 import { worldTimeScale } from "./ability-system";
 import { NPC_CRIT, alertNearbyGangers, defenderOf, guardAgainst, threaten, wearPlayerClothes } from "./combat-system";
@@ -114,7 +115,14 @@ const land = (ctx: SimContext, f: Fighter, profile: MeleeProfile): boolean => {
     if (t.ai) t.ai.alerted = true;
     ctx.bus.emit("DamageDealt", { sourceId: f.id, targetId: t.id, amount: outcome.damage, critical: outcome.critical, zone: outcome.zone, at: chest });
     if (guard.blocked) ctx.bus.emit("AttackBlocked", { attackerId: f.id, defenderId: t.id, parried: false, kind: "melee", at: chest });
-    else stagger(ctx, t, strike.stagger, "hit");
+    else {
+      stagger(ctx, t, strike.stagger, "hit");
+      // Shoved away from the attacker; movement keeps it out of walls.
+      if (t.melee) {
+        const d = Math.max(1e-6, reach.distance);
+        t.melee.knock = { x: ((t.position.x - f.position.x) / d) * KNOCKBACK_SPEED, z: ((t.position.z - f.position.z) / d) * KNOCKBACK_SPEED, time: KNOCKBACK_TIME };
+      }
+    }
     if (t.player) threaten(ctx, "damage", f.id);
   }
   ctx.bus.emit("MeleeStrike", { entityId: f.id, strike: f.melee.strike, hits });
@@ -148,6 +156,7 @@ export const meleeSystem: System = {
       m.stagger = Math.max(0, m.stagger - dt);
       m.parry = Math.max(0, m.parry - dt);
       m.parryCooldown = Math.max(0, m.parryCooldown - dt);
+      m.knock.time = Math.max(0, m.knock.time - dt);
       const profile = f.combatant.stats?.melee;
       // Switching to a gun, holstering, a conversation or death ends any swing.
       if (!profile || f.combatant.holstered || (f.health?.current ?? 1) <= 0 || (f.player && frozen)) {

@@ -40,7 +40,7 @@ const at = (p: Vec3): Pick<Entity, "position" | "prevPosition" | "yaw" | "prevYa
 export const isDead = (flags: readonly string[], key: string): boolean => flags.includes(`dead:${key}`);
 
 /** A combatant standing idle: no swing, no guard, not staggered. */
-export const idleMelee = (): MeleeState => ({ phase: "idle", timer: 0, strike: 0, combo: 0, queued: false, stagger: 0, guard: false, parry: 0, parryCooldown: 0 });
+export const idleMelee = (): MeleeState => ({ phase: "idle", timer: 0, strike: 0, combo: 0, queued: false, stagger: 0, guard: false, parry: 0, parryCooldown: 0, knock: { x: 0, z: 0, time: 0 } });
 
 export const playerEntity = (id: EntityId): Entity => ({
   ...actor(id, PLAYER_SPAWN),

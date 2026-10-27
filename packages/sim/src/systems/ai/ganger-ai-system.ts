@@ -10,6 +10,7 @@ import { followSchedule } from "../../world/schedule";
 import { worldTimeScale } from "../ability-system";
 import { NPC_CRIT, aimSpreadOf, fireShot } from "../combat-system";
 import { startSwing } from "../melee-system";
+import { knockbackVelocity } from "../../world/knockback";
 import { readyToFire } from "../../world/player-weapon";
 import { GANGER_TREE } from "./ganger-tree";
 
@@ -217,7 +218,8 @@ export const createGangerAiSystem = (): System => {
         // Off balance or committed to a swing: it stands where it is and the tree waits.
         const m = g.melee;
         if (m && (m.stagger > 0 || m.phase !== "idle")) {
-          g.velocity = { x: 0, y: 0, z: 0 };
+          const knock = knockbackVelocity(g);
+          g.velocity = { x: knock.x, y: 0, z: knock.z };
           if (g.combatant) g.combatant.engaged = m.stagger === 0;
           continue;
         }

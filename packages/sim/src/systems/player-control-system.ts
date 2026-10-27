@@ -10,6 +10,7 @@ import {
   wornGarments,
 } from "@seki/core";
 import type { Entity } from "../world/components";
+import { knockbackVelocity } from "../world/knockback";
 import type { System } from "../world/context";
 
 export const PITCH_LIMIT = 1.25;
@@ -132,7 +133,8 @@ export const playerControlSystem: System = {
       const sin = Math.sin(p.yaw);
       const cos = Math.cos(p.yaw);
       // Forward = (sin, cos); right = (cos, -sin).
-      p.velocity = { x: (sin * nz + cos * nx) * speed, y: 0, z: (cos * nz - sin * nx) * speed };
+      const knock = knockbackVelocity(p);
+      p.velocity = { x: (sin * nz + cos * nx) * speed + knock.x, y: 0, z: (cos * nz - sin * nx) * speed + knock.z };
     }
   },
 };
