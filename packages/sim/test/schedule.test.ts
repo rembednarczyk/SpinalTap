@@ -20,11 +20,16 @@ const plan = (key: string): ScheduleDef => {
   if (!def) throw new Error(key);
   return def;
 };
+const stopOf = (key: string, i: number) => {
+  const s = plan(key).stops[i];
+  if (!s) throw new Error(`${key} has no stop ${i}`);
+  return s;
+};
 const last = <T>(xs: readonly T[]): T => xs[xs.length - 1] as T;
 const dist = (a: { x: number; z: number }, b: { x: number; z: number }) => Math.hypot(a.x - b.x, a.z - b.z);
 
 const OYAJI_STALL = last(plan("oyaji").stops[0].path);
-const OYAJI_DOOR = last(plan("oyaji").stops[1].path);
+const OYAJI_DOOR = last(stopOf("oyaji", 1).path);
 const HEBI_POST = plan("hebi-lookout").stops[0].path[0];
 
 /** Teleports and runs one step, which is when streaming reacts. */
@@ -92,7 +97,7 @@ describe("daily plans", () => {
     expect(walking.arrived).toBe(false);
     expect(dist(walking.position, OYAJI_STALL)).toBeGreaterThan(0.5);
     expect(dist(walking.position, OYAJI_DOOR)).toBeGreaterThan(0.5);
-    expect(scheduledPose(def, clockAt(23))).toMatchObject({ stop: 1, position: OYAJI_DOOR, arrived: true, heading: def.stops[1].yaw });
+    expect(scheduledPose(def, clockAt(23))).toMatchObject({ stop: 1, position: OYAJI_DOOR, arrived: true, heading: stopOf("oyaji", 1).yaw });
     // Before opening time he is still at home from the night before.
     expect(scheduledPose(def, clockAt(7, 59))).toMatchObject({ stop: 1, position: OYAJI_DOOR });
   });
@@ -197,7 +202,7 @@ describe("daily plans and streaming", () => {
     const oyaji = byKey(sim, "oyaji")!;
     expect(oyaji.position).toEqual(OYAJI_DOOR);
     expect(oyaji.prevPosition).toEqual(OYAJI_DOOR);
-    expect(oyaji.yaw).toBe(plan("oyaji").stops[1].yaw);
+    expect(oyaji.yaw).toBe(stopOf("oyaji", 1).yaw);
     expect(oyaji.interactable?.dialogueId).toBe("oyaji_closed");
   });
 
@@ -213,7 +218,7 @@ describe("daily plans and streaming", () => {
   it("a wait puts NPCs of loaded chunks on their plan at once", () => {
     const sim = Simulation.create({ seed: 1 });
     skipTo(sim, hm(23, 45));
-    expect(byKey(sim, "ume")!.position).toEqual(last(plan("ume").stops[1].path));
+    expect(byKey(sim, "ume")!.position).toEqual(last(stopOf("ume", 1).path));
   });
 });
 
