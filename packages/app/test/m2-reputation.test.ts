@@ -13,6 +13,7 @@ const render: RenderPort = {
   setCameraMode(_m: CameraMode) {},
   attachCamera() {},
   playEffect(_e: EffectDescriptor) {},
+  setAppearance() {},
 };
 const played: string[] = [];
 const audio: AudioPort = { play: (cue) => void played.push(cue), stopAll() {} };

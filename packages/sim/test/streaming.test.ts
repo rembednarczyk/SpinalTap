@@ -248,6 +248,7 @@ describe("world streaming: presentation", () => {
     setCameraMode() {}
     attachCamera() {}
     playEffect() {}
+    setAppearance() {}
   }
 
   it("despawns streamed-out views as unloaded and killed ones as removed", () => {

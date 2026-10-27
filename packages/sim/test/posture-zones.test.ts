@@ -92,6 +92,7 @@ describe("crouching", () => {
       setCameraMode: () => {},
       attachCamera: () => {},
       playEffect: () => {},
+      setAppearance: () => {},
     };
     const sync = new RenderSync(port);
     sync.sync(sim.world, 0);

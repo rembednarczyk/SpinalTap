@@ -1,6 +1,6 @@
 import { type AbstractMesh, type Color3, Color4, Matrix, type Mesh, MeshBuilder, TransformNode, Vector3 } from "../babylon";
 import { applyOutline } from "../npr/outline";
-import type { CameraMode, DespawnReason, EffectDescriptor, EntityId, RenderPort, Transform, ViewDescriptor } from "@seki/core";
+import type { AppearanceDescriptor, CameraMode, DespawnReason, EffectDescriptor, EntityId, RenderPort, Transform, ViewDescriptor } from "@seki/core";
 import { CameraRig } from "../camera/camera-rig";
 import { Effects } from "../effects/effects";
 import { createRain } from "../effects/rain";
@@ -208,6 +208,9 @@ export class BabylonRenderer implements RenderPort {
   attachCamera(id: EntityId): void {
     this.cameraTarget = id;
   }
+
+  /** Outfits and stowed weapons arrive with the appearance work (ADR-0015, stage E7). */
+  setAppearance(_id: EntityId, _appearance: AppearanceDescriptor): void {}
 
   playEffect(effect: EffectDescriptor): void {
     switch (effect.kind) {

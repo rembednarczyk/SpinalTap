@@ -3,6 +3,7 @@ import type { CyberwareId } from "../cyberware/cyberware";
 import type { ItemId } from "../inventory/inventory";
 import type { FactionId } from "../reputation/reputation";
 import type { StoryChoiceId, StoryOption } from "../story/story";
+import type { EquipSlot, ItemRef, ModSlot } from "../items/types";
 
 /**
  * Requests from outside the simulation (narrative, UI). They are queued and applied at
@@ -21,4 +22,15 @@ export type GameCommand =
   /** Main-thread choice made in a memory flashback. The first answer sticks. */
   | { readonly type: "story-choice"; readonly choice: StoryChoiceId; readonly option: StoryOption }
   /** Closes act I: the sim resolves the ending from the recorded choices. */
-  | { readonly type: "resolve-ending" };
+  | { readonly type: "resolve-ending" }
+  // Inventory and loot (ADR-0015). None of them consumes randomness.
+  /** Puts a weapon or garment from the bag into its slot (or `slot`, for a weapon). */
+  | { readonly type: "equip-item"; readonly uid: string; readonly slot?: EquipSlot }
+  | { readonly type: "unequip-item"; readonly slot: EquipSlot }
+  | { readonly type: "use-item"; readonly ref: ItemRef }
+  /** Drops `qty` of a stack (an instance always drops whole) in a bag at the player's feet. */
+  | { readonly type: "drop-item"; readonly ref: ItemRef; readonly qty: number }
+  | { readonly type: "install-mod"; readonly weaponUid: string; readonly modUid: string }
+  | { readonly type: "remove-mod"; readonly weaponUid: string; readonly slot: ModSlot }
+  /** Takes one line of a loot container, or everything that fits. */
+  | { readonly type: "take-loot"; readonly containerKey: string; readonly line: number | "all" };

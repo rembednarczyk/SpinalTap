@@ -17,6 +17,7 @@ const render: RenderPort = {
   setCameraMode() {},
   attachCamera() {},
   playEffect() {},
+  setAppearance() {},
 };
 const audio: AudioPort = { play() {}, stopAll() {} };
 

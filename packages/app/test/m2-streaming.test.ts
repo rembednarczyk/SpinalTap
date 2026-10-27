@@ -33,6 +33,7 @@ class FakeRender implements RenderPort {
   }
   attachCamera() {}
   playEffect() {}
+  setAppearance() {}
 }
 
 const audio: AudioPort = { play() {}, stopAll() {} };

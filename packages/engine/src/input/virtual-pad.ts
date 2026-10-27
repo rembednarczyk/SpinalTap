@@ -69,6 +69,8 @@ export class VirtualPad {
       ability: edge("ability"),
       useItem: edge("useItem"),
       toggleWeapon: edge("toggleWeapon"),
+      reload: false,
+      weaponSlot: 0,
     };
     this.flush();
     return frame;

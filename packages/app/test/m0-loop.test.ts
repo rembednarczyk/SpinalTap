@@ -29,6 +29,7 @@ class FakeRender implements RenderPort {
   setCameraMode(m: CameraMode) { this.mode = m; }
   attachCamera() {}
   playEffect(e: EffectDescriptor) { this.effects.push(e.kind); }
+  setAppearance() {}
 }
 
 class FakeAudio implements AudioPort {

@@ -1,4 +1,4 @@
-import type { CameraMode, DespawnReason, EffectDescriptor, EntityId, Transform, ViewDescriptor } from "./types";
+import type { AppearanceDescriptor, CameraMode, DespawnReason, EffectDescriptor, EntityId, Transform, ViewDescriptor } from "./types";
 
 export interface RenderPort {
   spawn(entityId: EntityId, view: ViewDescriptor, transform: Transform): void;
@@ -14,4 +14,9 @@ export interface RenderPort {
   /** Marks the entity the camera follows. */
   attachCamera(entityId: EntityId): void;
   playEffect(effect: EffectDescriptor): void;
+  /**
+   * Dresses and arms a spawned character. Separate from `spawn`, so changing clothes or weapons
+   * never respawns the view (or reloads an imported model). Unknown ids are ignored.
+   */
+  setAppearance(entityId: EntityId, appearance: AppearanceDescriptor): void;
 }

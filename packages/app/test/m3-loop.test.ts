@@ -29,6 +29,7 @@ class FakeRender implements RenderPort {
   playEffect(e: EffectDescriptor) {
     this.effects.push(e.kind);
   }
+  setAppearance() {}
 }
 const audio: AudioPort = { play() {}, stopAll() {} };
 

@@ -51,6 +51,8 @@ export const mapKeyboardMouse = (keys: KeyState, look: LookDelta, map: KeyMap = 
   ability: any(keys.pressed, map.ability),
   useItem: any(keys.pressed, map.useItem),
   toggleWeapon: any(keys.pressed, map.toggleWeapon),
+  reload: false,
+  weaponSlot: 0,
 });
 
 export interface PadState {
@@ -84,6 +86,8 @@ export const mapGamepad = (pad: PadState, dt: number): InputFrame => ({
   ability: pad.pressed[5] ?? false,
   useItem: pad.pressed[2] ?? false,
   toggleWeapon: pad.pressed[4] ?? false,
+  reload: false,
+  weaponSlot: 0,
 });
 
 /** Combines devices: axes are summed and clamped, buttons are OR-ed. */
@@ -100,4 +104,6 @@ export const mergeFrames = (a: InputFrame, b: InputFrame): InputFrame => ({
   ability: a.ability || b.ability,
   useItem: a.useItem || b.useItem,
   toggleWeapon: a.toggleWeapon || b.toggleWeapon,
+  reload: a.reload || b.reload,
+  weaponSlot: a.weaponSlot || b.weaponSlot,
 });

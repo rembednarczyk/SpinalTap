@@ -16,6 +16,7 @@ class FakeRenderPort implements RenderPort {
   setCameraMode(mode: CameraMode) { this.mode = mode; }
   attachCamera(id: EntityId) { this.camera = id; }
   playEffect(e: EffectDescriptor) { this.effects.push(e); }
+  setAppearance() {}
 }
 
 describe("FixedStepLoop", () => {
