@@ -87,9 +87,14 @@ export const ShopPanel = () => {
           </button>
         </article>
       </div>
-      <button type="button" className="shop__close" onClick={() => intents.closeShop()}>
-        <span className="dialogue__key">E</span> Wyjdź z kliniki
-      </button>
+      <div className="shop__actions">
+        <button type="button" className="shop__talk" onClick={() => intents.talkToShopkeeper()}>
+          Porozmawiaj z Mori
+        </button>
+        <button type="button" className="shop__close" onClick={() => intents.closeShop()}>
+          <span className="dialogue__key">E</span> Wyjdź z kliniki
+        </button>
+      </div>
     </div>
   );
 };

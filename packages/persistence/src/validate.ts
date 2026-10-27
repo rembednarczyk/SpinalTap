@@ -6,6 +6,9 @@ import {
   type SaveSnapshot,
   isCyberwareId,
   isMemoryId,
+  isEndingId,
+  isStoryChoiceId,
+  isStoryOption,
 } from "@seki/core";
 
 type Json = Record<string, unknown>;
@@ -55,6 +58,12 @@ export const findSchemaError = (s: Json): string | null => {
     }
   }
   if (!isObject(d.ability) || !isNum(d.ability.activeTime) || !isNum(d.ability.cooldown)) return "ability";
+  const story = d.story;
+  if (!isObject(story) || !isObject(story.choices)) return "story";
+  for (const [choice, option] of Object.entries(story.choices)) {
+    if (!isStoryChoiceId(choice) || typeof option !== "string" || !isStoryOption(choice, option)) return "story choices";
+  }
+  if (!(story.ending === null || (typeof story.ending === "string" && isEndingId(story.ending)))) return "story ending";
   if (!(s.narrative === null || typeof s.narrative === "string")) return "narrative";
   if (!isObject(s.meta) || typeof s.meta.label !== "string" || typeof s.meta.objective !== "string") return "meta";
   return null;

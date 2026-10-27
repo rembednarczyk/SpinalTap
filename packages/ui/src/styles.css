@@ -324,7 +324,7 @@ kbd {
 .shop__name { margin: 0; font-size: 19px; }
 .shop__desc { margin: 0; flex: 1; font-size: 15px; color: var(--ink-dim); line-height: 1.35; }
 .shop__warn { margin: 0; font-size: 13px; color: var(--amber); }
-.shop__buy, .shop__close {
+.shop__buy, .shop__close, .shop__talk {
   padding: 8px 12px;
   font-size: 15px;
   letter-spacing: 0.08em;
@@ -333,9 +333,10 @@ kbd {
   border: 1px solid rgba(57, 255, 208, 0.4);
   cursor: pointer;
 }
-.shop__buy:hover:not(:disabled), .shop__close:hover { background: rgba(57, 255, 208, 0.22); }
+.shop__buy:hover:not(:disabled), .shop__close:hover, .shop__talk:hover { background: rgba(57, 255, 208, 0.22); }
 .shop__buy:disabled { opacity: 0.45; cursor: default; }
-.shop__close { margin-top: 16px; background: transparent; }
+.shop__actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.shop__close { background: transparent; }
 
 /* Character sheet */
 .sheet {

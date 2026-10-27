@@ -73,7 +73,7 @@ describe("migrations", () => {
       version: SAVE_SCHEMA_VERSION,
       rngState: 5,
       entities: [],
-      domain: { wallet: { eddies: 0 }, inventory: { medkit: 1 }, reputation: { clinic: 0 } },
+      domain: { wallet: { eddies: 0 }, inventory: { medkit: 1 }, reputation: { clinic: 0 }, story: { choices: {}, ending: null } },
     });
   });
 
@@ -81,7 +81,7 @@ describe("migrations", () => {
     const s = snapshot();
     const { clinic: _c, ...m1Reputation } = { ...s.domain.reputation, fixers: 12, hebi: -30, civilians: 4 };
     const loaded = decodeSave("m1", wrap({ ...s, version: 3, domain: { ...s.domain, reputation: m1Reputation } }));
-    expect(loaded.version).toBe(4);
+    expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
     expect(loaded.domain.reputation).toEqual({ fixers: 12, hebi: -30, civilians: 4, clinic: 0 });
     expect(loaded.domain.inventory).toEqual(s.domain.inventory);
   });
@@ -99,6 +99,43 @@ describe("migrations", () => {
     expect(loaded.domain.contracts).toEqual({ active: null, completed: 0 });
     expect(loaded.domain.ability).toEqual({ activeTime: 0, cooldown: 0 });
     expect(loaded.domain.flags).toEqual(s.domain.flags);
+  });
+
+  it("upgrades an M2 (v4) save: empty story state, act I started when the first contract is done", () => {
+    const s = snapshot();
+    const { story: _s, ...domain } = s.domain;
+    const fresh = decodeSave("m2", wrap({ ...s, version: 4, domain }));
+    expect(fresh.version).toBe(5);
+    expect(fresh.domain.story).toEqual({ choices: {}, ending: null });
+    expect(fresh.domain.quests).toEqual(s.domain.quests);
+
+    const done = { ...domain, quests: { m0_first_contract: { status: "completed" } } };
+    const upgraded = decodeSave("m2", wrap({ ...s, version: 4, domain: done }));
+    expect(upgraded.domain.quests).toEqual({ m0_first_contract: { status: "completed" }, m3_echo: { status: "active", stepIndex: 0 } });
+
+    // Never resets act I progress that is already there, and tolerates a missing domain.
+    const ahead = { ...domain, quests: { m0_first_contract: { status: "completed" }, m3_echo: { status: "active", stepIndex: 2 } } };
+    expect(decodeSave("m2", wrap({ ...s, version: 4, domain: ahead })).domain.quests.m3_echo).toEqual({ status: "active", stepIndex: 2 });
+    expect(MIGRATIONS[4]!({ version: 4 })).toEqual({ version: 5, domain: { quests: {}, story: { choices: {}, ending: null } } });
+  });
+
+  it("walks an M1 (v3) save through both steps: clinic faction (v4), then story state (v5)", () => {
+    const s = snapshot();
+    const { story: _s, ...domain } = s.domain;
+    const { clinic: _c, ...m1Reputation } = domain.reputation;
+    const m1 = { ...domain, reputation: m1Reputation, quests: { m0_first_contract: { status: "completed" } } };
+    const loaded = decodeSave("m1", wrap({ ...s, version: 3, domain: m1 }));
+    expect(loaded.version).toBe(5);
+    expect(loaded.domain.reputation.clinic).toBe(0);
+    expect(loaded.domain.story).toEqual({ choices: {}, ending: null });
+    expect(loaded.domain.quests.m3_echo).toEqual({ status: "active", stepIndex: 0 });
+  });
+
+  it("keeps story choices and the ending through the round trip", () => {
+    const s = snapshot();
+    const story = { choices: { case: "opened" as const, name: "silent" as const, crash: "wheel" as const }, ending: "aya" as const };
+    const withStory = { ...s, domain: { ...s.domain, story } };
+    expect(decodeSave("st", encodeSave(withStory)).domain.story).toEqual(story);
   });
 
   it("keeps an active contract through the round trip", () => {
@@ -137,6 +174,13 @@ describe("schema validation", () => {
     ["contracts", { contracts: { active: { id: "c1", siteId: "east_lot", targets: 2, reward: 1, status: "done" }, completed: 0 } }],
     ["ability", { ability: { activeTime: "x", cooldown: 0 } }],
     ["cyberware", { character: { alias: null, memories: [], cyberware: { optics: "fake" } } }],
+    ["story", { story: null }],
+    ["story", { story: { choices: [], ending: null } }],
+    ["story choices", { story: { choices: { mood: "opened" }, ending: null } }],
+    ["story choices", { story: { choices: { case: "wheel" }, ending: null } }],
+    ["story choices", { story: { choices: { case: 1 }, ending: null } }],
+    ["story ending", { story: { choices: {}, ending: "happy" } }],
+    ["story ending", { story: { choices: {}, ending: 0 } }],
   ])("rejects bad domain %s", (_name, patch) => {
     const s = snapshot();
     expect(findSchemaError({ ...s, domain: { ...s.domain, ...patch } } as unknown as Record<string, unknown>)).not.toBeNull();

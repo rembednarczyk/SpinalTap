@@ -122,6 +122,8 @@ describe("M0 vertical slice: input → sim → narrative → domain → save →
     talkThrough(session, ui);
     steps(session, 1);
     expect(session.sim.domain.quests.m0_first_contract).toEqual({ status: "completed" });
+    // Finishing the first contract opens act I of the main thread.
+    expect(session.sim.domain.quests.m3_echo).toEqual({ status: "active", stepIndex: 0 });
     expect(session.sim.domain.wallet.eddies).toBeGreaterThan(600);
     // -15 from the payday conversation, -4 for the courier (ADR-0011).
     expect(session.sim.domain.reputation.hebi).toBe(-19);
@@ -129,7 +131,7 @@ describe("M0 vertical slice: input → sim → narrative → domain → save →
     // 4. Save, keep playing, load: state matches the save point, narrative included.
     expect(await session.saveAsync("slot-1")).toBe(true);
     const saved = session.snapshot();
-    expect(ui.getState().slots[0]).toMatchObject({ slot: "slot-1", objective: expect.stringContaining("Kaito ma kolejne kontrakty") });
+    expect(ui.getState().slots[0]).toMatchObject({ slot: "slot-1", objective: expect.stringContaining("Weź od Kaito kontrakt") });
     steps(session, 120, frame({ moveZ: -1 }));
     expect(await session.loadAsync("slot-1")).toBe(true);
     expect(session.snapshot().domain).toEqual(saved.domain);
