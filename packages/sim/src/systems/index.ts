@@ -1,5 +1,5 @@
 import type { System } from "../world/context";
-import { createGangerAiSystem } from "./ai";
+import { createCivilianAiSystem, createGangerAiSystem } from "./ai";
 import { abilitySystem } from "./ability-system";
 import { combatSystem } from "./combat-system";
 import { deathSystem } from "./death-system";
@@ -25,6 +25,7 @@ export const createSystems = (): readonly System[] => [
   itemSystem,
   playerControlSystem,
   createGangerAiSystem(),
+  createCivilianAiSystem(),
   movementSystem,
   combatSystem,
   interactionSystem,

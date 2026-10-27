@@ -16,8 +16,16 @@ export interface GangerAi {
   readonly home: Vec3;
   readonly aggroRange: number;
   readonly attackRange: number;
-  /** Set once the ganger has noticed the player; never resets in M0. */
+  /**
+   * Set once the ganger has decided to fight the player; never resets. Gangers friendly to
+   * the player only set it when provoked (gunfire nearby or a hit).
+   */
   alerted: boolean;
+}
+
+/** A bystander that keeps to its spot and runs from a player the street fears. Stateless by design. */
+export interface CivilianAi {
+  readonly home: Vec3;
 }
 
 export interface Interactable {
@@ -52,5 +60,6 @@ export interface Entity {
   faction?: FactionId;
   combatant?: Combatant;
   ai?: GangerAi;
+  civilian?: CivilianAi;
   interactable?: Interactable;
 }

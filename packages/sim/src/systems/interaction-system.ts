@@ -1,7 +1,11 @@
+import { shopTerms } from "@seki/core";
 import type { Entity } from "../world/components";
 import type { System } from "../world/context";
 
-/** Tracks the nearest interactable in reach and starts a dialogue on the interact edge. */
+/**
+ * Tracks the nearest interactable in reach and starts a dialogue on the interact edge.
+ * A shop whose owner's faction is hostile to the player refuses instead of opening.
+ */
 export const interactionSystem: System = {
   name: "interaction",
   run(ctx) {
@@ -24,6 +28,11 @@ export const interactionSystem: System = {
       ctx.bus.emit("InteractionFocusChanged", { targetId: focusId, prompt: best?.interactable.prompt ?? null });
     }
     if (best && ctx.input.interact) {
+      const { interactable, faction } = best;
+      if (interactable.kind === "shop" && faction && !shopTerms(ctx.state.domain.reputation[faction]).open) {
+        ctx.bus.emit("InteractionRefused", { targetId: best.id, dialogueId: interactable.dialogueId, faction });
+        return;
+      }
       session.dialogueActive = true;
       session.focusId = null;
       ctx.bus.emit("InteractionFocusChanged", { targetId: null, prompt: null });

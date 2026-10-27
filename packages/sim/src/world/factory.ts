@@ -111,13 +111,15 @@ export const createDistrictWorld = (domain: DomainState): { world: World<Entity>
     ...actor(ids, CIVILIAN_SPAWN),
     view: { kind: "npc", preset: "civilian" },
     faction: "civilians",
+    velocity: { x: 0, y: 0, z: 0 },
+    civilian: { home: CIVILIAN_SPAWN.position },
     interactable: { kind: "dialogue", dialogueId: "ume", prompt: "Rozmawiaj z babcią Ume", radius: 2.4 },
   });
 
   world.add({
     ...actor(ids, RIPPERDOC_SPAWN),
     view: { kind: "npc", preset: "ripperdoc" },
-    faction: "civilians",
+    faction: "clinic",
     interactable: { kind: "shop", dialogueId: "mori", prompt: "Klinika doktora Mori", radius: 2.4 },
   });
 
