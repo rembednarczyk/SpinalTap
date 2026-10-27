@@ -43,7 +43,7 @@ describe("determinism", () => {
   });
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
-    expect(hashOf(runReplay(1234, script()))).toMatchInlineSnapshot(`"5c60913b"`);
+    expect(hashOf(runReplay(1234, script()))).toMatchInlineSnapshot(`"46e878ce"`);
   });
 
   it("a loaded snapshot continues exactly like the original run", () => {
@@ -87,7 +87,7 @@ describe("determinism", () => {
     // Swings both ways, a blocked blow and staggers: the duel exercises the whole package.
     for (const t of ["MeleeSwing", "AttackBlocked", "Staggered", "DamageDealt"]) expect(seen).toContain(t);
     expect(hashOf(sim)).toBe(hashOf(duel().sim));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"4ddb6f18"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"169effe7"`);
   });
 
   it("restores killed NPCs as absent", () => {

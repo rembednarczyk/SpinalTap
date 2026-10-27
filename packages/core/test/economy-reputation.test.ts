@@ -63,7 +63,7 @@ describe("reputation", () => {
     expect(isFactionId("hebi")).toBe(true);
     expect(isFactionId("clinic")).toBe(true);
     expect(isFactionId("arasaka")).toBe(false);
-    expect(FACTION_IDS).toEqual(["fixers", "hebi", "civilians", "clinic"]);
+    expect(FACTION_IDS).toEqual(["fixers", "hebi", "civilians", "clinic", "kagami"]);
     expect(Object.keys(createReputation())).toEqual([...FACTION_IDS]);
   });
 

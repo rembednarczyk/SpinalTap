@@ -85,6 +85,7 @@ To była ta noc. Wrak na Siódmej. Teraz wiesz, jak trafiłaś na tę ulicę.
 {
 - quest_step == "ask_mori" && has_flag("recalled:courier_case"): -> module
 - quest_step == "decide" && has_flag("recalled:crash_night"): -> decision
+- quest_step == "ren_trail": -> ren_trail
 - story_ending == "aya": -> after_aya
 - story_ending == "seki": -> after_seki
 - else: -> small_talk
@@ -164,6 +165,35 @@ Wychodzisz z kliniki lżejsza o kilka gramów. Ręce dalej wiedzą, jak celować
 
 = after_aya
 MORI: Aya. Jak głowa? Moduł dalej coś puszcza, czy już się uspokoił?
+-> END
+
+// Act II (m3-lustro.ink): after "seki" he sold the module, after "aya" it talks to her.
+= ren_trail
+{ story_ending == "seki":
+    -> sold
+}
+MORI: Aya. Jak głowa? Moduł dalej coś puszcza, czy już się uspokoił?
+* [Ktoś mówi do mnie przez moduł.]
+    SEKI: Ktoś mówi do mnie przez moduł.
+    MORI: Bywa tak, kiedy nadajnik jest blisko i zna częstotliwość Kagami. Ktoś cię szuka i wie, czego szukać.
+    MORI: Kto to, nie wiem. Ale babcia Ume wie o tej ulicy więcej niż ja.
+* [Nic. Głowa w porządku.]
+    SEKI: Nic. Głowa w porządku.
+    MORI: Kłamiesz tak samo jak przed operacją. Jak zacznie boleć, wróć.
+- -> END
+
+= sold
+MORI: Fiolki już nie ma. Domyślam się, że Kaito ci powiedział.
+* [Komu sprzedałeś mój moduł?]
+    SEKI: Komu sprzedałeś mój moduł?
+    MORI: Sama kazałaś go sprzedać. Przyszedł chłopak, Ren Odagiri. Zapłacił więcej, niż moduł był wart.
+    MORI: Pytał, czy da się go odtworzyć bez nosicielki. Powiedziałem, że tak, ze złączem i odrobiną cierpliwości.
+* [Mogłeś mi powiedzieć.]
+    SEKI: Mogłeś mi powiedzieć.
+    MORI: Mogłem. Ale moduł był już tylko towarem, a ty nie chciałaś go znać.
+    MORI: Kupił go Ren Odagiri. Płacił gotówką, której nikt na tej ulicy nie ma.
+- MORI: Nocuje na dachu nad targiem pod estakadą. Na schody pożarowe wchodzi od strony straganów.
+~ set_flag("ren_trail")
 -> END
 
 = after_seki

@@ -7,6 +7,7 @@ import {
   isCyberwareId,
   isMemoryId,
   isEndingId,
+  isActTwoEndingId,
   isStoryChoiceId,
   isStoryOption,
 } from "@seki/core";
@@ -68,6 +69,7 @@ export const findSchemaError = (s: Json): string | null => {
     if (!isStoryChoiceId(choice) || typeof option !== "string" || !isStoryOption(choice, option)) return "story choices";
   }
   if (!(story.ending === null || (typeof story.ending === "string" && isEndingId(story.ending)))) return "story ending";
+  if (!(story.act2Ending === null || (typeof story.act2Ending === "string" && isActTwoEndingId(story.act2Ending)))) return "story ending";
   const clock = d.clock;
   if (!isObject(clock) || !Number.isInteger(clock.seconds) || (clock.seconds as number) < 0) return "clock";
   if (!(s.narrative === null || typeof s.narrative === "string")) return "narrative";

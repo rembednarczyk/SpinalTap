@@ -1,5 +1,17 @@
 import { SeededRandom } from "../rng/seeded-random";
-import type { BlockStyle, ContractSiteId, BlockFront, LootLine, Vec3 } from "@seki/core";
+import {
+  ACT_TWO_ENDING_FLAG,
+  type BlockFront,
+  type BlockStyle,
+  type ContractSiteId,
+  KAGAMI_AMBUSH_FLAG,
+  KAGAMI_CLEANER_KEYS,
+  KAGAMI_JOB_FLAG,
+  type LootLine,
+  REN_TRAIL_FLAG,
+  type Vec3,
+  endingFlag,
+} from "@seki/core";
 import {
   type ActorDef,
   type BlockMaterial,
@@ -384,6 +396,47 @@ export const TARG_NAV: NavGraph = {
 /** Oyaji can be hurt: Hebi come for him in Hana's protection jobs. */
 export const OYAJI_MAX_HP = 120;
 
+/**
+ * Ren Odagiri sleeps on the concrete roof of the south row, the one up the third fire escape
+ * ladder, near Hebi's stash (act II, ADR-0023). He turns up once someone told Seki where he is
+ * and is gone after the "kagami" ending, when Kagami takes him.
+ */
+export const REN_SPOT: Vec3 = v(86, ROOF_MID_TOP, 59.6);
+
+/** Kurosawa of Kagami waits on the overpass deck, and his cleaners come from the lift side. */
+export const KUROSAWA_SPOT: Vec3 = v(100, OVERPASS_TOP, 92);
+const CLEANER_SPOTS: readonly Vec3[] = [v(105, OVERPASS_TOP, 89.5), v(107, OVERPASS_TOP, 94.5), v(111, OVERPASS_TOP, 92)];
+
+/** Tag of the cleaners (their deaths raise `killed:kagami_cleaner`). */
+export const KAGAMI_CLEANER_TAG = "kagami_cleaner";
+
+const REN: ActorDef = {
+  kind: "npc",
+  spawn: { key: "ren", position: REN_SPOT, yaw: 0 },
+  preset: "civilian",
+  faction: "hebi",
+  when: { all: [REN_TRAIL_FLAG], none: [endingFlag("kagami")] },
+  interactable: { kind: "dialogue", dialogueId: "ren_odagiri", prompt: "Rozmawiaj z Renem", radius: 2.4 },
+};
+
+const KUROSAWA: ActorDef = {
+  kind: "npc",
+  spawn: { key: "kurosawa", position: KUROSAWA_SPOT, yaw: -Math.PI / 2 },
+  preset: "fixer",
+  faction: "kagami",
+  when: { all: [KAGAMI_JOB_FLAG], none: [KAGAMI_AMBUSH_FLAG, ACT_TWO_ENDING_FLAG] },
+  interactable: { kind: "dialogue", dialogueId: "kurosawa", prompt: "Rozmawiaj z Kurosawą", radius: 2.4 },
+};
+
+const CLEANERS: readonly ActorDef[] = KAGAMI_CLEANER_KEYS.map(
+  (key, i): ActorDef => ({
+    kind: "ganger",
+    spawn: { key, position: CLEANER_SPOTS[i] ?? KUROSAWA_SPOT, yaw: -Math.PI / 2, tag: KAGAMI_CLEANER_TAG },
+    enemy: "kagami_cleaner",
+    when: { all: [KAGAMI_AMBUSH_FLAG] },
+  }),
+);
+
 export const TARG_SOUTH_ACTORS: readonly ActorDef[] = [
   {
     kind: "npc",
@@ -402,10 +455,13 @@ export const TARG_SOUTH_ACTORS: readonly ActorDef[] = [
     faction: "civilians",
     interactable: { kind: "dialogue", dialogueId: "hana", prompt: "Rozmawiaj z Haną", radius: 2.4 },
   },
+  REN,
 ];
 
 export const TARG_NORTH_ACTORS: readonly ActorDef[] = [
   { kind: "ganger", spawn: { key: "hebi-lookout", position: v(104, 0, 92), yaw: Math.PI, tag: null } },
+  KUROSAWA,
+  ...CLEANERS,
 ];
 
 /**

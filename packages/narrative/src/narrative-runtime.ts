@@ -31,6 +31,7 @@ const SPEAKERS: Readonly<Record<string, string>> = {
   MORI: "Doktor Mori",
   REN: "Ren",
   TECH: "Technik Kagami",
+  KUROSAWA: "Kurosawa",
   HANA: "Hana",
   OYAJI: "Oyaji",
 };
@@ -116,6 +117,7 @@ export class NarrativeRuntime {
     }
     this.story.variablesState.$("act1_ending", resolveEnding(domain.story.choices));
     this.story.variablesState.$("story_ending", domain.story.ending ?? "");
+    this.story.variablesState.$("act2_ending", domain.story.act2Ending ?? "");
     this.story.variablesState.$("game_hour", hourOf(domain.clock));
     this.story.variablesState.$("time_of_day", dayPhase(domain.clock));
     this.story.ChoosePathString(dialogueId);
@@ -226,5 +228,6 @@ export class NarrativeRuntime {
       this.emit({ type: "story-choice", choice, option });
     });
     this.story.BindExternalFunction("end_act", () => this.emit({ type: "resolve-ending" }));
+    this.story.BindExternalFunction("end_act2", () => this.emit({ type: "resolve-ending", act: 2 }));
   }
 }

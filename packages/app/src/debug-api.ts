@@ -1,4 +1,4 @@
-import { EMPTY_INPUT, type InputFrame, formatClock } from "@seki/core";
+import { type DomainState, EMPTY_INPUT, type InputFrame, formatClock } from "@seki/core";
 import type { PerfSample, PreviewState } from "@seki/engine";
 import type { FixedStepLoop } from "@seki/sim";
 import type { UiStore } from "@seki/ui";
@@ -29,7 +29,13 @@ export interface DebugApi {
   };
   perf(): PerfSample;
   setPaused(paused: boolean): void;
-  teleport(x: number, z: number, yaw?: number, pitch?: number): void;
+  /** Moves the player; `y` is the floor to stand on (a roof, the overpass deck), 0 by default. */
+  teleport(x: number, z: number, yaw?: number, pitch?: number, y?: number): void;
+  /**
+   * Restarts the running game from its own snapshot with part of the domain replaced, e.g. to
+   * start a test in the middle of the main thread. The world is rebuilt as a load would.
+   */
+  jump(domain: Partial<DomainState>): void;
   step(n: number, input?: Partial<InputFrame>): void;
   /** Lets game time pass (the wait command), applied on the next step. */
   wait(minutes: number): void;
@@ -82,14 +88,18 @@ export const createDebugApi = (
   setPaused(paused) {
     loop.paused = paused;
   },
-  teleport(x, z, yaw = 0, pitch = 0) {
+  teleport(x, z, yaw = 0, pitch = 0, y = 0) {
     const p = session.sim.player();
     if (!p) return;
-    p.position = { x, y: 0, z };
+    p.position = { x, y, z };
     p.prevPosition = p.position;
     p.yaw = yaw;
     p.prevYaw = yaw;
     p.pitch = pitch;
+  },
+  jump(domain) {
+    const snapshot = session.snapshot();
+    session.restore({ ...snapshot, domain: { ...snapshot.domain, ...domain } });
   },
   view: setView,
   dressed,

@@ -26,6 +26,7 @@ EXTERNAL complete_contract()
 - quest_step == "find_fixer": -> first_meeting
 - quest_step == "eliminate_courier": -> waiting
 - quest_step == "report_back": -> payday
+- quest_step == "kaito_job" && not has_flag("kagami_job"): -> ren_job
 - else: -> after
 }
 
@@ -104,6 +105,14 @@ KAITO: I jeszcze jedno, Seki. Ktoś już pytał o kobietę z wraku. Nie tylko ja
 { fixers_stance == "friendly":
     KAITO: Klienci o ciebie pytają. Dla swoich mam lepsze stawki.
 }
+{
+- act2_ending == "kagami" && not has_flag("kaito_after_act2"):
+    KAITO: Kagami zapłaciło za Rena co do eddie. Nie pytam, jak się z tym czujesz.
+    ~ set_flag("kaito_after_act2")
+- (act2_ending == "street" || act2_ending == "hebi") && not has_flag("kaito_after_act2"):
+    KAITO: Kagami zerwało ze mną umowę przez twój numer na estakadzie. Dobrze, że Hebi i ulica płacą w gotówce.
+    ~ set_flag("kaito_after_act2")
+}
 { contracts_done >= 1 && not has_flag("met_hana"):
     KAITO: Na targu pod estakadą handluje Hana. Bierze ode mnie towar, a czasem szuka kogoś, kto umie strzelać.
 }
@@ -138,6 +147,31 @@ KAITO: I jeszcze jedno, Seki. Ktoś już pytał o kobietę z wraku. Nie tylko ja
 
 = contract_running
 KAITO: Kontrakt dalej otwarty. Cel: {contract_site}.
+-> END
+
+// Act II (m3-lustro.ink): the hook from a fixer job into the main thread.
+= ren_job
+KAITO: Siadaj, {alias}. Mam zlecenie, które ci się nie spodoba.
+KAITO: Klient w czystych butach płaci pięć tysięcy za Rena Odagiri i walizkę chipów, którą trzyma. Może być żywy, może nie, byle z walizką.
+{ choice_rooftop == "together":
+    Pięć tysięcy. Prawie tyle, ile Kagami obiecało wam za tamten kurs.
+}
+KAITO: Posłuchaj, to ich wiadomość. Przyszła wczoraj.
+Kaito puszcza nagranie. Mówi Ren, spokojnie i trochę za równo: przekazanie w nocy, na estakadzie nad targiem.
+KAITO: Twój chłopak sam się umawia z Kagami. Albo ktoś mówi jego głosem.
+* [Nie poluję na Rena.]
+    ~ choice_job = "refused"
+    ~ story_choice("job", "refused")
+    SEKI: Nie poluję na Rena. Znajdź sobie kogoś innego.
+    KAITO: Znajdę. Kagami też znajdzie. Ich człowiek, Kurosawa, czeka dziś na estakadzie.
+    ~ change_rep("fixers", -3)
+* [Biorę. Chcę zobaczyć tego klienta.]
+    ~ choice_job = "taken"
+    ~ story_choice("job", "taken")
+    SEKI: Biorę. Chcę zobaczyć tego klienta.
+    KAITO: Rozsądnie. Nazywa się Kurosawa i czeka na estakadzie. Tylko nie rób z tego wojny, to mój klient.
+    ~ change_rep("fixers", 3)
+- ~ set_flag("kagami_job")
 -> END
 
 = delivery_running
@@ -175,6 +209,15 @@ KAITO: Słyszałem, że robisz coś dla Hany. Skończ u niej, potem pogadamy.
 { game_hour >= 23 || game_hour < 6:
     UME: Nie śpisz, dziecko? Ja też nie. W moim wieku noc jest za długa.
 }
+{ quest_step == "ren_trail":
+    -> ren_trail
+}
+{ act2_ending == "street" && not has_flag("ume_archive"):
+    UME: Pani Sato dostała chip z głosem męża. Słucha go co wieczór przy otwartym oknie.
+    UME: Nie wiem, czy to jej pomaga. Ale przynajmniej ten głos należy do niej.
+    ~ set_flag("ume_archive")
+    -> END
+}
 { has_flag("ume_memory"):
     UME: Uważaj na siebie na dachach, dziecko. Tak jak kiedyś.
     { has_memory("courier_case") && not has_flag("ume_ren"):
@@ -205,6 +248,27 @@ UME: Widziałam, jak cię wyciągali z tego auta. Myślałam, że już po tobie.
 + [Pamiętasz Rena?]
     -> ren_talk
 + [Muszę iść.]
+    -> END
+
+// Act II (m3-lustro.ink): Ren is back and hiding.
+= ren_trail
+{ story_ending == "aya":
+    UME: Słyszałaś go, prawda? Masz to wypisane na twarzy.
+- else:
+    UME: Szukasz kogoś. Widzę, jak patrzysz po dachach.
+}
++ [Gdzie znajdę Rena Odagiri?]
+    SEKI: Gdzie znajdę Rena Odagiri?
+    UME: Wrócił tydzień temu. Chudy, zarośnięty, nie przypomina tego chłopaka sprzed dwóch lat.
+    UME: Śpi na dachu nad targiem pod estakadą. Wchodzi się schodami pożarowymi od strony straganów.
+    { has_flag("ume_ren"):
+        UME: Mówiłam ci, że szukał cię pół roku. Teraz to on się ukrywa.
+    }
+    ~ set_flag("ren_trail")
+    ~ change_rep("civilians", 2)
+    -> END
++ [Nieważne.]
+    UME: Jak zechcesz pogadać, wiesz, gdzie stoję.
     -> END
 
 = ren_talk

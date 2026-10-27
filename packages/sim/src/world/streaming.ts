@@ -14,6 +14,7 @@ import type { World } from "miniplex";
 import { CONTRACT_SITE_SPAWNS } from "../content/district-m0";
 import { CONTRACT_ITEM_SPOTS } from "../content/district-targ";
 import { type ChunkDef, type DistrictId, WORLD_CHUNKS, chunkAt, distanceToRect } from "../content/world-map";
+import { type Presence, isPresent } from "../content/builders";
 import type { Entity } from "./components";
 import {
   type IdAllocator,
@@ -47,6 +48,8 @@ interface Template {
   /** Keyed entities carry state across unloads and saves; static props do not. */
   readonly key: string | null;
   readonly make: () => Entity;
+  /** Flags that decide whether the actor is in the world at all (ADR-0023). */
+  readonly when?: Presence;
 }
 
 export interface StreamingChange {
@@ -74,6 +77,8 @@ export class WorldStreamer {
   private contract: Template[] = [];
   private readonly resident = new Set<string>();
   private readonly dormant = new Map<string, EntitySnapshot>();
+  /** Flags the presence of conditional actors was last checked against (compared by reference). */
+  private presenceFlags: readonly string[] | null = null;
   /** Ids of entities currently asleep in an unloaded chunk (lets the renderer skip exit animations). */
   readonly streamedOut = new Set<EntityId>();
 
@@ -90,7 +95,7 @@ export class WorldStreamer {
       }
       for (const def of chunk.actors) {
         const id = ids.take();
-        const t: Template = { id, chunk: chunk.id, key: def.spawn.key, make: () => actorEntity(id, def, chunk.id) };
+        const t: Template = { id, chunk: chunk.id, key: def.spawn.key, make: () => actorEntity(id, def, chunk.id), ...(def.when ? { when: def.when } : {}) };
         list.push(t);
         this.byKey.set(def.spawn.key, t);
       }
@@ -177,6 +182,7 @@ export class WorldStreamer {
     }
     between();
     for (const c of chunks) this.spawnActors(world, flags, this.actorsOf(c.id), clock);
+    this.presenceFlags = flags;
   }
 
   /** Re-applies saved entity state: live entities directly, the rest as pinned or dormant. */
@@ -190,7 +196,7 @@ export class WorldStreamer {
         continue;
       }
       const t = this.byKey.get(s.key);
-      if (!t || isDead(flags, s.key) || flags.includes(takenFlag(s.key))) continue;
+      if (!t || isDead(flags, s.key) || flags.includes(takenFlag(s.key)) || !isPresent(t.when, flags)) continue;
       if (s.alerted) {
         // It was chasing the player when the save was made: pinned, alive outside its chunk.
         const pinned = t.make();
@@ -205,6 +211,7 @@ export class WorldStreamer {
 
   /** Loads and unloads chunks around `focus`. Unloads first, so ids never collide. */
   update(world: World<Entity>, flags: readonly string[], focus: Vec3, clock: GameClock): StreamingChange {
+    if (flags !== this.presenceFlags) this.syncPresence(world, flags, clock);
     let unloaded: string[] | null = null;
     let loaded: string[] | null = null;
     for (const c of this.chunks) {
@@ -220,6 +227,29 @@ export class WorldStreamer {
     }
     for (const id of loaded ?? []) this.spawnActors(world, flags, this.actorsOf(id), clock);
     return { loaded: loaded ?? [], unloaded: unloaded ?? [] };
+  }
+
+  /**
+   * Conditional actors follow the flags (ADR-0023): one whose condition starts to hold appears
+   * in its resident chunk, one whose condition stops holding leaves the world and forgets its
+   * sleeping state. Visits chunks in table order, so it stays deterministic.
+   */
+  private syncPresence(world: World<Entity>, flags: readonly string[], clock: GameClock): void {
+    this.presenceFlags = flags;
+    const live = new Map<string, Entity>();
+    for (const e of world) if (e.key) live.set(e.key, e);
+    for (const chunk of this.chunks) {
+      for (const t of this.content.get(chunk.id) ?? []) {
+        if (!t.when || t.key === null) continue;
+        if (isPresent(t.when, flags)) {
+          if (this.resident.has(chunk.id) && !live.has(t.key)) this.spawnActors(world, flags, [t], clock);
+          continue;
+        }
+        this.dormant.delete(t.key);
+        const e = live.get(t.key);
+        if (e) world.remove(e);
+      }
+    }
   }
 
   private actorsOf(chunkId: string): Template[] {
@@ -241,7 +271,7 @@ export class WorldStreamer {
     const alive = new Set<string>();
     for (const e of world) if (e.key) alive.add(e.key);
     for (const t of templates) {
-      if (t.key === null || isDead(flags, t.key) || flags.includes(takenFlag(t.key)) || alive.has(t.key)) continue;
+      if (t.key === null || isDead(flags, t.key) || flags.includes(takenFlag(t.key)) || alive.has(t.key) || !isPresent(t.when, flags)) continue;
       const e = t.make();
       const saved = this.dormant.get(t.key);
       if (saved) {

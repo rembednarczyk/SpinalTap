@@ -90,6 +90,15 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
   kontenery, kable), Car Kit (zaparkowane auta). Inne stylistyki przemalowane na noc, teal i
   magentę przez toon shader, z dołożonymi neonami, kablami i klimatyzatorami. Kolizje zostają
   bryłami w sim; budżety draw calli i migawka NPR pilnują wydajności i looku.
+- **[gotowe] Wątek główny, akt II „Lustro”.** ([ADR-0023](adr/0023-watek-glowny-akt-2.md))
+  Quest `m3_lustro` po akcie I: otwarcie zależne od zakończenia (Ren mówi przez moduł albo Kaito
+  pisze, że Mori sprzedał moduł), ślad od Ume lub Mori, Ren Odagiri na dachu targu z chipem
+  „zapis zero”, zlecenie Kaito na Rena jako haczyk, Kurosawa z Kagami na estakadzie. Trzy
+  wspomnienia z retrospekcjami (dach: zdrowie, głos: stabilność celowania, lustro: krytyk i
+  obrażenia), wybory w domenie, nowa frakcja Kagami Biotech, walka z czyścicielami albo układ bez
+  walki, trzy zakończenia (Archiwum ulicy, Wspólnicy, Kopia) z reputacją Hebi, mieszkańców i
+  korporacji. Postacie pojawiają się i znikają według flag. Zapis v9 z migracją. Akceptacja:
+  `packages/app/test/m3-lustro-loop.test.ts`, kluczowa rozmowa w `e2e/m3-lustro.spec.ts`.
 - **[gotowe] Przeskok na krawędź (mantle).** Skok przy murku do ok. 2,5 m kończy się podciągnięciem
   na jego wierzch w pół sekundy (dopisek w ADR-0021); bez strzału i skoku w trakcie.
 - **[gotowe] Sterowanie PC według standardu i pierwsze uruchomienie.** Kółko myszy zmienia broń,

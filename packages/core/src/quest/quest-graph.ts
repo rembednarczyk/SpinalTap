@@ -11,9 +11,17 @@ export type QuestReward =
   | { readonly type: "reputation"; readonly faction: FactionId; readonly delta: number }
   | { readonly type: "memory"; readonly memoryId: MemoryId };
 
+/** Another wording of a step's objective while `when` holds (the first match wins). */
+export interface ObjectiveVariant {
+  readonly when: QuestCondition;
+  readonly objective: string;
+}
+
 export interface QuestStep {
   readonly id: string;
   readonly objective: string;
+  /** How the objective reads in another situation, e.g. after a different ending of the act before. */
+  readonly variants?: readonly ObjectiveVariant[];
   readonly completeWhen: QuestCondition;
   readonly rewards: readonly QuestReward[];
 }
@@ -47,6 +55,10 @@ export const progressFlag = (event: ProgressEvent, stepId: string): string => `$
 
 export const evaluateCondition = (cond: QuestCondition, flags: Flags): boolean =>
   cond.type === "flag" ? hasFlag(flags, cond.flag) : cond.of.every((c) => evaluateCondition(c, flags));
+
+/** The objective of `step` as the player should read it now. */
+export const stepObjective = (step: QuestStep, flags: Flags): string =>
+  step.variants?.find((v) => evaluateCondition(v.when, flags))?.objective ?? step.objective;
 
 export const startQuest = (log: QuestLog, quest: QuestDefinition): QuestLog =>
   log[quest.id] ? log : { ...log, [quest.id]: { status: "active", stepIndex: 0 } };

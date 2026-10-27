@@ -125,6 +125,32 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
       },
     };
   },
+  // v8 -> v9 (ADR-0023, act II "Lustro"): Kagami Biotech becomes a faction, starting neutral; the
+  // story gets an act-II ending; the act-I ending is also kept as a flag (`ending:aya`), and a
+  // save that already finished act I starts act II at its first step, as a live game would.
+  8: (old) => {
+    const domain = isObject(old.domain) ? old.domain : {};
+    const reputation = isObject(domain.reputation) ? domain.reputation : {};
+    const story = isObject(domain.story) ? domain.story : { choices: {}, ending: null };
+    const quests = isObject(domain.quests) ? domain.quests : {};
+    const flags = Array.isArray(domain.flags) ? domain.flags.filter((f): f is string => typeof f === "string") : [];
+    // Ids are spelled out: a migration describes the schema of its time, not today's content.
+    const ending = typeof story.ending === "string" ? story.ending : null;
+    const endingFlag = ending ? `ending:${ending}` : null;
+    const echo = quests.m3_echo;
+    const startMirror = isObject(echo) && echo.status === "completed" && !("m3_lustro" in quests);
+    return {
+      ...old,
+      version: 9,
+      domain: {
+        ...domain,
+        reputation: { ...reputation, kagami: typeof reputation.kagami === "number" ? reputation.kagami : 0 },
+        story: { ...story, act2Ending: "act2Ending" in story ? story.act2Ending : null },
+        quests: startMirror ? { ...quests, m3_lustro: { status: "active", stepIndex: 0 } } : quests,
+        flags: endingFlag && !flags.includes(endingFlag) ? [...flags, endingFlag].sort() : flags,
+      },
+    };
+  },
 };
 
 export class MigrationError extends Error {}
