@@ -158,8 +158,7 @@ export const TouchControls = ({ pad }: { pad: TouchPadSink }) => {
   const intents = useIntents();
   const hasAbility = useUi((s) => s.ability !== null);
   const prompt = useUi((s) => s.prompt);
-  const toggleSheet = useUi((s) => s.toggleSheet);
-  const toggleJournal = useUi((s) => s.toggleJournal);
+  const toggleCharacter = useUi((s) => s.toggleCharacter);
   const look = useLookDrag(pad);
 
   // Lift every finger when the controls go away (dialogue, shop, pause).
@@ -179,11 +178,9 @@ export const TouchControls = ({ pad }: { pad: TouchPadSink }) => {
       />
       <Stick pad={pad} />
       <div className="touch__top">
-        <button type="button" className="touch__btn touch__btn--small" aria-label="Karta postaci" onClick={toggleSheet}>
+        {/* One button for the whole character screen instead of separate sheet and journal ones (plan §7). */}
+        <button type="button" className="touch__btn touch__btn--small touch__btn--menu" aria-label="Postać" data-testid="touch-character" onClick={() => toggleCharacter("inventory")}>
           ☰
-        </button>
-        <button type="button" className="touch__btn touch__btn--small" aria-label="Dziennik" onClick={toggleJournal}>
-          J
         </button>
         <button type="button" className="touch__btn touch__btn--small" aria-label="Pauza" onClick={() => intents.pause()}>
           II

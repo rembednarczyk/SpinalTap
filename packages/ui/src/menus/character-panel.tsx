@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import {
   CYBERWARE_CATALOG,
   FACTION_IDS,
@@ -28,27 +27,14 @@ const SLOTS = [
   ["arms", "Ramiona"],
 ] as const;
 
-/** Character sheet on Tab: implants, recovered memories, standing with factions. */
+/** Karta tab of the character screen (Tab): implants, recovered memories, standing with factions. */
 export const CharacterPanel = () => {
-  const open = useUi((s) => s.sheetOpen);
-  const toggle = useUi((s) => s.toggleSheet);
   const alias = useUi((s) => s.alias);
   const loadout = useUi((s) => s.cyberware);
   const memories = useUi((s) => s.memories);
   const reputation = useUi((s) => s.reputation);
   const contractsDone = useUi((s) => s.contractsDone);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.code !== "Tab") return;
-      e.preventDefault();
-      if (!e.repeat) toggle();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [toggle]);
-
-  if (!open) return null;
   return (
     <div className="sheet" data-testid="character-panel">
       <h2 className="sheet__name">{alias ?? "Nieznana"}</h2>
@@ -95,7 +81,7 @@ export const CharacterPanel = () => {
         </dl>
       </section>
       <div className="sheet__hint">
-        <kbd>Tab</kbd> zamknij
+        <kbd>Tab</kbd> zamknij · <kbd>I</kbd> ekwipunek · <kbd>J</kbd> dziennik
       </div>
     </div>
   );

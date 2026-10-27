@@ -102,7 +102,7 @@ export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
       <AbilityWidget />
       <WeaponStrip pad={touch} />
       <Minimap />
-      <div className="hud__camera">{cameraMode} · [V] · [X] broń · [1-3] slot · [R] przeładuj · [C] kucanie · [Tab] postać · [J] dziennik</div>
+      <div className="hud__camera">{cameraMode} · [V] · [X] broń · [1-3] slot · [R] przeładuj · [C] kucanie · [I] ekwipunek · [Tab] karta · [J] dziennik</div>
       {prompt && (
         <div className="hud__prompt" data-testid="prompt">
           <kbd>E</kbd> {prompt}

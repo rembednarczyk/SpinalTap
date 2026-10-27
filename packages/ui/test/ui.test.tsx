@@ -26,6 +26,17 @@ const intents = (): UiIntents => ({
   reload: vi.fn(),
   takeLoot: vi.fn(),
   closeLoot: vi.fn(),
+  openCharacterScreen: vi.fn(),
+  closeCharacterScreen: vi.fn(),
+  setPreviewViewport: vi.fn(),
+  rotatePreview: vi.fn(),
+  resetPreview: vi.fn(),
+  equip: vi.fn(),
+  unequip: vi.fn(),
+  useItem: vi.fn(),
+  dropItem: vi.fn(),
+  installMod: vi.fn(),
+  removeMod: vi.fn(),
 });
 
 const mount = (state: Partial<UiState> = {}) => {
@@ -339,9 +350,12 @@ describe("touch controls", () => {
     expect(i.pause).toHaveBeenCalled();
   });
 
-  it("opens the character sheet from the top bar", () => {
+  it("opens the character screen from the top bar, sheet one tab away", () => {
     mountTouch();
-    fireEvent.click(screen.getByRole("button", { name: "Karta postaci" }));
+    fireEvent.click(screen.getByRole("button", { name: "Postać" }));
+    expect(screen.getByTestId("inventory-tab")).toBeTruthy();
+    expect(screen.queryByTestId("touch-controls")).toBeNull();
+    fireEvent.click(screen.getByRole("tab", { name: /Karta/ }));
     expect(screen.getByTestId("character-panel")).toBeTruthy();
   });
 

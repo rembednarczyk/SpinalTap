@@ -7,3 +7,4 @@ export * from "./armor";
 export * from "./loot";
 export * from "./enemies";
 export * from "./appearance";
+export * from "./compare";

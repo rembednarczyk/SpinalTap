@@ -1,3 +1,4 @@
+import type { CyberwareLoadout } from "../cyberware/cyberware";
 import type { AppearanceDescriptor } from "../ports/types";
 import { GARMENT_CATALOG, WEAPON_CATALOG, isGarmentId, isWeaponId } from "./catalog";
 import type { EnemyType } from "./enemies";
@@ -9,8 +10,8 @@ const weaponLook = (inv: InventoryState, uid: string | null): WeaponLook | null 
   return def && isWeaponId(def) ? WEAPON_CATALOG[def].look : null;
 };
 
-/** What the player wears and carries, for `RenderPort.setAppearance` (ADR-0015). */
-export const appearanceOf = (inv: InventoryState, eq: Equipment): AppearanceDescriptor => {
+/** What the player wears and carries (and which implants show), for `RenderPort.setAppearance` (ADR-0015). */
+export const appearanceOf = (inv: InventoryState, eq: Equipment, cyberware: CyberwareLoadout = {}): AppearanceDescriptor => {
   const garments: Partial<Record<GarmentSlot, GarmentLook>> = {};
   for (const slot of ["head", "torso", "legs"] as const) {
     const uid = eq[slot];
@@ -20,7 +21,7 @@ export const appearanceOf = (inv: InventoryState, eq: Equipment): AppearanceDesc
   return {
     weapons: { primary: weaponLook(inv, eq.primary), secondary: weaponLook(inv, eq.secondary), melee: weaponLook(inv, eq.melee), active: eq.active },
     garments,
-    implants: [],
+    implants: (["optics", "arms"] as const).filter((slot) => cyberware[slot] !== undefined),
   };
 };
 

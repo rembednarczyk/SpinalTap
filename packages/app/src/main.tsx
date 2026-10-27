@@ -1,4 +1,4 @@
-import { BabylonRenderer, BrowserInput, PerfProbe, Stage, SynthAudio } from "@seki/engine";
+import { BabylonRenderer, BrowserInput, PerfProbe, PreviewStage, Stage, SynthAudio } from "@seki/engine";
 import { audioSampleManifest } from "./audio-manifest";
 import { loadModelManifest } from "./model-manifest";
 import { STORY_SOURCE } from "@seki/narrative";
@@ -48,17 +48,22 @@ const qualityParam = params.get("quality");
 const quality = qualityParam === "low" || qualityParam === "high" ? qualityParam : settings.quality;
 const stage = new Stage(canvas, { reference, quality });
 const renderer = new BabylonRenderer(stage);
+// The character menu's 3D preview: a second scene on the same engine and canvas (ADR-0015).
+const preview = new PreviewStage(stage.engine, canvas, { quality });
 // Imported character models: models/manifest.json next to the game, ?models=<url> for another
 // cast, ?models=off for the procedural one. The reference frame stays procedural so the NPR
 // snapshot does not depend on downloads; perf tests pass `off` for the same reason.
 const modelsParam = params.get("models");
 if (modelsParam !== "off" && (modelsParam || !reference)) {
-  void loadModelManifest(modelsParam ?? "./models/manifest.json").then((m) => {
-    if (Object.keys(m).length > 0) renderer.setCharacterModels(m);
-  });
   // CC0 weapon models replace the box pistols (see public/weapons/README.md).
   const weapons = new URL("weapons/", document.baseURI);
-  renderer.setWeaponModels({ pistol: new URL("pistol.glb", weapons).href, smg: new URL("smg.glb", weapons).href });
+  const weaponModels = { pistol: new URL("pistol.glb", weapons).href, smg: new URL("smg.glb", weapons).href };
+  void loadModelManifest(modelsParam ?? "./models/manifest.json").then((m) => {
+    if (Object.keys(m).length > 0) renderer.setCharacterModels(m);
+    preview.setModels(m, weaponModels);
+  });
+  renderer.setWeaponModels(weaponModels);
+  preview.setModels({}, weaponModels);
 }
 const input = new BrowserInput(canvas);
 // Recorded CC0 sounds from public/audio, loaded after the first gesture; ?audio=off keeps the
@@ -73,6 +78,7 @@ const session = new GameSession({
   audio,
   persistence: new SavePersistence(new IndexedDbSaveStore()),
   ui,
+  preview,
   story: STORY_SOURCE,
   seed: () => (seedParam ? Number(seedParam) : reference ? 42 : randomSeed()),
   now: () => new Date(),
@@ -96,6 +102,11 @@ const loop = new FixedStepLoop(browserClock, {
   },
   render: (alpha) => {
     session.render(alpha);
+    // The menu covers the game, which stays frozen: draw only the preview (and the menu colour).
+    if (session.characterScreenOpen) {
+      preview.render(stage.engine.getDeltaTime() / 1000);
+      return;
+    }
     renderer.frame(stage.engine.getDeltaTime() / 1000);
     const player = renderer.cameraTargetTransform;
     if (player) audio.setListener({ position: player.position, yaw: player.yaw, speed: player.speed });
@@ -168,6 +179,7 @@ createRoot(uiRoot).render(<GameUi store={ui} intents={session} touch={touchDevic
 const debug = createDebugApi(session, ui, loop, () => probe.sample(), (position, target) => renderer.rig.setReferenceView(position, target),
   () => renderer.dressedCount,
   () => renderer.rig.camera.position.y,
+  () => preview.state,
 );
 window.__seki = debug;
 

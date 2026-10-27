@@ -11,3 +11,4 @@ export * from "./spring-bones";
 export * from "./vrm-meta";
 export * from "./weapon-mount";
 export * from "./loadout";
+export * from "./preview-stage";

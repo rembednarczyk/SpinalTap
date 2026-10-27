@@ -12,7 +12,7 @@ export class RenderSync {
   private cameraTarget: EntityId | null = null;
   /** Last appearance sent per entity; a new one goes out only when it differs (ADR-0015). */
   private readonly looks = new Map<EntityId, AppearanceDescriptor>();
-  private playerLook: { inv: unknown; eq: unknown; look: AppearanceDescriptor } | null = null;
+  private playerLook: { inv: unknown; eq: unknown; cyber: unknown; look: AppearanceDescriptor } | null = null;
 
   constructor(private readonly port: RenderPort) {}
 
@@ -65,9 +65,9 @@ export class RenderSync {
   private appearanceFor(e: Entity, domain: DomainState | undefined): AppearanceDescriptor | null {
     if (e.player && domain) {
       const p = this.playerLook;
-      if (p && p.inv === domain.inventory && p.eq === domain.equipment) return p.look;
-      const look = appearanceOf(domain.inventory, domain.equipment);
-      this.playerLook = { inv: domain.inventory, eq: domain.equipment, look };
+      if (p && p.inv === domain.inventory && p.eq === domain.equipment && p.cyber === domain.character.cyberware) return p.look;
+      const look = appearanceOf(domain.inventory, domain.equipment, domain.character.cyberware);
+      this.playerLook = { inv: domain.inventory, eq: domain.equipment, cyber: domain.character.cyberware, look };
       return look;
     }
     if (e.enemy) return appearanceOfEnemy(ENEMY_TYPES[e.enemy.type]);
