@@ -54,7 +54,7 @@ const ganger = (ids: IdAllocator, spawn: ActorSpawn, tag: string | null, maxHp: 
     faction: "hebi",
     velocity: { x: 0, y: 0, z: 0 },
     health: { current: maxHp, max: maxHp },
-    combatant: { weapon: "gangerSmg", cooldown: 0 },
+    combatant: { weapon: "gangerSmg", cooldown: 0, holstered: false, drawing: 0 },
     ai: { home: spawn.position, aggroRange: 17, attackRange: 15, alerted: false },
   };
   if (tag) e.tag = tag;
@@ -97,7 +97,7 @@ export const createDistrictWorld = (domain: DomainState): { world: World<Entity>
     view: { kind: "heroine" },
     velocity: { x: 0, y: 0, z: 0 },
     health: { current: PLAYER_MAX_HP, max: PLAYER_MAX_HP },
-    combatant: { weapon: "pistol", cooldown: 0 },
+    combatant: { weapon: "pistol", cooldown: 0, holstered: false, drawing: 0 },
   });
 
   world.add({

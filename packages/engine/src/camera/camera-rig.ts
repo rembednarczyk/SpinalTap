@@ -87,6 +87,15 @@ export class CameraRig {
     this.recoil = 1;
   }
 
+  private weaponDrawn = true;
+  /** 0 holstered (viewmodel out of view) .. 1 drawn; eased towards `weaponDrawn`. */
+  private draw = 1;
+
+  /** Holster or draw the FPP weapon; the viewmodel drops out of view or comes back up. */
+  setWeaponDrawn(drawn: boolean): void {
+    this.weaponDrawn = drawn;
+  }
+
   /** Short camera shake, e.g. when the player is hit. */
   shake(amount: number): void {
     this.shakeAmount = Math.min(1, this.shakeAmount + amount);
@@ -140,9 +149,15 @@ export class CameraRig {
     );
 
     const fpp = this.blend < 0.35;
-    this.viewmodel.setEnabled(fpp);
+    this.draw += Math.sign((this.weaponDrawn ? 1 : 0) - this.draw) * Math.min(Math.abs((this.weaponDrawn ? 1 : 0) - this.draw), dt / 0.35);
+    const away = 1 - this.draw * this.draw * (3 - 2 * this.draw);
+    this.viewmodel.setEnabled(fpp && this.draw > 0.02);
+    // Weapon sways with the walk, sinks and tips down when put away.
+    this.viewmodel.position.x = VIEWMODEL.x + Math.sin(t) * 0.012 * bob;
+    this.viewmodel.position.y = VIEWMODEL.y - Math.abs(Math.cos(t)) * 0.01 * bob - away * 0.32;
     this.viewmodel.position.z = VIEWMODEL.z - this.recoil * 0.035;
-    this.viewmodel.rotation.x = -this.recoil * 0.25;
+    this.viewmodel.rotation.x = -this.recoil * 0.25 + away * 0.9;
+    this.viewmodel.rotation.z = Math.sin(t) * 0.02 * bob;
     this.onBodyVisibility(!fpp);
   }
 }

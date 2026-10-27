@@ -9,6 +9,8 @@ import type { EndingId, StoryChoiceId, StoryOption } from "../story/story";
 
 export interface DomainEvents {
   ShotFired: { shooterId: EntityId; from: Vec3; to: Vec3; hitEntity: EntityId | null };
+  /** Weapon holstered (drawn: false) or being drawn (ready after DRAW_TIME). */
+  WeaponToggled: { entityId: EntityId; drawn: boolean };
   DamageDealt: { sourceId: EntityId; targetId: EntityId; amount: number; critical: boolean; headshot: boolean; at: Vec3 };
   EntityKilled: { entityId: EntityId; tag: string | null };
   PlayerDied: { entityId: EntityId };

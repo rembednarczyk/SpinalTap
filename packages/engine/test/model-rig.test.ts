@@ -2,7 +2,7 @@ import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import { describe, expect, it } from "vitest";
 import { Quaternion, Scene, TransformNode, Vector3 } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
-import { animateRig, buildCivilian, buildHeroine } from "../src/renderer/characters";
+import { animateRig, buildCivilian, buildHeroine, raiseWeapon } from "../src/renderer/characters";
 import { HumanoidRetarget, normaliseBoneName } from "../src/renderer/model-rig";
 
 /** VRM 0.x-like T-pose skeleton facing -Z, under a glTF handedness root (mirror + 180°). */
@@ -65,7 +65,8 @@ describe("HumanoidRetarget", () => {
     const rig = buildHeroine(scene, new ToonMaterials(scene), "h");
     const { root, bone } = tPose(scene);
     const retarget = HumanoidRetarget.create(rig, root)!;
-    animateRig(rig, 0, 0.016);
+    raiseWeapon(rig);
+    for (let i = 0; i < 30; i++) animateRig(rig, 0, 0.016);
     retarget.update();
     const shoulder = worldOf(bone("J_Bip_R_UpperArm"));
     const hand = worldOf(bone("J_Bip_R_Hand"));
@@ -78,7 +79,8 @@ describe("HumanoidRetarget", () => {
     const rig = buildHeroine(scene, new ToonMaterials(scene), "h");
     const { root, bone } = tPose(scene);
     const retarget = HumanoidRetarget.create(rig, root)!;
-    animateRig(rig, 0, 0.016);
+    raiseWeapon(rig);
+    for (let i = 0; i < 30; i++) animateRig(rig, 0, 0.016);
     const gun = new TransformNode("gun", scene);
     // Rig forearm axes: -Y runs from the elbow to the fingers.
     expect(retarget.holdInRightHand(gun, new Vector3(0, -0.1, 0))).toBe(true);

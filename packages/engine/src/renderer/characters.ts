@@ -18,8 +18,17 @@ export interface CharacterRig {
   readonly elbowL: TransformNode;
   readonly elbowR: TransformNode;
   readonly meshes: Mesh[];
-  /** The right arm holds a weapon and is posed forward instead of swinging. */
+  /** Carries a pistol: holster at the right hip, drawn into the right hand. */
   readonly aiming: boolean;
+  /** Pistol in the hand and in the holster; the one not in use is scaled to zero. */
+  readonly gunHand: TransformNode | null;
+  readonly gunHip: TransformNode | null;
+  /** 0 holstered .. 1 drawn, eased towards `drawTarget` over DRAW_SECONDS. */
+  drawn: number;
+  drawTarget: boolean;
+  /** 0 low ready (muzzle down, arm loose) .. 1 aimed; raised by a shot, lowered after `aimHold`. */
+  aim: number;
+  aimHold: number;
   /** Arms hang slightly away from the body (radians around Z). */
   readonly armSpread: number;
   /** Left arm held in a fixed pose (shoulder X, elbow X), e.g. holding an umbrella. */
@@ -344,12 +353,51 @@ const skinCharacter = (b: RigBuilder, root: TransformNode, joints: TransformNode
   return out;
 };
 
-const finish = (root: TransformNode, b: RigBuilder, sk: Joints, opts: { aiming: boolean; armSpread: number; leftHold?: [number, number] }): CharacterRig => {
+interface Pistol {
+  readonly hand: TransformNode;
+  readonly hip: TransformNode;
+}
+
+/**
+ * A pistol twice over: one in the right hand (barrel along the forearm, grip towards the palm
+ * side, so it points where the arm aims) and one in a holster on the right hip. Each sits on
+ * its own bone; animation shows one and scales the other to zero.
+ */
+const pistol = (b: RigBuilder, sk: Joints, hipX: number, holster: PresetName, big = 1): Pistol => {
+  const s = sk.s;
+  const hand = b.node("gunHand", sk.elbowR, 0, -0.29 * s, 0.015);
+  const hip = b.node("gunHip", sk.body, hipX, 0.9 * s, 0.025);
+  for (const n of [hand, hip]) {
+    b.box(0.034 * big, 0.17 * big, 0.05 * big, "gun", n, 0, -0.07 * big, 0);
+    b.box(0.03 * big, 0.045 * big, 0.065 * big, "gun", n, 0, 0.005, -0.04 * big);
+  }
+  // Grip faces forward in the holster.
+  hip.rotation.y = Math.PI;
+  b.box(0.05 * big, 0.13 * big, 0.075 * big, holster, sk.body, hipX, 0.86 * s, 0.02);
+  return { hand, hip };
+};
+
+const finish = (
+  root: TransformNode,
+  b: RigBuilder,
+  sk: Joints,
+  opts: { aiming: boolean; armSpread: number; leftHold?: [number, number]; gun?: Pistol },
+): CharacterRig => {
   const { s: _s, ...joints } = sk;
   const order = [joints.body, joints.legL, joints.kneeL, joints.legR, joints.kneeR, joints.head, joints.armL, joints.elbowL, joints.armR, joints.elbowR];
+  if (opts.gun) order.push(opts.gun.hand, opts.gun.hip);
+  const meshes = skinCharacter(b, root, order);
+  // After skinning: a zero scale in the bind pose would make the bind matrix singular.
+  opts.gun?.hip.scaling.setAll(0);
   return {
     root,
-    meshes: skinCharacter(b, root, order),
+    meshes,
+    gunHand: opts.gun?.hand ?? null,
+    gunHip: opts.gun?.hip ?? null,
+    drawn: 1,
+    drawTarget: true,
+    aim: 0,
+    aimHold: 0,
     aiming: opts.aiming,
     armSpread: opts.armSpread,
     leftHold: opts.leftHold ?? null,
@@ -419,9 +467,8 @@ export const buildHeroine = (scene: Scene, materials: ToonMaterials, name: strin
   }
   // Optic line: the cybernetic eye glint.
   b.box(0.012, 0.012, 0.012, "heroineVisor", sk.head, 0.032 * s, 0.014 * s, 0.07 * s);
-  // Pistol in the right hand.
-  b.box(0.035, 0.07, 0.17, "gun", sk.elbowR, 0, -0.33 * s, 0.07);
-  return finish(root, b, sk, { aiming: true, armSpread: 0.07 });
+  const gun = pistol(b, sk, 0.165 * s, "cyberDark");
+  return finish(root, b, sk, { aiming: true, armSpread: 0.07, gun });
 };
 
 export const buildFixer = (scene: Scene, materials: ToonMaterials, name: string): CharacterRig => {
@@ -453,8 +500,8 @@ export const buildGanger = (scene: Scene, materials: ToonMaterials, name: string
   const hood = b.sphere(0.2 * sk.s, "gangerHood", sk.head, 0, 0.015, -0.015, [1, 1.05, 1.08]);
   hood.scaling.z = 1.05;
   b.box(0.13, 0.03, 0.03, "gangerMask", sk.head, 0, -0.02 * sk.s, 0.07 * sk.s);
-  b.box(0.045, 0.085, 0.3, "gun", sk.elbowR, 0, -0.3 * sk.s, 0.1);
-  return finish(root, b, sk, { aiming: true, armSpread: 0.12 });
+  const gun = pistol(b, sk, 0.18 * sk.s, "gangerPants", 1.25);
+  return finish(root, b, sk, { aiming: true, armSpread: 0.12, gun });
 };
 
 /** Babcia Ume: small, long beige coat, grey bun, red umbrella. */
@@ -526,7 +573,7 @@ export const animateRig = (rig: CharacterRig, speed: number, dt: number): void =
     rig.root.rotation.x = -1.45 * ease * ease;
     rig.armL.rotation.z = 0.9 * ease;
     rig.armR.rotation.z = -0.9 * ease;
-    rig.armR.rotation.x = -1.42 * (1 - ease) - 0.2 * ease;
+    rig.armR.rotation.x = -0.4 * (1 - ease) - 0.2 * ease;
     // After lying still for a while the body sinks out of view.
     const sink = Math.max(0, rig.dying - DEATH_FALL - DEATH_LINGER);
     rig.root.position.y = 0.12 * ease - sink * 0.5;
@@ -548,11 +595,8 @@ export const animateRig = (rig: CharacterRig, speed: number, dt: number): void =
     rig.elbowL.rotation.x = -0.18 - Math.max(0, swing) * 0.4;
   }
   rig.armL.rotation.z = rig.armSpread;
-  if (rig.aiming) {
-    rig.armR.rotation.x = -1.42;
-    rig.elbowR.rotation.x = -0.05;
-    rig.armR.rotation.z = 0;
-  } else {
+  if (rig.aiming) poseWeaponArms(rig, swing, amount, dt);
+  else {
     rig.armR.rotation.x = swing * 0.6;
     rig.armR.rotation.z = -rig.armSpread;
     rig.elbowR.rotation.x = -0.18 - Math.max(0, -swing) * 0.4;
@@ -562,6 +606,73 @@ export const animateRig = (rig: CharacterRig, speed: number, dt: number): void =
   rig.flinch = Math.max(0, rig.flinch - dt * 5);
   rig.body.rotation.z = Math.sin(rig.time * 30) * 0.05 * rig.flinch;
   rig.head.rotation.x = -0.25 * rig.flinch;
+};
+
+/** Seconds to draw or holster the pistol (matches the simulation's DRAW_TIME). */
+export const DRAW_SECONDS = 0.4;
+/** Seconds the weapon stays up after a shot before dropping back to low ready. */
+const AIM_HOLD = 1.4;
+
+interface ArmPose {
+  armX: number;
+  armZ: number;
+  elbowX: number;
+}
+
+const mixPose = (a: ArmPose, b: ArmPose, t: number): ArmPose => ({
+  armX: a.armX + (b.armX - a.armX) * t,
+  armZ: a.armZ + (b.armZ - a.armZ) * t,
+  elbowX: a.elbowX + (b.elbowX - a.elbowX) * t,
+});
+
+const smooth = (t: number): number => t * t * (3 - 2 * t);
+
+/**
+ * Right arm of an armed character. Holstered it swings like anyone's; drawn it carries the
+ * pistol at low ready (muzzle down and forward, the arm loose and swaying with the walk) and
+ * comes up to aim after a shot, the left hand joining to support it. Drawing reaches for the
+ * hip, then brings the pistol up; holstering plays the same backwards. The pistol swaps from
+ * holster to hand at the middle of the move.
+ */
+const poseWeaponArms = (rig: CharacterRig, swing: number, amount: number, dt: number): void => {
+  const target = rig.drawTarget ? 1 : 0;
+  rig.drawn += Math.sign(target - rig.drawn) * Math.min(Math.abs(target - rig.drawn), dt / DRAW_SECONDS);
+  rig.aimHold = Math.max(0, rig.aimHold - dt);
+  const aimTarget = rig.aimHold > 0 && rig.drawTarget ? 1 : 0;
+  // Snap up to aim, ease back down.
+  rig.aim += (aimTarget - rig.aim) * Math.min(1, dt * (aimTarget > rig.aim ? 14 : 3));
+
+  const sway = Math.cos(rig.phase) * amount;
+  const free: ArmPose = { armX: swing * 0.6, armZ: -rig.armSpread, elbowX: -0.18 - Math.max(0, -swing) * 0.4 };
+  const reach: ArmPose = { armX: 0.12, armZ: -0.32, elbowX: -0.55 };
+  const lowReady: ArmPose = { armX: -0.32 + swing * 0.22, armZ: -0.06, elbowX: -0.62 + sway * 0.12 };
+  const aimed: ArmPose = { armX: -1.42 + Math.abs(sway) * 0.05, armZ: 0, elbowX: -0.05 };
+  const ready = mixPose(lowReady, aimed, smooth(rig.aim));
+  const d = rig.drawn;
+  const pose = d < 0.5 ? mixPose(free, reach, smooth(d / 0.5)) : mixPose(reach, ready, smooth((d - 0.5) / 0.5));
+  rig.armR.rotation.x = pose.armX;
+  rig.armR.rotation.z = pose.armZ;
+  rig.elbowR.rotation.x = pose.elbowX;
+  rig.gunHand?.scaling.setAll(d >= 0.5 ? 1 : 0);
+  rig.gunHip?.scaling.setAll(d >= 0.5 ? 0 : 1);
+
+  // Support hand under the pistol while aiming.
+  const support = smooth(rig.aim) * (d >= 0.5 ? 1 : 0);
+  if (support > 0 && !rig.leftHold) {
+    rig.armL.rotation.x += (-1.3 - rig.armL.rotation.x) * support;
+    rig.armL.rotation.z += (0.42 - rig.armL.rotation.z) * support;
+    rig.elbowL.rotation.x += (-0.42 - rig.elbowL.rotation.x) * support;
+  }
+};
+
+/** Holsters or draws the pistol (animated). */
+export const setWeaponDrawn = (rig: CharacterRig, drawn: boolean): void => {
+  rig.drawTarget = drawn;
+};
+
+/** Brings the weapon up to aim for a moment, e.g. on a shot. */
+export const raiseWeapon = (rig: CharacterRig): void => {
+  rig.aimHold = AIM_HOLD;
 };
 
 /** Starts the death fall; the renderer disposes the rig when `deathFinished` says so. */

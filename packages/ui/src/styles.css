@@ -453,6 +453,7 @@ kbd {
 .touch__btn--q { right: 112px; bottom: 78px; color: var(--magenta); }
 .touch__btn--h { right: 40px; bottom: 122px; width: 48px; height: 48px; color: var(--ok); }
 .touch__btn--v { right: 172px; bottom: 140px; width: 44px; height: 44px; font-size: 15px; }
+.touch__btn--x { right: 96px; bottom: 150px; width: 44px; height: 44px; font-size: 15px; }
 .touch__top {
   position: absolute;
   top: max(12px, env(safe-area-inset-top, 0px));

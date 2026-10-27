@@ -12,7 +12,7 @@ import { MoonShadow } from "../npr/moon-shadow";
 import { ToonMaterials } from "../npr/toon-material";
 import { Atmosphere, createSplashes, createSteam } from "./atmosphere";
 import { createDressing } from "./dressing";
-import { type CharacterRig, animateRig, deathFinished, startDeath, buildCivilian, buildFixer, buildGanger, buildHeroine, buildRipperdoc } from "./characters";
+import { type CharacterRig, animateRig, deathFinished, raiseWeapon, setWeaponDrawn, startDeath, buildCivilian, buildFixer, buildGanger, buildHeroine, buildRipperdoc } from "./characters";
 import { type CharacterModelKey, type CharacterModelManifest, type ModelInstance, ModelLibrary } from "./model-library";
 import { HumanoidRetarget } from "./model-rig";
 import { SpringBones, humanoidColliders } from "./spring-bones";
@@ -25,6 +25,8 @@ interface Dressed {
   readonly retarget: HumanoidRetarget;
   /** Hair and cloth secondary motion, if the model has such bones. */
   readonly springs: SpringBones | null;
+  /** Pistol in the model's hand, shown while the rig has it drawn. */
+  gun: AbstractMesh | null;
 }
 
 const modelKeyOf = (view: ViewDescriptor): CharacterModelKey | null => {
@@ -189,6 +191,8 @@ export class BabylonRenderer implements RenderPort {
     switch (effect.kind) {
       case "muzzle-flash": {
         const own = effect.shooterId === this.cameraTarget;
+        const shooter = this.entities.get(effect.shooterId);
+        if (shooter?.kind === "character") raiseWeapon(shooter.rig);
         const from = (own ? this.rig.muzzlePosition() : null) ?? v3(effect.from);
         this.effects.muzzleFlash(from, v3(effect.to));
         if (own) this.rig.kick();
@@ -209,6 +213,12 @@ export class BabylonRenderer implements RenderPort {
       case "heal":
         this.grading.pulse();
         return;
+      case "weapon": {
+        const e = this.entities.get(effect.entityId);
+        if (e?.kind === "character") setWeaponDrawn(e.rig, effect.drawn);
+        if (effect.entityId === this.cameraTarget) this.rig.setWeaponDrawn(effect.drawn);
+        return;
+      }
       case "flinch": {
         const e = this.entities.get(effect.entityId);
         if (e?.kind === "character") e.rig.flinch = 1;
@@ -230,9 +240,10 @@ export class BabylonRenderer implements RenderPort {
         this.dying.splice(i, 1);
       }
     }
-    for (const d of this.dressed.values()) {
+    for (const [rig, d] of this.dressed) {
       d.retarget.update();
       d.springs?.update(dt);
+      d.gun?.setEnabled(rig.drawn >= 0.5);
     }
     const target = this.cameraTarget === null ? undefined : this.entities.get(this.cameraTarget);
     this.rig.update(target?.kind === "character" ? target.transform : null, dt);
@@ -290,11 +301,12 @@ export class BabylonRenderer implements RenderPort {
           return model.dispose();
         }
         for (const m of rig.meshes) m.setEnabled(false);
-        if (rig.aiming) this.arm(model, retarget);
         for (const m of model.meshes) if (m.getTotalVertices() > 0) this.shadow.addCaster(m);
         const prefix = `${name}-m-`;
         const springs = SpringBones.create(model.root, { vrm: model.springs, prefix, colliders: humanoidColliders(model.root, prefix) });
-        this.dressed.set(rig, { model, retarget, springs });
+        const dressed: Dressed = { model, retarget, springs, gun: null };
+        this.dressed.set(rig, dressed);
+        if (rig.aiming) dressed.gun = this.arm(model, retarget);
       })
       .catch((err: unknown) => {
         this.loadingModels.delete(rig);
@@ -303,17 +315,18 @@ export class BabylonRenderer implements RenderPort {
   }
 
   /** The procedural gun is baked into the hidden rig mesh; a dressed shooter gets its own. */
-  private arm(model: ModelInstance, retarget: HumanoidRetarget): void {
+  private arm(model: ModelInstance, retarget: HumanoidRetarget): AbstractMesh | null {
     const gun = MeshBuilder.CreateBox(`${model.root.name}-gun`, { width: 0.035, height: 0.2, depth: 0.06 }, this.stage.scene);
     gun.material = this.materials.get("gun");
     gun.isPickable = false;
     applyOutline(gun);
     if (!retarget.holdInRightHand(gun, new Vector3(0, -0.1, 0.03))) {
       gun.dispose();
-      return;
+      return null;
     }
     model.meshes.push(gun);
     this.shadow.addCaster(gun);
+    return gun;
   }
 
   private disposeRig(rig: CharacterRig): void {

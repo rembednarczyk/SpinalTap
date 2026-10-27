@@ -38,6 +38,7 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
       render.playEffect({ kind: "muzzle-flash", shooterId: e.shooterId, from: e.from, to: e.to });
       audio.play(isPlayer(e.shooterId) ? "shot" : "enemy-shot");
     }),
+    bus.on("WeaponToggled", (e) => render.playEffect({ kind: "weapon", entityId: e.entityId, drawn: e.drawn })),
     bus.on("DamageDealt", (e) => {
       render.playEffect({ kind: "hit-spark", at: e.at, critical: e.critical });
       render.playEffect({ kind: "flinch", entityId: e.targetId });

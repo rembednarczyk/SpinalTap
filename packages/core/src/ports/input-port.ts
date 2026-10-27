@@ -18,6 +18,8 @@ export interface InputFrame {
   readonly ability: boolean;
   /** Edge-triggered: use a medkit. */
   readonly useItem: boolean;
+  /** Edge-triggered: holster or draw the weapon. */
+  readonly toggleWeapon: boolean;
 }
 
 export const EMPTY_INPUT: InputFrame = Object.freeze({
@@ -31,6 +33,7 @@ export const EMPTY_INPUT: InputFrame = Object.freeze({
   toggleCamera: false,
   ability: false,
   useItem: false,
+  toggleWeapon: false,
 });
 
 export interface InputPort {

@@ -54,7 +54,7 @@ export const Hud = () => {
         </div>
       )}
       <AbilityWidget />
-      <div className="hud__camera">{cameraMode} · [V] · [Tab] postać</div>
+      <div className="hud__camera">{cameraMode} · [V] · [X] broń · [Tab] postać</div>
       {prompt && (
         <div className="hud__prompt" data-testid="prompt">
           <kbd>E</kbd> {prompt}

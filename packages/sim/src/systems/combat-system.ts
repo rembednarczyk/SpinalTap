@@ -1,4 +1,4 @@
-import { WEAPONS, applyDamage, directionFromAngles, resolveAttack, type RandomPort } from "@seki/core";
+import { DRAW_TIME, WEAPONS, applyDamage, directionFromAngles, resolveAttack, type RandomPort } from "@seki/core";
 import type { Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { aimOrigin, hitscan, type HitscanResult } from "../world/hitscan";
@@ -60,15 +60,31 @@ const alertNearbyGangers = (ctx: SimContext, at: { x: number; z: number }): void
   }
 };
 
-/** Ticks weapon cooldowns and handles the player's trigger. */
+/**
+ * Ticks weapon cooldowns and handles the player's weapon: holster / draw (pulling the trigger
+ * with the weapon put away draws it) and the trigger itself.
+ */
 export const combatSystem: System = {
   name: "combat",
   run(ctx) {
     const enemyDt = ctx.dt * worldTimeScale(ctx);
-    for (const e of ctx.world.with("combatant")) e.combatant.cooldown = Math.max(0, e.combatant.cooldown - (e.player ? ctx.dt : enemyDt));
-    if (ctx.session.dialogueActive || ctx.session.gameOver || !ctx.input.fire) return;
+    for (const e of ctx.world.with("combatant")) {
+      const dt = e.player ? ctx.dt : enemyDt;
+      e.combatant.cooldown = Math.max(0, e.combatant.cooldown - dt);
+      e.combatant.drawing = Math.max(0, e.combatant.drawing - dt);
+    }
+    if (ctx.session.dialogueActive || ctx.session.gameOver) return;
     for (const p of ctx.world.with("player", "combatant")) {
-      if (p.combatant.cooldown > 0) continue;
+      const c = p.combatant;
+      if (ctx.input.toggleWeapon || (c.holstered && ctx.input.fire)) {
+        c.holstered = !c.holstered;
+        c.drawing = c.holstered ? 0 : DRAW_TIME;
+        ctx.bus.emit("WeaponToggled", { entityId: p.id, drawn: !c.holstered });
+      }
+    }
+    if (!ctx.input.fire) return;
+    for (const p of ctx.world.with("player", "combatant")) {
+      if (p.combatant.cooldown > 0 || p.combatant.holstered || p.combatant.drawing > 0) continue;
       const stats = statsFor(ctx.state.domain.character);
       fireShot(
         ctx,

@@ -45,6 +45,9 @@ export const mitigate = (raw: number, armor: number): number =>
 /** Extra multiplier for hits in the head zone. */
 export const HEADSHOT_MULTIPLIER = 1.6;
 
+/** Seconds from starting to draw a holstered weapon to the first allowed shot. */
+export const DRAW_TIME = 0.4;
+
 export const resolveAttack = (
   attacker: AttackerProfile,
   defender: DefenderProfile,

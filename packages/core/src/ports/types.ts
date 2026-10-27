@@ -40,7 +40,9 @@ export type EffectDescriptor =
   | { readonly kind: "overdrive"; readonly active: boolean }
   | { readonly kind: "heal" }
   /** The entity was hit: short recoil of the body. */
-  | { readonly kind: "flinch"; readonly entityId: EntityId };
+  | { readonly kind: "flinch"; readonly entityId: EntityId }
+  /** The entity holstered its weapon or started drawing it. */
+  | { readonly kind: "weapon"; readonly entityId: EntityId; readonly drawn: boolean };
 
 export type AudioCue =
   | "shot"

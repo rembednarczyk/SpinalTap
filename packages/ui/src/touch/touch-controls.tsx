@@ -163,6 +163,7 @@ export const TouchControls = ({ pad }: { pad: TouchPadSink }) => {
         {hasAbility && <PadButtonView pad={pad} button="ability" label="Q" hint="Zdolność" className="touch__btn--q" />}
         <PadButtonView pad={pad} button="useItem" label="+" hint="Apteczka" className="touch__btn--h" />
         <PadButtonView pad={pad} button="toggleCamera" label="V" hint="Kamera FPP/TPP" className="touch__btn--v" />
+        <PadButtonView pad={pad} button="toggleWeapon" label="X" hint="Schowaj lub wyciągnij broń" className="touch__btn--x" />
       </div>
     </div>
   );

@@ -10,6 +10,10 @@ export interface Combatant {
   weapon: "pistol" | "gangerSmg";
   /** Seconds until the next shot is allowed. */
   cooldown: number;
+  /** Weapon put away: no shots until drawn again. Presentation-only otherwise; not saved. */
+  holstered: boolean;
+  /** Seconds left of the draw; shots wait for it. */
+  drawing: number;
 }
 
 export interface GangerAi {
