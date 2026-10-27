@@ -19,6 +19,8 @@ export interface InputFrame {
   readonly aim: boolean;
   /** Edge-triggered: true only on the tick the button went down. */
   readonly interact: boolean;
+  /** Edge-triggered: jump (ADR-0021). The simulation buffers it briefly, so an early press still counts. */
+  readonly jump: boolean;
   /** Edge-triggered. */
   readonly toggleCamera: boolean;
   /** Edge-triggered: use the installed active cyberware ability. */
@@ -45,6 +47,7 @@ export const EMPTY_INPUT: InputFrame = Object.freeze({
   fire: false,
   aim: false,
   interact: false,
+  jump: false,
   toggleCamera: false,
   ability: false,
   useItem: false,

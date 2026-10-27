@@ -160,11 +160,13 @@ export interface Interactable {
    * "pickup": taken on the spot (a contract crate); no conversation opens. "loot": a bag;
    * `dialogueId` is then the container key.
    */
-  readonly kind: "dialogue" | "shop" | "pickup" | "loot" | "elevator";
+  readonly kind: "dialogue" | "shop" | "pickup" | "loot" | "elevator" | "ladder";
   /** For a shop: which one (the clinic when absent). `dialogueId` is then the shopkeeper's ink knot. */
   readonly shopId?: ShopId;
   /** For an elevator call button: which elevator and the level the button stands on. */
   readonly elevator?: { readonly key: string; readonly level: number };
+  /** For a ladder's grab point: which ladder and which end (ADR-0021). */
+  readonly ladder?: { readonly key: string; readonly end: "bottom" | "top" };
   readonly dialogueId: string;
   readonly prompt: string;
   readonly radius: number;
@@ -196,6 +198,36 @@ export interface ElevatorGate {
 }
 
 /**
+ * A fire escape ladder (ADR-0021): climbed, not walked on. The climber hangs at (`x`, `z`)
+ * facing `yaw` (towards the wall), feet between `bottom` and `top`, and steps off at the top
+ * onto `exit`.
+ */
+export interface LadderDef {
+  readonly key: string;
+  readonly x: number;
+  readonly z: number;
+  readonly yaw: number;
+  readonly bottom: number;
+  readonly top: number;
+  readonly exit: Vec3;
+}
+
+/** Jump timers of the player (ADR-0021). Transient like the posture: not saved. */
+export interface JumpState {
+  /** Seconds left in which a jump still counts after leaving the ground without one (coyote time). */
+  coyote: number;
+  /** Seconds left of a press made too early (in the air), so it fires on landing (jump buffer). */
+  buffer: number;
+}
+
+/** On a ladder (ADR-0021). Transient; a game saved on a ladder grabs it again on load. */
+export interface Climbing {
+  readonly ladder: string;
+  /** Climbing speed this step, m/s, positive up (for the presentation). */
+  speed: number;
+}
+
+/**
  * One ECS entity. Components are optional fields; systems query the ones they need.
  * Hot-path components are mutated in place for performance (see ADR-0002).
  */
@@ -218,8 +250,15 @@ export interface Entity {
   solid?: Aabb;
   /** Sloped top of the solid (stairs, ramps, stair railings). */
   slope?: Slope;
-  /** Vertical speed while falling, m/s (negative down). Transient, not saved. */
+  /** Vertical speed while airborne (a fall, or a jump while positive), m/s. Transient, not saved. */
   fall?: number;
+  /** Highest feet height of the current time in the air, for fall damage (ADR-0021). Transient. */
+  airPeak?: number;
+  /** Seconds left of the slow walk after a hard landing (ADR-0021). Transient. */
+  landing?: number;
+  jump?: JumpState;
+  climb?: Climbing;
+  ladder?: LadderDef;
   elevator?: Elevator;
   gate?: ElevatorGate;
   body?: CharacterBody;

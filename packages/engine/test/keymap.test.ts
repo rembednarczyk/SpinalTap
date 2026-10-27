@@ -15,6 +15,11 @@ describe("keyboard and mouse mapping", () => {
     expect(f).toMatchObject({ lookYaw: 0.1, lookPitch: -0.2, fire: true, interact: false, toggleCamera: true });
   });
 
+  it("jumps on the Space edge (ADR-0021)", () => {
+    expect(mapKeyboardMouse(keys(["Space"], ["Space"]), { yaw: 0, pitch: 0 }).jump).toBe(true);
+    expect(mapKeyboardMouse(keys(["Space"]), { yaw: 0, pitch: 0 }).jump).toBe(false);
+  });
+
   it("crouches while C is held", () => {
     expect(mapKeyboardMouse(keys(["KeyC"]), { yaw: 0, pitch: 0 }).crouch).toBe(true);
     expect(mapKeyboardMouse(keys([], ["KeyC"]), { yaw: 0, pitch: 0 }).crouch).toBe(false);
@@ -46,10 +51,16 @@ describe("gamepad mapping", () => {
   it("scales look by dt and maps buttons", () => {
     const buttons: boolean[] = [];
     buttons[7] = true;
-    const pressed: boolean[] = [true, false, false, true];
+    const pressed: boolean[] = [false, false, true, false, false, false, false, false, true];
     const f = mapGamepad(pad([0, 0, 1, 0], buttons, pressed), 0.5);
     expect(f.lookYaw).toBeCloseTo(1.4);
-    expect(f).toMatchObject({ fire: true, interact: true, toggleCamera: true, sprint: false });
+    expect(f).toMatchObject({ fire: true, interact: true, toggleCamera: true, sprint: false, jump: false });
+  });
+
+  it("jumps on A, heals on Y (ADR-0021)", () => {
+    expect(mapGamepad(pad([0, 0, 0, 0], [], [true]), 1 / 60)).toMatchObject({ jump: true, interact: false });
+    expect(mapGamepad(pad([0, 0, 0, 0], [], [false, false, false, true]), 1 / 60)).toMatchObject({ useItem: true, toggleCamera: false });
+    expect(mergeFrames(EMPTY_INPUT, { ...EMPTY_INPUT, jump: true }).jump).toBe(true);
   });
 
   it("crouches while B is held", () => {

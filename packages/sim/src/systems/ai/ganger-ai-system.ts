@@ -13,6 +13,8 @@ import { startSwing } from "../melee-system";
 import { knockbackVelocity } from "../../world/knockback";
 import { readyToFire } from "../../world/player-weapon";
 import { GANGER_TREE } from "./ganger-tree";
+import { WORLD_NAV } from "../../content/world-map";
+import { LEVEL_GAP, firingPosition, routeAcrossLevels } from "../../world/nav";
 
 export const GANGER_SPEED = 3.1;
 /** A ganger with a melee weapon runs at whoever it fights to close the distance (ADR-0019). */
@@ -21,6 +23,11 @@ export const MELEE_CHASE_SPEED = 3.9;
 export const MELEE_REST = 0.45;
 const MELEE_REST_JITTER = 0.4;
 const TURN_RATE = 6;
+/** A melee fighter reaches no higher or lower than this (a brawler under the footbridge cannot hit it). */
+const MELEE_REACH_Y = 1.2;
+/** Knee height of the "can I walk straight there" test above street level (ADR-0021). */
+const WALK_TEST_HEIGHT = 0.6;
+
 /** A gang that wants the player dead looks for them harder. */
 export const HOSTILE_AGGRO_MULTIPLIER = 1.5;
 
@@ -59,7 +66,12 @@ class GangerAgent {
   SeesPlayer = (): boolean => this.seen.visible;
   PlayerAlive = (): boolean => this.seen.player !== null;
   IsAlerted = (): boolean => this.self?.ai.alerted ?? false;
-  PlayerInAttackRange = (): boolean => !!this.self && this.seen.distance <= this.self.ai.attackRange;
+  PlayerInAttackRange = (): boolean => {
+    const { self, seen } = this;
+    if (!self || !seen.player || seen.distance > self.ai.attackRange) return false;
+    // A blade does not reach a floor above or below.
+    return !self.combatant?.stats?.melee || Math.abs(seen.player.position.y - self.position.y) <= MELEE_REACH_Y;
+  };
   HasVictim = (): boolean => this.target.victim !== null;
   VictimInAttackRange = (): boolean => !!this.self && this.target.visible && this.target.distance <= this.self.ai.attackRange;
 
@@ -108,10 +120,39 @@ class GangerAgent {
   ChasePlayer = (): State => {
     const { self, seen } = this;
     if (!self || !seen.player) return State.FAILED;
-    this.moveTowards(seen.player.position.x, seen.player.position.z);
+    this.pursue(seen.player);
     this.face(seen.player);
     return State.SUCCEEDED;
   };
+
+  /**
+   * Goes after a target (ADR-0021). On the street with the target on the street it walks
+   * straight at it, as before. With the target on another level, or up on a deck with
+   * something in the way, it takes the stairs through the district's transition graph; a
+   * gunner instead heads for the nearest point that gives it a shot, when that is closer than
+   * the way up. With neither (a roof reached by a ladder, seen from nowhere) it goes back to
+   * its post rather than wait under the target's feet. Lifts and ladders are for the player.
+   */
+  private pursue(target: Entity): void {
+    const { ctx, self } = this;
+    if (!ctx || !self) return;
+    const from = self.position;
+    const to = target.position;
+    const apart = Math.abs(to.y - from.y) > LEVEL_GAP;
+    const raised = from.y > LEVEL_GAP || to.y > LEVEL_GAP;
+    const knee = (p: { x: number; y: number; z: number }) => ({ x: p.x, y: p.y + WALK_TEST_HEIGHT, z: p.z });
+    if (!apart && (!raised || lineOfSight(ctx.world, knee(from), knee(to)))) {
+      this.moveTowards(to.x, to.z);
+      return;
+    }
+    const route = routeAcrossLevels(ctx.world, WORLD_NAV, from, to);
+    const shot = self.combatant?.stats?.melee || !apart ? null : firingPosition(ctx.world, WORLD_NAV, from, to, self.ai.attackRange);
+    const way = shot && (!route || shot.cost < route.cost) ? shot : route;
+    if (way && Math.hypot(way.next.x - from.x, way.next.z - from.z) < 0.05) self.velocity = { x: 0, y: 0, z: 0 };
+    else if (way) this.moveTowards(way.next.x, way.next.z);
+    else if (apart) this.moveTowards(self.ai.home.x, self.ai.home.z);
+    else this.moveTowards(to.x, to.z);
+  }
 
   /** A friendly ganger that is not provoked stops and keeps an eye on the player. */
   WatchPlayer = (): State => {

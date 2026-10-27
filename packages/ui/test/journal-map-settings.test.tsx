@@ -128,6 +128,29 @@ describe("minimap", () => {
     expect(screen.queryByTestId("minimap-marker-target")).toBeNull();
   });
 
+  it("shows stairs, lifts and ladders, and the player's height up on a level (ADR-0021)", () => {
+    const levels: MapVm = {
+      ...map,
+      decks: [{ x: 10, z: 0, w: 20, d: 6 }],
+      links: [
+        { kind: "stairs", x: 2, z: 1 },
+        { kind: "lift", x: 4, z: 1 },
+        { kind: "ladder", x: 6, z: 1 },
+      ],
+    };
+    const { store } = mount({ screen: "playing", map: levels, mapPlayer: { x: 0, z: 0, yaw: 0 } });
+    const root = screen.getByTestId("minimap");
+    expect(root.querySelectorAll(".minimap__deck")).toHaveLength(1);
+    expect(screen.getByTestId("minimap-link-stairs").getAttribute("transform")).toBe("translate(2.00 -1.00)");
+    expect(screen.getByTestId("minimap-link-lift")).toBeTruthy();
+    expect(screen.getByTestId("minimap-link-ladder")).toBeTruthy();
+    expect(screen.queryByTestId("minimap-level")).toBeNull();
+    expect(root.classList.contains("minimap--upper")).toBe(false);
+    act(() => patchUi(store, { mapPlayer: { x: 0, z: 0, yaw: 0, level: 10 } }));
+    expect(screen.getByTestId("minimap-level").textContent).toContain("10 m");
+    expect(screen.getByTestId("minimap").classList.contains("minimap--upper")).toBe(true);
+  });
+
   it("pins far markers to the edge in their direction", () => {
     const near = markerOffset({ x: 3, z: 4 }, { x: 0, z: 0 });
     expect(near).toEqual({ x: 3, y: -4, edge: false });

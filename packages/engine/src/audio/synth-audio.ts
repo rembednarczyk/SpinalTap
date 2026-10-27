@@ -206,6 +206,27 @@ export const CUES: Readonly<Record<AudioCue, Recipe>> = {
       { type: "sine", freq: 2850, dur: 0.35, gain: 0.08 },
     ],
   },
+  // Jumps and landings (ADR-0021): a short scuff on take-off, a soft thud, a heavy one with a
+  // body-fall low end when it was a long drop.
+  jump: {
+    send: 0.05,
+    voices: [{ type: "noise", freq: 0, dur: 0.07, gain: 0.12, attack: 0.005, filter: 1800, filterTo: 900, filterType: "lowpass" }],
+  },
+  land: {
+    send: 0.1,
+    voices: [
+      { type: "noise", freq: 0, dur: 0.06, gain: 0.18, attack: 0.002, filter: 1400, filterTo: 500, filterType: "lowpass" },
+      { type: "sine", freq: 120, to: 60, dur: 0.1, gain: 0.16 },
+    ],
+  },
+  "land-hard": {
+    send: 0.25,
+    voices: [
+      { type: "noise", freq: 0, dur: 0.12, gain: 0.32, attack: 0.002, filter: 1600, filterTo: 300, filterType: "lowpass" },
+      { type: "sine", freq: 90, to: 38, dur: 0.24, gain: 0.34 },
+      { type: "triangle", freq: 260, to: 140, dur: 0.08, gain: 0.08 },
+    ],
+  },
 };
 
 export interface SynthAudioOptions {

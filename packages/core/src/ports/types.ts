@@ -27,6 +27,14 @@ export interface Transform {
   readonly aimZoom?: number;
   /** 1 while guarding with a melee weapon. Absent means 0. */
   readonly guard?: number;
+  /**
+   * Vertical speed in m/s while airborne (a jump or a fall, ADR-0021); absent on the ground.
+   * The rig tucks the legs on the way up, reaches for the ground on the way down and dips
+   * on landing.
+   */
+  readonly air?: number;
+  /** Climbing speed in m/s (positive up) while on a ladder (ADR-0021); absent otherwise. */
+  readonly climb?: number;
 }
 
 /** What the presentation layer should build for an entity. Pure data, engine-agnostic. */
@@ -40,6 +48,11 @@ export type ViewDescriptor =
       readonly material: "concrete" | "metal" | "asphalt" | "glass";
       /** A ramp, stairs or a stair railing: the top slopes instead of being flat (ADR-0020). */
       readonly slope?: Slope;
+      /**
+       * Drawn as a ladder of this many rungs (ADR-0021): two side rails along the block's
+       * height and rungs across its wider horizontal side. Not walkable; the ladder is climbed.
+       */
+      readonly rungs?: number;
     }
   | {
       readonly kind: "neon";
@@ -133,4 +146,8 @@ export type AudioCue =
   // Melee (ADR-0019).
   | "swing"
   | "block"
-  | "parry";
+  | "parry"
+  // Jumps, landings and ladders (ADR-0021).
+  | "jump"
+  | "land"
+  | "land-hard";

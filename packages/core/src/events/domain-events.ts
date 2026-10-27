@@ -89,6 +89,17 @@ export interface DomainEvents {
   AttackBlocked: { attackerId: EntityId; defenderId: EntityId; parried: boolean; kind: "melee" | "projectile"; at: Vec3 };
   /** Knocked off balance: whatever it was doing (a swing, a guard) is cut short. */
   Staggered: { entityId: EntityId; duration: number; cause: "hit" | "parry" };
+  // Jumps, falls and ladders (ADR-0021).
+  /** Left the ground on a jump. */
+  Jumped: { entityId: EntityId; at: Vec3 };
+  /**
+   * Back on the ground after a jump or a fall from `drop` metres (from the highest point).
+   * `hard` landings slow the character for a moment; `damage` is the fall damage, 0 below the
+   * threshold. The damage itself also goes out as `DamageDealt` (zone "leg", source = target).
+   */
+  Landed: { entityId: EntityId; drop: number; hard: boolean; damage: number; at: Vec3 };
+  /** Got on (`on`) or off a ladder. */
+  LadderClimb: { entityId: EntityId; ladder: string; on: boolean };
   LootDropped: { containerKey: string; at: Vec3; best: Rarity | null };
   /** `lines` were moved to the player; `left` lines stayed in the container. */
   LootTaken: { containerKey: string; lines: readonly LootLine[]; left: number };

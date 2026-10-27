@@ -1,6 +1,24 @@
 import { SeededRandom } from "../rng/seeded-random";
-import type { ContractSiteId, Vec3 } from "@seki/core";
-import { type ActorDef, type BlockMaterial, type Rect, type StaticProp, building, crate, deck, lamp, liftParts, neon, rail, slab, stairRail, stairs, v } from "./builders";
+import type { ContractSiteId, LootLine, Vec3 } from "@seki/core";
+import {
+  type ActorDef,
+  type BlockMaterial,
+  type NavGraph,
+  type Rect,
+  type StaticProp,
+  building,
+  crate,
+  deck,
+  ladderParts,
+  lamp,
+  liftParts,
+  neon,
+  rail,
+  slab,
+  stairRail,
+  stairs,
+  v,
+} from "./builders";
 
 /**
  * Ulica Kanałowa and Targ pod estakadą: the M2 districts north-east of Shinsekai 7.
@@ -78,6 +96,28 @@ const footbridge = (): StaticProp[] => {
   ];
 };
 
+/**
+ * Level graph of the street (ADR-0021): the road on both sides of the footbridge, the foot and
+ * the head of each flight, the north end of the walkway.
+ */
+export const KANAL_NAV: NavGraph = {
+  nodes: [
+    { id: "kanal-street-w", at: v(40, 0, 78) },
+    { id: "kanal-w-foot", at: v(43.4, 0, 75) },
+    { id: "kanal-w-top", at: v(52.6, FOOTBRIDGE_TOP, 75) },
+    { id: "kanal-bridge-n", at: v(53, FOOTBRIDGE_TOP, 81) },
+    { id: "kanal-e-foot", at: v(62.6, 0, 81) },
+    { id: "kanal-street-e", at: v(66, 0, 78) },
+  ],
+  edges: [
+    { a: "kanal-street-w", b: "kanal-w-foot" },
+    { a: "kanal-w-foot", b: "kanal-w-top", via: { minX: 43.2, maxX: 52.6, minZ: 74.2, maxZ: 75.8 } },
+    { a: "kanal-w-top", b: "kanal-bridge-n" },
+    { a: "kanal-bridge-n", b: "kanal-e-foot", via: { minX: 53.4, maxX: 62.8, minZ: 80.2, maxZ: 81.8 } },
+    { a: "kanal-e-foot", b: "kanal-street-e" },
+  ],
+};
+
 export const KANAL_PROPS: readonly StaticProp[] = [
   slab(29, -0.1, 71, v(74, 0.2, 40), "asphalt"),
   // Strip of road under the market gate, a hair lower than the market's own ground.
@@ -120,13 +160,81 @@ const southStalls = (): StaticProp[] => {
   return out;
 };
 
+// Evaluated here, in the order the table used to: the generator's sequence stays the same.
+const SOUTH_ROW = facadeRow(rng, 68, 114, 61, 6, [8, 16], [10, 16]);
+
+/** The south row's facade at `x`: its extent along X and its roof height. */
+const southBlock = (x: number): { x0: number; x1: number; top: number } => {
+  for (const p of SOUTH_ROW) {
+    if (p.view.kind === "block" && Math.abs(p.center.x - x) <= p.view.size.x / 2) {
+      return { x0: p.center.x - p.view.size.x / 2, x1: p.center.x + p.view.size.x / 2, top: p.view.size.y };
+    }
+  }
+  throw new Error(`no facade at x = ${x}`);
+};
+
+/** Height of the fire escape balcony on the market face of the south row. */
+export const BALCONY_TOP = 4.5;
+/** North face of the south row (the market side). */
+const ROW_FACE = 64;
+/** Climber's centre in front of a wall. */
+const HANG = 0.4;
+/** The three roofs of the south row (ADR-0021): low glass by the gate, concrete, glass to the east. */
+const ROOF_WEST = southBlock(70);
+const ROOF_MID = southBlock(88);
+const ROOF_EAST = southBlock(105);
+export const ROOF_WEST_TOP = ROOF_WEST.top;
+export const ROOF_MID_TOP = ROOF_MID.top;
+
+/**
+ * Fire escape on the market face of the south row (ADR-0021): a ladder from the market up to a
+ * balcony, a second one from the balcony onto the low roof, and a third from there onto the
+ * concrete roof next door, where Hebi keep a stash. Parapets on the outer (south) edges keep
+ * the roofs inside the map; the market side is open, and a drop from there hurts.
+ */
+const fireEscape = (): StaticProp[] => {
+  const west = ROOF_WEST.top;
+  const mid = ROOF_MID.top;
+  const midX0 = ROOF_MID.x0;
+  return [
+    deck(68.2, 72.6, ROW_FACE, ROW_FACE + 1.3, BALCONY_TOP, 0.2, "metal"),
+    rail(68.2, 72.6, ROW_FACE + 1.1, ROW_FACE + 1.3, BALCONY_TOP),
+    ...ladderParts({ key: "targ-escape-1", x: 73.2, z: ROW_FACE + HANG, yaw: Math.PI, bottom: 0, top: BALCONY_TOP, exit: v(72, BALCONY_TOP, ROW_FACE + 0.65) }),
+    ...ladderParts({ key: "targ-escape-2", x: 69.2, z: ROW_FACE + HANG, yaw: Math.PI, bottom: BALCONY_TOP, top: west, exit: v(69.2, west, ROW_FACE - 0.7) }),
+    ...ladderParts({ key: "targ-escape-3", x: midX0 - HANG, z: 60.5, yaw: Math.PI / 2, bottom: west, top: mid, exit: v(midX0 + 0.8, mid, 60.5) }),
+    rail(ROOF_WEST.x0, ROOF_WEST.x1, 58, 58.2, west),
+    rail(ROOF_MID.x0, ROOF_MID.x1, 58, 58.2, mid),
+    rail(ROOF_EAST.x0, ROOF_EAST.x1, 58, 58.2, ROOF_EAST.top),
+    // Hebi's rooftop stash: a crate to hide behind, the bag lies next to it (TARG_ROOF_STASH).
+    deck(91.9, 93.1, 60, 60.8, mid + 0.9, 0.9, "metal"),
+  ];
+};
+
+/** A stash on a roof (ADR-0021): a bag placed once, when the player first comes near. */
+export interface RoofStash {
+  readonly key: string;
+  readonly at: Vec3;
+  readonly lines: readonly LootLine[];
+}
+
+export const TARG_ROOF_STASH: RoofStash = {
+  key: "stash:targ-roof",
+  at: v(91.2, ROOF_MID_TOP, 60.4),
+  lines: [
+    { kind: "eddies", qty: 180 },
+    { kind: "ammo", ammo: "556", qty: 30 },
+    { kind: "stack", item: "medkit", qty: 1 },
+    { kind: "item", item: "holo_sight", rarity: "uncommon", qty: 1 },
+  ],
+};
+
 export const TARG_SOUTH_PROPS: readonly StaticProp[] = [
   slab(96, -0.1, 70, v(60, 0.2, 28), "asphalt"),
   // Outer walls; the gap in the west wall (Z ∈ [74, 82]) is the gate from Ulica Kanałowa.
   building(67, 65, 2, 8, 18, "metal"),
   building(96, 57, 60, 6, 2, "metal"),
   building(125, 70, 2, 8, 28, "metal"),
-  ...facadeRow(rng, 68, 114, 61, 6, [8, 16], [10, 16]),
+  ...SOUTH_ROW,
   ...facadeRow(rng, 114, 124, 64, 12, [12, 20], [10, 10]),
   ...facadeRow(rng, 114, 124, 77, 14, [12, 20], [10, 10]),
   ...southStalls(),
@@ -137,6 +245,7 @@ export const TARG_SOUTH_PROPS: readonly StaticProp[] = [
   neon(OYAJI_STALL.x, 2.2, OYAJI_STALL.z + 0.7, v(2.4, 0.18, 0.1), pick(rng, STRIPS)),
   lamp(110, 73, "#ff9ad0"),
   lamp(88, 72.5, "#9ad7ff"),
+  ...fireEscape(),
 ];
 
 const STALL_SIGNS = [
@@ -227,6 +336,38 @@ export const TARG_NORTH_PROPS: readonly StaticProp[] = [
   ...facadeRow(rng, 68, 124, 110, 8, [10, 18]),
   lamp(116, 99, "#ffcf8a"),
 ];
+
+/**
+ * Level graph of the market (ADR-0021): the floor between the stall rows, the west end under
+ * the deck, the foot and the head of the stairs and two points on the deck. The lift is left
+ * out on purpose (NPCs take the stairs), and so are the fire escape ladders: two points on the
+ * market floor that see over the roof edges are firing positions instead.
+ */
+export const TARG_NAV: NavGraph = {
+  nodes: [
+    { id: "targ-floor-c", at: v(92, 0, 84) },
+    { id: "targ-floor-w", at: v(72, 0, 85.5) },
+    { id: "targ-stairs-approach", at: v(69.2, 0, 94) },
+    { id: "targ-stairs-foot", at: v(69.2, 0, 98.1) },
+    { id: "targ-north-w", at: v(69.2, 0, 102) },
+    { id: "targ-stairs-top", at: v(87.2, OVERPASS_TOP, 98.1) },
+    { id: "targ-deck-w", at: v(87.2, OVERPASS_TOP, 94.5) },
+    { id: "targ-deck-e", at: v(112, OVERPASS_TOP, 92) },
+    { id: "targ-view-sw", at: v(80, 0, 75) },
+    { id: "targ-view-s", at: v(100, 0, 77) },
+  ],
+  edges: [
+    { a: "targ-floor-c", b: "targ-floor-w" },
+    { a: "targ-floor-w", b: "targ-stairs-approach" },
+    { a: "targ-stairs-approach", b: "targ-stairs-foot" },
+    { a: "targ-stairs-foot", b: "targ-north-w" },
+    { a: "targ-stairs-foot", b: "targ-stairs-top", via: { minX: 68.6, maxX: 88.4, minZ: 97.2, maxZ: 99 } },
+    { a: "targ-stairs-top", b: "targ-deck-w" },
+    { a: "targ-deck-w", b: "targ-deck-e" },
+    { a: "targ-floor-c", b: "targ-view-sw" },
+    { a: "targ-floor-c", b: "targ-view-s" },
+  ],
+};
 
 /** Oyaji can be hurt: Hebi come for him in Hana's protection jobs. */
 export const OYAJI_MAX_HP = 120;

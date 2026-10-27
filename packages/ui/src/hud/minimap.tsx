@@ -1,5 +1,5 @@
 import { memo } from "react";
-import type { MapMarkerKind, MapMarkerVm, MapRectVm, MapVm } from "../store/ui-store";
+import type { MapLinkKind, MapLinkVm, MapMarkerKind, MapMarkerVm, MapRectVm, MapVm } from "../store/ui-store";
 import { useUi } from "../use-ui";
 
 /** Metres from the player to the edge of the minimap. */
@@ -7,6 +7,22 @@ export const MINIMAP_RANGE = 32;
 const EDGE = MINIMAP_RANGE - 2.5;
 
 const LABEL: Record<MapMarkerKind, string> = { fixer: "Kaito", ripperdoc: "Mori", target: "Cel" };
+
+const LINK_LABEL: Record<MapLinkKind, string> = { stairs: "Schody", lift: "Winda", ladder: "Drabina" };
+
+/** Icons of the level links (ADR-0021), about 4 m across: three steps, a cage with arrows, rungs. */
+const LINK_ICON: Record<MapLinkKind, string> = {
+  stairs: "M-2 2 H-0.7 V0.7 H0.7 V-0.7 H2 V-2",
+  lift: "M-1.8 -1.8 H1.8 V1.8 H-1.8 Z M0 -1.2 L1 -0.2 H-1 Z M0 1.2 L1 0.2 H-1 Z",
+  ladder: "M-1 -2 V2 M1 -2 V2 M-1 -1 H1 M-1 0 H1 M-1 1 H1",
+};
+
+const Link = ({ link }: { link: MapLinkVm }) => (
+  <g className={`minimap__link minimap__link--${link.kind}`} transform={`translate(${link.x.toFixed(2)} ${(-link.z).toFixed(2)})`} data-testid={`minimap-link-${link.kind}`}>
+    <title>{LINK_LABEL[link.kind]}</title>
+    <path d={LINK_ICON[link.kind]} />
+  </g>
+);
 
 const rect = (r: MapRectVm, className: string, key?: number) => (
   // Map space: x east, y = -z so north points up.
@@ -19,6 +35,10 @@ const District = memo(({ map }: { map: MapVm }) => (
     {rect(map.bounds, "minimap__ground")}
     {map.streets.map((s, i) => rect(s, "minimap__street", i))}
     {map.blocks.map((b, i) => rect(b, "minimap__block", i))}
+    {map.decks?.map((d, i) => rect(d, "minimap__deck", i))}
+    {map.links?.map((l, i) => (
+      <Link key={i} link={l} />
+    ))}
   </>
 ));
 District.displayName = "District";
@@ -55,7 +75,7 @@ export const Minimap = () => {
   if (!map || !player) return null;
   const deg = (player.yaw * 180) / Math.PI;
   return (
-    <div className="minimap" data-testid="minimap" aria-label="Minimapa">
+    <div className={`minimap${player.level !== undefined ? " minimap--upper" : ""}`} data-testid="minimap" aria-label="Minimapa">
       <svg viewBox={`${-MINIMAP_RANGE} ${-MINIMAP_RANGE} ${MINIMAP_RANGE * 2} ${MINIMAP_RANGE * 2}`} role="img">
         <g transform={`translate(${(-player.x).toFixed(2)} ${player.z.toFixed(2)})`}>
           <District map={map} />
@@ -69,6 +89,11 @@ export const Minimap = () => {
         </g>
       </svg>
       <div className="minimap__north">N</div>
+      {player.level !== undefined && (
+        <div className="minimap__level" data-testid="minimap-level" title="Jesteś wyżej niż ulica">
+          ▲ {player.level} m
+        </div>
+      )}
     </div>
   );
 };

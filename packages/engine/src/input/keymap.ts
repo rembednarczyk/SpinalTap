@@ -10,6 +10,7 @@ export type Action =
   | "fire"
   | "aim"
   | "interact"
+  | "jump"
   | "toggleCamera"
   | "ability"
   | "useItem"
@@ -34,6 +35,7 @@ export const DEFAULT_KEYMAP: KeyMap = {
   // Right mouse button: aim down sights, or guard with a melee weapon (ADR-0019).
   aim: ["Mouse2"],
   interact: ["KeyE"],
+  jump: ["Space"],
   toggleCamera: ["KeyV"],
   ability: ["KeyQ"],
   useItem: ["KeyH"],
@@ -75,6 +77,7 @@ export const mapKeyboardMouse = (keys: KeyState, look: LookDelta, map: KeyMap = 
   fire: any(keys.held, map.fire),
   aim: any(keys.held, map.aim),
   interact: any(keys.pressed, map.interact),
+  jump: any(keys.pressed, map.jump),
   toggleCamera: any(keys.pressed, map.toggleCamera),
   ability: any(keys.pressed, map.ability),
   useItem: any(keys.pressed, map.useItem),
@@ -114,10 +117,12 @@ export const mapGamepad = (pad: PadState, dt: number): InputFrame => ({
   fire: pad.buttons[7] ?? false,
   // Left trigger.
   aim: pad.buttons[6] ?? false,
-  interact: pad.pressed[0] ?? false,
-  toggleCamera: pad.pressed[3] ?? false,
+  // Face buttons (ADR-0021): A jumps, X uses, Y heals; the View button switches the camera.
+  jump: pad.pressed[0] ?? false,
+  interact: pad.pressed[2] ?? false,
+  toggleCamera: pad.pressed[8] ?? false,
   ability: pad.pressed[5] ?? false,
-  useItem: pad.pressed[2] ?? false,
+  useItem: pad.pressed[3] ?? false,
   toggleWeapon: pad.pressed[4] ?? false,
   reload: pad.pressed[13] ?? false,
   weaponSlot: padSlot(pad.pressed),
@@ -134,6 +139,7 @@ export const mergeFrames = (a: InputFrame, b: InputFrame): InputFrame => ({
   fire: a.fire || b.fire,
   aim: a.aim || b.aim,
   interact: a.interact || b.interact,
+  jump: a.jump || b.jump,
   toggleCamera: a.toggleCamera || b.toggleCamera,
   ability: a.ability || b.ability,
   useItem: a.useItem || b.useItem,

@@ -29,7 +29,7 @@ import {
   secondOfDay,
 } from "@seki/core";
 import { type DialogueView, NarrativeRuntime } from "@seki/narrative";
-import { DISTRICTS, DISTRICT_M0_PROPS, type DistrictId, type Entity, RenderSync, SIM_HZ, Simulation } from "@seki/sim";
+import { DISTRICTS, type DistrictId, type Entity, RenderSync, SIM_HZ, Simulation, WORLD_CHUNKS } from "@seki/sim";
 import {
   type AbilityVm,
   type CharacterTab,
@@ -151,7 +151,8 @@ export class GameSession implements UiIntents {
       onDialogueInterrupted: () => this.interruptDialogue(),
       onLoot: (key) => this.openLoot(key),
     });
-    patchUi(deps.ui, { map: buildDistrictMap(DISTRICT_M0_PROPS) });
+    // The whole city, so the map keeps working past Shinsekai (the market deck, the footbridge, ADR-0021).
+    patchUi(deps.ui, { map: buildDistrictMap(WORLD_CHUNKS.flatMap((c) => c.props)) });
     this.appliedSettings = deps.settings?.applied ?? deps.ui.getState().settings;
     patchUi(deps.ui, { settings: this.appliedSettings, reloadNeeded: false });
     void this.refreshSlots();

@@ -211,6 +211,21 @@ kbd {
 .minimap__ground { fill: rgba(20, 30, 38, 0.6); }
 .minimap__street { fill: rgba(95, 242, 255, 0.12); stroke: rgba(95, 242, 255, 0.45); stroke-width: 0.3; }
 .minimap__block { fill: rgba(4, 7, 12, 0.85); stroke: rgba(95, 242, 255, 0.55); stroke-width: 0.4; }
+.minimap__deck { fill: rgba(255, 176, 0, 0.08); stroke: rgba(255, 176, 0, 0.35); stroke-width: 0.3; stroke-dasharray: 1 0.8; }
+/* Up on a level (ADR-0021): the floors up there light up, the street below fades. */
+.minimap--upper .minimap__deck { fill: rgba(255, 176, 0, 0.3); stroke: rgba(255, 176, 0, 0.85); stroke-dasharray: none; }
+.minimap--upper .minimap__street, .minimap--upper .minimap__block { opacity: 0.55; }
+.minimap__link path { fill: none; stroke: var(--amber); stroke-width: 0.55; stroke-linecap: square; }
+.minimap__link--lift path { fill: rgba(255, 176, 0, 0.25); }
+.minimap__level {
+  position: absolute;
+  right: 6px;
+  bottom: 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--amber);
+  text-shadow: 0 0 6px rgba(255, 176, 0, 0.6);
+}
 .minimap__cone { fill: rgba(95, 242, 255, 0.16); }
 .minimap__arrow { fill: var(--ink); }
 .minimap__marker { stroke: rgba(4, 7, 12, 0.9); stroke-width: 0.6; }
@@ -651,6 +666,7 @@ kbd {
 .touch__btn--x { right: 96px; bottom: 150px; width: 44px; height: 44px; font-size: 15px; }
 .touch__btn--c { right: 172px; bottom: 76px; width: 44px; height: 44px; font-size: 15px; }
 .touch__btn--aim { right: 228px; bottom: 96px; width: 52px; height: 52px; font-size: 20px; }
+.touch__btn--jump { right: 120px; bottom: 214px; width: 52px; height: 52px; font-size: 22px; }
 .touch__btn--r { right: 176px; bottom: 14px; width: 44px; height: 44px; font-size: 15px; color: var(--amber); }
 .touch__btn--on { background: rgba(95, 242, 255, 0.3); border-color: var(--cyan); color: var(--cyan); }
 .touch__top {

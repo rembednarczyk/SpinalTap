@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { type AudioPort, type DomainState, EMPTY_INPUT, type RenderPort, createDomainState } from "@seki/core";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
-import { DISTRICT_M0_PROPS, type Entity } from "@seki/sim";
+import { DISTRICT_M0_PROPS, type Entity, KANAL_PROPS, TARG_NORTH_PROPS, TARG_SOUTH_PROPS } from "@seki/sim";
 import { DEFAULT_SETTINGS, createUiStore } from "@seki/ui";
 import { GameSession, type SettingsHost } from "../src/game-session";
 import { buildJournal, createJournalCache } from "../src/journal";
@@ -82,6 +82,33 @@ describe("minimap data", () => {
     expect(map.streets).toHaveLength(2);
     expect(map.blocks.length).toBeGreaterThan(10);
     expect(buildDistrictMap([]).bounds.w).toBe(0);
+    // Shinsekai 7 is flat: no upper floors, no stairs.
+    expect(map.decks).toBeUndefined();
+    expect(map.links).toBeUndefined();
+  });
+
+  it("marks floors above the street, stairs, the lift and ladders (ADR-0021)", () => {
+    const map = buildDistrictMap([...KANAL_PROPS, ...TARG_SOUTH_PROPS, ...TARG_NORTH_PROPS]);
+    const kinds = (map.links ?? []).map((l) => l.kind);
+    // The footbridge's two flights and the market stairs; one lift; three fire escape ladders.
+    expect(kinds.filter((k) => k === "stairs")).toHaveLength(3);
+    expect(kinds.filter((k) => k === "lift")).toHaveLength(1);
+    expect(kinds.filter((k) => k === "ladder")).toHaveLength(3);
+    // The overpass deck is a floor above, not a building.
+    const deck = map.decks?.find((d) => d.w === 60 && d.d === 10);
+    expect(deck).toBeDefined();
+    expect(map.blocks.some((b) => b.w === 60 && b.d === 10)).toBe(false);
+  });
+
+  it("tells the player's height while up on a level", () => {
+    const track = createMinimapTracker();
+    const contracts = { active: null, completed: 0 } as const;
+    const at = (y: number) => ({ id: 1, player: true, position: { x: 96, y, z: 92 }, yaw: 0 }) as unknown as Entity;
+    expect(track([at(0)], [], contracts).mapPlayer?.level).toBeUndefined();
+    const up = track([at(9.9)], [], contracts).mapPlayer;
+    expect(up?.level).toBe(10);
+    expect(track([at(9.9)], [], contracts).mapPlayer).toBe(up);
+    expect(track([at(0)], [], contracts).mapPlayer?.level).toBeUndefined();
   });
 
   it("tracks the player and key NPCs, and keeps objects stable when nothing moved", () => {

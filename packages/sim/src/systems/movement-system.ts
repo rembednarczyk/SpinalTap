@@ -1,6 +1,7 @@
+import { applyDamage } from "@seki/core";
 import { overFootprint, resolveCircleAabb, topAt } from "../world/collision";
 import type { Entity } from "../world/components";
-import type { System } from "../world/context";
+import type { SimContext, System } from "../world/context";
 import { inCreationOrder } from "../world/ordering";
 import { worldTimeScale } from "./ability-system";
 
@@ -13,6 +14,16 @@ export const SNAP_DOWN = 0.35;
 export const GRAVITY = 20;
 /** How far past an edge the centre may hang before the character drops. */
 const EDGE_MARGIN = 0.05;
+
+/** Falls from up to this height (feet, from the highest point) do no harm (ADR-0021). */
+export const FALL_SAFE_HEIGHT = 4;
+/** Damage per metre of fall above FALL_SAFE_HEIGHT. */
+export const FALL_DAMAGE_PER_METRE = 10;
+/** Landings from this high are hard: a short slow walk, and a heavier sound. */
+export const HARD_LANDING_HEIGHT = 2.5;
+/** Seconds of slow walk after a hard landing, and after one that hurt. */
+export const HARD_LANDING_SLOW = 0.35;
+export const HURT_LANDING_SLOW = 0.6;
 
 type Solid = Entity & { solid: NonNullable<Entity["solid"]> };
 
@@ -38,9 +49,43 @@ export const groundAt = (solids: readonly Solid[], x: number, z: number, feet: n
   return ground;
 };
 
+/** Lowest underside above a head at `head` over the point, or Infinity: a jump stops there. */
+const ceilingAt = (solids: readonly Solid[], x: number, z: number, head: number): number => {
+  let ceiling = Infinity;
+  for (const s of solids) {
+    if (s.solid.min.y >= head - 1e-6 && s.solid.min.y < ceiling && overFootprint(s.solid, x, z)) ceiling = s.solid.min.y;
+  }
+  return ceiling;
+};
+
+/** Fall damage for a drop of `drop` metres (ADR-0021): none up to FALL_SAFE_HEIGHT, then linear. */
+export const fallDamage = (drop: number): number => (drop > FALL_SAFE_HEIGHT ? Math.round((drop - FALL_SAFE_HEIGHT) * FALL_DAMAGE_PER_METRE) : 0);
+
+/**
+ * Back on the ground at `ground` after time in the air (ADR-0021). A long drop hurts through
+ * the usual damage path (`DamageDealt`, zone "leg", the faller as its own source) and slows
+ * the next steps.
+ */
+const land = (ctx: SimContext, e: Entity, ground: number): void => {
+  const drop = Math.max(0, (e.airPeak ?? ground) - ground);
+  delete e.airPeak;
+  const hard = drop >= HARD_LANDING_HEIGHT;
+  const damage = e.health ? fallDamage(drop) : 0;
+  const at = { x: e.position.x, y: ground, z: e.position.z };
+  if (hard) e.landing = damage > 0 ? HURT_LANDING_SLOW : HARD_LANDING_SLOW;
+  if (damage > 0 && e.health) {
+    e.health = applyDamage(e.health, damage);
+    // Nobody pushed: a fatal fall is not held against the player (death system).
+    e.lastHitBy = e.id;
+    ctx.bus.emit("DamageDealt", { sourceId: e.id, targetId: e.id, amount: damage, critical: false, zone: "leg", at });
+  }
+  ctx.bus.emit("Landed", { entityId: e.id, drop, hard, damage, at });
+};
+
 /**
  * Integrates velocity, resolves character footprints against geometry and other bodies, then
- * puts the feet on the floor: stepping up ledges, following stairs down and falling off edges.
+ * puts the feet on the floor: stepping up ledges, following stairs down, falling off edges and
+ * flying a jump (ADR-0021). Characters on a ladder are moved by the ladder system instead.
  */
 export const movementSystem: System = {
   name: "movement",
@@ -52,6 +97,7 @@ export const movementSystem: System = {
     const solids = inCreationOrder(world.with("solid"));
     const bodies = inCreationOrder(world.with("body"));
     for (const e of inCreationOrder(world.with("velocity", "body"))) {
+      if (e.climb) continue;
       const dt = e.player ? ctx.dt : enemyDt;
       const feet = e.position.y;
       let x = e.position.x;
@@ -75,15 +121,30 @@ export const movementSystem: System = {
         }
       }
       const ground = groundAt(solids, x, z, feet);
+      const rising = (e.fall ?? 0) > 0;
       let y: number;
-      if (ground >= feet || (e.fall === undefined && feet - ground <= SNAP_DOWN)) {
+      if (!rising && (ground >= feet || (e.fall === undefined && feet - ground <= SNAP_DOWN))) {
         y = ground;
+        if (e.fall !== undefined) land(ctx, e, ground);
         delete e.fall;
       } else {
-        const vy = (e.fall ?? 0) - GRAVITY * dt;
-        y = Math.max(ground, feet + vy * dt);
-        if (y === ground) delete e.fall;
-        else e.fall = vy;
+        let vy = (e.fall ?? 0) - GRAVITY * dt;
+        let next = feet + vy * dt;
+        if (vy > 0) {
+          // Head against an underside: the jump stops rising there.
+          const ceiling = ceilingAt(solids, x, z, feet + e.body.height);
+          if (next + e.body.height > ceiling) {
+            next = Math.max(feet, ceiling - e.body.height);
+            vy = 0;
+          }
+        }
+        y = Math.max(ground, next);
+        // Leaving the ground without a jump: the fall is measured from here.
+        e.airPeak = e.fall === undefined ? Math.max(feet, y) : Math.max(e.airPeak ?? feet, y);
+        if (y === ground) {
+          land(ctx, e, ground);
+          delete e.fall;
+        } else e.fall = vy;
       }
       if (x !== e.position.x || y !== e.position.y || z !== e.position.z) e.position = { x, y, z };
     }

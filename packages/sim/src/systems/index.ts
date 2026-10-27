@@ -7,6 +7,7 @@ import { deathSystem } from "./death-system";
 import { elevatorSystem } from "./elevator-system";
 import { interactionSystem } from "./interaction-system";
 import { interpolationSystem } from "./interpolation-system";
+import { ladderSystem } from "./ladder-system";
 import { itemSystem } from "./item-system";
 import { movementSystem } from "./movement-system";
 import { playerControlSystem } from "./player-control-system";
@@ -24,7 +25,21 @@ export { equippedAbility, worldTimeScale } from "./ability-system";
 export { deadFlag } from "./death-system";
 export { LOOT_REACH, syncBags } from "./loot-system";
 export { gameSecondsPerStep } from "./clock-system";
-export { playerStatsOf, statsFor, CROUCH_SPEED_MULTIPLIER, CROUCH_TIME, PITCH_LIMIT, SPRINT_MULTIPLIER } from "./player-control-system";
+export {
+  playerStatsOf,
+  statsFor,
+  AIR_ACCEL,
+  COYOTE_TIME,
+  CROUCH_SPEED_MULTIPLIER,
+  CROUCH_TIME,
+  JUMP_BUFFER,
+  JUMP_SPEED,
+  LANDING_SLOW_MULTIPLIER,
+  PITCH_LIMIT,
+  SPRINT_MULTIPLIER,
+} from "./player-control-system";
+export { FALL_DAMAGE_PER_METRE, FALL_SAFE_HEIGHT, GRAVITY, HARD_LANDING_HEIGHT, fallDamage } from "./movement-system";
+export { CLIMB_SPEED, grabLadder } from "./ladder-system";
 
 /**
  * Explicit, fixed system order (determinism: never derived from map iteration).
@@ -37,6 +52,7 @@ export const createSystems = (): readonly System[] => [
   abilitySystem,
   itemSystem,
   playerControlSystem,
+  ladderSystem,
   scheduleSystem,
   createGangerAiSystem(),
   createCivilianAiSystem(),

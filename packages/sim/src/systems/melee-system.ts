@@ -158,8 +158,8 @@ export const meleeSystem: System = {
       m.parryCooldown = Math.max(0, m.parryCooldown - dt);
       m.knock.time = Math.max(0, m.knock.time - dt);
       const profile = f.combatant.stats?.melee;
-      // Switching to a gun, holstering, a conversation or death ends any swing.
-      if (!profile || f.combatant.holstered || (f.health?.current ?? 1) <= 0 || (f.player && frozen)) {
+      // Switching to a gun, holstering, a conversation, death or both hands on a ladder end any swing.
+      if (!profile || f.combatant.holstered || (f.health?.current ?? 1) <= 0 || (f.player && frozen) || f.climb) {
         toIdle(f);
         m.combo = 0;
         continue;

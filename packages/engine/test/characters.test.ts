@@ -217,3 +217,57 @@ describe("run cycle", () => {
     expect(run.lean).toBeGreaterThan(walk.lean + 0.15);
   });
 });
+
+describe("jumps, landings and ladders (ADR-0021)", () => {
+  const rig = () => {
+    const scene = new Scene(new NullEngine());
+    return buildFixer(scene, new ToonMaterials(scene), "j");
+  };
+
+  it("tucks the legs on the way up and reaches for the ground on the way down", () => {
+    const r = rig();
+    for (let i = 0; i < 20; i++) animateRig(r, 4, 1 / 60, 0, {}, { air: 6 });
+    const upKnee = r.kneeL.rotation.x;
+    const upThigh = r.legL.rotation.x;
+    expect(upKnee).toBeGreaterThan(1.1);
+    expect(upThigh).toBeLessThan(-0.5);
+    for (let i = 0; i < 20; i++) animateRig(r, 4, 1 / 60, 0, {}, { air: -7 });
+    expect(r.kneeL.rotation.x).toBeLessThan(upKnee - 0.4);
+    expect(r.legL.rotation.x).toBeGreaterThan(upThigh);
+    // No walk cycle in the air: the phase stands still.
+    const phase = r.phase;
+    animateRig(r, 4, 1 / 60, 0, {}, { air: -7 });
+    expect(r.phase).toBeCloseTo(phase, 2);
+  });
+
+  it("dips on landing, deeper after a long drop, and stands up again", () => {
+    const land = (vy: number) => {
+      const r = rig();
+      animateRig(r, 0, 1 / 60);
+      animateRig(r, 0, 1 / 60, 0, {}, { air: vy });
+      animateRig(r, 0, 1 / 60);
+      return r;
+    };
+    const soft = land(-3);
+    const hard = land(-14);
+    expect(soft.body.position.y).toBeLessThan(-0.01);
+    expect(hard.body.position.y).toBeLessThan(soft.body.position.y - 0.05);
+    for (let i = 0; i < 90; i++) animateRig(hard, 0, 1 / 60);
+    expect(hard.landing).toBe(0);
+    expect(hard.body.position.y).toBeCloseTo(0, 1);
+  });
+
+  it("climbs a ladder hand over hand, arms up, and the cycle follows the climbing speed", () => {
+    const r = rig();
+    for (let i = 0; i < 40; i++) animateRig(r, 0, 1 / 60, 0, {}, { climb: 2.2 });
+    expect(r.armL.rotation.x).toBeLessThan(-1.8);
+    expect(r.armR.rotation.x).toBeLessThan(-1.8);
+    expect(r.kneeL.rotation.x).toBeGreaterThan(0.6);
+    const phase = r.climbPhase;
+    for (let i = 0; i < 10; i++) animateRig(r, 0, 1 / 60, 0, {}, { climb: 0 });
+    expect(r.climbPhase).toBe(phase);
+    // Off the ladder the pose blends back to standing.
+    for (let i = 0; i < 60; i++) animateRig(r, 0, 1 / 60);
+    expect(r.armL.rotation.x).toBeGreaterThan(-0.5);
+  });
+});

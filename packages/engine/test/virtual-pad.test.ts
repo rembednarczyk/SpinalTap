@@ -52,6 +52,13 @@ describe("VirtualPad", () => {
     expect(pad.poll()).toMatchObject({ fire: false, ability: true, useItem: true, toggleCamera: true });
   });
 
+  it("jumps once per press of the jump button (ADR-0021)", () => {
+    const pad = new VirtualPad();
+    pad.press("jump");
+    expect(pad.poll().jump).toBe(true);
+    expect(pad.poll().jump).toBe(false);
+  });
+
   it("reloads on the R button edge and passes a tapped weapon slot once", () => {
     const pad = new VirtualPad();
     pad.press("reload");

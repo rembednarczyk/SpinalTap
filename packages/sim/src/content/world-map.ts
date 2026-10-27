@@ -1,8 +1,12 @@
-import type { ActorDef, Rect, StaticProp } from "./builders";
+import { type ActorDef, type NavGraph, type Rect, type StaticProp, mergeNav } from "./builders";
 import { DISTRICT_M0_ACTORS, DISTRICT_M0_BOUNDS, DISTRICT_M0_PROPS } from "./district-m0";
 import {
   KANAL_BOUNDS,
+  KANAL_NAV,
   KANAL_PROPS,
+  type RoofStash,
+  TARG_NAV,
+  TARG_ROOF_STASH,
   TARG_NORTH_ACTORS,
   TARG_NORTH_BOUNDS,
   TARG_NORTH_PROPS,
@@ -38,6 +42,12 @@ export const WORLD_CHUNKS: readonly ChunkDef[] = [
   { id: "targ-south", district: "targ", bounds: TARG_SOUTH_BOUNDS, props: TARG_SOUTH_PROPS, actors: TARG_SOUTH_ACTORS },
   { id: "targ-north", district: "targ", bounds: TARG_NORTH_BOUNDS, props: TARG_NORTH_PROPS, actors: TARG_NORTH_ACTORS },
 ];
+
+/** Level graph of the whole city (ADR-0021). Shinsekai 7 is flat and has none. */
+export const WORLD_NAV: NavGraph = mergeNav(KANAL_NAV, TARG_NAV);
+
+/** Stashes on roofs, placed once when the player first comes near (ADR-0021). */
+export const WORLD_STASHES: readonly RoofStash[] = [TARG_ROOF_STASH];
 
 /** Horizontal distance from a point to a rectangle; 0 inside. */
 export const distanceToRect = (x: number, z: number, r: Rect): number =>
