@@ -190,6 +190,35 @@ describe("Loadouts", () => {
     expect(scene.transformNodes.filter((n) => n.name.startsWith("hero-hip") || n.name.startsWith("hero-holster") || n.name === "hero-back" || n.name === "hero-sling")).toEqual([]);
   });
 
+  it("shows optics and arm implants on the rig, then on the model's head and hand", () => {
+    const { scene, materials, loadouts, rig } = setup();
+    loadouts.set(rig, { ...look(), implants: ["optics", "arms"] }, "hero");
+    expect(parentOf(scene, "hero-optics1")).toBe(rig.head.name);
+    expect(parentOf(scene, "hero-cyberarm0")).toBe(rig.elbowR.name);
+    loadouts.setModel(rig, model(scene, materials, rig).dressed);
+    expect(parentOf(scene, "hero-optics-1")).toBe("hero-bone-head");
+    expect(parentOf(scene, "hero-cyberarm1")).toBe("hero-bone-hand");
+    loadouts.set(rig, look(), "hero");
+    expect(scene.getMeshByName("hero-optics1")).toBeNull();
+    expect(scene.getMeshByName("hero-cyberarm0")).toBeNull();
+  });
+
+  it("moves holsters and the sling by the model's size and back when it comes off", () => {
+    const { scene, materials, loadouts, rig } = setup();
+    loadouts.set(rig, look(), "hero");
+    const holster = scene.getTransformNodeByName("hero-holsterR")!;
+    const sling = scene.getTransformNodeByName("hero-sling")!;
+    const [h0, s0] = [holster.position.clone(), sling.position.clone()];
+    const m = model(scene, materials, rig);
+    loadouts.setModel(rig, m.dressed);
+    const fit = Math.min(1.25, Math.max(0.8, m.dressed.retarget.headHeight / rig.head.position.y));
+    expect(holster.position.y).toBeCloseTo(h0.y * fit, 5);
+    expect(sling.position.y).toBeCloseTo(s0.y * fit, 5);
+    loadouts.setModel(rig, null);
+    expect(holster.position.y).toBeCloseTo(h0.y, 5);
+    expect(sling.position.z).toBeCloseTo(s0.z, 5);
+  });
+
   it("forgets a waiting model on dispose", () => {
     const { scene, materials, loadouts, rig } = setup();
     loadouts.setModel(rig, model(scene, materials, rig).dressed);

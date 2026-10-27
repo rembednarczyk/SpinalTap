@@ -50,7 +50,11 @@ interface State {
   readonly holsterR: TransformNode;
   readonly holsterL: TransformNode;
   readonly back: TransformNode;
+  /** Positions of the holsters and the sling on the rig, before fitting them to a model's size. */
+  readonly stowage: readonly { readonly node: TransformNode; readonly at: Vector3 }[];
   readonly mounted: Partial<Record<Place, Mounted>>;
+  /** Visible implants (optics at the temples, rings on the right forearm). */
+  implants: Mesh[];
   attachments: { readonly id: GarmentMeshId; readonly mesh: Mesh; readonly onModel: boolean }[];
   model: OnModel | null;
 }
@@ -181,7 +185,8 @@ export class Loadouts {
       const back = new TransformNode(`${name}-back`, this.scene);
       back.parent = sling;
       back.rotation.y = Math.PI / 2;
-      s = { look, name, holsterR, holsterL, back, mounted: {}, attachments: [], model: null };
+      const stowage = [holsterR, holsterL, sling].map((n) => ({ node: n, at: n.position.clone() }));
+      s = { look, name, holsterR, holsterL, back, stowage, mounted: {}, attachments: [], implants: [], model: null };
       this.states.set(rig, s);
       const waiting = this.pending.get(rig);
       this.pending.delete(rig);
@@ -192,6 +197,7 @@ export class Loadouts {
     this.arm(rig, s);
     this.attach(rig, s);
     this.tint(s);
+    this.implant(rig, s);
   }
 
   /** The imported model over the rig (or null when it is taken off). Nothing of it is kept. */
@@ -205,9 +211,11 @@ export class Loadouts {
     if (s.model?.model === model) return;
     this.dropModel(s);
     if (model) s.model = this.onModel(rig, model, s.name);
+    this.fitStowage(s);
     this.arm(rig, s);
     this.attach(rig, s);
     this.tint(s);
+    this.implant(rig, s);
   }
 
   has(rig: CharacterRig): boolean {
@@ -246,6 +254,8 @@ export class Loadouts {
     for (const m of Object.values(s.mounted)) m?.node.dispose();
     for (const a of s.attachments) a.mesh.dispose();
     s.attachments = [];
+    for (const m of s.implants) m.dispose();
+    s.implants = [];
     this.dropModel(s);
     s.holsterR.dispose();
     s.holsterL.dispose();
@@ -365,6 +375,54 @@ export class Loadouts {
       }
     }
     this.onMeshes(s.attachments.map((a) => a.mesh));
+  }
+
+  /**
+   * Holsters and the sling hang on the rig body at the rig's proportions; a taller or shorter
+   * model moves them by the same ratio as its head height, so the gun stays at its hip.
+   */
+  private fitStowage(s: State): void {
+    const fit = s.model?.fit ?? 1;
+    for (const { node, at } of s.stowage) node.position.copyFrom(at).scaleInPlace(fit);
+  }
+
+  /** Implants that show (ADR-0015 `implants`): optics glow beside the eyes, arms ring the right forearm. */
+  private implant(rig: CharacterRig, s: State): void {
+    for (const m of s.implants) m.dispose();
+    s.implants = [];
+    const shows = new Set(s.look.implants);
+    const onModel = s.model;
+    if (shows.has("optics")) {
+      const head = onModel?.anchors.head ?? rig.head;
+      const fit = onModel?.anchors.head ? onModel.fit : 1;
+      // A glowing strip at the outer corner of each eye.
+      const [x, y, z] = onModel?.anchors.head ? [0.064, 0.072, 0.078] : [0.062, 0.015, 0.045];
+      for (const side of [-1, 1]) {
+        const lens = MeshBuilder.CreateBox(`${s.name}-optics${side}`, { width: 0.014, height: 0.03, depth: 0.012 }, this.scene);
+        lens.parent = head;
+        lens.position.set(side * x * fit, y * fit, z * fit);
+        lens.rotation.y = side * 0.5;
+        lens.scaling.setAll(fit);
+        lens.material = this.materials.get("heroineVisor");
+        s.implants.push(lens);
+      }
+    }
+    if (shows.has("arms")) {
+      // Forearm frame: -Y runs from the elbow to the fingers. On a model the hand holder sits at the wrist.
+      const forearm = onModel?.hand ?? rig.elbowR;
+      const fit = onModel?.hand ? onModel.fit : 1;
+      const along = onModel?.hand ? [0.05, 0.11] : [-0.12, -0.19];
+      for (const [i, y] of along.entries()) {
+        const ring = MeshBuilder.CreateTorus(`${s.name}-cyberarm${i}`, { diameter: 0.07, thickness: 0.014, tessellation: 14 }, this.scene);
+        ring.parent = forearm;
+        ring.position.set(0, y * fit, 0);
+        ring.scaling.setAll(fit);
+        ring.material = this.materials.get("cyberCopper");
+        s.implants.push(ring);
+      }
+    }
+    for (const m of s.implants) m.isPickable = false;
+    this.onMeshes(s.implants);
   }
 
   /** Recolours the model's cloth by the torso and legs tints; the rest keeps its own colours. */

@@ -69,12 +69,15 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
   Hełm, wizjer i płyta kamizelki na kościach głowy i klatki ubranego modelu (na rigu
   proceduralnym bez modelu), kolor kurtki i spodni jako przebarwienie materiałów „Tops” i
   „Bottoms”, podgląd w menu przez te same `Loadouts` co świat.
+- **[gotowe] Kabury i wszczepy na modelach.** Kabury i pas na plecach przesuwają się o stosunek
+  wzrostu modelu do rigu (pistolet zostaje przy biodrze modelu); widoczne wszczepy z deskryptora:
+  optyka jako świecące paski przy kącikach oczu, cyberramię jako miedziane pierścienie na prawym
+  przedramieniu, na modelu i na rigu.
 
 ## Później
 
-- Wygląd ekwipunku, dalej: broń w kaburze i na plecach na kościach modelu (dziś na ciele rigu),
-  hełm i kamizelka jako modele GLB zamiast brył, przebarwienie na rigu proceduralnym, wizjer
-  a implant optyki (`implants` z deskryptora jeszcze nic nie rysuje).
+- Wygląd ekwipunku, dalej: hełm i kamizelka jako modele GLB zamiast brył, przebarwienie na rigu
+  proceduralnym, wszczepy szkieletu i układu nerwowego (dziś widać tylko optykę i ramię).
 
 - Ruch w pionie, dalej: nawigacja AI między poziomami (punkty przejścia przez schody i windy),
   skok i obrażenia od upadku, dachy i balkony w Shinsekai, drabiny przeciwpożarowe, minimapa z piętrami.
