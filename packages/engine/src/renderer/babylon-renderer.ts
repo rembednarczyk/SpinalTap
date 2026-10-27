@@ -141,10 +141,8 @@ export class BabylonRenderer implements RenderPort {
     if (this.lineArt) this.lineArt.geometryBuffer.renderTransparentMeshes = false;
     this.speedLines = new SpeedLines(scene, this.rig.camera);
     this.atmosphere = new Atmosphere(scene, NIGHT_RIG);
-    // With the kit, skinned M0 buildings bring their own facades: the dressing leaves them bare.
-    const dressing = createDressing(scene, this.materials, { skinned: !!options.cityKit });
-    for (const m of dressing.casters) this.shadow.addStaticCaster(m);
-    for (const m of dressing.meshes) if (m.material?.name.includes("vendingGlow")) stage.glow.addIncludedOnlyMesh(m);
+    // Without a kit the street dressing goes in now; with one, once it is known whether it loaded.
+    if (!options.cityKit) this.dressStreet(false);
     this.grading = new Grading(scene, this.rig.camera, { reference: stage.options.reference });
     this.effects = new Effects(scene, stage.glow);
     this.rain = stage.options.reference ? null : createRain(scene);
@@ -169,12 +167,22 @@ export class BabylonRenderer implements RenderPort {
         this.city.setDaylight(this.daylight);
         for (const [id, p] of this.pendingSkins) this.city.add(id, p.view.skin, p.view.size, p.center, p.box);
         this.pendingSkins.clear();
+        this.dressStreet(true);
       })
       .catch((err: unknown) => {
         console.warn(`[city] ${url} failed to load, keeping plain blocks`, err);
         this.pendingSkins.clear();
+        // The plain blocks keep their own facade dressing (shutters, signs, vending machines).
+        if (!scene.isDisposed) this.dressStreet(false);
       })
       .finally(() => scene.removePendingData(token));
+  }
+
+  /** Street dressing of M0; with the kit, skinned buildings bring their own facades and stay bare here. */
+  private dressStreet(skinned: boolean): void {
+    const dressing = createDressing(this.stage.scene, this.materials, { skinned });
+    for (const m of dressing.casters) this.shadow.addStaticCaster(m);
+    for (const m of dressing.meshes) if (m.material?.name.includes("vendingGlow")) this.stage.glow.addIncludedOnlyMesh(m);
   }
 
   /**
