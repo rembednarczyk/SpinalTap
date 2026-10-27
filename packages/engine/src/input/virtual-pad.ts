@@ -1,6 +1,6 @@
 import type { InputFrame } from "@seki/core";
 
-export type PadButton = "fire" | "interact" | "ability" | "useItem" | "toggleCamera" | "sprint" | "toggleWeapon";
+export type PadButton = "fire" | "interact" | "ability" | "useItem" | "toggleCamera" | "sprint" | "toggleWeapon" | "crouch";
 
 /** Stick deflection above which the on-screen stick also sprints. */
 export const STICK_SPRINT_THRESHOLD = 0.92;
@@ -62,6 +62,7 @@ export class VirtualPad {
       lookYaw: this.yaw,
       lookPitch: this.pitch,
       sprint: this.held.has("sprint") || Math.hypot(this.stickX, this.stickZ) >= STICK_SPRINT_THRESHOLD,
+      crouch: this.held.has("crouch"),
       fire: this.held.has("fire"),
       interact: edge("interact"),
       toggleCamera: edge("toggleCamera"),

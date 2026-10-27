@@ -5,7 +5,20 @@ export * from "./loop";
 export * from "./presentation";
 export * from "./replay";
 export * from "./simulation";
-export { createSystems, deadFlag, equippedAbility, fireShot, HEAD_ZONE, statsFor, PITCH_LIMIT, SPRINT_MULTIPLIER, worldTimeScale } from "./systems";
+export {
+  aimSpreadOf,
+  createSystems,
+  CROUCH_SPEED_MULTIPLIER,
+  CROUCH_TIME,
+  deadFlag,
+  equippedAbility,
+  fireShot,
+  GUNFIRE_INTERRUPT_RADIUS,
+  statsFor,
+  PITCH_LIMIT,
+  SPRINT_MULTIPLIER,
+  worldTimeScale,
+} from "./systems";
 export {
   CIVILIAN_FLEE_SPEED,
   CIVILIAN_TREE,

@@ -203,6 +203,55 @@ describe("fixer contracts (M1)", () => {
   });
 });
 
+describe("interrupted conversations (ADR-0015)", () => {
+  const cleared = (): DomainState => {
+    const d = createDomainState();
+    return {
+      ...d,
+      quests: { m0_first_contract: { status: "completed" } },
+      character: { ...d.character, alias: "Seki Senshi" },
+      contracts: { active: { id: "c1", siteId: "car_wash", targets: 2, reward: 500, status: "cleared" }, completed: 0 },
+    };
+  };
+
+  it("rolls ink back when nothing has happened yet, so the talk starts over the same", () => {
+    const { runtime, commands } = setup();
+    const before = runtime.saveState();
+    const first = runtime.start("fixer", createDomainState());
+    runtime.choose(0);
+    expect(runtime.inConversation).toBe(true);
+    expect(runtime.interrupt()).toBe(true);
+    expect(runtime.inConversation).toBe(false);
+    expect(runtime.saveState()).toBe(before);
+    expect(commands).toEqual([]);
+    const again = runtime.start("fixer", createDomainState());
+    expect(again).toEqual(first);
+  });
+
+  it("keeps ink's memory once effects went out, and does not repeat them", () => {
+    const { runtime, commands } = setup();
+    const view = runtime.start("fixer", cleared());
+    expect(view.choices.length).toBeGreaterThan(0);
+    expect(commands).toEqual([{ type: "complete-contract" }]);
+    expect(runtime.interrupt()).toBe(false);
+    // The sim has paid: the contract is gone. Talking again offers the next job, no second payout.
+    const paid = { ...cleared(), contracts: { active: null, completed: 1 } };
+    const again = runtime.start("fixer", paid);
+    expect(commands).toEqual([{ type: "complete-contract" }]);
+    expect(again.choices[0]?.text).toBe("Biorę robotę.");
+  });
+
+  it("leaves no pending choices in the saved state", () => {
+    const { runtime } = setup();
+    runtime.start("fixer", cleared());
+    runtime.interrupt();
+    const restored = setup().runtime;
+    restored.loadState(runtime.saveState());
+    expect(restored.inConversation).toBe(false);
+    expect(restored.start("ume", createDomainState()).lines.length).toBeGreaterThan(0);
+  });
+});
+
 describe("act I: Echo (M3)", () => {
   const echo = (stepIndex: number, patch: Partial<DomainState> = {}): DomainState => {
     const d = createDomainState();

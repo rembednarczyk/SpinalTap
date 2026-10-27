@@ -16,5 +16,6 @@
 | [0012](0012-watek-glowny-akt-1.md) | Wątek główny, akt I: wspomnienia, wybory, zakończenia | Zaakceptowana |
 | [0013](0013-audio-scena-muzyka-miks.md) | Scena audio: muzyka warstwowa, ambient pozycyjny, miks | Zaakceptowana |
 | [0014](0014-world-streaming-chunki.md) | World streaming: chunki z histerezą, drugi dystrykt | Zaakceptowana |
+| [0015](0015-postawa-rozrzut-strefy-trafien.md) | Postawa, rozrzut broni, strefy trafień, przerywanie rozmowy | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.

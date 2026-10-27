@@ -160,6 +160,7 @@ createRoot(uiRoot).render(<GameUi store={ui} intents={session} touch={touchDevic
 
 const debug = createDebugApi(session, ui, loop, () => probe.sample(), (position, target) => renderer.rig.setReferenceView(position, target),
   () => renderer.dressedCount,
+  () => renderer.rig.camera.position.y,
 );
 window.__seki = debug;
 

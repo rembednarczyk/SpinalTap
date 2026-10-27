@@ -1,4 +1,4 @@
-import { type EntityId, type RenderPort, lerp, lerpAngle } from "@seki/core";
+import { type EntityId, type RenderPort, type Transform, lerp, lerpAngle } from "@seki/core";
 import type { World } from "miniplex";
 import type { Entity } from "../world/components";
 
@@ -18,11 +18,12 @@ export class RenderSync {
     for (const e of world.with("view")) {
       seen.add(e.id);
       const moving = e.velocity !== undefined;
-      const transform = {
+      const transform: Transform = {
         position: moving ? lerp(e.prevPosition, e.position, alpha) : e.position,
         yaw: moving ? lerpAngle(e.prevYaw, e.yaw, alpha) : e.yaw,
         pitch: e.pitch,
         speed: e.velocity ? Math.hypot(e.velocity.x, e.velocity.z) : 0,
+        ...(e.posture ? { crouch: e.posture.prevAmount + (e.posture.amount - e.posture.prevAmount) * alpha } : {}),
       };
       if (!this.spawned.has(e.id)) {
         this.spawned.add(e.id);
