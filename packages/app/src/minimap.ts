@@ -32,7 +32,12 @@ export const buildDistrictMap = (props: readonly StaticProp[]): MapVm => {
   const flats: MapRectVm[] = [];
   const decks: MapRectVm[] = [];
   const links: MapLinkVm[] = [];
+  const water: MapRectVm[] = [];
   for (const p of props) {
+    if (p.view.kind === "water") {
+      water.push({ x: p.center.x, z: p.center.z, w: p.view.size.x, d: p.view.size.z });
+      continue;
+    }
     const r = footprint(p);
     if (!r || p.view.kind !== "block") continue;
     const link = linkOf(p);
@@ -47,7 +52,14 @@ export const buildDistrictMap = (props: readonly StaticProp[]): MapVm => {
   const area = (r: MapRectVm) => r.w * r.d;
   const ground = flats.reduce<MapRectVm | null>((best, r) => (!best || area(r) > area(best) ? r : best), null);
   const bounds = ground ?? { x: 0, z: 0, w: 0, d: 0 };
-  return { bounds, blocks, streets: flats.filter((r) => r !== ground), ...(decks.length > 0 ? { decks } : {}), ...(links.length > 0 ? { links } : {}) };
+  return {
+    bounds,
+    blocks,
+    streets: flats.filter((r) => r !== ground),
+    ...(decks.length > 0 ? { decks } : {}),
+    ...(links.length > 0 ? { links } : {}),
+    ...(water.length > 0 ? { water } : {}),
+  };
 };
 
 /** Metres; positions are snapped to this so the store only changes when the map would. */
@@ -57,8 +69,10 @@ const snap = (v: number, step: number) => Math.round(v / step) * step;
 
 const markerKind = (e: Entity, targetTags: ReadonlySet<string>): MapMarkerVm["kind"] | null => {
   if (e.interactable?.kind === "shop") return "ripperdoc";
-  // Both contract givers: Kaito and Hana on the market.
-  if (e.interactable?.dialogueId === "fixer" || e.interactable?.dialogueId === "hana") return "fixer";
+  // The contract givers: Kaito, Hana on the market, Genzō in the docks.
+  if (e.interactable?.dialogueId === "fixer" || e.interactable?.dialogueId === "hana" || e.interactable?.dialogueId === "genzo") return "fixer";
+  // The defector of an escort and the terminal of a hack (ADR-0024).
+  if (e.escort || e.interactable?.kind === "terminal") return "target";
   // The crate of a retrieval job.
   if (e.interactable?.kind === "pickup") return "target";
   if (e.tag && targetTags.has(e.tag) && (e.health?.current ?? 0) > 0) return "target";

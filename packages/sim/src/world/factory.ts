@@ -119,7 +119,7 @@ export const gangerEntity = (
   const e: Entity = {
     ...actor(id, spawn),
     chunk,
-    view: { kind: "enemy", preset: "ganger" },
+    view: { kind: "enemy", preset: def.faction === "tessen" ? "corpo" : "ganger" },
     faction: def.faction,
     enemy: { type },
     velocity: { x: 0, y: 0, z: 0 },
@@ -160,7 +160,7 @@ export const sniperEntity = (id: EntityId, spawn: ActorSpawn, tag: string | null
   const e: Entity = {
     ...actor(id, spawn),
     chunk,
-    view: { kind: "enemy", preset: "ganger" },
+    view: { kind: "enemy", preset: "corpo" },
     faction: def.faction,
     enemy: { type: "tessen_sniper" },
     velocity: { x: 0, y: 0, z: 0 },

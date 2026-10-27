@@ -100,6 +100,8 @@ export interface MapVm {
   /** Walkable floors above the street (decks, walkways, balconies); lit while the player is up there. */
   readonly decks?: readonly MapRectVm[];
   readonly links?: readonly MapLinkVm[];
+  /** Open water (the docks, ADR-0024), under everything else. */
+  readonly water?: readonly MapRectVm[];
 }
 
 export type MapMarkerKind = "fixer" | "ripperdoc" | "target";

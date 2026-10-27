@@ -263,7 +263,7 @@ describe("ripperdoc clinic", () => {
   });
 
   it("gives a regular the discount, and charges a distrusted customer extra", () => {
-    const rep = (clinic: number) => ({ fixers: 0, hebi: 0, civilians: 0, clinic });
+    const rep = (clinic: number) => ({ fixers: 0, hebi: 0, civilians: 0, clinic, tessen: 0 });
     mount({ screen: "playing", shopOpen: true, eddies: 5000, reputation: rep(60) });
     expect(screen.getByTestId("shop-terms").textContent).toBe("Stała klientka · rabat 20%");
     expect(screen.getByRole("button", { name: /Kup · 72 €\$/ })).toBeTruthy();

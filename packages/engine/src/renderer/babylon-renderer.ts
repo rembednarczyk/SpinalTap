@@ -21,13 +21,14 @@ import {
   startReload,
   startStagger,
   startSwing,
-  buildCivilian, buildFixer, buildGanger, buildHeroine, buildRipperdoc } from "./characters";
+  buildCivilian, buildCorpo, buildFixer, buildGanger, buildHeroine, buildRipperdoc } from "./characters";
 import { type CharacterModelKey, type CharacterModelManifest, type ModelInstance, ModelLibrary } from "./model-library";
 import { HumanoidRetarget } from "./model-rig";
 import { SpringBones, humanoidColliders } from "./spring-bones";
 import { type WeaponManifest, WeaponMounts } from "./weapon-mount";
 import { Loadouts } from "./loadout";
-import { type PropView, buildBlock, buildLamp, buildLootBag, buildNeon } from "./props";
+import { type PropView, buildBlock, buildLamp, buildLootBag, buildNeon, buildWater } from "./props";
+import { Lasers } from "./lasers";
 import type { Stage } from "./stage";
 
 /** An imported model dressed over a procedural rig, which keeps animating invisibly. */
@@ -71,6 +72,7 @@ export class BabylonRenderer implements RenderPort {
   readonly rig: CameraRig;
   readonly grading: Grading;
   private readonly effects: Effects;
+  private readonly lasers: Lasers;
   private readonly rain: ReturnType<typeof createRain> | null;
   private readonly splashes: ReturnType<typeof createSplashes> | null;
   readonly shadow: MoonShadow;
@@ -120,6 +122,7 @@ export class BabylonRenderer implements RenderPort {
     for (const m of dressing.meshes) if (m.material?.name.includes("vendingGlow")) stage.glow.addIncludedOnlyMesh(m);
     this.grading = new Grading(scene, this.rig.camera, { reference: stage.options.reference });
     this.effects = new Effects(scene, stage.glow);
+    this.lasers = new Lasers(scene, stage.glow);
     this.rain = stage.options.reference ? null : createRain(scene);
     this.splashes = stage.options.reference || !high ? null : createSplashes(scene);
     if (!stage.options.reference) {
@@ -141,7 +144,9 @@ export class BabylonRenderer implements RenderPort {
           view.kind === "heroine"
             ? buildHeroine
             : view.kind === "enemy"
-              ? buildGanger
+              ? view.preset === "corpo"
+                ? buildCorpo
+                : buildGanger
               : view.preset === "fixer"
                 ? buildFixer
                 : view.preset === "ripperdoc"
@@ -172,6 +177,11 @@ export class BabylonRenderer implements RenderPort {
         const lightKey = prop.light ? name : null;
         if (prop.light && lightKey) this.materials.addLight(lightKey, prop.light);
         this.entities.set(id, { kind: "prop", prop, lightKey, decor });
+        return;
+      }
+      case "water": {
+        const prop = buildWater(scene, this.materials, name, view, v3(t.position));
+        this.entities.set(id, { kind: "prop", prop, lightKey: null, decor: { meshes: [], flicker: null } });
         return;
       }
       case "loot": {
@@ -305,6 +315,11 @@ export class BabylonRenderer implements RenderPort {
         if (effect.entityId === this.cameraTarget) this.rig.shake(0.6);
         return;
       }
+      case "laser": {
+        if (effect.duration <= 0) this.lasers.stop(effect.shooterId);
+        else this.lasers.start(effect.shooterId, effect.targetId, effect.duration);
+        return;
+      }
       case "time-of-day": {
         // The app sends this only when the light level moves a step, so re-applying is cheap.
         const rig = rigForDaylight(effect.daylight);
@@ -348,6 +363,10 @@ export class BabylonRenderer implements RenderPort {
     this.materials.setLightFocus(this.rig.camera.position.x, this.rig.camera.position.z);
     if (moved) this.materials.setShadowMatrix(moved);
     this.effects.update(dt);
+    this.lasers.update(dt, (id) => {
+      const e = this.entities.get(id);
+      return e?.kind === "character" ? e.transform : null;
+    });
     if (this.flash) {
       this.flash.life -= dt;
       const intensity = Math.max(0, this.flash.life / 0.07);
@@ -365,6 +384,7 @@ export class BabylonRenderer implements RenderPort {
   private flash: { x: number; y: number; z: number; life: number } | null = null;
 
   clear(): void {
+    this.lasers.clear();
     this.resetting = true;
     for (const id of [...this.entities.keys()]) this.despawn(id);
     for (const rig of this.dying.splice(0)) this.disposeRig(rig);
