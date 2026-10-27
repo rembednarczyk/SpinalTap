@@ -16,7 +16,7 @@ import {
   recallDialogueId,
 } from "@seki/core";
 import { type DialogueView, NarrativeRuntime } from "@seki/narrative";
-import { DISTRICTS, DISTRICT_M0_PROPS, type DistrictId, RenderSync, Simulation } from "@seki/sim";
+import { DISTRICTS, DISTRICT_M0_PROPS, type DistrictId, RenderSync, SIM_HZ, Simulation } from "@seki/sim";
 import { type AbilityVm, type Screen, type SettingsVm, type UiIntents, type UiStore, dismissToast, patchUi, pushToast } from "@seki/ui";
 import { bindEventPresenter } from "./event-presenter";
 import { createJournalCache } from "./journal";
@@ -136,7 +136,7 @@ export class GameSession implements UiIntents {
   syncHud(): void {
     const sim = this.simulation;
     const player = sim.player();
-    const { title, objective } = describeObjective(sim.domain);
+    const { title, objective } = describeObjective(sim.domain, sim.tick);
     patchUi(this.deps.ui, {
       hp: player?.health?.current ?? 0,
       maxHp: player?.health?.max ?? 100,
@@ -313,7 +313,7 @@ export class GameSession implements UiIntents {
 
   private openDialogue(dialogueId: string): void {
     this.dialogueOpen = true;
-    patchUi(this.deps.ui, { dialogue: toDialogueVm(this.narrative.start(dialogueId, this.simulation.domain)), prompt: null });
+    patchUi(this.deps.ui, { dialogue: toDialogueVm(this.narrative.start(dialogueId, this.simulation.domain, { tick: this.simulation.tick, ticksPerSecond: SIM_HZ })), prompt: null });
     this.deps.onFocusChange?.(false);
   }
 

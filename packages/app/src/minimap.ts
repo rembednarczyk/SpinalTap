@@ -34,7 +34,10 @@ const snap = (v: number, step: number) => Math.round(v / step) * step;
 
 const markerKind = (e: Entity, targetTags: ReadonlySet<string>): MapMarkerVm["kind"] | null => {
   if (e.interactable?.kind === "shop") return "ripperdoc";
-  if (e.interactable?.dialogueId === "fixer") return "fixer";
+  // Both contract givers: Kaito and Hana on the market.
+  if (e.interactable?.dialogueId === "fixer" || e.interactable?.dialogueId === "hana") return "fixer";
+  // The crate of a retrieval job.
+  if (e.interactable?.kind === "pickup") return "target";
   if (e.tag && targetTags.has(e.tag) && (e.health?.current ?? 0) > 0) return "target";
   return null;
 };
@@ -48,8 +51,9 @@ export interface MinimapFrame {
 }
 
 /**
- * Tracks the player and the NPCs worth finding (fixer, ripperdoc, current targets). Returns the
- * previous objects when nothing moved past the snap, so per-frame syncs do not re-render.
+ * Tracks the player and what is worth finding (contract givers, ripperdoc, current targets, a
+ * contract crate). Returns the previous objects when nothing moved past the snap, so per-frame
+ * syncs do not re-render.
  */
 export const createMinimapTracker = () => {
   let player: MapPlayerVm | null = null;

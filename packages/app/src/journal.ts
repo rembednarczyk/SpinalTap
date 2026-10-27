@@ -1,4 +1,5 @@
-import { type DomainState, MEMORY_CATALOG, QUEST_DEFINITIONS, contractObjective } from "@seki/core";
+import { type DomainState, MEMORY_CATALOG, QUEST_DEFINITIONS, contractGiver, contractObjective } from "@seki/core";
+import { contractTitle } from "./objective";
 import type { JournalMemoryVm, JournalQuestVm, JournalVm } from "@seki/ui";
 
 /** Quest log, contracts and recovered memories as the journal shows them. Pure. */
@@ -20,19 +21,19 @@ export const buildJournal = (domain: DomainState): JournalVm => {
   if (active) {
     quests.push({
       id: `contract-${active.id}`,
-      title: `Kontrakt ${active.id.slice(1)} · Kaito`,
+      title: contractTitle(active),
       kind: "contract",
       status: "active",
       steps: [
         { objective: contractObjective({ ...active, status: "active" }), done: active.status === "cleared" },
-        ...(active.status === "cleared" ? [{ objective: "Wróć do Kaito po zapłatę", done: false }] : []),
+        ...(active.status === "cleared" ? [{ objective: `Wróć do ${contractGiver(active).genitive} po zapłatę`, done: false }] : []),
       ],
     });
   }
   if (completed > 0) {
     quests.push({
       id: "contracts-done",
-      title: "Kontrakty dla Kaito",
+      title: "Wykonane kontrakty",
       kind: "contract",
       status: "completed",
       steps: [{ objective: `Wykonane i opłacone: ${completed}`, done: true }],
