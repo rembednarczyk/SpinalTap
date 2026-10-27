@@ -123,6 +123,34 @@ const PadButtonView = ({
 };
 
 /**
+ * Crouch on a touch screen is a toggle: one tap holds the button down for the pad, the next
+ * lets it go. Lit while the player is crouched.
+ */
+const CrouchToggle = ({ pad }: { pad: TouchPadSink }) => {
+  const crouched = useUi((s) => s.crouched);
+  const [on, setOn] = useState(false);
+  return (
+    <button
+      type="button"
+      aria-label="Kucnij lub wstań"
+      aria-pressed={on}
+      data-testid="touch-crouch"
+      className={`touch__btn touch__btn--c${on || crouched ? " touch__btn--on" : ""}`}
+      onPointerDown={(e) => {
+        e.currentTarget.setPointerCapture?.(e.pointerId);
+        if (on) pad.release("crouch");
+        else pad.press("crouch");
+        setOn(!on);
+      }}
+      onContextMenu={(e) => e.preventDefault()}
+      onTouchEnd={(e) => e.preventDefault()}
+    >
+      C
+    </button>
+  );
+};
+
+/**
  * On-screen gamepad for phones and tablets: floating move stick on the left, drag-to-look on
  * the right, action buttons in thumb reach. The fire button also steers the view while held.
  */
@@ -168,6 +196,7 @@ export const TouchControls = ({ pad }: { pad: TouchPadSink }) => {
         <PadButtonView pad={pad} button="useItem" label="+" hint="Apteczka" className="touch__btn--h" />
         <PadButtonView pad={pad} button="toggleCamera" label="V" hint="Kamera FPP/TPP" className="touch__btn--v" />
         <PadButtonView pad={pad} button="toggleWeapon" label="X" hint="Schowaj lub wyciągnij broń" className="touch__btn--x" />
+        <CrouchToggle pad={pad} />
       </div>
     </div>
   );
