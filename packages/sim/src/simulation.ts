@@ -31,6 +31,8 @@ import { PLAYER_SPAWN } from "./content/district-m0";
 import type { DistrictId } from "./content/world-map";
 import { IdAllocator, entitySnapshotOf, playerEntity } from "./world/factory";
 import { WorldStreamer } from "./world/streaming";
+import { applyItemCommand, isItemCommand } from "./world/item-commands";
+import { syncPlayerWeapon } from "./world/player-weapon";
 
 export const SIM_HZ = 60;
 export const SIM_DT = 1 / SIM_HZ;
@@ -73,6 +75,7 @@ export class Simulation {
     if (contract?.status === "active") this.streamer.registerContract(this.world, domain.flags, domain.contracts.completed, contract);
     const focus = saved?.entities.find((e) => e.key === "player")?.position ?? PLAYER_SPAWN.position;
     this.streamer.loadInitial(this.world, domain.flags, focus, saved?.streaming.loadedChunks ?? [], () => this.world.add(player));
+    if (player.combatant) syncPlayerWeapon(domain, player.combatant);
   }
 
   static create(options: SimulationOptions): Simulation {
@@ -156,6 +159,10 @@ export class Simulation {
   }
 
   private apply(ctx: SimContext, cmd: GameCommand): void {
+    if (isItemCommand(cmd)) {
+      applyItemCommand(ctx, cmd);
+      return;
+    }
     switch (cmd.type) {
       case "set-flag":
         raiseFlag(ctx, cmd.flag);

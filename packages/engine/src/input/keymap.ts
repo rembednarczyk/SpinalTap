@@ -1,6 +1,22 @@
-import type { InputFrame } from "@seki/core";
+import type { InputFrame, WeaponSlotInput } from "@seki/core";
 
-export type Action = "forward" | "back" | "left" | "right" | "sprint" | "crouch" | "fire" | "interact" | "toggleCamera" | "ability" | "useItem" | "toggleWeapon";
+export type Action =
+  | "forward"
+  | "back"
+  | "left"
+  | "right"
+  | "sprint"
+  | "crouch"
+  | "fire"
+  | "interact"
+  | "toggleCamera"
+  | "ability"
+  | "useItem"
+  | "toggleWeapon"
+  | "reload"
+  | "slot1"
+  | "slot2"
+  | "slot3";
 
 /** Action → physical codes (KeyboardEvent.code, or "Mouse0".."Mouse2"). Remappable at runtime. */
 export type KeyMap = Readonly<Record<Action, readonly string[]>>;
@@ -19,6 +35,10 @@ export const DEFAULT_KEYMAP: KeyMap = {
   ability: ["KeyQ"],
   useItem: ["KeyH"],
   toggleWeapon: ["KeyX"],
+  reload: ["KeyR"],
+  slot1: ["Digit1", "Numpad1"],
+  slot2: ["Digit2", "Numpad2"],
+  slot3: ["Digit3", "Numpad3"],
 };
 
 export const remap = (map: KeyMap, action: Action, codes: readonly string[]): KeyMap => ({ ...map, [action]: codes });
@@ -37,6 +57,10 @@ export interface LookDelta {
   readonly pitch: number;
 }
 
+/** First slot key pressed this poll: 1 primary, 2 secondary, 3 melee, 0 none. */
+const slotPressed = (pressed: ReadonlySet<string>, map: KeyMap): WeaponSlotInput =>
+  any(pressed, map.slot1) ? 1 : any(pressed, map.slot2) ? 2 : any(pressed, map.slot3) ? 3 : 0;
+
 /** Keyboard + mouse state → InputFrame. Pure, so it is unit-tested without a browser. */
 export const mapKeyboardMouse = (keys: KeyState, look: LookDelta, map: KeyMap = DEFAULT_KEYMAP): InputFrame => ({
   moveX: (any(keys.held, map.right) ? 1 : 0) - (any(keys.held, map.left) ? 1 : 0),
@@ -51,8 +75,8 @@ export const mapKeyboardMouse = (keys: KeyState, look: LookDelta, map: KeyMap = 
   ability: any(keys.pressed, map.ability),
   useItem: any(keys.pressed, map.useItem),
   toggleWeapon: any(keys.pressed, map.toggleWeapon),
-  reload: false,
-  weaponSlot: 0,
+  reload: any(keys.pressed, map.reload),
+  weaponSlot: slotPressed(keys.pressed, map),
 });
 
 export interface PadState {
@@ -71,6 +95,9 @@ const dead = (v: number | undefined): number => {
   return Math.abs(x) < PAD_DEADZONE ? 0 : (x - Math.sign(x) * PAD_DEADZONE) / (1 - PAD_DEADZONE);
 };
 
+/** D-pad: left primary, up secondary, right melee (down reloads). */
+const padSlot = (pressed: readonly boolean[]): WeaponSlotInput => (pressed[14] ? 1 : pressed[12] ? 2 : pressed[15] ? 3 : 0);
+
 /** Standard-mapping gamepad → InputFrame. Look speed scales with dt. */
 export const mapGamepad = (pad: PadState, dt: number): InputFrame => ({
   moveX: dead(pad.axes[0]),
@@ -86,8 +113,8 @@ export const mapGamepad = (pad: PadState, dt: number): InputFrame => ({
   ability: pad.pressed[5] ?? false,
   useItem: pad.pressed[2] ?? false,
   toggleWeapon: pad.pressed[4] ?? false,
-  reload: false,
-  weaponSlot: 0,
+  reload: pad.pressed[13] ?? false,
+  weaponSlot: padSlot(pad.pressed),
 });
 
 /** Combines devices: axes are summed and clamped, buttons are OR-ed. */

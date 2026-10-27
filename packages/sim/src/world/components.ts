@@ -1,4 +1,4 @@
-import type { EntityId, FactionId, Health, Vec3, ViewDescriptor } from "@seki/core";
+import type { EntityId, FactionId, Health, Vec3, ViewDescriptor, WeaponId, WeaponSlot, WeaponStats } from "@seki/core";
 import type { Aabb } from "./collision";
 
 export interface CharacterBody {
@@ -6,8 +6,23 @@ export interface CharacterBody {
   readonly height: number;
 }
 
+/**
+ * Weapon state of a character (ADR-0015). For the player the domain is the source of truth
+ * (equipment, the weapon instance and its loaded rounds, the ammo pouch); `weapon`, `uid` and
+ * `stats` are a cache that `syncPlayerWeapon` refreshes every step. NPCs keep everything here.
+ */
 export interface Combatant {
-  weapon: "pistol" | "gangerSmg";
+  /** Weapon in the active slot, null when that slot is empty. */
+  weapon: WeaponId | null;
+  /** Its effective stats (the player's with rarity and mods, NPCs' from the `npc` profile). */
+  stats: WeaponStats | null;
+  /** The player's active weapon instance; undefined before the first sync, null for NPCs. */
+  uid?: string | null;
+  slot: WeaponSlot;
+  /** Rounds in the magazine of an NPC. Not saved: NPC magazines come back full. */
+  loaded: number;
+  /** Seconds left of a reload step, 0 when not reloading. Not saved. */
+  reloading: number;
   /** Seconds until the next shot is allowed. */
   cooldown: number;
   /** Weapon put away: no shots until drawn again. Presentation-only otherwise; not saved. */

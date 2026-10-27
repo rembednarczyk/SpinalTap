@@ -555,6 +555,7 @@ kbd {
 .touch__btn--v { right: 172px; bottom: 140px; width: 44px; height: 44px; font-size: 15px; }
 .touch__btn--x { right: 96px; bottom: 150px; width: 44px; height: 44px; font-size: 15px; }
 .touch__btn--c { right: 172px; bottom: 76px; width: 44px; height: 44px; font-size: 15px; }
+.touch__btn--r { right: 176px; bottom: 14px; width: 44px; height: 44px; font-size: 15px; color: var(--amber); }
 .touch__btn--on { background: rgba(95, 242, 255, 0.3); border-color: var(--cyan); color: var(--cyan); }
 .touch__top {
   position: absolute;
@@ -564,6 +565,47 @@ kbd {
   gap: 10px;
 }
 .touch__btn--small { position: static; width: 44px; height: 44px; font-size: 16px; border-radius: 10px; }
+
+/* Weapon strip: slots and rounds of the active weapon. */
+.weapon-strip {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+}
+.weapon-strip__ammo { display: flex; align-items: baseline; gap: 8px; padding: 2px 10px; background: var(--panel); border-right: 3px solid var(--magenta); }
+.weapon-strip__count { font-size: 22px; color: var(--ink); }
+.weapon-strip__type { font-size: 12px; color: var(--ink-dim); }
+.weapon-strip__note { font-size: 12px; color: var(--amber); text-transform: uppercase; letter-spacing: 0.08em; }
+.weapon-strip__ammo--empty .weapon-strip__count { color: var(--danger); }
+.weapon-strip__slots { display: flex; gap: 4px; }
+.weapon-strip__slot {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 48px;
+  height: 44px;
+  padding: 2px 6px;
+  font: inherit;
+  font-size: 11px;
+  color: var(--ink-dim);
+  text-align: left;
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+}
+.weapon-strip__slot--active { color: var(--ink); border-color: var(--cyan); box-shadow: 0 0 8px rgba(95, 242, 255, 0.35); }
+.weapon-strip__slot--empty { opacity: 0.55; }
+.weapon-strip__key { font-size: 10px; color: var(--cyan); }
+.weapon-strip__name { white-space: nowrap; max-width: 90px; overflow: hidden; text-overflow: ellipsis; }
+/* Rarity frame colour always comes with a text label elsewhere (ADR-0015). */
+.rarity--uncommon { border-color: rgba(95, 242, 255, 0.8); }
+.rarity--rare { border-color: rgba(255, 61, 139, 0.8); }
+.rarity--unique { border-color: rgba(255, 191, 74, 0.9); }
 
 /* Touch mode: move HUD pieces out of the thumbs' way. */
 .touch-mode .hud__wallet { right: 182px; top: 12px; }
@@ -581,6 +623,16 @@ kbd {
 .touch-mode .gear { right: auto; left: 28px; bottom: auto; top: 96px; align-items: flex-start; }
 .touch-mode .hud__camera { display: none; }
 .touch-mode .hud__prompt { top: 22%; }
+/* Left of the action cluster, right of the move stick, at thumb height. */
+.touch-mode .weapon-strip {
+  left: auto;
+  transform: none;
+  align-items: flex-end;
+  right: calc(max(16px, env(safe-area-inset-right, 0px)) + 246px);
+  bottom: max(12px, env(safe-area-inset-bottom, 0px));
+}
+.touch-mode .weapon-strip__slot { pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none; }
+.touch-mode .weapon-strip__name { max-width: 64px; }
 
 .rotate-hint { display: none; }
 @media (orientation: portrait) {

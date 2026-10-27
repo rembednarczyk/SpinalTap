@@ -1,8 +1,8 @@
-import { type EntityId, type EntitySnapshot, type Vec3 } from "@seki/core";
+import { type EntityId, type EntitySnapshot, type Vec3, type WeaponId, npcWeapon } from "@seki/core";
 import { PLAYER_SPAWN } from "../content/district-m0";
 import type { ActorDef, ActorSpawn, StaticProp } from "../content/builders";
 import { aabbFromCenter } from "./collision";
-import type { Entity } from "./components";
+import type { Combatant, Entity } from "./components";
 
 const BODY = { radius: 0.38, height: 1.8 } as const;
 
@@ -44,7 +44,8 @@ export const playerEntity = (id: EntityId): Entity => ({
   view: { kind: "heroine" },
   velocity: { x: 0, y: 0, z: 0 },
   health: { current: PLAYER_MAX_HP, max: PLAYER_MAX_HP },
-  combatant: { weapon: "pistol", cooldown: 0, holstered: false, drawing: 0, bloom: 0 },
+  // Armed from the domain by syncPlayerWeapon.
+  combatant: { weapon: null, stats: null, slot: "secondary", loaded: 0, reloading: 0, cooldown: 0, holstered: false, drawing: 0, bloom: 0 },
   posture: { crouched: false, amount: 0, prevAmount: 0, sprinting: false },
 });
 
@@ -52,6 +53,12 @@ export const propEntity = (id: EntityId, prop: StaticProp, chunk: string): Entit
   const e: Entity = { id, ...at(prop.center), view: prop.view, chunk };
   if (prop.solid && prop.view.kind === "block") e.solid = aabbFromCenter(prop.center, prop.view.size);
   return e;
+};
+
+/** An NPC with a full magazine of `weapon`, fired through the weapon's NPC profile. */
+export const npcCombatant = (weapon: WeaponId): Combatant => {
+  const stats = npcWeapon(weapon);
+  return { weapon, stats, uid: null, slot: stats.slot, loaded: stats.magazine, reloading: 0, cooldown: 0, holstered: false, drawing: 0, bloom: 0 };
 };
 
 export const gangerEntity = (id: EntityId, spawn: ActorSpawn, tag: string | null, maxHp: number, chunk: string): Entity => {
@@ -62,7 +69,7 @@ export const gangerEntity = (id: EntityId, spawn: ActorSpawn, tag: string | null
     faction: "hebi",
     velocity: { x: 0, y: 0, z: 0 },
     health: { current: maxHp, max: maxHp },
-    combatant: { weapon: "gangerSmg", cooldown: 0, holstered: false, drawing: 0, bloom: 0 },
+    combatant: npcCombatant("hebi_smg"),
     ai: { home: spawn.position, aggroRange: 17, attackRange: 15, alerted: false },
   };
   if (tag) e.tag = tag;

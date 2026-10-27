@@ -1,4 +1,13 @@
-import { type CameraMode, type CyberwareLoadout, type HitZone, type ReputationState, type SaveSlotInfo, createReputation } from "@seki/core";
+import {
+  type CameraMode,
+  type CyberwareLoadout,
+  type HitZone,
+  type Rarity,
+  type ReputationState,
+  type SaveSlotInfo,
+  type WeaponSlot,
+  createReputation,
+} from "@seki/core";
 import { createStore, type StoreApi } from "zustand/vanilla";
 
 export type Screen = "title" | "playing" | "paused" | "dead";
@@ -87,6 +96,29 @@ export interface MapPlayerVm {
   readonly yaw: number;
 }
 
+export interface WeaponSlotVm {
+  readonly slot: WeaponSlot;
+  /** Key and touch number of the slot. */
+  readonly key: 1 | 2 | 3;
+  /** Weapon in the slot, null when empty. */
+  readonly name: string | null;
+  readonly rarity: Rarity | null;
+}
+
+/** HUD weapon strip: the three slots and the active weapon's rounds. */
+export interface WeaponStripVm {
+  readonly slots: readonly WeaponSlotVm[];
+  readonly active: WeaponSlot;
+  /** Rounds in the magazine; null for melee or an empty hand. */
+  readonly loaded: number | null;
+  readonly magazine: number | null;
+  /** Matching rounds in the pouch; null when the weapon takes none. */
+  readonly reserve: number | null;
+  readonly ammoName: string | null;
+  readonly reloading: boolean;
+  readonly holstered: boolean;
+}
+
 export type GraphicsQuality = "high" | "low";
 
 export interface SettingsVm {
@@ -133,6 +165,7 @@ export interface UiState {
   /** How many more medkits fit in the bag. */
   readonly medkitRoom: number;
   readonly ability: AbilityVm | null;
+  readonly weapons: WeaponStripVm | null;
   readonly cyberware: CyberwareLoadout;
   readonly reputation: ReputationState;
   readonly contractsDone: number;
@@ -176,6 +209,7 @@ export const initialUiState: UiState = {
   medkits: 0,
   medkitRoom: 9,
   ability: null,
+  weapons: null,
   cyberware: {},
   reputation: createReputation(),
   contractsDone: 0,

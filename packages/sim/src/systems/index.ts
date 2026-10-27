@@ -10,6 +10,7 @@ import { movementSystem } from "./movement-system";
 import { playerControlSystem } from "./player-control-system";
 import { questSystem } from "./quest-system";
 import { streamingSystem } from "./streaming-system";
+import { weaponSystem } from "./weapon-system";
 
 export { aimSpreadOf, fireShot, GUNFIRE_INTERRUPT_RADIUS } from "./combat-system";
 export { equippedAbility, worldTimeScale } from "./ability-system";
@@ -29,6 +30,7 @@ export const createSystems = (): readonly System[] => [
   createGangerAiSystem(),
   createCivilianAiSystem(),
   movementSystem,
+  weaponSystem,
   combatSystem,
   interactionSystem,
   deathSystem,

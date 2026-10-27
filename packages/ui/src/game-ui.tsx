@@ -20,7 +20,7 @@ const Screens = ({ touch }: { touch: TouchPadSink | undefined }) => {
     <>
       {touch && screen === "playing" && !modal && <TouchControls pad={touch} />}
       {touch && <div className="rotate-hint">Obróć telefon poziomo</div>}
-      {screen !== "title" && <Hud />}
+      {screen !== "title" && <Hud touch={touch} />}
       {screen === "playing" && <DialoguePanel />}
       {screen === "playing" && <ShopPanel />}
       {screen === "playing" && <CharacterPanel />}

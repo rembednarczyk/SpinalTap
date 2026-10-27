@@ -44,6 +44,15 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
       render.playEffect({ kind: "weapon", entityId: e.entityId, drawn: e.drawn });
       if (isPlayer(e.entityId)) audio.play("ui-select");
     }),
+    bus.on("WeaponSwitched", (e) => {
+      render.playEffect({ kind: "weapon", entityId: e.entityId, drawn: true, slot: e.slot });
+      if (isPlayer(e.entityId)) audio.play("ui-select");
+    }),
+    bus.on("ReloadStarted", (e) => render.playEffect({ kind: "reload", entityId: e.entityId, duration: e.duration })),
+    bus.on("InventoryFull", () => {
+      toast("system", "Plecak pełny", "Zrób miejsce, zanim weźmiesz więcej.");
+      audio.play("denied");
+    }),
     bus.on("DamageDealt", (e) => {
       render.playEffect({ kind: "hit-spark", at: e.at, critical: e.critical });
       render.playEffect({ kind: "flinch", entityId: e.targetId });

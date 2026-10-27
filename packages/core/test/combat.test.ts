@@ -3,7 +3,7 @@ import {
   BASE_STATS,
   CYBERWARE_CATALOG,
   MAX_AIM_STABILITY,
-  WEAPONS,
+  WEAPON_CATALOG,
   ZONE_MULTIPLIERS,
   addBloom,
   applyDamage,
@@ -23,7 +23,7 @@ import {
 } from "../src";
 import { sequenceRng } from "./helpers";
 
-const attacker: AttackerProfile = { damage: WEAPONS.pistol.baseDamage, critChance: 0.1, critMultiplier: 2, damageBonus: 0 };
+const attacker: AttackerProfile = { damage: WEAPON_CATALOG.unity9.damage, critChance: 0.1, critMultiplier: 2, damageBonus: 0 };
 
 describe("combat rules", () => {
   it("deals base damage reduced by armor on a torso hit", () => {
@@ -87,7 +87,7 @@ describe("hit zones", () => {
 });
 
 describe("weapon spread", () => {
-  const p = WEAPONS.pistol.spread;
+  const p = WEAPON_CATALOG.unity9.spread;
   const still: ShooterState = { crouch: 0, moving: 0, sprinting: false, bloom: 0, aimStability: 0 };
 
   it("is wider moving, narrower standing still and clearly narrowest crouched", () => {

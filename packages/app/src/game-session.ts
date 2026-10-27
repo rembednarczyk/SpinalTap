@@ -24,6 +24,7 @@ import { createJournalCache } from "./journal";
 import { buildDistrictMap, createMinimapTracker } from "./minimap";
 import { needsReload, sanitizeSettings } from "./settings";
 import { describeObjective, saveLabel } from "./objective";
+import { createWeaponHud } from "./weapon-hud";
 
 export interface GameSessionDeps {
   readonly render: RenderPort;
@@ -68,6 +69,7 @@ export class GameSession implements UiIntents {
   private lastAbilityVm: AbilityVm | null = null;
   private readonly journal = createJournalCache();
   private readonly minimap = createMinimapTracker();
+  private readonly weaponHud = createWeaponHud();
   private readonly appliedSettings: SettingsVm;
   /** Last district the player was seen in; a change raises a toast. */
   private district: DistrictId | null = null;
@@ -166,6 +168,7 @@ export class GameSession implements UiIntents {
       medkits: sim.domain.inventory.stacks.medkit ?? 0,
       medkitRoom: stackRoom(sim.domain.inventory, sim.domain.equipment, "medkit"),
       ability: this.abilityVm(),
+      weapons: this.weaponHud(sim),
       cyberware: sim.domain.character.cyberware,
       reputation: sim.domain.reputation,
       contractsDone: sim.domain.contracts.completed,
