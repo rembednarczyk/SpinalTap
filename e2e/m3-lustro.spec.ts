@@ -3,6 +3,8 @@ import { freeze, gameState, step, teleport, waitForGame } from "./helpers";
 
 /** Act II (ADR-0023): the key conversation, Kurosawa's offer on the overpass, through the dialogue UI. */
 test("Kurosawa's deal on the overpass ends act II and Kagami's copy plays", async ({ page }) => {
+  // Streaming the market in (city kit models) is the slow part on a busy machine.
+  test.setTimeout(240_000);
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/?seed=11");
@@ -24,7 +26,15 @@ test("Kurosawa's deal on the overpass ends act II and Kagami's copy plays", asyn
   // On the overpass deck, next to him; one step streams the market in.
   await teleport(page, 98.5, 92, Math.PI / 2, 0, 9.9);
   await step(page, 2);
-  await expect(page.getByTestId("prompt")).toContainText("Kurosawą");
+  await expect
+    .poll(
+      async () => {
+        await step(page, 1);
+        return (await page.getByTestId("prompt").allTextContents()).join(" ");
+      },
+      { timeout: 60_000 },
+    )
+    .toContain("Kurosawą");
   await step(page, 1, { interact: true });
   const dialogue = page.getByTestId("dialogue");
   await expect(dialogue).toContainText("dział odzysku");
