@@ -14,6 +14,23 @@ export interface Combatant {
   holstered: boolean;
   /** Seconds left of the draw; shots wait for it. */
   drawing: number;
+  /** Extra spread from recent shots in radians; recovers over time. Not saved (ADR-0016). */
+  bloom: number;
+}
+
+/**
+ * How the character holds itself (ADR-0016). Transient like the holster: not saved, a loaded
+ * game starts standing.
+ */
+export interface Posture {
+  /** Wants to crouch (the input is held). */
+  crouched: boolean;
+  /** 0 standing .. 1 fully crouched, eased towards `crouched` over CROUCH_TIME. */
+  amount: number;
+  /** `amount` at the previous step, for interpolated rendering. */
+  prevAmount: number;
+  /** Sprinting this step (widens the aim cone). */
+  sprinting: boolean;
 }
 
 export interface GangerAi {
@@ -112,6 +129,7 @@ export interface Entity {
   /** Static geometry: collides and blocks line of sight, never moves. */
   solid?: Aabb;
   body?: CharacterBody;
+  posture?: Posture;
   player?: true;
   health?: Health;
   faction?: FactionId;

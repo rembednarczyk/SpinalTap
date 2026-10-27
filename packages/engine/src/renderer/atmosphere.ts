@@ -258,7 +258,7 @@ export class Atmosphere {
   }
 
   /**
-   * Time of day (ADR-0015): the sky and the distant skyline follow the rig's haze; the zenith
+   * Time of day (ADR-0017): the sky and the distant skyline follow the rig's haze; the zenith
    * and the cloud undersides pale with daylight. Uniforms only, the shaders stay as they are.
    */
   setDaylight(rig: LightingRig, daylight: number): void {

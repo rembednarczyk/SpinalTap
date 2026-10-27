@@ -3,6 +3,7 @@ import { FootstepClock } from "./footsteps";
 import { MixState } from "./mixer";
 import { LAYER_MIX, LAYERS, type Layer, LOOP_STEPS, MOOD_CUTOFF, MusicDirector, MusicSequencer, type NoteEvent, STEP_SECONDS, midiToHz, mulberry32 } from "./music";
 import { DEFAULT_POSE, DISTRICT_M0_VENTS, type Emitter, type EmitterMix, emitterMix, neonEmitters } from "./spatial";
+import { type AudioSampleManifest, type FetchBytes, SampleBank, type SampleSet, VariantPicker, manifestUrls } from "./samples";
 import { PRIORITY, VoicePool } from "./voice-pool";
 
 /** One synthesized partial: an oscillator or noise burst with an envelope. */
@@ -153,6 +154,13 @@ export interface SynthAudioOptions {
   readonly maxVoices?: number;
   /** Start ambience and music on the first unlock (default true). */
   readonly autoStart?: boolean;
+  /**
+   * Recorded sounds (CC0 packs) supplied by the application. They load lazily after `unlock()`;
+   * until a recording is decoded, or when it is missing or undecodable, the synth plays instead.
+   */
+  readonly samples?: AudioSampleManifest;
+  /** Byte loader for the samples, injectable for tests. Defaults to `fetch`. */
+  readonly fetchBytes?: FetchBytes;
 }
 
 interface PlayingVoice {
@@ -168,6 +176,10 @@ interface Ambience {
   readonly humPan: StereoPannerNode | null;
   readonly steam: GainNode;
   readonly steamPan: StereoPannerNode | null;
+  /** Level of the synthesized rain (hiss and wash), lowered once the recorded loop runs. */
+  readonly rainSynth: GainNode;
+  /** The recorded rain loop, once its buffer is decoded. */
+  rainLoop: AudioBufferSourceNode | null;
 }
 
 interface Graph {
@@ -219,6 +231,9 @@ export class SynthAudio implements AudioPort, AudioScenePort {
   private readonly neon: readonly Emitter[] = neonEmitters();
   private readonly vents: readonly Emitter[] = DISTRICT_M0_VENTS;
   private pose: AudioListenerPose = DEFAULT_POSE;
+  private readonly samples: AudioSampleManifest;
+  private readonly bank: SampleBank;
+  private readonly picker: VariantPicker;
 
   private musicOn = false;
   private step = 0;
@@ -237,6 +252,19 @@ export class SynthAudio implements AudioPort, AudioScenePort {
 
   constructor(private readonly opts: SynthAudioOptions = {}) {
     this.pool = new VoicePool(opts.maxVoices ?? 40);
+    this.samples = opts.samples ?? {};
+    this.bank = new SampleBank(opts.fetchBytes);
+    this.picker = new VariantPicker(this.bank, this.rnd);
+  }
+
+  /** Loaded recordings (tests, debug overlay). */
+  get sampleBank(): SampleBank {
+    return this.bank;
+  }
+
+  /** True while the recorded rain loop plays instead of the synthesized hiss alone. */
+  get recordedRain(): boolean {
+    return !!this.ambience?.rainLoop;
   }
 
   /** True once a context exists. */
@@ -276,6 +304,8 @@ export class SynthAudio implements AudioPort, AudioScenePort {
         this.g = null;
         return;
       }
+      // Lazy: nothing is downloaded before the first gesture, and only once.
+      this.bank.load(this.g.ctx, manifestUrls(this.samples));
       if (this.opts.autoStart !== false) this.startAmbience();
     }
     const ctx = this.g.ctx;
@@ -298,7 +328,11 @@ export class SynthAudio implements AudioPort, AudioScenePort {
     this.lastCue.set(cue, now);
     const r = CUES[cue];
     const dest = r.crush ? g.crusher : g.buses.sfx;
-    for (const v of r.voices) this.voice(g, v, now + (v.start ?? 0), dest, r.priority ?? PRIORITY.sfx, 1, r.send ?? 0);
+    const set = this.samples.cues?.[cue];
+    const played = this.sample(g, set, now, dest, r.priority ?? PRIORITY.sfx, 1, 0, set?.send ?? r.send ?? 0);
+    if (!played || set?.layerSynth) {
+      for (const v of r.voices) this.voice(g, v, now + (v.start ?? 0), dest, r.priority ?? PRIORITY.sfx, 1, r.send ?? 0);
+    }
     this.refreshMood(now);
   }
 
@@ -372,7 +406,10 @@ export class SynthAudio implements AudioPort, AudioScenePort {
     this.pool.prune(now);
     this.refreshMood(now);
     if (this.musicOn) this.scheduleMusic(g, now);
-    if (this.ambience) this.scheduleAmbience(g, now);
+    if (this.ambience) {
+      this.scheduleAmbience(g, now);
+      this.startRecordedRain(g, this.ambience, now);
+    }
     const n = this.steps.advance(this.pose.speed, dt);
     for (let i = 0; i < n; i++) this.footstep(g, now + 0.01 + i * 0.05);
   }
@@ -481,12 +518,14 @@ export class SynthAudio implements AudioPort, AudioScenePort {
     };
 
     // Rain: a hiss band plus the low wash of water on asphalt, slowly breathing.
+    const rainSynth = gain(1);
+    rainSynth.connect(out);
     const rain = loop(1);
     const hiss = gain(0.26);
-    chain([rain, filter("highpass", 600), filter("lowpass", 7500), hiss, out]);
+    chain([rain, filter("highpass", 600), filter("lowpass", 7500), hiss, rainSynth]);
     lfo(0.09, 0.06, hiss.gain);
     const wash = gain(0.2);
-    chain([rain, filter("lowpass", 320), wash, out]);
+    chain([rain, filter("lowpass", 320), wash, rainSynth]);
     // Distant traffic: deep rumble whose cutoff swells as unseen cars pass.
     const traffic = loop(0.37);
     const rumbleTone = filter("lowpass", 140);
@@ -516,7 +555,30 @@ export class SynthAudio implements AudioPort, AudioScenePort {
     lfo(0.23, 0.4, puff.gain);
 
     for (const s of sources) s.start();
-    return { sources, out, hum, humPan, steam, steamPan };
+    const a: Ambience = { sources, out, hum, humPan, steam, steamPan, rainSynth, rainLoop: null };
+    this.startRecordedRain(g, a, ctx.currentTime);
+    return a;
+  }
+
+  /** Swaps in the recorded rain loop as soon as it is decoded; the synth stays underneath. */
+  private startRecordedRain(g: Graph, a: Ambience, now: number): void {
+    const spec = this.samples.rain;
+    if (a.rainLoop || !spec) return;
+    const buffer = this.bank.get(spec.url);
+    if (!buffer) return;
+    const { ctx } = g;
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    src.loop = true;
+    const level = ctx.createGain();
+    level.gain.value = 0;
+    level.gain.setTargetAtTime(spec.gain ?? 1, now, 1.2);
+    src.connect(level).connect(a.out);
+    // Start inside the loop so a restart never begins on the same drop.
+    src.start(now, this.rnd() * buffer.duration * 0.9);
+    a.sources.push(src);
+    a.rainLoop = src;
+    a.rainSynth.gain.setTargetAtTime(Math.min(1, Math.max(0, spec.synthLevel ?? 0.3)), now, 1.2);
   }
 
   // ------------------------------------------------------------------------------ Schedule
@@ -644,10 +706,51 @@ export class SynthAudio implements AudioPort, AudioScenePort {
     const pan = this.steps.nextFoot() * 0.08;
     const p = PRIORITY.footstep;
     const dest = g.buses.sfx;
+    if (this.sample(g, this.samples.footsteps, at, dest, p, k, pan, 0)) return;
     const pitch = 0.92 + this.rnd() * 0.16;
     this.voice(g, { type: "noise", freq: 0, dur: 0.07, gain: 0.13, filter: (650 + speed * 90) * pitch, attack: 0.002, pan }, at, dest, p, k);
     this.voice(g, { type: "noise", freq: 0, dur: 0.1 + 0.03 * k, gain: 0.06, filter: 4200 * pitch, filterTo: 2400, filterType: "bandpass", q: 1.2, attack: 0.004, pan }, at + 0.012, dest, p, k);
     this.voice(g, { type: "sine", freq: 75 * pitch, to: 48, dur: 0.07, gain: 0.12, attack: 0.002 }, at, dest, p, k);
+  }
+
+  /**
+   * Plays a ready recording of `set` through the same pool, bus, panner and reverb send as a
+   * synth voice. Returns false when no variant is decoded yet (or ever), so the caller synthesizes.
+   */
+  private sample(g: Graph, set: SampleSet | undefined, at: number, dest: AudioNode, priority: number, scale: number, pan: number, send: number): boolean {
+    const picked = this.picker.pick(set);
+    if (!picked || !set) return false;
+    const { ctx } = g;
+    const now = ctx.currentTime;
+    // A refused voice still counts as played: falling back to synth would steal the same slot.
+    if (!this.pool.canClaim(priority, now)) return true;
+    const dur = picked.buffer.duration / picked.rate;
+    const end = at + dur + 0.02;
+    const src = ctx.createBufferSource();
+    src.buffer = picked.buffer;
+    src.playbackRate.value = picked.rate;
+    const env = ctx.createGain();
+    const peak = Math.max(SILENT * 2, (set.gain ?? 1) * scale);
+    env.gain.setValueAtTime(peak, at);
+    env.gain.setValueAtTime(peak, Math.max(at, end - 0.03));
+    env.gain.linearRampToValueAtTime(0, end);
+    const claimed = this.pool.claim({ src, env }, priority, now, end);
+    if (claimed.ok && claimed.evicted) this.kill(claimed.evicted, now);
+    let node: AudioNode = src.connect(env);
+    if (pan !== 0 && typeof ctx.createStereoPanner === "function") {
+      const p = ctx.createStereoPanner();
+      p.pan.setValueAtTime(pan, at);
+      node = node.connect(p);
+    }
+    node.connect(dest);
+    if (send > 0) {
+      const s = ctx.createGain();
+      s.gain.value = send;
+      node.connect(s).connect(g.reverb);
+    }
+    src.start(at);
+    src.stop(end);
+    return true;
   }
 
   /** Builds one voice if the pool admits it; the nodes are disposable (single-use sources). */

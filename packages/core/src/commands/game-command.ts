@@ -23,7 +23,7 @@ export type GameCommand =
   /** Closes act I: the sim resolves the ending from the recorded choices. */
   | { readonly type: "resolve-ending" }
   /**
-   * Lets game time pass in one jump (ADR-0015), e.g. waiting for a stall to open. Whole game
+   * Lets game time pass in one jump (ADR-0017), e.g. waiting for a stall to open. Whole game
    * minutes, at least 1. NPCs following a daily plan are put where it says at the new time.
    */
   | { readonly type: "wait"; readonly minutes: number };

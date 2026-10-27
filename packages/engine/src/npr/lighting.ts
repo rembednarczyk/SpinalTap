@@ -49,7 +49,7 @@ export const mixHex = (a: string, b: string, t: number): string =>
     .join("")}`;
 
 /**
- * The light rig for a daylight level (0 night, 1 day; ADR-0015). Only colours and fog density
+ * The light rig for a daylight level (0 night, 1 day; ADR-0017). Only colours and fog density
  * move; the moon direction stays, so shadows do not swing. Exactly NIGHT_RIG at 0.
  */
 export const rigForDaylight = (daylight: number): LightingRig => {

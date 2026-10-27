@@ -15,6 +15,11 @@ describe("keyboard and mouse mapping", () => {
     expect(f).toMatchObject({ lookYaw: 0.1, lookPitch: -0.2, fire: true, interact: false, toggleCamera: true });
   });
 
+  it("crouches while C is held", () => {
+    expect(mapKeyboardMouse(keys(["KeyC"]), { yaw: 0, pitch: 0 }).crouch).toBe(true);
+    expect(mapKeyboardMouse(keys([], ["KeyC"]), { yaw: 0, pitch: 0 }).crouch).toBe(false);
+  });
+
   it("supports remapping", () => {
     const map = remap(DEFAULT_KEYMAP, "fire", ["KeyF"]);
     expect(mapKeyboardMouse(keys(["KeyF"]), { yaw: 0, pitch: 0 }, map).fire).toBe(true);
@@ -36,6 +41,14 @@ describe("gamepad mapping", () => {
     const f = mapGamepad(pad([0, 0, 1, 0], buttons, pressed), 0.5);
     expect(f.lookYaw).toBeCloseTo(1.4);
     expect(f).toMatchObject({ fire: true, interact: true, toggleCamera: true, sprint: false });
+  });
+
+  it("crouches while B is held", () => {
+    const buttons: boolean[] = [];
+    buttons[1] = true;
+    expect(mapGamepad(pad([0, 0, 0, 0], buttons), 1 / 60).crouch).toBe(true);
+    expect(mapGamepad(pad([0, 0, 0, 0]), 1 / 60).crouch).toBe(false);
+    expect(mergeFrames(EMPTY_INPUT, { ...EMPTY_INPUT, crouch: true }).crouch).toBe(true);
   });
 
   it("merges devices", () => {

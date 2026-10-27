@@ -1,4 +1,4 @@
-// Time of day (ADR-0015). Synced from the domain clock before every conversation.
+// Time of day (ADR-0017). Synced from the domain clock before every conversation.
 // game_hour: 0-23. time_of_day: "night", "dawn", "day" or "dusk".
 
 VAR game_hour = 21

@@ -12,6 +12,11 @@ export interface Transform {
   readonly pitch: number;
   /** Horizontal speed in m/s, used by the presentation layer for procedural animation. */
   readonly speed: number;
+  /**
+   * 0 standing .. 1 fully crouched, eased by the simulation (ADR-0016). Drives the crouch pose
+   * and the eye height. Absent means standing.
+   */
+  readonly crouch?: number;
 }
 
 /** What the presentation layer should build for an entity. Pure data, engine-agnostic. */
@@ -47,7 +52,7 @@ export type EffectDescriptor =
   /** The entity holstered its weapon or started drawing it. */
   | { readonly kind: "weapon"; readonly entityId: EntityId; readonly drawn: boolean }
   /**
-   * Time of day changed (ADR-0015). `daylight` is 0 at night and 1 by day; `hour` is the
+   * Time of day changed (ADR-0017). `daylight` is 0 at night and 1 by day; `hour` is the
    * fractional hour 0–24, for presentation that wants more than the light level. Not
    * short-lived: the latest one holds until the next.
    */

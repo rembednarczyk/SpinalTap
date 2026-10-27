@@ -2,6 +2,7 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { GameUi, createUiStore, dismissToast, patchUi, pushToast, type UiIntents, type UiState } from "../src";
+import { HUD_CAMERA_FOV, spreadToScreen } from "../src/hud/hud";
 
 const intents = (): UiIntents => ({
   newGame: vi.fn(),
@@ -69,6 +70,52 @@ describe("HUD", () => {
     expect(screen.getByText("Wspomnienie: odruch")).toBeTruthy();
     act(() => dismissToast(store, id));
     expect(screen.queryByText("Wspomnienie: odruch")).toBeNull();
+  });
+
+  it("spreads the crosshair ticks with the aim cone and pulls them in while crouched", () => {
+    const { store } = mount({ screen: "playing", aimSpread: 0.02 });
+    const cross = screen.getByTestId("crosshair");
+    const spread = () => Number(cross.style.getPropertyValue("--spread"));
+    expect(cross.querySelectorAll(".crosshair__tick")).toHaveLength(4);
+    const standing = spread();
+    expect(standing).toBeCloseTo(spreadToScreen(0.02), 3);
+    act(() => patchUi(store, { aimSpread: 0.07 }));
+    expect(spread()).toBeGreaterThan(standing * 3);
+    act(() => patchUi(store, { aimSpread: 0.008, crouched: true }));
+    expect(spread()).toBeLessThan(standing);
+    expect(cross.classList.contains("crosshair--crouched")).toBe(true);
+    // Small angles map almost linearly: 0.02 rad is ~4% of half the screen at a 1.08 rad FOV.
+    expect(spreadToScreen(0.02)).toBeCloseTo(Math.tan(0.02) / Math.tan(HUD_CAMERA_FOV / 2));
+    expect(spreadToScreen(-1)).toBe(0);
+  });
+
+  it("does not re-render the crosshair when the store gets the same spread again", () => {
+    const { store } = mount({ screen: "playing", aimSpread: 0.02 });
+    let changes = 0;
+    const off = store.subscribe(() => (changes += 1));
+    act(() => patchUi(store, { aimSpread: 0.02, crouched: false }));
+    expect(changes).toBe(0);
+    off();
+  });
+
+  it("flashes the crosshair on a hit, red with an X on a head hit", () => {
+    vi.useFakeTimers();
+    try {
+      const { store } = mount({ screen: "playing" });
+      const cross = screen.getByTestId("crosshair");
+      act(() => patchUi(store, { hitMarker: 1, hitZone: "torso" }));
+      expect(cross.classList.contains("crosshair--hit")).toBe(true);
+      expect(cross.classList.contains("crosshair--head")).toBe(false);
+      act(() => vi.advanceTimersByTime(200));
+      expect(cross.classList.contains("crosshair--hit")).toBe(false);
+      act(() => patchUi(store, { hitMarker: 2, hitZone: "head" }));
+      expect(cross.classList.contains("crosshair--head")).toBe(true);
+      expect(cross.querySelector(".crosshair__x")).not.toBeNull();
+      act(() => vi.advanceTimersByTime(300));
+      expect(cross.classList.contains("crosshair--head")).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("caps the toast stack", () => {
@@ -260,6 +307,22 @@ describe("touch controls", () => {
     expect(pad.release).toHaveBeenCalledWith("fire");
     fireEvent.pointerDown(screen.getByRole("button", { name: "Zdolność" }), { pointerId: 2 });
     expect(pad.press).toHaveBeenCalledWith("ability");
+  });
+
+  it("toggles crouch: one tap holds it, the next lets go", () => {
+    const { store, pad } = mountTouch();
+    const crouch = screen.getByTestId("touch-crouch");
+    fireEvent.pointerDown(crouch, { pointerId: 3 });
+    fireEvent.pointerUp(crouch, { pointerId: 3 });
+    expect(pad.press).toHaveBeenCalledWith("crouch");
+    expect(pad.release).not.toHaveBeenCalledWith("crouch");
+    expect(crouch.getAttribute("aria-pressed")).toBe("true");
+    fireEvent.pointerDown(crouch, { pointerId: 4 });
+    expect(pad.release).toHaveBeenCalledWith("crouch");
+    expect(crouch.getAttribute("aria-pressed")).toBe("false");
+    // Lit from the game state too.
+    act(() => patchUi(store, { crouched: true }));
+    expect(crouch.classList.contains("touch__btn--on")).toBe(true);
   });
 
   it("hides the ability button without the implant and pauses from the top bar", () => {

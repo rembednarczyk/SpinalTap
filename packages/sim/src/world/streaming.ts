@@ -53,7 +53,7 @@ const NO_CHANGE: StreamingChange = { loaded: [], unloaded: [] };
  *
  * Characters with a daily plan do not freeze while asleep: whenever one is spawned (a chunk
  * loading, a new game) it is put where its plan says for the current time, so Oyaji left at
- * his stall in the evening is found at home after midnight (ADR-0015).
+ * his stall in the evening is found at home after midnight (ADR-0017).
  */
 export class WorldStreamer {
   private readonly content = new Map<string, Template[]>();

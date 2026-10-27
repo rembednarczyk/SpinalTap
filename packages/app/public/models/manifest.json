@@ -1,0 +1,7 @@
+{
+  "heroine": { "url": "seki.vrm", "scale": 1.15 },
+  "fixer": { "url": "kaito.vrm", "scale": 1.03 },
+  "ganger": { "url": "ganger.vrm", "scale": 1.07 },
+  "civilian": { "url": "civilian.vrm", "scale": 0.97 },
+  "ripperdoc": { "url": "mori.vrm", "scale": 1.08 }
+}

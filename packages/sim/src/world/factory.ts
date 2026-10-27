@@ -45,7 +45,8 @@ export const playerEntity = (id: EntityId): Entity => ({
   view: { kind: "heroine" },
   velocity: { x: 0, y: 0, z: 0 },
   health: { current: PLAYER_MAX_HP, max: PLAYER_MAX_HP },
-  combatant: { weapon: "pistol", cooldown: 0, holstered: false, drawing: 0 },
+  combatant: { weapon: "pistol", cooldown: 0, holstered: false, drawing: 0, bloom: 0 },
+  posture: { crouched: false, amount: 0, prevAmount: 0, sprinting: false },
 });
 
 export const propEntity = (id: EntityId, prop: StaticProp, chunk: string): Entity => {
@@ -62,7 +63,7 @@ export const gangerEntity = (id: EntityId, spawn: ActorSpawn, tag: string | null
     faction: "hebi",
     velocity: { x: 0, y: 0, z: 0 },
     health: { current: maxHp, max: maxHp },
-    combatant: { weapon: "gangerSmg", cooldown: 0, holstered: false, drawing: 0 },
+    combatant: { weapon: "gangerSmg", cooldown: 0, holstered: false, drawing: 0, bloom: 0 },
     ai: { home: spawn.position, aggroRange: 17, attackRange: 15, alerted: false },
   };
   if (tag) e.tag = tag;

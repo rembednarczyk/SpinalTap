@@ -21,6 +21,8 @@ export interface PresenterHooks {
   onDialogue(dialogueId: string): void;
   onShop(): void;
   onPlayerDied(): void;
+  /** Violence cut a conversation or the shop short; the sim has already freed the player. */
+  onDialogueInterrupted(reason: DomainEvents["DialogueInterrupted"]["reason"]): void;
 }
 
 /**
@@ -50,12 +52,16 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
         patchUi(ui, { hurtFlash: ui.getState().hurtFlash + 1 });
         audio.play("hurt");
       } else if (isPlayer(e.sourceId)) {
-        patchUi(ui, { hitMarker: ui.getState().hitMarker + 1 });
-        audio.play(e.critical || e.headshot ? "critical" : "hit");
+        patchUi(ui, { hitMarker: ui.getState().hitMarker + 1, hitZone: e.zone });
+        audio.play(e.critical || e.zone === "head" ? "critical" : "hit");
       }
     }),
     bus.on("EntityKilled", () => audio.play("kill")),
     bus.on("PlayerDied", () => hooks.onPlayerDied()),
+    bus.on("DialogueInterrupted", (e) => {
+      hooks.onDialogueInterrupted(e.reason);
+      toast("system", "Rozmowa przerwana", e.reason === "damage" ? "Ktoś do ciebie strzela!" : "Strzały tuż obok. Nie czas na gadanie.");
+    }),
     bus.on("InteractionFocusChanged", (e) => patchUi(ui, { prompt: e.prompt })),
     bus.on("InteractionStarted", (e) => (e.kind === "shop" ? hooks.onShop() : hooks.onDialogue(e.dialogueId))),
     bus.on("InteractionRefused", (e) => {

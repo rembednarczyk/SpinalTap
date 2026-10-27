@@ -33,6 +33,8 @@ export interface DebugApi {
   view(position: { x: number; y: number; z: number } | null, target?: { x: number; y: number; z: number }): void;
   /** Characters currently wearing an imported model. */
   dressed(): number;
+  /** Height of the game camera in metres (crouch checks). */
+  cameraY(): number;
   session: GameSession;
 }
 
@@ -43,6 +45,7 @@ export const createDebugApi = (
   perf: () => PerfSample,
   setView: DebugApi["view"],
   dressed: () => number = () => 0,
+  cameraY: () => number = () => 0,
 ): DebugApi => ({
   ready: false,
   session,
@@ -81,6 +84,7 @@ export const createDebugApi = (
   },
   view: setView,
   dressed,
+  cameraY,
   wait(minutes) {
     session.sim.enqueue({ type: "wait", minutes });
   },

@@ -159,7 +159,16 @@ export class FakeAudioContext {
   }
   createBuffer(channels: number, length: number, sampleRate: number) {
     const data = Array.from({ length: channels }, () => new Float32Array(length));
-    return { numberOfChannels: channels, length, sampleRate, getChannelData: (ch: number) => data[ch]! };
+    return { numberOfChannels: channels, length, sampleRate, duration: length / sampleRate, getChannelData: (ch: number) => data[ch]! };
+  }
+  /** Bytes that fail to decode (unsupported codec, corrupt file). */
+  readonly undecodable = new Set<ArrayBuffer>();
+  decodeCalls = 0;
+  /** Decodes to a silent buffer whose length (in samples) is the byte length of the input. */
+  decodeAudioData(bytes: ArrayBuffer): Promise<ReturnType<FakeAudioContext["createBuffer"]>> {
+    this.decodeCalls++;
+    if (this.undecodable.has(bytes)) return Promise.reject(new Error("EncodingError"));
+    return Promise.resolve(this.createBuffer(1, Math.max(1, bytes.byteLength), this.sampleRate));
   }
 
   count(kind: string): number {

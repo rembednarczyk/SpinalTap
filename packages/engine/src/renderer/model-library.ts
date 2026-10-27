@@ -42,6 +42,10 @@ export interface ModelInstance {
   readonly animations: AnimationGroup[];
   /** Spring bone data authored in the VRM file, if any. */
   readonly springs: VrmSprings | null;
+  /** Name prefix of this instance's nodes (to find bones by their file names). */
+  readonly prefix: string;
+  /** Puts every node back to its pose at instantiation, so a pooled instance can be reused. */
+  resetPose(): void;
   dispose(): void;
 }
 
@@ -192,7 +196,19 @@ export class ModelLibrary {
     outlineModelMeshes(meshes, spec.outline ?? false);
     if (spec.scale !== undefined) root.scaling.scaleInPlace(spec.scale);
     if (spec.yaw) root.rotation.y += spec.yaw;
+    const bind = (root.getDescendants(false) as TransformNode[])
+      .filter((n) => "rotation" in n)
+      .map((n) => ({ n, q: n.rotationQuaternion?.clone() ?? null, r: n.rotation.clone(), p: n.position.clone() }));
     return {
+      prefix: `${name}-`,
+      resetPose: () => {
+        for (const b of bind) {
+          b.n.position.copyFrom(b.p);
+          b.n.rotation.copyFrom(b.r);
+          if (b.q) b.n.rotationQuaternion = b.q.clone();
+          else b.n.rotationQuaternion = null;
+        }
+      },
       root,
       meshes,
       animations: entries.animationGroups,

@@ -1,4 +1,4 @@
-# ADR-0015: Zegar doby i harmonogramy NPC (M2)
+# ADR-0017: Zegar doby i harmonogramy NPC (M2)
 
 ## Kontekst
 Ostatnia część M2 (§6 „Spawn / schedule”, „NPC AI”; §14): NPC z planem dnia, interakcje zależne od pory i pora dnia widoczna w świecie. Wszystko deterministyczne, zgodne ze streamingiem (ADR-0014) i z zapisem. Renderer należy do innego obszaru, więc pora dnia musi przejść przez kontrakt w `core`.

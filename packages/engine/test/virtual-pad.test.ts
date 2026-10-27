@@ -17,6 +17,18 @@ describe("VirtualPad", () => {
     expect(pad.poll().sprint).toBe(false);
   });
 
+  it("crouches while the crouch button is latched and stands on release", () => {
+    const pad = new VirtualPad();
+    pad.press("crouch");
+    expect(pad.poll().crouch).toBe(true);
+    expect(pad.poll().crouch).toBe(true);
+    pad.release("crouch");
+    expect(pad.poll().crouch).toBe(false);
+    pad.press("crouch");
+    pad.reset();
+    expect(pad.poll().crouch).toBe(false);
+  });
+
   it("accumulates look between polls and consumes it", () => {
     const pad = new VirtualPad();
     pad.look(0.1, 0.02);

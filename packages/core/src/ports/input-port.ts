@@ -9,6 +9,8 @@ export interface InputFrame {
   /** Pitch change in radians accumulated since the previous frame. */
   readonly lookPitch: number;
   readonly sprint: boolean;
+  /** Held: crouch while true (touch controls latch it). */
+  readonly crouch: boolean;
   readonly fire: boolean;
   /** Edge-triggered: true only on the tick the button went down. */
   readonly interact: boolean;
@@ -28,6 +30,7 @@ export const EMPTY_INPUT: InputFrame = Object.freeze({
   lookYaw: 0,
   lookPitch: 0,
   sprint: false,
+  crouch: false,
   fire: false,
   interact: false,
   toggleCamera: false,

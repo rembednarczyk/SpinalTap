@@ -9,3 +9,4 @@ export * from "./model-library";
 export * from "./model-rig";
 export * from "./spring-bones";
 export * from "./vrm-meta";
+export * from "./weapon-mount";

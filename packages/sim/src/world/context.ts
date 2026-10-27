@@ -11,6 +11,8 @@ export interface SessionState {
   focusId: EntityId | null;
   /** Prompt shown for the focused entity; it can change while focus stays (a stall closing). */
   focusPrompt: string | null;
+  /** The last shot that hurt or nearly hit the player, or was fired close by; null if none. */
+  lastThreat: { readonly tick: number; readonly sourceId: EntityId } | null;
 }
 
 /** Mutable holder for the immutable domain state, plus a dirty marker for quest evaluation. */
