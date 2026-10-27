@@ -1,7 +1,7 @@
-import { expect, test } from "@playwright/test";
+import { type Page, expect, test } from "@playwright/test";
 import { freeze, gameState, step, teleport, waitForGame } from "./helpers";
 
-const wait = (page: import("@playwright/test").Page, minutes: number) => page.evaluate((m) => window.__seki!.wait(m), minutes);
+const wait = (page: Page, minutes: number) => page.evaluate((m) => window.__seki!.wait(m), minutes);
 
 test("the HUD clock follows game time; Oyaji's stall is closed at night and open by day", async ({ page }) => {
   test.slow();
