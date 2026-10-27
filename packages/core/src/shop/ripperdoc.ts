@@ -6,7 +6,25 @@ import { type Equipment, type InventoryState, addStack } from "../items/inventor
 import type { StackableId } from "../items/types";
 import { type ReputationTier, reputationTier } from "../reputation/reputation";
 
-export type PurchaseFailure = "insufficient-funds" | "already-installed" | "inventory-full" | "refused";
+/**
+ * Why a trade did not happen. "closed": the stall is shut at this hour; "not-sold-here": not in
+ * this shop's stock (or not an implant); "not-bought-here": the trader does not buy that kind;
+ * "worthless": nobody pays for it (the starter optics); "in-use": equipped, mounted or modded.
+ */
+export type PurchaseFailure =
+  | "insufficient-funds"
+  | "already-installed"
+  | "inventory-full"
+  | "refused"
+  | "closed"
+  | "not-found"
+  | "in-use"
+  | "not-sold-here"
+  | "not-bought-here"
+  | "worthless"
+  | "not-damaged"
+  | "max-capacity"
+  | "empty-slot";
 
 /** How a shop treats the player, derived from the shop owner's faction standing. */
 export interface ShopTerms {
@@ -35,7 +53,10 @@ export type CyberwarePurchase =
   | { readonly ok: true; readonly wallet: Wallet; readonly character: CharacterState; readonly replaced: CyberwareId | null; readonly price: number }
   | { readonly ok: false; readonly reason: PurchaseFailure };
 
-/** Buying from the ripperdoc installs immediately; the replaced implant is not refunded. */
+/**
+ * Buying from the ripperdoc installs immediately. The replaced implant is not refunded; the
+ * simulation puts it into the bag with `stowImplant` when a cell is free (ADR-0015).
+ */
 export const buyCyberware = (wallet: Wallet, character: CharacterState, id: CyberwareId, terms: ShopTerms = STANDARD_TERMS): CyberwarePurchase => {
   if (!terms.open) return { ok: false, reason: "refused" };
   const def = CYBERWARE_CATALOG[id];

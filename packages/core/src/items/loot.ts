@@ -72,7 +72,7 @@ const HEBI_COMMON: readonly WeightedLootEntry[] = [
 ];
 
 export const LOOT_TABLES: Readonly<Record<LootTableId, LootTable>> = {
-  hebi_common: { eddies: [8, 30], guaranteed: [], rolls: 1, entries: HEBI_COMMON },
+  hebi_common: { eddies: [10, 34], guaranteed: [], rolls: 1, entries: HEBI_COMMON },
   hebi_enforcer: {
     eddies: [30, 80],
     guaranteed: [

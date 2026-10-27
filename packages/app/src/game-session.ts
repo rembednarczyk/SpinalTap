@@ -2,7 +2,10 @@ import {
   ABILITY_CATALOG,
   type AudioPort,
   type CyberwareId,
-  type StackableId,
+  type CyberwareSlot,
+  type ItemRef,
+  type ShopId,
+  type ShopItemId,
   stackRoom,
   loadoutAbility,
   CorruptSaveError,
@@ -31,6 +34,7 @@ import { needsReload, sanitizeSettings } from "./settings";
 import { describeObjective, saveLabel } from "./objective";
 import { createWeaponHud } from "./weapon-hud";
 import { createLootTracker } from "./loot-view";
+import { createTradeTracker } from "./trade-view";
 
 export interface GameSessionDeps {
   readonly render: RenderPort;
@@ -72,6 +76,10 @@ export class GameSession implements UiIntents {
   private simulation: Simulation;
   private dialogueOpen = false;
   private shopOpen = false;
+  /** Counter behind the open shop panel, and the ink knot of its keeper ("Porozmawiaj"). */
+  private shopId: ShopId = "clinic";
+  private shopTalk = "mori";
+  private readonly tradeView = createTradeTracker();
   /** Key of the bag being searched, or null. */
   private lootKey: string | null = null;
   private readonly lootView = createLootTracker();
@@ -92,7 +100,7 @@ export class GameSession implements UiIntents {
     bindEventPresenter(this.bus, deps.render, deps.audio, deps.ui, {
       playerId: () => this.simulation.player()?.id ?? null,
       onDialogue: (id) => this.openDialogue(id),
-      onShop: () => this.openShop(),
+      onShop: (shopId, dialogueId) => this.openShop(shopId, dialogueId),
       onPlayerDied: () => this.setScreen("dead"),
       onDialogueInterrupted: () => this.interruptDialogue(),
       onLoot: (key) => this.openLoot(key),
@@ -199,6 +207,7 @@ export class GameSession implements UiIntents {
       ability: this.abilityVm(),
       weapons: this.weaponHud(sim),
       loot,
+      ...(this.shopOpen ? { trade: this.tradeView(sim.domain) } : {}),
       cyberware: sim.domain.character.cyberware,
       reputation: sim.domain.reputation,
       contractsDone: sim.domain.contracts.completed,
@@ -243,20 +252,45 @@ export class GameSession implements UiIntents {
     if (this.inControl) this.setScreen("paused");
   }
 
+  /** Trade commands go out only while that counter is open. */
+  private atCounter(shop: ShopId): boolean {
+    return this.shopOpen && this.shopId === shop;
+  }
+
   buyCyberware(id: CyberwareId): void {
-    if (this.shopOpen) this.simulation.enqueue({ type: "buy-cyberware", cyberwareId: id });
+    if (this.atCounter("clinic")) this.simulation.enqueue({ type: "buy-cyberware", cyberwareId: id });
   }
 
-  buyItem(id: StackableId): void {
-    if (this.shopOpen) this.simulation.enqueue({ type: "buy-item", itemId: id });
+  buyItem(id: ShopItemId): void {
+    if (this.shopOpen) this.simulation.enqueue({ type: "buy-item", itemId: id, shopId: this.shopId });
   }
 
-  /** From the clinic counter straight into a conversation with doktor Mori (ink knot `mori`). */
+  sellItem(ref: ItemRef, qty: number): void {
+    if (this.shopOpen) this.simulation.enqueue({ type: "sell-item", shopId: this.shopId, ref, qty });
+  }
+
+  repairItem(uid: string, useParts: number): void {
+    if (this.atCounter("oyaji")) this.simulation.enqueue({ type: "repair-item", uid, useParts });
+  }
+
+  upgradeBackpack(): void {
+    if (this.atCounter("oyaji")) this.simulation.enqueue({ type: "upgrade-capacity" });
+  }
+
+  installCyberwareItem(uid: string): void {
+    if (this.atCounter("clinic")) this.simulation.enqueue({ type: "install-cyberware-item", uid });
+  }
+
+  removeCyberware(slot: CyberwareSlot): void {
+    if (this.atCounter("clinic")) this.simulation.enqueue({ type: "remove-cyberware", slot });
+  }
+
+  /** From the counter straight into a conversation with its keeper (ink knot `mori` or `oyaji`). */
   talkToShopkeeper(): void {
     if (!this.shopOpen) return;
     this.shopOpen = false;
     patchUi(this.deps.ui, { shopOpen: false });
-    this.openDialogue("mori");
+    this.openDialogue(this.shopTalk);
   }
 
   closeShop(): void {
@@ -391,9 +425,11 @@ export class GameSession implements UiIntents {
     this.deps.onFocusChange?.(false);
   }
 
-  private openShop(): void {
+  private openShop(shopId: ShopId, dialogueId: string): void {
     this.shopOpen = true;
-    patchUi(this.deps.ui, { shopOpen: true, prompt: null });
+    this.shopId = shopId;
+    this.shopTalk = dialogueId;
+    patchUi(this.deps.ui, { shopOpen: true, shopId, trade: this.tradeView(this.simulation.domain), prompt: null });
     this.deps.onFocusChange?.(false);
   }
 

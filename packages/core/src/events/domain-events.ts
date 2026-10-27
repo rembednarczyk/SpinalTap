@@ -2,11 +2,12 @@ import type { Vec3 } from "../math/vec3";
 import type { CameraMode, EntityId } from "../ports/types";
 import type { HitZone } from "../combat/combat-rules";
 import type { FactionId } from "../reputation/reputation";
-import type { CyberwareId } from "../cyberware/cyberware";
+import type { CyberwareId, CyberwareSlot } from "../cyberware/cyberware";
 import type { PurchaseFailure } from "../shop/ripperdoc";
+import type { ShopId, ShopItemId } from "../shop/shops";
 import type { Contract, ContractFailure } from "../contracts/contracts";
 import type { EndingId, StoryChoiceId, StoryOption } from "../story/story";
-import type { ConsumableId, EquipSlot, ItemDefId, ItemRef, LootLine, ModSlot, Rarity, StackableId, WeaponId, WeaponSlot } from "../items/types";
+import type { ConsumableId, EquipSlot, ItemDefId, ItemRef, LootLine, ModSlot, Rarity, WeaponId, WeaponSlot } from "../items/types";
 import type { GameClock } from "../time/game-clock";
 
 export interface DomainEvents {
@@ -20,9 +21,10 @@ export interface DomainEvents {
   InteractionFocusChanged: { targetId: EntityId | null; prompt: string | null };
   /**
    * kind "shop" opens the ripperdoc panel instead of an ink conversation; kind "loot" opens the
-   * loot panel, and `dialogueId` is then the container key.
+   * loot panel, and `dialogueId` is then the container key. A shop says which one (`shopId`,
+   * the clinic when absent); `dialogueId` is then the shopkeeper's ink knot.
    */
-  InteractionStarted: { targetId: EntityId; dialogueId: string; kind: "dialogue" | "shop" | "loot" };
+  InteractionStarted: { targetId: EntityId; dialogueId: string; kind: "dialogue" | "shop" | "loot"; shopId?: ShopId };
   /** The NPC will not deal with the player because of their faction's standing. */
   /**
    * A conversation or the shop was cut short by violence: the player was hurt, or someone
@@ -35,13 +37,25 @@ export interface DomainEvents {
   CameraModeChanged: { mode: CameraMode };
   QuestAdvanced: { questId: string; stepId: string; objective: string };
   QuestCompleted: { questId: string; title: string };
-  /** `source` "loot": picked up from a bag (no payment toast). */
-  EddiesChanged: { balance: number; delta: number; source?: "loot" };
+  /** `source` "loot": picked up from a bag; "sale": paid by a trader (no payment toast for either). */
+  EddiesChanged: { balance: number; delta: number; source?: "loot" | "sale" };
   ReputationChanged: { faction: FactionId; value: number; delta: number };
   MemoryUnlocked: { memoryId: string; title: string; description: string };
-  CyberwareInstalled: { cyberwareId: CyberwareId; replaced: CyberwareId | null; price: number };
-  ItemBought: { itemId: StackableId; price: number };
-  PurchaseFailed: { reason: PurchaseFailure };
+  /**
+   * `fromBag`: fitted from the inventory for a fee (`price`). `stowed`: the replaced implant went
+   * into the bag (false when there was no room and it is gone).
+   */
+  CyberwareInstalled: { cyberwareId: CyberwareId; replaced: CyberwareId | null; price: number; fromBag?: boolean; stowed?: boolean };
+  /** Taken out at the clinic, into the bag. */
+  CyberwareRemoved: { cyberwareId: CyberwareId; slot: CyberwareSlot };
+  /** `qty` is the number of rounds for a box of ammo, otherwise 1. */
+  ItemBought: { itemId: ShopItemId; price: number; shopId?: ShopId; qty?: number };
+  PurchaseFailed: { reason: PurchaseFailure; shopId?: ShopId };
+  ItemSold: { shopId: ShopId; defId: ItemDefId; qty: number; price: number };
+  /** A garment mended to 100; `parts` pieces of "Części broni" went into it. */
+  ItemRepaired: { uid: string; defId: ItemDefId; price: number; parts: number };
+  /** The backpack grew to `capacity` cells. */
+  CapacityUpgraded: { capacity: number; price: number };
   ItemUsed: { itemId: ConsumableId; healed: number };
   AbilityActivated: { abilityId: string; duration: number };
   AbilityEnded: { abilityId: string };
@@ -56,7 +70,7 @@ export interface DomainEvents {
   TimeSkipped: { minutes: number; clock: GameClock };
   // Inventory, weapons and loot (ADR-0015).
   ItemAdded: { ref: ItemRef; defId: ItemDefId; qty: number; source: ItemSource };
-  ItemRemoved: { ref: ItemRef; qty: number; reason: "used" | "dropped" };
+  ItemRemoved: { ref: ItemRef; qty: number; reason: "used" | "dropped" | "sold" | "installed" | "repair" };
   ItemEquipped: { uid: string; slot: EquipSlot; replaced: string | null };
   ItemUnequipped: { uid: string; slot: EquipSlot };
   ModInstalled: { weaponUid: string; modUid: string; slot: ModSlot };

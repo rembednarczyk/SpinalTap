@@ -57,7 +57,12 @@ export const interactionSystem: System = {
       session.focusId = null;
       session.focusPrompt = null;
       ctx.bus.emit("InteractionFocusChanged", { targetId: null, prompt: null });
-      ctx.bus.emit("InteractionStarted", { targetId: best.id, dialogueId: interactable.dialogueId, kind: interactable.kind });
+      ctx.bus.emit("InteractionStarted", {
+        targetId: best.id,
+        dialogueId: interactable.dialogueId,
+        kind: interactable.kind,
+        ...(interactable.kind === "shop" ? { shopId: interactable.shopId ?? "clinic" } : {}),
+      });
     }
   },
 };
