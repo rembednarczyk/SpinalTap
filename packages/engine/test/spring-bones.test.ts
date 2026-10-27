@@ -56,6 +56,21 @@ describe("SpringBones", () => {
     expect(angle(a.rotationQuaternion)).toBeLessThan(1e-3);
   });
 
+  it("uses authored VRM groups: their settings, colliders and only their bones", () => {
+    const { root, a } = strand();
+    const vrm = {
+      groups: [{ stiffness: 4, gravity: 0, drag: 0.9, hitRadius: 0.01, roots: ["HairJoint-b"], colliderGroups: [0] }],
+      colliderGroups: [[{ node: "J_Bip_C_Head", offset: [0, -0.3, 0] as [number, number, number], radius: 0.05 }]],
+    };
+    const springs = SpringBones.create(root, { vrm })!;
+    // HairJoint-a is not in any group, so only b (with its child c) is simulated.
+    expect(springs.count).toBe(1);
+    springs.update(1 / 60);
+    root.position.x += 0.3;
+    springs.update(1 / 60);
+    expect(angle(a.rotationQuaternion)).toBeLessThan(1e-3);
+  });
+
   it("ignores models without secondary bones", () => {
     const scene = new Scene(new NullEngine());
     expect(SpringBones.create(new TransformNode("prop", scene))).toBeNull();

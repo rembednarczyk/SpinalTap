@@ -292,7 +292,8 @@ export class BabylonRenderer implements RenderPort {
         for (const m of rig.meshes) m.setEnabled(false);
         if (rig.aiming) this.arm(model, retarget);
         for (const m of model.meshes) if (m.getTotalVertices() > 0) this.shadow.addCaster(m);
-        const springs = SpringBones.create(model.root, humanoidColliders(model.root, `${name}-m-`));
+        const prefix = `${name}-m-`;
+        const springs = SpringBones.create(model.root, { vrm: model.springs, prefix, colliders: humanoidColliders(model.root, prefix) });
         this.dressed.set(rig, { model, retarget, springs });
       })
       .catch((err: unknown) => {

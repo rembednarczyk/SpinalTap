@@ -49,8 +49,10 @@ NPR zawsze używa obsady proceduralnej, żeby migawka nie zależała od pobrań.
 4. Postać strzelająca dostaje broń w kości prawej dłoni, ułożoną wzdłuż przedramienia rigu.
 5. `SpringBones` porusza włosami i ubraniem (kości `HairJoint-*` i `J_Sec_*`) algorytmem
    sprężyn VRM: bezwładność, opór, sztywność i lekka grawitacja, z limitem wychylenia.
-   Końcówki w 75% podążają za ruchem postaci, żeby przy biegu włosy nie stawały dęba. Sfery
-   kolizji na głowie, klatce i udach trzymają włosy z dala od twarzy, a spódnicę od nóg.
+   Końcówki w 75% podążają za ruchem postaci, żeby przy biegu włosy nie stawały dęba.
+   Parametry, kolidery i promienie trafień są czytane z pliku (VRM 0.x `secondaryAnimation`,
+   VRM 1.0 `VRMC_springBone`), więc fizyka jest taka, jak ustawił autor w VRoid Studio.
+   Modele bez tych danych dostają `DEFAULT_SPRING` i sfery na głowie, klatce i udach.
 
 ## Ograniczenia i pułapki
 
@@ -64,8 +66,6 @@ NPR zawsze używa obsady proceduralnej, żeby migawka nie zależała od pobrań.
   bez niej przy przeciążonej maszynie, więc przyczyna nie jest ustalona. Przy ponownej próbie
   trzymać sterowane cele zawsze aktywne (wpływ > 0), bo Babylon liczy aktywne cele do definicji
   shadera i każde mrugnięcie wymuszałoby rekompilację.
-- **Parametry sprężyn z pliku VRM** (`secondaryAnimation`) nie są czytane; wszystkie łańcuchy
-  mają jedne ustawienia (`DEFAULT_SPRING`).
 - **Klipy animacji z pliku** nie są odtwarzane, bo rig daje chód, celowanie, trafienie i upadek.
 - **Wydajność:** model VRoid to około 15 draw calli plus cień. Budżet ulicy (280) mieści
   kilka takich postaci. Przy większej obsadzie potrzebne będzie LOD albo atlas materiałów.

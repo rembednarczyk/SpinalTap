@@ -14,6 +14,7 @@ import {
 import { applyOutline } from "../npr/outline";
 import type { PresetName } from "../npr/presets";
 import type { ToonMaterials } from "../npr/toon-material";
+import { type VrmSprings, readGlbJson, readVrmSprings } from "./vrm-meta";
 
 /** Which character views can be replaced by imported models. */
 export type CharacterModelKey = "heroine" | "fixer" | "civilian" | "ripperdoc" | "ganger";
@@ -39,6 +40,8 @@ export interface ModelInstance {
   readonly root: TransformNode;
   readonly meshes: AbstractMesh[];
   readonly animations: AnimationGroup[];
+  /** Spring bone data authored in the VRM file, if any. */
+  readonly springs: VrmSprings | null;
   dispose(): void;
 }
 
@@ -170,7 +173,7 @@ export const outlineModelMeshes = (meshes: readonly AbstractMesh[], enabled: boo
  * animation groups.
  */
 export class ModelLibrary {
-  private readonly containers = new Map<string, Promise<AssetContainer>>();
+  private readonly containers = new Map<string, Promise<{ container: AssetContainer; springs: VrmSprings | null }>>();
 
   constructor(
     private readonly scene: Scene,
@@ -178,7 +181,7 @@ export class ModelLibrary {
   ) {}
 
   async instantiate(spec: CharacterModelSpec, name: string): Promise<ModelInstance> {
-    const container = await this.load(spec);
+    const { container, springs } = await this.load(spec);
     const entries = container.instantiateModelsToScene((n) => `${name}-${n}`, false, { doNotInstantiate: true });
     const root = entries.rootNodes[0] as TransformNode | undefined;
     if (!root) throw new Error(`Model ${spec.url} has no root node`);
@@ -193,6 +196,7 @@ export class ModelLibrary {
       root,
       meshes,
       animations: entries.animationGroups,
+      springs,
       dispose: () => {
         for (const g of entries.animationGroups) g.dispose();
         for (const s of entries.skeletons) s.dispose();
@@ -201,14 +205,25 @@ export class ModelLibrary {
     };
   }
 
-  private load(spec: CharacterModelSpec): Promise<AssetContainer> {
+  private load(spec: CharacterModelSpec): Promise<{ container: AssetContainer; springs: VrmSprings | null }> {
     let pending = this.containers.get(spec.url);
     if (!pending) {
       pending = (async () => {
         await loadGltfPlugin();
-        const container = await LoadAssetContainerAsync(spec.url, this.scene, { pluginExtension: pluginExtensionFor(spec.url) });
+        const extension = pluginExtensionFor(spec.url);
+        // Binary files are fetched here so the VRM spring data can be read from the JSON
+        // chunk; a .gltf with external buffers loads by URL so its relative paths resolve.
+        let springs: VrmSprings | null = null;
+        let source: string | Uint8Array = spec.url;
+        if (extension === ".glb" || /\.glb(\?|#|$)/i.test(spec.url)) {
+          const bytes = await (await fetch(spec.url)).arrayBuffer();
+          const json = readGlbJson(bytes);
+          springs = json ? readVrmSprings(json) : null;
+          source = new Uint8Array(bytes);
+        }
+        const container = await LoadAssetContainerAsync(source, this.scene, { pluginExtension: extension ?? (typeof source === "string" ? undefined : ".glb") });
         convertModelMaterials(container, this.materials, spec.preset ?? "importedCharacter");
-        return container;
+        return { container, springs };
       })();
       this.containers.set(spec.url, pending);
     }

@@ -1,5 +1,6 @@
 import { Matrix, Quaternion, type TransformNode, Vector3 } from "../babylon";
 import { normaliseBoneName } from "./model-rig";
+import type { VrmSprings } from "./vrm-meta";
 
 /** Secondary-motion bones: VRoid hair (`HairJoint-*`) and cloth (`J_Sec_*`). */
 const SECONDARY = /(^|-)(j_sec_|hairjoint)/i;
@@ -32,8 +33,23 @@ interface Joint {
   /** Tail position in world space, now and one step ago. */
   tail: Vector3;
   prevTail: Vector3;
-  /** Colliders the bind pose is clear of; one the bone starts inside would fling it. */
+  readonly settings: SpringSettings;
+  /** Colliders this joint may hit (its group's, or all of them). */
+  readonly candidates: readonly SpringCollider[];
+  /** Radius of the tail sphere (VRM hitRadius). */
+  readonly radius: number;
+  /** Candidates the bind pose is clear of; one the bone starts inside would fling it. */
   hits: SpringCollider[];
+}
+
+export interface SpringOptions {
+  /** Used for joints without authored colliders (no VRM data). */
+  readonly colliders?: readonly SpringCollider[];
+  /** Authored spring data from the VRM file; without it every secondary bone gets `settings`. */
+  readonly vrm?: VrmSprings | null;
+  /** Name prefix of the instance, to find the nodes the VRM data names. */
+  readonly prefix?: string;
+  readonly settings?: SpringSettings;
 }
 
 /** Sphere in model space that hair and cloth tails are pushed out of. */
@@ -61,18 +77,35 @@ export class SpringBones {
   private readonly lastRoot = new Vector3();
   private primed = false;
 
-  private constructor(
-    private readonly root: TransformNode,
-    private readonly settings: SpringSettings,
-    private readonly colliders: readonly SpringCollider[],
-  ) {}
+  private constructor(private readonly root: TransformNode) {}
 
   /** Null when the model has no secondary bones. */
-  static create(root: TransformNode, colliders: readonly SpringCollider[] = [], settings = DEFAULT_SPRING): SpringBones | null {
-    const self = new SpringBones(root, settings, colliders);
+  static create(root: TransformNode, options: SpringOptions = {}): SpringBones | null {
+    const self = new SpringBones(root);
+    const base = options.settings ?? DEFAULT_SPRING;
+    const nodes = root.getDescendants(false) as TransformNode[];
+    const named = new Map(nodes.map((n) => [n.name, n]));
+    const prefix = options.prefix ?? "";
+    // Authored groups first: each root and everything below it shares the group's settings.
+    const authored = new Map<TransformNode, { settings: SpringSettings; colliders: SpringCollider[]; radius: number }>();
+    for (const g of options.vrm?.groups ?? []) {
+      const colliders = g.colliderGroups.flatMap((i) => options.vrm?.colliderGroups[i] ?? []).flatMap((c): SpringCollider[] => {
+        const node = named.get(prefix + c.node);
+        return node ? [{ node, offset: new Vector3(...c.offset), radius: c.radius }] : [];
+      });
+      const settings = { ...base, stiffness: g.stiffness, drag: g.drag, gravity: g.gravity };
+      for (const rootName of g.roots) {
+        const top = named.get(prefix + rootName);
+        if (!top) continue;
+        for (const n of [top, ...(top.getDescendants(false) as TransformNode[])]) authored.set(n, { settings, colliders, radius: g.hitRadius });
+      }
+    }
+    const useAuthored = authored.size > 0;
     // Parents before children, so a chain is solved from its root outwards.
-    for (const node of root.getDescendants(false) as TransformNode[]) {
-      if (!SECONDARY.test(node.name) || !("rotation" in node)) continue;
+    for (const node of nodes) {
+      if (!("rotation" in node)) continue;
+      const own = authored.get(node);
+      if (useAuthored ? !own : !SECONDARY.test(node.name)) continue;
       const child = node.getChildren((n): n is TransformNode => "position" in n, true)[0];
       if (!child || child.position.length() < 1e-4) continue;
       self.joints.push({
@@ -82,6 +115,9 @@ export class SpringBones {
         length: child.position.length(),
         tail: Vector3.Zero(),
         prevTail: Vector3.Zero(),
+        settings: own?.settings ?? base,
+        candidates: own?.colliders ?? options.colliders ?? [],
+        radius: own?.radius ?? 0,
         hits: [],
       });
     }
@@ -105,9 +141,10 @@ export class SpringBones {
     }
     // Carry the tails along with most of the character's own movement.
     const rootPos = this.root.getAbsolutePosition();
-    const carried = rootPos.subtract(this.lastRoot).scale(this.settings.follow);
+    const moved = rootPos.subtract(this.lastRoot);
     this.lastRoot.copyFrom(rootPos);
     for (const j of this.joints) {
+      const carried = moved.scale(j.settings.follow);
       j.tail.addInPlace(carried);
       j.prevTail.addInPlace(carried);
     }
@@ -123,18 +160,19 @@ export class SpringBones {
         this.prime();
         return;
       }
+      const k = j.settings;
       const next = tail
-        .add(tail.subtract(prev).scale(1 - this.settings.drag))
-        .add(rest.scale(this.settings.stiffness * step))
-        .add(gravity.scale(this.settings.gravity * step));
+        .add(tail.subtract(prev).scale(1 - k.drag))
+        .add(rest.scale(k.stiffness * step))
+        .add(gravity.scale(k.gravity * step));
       let dir = next.subtract(head).normalize();
       const swing = Math.acos(Math.min(1, Math.max(-1, Vector3.Dot(dir, rest))));
-      if (swing > this.settings.maxAngle) {
+      if (swing > k.maxAngle) {
         // Pull back onto the cone around the rest direction.
         const axis = Vector3.Cross(rest, dir);
-        if (axis.lengthSquared() > 1e-10) dir = rest.applyRotationQuaternion(Quaternion.RotationAxis(axis.normalize(), this.settings.maxAngle));
+        if (axis.lengthSquared() > 1e-10) dir = rest.applyRotationQuaternion(Quaternion.RotationAxis(axis.normalize(), k.maxAngle));
       }
-      for (const c of j.hits) dir = this.collide(c, head, dir, j.length);
+      for (const c of j.hits) dir = this.collide(c, head, dir, j.length, j.radius);
       dir.normalize();
       const solved = head.add(dir.scale(j.length));
       j.prevTail = j.tail;
@@ -162,7 +200,7 @@ export class SpringBones {
       const tail = head.add(j.axis.applyRotationQuaternion(this.modelRotation(j.node)).scale(j.length));
       j.tail = Vector3.TransformCoordinates(tail, this.fromModel);
       j.prevTail = j.tail.clone();
-      j.hits = this.colliders.filter((c) => Vector3.Distance(tail, this.colliderCentre(c)) >= c.radius);
+      j.hits = j.candidates.filter((c) => Vector3.Distance(tail, this.colliderCentre(c)) >= c.radius + j.radius);
     }
     this.lastRoot.copyFrom(this.root.getAbsolutePosition());
     this.primed = true;
@@ -172,13 +210,14 @@ export class SpringBones {
     return this.modelPosition(c.node).add(c.offset.applyRotationQuaternion(this.modelRotation(c.node)));
   }
 
-  private collide(c: SpringCollider, head: Vector3, dir: Vector3, length: number): Vector3 {
+  private collide(c: SpringCollider, head: Vector3, dir: Vector3, length: number, radius: number): Vector3 {
     const centre = this.colliderCentre(c);
     const tail = head.add(dir.normalizeToNew().scale(length));
     const away = tail.subtract(centre);
     const d = away.length();
-    if (d >= c.radius || d < 1e-6) return dir;
-    return centre.add(away.scale(c.radius / d)).subtract(head);
+    const reach = c.radius + radius;
+    if (d >= reach || d < 1e-6) return dir;
+    return centre.add(away.scale(reach / d)).subtract(head);
   }
 
   /** Rotation of a node relative to the model root. */

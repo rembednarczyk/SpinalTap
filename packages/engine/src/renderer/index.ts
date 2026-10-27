@@ -8,3 +8,4 @@ export * from "./model-loader";
 export * from "./model-library";
 export * from "./model-rig";
 export * from "./spring-bones";
+export * from "./vrm-meta";
