@@ -1,8 +1,26 @@
 import { useEffect } from "react";
-import { CYBERWARE_CATALOG, FACTIONS, type FactionId, MEMORY_CATALOG, type MemoryId, reputationTier } from "@seki/core";
+import {
+  CYBERWARE_CATALOG,
+  FACTION_IDS,
+  FACTIONS,
+  type FactionId,
+  type FactionStance,
+  MEMORY_CATALOG,
+  type MemoryId,
+  reputationTier,
+  stanceOf,
+} from "@seki/core";
 import { useUi } from "../use-ui";
 
 const TIER: Record<string, string> = { hostile: "wrogość", wary: "nieufność", neutral: "neutralnie", friendly: "sympatia", trusted: "zaufanie" };
+/** What each faction's stance means on the street, in one line. */
+const CONSEQUENCE: Readonly<Record<FactionId, Readonly<Record<FactionStance, string>>>> = {
+  fixers: { hostile: "Kaito płaci mniej", neutral: "Zwykłe stawki", friendly: "Kaito płaci więcej" },
+  hebi: { hostile: "Polują na ciebie", neutral: "Strzelają bez ostrzeżenia", friendly: "Nie strzelają pierwsi" },
+  civilians: { hostile: "Uciekają przed tobą", neutral: "Nie zwracają uwagi", friendly: "Witają cię na ulicy" },
+  clinic: { hostile: "Mori cię nie obsłuży", neutral: "Ceny katalogowe", friendly: "Rabat u Mori" },
+};
+
 const SLOTS = [
   ["optics", "Optyka"],
   ["nervous", "Układ nerwowy"],
@@ -64,12 +82,13 @@ export const CharacterPanel = () => {
       <section>
         <h3 className="sheet__h">Reputacja</h3>
         <dl className="sheet__list">
-          {(Object.keys(FACTIONS) as FactionId[]).map((f) => (
-            <div key={f} className="sheet__row">
+          {FACTION_IDS.map((f) => (
+            <div key={f} className="sheet__row" data-testid={`rep-${f}`}>
               <dt>{FACTIONS[f]}</dt>
               <dd>
                 {reputation[f] > 0 ? "+" : ""}
                 {reputation[f]} · {TIER[reputationTier(reputation[f])]}
+                <div className={`sheet__effect sheet__effect--${stanceOf(reputation[f])}`}>{CONSEQUENCE[f][stanceOf(reputation[f])]}</div>
               </dd>
             </div>
           ))}
