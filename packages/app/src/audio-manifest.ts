@@ -26,6 +26,13 @@ const SOUNDS = {
     memory: { urls: range("glitch-", ["001", "002", "003", "004"]), gain: 0.6, pitch: 0.1, layerSynth: true },
     heal: { urls: ["clinic-heal-000.ogg", "clinic-heal-001.ogg"], gain: 0.4, pitch: 0.04, send: 0.35 },
     overdrive: { urls: ["cyber-overdrive.ogg"], gain: 0.35, pitch: 0.03, layerSynth: true },
+    // Weapons, loot and trade (E12).
+    reload: { urls: range("reload-metal-", ["000", "001"]), gain: 0.5, pitch: 0.05, send: 0.15 },
+    "weapon-switch": { urls: range("weapon-switch-", ["000", "001"]), gain: 0.4, pitch: 0.06, send: 0.1 },
+    "loot-pickup": { urls: range("loot-pickup-", ["000", "001"]), gain: 0.55, pitch: 0.08 },
+    // The tin clink sits on the synth's coin triad.
+    sell: { urls: range("sell-tin-", ["000", "001"]), gain: 0.45, pitch: 0.05, layerSynth: true },
+    repair: { urls: range("repair-hammer-", ["000", "001"]), gain: 0.45, pitch: 0.05, send: 0.2 },
   },
   footsteps: { urls: range("step-concrete-", ["000", "001", "002", "003", "004"]), gain: 0.55, pitch: 0.07 },
   rain: { url: "rain-loop.ogg", gain: 0.5, synthLevel: 0.3 },

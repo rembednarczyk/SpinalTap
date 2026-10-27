@@ -92,4 +92,10 @@ export type AudioCue =
   | "purchase"
   | "denied"
   | "heal"
-  | "overdrive";
+  | "overdrive"
+  // Weapons, loot and trade (ADR-0015, E12).
+  | "reload"
+  | "weapon-switch"
+  | "loot-pickup"
+  | "sell"
+  | "repair";
