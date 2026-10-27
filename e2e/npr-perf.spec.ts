@@ -1,6 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
-import { freeze, perf, step, waitForGame } from "./helpers";
+import { freeze, gameState, perf, step, teleport, waitForGame } from "./helpers";
 
 const budgets = JSON.parse(readFileSync("tools/perf-budgets.json", "utf8")) as {
   scenes: Record<string, { drawCalls: number; activeMeshes: number }>;
@@ -43,5 +43,23 @@ test("street view in TPP stays within the perf budget", async ({ page }) => {
   report["street-tpp"] = sample;
   expect(sample.drawCalls).toBeLessThanOrEqual(budgets.scenes["street-tpp"]!.drawCalls);
   expect(sample.activeMeshes).toBeLessThanOrEqual(budgets.scenes["street-tpp"]!.activeMeshes);
+  expect(sample.frameTimeMs).toBeLessThanOrEqual(budgets.frameTimeMs);
+});
+
+test("market under the overpass in TPP stays within the perf budget", async ({ page }) => {
+  await page.goto("/?seed=3");
+  await waitForGame(page);
+  await page.getByRole("button", { name: "Nowa gra" }).click();
+  await freeze(page);
+  await step(page, 1, { toggleCamera: true });
+  // East end of the market, looking back west over the stalls, under the deck towards the gate.
+  await teleport(page, 106, 79, -Math.PI / 2);
+  await step(page, 30, { moveZ: 1 });
+  expect((await gameState(page)).loadedChunks).not.toContain("shinsekai-7");
+  await page.waitForTimeout(1500);
+  const sample = await perf(page);
+  report["market-tpp"] = sample;
+  expect(sample.drawCalls).toBeLessThanOrEqual(budgets.scenes["market-tpp"]!.drawCalls);
+  expect(sample.activeMeshes).toBeLessThanOrEqual(budgets.scenes["market-tpp"]!.activeMeshes);
   expect(sample.frameTimeMs).toBeLessThanOrEqual(budgets.frameTimeMs);
 });
