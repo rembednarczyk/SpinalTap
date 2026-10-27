@@ -12,8 +12,13 @@ import {
   type PersistencePort,
   type RenderPort,
   type SaveSnapshot,
+  dayOf,
+  dayPhase,
+  daylight,
+  formatClock,
   pendingRecall,
   recallDialogueId,
+  secondOfDay,
 } from "@seki/core";
 import { type DialogueView, NarrativeRuntime } from "@seki/narrative";
 import { DISTRICTS, DISTRICT_M0_PROPS, type DistrictId, RenderSync, Simulation } from "@seki/sim";
@@ -65,6 +70,8 @@ export class GameSession implements UiIntents {
   private readonly appliedSettings: SettingsVm;
   /** Last district the player was seen in; a change raises a toast. */
   private district: DistrictId | null = null;
+  /** Daylight level last sent to the renderer; null after the views were cleared. */
+  private daylightSent: number | null = null;
 
   constructor(private readonly deps: GameSessionDeps) {
     this.narrative = new NarrativeRuntime(deps.story, (cmd) => this.simulation.enqueue(cmd));
@@ -120,8 +127,22 @@ export class GameSession implements UiIntents {
 
   render(alpha: number): void {
     this.renderSync.sync(this.simulation.world, alpha, this.simulation.streamer.streamedOut);
+    this.syncTimeOfDay();
     this.announceDistrict();
     this.syncHud();
+  }
+
+  /**
+   * Time of day reaches the renderer as world state (ADR-0015): a time-of-day effect whenever
+   * the light level moves a step of 1/64, which is every ~2 game minutes at dawn and dusk and
+   * never during the night or the day.
+   */
+  private syncTimeOfDay(): void {
+    const clock = this.simulation.clock;
+    const level = Math.round(daylight(clock) * DAYLIGHT_STEPS) / DAYLIGHT_STEPS;
+    if (level === this.daylightSent) return;
+    this.daylightSent = level;
+    this.deps.render.playEffect({ kind: "time-of-day", daylight: level, hour: secondOfDay(clock) / 3600 });
   }
 
   /** Names the district when the player crosses into another one (streaming itself is silent). */
@@ -152,6 +173,9 @@ export class GameSession implements UiIntents {
       reputation: sim.domain.reputation,
       contractsDone: sim.domain.contracts.completed,
       journal: this.journal(sim.domain),
+      clock: formatClock(sim.clock),
+      day: dayOf(sim.clock),
+      dayPhase: dayPhase(sim.clock),
       ...this.minimap(sim.world, sim.domain.flags, sim.domain.contracts),
     });
   }
@@ -331,6 +355,7 @@ export class GameSession implements UiIntents {
 
   private replaceSimulation(next: Simulation): void {
     this.renderSync.reset();
+    this.daylightSent = null;
     this.simulation = next;
     this.district = next.district;
     this.deps.render.setCameraMode(next.domain.preferences.cameraMode);
@@ -343,6 +368,8 @@ export class GameSession implements UiIntents {
     this.deps.onFocusChange?.(this.inControl);
   }
 }
+
+const DAYLIGHT_STEPS = 64;
 
 const pushToastTimed = (ui: UiStore, kind: "system", title: string, text = "") => {
   const id = pushToast(ui, { kind, title, text });
