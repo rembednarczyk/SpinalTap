@@ -113,7 +113,7 @@ describe("ripperdoc", () => {
     expect(richInstalled).toHaveLength(1);
     expect(rich.domain.character.cyberware.nervous).toBe("kairos_overclock");
     expect(rich.domain.wallet.eddies).toBe(2000 - 1100 - 90);
-    expect(rich.domain.inventory.medkit).toBe(2);
+    expect(rich.domain.inventory.stacks.medkit).toBe(2);
   });
 
   it("opens as a shop interaction", () => {
@@ -131,12 +131,12 @@ describe("medkits", () => {
     const sim = Simulation.create({ seed: 1 });
     const used = collect<{ healed: number }>(sim, "ItemUsed");
     sim.step(input({ useItem: true }));
-    expect(sim.domain.inventory.medkit).toBe(1);
+    expect(sim.domain.inventory.stacks.medkit).toBe(1);
     sim.player()!.health = { current: 30, max: 100 };
     sim.step(input({ useItem: true }));
     expect(used).toEqual([expect.objectContaining({ healed: 40 })]);
     expect(sim.player()!.health!.current).toBe(70);
-    expect(sim.domain.inventory.medkit).toBe(0);
+    expect(sim.domain.inventory.stacks.medkit ?? 0).toBe(0);
     sim.player()!.health = { current: 30, max: 100 };
     sim.step(input({ useItem: true }));
     expect(sim.player()!.health!.current).toBe(30);

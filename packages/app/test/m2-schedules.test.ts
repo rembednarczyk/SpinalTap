@@ -21,6 +21,7 @@ class FakeRender implements RenderPort {
   }
   setCameraMode() {}
   attachCamera() {}
+  setAppearance() {}
   playEffect(e: EffectDescriptor) {
     this.effects.push(e);
   }

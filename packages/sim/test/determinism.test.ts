@@ -15,6 +15,13 @@ const script = (): ReplayFrame[] => {
   for (let i = 0; i < 360; i++) {
     frames.push({ input: input({ fire: true, crouch: i % 180 >= 90, moveX: i % 120 < 60 ? 1 : -1, lookYaw: i % 90 < 45 ? -0.004 : 0.004 }) });
   }
+  // Weapon handling (ADR-0015): reload, an empty slot, holster, draw again and keep firing.
+  frames.push({ input: input({ reload: true }) });
+  for (let i = 0; i < 40; i++) frames.push({ input: input() });
+  frames.push({ input: input({ weaponSlot: 3 }) });
+  frames.push({ input: input({ toggleWeapon: true }) });
+  frames.push({ input: input({ weaponSlot: 2 }) });
+  for (let i = 0; i < 120; i++) frames.push({ input: input({ fire: true, lookYaw: i % 60 < 30 ? 0.003 : -0.003 }) });
   return frames;
 };
 
@@ -25,7 +32,7 @@ describe("determinism", () => {
     const a = runReplay(1234, script());
     const b = runReplay(1234, script());
     expect(hashOf(a)).toBe(hashOf(b));
-    expect(a.tick).toBe(871);
+    expect(a.tick).toBe(1035);
   });
 
   it("a different seed diverges once randomness is involved", () => {
@@ -33,7 +40,7 @@ describe("determinism", () => {
   });
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
-    expect(hashOf(runReplay(1234, script()))).toMatchInlineSnapshot(`"53f353d8"`);
+    expect(hashOf(runReplay(1234, script()))).toMatchInlineSnapshot(`"87014c83"`);
   });
 
   it("a loaded snapshot continues exactly like the original run", () => {

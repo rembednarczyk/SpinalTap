@@ -161,3 +161,35 @@ test("touch layout keeps the minimap off the pad", async ({ page }) => {
     expect(overlaps, `minimap overlaps ${await pad.nth(i).getAttribute("aria-label")}`).toBe(false);
   }
 });
+
+test("touch layout keeps the weapon strip off the pad and the minimap", async ({ page }) => {
+  await page.setViewportSize({ width: 844, height: 390 });
+  await page.goto("/?seed=7&touch");
+  await waitForGame(page);
+  await page.getByRole("button", { name: "Nowa gra" }).click();
+  await freeze(page);
+  await step(page, 1);
+  const strip = await page.getByTestId("weapon-strip").boundingBox();
+  expect(strip).not.toBeNull();
+  const inside = strip!.x >= 0 && strip!.y >= 0 && strip!.x + strip!.width <= 844 && strip!.y + strip!.height <= 390;
+  expect(inside, "weapon strip on screen").toBe(true);
+  const overlap = (a: { x: number; y: number; width: number; height: number }, b: { x: number; y: number; width: number; height: number }) =>
+    a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+  const map = await page.getByTestId("minimap").boundingBox();
+  expect(overlap(strip!, map!), "weapon strip overlaps the minimap").toBe(false);
+  const clock = await page.getByTestId("clock").boundingBox();
+  expect(overlap(strip!, clock!), "weapon strip overlaps the clock").toBe(false);
+  expect(overlap(clock!, map!), "clock overlaps the minimap").toBe(false);
+  const pad = page.getByTestId("touch-controls").getByRole("button");
+  const count = await pad.count();
+  expect(count).toBeGreaterThan(4);
+  for (let i = 0; i < count; i++) {
+    const b = await pad.nth(i).boundingBox();
+    if (!b) continue;
+    expect(overlap(strip!, b), `weapon strip overlaps ${await pad.nth(i).getAttribute("aria-label")}`).toBe(false);
+  }
+  // The strip's slots are touch targets of at least 44 px.
+  const slot = await page.getByRole("button", { name: /Boczna: Unity-9/ }).boundingBox();
+  expect(slot!.height).toBeGreaterThanOrEqual(44);
+  await expect(page.getByRole("button", { name: "Przeładuj" })).toBeVisible();
+});

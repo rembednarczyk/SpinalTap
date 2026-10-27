@@ -15,6 +15,7 @@ export {
   gameSecondsPerStep,
   fireShot,
   GUNFIRE_INTERRUPT_RADIUS,
+  playerStatsOf,
   statsFor,
   PITCH_LIMIT,
   SPRINT_MULTIPLIER,
@@ -30,4 +31,5 @@ export {
   effectiveAggroRange,
 } from "./systems/ai";
 export { contractGangerHp, GANGER_MAX_HP, PLAYER_MAX_HP } from "./world/factory";
+export { activeWeaponItem, loadedOf, readyToFire, reserveOf } from "./world/player-weapon";
 export type { SessionState, SimContext, System } from "./world/context";

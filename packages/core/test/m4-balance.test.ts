@@ -4,7 +4,7 @@ import {
   CYBERWARE_CATALOG,
   type ContractKind,
   EMPTY_CONTRACTS,
-  ITEM_CATALOG,
+  STACKABLE_CATALOG,
   createReputation,
   generateContractOfKind,
 } from "../src";
@@ -58,6 +58,6 @@ describe("balance (ADR-0018)", () => {
   });
 
   it("a medkit costs less than half of the cheapest job", () => {
-    expect(ITEM_CATALOG.medkit.price).toBeLessThan(Math.min(...CONTRACT_KIND_IDS.flatMap(payouts)) / 2);
+    expect(STACKABLE_CATALOG.medkit.value).toBeLessThan(Math.min(...CONTRACT_KIND_IDS.flatMap(payouts)) / 2);
   });
 });

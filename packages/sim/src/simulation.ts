@@ -30,7 +30,7 @@ import {
 } from "@seki/core";
 import { World } from "miniplex";
 import { SeededRandom } from "./rng/seeded-random";
-import { aimSpreadOf, createSystems, statsFor } from "./systems";
+import { aimSpreadOf, createSystems, playerStatsOf } from "./systems";
 import type { Entity } from "./world/components";
 import type { DomainHolder, SessionState, SimContext, System } from "./world/context";
 import { deadFlag } from "./systems/death-system";
@@ -40,6 +40,8 @@ import { OYAJI_HOURS } from "./content/schedules";
 import type { DistrictId } from "./content/world-map";
 import { IdAllocator, entitySnapshotOf, playerEntity } from "./world/factory";
 import { WorldStreamer } from "./world/streaming";
+import { applyItemCommand, isItemCommand } from "./world/item-commands";
+import { syncPlayerWeapon } from "./world/player-weapon";
 import { inCreationOrder } from "./world/ordering";
 import { placeOnSchedule } from "./world/schedule";
 
@@ -90,6 +92,7 @@ export class Simulation {
     if (contract?.status === "active") this.streamer.registerContract(this.world, domain.flags, domain.contracts.completed, contract);
     const focus = saved?.entities.find((e) => e.key === "player")?.position ?? PLAYER_SPAWN.position;
     this.streamer.loadInitial(this.world, domain.flags, focus, saved?.streaming.loadedChunks ?? [], domain.clock, () => this.world.add(player));
+    if (player.combatant) syncPlayerWeapon(domain, player.combatant);
   }
 
   static create(options: SimulationOptions): Simulation {
@@ -128,7 +131,7 @@ export class Simulation {
   /** Half-angle of the player's aim cone in radians right now (HUD crosshair); 0 without a player. */
   aimSpread(): number {
     const p = this.player();
-    return p ? aimSpreadOf(p, statsFor(this.holder.domain.character)) : 0;
+    return p ? aimSpreadOf(p, playerStatsOf(this.holder.domain)) : 0;
   }
 
   /** District the player stands in, or null between chunk bounds. */
@@ -148,6 +151,7 @@ export class Simulation {
       state: this.holder,
       session: this.session,
       rng: this.rng,
+      seed: this.seed,
       streamer: this.streamer,
       bus: this.bus,
       dt: SIM_DT,
@@ -183,6 +187,10 @@ export class Simulation {
   }
 
   private apply(ctx: SimContext, cmd: GameCommand): void {
+    if (isItemCommand(cmd)) {
+      applyItemCommand(ctx, cmd);
+      return;
+    }
     switch (cmd.type) {
       case "set-flag":
         raiseFlag(ctx, cmd.flag);
@@ -215,7 +223,7 @@ export class Simulation {
       }
       case "buy-item": {
         const domain = this.holder.domain;
-        const r = buyItem(domain.wallet, domain.inventory, cmd.itemId, shopTerms(domain.reputation.clinic));
+        const r = buyItem(domain.wallet, domain.inventory, domain.equipment, cmd.itemId, shopTerms(domain.reputation.clinic));
         if (!r.ok) {
           ctx.bus.emit("PurchaseFailed", { reason: r.reason });
           break;

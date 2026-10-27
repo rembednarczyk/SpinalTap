@@ -1,6 +1,6 @@
 import { type CyberwareLoadout, loadoutModifiers } from "../cyberware/cyberware";
 import { MEMORY_CATALOG, type MemoryId } from "./memories";
-import { BASE_STATS, type DerivedStats, combineModifiers } from "./stats";
+import { BASE_STATS, type DerivedStats, type StatModifiers, combineModifiers } from "./stats";
 
 export interface CharacterState {
   /** Name the player character goes by. Starts unknown; the fixer gives her an alias. */
@@ -15,11 +15,9 @@ export const createCharacter = (): CharacterState => ({
   cyberware: { optics: "hitomi_optics_mk1" },
 });
 
-export const deriveStats = (c: CharacterState): DerivedStats =>
-  combineModifiers(BASE_STATS, [
-    ...loadoutModifiers(c.cyberware),
-    ...c.memories.map((id) => MEMORY_CATALOG[id].modifiers),
-  ]);
+/** Stats from implants and memories, plus `extra` (e.g. worn garments). */
+export const deriveStats = (c: CharacterState, extra: readonly StatModifiers[] = []): DerivedStats =>
+  combineModifiers(BASE_STATS, [...loadoutModifiers(c.cyberware), ...c.memories.map((id) => MEMORY_CATALOG[id].modifiers), ...extra]);
 
 export const hasMemory = (c: CharacterState, id: MemoryId): boolean => c.memories.includes(id);
 

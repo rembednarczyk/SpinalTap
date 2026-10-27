@@ -1,14 +1,18 @@
 import {
-  DRAW_TIME,
-  WEAPONS,
+  ENEMY_TYPES,
   type DefenderProfile,
+  type EnemyTypeId,
+  type HitZone,
+  defenseOf,
+  outfitDefense,
+  wearGarments,
+  wornGarments,
   type DerivedStats,
   type DialogueInterruptReason,
   type Vec3,
   addBloom,
   applyDamage,
   directionFromAngles,
-  recoverBloom,
   resolveAttack,
   sampleCone,
   spreadAngle,
@@ -18,16 +22,20 @@ import type { Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { crouchOf } from "../world/hitboxes";
 import { aimOrigin, chestOf, hitscan, type HitscanResult } from "../world/hitscan";
-import { worldTimeScale } from "./ability-system";
-import { statsFor } from "./player-control-system";
+import { consumeRound, loadedOf, readyToFire } from "../world/player-weapon";
+import { playerStatsOf } from "./player-control-system";
 
-const ALERT_RADIUS = 22;
 /** An enemy firing this close to the player breaks off a conversation (metres). */
 export const GUNFIRE_INTERRUPT_RADIUS = 8;
 /** A shot passing this close to the player's chest counts as fired at them (metres). */
 const NEAR_MISS_RADIUS = 1.5;
-/** Gangers wear a vest over the torso. */
-const GANGER_ARMOR: DefenderProfile = { armor: 2, zoneArmor: { torso: 3 } };
+/** Armor of each enemy type's fixed outfit, resolved once. */
+const OUTFIT_DEFENSE = new Map<EnemyTypeId, DefenderProfile>();
+const enemyDefense = (type: EnemyTypeId): DefenderProfile => {
+  let d = OUTFIT_DEFENSE.get(type);
+  if (!d) OUTFIT_DEFENSE.set(type, (d = outfitDefense(ENEMY_TYPES[type].outfit)));
+  return d;
+};
 
 export interface ShotRequest {
   readonly shooter: Entity;
@@ -41,12 +49,23 @@ export interface ShotRequest {
   readonly damageBonus: number;
 }
 
+/**
+ * Armor per zone (ADR-0015): the player's implants and memories everywhere plus the clothes on
+ * the zone hit; an enemy's fixed outfit; nothing for anyone else.
+ */
 const defenderOf = (ctx: SimContext, target: Entity): DefenderProfile => {
   if (target.player) {
-    const stats = statsFor(ctx.state.domain.character);
-    return { armor: stats.armor, zoneArmor: { head: stats.headArmor } };
+    const { inventory, equipment } = ctx.state.domain;
+    return defenseOf(playerStatsOf(ctx.state.domain), wornGarments(inventory, equipment));
   }
-  return target.ai ? GANGER_ARMOR : { armor: 0 };
+  return target.enemy ? enemyDefense(target.enemy.type) : { armor: 0 };
+};
+
+/** A hit on the player wears the clothes covering that zone. */
+const wearPlayerClothes = (ctx: SimContext, zone: HitZone): void => {
+  const domain = ctx.state.domain;
+  const inventory = wearGarments(domain.inventory, domain.equipment, zone);
+  if (inventory !== domain.inventory) ctx.state.domain = { ...domain, inventory };
 };
 
 /**
@@ -54,9 +73,10 @@ const defenderOf = (ctx: SimContext, target: Entity): DefenderProfile => {
  * implants. The HUD crosshair shows the same number.
  */
 export const aimSpreadOf = (e: Entity, stats: Pick<DerivedStats, "moveSpeed" | "aimStability"> | null): number => {
-  if (!e.combatant) return 0;
+  const weapon = e.combatant?.stats;
+  if (!e.combatant || !weapon) return 0;
   const speed = e.velocity ? Math.hypot(e.velocity.x, e.velocity.z) : 0;
-  return spreadAngle(WEAPONS[e.combatant.weapon].spread, {
+  return spreadAngle(weapon.spread, {
     crouch: crouchOf(e),
     moving: stats ? speed / stats.moveSpeed : 0,
     sprinting: e.posture?.sprinting ?? false,
@@ -84,29 +104,42 @@ const threaten = (ctx: SimContext, reason: DialogueInterruptReason, sourceId: nu
   ctx.bus.emit("DialogueInterrupted", { reason, sourceId });
 };
 
-/** Fires one hitscan shot: spreads it, resolves the hit, applies damage and emits events. Shared by player and AI. */
+/**
+ * Fires one trigger pull: every pellet (one for most weapons) gets its own direction in the cone
+ * (two random numbers), ray and, on a hit, `resolveAttack` (one more). Uses a round, sets the
+ * cooldown, adds bloom, emits events. Shared by player and AI. The result is the first pellet's.
+ */
 export const fireShot = (ctx: SimContext, shot: ShotRequest, rng: RandomPort): HitscanResult => {
   const combatant = shot.shooter.combatant;
-  if (!combatant) throw new Error("fireShot: shooter has no weapon");
-  const weapon = WEAPONS[combatant.weapon];
-  combatant.cooldown = weapon.cooldown;
-  const dir = sampleCone(shot.dir, shot.spread, rng);
-  combatant.bloom = addBloom(weapon.spread, combatant.bloom);
-  const result = hitscan(ctx.world, shot.origin, dir, weapon.range, shot.shooter.id);
-  ctx.bus.emit("ShotFired", { shooterId: shot.shooter.id, from: shot.origin, to: result.point, hitEntity: result.entity?.id ?? null });
-  alertNearbyGangers(ctx, shot.origin);
-  const target = result.entity;
+  const weapon = combatant?.stats;
+  if (!combatant || !weapon) throw new Error("fireShot: shooter has no weapon");
+  combatant.cooldown = weapon.interval;
+  consumeRound(ctx, shot.shooter);
+  let first: HitscanResult | null = null;
   let hurtPlayer = false;
-  if (target?.health && result.zone) {
+  let farthest: Vec3 = shot.origin;
+  for (let i = 0; i < weapon.pellets; i++) {
+    const dir = sampleCone(shot.dir, shot.spread, rng);
+    const result = hitscan(ctx.world, shot.origin, dir, weapon.range, shot.shooter.id);
+    if (!first) {
+      first = result;
+      ctx.bus.emit("ShotFired", { shooterId: shot.shooter.id, from: shot.origin, to: result.point, hitEntity: result.entity?.id ?? null });
+    }
+    farthest = result.point;
+    const target = result.entity;
+    if (!target?.health || !result.zone) continue;
     const outcome = resolveAttack(
-      { weapon, critChance: shot.critChance, critMultiplier: shot.critMultiplier, damageBonus: shot.damageBonus },
+      { damage: weapon.damage, zones: weapon.zones, critChance: shot.critChance, critMultiplier: shot.critMultiplier, damageBonus: shot.damageBonus },
       defenderOf(ctx, target),
       rng,
       result.zone,
     );
     target.health = applyDamage(target.health, outcome.damage);
     target.lastHitBy = shot.shooter.id;
-    hurtPlayer = !!target.player;
+    if (target.player) {
+      hurtPlayer = true;
+      wearPlayerClothes(ctx, outcome.zone);
+    }
     // Getting shot provokes any AI, whatever it thought of the shooter before.
     if (target.ai) target.ai.alerted = true;
     ctx.bus.emit("DamageDealt", {
@@ -118,6 +151,9 @@ export const fireShot = (ctx: SimContext, shot: ShotRequest, rng: RandomPort): H
       at: result.point,
     });
   }
+  combatant.bloom = addBloom(weapon.spread, combatant.bloom);
+  alertNearbyGangers(ctx, shot.origin, weapon.alertRadius);
+  const result = first ?? { distance: 0, point: farthest, entity: null, zone: null };
   if (!shot.shooter.player) {
     const player = ctx.world.with("player").first;
     if (hurtPlayer) threaten(ctx, "damage", shot.shooter.id);
@@ -130,39 +166,22 @@ export const fireShot = (ctx: SimContext, shot: ShotRequest, rng: RandomPort): H
   return result;
 };
 
-const alertNearbyGangers = (ctx: SimContext, at: { x: number; z: number }): void => {
+const alertNearbyGangers = (ctx: SimContext, at: { x: number; z: number }, radius: number): void => {
   for (const g of ctx.world.with("ai")) {
-    if (Math.hypot(g.position.x - at.x, g.position.z - at.z) <= ALERT_RADIUS) g.ai.alerted = true;
+    if (Math.hypot(g.position.x - at.x, g.position.z - at.z) <= radius) g.ai.alerted = true;
   }
 };
 
-/**
- * Ticks weapon cooldowns and bloom and handles the player's weapon: holster / draw (pulling
- * the trigger with the weapon put away draws it) and the trigger itself.
- */
+/** The player's trigger. Timers, holster, slots and reloads are handled by `weapon` just before. */
 export const combatSystem: System = {
   name: "combat",
   run(ctx) {
-    const enemyDt = ctx.dt * worldTimeScale(ctx);
-    for (const e of ctx.world.with("combatant")) {
-      const dt = e.player ? ctx.dt : enemyDt;
-      e.combatant.cooldown = Math.max(0, e.combatant.cooldown - dt);
-      e.combatant.drawing = Math.max(0, e.combatant.drawing - dt);
-      e.combatant.bloom = recoverBloom(WEAPONS[e.combatant.weapon].spread, e.combatant.bloom, dt);
-    }
-    if (ctx.session.dialogueActive || ctx.session.gameOver) return;
+    if (ctx.session.dialogueActive || ctx.session.gameOver || !ctx.input.fire) return;
     for (const p of ctx.world.with("player", "combatant")) {
-      const c = p.combatant;
-      if (ctx.input.toggleWeapon || (c.holstered && ctx.input.fire)) {
-        c.holstered = !c.holstered;
-        c.drawing = c.holstered ? 0 : DRAW_TIME;
-        ctx.bus.emit("WeaponToggled", { entityId: p.id, drawn: !c.holstered });
-      }
-    }
-    if (!ctx.input.fire) return;
-    for (const p of ctx.world.with("player", "combatant")) {
-      if (p.combatant.cooldown > 0 || p.combatant.holstered || p.combatant.drawing > 0) continue;
-      const stats = statsFor(ctx.state.domain.character);
+      if (!readyToFire(p.combatant, loadedOf(ctx, p))) continue;
+      // A shotgun with a shell in gives way to the trigger mid-reload.
+      p.combatant.reloading = 0;
+      const stats = playerStatsOf(ctx.state.domain);
       fireShot(
         ctx,
         {

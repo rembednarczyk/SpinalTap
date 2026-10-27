@@ -1,7 +1,7 @@
 import { BehaviourTree, State } from "mistreevous";
 
 type Agent = ConstructorParameters<typeof BehaviourTree>[1];
-import { WEAPONS, factionStance, normalize, sub, type EntityId, type FactionStance } from "@seki/core";
+import { factionStance, normalize, sub, type EntityId, type FactionStance } from "@seki/core";
 import type { Entity } from "../../world/components";
 import type { SimContext, System } from "../../world/context";
 import { chestOf, eyeOf, lineOfSight } from "../../world/hitscan";
@@ -9,6 +9,7 @@ import { inCreationOrder } from "../../world/ordering";
 import { followSchedule } from "../../world/schedule";
 import { worldTimeScale } from "../ability-system";
 import { aimSpreadOf, fireShot } from "../combat-system";
+import { readyToFire } from "../../world/player-weapon";
 import { GANGER_TREE } from "./ganger-tree";
 
 export const GANGER_SPEED = 3.1;
@@ -74,12 +75,12 @@ class GangerAgent {
     self.velocity = { x: 0, y: 0, z: 0 };
     this.face(target);
     const combatant = self.combatant;
-    if (combatant && combatant.cooldown <= 0) {
+    if (combatant && readyToFire(combatant, combatant.loaded)) {
       const origin = eyeOf(self);
       const dir = normalize(sub(chestOf(target), origin));
       fireShot(ctx, { shooter: self, origin, dir, spread: aimSpreadOf(self, null), ...GANGER_CRIT }, ctx.rng);
       // Stagger the next burst so the two gangers do not fire in lockstep.
-      combatant.cooldown = WEAPONS[combatant.weapon].cooldown + ctx.rng.next() * 0.5;
+      combatant.cooldown += ctx.rng.next() * 0.5;
     }
     return State.SUCCEEDED;
   }

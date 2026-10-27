@@ -20,6 +20,15 @@ describe("keyboard and mouse mapping", () => {
     expect(mapKeyboardMouse(keys([], ["KeyC"]), { yaw: 0, pitch: 0 }).crouch).toBe(false);
   });
 
+  it("reloads on R and picks weapon slots with 1 to 3 (edges only)", () => {
+    expect(mapKeyboardMouse(keys([], ["KeyR"]), { yaw: 0, pitch: 0 }).reload).toBe(true);
+    expect(mapKeyboardMouse(keys(["KeyR"]), { yaw: 0, pitch: 0 }).reload).toBe(false);
+    expect(mapKeyboardMouse(keys([], ["Digit1"]), { yaw: 0, pitch: 0 }).weaponSlot).toBe(1);
+    expect(mapKeyboardMouse(keys([], ["Numpad2"]), { yaw: 0, pitch: 0 }).weaponSlot).toBe(2);
+    expect(mapKeyboardMouse(keys([], ["Digit3"]), { yaw: 0, pitch: 0 }).weaponSlot).toBe(3);
+    expect(mapKeyboardMouse(keys(["Digit1"]), { yaw: 0, pitch: 0 }).weaponSlot).toBe(0);
+  });
+
   it("supports remapping", () => {
     const map = remap(DEFAULT_KEYMAP, "fire", ["KeyF"]);
     expect(mapKeyboardMouse(keys(["KeyF"]), { yaw: 0, pitch: 0 }, map).fire).toBe(true);
@@ -51,8 +60,22 @@ describe("gamepad mapping", () => {
     expect(mergeFrames(EMPTY_INPUT, { ...EMPTY_INPUT, crouch: true }).crouch).toBe(true);
   });
 
+  it("reloads on d-pad down and picks slots with the other d-pad directions", () => {
+    const at = (i: number) => {
+      const pressed: boolean[] = [];
+      pressed[i] = true;
+      return mapGamepad(pad([0, 0, 0, 0], [], pressed), 1 / 60);
+    };
+    expect(at(13).reload).toBe(true);
+    expect(at(14).weaponSlot).toBe(1);
+    expect(at(12).weaponSlot).toBe(2);
+    expect(at(15).weaponSlot).toBe(3);
+    expect(mapGamepad(pad([0, 0, 0, 0]), 1 / 60)).toMatchObject({ reload: false, weaponSlot: 0 });
+  });
+
   it("merges devices", () => {
-    const f = mergeFrames({ ...EMPTY_INPUT, moveX: 1, fire: true }, { ...EMPTY_INPUT, moveX: 1, lookYaw: 0.2 });
-    expect(f).toMatchObject({ moveX: 1, fire: true, lookYaw: 0.2 });
+    const f = mergeFrames({ ...EMPTY_INPUT, moveX: 1, fire: true }, { ...EMPTY_INPUT, moveX: 1, lookYaw: 0.2, reload: true, weaponSlot: 3 });
+    expect(f).toMatchObject({ moveX: 1, fire: true, lookYaw: 0.2, reload: true, weaponSlot: 3 });
+    expect(mergeFrames({ ...EMPTY_INPUT, weaponSlot: 1 }, { ...EMPTY_INPUT, weaponSlot: 2 }).weaponSlot).toBe(1);
   });
 });

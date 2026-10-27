@@ -2,6 +2,7 @@ import { CorruptSaveError, type SaveSnapshot } from "@seki/core";
 import { checksum } from "./checksum";
 import { MigrationError, migrate } from "./migrations";
 import { findSchemaError } from "./validate";
+import { sanitizeItems } from "./validate-items";
 
 const FORMAT = "seki-save";
 
@@ -41,7 +42,9 @@ export const decodeSave = (slot: string, raw: string): SaveSnapshot => {
     if (e instanceof MigrationError) throw new CorruptSaveError(slot, e.message);
     throw e;
   }
-  const error = findSchemaError(migrated);
+  const { payload: clean, warnings } = sanitizeItems(migrated);
+  for (const w of warnings) console.warn(`[save ${slot}] ${w}`);
+  const error = findSchemaError(clean);
   if (error) throw new CorruptSaveError(slot, `invalid field: ${error}`);
-  return migrated as unknown as SaveSnapshot;
+  return clean as unknown as SaveSnapshot;
 };

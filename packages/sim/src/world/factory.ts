@@ -1,9 +1,9 @@
-import { type EntityId, type EntitySnapshot, type Vec3 } from "@seki/core";
+import { ENEMY_TYPES, type EnemyTypeId, type EntityId, type EntitySnapshot, type Vec3, type WeaponId, npcWeapon } from "@seki/core";
 import { PLAYER_SPAWN } from "../content/district-m0";
 import type { ActorDef, ActorSpawn, StaticProp } from "../content/builders";
 import { SCHEDULES } from "../content/schedules";
 import { aabbFromCenter } from "./collision";
-import type { Entity } from "./components";
+import type { Combatant, Entity } from "./components";
 
 const BODY = { radius: 0.38, height: 1.8 } as const;
 
@@ -45,7 +45,8 @@ export const playerEntity = (id: EntityId): Entity => ({
   view: { kind: "heroine" },
   velocity: { x: 0, y: 0, z: 0 },
   health: { current: PLAYER_MAX_HP, max: PLAYER_MAX_HP },
-  combatant: { weapon: "pistol", cooldown: 0, holstered: false, drawing: 0, bloom: 0 },
+  // Armed from the domain by syncPlayerWeapon.
+  combatant: { weapon: null, stats: null, slot: "secondary", loaded: 0, reloading: 0, cooldown: 0, holstered: false, drawing: 0, bloom: 0 },
   posture: { crouched: false, amount: 0, prevAmount: 0, sprinting: false },
 });
 
@@ -55,15 +56,32 @@ export const propEntity = (id: EntityId, prop: StaticProp, chunk: string): Entit
   return e;
 };
 
-export const gangerEntity = (id: EntityId, spawn: ActorSpawn, tag: string | null, maxHp: number, chunk: string, victim?: string): Entity => {
+/** An NPC with a full magazine of `weapon`, fired through the weapon's NPC profile. */
+export const npcCombatant = (weapon: WeaponId): Combatant => {
+  const stats = npcWeapon(weapon);
+  return { weapon, stats, uid: null, slot: stats.slot, loaded: stats.magazine, reloading: 0, cooldown: 0, holstered: false, drawing: 0, bloom: 0 };
+};
+
+/** A Hebi ganger; weapon, outfit and loot come from its enemy type (ADR-0015). */
+export const gangerEntity = (
+  id: EntityId,
+  spawn: ActorSpawn,
+  tag: string | null,
+  maxHp: number,
+  chunk: string,
+  victim?: string,
+  type: EnemyTypeId = "hebi_ganger",
+): Entity => {
+  const def = ENEMY_TYPES[type];
   const e: Entity = {
     ...actor(id, spawn),
     chunk,
     view: { kind: "enemy", preset: "ganger" },
-    faction: "hebi",
+    faction: def.faction,
+    enemy: { type },
     velocity: { x: 0, y: 0, z: 0 },
     health: { current: maxHp, max: maxHp },
-    combatant: { weapon: "gangerSmg", cooldown: 0, holstered: false, drawing: 0, bloom: 0 },
+    combatant: npcCombatant(def.weapon),
     ai: { home: spawn.position, aggroRange: 17, attackRange: 15, alerted: false, ...(victim ? { victim } : {}) },
   };
   if (tag) e.tag = tag;

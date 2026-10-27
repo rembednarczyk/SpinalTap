@@ -1,19 +1,10 @@
 import type { RandomPort } from "../ports/random-port";
-import type { SpreadProfile } from "./spread";
-
-export interface Weapon {
-  readonly id: string;
-  readonly name: string;
-  readonly baseDamage: number;
-  /** Seconds between shots. */
-  readonly cooldown: number;
-  readonly range: number;
-  /** Aim cone of the weapon. Whether a shot connects is decided by where the ray lands. */
-  readonly spread: SpreadProfile;
-}
 
 export interface AttackerProfile {
-  readonly weapon: Weapon;
+  /** Damage per projectile before zone, crit and armor. */
+  readonly damage: number;
+  /** Per-zone multipliers of the weapon; ZONE_MULTIPLIERS when absent. */
+  readonly zones?: Readonly<Record<HitZone, number>>;
   readonly critChance: number;
   readonly critMultiplier: number;
   readonly damageBonus: number;
@@ -40,25 +31,6 @@ export interface AttackOutcome {
   readonly zone: HitZone;
 }
 
-export const WEAPONS = {
-  pistol: {
-    id: "pistol",
-    name: "Unity-9",
-    baseDamage: 22,
-    cooldown: 0.28,
-    range: 60,
-    spread: { base: 0.02, crouch: 0.4, move: 0.03, sprint: 0.06, bloomPerShot: 0.018, bloomMax: 0.06, recovery: 0.07 },
-  },
-  gangerSmg: {
-    id: "gangerSmg",
-    name: "Hebi SMG",
-    baseDamage: 7,
-    cooldown: 0.9,
-    range: 18,
-    spread: { base: 0.055, crouch: 0.6, move: 0.04, sprint: 0.08, bloomPerShot: 0.01, bloomMax: 0.03, recovery: 0.04 },
-  },
-} as const satisfies Record<string, Weapon>;
-
 /** Minimum share of damage that always passes through armor. */
 const MIN_DAMAGE_RATIO = 0.2;
 
@@ -79,7 +51,7 @@ export const DRAW_TIME = 0.4;
  */
 export const resolveAttack = (attacker: AttackerProfile, defender: DefenderProfile, rng: RandomPort, zone: HitZone = "torso"): AttackOutcome => {
   const critical = rng.next() < attacker.critChance;
-  const raw = (attacker.weapon.baseDamage + attacker.damageBonus) * (critical ? attacker.critMultiplier : 1) * ZONE_MULTIPLIERS[zone];
+  const raw = (attacker.damage + attacker.damageBonus) * (critical ? attacker.critMultiplier : 1) * (attacker.zones ?? ZONE_MULTIPLIERS)[zone];
   return { critical, zone, damage: Math.round(mitigate(raw, armorFor(defender, zone))) };
 };
 

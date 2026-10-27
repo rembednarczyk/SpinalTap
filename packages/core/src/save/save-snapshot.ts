@@ -1,7 +1,8 @@
 import type { Vec3 } from "../math/vec3";
 import type { DomainState } from "../state/domain-state";
 
-export const SAVE_SCHEMA_VERSION = 7;
+/** v8: inventory, weapons and loot (ADR-0015), after the day clock of v7 (ADR-0017). */
+export const SAVE_SCHEMA_VERSION = 8;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {

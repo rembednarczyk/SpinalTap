@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BASE_STATS, WEAPONS } from "@seki/core";
+import { BASE_STATS, WEAPON_CATALOG } from "@seki/core";
 import {
   CROUCH_BODY_SCALE,
   CROUCH_EYE_HEIGHT,
@@ -92,6 +92,7 @@ describe("crouching", () => {
       setCameraMode: () => {},
       attachCamera: () => {},
       playEffect: () => {},
+      setAppearance: () => {},
     };
     const sync = new RenderSync(port);
     sync.sync(sim.world, 0);
@@ -167,9 +168,9 @@ describe("aim spread in the sim", () => {
 
   it("follows the starting optics' stability; a ganger has none", () => {
     const sim = Simulation.create({ seed: 2 });
-    expect(sim.aimSpread()).toBeCloseTo(WEAPONS.pistol.spread.base * 0.9);
+    expect(sim.aimSpread()).toBeCloseTo(WEAPON_CATALOG.unity9.spread.base * 0.9);
     const guard = byKey(sim, "guard")!;
-    expect(aimSpreadOf(guard, null)).toBeCloseTo(WEAPONS.gangerSmg.spread.base);
+    expect(aimSpreadOf(guard, null)).toBeCloseTo(WEAPON_CATALOG.hebi_smg.npc.spread.base);
   });
 
   it("is deterministic: the same seed spreads the same shots", () => {

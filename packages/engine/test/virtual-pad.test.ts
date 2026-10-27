@@ -52,6 +52,14 @@ describe("VirtualPad", () => {
     expect(pad.poll()).toMatchObject({ fire: false, ability: true, useItem: true, toggleCamera: true });
   });
 
+  it("reloads on the R button edge and passes a tapped weapon slot once", () => {
+    const pad = new VirtualPad();
+    pad.press("reload");
+    pad.selectWeaponSlot(3);
+    expect(pad.poll()).toMatchObject({ reload: true, weaponSlot: 3 });
+    expect(pad.poll()).toMatchObject({ reload: false, weaponSlot: 0 });
+  });
+
   it("reset lifts every finger", () => {
     const pad = new VirtualPad();
     pad.setStick(0, 1);

@@ -22,7 +22,13 @@ export interface InputFrame {
   readonly useItem: boolean;
   /** Edge-triggered: holster or draw the weapon. */
   readonly toggleWeapon: boolean;
+  /** Edge-triggered: reload the active weapon. */
+  readonly reload: boolean;
+  /** Edge-triggered weapon slot choice: 1 primary, 2 secondary, 3 melee, 0 no change. */
+  readonly weaponSlot: WeaponSlotInput;
 }
+
+export type WeaponSlotInput = 0 | 1 | 2 | 3;
 
 export const EMPTY_INPUT: InputFrame = Object.freeze({
   moveX: 0,
@@ -37,6 +43,8 @@ export const EMPTY_INPUT: InputFrame = Object.freeze({
   ability: false,
   useItem: false,
   toggleWeapon: false,
+  reload: false,
+  weaponSlot: 0,
 });
 
 export interface InputPort {

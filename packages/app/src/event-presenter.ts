@@ -8,7 +8,7 @@ import {
   type EventBus,
   FACTIONS,
   type FactionId,
-  ITEM_CATALOG,
+  STACKABLE_CATALOG,
   type RenderPort,
   contractClearedNote,
   contractFailureNote,
@@ -17,6 +17,7 @@ import {
   formatClock,
 } from "@seki/core";
 import { type UiStore, dismissToast, patchUi, pushToast } from "@seki/ui";
+import { lootSummary } from "./loot-view";
 
 const TOAST_MS = 4500;
 
@@ -41,6 +42,8 @@ export interface PresenterHooks {
   playerId(): EntityId | null;
   onDialogue(dialogueId: string): void;
   onShop(): void;
+  /** The player opened a bag (`key` of its container). */
+  onLoot(key: string): void;
   onPlayerDied(): void;
   /** Violence cut a conversation or the shop short; the sim has already freed the player. */
   onDialogueInterrupted(reason: DomainEvents["DialogueInterrupted"]["reason"]): void;
@@ -66,6 +69,15 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
       render.playEffect({ kind: "weapon", entityId: e.entityId, drawn: e.drawn });
       if (isPlayer(e.entityId)) audio.play("ui-select");
     }),
+    bus.on("WeaponSwitched", (e) => {
+      render.playEffect({ kind: "weapon", entityId: e.entityId, drawn: true, slot: e.slot });
+      if (isPlayer(e.entityId)) audio.play("ui-select");
+    }),
+    bus.on("ReloadStarted", (e) => render.playEffect({ kind: "reload", entityId: e.entityId, duration: e.duration })),
+    bus.on("InventoryFull", () => {
+      toast("system", "Plecak pełny", "Zrób miejsce, zanim weźmiesz więcej.");
+      audio.play("denied");
+    }),
     bus.on("DamageDealt", (e) => {
       render.playEffect({ kind: "hit-spark", at: e.at, critical: e.critical });
       render.playEffect({ kind: "flinch", entityId: e.targetId });
@@ -84,7 +96,17 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
       toast("system", "Rozmowa przerwana", e.reason === "damage" ? "Ktoś do ciebie strzela!" : "Strzały tuż obok. Nie czas na gadanie.");
     }),
     bus.on("InteractionFocusChanged", (e) => patchUi(ui, { prompt: e.prompt })),
-    bus.on("InteractionStarted", (e) => (e.kind === "shop" ? hooks.onShop() : hooks.onDialogue(e.dialogueId))),
+    bus.on("InteractionStarted", (e) => {
+      if (e.kind === "shop") hooks.onShop();
+      else if (e.kind === "loot") hooks.onLoot(e.dialogueId);
+      else hooks.onDialogue(e.dialogueId);
+    }),
+    bus.on("LootTaken", (e) => {
+      if (e.lines.length === 0) return;
+      toast("money", "Łup", lootSummary(e.lines));
+      audio.play("purchase");
+    }),
+    bus.on("LootExpired", () => toast("system", "Torba przepadła", "Ktoś był szybszy.")),
     bus.on("InteractionRefused", (e) => {
       toast("reputation", REFUSAL[e.faction] ?? `${FACTIONS[e.faction]} nie chce z tobą rozmawiać`, "Reputacja");
       audio.play("denied");
@@ -103,7 +125,7 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
       audio.play("quest-update");
     }),
     bus.on("EddiesChanged", (e) => {
-      if (e.delta > 0) toast("money", `+${e.delta.toLocaleString("pl-PL")} €$`, "Przelew");
+      if (e.delta > 0 && e.source !== "loot") toast("money", `+${e.delta.toLocaleString("pl-PL")} €$`, "Przelew");
     }),
     bus.on("CyberwareInstalled", (e) => {
       const def = CYBERWARE_CATALOG[e.cyberwareId];
@@ -111,7 +133,7 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
       audio.play("purchase");
     }),
     bus.on("ItemBought", (e) => {
-      toast("system", `Kupiono: ${ITEM_CATALOG[e.itemId].name}`, `-${e.price} €$`);
+      toast("system", `Kupiono: ${STACKABLE_CATALOG[e.itemId].name}`, `-${e.price} €$`);
       audio.play("purchase");
     }),
     bus.on("PurchaseFailed", (e) => {
@@ -120,7 +142,7 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
       audio.play("denied");
     }),
     bus.on("ItemUsed", (e) => {
-      toast("system", `${ITEM_CATALOG[e.itemId].name}: +${e.healed} HP`);
+      toast("system", `${STACKABLE_CATALOG[e.itemId].name}: +${e.healed} HP`);
       render.playEffect({ kind: "heal" });
       audio.play("heal");
     }),

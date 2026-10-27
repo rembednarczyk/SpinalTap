@@ -11,14 +11,17 @@ import { movementSystem } from "./movement-system";
 import { playerControlSystem } from "./player-control-system";
 import { questSystem } from "./quest-system";
 import { streamingSystem } from "./streaming-system";
+import { weaponSystem } from "./weapon-system";
+import { lootSystem } from "./loot-system";
 import { clockSystem } from "./clock-system";
 import { scheduleSystem } from "./schedule-system";
 
 export { aimSpreadOf, fireShot, GUNFIRE_INTERRUPT_RADIUS } from "./combat-system";
 export { equippedAbility, worldTimeScale } from "./ability-system";
 export { deadFlag } from "./death-system";
+export { LOOT_REACH, syncBags } from "./loot-system";
 export { gameSecondsPerStep } from "./clock-system";
-export { statsFor, CROUCH_SPEED_MULTIPLIER, CROUCH_TIME, PITCH_LIMIT, SPRINT_MULTIPLIER } from "./player-control-system";
+export { playerStatsOf, statsFor, CROUCH_SPEED_MULTIPLIER, CROUCH_TIME, PITCH_LIMIT, SPRINT_MULTIPLIER } from "./player-control-system";
 
 /**
  * Explicit, fixed system order (determinism: never derived from map iteration).
@@ -35,9 +38,11 @@ export const createSystems = (): readonly System[] => [
   createGangerAiSystem(),
   createCivilianAiSystem(),
   movementSystem,
+  weaponSystem,
   combatSystem,
   interactionSystem,
   deathSystem,
+  lootSystem,
   contractSystem,
   questSystem,
 ];

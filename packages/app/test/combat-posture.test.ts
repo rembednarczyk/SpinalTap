@@ -14,6 +14,7 @@ const render: RenderPort = {
   setCameraMode() {},
   attachCamera() {},
   playEffect() {},
+  setAppearance() {},
 };
 
 class FakeAudio implements AudioPort {

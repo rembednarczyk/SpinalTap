@@ -4,6 +4,8 @@ import { useUi } from "../use-ui";
 import { AbilityWidget } from "./ability-widget";
 import { Minimap } from "./minimap";
 import { Toasts } from "./toasts";
+import { WeaponStrip } from "./weapon-strip";
+import type { TouchPadSink } from "../touch/touch-pad-sink";
 
 /** Vertical field of view of the game camera in radians (engine CameraRig). */
 export const HUD_CAMERA_FOV = 1.08;
@@ -63,7 +65,7 @@ const Clock = () => {
   );
 };
 
-export const Hud = () => {
+export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
   const hp = useUi((s) => s.hp);
   const maxHp = useUi((s) => s.maxHp);
   const eddies = useUi((s) => s.eddies);
@@ -98,8 +100,9 @@ export const Hud = () => {
         </div>
       )}
       <AbilityWidget />
+      <WeaponStrip pad={touch} />
       <Minimap />
-      <div className="hud__camera">{cameraMode} · [V] · [X] broń · [C] kucanie · [Tab] postać · [J] dziennik</div>
+      <div className="hud__camera">{cameraMode} · [V] · [X] broń · [1-3] slot · [R] przeładuj · [C] kucanie · [Tab] postać · [J] dziennik</div>
       {prompt && (
         <div className="hud__prompt" data-testid="prompt">
           <kbd>E</kbd> {prompt}

@@ -1,4 +1,4 @@
-import { clamp, deriveStats, type DerivedStats, type CharacterState } from "@seki/core";
+import { clamp, deriveStats, type DerivedStats, type CharacterState, type DomainState, garmentModifiers, wornGarments } from "@seki/core";
 import type { System } from "../world/context";
 
 export const PITCH_LIMIT = 1.25;
@@ -20,6 +20,21 @@ export const statsFor = (c: CharacterState): DerivedStats => {
   return cachedStats;
 };
 
+let cachedFor: { character: CharacterState; equipment: DomainState["equipment"] } | null = null;
+let cachedPlayer: DerivedStats | null = null;
+
+/**
+ * The player's stats with worn garments (a ballistic vest slows her down). Memoised on the
+ * character and the equipment, which only change on install, memory or equip.
+ */
+export const playerStatsOf = (domain: DomainState): DerivedStats => {
+  if (!cachedPlayer || cachedFor?.character !== domain.character || cachedFor.equipment !== domain.equipment) {
+    cachedFor = { character: domain.character, equipment: domain.equipment };
+    cachedPlayer = deriveStats(domain.character, garmentModifiers(wornGarments(domain.inventory, domain.equipment)));
+  }
+  return cachedPlayer;
+};
+
 /** Turns the InputFrame into player look angles, desired velocity and the camera mode toggle. */
 export const playerControlSystem: System = {
   name: "player-control",
@@ -30,7 +45,7 @@ export const playerControlSystem: System = {
       ctx.state.domain = { ...ctx.state.domain, preferences: { ...ctx.state.domain.preferences, cameraMode: mode } };
       ctx.bus.emit("CameraModeChanged", { mode });
     }
-    const stats = statsFor(ctx.state.domain.character);
+    const stats = playerStatsOf(ctx.state.domain);
     for (const p of ctx.world.with("player", "velocity")) {
       if (p.health) p.health = { current: Math.min(p.health.current, stats.maxHp), max: stats.maxHp };
       const posture = p.posture;

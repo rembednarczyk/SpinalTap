@@ -4,6 +4,7 @@ import { Hud } from "./hud/hud";
 import { CharacterPanel } from "./menus/character-panel";
 import { JournalPanel } from "./journal/journal-panel";
 import { ShopPanel } from "./shop/shop-panel";
+import { LootPanel } from "./loot/loot-panel";
 import { TouchControls } from "./touch/touch-controls";
 import type { TouchPadSink } from "./touch/touch-pad-sink";
 import type { UiIntents } from "./intents";
@@ -15,14 +16,15 @@ import { UiContext, useUi } from "./use-ui";
 
 const Screens = ({ touch }: { touch: TouchPadSink | undefined }) => {
   const screen = useUi((s) => s.screen);
-  const modal = useUi((s) => s.dialogue !== null || s.shopOpen);
+  const modal = useUi((s) => s.dialogue !== null || s.shopOpen || s.loot !== null);
   return (
     <>
       {touch && screen === "playing" && !modal && <TouchControls pad={touch} />}
       {touch && <div className="rotate-hint">Obróć telefon poziomo</div>}
-      {screen !== "title" && <Hud />}
+      {screen !== "title" && <Hud touch={touch} />}
       {screen === "playing" && <DialoguePanel />}
       {screen === "playing" && <ShopPanel />}
+      {screen === "playing" && <LootPanel />}
       {screen === "playing" && <CharacterPanel />}
       {screen === "playing" && <JournalPanel />}
       {screen === "title" && <TitleScreen />}

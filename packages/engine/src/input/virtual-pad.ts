@@ -1,6 +1,6 @@
-import type { InputFrame } from "@seki/core";
+import type { InputFrame, WeaponSlotInput } from "@seki/core";
 
-export type PadButton = "fire" | "interact" | "ability" | "useItem" | "toggleCamera" | "sprint" | "toggleWeapon" | "crouch";
+export type PadButton = "fire" | "interact" | "ability" | "useItem" | "toggleCamera" | "sprint" | "toggleWeapon" | "crouch" | "reload";
 
 /** Stick deflection above which the on-screen stick also sprints. */
 export const STICK_SPRINT_THRESHOLD = 0.92;
@@ -16,6 +16,8 @@ export class VirtualPad {
   private pitch = 0;
   private readonly held = new Set<PadButton>();
   private readonly pressed = new Set<PadButton>();
+  /** Slot tapped on the HUD weapon strip since the last poll. */
+  private slot: WeaponSlotInput = 0;
 
   /** x: right, z: forward, both in [-1, 1]; the vector is clamped to the unit circle. */
   setStick(x: number, z: number): void {
@@ -36,6 +38,11 @@ export class VirtualPad {
     this.held.add(button);
   }
 
+  /** A tap on a weapon slot in the HUD strip; edge-triggered like a button. */
+  selectWeaponSlot(slot: 1 | 2 | 3): void {
+    this.slot = slot;
+  }
+
   release(button: PadButton): void {
     this.held.delete(button);
   }
@@ -50,6 +57,7 @@ export class VirtualPad {
   /** Drops buffered edges and look deltas but keeps what is held. */
   flush(): void {
     this.pressed.clear();
+    this.slot = 0;
     this.yaw = 0;
     this.pitch = 0;
   }
@@ -69,6 +77,8 @@ export class VirtualPad {
       ability: edge("ability"),
       useItem: edge("useItem"),
       toggleWeapon: edge("toggleWeapon"),
+      reload: edge("reload"),
+      weaponSlot: this.slot,
     };
     this.flush();
     return frame;

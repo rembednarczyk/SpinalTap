@@ -26,6 +26,8 @@ export interface SimContext {
   readonly state: DomainHolder;
   readonly session: SessionState;
   readonly rng: SeededRandom;
+  /** Game seed, for streams derived from it (loot). */
+  readonly seed: number;
   readonly streamer: WorldStreamer;
   readonly bus: EventBus<DomainEvents>;
   readonly dt: number;

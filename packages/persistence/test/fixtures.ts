@@ -16,6 +16,20 @@ export const snapshot = (overrides: Partial<SaveSnapshot> = {}): SaveSnapshot =>
   ...overrides,
 });
 
+/** What v6 (world streaming) wrote: a medkit counter, no day clock, no equipment. */
+export const v6Payload = (medkits = 3) => {
+  const s = snapshot();
+  const { equipment: _e, ammo: _a, loot: _l, clock: _c, ...domain } = s.domain;
+  return { ...s, version: 6, domain: { ...domain, inventory: { medkit: medkits } } };
+};
+
+/** What v7 (day clock, ADR-0017) wrote: the clock, still the medkit counter. */
+export const v7Payload = (medkits = 3) => {
+  const s = snapshot();
+  const { equipment: _e, ammo: _a, loot: _l, ...domain } = s.domain;
+  return { ...s, version: 7, domain: { ...domain, inventory: { medkit: medkits } } };
+};
+
 /** What the v1 prototype wrote: "credits", no camera preference, no rngState, no alert flags. */
 export const v1Payload = () => {
   const s = snapshot();

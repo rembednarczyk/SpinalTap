@@ -6,7 +6,8 @@ import { QUEST_FIRST_CONTRACT } from "../quest/definitions";
 import { type ReputationState, createReputation } from "../reputation/reputation";
 import { type AbilityState, IDLE_ABILITY } from "../abilities/abilities";
 import { type ContractLog, EMPTY_CONTRACTS } from "../contracts/contracts";
-import type { Inventory } from "../inventory/inventory";
+import { type AmmoPouch, type Equipment, type InventoryState, starterKit } from "../items/inventory";
+import { EMPTY_LOOT, type LootState } from "../items/loot";
 import { EMPTY_STORY, type StoryState } from "../story/story";
 import { type GameClock, START_CLOCK } from "../time/game-clock";
 import type { Flags } from "./flags";
@@ -23,7 +24,12 @@ export interface DomainState {
   readonly quests: QuestLog;
   readonly flags: Flags;
   readonly preferences: Preferences;
-  readonly inventory: Inventory;
+  /** Bag, worn and mounted pieces (ADR-0015). */
+  readonly inventory: InventoryState;
+  readonly equipment: Equipment;
+  readonly ammo: AmmoPouch;
+  /** Bags lying in the world, with their contents. */
+  readonly loot: LootState;
   readonly contracts: ContractLog;
   readonly ability: AbilityState;
   /** Main-thread choices and the resolved ending. Ink variables are synced from it. */
@@ -33,13 +39,14 @@ export interface DomainState {
 }
 
 export const createDomainState = (): DomainState => ({
+  ...starterKit(),
+  loot: EMPTY_LOOT,
   character: createCharacter(),
   wallet: createWallet(120),
   reputation: createReputation(),
   quests: startQuest({}, QUEST_FIRST_CONTRACT),
   flags: [],
   preferences: { cameraMode: "FPP" },
-  inventory: { medkit: 1 },
   contracts: EMPTY_CONTRACTS,
   ability: IDLE_ABILITY,
   story: EMPTY_STORY,

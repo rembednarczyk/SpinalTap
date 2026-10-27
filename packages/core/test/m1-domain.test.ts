@@ -3,11 +3,11 @@ import {
   ABILITY_CATALOG,
   ELIMINATION_SITE_IDS,
   CYBERWARE_CATALOG,
+  EMPTY_EQUIPMENT,
+  EMPTY_INVENTORY,
   EMPTY_CONTRACTS,
   IDLE_ABILITY,
-  MAX_STACK,
   activate,
-  addItem,
   buyCyberware,
   buyItem,
   contractObjective,
@@ -16,26 +16,10 @@ import {
   enemyTimeScale,
   generateContract,
   isContractSiteId,
-  isItemId,
-  itemCount,
   loadoutAbility,
-  takeItem,
   tickAbility,
 } from "../src";
 import { sequenceRng } from "./helpers";
-
-describe("inventory", () => {
-  it("adds up to the stack limit and takes down to zero", () => {
-    expect(addItem({}, "medkit", 2)).toEqual({ medkit: 2 });
-    expect(addItem({ medkit: MAX_STACK }, "medkit")).toBeNull();
-    expect(addItem({}, "medkit", 0)).toBeNull();
-    expect(takeItem({ medkit: 1 }, "medkit")).toEqual({ medkit: 0 });
-    expect(takeItem({}, "medkit")).toBeNull();
-    expect(itemCount({}, "medkit")).toBe(0);
-    expect(isItemId("medkit")).toBe(true);
-    expect(isItemId("grenade")).toBe(false);
-  });
-});
 
 describe("ripperdoc", () => {
   it("charges and installs, replacing the implant in the same slot", () => {
@@ -57,9 +41,12 @@ describe("ripperdoc", () => {
   });
 
   it("sells medkits while there is room and money", () => {
-    expect(buyItem({ eddies: 100 }, {}, "medkit")).toEqual({ ok: true, wallet: { eddies: 10 }, inventory: { medkit: 1 }, price: 90 });
-    expect(buyItem({ eddies: 10 }, {}, "medkit")).toEqual({ ok: false, reason: "insufficient-funds" });
-    expect(buyItem({ eddies: 1000 }, { medkit: MAX_STACK }, "medkit")).toEqual({ ok: false, reason: "inventory-full" });
+    const eq = EMPTY_EQUIPMENT;
+    expect(buyItem({ eddies: 100 }, EMPTY_INVENTORY, eq, "medkit")).toMatchObject({ ok: true, wallet: { eddies: 10 }, inventory: { stacks: { medkit: 1 } }, price: 90 });
+    expect(buyItem({ eddies: 10 }, EMPTY_INVENTORY, eq, "medkit")).toEqual({ ok: false, reason: "insufficient-funds" });
+    const full = { ...EMPTY_INVENTORY, capacity: 1, stacks: { medkit: 9 } };
+    expect(buyItem({ eddies: 1000 }, full, eq, "medkit")).toEqual({ ok: false, reason: "inventory-full" });
+    expect(buyItem({ eddies: 1000 }, full, eq, "bandage")).toEqual({ ok: false, reason: "inventory-full" });
   });
 
   it("every implant has a description and a non-negative price", () => {

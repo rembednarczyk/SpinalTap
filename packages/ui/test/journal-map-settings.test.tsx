@@ -13,7 +13,7 @@ const intents = (): UiIntents & Record<string, ReturnType<typeof vi.fn>> => {
 const mount = (state: Partial<UiState> = {}, touch = false) => {
   const store = createUiStore(state);
   const i = intents();
-  const pad = { setStick: vi.fn(), look: vi.fn(), press: vi.fn(), release: vi.fn(), reset: vi.fn() };
+  const pad = { setStick: vi.fn(), look: vi.fn(), press: vi.fn(), release: vi.fn(), reset: vi.fn(), selectWeaponSlot: vi.fn() };
   render(<GameUi store={store} intents={i} touch={touch ? pad : undefined} />);
   return { store, i };
 };

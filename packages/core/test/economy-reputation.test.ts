@@ -3,6 +3,8 @@ import {
   CYBERWARE_CATALOG,
   FACTION_IDS,
   STANDARD_TERMS,
+  EMPTY_EQUIPMENT,
+  EMPTY_INVENTORY,
   buyCyberware,
   buyItem,
   changeReputation,
@@ -122,7 +124,7 @@ describe("shop terms", () => {
     const discounted = buyCyberware({ eddies: 2000 }, c, "subdermal_weave", shopTerms(80));
     expect(discounted).toMatchObject({ ok: true, price: priceWithTerms(CYBERWARE_CATALOG.subdermal_weave.price, shopTerms(80)) });
     expect(buyCyberware({ eddies: 99999 }, c, "subdermal_weave", shopTerms(-80))).toEqual({ ok: false, reason: "refused" });
-    expect(buyItem({ eddies: 81 }, {}, "medkit", shopTerms(20))).toEqual({ ok: true, wallet: { eddies: 0 }, inventory: { medkit: 1 }, price: 81 });
-    expect(buyItem({ eddies: 99999 }, {}, "medkit", shopTerms(-80))).toEqual({ ok: false, reason: "refused" });
+    expect(buyItem({ eddies: 81 }, EMPTY_INVENTORY, EMPTY_EQUIPMENT, "medkit", shopTerms(20))).toMatchObject({ ok: true, wallet: { eddies: 0 }, inventory: { stacks: { medkit: 1 } }, price: 81 });
+    expect(buyItem({ eddies: 99999 }, EMPTY_INVENTORY, EMPTY_EQUIPMENT, "medkit", shopTerms(-80))).toEqual({ ok: false, reason: "refused" });
   });
 });

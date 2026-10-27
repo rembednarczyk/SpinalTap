@@ -98,6 +98,16 @@ export class WorldStreamer {
     }
   }
 
+  /** A fresh entity id, for things spawned at run time (bags). */
+  takeId(): EntityId {
+    return this.ids.take();
+  }
+
+  /** Chunk containing the point, or "" outside every chunk. */
+  chunkIdAt(p: Vec3): string {
+    return chunkAt(p.x, p.z, this.chunks)?.id ?? "";
+  }
+
   /** Resident chunks, in table order. */
   get loadedChunks(): string[] {
     return this.chunks.filter((c) => this.resident.has(c.id)).map((c) => c.id);

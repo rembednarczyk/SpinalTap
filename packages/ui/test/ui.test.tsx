@@ -19,6 +19,8 @@ const intents = (): UiIntents => ({
   talkToShopkeeper: vi.fn(),
   changeSettings: vi.fn(),
   reload: vi.fn(),
+  takeLoot: vi.fn(),
+  closeLoot: vi.fn(),
 });
 
 const mount = (state: Partial<UiState> = {}) => {
@@ -273,7 +275,7 @@ describe("gear and character sheet", () => {
 });
 
 describe("touch controls", () => {
-  const sink = () => ({ setStick: vi.fn(), look: vi.fn(), press: vi.fn(), release: vi.fn(), reset: vi.fn() });
+  const sink = () => ({ setStick: vi.fn(), look: vi.fn(), press: vi.fn(), release: vi.fn(), reset: vi.fn(), selectWeaponSlot: vi.fn() });
 
   const mountTouch = (state: Partial<UiState> = {}) => {
     const store = createUiStore({ screen: "playing", ...state });

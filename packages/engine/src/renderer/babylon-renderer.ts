@@ -1,6 +1,6 @@
 import { type AbstractMesh, type Color3, Color4, Matrix, type Mesh, MeshBuilder, TransformNode, Vector3 } from "../babylon";
 import { applyOutline } from "../npr/outline";
-import type { CameraMode, DespawnReason, EffectDescriptor, EntityId, RenderPort, Transform, ViewDescriptor } from "@seki/core";
+import type { AppearanceDescriptor, CameraMode, DespawnReason, EffectDescriptor, EntityId, RenderPort, Transform, ViewDescriptor } from "@seki/core";
 import { CameraRig } from "../camera/camera-rig";
 import { Effects } from "../effects/effects";
 import { createRain } from "../effects/rain";
@@ -169,6 +169,14 @@ export class BabylonRenderer implements RenderPort {
         this.entities.set(id, { kind: "prop", prop, lightKey, decor });
         return;
       }
+      case "loot": {
+        // Placeholder until the bag look (ADR-0015, E7): a small metal box through the prop path.
+        const size = { x: 0.5, y: 0.28, z: 0.36 };
+        const at = v3({ x: t.position.x, y: t.position.y + size.y / 2, z: t.position.z });
+        const prop = buildBlock(scene, this.materials, name, { kind: "block", size, material: "metal" }, at);
+        this.entities.set(id, { kind: "prop", prop, lightKey: null, decor: { meshes: [], flicker: null } });
+        return;
+      }
     }
   }
 
@@ -210,6 +218,9 @@ export class BabylonRenderer implements RenderPort {
   attachCamera(id: EntityId): void {
     this.cameraTarget = id;
   }
+
+  /** Outfits and stowed weapons arrive with the appearance work (ADR-0015, stage E7). */
+  setAppearance(_id: EntityId, _appearance: AppearanceDescriptor): void {}
 
   playEffect(effect: EffectDescriptor): void {
     switch (effect.kind) {
