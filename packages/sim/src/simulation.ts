@@ -188,7 +188,7 @@ export class Simulation {
       }
       case "buy-item": {
         const domain = this.holder.domain;
-        const r = buyItem(domain.wallet, domain.inventory, cmd.itemId, shopTerms(domain.reputation.clinic));
+        const r = buyItem(domain.wallet, domain.inventory, domain.equipment, cmd.itemId, shopTerms(domain.reputation.clinic));
         if (!r.ok) {
           ctx.bus.emit("PurchaseFailed", { reason: r.reason });
           break;

@@ -130,6 +130,8 @@ export interface UiState {
   readonly hasSaves: boolean;
   readonly busy: boolean;
   readonly medkits: number;
+  /** How many more medkits fit in the bag. */
+  readonly medkitRoom: number;
   readonly ability: AbilityVm | null;
   readonly cyberware: CyberwareLoadout;
   readonly reputation: ReputationState;
@@ -172,6 +174,7 @@ export const initialUiState: UiState = {
   hasSaves: false,
   busy: false,
   medkits: 0,
+  medkitRoom: 9,
   ability: null,
   cyberware: {},
   reputation: createReputation(),

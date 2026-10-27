@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { CYBERWARE_CATALOG, type CyberwareId, ITEM_CATALOG, MAX_STACK, type ShopTerms, priceWithTerms, shopTerms } from "@seki/core";
+import { CYBERWARE_CATALOG, type CyberwareId, STACKABLE_CATALOG, type ShopTerms, priceWithTerms, shopTerms } from "@seki/core";
 import { useIntents, useUi } from "../use-ui";
 
 const SLOT_LABEL: Record<string, string> = { optics: "Optyka", nervous: "Układ nerwowy", skeleton: "Szkielet", arms: "Ramiona" };
@@ -19,6 +19,7 @@ export const ShopPanel = () => {
   const eddies = useUi((s) => s.eddies);
   const loadout = useUi((s) => s.cyberware);
   const medkits = useUi((s) => s.medkits);
+  const medkitRoom = useUi((s) => s.medkitRoom);
   const clinicRep = useUi((s) => s.reputation.clinic);
   const intents = useIntents();
 
@@ -34,7 +35,8 @@ export const ShopPanel = () => {
   if (!open) return null;
   const terms = shopTerms(clinicRep);
   const note = termsNote(terms);
-  const medkitPrice = priceWithTerms(ITEM_CATALOG.medkit.price, terms);
+  const medkit = STACKABLE_CATALOG.medkit;
+  const medkitPrice = priceWithTerms(medkit.value, terms);
   return (
     <div className="shop" data-testid="shop" role="dialog" aria-label="Klinika doktora Mori">
       <header className="shop__head">
@@ -75,12 +77,12 @@ export const ShopPanel = () => {
         })}
         <article className="shop__item">
           <div className="shop__slot">Ekwipunek · masz {medkits}</div>
-          <h3 className="shop__name">{ITEM_CATALOG.medkit.name}</h3>
-          <p className="shop__desc">{ITEM_CATALOG.medkit.description} Użycie: [H].</p>
+          <h3 className="shop__name">{medkit.name}</h3>
+          <p className="shop__desc">{medkit.description} Użycie: [H].</p>
           <button
             type="button"
             className="shop__buy"
-            disabled={eddies < medkitPrice || medkits >= MAX_STACK}
+            disabled={eddies < medkitPrice || medkitRoom < 1}
             onClick={() => intents.buyItem("medkit")}
           >
             Kup · {medkitPrice} €$

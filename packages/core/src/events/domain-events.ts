@@ -3,11 +3,10 @@ import type { CameraMode, EntityId } from "../ports/types";
 import type { HitZone } from "../combat/combat-rules";
 import type { FactionId } from "../reputation/reputation";
 import type { CyberwareId } from "../cyberware/cyberware";
-import type { ItemId } from "../inventory/inventory";
 import type { PurchaseFailure } from "../shop/ripperdoc";
 import type { Contract } from "../contracts/contracts";
 import type { EndingId, StoryChoiceId, StoryOption } from "../story/story";
-import type { EquipSlot, ItemDefId, ItemRef, LootLine, ModSlot, Rarity, WeaponId, WeaponSlot } from "../items/types";
+import type { ConsumableId, EquipSlot, ItemDefId, ItemRef, LootLine, ModSlot, Rarity, StackableId, WeaponId, WeaponSlot } from "../items/types";
 
 export interface DomainEvents {
   ShotFired: { shooterId: EntityId; from: Vec3; to: Vec3; hitEntity: EntityId | null };
@@ -39,9 +38,9 @@ export interface DomainEvents {
   ReputationChanged: { faction: FactionId; value: number; delta: number };
   MemoryUnlocked: { memoryId: string; title: string; description: string };
   CyberwareInstalled: { cyberwareId: CyberwareId; replaced: CyberwareId | null; price: number };
-  ItemBought: { itemId: ItemId; price: number };
+  ItemBought: { itemId: StackableId; price: number };
   PurchaseFailed: { reason: PurchaseFailure };
-  ItemUsed: { itemId: ItemId; healed: number };
+  ItemUsed: { itemId: ConsumableId; healed: number };
   AbilityActivated: { abilityId: string; duration: number };
   AbilityEnded: { abilityId: string };
   ContractAccepted: { contract: Contract };

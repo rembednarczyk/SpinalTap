@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CYBERWARE_CATALOG, ITEM_CATALOG, type ReputationState, priceWithTerms, shopTerms } from "@seki/core";
+import { CYBERWARE_CATALOG, STACKABLE_CATALOG, type ReputationState, priceWithTerms, shopTerms } from "@seki/core";
 import { FLEE_RADIUS, HOSTILE_AGGRO_MULTIPLIER, Simulation, effectiveAggroRange, stateHash } from "../src";
 import { byKey, collect, input, run, teleportPlayer } from "./helpers";
 
@@ -45,8 +45,8 @@ describe("the ripperdoc", () => {
     const bought = collect<{ price: number }>(sim, "ItemBought");
     sim.enqueue({ type: "buy-item", itemId: "medkit" });
     sim.step();
-    const price = priceWithTerms(ITEM_CATALOG.medkit.price, shopTerms(60));
-    expect(price).toBeLessThan(ITEM_CATALOG.medkit.price);
+    const price = priceWithTerms(STACKABLE_CATALOG.medkit.value, shopTerms(60));
+    expect(price).toBeLessThan(STACKABLE_CATALOG.medkit.value);
     expect(bought).toEqual([{ itemId: "medkit", price }]);
     expect(sim.domain.wallet.eddies).toBe(5000 - price);
   });

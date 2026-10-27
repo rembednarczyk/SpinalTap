@@ -1,7 +1,9 @@
 import { type CharacterState } from "../character/character";
 import { CYBERWARE_CATALOG, type CyberwareId, installCyberware } from "../cyberware/cyberware";
 import { type Wallet, debit } from "../economy/wallet";
-import { type Inventory, ITEM_CATALOG, type ItemId, addItem } from "../inventory/inventory";
+import { STACKABLE_CATALOG } from "../items/catalog";
+import { type Equipment, type InventoryState, addStack } from "../items/inventory";
+import type { StackableId } from "../items/types";
 import { type ReputationTier, reputationTier } from "../reputation/reputation";
 
 export type PurchaseFailure = "insufficient-funds" | "already-installed" | "inventory-full" | "refused";
@@ -46,15 +48,22 @@ export const buyCyberware = (wallet: Wallet, character: CharacterState, id: Cybe
 };
 
 export type ItemPurchase =
-  | { readonly ok: true; readonly wallet: Wallet; readonly inventory: Inventory; readonly price: number }
+  | { readonly ok: true; readonly wallet: Wallet; readonly inventory: InventoryState; readonly price: number }
   | { readonly ok: false; readonly reason: PurchaseFailure };
 
-export const buyItem = (wallet: Wallet, inventory: Inventory, id: ItemId, terms: ShopTerms = STANDARD_TERMS): ItemPurchase => {
+/** Buys one piece of a stackable item into the bag. */
+export const buyItem = (
+  wallet: Wallet,
+  inventory: InventoryState,
+  equipment: Equipment,
+  id: StackableId,
+  terms: ShopTerms = STANDARD_TERMS,
+): ItemPurchase => {
   if (!terms.open) return { ok: false, reason: "refused" };
-  const next = addItem(inventory, id);
-  if (!next) return { ok: false, reason: "inventory-full" };
-  const price = priceWithTerms(ITEM_CATALOG[id].price, terms);
+  const next = addStack(inventory, equipment, id, 1);
+  if (next.added === 0) return { ok: false, reason: "inventory-full" };
+  const price = priceWithTerms(STACKABLE_CATALOG[id].value, terms);
   const paid = debit(wallet, price);
   if (!paid.ok) return { ok: false, reason: "insufficient-funds" };
-  return { ok: true, wallet: paid.wallet, inventory: next, price };
+  return { ok: true, wallet: paid.wallet, inventory: next.inventory, price };
 };

@@ -4,3 +4,4 @@ export * from "./catalog";
 export * from "./inventory";
 export * from "./weapons";
 export * from "./armor";
+export * from "./loot";

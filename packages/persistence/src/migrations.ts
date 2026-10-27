@@ -80,6 +80,45 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
     version: 6,
     streaming: isObject(old.streaming) ? old.streaming : { loadedChunks: [] },
   }),
+  // v6 -> v7 and v7 -> v8 are reserved for the day schedules and the market contracts, built
+  // in parallel. Until those land they only bump the version; at merge their real steps
+  // replace these placeholders and the inventory step below moves to the last number.
+  6: (old) => ({ ...old, version: 7 }),
+  7: (old) => ({ ...old, version: 8 }),
+  // v8 -> v9 (ADR-0015): the medkit counter becomes the slot inventory, and every save gets
+  // the starter weapon and clothes, worn, plus 48 rounds of 9 mm and no loot lying around.
+  8: (old) => {
+    const domain = isObject(old.domain) ? old.domain : {};
+    const inv = isObject(domain.inventory) ? domain.inventory : {};
+    // Ids and numbers are spelled out: a migration describes the schema of its time.
+    const upgraded = "stacks" in inv;
+    const medkits = typeof inv.medkit === "number" && Number.isInteger(inv.medkit) && inv.medkit > 0 ? inv.medkit : 0;
+    return {
+      ...old,
+      version: 9,
+      domain: {
+        ...domain,
+        inventory: upgraded
+          ? inv
+          : {
+              stacks: medkits > 0 ? { medkit: medkits } : {},
+              items: [
+                { uid: "i1", def: "unity9", rarity: "common", loaded: 12, mods: {} },
+                { uid: "i2", def: "seki_jacket", rarity: "common", condition: 100 },
+                { uid: "i3", def: "cargo_pants", rarity: "common", condition: 100 },
+              ],
+              keyItems: [],
+              capacity: 24,
+              nextUid: 4,
+            },
+        equipment: isObject(domain.equipment)
+          ? domain.equipment
+          : { primary: null, secondary: "i1", melee: null, head: null, torso: "i2", legs: "i3", active: "secondary" },
+        ammo: isObject(domain.ammo) ? domain.ammo : { "9mm": 48 },
+        loot: isObject(domain.loot) ? domain.loot : { containers: [], dropSeq: 0 },
+      },
+    };
+  },
 };
 
 export class MigrationError extends Error {}

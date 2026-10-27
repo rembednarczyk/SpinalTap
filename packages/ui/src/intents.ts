@@ -1,4 +1,4 @@
-import type { CyberwareId, ItemId } from "@seki/core";
+import type { CyberwareId, StackableId } from "@seki/core";
 import type { SettingsVm } from "./store/ui-store";
 
 /** Everything the UI can ask the game to do. Implemented by the app composition root. */
@@ -12,7 +12,7 @@ export interface UiIntents {
   closeDialogue(): void;
   quitToTitle(): void;
   buyCyberware(id: CyberwareId): void;
-  buyItem(id: ItemId): void;
+  buyItem(id: StackableId): void;
   closeShop(): void;
   /** Leaves the clinic counter for a conversation with the ripperdoc. */
   talkToShopkeeper(): void;

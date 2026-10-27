@@ -10,7 +10,6 @@ export * from "./quest";
 export * from "./state";
 export * from "./save";
 export * from "./commands";
-export * from "./inventory";
 export * from "./abilities";
 export * from "./shop";
 export * from "./contracts";

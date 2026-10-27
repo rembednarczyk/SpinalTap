@@ -123,7 +123,7 @@ describe("M1 acceptance: contract → eddies → cyberware → stronger in comba
     session.closeShop();
     steps(session, 1);
     expect(session.sim.domain.character.cyberware.arms).toBe("steady_grip");
-    expect(session.sim.domain.inventory.medkit).toBe(2);
+    expect(session.sim.domain.inventory.stacks.medkit).toBe(2);
     expect(session.sim.domain.wallet.eddies).toBe(before + contract.reward - 500 - 90);
     expect(ui.getState().shopOpen).toBe(false);
 

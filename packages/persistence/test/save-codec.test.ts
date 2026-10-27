@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
-import { CorruptSaveError, SAVE_SCHEMA_VERSION } from "@seki/core";
-import { MIGRATIONS, checksum, decodeSave, encodeSave, findSchemaError, migrate } from "../src";
-import { snapshot, v1Payload } from "./fixtures";
+import { describe, expect, it, vi } from "vitest";
+import { CorruptSaveError, SAVE_SCHEMA_VERSION, createDomainState } from "@seki/core";
+import { MIGRATIONS, checksum, decodeSave, encodeSave, findSchemaError, migrate, sanitizeItems } from "../src";
+import { snapshot, v1Payload, v6Payload } from "./fixtures";
 
 const wrap = (payload: unknown) => {
   const text = JSON.stringify(payload);
@@ -74,7 +74,15 @@ describe("migrations", () => {
       rngState: 5,
       entities: [],
       streaming: { loadedChunks: [] },
-      domain: { wallet: { eddies: 0 }, inventory: { medkit: 1 }, reputation: { clinic: 0 }, story: { choices: {}, ending: null } },
+      domain: {
+        wallet: { eddies: 0 },
+        inventory: { stacks: { medkit: 1 }, capacity: 24, nextUid: 4 },
+        equipment: { secondary: "i1", active: "secondary" },
+        ammo: { "9mm": 48 },
+        loot: { containers: [], dropSeq: 0 },
+        reputation: { clinic: 0 },
+        story: { choices: {}, ending: null },
+      },
     });
   });
 
@@ -96,7 +104,7 @@ describe("migrations", () => {
     const s = snapshot();
     const { inventory: _i, contracts: _c, ability: _a, ...domain } = s.domain;
     const loaded = decodeSave("m0", wrap({ ...s, version: 2, domain }));
-    expect(loaded.domain.inventory).toEqual({ medkit: 1 });
+    expect(loaded.domain.inventory.stacks).toEqual({ medkit: 1 });
     expect(loaded.domain.contracts).toEqual({ active: null, completed: 0 });
     expect(loaded.domain.ability).toEqual({ activeTime: 0, cooldown: 0 });
     expect(loaded.domain.flags).toEqual(s.domain.flags);
@@ -142,7 +150,7 @@ describe("migrations", () => {
   it("upgrades an M3 (v5) save to world streaming with nothing preloaded", () => {
     const { streaming: _s, ...v5 } = snapshot();
     const loaded = decodeSave("m3", wrap({ ...v5, version: 5 }));
-    expect(loaded.version).toBe(6);
+    expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
     expect(loaded.streaming).toEqual({ loadedChunks: [] });
     expect(loaded.entities).toEqual(v5.entities);
     expect(loaded.domain).toEqual(v5.domain);
@@ -185,8 +193,25 @@ describe("schema validation", () => {
     ["preferences", { preferences: { cameraMode: "VR" } }],
     ["reputation", { reputation: { fixers: 0 } }],
     ["reputation", { reputation: { fixers: 0, hebi: 0, civilians: 0 } }],
-    ["inventory", { inventory: { medkit: -1 } }],
-    ["inventory", { inventory: { rocket: 1 } }],
+    ["inventory", { inventory: { medkit: 1 } }],
+    ["inventory stacks", { inventory: { ...createDomainState().inventory, stacks: { medkit: -1 } } }],
+    ["inventory stacks", { inventory: { ...createDomainState().inventory, stacks: { rocket: 1 } } }],
+    ["inventory stacks", { inventory: { ...createDomainState().inventory, stacks: { medkit: 0 } } }],
+    ["inventory items", { inventory: { ...createDomainState().inventory, items: [{ uid: "i1", def: "unity9", rarity: "common", loaded: -1 }] } }],
+    ["inventory items", { inventory: { ...createDomainState().inventory, items: [{ uid: "i1", def: "unity9", rarity: "common", condition: 101 }] } }],
+    ["inventory items", { inventory: { ...createDomainState().inventory, items: [{ uid: "i1", def: "unity9", rarity: "common", mods: { barrel: "i2" } }] } }],
+    ["inventory uids", { inventory: { ...createDomainState().inventory, items: [{ uid: "i1", def: "unity9", rarity: "common" }, { uid: "i1", def: "baton", rarity: "common" }] } }],
+    ["inventory key items", { inventory: { ...createDomainState().inventory, keyItems: [1] } }],
+    ["inventory capacity", { inventory: { ...createDomainState().inventory, capacity: -1 } }],
+    ["equipment", { equipment: { ...createDomainState().equipment, head: 3 } }],
+    ["equipment", { equipment: { ...createDomainState().equipment, active: "torso" } }],
+    ["equipment", { equipment: null }],
+    ["ammo", { ammo: { "9mm": 1.5 } }],
+    ["ammo", { ammo: { rocket: 1 } }],
+    ["loot", { loot: { containers: [], dropSeq: -1 } }],
+    ["loot container", { loot: { dropSeq: 0, containers: [{ key: "k", position: { x: 0, y: 0 }, chunk: "a", expiresAtTick: 1, lines: [] }] } }],
+    ["loot container", { loot: { dropSeq: 0, containers: [{ key: "k", position: { x: 0, y: 0, z: 0 }, chunk: "a", expiresAtTick: 1.5, lines: [] }] } }],
+    ["loot container", { loot: { dropSeq: 0, containers: [{ key: "k", position: { x: 0, y: 0, z: 0 }, chunk: "a", expiresAtTick: 1, lines: [{ kind: "eddies", qty: 0 }] }] } }],
     ["contracts", { contracts: { active: null, completed: 0.5 } }],
     ["contracts", { contracts: { active: { id: "c1", siteId: "moon", targets: 2, reward: 1, status: "active" }, completed: 0 } }],
     ["contracts", { contracts: { active: { id: "c1", siteId: "east_lot", targets: 2, reward: 1, status: "done" }, completed: 0 } }],
@@ -202,5 +227,139 @@ describe("schema validation", () => {
   ])("rejects bad domain %s", (_name, patch) => {
     const s = snapshot();
     expect(findSchemaError({ ...s, domain: { ...s.domain, ...patch } } as unknown as Record<string, unknown>)).not.toBeNull();
+  });
+});
+
+describe("inventory migration (v8 to v9, ADR-0015)", () => {
+  it("turns a v6 medkit counter into the slot inventory with the starter weapon and clothes", () => {
+    const loaded = decodeSave("v6", wrap(v6Payload(3)));
+    expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
+    expect(loaded.domain.inventory).toEqual({
+      stacks: { medkit: 3 },
+      items: [
+        { uid: "i1", def: "unity9", rarity: "common", loaded: 12, mods: {} },
+        { uid: "i2", def: "seki_jacket", rarity: "common", condition: 100 },
+        { uid: "i3", def: "cargo_pants", rarity: "common", condition: 100 },
+      ],
+      keyItems: [],
+      capacity: 24,
+      nextUid: 4,
+    });
+    expect(loaded.domain.equipment).toEqual({ primary: null, secondary: "i1", melee: null, head: null, torso: "i2", legs: "i3", active: "secondary" });
+    expect(loaded.domain.ammo).toEqual({ "9mm": 48 });
+    expect(loaded.domain.loot).toEqual({ containers: [], dropSeq: 0 });
+    // The new game starts with the same kit, so old and new saves play alike.
+    const fresh = createDomainState();
+    expect(loaded.domain.equipment).toEqual(fresh.equipment);
+    expect(loaded.domain.inventory.items).toEqual(fresh.inventory.items);
+  });
+
+  it("walks a v8 save (the placeholder steps) and an empty medkit counter", () => {
+    const v8 = { ...v6Payload(0), version: 8 };
+    const loaded = decodeSave("v8", wrap(v8));
+    expect(loaded.domain.inventory.stacks).toEqual({});
+    expect(MIGRATIONS[6]!({ version: 6, x: 1 })).toEqual({ version: 7, x: 1 });
+    expect(MIGRATIONS[7]!({ version: 7 })).toEqual({ version: 8 });
+  });
+
+  it("chains every old version to the current one", () => {
+    for (const version of [2, 3, 4, 5, 6, 7, 8]) {
+      const loaded = decodeSave(`v${version}`, wrap({ ...v6Payload(2), version }));
+      expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
+      expect(loaded.domain.inventory.stacks.medkit).toBe(2);
+      expect(loaded.domain.equipment.secondary).toBe("i1");
+    }
+  });
+
+  it("tolerates a missing domain and keeps sections that already exist", () => {
+    expect(MIGRATIONS[8]!({ version: 8 })).toMatchObject({ version: 9, domain: { inventory: { stacks: {} }, ammo: { "9mm": 48 } } });
+    const current = snapshot();
+    const again = MIGRATIONS[8]!({ ...current, version: 8 } as unknown as Record<string, unknown>);
+    expect(again.domain).toEqual(current.domain);
+    expect(MIGRATIONS[8]!({ version: 8, domain: { inventory: { medkit: 1.5 } } })).toMatchObject({ domain: { inventory: { stacks: {} } } });
+  });
+
+  it("round-trips weapons, mods, ammo and a bag in an unloaded chunk", () => {
+    const s = snapshot();
+    const domain = {
+      ...s.domain,
+      inventory: {
+        ...s.domain.inventory,
+        items: [
+          ...s.domain.inventory.items,
+          { uid: "i4", def: "hebi_smg" as const, rarity: "rare" as const, loaded: 17, mods: { muzzle: "i5" } },
+          { uid: "i5", def: "suppressor" as const, rarity: "common" as const },
+        ],
+        nextUid: 6,
+      },
+      equipment: { ...s.domain.equipment, primary: "i4", active: "primary" as const },
+      ammo: { "9mm": 31, "12g": 6 },
+      loot: {
+        dropSeq: 1,
+        containers: [
+          {
+            key: "loot:c1-g0",
+            position: { x: 3, y: 0, z: 140 },
+            chunk: "targ-south",
+            expiresAtTick: 20_000,
+            lines: [
+              { kind: "eddies" as const, qty: 14 },
+              { kind: "ammo" as const, ammo: "9mm" as const, qty: 9 },
+              { kind: "stack" as const, item: "scrap" as const, qty: 2 },
+              { kind: "item" as const, item: "hebi_jacket" as const, rarity: "uncommon" as const, qty: 1 as const },
+            ],
+          },
+        ],
+      },
+    };
+    const withLoot = { ...s, domain };
+    expect(decodeSave("loot", encodeSave(withLoot))).toEqual(withLoot);
+  });
+
+  it("drops an item of unknown kind with a warning and still loads", () => {
+    const s = snapshot();
+    const broken = {
+      ...s,
+      domain: {
+        ...s.domain,
+        inventory: {
+          ...s.domain.inventory,
+          items: [
+            ...s.domain.inventory.items,
+            { uid: "i4", def: "plasma_rifle", rarity: "common" },
+            { uid: "i5", def: "hebi_smg", rarity: "common", loaded: 0, mods: { muzzle: "i6", sight: "i7" } },
+            { uid: "i6", def: "laser_sight", rarity: "common" },
+            { uid: "i7", def: "holo_sight", rarity: "common" },
+          ],
+        },
+        equipment: { ...s.domain.equipment, primary: "i4", head: "i6" },
+        loot: {
+          dropSeq: 0,
+          containers: [{ key: "k", position: { x: 0, y: 0, z: 0 }, chunk: "", expiresAtTick: 9, lines: [{ kind: "item", item: "plasma_rifle", rarity: "rare", qty: 1 }, { kind: "eddies", qty: 3 }] }],
+        },
+      },
+    };
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const loaded = decodeSave("broken", wrap(broken));
+    expect(loaded.domain.inventory.items.map((i) => i.uid)).toEqual(["i1", "i2", "i3", "i5", "i7"]);
+    expect(loaded.domain.inventory.items.find((i) => i.uid === "i5")?.mods).toEqual({ sight: "i7" });
+    expect(loaded.domain.equipment).toMatchObject({ primary: null, head: null, secondary: "i1" });
+    expect(loaded.domain.loot.containers[0]?.lines).toEqual([{ kind: "eddies", qty: 3 }]);
+    expect(warn).toHaveBeenCalledTimes(3);
+    warn.mockRestore();
+  });
+
+  it("leaves structural damage to the schema check", () => {
+    expect(sanitizeItems({ domain: { inventory: {} } }).warnings).toEqual([]);
+    expect(sanitizeItems({ domain: 3 }).warnings).toEqual([]);
+    const s = snapshot();
+    const odd = { ...s, domain: { ...s.domain, equipment: null, loot: { containers: [null, { key: "x" }], dropSeq: 0 } } };
+    const r = sanitizeItems(odd as unknown as Record<string, unknown>);
+    expect(r.warnings).toEqual([]);
+    expect(findSchemaError(r.payload)).toBe("equipment");
+    for (const line of [{ kind: "ammo", ammo: "rocket", qty: 1 }, { kind: "stack", item: "rocket", qty: 1 }, { kind: "item", item: "baton", rarity: "common", qty: 2 }, { kind: "gift", qty: 1 }]) {
+      const bag = { ...s, domain: { ...s.domain, loot: { dropSeq: 0, containers: [{ key: "k", position: { x: 0, y: 0, z: 0 }, chunk: "", expiresAtTick: 1, lines: [line] }] } } };
+      expect(findSchemaError(bag as unknown as Record<string, unknown>)).toBe("loot container");
+    }
   });
 });

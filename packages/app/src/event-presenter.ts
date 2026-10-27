@@ -6,7 +6,7 @@ import {
   type EventBus,
   FACTIONS,
   type FactionId,
-  ITEM_CATALOG,
+  STACKABLE_CATALOG,
   type RenderPort,
 } from "@seki/core";
 import { type UiStore, dismissToast, patchUi, pushToast } from "@seki/ui";
@@ -89,7 +89,7 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
       audio.play("purchase");
     }),
     bus.on("ItemBought", (e) => {
-      toast("system", `Kupiono: ${ITEM_CATALOG[e.itemId].name}`, `-${e.price} €$`);
+      toast("system", `Kupiono: ${STACKABLE_CATALOG[e.itemId].name}`, `-${e.price} €$`);
       audio.play("purchase");
     }),
     bus.on("PurchaseFailed", (e) => {
@@ -98,7 +98,7 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
       audio.play("denied");
     }),
     bus.on("ItemUsed", (e) => {
-      toast("system", `${ITEM_CATALOG[e.itemId].name}: +${e.healed} HP`);
+      toast("system", `${STACKABLE_CATALOG[e.itemId].name}: +${e.healed} HP`);
       render.playEffect({ kind: "heal" });
       audio.play("heal");
     }),

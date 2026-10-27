@@ -1,9 +1,8 @@
 import type { MemoryId } from "../character/memories";
 import type { CyberwareId } from "../cyberware/cyberware";
-import type { ItemId } from "../inventory/inventory";
 import type { FactionId } from "../reputation/reputation";
 import type { StoryChoiceId, StoryOption } from "../story/story";
-import type { EquipSlot, ItemRef, ModSlot } from "../items/types";
+import type { EquipSlot, ItemRef, ModSlot, StackableId } from "../items/types";
 
 /**
  * Requests from outside the simulation (narrative, UI). They are queued and applied at
@@ -16,7 +15,7 @@ export type GameCommand =
   | { readonly type: "set-alias"; readonly alias: string }
   | { readonly type: "end-dialogue" }
   | { readonly type: "buy-cyberware"; readonly cyberwareId: CyberwareId }
-  | { readonly type: "buy-item"; readonly itemId: ItemId }
+  | { readonly type: "buy-item"; readonly itemId: StackableId }
   | { readonly type: "accept-contract" }
   | { readonly type: "complete-contract" }
   /** Main-thread choice made in a memory flashback. The first answer sticks. */

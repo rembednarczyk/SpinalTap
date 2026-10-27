@@ -2,7 +2,8 @@ import {
   ABILITY_CATALOG,
   type AudioPort,
   type CyberwareId,
-  type ItemId,
+  type StackableId,
+  stackRoom,
   loadoutAbility,
   CorruptSaveError,
   type DomainEvents,
@@ -162,7 +163,8 @@ export class GameSession implements UiIntents {
       objective,
       cameraMode: sim.domain.preferences.cameraMode,
       memories: sim.domain.character.memories,
-      medkits: sim.domain.inventory.medkit ?? 0,
+      medkits: sim.domain.inventory.stacks.medkit ?? 0,
+      medkitRoom: stackRoom(sim.domain.inventory, sim.domain.equipment, "medkit"),
       ability: this.abilityVm(),
       cyberware: sim.domain.character.cyberware,
       reputation: sim.domain.reputation,
@@ -209,7 +211,7 @@ export class GameSession implements UiIntents {
     if (this.shopOpen) this.simulation.enqueue({ type: "buy-cyberware", cyberwareId: id });
   }
 
-  buyItem(id: ItemId): void {
+  buyItem(id: StackableId): void {
     if (this.shopOpen) this.simulation.enqueue({ type: "buy-item", itemId: id });
   }
 

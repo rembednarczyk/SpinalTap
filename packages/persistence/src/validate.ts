@@ -1,7 +1,6 @@
 import {
   FACTIONS,
   isContractSiteId,
-  isItemId,
   SAVE_SCHEMA_VERSION,
   type SaveSnapshot,
   isCyberwareId,
@@ -10,6 +9,7 @@ import {
   isStoryChoiceId,
   isStoryOption,
 } from "@seki/core";
+import { findItemsError } from "./validate-items";
 
 type Json = Record<string, unknown>;
 
@@ -44,10 +44,8 @@ export const findSchemaError = (s: Json): string | null => {
   }
   if (!Array.isArray(d.flags) || !d.flags.every((f) => typeof f === "string")) return "flags";
   if (!isObject(d.preferences) || (d.preferences.cameraMode !== "FPP" && d.preferences.cameraMode !== "TPP")) return "preferences";
-  if (!isObject(d.inventory)) return "inventory";
-  for (const [id, n] of Object.entries(d.inventory)) {
-    if (!isItemId(id) || !Number.isInteger(n) || (n as number) < 0) return "inventory";
-  }
+  const itemsError = findItemsError(d);
+  if (itemsError) return itemsError;
   const contracts = d.contracts;
   if (!isObject(contracts) || !Number.isInteger(contracts.completed) || (contracts.completed as number) < 0) return "contracts";
   const active = contracts.active;

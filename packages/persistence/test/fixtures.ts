@@ -16,6 +16,13 @@ export const snapshot = (overrides: Partial<SaveSnapshot> = {}): SaveSnapshot =>
   ...overrides,
 });
 
+/** What the last released schema (v6, world streaming) wrote: a medkit counter and nothing else. */
+export const v6Payload = (medkits = 3) => {
+  const s = snapshot();
+  const { equipment: _e, ammo: _a, loot: _l, ...domain } = s.domain;
+  return { ...s, version: 6, domain: { ...domain, inventory: { medkit: medkits } } };
+};
+
 /** What the v1 prototype wrote: "credits", no camera preference, no rngState, no alert flags. */
 export const v1Payload = () => {
   const s = snapshot();
