@@ -41,6 +41,24 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
       },
     };
   },
+  // v3 (M1): no main-thread story state. A save that already finished the first contract
+  // starts act I ("Echo") at its first step, as a live game would on completing it.
+  3: (old) => {
+    const domain = isObject(old.domain) ? old.domain : {};
+    const quests = isObject(domain.quests) ? domain.quests : {};
+    // Ids are spelled out: a migration describes the schema of its time, not today's content.
+    const first = quests.m0_first_contract;
+    const startEcho = isObject(first) && first.status === "completed" && !("m3_echo" in quests);
+    return {
+      ...old,
+      version: 4,
+      domain: {
+        ...domain,
+        quests: startEcho ? { ...quests, m3_echo: { status: "active", stepIndex: 0 } } : quests,
+        story: isObject(domain.story) ? domain.story : { choices: {}, ending: null },
+      },
+    };
+  },
 };
 
 export class MigrationError extends Error {}

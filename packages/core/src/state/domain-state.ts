@@ -7,6 +7,7 @@ import { type ReputationState, createReputation } from "../reputation/reputation
 import { type AbilityState, IDLE_ABILITY } from "../abilities/abilities";
 import { type ContractLog, EMPTY_CONTRACTS } from "../contracts/contracts";
 import type { Inventory } from "../inventory/inventory";
+import { EMPTY_STORY, type StoryState } from "../story/story";
 import type { Flags } from "./flags";
 
 export interface Preferences {
@@ -24,6 +25,8 @@ export interface DomainState {
   readonly inventory: Inventory;
   readonly contracts: ContractLog;
   readonly ability: AbilityState;
+  /** Main-thread choices and the resolved ending. Ink variables are synced from it. */
+  readonly story: StoryState;
 }
 
 export const createDomainState = (): DomainState => ({
@@ -36,4 +39,5 @@ export const createDomainState = (): DomainState => ({
   inventory: { medkit: 1 },
   contracts: EMPTY_CONTRACTS,
   ability: IDLE_ABILITY,
+  story: EMPTY_STORY,
 });

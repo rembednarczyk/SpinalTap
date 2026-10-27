@@ -5,6 +5,7 @@ import type { CyberwareId } from "../cyberware/cyberware";
 import type { ItemId } from "../inventory/inventory";
 import type { PurchaseFailure } from "../shop/ripperdoc";
 import type { Contract } from "../contracts/contracts";
+import type { EndingId, StoryChoiceId, StoryOption } from "../story/story";
 
 export interface DomainEvents {
   ShotFired: { shooterId: EntityId; from: Vec3; to: Vec3; hitEntity: EntityId | null };
@@ -29,6 +30,8 @@ export interface DomainEvents {
   ContractAccepted: { contract: Contract };
   ContractCleared: { contract: Contract };
   ContractCompleted: { contract: Contract; reward: number };
+  StoryChoiceMade: { choice: StoryChoiceId; option: StoryOption };
+  EndingReached: { endingId: EndingId; title: string };
 }
 
 export type DomainEventType = keyof DomainEvents;

@@ -1,4 +1,6 @@
 import {
+  ACT_ONE_ENDING_FLAG,
+  ENDINGS,
   type DomainEvents,
   type DomainState,
   EMPTY_INPUT,
@@ -13,14 +15,17 @@ import {
   createDomainState,
   credit,
   generateContract,
+  recordChoice,
+  resolveEnding,
   setAlias,
+  setEnding,
 } from "@seki/core";
 import type { World } from "miniplex";
 import { SeededRandom } from "./rng/seeded-random";
 import { createSystems } from "./systems";
 import type { Entity } from "./world/components";
 import type { DomainHolder, SessionState, SimContext, System } from "./world/context";
-import { adjustReputation, grantMemory, raiseFlag } from "./world/domain-ops";
+import { adjustReputation, grantMemory, raiseFlag, raiseProgress } from "./world/domain-ops";
 import { type IdAllocator, createDistrictWorld, spawnContractTargets } from "./world/factory";
 
 export const SIM_HZ = 60;
@@ -172,6 +177,7 @@ export class Simulation {
         this.holder.domain = { ...domain, wallet: r.wallet, character: r.character };
         if (r.price > 0) ctx.bus.emit("EddiesChanged", { balance: r.wallet.eddies, delta: -r.price });
         ctx.bus.emit("CyberwareInstalled", { cyberwareId: cmd.cyberwareId, replaced: r.replaced, price: r.price });
+        raiseProgress(ctx, "cyberware_installed");
         break;
       }
       case "buy-item": {
@@ -209,6 +215,23 @@ export class Simulation {
         adjustReputation(ctx, "fixers", 3);
         adjustReputation(ctx, "hebi", -5);
         ctx.bus.emit("ContractCompleted", { contract, reward: contract.reward });
+        raiseProgress(ctx, "contract_completed");
+        break;
+      }
+      case "story-choice": {
+        const story = recordChoice(this.holder.domain.story, cmd.choice, cmd.option);
+        if (story === this.holder.domain.story) break;
+        this.holder.domain = { ...this.holder.domain, story };
+        ctx.bus.emit("StoryChoiceMade", { choice: cmd.choice, option: cmd.option });
+        break;
+      }
+      case "resolve-ending": {
+        const domain = this.holder.domain;
+        if (domain.story.ending) break;
+        const ending = resolveEnding(domain.story.choices);
+        this.holder.domain = { ...domain, story: setEnding(domain.story, ending) };
+        raiseFlag(ctx, ACT_ONE_ENDING_FLAG);
+        ctx.bus.emit("EndingReached", { endingId: ending, title: ENDINGS[ending].title });
         break;
       }
     }
