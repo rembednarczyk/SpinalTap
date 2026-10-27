@@ -2,6 +2,22 @@ import { type AppearanceDescriptor, type DomainState, ENEMY_TYPES, type EntityId
 import type { World } from "miniplex";
 import type { Entity } from "../world/components";
 
+type AimFields = Pick<Transform, "aim" | "aimZoom" | "guard">;
+
+/**
+ * Aim and guard for the presentation (ADR-0019): the player's eased aim down sights with the
+ * zoom of the weapon in hand, an NPC's weapon up while it fights, the guard of either.
+ */
+const aimOf = (e: Entity, alpha: number): AimFields => {
+  const out: { aim?: number; aimZoom?: number; guard?: number } = {};
+  if (e.posture) {
+    out.aim = e.posture.prevAim + (e.posture.aim - e.posture.prevAim) * alpha;
+    out.aimZoom = e.combatant?.stats?.ads?.zoom ?? 1;
+  } else if (e.combatant?.engaged) out.aim = 1;
+  if (e.melee?.guard) out.guard = 1;
+  return out;
+};
+
 /**
  * Mirrors the ECS world into a RenderPort: spawns new views, despawns removed ones and
  * pushes interpolated transforms for moving entities. Entities listed in `streamedOut`
@@ -27,6 +43,7 @@ export class RenderSync {
         pitch: e.pitch,
         speed: e.velocity ? Math.hypot(e.velocity.x, e.velocity.z) : 0,
         ...(e.posture ? { crouch: e.posture.prevAmount + (e.posture.amount - e.posture.prevAmount) * alpha } : {}),
+        ...aimOf(e, alpha),
       };
       if (!this.spawned.has(e.id)) {
         this.spawned.add(e.id);

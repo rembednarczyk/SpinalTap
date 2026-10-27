@@ -1,9 +1,14 @@
-import type { GraphicsQuality, SettingsVm } from "../store/ui-store";
+import type { AimMode, GraphicsQuality, SettingsVm } from "../store/ui-store";
 import { useIntents, useUi } from "../use-ui";
 
 const QUALITY: readonly (readonly [GraphicsQuality, string])[] = [
   ["high", "Wysoka"],
   ["low", "Niska"],
+];
+
+const AIM_MODES: readonly (readonly [AimMode, string])[] = [
+  ["hold", "Przytrzymaj"],
+  ["toggle", "Przełącz"],
 ];
 
 const Slider = ({
@@ -62,6 +67,23 @@ export const SettingsPanel = () => {
               aria-checked={settings.quality === q}
               className={`settings__option${settings.quality === q ? " settings__option--on" : ""}`}
               onClick={() => intents.changeSettings({ quality: q })}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="settings__row">
+        <span className="settings__label">Celowanie (PPM)</span>
+        <div className="settings__choice" role="radiogroup" aria-label="Celowanie">
+          {AIM_MODES.map(([m, label]) => (
+            <button
+              key={m}
+              type="button"
+              role="radio"
+              aria-checked={settings.aimMode === m}
+              className={`settings__option${settings.aimMode === m ? " settings__option--on" : ""}`}
+              onClick={() => intents.changeSettings({ aimMode: m })}
             >
               {label}
             </button>

@@ -3,7 +3,7 @@ import { PLAYER_SPAWN } from "../content/district-m0";
 import type { ActorDef, ActorSpawn, StaticProp } from "../content/builders";
 import { SCHEDULES } from "../content/schedules";
 import { aabbFromCenter } from "./collision";
-import type { Combatant, Entity } from "./components";
+import type { Combatant, Entity, MeleeState } from "./components";
 
 const BODY = { radius: 0.38, height: 1.8 } as const;
 
@@ -39,6 +39,9 @@ const at = (p: Vec3): Pick<Entity, "position" | "prevPosition" | "yaw" | "prevYa
 
 export const isDead = (flags: readonly string[], key: string): boolean => flags.includes(`dead:${key}`);
 
+/** A combatant standing idle: no swing, no guard, not staggered. */
+export const idleMelee = (): MeleeState => ({ phase: "idle", timer: 0, strike: 0, combo: 0, queued: false, stagger: 0, guard: false, parry: 0, parryCooldown: 0, knock: { x: 0, z: 0, time: 0 } });
+
 export const playerEntity = (id: EntityId): Entity => ({
   ...actor(id, PLAYER_SPAWN),
   player: true,
@@ -47,7 +50,8 @@ export const playerEntity = (id: EntityId): Entity => ({
   health: { current: PLAYER_MAX_HP, max: PLAYER_MAX_HP },
   // Armed from the domain by syncPlayerWeapon.
   combatant: { weapon: null, stats: null, slot: "secondary", loaded: 0, reloading: 0, cooldown: 0, holstered: false, drawing: 0, bloom: 0 },
-  posture: { crouched: false, amount: 0, prevAmount: 0, sprinting: false },
+  melee: idleMelee(),
+  posture: { crouched: false, amount: 0, prevAmount: 0, sprinting: false, aiming: false, aim: 0, prevAim: 0 },
 });
 
 /** Reach of a lift's call button, metres. */
@@ -79,6 +83,12 @@ export const npcCombatant = (weapon: WeaponId): Combatant => {
   return { weapon, stats, uid: null, slot: stats.slot, loaded: stats.magazine, reloading: 0, cooldown: 0, holstered: false, drawing: 0, bloom: 0 };
 };
 
+/** Distance from which an NPC with a melee weapon starts its swing; null for firearms. */
+export const meleeAttackRange = (weapon: WeaponId): number | null => {
+  const stats = npcWeapon(weapon);
+  return stats.melee ? stats.range * 0.8 : null;
+};
+
 /** A Hebi ganger; weapon, outfit and loot come from its enemy type (ADR-0015). */
 export const gangerEntity = (
   id: EntityId,
@@ -99,7 +109,9 @@ export const gangerEntity = (
     velocity: { x: 0, y: 0, z: 0 },
     health: { current: maxHp, max: maxHp },
     combatant: npcCombatant(def.weapon),
-    ai: { home: spawn.position, aggroRange: 17, attackRange: 15, alerted: false, ...(victim ? { victim } : {}) },
+    melee: idleMelee(),
+    // A melee fighter has to close in: it attacks from inside its weapon's reach.
+    ai: { home: spawn.position, aggroRange: 17, attackRange: meleeAttackRange(def.weapon) ?? 15, alerted: false, ...(victim ? { victim } : {}) },
   };
   if (tag) e.tag = tag;
   return e;

@@ -147,13 +147,16 @@ describe("settings", () => {
   };
 
   it("shows the current values and sends changes as intents", () => {
-    const { i } = openSettings({ settings: { quality: "high", mouseSensitivity: 1.5, touchSensitivity: 0.8, volume: 0.4 } });
+    const { i } = openSettings({ settings: { quality: "high", aimMode: "hold", mouseSensitivity: 1.5, touchSensitivity: 0.8, volume: 0.4 } });
     expect(screen.getByRole("radio", { name: "Wysoka" }).getAttribute("aria-checked")).toBe("true");
     expect(screen.getByLabelText(/Czułość myszy/)).toHaveProperty("value", "1.5");
     expect(screen.getByTestId("settings").textContent).toContain("40%");
     expect(screen.getByTestId("settings").textContent).toContain("0,8×");
     fireEvent.click(screen.getByRole("radio", { name: "Niska" }));
     expect(i.changeSettings).toHaveBeenCalledWith({ quality: "low" });
+    expect(screen.getByRole("radio", { name: "Przytrzymaj" }).getAttribute("aria-checked")).toBe("true");
+    fireEvent.click(screen.getByRole("radio", { name: "Przełącz" }));
+    expect(i.changeSettings).toHaveBeenCalledWith({ aimMode: "toggle" });
     fireEvent.change(screen.getByLabelText(/Czułość myszy/), { target: { value: "2" } });
     expect(i.changeSettings).toHaveBeenCalledWith({ mouseSensitivity: 2 });
     fireEvent.change(screen.getByLabelText(/Czułość dotyku/), { target: { value: "1.2" } });

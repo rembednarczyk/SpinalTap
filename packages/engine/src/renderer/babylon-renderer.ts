@@ -1,5 +1,5 @@
 import { type AbstractMesh, type Color3, Color4, Matrix, type Mesh, TransformNode, Vector3 } from "../babylon";
-import type { AppearanceDescriptor, CameraMode, DespawnReason, EffectDescriptor, EntityId, RenderPort, Transform, ViewDescriptor } from "@seki/core";
+import type { AppearanceDescriptor, CameraMode, DespawnReason, EffectDescriptor, EntityId, RenderPort, Transform, ViewDescriptor, WeaponLook } from "@seki/core";
 import { CameraRig } from "../camera/camera-rig";
 import { Effects } from "../effects/effects";
 import { createRain } from "../effects/rain";
@@ -11,7 +11,17 @@ import { MoonShadow } from "../npr/moon-shadow";
 import { ToonMaterials } from "../npr/toon-material";
 import { Atmosphere, createSplashes, createSteam } from "./atmosphere";
 import { createDressing } from "./dressing";
-import { type CharacterRig, animateRig, deathFinished, raiseWeapon, setWeaponDrawn, startDeath, startReload, buildCivilian, buildFixer, buildGanger, buildHeroine, buildRipperdoc } from "./characters";
+import {
+  type CharacterRig,
+  animateRig,
+  deathFinished,
+  raiseWeapon,
+  setWeaponDrawn,
+  startDeath,
+  startReload,
+  startStagger,
+  startSwing,
+  buildCivilian, buildFixer, buildGanger, buildHeroine, buildRipperdoc } from "./characters";
 import { type CharacterModelKey, type CharacterModelManifest, type ModelInstance, ModelLibrary } from "./model-library";
 import { HumanoidRetarget } from "./model-rig";
 import { SpringBones, humanoidColliders } from "./spring-bones";
@@ -194,6 +204,7 @@ export class BabylonRenderer implements RenderPort {
     const e = this.entities.get(id);
     if (!e) return;
     this.entities.delete(id);
+    this.held.delete(id);
     if (e.kind === "character") {
       // Enemies fall over before disappearing; a reset (load, new game) or a chunk streaming
       // out clears them at once.
@@ -220,7 +231,11 @@ export class BabylonRenderer implements RenderPort {
 
   attachCamera(id: EntityId): void {
     this.cameraTarget = id;
+    this.rig.setHeldWeapon(this.held.get(id) ?? null);
   }
+
+  /** Weapon in hand per character, so the FPP viewmodel can follow whoever the camera takes. */
+  private readonly held = new Map<EntityId, WeaponLook | null>();
 
   /** Outfits and stowed weapons arrive with the appearance work (ADR-0015, stage E7). */
 
@@ -262,6 +277,25 @@ export class BabylonRenderer implements RenderPort {
         if (effect.entityId === this.cameraTarget) this.rig.startReload(effect.duration);
         return;
       }
+      case "melee": {
+        const e = this.entities.get(effect.entityId);
+        if (e?.kind === "character") startSwing(e.rig, effect.strike, effect.windup, effect.recovery);
+        if (effect.entityId === this.cameraTarget) this.rig.startSwing(effect.strike, effect.windup, effect.recovery);
+        return;
+      }
+      case "stagger": {
+        const e = this.entities.get(effect.entityId);
+        if (e?.kind === "character") startStagger(e.rig, effect.duration);
+        if (effect.entityId === this.cameraTarget) this.rig.shake(0.8);
+        return;
+      }
+      case "block": {
+        this.effects.hitSpark(v3(effect.at), effect.parried);
+        const e = this.entities.get(effect.entityId);
+        if (e?.kind === "character") e.rig.flinch = Math.max(e.rig.flinch, 0.4);
+        if (effect.entityId === this.cameraTarget) this.rig.shake(effect.parried ? 0.15 : 0.35);
+        return;
+      }
       case "flinch": {
         const e = this.entities.get(effect.entityId);
         if (e?.kind === "character") e.rig.flinch = 1;
@@ -280,7 +314,9 @@ export class BabylonRenderer implements RenderPort {
 
   /** Per-frame presentation update: animation, camera, VFX, rain. Call before scene.render(). */
   frame(dt: number): void {
-    for (const e of this.entities.values()) if (e.kind === "character") animateRig(e.rig, e.transform.speed, dt, e.transform.crouch);
+    for (const e of this.entities.values()) {
+      if (e.kind === "character") animateRig(e.rig, e.transform.speed, dt, e.transform.crouch, { aim: e.transform.aim ?? 0, guard: e.transform.guard ?? 0 });
+    }
     for (let i = this.dying.length - 1; i >= 0; i--) {
       const rig = this.dying[i];
       if (!rig) continue;
@@ -347,6 +383,11 @@ export class BabylonRenderer implements RenderPort {
   setAppearance(id: EntityId, appearance: AppearanceDescriptor): void {
     const e = this.entities.get(id);
     if (e?.kind !== "character" || !e.rig.aiming) return;
+    const w = appearance.weapons;
+    // A baton or blade in hand swings and guards instead of aiming (ADR-0019).
+    e.rig.melee = w.active === "melee" && w.melee !== null;
+    this.held.set(id, w[w.active]);
+    if (id === this.cameraTarget) this.rig.setHeldWeapon(w[w.active]);
     this.loadouts.set(e.rig, appearance, e.name);
   }
 

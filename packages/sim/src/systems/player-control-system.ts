@@ -1,4 +1,16 @@
-import { clamp, deriveStats, type DerivedStats, type CharacterState, type DomainState, garmentModifiers, wornGarments } from "@seki/core";
+import {
+  PARRY_COOLDOWN,
+  STAGGER_MOVE,
+  clamp,
+  deriveStats,
+  type DerivedStats,
+  type CharacterState,
+  type DomainState,
+  garmentModifiers,
+  wornGarments,
+} from "@seki/core";
+import type { Entity } from "../world/components";
+import { knockbackVelocity } from "../world/knockback";
 import type { System } from "../world/context";
 
 export const PITCH_LIMIT = 1.25;
@@ -35,6 +47,44 @@ export const playerStatsOf = (domain: DomainState): DerivedStats => {
   return cachedPlayer;
 };
 
+/** Seconds to aim when the weapon has no ADS profile (never used by the catalog's firearms). */
+const DEFAULT_ADS_TIME = 0.2;
+
+/** The weapon is out and ready in the hands: drawn, not being drawn, not reloading. */
+const weaponReady = (p: Entity): boolean => {
+  const c = p.combatant;
+  return !!c?.stats && !c.holstered && c.drawing === 0 && c.reloading === 0;
+};
+
+/**
+ * The aim button (ADR-0019): with a firearm it eases the aim down sights in and out over the
+ * weapon's `ads.time`; with a melee weapon it raises the guard, which opens a parry window
+ * unless the guard went up less than PARRY_COOLDOWN ago. Neither while staggered, a swing is
+ * on its way or the weapon is not ready. Frozen (dialogue, death) both drop.
+ */
+const updateAimAndGuard = (p: Entity, wantsAim: boolean, frozen: boolean, dt: number): void => {
+  const weapon = p.combatant?.stats ?? null;
+  const posture = p.posture;
+  const melee = p.melee;
+  const staggered = (melee?.stagger ?? 0) > 0;
+  const able = wantsAim && !frozen && !staggered && weaponReady(p);
+  if (posture) {
+    posture.aiming = able && !!weapon?.ads;
+    const step = dt / (weapon?.ads?.time ?? DEFAULT_ADS_TIME);
+    const target = posture.aiming ? 1 : 0;
+    posture.aim = posture.aim < target ? Math.min(target, posture.aim + step) : Math.max(target, posture.aim - step);
+  }
+  if (melee) {
+    const guard = able && !!weapon?.melee && melee.phase === "idle";
+    if (guard && !melee.guard) {
+      melee.parry = melee.parryCooldown <= 0 && weapon?.melee ? weapon.melee.block.parryWindow : 0;
+      melee.parryCooldown = PARRY_COOLDOWN;
+    }
+    if (!guard) melee.parry = 0;
+    melee.guard = guard;
+  }
+};
+
 /** Turns the InputFrame into player look angles, desired velocity and the camera mode toggle. */
 export const playerControlSystem: System = {
   name: "player-control",
@@ -58,6 +108,7 @@ export const playerControlSystem: System = {
         posture.amount = posture.amount < target ? Math.min(target, posture.amount + step) : Math.max(target, posture.amount - step);
         posture.sprinting = false;
       }
+      updateAimAndGuard(p, input.aim, frozen, ctx.dt);
       if (frozen) {
         p.velocity = { x: 0, y: 0, z: 0 };
         continue;
@@ -68,15 +119,22 @@ export const playerControlSystem: System = {
       const nx = len > 1 ? input.moveX / len : input.moveX;
       const nz = len > 1 ? input.moveZ / len : input.moveZ;
       const crouched = posture?.crouched ?? false;
-      const sprinting = input.sprint && nz > 0 && !crouched;
+      const weapon = p.combatant?.stats ?? null;
+      const guarding = p.melee?.guard ?? false;
+      const staggered = (p.melee?.stagger ?? 0) > 0;
+      // No sprint while aiming down sights, guarding or off balance.
+      const sprinting = input.sprint && nz > 0 && !crouched && !(posture?.aiming ?? false) && !guarding && !staggered;
       if (posture) posture.sprinting = sprinting;
-      // Speed follows the eased crouch, so getting down slows the step smoothly.
+      // Speed follows the eased crouch and aim, so getting down or aiming slows the step smoothly.
       const crouchSlow = 1 + (CROUCH_SPEED_MULTIPLIER - 1) * (posture?.amount ?? 0);
-      const speed = stats.moveSpeed * (sprinting ? SPRINT_MULTIPLIER : crouchSlow);
+      const aimSlow = 1 + ((weapon?.ads?.move ?? 1) - 1) * (posture?.aim ?? 0);
+      const guardSlow = guarding && weapon?.melee ? weapon.melee.block.move : 1;
+      const speed = stats.moveSpeed * (sprinting ? SPRINT_MULTIPLIER : crouchSlow * aimSlow * guardSlow) * (staggered ? STAGGER_MOVE : 1);
       const sin = Math.sin(p.yaw);
       const cos = Math.cos(p.yaw);
       // Forward = (sin, cos); right = (cos, -sin).
-      p.velocity = { x: (sin * nz + cos * nx) * speed, y: 0, z: (cos * nz - sin * nx) * speed };
+      const knock = knockbackVelocity(p);
+      p.velocity = { x: (sin * nz + cos * nx) * speed + knock.x, y: 0, z: (cos * nz - sin * nx) * speed + knock.z };
     }
   },
 };

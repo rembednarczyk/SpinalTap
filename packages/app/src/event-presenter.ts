@@ -97,6 +97,14 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
       render.playEffect({ kind: "weapon", entityId: e.entityId, drawn: true, slot: e.slot });
       if (isPlayer(e.entityId)) audio.play("weapon-switch");
     }),
+    // Melee (ADR-0019): the swing plays over the simulation's timing; the whoosh comes as it lands.
+    bus.on("MeleeSwing", (e) => render.playEffect({ kind: "melee", entityId: e.entityId, strike: e.strike, windup: e.windup, recovery: e.recovery })),
+    bus.on("MeleeStrike", () => audio.play("swing")),
+    bus.on("AttackBlocked", (e) => {
+      render.playEffect({ kind: "block", entityId: e.defenderId, parried: e.parried, at: e.at });
+      audio.play(e.parried ? "parry" : "block");
+    }),
+    bus.on("Staggered", (e) => render.playEffect({ kind: "stagger", entityId: e.entityId, duration: e.duration })),
     bus.on("ReloadStarted", (e) => {
       render.playEffect({ kind: "reload", entityId: e.entityId, duration: e.duration });
       if (isPlayer(e.entityId)) audio.play("reload");

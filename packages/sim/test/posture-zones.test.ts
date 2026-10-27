@@ -65,7 +65,7 @@ describe("crouching", () => {
 
   it("lowers the hitbox: a chest-high shot over a crouched body misses", () => {
     const standing = dummy();
-    const crouched = dummy({ posture: { crouched: true, amount: 1, prevAmount: 1, sprinting: false } });
+    const crouched = dummy({ posture: { crouched: true, amount: 1, prevAmount: 1, sprinting: false, aiming: false, aim: 0, prevAim: 0 } });
     expect(shootAt(standing, 1.4)?.zone).toBe("torso");
     expect(shootAt(crouched, 1.4)).toBeNull();
     expect(bodyAabb(crouched)!.max.y).toBeCloseTo(1.8 * CROUCH_BODY_SCALE);

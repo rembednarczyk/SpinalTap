@@ -145,7 +145,9 @@ export class WorldStreamer {
       const key = `${contract.id}-g${i}`;
       // Face the street centre line.
       const spawn = { key, position, yaw: Math.atan2(-position.x, 0.001) };
-      const make = () => gangerEntity(id, spawn, contractTag(contract.id), contractGangerHp(completed), chunk, victim);
+      // Every third ganger of a wave fights hand to hand (ADR-0019).
+      const type = i % 3 === 2 ? "hebi_brawler" : "hebi_ganger";
+      const make = () => gangerEntity(id, spawn, contractTag(contract.id), contractGangerHp(completed), chunk, victim, type);
       const t: Template = { id, chunk, key, make };
       this.contract.push(t);
       this.byKey.set(key, t);

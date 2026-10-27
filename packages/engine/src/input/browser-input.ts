@@ -1,5 +1,5 @@
 import { EMPTY_INPUT, type InputFrame, type InputPort } from "@seki/core";
-import { DEFAULT_KEYMAP, type KeyMap, mapGamepad, mapKeyboardMouse, mergeFrames } from "./keymap";
+import { AimLatch, type AimMode, DEFAULT_KEYMAP, type KeyMap, mapGamepad, mapKeyboardMouse, mergeFrames } from "./keymap";
 import { VirtualPad } from "./virtual-pad";
 
 const MOUSE_SENSITIVITY = 0.0022;
@@ -25,6 +25,7 @@ export class BrowserInput implements InputPort {
   private padPrev: boolean[] = [];
   private lastPoll: number | null = null;
   private readonly disposers: (() => void)[] = [];
+  private readonly aimLatch = new AimLatch();
 
   constructor(private readonly target: HTMLElement) {
     const on = <K extends keyof WindowEventMap>(type: K, fn: (e: WindowEventMap[K]) => void) => {
@@ -52,11 +53,25 @@ export class BrowserInput implements InputPort {
       this.pressed.add(`Mouse${e.button}`);
     });
     on("mouseup", (e) => this.held.delete(`Mouse${e.button}`));
+    // The right button aims; keep the browser's context menu away from the game canvas.
+    const noMenu = (e: Event) => e.preventDefault();
+    target.addEventListener("contextmenu", noMenu);
+    this.disposers.push(() => target.removeEventListener("contextmenu", noMenu));
     on("mousemove", (e) => {
       if (!this.mouseActive || this.touchEmulated()) return;
       this.yaw += e.movementX * MOUSE_SENSITIVITY;
       this.pitch += e.movementY * MOUSE_SENSITIVITY;
     });
+  }
+
+  /** "hold" (default) or "toggle" for the aim button, from the settings (ADR-0019). */
+  get aimMode(): AimMode {
+    return this.aimLatch.mode;
+  }
+
+  set aimMode(mode: AimMode) {
+    if (mode !== this.aimLatch.mode) this.aimLatch.reset();
+    this.aimLatch.mode = mode;
   }
 
   /** When false (menus, dialogue) poll() returns an empty frame. */
@@ -69,7 +84,10 @@ export class BrowserInput implements InputPort {
    * dialogue (e.g. E) does not leak into the first gameplay frame and reopen it.
    */
   set enabled(value: boolean) {
-    if (value !== this.active) this.clearBuffered();
+    if (value !== this.active) {
+      this.clearBuffered();
+      this.aimLatch.reset();
+    }
     this.active = value;
   }
 
@@ -110,7 +128,7 @@ export class BrowserInput implements InputPort {
     // The pad consumes its own edges and look deltas while polling.
     const withTouch = mergeFrames(km, this.virtualPad.poll());
     const pad = this.pollPad(dt);
-    return pad ? mergeFrames(withTouch, pad) : withTouch;
+    return this.aimLatch.apply(pad ? mergeFrames(withTouch, pad) : withTouch);
   }
 
   dispose(): void {

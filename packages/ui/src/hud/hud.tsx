@@ -10,18 +10,25 @@ import type { TouchPadSink } from "../touch/touch-pad-sink";
 /** Vertical field of view of the game camera in radians (engine CameraRig). */
 export const HUD_CAMERA_FOV = 1.08;
 
-/** Aim cone half-angle -> tick offset as a share of half the viewport height. */
-export const spreadToScreen = (spread: number): number => Math.tan(Math.max(0, spread)) / Math.tan(HUD_CAMERA_FOV / 2);
+/**
+ * Aim cone half-angle -> tick offset as a share of half the viewport height. `zoom` is the
+ * current field of view as a share of the hip one (aiming down sights narrows it).
+ */
+export const spreadToScreen = (spread: number, zoom = 1): number => Math.tan(Math.max(0, spread)) / Math.tan((HUD_CAMERA_FOV * zoom) / 2);
 
 /**
  * Four ticks that sit where the aim cone meets the screen: they spread apart while moving
- * and after shots, and pull in while crouched. A confirmed hit flashes them, a head hit red.
+ * and after shots, and pull in while crouched or aiming down sights. A melee guard turns them
+ * into a bracket. A confirmed hit flashes them, a head hit red.
  */
 const Crosshair = () => {
   const hit = useUi((s) => s.hitMarker);
   const zone = useUi((s) => s.hitZone);
   const spread = useUi((s) => s.aimSpread);
   const crouched = useUi((s) => s.crouched);
+  const aiming = useUi((s) => s.aiming);
+  const zoom = useUi((s) => s.aimZoom);
+  const blocking = useUi((s) => s.blocking);
   const [flash, setFlash] = useState<"hit" | "head" | null>(null);
   useEffect(() => {
     if (hit === 0) return;
@@ -30,8 +37,8 @@ const Crosshair = () => {
     const t = setTimeout(() => setFlash(null), head ? 220 : 120);
     return () => clearTimeout(t);
   }, [hit, zone]);
-  const cls = ["crosshair", crouched && "crosshair--crouched", flash && "crosshair--hit", flash === "head" && "crosshair--head"].filter(Boolean).join(" ");
-  const style = { "--spread": spreadToScreen(spread).toFixed(4) } as CSSProperties;
+  const cls = ["crosshair", crouched && "crosshair--crouched", aiming && "crosshair--aiming", blocking && "crosshair--guard", flash && "crosshair--hit", flash === "head" && "crosshair--head"].filter(Boolean).join(" ");
+  const style = { "--spread": spreadToScreen(spread, zoom).toFixed(4) } as CSSProperties;
   return (
     <div className={cls} style={style} data-testid="crosshair" data-spread={spread.toFixed(3)}>
       <span className="crosshair__tick crosshair__tick--top" />

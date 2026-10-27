@@ -185,6 +185,27 @@ export const CUES: Readonly<Record<AudioCue, Recipe>> = {
       { type: "sine", freq: 1700, to: 1450, start: 0.18, dur: 0.12, gain: 0.05 },
     ],
   },
+  // Melee (ADR-0019): an air whoosh sweeping across the stereo field, a dull clack on a guard,
+  // and a bright ring for a parry.
+  swing: {
+    send: 0.1,
+    voices: [{ type: "noise", freq: 0, dur: 0.16, gain: 0.2, attack: 0.03, filter: 700, filterTo: 2600, filterType: "bandpass", q: 1.4, pan: -0.4, panTo: 0.4 }],
+  },
+  block: {
+    send: 0.3,
+    voices: [
+      { type: "noise", freq: 0, dur: 0.06, gain: 0.3, filter: 2200, filterTo: 700, attack: 0.001 },
+      { type: "triangle", freq: 420, to: 300, dur: 0.12, gain: 0.18 },
+    ],
+  },
+  parry: {
+    send: 0.45,
+    voices: [
+      { type: "noise", freq: 0, dur: 0.05, gain: 0.3, filter: 5000, filterTo: 2000, attack: 0.001 },
+      { type: "triangle", freq: 1900, dur: 0.45, gain: 0.16 },
+      { type: "sine", freq: 2850, dur: 0.35, gain: 0.08 },
+    ],
+  },
 };
 
 export interface SynthAudioOptions {

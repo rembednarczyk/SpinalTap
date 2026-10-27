@@ -32,6 +32,10 @@ export interface ShooterState {
   readonly bloom: number;
   /** Share of spread removed by implants, see `DerivedStats.aimStability`. */
   readonly aimStability: number;
+  /** 0 from the hip .. 1 fully aimed down sights (ADR-0019); absent means from the hip. */
+  readonly aim?: number;
+  /** Multiplier on the whole cone at full aim (`AdsProfile.spread`); absent means 1. */
+  readonly aimMultiplier?: number;
 }
 
 const clamp01 = (v: number): number => Math.min(1, Math.max(0, v));
@@ -44,7 +48,8 @@ export const spreadAngle = (profile: SpreadProfile, s: ShooterState): number => 
   // Moving while crouched is a slow, careful step: it costs less than walking upright.
   const motion = moving * profile.move * (1 - 0.5 * crouch) + (s.sprinting ? profile.sprint : 0);
   const raw = profile.base * stance + motion + Math.max(0, s.bloom);
-  return raw * (1 - clamp01(s.aimStability));
+  const ads = 1 + ((s.aimMultiplier ?? 1) - 1) * clamp01(s.aim ?? 0);
+  return raw * ads * (1 - clamp01(s.aimStability));
 };
 
 /** Bloom after one more shot. */

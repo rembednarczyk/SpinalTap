@@ -232,7 +232,9 @@ dawałby graczowi broń słabszą od pistoletu albo gangerzy staliby się zabój
 
 **Broń biała** używa tego samego `fireShot` z zasięgiem 2,2 do 2,6 m i rozrzutem 0 (krótki hitscan
 w osi celowania). Bez amunicji i przeładowania. Trafienie zużywa te same dwie liczby losowe co strzał
-(trafienie, krytyk), więc strumień RNG pozostaje wyrównany.
+(trafienie, krytyk), więc strumień RNG pozostaje wyrównany. *Zastąpione przez [ADR-0019](adr/0019-celowanie-ads-i-bron-biala.md):
+broń biała ma własny system z combo, łukiem trafienia, blokiem i parowaniem; jedna liczba losowa
+na trafienie (krytyk).*
 
 **Strzelba**: każda śrucina to osobny promień i osobny `resolveAttack`. Liczba liczb losowych na
 strzał jest stała: `pellets × (2 na rozrzut [walka] + 2 na trafienie i krytyk)`.

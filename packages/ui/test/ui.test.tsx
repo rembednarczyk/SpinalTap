@@ -107,6 +107,21 @@ describe("HUD", () => {
     expect(spreadToScreen(-1)).toBe(0);
   });
 
+  it("pulls the ticks in while aiming down sights, calibrated to the zoomed view (ADR-0019)", () => {
+    const { store } = mount({ screen: "playing", aimSpread: 0.03 });
+    const cross = screen.getByTestId("crosshair");
+    const spread = () => Number(cross.style.getPropertyValue("--spread"));
+    const hip = spread();
+    act(() => patchUi(store, { aimSpread: 0.015, aiming: true, aimZoom: 0.8 }));
+    expect(cross.classList.contains("crosshair--aiming")).toBe(true);
+    expect(spread()).toBeCloseTo(spreadToScreen(0.015, 0.8), 3);
+    expect(spread()).toBeLessThan(hip);
+    // The same cone covers more of a zoomed-in screen.
+    expect(spreadToScreen(0.02, 0.6)).toBeGreaterThan(spreadToScreen(0.02));
+    act(() => patchUi(store, { aiming: false, blocking: true }));
+    expect(cross.classList.contains("crosshair--guard")).toBe(true);
+  });
+
   it("does not re-render the crosshair when the store gets the same spread again", () => {
     const { store } = mount({ screen: "playing", aimSpread: 0.02 });
     let changes = 0;
@@ -325,6 +340,20 @@ describe("touch controls", () => {
     expect(pad.release).toHaveBeenCalledWith("fire");
     fireEvent.pointerDown(screen.getByRole("button", { name: "Zdolność" }), { pointerId: 2 });
     expect(pad.press).toHaveBeenCalledWith("ability");
+  });
+
+  it("holds the aim button while pressed and lights it while aiming or guarding (ADR-0019)", () => {
+    const { store, pad } = mountTouch();
+    const aim = screen.getByTestId("touch-aim");
+    fireEvent.pointerDown(aim, { pointerId: 5 });
+    expect(pad.press).toHaveBeenCalledWith("aim");
+    fireEvent.pointerUp(aim, { pointerId: 5 });
+    expect(pad.release).toHaveBeenCalledWith("aim");
+    expect(aim.classList.contains("touch__btn--on")).toBe(false);
+    act(() => patchUi(store, { aiming: true }));
+    expect(aim.classList.contains("touch__btn--on")).toBe(true);
+    act(() => patchUi(store, { aiming: false, blocking: true }));
+    expect(aim.classList.contains("touch__btn--on")).toBe(true);
   });
 
   it("toggles crouch: one tap holds it, the next lets go", () => {

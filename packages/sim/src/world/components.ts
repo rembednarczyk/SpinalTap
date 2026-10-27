@@ -31,6 +31,35 @@ export interface Combatant {
   drawing: number;
   /** Extra spread from recent shots in radians; recovers over time. Not saved (ADR-0016). */
   bloom: number;
+  /** An NPC that is fighting this step holds its weapon up (presentation only, not saved). */
+  engaged?: boolean;
+}
+
+/**
+ * Melee state of a combatant (ADR-0019): the swing in progress, the combo, the guard and
+ * stagger. Transient like the holster and the bloom: not saved, a loaded game starts idle.
+ */
+export interface MeleeState {
+  /** "windup": the swing is on its way and lands when `timer` runs out; "recovery": it landed. */
+  phase: "idle" | "windup" | "recovery";
+  /** Seconds left of the phase. */
+  timer: number;
+  /** Index of the current (or last) strike in the weapon's combo. */
+  strike: number;
+  /** Seconds left in which the next swing continues the combo. */
+  combo: number;
+  /** The attack button was held during recovery: the next swing starts right after it. */
+  queued: boolean;
+  /** Seconds left staggered: no swing, no guard, no shot, slow feet. */
+  stagger: number;
+  /** Guard up (the aim button with a melee weapon). */
+  guard: boolean;
+  /** Seconds left of the parry window opened by raising the guard. */
+  parry: number;
+  /** Seconds until raising the guard opens a parry window again. */
+  parryCooldown: number;
+  /** Knockback of an unguarded hit: ground velocity (m/s) for `time` more seconds. */
+  knock: { x: number; z: number; time: number };
 }
 
 /**
@@ -46,6 +75,12 @@ export interface Posture {
   prevAmount: number;
   /** Sprinting this step (widens the aim cone). */
   sprinting: boolean;
+  /** Wants to aim down sights this step (ADR-0019). */
+  aiming: boolean;
+  /** 0 from the hip .. 1 fully aimed, eased over the weapon's `ads.time`. */
+  aim: number;
+  /** `aim` at the previous step, for interpolated rendering. */
+  prevAim: number;
 }
 
 export interface GangerAi {
@@ -195,6 +230,7 @@ export interface Entity {
   lastHitBy?: EntityId;
   faction?: FactionId;
   combatant?: Combatant;
+  melee?: MeleeState;
   ai?: GangerAi;
   /** Enemy type (ADR-0015): weapon, outfit and loot table come from it. */
   enemy?: { readonly type: EnemyTypeId };

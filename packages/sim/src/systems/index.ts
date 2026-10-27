@@ -13,11 +13,13 @@ import { playerControlSystem } from "./player-control-system";
 import { questSystem } from "./quest-system";
 import { streamingSystem } from "./streaming-system";
 import { weaponSystem } from "./weapon-system";
+import { meleeSystem } from "./melee-system";
 import { lootSystem } from "./loot-system";
 import { clockSystem } from "./clock-system";
 import { scheduleSystem } from "./schedule-system";
 
-export { aimSpreadOf, fireShot, GUNFIRE_INTERRUPT_RADIUS } from "./combat-system";
+export { aimSpreadOf, fireShot, GUNFIRE_INTERRUPT_RADIUS, NPC_CRIT } from "./combat-system";
+export { meleeSystem, stagger, startSwing } from "./melee-system";
 export { equippedAbility, worldTimeScale } from "./ability-system";
 export { deadFlag } from "./death-system";
 export { LOOT_REACH, syncBags } from "./loot-system";
@@ -41,6 +43,7 @@ export const createSystems = (): readonly System[] => [
   elevatorSystem,
   movementSystem,
   weaponSystem,
+  meleeSystem,
   combatSystem,
   interactionSystem,
   deathSystem,
