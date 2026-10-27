@@ -1,5 +1,5 @@
 import { Color3, Color4, Constants, DynamicTexture, type Mesh, MeshBuilder, MeshClass, ParticleSystem, type Scene, ShaderMaterial, Vector3 } from "../babylon";
-import type { LightingRig } from "../npr/lighting";
+import { type LightingRig, mixHex } from "../npr/lighting";
 
 const SKY_VERTEX = /* glsl */ `
 precision highp float;
@@ -182,6 +182,13 @@ interface Flicker {
   readonly seed: number;
 }
 
+const NIGHT_ZENITH = "#03060b";
+const DAY_ZENITH = "#5d6b7c";
+const NIGHT_CLOUDS = "#3a3442";
+const DAY_CLOUDS = "#a3a9b4";
+const NIGHT_SILHOUETTE = "#070b11";
+const DAY_SILHOUETTE = "#4a5562";
+
 /**
  * Everything that makes the street read as a place at night rather than boxes in fog: sky,
  * distant skyline, light shafts under lamps, neon reflections on wet asphalt, flickering signs.
@@ -192,6 +199,8 @@ export class Atmosphere {
   private readonly streakMaterials = new Map<string, ShaderMaterial>();
   private readonly flickers: Flicker[] = [];
   private time = 0;
+  private sky: ShaderMaterial | null = null;
+  private skyline: ShaderMaterial | null = null;
   /** Meshes that must stay out of the G-buffer, shadow and picking. */
   readonly decorative: Mesh[] = [];
 
@@ -248,6 +257,19 @@ export class Atmosphere {
     mesh.dispose();
   }
 
+  /**
+   * Time of day (ADR-0015): the sky and the distant skyline follow the rig's haze; the zenith
+   * and the cloud undersides pale with daylight. Uniforms only, the shaders stay as they are.
+   */
+  setDaylight(rig: LightingRig, daylight: number): void {
+    const t = Math.max(0, Math.min(1, daylight));
+    this.sky?.setColor3("zenith", Color3.FromHexString(mixHex(NIGHT_ZENITH, DAY_ZENITH, t)));
+    this.sky?.setColor3("horizon", Color3.FromHexString(rig.fogColor));
+    this.sky?.setColor3("cloudLit", Color3.FromHexString(mixHex(NIGHT_CLOUDS, DAY_CLOUDS, t)));
+    this.skyline?.setColor3("silhouette", Color3.FromHexString(mixHex(NIGHT_SILHOUETTE, DAY_SILHOUETTE, t)));
+    this.skyline?.setColor3("haze", Color3.FromHexString(rig.fogColor).scale(1.6 - 0.5 * t));
+  }
+
   removeFlicker(material: { emissiveColor: Color3 }): void {
     const i = this.flickers.findIndex((f) => f.material === material);
     if (i >= 0) this.flickers.splice(i, 1);
@@ -288,12 +310,13 @@ export class Atmosphere {
       attributes: ["position"],
       uniforms: ["worldViewProjection", "zenith", "horizon", "cityGlow", "cloudLit"],
     });
-    m.setColor3("zenith", Color3.FromHexString("#03060b"));
+    m.setColor3("zenith", Color3.FromHexString(NIGHT_ZENITH));
     m.setColor3("horizon", Color3.FromHexString(rig.fogColor));
     m.setColor3("cityGlow", Color3.FromHexString("#2c2a33"));
-    m.setColor3("cloudLit", Color3.FromHexString("#3a3442"));
+    m.setColor3("cloudLit", Color3.FromHexString(NIGHT_CLOUDS));
     m.disableDepthWrite = true;
     sky.material = m;
+    this.sky = m;
     sky.infiniteDistance = true;
     sky.renderingGroupId = 0;
     this.decorate(sky);
@@ -320,9 +343,10 @@ export class Atmosphere {
       attributes: ["position", "normal"],
       uniforms: ["world", "viewProjection", "silhouette", "haze", "cameraPosition"],
     });
-    m.setColor3("silhouette", Color3.FromHexString("#070b11"));
+    m.setColor3("silhouette", Color3.FromHexString(NIGHT_SILHOUETTE));
     m.setColor3("haze", Color3.FromHexString(rig.fogColor).scale(1.6));
     merged.material = m;
+    this.skyline = m;
     this.decorate(merged);
   }
 }
