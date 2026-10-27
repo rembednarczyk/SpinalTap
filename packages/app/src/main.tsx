@@ -55,6 +55,9 @@ if (modelsParam !== "off" && (modelsParam || !reference)) {
   void loadModelManifest(modelsParam ?? "./models/manifest.json").then((m) => {
     if (Object.keys(m).length > 0) renderer.setCharacterModels(m);
   });
+  // CC0 weapon models replace the box pistols (see public/weapons/README.md).
+  const weapons = new URL("weapons/", document.baseURI);
+  renderer.setWeaponModels({ pistol: new URL("pistol.glb", weapons).href, smg: new URL("smg.glb", weapons).href });
 }
 const input = new BrowserInput(canvas);
 const audio = new SynthAudio();

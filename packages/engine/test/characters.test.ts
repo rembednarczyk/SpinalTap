@@ -17,8 +17,8 @@ describe.each(Object.entries(builders))("character %s", (name, build) => {
     expect(rig.meshes.length).toBeGreaterThan(0);
     expect(rig.meshes.length).toBeLessThanOrEqual(3);
     for (const m of rig.meshes) {
-      // Ten joints, plus the hand and holster pistols of armed characters.
-      expect(m.skeleton?.bones).toHaveLength(rig.aiming ? 12 : 10);
+      // Ten joints, plus the hand and holster pistols (and their placeholder boxes) of armed characters.
+      expect(m.skeleton?.bones).toHaveLength(rig.aiming ? 14 : 10);
       expect(m.parent).toBe(rig.root);
     }
   });

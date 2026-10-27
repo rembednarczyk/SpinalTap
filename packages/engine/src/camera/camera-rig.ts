@@ -55,11 +55,25 @@ export class CameraRig {
     gun.material = materials.get("gun");
     gun.parent = this.viewmodel;
     gun.position.set(0, 0.04, 0.07);
+    this.placeholderGun = gun;
     for (const m of [sleeve, hand, gun]) {
       m.isPickable = false;
       applyOutline(m, 0.004);
     }
     this.viewmodel.position.set(VIEWMODEL.x, VIEWMODEL.y, VIEWMODEL.z);
+  }
+
+  private placeholderGun: AbstractMesh | null = null;
+
+  /** Node a weapon model is mounted under in the FPP viewmodel. */
+  get weaponMount(): TransformNode {
+    return this.viewmodel;
+  }
+
+  /** Drops the box pistol once a weapon model is mounted. */
+  hidePlaceholderGun(): void {
+    this.placeholderGun?.dispose();
+    this.placeholderGun = null;
   }
 
   setMode(mode: CameraMode): void {

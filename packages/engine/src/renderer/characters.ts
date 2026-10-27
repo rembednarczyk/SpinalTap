@@ -23,6 +23,8 @@ export interface CharacterRig {
   /** Pistol in the hand and in the holster; the one not in use is scaled to zero. */
   readonly gunHand: TransformNode | null;
   readonly gunHip: TransformNode | null;
+  /** The placeholder box pistols under hand and holster; scaled to zero once a weapon model is mounted. */
+  readonly gunBoxes: readonly TransformNode[];
   /** 0 holstered .. 1 drawn, eased towards `drawTarget` over DRAW_SECONDS. */
   drawn: number;
   drawTarget: boolean;
@@ -358,6 +360,7 @@ const skinCharacter = (b: RigBuilder, root: TransformNode, joints: TransformNode
 interface Pistol {
   readonly hand: TransformNode;
   readonly hip: TransformNode;
+  readonly boxes: readonly [TransformNode, TransformNode];
 }
 
 /**
@@ -369,14 +372,16 @@ const pistol = (b: RigBuilder, sk: Joints, hipX: number, holster: PresetName, bi
   const s = sk.s;
   const hand = b.node("gunHand", sk.elbowR, 0, -0.29 * s, 0.015);
   const hip = b.node("gunHip", sk.body, hipX, 0.9 * s, 0.025);
-  for (const n of [hand, hip]) {
+  // The boxes sit on their own bones so a mounted weapon model can hide them.
+  const boxes = [b.node("gunHandBox", hand), b.node("gunHipBox", hip)] as const;
+  for (const n of boxes) {
     b.box(0.034 * big, 0.17 * big, 0.05 * big, "gun", n, 0, -0.07 * big, 0);
     b.box(0.03 * big, 0.045 * big, 0.065 * big, "gun", n, 0, 0.005, -0.04 * big);
   }
   // Grip faces forward in the holster.
   hip.rotation.y = Math.PI;
   b.box(0.05 * big, 0.13 * big, 0.075 * big, holster, sk.body, hipX, 0.86 * s, 0.02);
-  return { hand, hip };
+  return { hand, hip, boxes };
 };
 
 const finish = (
@@ -387,7 +392,7 @@ const finish = (
 ): CharacterRig => {
   const { s: _s, ...joints } = sk;
   const order = [joints.body, joints.legL, joints.kneeL, joints.legR, joints.kneeR, joints.head, joints.armL, joints.elbowL, joints.armR, joints.elbowR];
-  if (opts.gun) order.push(opts.gun.hand, opts.gun.hip);
+  if (opts.gun) order.push(opts.gun.hand, opts.gun.hip, ...opts.gun.boxes);
   const meshes = skinCharacter(b, root, order);
   // After skinning: a zero scale in the bind pose would make the bind matrix singular.
   opts.gun?.hip.scaling.setAll(0);
@@ -396,6 +401,7 @@ const finish = (
     meshes,
     gunHand: opts.gun?.hand ?? null,
     gunHip: opts.gun?.hip ?? null,
+    gunBoxes: opts.gun?.boxes ?? [],
     drawn: 1,
     drawTarget: true,
     aim: 0,

@@ -1,4 +1,4 @@
-import { type AbstractMesh, type Color3, Color4, Matrix, type Mesh, MeshBuilder, Vector3 } from "../babylon";
+import { type AbstractMesh, type Color3, Color4, Matrix, type Mesh, MeshBuilder, TransformNode, Vector3 } from "../babylon";
 import { applyOutline } from "../npr/outline";
 import type { CameraMode, DespawnReason, EffectDescriptor, EntityId, RenderPort, Transform, ViewDescriptor } from "@seki/core";
 import { CameraRig } from "../camera/camera-rig";
@@ -16,6 +16,7 @@ import { type CharacterRig, animateRig, deathFinished, raiseWeapon, setWeaponDra
 import { type CharacterModelKey, type CharacterModelManifest, type ModelInstance, ModelLibrary } from "./model-library";
 import { HumanoidRetarget } from "./model-rig";
 import { SpringBones, humanoidColliders } from "./spring-bones";
+import { type WeaponKind, type WeaponManifest, WeaponMounts } from "./weapon-mount";
 import { type PropView, buildBlock, buildLamp, buildNeon } from "./props";
 import type { Stage } from "./stage";
 
@@ -26,7 +27,7 @@ interface Dressed {
   /** Hair and cloth secondary motion, if the model has such bones. */
   readonly springs: SpringBones | null;
   /** Pistol in the model's hand, shown while the rig has it drawn. */
-  gun: AbstractMesh | null;
+  gun: TransformNode | null;
   /** Pool key: the model file. */
   readonly url: string;
 }
@@ -74,6 +75,9 @@ export class BabylonRenderer implements RenderPort {
   private readonly blockers = new Set<AbstractMesh>();
   private cameraTarget: EntityId | null = null;
   private readonly library: ModelLibrary;
+  private readonly weapons: WeaponMounts;
+  /** Weapon model each armed character carries (the heroine a pistol, gangers an SMG). */
+  private readonly weaponOf = new Map<CharacterRig, WeaponKind>();
   private models: CharacterModelManifest = {};
   private readonly dressed = new Map<CharacterRig, Dressed>();
   /** Rigs whose model is still loading, so a manifest arriving meanwhile does not dress them twice. */
@@ -92,6 +96,7 @@ export class BabylonRenderer implements RenderPort {
       strength: 0.9,
     });
     this.library = new ModelLibrary(scene, this.materials);
+    this.weapons = new WeaponMounts(this.library);
     this.rig = new CameraRig(scene, this.materials, (m) => this.blockers.has(m));
     this.rig.onBodyVisibility = (visible) => this.setPlayerBodyVisible(visible);
     // Line art must be attached before the grading pipeline so the ink gets graded too.
@@ -137,6 +142,10 @@ export class BabylonRenderer implements RenderPort {
         this.entities.set(id, { kind: "character", rig, transform: t, model, name });
         this.applyTransform(rig, t);
         this.dress(rig, model, name);
+        if (rig.gunHand) {
+          this.weaponOf.set(rig, view.kind === "heroine" ? "pistol" : "smg");
+          this.equipWeapon(rig, name);
+        }
         return;
       }
       case "block":
@@ -289,6 +298,34 @@ export class BabylonRenderer implements RenderPort {
     this.resetting = false;
   }
 
+  /**
+   * Weapon models (glTF) that replace the placeholder box pistols in hands, holsters, the FPP
+   * viewmodel and the hands of imported characters. Characters on screen are re-armed.
+   */
+  setWeaponModels(manifest: WeaponManifest): void {
+    this.weapons.setManifest(manifest);
+    for (const e of this.entities.values()) if (e.kind === "character" && e.rig.gunHand) this.equipWeapon(e.rig, e.name);
+    if (this.weapons.has("pistol")) {
+      void this.weapons.mount(this.rig.weaponMount, "pistol", "vm-weapon", "view").then((pivot) => {
+        if (pivot) this.rig.hidePlaceholderGun();
+      });
+    }
+  }
+
+  /** Mounts the rig's weapon model in hand and holster; the box pistols go once both are in. */
+  private equipWeapon(rig: CharacterRig, name: string): void {
+    const kind = this.weaponOf.get(rig);
+    if (!kind || !rig.gunHand || !rig.gunHip || !this.weapons.has(kind)) return;
+    void Promise.all([
+      this.weapons.mount(rig.gunHand, kind, `${name}-w-hand`, "hand"),
+      this.weapons.mount(rig.gunHip, kind, `${name}-w-hip`, "hand"),
+    ]).then(([hand, hip]) => {
+      if (!hand || !hip) return;
+      for (const box of rig.gunBoxes) box.scaling.setAll(0);
+      for (const pivot of [hand, hip]) for (const m of pivot.getChildMeshes(false)) if (m.getTotalVertices() > 0) this.shadow.addCaster(m);
+    });
+  }
+
   /** Imported character models (models/manifest.json); characters on screen are dressed too. */
   setCharacterModels(manifest: CharacterModelManifest): void {
     this.models = manifest;
@@ -338,7 +375,7 @@ export class BabylonRenderer implements RenderPort {
     const springs = SpringBones.create(model.root, { vrm: model.springs, prefix: model.prefix, colliders: humanoidColliders(model.root, model.prefix) });
     const dressed: Dressed = { model, retarget, springs, gun: null, url };
     this.dressed.set(rig, dressed);
-    if (rig.aiming) dressed.gun = this.arm(model, retarget);
+    if (rig.aiming) dressed.gun = this.arm(model, retarget, rig);
   }
 
   /** Detaches a model, resets its pose and keeps it for the next character of the same look. */
@@ -351,32 +388,42 @@ export class BabylonRenderer implements RenderPort {
     this.modelPool.set(url, pool);
   }
 
-  /** The procedural gun is baked into the hidden rig mesh; a dressed shooter gets its own. */
-  private arm(model: ModelInstance, retarget: HumanoidRetarget): AbstractMesh | null {
-    const gun = MeshBuilder.CreateBox(`${model.root.name}-gun`, { width: 0.035, height: 0.2, depth: 0.06 }, this.stage.scene);
-    gun.material = this.materials.get("gun");
-    gun.isPickable = false;
-    applyOutline(gun);
-    if (!retarget.holdInRightHand(gun, new Vector3(0, -0.1, 0.03))) {
-      gun.dispose();
+  /**
+   * The procedural gun is baked into the hidden rig mesh, so a dressed shooter gets its own: a
+   * holder in the model's hand with the weapon model, or a box until (or unless) one loads.
+   */
+  private arm(model: ModelInstance, retarget: HumanoidRetarget, rig: CharacterRig): TransformNode | null {
+    const holder = new TransformNode(`${model.root.name}-gun`, this.stage.scene);
+    if (!retarget.holdInRightHand(holder, new Vector3(0, 0, 0))) {
+      holder.dispose();
       return null;
     }
-    model.meshes.push(gun);
-    this.shadow.addCaster(gun);
-    return gun;
+    const box = MeshBuilder.CreateBox(`${model.root.name}-gunbox`, { width: 0.035, height: 0.2, depth: 0.06 }, this.stage.scene);
+    box.material = this.materials.get("gun");
+    box.isPickable = false;
+    box.parent = holder;
+    box.position.set(0, -0.1, 0.03);
+    applyOutline(box);
+    this.shadow.addCaster(box);
+    const kind = this.weaponOf.get(rig);
+    if (kind) {
+      void this.weapons.mount(holder, kind, `${model.root.name}-w`, "hand").then((pivot) => {
+        if (!pivot) return;
+        box.dispose();
+        for (const m of pivot.getChildMeshes(false)) if (m.getTotalVertices() > 0) this.shadow.addCaster(m);
+      });
+    }
+    return holder;
   }
 
   private disposeRig(rig: CharacterRig): void {
     const d = this.dressed.get(rig);
     if (d) {
-      if (d.gun) {
-        const i = d.model.meshes.indexOf(d.gun);
-        if (i >= 0) d.model.meshes.splice(i, 1);
-        d.gun.dispose();
-      }
+      d.gun?.dispose();
       this.releaseModel(d.model, d.url);
     }
     this.dressed.delete(rig);
+    this.weaponOf.delete(rig);
     rig.root.dispose(false, false);
   }
 
