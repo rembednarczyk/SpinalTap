@@ -666,7 +666,7 @@ kbd {
 .touch__btn--x { right: 96px; bottom: 150px; width: 44px; height: 44px; font-size: 15px; }
 .touch__btn--c { right: 172px; bottom: 76px; width: 44px; height: 44px; font-size: 15px; }
 .touch__btn--aim { right: 228px; bottom: 96px; width: 52px; height: 52px; font-size: 20px; }
-.touch__btn--jump { right: 236px; bottom: 26px; width: 52px; height: 52px; font-size: 22px; }
+.touch__btn--jump { right: 232px; bottom: 158px; width: 52px; height: 52px; font-size: 22px; }
 .touch__btn--r { right: 176px; bottom: 14px; width: 44px; height: 44px; font-size: 15px; color: var(--amber); }
 .touch__btn--on { background: rgba(95, 242, 255, 0.3); border-color: var(--cyan); color: var(--cyan); }
 .touch__top {
