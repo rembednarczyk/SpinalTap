@@ -1,44 +1,5 @@
 import { GAME_SECONDS_PER_REAL_SECOND, type GameClock, type Vec3, angleDelta, minuteOfDay, secondsSince } from "@seki/core";
-import type { Entity, Interactable } from "./components";
-
-/**
- * One entry of a daily plan. From minute `at` of the day the NPC walks `path` in order,
- * starting where the previous stop left it, and then stays at the last point facing `yaw`.
- * A patrol (`loop`) instead keeps walking `path` as a closed loop until the next stop.
- */
-export interface ScheduleStop {
-  /** Short name for tests and debugging ("stragan", "dom", "patrol"). */
-  readonly label: string;
-  /** Minute of the day (0–1439) the NPC sets off. */
-  readonly at: number;
-  /** Straight-line waypoints; together with the previous stop they must stay clear of solids. */
-  readonly path: readonly [Vec3, ...Vec3[]];
-  /** Facing once the NPC stands at its stop. */
-  readonly yaw: number;
-  readonly loop?: true;
-  /**
-   * What talking to the NPC means while this stop is current: an interaction that replaces
-   * the NPC's own (e.g. a closed stall), or null for none. Omitted: the NPC's own.
-   */
-  readonly interaction?: Interactable | null;
-}
-
-/** A daily plan: stops sorted by `at`, repeated every day. The day wraps from the last stop to the first. */
-export interface ScheduleDef {
-  readonly stops: readonly [ScheduleStop, ...ScheduleStop[]];
-  /** Walking speed along the path, metres per real second. */
-  readonly speed: number;
-}
-
-/** Where the plan wants the NPC right now. A pure function of the plan and the clock. */
-export interface SchedulePose {
-  readonly stop: number;
-  readonly position: Vec3;
-  /** Direction of travel while walking; the stop's facing once there. */
-  readonly heading: number;
-  /** Standing at its stop (not walking, not patrolling). */
-  readonly arrived: boolean;
-}
+import type { Entity, Interactable, ScheduleDef, SchedulePose, ScheduleStop } from "./components";
 
 /** Index of the stop in force at the clock's minute; before the first stop of the day, yesterday's last. */
 export const currentStopIndex = (def: ScheduleDef, clock: GameClock): number => {

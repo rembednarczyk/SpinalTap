@@ -1,5 +1,5 @@
 import { type Vec3, hm } from "@seki/core";
-import type { ScheduleDef } from "../world/schedule";
+import type { ScheduleDef } from "../world/components";
 import type { ActorSpawn } from "./builders";
 import { WORLD_CHUNKS } from "./world-map";
 
