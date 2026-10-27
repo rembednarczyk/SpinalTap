@@ -166,7 +166,7 @@ describe("fixer contracts (M1)", () => {
     const view = runtime.start("fixer", afterM0({ active: null, completed: 0 }));
     expect(view.choices.map((c) => c.text)).toEqual([
       "Biorę robotę.",
-      "Jeśli chcesz lepszego sprzętu, idź do doktora Mori.",
+      "Gdzie tu się można podrasować?",
       "Nie dziś.",
     ]);
     expect(runtime.choose(0).ended).toBe(true);
@@ -319,7 +319,7 @@ describe("act I: Echo (M3)", () => {
     const view = runtime.start("mori", echo(3, choices({ case: "opened", name: "spoken", crash: "ren" })));
     expect(view.ended).toBe(true);
     expect(text(view)).toContain("chip z moim imieniem");
-    expect(text(view)).toContain("Czterdzieści razy");
+    expect(text(view)).toContain("Czterdzieści jeden razy");
     expect(text(view)).not.toContain("sama skręciłam");
     expect(text(view)).toContain("Zostaw go.");
     expect(view.lines.at(-2)?.speaker).toBe("Seki Senshi");

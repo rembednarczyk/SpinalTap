@@ -75,7 +75,7 @@ HANA: Paczkę już mam. Po pieniądze idź do Kaito, to jego kurs.
 { contract_kind == "retrieve":
     HANA: Skrzynka dalej jest u Hebi, pod estakadą przy wschodniej ścianie.
 - else:
-    HANA: Hebi są już na targu. Nie stój przy mnie, pilnuj Oyaji!
+    HANA: Hebi są już na targu. Nie stój przy mnie, pilnuj Oyajiego!
 }
 -> END
 

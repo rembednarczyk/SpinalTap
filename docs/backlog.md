@@ -59,6 +59,12 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
   nachylenie, interakcja nie sięga przez strop. Treść: estakada nad targiem jako chodnik z
   poręczami, schody od zachodu i winda towarowa z bramką na górze; kładka nad ulicą Kanałową.
 
+- **[gotowe] Poprawki linii dialogowych.** Przegląd wszystkich rozmów w `packages/narrative/ink`: wybory
+  gracza to kwestie Seki (u Kaito wybór brzmiał jak jego własna rada o doktorze Mori), odpowiedzi
+  od właściwego mówcy, bez powtórzeń po pytaniach pobocznych, spójność z wątkiem głównym (liczba
+  prób nadpisania, co Seki wie o Renie). Pilnuje tego `packages/narrative/test/dialogue-roles.test.ts`,
+  który przechodzi każdą osiągalną ścieżkę wyborów.
+
 ## Później
 
 - Ruch w pionie, dalej: nawigacja AI między poziomami (punkty przejścia przez schody i windy),
