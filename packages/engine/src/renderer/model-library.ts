@@ -14,7 +14,8 @@ import {
 import { applyOutline } from "../npr/outline";
 import type { PresetName } from "../npr/presets";
 import type { ToonMaterials } from "../npr/toon-material";
-import { type VrmSprings, readGlbJson, readVrmSprings } from "./vrm-meta";
+import { FaceRig } from "./face";
+import { type VrmExpressions, type VrmSprings, readGlbJson, readVrmExpressions, readVrmSprings } from "./vrm-meta";
 
 /** Which character views can be replaced by imported models. */
 export type CharacterModelKey = "heroine" | "fixer" | "civilian" | "ripperdoc" | "ganger";
@@ -36,12 +37,20 @@ export interface CharacterModelSpec {
 
 export type CharacterModelManifest = Partial<Record<CharacterModelKey, CharacterModelSpec>>;
 
+interface Loaded {
+  readonly container: AssetContainer;
+  readonly springs: VrmSprings | null;
+  readonly expressions: VrmExpressions | null;
+}
+
 export interface ModelInstance {
   readonly root: TransformNode;
   readonly meshes: AbstractMesh[];
   readonly animations: AnimationGroup[];
   /** Spring bone data authored in the VRM file, if any. */
   readonly springs: VrmSprings | null;
+  /** Blink and mouth shapes, when the file has VRM expressions with morph targets. */
+  readonly face: FaceRig | null;
   /** Name prefix of this instance's nodes (to find bones by their file names). */
   readonly prefix: string;
   /** Puts every node back to its pose at instantiation, so a pooled instance can be reused. */
@@ -68,7 +77,17 @@ export interface SourceMaterial {
   readonly hidden: boolean;
   /** Depth stacking of VRoid face layers over the face skin. */
   readonly layer: number;
+  /** The garment slot a VRoid cloth material dresses ("Tops", "Bottoms"), for garment tints. */
+  readonly garment: "torso" | "legs" | null;
 }
+
+/** What an imported mesh's toon material was made from, kept in `mesh.metadata.toonSource` to recolour it. */
+export interface ToonSource {
+  readonly preset: PresetName;
+  readonly source: SourceMaterial;
+}
+
+export const toonSourceOf = (mesh: AbstractMesh): ToonSource | null => (mesh.metadata as { toonSource?: ToonSource } | null)?.toonSource ?? null;
 
 const FACE_LAYERS: readonly [RegExp, number][] = [
   [/eyehighlight/i, 4],
@@ -101,6 +120,7 @@ export const readSourceMaterial = (material: unknown): SourceMaterial => {
     hidden: /eyeextra/i.test(m?.name ?? ""),
     layer: FACE_LAYERS.find(([re]) => re.test(m?.name ?? ""))?.[1] ?? 0,
     outline: mode < 2 && m?.backFaceCulling !== false && !/face|eye|mouth|lash|brow|highlight/i.test(m?.name ?? ""),
+    garment: /tops/i.test(m?.name ?? "") ? "torso" : /bottoms/i.test(m?.name ?? "") ? "legs" : null,
   };
 };
 
@@ -129,7 +149,8 @@ export const convertModelMaterials = (container: AssetContainer, materials: Toon
       dropped.push(mesh);
       continue;
     }
-    mesh.metadata = { ...(mesh.metadata as object | null), toonOutline: source.outline };
+    const toonSource: ToonSource = { preset, source };
+    mesh.metadata = { ...(mesh.metadata as object | null), toonOutline: source.outline, toonSource };
     // Primitives of one glTF mesh have their own Geometry but share the vertex data.
     const data = mesh.getVertexBuffer("position")?.getData() ?? mesh;
     let dataId = dataIds.get(data);
@@ -177,7 +198,7 @@ export const outlineModelMeshes = (meshes: readonly AbstractMesh[], enabled: boo
  * animation groups.
  */
 export class ModelLibrary {
-  private readonly containers = new Map<string, Promise<{ container: AssetContainer; springs: VrmSprings | null }>>();
+  private readonly containers = new Map<string, Promise<Loaded>>();
 
   constructor(
     private readonly scene: Scene,
@@ -185,7 +206,7 @@ export class ModelLibrary {
   ) {}
 
   async instantiate(spec: CharacterModelSpec, name: string): Promise<ModelInstance> {
-    const { container, springs } = await this.load(spec);
+    const { container, springs, expressions } = await this.load(spec);
     const entries = container.instantiateModelsToScene((n) => `${name}-${n}`, false, { doNotInstantiate: true });
     const root = entries.rootNodes[0] as TransformNode | undefined;
     if (!root) throw new Error(`Model ${spec.url} has no root node`);
@@ -213,6 +234,7 @@ export class ModelLibrary {
       meshes,
       animations: entries.animationGroups,
       springs,
+      face: FaceRig.create(meshes, expressions, `${name}-`),
       dispose: () => {
         for (const g of entries.animationGroups) g.dispose();
         for (const s of entries.skeletons) s.dispose();
@@ -221,7 +243,7 @@ export class ModelLibrary {
     };
   }
 
-  private load(spec: CharacterModelSpec): Promise<{ container: AssetContainer; springs: VrmSprings | null }> {
+  private load(spec: CharacterModelSpec): Promise<Loaded> {
     let pending = this.containers.get(spec.url);
     if (!pending) {
       pending = (async () => {
@@ -230,16 +252,18 @@ export class ModelLibrary {
         // Binary files are fetched here so the VRM spring data can be read from the JSON
         // chunk; a .gltf with external buffers loads by URL so its relative paths resolve.
         let springs: VrmSprings | null = null;
+        let expressions: VrmExpressions | null = null;
         let source: string | Uint8Array = spec.url;
         if (extension === ".glb" || /\.glb(\?|#|$)/i.test(spec.url)) {
           const bytes = await (await fetch(spec.url)).arrayBuffer();
           const json = readGlbJson(bytes);
           springs = json ? readVrmSprings(json) : null;
+          expressions = json ? readVrmExpressions(json) : null;
           source = new Uint8Array(bytes);
         }
         const container = await LoadAssetContainerAsync(source, this.scene, { pluginExtension: extension ?? (typeof source === "string" ? undefined : ".glb") });
         convertModelMaterials(container, this.materials, spec.preset ?? "importedCharacter");
-        return { container, springs };
+        return { container, springs, expressions };
       })();
       this.containers.set(spec.url, pending);
     }

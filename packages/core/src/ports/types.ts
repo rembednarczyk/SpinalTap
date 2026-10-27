@@ -90,6 +90,8 @@ export type EffectDescriptor =
   | { readonly kind: "flinch"; readonly entityId: EntityId }
   /** The entity holstered its weapon or started drawing it. */
   | { readonly kind: "weapon"; readonly entityId: EntityId; readonly drawn: boolean; readonly slot?: WeaponSlot }
+  /** The entity speaks a line: its mouth moves for about `seconds` (0 stops it). */
+  | { readonly kind: "talk"; readonly entityId: EntityId; readonly seconds: number }
   /** The entity started reloading; the animation should last `duration` seconds. */
   | { readonly kind: "reload"; readonly entityId: EntityId; readonly duration: number }
   /** A melee swing (ADR-0019): `strike` of the combo, landing after `windup`, then `recovery`. */

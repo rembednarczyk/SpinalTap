@@ -1,45 +1,10 @@
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import { describe, expect, it } from "vitest";
-import { Quaternion, Scene, TransformNode, Vector3 } from "../src/babylon";
+import { Matrix, Scene, TransformNode, Vector3 } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
 import { animateRig, buildCivilian, buildHeroine, raiseWeapon } from "../src/renderer/characters";
 import { HumanoidRetarget, normaliseBoneName } from "../src/renderer/model-rig";
-
-/** VRM 0.x-like T-pose skeleton facing -Z, under a glTF handedness root (mirror + 180°). */
-const tPose = (scene: Scene): { root: TransformNode; bone: (n: string) => TransformNode } => {
-  const root = new TransformNode("__root__", scene);
-  root.rotationQuaternion = new Quaternion(0, 1, 0, 0);
-  root.scaling.set(1, 1, -1);
-  const nodes = new Map<string, TransformNode>();
-  const add = (name: string, parent: TransformNode, x: number, y: number, z = 0): TransformNode => {
-    const n = new TransformNode(name, scene);
-    n.parent = parent;
-    n.position.set(x, y, z);
-    n.rotationQuaternion = Quaternion.Identity();
-    nodes.set(name, n);
-    return n;
-  };
-  const hips = add("J_Bip_C_Hips", root, 0, 0.9);
-  const chest = add("J_Bip_C_Chest", hips, 0, 0.3);
-  add("J_Bip_C_Head", chest, 0, 0.25);
-  // VRM 0.x faces -Z, so the character's left is +X in glTF space.
-  for (const [side, sx] of [["L", 1], ["R", -1]] as const) {
-    const ul = add(`J_Bip_${side}_UpperLeg`, hips, 0.09 * sx, -0.05);
-    const ll = add(`J_Bip_${side}_LowerLeg`, ul, 0, -0.4);
-    add(`J_Bip_${side}_Foot`, ll, 0, -0.4);
-    const ua = add(`J_Bip_${side}_UpperArm`, chest, 0.18 * sx, 0.15);
-    const la = add(`J_Bip_${side}_LowerArm`, ua, 0.27 * sx, 0);
-    add(`J_Bip_${side}_Hand`, la, 0.25 * sx, 0);
-  }
-  return { root, bone: (n) => nodes.get(n)! };
-};
-
-const worldOf = (node: TransformNode): Vector3 => {
-  const chain: TransformNode[] = [];
-  for (let n: TransformNode | null = node; n; n = n.parent as TransformNode | null) chain.unshift(n);
-  for (const n of chain) n.computeWorldMatrix(true);
-  return node.getAbsolutePosition().clone();
-};
+import { tPose, worldMatrixOf, worldOf } from "./t-pose";
 
 describe("HumanoidRetarget", () => {
   it("normalises VRoid, Mixamo and Blender bone names", () => {
@@ -128,6 +93,50 @@ describe("HumanoidRetarget", () => {
     expect(at.z).toBeGreaterThan(hand.z);
     const forward = Vector3.TransformNormal(new Vector3(0, -1, 0), gun.getWorldMatrix()).normalize();
     expect(forward.z).toBeGreaterThan(0.9);
+  });
+
+  /** World axes of a node as one list of numbers (X, Y and Z axis directions with their lengths). */
+  const axes = (node: TransformNode): number[] => {
+    const m = worldMatrixOf(node);
+    return [new Vector3(1, 0, 0), new Vector3(0, 1, 0), new Vector3(0, 0, 1)].flatMap((v) => Vector3.TransformNormal(v, m).asArray());
+  };
+  const expectClose = (a: number[], b: number[]) => a.forEach((x, i) => expect(x).toBeCloseTo(b[i]!, 4));
+
+  it("anchors add-ons on the head and chest bones in the rig's frame and metres", () => {
+    const scene = new Scene(new NullEngine());
+    const rig = buildHeroine(scene, new ToonMaterials(scene), "h");
+    const { root, bone } = tPose(scene);
+    // A model 1.2 times bigger than its file, mirrored by the glTF root.
+    root.scaling.set(1.2, 1.2, -1.2);
+    const retarget = HumanoidRetarget.create(rig, root)!;
+    expect(retarget.headHeight).toBeCloseTo(1.45 * 1.2, 3);
+    const head = retarget.anchor("head", "head-anchor")!;
+    const chest = retarget.anchor("chest", "chest-anchor")!;
+    expect(head.parent).toBe(bone("J_Bip_C_Head"));
+    expect(chest.parent).toBe(bone("J_Bip_C_Chest"));
+    expectClose(axes(head), axes(rig.head));
+    expectClose(axes(chest), axes(rig.body));
+    // The head anchor turns with the rig's head (look around, aim pitch).
+    rig.head.rotation.set(0.3, 0.6, 0);
+    retarget.update();
+    expectClose(axes(head), axes(rig.head));
+    expect(Vector3.Distance(worldOf(head), worldOf(bone("J_Bip_C_Head")))).toBeCloseTo(0, 5);
+    // An offset under the anchor is in metres along the rig head's axes.
+    const visor = new TransformNode("visor", scene);
+    visor.parent = head;
+    visor.position.set(0, 0, 0.1);
+    const forward = Vector3.TransformNormal(new Vector3(0, 0, 0.1), Matrix.FromQuaternionToRef(rig.head.rotationQuaternion ?? rig.head.rotation.toQuaternion(), new Matrix()).multiply(worldMatrixOf(rig.body)));
+    expect(worldOf(visor).subtract(worldOf(head)).subtract(forward).length()).toBeCloseTo(0, 4);
+  });
+
+  it("has no chest anchor on a skeleton without a chest bone", () => {
+    const scene = new Scene(new NullEngine());
+    const rig = buildHeroine(scene, new ToonMaterials(scene), "h");
+    const { root, bone } = tPose(scene);
+    bone("J_Bip_C_Chest").name = "Torso";
+    const retarget = HumanoidRetarget.create(rig, root)!;
+    expect(retarget.anchor("chest", "c")).toBeNull();
+    expect(retarget.anchor("head", "h")).not.toBeNull();
   });
 
   it("refuses models without a humanoid skeleton", () => {

@@ -107,3 +107,58 @@ export const readVrmSprings = (gltf: Json): VrmSprings | null => {
   }
   return null;
 };
+
+/** Facial expressions the game drives: blinking and the five vowel mouth shapes. */
+export const FACE_SHAPES = ["blink", "a", "i", "u", "e", "o"] as const;
+export type FaceShape = (typeof FACE_SHAPES)[number];
+
+/** One morph target an expression moves: on the meshes of a node, at `weight` 0..1. */
+export interface MorphBind {
+  readonly node: string;
+  readonly index: number;
+  readonly weight: number;
+}
+
+export type VrmExpressions = Partial<Record<FaceShape, readonly MorphBind[]>>;
+
+const isFaceShape = (v: string): v is FaceShape => (FACE_SHAPES as readonly string[]).includes(v);
+
+/**
+ * Blink and vowel expressions from VRM 0.x (`blendShapeMaster`, binds by mesh, weight 0..100)
+ * or VRM 1.0 (`VRMC_vrm.expressions.preset`, binds by node, weight 0..1, names "aa", "ih"...).
+ * Mesh references become the names of the nodes that use the mesh.
+ */
+export const readVrmExpressions = (gltf: Json): VrmExpressions | null => {
+  const nodes = arr(gltf.nodes).map(obj);
+  const nodesOfMesh = (mesh: unknown): string[] =>
+    typeof mesh === "number" ? nodes.filter((n) => n.mesh === mesh).map((n) => String(n.name ?? "")) : [];
+  const out: Partial<Record<FaceShape, MorphBind[]>> = {};
+  const ext = obj(gltf.extensions);
+
+  const v0 = arr(obj(obj(ext.VRM).blendShapeMaster).blendShapeGroups);
+  for (const g of v0.map(obj)) {
+    const preset = String(g.presetName ?? "");
+    if (!isFaceShape(preset)) continue;
+    const binds = arr(g.binds)
+      .map(obj)
+      .flatMap((b) => nodesOfMesh(b.mesh).map((node): MorphBind => ({ node, index: num(b.index, -1), weight: num(b.weight, 100) / 100 })))
+      .filter((b) => b.index >= 0);
+    if (binds.length > 0) out[preset] = binds;
+  }
+
+  const V1_NAMES: Readonly<Record<string, FaceShape>> = { blink: "blink", aa: "a", ih: "i", ou: "u", ee: "e", oh: "o" };
+  const v1 = obj(obj(obj(ext.VRMC_vrm).expressions).preset);
+  for (const [name, e] of Object.entries(v1)) {
+    const shape = V1_NAMES[name];
+    if (!shape) continue;
+    const binds = arr(obj(e).morphTargetBinds)
+      .map(obj)
+      .map((b): MorphBind | null => {
+        const n = typeof b.node === "number" ? nodes[b.node] : undefined;
+        return n ? { node: String(n.name ?? ""), index: num(b.index, -1), weight: num(b.weight, 1) } : null;
+      })
+      .filter((b): b is MorphBind => b !== null && b.index >= 0);
+    if (binds.length > 0) out[shape] = binds;
+  }
+  return Object.keys(out).length > 0 ? out : null;
+};
