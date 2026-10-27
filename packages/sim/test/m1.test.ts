@@ -103,7 +103,7 @@ describe("ripperdoc", () => {
     const installed = collect(sim, "CyberwareInstalled");
     sim.enqueue({ type: "buy-cyberware", cyberwareId: "kairos_overclock" });
     sim.step();
-    expect(failed).toEqual([{ reason: "insufficient-funds" }]);
+    expect(failed).toEqual([{ reason: "insufficient-funds", shopId: "clinic" }]);
     const rich = withDomain(sim, (d) => ({ ...d, wallet: { eddies: 2000 } }));
     const richInstalled = collect(rich, "CyberwareInstalled");
     rich.enqueue({ type: "buy-cyberware", cyberwareId: "kairos_overclock" });

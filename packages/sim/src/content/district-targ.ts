@@ -168,6 +168,8 @@ export const TARG_SOUTH_ACTORS: readonly ActorDef[] = [
     faction: "civilians",
     bystander: true,
     maxHp: OYAJI_MAX_HP,
+    // By day the stall (plan §6); from 22:00 the schedule swaps in `oyaji_closed`.
+    interactable: { kind: "shop", shopId: "oyaji", dialogueId: "oyaji", prompt: "Stragan Oyajiego", radius: 2.4 },
   },
   {
     kind: "npc",

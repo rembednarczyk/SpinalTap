@@ -1,4 +1,4 @@
-import { type Vec3, hm } from "@seki/core";
+import { type GameClock, type Vec3, hm, minuteOfDay } from "@seki/core";
 import type { ScheduleDef } from "../world/components";
 import type { ActorSpawn } from "./builders";
 import { WORLD_CHUNKS } from "./world-map";
@@ -39,6 +39,12 @@ const ume = (): ScheduleDef => {
 
 /** Oyaji keeps his stall open 8:00–22:00, then shuts it and sits out the night in his doorway. */
 export const OYAJI_HOURS = { open: hm(8), close: hm(22) } as const;
+
+/** The stall is open (trade, protection jobs from Hana; ADR-0017, ADR-0018). */
+export const oyajiStallOpen = (clock: GameClock): boolean => {
+  const m = minuteOfDay(clock);
+  return m >= OYAJI_HOURS.open && m < OYAJI_HOURS.close;
+};
 
 const oyaji = (): ScheduleDef => {
   const stall = spawnOf("oyaji");

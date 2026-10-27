@@ -13,20 +13,16 @@ import {
   SAVE_SCHEMA_VERSION,
   SECONDS_PER_MINUTE,
   advanceClock,
-  buyCyberware,
-  buyItem,
   createDomainState,
   PROTECTEE_KEY,
   contractKind,
   credit,
   generateContractOfKind,
   hasFlag,
-  minuteOfDay,
   recordChoice,
   resolveEnding,
   setAlias,
   setEnding,
-  shopTerms,
 } from "@seki/core";
 import { World } from "miniplex";
 import { SeededRandom } from "./rng/seeded-random";
@@ -36,22 +32,18 @@ import type { DomainHolder, SessionState, SimContext, System } from "./world/con
 import { deadFlag } from "./systems/death-system";
 import { adjustReputation, applyReputationCause, clearContract, grantMemory, raiseFlag, raiseProgress } from "./world/domain-ops";
 import { PLAYER_SPAWN } from "./content/district-m0";
-import { OYAJI_HOURS } from "./content/schedules";
+import { oyajiStallOpen } from "./content/schedules";
 import type { DistrictId } from "./content/world-map";
 import { IdAllocator, entitySnapshotOf, playerEntity } from "./world/factory";
 import { WorldStreamer } from "./world/streaming";
 import { applyItemCommand, isItemCommand } from "./world/item-commands";
+import { applyTradeCommand, isTradeCommand } from "./world/trade-commands";
 import { syncPlayerWeapon } from "./world/player-weapon";
 import { inCreationOrder } from "./world/ordering";
 import { placeOnSchedule } from "./world/schedule";
 
 export const SIM_HZ = 60;
 
-/** Protection jobs are offered while Oyaji keeps his stall open (ADR-0018). */
-export const oyajiStallOpen = (clock: DomainState["clock"]): boolean => {
-  const m = minuteOfDay(clock);
-  return m >= OYAJI_HOURS.open && m < OYAJI_HOURS.close;
-};
 export const SIM_DT = 1 / SIM_HZ;
 
 export interface SimulationOptions {
@@ -191,6 +183,10 @@ export class Simulation {
       applyItemCommand(ctx, cmd);
       return;
     }
+    if (isTradeCommand(cmd)) {
+      applyTradeCommand(ctx, cmd);
+      return;
+    }
     switch (cmd.type) {
       case "set-flag":
         raiseFlag(ctx, cmd.flag);
@@ -207,33 +203,6 @@ export class Simulation {
       case "end-dialogue":
         this.session.dialogueActive = false;
         break;
-      case "buy-cyberware": {
-        const domain = this.holder.domain;
-        const r = buyCyberware(domain.wallet, domain.character, cmd.cyberwareId, shopTerms(domain.reputation.clinic));
-        if (!r.ok) {
-          ctx.bus.emit("PurchaseFailed", { reason: r.reason });
-          break;
-        }
-        this.holder.domain = { ...domain, wallet: r.wallet, character: r.character };
-        if (r.price > 0) ctx.bus.emit("EddiesChanged", { balance: r.wallet.eddies, delta: -r.price });
-        ctx.bus.emit("CyberwareInstalled", { cyberwareId: cmd.cyberwareId, replaced: r.replaced, price: r.price });
-        if (r.price > 0) applyReputationCause(ctx, { type: "clinic-purchase", kind: "cyberware" });
-        raiseProgress(ctx, "cyberware_installed");
-        break;
-      }
-      case "buy-item": {
-        const domain = this.holder.domain;
-        const r = buyItem(domain.wallet, domain.inventory, domain.equipment, cmd.itemId, shopTerms(domain.reputation.clinic));
-        if (!r.ok) {
-          ctx.bus.emit("PurchaseFailed", { reason: r.reason });
-          break;
-        }
-        this.holder.domain = { ...domain, wallet: r.wallet, inventory: r.inventory };
-        ctx.bus.emit("EddiesChanged", { balance: r.wallet.eddies, delta: -r.price });
-        ctx.bus.emit("ItemBought", { itemId: cmd.itemId, price: r.price });
-        applyReputationCause(ctx, { type: "clinic-purchase", kind: "item" });
-        break;
-      }
       case "accept-contract": {
         const domain = this.holder.domain;
         const kind = cmd.kind ?? "eliminate";
