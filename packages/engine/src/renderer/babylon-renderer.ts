@@ -1,4 +1,4 @@
-import { type AbstractMesh, type Color3, Color4, Matrix, type Mesh, TransformNode, Vector3 } from "../babylon";
+import { type AbstractMesh, type Color3, Color4, Matrix, type Mesh, Vector3 } from "../babylon";
 import type { AppearanceDescriptor, CameraMode, DespawnReason, EffectDescriptor, EntityId, RenderPort, Transform, ViewDescriptor, WeaponLook } from "@seki/core";
 import { CameraRig } from "../camera/camera-rig";
 import { Effects } from "../effects/effects";
@@ -36,8 +36,6 @@ interface Dressed {
   readonly retarget: HumanoidRetarget;
   /** Hair and cloth secondary motion, if the model has such bones. */
   readonly springs: SpringBones | null;
-  /** Pistol in the model's hand, shown while the rig has it drawn. */
-  gun: TransformNode | null;
   /** Pool key: the model file. */
   readonly url: string;
 }
@@ -336,8 +334,8 @@ export class BabylonRenderer implements RenderPort {
       d.springs?.update(dt);
       d.model.face?.update(dt);
     }
-    for (const e of this.entities.values()) if (e.kind === "character") this.loadouts.update(e.rig, this.dressed.has(e.rig));
-    for (const rig of this.dying) this.loadouts.update(rig, this.dressed.has(rig));
+    for (const e of this.entities.values()) if (e.kind === "character") this.loadouts.update(e.rig);
+    for (const rig of this.dying) this.loadouts.update(rig);
     const target = this.cameraTarget === null ? undefined : this.entities.get(this.cameraTarget);
     this.rig.update(target?.kind === "character" ? target.transform : null, dt);
     // Shadow follows what the camera looks at: the player, or the fixed reference view.
@@ -375,9 +373,7 @@ export class BabylonRenderer implements RenderPort {
    */
   setWeaponModels(manifest: WeaponManifest): void {
     this.weapons.setManifest(manifest);
-    const names = new Map<CharacterRig, string>();
-    for (const e of this.entities.values()) if (e.kind === "character") names.set(e.rig, e.name);
-    this.loadouts.remountAll(names);
+    this.loadouts.remountAll();
     if (this.weapons.has("pistol")) {
       void this.weapons.mount(this.rig.weaponMount, "pistol", "vm-weapon", "view").then((pivot) => {
         if (pivot) this.rig.hidePlaceholderGun();
@@ -444,9 +440,9 @@ export class BabylonRenderer implements RenderPort {
     for (const m of rig.meshes) m.setEnabled(false);
     for (const m of model.meshes) if (m.getTotalVertices() > 0) this.shadow.addCaster(m);
     const springs = SpringBones.create(model.root, { vrm: model.springs, prefix: model.prefix, colliders: humanoidColliders(model.root, model.prefix) });
-    const dressed: Dressed = { model, retarget, springs, gun: null, url };
-    this.dressed.set(rig, dressed);
-    if (rig.aiming) dressed.gun = this.arm(model, retarget, rig);
+    this.dressed.set(rig, { model, retarget, springs, url });
+    // The gun in the model's hand and the garment add-ons on its bones.
+    this.loadouts.setModel(rig, { retarget, meshes: model.meshes });
   }
 
   /** Detaches a model, resets its pose and keeps it for the next character of the same look. */
@@ -459,29 +455,12 @@ export class BabylonRenderer implements RenderPort {
     this.modelPool.set(url, pool);
   }
 
-  /**
-   * The procedural gun is baked into the hidden rig mesh, so a dressed shooter gets its own: a
-   * holder in the model's hand with the weapon model, or a box until (or unless) one loads.
-   */
-  private arm(model: ModelInstance, retarget: HumanoidRetarget, rig: CharacterRig): TransformNode | null {
-    const holder = new TransformNode(`${model.root.name}-gun`, this.stage.scene);
-    if (!retarget.holdInRightHand(holder, new Vector3(0, 0, 0))) {
-      holder.dispose();
-      return null;
-    }
-    this.loadouts.setModelHand(rig, holder, model.root.name);
-    return holder;
-  }
-
   private disposeRig(rig: CharacterRig): void {
-    const d = this.dressed.get(rig);
-    if (d) {
-      d.gun?.dispose();
-      this.releaseModel(d.model, d.url);
-    }
-    this.dressed.delete(rig);
-    this.loadouts.setModelHand(rig, null, "");
+    // First off the model's bones (gun, add-ons) and its own colours back, then into the pool.
     this.loadouts.dispose(rig);
+    const d = this.dressed.get(rig);
+    if (d) this.releaseModel(d.model, d.url);
+    this.dressed.delete(rig);
     rig.root.dispose(false, false);
   }
 

@@ -77,7 +77,17 @@ export interface SourceMaterial {
   readonly hidden: boolean;
   /** Depth stacking of VRoid face layers over the face skin. */
   readonly layer: number;
+  /** The garment slot a VRoid cloth material dresses ("Tops", "Bottoms"), for garment tints. */
+  readonly garment: "torso" | "legs" | null;
 }
+
+/** What an imported mesh's toon material was made from, kept in `mesh.metadata.toonSource` to recolour it. */
+export interface ToonSource {
+  readonly preset: PresetName;
+  readonly source: SourceMaterial;
+}
+
+export const toonSourceOf = (mesh: AbstractMesh): ToonSource | null => (mesh.metadata as { toonSource?: ToonSource } | null)?.toonSource ?? null;
 
 const FACE_LAYERS: readonly [RegExp, number][] = [
   [/eyehighlight/i, 4],
@@ -110,6 +120,7 @@ export const readSourceMaterial = (material: unknown): SourceMaterial => {
     hidden: /eyeextra/i.test(m?.name ?? ""),
     layer: FACE_LAYERS.find(([re]) => re.test(m?.name ?? ""))?.[1] ?? 0,
     outline: mode < 2 && m?.backFaceCulling !== false && !/face|eye|mouth|lash|brow|highlight/i.test(m?.name ?? ""),
+    garment: /tops/i.test(m?.name ?? "") ? "torso" : /bottoms/i.test(m?.name ?? "") ? "legs" : null,
   };
 };
 
@@ -138,7 +149,8 @@ export const convertModelMaterials = (container: AssetContainer, materials: Toon
       dropped.push(mesh);
       continue;
     }
-    mesh.metadata = { ...(mesh.metadata as object | null), toonOutline: source.outline };
+    const toonSource: ToonSource = { preset, source };
+    mesh.metadata = { ...(mesh.metadata as object | null), toonOutline: source.outline, toonSource };
     // Primitives of one glTF mesh have their own Geometry but share the vertex data.
     const data = mesh.getVertexBuffer("position")?.getData() ?? mesh;
     let dataId = dataIds.get(data);

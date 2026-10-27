@@ -47,6 +47,11 @@ export interface ImportedMaterialOptions {
   readonly doubleSided?: boolean;
   /** Stacking order of coplanar face layers (eye white < iris < highlight); 0 for the rest. */
   readonly layer?: number;
+  /**
+   * Garment colour (ADR-0015 E7): the texture only gives the brightness and `base` the hue,
+   * so a dark or patterned cloth reads as the tint too. Needs a texture.
+   */
+  readonly tint?: boolean;
 }
 
 export interface ShadowBinding {
@@ -87,9 +92,10 @@ export class ToonMaterials {
   forImported(base: string, texture: Texture | null, preset: PresetName = "importedCharacter", options: ImportedMaterialOptions = {}): ShaderMaterial {
     const blend = options.alphaBlend === true && texture !== null;
     const cut = !blend && options.alphaTest === true && texture !== null;
-    const key = `imp:${preset}:${base}:${texture?.uniqueId ?? "-"}${cut ? ":cut" : ""}${blend ? ":blend" : ""}${options.doubleSided ? ":2s" : ""}${options.layer ? `:L${options.layer}` : ""}`;
+    const tint = options.tint === true && texture !== null;
+    const key = `imp:${preset}:${base}:${texture?.uniqueId ?? "-"}${cut ? ":cut" : ""}${blend ? ":blend" : ""}${options.doubleSided ? ":2s" : ""}${options.layer ? `:L${options.layer}` : ""}${tint ? ":tint" : ""}`;
     return this.cached(key, () => {
-      const m = this.create(key, { ...PRESETS[preset], base }, texture, cut ? "ALPHATEST" : blend ? "ALPHABLEND" : null);
+      const m = this.create(key, { ...PRESETS[preset], base }, texture, cut ? "ALPHATEST" : blend ? "ALPHABLEND" : null, tint);
       if (options.doubleSided) m.backFaceCulling = false;
       if (options.layer) {
         // Polygon offset, so the nearer layer wins the depth test whatever the draw order.
@@ -183,7 +189,7 @@ export class ToonMaterials {
     for (const m of this.materials.values()) this.applyRig(m);
   }
 
-  private create(name: string, p: ToonPreset, texture: Texture | null = null, alpha: "ALPHATEST" | "ALPHABLEND" | null = null): ShaderMaterial {
+  private create(name: string, p: ToonPreset, texture: Texture | null = null, alpha: "ALPHATEST" | "ALPHABLEND" | null = null, tint = false): ShaderMaterial {
     const m = new ShaderMaterial(
       `toon-${name}`,
       this.scene,
@@ -192,7 +198,7 @@ export class ToonMaterials {
         attributes: texture ? ["position", "normal", "uv"] : ["position", "normal"],
         uniforms: [...UNIFORMS],
         samplers: [...SAMPLERS],
-        defines: texture ? ["UV1", "TEXTURE", ...(alpha ? [alpha] : [])] : [],
+        defines: texture ? ["UV1", "TEXTURE", ...(alpha ? [alpha] : []), ...(tint ? ["TINT"] : [])] : [],
         needAlphaBlending: alpha === "ALPHABLEND",
       },
     );

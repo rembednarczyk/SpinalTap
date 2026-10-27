@@ -138,7 +138,12 @@ void main(void) {
   // Cut-out hair strands, lashes and brows; the toon pass stays opaque.
   if (texel.a < 0.5) albedo = vec3(1.0, 0.0, 1.0);
 #endif
+#ifdef TINT
+  // Garment colour (ADR-0015 E7): the cloth's shading kept as brightness, the hue from baseColor.
+  albedo *= 0.3 + 0.85 * dot(texel.rgb, vec3(0.299, 0.587, 0.114));
+#else
   albedo *= texel.rgb;
+#endif
 #endif
 #ifdef VERTEXCOLOR
   albedo *= vColor.rgb;

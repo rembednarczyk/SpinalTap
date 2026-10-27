@@ -1,4 +1,5 @@
 import { type Page, type TestInfo, expect, test } from "@playwright/test";
+import type { DomainState } from "@seki/core";
 import { freeze, step, teleport, waitForGame } from "./helpers";
 
 // Seed 71: the alley guard drops an uncommon Hebi SMG (rolled from its own loot stream).
@@ -137,5 +138,43 @@ test.describe("character menu on a phone in landscape", () => {
   test("loot an SMG, equip it by touch, turn the preview with a finger, save and load", async ({ page }, info) => {
     test.slow();
     await scenario(page, info, true);
+  });
+});
+
+test.describe("garments on the menu preview", () => {
+  test("a helmet and a ballistic vest go on Seki's model in the preview, tinting her top", async ({ page }) => {
+    test.slow();
+    const errors: string[] = [];
+    page.on("pageerror", (e) => errors.push(e.message));
+    await page.goto(`/?seed=${SEED}`);
+    await waitForGame(page);
+    await page.getByRole("button", { name: "Nowa gra" }).click();
+    await freeze(page);
+    // Into the bag, not worn yet (quicker than buying them at the market).
+    await page.evaluate(() => {
+      const sim = window.__seki!.session.sim as unknown as { holder: { domain: DomainState } };
+      const d = sim.holder.domain;
+      const items = [
+        ...d.inventory.items,
+        { uid: "e2e-helmet", def: "moto_helmet" as const, rarity: "common" as const, condition: 100 },
+        { uid: "e2e-vest", def: "ballistic_vest" as const, rarity: "common" as const, condition: 100 },
+      ];
+      sim.holder.domain = { ...d, inventory: { ...d.inventory, items } };
+    });
+    await step(page, 1);
+    await page.keyboard.press("KeyI");
+    await expect.poll(async () => (await preview(page))?.visible).toBe(true);
+    // The imported heroine loads in the background; garments then hang on her bones.
+    await expect.poll(async () => (await preview(page))?.dressed, { timeout: 90_000 }).toBe(true);
+    expect(await preview(page)).toMatchObject({ garments: [], tinted: 0 });
+
+    for (const def of ["moto_helmet", "ballistic_vest"]) {
+      await page.locator(`[data-testid="item-cell"][data-def="${def}"]`).click();
+      await page.getByTestId("item-detail").getByRole("button", { name: /Załóż/ }).click();
+    }
+    await expect.poll(async () => (await preview(page))?.garments).toEqual(["helmet", "vest-plate"]);
+    expect(await preview(page)).toMatchObject({ garmentsOnModel: true, tinted: 1 });
+    expect((await domain(page)).equipment).toMatchObject({ head: "e2e-helmet", torso: "e2e-vest" });
+    expect(errors).toEqual([]);
   });
 });
