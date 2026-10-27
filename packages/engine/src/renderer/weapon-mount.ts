@@ -1,4 +1,4 @@
-import { Matrix, Quaternion, TransformNode, Vector3 } from "../babylon";
+import { Quaternion, TransformNode, Vector3 } from "../babylon";
 import type { ModelInstance, ModelLibrary } from "./model-library";
 
 export type WeaponKind = "pistol" | "smg";
@@ -12,10 +12,14 @@ export type WeaponManifest = Partial<Record<WeaponKind, string>>;
  */
 const MUZZLE_X = 1;
 
+/** Rotation that takes the model's X (barrel) and Y (top) onto `barrel` and `top`. */
+const orient = (barrel: Vector3, top: Vector3): Quaternion =>
+  Quaternion.RotationQuaternionFromAxis(barrel, top, Vector3.Cross(barrel, top));
+
 /** Rig forearm / hand frame: the barrel runs along -Y (elbow to fingers), the top faces +Z. */
-const IN_HAND = Quaternion.FromRotationMatrix(Matrix.FromValues(0, -MUZZLE_X, 0, 0, 0, 0, 1, 0, -MUZZLE_X, 0, 0, 0, 0, 0, 0, 1));
+const IN_HAND = orient(new Vector3(0, -MUZZLE_X, 0), new Vector3(0, 0, 1));
 /** FPP viewmodel frame: the barrel points along +Z (camera forward), top up. */
-const IN_VIEW = Quaternion.FromRotationMatrix(Matrix.FromValues(0, 0, MUZZLE_X, 0, 0, 1, 0, 0, -MUZZLE_X, 0, 0, 0, 0, 0, 0, 1));
+const IN_VIEW = orient(new Vector3(0, 0, MUZZLE_X), new Vector3(0, 1, 0));
 
 export type MountSpace = "hand" | "view";
 
