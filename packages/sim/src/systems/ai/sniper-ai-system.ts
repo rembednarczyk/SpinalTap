@@ -7,6 +7,7 @@ import { readyToFire } from "../../world/player-weapon";
 import { LEVEL_GAP, routeAcrossLevels } from "../../world/nav";
 import { WORLD_NAV } from "../../content/world-map";
 import { worldTimeScale } from "../ability-system";
+import { detourStep, steerPoint, straightWalk } from "./steering";
 import { NPC_CRIT, aimSpreadOf, fireShot } from "../combat-system";
 
 /** Seconds the laser is on before the shot: the telegraph (ADR-0024). */
@@ -59,20 +60,19 @@ export const retreatPerch = (perches: readonly Vec3[], self: Vec3, player: Vec3)
   return best >= 0 ? best : any;
 };
 
-/** Knee height of the "can I walk straight there" test (as for the gangers, ADR-0021). */
-const KNEE = 0.6;
-const knee = (p: Vec3): Vec3 => ({ x: p.x, y: p.y + KNEE, z: p.z });
-
 /**
- * Walks towards the perch: straight when it is on the same floor in plain view, through the
- * level graph otherwise (two roofs of nearly the same height are still different floors).
+ * Walks towards the perch: on the same floor straight when the walk is free and around the
+ * obstacle otherwise (ADR-0025); through the level graph when the perch is on another floor
+ * or this floor does not lead there (two roofs of nearly the same height are still different
+ * floors).
  */
 const walkTo = (ctx: SimContext, self: Sniper, goal: Vec3): void => {
   const from = self.position;
   const apart = Math.abs(goal.y - from.y) > LEVEL_GAP;
   const raised = from.y > LEVEL_GAP || goal.y > LEVEL_GAP;
-  const straight = !apart && (!raised || lineOfSight(ctx.world, knee(from), knee(goal)));
-  const next = straight ? goal : (routeAcrossLevels(ctx.world, WORLD_NAV, from, goal)?.next ?? goal);
+  const sameFloor = !apart && (straightWalk(ctx.world, from, goal) || detourStep(ctx.world, from, goal) !== null || !raised);
+  const leg = sameFloor ? goal : (routeAcrossLevels(ctx.world, WORLD_NAV, from, goal)?.next ?? goal);
+  const next = steerPoint(ctx.world, from, leg);
   const dx = next.x - from.x;
   const dz = next.z - from.z;
   const d = Math.hypot(dx, dz);

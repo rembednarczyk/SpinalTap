@@ -1,6 +1,6 @@
 import type { ContractSiteId, Vec3 } from "@seki/core";
 import { M0_TARGET_TAG } from "@seki/core";
-import { TARG_CONTRACT_SITE_SPAWNS } from "./district-targ";
+import { TARG_CONTRACT_SITE_FACING, TARG_CONTRACT_SITE_SPAWNS } from "./district-targ";
 import { DOKI_CONTRACT_SITE_SPAWNS } from "./district-doki";
 import { type ActorDef, type ActorSpawn, type GangerSpawn, type Rect, type StaticProp, building, crate, lamp, neon, skin, v } from "./builders";
 
@@ -80,6 +80,35 @@ export const CONTRACT_SITE_SPAWNS: Readonly<Record<ContractSiteId, readonly Vec3
   koi_back: [v(3, 0, 12), v(-3, 0, 14.5), v(5, 0, 17), v(-1, 0, 10)],
   car_wash: [v(1, 0, 43), v(-2.5, 0, 39.5), v(4, 0, 47), v(-4, 0, 47)],
   south_gate: [v(-4, 0, -33), v(4.5, 0, -34.5), v(-1, 0, -35), v(6.5, 0, -33.5)],
+};
+
+/**
+ * The point each contract crew faces when it spawns (audit W11): the way trouble comes from.
+ * Kaito's sites look onto the main street or towards Kaito's corner; the market's are in
+ * `TARG_CONTRACT_SITE_FACING`. The docks posts carry their own yaw (ADR-0024).
+ */
+export const CONTRACT_SITE_FACING: Readonly<Partial<Record<ContractSiteId, Vec3>>> = {
+  ...TARG_CONTRACT_SITE_FACING,
+  east_lot: v(0, 0, -12),
+  koi_back: v(FIXER_SPAWN.position.x, 0, FIXER_SPAWN.position.z),
+  car_wash: v(0, 0, 30),
+  south_gate: v(0, 0, -20),
+};
+
+/**
+ * Yaw of a contract ganger spawned at `position` on `site`: towards the site's facing point, or,
+ * for a site without one, towards the middle of its spawn points (the crew faces each other).
+ */
+export const contractSpawnYaw = (site: ContractSiteId, position: Vec3): number => {
+  const points = CONTRACT_SITE_SPAWNS[site];
+  const centre = CONTRACT_SITE_FACING[site] ?? {
+    x: points.reduce((sum, p) => sum + p.x, 0) / Math.max(1, points.length),
+    y: 0,
+    z: points.reduce((sum, p) => sum + p.z, 0) / Math.max(1, points.length),
+  };
+  const dx = centre.x - position.x;
+  const dz = centre.z - position.z;
+  return Math.hypot(dx, dz) < 1e-6 ? 0 : Math.atan2(dx, dz);
 };
 
 export const GANGER_SPAWNS: readonly GangerSpawn[] = [
