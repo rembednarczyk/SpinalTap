@@ -129,6 +129,9 @@ interface Flicker {
   readonly seed: number;
 }
 
+/** Sky dome diameter; its radius must stay inside the camera's far plane (CameraRig: maxZ 320). */
+export const SKY_DIAMETER = 600;
+
 const NIGHT_ZENITH = "#03060b";
 const DAY_ZENITH = "#5d6b7c";
 const NIGHT_CLOUDS = "#3a3442";
@@ -146,6 +149,8 @@ export class Atmosphere {
   private readonly flickers: Flicker[] = [];
   private time = 0;
   private sky: ShaderMaterial | null = null;
+  /** The sky dome; follows the camera (never frozen). */
+  skyMesh: Mesh | null = null;
   /** Meshes that must stay out of the G-buffer, shadow and picking. */
   readonly decorative: Mesh[] = [];
 
@@ -239,15 +244,15 @@ export class Atmosphere {
     return m;
   }
 
-  private decorate(mesh: Mesh): Mesh {
+  private decorate(mesh: Mesh, freeze = true): Mesh {
     mesh.isPickable = false;
-    mesh.freezeWorldMatrix();
+    if (freeze) mesh.freezeWorldMatrix();
     this.decorative.push(mesh);
     return mesh;
   }
 
   private buildSky(rig: LightingRig): void {
-    const sky = MeshBuilder.CreateSphere("sky", { diameter: 600, segments: 24, sideOrientation: MeshClass.BACKSIDE }, this.scene);
+    const sky = MeshBuilder.CreateSphere("sky", { diameter: SKY_DIAMETER, segments: 24, sideOrientation: MeshClass.BACKSIDE }, this.scene);
     const m = new ShaderMaterial("sky", this.scene, { vertexSource: SKY_VERTEX, fragmentSource: SKY_FRAGMENT }, {
       attributes: ["position"],
       uniforms: ["worldViewProjection", "zenith", "horizon", "cityGlow", "cloudLit"],
@@ -259,9 +264,14 @@ export class Atmosphere {
     m.disableDepthWrite = true;
     sky.material = m;
     this.sky = m;
+    // infiniteDistance re-centres the dome on the camera every frame, which a frozen world
+    // matrix would stop: the dome then stays where the camera was at start-up and, a hundred
+    // metres away (the market, the deck), its far side falls behind the far plane and the clear
+    // colour shows through as a dark disc.
     sky.infiniteDistance = true;
     sky.renderingGroupId = 0;
-    this.decorate(sky);
+    this.decorate(sky, false);
+    this.skyMesh = sky;
   }
 }
 
