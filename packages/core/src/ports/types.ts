@@ -41,8 +41,11 @@ export interface Transform {
 export type ViewDescriptor =
   | { readonly kind: "heroine" }
   | { readonly kind: "npc"; readonly preset: "fixer" | "civilian" | "ripperdoc" }
-  /** "corpo": Tessen's security in the docks (ADR-0024); "ganger": Hebi. */
-  | { readonly kind: "enemy"; readonly preset: "ganger" | "corpo" }
+  /**
+   * "corpo": Tessen's security in the docks (ADR-0024); "ganger": Hebi. `enforcer`: sees through
+   * disguises (ADR-0033), the HUD marks it with an icon.
+   */
+  | { readonly kind: "enemy"; readonly preset: "ganger" | "corpo"; readonly enforcer?: boolean }
   | {
       readonly kind: "block";
       readonly size: Vec3;

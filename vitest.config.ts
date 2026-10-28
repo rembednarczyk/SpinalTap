@@ -4,6 +4,9 @@ export default defineConfig({
   test: {
     include: ["packages/*/test/**/*.test.{ts,tsx}"],
     environment: "node",
+    // The app and sim loop tests play whole acts and contracts: well under a second on a free
+    // machine, but past the default 5 s when other test runs share the CPU. A real hang still fails.
+    testTimeout: 20_000,
     coverage: {
       provider: "v8",
       include: ["packages/*/src/**/*.{ts,tsx}"],

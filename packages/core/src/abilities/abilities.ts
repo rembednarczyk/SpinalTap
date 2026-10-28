@@ -37,8 +37,9 @@ export const canActivate = (s: AbilityState): boolean => s.cooldown <= 0;
 export const activate = (s: AbilityState, def: AbilityDefinition): AbilityState | null =>
   canActivate(s) ? { activeTime: def.duration, cooldown: def.cooldown } : null;
 
-export const tickAbility = (s: AbilityState, dt: number): AbilityState =>
-  s.activeTime <= 0 && s.cooldown <= 0 ? s : { activeTime: Math.max(0, s.activeTime - dt), cooldown: Math.max(0, s.cooldown - dt) };
+/** Runs the ability for `dt` seconds; the cooldown runs `cooldownRate` times faster (a buff, ADR-0033). */
+export const tickAbility = (s: AbilityState, dt: number, cooldownRate = 1): AbilityState =>
+  s.activeTime <= 0 && s.cooldown <= 0 ? s : { activeTime: Math.max(0, s.activeTime - dt), cooldown: Math.max(0, s.cooldown - dt * cooldownRate) };
 
 export const enemyTimeScale = (s: AbilityState, def: AbilityDefinition | null): number =>
   def && s.activeTime > 0 ? def.enemyTimeScale : 1;

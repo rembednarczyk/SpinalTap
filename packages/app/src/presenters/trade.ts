@@ -18,6 +18,7 @@ const FAILURE_TEXT: Readonly<Record<PurchaseFailure, string>> = {
   "not-damaged": "Tu nie ma czego naprawiać.",
   "max-capacity": "Większego plecaka nie mam.",
   "empty-slot": "Tam nic nie siedzi.",
+  "over-capacity": "Twoje ciało więcej nie uciągnie. Za mało pojemności cyberware.",
 };
 
 /** Trade and money: purchases, sales, repairs, implants, transfers and refusals at the counter. */

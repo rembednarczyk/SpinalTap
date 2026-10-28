@@ -174,8 +174,11 @@ export interface DomainEvents {
   // Wave 2 (ADR-0032).
   /** A burst of speed on the ground or in the air (legs cyberware). */
   Dashed: { entityId: EntityId; air: boolean; at: Vec3 };
-  /** A guarding blade sent a bullet back towards where the defender looks. */
-  ProjectileReflected: { defenderId: EntityId; attackerId: EntityId; at: Vec3 };
+  /**
+   * A guarding blade sent a bullet back towards where the defender looks. `at`: where the guard
+   * caught it; `to`: where the bullet went (ADR-0033), `hitEntity` who it hit.
+   */
+  ProjectileReflected: { defenderId: EntityId; attackerId: EntityId; at: Vec3; to: Vec3; hitEntity: EntityId | null };
   /** Cyberware capacity in use and the limit (installing above the limit is refused). */
   CyberwareCapacityChanged: { used: number; max: number };
   BuffApplied: { buffId: BuffId; duration: number };

@@ -34,6 +34,7 @@
 | [0030](0030-wizualia-fali-1.md) | Wizualia fali 1: paleta dystryktów, szyldy i holoreklamy z atlasu, post-process zdarzeń z limitem błysków, skaner | Zaakceptowana |
 | [0031](0031-rozbicie-god-objectow.md) | Audyt god objectów i docelowy podział: wąskie intencje UI, obszary stanu, kontrolery sesji, fasada renderera, strażnik w ESLint | Zaakceptowana |
 | [0032](0032-fala-2-kontrakty.md) | Kontrakty fali 2: metro, radio, przebrania, pojemność cyberware i zryw, buffy, warianty zleceń i haki, spotkania uliczne | Zaakceptowana |
+| [0033](0033-fala-2-cialo-zryw-pojemnosc-buffy-przebrania.md) | Fala 2 w symulacji (sim A): zryw i zryw w powietrzu, odbijanie pocisków, pojemność cyberware i shardy, buffy z jedzenia, przebrania i egzekutorzy | Zaakceptowana |
 | [0034](0034-metro-warianty-haki-spotkania.md) | Sim B fali 2: metro z peronami i przejazdem, warianty zleceń, haki obserwacyjne, spotkania uliczne i mikrozdarzenia | Zaakceptowana |
 | [0035](0035-hud-fali-2.md) | App i UI fali 2: kontrolery metra, radia i dotyku, prezentery ciała, przebrań i haków, minimapa z zoomem i obszarami, łuk dotykowy | Zaakceptowana |
 

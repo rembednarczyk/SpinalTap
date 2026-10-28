@@ -196,6 +196,22 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
       },
     };
   },
+  // v12 -> v13 (ADR-0033): no buffs running, no capacity shard used yet, and no disguise seen
+  // through. The role itself follows the worn torso garment on the first step (a Hebi jacket
+  // worn in an old save becomes a disguise then).
+  12: (old) => {
+    const domain = isObject(old.domain) ? old.domain : {};
+    return {
+      ...old,
+      version: 13,
+      domain: {
+        ...domain,
+        buffs: Array.isArray(domain.buffs) ? domain.buffs : [],
+        capacityShards: typeof domain.capacityShards === "number" ? domain.capacityShards : 0,
+        disguise: isObject(domain.disguise) ? domain.disguise : { role: null, blown: false },
+      },
+    };
+  },
 };
 
 export class MigrationError extends Error {}

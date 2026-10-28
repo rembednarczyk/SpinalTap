@@ -2,13 +2,14 @@ import type { Vec3 } from "../math/vec3";
 import type { DomainState } from "../state/domain-state";
 
 /**
+ * v13: buffs, capacity shards and the disguise (ADR-0033).
  * v12: a metro ride in progress, the street encounters played (ADR-0034); the contract's variation
  * and hooks found are optional fields of the contract log.
  * v11: heat, the cyberdeck (RAM, upload) and the contract's debrief counters (ADR-0029).
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 12;
+export const SAVE_SCHEMA_VERSION = 13;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {

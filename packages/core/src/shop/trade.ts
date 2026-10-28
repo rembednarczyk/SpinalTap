@@ -1,5 +1,6 @@
 import { type CharacterState } from "../character/character";
 import { CYBERWARE_CATALOG, type CyberwareId, type CyberwareSlot, installCyberware, isCyberwareId, uninstallCyberware } from "../cyberware/cyberware";
+import { fitsCapacity } from "../cyberware/capacity";
 import { type Wallet, credit, debit } from "../economy/wallet";
 import { conditionFactor } from "../items/armor";
 import { WEAPON_CATALOG, isGarmentId, isWeaponId, itemSummary } from "../items/catalog";
@@ -235,7 +236,7 @@ export type ImplantFitting =
     }
   | { readonly ok: false; readonly reason: TradeFailure };
 
-/** Fits an implant from the bag; the one it replaces goes back into the bag. */
+/** Fits an implant from the bag; the one it replaces goes back into the bag. Refused past `capacity` (ADR-0033). */
 export const installCyberwareItem = (
   wallet: Wallet,
   character: CharacterState,
@@ -243,6 +244,7 @@ export const installCyberwareItem = (
   equipment: Equipment,
   uid: string,
   terms: ShopTerms = STANDARD_TERMS,
+  capacity = Infinity,
 ): ImplantFitting => {
   if (!terms.open) return { ok: false, reason: "refused" };
   const item = findItem(inventory, uid);
@@ -250,6 +252,7 @@ export const installCyberwareItem = (
   const id = item.def;
   if (!isCyberwareId(id)) return { ok: false, reason: "not-sold-here" };
   if (character.cyberware[CYBERWARE_CATALOG[id].slot] === id) return { ok: false, reason: "already-installed" };
+  if (!fitsCapacity(character.cyberware, id, capacity)) return { ok: false, reason: "over-capacity" };
   const fee = installFee({ def: id, rarity: item.rarity }, terms);
   const pay = fee === 0 ? { ok: true as const, wallet } : debit(wallet, fee);
   if (!pay.ok) return { ok: false, reason: "insufficient-funds" };
