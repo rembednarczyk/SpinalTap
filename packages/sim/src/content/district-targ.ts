@@ -401,6 +401,11 @@ export const TARG_NAV: NavGraph = {
     { id: "targ-deck-e", at: v(112, OVERPASS_TOP, 92) },
     { id: "targ-view-sw", at: v(80, 0, 75) },
     { id: "targ-view-s", at: v(100, 0, 77) },
+    // Ground floor round the stairs and behind the north stalls (ADR-0025): a start or a goal
+    // tucked behind a counter still finds the graph.
+    { id: "targ-stairs-e", at: v(90, 0, 99.9) },
+    { id: "targ-north-c", at: v(90, 0, 104.4) },
+    { id: "targ-north-e", at: v(110, 0, 104.4) },
   ],
   edges: [
     { a: "targ-floor-c", b: "targ-floor-w" },
@@ -412,6 +417,9 @@ export const TARG_NAV: NavGraph = {
     { a: "targ-deck-w", b: "targ-deck-e" },
     { a: "targ-floor-c", b: "targ-view-sw" },
     { a: "targ-floor-c", b: "targ-view-s" },
+    { a: "targ-floor-c", b: "targ-stairs-e" },
+    { a: "targ-stairs-e", b: "targ-north-c" },
+    { a: "targ-north-c", b: "targ-north-e" },
   ],
 };
 
