@@ -1,0 +1,152 @@
+import type { DomainState, PhonePriority } from "@seki/core";
+import { NarrativeRuntime } from "@seki/narrative";
+import type { PhoneLineVm, PhoneMessageVm, PhoneNoticeVm, PhoneThreadVm, PhoneVm } from "@seki/ui";
+
+/** Display names of the phone contacts; an unknown id is shown capitalised. */
+export const CONTACT_NAMES: Readonly<Record<string, string>> = {
+  kaito: "Kaito",
+  hana: "Hana",
+  genzo: "Genzō",
+  mori: "Doktor Mori",
+  oyaji: "Oyaji",
+  mika: "Mika",
+};
+
+export const contactName = (from: string): string => CONTACT_NAMES[from] ?? (from ? from[0]!.toUpperCase() + from.slice(1) : "Nieznany");
+
+/** Seconds a banner stays up: a text 5 s, a holocall about as long as it takes to read. */
+export const noticeSeconds = (m: Pick<PhoneMessageVm, "kind" | "priority" | "lines">): number => {
+  if (m.priority !== "story" && m.kind === "text") return 5;
+  const chars = m.lines.reduce((n, l) => n + l.text.length, 0);
+  return Math.min(12, Math.max(4, 2 + chars * 0.05));
+};
+
+/** Seconds of quiet after a banner before an `info` message may show. */
+export const INFO_GAP = 8;
+
+export interface PhoneMoment {
+  /** Seconds of game time (the simulation's ticks). */
+  readonly t: number;
+  /** A conversation, a shop, a breach or combat: only story gets through. */
+  readonly busy: boolean;
+  /** Nothing going on at all (no heat, no scanner): news may come in. */
+  readonly calm: boolean;
+}
+
+const RANK: Readonly<Record<PhonePriority, number>> = { story: 0, contract: 1, info: 2 };
+
+/**
+ * The one notification queue of the phone (ADR-0028, Cyberpunk 2077 after 2.0): `story`
+ * interrupts anything as a holocall, `contract` waits until the player is out of a
+ * conversation and out of combat, `info` waits for a quiet moment. One banner at a time; a
+ * banner pushed aside by a story call comes back after it.
+ */
+export class PhoneQueue {
+  private pending: PhoneMessageVm[] = [];
+  private current: { readonly notice: PhoneNoticeVm; readonly until: number } | null = null;
+  private quietSince = -Infinity;
+
+  push(message: PhoneMessageVm): void {
+    // Stable by priority: story first, then contracts, then news, each in arrival order.
+    const i = this.pending.findIndex((m) => RANK[m.priority] > RANK[message.priority]);
+    if (i < 0) this.pending.push(message);
+    else this.pending.splice(i, 0, message);
+  }
+
+  get waiting(): number {
+    return this.pending.length;
+  }
+
+  clear(): void {
+    this.pending = [];
+    this.current = null;
+    this.quietSince = -Infinity;
+  }
+
+  /** What shows now; the same object as long as nothing changes. */
+  update(now: PhoneMoment): PhoneNoticeVm | null {
+    const cur = this.current;
+    if (cur && now.t >= cur.until) {
+      this.current = null;
+      this.quietSince = now.t;
+    } else if (cur && !cur.notice.holocall) {
+      // A story call, a fight or a conversation pushes a banner aside; it comes back later.
+      const story = this.pending[0]?.priority === "story";
+      if (story || now.busy) {
+        this.current = null;
+        this.push(cur.notice.message);
+      }
+    }
+    if (this.current) return this.current.notice;
+    const next = this.pending[0];
+    if (!next) return null;
+    const allowed = next.priority === "story" || (next.priority === "contract" ? !now.busy : now.calm && now.t - this.quietSince >= INFO_GAP);
+    if (!allowed) return null;
+    this.pending.shift();
+    const notice = { message: next, holocall: next.priority === "story" };
+    this.current = { notice, until: now.t + noticeSeconds(next) };
+    return notice;
+  }
+}
+
+/** Every message, one thread per contact; a thread is read when the phone shows it. */
+export class PhoneInbox {
+  private threads = new Map<string, { messages: PhoneMessageVm[]; read: number }>();
+  private vm: PhoneVm = { threads: [], unread: 0 };
+  private order: string[] = [];
+
+  add(m: PhoneMessageVm): PhoneVm {
+    const t = this.threads.get(m.from) ?? { messages: [], read: 0 };
+    t.messages = [...t.messages, m];
+    this.threads.set(m.from, t);
+    this.order = [m.from, ...this.order.filter((f) => f !== m.from)];
+    return this.build();
+  }
+
+  read(from: string): PhoneVm {
+    const t = this.threads.get(from);
+    if (!t || t.read === t.messages.length) return this.vm;
+    t.read = t.messages.length;
+    return this.build();
+  }
+
+  clear(): PhoneVm {
+    this.threads.clear();
+    this.order = [];
+    return this.build();
+  }
+
+  get view(): PhoneVm {
+    return this.vm;
+  }
+
+  private build(): PhoneVm {
+    const threads: PhoneThreadVm[] = this.order.map((from) => {
+      const t = this.threads.get(from)!;
+      return { from, contact: contactName(from), messages: t.messages, unread: t.messages.length - t.read };
+    });
+    this.vm = { threads, unread: threads.reduce((n, t) => n + t.unread, 0) };
+    return this.vm;
+  }
+}
+
+/**
+ * Renders a phone knot to lines with a runtime of its own (compiled on first use), so a text
+ * never disturbs the conversation in progress or the ink state that goes into the save, and
+ * any command the knot would send is dropped. A missing knot shows a short fallback.
+ */
+export const createKnotRenderer = (source: string) => {
+  let runtime: NarrativeRuntime | null = null;
+  return (knot: string, domain: DomainState): PhoneLineVm[] => {
+    try {
+      runtime ??= new NarrativeRuntime(source, () => {});
+      const view = runtime.start(knot, domain);
+      runtime.interrupt();
+      const lines = view.lines.map((l) => ({ speaker: l.speaker, text: l.text }));
+      if (lines.length > 0) return lines;
+    } catch {
+      // Unknown knot (content not written yet) or an ink error: the fallback below.
+    }
+    return [{ speaker: null, text: "Nowa wiadomość." }];
+  };
+};

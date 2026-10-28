@@ -1,5 +1,5 @@
 import type { InputFrame } from "@seki/core";
-import { type AimMode, DEFAULT_SETTINGS, type GraphicsQuality, type SettingsVm } from "@seki/ui";
+import { type AimMode, type ColorblindMode, DEFAULT_SETTINGS, type DamageNumbersMode, type GraphicsQuality, HUD_SCALE_RANGE, type SettingsVm } from "@seki/ui";
 
 export const SETTINGS_KEY = "seki.settings.v1";
 
@@ -11,6 +11,9 @@ const clamp = (v: unknown, min: number, max: number, fallback: number): number =
 
 const isQuality = (v: unknown): v is GraphicsQuality => v === "high" || v === "low";
 const isAimMode = (v: unknown): v is AimMode => v === "hold" || v === "toggle";
+const isDamageMode = (v: unknown): v is DamageNumbersMode => v === "off" || v === "hit" || v === "total";
+const isColorblind = (v: unknown): v is ColorblindMode => v === "off" || v === "protan" || v === "deutan" || v === "tritan";
+const bool = (v: unknown, fallback: boolean): boolean => (typeof v === "boolean" ? v : fallback);
 
 /** Vertical field of view the settings allow, degrees. */
 export const FOV_RANGE: readonly [number, number] = [50, 80];
@@ -41,6 +44,14 @@ export const sanitizeSettings = (raw: unknown, defaults: SettingsVm = DEFAULT_SE
     volume: clamp(r.volume, 0, 1, defaults.volume),
     bindings: sanitizeBindings(r.bindings),
     hints: typeof r.hints === "boolean" ? r.hints : defaults.hints,
+    // Wave 1 (ADR-0028): entries saved before these fields existed take the defaults.
+    hudAlwaysShow: bool(r.hudAlwaysShow, defaults.hudAlwaysShow),
+    damageNumbers: isDamageMode(r.damageNumbers) ? r.damageNumbers : defaults.damageNumbers,
+    hudScale: Math.round(clamp(r.hudScale, HUD_SCALE_RANGE[0], HUD_SCALE_RANGE[1], defaults.hudScale) * 20) / 20,
+    legibleFont: bool(r.legibleFont, defaults.legibleFont),
+    reduceFlashes: bool(r.reduceFlashes, defaults.reduceFlashes),
+    untimedBreach: bool(r.untimedBreach, defaults.untimedBreach),
+    colorblind: isColorblind(r.colorblind) ? r.colorblind : defaults.colorblind,
   };
 };
 
@@ -70,6 +81,19 @@ export const scaleLook = (frame: InputFrame, factor: number, invertY = false): I
   (factor === 1 && !invertY) || (frame.lookYaw === 0 && frame.lookPitch === 0)
     ? frame
     : { ...frame, lookYaw: frame.lookYaw * factor, lookPitch: frame.lookPitch * factor * (invertY ? -1 : 1) };
+
+/**
+ * The accessibility flag the engine reads (ADR-0028): "reduce flashes and glitch" turns off
+ * aberration, glitch and flicker. The renderer does not take it yet; once it has
+ * `setReduceFlashes`, this hands it over with no change here.
+ */
+export interface EffectsTarget {
+  setReduceFlashes?(on: boolean): void;
+}
+
+export const applyEffects = (target: object, settings: Pick<SettingsVm, "reduceFlashes">): void => {
+  (target as EffectsTarget).setReduceFlashes?.(settings.reduceFlashes);
+};
 
 /** Settings that the running game cannot change on the fly. */
 /** Only the graphics quality needs a reload; volume and sensitivity apply at once. */
