@@ -96,6 +96,8 @@ export interface MinimapContext {
   readonly disguised?: boolean;
   /** Observers known to see through the disguise. */
   readonly enforcers?: ReadonlySet<EntityId>;
+  /** Which job the HUD shows (the journal's pin): only its targets are marked. Both when absent. */
+  readonly focus?: "story" | "contract";
 }
 
 /** An enforcer (ADR-0033): its look says so (`view.enforcer`), or it has already seen through the disguise. */
@@ -151,8 +153,9 @@ export const createMinimapTracker = () => {
   let zoom = 1;
   return (entities: Iterable<Entity>, flags: readonly string[], contracts: ContractLog, ctx: MinimapContext = { ticksPerSecond: 60 }): MinimapFrame => {
     const targetTags = new Set<string>();
-    if (!flags.includes(`killed:${M0_TARGET_TAG}`)) targetTags.add(M0_TARGET_TAG);
-    const contract = contracts.active?.status === "active";
+    // The map marks the same job as the HUD (`shownEntryId`): the main thread or the contract.
+    if (ctx.focus !== "contract" && !flags.includes(`killed:${M0_TARGET_TAG}`)) targetTags.add(M0_TARGET_TAG);
+    const contract = contracts.active?.status === "active" && ctx.focus !== "story";
     if (contracts.active && contract) targetTags.add(contractTag(contracts.active.id));
     let nextPlayer: MapPlayerVm | null = null;
     let goal = 1;

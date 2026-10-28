@@ -3,6 +3,7 @@ import { type AudioCue, type DomainEvents, type DomainState, EMPTY_INPUT, EventB
 import { STORY_SOURCE } from "@seki/narrative";
 import { CONTRACT_HOOKS, DASH_COOLDOWN, type Entity, type Simulation } from "@seki/sim";
 import { type UiState, createUiStore } from "@seki/ui";
+import { mapFocus } from "../src/controllers/hud-sync";
 import { MetroController } from "../src/controllers/metro-controller";
 import { RadioController } from "../src/controllers/radio-controller";
 import { ShopController } from "../src/controllers/shop-controller";
@@ -324,6 +325,16 @@ describe("minimap of wave 2", () => {
     expect(a.mapMarkers.map((m) => m.kind)).toEqual(["target", "target", "enforcer"]);
     const b = track([player(0, 0), hired, terminal, guard], [], { active: null, completed: 1 }, { ticksPerSecond: 60 });
     expect(b.mapMarkers).toEqual([]);
+  });
+
+  it("marks only the job the HUD shows", () => {
+    const track = createMinimapTracker();
+    const courier = { id: 4, key: "courier", tag: "hebi_courier", health: { current: 80, max: 80 }, position: { x: 1, y: 0, z: 43 } } as unknown as Entity;
+    const hired = { id: 5, key: "c1-g0", tag: "contract:c1", health: { current: 80, max: 80 }, position: { x: 3, y: 0, z: 13 } } as unknown as Entity;
+    const ids = (focus: "story" | "contract") => track([player(0, 0), courier, hired], [], contracts, { ticksPerSecond: 60, focus }).mapMarkers.map((m) => m.id);
+    expect(ids("story")).toEqual(["courier"]);
+    expect(ids("contract")).toEqual(["c1-g0"]);
+    expect(mapFocus(createDomainState())).toBe("story");
   });
 
   it("zooms out with speed and after a dash, looks ahead while moving, and keeps still on the metro", () => {

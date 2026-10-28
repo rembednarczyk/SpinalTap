@@ -1,10 +1,10 @@
-import { ABILITY_CATALOG, type RenderPort, dayOf, dayPhase, daylight, formatClock, loadoutAbility, secondOfDay, stackRoom } from "@seki/core";
+import { ABILITY_CATALOG, type DomainState, type RenderPort, dayOf, dayPhase, daylight, formatClock, loadoutAbility, secondOfDay, stackRoom } from "@seki/core";
 import { DISTRICTS, type DistrictId, type Entity, SIM_HZ, type Simulation } from "@seki/sim";
 import { type AbilityVm, type ContractIntents, type LootVm, type Screen, type TradeVm, type UiStore, patchUi } from "@seki/ui";
 import { createStatsCache } from "../character-view";
 import { createJournalCache } from "../journal";
 import { createMinimapTracker } from "../minimap";
-import { describeObjective } from "../objective";
+import { contractEntryId, describeObjective, shownEntryId } from "../objective";
 import { createWeaponHud } from "../weapon-hud";
 import type { Wave1Hud } from "../wave1-hud";
 import type { Wave2Hud } from "../wave2-hud";
@@ -33,6 +33,12 @@ export const isCalm = (sim: Simulation): boolean => {
   if (threat === null || tick - threat.tick >= RECALL_CALM_TICKS) return true;
   for (const e of world.with("health")) if (e.id === threat.sourceId) return e.health.current <= 0;
   return true;
+};
+
+/** The job whose targets the minimap marks: the one the HUD shows (ADR-0035). */
+export const mapFocus = (domain: DomainState): "story" | "contract" => {
+  const contract = domain.contracts.active;
+  return contract && shownEntryId(domain) === contractEntryId(contract) ? "contract" : "story";
 };
 
 /** What the HUD needs to know about the panels the controllers keep. */
@@ -148,6 +154,7 @@ export class HudSync implements ContractIntents {
       riding: panels.riding(),
       disguised: wave2.disguised,
       enforcers: wave2.enforcers,
+      focus: mapFocus(sim.domain),
     });
   }
 
