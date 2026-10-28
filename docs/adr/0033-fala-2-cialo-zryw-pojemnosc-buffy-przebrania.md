@@ -4,7 +4,7 @@
 ADR-0032 ustalił kontrakty fali 2. Ten ADR opisuje część „ruch, walka, ciało” w `packages/sim` i reguły w `packages/core`: liczby, kolejność systemów, zapis i wpływ na złote hashe. HUD (ikony buffów, pasek pojemności, wskaźnik przebrania i egzekutora) i efekty (zryw, odbicie, wygląd przebrań) robią app, UI i engine.
 
 ## Decyzja: kolejność systemów
-`createSystems()`: `clock, streaming, interpolation, ability, body, item, player-control, perk, ladder, …` (reszta jak w ADR-0029).
+`createSystems()`: `clock, metro, streaming, interpolation, ability, body, item, player-control, perk, ladder, …` (metro z ADR-0034, reszta jak w ADR-0029 i ADR-0034).
 - `body` po `ability`: buffy, regeneracja, rola przebrania i raport pojemności.
 - `perk` zaraz po sterowaniu gracza: zryw nadpisuje prędkość, o którą prosi gałka, zanim ruszy drabina i ruch.
 
@@ -119,7 +119,7 @@ ADR-0032 ustalił kontrakty fali 2. Ten ADR opisuje część „ruch, walka, cia
 - Doki dostają trzecią drogę do biura Tessen: w kombinezonie personelu z bronią w kaburze, z dala od szefa zmiany.
 
 ## Zapis
-- `SAVE_SCHEMA_VERSION` z 11 na 12, z polami `buffs`, `capacityShards` i `disguise`.
+- `SAVE_SCHEMA_VERSION` z 12 na 13 (v12 to metro i spotkania z ADR-0034), z polami `buffs`, `capacityShards` i `disguise`.
 - Migracja: brak buffów, zero shardów, brak przebrania. Rolę ustala pierwszy krok z noszonego ubrania.
 - Walidacja:
   - buffy: znane id, sekundy > 0, bez powtórzeń;
@@ -129,9 +129,11 @@ ADR-0032 ustalił kontrakty fali 2. Ten ADR opisuje część „ruch, walka, cia
 
 ## Konsekwencje
 - Złote hashe zmieniają się tylko przez nowe pola zapisu:
-  - replay `d9a66304` na `6523560f`;
-  - pojedynek `5be082e2` na `a7a1a5c1`.
-  - Test treści po zdjęciu pól v12 (i z wersją 11) dalej daje `bef1026f`, więc przebieg się nie zmienił.
+  - replay `87733351` (sim B) na `3b18f8a4`;
+  - pojedynek `76a39667` (sim B) na `825838fe`.
+  - Ten sam replay po zdjęciu pól v13 i z wersją 12 daje `87733351`, czyli hash sim B, więc przebieg się nie zmienił.
+  - Test treści po zdjęciu wszystkich pól fali 2 i z wersją 11 dalej daje `bef1026f`.
+  - Przed merge'em z sim B (moja gałąź sama): replay `d9a66304` na `6523560f`, pojedynek `5be082e2` na `a7a1a5c1`.
 - Reguły fali 2 hashy nie ruszają: replay nie używa implantów, buffów ani przebrań.
 - Zmiana poza moim obszarem: jedna linia tekstu odmowy `over-capacity` w `app/src/presenters/trade.ts`, bo mapa jest wyczerpująca.
 - Testy:

@@ -276,7 +276,7 @@ class GangerAgent {
     else self.velocity = { x: 0, y: 0, z: 0 };
     const watch = self.ai.watch;
     if ((self.ai.suspicion ?? 0) > 0 && this.seen.player) this.face(this.seen.player);
-    else if (watch && ctx && d <= 0.3) self.yaw = watch.yaw + WATCH_SWEEP * Math.sin((2 * Math.PI * ctx.tick * ctx.dt) / WATCH_PERIOD + watch.phase);
+    else if (watch && ctx && d <= 0.3) self.yaw = watch.yaw + WATCH_SWEEP * Math.sin((2 * Math.PI * ctx.tick * ctx.dt) / (watch.period ?? WATCH_PERIOD) + watch.phase);
     return State.SUCCEEDED;
   };
 

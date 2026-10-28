@@ -23,6 +23,10 @@ import { createCrimeSystem } from "./crime-system";
 import { contractLayerSystem } from "./contract-layer-system";
 import { perkSystem } from "./perk-system";
 import { createBodySystem } from "./body-system";
+import { metroSystem } from "../world/metro-ride";
+import { hookSystem } from "../world/hook-tracker";
+import { contractPlanSystem } from "./contract-plan-system";
+import { streetSceneSystem } from "./street-scene-system";
 
 export { aimSpreadOf, fireShot, GUNFIRE_INTERRUPT_RADIUS, NPC_CRIT } from "./combat-system";
 export { meleeSystem, stagger, startSwing } from "./melee-system";
@@ -88,9 +92,13 @@ export { createBodySystem, cyberCapacityOf } from "./body-system";
  *
  * ADR-0033: the body (buffs, disguise, capacity) after the ability, the perks (dash, stamina)
  * right after the player's control, so a dash overrides the velocity the stick asked for.
+ * ADR-0034: the metro before streaming (a rider's destination streams in), the contract plan and
+ * the hooks after the contract system (a shard's bag exists once its carrier is down), the street
+ * scenes after the contract layer.
  */
 export const createSystems = (): readonly System[] => [
   clockSystem,
+  metroSystem,
   streamingSystem,
   interpolationSystem,
   abilitySystem,
@@ -115,6 +123,9 @@ export const createSystems = (): readonly System[] => [
   createCrimeSystem(),
   lootSystem,
   contractSystem,
+  contractPlanSystem,
+  hookSystem,
   contractLayerSystem,
+  streetSceneSystem,
   questSystem,
 ];

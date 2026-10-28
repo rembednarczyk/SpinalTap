@@ -182,14 +182,28 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
       },
     };
   },
-  // v11 -> v12 (ADR-0033): no buffs running, no capacity shard used yet, and no disguise seen
-  // through. The role itself follows the worn torso garment on the first step (a Hebi jacket
-  // worn in an old save becomes a disguise then).
+  // v11 -> v12 (ADR-0034): nobody was on the metro and no street encounter had played. A running
+  // contract stays plain (no variation) with no hooks found: both are optional fields.
   11: (old) => {
     const domain = isObject(old.domain) ? old.domain : {};
     return {
       ...old,
       version: 12,
+      domain: {
+        ...domain,
+        metro: isObject(domain.metro) ? domain.metro : { ride: null },
+        encounters: isObject(domain.encounters) ? domain.encounters : { used: [], nights: {} },
+      },
+    };
+  },
+  // v12 -> v13 (ADR-0033): no buffs running, no capacity shard used yet, and no disguise seen
+  // through. The role itself follows the worn torso garment on the first step (a Hebi jacket
+  // worn in an old save becomes a disguise then).
+  12: (old) => {
+    const domain = isObject(old.domain) ? old.domain : {};
+    return {
+      ...old,
+      version: 13,
       domain: {
         ...domain,
         buffs: Array.isArray(domain.buffs) ? domain.buffs : [],

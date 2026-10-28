@@ -86,12 +86,21 @@ Tak jak w ADR-0028, kontrakty ustalam z góry, żeby warstwy powstawały równol
   - progi mokrego asfaltu;
   - przypisanie zrywu na padzie i dotyku.
 
-## Zmiany kontraktu
-Same dopiski. Zmiany sim A, opisane w [ADR-0033](0033-fala-2-cialo-zryw-pojemnosc-buffy-przebrania.md):
-- `ProjectileReflected` dostaje `to: Vec3` (dokąd poleciał odbity pocisk) i `hitEntity: EntityId | null` (kogo trafił). Engine rysuje z tego smugę.
-- `ViewDescriptor` wroga (`kind: "enemy"`) dostaje opcjonalne `enforcer?: boolean`. Egzekutor widzi przez przebranie, a HUD pokazuje nad nim ikonę.
-- `PurchaseFailure` dostaje `"over-capacity"`: implant przekracza pojemność cyberware.
-
 ## Konsekwencje
 - Nowa komenda, zdarzenia i pole wejścia nie zmieniają złotych hashy. Implementacja zmieni je świadomie.
 - Pojazdy sterowane przez gracza zostają poza zakresem (raport: odradzane).
+
+## Zmiany kontraktu
+Wszystkie są dopisaniem pól opcjonalnych albo nowych zdarzeń, bez zmiany istniejących.
+- **Sim B (ADR-0034):**
+  - `InteractionStarted.kind` dostaje wartość `"metro"` i opcjonalne pole `station: MetroStationId` (kiosk biletowy otwiera mapę linii);
+  - `MetroRefused { reason: MetroRefusal; to }`, gdzie `MetroRefusal` to `riding`, `not-at-kiosk`, `same-station`, `watched` (zlecenie z heat > 0) albo `funds`;
+  - `GuardBark { entityId; knot }`: podsłuchana kwestia strażnika (hak `bark`);
+  - `ContractDebrief.variation?: ContractVariation`;
+  - `Contract.variation?: ContractVariation` i `ContractLog.hooks?: readonly string[]` (znalezione haki);
+  - `DomainState.metro` (przejazd w toku) i `DomainState.encounters` (rozegrane spotkania), zapis v12.
+- **Sim A ([ADR-0033](0033-fala-2-cialo-zryw-pojemnosc-buffy-przebrania.md)):**
+  - `ProjectileReflected` dostaje `to: Vec3` (dokąd poleciał odbity pocisk) i `hitEntity: EntityId | null` (kogo trafił); engine rysuje z tego smugę;
+  - `ViewDescriptor` wroga (`kind: "enemy"`) dostaje opcjonalne `enforcer?: boolean`: egzekutor widzi przez przebranie, HUD pokazuje nad nim ikonę;
+  - `PurchaseFailure` dostaje `"over-capacity"`: implant przekracza pojemność cyberware;
+  - `DomainState.buffs`, `capacityShards` i `disguise`, zapis v13.

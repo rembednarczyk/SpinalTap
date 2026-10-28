@@ -5,6 +5,7 @@ import type { Flags } from "../state/flags";
 import { CONTRACT_KINDS, type ContractGiverId, type ContractKind } from "./kinds";
 import type { ContractTally } from "./scoring";
 import type { BreachDaemonId } from "../hacking/quickhacks";
+import type { ContractVariation } from "../world/wave2";
 
 /** Places where a contract sends Seki. Positions live in sim content. */
 export const CONTRACT_SITES = {
@@ -69,6 +70,11 @@ export interface Contract {
   readonly away?: number;
   /** Hack only: daemons won on the terminal (the breach is applied once). */
   readonly breach?: readonly BreachDaemonId[];
+  /**
+   * What changes the plan (ADR-0034), rolled at acceptance. Absent on the first contracts and
+   * in saves from before wave 2: a plain job.
+   */
+  readonly variation?: ContractVariation;
 }
 
 export interface ContractLog {
@@ -79,6 +85,8 @@ export interface ContractLog {
    * (and the events that carry it) stays what was agreed. Absent or null without a contract.
    */
   readonly tally?: ContractTally | null;
+  /** Ids of the observation hooks found during the active contract (ADR-0034). */
+  readonly hooks?: readonly string[];
 }
 
 export const EMPTY_CONTRACTS: ContractLog = { active: null, completed: 0 };
@@ -275,5 +283,6 @@ const FAILURE_NOTES: Readonly<Record<ContractFailure, string>> = {
   "connection-lost": "Połączenie z terminalem zerwane. Tessen zamknął lukę",
 };
 
-/** Why a contract fell through, as the HUD says it. */
-export const contractFailureNote = (reason: ContractFailure): string => FAILURE_NOTES[reason];
+/** Why a contract fell through, as the HUD says it. A missed deadline of a varied job (ADR-0034) is not about a package. */
+export const contractFailureNote = (reason: ContractFailure, kind: ContractKind = "delivery"): string =>
+  reason === "timeout" && kind !== "delivery" ? "Termin minął. Zleceniodawca szuka kogoś szybszego" : FAILURE_NOTES[reason];

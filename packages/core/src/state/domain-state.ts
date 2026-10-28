@@ -15,6 +15,8 @@ import { type HeatState, NO_HEAT } from "../crime/rules";
 import { INITIAL_NETRUN, type NetrunState } from "../hacking/netrun";
 import { type BuffList, NO_BUFFS } from "../abilities/buffs";
 import { type DisguiseState, NO_DISGUISE } from "../crime/disguise";
+import { type MetroState, NO_METRO } from "../world/metro";
+import { type EncounterLog, NO_ENCOUNTERS } from "../world/encounters";
 
 export interface Preferences {
   readonly cameraMode: CameraMode;
@@ -50,6 +52,10 @@ export interface DomainState {
   readonly capacityShards: number;
   /** Who the player passes for, and whether someone saw through it (ADR-0033). */
   readonly disguise: DisguiseState;
+  /** A metro ride in progress (ADR-0034). */
+  readonly metro: MetroState;
+  /** Street encounters already played (ADR-0034). */
+  readonly encounters: EncounterLog;
 }
 
 export const createDomainState = (): DomainState => ({
@@ -70,4 +76,6 @@ export const createDomainState = (): DomainState => ({
   buffs: NO_BUFFS,
   capacityShards: 0,
   disguise: NO_DISGUISE,
+  metro: NO_METRO,
+  encounters: NO_ENCOUNTERS,
 });

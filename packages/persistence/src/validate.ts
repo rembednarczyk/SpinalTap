@@ -16,6 +16,7 @@ import {
   isStoryOption,
 } from "@seki/core";
 import { findItemsError } from "./validate-items";
+import { findContractWave2Error, findEncountersError, findMetroError } from "./validate-wave2";
 
 type Json = Record<string, unknown>;
 
@@ -78,6 +79,8 @@ export const findSchemaError = (s: Json): string | null => {
   if (contracts.tally !== undefined && contracts.tally !== null && findTallyError(contracts.tally)) return "contract tally";
   const heatError = findHeatError(d.heat) ?? findNetrunError(d.netrun);
   if (heatError) return heatError;
+  const wave2Error = findContractWave2Error(contracts) ?? findMetroError(d.metro) ?? findEncountersError(d.encounters);
+  if (wave2Error) return wave2Error;
   if (!isObject(d.ability) || !isNum(d.ability.activeTime) || !isNum(d.ability.cooldown)) return "ability";
   const bodyError = findBodyError(d);
   if (bodyError) return bodyError;

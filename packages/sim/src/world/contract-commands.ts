@@ -10,7 +10,11 @@ import {
   freshTally,
   generateContractOfKind,
   hasFlag,
+  VARIATION_FROM_COMPLETED,
+  applyVariation,
+  rollContractVariation,
 } from "@seki/core";
+import { deriveRandom } from "../rng/derive-random";
 import { DOKI_TERMINAL_SPOTS } from "../content/district-doki";
 import { oyajiStallOpen } from "../content/schedules";
 import { HACK_RANGE } from "../systems/contract-system";
@@ -39,13 +43,18 @@ export const acceptContract = (ctx: SimContext, cmd: Command<"accept-contract">)
   if (domain.contracts.active) return;
   // Nobody to protect once Oyaji is dead, and Hebi raid his stall only while it is open.
   if (kind === "protect" && (hasFlag(domain.flags, deadFlag(PROTECTEE_KEY)) || !oyajiStallOpen(domain.clock))) return;
-  const contract = generateContractOfKind(
+  const plain = generateContractOfKind(
     kind,
     { log: domain.contracts, reputation: domain.reputation, flags: domain.flags, tick: ctx.tick, ticksPerSecond: SIM_HZ },
     ctx.rng,
   );
-  // Fresh debrief counters (ADR-0029): a new job starts clean.
-  ctx.state.domain = { ...domain, contracts: { ...domain.contracts, active: contract, tally: freshTally(ctx.tick) } };
+  // The variation (ADR-0034) from a stream of its own, so the job's other rolls stay as they were.
+  const varied = domain.contracts.completed >= VARIATION_FROM_COMPLETED;
+  const variation = varied ? rollContractVariation(kind, plain.siteId, deriveRandom(ctx.seed, `variation:${plain.id}`)) : null;
+  const contract = variation ? applyVariation(plain, variation, ctx.tick, SIM_HZ) : plain;
+  // Fresh debrief counters (ADR-0029) and no hooks found: a new job starts clean.
+  const { hooks: _found, ...log } = domain.contracts;
+  ctx.state.domain = { ...domain, contracts: { ...log, active: contract, tally: freshTally(ctx.tick) } };
   if (kind === "protect") patchUpProtectee(ctx);
   ctx.streamer.registerContract(ctx.world, ctx.state.domain.flags, domain.contracts.completed, contract);
   ctx.bus.emit("ContractAccepted", { contract });
@@ -77,7 +86,7 @@ export const completeContract = (ctx: SimContext): void => {
   if (paid.ok) ctx.bus.emit("EddiesChanged", { balance: paid.wallet.eddies, delta: total });
   applyReputationCause(ctx, { type: "contract-completed", kind });
   ctx.bus.emit("ContractCompleted", { contract, reward: contract.reward });
-  ctx.bus.emit("ContractDebrief", { contractId: contract.id, reward: contract.reward, ...card });
+  ctx.bus.emit("ContractDebrief", { contractId: contract.id, reward: contract.reward, ...card, ...(contract.variation ? { variation: contract.variation } : {}) });
   phoneFromFixer(ctx, giverOfContract(contract), "paid");
   raiseProgress(ctx, "contract_completed");
 };

@@ -100,7 +100,8 @@ export const contractSystem: System = {
     const contract = ctx.state.domain.contracts.active;
     if (contract?.status !== "active") return;
     const kind = contractKind(contract);
-    if (kind === "delivery" && contract.deadlineTick !== undefined && ctx.tick >= contract.deadlineTick) failContract(ctx, "timeout");
+    // A delivery's clock, or the deadline of a `time_limit` variation (ADR-0034).
+    if (contract.deadlineTick !== undefined && ctx.tick >= contract.deadlineTick) failContract(ctx, "timeout");
     else if (kind === "protect" && ctx.state.domain.flags.includes(deadFlag(PROTECTEE_KEY))) failContract(ctx, "protectee-killed");
     else if (kind === "escort") runEscort(ctx, contract);
     else if (kind === "infiltrate") runInfiltration(ctx, contract);

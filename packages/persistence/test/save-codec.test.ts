@@ -557,16 +557,16 @@ describe("heat, cyberdeck and debrief counters (v10 to v11, ADR-0029)", () => {
   });
 });
 
-describe("buffs, capacity shards and the disguise (v11 to v12, ADR-0033)", () => {
-  /** What v11 wrote: none of the wave 2 body state. */
-  const v11Payload = () => {
+describe("buffs, capacity shards and the disguise (v12 to v13, ADR-0033)", () => {
+  /** What v12 wrote: none of the wave 2 body state. */
+  const v12Payload = () => {
     const s = snapshot();
     const { buffs: _b, capacityShards: _c, disguise: _d, ...domain } = s.domain;
-    return { ...s, version: 11, domain };
+    return { ...s, version: 12, domain };
   };
 
   it("adds no buffs, no shards and no disguise", () => {
-    const loaded = decodeSave("v11", wrap(v11Payload()));
+    const loaded = decodeSave("v12", wrap(v12Payload()));
     expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
     expect(loaded.domain.buffs).toEqual([]);
     expect(loaded.domain.capacityShards).toBe(0);
@@ -574,9 +574,9 @@ describe("buffs, capacity shards and the disguise (v11 to v12, ADR-0033)", () =>
   });
 
   it("tolerates a missing domain and keeps what is already there", () => {
-    expect(MIGRATIONS[11]!({ version: 11 })).toEqual({ version: 12, domain: { buffs: [], capacityShards: 0, disguise: { role: null, blown: false } } });
+    expect(MIGRATIONS[12]!({ version: 12 })).toEqual({ version: 13, domain: { buffs: [], capacityShards: 0, disguise: { role: null, blown: false } } });
     const kept = { buffs: [{ id: "regen", left: 3 }], capacityShards: 2, disguise: { role: "hebi", blown: true } };
-    expect(MIGRATIONS[11]!({ version: 11, domain: kept })).toMatchObject({ domain: kept });
+    expect(MIGRATIONS[12]!({ version: 12, domain: kept })).toMatchObject({ domain: kept });
   });
 
   it("validates buffs, shards and the disguise of a current save", () => {
