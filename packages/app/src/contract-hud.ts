@@ -11,6 +11,7 @@ import {
   contractGiver,
   contractKind,
 } from "@seki/core";
+import { variationOf } from "@seki/narrative";
 import type { ContractBonusVm, ContractDebriefVm, ContractVariationVm } from "@seki/ui";
 
 /**
@@ -47,15 +48,9 @@ const TRAIT_TEXT: Readonly<Record<TargetTrait, string>> = { paranoid: "cel paran
 const TWIST_TEXT: Readonly<Record<NonNullable<ContractVariation["twist"]>, string>> = { wrong_target: "zły cel", setup: "wystawka" };
 
 /**
- * The variation of a contract, when the simulation stores one on it (ADR-0032). Read without
- * assuming the field exists yet: sim B adds `variation` to the contract.
+ * The debrief card's tags for a variation (ADR-0032); the contract's own `variation` is read
+ * with the narrative's `variationOf`, which does not assume the field exists yet.
  */
-export const variationOf = (contract: object | null): ContractVariation | null => {
-  if (!contract || !("variation" in contract)) return null;
-  const v = contract.variation;
-  return typeof v === "object" && v !== null && "security" in v && "modifiers" in v ? (v as ContractVariation) : null;
-};
-
 export const variationVm = (v: ContractVariation): ContractVariationVm => ({
   labels: [...v.modifiers.map((m) => MODIFIER_TEXT[m]), SECURITY_TEXT[v.security], ...(v.trait ? [TRAIT_TEXT[v.trait]] : [])],
   twist: v.twist ? TWIST_TEXT[v.twist] : null,

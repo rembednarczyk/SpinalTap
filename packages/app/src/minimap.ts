@@ -169,8 +169,10 @@ export const createMinimapTracker = () => {
       const kind = markerKind(e, targetTags, contract, ctx);
       if (kind) nextMarkers.push(markerOf(e, kind));
     }
-    zoom = Math.round((zoom + (goal - zoom) * ZOOM_EASE) / ZOOM_STEP) * ZOOM_STEP;
-    if (Math.abs(goal - zoom) < ZOOM_STEP) zoom = goal;
+    // Eases towards the goal, at least one step a frame, so it always gets there.
+    const delta = goal - zoom;
+    const move = Math.min(Math.abs(delta), Math.max(ZOOM_STEP, Math.abs(delta) * ZOOM_EASE));
+    zoom = Math.round((zoom + Math.sign(delta) * move) / ZOOM_STEP) * ZOOM_STEP;
     if (!nextPlayer) player = null;
     else if (!player || player.x !== nextPlayer.x || player.z !== nextPlayer.z || player.yaw !== nextPlayer.yaw || player.level !== nextPlayer.level || player.moving !== nextPlayer.moving) player = nextPlayer;
     if (!sameMarkers(markers, nextMarkers)) markers = nextMarkers;
