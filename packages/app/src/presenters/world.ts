@@ -30,6 +30,7 @@ export const presentWorld: Presenter = ({ bus, render, audio, ui, hooks, toast, 
   bus.on("InteractionStarted", (e) => {
     if (e.kind === "shop") hooks.onShop(e.shopId ?? "clinic", e.dialogueId);
     else if (e.kind === "loot") hooks.onLoot(e.dialogueId);
+    else if (e.kind === "metro") hooks.onMetro?.(e.station ?? null);
     else hooks.onDialogue(e.dialogueId);
   }),
   bus.on("InteractionRefused", (e) => {

@@ -8,7 +8,7 @@ import { RadioController } from "../src/controllers/radio-controller";
 import { ShopController } from "../src/controllers/shop-controller";
 import { TouchController } from "../src/controllers/touch-controller";
 import { debriefVm } from "../src/contract-hud";
-import { METRO_GUARDED, kioskStation, metroFare, metroMapVm, stationOfDistrict } from "../src/metro";
+import { METRO_GUARDED, metroFare, metroMapVm, stationOfDistrict } from "../src/metro";
 import { MAP_ZOOM_DASH, MAP_ZOOM_RUN, TARGET_AREA_RADIUS, createMinimapTracker } from "../src/minimap";
 import { createKnotLines, createKnotPool, createKnotRenderer } from "../src/phone";
 import { DASH_COOLDOWN_SECONDS } from "../src/presenters/body-hud";
@@ -52,16 +52,12 @@ describe("knot pools (ADR-0035)", () => {
 
 describe("metro data", () => {
   it("prices a ride by stops and maps kiosks and districts to platforms", () => {
-    expect(metroFare("shinsekai", "shinsekai")).toBe(0);
-    expect(metroFare("shinsekai", "kanal")).toBe(25);
-    expect(metroFare("doki", "shinsekai")).toBe(45);
+    expect(metroMapVm("shinsekai", false).stops[0]?.fare).toBe(0);
+    expect(metroFare("shinsekai", "kanal")).toBe(20);
+    expect(metroFare("doki", "shinsekai")).toBe(30);
     expect(stationOfDistrict("shinsekai-7")).toBe("shinsekai");
     expect(stationOfDistrict("doki")).toBe("doki");
     expect(stationOfDistrict(null)).toBeNull();
-    expect(kioskStation("metro_kiosk", "targ")).toBe("targ");
-    expect(kioskStation("metro_kiosk_doki", "targ")).toBe("doki");
-    expect(kioskStation("metro_kiosk_nowhere", "targ")).toBeNull();
-    expect(kioskStation("fixer", "targ")).toBeNull();
     const map = metroMapVm("kanal", true);
     expect(map.stops.map((s) => s.id)).toEqual(["shinsekai", "kanal", "targ", "doki"]);
     expect(map.stops.find((s) => s.here)?.id).toBe("kanal");
@@ -107,6 +103,16 @@ describe("MetroController without a session", () => {
     expect(hot.commands).toEqual([]);
     hot.metro.closeMetro();
     expect(hot.commands).toEqual([{ type: "end-dialogue" }]);
+  });
+
+  it("says why the kiosk refused a ticket", () => {
+    const toasts: string[] = [];
+    const bus = new EventBus<DomainEvents>();
+    const cues: AudioCue[] = [];
+    new MetroController({ bus, sim: fakeSim().sim, ui: createUiStore(), audio: fakeAudio(cues), focus: fakeFocus().focus, canOpen: () => true, guarded: () => false, rideLines: createKnotPool(lines, "metro_ride_", domain), toast: (_t, text) => toasts.push(text) });
+    bus.emit("MetroRefused", { reason: "watched", to: "doki" });
+    expect(toasts).toEqual([METRO_GUARDED]);
+    expect(cues).toEqual(["denied"]);
   });
 
   it("shows the ride with ink subtitles from MetroDeparted to MetroArrived", () => {

@@ -46,7 +46,7 @@ export const presentQuests: Presenter = ({ bus, render, audio, toast }) => [
     audio.play("quest-update");
   }),
   bus.on("ContractFailed", (e) => {
-    toast("quest", "Kontrakt przepadł", contractFailureNote(e.reason));
+    toast("quest", "Kontrakt przepadł", contractFailureNote(e.reason, contractKind(e.contract)));
     audio.play("denied");
   }),
   bus.on("ReputationChanged", (e) => {

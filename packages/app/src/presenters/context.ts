@@ -1,4 +1,4 @@
-import type { AudioPort, DomainEvents, EntityId, EventBus, RenderPort, ShopId } from "@seki/core";
+import type { AudioPort, DomainEvents, EntityId, EventBus, MetroStationId, RenderPort, ShopId } from "@seki/core";
 import { type Toast, type UiStore, dismissToast, pushToast } from "@seki/ui";
 
 export const TOAST_MS = 4500;
@@ -15,6 +15,8 @@ export interface PresenterHooks {
   onDialogueInterrupted(reason: DomainEvents["DialogueInterrupted"]["reason"]): void;
   /** A street encounter began (ADR-0032): its ink scene opens as a conversation with `npcId`. */
   onEncounter?(knot: string, npcId: EntityId | null): void;
+  /** A ticket kiosk (ADR-0034): the line map of `station` (the district's when absent). */
+  onMetro?(station: MetroStationId | null): void;
 }
 
 /** What every presenter gets: the bus, the three presentation channels and the session hooks. */

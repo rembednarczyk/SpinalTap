@@ -1,6 +1,6 @@
 import type { AudioPort, DomainEvents, EventBus, MetroStationId } from "@seki/core";
 import { type MetroIntents, type MetroRideVm, type PhoneLineVm, type UiStore, patchUi } from "@seki/ui";
-import { METRO_LINE, METRO_STATION_NAMES, metroFare, metroMapVm } from "../metro";
+import { METRO_LINE, METRO_REFUSAL_TEXT, METRO_STATION_NAMES, metroFare, metroMapVm } from "../metro";
 import type { KnotPool } from "../phone";
 import type { Focus, SimRef } from "./shared";
 
@@ -19,6 +19,8 @@ export interface MetroControllerDeps {
   readonly guarded: () => boolean;
   /** Ink lines for the ride, `metro_ride_<n>`; an empty pool leaves the ride quiet. */
   readonly rideLines: KnotPool;
+  /** A system toast (a refused ticket). */
+  readonly toast?: (title: string, text: string) => void;
 }
 
 interface Kiosk {
@@ -48,6 +50,10 @@ export class MetroController implements MetroIntents {
   constructor(private readonly deps: MetroControllerDeps) {
     deps.bus.on("MetroDeparted", (e) => this.depart(e));
     deps.bus.on("MetroArrived", () => this.arrive());
+    deps.bus.on("MetroRefused", (e) => {
+      deps.audio.play("denied");
+      deps.toast?.("Kiosk odmawia", METRO_REFUSAL_TEXT[e.reason]);
+    });
   }
 
   get isOpen(): boolean {

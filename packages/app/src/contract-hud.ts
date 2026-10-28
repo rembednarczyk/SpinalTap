@@ -32,7 +32,7 @@ export const debriefVm = (e: DomainEvents["ContractDebrief"], contract: Contract
     bonus: e.bonus,
     styleBonus: e.styleBonus,
     seconds: e.seconds,
-    ...variationField(contract),
+    ...variationField(e.variation ?? variationOf(contract)),
   };
 };
 
@@ -56,8 +56,7 @@ export const variationVm = (v: ContractVariation): ContractVariationVm => ({
   twist: v.twist ? TWIST_TEXT[v.twist] : null,
 });
 
-const variationField = (contract: Contract | null): { variation?: ContractVariationVm } => {
-  const v = variationOf(contract);
+const variationField = (v: ContractVariation | null | undefined): { variation?: ContractVariationVm } => {
   return v ? { variation: variationVm(v) } : {};
 };
 

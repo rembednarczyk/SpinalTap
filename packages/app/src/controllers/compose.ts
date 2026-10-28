@@ -3,7 +3,7 @@ import type { NarrativeRuntime } from "@seki/narrative";
 import { SIM_HZ } from "@seki/sim";
 import type { RadioStationId, Screen } from "@seki/ui";
 import { bindEventPresenter } from "../event-presenter";
-import { kioskStation } from "../metro";
+import { stationOfDistrict } from "../metro";
 import { type KnotLines, type KnotPool, createKnotLines, createKnotPool, createKnotRenderer } from "../phone";
 import type { GameSessionDeps } from "../session-deps";
 import { Wave1Hud } from "../wave1-hud";
@@ -68,8 +68,10 @@ const createTravel = (deps: GameSessionDeps, s: SessionHooks, lines: KnotLines, 
     audio,
     focus,
     canOpen,
-    guarded: () => wave1.heatLevel > 0 && s.sim().domain.contracts.active?.status === "active",
+    // The kiosk's own rule (ADR-0034): a running contract, active or cleared, with heat on.
+    guarded: () => wave1.heatLevel > 0 && s.sim().domain.contracts.active !== null,
     rideLines: createKnotPool(lines, "metro_ride_", domain),
+    toast: (title, text) => pushToastTimed(ui, "system", title, text),
   });
   const pools = new Map<RadioStationId, KnotPool>();
   const radio = new RadioController({
@@ -103,11 +105,12 @@ export const createControllers = (deps: GameSessionDeps, s: SessionHooks): Contr
   let free = (): boolean => false;
   bindEventPresenter(bus, render, audio, ui, {
     playerId: () => sim().player()?.id ?? null,
-    onDialogue: (id) => {
-      // A ticket kiosk opens the line map, not ink (ADR-0035).
-      const station = kioskStation(id, sim().district);
-      if (station && metro) metro.open(station);
-      else dialogue.open(id);
+    onDialogue: (id) => dialogue.open(id),
+    // A ticket kiosk opens the line map, not ink (ADR-0034, ADR-0035).
+    onMetro: (station) => {
+      const from = station ?? stationOfDistrict(sim().district);
+      if (from && metro) metro.open(from);
+      else sim().enqueue({ type: "end-dialogue" });
     },
     onEncounter: (knot) => {
       if (free()) dialogue.open(knot);
