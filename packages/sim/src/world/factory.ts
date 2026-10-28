@@ -2,6 +2,7 @@ import { ENEMY_TYPES, type EnemyTypeId, type EntityId, type EntitySnapshot, type
 import { PLAYER_SPAWN } from "../content/district-m0";
 import { SNIPER_PERCHES } from "../content/district-doki";
 import type { ActorDef, ActorSpawn, StaticProp } from "../content/builders";
+import { type DeviceDef, deviceView } from "../content/devices";
 import { SCHEDULES } from "../content/schedules";
 import { aabbFromCenter } from "./collision";
 import type { Combatant, Entity, MeleeState } from "./components";
@@ -223,6 +224,30 @@ const npcEntity = (id: EntityId, def: ActorDef & { kind: "npc" }, chunk: string)
   return e;
 };
 
+/** A camera or a hackable device (ADR-0029). Not solid, no health: hacks switch it off for a while. */
+export const deviceEntity = (id: EntityId, def: DeviceDef): Entity => ({
+  id,
+  key: def.key,
+  chunk: def.chunk,
+  position: def.position,
+  prevPosition: def.position,
+  yaw: def.yaw,
+  prevYaw: def.yaw,
+  pitch: 0,
+  view: deviceView(def.kind),
+  faction: def.faction,
+  device: {
+    kind: def.kind,
+    network: def.network,
+    faction: def.faction,
+    ...(def.restricted ? { restricted: def.restricted } : {}),
+    spot: 0,
+    cooldown: 0,
+    noise: 0,
+    broken: 0,
+  },
+});
+
 /** Size of a contract crate. */
 const CRATE = { x: 0.9, y: 0.6, z: 0.6 } as const;
 
@@ -246,15 +271,21 @@ export const pickupEntity = (id: EntityId, key: string, position: Vec3, chunk: s
 export const contractGangerHp = (completed: number): number => GANGER_MAX_HP + Math.min(60, completed * 10);
 
 /** The saveable state of a keyed entity. */
-export const entitySnapshotOf = (e: Entity & { key: string }): EntitySnapshot => ({
-  key: e.key,
-  position: e.position,
-  yaw: e.yaw,
-  pitch: e.pitch,
-  hp: e.health?.current ?? null,
-  cooldown: e.combatant?.cooldown ?? 0,
-  alerted: e.ai?.alerted ?? false,
-});
+export const entitySnapshotOf = (e: Entity & { key: string }): EntitySnapshot => {
+  const s: EntitySnapshot = {
+    key: e.key,
+    position: e.position,
+    yaw: e.yaw,
+    pitch: e.pitch,
+    hp: e.health?.current ?? null,
+    cooldown: e.combatant?.cooldown ?? 0,
+    alerted: e.ai?.alerted ?? false,
+  };
+  // Looking for the player (ADR-0029): where, for how long, and how long out of sight.
+  const ai = e.ai;
+  if (!ai?.lastKnown) return s;
+  return { ...s, lastKnown: { ...ai.lastKnown }, search: ai.search ?? 0, lost: ai.lost ?? 0 };
+};
 
 /** Puts saved state back onto a freshly built entity. */
 export const applyEntitySnapshot = (e: Entity, s: EntitySnapshot): void => {
@@ -265,5 +296,10 @@ export const applyEntitySnapshot = (e: Entity, s: EntitySnapshot): void => {
   e.pitch = s.pitch;
   if (e.health && s.hp !== null) e.health = { ...e.health, current: s.hp };
   if (e.combatant) e.combatant.cooldown = s.cooldown;
-  if (e.ai) e.ai.alerted = s.alerted;
+  if (e.ai) {
+    e.ai.alerted = s.alerted;
+    e.ai.lastKnown = s.lastKnown ? { ...s.lastKnown } : null;
+    e.ai.search = s.search ?? 0;
+    e.ai.lost = s.lost ?? 0;
+  }
 };

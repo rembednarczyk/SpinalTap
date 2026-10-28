@@ -30,7 +30,7 @@ import {
   sniperEntity,
   stateHash,
 } from "../src";
-import { byKey, collect, input, run, teleportPlayer } from "./helpers";
+import { byKey, collect, input, run, teleportPlayer, debriefExtras } from "./helpers";
 
 const at = (x: number, z: number, y = 0) => ({ x, y, z });
 const roundTrip = (s: SaveSnapshot): SaveSnapshot => JSON.parse(JSON.stringify(s)) as SaveSnapshot;
@@ -168,8 +168,10 @@ describe("escort (Mika to the boat)", () => {
     expect(alarmAt).toBeGreaterThan(0);
     expect(sim.domain.contracts.active?.status).toBe("cleared");
     const before = sim.domain.wallet.eddies;
+    // The card adds the bonus condition and the fixer's style (ADR-0029).
+    const extra = debriefExtras(sim);
     complete(sim);
-    expect(sim.domain.wallet.eddies).toBe(before + c.reward);
+    expect(sim.domain.wallet.eddies).toBe(before + c.reward + extra());
     expect(sim.domain.reputation.tessen).toBeLessThan(0);
   });
 

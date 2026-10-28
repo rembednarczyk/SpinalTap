@@ -38,6 +38,23 @@ export {
   PITCH_LIMIT,
   SPRINT_MULTIPLIER,
   worldTimeScale,
+  scanning,
+  DEVICE_SHORT_SECONDS,
+  hackTargetKind,
+  scanFocus,
+  CAMERA_ALARM_RADIUS,
+  CAMERA_CONE,
+  CAMERA_RANGE,
+  CAMERA_REPORT_COOLDOWN,
+  CAMERA_SPOT_SECONDS,
+  REINFORCE_INTERVAL,
+  REPORT_LEAD_RADIUS,
+  SPAWN_MAX,
+  SPAWN_MIN,
+  VIEW_HALF_ANGLE,
+  cameraSees,
+  inPlayerView,
+  securityAt,
 } from "./systems";
 export {
   CIVILIAN_FLEE_SPEED,
@@ -60,6 +77,18 @@ export {
   guardSees,
   nextOnRoute,
   retreatPerch,
+  ALARMED_SECONDS,
+  AWARENESS_STEP,
+  COWER_RADIUS,
+  COWER_SECONDS,
+  FLEE_SECONDS,
+  GIVE_UP,
+  LEAD_ARRIVE,
+  SEARCH_SECONDS,
+  TRACK_GRACE,
+  awarenessOf,
+  giveLead,
+  scare,
 } from "./systems/ai";
 export {
   contractGangerHp,
@@ -79,5 +108,8 @@ export {
 export { ESCORT_ARRIVE, HACK_RANGE } from "./systems/contract-system";
 export { firingPosition, routeAcrossLevels } from "./world/nav";
 export { activeWeaponItem, loadedOf, readyToFire, reserveOf } from "./world/player-weapon";
+export { deviceEntity } from "./world/factory";
+export { phoneKnot } from "./world/street";
+export { BREACH_DATAMINE_EDDIES, BREACH_ICEPICK_SECONDS, BREACH_MARK_SECONDS } from "./simulation";
 export type { SessionState, SimContext, System } from "./world/context";
 export { shopOpen } from "./world/trade-commands";

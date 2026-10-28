@@ -13,6 +13,15 @@ import { MemorySaveStore, SavePersistence } from "@seki/persistence";
 import { createUiStore } from "@seki/ui";
 import { GameSession } from "../src/game-session";
 
+/** What the debrief card pays on top of the reward (ADR-0029); subscribe right before the payment. */
+const extraPay = (session: GameSession): (() => number) => {
+  let extra = 0;
+  session.sim.bus.on("ContractDebrief", (c) => {
+    extra += c.bonus + c.styleBonus;
+  });
+  return () => extra;
+};
+
 const render: RenderPort = {
   spawn() {},
   updateTransform() {},
@@ -112,9 +121,10 @@ describe("M1 acceptance: contract → eddies → cyberware → stronger in comba
 
     // Report back: Kaito pays and offers the next job (declined here).
     const before = session.sim.domain.wallet.eddies;
+    const extra = extraPay(session);
     talkToKaito(session);
     steps(session, 1);
-    expect(session.sim.domain.wallet.eddies).toBe(before + contract.reward);
+    expect(session.sim.domain.wallet.eddies).toBe(before + contract.reward + extra());
     expect(session.sim.domain.contracts.completed).toBe(1);
     session.choose(2);
     session.closeDialogue();
@@ -132,7 +142,7 @@ describe("M1 acceptance: contract → eddies → cyberware → stronger in comba
     steps(session, 1);
     expect(session.sim.domain.character.cyberware.arms).toBe("steady_grip");
     expect(session.sim.domain.inventory.stacks.medkit).toBe(2);
-    expect(session.sim.domain.wallet.eddies).toBe(before + contract.reward - 500 - 90);
+    expect(session.sim.domain.wallet.eddies).toBe(before + contract.reward + extra() - 500 - 90);
     expect(ui.getState().shopOpen).toBe(false);
 
     // Next contract: the same pistol now hits harder.

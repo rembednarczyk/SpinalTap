@@ -14,6 +14,7 @@ import {
   TARG_SOUTH_BOUNDS,
   TARG_SOUTH_PROPS,
 } from "./district-targ";
+import { DEVICES, type DeviceDef } from "./devices";
 import { DOKI_NAV, DOKI_QUAY_ACTORS, DOKI_QUAY_BOUNDS, DOKI_QUAY_PROPS, DOKI_YARD_ACTORS, DOKI_YARD_BOUNDS, DOKI_YARD_PROPS } from "./district-doki";
 
 export const DISTRICTS = {
@@ -47,6 +48,9 @@ export const WORLD_CHUNKS: readonly ChunkDef[] = [
   { id: "doki-yard", district: "doki", bounds: DOKI_YARD_BOUNDS, props: DOKI_YARD_PROPS, actors: DOKI_YARD_ACTORS },
   { id: "doki-quay", district: "doki", bounds: DOKI_QUAY_BOUNDS, props: DOKI_QUAY_PROPS, actors: DOKI_QUAY_ACTORS },
 ];
+
+/** Cameras and hackable devices (ADR-0029); each one names its chunk above. */
+export const WORLD_DEVICES: readonly DeviceDef[] = DEVICES;
 
 /** Level graph of the whole city (ADR-0021). Shinsekai 7 is flat and has none. */
 export const WORLD_NAV: NavGraph = mergeNav(KANAL_NAV, TARG_NAV, DOKI_NAV);

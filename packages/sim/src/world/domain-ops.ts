@@ -17,6 +17,7 @@ import {
   contractPayout,
   credit,
   currentStep,
+  freshTally,
   progressFlag,
   hasFlag,
   hasMemory,
@@ -25,6 +26,7 @@ import {
   unlockMemory,
 } from "@seki/core";
 import type { SimContext } from "./context";
+import { giverOfContract, phoneFromFixer } from "./street";
 
 /** Domain mutations shared by systems and command handling. Each one emits its own event. */
 export const raiseFlag = (ctx: SimContext, flag: string): void => {
@@ -88,7 +90,9 @@ export const clearContract = (ctx: SimContext): void => {
   const contract = ctx.state.domain.contracts.active;
   if (contract?.status !== "active") return;
   const cleared = { ...contract, status: "cleared" as const };
-  ctx.state.domain = { ...ctx.state.domain, contracts: { ...ctx.state.domain.contracts, active: cleared } };
+  const log = ctx.state.domain.contracts;
+  // The clock of the `swift` badge stops here (ADR-0029).
+  ctx.state.domain = { ...ctx.state.domain, contracts: { ...log, active: cleared, tally: { ...(log.tally ?? freshTally(ctx.tick)), clearedTick: ctx.tick } } };
   ctx.bus.emit("ContractCleared", { contract: cleared });
 };
 
@@ -99,8 +103,9 @@ export const clearContract = (ctx: SimContext): void => {
 export const failContract = (ctx: SimContext, reason: ContractFailure): void => {
   const contract = ctx.state.domain.contracts.active;
   if (!contract) return;
-  ctx.state.domain = { ...ctx.state.domain, contracts: { ...ctx.state.domain.contracts, active: null } };
+  ctx.state.domain = { ...ctx.state.domain, contracts: { active: null, completed: ctx.state.domain.contracts.completed } };
   raiseFlag(ctx, contractFailedFlag(contract.id));
   applyReputationCause(ctx, { type: "contract-failed", kind: contractKind(contract) });
   ctx.bus.emit("ContractFailed", { contract, reason });
+  phoneFromFixer(ctx, giverOfContract(contract), "failed");
 };

@@ -15,6 +15,15 @@ import { DOKI_ITEM_SPOTS, DOKI_TERMINAL_SPOTS, GENZO_SPOT, SIM_HZ } from "@seki/
 import { createUiStore } from "@seki/ui";
 import { GameSession } from "../src/game-session";
 
+/** What the debrief card pays on top of the reward (ADR-0029); subscribe right before the payment. */
+const extraPay = (session: GameSession): (() => number) => {
+  let extra = 0;
+  session.sim.bus.on("ContractDebrief", (c) => {
+    extra += c.bonus + c.styleBonus;
+  });
+  return () => extra;
+};
+
 const effects: EffectDescriptor[] = [];
 const render: RenderPort = {
   spawn() {},
@@ -133,11 +142,12 @@ describe("M4 acceptance: the docks", () => {
     expect(ui.getState().objective).toBe("Terminal złamany. Wróć do Genzō po zapłatę");
 
     const before = eddies();
+    const extra = extraPay(session);
     talkToGenzo(session);
     expect(text(ui)).toContain("Terminal złamany");
     expect(text(ui)).toContain(`${hack.reward} eddies`);
     steps(session, 1);
-    expect(eddies()).toBe(before + hack.reward);
+    expect(eddies()).toBe(before + hack.reward + extra());
 
     // Straight on: the office.
     choose(session, ui, "Co trzeba wynieść z biura Tessen?");

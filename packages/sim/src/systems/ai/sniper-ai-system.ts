@@ -7,6 +7,7 @@ import { readyToFire } from "../../world/player-weapon";
 import { LEVEL_GAP, routeAcrossLevels } from "../../world/nav";
 import { WORLD_NAV } from "../../content/world-map";
 import { worldTimeScale } from "../ability-system";
+import { noteDetected } from "../../world/street";
 import { detourStep, steerPoint, straightWalk } from "./steering";
 import { NPC_CRIT, aimSpreadOf, fireShot } from "../combat-system";
 
@@ -130,7 +131,9 @@ export const sniperAiSystem: System = {
       }
       const range = self.combatant?.stats?.range ?? 0;
       const hostile = factionStance(ctx.state.domain.reputation, self.faction ?? "tessen") !== "friendly";
-      const inLine = hostile && dist3(player.position, self.position) <= range && lineOfSight(ctx.world, eyeOf(self), chestOf(player));
+      // Optics rebooted by a quickhack (ADR-0029): it sees nothing.
+      const blind = (self.hackFx?.blind ?? 0) > 0;
+      const inLine = hostile && !blind && dist3(player.position, self.position) <= range && lineOfSight(ctx.world, eyeOf(self), chestOf(player));
       if (s.phase === "rest") {
         s.timer = Math.max(0, s.timer - dt);
         if (inLine) face(self, player.position, TURN_RATE * dt);
@@ -141,6 +144,7 @@ export const sniperAiSystem: System = {
         if (!inLine || !self.combatant || !readyToFire(self.combatant, self.combatant.loaded)) continue;
         s.phase = "aim";
         s.timer = SNIPER_AIM_TIME;
+        noteDetected(ctx);
         ctx.bus.emit("SniperAimed", { entityId: self.id, targetId: player.id, duration: SNIPER_AIM_TIME });
       }
       // Aiming: track the target; a broken line switches the laser off.

@@ -9,7 +9,7 @@ import {
   takenFlag,
 } from "@seki/core";
 import { CONTRACT_ITEM_SPOTS, OYAJI_MAX_HP, SIM_HZ, Simulation, stateHash } from "../src";
-import { byKey, collect, input, run, teleportPlayer } from "./helpers";
+import { byKey, collect, input, run, teleportPlayer, debriefExtras } from "./helpers";
 
 const at = (x: number, z: number) => ({ x, y: 0, z });
 
@@ -68,8 +68,10 @@ describe("delivery (Kaito → Hana, against the clock)", () => {
     expect(cleared).toHaveLength(1);
     expect(sim.domain.contracts.active?.status).toBe("cleared");
     const before = sim.domain.wallet.eddies;
+    // The card adds the bonus condition and the fixer's style (ADR-0029).
+    const extra = debriefExtras(sim);
     complete(sim);
-    expect(sim.domain.wallet.eddies).toBe(before + c.reward);
+    expect(sim.domain.wallet.eddies).toBe(before + c.reward + extra());
     expect(sim.domain.contracts).toEqual({ active: null, completed: 1 });
     expect(sim.domain.reputation).toEqual({ fixers: 2, hebi: 0, civilians: 1, clinic: 0, kagami: 0, tessen: 0 });
   });
@@ -122,8 +124,10 @@ describe("delivery (Kaito → Hana, against the clock)", () => {
     run(sim, c.deadlineTick! - sim.tick + 10);
     const restored = reload(sim);
     const before = restored.domain.wallet.eddies;
+    // The card adds the bonus condition and the fixer's style (ADR-0029).
+    const extra = debriefExtras(restored);
     complete(restored);
-    expect(restored.domain.wallet.eddies).toBe(before + c.reward);
+    expect(restored.domain.wallet.eddies).toBe(before + c.reward + extra());
   });
 });
 
@@ -152,9 +156,11 @@ describe("retrieval (Hana's crate from the Hebi stash)", () => {
     killAll(sim, c);
     expect(sim.domain.contracts.active?.status).toBe("cleared");
     const before = sim.domain.wallet.eddies;
+    // The card adds the bonus condition and the fixer's style (ADR-0029).
+    const extra = debriefExtras(sim);
     const rep = sim.domain.reputation;
     complete(sim);
-    expect(sim.domain.wallet.eddies).toBe(before + c.reward);
+    expect(sim.domain.wallet.eddies).toBe(before + c.reward + extra());
     expect(sim.domain.reputation).toEqual({ ...rep, civilians: rep.civilians + 3, hebi: rep.hebi - 4, fixers: rep.fixers + 1 });
   });
 
@@ -223,8 +229,10 @@ describe("protection (Hebi come for Oyaji)", () => {
     killAll(sim, c);
     expect(sim.domain.contracts.active?.status).toBe("cleared");
     const before = sim.domain.wallet.eddies;
+    // The card adds the bonus condition and the fixer's style (ADR-0029).
+    const extra = debriefExtras(sim);
     complete(sim);
-    expect(sim.domain.wallet.eddies).toBe(before + c.reward);
+    expect(sim.domain.wallet.eddies).toBe(before + c.reward + extra());
     expect(sim.domain.reputation).toEqual({
       ...rep,
       hebi: rep.hebi - 4 * c.targets - 3,
