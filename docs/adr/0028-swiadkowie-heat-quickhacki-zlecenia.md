@@ -82,3 +82,13 @@ Wszystkie trzy przecinają `core`, `sim`, `app`, `ui` i `engine`. Żeby kilka os
 - Nowe pole w `InputFrame` zmienia kształt wejścia, ale nie złote hashe (wejście nie wchodzi do hasha stanu).
 - `breach-result` przenosi zaufanie do UI. Gra jest jednoosobowa, więc to akceptowalne, a replay zachowuje wynik jako komendę.
 - Kolejne fale (metro, radio, przebrania, Cyberware Capacity, generator wariacji zleceń) korzystają z tych samych zdarzeń.
+
+## Zmiany kontraktu
+Tylko dopisania: nowe pola opcjonalne i doprecyzowania. Nic nie zmieniło znaczenia ani nie zniknęło.
+
+- **Fala 1 w symulacji (ADR-0029):**
+  - `HeatChanged.faction?: FactionId`: czyja ochrona ściga gracza (`hebi` albo `tessen`), żeby HUD mógł podpisać gwiazdki. Bez heat pole nie występuje.
+  - `PhoneMessage.from` to id zleceniodawcy (`kaito`, `hana`, `genzo`), a `knot` ma postać `phone_<id>_<sytuacja>`, sytuacje: `offer`, `paid`, `failed`.
+  - `ContractCompleted.reward` zostaje nagrodą bazową. Całą wypłatę (nagroda, bonus, styl) niesie `EddiesChanged.delta`, a podział `ContractDebrief`.
+  - `AwarenessChanged` wysyłają też kamery (`observerId` to kamera).
+  - Dane w domenie: `DomainState.heat` (`HeatState`) i `DomainState.netrun` (`NetrunState`), `ContractLog.tally?` (`ContractTally`) i `Contract.breach?` (demony wygrane na terminalu), w `EntitySnapshot` opcjonalne `lastKnown`, `search`, `lost`. Schemat zapisu 11.
