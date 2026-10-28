@@ -10,6 +10,7 @@ export const CONTACT_NAMES: Readonly<Record<string, string>> = {
   mori: "Doktor Mori",
   oyaji: "Oyaji",
   mika: "Mika",
+  fumiko: "Fumiko",
 };
 
 export const contactName = (from: string): string => CONTACT_NAMES[from] ?? (from ? from[0]!.toUpperCase() + from.slice(1) : "Nieznany");

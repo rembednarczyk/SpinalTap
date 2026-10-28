@@ -20,6 +20,8 @@ const NAMED: Readonly<Record<string, string>> = {
   oyaji: "Oyaji",
   hana: "Hana",
   genzo: "Genzō",
+  fumiko: "Fumiko",
+  fumiko_closed: "Fumiko",
 };
 
 const GIVEN = ["Akira", "Yumi", "Kenji", "Rin", "Daichi", "Mei", "Sora", "Haru", "Nao", "Ren", "Emi", "Taro"] as const;
