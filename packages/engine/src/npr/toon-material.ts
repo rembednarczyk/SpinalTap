@@ -29,6 +29,7 @@ const UNIFORMS = [
   "pointColor",
   "pointCount",
   "selfLit",
+  "envStrength",
 ];
 
 const hex = (h: string): Color3 => Color3.FromHexString(h);
@@ -77,6 +78,8 @@ export class ToonMaterials {
   private active: PointLightDef[] = [];
   private focus: { x: number; z: number } | null = null;
   private shadow: ShadowBinding | null = null;
+  /** Wet-asphalt probe (ADR-0036) and the presets that sample it; fixed before they are created. */
+  private env: { texture: BaseTexture; presets: ReadonlySet<string>; strength: number } | null = null;
 
   constructor(
     private readonly scene: Scene,
@@ -118,6 +121,28 @@ export class ToonMaterials {
       m.setFloat("selfLit", 1);
       return m;
     });
+  }
+
+  /**
+   * The static reflection probe the wet surfaces sample (ADR-0036). Call before the first
+   * material of those presets is created: the reflection is compiled in, not toggled.
+   */
+  setEnvironment(texture: BaseTexture, presets: ReadonlySet<string>, strength = 1.6): void {
+    this.env = { texture, presets, strength };
+    for (const [name, m] of this.materials) if (presets.has(name)) m.setTexture("envSampler", texture);
+  }
+
+  /** Brightness of the probe on wet surfaces, 0 while it holds nothing yet. */
+  setEnvironmentStrength(strength: number): void {
+    if (!this.env) return;
+    this.env = { ...this.env, strength };
+    for (const [name, m] of this.materials) if (this.env.presets.has(name)) m.setFloat("envStrength", strength);
+  }
+
+  /** Materials compiled with the probe (debug, tests). */
+  get reflectiveCount(): number {
+    const env = this.env;
+    return env ? [...this.materials.keys()].filter((k) => env.presets.has(k)).length : 0;
   }
 
   setShadow(shadow: ShadowBinding | null): void {
@@ -217,6 +242,7 @@ export class ToonMaterials {
   }
 
   private create(name: string, p: ToonPreset, texture: Texture | null = null, alpha: "ALPHATEST" | "ALPHABLEND" | null = null, tint = false, extra: readonly string[] = []): ShaderMaterial {
+    const env = this.env && this.env.presets.has(name) ? this.env : null;
     const m = new ShaderMaterial(
       `toon-${name}`,
       this.scene,
@@ -224,12 +250,13 @@ export class ToonMaterials {
       {
         attributes: texture ? ["position", "normal", "uv"] : ["position", "normal"],
         uniforms: [...UNIFORMS],
-        samplers: [...SAMPLERS],
+        samplers: env ? [...SAMPLERS, "envSampler"] : [...SAMPLERS],
         defines: [
           ...(texture ? ["UV1", "TEXTURE", ...(alpha ? [alpha] : []), ...(tint ? ["TINT"] : [])] : []),
           ...(p.surface === "concrete" ? ["CONCRETE_PANELS"] : p.surface === "metal" ? ["METAL_PANELS"] : []),
           ...(p.vertexFlags ? ["DRESS_FLAGS"] : []),
           ...extra,
+          ...(env ? ["ENV_REFLECT"] : []),
         ],
         needAlphaBlending: alpha === "ALPHABLEND",
       },
@@ -243,6 +270,10 @@ export class ToonMaterials {
     m.setFloat("windows", p.windows ? 1 : 0);
     m.setFloat("fill", p.fill ?? 0);
     m.setFloat("selfLit", 1);
+    if (env) {
+      m.setTexture("envSampler", env.texture);
+      m.setFloat("envStrength", env.strength);
+    }
     return m;
   }
 
