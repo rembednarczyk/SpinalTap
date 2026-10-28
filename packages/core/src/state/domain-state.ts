@@ -13,6 +13,8 @@ import { type GameClock, START_CLOCK } from "../time/game-clock";
 import type { Flags } from "./flags";
 import { type HeatState, NO_HEAT } from "../crime/rules";
 import { INITIAL_NETRUN, type NetrunState } from "../hacking/netrun";
+import { type MetroState, NO_METRO } from "../world/metro";
+import { type EncounterLog, NO_ENCOUNTERS } from "../world/encounters";
 
 export interface Preferences {
   readonly cameraMode: CameraMode;
@@ -42,6 +44,10 @@ export interface DomainState {
   readonly heat: HeatState;
   /** The cyberdeck: RAM and the upload in progress (ADR-0029). */
   readonly netrun: NetrunState;
+  /** A metro ride in progress (ADR-0034). */
+  readonly metro: MetroState;
+  /** Street encounters already played (ADR-0034). */
+  readonly encounters: EncounterLog;
 }
 
 export const createDomainState = (): DomainState => ({
@@ -59,4 +65,6 @@ export const createDomainState = (): DomainState => ({
   clock: START_CLOCK,
   heat: NO_HEAT,
   netrun: INITIAL_NETRUN,
+  metro: NO_METRO,
+  encounters: NO_ENCOUNTERS,
 });

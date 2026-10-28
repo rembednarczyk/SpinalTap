@@ -43,7 +43,7 @@ describe("determinism", () => {
   });
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
-    expect(hashOf(runReplay(1234, script()))).toMatchInlineSnapshot(`"d9a66304"`);
+    expect(hashOf(runReplay(1234, script()))).toMatchInlineSnapshot(`"87733351"`);
   });
 
   it("without the street life of ADR-0026 in the snapshot, the run hashes as before it (content, not rules)", () => {
@@ -52,18 +52,21 @@ describe("determinism", () => {
     const snap = runReplay(1234, script()).snapshot(null, "test", "");
     const added = new Set(["hideo", "tetsu", "mei", "sachiko"]);
     const stash = /^(placed:)?stash:(s7|kanal)-/;
+    // The save fields of ADR-0034 (metro, encounters, schema v12) came later still: left out as well.
+    const { metro: _metro, encounters: _encounters, ...domain } = snap.domain;
     const before = {
       ...snap,
+      version: 11,
       entities: snap.entities.filter((e) => !added.has(e.key)),
       domain: {
-        ...snap.domain,
+        ...domain,
         flags: snap.domain.flags.filter((f) => !stash.test(f)),
         loot: { ...snap.domain.loot, containers: snap.domain.loot.containers.filter((c) => !stash.test(c.key)) },
       },
     };
     expect(snap.entities.filter((e) => added.has(e.key))).toHaveLength(4);
     // The hash of the same run with the rules of ADR-0029 (wave 1) and without this content.
-    expect(stateHash(before)).toBe("bef1026f");
+    expect(stateHash(before as unknown as typeof snap)).toBe("bef1026f");
   });
 
   it("a loaded snapshot continues exactly like the original run", () => {
@@ -107,7 +110,7 @@ describe("determinism", () => {
     // Swings both ways, a blocked blow and staggers: the duel exercises the whole package.
     for (const t of ["MeleeSwing", "AttackBlocked", "Staggered", "DamageDealt"]) expect(seen).toContain(t);
     expect(hashOf(sim)).toBe(hashOf(duel().sim));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"5be082e2"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"76a39667"`);
   });
 
   it("restores killed NPCs as absent", () => {
