@@ -12,10 +12,33 @@ import { PauseMenu } from "./menus/pause-menu";
 import { TitleScreen } from "./menus/title-screen";
 import type { UiStore } from "./store/ui-store";
 import { UiContext, useUi } from "./use-ui";
+import { BreachPanel } from "./breach/breach-panel";
+import { DebriefCard } from "./hud/contract-card";
+import { PhonePanel } from "./phone/phone";
+
+/**
+ * Accessibility settings on the document root (ADR-0028): HUD scale as `--hud-scale`, the
+ * legible font, reduced flashes and the colour-blind palette as attributes the styles read.
+ */
+const Accessibility = () => {
+  const scale = useUi((s) => s.settings.hudScale);
+  const legible = useUi((s) => s.settings.legibleFont);
+  const reduce = useUi((s) => s.settings.reduceFlashes);
+  const palette = useUi((s) => s.settings.colorblind);
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty("--hud-scale", String(scale));
+    root.classList.toggle("legible-font", legible);
+    root.classList.toggle("reduce-flashes", reduce);
+    if (palette === "off") delete root.dataset.palette;
+    else root.dataset.palette = palette;
+  }, [scale, legible, reduce, palette]);
+  return null;
+};
 
 const Screens = ({ touch }: { touch: TouchPadSink | undefined }) => {
   const screen = useUi((s) => s.screen);
-  const modal = useUi((s) => s.dialogue !== null || s.shopOpen || s.loot !== null);
+  const modal = useUi((s) => s.dialogue !== null || s.shopOpen || s.loot !== null || s.phoneOpen || s.breach !== null);
   // The character screen covers the whole game; the HUD under it would only show through.
   const menu = useUi((s) => s.characterTab !== null) && screen === "playing";
   return (
@@ -27,6 +50,9 @@ const Screens = ({ touch }: { touch: TouchPadSink | undefined }) => {
       {screen === "playing" && <ShopPanel />}
       {screen === "playing" && <LootPanel />}
       {screen === "playing" && <CharacterScreen />}
+      {screen === "playing" && !menu && <DebriefCard />}
+      {screen === "playing" && <PhonePanel />}
+      {screen === "playing" && <BreachPanel />}
       {screen === "title" && <TitleScreen />}
       {screen === "paused" && <PauseMenu />}
       {screen === "dead" && <DeathScreen />}
@@ -42,6 +68,7 @@ export const GameUi = ({ store, intents, touch }: { store: UiStore; intents: UiI
   }, [touch]);
   return (
     <UiContext.Provider value={value}>
+      <Accessibility />
       <Screens touch={touch} />
     </UiContext.Provider>
   );

@@ -6,7 +6,19 @@ import { describe, expect, it } from "vitest";
 import { MeshBuilder, Scene } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
 import { CityKit } from "../src/renderer/city-kit";
-import { GeometrySink, KIT_TEXTURE, type Placement, addDecor, addSigns, parseCityKit, planSkin, swatchUv, turnXZ } from "../src/renderer/city-kit-data";
+import {
+  GeometrySink,
+  KIT_TEXTURE,
+  type Placement,
+  WALKED_ROOF_CLEARANCE,
+  addDecor,
+  addSigns,
+  isRoofHousing,
+  parseCityKit,
+  planSkin,
+  swatchUv,
+  turnXZ,
+} from "../src/renderer/city-kit-data";
 
 const file = (readFileSync as (url: URL) => Uint8Array)(new URL("../../app/public/city/city-kit.glb", import.meta.url));
 const data = parseCityKit(file.buffer.slice(file.byteOffset, file.byteOffset + file.byteLength) as ArrayBuffer);
@@ -141,6 +153,54 @@ describe("city kit data (ADR-0022)", () => {
     const crossZ = e1.x * e2.y - e1.y * e2.x;
     // Babylon's CreateBox: the cross product of a front face points against its normal.
     expect(Math.sign(crossZ)).toBe(-Math.sign(n.z));
+  });
+});
+
+describe("walked roofs (ADR-0027, C8)", () => {
+  const size = { x: 15.5, y: 12.7, z: 6 };
+  const center = { x: 88.55, y: 6.35, z: 61 };
+
+  it("only uses models without tall roof parts and trims their roof housings", () => {
+    for (const front of FRONTS) {
+      for (const style of ["shop", "tenement", "tower", "bar"] as const) {
+        const plan = planSkin(data, { style, front }, size, center, { walkedRoof: true })!;
+        for (const p of plan.placements) {
+          const m = data.models.get(p.key)!;
+          expect(m.size.y - m.roof).toBeLessThan(WALKED_ROOF_CLEARANCE);
+        }
+        const sink = new GeometrySink();
+        for (const p of plan.placements) sink.addModel(data.models.get(p.key)!, p, true);
+        // Nothing taller than a parapet stands on the roof.
+        const top = center.y + size.y / 2;
+        let highest = -Infinity;
+        for (const i of sink.indices) highest = Math.max(highest, sink.positions[i * 3 + 1]!);
+        expect(highest).toBeLessThan(top + 0.9);
+      }
+    }
+  });
+
+  it("trims roof housings but keeps the roof surface and the parapets", () => {
+    const m = data.models.get("kc-k")!;
+    let housing = 0;
+    for (let t = 0; t < m.indices.length; t += 3) if (isRoofHousing(m, m.indices[t]!, m.indices[t + 1]!, m.indices[t + 2]!)) housing++;
+    expect(housing).toBeGreaterThan(0);
+    expect(housing).toBeLessThan(m.indices.length / 3 / 4);
+  });
+
+  it("asks whether a roof is walked when its cell is built", () => {
+    const scene = new Scene(new NullEngine());
+    const asked: number[] = [];
+    const walkedRoof = (c: Vec3) => {
+      asked.push(c.x);
+      return true;
+    };
+    const kit = new CityKit(scene, new ToonMaterials(scene), null, data, { labels: false, walkedRoof });
+    kit.add(1, { style: "tenement", front: "z+" }, size, center, null);
+    kit.flush();
+    expect(asked).toEqual([center.x]);
+    kit.touch(center.x, center.z);
+    kit.flush();
+    expect(asked).toEqual([center.x, center.x]);
   });
 });
 

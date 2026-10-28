@@ -14,6 +14,15 @@ import { CONTRACT_ITEM_SPOTS } from "@seki/sim";
 import { createUiStore } from "@seki/ui";
 import { GameSession } from "../src/game-session";
 
+/** What the debrief card pays on top of the reward (ADR-0029); subscribe right before the payment. */
+const extraPay = (session: GameSession): (() => number) => {
+  let extra = 0;
+  session.sim.bus.on("ContractDebrief", (c) => {
+    extra += c.bonus + c.styleBonus;
+  });
+  return () => extra;
+};
+
 const render: RenderPort = {
   spawn() {},
   updateTransform() {},
@@ -126,11 +135,12 @@ describe("M4 acceptance: market contracts → eddies → cyberware", () => {
     expect(ui.getState().objective).toBe("Paczka oddana. Wróć do Kaito po zapłatę");
 
     let before = eddies();
+    let extra = extraPay(session);
     talkToKaito(session);
     expect(text(ui)).toContain("moduły doszły zimne");
     choose(session, ui, "Nie dziś.");
     close(session);
-    expect(eddies()).toBe(before + delivery.reward);
+    expect(eddies()).toBe(before + delivery.reward + extra());
     expect(session.sim.domain.contracts.completed).toBe(2);
 
     // Hana: her crate from the Hebi stash.
@@ -151,11 +161,12 @@ describe("M4 acceptance: market contracts → eddies → cyberware", () => {
     expect(entry).toMatchObject({ title: "Kontrakt 3 · Hana", steps: [{ done: true }, { objective: "Wróć do Hany po zapłatę", done: false }] });
 
     before = eddies();
+    extra = extraPay(session);
     talkToHana(session);
     expect(text(ui)).toContain("Jest moja skrzynka");
     choose(session, ui, "Ktoś potrzebuje ochrony?");
     close(session);
-    expect(eddies()).toBe(before + retrieval.reward);
+    expect(eddies()).toBe(before + retrieval.reward + extra());
 
     // Hana: the next job is already running. Hebi come for Oyaji; take the wave down.
     const protection = session.sim.domain.contracts.active!;
@@ -169,11 +180,12 @@ describe("M4 acceptance: market contracts → eddies → cyberware", () => {
     expect(session.sim.domain.flags).not.toContain("dead:oyaji");
 
     before = eddies();
+    extra = extraPay(session);
     talkToHana(session);
     expect(text(ui)).toContain("Oyaji żyje");
     choose(session, ui, "Nie teraz.");
     close(session);
-    expect(eddies()).toBe(before + protection.reward);
+    expect(eddies()).toBe(before + protection.reward + extra());
     expect(session.sim.domain.contracts).toEqual({ active: null, completed: 4 });
     expect(ui.getState().objective).toBe("Kaito ma kolejne kontrakty, Hana z targu też. Mori sprzedaje cyberware.");
 

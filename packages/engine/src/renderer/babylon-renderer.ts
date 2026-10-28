@@ -1,8 +1,13 @@
-import { type AbstractMesh, type Color3, Color4, Matrix, type Mesh, Vector3 } from "../babylon";
-import type { AppearanceDescriptor, CameraMode, DespawnReason, EffectDescriptor, EntityId, RenderPort, Transform, ViewDescriptor, WeaponLook } from "@seki/core";
+import { type AbstractMesh, type Color3, Color4, Matrix, type Mesh, MeshBuilder, Vector3 } from "../babylon";
+import type { AppearanceDescriptor, CameraMode, DespawnReason, EffectDescriptor, EntityId, HackTargetKind, RenderPort, Transform, ViewDescriptor, WeaponLook } from "@seki/core";
+import type { DistrictId } from "@seki/sim";
 import { CameraRig } from "../camera/camera-rig";
 import { Effects } from "../effects/effects";
 import { createRain } from "../effects/rain";
+import { FlashLimiter } from "../effects/flash-limiter";
+import { GameplayFxState } from "../effects/gameplay-fx";
+import { GameplayPost } from "../effects/gameplay-post";
+import { DISTRICT_PALETTES, PaletteBlend, districtAt, rigWithPalette } from "../npr/district-palette";
 import { Grading } from "../npr/grading";
 import { LineArt } from "../npr/line-art";
 import { SpeedLines } from "../npr/speed-lines";
@@ -11,7 +16,9 @@ import { MoonShadow } from "../npr/moon-shadow";
 import { ToonMaterials } from "../npr/toon-material";
 import { Atmosphere, createSplashes, createSteam } from "./atmosphere";
 import { CityKit } from "./city-kit";
-import { createDressing } from "./dressing";
+import { type DressBlock, isWalkedRoof } from "./dressing-plan";
+import { WorldDressing } from "./dressing";
+import { FarCity } from "./far-city";
 import {
   type CharacterRig,
   animateRig,
@@ -30,6 +37,8 @@ import { type WeaponManifest, WeaponMounts } from "./weapon-mount";
 import { Loadouts } from "./loadout";
 import { type PropView, buildBlock, buildLamp, buildLootBag, buildNeon, buildWater } from "./props";
 import { Lasers } from "./lasers";
+import { type ScanClass, ScanHighlight, scanClassOfTarget, scanClassOfView } from "./scan-highlight";
+import { Signage } from "./signage";
 import type { Stage } from "./stage";
 
 /** An imported model dressed over a procedural rig, which keeps animating invisibly. */
@@ -56,7 +65,7 @@ const modelKeyOf = (view: ViewDescriptor): CharacterModelKey | null => {
 };
 
 type Spawned =
-  | { kind: "character"; rig: CharacterRig; transform: Transform; model: CharacterModelKey | null; name: string }
+  | { kind: "character"; rig: CharacterRig; transform: Transform; model: CharacterModelKey | null; name: string; scan: ScanClass | null }
   | { kind: "prop"; prop: PropView; lightKey: string | null; decor: Decor };
 
 /** Atmosphere pieces added for a prop, taken back when the prop goes (world streaming). */
@@ -83,6 +92,18 @@ interface PendingSkin {
   readonly center: Vector3;
   readonly box: Mesh | null;
 }
+
+/**
+ * Gameplay moments the renderer shows over the whole frame (ADR-0030). The app translates domain
+ * events into these; proposed as EffectDescriptor kinds in core.
+ */
+export type GameplayFxEvent =
+  /** The player took damage. */
+  | { readonly kind: "player-hurt"; readonly amount: number }
+  /** A quickhack upload started or landed. */
+  | { readonly kind: "quickhack"; readonly phase: "started" | "applied" }
+  /** Heat level 0..3; `searching` while the hunters have lost the player. */
+  | { readonly kind: "heat"; readonly level: number; readonly searching: boolean };
 
 /** RenderPort over Babylon.js. Turns entity view descriptors into NPR meshes and drives the camera. */
 export class BabylonRenderer implements RenderPort {
@@ -113,8 +134,29 @@ export class BabylonRenderer implements RenderPort {
 
   /** Buildings and vehicles from the city kit (ADR-0022), once it has loaded. */
   private city: CityKit | null = null;
+  /** Procedural dressing of every streamed-in chunk (ADR-0027). */
+  readonly dressing: WorldDressing;
+  /** Stand-ins, tower rings and megabuildings beyond the streets (ADR-0027). */
+  readonly farCity: FarCity;
+  /** Blocks in view, for the walked-roof test (ADR-0027, C8). */
+  private readonly blocks = new Map<EntityId, DressBlock>();
   private readonly pendingSkins = new Map<EntityId, PendingSkin>();
   private daylight = 0;
+  /** Every effect that brightens the frame asks here first: three flashes a second at most. */
+  private readonly limiter = new FlashLimiter();
+  private readonly fx = new GameplayFxState(this.limiter);
+  private readonly fxPost: GameplayPost;
+  /** Signs, holo-ads and their street reflections, one draw call (ADR-0030). */
+  readonly signage: Signage;
+  /** District colour script on screen, blending when the camera crosses a seam. */
+  private readonly palette = new PaletteBlend(DISTRICT_PALETTES["shinsekai-7"]);
+  private district: DistrictId | null = null;
+  /** Jump to the next district's palette instead of blending (start, new game, load). */
+  private snapPalette = true;
+  private reduceFlashes = false;
+  private scanning = false;
+  private scanFocus: { id: EntityId; kind: HackTargetKind | undefined } | null = null;
+  private readonly scanHighlight = new ScanHighlight();
 
   constructor(
     private readonly stage: Stage,
@@ -143,9 +185,17 @@ export class BabylonRenderer implements RenderPort {
     if (this.lineArt) this.lineArt.geometryBuffer.renderTransparentMeshes = false;
     this.speedLines = new SpeedLines(scene, this.rig.camera);
     this.atmosphere = new Atmosphere(scene, NIGHT_RIG);
-    // Without a kit the street dressing goes in now; with one, once it is known whether it loaded.
-    if (!options.cityKit) this.dressStreet(false);
-    this.grading = new Grading(scene, this.rig.camera, { reference: stage.options.reference });
+    this.farCity = new FarCity(scene, NIGHT_RIG);
+    this.signage = new Signage(scene);
+    // Without a kit the dressing goes in with the first chunk; with one, once it is known whether it loaded.
+    this.dressing = new WorldDressing(scene, this.materials, options.cityKit ? "pending" : "bare", {
+      built: (m) => this.shadow.addStaticCaster(m),
+    });
+    this.warmUpMaterials();
+    this.grading = new Grading(scene, this.rig.camera, { reference: stage.options.reference }, this.limiter);
+    // After the grading pipeline, so the scanner drains the graded colour.
+    this.fxPost = new GameplayPost(scene, this.rig.camera);
+    this.applyLook();
     this.effects = new Effects(scene, stage.glow);
     this.lasers = new Lasers(scene, stage.glow);
     this.rain = stage.options.reference ? null : createRain(scene);
@@ -158,6 +208,25 @@ export class BabylonRenderer implements RenderPort {
     if (options.cityKit) this.loadCityKit(options.cityKit);
   }
 
+  /**
+   * Compiles the bare-structure skins (ADR-0027) up front, so the first pillar or wall that
+   * streams in does not stall a frame on a shader compile.
+   */
+  private warmUpMaterials(): void {
+    const probe = MeshBuilder.CreateBox("material-warmup", { size: 0.01 }, this.stage.scene);
+    probe.isVisible = false;
+    probe.isPickable = false;
+    let left = 2;
+    for (const preset of ["concreteBare", "metalPanel"] as const) {
+      this.materials.get(preset).forceCompilation(probe, () => {
+        left -= 1;
+        if (left === 0) probe.dispose();
+      });
+    }
+    // The holo shader too (ADR-0030); the gameplay post-process compiles when it is created.
+    this.signage.warmUp();
+  }
+
   /** Loads the kit in the background; the scene is not ready (reference frames wait) until it is in. */
   private loadCityKit(url: string): void {
     const { scene } = this.stage;
@@ -166,26 +235,22 @@ export class BabylonRenderer implements RenderPort {
     CityKit.load(url)
       .then((data) => {
         if (scene.isDisposed) return;
-        this.city = new CityKit(scene, this.materials, this.stage.glow, data, { onCovered: (box) => this.stepBack(box) });
+        this.city = new CityKit(scene, this.materials, this.stage.glow, data, {
+          onCovered: (box) => this.stepBack(box),
+          walkedRoof: (center, size) => isWalkedRoof({ center, size }, this.blocks.values()),
+        });
         this.city.setDaylight(this.daylight);
         for (const [id, p] of this.pendingSkins) this.city.add(id, p.view.skin, p.view.size, p.center, p.box);
         this.pendingSkins.clear();
-        this.dressStreet(true);
+        this.dressing.setKit("kit");
       })
       .catch((err: unknown) => {
         console.warn(`[city] ${url} failed to load, keeping plain blocks`, err);
         this.pendingSkins.clear();
-        // The plain blocks keep their own facade dressing (shutters, signs, vending machines).
-        if (!scene.isDisposed) this.dressStreet(false);
+        // The plain blocks get the procedural facades of every chunk (W9).
+        this.dressing.setKit("bare");
       })
       .finally(() => scene.removePendingData(token));
-  }
-
-  /** Street dressing of M0; with the kit, skinned buildings bring their own facades and stay bare here. */
-  private dressStreet(skinned: boolean): void {
-    const dressing = createDressing(this.stage.scene, this.materials, { skinned });
-    for (const m of dressing.casters) this.shadow.addStaticCaster(m);
-    for (const m of dressing.meshes) if (m.material?.name.includes("vendingGlow")) this.stage.glow.addIncludedOnlyMesh(m);
   }
 
   /**
@@ -232,7 +297,7 @@ export class BabylonRenderer implements RenderPort {
         const rig = build(scene, this.materials, name);
         for (const m of rig.meshes) this.shadow.addCaster(m);
         const model = modelKeyOf(view);
-        this.entities.set(id, { kind: "character", rig, transform: t, model, name });
+        this.entities.set(id, { kind: "character", rig, transform: t, model, name, scan: scanClassOfView(view) });
         this.applyTransform(rig, t);
         this.dress(rig, model, name);
         return;
@@ -254,6 +319,16 @@ export class BabylonRenderer implements RenderPort {
         const lightKey = prop.light ? name : null;
         if (prop.light && lightKey) this.materials.addLight(lightKey, prop.light);
         this.entities.set(id, { kind: "prop", prop, lightKey, decor });
+        if (view.kind === "block") {
+          this.dressing.addBlock(id, view, at);
+          this.blocks.set(id, { center: { x: at.x, y: at.y, z: at.z }, size: view.size, material: view.material, ...(view.rungs ? { rungs: view.rungs } : {}) });
+          // A ladder, or a rail or crate up on a roof, can make a roof walked: rebuild the kit
+          // cells around it. Anything else leaves built cells alone (rebuilding them stalls a frame).
+          const raised = at.y - view.size.y / 2 > 2 && Math.min(view.size.x, view.size.z) < 3;
+          if (!view.skin && (view.rungs || raised)) this.city?.touch(at.x, at.z);
+        } else if (view.kind === "neon") {
+          this.dressing.addSign(id, view, at);
+        }
         if (view.kind === "block" && view.skin) {
           const box = (prop.root.getChildMeshes(true)[0] as Mesh | undefined) ?? null;
           const skinned = { view: { ...view, skin: view.skin }, center: at, box };
@@ -309,6 +384,8 @@ export class BabylonRenderer implements RenderPort {
     }
     this.city?.remove(id);
     this.pendingSkins.delete(id);
+    this.dressing.remove(id);
+    this.blocks.delete(id);
     for (const m of e.prop.blockers) this.blockers.delete(m);
     if (e.lightKey) this.materials.removeLight(e.lightKey);
     for (const m of e.decor.meshes) this.atmosphere.removeDecoration(m);
@@ -341,7 +418,8 @@ export class BabylonRenderer implements RenderPort {
         const from = (own ? this.rig.muzzlePosition() : null) ?? v3(effect.from);
         this.effects.muzzleFlash(from, v3(effect.to));
         if (own) this.rig.kick();
-        this.flash = { x: from.x, y: from.y, z: from.z, life: 0.07 };
+        // The muzzle lights the whole street: one of the three flashes a second, or none.
+        if (!this.reduceFlashes && this.limiter.tryFlash()) this.flash = { x: from.x, y: from.y, z: from.z, life: 0.07 };
         return;
       }
       case "hit-spark":
@@ -407,19 +485,108 @@ export class BabylonRenderer implements RenderPort {
       }
       case "time-of-day": {
         // The app sends this only when the light level moves a step, so re-applying is cheap.
-        const rig = rigForDaylight(effect.daylight);
-        this.materials.setRig(rig);
-        this.atmosphere.setDaylight(rig, effect.daylight);
         this.daylight = effect.daylight;
+        this.applyLook();
+        this.materials.get("dressing").setFloat("selfLit", 1 - 0.5 * Math.max(0, Math.min(1, effect.daylight)));
         this.city?.setDaylight(effect.daylight);
         return;
       }
     }
   }
 
+  /**
+   * Light rig of the time of day in the colours of the district on screen (ADR-0030): toon fog,
+   * ambient and rim, the grade, the sky, the far city and the signs.
+   */
+  private applyLook(): void {
+    const p = this.palette.value;
+    const rig = rigWithPalette(rigForDaylight(this.daylight), p, this.daylight);
+    this.materials.setRig(rig);
+    this.materials.setRimTint(p.rim, p.rimWeight * (1 - 0.5 * Math.max(0, Math.min(1, this.daylight))));
+    this.atmosphere.setDaylight(rig, this.daylight);
+    this.farCity.setDaylight(rig, this.daylight);
+    this.signage.setDaylight(rig, this.daylight);
+    this.grading.setPalette(p);
+  }
+
+  /** The district under the camera picks the palette; a seam crossing blends over a few seconds. */
+  private updatePalette(dt: number): void {
+    const cam = this.rig.camera.position;
+    const here = districtAt(cam.x, cam.z) ?? this.district;
+    if (here !== null && (here !== this.district || this.snapPalette)) {
+      this.palette.retarget(DISTRICT_PALETTES[here], this.snapPalette);
+      if (this.snapPalette) this.applyLook();
+      this.district = here;
+      this.snapPalette = false;
+    }
+    if (this.palette.update(dt)) this.applyLook();
+  }
+
+  /** District whose colours are on screen (debug and tests). */
+  get paletteDistrict(): DistrictId | null {
+    return this.district;
+  }
+
+  /** Accessibility (ADR-0028): no aberration, glitch or flicker anywhere; slow fades only. */
+  setReduceFlashes(on: boolean): void {
+    this.reduceFlashes = on;
+    this.fx.setReduceFlashes(on);
+    this.grading.setReduceFlashes(on);
+    this.signage.setReduceFlashes(on);
+    this.farCity.setReduceFlashes(on);
+    this.atmosphere.reduceFlicker = on;
+  }
+
+  /** A gameplay moment over the whole frame (ADR-0030): a hit, a quickhack, heat. */
+  gameplayFx(e: GameplayFxEvent): void {
+    switch (e.kind) {
+      case "player-hurt":
+        this.fx.hurtBy(e.amount);
+        return;
+      case "quickhack":
+        this.fx.hack(e.phase);
+        return;
+      case "heat":
+        this.fx.setHeat(e.level, e.searching);
+        return;
+    }
+  }
+
+  /** The scanner is held: scanlines and drained colour, targets outlined by kind. */
+  setScanning(on: boolean): void {
+    if (on === this.scanning) return;
+    this.scanning = on;
+    this.fx.setScanning(on);
+    if (!on) this.scanHighlight.release();
+  }
+
+  /** What the scanner focuses (ScanFocusChanged): filled and outlined; cameras and devices in yellow. */
+  setScanFocus(id: EntityId | null, kind?: HackTargetKind): void {
+    this.scanFocus = id === null ? null : { id, kind };
+  }
+
+  /** Outlines every character in the scanner's colours, the focused target filled too. */
+  private updateScanHighlight(): void {
+    if (!this.scanning) return;
+    const strength = Math.min(1, this.fx.uniforms.scan * 1.4);
+    const keep = new Set<AbstractMesh>();
+    for (const [id, e] of this.entities) {
+      const focused = this.scanFocus?.id === id;
+      const own = e.kind === "character" ? e.scan : null;
+      const cls = focused ? scanClassOfTarget(this.scanFocus?.kind, own) : own;
+      if (!cls) continue;
+      const meshes: readonly AbstractMesh[] = e.kind === "character" ? (this.dressed.get(e.rig)?.model.meshes ?? e.rig.meshes) : e.prop.root.getChildMeshes(false);
+      this.scanHighlight.mark(meshes, cls, focused, strength);
+      for (const m of meshes) keep.add(m);
+    }
+    this.scanHighlight.release(keep);
+  }
+
   /** Per-frame presentation update: animation, camera, VFX, rain. Call before scene.render(). */
   frame(dt: number): void {
+    this.limiter.advance(dt);
     this.city?.flush();
+    if (this.dressing.flush()) this.farCity.setResident(this.dressing.residentChunks());
     for (const e of this.entities.values()) {
       if (e.kind === "character") {
         const t = e.transform;
@@ -462,6 +629,12 @@ export class BabylonRenderer implements RenderPort {
       if (this.flash.life <= 0) this.flash = null;
     }
     this.atmosphere.update(dt, this.stage.options.reference);
+    this.farCity.update(dt, this.rig.camera.position, this.stage.options.reference);
+    this.signage.update(dt, this.stage.options.reference);
+    this.updatePalette(dt);
+    this.fx.update(dt);
+    this.fxPost.update(this.fx.uniforms, this.fx.active);
+    this.updateScanHighlight();
     this.grading.update(dt);
     this.speedLines.update(dt);
     this.rain?.follow(this.rig.camera.position);
@@ -473,6 +646,10 @@ export class BabylonRenderer implements RenderPort {
 
   clear(): void {
     this.lasers.clear();
+    // A new game or a load lands anywhere: the next district's colours come in at once.
+    this.snapPalette = true;
+    this.scanHighlight.release();
+    this.fx.setHeat(0, false);
     this.resetting = true;
     for (const id of [...this.entities.keys()]) this.despawn(id);
     for (const rig of this.dying.splice(0)) this.disposeRig(rig);

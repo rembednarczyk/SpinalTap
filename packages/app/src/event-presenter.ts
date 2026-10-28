@@ -30,7 +30,7 @@ const LANDING_SOUND_DROP = 0.5;
 const REFUSAL: Partial<Record<FactionId, string>> = { clinic: "Mori zamyka drzwi kliniki", civilians: "Oyaji opuszcza roletę" };
 
 /** Who shakes their head when a trade does not happen. */
-const SHOPKEEPER: Readonly<Record<ShopId, string>> = { clinic: "Mori", oyaji: "Oyaji" };
+const SHOPKEEPER: Readonly<Record<ShopId, string>> = { clinic: "Mori", oyaji: "Oyaji", yatai: "Fumiko" };
 
 const FAILURE_TEXT: Readonly<Record<PurchaseFailure, string>> = {
   "insufficient-funds": "Za mało eddies.",
@@ -128,7 +128,7 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
         patchUi(ui, { hurtFlash: ui.getState().hurtFlash + 1 });
         audio.play("hurt");
       } else if (isPlayer(e.sourceId)) {
-        patchUi(ui, { hitMarker: ui.getState().hitMarker + 1, hitZone: e.zone });
+        patchUi(ui, { hitMarker: ui.getState().hitMarker + 1, hitZone: e.zone, hitKind: e.critical ? "crit" : "hit" });
         audio.play(e.critical || e.zone === "head" ? "critical" : "hit");
       }
     }),

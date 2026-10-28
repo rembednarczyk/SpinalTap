@@ -16,6 +16,8 @@ const TABS: Readonly<Record<ShopId, readonly { readonly id: Tab; readonly label:
     { id: "sell", label: "Sprzedaj" },
     { id: "repair", label: "Naprawa" },
   ],
+  // Street food (ADR-0026): Fumiko sells, buys nothing back.
+  yatai: [{ id: "buy", label: "Kup" }],
 };
 
 interface Counter {
@@ -46,6 +48,15 @@ const COUNTER: Readonly<Record<ShopId, Counter>> = {
     talk: "Porozmawiaj z Oyajim",
     leave: "Odejdź od straganu",
     surcharge: "Oyaji ci nie ufa",
+  },
+  yatai: {
+    label: "Ramen u Fumiko",
+    eyebrow: "Stragan z ramenem · Targ pod estakadą",
+    title: "Fumiko",
+    quote: "„Tonkotsu albo yakitori. Innego menu nie ma i nie będzie.”",
+    talk: "Porozmawiaj z Fumiko",
+    leave: "Odejdź od straganu",
+    surcharge: "Fumiko ci nie ufa",
   },
 };
 

@@ -12,6 +12,11 @@ import { DOKI_TERMINAL_SPOTS, ESCORT_AMBUSH_Z, ESCORT_ROUTE } from "../content/d
 import type { SimContext, System } from "../world/context";
 import { clearContract, failContract, raiseFlag } from "../world/domain-ops";
 import { deadFlag } from "./death-system";
+import { CONTRACT_SITE_SPAWNS } from "../content/district-m0";
+import { disturb } from "../world/street";
+
+/** A raised alarm is heard this far (ADR-0029). */
+export const ALARM_NOISE = 25;
 
 /** Mika is on the boat this close to the end of the route (metres, horizontally). */
 export const ESCORT_ARRIVE = 1.2;
@@ -26,6 +31,9 @@ export const raiseAlarm = (ctx: SimContext, contract: Contract): void => {
   raiseFlag(ctx, flag);
   ctx.streamer.spawnWaiting(ctx.world, ctx.state.domain.flags);
   ctx.bus.emit("ContractAlarm", { contract });
+  // The job's own second phase: the street hears it, the debrief does not count it as an alarm.
+  const site = CONTRACT_SITE_SPAWNS[contract.siteId][0];
+  if (site) disturb(ctx, "alarm", site, ALARM_NOISE, ctx.world.with("player").first?.id ?? 0);
 };
 
 const setActive = (ctx: SimContext, contract: Contract): void => {

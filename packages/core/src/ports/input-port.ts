@@ -35,7 +35,13 @@ export interface InputFrame {
   readonly weaponSlot: WeaponSlotInput;
   /** Edge-triggered: next (1) or previous (-1) weapon slot that holds a weapon, 0 none (mouse wheel). */
   readonly weaponCycle: WeaponCycleInput;
+  /** Held: scanner mode (ADR-0028). Time slows a little and quickhacks target what is in focus. */
+  readonly scan: boolean;
+  /** Edge-triggered quickhack choice while scanning: the n-th hack of the list, 0 none. */
+  readonly quickhack: QuickhackSlotInput;
 }
+
+export type QuickhackSlotInput = 0 | 1 | 2 | 3 | 4 | 5;
 
 export type WeaponCycleInput = -1 | 0 | 1;
 
@@ -59,6 +65,8 @@ export const EMPTY_INPUT: InputFrame = Object.freeze({
   reload: false,
   weaponSlot: 0,
   weaponCycle: 0,
+  scan: false,
+  quickhack: 0,
 });
 
 export interface InputPort {

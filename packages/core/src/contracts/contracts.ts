@@ -3,6 +3,8 @@ import type { RandomPort } from "../ports/random-port";
 import type { FactionId, ReputationState } from "../reputation/reputation";
 import type { Flags } from "../state/flags";
 import { CONTRACT_KINDS, type ContractGiverId, type ContractKind } from "./kinds";
+import type { ContractTally } from "./scoring";
+import type { BreachDaemonId } from "../hacking/quickhacks";
 
 /** Places where a contract sends Seki. Positions live in sim content. */
 export const CONTRACT_SITES = {
@@ -10,6 +12,8 @@ export const CONTRACT_SITES = {
   koi_back: { id: "koi_back", label: "ulica na wysokości baru Neon Koi" },
   car_wash: { id: "car_wash", label: "zaułek za myjnią" },
   south_gate: { id: "south_gate", label: "brama południowa przy wraku" },
+  // Ulica Kanałowa (ADR-0026).
+  kanal_bridge: { id: "kanal_bridge", label: "pod kładką na Ulicy Kanałowej" },
   // Targ pod estakadą (M4).
   hana_stall: { id: "hana_stall", label: "wózek Hany na targu pod estakadą" },
   hebi_stash: { id: "hebi_stash", label: "skrytka Hebi pod estakadą, wschodni koniec targu" },
@@ -25,8 +29,11 @@ export type ContractSiteId = keyof typeof CONTRACT_SITES;
 
 export const CONTRACT_SITE_IDS = Object.keys(CONTRACT_SITES) as ContractSiteId[];
 
-/** Where Kaito's elimination jobs happen (the M1 sites, in their original order). */
-export const ELIMINATION_SITE_IDS: readonly ContractSiteId[] = ["east_lot", "koi_back", "car_wash", "south_gate"];
+/**
+ * Where Kaito's elimination jobs happen: the M1 sites in their original order, then the spot
+ * under the footbridge on Ulica Kanałowa (ADR-0026).
+ */
+export const ELIMINATION_SITE_IDS: readonly ContractSiteId[] = ["east_lot", "koi_back", "car_wash", "south_gate", "kanal_bridge"];
 
 const RAID_SITE_IDS: readonly ContractSiteId[] = ["raid_north", "raid_east"];
 
@@ -60,11 +67,18 @@ export interface Contract {
   readonly progress?: number;
   /** Hack only: ticks in a row the player has been away from the running terminal. */
   readonly away?: number;
+  /** Hack only: daemons won on the terminal (the breach is applied once). */
+  readonly breach?: readonly BreachDaemonId[];
 }
 
 export interface ContractLog {
   readonly active: Contract | null;
   readonly completed: number;
+  /**
+   * Debrief counters of the active contract (ADR-0029), kept beside it so the contract itself
+   * (and the events that carry it) stays what was agreed. Absent or null without a contract.
+   */
+  readonly tally?: ContractTally | null;
 }
 
 export const EMPTY_CONTRACTS: ContractLog = { active: null, completed: 0 };

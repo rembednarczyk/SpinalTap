@@ -16,3 +16,5 @@ export * from "./contracts";
 export * from "./story";
 export * from "./items";
 export * from "./time";
+export * from "./hacking";
+export * from "./crime";

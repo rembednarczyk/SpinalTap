@@ -20,7 +20,13 @@ import {
   advanceClock,
   createDomainState,
   PROTECTEE_KEY,
+  CONTRACT_BONUS,
+  type BreachDaemonId,
   contractKind,
+  contractTag,
+  contractTerminalKey,
+  debriefOf,
+  freshTally,
   credit,
   generateContractOfKind,
   hasFlag,
@@ -33,7 +39,7 @@ import { World } from "miniplex";
 import { SeededRandom } from "./rng/seeded-random";
 import { aimSpreadOf, createSystems, playerStatsOf } from "./systems";
 import type { Entity } from "./world/components";
-import type { DomainHolder, SessionState, SimContext, System } from "./world/context";
+import { type DomainHolder, type SessionState, type SimContext, type System, freshSession } from "./world/context";
 import { deadFlag } from "./systems/death-system";
 import { adjustReputation, applyReputationCause, clearContract, grantMemory, raiseFlag, raiseProgress } from "./world/domain-ops";
 import { PLAYER_SPAWN } from "./content/district-m0";
@@ -46,6 +52,15 @@ import { applyTradeCommand, isTradeCommand } from "./world/trade-commands";
 import { syncPlayerWeapon } from "./world/player-weapon";
 import { inCreationOrder } from "./world/ordering";
 import { placeOnSchedule } from "./world/schedule";
+import { BREACH_DAEMONS, giverOfContract, hackFxOf, noteHacked, phoneFromFixer } from "./world/street";
+import { DOKI_TERMINAL_SPOTS } from "./content/district-doki";
+import { HACK_RANGE } from "./systems/contract-system";
+
+/** Daemons of a terminal breach (ADR-0029): ICEpick cuts the hack short, Datamine pays, Mass Vulnerability marks the wave. */
+export const BREACH_ICEPICK_SECONDS = 10;
+export const BREACH_DATAMINE_EDDIES = 80;
+export const BREACH_MARK_SECONDS = 20;
+
 
 export const SIM_HZ = 60;
 
@@ -64,7 +79,7 @@ export class Simulation {
   readonly bus: EventBus<DomainEvents>;
   readonly seed: number;
   readonly world: World<Entity>;
-  readonly session: SessionState = { dialogueActive: false, gameOver: false, focusId: null, focusPrompt: null, lastThreat: null };
+  readonly session: SessionState = freshSession();
   private readonly rng: SeededRandom;
   private readonly holder: DomainHolder;
   private readonly systems: readonly System[] = createSystems();
@@ -214,6 +229,40 @@ export class Simulation {
     ctx.bus.emit("EndingReached", { act: 2, endingId: ending, title: def.title });
   }
 
+  /**
+   * A terminal breach (ADR-0028, ADR-0029): only on the running hack job's terminal, with the
+   * hack started and Seki at the terminal, once per job. The UI played the minigame; the daemons
+   * it won apply here: ICEpick takes BREACH_ICEPICK_SECONDS off the hack and a RAM off every
+   * quickhack while the job lasts, Datamine pays BREACH_DATAMINE_EDDIES, Mass Vulnerability marks
+   * the job's guards for BREACH_MARK_SECONDS.
+   */
+  private applyBreach(ctx: SimContext, terminalKey: string, won: readonly BreachDaemonId[]): void {
+    const domain = this.holder.domain;
+    const contract = domain.contracts.active;
+    if (contract?.status !== "active" || contractKind(contract) !== "hack" || contract.breach || contract.progress === undefined) return;
+    if (terminalKey !== contractTerminalKey(contract.id)) return;
+    const spot = DOKI_TERMINAL_SPOTS[contract.siteId];
+    const p = this.player();
+    if (!spot || !p || Math.hypot(p.position.x - spot.x, p.position.z - spot.z) > HACK_RANGE) return;
+    const daemons = BREACH_DAEMONS.filter((d) => won.includes(d));
+    const rate = Math.round(1 / ctx.dt);
+    const progress = contract.progress + (daemons.includes("icepick") ? BREACH_ICEPICK_SECONDS * rate : 0);
+    this.holder.domain = { ...domain, contracts: { ...domain.contracts, active: { ...contract, breach: daemons, progress } } };
+    if (daemons.includes("datamine")) {
+      const r = credit(this.holder.domain.wallet, BREACH_DATAMINE_EDDIES);
+      if (r.ok) {
+        this.holder.domain = { ...this.holder.domain, wallet: r.wallet };
+        ctx.bus.emit("EddiesChanged", { balance: r.wallet.eddies, delta: BREACH_DATAMINE_EDDIES, source: "loot" });
+      }
+    }
+    if (daemons.includes("mass_vulnerability")) {
+      const tag = contractTag(contract.id);
+      for (const e of [...this.world]) if (e.tag === tag) hackFxOf(this.world, e).pinged = BREACH_MARK_SECONDS;
+    }
+    noteHacked(ctx);
+    ctx.bus.emit("BreachCompleted", { terminalKey, daemons });
+  }
+
   /** Oyaji has patched himself up since the last raid (only matters while he is in the world). */
   private patchUpProtectee(): void {
     for (const e of this.world.with("health")) if (e.key === PROTECTEE_KEY) e.health = { ...e.health, current: e.health.max };
@@ -255,10 +304,12 @@ export class Simulation {
           { log: domain.contracts, reputation: domain.reputation, flags: domain.flags, tick: ctx.tick, ticksPerSecond: SIM_HZ },
           this.rng,
         );
-        this.holder.domain = { ...domain, contracts: { ...domain.contracts, active: contract } };
+        // Fresh debrief counters (ADR-0029): a new job starts clean.
+        this.holder.domain = { ...domain, contracts: { ...domain.contracts, active: contract, tally: freshTally(ctx.tick) } };
         if (kind === "protect") this.patchUpProtectee();
         this.streamer.registerContract(this.world, this.holder.domain.flags, domain.contracts.completed, contract);
         ctx.bus.emit("ContractAccepted", { contract });
+        ctx.bus.emit("ContractBonusChanged", { contractId: contract.id, condition: CONTRACT_BONUS[kind], kept: true });
         break;
       }
       case "deliver-contract": {
@@ -271,15 +322,21 @@ export class Simulation {
         const domain = this.holder.domain;
         const contract = domain.contracts.active;
         if (contract?.status !== "cleared") break;
-        const paid = credit(domain.wallet, contract.reward);
+        // The card (ADR-0029): badges from the counters, the condition's bonus and the fixer's style, paid in one transfer.
+        const kind = contractKind(contract);
+        const card = debriefOf(kind, domain.contracts.tally ?? freshTally(ctx.tick), contract.reward, ctx.tick, SIM_HZ);
+        const total = contract.reward + card.bonus + card.styleBonus;
+        const paid = credit(domain.wallet, total);
         this.holder.domain = {
           ...domain,
           wallet: paid.ok ? paid.wallet : domain.wallet,
           contracts: { active: null, completed: domain.contracts.completed + 1 },
         };
-        if (paid.ok) ctx.bus.emit("EddiesChanged", { balance: paid.wallet.eddies, delta: contract.reward });
-        applyReputationCause(ctx, { type: "contract-completed", kind: contractKind(contract) });
+        if (paid.ok) ctx.bus.emit("EddiesChanged", { balance: paid.wallet.eddies, delta: total });
+        applyReputationCause(ctx, { type: "contract-completed", kind });
         ctx.bus.emit("ContractCompleted", { contract, reward: contract.reward });
+        ctx.bus.emit("ContractDebrief", { contractId: contract.id, reward: contract.reward, ...card });
+        phoneFromFixer(ctx, giverOfContract(contract), "paid");
         raiseProgress(ctx, "contract_completed");
         break;
       }
@@ -302,6 +359,9 @@ export class Simulation {
         ctx.bus.emit("TimeSkipped", { minutes, clock });
         break;
       }
+      case "breach-result":
+        this.applyBreach(ctx, cmd.terminalKey, cmd.daemons);
+        break;
       case "resolve-ending": {
         if (cmd.act === 2) {
           this.resolveActTwo(ctx);

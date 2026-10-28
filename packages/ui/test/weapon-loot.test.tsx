@@ -38,6 +38,13 @@ const intents = (): UiIntents => ({
   dropItem: vi.fn(),
   installMod: vi.fn(),
   removeMod: vi.fn(),
+  openPhone: vi.fn(),
+  closePhone: vi.fn(),
+  readThread: vi.fn(),
+  dismissDebrief: vi.fn(),
+  setScan: vi.fn(),
+  pickQuickhack: vi.fn(),
+  submitBreach: vi.fn(),
 });
 
 const pad = (): TouchPadSink => ({ setStick: vi.fn(), look: vi.fn(), press: vi.fn(), release: vi.fn(), reset: vi.fn(), selectWeaponSlot: vi.fn() });

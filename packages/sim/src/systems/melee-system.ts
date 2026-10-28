@@ -6,6 +6,10 @@ import { chestOf, eyeOf, lineOfSight } from "../world/hitscan";
 import { KNOCKBACK_SPEED, KNOCKBACK_TIME } from "../world/knockback";
 import { inCreationOrder } from "../world/ordering";
 import { worldTimeScale } from "./ability-system";
+import { disturb, isEngaged, noteViolence } from "../world/street";
+
+/** A blow that lands is heard and seen this far (ADR-0029). */
+const FIGHT_NOISE = 10;
 import { NPC_CRIT, alertNearbyGangers, defenderOf, guardAgainst, threaten, wearPlayerClothes } from "./combat-system";
 import { playerStatsOf } from "./player-control-system";
 
@@ -109,6 +113,7 @@ const land = (ctx: SimContext, f: Fighter, profile: MeleeProfile): boolean => {
       ctx.rng,
       zone,
     );
+    if (f.player) noteViolence(ctx, t, isEngaged(t), chest);
     t.health = applyDamage(t.health, outcome.damage);
     t.lastHitBy = f.id;
     if (t.player) wearPlayerClothes(ctx, outcome.zone);
@@ -127,6 +132,7 @@ const land = (ctx: SimContext, f: Fighter, profile: MeleeProfile): boolean => {
   }
   ctx.bus.emit("MeleeStrike", { entityId: f.id, strike: f.melee.strike, hits });
   alertNearbyGangers(ctx, f.position, weapon.alertRadius);
+  if (hits > 0) disturb(ctx, "fight", f.position, FIGHT_NOISE, f.id);
   return parried;
 };
 

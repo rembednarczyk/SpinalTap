@@ -1,4 +1,19 @@
-import type { EnemyTypeId, EntityId, FactionId, Health, ShopId, Slope, Vec3, ViewDescriptor, WeaponId, WeaponSlot, WeaponStats } from "@seki/core";
+import type {
+  ContractKind,
+  CrimeKind,
+  CrowdState,
+  EnemyTypeId,
+  EntityId,
+  FactionId,
+  Health,
+  ShopId,
+  Slope,
+  Vec3,
+  ViewDescriptor,
+  WeaponId,
+  WeaponSlot,
+  WeaponStats,
+} from "@seki/core";
 import type { Aabb } from "./collision";
 
 export interface CharacterBody {
@@ -108,6 +123,18 @@ export interface GangerAi {
   suspicion?: number;
   /** A guard on a post looks around: its facing sweeps around `yaw` (ADR-0024). */
   readonly watch?: { readonly yaw: number; readonly phase: number };
+  /**
+   * Where it last saw the player, or a lead it was given (a noise, a camera, a trace) (ADR-0029).
+   * An alerted AI chases it once the player is out of sight; an unalerted one walks there to
+   * look. Saved with the entity.
+   */
+  lastKnown?: Vec3 | null;
+  /** Seconds it still looks around `lastKnown` before going back to its post. Saved. */
+  search?: number;
+  /** Seconds the player has been out of its sight while alerted. Transient. */
+  lost?: number;
+  /** It saw the player this step (read by the heat after the AI ran). Transient. */
+  sees?: boolean;
 }
 
 /**
@@ -130,9 +157,70 @@ export interface EscortAi {
   readonly route: readonly [Vec3, ...Vec3[]];
 }
 
-/** A bystander that keeps to its spot and runs from a player the street fears. Stateless by design. */
+/**
+ * A bystander that keeps to its spot (or its daily plan), runs from a player the street fears
+ * and reacts to disturbances (ADR-0029). `crowd` is transient: a loaded game starts calm.
+ */
 export interface CivilianAi {
   readonly home: Vec3;
+  crowd?: CrowdMind;
+}
+
+/** A bystander's reaction to the street (ADR-0029). Transient, not saved. */
+export interface CrowdMind {
+  state: CrowdState;
+  /** Seconds left of the state; at 0 it calms down one step (cowering, then fleeing, then calm). */
+  timer: number;
+  /** What it reacts to (runs away from it, looks at it). */
+  from: Vec3;
+  /** A call to the security in progress. */
+  call: WitnessCall | null;
+  /** Seconds left of being too scared to phone (the player aimed at it). */
+  scared: number;
+}
+
+export interface WitnessCall {
+  readonly crime: CrimeKind;
+  readonly at: Vec3;
+  /** The incident it saw; several witnesses of one incident make one report. */
+  readonly incident: number;
+  left: number;
+}
+
+/** Kinds of hackable things placed in the districts (ADR-0029). */
+export type DeviceKind = "camera" | "vending" | "speaker" | "neon";
+
+/**
+ * A camera or a device (ADR-0029). A camera sees in a cone in front of it (the entity's yaw) and
+ * reports crimes at once; with `restricted`, it also reports the player standing in the zone.
+ * Devices make noise when distracted. Timers are transient.
+ */
+export interface Device {
+  readonly kind: DeviceKind;
+  /** The network the device is wired to (ping, ICEpick). */
+  readonly network: string;
+  /** Whose security it reports to. */
+  readonly faction: FactionId;
+  /** A no-go zone the camera watches; with `during`, only while a contract of that kind runs. */
+  readonly restricted?: { readonly minX: number; readonly maxX: number; readonly minZ: number; readonly maxZ: number; readonly during?: ContractKind };
+  /** Camera: 0..1 how sure it is the player is where they should not be. */
+  spot: number;
+  /** Seconds before the camera reports the trespass again. */
+  cooldown: number;
+  /** Seconds left of the noise of `distract`. */
+  noise: number;
+  /** Seconds left knocked out by `short_circuit`. */
+  broken: number;
+}
+
+/** Quickhack effects on a person or a camera, seconds left (ADR-0029). Transient, not saved. */
+export interface HackEffects {
+  /** Marked by `ping`: the HUD shows it through walls. */
+  pinged: number;
+  /** `reboot_optics`: sees nothing. */
+  blind: number;
+  /** `cripple_movement`: cannot walk. */
+  crippled: number;
 }
 
 /**
@@ -322,4 +410,12 @@ export interface Entity {
   interactable?: Interactable;
   /** A bag in the world; its contents live in `domain.loot` under this key. */
   lootBag?: { readonly key: string };
+  /** A camera or a hackable device (ADR-0029). */
+  device?: Device;
+  /** Quickhack effects (ADR-0029). */
+  hackFx?: HackEffects;
+  /** Sent in by the district's security because of the heat (ADR-0029); unkeyed, not saved. */
+  security?: true;
+  /** The player hurt it while it was not fighting them: its death is a crime (ADR-0029). Transient. */
+  wronged?: true;
 }

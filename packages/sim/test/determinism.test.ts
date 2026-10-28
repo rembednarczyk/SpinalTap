@@ -43,7 +43,27 @@ describe("determinism", () => {
   });
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
-    expect(hashOf(runReplay(1234, script()))).toMatchInlineSnapshot(`"31f58220"`);
+    expect(hashOf(runReplay(1234, script()))).toMatchInlineSnapshot(`"d9a66304"`);
+  });
+
+  it("without the street life of ADR-0026 in the snapshot, the run hashes as before it (content, not rules)", () => {
+    // The run reaches the alley: Ulica Kanałowa streams in with its four new people, and the
+    // stashes behind Neon Koi, behind PACHINKO and by the passage are placed. Nothing else moved.
+    const snap = runReplay(1234, script()).snapshot(null, "test", "");
+    const added = new Set(["hideo", "tetsu", "mei", "sachiko"]);
+    const stash = /^(placed:)?stash:(s7|kanal)-/;
+    const before = {
+      ...snap,
+      entities: snap.entities.filter((e) => !added.has(e.key)),
+      domain: {
+        ...snap.domain,
+        flags: snap.domain.flags.filter((f) => !stash.test(f)),
+        loot: { ...snap.domain.loot, containers: snap.domain.loot.containers.filter((c) => !stash.test(c.key)) },
+      },
+    };
+    expect(snap.entities.filter((e) => added.has(e.key))).toHaveLength(4);
+    // The hash of the same run with the rules of ADR-0029 (wave 1) and without this content.
+    expect(stateHash(before)).toBe("bef1026f");
   });
 
   it("a loaded snapshot continues exactly like the original run", () => {
@@ -87,7 +107,7 @@ describe("determinism", () => {
     // Swings both ways, a blocked blow and staggers: the duel exercises the whole package.
     for (const t of ["MeleeSwing", "AttackBlocked", "Staggered", "DamageDealt"]) expect(seen).toContain(t);
     expect(hashOf(sim)).toBe(hashOf(duel().sim));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"dfa7316b"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"5be082e2"`);
   });
 
   it("restores killed NPCs as absent", () => {

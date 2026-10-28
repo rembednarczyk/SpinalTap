@@ -23,3 +23,9 @@ export const collect = <T>(sim: Simulation, type: Parameters<Simulation["bus"]["
   sim.bus.on(type, (p) => out.push(p as T));
   return out;
 };
+
+/** What the debrief cards paid on top of the base rewards so far (ADR-0029), from now on. */
+export const debriefExtras = (sim: Simulation): (() => number) => {
+  const cards = collect<{ bonus: number; styleBonus: number }>(sim, "ContractDebrief");
+  return () => cards.reduce((sum, c) => sum + c.bonus + c.styleBonus, 0);
+};

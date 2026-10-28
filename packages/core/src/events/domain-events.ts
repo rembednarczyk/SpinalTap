@@ -9,6 +9,9 @@ import type { Contract, ContractFailure } from "../contracts/contracts";
 import type { ActTwoEndingId, EndingId, StoryChoiceId, StoryOption } from "../story/story";
 import type { ConsumableId, EquipSlot, ItemDefId, ItemRef, LootLine, ModSlot, Rarity, WeaponId, WeaponSlot } from "../items/types";
 import type { GameClock } from "../time/game-clock";
+import type { BreachDaemonId, HackTargetKind, QuickhackFailure, QuickhackId } from "../hacking/quickhacks";
+import type { CrimeKind, CrowdState, DisturbanceKind, HeatLevel, WitnessChannel } from "../crime/heat";
+import type { BonusCondition, ContractBadge, ContractRank } from "../contracts/debrief";
 
 export interface DomainEvents {
   ShotFired: { shooterId: EntityId; from: Vec3; to: Vec3; hitEntity: EntityId | null };
@@ -16,7 +19,8 @@ export interface DomainEvents {
   WeaponToggled: { entityId: EntityId; drawn: boolean };
   /** `zone` is the body part the shot landed on (ADR-0016). */
   DamageDealt: { sourceId: EntityId; targetId: EntityId; amount: number; critical: boolean; zone: HitZone; at: Vec3 };
-  EntityKilled: { entityId: EntityId; tag: string | null };
+  /** `killerId`: whoever dealt the last blow, when known (ADR-0028: kill markers, debrief). */
+  EntityKilled: { entityId: EntityId; tag: string | null; killerId?: EntityId };
   PlayerDied: { entityId: EntityId };
   InteractionFocusChanged: { targetId: EntityId | null; prompt: string | null };
   /**
@@ -113,7 +117,61 @@ export interface DomainEvents {
   /** `lines` were moved to the player; `left` lines stayed in the container. */
   LootTaken: { containerKey: string; lines: readonly LootLine[]; left: number };
   LootExpired: { containerKey: string };
+  // Crime, crowds and heat (ADR-0028).
+  /** Something the street notices, heard or seen up to `radius` metres from `at`. */
+  Disturbance: { kind: DisturbanceKind; at: Vec3; radius: number; sourceId: EntityId };
+  /** A bystander's reaction changed (presentation: animation, bark, minimap). */
+  CrowdReacted: { entityId: EntityId; state: CrowdState };
+  /** A civilian started phoning it in; the call lands after `duration` seconds unless cut off. */
+  WitnessCalling: { witnessId: EntityId; crime: CrimeKind; duration: number };
+  /** A crime reached the district's security. `witnessId` is the civilian, camera or patrol. */
+  CrimeReported: { crime: CrimeKind; channel: WitnessChannel; witnessId: EntityId; offenderId: EntityId; at: Vec3 };
+  /**
+   * The pursuit changed. `searching`: the security lost sight and looks around `lastKnown`;
+   * the heat drops one level when `searchLeft` seconds run out with the player unseen.
+   * `faction` (ADR-0029): whose security hunts the player; absent at heat 0.
+   */
+  HeatChanged: { level: HeatLevel; previous: HeatLevel; searching: boolean; lastKnown: Vec3 | null; searchLeft: number; faction?: FactionId };
+  /**
+   * An enemy's awareness of the player (stealth feedback for the HUD). `level` 0..1 fills the
+   * suspicion; `lastKnown` is where it last saw the player (Deus Ex style silhouette).
+   */
+  AwarenessChanged: { observerId: EntityId; state: AwarenessState; level: number; lastKnown: Vec3 | null };
+  // Scanner and quickhacks (ADR-0028).
+  /** The scanner focused something that can be scanned (null: nothing). */
+  ScanFocusChanged: { targetId: EntityId | null; kind?: HackTargetKind; name?: string; faction?: FactionId | null };
+  /** A terminal opened its network: the UI starts the minigame for these daemons. */
+  BreachStarted: { terminalKey: string; daemons: readonly BreachDaemonId[] };
+  QuickhackStarted: { hackId: QuickhackId; targetId: EntityId; upload: number; ram: number };
+  QuickhackApplied: { hackId: QuickhackId; targetId: EntityId; duration: number };
+  QuickhackFailed: { hackId: QuickhackId; targetId: EntityId; reason: QuickhackFailure };
+  /** The upload was noticed: the target's network knows where the player is. */
+  QuickhackTraced: { hackId: QuickhackId; targetId: EntityId };
+  RamChanged: { current: number; max: number };
+  /** A terminal breach ended (the UI minigame sends the result as a command). */
+  BreachCompleted: { terminalKey: string; daemons: readonly BreachDaemonId[] };
+  // Contract layer (ADR-0028).
+  /** The optional condition of the running contract is still on (`kept`) or lost for good. */
+  ContractBonusChanged: { contractId: string; condition: BonusCondition; kept: boolean };
+  /** End-of-contract card: what was earned and how it was paid. Sent after ContractCompleted. */
+  ContractDebrief: {
+    contractId: string;
+    badges: readonly ContractBadge[];
+    rank: ContractRank;
+    reward: number;
+    bonus: number;
+    styleBonus: number;
+    seconds: number;
+  };
+  /** A text or a call on the phone (ADR-0028); the app renders `knot` from ink. */
+  PhoneMessage: { from: string; kind: "text" | "call"; knot: string; priority: PhonePriority };
 }
+
+/** Awareness of the player, from not noticing to fighting. */
+export type AwarenessState = "unaware" | "suspicious" | "searching" | "alerted";
+
+/** "story" interrupts (a holocall), "contract" queues, "info" waits for a quiet moment. */
+export type PhonePriority = "story" | "contract" | "info";
 
 export type ItemSource = "loot" | "shop" | "quest" | "clinic";
 

@@ -39,6 +39,13 @@ const intents = (): UiIntents => ({
   dropItem: vi.fn(),
   installMod: vi.fn(),
   removeMod: vi.fn(),
+  openPhone: vi.fn(),
+  closePhone: vi.fn(),
+  readThread: vi.fn(),
+  dismissDebrief: vi.fn(),
+  setScan: vi.fn(),
+  pickQuickhack: vi.fn(),
+  submitBreach: vi.fn(),
 });
 
 const mount = (state: Partial<UiState> = {}) => {

@@ -23,11 +23,14 @@ const status = (w: WeaponStripVm): string | null => {
  */
 export const WeaponStrip = ({ pad }: { pad?: TouchPadSink | undefined }) => {
   const w = useUi((s) => s.weapons);
+  const shown = useUi((s) => s.combat || s.settings.hudAlwaysShow);
   if (!w) return null;
   const note = status(w);
+  // Out of combat the rounds step aside, unless something about them needs saying.
+  const calm = !shown && note === null;
   return (
     <div className="weapon-strip" data-testid="weapon-strip">
-      <div className={`weapon-strip__ammo${w.loaded === 0 ? " weapon-strip__ammo--empty" : ""}`} data-testid="weapon-ammo">
+      <div className={`weapon-strip__ammo${w.loaded === 0 ? " weapon-strip__ammo--empty" : ""}${calm ? " weapon-strip__ammo--calm" : ""}`} data-testid="weapon-ammo">
         <span className="weapon-strip__count">{ammoText(w)}</span>
         {w.ammoName && <span className="weapon-strip__type">{w.ammoName}</span>}
         {note && <span className="weapon-strip__note">{note}</span>}

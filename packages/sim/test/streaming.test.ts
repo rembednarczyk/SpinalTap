@@ -17,7 +17,8 @@ const at = (x: number, z: number) => ({ x, y: 0, z });
 
 const hasKey = (sim: Simulation, key: string) => byKey(sim, key) !== undefined;
 
-const chunkEntities = (sim: Simulation, chunk: string): Entity[] => [...sim.world].filter((e) => e.chunk === chunk);
+/** What the chunk holds of its own: loot bags come and go (stashes appear as Seki walks by, ADR-0026). */
+const chunkEntities = (sim: Simulation, chunk: string): Entity[] => [...sim.world].filter((e) => e.chunk === chunk && !e.lootBag);
 
 /** Teleports and runs one step, which is when streaming reacts. */
 const goTo = (sim: Simulation, x: number, z: number, yaw = 0) => {
@@ -146,7 +147,8 @@ describe("world streaming: loading and unloading", () => {
   });
 
   it("a contract is not cleared while its targets sleep in an unloaded chunk", () => {
-    const sim = Simulation.create({ seed: 5 });
+    // Seed 6 sends Kaito's job to the car wash alley, out of sight of the spawn (seed 5 now picks the south gate).
+    const sim = Simulation.create({ seed: 6 });
     sim.enqueue({ type: "accept-contract" });
     sim.step();
     const contract = sim.domain.contracts.active!;

@@ -285,7 +285,18 @@ const FLOOR = 3.2;
  * roof at the box's top), so the box itself can be hidden. Decor (AC units, a drain pipe,
  * cables over the street, signs) hangs on the front.
  */
-export const planSkin = (data: CityKitData, skin: BlockSkin, size: Vec3, center: Vec3): SkinPlan | null => {
+/** Height above its main roof a model may reach and still go on a walked roof (parapets only). */
+export const WALKED_ROOF_CLEARANCE = 1.0;
+
+export interface PlanOptions {
+  /**
+   * People walk on this roof (ADR-0027, C8): only models without tall roof parts, so nothing
+   * without collision stands where they walk. `addModel` then trims roof housings too.
+   */
+  readonly walkedRoof?: boolean;
+}
+
+export const planSkin = (data: CityKitData, skin: BlockSkin, size: Vec3, center: Vec3, options: PlanOptions = {}): SkinPlan | null => {
   const rand = prng(seedOf(center));
   const turn = FACING_TURN[skin.front];
   const alongX = skin.front === "z+" || skin.front === "z-";
@@ -297,7 +308,9 @@ export const planSkin = (data: CityKitData, skin: BlockSkin, size: Vec3, center:
     const [wx, wz] = turnXZ(lx, lz, turn);
     return { key, x: origin.x + wx, y: origin.y + ly, z: origin.z + wz, turn, sx, sy, sz, tint };
   };
-  const all = [...data.models.values()];
+  const models = [...data.models.values()];
+  const flat = models.filter((m) => m.size.y - m.roof < WALKED_ROOF_CLEARANCE);
+  const all = options.walkedRoof && !VEHICLES.has(skin.style) ? flat : models;
   const pool = (style: string) => all.filter((m) => m.styles.includes(style));
   const front = pool(POOLS[skin.style].front);
   if (front.length === 0) return null;
@@ -407,8 +420,12 @@ export class GeometrySink {
     return this.positions.length / 3;
   }
 
-  /** A model scaled in its own frame, turned and moved; `tint` goes to the vertex colour. */
-  addModel(m: KitModel, p: Placement): void {
+  /**
+   * A model scaled in its own frame, turned and moved; `tint` goes to the vertex colour. With
+   * `trimRoof` (a walked roof, ADR-0027) triangles that rise above the main roof away from the
+   * model's edges (roof housings, AC units, stair heads) are left out; parapets stay.
+   */
+  addModel(m: KitModel, p: Placement, trimRoof = false): void {
     const base = this.vertexCount;
     const [r, g, b] = hexRgb(p.tint);
     const c = Math.cos(p.turn);
@@ -430,7 +447,17 @@ export class GeometrySink {
       this.colors.push(r, g, b, 1);
     }
     for (let i = 0; i < m.uvs.length; i += 2) this.uvs.push(m.uvs[i] ?? 0, paletteV(m.uvs[i + 1] ?? 0));
-    for (const i of m.indices) this.indices.push(base + i);
+    if (!trimRoof) {
+      for (const i of m.indices) this.indices.push(base + i);
+      return;
+    }
+    for (let t = 0; t < m.indices.length; t += 3) {
+      const a = m.indices[t] ?? 0;
+      const b = m.indices[t + 1] ?? 0;
+      const c = m.indices[t + 2] ?? 0;
+      if (isRoofHousing(m, a, b, c)) continue;
+      this.indices.push(base + a, base + b, base + c);
+    }
   }
 
   /**
@@ -472,6 +499,24 @@ export class GeometrySink {
     this.quad(corner(-1, -1, -1), corner(-1, 1, -1), corner(1, 1, -1), corner(1, -1, -1), neg(az), uv);
   }
 }
+
+/** Distance from a model's footprint edge within which roof parts count as parapet. */
+const PARAPET_BAND = 0.6;
+
+/** Is a triangle (model space) part of a roof housing: above the roof and inside the parapet? */
+export const isRoofHousing = (m: KitModel, a: number, b: number, c: number): boolean => {
+  const P = m.positions;
+  let maxY = -Infinity;
+  let cx = 0;
+  let cz = 0;
+  for (const i of [a, b, c]) {
+    maxY = Math.max(maxY, P[i * 3 + 1] ?? 0);
+    cx += (P[i * 3] ?? 0) / 3;
+    cz += (P[i * 3 + 2] ?? 0) / 3;
+  }
+  if (maxY <= m.roof + 0.3) return false;
+  return Math.min(m.size.x / 2 - Math.abs(cx), m.size.z / 2 - Math.abs(cz)) > PARAPET_BAND;
+};
 
 export const hexRgb = (hex: string): readonly [number, number, number] => {
   const n = parseInt(hex.slice(1, 7), 16);

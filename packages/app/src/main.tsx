@@ -10,7 +10,7 @@ import { browserClock } from "./browser-clock";
 import { type DebugApi, createDebugApi } from "./debug-api";
 import { GameSession } from "./game-session";
 import { keymapFor } from "./controls";
-import { type SettingsStorage, loadHintsSeen, loadSettings, saveHintsSeen, saveSettings, scaleLook } from "./settings";
+import { type SettingsStorage, applyEffects, loadHintsSeen, loadSettings, saveHintsSeen, saveSettings, scaleLook } from "./settings";
 
 declare global {
   interface Window {
@@ -42,7 +42,9 @@ const storage = ((): SettingsStorage | null => {
   }
 })();
 // The reference frame never shows hints (the NPR snapshot is of the scene alone).
-const deviceDefaults = { ...DEFAULT_SETTINGS, quality: touchDevice ? "low" : "high", hints: !reference } as const;
+// A system-wide "reduce motion" turns the flashes and the glitch down from the start (ADR-0028).
+const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const deviceDefaults = { ...DEFAULT_SETTINGS, quality: touchDevice ? "low" : "high", hints: !reference, reduceFlashes: reducedMotion } as const;
 // The reference frame ignores saved settings so the NPR snapshot never depends on the profile.
 const settings = reference ? deviceDefaults : loadSettings(storage, deviceDefaults);
 const qualityParam = params.get("quality");
@@ -109,6 +111,7 @@ const applyControls = (s: typeof settings) => {
   input.keymap = keymapFor(s.bindings);
   input.setButtonModes({ aim: s.aimMode, crouch: s.crouchMode, sprint: s.sprintMode });
   renderer.rig.baseFov = fovRadians(s.fov);
+  applyEffects(renderer, s);
 };
 
 const loop = new FixedStepLoop(browserClock, {
@@ -127,6 +130,7 @@ const loop = new FixedStepLoop(browserClock, {
       preview.render(stage.engine.getDeltaTime() / 1000);
       return;
     }
+    renderer.setScanning(ui.getState().scanning);
     renderer.frame(stage.engine.getDeltaTime() / 1000);
     const player = renderer.cameraTargetTransform;
     if (player) audio.setListener({ position: player.position, yaw: player.yaw, speed: player.speed });
@@ -209,6 +213,16 @@ const debug = createDebugApi(session, ui, loop, () => probe.sample(), (position,
   () => preview.state,
 );
 window.__seki = debug;
+
+// Wave 1 effects over the whole frame (ADR-0030): hits on the player, quickhack uploads, heat
+// and the scanner's focus. The scanner itself follows the store in the render loop.
+session.bus.on("DamageDealt", (e) => {
+  if (e.targetId === session.sim.player()?.id) renderer.gameplayFx({ kind: "player-hurt", amount: e.amount });
+});
+session.bus.on("QuickhackStarted", () => renderer.gameplayFx({ kind: "quickhack", phase: "started" }));
+session.bus.on("QuickhackApplied", () => renderer.gameplayFx({ kind: "quickhack", phase: "applied" }));
+session.bus.on("HeatChanged", (e) => renderer.gameplayFx({ kind: "heat", level: e.level, searching: e.searching }));
+session.bus.on("ScanFocusChanged", (e) => renderer.setScanFocus(e.targetId, e.kind));
 
 if (reference) {
   // The snapshot guards the 3D look only; the HUD has its own component tests.

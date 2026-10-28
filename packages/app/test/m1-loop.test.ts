@@ -11,7 +11,17 @@ import {
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
 import { createUiStore } from "@seki/ui";
+import { CONTRACT_SITE_SPAWNS } from "@seki/sim";
 import { GameSession } from "../src/game-session";
+
+/** What the debrief card pays on top of the reward (ADR-0029); subscribe right before the payment. */
+const extraPay = (session: GameSession): (() => number) => {
+  let extra = 0;
+  session.sim.bus.on("ContractDebrief", (c) => {
+    extra += c.bonus + c.styleBonus;
+  });
+  return () => extra;
+};
 
 const render: RenderPort = {
   spawn() {},
@@ -112,9 +122,10 @@ describe("M1 acceptance: contract → eddies → cyberware → stronger in comba
 
     // Report back: Kaito pays and offers the next job (declined here).
     const before = session.sim.domain.wallet.eddies;
+    const extra = extraPay(session);
     talkToKaito(session);
     steps(session, 1);
-    expect(session.sim.domain.wallet.eddies).toBe(before + contract.reward);
+    expect(session.sim.domain.wallet.eddies).toBe(before + contract.reward + extra());
     expect(session.sim.domain.contracts.completed).toBe(1);
     session.choose(2);
     session.closeDialogue();
@@ -132,7 +143,7 @@ describe("M1 acceptance: contract → eddies → cyberware → stronger in comba
     steps(session, 1);
     expect(session.sim.domain.character.cyberware.arms).toBe("steady_grip");
     expect(session.sim.domain.inventory.stacks.medkit).toBe(2);
-    expect(session.sim.domain.wallet.eddies).toBe(before + contract.reward - 500 - 90);
+    expect(session.sim.domain.wallet.eddies).toBe(before + contract.reward + extra() - 500 - 90);
     expect(ui.getState().shopOpen).toBe(false);
 
     // Next contract: the same pistol now hits harder.
@@ -141,6 +152,10 @@ describe("M1 acceptance: contract → eddies → cyberware → stronger in comba
     session.closeDialogue();
     steps(session, 1);
     const next = session.sim.domain.contracts.active!;
+    // The site may be off the street (under the Kanałowa footbridge): walk there so it streams in.
+    const site = CONTRACT_SITE_SPAWNS[next.siteId][0]!;
+    teleport(session, site.x, site.z - 3, 0);
+    steps(session, 1);
     const nextTargets = [...session.sim.world].filter((e) => e.tag === contractTag(next.id)).map((e) => e.key!);
     const upgradedHits = nextTargets.flatMap((k) => shootDown(session, k));
     // 22 + 3 (memory) through the ganger's Hebi jacket (torso 3, ADR-0015); the grip adds 4.

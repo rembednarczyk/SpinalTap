@@ -35,6 +35,14 @@ const SPEAKERS: Readonly<Record<string, string>> = {
   HANA: "Hana",
   OYAJI: "Oyaji",
   GENZO: "Genzō",
+  // Ulica Kanałowa and the market stalls (ADR-0026).
+  HIDEO: "Hideo",
+  TETSU: "Tetsu",
+  MEI: "Mei",
+  SACHIKO: "Sachiko",
+  GORO: "Goro",
+  KENTA: "Kenta",
+  FUMIKO: "Fumiko",
 };
 const SPEAKER_RE = /^([A-Z]+):\s*(.*)$/;
 

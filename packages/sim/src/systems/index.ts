@@ -18,10 +18,31 @@ import { meleeSystem } from "./melee-system";
 import { lootSystem } from "./loot-system";
 import { clockSystem } from "./clock-system";
 import { scheduleSystem } from "./schedule-system";
+import { scannerSystem } from "./scanner-system";
+import { createCrimeSystem } from "./crime-system";
+import { contractLayerSystem } from "./contract-layer-system";
 
 export { aimSpreadOf, fireShot, GUNFIRE_INTERRUPT_RADIUS, NPC_CRIT } from "./combat-system";
 export { meleeSystem, stagger, startSwing } from "./melee-system";
-export { equippedAbility, worldTimeScale } from "./ability-system";
+export { equippedAbility, scanning, worldTimeScale } from "./ability-system";
+export { DEVICE_SHORT_SECONDS, hackTargetKind, scanFocus, scannerSystem } from "./scanner-system";
+export {
+  CAMERA_ALARM_RADIUS,
+  CAMERA_CONE,
+  CAMERA_RANGE,
+  CAMERA_REPORT_COOLDOWN,
+  CAMERA_SPOT_SECONDS,
+  REINFORCE_INTERVAL,
+  REPORT_LEAD_RADIUS,
+  SPAWN_MAX,
+  SPAWN_MIN,
+  VIEW_HALF_ANGLE,
+  cameraSees,
+  createCrimeSystem,
+  inPlayerView,
+  securityAt,
+} from "./crime-system";
+export { contractLayerSystem } from "./contract-layer-system";
 export { deadFlag } from "./death-system";
 export { LOOT_REACH, syncBags } from "./loot-system";
 export { gameSecondsPerStep } from "./clock-system";
@@ -44,6 +65,10 @@ export { CLIMB_SPEED, grabLadder } from "./ladder-system";
 /**
  * Explicit, fixed system order (determinism: never derived from map iteration).
  * Returns fresh instances because some systems keep per-simulation caches.
+ *
+ * ADR-0029: the scanner runs before the AI (a hack's effect counts in the same step), the crime
+ * system after the deaths (a kill and its witnesses share a step), the contract layer after the
+ * contract system (it sees the job's state of this step).
  */
 export const createSystems = (): readonly System[] => [
   clockSystem,
@@ -54,6 +79,7 @@ export const createSystems = (): readonly System[] => [
   playerControlSystem,
   ladderSystem,
   scheduleSystem,
+  scannerSystem,
   createGangerAiSystem(),
   sniperAiSystem,
   createCivilianAiSystem(),
@@ -65,7 +91,9 @@ export const createSystems = (): readonly System[] => [
   combatSystem,
   interactionSystem,
   deathSystem,
+  createCrimeSystem(),
   lootSystem,
   contractSystem,
+  contractLayerSystem,
   questSystem,
 ];

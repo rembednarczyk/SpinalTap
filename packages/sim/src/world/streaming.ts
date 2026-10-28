@@ -16,16 +16,18 @@ import {
   takenFlag,
 } from "@seki/core";
 import type { World } from "miniplex";
-import { CONTRACT_SITE_SPAWNS } from "../content/district-m0";
+import { CONTRACT_SITE_SPAWNS, contractSpawnYaw } from "../content/district-m0";
 import { CONTRACT_ITEM_SPOTS } from "../content/district-targ";
 import { DOKI_CONTRACT_POSTS, DOKI_ITEM_SPOTS, DOKI_TERMINAL_SPOTS, ESCORT_ROUTE } from "../content/district-doki";
-import { type ChunkDef, type DistrictId, WORLD_CHUNKS, chunkAt, distanceToRect } from "../content/world-map";
+import { type ChunkDef, type DistrictId, WORLD_CHUNKS, WORLD_DEVICES, chunkAt, distanceToRect } from "../content/world-map";
+import type { DeviceDef } from "../content/devices";
 import { type Presence, isPresent } from "../content/builders";
 import type { Entity } from "./components";
 import {
   type IdAllocator,
   actorEntity,
   applyEntitySnapshot,
+  deviceEntity,
   contractGangerHp,
   entitySnapshotOf,
   escortEntity,
@@ -98,6 +100,7 @@ export class WorldStreamer {
     private readonly ids: IdAllocator,
     readonly chunks: readonly ChunkDef[] = WORLD_CHUNKS,
     readonly radii: StreamingRadii = STREAMING_RADII,
+    devices: readonly DeviceDef[] = WORLD_DEVICES,
   ) {
     for (const chunk of chunks) {
       const list: Template[] = [];
@@ -112,6 +115,15 @@ export class WorldStreamer {
         this.byKey.set(def.spawn.key, t);
       }
       this.content.set(chunk.id, list);
+    }
+    // Devices (ADR-0029) after every chunk's own content, so the ids above stay what they were.
+    for (const def of devices) {
+      const list = this.content.get(def.chunk);
+      if (!list) continue;
+      const id = ids.take();
+      const t: Template = { id, chunk: def.chunk, key: def.key, make: () => deviceEntity(id, def) };
+      list.push(t);
+      this.byKey.set(def.key, t);
     }
   }
 
@@ -197,8 +209,8 @@ export class WorldStreamer {
         add(post.onAlarm ? { id, chunk, key, make, when: { all: [contractAlarmFlag(contract.id)] } } : { id, chunk, key, make });
         continue;
       }
-      // Face the street centre line.
-      const spawn = { key, position, yaw: Math.atan2(-position.x, 0.001) };
+      // Face the way trouble comes from on this site (audit W11).
+      const spawn = { key, position, yaw: contractSpawnYaw(contract.siteId, position) };
       // Every third ganger of a wave fights hand to hand (ADR-0019).
       const type = i % 3 === 2 ? "hebi_brawler" : "hebi_ganger";
       add({ id, chunk, key, make: () => gangerEntity(id, spawn, tag, contractGangerHp(completed), chunk, victim, type) });
@@ -258,8 +270,8 @@ export class WorldStreamer {
       }
       const t = this.byKey.get(s.key);
       if (!t || isDead(flags, s.key) || flags.includes(takenFlag(s.key)) || !isPresent(t.when, flags)) continue;
-      if (s.alerted) {
-        // It was chasing the player when the save was made: pinned, alive outside its chunk.
+      if (s.alerted || s.lastKnown) {
+        // It was chasing (or looking for) the player when the save was made: pinned, alive outside its chunk.
         const pinned = t.make();
         applyEntitySnapshot(pinned, s);
         world.add(pinned);
@@ -348,7 +360,8 @@ export class WorldStreamer {
   private unload(world: World<Entity>, chunkIds: ReadonlySet<string>): void {
     const leaving = inCreationOrder([...world].filter((e) => e.chunk !== undefined && chunkIds.has(e.chunk)));
     for (const e of leaving) {
-      if (e.ai?.alerted) continue;
+      // Chasing or looking for the player (ADR-0029): it stays.
+      if (e.ai?.alerted || e.ai?.lastKnown) continue;
       if (e.key) this.dormant.set(e.key, entitySnapshotOf({ ...e, key: e.key }));
       world.remove(e);
       this.streamedOut.add(e.id);

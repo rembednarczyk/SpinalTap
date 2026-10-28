@@ -38,7 +38,8 @@ test("a killed ganger leaves a bag; E opens it and Weź wszystko empties it", as
     guard.health = { current: 0, max: guard.health!.max };
   });
   await step(page, 2);
-  const bag = await page.evaluate(() => window.__seki!.session.sim.domain.loot.containers[0] ?? null);
+  // The street's stashes (ADR-0026) are containers too: pick the guard's bag by key.
+  const bag = await page.evaluate(() => window.__seki!.session.sim.domain.loot.containers.find((c) => c.key === "loot:guard") ?? null);
   expect(bag?.key).toBe("loot:guard");
   const before = (await gameState(page)).eddies;
   await teleport(page, bag!.position.x, bag!.position.z - 1);
@@ -54,7 +55,7 @@ test("a killed ganger leaves a bag; E opens it and Weź wszystko empties it", as
   await step(page, 2);
   await expect(panel).toBeHidden();
   expect((await gameState(page)).eddies).toBeGreaterThan(before);
-  expect(await page.evaluate(() => window.__seki!.session.sim.domain.loot.containers.length)).toBe(0);
+  expect(await page.evaluate(() => window.__seki!.session.sim.domain.loot.containers.some((c) => c.key === "loot:guard"))).toBe(false);
   expect((await gameState(page)).dialogue).toBe(false);
   expect(errors).toEqual([]);
 });

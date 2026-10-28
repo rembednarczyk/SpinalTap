@@ -47,50 +47,6 @@ void main(void) {
 }
 `;
 
-const SKYLINE_VERTEX = /* glsl */ `
-precision highp float;
-attribute vec3 position;
-attribute vec3 normal;
-uniform mat4 world;
-uniform mat4 viewProjection;
-varying vec3 vWorldPos;
-varying vec3 vNormal;
-void main(void) {
-  vec4 wp = world * vec4(position, 1.0);
-  vWorldPos = wp.xyz;
-  vNormal = normal;
-  gl_Position = viewProjection * wp;
-}
-`;
-
-/** Distant towers: flat silhouettes fading into haze towards the ground, scattered lit windows. */
-const SKYLINE_FRAGMENT = /* glsl */ `
-precision highp float;
-varying vec3 vWorldPos;
-varying vec3 vNormal;
-uniform vec3 silhouette;
-uniform vec3 haze;
-uniform vec3 cameraPosition;
-float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-void main(void) {
-  float height = clamp(vWorldPos.y / 90.0, 0.0, 1.0);
-  vec3 col = mix(haze, silhouette, smoothstep(0.0, 0.6, height));
-  if (abs(vNormal.y) < 0.5) {
-    float u = abs(vNormal.x) > 0.5 ? vWorldPos.z : vWorldPos.x;
-    vec2 g = vec2(u / 3.0, vWorldPos.y / 3.6);
-    vec2 cell = floor(g);
-    vec2 f = fract(g);
-    float inWin = step(0.3, f.x) * step(f.x, 0.7) * step(0.35, f.y) * step(f.y, 0.7);
-    float h = hash(cell + vNormal.xz * 13.0);
-    vec3 win = h > 0.93 ? vec3(0.45, 0.9, 1.0) : vec3(1.0, 0.68, 0.38);
-    col = mix(col, win * 0.7, inWin * step(0.82, h) * (0.4 + 0.6 * height));
-  }
-  // Rim of the roofline catches the city glow.
-  if (vNormal.y > 0.5) col += haze * 0.25;
-  gl_FragColor = vec4(col, 1.0);
-}
-`;
-
 const CONE_VERTEX = /* glsl */ `
 precision highp float;
 attribute vec3 position;
@@ -128,22 +84,37 @@ const STREAK_VERTEX = /* glsl */ `
 precision highp float;
 attribute vec3 position;
 attribute vec2 uv;
+uniform mat4 world;
 uniform mat4 worldViewProjection;
 varying vec2 vUV;
+varying vec2 vGround;
 void main(void) {
   vUV = uv;
+  vGround = (world * vec4(position, 1.0)).xz;
   gl_Position = worldViewProjection * vec4(position, 1.0);
 }
 `;
 
-/** Neon reflected in wet asphalt: broken vertical streaks fading away from the source. */
+/**
+ * Neon reflected in wet asphalt: broken vertical streaks fading away from the source, strongest
+ * where the puddle mask (value noise over the ground, ADR-0030) says the street holds water.
+ */
 const STREAK_FRAGMENT = /* glsl */ `
 precision highp float;
 varying vec2 vUV;
+varying vec2 vGround;
 uniform vec3 lightColor;
 uniform float intensity;
 uniform float time;
 float hash(float x) { return fract(sin(x * 91.7) * 43758.5453); }
+float hash2(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }
+float puddles(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  float n = mix(mix(hash2(i), hash2(i + vec2(1.0, 0.0)), f.x), mix(hash2(i + vec2(0.0, 1.0)), hash2(i + vec2(1.0, 1.0)), f.x), f.y);
+  return smoothstep(0.4, 0.62, n);
+}
 void main(void) {
   float across = 1.0 - abs(vUV.x * 2.0 - 1.0);
   float along = 1.0 - vUV.y;
@@ -154,19 +125,11 @@ void main(void) {
   float h = mix(hash(lane), hash(lane + 1.0), k);
   float ripple = 0.6 + 0.4 * sin(vUV.y * 52.0 + h * 6.28 + time * 1.7);
   float streaks = mix(0.25, 1.0, h * h) * ripple;
-  float a = pow(across, 1.6) * pow(along, 1.4) * streaks * intensity;
+  float wet = mix(0.35, 1.25, puddles(vGround * 0.45));
+  float a = pow(across, 1.6) * pow(along, 1.4) * streaks * wet * intensity;
   gl_FragColor = vec4(lightColor * a, a);
 }
 `;
-
-/** Small deterministic PRNG so the skyline is identical every run (reference snapshots). */
-const lcg = (seed: number) => {
-  let s = seed >>> 0;
-  return () => {
-    s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
-    return s / 4294967296;
-  };
-};
 
 const additive = (scene: Scene, name: string, vertex: string, fragment: string, uniforms: string[], attributes: string[]): ShaderMaterial => {
   const m = new ShaderMaterial(name, scene, { vertexSource: vertex, fragmentSource: fragment }, { attributes, uniforms, needAlphaBlending: true });
@@ -182,16 +145,18 @@ interface Flicker {
   readonly seed: number;
 }
 
+/** Sky dome diameter; its radius must stay inside the camera's far plane (CameraRig: maxZ 320). */
+export const SKY_DIAMETER = 600;
+
 const NIGHT_ZENITH = "#03060b";
 const DAY_ZENITH = "#5d6b7c";
 const NIGHT_CLOUDS = "#3a3442";
 const DAY_CLOUDS = "#a3a9b4";
-const NIGHT_SILHOUETTE = "#070b11";
-const DAY_SILHOUETTE = "#4a5562";
 
 /**
  * Everything that makes the street read as a place at night rather than boxes in fog: sky,
- * distant skyline, light shafts under lamps, neon reflections on wet asphalt, flickering signs.
+ * light shafts under lamps, neon reflections on wet asphalt, flickering signs. The distant city
+ * is FarCity (ADR-0027).
  * Purely presentational; none of it exists in the simulation.
  */
 export class Atmosphere {
@@ -200,7 +165,8 @@ export class Atmosphere {
   private readonly flickers: Flicker[] = [];
   private time = 0;
   private sky: ShaderMaterial | null = null;
-  private skyline: ShaderMaterial | null = null;
+  /** The sky dome; follows the camera (never frozen). */
+  skyMesh: Mesh | null = null;
   /** Meshes that must stay out of the G-buffer, shadow and picking. */
   readonly decorative: Mesh[] = [];
 
@@ -209,7 +175,6 @@ export class Atmosphere {
     rig: LightingRig,
   ) {
     this.buildSky(rig);
-    this.buildSkyline(rig);
   }
 
   /** A light shaft from a lamp head down to the street. */
@@ -237,7 +202,7 @@ export class Atmosphere {
     // The plane's local +Z is its length axis; point it along `dir` (uv.y = 0 at the far end).
     plane.rotation.y = Math.atan2(-dir.x, -dir.z);
     plane.material = this.material(this.streakMaterials, `${color}:${intensity}`, () => {
-      const m = additive(this.scene, `streak-${color}`, STREAK_VERTEX, STREAK_FRAGMENT, ["worldViewProjection", "lightColor", "intensity", "time"], ["position", "uv"]);
+      const m = additive(this.scene, `streak-${color}`, STREAK_VERTEX, STREAK_FRAGMENT, ["world", "worldViewProjection", "lightColor", "intensity", "time"], ["position", "uv"]);
       m.setColor3("lightColor", Color3.FromHexString(color));
       m.setFloat("intensity", intensity);
       return m;
@@ -258,7 +223,7 @@ export class Atmosphere {
   }
 
   /**
-   * Time of day (ADR-0017): the sky and the distant skyline follow the rig's haze; the zenith
+   * Time of day (ADR-0017): the sky follows the rig's haze; the zenith
    * and the cloud undersides pale with daylight. Uniforms only, the shaders stay as they are.
    */
   setDaylight(rig: LightingRig, daylight: number): void {
@@ -266,8 +231,6 @@ export class Atmosphere {
     this.sky?.setColor3("zenith", Color3.FromHexString(mixHex(NIGHT_ZENITH, DAY_ZENITH, t)));
     this.sky?.setColor3("horizon", Color3.FromHexString(rig.fogColor));
     this.sky?.setColor3("cloudLit", Color3.FromHexString(mixHex(NIGHT_CLOUDS, DAY_CLOUDS, t)));
-    this.skyline?.setColor3("silhouette", Color3.FromHexString(mixHex(NIGHT_SILHOUETTE, DAY_SILHOUETTE, t)));
-    this.skyline?.setColor3("haze", Color3.FromHexString(rig.fogColor).scale(1.6 - 0.5 * t));
   }
 
   removeFlicker(material: { emissiveColor: Color3 }): void {
@@ -275,11 +238,18 @@ export class Atmosphere {
     if (i >= 0) this.flickers.splice(i, 1);
   }
 
+  /** Accessibility (ADR-0028): signs stop sputtering, reflections stop rippling. */
+  reduceFlicker = false;
+
   update(dt: number, frozen: boolean): void {
     if (frozen) return;
     this.time += dt;
     for (const m of this.streakMaterials.values()) m.setFloat("time", this.time);
     for (const f of this.flickers) {
+      if (this.reduceFlicker) {
+        f.material.emissiveColor.copyFrom(f.base);
+        continue;
+      }
       // Mostly steady; every few seconds a burst of short dropouts.
       const cycle = (this.time + f.seed * 3.7) % 6.5;
       const burst = cycle > 5.6 && Math.sin(this.time * 47 + f.seed) > 0.1;
@@ -297,15 +267,15 @@ export class Atmosphere {
     return m;
   }
 
-  private decorate(mesh: Mesh): Mesh {
+  private decorate(mesh: Mesh, freeze = true): Mesh {
     mesh.isPickable = false;
-    mesh.freezeWorldMatrix();
+    if (freeze) mesh.freezeWorldMatrix();
     this.decorative.push(mesh);
     return mesh;
   }
 
   private buildSky(rig: LightingRig): void {
-    const sky = MeshBuilder.CreateSphere("sky", { diameter: 600, segments: 24, sideOrientation: MeshClass.BACKSIDE }, this.scene);
+    const sky = MeshBuilder.CreateSphere("sky", { diameter: SKY_DIAMETER, segments: 24, sideOrientation: MeshClass.BACKSIDE }, this.scene);
     const m = new ShaderMaterial("sky", this.scene, { vertexSource: SKY_VERTEX, fragmentSource: SKY_FRAGMENT }, {
       attributes: ["position"],
       uniforms: ["worldViewProjection", "zenith", "horizon", "cityGlow", "cloudLit"],
@@ -317,37 +287,14 @@ export class Atmosphere {
     m.disableDepthWrite = true;
     sky.material = m;
     this.sky = m;
+    // infiniteDistance re-centres the dome on the camera every frame, which a frozen world
+    // matrix would stop: the dome then stays where the camera was at start-up and, a hundred
+    // metres away (the market, the deck), its far side falls behind the far plane and the clear
+    // colour shows through as a dark disc.
     sky.infiniteDistance = true;
     sky.renderingGroupId = 0;
-    this.decorate(sky);
-  }
-
-  private buildSkyline(rig: LightingRig): void {
-    const rand = lcg(7);
-    const towers: Mesh[] = [];
-    for (let i = 0; i < 70; i++) {
-      const angle = (i / 70) * Math.PI * 2 + rand() * 0.06;
-      const dist = 75 + rand() * 90;
-      const w = 10 + rand() * 18;
-      const h = 30 + rand() * rand() * 110;
-      const t = MeshBuilder.CreateBox(`tower-${i}`, { width: w, depth: w * (0.6 + rand() * 0.8), height: h }, this.scene);
-      t.position.set(Math.sin(angle) * dist, h / 2 - 2, 7 + Math.cos(angle) * dist);
-      t.rotation.y = rand() * Math.PI;
-      t.bakeCurrentTransformIntoVertices();
-      towers.push(t);
-    }
-    const merged = MeshClass.MergeMeshes(towers, true, true);
-    if (!merged) return;
-    merged.name = "skyline";
-    const m = new ShaderMaterial("skyline", this.scene, { vertexSource: SKYLINE_VERTEX, fragmentSource: SKYLINE_FRAGMENT }, {
-      attributes: ["position", "normal"],
-      uniforms: ["world", "viewProjection", "silhouette", "haze", "cameraPosition"],
-    });
-    m.setColor3("silhouette", Color3.FromHexString(NIGHT_SILHOUETTE));
-    m.setColor3("haze", Color3.FromHexString(rig.fogColor).scale(1.6));
-    merged.material = m;
-    this.skyline = m;
-    this.decorate(merged);
+    this.decorate(sky, false);
+    this.skyMesh = sky;
   }
 }
 

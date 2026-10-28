@@ -1,6 +1,8 @@
 import {
   ABILITY_CATALOG,
   type AudioPort,
+  type BreachDaemonId,
+  type QuickhackSlotInput,
   type CyberwareId,
   type CyberwareSlot,
   type ItemRef,
@@ -53,6 +55,8 @@ import { describeObjective, saveLabel } from "./objective";
 import { createWeaponHud } from "./weapon-hud";
 import { createLootTracker } from "./loot-view";
 import { createTradeTracker } from "./trade-view";
+import { createKnotRenderer } from "./phone";
+import { Wave1Hud } from "./wave1-hud";
 
 export interface GameSessionDeps {
   readonly render: RenderPort;
@@ -148,6 +152,14 @@ export class GameSession implements UiIntents {
   private talkTarget: EntityId | null = null;
   /** Daylight level last sent to the renderer; null after the views were cleared. */
   private daylightSent: number | null = null;
+  // Wave 1 (ADR-0028).
+  private readonly wave1: Wave1Hud;
+  private phoneOpen = false;
+  /** Terminal of the breach minigame on screen, or null. */
+  private breachKey: string | null = null;
+  /** Touch: the scanner button is on, and a hack tapped in its list waits for the next step. */
+  private touchScan = false;
+  private touchHack: QuickhackSlotInput = 0;
 
   constructor(private readonly deps: GameSessionDeps) {
     this.narrative = new NarrativeRuntime(deps.story, (cmd) => this.simulation.enqueue(cmd));
@@ -169,6 +181,15 @@ export class GameSession implements UiIntents {
       onDialogueInterrupted: () => this.interruptDialogue(),
       onLoot: (key) => this.openLoot(key),
     });
+    this.wave1 = new Wave1Hud(this.bus, deps.ui, {
+      playerId: () => this.simulation.player()?.id ?? null,
+      domain: () => this.simulation.domain,
+      clock: () => formatClock(this.simulation.clock),
+      tick: () => this.simulation.tick,
+      ticksPerSecond: SIM_HZ,
+      damageMode: () => deps.ui.getState().settings.damageNumbers,
+      renderKnot: createKnotRenderer(deps.story),
+    });
     // The whole city, so the map keeps working past Shinsekai (the market deck, the footbridge, ADR-0021).
     patchUi(deps.ui, { map: buildDistrictMap(WORLD_CHUNKS.flatMap((c) => c.props)) });
     this.appliedSettings = deps.settings?.applied ?? deps.ui.getState().settings;
@@ -186,7 +207,7 @@ export class GameSession implements UiIntents {
 
   /** True while the player is in control (playing, no dialogue, no menu). */
   get inControl(): boolean {
-    return this.screen === "playing" && !this.dialogueOpen && !this.shopOpen && this.lootKey === null && !this.characterOpen;
+    return this.screen === "playing" && !this.dialogueOpen && !this.shopOpen && this.lootKey === null && !this.characterOpen && !this.phoneOpen && this.breachKey === null;
   }
 
   /**
@@ -204,9 +225,27 @@ export class GameSession implements UiIntents {
 
   step(input: InputFrame): void {
     if (!this.running) return;
-    this.simulation.step(this.inControl ? input : EMPTY_INPUT);
+    this.simulation.step(this.inControl ? this.withTouchScan(input) : EMPTY_INPUT);
+    patchUi(this.deps.ui, { scanning: this.inControl && (input.scan || this.touchScan) });
     this.playPendingRecall();
     this.stepHints();
+  }
+
+  /**
+   * The touch scanner (ADR-0028): the HUD button and a tap on the hack list go into the input
+   * frame here, as the keyboard's Z and number keys do. The virtual pad can take this over.
+   */
+  private withTouchScan(input: InputFrame): InputFrame {
+    const hack = this.touchHack;
+    this.touchHack = 0;
+    if (!this.touchScan && hack === 0) return input;
+    const scan = input.scan || this.touchScan;
+    return { ...input, scan, quickhack: input.quickhack || (scan ? hack : 0) };
+  }
+
+  /** The player fought within a few seconds or is hunted: the contextual HUD shows. */
+  private get inCombat(): boolean {
+    return !this.calm() || this.wave1.fighting || this.wave1.hunted;
   }
 
   /** First-run hints follow play; the store hears only about changes. */
@@ -327,7 +366,17 @@ export class GameSession implements UiIntents {
       day: dayOf(sim.clock),
       dayPhase: dayPhase(sim.clock),
       ...this.minimap(sim.world, sim.domain.flags, sim.domain.contracts),
+      ...this.wave1HudFrame(player),
     });
+  }
+
+  private wave1HudFrame(player: Entity | undefined) {
+    const combat = this.screen === "playing" && this.inCombat;
+    // The open phone shows the messages itself; banners wait.
+    const talking = this.dialogueOpen || this.shopOpen || this.lootKey !== null || this.breachKey !== null || this.phoneOpen;
+    const busy = talking || combat;
+    const calm = !busy && !this.characterOpen && this.wave1.heatLevel === 0 && !this.deps.ui.getState().scanning;
+    return { combat, ...this.wave1.sync({ world: this.simulation.world, player, busy, calm }) };
   }
 
   private abilityVm(): AbilityVm | null {
@@ -345,6 +394,63 @@ export class GameSession implements UiIntents {
   }
 
   // ---- UiIntents ----
+
+  // Phone, debrief, scanner and breach (ADR-0028).
+
+  openPhone(): void {
+    if (this.screen !== "playing" || this.dialogueOpen || this.shopOpen || this.lootKey !== null || this.characterOpen || this.breachKey !== null) return;
+    if (this.phoneOpen) return;
+    this.phoneOpen = true;
+    patchUi(this.deps.ui, { phoneOpen: true, prompt: null });
+    this.deps.audio.play("ui-select");
+    this.deps.onFocusChange?.(false);
+  }
+
+  closePhone(): void {
+    if (!this.phoneOpen) return;
+    this.phoneOpen = false;
+    patchUi(this.deps.ui, { phoneOpen: false });
+    this.deps.onFocusChange?.(this.inControl);
+  }
+
+  readThread(from: string): void {
+    this.wave1.readThread(from);
+  }
+
+  dismissDebrief(): void {
+    patchUi(this.deps.ui, { debrief: null });
+  }
+
+  setScan(on: boolean): void {
+    this.touchScan = on;
+    if (!on) this.touchHack = 0;
+  }
+
+  pickQuickhack(slot: Exclude<QuickhackSlotInput, 0>): void {
+    if (this.touchScan) this.touchHack = slot;
+  }
+
+  /**
+   * Shows the breach minigame for a terminal (debug API for now; the terminals of the
+   * simulation will open it). The player stands still while it is on screen.
+   */
+  openBreach(terminalKey: string, daemons: readonly BreachDaemonId[] = ["icepick", "datamine", "mass_vulnerability"]): void {
+    if (!this.inControl && this.breachKey === null) return;
+    this.breachKey = terminalKey;
+    patchUi(this.deps.ui, { breach: { terminalKey, daemons: daemons.slice(0, 3) }, prompt: null });
+    this.deps.onFocusChange?.(false);
+  }
+
+  /** The minigame ended: the simulation applies what was won (`breach-result`). */
+  submitBreach(daemons: readonly BreachDaemonId[]): void {
+    const terminalKey = this.breachKey;
+    if (terminalKey === null) return;
+    this.breachKey = null;
+    patchUi(this.deps.ui, { breach: null });
+    this.simulation.enqueue({ type: "breach-result", terminalKey, daemons: [...daemons] });
+    this.deps.audio.play(daemons.length > 0 ? "quest-update" : "denied");
+    this.deps.onFocusChange?.(this.inControl);
+  }
 
   newGame(): void {
     this.replaceSimulation(Simulation.create({ seed: this.deps.seed(), bus: this.bus }));
@@ -598,6 +704,7 @@ export class GameSession implements UiIntents {
   restore(snapshot: SaveSnapshot): void {
     this.closeDialogueSilently();
     this.replaceSimulation(Simulation.fromSnapshot(snapshot, this.bus));
+    this.wave1.inbox.clear();
     if (snapshot.narrative) this.narrative.loadState(snapshot.narrative);
     else this.narrative.resetState();
     this.setScreen("playing");
@@ -667,13 +774,19 @@ export class GameSession implements UiIntents {
     this.dialogueOpen = false;
     this.shopOpen = false;
     this.lootKey = null;
-    patchUi(this.deps.ui, { dialogue: null, shopOpen: false, loot: null });
+    this.phoneOpen = false;
+    // A breach cut short sends nothing: the terminal stays as it was.
+    this.breachKey = null;
+    patchUi(this.deps.ui, { dialogue: null, shopOpen: false, loot: null, phoneOpen: false, breach: null });
   }
 
   private replaceSimulation(next: Simulation): void {
     this.renderSync.reset();
     this.daylightSent = null;
     this.simulation = next;
+    this.wave1.reset();
+    this.touchScan = false;
+    this.touchHack = 0;
     this.district = next.district;
     this.deps.render.setCameraMode(next.domain.preferences.cameraMode);
     patchUi(this.deps.ui, { prompt: null, toasts: [] });

@@ -32,12 +32,22 @@ kbd {
   color: var(--cyan);
 }
 
-/* HUD */
-.hud { position: absolute; inset: 0; }
+/* HUD. --hud-scale (accessibility) scales the whole layer from the top-left corner; the
+   layer is shrunk by the same factor first, so it still covers the screen exactly. */
+.hud {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(100% / var(--hud-scale, 1));
+  height: calc(100% / var(--hud-scale, 1));
+  transform: scale(var(--hud-scale, 1));
+  transform-origin: 0 0;
+}
 
 /* Four ticks around the aim point; --spread (set from the aim cone) pushes them apart. */
 .crosshair {
-  --gap: calc(3px + var(--spread, 0) * 50vh);
+  /* The aim cone lives in screen space: undo the HUD scale. */
+  --gap: calc(3px + var(--spread, 0) * 50vh / var(--hud-scale, 1));
   position: absolute;
   left: 50%;
   top: 50%;
@@ -583,7 +593,7 @@ kbd {
 .settings__label { flex: 0 0 9em; color: var(--ink-dim); }
 .settings__slider { flex: 1; min-width: 0; accent-color: var(--cyan); pointer-events: auto; }
 .settings__value { flex: 0 0 3.5em; text-align: right; font-family: var(--font-mono); font-size: 14px; }
-.settings__choice { display: flex; gap: 6px; }
+.settings__choice { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
 .settings__option {
   padding: 4px 12px;
   font-size: 15px;
@@ -806,7 +816,8 @@ kbd {
   .gear__ability { width: 220px; padding: 5px 8px; }
   .minimap { left: max(16px, env(safe-area-inset-left, 0px)); bottom: 76px; width: 120px; height: 120px; }
   .settings__label { flex-basis: 7em; }
-  .touch-mode .gear { top: 64px; left: max(16px, env(safe-area-inset-left, 0px)); }
+  /* Below the objective, which can carry the condition bonus. */
+  .touch-mode .gear { top: 92px; left: max(16px, env(safe-area-inset-left, 0px)); }
   .dialogue { bottom: 8px; padding: 10px 14px; }
   .dialogue__lines { max-height: 30vh; }
   .dialogue__line, .dialogue__choice { font-size: 15px; }
@@ -1139,3 +1150,403 @@ kbd {
   .inv__detail { background: rgba(6, 10, 16, 0.97); padding-right: 52px; }
   .cscreen__ammo { display: none; }
 }
+
+/* ---- Wave 1 (ADR-0028) ---- */
+
+/* Colour tokens by function. Every one comes with an icon too (hud/tokens.ts). */
+:root {
+  --tok-threat: var(--danger);
+  --tok-objective: var(--magenta);
+  --tok-friendly: var(--ok);
+  --tok-loot: var(--amber);
+  --tok-hack: var(--cyan);
+}
+/* Red-green deficiencies: threat moves to orange, friendly to blue (Okabe-Ito). */
+:root[data-palette="protan"],
+:root[data-palette="deutan"] {
+  --tok-threat: #ff8a1f;
+  --tok-objective: #e58fd6;
+  --tok-friendly: #56b4e9;
+  --tok-loot: #f0e442;
+  --tok-hack: #dff9ff;
+}
+:root[data-palette="protan"] { --tok-threat: #ffa31a; }
+/* Blue-yellow deficiency: hack moves off cyan, loot off amber. */
+:root[data-palette="tritan"] {
+  --tok-threat: #ff4d5e;
+  --tok-objective: #ff3d8b;
+  --tok-friendly: #6dffb0;
+  --tok-loot: #ff9fd0;
+  --tok-hack: #f4f4f4;
+}
+:root.legible-font {
+  --font-ui: "Atkinson Hyperlegible", system-ui, sans-serif;
+  --font-mono: "Atkinson Hyperlegible", ui-monospace, monospace;
+}
+.tokens { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 6px 0 0; padding: 0; list-style: none; font-size: 15px; }
+.token { display: flex; align-items: center; gap: 6px; }
+.token__icon { font-family: var(--font-mono); }
+.token--threat .token__icon { color: var(--tok-threat); }
+.token--objective .token__icon { color: var(--tok-objective); }
+.token--friendly .token__icon { color: var(--tok-friendly); }
+.token--loot .token__icon { color: var(--tok-loot); }
+.token--hack .token__icon { color: var(--tok-hack); }
+
+/* Contextual HUD: the bar and the rounds step aside out of combat. */
+.hud__hp, .hud__hp-label, .weapon-strip__ammo { transition: opacity 400ms ease-out; }
+.hud__identity--calm .hud__hp, .hud__identity--calm .hud__hp-label { opacity: 0; }
+.weapon-strip__ammo--calm { opacity: 0; }
+
+/* Hit markers: critical (amber X) and kill (white X and a ring). */
+.crosshair--crit .crosshair__x {
+  background:
+    linear-gradient(45deg, transparent 42%, var(--amber) 42%, var(--amber) 58%, transparent 58%),
+    linear-gradient(-45deg, transparent 42%, var(--amber) 42%, var(--amber) 58%, transparent 58%);
+}
+.crosshair--kill .crosshair__x {
+  left: -9px;
+  top: -9px;
+  width: 18px;
+  height: 18px;
+  background:
+    linear-gradient(45deg, transparent 42%, var(--ink) 42%, var(--ink) 58%, transparent 58%),
+    linear-gradient(-45deg, transparent 42%, var(--ink) 42%, var(--ink) 58%, transparent 58%);
+}
+.crosshair__ring { position: absolute; left: -14px; top: -14px; width: 28px; height: 28px; border: 2px solid var(--tok-threat); transform: rotate(45deg); animation: kill-ring 360ms ease-out forwards; }
+@keyframes kill-ring { from { opacity: 1; transform: rotate(45deg) scale(0.6); } to { opacity: 0; transform: rotate(45deg) scale(1.3); } }
+
+.dmg { position: absolute; left: 50%; top: calc(50% - 34px); width: 0; height: 0; }
+.dmg__n {
+  position: absolute;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  color: var(--ink);
+  text-shadow: 0 0 3px #000, 0 0 6px rgba(0, 0, 0, 0.8);
+  animation: dmg-rise 900ms ease-out forwards;
+  white-space: nowrap;
+}
+.dmg__n--crit { color: var(--amber); font-size: 20px; }
+@keyframes dmg-rise { from { opacity: 1; translate: 0 0; } 70% { opacity: 1; } to { opacity: 0; translate: 0 -26px; } }
+
+/* Heat: stars for the level, dim while searched for, a slow 1 Hz blink before the drop. */
+.heat {
+  position: absolute;
+  left: 50%;
+  top: 18px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 14px;
+  font-size: 22px;
+  color: var(--tok-threat);
+  background: var(--panel);
+  border-bottom: 2px solid var(--tok-threat);
+  clip-path: polygon(0 0, 100% 0, 94% 100%, 6% 100%);
+}
+.heat__star { line-height: 1; }
+.heat__star:not(.heat__star--on) { color: var(--ink-dim); opacity: 0.5; }
+.heat--searching .heat__star--on { opacity: 0.45; }
+.heat__note { margin-left: 6px; font-family: var(--font-mono); font-size: 12px; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.1em; }
+.heat--ending .heat__star--on { animation: heat-blink 1s steps(2, jump-none) infinite; }
+@keyframes heat-blink { from { opacity: 0.95; } to { opacity: 0.25; } }
+.reduce-flashes .heat--ending .heat__star--on { animation: none; opacity: 0.7; text-decoration: underline; }
+
+/* Detection ring round the crosshair. */
+.detection { position: absolute; left: 50%; top: 50%; width: 150px; height: 150px; margin: -75px 0 0 -75px; overflow: visible; pointer-events: none; }
+.detection__track { fill: none; stroke: rgba(255, 255, 255, 0.18); stroke-width: 4; }
+.detection__fill { fill: none; stroke-width: 4; stroke-linecap: butt; }
+.detection__glyph { font-family: var(--font-mono); font-size: 11px; font-weight: 700; text-anchor: middle; dominant-baseline: central; }
+.detection__arc--suspicious .detection__fill { stroke: var(--amber); }
+.detection__arc--suspicious .detection__glyph { fill: var(--amber); }
+.detection__arc--searching .detection__fill { stroke: var(--amber); stroke-dasharray: 3 2; }
+.detection__arc--searching .detection__glyph { fill: var(--amber); }
+.detection__arc--alerted .detection__fill { stroke: var(--tok-threat); }
+.detection__arc--alerted .detection__glyph { fill: var(--tok-threat); }
+
+/* Minimap: witnesses calling it in, the last known position. */
+.minimap__marker--target { fill: var(--tok-objective); }
+.minimap__witness rect { fill: var(--tok-threat); stroke: rgba(4, 7, 12, 0.9); stroke-width: 0.5; }
+.minimap__witness path { stroke: rgba(4, 7, 12, 0.9); stroke-width: 0.5; }
+.minimap__ghost { fill: rgba(255, 255, 255, 0.12); stroke: var(--ink); stroke-width: 0.45; stroke-dasharray: 0.8 0.5; }
+
+/* Contract condition by the objective. */
+.hud__bonus { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; margin-top: 4px; font-size: 14px; color: var(--ok); }
+.hud__bonus .badge-icon { width: 14px; height: 14px; }
+.hud__bonus-pay { font-family: var(--font-mono); color: var(--amber); }
+.hud__bonus-state { margin-left: auto; font-family: var(--font-mono); }
+.hud__bonus--lost { color: var(--ink-dim); }
+.hud__bonus--lost .hud__bonus-label, .hud__bonus--lost .hud__bonus-pay { text-decoration: line-through; }
+.hud__bonus--lost .hud__bonus-state { color: var(--danger); }
+.badge-icon { width: 22px; height: 22px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }
+
+/* Debrief card. */
+.debrief {
+  position: absolute;
+  left: 50%;
+  top: 12%;
+  transform: translateX(-50%);
+  width: 460px;
+  max-width: calc(100% - 32px);
+  padding: 14px 18px;
+  background: rgba(6, 10, 16, 0.92);
+  border: 1px solid var(--panel-edge);
+  border-top: 3px solid var(--ok);
+  /* The cut corner sits bottom left, away from the close button (a clipped area takes no clicks). */
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+  animation: toast-in 240ms ease-out;
+}
+.debrief__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.debrief__eyebrow { font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ok); }
+.debrief__title { font-size: 24px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.debrief__rank { display: flex; flex-direction: column; align-items: center; min-width: 64px; font-family: var(--font-mono); font-size: 44px; line-height: 1; color: var(--cyan); }
+.debrief__rank--S { color: var(--amber); text-shadow: 0 0 14px rgba(255, 191, 74, 0.5); }
+.debrief__rank--A { color: var(--magenta); }
+.debrief__rank--C { color: var(--ink-dim); }
+.debrief__rank-text { margin-top: 2px; font-family: var(--font-ui); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-dim); }
+.debrief__badges { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px 6px; margin: 12px 0; padding: 0; list-style: none; }
+.debrief__badge { position: relative; display: flex; align-items: center; gap: 6px; padding: 6px 8px; font-size: 14px; color: var(--ink-dim); background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); }
+.debrief__badge:not(.debrief__badge--earned) .badge-icon, .debrief__badge:not(.debrief__badge--earned) .debrief__badge-label { opacity: 0.55; }
+.debrief__badge--earned { color: var(--ink); border-color: var(--cyan); }
+.debrief__badge--earned .badge-icon { color: var(--cyan); }
+.debrief__badge--style { border-style: dashed; border-color: rgba(255, 191, 74, 0.6); }
+.debrief__badge--style.debrief__badge--earned { border-color: var(--amber); border-style: solid; }
+.debrief__badge-state { margin-left: auto; font-family: var(--font-mono); }
+.debrief__badge-style { position: absolute; right: 4px; top: -8px; padding: 0 4px; font-size: 10px; letter-spacing: 0.05em; color: var(--amber); background: rgba(6, 10, 16, 0.95); }
+.debrief__pay { margin: 0; font-size: 15px; }
+.debrief__pay > div { display: flex; justify-content: space-between; padding: 2px 0; }
+.debrief__pay dt { color: var(--ink-dim); }
+.debrief__pay dd { margin: 0; font-family: var(--font-mono); }
+.debrief__pay > .debrief__total { margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--panel-edge); font-size: 18px; }
+.debrief__total dd { color: var(--amber); }
+.debrief__close { display: block; margin: 10px 0 0 auto; min-height: 44px; padding: 6px 16px; font-size: 16px; color: var(--ink); background: rgba(95, 242, 255, 0.08); border: 1px solid var(--cyan); cursor: pointer; }
+
+/* Phone: holocall, notifications and the inbox. */
+.phone__portrait {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--cyan);
+  background: rgba(95, 242, 255, 0.1);
+  clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+}
+.phone__portrait--big { width: 72px; height: 72px; font-size: 26px; background: repeating-linear-gradient(0deg, rgba(95, 242, 255, 0.24) 0 2px, rgba(95, 242, 255, 0.08) 2px 4px); }
+.holocall {
+  z-index: 2;
+  position: absolute;
+  left: 28px;
+  top: 120px;
+  display: flex;
+  gap: 12px;
+  width: 420px;
+  max-width: calc(100% - 56px);
+  padding: 10px 14px;
+  background: rgba(6, 10, 16, 0.9);
+  border-left: 3px solid var(--cyan);
+  animation: toast-in 240ms ease-out;
+}
+.holocall__who { font-size: 15px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+.holocall__tag { margin-right: 4px; padding: 0 6px; font-size: 11px; color: #05080c; background: var(--cyan); }
+.holocall__line { margin: 4px 0 0; font-size: 16px; }
+.phone-notice {
+  z-index: 2;
+  position: absolute;
+  left: 28px;
+  top: 120px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 320px;
+  padding: 8px 12px;
+  background: var(--panel);
+  border-left: 3px solid var(--amber);
+  animation: toast-in 240ms ease-out;
+}
+.phone-notice--info { border-left-color: var(--ink-dim); }
+.phone-notice__icon { font-size: 20px; color: var(--amber); }
+.phone-notice__body { flex: 1; min-width: 0; }
+.phone-notice__who { font-weight: 700; letter-spacing: 0.06em; }
+.phone-notice__text { font-size: 14px; color: var(--ink-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.phone {
+  position: absolute;
+  right: 28px;
+  top: 72px;
+  bottom: 72px;
+  display: flex;
+  flex-direction: column;
+  width: 460px;
+  max-width: calc(100% - 32px);
+  background: rgba(6, 10, 16, 0.94);
+  border: 1px solid var(--panel-edge);
+  border-right: 3px solid var(--cyan);
+  pointer-events: auto;
+}
+.phone button { cursor: pointer; }
+.phone__bar { display: flex; align-items: center; justify-content: space-between; padding: 6px 12px; border-bottom: 1px solid var(--panel-edge); }
+.phone__title { font-size: 18px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; }
+.phone__close { width: 44px; height: 44px; font-size: 18px; color: var(--ink); background: transparent; border: none; }
+.phone__empty { padding: 16px; color: var(--ink-dim); }
+.phone__body { display: flex; flex: 1; min-height: 0; }
+.phone__contacts { flex: 0 0 150px; margin: 0; padding: 6px; list-style: none; overflow-y: auto; border-right: 1px solid var(--panel-edge); }
+.phone__contact { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 4px 6px; font-size: 15px; color: var(--ink-dim); text-align: left; background: transparent; border: 1px solid transparent; }
+.phone__contact--on { color: var(--ink); border-color: var(--cyan); background: rgba(95, 242, 255, 0.06); }
+.phone__contact-name { flex: 1; }
+.phone__unread { min-width: 20px; padding: 0 4px; font-family: var(--font-mono); font-size: 12px; text-align: center; color: #05080c; background: var(--amber); }
+.phone__thread { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.phone__thread-head { display: flex; align-items: center; gap: 8px; padding: 8px 12px; font-weight: 700; letter-spacing: 0.08em; }
+.phone__messages { flex: 1; margin: 0; padding: 0 12px 12px; list-style: none; overflow-y: auto; }
+.phone__message { margin-top: 8px; padding: 6px 10px; background: rgba(255, 255, 255, 0.04); border-left: 2px solid var(--panel-edge); }
+.phone__message--story { border-left-color: var(--cyan); }
+.phone__message--contract { border-left-color: var(--amber); }
+.phone__time { font-family: var(--font-mono); font-size: 11px; color: var(--ink-dim); }
+.phone__text { margin: 2px 0 0; font-size: 15px; }
+
+/* Scanner (Kiroshi optics). No flicker: the frame is steady. */
+.scanner { position: absolute; inset: 0; pointer-events: none; }
+.scanner__frame { position: absolute; inset: 7% 9%; background: radial-gradient(ellipse at center, transparent 55%, rgba(95, 242, 255, 0.07)); }
+.scanner__corner { position: absolute; width: 36px; height: 36px; border: 0 solid var(--tok-hack); }
+.scanner__corner--tl { left: 0; top: 0; border-left-width: 2px; border-top-width: 2px; }
+.scanner__corner--tr { right: 0; top: 0; border-right-width: 2px; border-top-width: 2px; }
+.scanner__corner--bl { left: 0; bottom: 0; border-left-width: 2px; border-bottom-width: 2px; }
+.scanner__corner--br { right: 0; bottom: 0; border-right-width: 2px; border-bottom-width: 2px; }
+.scanner__brand { position: absolute; right: 44px; top: -2px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.25em; color: var(--tok-hack); }
+.scanner__panel { position: absolute; left: calc(50% + 80px); top: 26%; width: 290px; }
+.scan-card { padding: 10px 12px; background: rgba(6, 10, 16, 0.86); border-left: 3px solid var(--tok-hack); }
+.scan-card--hostile { border-left-color: var(--tok-threat); }
+.scan-card--empty { padding: 6px 12px; font-size: 14px; color: var(--ink-dim); background: var(--panel); border-left: 3px solid var(--panel-edge); }
+.scan-card__kind { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--tok-hack); }
+.scan-card--hostile .scan-card__kind { color: var(--tok-threat); }
+.scan-card__name { font-size: 20px; font-weight: 700; letter-spacing: 0.06em; }
+.scan-card__faction { font-size: 14px; color: var(--amber); }
+.scan-card__profile { margin: 6px 0 0; padding: 0; list-style: none; font-size: 13px; color: var(--ink-dim); }
+.scan-card__profile li::before { content: "› "; color: var(--tok-hack); }
+.hacks { margin: 8px 0 0; padding: 0; list-style: none; }
+.hacks__row, .hacks__btn { display: flex; align-items: center; gap: 8px; font-size: 15px; }
+.hacks__row { padding: 3px 0; border-top: 1px solid rgba(255, 255, 255, 0.06); }
+.hacks__btn { width: 100%; min-height: 44px; padding: 0 4px; color: var(--ink); text-align: left; background: transparent; border: 1px solid var(--panel-edge); pointer-events: auto; touch-action: manipulation; }
+.hacks__btn:disabled { opacity: 0.45; }
+.hacks__title { flex: 1; }
+.hacks__cat { font-size: 11px; color: var(--ink-dim); text-transform: uppercase; }
+.hacks__ram { font-family: var(--font-mono); font-size: 13px; color: var(--tok-hack); }
+.hacks__row--short .hacks__ram { color: var(--danger); text-decoration: line-through; }
+.hacks__row--combat .hacks__key { color: var(--tok-threat); }
+.scanner__status { position: absolute; left: 50%; top: calc(50% + 70px); transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 4px; width: 280px; }
+.ram { display: flex; align-items: center; gap: 6px; padding: 2px 8px; font-family: var(--font-mono); font-size: 12px; color: var(--tok-hack); background: var(--panel); }
+.ram__cells { display: flex; gap: 2px; }
+.ram__cell { width: 10px; height: 8px; border: 1px solid var(--tok-hack); opacity: 0.5; }
+.ram__cell--on { background: var(--tok-hack); opacity: 1; }
+.upload { width: 100%; padding: 4px 8px; font-size: 13px; background: var(--panel); border-left: 3px solid var(--tok-hack); }
+.upload__bar { display: block; height: 4px; margin-top: 3px; background: rgba(255, 255, 255, 0.1); }
+.upload__fill { display: block; height: 100%; width: 0; background: var(--tok-hack); animation: upload-fill var(--upload, 1s) linear forwards; }
+@keyframes upload-fill { to { width: 100%; } }
+.scan-note { padding: 3px 10px; font-size: 14px; background: var(--panel); border-left: 3px solid var(--ok); animation: toast-in 200ms ease-out; }
+.scan-note--fail { border-left-color: var(--ink-dim); }
+.scan-note--traced { color: var(--tok-threat); border-left-color: var(--tok-threat); font-weight: 700; }
+
+/* Breach Protocol. */
+.breach {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 640px;
+  max-width: calc(100% - 24px);
+  max-height: calc(100% - 16px);
+  overflow: auto;
+  padding: 14px 18px;
+  background: rgba(6, 10, 16, 0.95);
+  border: 1px solid var(--panel-edge);
+  border-top: 3px solid var(--tok-hack);
+  pointer-events: auto;
+}
+.breach button { cursor: pointer; }
+.breach__head { display: flex; justify-content: space-between; align-items: baseline; }
+.breach__eyebrow { font-size: 14px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--tok-hack); }
+.breach__timer { font-family: var(--font-mono); font-size: 16px; color: var(--amber); }
+.breach__timer--low { color: var(--danger); }
+.breach__timer--off { color: var(--ink-dim); font-size: 13px; }
+.breach__body { display: flex; gap: 18px; margin-top: 10px; }
+.breach__matrix { display: grid; gap: 4px; flex: 0 0 auto; }
+.breach__cell {
+  width: 52px;
+  height: 46px;
+  font-family: var(--font-mono);
+  font-size: 18px;
+  color: var(--ink-dim);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid transparent;
+}
+.breach__cell--line { background: repeating-linear-gradient(135deg, rgba(95, 242, 255, 0.1) 0 4px, rgba(95, 242, 255, 0.03) 4px 8px); border: 1px dashed rgba(95, 242, 255, 0.5); }
+.breach__cell--legal { color: var(--ink); }
+.breach__cell--legal:hover, .breach__cell--legal:focus-visible { color: #05080c; background: var(--tok-hack); outline: none; }
+.breach__cell--used { color: var(--ink-dim); opacity: 0.5; }
+.breach__cell:disabled { cursor: default; }
+.breach__side { flex: 1; min-width: 0; }
+.breach__label { margin-top: 4px; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-dim); }
+.breach__buffer { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0 10px; }
+.breach__slot { display: grid; place-items: center; width: 34px; height: 30px; font-family: var(--font-mono); font-size: 14px; border: 1px dashed var(--panel-edge); }
+.breach__slot--full { color: var(--tok-hack); border-style: solid; border-color: var(--tok-hack); }
+.breach__daemons { margin: 4px 0 0; padding: 0; list-style: none; }
+.breach__daemon { display: grid; grid-template-columns: auto 1fr; gap: 0 10px; padding: 6px 0; border-top: 1px solid rgba(255, 255, 255, 0.06); }
+.breach__codes { display: flex; gap: 4px; grid-row: span 2; align-items: center; }
+.breach__code { padding: 2px 4px; font-family: var(--font-mono); font-size: 14px; border: 1px solid var(--panel-edge); }
+.breach__daemon-name { font-weight: 700; }
+.breach__daemon-effect { font-size: 12px; color: var(--ink-dim); }
+.breach__daemon--won .breach__code { color: #05080c; background: var(--ok); border-color: var(--ok); }
+.breach__daemon--won .breach__daemon-name { color: var(--ok); }
+.breach__actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 12px; }
+.breach__result { flex: 1; font-size: 15px; }
+.breach__btn { min-height: 44px; padding: 6px 14px; font-size: 15px; color: var(--ink); background: rgba(95, 242, 255, 0.08); border: 1px solid var(--tok-hack); }
+.breach__btn--go { border-color: var(--ok); }
+.breach__btn--ghost { background: transparent; border-color: var(--panel-edge); }
+
+/* Touch: the scanner and the phone. */
+.touch__btn--scan { right: 40px; bottom: 172px; width: 48px; height: 48px; font-size: 20px; color: var(--tok-hack); }
+.touch__btn--phone { position: relative; }
+.touch__badge { position: absolute; right: -4px; top: -4px; min-width: 16px; padding: 0 3px; font-size: 11px; color: #05080c; background: var(--amber); border-radius: 8px; }
+
+/* Reduced flashes: no blinking rings; fades stay. */
+.reduce-flashes .hurt-vignette { animation-duration: 700ms; opacity: 0.6; }
+.reduce-flashes .crosshair__ring { animation: none; opacity: 0.8; }
+
+@media (max-height: 500px), (max-width: 760px) {
+  .heat { top: 10px; font-size: 18px; }
+  .holocall, .phone-notice { left: max(16px, env(safe-area-inset-left, 0px)); top: 64px; width: 360px; padding: 6px 10px; }
+  .phone__portrait--big { width: 52px; height: 52px; font-size: 20px; }
+  .holocall__line { font-size: 14px; }
+  .debrief { top: 8px; padding: 8px 12px; }
+  .debrief__title { font-size: 18px; }
+  .debrief__rank { font-size: 32px; }
+  .debrief__badges { margin: 6px 0; }
+  .debrief__badge { padding: 3px 6px; font-size: 12px; }
+  .debrief__pay { font-size: 13px; }
+  .debrief__pay > .debrief__total { font-size: 15px; }
+  .debrief__close { margin-top: 4px; }
+  .phone { top: 8px; bottom: 8px; right: max(12px, env(safe-area-inset-right, 0px)); }
+  .breach { padding: 8px 12px; }
+  .breach__body { gap: 10px; margin-top: 6px; }
+  .breach__cell { width: 46px; height: 44px; font-size: 16px; }
+  .scanner__panel { top: 18%; }
+}
+/* Touch: keep the cards off the pad and the stick; only their buttons take touches. */
+.touch-mode .heat { left: 50%; transform: none; }
+.touch-mode .holocall { left: 50%; transform: translateX(-50%); top: 48px; }
+.touch-mode .phone-notice { left: 50%; top: 48px; width: 320px; transform: translateX(-50%); }
+.touch-mode .debrief { left: max(16px, env(safe-area-inset-left, 0px)); transform: none; width: min(400px, 52vw); max-height: calc(100% - 16px); overflow: hidden; pointer-events: none; }
+.touch-mode .debrief__close { pointer-events: auto; }
+/* Touch scanner: the card left of the crosshair, compact; the bars right of the heat stars,
+   clear of the pad. */
+.touch-mode .scanner__brand { display: none; }
+.touch-mode .scanner__panel { left: auto; right: calc(50% + 40px); top: 40px; width: 240px; }
+.touch-mode .scan-card { padding: 6px 10px; }
+.touch-mode .scan-card__name { font-size: 16px; }
+.touch-mode .scan-card__profile li + li { display: none; }
+.touch-mode .hacks { margin-top: 4px; }
+.touch-mode .hacks__row { padding: 1px 0; border-top: none; }
+.touch-mode .hacks__cat { display: none; }
+.touch-mode .scanner__status { left: calc(50% + 10px); top: 92px; transform: none; width: 220px; align-items: flex-start; }
