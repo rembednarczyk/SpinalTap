@@ -10,10 +10,23 @@ export interface DialogueLineVm {
   readonly text: string;
 }
 
+/** Kind of a dialogue option (ADR-0039); the same set as the narrative's `DialogueTone`. */
+export type DialogueToneVm = "main" | "optional" | "leave" | "aggressive" | "persuade" | "hack" | "lifepath";
+
+export interface DialogueChoiceVm {
+  readonly index: number;
+  readonly text: string;
+  /** `optional` when missing. */
+  readonly tone?: DialogueToneVm;
+}
+
 export interface DialogueVm {
+  /** The lines of the last step, under the wheel. */
   readonly lines: readonly DialogueLineVm[];
-  readonly choices: readonly { readonly index: number; readonly text: string }[];
+  readonly choices: readonly DialogueChoiceVm[];
   readonly ended: boolean;
+  /** Earlier lines of this conversation, oldest first, for the scrollable log. */
+  readonly history?: readonly DialogueLineVm[];
 }
 
 export interface AbilityVm {

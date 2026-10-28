@@ -1,0 +1,204 @@
+/* Dialogue wheel and subtitles (ADR-0039). */
+
+:root {
+  /* Option kinds as in Cyberpunk 2077: gold moves the scene on, blue asks around. Every kind
+     also has its own icon, so the colour-blind palettes only need to keep them apart. */
+  --tone-main: #ffd447;
+  --tone-optional: #6cc4ff;
+  --tone-leave: #9fb3b8;
+  --tone-aggressive: var(--tok-threat, #ff4d5e);
+  --tone-persuade: var(--tok-friendly, #6dffb0);
+  --tone-hack: var(--tok-hack, #5ff2ff);
+  --tone-lifepath: var(--tok-objective, #ff3d8b);
+}
+:root[data-palette="protan"],
+:root[data-palette="deutan"] {
+  --tone-main: #f0e442;
+  --tone-optional: #56b4e9;
+}
+:root[data-palette="tritan"] {
+  --tone-main: #ffd0e0;
+  --tone-optional: #9fd8ff;
+}
+
+/* The layer covers the screen and scales with the HUD (--hud-scale), like .hud. On a phone the
+   scale is capped, so six options still fit between the top and bottom edge. */
+.dialogue {
+  --s: var(--hud-scale, 1);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(100% / var(--s));
+  height: calc(100% / var(--s));
+  transform: scale(var(--s));
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+
+/* The rest of the HUD steps back while the wheel is up (it stays readable, as in CP2077). */
+#ui-root:has(.dialogue) .hud { opacity: 0.35; transition: opacity 150ms ease-out; }
+
+/* The hub is the person Seki talks to: right of the screen centre, a little above it. Slots
+   sit --step apart; never under 44 px on screen, never more than the screen can hold. */
+.wheel {
+  --step: clamp(calc(46px / var(--s)), calc((100vh / var(--s) - 24px) / var(--n, 6)), 52px);
+  --wheel-room: calc(50vw / var(--s) - 28px - 16px);
+  position: absolute;
+  left: calc(50% + 28px);
+  top: 42%;
+  width: 0;
+  height: 0;
+}
+.wheel__hub {
+  position: absolute;
+  left: -7px;
+  top: -7px;
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--ray, var(--tone-main));
+  transform: rotate(45deg);
+  opacity: 0.85;
+}
+.wheel__ray {
+  position: absolute;
+  left: 0;
+  top: -1px;
+  width: calc(var(--len) * var(--step) - 6px);
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--ray, var(--tone-main)));
+  transform-origin: 0 50%;
+  transform: rotate(var(--angle));
+  transition: transform 120ms ease-out;
+}
+
+.wheel__opt {
+  --c: var(--tone-optional);
+  position: absolute;
+  left: calc(var(--x) * var(--step));
+  top: calc(var(--y) * var(--step));
+  transform: translateY(-50%);
+  transform-origin: 0 50%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  width: max-content;
+  min-height: calc(var(--step) - 2px / var(--s));
+  /* Room left of the screen edge, with space for the highlighted slot to grow by 8 %. */
+  max-width: min(440px, calc((var(--wheel-room) - var(--x) * var(--step)) / 1.08));
+  padding: 4px 12px 4px 10px;
+  font-size: 17px;
+  line-height: 1.15;
+  text-align: left;
+  color: var(--ink);
+  background: rgba(6, 10, 16, 0.84);
+  border: 1px solid rgba(159, 179, 184, 0.25);
+  border-left: 3px solid var(--c);
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
+  transition: scale 120ms ease-out, background-color 120ms ease-out;
+  animation: wheel-in 180ms ease-out both;
+  animation-delay: calc(var(--i, 0) * 25ms);
+}
+.wheel__opt--main { --c: var(--tone-main); }
+.wheel__opt--leave { --c: var(--tone-leave); }
+.wheel__opt--aggressive { --c: var(--tone-aggressive); }
+.wheel__opt--persuade { --c: var(--tone-persuade); }
+.wheel__opt--hack { --c: var(--tone-hack); }
+.wheel__opt--lifepath { --c: var(--tone-lifepath); }
+.wheel__opt--main .wheel__text { color: var(--tone-main); }
+.wheel__opt--leave .wheel__text { color: var(--ink-dim); }
+.wheel__opt:focus-visible { outline: none; }
+.wheel__opt--hot {
+  scale: 1.08;
+  z-index: 1;
+  background: rgba(14, 22, 30, 0.95);
+  border-color: var(--c);
+  box-shadow: inset 0 0 0 1px var(--c);
+}
+.wheel__icon { flex: none; width: 1.1em; text-align: center; font-size: 15px; color: var(--c); }
+.wheel__text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.wheel__key { flex: none; margin-left: auto; font-size: 12px; opacity: 0.8; }
+.touch-mode .wheel__key { display: none; }
+
+@keyframes wheel-in {
+  from { opacity: 0; translate: -14px 0; }
+  to { opacity: 1; translate: 0 0; }
+}
+
+/* Subtitles: the last lines at the bottom, earlier ones above them, dimmed and scrollable. */
+.subs {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  box-sizing: border-box;
+  width: min(760px, calc(100% - 32px));
+  max-height: calc(24vh / var(--s));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  padding: 10px 18px 4px;
+  background: rgba(6, 10, 16, 0.8);
+  border-top: 2px solid var(--cyan);
+  pointer-events: auto;
+  outline: none;
+}
+.subs__line { margin: 0 0 6px; font-size: 18px; line-height: 1.35; }
+.subs__line--past { opacity: 0.55; }
+.subs__line--narration { font-style: italic; color: var(--magenta); }
+.subs__speaker {
+  display: inline-block;
+  min-width: 7em;
+  margin-right: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+
+.dlg-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Phones in landscape: the subtitles go to the bottom left, the wheel takes the right half
+   from top to bottom, so neither covers the other. */
+@media (max-height: 500px), (max-width: 760px) {
+  .dialogue { --s: min(var(--hud-scale, 1), 1.1); }
+  .wheel {
+    --wheel-room: calc(56vw / var(--s) - 16px - env(safe-area-inset-right, 0px));
+    left: 44%;
+    top: 50%;
+  }
+  .wheel__opt { font-size: 14px; gap: 8px; padding: 3px 10px 3px 8px; }
+  .subs {
+    left: max(12px, env(safe-area-inset-left, 0px));
+    bottom: 8px;
+    transform: none;
+    width: calc(44% - 28px - max(12px, env(safe-area-inset-left, 0px)));
+    max-height: 44%;
+    padding: 8px 10px 2px;
+  }
+  .subs__line { font-size: 14px; margin-bottom: 4px; }
+  .subs__speaker { display: block; min-width: 0; margin: 0; font-size: 12px; }
+}
+
+/* No slide or pulse with reduced flashes (Dostępność) or a system-wide reduced motion. */
+.reduce-flashes .wheel__opt,
+.reduce-flashes .wheel__ray { animation: none; transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  .wheel__opt,
+  .wheel__ray { animation: none; transition: none; }
+}
