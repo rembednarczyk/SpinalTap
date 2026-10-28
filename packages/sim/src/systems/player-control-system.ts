@@ -9,6 +9,8 @@ import {
   type InputFrame,
   garmentModifiers,
   wornGarments,
+  buffModifiers,
+  BUFF_CATALOG,
 } from "@seki/core";
 import type { Entity } from "../world/components";
 import { knockbackVelocity } from "../world/knockback";
@@ -35,17 +37,23 @@ export const statsFor = (c: CharacterState): DerivedStats => {
   return cachedStats;
 };
 
-let cachedFor: { character: CharacterState; equipment: DomainState["equipment"] } | null = null;
+let cachedFor: { character: CharacterState; equipment: DomainState["equipment"]; buffs: string } | null = null;
 let cachedPlayer: DerivedStats | null = null;
 
+/** The buffs that change stats, as a key: their seconds left tick every step, the stats do not. */
+const statBuffKey = (domain: DomainState): string =>
+  domain.buffs.length === 0 ? "" : domain.buffs.filter((b) => BUFF_CATALOG[b.id].modifiers).map((b) => b.id).join(",");
+
 /**
- * The player's stats with worn garments (a ballistic vest slows her down). Memoised on the
- * character and the equipment, which only change on install, memory or equip.
+ * The player's stats with worn garments (a ballistic vest slows her down) and running buffs (the
+ * stim steadies the aim, ADR-0033). Memoised on the character, the equipment and the stat buffs,
+ * which only change on install, memory, equip or a buff starting or ending.
  */
 export const playerStatsOf = (domain: DomainState): DerivedStats => {
-  if (!cachedPlayer || cachedFor?.character !== domain.character || cachedFor.equipment !== domain.equipment) {
-    cachedFor = { character: domain.character, equipment: domain.equipment };
-    cachedPlayer = deriveStats(domain.character, garmentModifiers(wornGarments(domain.inventory, domain.equipment)));
+  const buffs = statBuffKey(domain);
+  if (!cachedPlayer || cachedFor?.character !== domain.character || cachedFor.equipment !== domain.equipment || cachedFor.buffs !== buffs) {
+    cachedFor = { character: domain.character, equipment: domain.equipment, buffs };
+    cachedPlayer = deriveStats(domain.character, [...garmentModifiers(wornGarments(domain.inventory, domain.equipment)), ...buffModifiers(domain.buffs)]);
   }
   return cachedPlayer;
 };
