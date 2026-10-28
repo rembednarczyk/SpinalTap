@@ -34,15 +34,16 @@ ADR-0032 dał engine pięć rzeczy z fali 2 (raport `docs/research/reports/Resea
 - Gra jedna stacja naraz i tylko wtedy, gdy ją słychać. Ciche radio niczego nie planuje. Radio rusza dopiero z pejzażem dźwiękowym (`autoStart` lub `startAmbience`).
 
 ### Zryw i odbicie (`effects/trails.ts`, `effects/trail-meshes.ts`)
-- `GameplayFxEvent` dostaje rodzaje `dash { entityId, at, air }` i `reflect { defenderId, attackerId, at }`. `main.tsx` tłumaczy na nie `Dashed` i `ProjectileReflected`.
+- `GameplayFxEvent` dostaje rodzaje `dash { entityId, at, air }` i `reflect { defenderId, at, to }`. `main.tsx` tłumaczy na nie `Dashed` i `ProjectileReflected`.
 - Zryw zostawia dwie świecące smugi (pierś w cyjanie, kolana w różu), których czoło przez 0,22 s idzie za postacią. Gasną po 0,42 s. Dla gracza dochodzi rozmycie radialne w post-processie zdarzeń (nowy uniform `blur`, w powietrzu mocniej, przy ograniczeniu błysków o połowę) i wybuch linii prędkości (`SpeedLines.pulse`). Rozmycie nie rozjaśnia kadru, więc nie bierze błysku z limitu.
-- Odbicie daje iskrę na ostrzu i świetlny ślad od ostrza do piersi strzelca (0,2 s). Rozświetlenie ulicy jest jednym z trzech błysków na sekundę z `FlashLimiter` (ADR-0030), a przy ograniczeniu błysków nie ma go wcale. Ślad pokazuje się zawsze.
+- Odbicie daje iskrę na ostrzu i świetlny ślad od ostrza do punktu `to` z `ProjectileReflected` (tam, dokąd poleciał pocisk, 0,2 s). Rozświetlenie ulicy jest jednym z trzech błysków na sekundę z `FlashLimiter` (ADR-0030), a przy ograniczeniu błysków nie ma go wcale. Ślad pokazuje się zawsze.
 - Pula ma 8 belek i jest wyłączona, gdy nic nie leci.
 
 ### Przebrania na modelach (`renderer/character-skin.ts`, `renderer/loadout.ts`)
 - Do dziś odcień z `setAppearance` (np. `jacket-tessen` munduru Tessen: granat `#2f4a6b` na ubraniu „Tops” modelu VRoid, do tego płyta kamizelki `vest-plate` na piersi) barwił tylko importowane modele. Proceduralna obsada (telefony, klatka referencyjna, `models=off`) zostawała w kolorach presetu i przebrania nie było widać.
 - Scalone siatki postaci pamiętają teraz, z której części pochodzi każdy wierzchołek (`skinParts`). Loadout przemalowuje góry, kurtki i płaszcze odcieniem tułowia, a spodnie odcieniem nóg (`RIG_GARMENT_PRESETS`). Skóra, włosy, buty i cyberware zostają. Kurtka Seki i bojówki (odcień null) przywracają kolory presetu. Malowanie dzieje się tylko przy zmianie wyglądu.
-- Kurtka Hebi (`jacket-hebi`) i mundur Tessen działają od razu. Ubranie personelu Tessen nie ma jeszcze klucza palety ani przedmiotu (propozycja niżej).
+- Kurtka Hebi (`jacket-hebi`) i mundur ochrony Tessen (`jacket-tessen`) działają od razu. Kombinezon personelu Tessen (`tessen_overalls`) ma dziś odcień `cargo`, który w `GARMENT_TINT` jest null, więc wygląda jak zwykłe bojówki (propozycja niżej).
+- Egzekutor (`enforcer` w `ViewDescriptor` wroga) nosi bursztynową, lekko świecącą opaskę na lewym ramieniu (`markEnforcer`, preset `enforcerBand`). Wisi na kości ramienia riga, który porusza też importowany model, i znika razem z postacią. Ikonę rysuje HUD.
 
 ### Progi mokrego asfaltu (`npr/quality.ts`, `renderer/wet-probe.ts`, shader toon)
 - `RenderQuality` dostaje `medium`. `QUALITY_TIERS` zbiera w jednym miejscu, co robi każdy próg: mapa cienia, line art, rozbryzgi, sonda, podgląd postaci na żywo.
@@ -61,8 +62,8 @@ ADR-0032 dał engine pięć rzeczy z fali 2 (raport `docs/research/reports/Resea
 ## Propozycje kontraktu
 - `RenderPort.setMetroRide?(ride: { from: MetroStationId; to: MetroStationId; seconds: number } | null)`. App woła ją, jeśli istnieje, na `MetroDeparted` i `MetroArrived`.
 - `AudioScenePort.setRadioStation?(id: RadioStationId | null)` i typ `RadioStationId = "drift" | "yoru" | "tessen"` w `core` (dziś w engine, eksportowany z `@seki/engine`). Stan stacji żyje w app (ADR-0032).
-- `EffectDescriptor` dostaje `dash { entityId, at, air }` i `reflect { defenderId, attackerId, at }` (dziś `GameplayFxEvent`). Wtedy `bindEventPresenter` przekaże je przez `playEffect`, a `main.tsx` przestanie słuchać szyny, tak jak proponował ADR-0030.
-- `PaletteKey` dostaje `uniform-staff` (szary uniform personelu, propozycja `#8a9099`), a `GarmentMeshId` dostaje `badge` (identyfikator na piersi) dla roli `tessen_staff`. Engine doda kolor do `GARMENT_TINT` i kształt do `ADD_ONS`.
+- `EffectDescriptor` dostaje `dash { entityId, at, air }` i `reflect { defenderId, at, to }` (dziś `GameplayFxEvent`). Wtedy `bindEventPresenter` przekaże je przez `playEffect`, a `main.tsx` przestanie słuchać szyny, tak jak proponował ADR-0030.
+- `PaletteKey` dostaje `overalls-staff` (szaroniebieski kombinezon personelu, propozycja `#7d8794`) dla `tessen_overalls`, a `GarmentMeshId` dostaje `badge` (identyfikator na piersi). Engine doda kolor do `GARMENT_TINT` i kształt do `ADD_ONS`.
 - `GraphicsQuality` w UI dostaje `medium`.
 
 ## Konsekwencje

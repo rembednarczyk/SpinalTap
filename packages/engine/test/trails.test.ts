@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { FlashLimiter, MAX_FLASHES_PER_SECOND } from "../src/effects/flash-limiter";
 import { GameplayFxState } from "../src/effects/gameplay-fx";
-import { DASH_FOLLOW, DASH_TRAIL_LIFE, MAX_TRAILS, REFLECT_TRAIL_LIFE, TrailState, segment, trailFade } from "../src/effects/trails";
+import { DASH_FOLLOW, DASH_TRAIL_LIFE, MAX_STEP, MAX_TRAILS, REFLECT_TRAIL_LIFE, TrailState, segment, trailFade } from "../src/effects/trails";
 
 const DT = 1 / 60;
 const at = { x: 0, y: 0, z: 0 };
@@ -28,11 +28,18 @@ describe("dash streaks (ADR-0036)", () => {
   it("fades out and goes after its life", () => {
     const trails = new TrailState(new FlashLimiter());
     trails.dash(1, at);
-    trails.update(DASH_TRAIL_LIFE / 2, () => null);
+    for (let i = 0; i < 10; i++) trails.update(DASH_TRAIL_LIFE / 20, () => null);
     const t = trails.trails[0]!;
     expect(trailFade(t.ttl, t.life)).toBeCloseTo(0.5, 5);
-    trails.update(DASH_TRAIL_LIFE, () => null);
+    for (let i = 0; i < 11; i++) trails.update(DASH_TRAIL_LIFE / 20, () => null);
     expect(trails.trails).toHaveLength(0);
+  });
+
+  it("age by at most MAX_STEP per frame, so a hitch does not swallow them", () => {
+    const trails = new TrailState(new FlashLimiter());
+    trails.dash(1, at);
+    trails.update(2, () => null);
+    expect(trails.trails[0]!.ttl).toBeCloseTo(DASH_TRAIL_LIFE - MAX_STEP);
   });
 
   it("keeps at most MAX_TRAILS, dropping the oldest", () => {

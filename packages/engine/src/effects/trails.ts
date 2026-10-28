@@ -31,6 +31,8 @@ export const DASH_FOLLOW = 0.22;
 export const REFLECT_TRAIL_LIFE = 0.2;
 /** Chest and knee height of the two dash streaks. */
 const DASH_LIFTS = [1.15, 0.45] as const;
+/** Longest frame a trail ages by, so it shows for a few frames even after a hitch. */
+export const MAX_STEP = 1 / 20;
 /** Most trails alive at once; the oldest goes first. */
 export const MAX_TRAILS = 8;
 
@@ -79,7 +81,8 @@ export class TrailState {
   }
 
   update(dt: number, positionOf: PositionOf): void {
-    const step = Math.max(0, dt);
+    // A hitch (a long frame) must not swallow a trail before anyone sees it.
+    const step = Math.max(0, Math.min(MAX_STEP, dt));
     for (let i = this.items.length - 1; i >= 0; i--) {
       const t = this.items[i]!;
       t.ttl -= step;

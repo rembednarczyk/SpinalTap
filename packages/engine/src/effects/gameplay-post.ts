@@ -43,7 +43,7 @@ void main(void) {
   // Dash (ADR-0036): a zoom blur towards the middle, the centre stays sharp.
   if (blur > 0.001) {
     vec3 acc = col;
-    float k = blur * 0.045 * smoothstep(0.1, 0.7, length(d) * 2.0);
+    float k = blur * 0.028 * smoothstep(0.1, 0.7, length(d) * 2.0);
     for (int i = 1; i <= 5; i++) acc += texture2D(textureSampler, uv - d * k * float(i)).rgb;
     col = acc / 6.0;
   }
