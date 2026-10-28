@@ -218,11 +218,19 @@ export const takeLoot = (pockets: Pockets, lines: readonly LootLine[], which: nu
   return { wallet, inventory, equipment, ammo, taken, left, added, full };
 };
 
-/** Adds a container at the end; past the limit the oldest ones go and are returned. */
+/** A container that never expires: a stash placed by the world, not a bag dropped in play. */
+export const isPermanentContainer = (c: LootContainer): boolean => c.expiresAtTick === Number.MAX_SAFE_INTEGER;
+
+/**
+ * Adds a container at the end; past the limit the oldest ones go and are returned. Stashes
+ * (ADR-0021, ADR-0026) neither count towards the limit nor get pushed out: they are placed once
+ * and would never come back.
+ */
 export const addContainer = (loot: LootState, container: LootContainer, limit = MAX_LOOT_CONTAINERS): { loot: LootState; evicted: LootContainer[] } => {
   const all = [...loot.containers.filter((c) => c.key !== container.key), container];
-  const evicted = all.slice(0, Math.max(0, all.length - limit));
-  return { loot: { ...loot, containers: all.slice(evicted.length) }, evicted };
+  const dropped = all.filter((c) => !isPermanentContainer(c));
+  const evicted = dropped.slice(0, Math.max(0, dropped.length - limit));
+  return { loot: { ...loot, containers: evicted.length === 0 ? all : all.filter((c) => !evicted.includes(c)) }, evicted };
 };
 
 /** Replaces a container's lines; an emptied container is removed. */

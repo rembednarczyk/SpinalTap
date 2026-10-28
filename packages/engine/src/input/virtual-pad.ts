@@ -82,6 +82,9 @@ export class VirtualPad {
       reload: edge("reload"),
       weaponSlot: this.slot,
       weaponCycle: 0,
+      // The scanner and quickhacks come to touch with the HUD of ADR-0028.
+      scan: false,
+      quickhack: 0,
     };
     this.flush();
     return frame;

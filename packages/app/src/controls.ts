@@ -15,6 +15,7 @@ export const CONTROL_LABELS: readonly (readonly [Action, string])[] = [
   ["reload", "Przeładowanie"],
   ["interact", "Interakcja"],
   ["ability", "Zdolność cyberware"],
+  ["scan", "Skaner (przytrzymaj)"],
   ["useItem", "Apteczka"],
   ["toggleWeapon", "Schowaj / dobądź broń"],
   ["slot1", "Broń główna"],

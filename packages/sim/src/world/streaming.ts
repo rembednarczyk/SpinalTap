@@ -16,7 +16,7 @@ import {
   takenFlag,
 } from "@seki/core";
 import type { World } from "miniplex";
-import { CONTRACT_SITE_SPAWNS } from "../content/district-m0";
+import { CONTRACT_SITE_SPAWNS, contractSpawnYaw } from "../content/district-m0";
 import { CONTRACT_ITEM_SPOTS } from "../content/district-targ";
 import { DOKI_CONTRACT_POSTS, DOKI_ITEM_SPOTS, DOKI_TERMINAL_SPOTS, ESCORT_ROUTE } from "../content/district-doki";
 import { type ChunkDef, type DistrictId, WORLD_CHUNKS, chunkAt, distanceToRect } from "../content/world-map";
@@ -197,8 +197,8 @@ export class WorldStreamer {
         add(post.onAlarm ? { id, chunk, key, make, when: { all: [contractAlarmFlag(contract.id)] } } : { id, chunk, key, make });
         continue;
       }
-      // Face the street centre line.
-      const spawn = { key, position, yaw: Math.atan2(-position.x, 0.001) };
+      // Face the way trouble comes from on this site (audit W11).
+      const spawn = { key, position, yaw: contractSpawnYaw(contract.siteId, position) };
       // Every third ganger of a wave fights hand to hand (ADR-0019).
       const type = i % 3 === 2 ? "hebi_brawler" : "hebi_ganger";
       add({ id, chunk, key, make: () => gangerEntity(id, spawn, tag, contractGangerHp(completed), chunk, victim, type) });

@@ -34,6 +34,14 @@ describe("keyboard and mouse mapping", () => {
     expect(mapKeyboardMouse(keys(["Digit1"]), { yaw: 0, pitch: 0 }).weaponSlot).toBe(0);
   });
 
+  it("holds the scanner on Z or the middle button; there the number keys pick quickhacks (ADR-0028)", () => {
+    const look = { yaw: 0, pitch: 0 };
+    expect(mapKeyboardMouse(keys(["Mouse1"]), look)).toMatchObject({ scan: true, quickhack: 0 });
+    expect(mapKeyboardMouse(keys(["KeyZ", "Digit2"], ["Digit2"]), look)).toMatchObject({ scan: true, quickhack: 2, weaponSlot: 0 });
+    expect(mapKeyboardMouse(keys(["KeyZ", "Digit5"], ["Digit5"]), look)).toMatchObject({ quickhack: 5 });
+    expect(mapKeyboardMouse(keys(["Digit2"], ["Digit2"]), look)).toMatchObject({ scan: false, quickhack: 0, weaponSlot: 2 });
+  });
+
   it("supports remapping", () => {
     const map = remap(DEFAULT_KEYMAP, "fire", ["KeyF"]);
     expect(mapKeyboardMouse(keys(["KeyF"]), { yaw: 0, pitch: 0 }, map).fire).toBe(true);

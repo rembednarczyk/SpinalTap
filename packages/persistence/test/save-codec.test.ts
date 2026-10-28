@@ -197,6 +197,29 @@ describe("migrations", () => {
     const withContract = { ...s, domain: { ...s.domain, contracts: { active: contract, completed: 2 } } };
     expect(decodeSave("c", encodeSave(withContract)).domain.contracts.active).toEqual(contract);
   });
+
+  it("keeps the street life of ADR-0026 in a v10 save: the job under the footbridge, street food, a placed stash", () => {
+    const s = snapshot();
+    const contract = { id: "c4", siteId: "kanal_bridge" as const, targets: 2, reward: 500, status: "active" as const };
+    const stash = { key: "stash:kanal-alley", position: { x: 9.1, y: 0, z: 55.6 }, chunk: "kanal", expiresAtTick: Number.MAX_SAFE_INTEGER, lines: [{ kind: "stack" as const, item: "yakitori" as const, qty: 2 }] };
+    const street = {
+      ...s,
+      entities: [...s.entities, { key: "hideo", position: { x: 52.6, y: 5, z: 75.4 }, yaw: 0, pitch: 0, hp: null, cooldown: 0, alerted: false }],
+      domain: {
+        ...s.domain,
+        flags: [...s.domain.flags, "placed:stash:kanal-alley", "met_fumiko"],
+        contracts: { active: contract, completed: 3 },
+        inventory: { ...s.domain.inventory, stacks: { ...s.domain.inventory.stacks, ramen: 2, yakitori: 1 } },
+        loot: { ...s.domain.loot, containers: [stash] },
+      },
+    };
+    const back = decodeSave("w", encodeSave(street));
+    expect(back.version).toBe(10);
+    expect(back.domain.contracts.active).toEqual(contract);
+    expect(back.domain.inventory.stacks).toMatchObject({ ramen: 2, yakitori: 1 });
+    expect(back.domain.loot.containers).toEqual([stash]);
+    expect(back.entities.map((e) => e.key)).toContain("hideo");
+  });
 });
 
 describe("schema validation", () => {

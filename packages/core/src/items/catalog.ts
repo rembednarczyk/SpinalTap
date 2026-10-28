@@ -57,6 +57,26 @@ export const STACKABLE_CATALOG = {
     stack: 9,
     heal: 15,
   },
+  // Street food from Fumiko's stall on the market (ADR-0026): cheaper per HP than medical
+  // kit, but eaten from the bag, never by quick use in a fight.
+  ramen: {
+    id: "ramen",
+    name: "Miska ramenu",
+    description: "Tonkotsu od Fumiko, w kubku z pokrywką. Przywraca 30 HP, jeśli zjesz to w spokoju.",
+    category: "consumable",
+    value: 35,
+    stack: 3,
+    heal: 30,
+  },
+  yakitori: {
+    id: "yakitori",
+    name: "Yakitori",
+    description: "Dwa szaszłyki z grilla. Kurczak, podobno. Przywraca 10 HP.",
+    category: "consumable",
+    value: 10,
+    stack: 6,
+    heal: 10,
+  },
   scrap: {
     id: "scrap",
     name: "Złom elektroniczny",
@@ -83,7 +103,7 @@ export const STACKABLE_CATALOG = {
   },
 } as const satisfies Record<StackableId, StackableDefinition>;
 
-export const CONSUMABLE_IDS: readonly ConsumableId[] = ["medkit", "bandage"];
+export const CONSUMABLE_IDS: readonly ConsumableId[] = ["medkit", "bandage", "ramen", "yakitori"];
 export const JUNK_IDS: readonly JunkId[] = ["scrap", "weapon_parts", "datachip"];
 
 export interface AmmoDefinition {

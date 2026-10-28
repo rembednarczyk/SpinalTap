@@ -174,7 +174,8 @@ export const KANAL_PROPS: readonly StaticProp[] = [
   slab((DOKI_PASSAGE.x0 + DOKI_PASSAGE.x1) / 2, 0.03, 86, v(DOKI_PASSAGE.x1 - DOKI_PASSAGE.x0, 0.06, 8), "concrete"),
   neon((DOKI_PASSAGE.x0 + DOKI_PASSAGE.x1) / 2, 6.4, 81.9, v(4.4, 1.2, 0.15), "#39d0ff", "DOKI"),
   // Kiosk just inside the market gate: the street's view ends on it, not on the market behind.
-  building(74, 78, 6, 3.2, 10, "metal"),
+  // Sachiko sells over its west counter (ADR-0026); the city kit hangs its shop signs there.
+  building(74, 78, 6, 3.2, 10, "metal", skin("shop", "x-")),
   // Clutter.
   crate(8.7, 58, 1.4, 1.3, 2.6, skin("dumpster", "x-")),
   crate(5.2, 70, 0.9, 1.1, 0.9),
@@ -186,7 +187,96 @@ export const KANAL_PROPS: readonly StaticProp[] = [
   lamp(9.3, 67, "#9ad7ff"),
   lamp(50, 81.2, "#ffcf8a"),
   ...footbridge(),
+  // ADR-0026, appended so the props above keep their order. Tetsu's table of gadgets in front
+  // of DENKI, and crates under the footbridge where Hebi meet (Kaito's site `kanal_bridge`).
+  // Both crates keep off the middle of the road (Z ∈ [77.4, 80.4]), where traffic and chases run.
+  crate(42.6, 80.9, 1.4, 0.9, 0.7),
+  crate(53, 80.9, 1.2, 0.9, 1.0),
+  crate(51.2, 76.9, 0.9, 0.8, 0.9),
 ];
+
+/**
+ * Where the people of Ulica Kanałowa stand (ADR-0026). Hideo, a clerk from the Tessen office,
+ * crosses the footbridge to work and back to the SAKE bar; Mei sings at KARAOKE by night;
+ * Tetsu keeps DENKI; Sachiko the kiosk at the market gate.
+ */
+export const KANAL_SPOTS = {
+  hideoSake: v(8.6, 0, 63.5),
+  hideoHome: v(4.7, 0, 76),
+  hideoKiosk: v(69.9, 0, 75.6),
+  meiKaraoke: v(14, 0, 80.9),
+  meiHome: v(5.3, 0, 80.4),
+  tetsu: v(44.6, 0, 80.9),
+  sachiko: v(70.4, 0, 79.6),
+} as const;
+
+/**
+ * Hideo's way over the footbridge from the west kerb to the market gate (ADR-0026), on the
+ * walkable surface: the west flight, the walkway, the east flight. Reversed for the way back.
+ */
+export const FOOTBRIDGE_WALK: readonly Vec3[] = [
+  v(40, 0, 78.6),
+  v(43.4, 0, 75),
+  v(52, FOOTBRIDGE_TOP, 75),
+  v(52.6, FOOTBRIDGE_TOP, 75.4),
+  v(53, FOOTBRIDGE_TOP, 81),
+  v(54, FOOTBRIDGE_TOP, 81),
+  v(62, 0, 81),
+  v(63, 0, 81),
+  v(66, 0, 78.6),
+];
+
+export const KANAL_ACTORS: readonly ActorDef[] = [
+  {
+    kind: "npc",
+    spawn: { key: "hideo", position: KANAL_SPOTS.hideoSake, yaw: -Math.PI / 2 },
+    preset: "civilian",
+    faction: "civilians",
+    bystander: true,
+    interactable: { kind: "dialogue", dialogueId: "hideo", prompt: "Rozmawiaj z Hideo", radius: 2.4 },
+  },
+  {
+    kind: "npc",
+    spawn: { key: "tetsu", position: KANAL_SPOTS.tetsu, yaw: Math.PI },
+    preset: "civilian",
+    faction: "civilians",
+    bystander: true,
+    interactable: { kind: "dialogue", dialogueId: "tetsu", prompt: "Rozmawiaj z Tetsu (DENKI)", radius: 2.4 },
+  },
+  {
+    kind: "npc",
+    spawn: { key: "mei", position: KANAL_SPOTS.meiKaraoke, yaw: Math.PI },
+    preset: "civilian",
+    faction: "civilians",
+    bystander: true,
+    interactable: { kind: "dialogue", dialogueId: "mei", prompt: "Rozmawiaj z Mei", radius: 2.4 },
+  },
+  {
+    kind: "npc",
+    spawn: { key: "sachiko", position: KANAL_SPOTS.sachiko, yaw: -Math.PI / 2 },
+    preset: "civilian",
+    faction: "civilians",
+    bystander: true,
+    interactable: { kind: "dialogue", dialogueId: "sachiko", prompt: "Kiosk Sachiko", radius: 2.4 },
+  },
+];
+
+/** Kaito's job under the footbridge (ADR-0026): Hebi trading chips in the shadow of the walkway. */
+export const KANAL_CONTRACT_SITE_SPAWNS: Readonly<Record<"kanal_bridge", readonly Vec3[]>> = {
+  kanal_bridge: [v(53.2, 0, 78.2), v(49.5, 0, 77.4), v(56.5, 0, 77.8), v(52.8, 0, 76.4)],
+};
+
+/** A bag left behind the dumpster by the passage to Shinsekai (ADR-0026). */
+export const KANAL_ALLEY_STASH: RoofStash = {
+  key: "stash:kanal-alley",
+  at: v(9.1, 0, 55.6),
+  lines: [
+    { kind: "eddies", qty: 60 },
+    { kind: "stack", item: "bandage", qty: 1 },
+    { kind: "stack", item: "yakitori", qty: 2 },
+    { kind: "stack", item: "scrap", qty: 2 },
+  ],
+};
 
 // ---------------------------------------------------------------- Targ pod estakadą
 
@@ -381,6 +471,9 @@ export const TARG_NORTH_PROPS: readonly StaticProp[] = [
   crate(122.5, 96.6, 1.6, 1.4, 1.4),
   ...facadeRow(rng, 68, 124, 110, 8, [10, 18], [12, 18], "z-"),
   lamp(116, 99, "#ffcf8a"),
+  // ADR-0026, hand-placed after the generated rows: no random number moves. A car left on the
+  // highway deck since the night of the blockade, cover on the west end of the walkway.
+  { ...crate(76, 90, 4.2, 1.5, 2, skin("car", "x+")), center: v(76, OVERPASS_TOP + 0.75, 90) },
 ];
 
 /**
@@ -401,6 +494,11 @@ export const TARG_NAV: NavGraph = {
     { id: "targ-deck-e", at: v(112, OVERPASS_TOP, 92) },
     { id: "targ-view-sw", at: v(80, 0, 75) },
     { id: "targ-view-s", at: v(100, 0, 77) },
+    // Ground floor round the stairs and behind the north stalls (ADR-0025): a start or a goal
+    // tucked behind a counter still finds the graph.
+    { id: "targ-stairs-e", at: v(90, 0, 99.9) },
+    { id: "targ-north-c", at: v(90, 0, 104.4) },
+    { id: "targ-north-e", at: v(110, 0, 104.4) },
   ],
   edges: [
     { a: "targ-floor-c", b: "targ-floor-w" },
@@ -412,8 +510,35 @@ export const TARG_NAV: NavGraph = {
     { a: "targ-deck-w", b: "targ-deck-e" },
     { a: "targ-floor-c", b: "targ-view-sw" },
     { a: "targ-floor-c", b: "targ-view-s" },
+    { a: "targ-floor-c", b: "targ-stairs-e" },
+    { a: "targ-stairs-e", b: "targ-north-c" },
+    { a: "targ-north-c", b: "targ-north-e" },
   ],
 };
+
+/** What the car abandoned on the highway deck still holds (ADR-0026). */
+export const TARG_OVERPASS_STASH: RoofStash = {
+  key: "stash:targ-overpass",
+  at: v(75.2, OVERPASS_TOP, 91.6),
+  lines: [
+    { kind: "eddies", qty: 120 },
+    { kind: "ammo", ammo: "9mm", qty: 18 },
+    { kind: "stack", item: "bandage", qty: 2 },
+    { kind: "stack", item: "datachip", qty: 1 },
+  ],
+};
+
+/**
+ * Stall keepers of the north row (ADR-0026), behind their counters: Kenta fries okonomiyaki
+ * under OKONOMI, Fumiko keeps the ramen stall (the market's food shop) and Goro sells umbrellas
+ * at the east end. The south row stays Oyaji's alone: Hana's protection waves walk along it
+ * to his stall, and a keeper there would stand in their way.
+ */
+export const STALL_KEEPERS = {
+  kenta: v(77.2, 0, 103.4),
+  fumiko: v(93.6, 0, 103.4),
+  goro: v(103.1, 0, 103.4),
+} as const;
 
 /** Oyaji can be hurt: Hebi come for him in Hana's protection jobs. */
 export const OYAJI_MAX_HP = 120;
@@ -484,6 +609,31 @@ export const TARG_NORTH_ACTORS: readonly ActorDef[] = [
   { kind: "ganger", spawn: { key: "hebi-lookout", position: v(104, 0, 92), yaw: Math.PI, tag: null } },
   KUROSAWA,
   ...CLEANERS,
+  {
+    kind: "npc",
+    spawn: { key: "kenta", position: STALL_KEEPERS.kenta, yaw: Math.PI },
+    preset: "civilian",
+    faction: "civilians",
+    bystander: true,
+    interactable: { kind: "dialogue", dialogueId: "kenta", prompt: "Okonomiyaki u Kenty", radius: 3 },
+  },
+  {
+    kind: "npc",
+    spawn: { key: "fumiko", position: STALL_KEEPERS.fumiko, yaw: Math.PI },
+    preset: "civilian",
+    faction: "civilians",
+    bystander: true,
+    // From 16:00 to 4:00 the stall (ADR-0026); the rest of the day the schedule swaps in `fumiko_closed`.
+    interactable: { kind: "shop", shopId: "yatai", dialogueId: "fumiko", prompt: "Ramen u Fumiko", radius: 3 },
+  },
+  {
+    kind: "npc",
+    spawn: { key: "goro", position: STALL_KEEPERS.goro, yaw: Math.PI },
+    preset: "civilian",
+    faction: "civilians",
+    bystander: true,
+    interactable: { kind: "dialogue", dialogueId: "goro", prompt: "Parasole u Goro", radius: 3 },
+  },
 ];
 
 /**
@@ -495,6 +645,18 @@ export const TARG_CONTRACT_SITE_SPAWNS: Readonly<Record<"hana_stall" | "hebi_sta
   hebi_stash: [v(118, 0, 89), v(119.5, 0, 95.5), v(116.5, 0, 92.5), v(121.5, 0, 88)],
   raid_north: [v(90, 0, 91), v(94, 0, 93), v(98, 0, 90.5), v(86, 0, 92.5)],
   raid_east: [v(110, 0, 74), v(111.5, 0, 78), v(108.5, 0, 71.5), v(112, 0, 81)],
+};
+
+/**
+ * Which way each market crew looks when it turns up (audit W11): the raids at Oyaji's stall,
+ * the stash guards west over the market floor they would be attacked from, the cart crew at
+ * Hana. Their yaw is the direction from each spawn point to this point.
+ */
+export const TARG_CONTRACT_SITE_FACING: Readonly<Record<"hana_stall" | "hebi_stash" | "raid_north" | "raid_east", Vec3>> = {
+  hana_stall: v(HANA_SPOT.x, 0, HANA_SPOT.z),
+  hebi_stash: v(100, 0, 90),
+  raid_north: v(OYAJI_STALL.x, 0, OYAJI_STALL.z - 1.4),
+  raid_east: v(OYAJI_STALL.x, 0, OYAJI_STALL.z - 1.4),
 };
 
 /** Where the crate of a retrieval job lies (centre of the box). */

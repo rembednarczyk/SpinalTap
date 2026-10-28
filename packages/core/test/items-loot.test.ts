@@ -12,6 +12,7 @@ import {
   type Pockets,
   type RandomPort,
   addContainer,
+  isPermanentContainer,
   bestLootRarity,
   expireContainers,
   rollLoot,
@@ -107,6 +108,16 @@ describe("bags", () => {
     expect(r.evicted.map((c) => c.key)).toEqual(["b0"]);
     expect(r.loot.containers).toHaveLength(MAX_LOOT_CONTAINERS);
     expect(addContainer(r.loot, bag("new")).loot.containers.at(-1)?.key).toBe("new");
+  });
+
+  it("never pushes out a stash, and stashes do not count towards the twelve (ADR-0026)", () => {
+    let loot = addContainer(EMPTY_LOOT, bag("stash:a", Number.MAX_SAFE_INTEGER)).loot;
+    for (let i = 0; i < MAX_LOOT_CONTAINERS; i++) loot = addContainer(loot, bag(`b${i}`)).loot;
+    loot = addContainer(loot, bag("stash:b", Number.MAX_SAFE_INTEGER)).loot;
+    expect(isPermanentContainer(loot.containers[0]!)).toBe(true);
+    const r = addContainer(loot, bag("new"));
+    expect(r.evicted.map((c) => c.key)).toEqual(["b0"]);
+    expect(r.loot.containers.map((c) => c.key)).toEqual(["stash:a", ...Array.from({ length: 11 }, (_, i) => `b${i + 1}`), "stash:b", "new"]);
   });
 
   it("updates lines and removes an emptied bag", () => {

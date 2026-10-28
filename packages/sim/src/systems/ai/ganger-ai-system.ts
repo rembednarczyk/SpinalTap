@@ -1,7 +1,7 @@
 import { BehaviourTree, State } from "mistreevous";
 
 type Agent = ConstructorParameters<typeof BehaviourTree>[1];
-import { angleTo, factionStance, normalize, strikeAt, sub, type EntityId, type FactionStance } from "@seki/core";
+import { angleTo, factionStance, normalize, strikeAt, sub, type EntityId, type FactionStance, type Vec3 } from "@seki/core";
 import type { Entity } from "../../world/components";
 import type { SimContext, System } from "../../world/context";
 import { chestOf, eyeOf, lineOfSight } from "../../world/hitscan";
@@ -15,6 +15,7 @@ import { readyToFire } from "../../world/player-weapon";
 import { GANGER_TREE } from "./ganger-tree";
 import { WORLD_NAV } from "../../content/world-map";
 import { LEVEL_GAP, firingPosition, routeAcrossLevels } from "../../world/nav";
+import { type Detour, SAME_FLOOR, detourStep, followDetour, planDetour, straightWalk } from "./steering";
 
 export const GANGER_SPEED = 3.1;
 /** A ganger with a melee weapon runs at whoever it fights to close the distance (ADR-0019). */
@@ -25,8 +26,36 @@ const MELEE_REST_JITTER = 0.4;
 const TURN_RATE = 6;
 /** A melee fighter reaches no higher or lower than this (a brawler under the footbridge cannot hit it). */
 const MELEE_REACH_Y = 1.2;
-/** Knee height of the "can I walk straight there" test above street level (ADR-0021). */
-const WALK_TEST_HEIGHT = 0.6;
+/**
+ * Stuck detection (ADR-0025): a ganger that wants to move but has not got `STUCK_DISTANCE`
+ * metres away from where it stood `STUCK_TIME` seconds ago takes the way around for
+ * `UNSTICK_TIME` seconds, with a sidestep, even where the knee-high line looks free.
+ */
+export const STUCK_TIME = 1.5;
+const STUCK_DISTANCE = 0.4;
+const UNSTICK_TIME = 1.2;
+/** Sideways share of the walk while getting unstuck. */
+const SIDESTEP = 0.6;
+
+/**
+ * Transient progress memory of one walker (like the melee state, not saved): where it stood
+ * when the current stretch began, and until when it is getting unstuck.
+ */
+interface Progress {
+  x: number;
+  z: number;
+  since: number;
+  unstickUntil: number;
+  /** Side of the sidestep, flipped every time it gets stuck again. */
+  side: 1 | -1;
+  /** The repath made when it got stuck: round the static obstacles and the other characters. */
+  plan: Detour | null;
+}
+
+/** Characters this close count as obstacles in the repath of a stuck walker. */
+const CROWD_RADIUS = 8;
+/** The repath is for this goal; a goal that moved further than this needs the ordinary way. */
+const PLAN_DRIFT = 2;
 
 /**
  * Sight of a corporate guard (ADR-0024). It sees in a cone in front of it, a crouching player
@@ -86,6 +115,11 @@ class GangerAgent {
   target: VictimPerception = NO_VICTIM;
   /** Presentation memory only: the warning cue fires once per ganger, it never feeds back into the state. */
   warned = false;
+  progress: Progress | null = null;
+  /** Set by every walk this step; read by the stuck check after the tree has run. */
+  walking = false;
+  /** Where the last walk this step was headed. */
+  goal: Vec3 | null = null;
 
   SeesPlayer = (): boolean => this.seen.visible;
   PlayerAlive = (): boolean => this.seen.player !== null;
@@ -106,7 +140,7 @@ class GangerAgent {
   ChaseVictim = (): State => {
     const { self, target } = this;
     if (!self || !target.victim) return State.FAILED;
-    this.moveTowards(target.victim.position.x, target.victim.position.z);
+    this.walkTo(target.victim.position);
     this.face(target.victim);
     return State.SUCCEEDED;
   };
@@ -150,12 +184,13 @@ class GangerAgent {
   };
 
   /**
-   * Goes after a target (ADR-0021). On the street with the target on the street it walks
-   * straight at it, as before. With the target on another level, or up on a deck with
-   * something in the way, it takes the stairs through the district's transition graph; a
-   * gunner instead heads for the nearest point that gives it a shot, when that is closer than
-   * the way up. With neither (a roof reached by a ladder, seen from nowhere) it goes back to
-   * its post rather than wait under the target's feet. Lifts and ladders are for the player.
+   * Goes after a target (ADR-0021, ADR-0025). On the same floor it walks straight at it when
+   * the knee-high line is free, and around the obstacle (the floor's distance field) when it
+   * is not. With the target on another level, or on the same level but not reachable on this
+   * floor, it takes the stairs through the district's transition graph; a gunner instead heads
+   * for the nearest point that gives it a shot, when that is closer than the way up. With
+   * neither (a roof reached by a ladder, seen from nowhere) it goes back to its post rather
+   * than wait under the target's feet. Lifts and ladders are for the player.
    */
   private pursue(target: Entity): void {
     const { ctx, self } = this;
@@ -164,18 +199,52 @@ class GangerAgent {
     const to = target.position;
     const apart = Math.abs(to.y - from.y) > LEVEL_GAP;
     const raised = from.y > LEVEL_GAP || to.y > LEVEL_GAP;
-    const knee = (p: { x: number; y: number; z: number }) => ({ x: p.x, y: p.y + WALK_TEST_HEIGHT, z: p.z });
-    if (!apart && (!raised || lineOfSight(ctx.world, knee(from), knee(to)))) {
-      this.moveTowards(to.x, to.z);
-      return;
+    if (!apart) {
+      const step = this.head(to);
+      if (step || !raised) {
+        this.goal = to;
+        this.moveTowards((step ?? to).x, (step ?? to).z);
+        return;
+      }
     }
     const route = routeAcrossLevels(ctx.world, WORLD_NAV, from, to);
     const shot = self.combatant?.stats?.melee || !apart ? null : firingPosition(ctx.world, WORLD_NAV, from, to, self.ai.attackRange);
     const way = shot && (!route || shot.cost < route.cost) ? shot : route;
     if (way && Math.hypot(way.next.x - from.x, way.next.z - from.z) < 0.05) self.velocity = { x: 0, y: 0, z: 0 };
-    else if (way) this.moveTowards(way.next.x, way.next.z);
-    else if (apart) this.moveTowards(self.ai.home.x, self.ai.home.z);
+    else if (way) this.walkTo(way.next);
+    else if (apart) this.walkTo(self.ai.home);
     else this.moveTowards(to.x, to.z);
+  }
+
+  /** Walks towards a point on its floor, around obstacles when the straight line is blocked. */
+  private walkTo(goal: Vec3): void {
+    const p = this.head(goal) ?? goal;
+    this.goal = goal;
+    this.moveTowards(p.x, p.z);
+  }
+
+  /**
+   * The point to head for on the way to `goal` (ADR-0025): the goal itself when the knee-high
+   * line is free (or the goal is on another floor), a point round the obstacle otherwise, the
+   * repath while getting unstuck. Null when this floor does not lead there.
+   */
+  private head(goal: Vec3): Vec3 | null {
+    const { ctx, self } = this;
+    if (!ctx || !self) return null;
+    const from = self.position;
+    if (Math.abs(goal.y - from.y) > SAME_FLOOR) return goal;
+    const plan = this.progress?.plan;
+    if (this.unsticking() && plan && Math.hypot(plan.goal.x - goal.x, plan.goal.z - goal.z) < PLAN_DRIFT) {
+      const p = followDetour(plan, from);
+      if (p) return p;
+    }
+    if (!this.unsticking() && straightWalk(ctx.world, from, goal)) return goal;
+    return detourStep(ctx.world, from, goal);
+  }
+
+  private unsticking(): boolean {
+    const { ctx, progress } = this;
+    return !!ctx && !!progress && ctx.tick < progress.unstickUntil;
   }
 
   /** A friendly ganger that is not provoked stops and keeps an eye on the player. */
@@ -204,7 +273,7 @@ class GangerAgent {
       return State.SUCCEEDED;
     }
     const d = Math.hypot(self.ai.home.x - self.position.x, self.ai.home.z - self.position.z);
-    if (d > 0.3) this.moveTowards(self.ai.home.x, self.ai.home.z);
+    if (d > 0.3) this.walkTo(self.ai.home);
     else self.velocity = { x: 0, y: 0, z: 0 };
     const watch = self.ai.watch;
     if ((self.ai.suspicion ?? 0) > 0 && this.seen.player) this.face(this.seen.player);
@@ -219,7 +288,54 @@ class GangerAgent {
     const dz = z - self.position.z;
     const d = Math.hypot(dx, dz);
     const speed = self.combatant?.stats?.melee ? MELEE_CHASE_SPEED : GANGER_SPEED;
-    self.velocity = d < 1e-6 ? { x: 0, y: 0, z: 0 } : { x: (dx / d) * speed, y: 0, z: (dz / d) * speed };
+    if (d < 1e-6) {
+      self.velocity = { x: 0, y: 0, z: 0 };
+      return;
+    }
+    this.walking = true;
+    let ux = dx / d;
+    let uz = dz / d;
+    const p = this.progress;
+    if (p && !p.plan && this.unsticking()) {
+      // Getting unstuck: lean to one side of the way, so two walkers jammed in a gap part.
+      const sx = ux + -uz * p.side * SIDESTEP;
+      const sz = uz + ux * p.side * SIDESTEP;
+      const s = Math.hypot(sx, sz);
+      ux = sx / s;
+      uz = sz / s;
+    }
+    self.velocity = { x: ux * speed, y: 0, z: uz * speed };
+  }
+
+  /**
+   * After the tree: tracks whether a walking ganger gets anywhere. Standing still (shooting,
+   * holding a post) resets the stretch.
+   */
+  checkProgress(): void {
+    const { ctx, self } = this;
+    if (!ctx || !self) return;
+    const { x, z } = self.position;
+    const p = this.progress;
+    if (!this.walking || !p) {
+      this.progress = { x, z, since: ctx.tick, unstickUntil: p?.unstickUntil ?? 0, side: p?.side ?? (self.id % 2 === 0 ? 1 : -1), plan: p?.plan ?? null };
+      return;
+    }
+    if (Math.hypot(x - p.x, z - p.z) >= STUCK_DISTANCE) {
+      p.x = x;
+      p.z = z;
+      p.since = ctx.tick;
+      return;
+    }
+    if ((ctx.tick - p.since) * ctx.dt * this.timeScale < STUCK_TIME || ctx.tick < p.unstickUntil) return;
+    p.unstickUntil = ctx.tick + Math.ceil(UNSTICK_TIME / (ctx.dt * Math.max(this.timeScale, 1e-3)));
+    p.side = p.side === 1 ? -1 : 1;
+    p.since = ctx.tick;
+    const crowd: Vec3[] = [];
+    for (const e of inCreationOrder(ctx.world.with("body"))) {
+      if (e === self || e.player || Math.hypot(e.position.x - x, e.position.z - z) > CROWD_RADIUS) continue;
+      crowd.push(e.position);
+    }
+    p.plan = this.goal ? planDetour(ctx.world, self.position, this.goal, crowd) : null;
   }
 
   private face(target: Entity): void {
@@ -300,9 +416,14 @@ export const createGangerAiSystem = (): System => {
           const knock = knockbackVelocity(g);
           g.velocity = { x: knock.x, y: 0, z: knock.z };
           if (g.combatant) g.combatant.engaged = m.stagger === 0;
+          brain.agent.walking = false;
+          brain.agent.checkProgress();
           continue;
         }
+        brain.agent.walking = false;
+        brain.agent.goal = null;
         brain.tree.step();
+        brain.agent.checkProgress();
       }
       for (const id of [...trees.keys()]) if (!alive.has(id)) trees.delete(id);
     },
