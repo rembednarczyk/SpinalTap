@@ -100,6 +100,12 @@ export interface ContractIntents {
   dismissDebrief(): void;
 }
 
+/** The journal: which entry the HUD follows. */
+export interface JournalIntents {
+  /** Follow this entry (a quest id or `contract-<id>`) on the HUD; null lets the game pick. */
+  trackQuest(questId: string | null): void;
+}
+
 /** Scanner, quickhacks and the breach minigame (ADR-0028). */
 export interface HackIntents {
   /** Touch: the scanner button (held on the keyboard through the input frame). */
@@ -114,4 +120,4 @@ export interface HackIntents {
  * Everything the UI can ask the game to do, as the sum of the narrow interfaces above.
  * Implemented by the app composition root; components take only their part (ADR-0031).
  */
-export type UiIntents = SessionIntents & DialogueIntents & ShopIntents & LootIntents & CharacterIntents & SettingsIntents & PhoneIntents & ContractIntents & HackIntents;
+export type UiIntents = SessionIntents & DialogueIntents & ShopIntents & LootIntents & CharacterIntents & SettingsIntents & PhoneIntents & ContractIntents & JournalIntents & HackIntents;

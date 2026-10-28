@@ -46,6 +46,7 @@ const intents = (): UiIntents => ({
   setScan: vi.fn(),
   pickQuickhack: vi.fn(),
   submitBreach: vi.fn(),
+  trackQuest: vi.fn(),
 });
 
 const mount = (state: Partial<UiState> = {}) => {
