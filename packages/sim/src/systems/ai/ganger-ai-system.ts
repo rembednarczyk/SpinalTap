@@ -331,7 +331,7 @@ class GangerAgent {
     p.since = ctx.tick;
     const crowd: Vec3[] = [];
     for (const e of inCreationOrder(ctx.world.with("body"))) {
-      if (e === self || e.player || Math.hypot(e.position.x - x, e.position.z - z) > CROWD_RADIUS) continue;
+      if (e === self || e.player || e.passerby || Math.hypot(e.position.x - x, e.position.z - z) > CROWD_RADIUS) continue;
       crowd.push(e.position);
     }
     p.plan = this.goal ? planDetour(ctx.world, self.position, this.goal, crowd) : null;

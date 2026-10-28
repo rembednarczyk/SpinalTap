@@ -21,6 +21,7 @@ import { CONTRACT_ITEM_SPOTS } from "../content/district-targ";
 import { DOKI_CONTRACT_POSTS, DOKI_ITEM_SPOTS, DOKI_TERMINAL_SPOTS, ESCORT_ROUTE } from "../content/district-doki";
 import { type ChunkDef, type DistrictId, WORLD_CHUNKS, WORLD_DEVICES, WORLD_METRO, chunkAt, distanceToRect } from "../content/world-map";
 import type { DeviceDef } from "../content/devices";
+import { MAX_PASSERSBY_PER_CHUNK, PASSERSBY } from "../content/activity-spots";
 import type { MetroStationDef } from "../content/metro";
 import { metroPieces } from "./metro-pieces";
 import { decorateTarget, planExtras, targetPresence, targetSpot, targetType } from "./contract-plan";
@@ -98,6 +99,8 @@ export class WorldStreamer {
   private presenceFlags: readonly string[] | null = null;
   /** Ids of entities currently asleep in an unloaded chunk (lets the renderer skip exit animations). */
   readonly streamedOut = new Set<EntityId>();
+  /** Ids reserved for each chunk's background passers-by (ADR-0040); the passer-by system spawns them. */
+  readonly passerbyIds = new Map<string, readonly EntityId[]>();
 
   constructor(
     private readonly ids: IdAllocator,
@@ -137,6 +140,11 @@ export class WorldStreamer {
         const id = ids.take();
         list.push({ id, chunk: station.chunk, key: null, make: () => make(id) });
       }
+    }
+    // Passers-by (ADR-0040) last, so every id above stays what it was.
+    for (const chunk of chunks) {
+      const count = Math.min(MAX_PASSERSBY_PER_CHUNK, PASSERSBY[chunk.id] ?? 0);
+      if (count > 0) this.passerbyIds.set(chunk.id, Array.from({ length: count }, () => ids.take()));
     }
   }
 

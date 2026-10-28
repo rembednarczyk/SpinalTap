@@ -243,7 +243,8 @@ export const movementSystem: System = {
     // Creation order, not world order: chunks streamed back in are appended to the world, and
     // push-out against overlapping boxes depends on the order they are visited.
     const solids = inCreationOrder(world.with("solid"));
-    const bodies = inCreationOrder(world.with("body"));
+    // Background passers-by (ADR-0040) give way to everyone and push nobody: they never change the saved state.
+    const bodies = inCreationOrder(world.with("body")).filter((b) => !b.passerby);
     for (const e of inCreationOrder(world.with("velocity", "body"))) {
       if (e.climb) continue;
       const dt = e.player ? ctx.dt : enemyDt;

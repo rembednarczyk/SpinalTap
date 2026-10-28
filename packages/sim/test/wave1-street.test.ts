@@ -101,12 +101,14 @@ describe("the crowd (ADR-0029)", () => {
     fireUp(sim);
     expect(noise[0]).toMatchObject({ kind: "gunshot", sourceId: sim.player()!.id });
     sim.step();
-    expect(reacted).toEqual([{ entityId: ume.id, state: "fleeing" }]);
+    // Only Ume's reactions: a background passer-by (ADR-0040) up the street runs too.
+    const hers = () => reacted.filter((e) => e.entityId === ume.id);
+    expect(hers()).toEqual([{ entityId: ume.id, state: "fleeing" }]);
     const d0 = flat(ume.position, origin);
     run(sim, 2 * SIM_HZ);
     expect(flat(ume.position, origin)).toBeGreaterThan(d0 + 3);
     run(sim, (FLEE_SECONDS + 1) * SIM_HZ);
-    expect(reacted.at(-1)).toEqual({ entityId: ume.id, state: "calm" });
+    expect(hers().at(-1)).toEqual({ entityId: ume.id, state: "calm" });
 
     // Point blank: cowering, then running, then calm.
     const close = Simulation.create({ seed: 4 });
@@ -118,12 +120,13 @@ describe("the crowd (ADR-0029)", () => {
     // Looking away: a gun pointed at her would keep her down (intimidation).
     close.player()!.yaw = 0;
     close.step();
-    expect(seen[0]).toEqual({ entityId: u.id, state: "cowering" });
+    const mine = () => seen.filter((e) => e.entityId === u.id);
+    expect(mine()[0]).toEqual({ entityId: u.id, state: "cowering" });
     const still = { ...u.position };
     run(close, (COWER_SECONDS - 0.5) * SIM_HZ);
     expect(flat(u.position, still)).toBeLessThan(0.05);
     run(close, (FLEE_SECONDS + 1.5) * SIM_HZ);
-    expect(seen.map((e) => e.state)).toEqual(["cowering", "fleeing", "calm"]);
+    expect(mine().map((e) => e.state)).toEqual(["cowering", "fleeing", "calm"]);
   });
 });
 

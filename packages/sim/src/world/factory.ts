@@ -8,7 +8,7 @@ import { aabbFromCenter } from "./collision";
 import type { Combatant, Entity, MeleeState } from "./components";
 import { isEnforcer } from "./enforcer";
 
-const BODY = { radius: 0.38, height: 1.8 } as const;
+export const BODY = { radius: 0.38, height: 1.8 } as const;
 
 export const GANGER_MAX_HP = 80;
 export const PLAYER_MAX_HP = 100;

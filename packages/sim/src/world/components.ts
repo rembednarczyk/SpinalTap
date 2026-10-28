@@ -1,4 +1,5 @@
 import type {
+  ActivityId,
   ContractKind,
   CrimeKind,
   CrowdState,
@@ -15,6 +16,7 @@ import type {
   WeaponSlot,
   WeaponStats,
 } from "@seki/core";
+import type { ActivityPlan, Passerby } from "./activity-types";
 import type { Aabb } from "./collision";
 
 export interface CharacterBody {
@@ -249,6 +251,8 @@ export interface ScheduleStop {
    * the NPC's own (e.g. a closed stall), or null for none. Omitted: the NPC's own.
    */
   readonly interaction?: Interactable | null;
+  /** What the NPC does once it stands at the stop (ADR-0040); omitted: it just stands. */
+  readonly activity?: ActivityPlan;
 }
 
 /** A daily plan: stops sorted by `at`, repeated every day. The day wraps from the last stop to the first. */
@@ -448,4 +452,11 @@ export interface Entity {
   security?: true;
   /** The player hurt it while it was not fighting them: its death is a crime (ADR-0029). Transient. */
   wronged?: true;
+  /**
+   * What the character does where it stands (ADR-0040), set by the activity system from its
+   * plan, its spot or its role. Derived from the clock and the content every step: not saved.
+   */
+  activity?: ActivityId;
+  /** A background passer-by (ADR-0040): unkeyed, not saved, rebuilt from the seed and the clock. */
+  passerby?: Passerby;
 }
