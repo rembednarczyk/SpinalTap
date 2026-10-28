@@ -21,13 +21,13 @@ Rampa za magazynem w porcie. Leje. Na nadgarstku masz kajdanki, a do nich przypi
 REN: Jeszcze dwie przecznice i jesteśmy kwita. Nie zaglądaj do środka.
 REN: Płacą nam za to, żebyśmy nie wiedzieli, co wieziemy.
 Zamek walizki jest tani. Wystarczy paznokieć.
-* [Otwierasz walizkę.]
+* [Otwierasz walizkę. #tone:main]
     ~ choice_case = "opened"
     ~ story_choice("case", "opened")
     W środku, w gąbce, leżą rzędy chipów pamięci. Na każdym naklejka z imieniem i datą.
     Na jednym widzisz swoje imię. Zanim zdążysz je przeczytać, Ren zatrzaskuje wieko.
     REN: Mówiłem ci. Teraz będziesz o tym myśleć.
-* [Zostawiasz zamek w spokoju.]
+* [Zostawiasz zamek w spokoju. #tone:main]
     ~ choice_case = "sealed"
     ~ story_choice("case", "sealed")
     Niesiesz walizkę dalej. Jest lżejsza, niż powinna. Ren klepie cię w ramię.
@@ -42,13 +42,13 @@ Biała lampa. Inna niż u Mori, większa, z sześcioma soczewkami.
 Leżysz przypięta pasami do stołu i nie czujesz nóg. Ktoś w fartuchu z logo Kagami stuka w tablet.
 TECH: Zapis czterdziesty pierwszy. Kontrola tożsamości przed nadpisaniem.
 TECH: Jak się nazywasz?
-* [Mówisz swoje imię.]
+* [Mówisz swoje imię. #tone:main]
     ~ choice_name = "spoken"
     ~ story_choice("name", "spoken")
     SEKI: Aya. Nazywam się Aya.
     TECH: Wciąż pamięta. Odnotowuję: nadpisanie numer czterdzieści jeden nieudane.
     Imię zostaje ci w ustach. Aya. Brzmi znajomo, jak adres, pod którym kiedyś mieszkałaś.
-* [Milczysz.]
+* [Milczysz. #tone:main]
     ~ choice_name = "silent"
     ~ story_choice("name", "silent")
     Zaciskasz zęby. Technik czeka chwilę i wzrusza ramionami.
@@ -66,12 +66,12 @@ Noc, mokra obwodnica, sto sześćdziesiąt na liczniku. Prowadzisz cudzy samoch�
 Nad maską wisi dron i świeci ci reflektorem w oczy.
 REN: Słyszysz mnie? Jedź prosto do wiaduktu. Pod nim zgubi sygnał. Nie skręcaj.
 Głos w słuchawce brzmi jak Ren. Trochę za spokojnie.
-* [Szarpiesz kierownicę w bok.]
+* [Szarpiesz kierownicę w bok. #tone:main]
     ~ choice_crash = "wheel"
     ~ story_choice("crash", "wheel")
     Samochód wchodzi bokiem w barierę. Dron leciał za nisko i uderza w słup razem z tobą.
     Pamiętasz zgrzyt blachy i to, że sama o tym zdecydowałaś.
-* [Jedziesz prosto, tak jak mówi.]
+* [Jedziesz prosto, tak jak mówi. #tone:main]
     ~ choice_crash = "ren"
     ~ story_choice("crash", "ren")
     Wiadukt jest coraz bliżej. Dron schodzi niżej i strzela w opony.
@@ -105,10 +105,10 @@ MORI: Stąd.
 Mori obraca monitor. Na skanie twojej czaszki, tuż za uchem, świeci prostokąt wielkości paznokcia.
 MORI: Siedział tam, kiedy cię składałem. Moduł pamięci Kagami, numer seryjny zeszlifowany.
 MORI: Nie wiem, co na nim jest. Twoje życie albo czyjeś. Wiem tylko, że im dłużej z nim chodzisz, tym więcej z niego wypływa.
-* [Możesz go wyjąć?]
+* [Możesz go wyjąć? #tone:main]
     SEKI: Możesz go wyjąć?
     MORI: Mogę. Ale jest wpięty w korę ruchową. Wyjmę go, kiedy będziesz wiedziała, czego chcesz.
-* [Skąd mam wiedzieć, że to moje wspomnienia?]
+* [Skąd mam wiedzieć, że to moje wspomnienia? #tone:main]
     SEKI: Skąd mam wiedzieć, że to moje wspomnienia?
     MORI: Nie masz skąd. Ja też nie. Moduł nie zostawia podpisu.
 - MORI: Połóż się. Podłączę diagnostykę i zobaczymy, co z niego wyciągniemy.
@@ -173,22 +173,22 @@ MORI: Aya. Jak głowa? Moduł dalej coś puszcza, czy już się uspokoił?
     -> sold
 }
 MORI: Aya. Jak głowa? Moduł dalej coś puszcza, czy już się uspokoił?
-* [Ktoś mówi do mnie przez moduł.]
+* [Ktoś mówi do mnie przez moduł. #tone:main]
     SEKI: Ktoś mówi do mnie przez moduł.
     MORI: Bywa tak, kiedy nadajnik jest blisko i zna częstotliwość Kagami. Ktoś cię szuka i wie, czego szukać.
     MORI: Kto to, nie wiem. Ale babcia Ume wie o tej ulicy więcej niż ja.
-* [Nic. Głowa w porządku.]
+* [Nic. Głowa w porządku. #tone:optional]
     SEKI: Nic. Głowa w porządku.
     MORI: Kłamiesz tak samo jak przed operacją. Jak zacznie boleć, wróć.
 - -> END
 
 = sold
 MORI: Fiolki już nie ma. Domyślam się, że Kaito ci powiedział.
-* [Komu sprzedałeś mój moduł?]
+* [Komu sprzedałeś mój moduł? #tone:main]
     SEKI: Komu sprzedałeś mój moduł?
     MORI: Sama kazałaś go sprzedać. Przyszedł chłopak, Ren Odagiri. Zapłacił więcej, niż moduł był wart.
     MORI: Pytał, czy da się go odtworzyć bez nosicielki. Powiedziałem, że tak, ze złączem i odrobiną cierpliwości.
-* [Mogłeś mi powiedzieć.]
+* [Mogłeś mi powiedzieć. #tone:optional]
     SEKI: Mogłeś mi powiedzieć.
     MORI: Mogłem. Ale moduł był już tylko towarem, a ty nie chciałaś go znać.
     MORI: Kupił go Ren Odagiri. Płacił gotówką, której nikt na tej ulicy nie ma.

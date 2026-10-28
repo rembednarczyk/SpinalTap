@@ -10,18 +10,18 @@ NOBU: Postawiłem rękę. Prawą, z odzysku. Automat ją wygrał i trzyma w poda
 -> ask
 
 = ask
-* [Jak można przegrać własną rękę?]
+* [Jak można przegrać własną rękę? #tone:optional]
     SEKI: Jak można przegrać własną rękę?
     NOBU: Szło mi. Przez całą godzinę mi szło. Potem przestało, a ręka już była na stole.
     -> ask
-* [Spróbuję ją wyciągnąć z automatu.]
+* [Spróbuję ją wyciągnąć z automatu. #tone:hack]
     SEKI: Spróbuję ją wyciągnąć z automatu.
     Wsuwasz palec w gniazdo serwisowe. Automat piszczy, gra fanfarę i wypluwa dłoń, a za nią garść żetonów.
     ~ set_flag("enc_s7_pachinko_hand")
     ~ change_rep("civilians", 2)
     NOBU: Rusza się! Kciuk się rusza! Żetony są twoje, w Neon Koi biorą je zamiast drobnych.
     -> END
-* [Zostaw ją tam. Może to znak, żeby przestać.]
+* [Zostaw ją tam. Może to znak, żeby przestać. #tone:main]
     SEKI: Zostaw ją tam. Może to znak, żeby przestać.
     ~ set_flag("enc_s7_pachinko_left")
     NOBU: Znak to był w zeszłym tygodniu, jak przegrałem nogę. Odegrałem ją. Lewą ręką.
@@ -33,7 +33,7 @@ Na chodniku śpi facet w garniturze. Teczka pod głową, krawat zawiązany jak d
 -> look
 
 = look
-* [Hej. Wstawaj, zanim ktoś cię oskubie.]
+* [Hej. Wstawaj, zanim ktoś cię oskubie. #tone:main]
     SEKI: Hej. Wstawaj, zanim ktoś cię oskubie.
     SARARIMAN: Pani prezes? Raport będzie na dziewiątą, przysięgam.
     SARARIMAN: Och. Pani nie jest prezesem. To dobrze. Prezes by mnie od razu zwolnił.
@@ -41,13 +41,13 @@ Na chodniku śpi facet w garniturze. Teczka pod głową, krawat zawiązany jak d
     ~ change_rep("civilians", 2)
     SARARIMAN: Dziękuję. Mam tylko kartę na ramen, ale niech pani weźmie. Lepiej, żeby ktoś z niej skorzystał.
     -> END
-* [Sięgasz po jego portfel.]
+* [Sięgasz po jego portfel. #tone:aggressive]
     Portfel jest cienki. W środku karta na ramen u Fumiko i zdjęcie dziecka w mundurku.
     ~ set_flag("enc_s7_salaryman_robbed")
     ~ change_rep("civilians", -3)
     SARARIMAN: Mmm. Mamo, jeszcze pięć minut.
     -> END
-* [Zostawiasz go. Każdy ma prawo do snu.]
+* [Zostawiasz go. Każdy ma prawo do snu. #tone:leave]
     Odchodzisz. Za plecami słyszysz, jak dzwoni po raz trzynasty.
     -> END
 
@@ -58,28 +58,28 @@ HINA: Widziała pani kota? Srebrny, na baterię. Mruczy jak lodówka.
 -> ask
 
 = ask
-* [Jak się nazywa?]
+* [Jak się nazywa? #tone:optional]
     SEKI: Jak się nazywa?
     HINA: Pan Kot. Tata mówi, że to głupie imię, ale tata nazwał mnie Hina, więc nie ma prawa głosu.
     -> ask
-* [Sprawdzę w myjni. Tam jest ciepło.]
+* [Sprawdzę w myjni. Tam jest ciepło. #tone:main]
     SEKI: Sprawdzę w myjni. Tam jest ciepło.
     Pod szczotkami myjni leży srebrny kot i mruczy do suszarki. Na twój widok przestaje i patrzy, jakby czekał na wyjaśnienia.
     HINA: Jest tam? Niech pani powie, że jest!
     -> found
-* [Kot na baterię wróci, jak mu się skończy prąd.]
+* [Kot na baterię wróci, jak mu się skończy prąd. #tone:leave]
     SEKI: Kot na baterię wróci, jak mu się skończy prąd.
     HINA: Jak mu się skończy prąd, to nigdzie nie wróci. Dorośli są czasem bardzo głupi.
     -> END
 
 = found
-* [Oddajesz kota Hinie.]
+* [Oddajesz kota Hinie. #tone:main]
     HINA: Pan Kot! Gdzie byłeś? Nie odpowiadaj, wiem, w myjni.
     ~ set_flag("enc_s7_neko_returned")
     ~ change_rep("civilians", 3)
     HINA: Proszę. Znalazłam to wczoraj pod wrakiem. Błyszczy, więc chyba jest cenne.
     -> END
-* [Wyciągasz z kota baterię na części.]
+* [Wyciągasz z kota baterię na części. #tone:aggressive]
     Bateria wychodzi z cichym kliknięciem. Kot zastyga w pół mruknięcia.
     ~ set_flag("enc_s7_neko_battery")
     ~ change_rep("civilians", -4)
@@ -94,11 +94,11 @@ SHIRO: Sprzedałem ją Kagami. Wspomnienia o żonie, cały pakiet, z dopłatą z
 -> ask
 
 = ask
-* [Ile ci za nią zapłacili?]
+* [Ile ci za nią zapłacili? #tone:optional]
     SEKI: Ile ci za nią zapłacili?
     SHIRO: Tyle, że starczyło na jej leczenie. Nie starczyło, żeby wyzdrowiała. Tego też nie pamiętam, ale mam rachunki.
     -> ask
-* [Przeczytaj jeszcze raz. Słucham.]
+* [Przeczytaj jeszcze raz. Słucham. #tone:main]
     SEKI: Przeczytaj jeszcze raz. Słucham.
     SHIRO: „Miała parasol.” Tylko tyle mi zostało. Dziękuję, że ktoś to usłyszał dwa razy.
     ~ set_flag("enc_s7_poet_listened")
@@ -107,7 +107,7 @@ SHIRO: Sprzedałem ją Kagami. Wspomnienia o żonie, cały pakiet, z dopłatą z
         Coś w tobie drga. Stół, światło, ktoś liczy od dziesięciu w dół. Odpychasz to.
     }
     -> END
-* [Kagami wciąż kupuje?]
+* [Kagami wciąż kupuje? #tone:main]
     SEKI: Kagami wciąż kupuje?
     SHIRO: Zawsze. Punkt skupu jest za kliniką, bez szyldu. Kolejka ustawia się przed świtem.
     ~ set_flag("enc_s7_poet_kagami")

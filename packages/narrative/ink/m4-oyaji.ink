@@ -19,16 +19,16 @@
 -> talk
 
 = talk
-+ [Co skupujesz?]
++ [Co skupujesz? #tone:optional]
     SEKI: Co skupujesz?
     OYAJI: Wszystko, co da się rozkręcić. Złom i chipy po pełnej cenie, resztę za ćwiartkę.
     OYAJI: Części broni nie sprzedawaj. Przynieś je z podartą kurtką, to zejdę z ceny naprawy.
     -> talk
-+ [Masz większy plecak?]
++ [Masz większy plecak? #tone:optional]
     SEKI: Masz większy plecak?
     OYAJI: Mam dwa. Jeden za sześćset, drugi za tysiąc dwieście. Potem już tylko walizki.
     -> talk
-+ { not has_flag("oyaji_hebi") } [Hebi ci nie dokuczają?]
++ { not has_flag("oyaji_hebi") } [Hebi ci nie dokuczają? #tone:optional]
     SEKI: Hebi ci nie dokuczają?
     ~ set_flag("oyaji_hebi")
     { civilians_stance == "friendly":
@@ -37,6 +37,6 @@
         OYAJI: Co miesiąc chcą swoje. Jak nie zapłacę, przychodzą za dnia, przy ludziach.
     }
     -> talk
-+ [Na razie wystarczy.]
++ [Na razie wystarczy. #tone:leave]
     OYAJI: Stragan stoi do dziesiątej. Potem roleta w dół.
     -> END

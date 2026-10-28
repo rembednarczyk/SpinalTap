@@ -8,17 +8,17 @@ TOMO: Ale bramka dalej mnie wpuszcza. Nikt jej nie powiedział. Więc przychodz�
 -> ask
 
 = ask
-* [Czemu nie pójdziesz do domu?]
+* [Czemu nie pójdziesz do domu? #tone:optional]
     SEKI: Czemu nie pójdziesz do domu?
     TOMO: A co tam będę robił? Żona myśli, że jestem w pracy. Jestem w pracy. Wszystko się zgadza.
     -> ask
-* [Skoro bramka cię wpuszcza, wpuści i mnie?]
+* [Skoro bramka cię wpuszcza, wpuści i mnie? #tone:persuade]
     SEKI: Skoro bramka cię wpuszcza, wpuści i mnie?
     TOMO: Ha. Moja karta otwiera bramę przy dźwigu do końca miesiąca. Bierz kopię. Niech Tessen zapłaci za ten błąd.
     ~ set_flag("enc_doki_laidoff_badge")
     ~ change_rep("tessen", -1)
     -> END
-* [Napisz do nich skargę. Głośno.]
+* [Napisz do nich skargę. Głośno. #tone:main]
     SEKI: Napisz do nich skargę. Głośno.
     TOMO: Skargi czyta ten sam algorytm. Odpisze mi, że skarga też przestaje być optymalna. Ale dzięki.
     ~ set_flag("enc_doki_laidoff_complaint")
@@ -32,18 +32,18 @@ STRAZNIK: To dron ptasi z dawnego programu odstraszania. Program zamknęli, ptak
 -> ask
 
 = ask
-* [Strącasz mewę jednym strzałem.]
+* [Strącasz mewę jednym strzałem. #tone:aggressive]
     Mewa spada do wody z pluskiem i krótkim komunikatem o błędzie.
     ~ set_flag("enc_doki_gull_shot")
     ~ change_rep("tessen", 2)
     STRAZNIK: No proszę. Nie widziałem cię tu, ale jak mnie ktoś zapyta, to jesteś w porządku.
     -> END
-* [Rzucasz mewie resztkę jego kanapki.]
+* [Rzucasz mewie resztkę jego kanapki. #tone:main]
     Mewa łapie kęs w locie, zatacza koło nad dźwigiem i siada ci na ramieniu. Waży więcej, niż wygląda.
     ~ set_flag("enc_doki_gull_friend")
     STRAZNIK: Ty ją karmisz?! Teraz będzie przychodzić po dwie!
     -> END
-* [Ten ptak ma lepszy kontrakt niż ty?]
+* [Ten ptak ma lepszy kontrakt niż ty? #tone:optional]
     SEKI: Ten ptak ma lepszy kontrakt niż ty?
     STRAZNIK: Ma lepszy. Nikt go nie kontroluje, nie płaci składek i je za darmo. Czasem mu zazdroszczę.
     -> ask
@@ -55,23 +55,23 @@ GLOS: Halo? Ktoś tam jest? Nie mamy już wody. Jest nas sześcioro.
 -> ask
 
 = ask
-* [Kto was tu zamknął?]
+* [Kto was tu zamknął? #tone:optional]
     SEKI: Kto was tu zamknął?
     GLOS: Pośrednik z Tessen. Obiecał pracę w zakładzie. Zakład okazał się kontenerem, a praca czekaniem.
     -> ask
-* [Zrywasz plombę i otwierasz drzwi.]
+* [Zrywasz plombę i otwierasz drzwi. #tone:main]
     Drzwi skrzypią. W środku sześć osób w kombinezonach, mrużą oczy przed światłem lamp portowych.
     ~ set_flag("enc_doki_container_opened")
     ~ change_rep("tessen", -3)
     ~ change_rep("civilians", 3)
     GLOS: Dziękujemy. Nie wiemy, gdzie iść, ale wiemy, że stąd.
     -> END
-* [Dam znać Genzō. On ma łodzie.]
+* [Dam znać Genzō. On ma łodzie. #tone:main]
     SEKI: Dam znać Genzō. On ma łodzie.
     GLOS: Ktokolwiek to jest, niech się pospieszy. I niech przyniesie wodę.
     ~ set_flag("enc_doki_container_genzo")
     ~ change_rep("fixers", 1)
     -> END
-* [Odchodzisz od kontenera.]
+* [Odchodzisz od kontenera. #tone:leave]
     Pukanie słychać jeszcze przez dwie alejki. Potem przestajesz je słyszeć, choć nie wiesz, czy ono przestało.
     -> END

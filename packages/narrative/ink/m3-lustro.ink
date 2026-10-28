@@ -64,23 +64,23 @@ Pod plandeką rozpiętą między antenami siedzi chudy chłopak. Na karku ma wyt
     Ren obraca w palcach szklaną fiolkę. W środku leży twój moduł.
 }
 - (talk)
-* { choice_crash == "ren" } [Tamtej nocy słyszałam w słuchawce twój głos.]
+* { choice_crash == "ren" } [Tamtej nocy słyszałam w słuchawce twój głos. #tone:lifepath]
     SEKI: Tamtej nocy słyszałam w słuchawce twój głos. Kazałeś mi jechać prosto.
     REN: Wiem, co słyszałaś. Ja wtedy leżałem w furgonetce Kagami z workiem na głowie. Nikt mi nie dał mikrofonu.
     -> talk
-* { choice_crash == "wheel" } [Pamiętam wypadek. Sama skręciłam.]
+* { choice_crash == "wheel" } [Pamiętam wypadek. Sama skręciłam. #tone:lifepath]
     SEKI: Pamiętam wypadek. Sama skręciłam.
     REN: I dlatego żyjesz. Dron miał cię doprowadzić pod wiadukt, tam czekała ich ekipa.
     -> talk
-* { choice_case == "opened" } [Widziałam chip ze swoim imieniem.]
+* { choice_case == "opened" } [Widziałam chip ze swoim imieniem. #tone:lifepath]
     SEKI: Widziałam chip ze swoim imieniem. W tamtej walizce.
     REN: Wyjąłem go, zanim zabrali nam walizkę. Noszę go przy sobie od dwóch lat.
     -> talk
-* { choice_case == "sealed" } [Nigdy nie zajrzałam do tej walizki.]
+* { choice_case == "sealed" } [Nigdy nie zajrzałam do tej walizki. #tone:lifepath]
     SEKI: Nigdy nie zajrzałam do tej walizki.
     REN: Ja zajrzałem. Pięćdziesiąt chipów, na każdym czyjeś imię. Na jednym twoje.
     -> talk
-* [Czego ode mnie chcesz?]
+* [Czego ode mnie chcesz? #tone:main]
     SEKI: Czego ode mnie chcesz?
     REN: Chcę ci coś oddać. I poprosić o pomoc, bo sam już nie dam rady.
     -> offer
@@ -94,10 +94,10 @@ Ren wyjmuje z kieszeni chip w folii. Na naklejce jest imię Aya i data sprzed dw
     REN: Moduł mam tutaj, a w fiolce jest złącze. Podepnę cię kablem na kilka minut. Mori mówił, że to bezpieczne.
 }
 REN: Reszta archiwum leży u mnie. Kagami chce je z powrotem i wystawiło na mnie zlecenie. Kaito je ma.
-* [Daj mi ten chip.]
+* [Daj mi ten chip. #tone:main]
     SEKI: Daj mi ten chip. Chcę wiedzieć, kim byłam.
     REN: Usiądź. Za pierwszym razem zawsze kręci się w głowie.
-* [Skąd mam wiedzieć, że ten zapis jest prawdziwy?]
+* [Skąd mam wiedzieć, że ten zapis jest prawdziwy? #tone:main]
     SEKI: Skąd mam wiedzieć, że ten zapis jest prawdziwy?
     REN: Nie masz skąd. Ale to jedyny zapis, którego Kagami nie zdążyło poprawić.
 - Chip jest ciepły od jego kieszeni. Za uchem coś przeskakuje.
@@ -184,27 +184,27 @@ KUROSAWA: Propozycja jest prosta. Odagiri i archiwum dla nas. Dla pani pełny za
     Znasz ten ton. Tak samo znudzony był technik w słuchawce, kiedy wyłączał filtr Odagiri.
 }
 - (ask)
-* [Ile z tego zapisu jest prawdziwe?]
+* [Ile z tego zapisu jest prawdziwe? #tone:optional]
     SEKI: Ile z tego zapisu jest prawdziwe?
     KUROSAWA: Tyle, ile pani zechce. Prawdziwe jest to, co się pamięta.
     -> ask
-* { choice_voice == "listened" } [Kto mówił do mnie głosem Rena?]
+* { choice_voice == "listened" } [Kto mówił do mnie głosem Rena? #tone:lifepath]
     SEKI: Kto mówił do mnie głosem Rena tamtej nocy?
     KUROSAWA: Nasz technik. Odagiri sprzedał nam próbkę głosu rok wcześniej. Mamy na to pokwitowanie.
     -> ask
-* [Archiwum wraca do ludzi, których nagraliście.]
+* [Archiwum wraca do ludzi, których nagraliście. #tone:main]
     ~ choice_archive = "street"
     ~ story_choice("archive", "street")
     SEKI: Archiwum wraca do ludzi, których nagraliście. Każdy chip do swojego właściciela.
     KUROSAWA: Szkoda. Dział odzysku nie negocjuje dwa razy.
     -> ambush
-* [Archiwum zostaje u Rena.]
+* [Archiwum zostaje u Rena. #tone:main]
     ~ choice_archive = "hebi"
     ~ story_choice("archive", "hebi")
     SEKI: Archiwum zostaje u Rena. Hebi zapłacą za nie uczciwiej niż wy.
     KUROSAWA: Uczciwiej. Ciekawe słowo w ustach kogoś, kto nie wie, czyje ma wspomnienia.
     -> ambush
-* [Bierzcie Rena i archiwum. Chcę swój zapis.]
+* [Bierzcie Rena i archiwum. Chcę swój zapis. #tone:main]
     ~ choice_archive = "kagami"
     ~ story_choice("archive", "kagami")
     SEKI: Bierzcie Rena i archiwum. Chcę swój zapis.
@@ -238,12 +238,12 @@ Ten sam dach, dwa lata wcześniej. Pada, a pod wami szumi targ.
 Ren liczy na palcach pieniądze, których jeszcze nie macie.
 REN: Kagami płaci za jeden kurs tyle, co Hebi za rok. Walizka z portu do ich laboratorium i jesteśmy wolni.
 REN: Jedziemy razem. Ty prowadzisz, ja siedzę na kanale.
-* [Podajesz mu rękę.]
+* [Podajesz mu rękę. #tone:main]
     ~ choice_rooftop = "together"
     ~ story_choice("rooftop", "together")
     Ściskasz jego dłoń. Jest mokra i ciepła. Śmiejecie się jak dzieciaki, które coś ukradły ze straganu.
     REN: Ostatni kurs. Potem morze, obiecuję.
-* [Mówisz, że pojedziesz sama.]
+* [Mówisz, że pojedziesz sama. #tone:main]
     ~ choice_rooftop = "alone"
     ~ story_choice("rooftop", "alone")
     Mówisz mu, że jeden kurier rzuca się w oczy mniej niż dwóch. To tylko połowa prawdy.
@@ -260,12 +260,12 @@ Wrak na Siódmej. Wisisz w pasach głową w dół. W uchu dalej masz słuchawkę
 REN: Zapis zakończony. Obiekt nie reaguje.
 Głos Rena urywa się, a w słuchawce zostaje ktoś inny, starszy i znudzony.
 TECH: Wyłączam filtr Odagiri. Próbka głosu dobrowolna, opłacona z góry. Zbierzcie ją przed świtem.
-* [Słuchasz dalej, chociaż boli.]
+* [Słuchasz dalej, chociaż boli. #tone:main]
     ~ choice_voice = "listened"
     ~ story_choice("voice", "listened")
     Zapamiętujesz każde słowo. Filtr Odagiri. Próbka dobrowolna. Ren sprzedał im swój głos, zanim wsiadłaś do tego auta.
     Może nie wiedział, do czego go użyją. A może wiedział.
-* [Wyrywasz słuchawkę z ucha.]
+* [Wyrywasz słuchawkę z ucha. #tone:main]
     ~ choice_voice = "torn"
     ~ story_choice("voice", "torn")
     Słuchawka ląduje w kałuży oleju. Wolisz ciszę niż kolejny głos, któremu nie da się ufać.

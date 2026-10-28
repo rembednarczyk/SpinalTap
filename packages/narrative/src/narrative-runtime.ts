@@ -25,7 +25,7 @@ import {
   stanceOf,
 } from "@seki/core";
 import { describeVariation, variationOf } from "./contract-variation";
-import type { DialogueLine, DialogueView } from "./dialogue-view";
+import { type DialogueLine, type DialogueView, toneOf } from "./dialogue-view";
 
 const SPEAKERS: Readonly<Record<string, string>> = {
   KAITO: "Kaito",
@@ -215,7 +215,7 @@ export class NarrativeRuntime {
       const text = (this.story.Continue() ?? "").trim();
       if (text) lines.push(this.parseLine(text));
     }
-    const choices = this.story.currentChoices.map((c) => ({ index: c.index, text: c.text }));
+    const choices = this.story.currentChoices.map((c) => ({ index: c.index, text: c.text.trim(), tone: toneOf(c.tags) }));
     return { dialogueId: this.dialogueId, lines, choices, ended: choices.length === 0 };
   }
 
