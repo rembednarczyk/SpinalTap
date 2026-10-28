@@ -11,6 +11,7 @@ import { TrailMeshes } from "../effects/trail-meshes";
 import { TrailState } from "../effects/trails";
 import { DISTRICT_PALETTES, PaletteBlend, districtAt, rigWithPalette } from "../npr/district-palette";
 import { Grading } from "../npr/grading";
+import { qualityTier } from "../npr/quality";
 import { rigForDaylight } from "../npr/lighting";
 import type { SpeedLines } from "../npr/speed-lines";
 import type { ToonMaterials } from "../npr/toon-material";
@@ -101,7 +102,7 @@ export class ScreenFx {
   constructor(private readonly deps: ScreenFxDeps) {
     const { stage, camera } = deps;
     const { scene } = stage;
-    const high = (stage.options.quality ?? "high") === "high";
+    const tier = qualityTier(stage.options.quality);
     this.grading = new Grading(scene, camera.camera, { reference: stage.options.reference }, this.limiter);
     // After the grading pipeline, so the scanner drains the graded colour.
     this.fxPost = new GameplayPost(scene, camera.camera);
@@ -110,7 +111,7 @@ export class ScreenFx {
     this.lasers = new Lasers(scene, stage.glow);
     this.trailMeshes = new TrailMeshes(scene, stage.glow);
     this.rain = stage.options.reference ? null : createRain(scene);
-    this.splashes = stage.options.reference || !high ? null : createSplashes(scene);
+    this.splashes = stage.options.reference || !tier.splashes ? null : createSplashes(scene);
     if (!stage.options.reference) {
       // Manhole in the street and the vent behind the car wash.
       createSteam(scene, new Vector3(1.8, 0.05, 5.5), new Color4(0.6, 0.74, 0.85, 0.3), 22);
@@ -305,6 +306,15 @@ export class ScreenFx {
       for (const m of meshes) keep.add(m);
     });
     this.scanHighlight.release(keep);
+  }
+
+  /** Under a roof (the metro car, ADR-0036): no rain or splashes in front of the camera. */
+  setIndoor(on: boolean): void {
+    for (const p of [this.rain, this.splashes]) {
+      if (!p) continue;
+      if (on) p.system.stop();
+      else p.system.start();
+    }
   }
 
   /** Starts a frame: the flash budget moves on before anything asks it. */
