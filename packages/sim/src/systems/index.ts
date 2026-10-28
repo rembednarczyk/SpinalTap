@@ -21,6 +21,10 @@ import { scheduleSystem } from "./schedule-system";
 import { scannerSystem } from "./scanner-system";
 import { createCrimeSystem } from "./crime-system";
 import { contractLayerSystem } from "./contract-layer-system";
+import { metroSystem } from "../world/metro-ride";
+import { hookSystem } from "../world/hook-tracker";
+import { contractPlanSystem } from "./contract-plan-system";
+import { streetSceneSystem } from "./street-scene-system";
 
 export { aimSpreadOf, fireShot, GUNFIRE_INTERRUPT_RADIUS, NPC_CRIT } from "./combat-system";
 export { meleeSystem, stagger, startSwing } from "./melee-system";
@@ -69,9 +73,14 @@ export { CLIMB_SPEED, grabLadder } from "./ladder-system";
  * ADR-0029: the scanner runs before the AI (a hack's effect counts in the same step), the crime
  * system after the deaths (a kill and its witnesses share a step), the contract layer after the
  * contract system (it sees the job's state of this step).
+ *
+ * ADR-0034: the metro before streaming (a rider's destination streams in), the contract plan and
+ * the hooks after the contract system (a shard's bag exists once its carrier is down), the street
+ * scenes after the contract layer.
  */
 export const createSystems = (): readonly System[] => [
   clockSystem,
+  metroSystem,
   streamingSystem,
   interpolationSystem,
   abilitySystem,
@@ -94,6 +103,9 @@ export const createSystems = (): readonly System[] => [
   createCrimeSystem(),
   lootSystem,
   contractSystem,
+  contractPlanSystem,
+  hookSystem,
   contractLayerSystem,
+  streetSceneSystem,
   questSystem,
 ];

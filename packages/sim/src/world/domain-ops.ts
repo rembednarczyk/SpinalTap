@@ -35,6 +35,13 @@ export const raiseFlag = (ctx: SimContext, flag: string): void => {
   ctx.state.flagsDirty = true;
 };
 
+/** Takes a flag down again (the variation's presence flags, ADR-0034). */
+export const lowerFlag = (ctx: SimContext, flag: string): void => {
+  if (!hasFlag(ctx.state.domain.flags, flag)) return;
+  ctx.state.domain = { ...ctx.state.domain, flags: ctx.state.domain.flags.filter((f) => f !== flag) };
+  ctx.state.flagsDirty = true;
+};
+
 /** Raises the step-scoped flag of `event` for the current step of every active quest. */
 export const raiseProgress = (ctx: SimContext, event: ProgressEvent): void => {
   for (const quest of QUEST_DEFINITIONS) {

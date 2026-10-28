@@ -6,6 +6,8 @@ import { clearContract, raiseFlag } from "../world/domain-ops";
 import { raiseAlarm } from "./contract-system";
 import { callElevator } from "./elevator-system";
 import { grabLadder } from "./ladder-system";
+import { readHookTerminal } from "../world/hook-tracker";
+import { helpPasserBy } from "../world/micro-events";
 
 /**
  * Picking up the crate of the running retrieval job, or the data of an infiltration (ADR-0024):
@@ -90,6 +92,15 @@ export const interactionSystem: System = {
         startHack(ctx, best);
         return;
       }
+      // Wave 2 (ADR-0034): a hook's mail, a passer-by in need.
+      if (interactable.kind === "read") {
+        readHookTerminal(ctx, best);
+        return;
+      }
+      if (interactable.kind === "help") {
+        helpPasserBy(ctx, best);
+        return;
+      }
       if (interactable.kind === "shop" && faction && !shopTerms(ctx.state.domain.reputation[faction]).open) {
         ctx.bus.emit("InteractionRefused", { targetId: best.id, dialogueId: interactable.dialogueId, faction });
         return;
@@ -103,6 +114,8 @@ export const interactionSystem: System = {
         dialogueId: interactable.dialogueId,
         kind: interactable.kind,
         ...(interactable.kind === "shop" ? { shopId: interactable.shopId ?? "clinic" } : {}),
+        // A ticket kiosk (ADR-0034): the app opens the line map and answers with travel-metro.
+        ...(interactable.station ? { station: interactable.station } : {}),
       });
     }
   },

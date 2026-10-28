@@ -89,3 +89,13 @@ Tak jak w ADR-0028, kontrakty ustalam z góry, żeby warstwy powstawały równol
 ## Konsekwencje
 - Nowa komenda, zdarzenia i pole wejścia nie zmieniają złotych hashy. Implementacja zmieni je świadomie.
 - Pojazdy sterowane przez gracza zostają poza zakresem (raport: odradzane).
+
+## Zmiany kontraktu
+Wszystkie są dopisaniem pól opcjonalnych albo nowych zdarzeń, bez zmiany istniejących.
+- **Sim B (ADR-0034):**
+  - `InteractionStarted.kind` dostaje wartość `"metro"` i opcjonalne pole `station: MetroStationId` (kiosk biletowy otwiera mapę linii);
+  - `MetroRefused { reason: MetroRefusal; to }`, gdzie `MetroRefusal` to `riding`, `not-at-kiosk`, `same-station`, `watched` (zlecenie z heat > 0) albo `funds`;
+  - `GuardBark { entityId; knot }`: podsłuchana kwestia strażnika (hak `bark`);
+  - `ContractDebrief.variation?: ContractVariation`;
+  - `Contract.variation?: ContractVariation` i `ContractLog.hooks?: readonly string[]` (znalezione haki);
+  - `DomainState.metro` (przejazd w toku) i `DomainState.encounters` (rozegrane spotkania), zapis v12.

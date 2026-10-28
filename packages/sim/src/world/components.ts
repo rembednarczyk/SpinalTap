@@ -6,6 +6,7 @@ import type {
   EntityId,
   FactionId,
   Health,
+  MetroStationId,
   ShopId,
   Slope,
   Vec3,
@@ -122,7 +123,7 @@ export interface GangerAi {
   /** How sure the guard is that it saw someone, 0..1; at 1 it is alerted. Transient, not saved. */
   suspicion?: number;
   /** A guard on a post looks around: its facing sweeps around `yaw` (ADR-0024). */
-  readonly watch?: { readonly yaw: number; readonly phase: number };
+  readonly watch?: { readonly yaw: number; readonly phase: number; readonly period?: number };
   /**
    * Where it last saw the player, or a lead it was given (a noise, a camera, a trace) (ADR-0029).
    * An alerted AI chases it once the player is out of sight; an unalerted one walks there to
@@ -278,9 +279,12 @@ export interface Interactable {
   /**
    * "pickup": taken on the spot (a contract crate); no conversation opens. "loot": a bag;
    * `dialogueId` is then the container key. "terminal": a hack job's terminal, the key starts
-   * the hack.
+   * the hack. Wave 2 (ADR-0034): "metro" is a ticket kiosk of `station`, "read" a mail on a
+   * terminal (an observation hook, `dialogueId` its knot), "help" a passer-by in need (a
+   * micro-event).
    */
-  readonly kind: "dialogue" | "shop" | "pickup" | "loot" | "elevator" | "ladder" | "terminal";
+  readonly kind: "dialogue" | "shop" | "pickup" | "loot" | "elevator" | "ladder" | "terminal" | "metro" | "read" | "help";
+  readonly station?: MetroStationId;
   /** For a shop: which one (the clinic when absent). `dialogueId` is then the shopkeeper's ink knot. */
   readonly shopId?: ShopId;
   /** For an elevator call button: which elevator and the level the button stands on. */
