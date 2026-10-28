@@ -86,6 +86,12 @@ Tak jak w ADR-0028, kontrakty ustalam z góry, żeby warstwy powstawały równol
   - progi mokrego asfaltu;
   - przypisanie zrywu na padzie i dotyku.
 
+## Zmiany kontraktu
+Same dopiski. Zmiany sim A, opisane w [ADR-0033](0033-fala-2-cialo-zryw-pojemnosc-buffy-przebrania.md):
+- `ProjectileReflected` dostaje `to: Vec3` (dokąd poleciał odbity pocisk) i `hitEntity: EntityId | null` (kogo trafił). Engine rysuje z tego smugę.
+- `ViewDescriptor` wroga (`kind: "enemy"`) dostaje opcjonalne `enforcer?: boolean`. Egzekutor widzi przez przebranie, a HUD pokazuje nad nim ikonę.
+- `PurchaseFailure` dostaje `"over-capacity"`: implant przekracza pojemność cyberware.
+
 ## Konsekwencje
 - Nowa komenda, zdarzenia i pole wejścia nie zmieniają złotych hashy. Implementacja zmieni je świadomie.
 - Pojazdy sterowane przez gracza zostają poza zakresem (raport: odradzane).
