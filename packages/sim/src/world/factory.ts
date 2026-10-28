@@ -6,6 +6,7 @@ import { type DeviceDef, deviceView } from "../content/devices";
 import { SCHEDULES } from "../content/schedules";
 import { aabbFromCenter } from "./collision";
 import type { Combatant, Entity, MeleeState } from "./components";
+import { isEnforcer } from "./disguise";
 
 const BODY = { radius: 0.38, height: 1.8 } as const;
 
@@ -117,10 +118,12 @@ export const gangerEntity = (
   type: EnemyTypeId = "hebi_ganger",
 ): Entity => {
   const def = ENEMY_TYPES[type];
+  // Enforcers see through disguises (ADR-0033); the HUD marks them through the view.
+  const enforcer = isEnforcer(spawn.key, id, def.faction);
   const e: Entity = {
     ...actor(id, spawn),
     chunk,
-    view: { kind: "enemy", preset: def.faction === "tessen" ? "corpo" : "ganger" },
+    view: { kind: "enemy", preset: def.faction === "tessen" ? "corpo" : "ganger", ...(enforcer ? { enforcer: true } : {}) },
     faction: def.faction,
     enemy: { type },
     velocity: { x: 0, y: 0, z: 0 },
@@ -135,6 +138,7 @@ export const gangerEntity = (
         : { home: spawn.position, aggroRange: 17, attackRange: meleeAttackRange(def.weapon) ?? 15, alerted: false, ...(victim ? { victim } : {}) },
   };
   if (tag) e.tag = tag;
+  if (enforcer && e.ai) e.ai = { ...e.ai, enforcer: true };
   return e;
 };
 

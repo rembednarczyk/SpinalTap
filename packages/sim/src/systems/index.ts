@@ -21,6 +21,8 @@ import { scheduleSystem } from "./schedule-system";
 import { scannerSystem } from "./scanner-system";
 import { createCrimeSystem } from "./crime-system";
 import { contractLayerSystem } from "./contract-layer-system";
+import { perkSystem } from "./perk-system";
+import { createBodySystem } from "./body-system";
 
 export { aimSpreadOf, fireShot, GUNFIRE_INTERRUPT_RADIUS, NPC_CRIT } from "./combat-system";
 export { meleeSystem, stagger, startSwing } from "./melee-system";
@@ -61,6 +63,20 @@ export {
 } from "./player-control-system";
 export { FALL_DAMAGE_PER_METRE, FALL_SAFE_HEIGHT, GRAVITY, HARD_LANDING_HEIGHT, MANTLE_REACH, MANTLE_TIME, fallDamage } from "./movement-system";
 export { CLIMB_SPEED, grabLadder } from "./ladder-system";
+export {
+  DASH_COOLDOWN,
+  DASH_EXIT_SPEED,
+  DASH_IFRAMES,
+  DASH_SPEED,
+  DASH_TIME,
+  STAMINA_GUARD_REGEN,
+  STAMINA_REGEN,
+  dashing,
+  freshPerks,
+  perkSystem,
+  perksOf,
+} from "./perk-system";
+export { createBodySystem, cyberCapacityOf } from "./body-system";
 
 /**
  * Explicit, fixed system order (determinism: never derived from map iteration).
@@ -69,14 +85,19 @@ export { CLIMB_SPEED, grabLadder } from "./ladder-system";
  * ADR-0029: the scanner runs before the AI (a hack's effect counts in the same step), the crime
  * system after the deaths (a kill and its witnesses share a step), the contract layer after the
  * contract system (it sees the job's state of this step).
+ *
+ * ADR-0033: the body (buffs, disguise, capacity) after the ability, the perks (dash, stamina)
+ * right after the player's control, so a dash overrides the velocity the stick asked for.
  */
 export const createSystems = (): readonly System[] => [
   clockSystem,
   streamingSystem,
   interpolationSystem,
   abilitySystem,
+  createBodySystem(),
   itemSystem,
   playerControlSystem,
+  perkSystem,
   ladderSystem,
   scheduleSystem,
   scannerSystem,

@@ -15,7 +15,7 @@ import {
   WITNESS_CALL_SECONDS,
   type WitnessChannel,
   angleTo,
-  contractKind,
+  ZONE_ACCESS,
   factionStance,
   heatContact,
   heatLost,
@@ -29,6 +29,7 @@ import { gangerEntity } from "../world/factory";
 import { chestOf, eyeOf, lineOfSight } from "../world/hitscan";
 import { inCreationOrder } from "../world/ordering";
 import { disturb, noteAlarm, noteDetected } from "../world/street";
+import { coveredFrom, zoneActive } from "../world/disguise";
 import { worldTimeScale } from "./ability-system";
 import { COWER_RADIUS, scare } from "./ai/civilian-ai-system";
 import { effectiveAggroRange, giveLead, guardSees } from "./ai/ganger-perception";
@@ -200,12 +201,6 @@ const runCalls = (ctx: SimContext, player: Entity | null, dt: number): void => {
   }
 };
 
-const zoneActive = (ctx: SimContext, zone: NonNullable<NonNullable<Entity["device"]>["restricted"]>): boolean => {
-  if (!zone.during) return true;
-  const c = ctx.state.domain.contracts.active;
-  return c?.status === "active" && contractKind(c) === zone.during;
-};
-
 /** Cameras watching no-go zones (ADR-0029): the spot meter, the alarm, the guards sent to look. */
 const runCameras = (ctx: SimContext, player: Entity | null, dt: number, aware: Map<EntityId, { state: AwarenessState; level: number }>): void => {
   for (const cam of inCreationOrder(ctx.world.with("device"))) {
@@ -213,8 +208,16 @@ const runCameras = (ctx: SimContext, player: Entity | null, dt: number, aware: M
     if (d.kind !== "camera") continue;
     d.cooldown = Math.max(0, d.cooldown - dt);
     const zone = d.restricted;
+    // The office staff's overalls belong in the office (ADR-0033): the camera takes her for staff.
     const inside =
-      !!player && !!zone && zoneActive(ctx, zone) && player.position.x >= zone.minX && player.position.x <= zone.maxX && player.position.z >= zone.minZ && player.position.z <= zone.maxZ;
+      !!player &&
+      !!zone &&
+      zoneActive(ctx, zone) &&
+      !staffPass(ctx, d.faction) &&
+      player.position.x >= zone.minX &&
+      player.position.x <= zone.maxX &&
+      player.position.z >= zone.minZ &&
+      player.position.z <= zone.maxZ;
     const sees = inside && !!player && cameraSees(ctx, cam, player);
     d.spot = Math.max(0, Math.min(1, d.spot + (sees ? dt / CAMERA_SPOT_SECONDS : -dt * 0.5)));
     if (player && sees && d.spot >= 1 && d.cooldown === 0) {
@@ -235,8 +238,15 @@ const runCameras = (ctx: SimContext, player: Entity | null, dt: number, aware: M
   }
 };
 
-/** Does anyone of the hunting security see the player (contact)? */
+/** A disguise of the camera's faction whose role belongs in its no-go zones (ADR-0033). */
+const staffPass = (ctx: SimContext, faction: FactionId): boolean => {
+  const role = ctx.state.domain.disguise.role;
+  return role !== null && ZONE_ACCESS[role] && coveredFrom(ctx, faction);
+};
+
+/** Does anyone of the hunting security see the player (contact)? Not while her disguise holds against them (ADR-0033). */
 const hunterContact = (ctx: SimContext, faction: FactionId, player: Entity): boolean => {
+  if (coveredFrom(ctx, faction)) return false;
   for (const g of ctx.world.with("ai")) if (g.faction === faction && g.ai.sees) return true;
   for (const cam of ctx.world.with("device")) if (cam.device.faction === faction && cameraSees(ctx, cam, player)) return true;
   return false;
