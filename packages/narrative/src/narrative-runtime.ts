@@ -43,6 +43,33 @@ const SPEAKERS: Readonly<Record<string, string>> = {
   GORO: "Goro",
   KENTA: "Kenta",
   FUMIKO: "Fumiko",
+  // Street encounters (ADR-0032).
+  NOBU: "Nobu",
+  SARARIMAN: "Sarariman",
+  HINA: "Hina",
+  SHIRO: "Shiro",
+  TAKUMI: "Takumi",
+  SABU: "Dziadek Sabu",
+  AUTOMAT: "Automat",
+  KOJI: "Koji",
+  KIKU: "Wróżka Kiku",
+  DAIGO: "Daigo",
+  POBORCA: "Poborca Hebi",
+  AKANE: "Akane",
+  RIKO: "Riko",
+  TOMO: "Tomo",
+  STRAZNIK: "Strażnik Tessen",
+  GLOS: "Głos z kontenera",
+  // Observation hooks, the metro car and the radio (ADR-0032).
+  HEBI: "Hebi",
+  GLOSNIK: "Głośnik",
+  PASAZER: "Pasażer",
+  PASAZERKA: "Pasażerka",
+  DZIECKO: "Dziecko",
+  REKLAMA: "Reklama",
+  KASS: "DJ Kass",
+  YUKI: "Mama Yuki",
+  LEKTORKA: "Tessen Info",
 };
 const SPEAKER_RE = /^([A-Z]+):\s*(.*)$/;
 
