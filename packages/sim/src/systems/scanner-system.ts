@@ -173,6 +173,64 @@ const watchers = (ctx: SimContext, player: Entity, except: Entity | null): Entit
 /** A point on the floor in front of a device, for the guards it draws. */
 const leadAt = (device: Entity, floor: number): Vec3 => ({ x: device.position.x + Math.sin(device.yaw) * 1.2, y: floor, z: device.position.z + Math.cos(device.yaw) * 1.2 });
 
+/** Ping: marks the target, everyone of its faction near it and every camera on its network. */
+const ping = (ctx: SimContext, target: Entity, duration: number): void => {
+  const faction = target.device?.faction ?? target.faction;
+  const network = target.device?.network;
+  for (const e of inCreationOrder([...ctx.world.with("ai"), ...ctx.world.with("sniper"), ...ctx.world.with("device")])) {
+    const near = Math.hypot(e.position.x - target.position.x, e.position.z - target.position.z) <= PING_RADIUS && e.faction === faction;
+    const wired = !!network && e.device?.network === network;
+    if (e === target || near || wired) {
+      if (e.device && e.device.kind !== "camera") continue;
+      hackFxOf(ctx.world, e).pinged = duration;
+    }
+  }
+  hackFxOf(ctx.world, target).pinged = duration;
+};
+
+/** Reboot Optics: the target goes blind and loses the player. */
+const rebootOptics = (ctx: SimContext, target: Entity, duration: number): void => {
+  hackFxOf(ctx.world, target).blind = duration;
+  const ai = target.ai;
+  if (ai) {
+    // It loses the player: whatever it chases now is the last position it had.
+    ai.suspicion = 0;
+    if (ai.alerted) ai.lost = Math.max(ai.lost ?? 0, TRACK_GRACE + 1e-3);
+  }
+  if (target.device) target.device.spot = 0;
+};
+
+/** Distract: a noise at the target that draws the guards around it. */
+const distract = (ctx: SimContext, target: Entity, duration: number): void => {
+  if (target.device) target.device.noise = duration;
+  for (const g of inCreationOrder(ctx.world.with("ai"))) {
+    if (Math.hypot(g.position.x - target.position.x, g.position.z - target.position.z) <= DISTRACT_RADIUS) giveLead(g, leadAt(target, g.position.y));
+  }
+  disturb(ctx, "hack", target.position, DISTRACT_RADIUS, target.id);
+};
+
+/** Short Circuit: a device breaks for a while, a body takes damage. */
+const shortCircuit = (ctx: SimContext, player: Entity, target: Entity): void => {
+  if (target.device) {
+    target.device.broken = DEVICE_SHORT_SECONDS;
+    target.device.noise = 0;
+    target.device.spot = 0;
+  } else if (target.health) {
+    const at = chestOf(target);
+    noteViolence(ctx, target, isEngaged(target), at);
+    target.health = applyDamage(target.health, SHORT_CIRCUIT_DAMAGE);
+    target.lastHitBy = player.id;
+    const ai = target.ai;
+    if (ai && !ai.alerted) {
+      // Hurt by something it cannot see: it looks around where it stands (seeing the player alerts it).
+      ai.lastKnown = { ...target.position };
+      ai.search = SEARCH_SECONDS;
+    }
+    ctx.bus.emit("DamageDealt", { sourceId: player.id, targetId: target.id, amount: SHORT_CIRCUIT_DAMAGE, critical: false, zone: "torso", at });
+  }
+  disturb(ctx, "hack", target.position, HACK_NOISE, target.id);
+};
+
 /** The upload is through: the effect, and maybe the trace. */
 const apply = (ctx: SimContext, player: Entity, hackId: QuickhackId, target: Entity): void => {
   const def = QUICKHACKS[hackId];
@@ -184,63 +242,21 @@ const apply = (ctx: SimContext, player: Entity, hackId: QuickhackId, target: Ent
     for (const w of seen) giveLead(w, player.position);
   }
   switch (hackId) {
-    case "ping": {
-      const faction = target.device?.faction ?? target.faction;
-      const network = target.device?.network;
-      for (const e of inCreationOrder([...ctx.world.with("ai"), ...ctx.world.with("sniper"), ...ctx.world.with("device")])) {
-        const near = Math.hypot(e.position.x - target.position.x, e.position.z - target.position.z) <= PING_RADIUS && e.faction === faction;
-        const wired = !!network && e.device?.network === network;
-        if (e === target || near || wired) {
-          if (e.device && e.device.kind !== "camera") continue;
-          hackFxOf(ctx.world, e).pinged = def.duration;
-        }
-      }
-      hackFxOf(ctx.world, target).pinged = def.duration;
+    case "ping":
+      ping(ctx, target, def.duration);
       break;
-    }
-    case "reboot_optics": {
-      hackFxOf(ctx.world, target).blind = def.duration;
-      const ai = target.ai;
-      if (ai) {
-        // It loses the player: whatever it chases now is the last position it had.
-        ai.suspicion = 0;
-        if (ai.alerted) ai.lost = Math.max(ai.lost ?? 0, TRACK_GRACE + 1e-3);
-      }
-      if (target.device) target.device.spot = 0;
+    case "reboot_optics":
+      rebootOptics(ctx, target, def.duration);
       break;
-    }
-    case "distract": {
-      if (target.device) target.device.noise = def.duration;
-      for (const g of inCreationOrder(ctx.world.with("ai"))) {
-        if (Math.hypot(g.position.x - target.position.x, g.position.z - target.position.z) <= DISTRACT_RADIUS) giveLead(g, leadAt(target, g.position.y));
-      }
-      disturb(ctx, "hack", target.position, DISTRACT_RADIUS, target.id);
+    case "distract":
+      distract(ctx, target, def.duration);
       break;
-    }
     case "cripple_movement":
       hackFxOf(ctx.world, target).crippled = def.duration;
       break;
-    case "short_circuit": {
-      if (target.device) {
-        target.device.broken = DEVICE_SHORT_SECONDS;
-        target.device.noise = 0;
-        target.device.spot = 0;
-      } else if (target.health) {
-        const at = chestOf(target);
-        noteViolence(ctx, target, isEngaged(target), at);
-        target.health = applyDamage(target.health, SHORT_CIRCUIT_DAMAGE);
-        target.lastHitBy = player.id;
-        const ai = target.ai;
-        if (ai && !ai.alerted) {
-          // Hurt by something it cannot see: it looks around where it stands (seeing the player alerts it).
-          ai.lastKnown = { ...target.position };
-          ai.search = SEARCH_SECONDS;
-        }
-        ctx.bus.emit("DamageDealt", { sourceId: player.id, targetId: target.id, amount: SHORT_CIRCUIT_DAMAGE, critical: false, zone: "torso", at });
-      }
-      disturb(ctx, "hack", target.position, HACK_NOISE, target.id);
+    case "short_circuit":
+      shortCircuit(ctx, player, target);
       break;
-    }
   }
   noteHacked(ctx);
   ctx.bus.emit("QuickhackApplied", { hackId, targetId: target.id, duration: def.duration });
