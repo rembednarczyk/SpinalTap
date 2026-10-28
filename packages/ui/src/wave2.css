@@ -113,7 +113,7 @@
 .touch__btn:disabled { opacity: 0.35; }
 /* The outer ring: everything else at least 44 px, clear of the arc. */
 .touch-mode .touch__btn--jump { right: 96px; bottom: 196px; }
-.touch-mode .touch__btn--h { right: 36px; bottom: 178px; width: 44px; height: 44px; }
+.touch-mode .touch__btn--h { right: 240px; bottom: 62px; width: 44px; height: 44px; }
 .touch-mode .touch__btn--x { right: 156px; bottom: 150px; }
 .touch-mode .touch__btn--q { right: 170px; bottom: 98px; }
 .touch-mode .touch__btn--aim { right: 178px; bottom: 36px; }

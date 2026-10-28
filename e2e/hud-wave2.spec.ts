@@ -28,9 +28,12 @@ test("metro, radio and the wave 2 badges from the debug API", async ({ page }) =
   await page.evaluate(() => window.__seki!.emit("MetroArrived", { station: "doki" }));
   await expect(page.getByTestId("metro-ride")).toBeHidden();
 
-  // B tunes the radio: a toast with the station's name.
+  // B tunes the radio; the phone shows the station picked (the toast is gone in a few seconds).
   await page.keyboard.press("KeyB");
-  await expect(page.locator(".toast--radio")).toContainText("Neon Drift 88.1");
+  await page.keyboard.press("KeyT");
+  await expect(page.getByTestId("radio-drift")).toHaveAttribute("aria-checked", "true");
+  await page.keyboard.press("KeyT");
+  await expect(page.getByTestId("phone")).toBeHidden();
 
   // Buffs, the disguise and a hook in the tracker.
   await page.evaluate(() => {
