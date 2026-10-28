@@ -30,5 +30,6 @@
 | [0026](0026-zycie-ulicy-kanalowej-targu-i-zaulkow.md) | Życie ulicy: ludzie Kanałowej, stragany i ramen na targu, myjnia, skrytki w zaułkach | Zaakceptowana |
 | [0027](0027-dressing-chunkow-i-dalekie-miasto.md) | Dressing wszystkich chunków, skórki gołych brył, witryny, chodzone dachy i dalekie miasto | Zaakceptowana |
 | [0028](0028-swiadkowie-heat-quickhacki-zlecenia.md) | Kontrakty fali 1 z researchu: świadkowie i heat, skaner i quickhacki, odznaki zleceń, telefon | Zaakceptowana |
+| [0029](0029-fala-1-symulacja-swiadkowie-heat-quickhacki.md) | Fala 1 w symulacji: ostatnia znana pozycja, tłum i świadkowie, heat i wsparcie poza wzrokiem, skaner i quickhacki, kamery i Breach, debrief zlecenia, zapis v11 | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.

@@ -2,10 +2,11 @@ import type { Vec3 } from "../math/vec3";
 import type { DomainState } from "../state/domain-state";
 
 /**
+ * v11: heat, the cyberdeck (RAM, upload) and the contract's debrief counters (ADR-0029).
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 10;
+export const SAVE_SCHEMA_VERSION = 11;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {
@@ -17,6 +18,14 @@ export interface EntitySnapshot {
   readonly cooldown: number;
   /** AI alert state; false for non-AI entities. */
   readonly alerted: boolean;
+  /**
+   * Where an AI last saw the player and the seconds it still looks around there (ADR-0029).
+   * Optional: absent for everyone who is not looking for the player.
+   */
+  readonly lastKnown?: Vec3;
+  readonly search?: number;
+  /** Seconds out of its sight while alerted. */
+  readonly lost?: number;
 }
 
 /** World streaming state: which chunks are resident. Their content is rebuilt from the content tables. */

@@ -162,6 +162,26 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
       domain: { ...domain, reputation: { ...reputation, tessen: typeof reputation.tessen === "number" ? reputation.tessen : 0 } },
     };
   },
+  // v10 -> v11 (ADR-0029): no heat, a full starting cyberdeck with nothing uploading, and a
+  // running contract starts its debrief counters at the save's tick (nothing seen, nothing lost).
+  10: (old) => {
+    const domain = isObject(old.domain) ? old.domain : {};
+    const contracts = isObject(domain.contracts) ? domain.contracts : { active: null, completed: 0 };
+    const active = isObject(contracts.active) ? contracts.active : null;
+    const tick = typeof old.tick === "number" && Number.isInteger(old.tick) && old.tick >= 0 ? old.tick : 0;
+    // Numbers are spelled out: a migration describes the schema of its time (BASE_RAM was 8).
+    const tally = { startTick: tick, detected: false, alarm: false, extraKills: 0, damaged: false, hacked: false, bonusLost: false };
+    return {
+      ...old,
+      version: 11,
+      domain: {
+        ...domain,
+        heat: isObject(domain.heat) ? domain.heat : { level: 0, faction: null, searching: false, lastKnown: null, searchLeft: 0, cooldown: 0 },
+        netrun: isObject(domain.netrun) ? domain.netrun : { ram: 8, upload: null },
+        contracts: active && !isObject(contracts.tally) ? { ...contracts, tally } : contracts,
+      },
+    };
+  },
 };
 
 export class MigrationError extends Error {}

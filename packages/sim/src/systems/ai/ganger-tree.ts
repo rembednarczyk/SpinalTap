@@ -7,6 +7,10 @@
  * towards the player (see the ganger AI system); a ganger that sees the player without
  * being alerted just watches them. A ganger with a victim (a protection job's wave) goes for
  * that NPC before chasing anyone; without one, those two branches never match.
+ *
+ * ADR-0029: an alerted ganger that lost sight of the player chases the last known position,
+ * not the player; once there it stops fighting and looks around (`HasLead`), as does one sent
+ * to check a lead (a distraction, a camera, a trace, the heat), and then goes back to its post.
  */
 export const GANGER_TREE = `root {
   selector {
@@ -33,6 +37,10 @@ export const GANGER_TREE = `root {
     sequence {
       condition [SeesPlayer]
       action [WatchPlayer]
+    }
+    sequence {
+      condition [HasLead]
+      action [Investigate]
     }
     action [HoldPosition]
   }

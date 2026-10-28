@@ -129,8 +129,9 @@ export interface DomainEvents {
   /**
    * The pursuit changed. `searching`: the security lost sight and looks around `lastKnown`;
    * the heat drops one level when `searchLeft` seconds run out with the player unseen.
+   * `faction` (ADR-0029): whose security hunts the player; absent at heat 0.
    */
-  HeatChanged: { level: HeatLevel; previous: HeatLevel; searching: boolean; lastKnown: Vec3 | null; searchLeft: number };
+  HeatChanged: { level: HeatLevel; previous: HeatLevel; searching: boolean; lastKnown: Vec3 | null; searchLeft: number; faction?: FactionId };
   /**
    * An enemy's awareness of the player (stealth feedback for the HUD). `level` 0..1 fills the
    * suspicion; `lastKnown` is where it last saw the player (Deus Ex style silhouette).

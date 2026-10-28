@@ -26,6 +26,7 @@ import { crouchOf } from "../world/hitboxes";
 import { aimOrigin, chestOf, hitscan, type HitscanResult } from "../world/hitscan";
 import { consumeRound, loadedOf, readyToFire } from "../world/player-weapon";
 import { playerStatsOf } from "./player-control-system";
+import { disturb, isEngaged, noteViolence, offend, playerEngaged } from "../world/street";
 
 /** Crit chances of NPC attacks (shots and swings). */
 export const NPC_CRIT = { critChance: 0.05, critMultiplier: 1.5, damageBonus: 0 } as const;
@@ -122,6 +123,8 @@ export const fireShot = (ctx: SimContext, shot: ShotRequest, rng: RandomPort): H
   if (!combatant || !weapon) throw new Error("fireShot: shooter has no weapon");
   combatant.cooldown = weapon.interval;
   consumeRound(ctx, shot.shooter);
+  // Fire opened outside a fight is a crime once someone sees it (ADR-0029); judged before the shot alerts anyone.
+  const crime = !!shot.shooter.player && !playerEngaged(ctx, shot.shooter);
   let first: HitscanResult | null = null;
   let hurtPlayer = false;
   let farthest: Vec3 = shot.origin;
@@ -144,6 +147,7 @@ export const fireShot = (ctx: SimContext, shot: ShotRequest, rng: RandomPort): H
       result.zone,
     );
     if (guard.blocked) ctx.bus.emit("AttackBlocked", { attackerId: shot.shooter.id, defenderId: target.id, parried: false, kind: "projectile", at: result.point });
+    if (shot.shooter.player) noteViolence(ctx, target, isEngaged(target), result.point);
     target.health = applyDamage(target.health, outcome.damage);
     target.lastHitBy = shot.shooter.id;
     if (target.player) {
@@ -163,6 +167,8 @@ export const fireShot = (ctx: SimContext, shot: ShotRequest, rng: RandomPort): H
   }
   combatant.bloom = addBloom(weapon.spread, combatant.bloom);
   alertNearbyGangers(ctx, shot.origin, weapon.alertRadius);
+  disturb(ctx, "gunshot", shot.origin, weapon.alertRadius, shot.shooter.id);
+  if (crime) offend(ctx, "gunfire", shot.origin);
   const result = first ?? { distance: 0, point: farthest, entity: null, zone: null };
   if (!shot.shooter.player) {
     const player = ctx.world.with("player").first;

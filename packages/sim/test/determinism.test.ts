@@ -43,7 +43,7 @@ describe("determinism", () => {
   });
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
-    expect(hashOf(runReplay(1234, script()))).toMatchInlineSnapshot(`"74bd1c33"`);
+    expect(hashOf(runReplay(1234, script()))).toMatchInlineSnapshot(`"d9a66304"`);
   });
 
   it("without the street life of ADR-0026 in the snapshot, the run hashes as before it (content, not rules)", () => {
@@ -62,7 +62,8 @@ describe("determinism", () => {
       },
     };
     expect(snap.entities.filter((e) => added.has(e.key))).toHaveLength(4);
-    expect(stateHash(before)).toBe("31f58220");
+    // The hash of the same run with the rules of ADR-0029 (wave 1) and without this content.
+    expect(stateHash(before)).toBe("bef1026f");
   });
 
   it("a loaded snapshot continues exactly like the original run", () => {
@@ -106,7 +107,7 @@ describe("determinism", () => {
     // Swings both ways, a blocked blow and staggers: the duel exercises the whole package.
     for (const t of ["MeleeSwing", "AttackBlocked", "Staggered", "DamageDealt"]) expect(seen).toContain(t);
     expect(hashOf(sim)).toBe(hashOf(duel().sim));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"dfa7316b"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"5be082e2"`);
   });
 
   it("restores killed NPCs as absent", () => {

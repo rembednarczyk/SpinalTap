@@ -214,7 +214,7 @@ describe("migrations", () => {
       },
     };
     const back = decodeSave("w", encodeSave(street));
-    expect(back.version).toBe(10);
+    expect(back.version).toBe(SAVE_SCHEMA_VERSION);
     expect(back.domain.contracts.active).toEqual(contract);
     expect(back.domain.inventory.stacks).toMatchObject({ ramen: 2, yakitori: 1 });
     expect(back.domain.loot.containers).toEqual([stash]);
@@ -514,5 +514,45 @@ describe("Tessen standing (v9 to v10, ADR-0024)", () => {
       const broken = { ...withHack, domain: { ...withHack.domain, contracts: { active: { ...hack, progress: bad }, completed: 3 } } };
       expect(findSchemaError(broken as unknown as Record<string, unknown>)).toBe("contract progress");
     }
+  });
+});
+
+describe("heat, cyberdeck and debrief counters (v10 to v11, ADR-0029)", () => {
+  /** What v10 wrote: no heat, no cyberdeck, a running contract without counters. */
+  const v10Payload = () => {
+    const s = snapshot();
+    const { heat: _h, netrun: _n, ...domain } = s.domain;
+    const job = { id: "c2", kind: "retrieve", siteId: "hebi_stash", targets: 2, reward: 470, status: "active" } as const;
+    return { ...s, version: 10, domain: { ...domain, contracts: { active: job, completed: 1 } } };
+  };
+
+  it("adds no heat, a full deck and counters starting at the save's tick", () => {
+    const loaded = decodeSave("v10", wrap(v10Payload()));
+    expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
+    expect(loaded.domain.heat).toEqual({ level: 0, faction: null, searching: false, lastKnown: null, searchLeft: 0, cooldown: 0 });
+    expect(loaded.domain.netrun).toEqual({ ram: 8, upload: null });
+    expect(loaded.domain.contracts.tally).toEqual({ startTick: 900, detected: false, alarm: false, extraKills: 0, damaged: false, hacked: false, bonusLost: false });
+  });
+
+  it("tolerates a missing domain and keeps what is already there", () => {
+    expect(MIGRATIONS[10]!({ version: 10 })).toMatchObject({ version: 11, domain: { netrun: { ram: 8, upload: null }, contracts: { active: null } } });
+    const heat = { level: 2, faction: "hebi", searching: true, lastKnown: { x: 1, y: 0, z: 2 }, searchLeft: 4, cooldown: 0 };
+    expect(MIGRATIONS[10]!({ version: 10, domain: { heat } })).toMatchObject({ domain: { heat } });
+  });
+
+  it("validates heat, the upload and the counters of a current save", () => {
+    const s = snapshot();
+    const upload = { hackId: "ping", target: "dev:doki-yard-cam", left: 0.3, ram: 2 } as const;
+    const withUpload = { ...s, domain: { ...s.domain, netrun: { ram: 3.5, upload } } };
+    expect(decodeSave("u", encodeSave(withUpload)).domain.netrun.upload).toEqual(upload);
+    const bad = (domain: Record<string, unknown>) => findSchemaError({ ...s, domain: { ...s.domain, ...domain } } as unknown as Record<string, unknown>);
+    expect(bad({ heat: { ...s.domain.heat, level: 4 } })).toBe("heat");
+    expect(bad({ heat: { ...s.domain.heat, faction: "ncpd" } })).toBe("heat");
+    expect(bad({ netrun: { ram: -1, upload: null } })).toBe("netrun");
+    expect(bad({ netrun: { ram: 2, upload: { ...upload, hackId: "suicide" } } })).toBe("netrun upload");
+    const job = { id: "c2", kind: "retrieve", siteId: "hebi_stash", targets: 2, reward: 470, status: "active" };
+    expect(bad({ contracts: { active: job, completed: 1, tally: { startTick: 1 } } })).toBe("contract tally");
+    const entity = { key: "g", position: { x: 0, y: 0, z: 0 }, yaw: 0, pitch: 0, hp: 1, cooldown: 0, alerted: false, search: "x" };
+    expect(findSchemaError({ ...s, entities: [entity] } as unknown as Record<string, unknown>)).toBe("entity g search");
   });
 });

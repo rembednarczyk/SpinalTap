@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ABILITY_CATALOG, CONTRACT_SITE_SPAWNS_COUNT_GUARD, contractTag, type Contract } from "./m1-helpers";
 import { GANGER_SPEED, Simulation, contractGangerHp, stateHash } from "../src";
-import { byKey, collect, input, run, teleportPlayer } from "./helpers";
+import { byKey, collect, input, run, teleportPlayer, debriefExtras } from "./helpers";
 
 /** A copy of the simulation with a patched domain, built the way a load would build it. */
 const withDomain = (sim: Simulation, patch: (d: Simulation["domain"]) => Simulation["domain"]): Simulation => {
@@ -56,11 +56,13 @@ describe("fixer contracts", () => {
     expect(cleared).toHaveLength(1);
     expect(sim.domain.contracts.active?.status).toBe("cleared");
     const before = sim.domain.wallet.eddies;
+    // The card adds the bonus condition and the fixer's style (ADR-0029).
+    const extra = debriefExtras(sim);
     sim.enqueue({ type: "complete-contract" });
     sim.enqueue({ type: "complete-contract" });
     sim.step();
     expect(completed).toEqual([expect.objectContaining({ reward: c.reward })]);
-    expect(sim.domain.wallet.eddies).toBe(before + c.reward);
+    expect(sim.domain.wallet.eddies).toBe(before + c.reward + extra());
     expect(sim.domain.contracts).toEqual({ active: null, completed: 1 });
     // -4 per target killed, -5 for completing the contract.
     expect(sim.domain.reputation).toEqual({ fixers: 3, hebi: -4 * c.targets - 5, civilians: 1 - c.targets, clinic: 0, kagami: 0, tessen: 0 });

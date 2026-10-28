@@ -3,6 +3,8 @@ import type { RandomPort } from "../ports/random-port";
 import type { FactionId, ReputationState } from "../reputation/reputation";
 import type { Flags } from "../state/flags";
 import { CONTRACT_KINDS, type ContractGiverId, type ContractKind } from "./kinds";
+import type { ContractTally } from "./scoring";
+import type { BreachDaemonId } from "../hacking/quickhacks";
 
 /** Places where a contract sends Seki. Positions live in sim content. */
 export const CONTRACT_SITES = {
@@ -65,11 +67,18 @@ export interface Contract {
   readonly progress?: number;
   /** Hack only: ticks in a row the player has been away from the running terminal. */
   readonly away?: number;
+  /** Hack only: daemons won on the terminal (the breach is applied once). */
+  readonly breach?: readonly BreachDaemonId[];
 }
 
 export interface ContractLog {
   readonly active: Contract | null;
   readonly completed: number;
+  /**
+   * Debrief counters of the active contract (ADR-0029), kept beside it so the contract itself
+   * (and the events that carry it) stays what was agreed. Absent or null without a contract.
+   */
+  readonly tally?: ContractTally | null;
 }
 
 export const EMPTY_CONTRACTS: ContractLog = { active: null, completed: 0 };

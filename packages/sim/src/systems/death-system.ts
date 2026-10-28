@@ -4,6 +4,10 @@ import type { Entity } from "../world/components";
 import type { System } from "../world/context";
 import { applyReputationCause, clearContract, dropLoot, raiseFlag } from "../world/domain-ops";
 import { inCreationOrder } from "../world/ordering";
+import { disturb, isContractTarget, noteTally, offend } from "../world/street";
+
+/** A body is noticed this far (ADR-0029). */
+const BODY_NOISE = 12;
 
 export const deadFlag = (key: string): string => `dead:${key}`;
 
@@ -50,11 +54,16 @@ export const deathSystem: System = {
         continue;
       }
       if (e.key) raiseFlag(ctx, deadFlag(e.key));
+      const byPlayer = playerId !== undefined && e.lastHitBy === playerId;
+      // Killing someone who was not fighting is a murder once someone sees it (ADR-0029).
+      if (byPlayer && e.wronged) offend(ctx, "murder", e.position);
+      if (byPlayer && !isContractTarget(ctx, e)) noteTally(ctx, (t) => ({ ...t, extraKills: t.extraKills + 1 }));
+      disturb(ctx, "body", e.position, BODY_NOISE, e.id);
       if (e.tag) raiseFlag(ctx, killedFlag(e.tag));
       // A death the player did not cause (Hebi shooting Oyaji) is not held against them.
       if (e.faction && (e.lastHitBy === undefined || e.lastHitBy === playerId)) applyReputationCause(ctx, { type: "member-killed", faction: e.faction });
       dropEnemyLoot(ctx, e);
-      ctx.bus.emit("EntityKilled", { entityId: e.id, tag: e.tag ?? null });
+      ctx.bus.emit("EntityKilled", { entityId: e.id, tag: e.tag ?? null, ...(e.lastHitBy === undefined ? {} : { killerId: e.lastHitBy }) });
       ctx.world.remove(e);
     }
     if (dead.length > 0) checkContractCleared(ctx);
