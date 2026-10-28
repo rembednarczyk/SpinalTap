@@ -421,7 +421,8 @@ const DAY_SILHOUETTE = "#4a5562";
  * the camera across the horizon, and their lights. Chunks in view hide their stand-ins.
  */
 export class FarCity {
-  readonly plan: FarCityPlan;
+  /** Chunk ids in slot order; the plan itself is dropped once its meshes are built. */
+  private readonly chunkIds: readonly string[];
   readonly meshes: Mesh[] = [];
   private readonly far: ShaderMaterial[] = [];
   private readonly lights: ShaderMaterial[] = [];
@@ -434,11 +435,12 @@ export class FarCity {
     rig: LightingRig,
     chunks: readonly ChunkDef[] = WORLD_CHUNKS,
   ) {
-    this.plan = planFarCity(chunks);
-    const world = this.solid("far-world", this.plan.world);
-    const horizon = this.solid("far-horizon", this.plan.horizon);
-    const worldLights = this.glow("far-world-lights", this.plan.worldLights);
-    const horizonLights = this.glow("far-horizon-lights", this.plan.horizonLights);
+    const plan = planFarCity(chunks);
+    this.chunkIds = plan.chunks;
+    const world = this.solid("far-world", plan.world);
+    const horizon = this.solid("far-horizon", plan.horizon);
+    const worldLights = this.glow("far-world-lights", plan.worldLights);
+    const horizonLights = this.glow("far-horizon-lights", plan.horizonLights);
     this.horizonMeshes = [horizon, horizonLights].filter((m): m is Mesh => m !== null);
     for (const m of [world, horizon, worldLights, horizonLights]) if (m) this.meshes.push(m);
     this.setDaylight(rig, 0);
@@ -448,7 +450,7 @@ export class FarCity {
   /** Chunks drawn by the street itself: their stand-ins hide. */
   setResident(resident: ReadonlySet<string>): void {
     const hidden = Array.from({ length: FAR_CHUNK_SLOTS }, (_, i) => {
-      const id = this.plan.chunks[i];
+      const id = this.chunkIds[i];
       return id !== undefined && resident.has(id) ? 1 : 0;
     });
     const key = hidden.join("");
