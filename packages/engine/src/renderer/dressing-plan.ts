@@ -176,11 +176,32 @@ export const planDressing = (input: DressingInput): MeshSink => {
   const near = (p: Vec3, pad: number) =>
     input.signs.some((s) => Math.abs(s.center.x - p.x) < s.size.x / 2 + pad && Math.abs(s.center.y - p.y) < s.size.y / 2 + pad && Math.abs(s.center.z - p.z) < s.size.z / 2 + pad);
   for (const b of input.blocks) {
-    if (isBuilding(b) && !(input.kit && b.skin)) dressBuilding(sink, b, input.world, near);
+    if (isBuilding(b) && input.kit && b.skin) {
+      // The kit draws the facade; the street in front of it still gets its clutter.
+      if (faceOpen(b, b.skin.front, input.world, 2.5)) dressKerb(sink, b, faceOf(b, b.skin.front));
+    } else if (isBuilding(b)) dressBuilding(sink, b, input.world, near);
     else if (isRoadDeck(b)) dressDeck(sink, b);
     else if (b.material === "asphalt" && top(b) < 0.4) dressGround(sink, b);
   }
   return sink;
+};
+
+/** At the foot of a front: a vending machine now and then, bag piles and a box. Kept with the kit too. */
+const dressKerb = (sink: MeshSink, b: DressBlock, f: Face): void => {
+  const rand = prng(seedOf(b.center) ^ 0xb1a5);
+  const w = f.width;
+  if (rand() < 0.3 && w > 6) {
+    const u = (rand() - 0.5) * (w - 3);
+    sink.box(f.at(u, 0.95, 0.4), 0.8, 1.9, 0.75, C(PALETTE.vending), { rotY: f.rot });
+    sink.box(f.at(u, 1.15, 0.79), 0.55, 1.2, 0.03, C("#9fe8ff", DRESS_FLAG.lit), { rotY: f.rot });
+  }
+  if (rand() < 0.45) {
+    const u = (rand() - 0.5) * (w - 2);
+    for (let i = 0; i < 4; i++) {
+      sink.box(f.at(u + (rand() - 0.5) * 1.1, 0.24, 0.5 + rand() * 0.6), 0.6, 0.48, 0.55, C(rand() < 0.5 ? PALETTE.bag : PALETTE.bag2), { rotY: rand() * 3, bottom: false });
+    }
+    sink.box(f.at(u + 0.9, 0.22, 0.45), 0.6, 0.45, 0.5, C(PALETTE.cardboard), { rotY: f.rot + rand(), bottom: false });
+  }
 };
 
 const dressBuilding = (sink: MeshSink, b: DressBlock, world: readonly DressBlock[], onSign: (p: Vec3, pad: number) => boolean): void => {
@@ -211,20 +232,7 @@ const dressBuilding = (sink: MeshSink, b: DressBlock, world: readonly DressBlock
           sink.box(f.at(u, 2.95, 0.62), 1.3, 0.06, sw + 0.4, C(color), { rotY: f.rot - Math.PI / 2, tilt: -0.32 });
         }
       }
-      // A vending machine by the door now and then, its front lit.
-      if (rand() < 0.3 && w > 6) {
-        const u = (rand() - 0.5) * (w - 3);
-        sink.box(f.at(u, 0.95, 0.4), 0.8, 1.9, 0.75, C(PALETTE.vending), { rotY: f.rot });
-        sink.box(f.at(u, 1.15, 0.79), 0.55, 1.2, 0.03, C("#9fe8ff", DRESS_FLAG.lit), { rotY: f.rot });
-      }
-      // Rubbish: bag piles and a box.
-      if (rand() < 0.45) {
-        const u = (rand() - 0.5) * (w - 2);
-        for (let i = 0; i < 4; i++) {
-          sink.box(f.at(u + (rand() - 0.5) * 1.1, 0.24, 0.5 + rand() * 0.6), 0.6, 0.48, 0.55, C(rand() < 0.5 ? PALETTE.bag : PALETTE.bag2), { rotY: rand() * 3, bottom: false });
-        }
-        sink.box(f.at(u + 0.9, 0.22, 0.45), 0.6, 0.45, 0.5, C(PALETTE.cardboard), { rotY: f.rot + rand(), bottom: false });
-      }
+      dressKerb(sink, b, f);
       // A neon blade sign out of the facade, lit, in the city's sign colours.
       if (tall > 8 && rand() < 0.65) {
         const h = 2.4 + rand() * 1.6;
