@@ -1,13 +1,18 @@
 import { Color4, Engine, GlowLayer, Scene } from "../babylon";
+import type { RenderQuality } from "../npr/quality";
+
+export type { RenderQuality } from "../npr/quality";
 
 export interface StageOptions {
   /** Reference mode: deterministic frame for snapshot tests (no rain, no grain, fixed camera). */
   readonly reference: boolean;
-  /** "low" trims the expensive passes (smaller shadow map, no screen-space line art) for phones. */
+  /**
+   * "low" trims the expensive passes (smaller shadow map, no screen-space line art) for phones;
+   * "medium" keeps the line art and adds the wet-asphalt probe at a smaller size (ADR-0036).
+   */
   readonly quality?: RenderQuality;
 }
 
-export type RenderQuality = "high" | "low";
 
 /** Engine + scene + glow layer. WebGL2 baseline (ADR-0004). */
 export class Stage {
