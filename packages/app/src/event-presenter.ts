@@ -30,7 +30,7 @@ const LANDING_SOUND_DROP = 0.5;
 const REFUSAL: Partial<Record<FactionId, string>> = { clinic: "Mori zamyka drzwi kliniki", civilians: "Oyaji opuszcza roletę" };
 
 /** Who shakes their head when a trade does not happen. */
-const SHOPKEEPER: Readonly<Record<ShopId, string>> = { clinic: "Mori", oyaji: "Oyaji" };
+const SHOPKEEPER: Readonly<Record<ShopId, string>> = { clinic: "Mori", oyaji: "Oyaji", yatai: "Fumiko" };
 
 const FAILURE_TEXT: Readonly<Record<PurchaseFailure, string>> = {
   "insufficient-funds": "Za mało eddies.",

@@ -1,11 +1,14 @@
 import { type ActorDef, type NavGraph, type Rect, type StaticProp, mergeNav } from "./builders";
-import { DISTRICT_M0_ACTORS, DISTRICT_M0_BOUNDS, DISTRICT_M0_PROPS } from "./district-m0";
+import { DISTRICT_M0_ACTORS, DISTRICT_M0_BOUNDS, DISTRICT_M0_PROPS, S7_STASHES } from "./district-m0";
 import {
+  KANAL_ACTORS,
+  KANAL_ALLEY_STASH,
   KANAL_BOUNDS,
   KANAL_NAV,
   KANAL_PROPS,
   type RoofStash,
   TARG_NAV,
+  TARG_OVERPASS_STASH,
   TARG_ROOF_STASH,
   TARG_NORTH_ACTORS,
   TARG_NORTH_BOUNDS,
@@ -40,7 +43,7 @@ export interface ChunkDef {
 /** Every chunk of the city, in the order their content is created (and entity ids reserved). */
 export const WORLD_CHUNKS: readonly ChunkDef[] = [
   { id: "shinsekai-7", district: "shinsekai-7", bounds: DISTRICT_M0_BOUNDS, props: DISTRICT_M0_PROPS, actors: DISTRICT_M0_ACTORS },
-  { id: "kanal", district: "kanal", bounds: KANAL_BOUNDS, props: KANAL_PROPS, actors: [] },
+  { id: "kanal", district: "kanal", bounds: KANAL_BOUNDS, props: KANAL_PROPS, actors: KANAL_ACTORS },
   { id: "targ-south", district: "targ", bounds: TARG_SOUTH_BOUNDS, props: TARG_SOUTH_PROPS, actors: TARG_SOUTH_ACTORS },
   { id: "targ-north", district: "targ", bounds: TARG_NORTH_BOUNDS, props: TARG_NORTH_PROPS, actors: TARG_NORTH_ACTORS },
   // ADR-0024: north of Ulica Kanałowa, through the passage in its north row.
@@ -51,8 +54,8 @@ export const WORLD_CHUNKS: readonly ChunkDef[] = [
 /** Level graph of the whole city (ADR-0021). Shinsekai 7 is flat and has none. */
 export const WORLD_NAV: NavGraph = mergeNav(KANAL_NAV, TARG_NAV, DOKI_NAV);
 
-/** Stashes on roofs, placed once when the player first comes near (ADR-0021). */
-export const WORLD_STASHES: readonly RoofStash[] = [TARG_ROOF_STASH];
+/** Stashes placed once when the player first comes near: on roofs (ADR-0021), in alleys and dead ends (ADR-0026). */
+export const WORLD_STASHES: readonly RoofStash[] = [TARG_ROOF_STASH, ...S7_STASHES, KANAL_ALLEY_STASH, TARG_OVERPASS_STASH];
 
 /** Horizontal distance from a point to a rectangle; 0 inside. */
 export const distanceToRect = (x: number, z: number, r: Rect): number =>
