@@ -1,5 +1,5 @@
 import { type PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from "react";
-import { useIntents, useUi } from "../use-ui";
+import { useHackIntents, usePhoneIntents, useSessionIntents, useUi } from "../use-ui";
 import type { TouchButton, TouchPadSink } from "./touch-pad-sink";
 
 /** Radians of rotation per CSS pixel of finger travel. */
@@ -158,7 +158,9 @@ const CrouchToggle = ({ pad }: { pad: TouchPadSink }) => {
  * the right, action buttons in thumb reach. The fire button also steers the view while held.
  */
 export const TouchControls = ({ pad }: { pad: TouchPadSink }) => {
-  const intents = useIntents();
+  const hack = useHackIntents();
+  const phone = usePhoneIntents();
+  const session = useSessionIntents();
   const hasAbility = useUi((s) => s.ability !== null);
   const prompt = useUi((s) => s.prompt);
   const toggleCharacter = useUi((s) => s.toggleCharacter);
@@ -172,9 +174,9 @@ export const TouchControls = ({ pad }: { pad: TouchPadSink }) => {
   useEffect(
     () => () => {
       pad.reset();
-      intents.setScan(false);
+      hack.setScan(false);
     },
-    [pad, intents],
+    [pad, hack],
   );
 
   return (
@@ -195,10 +197,10 @@ export const TouchControls = ({ pad }: { pad: TouchPadSink }) => {
         <button type="button" className="touch__btn touch__btn--small touch__btn--menu" aria-label="Postać" data-testid="touch-character" onClick={() => toggleCharacter("inventory")}>
           ☰
         </button>
-        <button type="button" className="touch__btn touch__btn--small touch__btn--phone" aria-label="Telefon" data-testid="touch-phone" onClick={() => intents.openPhone()}>
+        <button type="button" className="touch__btn touch__btn--small touch__btn--phone" aria-label="Telefon" data-testid="touch-phone" onClick={() => phone.openPhone()}>
           ☏{unread > 0 && <span className="touch__badge">{unread}</span>}
         </button>
-        <button type="button" className="touch__btn touch__btn--small" aria-label="Pauza" onClick={() => intents.pause()}>
+        <button type="button" className="touch__btn touch__btn--small" aria-label="Pauza" onClick={() => session.pause()}>
           II
         </button>
       </div>
@@ -220,7 +222,7 @@ export const TouchControls = ({ pad }: { pad: TouchPadSink }) => {
           aria-pressed={scanning}
           data-testid="touch-scan"
           className={`touch__btn touch__btn--scan${scanning ? " touch__btn--on" : ""}`}
-          onPointerDown={() => intents.setScan(!scanning)}
+          onPointerDown={() => hack.setScan(!scanning)}
           onContextMenu={(e) => e.preventDefault()}
           onTouchEnd={(e) => e.preventDefault()}
         >

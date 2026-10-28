@@ -1,6 +1,6 @@
 import { type ItemRef, bagCells, findItem, isPlaced, usedCells } from "@seki/core";
 import { useEffect, useMemo, useState } from "react";
-import { useIntents, useUi } from "../use-ui";
+import { useCharacterIntents, useUi } from "../use-ui";
 import { type ActionContext, type ActionId, ConfirmSheet, QuantityPicker, defaultAction, itemActions, slotHolding } from "./actions";
 import { CharacterPreview } from "./character-preview";
 import { EquipmentSlots } from "./equipment-slots";
@@ -24,7 +24,7 @@ type Sheet = { readonly kind: "quantity"; readonly ref: Extract<ItemRef, { stack
  * goes through an intent and applies at once; the clock stands meanwhile.
  */
 export const InventoryTab = () => {
-  const intents = useIntents();
+  const intents = useCharacterIntents();
   const inventory = useUi((s) => s.inventory);
   const equipment = useUi((s) => s.equipment);
   const stats = useUi((s) => s.characterStats);

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useIntents, useUi } from "../use-ui";
+import { useSessionIntents, useUi } from "../use-ui";
 import { ControlsHelp } from "./controls-help";
 import { SaveSlots } from "./save-slots";
 
@@ -24,7 +24,7 @@ const FullscreenButton = () => {
 };
 
 export const TitleScreen = () => {
-  const intents = useIntents();
+  const intents = useSessionIntents();
   const hasSaves = useUi((s) => s.hasSaves);
   const busy = useUi((s) => s.busy);
   const [view, setView] = useState<"main" | "load">("main");

@@ -1,8 +1,8 @@
-import { useIntents, useUi } from "../use-ui";
+import { useSessionIntents, useUi } from "../use-ui";
 import { SaveSlots } from "./save-slots";
 
 export const DeathScreen = () => {
-  const intents = useIntents();
+  const intents = useSessionIntents();
   const hasSaves = useUi((s) => s.hasSaves);
   return (
     <div className="screen screen--dead" data-testid="death-screen">

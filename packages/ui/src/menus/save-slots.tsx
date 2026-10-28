@@ -1,11 +1,11 @@
-import { useIntents, useUi } from "../use-ui";
+import { useSessionIntents, useUi } from "../use-ui";
 
 export const SAVE_SLOTS = ["slot-1", "slot-2", "slot-3"] as const;
 
 export const SaveSlots = ({ mode }: { mode: "save" | "load" }) => {
   const slots = useUi((s) => s.slots);
   const busy = useUi((s) => s.busy);
-  const intents = useIntents();
+  const intents = useSessionIntents();
   const names = mode === "load" ? [...new Set([...slots.map((s) => s.slot), ...SAVE_SLOTS])].sort() : SAVE_SLOTS;
   return (
     <div className="slots">

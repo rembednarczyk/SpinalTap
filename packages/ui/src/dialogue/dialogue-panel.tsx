@@ -1,9 +1,9 @@
 import { useEffect } from "react";
-import { useIntents, useUi } from "../use-ui";
+import { useDialogueIntents, useUi } from "../use-ui";
 
 export const DialoguePanel = () => {
   const dialogue = useUi((s) => s.dialogue);
-  const intents = useIntents();
+  const intents = useDialogueIntents();
 
   useEffect(() => {
     if (!dialogue) return;

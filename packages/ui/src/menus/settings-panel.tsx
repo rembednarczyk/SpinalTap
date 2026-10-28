@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { type ColorblindMode, type DamageNumbersMode, HUD_SCALE_RANGE } from "../store/hud-vm";
 import type { AimMode, GraphicsQuality, SettingsVm } from "../store/ui-store";
 import { TOKENS } from "../hud/tokens";
-import { useIntents, useUi } from "../use-ui";
+import { useSettingsIntents, useUi } from "../use-ui";
 import { RESERVED_KEYS, keyLabel } from "./key-label";
 
 const QUALITY: readonly (readonly [GraphicsQuality, string])[] = [
@@ -121,7 +121,7 @@ const Accessibility = ({ settings, set }: { settings: SettingsVm; set: (patch: P
 /** The key list: click "Zmień", then press a key, a mouse button or turn the wheel; Esc cancels. */
 const KeyBindings = () => {
   const controls = useUi((s) => s.controls);
-  const intents = useIntents();
+  const intents = useSettingsIntents();
   const [listening, setListening] = useState<string | null>(null);
   const [refused, setRefused] = useState<string | null>(null);
   useEffect(() => {
@@ -183,7 +183,7 @@ const KeyBindings = () => {
 export const SettingsPanel = () => {
   const settings = useUi((s) => s.settings);
   const reloadNeeded = useUi((s) => s.reloadNeeded);
-  const intents = useIntents();
+  const intents = useSettingsIntents();
   const [section, setSection] = useState<Section>("general");
   const set = (patch: Partial<SettingsVm>) => intents.changeSettings(patch);
   return (

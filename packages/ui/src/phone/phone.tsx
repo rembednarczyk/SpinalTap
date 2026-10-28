@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { PhoneMessageVm, PhoneThreadVm } from "../store/hud-vm";
-import { useIntents, useUi } from "../use-ui";
+import { usePhoneIntents, useUi } from "../use-ui";
 
 /** The phone key; kept out of the key bindings (menus.RESERVED_KEYS). */
 export const PHONE_KEY = "KeyT";
@@ -93,7 +93,7 @@ export const PhonePanel = () => {
   const open = useUi((s) => s.phoneOpen);
   const phone = useUi((s) => s.phone);
   const blocked = useUi((s) => s.dialogue !== null || s.shopOpen || s.loot !== null || s.characterTab !== null || s.breach !== null);
-  const intents = useIntents();
+  const intents = usePhoneIntents();
   const [selected, setSelected] = useState<string | null>(null);
 
   useEffect(() => {
