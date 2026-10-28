@@ -1,5 +1,5 @@
 {
-  "$comment": "Perf budgets for the M0 reference scenes (plan \u00a710, ADR-0007). Draw calls include the colour pass, the moon shadow pass, the G-buffer for line art and character outlines. Frame time is measured under SwiftShader in CI, hence the generous ceiling. market-tpp (M2): the Targ district streamed in, Shinsekai streamed out; measured 182 draw calls / 80 active meshes. ADR-0021 (fire escape, balcony, three ladders and roof parapets on the south row): measured 248 draw calls / 109 active meshes. docks (ADR-0024): east end of the quay looking west (water and mist, crane, office), the docks yard and quay streamed in and nothing else; measured 190 draw calls / 82 active meshes.",
+  "$comment": "Perf budgets for the M0 reference scenes (plan \u00a710, ADR-0007). Draw calls include the colour pass, the moon shadow pass, the G-buffer for line art and character outlines. Frame time is measured under SwiftShader in CI, hence the generous ceiling. market-tpp (M2): the Targ district streamed in, Shinsekai streamed out; measured 182 draw calls / 80 active meshes. ADR-0021 (fire escape, balcony, three ladders and roof parapets on the south row): measured 248 draw calls / 109 active meshes. docks (ADR-0024): east end of the quay looking west (water and mist, crane, office), the docks yard and quay streamed in and nothing else; measured 190 draw calls / 82 active meshes. ADR-0026 (Kenta, Fumiko and Goro behind the north stalls, Sachiko at the kiosk, the people of Ulica Kanałowa down the street behind the gate, the car on the deck): measured 301 draw calls / 120 active meshes; the four market keepers alone are 20 draw calls.",
   "scenes": {
     "reference": {
       "drawCalls": 130,
@@ -10,8 +10,8 @@
       "activeMeshes": 130
     },
     "market-tpp": {
-      "drawCalls": 265,
-      "activeMeshes": 118
+      "drawCalls": 315,
+      "activeMeshes": 126
     },
     "docks": {
       "drawCalls": 230,
