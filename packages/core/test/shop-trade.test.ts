@@ -201,7 +201,8 @@ describe("backpack", () => {
 
 describe("shop stock", () => {
   it("the clinic sells medicine, Oyaji ammo, mods, clothes and guns", () => {
-    expect(SHOPS.clinic.stock.map((e) => e.item)).toEqual(["medkit", "bandage"]);
+    // Wave 2 (ADR-0033): the steadying stim and the capacity shard join the medicine.
+    expect(SHOPS.clinic.stock.map((e) => e.item)).toEqual(["medkit", "bandage", "steady_stim", "capacity_shard"]);
     const kinds = new Set(SHOPS.oyaji.stock.map((e) => e.kind));
     expect(kinds).toEqual(new Set(["ammo", "item"]));
     for (const shop of SHOP_IDS) expect(new Set(SHOPS[shop].stock.map((e) => e.item)).size).toBe(SHOPS[shop].stock.length);

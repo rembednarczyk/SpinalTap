@@ -3,6 +3,12 @@ import type { StatModifiers } from "../character/stats";
 
 export type CyberwareSlot = "optics" | "nervous" | "skeleton" | "arms";
 
+/**
+ * A perk that changes how the game plays (ADR-0033): a dash (also once in the air) and
+ * bullets sent back off a guarding melee weapon.
+ */
+export type CyberPerk = "dash" | "deflect";
+
 export interface CyberwareDefinition {
   readonly id: string;
   readonly name: string;
@@ -12,6 +18,9 @@ export interface CyberwareDefinition {
   readonly modifiers: StatModifiers;
   /** Active ability granted while installed. */
   readonly ability?: AbilityId;
+  /** Cyberware capacity it takes, 2 to 8 (ADR-0033). */
+  readonly capacity: number;
+  readonly perk?: CyberPerk;
 }
 
 export const CYBERWARE_CATALOG = {
@@ -21,6 +30,7 @@ export const CYBERWARE_CATALOG = {
     slot: "optics",
     price: 0,
     description: "Optyka startowa z prostym wspomaganiem celowania. Szansa na krytyk +4%, stabilność celowania +10%.",
+    capacity: 2,
     modifiers: { critChance: 0.04, aimStability: 0.1 },
   },
   subdermal_weave: {
@@ -29,6 +39,7 @@ export const CYBERWARE_CATALOG = {
     slot: "skeleton",
     price: 650,
     description: "Siatka z polimeru pod skórą, także pod skalpem. Pancerz +4, pancerz głowy +3, maks. HP +15.",
+    capacity: 4,
     modifiers: { armor: 4, maxHp: 15, headArmor: 3 },
   },
   synapse_booster: {
@@ -37,6 +48,7 @@ export const CYBERWARE_CATALOG = {
     slot: "nervous",
     price: 900,
     description: "Szybsze przetwarzanie celu. Mnożnik krytyka +0,4, stabilność celowania +10%.",
+    capacity: 5,
     modifiers: { critMultiplier: 0.4, aimStability: 0.1 },
   },
   kairos_overclock: {
@@ -45,6 +57,7 @@ export const CYBERWARE_CATALOG = {
     slot: "nervous",
     price: 1100,
     description: "Aktywny [Q]: przez 4 s świat zwalnia do 30%. Odnowienie 16 s.",
+    capacity: 7,
     modifiers: {},
     ability: "reflex_overdrive",
   },
@@ -54,7 +67,30 @@ export const CYBERWARE_CATALOG = {
     slot: "arms",
     price: 500,
     description: "Mniej odrzutu, pewniejszy strzał. Obrażenia +4, stabilność celowania +30%.",
+    capacity: 3,
     modifiers: { damageBonus: 4, aimStability: 0.3 },
+  },
+  // Wave 2 (ADR-0033). The legs go into the skeleton slot (tendons and joints of the frame), so
+  // the dash competes with the subdermal weave: mobility or armour.
+  kitsune_tendons: {
+    id: "kitsune_tendons",
+    name: "Ścięgna Kitsune",
+    slot: "skeleton",
+    price: 950,
+    capacity: 6,
+    description: "Wzmocnione ścięgna nóg. [Alt]: zryw na 3 m w kierunku ruchu, także raz w powietrzu. Odnowienie 1,5 s, przez 0,3 s kule przechodzą obok.",
+    modifiers: { moveSpeed: 0.2 },
+    perk: "dash",
+  },
+  tsubame_reflex: {
+    id: "tsubame_reflex",
+    name: "Odruch Tsubame",
+    slot: "arms",
+    price: 1150,
+    capacity: 8,
+    description: "Sterownik nadgarstka. Blok bronią białą odbija kule tam, gdzie patrzysz, dopóki wytrzymałość jest powyżej 1/3.",
+    modifiers: {},
+    perk: "deflect",
   },
 } as const satisfies Record<string, CyberwareDefinition>;
 
@@ -95,4 +131,14 @@ export const loadoutAbility = (loadout: CyberwareLoadout): AbilityId | null => {
     if (def.ability) return def.ability;
   }
   return null;
+};
+
+/** Does an installed implant give the perk? */
+export const hasPerk = (loadout: CyberwareLoadout, perk: CyberPerk): boolean => {
+  for (const id of Object.values(loadout)) {
+    if (id === undefined) continue;
+    const def: CyberwareDefinition = CYBERWARE_CATALOG[id];
+    if (def.perk === perk) return true;
+  }
+  return false;
 };

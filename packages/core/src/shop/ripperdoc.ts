@@ -1,5 +1,6 @@
 import { type CharacterState } from "../character/character";
 import { CYBERWARE_CATALOG, type CyberwareId, installCyberware } from "../cyberware/cyberware";
+import { fitsCapacity } from "../cyberware/capacity";
 import { type Wallet, debit } from "../economy/wallet";
 import { STACKABLE_CATALOG } from "../items/catalog";
 import { type Equipment, type InventoryState, addStack } from "../items/inventory";
@@ -9,7 +10,8 @@ import { type ReputationTier, reputationTier } from "../reputation/reputation";
 /**
  * Why a trade did not happen. "closed": the stall is shut at this hour; "not-sold-here": not in
  * this shop's stock (or not an implant); "not-bought-here": the trader does not buy that kind;
- * "worthless": nobody pays for it (the starter optics); "in-use": equipped, mounted or modded.
+ * "worthless": nobody pays for it (the starter optics); "in-use": equipped, mounted or modded;
+ * "over-capacity": the implant does not fit into the cyberware capacity (ADR-0033).
  */
 export type PurchaseFailure =
   | "insufficient-funds"
@@ -24,7 +26,8 @@ export type PurchaseFailure =
   | "worthless"
   | "not-damaged"
   | "max-capacity"
-  | "empty-slot";
+  | "empty-slot"
+  | "over-capacity";
 
 /** How a shop treats the player, derived from the shop owner's faction standing. */
 export interface ShopTerms {
@@ -55,12 +58,20 @@ export type CyberwarePurchase =
 
 /**
  * Buying from the ripperdoc installs immediately. The replaced implant is not refunded; the
- * simulation puts it into the bag with `stowImplant` when a cell is free (ADR-0015).
+ * simulation puts it into the bag with `stowImplant` when a cell is free (ADR-0015). An implant
+ * past the cyberware capacity `capacity` is refused (ADR-0033); without it there is no limit.
  */
-export const buyCyberware = (wallet: Wallet, character: CharacterState, id: CyberwareId, terms: ShopTerms = STANDARD_TERMS): CyberwarePurchase => {
+export const buyCyberware = (
+  wallet: Wallet,
+  character: CharacterState,
+  id: CyberwareId,
+  terms: ShopTerms = STANDARD_TERMS,
+  capacity = Infinity,
+): CyberwarePurchase => {
   if (!terms.open) return { ok: false, reason: "refused" };
   const def = CYBERWARE_CATALOG[id];
   if (character.cyberware[def.slot] === id) return { ok: false, reason: "already-installed" };
+  if (!fitsCapacity(character.cyberware, id, capacity)) return { ok: false, reason: "over-capacity" };
   const price = priceWithTerms(def.price, terms);
   const paid = price === 0 ? { ok: true as const, wallet } : debit(wallet, price);
   if (!paid.ok) return { ok: false, reason: "insufficient-funds" };

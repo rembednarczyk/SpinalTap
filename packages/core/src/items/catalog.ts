@@ -2,6 +2,7 @@ import type { StatModifiers } from "../character/stats";
 import type { HitZone } from "../combat/combat-rules";
 import type { SpreadProfile } from "../combat/spread";
 import { CYBERWARE_CATALOG, type CyberwareId, isCyberwareId } from "../cyberware/cyberware";
+import type { BuffId, DisguiseRole } from "../world/wave2";
 import type {
   AmmoId,
   ConsumableId,
@@ -36,6 +37,10 @@ export interface StackableDefinition {
   readonly stack: number;
   /** HP restored when used (consumables). */
   readonly heal?: number;
+  /** Buff it starts (ADR-0033), for the buff's own duration. */
+  readonly buff?: BuffId;
+  /** Cyberware capacity it adds for good when used (a capacity shard, ADR-0033). */
+  readonly cyberCapacity?: number;
 }
 
 export const STACKABLE_CATALOG = {
@@ -62,11 +67,12 @@ export const STACKABLE_CATALOG = {
   ramen: {
     id: "ramen",
     name: "Miska ramenu",
-    description: "Tonkotsu od Fumiko, w kubku z pokrywką. Przywraca 30 HP, jeśli zjesz to w spokoju.",
+    description: "Tonkotsu od Fumiko, w kubku z pokrywką. Przywraca 30 HP i przez 2 minuty 0,5 HP/s.",
     category: "consumable",
     value: 35,
     stack: 3,
     heal: 30,
+    buff: "regen",
   },
   yakitori: {
     id: "yakitori",
@@ -76,6 +82,37 @@ export const STACKABLE_CATALOG = {
     value: 10,
     stack: 6,
     heal: 10,
+  },
+  // Wave 2 (ADR-0033): buffs that count in a fight, and the capacity shard.
+  synth_coffee: {
+    id: "synth_coffee",
+    name: "Kawa syntetyczna",
+    description: "Gorzka, z termosu Fumiko. Przez 90 s odnowienie zdolności i zrywu biegnie 1,5 raza szybciej.",
+    category: "consumable",
+    value: 40,
+    stack: 3,
+    heal: 0,
+    buff: "quick_cooldown",
+  },
+  steady_stim: {
+    id: "steady_stim",
+    name: "Stymulant Shizuka",
+    description: "Iniektor doktora Mori z beta-blokerem. Przez 60 s stabilność celowania +20%.",
+    category: "consumable",
+    value: 70,
+    stack: 5,
+    heal: 0,
+    buff: "steady",
+  },
+  capacity_shard: {
+    id: "capacity_shard",
+    name: "Shard pojemności",
+    description: "Wojskowy shard kalibracyjny. Wgrany zwiększa pojemność cyberware o 2 na zawsze.",
+    category: "consumable",
+    value: 450,
+    stack: 5,
+    heal: 0,
+    cyberCapacity: 2,
   },
   scrap: {
     id: "scrap",
@@ -103,7 +140,7 @@ export const STACKABLE_CATALOG = {
   },
 } as const satisfies Record<StackableId, StackableDefinition>;
 
-export const CONSUMABLE_IDS: readonly ConsumableId[] = ["medkit", "bandage", "ramen", "yakitori"];
+export const CONSUMABLE_IDS: readonly ConsumableId[] = ["medkit", "bandage", "ramen", "yakitori", "synth_coffee", "steady_stim", "capacity_shard"];
 export const JUNK_IDS: readonly JunkId[] = ["scrap", "weapon_parts", "datachip"];
 
 export interface AmmoDefinition {
@@ -133,6 +170,8 @@ export interface GarmentDefinition {
   readonly modifiers?: StatModifiers;
   readonly value: number;
   readonly look: GarmentLook;
+  /** Worn on the torso, it passes the player off as one of them (ADR-0033). */
+  readonly disguise?: DisguiseRole;
 }
 
 export const GARMENT_CATALOG = {
@@ -185,6 +224,7 @@ export const GARMENT_CATALOG = {
     armor: { torso: 3, arm: 2 },
     value: 600,
     look: { tint: "jacket-hebi" },
+    disguise: "hebi",
   },
   ballistic_vest: {
     id: "ballistic_vest",
@@ -228,6 +268,29 @@ export const GARMENT_CATALOG = {
     armor: { head: 3 },
     value: 400,
     look: { attachments: [{ point: "head", mesh: "helmet" }] },
+  },
+  // Disguises of the docks (ADR-0033): what the guards and the office staff wear, not armour.
+  tessen_uniform: {
+    id: "tessen_uniform",
+    name: "Mundur ochrony Tessen",
+    description: "Szara kurtka służbowa z naszywką Tessen. Strażnicy biorą cię za swoją, szef zmiany nie zawsze.",
+    category: "garment",
+    slot: "torso",
+    armor: { torso: 2, arm: 1 },
+    value: 450,
+    look: { tint: "jacket-tessen" },
+    disguise: "tessen_guard",
+  },
+  tessen_overalls: {
+    id: "tessen_overalls",
+    name: "Kombinezon personelu Tessen",
+    description: "Kombinezon obsługi portu z identyfikatorem. Wpuszczają w nim do biura, ale z bronią w ręku nikt nie uwierzy.",
+    category: "garment",
+    slot: "torso",
+    armor: { torso: 1 },
+    value: 300,
+    look: { tint: "cargo" },
+    disguise: "tessen_staff",
   },
 } as const satisfies Record<GarmentId, GarmentDefinition>;
 
