@@ -6,6 +6,8 @@ VAR quest_step = ""
 VAR alias = ""
 VAR contract_state = ""
 VAR contract_site = ""
+// The rolled variation of the running contract as one or two sentences (ADR-0032), "" without one.
+VAR contract_variation = ""
 VAR contracts_done = 0
 // Faction stances from the domain: "hostile", "neutral" or "friendly".
 VAR fixers_stance = "neutral"
@@ -147,6 +149,9 @@ KAITO: I jeszcze jedno, Seki. Ktoś już pytał o kobietę z wraku. Nie tylko ja
 
 = contract_running
 KAITO: Kontrakt dalej otwarty. Cel: {contract_site}.
+{ contract_variation != "":
+    KAITO: Jeszcze jedno, zanim pójdziesz. {contract_variation}
+}
 -> END
 
 // Act II (m3-lustro.ink): the hook from a fixer job into the main thread.
@@ -178,6 +183,9 @@ KAITO: Twój chłopak sam się umawia z Kagami. Albo ktoś mówi jego głosem.
 KAITO: Moduły miały już być u Hany. Targ pod estakadą, za Ulicą Kanałową.
 { contract_time_left > 0:
     KAITO: Zostało ci {contract_time_left} s. Nie stój tu.
+}
+{ contract_variation != "":
+    KAITO: I pamiętaj. {contract_variation}
 }
 -> END
 
