@@ -15,8 +15,6 @@ import { BODY } from "./factory";
 
 /** Game seconds a passer-by spends on one leg of its routine: the walk there and the stay. */
 export const ROUTINE_SLOT_SECONDS = 45 * SECONDS_PER_MINUTE;
-/** Each passer-by of a chunk sets off this much later than the one before it, so they do not all leave at once. */
-export const ROUTINE_STAGGER_SECONDS = 4 * SECONDS_PER_MINUTE;
 
 export interface RoutineStop {
   readonly spot: ActivitySpot;
@@ -69,15 +67,18 @@ export const routineOf = (seed: number, chunk: string, count: number, slot: numb
   return out;
 };
 
-/** The routine slot passer-by `index` is in at the clock's time (later ones set off later). */
-export const slotOf = (clock: GameClock, index: number): number => Math.floor((clock.seconds - index * ROUTINE_STAGGER_SECONDS) / ROUTINE_SLOT_SECONDS);
+/**
+ * The routine slot at the clock's time. Everyone of a chunk changes spots at the same moment,
+ * so two of them never head for one spot; they still arrive one by one (different walks, speeds).
+ */
+export const slotOf = (clock: GameClock): number => Math.floor(clock.seconds / ROUTINE_SLOT_SECONDS);
 
 const memo = new Map<string, RoutineStop[]>();
 const MEMO_SIZE = 64;
 
 /** The stop of passer-by `index` of `chunk` at the clock's time. Memoised; a miss gives what a hit would. */
 export const passerbyStop = (seed: number, chunk: string, index: number, count: number, clock: GameClock): RoutineStop | null => {
-  const slot = slotOf(clock, index);
+  const slot = slotOf(clock);
   const key = `${seed}:${chunk}:${count}:${slot}`;
   let plan = memo.get(key);
   if (!plan) {
