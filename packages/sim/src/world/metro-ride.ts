@@ -1,9 +1,7 @@
-import { type EntityId, type GameCommand, type MetroStationId, debit, metroFare, metroRefusal, metroRideSeconds } from "@seki/core";
-import { KIOSK_SIZE, type MetroStationDef, kioskAt, kioskView, metroStation } from "../content/metro";
-import { aabbFromCenter } from "./collision";
+import { type GameCommand, type MetroStationId, debit, metroFare, metroRefusal, metroRideSeconds } from "@seki/core";
+import { type MetroStationDef, kioskAt, metroStation } from "../content/metro";
 import type { Entity } from "./components";
 import type { SimContext, System } from "./context";
-import { propEntity } from "./factory";
 
 /**
  * The metro (ADR-0032, ADR-0034). A ticket bought at a kiosk takes the player off the street:
@@ -12,27 +10,6 @@ import { propEntity } from "./factory";
  * that district in while the ride lasts. The clock runs on. At `arriveTick` the player comes up
  * on the platform. The ride is in the domain, so a save made in the carriage loads in it.
  */
-
-/** Makers of the platform's entities (props and the kiosk), unkeyed: they are content. */
-export const metroPieces = (station: MetroStationDef): ((id: EntityId) => Entity)[] => [
-  ...station.props.map((prop) => (id: EntityId) => propEntity(id, prop, station.chunk)),
-  (id: EntityId): Entity => {
-    const centre = { x: station.kiosk.x, y: station.kiosk.y + KIOSK_SIZE.y / 2, z: station.kiosk.z };
-    return {
-      id,
-      chunk: station.chunk,
-      position: centre,
-      prevPosition: centre,
-      yaw: station.yaw,
-      prevYaw: station.yaw,
-      pitch: 0,
-      view: kioskView,
-      solid: aabbFromCenter(centre, KIOSK_SIZE),
-      // The interaction is measured from the kiosk's foot, like a person's.
-      interactable: { kind: "metro", station: station.id, dialogueId: `metro_${station.id}`, prompt: "Bilet", radius: 1.8 },
-    };
-  },
-];
 
 const PLAYER_KEY = "player";
 

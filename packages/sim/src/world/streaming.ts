@@ -22,7 +22,7 @@ import { DOKI_CONTRACT_POSTS, DOKI_ITEM_SPOTS, DOKI_TERMINAL_SPOTS, ESCORT_ROUTE
 import { type ChunkDef, type DistrictId, WORLD_CHUNKS, WORLD_DEVICES, WORLD_METRO, chunkAt, distanceToRect } from "../content/world-map";
 import type { DeviceDef } from "../content/devices";
 import type { MetroStationDef } from "../content/metro";
-import { metroPieces } from "./metro-ride";
+import { metroPieces } from "./metro-pieces";
 import { decorateTarget, planExtras, targetPresence, targetSpot, targetType } from "./contract-plan";
 import { type Presence, isPresent } from "../content/builders";
 import type { Entity } from "./components";

@@ -1,6 +1,7 @@
 import type { MetroStationId, Vec3, ViewDescriptor } from "@seki/core";
 import { type StaticProp, neon, slab, v } from "./builders";
-import type { DistrictId } from "./world-map";
+/** District ids as world-map.ts names them (kept local: world-map imports this table). */
+type DistrictId = "shinsekai-7" | "kanal" | "targ" | "doki";
 
 /**
  * Metro platforms (ADR-0034): one per district, each a ticket kiosk against a wall with a
