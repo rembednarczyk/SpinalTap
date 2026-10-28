@@ -44,9 +44,9 @@ describe("dash streaks (ADR-0036)", () => {
 });
 
 describe("reflected bullets (ADR-0036)", () => {
-  it("draw a trail from the blade to the shooter's chest", () => {
+  it("draw a trail from the blade to where the bullet went", () => {
     const trails = new TrailState(new FlashLimiter());
-    trails.reflect({ x: 1, y: 1.3, z: 1 }, { x: 1, y: 0, z: 11 }, false);
+    trails.reflect({ x: 1, y: 1.3, z: 1 }, { x: 1, y: 1.3, z: 11 }, false);
     const t = trails.trails[0]!;
     expect(t.kind).toBe("reflect");
     expect(t.to).toEqual({ x: 1, y: 1.3, z: 11 });
@@ -59,7 +59,7 @@ describe("reflected bullets (ADR-0036)", () => {
     let lit = 0;
     for (let i = 0; i < 60; i++) {
       limiter.advance(DT);
-      if (trails.reflect(at, null, false)) lit++;
+      if (trails.reflect(at, { x: 0, y: 1, z: 5 }, false)) lit++;
     }
     expect(lit).toBe(MAX_FLASHES_PER_SECOND);
     // Every reflection still shows its trail (the pool keeps the newest).
@@ -69,7 +69,7 @@ describe("reflected bullets (ADR-0036)", () => {
   it("never flash with reduced flashes", () => {
     const limiter = new FlashLimiter();
     const trails = new TrailState(limiter);
-    expect(trails.reflect(at, null, true)).toBe(false);
+    expect(trails.reflect(at, { x: 0, y: 1, z: 5 }, true)).toBe(false);
     expect(limiter.recent).toBe(0);
   });
 });

@@ -227,7 +227,7 @@ session.bus.on("HeatChanged", (e) => renderer.gameplayFx({ kind: "heat", level: 
 session.bus.on("ScanFocusChanged", (e) => renderer.setScanFocus(e.targetId, e.kind));
 // Wave 2 (ADR-0036): dash and reflection effects, the metro car while the destination streams in.
 session.bus.on("Dashed", (e) => renderer.gameplayFx({ kind: "dash", entityId: e.entityId, at: e.at, air: e.air }));
-session.bus.on("ProjectileReflected", (e) => renderer.gameplayFx({ kind: "reflect", defenderId: e.defenderId, attackerId: e.attackerId, at: e.at }));
+session.bus.on("ProjectileReflected", (e) => renderer.gameplayFx({ kind: "reflect", defenderId: e.defenderId, at: e.at, to: e.to }));
 session.bus.on("MetroDeparted", (e) => renderer.setMetroRide({ from: e.from, to: e.to, seconds: e.seconds }));
 session.bus.on("MetroArrived", () => renderer.setMetroRide(null));
 

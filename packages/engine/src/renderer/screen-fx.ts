@@ -36,8 +36,8 @@ export type GameplayFxEvent =
   | { readonly kind: "heat"; readonly level: number; readonly searching: boolean }
   /** Someone dashed from `at` (Dashed, ADR-0036): streaks behind them; blur and speed lines for the player. */
   | { readonly kind: "dash"; readonly entityId: EntityId; readonly at: Vec3; readonly air: boolean }
-  /** A blade sent a bullet back (ProjectileReflected): a spark and a light trail to the shooter. */
-  | { readonly kind: "reflect"; readonly defenderId: EntityId; readonly attackerId: EntityId; readonly at: Vec3 };
+  /** A blade sent a bullet back (ProjectileReflected): a spark at `at` and a light trail to `to`. */
+  | { readonly kind: "reflect"; readonly defenderId: EntityId; readonly at: Vec3; readonly to: Vec3 };
 
 /** Visits one entity the scanner may outline: its own scan class and, lazily, its meshes. */
 export type ScanVisitor = (id: EntityId, own: ScanClass | null, meshes: () => readonly AbstractMesh[]) => void;
@@ -266,16 +266,15 @@ export class ScreenFx {
         this.deps.speedLines.pulse(this.reduceFlashes ? 0.5 : 1);
         return;
       case "reflect":
-        this.reflect(e.defenderId, e.attackerId, e.at);
+        this.reflect(e.defenderId, e.at, e.to);
         return;
     }
   }
 
-  /** Spark on the blade, a trail back to the shooter, and the street lit only within the flash budget. */
-  private reflect(defenderId: EntityId, attackerId: EntityId, at: Vec3): void {
+  /** Spark on the blade, a trail to where the bullet went, and the street lit only within the flash budget. */
+  private reflect(defenderId: EntityId, at: Vec3, to: Vec3): void {
     this.effects.hitSpark(v3(at), true);
-    const shooter = this.deps.actors.transformOf(attackerId)?.position ?? null;
-    if (this.trails.reflect(at, shooter, this.reduceFlashes)) this.flash = { x: at.x, y: at.y, z: at.z, life: 0.05 };
+    if (this.trails.reflect(at, to, this.reduceFlashes)) this.flash = { x: at.x, y: at.y, z: at.z, life: 0.05 };
     if (this.isCameraTarget(defenderId)) this.deps.camera.shake(0.2);
   }
 

@@ -31,8 +31,6 @@ export const DASH_FOLLOW = 0.22;
 export const REFLECT_TRAIL_LIFE = 0.2;
 /** Chest and knee height of the two dash streaks. */
 const DASH_LIFTS = [1.15, 0.45] as const;
-/** Where the reflected bullet ends on the shooter: about the chest. */
-const SHOOTER_CHEST = 1.3;
 /** Most trails alive at once; the oldest goes first. */
 export const MAX_TRAILS = 8;
 
@@ -71,12 +69,11 @@ export class TrailState {
   }
 
   /**
-   * A bullet sent back from the blade at `at` to the shooter's chest (or straight up the
-   * defender's view when the shooter is gone). Returns true when the spark may also light the
-   * street: one of the three flashes a second (ADR-0030), never with reduced flashes.
+   * A bullet sent back from the blade at `at` to `to`, where the simulation says it went (the
+   * shooter or whatever it hit). Returns true when the spark may also light the street: one of
+   * the three flashes a second (ADR-0030), never with reduced flashes.
    */
-  reflect(at: Vec3, shooter: Vec3 | null, reduceFlashes: boolean): boolean {
-    const to = shooter ? up(shooter, SHOOTER_CHEST) : up(at, 0.01);
+  reflect(at: Vec3, to: Vec3, reduceFlashes: boolean): boolean {
     this.push({ kind: "reflect", from: at, to, ttl: REFLECT_TRAIL_LIFE, life: REFLECT_TRAIL_LIFE, follow: null, lift: 0, followFor: 0 });
     return !reduceFlashes && this.limiter.tryFlash();
   }
