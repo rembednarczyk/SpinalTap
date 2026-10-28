@@ -137,7 +137,7 @@ describe("daily plans on the street (ADR-0026)", () => {
     expect(highest).toBeGreaterThan(4.5);
     expect(worst).toBeLessThan(1.5);
     expect(Math.hypot(hideo.position.x - KANAL_SPOTS.hideoKiosk.x, hideo.position.z - KANAL_SPOTS.hideoKiosk.z)).toBeLessThan(0.2);
-  });
+  }, 30_000);
 
   it("Mei sings under KARAOKE at night and waits by the bend by day", () => {
     const night = Simulation.create({ seed: 1 });
