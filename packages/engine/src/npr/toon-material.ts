@@ -127,7 +127,7 @@ export class ToonMaterials {
    * The static reflection probe the wet surfaces sample (ADR-0036). Call before the first
    * material of those presets is created: the reflection is compiled in, not toggled.
    */
-  setEnvironment(texture: BaseTexture, presets: ReadonlySet<string>, strength = 2.2): void {
+  setEnvironment(texture: BaseTexture, presets: ReadonlySet<string>, strength = 1.6): void {
     this.env = { texture, presets, strength };
     for (const [name, m] of this.materials) if (presets.has(name)) m.setTexture("envSampler", texture);
   }

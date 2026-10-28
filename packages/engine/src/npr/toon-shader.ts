@@ -306,9 +306,10 @@ void main(void) {
   if (wetK > 0.4 && n.y > 0.6 && envStrength > 0.0) {
     vec3 r = reflect(-v, n);
     r.y = abs(r.y);
-    vec3 env = textureCube(envSampler, r).rgb;
-    env = floor(env * 6.0 + 0.4) / 6.0;
-    float puddle = mix(0.3, 1.0, step(0.5, vnoise(vWorldPos.xz * 0.45)));
+    // Only what glows: the sky's haze is cut away, neon and signs stay, in flat steps.
+    vec3 env = max(textureCube(envSampler, r).rgb - vec3(0.18), vec3(0.0));
+    env = floor(env * 6.0 + 0.3) / 6.0;
+    float puddle = mix(0.15, 1.0, step(0.5, vnoise(vWorldPos.xz * 0.45)));
     float graze = 0.25 + 0.75 * pow(1.0 - max(dot(n, v), 0.0), 3.0);
     spec += env * envStrength * puddle * graze * wetK;
   }

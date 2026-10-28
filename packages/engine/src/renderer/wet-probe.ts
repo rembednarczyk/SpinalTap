@@ -57,6 +57,9 @@ export class WetProbe {
     // Render once, then only on `resetRefreshCounter`.
     this.probe.refreshRate = 0;
     this.probe.renderList = [];
+    // Babylon renders a probe only for the materials that ask for it (standard, PBR); the toon
+    // ShaderMaterials do not, so the cube goes in with the scene's own render targets.
+    scene.customRenderTargets.push(this.probe.cubeTexture);
   }
 
   get texture(): BaseTexture {
