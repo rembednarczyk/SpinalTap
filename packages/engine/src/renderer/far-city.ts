@@ -360,6 +360,7 @@ varying float vDist;
 uniform float time;
 uniform float intensity;
 uniform float fogDensity;
+uniform float reduce;
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 void main(void) {
   float seed = vMeta.x;
@@ -396,7 +397,7 @@ void main(void) {
     }
     float frame = 1.0 - step(0.025, min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y)));
     float scan = 0.72 + 0.28 * sin(uv.y * 180.0 + time * 7.0);
-    float flick = 1.0 - 0.6 * step(0.985, hash(vec2(floor(time * 14.0), seed * 31.0)));
+    float flick = 1.0 - 0.6 * step(0.985, hash(vec2(floor(time * 14.0), seed * 31.0))) * (1.0 - reduce);
     col *= mix(1.25, 0.75, uv.y);
     a = (shape * 0.42 + frame * 0.7 + 0.05) * scan * flick;
   } else if (kind < 1.5) {
@@ -475,6 +476,11 @@ export class FarCity {
     }
   }
 
+  /** Accessibility (ADR-0028): the ads stop dropping out. */
+  setReduceFlashes(on: boolean): void {
+    for (const m of this.lights) m.setFloat("reduce", on ? 1 : 0);
+  }
+
   /** Keeps the horizon around the camera and animates the ads (frozen in reference frames). */
   update(dt: number, camera: Vec3, frozen: boolean): void {
     for (const m of this.horizonMeshes) {
@@ -505,13 +511,14 @@ export class FarCity {
     const mesh = sinkToMesh(this.scene, name, sink, true);
     const m = new ShaderMaterial(name, this.scene, { vertexSource: LIGHTS_VERTEX, fragmentSource: LIGHTS_FRAGMENT }, {
       attributes: ["position", "color", "uv", "uv2"],
-      uniforms: ["world", "viewProjection", "cameraPosition", "time", "intensity", "fogDensity"],
+      uniforms: ["world", "viewProjection", "cameraPosition", "time", "intensity", "fogDensity", "reduce"],
       needAlphaBlending: true,
     });
     m.alphaMode = Constants.ALPHA_ONEONE;
     m.disableDepthWrite = true;
     m.backFaceCulling = false;
     m.setFloat("time", 0);
+    m.setFloat("reduce", 0);
     mesh.material = m;
     this.lights.push(m);
     return mesh;
