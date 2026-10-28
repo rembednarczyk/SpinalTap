@@ -26,5 +26,6 @@
 | [0022](0022-budynki-z-zestawu-cc0.md) | Budynki i pojazdy z zestawu CC0 (city kit): skin bloku, paleta, komórki 64 m | Zaakceptowana |
 | [0023](0023-watek-glowny-akt-2.md) | Wątek główny, akt II „Lustro”: Ren, archiwum Kagami, trzy zakończenia | Zaakceptowana |
 | [0024](0024-doki-zlecenia-snajper-ochrona.md) | Doki Tessen: eskorta, infiltracja, włamanie, snajper i ochrona korporacji, zapis v9 | Zaakceptowana |
+| [0028](0028-swiadkowie-heat-quickhacki-zlecenia.md) | Kontrakty fali 1 z researchu: świadkowie i heat, skaner i quickhacki, odznaki zleceń, telefon | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.

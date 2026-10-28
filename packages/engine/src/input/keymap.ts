@@ -1,4 +1,9 @@
-import type { InputFrame, WeaponCycleInput, WeaponSlotInput } from "@seki/core";
+import type {
+  InputFrame,
+  QuickhackSlotInput,
+  WeaponCycleInput,
+  WeaponSlotInput,
+} from "@seki/core";
 
 export type Action =
   | "forward"
@@ -20,7 +25,8 @@ export type Action =
   | "slot2"
   | "slot3"
   | "nextWeapon"
-  | "prevWeapon";
+  | "prevWeapon"
+  | "scan";
 
 /**
  * Action → physical codes (KeyboardEvent.code, "Mouse0".."Mouse4", or "WheelUp"/"WheelDown").
@@ -53,11 +59,18 @@ export const DEFAULT_KEYMAP: KeyMap = {
   // The wheel walks through the weapons that are there: down to the next, up to the previous.
   nextWeapon: ["WheelDown"],
   prevWeapon: ["WheelUp"],
+  // Scanner (ADR-0028), held. Tab, Cyberpunk's key, opens the character menu here.
+  scan: ["KeyZ", "Mouse1"],
 };
 
-export const remap = (map: KeyMap, action: Action, codes: readonly string[]): KeyMap => ({ ...map, [action]: codes });
+export const remap = (
+  map: KeyMap,
+  action: Action,
+  codes: readonly string[],
+): KeyMap => ({ ...map, [action]: codes });
 
-const any = (held: ReadonlySet<string>, codes: readonly string[]) => codes.some((c) => held.has(c));
+const any = (held: ReadonlySet<string>, codes: readonly string[]) =>
+  codes.some((c) => held.has(c));
 
 export interface KeyState {
   /** Codes currently held. */
@@ -72,32 +85,70 @@ export interface LookDelta {
 }
 
 /** First slot key pressed this poll: 1 primary, 2 secondary, 3 melee, 0 none. */
-const slotPressed = (pressed: ReadonlySet<string>, map: KeyMap): WeaponSlotInput =>
-  any(pressed, map.slot1) ? 1 : any(pressed, map.slot2) ? 2 : any(pressed, map.slot3) ? 3 : 0;
+const slotPressed = (
+  pressed: ReadonlySet<string>,
+  map: KeyMap,
+): WeaponSlotInput =>
+  any(pressed, map.slot1)
+    ? 1
+    : any(pressed, map.slot2)
+      ? 2
+      : any(pressed, map.slot3)
+        ? 3
+        : 0;
 
-const cyclePressed = (pressed: ReadonlySet<string>, map: KeyMap): WeaponCycleInput =>
+/** While scanning, the number keys pick a quickhack instead of a weapon (ADR-0028). */
+const QUICKHACK_KEYS: readonly (readonly string[])[] = [
+  ["Digit1", "Numpad1"],
+  ["Digit2", "Numpad2"],
+  ["Digit3", "Numpad3"],
+  ["Digit4", "Numpad4"],
+  ["Digit5", "Numpad5"],
+];
+
+const quickhackPressed = (pressed: ReadonlySet<string>): QuickhackSlotInput => {
+  const i = QUICKHACK_KEYS.findIndex((codes) => any(pressed, codes));
+  return (i + 1) as QuickhackSlotInput;
+};
+
+const cyclePressed = (
+  pressed: ReadonlySet<string>,
+  map: KeyMap,
+): WeaponCycleInput =>
   any(pressed, map.nextWeapon) ? 1 : any(pressed, map.prevWeapon) ? -1 : 0;
 
 /** Keyboard + mouse state → InputFrame. Pure, so it is unit-tested without a browser. */
-export const mapKeyboardMouse = (keys: KeyState, look: LookDelta, map: KeyMap = DEFAULT_KEYMAP): InputFrame => ({
-  moveX: (any(keys.held, map.right) ? 1 : 0) - (any(keys.held, map.left) ? 1 : 0),
-  moveZ: (any(keys.held, map.forward) ? 1 : 0) - (any(keys.held, map.back) ? 1 : 0),
-  lookYaw: look.yaw,
-  lookPitch: look.pitch,
-  sprint: any(keys.held, map.sprint),
-  crouch: any(keys.held, map.crouch),
-  fire: any(keys.held, map.fire),
-  aim: any(keys.held, map.aim),
-  interact: any(keys.pressed, map.interact),
-  jump: any(keys.pressed, map.jump),
-  toggleCamera: any(keys.pressed, map.toggleCamera),
-  ability: any(keys.pressed, map.ability),
-  useItem: any(keys.pressed, map.useItem),
-  toggleWeapon: any(keys.pressed, map.toggleWeapon),
-  reload: any(keys.pressed, map.reload),
-  weaponSlot: slotPressed(keys.pressed, map),
-  weaponCycle: cyclePressed(keys.pressed, map),
-});
+export const mapKeyboardMouse = (
+  keys: KeyState,
+  look: LookDelta,
+  map: KeyMap = DEFAULT_KEYMAP,
+): InputFrame => {
+  const scan = any(keys.held, map.scan);
+  return {
+    moveX:
+      (any(keys.held, map.right) ? 1 : 0) - (any(keys.held, map.left) ? 1 : 0),
+    moveZ:
+      (any(keys.held, map.forward) ? 1 : 0) -
+      (any(keys.held, map.back) ? 1 : 0),
+    lookYaw: look.yaw,
+    lookPitch: look.pitch,
+    sprint: any(keys.held, map.sprint),
+    crouch: any(keys.held, map.crouch),
+    fire: any(keys.held, map.fire),
+    aim: any(keys.held, map.aim),
+    interact: any(keys.pressed, map.interact),
+    jump: any(keys.pressed, map.jump),
+    toggleCamera: any(keys.pressed, map.toggleCamera),
+    ability: any(keys.pressed, map.ability),
+    useItem: any(keys.pressed, map.useItem),
+    toggleWeapon: any(keys.pressed, map.toggleWeapon),
+    reload: any(keys.pressed, map.reload),
+    weaponSlot: scan ? 0 : slotPressed(keys.pressed, map),
+    weaponCycle: cyclePressed(keys.pressed, map),
+    scan,
+    quickhack: scan ? quickhackPressed(keys.pressed) : 0,
+  };
+};
 
 export interface PadState {
   readonly axes: readonly number[];
@@ -112,11 +163,14 @@ export const PAD_LOOK_SPEED = 2.8;
 
 const dead = (v: number | undefined): number => {
   const x = v ?? 0;
-  return Math.abs(x) < PAD_DEADZONE ? 0 : (x - Math.sign(x) * PAD_DEADZONE) / (1 - PAD_DEADZONE);
+  return Math.abs(x) < PAD_DEADZONE
+    ? 0
+    : (x - Math.sign(x) * PAD_DEADZONE) / (1 - PAD_DEADZONE);
 };
 
 /** D-pad: left primary, up secondary, right melee (down reloads). */
-const padSlot = (pressed: readonly boolean[]): WeaponSlotInput => (pressed[14] ? 1 : pressed[12] ? 2 : pressed[15] ? 3 : 0);
+const padSlot = (pressed: readonly boolean[]): WeaponSlotInput =>
+  pressed[14] ? 1 : pressed[12] ? 2 : pressed[15] ? 3 : 0;
 
 /** Standard-mapping gamepad → InputFrame. Look speed scales with dt. */
 export const mapGamepad = (pad: PadState, dt: number): InputFrame => ({
@@ -141,6 +195,9 @@ export const mapGamepad = (pad: PadState, dt: number): InputFrame => ({
   weaponSlot: padSlot(pad.pressed),
   // Weapons are picked on the d-pad, so the pad never cycles.
   weaponCycle: 0,
+  // Scanner on the right stick click (ADR-0028); quickhacks are picked in the touch/HUD list.
+  scan: pad.buttons[11] ?? false,
+  quickhack: 0,
 });
 
 /** Combines devices: axes are summed and clamped, buttons are OR-ed. */
@@ -162,6 +219,8 @@ export const mergeFrames = (a: InputFrame, b: InputFrame): InputFrame => ({
   reload: a.reload || b.reload,
   weaponSlot: a.weaponSlot || b.weaponSlot,
   weaponCycle: a.weaponCycle || b.weaponCycle,
+  scan: a.scan || b.scan,
+  quickhack: a.quickhack || b.quickhack,
 });
 
 /** How a button behaves: held down, or pressed once to start and again to stop. */
@@ -229,7 +288,11 @@ export class InputLatches {
   private readonly crouch = new Latch();
   private readonly sprint = new Latch();
 
-  setModes(modes: { aim: ButtonMode; crouch: ButtonMode; sprint: ButtonMode }): void {
+  setModes(modes: {
+    aim: ButtonMode;
+    crouch: ButtonMode;
+    sprint: ButtonMode;
+  }): void {
     for (const key of ["aim", "crouch", "sprint"] as const) {
       if (this[key].mode !== modes[key]) this[key].reset();
       this[key].mode = modes[key];
@@ -239,7 +302,11 @@ export class InputLatches {
   apply(frame: InputFrame): InputFrame {
     const aim = this.aim.apply(frame.aim);
     let sprint = this.sprint.apply(frame.sprint);
-    if (this.sprint.mode === "toggle" && sprint && (frame.moveZ <= 0.1 || aim)) {
+    if (
+      this.sprint.mode === "toggle" &&
+      sprint &&
+      (frame.moveZ <= 0.1 || aim)
+    ) {
       this.sprint.latched = false;
       sprint = false;
     }
@@ -248,7 +315,11 @@ export class InputLatches {
       this.crouch.latched = false;
       crouch = false;
     }
-    return aim === frame.aim && sprint === frame.sprint && crouch === frame.crouch ? frame : { ...frame, aim, sprint, crouch };
+    return aim === frame.aim &&
+      sprint === frame.sprint &&
+      crouch === frame.crouch
+      ? frame
+      : { ...frame, aim, sprint, crouch };
   }
 
   reset(): void {

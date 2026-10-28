@@ -5,6 +5,7 @@ import type { FactionId } from "../reputation/reputation";
 import type { ShopId, ShopItemId } from "../shop/shops";
 import type { StoryChoiceId, StoryOption } from "../story/story";
 import type { EquipSlot, ItemRef, ModSlot } from "../items/types";
+import type { BreachDaemonId } from "../hacking/quickhacks";
 
 /**
  * Requests from outside the simulation (narrative, UI). They are queued and applied at
@@ -55,4 +56,10 @@ export type GameCommand =
   | { readonly type: "install-mod"; readonly weaponUid: string; readonly modUid: string }
   | { readonly type: "remove-mod"; readonly weaponUid: string; readonly slot: ModSlot }
   /** Takes one line of a loot container, or everything that fits. */
-  | { readonly type: "take-loot"; readonly containerKey: string; readonly line: number | "all" };
+  | { readonly type: "take-loot"; readonly containerKey: string; readonly line: number | "all" }
+  // Hacking (ADR-0028).
+  /**
+   * The result of the terminal minigame (or its auto-solve, which wins fewer daemons). The UI
+   * plays the puzzle; the simulation only applies what was won.
+   */
+  | { readonly type: "breach-result"; readonly terminalKey: string; readonly daemons: readonly BreachDaemonId[] };
