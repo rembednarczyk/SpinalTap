@@ -260,7 +260,8 @@ describe("protection (Hebi come for Oyaji)", () => {
     sim.enqueue({ type: "accept-contract", kind: "protect" });
     sim.step();
     expect(sim.domain.contracts.active).toBeNull();
-  });
+    // Oyaji runs from the shots now (ADR-0029), so the wave needs about 45 s of play: roomy timeout.
+  }, 20_000);
 
   it("is only on while Oyaji's stall is open (8:00 to 22:00)", () => {
     const at = (hour: number, minute = 0) =>

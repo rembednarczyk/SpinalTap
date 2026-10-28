@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { type DomainEvents, HEAT_SEARCH_SECONDS, NO_HEAT, type SaveSnapshot, WITNESS_CALL_SECONDS } from "@seki/core";
 import {
   COWER_SECONDS,
@@ -12,6 +12,9 @@ import {
   stateHash,
 } from "../src";
 import { byKey, collect, input, run, teleportPlayer } from "./helpers";
+
+// Long runs of the street (a 20 s search, four directions of spawns): roomy on a busy machine.
+vi.setConfig({ testTimeout: 20_000 });
 
 const at = (x: number, z: number, y = 0) => ({ x, y, z });
 const roundTrip = (s: SaveSnapshot): SaveSnapshot => JSON.parse(JSON.stringify(s)) as SaveSnapshot;

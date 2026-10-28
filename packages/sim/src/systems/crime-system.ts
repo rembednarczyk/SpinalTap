@@ -57,6 +57,8 @@ export const REINFORCE_INTERVAL = 4;
 export const SPAWN_MIN = 12;
 export const SPAWN_MAX = 60;
 export const VIEW_HALF_ANGLE = 1.2;
+/** With no entry out of sight, the next look for one waits this long (seconds). */
+const ENTRY_RETRY = 1;
 /** Searchers spread around the last known position this far. */
 const SEARCH_SPREAD = 4;
 
@@ -285,7 +287,11 @@ const runReinforcements = (ctx: SimContext, player: Entity | null, dt: number): 
   const type = SECURITY_ENEMY[heat.faction];
   if (!player || !type || live.length >= HEAT_REINFORCEMENTS[heat.level] || watch.reinforce > 0) return;
   const at = entryFor(ctx, player, heat.lastKnown ?? player.position);
-  if (!at) return;
+  // No entry out of sight right now: look again in a second, not every step.
+  if (!at) {
+    watch.reinforce = ENTRY_RETRY;
+    return;
+  }
   watch.reinforce = REINFORCE_INTERVAL;
   const g = gangerEntity(ctx.streamer.takeId(), { key: "", position: at, yaw: 0 }, null, ENEMY_TYPES[type].hp, "", undefined, type);
   delete g.key;
