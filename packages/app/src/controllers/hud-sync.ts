@@ -7,6 +7,7 @@ import { createMinimapTracker } from "../minimap";
 import { describeObjective } from "../objective";
 import { createWeaponHud } from "../weapon-hud";
 import type { Wave1Hud } from "../wave1-hud";
+import type { Wave2Hud } from "../wave2-hud";
 import { type SimRef, pushToastTimed } from "./shared";
 
 /** A flashback waits this many ticks (5 s) after the last shot near the player, unless the shooter is down. */
@@ -40,6 +41,8 @@ export interface HudPanels {
   /** A conversation, a shop, a bag, a breach or the phone is on screen. */
   talking(): boolean;
   characterOpen(): boolean;
+  /** On the metro (ADR-0035): the minimap's dynamic zoom is off. */
+  riding(): boolean;
   /** The open bag (the loot controller closes an emptied one). */
   loot(): LootVm | null;
   /** The bag as the open counter sees it; nothing while no shop is open. */
@@ -51,6 +54,7 @@ export interface HudSyncDeps {
   readonly ui: UiStore;
   readonly render: RenderPort;
   readonly wave1: Wave1Hud;
+  readonly wave2: Wave2Hud;
   readonly panels: HudPanels;
 }
 
@@ -77,6 +81,7 @@ export class HudSync implements ContractIntents {
   reset(next: Simulation): void {
     this.daylightSent = null;
     this.deps.wave1.reset();
+    this.deps.wave2.reset();
     this.district = next.district;
   }
 
@@ -129,18 +134,30 @@ export class HudSync implements ContractIntents {
       clock: formatClock(sim.clock),
       day: dayOf(sim.clock),
       dayPhase: dayPhase(sim.clock),
-      ...this.minimap(sim.world, sim.domain.flags, sim.domain.contracts),
+      ...this.minimapFrame(sim),
       ...this.wave1Frame(sim, player),
     });
   }
 
+  /** The minimap with the wave 2 context (ADR-0035): zoom by speed, enforcers while disguised. */
+  private minimapFrame(sim: Simulation) {
+    const { wave2, panels } = this.deps;
+    return this.minimap(sim.world, sim.domain.flags, sim.domain.contracts, {
+      ticksPerSecond: SIM_HZ,
+      dashing: wave2.dashing,
+      riding: panels.riding(),
+      disguised: wave2.disguised,
+      enforcers: wave2.enforcers,
+    });
+  }
+
   private wave1Frame(sim: Simulation, player: Entity | undefined) {
-    const { panels, wave1, ui } = this.deps;
+    const { panels, wave1, wave2, ui } = this.deps;
     const combat = panels.screen() === "playing" && this.inCombat;
     // The open phone shows the messages itself; banners wait.
     const busy = panels.talking() || combat;
     const calm = !busy && !panels.characterOpen() && wave1.heatLevel === 0 && !ui.getState().scanning;
-    return { combat, ...wave1.sync({ world: sim.world, player, busy, calm }) };
+    return { combat, ...wave1.sync({ world: sim.world, player, busy, calm }), ...wave2.sync(player, busy, calm) };
   }
 
   private abilityVm(sim: Simulation): AbilityVm | null {

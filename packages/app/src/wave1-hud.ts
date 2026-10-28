@@ -6,7 +6,7 @@ import { CombatFeedback } from "./presenters/combat-feedback";
 import { ContractCards } from "./presenters/contract-cards";
 import { HackingHud } from "./presenters/hacking-hud";
 import { HeatHud } from "./presenters/heat-hud";
-import { type HudPart, type HudPatch, type Wave1Hooks, hudPartContext } from "./presenters/hud-part";
+import { type HudPart, type HudPatch, type Wave1Hooks, createReuse, hudPartContext } from "./presenters/hud-part";
 import { PhoneHud } from "./presenters/phone-hud";
 
 export { COMBAT_SECONDS } from "./presenters/combat-feedback";
@@ -34,7 +34,7 @@ export class Wave1Hud {
   private readonly heat: HeatHud;
   private readonly combat: CombatFeedback;
   private readonly parts: readonly HudPart[];
-  private last: Partial<UiState> = {};
+  private readonly reuse = createReuse();
 
   constructor(
     bus: EventBus<DomainEvents>,
@@ -63,7 +63,7 @@ export class Wave1Hud {
 
   /** A new game or a load: nothing of the old pursuit or the old phone banners carries over. */
   reset(): void {
-    this.last = {};
+    this.reuse.clear();
     const patch: HudPatch = {};
     for (const part of this.parts) Object.assign(patch, part.reset());
     patchUi(this.ui, patch);
@@ -98,18 +98,6 @@ export class Wave1Hud {
     const out: HudPatch = {};
     const partFrame = { tick, found, player: frame.player, busy: frame.busy, calm: frame.calm };
     for (const part of this.parts) Object.assign(out, part.frame?.(partFrame));
-    return this.reuse(out);
-  }
-
-  /** Hands back the previous objects for values that did not change, so React stays still. */
-  private reuse(out: Partial<UiState>): Partial<UiState> {
-    const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
-    const result: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(out)) {
-      const prev = (this.last as Record<string, unknown>)[k];
-      result[k] = prev !== undefined && same(prev, v) ? prev : v;
-    }
-    this.last = { ...this.last, ...result };
-    return result as Partial<UiState>;
+    return this.reuse.apply(out);
   }
 }

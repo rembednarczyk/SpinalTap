@@ -13,6 +13,8 @@ export interface PresenterHooks {
   onPlayerDied(): void;
   /** Violence cut a conversation or the shop short; the sim has already freed the player. */
   onDialogueInterrupted(reason: DomainEvents["DialogueInterrupted"]["reason"]): void;
+  /** A street encounter began (ADR-0032): its ink scene opens as a conversation with `npcId`. */
+  onEncounter?(knot: string, npcId: EntityId | null): void;
 }
 
 /** What every presenter gets: the bus, the three presentation channels and the session hooks. */

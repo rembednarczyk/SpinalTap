@@ -121,20 +121,20 @@ describe("minimap data", () => {
     const contracts = { active: { id: "c1", siteId: "koi_back", targets: 1, reward: 1, status: "active" }, completed: 0 } as const;
     const a = track([player, fixer, mori, courier, hired], [], contracts);
     expect(a.mapPlayer).toEqual({ x: 1, z: 2, yaw: expect.closeTo(0.5, 1) });
-    expect(a.mapMarkers.map((m) => m.kind)).toEqual(["fixer", "ripperdoc", "target", "target"]);
+    expect(a.mapMarkers.map((m) => m.kind)).toEqual(["fixer", "target", "target"]);
     const b = track([player, fixer, mori, courier, hired], [], contracts);
     expect(b.mapPlayer).toBe(a.mapPlayer);
     expect(b.mapMarkers).toBe(a.mapMarkers);
     const c = track([player, fixer, mori, courier, hired], ["killed:hebi_courier"], { active: null, completed: 1 });
-    expect(c.mapMarkers.map((m) => m.kind)).toEqual(["fixer", "ripperdoc"]);
+    expect(c.mapMarkers.map((m) => m.kind)).toEqual(["fixer"]);
     expect(track([fixer], [], contracts).mapPlayer).toBeNull();
   });
 
-  it("marks Mori's clinic apart from other shops", () => {
+  it("leaves the shops off the map: only fixers and accepted contracts (ADR-0035)", () => {
     const track = createMinimapTracker();
     const mori = { id: 3, key: "mori", position: { x: -6, y: 0, z: 2 }, interactable: { kind: "shop", dialogueId: "mori" } } as unknown as Entity;
     const oyaji = { id: 6, key: "oyaji", position: { x: 80, y: 0, z: 66 }, interactable: { kind: "shop", shopId: "oyaji", dialogueId: "oyaji" } } as unknown as Entity;
-    expect(track([mori, oyaji], [], { active: null, completed: 0 }).mapMarkers.map((m) => m.kind)).toEqual(["ripperdoc", "vendor"]);
+    expect(track([mori, oyaji], [], { active: null, completed: 0 }).mapMarkers).toEqual([]);
   });
 
   it("reaches the store through the session", () => {
@@ -143,7 +143,7 @@ describe("minimap data", () => {
     s.newGame();
     const st = ui.getState();
     expect(st.mapPlayer).toMatchObject({ x: 0, z: -28 });
-    expect(st.mapMarkers.map((m) => m.kind).sort()).toEqual(["fixer", "ripperdoc", "target"]);
+    expect(st.mapMarkers.map((m) => m.kind).sort()).toEqual(["fixer", "target"]);
     expect(st.journal.quests[0]?.title).toBe("Pierwsze zlecenie");
     const before = ui.getState().mapPlayer;
     s.step(EMPTY_INPUT);

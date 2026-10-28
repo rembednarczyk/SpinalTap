@@ -1,6 +1,7 @@
 import type { AudioPort, DomainEvents, EventBus, RenderPort } from "@seki/core";
 import type { UiStore } from "@seki/ui";
 import { presentCombat } from "./presenters/combat";
+import { presentEncounters } from "./presenters/encounters";
 import { type Presenter, type PresenterHooks, presenterContext } from "./presenters/context";
 import { presentLoot } from "./presenters/loot";
 import { presentQuests } from "./presenters/quests";
@@ -13,7 +14,7 @@ export type { PresenterHooks } from "./presenters/context";
  * Presenters per area (ADR-0031), registered in this order. Each event type has one handler
  * among them, so the order only matters against the other listeners of the bus.
  */
-export const PRESENTERS: readonly Presenter[] = [presentCombat, presentLoot, presentWorld, presentTrade, presentQuests];
+export const PRESENTERS: readonly Presenter[] = [presentCombat, presentLoot, presentWorld, presentTrade, presentQuests, presentEncounters];
 
 /**
  * Translates domain events into presentation: UI store updates and toasts, audio cues and

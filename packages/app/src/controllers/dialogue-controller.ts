@@ -30,6 +30,10 @@ export class DialogueController implements DialogueIntents {
     deps.bus.on("InteractionStarted", (e) => {
       if (e.kind === "dialogue" || e.kind === "shop") this.talkTarget = e.targetId;
     });
+    // A street encounter (ADR-0032) talks through its NPC the same way.
+    deps.bus.on("EncounterStarted", (e) => {
+      if (!this.dialogueOpen) this.talkTarget = e.npcId;
+    });
   }
 
   get isOpen(): boolean {
