@@ -1,5 +1,6 @@
 import { type PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from "react";
 import { useHackIntents, usePhoneIntents, useSessionIntents, useUi } from "../use-ui";
+import { swallowNextClick } from "./ghost-click";
 import type { TouchButton, TouchPadSink } from "./touch-pad-sink";
 
 /** Radians of rotation per CSS pixel of finger travel. */
@@ -108,6 +109,8 @@ const PadButtonView = ({
       className={`touch__btn ${className}${down ? " touch__btn--down" : ""}`}
       onPointerDown={(e) => {
         e.currentTarget.setPointerCapture?.(e.pointerId);
+        // The press may open a panel under the thumb; its compatibility click must not choose.
+        if (e.pointerType === "touch" || e.pointerType === "pen") swallowNextClick();
         setDown(true);
         pad.press(button);
         if (lookToo) look.start(e);
@@ -116,8 +119,8 @@ const PadButtonView = ({
       onPointerUp={up}
       onPointerCancel={up}
       onContextMenu={(e) => e.preventDefault()}
-      // Swallow the compatibility click: when the press opens a dialogue, the pad hides and the
-      // click would land on whatever appeared under the thumb (the first dialogue choice).
+      // Swallow the compatibility click while the button is still there (see swallowNextClick
+      // for the case where the press opened a panel and the button is gone).
       onTouchEnd={(e) => e.preventDefault()}
     >
       {label}
