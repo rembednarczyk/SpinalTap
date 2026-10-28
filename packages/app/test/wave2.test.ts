@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { type AudioCue, type DomainEvents, type DomainState, EMPTY_INPUT, EventBus, type GameCommand, createDomainState } from "@seki/core";
+import { type AudioCue, type DomainEvents, type DomainState, EventBus, type GameCommand, createDomainState } from "@seki/core";
 import { STORY_SOURCE } from "@seki/narrative";
 import { CONTRACT_HOOKS, DASH_COOLDOWN, type Entity, type Simulation } from "@seki/sim";
 import { type UiState, createUiStore } from "@seki/ui";
@@ -7,7 +7,6 @@ import { mapFocus } from "../src/controllers/hud-sync";
 import { MetroController } from "../src/controllers/metro-controller";
 import { RadioController } from "../src/controllers/radio-controller";
 import { ShopController } from "../src/controllers/shop-controller";
-import { TouchController } from "../src/controllers/touch-controller";
 import { debriefVm } from "../src/contract-hud";
 import { METRO_GUARDED, metroFare, metroMapVm, stationOfDistrict } from "../src/metro";
 import { MAP_ZOOM_DASH, MAP_ZOOM_RUN, TARGET_AREA_RADIUS, createMinimapTracker } from "../src/minimap";
@@ -197,16 +196,6 @@ describe("RadioController without a session", () => {
     expect(sanitizeSettings({ radioStation: "tessen" }).radioStation).toBe("tessen");
     expect(sanitizeSettings({ radioStation: "koi" }).radioStation).toBeNull();
     expect(sanitizeSettings({ mapMarkers: false, highlights: false })).toMatchObject({ mapMarkers: false, highlights: false });
-  });
-});
-
-describe("TouchController", () => {
-  it("merges one dash into the next frame only", () => {
-    const touch = new TouchController();
-    expect(touch.withTouch(EMPTY_INPUT)).toBe(EMPTY_INPUT);
-    touch.touchDash();
-    expect(touch.withTouch(EMPTY_INPUT).dash).toBe(true);
-    expect(touch.withTouch(EMPTY_INPUT).dash).toBe(false);
   });
 });
 

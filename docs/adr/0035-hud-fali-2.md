@@ -18,7 +18,8 @@ ADR-0032 ustalił kontrakty fali 2. Symulacja (sim A i sim B) dopiero zaczyna em
   - Klawisz B jest dopisany do `RESERVED_KEYS`. Radio da się też wybrać w telefonie.
   - Stacja jest polem ustawień (`settings.radioStation`, localStorage).
   - Co 45 s gry toast z wstawką z puli `radio_<stacja>_<n>`.
-- **`TouchController`** implementuje `TouchIntents` (`touchDash`): zryw z łuku dotykowego trafia do następnej klatki wejścia (`withTouch`), tak jak skaner z fali 1.
+- Zryw na dotyku to przycisk `dash` wirtualnego pada (ADR-0036). Wcześniejszy `TouchController` z intencją `touchDash` zniknął, gdy pad dostał ten przycisk.
+- Ustawienia grafiki mają trzy progi: wysoka, średnia i niska (`RenderQuality` z ADR-0036). `?quality=medium` działa jak pozostałe.
 
 ### Prezentery (app, `presenters/`, fasada `Wave2Hud`)
 - **`BodyHud`** czyta stan z domeny w każdej klatce, więc wczytanie gry pokazuje go od razu:
@@ -59,13 +60,12 @@ Zgłoszenie z telefonu (ok. 800×370 CSS) pokazało przeładowany ekran: przycis
 - `e2e/touch-layout.spec.ts` sprawdza przy 800×370 i 667×375 brak przecięć prostokątów przycisków pada, minimapy, licznika, zegara, celu, zdrowia i paska broni, z promptem i z rozwiniętym rzędem.
 
 ## Propozycje kontraktów
-- **Audio:** `AudioScenePort.setRadioStation?(id: string | null)`. App woła ją, jeśli adapter ją ma (`RadioAudio`).
+- **Audio:** `setRadioStation?(id | null)` w `AudioScenePort`. `SynthAudio` już ją ma (ADR-0036), a app woła ją przez opcjonalny typ `RadioAudio`; typ stacji warto przenieść do core, bo UI trzyma dziś własną listę id.
 - **Render:** `setHighlights?(on: boolean)` obok `setReduceFlashes`.
-- **Wejście:** `VirtualPad` z przyciskiem `dash`. Wtedy `TouchController` staje się zwykłym naciśnięciem pada.
 - **Core:** stała odnowienia zrywu w core zamiast w sim, żeby app nie sięgał po nią do `@seki/sim`.
 - **Sim:**
   - spotkanie emituje tylko `EncounterStarted`, bez `InteractionStarted`, żeby knot nie startował dwa razy.
 
 ## Konsekwencje
-- `UiState` ma nowe obszary `MetroUiState` i `BodyUiState`. `UiIntents` jest sumą 12 wąskich interfejsów.
+- `UiState` ma nowe obszary `MetroUiState` i `BodyUiState`. `UiIntents` jest sumą wąskich interfejsów, w tym `MetroIntents` i `RadioIntents`.
 - Zmiana reguły minimapy zmieniła oczekiwania w `journal-map-settings.test.ts`, bo klinika i sklepy nie mają już znaczników.

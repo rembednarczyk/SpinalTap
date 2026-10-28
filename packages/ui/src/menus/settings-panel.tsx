@@ -7,6 +7,7 @@ import { RESERVED_KEYS, keyLabel } from "./key-label";
 
 const QUALITY: readonly (readonly [GraphicsQuality, string])[] = [
   ["high", "Wysoka"],
+  ["medium", "Średnia"],
   ["low", "Niska"],
 ];
 

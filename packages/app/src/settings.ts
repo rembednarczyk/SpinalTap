@@ -9,7 +9,7 @@ export type SettingsStorage = Pick<Storage, "getItem" | "setItem">;
 const clamp = (v: unknown, min: number, max: number, fallback: number): number =>
   typeof v === "number" && Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback;
 
-const isQuality = (v: unknown): v is GraphicsQuality => v === "high" || v === "low";
+const isQuality = (v: unknown): v is GraphicsQuality => v === "high" || v === "medium" || v === "low";
 const isAimMode = (v: unknown): v is AimMode => v === "hold" || v === "toggle";
 const isDamageMode = (v: unknown): v is DamageNumbersMode => v === "off" || v === "hit" || v === "total";
 const isColorblind = (v: unknown): v is ColorblindMode => v === "off" || v === "protan" || v === "deutan" || v === "tritan";

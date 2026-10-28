@@ -10,7 +10,6 @@ import { Wave1Hud } from "../wave1-hud";
 import { Wave2Hud } from "../wave2-hud";
 import { MetroController } from "./metro-controller";
 import { RadioController } from "./radio-controller";
-import { TouchController } from "./touch-controller";
 import { CharacterMenuController } from "./character-menu-controller";
 import { DialogueController } from "./dialogue-controller";
 import { HackController } from "./hack-controller";
@@ -54,7 +53,6 @@ export interface Controllers {
   readonly wave2: Wave2Hud;
   readonly metro: MetroController;
   readonly radio: RadioController;
-  readonly touch: TouchController;
 }
 
 /** The metro and the radio: their ink pools come from one knot renderer shared with the phone. */
@@ -157,5 +155,5 @@ export const createControllers = (deps: GameSessionDeps, s: SessionHooks): Contr
   });
   const canSave = () => !dialogue.isOpen && !shop.isOpen && !loot.isOpen && !travel.metro.isOpen && !travel.metro.riding && s.screen() !== "dead" && s.screen() !== "title";
   const saves = new SaveController({ persistence: deps.persistence, ui, audio, narrative: s.narrative, sim, now: deps.now, canSave, restore: s.restore });
-  return { focus, hints, dialogue, shop, loot, character, settings, phone, hack, saves, wave1, hud, wave2, ...travel, touch: new TouchController() };
+  return { focus, hints, dialogue, shop, loot, character, settings, phone, hack, saves, wave1, hud, wave2, ...travel };
 };

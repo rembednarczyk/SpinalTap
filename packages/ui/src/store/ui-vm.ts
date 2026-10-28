@@ -199,7 +199,7 @@ export interface CharacterStatsVm {
   readonly moveSpeed: number;
 }
 
-export type GraphicsQuality = "high" | "low";
+export type GraphicsQuality = "high" | "medium" | "low";
 
 /** The aim button held down, or pressed once to aim and again to stop (ADR-0019). */
 export type AimMode = "hold" | "toggle";

@@ -48,10 +48,9 @@ const deviceDefaults = { ...DEFAULT_SETTINGS, quality: touchDevice ? "low" : "hi
 // The reference frame ignores saved settings so the NPR snapshot never depends on the profile.
 const settings = reference ? deviceDefaults : loadSettings(storage, deviceDefaults);
 const qualityParam = params.get("quality");
-// ?quality wins over the saved setting, so tests and bug reports can force either.
-const quality = qualityParam === "low" || qualityParam === "high" ? qualityParam : settings.quality;
-// ?quality=medium: the middle tier (line art, wet-asphalt probe; ADR-0036) until the settings offer it.
-const renderQuality = qualityParam === "medium" ? "medium" : quality;
+// ?quality wins over the saved setting, so tests and bug reports can force any tier (ADR-0036).
+const quality = qualityParam === "low" || qualityParam === "medium" || qualityParam === "high" ? qualityParam : settings.quality;
+const renderQuality = quality;
 const stage = new Stage(canvas, { reference, quality: renderQuality });
 // Buildings and vehicles from the CC0 city kit (public/city/README.md, ADR-0022); ?city=off keeps
 // the plain blocks. The reference frame uses it too: the scene is ready only once it is in.

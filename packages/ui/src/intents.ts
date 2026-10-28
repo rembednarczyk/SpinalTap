@@ -131,8 +131,7 @@ export type UiIntents = SessionIntents &
   JournalIntents &
   HackIntents &
   MetroIntents &
-  RadioIntents &
-  TouchIntents;
+  RadioIntents;
 
 // ---- Wave 2 (ADR-0035) ----
 
@@ -151,8 +150,3 @@ export interface RadioIntents {
   nextRadioStation(): void;
 }
 
-/** Touch-only actions that the virtual pad does not carry yet. */
-export interface TouchIntents {
-  /** The dash button of the action arc: one dash on the next step. */
-  touchDash(): void;
-}

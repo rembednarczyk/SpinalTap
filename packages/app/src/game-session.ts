@@ -88,7 +88,7 @@ export class GameSession implements UiIntents {
 
   step(input: InputFrame): void {
     if (!this.running) return;
-    this.simulation.step(this.inControl ? this.c.touch.withTouch(this.c.hack.withTouchScan(input)) : EMPTY_INPUT);
+    this.simulation.step(this.inControl ? this.c.hack.withTouchScan(input) : EMPTY_INPUT);
     this.c.metro.tick(1 / SIM_HZ);
     this.c.radio.tick(1 / SIM_HZ);
     patchUi(this.deps.ui, { scanning: this.inControl && this.c.hack.scanning(input) });
@@ -205,7 +205,6 @@ export class GameSession implements UiIntents {
   closeMetro(): void { this.c.metro.closeMetro(); }
   setRadioStation(id: RadioStationId | null): void { this.c.radio.setRadioStation(id); }
   nextRadioStation(): void { this.c.radio.nextRadioStation(); }
-  touchDash(): void { this.c.touch.touchDash(); }
   /** Shows the line map of a kiosk (debug API; the kiosks of the simulation open it by interaction). */
   openMetro(from: MetroStationId): void { this.c.metro.open(from, false); }
 
@@ -241,7 +240,6 @@ export class GameSession implements UiIntents {
     this.c.hud.reset(next);
     this.c.hack.reset();
     this.c.metro.reset();
-    this.c.touch.reset();
     this.deps.render.setCameraMode(next.domain.preferences.cameraMode);
     patchUi(this.deps.ui, { prompt: null, toasts: [] });
     this.render(0);

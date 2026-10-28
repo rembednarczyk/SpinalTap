@@ -10,7 +10,6 @@ import type {
   MetroIntents,
   PhoneIntents,
   RadioIntents,
-  TouchIntents,
   SessionIntents,
   SettingsIntents,
   ShopIntents,
@@ -43,4 +42,3 @@ export const useJournalIntents = (): JournalIntents => useUiContext().intents;
 export const useHackIntents = (): HackIntents => useUiContext().intents;
 export const useMetroIntents = (): MetroIntents => useUiContext().intents;
 export const useRadioIntents = (): RadioIntents => useUiContext().intents;
-export const useTouchIntents = (): TouchIntents => useUiContext().intents;

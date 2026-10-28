@@ -1,4 +1,4 @@
-export type TouchButton = "fire" | "aim" | "interact" | "jump" | "ability" | "useItem" | "toggleCamera" | "sprint" | "toggleWeapon" | "crouch" | "reload";
+export type TouchButton = "fire" | "aim" | "interact" | "jump" | "ability" | "useItem" | "toggleCamera" | "sprint" | "toggleWeapon" | "crouch" | "reload" | "dash";
 
 /** Where the on-screen controls send input. Implemented by the engine's VirtualPad. */
 export interface TouchPadSink {

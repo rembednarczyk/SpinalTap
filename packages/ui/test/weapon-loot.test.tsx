@@ -49,7 +49,6 @@ const intents = (): UiIntents => ({
   closeMetro: vi.fn(),
   setRadioStation: vi.fn(),
   nextRadioStation: vi.fn(),
-  touchDash: vi.fn(),
   trackQuest: vi.fn(),
 });
 

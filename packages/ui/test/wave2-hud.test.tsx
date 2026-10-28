@@ -156,14 +156,14 @@ describe("minimap of wave 2", () => {
 
 describe("touch of wave 2", () => {
   it("has the action arc around fire and a Use button that names the prompt", () => {
-    const { i, pad, store } = mount({ prompt: "Kup bilet" }, true);
+    const { pad, store } = mount({ prompt: "Kup bilet" }, true);
     const use = screen.getByTestId("touch-use");
     expect(use.textContent).toBe("UżyjKup bilet");
     expect(use.classList.contains("touch__btn--hot")).toBe(true);
     fireEvent.pointerDown(use);
     expect(pad.press).toHaveBeenCalledWith("interact");
     fireEvent.pointerDown(screen.getByTestId("touch-dash"));
-    expect(i.touchDash).toHaveBeenCalled();
+    expect(pad.press).toHaveBeenCalledWith("dash");
     fireEvent.pointerDown(screen.getByTestId("touch-reload"));
     expect(pad.press).toHaveBeenCalledWith("reload");
     act(() =>

@@ -1,5 +1,5 @@
 import type { WeaponStripVm } from "../store/ui-store";
-import { useHackIntents, useTouchIntents, useUi } from "../use-ui";
+import { useHackIntents, useUi } from "../use-ui";
 import { PadButtonView, swallowGhostClick, touchGuards } from "./pad-button";
 import type { TouchPadSink } from "./touch-pad-sink";
 
@@ -16,12 +16,11 @@ export const nextWeaponKey = (weapons: WeaponStripVm | null): 1 | 2 | 3 | null =
 
 /**
  * Secondary actions in an arc around the fire button (ADR-0035): reload, the scanner, the dash
- * and "more", which unfolds the rest. Each target is at least 44 CSS px. The scanner and the
- * dash go through intents, since the virtual pad does not carry them yet.
+ * and "more", which unfolds the rest. Each target is at least 44 CSS px. The dash is a button of
+ * the virtual pad (ADR-0036); the scanner goes through the hack intents.
  */
 export const ActionArc = ({ pad, more, onMore }: { pad: TouchPadSink; more: boolean; onMore: () => void }) => {
   const hack = useHackIntents();
-  const touch = useTouchIntents();
   const scanning = useUi((s) => s.scanning);
   const dashReady = useUi((s) => (s.dash ? s.dash.cooldown <= 0 : true));
   return (
@@ -42,19 +41,7 @@ export const ActionArc = ({ pad, more, onMore }: { pad: TouchPadSink; more: bool
       >
         ◈
       </button>
-      <button
-        type="button"
-        aria-label="Zryw"
-        data-testid="touch-dash"
-        className={`touch__btn touch__btn--arc touch__btn--arc-3${dashReady ? "" : " touch__btn--cooling"}`}
-        onPointerDown={(e) => {
-          swallowGhostClick(e);
-          touch.touchDash();
-        }}
-        {...touchGuards}
-      >
-        »
-      </button>
+      <PadButtonView pad={pad} button="dash" label="»" hint="Zryw" className={`touch__btn--arc touch__btn--arc-3${dashReady ? "" : " touch__btn--cooling"}`} testId="touch-dash" />
       <button
         type="button"
         aria-label={more ? "Mniej akcji" : "Więcej akcji"}
