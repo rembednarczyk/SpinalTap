@@ -10,6 +10,10 @@ export interface ToonPreset {
   readonly fill?: number;
   /** Inverted-hull outline; reserved for characters (see ADR-0003). */
   readonly outline?: boolean;
+  /** Procedural surface of bare structures (ADR-0027): formwork concrete or ribbed sheet metal. */
+  readonly surface?: "concrete" | "metal";
+  /** Vertex alpha carries flags (ADR-0027): 1 painted, 0.5 wet, 0 self-lit. */
+  readonly vertexFlags?: boolean;
 }
 
 const CHAR = { rim: "#9ff6ff", rimStrength: 0.55, outline: true, fill: 0.55 } as const;
@@ -22,6 +26,9 @@ export const PRESETS = {
   metal: { base: "#474c55", gloss: 0.3, rimStrength: 0.1, rim: "#8fb3c9" },
   sidewalk: { base: "#4a4f58", gloss: 0.25, rimStrength: 0 },
   pole: { base: "#2e3138", gloss: 0.3, rimStrength: 0.1, rim: "#8fb3c9" },
+  // Bare structures (ADR-0027): district walls, pillars, shaft walls, decks, kiosks, crates.
+  concreteBare: { base: "#5d636c", gloss: 0.1, rimStrength: 0.08, rim: "#8fb3c9", surface: "concrete" },
+  metalPanel: { base: "#4d535d", gloss: 0.35, rimStrength: 0.1, rim: "#8fb3c9", surface: "metal" },
   // Heroine.
   skin: { base: "#f2dccd", ...CHAR },
   heroineHair: { base: "#3a2552", ...CHAR, rim: "#ff8fd0" },
@@ -66,7 +73,7 @@ export const PRESETS = {
   charVertexColor: { base: "#ffffff", ...CHAR },
   charVertexColorFlat: { base: "#ffffff", rimStrength: 0, outline: false, fill: 0.45 },
   // District dressing: merged props coloured per vertex.
-  dressing: { base: "#ffffff", gloss: 0.15, rimStrength: 0.1, rim: "#8fb3c9" },
+  dressing: { base: "#ffffff", gloss: 0.15, rimStrength: 0.1, rim: "#8fb3c9", vertexFlags: true },
   puddle: { base: "#16181f", gloss: 1.8, rimStrength: 0 },
   // Harbour water (ADR-0024): near black, glossy, so the quay lights streak across it.
   water: { base: "#0a1620", gloss: 1.6, rimStrength: 0.06, rim: "#5ab0ff" },

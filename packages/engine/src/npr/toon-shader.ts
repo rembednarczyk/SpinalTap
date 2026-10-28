@@ -105,6 +105,95 @@ float hash(vec2 p) {
   return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 }
 
+float vnoise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
+}
+
+/** World coordinates across a face: (along, up) on walls, (x, z) on floors and roofs. */
+vec2 facePlane(vec3 p, vec3 n) {
+  vec3 a = abs(n);
+  if (a.y > 0.5) return p.xz;
+  return vec2(a.x > 0.5 ? p.z : p.x, p.y);
+}
+
+/** 1 on a line of half width w (metres) at every multiple of period, 0 elsewhere; hard edged. */
+float gridLine(float x, float period, float w) {
+  float d = abs(fract(x / period + 0.5) - 0.5) * period;
+  return 1.0 - step(w, d);
+}
+
+#if defined(CONCRETE_PANELS) || defined(METAL_PANELS)
+/**
+ * Procedural surface of bare structures (ADR-0027): poured concrete with formwork seams, tie
+ * holes and grime streaks, or ribbed sheet metal with panel seams, rivets and rust runs.
+ * Stepped values, no gradients, so it reads as painted cels; fades out with distance.
+ */
+vec3 surfacePattern(vec3 albedo, vec3 p, vec3 n, float dist) {
+  vec2 q = facePlane(p, n);
+  float near = 1.0 - smoothstep(22.0, 55.0, dist);
+  bool wall = abs(n.y) < 0.5;
+  float k = 1.0;
+#ifdef CONCRETE_PANELS
+  float blotch = step(0.58, vnoise(q * 0.45 + 3.7));
+  k -= 0.07 * blotch;
+  float seam = max(gridLine(q.x, 1.8, 0.018), wall ? gridLine(q.y, 0.9, 0.014) : gridLine(q.y, 1.8, 0.018));
+  vec2 c = fract(q / vec2(0.9, 0.45));
+  float tie = wall ? (1.0 - step(0.035, length((c - 0.5) * vec2(0.9, 0.45)))) : 0.0;
+  // Grime runs down from ledges and seams.
+  float streak = wall ? step(0.66, vnoise(vec2(q.x * 2.2, q.y * 0.12 + 11.0))) * step(0.45, fract(q.y / 0.9)) : 0.0;
+  k -= 0.1 * streak;
+  k -= 0.32 * max(seam, tie) * near;
+  // Damp foot of walls standing on the street.
+  if (wall) k -= 0.12 * (1.0 - step(0.55, p.y));
+  return albedo * max(k, 0.4);
+#else
+  if (wall) {
+    float rib = step(0.5, fract(q.x / 0.22));
+    k += (rib - 0.5) * 0.16 * near;
+    float panel = max(gridLine(q.x, 2.4, 0.02), gridLine(q.y, 1.2, 0.02));
+    float rivet = gridLine(q.y, 1.2, 0.06) * gridLine(q.x, 0.22, 0.03);
+    k -= 0.35 * panel * near;
+    k += 0.12 * rivet * near;
+    float rust = step(0.62, vnoise(vec2(q.x * 1.3, q.y * 0.18 + 5.0)));
+    vec3 col = mix(albedo, albedo * vec3(1.25, 0.82, 0.62), 0.55 * rust);
+    return col * k;
+  }
+  // Floors: tread plate in a diamond lattice.
+  float tread = gridLine(q.x + q.y, 0.18, 0.012) * gridLine(q.x - q.y, 0.18, 0.04);
+  k += 0.14 * tread * near;
+  k -= 0.3 * max(gridLine(q.x, 1.2, 0.015), gridLine(q.y, 1.2, 0.015)) * near;
+  return albedo * k;
+#endif
+}
+#endif
+
+#ifdef CITYKIT
+/**
+ * Storefront glass of the city kit (ADR-0027): mullions, a transom and a kick plate, shelving
+ * inside, a roller shutter half down on some bays and light falling off towards the top.
+ */
+vec3 shopGlass(vec3 glow, vec3 p, vec3 n) {
+  vec2 q = facePlane(p, n);
+  float bay = floor(q.x / 1.3);
+  float h = hash(vec2(bay, 7.0));
+  float y = q.y;
+  float k = mix(1.15, 0.55, smoothstep(0.2, 3.2, y));
+  // Shelves and goods behind the glass.
+  k *= 1.0 - 0.35 * step(0.5, fract(y / 0.55)) * step(y, 2.0) * step(0.3, hash(vec2(bay, floor(y / 0.55))));
+  // Roller shutter pulled half down on a few bays.
+  float shutter = step(0.62, h) * step(2.6 - h * 1.4, y);
+  k = mix(k, 0.16 + 0.1 * step(0.5, fract(y / 0.12)), shutter);
+  vec3 col = glow * k;
+  float frame = max(gridLine(q.x, 1.3, 0.045), max(gridLine(y - 2.35, 100.0, 0.05), gridLine(y - 0.32, 100.0, 0.04)));
+  col = mix(col, vec3(0.03, 0.035, 0.045), frame);
+  if (y < 0.28) col = vec3(0.05, 0.055, 0.065);
+  return col;
+}
+#endif
+
 float shadowTap(vec2 uv, float d) {
   return step(d, texture2D(shadowSampler, uv).r);
 }
@@ -160,6 +249,18 @@ void main(void) {
   albedo *= vColor.rgb;
 #endif
 #endif
+  float dist = length(cameraPosition - vWorldPos);
+#if defined(CONCRETE_PANELS) || defined(METAL_PANELS)
+  albedo = surfacePattern(albedo, vWorldPos, n, dist);
+#endif
+
+  float g = gloss;
+#if defined(DRESS_FLAGS) && defined(VERTEXCOLOR)
+  // Dressing flags in the vertex alpha (ADR-0027): 1 painted, 0.5 wet, 0 self-lit.
+  float wetFlag = step(0.25, vColor.a) * (1.0 - step(0.75, vColor.a));
+  float litFlag = 1.0 - step(0.25, vColor.a);
+  g = mix(gloss, 1.8, wetFlag);
+#endif
 
   float moon = band(max(dot(n, normalize(sunDir)), 0.0)) * moonShadow();
   vec3 lit = ambientColor * (1.0 + fill) + sunColor * moon;
@@ -181,10 +282,10 @@ void main(void) {
     att *= att;
     float ndl = max(dot(n, l), 0.0);
     lit += pointColor[i].rgb * pointColor[i].a * band(ndl * att * 1.8);
-    if (gloss > 0.0) {
+    if (g > 0.0) {
       vec3 h = normalize(l + v);
       float s = pow(max(dot(n, h), 0.0), 18.0) * att;
-      spec += pointColor[i].rgb * pointColor[i].a * smoothstep(0.18, 0.22, s) * gloss;
+      spec += pointColor[i].rgb * pointColor[i].a * smoothstep(0.18, 0.22, s) * g;
     }
   }
 
@@ -215,12 +316,18 @@ void main(void) {
 
 #ifdef CITYKIT
   // Lit windows and neon keep their colour and carry a little further through the haze.
-  color = mix(color, texel.rgb * selfLit, selfLitMask);
+  // Alpha just above 0 marks storefront glass, which gets frames and shelving.
+  vec3 glowColor = texel.rgb;
+  if (texel.a > 0.06 && texel.a < 0.25) glowColor = shopGlass(glowColor, vWorldPos, n);
+  color = mix(color, glowColor * selfLit, selfLitMask);
 #endif
-  float dist = length(cameraPosition - vWorldPos);
   float fog = 1.0 - exp(-pow(dist * fogDensity, 2.0));
 #ifdef CITYKIT
   fog *= 1.0 - 0.35 * selfLitMask;
+#endif
+#if defined(DRESS_FLAGS) && defined(VERTEXCOLOR)
+  color = mix(color, vColor.rgb * selfLit, litFlag);
+  fog *= 1.0 - 0.35 * litFlag;
 #endif
   color = mix(color, fogColor, clamp(fog, 0.0, 1.0));
 #if defined(ALPHABLEND) && defined(TEXTURE)

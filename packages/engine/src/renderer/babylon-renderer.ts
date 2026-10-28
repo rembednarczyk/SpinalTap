@@ -1,4 +1,4 @@
-import { type AbstractMesh, type Color3, Color4, Matrix, type Mesh, Vector3 } from "../babylon";
+import { type AbstractMesh, type Color3, Color4, Matrix, type Mesh, MeshBuilder, Vector3 } from "../babylon";
 import type { AppearanceDescriptor, CameraMode, DespawnReason, EffectDescriptor, EntityId, RenderPort, Transform, ViewDescriptor, WeaponLook } from "@seki/core";
 import { CameraRig } from "../camera/camera-rig";
 import { Effects } from "../effects/effects";
@@ -11,7 +11,9 @@ import { MoonShadow } from "../npr/moon-shadow";
 import { ToonMaterials } from "../npr/toon-material";
 import { Atmosphere, createSplashes, createSteam } from "./atmosphere";
 import { CityKit } from "./city-kit";
-import { createDressing } from "./dressing";
+import { type DressBlock, isWalkedRoof } from "./dressing-plan";
+import { WorldDressing } from "./dressing";
+import { FarCity } from "./far-city";
 import {
   type CharacterRig,
   animateRig,
@@ -113,6 +115,12 @@ export class BabylonRenderer implements RenderPort {
 
   /** Buildings and vehicles from the city kit (ADR-0022), once it has loaded. */
   private city: CityKit | null = null;
+  /** Procedural dressing of every streamed-in chunk (ADR-0027). */
+  readonly dressing: WorldDressing;
+  /** Stand-ins, tower rings and megabuildings beyond the streets (ADR-0027). */
+  readonly farCity: FarCity;
+  /** Blocks in view, for the walked-roof test (ADR-0027, C8). */
+  private readonly blocks = new Map<EntityId, DressBlock>();
   private readonly pendingSkins = new Map<EntityId, PendingSkin>();
   private daylight = 0;
 
@@ -143,8 +151,12 @@ export class BabylonRenderer implements RenderPort {
     if (this.lineArt) this.lineArt.geometryBuffer.renderTransparentMeshes = false;
     this.speedLines = new SpeedLines(scene, this.rig.camera);
     this.atmosphere = new Atmosphere(scene, NIGHT_RIG);
-    // Without a kit the street dressing goes in now; with one, once it is known whether it loaded.
-    if (!options.cityKit) this.dressStreet(false);
+    this.farCity = new FarCity(scene, NIGHT_RIG);
+    // Without a kit the dressing goes in with the first chunk; with one, once it is known whether it loaded.
+    this.dressing = new WorldDressing(scene, this.materials, options.cityKit ? "pending" : "bare", {
+      built: (m) => this.shadow.addStaticCaster(m),
+    });
+    this.warmUpMaterials();
     this.grading = new Grading(scene, this.rig.camera, { reference: stage.options.reference });
     this.effects = new Effects(scene, stage.glow);
     this.lasers = new Lasers(scene, stage.glow);
@@ -158,6 +170,23 @@ export class BabylonRenderer implements RenderPort {
     if (options.cityKit) this.loadCityKit(options.cityKit);
   }
 
+  /**
+   * Compiles the bare-structure skins (ADR-0027) up front, so the first pillar or wall that
+   * streams in does not stall a frame on a shader compile.
+   */
+  private warmUpMaterials(): void {
+    const probe = MeshBuilder.CreateBox("material-warmup", { size: 0.01 }, this.stage.scene);
+    probe.isVisible = false;
+    probe.isPickable = false;
+    let left = 2;
+    for (const preset of ["concreteBare", "metalPanel"] as const) {
+      this.materials.get(preset).forceCompilation(probe, () => {
+        left -= 1;
+        if (left === 0) probe.dispose();
+      });
+    }
+  }
+
   /** Loads the kit in the background; the scene is not ready (reference frames wait) until it is in. */
   private loadCityKit(url: string): void {
     const { scene } = this.stage;
@@ -166,26 +195,22 @@ export class BabylonRenderer implements RenderPort {
     CityKit.load(url)
       .then((data) => {
         if (scene.isDisposed) return;
-        this.city = new CityKit(scene, this.materials, this.stage.glow, data, { onCovered: (box) => this.stepBack(box) });
+        this.city = new CityKit(scene, this.materials, this.stage.glow, data, {
+          onCovered: (box) => this.stepBack(box),
+          walkedRoof: (center, size) => isWalkedRoof({ center, size }, this.blocks.values()),
+        });
         this.city.setDaylight(this.daylight);
         for (const [id, p] of this.pendingSkins) this.city.add(id, p.view.skin, p.view.size, p.center, p.box);
         this.pendingSkins.clear();
-        this.dressStreet(true);
+        this.dressing.setKit("kit");
       })
       .catch((err: unknown) => {
         console.warn(`[city] ${url} failed to load, keeping plain blocks`, err);
         this.pendingSkins.clear();
-        // The plain blocks keep their own facade dressing (shutters, signs, vending machines).
-        if (!scene.isDisposed) this.dressStreet(false);
+        // The plain blocks get the procedural facades of every chunk (W9).
+        this.dressing.setKit("bare");
       })
       .finally(() => scene.removePendingData(token));
-  }
-
-  /** Street dressing of M0; with the kit, skinned buildings bring their own facades and stay bare here. */
-  private dressStreet(skinned: boolean): void {
-    const dressing = createDressing(this.stage.scene, this.materials, { skinned });
-    for (const m of dressing.casters) this.shadow.addStaticCaster(m);
-    for (const m of dressing.meshes) if (m.material?.name.includes("vendingGlow")) this.stage.glow.addIncludedOnlyMesh(m);
   }
 
   /**
@@ -254,6 +279,16 @@ export class BabylonRenderer implements RenderPort {
         const lightKey = prop.light ? name : null;
         if (prop.light && lightKey) this.materials.addLight(lightKey, prop.light);
         this.entities.set(id, { kind: "prop", prop, lightKey, decor });
+        if (view.kind === "block") {
+          this.dressing.addBlock(id, view, at);
+          this.blocks.set(id, { center: { x: at.x, y: at.y, z: at.z }, size: view.size, material: view.material, ...(view.rungs ? { rungs: view.rungs } : {}) });
+          // A ladder, or a rail or crate up on a roof, can make a roof walked: rebuild the kit
+          // cells around it. Anything else leaves built cells alone (rebuilding them stalls a frame).
+          const raised = at.y - view.size.y / 2 > 2 && Math.min(view.size.x, view.size.z) < 3;
+          if (!view.skin && (view.rungs || raised)) this.city?.touch(at.x, at.z);
+        } else if (view.kind === "neon") {
+          this.dressing.addSign(id, view, at);
+        }
         if (view.kind === "block" && view.skin) {
           const box = (prop.root.getChildMeshes(true)[0] as Mesh | undefined) ?? null;
           const skinned = { view: { ...view, skin: view.skin }, center: at, box };
@@ -309,6 +344,8 @@ export class BabylonRenderer implements RenderPort {
     }
     this.city?.remove(id);
     this.pendingSkins.delete(id);
+    this.dressing.remove(id);
+    this.blocks.delete(id);
     for (const m of e.prop.blockers) this.blockers.delete(m);
     if (e.lightKey) this.materials.removeLight(e.lightKey);
     for (const m of e.decor.meshes) this.atmosphere.removeDecoration(m);
@@ -410,6 +447,8 @@ export class BabylonRenderer implements RenderPort {
         const rig = rigForDaylight(effect.daylight);
         this.materials.setRig(rig);
         this.atmosphere.setDaylight(rig, effect.daylight);
+        this.farCity.setDaylight(rig, effect.daylight);
+        this.materials.get("dressing").setFloat("selfLit", 1 - 0.5 * Math.max(0, Math.min(1, effect.daylight)));
         this.daylight = effect.daylight;
         this.city?.setDaylight(effect.daylight);
         return;
@@ -420,6 +459,7 @@ export class BabylonRenderer implements RenderPort {
   /** Per-frame presentation update: animation, camera, VFX, rain. Call before scene.render(). */
   frame(dt: number): void {
     this.city?.flush();
+    if (this.dressing.flush()) this.farCity.setResident(this.dressing.residentChunks());
     for (const e of this.entities.values()) {
       if (e.kind === "character") {
         const t = e.transform;
@@ -462,6 +502,7 @@ export class BabylonRenderer implements RenderPort {
       if (this.flash.life <= 0) this.flash = null;
     }
     this.atmosphere.update(dt, this.stage.options.reference);
+    this.farCity.update(dt, this.rig.camera.position, this.stage.options.reference);
     this.grading.update(dt);
     this.speedLines.update(dt);
     this.rain?.follow(this.rig.camera.position);

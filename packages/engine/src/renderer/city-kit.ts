@@ -8,7 +8,6 @@ import {
   GeometrySink,
   KIT_TEXTURE,
   SIGN_ATLAS,
-  type SkinPlan,
   addDecor,
   addSigns,
   hexRgb,
@@ -21,7 +20,9 @@ import {
 export const CITY_BUCKET = 64;
 
 interface Member {
-  readonly plan: SkinPlan;
+  readonly skin: BlockSkin;
+  readonly size: Vec3;
+  readonly center: Vec3;
   /** The collision box drawn while the kit is not there. */
   readonly box: Mesh | null;
 }
@@ -40,6 +41,11 @@ export interface CityKitOptions {
   readonly labels?: boolean;
   /** Called when a block's box gives way to the kit (the renderer hides it and steps it back). */
   readonly onCovered?: (box: Mesh) => void;
+  /**
+   * Is the roof of this block walked on (ADR-0027, C8)? Asked when its cell is built: walked
+   * roofs get models without tall roof parts and lose their roof housings.
+   */
+  readonly walkedRoof?: (center: Vec3, size: Vec3) => boolean;
 }
 
 /** RGBA pixels of the sign label atlas (black boards, neon letters), or null without a canvas. */
@@ -92,9 +98,11 @@ const kitTextures = (data: CityKitData, labels: boolean): { color: Uint8Array; g
   const ch = paletteHeight / data.grid;
   data.swatches.forEach((s, i) => {
     const rgb = hexRgb(s.color).map((c) => Math.round(c * 255));
-    const alpha = s.kind === "lit" ? 255 : s.kind === "tint" ? 128 : 0;
-    // Storefront glass fills whole walls: it blooms far less than a window or a neon tube.
-    const bloom = s.name.startsWith("shop-") ? 0.25 : 1;
+    // Storefront glass fills whole walls: it blooms far less than a window or a neon tube, and
+    // alpha just above 0 tells the shader to draw frames and shelving into it (ADR-0027, C1).
+    const shop = s.name.startsWith("shop-");
+    const alpha = s.kind === "lit" ? 255 : s.kind === "tint" ? 128 : shop ? 40 : 0;
+    const bloom = shop ? 0.25 : 1;
     const x0 = (i % data.grid) * cw;
     const y0 = Math.floor(i / data.grid) * ch;
     for (let y = y0; y < y0 + ch; y++) {
@@ -161,15 +169,14 @@ export class CityKit {
   /** Dresses a block; false if the kit has nothing for its style. The box is hidden once its cell is built. */
   add(id: EntityId, skin: BlockSkin, size: Vec3, center: Vec3, box: Mesh | null): boolean {
     this.remove(id);
-    const plan = planSkin(this.data, skin, size, center);
-    if (!plan) return false;
+    if (!planSkin(this.data, skin, size, center)) return false;
     const key = `${Math.floor(center.x / CITY_BUCKET)}:${Math.floor(center.z / CITY_BUCKET)}`;
     let bucket = this.buckets.get(key);
     if (!bucket) {
       bucket = { members: new Map(), mesh: null, dirty: true };
       this.buckets.set(key, bucket);
     }
-    bucket.members.set(id, { plan, box });
+    bucket.members.set(id, { skin, size, center: { x: center.x, y: center.y, z: center.z }, box });
     bucket.dirty = true;
     this.where.set(id, key);
     return true;
@@ -183,6 +190,16 @@ export class CityKit {
     if (!bucket) return;
     bucket.members.delete(id);
     bucket.dirty = true;
+  }
+
+  /** Something changed near this point (a ladder or a rail on a roof): rebuild its cells. */
+  touch(x: number, z: number): void {
+    for (const dx of [-2, 2]) {
+      for (const dz of [-2, 2]) {
+        const bucket = this.buckets.get(`${Math.floor((x + dx) / CITY_BUCKET)}:${Math.floor((z + dz) / CITY_BUCKET)}`);
+        if (bucket) bucket.dirty = true;
+      }
+    }
   }
 
   has(id: EntityId): boolean {
@@ -204,12 +221,15 @@ export class CityKit {
       for (const id of [...bucket.members.keys()].sort((a, b) => a - b)) {
         const m = bucket.members.get(id);
         if (!m) continue;
-        for (const p of m.plan.placements) {
+        const walked = this.options.walkedRoof?.(m.center, m.size) ?? false;
+        const plan = planSkin(this.data, m.skin, m.size, m.center, { walkedRoof: walked });
+        if (!plan) continue;
+        for (const p of plan.placements) {
           const model = this.data.models.get(p.key);
-          if (model) sink.addModel(model, p);
+          if (model) sink.addModel(model, p, walked);
         }
-        addDecor(sink, this.data, m.plan);
-        addSigns(sink, m.plan);
+        addDecor(sink, this.data, plan);
+        addSigns(sink, plan);
         if (m.box && m.box.isVisible) {
           m.box.isVisible = false;
           this.options.onCovered?.(m.box);

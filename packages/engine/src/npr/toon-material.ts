@@ -211,7 +211,12 @@ export class ToonMaterials {
         attributes: texture ? ["position", "normal", "uv"] : ["position", "normal"],
         uniforms: [...UNIFORMS],
         samplers: [...SAMPLERS],
-        defines: texture ? ["UV1", "TEXTURE", ...(alpha ? [alpha] : []), ...(tint ? ["TINT"] : []), ...extra] : [...extra],
+        defines: [
+          ...(texture ? ["UV1", "TEXTURE", ...(alpha ? [alpha] : []), ...(tint ? ["TINT"] : [])] : []),
+          ...(p.surface === "concrete" ? ["CONCRETE_PANELS"] : p.surface === "metal" ? ["METAL_PANELS"] : []),
+          ...(p.vertexFlags ? ["DRESS_FLAGS"] : []),
+          ...extra,
+        ],
         needAlphaBlending: alpha === "ALPHABLEND",
       },
     );
@@ -223,6 +228,7 @@ export class ToonMaterials {
     m.setFloat("gloss", p.gloss ?? 0);
     m.setFloat("windows", p.windows ? 1 : 0);
     m.setFloat("fill", p.fill ?? 0);
+    m.setFloat("selfLit", 1);
     return m;
   }
 
