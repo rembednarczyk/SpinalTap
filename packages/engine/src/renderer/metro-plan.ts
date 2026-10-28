@@ -1,3 +1,4 @@
+import type { ActivityId } from "@seki/core";
 import { SIGN_COLORS, prng } from "./city-kit-data";
 import { DRESS_FLAG, MeshSink, type Rgba, type Vec, hexColor } from "./mesh-sink";
 
@@ -245,14 +246,16 @@ export interface Rider {
   readonly preset: "civilian" | "fixer" | "ripperdoc" | "ganger" | "corpo";
   readonly at: Vec;
   readonly yaw: number;
+  /** What the rider does on the way (ADR-0040). */
+  readonly activity?: ActivityId;
 }
 
 /** Up to four riders, always in view of the seat: by the far door, on the bench opposite, in the aisle. */
 export const RIDERS: readonly Rider[] = [
-  { preset: "civilian", at: { x: 0.95, y: 0, z: 4.5 }, yaw: -Math.PI / 2 },
-  { preset: "corpo", at: { x: 0.35, y: 0, z: 2.6 }, yaw: Math.PI * 0.9 },
-  { preset: "ganger", at: { x: -0.3, y: 0, z: 5.4 }, yaw: Math.PI },
-  { preset: "fixer", at: { x: 0.9, y: 0, z: -4.6 }, yaw: -Math.PI / 2 },
+  { preset: "civilian", at: { x: 0.95, y: 0, z: 4.5 }, yaw: -Math.PI / 2, activity: "sit" },
+  { preset: "corpo", at: { x: 0.35, y: 0, z: 2.6 }, yaw: Math.PI * 0.9, activity: "phone" },
+  { preset: "ganger", at: { x: -0.3, y: 0, z: 5.4 }, yaw: Math.PI, activity: "idle" },
+  { preset: "fixer", at: { x: 0.9, y: 0, z: -4.6 }, yaw: -Math.PI / 2, activity: "sleep" },
 ];
 
 /** How many riders a ride gets: two to four, picked from the trip so it stays the same each time. */

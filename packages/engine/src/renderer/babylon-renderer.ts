@@ -1,5 +1,5 @@
 import { type AbstractMesh, Matrix, MeshBuilder } from "../babylon";
-import type { AppearanceDescriptor, CameraMode, DespawnReason, EffectDescriptor, EntityId, HackTargetKind, RenderPort, Transform, ViewDescriptor } from "@seki/core";
+import type { ActivityId, AppearanceDescriptor, CameraMode, DespawnReason, EffectDescriptor, EntityId, HackTargetKind, RenderPort, Transform, ViewDescriptor } from "@seki/core";
 import type { DistrictId } from "@seki/sim";
 import { CameraRig } from "../camera/camera-rig";
 import type { Grading } from "../npr/grading";
@@ -10,11 +10,12 @@ import { MoonShadow } from "../npr/moon-shadow";
 import { WET_PRESETS, qualityTier } from "../npr/quality";
 import { ToonMaterials } from "../npr/toon-material";
 import { Atmosphere } from "./atmosphere";
+import { CharacterActivities } from "./character-activities";
 import { type CharacterDescriptor, CharacterViews } from "./character-views";
 import { CityKitLoader } from "./city-kit-loader";
 import { WorldDressing } from "./dressing";
 import { FarCity } from "./far-city";
-import { MetroRide, type MetroRideView } from "./metro-ride";
+import { MetroRide, type MetroRideView, type RideCast } from "./metro-ride";
 import type { CharacterModelManifest } from "./model-library";
 import { PropViews } from "./prop-views";
 import { type GameplayFxEvent, ScreenFx } from "./screen-fx";
@@ -56,6 +57,8 @@ export class BabylonRenderer implements RenderPort {
   /** Signs, holo-ads and their street reflections, one draw call (ADR-0030). */
   readonly signage: Signage;
   private readonly characters: CharacterViews;
+  /** What the characters do where they stand (ADR-0040). */
+  private readonly activities: CharacterActivities;
   private readonly props: PropViews;
   private readonly fx: ScreenFx;
   private readonly cityKit: CityKitLoader;
@@ -91,7 +94,15 @@ export class BabylonRenderer implements RenderPort {
     this.rig.onBodyVisibility = (visible) => {
       if (this.cameraTarget !== null) this.characters.setBodyVisible(this.cameraTarget, visible);
     };
-    this.characters = new CharacterViews({ scene, materials: this.materials, shadow: this.shadow, camera: this.rig, cameraTarget: () => this.cameraTarget });
+    this.activities = new CharacterActivities(scene, this.materials, () => this.rig.camera.position);
+    this.characters = new CharacterViews({
+      scene,
+      materials: this.materials,
+      shadow: this.shadow,
+      camera: this.rig,
+      cameraTarget: () => this.cameraTarget,
+      pose: (id, rig, speed, dt, retarget) => this.activities.apply(id, rig, speed, dt, retarget),
+    });
     // Line art must be attached before the grading pipeline so the ink gets graded too.
     this.lineArt = tier.lineArt ? new LineArt(scene, this.rig.camera) : null;
     if (this.lineArt) this.lineArt.geometryBuffer.renderTransparentMeshes = false;
@@ -122,8 +133,22 @@ export class BabylonRenderer implements RenderPort {
       },
     });
     this.grading = this.fx.grading;
-    this.metro = new MetroRide({ scene, materials: this.materials, shadow: this.shadow, camera: this.rig, cast: this.characters });
+    this.metro = new MetroRide({ scene, materials: this.materials, shadow: this.shadow, camera: this.rig, cast: this.rideCast() });
     if (options.cityKit) this.cityKit.load(options.cityKit);
+  }
+
+  /** The metro's riders are characters like any other, with their activities (ADR-0040). */
+  private rideCast(): RideCast {
+    const { characters, activities } = this;
+    return {
+      spawn: (id, view, t) => characters.spawn(id, view, t),
+      setAppearance: (id, look) => characters.setAppearance(id, look),
+      setActivity: (id, activity) => activities.set(id, activity, { seat: "scene" }),
+      despawn: (id, fall) => {
+        activities.forget(id);
+        characters.despawn(id, fall);
+      },
+    };
   }
 
   /**
@@ -175,6 +200,8 @@ export class BabylonRenderer implements RenderPort {
   despawn(id: EntityId, reason: DespawnReason = "removed"): void {
     // Enemies fall over before disappearing; a reset (load, new game) or a chunk streaming
     // out clears them at once.
+    // Held things leave first: they may sit in the hand of a model that goes back to its pool.
+    this.activities.forget(id);
     if (this.characters.has(id)) this.characters.despawn(id, !this.resetting && reason === "removed" && id !== this.cameraTarget);
     else this.props.despawn(id);
   }
@@ -276,6 +303,7 @@ export class BabylonRenderer implements RenderPort {
     this.fx.clear();
     this.resetting = true;
     for (const id of this.props.ids()) this.despawn(id);
+    this.activities.clear();
     this.characters.clear();
     this.resetting = false;
   }
@@ -286,6 +314,16 @@ export class BabylonRenderer implements RenderPort {
    */
   setWeaponModels(manifest: WeaponManifest): void {
     this.characters.setWeaponModels(manifest);
+  }
+
+  /** What the character does where it stands (ADR-0040); null returns it to walking and idling. */
+  setActivity(id: EntityId, activity: ActivityId | null): void {
+    if (this.characters.has(id)) this.activities.set(id, activity);
+  }
+
+  /** Activity a character plays now (debug and tests). */
+  activityOf(id: EntityId): ActivityId | null {
+    return this.activities.activityOf(id);
   }
 
   /** What a character wears and carries (ADR-0015): weapons in hand, holster and on the back, garment add-ons. */
