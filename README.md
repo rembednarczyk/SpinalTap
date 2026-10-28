@@ -27,7 +27,7 @@ Parametry URL: `?seed=123` (stałe ziarno nowej gry), `?reference` (deterministy
 | Mysz (kliknij w ekran, żeby przechwycić kursor) | rozglądanie |
 | LPM | strzał |
 | E | rozmowa |
-| 1–4 | wybór kwestii w dialogu |
+| 1–6, strzałki góra/dół, kółko myszy, E / Enter / Spacja | wybór kwestii na kole dialogowym |
 | V | FPP / TPP |
 | Q | zdolność cyberware (po wszczepieniu Akceleratora Kairos) |
 | H | apteczka |
@@ -38,6 +38,8 @@ Parametry URL: `?seed=123` (stałe ziarno nowej gry), `?reference` (deterministy
 Pad (standard mapping): lewa gałka ruch, prawa rozglądanie, RT strzał, A rozmowa, Y kamera, RB zdolność, X apteczka, L3 sprint.
 
 Telefon i tablet (wykrywane automatycznie, na komputerze można wymusić `?touch`): grę obracamy poziomo. Lewa połowa ekranu to pływająca gałka ruchu (pełne wychylenie = sprint), prawa to rozglądanie przeciąganiem. Przycisk strzału też obraca widok, gdy przesuwasz po nim palec. Obok są E, Q, apteczka (+) i kamera (V), a u góry karta postaci i pauza.
+
+Dialog na kole ([ADR-0039](docs/adr/0039-dialog-na-kole.md)): kwestie układają się na łuku obok rozmówcy, z ikoną i kolorem rodzaju (◆ złoty wątek główny, ◇ niebieskie pytanie, ✕ wyjście zawsze na dole, ▲ groźba, ◎ perswazja, ⬡ hack, ✦ opcja z przeszłości). Podświetloną wybiera się myszą, cyfrą, strzałkami albo kółkiem i potwierdza E, Enterem lub Spacją, na telefonie tapnięciem. Napisy z przewijaną historią rozmowy zostają na dole.
 
 ## Co jest w M0
 
