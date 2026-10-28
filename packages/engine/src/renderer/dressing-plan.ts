@@ -179,11 +179,40 @@ export const planDressing = (input: DressingInput): MeshSink => {
     if (isBuilding(b) && input.kit && b.skin) {
       // The kit draws the facade; the street in front of it still gets its clutter.
       if (faceOpen(b, b.skin.front, input.world, 2.5)) dressKerb(sink, b, faceOf(b, b.skin.front));
+      dressCables(sink, b);
     } else if (isBuilding(b)) dressBuilding(sink, b, input.world, near);
     else if (isRoadDeck(b)) dressDeck(sink, b);
     else if (b.material === "asphalt" && top(b) < 0.4) dressGround(sink, b);
   }
   return sink;
+};
+
+/**
+ * Road paint in front of a facade whose street the content names: a dashed centre line half way
+ * across, and a zebra crossing in front of shops. Facing rows paint the same line; it coincides.
+ */
+const dressStreetPaint = (sink: MeshSink, b: DressBlock): void => {
+  const street = b.skin?.street;
+  if (street === undefined || street < 6 || !b.skin) return;
+  const f = faceOf(b, b.skin.front);
+  const y = 0.012;
+  for (let u = -f.width / 2 + 1; u < f.width / 2 - 1; u += 4) sink.box(f.at(u, y, street / 2), 2, 0.01, 0.14, C(PALETTE.line), { rotY: f.rot, bottom: false });
+  if (b.skin.style !== "shop") return;
+  for (let out = 1.2; out <= street - 1.2; out += 1.1) sink.box(f.at(0, y + 0.002, out), 3, 0.01, 0.55, C(PALETTE.line), { rotY: f.rot, bottom: false });
+};
+
+/** Power and data lines across the street the content names (`skin.street`). Kept with the kit too. */
+const dressCables = (sink: MeshSink, b: DressBlock): void => {
+  dressStreetPaint(sink, b);
+  if (b.skin?.street === undefined || b.skin.street <= 2) return;
+  const rand = prng(seedOf(b.center) ^ 0xc0b1e);
+  const f = faceOf(b, b.skin.front);
+  const count = 2 + Math.floor(rand() * 2) + (f.width > 14 ? 1 : 0);
+  for (let k = 0; k < count; k++) {
+    const u = (rand() - 0.5) * f.width * 0.85;
+    const y = Math.min(b.size.y - 1, 6.5 + rand() * 6);
+    sink.cable(f.at(u, y, 0.05), f.at(u + (rand() - 0.5) * 7, y + (rand() - 0.5) * 2.5, b.skin.street), 0.7 + rand() * 1.2, C(PALETTE.cable));
+  }
 };
 
 /** At the foot of a front: a vending machine now and then, bag piles and a box. Kept with the kit too. */
@@ -283,16 +312,7 @@ const dressBuilding = (sink: MeshSink, b: DressBlock, world: readonly DressBlock
       }
     }
   }
-  // Power and data lines across the street the content names.
-  if (b.skin?.street !== undefined && b.skin.street > 2) {
-    const f = faceOf(b, b.skin.front);
-    const count = 1 + Math.floor(rand() * 2) + (f.width > 14 ? 1 : 0);
-    for (let k = 0; k < count; k++) {
-      const u = (rand() - 0.5) * f.width * 0.8;
-      const y = Math.min(tall - 1, 6 + rand() * 6);
-      sink.cable(f.at(u, y, 0.05), f.at(u + (rand() - 0.5) * 6, y + (rand() - 0.5) * 2, b.skin.street), 0.6 + rand() * 1.1, C(PALETTE.cable));
-    }
-  }
+  dressCables(sink, b);
   // Roof: a water tank or an antenna cluster, unless people walk there (C8).
   if (isWalkedRoof(b, world)) return;
   const roofY = top(b);
