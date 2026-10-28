@@ -19,6 +19,7 @@ import {
 } from "@seki/core";
 import type { SimContext } from "./context";
 import { dropLoot } from "./domain-ops";
+import { noteHookLoot } from "./hook-tracker";
 
 type ItemCommandType = "equip-item" | "unequip-item" | "use-item" | "drop-item" | "install-mod" | "remove-mod" | "take-loot";
 
@@ -92,6 +93,8 @@ const takeLootLine = (ctx: SimContext, cmd: Command<"take-loot">): void => {
   const blocked = r.full.find((id): id is ItemDefId => !isAmmoId(id));
   if (blocked !== undefined) ctx.bus.emit("InventoryFull", { defId: blocked });
   ctx.bus.emit("LootTaken", { containerKey: container.key, lines: r.taken, left: r.left.length });
+  // A shard of an observation hook (ADR-0034).
+  noteHookLoot(ctx, container.key, r.taken);
 };
 
 /** Takes what `drop-item` names out of the bag: the loot line it becomes and the domain without it; null if refused. */

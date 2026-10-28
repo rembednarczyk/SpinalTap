@@ -17,6 +17,31 @@ export interface SessionState {
   street: StreetLog;
   /** Transient memory of the contract layer and the phone (ADR-0029). */
   watch: SessionWatch;
+  /** The player while riding the metro, out of the world (ADR-0034); null on foot. */
+  passenger: Entity | null;
+  /** Street encounters and micro-events of this session (ADR-0034). */
+  street2: StreetScenes;
+}
+
+/** A street encounter whose dialogue is open, and the micro-event under way (ADR-0034). */
+export interface StreetScenes {
+  encounter: string | null;
+  /** Passers-by put at an encounter's point, by encounter id. */
+  npcs: Readonly<Record<string, EntityId>>;
+  micro: MicroEventRun | null;
+  /** District at the end of the last step, for entries. */
+  district: string | null;
+}
+
+/** A micro-event in progress: who is in it, where, and what ends it. Transient, not saved. */
+export interface MicroEventRun {
+  readonly id: string;
+  readonly kind: "mugging" | "aid";
+  readonly at: Vec3;
+  /** The passer-by (the one robbed, or the one to help). */
+  readonly victim: EntityId;
+  /** The muggers of a mugging; empty for an aid. */
+  readonly attackers: readonly EntityId[];
 }
 
 /** Something the street noticed this step (the payload of `Disturbance`). */
@@ -62,6 +87,8 @@ export const freshSession = (): SessionState => ({
   lastThreat: null,
   street: { disturbances: [], offences: [], incidents: 0 },
   watch: { district: null, playerHp: null, focus: null, ram: null, reinforce: 0 },
+  passenger: null,
+  street2: { encounter: null, npcs: {}, micro: null, district: null },
 });
 
 /** Mutable holder for the immutable domain state, plus a dirty marker for quest evaluation. */
