@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { DomainState } from "@seki/core";
+import type { DomainState, SaveSnapshot } from "@seki/core";
 import { Simulation, gangerEntity, runReplay, stateHash, type ReplayFrame } from "../src";
 import { input, run } from "./helpers";
 
@@ -43,7 +43,7 @@ describe("determinism", () => {
   });
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
-    expect(hashOf(runReplay(1234, script()))).toMatchInlineSnapshot(`"d9a66304"`);
+    expect(hashOf(runReplay(1234, script()))).toMatchInlineSnapshot(`"6523560f"`);
   });
 
   it("without the street life of ADR-0026 in the snapshot, the run hashes as before it (content, not rules)", () => {
@@ -52,17 +52,21 @@ describe("determinism", () => {
     const snap = runReplay(1234, script()).snapshot(null, "test", "");
     const added = new Set(["hideo", "tetsu", "mei", "sachiko"]);
     const stash = /^(placed:)?stash:(s7|kanal)-/;
+    // Wave 2 (ADR-0033) only added fields to the save (v12): the run never touches them.
+    const { buffs, capacityShards, disguise, ...wave1Domain } = snap.domain;
+    expect({ buffs, capacityShards, disguise }).toEqual({ buffs: [], capacityShards: 0, disguise: { role: null, blown: false } });
     const before = {
       ...snap,
+      version: 11,
       entities: snap.entities.filter((e) => !added.has(e.key)),
       domain: {
-        ...snap.domain,
+        ...wave1Domain,
         flags: snap.domain.flags.filter((f) => !stash.test(f)),
         loot: { ...snap.domain.loot, containers: snap.domain.loot.containers.filter((c) => !stash.test(c.key)) },
       },
-    };
+    } as unknown as SaveSnapshot;
     expect(snap.entities.filter((e) => added.has(e.key))).toHaveLength(4);
-    // The hash of the same run with the rules of ADR-0029 (wave 1) and without this content.
+    // The hash of the same run with the rules of ADR-0029 (wave 1), without this content and the v12 fields.
     expect(stateHash(before)).toBe("bef1026f");
   });
 
@@ -107,7 +111,7 @@ describe("determinism", () => {
     // Swings both ways, a blocked blow and staggers: the duel exercises the whole package.
     for (const t of ["MeleeSwing", "AttackBlocked", "Staggered", "DamageDealt"]) expect(seen).toContain(t);
     expect(hashOf(sim)).toBe(hashOf(duel().sim));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"5be082e2"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"a7a1a5c1"`);
   });
 
   it("restores killed NPCs as absent", () => {

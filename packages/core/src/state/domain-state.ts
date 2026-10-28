@@ -13,6 +13,8 @@ import { type GameClock, START_CLOCK } from "../time/game-clock";
 import type { Flags } from "./flags";
 import { type HeatState, NO_HEAT } from "../crime/rules";
 import { INITIAL_NETRUN, type NetrunState } from "../hacking/netrun";
+import { type BuffList, NO_BUFFS } from "../abilities/buffs";
+import { type DisguiseState, NO_DISGUISE } from "../crime/disguise";
 
 export interface Preferences {
   readonly cameraMode: CameraMode;
@@ -42,6 +44,12 @@ export interface DomainState {
   readonly heat: HeatState;
   /** The cyberdeck: RAM and the upload in progress (ADR-0029). */
   readonly netrun: NetrunState;
+  /** Buffs from food, drinks and stims with the seconds left (ADR-0033). */
+  readonly buffs: BuffList;
+  /** Capacity shards used so far; each grows the cyberware capacity for good (ADR-0033). */
+  readonly capacityShards: number;
+  /** Who the player passes for, and whether someone saw through it (ADR-0033). */
+  readonly disguise: DisguiseState;
 }
 
 export const createDomainState = (): DomainState => ({
@@ -59,4 +67,7 @@ export const createDomainState = (): DomainState => ({
   clock: START_CLOCK,
   heat: NO_HEAT,
   netrun: INITIAL_NETRUN,
+  buffs: NO_BUFFS,
+  capacityShards: 0,
+  disguise: NO_DISGUISE,
 });
