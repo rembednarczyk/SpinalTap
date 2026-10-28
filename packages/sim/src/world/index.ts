@@ -6,3 +6,4 @@ export * from "./streaming";
 export * from "./hitboxes";
 export * from "./schedule";
 export * from "./knockback";
+export { DEFLECT_COST, DEFLECT_THRESHOLD, deflects } from "./deflect";
