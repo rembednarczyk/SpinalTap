@@ -189,8 +189,9 @@ export const KANAL_PROPS: readonly StaticProp[] = [
   ...footbridge(),
   // ADR-0026, appended so the props above keep their order. Tetsu's table of gadgets in front
   // of DENKI, and crates under the footbridge where Hebi meet (Kaito's site `kanal_bridge`).
+  // Both crates keep off the middle of the road (Z ∈ [77.4, 80.4]), where traffic and chases run.
   crate(42.6, 80.9, 1.4, 0.9, 0.7),
-  crate(53, 79.6, 1.2, 0.9, 1.0),
+  crate(53, 80.9, 1.2, 0.9, 1.0),
   crate(51.2, 76.9, 0.9, 0.8, 0.9),
 ];
 

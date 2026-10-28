@@ -104,6 +104,14 @@ describe("new places stand clear of every walk (ADR-0026)", () => {
     expect(chunkAt(53.2, 78.2)?.id).toBe("kanal");
   });
 
+  it("the road along Ulica Kanałowa stays open from the bend to the market gate", () => {
+    for (const z of [78.5, 79, 79.5]) {
+      const hits = [];
+      for (let x = 8; x <= 66; x += 0.25) hits.push(...blockers(at(x, z)).map((s) => `${x},${z} hits ${s.center.x},${s.center.z}`));
+      expect(hits).toEqual([]);
+    }
+  });
+
   it("the car wash keeps the car_wash site (the alley behind it) and Kaito's spot free", () => {
     for (const p of CONTRACT_SITE_SPAWNS.car_wash ?? []) expect(blockers(p)).toEqual([]);
     expect(blockers(at(6.2, 1.5))).toEqual([]);
