@@ -55,8 +55,8 @@ const PALETTE = {
 
 const FLOOR = 3.2;
 
-type Side = BlockFront;
-const SIDES: readonly Side[] = ["x+", "x-", "z+", "z-"];
+export type Side = BlockFront;
+export const SIDES: readonly Side[] = ["x+", "x-", "z+", "z-"];
 const NORMAL: Readonly<Record<Side, { x: number; z: number }>> = { "x+": { x: 1, z: 0 }, "x-": { x: -1, z: 0 }, "z+": { x: 0, z: 1 }, "z-": { x: 0, z: -1 } };
 
 /** A building: tall, with rooms behind its walls (the same rule as the procedural windows). */
@@ -106,7 +106,7 @@ export const isWalkedRoof = (b: Pick<DressBlock, "center" | "size">, others: Ite
 };
 
 /** World frame of one face of a box: point at (along, height above the block's bottom, out). */
-interface Face {
+export interface Face {
   readonly side: Side;
   readonly n: { x: number; z: number };
   /** Turn for boxes whose local z points out of the face. */
@@ -116,7 +116,7 @@ interface Face {
   at(u: number, y: number, out: number): Vec3;
 }
 
-const faceOf = (b: DressBlock, side: Side): Face => {
+export const faceOf = (b: DressBlock, side: Side): Face => {
   const n = NORMAL[side];
   const alongX = side === "z+" || side === "z-";
   const width = alongX ? b.size.x : b.size.z;
@@ -137,7 +137,7 @@ const faceOf = (b: DressBlock, side: Side): Face => {
 };
 
 /** Is the strip `reach` metres in front of a face clear of other bulk? */
-const faceOpen = (b: DressBlock, side: Side, others: readonly DressBlock[], reach: number): boolean => {
+export const faceOpen = (b: DressBlock, side: Side, others: readonly DressBlock[], reach: number): boolean => {
   const n = NORMAL[side];
   const alongX = side === "z+" || side === "z-";
   const shrink = 0.6;

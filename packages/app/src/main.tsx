@@ -130,6 +130,7 @@ const loop = new FixedStepLoop(browserClock, {
       preview.render(stage.engine.getDeltaTime() / 1000);
       return;
     }
+    renderer.setScanning(ui.getState().scanning);
     renderer.frame(stage.engine.getDeltaTime() / 1000);
     const player = renderer.cameraTargetTransform;
     if (player) audio.setListener({ position: player.position, yaw: player.yaw, speed: player.speed });
@@ -212,6 +213,16 @@ const debug = createDebugApi(session, ui, loop, () => probe.sample(), (position,
   () => preview.state,
 );
 window.__seki = debug;
+
+// Wave 1 effects over the whole frame (ADR-0030): hits on the player, quickhack uploads, heat
+// and the scanner's focus. The scanner itself follows the store in the render loop.
+session.bus.on("DamageDealt", (e) => {
+  if (e.targetId === session.sim.player()?.id) renderer.gameplayFx({ kind: "player-hurt", amount: e.amount });
+});
+session.bus.on("QuickhackStarted", () => renderer.gameplayFx({ kind: "quickhack", phase: "started" }));
+session.bus.on("QuickhackApplied", () => renderer.gameplayFx({ kind: "quickhack", phase: "applied" }));
+session.bus.on("HeatChanged", (e) => renderer.gameplayFx({ kind: "heat", level: e.level, searching: e.searching }));
+session.bus.on("ScanFocusChanged", (e) => renderer.setScanFocus(e.targetId, e.kind));
 
 if (reference) {
   // The snapshot guards the 3D look only; the HUD has its own component tests.

@@ -31,5 +31,6 @@
 | [0027](0027-dressing-chunkow-i-dalekie-miasto.md) | Dressing wszystkich chunków, skórki gołych brył, witryny, chodzone dachy i dalekie miasto | Zaakceptowana |
 | [0028](0028-swiadkowie-heat-quickhacki-zlecenia.md) | Kontrakty fali 1 z researchu: świadkowie i heat, skaner i quickhacki, odznaki zleceń, telefon | Zaakceptowana |
 | [0029](0029-fala-1-symulacja-swiadkowie-heat-quickhacki.md) | Fala 1 w symulacji: ostatnia znana pozycja, tłum i świadkowie, heat i wsparcie poza wzrokiem, skaner i quickhacki, kamery i Breach, debrief zlecenia, zapis v11 | Zaakceptowana |
+| [0030](0030-wizualia-fali-1.md) | Wizualia fali 1: paleta dystryktów, szyldy i holoreklamy z atlasu, post-process zdarzeń z limitem błysków, skaner | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.

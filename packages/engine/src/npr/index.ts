@@ -7,3 +7,4 @@ export * from "./grading";
 export * from "./moon-shadow";
 export * from "./line-art";
 export * from "./speed-lines";
+export * from "./district-palette";

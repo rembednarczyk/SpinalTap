@@ -79,6 +79,8 @@ uniform vec3 sunColor;
 uniform vec3 ambientColor;
 uniform vec3 rimColor;
 uniform float rimStrength;
+/** District rim colour (ADR-0030): rgb mixed over the preset rim by a. */
+uniform vec4 rimTint;
 uniform float gloss;
 uniform float windows;
 /** Character fill light: a banded key from the camera side so faces read at night. */
@@ -301,7 +303,7 @@ void main(void) {
   vec3 color = paint * lit + spec + emissiveColor;
 
   float fres = 1.0 - max(dot(n, v), 0.0);
-  color += rimColor * smoothstep(0.66, 0.7, fres) * rimStrength * (0.35 + 0.65 * moon);
+  color += mix(rimColor, rimTint.rgb, rimTint.a) * smoothstep(0.66, 0.7, fres) * rimStrength * (0.35 + 0.65 * moon);
 
   if (windows > 0.5 && abs(n.y) < 0.5) {
     float u = abs(n.x) > 0.5 ? vWorldPos.z : vWorldPos.x;
