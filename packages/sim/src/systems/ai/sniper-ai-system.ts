@@ -86,6 +86,78 @@ const stopAiming = (ctx: SimContext, self: Sniper, target: Entity | null): void 
 };
 
 /**
+ * Picks the perch farthest from a player who came too close and walks there. Returns true
+ * while the sniper is on the way (it does not shoot then).
+ */
+const reposition = (ctx: SimContext, self: Sniper, player: Entity, perch: Vec3): boolean => {
+  const s = self.sniper;
+  const near = dist3(player.position, self.position) <= SNIPER_RETREAT_RADIUS;
+  if (near) {
+    const away = retreatPerch(s.perches, self.position, player.position);
+    const there = s.perches[away];
+    if (away !== s.perch && there && dist3(there, player.position) > dist3(perch, player.position) + RETREAT_GAIN) {
+      stopAiming(ctx, self, player);
+      s.perch = away;
+      s.phase = "move";
+    }
+  }
+  const goal = s.perches[s.perch] ?? perch;
+  if (s.phase === "move" || dist3(goal, self.position) > ON_PERCH) {
+    if (dist3(goal, self.position) <= ON_PERCH) s.phase = "idle";
+    else {
+      stopAiming(ctx, self, player);
+      s.phase = "move";
+      walkTo(ctx, self, goal);
+      return true;
+    }
+  }
+  return false;
+};
+
+/** A hostile, seeing sniper with the player in range and a clear line to their chest. */
+const seesTarget = (ctx: SimContext, self: Sniper, player: Entity): boolean => {
+  const range = self.combatant?.stats?.range ?? 0;
+  const hostile = factionStance(ctx.state.domain.reputation, self.faction ?? "tessen") !== "friendly";
+  // Optics rebooted by a quickhack (ADR-0029): it sees nothing.
+  const blind = (self.hackFx?.blind ?? 0) > 0;
+  return hostile && !blind && dist3(player.position, self.position) <= range && lineOfSight(ctx.world, eyeOf(self), chestOf(player));
+};
+
+/** On the perch: rest, start aiming, track the target and fire when the aim time is up. */
+const shoot = (ctx: SimContext, self: Sniper, player: Entity, inLine: boolean, dt: number): void => {
+  const s = self.sniper;
+  if (s.phase === "rest") {
+    s.timer = Math.max(0, s.timer - dt);
+    if (inLine) face(self, player.position, TURN_RATE * dt);
+    if (s.timer === 0) s.phase = "idle";
+    return;
+  }
+  if (s.phase === "idle") {
+    if (!inLine || !self.combatant || !readyToFire(self.combatant, self.combatant.loaded)) return;
+    s.phase = "aim";
+    s.timer = SNIPER_AIM_TIME;
+    noteDetected(ctx);
+    ctx.bus.emit("SniperAimed", { entityId: self.id, targetId: player.id, duration: SNIPER_AIM_TIME });
+  }
+  // Aiming: track the target; a broken line switches the laser off.
+  if (!inLine) {
+    stopAiming(ctx, self, player);
+    s.phase = "rest";
+    s.timer = LOST_SIGHT_REST;
+    return;
+  }
+  face(self, player.position, TURN_RATE * dt);
+  if (self.combatant) self.combatant.engaged = true;
+  s.timer = Math.max(0, s.timer - dt);
+  if (s.timer > 0 || !self.combatant || !readyToFire(self.combatant, self.combatant.loaded)) return;
+  const origin = eyeOf(self);
+  fireShot(ctx, { shooter: self, origin, dir: normalize(sub(chestOf(player), origin)), spread: aimSpreadOf(self, null), ...NPC_CRIT }, ctx.rng);
+  ctx.bus.emit("SniperAimed", { entityId: self.id, targetId: player.id, duration: 0 });
+  s.phase = "rest";
+  s.timer = self.combatant.stats?.interval ?? SNIPER_AIM_TIME;
+};
+
+/**
  * Tessen snipers (ADR-0024). A sniper holds a perch high up. Seeing the player in range (and
  * not liked by Tessen), it turns its laser on and fires `SNIPER_AIM_TIME` later if the line is
  * still clear: the laser is the warning, cover is the answer. Between shots it rests. When the
@@ -109,60 +181,8 @@ export const sniperAiSystem: System = {
         s.phase = "idle";
         continue;
       }
-      const near = dist3(player.position, self.position) <= SNIPER_RETREAT_RADIUS;
-      if (near) {
-        const away = retreatPerch(s.perches, self.position, player.position);
-        const there = s.perches[away];
-        if (away !== s.perch && there && dist3(there, player.position) > dist3(perch, player.position) + RETREAT_GAIN) {
-          stopAiming(ctx, self, player);
-          s.perch = away;
-          s.phase = "move";
-        }
-      }
-      const goal = s.perches[s.perch] ?? perch;
-      if (s.phase === "move" || dist3(goal, self.position) > ON_PERCH) {
-        if (dist3(goal, self.position) <= ON_PERCH) s.phase = "idle";
-        else {
-          stopAiming(ctx, self, player);
-          s.phase = "move";
-          walkTo(ctx, self, goal);
-          continue;
-        }
-      }
-      const range = self.combatant?.stats?.range ?? 0;
-      const hostile = factionStance(ctx.state.domain.reputation, self.faction ?? "tessen") !== "friendly";
-      // Optics rebooted by a quickhack (ADR-0029): it sees nothing.
-      const blind = (self.hackFx?.blind ?? 0) > 0;
-      const inLine = hostile && !blind && dist3(player.position, self.position) <= range && lineOfSight(ctx.world, eyeOf(self), chestOf(player));
-      if (s.phase === "rest") {
-        s.timer = Math.max(0, s.timer - dt);
-        if (inLine) face(self, player.position, TURN_RATE * dt);
-        if (s.timer === 0) s.phase = "idle";
-        continue;
-      }
-      if (s.phase === "idle") {
-        if (!inLine || !self.combatant || !readyToFire(self.combatant, self.combatant.loaded)) continue;
-        s.phase = "aim";
-        s.timer = SNIPER_AIM_TIME;
-        noteDetected(ctx);
-        ctx.bus.emit("SniperAimed", { entityId: self.id, targetId: player.id, duration: SNIPER_AIM_TIME });
-      }
-      // Aiming: track the target; a broken line switches the laser off.
-      if (!inLine) {
-        stopAiming(ctx, self, player);
-        s.phase = "rest";
-        s.timer = LOST_SIGHT_REST;
-        continue;
-      }
-      face(self, player.position, TURN_RATE * dt);
-      if (self.combatant) self.combatant.engaged = true;
-      s.timer = Math.max(0, s.timer - dt);
-      if (s.timer > 0 || !self.combatant || !readyToFire(self.combatant, self.combatant.loaded)) continue;
-      const origin = eyeOf(self);
-      fireShot(ctx, { shooter: self, origin, dir: normalize(sub(chestOf(player), origin)), spread: aimSpreadOf(self, null), ...NPC_CRIT }, ctx.rng);
-      ctx.bus.emit("SniperAimed", { entityId: self.id, targetId: player.id, duration: 0 });
-      s.phase = "rest";
-      s.timer = self.combatant.stats?.interval ?? SNIPER_AIM_TIME;
+      if (reposition(ctx, self, player, perch)) continue;
+      shoot(ctx, self, player, seesTarget(ctx, self, player), dt);
     }
   },
 };

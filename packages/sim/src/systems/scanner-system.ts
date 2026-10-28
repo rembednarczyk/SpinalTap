@@ -27,7 +27,7 @@ import { chestOf, eyeOf, lineOfSight } from "../world/hitscan";
 import { inCreationOrder } from "../world/ordering";
 import { disturb, hackFxOf, isEngaged, noteDetected, noteHacked, noteViolence } from "../world/street";
 import { scanning, worldTimeScale } from "./ability-system";
-import { SEARCH_SECONDS, TRACK_GRACE, effectiveAggroRange, giveLead, guardSees } from "./ai/ganger-ai-system";
+import { SEARCH_SECONDS, TRACK_GRACE, effectiveAggroRange, giveLead, guardSees } from "./ai/ganger-perception";
 import { cameraSees } from "./crime-system";
 
 /** Seconds a `short_circuit` knocks a device out. */

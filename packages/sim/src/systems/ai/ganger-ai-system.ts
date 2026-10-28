@@ -1,10 +1,10 @@
 import { BehaviourTree, State } from "mistreevous";
 
 type Agent = ConstructorParameters<typeof BehaviourTree>[1];
-import { angleTo, factionStance, normalize, strikeAt, sub, type EntityId, type FactionStance, type Vec3 } from "@seki/core";
+import { angleTo, normalize, strikeAt, sub, type EntityId, type Vec3 } from "@seki/core";
 import type { Entity } from "../../world/components";
 import type { SimContext, System } from "../../world/context";
-import { chestOf, eyeOf, lineOfSight } from "../../world/hitscan";
+import { chestOf, eyeOf } from "../../world/hitscan";
 import { inCreationOrder } from "../../world/ordering";
 import { followSchedule } from "../../world/schedule";
 import { worldTimeScale } from "../ability-system";
@@ -17,7 +17,19 @@ import { WORLD_NAV } from "../../content/world-map";
 import { LEVEL_GAP, firingPosition, routeAcrossLevels } from "../../world/nav";
 import { type Detour, SAME_FLOOR, detourStep, followDetour, planDetour, straightWalk } from "./steering";
 import { type AwarenessState } from "@seki/core";
-import { noteDetected } from "../../world/street";
+import {
+  AWARENESS_STEP,
+  type Ganger,
+  NO_VICTIM,
+  type Perception,
+  TRACK_GRACE,
+  type VictimPerception,
+  awarenessOf,
+  perceivePlayer,
+  perceiveVictim,
+  track,
+  victimsOf,
+} from "./ganger-perception";
 
 export const GANGER_SPEED = 3.1;
 /** A ganger with a melee weapon runs at whoever it fights to close the distance (ADR-0019). */
@@ -58,87 +70,13 @@ interface Progress {
 const CROWD_RADIUS = 8;
 /** The repath is for this goal; a goal that moved further than this needs the ordinary way. */
 const PLAN_DRIFT = 2;
-
-/**
- * Sight of a corporate guard (ADR-0024). It sees in a cone in front of it, a crouching player
- * only from half as far, and anyone standing right next to it whatever the facing (unless they
- * crouch). Seeing fills its suspicion, faster the closer the player is; at 1 it raises the alarm.
- * Out of sight the suspicion drains again.
- */
-export const GUARD_CONE = 1.05;
-export const GUARD_CROUCH_SIGHT = 0.5;
-export const GUARD_NEAR = 2.2;
-const SUSPICION_RATE = 1.4;
-const SUSPICION_DECAY = 0.5;
 /** A guard on watch sweeps this far either side of its post's facing, once per `WATCH_PERIOD` seconds. */
 export const WATCH_SWEEP = 0.7;
 const WATCH_PERIOD = 8;
 
-/** Whether a cone-sighted guard notices the player this step (pure; the caller keeps the meter). */
-export const guardSees = (g: Entity, player: Entity, distance: number, inSight: boolean, sight: number): boolean => {
-  if (!inSight) return false;
-  const crouched = (player.posture?.amount ?? 0) > 0.5;
-  if (distance <= GUARD_NEAR && !crouched) return true;
-  if (distance > sight * (crouched ? GUARD_CROUCH_SIGHT : 1)) return false;
-  return Math.abs(angleTo({ x: g.position.x, z: g.position.z, yaw: g.yaw }, player.position.x, player.position.z)) <= GUARD_CONE;
-};
-
-/**
- * Last known position (ADR-0029). For `TRACK_GRACE` seconds after losing sight an alerted AI
- * still knows where the player went (it heard them); then it heads for the last position it
- * had. Arriving there (within `LEAD_ARRIVE`) without seeing the player, or after `GIVE_UP`
- * seconds of chasing a ghost, it stops fighting and looks around for `SEARCH_SECONDS`.
- */
-export const TRACK_GRACE = 1.5;
-export const LEAD_ARRIVE = 1.5;
-export const GIVE_UP = 20;
-export const SEARCH_SECONDS = 6;
 /** Looking around at the lead: the facing sweeps this far either side, once per `SEARCH_PERIOD`. */
 const SEARCH_SWEEP = 1.4;
 const SEARCH_PERIOD = 3;
-/** AwarenessChanged goes out when the state changes or the level moves this much. */
-export const AWARENESS_STEP = 0.25;
-
-/** The awareness the HUD shows for an AI (ADR-0029): state and level 0..1. */
-export const awarenessOf = (ai: Ganger["ai"]): { state: AwarenessState; level: number } => {
-  const suspicion = ai.suspicion ?? 0;
-  if (ai.alerted) return (ai.lost ?? 0) > TRACK_GRACE ? { state: "searching", level: 0.75 } : { state: "alerted", level: 1 };
-  if ((ai.search ?? 0) > 0) return { state: "searching", level: Math.max(0.5, suspicion) };
-  if (ai.lastKnown) return { state: "suspicious", level: Math.max(0.4, suspicion) };
-  if (suspicion > 0) return { state: "suspicious", level: suspicion };
-  return { state: "unaware", level: 0 };
-};
-
-/** Where the AI is sent to look (a distraction, a camera, a trace, the heat): it walks there unless it is fighting. */
-export const giveLead = (g: Entity, at: Vec3): void => {
-  if (!g.ai || g.ai.alerted) return;
-  g.ai.lastKnown = { x: at.x, y: at.y, z: at.z };
-  g.ai.search = 0;
-};
-
-/** A gang that wants the player dead looks for them harder. */
-export const HOSTILE_AGGRO_MULTIPLIER = 1.5;
-
-/** Aggro range under a given Hebi stance. */
-export const effectiveAggroRange = (base: number, stance: FactionStance): number =>
-  stance === "hostile" ? base * HOSTILE_AGGRO_MULTIPLIER : base;
-
-type Ganger = Entity & { ai: NonNullable<Entity["ai"]>; velocity: NonNullable<Entity["velocity"]> };
-
-interface Perception {
-  player: Entity | null;
-  distance: number;
-  visible: boolean;
-}
-
-/** What a ganger sent after an NPC knows about its victim. */
-interface VictimPerception {
-  victim: Entity | null;
-  distance: number;
-  visible: boolean;
-}
-
-const NO_VICTIM: VictimPerception = { victim: null, distance: Infinity, visible: false };
 
 /** The blackboard the tree's conditions and actions read. Rebound to the current entity each step. */
 class GangerAgent {
@@ -411,46 +349,6 @@ class GangerAgent {
   }
 }
 
-/**
- * Keeps the last known position and the search of one AI up to date (ADR-0029). Seen: the
- * player's position. Alerted out of sight: still tracked for `TRACK_GRACE`, then chased as it
- * was; reached (or chased for `GIVE_UP`) without contact, the AI stops fighting and searches.
- * A lead's search running out clears it.
- */
-const track = (ctx: SimContext, g: Ganger, player: Entity | null, visible: boolean, dt: number): void => {
-  const ai = g.ai;
-  if (ai.alerted) {
-    if (visible && player) noteDetected(ctx);
-    if (!player) return;
-    ai.search = 0;
-    if (visible) {
-      ai.lost = 0;
-      ai.lastKnown = { ...player.position };
-      return;
-    }
-    ai.lost = (ai.lost ?? 0) + dt;
-    // Alerted without having seen the player (a hit, a shot, the hack's wave): it knows roughly where.
-    if (ai.lost <= TRACK_GRACE || !ai.lastKnown) ai.lastKnown = { ...player.position };
-    const lead = ai.lastKnown;
-    const there = Math.hypot(lead.x - g.position.x, lead.z - g.position.z) < LEAD_ARRIVE && Math.abs(lead.y - g.position.y) < LEVEL_GAP;
-    if (ai.lost > TRACK_GRACE && (there || ai.lost > GIVE_UP) && !ai.victim) {
-      ai.alerted = false;
-      ai.lost = 0;
-      ai.search = SEARCH_SECONDS;
-    }
-    return;
-  }
-  ai.lost = 0;
-  const lead = ai.lastKnown;
-  if (!lead) return;
-  if ((ai.search ?? 0) > 0) {
-    ai.search = Math.max(0, (ai.search ?? 0) - dt);
-    if (ai.search === 0) ai.lastKnown = null;
-    return;
-  }
-  if (Math.hypot(lead.x - g.position.x, lead.z - g.position.z) < LEAD_ARRIVE) ai.search = SEARCH_SECONDS;
-};
-
 /** AwarenessChanged when the state changes or the level moves by `AWARENESS_STEP` (no spam every tick). */
 const report = (ctx: SimContext, g: Ganger, agent: GangerAgent): void => {
   const now = awarenessOf(g.ai);
@@ -460,19 +358,49 @@ const report = (ctx: SimContext, g: Ganger, agent: GangerAgent): void => {
   ctx.bus.emit("AwarenessChanged", { observerId: g.id, state: now.state, level: now.level, lastKnown: g.ai.lastKnown ? { ...g.ai.lastKnown } : null });
 };
 
-/** Living NPCs some ganger was sent after, by key. Empty (and cheap) when no wave is out. */
-const victimsOf = (ctx: SimContext): Map<string, Entity> => {
-  const wanted = new Set<string>();
-  for (const g of ctx.world.with("ai")) if (g.ai.victim) wanted.add(g.ai.victim);
-  const out = new Map<string, Entity>();
-  if (wanted.size === 0) return out;
-  for (const e of ctx.world.with("health")) if (e.key && wanted.has(e.key) && e.health.current > 0) out.set(e.key, e);
-  return out;
+interface Brain {
+  readonly tree: BehaviourTree;
+  readonly agent: GangerAgent;
+}
+
+/** The ganger's tree and blackboard, created on first sight. */
+const brainOf = (trees: Map<EntityId, Brain>, id: EntityId): Brain => {
+  let brain = trees.get(id);
+  if (!brain) {
+    const agent = new GangerAgent();
+    brain = { agent, tree: new BehaviourTree(GANGER_TREE, agent as unknown as Agent) };
+    trees.set(id, brain);
+  }
+  return brain;
 };
 
-const perceiveVictim = (ctx: SimContext, g: Entity, victim: Entity): VictimPerception => {
-  const distance = Math.hypot(victim.position.x - g.position.x, victim.position.z - g.position.z);
-  return { victim, distance, visible: lineOfSight(ctx.world, eyeOf(g), chestOf(victim)) };
+/**
+ * Runs the tree on what the ganger perceives. Off balance or committed to a swing, it stands
+ * where it is and the tree waits.
+ */
+const think = (ctx: SimContext, g: Ganger, { tree, agent }: Brain, seen: Perception, target: VictimPerception, timeScale: number): void => {
+  agent.ctx = ctx;
+  agent.self = g;
+  agent.seen = seen;
+  agent.target = target;
+  agent.timeScale = timeScale;
+  if (g.combatant) g.combatant.engaged = false;
+  const m = g.melee;
+  if (m && (m.stagger > 0 || m.phase !== "idle")) {
+    const knock = knockbackVelocity(g);
+    g.velocity = { x: knock.x, y: 0, z: knock.z };
+    if (g.combatant) g.combatant.engaged = m.stagger === 0;
+    agent.walking = false;
+    agent.checkProgress();
+    return;
+  }
+  agent.walking = false;
+  agent.goal = null;
+  tree.step();
+  // Paralysed by `cripple_movement` (ADR-0029): it turns and shoots, but does not walk.
+  if ((g.hackFx?.crippled ?? 0) > 0) g.velocity = { x: 0, y: 0, z: 0 };
+  agent.checkProgress();
+  report(ctx, g, agent);
 };
 
 /**
@@ -483,66 +411,22 @@ const perceiveVictim = (ctx: SimContext, g: Entity, victim: Entity): VictimPerce
  * when alerted with the player in sight and range.
  */
 export const createGangerAiSystem = (): System => {
-  const trees = new Map<EntityId, { tree: BehaviourTree; agent: GangerAgent }>();
+  const trees = new Map<EntityId, Brain>();
   return {
     name: "ganger-ai",
     run(ctx) {
       const player = ctx.session.gameOver ? null : (ctx.world.with("player").first ?? null);
       const alive = new Set<EntityId>();
       const timeScale = worldTimeScale(ctx);
-      const reputation = ctx.state.domain.reputation;
-      const heat = ctx.state.domain.heat;
+      const { reputation, heat } = ctx.state.domain;
       const victims = victimsOf(ctx);
       for (const g of inCreationOrder(ctx.world.with("ai", "velocity"))) {
         alive.add(g.id);
-        let brain = trees.get(g.id);
-        if (!brain) {
-          const agent = new GangerAgent();
-          brain = { agent, tree: new BehaviourTree(GANGER_TREE, agent as unknown as Agent) };
-          trees.set(g.id, brain);
-        }
-        const distance = player ? Math.hypot(player.position.x - g.position.x, player.position.z - g.position.z) : Infinity;
-        const stance = factionStance(reputation, g.faction ?? "hebi");
-        const aggro = effectiveAggroRange(g.ai.aggroRange, stance);
-        const blind = (g.hackFx?.blind ?? 0) > 0;
-        let visible = !blind && !!player && distance <= aggro && lineOfSight(ctx.world, eyeOf(g), chestOf(player));
-        if (g.ai.cone && player && !g.ai.alerted) {
-          // A corporate guard needs a moment of looking before it believes its eyes.
-          const sees = guardSees(g, player, distance, visible, aggro);
-          const before = g.ai.suspicion ?? 0;
-          const rate = sees ? SUSPICION_RATE * (1.5 - Math.min(1, distance / aggro)) : -SUSPICION_DECAY;
-          g.ai.suspicion = Math.max(0, Math.min(1, before + rate * ctx.dt * timeScale));
-          visible = g.ai.suspicion >= 1;
-        }
-        // The district's security hunting the player (ADR-0029) attacks on sight whatever the stance.
-        const hunted = heat.level > 0 && heat.faction === (g.faction ?? "hebi");
-        if (visible && (stance !== "friendly" || hunted)) g.ai.alerted = true;
-        g.ai.sees = visible;
-        track(ctx, g, player, visible, ctx.dt * timeScale);
-        brain.agent.ctx = ctx;
-        brain.agent.self = g;
-        brain.agent.seen = { player, distance, visible };
+        const brain = brainOf(trees, g.id);
+        const seen = perceivePlayer(ctx, g, player, { reputation, heat }, timeScale);
+        track(ctx, g, player, seen.visible, ctx.dt * timeScale);
         const victim = g.ai.victim ? (victims.get(g.ai.victim) ?? null) : null;
-        brain.agent.target = victim ? perceiveVictim(ctx, g, victim) : NO_VICTIM;
-        brain.agent.timeScale = timeScale;
-        if (g.combatant) g.combatant.engaged = false;
-        // Off balance or committed to a swing: it stands where it is and the tree waits.
-        const m = g.melee;
-        if (m && (m.stagger > 0 || m.phase !== "idle")) {
-          const knock = knockbackVelocity(g);
-          g.velocity = { x: knock.x, y: 0, z: knock.z };
-          if (g.combatant) g.combatant.engaged = m.stagger === 0;
-          brain.agent.walking = false;
-          brain.agent.checkProgress();
-          continue;
-        }
-        brain.agent.walking = false;
-        brain.agent.goal = null;
-        brain.tree.step();
-        // Paralysed by `cripple_movement` (ADR-0029): it turns and shoots, but does not walk.
-        if ((g.hackFx?.crippled ?? 0) > 0) g.velocity = { x: 0, y: 0, z: 0 };
-        brain.agent.checkProgress();
-        report(ctx, g, brain.agent);
+        think(ctx, g, brain, seen, victim ? perceiveVictim(ctx, g, victim) : NO_VICTIM, timeScale);
       }
       for (const id of [...trees.keys()]) if (!alive.has(id)) trees.delete(id);
     },
