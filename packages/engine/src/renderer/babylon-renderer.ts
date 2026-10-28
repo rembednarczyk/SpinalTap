@@ -282,8 +282,10 @@ export class BabylonRenderer implements RenderPort {
         if (view.kind === "block") {
           this.dressing.addBlock(id, view, at);
           this.blocks.set(id, { center: { x: at.x, y: at.y, z: at.z }, size: view.size, material: view.material, ...(view.rungs ? { rungs: view.rungs } : {}) });
-          // A ladder or a rail can make a roof walked: rebuild the kit cells around it.
-          if (!view.skin) this.city?.touch(at.x, at.z);
+          // A ladder, or a rail or crate up on a roof, can make a roof walked: rebuild the kit
+          // cells around it. Anything else leaves built cells alone (rebuilding them stalls a frame).
+          const raised = at.y - view.size.y / 2 > 2 && Math.min(view.size.x, view.size.z) < 3;
+          if (!view.skin && (view.rungs || raised)) this.city?.touch(at.x, at.z);
         } else if (view.kind === "neon") {
           this.dressing.addSign(id, view, at);
         }
