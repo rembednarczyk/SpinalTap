@@ -1,6 +1,6 @@
 import { RARITY } from "@seki/core";
 import { useEffect } from "react";
-import { useIntents, useUi } from "../use-ui";
+import { useLootIntents, useUi } from "../use-ui";
 
 /**
  * A searched bag (ADR-0015): the lines with quantities and rarity labels, one button per line
@@ -9,7 +9,7 @@ import { useIntents, useUi } from "../use-ui";
  */
 export const LootPanel = () => {
   const loot = useUi((s) => s.loot);
-  const intents = useIntents();
+  const intents = useLootIntents();
 
   useEffect(() => {
     if (!loot) return;

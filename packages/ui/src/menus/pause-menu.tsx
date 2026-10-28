@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { useIntents } from "../use-ui";
+import { useSessionIntents } from "../use-ui";
 import { ControlsHelp } from "./controls-help";
 import { SaveSlots } from "./save-slots";
 import { SettingsPanel } from "./settings-panel";
 
 export const PauseMenu = () => {
-  const intents = useIntents();
+  const intents = useSessionIntents();
   const [tab, setTab] = useState<"main" | "save" | "load" | "settings">("main");
   return (
     <div className="screen screen--pause" data-testid="pause-menu">
