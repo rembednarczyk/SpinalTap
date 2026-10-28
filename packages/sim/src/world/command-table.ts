@@ -48,6 +48,8 @@ export const COMMAND_HANDLERS: CommandHandlers = {
   "install-mod": applyItemCommand,
   "remove-mod": applyItemCommand,
   "take-loot": applyItemCommand,
+  // Wave 2 (ADR-0032): the metro rides in with its own handler; until then a ticket does nothing.
+  "travel-metro": () => undefined,
 };
 
 /** Dispatches a command to its handler; an unknown type (a corrupt replay) changes nothing. */

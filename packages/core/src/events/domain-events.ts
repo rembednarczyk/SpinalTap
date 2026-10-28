@@ -12,6 +12,7 @@ import type { GameClock } from "../time/game-clock";
 import type { BreachDaemonId, HackTargetKind, QuickhackFailure, QuickhackId } from "../hacking/quickhacks";
 import type { CrimeKind, CrowdState, DisturbanceKind, HeatLevel, WitnessChannel } from "../crime/heat";
 import type { BonusCondition, ContractBadge, ContractRank } from "../contracts/debrief";
+import type { BuffId, DisguiseRole, MetroStationId } from "../world/wave2";
 
 export interface DomainEvents {
   ShotFired: { shooterId: EntityId; from: Vec3; to: Vec3; hitEntity: EntityId | null };
@@ -165,6 +166,27 @@ export interface DomainEvents {
   };
   /** A text or a call on the phone (ADR-0028); the app renders `knot` from ink. */
   PhoneMessage: { from: string; kind: "text" | "call"; knot: string; priority: PhonePriority };
+  // Wave 2 (ADR-0032).
+  /** A burst of speed on the ground or in the air (legs cyberware). */
+  Dashed: { entityId: EntityId; air: boolean; at: Vec3 };
+  /** A guarding blade sent a bullet back towards where the defender looks. */
+  ProjectileReflected: { defenderId: EntityId; attackerId: EntityId; at: Vec3 };
+  /** Cyberware capacity in use and the limit (installing above the limit is refused). */
+  CyberwareCapacityChanged: { used: number; max: number };
+  BuffApplied: { buffId: BuffId; duration: number };
+  BuffEnded: { buffId: BuffId };
+  /** The player now passes for `role`, or for nobody (null). */
+  DisguiseChanged: { role: DisguiseRole | null };
+  /** An enforcer saw through the disguise, or a forbidden act gave it away. */
+  DisguiseBlown: { observerId: EntityId; role: DisguiseRole };
+  /** The train left: the destination streams in during `seconds` of ride. */
+  MetroDeparted: { from: MetroStationId; to: MetroStationId; seconds: number };
+  MetroArrived: { station: MetroStationId };
+  /** A street encounter (a short ink scene) began with `npcId`. */
+  EncounterStarted: { encounterId: string; knot: string; npcId: EntityId | null };
+  EncounterEnded: { encounterId: string; outcome: string };
+  /** The player learned something that opens another way through the running contract. */
+  ContractHookFound: { contractId: string; hookId: string; text: string };
 }
 
 /** Awareness of the player, from not noticing to fighting. */

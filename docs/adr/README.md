@@ -33,5 +33,6 @@
 | [0029](0029-fala-1-symulacja-swiadkowie-heat-quickhacki.md) | Fala 1 w symulacji: ostatnia znana pozycja, tłum i świadkowie, heat i wsparcie poza wzrokiem, skaner i quickhacki, kamery i Breach, debrief zlecenia, zapis v11 | Zaakceptowana |
 | [0030](0030-wizualia-fali-1.md) | Wizualia fali 1: paleta dystryktów, szyldy i holoreklamy z atlasu, post-process zdarzeń z limitem błysków, skaner | Zaakceptowana |
 | [0031](0031-rozbicie-god-objectow.md) | Audyt god objectów i docelowy podział: wąskie intencje UI, obszary stanu, kontrolery sesji, fasada renderera, strażnik w ESLint | Zaakceptowana |
+| [0032](0032-fala-2-kontrakty.md) | Kontrakty fali 2: metro, radio, przebrania, pojemność cyberware i zryw, buffy, warianty zleceń i haki, spotkania uliczne | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.

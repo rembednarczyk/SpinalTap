@@ -85,6 +85,7 @@ export class VirtualPad {
       // The scanner and quickhacks come to touch with the HUD of ADR-0028.
       scan: false,
       quickhack: 0,
+      dash: false,
     };
     this.flush();
     return frame;

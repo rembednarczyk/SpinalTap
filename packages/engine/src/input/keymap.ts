@@ -26,7 +26,8 @@ export type Action =
   | "slot3"
   | "nextWeapon"
   | "prevWeapon"
-  | "scan";
+  | "scan"
+  | "dash";
 
 /**
  * Action → physical codes (KeyboardEvent.code, "Mouse0".."Mouse4", or "WheelUp"/"WheelDown").
@@ -61,6 +62,8 @@ export const DEFAULT_KEYMAP: KeyMap = {
   prevWeapon: ["WheelUp"],
   // Scanner (ADR-0028), held. Tab, Cyberpunk's key, opens the character menu here.
   scan: ["KeyZ", "Mouse1"],
+  // Dash (ADR-0032). Alt as in many PC action games; the browser's own Alt menu is suppressed.
+  dash: ["AltLeft"],
 };
 
 export const remap = (
@@ -147,6 +150,7 @@ export const mapKeyboardMouse = (
     weaponCycle: cyclePressed(keys.pressed, map),
     scan,
     quickhack: scan ? quickhackPressed(keys.pressed) : 0,
+  dash: any(keys.pressed, map.dash),
   };
 };
 
@@ -198,6 +202,8 @@ export const mapGamepad = (pad: PadState, dt: number): InputFrame => ({
   // Scanner on the right stick click (ADR-0028); quickhacks are picked in the touch/HUD list.
   scan: pad.buttons[11] ?? false,
   quickhack: 0,
+  // The pad's dash binding comes with the wave 2 input work (ADR-0032).
+  dash: false,
 });
 
 /** Combines devices: axes are summed and clamped, buttons are OR-ed. */
@@ -221,6 +227,7 @@ export const mergeFrames = (a: InputFrame, b: InputFrame): InputFrame => ({
   weaponCycle: a.weaponCycle || b.weaponCycle,
   scan: a.scan || b.scan,
   quickhack: a.quickhack || b.quickhack,
+  dash: a.dash || b.dash,
 });
 
 /** How a button behaves: held down, or pressed once to start and again to stop. */
