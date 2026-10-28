@@ -69,6 +69,12 @@ export const DebriefCard = () => {
           <span className="debrief__rank-text">{RANK_TEXT[debrief.rank]}</span>
         </div>
       </header>
+      {debrief.variation && (
+        <p className="debrief__variation" data-testid="debrief-variation">
+          {debrief.variation.labels.join(" · ")}
+          {debrief.variation.twist && <b className="debrief__twist"> · {debrief.variation.twist}</b>}
+        </p>
+      )}
       <ul className="debrief__badges">
         {debrief.badges.map((b) => (
           <li

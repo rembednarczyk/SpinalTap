@@ -13,6 +13,7 @@ import { DamageNumbers } from "./damage-numbers";
 import { ScannerHud } from "./scanner";
 import { DetectionRing, HeatStars } from "./stealth";
 import { PhoneNotice } from "../phone/phone";
+import { BuffIcons, DashIcon, DisguiseBadge, HookList } from "./body-hud";
 
 /** Default vertical field of view of the game camera in radians (engine CameraRig; the settings change it). */
 export const HUD_CAMERA_FOV = 1.08;
@@ -136,7 +137,9 @@ export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
   const always = useUi((s) => s.settings.hudAlwaysShow);
   const hpPct = Math.max(0, Math.min(100, (hp / Math.max(1, maxHp)) * 100));
   // Contextual HUD (Cyberpunk 2.1): out of combat and at full health the bar steps aside.
-  const calm = !always && !combat && hp >= maxHp;
+  // A disguise keeps the bar up: the role badge sits next to it (ADR-0035).
+  const disguised = useUi((s) => s.disguise !== null);
+  const calm = !always && !combat && hp >= maxHp && !disguised;
 
   return (
     <div className="hud" data-testid="hud">
@@ -152,7 +155,9 @@ export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
         <div className="hud__hp-label">
           {Math.ceil(hp)} / {maxHp}
         </div>
+        <DisguiseBadge />
       </div>
+      <BuffIcons />
       <div className="hud__wallet" data-testid="eddies">
         <span className="hud__currency">€$</span> {eddies.toLocaleString("pl-PL")}
       </div>
@@ -162,10 +167,12 @@ export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
           <div className="hud__quest-title">{questTitle}</div>
           <div>{objective}</div>
           <BonusIndicator />
+          <HookList />
         </div>
       )}
       <HeatStars />
       <AbilityWidget />
+      <DashIcon />
       <WeaponStrip pad={touch} />
       <Minimap />
       <div className="hud__camera">

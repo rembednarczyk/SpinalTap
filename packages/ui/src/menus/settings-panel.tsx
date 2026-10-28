@@ -203,6 +203,8 @@ export const SettingsPanel = () => {
           <Slider id="touchSensitivity" label="Czułość dotyku" value={settings.touchSensitivity} min={0.2} max={3} step={0.1} format={times} onChange={(v) => set({ touchSensitivity: v })} />
           <Choice label="Zdrowie i amunicja zawsze" value={settings.hudAlwaysShow ? "on" : "off"} options={ON_OFF} onChange={(v) => set({ hudAlwaysShow: v === "on" })} />
           <Choice label="Liczby obrażeń" value={settings.damageNumbers} options={DAMAGE_NUMBERS} onChange={(damageNumbers) => set({ damageNumbers })} />
+          <Choice label="Znaczniki na minimapie" value={settings.mapMarkers ? "on" : "off"} options={ON_OFF} onChange={(v) => set({ mapMarkers: v === "on" })} />
+          <Choice label="Podświetlenia obiektów" value={settings.highlights ? "on" : "off"} options={ON_OFF} onChange={(v) => set({ highlights: v === "on" })} />
         </>
       )}
       {section === "mouse" && (

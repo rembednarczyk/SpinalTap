@@ -15,6 +15,8 @@ import { UiContext, useUi } from "./use-ui";
 import { BreachPanel } from "./breach/breach-panel";
 import { DebriefCard } from "./hud/contract-card";
 import { PhonePanel } from "./phone/phone";
+import { MetroMap, MetroRide } from "./metro/metro-panel";
+import { RadioKey } from "./radio/radio";
 
 /**
  * Accessibility settings on the document root (ADR-0028): HUD scale as `--hud-scale`, the
@@ -38,7 +40,7 @@ const Accessibility = () => {
 
 const Screens = ({ touch }: { touch: TouchPadSink | undefined }) => {
   const screen = useUi((s) => s.screen);
-  const modal = useUi((s) => s.dialogue !== null || s.shopOpen || s.loot !== null || s.phoneOpen || s.breach !== null);
+  const modal = useUi((s) => s.dialogue !== null || s.shopOpen || s.loot !== null || s.phoneOpen || s.breach !== null || s.metroMap !== null || s.metroRide !== null);
   // The character screen covers the whole game; the HUD under it would only show through.
   const menu = useUi((s) => s.characterTab !== null) && screen === "playing";
   return (
@@ -53,6 +55,9 @@ const Screens = ({ touch }: { touch: TouchPadSink | undefined }) => {
       {screen === "playing" && !menu && <DebriefCard />}
       {screen === "playing" && <PhonePanel />}
       {screen === "playing" && <BreachPanel />}
+      {screen === "playing" && <MetroMap />}
+      {screen === "playing" && <MetroRide />}
+      {screen === "playing" && <RadioKey />}
       {screen === "title" && <TitleScreen />}
       {screen === "paused" && <PauseMenu />}
       {screen === "dead" && <DeathScreen />}

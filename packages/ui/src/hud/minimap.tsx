@@ -6,7 +6,7 @@ import { useUi } from "../use-ui";
 export const MINIMAP_RANGE = 32;
 const EDGE = MINIMAP_RANGE - 2.5;
 
-const LABEL: Record<MapMarkerKind, string> = { fixer: "Zlecenia", ripperdoc: "Klinika Mori", vendor: "Sklep", target: "Cel" };
+const LABEL: Record<MapMarkerKind, string> = { fixer: "Zlecenia", ripperdoc: "Klinika Mori", vendor: "Sklep", target: "Cel", enforcer: "Egzekutor: widzi przez przebranie" };
 
 const LINK_LABEL: Record<MapLinkKind, string> = { stairs: "Schody", lift: "Winda", ladder: "Drabina" };
 
@@ -44,33 +44,61 @@ const District = memo(({ map }: { map: MapVm }) => (
 ));
 District.displayName = "District";
 
-/** Marker position relative to the player; markers out of range stick to the edge. */
-export const markerOffset = (m: { x: number; z: number }, player: { x: number; z: number }): { x: number; y: number; edge: boolean } => {
-  const x = m.x - player.x;
-  const y = -(m.z - player.z);
-  const dist = Math.hypot(x, y);
-  if (dist <= EDGE) return { x, y, edge: false };
-  const k = EDGE / dist;
-  return { x: x * k, y: y * k, edge: true };
+/**
+ * What the minimap is centred on and how much it shrinks the world: `k` is 1 at the default
+ * range and smaller while zoomed out, so markers keep their size (ADR-0035).
+ */
+export interface MapView {
+  readonly x: number;
+  readonly z: number;
+  readonly k?: number;
+}
+
+/** Share of the range the view looks ahead while moving: the arrow sits in the lower third. */
+export const LOOK_AHEAD = 1 / 3;
+
+/** The view of a frame: centred on the player, or ahead of a moving one along the view direction. */
+export const mapView = (player: { x: number; z: number; yaw: number; moving?: boolean }, zoom = 1): Required<MapView> => {
+  const lead = player.moving ? MINIMAP_RANGE * zoom * LOOK_AHEAD : 0;
+  return { x: player.x + Math.sin(player.yaw) * lead, z: player.z + Math.cos(player.yaw) * lead, k: 1 / Math.max(0.5, zoom) };
 };
 
-const Marker = ({ marker, player }: { marker: MapMarkerVm; player: { x: number; z: number } }) => {
-  const o = markerOffset(marker, player);
+/** Marker position relative to the view centre; markers out of range stick to the edge. */
+export const markerOffset = (m: { x: number; z: number }, view: MapView): { x: number; y: number; edge: boolean } => {
+  const k = view.k ?? 1;
+  const x = (m.x - view.x) * k;
+  const y = -(m.z - view.z) * k;
+  const dist = Math.hypot(x, y);
+  if (dist <= EDGE) return { x, y, edge: false };
+  const s = EDGE / dist;
+  return { x: x * s, y: y * s, edge: true };
+};
+
+const MarkerIcon = ({ kind }: { kind: MapMarkerKind }) => {
+  if (kind === "target") return <path d="M0 -2.6 L2.6 0 L0 2.6 L-2.6 0 Z" />;
+  // An enforcer: a shield with a slit, the one who sees through a disguise.
+  if (kind === "enforcer") return <path d="M0 -2.8 L2.4 -1.8 V0.6 Q2.4 2.2 0 3 Q-2.4 2.2 -2.4 0.6 V-1.8 Z M-1.2 0 H1.2" />;
+  return <circle r={2} />;
+};
+
+const Marker = ({ marker, view }: { marker: MapMarkerVm; view: MapView }) => {
+  const o = markerOffset(marker, view);
+  const area = marker.radius !== undefined && !o.edge;
   return (
     <g
-      className={`minimap__marker minimap__marker--${marker.kind}${o.edge ? " minimap__marker--edge" : ""}`}
+      className={`minimap__marker minimap__marker--${marker.kind}${o.edge ? " minimap__marker--edge" : ""}${area ? " minimap__marker--area" : ""}`}
       transform={`translate(${o.x.toFixed(2)} ${o.y.toFixed(2)})`}
       data-testid={`minimap-marker-${marker.kind}`}
     >
-      <title>{LABEL[marker.kind]}</title>
-      {marker.kind === "target" ? <path d="M0 -2.6 L2.6 0 L0 2.6 L-2.6 0 Z" /> : <circle r={2} />}
+      <title>{marker.kind === "target" && marker.radius !== undefined ? "Obszar celu" : LABEL[marker.kind]}</title>
+      {area ? <circle className="minimap__area" r={(marker.radius ?? 0) * (view.k ?? 1)} data-testid="minimap-area" /> : <MarkerIcon kind={marker.kind} />}
     </g>
   );
 };
 
 /** A phone over a civilian who is calling it in (ADR-0028). */
-const Witness = ({ at, player }: { at: { x: number; z: number }; player: { x: number; z: number } }) => {
-  const o = markerOffset(at, player);
+const Witness = ({ at, view }: { at: { x: number; z: number }; view: MapView }) => {
+  const o = markerOffset(at, view);
   return (
     <g className={`minimap__witness${o.edge ? " minimap__marker--edge" : ""}`} transform={`translate(${o.x.toFixed(2)} ${o.y.toFixed(2)})`} data-testid="minimap-witness">
       <title>Świadek dzwoni</title>
@@ -81,8 +109,8 @@ const Witness = ({ at, player }: { at: { x: number; z: number }; player: { x: nu
 };
 
 /** Where the enemies last saw the player: a hollow silhouette (Deus Ex style). */
-const Silhouette = ({ at, player }: { at: { x: number; z: number }; player: { x: number; z: number } }) => {
-  const o = markerOffset(at, player);
+const Silhouette = ({ at, view }: { at: { x: number; z: number }; view: MapView }) => {
+  const o = markerOffset(at, view);
   return (
     <g className="minimap__ghost" transform={`translate(${o.x.toFixed(2)} ${o.y.toFixed(2)})`} data-testid="minimap-last-known">
       <title>Ostatnia znana pozycja</title>
@@ -92,29 +120,36 @@ const Silhouette = ({ at, player }: { at: { x: number; z: number }; player: { x:
   );
 };
 
-/** North-up minimap centred on the player: district outline, view direction and key NPCs. */
+/**
+ * North-up minimap: district outline, view direction and what is worth finding. It zooms out
+ * with speed and, while the player moves, looks ahead so the arrow sits in the lower third
+ * (ADR-0035). The no-markers setting hides objective and fixer markers.
+ */
 export const Minimap = () => {
   const map = useUi((s) => s.map);
   const player = useUi((s) => s.mapPlayer);
   const markers = useUi((s) => s.mapMarkers);
   const witnesses = useUi((s) => s.witnesses);
   const lastKnown = useUi((s) => s.lastKnown);
+  const zoom = useUi((s) => s.mapZoom);
+  const showMarkers = useUi((s) => s.settings.mapMarkers);
   if (!map || !player) return null;
   const deg = (player.yaw * 180) / Math.PI;
+  const view = mapView(player, zoom);
+  const me = markerOffset(player, view);
+  const at = me.x === 0 && me.y === 0 ? "" : `translate(${me.x.toFixed(2)} ${me.y.toFixed(2)}) `;
   return (
-    <div className={`minimap${player.level !== undefined ? " minimap--upper" : ""}`} data-testid="minimap" aria-label="Minimapa">
+    <div className={`minimap${player.level !== undefined ? " minimap--upper" : ""}`} data-testid="minimap" data-zoom={zoom.toFixed(2)} aria-label="Minimapa">
       <svg viewBox={`${-MINIMAP_RANGE} ${-MINIMAP_RANGE} ${MINIMAP_RANGE * 2} ${MINIMAP_RANGE * 2}`} role="img">
-        <g transform={`translate(${(-player.x).toFixed(2)} ${player.z.toFixed(2)})`}>
+        <g transform={`scale(${view.k.toFixed(3)}) translate(${(-view.x).toFixed(2)} ${view.z.toFixed(2)})`}>
           <District map={map} />
         </g>
-        {markers.map((m) => (
-          <Marker key={m.id} marker={m} player={player} />
-        ))}
-        {lastKnown && <Silhouette at={lastKnown} player={player} />}
+        {showMarkers && markers.map((m) => <Marker key={m.id} marker={m} view={view} />)}
+        {lastKnown && <Silhouette at={lastKnown} view={view} />}
         {witnesses.map((w) => (
-          <Witness key={w.id} at={w} player={player} />
+          <Witness key={w.id} at={w} view={view} />
         ))}
-        <g className="minimap__player" transform={`rotate(${deg.toFixed(1)})`} data-testid="minimap-player">
+        <g className="minimap__player" transform={`${at}rotate(${deg.toFixed(1)})`} data-testid="minimap-player">
           <path className="minimap__cone" d="M0 0 L-7 -14 A16 16 0 0 1 7 -14 Z" />
           <path className="minimap__arrow" d="M0 -3.4 L2.4 2.4 L0 1.2 L-2.4 2.4 Z" />
         </g>
