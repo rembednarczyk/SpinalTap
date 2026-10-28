@@ -7,7 +7,9 @@ import { mulberry32 } from "./music";
  * Pure data and a pure generator, so the stations are tested without WebAudio.
  */
 
-export type RadioStationId = "drift" | "yoru" | "tessen";
+import type { RadioStationId } from "@seki/core";
+
+export type { RadioStationId };
 
 export const RADIO_STATION_IDS: readonly RadioStationId[] = ["drift", "yoru", "tessen"];
 

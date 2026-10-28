@@ -11,12 +11,9 @@ import { LAYERS, type LayerKind, RIDER_EYE, RIDER_LOOK, type Rider, TRAIN_SPEED,
  * A metro ride on screen (ADR-0036), proposed for `RenderPort.setMetroRide?(ride | null)`. The
  * app sends it on `MetroDeparted` and clears it on `MetroArrived`.
  */
-export interface MetroRideView {
-  readonly from: string;
-  readonly to: string;
-  /** Length of the ride in seconds (the streaming time of the destination). */
-  readonly seconds: number;
-}
+import type { MetroRideView } from "@seki/core";
+
+export type { MetroRideView };
 
 /** Where the car stands: far from every district, so the city stays out of the far plane. */
 export const CAR_ORIGIN = { x: 0, y: 0, z: -2600 } as const;

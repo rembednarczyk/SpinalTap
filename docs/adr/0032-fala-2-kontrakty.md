@@ -110,3 +110,7 @@ Wszystkie są dopisaniem pól opcjonalnych albo nowych zdarzeń, bez zmiany istn
 - HUD pokazuje cel przypiętego wpisu, dopóki ten trwa. Potem gra wybiera sama: wątek główny, a przy jego kroku o zleceniu albo bez niego zlecenie.
 - Dziennik oznacza wpis, który HUD śledzi. Przycisk „Śledź” przypina dowolny trwający wpis, „Śledzone · przestań” oddaje wybór grze.
 - UI: wąski `JournalIntents.trackQuest`, hook `useJournalIntents`.
+
+### Po engine fali 2 (propozycje z ADR-0036)
+- `RadioStationId` i `RADIO_STATION_IDS` w `core/world/wave2.ts`, `AudioScenePort.setRadioStation?(id | null)`. Engine bierze typ z core, a UI może go używać bez importu engine.
+- `MetroRideView` w core i `RenderPort.setMetroRide?(ride | null)`.
