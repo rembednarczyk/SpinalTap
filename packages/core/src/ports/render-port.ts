@@ -19,4 +19,6 @@ export interface RenderPort {
    * never respawns the view (or reloads an imported model). Unknown ids are ignored.
    */
   setAppearance(entityId: EntityId, appearance: AppearanceDescriptor): void;
+  /** Accessibility (ADR-0028): no chromatic aberration, glitch or flicker; slow fades only. */
+  setReduceFlashes?(on: boolean): void;
 }

@@ -1,13 +1,10 @@
 import { type CSSProperties } from "react";
-import { type HackTargetKind, QUICKHACKS, QUICKHACK_IDS, type QuickhackCategory, type QuickhackId, type QuickhackSlotInput } from "@seki/core";
+import { type HackTargetKind, QUICKHACKS, type QuickhackCategory, type QuickhackSlotInput, quickhacksFor } from "@seki/core";
 import type { RamVm } from "../store/hud-vm";
 import { useIntents, useUi } from "../use-ui";
 
-/**
- * The quickhacks a target kind takes, in the order of the number keys (InputFrame.quickhack is
- * the n-th of this list): the order of QUICKHACKS.
- */
-export const quickhacksFor = (kind: HackTargetKind): QuickhackId[] => QUICKHACK_IDS.filter((id) => (QUICKHACKS[id].targets as readonly HackTargetKind[]).includes(kind)).slice(0, 5);
+/** The quickhacks a target kind takes, in the order of the number keys (shared with the sim). */
+export { quickhacksFor };
 
 const KIND_LABEL: Readonly<Record<HackTargetKind, string>> = { camera: "Kamera", device: "Urządzenie", person: "Osoba" };
 const CATEGORY_LABEL: Readonly<Record<QuickhackCategory, string>> = { covert: "ukryty", control: "kontrola", combat: "bojowy" };

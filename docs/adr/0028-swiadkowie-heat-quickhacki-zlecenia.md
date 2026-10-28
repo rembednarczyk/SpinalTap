@@ -82,3 +82,12 @@ Wszystkie trzy przecinają `core`, `sim`, `app`, `ui` i `engine`. Żeby kilka os
 - Nowe pole w `InputFrame` zmienia kształt wejścia, ale nie złote hashe (wejście nie wchodzi do hasha stanu).
 - `breach-result` przenosi zaufanie do UI. Gra jest jednoosobowa, więc to akceptowalne, a replay zachowuje wynik jako komendę.
 - Kolejne fale (metro, radio, przebrania, Cyberware Capacity, generator wariacji zleceń) korzystają z tych samych zdarzeń.
+
+## Zmiany kontraktu
+- **Po HUD fali 1 (propozycje z implementacji UI):**
+  - `quickhacksFor(kind)` i `MAX_QUICKHACK_SLOTS` w `core/hacking`: jedna lista hacków dla celu, wspólna dla sim i HUD.
+  - `ScanFocusChanged` dostaje opcjonalne `kind`, `name` i `faction`, żeby HUD nie zgadywał rodzaju celu.
+  - `EntityKilled.killerId`, opcjonalne: znacznik zabójstwa i liczniki odznak.
+  - Nowe zdarzenie `BreachStarted { terminalKey, daemons }`: symulacja otwiera minigrę na terminalu. „Odłącz” wysyła zdobyte do tej pory demony (także pustą listę). Przerwanie przez obrażenia nie wysyła nic i terminal można złamać ponownie.
+  - `RenderPort.setReduceFlashes?(on)`: opcja dostępności dla engine.
+  - `HeatChanged.searchLeft` zostaje migawką: HUD odlicza sam od ostatniego zdarzenia.
