@@ -123,6 +123,9 @@ const Hint = () => {
   );
 };
 
+/** Key hints such as " [E]" in an objective line; a touch screen has no keys to name (ADR-0035). */
+export const withoutKeyHints = (text: string): string => text.replace(/\s*\[[A-Za-z0-9]{1,5}\]/g, "");
+
 export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
   const hp = useUi((s) => s.hp);
   const maxHp = useUi((s) => s.maxHp);
@@ -165,7 +168,7 @@ export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
       {objective && (
         <div className="hud__objective" data-testid="objective">
           <div className="hud__quest-title">{questTitle}</div>
-          <div>{objective}</div>
+          <div>{touch ? withoutKeyHints(objective) : objective}</div>
           <BonusIndicator />
           <HookList />
         </div>

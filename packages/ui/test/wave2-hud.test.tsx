@@ -184,6 +184,7 @@ describe("touch of wave 2", () => {
         },
       }),
     );
+    fireEvent.pointerDown(screen.getByTestId("touch-more"));
     fireEvent.pointerDown(screen.getByTestId("touch-weapon"));
     expect(pad.selectWeaponSlot).toHaveBeenCalledWith(3);
   });

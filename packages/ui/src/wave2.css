@@ -101,32 +101,82 @@
 .minimap__marker--enforcer { fill: var(--danger); }
 .minimap__marker--enforcer path { stroke: rgba(4, 7, 12, 0.9); stroke-width: 0.5; }
 
-/* ---- touch: the action arc around fire and the contextual "Use" ---- */
-.touch-mode .touch__actions { width: 300px; height: 260px; }
+/* ---- touch layout (ADR-0035): a phone in landscape, 667x375 and up ----
+   Right thumb: fire with an arc of reload, scanner, dash and "more"; aim, jump and the ability
+   beside it; "Use" only while there is something to use. Top right: one row of menu, phone and
+   pause, the wallet and the clock to its left, the minimap under it. Left: the objective on top,
+   the move stick, health only when it matters. No key hints anywhere. Every target is 44 px+. */
+.touch-mode .touch__actions {
+  right: max(16px, env(safe-area-inset-right, 0px));
+  bottom: max(10px, env(safe-area-inset-bottom, 0px));
+  width: 400px;
+  height: 200px;
+}
+.touch-mode .touch__btn--fire { right: 8px; bottom: 12px; width: 88px; height: 88px; }
 .touch__arc { position: absolute; inset: 0; pointer-events: none; }
+/* Around the fire button, upper left of it, 4 px apart so no two targets share a square. */
 .touch__arc .touch__btn--arc { width: 48px; height: 48px; font-size: 18px; }
-.touch__arc .touch__btn--arc-1 { right: 37px; bottom: 126px; color: var(--amber); }
-.touch__arc .touch__btn--arc-2 { right: 79px; bottom: 110px; }
-.touch__arc .touch__btn--arc-3 { right: 108px; bottom: 76px; color: var(--tok-hack, var(--cyan)); }
-.touch__arc .touch__btn--arc-4 { right: 116px; bottom: 32px; color: var(--magenta); }
+.touch__arc .touch__btn--arc-1 { right: 28px; bottom: 124px; color: var(--amber); }
+.touch__arc .touch__btn--arc-2 { right: 80px; bottom: 112px; color: var(--tok-hack, var(--cyan)); }
+.touch__arc .touch__btn--arc-3 { right: 104px; bottom: 60px; color: var(--magenta); }
+.touch__arc .touch__btn--arc-4 { right: 104px; bottom: 8px; }
 .touch__btn--cooling { opacity: 0.45; }
 .touch__btn:disabled { opacity: 0.35; }
-/* The outer ring: everything else at least 44 px, clear of the arc. */
-.touch-mode .touch__btn--jump { right: 96px; bottom: 196px; }
-.touch-mode .touch__btn--h { right: 240px; bottom: 62px; width: 44px; height: 44px; }
-.touch-mode .touch__btn--x { right: 156px; bottom: 150px; }
-.touch-mode .touch__btn--q { right: 170px; bottom: 98px; }
-.touch-mode .touch__btn--aim { right: 178px; bottom: 36px; }
-.touch-mode .touch__btn--c { right: 236px; bottom: 120px; }
-.touch-mode .touch__btn--v { right: 230px; bottom: 182px; }
-.touch-mode .touch__btn--use { right: 236px; bottom: 0; width: auto; min-width: 64px; max-width: 168px; height: 48px; padding: 0 12px; border-radius: 24px; display: flex; flex-direction: column; justify-content: center; line-height: 1.1; }
+.touch-mode .touch__btn--aim { right: 184px; bottom: 10px; width: 52px; height: 52px; }
+.touch-mode .touch__btn--q { right: 184px; bottom: 72px; width: 52px; height: 52px; }
+.touch-mode .touch__btn--jump { right: 176px; bottom: 136px; width: 52px; height: 52px; }
+/* "Use": a pill near the crosshair, naming what happens. */
+.touch-mode .touch__btn--use {
+  right: 248px;
+  bottom: 136px;
+  width: auto;
+  min-width: 96px;
+  max-width: 168px;
+  height: 48px;
+  padding: 0 14px;
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.1;
+}
 .touch__use-verb { font-family: var(--font-ui); font-size: 15px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
-.touch__use-what { max-width: 144px; overflow: hidden; font-family: var(--font-ui); font-size: 11px; white-space: nowrap; text-overflow: ellipsis; }
-.touch-mode .weapon-strip { right: calc(max(16px, env(safe-area-inset-right, 0px)) + 316px); }
-/* The "Use" button names the action; the prompt over the crosshair would only repeat it. */
-.touch-mode .hud__prompt { display: none; }
-.touch-mode .buffs { left: auto; right: max(120px, calc(env(safe-area-inset-right, 0px) + 112px)); bottom: auto; top: max(110px, calc(env(safe-area-inset-top, 0px) + 98px)); flex-direction: column; }
-.touch-mode .dash { display: none; }
+.touch__use-what { max-width: 140px; overflow: hidden; font-family: var(--font-ui); font-size: 11px; white-space: nowrap; text-overflow: ellipsis; }
+/* "More" unfolds one row left of the cluster. */
+.touch__more { position: absolute; right: 248px; bottom: 86px; display: flex; gap: 6px; pointer-events: none; }
+.touch__more .touch__btn { position: relative; right: auto; bottom: auto; width: 44px; height: 44px; font-size: 16px; }
+.touch__more .touch__btn--h { color: var(--ok); }
+
+/* Top right: one row of buttons, the wallet and clock left of it, the minimap under it. */
+.touch-mode .touch__top { top: max(8px, env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); gap: 6px; }
+.touch-mode .minimap { top: max(60px, calc(env(safe-area-inset-top, 0px) + 52px)); right: max(16px, env(safe-area-inset-right, 0px)); width: 88px; height: 88px; }
+.touch-mode .hud__wallet { top: max(8px, env(safe-area-inset-top, 0px)); right: calc(max(16px, env(safe-area-inset-right, 0px)) + 152px); font-size: 15px; padding: 4px 10px; }
+.touch-mode .hud__clock { top: max(44px, calc(env(safe-area-inset-top, 0px) + 36px)); right: calc(max(16px, env(safe-area-inset-right, 0px)) + 152px); font-size: 12px; padding: 2px 8px; }
+.touch-mode .toasts { top: max(76px, calc(env(safe-area-inset-top, 0px) + 68px)); right: calc(max(16px, env(safe-area-inset-right, 0px)) + 104px); width: min(260px, 36vw); gap: 4px; }
+.touch-mode .toast { padding: 4px 8px; }
+.touch-mode .toast:nth-last-child(n + 3) { display: none; }
+
+/* Left: the objective, the stick, health only when it matters, the active weapon. */
+.touch-mode .hud__objective { left: max(16px, env(safe-area-inset-left, 0px)); top: max(8px, env(safe-area-inset-top, 0px)); max-width: calc(100vw - 380px); font-size: 13px; padding: 4px 10px; }
+.touch-mode .hud__quest-title { font-size: 10px; }
+.touch-mode .hud__identity { left: max(16px, env(safe-area-inset-left, 0px)); bottom: max(10px, env(safe-area-inset-bottom, 0px)); width: 160px; padding: 4px 8px; }
+.touch-mode .hud__identity--calm { display: none; }
+.touch-mode .hud__name { display: none; }
+.touch-mode .hud__hp { margin-top: 0; }
+.touch-mode .hud__hp-label { font-size: 11px; }
+.touch-mode .touch__stick-hint { bottom: max(80px, calc(env(safe-area-inset-bottom, 0px) + 70px)); }
+.touch-mode .weapon-strip { left: calc(max(16px, env(safe-area-inset-left, 0px)) + 172px); right: auto; bottom: max(10px, env(safe-area-inset-bottom, 0px)); align-items: flex-start; }
+.touch-mode .weapon-strip__slot:not(.weapon-strip__slot--active) { display: none; }
+.touch-mode .weapon-strip__key { display: none; }
+
+/* Fewer things at once, and no keys to name on a touch screen. */
+.touch-mode .gear, .touch-mode .dash, .touch-mode .hud__prompt { display: none; }
+.touch-mode .hud kbd { display: none; }
+.touch-mode .buffs { left: max(16px, env(safe-area-inset-left, 0px)); right: auto; top: max(84px, calc(env(safe-area-inset-top, 0px) + 76px)); bottom: auto; flex-direction: row; }
+.touch-mode .buff { grid-template-columns: auto; padding: 2px 6px 4px; }
+.touch-mode .buff__name { display: none; }
+.touch-mode .buff__icon { grid-row: auto; }
+
 
 @media (max-height: 500px), (max-width: 760px) {
   .buffs { left: calc(max(16px, env(safe-area-inset-left, 0px)) + 132px); bottom: 76px; }

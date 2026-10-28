@@ -35,14 +35,11 @@ test("metro, radio and the wave 2 badges from the debug API", async ({ page }) =
   await page.keyboard.press("KeyT");
   await expect(page.getByTestId("phone")).toBeHidden();
 
-  // Buffs, the disguise and a hook in the tracker.
-  await page.evaluate(() => {
-    const seki = window.__seki!;
-    seki.emit("BuffApplied", { buffId: "regen", duration: 30 });
-    seki.emit("DisguiseChanged", { role: "tessen_guard" });
-  });
+  // Buffs and the disguise are read from the domain: a game with them, as a load would bring it.
+  // No step after it: the simulation recomputes the disguise from the clothes worn.
+  await page.evaluate(() => window.__seki!.jump({ buffs: [{ id: "regen", left: 30 }], disguise: { role: "tessen_guard", blown: false } }));
   await expect(page.getByTestId("buff-regen")).toBeVisible();
   await expect(page.getByTestId("disguise")).toContainText("ochrona Tessen");
-  await page.evaluate(() => window.__seki!.emit("DisguiseBlown", { observerId: 1, role: "tessen_guard" }));
+  await page.evaluate(() => window.__seki!.jump({ disguise: { role: "tessen_guard", blown: true } }));
   await expect(page.getByTestId("disguise")).toContainText("Spalona przykrywka");
 });

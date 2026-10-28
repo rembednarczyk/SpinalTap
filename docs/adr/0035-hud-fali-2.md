@@ -46,10 +46,17 @@ ADR-0032 ustalił kontrakty fali 2. Symulacja (sim A i sim B) dopiero zaczyna em
 - UI blokuje przycisk z komunikatem, a `ShopController` odrzuca komendę z toastem.
 - W ekwipunku „Użyj” działa przy pełnym zdrowiu dla przedmiotów, które nie tylko leczą (`needsWounds`): kawa, stymulant, shard pojemności.
 
-### Dotyk
-- Łuk akcji drugorzędnych wokół przycisku ognia: przeładowanie, następna broń, skaner, zryw.
-- Kontekstowy przycisk „Użyj” z treścią promptu zamiast „E”.
+### Dotyk (telefon poziomo, od 667×375 CSS)
+Zgłoszenie z telefonu (ok. 800×370 CSS) pokazało przeładowany ekran: przyciski na liczniku €$, zegarze i minimapie, panel zdrowia pod joystickiem, osiem przycisków naraz i podpowiedzi klawiszy. Nowy układ:
+- Zawsze widoczne są tylko ogień, celowanie, skok i łuk wokół ognia: przeładowanie, skaner, zryw i „więcej”.
+- „Więcej” rozwija rząd z apteczką (z licznikiem), następną bronią, kucaniem, kamerą i chowaniem broni. Stan kucania żyje w kontrolkach, więc zwinięcie rzędu go nie gubi.
+- „Użyj” pojawia się tylko przy promptcie i nazywa interakcję. Zdolność (⚡) jest tylko z implantem.
+- Prawy górny róg: jeden rząd z menu, telefonem i pauzą. Licznik i zegar są na lewo od niego, a minimapa pod nim.
+- Lewa strona: cel u góry, joystick, zdrowie tylko w walce albo po trafieniu (jak na pulpicie) i tylko aktywna broń.
+- Bez podpowiedzi klawiszy: znika `[E]` w treści celu, `kbd` w HUD, panel apteczki i ikona zrywu.
+- Każdy przycisk pada wywołuje `swallowNextClick` dla dotyku i pióra.
 - Cele mają co najmniej 44 px, a pozycje biorą `env(safe-area-inset-*)`.
+- `e2e/touch-layout.spec.ts` sprawdza przy 800×370 i 667×375 brak przecięć prostokątów przycisków pada, minimapy, licznika, zegara, celu, zdrowia i paska broni, z promptem i z rozwiniętym rzędem.
 
 ## Propozycje kontraktów
 - **Audio:** `AudioScenePort.setRadioStation?(id: string | null)`. App woła ją, jeśli adapter ją ma (`RadioAudio`).

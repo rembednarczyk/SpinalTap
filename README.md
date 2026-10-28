@@ -37,7 +37,7 @@ Parametry URL: `?seed=123` (stałe ziarno nowej gry), `?reference` (deterministy
 
 Pad (standard mapping): lewa gałka ruch, prawa rozglądanie, RT strzał, A rozmowa, Y kamera, RB zdolność, X apteczka, L3 sprint.
 
-Telefon i tablet (wykrywane automatycznie, na komputerze można wymusić `?touch`): grę obracamy poziomo. Lewa połowa ekranu to pływająca gałka ruchu (pełne wychylenie = sprint), prawa to rozglądanie przeciąganiem. Przycisk strzału też obraca widok, gdy przesuwasz po nim palec. Obok są E, Q, apteczka (+) i kamera (V), a u góry karta postaci i pauza.
+Telefon i tablet (wykrywane automatycznie, na komputerze można wymusić `?touch`): grę obracamy poziomo. Lewa połowa ekranu to pływająca gałka ruchu (pełne wychylenie = sprint), prawa to rozglądanie przeciąganiem. Przycisk strzału też obraca widok, gdy przesuwasz po nim palec. Wokół niego są przeładowanie, skaner, zryw i „więcej” (apteczka, następna broń, kucanie, kamera, chowanie broni), obok celowanie i skok, a „Użyj” pojawia się przy rzeczach, których można użyć. U góry w jednym rzędzie są karta postaci, telefon i pauza.
 
 ## Co jest w M0
 
@@ -66,7 +66,7 @@ Opis w [ADR-0035](docs/adr/0035-hud-fali-2.md).
 - Ikony buffów z czasem, ikona zrywu (Alt) z odnowieniem, wskaźnik przebrania przy pasku zdrowia i ostrzeżenie o spalonej przykrywce.
 - Minimapa oddala się przy sprincie i zrywie, przy ruchu patrzy do przodu (strzałka w dolnej tercji), pokazuje tylko fixerów i przyjęte zlecenia, a cel jako obszar. W ustawieniach jest tryb bez znaczników i przełącznik podświetleń.
 - Tracker zlecenia pokazuje odkryte haki, karta podsumowania wariant zlecenia.
-- Dotyk: łuk akcji wokół przycisku ognia (przeładowanie, następna broń, skaner, zryw) i przycisk „Użyj” z opisem interakcji.
+- Dotyk: na telefonie widać tylko ogień, celowanie, skok i łuk (przeładowanie, skaner, zryw, „więcej”); „Użyj” pojawia się przy promptcie, a reszta jest pod „więcej”. Nic się nie nakłada przy 800×370 i 667×375 CSS, bez podpowiedzi klawiszy.
 
 ## Struktura
 
