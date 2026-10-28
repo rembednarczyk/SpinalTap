@@ -9,6 +9,16 @@ export interface StageOptions {
 
 export type RenderQuality = "high" | "low";
 
+/** Most device pixels per CSS pixel the low preset renders: sharp on phones, still cheap. */
+export const LOW_QUALITY_MAX_RATIO = 1.5;
+
+/**
+ * Babylon's hardware scaling level for the low preset: the canvas renders at
+ * cssSize / level, so 1 / ratio gives `ratio` device pixels per CSS pixel. A phone with a
+ * device pixel ratio of 2.5 renders at 1.5x its CSS size, never below it.
+ */
+export const lowQualityScaling = (devicePixelRatio: number): number => 1 / Math.max(1, Math.min(devicePixelRatio || 1, LOW_QUALITY_MAX_RATIO));
+
 /** Engine + scene + glow layer. WebGL2 baseline (ADR-0004). */
 export class Stage {
   readonly engine: Engine;
@@ -22,7 +32,7 @@ export class Stage {
     const low = options.quality === "low";
     this.engine = new Engine(canvas, !low, { preserveDrawingBuffer: true, stencil: true, antialias: !low }, true);
     // Phones report device pixel ratios of 2-3; cap the render resolution on low quality.
-    if (low) this.engine.setHardwareScalingLevel(Math.max(1, (window.devicePixelRatio || 1) / 1.25));
+    if (low) this.engine.setHardwareScalingLevel(lowQualityScaling(window.devicePixelRatio));
     this.scene = new Scene(this.engine);
     this.scene.clearColor = new Color4(0.06, 0.09, 0.12, 1);
     this.scene.skipPointerMovePicking = true;
