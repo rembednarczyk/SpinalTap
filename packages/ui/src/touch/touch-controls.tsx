@@ -164,10 +164,18 @@ export const TouchControls = ({ pad }: { pad: TouchPadSink }) => {
   const toggleCharacter = useUi((s) => s.toggleCharacter);
   // Lit while aiming down sights or guarding, which in toggle mode outlasts the press.
   const aimOn = useUi((s) => s.aiming || s.blocking);
+  const scanning = useUi((s) => s.scanning);
+  const unread = useUi((s) => s.phone.unread);
   const look = useLookDrag(pad);
 
-  // Lift every finger when the controls go away (dialogue, shop, pause).
-  useEffect(() => () => pad.reset(), [pad]);
+  // Lift every finger when the controls go away (dialogue, shop, pause); the scanner too.
+  useEffect(
+    () => () => {
+      pad.reset();
+      intents.setScan(false);
+    },
+    [pad, intents],
+  );
 
   return (
     <div className="touch" data-testid="touch-controls">
@@ -187,6 +195,9 @@ export const TouchControls = ({ pad }: { pad: TouchPadSink }) => {
         <button type="button" className="touch__btn touch__btn--small touch__btn--menu" aria-label="Postać" data-testid="touch-character" onClick={() => toggleCharacter("inventory")}>
           ☰
         </button>
+        <button type="button" className="touch__btn touch__btn--small touch__btn--phone" aria-label="Telefon" data-testid="touch-phone" onClick={() => intents.openPhone()}>
+          ☏{unread > 0 && <span className="touch__badge">{unread}</span>}
+        </button>
         <button type="button" className="touch__btn touch__btn--small" aria-label="Pauza" onClick={() => intents.pause()}>
           II
         </button>
@@ -202,6 +213,19 @@ export const TouchControls = ({ pad }: { pad: TouchPadSink }) => {
         <PadButtonView pad={pad} button="reload" label="R" hint="Przeładuj" className="touch__btn--r" />
         <PadButtonView pad={pad} button="jump" label="⤒" hint="Skok" className="touch__btn--jump" testId="touch-jump" />
         <CrouchToggle pad={pad} />
+        {/* A toggle on touch; a tap on a hack in the scanner list uploads it. The app merges both into the input frame (TODO engine: the virtual pad could carry them). */}
+        <button
+          type="button"
+          aria-label="Skaner"
+          aria-pressed={scanning}
+          data-testid="touch-scan"
+          className={`touch__btn touch__btn--scan${scanning ? " touch__btn--on" : ""}`}
+          onPointerDown={() => intents.setScan(!scanning)}
+          onContextMenu={(e) => e.preventDefault()}
+          onTouchEnd={(e) => e.preventDefault()}
+        >
+          ◈
+        </button>
       </div>
     </div>
   );

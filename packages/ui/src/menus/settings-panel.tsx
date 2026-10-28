@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { type ColorblindMode, type DamageNumbersMode, HUD_SCALE_RANGE } from "../store/hud-vm";
 import type { AimMode, GraphicsQuality, SettingsVm } from "../store/ui-store";
+import { TOKENS } from "../hud/tokens";
 import { useIntents, useUi } from "../use-ui";
 import { RESERVED_KEYS, keyLabel } from "./key-label";
 
@@ -70,12 +72,51 @@ const ON_OFF: readonly (readonly ["on" | "off", string])[] = [
   ["on", "Tak"],
 ];
 
-type Section = "general" | "mouse" | "keys";
+type Section = "general" | "mouse" | "keys" | "access";
 const SECTIONS: readonly (readonly [Section, string])[] = [
   ["general", "Ogólne"],
   ["mouse", "Mysz i kamera"],
   ["keys", "Klawisze"],
+  ["access", "Dostępność"],
 ];
+
+const DAMAGE_NUMBERS: readonly (readonly [DamageNumbersMode, string])[] = [
+  ["off", "Wyłączone"],
+  ["hit", "Na trafienie"],
+  ["total", "Suma"],
+];
+
+const COLORBLIND: readonly (readonly [ColorblindMode, string])[] = [
+  ["off", "Brak"],
+  ["protan", "Protanopia"],
+  ["deutan", "Deuteranopia"],
+  ["tritan", "Tritanopia"],
+];
+
+/** The colour tokens with their icons, so the chosen palette can be checked at a glance. */
+const TokenLegend = () => (
+  <ul className="tokens" data-testid="token-legend" aria-label="Kolory HUD">
+    {TOKENS.map((t) => (
+      <li key={t.id} className={`token token--${t.id}`}>
+        <span className="token__icon" aria-hidden="true">
+          {t.icon}
+        </span>
+        {t.label}
+      </li>
+    ))}
+  </ul>
+);
+
+const Accessibility = ({ settings, set }: { settings: SettingsVm; set: (patch: Partial<SettingsVm>) => void }) => (
+  <>
+    <Slider id="hudScale" label="Skala HUD" value={settings.hudScale} min={HUD_SCALE_RANGE[0]} max={HUD_SCALE_RANGE[1]} step={0.05} format={percent} onChange={(v) => set({ hudScale: v })} />
+    <Choice label="Czytelna czcionka" value={settings.legibleFont ? "on" : "off"} options={ON_OFF} onChange={(v) => set({ legibleFont: v === "on" })} />
+    <Choice label="Ogranicz błyski i glitch" value={settings.reduceFlashes ? "on" : "off"} options={ON_OFF} onChange={(v) => set({ reduceFlashes: v === "on" })} />
+    <Choice label="Minigra bez limitu czasu" value={settings.untimedBreach ? "on" : "off"} options={ON_OFF} onChange={(v) => set({ untimedBreach: v === "on" })} />
+    <Choice label="Tryb dla daltonistów" value={settings.colorblind} options={COLORBLIND} onChange={(colorblind) => set({ colorblind })} />
+    <TokenLegend />
+  </>
+);
 
 /** The key list: click "Zmień", then press a key, a mouse button or turn the wheel; Esc cancels. */
 const KeyBindings = () => {
@@ -160,6 +201,8 @@ export const SettingsPanel = () => {
           <Slider id="volume" label="Głośność" value={settings.volume} min={0} max={1} step={0.05} format={percent} onChange={(v) => set({ volume: v })} />
           <Choice label="Podpowiedzi" value={settings.hints ? "on" : "off"} options={ON_OFF} onChange={(v) => set({ hints: v === "on" })} />
           <Slider id="touchSensitivity" label="Czułość dotyku" value={settings.touchSensitivity} min={0.2} max={3} step={0.1} format={times} onChange={(v) => set({ touchSensitivity: v })} />
+          <Choice label="Zdrowie i amunicja zawsze" value={settings.hudAlwaysShow ? "on" : "off"} options={ON_OFF} onChange={(v) => set({ hudAlwaysShow: v === "on" })} />
+          <Choice label="Liczby obrażeń" value={settings.damageNumbers} options={DAMAGE_NUMBERS} onChange={(damageNumbers) => set({ damageNumbers })} />
         </>
       )}
       {section === "mouse" && (
@@ -174,6 +217,7 @@ export const SettingsPanel = () => {
         </>
       )}
       {section === "keys" && <KeyBindings />}
+      {section === "access" && <Accessibility settings={settings} set={set} />}
       {reloadNeeded && (
         <div className="settings__note" data-testid="settings-reload">
           <p>Jakość grafiki zmieni się po przeładowaniu. Najpierw zapisz grę, bo niezapisany postęp przepadnie.</p>

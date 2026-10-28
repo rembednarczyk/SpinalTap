@@ -68,11 +68,37 @@ const Marker = ({ marker, player }: { marker: MapMarkerVm; player: { x: number; 
   );
 };
 
+/** A phone over a civilian who is calling it in (ADR-0028). */
+const Witness = ({ at, player }: { at: { x: number; z: number }; player: { x: number; z: number } }) => {
+  const o = markerOffset(at, player);
+  return (
+    <g className={`minimap__witness${o.edge ? " minimap__marker--edge" : ""}`} transform={`translate(${o.x.toFixed(2)} ${o.y.toFixed(2)})`} data-testid="minimap-witness">
+      <title>Świadek dzwoni</title>
+      <rect x={-1.6} y={-2.6} width={3.2} height={5.2} rx={0.6} />
+      <path d="M-0.8 -1.6 H0.8 M-0.4 1.8 H0.4" />
+    </g>
+  );
+};
+
+/** Where the enemies last saw the player: a hollow silhouette (Deus Ex style). */
+const Silhouette = ({ at, player }: { at: { x: number; z: number }; player: { x: number; z: number } }) => {
+  const o = markerOffset(at, player);
+  return (
+    <g className="minimap__ghost" transform={`translate(${o.x.toFixed(2)} ${o.y.toFixed(2)})`} data-testid="minimap-last-known">
+      <title>Ostatnia znana pozycja</title>
+      <circle cx={0} cy={-2.2} r={1.1} />
+      <path d="M-1.6 2.8 V0.4 Q-1.6 -0.8 0 -0.8 Q1.6 -0.8 1.6 0.4 V2.8 Z" />
+    </g>
+  );
+};
+
 /** North-up minimap centred on the player: district outline, view direction and key NPCs. */
 export const Minimap = () => {
   const map = useUi((s) => s.map);
   const player = useUi((s) => s.mapPlayer);
   const markers = useUi((s) => s.mapMarkers);
+  const witnesses = useUi((s) => s.witnesses);
+  const lastKnown = useUi((s) => s.lastKnown);
   if (!map || !player) return null;
   const deg = (player.yaw * 180) / Math.PI;
   return (
@@ -83,6 +109,10 @@ export const Minimap = () => {
         </g>
         {markers.map((m) => (
           <Marker key={m.id} marker={m} player={player} />
+        ))}
+        {lastKnown && <Silhouette at={lastKnown} player={player} />}
+        {witnesses.map((w) => (
+          <Witness key={w.id} at={w} player={player} />
         ))}
         <g className="minimap__player" transform={`rotate(${deg.toFixed(1)})`} data-testid="minimap-player">
           <path className="minimap__cone" d="M0 0 L-7 -14 A16 16 0 0 1 7 -14 Z" />
