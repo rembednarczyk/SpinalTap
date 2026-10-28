@@ -505,6 +505,18 @@ export const TARG_CONTRACT_SITE_SPAWNS: Readonly<Record<"hana_stall" | "hebi_sta
   raid_east: [v(110, 0, 74), v(111.5, 0, 78), v(108.5, 0, 71.5), v(112, 0, 81)],
 };
 
+/**
+ * Which way each market crew looks when it turns up (audit W11): the raids at Oyaji's stall,
+ * the stash guards west over the market floor they would be attacked from, the cart crew at
+ * Hana. Their yaw is the direction from each spawn point to this point.
+ */
+export const TARG_CONTRACT_SITE_FACING: Readonly<Record<"hana_stall" | "hebi_stash" | "raid_north" | "raid_east", Vec3>> = {
+  hana_stall: v(HANA_SPOT.x, 0, HANA_SPOT.z),
+  hebi_stash: v(100, 0, 90),
+  raid_north: v(OYAJI_STALL.x, 0, OYAJI_STALL.z - 1.4),
+  raid_east: v(OYAJI_STALL.x, 0, OYAJI_STALL.z - 1.4),
+};
+
 /** Where the crate of a retrieval job lies (centre of the box). */
 export const CONTRACT_ITEM_SPOTS: Readonly<Partial<Record<ContractSiteId, Vec3>>> = {
   hebi_stash: v(122.2, 0.3, 92),
