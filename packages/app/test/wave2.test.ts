@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { type AudioCue, type DomainEvents, EMPTY_INPUT, EventBus, type GameCommand, createDomainState } from "@seki/core";
+import { type AudioCue, type DomainEvents, type DomainState, EMPTY_INPUT, EventBus, type GameCommand, createDomainState } from "@seki/core";
 import { STORY_SOURCE } from "@seki/narrative";
-import type { Entity, Simulation } from "@seki/sim";
+import { CONTRACT_HOOKS, DASH_COOLDOWN, type Entity, type Simulation } from "@seki/sim";
 import { type UiState, createUiStore } from "@seki/ui";
 import { MetroController } from "../src/controllers/metro-controller";
 import { RadioController } from "../src/controllers/radio-controller";
@@ -11,7 +11,6 @@ import { debriefVm } from "../src/contract-hud";
 import { METRO_GUARDED, metroFare, metroMapVm, stationOfDistrict } from "../src/metro";
 import { MAP_ZOOM_DASH, MAP_ZOOM_RUN, TARGET_AREA_RADIUS, createMinimapTracker } from "../src/minimap";
 import { createKnotLines, createKnotPool, createKnotRenderer } from "../src/phone";
-import { DASH_COOLDOWN_SECONDS } from "../src/presenters/body-hud";
 import { sanitizeSettings } from "../src/settings";
 import { Wave2Hud } from "../src/wave2-hud";
 
@@ -212,7 +211,7 @@ describe("TouchController", () => {
 
 describe("ShopController and cyberware capacity", () => {
   it("refuses an implant over the capacity with a message", () => {
-    const ui = createUiStore({ capacity: { used: 7, max: 8 } });
+    const ui = createUiStore({ capacity: { used: 0, max: 1 } });
     const { sim, commands } = fakeSim();
     const shop = new ShopController({ sim, ui, focus: fakeFocus().focus, talk: () => {} });
     shop.open("clinic", "mori");
@@ -230,9 +229,10 @@ describe("Wave2Hud presenters", () => {
     const bus = new EventBus<DomainEvents>();
     const ui = createUiStore({ screen: "playing" });
     let tick = 0;
+    let domain: DomainState = createDomainState();
     const hud = new Wave2Hud(bus, ui, {
       playerId: () => 1,
-      domain: () => createDomainState(),
+      domain: () => domain,
       clock: () => "22:00",
       tick: () => tick,
       ticksPerSecond: 10,
@@ -240,56 +240,63 @@ describe("Wave2Hud presenters", () => {
       renderKnot: () => [],
       toastMs: 1,
     });
-    return { bus, ui, hud, at: (t: number) => (tick = t) };
+    return { bus, ui, hud, at: (t: number) => (tick = t), set: (patch: Partial<DomainState>) => (domain = { ...domain, ...patch }) };
   };
+  const zero = { x: 0, y: 0, z: 0 };
 
-  it("shows capacity, buffs with time left and the dash cooldown", () => {
-    const { bus, ui, hud, at } = setup();
-    bus.emit("CyberwareCapacityChanged", { used: 6, max: 10 });
-    expect(ui.getState().capacity).toEqual({ used: 6, max: 10 });
-    bus.emit("BuffApplied", { buffId: "regen", duration: 30 });
-    bus.emit("Dashed", { entityId: 1, air: false, at: { x: 0, y: 0, z: 0 } });
-    expect(hud.sync(undefined, false, true)).toMatchObject({ buffs: [{ id: "regen", name: "Regeneracja", left: 30, total: 30 }], dash: { cooldown: DASH_COOLDOWN_SECONDS } });
+  it("reads capacity and buffs from the domain and times the dash, shorter with coffee", () => {
+    const { bus, hud, at, set } = setup();
+    set({ buffs: [{ id: "regen", left: 29.4 }] });
+    bus.emit("Dashed", { entityId: 1, air: false, at: zero });
+    const first = hud.sync(undefined, false, true);
+    expect(first.capacity?.max).toBeGreaterThan(0);
+    expect(first.buffs).toEqual([{ id: "regen", name: "Regeneracja", left: 30, total: 120 }]);
+    expect(first.dash).toEqual({ cooldown: DASH_COOLDOWN, total: DASH_COOLDOWN });
     expect(hud.dashing).toBe(true);
     at(100);
-    const later = hud.sync(undefined, false, true);
-    expect(later.buffs?.[0]?.left).toBe(20);
-    expect(later.dash?.cooldown).toBe(0);
+    expect(hud.sync(undefined, false, true).dash?.cooldown).toBe(0);
     expect(hud.dashing).toBe(false);
-    bus.emit("BuffEnded", { buffId: "regen" });
-    expect(hud.sync(undefined, false, true).buffs).toEqual([]);
+    set({ buffs: [{ id: "quick_cooldown", left: 60 }] });
+    bus.emit("Dashed", { entityId: 1, air: false, at: zero });
+    expect(hud.sync(undefined, false, true).dash?.total).toBe(1);
   });
 
   it("toasts a reflected bullet of the player only", () => {
     vi.useFakeTimers();
     const { bus, ui } = setup();
-    bus.emit("ProjectileReflected", { defenderId: 2, attackerId: 1, at: { x: 0, y: 0, z: 0 } });
+    bus.emit("ProjectileReflected", { defenderId: 2, attackerId: 1, at: zero, to: zero, hitEntity: null });
     expect(ui.getState().toasts).toEqual([]);
-    bus.emit("ProjectileReflected", { defenderId: 1, attackerId: 3, at: { x: 0, y: 0, z: 0 } });
+    bus.emit("ProjectileReflected", { defenderId: 1, attackerId: 3, at: zero, to: zero, hitEntity: 3 });
     expect(ui.getState().toasts.at(-1)?.title).toBe("Pocisk odbity");
     vi.useRealTimers();
   });
 
-  it("shows the disguise, marks who saw through it and warns when it is blown", () => {
-    const { bus, ui, hud } = setup();
-    bus.emit("DisguiseChanged", { role: "tessen_guard" });
+  it("shows the disguise from the domain, marks who saw through it and warns when it is blown", () => {
+    const { bus, ui, hud, set } = setup();
+    set({ disguise: { role: "tessen_guard", blown: false } });
     expect(hud.sync(undefined, false, true).disguise).toEqual({ role: "tessen_guard", label: "Przebranie: ochrona Tessen", blown: false });
+    set({ disguise: { role: "tessen_guard", blown: true } });
     bus.emit("DisguiseBlown", { observerId: 9, role: "tessen_guard" });
     expect(hud.sync(undefined, false, true).disguise?.blown).toBe(true);
     expect(ui.getState().toasts.at(-1)?.title).toBe("Przykrywka spalona");
     expect([...hud.enforcers]).toEqual([9]);
+    set({ disguise: { role: null, blown: false } });
     bus.emit("DisguiseChanged", { role: null });
     expect(hud.sync(undefined, false, true).disguise).toBeNull();
     expect(hud.enforcers.size).toBe(0);
   });
 
-  it("lists hooks of the running contract and clears them with the contract", () => {
-    const { bus, ui } = setup();
+  it("lists hooks of the running contract, clears them with the contract and brings saved ones back", () => {
+    const { bus, ui, hud, set } = setup();
     bus.emit("ContractHookFound", { contractId: "c1", hookId: "h1", text: "Strażnik pali o 23:00 za magazynem." });
     bus.emit("ContractHookFound", { contractId: "c1", hookId: "h1", text: "Strażnik pali o 23:00 za magazynem." });
     expect(ui.getState().contractHooks).toEqual([{ id: "h1", text: "Strażnik pali o 23:00 za magazynem." }]);
     bus.emit("ContractFailed", { contractId: "c1" } as never);
     expect(ui.getState().contractHooks).toEqual([]);
+    const hook = CONTRACT_HOOKS[0]!;
+    set({ contracts: { active: null, completed: 0, hooks: [hook.id, "unknown"] } });
+    hud.reset();
+    expect(ui.getState().contractHooks).toEqual([{ id: hook.id, text: hook.text }]);
   });
 });
 

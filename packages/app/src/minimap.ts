@@ -98,8 +98,8 @@ export interface MinimapContext {
   readonly enforcers?: ReadonlySet<EntityId>;
 }
 
-/** Marks an entity the simulation flags as an enforcer (sim A adds the component; read without assuming it). */
-const isEnforcer = (e: Entity, known: ReadonlySet<EntityId> | undefined): boolean => (known?.has(e.id) ?? false) || ("enforcer" in e && Boolean(e.enforcer));
+/** An enforcer (ADR-0033): its look says so (`view.enforcer`), or it has already seen through the disguise. */
+const isEnforcer = (e: Entity, known: ReadonlySet<EntityId> | undefined): boolean => (known?.has(e.id) ?? false) || (e.view?.kind === "enemy" && e.view.enforcer === true);
 
 const markerKind = (e: Entity, targetTags: ReadonlySet<string>, contract: boolean, ctx: MinimapContext): MapMarkerVm["kind"] | null => {
   // The contract givers: Kaito, Hana on the market, Genzō in the docks.

@@ -5,6 +5,8 @@ import { DEFAULT_SETTINGS, GameUi, type MapVm, type UiIntents, type UiState, cap
 import { RESERVED_KEYS } from "../src/menus/key-label";
 import { mapView, markerOffset } from "../src/hud/minimap";
 import { nextWeaponKey } from "../src/touch/action-arc";
+import { itemActions } from "../src/inventory/actions";
+import { EMPTY_EQUIPMENT, EMPTY_INVENTORY } from "@seki/core";
 
 const intents = (): UiIntents & Record<string, ReturnType<typeof vi.fn>> => {
   const spies: Record<string | symbol, ReturnType<typeof vi.fn>> = {};
@@ -113,9 +115,9 @@ describe("ripperdoc capacity", () => {
     expect(capacityCost("subdermal_weave")).toBeGreaterThanOrEqual(2);
     expect(capacityCost("subdermal_weave")).toBeLessThanOrEqual(8);
     expect(capacityFit("subdermal_weave", {}, null).over).toBe(false);
-    expect(capacityFit("subdermal_weave", {}, { used: 8, max: 8 }).over).toBe(true);
-    mount({ shopOpen: true, shopId: "clinic", eddies: 9999, capacity: { used: 8, max: 8 } });
-    expect(screen.getByTestId("capacity-value").textContent).toBe("8 / 8");
+    expect(capacityFit("subdermal_weave", {}, { used: 0, max: 1 }).over).toBe(true);
+    mount({ shopOpen: true, shopId: "clinic", eddies: 9999, capacity: { used: 0, max: 1 } });
+    expect(screen.getByTestId("capacity-value").textContent).toBe("0 / 1");
     const offer = screen.getByTestId("implant-subdermal_weave");
     expect(offer.textContent).toContain("Pojemność");
     expect(offer.textContent).toContain("Za mało pojemności");
@@ -201,5 +203,15 @@ describe("settings of wave 2", () => {
     const highlights = screen.getByRole("radiogroup", { name: "Podświetlenia obiektów" });
     fireEvent.click(highlights.querySelector('[aria-checked="false"]')!);
     expect(i.changeSettings).toHaveBeenCalledWith({ highlights: false });
+  });
+});
+
+describe("wave 2 consumables", () => {
+  it("lets coffee and a capacity shard be used at full health, a medkit not", () => {
+    const ctx = { inventory: EMPTY_INVENTORY, equipment: EMPTY_EQUIPMENT, hp: 100, maxHp: 100 };
+    const use = (stack: string) => itemActions({ stack } as never, ctx).find((a) => a.id === "use")?.blocked;
+    expect(use("medkit")).toBe("Zdrowie jest pełne");
+    expect(use("synth_coffee")).toBeNull();
+    expect(use("capacity_shard")).toBeNull();
   });
 });

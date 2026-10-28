@@ -11,6 +11,7 @@ import {
   findItem,
   freeCells,
   isConsumableId,
+  needsWounds,
   isPlaced,
   isWeaponId,
   slotFor,
@@ -48,7 +49,7 @@ export const itemActions = (ref: ItemRef, ctx: ActionContext): ItemAction[] => {
   const { inventory: inv, equipment: eq } = ctx;
   if ("stack" in ref) {
     const out: ItemAction[] = [];
-    if (isConsumableId(ref.stack)) out.push({ id: "use", label: "Użyj", key: "E", blocked: ctx.hp >= ctx.maxHp ? "Zdrowie jest pełne" : null });
+    if (isConsumableId(ref.stack)) out.push({ id: "use", label: "Użyj", key: "E", blocked: ctx.hp >= ctx.maxHp && needsWounds(ref.stack) ? "Zdrowie jest pełne" : null });
     out.push({ id: "drop", label: "Wyrzuć", key: "X", blocked: null });
     return out;
   }

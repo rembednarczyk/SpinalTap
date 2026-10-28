@@ -21,12 +21,12 @@ ADR-0032 ustalił kontrakty fali 2. Symulacja (sim A i sim B) dopiero zaczyna em
 - **`TouchController`** implementuje `TouchIntents` (`touchDash`): zryw z łuku dotykowego trafia do następnej klatki wejścia (`withTouch`), tak jak skaner z fali 1.
 
 ### Prezentery (app, `presenters/`, fasada `Wave2Hud`)
-- **`BodyHud`**:
-  - pojemność z `CyberwareCapacityChanged`;
-  - buffy z czasem z `BuffApplied` i `BuffEnded`;
-  - ikona zrywu z `Dashed`; odnowienie to stała `DASH_COOLDOWN_SECONDS` z TODO, bo core jeszcze go nie eksportuje;
+- **`BodyHud`** czyta stan z domeny w każdej klatce, więc wczytanie gry pokazuje go od razu:
+  - pojemność z `capacityUsed` i `capacityMax` z core;
+  - buffy z `domain.buffs` z czasem i nazwą z `BUFF_CATALOG`; `BuffApplied` daje toast;
+  - ikona zrywu z `Dashed`, odnowienie `DASH_COOLDOWN` z sim (1,5 s) podzielone przez `cooldownRateOf` (z kawą 1 s);
   - toast przy `ProjectileReflected` gracza.
-- **`DisguiseHud`**: rola przy pasku zdrowia z `DisguiseChanged`. `DisguiseBlown` daje toast, ostrzeżenie w odznace i oznacza obserwatora jako egzekutora na minimapie.
+- **`DisguiseHud`**: rola i spalenie przy pasku zdrowia z `domain.disguise`. `DisguiseBlown` daje toast i oznacza obserwatora jako egzekutora na minimapie; pozostałych egzekutorów minimapa bierze z `view.enforcer`.
 - **`ContractIntel`**:
   - haki z `ContractHookFound` w trackerze, czyszczone z końcem zlecenia;
   - po wczytaniu haki wracają z `ContractLog.hooks`;
@@ -42,8 +42,9 @@ ADR-0032 ustalił kontrakty fali 2. Symulacja (sim A i sim B) dopiero zaczyna em
 - Ustawienia: `mapMarkers` (tryb bez znaczników) i `highlights` (podświetlenia, przekazywane do renderera).
 
 ### Klinika
-- Koszt implantu zwraca `capacityCost` z `@seki/ui`. Czyta `capacity` z katalogu, jeśli core go doda; inaczej szacuje z ceny w zakresie 2-8.
+- Koszt implantu to `capacity` z katalogu core, a zgodność liczy `fitsCapacity` z core.
 - UI blokuje przycisk z komunikatem, a `ShopController` odrzuca komendę z toastem.
+- W ekwipunku „Użyj” działa przy pełnym zdrowiu dla przedmiotów, które nie tylko leczą (`needsWounds`): kawa, stymulant, shard pojemności.
 
 ### Dotyk
 - Łuk akcji drugorzędnych wokół przycisku ognia: przeładowanie, następna broń, skaner, zryw.
@@ -54,12 +55,8 @@ ADR-0032 ustalił kontrakty fali 2. Symulacja (sim A i sim B) dopiero zaczyna em
 - **Audio:** `AudioScenePort.setRadioStation?(id: string | null)`. App woła ją, jeśli adapter ją ma (`RadioAudio`).
 - **Render:** `setHighlights?(on: boolean)` obok `setReduceFlashes`.
 - **Wejście:** `VirtualPad` z przyciskiem `dash`. Wtedy `TouchController` staje się zwykłym naciśnięciem pada.
-- **Core:**
-  - `CyberwareDefinition.capacity`;
-  - stała odnowienia zrywu.
+- **Core:** stała odnowienia zrywu w core zamiast w sim, żeby app nie sięgał po nią do `@seki/sim`.
 - **Sim:**
-  - `CyberwareCapacityChanged` po starcie i wczytaniu, bo app czyści pojemność przy resecie;
-  - komponent `enforcer` na bytach (app już go czyta);
   - spotkanie emituje tylko `EncounterStarted`, bez `InteractionStarted`, żeby knot nie startował dwa razy.
 
 ## Konsekwencje

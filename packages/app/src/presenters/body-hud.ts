@@ -1,42 +1,33 @@
-import type { BuffId } from "@seki/core";
-import { type BuffVm, type DashVm, patchUi } from "@seki/ui";
+import { BUFF_CATALOG, type DomainState, capacityMax, capacityUsed, cooldownRateOf } from "@seki/core";
+import { DASH_COOLDOWN } from "@seki/sim";
+import type { BuffVm, CapacityVm, DashVm } from "@seki/ui";
 import type { HudPart, HudPartContext, HudPartFrame, HudPatch } from "./hud-part";
 
-/**
- * Dash cooldown in seconds, for the HUD icon only (the simulation enforces its own).
- * TODO(core): read the cooldown from core once sim A exports it with the legs cyberware.
- */
-export const DASH_COOLDOWN_SECONDS = 1.2;
 /** The minimap stays zoomed out this long after a dash (ADR-0035). */
 export const DASH_ZOOM_SECONDS = 0.8;
 
-export const BUFF_NAMES: Readonly<Record<BuffId, string>> = {
-  regen: "Regeneracja",
-  quick_cooldown: "Szybkie odnowienie",
-  steady: "Pewna ręka",
-};
+/** Seconds of the dash cooldown with the buffs that run now (synthetic coffee shortens it). */
+export const dashCooldownSeconds = (domain: DomainState): number => DASH_COOLDOWN / cooldownRateOf(domain.buffs);
 
-interface Buff {
-  readonly until: number;
-  readonly total: number;
-}
+export const capacityVm = (domain: DomainState): CapacityVm => ({
+  used: capacityUsed(domain.character.cyberware),
+  max: capacityMax(domain.contracts.completed, domain.capacityShards),
+});
 
-/** The wave 2 body (ADR-0035): implant capacity, buffs from food, the dash icon and a reflected bullet. */
+/**
+ * The wave 2 body (ADR-0035): implant capacity, buffs and the dash icon, read from the domain
+ * each frame so a load shows them as they were; the events add the toasts (a buff taken, a
+ * bullet sent back).
+ */
 export class BodyHud implements HudPart {
   readonly offs: readonly (() => void)[];
-  private readonly buffs = new Map<BuffId, Buff>();
   private dashTick: number | null = null;
   private tick = 0;
 
   constructor(private readonly ctx: HudPartContext) {
-    const { bus, ui, hooks, isPlayer } = ctx;
+    const { bus, hooks, isPlayer } = ctx;
     this.offs = [
-      bus.on("CyberwareCapacityChanged", (e) => patchUi(ui, { capacity: { used: e.used, max: e.max } })),
-      bus.on("BuffApplied", (e) => {
-        this.buffs.set(e.buffId, { until: hooks.tick() + Math.ceil(e.duration * hooks.ticksPerSecond), total: Math.round(e.duration) });
-        ctx.toast("system", BUFF_NAMES[e.buffId], `${Math.round(e.duration)} s`);
-      }),
-      bus.on("BuffEnded", (e) => this.buffs.delete(e.buffId)),
+      bus.on("BuffApplied", (e) => ctx.toast("system", BUFF_CATALOG[e.buffId].name, `${Math.round(e.duration)} s`)),
       bus.on("Dashed", (e) => {
         if (isPlayer(e.entityId)) this.dashTick = hooks.tick();
       }),
@@ -53,27 +44,25 @@ export class BodyHud implements HudPart {
 
   frame(f: HudPartFrame): HudPatch {
     this.tick = f.tick;
-    return { buffs: this.buffVm(f.tick), dash: this.dashVm(f.tick) };
+    const domain = this.ctx.hooks.domain();
+    return { capacity: capacityVm(domain), buffs: this.buffVm(domain), dash: this.dashVm(domain, f.tick) };
   }
 
   reset(): HudPatch {
-    this.buffs.clear();
     this.dashTick = null;
     return { buffs: [], dash: null, capacity: null };
   }
 
-  private buffVm(tick: number): BuffVm[] {
-    const out: BuffVm[] = [];
-    for (const [id, b] of this.buffs) {
-      const left = Math.ceil((b.until - tick) / this.ctx.hooks.ticksPerSecond);
-      if (left > 0) out.push({ id, name: BUFF_NAMES[id], left, total: b.total });
-    }
-    return out;
+  private buffVm(domain: DomainState): BuffVm[] {
+    return domain.buffs
+      .filter((b) => b.left > 0)
+      .map((b) => ({ id: b.id, name: BUFF_CATALOG[b.id].name, left: Math.ceil(b.left), total: BUFF_CATALOG[b.id].duration }));
   }
 
-  private dashVm(tick: number): DashVm | null {
+  private dashVm(domain: DomainState, tick: number): DashVm | null {
     if (this.dashTick === null) return null;
-    const left = DASH_COOLDOWN_SECONDS - (tick - this.dashTick) / this.ctx.hooks.ticksPerSecond;
-    return { cooldown: Math.max(0, Math.ceil(left * 10) / 10), total: DASH_COOLDOWN_SECONDS };
+    const total = dashCooldownSeconds(domain);
+    const left = total - (tick - this.dashTick) / this.ctx.hooks.ticksPerSecond;
+    return { cooldown: Math.max(0, Math.ceil(left * 10) / 10), total: Math.round(total * 10) / 10 };
   }
 }
