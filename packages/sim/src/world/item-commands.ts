@@ -20,11 +20,7 @@ import {
 import type { SimContext } from "./context";
 import { dropLoot } from "./domain-ops";
 
-const ITEM_COMMANDS = ["equip-item", "unequip-item", "use-item", "drop-item", "install-mod", "remove-mod", "take-loot"] as const;
-
-type ItemCommand = Extract<GameCommand, { type: (typeof ITEM_COMMANDS)[number] }>;
-
-export const isItemCommand = (cmd: GameCommand): cmd is ItemCommand => (ITEM_COMMANDS as readonly string[]).includes(cmd.type);
+type ItemCommand = Extract<GameCommand, { type: "equip-item" | "unequip-item" | "use-item" | "drop-item" | "install-mod" | "remove-mod" | "take-loot" }>;
 
 /**
  * Inventory commands from the menu (ADR-0015). Pure domain changes through core functions; none

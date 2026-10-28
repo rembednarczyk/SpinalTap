@@ -23,11 +23,10 @@ import { deadFlag } from "../systems/death-system";
 import type { SimContext } from "./context";
 import { applyReputationCause, raiseProgress } from "./domain-ops";
 
-const TRADE_COMMANDS = ["buy-cyberware", "buy-item", "sell-item", "repair-item", "upgrade-capacity", "install-cyberware-item", "remove-cyberware"] as const;
-
-type TradeCommand = Extract<GameCommand, { type: (typeof TRADE_COMMANDS)[number] }>;
-
-export const isTradeCommand = (cmd: GameCommand): cmd is TradeCommand => (TRADE_COMMANDS as readonly string[]).includes(cmd.type);
+type TradeCommand = Extract<
+  GameCommand,
+  { type: "buy-cyberware" | "buy-item" | "sell-item" | "repair-item" | "upgrade-capacity" | "install-cyberware-item" | "remove-cyberware" }
+>;
 
 /**
  * Mori's clinic never closes; Oyaji trades while his stall is up and he is alive; Fumiko's
