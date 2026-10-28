@@ -98,11 +98,21 @@ export const buildLootBag = (scene: Scene, materials: ToonMaterials, name: strin
   return { root, glowing: [strip], blockers: [], casters: [bag], light: null };
 };
 
-const blockPreset = (v: Block): PresetName => {
+/**
+ * A building: tall, with a footprint wide enough for rooms. It keeps the procedural windows;
+ * everything else (district walls, pillars, shaft walls, decks, kiosks) is a bare structure.
+ */
+export const isBuildingBlock = (v: Pick<Block, "size" | "material">): boolean =>
+  v.material !== "asphalt" && v.size.y >= 6 && Math.min(v.size.x, v.size.z) >= 3 && Math.max(v.size.x, v.size.z) < 40;
+
+export const blockPreset = (v: Block): PresetName => {
   if (v.material === "asphalt") return "asphalt";
   if (v.size.y < 0.2) return "sidewalk";
-  if (v.material === "concrete" && v.size.y < 4) return "metal";
-  return v.material;
+  if (v.rungs) return "metal";
+  if (v.material === "glass") return "glass";
+  if (isBuildingBlock(v)) return v.material === "metal" ? "metal" : "concrete";
+  // Bare structures get a procedural skin (ADR-0027): formwork concrete or ribbed sheet metal.
+  return v.material === "metal" ? "metalPanel" : "concreteBare";
 };
 
 type Slope = NonNullable<Block["slope"]>;
