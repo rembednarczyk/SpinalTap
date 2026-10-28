@@ -7,7 +7,8 @@ ADR-0032 ustalił kontrakty fali 2. Symulacja (sim A i sim B) dopiero zaczyna em
 
 ### Kontrolery (app, `controllers/`)
 - **`MetroController`** implementuje `MetroIntents` (`travelMetro`, `closeMetro`).
-  - Interakcja z `dialogueId` `metro_kiosk` (stacja z dystryktu) albo `metro_kiosk_<stacja>` otwiera mapę linii zamiast ink.
+  - `InteractionStarted` z `kind: "metro"` i `station` (ADR-0034) otwiera mapę linii zamiast ink. Ceny liczy `metroFare` z core.
+  - `MetroRefused` daje toast z powodem odmowy.
   - Bilet wysyła `travel-metro { to }`, a po interakcji także `end-dialogue`.
   - Brak środków albo gorące zlecenie (heat > 0 przy aktywnym zleceniu) daje odmowę i dźwięk `denied`.
   - `MetroDeparted` pokazuje ekran przejazdu z postępem, a `MetroArrived` go zamyka. Napisy pochodzą z puli knotów `metro_ride_<n>`; pusta pula daje cichy przejazd.
@@ -26,9 +27,13 @@ ADR-0032 ustalił kontrakty fali 2. Symulacja (sim A i sim B) dopiero zaczyna em
   - ikona zrywu z `Dashed`; odnowienie to stała `DASH_COOLDOWN_SECONDS` z TODO, bo core jeszcze go nie eksportuje;
   - toast przy `ProjectileReflected` gracza.
 - **`DisguiseHud`**: rola przy pasku zdrowia z `DisguiseChanged`. `DisguiseBlown` daje toast, ostrzeżenie w odznace i oznacza obserwatora jako egzekutora na minimapie.
-- **`ContractIntel`**: haki z `ContractHookFound` w trackerze, czyszczone z końcem zlecenia.
+- **`ContractIntel`**:
+  - haki z `ContractHookFound` w trackerze, czyszczone z końcem zlecenia;
+  - po wczytaniu haki wracają z `ContractLog.hooks`;
+  - `GuardBark` pokazuje kwestię strażnika jako napis.
 - **`presentEncounters`**: `EncounterStarted` otwiera knot drogą zwykłego dialogu, jeśli żaden panel nie jest otwarty.
-- Karta podsumowania pokazuje wariant zlecenia, gdy kontrakt go niesie. Wariant czyta `variationOf` z narracji.
+- Karta podsumowania pokazuje wariant zlecenia z `ContractDebrief.variation` albo z kontraktu (`variationOf` z narracji).
+- W czasie przejazdu `sim.player()` zwraca `undefined`; HUD i minimapa to znoszą (test sesji z prawdziwym przejazdem).
 
 ### Minimapa
 - Na mapie są tylko fixerzy i cele przyjętych zleceń. Sklepy zniknęły, a terminal, skrzynia i eskortowany są widoczne tylko przy aktywnym zleceniu.
@@ -51,9 +56,7 @@ ADR-0032 ustalił kontrakty fali 2. Symulacja (sim A i sim B) dopiero zaczyna em
 - **Wejście:** `VirtualPad` z przyciskiem `dash`. Wtedy `TouchController` staje się zwykłym naciśnięciem pada.
 - **Core:**
   - `CyberwareDefinition.capacity`;
-  - stała odnowienia zrywu;
-  - taryfa metra w treści zamiast `metroFare` w app.
-- **Interakcja:** `InteractionStarted.kind: "metro"` (z `stationId`) zamiast konwencji `metro_kiosk_*`.
+  - stała odnowienia zrywu.
 - **Sim:**
   - `CyberwareCapacityChanged` po starcie i wczytaniu, bo app czyści pojemność przy resecie;
   - komponent `enforcer` na bytach (app już go czyta);
