@@ -27,6 +27,7 @@
 | [0023](0023-watek-glowny-akt-2.md) | Wątek główny, akt II „Lustro”: Ren, archiwum Kagami, trzy zakończenia | Zaakceptowana |
 | [0024](0024-doki-zlecenia-snajper-ochrona.md) | Doki Tessen: eskorta, infiltracja, włamanie, snajper i ochrona korporacji, zapis v9 | Zaakceptowana |
 | [0025](0025-omijanie-przeszkod-na-poziomie.md) | Omijanie przeszkód na jednym poziomie (pole odległości), węzły parteru, wykrywanie utknięcia, kierunek spawnu załóg | Zaakceptowana |
+| [0026](0026-zycie-ulicy-kanalowej-targu-i-zaulkow.md) | Życie ulicy: ludzie Kanałowej, stragany i ramen na targu, myjnia, skrytki w zaułkach | Zaakceptowana |
 | [0028](0028-swiadkowie-heat-quickhacki-zlecenia.md) | Kontrakty fali 1 z researchu: świadkowie i heat, skaner i quickhacki, odznaki zleceń, telefon | Zaakceptowana |
 | [0029](0029-fala-1-symulacja-swiadkowie-heat-quickhacki.md) | Fala 1 w symulacji: ostatnia znana pozycja, tłum i świadkowie, heat i wsparcie poza wzrokiem, skaner i quickhacki, kamery i Breach, debrief zlecenia, zapis v11 | Zaakceptowana |
 

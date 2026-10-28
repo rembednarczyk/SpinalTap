@@ -127,6 +127,28 @@ describe("the crowd (ADR-0029)", () => {
   });
 });
 
+describe("the street people of ADR-0026 in the crowd", () => {
+  it("everyone on Ulica Kanałowa and at the market stalls reacts to a shot nearby", () => {
+    for (const keys of [["hideo", "tetsu", "mei", "sachiko"], ["kenta", "fumiko", "goro"]]) {
+      for (const key of keys) {
+        const sim = Simulation.create({ seed: 7 });
+        const first = byKey(sim, key);
+        // Stream the person's chunk in: stand on them first, then step back.
+        const spot = first?.position ?? sim.streamer.chunks.flatMap((c) => c.actors).find((a) => a.spawn.key === key)!.spawn.position;
+        teleportPlayer(sim, at(spot.x, spot.z), 0);
+        sim.step();
+        const npc = byKey(sim, key)!;
+        teleportPlayer(sim, at(npc.position.x + 2, npc.position.z, npc.position.y), 0);
+        sim.step();
+        fireUp(sim);
+        sim.step();
+        // Floored by the close shot.
+        expect(npc.civilian?.crowd?.state, key).toBe("cowering");
+      }
+    }
+  });
+});
+
 describe("witnesses, the call and the heat (ADR-0028, ADR-0029)", () => {
   /** Seki fires into the sky in front of babcia Ume, with no gang fighting nearby: a crime. */
   const shootInFrontOfUme = (seed = 5) => {

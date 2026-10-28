@@ -4,14 +4,15 @@ import type { AmmoId, GarmentId, ItemCategory, ModId, Rarity, StackableId, Weapo
 import type { FactionId } from "../reputation/reputation";
 
 /**
- * The two traders of the game (plan §6): doktor Mori's clinic and Oyaji's stall on the market.
- * A shop is plain data; prices and trades are the pure functions in `trade.ts`.
+ * The traders of the game (plan §6): doktor Mori's clinic, Oyaji's stall on the market and,
+ * since ADR-0026, Fumiko's ramen stall in the market's north row. A shop is plain data;
+ * prices and trades are the pure functions in `trade.ts`.
  */
-export type ShopId = "clinic" | "oyaji";
+export type ShopId = "clinic" | "oyaji" | "yatai";
 
-export const SHOP_IDS: readonly ShopId[] = ["clinic", "oyaji"];
+export const SHOP_IDS: readonly ShopId[] = ["clinic", "oyaji", "yatai"];
 
-export const isShopId = (v: unknown): v is ShopId => v === "clinic" || v === "oyaji";
+export const isShopId = (v: unknown): v is ShopId => v === "clinic" || v === "oyaji" || v === "yatai";
 
 /** What a shop sells besides implants. Each id appears at most once per shop. */
 export type StockEntry =
@@ -79,6 +80,20 @@ export const SHOPS: Readonly<Record<ShopId, ShopDefinition>> = {
     implants: false,
     repairs: true,
     backpacks: true,
+  },
+  // Street food (ADR-0026): sells, buys nothing back.
+  yatai: {
+    id: "yatai",
+    name: "Ramen u Fumiko",
+    owner: "civilians",
+    stock: [
+      { kind: "stack", item: "ramen" },
+      { kind: "stack", item: "yakitori" },
+    ],
+    buys: [],
+    implants: false,
+    repairs: false,
+    backpacks: false,
   },
 };
 

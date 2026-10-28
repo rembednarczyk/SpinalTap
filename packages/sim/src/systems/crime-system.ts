@@ -181,7 +181,8 @@ const aimedAt = (player: Entity, c: Entity): boolean => {
 const runCalls = (ctx: SimContext, player: Entity | null, dt: number): void => {
   for (const c of inCreationOrder(ctx.world.with("civilian"))) {
     const mind = c.civilian.crowd;
-    if (player && aimedAt(player, c)) {
+    // Only someone already shaken (a call, a scare) is scared off the phone: a calm passer-by walks on.
+    if (player && mind && (mind.call || mind.state !== "calm") && aimedAt(player, c)) {
       scare(ctx, c, "cowering", player.position);
       const m = c.civilian.crowd;
       if (m) {

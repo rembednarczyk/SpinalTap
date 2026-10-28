@@ -12,6 +12,8 @@ export const CONTRACT_SITES = {
   koi_back: { id: "koi_back", label: "ulica na wysokości baru Neon Koi" },
   car_wash: { id: "car_wash", label: "zaułek za myjnią" },
   south_gate: { id: "south_gate", label: "brama południowa przy wraku" },
+  // Ulica Kanałowa (ADR-0026).
+  kanal_bridge: { id: "kanal_bridge", label: "pod kładką na Ulicy Kanałowej" },
   // Targ pod estakadą (M4).
   hana_stall: { id: "hana_stall", label: "wózek Hany na targu pod estakadą" },
   hebi_stash: { id: "hebi_stash", label: "skrytka Hebi pod estakadą, wschodni koniec targu" },
@@ -27,8 +29,11 @@ export type ContractSiteId = keyof typeof CONTRACT_SITES;
 
 export const CONTRACT_SITE_IDS = Object.keys(CONTRACT_SITES) as ContractSiteId[];
 
-/** Where Kaito's elimination jobs happen (the M1 sites, in their original order). */
-export const ELIMINATION_SITE_IDS: readonly ContractSiteId[] = ["east_lot", "koi_back", "car_wash", "south_gate"];
+/**
+ * Where Kaito's elimination jobs happen: the M1 sites in their original order, then the spot
+ * under the footbridge on Ulica Kanałowa (ADR-0026).
+ */
+export const ELIMINATION_SITE_IDS: readonly ContractSiteId[] = ["east_lot", "koi_back", "car_wash", "south_gate", "kanal_bridge"];
 
 const RAID_SITE_IDS: readonly ContractSiteId[] = ["raid_north", "raid_east"];
 

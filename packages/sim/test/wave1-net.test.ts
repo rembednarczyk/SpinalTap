@@ -285,7 +285,10 @@ const crew = (sim: Simulation, c: Contract) => [...sim.world].filter((e) => e.ta
 
 describe("the contract layer (ADR-0028, ADR-0029)", () => {
   it("a clean, quick elimination earns S: the card, the bonus and Kaito's style are paid in one transfer", () => {
-    const sim = Simulation.create({ seed: 31 });
+    // Hebi on good terms: the targets do not go for Seki on sight, so nobody detects her.
+    const base = Simulation.create({ seed: 31 });
+    const snap = base.snapshot(null, "t", "");
+    const sim = Simulation.fromSnapshot({ ...snap, domain: { ...snap.domain, reputation: { ...snap.domain.reputation, hebi: 60 } } });
     const bonus = collect<DomainEvents["ContractBonusChanged"]>(sim, "ContractBonusChanged");
     const cards = collect<DomainEvents["ContractDebrief"]>(sim, "ContractDebrief");
     const paid = collect<DomainEvents["EddiesChanged"]>(sim, "EddiesChanged");
