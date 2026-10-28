@@ -34,3 +34,40 @@ export interface ContractVariation {
   /** A rare turn of events: the target is someone else, the client sets the player up. */
   readonly twist?: "wrong_target" | "setup";
 }
+
+/**
+ * A street encounter (ADR-0032): a short ink scene that starts when the player comes near `at`
+ * between `fromHour` and `toHour` (wrapping past midnight). Content lists them as data; the
+ * simulation runs them, the narrative holds `knot`.
+ */
+export interface EncounterDef {
+  readonly id: string;
+  /** District id as the simulation's content names it (e.g. "kanal"). */
+  readonly district: string;
+  readonly knot: string;
+  readonly fromHour: number;
+  readonly toHour: number;
+  readonly at: { readonly x: number; readonly z: number };
+  readonly radius: number;
+  /** Key of the NPC who plays it, spawned by the encounter if absent from the world. */
+  readonly npcKey?: string;
+  /** Plays once per game (most) or each night. */
+  readonly once: boolean;
+}
+
+/** Contract kinds as `CONTRACT_KINDS` names them; repeated here to keep this file import-free. */
+export type HookContractKind = "eliminate" | "delivery" | "retrieve" | "protect" | "escort" | "infiltrate" | "hack";
+
+/**
+ * An observation hook (ADR-0032): something overheard, read or found during a contract of `kind`
+ * that reveals another way through. `source` says how the player meets it.
+ */
+export interface ContractHookDef {
+  readonly id: string;
+  readonly kind: HookContractKind;
+  readonly source: "bark" | "terminal" | "shard";
+  /** Ink knot with the bark or the mail. */
+  readonly knot: string;
+  /** One line for the tracker once found. */
+  readonly text: string;
+}
