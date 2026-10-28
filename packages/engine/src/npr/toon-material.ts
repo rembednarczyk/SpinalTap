@@ -20,6 +20,7 @@ const UNIFORMS = [
   "ambientColor",
   "rimColor",
   "rimStrength",
+  "rimTint",
   "gloss",
   "windows",
   "fogColor",
@@ -153,8 +154,21 @@ export class ToonMaterials {
       this.applyLights(m);
       this.applyShadow(m);
       m.setVector4("flashLight", this.flash);
+      m.setVector4("rimTint", this.rimTint);
     }
     return m;
+  }
+
+  private rimTint = { x: 1, y: 1, z: 1, w: 0 };
+
+  /** District rim colour (ADR-0030), mixed over every preset's own rim by `weight`. */
+  setRimTint(color: string, weight: number): void {
+    const c = hex(color);
+    const next = { x: c.r, y: c.g, z: c.b, w: Math.max(0, Math.min(1, weight)) };
+    const r = this.rimTint;
+    if (r.x === next.x && r.y === next.y && r.z === next.z && r.w === next.w) return;
+    this.rimTint = next;
+    for (const m of this.materials.values()) m.setVector4("rimTint", next);
   }
 
   /**
