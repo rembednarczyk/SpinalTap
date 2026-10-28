@@ -1,5 +1,6 @@
 import { ENEMY_TYPES, type EnemyTypeId, type EntityId, type EntitySnapshot, type Vec3, type WeaponId, npcWeapon } from "@seki/core";
 import { PLAYER_SPAWN } from "../content/district-m0";
+import { SNIPER_PERCHES } from "../content/district-doki";
 import type { ActorDef, ActorSpawn, StaticProp } from "../content/builders";
 import { SCHEDULES } from "../content/schedules";
 import { aabbFromCenter } from "./collision";
@@ -118,22 +119,94 @@ export const gangerEntity = (
   const e: Entity = {
     ...actor(id, spawn),
     chunk,
-    view: { kind: "enemy", preset: "ganger" },
+    view: { kind: "enemy", preset: def.faction === "tessen" ? "corpo" : "ganger" },
     faction: def.faction,
     enemy: { type },
     velocity: { x: 0, y: 0, z: 0 },
     health: { current: maxHp, max: maxHp },
     combatant: npcCombatant(def.weapon),
     melee: idleMelee(),
-    // A melee fighter has to close in: it attacks from inside its weapon's reach.
-    ai: { home: spawn.position, aggroRange: 17, attackRange: meleeAttackRange(def.weapon) ?? 15, alerted: false, ...(victim ? { victim } : {}) },
+    // A melee fighter has to close in: it attacks from inside its weapon's reach. Tessen's guards
+    // (ADR-0024) see in a cone and fire their rifles from a little further out.
+    ai:
+      def.faction === "tessen"
+        ? { home: spawn.position, aggroRange: GUARD_SIGHT, attackRange: 20, alerted: false, cone: true, ...(victim ? { victim } : {}) }
+        : { home: spawn.position, aggroRange: 17, attackRange: meleeAttackRange(def.weapon) ?? 15, alerted: false, ...(victim ? { victim } : {}) },
   };
   if (tag) e.tag = tag;
   return e;
 };
 
+/** How far a corporate guard sees a standing player in front of it, metres. */
+export const GUARD_SIGHT = 18;
+
+/** Index of the perch nearest to `p`. */
+export const nearestPerch = (perches: readonly Vec3[], p: Vec3): number => {
+  let best = 0;
+  let bestD = Infinity;
+  perches.forEach((q, i) => {
+    const d = Math.hypot(q.x - p.x, q.y - p.y, q.z - p.z);
+    if (d < bestD) {
+      best = i;
+      bestD = d;
+    }
+  });
+  return best;
+};
+
+/** A Tessen sniper (ADR-0024): an enemy without a behaviour tree, driven by the sniper system. */
+export const sniperEntity = (id: EntityId, spawn: ActorSpawn, tag: string | null, maxHp: number, chunk: string, perches: readonly Vec3[] = SNIPER_PERCHES): Entity => {
+  const def = ENEMY_TYPES.tessen_sniper;
+  const e: Entity = {
+    ...actor(id, spawn),
+    chunk,
+    view: { kind: "enemy", preset: "corpo" },
+    faction: def.faction,
+    enemy: { type: "tessen_sniper" },
+    velocity: { x: 0, y: 0, z: 0 },
+    health: { current: maxHp, max: maxHp },
+    combatant: npcCombatant(def.weapon),
+    melee: idleMelee(),
+    sniper: { perches, phase: "idle", timer: 0, perch: nearestPerch(perches, spawn.position) },
+  };
+  if (tag) e.tag = tag;
+  return e;
+};
+
+/** Mika's health: as much as Oyaji, a little less than a guard. */
+export const ESCORT_MAX_HP = 110;
+
+/** The defector of an escort job (ADR-0024): a civilian who walks the route while Seki is near. */
+export const escortEntity = (id: EntityId, key: string, route: readonly [Vec3, ...Vec3[]], chunk: string): Entity => ({
+  ...actor(id, { key, position: route[0], yaw: Math.PI }),
+  chunk,
+  view: { kind: "npc", preset: "civilian" },
+  faction: "civilians",
+  velocity: { x: 0, y: 0, z: 0 },
+  health: { current: ESCORT_MAX_HP, max: ESCORT_MAX_HP },
+  escort: { route },
+});
+
+/** Size of a hack job's terminal. */
+const TERMINAL = { x: 0.7, y: 1.4, z: 0.5 } as const;
+
+/** A hack job's terminal (ADR-0024): the interact key starts the hack. */
+export const terminalEntity = (id: EntityId, key: string, foot: Vec3, chunk: string): Entity => ({
+  id,
+  key,
+  chunk,
+  ...at({ x: foot.x, y: foot.y + TERMINAL.y / 2, z: foot.z }),
+  view: { kind: "block", size: TERMINAL, material: "glass" },
+  interactable: { kind: "terminal", dialogueId: key, prompt: "Włam się do terminala", radius: 2 },
+});
+
 export const actorEntity = (id: EntityId, def: ActorDef, chunk: string): Entity => {
-  const e = def.kind === "ganger" ? gangerEntity(id, def.spawn, def.spawn.tag, GANGER_MAX_HP, chunk) : npcEntity(id, def, chunk);
+  const e =
+    def.kind === "ganger"
+      ? def.enemy
+        ? gangerEntity(id, def.spawn, def.spawn.tag, ENEMY_TYPES[def.enemy].hp, chunk, undefined, def.enemy)
+        : gangerEntity(id, def.spawn, def.spawn.tag, GANGER_MAX_HP, chunk)
+      : npcEntity(id, def, chunk);
   const plan = SCHEDULES[def.spawn.key];
   if (plan) e.schedule = { def: plan, own: e.interactable ?? null, pose: null };
   return e;
@@ -153,14 +226,20 @@ const npcEntity = (id: EntityId, def: ActorDef & { kind: "npc" }, chunk: string)
 /** Size of a contract crate. */
 const CRATE = { x: 0.9, y: 0.6, z: 0.6 } as const;
 
-/** The crate of a retrieval contract: picked up with the interact key, no conversation. */
-export const pickupEntity = (id: EntityId, key: string, position: Vec3, chunk: string): Entity => ({
+/** Size of the data module of an infiltration. */
+const DATA = { x: 0.4, y: 0.12, z: 0.3 } as const;
+
+/**
+ * The crate of a retrieval contract, or the data of an infiltration (ADR-0024): picked up with
+ * the interact key, no conversation.
+ */
+export const pickupEntity = (id: EntityId, key: string, position: Vec3, chunk: string, what: "crate" | "data" = "crate"): Entity => ({
   id,
   key,
   chunk,
   ...at(position),
-  view: { kind: "block", size: CRATE, material: "glass" },
-  interactable: { kind: "pickup", dialogueId: key, prompt: "Zabierz skrzynkę Hany", radius: 1.8 },
+  view: { kind: "block", size: what === "crate" ? CRATE : DATA, material: "glass" },
+  interactable: { kind: "pickup", dialogueId: key, prompt: what === "crate" ? "Zabierz skrzynkę Hany" : "Zgraj dane Tessen", radius: 1.8 },
 });
 
 /** Contract targets get tougher as Seki completes more jobs. */

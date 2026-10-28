@@ -1,19 +1,34 @@
-import { contractItemKey, contractKind, shopTerms, takenFlag } from "@seki/core";
+import { contractItemKey, contractKind, contractTerminalKey, shopTerms, takenFlag } from "@seki/core";
 import type { Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { clearContract, raiseFlag } from "../world/domain-ops";
+import { raiseAlarm } from "./contract-system";
 import { callElevator } from "./elevator-system";
 import { grabLadder } from "./ladder-system";
 
-/** Picking up the crate of the running retrieval job: it leaves the world and the job is cleared. */
+/**
+ * Picking up the crate of the running retrieval job, or the data of an infiltration (ADR-0024):
+ * it leaves the world and the job is cleared.
+ */
 const takeContractCrate = (ctx: SimContext, crate: Entity): void => {
   const contract = ctx.state.domain.contracts.active;
-  if (!crate.key || contract?.status !== "active" || contractKind(contract) !== "retrieve" || crate.key !== contractItemKey(contract.id)) return;
+  const kind = contract ? contractKind(contract) : null;
+  if (!crate.key || contract?.status !== "active" || (kind !== "retrieve" && kind !== "infiltrate") || crate.key !== contractItemKey(contract.id)) return;
   raiseFlag(ctx, takenFlag(crate.key));
   ctx.world.remove(crate);
   ctx.session.focusId = null;
   ctx.bus.emit("InteractionFocusChanged", { targetId: null, prompt: null });
   clearContract(ctx);
+};
+
+/** The terminal of the running hack job: the key starts the hack and the alarm (ADR-0024). */
+const startHack = (ctx: SimContext, terminal: Entity): void => {
+  const contract = ctx.state.domain.contracts.active;
+  if (contract?.status !== "active" || contractKind(contract) !== "hack" || contract.progress !== undefined) return;
+  if (terminal.key !== contractTerminalKey(contract.id)) return;
+  const started = { ...contract, progress: 0, away: 0 };
+  ctx.state.domain = { ...ctx.state.domain, contracts: { ...ctx.state.domain.contracts, active: started } };
+  raiseAlarm(ctx, started);
 };
 
 /** Vertical reach of the interact key, metres between feet (or the button's base). */
@@ -64,6 +79,10 @@ export const interactionSystem: System = {
       }
       if (interactable.kind === "pickup") {
         takeContractCrate(ctx, best);
+        return;
+      }
+      if (interactable.kind === "terminal") {
+        startHack(ctx, best);
         return;
       }
       if (interactable.kind === "shop" && faction && !shopTerms(ctx.state.domain.reputation[faction]).open) {

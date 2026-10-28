@@ -311,7 +311,7 @@ const humanoid = (b: RigBuilder, root: TransformNode, build: Build, look: Look):
   return { body, head, legL: l.leg, legR: r.leg, kneeL: l.knee, kneeR: r.knee, armL: al.arm, armR: ar.arm, elbowL: al.elbow, elbowR: ar.elbow, s };
 };
 
-const EMISSIVE: ReadonlySet<PresetName> = new Set<PresetName>(["heroineVisor", "gangerMask", "docGoggles"]);
+const EMISSIVE: ReadonlySet<PresetName> = new Set<PresetName>(["heroineVisor", "gangerMask", "docGoggles", "corpoVisor"]);
 
 /**
  * Turns the loose parts into one skinned mesh per look group: every joint becomes a bone
@@ -552,6 +552,24 @@ export const buildGanger = (scene: Scene, materials: ToonMaterials, name: string
   b.box(0.13, 0.03, 0.03, "gangerMask", sk.head, 0, -0.02 * sk.s, 0.07 * sk.s);
   const gun = pistol(b, sk, 0.18 * sk.s, "gangerPants", 1.25);
   return finish(root, b, sk, { aiming: true, armSpread: 0.12, gun });
+};
+
+/** Tessen security (ADR-0024): broader, navy uniform, chest plate, helmet with a cyan visor strip. */
+export const buildCorpo = (scene: Scene, materials: ToonMaterials, name: string): CharacterRig => {
+  const root = new TransformNode(name, scene);
+  const b = new RigBuilder(scene, materials, name);
+  const sk = humanoid(
+    b,
+    root,
+    { height: 1.84, shoulder: 0.22, hip: 0.16, chest: 0.19, waist: 0.16, limb: 1.12, female: false },
+    { skin: "skin", top: "corpoUniform", bottom: "corpoUniform", shoes: "gangerPants", arms: "corpoUniform", face: false },
+  );
+  const helmet = b.sphere(0.205 * sk.s, "corpoPlate", sk.head, 0, 0.03, -0.01, [1, 0.9, 1.05]);
+  helmet.scaling.z = 1.05;
+  b.box(0.15, 0.028, 0.03, "corpoVisor", sk.head, 0, 0.02 * sk.s, 0.075 * sk.s);
+  b.box(0.3, 0.26, 0.06, "corpoPlate", sk.body, 0, 1.36 * sk.s, 0.1);
+  const gun = pistol(b, sk, 0.18 * sk.s, "corpoPlate", 1.25);
+  return finish(root, b, sk, { aiming: true, armSpread: 0.14, gun });
 };
 
 /** Babcia Ume: small, long beige coat, grey bun, red umbrella. */

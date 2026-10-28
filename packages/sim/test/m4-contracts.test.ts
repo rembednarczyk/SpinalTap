@@ -71,7 +71,7 @@ describe("delivery (Kaito → Hana, against the clock)", () => {
     complete(sim);
     expect(sim.domain.wallet.eddies).toBe(before + c.reward);
     expect(sim.domain.contracts).toEqual({ active: null, completed: 1 });
-    expect(sim.domain.reputation).toEqual({ fixers: 2, hebi: 0, civilians: 1, clinic: 0 });
+    expect(sim.domain.reputation).toEqual({ fixers: 2, hebi: 0, civilians: 1, clinic: 0, kagami: 0, tessen: 0 });
   });
 
   it("fails at the deadline: no pay, Kaito's network is unhappy, the id is retired", () => {

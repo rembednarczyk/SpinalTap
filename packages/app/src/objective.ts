@@ -1,4 +1,14 @@
-import { type Contract, type DomainState, QUEST_DEFINITIONS, activeMainStep, contractGiver, contractObjective, contractSecondsLeft, hasFlag } from "@seki/core";
+import {
+  type Contract,
+  type DomainState,
+  QUEST_DEFINITIONS,
+  activeMainStep,
+  contractGiver,
+  contractObjective,
+  contractSecondsLeft,
+  hasFlag,
+  stepObjective,
+} from "@seki/core";
 import { SIM_HZ } from "@seki/sim";
 
 /** Main steps that are about fixer work: while a contract runs, the HUD shows the contract itself. */
@@ -18,11 +28,12 @@ export const describeObjective = (domain: DomainState, tick: number | null = nul
   const main = activeMainStep(domain.quests, QUEST_DEFINITIONS);
   if (main) {
     if (contractView && CONTRACT_STEPS.has(main.step.id)) return contractView;
-    return { title: main.quest.title, objective: main.step.objective };
+    return { title: main.quest.title, objective: stepObjective(main.step, domain.flags) };
   }
   const started = QUEST_DEFINITIONS.some((q) => q.main && domain.quests[q.id]);
   if (!started) return { title: null, objective: null };
-  const work = hasFlag(domain.flags, "met_hana") ? "Kaito ma kolejne kontrakty, Hana z targu też." : "Kaito ma kolejne kontrakty.";
+  const givers = [...(hasFlag(domain.flags, "met_hana") ? ["Hana z targu"] : []), ...(hasFlag(domain.flags, "met_genzo") ? ["Genzō w Dokach"] : [])];
+  const work = givers.length > 0 ? `Kaito ma kolejne kontrakty, ${givers.join(" i ")} też.` : "Kaito ma kolejne kontrakty.";
   return contractView ?? { title: "Wolna ręka", objective: `${work} Mori sprzedaje cyberware.` };
 };
 

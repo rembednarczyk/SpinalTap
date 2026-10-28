@@ -187,6 +187,28 @@ export const GARMENT_CATALOG = {
     value: 500,
     look: { tint: "kevlar" },
   },
+  // Corporate security in the docks (ADR-0024): plates where a Hebi jacket has patches.
+  tessen_vest: {
+    id: "tessen_vest",
+    name: "Pancerz Tessen",
+    description: "Korporacyjna kamizelka z płytami na piersi i barkach. Słabe pociski się od niej odbijają.",
+    category: "garment",
+    slot: "torso",
+    armor: { torso: 6, arm: 3 },
+    modifiers: { moveSpeed: -0.15 },
+    value: 1100,
+    look: { tint: "jacket-tessen", attachments: [{ point: "chest", mesh: "vest-plate" }] },
+  },
+  tessen_helmet: {
+    id: "tessen_helmet",
+    name: "Hełm ochrony Tessen",
+    description: "Lekki hełm z daszkiem. Strzał w twarz dalej boli.",
+    category: "garment",
+    slot: "head",
+    armor: { head: 3 },
+    value: 400,
+    look: { attachments: [{ point: "head", mesh: "helmet" }] },
+  },
 } as const satisfies Record<GarmentId, GarmentDefinition>;
 
 /** What a mod changes in `effectiveWeapon`. Multipliers default to 1. */
@@ -468,7 +490,34 @@ export const WEAPON_CATALOG = {
     alertRadius: GUNSHOT_ALERT,
     value: 1800,
     look: "rifle",
+    // Tessen guards in the docks (ADR-0024): short controlled bursts, accurate at street range.
+    npc: { damage: 11, interval: 0.75, range: 30, spread: { ...GANGER_SMG_SPREAD, base: 0.035 } },
     ads: { zoom: 0.55, time: 0.28, spread: 0.35, move: 0.6 },
+  },
+  kagero_dmr: {
+    id: "kagero_dmr",
+    name: "Kagero DMR",
+    description: "Karabin wyborowy ochrony portu. Jeden strzał, długa przerwa, a potem drugi.",
+    category: "weapon",
+    class: "rifle",
+    slot: "primary",
+    damage: 62,
+    pellets: 1,
+    interval: 0.9,
+    magazine: 6,
+    reload: 2.8,
+    reloadMode: "magazine",
+    ammo: "556",
+    spread: { base: 0.012, crouch: 0.4, move: 0.06, sprint: 0.12, bloomPerShot: 0.05, bloomMax: 0.08, recovery: 0.08 },
+    range: 120,
+    drawTime: 0.85,
+    modSlots: ["muzzle", "sight"],
+    alertRadius: 34,
+    value: 2200,
+    look: "rifle",
+    // The sniper's shot (ADR-0024): telegraphed by the laser, so it may hit hard and true.
+    npc: { damage: 34, interval: 2.6, range: 80, spread: { ...NO_SPREAD, base: 0.004 } },
+    ads: { zoom: 0.38, time: 0.34, spread: 0.2, move: 0.5 },
   },
   baton: {
     id: "baton",

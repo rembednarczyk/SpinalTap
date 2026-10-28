@@ -130,6 +130,13 @@ describe("minimap data", () => {
     expect(track([fixer], [], contracts).mapPlayer).toBeNull();
   });
 
+  it("marks Mori's clinic apart from other shops", () => {
+    const track = createMinimapTracker();
+    const mori = { id: 3, key: "mori", position: { x: -6, y: 0, z: 2 }, interactable: { kind: "shop", dialogueId: "mori" } } as unknown as Entity;
+    const oyaji = { id: 6, key: "oyaji", position: { x: 80, y: 0, z: 66 }, interactable: { kind: "shop", shopId: "oyaji", dialogueId: "oyaji" } } as unknown as Entity;
+    expect(track([mori, oyaji], [], { active: null, completed: 0 }).mapMarkers.map((m) => m.kind)).toEqual(["ripperdoc", "vendor"]);
+  });
+
   it("reaches the store through the session", () => {
     const { s, ui } = session();
     expect(ui.getState().map?.blocks.length).toBeGreaterThan(0);

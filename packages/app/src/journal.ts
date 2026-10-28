@@ -1,4 +1,4 @@
-import { type DomainState, MEMORY_CATALOG, QUEST_DEFINITIONS, contractGiver, contractObjective } from "@seki/core";
+import { type DomainState, MEMORY_CATALOG, QUEST_DEFINITIONS, contractGiver, contractObjective, stepObjective } from "@seki/core";
 import { contractTitle } from "./objective";
 import type { JournalMemoryVm, JournalQuestVm, JournalVm } from "@seki/ui";
 
@@ -14,7 +14,9 @@ export const buildJournal = (domain: DomainState): JournalVm => {
       title: q.title,
       kind: q.main ? "main" : "side",
       status: progress.status,
-      steps: q.steps.slice(0, reached).map((s, i) => ({ objective: s.objective, done: progress.status === "completed" || i < progress.stepIndex })),
+      steps: q.steps
+        .slice(0, reached)
+        .map((s, i) => ({ objective: stepObjective(s, domain.flags), done: progress.status === "completed" || i < progress.stepIndex })),
     });
   }
   const { active, completed } = domain.contracts;
@@ -48,11 +50,20 @@ export const buildJournal = (domain: DomainState): JournalVm => {
  * so comparing references is enough to know nothing the journal shows has changed.
  */
 export const createJournalCache = (): ((domain: DomainState) => JournalVm) => {
-  let last: { quests: unknown; contracts: unknown; memories: unknown; vm: JournalVm } | null = null;
+  let last: { quests: unknown; contracts: unknown; memories: unknown; flags: unknown; vm: JournalVm } | null = null;
   return (domain) => {
-    if (last && last.quests === domain.quests && last.contracts === domain.contracts && last.memories === domain.character.memories) return last.vm;
+    // Flags too: a step's objective can read differently as the story moves (ADR-0023).
+    if (
+      last &&
+      last.quests === domain.quests &&
+      last.contracts === domain.contracts &&
+      last.memories === domain.character.memories &&
+      last.flags === domain.flags
+    ) {
+      return last.vm;
+    }
     const vm = buildJournal(domain);
-    last = { quests: domain.quests, contracts: domain.contracts, memories: domain.character.memories, vm };
+    last = { quests: domain.quests, contracts: domain.contracts, memories: domain.character.memories, flags: domain.flags, vm };
     return vm;
   };
 };

@@ -1,19 +1,26 @@
 import {
   type Contract,
+  ENEMY_TYPES,
+  type EnemyTypeId,
   type EntityId,
   type EntitySnapshot,
   type GameClock,
   PROTECTEE_KEY,
   type Vec3,
+  contractAlarmFlag,
+  contractEscortKey,
   contractItemKey,
   contractKind,
   contractTag,
+  contractTerminalKey,
   takenFlag,
 } from "@seki/core";
 import type { World } from "miniplex";
 import { CONTRACT_SITE_SPAWNS } from "../content/district-m0";
 import { CONTRACT_ITEM_SPOTS } from "../content/district-targ";
+import { DOKI_CONTRACT_POSTS, DOKI_ITEM_SPOTS, DOKI_TERMINAL_SPOTS, ESCORT_ROUTE } from "../content/district-doki";
 import { type ChunkDef, type DistrictId, WORLD_CHUNKS, chunkAt, distanceToRect } from "../content/world-map";
+import { type Presence, isPresent } from "../content/builders";
 import type { Entity } from "./components";
 import {
   type IdAllocator,
@@ -21,10 +28,13 @@ import {
   applyEntitySnapshot,
   contractGangerHp,
   entitySnapshotOf,
+  escortEntity,
   gangerEntity,
   isDead,
   pickupEntity,
   propEntity,
+  sniperEntity,
+  terminalEntity,
 } from "./factory";
 import { inCreationOrder } from "./ordering";
 import { placeOnSchedule } from "./schedule";
@@ -47,7 +57,12 @@ interface Template {
   /** Keyed entities carry state across unloads and saves; static props do not. */
   readonly key: string | null;
   readonly make: () => Entity;
+  /** Flags that decide whether the actor is in the world at all (ADR-0023). */
+  readonly when?: Presence;
 }
+
+/** Docks guards get tougher with experience, from their own type's health (ADR-0024). */
+const docksGuardHp = (type: EnemyTypeId, completed: number): number => ENEMY_TYPES[type].hp + Math.min(40, completed * 5);
 
 export interface StreamingChange {
   readonly loaded: readonly string[];
@@ -74,6 +89,8 @@ export class WorldStreamer {
   private contract: Template[] = [];
   private readonly resident = new Set<string>();
   private readonly dormant = new Map<string, EntitySnapshot>();
+  /** Flags the presence of conditional actors was last checked against (compared by reference). */
+  private presenceFlags: readonly string[] | null = null;
   /** Ids of entities currently asleep in an unloaded chunk (lets the renderer skip exit animations). */
   readonly streamedOut = new Set<EntityId>();
 
@@ -90,7 +107,7 @@ export class WorldStreamer {
       }
       for (const def of chunk.actors) {
         const id = ids.take();
-        const t: Template = { id, chunk: chunk.id, key: def.spawn.key, make: () => actorEntity(id, def, chunk.id) };
+        const t: Template = { id, chunk: chunk.id, key: def.spawn.key, make: () => actorEntity(id, def, chunk.id), ...(def.when ? { when: def.when } : {}) };
         list.push(t);
         this.byKey.set(def.spawn.key, t);
       }
@@ -108,6 +125,11 @@ export class WorldStreamer {
     return chunkAt(p.x, p.z, this.chunks)?.id ?? "";
   }
 
+  /** Is the point within `margin` metres of a chunk other than `except` (a seam between districts)? */
+  nearOtherChunk(p: Vec3, margin: number, except: string): boolean {
+    return this.chunks.some((c) => c.id !== except && distanceToRect(p.x, p.z, c.bounds) <= margin);
+  }
+
   /** Resident chunks, in table order. */
   get loadedChunks(): string[] {
     return this.chunks.filter((c) => this.resident.has(c.id)).map((c) => c.id);
@@ -117,8 +139,17 @@ export class WorldStreamer {
     return this.resident.has(chunkId);
   }
 
+  /**
+   * District named for the point. Streaming bounds overlap at the seams (Kanałowa runs on
+   * under the market gate), so the last chunk in table order wins: a later district is laid
+   * over its neighbour's margin.
+   */
   districtAt(p: Vec3): DistrictId | null {
-    return chunkAt(p.x, p.z, this.chunks)?.district ?? null;
+    for (let i = this.chunks.length - 1; i >= 0; i--) {
+      const c = this.chunks[i];
+      if (c && distanceToRect(p.x, p.z, c.bounds) === 0) return c.district;
+    }
+    return null;
   }
 
   /** State of keyed entities asleep in unloaded chunks, sorted by key. */
@@ -136,31 +167,66 @@ export class WorldStreamer {
     const chunk = (first ? chunkAt(first.x, first.z, this.chunks) : null)?.id ?? this.chunks[0]?.id ?? "";
     for (const old of this.contract) this.byKey.delete(old.key ?? "");
     this.contract = [];
-    // A protection wave is sent at Oyaji; everyone else just holds the site.
-    const victim = contractKind(contract) === "protect" ? PROTECTEE_KEY : undefined;
+    const kind = contractKind(contract);
+    // A protection wave is sent at Oyaji, an escort's ambush at the defector; everyone else holds the site.
+    const victim = kind === "protect" ? PROTECTEE_KEY : kind === "escort" ? contractEscortKey(contract.id) : undefined;
+    const posts = DOKI_CONTRACT_POSTS[contract.siteId];
+    const tag = contractTag(contract.id);
+    const add = (t: Template): void => {
+      this.contract.push(t);
+      if (t.key) this.byKey.set(t.key, t);
+    };
     for (let i = 0; i < contract.targets; i++) {
       const position = points[i % points.length];
       if (!position) continue;
       const id = this.ids.take();
       const key = `${contract.id}-g${i}`;
+      const post = posts?.[i % posts.length];
+      if (post) {
+        // A docks post (ADR-0024): its own facing and type; an alarm post waits for the alarm.
+        const spawn = { key, position: post.at, yaw: post.yaw };
+        const hp = docksGuardHp(post.type, completed);
+        const make = (): Entity => {
+          if (post.type === "tessen_sniper") return sniperEntity(id, spawn, tag, hp, chunk);
+          const g = gangerEntity(id, spawn, tag, hp, chunk, victim, post.type);
+          // The hack's wave knows where Seki is; the office guards stand watch and look around.
+          if (g.ai && kind === "hack") g.ai.alerted = true;
+          if (g.ai && !post.onAlarm) g.ai = { ...g.ai, watch: { yaw: post.yaw, phase: i * 1.7 } };
+          return g;
+        };
+        add(post.onAlarm ? { id, chunk, key, make, when: { all: [contractAlarmFlag(contract.id)] } } : { id, chunk, key, make });
+        continue;
+      }
       // Face the street centre line.
       const spawn = { key, position, yaw: Math.atan2(-position.x, 0.001) };
       // Every third ganger of a wave fights hand to hand (ADR-0019).
       const type = i % 3 === 2 ? "hebi_brawler" : "hebi_ganger";
-      const make = () => gangerEntity(id, spawn, contractTag(contract.id), contractGangerHp(completed), chunk, victim, type);
-      const t: Template = { id, chunk, key, make };
-      this.contract.push(t);
-      this.byKey.set(key, t);
+      add({ id, chunk, key, make: () => gangerEntity(id, spawn, tag, contractGangerHp(completed), chunk, victim, type) });
     }
-    const crate = contractKind(contract) === "retrieve" ? CONTRACT_ITEM_SPOTS[contract.siteId] : undefined;
+    const crate = kind === "retrieve" ? CONTRACT_ITEM_SPOTS[contract.siteId] : kind === "infiltrate" ? DOKI_ITEM_SPOTS[contract.siteId] : undefined;
     if (crate) {
       const id = this.ids.take();
       const key = contractItemKey(contract.id);
-      const t: Template = { id, chunk, key, make: () => pickupEntity(id, key, crate, chunk) };
-      this.contract.push(t);
-      this.byKey.set(key, t);
+      add({ id, chunk, key, make: () => pickupEntity(id, key, crate, chunk, kind === "retrieve" ? "crate" : "data") });
+    }
+    if (kind === "escort") {
+      const id = this.ids.take();
+      const key = contractEscortKey(contract.id);
+      add({ id, chunk, key, make: () => escortEntity(id, key, ESCORT_ROUTE, chunk) });
+    }
+    const terminal = kind === "hack" ? DOKI_TERMINAL_SPOTS[contract.siteId] : undefined;
+    if (terminal) {
+      const id = this.ids.take();
+      const key = contractTerminalKey(contract.id);
+      add({ id, chunk, key, make: () => terminalEntity(id, key, terminal, chunk) });
     }
     if (this.resident.has(chunk)) this.spawnActors(world, flags, this.contract, null);
+  }
+
+  /** Spawns the contract's characters that were waiting for a flag that is now up (ADR-0024). */
+  spawnWaiting(world: World<Entity>, flags: readonly string[]): void {
+    const waiting = this.contract.filter((t) => t.when !== undefined && this.resident.has(t.chunk));
+    this.spawnActors(world, flags, waiting, null);
   }
 
   /**
@@ -177,6 +243,7 @@ export class WorldStreamer {
     }
     between();
     for (const c of chunks) this.spawnActors(world, flags, this.actorsOf(c.id), clock);
+    this.presenceFlags = flags;
   }
 
   /** Re-applies saved entity state: live entities directly, the rest as pinned or dormant. */
@@ -190,7 +257,7 @@ export class WorldStreamer {
         continue;
       }
       const t = this.byKey.get(s.key);
-      if (!t || isDead(flags, s.key) || flags.includes(takenFlag(s.key))) continue;
+      if (!t || isDead(flags, s.key) || flags.includes(takenFlag(s.key)) || !isPresent(t.when, flags)) continue;
       if (s.alerted) {
         // It was chasing the player when the save was made: pinned, alive outside its chunk.
         const pinned = t.make();
@@ -205,6 +272,7 @@ export class WorldStreamer {
 
   /** Loads and unloads chunks around `focus`. Unloads first, so ids never collide. */
   update(world: World<Entity>, flags: readonly string[], focus: Vec3, clock: GameClock): StreamingChange {
+    if (flags !== this.presenceFlags) this.syncPresence(world, flags, clock);
     let unloaded: string[] | null = null;
     let loaded: string[] | null = null;
     for (const c of this.chunks) {
@@ -220,6 +288,29 @@ export class WorldStreamer {
     }
     for (const id of loaded ?? []) this.spawnActors(world, flags, this.actorsOf(id), clock);
     return { loaded: loaded ?? [], unloaded: unloaded ?? [] };
+  }
+
+  /**
+   * Conditional actors follow the flags (ADR-0023): one whose condition starts to hold appears
+   * in its resident chunk, one whose condition stops holding leaves the world and forgets its
+   * sleeping state. Visits chunks in table order, so it stays deterministic.
+   */
+  private syncPresence(world: World<Entity>, flags: readonly string[], clock: GameClock): void {
+    this.presenceFlags = flags;
+    const live = new Map<string, Entity>();
+    for (const e of world) if (e.key) live.set(e.key, e);
+    for (const chunk of this.chunks) {
+      for (const t of this.content.get(chunk.id) ?? []) {
+        if (!t.when || t.key === null) continue;
+        if (isPresent(t.when, flags)) {
+          if (this.resident.has(chunk.id) && !live.has(t.key)) this.spawnActors(world, flags, [t], clock);
+          continue;
+        }
+        this.dormant.delete(t.key);
+        const e = live.get(t.key);
+        if (e) world.remove(e);
+      }
+    }
   }
 
   private actorsOf(chunkId: string): Template[] {
@@ -241,7 +332,7 @@ export class WorldStreamer {
     const alive = new Set<string>();
     for (const e of world) if (e.key) alive.add(e.key);
     for (const t of templates) {
-      if (t.key === null || isDead(flags, t.key) || flags.includes(takenFlag(t.key)) || alive.has(t.key)) continue;
+      if (t.key === null || isDead(flags, t.key) || flags.includes(takenFlag(t.key)) || alive.has(t.key) || !isPresent(t.when, flags)) continue;
       const e = t.make();
       const saved = this.dormant.get(t.key);
       if (saved) {

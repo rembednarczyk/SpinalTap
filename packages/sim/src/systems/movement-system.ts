@@ -106,6 +106,18 @@ const stepMantle = (m: NonNullable<Entity["mantle"]>, e: Entity, dt: number): vo
   if (m.t >= m.duration) delete e.mantle;
 };
 
+/** Bounds of neighbouring districts may leave a seam this wide between them (ADR-0024). */
+const SEAM = 0.5;
+
+/**
+ * A move from inside a district to a point outside every district (ADR-0021 addendum). The
+ * seam towards a neighbouring district is not outside: it is crossed on the way there.
+ */
+const leavesWorld = (ctx: SimContext, from: Entity["position"], to: Entity["position"]): boolean => {
+  const here = ctx.streamer.chunkIdAt(from);
+  return here !== "" && ctx.streamer.chunkIdAt(to) === "" && !ctx.streamer.nearOtherChunk(to, SEAM, here);
+};
+
 /** Fall damage for a drop of `drop` metres (ADR-0021): none up to FALL_SAFE_HEIGHT, then linear. */
 export const fallDamage = (drop: number): number => (drop > FALL_SAFE_HEIGHT ? Math.round((drop - FALL_SAFE_HEIGHT) * FALL_DAMAGE_PER_METRE) : 0);
 
@@ -160,7 +172,7 @@ export const movementSystem: System = {
         // In the air, pressing into a ledge within reach: pull up onto it instead of sliding down.
         if (e.player && e.fall !== undefined) {
           const to = ledgeAhead(solids, e, x, z, e.velocity.x, e.velocity.z);
-          if (to) {
+          if (to && !leavesWorld(ctx, e.position, to)) {
             e.mantle = { from: e.position, to, duration: MANTLE_TIME, t: 0 };
             delete e.fall;
             delete e.airPeak;
@@ -182,6 +194,12 @@ export const movementSystem: System = {
             }
           }
         }
+      }
+      // The edge of the world is a wall: a jump over a parapet or an outer wall never lands
+      // outside every district (the street plane y = 0 runs on beyond them).
+      if (e.player && leavesWorld(ctx, e.position, { x, y: feet, z })) {
+        x = e.position.x;
+        z = e.position.z;
       }
       const ground = groundAt(solids, x, z, feet);
       const rising = (e.fall ?? 0) > 0;

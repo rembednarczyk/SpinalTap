@@ -1,4 +1,4 @@
-import type { BlockSkin, BlockStyle, FactionId, BlockFront, Vec3, ViewDescriptor } from "@seki/core";
+import type { BlockSkin, BlockStyle, EnemyTypeId, FactionId, BlockFront, Vec3, ViewDescriptor } from "@seki/core";
 import type { Interactable, LadderDef } from "../world/components";
 
 /** Shared vocabulary of the content tables. Coordinates: Y up, +Z north, yaw 0 faces +Z. */
@@ -30,9 +30,22 @@ export interface GangerSpawn extends ActorSpawn {
 }
 
 /** A keyed character placed by content. Its state survives unloading and saves. */
+/**
+ * When a keyed actor is in the world (ADR-0023): every flag of `all` is set and none of `none`.
+ * Without it the actor is always there. Streaming adds and removes actors as the flags change.
+ */
+export interface Presence {
+  readonly all?: readonly string[];
+  readonly none?: readonly string[];
+}
+
+export const isPresent = (presence: Presence | undefined, flags: readonly string[]): boolean =>
+  !presence || ((presence.all ?? []).every((f) => flags.includes(f)) && !(presence.none ?? []).some((f) => flags.includes(f)));
+
 export type ActorDef =
   | {
       readonly kind: "npc";
+      readonly when?: Presence;
       readonly spawn: ActorSpawn;
       readonly preset: "fixer" | "civilian" | "ripperdoc";
       readonly faction: FactionId;
@@ -42,7 +55,13 @@ export type ActorDef =
       /** Gives the NPC health, so it can be hurt and killed. NPCs without it cannot be. */
       readonly maxHp?: number;
     }
-  | { readonly kind: "ganger"; readonly spawn: GangerSpawn };
+  | {
+      readonly kind: "ganger";
+      readonly spawn: GangerSpawn;
+      readonly when?: Presence;
+      /** Enemy type and its health; without it a Hebi ganger with the default health. */
+      readonly enemy?: EnemyTypeId;
+    };
 
 /** Axis-aligned rectangle on the XZ plane. */
 export interface Rect {
@@ -93,6 +112,13 @@ export const slab = (x: number, y: number, z: number, size: Vec3, material: Bloc
 export const neon = (x: number, y: number, z: number, size: Vec3, color: string, label?: string): StaticProp => ({
   center: v(x, y, z),
   view: label === undefined ? { kind: "neon", size, color } : { kind: "neon", size, color, label },
+  solid: false,
+});
+
+/** Open water over the rectangle, its surface at `y` (ADR-0024). Visual only. */
+export const water = (x0: number, x1: number, z0: number, z1: number, y: number): StaticProp => ({
+  center: v((x0 + x1) / 2, y, (z0 + z1) / 2),
+  view: { kind: "water", size: v(x1 - x0, 0.01, z1 - z0) },
   solid: false,
 });
 

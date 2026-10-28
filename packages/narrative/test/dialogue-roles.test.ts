@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type Contract, type DomainState, createDomainState } from "@seki/core";
+import { type ActTwoEndingId, type Contract, type DomainState, type EndingId, createDomainState } from "@seki/core";
 import { type DialogueView, NarrativeRuntime, STORY_SOURCE } from "../src";
 
 /**
@@ -51,9 +51,41 @@ const memories = (...ids: DomainState["character"]["memories"]): Partial<DomainS
   character: { ...createDomainState().character, alias: "Seki Senshi", memories: ids },
 });
 
+type Choices = DomainState["story"]["choices"];
+const ACT_ONE: Readonly<Record<EndingId, Choices>> = {
+  aya: { case: "opened", name: "spoken", crash: "wheel" },
+  seki: { case: "sealed", name: "silent", crash: "ren" },
+};
+/** Act II at `stepIndex`, after the act-I `ending`, with some choices overridden. */
+const lustro = (stepIndex: number, ending: EndingId, choices: Choices = {}, patch: Partial<DomainState> = {}): DomainState =>
+  afterM0({
+    quests: { m0_first_contract: { status: "completed" }, m3_echo: { status: "completed" }, m3_lustro: { status: "active", stepIndex } },
+    story: { choices: { ...ACT_ONE[ending], ...choices }, ending, act2Ending: null },
+    ...patch,
+    flags: [`ending:${ending}`, "seen:act2_opening", ...(patch.flags ?? [])],
+  });
+const afterLustro = (act2Ending: ActTwoEndingId, patch: Partial<DomainState> = {}): DomainState =>
+  afterM0({
+    quests: { m0_first_contract: { status: "completed" }, m3_echo: { status: "completed" }, m3_lustro: { status: "completed" } },
+    story: { choices: { ...ACT_ONE.aya, archive: act2Ending }, ending: "aya", act2Ending },
+    ...patch,
+    flags: ["ending:aya", `ending:${act2Ending}`, "act2_ending", ...(patch.flags ?? [])],
+  });
+const CLEANERS_DEAD = ["dead:kagami-cleaner-1", "dead:kagami-cleaner-2", "dead:kagami-cleaner-3"];
+
 const delivery = (status: Contract["status"]): Contract => ({ id: "c2", kind: "delivery", siteId: "hana_stall", targets: 0, reward: 325, status, deadlineTick: 6000 });
 const retrieve = (status: Contract["status"]): Contract => ({ id: "c2", kind: "retrieve", siteId: "hebi_stash", targets: 2, reward: 470, status });
 const hit = (status: Contract["status"]): Contract => ({ id: "c1", siteId: "car_wash", targets: 2, reward: 500, status });
+const hack = (status: Contract["status"], progress?: number): Contract => ({
+  id: "c3",
+  kind: "hack",
+  siteId: "quay_terminal",
+  targets: 3,
+  reward: 700,
+  status,
+  ...(progress === undefined ? {} : { progress, away: 0 }),
+});
+const escort = (status: Contract["status"]): Contract => ({ id: "c3", kind: "escort", siteId: "docks_escort", targets: 2, reward: 580, status });
 
 interface Scenario {
   readonly name: string;
@@ -84,23 +116,64 @@ const SCENARIOS: readonly Scenario[] = [
   {
     name: "Mori, finale aya",
     knot: "mori",
-    domain: echo(3, { flags: ["recalled:crash_night"], story: { choices: { case: "opened", name: "spoken", crash: "wheel" }, ending: null } }),
+    domain: echo(3, { flags: ["recalled:crash_night"], story: { choices: { case: "opened", name: "spoken", crash: "wheel" }, ending: null, act2Ending: null } }),
     npcs: ["Doktor Mori"],
   },
   {
     name: "Mori, finale seki",
     knot: "mori",
-    domain: echo(3, { flags: ["recalled:crash_night"], story: { choices: { case: "sealed", name: "silent", crash: "ren" }, ending: null } }),
+    domain: echo(3, { flags: ["recalled:crash_night"], story: { choices: { case: "sealed", name: "silent", crash: "ren" }, ending: null, act2Ending: null } }),
     npcs: ["Doktor Mori"],
   },
   { name: "Hana, first offer", knot: "hana", domain: afterM0(), npcs: ["Hana"] },
   { name: "Hana, payday", knot: "hana", domain: afterM0({ flags: ["met_hana"] }, retrieve("cleared")), npcs: ["Hana"] },
   { name: "Hana, delivery", knot: "hana", domain: afterM0({}, delivery("active")), npcs: ["Hana"] },
   { name: "Oyaji, stall", knot: "oyaji", domain: afterM0(), npcs: ["Oyaji"] },
+  { name: "Genzō, first offer", knot: "genzo", domain: afterM0(), npcs: ["Genzō"] },
+  { name: "Genzō, known, Tessen hostile", knot: "genzo", domain: afterM0({ flags: ["met_genzo"], reputation: { ...createDomainState().reputation, tessen: -40 } }), npcs: ["Genzō"] },
+  { name: "Genzō, payday", knot: "genzo", domain: afterM0({ flags: ["met_genzo"] }, escort("cleared")), npcs: ["Genzō"] },
+  { name: "Genzō, hack running", knot: "genzo", domain: afterM0({}, hack("active", 600)), npcs: ["Genzō"] },
+  { name: "Genzō, busy for Hana", knot: "genzo", domain: afterM0({}, retrieve("active")), npcs: ["Genzō"] },
   { name: "Oyaji, closed", knot: "oyaji_closed", domain: { ...afterM0(), clock: { seconds: 23 * 3600 } }, npcs: ["Oyaji"] },
   { name: "flashback: case", knot: "recall_courier_case", domain: echo(0), npcs: ["Ren"], actions: true },
   { name: "flashback: table", knot: "recall_operating_table", domain: echo(0), npcs: ["Technik Kagami", "Doktor Mori"], actions: true },
   { name: "flashback: crash", knot: "recall_crash_night", domain: echo(0), npcs: ["Ren"], actions: true },
+  // Act II, "Lustro" (m3-lustro.ink), after each act-I ending and with different act-I choices.
+  { name: "act II opening, aya", knot: "act2_opening", domain: lustro(0, "aya", { crash: "ren" }), npcs: ["Ren"] },
+  { name: "act II opening, seki", knot: "act2_opening", domain: lustro(0, "seki", { crash: "ren" }), npcs: KAITO },
+  { name: "Ume, where Ren is (aya)", knot: "ume", domain: lustro(0, "aya", {}, { flags: ["ume_memory", "ume_ren"] }), npcs: ["Babcia Ume"] },
+  { name: "Ume, where Ren is (seki)", knot: "ume", domain: lustro(0, "seki"), npcs: ["Babcia Ume"] },
+  { name: "Mori, the module talks (aya)", knot: "mori", domain: lustro(0, "aya"), npcs: ["Doktor Mori"] },
+  { name: "Mori, who bought the module (seki)", knot: "mori", domain: lustro(0, "seki"), npcs: ["Doktor Mori"] },
+  { name: "Ren, first meeting (aya)", knot: "ren_odagiri", domain: lustro(1, "aya", { case: "opened", crash: "ren" }), npcs: ["Ren"] },
+  { name: "Ren, first meeting (seki)", knot: "ren_odagiri", domain: lustro(1, "seki", { case: "sealed", crash: "wheel" }), npcs: ["Ren"] },
+  { name: "Ren, waiting for Kaito's news", knot: "ren_odagiri", domain: lustro(2, "aya"), npcs: ["Ren"] },
+  { name: "Ren, waiting for the deal", knot: "ren_odagiri", domain: lustro(3, "aya"), npcs: ["Ren"] },
+  { name: "Ren, under fire", knot: "ren_odagiri", domain: lustro(3, "aya", { archive: "street" }, { flags: ["kagami_ambush"] }), npcs: ["Ren"] },
+  {
+    name: "Ren, finale street",
+    knot: "ren_odagiri",
+    domain: lustro(3, "aya", { rooftop: "together", voice: "listened", archive: "street" }, { flags: ["kagami_ambush", ...CLEANERS_DEAD] }),
+    npcs: ["Ren"],
+  },
+  {
+    name: "Ren, finale hebi",
+    knot: "ren_odagiri",
+    domain: lustro(3, "seki", { rooftop: "alone", voice: "torn", archive: "hebi" }, { flags: ["kagami_ambush", ...CLEANERS_DEAD] }),
+    npcs: ["Ren"],
+  },
+  { name: "Ren, after street", knot: "ren_odagiri", domain: afterLustro("street"), npcs: ["Ren"] },
+  { name: "Ren, after hebi", knot: "ren_odagiri", domain: afterLustro("hebi"), npcs: ["Ren"] },
+  { name: "Kaito, the job on Ren", knot: "fixer", domain: lustro(2, "aya", { rooftop: "together" }, { flags: ["recalled:rooftop"] }), npcs: KAITO },
+  { name: "Kaito, after the kagami ending", knot: "fixer", domain: afterLustro("kagami"), npcs: KAITO },
+  { name: "Kaito, after the street ending", knot: "fixer", domain: afterLustro("street"), npcs: KAITO },
+  { name: "Kurosawa, waiting", knot: "kurosawa", domain: lustro(2, "aya"), npcs: ["Kurosawa"] },
+  { name: "Kurosawa, the deal (aya)", knot: "kurosawa", domain: lustro(3, "aya", { job: "taken", voice: "listened", rooftop: "together" }), npcs: ["Kurosawa"] },
+  { name: "Kurosawa, the deal (seki)", knot: "kurosawa", domain: lustro(3, "seki", { job: "refused", voice: "torn" }), npcs: ["Kurosawa"] },
+  { name: "Ume, after the street ending", knot: "ume", domain: afterLustro("street", { flags: ["ume_memory"] }), npcs: ["Babcia Ume"] },
+  { name: "flashback: rooftop", knot: "recall_rooftop", domain: lustro(1, "aya"), npcs: ["Ren"], actions: true },
+  { name: "flashback: last call", knot: "recall_last_call", domain: lustro(2, "aya"), npcs: ["Ren", "Technik Kagami"], actions: true },
+  { name: "flashback: mirror", knot: "recall_mirror", domain: afterLustro("kagami"), npcs: ["Technik Kagami"], actions: true },
 ];
 
 const firstWord = (s: string): string => (s.toLocaleLowerCase("pl").match(/\p{L}+/u) ?? [""])[0];

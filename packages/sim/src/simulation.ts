@@ -1,6 +1,11 @@
 import {
   ACT_ONE_ENDING_FLAG,
+  ACT_TWO_ENDINGS,
+  ACT_TWO_ENDING_FLAG,
   ENDINGS,
+  endingFlag,
+  resolveActTwoEnding,
+  setActTwoEnding,
   type DomainEvents,
   type DomainState,
   EMPTY_INPUT,
@@ -192,6 +197,23 @@ export class Simulation {
     };
   }
 
+  /**
+   * Closes act II (ADR-0023): only after act I and the archive choice, once. The ending moves the
+   * factions it names and may bring a memory, whose flashback then plays like any other.
+   */
+  private resolveActTwo(ctx: SimContext): void {
+    const domain = this.holder.domain;
+    const ending = resolveActTwoEnding(domain.story.choices);
+    if (!domain.story.ending || domain.story.act2Ending || !ending) return;
+    this.holder.domain = { ...domain, story: setActTwoEnding(domain.story, ending) };
+    const def = ACT_TWO_ENDINGS[ending];
+    for (const { faction, delta } of def.reputation) adjustReputation(ctx, faction, delta);
+    if ("memory" in def) grantMemory(ctx, def.memory);
+    raiseFlag(ctx, ACT_TWO_ENDING_FLAG);
+    raiseFlag(ctx, endingFlag(ending));
+    ctx.bus.emit("EndingReached", { act: 2, endingId: ending, title: def.title });
+  }
+
   /** Oyaji has patched himself up since the last raid (only matters while he is in the world). */
   private patchUpProtectee(): void {
     for (const e of this.world.with("health")) if (e.key === PROTECTEE_KEY) e.health = { ...e.health, current: e.health.max };
@@ -281,12 +303,17 @@ export class Simulation {
         break;
       }
       case "resolve-ending": {
+        if (cmd.act === 2) {
+          this.resolveActTwo(ctx);
+          break;
+        }
         const domain = this.holder.domain;
         if (domain.story.ending) break;
         const ending = resolveEnding(domain.story.choices);
         this.holder.domain = { ...domain, story: setEnding(domain.story, ending) };
         raiseFlag(ctx, ACT_ONE_ENDING_FLAG);
-        ctx.bus.emit("EndingReached", { endingId: ending, title: ENDINGS[ending].title });
+        raiseFlag(ctx, endingFlag(ending));
+        ctx.bus.emit("EndingReached", { act: 1, endingId: ending, title: ENDINGS[ending].title });
         break;
       }
     }

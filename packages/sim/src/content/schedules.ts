@@ -49,7 +49,8 @@ export const oyajiStallOpen = (clock: GameClock): boolean => {
 const oyaji = (): ScheduleDef => {
   const stall = spawnOf("oyaji");
   const front = offset(stall.position, -3, -1.2);
-  const door = offset(stall.position, -7, -2);
+  // His door, kept clear of the fire-escape ladder at x 73.2 so the night prompt never covers it.
+  const door = offset(stall.position, -4, -2);
   return {
     speed: CIVILIAN_WALK,
     stops: [

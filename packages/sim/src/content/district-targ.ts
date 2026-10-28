@@ -1,5 +1,17 @@
 import { SeededRandom } from "../rng/seeded-random";
-import type { BlockStyle, ContractSiteId, BlockFront, LootLine, Vec3 } from "@seki/core";
+import {
+  ACT_TWO_ENDING_FLAG,
+  type BlockFront,
+  type BlockStyle,
+  type ContractSiteId,
+  KAGAMI_AMBUSH_FLAG,
+  KAGAMI_CLEANER_KEYS,
+  KAGAMI_JOB_FLAG,
+  type LootLine,
+  REN_TRAIL_FLAG,
+  type Vec3,
+  endingFlag,
+} from "@seki/core";
 import {
   type ActorDef,
   type BlockMaterial,
@@ -20,6 +32,7 @@ import {
   stairs,
   v,
 } from "./builders";
+import { DOKI_PASSAGE } from "./district-doki";
 
 /**
  * Ulica Kanałowa and Targ pod estakadą: the M2 districts north-east of Shinsekai 7.
@@ -79,6 +92,24 @@ const stall = (rng: SeededRandom, x: number, z: number, front: 1 | -1): StaticPr
   slab(x, 2.55, z + front * 0.4, v(3.2, 0.2, 2.4), pick(rng, AWNINGS)),
 ];
 
+/**
+ * Cuts a gap of [x0, x1] out of a facade row (ADR-0024): a block across it becomes the parts on
+ * either side. Applied after the generator ran, so no random number moves.
+ */
+const withPassage = (row: readonly StaticProp[], x0: number, x1: number): StaticProp[] =>
+  row.flatMap((p): StaticProp[] => {
+    if (p.view.kind !== "block") return [p];
+    const left = p.center.x - p.view.size.x / 2;
+    const right = p.center.x + p.view.size.x / 2;
+    if (right <= x0 || left >= x1) return [p];
+    const { y: h, z: d } = p.view.size;
+    const { material, skin: look } = p.view;
+    const parts: StaticProp[] = [];
+    if (x0 - left > 0.01) parts.push(building((left + x0) / 2, p.center.z, x0 - left, h, d, material, look));
+    if (right - x1 > 0.01) parts.push(building((x1 + right) / 2, p.center.z, right - x1, h, d, material, look));
+    return parts;
+  });
+
 const rng = new SeededRandom(CONTENT_SEED);
 
 // ---------------------------------------------------------------- Ulica Kanałowa
@@ -131,15 +162,17 @@ export const KANAL_NAV: NavGraph = {
 
 export const KANAL_PROPS: readonly StaticProp[] = [
   slab(29, -0.1, 71, v(74, 0.2, 40), "asphalt"),
-  // Strip of road under the market gate, a hair lower than the market's own ground.
-  slab(72, -0.12, 78, v(12, 0.2, 12), "asphalt"),
+  // Strip of road under the market gate, below the market's own ground (6 cm: no z-fighting).
+  slab(72, -0.16, 78, v(12, 0.2, 12), "asphalt"),
   slab(35, 0.04, 81.2, v(62, 0.08, 1.6), "concrete"),
   // West of segment A, closing the bend.
   building(-2, 71, 12, 18, 38, "concrete", skin("tenement", "x+", { street: 6 })),
   // South of segment B: one long block that hides Shinsekai from the eastern half of the street.
   ...facadeRow(rng, 10, 66, 63, 22, [12, 20], [16, 20], "z+", 8),
-  // North of segment B.
-  ...facadeRow(rng, 4, 66, 86, 8, [10, 22], [13, 17], "z-", 8),
+  // North of segment B, with the passage into the docks (ADR-0024).
+  ...withPassage(facadeRow(rng, 4, 66, 86, 8, [10, 22], [13, 17], "z-", 8), DOKI_PASSAGE.x0, DOKI_PASSAGE.x1),
+  slab((DOKI_PASSAGE.x0 + DOKI_PASSAGE.x1) / 2, 0.03, 86, v(DOKI_PASSAGE.x1 - DOKI_PASSAGE.x0, 0.06, 8), "concrete"),
+  neon((DOKI_PASSAGE.x0 + DOKI_PASSAGE.x1) / 2, 6.4, 81.9, v(4.4, 1.2, 0.15), "#39d0ff", "DOKI"),
   // Kiosk just inside the market gate: the street's view ends on it, not on the market behind.
   building(74, 78, 6, 3.2, 10, "metal"),
   // Clutter.
@@ -328,7 +361,8 @@ const overpass = (): StaticProp[] => {
         { level: 1, at: v(lift.x0 - 0.2, top + 1.25, 86.6) },
       ],
     }),
-    neon(lift.x1 + 0.45, 3, 85.6, v(0.15, 2.2, 0.8), "#ffb000", "LIFT"),
+    // On the west wall of the shaft: thin-in-X signs face west (props.ts), towards the stairs.
+    neon(lift.x0 - 0.45, 3, 85.6, v(0.15, 2.2, 0.8), "#ffb000", "LIFT"),
   ];
 };
 
@@ -384,6 +418,47 @@ export const TARG_NAV: NavGraph = {
 /** Oyaji can be hurt: Hebi come for him in Hana's protection jobs. */
 export const OYAJI_MAX_HP = 120;
 
+/**
+ * Ren Odagiri sleeps on the concrete roof of the south row, the one up the third fire escape
+ * ladder, near Hebi's stash (act II, ADR-0023). He turns up once someone told Seki where he is
+ * and is gone after the "kagami" ending, when Kagami takes him.
+ */
+export const REN_SPOT: Vec3 = v(86, ROOF_MID_TOP, 59.6);
+
+/** Kurosawa of Kagami waits on the overpass deck, and his cleaners come from the lift side. */
+export const KUROSAWA_SPOT: Vec3 = v(100, OVERPASS_TOP, 92);
+const CLEANER_SPOTS: readonly Vec3[] = [v(105, OVERPASS_TOP, 89.5), v(107, OVERPASS_TOP, 94.5), v(111, OVERPASS_TOP, 92)];
+
+/** Tag of the cleaners (their deaths raise `killed:kagami_cleaner`). */
+export const KAGAMI_CLEANER_TAG = "kagami_cleaner";
+
+const REN: ActorDef = {
+  kind: "npc",
+  spawn: { key: "ren", position: REN_SPOT, yaw: 0 },
+  preset: "civilian",
+  faction: "hebi",
+  when: { all: [REN_TRAIL_FLAG], none: [endingFlag("kagami")] },
+  interactable: { kind: "dialogue", dialogueId: "ren_odagiri", prompt: "Rozmawiaj z Renem", radius: 2.4 },
+};
+
+const KUROSAWA: ActorDef = {
+  kind: "npc",
+  spawn: { key: "kurosawa", position: KUROSAWA_SPOT, yaw: -Math.PI / 2 },
+  preset: "fixer",
+  faction: "kagami",
+  when: { all: [KAGAMI_JOB_FLAG], none: [KAGAMI_AMBUSH_FLAG, ACT_TWO_ENDING_FLAG] },
+  interactable: { kind: "dialogue", dialogueId: "kurosawa", prompt: "Rozmawiaj z Kurosawą", radius: 2.4 },
+};
+
+const CLEANERS: readonly ActorDef[] = KAGAMI_CLEANER_KEYS.map(
+  (key, i): ActorDef => ({
+    kind: "ganger",
+    spawn: { key, position: CLEANER_SPOTS[i] ?? KUROSAWA_SPOT, yaw: -Math.PI / 2, tag: KAGAMI_CLEANER_TAG },
+    enemy: "kagami_cleaner",
+    when: { all: [KAGAMI_AMBUSH_FLAG] },
+  }),
+);
+
 export const TARG_SOUTH_ACTORS: readonly ActorDef[] = [
   {
     kind: "npc",
@@ -393,7 +468,7 @@ export const TARG_SOUTH_ACTORS: readonly ActorDef[] = [
     bystander: true,
     maxHp: OYAJI_MAX_HP,
     // By day the stall (plan §6); from 22:00 the schedule swaps in `oyaji_closed`.
-    interactable: { kind: "shop", shopId: "oyaji", dialogueId: "oyaji", prompt: "Stragan Oyajiego", radius: 2.4 },
+    interactable: { kind: "shop", shopId: "oyaji", dialogueId: "oyaji", prompt: "Stragan Oyajiego", radius: 3 },
   },
   {
     kind: "npc",
@@ -402,10 +477,13 @@ export const TARG_SOUTH_ACTORS: readonly ActorDef[] = [
     faction: "civilians",
     interactable: { kind: "dialogue", dialogueId: "hana", prompt: "Rozmawiaj z Haną", radius: 2.4 },
   },
+  REN,
 ];
 
 export const TARG_NORTH_ACTORS: readonly ActorDef[] = [
   { kind: "ganger", spawn: { key: "hebi-lookout", position: v(104, 0, 92), yaw: Math.PI, tag: null } },
+  KUROSAWA,
+  ...CLEANERS,
 ];
 
 /**

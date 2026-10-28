@@ -23,7 +23,7 @@ describe("reputation from deeds", () => {
     const changes = collect(sim, "ReputationChanged");
     byKey(sim, "guard")!.health = { current: 0, max: 80 };
     sim.step();
-    expect(sim.domain.reputation).toEqual({ fixers: 0, hebi: -4, civilians: -1, clinic: 0 });
+    expect(sim.domain.reputation).toEqual({ fixers: 0, hebi: -4, civilians: -1, clinic: 0, kagami: 0, tessen: 0 });
     expect(changes).toEqual([
       { faction: "hebi", value: -4, delta: -4 },
       { faction: "civilians", value: -1, delta: -1 },

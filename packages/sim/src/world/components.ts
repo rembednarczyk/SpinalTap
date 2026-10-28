@@ -93,10 +93,41 @@ export interface GangerAi {
    */
   alerted: boolean;
   /**
-   * Key of the NPC this ganger was sent to kill (a protection job's wave). It goes for the
-   * victim, and turns on the player only once alerted and with the player in sight and range.
+   * Key of the NPC this ganger was sent to kill (a protection job's wave, an escort's ambush).
+   * It goes for the victim, and turns on the player only once alerted and with the player in
+   * sight and range.
    */
   readonly victim?: string;
+  /**
+   * Corporate guard (ADR-0024): sees only in front of it, notices a crouching player late and
+   * needs a moment of looking before it raises the alarm. Without it the ganger sees all round
+   * and decides at once, as before.
+   */
+  readonly cone?: true;
+  /** How sure the guard is that it saw someone, 0..1; at 1 it is alerted. Transient, not saved. */
+  suspicion?: number;
+  /** A guard on a post looks around: its facing sweeps around `yaw` (ADR-0024). */
+  readonly watch?: { readonly yaw: number; readonly phase: number };
+}
+
+/**
+ * A sniper (ADR-0024): no behaviour tree, a small state machine. It keeps to a perch high up,
+ * aims for `AIM_TIME` with the laser on (the telegraph), fires, waits, and walks to the perch
+ * farthest from the player once the player gets close. Transient like the melee state: a game
+ * loaded mid-aim starts idle on its saved position.
+ */
+export interface SniperState {
+  readonly perches: readonly Vec3[];
+  phase: "idle" | "aim" | "rest" | "move";
+  /** Seconds left of the aim or the rest. */
+  timer: number;
+  /** Perch it holds or walks to (index into `perches`). */
+  perch: number;
+}
+
+/** A defector walked to the boat (ADR-0024): follows `route` while the player is close. */
+export interface EscortAi {
+  readonly route: readonly [Vec3, ...Vec3[]];
 }
 
 /** A bystander that keeps to its spot and runs from a player the street fears. Stateless by design. */
@@ -158,9 +189,10 @@ export interface Scheduled {
 export interface Interactable {
   /**
    * "pickup": taken on the spot (a contract crate); no conversation opens. "loot": a bag;
-   * `dialogueId` is then the container key.
+   * `dialogueId` is then the container key. "terminal": a hack job's terminal, the key starts
+   * the hack.
    */
-  readonly kind: "dialogue" | "shop" | "pickup" | "loot" | "elevator" | "ladder";
+  readonly kind: "dialogue" | "shop" | "pickup" | "loot" | "elevator" | "ladder" | "terminal";
   /** For a shop: which one (the clinic when absent). `dialogueId` is then the shopkeeper's ink knot. */
   readonly shopId?: ShopId;
   /** For an elevator call button: which elevator and the level the button stands on. */
@@ -284,6 +316,8 @@ export interface Entity {
   /** Enemy type (ADR-0015): weapon, outfit and loot table come from it. */
   enemy?: { readonly type: EnemyTypeId };
   civilian?: CivilianAi;
+  sniper?: SniperState;
+  escort?: EscortAi;
   schedule?: Scheduled;
   interactable?: Interactable;
   /** A bag in the world; its contents live in `domain.loot` under this key. */

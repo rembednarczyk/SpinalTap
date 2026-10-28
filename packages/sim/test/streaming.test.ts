@@ -53,7 +53,7 @@ describe("world streaming: loading and unloading", () => {
     expect(sim.streamer.loadedChunks).toEqual(["shinsekai-7", "kanal"]);
     goTo(sim, 40, 78);
     expect(sim.district).toBe("kanal");
-    expect(sim.streamer.loadedChunks).toEqual(["shinsekai-7", "kanal", "targ-south", "targ-north"]);
+    expect(sim.streamer.loadedChunks).toEqual(["shinsekai-7", "kanal", "targ-south", "targ-north", "doki-yard"]);
     expect(hasKey(sim, "oyaji")).toBe(true);
     expect(hasKey(sim, "hebi-lookout")).toBe(true);
   });
@@ -65,6 +65,9 @@ describe("world streaming: loading and unloading", () => {
     goTo(sim, 30, 78);
     goTo(sim, 95, 78);
     expect(sim.district).toBe("targ");
+    // Kanałowa's streaming bounds run on under the gate; the market names that strip.
+    expect(sim.streamer.districtAt({ x: 72, y: 0, z: 78 })).toBe("targ");
+    expect(sim.streamer.districtAt({ x: 60, y: 0, z: 78 })).toBe("kanal");
     expect(sim.streamer.isLoaded("shinsekai-7")).toBe(false);
     expect(hasKey(sim, "fixer")).toBe(false);
     expect(chunkEntities(sim, "shinsekai-7")).toHaveLength(0);

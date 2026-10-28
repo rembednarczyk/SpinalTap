@@ -63,7 +63,7 @@ describe("fixer contracts", () => {
     expect(sim.domain.wallet.eddies).toBe(before + c.reward);
     expect(sim.domain.contracts).toEqual({ active: null, completed: 1 });
     // -4 per target killed, -5 for completing the contract.
-    expect(sim.domain.reputation).toEqual({ fixers: 3, hebi: -4 * c.targets - 5, civilians: 1 - c.targets, clinic: 0 });
+    expect(sim.domain.reputation).toEqual({ fixers: 3, hebi: -4 * c.targets - 5, civilians: 1 - c.targets, clinic: 0, kagami: 0, tessen: 0 });
   });
 
   it("a load in the middle of a contract restores only the surviving targets", () => {

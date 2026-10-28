@@ -18,6 +18,8 @@ const CONSEQUENCE: Readonly<Record<FactionId, Readonly<Record<FactionStance, str
   hebi: { hostile: "Polują na ciebie", neutral: "Strzelają bez ostrzeżenia", friendly: "Nie strzelają pierwsi" },
   civilians: { hostile: "Uciekają przed tobą", neutral: "Nie zwracają uwagi", friendly: "Witają cię na ulicy" },
   clinic: { hostile: "Mori cię nie obsłuży", neutral: "Ceny katalogowe", friendly: "Rabat u Mori" },
+  kagami: { hostile: "Czyściciele Kagami cię szukają", neutral: "Numer w ich archiwum", friendly: "Kagami ma cię za swoją" },
+  tessen: { hostile: "Strzelcy na dachach portu", neutral: "Ochrona strzela do intruzów", friendly: "Ochrona przymyka oko" },
 };
 
 const SLOTS = [

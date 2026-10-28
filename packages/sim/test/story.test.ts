@@ -91,7 +91,7 @@ describe("main thread in the simulation", () => {
     sim.step();
     expect(sim.domain.story.ending).toBe("aya");
     expect(sim.domain.flags).toContain(ACT_ONE_ENDING_FLAG);
-    expect(endings).toEqual([{ endingId: "aya", title: "Aya" }]);
+    expect(endings).toEqual([{ act: 1, endingId: "aya", title: "Aya" }]);
     expect(completed.map((c) => c.questId)).toEqual([QUEST_ECHO.id]);
     expect(sim.domain.quests[QUEST_ECHO.id]).toEqual({ status: "completed" });
   });
@@ -101,7 +101,7 @@ describe("main thread in the simulation", () => {
     sim.enqueue({ type: "story-choice", choice: "name", option: "silent" });
     sim.step();
     const restored = Simulation.fromSnapshot(sim.snapshot(null, "x", ""));
-    expect(restored.domain.story).toEqual({ choices: { name: "silent" }, ending: null });
+    expect(restored.domain.story).toEqual({ choices: { name: "silent" }, ending: null, act2Ending: null });
     expect(stateHash(restored.snapshot(null, "x", ""))).toBe(stateHash(sim.snapshot(null, "x", "")));
   });
 });

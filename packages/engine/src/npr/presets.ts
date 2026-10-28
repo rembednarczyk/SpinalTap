@@ -39,6 +39,10 @@ export const PRESETS = {
   gangerHood: { base: "#2f6b3a", ...CHAR, rim: "#b6ff9f" },
   gangerPants: { base: "#1f2420", ...CHAR },
   gangerMask: { base: "#000000", emissive: "#ff2b3a", rimStrength: 0, outline: false },
+  // Tessen security (ADR-0024): navy uniform, grey plates, a cyan visor strip.
+  corpoUniform: { base: "#22324a", ...CHAR, rim: "#8fd8ff" },
+  corpoPlate: { base: "#4a505c", gloss: 0.5, ...CHAR },
+  corpoVisor: { base: "#000000", emissive: "#39d0ff", rimStrength: 0, outline: false },
   // Civilian.
   umeCoat: { base: "#b9a68a", ...CHAR },
   umeHair: { base: "#c9c9cf", ...CHAR },
@@ -64,6 +68,8 @@ export const PRESETS = {
   // District dressing: merged props coloured per vertex.
   dressing: { base: "#ffffff", gloss: 0.15, rimStrength: 0.1, rim: "#8fb3c9" },
   puddle: { base: "#16181f", gloss: 1.8, rimStrength: 0 },
+  // Harbour water (ADR-0024): near black, glossy, so the quay lights streak across it.
+  water: { base: "#0a1620", gloss: 1.6, rimStrength: 0.06, rim: "#5ab0ff" },
   vendingGlow: { base: "#000000", emissive: "#9fe8ff", rimStrength: 0, outline: false },
   // Imported glTF characters: colour comes from the model.
   importedCharacter: { base: "#ffffff", ...CHAR },

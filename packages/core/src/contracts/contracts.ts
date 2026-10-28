@@ -15,6 +15,10 @@ export const CONTRACT_SITES = {
   hebi_stash: { id: "hebi_stash", label: "skrytka Hebi pod estakadą, wschodni koniec targu" },
   raid_north: { id: "raid_north", label: "stragan Oyaji, Hebi idą spod estakady" },
   raid_east: { id: "raid_east", label: "stragan Oyaji, Hebi idą od wschodniej ściany" },
+  // Doki (M4, ADR-0024).
+  docks_escort: { id: "docks_escort", label: "z placu kontenerowego w Dokach na molo, do łodzi" },
+  tessen_office: { id: "tessen_office", label: "biuro Tessen na nabrzeżu w Dokach" },
+  quay_terminal: { id: "quay_terminal", label: "terminal portowy pod dźwigiem w Dokach" },
 } as const;
 
 export type ContractSiteId = keyof typeof CONTRACT_SITES;
@@ -32,6 +36,8 @@ export const isContractSiteId = (id: string): id is ContractSiteId => Object.has
 export const CONTRACT_GIVERS = {
   kaito: { id: "kaito", name: "Kaito", genitive: "Kaito", faction: "fixers" },
   hana: { id: "hana", name: "Hana", genitive: "Hany", faction: "civilians" },
+  // A smuggler in the docks, part of Kaito's network: fixer standing scales his pay too.
+  genzo: { id: "genzo", name: "Genzō", genitive: "Genzō", faction: "fixers" },
 } as const satisfies Record<ContractGiverId, { id: ContractGiverId; name: string; genitive: string; faction: FactionId }>;
 
 export interface Contract {
@@ -47,6 +53,13 @@ export interface Contract {
   readonly status: "active" | "cleared";
   /** Delivery only: the simulation tick by which the package must reach Hana. */
   readonly deadlineTick?: number;
+  /**
+   * Hack only (ADR-0024): simulation ticks of connection so far, present once the hack has
+   * started. The job is done at `HACK_SECONDS` worth of ticks.
+   */
+  readonly progress?: number;
+  /** Hack only: ticks in a row the player has been away from the running terminal. */
+  readonly away?: number;
 }
 
 export interface ContractLog {
@@ -75,7 +88,25 @@ export const takenFlag = (key: string): string => `taken:${key}`;
 /** The NPC a protection contract is about. */
 export const PROTECTEE_KEY = "oyaji";
 
-export type ContractFailure = "timeout" | "protectee-killed";
+/** Key of the defector an escort contract walks to the boat. */
+export const contractEscortKey = (contractId: string): string => `${contractId}-escort`;
+
+/** Key of the terminal a hack contract breaks into. */
+export const contractTerminalKey = (contractId: string): string => `${contractId}-terminal`;
+
+/**
+ * Raised when a contract's second phase begins: the ambush of an escort, the wave of a hack.
+ * Gangers waiting for it spawn then (and after a load, if it is already up).
+ */
+export const contractAlarmFlag = (contractId: string): string => `alarm:${contractId}`;
+
+/** Seconds of connection a hack needs. */
+export const HACK_SECONDS = 40;
+
+/** Seconds in a row the player may leave a running hack before the connection drops. */
+export const HACK_GRACE_SECONDS = 15;
+
+export type ContractFailure = "timeout" | "protectee-killed" | "escort-killed" | "detected" | "connection-lost";
 
 /** Everything a contract generator may look at besides the random stream. */
 export interface ContractContext {
@@ -112,10 +143,13 @@ export const DELIVERY_LIMITS = [50, 65, 80] as const;
 /** Pay for a delivery: the tighter the limit, the more it pays. */
 export const deliveryBase = (limitSeconds: number): number => 200 + (90 - limitSeconds) * 5;
 
+/** Base pay of the docks jobs before the per-guard part (ADR-0024 balance table). */
+const DOCKS_BASE = { escort: 320, infiltrate: 380, hack: 340 } as const;
+
 /**
  * A contract of the given kind. Each generator consumes a fixed amount of randomness:
  * elimination two numbers (site, targets), delivery one (time limit), retrieval one (guards),
- * protection two (approach, wave size).
+ * protection two (approach, wave size), and each docks job one (guards or wave size).
  */
 export const generateContractOfKind = (kind: ContractKind, ctx: ContractContext, rng: RandomPort): Contract => {
   const id = nextContractId(ctx.log, ctx.flags);
@@ -145,12 +179,33 @@ export const generateContractOfKind = (kind: ContractKind, ctx: ContractContext,
       const targets = Math.min(4, 2 + Math.floor(rng.next() * 2) + experience);
       return { id, kind, siteId: site, targets, reward: contractPayout(300 + targets * 125, giverRep), status: "active" };
     }
+    // The docks (ADR-0024): corporate guards in armour, so a man there is worth more than a Hebi.
+    case "escort": {
+      const targets = Math.min(4, 2 + Math.floor(rng.next() * 2) + experience);
+      return { id, kind, siteId: "docks_escort", targets, reward: contractPayout(DOCKS_BASE.escort + targets * 130, giverRep), status: "active" };
+    }
+    case "infiltrate": {
+      const targets = Math.min(5, 3 + Math.floor(rng.next() * 2) + experience);
+      return { id, kind, siteId: "tessen_office", targets, reward: contractPayout(DOCKS_BASE.infiltrate + targets * 80, giverRep), status: "active" };
+    }
+    case "hack": {
+      const targets = Math.min(5, 3 + Math.floor(rng.next() * 2) + experience);
+      return { id, kind, siteId: "quay_terminal", targets, reward: contractPayout(DOCKS_BASE.hack + targets * 120, giverRep), status: "active" };
+    }
   }
 };
 
-/** Whole seconds left until a delivery deadline (never negative), or null for jobs without one. */
-export const contractSecondsLeft = (c: Contract, tick: number, ticksPerSecond: number): number | null =>
-  c.deadlineTick === undefined ? null : Math.max(0, Math.ceil((c.deadlineTick - tick) / ticksPerSecond));
+/** The kinds the docks giver hands out, in the order his dialogue offers them. */
+export const DOCKS_CONTRACT_KINDS: readonly ContractKind[] = ["escort", "infiltrate", "hack"];
+
+/**
+ * Whole seconds left (never negative): until a delivery deadline, or of a running hack's
+ * connection. Null for jobs without a clock.
+ */
+export const contractSecondsLeft = (c: Contract, tick: number, ticksPerSecond: number): number | null => {
+  if (c.progress !== undefined) return Math.max(0, Math.ceil(HACK_SECONDS - c.progress / ticksPerSecond));
+  return c.deadlineTick === undefined ? null : Math.max(0, Math.ceil((c.deadlineTick - tick) / ticksPerSecond));
+};
 
 const clock = (seconds: number): string => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 
@@ -167,6 +222,14 @@ export const contractObjective = (c: Contract, secondsLeft: number | null = null
       return `Zabierz skrzynkę Hany ze skrytki Hebi (strażnicy: ${c.targets}): ${site}`;
     case "protect":
       return `Obroń Oyaji przed Hebi (${c.targets}): ${site}`;
+    case "escort":
+      return `Odprowadź Mikę do łodzi i osłoń ją przed Tessen (${c.targets}): ${site}`;
+    case "infiltrate":
+      return `Zgraj dane z terminala, nie daj się zauważyć (strażnicy: ${c.targets}): ${site}`;
+    case "hack":
+      return c.progress === undefined
+        ? `Włam się do terminala i utrzymaj połączenie ${HACK_SECONDS} s: ${site}`
+        : `Utrzymaj połączenie z terminalem${secondsLeft === null ? "" : ` (zostało ${clock(secondsLeft)})`}: ${site}`;
   }
 };
 
@@ -181,9 +244,22 @@ export const contractClearedNote = (c: Contract): string => {
       return "Skrzynka zabrana";
     case "protect":
       return "Oyaji żyje, Hebi leżą";
+    case "escort":
+      return "Mika na łodzi";
+    case "infiltrate":
+      return "Dane zgrane";
+    case "hack":
+      return "Terminal złamany";
   }
 };
 
+const FAILURE_NOTES: Readonly<Record<ContractFailure, string>> = {
+  timeout: "Paczka nie dotarła na czas. Kaito nie będzie zadowolony",
+  "protectee-killed": "Oyaji nie żyje. Zlecenie Hany przepadło",
+  "escort-killed": "Mika nie żyje. Łódź Genzō odpływa pusta",
+  detected: "Ochrona Tessen cię zauważyła. Alarm w biurze, dane przepadły",
+  "connection-lost": "Połączenie z terminalem zerwane. Tessen zamknął lukę",
+};
+
 /** Why a contract fell through, as the HUD says it. */
-export const contractFailureNote = (reason: ContractFailure): string =>
-  reason === "timeout" ? "Paczka nie dotarła na czas. Kaito nie będzie zadowolony" : "Oyaji nie żyje. Zlecenie Hany przepadło";
+export const contractFailureNote = (reason: ContractFailure): string => FAILURE_NOTES[reason];

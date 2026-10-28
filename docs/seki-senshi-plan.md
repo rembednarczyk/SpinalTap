@@ -280,6 +280,7 @@ Dialogi i rozgałęzienia pisane w **ink**, wykonywane przez `inkjs`. Pisarz pra
 - Motyw przewodni zgodny z referencją: pytanie o autentyczność wspomnień i tożsamości przy rozbudowanym cyberware.
 - Progresja diegetyczna: odblokowania zdolności podane jako odzyskane wspomnienia, spięte z questami głównego wątku.
 - Sandbox: zlecenia fixera jako pętla poboczna zasilająca ekonomię i reputację, z haczykami prowadzącymi do wątku głównego.
+- Akty: I „Echo” (moduł Kagami, trzy wspomnienia, zakończenia Aya / Seki, ADR-0012), II „Lustro” (Ren Odagiri, archiwum Kagami, zlecenie Kaito jako haczyk, zakończenia Archiwum ulicy / Wspólnicy / Kopia, ADR-0023).
 
 ---
 

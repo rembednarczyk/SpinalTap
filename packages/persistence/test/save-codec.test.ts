@@ -91,7 +91,7 @@ describe("migrations", () => {
     const { clinic: _c, ...m1Reputation } = { ...s.domain.reputation, fixers: 12, hebi: -30, civilians: 4 };
     const loaded = decodeSave("m1", wrap({ ...s, version: 3, domain: { ...s.domain, reputation: m1Reputation } }));
     expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
-    expect(loaded.domain.reputation).toEqual({ fixers: 12, hebi: -30, civilians: 4, clinic: 0 });
+    expect(loaded.domain.reputation).toEqual({ fixers: 12, hebi: -30, civilians: 4, clinic: 0, kagami: 0, tessen: 0 });
     expect(loaded.domain.inventory).toEqual(s.domain.inventory);
   });
 
@@ -115,7 +115,7 @@ describe("migrations", () => {
     const { story: _s, ...domain } = s.domain;
     const fresh = decodeSave("m2", wrap({ ...s, version: 4, domain }));
     expect(fresh.version).toBe(SAVE_SCHEMA_VERSION);
-    expect(fresh.domain.story).toEqual({ choices: {}, ending: null });
+    expect(fresh.domain.story).toEqual({ choices: {}, ending: null, act2Ending: null });
     expect(fresh.domain.quests).toEqual(s.domain.quests);
 
     const done = { ...domain, quests: { m0_first_contract: { status: "completed" } } };
@@ -136,13 +136,13 @@ describe("migrations", () => {
     const loaded = decodeSave("m1", wrap({ ...s, version: 3, domain: m1 }));
     expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
     expect(loaded.domain.reputation.clinic).toBe(0);
-    expect(loaded.domain.story).toEqual({ choices: {}, ending: null });
+    expect(loaded.domain.story).toEqual({ choices: {}, ending: null, act2Ending: null });
     expect(loaded.domain.quests.m3_echo).toEqual({ status: "active", stepIndex: 0 });
   });
 
   it("keeps story choices and the ending through the round trip", () => {
     const s = snapshot();
-    const story = { choices: { case: "opened" as const, name: "silent" as const, crash: "wheel" as const }, ending: "aya" as const };
+    const story = { choices: { case: "opened" as const, name: "silent" as const, crash: "wheel" as const }, ending: "aya" as const, act2Ending: null };
     const withStory = { ...s, domain: { ...s.domain, story } };
     expect(decodeSave("st", encodeSave(withStory)).domain.story).toEqual(story);
   });
@@ -402,6 +402,94 @@ describe("inventory migration (v7 to v8, ADR-0015)", () => {
     for (const line of [{ kind: "ammo", ammo: "rocket", qty: 1 }, { kind: "stack", item: "rocket", qty: 1 }, { kind: "item", item: "baton", rarity: "common", qty: 2 }, { kind: "gift", qty: 1 }]) {
       const bag = { ...s, domain: { ...s.domain, loot: { dropSeq: 0, containers: [{ key: "k", position: { x: 0, y: 0, z: 0 }, chunk: "", expiresAtTick: 1, lines: [line] }] } } };
       expect(findSchemaError(bag as unknown as Record<string, unknown>)).toBe("loot container");
+    }
+  });
+});
+
+describe("act II migration (v8 to v9, ADR-0023)", () => {
+  /** What v8 wrote: no Kagami faction, no act-II ending, the act-I ending only in `story`. */
+  const v8Payload = (patch: { quests?: object; story?: object; flags?: string[] } = {}) => {
+    const s = snapshot();
+    const { kagami: _k, ...reputation } = s.domain.reputation;
+    const { act2Ending: _a, ...story } = s.domain.story;
+    return { ...s, version: 8, domain: { ...s.domain, reputation, story: { ...story, ...patch.story }, quests: patch.quests ?? s.domain.quests, flags: patch.flags ?? s.domain.flags } };
+  };
+
+  it("adds a neutral Kagami faction and an empty act-II ending, and leaves an unfinished act I alone", () => {
+    const loaded = decodeSave("v8", wrap(v8Payload()));
+    expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
+    expect(loaded.domain.reputation.kagami).toBe(0);
+    expect(loaded.domain.story).toEqual({ choices: {}, ending: null, act2Ending: null });
+    expect(loaded.domain.quests).toEqual(snapshot().domain.quests);
+    expect(loaded.domain.flags).toEqual(["met_fixer"]);
+  });
+
+  it("starts act II after a finished act I and keeps its ending as a flag", () => {
+    const done = { m0_first_contract: { status: "completed" }, m3_echo: { status: "completed" } };
+    const loaded = decodeSave(
+      "v8",
+      wrap(v8Payload({ quests: done, story: { choices: { case: "sealed", name: "silent", crash: "ren" }, ending: "seki" }, flags: ["act1_ending", "met_fixer"] })),
+    );
+    expect(loaded.domain.quests).toEqual({ ...done, m3_lustro: { status: "active", stepIndex: 0 } });
+    expect(loaded.domain.flags).toEqual(["act1_ending", "ending:seki", "met_fixer"]);
+    expect(loaded.domain.story).toEqual({ choices: { case: "sealed", name: "silent", crash: "ren" }, ending: "seki", act2Ending: null });
+  });
+
+  it("never restarts act II, keeps what is there and tolerates a missing domain", () => {
+    const ahead = { m3_echo: { status: "completed" }, m3_lustro: { status: "active", stepIndex: 2 } };
+    expect(decodeSave("v8", wrap(v8Payload({ quests: ahead, story: { ending: "aya" }, flags: ["ending:aya"] }))).domain).toMatchObject({
+      quests: ahead,
+      flags: ["ending:aya"],
+    });
+    expect(MIGRATIONS[8]!({ version: 8 })).toEqual({
+      version: 9,
+      domain: { reputation: { kagami: 0 }, story: { choices: {}, ending: null, act2Ending: null }, quests: {}, flags: [] },
+    });
+    const current = snapshot();
+    expect(MIGRATIONS[8]!({ ...current, version: 8 } as unknown as Record<string, unknown>).domain).toEqual(current.domain);
+  });
+
+  it("validates the act-II ending of a current save", () => {
+    const s = snapshot();
+    const story = { choices: { archive: "hebi" as const, rooftop: "alone" as const }, ending: "aya" as const, act2Ending: "hebi" as const };
+    expect(decodeSave("st", encodeSave({ ...s, domain: { ...s.domain, story } })).domain.story).toEqual(story);
+    const bad = { ...s, domain: { ...s.domain, story: { ...story, act2Ending: "aya" } } };
+    expect(findSchemaError(bad as unknown as Record<string, unknown>)).toBe("story ending");
+  });
+});
+
+describe("Tessen standing (v9 to v10, ADR-0024)", () => {
+  /** What v9 wrote: no Tessen. */
+  const v9Payload = () => {
+    const s = snapshot();
+    const { tessen: _t, ...reputation } = s.domain.reputation;
+    return { ...s, version: 9, domain: { ...s.domain, reputation: { ...reputation, hebi: -12 } } };
+  };
+
+  it("adds a neutral Tessen and keeps the other standings", () => {
+    const loaded = decodeSave("v9", wrap(v9Payload()));
+    expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
+    expect(loaded.domain.reputation).toEqual({ fixers: 0, hebi: -12, civilians: 0, clinic: 0, kagami: 0, tessen: 0 });
+  });
+
+  it("tolerates a missing domain and keeps a standing that is already there", () => {
+    expect(MIGRATIONS[9]!({ version: 9 })).toEqual({ version: 10, domain: { reputation: { tessen: 0 } } });
+    expect(MIGRATIONS[9]!({ version: 9, domain: { reputation: { tessen: -20 } } })).toMatchObject({ domain: { reputation: { tessen: -20 } } });
+  });
+
+  it("a save without Tessen is rejected unless migrated", () => {
+    const { version: _v, ...rest } = v9Payload();
+    expect(findSchemaError({ ...rest, version: SAVE_SCHEMA_VERSION } as unknown as Record<string, unknown>)).toBe("reputation");
+  });
+
+  it("checks a hack's clock when it is there", () => {
+    const s = snapshot();
+    const hack = { id: "c4", kind: "hack", siteId: "quay_terminal", targets: 3, reward: 700, status: "active", progress: 120, away: 0 } as const;
+    const withHack = { ...s, domain: { ...s.domain, contracts: { active: hack, completed: 3 } } };
+    expect(decodeSave("hack", encodeSave(withHack)).domain.contracts.active).toEqual(hack);
+    for (const bad of [-1, 1.5, "3"]) {
+      const broken = { ...withHack, domain: { ...withHack.domain, contracts: { active: { ...hack, progress: bad }, completed: 3 } } };
+      expect(findSchemaError(broken as unknown as Record<string, unknown>)).toBe("contract progress");
     }
   });
 });

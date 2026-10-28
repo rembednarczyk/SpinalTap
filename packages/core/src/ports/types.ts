@@ -41,7 +41,8 @@ export interface Transform {
 export type ViewDescriptor =
   | { readonly kind: "heroine" }
   | { readonly kind: "npc"; readonly preset: "fixer" | "civilian" | "ripperdoc" }
-  | { readonly kind: "enemy"; readonly preset: "ganger" }
+  /** "corpo": Tessen's security in the docks (ADR-0024); "ganger": Hebi. */
+  | { readonly kind: "enemy"; readonly preset: "ganger" | "corpo" }
   | {
       readonly kind: "block";
       readonly size: Vec3;
@@ -66,6 +67,11 @@ export type ViewDescriptor =
       readonly label?: string;
     }
   | { readonly kind: "lamp"; readonly color: string }
+  /**
+   * Open water (ADR-0024): a dark plane at the block's top, with mist over it. Not walkable and
+   * never solid; the edge it lies beyond is railed off.
+   */
+  | { readonly kind: "water"; readonly size: Vec3 }
   /** A bag dropped by a defeated enemy (ADR-0015). `best` is the rarest item inside, for the neon strip. */
   | { readonly kind: "loot"; readonly style: "bag"; readonly best: Rarity | null };
 
@@ -132,6 +138,11 @@ export type EffectDescriptor =
   | { readonly kind: "reload"; readonly entityId: EntityId; readonly duration: number }
   /** A melee swing (ADR-0019): `strike` of the combo, landing after `windup`, then `recovery`. */
   | { readonly kind: "melee"; readonly entityId: EntityId; readonly strike: number; readonly windup: number; readonly recovery: number }
+  /**
+   * A sniper's laser (ADR-0024) from the shooter's eye to the target's chest for `duration`
+   * seconds, with a glint at the scope; 0 turns it off.
+   */
+  | { readonly kind: "laser"; readonly shooterId: EntityId; readonly targetId: EntityId; readonly duration: number }
   /** Knocked off balance for `duration` seconds. */
   | { readonly kind: "stagger"; readonly entityId: EntityId; readonly duration: number }
   /** The entity's guard took a blow at `at`; `parried` for a perfect block. */

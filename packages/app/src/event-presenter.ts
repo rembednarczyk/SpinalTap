@@ -60,6 +60,12 @@ const acceptedText = (c: Contract): string => {
       return `Hebi idą po Oyaji: ${c.targets}. ${pay}`;
     case "eliminate":
       return `Cele: ${c.targets}. ${pay}`;
+    case "escort":
+      return `Mika czeka przy kontenerze Genzō. Tessen: ${c.targets}. ${pay}`;
+    case "infiltrate":
+      return `Biuro Tessen, strażnicy: ${c.targets}. Bez alarmu. ${pay}`;
+    case "hack":
+      return `Terminal pod dźwigiem, potem fala Tessen. ${pay}`;
   }
 };
 
@@ -226,6 +232,12 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
       toast("quest", contractClearedNote(e.contract), `Wróć do ${contractGiver(e.contract).genitive} po zapłatę`);
       audio.play("quest-update");
     }),
+    bus.on("ContractAlarm", (e) => {
+      toast("quest", contractKind(e.contract) === "escort" ? "Zasadzka Tessen" : "Alarm w porcie", contractKind(e.contract) === "escort" ? "Osłoń Mikę" : "Utrzymaj terminal, ochrona już idzie");
+      audio.play("quest-update");
+    }),
+    // The sniper's telegraph (ADR-0024): the laser is the warning.
+    bus.on("SniperAimed", (e) => render.playEffect({ kind: "laser", shooterId: e.entityId, targetId: e.targetId, duration: e.duration })),
     bus.on("ContractFailed", (e) => {
       toast("quest", "Kontrakt przepadł", contractFailureNote(e.reason));
       audio.play("denied");
@@ -234,7 +246,7 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
       if (e.delta !== 0) toast("reputation", `${FACTIONS[e.faction]} ${e.delta > 0 ? "+" : ""}${e.delta}`, "Reputacja");
     }),
     bus.on("EndingReached", (e) => {
-      toast("quest", "Koniec aktu I: Echo", `Zakończenie: ${e.title}`);
+      toast("quest", e.act === 2 ? "Koniec aktu II: Lustro" : "Koniec aktu I: Echo", `Zakończenie: ${e.title}`);
       audio.play("quest-update");
     }),
     bus.on("TimeSkipped", (e) => toast("system", `Mija czas: ${formatClock(e.clock)}`, `${Math.floor(e.minutes / 60)} h ${e.minutes % 60} min później`)),

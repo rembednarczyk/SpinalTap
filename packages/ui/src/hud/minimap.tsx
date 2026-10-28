@@ -6,7 +6,7 @@ import { useUi } from "../use-ui";
 export const MINIMAP_RANGE = 32;
 const EDGE = MINIMAP_RANGE - 2.5;
 
-const LABEL: Record<MapMarkerKind, string> = { fixer: "Kaito", ripperdoc: "Mori", target: "Cel" };
+const LABEL: Record<MapMarkerKind, string> = { fixer: "Zlecenia", ripperdoc: "Klinika Mori", vendor: "Sklep", target: "Cel" };
 
 const LINK_LABEL: Record<MapLinkKind, string> = { stairs: "Schody", lift: "Winda", ladder: "Drabina" };
 
@@ -33,6 +33,7 @@ const rect = (r: MapRectVm, className: string, key?: number) => (
 const District = memo(({ map }: { map: MapVm }) => (
   <>
     {rect(map.bounds, "minimap__ground")}
+    {map.water?.map((w, i) => rect(w, "minimap__water", i))}
     {map.streets.map((s, i) => rect(s, "minimap__street", i))}
     {map.blocks.map((b, i) => rect(b, "minimap__block", i))}
     {map.decks?.map((d, i) => rect(d, "minimap__deck", i))}
