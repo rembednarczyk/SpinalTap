@@ -11,6 +11,16 @@ describe("VirtualPad", () => {
     expect(f.sprint).toBe(true);
   });
 
+  it("dashes once per press of the dash button (ADR-0036)", () => {
+    const pad = new VirtualPad();
+    pad.press("dash");
+    expect(pad.poll().dash).toBe(true);
+    expect(pad.poll().dash).toBe(false);
+    pad.release("dash");
+    pad.press("dash");
+    expect(pad.poll().dash).toBe(true);
+  });
+
   it("sprints only near full deflection", () => {
     const pad = new VirtualPad();
     pad.setStick(0, STICK_SPRINT_THRESHOLD - 0.05);

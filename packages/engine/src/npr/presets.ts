@@ -50,6 +50,8 @@ export const PRESETS = {
   corpoUniform: { base: "#22324a", ...CHAR, rim: "#8fd8ff" },
   corpoPlate: { base: "#4a505c", gloss: 0.5, ...CHAR },
   corpoVisor: { base: "#000000", emissive: "#39d0ff", rimStrength: 0, outline: false },
+  // Enforcers (ADR-0036): an amber armband that glows a little.
+  enforcerBand: { base: "#000000", emissive: "#ffb000", rimStrength: 0, outline: false },
   // Civilian.
   umeCoat: { base: "#b9a68a", ...CHAR },
   umeHair: { base: "#c9c9cf", ...CHAR },

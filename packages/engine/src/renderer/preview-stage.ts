@@ -6,6 +6,7 @@ import { type CharacterRig, animateRig, buildHeroine } from "./characters";
 import { Loadouts } from "./loadout";
 import { type CharacterModelManifest, type ModelInstance, ModelLibrary } from "./model-library";
 import { HumanoidRetarget } from "./model-rig";
+import { qualityTier } from "../npr/quality";
 import type { RenderQuality } from "./stage";
 import { type WeaponManifest, WeaponMounts } from "./weapon-mount";
 
@@ -168,7 +169,7 @@ export class PreviewStage {
       this.lastSize = size;
       this.dirty = true;
     }
-    const live = (this.options.quality ?? "high") === "high";
+    const live = qualityTier(this.options.quality).livePreview;
     if (!this.dirty && !live) return;
     this.dirty = false;
     this.engine.clear(PREVIEW_BACKGROUND, true, true, true);

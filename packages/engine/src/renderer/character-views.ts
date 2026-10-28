@@ -15,6 +15,7 @@ import {
   deathFinished,
   startDeath,
 } from "./characters";
+import { markEnforcer } from "./enforcer-mark";
 import { Loadouts } from "./loadout";
 import { type CharacterModelKey, type CharacterModelManifest, type ModelInstance, ModelLibrary } from "./model-library";
 import { HumanoidRetarget } from "./model-rig";
@@ -147,6 +148,7 @@ export class CharacterViews implements FxActors {
     const name = `e${id}`;
     const rig = builderOf(view)(this.deps.scene, this.deps.materials, name);
     for (const m of rig.meshes) this.deps.shadow.addCaster(m);
+    if (view.kind === "enemy" && view.enforcer) markEnforcer(this.deps.scene, this.deps.materials, rig, name);
     const model = modelKeyOf(view);
     this.views.set(id, { rig, transform: t, model, name, scan: scanClassOfView(view) });
     applyTransform(rig, t);

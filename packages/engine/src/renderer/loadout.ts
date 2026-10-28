@@ -4,6 +4,7 @@ import { applyOutline } from "../npr/outline";
 import type { PresetName } from "../npr/presets";
 import type { ToonMaterials } from "../npr/toon-material";
 import type { CharacterRig } from "./characters";
+import { recolorSkin } from "./character-skin";
 import { toonSourceOf } from "./model-library";
 import type { AnchorBone, HumanoidRetarget } from "./model-rig";
 import type { WeaponKind, WeaponMounts } from "./weapon-mount";
@@ -144,6 +145,26 @@ export const GARMENT_TINT: Readonly<Record<PaletteKey, string | null>> = {
 const TINTED: readonly GarmentSlot[] = ["torso", "legs"];
 
 /**
+ * Which cloth of the procedural rigs a garment slot dresses (ADR-0036): tops, jackets and coats
+ * take the torso tint (with their sleeves), trousers the legs tint. Skin, hair, shoes and
+ * cyberware keep their colours.
+ */
+export const RIG_GARMENT_PRESETS: Readonly<Partial<Record<GarmentSlot, readonly PresetName[]>>> = {
+  torso: ["sekiTop", "heroineCoat", "fixerJacket", "gangerHood", "corpoUniform", "umeCoat", "moriCoat", "docCoat"],
+  legs: ["sekiPants", "heroineLegs", "fixerPants", "gangerPants"],
+};
+
+/** The tint a procedural rig's part takes from a look, or null to keep its preset colour. */
+export const rigTintOf = (look: AppearanceDescriptor, preset: PresetName): string | null => {
+  for (const slot of TINTED) {
+    if (!RIG_GARMENT_PRESETS[slot]?.includes(preset)) continue;
+    const key = look.garments[slot]?.tint;
+    return key ? GARMENT_TINT[key] : null;
+  }
+  return null;
+};
+
+/**
  * Weapons and garment add-ons a character carries, from its `AppearanceDescriptor`: the
  * active weapon in hand while drawn, the sidearm in the right hip holster, the melee weapon
  * on the left hip and the long gun across the back while not in hand. Garment add-ons sit on
@@ -198,6 +219,7 @@ export class Loadouts {
     this.arm(rig, s);
     this.attach(rig, s);
     this.tint(s);
+    this.tintRig(rig, s);
     this.implant(rig, s);
   }
 
@@ -424,6 +446,14 @@ export class Loadouts {
     }
     for (const m of s.implants) m.isPickable = false;
     this.onMeshes(s.implants);
+  }
+
+  /**
+   * The procedural rig wears the tints too (ADR-0036), so a disguise reads on the cast without
+   * imported models (phones, the reference frame): its cloth vertices take the garment colour.
+   */
+  private tintRig(rig: CharacterRig, s: State): void {
+    for (const mesh of rig.meshes) recolorSkin(mesh, (preset) => rigTintOf(s.look, preset));
   }
 
   /** Recolours the model's cloth by the torso and legs tints; the rest keeps its own colours. */

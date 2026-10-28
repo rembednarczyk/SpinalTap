@@ -37,5 +37,7 @@
 | [0033](0033-fala-2-cialo-zryw-pojemnosc-buffy-przebrania.md) | Fala 2 w symulacji (sim A): zryw i zryw w powietrzu, odbijanie pocisków, pojemność cyberware i shardy, buffy z jedzenia, przebrania i egzekutorzy | Zaakceptowana |
 | [0034](0034-metro-warianty-haki-spotkania.md) | Sim B fali 2: metro z peronami i przejazdem, warianty zleceń, haki obserwacyjne, spotkania uliczne i mikrozdarzenia | Zaakceptowana |
 | [0035](0035-hud-fali-2.md) | App i UI fali 2: kontrolery metra, radia i dotyku, prezentery ciała, przebrań i haków, minimapa z zoomem i obszarami, łuk dotykowy | Zaakceptowana |
+| [0036](0036-engine-fali-2.md) | Engine fali 2: wagon metra z paralaksą, radio z trzema stacjami i głośnikami w lokalach, smugi zrywu i ślad odbicia, odcienie przebrań na proceduralnej obsadzie, progi mokrego asfaltu ze statyczną sondą | Zaakceptowana |
+| [0037](0037-fala-3-wnetrza-dialog-rutyny.md) | Fala 3 z uwag gracza: wnętrza i drzwi automatyczne, start w klinice, dialog na kole, rutyny i aktywności NPC | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.
