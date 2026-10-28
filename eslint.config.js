@@ -27,6 +27,23 @@ export default tseslint.config(
     },
   },
   {
+    // Guard against god objects and god functions (ADR-0031). Blank lines and comments do not count.
+    files: ["packages/*/src/**/*.ts", "packages/*/src/**/*.tsx"],
+    rules: {
+      "max-lines": ["error", { max: 500, skipBlankLines: true, skipComments: true }],
+      "max-lines-per-function": ["error", { max: 120, skipBlankLines: true, skipComments: true }],
+    },
+  },
+  {
+    // Data tables, not logic: content of the districts, the item catalogue, the city kit's model table.
+    files: [
+      "packages/sim/src/content/district-*.ts",
+      "packages/core/src/items/catalog.ts",
+      "packages/engine/src/renderer/city-kit-data.ts",
+    ],
+    rules: { "max-lines": "off" },
+  },
+  {
     files: ["**/*.test.ts", "**/*.test.tsx", "**/test/**"],
     rules: { "@typescript-eslint/no-non-null-assertion": "off" },
   },

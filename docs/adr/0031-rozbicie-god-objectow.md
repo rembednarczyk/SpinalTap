@@ -63,3 +63,19 @@ Docelowy podział, w kolejności:
 ## Konsekwencje
 - Nowa funkcja z fali 2 (metro, radio, przebrania) dostaje własny kontroler, prezenter i obszar stanu, zamiast dopisywać się do `GameSession`, `UiIntents` i `BabylonRenderer`.
 - Testy app mogą tworzyć pojedynczy kontroler bez całej sesji.
+
+## Wynik
+| Miejsce | Przed | Po |
+|---|---|---|
+| `GameSession` | 808 linii, 76 metod | 239 linii; kontrolery w `app/src/controllers/` (dialog, sklep, łup, menu postaci, ustawienia, telefon, hacking, zapis, `HudSync`, `HintSync`), każdy poniżej 190 linii |
+| `UiIntents` | 41 metod w jednym interfejsie | suma 9 wąskich interfejsów (dodatkowo `ContractIntents`), wąskie hooki `use*Intents()`; żaden komponent nie wywołuje `useIntents()` |
+| `UiState` | 75 pól płasko | 12 nazwanych obszarów, typy VM w `ui-vm.ts` |
+| `bindEventPresenter` | 175 linii, 45 subskrypcji | 28 linii i lista prezenterów per obszar w `app/src/presenters/` |
+| `Wave1Hud` | 386 linii | 115 linii, fasada nad częściami |
+| `BabylonRenderer` | 798 linii, 33 metody | 249 linii; `CharacterViews`, `PropViews`, `ScreenFx`, `CityKitLoader` |
+| `SynthAudio` | 983 linie | 219 linii; `cues`, `audio-graph`, `synth-voices`, `ambience`, `layered-music` |
+| `characters.ts` | 1048 linii | reeksport; 7 plików, `animateRig` 16 linii |
+| `InventoryTab` | 194 linie | 138 linii i hook `useInventorySelection` |
+| `Simulation.apply` | 110 linii, `switch` | tabela handlerów z typem wymuszającym komplet, `simulation.ts` 175 linii |
+
+Złote hashe, migawka NPR i zapis bez zmian. ESLint pilnuje limitów (`max-lines` 500, `max-lines-per-function` 120); wyjątek `max-lines` mają tabele treści dystryktów, katalog przedmiotów i dane city kitu.
