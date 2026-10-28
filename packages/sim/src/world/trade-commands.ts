@@ -18,7 +18,7 @@ import {
   stowImplant,
   upgradeBackpack,
 } from "@seki/core";
-import { oyajiStallOpen } from "../content/schedules";
+import { oyajiStallOpen, yataiOpen } from "../content/schedules";
 import { deadFlag } from "../systems/death-system";
 import type { SimContext } from "./context";
 import { applyReputationCause, raiseProgress } from "./domain-ops";
@@ -29,9 +29,20 @@ type TradeCommand = Extract<GameCommand, { type: (typeof TRADE_COMMANDS)[number]
 
 export const isTradeCommand = (cmd: GameCommand): cmd is TradeCommand => (TRADE_COMMANDS as readonly string[]).includes(cmd.type);
 
-/** Mori's clinic never closes; Oyaji trades while his stall is up and he is alive. */
-export const shopOpen = (domain: DomainState, shop: ShopId): boolean =>
-  shop === "clinic" || (oyajiStallOpen(domain.clock) && !hasFlag(domain.flags, deadFlag(PROTECTEE_KEY)));
+/**
+ * Mori's clinic never closes; Oyaji trades while his stall is up and he is alive; Fumiko's
+ * ramen stall from the afternoon to the small hours (ADR-0026).
+ */
+export const shopOpen = (domain: DomainState, shop: ShopId): boolean => {
+  switch (shop) {
+    case "clinic":
+      return true;
+    case "oyaji":
+      return oyajiStallOpen(domain.clock) && !hasFlag(domain.flags, deadFlag(PROTECTEE_KEY));
+    case "yatai":
+      return yataiOpen(domain.clock);
+  }
+};
 
 const termsAt = (domain: DomainState, shop: ShopId): ShopTerms => shopTerms(domain.reputation[SHOPS[shop].owner]);
 

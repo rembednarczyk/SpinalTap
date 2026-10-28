@@ -1,6 +1,7 @@
 import { type GameClock, type Vec3, hm, minuteOfDay } from "@seki/core";
 import type { ScheduleDef } from "../world/components";
-import type { ActorSpawn } from "./builders";
+import { type ActorSpawn, v } from "./builders";
+import { FOOTBRIDGE_WALK, KANAL_SPOTS } from "./district-targ";
 import { WORLD_CHUNKS } from "./world-map";
 
 /**
@@ -85,8 +86,74 @@ const hebiLookout = (): ScheduleDef => {
   };
 };
 
+/**
+ * Hideo (ADR-0026): sleeps in the doorway of the west block, crosses the footbridge to the
+ * market gate in the morning (the Tessen office bus stops there), and comes back over it to
+ * the SAKE bar in the evening, where he stands until two.
+ */
+const hideo = (): ScheduleDef => {
+  const sake = spawnOf("hideo");
+  const { hideoHome: home, hideoKiosk: kiosk } = KANAL_SPOTS;
+  const bend = v(7, 0, 72);
+  const kerb = v(7, 0, 78.8);
+  const westEnd = v(12, 0, 79);
+  return {
+    speed: CIVILIAN_WALK,
+    stops: [
+      { label: "dom", at: hm(2), path: [bend, home], yaw: Math.PI / 2 },
+      { label: "do pracy", at: hm(7, 30), path: [kerb, ...FOOTBRIDGE_WALK, kiosk], yaw: Math.PI / 2 },
+      { label: "sake", at: hm(19), path: [kiosk, ...[...FOOTBRIDGE_WALK].reverse(), westEnd, bend, sake.position], yaw: sake.yaw },
+    ],
+  };
+};
+
+/** Mei sings at KARAOKE from 20:00 to 4:00; by day she waits out the light in the corner by the bend. */
+const mei = (): ScheduleDef => {
+  const stage = spawnOf("mei");
+  const corner = v(9, 0, 80.6);
+  return {
+    speed: CIVILIAN_WALK,
+    stops: [
+      { label: "dom", at: hm(4), path: [corner, KANAL_SPOTS.meiHome], yaw: Math.PI / 2 },
+      { label: "karaoke", at: hm(20), path: [corner, stage.position], yaw: stage.yaw },
+    ],
+  };
+};
+
+/** Fumiko's ramen stall is open 16:00–4:00 (ADR-0026): the night market eats, the day one works. */
+export const YATAI_HOURS = { open: hm(16), close: hm(4) } as const;
+
+/** The ramen stall is open (the shop trades only then). */
+export const yataiOpen = (clock: GameClock): boolean => {
+  const m = minuteOfDay(clock);
+  return m >= YATAI_HOURS.open || m < YATAI_HOURS.close;
+};
+
+const fumiko = (): ScheduleDef => {
+  const stall = spawnOf("fumiko");
+  const behind = offset(stall.position, 0, 1);
+  // A stool behind the next stall west, by the wall of the north row.
+  const stool = offset(stall.position, -3.4, 1.2);
+  return {
+    speed: CIVILIAN_WALK,
+    stops: [
+      {
+        label: "dom",
+        at: YATAI_HOURS.close,
+        path: [behind, stool],
+        yaw: stall.yaw,
+        interaction: { kind: "dialogue", dialogueId: "fumiko_closed", prompt: "Ramen u Fumiko: zamknięte do 16:00", radius: 3 },
+      },
+      { label: "stragan", at: YATAI_HOURS.open, path: [behind, stall.position], yaw: stall.yaw },
+    ],
+  };
+};
+
 export const SCHEDULES: Readonly<Record<string, ScheduleDef>> = {
   ume: ume(),
   oyaji: oyaji(),
   "hebi-lookout": hebiLookout(),
+  hideo: hideo(),
+  mei: mei(),
+  fumiko: fumiko(),
 };

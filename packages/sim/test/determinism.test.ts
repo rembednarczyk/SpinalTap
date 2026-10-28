@@ -43,7 +43,26 @@ describe("determinism", () => {
   });
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
-    expect(hashOf(runReplay(1234, script()))).toMatchInlineSnapshot(`"31f58220"`);
+    expect(hashOf(runReplay(1234, script()))).toMatchInlineSnapshot(`"74bd1c33"`);
+  });
+
+  it("without the street life of ADR-0026 in the snapshot, the run hashes as before it (content, not rules)", () => {
+    // The run reaches the alley: Ulica Kanałowa streams in with its four new people, and the
+    // stashes behind Neon Koi, behind PACHINKO and by the passage are placed. Nothing else moved.
+    const snap = runReplay(1234, script()).snapshot(null, "test", "");
+    const added = new Set(["hideo", "tetsu", "mei", "sachiko"]);
+    const stash = /^(placed:)?stash:(s7|kanal)-/;
+    const before = {
+      ...snap,
+      entities: snap.entities.filter((e) => !added.has(e.key)),
+      domain: {
+        ...snap.domain,
+        flags: snap.domain.flags.filter((f) => !stash.test(f)),
+        loot: { ...snap.domain.loot, containers: snap.domain.loot.containers.filter((c) => !stash.test(c.key)) },
+      },
+    };
+    expect(snap.entities.filter((e) => added.has(e.key))).toHaveLength(4);
+    expect(stateHash(before)).toBe("31f58220");
   });
 
   it("a loaded snapshot continues exactly like the original run", () => {
