@@ -28,7 +28,7 @@ void main(void) {
 }
 `;
 
-/** Anime speed lines at the screen edge, used while the reflex overdrive runs. */
+/** Anime speed lines at the screen edge, while the reflex overdrive runs and in a burst on a dash. */
 export class SpeedLines {
   readonly postProcess: PostProcess;
   intensity = 0;
@@ -46,13 +46,23 @@ export class SpeedLines {
     };
   }
 
+  /** A short burst over whatever runs (ADR-0036): decays over about a third of a second. */
+  private burst = 0;
+
   set active(on: boolean) {
     this.target = on ? 1 : 0;
   }
 
+  /** A dash: the lines snap in at `amount` and fade out by themselves. */
+  pulse(amount: number): void {
+    this.burst = Math.max(this.burst, Math.min(1, amount));
+  }
+
   update(dt: number): void {
     this.time += dt;
-    this.intensity += (this.target - this.intensity) * Math.min(1, dt * 5);
-    if (this.intensity < 0.01 && this.target === 0) this.intensity = 0;
+    this.burst = Math.max(0, this.burst - dt / 0.35);
+    const target = Math.max(this.target, this.burst);
+    this.intensity = this.burst > this.intensity ? this.burst : this.intensity + (target - this.intensity) * Math.min(1, dt * 5);
+    if (this.intensity < 0.01 && target === 0) this.intensity = 0;
   }
 }
