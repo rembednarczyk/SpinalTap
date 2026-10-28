@@ -67,6 +67,11 @@ ADR-0032 dał engine pięć rzeczy z fali 2 (raport `docs/research/reports/Resea
 - `GraphicsQuality` w UI dostaje `medium`.
 
 ## Konsekwencje
-- Budżety: patrz tabela pomiarów w opisie zmiany i `$comment` w `tools/perf-budgets.json`. Sonda nie dodaje wywołań w zwykłej klatce, wagon żyje poza budżetem scen (miasto jest wtedy poza kadrem).
+- Budżety (SwiftShader, `models=off`, wywołania / aktywne siatki):
+  - klatka referencyjna: 102 / 36 przed i po;
+  - doki: 205 / 91 przed, 211 / 94 po scaleniu fali 2 (kioski i perony z sim B);
+  - wagon metra: 61 / 12 (z importowanymi modelami statystów 205 / 40), miasto jest wtedy poza kadrem;
+  - ulica na `high` 206 wywołań, na `low` 143 (różnica to line art, sonda nie dodaje wywołań w zwykłej klatce).
+  Budżety w `tools/perf-budgets.json` bez zmian. Czas klatki w CI zależy od obciążenia maszyny.
 - Migawka NPR zmienia się świadomie: klatka referencyjna działa na `high`, więc mokry asfalt pod Neon Koi odbija teraz neon i niebo w stopniach.
 - Złote hashe bez zmian (nic w `sim`).
