@@ -1,0 +1,100 @@
+import { Bone, Color3, Matrix, type Mesh, MeshClass, Quaternion, Skeleton, TransformNode, VertexBuffer } from "../babylon";
+import { applyOutline } from "../npr/outline";
+import { PRESETS, type PresetName } from "../npr/presets";
+import { presetHasOutline } from "../npr/toon-material";
+import type { RigBuilder } from "./rig-builder";
+
+const EMISSIVE: ReadonlySet<PresetName> = new Set<PresetName>(["heroineVisor", "gangerMask", "docGoggles", "corpoVisor"]);
+
+/** Parts that merge into one mesh: an emissive preset of its own, or the outlined or flat rest. */
+interface LookGroup {
+  readonly meshes: Mesh[];
+  readonly preset: PresetName | null;
+  readonly outline: boolean;
+}
+
+/** One bone per joint, linked to its pivot node so the procedural animation keeps driving it. */
+const buildSkeleton = (b: RigBuilder, joints: TransformNode[]): { skeleton: Skeleton; boneOf: Map<TransformNode, Bone> } => {
+  const skeleton = new Skeleton(`${b.name}-skeleton`, `${b.name}-skeleton`, b.scene);
+  const boneOf = new Map<TransformNode, Bone>();
+  const local = (n: TransformNode) =>
+    Matrix.Compose(n.scaling, n.rotationQuaternion ?? Quaternion.FromEulerAngles(n.rotation.x, n.rotation.y, n.rotation.z), n.position);
+  // Parents before children: joints are listed in creation order, which already guarantees that.
+  for (const node of joints) {
+    const parentBone = node.parent instanceof TransformNode ? (boneOf.get(node.parent) ?? null) : null;
+    const bone = new Bone(node.name, skeleton, parentBone, local(node));
+    bone.linkTransformNode(node);
+    boneOf.set(node, bone);
+  }
+  return { skeleton, boneOf };
+};
+
+/** Bakes a part into root space (the bind pose), its preset colour into vertex colours, and tags every vertex with its joint. */
+const bakePart = (m: Mesh, rootInverse: Matrix, preset: PresetName, boneIndex: number): void => {
+  m.computeWorldMatrix(true);
+  m.bakeTransformIntoVertices(m.getWorldMatrix().multiply(rootInverse));
+  m.parent = null;
+  m.position.setAll(0);
+  m.rotation.setAll(0);
+  m.rotationQuaternion = null;
+  m.scaling.setAll(1);
+  const count = m.getTotalVertices();
+  const color = Color3.FromHexString(PRESETS[preset].base);
+  const colors = new Float32Array(count * 4);
+  const indices = new Float32Array(count * 4);
+  const weights = new Float32Array(count * 4);
+  for (let i = 0; i < count; i++) {
+    colors.set([color.r, color.g, color.b, 1], i * 4);
+    indices[i * 4] = boneIndex;
+    weights[i * 4] = 1;
+  }
+  m.setVerticesData(VertexBuffer.ColorKind, colors);
+  m.setVerticesData(VertexBuffer.MatricesIndicesKind, indices);
+  m.setVerticesData(VertexBuffer.MatricesWeightsKind, weights);
+};
+
+/** One merged, skinned mesh per look group. */
+const mergeGroups = (b: RigBuilder, root: TransformNode, skeleton: Skeleton, groups: Map<string, LookGroup>): Mesh[] => {
+  const out: Mesh[] = [];
+  for (const [key, g] of groups) {
+    const merged = MeshClass.MergeMeshes(g.meshes, true, true);
+    if (!merged) continue;
+    merged.name = `${b.name}-${key}`;
+    merged.parent = root;
+    merged.skeleton = skeleton;
+    merged.numBoneInfluencers = 1;
+    merged.isPickable = false;
+    merged.material = b.materials.get(g.preset ?? (g.outline ? "charVertexColor" : "charVertexColorFlat"));
+    if (g.outline) applyOutline(merged);
+    out.push(merged);
+  }
+  return out;
+};
+
+/**
+ * Turns the loose parts into one skinned mesh per look group: every joint becomes a bone
+ * linked to its pivot node (so the procedural animation keeps driving it), and each part's
+ * preset colour is baked into vertex colours. A character costs 1-3 draw calls per pass
+ * instead of one per part, in every pass (colour, shadow, G-buffer, outline).
+ */
+export const skinCharacter = (b: RigBuilder, root: TransformNode, joints: TransformNode[]): Mesh[] => {
+  const { skeleton, boneOf } = buildSkeleton(b, joints);
+  root.computeWorldMatrix(true);
+  const rootInverse = Matrix.Invert(root.getWorldMatrix());
+
+  const groups = new Map<string, LookGroup>();
+  for (const m of b.meshes) {
+    const preset = b.presets.get(m) ?? "charVertexColor";
+    const parent = m.parent instanceof TransformNode ? m.parent : null;
+    const bone = parent ? boneOf.get(parent) : undefined;
+    if (!bone) continue;
+    bakePart(m, rootInverse, preset, skeleton.bones.indexOf(bone));
+    const emissive = EMISSIVE.has(preset);
+    const outline = !emissive && presetHasOutline(preset);
+    const key = emissive ? `e:${preset}` : outline ? "outlined" : "flat";
+    const g = groups.get(key) ?? { meshes: [], preset: emissive ? preset : null, outline };
+    g.meshes.push(m);
+    groups.set(key, g);
+  }
+  return mergeGroups(b, root, skeleton, groups);
+};
