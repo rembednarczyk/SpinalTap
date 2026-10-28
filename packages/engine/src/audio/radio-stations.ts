@@ -7,9 +7,9 @@ import { mulberry32 } from "./music";
  * Pure data and a pure generator, so the stations are tested without WebAudio.
  */
 
-export type RadioStationId = "synthwave" | "citypop" | "news";
+export type RadioStationId = "drift" | "yoru" | "tessen";
 
-export const RADIO_STATION_IDS: readonly RadioStationId[] = ["synthwave", "citypop", "news"];
+export const RADIO_STATION_IDS: readonly RadioStationId[] = ["drift", "yoru", "tessen"];
 
 export type RadioLayer = "pad" | "bass" | "keys" | "lead" | "drums" | "voice";
 
@@ -61,10 +61,10 @@ export interface StationParams {
 
 export const RADIO_STATIONS: Readonly<Record<RadioStationId, StationParams>> = {
   // Night drive: D minor, i–VI–VII–i on saws, a sixteenth arpeggio, gated snare.
-  synthwave: {
-    id: "synthwave",
-    name: "Neon Drive",
-    frequency: "89.3",
+  drift: {
+    id: "drift",
+    name: "Neon Drift",
+    frequency: "88.1",
     bpm: 100,
     root: 38,
     scale: [0, 2, 3, 5, 7, 8, 10],
@@ -83,10 +83,10 @@ export const RADIO_STATIONS: Readonly<Record<RadioStationId, StationParams>> = {
     voice: false,
   },
   // Japanese city pop: F major, IVmaj7–iii7–vi7–Vsus over a slap bass, electric piano stabs, swing.
-  citypop: {
-    id: "citypop",
-    name: "Sakura City",
-    frequency: "81.5",
+  yoru: {
+    id: "yoru",
+    name: "Yoru FM",
+    frequency: "76.5",
     bpm: 112,
     root: 41,
     scale: [0, 2, 4, 5, 7, 9, 11],
@@ -105,9 +105,9 @@ export const RADIO_STATIONS: Readonly<Record<RadioStationId, StationParams>> = {
     voice: false,
   },
   // Tessen News: a calm C major bed, a bell on the chords, a ticking pulse and the reader.
-  news: {
-    id: "news",
-    name: "Tessen News 24",
+  tessen: {
+    id: "tessen",
+    name: "Tessen Info 24",
     frequency: "102.4",
     bpm: 84,
     root: 36,

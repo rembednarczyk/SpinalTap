@@ -15,16 +15,16 @@ const notes = (id: keyof typeof RADIO_STATIONS) => {
 
 describe("radio stations (ADR-0036)", () => {
   it("are three different parameter sets of the sequencer: tempo, scale, timbre and drums", () => {
-    expect(RADIO_STATION_IDS).toEqual(["synthwave", "citypop", "news"]);
+    expect(RADIO_STATION_IDS).toEqual(["drift", "yoru", "tessen"]);
     const all = RADIO_STATION_IDS.map((id) => RADIO_STATIONS[id]);
     expect(new Set(all.map((s) => s.bpm)).size).toBe(3);
     expect(new Set(all.map((s) => `${s.root}:${s.scale.join()}`)).size).toBe(3);
     expect(new Set(all.map((s) => s.timbre.keys.type)).size).toBe(3);
     expect(new Set(all.map((s) => s.drums?.kick)).size).toBe(3);
     // Synthwave in minor (a flat third), city pop with major sevenths.
-    expect(RADIO_STATIONS.synthwave.scale[2]).toBe(3);
-    expect(RADIO_STATIONS.citypop.sevenths).toBe(true);
-    expect(chordOn(RADIO_STATIONS.citypop, 3)).toHaveLength(4);
+    expect(RADIO_STATIONS.drift.scale[2]).toBe(3);
+    expect(RADIO_STATIONS.yoru.sevenths).toBe(true);
+    expect(chordOn(RADIO_STATIONS.yoru, 3)).toHaveLength(4);
   });
 
   it("keep every pitched note inside the station's scale", () => {
@@ -36,30 +36,30 @@ describe("radio stations (ADR-0036)", () => {
   });
 
   it("loop over one bar per chord, with the tempo in the step length", () => {
-    const loop = buildStationLoop(RADIO_STATIONS.citypop);
-    expect(loop.length).toBe(RADIO_STATIONS.citypop.progression.length * STEPS_PER_BAR);
+    const loop = buildStationLoop(RADIO_STATIONS.yoru);
+    expect(loop.length).toBe(RADIO_STATIONS.yoru.progression.length * STEPS_PER_BAR);
     expect(loop.stepSeconds).toBeCloseTo(60 / 112 / 4);
     expect(loop.at(loop.length)).toBe(loop.at(0));
-    expect(degreeToMidi(RADIO_STATIONS.news, 7)).toBe(RADIO_STATIONS.news.root + 12);
+    expect(degreeToMidi(RADIO_STATIONS.tessen, 7)).toBe(RADIO_STATIONS.tessen.root + 12);
   });
 
   it("swing city pop's off-beats; synthwave plays straight with a gated snare", () => {
-    const pop = notes("citypop");
+    const pop = notes("yoru");
     expect(pop.filter((n) => n.step % 2 === 1).every((n) => n.delay > 0)).toBe(true);
     expect(pop.filter((n) => n.step % 2 === 0).every((n) => n.delay === 0)).toBe(true);
-    const synth = notes("synthwave");
+    const synth = notes("drift");
     expect(synth.every((n) => n.delay === 0)).toBe(true);
     expect(synth.some((n) => n.drum === "snare")).toBe(true);
     expect(pop.some((n) => n.drum === "clap")).toBe(true);
   });
 
   it("put a reader on the news, over a bed without a kick, with a pause every fourth bar", () => {
-    const news = notes("news");
+    const news = notes("tessen");
     const voice = news.filter((n) => n.layer === "voice");
     expect(voice.length).toBeGreaterThan(20);
     expect(news.some((n) => n.drum === "kick")).toBe(false);
     expect(voice.every((n) => Math.floor(n.step / STEPS_PER_BAR) !== 3)).toBe(true);
-    expect(notes("citypop").some((n) => n.layer === "voice")).toBe(false);
+    expect(notes("yoru").some((n) => n.layer === "voice")).toBe(false);
   });
 });
 
@@ -77,7 +77,7 @@ describe("diegetic speakers", () => {
   it("play the loudest venue's station, panned towards it, and fall silent away from it", () => {
     const karaoke = speakers.find((s) => s.label === "KARAOKE")!;
     const near = speakerMix(pose(karaoke.position.x - 3, karaoke.position.z), speakers);
-    expect(near?.station).toBe("citypop");
+    expect(near?.station).toBe("yoru");
     expect(near!.gain).toBeGreaterThan(0.3);
     // The speaker is to the east (+x), i.e. on the right of a listener facing +z.
     expect(near!.pan).toBeGreaterThan(0);
@@ -89,8 +89,8 @@ describe("diegetic speakers", () => {
     const bar = radioMix("explore", null, 1);
     expect(bar.radio).toBe(1);
     expect(bar.score).toBeLessThan(0.5);
-    expect(radioMix("explore", "news", 0)).toEqual({ score: 0, radio: 1 });
-    expect(radioMix("combat", "news", 0)).toEqual({ score: 1, radio: 0.3 });
+    expect(radioMix("explore", "tessen", 0)).toEqual({ score: 0, radio: 1 });
+    expect(radioMix("combat", "tessen", 0)).toEqual({ score: 1, radio: 0.3 });
     expect(radioMix("overdrive", null, 1).score).toBeGreaterThan(0.7);
   });
 });
@@ -116,10 +116,10 @@ describe("SynthAudio radio", () => {
     run(ctx, audio, 1);
     expect(audio.radioAudible).toBeNull();
     expect(audio.scoreLevel).toBe(1);
-    audio.setRadioStation("citypop");
+    audio.setRadioStation("yoru");
     run(ctx, audio, 1);
-    expect(audio.radioStation).toBe("citypop");
-    expect(audio.radioAudible).toBe("citypop");
+    expect(audio.radioStation).toBe("yoru");
+    expect(audio.radioAudible).toBe("yoru");
     expect(audio.scoreLevel).toBe(0);
     audio.play("shot");
     run(ctx, audio, 0.2);
@@ -134,7 +134,7 @@ describe("SynthAudio radio", () => {
     audio.unlock();
     audio.setListener(pose(karaoke.position.x, karaoke.position.z - 2));
     run(ctx, audio, 1);
-    expect(audio.radioAudible).toBe("citypop");
+    expect(audio.radioAudible).toBe("yoru");
     expect(audio.scoreLevel).toBeLessThan(1);
     audio.setListener(pose(0, -300));
     run(ctx, audio, 1);
@@ -145,7 +145,7 @@ describe("SynthAudio radio", () => {
     const ctx = new FakeAudioContext();
     const audio = new SynthAudio({ createContext: () => ctx.asContext(), autoStart: false, setInterval: () => 0, clearInterval: () => undefined });
     audio.unlock();
-    audio.setRadioStation("synthwave");
+    audio.setRadioStation("drift");
     run(ctx, audio, 1);
     expect(audio.radioAudible).toBeNull();
   });

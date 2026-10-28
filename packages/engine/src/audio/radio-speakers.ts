@@ -8,15 +8,15 @@ import { emitterMix } from "./spatial";
  * the label of their neon in the world's content. Each venue plays its own station.
  */
 export const VENUE_STATIONS: Readonly<Record<string, RadioStationId>> = {
-  BAR: "synthwave",
-  "NEON KOI": "synthwave",
-  PACHINKO: "synthwave",
-  PACHI: "synthwave",
-  KARAOKE: "citypop",
-  SAKE: "citypop",
-  TAKO: "citypop",
-  RAMEN: "news",
-  DENKI: "news",
+  BAR: "drift",
+  "NEON KOI": "drift",
+  PACHINKO: "drift",
+  PACHI: "drift",
+  KARAOKE: "yoru",
+  SAKE: "yoru",
+  TAKO: "yoru",
+  RAMEN: "tessen",
+  DENKI: "tessen",
 };
 
 export interface RadioSpeaker {
