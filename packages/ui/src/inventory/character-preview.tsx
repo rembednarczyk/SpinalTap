@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { PreviewRect } from "../intents";
-import { useIntents } from "../use-ui";
+import { useCharacterIntents } from "../use-ui";
 
 /** Radians of turn per CSS pixel dragged. */
 export const PREVIEW_TURN_PER_PX = 0.012;
@@ -19,7 +19,7 @@ const rectOf = (el: HTMLElement): PreviewRect | null => {
  * One finger or the mouse turns the character; a double tap brings it back to the front.
  */
 export const CharacterPreview = () => {
-  const intents = useIntents();
+  const intents = useCharacterIntents();
   const box = useRef<HTMLDivElement>(null);
   const drag = useRef<{ id: number; x: number; startX: number; startY: number; moved: boolean } | null>(null);
   const lastTap = useRef<{ t: number; x: number; y: number } | null>(null);

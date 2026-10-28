@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import type { ContractBadge, ContractRank } from "@seki/core";
-import { useIntents, useUi } from "../use-ui";
+import { useContractIntents, useUi } from "../use-ui";
 
 /** Icon (24 px SVG path), name and meaning of each badge, in Polish. */
 export const BADGE_INFO: Readonly<Record<ContractBadge, { readonly label: string; readonly hint: string; readonly icon: string }>> = {
@@ -39,7 +39,7 @@ const CARD_SECONDS = 15;
 export const DebriefCard = () => {
   const debrief = useUi((s) => s.debrief);
   const talking = useUi((s) => s.dialogue !== null);
-  const intents = useIntents();
+  const intents = useContractIntents();
   const shown = debrief !== null && !talking;
 
   useEffect(() => {

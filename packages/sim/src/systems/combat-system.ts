@@ -138,48 +138,63 @@ export const fireShot = (ctx: SimContext, shot: ShotRequest, rng: RandomPort): H
     farthest = result.point;
     const target = result.entity;
     if (!target?.health || !result.zone) continue;
-    // A raised melee guard takes some of a shot coming from the front (ADR-0019).
-    const guard = guardAgainst(target, shot.origin, "projectile");
-    const outcome = resolveAttack(
-      { damage: weapon.damage * guard.multiplier, zones: weapon.zones, critChance: shot.critChance, critMultiplier: shot.critMultiplier, damageBonus: shot.damageBonus * guard.multiplier },
-      defenderOf(ctx, target),
-      rng,
-      result.zone,
-    );
-    if (guard.blocked) ctx.bus.emit("AttackBlocked", { attackerId: shot.shooter.id, defenderId: target.id, parried: false, kind: "projectile", at: result.point });
-    if (shot.shooter.player) noteViolence(ctx, target, isEngaged(target), result.point);
-    target.health = applyDamage(target.health, outcome.damage);
-    target.lastHitBy = shot.shooter.id;
-    if (target.player) {
-      hurtPlayer = true;
-      wearPlayerClothes(ctx, outcome.zone);
-    }
-    // Getting shot provokes any AI, whatever it thought of the shooter before.
-    if (target.ai) target.ai.alerted = true;
-    ctx.bus.emit("DamageDealt", {
-      sourceId: shot.shooter.id,
-      targetId: target.id,
-      amount: outcome.damage,
-      critical: outcome.critical,
-      zone: outcome.zone,
-      at: result.point,
-    });
+    if (hitWithPellet(ctx, shot, weapon, { target, health: target.health, point: result.point, zone: result.zone }, rng)) hurtPlayer = true;
   }
   combatant.bloom = addBloom(weapon.spread, combatant.bloom);
   alertNearbyGangers(ctx, shot.origin, weapon.alertRadius);
   disturb(ctx, "gunshot", shot.origin, weapon.alertRadius, shot.shooter.id);
   if (crime) offend(ctx, "gunfire", shot.origin);
   const result = first ?? { distance: 0, point: farthest, entity: null, zone: null };
-  if (!shot.shooter.player) {
-    const player = ctx.world.with("player").first;
-    if (hurtPlayer) threaten(ctx, "damage", shot.shooter.id);
-    else if (player) {
-      const close = Math.hypot(player.position.x - shot.origin.x, player.position.z - shot.origin.z) <= GUNFIRE_INTERRUPT_RADIUS;
-      const nearMiss = pointSegmentDistance(chestOf(player), shot.origin, result.point) <= NEAR_MISS_RADIUS;
-      if (close || nearMiss) threaten(ctx, "gunfire", shot.shooter.id);
-    }
-  }
+  if (!shot.shooter.player) warnPlayer(ctx, shot, hurtPlayer, result.point);
   return result;
+};
+
+/**
+ * One pellet hits `target` in `zone`: a raised melee guard takes some of a shot from the front
+ * (ADR-0019), `resolveAttack` draws the crit (one random number), the damage lands and any AI
+ * hit is alerted. Returns whether the player was hurt.
+ */
+const hitWithPellet = (
+  ctx: SimContext,
+  shot: ShotRequest,
+  weapon: NonNullable<NonNullable<Entity["combatant"]>["stats"]>,
+  { target, health, point, zone }: { target: Entity; health: NonNullable<Entity["health"]>; point: Vec3; zone: HitZone },
+  rng: RandomPort,
+): boolean => {
+  const guard = guardAgainst(target, shot.origin, "projectile");
+  const outcome = resolveAttack(
+    { damage: weapon.damage * guard.multiplier, zones: weapon.zones, critChance: shot.critChance, critMultiplier: shot.critMultiplier, damageBonus: shot.damageBonus * guard.multiplier },
+    defenderOf(ctx, target),
+    rng,
+    zone,
+  );
+  if (guard.blocked) ctx.bus.emit("AttackBlocked", { attackerId: shot.shooter.id, defenderId: target.id, parried: false, kind: "projectile", at: point });
+  if (shot.shooter.player) noteViolence(ctx, target, isEngaged(target), point);
+  target.health = applyDamage(health, outcome.damage);
+  target.lastHitBy = shot.shooter.id;
+  if (target.player) wearPlayerClothes(ctx, outcome.zone);
+  // Getting shot provokes any AI, whatever it thought of the shooter before.
+  if (target.ai) target.ai.alerted = true;
+  ctx.bus.emit("DamageDealt", {
+    sourceId: shot.shooter.id,
+    targetId: target.id,
+    amount: outcome.damage,
+    critical: outcome.critical,
+    zone: outcome.zone,
+    at: point,
+  });
+  return !!target.player;
+};
+
+/** An NPC's shot that hurt the player, was fired close by or passed near their chest is a threat (ADR-0016). */
+const warnPlayer = (ctx: SimContext, shot: ShotRequest, hurtPlayer: boolean, impact: Vec3): void => {
+  const player = ctx.world.with("player").first;
+  if (hurtPlayer) threaten(ctx, "damage", shot.shooter.id);
+  else if (player) {
+    const close = Math.hypot(player.position.x - shot.origin.x, player.position.z - shot.origin.z) <= GUNFIRE_INTERRUPT_RADIUS;
+    const nearMiss = pointSegmentDistance(chestOf(player), shot.origin, impact) <= NEAR_MISS_RADIUS;
+    if (close || nearMiss) threaten(ctx, "gunfire", shot.shooter.id);
+  }
 };
 
 export const alertNearbyGangers = (ctx: SimContext, at: { x: number; z: number }, radius: number): void => {

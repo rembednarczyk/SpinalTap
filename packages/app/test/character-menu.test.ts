@@ -128,11 +128,11 @@ describe("character menu in the app (plan §8.5 contract)", () => {
   it("refuses to open over the clinic, and closes on death or a load", async () => {
     const { session, ui, preview } = await setup();
     ui.setState({ characterTab: "inventory" });
-    (session as unknown as { shopOpen: boolean }).shopOpen = true;
+    (session as unknown as { c: { shop: { shopOpen: boolean } } }).c.shop.shopOpen = true;
     session.openCharacterScreen("inventory");
     expect(ui.getState().characterTab).toBeNull();
     expect(session.characterScreenOpen).toBe(false);
-    (session as unknown as { shopOpen: boolean }).shopOpen = false;
+    (session as unknown as { c: { shop: { shopOpen: boolean } } }).c.shop.shopOpen = false;
 
     session.openCharacterScreen("sheet");
     session.openCharacterScreen("journal");

@@ -22,7 +22,7 @@ import {
   stockName,
 } from "@seki/core";
 import type { TradeItemVm } from "../store/ui-store";
-import { useIntents, useUi } from "../use-ui";
+import { useShopIntents, useUi } from "../use-ui";
 
 const SLOT_LABEL: Readonly<Record<CyberwareSlot, string>> = { optics: "Optyka", nervous: "Układ nerwowy", skeleton: "Szkielet", arms: "Ramiona" };
 const SLOTS: readonly CyberwareSlot[] = ["optics", "nervous", "skeleton", "arms"];
@@ -60,7 +60,7 @@ const ImplantOffers = ({ terms }: { readonly terms: ShopTerms }) => {
   const eddies = useUi((s) => s.eddies);
   const loadout = useUi((s) => s.cyberware);
   const freeCells = useUi((s) => s.trade.freeCells);
-  const intents = useIntents();
+  const intents = useShopIntents();
   return (
     <>
       {IMPLANTS.map((id) => {
@@ -90,7 +90,7 @@ const StockOffer = ({ entry, terms }: { readonly entry: StockEntry; readonly ter
   const medkits = useUi((s) => s.medkits);
   const medkitRoom = useUi((s) => s.medkitRoom);
   const trade = useUi((s) => s.trade);
-  const intents = useIntents();
+  const intents = useShopIntents();
   const price = priceWithTerms(stockListPrice(entry), terms);
   let slot: string;
   let room = trade.freeCells > 0;
@@ -120,7 +120,7 @@ const StockOffer = ({ entry, terms }: { readonly entry: StockEntry; readonly ter
 const BackpackOffer = () => {
   const eddies = useUi((s) => s.eddies);
   const capacity = useUi((s) => s.trade.capacity);
-  const intents = useIntents();
+  const intents = useShopIntents();
   const price = backpackPrice({ capacity });
   return (
     <article className="shop__item" data-testid="shop-backpack">
@@ -137,7 +137,7 @@ const BackpackOffer = () => {
 /** What Seki carries that this trader buys, with the price per piece (and for a whole stack). */
 export const SellTab = ({ shopId, terms }: { readonly shopId: ShopId; readonly terms: ShopTerms }) => {
   const items = useUi((s) => s.trade.items).filter((i) => shopBuys(shopId, i.defId));
-  const intents = useIntents();
+  const intents = useShopIntents();
   if (items.length === 0) return <p className="shop__empty">Nie masz nic, co by tu kupili.</p>;
   return (
     <ul className="shop__lines" data-testid="shop-sell">
@@ -173,7 +173,7 @@ export const SellTab = ({ shopId, terms }: { readonly shopId: ShopId; readonly t
 export const RepairTab = () => {
   const eddies = useUi((s) => s.eddies);
   const trade = useUi((s) => s.trade);
-  const intents = useIntents();
+  const intents = useShopIntents();
   const [useParts, setUseParts] = useState(true);
   const damaged = trade.items.filter((i) => i.category === "garment" && i.condition !== null && i.condition < 100);
   if (damaged.length === 0) return <p className="shop__empty">Ubrania całe. Wróć, jak cię ktoś podziurawi.</p>;
@@ -209,7 +209,7 @@ export const ImplantsTab = ({ terms }: { readonly terms: ShopTerms }) => {
   const eddies = useUi((s) => s.eddies);
   const loadout = useUi((s) => s.cyberware);
   const trade = useUi((s) => s.trade);
-  const intents = useIntents();
+  const intents = useShopIntents();
   const bag = trade.items.filter((i): i is TradeItemVm & { defId: CyberwareId } => isCyberwareId(i.defId));
   return (
     <>

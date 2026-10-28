@@ -6,6 +6,7 @@ import {
   type DerivedStats,
   type CharacterState,
   type DomainState,
+  type InputFrame,
   garmentModifiers,
   wornGarments,
 } from "@seki/core";
@@ -126,73 +127,96 @@ const updateAimAndGuard = (p: Entity, wantsAim: boolean, frozen: boolean, dt: nu
   }
 };
 
+/** The camera toggle flips the preferred mode between first and third person. */
+const toggleCameraMode = (ctx: SimContext): void => {
+  const mode = ctx.state.domain.preferences.cameraMode === "FPP" ? "TPP" : "FPP";
+  ctx.state.domain = { ...ctx.state.domain, preferences: { ...ctx.state.domain.preferences, cameraMode: mode } };
+  ctx.bus.emit("CameraModeChanged", { mode });
+};
+
+/** Eases the crouch towards the held input. Frozen (dialogue, death) the stance stays as it was. */
+const updateCrouch = (posture: NonNullable<Entity["posture"]>, crouch: boolean, frozen: boolean, dt: number): void => {
+  if (!frozen) posture.crouched = crouch;
+  const target = posture.crouched ? 1 : 0;
+  const step = dt / CROUCH_TIME;
+  posture.amount = posture.amount < target ? Math.min(target, posture.amount + step) : Math.max(target, posture.amount - step);
+  posture.sprinting = false;
+};
+
+/** Counts the slow walk after a hard landing down; true while it lasted into this step. */
+const tickLanding = (p: Entity, dt: number): boolean => {
+  const landingSlow = (p.landing ?? 0) > 0;
+  if (p.landing !== undefined) {
+    p.landing -= dt;
+    if (p.landing <= 0) delete p.landing;
+  }
+  return landingSlow;
+};
+
+/**
+ * The velocity the stick asks for on the ground, along the player's facing: walk, crouch, aim,
+ * guard or sprint speed, slowed by a stagger or a hard landing, plus any knockback. Sets the
+ * sprint flag of the posture.
+ */
+const wantedVelocity = (p: Entity, input: InputFrame, stats: DerivedStats, landingSlow: boolean): { x: number; z: number } => {
+  const posture = p.posture;
+  const len = Math.hypot(input.moveX, input.moveZ);
+  const nx = len > 1 ? input.moveX / len : input.moveX;
+  const nz = len > 1 ? input.moveZ / len : input.moveZ;
+  const crouched = posture?.crouched ?? false;
+  const weapon = p.combatant?.stats ?? null;
+  const guarding = p.melee?.guard ?? false;
+  const staggered = (p.melee?.stagger ?? 0) > 0;
+  // No sprint while aiming down sights, guarding or off balance.
+  const sprinting = input.sprint && nz > 0 && !crouched && !(posture?.aiming ?? false) && !guarding && !staggered;
+  if (posture) posture.sprinting = sprinting;
+  // Speed follows the eased crouch and aim, so getting down or aiming slows the step smoothly.
+  const crouchSlow = 1 + (CROUCH_SPEED_MULTIPLIER - 1) * (posture?.amount ?? 0);
+  const aimSlow = 1 + ((weapon?.ads?.move ?? 1) - 1) * (posture?.aim ?? 0);
+  const guardSlow = guarding && weapon?.melee ? weapon.melee.block.move : 1;
+  const speed =
+    stats.moveSpeed * (sprinting ? SPRINT_MULTIPLIER : crouchSlow * aimSlow * guardSlow) * (staggered ? STAGGER_MOVE : 1) * (landingSlow ? LANDING_SLOW_MULTIPLIER : 1);
+  const sin = Math.sin(p.yaw);
+  const cos = Math.cos(p.yaw);
+  // Forward = (sin, cos); right = (cos, -sin).
+  const knock = knockbackVelocity(p);
+  return { x: (sin * nz + cos * nx) * speed + knock.x, z: (cos * nz - sin * nx) * speed + knock.z };
+};
+
+/** On the ground the player moves as wanted; in the air the take-off momentum carries on and the stick only nudges it (ADR-0021). */
+const steer = (p: Entity & { velocity: NonNullable<Entity["velocity"]> }, want: { x: number; z: number }, dt: number): void => {
+  if (p.fall === undefined) {
+    p.velocity = { x: want.x, y: 0, z: want.z };
+    return;
+  }
+  const dx = want.x - p.velocity.x;
+  const dz = want.z - p.velocity.z;
+  const change = Math.hypot(dx, dz);
+  const k = change > AIR_ACCEL * dt ? (AIR_ACCEL * dt) / change : 1;
+  p.velocity = { x: p.velocity.x + dx * k, y: 0, z: p.velocity.z + dz * k };
+};
+
 /** Turns the InputFrame into player look angles, desired velocity and the camera mode toggle. */
 export const playerControlSystem: System = {
   name: "player-control",
   run(ctx) {
     const { input, session } = ctx;
-    if (input.toggleCamera) {
-      const mode = ctx.state.domain.preferences.cameraMode === "FPP" ? "TPP" : "FPP";
-      ctx.state.domain = { ...ctx.state.domain, preferences: { ...ctx.state.domain.preferences, cameraMode: mode } };
-      ctx.bus.emit("CameraModeChanged", { mode });
-    }
+    if (input.toggleCamera) toggleCameraMode(ctx);
     const stats = playerStatsOf(ctx.state.domain);
     for (const p of ctx.world.with("player", "velocity")) {
       if (p.health) p.health = { current: Math.min(p.health.current, stats.maxHp), max: stats.maxHp };
-      const posture = p.posture;
       const frozen = session.dialogueActive || session.gameOver;
-      if (posture) {
-        // Frozen (dialogue, death) the stance stays as it was; otherwise it follows the held input.
-        if (!frozen) posture.crouched = input.crouch;
-        const target = posture.crouched ? 1 : 0;
-        const step = ctx.dt / CROUCH_TIME;
-        posture.amount = posture.amount < target ? Math.min(target, posture.amount + step) : Math.max(target, posture.amount - step);
-        posture.sprinting = false;
-      }
+      if (p.posture) updateCrouch(p.posture, input.crouch, frozen, ctx.dt);
       updateAimAndGuard(p, input.aim, frozen, ctx.dt);
       updateJump(ctx, p, frozen);
-      const landingSlow = (p.landing ?? 0) > 0;
-      if (p.landing !== undefined) {
-        p.landing -= ctx.dt;
-        if (p.landing <= 0) delete p.landing;
-      }
+      const landingSlow = tickLanding(p, ctx.dt);
       if (frozen) {
         p.velocity = { x: 0, y: 0, z: 0 };
         continue;
       }
       p.yaw += input.lookYaw;
       p.pitch = clamp(p.pitch + input.lookPitch, -PITCH_LIMIT, PITCH_LIMIT);
-      const len = Math.hypot(input.moveX, input.moveZ);
-      const nx = len > 1 ? input.moveX / len : input.moveX;
-      const nz = len > 1 ? input.moveZ / len : input.moveZ;
-      const crouched = posture?.crouched ?? false;
-      const weapon = p.combatant?.stats ?? null;
-      const guarding = p.melee?.guard ?? false;
-      const staggered = (p.melee?.stagger ?? 0) > 0;
-      // No sprint while aiming down sights, guarding or off balance.
-      const sprinting = input.sprint && nz > 0 && !crouched && !(posture?.aiming ?? false) && !guarding && !staggered;
-      if (posture) posture.sprinting = sprinting;
-      // Speed follows the eased crouch and aim, so getting down or aiming slows the step smoothly.
-      const crouchSlow = 1 + (CROUCH_SPEED_MULTIPLIER - 1) * (posture?.amount ?? 0);
-      const aimSlow = 1 + ((weapon?.ads?.move ?? 1) - 1) * (posture?.aim ?? 0);
-      const guardSlow = guarding && weapon?.melee ? weapon.melee.block.move : 1;
-      const speed =
-        stats.moveSpeed * (sprinting ? SPRINT_MULTIPLIER : crouchSlow * aimSlow * guardSlow) * (staggered ? STAGGER_MOVE : 1) * (landingSlow ? LANDING_SLOW_MULTIPLIER : 1);
-      const sin = Math.sin(p.yaw);
-      const cos = Math.cos(p.yaw);
-      // Forward = (sin, cos); right = (cos, -sin).
-      const knock = knockbackVelocity(p);
-      const want = { x: (sin * nz + cos * nx) * speed + knock.x, z: (cos * nz - sin * nx) * speed + knock.z };
-      if (p.fall === undefined) {
-        p.velocity = { x: want.x, y: 0, z: want.z };
-        continue;
-      }
-      // In the air the take-off momentum carries on; the stick only nudges it (ADR-0021).
-      const dx = want.x - p.velocity.x;
-      const dz = want.z - p.velocity.z;
-      const change = Math.hypot(dx, dz);
-      const k = change > AIR_ACCEL * ctx.dt ? (AIR_ACCEL * ctx.dt) / change : 1;
-      p.velocity = { x: p.velocity.x + dx * k, y: 0, z: p.velocity.z + dz * k };
+      steer(p, wantedVelocity(p, input, stats, landingSlow), ctx.dt);
     }
   },
 };

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { BreachDaemonId } from "@seki/core";
-import { useIntents, useUi } from "../use-ui";
+import { useHackIntents, useUi } from "../use-ui";
 import { BREACH_SECONDS, type BreachCell, DAEMON_INFO, autoSolve, bufferOf, generateBreach, isFinished, isLegal, solvedDaemons } from "./breach-logic";
 
 /** Random source of the layout; tests pass their own. */
@@ -38,7 +38,7 @@ export const BreachPanel = ({ rng = Math.random }: { rng?: BreachRng }) => {
 };
 
 const BreachGame = ({ daemons, rng }: { daemons: readonly BreachDaemonId[]; rng: BreachRng }) => {
-  const intents = useIntents();
+  const intents = useHackIntents();
   const untimed = useUi((s) => s.settings.untimedBreach);
   const puzzle = useMemo(() => generateBreach(rng, daemons), [rng, daemons]);
   const [picks, setPicks] = useState<readonly BreachCell[]>([]);

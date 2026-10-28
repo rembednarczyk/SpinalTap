@@ -142,6 +142,94 @@ const land = (ctx: SimContext, e: Entity, ground: number): void => {
   ctx.bus.emit("Landed", { entityId: e.id, drop, hard, damage, at });
 };
 
+type Body = Entity & { body: NonNullable<Entity["body"]> };
+type Mover = Body & { velocity: NonNullable<Entity["velocity"]> };
+
+/** Pushes a footprint at (x, z) out of the solids it bumps into and the bodies it overlaps. */
+const pushOut = (solids: readonly Solid[], bodies: readonly Body[], e: Mover, x: number, z: number, feet: number): { x: number; z: number } => {
+  for (let i = 0; i < ITERATIONS; i++) {
+    for (const s of solids) if (blocks(s, x, z, e.body.radius, feet, e.body.height)) ({ x, z } = resolveCircleAabb(x, z, e.body.radius, s.solid));
+    for (const other of bodies) {
+      if (other === e || Math.abs(other.position.y - feet) >= e.body.height) continue;
+      const dx = x - other.position.x;
+      const dz = z - other.position.z;
+      const min = e.body.radius + other.body.radius;
+      const d = Math.hypot(dx, dz);
+      if (d < min && d > 1e-6) {
+        x = other.position.x + (dx / d) * min;
+        z = other.position.z + (dz / d) * min;
+      }
+    }
+  }
+  return { x, z };
+};
+
+/**
+ * The horizontal part of a step: velocity, then push-out. Returns where the feet end up, or
+ * null when the player caught a ledge in the air and starts a pull-up instead.
+ */
+const moveAcross = (ctx: SimContext, e: Mover, solids: readonly Solid[], bodies: readonly Body[], dt: number): { x: number; z: number } | null => {
+  const feet = e.position.y;
+  let x = e.position.x;
+  let z = e.position.z;
+  if (e.velocity.x !== 0 || e.velocity.z !== 0) {
+    x += e.velocity.x * dt;
+    z += e.velocity.z * dt;
+    // In the air, pressing into a ledge within reach: pull up onto it instead of sliding down.
+    if (e.player && e.fall !== undefined) {
+      const to = ledgeAhead(solids, e, x, z, e.velocity.x, e.velocity.z);
+      if (to && !leavesWorld(ctx, e.position, to)) {
+        e.mantle = { from: e.position, to, duration: MANTLE_TIME, t: 0 };
+        delete e.fall;
+        delete e.airPeak;
+        ctx.bus.emit("Mantled", { entityId: e.id, at: to });
+        return null;
+      }
+    }
+    ({ x, z } = pushOut(solids, bodies, e, x, z, feet));
+  }
+  // The edge of the world is a wall: a jump over a parapet or an outer wall never lands
+  // outside every district (the street plane y = 0 runs on beyond them).
+  if (e.player && leavesWorld(ctx, e.position, { x, y: feet, z })) {
+    x = e.position.x;
+    z = e.position.z;
+  }
+  return { x, z };
+};
+
+/**
+ * The vertical part of a step at (x, z): on the floor (stepping up, following stairs down),
+ * or in the air (falling, or flying a jump up to a ceiling). Returns the new height of the feet.
+ */
+const moveVertically = (ctx: SimContext, e: Mover, solids: readonly Solid[], x: number, z: number, dt: number): number => {
+  const feet = e.position.y;
+  const ground = groundAt(solids, x, z, feet);
+  const rising = (e.fall ?? 0) > 0;
+  if (!rising && (ground >= feet || (e.fall === undefined && feet - ground <= SNAP_DOWN))) {
+    if (e.fall !== undefined) land(ctx, e, ground);
+    delete e.fall;
+    return ground;
+  }
+  let vy = (e.fall ?? 0) - GRAVITY * dt;
+  let next = feet + vy * dt;
+  if (vy > 0) {
+    // Head against an underside: the jump stops rising there.
+    const ceiling = ceilingAt(solids, x, z, feet + e.body.height);
+    if (next + e.body.height > ceiling) {
+      next = Math.max(feet, ceiling - e.body.height);
+      vy = 0;
+    }
+  }
+  const y = Math.max(ground, next);
+  // Leaving the ground without a jump: the fall is measured from here.
+  e.airPeak = e.fall === undefined ? Math.max(feet, y) : Math.max(e.airPeak ?? feet, y);
+  if (y === ground) {
+    land(ctx, e, ground);
+    delete e.fall;
+  } else e.fall = vy;
+  return y;
+};
+
 /**
  * Integrates velocity, resolves character footprints against geometry and other bodies, then
  * puts the feet on the floor: stepping up ledges, following stairs down, falling off edges and
@@ -163,70 +251,10 @@ export const movementSystem: System = {
         stepMantle(e.mantle, e, dt);
         continue;
       }
-      const feet = e.position.y;
-      let x = e.position.x;
-      let z = e.position.z;
-      if (e.velocity.x !== 0 || e.velocity.z !== 0) {
-        x += e.velocity.x * dt;
-        z += e.velocity.z * dt;
-        // In the air, pressing into a ledge within reach: pull up onto it instead of sliding down.
-        if (e.player && e.fall !== undefined) {
-          const to = ledgeAhead(solids, e, x, z, e.velocity.x, e.velocity.z);
-          if (to && !leavesWorld(ctx, e.position, to)) {
-            e.mantle = { from: e.position, to, duration: MANTLE_TIME, t: 0 };
-            delete e.fall;
-            delete e.airPeak;
-            ctx.bus.emit("Mantled", { entityId: e.id, at: to });
-            continue;
-          }
-        }
-        for (let i = 0; i < ITERATIONS; i++) {
-          for (const s of solids) if (blocks(s, x, z, e.body.radius, feet, e.body.height)) ({ x, z } = resolveCircleAabb(x, z, e.body.radius, s.solid));
-          for (const other of bodies) {
-            if (other === e || Math.abs(other.position.y - feet) >= e.body.height) continue;
-            const dx = x - other.position.x;
-            const dz = z - other.position.z;
-            const min = e.body.radius + other.body.radius;
-            const d = Math.hypot(dx, dz);
-            if (d < min && d > 1e-6) {
-              x = other.position.x + (dx / d) * min;
-              z = other.position.z + (dz / d) * min;
-            }
-          }
-        }
-      }
-      // The edge of the world is a wall: a jump over a parapet or an outer wall never lands
-      // outside every district (the street plane y = 0 runs on beyond them).
-      if (e.player && leavesWorld(ctx, e.position, { x, y: feet, z })) {
-        x = e.position.x;
-        z = e.position.z;
-      }
-      const ground = groundAt(solids, x, z, feet);
-      const rising = (e.fall ?? 0) > 0;
-      let y: number;
-      if (!rising && (ground >= feet || (e.fall === undefined && feet - ground <= SNAP_DOWN))) {
-        y = ground;
-        if (e.fall !== undefined) land(ctx, e, ground);
-        delete e.fall;
-      } else {
-        let vy = (e.fall ?? 0) - GRAVITY * dt;
-        let next = feet + vy * dt;
-        if (vy > 0) {
-          // Head against an underside: the jump stops rising there.
-          const ceiling = ceilingAt(solids, x, z, feet + e.body.height);
-          if (next + e.body.height > ceiling) {
-            next = Math.max(feet, ceiling - e.body.height);
-            vy = 0;
-          }
-        }
-        y = Math.max(ground, next);
-        // Leaving the ground without a jump: the fall is measured from here.
-        e.airPeak = e.fall === undefined ? Math.max(feet, y) : Math.max(e.airPeak ?? feet, y);
-        if (y === ground) {
-          land(ctx, e, ground);
-          delete e.fall;
-        } else e.fall = vy;
-      }
+      const across = moveAcross(ctx, e, solids, bodies, dt);
+      if (!across) continue;
+      const { x, z } = across;
+      const y = moveVertically(ctx, e, solids, x, z, dt);
       if (x !== e.position.x || y !== e.position.y || z !== e.position.z) e.position = { x, y, z };
     }
   },

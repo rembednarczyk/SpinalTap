@@ -1,0 +1,76 @@
+import { type EntityId, QUICKHACKS, type QuickhackFailure } from "@seki/core";
+import { type ScanNoteVm, patchUi } from "@seki/ui";
+import { scanTargetVm } from "../scan-view";
+import type { HudPart, HudPartContext, HudPartFrame, HudPatch } from "./hud-part";
+
+const NOTE_SECONDS = 2.5;
+
+export const FAILURE_TEXT: Readonly<Record<QuickhackFailure, string>> = {
+  "no-ram": "Za mało RAM",
+  "out-of-range": "Cel poza zasięgiem",
+  "lost-target": "Utracono cel, wraca połowa RAM",
+  "wrong-target": "Ten hack nie działa na ten cel",
+  busy: "Trwa inny upload",
+};
+
+const DAEMON_TEXT: Readonly<Record<string, string>> = { icepick: "ICEpick", datamine: "Kopacz danych", mass_vulnerability: "Masowa podatność" };
+
+/** Scanner and quickhacks (ADR-0028): the scanned target, RAM, the upload, notes, and the breach result. */
+export class HackingHud implements HudPart {
+  readonly offs: readonly (() => void)[];
+  private focusId: EntityId | null = null;
+  private noteTick = 0;
+  private noteSeq = 0;
+  private uploadSeq = 0;
+
+  constructor(private readonly ctx: HudPartContext) {
+    const { bus, ui } = ctx;
+    this.offs = [
+      bus.on("ScanFocusChanged", (e) => {
+        this.focusId = e.targetId;
+        if (e.targetId === null) patchUi(ui, { scanTarget: null });
+      }),
+      bus.on("RamChanged", (e) => patchUi(ui, { ram: { current: e.current, max: e.max } })),
+      bus.on("QuickhackStarted", (e) => patchUi(ui, { upload: { seq: ++this.uploadSeq, hackId: e.hackId, seconds: e.upload } })),
+      bus.on("QuickhackApplied", (e) => {
+        patchUi(ui, { upload: null });
+        this.note("ok", `${QUICKHACKS[e.hackId].title}: wgrano`);
+      }),
+      bus.on("QuickhackFailed", (e) => {
+        if (ui.getState().upload?.hackId === e.hackId) patchUi(ui, { upload: null });
+        this.note("fail", `${QUICKHACKS[e.hackId].title}: ${FAILURE_TEXT[e.reason]}`);
+      }),
+      bus.on("QuickhackTraced", () => this.note("traced", "Namierzono cię! Sieć zna twoją pozycję")),
+      bus.on("BreachCompleted", (e) =>
+        ctx.toast("system", "Włamanie zakończone", e.daemons.length > 0 ? `Demony: ${e.daemons.map((d) => DAEMON_TEXT[d] ?? d).join(", ")}` : "Nic nie wgrano"),
+      ),
+    ];
+  }
+
+  wanted(): Iterable<EntityId> {
+    return this.focusId !== null ? [this.focusId] : [];
+  }
+
+  frame(f: HudPartFrame): HudPatch {
+    const out: HudPatch = {};
+    const ui = this.ctx.ui;
+    if (this.focusId !== null) {
+      const target = f.found.get(this.focusId);
+      const prev = ui.getState().scanTarget;
+      if (!target) out.scanTarget = null;
+      else if (prev?.id !== target.id) out.scanTarget = scanTargetVm(target);
+    }
+    if (ui.getState().scanNote && f.tick - this.noteTick >= NOTE_SECONDS * this.ctx.hooks.ticksPerSecond) out.scanNote = null;
+    return out;
+  }
+
+  reset(): HudPatch {
+    this.focusId = null;
+    return { scanTarget: null, upload: null, scanNote: null };
+  }
+
+  private note(tone: ScanNoteVm["tone"], text: string): void {
+    this.noteTick = this.ctx.hooks.tick();
+    patchUi(this.ctx.ui, { scanNote: { seq: ++this.noteSeq, tone, text } });
+  }
+}

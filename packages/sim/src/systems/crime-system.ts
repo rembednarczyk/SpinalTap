@@ -31,7 +31,7 @@ import { inCreationOrder } from "../world/ordering";
 import { disturb, noteAlarm, noteDetected } from "../world/street";
 import { worldTimeScale } from "./ability-system";
 import { COWER_RADIUS, scare } from "./ai/civilian-ai-system";
-import { effectiveAggroRange, giveLead, guardSees } from "./ai/ganger-ai-system";
+import { effectiveAggroRange, giveLead, guardSees } from "./ai/ganger-perception";
 
 /**
  * Cameras (ADR-0029): they see `CAMERA_RANGE` metres in a cone of `CAMERA_CONE` either side of

@@ -1,7 +1,7 @@
 import { type CSSProperties } from "react";
 import { type HackTargetKind, QUICKHACKS, type QuickhackCategory, type QuickhackSlotInput, quickhacksFor } from "@seki/core";
 import type { RamVm } from "../store/hud-vm";
-import { useIntents, useUi } from "../use-ui";
+import { useHackIntents, useUi } from "../use-ui";
 
 /** The quickhacks a target kind takes, in the order of the number keys (shared with the sim). */
 export { quickhacksFor };
@@ -56,7 +56,7 @@ const ScanNote = () => {
 const ScanTarget = ({ touch }: { touch: boolean }) => {
   const target = useUi((s) => s.scanTarget);
   const ram = useUi((s) => s.ram);
-  const intents = useIntents();
+  const intents = useHackIntents();
   if (!target) return <div className="scan-card scan-card--empty">Brak celu w polu skanu</div>;
   const hacks = quickhacksFor(target.kind);
   return (

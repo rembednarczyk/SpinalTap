@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 import { InventoryTab } from "../inventory/inventory-tab";
 import { JournalPanel } from "../journal/journal-panel";
 import type { CharacterTab } from "../store/ui-store";
-import { useIntents, useUi } from "../use-ui";
+import { useCharacterIntents, useUi } from "../use-ui";
 import { CharacterPanel } from "./character-panel";
 
 const TABS: readonly (readonly [CharacterTab, string, string])[] = [
@@ -43,7 +43,7 @@ export const CharacterScreen = () => {
   const close = useUi((s) => s.closeCharacter);
   const modal = useUi((s) => s.dialogue !== null || s.shopOpen || s.loot !== null);
   const eddies = useUi((s) => s.eddies);
-  const intents = useIntents();
+  const intents = useCharacterIntents();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

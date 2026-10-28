@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { SHOPS, type ShopId, type ShopTerms, shopTerms } from "@seki/core";
-import { useIntents, useUi } from "../use-ui";
+import { useShopIntents, useUi } from "../use-ui";
 import { BuyTab, ImplantsTab, RepairTab, SellTab } from "./trade-tabs";
 
 type Tab = "buy" | "implants" | "sell" | "repair";
@@ -75,7 +75,7 @@ const termsNote = (terms: ShopTerms, counter: Counter): string | null => {
 export const ShopPanel = () => {
   const open = useUi((s) => s.shopOpen);
   const shopId = useUi((s) => s.shopId);
-  const intents = useIntents();
+  const intents = useShopIntents();
 
   useEffect(() => {
     if (!open) return;
@@ -94,7 +94,7 @@ export const ShopPanel = () => {
 const ShopCounter = ({ shopId }: { readonly shopId: ShopId }) => {
   const eddies = useUi((s) => s.eddies);
   const rep = useUi((s) => s.reputation[SHOPS[shopId].owner]);
-  const intents = useIntents();
+  const intents = useShopIntents();
   const [tab, setTab] = useState<Tab>("buy");
   const counter = COUNTER[shopId];
   const terms = shopTerms(rep);
