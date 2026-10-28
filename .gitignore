@@ -3,7 +3,7 @@ dist/
 coverage/
 playwright-report/
 test-results/
-reports/
+/reports/
 *.log
 .vite/
 artifact/

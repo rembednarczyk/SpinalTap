@@ -67,6 +67,9 @@ VAR tessen_stance = "neutral"
         GENZO: Terminal pod dźwigiem. Podłącz się i nie odchodź.
     }
 }
+{ contract_variation != "":
+    GENZO: Ludzie z portu mówią tak. {contract_variation}
+}
 -> END
 
 = payday
