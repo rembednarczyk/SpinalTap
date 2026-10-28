@@ -71,3 +71,24 @@ export interface ContractHookDef {
   /** One line for the tracker once found. */
   readonly text: string;
 }
+
+/**
+ * What a character is doing where it stands (ADR-0037): the renderer plays a matching idle
+ * animation, the simulation picks it from the character's daily plan or an activity spot.
+ */
+export type ActivityId =
+  | "idle"
+  | "smoke"
+  | "phone"
+  | "lean"
+  | "sit"
+  | "eat"
+  | "drink"
+  | "cook"
+  | "sweep"
+  | "talk"
+  | "sleep"
+  | "terminal"
+  | "guard";
+
+export const ACTIVITY_IDS: readonly ActivityId[] = ["idle", "smoke", "phone", "lean", "sit", "eat", "drink", "cook", "sweep", "talk", "sleep", "terminal", "guard"];
