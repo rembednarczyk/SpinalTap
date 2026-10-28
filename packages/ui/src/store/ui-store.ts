@@ -1,5 +1,6 @@
 import {
   type AmmoPouch,
+  BASE_RAM,
   type CameraMode,
   EMPTY_EQUIPMENT,
   EMPTY_INVENTORY,
@@ -19,6 +20,28 @@ import {
   createReputation,
 } from "@seki/core";
 import { createStore, type StoreApi } from "zustand/vanilla";
+import {
+  type BreachVm,
+  type ColorblindMode,
+  type ContractBonusVm,
+  type ContractDebriefVm,
+  type DamageNumberVm,
+  type DamageNumbersMode,
+  type DetectionVm,
+  EMPTY_PHONE,
+  type HeatVm,
+  type HitKind,
+  type MapPointVm,
+  NO_HEAT,
+  type PhoneNoticeVm,
+  type PhoneVm,
+  type RamVm,
+  type ScanNoteVm,
+  type ScanTargetVm,
+  type UploadVm,
+} from "./hud-vm";
+
+export * from "./hud-vm";
 
 export type Screen = "title" | "playing" | "paused" | "dead";
 
@@ -43,7 +66,7 @@ export interface AbilityVm {
 
 export interface Toast {
   readonly id: number;
-  readonly kind: "quest" | "memory" | "money" | "reputation" | "system" | "cyberware";
+  readonly kind: "quest" | "memory" | "money" | "reputation" | "system" | "cyberware" | "heat";
   readonly title: string;
   readonly text: string;
 }
@@ -233,6 +256,21 @@ export interface SettingsVm {
   readonly bindings: Readonly<Record<string, readonly string[]>>;
   /** First-run hints (controls, interactions) shown while playing. */
   readonly hints: boolean;
+  /** Health and ammo stay on screen outside combat too. */
+  readonly hudAlwaysShow: boolean;
+  /** Damage numbers over the crosshair: none, one per hit, or a running total per target. */
+  readonly damageNumbers: DamageNumbersMode;
+  // Accessibility (ADR-0028).
+  /** HUD size multiplier, 1 = default. */
+  readonly hudScale: number;
+  /** A legible font (Atkinson Hyperlegible) instead of the narrow display one. */
+  readonly legibleFont: boolean;
+  /** No aberration, glitch or blinking; the engine reads it too. */
+  readonly reduceFlashes: boolean;
+  /** The breach minigame has no timer. */
+  readonly untimedBreach: boolean;
+  /** Colour tokens for colour vision deficiencies (each token has an icon as well). */
+  readonly colorblind: ColorblindMode;
 }
 
 /** Vertical field of view of the camera by default, degrees (shown rounded; it is 1.08 rad). */
@@ -254,6 +292,13 @@ export const DEFAULT_SETTINGS: SettingsVm = {
   volume: 0.6,
   bindings: {},
   hints: true,
+  hudAlwaysShow: false,
+  damageNumbers: "off",
+  hudScale: 1,
+  legibleFont: false,
+  reduceFlashes: false,
+  untimedBreach: false,
+  colorblind: "off",
 };
 
 /** A first-run hint: the keys (as labels) and the action, e.g. ["W", "A", "S", "D"] "ruch". */
@@ -287,6 +332,11 @@ export interface UiState {
   readonly hitMarker: number;
   /** Body part of the last confirmed hit; a head hit flashes the crosshair red. */
   readonly hitZone: HitZone | null;
+  /** What the last confirmed hit did: a plain hit, a critical one or a kill (each its own marker). */
+  readonly hitKind: HitKind;
+  readonly damageNumbers: readonly DamageNumberVm[];
+  /** The player fights or is hunted; outside it the health bar and ammo hide (unless always shown). */
+  readonly combat: boolean;
   /**
    * Half-angle of the player's aim cone in radians, quantised by the app so the store only
    * changes while the cone actually moves (bloom, getting up or down, starting to run).
@@ -356,6 +406,26 @@ export interface UiState {
   readonly clock: string | null;
   readonly day: number;
   readonly dayPhase: DayPhase;
+  // Wave 1 (ADR-0028).
+  readonly phone: PhoneVm;
+  readonly phoneOpen: boolean;
+  /** Holocall or notification on top of the HUD, null when none. */
+  readonly phoneNotice: PhoneNoticeVm | null;
+  readonly debrief: ContractDebriefVm | null;
+  readonly contractBonus: ContractBonusVm | null;
+  readonly heat: HeatVm;
+  readonly detection: readonly DetectionVm[];
+  /** Where the enemies last saw the player (silhouette on the minimap), null when nobody looks. */
+  readonly lastKnown: { readonly x: number; readonly z: number } | null;
+  /** Civilians phoning a crime in, as minimap markers. */
+  readonly witnesses: readonly MapPointVm[];
+  /** The scanner is held. */
+  readonly scanning: boolean;
+  readonly scanTarget: ScanTargetVm | null;
+  readonly ram: RamVm;
+  readonly upload: UploadVm | null;
+  readonly scanNote: ScanNoteVm | null;
+  readonly breach: BreachVm | null;
 }
 
 export const initialUiState: UiState = {
@@ -372,6 +442,9 @@ export const initialUiState: UiState = {
   toasts: [],
   hitMarker: 0,
   hitZone: null,
+  hitKind: "hit",
+  damageNumbers: [],
+  combat: false,
   aimSpread: 0,
   aiming: false,
   aimZoom: 1,
@@ -416,6 +489,21 @@ export const initialUiState: UiState = {
   clock: null,
   day: 1,
   dayPhase: "night",
+  phone: EMPTY_PHONE,
+  phoneOpen: false,
+  phoneNotice: null,
+  debrief: null,
+  contractBonus: null,
+  heat: NO_HEAT,
+  detection: [],
+  lastKnown: null,
+  witnesses: [],
+  scanning: false,
+  scanTarget: null,
+  ram: { current: BASE_RAM, max: BASE_RAM },
+  upload: null,
+  scanNote: null,
+  breach: null,
 };
 
 export type UiStore = StoreApi<UiState>;

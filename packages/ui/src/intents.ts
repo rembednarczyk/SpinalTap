@@ -1,4 +1,4 @@
-import type { CyberwareId, CyberwareSlot, EquipSlot, ItemRef, ModSlot, ShopItemId } from "@seki/core";
+import type { BreachDaemonId, CyberwareId, CyberwareSlot, EquipSlot, ItemRef, ModSlot, QuickhackSlotInput, ShopItemId } from "@seki/core";
 import type { CharacterTab, SettingsVm } from "./store/ui-store";
 
 /** Where the 3D preview of the character screen is drawn, in CSS pixels of the page. */
@@ -64,4 +64,18 @@ export interface UiIntents {
   dropItem(ref: ItemRef, qty: number): void;
   installMod(weaponUid: string, modUid: string): void;
   removeMod(weaponUid: string, slot: ModSlot): void;
+  // Wave 1 (ADR-0028).
+  /** The phone (T or the touch button): the inbox with a thread per contact. */
+  openPhone(): void;
+  closePhone(): void;
+  /** Marks a contact's thread as read. */
+  readThread(from: string): void;
+  /** Closes the contract debrief card. */
+  dismissDebrief(): void;
+  /** Touch: the scanner button (held on the keyboard through the input frame). */
+  setScan(on: boolean): void;
+  /** Touch: a tap on the n-th quickhack of the scanner list. */
+  pickQuickhack(slot: Exclude<QuickhackSlotInput, 0>): void;
+  /** The breach minigame ended with these daemons (none when the player disconnected). */
+  submitBreach(daemons: readonly BreachDaemonId[]): void;
 }
