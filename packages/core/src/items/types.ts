@@ -13,7 +13,8 @@ export type ItemCategory = "weapon" | "ammo" | "consumable" | "garment" | "cyber
 
 export type WeaponId = "unity9" | "oni44" | "hebi_smg" | "raijin12" | "tessen_ar5" | "kagero_dmr" | "baton" | "shirasaya";
 export type AmmoId = "9mm" | "44" | "12g" | "556";
-export type ConsumableId = "medkit" | "bandage";
+/** Street food (ADR-0026) heals too, but only from the bag: quick use takes medical kit only. */
+export type ConsumableId = "medkit" | "bandage" | "ramen" | "yakitori";
 export type JunkId = "scrap" | "weapon_parts" | "datachip";
 export type GarmentId =
   | "seki_jacket"

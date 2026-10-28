@@ -4,6 +4,9 @@ import { type ReplayFrame, SIM_HZ, Simulation, deriveRandom, runReplay, stateHas
 import { byKey, collect, input, run, teleportPlayer } from "./helpers";
 
 const bags = (sim: Simulation) => [...sim.world.with("lootBag")];
+/** Bags dropped in play: everything but the stashes placed as Seki walks the city (ADR-0026). */
+const drops = (sim: Simulation) => sim.domain.loot.containers.filter((c) => !c.key.startsWith("stash:"));
+const dropBags = (sim: Simulation) => bags(sim).filter((b) => !b.lootBag.key.startsWith("stash:"));
 
 /** Only the guard stays in the alley, calm, so nothing but the test touches the main stream. */
 const quietAlley = (seed = 21) => {
@@ -72,8 +75,8 @@ describe("loot from enemies (plan E6)", () => {
     expect(taken).toEqual([expect.objectContaining({ containerKey: "loot:guard", left: 0 })]);
     expect(money).toEqual([{ balance: before + eddies, delta: eddies, source: "loot" }]);
     expect(sim.domain.wallet.eddies).toBe(before + eddies);
-    expect(sim.domain.loot.containers).toEqual([]);
-    expect(bags(sim)).toHaveLength(0);
+    expect(drops(sim)).toEqual([]);
+    expect(dropBags(sim)).toHaveLength(0);
     // A second take of a gone bag does nothing.
     sim.enqueue({ type: "take-loot", containerKey: "loot:guard", line: "all" });
     sim.step();
@@ -124,7 +127,7 @@ describe("loot from enemies (plan E6)", () => {
     expect(expired).toEqual([]);
     sim.step();
     expect(expired).toEqual([{ containerKey: "loot:guard" }]);
-    expect(sim.domain.loot.containers).toEqual([]);
+    expect(drops(sim)).toEqual([]);
     expect(bags(sim)).toHaveLength(0);
   });
 
@@ -138,7 +141,7 @@ describe("loot from enemies (plan E6)", () => {
     expect(bags(restored).map((b) => b.lootBag.key)).toEqual(["loot:guard"]);
     // The guard stays dead: no second roll.
     expect(byKey(restored, "guard")).toBeUndefined();
-    expect(restored.domain.loot.containers).toHaveLength(1);
+    expect(drops(restored)).toHaveLength(1);
   });
 
   it("a bag in an unloaded chunk sleeps, keeps ageing, and never returns once expired", () => {
@@ -148,17 +151,17 @@ describe("loot from enemies (plan E6)", () => {
     run(sim, 2);
     expect(sim.streamer.isLoaded("shinsekai-7")).toBe(false);
     expect(bags(sim)).toHaveLength(0);
-    expect(sim.domain.loot.containers).toHaveLength(1);
+    expect(drops(sim)).toHaveLength(1);
     teleportPlayer(sim, { x: 0, y: 0, z: 30 });
     run(sim, 2);
-    expect(bags(sim)).toHaveLength(1);
+    expect(dropBags(sim)).toHaveLength(1);
     teleportPlayer(sim, { x: 40, y: 0, z: 160 });
-    const expires = sim.domain.loot.containers[0]!.expiresAtTick;
+    const expires = drops(sim)[0]!.expiresAtTick;
     run(sim, expires - sim.tick + 1);
     teleportPlayer(sim, { x: 0, y: 0, z: 30 });
     run(sim, 2);
-    expect(bags(sim)).toHaveLength(0);
-    expect(sim.domain.loot.containers).toEqual([]);
+    expect(dropBags(sim)).toHaveLength(0);
+    expect(drops(sim)).toEqual([]);
   });
 
   it("contract targets drop their own bags", () => {

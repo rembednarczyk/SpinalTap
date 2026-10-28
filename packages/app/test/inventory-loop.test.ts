@@ -115,7 +115,7 @@ describe("loot loop: kill, bag, take, save, load (plan E6)", () => {
     session.takeLoot("all");
     steps(session, 1);
     expect(session.sim.domain.wallet.eddies).toBe(wallet + eddies);
-    expect(session.sim.domain.loot.containers).toEqual([]);
+    expect(session.sim.domain.loot.containers.filter((c) => !c.key.startsWith("stash:"))).toEqual([]);
     expect(ui.getState().loot).toBeNull();
     steps(session, 1);
     expect(session.inControl).toBe(true);
@@ -139,8 +139,8 @@ describe("loot loop: kill, bag, take, save, load (plan E6)", () => {
     session.newGame();
     expect(await session.loadAsync("slot-2")).toBe(true);
     steps(session, 1);
-    expect(session.sim.domain.loot.containers.map((c) => c.key)).toEqual(["loot:guard"]);
-    expect([...session.sim.world.with("lootBag")]).toHaveLength(1);
+    expect(session.sim.domain.loot.containers.map((c) => c.key).filter((k) => !k.startsWith("stash:"))).toEqual(["loot:guard"]);
+    expect([...session.sim.world.with("lootBag")].filter((b) => !b.lootBag.key.startsWith("stash:"))).toHaveLength(1);
   });
 
   it("Esc leaves the bag as it is; taking one line keeps the panel open", () => {
