@@ -155,7 +155,7 @@ describe("contract debrief", () => {
     expect(screen.getByTestId("contract-bonus").textContent).toContain("✓");
     act(() => patchUi(store, { contractBonus: { label: "Nie podnoś alarmu", badge: "no_alarm", bonus: 300, kept: false } }));
     expect(screen.getByTestId("contract-bonus").className).toContain("hud__bonus--lost");
-    expect(screen.getByTestId("contract-bonus").textContent).toContain("stracony");
+    expect(screen.getByTestId("contract-bonus").getAttribute("aria-label")).toContain("stracony");
   });
 });
 

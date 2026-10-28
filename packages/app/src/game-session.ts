@@ -372,7 +372,8 @@ export class GameSession implements UiIntents {
 
   private wave1HudFrame(player: Entity | undefined) {
     const combat = this.screen === "playing" && this.inCombat;
-    const talking = this.dialogueOpen || this.shopOpen || this.lootKey !== null || this.breachKey !== null;
+    // The open phone shows the messages itself; banners wait.
+    const talking = this.dialogueOpen || this.shopOpen || this.lootKey !== null || this.breachKey !== null || this.phoneOpen;
     const busy = talking || combat;
     const calm = !busy && !this.characterOpen && this.wave1.heatLevel === 0 && !this.deps.ui.getState().scanning;
     return { combat, ...this.wave1.sync({ world: this.simulation.world, player, busy, calm }) };

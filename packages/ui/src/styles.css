@@ -593,7 +593,7 @@ kbd {
 .settings__label { flex: 0 0 9em; color: var(--ink-dim); }
 .settings__slider { flex: 1; min-width: 0; accent-color: var(--cyan); pointer-events: auto; }
 .settings__value { flex: 0 0 3.5em; text-align: right; font-family: var(--font-mono); font-size: 14px; }
-.settings__choice { display: flex; gap: 6px; }
+.settings__choice { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
 .settings__option {
   padding: 4px 12px;
   font-size: 15px;
@@ -816,7 +816,8 @@ kbd {
   .gear__ability { width: 220px; padding: 5px 8px; }
   .minimap { left: max(16px, env(safe-area-inset-left, 0px)); bottom: 76px; width: 120px; height: 120px; }
   .settings__label { flex-basis: 7em; }
-  .touch-mode .gear { top: 64px; left: max(16px, env(safe-area-inset-left, 0px)); }
+  /* Below the objective, which can carry the condition bonus. */
+  .touch-mode .gear { top: 92px; left: max(16px, env(safe-area-inset-left, 0px)); }
   .dialogue { bottom: 8px; padding: 10px 14px; }
   .dialogue__lines { max-height: 30vh; }
   .dialogue__line, .dialogue__choice { font-size: 15px; }
@@ -1271,7 +1272,7 @@ kbd {
 .minimap__ghost { fill: rgba(255, 255, 255, 0.12); stroke: var(--ink); stroke-width: 0.45; stroke-dasharray: 0.8 0.5; }
 
 /* Contract condition by the objective. */
-.hud__bonus { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 14px; color: var(--ok); }
+.hud__bonus { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; margin-top: 4px; font-size: 14px; color: var(--ok); }
 .hud__bonus .badge-icon { width: 14px; height: 14px; }
 .hud__bonus-pay { font-family: var(--font-mono); color: var(--amber); }
 .hud__bonus-state { margin-left: auto; font-family: var(--font-mono); }
@@ -1292,7 +1293,8 @@ kbd {
   background: rgba(6, 10, 16, 0.92);
   border: 1px solid var(--panel-edge);
   border-top: 3px solid var(--ok);
-  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%);
+  /* The cut corner sits bottom left, away from the close button (a clipped area takes no clicks). */
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 16px 100%, 0 calc(100% - 16px));
   animation: toast-in 240ms ease-out;
 }
 .debrief__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
@@ -1335,6 +1337,7 @@ kbd {
 }
 .phone__portrait--big { width: 72px; height: 72px; font-size: 26px; background: repeating-linear-gradient(0deg, rgba(95, 242, 255, 0.24) 0 2px, rgba(95, 242, 255, 0.08) 2px 4px); }
 .holocall {
+  z-index: 2;
   position: absolute;
   left: 28px;
   top: 120px;
@@ -1343,7 +1346,7 @@ kbd {
   width: 420px;
   max-width: calc(100% - 56px);
   padding: 10px 14px;
-  background: var(--panel);
+  background: rgba(6, 10, 16, 0.9);
   border-left: 3px solid var(--cyan);
   animation: toast-in 240ms ease-out;
 }
@@ -1351,6 +1354,7 @@ kbd {
 .holocall__tag { margin-right: 4px; padding: 0 6px; font-size: 11px; color: #05080c; background: var(--cyan); }
 .holocall__line { margin: 4px 0 0; font-size: 16px; }
 .phone-notice {
+  z-index: 2;
   position: absolute;
   left: 28px;
   top: 120px;
@@ -1410,7 +1414,7 @@ kbd {
 .scanner__corner--tr { right: 0; top: 0; border-right-width: 2px; border-top-width: 2px; }
 .scanner__corner--bl { left: 0; bottom: 0; border-left-width: 2px; border-bottom-width: 2px; }
 .scanner__corner--br { right: 0; bottom: 0; border-right-width: 2px; border-bottom-width: 2px; }
-.scanner__brand { position: absolute; left: 44px; top: -2px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.25em; color: var(--tok-hack); }
+.scanner__brand { position: absolute; right: 44px; top: -2px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.25em; color: var(--tok-hack); }
 .scanner__panel { position: absolute; left: calc(50% + 80px); top: 26%; width: 290px; }
 .scan-card { padding: 10px 12px; background: rgba(6, 10, 16, 0.86); border-left: 3px solid var(--tok-hack); }
 .scan-card--hostile { border-left-color: var(--tok-threat); }
@@ -1535,5 +1539,14 @@ kbd {
 .touch-mode .phone-notice { left: 50%; top: 48px; width: 320px; transform: translateX(-50%); }
 .touch-mode .debrief { left: max(16px, env(safe-area-inset-left, 0px)); transform: none; width: min(400px, 52vw); max-height: calc(100% - 16px); overflow: hidden; pointer-events: none; }
 .touch-mode .debrief__close { pointer-events: auto; }
-.touch-mode .scanner__panel { left: auto; right: calc(50% + 56px); top: 60px; width: 270px; }
-.touch-mode .scanner__status { top: calc(50% + 50px); }
+/* Touch scanner: the card left of the crosshair, compact; the bars right of the heat stars,
+   clear of the pad. */
+.touch-mode .scanner__brand { display: none; }
+.touch-mode .scanner__panel { left: auto; right: calc(50% + 40px); top: 40px; width: 240px; }
+.touch-mode .scan-card { padding: 6px 10px; }
+.touch-mode .scan-card__name { font-size: 16px; }
+.touch-mode .scan-card__profile li + li { display: none; }
+.touch-mode .hacks { margin-top: 4px; }
+.touch-mode .hacks__row { padding: 1px 0; border-top: none; }
+.touch-mode .hacks__cat { display: none; }
+.touch-mode .scanner__status { left: calc(50% + 10px); top: 92px; transform: none; width: 220px; align-items: flex-start; }

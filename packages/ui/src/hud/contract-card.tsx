@@ -122,7 +122,7 @@ export const BonusIndicator = () => {
       <BadgeIcon badge={bonus.badge} />
       <span className="hud__bonus-label">{bonus.label}</span>
       <span className="hud__bonus-pay">+{money(bonus.bonus)}</span>
-      <span className="hud__bonus-state">{bonus.kept ? "✓" : "✗ stracony"}</span>
+      <span className="hud__bonus-state">{bonus.kept ? "✓" : "✗"}</span>
     </div>
   );
 };
