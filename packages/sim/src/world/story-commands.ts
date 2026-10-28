@@ -18,6 +18,7 @@ import type { SimContext } from "./context";
 import { adjustReputation, grantMemory, raiseFlag } from "./domain-ops";
 import { inCreationOrder } from "./ordering";
 import { placeOnSchedule } from "./schedule";
+import { endEncounter } from "./street-scenes";
 
 type Command<K extends GameCommand["type"]> = Extract<GameCommand, { type: K }>;
 
@@ -34,6 +35,8 @@ export const applyAlias = (ctx: SimContext, cmd: Command<"set-alias">): void => 
 
 export const endDialogue = (ctx: SimContext): void => {
   ctx.session.dialogueActive = false;
+  // A street encounter's scene is over (ADR-0034).
+  endEncounter(ctx);
 };
 
 /** A main-thread choice; the first answer sticks, a repeat changes nothing. */

@@ -28,6 +28,7 @@ import type { Offence, SimContext, StreetDisturbance, System } from "../world/co
 import { gangerEntity } from "../world/factory";
 import { chestOf, eyeOf, lineOfSight } from "../world/hitscan";
 import { inCreationOrder } from "../world/ordering";
+import { codeKnown } from "../world/hook-tracker";
 import { disturb, noteAlarm, noteDetected } from "../world/street";
 import { worldTimeScale } from "./ability-system";
 import { COWER_RADIUS, scare } from "./ai/civilian-ai-system";
@@ -203,7 +204,8 @@ const runCalls = (ctx: SimContext, player: Entity | null, dt: number): void => {
 const zoneActive = (ctx: SimContext, zone: NonNullable<NonNullable<Entity["device"]>["restricted"]>): boolean => {
   if (!zone.during) return true;
   const c = ctx.state.domain.contracts.active;
-  return c?.status === "active" && contractKind(c) === zone.during;
+  // A door code from an observation hook (ADR-0034): the camera takes the player for staff.
+  return c?.status === "active" && contractKind(c) === zone.during && !codeKnown(ctx);
 };
 
 /** Cameras watching no-go zones (ADR-0029): the spot meter, the alarm, the guards sent to look. */

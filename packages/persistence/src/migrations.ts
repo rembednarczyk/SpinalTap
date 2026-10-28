@@ -182,6 +182,20 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
       },
     };
   },
+  // v11 -> v12 (ADR-0034): nobody was on the metro and no street encounter had played. A running
+  // contract stays plain (no variation) with no hooks found: both are optional fields.
+  11: (old) => {
+    const domain = isObject(old.domain) ? old.domain : {};
+    return {
+      ...old,
+      version: 12,
+      domain: {
+        ...domain,
+        metro: isObject(domain.metro) ? domain.metro : { ride: null },
+        encounters: isObject(domain.encounters) ? domain.encounters : { used: [], nights: {} },
+      },
+    };
+  },
 };
 
 export class MigrationError extends Error {}
