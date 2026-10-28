@@ -68,4 +68,6 @@ export type GameCommand =
   | { readonly type: "breach-result"; readonly terminalKey: string; readonly daemons: readonly BreachDaemonId[] }
   // Wave 2 (ADR-0032).
   /** Buys a ticket at the platform the player stands on and rides to `to`. */
-  | { readonly type: "travel-metro"; readonly to: MetroStationId };
+  | { readonly type: "travel-metro"; readonly to: MetroStationId }
+  /** Follow this journal entry on the HUD (a quest id or `contract-<id>`); null lets the game pick. */
+  | { readonly type: "track-quest"; readonly questId: string | null };

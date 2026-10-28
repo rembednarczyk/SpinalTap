@@ -593,3 +593,13 @@ describe("buffs, capacity shards and the disguise (v12 to v13, ADR-0033)", () =>
     expect(bad({ disguise: { role: null } })).toBe("disguise");
   });
 });
+
+describe("tracked journal entry in the preferences", () => {
+  it("keeps a pinned entry and rejects one that is not text", () => {
+    const s = snapshot();
+    const pinned = { ...s, domain: { ...s.domain, preferences: { ...s.domain.preferences, trackedQuest: "contract-c4" } } };
+    expect(decodeSave("pin", encodeSave(pinned)).domain.preferences.trackedQuest).toBe("contract-c4");
+    const bad = { ...s, domain: { ...s.domain, preferences: { ...s.domain.preferences, trackedQuest: 7 } } };
+    expect(findSchemaError(bad as unknown as Record<string, unknown>)).toBe("preferences");
+  });
+});

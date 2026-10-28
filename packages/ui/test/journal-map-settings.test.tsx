@@ -74,6 +74,19 @@ describe("journal", () => {
     expect(screen.getByTestId("journal-memory-combat_reflex").textContent).toContain("Ręce wiedzą");
   });
 
+  it("follows an entry on the HUD from the journal, and stops following it", () => {
+    const tracked: JournalVm = {
+      ...journal,
+      quests: journal.quests.map((q) => (q.id === "contract-c2" ? { ...q, tracked: true, pinned: false } : q)),
+    };
+    const { i, store } = mount({ screen: "playing", journal: tracked, journalOpen: true });
+    fireEvent.click(screen.getByTestId("journal-track-contract-c2"));
+    expect(i.trackQuest).toHaveBeenCalledWith("contract-c2");
+    act(() => patchUi(store, { journal: { ...tracked, quests: tracked.quests.map((q) => (q.id === "contract-c2" ? { ...q, pinned: true } : q)) } }));
+    fireEvent.click(screen.getByTestId("journal-untrack-contract-c2"));
+    expect(i.trackQuest).toHaveBeenLastCalledWith(null);
+  });
+
   it("says so when a tab is empty", () => {
     mount({ screen: "playing", journalOpen: true });
     expect(screen.getByText(/Nic na teraz/)).toBeTruthy();

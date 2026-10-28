@@ -1,5 +1,5 @@
 import { type DomainState, MEMORY_CATALOG, QUEST_DEFINITIONS, contractGiver, contractObjective, stepObjective } from "@seki/core";
-import { contractTitle } from "./objective";
+import { contractEntryId, contractTitle, shownEntryId } from "./objective";
 import type { JournalMemoryVm, JournalQuestVm, JournalVm } from "@seki/ui";
 
 /** Quest log, contracts and recovered memories as the journal shows them. Pure. */
@@ -22,7 +22,7 @@ export const buildJournal = (domain: DomainState): JournalVm => {
   const { active, completed } = domain.contracts;
   if (active) {
     quests.push({
-      id: `contract-${active.id}`,
+      id: contractEntryId(active),
       title: contractTitle(active),
       kind: "contract",
       status: "active",
@@ -41,8 +41,12 @@ export const buildJournal = (domain: DomainState): JournalVm => {
       steps: [{ objective: `Wykonane i opłacone: ${completed}`, done: true }],
     });
   }
+  // Mark the entry the HUD follows, and whether the player chose it.
+  const shown = shownEntryId(domain);
+  const pinned = domain.preferences.trackedQuest;
+  const marked = quests.map((q) => (q.status === "active" && q.id === shown ? { ...q, tracked: true, pinned: q.id === pinned } : q));
   const memories: JournalMemoryVm[] = domain.character.memories.map((id) => ({ id, title: MEMORY_CATALOG[id].title, description: MEMORY_CATALOG[id].description }));
-  return { quests, memories };
+  return { quests: marked, memories };
 };
 
 /**
@@ -50,7 +54,7 @@ export const buildJournal = (domain: DomainState): JournalVm => {
  * so comparing references is enough to know nothing the journal shows has changed.
  */
 export const createJournalCache = (): ((domain: DomainState) => JournalVm) => {
-  let last: { quests: unknown; contracts: unknown; memories: unknown; flags: unknown; vm: JournalVm } | null = null;
+  let last: { quests: unknown; contracts: unknown; memories: unknown; flags: unknown; prefs: unknown; vm: JournalVm } | null = null;
   return (domain) => {
     // Flags too: a step's objective can read differently as the story moves (ADR-0023).
     if (
@@ -58,12 +62,13 @@ export const createJournalCache = (): ((domain: DomainState) => JournalVm) => {
       last.quests === domain.quests &&
       last.contracts === domain.contracts &&
       last.memories === domain.character.memories &&
-      last.flags === domain.flags
+      last.flags === domain.flags &&
+      last.prefs === domain.preferences
     ) {
       return last.vm;
     }
     const vm = buildJournal(domain);
-    last = { quests: domain.quests, contracts: domain.contracts, memories: domain.character.memories, flags: domain.flags, vm };
+    last = { quests: domain.quests, contracts: domain.contracts, memories: domain.character.memories, flags: domain.flags, prefs: domain.preferences, vm };
     return vm;
   };
 };

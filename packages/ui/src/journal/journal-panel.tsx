@@ -1,14 +1,42 @@
 import { useState } from "react";
 import type { JournalQuestVm } from "../store/ui-store";
-import { useUi } from "../use-ui";
+import { useJournalIntents, useUi } from "../use-ui";
 
 type Tab = "active" | "done" | "memories";
 
 const KIND_LABEL: Record<JournalQuestVm["kind"], string> = { main: "Wątek główny", side: "Zadanie poboczne", contract: "Kontrakt" };
 
+/**
+ * Follow an active entry on the HUD, or stop following the one the player chose (the game then
+ * picks again). The entry the game picked on its own says so and can be pinned.
+ */
+const TrackButton = ({ quest }: { quest: JournalQuestVm }) => {
+  const { trackQuest } = useJournalIntents();
+  if (quest.status !== "active" || quest.id === "contracts-done") return null;
+  if (quest.pinned)
+    return (
+      <button type="button" className="journal__track journal__track--on" onClick={() => trackQuest(null)} data-testid={`journal-untrack-${quest.id}`}>
+        Śledzone · przestań
+      </button>
+    );
+  return (
+    <button
+      type="button"
+      className={`journal__track${quest.tracked ? " journal__track--auto" : ""}`}
+      onClick={() => trackQuest(quest.id)}
+      data-testid={`journal-track-${quest.id}`}
+    >
+      {quest.tracked ? "Na HUD · przypnij" : "Śledź"}
+    </button>
+  );
+};
+
 const QuestEntry = ({ quest }: { quest: JournalQuestVm }) => (
-  <li className={`journal__quest journal__quest--${quest.kind}`} data-testid={`journal-quest-${quest.id}`}>
-    <div className="journal__kind">{KIND_LABEL[quest.kind]}</div>
+  <li className={`journal__quest journal__quest--${quest.kind}${quest.tracked ? " journal__quest--tracked" : ""}`} data-testid={`journal-quest-${quest.id}`}>
+    <div className="journal__kind">
+      {KIND_LABEL[quest.kind]}
+      <TrackButton quest={quest} />
+    </div>
     <div className="journal__title">{quest.title}</div>
     <ol className="journal__steps">
       {quest.steps.map((step, i) => (

@@ -194,6 +194,7 @@ export class GameSession implements UiIntents {
   closePhone(): void { this.c.phone.closePhone(); }
   readThread(from: string): void { this.c.phone.readThread(from); }
   dismissDebrief(): void { this.c.hud.dismissDebrief(); }
+  trackQuest(questId: string | null): void { this.simulation.enqueue({ type: "track-quest", questId }); }
   setScan(on: boolean): void { this.c.hack.setScan(on); }
   pickQuickhack(slot: Exclude<QuickhackSlotInput, 0>): void { this.c.hack.pickQuickhack(slot); }
   submitBreach(daemons: readonly BreachDaemonId[]): void { this.c.hack.submitBreach(daemons); }

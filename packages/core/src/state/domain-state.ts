@@ -20,6 +20,11 @@ import { type EncounterLog, NO_ENCOUNTERS } from "../world/encounters";
 
 export interface Preferences {
   readonly cameraMode: CameraMode;
+  /**
+   * Journal entry the player chose to follow (a quest id or `contract-<id>`); the HUD and the
+   * map show its objective. Absent: the game picks (the main thread, or the running contract).
+   */
+  readonly trackedQuest?: string;
 }
 
 /** Everything about the playthrough that is not an ECS component. */

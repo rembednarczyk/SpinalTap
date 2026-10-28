@@ -1,4 +1,5 @@
 import { type PointerEvent as ReactPointerEvent, type ReactNode, useRef, useState } from "react";
+import { swallowNextClick } from "./ghost-click";
 import type { TouchButton, TouchPadSink } from "./touch-pad-sink";
 
 /** Radians of rotation per CSS pixel of finger travel. */
@@ -27,6 +28,14 @@ export const useLookDrag = (pad: TouchPadSink) => {
       if (last.current?.id === e.pointerId) last.current = null;
     },
   };
+};
+
+/**
+ * The press may open a panel under the thumb (a talk, a shop, the line map); the browser's
+ * compatibility click after it must not pick anything there (see `swallowNextClick`).
+ */
+export const swallowGhostClick = (e: { pointerType: string }): void => {
+  if (e.pointerType === "touch" || e.pointerType === "pen") swallowNextClick();
 };
 
 /** Swallows the long-press menu and the compatibility click of a touch button. */
@@ -70,6 +79,7 @@ export const PadButtonView = ({
       className={`touch__btn ${className}${down ? " touch__btn--down" : ""}`}
       onPointerDown={(e) => {
         e.currentTarget.setPointerCapture?.(e.pointerId);
+        swallowGhostClick(e);
         setDown(true);
         pad.press(button);
         if (lookToo) look.start(e);

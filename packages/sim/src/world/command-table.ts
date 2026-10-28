@@ -2,7 +2,7 @@ import type { GameCommand } from "@seki/core";
 import type { SimContext } from "./context";
 import { acceptContract, applyBreach, completeContract, deliverContract } from "./contract-commands";
 import { applyItemCommand } from "./item-commands";
-import { applyAlias, applyResolveEnding, changeReputation, endDialogue, setFlag, storyChoice, unlockMemory, waitMinutes } from "./story-commands";
+import { applyAlias, applyResolveEnding, changeReputation, endDialogue, setFlag, storyChoice, unlockMemory, trackQuest, waitMinutes } from "./story-commands";
 import { applyTradeCommand } from "./trade-commands";
 import { travelMetro } from "./metro-ride";
 
@@ -28,6 +28,7 @@ export const COMMAND_HANDLERS: CommandHandlers = {
   "story-choice": storyChoice,
   "resolve-ending": applyResolveEnding,
   wait: waitMinutes,
+  "track-quest": trackQuest,
   // Contracts and hacking.
   "accept-contract": acceptContract,
   "deliver-contract": deliverContract,

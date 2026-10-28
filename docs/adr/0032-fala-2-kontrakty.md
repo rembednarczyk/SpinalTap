@@ -104,3 +104,9 @@ Wszystkie są dopisaniem pól opcjonalnych albo nowych zdarzeń, bez zmiany istn
   - `ViewDescriptor` wroga (`kind: "enemy"`) dostaje opcjonalne `enforcer?: boolean`: egzekutor widzi przez przebranie, HUD pokazuje nad nim ikonę;
   - `PurchaseFailure` dostaje `"over-capacity"`: implant przekracza pojemność cyberware;
   - `DomainState.buffs`, `capacityShards` i `disguise`, zapis v13.
+
+### Śledzone zadanie (pomysł gracza)
+- Komenda `track-quest { questId | null }` i opcjonalne `Preferences.trackedQuest` (id zadania albo `contract-<id>`). Zapis bez podbicia wersji: pole jest opcjonalne i walidowane, gdy jest.
+- HUD pokazuje cel przypiętego wpisu, dopóki ten trwa. Potem gra wybiera sama: wątek główny, a przy jego kroku o zleceniu albo bez niego zlecenie.
+- Dziennik oznacza wpis, który HUD śledzi. Przycisk „Śledź” przypina dowolny trwający wpis, „Śledzone · przestań” oddaje wybór grze.
+- UI: wąski `JournalIntents.trackQuest`, hook `useJournalIntents`.
