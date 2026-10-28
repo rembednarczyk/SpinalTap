@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { EMPTY_INPUT } from "@seki/core";
-import { AimLatch, DEFAULT_KEYMAP, InputLatches, PAD_DEADZONE, mapGamepad, mapKeyboardMouse, mergeFrames, remap } from "../src/input/keymap";
+import { AimLatch, DEFAULT_KEYMAP, DOUBLE_TAP_SECONDS, DoubleTap, InputLatches, PAD_DEADZONE, mapGamepad, mapKeyboardMouse, mergeFrames, remap } from "../src/input/keymap";
 
 const keys = (held: string[], pressed: string[] = []) => ({ held: new Set(held), pressed: new Set(pressed) });
 
@@ -169,5 +169,30 @@ describe("PC controls (wheel, F, hold or toggle)", () => {
     l.setModes({ aim: "hold", crouch: "hold", sprint: "hold" });
     expect(l.apply({ ...run, sprint: true }).sprint).toBe(true);
     expect(l.apply(run).sprint).toBe(false);
+  });
+});
+
+describe("dash on the pad (ADR-0036)", () => {
+  it("dashes on a double tap of B within the window, not on a single or a slow pair", () => {
+    const tap = new DoubleTap();
+    expect(tap.update(true, 0)).toBe(false);
+    expect(tap.update(false, DOUBLE_TAP_SECONDS / 2)).toBe(false);
+    expect(tap.update(true, 0.01)).toBe(true);
+    // A third tap starts a new pair.
+    expect(tap.update(true, 0.05)).toBe(false);
+    expect(tap.update(false, DOUBLE_TAP_SECONDS + 0.05)).toBe(false);
+    expect(tap.update(true, 0)).toBe(false);
+    tap.reset();
+    expect(tap.update(true, 0.01)).toBe(false);
+  });
+
+  it("passes the detected dash through the pad mapping", () => {
+    expect(mapGamepad({ axes: [0, 0, 0, 0], buttons: [], pressed: [], dash: true }, 1 / 60).dash).toBe(true);
+    expect(mapGamepad({ axes: [0, 0, 0, 0], buttons: [], pressed: [] }, 1 / 60).dash).toBe(false);
+  });
+
+  it("dashes on left Alt on the keyboard", () => {
+    expect(mapKeyboardMouse(keys(["AltLeft"], ["AltLeft"]), { yaw: 0, pitch: 0 }).dash).toBe(true);
+    expect(mapKeyboardMouse(keys(["AltLeft"]), { yaw: 0, pitch: 0 }).dash).toBe(false);
   });
 });

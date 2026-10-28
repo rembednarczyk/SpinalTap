@@ -1,6 +1,10 @@
 import type { InputFrame, WeaponSlotInput } from "@seki/core";
 
-export type PadButton = "fire" | "aim" | "interact" | "jump" | "ability" | "useItem" | "toggleCamera" | "sprint" | "toggleWeapon" | "crouch" | "reload";
+/**
+ * On-screen buttons. `dash` (ADR-0036) is an edge like jump; the HUD places its button next to
+ * the jump button under the action name `dash`.
+ */
+export type PadButton = "fire" | "aim" | "interact" | "jump" | "ability" | "useItem" | "toggleCamera" | "sprint" | "toggleWeapon" | "crouch" | "reload" | "dash";
 
 /** Stick deflection above which the on-screen stick also sprints. */
 export const STICK_SPRINT_THRESHOLD = 0.92;
@@ -85,7 +89,7 @@ export class VirtualPad {
       // The scanner and quickhacks come to touch with the HUD of ADR-0028.
       scan: false,
       quickhack: 0,
-      dash: false,
+      dash: edge("dash"),
     };
     this.flush();
     return frame;
