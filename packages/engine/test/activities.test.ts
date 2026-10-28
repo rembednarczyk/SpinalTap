@@ -18,6 +18,7 @@ import {
 } from "../src/renderer/activity-poses";
 import { applyActivityPose, plantedOffset } from "../src/renderer/activity-rig";
 import { CharacterActivities } from "../src/renderer/character-activities";
+import { CHARACTER_DRAW_DISTANCE, withinDrawDistance } from "../src/renderer/character-lod";
 import { animateRig, buildCivilian, buildGanger, setWeaponDrawn } from "../src/renderer/characters";
 
 const scene = new Scene(new NullEngine());
@@ -187,5 +188,14 @@ describe("CharacterActivities", () => {
     expect(scene.meshes.length).toBe(meshes + 1);
     acts.clear();
     expect(scene.meshes.length).toBe(meshes);
+  });
+});
+
+describe("character draw distance", () => {
+  it("keeps characters within 60 m on the ground plane and drops the ones beyond", () => {
+    expect(CHARACTER_DRAW_DISTANCE).toBe(60);
+    expect(withinDrawDistance({ x: 0, z: 59.9 }, { x: 0, z: 0 })).toBe(true);
+    expect(withinDrawDistance({ x: 43, z: 43 }, { x: 0, z: 0 })).toBe(false);
+    expect(withinDrawDistance({ x: 10, z: 10 }, { x: 12, z: 9 }, 2)).toBe(false);
   });
 });

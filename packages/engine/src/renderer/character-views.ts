@@ -16,6 +16,7 @@ import {
   startDeath,
 } from "./characters";
 import { markEnforcer } from "./enforcer-mark";
+import { withinDrawDistance } from "./character-lod";
 import { Loadouts } from "./loadout";
 import { type CharacterModelKey, type CharacterModelManifest, type ModelInstance, ModelLibrary } from "./model-library";
 import { HumanoidRetarget } from "./model-rig";
@@ -188,7 +189,15 @@ export class CharacterViews implements FxActors {
 
   /** Animation, the death falls, the dressed models and the loadouts on them. */
   update(dt: number): void {
+    const eye = this.deps.camera.camera.position;
+    const followed = this.deps.cameraTarget();
     for (const [id, v] of this.views) {
+      // Far characters are switched off and skip their animation (ADR-0040).
+      if (id !== followed) {
+        const near = withinDrawDistance(v.rig.root.position, eye);
+        if (v.rig.root.isEnabled(false) !== near) v.rig.root.setEnabled(near);
+        if (!near) continue;
+      }
       const t = v.transform;
       const motion = { ...(t.air !== undefined ? { air: t.air } : {}), ...(t.climb !== undefined ? { climb: t.climb } : {}) };
       animateRig(v.rig, t.speed, dt, t.crouch, { aim: t.aim ?? 0, guard: t.guard ?? 0 }, motion);
@@ -204,11 +213,12 @@ export class CharacterViews implements FxActors {
       }
     }
     for (const d of this.dressed.values()) {
+      if (!d.model.root.isEnabled()) continue;
       d.retarget.update();
       d.springs?.update(dt);
       d.model.face?.update(dt);
     }
-    for (const v of this.views.values()) this.loadouts.update(v.rig);
+    for (const v of this.views.values()) if (v.rig.root.isEnabled(false)) this.loadouts.update(v.rig);
     for (const rig of this.dying) this.loadouts.update(rig);
   }
 
