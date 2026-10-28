@@ -1,5 +1,6 @@
 import { Compiler, type Story } from "inkjs/full";
 import {
+  type ContractVariation,
   type DomainState,
   type GameCommand,
   CONTRACT_KINDS,
@@ -23,6 +24,7 @@ import {
   resolveEnding,
   stanceOf,
 } from "@seki/core";
+import { describeVariation, variationOf } from "./contract-variation";
 import type { DialogueLine, DialogueView } from "./dialogue-view";
 
 const SPEAKERS: Readonly<Record<string, string>> = {
@@ -126,9 +128,11 @@ export class NarrativeRuntime {
 
   /**
    * Opens the knot `dialogueId`. `clock` (the simulation tick and rate) lets the dialogue read
-   * how much time a delivery has left; without it the time reads as 0.
+   * how much time a delivery has left; without it the time reads as 0. `variation` is the rolled
+   * plan of the running contract (ADR-0032); it defaults to the one stored on the contract, and
+   * the fixers mention it only when there is one.
    */
-  start(dialogueId: string, domain: DomainState, clock?: ConversationClock): DialogueView {
+  start(dialogueId: string, domain: DomainState, clock?: ConversationClock, variation?: ContractVariation): DialogueView {
     this.checkpoint = this.story.state.toJson();
     this.effects = 0;
     this.domain = domain;
@@ -146,6 +150,7 @@ export class NarrativeRuntime {
     this.story.variablesState.$("contract_reward", contract?.reward ?? 0);
     const left = contract && clock ? contractSecondsLeft(contract, clock.tick, clock.ticksPerSecond) : null;
     this.story.variablesState.$("contract_time_left", left ?? 0);
+    this.story.variablesState.$("contract_variation", contract ? describeVariation(variation ?? variationOf(contract)) : "");
     for (const f of FACTION_IDS) this.story.variablesState.$(`${f}_stance`, stanceOf(domain.reputation[f]));
     // The domain owns the main-thread choices; ink sees them as plain string variables.
     for (const choice of Object.keys(STORY_CHOICES) as StoryChoiceId[]) {

@@ -77,6 +77,9 @@ HANA: Paczkę już mam. Po pieniądze idź do Kaito, to jego kurs.
 - else:
     HANA: Hebi są już na targu. Nie stój przy mnie, pilnuj Oyajiego!
 }
+{ contract_variation != "":
+    HANA: Słyszałam jeszcze coś między straganami. {contract_variation}
+}
 -> END
 
 = payday
