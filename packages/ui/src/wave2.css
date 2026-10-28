@@ -19,11 +19,11 @@
 .metro__line { margin: 0; font-size: 26px; letter-spacing: 0.08em; }
 .metro__wallet { font-family: var(--font-mono); font-size: 16px; color: var(--amber); }
 .metro__refusal { margin: 10px 0 0; padding: 8px 10px; border-left: 3px solid var(--danger); color: var(--danger); background: rgba(255, 77, 94, 0.08); }
-.metro__stops { position: relative; margin: 16px 0; padding: 0 0 0 22px; list-style: none; }
+.metro__stops { position: relative; margin: 16px 0; padding: 0 0 0 34px; list-style: none; }
 /* The line itself: one stroke down the stops. */
-.metro__stops::before { content: ""; position: absolute; left: 8px; top: 22px; bottom: 22px; width: 4px; background: var(--amber); border-radius: 2px; }
+.metro__stops::before { content: ""; position: absolute; left: 10px; top: 22px; bottom: 22px; width: 4px; background: var(--amber); border-radius: 2px; }
 .metro__stop { position: relative; display: flex; align-items: center; gap: 12px; min-height: 52px; }
-.metro__dot { position: absolute; left: -20px; width: 16px; height: 16px; border-radius: 50%; background: #0b1016; border: 3px solid var(--amber); }
+.metro__dot { position: absolute; left: -32px; width: 16px; height: 16px; border-radius: 50%; background: #0b1016; border: 3px solid var(--amber); }
 .metro__stop--here .metro__dot { background: var(--amber); box-shadow: 0 0 12px rgba(255, 191, 74, 0.7); }
 .metro__name { flex: 1; font-size: 18px; font-weight: 700; letter-spacing: 0.04em; }
 .metro__here { font-family: var(--font-mono); font-size: 13px; color: var(--amber); }
@@ -68,7 +68,7 @@
 .shop__capacity { display: inline-block; margin: 2px 0; font-family: var(--font-mono); font-size: 12px; color: #39ffd0; }
 
 /* ---- buffs, the dash, the disguise ---- */
-.buffs { position: absolute; left: 324px; bottom: 28px; display: flex; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.buffs { position: absolute; left: 212px; bottom: 112px; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .buff { position: relative; display: grid; grid-template-columns: auto auto; gap: 0 6px; align-items: center; padding: 4px 8px 6px; background: var(--panel); border-bottom: 2px solid var(--ok); font-size: 13px; }
 .buff__icon { grid-row: span 2; font-size: 18px; color: var(--ok); }
 .buff__name { font-weight: 700; }
@@ -77,7 +77,7 @@
 .buff--ending { animation: buff-blink 0.8s steps(2) infinite; }
 @keyframes buff-blink { 50% { opacity: 0.5; } }
 .reduce-flashes .buff--ending, .reduce-flashes .disguise--blown { animation: none; }
-.dash { position: absolute; right: 336px; bottom: 52px; display: flex; flex-direction: column; align-items: center; width: 52px; font-family: var(--font-mono); font-size: 11px; }
+.dash { position: absolute; right: 28px; bottom: 160px; display: flex; flex-direction: column; align-items: center; width: 52px; font-family: var(--font-mono); font-size: 11px; }
 .dash svg { width: 40px; height: 40px; transform: rotate(-90deg); }
 .dash__track { fill: var(--panel); stroke: rgba(255, 255, 255, 0.1); stroke-width: 3; }
 .dash__ring { fill: none; stroke: var(--ink-dim); stroke-width: 3; }
@@ -129,7 +129,7 @@
 .touch-mode .dash { display: none; }
 
 @media (max-height: 500px), (max-width: 760px) {
-  .buffs { left: 228px; bottom: 12px; }
+  .buffs { left: calc(max(16px, env(safe-area-inset-left, 0px)) + 132px); bottom: 76px; }
   .metro { padding: 12px 16px; }
   .metro__stop { min-height: 46px; }
 }

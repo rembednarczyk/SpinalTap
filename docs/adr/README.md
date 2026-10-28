@@ -34,5 +34,6 @@
 | [0030](0030-wizualia-fali-1.md) | Wizualia fali 1: paleta dystryktów, szyldy i holoreklamy z atlasu, post-process zdarzeń z limitem błysków, skaner | Zaakceptowana |
 | [0031](0031-rozbicie-god-objectow.md) | Audyt god objectów i docelowy podział: wąskie intencje UI, obszary stanu, kontrolery sesji, fasada renderera, strażnik w ESLint | Zaakceptowana |
 | [0032](0032-fala-2-kontrakty.md) | Kontrakty fali 2: metro, radio, przebrania, pojemność cyberware i zryw, buffy, warianty zleceń i haki, spotkania uliczne | Zaakceptowana |
+| [0035](0035-hud-fali-2.md) | App i UI fali 2: kontrolery metra, radia i dotyku, prezentery ciała, przebrań i haków, minimapa z zoomem i obszarami, łuk dotykowy | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.

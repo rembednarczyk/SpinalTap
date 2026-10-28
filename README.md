@@ -56,6 +56,18 @@ Telefon i tablet (wykrywane automatycznie, na komputerze można wymusić `?touch
 - Trafienia w głowę (×1,6), apteczki (+40 HP), karta postaci z cyberware, wspomnieniami i reputacją.
 - Zapis v3 z migracją starszych zapisów.
 
+## HUD fali 2
+
+Opis w [ADR-0035](docs/adr/0035-hud-fali-2.md).
+
+- Metro: przy kiosku biletowym mapa linii Kanjō z czterema stacjami i cenami; w drodze panel z linią, stacją docelową, postępem i napisami z ink.
+- Radio: B przełącza stacje (Neon Drift 88.1, Yoru FM 76.5, Tessen Info 24, wyłączone), wybór jest też w telefonie i zostaje w ustawieniach. Co jakiś czas toast z wstawką stacji.
+- Klinika pokazuje pojemność cyberware i koszt każdego implantu; montaż ponad limit jest zablokowany.
+- Ikony buffów z czasem, ikona zrywu (Alt) z odnowieniem, wskaźnik przebrania przy pasku zdrowia i ostrzeżenie o spalonej przykrywce.
+- Minimapa oddala się przy sprincie i zrywie, przy ruchu patrzy do przodu (strzałka w dolnej tercji), pokazuje tylko fixerów i przyjęte zlecenia, a cel jako obszar. W ustawieniach jest tryb bez znaczników i przełącznik podświetleń.
+- Tracker zlecenia pokazuje odkryte haki, karta podsumowania wariant zlecenia.
+- Dotyk: łuk akcji wokół przycisku ognia (przeładowanie, następna broń, skaner, zryw) i przycisk „Użyj” z opisem interakcji.
+
 ## Struktura
 
 ```
