@@ -11,6 +11,8 @@ import { EMPTY_LOOT, type LootState } from "../items/loot";
 import { EMPTY_STORY, type StoryState } from "../story/story";
 import { type GameClock, START_CLOCK } from "../time/game-clock";
 import type { Flags } from "./flags";
+import { type HeatState, NO_HEAT } from "../crime/rules";
+import { INITIAL_NETRUN, type NetrunState } from "../hacking/netrun";
 
 export interface Preferences {
   readonly cameraMode: CameraMode;
@@ -36,6 +38,10 @@ export interface DomainState {
   readonly story: StoryState;
   /** Time of day; the simulation advances it every step. Schedules and lighting follow it. */
   readonly clock: GameClock;
+  /** The district security's pursuit (ADR-0029). */
+  readonly heat: HeatState;
+  /** The cyberdeck: RAM and the upload in progress (ADR-0029). */
+  readonly netrun: NetrunState;
 }
 
 export const createDomainState = (): DomainState => ({
@@ -51,4 +57,6 @@ export const createDomainState = (): DomainState => ({
   ability: IDLE_ABILITY,
   story: EMPTY_STORY,
   clock: START_CLOCK,
+  heat: NO_HEAT,
+  netrun: INITIAL_NETRUN,
 });

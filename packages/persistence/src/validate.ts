@@ -1,5 +1,7 @@
 import {
   FACTIONS,
+  QUICKHACK_IDS,
+  isFactionId,
   isContractKind,
   isContractSiteId,
   SAVE_SCHEMA_VERSION,
@@ -28,6 +30,9 @@ export const findSchemaError = (s: Json): string | null => {
     if (!isObject(e) || typeof e.key !== "string" || !isVec(e.position)) return "entity shape";
     if (!isNum(e.yaw) || !isNum(e.pitch) || !isNum(e.cooldown) || typeof e.alerted !== "boolean") return `entity ${e.key}`;
     if (e.hp !== null && !isNum(e.hp)) return `entity ${e.key} hp`;
+    if ((e.lastKnown !== undefined && !isVec(e.lastKnown)) || (e.search !== undefined && !isNum(e.search)) || (e.lost !== undefined && !isNum(e.lost))) {
+      return `entity ${e.key} search`;
+    }
   }
   const st = s.streaming;
   if (!isObject(st) || !Array.isArray(st.loadedChunks) || !st.loadedChunks.every((c) => typeof c === "string")) return "streaming";
@@ -66,7 +71,11 @@ export const findSchemaError = (s: Json): string | null => {
       const n = active[field];
       if (n !== undefined && (!Number.isInteger(n) || (n as number) < 0)) return "contract progress";
     }
+    if (active.breach !== undefined && (!Array.isArray(active.breach) || !active.breach.every((x) => typeof x === "string"))) return "contract breach";
   }
+  if (contracts.tally !== undefined && contracts.tally !== null && findTallyError(contracts.tally)) return "contract tally";
+  const heatError = findHeatError(d.heat) ?? findNetrunError(d.netrun);
+  if (heatError) return heatError;
   if (!isObject(d.ability) || !isNum(d.ability.activeTime) || !isNum(d.ability.cooldown)) return "ability";
   const story = d.story;
   if (!isObject(story) || !isObject(story.choices)) return "story";
@@ -79,6 +88,32 @@ export const findSchemaError = (s: Json): string | null => {
   if (!isObject(clock) || !Number.isInteger(clock.seconds) || (clock.seconds as number) < 0) return "clock";
   if (!(s.narrative === null || typeof s.narrative === "string")) return "narrative";
   if (!isObject(s.meta) || typeof s.meta.label !== "string" || typeof s.meta.objective !== "string") return "meta";
+  return null;
+};
+
+/** The contract's debrief counters (ADR-0029). */
+const findTallyError = (t: unknown): string | null => {
+  if (!isObject(t) || !Number.isInteger(t.startTick) || (t.clearedTick !== undefined && !Number.isInteger(t.clearedTick))) return "tally";
+  if (!Number.isInteger(t.extraKills) || (t.extraKills as number) < 0) return "tally";
+  for (const flag of ["detected", "alarm", "damaged", "hacked", "bonusLost"] as const) if (typeof t[flag] !== "boolean") return "tally";
+  return null;
+};
+
+/** Heat (ADR-0029): level 0..3, the hunting faction, the search. */
+const findHeatError = (h: unknown): string | null => {
+  if (!isObject(h) || !Number.isInteger(h.level) || (h.level as number) < 0 || (h.level as number) > 3) return "heat";
+  if (!(h.faction === null || (typeof h.faction === "string" && isFactionId(h.faction)))) return "heat";
+  if (typeof h.searching !== "boolean" || !(h.lastKnown === null || isVec(h.lastKnown)) || !isNum(h.searchLeft) || !isNum(h.cooldown)) return "heat";
+  return null;
+};
+
+/** The cyberdeck (ADR-0029): RAM and the upload in progress. */
+const findNetrunError = (n: unknown): string | null => {
+  if (!isObject(n) || !isNum(n.ram) || n.ram < 0) return "netrun";
+  const u = n.upload;
+  if (u === null) return null;
+  if (!isObject(u) || typeof u.hackId !== "string" || !(QUICKHACK_IDS as readonly string[]).includes(u.hackId)) return "netrun upload";
+  if (typeof u.target !== "string" || !isNum(u.left) || !isNum(u.ram)) return "netrun upload";
   return null;
 };
 
