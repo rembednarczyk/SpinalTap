@@ -6,7 +6,7 @@ import { type DeviceDef, deviceView } from "../content/devices";
 import { SCHEDULES } from "../content/schedules";
 import { aabbFromCenter } from "./collision";
 import type { Combatant, Entity, MeleeState } from "./components";
-import { isEnforcer } from "./disguise";
+import { isEnforcer } from "./enforcer";
 
 const BODY = { radius: 0.38, height: 1.8 } as const;
 

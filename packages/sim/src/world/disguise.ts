@@ -1,4 +1,6 @@
 import { DISGUISE_FACTION, ZONE_ACCESS, contractKind, disguiseHolds, type EntityId, type FactionId } from "@seki/core";
+
+export { isEnforcer } from "./enforcer";
 import type { Device, Entity } from "./components";
 import type { SimContext } from "./context";
 import { noteDetected } from "./street";
@@ -7,29 +9,6 @@ import { noteDetected } from "./street";
  * Disguises in the world (ADR-0033): who is an enforcer, what gives the player away, and what
  * happens when someone sees through her. The rules and rates are in core (crime/disguise.ts).
  */
-
-/** FNV-1a of a string, for a fixed choice from a key. */
-const hashOf = (s: string): number => {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193) >>> 0;
-  return h;
-};
-
-/**
- * Does this enemy see through disguises? In a contract crew (keys `<contract>-g<n>`) the
- * Tessen shift boss is the first post (the office guard over the room) and every third Hebi
- * from the first is an enforcer. Anyone else: every third Hebi by its key (its id when it has
- * none), never a Tessen guard. Fixed by the key, so a loaded game marks the same people.
- */
-export const isEnforcer = (key: string, id: EntityId, faction: FactionId): boolean => {
-  if (faction !== "hebi" && faction !== "tessen") return false;
-  const post = /-g(\d+)$/.exec(key);
-  if (post) {
-    const n = Number(post[1]);
-    return faction === "tessen" ? n === 0 : n % 3 === 0;
-  }
-  return faction === "hebi" && hashOf(key || `#${id}`) % 3 === 0;
-};
 
 /** Is a camera's no-go zone in force right now (always, or during its kind of contract)? */
 export const zoneActive = (ctx: SimContext, zone: NonNullable<Device["restricted"]>): boolean => {
