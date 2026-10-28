@@ -13,8 +13,12 @@ export type ItemCategory = "weapon" | "ammo" | "consumable" | "garment" | "cyber
 
 export type WeaponId = "unity9" | "oni44" | "hebi_smg" | "raijin12" | "tessen_ar5" | "kagero_dmr" | "baton" | "shirasaya";
 export type AmmoId = "9mm" | "44" | "12g" | "556";
-/** Street food (ADR-0026) heals too, but only from the bag: quick use takes medical kit only. */
-export type ConsumableId = "medkit" | "bandage" | "ramen" | "yakitori";
+/**
+ * Street food (ADR-0026) heals too, but only from the bag: quick use takes medical kit only.
+ * Wave 2 (ADR-0033): synthetic coffee and a stim give buffs, a capacity shard grows the
+ * cyberware capacity for good.
+ */
+export type ConsumableId = "medkit" | "bandage" | "ramen" | "yakitori" | "synth_coffee" | "steady_stim" | "capacity_shard";
 export type JunkId = "scrap" | "weapon_parts" | "datachip";
 export type GarmentId =
   | "seki_jacket"
@@ -25,7 +29,9 @@ export type GarmentId =
   | "ballistic_vest"
   | "kevlar_pants"
   | "tessen_vest"
-  | "tessen_helmet";
+  | "tessen_helmet"
+  | "tessen_uniform"
+  | "tessen_overalls";
 export type ModId = "suppressor" | "holo_sight" | "extended_mag";
 
 /** Items without state of their own: counted per id. */

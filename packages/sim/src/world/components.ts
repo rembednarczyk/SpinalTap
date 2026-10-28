@@ -136,6 +136,11 @@ export interface GangerAi {
   lost?: number;
   /** It saw the player this step (read by the heat after the AI ran). Transient. */
   sees?: boolean;
+  /**
+   * Sees through disguises (ADR-0033): a Tessen shift boss, every third Hebi. Fixed at spawn
+   * from the key, so it needs no saving.
+   */
+  readonly enforcer?: true;
 }
 
 /**
@@ -352,6 +357,25 @@ export interface JumpState {
   buffer: number;
 }
 
+/**
+ * The player's perks in motion (ADR-0033): the dash and the guard's stamina for deflecting
+ * bullets. Transient like the jump timers: a loaded game starts rested, with the dash ready.
+ */
+export interface PerkState {
+  /** Seconds left of the dash burst. */
+  dash: number;
+  /** Direction of the burst on the ground plane (unit). */
+  dashDir: { x: number; z: number };
+  /** Seconds until the next dash. */
+  dashCooldown: number;
+  /** The one dash of this time in the air is used; resets on the ground. */
+  airDash: boolean;
+  /** Seconds left in which shots pass the player by. */
+  iframes: number;
+  /** 0..1; deflecting a bullet takes some, it comes back over time. */
+  stamina: number;
+}
+
 /** On a ladder (ADR-0021). Transient; a game saved on a ladder grabs it again on load. */
 export interface Climbing {
   readonly ladder: string;
@@ -389,6 +413,8 @@ export interface Entity {
   /** Seconds left of the slow walk after a hard landing (ADR-0021). Transient. */
   landing?: number;
   jump?: JumpState;
+  /** Dash and deflection (ADR-0033), the player only. */
+  perks?: PerkState;
   climb?: Climbing;
   /** Pulling up onto a ledge (mantle). Transient, not saved: a game saved mid-mantle loads on the ground below. */
   mantle?: Mantle;

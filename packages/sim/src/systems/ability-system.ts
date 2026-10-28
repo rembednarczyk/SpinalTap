@@ -1,4 +1,4 @@
-import { ABILITY_CATALOG, type AbilityDefinition, SCAN_TIME_SCALE, activate, enemyTimeScale, loadoutAbility, tickAbility } from "@seki/core";
+import { ABILITY_CATALOG, type AbilityDefinition, SCAN_TIME_SCALE, activate, cooldownRateOf, enemyTimeScale, loadoutAbility, tickAbility } from "@seki/core";
 import type { SimContext, System } from "../world/context";
 
 export const equippedAbility = (ctx: SimContext): AbilityDefinition | null => {
@@ -16,13 +16,13 @@ export const scanning = (ctx: SimContext): boolean => ctx.input.scan && !ctx.ses
 export const worldTimeScale = (ctx: SimContext): number =>
   Math.min(enemyTimeScale(ctx.state.domain.ability, equippedAbility(ctx)), scanning(ctx) ? SCAN_TIME_SCALE : 1);
 
-/** Ticks the active ability, ends it on time, and activates it on the input edge. */
+/** Ticks the active ability (the cooldown faster with the quick_cooldown buff, ADR-0033), ends it on time, and activates it on the input edge. */
 export const abilitySystem: System = {
   name: "ability",
   run(ctx) {
     const def = equippedAbility(ctx);
     const before = ctx.state.domain.ability;
-    let next = tickAbility(before, ctx.dt);
+    let next = tickAbility(before, ctx.dt, cooldownRateOf(ctx.state.domain.buffs));
     if (before.activeTime > 0 && next.activeTime <= 0) ctx.bus.emit("AbilityEnded", { abilityId: def?.id ?? "reflex_overdrive" });
     const blocked = ctx.session.dialogueActive || ctx.session.gameOver;
     if (ctx.input.ability && def && !blocked) {

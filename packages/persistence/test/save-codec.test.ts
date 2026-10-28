@@ -556,3 +556,40 @@ describe("heat, cyberdeck and debrief counters (v10 to v11, ADR-0029)", () => {
     expect(findSchemaError({ ...s, entities: [entity] } as unknown as Record<string, unknown>)).toBe("entity g search");
   });
 });
+
+describe("buffs, capacity shards and the disguise (v12 to v13, ADR-0033)", () => {
+  /** What v12 wrote: none of the wave 2 body state. */
+  const v12Payload = () => {
+    const s = snapshot();
+    const { buffs: _b, capacityShards: _c, disguise: _d, ...domain } = s.domain;
+    return { ...s, version: 12, domain };
+  };
+
+  it("adds no buffs, no shards and no disguise", () => {
+    const loaded = decodeSave("v12", wrap(v12Payload()));
+    expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
+    expect(loaded.domain.buffs).toEqual([]);
+    expect(loaded.domain.capacityShards).toBe(0);
+    expect(loaded.domain.disguise).toEqual({ role: null, blown: false });
+  });
+
+  it("tolerates a missing domain and keeps what is already there", () => {
+    expect(MIGRATIONS[12]!({ version: 12 })).toEqual({ version: 13, domain: { buffs: [], capacityShards: 0, disguise: { role: null, blown: false } } });
+    const kept = { buffs: [{ id: "regen", left: 3 }], capacityShards: 2, disguise: { role: "hebi", blown: true } };
+    expect(MIGRATIONS[12]!({ version: 12, domain: kept })).toMatchObject({ domain: kept });
+  });
+
+  it("validates buffs, shards and the disguise of a current save", () => {
+    const s = snapshot();
+    const body = { ...s, domain: { ...s.domain, buffs: [{ id: "regen", left: 40 }, { id: "steady", left: 2.5 }], capacityShards: 3, disguise: { role: "tessen_staff", blown: false } } } as const;
+    expect(decodeSave("b", encodeSave(body)).domain).toMatchObject({ capacityShards: 3, disguise: { role: "tessen_staff", blown: false } });
+    const bad = (domain: Record<string, unknown>) => findSchemaError({ ...s, domain: { ...s.domain, ...domain } } as unknown as Record<string, unknown>);
+    expect(bad({ buffs: [{ id: "speed", left: 3 }] })).toBe("buffs");
+    expect(bad({ buffs: [{ id: "regen", left: 0 }] })).toBe("buffs");
+    expect(bad({ buffs: [{ id: "regen", left: 3 }, { id: "regen", left: 4 }] })).toBe("buffs");
+    expect(bad({ capacityShards: -1 })).toBe("capacity shards");
+    expect(bad({ capacityShards: 1.5 })).toBe("capacity shards");
+    expect(bad({ disguise: { role: "ncpd", blown: false } })).toBe("disguise");
+    expect(bad({ disguise: { role: null } })).toBe("disguise");
+  });
+});

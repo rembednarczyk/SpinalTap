@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { DomainState } from "@seki/core";
+import type { DomainState, SaveSnapshot } from "@seki/core";
 import { Simulation, gangerEntity, runReplay, stateHash, type ReplayFrame } from "../src";
 import { input, run } from "./helpers";
 
@@ -43,7 +43,7 @@ describe("determinism", () => {
   });
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
-    expect(hashOf(runReplay(1234, script()))).toMatchInlineSnapshot(`"87733351"`);
+    expect(hashOf(runReplay(1234, script()))).toMatchInlineSnapshot(`"3b18f8a4"`);
   });
 
   it("without the street life of ADR-0026 in the snapshot, the run hashes as before it (content, not rules)", () => {
@@ -52,8 +52,10 @@ describe("determinism", () => {
     const snap = runReplay(1234, script()).snapshot(null, "test", "");
     const added = new Set(["hideo", "tetsu", "mei", "sachiko"]);
     const stash = /^(placed:)?stash:(s7|kanal)-/;
-    // The save fields of ADR-0034 (metro, encounters, schema v12) came later still: left out as well.
-    const { metro: _metro, encounters: _encounters, ...domain } = snap.domain;
+    // Wave 2 left the run alone and only added fields to the save: the metro and the encounters
+    // of ADR-0034 (v12), the buffs, the shards and the disguise of ADR-0033 (v13).
+    const { metro: _metro, encounters: _encounters, buffs, capacityShards, disguise, ...domain } = snap.domain;
+    expect({ buffs, capacityShards, disguise }).toEqual({ buffs: [], capacityShards: 0, disguise: { role: null, blown: false } });
     const before = {
       ...snap,
       version: 11,
@@ -63,10 +65,16 @@ describe("determinism", () => {
         flags: snap.domain.flags.filter((f) => !stash.test(f)),
         loot: { ...snap.domain.loot, containers: snap.domain.loot.containers.filter((c) => !stash.test(c.key)) },
       },
-    };
+    } as unknown as SaveSnapshot;
     expect(snap.entities.filter((e) => added.has(e.key))).toHaveLength(4);
-    // The hash of the same run with the rules of ADR-0029 (wave 1) and without this content.
-    expect(stateHash(before as unknown as typeof snap)).toBe("bef1026f");
+    // The hash of the same run with the rules of ADR-0029 (wave 1), without this content and the wave 2 fields.
+    expect(stateHash(before)).toBe("bef1026f");
+  });
+
+  it("without the v13 fields of ADR-0033 the replay hashes as with sim B of wave 2 (fields, not rules)", () => {
+    const snap = runReplay(1234, script()).snapshot(null, "test", "");
+    const { buffs: _b, capacityShards: _c, disguise: _d, ...domain } = snap.domain;
+    expect(stateHash({ ...snap, version: 12, domain } as unknown as SaveSnapshot)).toBe("87733351");
   });
 
   it("a loaded snapshot continues exactly like the original run", () => {
@@ -110,7 +118,7 @@ describe("determinism", () => {
     // Swings both ways, a blocked blow and staggers: the duel exercises the whole package.
     for (const t of ["MeleeSwing", "AttackBlocked", "Staggered", "DamageDealt"]) expect(seen).toContain(t);
     expect(hashOf(sim)).toBe(hashOf(duel().sim));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"76a39667"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"825838fe"`);
   });
 
   it("restores killed NPCs as absent", () => {

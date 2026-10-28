@@ -47,6 +47,9 @@ export const SHOPS: Readonly<Record<ShopId, ShopDefinition>> = {
     stock: [
       { kind: "stack", item: "medkit" },
       { kind: "stack", item: "bandage" },
+      // Wave 2 (ADR-0033): the steadying stim and, for the patient, a capacity shard.
+      { kind: "stack", item: "steady_stim" },
+      { kind: "stack", item: "capacity_shard" },
     ],
     buys: ["cyberware"],
     implants: true,
@@ -89,6 +92,7 @@ export const SHOPS: Readonly<Record<ShopId, ShopDefinition>> = {
     stock: [
       { kind: "stack", item: "ramen" },
       { kind: "stack", item: "yakitori" },
+      { kind: "stack", item: "synth_coffee" },
     ],
     buys: [],
     implants: false,

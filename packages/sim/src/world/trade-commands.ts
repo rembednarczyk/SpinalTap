@@ -22,6 +22,7 @@ import { oyajiStallOpen, yataiOpen } from "../content/schedules";
 import { deadFlag } from "../systems/death-system";
 import type { SimContext } from "./context";
 import { applyReputationCause, raiseProgress } from "./domain-ops";
+import { cyberCapacityOf } from "../systems/body-system";
 
 type TradeCommand = Extract<
   GameCommand,
@@ -86,7 +87,7 @@ const counterAt = (ctx: SimContext, domain: DomainState, shopId: ShopId, fail: C
 });
 
 const buyImplant = (ctx: SimContext, cmd: Command<"buy-cyberware">, { domain, terms, fail, charged }: Counter): void => {
-  const r = buyCyberware(domain.wallet, domain.character, cmd.cyberwareId, terms);
+  const r = buyCyberware(domain.wallet, domain.character, cmd.cyberwareId, terms, cyberCapacityOf(domain).max);
   if (!r.ok) return fail(r.reason);
   const stowed = r.replaced ? stowImplant(domain.inventory, domain.equipment, r.replaced) : { inventory: domain.inventory, item: null };
   ctx.state.domain = { ...domain, wallet: r.wallet, character: r.character, inventory: stowed.inventory };
@@ -98,7 +99,7 @@ const buyImplant = (ctx: SimContext, cmd: Command<"buy-cyberware">, { domain, te
 };
 
 const installImplantFromBag = (ctx: SimContext, cmd: Command<"install-cyberware-item">, { domain, terms, fail, charged }: Counter): void => {
-  const r = installCyberwareItem(domain.wallet, domain.character, domain.inventory, domain.equipment, cmd.uid, terms);
+  const r = installCyberwareItem(domain.wallet, domain.character, domain.inventory, domain.equipment, cmd.uid, terms, cyberCapacityOf(domain).max);
   if (!r.ok) return fail(r.reason);
   ctx.state.domain = { ...domain, wallet: r.wallet, character: r.character, inventory: r.inventory };
   charged(r.wallet, r.fee);

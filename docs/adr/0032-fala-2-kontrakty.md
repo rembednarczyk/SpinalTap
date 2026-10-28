@@ -99,3 +99,8 @@ Wszystkie są dopisaniem pól opcjonalnych albo nowych zdarzeń, bez zmiany istn
   - `ContractDebrief.variation?: ContractVariation`;
   - `Contract.variation?: ContractVariation` i `ContractLog.hooks?: readonly string[]` (znalezione haki);
   - `DomainState.metro` (przejazd w toku) i `DomainState.encounters` (rozegrane spotkania), zapis v12.
+- **Sim A ([ADR-0033](0033-fala-2-cialo-zryw-pojemnosc-buffy-przebrania.md)):**
+  - `ProjectileReflected` dostaje `to: Vec3` (dokąd poleciał odbity pocisk) i `hitEntity: EntityId | null` (kogo trafił); engine rysuje z tego smugę;
+  - `ViewDescriptor` wroga (`kind: "enemy"`) dostaje opcjonalne `enforcer?: boolean`: egzekutor widzi przez przebranie, HUD pokazuje nad nim ikonę;
+  - `PurchaseFailure` dostaje `"over-capacity"`: implant przekracza pojemność cyberware;
+  - `DomainState.buffs`, `capacityShards` i `disguise`, zapis v13.

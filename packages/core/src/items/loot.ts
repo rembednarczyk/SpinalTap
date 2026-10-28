@@ -81,6 +81,10 @@ const TESSEN_COMMON: readonly WeightedLootEntry[] = [
   { item: "tessen_ar5", weight: 4, qty: [1, 1], rarity: "roll" },
   { item: "kevlar_pants", weight: 3, qty: [1, 1], rarity: "roll" },
   { item: "tessen_vest", weight: 2, qty: [1, 1], rarity: "roll" },
+  // Disguises of the docks (ADR-0033): the guard's uniform off a guard, the staff's overalls from the stores.
+  { item: "tessen_uniform", weight: 4, qty: [1, 1], rarity: "common" },
+  { item: "tessen_overalls", weight: 2, qty: [1, 1], rarity: "common" },
+  { item: "capacity_shard", weight: 1, qty: [1, 1] },
   { item: "holo_sight", weight: 2, qty: [1, 1] },
   { item: "suppressor", weight: 1, qty: [1, 1] },
 ];
