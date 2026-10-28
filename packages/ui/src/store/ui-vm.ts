@@ -1,5 +1,6 @@
 import type { ItemCategory, ItemDefId, ItemRef, Rarity, WeaponSlot } from "@seki/core";
 import type { ColorblindMode, DamageNumbersMode } from "./hud-vm";
+import type { RadioStationId } from "./wave2-vm";
 
 // View models of the UI store: what the areas of `UiState` hold (ADR-0031).
 
@@ -26,7 +27,7 @@ export interface AbilityVm {
 
 export interface Toast {
   readonly id: number;
-  readonly kind: "quest" | "memory" | "money" | "reputation" | "system" | "cyberware" | "heat";
+  readonly kind: "quest" | "memory" | "money" | "reputation" | "system" | "cyberware" | "heat" | "radio";
   readonly title: string;
   readonly text: string;
 }
@@ -87,13 +88,16 @@ export interface MapVm {
   readonly water?: readonly MapRectVm[];
 }
 
-export type MapMarkerKind = "fixer" | "ripperdoc" | "vendor" | "target";
+/** "enforcer": someone who sees through the player's disguise (ADR-0032). */
+export type MapMarkerKind = "fixer" | "ripperdoc" | "vendor" | "target" | "enforcer";
 
 export interface MapMarkerVm {
   readonly id: string;
   readonly kind: MapMarkerKind;
   readonly x: number;
   readonly z: number;
+  /** A target shown as an area around (x, z) instead of a point, metres (ADR-0035). */
+  readonly radius?: number;
 }
 
 export interface MapPlayerVm {
@@ -103,6 +107,8 @@ export interface MapPlayerVm {
   readonly yaw: number;
   /** Height above the street in whole metres while the player is up on a level (ADR-0021); absent on the street. */
   readonly level?: number;
+  /** Moving: the minimap looks ahead, with the arrow in the lower third (ADR-0035). */
+  readonly moving?: boolean;
 }
 
 export interface WeaponSlotVm {
@@ -231,6 +237,13 @@ export interface SettingsVm {
   readonly untimedBreach: boolean;
   /** Colour tokens for colour vision deficiencies (each token has an icon as well). */
   readonly colorblind: ColorblindMode;
+  // Wave 2 (ADR-0035).
+  /** Radio station playing, null when off. */
+  readonly radioStation: RadioStationId | null;
+  /** Objective and fixer markers on the minimap; off is the no-markers mode. */
+  readonly mapMarkers: boolean;
+  /** Outlines of interactive objects in the world; the engine reads it. */
+  readonly highlights: boolean;
 }
 
 /** Vertical field of view of the camera by default, degrees (shown rounded; it is 1.08 rad). */
@@ -259,6 +272,9 @@ export const DEFAULT_SETTINGS: SettingsVm = {
   reduceFlashes: false,
   untimedBreach: false,
   colorblind: "off",
+  radioStation: null,
+  mapMarkers: true,
+  highlights: true,
 };
 
 /** A first-run hint: the keys (as labels) and the action, e.g. ["W", "A", "S", "D"] "ruch". */

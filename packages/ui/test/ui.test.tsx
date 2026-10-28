@@ -46,6 +46,11 @@ const intents = (): UiIntents => ({
   setScan: vi.fn(),
   pickQuickhack: vi.fn(),
   submitBreach: vi.fn(),
+  travelMetro: vi.fn(),
+  closeMetro: vi.fn(),
+  setRadioStation: vi.fn(),
+  nextRadioStation: vi.fn(),
+  touchDash: vi.fn(),
 });
 
 const mount = (state: Partial<UiState> = {}) => {

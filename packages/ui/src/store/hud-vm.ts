@@ -1,3 +1,4 @@
+import type { ContractVariationVm } from "./wave2-vm";
 import type { AwarenessState, BreachDaemonId, ContractBadge, ContractRank, HackTargetKind, HeatLevel, PhonePriority, QuickhackId } from "@seki/core";
 
 /**
@@ -72,6 +73,8 @@ export interface ContractDebriefVm {
   readonly bonus: number;
   readonly styleBonus: number;
   readonly seconds: number;
+  /** The contract's variation when the simulation reports one (ADR-0032). */
+  readonly variation?: ContractVariationVm;
 }
 
 /** The running contract's optional condition, next to the objective. */

@@ -1,5 +1,5 @@
-import type { BreachDaemonId, CyberwareId, CyberwareSlot, EquipSlot, ItemRef, ModSlot, QuickhackSlotInput, ShopItemId } from "@seki/core";
-import type { CharacterTab, SettingsVm } from "./store/ui-store";
+import type { BreachDaemonId, CyberwareId, CyberwareSlot, EquipSlot, ItemRef, MetroStationId, ModSlot, QuickhackSlotInput, ShopItemId } from "@seki/core";
+import type { CharacterTab, RadioStationId, SettingsVm } from "./store/ui-store";
 
 /** Where the 3D preview of the character screen is drawn, in CSS pixels of the page. */
 export interface PreviewRect {
@@ -114,4 +114,38 @@ export interface HackIntents {
  * Everything the UI can ask the game to do, as the sum of the narrow interfaces above.
  * Implemented by the app composition root; components take only their part (ADR-0031).
  */
-export type UiIntents = SessionIntents & DialogueIntents & ShopIntents & LootIntents & CharacterIntents & SettingsIntents & PhoneIntents & ContractIntents & HackIntents;
+export type UiIntents = SessionIntents &
+  DialogueIntents &
+  ShopIntents &
+  LootIntents &
+  CharacterIntents &
+  SettingsIntents &
+  PhoneIntents &
+  ContractIntents &
+  HackIntents &
+  MetroIntents &
+  RadioIntents &
+  TouchIntents;
+
+// ---- Wave 2 (ADR-0035) ----
+
+/** The metro: the line map at the ticket kiosk. */
+export interface MetroIntents {
+  /** Buys a ticket at this platform and rides to `to` (the `travel-metro` command). */
+  travelMetro(to: MetroStationId): void;
+  /** Leaves the kiosk without a ticket. */
+  closeMetro(): void;
+}
+
+/** The radio (B, or the phone): three stations and off. */
+export interface RadioIntents {
+  setRadioStation(id: RadioStationId | null): void;
+  /** The next station in the list, then off, then the first again. */
+  nextRadioStation(): void;
+}
+
+/** Touch-only actions that the virtual pad does not carry yet. */
+export interface TouchIntents {
+  /** The dash button of the action arc: one dash on the next step. */
+  touchDash(): void;
+}

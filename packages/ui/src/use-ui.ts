@@ -6,7 +6,10 @@ import type {
   DialogueIntents,
   HackIntents,
   LootIntents,
+  MetroIntents,
   PhoneIntents,
+  RadioIntents,
+  TouchIntents,
   SessionIntents,
   SettingsIntents,
   ShopIntents,
@@ -36,3 +39,6 @@ export const useSettingsIntents = (): SettingsIntents => useUiContext().intents;
 export const usePhoneIntents = (): PhoneIntents => useUiContext().intents;
 export const useContractIntents = (): ContractIntents => useUiContext().intents;
 export const useHackIntents = (): HackIntents => useUiContext().intents;
+export const useMetroIntents = (): MetroIntents => useUiContext().intents;
+export const useRadioIntents = (): RadioIntents => useUiContext().intents;
+export const useTouchIntents = (): TouchIntents => useUiContext().intents;
