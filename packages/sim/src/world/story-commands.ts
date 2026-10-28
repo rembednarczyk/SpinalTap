@@ -91,3 +91,10 @@ export const applyResolveEnding = (ctx: SimContext, cmd: Command<"resolve-ending
   raiseFlag(ctx, endingFlag(ending));
   ctx.bus.emit("EndingReached", { act: 1, endingId: ending, title: ENDINGS[ending].title });
 };
+
+/** The journal entry the HUD follows; null (or an empty id) hands the choice back to the game. */
+export const trackQuest = (ctx: SimContext, cmd: Command<"track-quest">): void => {
+  const { trackedQuest: _old, ...rest } = ctx.state.domain.preferences;
+  const preferences = cmd.questId ? { ...rest, trackedQuest: cmd.questId } : rest;
+  ctx.state.domain = { ...ctx.state.domain, preferences };
+};

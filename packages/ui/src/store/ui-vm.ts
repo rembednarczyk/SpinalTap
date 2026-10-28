@@ -43,6 +43,10 @@ export interface JournalQuestVm {
   readonly status: "active" | "completed";
   /** Steps reached so far, in order; the current one is the last with `done: false`. */
   readonly steps: readonly JournalStepVm[];
+  /** The HUD follows this entry now. */
+  readonly tracked?: boolean;
+  /** The player chose it (as opposed to the game picking it). */
+  readonly pinned?: boolean;
 }
 
 export interface JournalMemoryVm {

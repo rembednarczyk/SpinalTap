@@ -580,7 +580,16 @@ kbd {
 .journal__quest--main { border-color: var(--magenta); }
 .journal__quest--contract { border-color: var(--amber); }
 .journal__memory { border-color: var(--magenta); }
-.journal__kind { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-dim); }
+.journal__kind { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-dim); display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.journal__quest--tracked { background: linear-gradient(90deg, rgba(95, 242, 255, 0.08), transparent 60%); }
+.journal__track {
+  font: inherit; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
+  min-height: 32px; padding: 4px 10px; cursor: pointer;
+  color: var(--cyan); background: transparent; border: 1px solid var(--panel-edge);
+}
+.journal__track:hover, .journal__track:focus-visible { border-color: var(--cyan); }
+.journal__track--auto { color: var(--ink-dim); }
+.journal__track--on { color: #04070c; background: var(--cyan); border-color: var(--cyan); }
 .journal__title { font-weight: 700; letter-spacing: 0.05em; }
 .journal__steps { margin: 4px 0 0; padding-left: 18px; font-size: 14px; }
 .journal__step { margin: 2px 0; }

@@ -54,6 +54,7 @@ export const findSchemaError = (s: Json): string | null => {
   }
   if (!Array.isArray(d.flags) || !d.flags.every((f) => typeof f === "string")) return "flags";
   if (!isObject(d.preferences) || (d.preferences.cameraMode !== "FPP" && d.preferences.cameraMode !== "TPP")) return "preferences";
+  if (d.preferences.trackedQuest !== undefined && typeof d.preferences.trackedQuest !== "string") return "preferences";
   const itemsError = findItemsError(d);
   if (itemsError) return itemsError;
   const contracts = d.contracts;
