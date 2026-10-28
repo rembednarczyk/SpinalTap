@@ -13,6 +13,7 @@ import { Atmosphere, createSplashes, createSteam } from "./atmosphere";
 import { CityKit } from "./city-kit";
 import { type DressBlock, isWalkedRoof } from "./dressing-plan";
 import { WorldDressing } from "./dressing";
+import { FarCity } from "./far-city";
 import {
   type CharacterRig,
   animateRig,
@@ -116,6 +117,8 @@ export class BabylonRenderer implements RenderPort {
   private city: CityKit | null = null;
   /** Procedural dressing of every streamed-in chunk (ADR-0027). */
   readonly dressing: WorldDressing;
+  /** Stand-ins, tower rings and megabuildings beyond the streets (ADR-0027). */
+  readonly farCity: FarCity;
   /** Blocks in view, for the walked-roof test (ADR-0027, C8). */
   private readonly blocks = new Map<EntityId, DressBlock>();
   private readonly pendingSkins = new Map<EntityId, PendingSkin>();
@@ -148,6 +151,7 @@ export class BabylonRenderer implements RenderPort {
     if (this.lineArt) this.lineArt.geometryBuffer.renderTransparentMeshes = false;
     this.speedLines = new SpeedLines(scene, this.rig.camera);
     this.atmosphere = new Atmosphere(scene, NIGHT_RIG);
+    this.farCity = new FarCity(scene, NIGHT_RIG);
     // Without a kit the dressing goes in with the first chunk; with one, once it is known whether it loaded.
     this.dressing = new WorldDressing(scene, this.materials, options.cityKit ? "pending" : "bare", {
       built: (m) => this.shadow.addStaticCaster(m),
@@ -441,6 +445,7 @@ export class BabylonRenderer implements RenderPort {
         const rig = rigForDaylight(effect.daylight);
         this.materials.setRig(rig);
         this.atmosphere.setDaylight(rig, effect.daylight);
+        this.farCity.setDaylight(rig, effect.daylight);
         this.materials.get("dressing").setFloat("selfLit", 1 - 0.5 * Math.max(0, Math.min(1, effect.daylight)));
         this.daylight = effect.daylight;
         this.city?.setDaylight(effect.daylight);
@@ -452,7 +457,7 @@ export class BabylonRenderer implements RenderPort {
   /** Per-frame presentation update: animation, camera, VFX, rain. Call before scene.render(). */
   frame(dt: number): void {
     this.city?.flush();
-    this.dressing.flush();
+    if (this.dressing.flush()) this.farCity.setResident(this.dressing.residentChunks());
     for (const e of this.entities.values()) {
       if (e.kind === "character") {
         const t = e.transform;
@@ -495,6 +500,7 @@ export class BabylonRenderer implements RenderPort {
       if (this.flash.life <= 0) this.flash = null;
     }
     this.atmosphere.update(dt, this.stage.options.reference);
+    this.farCity.update(dt, this.rig.camera.position, this.stage.options.reference);
     this.grading.update(dt);
     this.speedLines.update(dt);
     this.rain?.follow(this.rig.camera.position);
