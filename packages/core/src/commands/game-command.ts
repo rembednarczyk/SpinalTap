@@ -60,6 +60,8 @@ export type GameCommand =
   // Hacking (ADR-0028).
   /**
    * The result of the terminal minigame (or its auto-solve, which wins fewer daemons). The UI
-   * plays the puzzle; the simulation only applies what was won.
+   * plays the puzzle; the simulation only applies what was won. Disconnecting sends what was
+   * won so far (possibly nothing); a breach cut short by damage sends nothing and the terminal
+   * can be breached again.
    */
   | { readonly type: "breach-result"; readonly terminalKey: string; readonly daemons: readonly BreachDaemonId[] };

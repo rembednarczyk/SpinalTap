@@ -63,7 +63,7 @@ export const deathSystem: System = {
       // A death the player did not cause (Hebi shooting Oyaji) is not held against them.
       if (e.faction && (e.lastHitBy === undefined || e.lastHitBy === playerId)) applyReputationCause(ctx, { type: "member-killed", faction: e.faction });
       dropEnemyLoot(ctx, e);
-      ctx.bus.emit("EntityKilled", { entityId: e.id, tag: e.tag ?? null });
+      ctx.bus.emit("EntityKilled", { entityId: e.id, tag: e.tag ?? null, ...(e.lastHitBy === undefined ? {} : { killerId: e.lastHitBy }) });
       ctx.world.remove(e);
     }
     if (dead.length > 0) checkContractCleared(ctx);

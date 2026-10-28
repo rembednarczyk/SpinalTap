@@ -92,3 +92,10 @@ Tylko dopisania: nowe pola opcjonalne i doprecyzowania. Nic nie zmieniło znacze
   - `ContractCompleted.reward` zostaje nagrodą bazową. Całą wypłatę (nagroda, bonus, styl) niesie `EddiesChanged.delta`, a podział `ContractDebrief`.
   - `AwarenessChanged` wysyłają też kamery (`observerId` to kamera).
   - Dane w domenie: `DomainState.heat` (`HeatState`) i `DomainState.netrun` (`NetrunState`), `ContractLog.tally?` (`ContractTally`) i `Contract.breach?` (demony wygrane na terminalu), w `EntitySnapshot` opcjonalne `lastKnown`, `search`, `lost`. Schemat zapisu 11.
+- **Po HUD fali 1 (propozycje z implementacji UI):**
+  - `quickhacksFor(kind)` i `MAX_QUICKHACK_SLOTS` w `core/hacking`: jedna lista hacków dla celu, wspólna dla sim i HUD.
+  - `ScanFocusChanged` dostaje opcjonalne `kind`, `name` i `faction`, żeby HUD nie zgadywał rodzaju celu.
+  - `EntityKilled.killerId`, opcjonalne: znacznik zabójstwa i liczniki odznak.
+  - Nowe zdarzenie `BreachStarted { terminalKey, daemons }`: symulacja otwiera minigrę na terminalu. „Odłącz” wysyła zdobyte do tej pory demony (także pustą listę). Przerwanie przez obrażenia nie wysyła nic i terminal można złamać ponownie.
+  - `RenderPort.setReduceFlashes?(on)`: opcja dostępności dla engine.
+  - `HeatChanged.searchLeft` zostaje migawką: HUD odlicza sam od ostatniego zdarzenia.

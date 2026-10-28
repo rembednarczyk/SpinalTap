@@ -52,7 +52,7 @@ import { applyTradeCommand, isTradeCommand } from "./world/trade-commands";
 import { syncPlayerWeapon } from "./world/player-weapon";
 import { inCreationOrder } from "./world/ordering";
 import { placeOnSchedule } from "./world/schedule";
-import { giverOfContract, hackFxOf, noteHacked, phoneFromFixer } from "./world/street";
+import { BREACH_DAEMONS, giverOfContract, hackFxOf, noteHacked, phoneFromFixer } from "./world/street";
 import { DOKI_TERMINAL_SPOTS } from "./content/district-doki";
 import { HACK_RANGE } from "./systems/contract-system";
 
@@ -60,7 +60,7 @@ import { HACK_RANGE } from "./systems/contract-system";
 export const BREACH_ICEPICK_SECONDS = 10;
 export const BREACH_DATAMINE_EDDIES = 80;
 export const BREACH_MARK_SECONDS = 20;
-const BREACH_DAEMONS: readonly BreachDaemonId[] = ["icepick", "datamine", "mass_vulnerability"];
+
 
 export const SIM_HZ = 60;
 

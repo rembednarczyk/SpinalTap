@@ -51,8 +51,8 @@ Ograniczenia jak zawsze: determinizm (bez `Math.random` i zegara ściennego, los
 
 ## Decyzja: skaner, RAM i quickhacki
 - Przytrzymany `scan` (poza dialogiem i po śmierci nie działa) zwalnia świat do `SCAN_TIME_SCALE` = 0,6 przez `worldTimeScale`. Z przeciążeniem odruchów wygrywa wolniejsze (0,3).
-- Fokus: rzecz do zeskanowania (człowiek z AI, snajper, przechodzień, eskorta, kamera, urządzenie) najbliżej środka widoku, do `SCAN_RANGE` = 25 m i `SCAN_CONE` = 0,3 rad, z czystą linią. Remis: bliższy, potem kolejność tworzenia. `ScanFocusChanged` przy zmianie.
-- `quickhack` n uploaduje n-ty hack z listy rodzaju celu (`hacksFor`: kolejność `QUICKHACK_IDS` po filtrze `targets`). Człowiek: ping, restart optyki, paraliż, zwarcie. Kamera: ping, restart optyki. Urządzenie: ping, rozproszenie, zwarcie. Za krótka lista nic nie robi.
+- Fokus: rzecz do zeskanowania (człowiek z AI, snajper, przechodzień, eskorta, kamera, urządzenie) najbliżej środka widoku, do `SCAN_RANGE` = 25 m i `SCAN_CONE` = 0,3 rad, z czystą linią. Remis: bliższy, potem kolejność tworzenia. `ScanFocusChanged` przy zmianie, z `kind` (rodzaj celu), `name` (kamera, automat, głośnik, neon; u wroga nazwa jego strony, np. „Ochrona Tessen”; u reszty „Przechodzień”) i `faction`.
+- `quickhack` n uploaduje n-ty hack z listy rodzaju celu (`quickhacksFor` z `core`, ta sama lista co w HUD: kolejność `QUICKHACK_IDS` po filtrze `targets`). Człowiek: ping, restart optyki, paraliż, zwarcie. Kamera: ping, restart optyki. Urządzenie: ping, rozproszenie, zwarcie. Za krótka lista nic nie robi.
 - RAM płatny na starcie (`QuickhackStarted`). Odmowa: `busy` (trwa inny upload), `no-ram`, `wrong-target` (urządzenie po zwarciu). Upload liczy czas gracza i wymaga, żeby cel był w fokusie co krok. Utrata fokusu kończy go `lost-target` i zwraca połowę RAM.
 - RAM: `BASE_RAM` = 8, regeneracja 0,5/s, gdy nic się nie uploaduje i gracz nie walczy (ostrzał w ostatnich 3 s albo zaalarmowany wróg w promieniu `COMBAT_RADIUS` = 40 m). `RamChanged` przy zmianie liczby całkowitej.
 - `DomainState.netrun` (RAM i upload z celem jako kluczem bytu albo `#id`) wchodzi do zapisu. Wczytana gra kończy upload tak samo (test). Efekty na bytach (`hackFx`: `pinged`, `blind`, `crippled`; liczniki urządzeń) są przejściowe i biegną w czasie świata.
@@ -70,10 +70,11 @@ Ograniczenia jak zawsze: determinizm (bez `Math.random` i zegara ściennego, los
 - Rozmieszczenie:
   - Doki: kamera w biurze Tessen (strefa: wnętrze biura w trakcie infiltracji, stół z danymi poza stożkiem, drzwi w stożku), kamera nad drzwiami biura na nabrzeże, kamera na placu przy schodach magazynu, automat z napojami pod ścianą biura, głośnik na placu;
   - targ: kamera Hebi na ścianie przy skrytce (strefa: skrytka w trakcie odzyskania), neon i głośnik przy skrytce.
-- **Breach Protocol** na terminalu włamania w Dokach: `breach-result` działa tylko dla terminala trwającego zlecenia `hack`, po starcie włamania, z Seki w zasięgu terminala (4 m), raz na zlecenie. Demony:
+- **Breach Protocol** na terminalu włamania w Dokach: klawisz interakcji na terminalu trwającego zlecenia `hack` wysyła `BreachStarted` z trzema demonami (przy pierwszym naciśnięciu startuje też włamanie), dopóki breach nie zostanie rozliczony; przerwany obrażeniami można więc otworzyć znowu. `breach-result` działa tylko dla terminala trwającego zlecenia `hack`, po starcie włamania, z Seki w zasięgu terminala (4 m), raz na zlecenie. Demony:
   - ICEpick skraca włamanie o `BREACH_ICEPICK_SECONDS` = 10 s i obniża koszt quickhacków o 1 RAM (najmniej 1) do końca zlecenia;
   - Datamine daje `BREACH_DATAMINE_EDDIES` = 80 €$ (`EddiesChanged` ze źródłem `loot`);
   - Mass Vulnerability oznacza ludzi zlecenia (`pinged`) na `BREACH_MARK_SECONDS` = 20 s.
+  - Pusta lista („Odłącz” bez demonów) też rozlicza breach.
   - Wynik idzie jako `BreachCompleted` z demonami w stałej kolejności, bez powtórzeń, i zapisuje się w zleceniu (`breach`).
 
 ## Decyzja: warunek bonusowy, odznaki, debrief, telefon
@@ -92,7 +93,7 @@ Ograniczenia jak zawsze: determinizm (bez `Math.random` i zegara ściennego, los
 - Liczniki (`ContractTally`) są w `domain.contracts.tally`, obok zlecenia, a nie w nim: samo zlecenie i zdarzenia, które je niosą, zostają takie, jak je przyjęto. Przyjęcie zaczyna je od zera, wypłata i porażka je usuwają, nowa gra ich nie ma.
   - `detected`: wróg zaalarmowany widzi gracza, snajper zaczyna celować, kamera go łapie, upload namierzony;
   - `alarm`: zgłoszone przestępstwo albo alarm kamery (druga faza zlecenia, czyli zasadzka eskorty i fala włamania, się nie liczy);
-  - `extraKills`: zabici przez gracza spoza celów zlecenia;
+  - `extraKills`: zabici przez gracza spoza celów zlecenia (`EntityKilled.killerId` niesie zabójcę, gdy jest znany);
   - `damaged`: spadek zdrowia gracza między krokami (także upadek);
   - `hacked`: quickhack albo breach;
   - czas od przyjęcia do wykonania zadania (`clearedTick`).

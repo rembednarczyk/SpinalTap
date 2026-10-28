@@ -128,7 +128,7 @@ export const bindEventPresenter = (bus: EventBus<DomainEvents>, render: RenderPo
         patchUi(ui, { hurtFlash: ui.getState().hurtFlash + 1 });
         audio.play("hurt");
       } else if (isPlayer(e.sourceId)) {
-        patchUi(ui, { hitMarker: ui.getState().hitMarker + 1, hitZone: e.zone });
+        patchUi(ui, { hitMarker: ui.getState().hitMarker + 1, hitZone: e.zone, hitKind: e.critical ? "crit" : "hit" });
         audio.play(e.critical || e.zone === "head" ? "critical" : "hit");
       }
     }),

@@ -76,7 +76,7 @@ describe("the scanner (ADR-0029)", () => {
     const focus = collect<DomainEvents["ScanFocusChanged"]>(sim, "ScanFocusChanged");
     lookAt(sim, chest(g));
     sim.step(input({ scan: true }));
-    expect(focus).toEqual([{ targetId: g.id }]);
+    expect(focus).toEqual([{ targetId: g.id, kind: "person", name: "Ochrona Tessen", faction: "tessen" }]);
     const ctx = { input: input({ scan: true }), session: sim.session, state: { domain: sim.domain } } as never;
     expect(worldTimeScale(ctx)).toBeCloseTo(0.6);
     sim.step();
@@ -384,12 +384,15 @@ describe("Breach Protocol on the docks terminal (ADR-0029)", () => {
     const c = take(sim, "hack");
     const t = DOKI_TERMINAL_SPOTS.quay_terminal!;
     const breach = collect<DomainEvents["BreachCompleted"]>(sim, "BreachCompleted");
+    const opened = collect<DomainEvents["BreachStarted"]>(sim, "BreachStarted");
     // Not before the hack has started.
     sim.enqueue({ type: "breach-result", terminalKey: contractTerminalKey(c.id), daemons: ["icepick"] });
     sim.step();
     expect(breach).toHaveLength(0);
     teleportPlayer(sim, at(t.x, t.z - 1.4), 0);
     sim.step(input({ interact: true }));
+    // The key opens the network for the HUD's minigame.
+    expect(opened).toEqual([{ terminalKey: contractTerminalKey(c.id), daemons: ["icepick", "datamine", "mass_vulnerability"] }]);
     const progress = sim.domain.contracts.active!.progress!;
     const eddies = sim.domain.wallet.eddies;
     sim.enqueue({ type: "breach-result", terminalKey: contractTerminalKey(c.id), daemons: ["datamine", "icepick", "icepick"] });
@@ -398,10 +401,12 @@ describe("Breach Protocol on the docks terminal (ADR-0029)", () => {
     expect(sim.domain.contracts.active!.progress).toBe(progress + 1 + BREACH_ICEPICK_SECONDS * SIM_HZ);
     expect(sim.domain.wallet.eddies).toBe(eddies + BREACH_DATAMINE_EDDIES);
     expect(sim.domain.contracts.tally?.hacked).toBe(true);
-    // Once per job.
+    // Once per job: the terminal does not open again either.
     sim.enqueue({ type: "breach-result", terminalKey: contractTerminalKey(c.id), daemons: ["datamine"] });
     sim.step();
     expect(breach).toHaveLength(1);
+    sim.step(input({ interact: true }));
+    expect(opened).toHaveLength(1);
     // ICEpick: a quickhack costs one RAM less while the job runs.
     const guard = gangerEntity(90030, { key: "near", position: at(t.x + 4, t.z - 1.4), yaw: 0 }, null, 110, "doki-quay", undefined, "tessen_guard");
     sim.world.add(guard);
@@ -409,5 +414,38 @@ describe("Breach Protocol on the docks terminal (ADR-0029)", () => {
     lookAt(sim, chest(guard));
     sim.step(input({ scan: true, quickhack: 1 }));
     expect(sim.domain.netrun.upload?.ram).toBe(QUICKHACKS.ping.ram - 1);
+  });
+});
+
+describe("breach without daemons and kill markers (ADR-0028 contract changes)", () => {
+  it("disconnecting with nothing won closes the breach; a cut-short one can be opened again", () => {
+    const sim = Simulation.create({ seed: 42 });
+    teleportPlayer(sim, at(GENZO_SPOT.x + 0.4, GENZO_SPOT.z - 2), 0);
+    sim.step();
+    tough(sim);
+    const c = take(sim, "hack");
+    const t = DOKI_TERMINAL_SPOTS.quay_terminal!;
+    const opened = collect<DomainEvents["BreachStarted"]>(sim, "BreachStarted");
+    const breach = collect<DomainEvents["BreachCompleted"]>(sim, "BreachCompleted");
+    teleportPlayer(sim, at(t.x, t.z - 1.4), 0);
+    sim.step(input({ interact: true }));
+    // Cut short by damage: the HUD sends nothing, the key opens the network again.
+    sim.step(input({ interact: true }));
+    expect(opened).toHaveLength(2);
+    sim.enqueue({ type: "breach-result", terminalKey: contractTerminalKey(c.id), daemons: [] });
+    sim.step();
+    expect(breach).toEqual([{ terminalKey: contractTerminalKey(c.id), daemons: [] }]);
+    expect(sim.domain.contracts.active?.breach).toEqual([]);
+  });
+
+  it("EntityKilled names the killer when it is known", () => {
+    const sim = Simulation.create({ seed: 43 });
+    const killed = collect<DomainEvents["EntityKilled"]>(sim, "EntityKilled");
+    const g = gangerEntity(90040, { key: "victim", position: at(3, -20), yaw: 0 }, null, 1, "shinsekai-7");
+    sim.world.add(g);
+    g.lastHitBy = sim.player()!.id;
+    g.health = { current: 0, max: 1 };
+    sim.step();
+    expect(killed).toEqual([{ entityId: g.id, tag: null, killerId: sim.player()!.id }]);
   });
 });

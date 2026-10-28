@@ -9,7 +9,7 @@ import type { Contract, ContractFailure } from "../contracts/contracts";
 import type { ActTwoEndingId, EndingId, StoryChoiceId, StoryOption } from "../story/story";
 import type { ConsumableId, EquipSlot, ItemDefId, ItemRef, LootLine, ModSlot, Rarity, WeaponId, WeaponSlot } from "../items/types";
 import type { GameClock } from "../time/game-clock";
-import type { BreachDaemonId, QuickhackFailure, QuickhackId } from "../hacking/quickhacks";
+import type { BreachDaemonId, HackTargetKind, QuickhackFailure, QuickhackId } from "../hacking/quickhacks";
 import type { CrimeKind, CrowdState, DisturbanceKind, HeatLevel, WitnessChannel } from "../crime/heat";
 import type { BonusCondition, ContractBadge, ContractRank } from "../contracts/debrief";
 
@@ -19,7 +19,8 @@ export interface DomainEvents {
   WeaponToggled: { entityId: EntityId; drawn: boolean };
   /** `zone` is the body part the shot landed on (ADR-0016). */
   DamageDealt: { sourceId: EntityId; targetId: EntityId; amount: number; critical: boolean; zone: HitZone; at: Vec3 };
-  EntityKilled: { entityId: EntityId; tag: string | null };
+  /** `killerId`: whoever dealt the last blow, when known (ADR-0028: kill markers, debrief). */
+  EntityKilled: { entityId: EntityId; tag: string | null; killerId?: EntityId };
   PlayerDied: { entityId: EntityId };
   InteractionFocusChanged: { targetId: EntityId | null; prompt: string | null };
   /**
@@ -138,7 +139,9 @@ export interface DomainEvents {
   AwarenessChanged: { observerId: EntityId; state: AwarenessState; level: number; lastKnown: Vec3 | null };
   // Scanner and quickhacks (ADR-0028).
   /** The scanner focused something that can be scanned (null: nothing). */
-  ScanFocusChanged: { targetId: EntityId | null };
+  ScanFocusChanged: { targetId: EntityId | null; kind?: HackTargetKind; name?: string; faction?: FactionId | null };
+  /** A terminal opened its network: the UI starts the minigame for these daemons. */
+  BreachStarted: { terminalKey: string; daemons: readonly BreachDaemonId[] };
   QuickhackStarted: { hackId: QuickhackId; targetId: EntityId; upload: number; ram: number };
   QuickhackApplied: { hackId: QuickhackId; targetId: EntityId; duration: number };
   QuickhackFailed: { hackId: QuickhackId; targetId: EntityId; reason: QuickhackFailure };

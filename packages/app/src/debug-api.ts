@@ -1,4 +1,4 @@
-import { type DomainState, EMPTY_INPUT, type InputFrame, formatClock } from "@seki/core";
+import { type BreachDaemonId, type DomainEvents, type DomainState, EMPTY_INPUT, type InputFrame, formatClock } from "@seki/core";
 import type { PerfSample, PreviewState } from "@seki/engine";
 import type { FixedStepLoop } from "@seki/sim";
 import type { UiStore } from "@seki/ui";
@@ -47,6 +47,13 @@ export interface DebugApi {
   cameraY(): number;
   /** What the character menu's 3D preview shows; null without one. */
   preview(): PreviewState | null;
+  /**
+   * Puts a domain event on the bus as if the simulation had sent it (ADR-0028 HUD checks:
+   * PhoneMessage, ContractDebrief, HeatChanged...), then refreshes the HUD.
+   */
+  emit<K extends keyof DomainEvents>(type: K, payload: DomainEvents[K]): void;
+  /** Opens the breach minigame for a terminal, as the terminals of the simulation will. */
+  breach(terminalKey: string, daemons?: readonly BreachDaemonId[]): void;
   session: GameSession;
 }
 
@@ -105,6 +112,13 @@ export const createDebugApi = (
   dressed,
   cameraY,
   preview,
+  emit(type, payload) {
+    session.bus.emit(type, payload);
+    session.syncHud();
+  },
+  breach(terminalKey, daemons) {
+    session.openBreach(terminalKey, daemons);
+  },
   wait(minutes) {
     session.sim.enqueue({ type: "wait", minutes });
   },

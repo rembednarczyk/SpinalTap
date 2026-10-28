@@ -1,4 +1,4 @@
-import { BASE_RAM, type HackTargetKind, QUICKHACKS, QUICKHACK_IDS, type QuickhackId, RAM_REGEN_PER_SECOND } from "./quickhacks";
+import { BASE_RAM, type HackTargetKind, QUICKHACKS, type QuickhackId, RAM_REGEN_PER_SECOND, quickhacksFor } from "./quickhacks";
 
 /**
  * The cyberdeck's state (ADR-0029): RAM and the upload in progress. Saved in the domain state,
@@ -22,9 +22,8 @@ export interface NetrunState {
 
 export const INITIAL_NETRUN: NetrunState = { ram: BASE_RAM, upload: null };
 
-/** Hacks that fit a kind of target, in `QUICKHACK_IDS` order: the list the scanner shows. */
-export const hacksFor = (kind: HackTargetKind): readonly QuickhackId[] =>
-  QUICKHACK_IDS.filter((id) => (QUICKHACKS[id].targets as readonly HackTargetKind[]).includes(kind));
+/** Hacks that fit a kind of target: the scanner's list, shared with the HUD (`quickhacksFor`). */
+export const hacksFor = (kind: HackTargetKind): readonly QuickhackId[] => quickhacksFor(kind);
 
 /** The n-th hack (1-based) of the target's list, or null past its end. */
 export const hackInSlot = (kind: HackTargetKind, slot: number): QuickhackId | null => hacksFor(kind)[slot - 1] ?? null;

@@ -39,6 +39,16 @@ export type QuickhackId = keyof typeof QUICKHACKS;
 
 export const QUICKHACK_IDS = Object.keys(QUICKHACKS) as QuickhackId[];
 
+/** Most quickhacks the scanner lists at once (keys 1..5). */
+export const MAX_QUICKHACK_SLOTS = 5;
+
+/**
+ * The scanner's list for a kind of target, in table order. `InputFrame.quickhack` n picks the
+ * n-th entry; the simulation and the HUD both use this list, so a key always means the same hack.
+ */
+export const quickhacksFor = (kind: HackTargetKind): QuickhackId[] =>
+  QUICKHACK_IDS.filter((id) => (QUICKHACKS[id].targets as readonly HackTargetKind[]).includes(kind)).slice(0, MAX_QUICKHACK_SLOTS);
+
 /** RAM of the starting cyberdeck and its regeneration per second outside combat. */
 export const BASE_RAM = 8;
 export const RAM_REGEN_PER_SECOND = 0.5;

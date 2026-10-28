@@ -2,6 +2,7 @@ import {
   CONTRACT_KINDS,
   type Contract,
   type ContractGiverId,
+  type BreachDaemonId,
   type ContractTally,
   type CrimeKind,
   type DisturbanceKind,
@@ -101,3 +102,6 @@ export const hackFxOf = (world: World<Entity>, e: Entity): HackEffects => {
   if (!e.hackFx) world.addComponent(e, "hackFx", { pinged: 0, blind: 0, crippled: 0 });
   return e.hackFx ?? { pinged: 0, blind: 0, crippled: 0 };
 };
+
+/** Daemons a docks terminal offers in Breach Protocol (ADR-0029), in the order they apply. */
+export const BREACH_DAEMONS: readonly BreachDaemonId[] = ["icepick", "datamine", "mass_vulnerability"];

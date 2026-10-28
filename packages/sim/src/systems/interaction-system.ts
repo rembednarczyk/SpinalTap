@@ -1,4 +1,5 @@
 import { contractItemKey, contractKind, contractTerminalKey, shopTerms, takenFlag } from "@seki/core";
+import { BREACH_DAEMONS } from "../world/street";
 import type { Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { clearContract, raiseFlag } from "../world/domain-ops";
@@ -24,8 +25,12 @@ const takeContractCrate = (ctx: SimContext, crate: Entity): void => {
 /** The terminal of the running hack job: the key starts the hack and the alarm (ADR-0024). */
 const startHack = (ctx: SimContext, terminal: Entity): void => {
   const contract = ctx.state.domain.contracts.active;
-  if (contract?.status !== "active" || contractKind(contract) !== "hack" || contract.progress !== undefined) return;
+  if (contract?.status !== "active" || contractKind(contract) !== "hack") return;
   if (terminal.key !== contractTerminalKey(contract.id)) return;
+  // The terminal's network opens (ADR-0029): the HUD plays Breach Protocol and answers with
+  // `breach-result`. A breach cut short sends nothing, so the key opens it again until one lands.
+  if (!contract.breach) ctx.bus.emit("BreachStarted", { terminalKey: terminal.key, daemons: BREACH_DAEMONS });
+  if (contract.progress !== undefined) return;
   const started = { ...contract, progress: 0, away: 0 };
   ctx.state.domain = { ...ctx.state.domain, contracts: { ...ctx.state.domain.contracts, active: started } };
   raiseAlarm(ctx, started);

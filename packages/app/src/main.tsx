@@ -10,7 +10,7 @@ import { browserClock } from "./browser-clock";
 import { type DebugApi, createDebugApi } from "./debug-api";
 import { GameSession } from "./game-session";
 import { keymapFor } from "./controls";
-import { type SettingsStorage, loadHintsSeen, loadSettings, saveHintsSeen, saveSettings, scaleLook } from "./settings";
+import { type SettingsStorage, applyEffects, loadHintsSeen, loadSettings, saveHintsSeen, saveSettings, scaleLook } from "./settings";
 
 declare global {
   interface Window {
@@ -42,7 +42,9 @@ const storage = ((): SettingsStorage | null => {
   }
 })();
 // The reference frame never shows hints (the NPR snapshot is of the scene alone).
-const deviceDefaults = { ...DEFAULT_SETTINGS, quality: touchDevice ? "low" : "high", hints: !reference } as const;
+// A system-wide "reduce motion" turns the flashes and the glitch down from the start (ADR-0028).
+const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const deviceDefaults = { ...DEFAULT_SETTINGS, quality: touchDevice ? "low" : "high", hints: !reference, reduceFlashes: reducedMotion } as const;
 // The reference frame ignores saved settings so the NPR snapshot never depends on the profile.
 const settings = reference ? deviceDefaults : loadSettings(storage, deviceDefaults);
 const qualityParam = params.get("quality");
@@ -109,6 +111,7 @@ const applyControls = (s: typeof settings) => {
   input.keymap = keymapFor(s.bindings);
   input.setButtonModes({ aim: s.aimMode, crouch: s.crouchMode, sprint: s.sprintMode });
   renderer.rig.baseFov = fovRadians(s.fov);
+  applyEffects(renderer, s);
 };
 
 const loop = new FixedStepLoop(browserClock, {

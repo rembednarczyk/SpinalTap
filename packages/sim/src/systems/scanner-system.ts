@@ -3,6 +3,7 @@ import {
   COMBAT_RADIUS,
   DISTRACT_RADIUS,
   type EntityId,
+  FACTIONS,
   type HackTargetKind,
   PING_RADIUS,
   QUICKHACKS,
@@ -20,7 +21,7 @@ import {
   refundOf,
   regenRam,
 } from "@seki/core";
-import type { Entity } from "../world/components";
+import type { DeviceKind, Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { chestOf, eyeOf, lineOfSight } from "../world/hitscan";
 import { inCreationOrder } from "../world/ordering";
@@ -41,6 +42,15 @@ export const hackTargetKind = (e: Entity): HackTargetKind | null => {
   if (e.device) return e.device.kind === "camera" ? "camera" : "device";
   if (e.body && e.health && (e.ai || e.sniper || e.civilian || e.escort)) return "person";
   return null;
+};
+
+const DEVICE_NAMES: Readonly<Record<DeviceKind, string>> = { camera: "Kamera", vending: "Automat z napojami", speaker: "Głośnik", neon: "Neon" };
+
+/** What the scanner calls it: the device, the fighter's side, or a passer-by. */
+export const scanName = (e: Entity): string => {
+  if (e.device) return DEVICE_NAMES[e.device.kind];
+  if (e.ai || e.sniper) return e.faction ? FACTIONS[e.faction] : "Wróg";
+  return "Przechodzień";
 };
 
 /** Where the scanner looks at it: a device's centre, a person's chest. */
@@ -288,7 +298,8 @@ export const scannerSystem: System = {
     const focusId: EntityId | null = focus?.id ?? null;
     if (focusId !== ctx.session.watch.focus) {
       ctx.session.watch.focus = focusId;
-      ctx.bus.emit("ScanFocusChanged", { targetId: focusId });
+      const kind = focus ? hackTargetKind(focus) : null;
+      ctx.bus.emit("ScanFocusChanged", focus && kind ? { targetId: focus.id, kind, name: scanName(focus), faction: focus.device?.faction ?? focus.faction ?? null } : { targetId: null });
     }
     if (player) {
       runUpload(ctx, player, focus);
