@@ -1,6 +1,6 @@
 import { type GroundSurface, type TerrainGrid, type TerrainOpenSides, terrainHeightAt } from "@seki/core";
 import { DRESS_FLAG, type MeshSink, type Rgba, type Vec, hexColor } from "../mesh-sink";
-import { type P2, obbLocal, orientedBox, pointInRing, triangulate } from "./polygon";
+import { type P2, obbLocal, orientedBox, pointInRing, signedArea, triangulate } from "./polygon";
 import { face, quadUv, vertex } from "./sink-ops";
 
 /**
@@ -27,9 +27,10 @@ export const SURFACE_LIFT: Readonly<Record<GroundSurface, number>> = {
   cobble: 0.08,
   footway: 0.09,
   sidewalk: 0.16,
+  basin: 0.32,
 };
 
-const SURFACE_COLOR: Readonly<Record<Exclude<GroundSurface, "water">, Rgba>> = {
+const SURFACE_COLOR: Readonly<Record<Exclude<GroundSurface, "water" | "basin">, Rgba>> = {
   road: hexColor("#3a3d45", DRESS_FLAG.wet),
   rail: hexColor("#4d4842", DRESS_FLAG.solid),
   square: hexColor("#6d6a66", DRESS_FLAG.solid),
@@ -197,7 +198,7 @@ const kerbs = (sink: MeshSink, ring: readonly P2[], h: HeightAt, roadAt: RoadAt)
 };
 
 /** A ground surface (not water) draped on the terrain, with kerbs on sidewalks along roads. */
-export const planSurface = (sink: MeshSink, surface: Exclude<GroundSurface, "water">, ring: readonly P2[], h: HeightAt, roadAt: RoadAt | null): void => {
+export const planSurface = (sink: MeshSink, surface: Exclude<GroundSurface, "water" | "basin">, ring: readonly P2[], h: HeightAt, roadAt: RoadAt | null): void => {
   const box = orientedBox(ring);
   const strip = (surface === "road" || surface === "rail") && box.halfLong > box.halfShort * 4 ? box.halfShort * 2 : 0;
   const code = SURFACE_CODE[surface];
@@ -209,8 +210,40 @@ export const planSurface = (sink: MeshSink, surface: Exclude<GroundSurface, "wat
 };
 
 /** Water (the Bystrzyca, fountain pools) draped just above the terrain: uv = world x, z. */
-export const planWater = (sink: MeshSink, ring: readonly P2[], h: HeightAt): void => {
-  drape(sink, ring, h, SURFACE_LIFT.water, WATER_COLOR, (p) => [p.x, p.z], [0, 0]);
+export const planWater = (sink: MeshSink, ring: readonly P2[], h: HeightAt, lift: number = SURFACE_LIFT.water): void => {
+  drape(sink, ring, h, lift, WATER_COLOR, (p) => [p.x, p.z], [0, 0]);
+};
+
+const RIM = hexColor("#8f8a82", DRESS_FLAG.solid);
+/** A fountain's stone rim: its top above the square and its width, metres. */
+export const BASIN_RIM = { top: 0.45, width: 0.35 } as const;
+
+/**
+ * A fountain (ADR-0044): the water stands in the basin at `SURFACE_LIFT.basin` inside a granite
+ * rim, its outer face down to the square, a ledge to sit on and the inner face down to the water.
+ */
+export const planBasin = (water: MeshSink, stone: MeshSink, ring: readonly P2[], h: HeightAt): void => {
+  planWater(water, ring, h, SURFACE_LIFT.basin);
+  const ccwRing = signedArea(ring) >= 0 ? ring : [...ring].reverse();
+  const up = { x: 0, y: 1, z: 0 };
+  for (let i = 0; i < ccwRing.length; i++) {
+    const a = ccwRing[i] as P2;
+    const b = ccwRing[(i + 1) % ccwRing.length] as P2;
+    const len = Math.hypot(b.x - a.x, b.z - a.z);
+    if (len < 1e-3) continue;
+    // Outward is right of the edge for a counter-clockwise ring seen from above (x east, z north).
+    const out = { x: (b.z - a.z) / len, y: 0, z: -(b.x - a.x) / len };
+    const inn = { x: -out.x, y: 0, z: -out.z };
+    const ga = h(a.x, a.z);
+    const gb = h(b.x, b.z);
+    const ia = { x: a.x + inn.x * BASIN_RIM.width, z: a.z + inn.z * BASIN_RIM.width };
+    const ib = { x: b.x + inn.x * BASIN_RIM.width, z: b.z + inn.z * BASIN_RIM.width };
+    const top = (p: P2, g: number) => ({ x: p.x, y: g + BASIN_RIM.top, z: p.z });
+    const uv = (p: P2): [number, number] => [p.x, p.z];
+    quadUv(stone, [{ x: a.x, y: ga, z: a.z }, { x: b.x, y: gb, z: b.z }, top(b, gb), top(a, ga)], out, RIM, [uv(a), uv(b), uv(b), uv(a)]);
+    quadUv(stone, [top(a, ga), top(b, gb), top(ib, gb), top(ia, ga)], up, RIM, [uv(a), uv(b), uv(ib), uv(ia)]);
+    quadUv(stone, [top(ia, ga), top(ib, gb), { x: ib.x, y: gb + SURFACE_LIFT.basin, z: ib.z }, { x: ia.x, y: ga + SURFACE_LIFT.basin, z: ia.z }], inn, RIM, [uv(ia), uv(ib), uv(ib), uv(ia)]);
+  }
 };
 
 /** True when some ring of `rings` contains (x, z): the road test for kerbs. */

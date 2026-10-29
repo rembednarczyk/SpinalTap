@@ -16,6 +16,7 @@ const cobbled = (t: Tags) => COBBLES.has(t.surface ?? "");
 /** Surface of a mapped area, or null when it is not ground. */
 export const areaSurface = (t: Tags): GroundSurface | null => {
   if (t.building !== undefined) return null;
+  if (t.amenity === "fountain" && t.fountain !== "splash_pad" && t.natural === "water") return "basin";
   if (t.natural === "water" || t.waterway === "riverbank" || t.landuse === "reservoir" || t.landuse === "basin") return "water";
   if (t.place === "square" || t.highway === "pedestrian" || t["area:highway"] === "pedestrian" || t.amenity === "marketplace") return cobbled(t) ? "cobble" : "square";
   if (t["area:highway"] === "footway" || t.highway === "footway") return cobbled(t) ? "cobble" : "footway";
@@ -126,7 +127,7 @@ export const areaBand = (a: Area): Band | null => {
 };
 
 /** Draw order: big areas first, then roads, cobbles, sidewalks, paths and rails on top. */
-const ORDER: Record<GroundSurface, number> = { water: 0, grass: 1, square: 2, road: 3, cobble: 4, sidewalk: 5, footway: 6, rail: 7 };
+const ORDER: Record<GroundSurface, number> = { water: 0, grass: 1, square: 2, road: 3, cobble: 4, sidewalk: 5, footway: 6, rail: 7, basin: 8 };
 
 /** Clips bands to a chunk, simplifies and rounds them, in draw order then by source id. */
 export const chunkGround = (bands: readonly Band[], rect: Rect): GroundOut[] => {

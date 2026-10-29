@@ -14,6 +14,7 @@ import { type ChunkOut } from "./model.ts";
 const SCALE = 2;
 const SURFACE: Record<string, string> = {
   water: "#5b8fd6",
+  basin: "#4a82c9",
   grass: "#9ccf7f",
   square: "#e6dcc3",
   road: "#7d7d85",
