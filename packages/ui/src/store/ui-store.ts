@@ -58,6 +58,7 @@ import type { BuffVm, CapacityVm, ContractHookVm, DashVm, DisguiseVm, MetroMapVm
 
 export * from "./hud-vm";
 export * from "./ui-vm";
+export * from "./map-vm";
 export * from "./wave2-vm";
 
 // ---- Areas of the UI state (ADR-0031) ----

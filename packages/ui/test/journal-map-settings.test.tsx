@@ -37,7 +37,7 @@ const journal: JournalVm = {
       title: "Kontrakt 2 · Kaito",
       kind: "contract",
       status: "active",
-      steps: [{ objective: "Zneutralizuj gangerów Hebi (3): zaułek za myjnią", done: false }],
+      steps: [{ objective: "Zneutralizuj gangerów Hebi (3): podwórko za myjnią", done: false }],
     },
   ],
   memories: [{ id: "combat_reflex", title: "Wspomnienie: odruch", description: "Ręce wiedzą, gdzie celować." }],
@@ -62,7 +62,7 @@ describe("journal", () => {
     mount({ screen: "playing", journal, journalOpen: true });
     const active = screen.getByTestId("journal-quest-contract-c2");
     expect(active.textContent).toContain("Kontrakt");
-    expect(active.textContent).toContain("zaułek za myjnią");
+    expect(active.textContent).toContain("podwórko za myjnią");
     expect(screen.queryByTestId("journal-quest-m0_first_contract")).toBeNull();
 
     fireEvent.click(screen.getByRole("tab", { name: /Ukończone/ }));
@@ -172,6 +172,66 @@ describe("minimap", () => {
     expect(far.x).toBeCloseTo(0);
     expect(far.y).toBeLessThan(0);
     expect(Math.hypot(far.x, far.y)).toBeLessThan(MINIMAP_RANGE);
+  });
+});
+
+/** A piece of Lublin (ADR-0045): a street with its name, a building by it, one far away. */
+const city: MapVm = {
+  ...map,
+  ground: [{ x: 0, z: 0, w: 400, d: 400 }],
+  areas: [{ kind: "road", points: [-50, -2, 50, -2, 50, 2, -50, 2] }],
+  buildings: [
+    [5, 5, 15, 5, 15, 15, 5, 15],
+    [300, 300, 310, 300, 310, 310, 300, 310],
+  ],
+  labels: [
+    { kind: "street", text: "Grodzka", x: 0, z: 0, angle: 0.5 },
+    { kind: "district", text: "Stare Miasto", x: 0, z: 40, angle: 0 },
+  ],
+  places: [{ name: "Stare Miasto", x: 0, z: 40 }],
+};
+
+describe("Lublin on the minimap and the map tab (ADR-0045)", () => {
+  it("draws the surfaces, the buildings near the player and the street names", () => {
+    mount({ screen: "playing", map: city, mapPlayer: { x: 0, z: 0, yaw: 0 } });
+    const root = screen.getByTestId("minimap");
+    expect(root.querySelectorAll(".minimap__area--road")).toHaveLength(1);
+    // The far building is out of the window round the player.
+    expect(root.querySelectorAll(".minimap__building")).toHaveLength(1);
+    const names = [...root.querySelectorAll(".minimap__label")].map((t) => t.textContent);
+    expect(names).toEqual(["Grodzka"]);
+    expect(root.querySelector(".minimap__label")?.getAttribute("transform")).toBe("rotate(-28.6 0.0 0.0)");
+  });
+
+  it("M opens the map tab with the whole city, the names, the player and the credit", () => {
+    const { store } = mount({ screen: "playing", map: city, mapPlayer: { x: 0, z: 0, yaw: 0 } });
+    fireEvent.keyDown(window, { code: "KeyM" });
+    expect(store.getState().characterTab).toBe("map");
+    const tab = screen.getByTestId("city-map");
+    expect(tab.querySelectorAll(".citymap__building")).toHaveLength(2);
+    expect([...tab.querySelectorAll(".citymap__label")].map((t) => t.textContent)).toEqual(["Grodzka", "Stare Miasto"]);
+    expect(screen.getByTestId("citymap-player")).toBeTruthy();
+    expect(screen.getByTestId("map-attribution").textContent).toContain("OpenStreetMap");
+    // The district button moves the view there.
+    const svg = tab.querySelector("svg")!;
+    const before = svg.getAttribute("viewBox");
+    fireEvent.click(within(tab).getByText("Stare Miasto", { selector: "button" }));
+    expect(svg.getAttribute("viewBox")).not.toBe(before);
+    fireEvent.click(within(tab).getByLabelText("Oddal"));
+    expect(svg.getAttribute("viewBox")).toContain("630.0");
+    fireEvent.keyDown(window, { code: "KeyM" });
+    expect(store.getState().characterTab).toBeNull();
+  });
+
+  it("credits the map data on the title screen, small, and in full under Autorzy", () => {
+    mount({ screen: "title" });
+    expect(screen.getByTestId("title-attribution").textContent).toBe("Dane mapy © OpenStreetMap contributors (ODbL) · teren: GUGiK NMT");
+    fireEvent.click(screen.getByRole("button", { name: "Autorzy" }));
+    const credits = screen.getByTestId("credits");
+    expect(credits.textContent).toContain("Open Database License");
+    expect(credits.textContent).toContain("GUGiK");
+    fireEvent.click(within(credits).getByRole("button", { name: "Wróć" }));
+    expect(screen.queryByTestId("credits")).toBeNull();
   });
 });
 

@@ -20,4 +20,5 @@ export * from "./crowd";
 export * from "./lublin/sites";
 export * from "./lublin/terrain";
 export { againstWall, inBuilding, nearestWall, spotNear } from "./lublin/places";
+export { clearedBuilding } from "./lublin/city";
 export type { RoomCut, SceneryItem } from "./lublin/city";

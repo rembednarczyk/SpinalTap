@@ -1,0 +1,75 @@
+/* Lublin on the minimap and the map tab (ADR-0045). Map space is metres: strokes are too. */
+.minimap__area--road { fill: rgba(70, 86, 100, 0.55); }
+.minimap__area--walk { fill: rgba(95, 242, 255, 0.1); }
+.minimap__area--green { fill: rgba(70, 150, 90, 0.28); }
+.minimap__area--water { fill: rgba(30, 90, 140, 0.45); }
+.minimap__area--rail { fill: rgba(120, 110, 100, 0.3); }
+.minimap__building { fill: rgba(4, 7, 12, 0.85); stroke: rgba(95, 242, 255, 0.45); stroke-width: 0.35; }
+.minimap__label {
+  fill: rgba(225, 245, 255, 0.85);
+  font-family: var(--font-mono);
+  text-anchor: middle;
+  dominant-baseline: middle;
+  paint-order: stroke;
+  stroke: rgba(4, 7, 12, 0.9);
+  stroke-width: 0.8;
+  letter-spacing: 0.04em;
+}
+
+.cscreen--map .cscreen__body { padding: 0; }
+.citymap { position: relative; flex: 1; min-height: 0; display: flex; overflow: hidden; background: rgba(6, 10, 15, 0.92); border: 1px solid var(--panel-edge); }
+.citymap__svg { flex: 1; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+.citymap__svg:active { cursor: grabbing; }
+.citymap__ground { fill: rgba(20, 30, 38, 0.9); }
+.citymap__area--road { fill: rgba(70, 86, 100, 0.8); }
+.citymap__area--walk { fill: rgba(95, 242, 255, 0.12); }
+.citymap__area--green { fill: rgba(70, 150, 90, 0.35); }
+.citymap__area--water { fill: rgba(30, 90, 140, 0.6); }
+.citymap__area--rail { fill: rgba(120, 110, 100, 0.4); }
+.citymap__water { fill: rgba(30, 90, 140, 0.6); }
+.citymap__building { fill: rgba(4, 7, 12, 0.9); stroke: rgba(95, 242, 255, 0.5); stroke-width: 0.5; }
+.citymap__block { fill: rgba(255, 61, 139, 0.18); stroke: rgba(255, 61, 139, 0.5); stroke-width: 0.4; }
+.citymap__label {
+  font-family: var(--font-mono);
+  text-anchor: middle;
+  dominant-baseline: middle;
+  paint-order: stroke;
+  stroke: rgba(4, 7, 12, 0.95);
+  stroke-width: 0.25em;
+  pointer-events: none;
+}
+.citymap__label--street { fill: rgba(225, 245, 255, 0.85); letter-spacing: 0.04em; }
+.citymap__label--district { fill: var(--cyan); font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.85; }
+.citymap__label--landmark { fill: var(--amber); font-style: italic; }
+.citymap__label--station { fill: #39ffd0; font-weight: 700; }
+.citymap__player path { fill: var(--ink); stroke: rgba(4, 7, 12, 0.9); stroke-width: 1; }
+.citymap__marker circle { stroke: rgba(4, 7, 12, 0.9); stroke-width: 1; }
+.citymap__marker--fixer { fill: var(--amber); }
+.citymap__marker--target { fill: var(--magenta); }
+.citymap__marker--enforcer { fill: var(--danger); }
+.citymap__area { fill: rgba(255, 61, 139, 0.16); stroke: var(--magenta); stroke-width: 1; stroke-dasharray: 3 2; }
+.citymap__tools { position: absolute; top: 10px; left: 10px; display: flex; flex-wrap: wrap; gap: 6px; max-width: calc(100% - 20px); }
+.citymap__btn {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  cursor: pointer;
+}
+.citymap__btn--wide { font-size: 12px; letter-spacing: 0.04em; }
+.citymap__btn:hover { border-color: var(--cyan); }
+.citymap__credit {
+  position: absolute;
+  right: 8px;
+  bottom: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-dim);
+  background: rgba(4, 7, 12, 0.6);
+  padding: 1px 6px;
+}
+.touch-mode .citymap__btn { min-width: 40px; height: 40px; }

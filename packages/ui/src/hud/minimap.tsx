@@ -1,6 +1,8 @@
-import { memo } from "react";
-import type { MapLinkKind, MapLinkVm, MapMarkerKind, MapMarkerVm, MapRectVm, MapVm } from "../store/ui-store";
+import { memo, useMemo } from "react";
+import "../citymap/citymap.css";
+import type { MapBox, MapLabelKind, MapLinkKind, MapLinkVm, MapMarkerKind, MapMarkerVm, MapRectVm, MapVm } from "../store/ui-store";
 import { useUi } from "../use-ui";
+import { CityLabels, type CityIndex, CityShapes, indexCity, windowAround } from "./city-layer";
 
 /** Metres from the player to the edge of the minimap. */
 export const MINIMAP_RANGE = 32;
@@ -29,10 +31,18 @@ const rect = (r: MapRectVm, className: string, key?: number) => (
   <rect key={key} className={className} x={r.x - r.w / 2} y={-(r.z + r.d / 2)} width={r.w} height={r.d} />
 );
 
-/** District layer; it only re-renders when the geometry changes, not when the player moves. */
-const District = memo(({ map }: { map: MapVm }) => (
+/** The minimap's names: the streets only, three metres high. */
+const STREET_NAMES: ReadonlySet<MapLabelKind> = new Set(["street"]);
+const NAME_SIZE = () => 3;
+/** Half the side of the window of the city drawn round the player, and its grid (ADR-0045). */
+const CITY_WINDOW = 100;
+const CITY_CELL = 32;
+
+/** District layer; it re-renders when the geometry changes or the player crosses a cell of the city's window. */
+const District = memo(({ map, city, window }: { map: MapVm; city: CityIndex; window: MapBox }) => (
   <>
-    {rect(map.bounds, "minimap__ground")}
+    {map.ground ? map.ground.map((g, i) => rect(g, "minimap__ground", i)) : rect(map.bounds, "minimap__ground")}
+    <CityShapes city={city} window={window} prefix="minimap" />
     {map.water?.map((w, i) => rect(w, "minimap__water", i))}
     {map.streets.map((s, i) => rect(s, "minimap__street", i))}
     {map.blocks.map((b, i) => rect(b, "minimap__block", i))}
@@ -40,6 +50,7 @@ const District = memo(({ map }: { map: MapVm }) => (
     {map.links?.map((l, i) => (
       <Link key={i} link={l} />
     ))}
+    <CityLabels city={city} window={window} prefix="minimap" kinds={STREET_NAMES} size={NAME_SIZE} />
   </>
 ));
 District.displayName = "District";
@@ -133,7 +144,11 @@ export const Minimap = () => {
   const lastKnown = useUi((s) => s.lastKnown);
   const zoom = useUi((s) => s.mapZoom);
   const showMarkers = useUi((s) => s.settings.mapMarkers);
-  if (!map || !player) return null;
+  const city = useMemo(() => (map ? indexCity(map) : null), [map]);
+  const cx = player ? Math.round(player.x / CITY_CELL) : 0;
+  const cz = player ? Math.round(player.z / CITY_CELL) : 0;
+  const window = useMemo(() => windowAround(cx * CITY_CELL, cz * CITY_CELL, CITY_WINDOW, CITY_CELL), [cx, cz]);
+  if (!map || !player || !city) return null;
   const deg = (player.yaw * 180) / Math.PI;
   const view = mapView(player, zoom);
   const me = markerOffset(player, view);
@@ -142,7 +157,7 @@ export const Minimap = () => {
     <div className={`minimap${player.level !== undefined ? " minimap--upper" : ""}`} data-testid="minimap" data-zoom={zoom.toFixed(2)} aria-label="Minimapa">
       <svg viewBox={`${-MINIMAP_RANGE} ${-MINIMAP_RANGE} ${MINIMAP_RANGE * 2} ${MINIMAP_RANGE * 2}`} role="img">
         <g transform={`scale(${view.k.toFixed(3)}) translate(${(-view.x).toFixed(2)} ${view.z.toFixed(2)})`}>
-          <District map={map} />
+          <District map={map} city={city} window={window} />
         </g>
         {showMarkers && markers.map((m) => <Marker key={m.id} marker={m} view={view} />)}
         {lastKnown && <Silhouette at={lastKnown} view={view} />}

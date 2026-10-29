@@ -1,5 +1,6 @@
 import type { ItemCategory, ItemDefId, ItemRef, Rarity, WeaponSlot } from "@seki/core";
 import type { ColorblindMode, DamageNumbersMode } from "./hud-vm";
+import type { MapAreaVm, MapLabelVm, MapPlaceVm, MapPolygon } from "./map-vm";
 import type { RadioStationId } from "./wave2-vm";
 
 // View models of the UI store: what the areas of `UiState` hold (ADR-0031).
@@ -93,9 +94,19 @@ export interface MapLinkVm {
   readonly z: number;
 }
 
-/** Static district geometry for the minimap. Sent once at startup. */
+/** Static district geometry for the minimap and the map tab. Sent once at startup. */
 export interface MapVm {
   readonly bounds: MapRectVm;
+  /** The chunks of the city (ADR-0045): the ground under everything else. */
+  readonly ground?: readonly MapRectVm[];
+  /** Lublin's surfaces: roads, pavements and squares, green, water, rails. */
+  readonly areas?: readonly MapAreaVm[];
+  /** Lublin's building outlines. */
+  readonly buildings?: readonly MapPolygon[];
+  /** Street names, districts, landmarks and metro stations. */
+  readonly labels?: readonly MapLabelVm[];
+  /** The districts, for the map tab's jumps. */
+  readonly places?: readonly MapPlaceVm[];
   readonly blocks: readonly MapRectVm[];
   readonly streets: readonly MapRectVm[];
   /** Walkable floors above the street (decks, walkways, balconies); lit while the player is up there. */
@@ -194,8 +205,8 @@ export interface TradeVm {
 
 export const EMPTY_TRADE: TradeVm = { items: [], capacity: 24, freeCells: 24, weaponParts: 0 };
 
-/** Tabs of the character screen (plan §7): I, Tab and J open it on theirs. */
-export type CharacterTab = "inventory" | "sheet" | "journal";
+/** Tabs of the character screen (plan §7): I, Tab, J and M open it on theirs. */
+export type CharacterTab = "inventory" | "sheet" | "journal" | "map";
 
 /** Numbers of the stats panel, worked out by the app from the domain and the player. */
 export interface CharacterStatsVm {

@@ -310,6 +310,11 @@ kbd {
   text-shadow: 3px 0 0 rgba(255, 61, 139, 0.55), -3px 0 0 rgba(95, 242, 255, 0.55);
 }
 .title__tag { font-family: var(--font-mono); color: var(--ink-dim); letter-spacing: 0.2em; }
+/* Map credit (ADR-0045): small, at the foot of the title screen. */
+.title__attribution { position: absolute; left: 0; right: 0; bottom: max(8px, env(safe-area-inset-bottom, 0px)); text-align: center; font-family: var(--font-mono); font-size: 10px; color: var(--ink-dim); opacity: 0.75; pointer-events: none; }
+.credits { max-width: 560px; }
+.credits__title { font-family: var(--font-mono); letter-spacing: 0.14em; font-size: 18px; margin: 0 0 6px; color: var(--cyan); }
+.credits__line { margin: 0 0 8px; color: var(--ink); font-size: 14px; line-height: 1.45; }
 
 .menu { display: flex; flex-direction: column; gap: 10px; width: min(420px, 100%); }
 .menu__item {
