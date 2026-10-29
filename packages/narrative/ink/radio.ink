@@ -9,7 +9,7 @@ KASS: Neon Drift, osiemdziesiąt osiem i jeden. Tu Kass. Jest trzecia w nocy, a 
 -> END
 
 === radio_drift_2 ===
-KASS: Dzwoni słuchacz z Kanałowej. Mówi, że automat z napojami zaczął z nim rozmawiać. Brachu, odpowiadaj mu. Mało kto dziś słucha.
+KASS: Dzwoni słuchacz ze Starego Miasta. Mówi, że automat z napojami zaczął z nim rozmawiać. Brachu, odpowiadaj mu. Mało kto dziś słucha.
 -> END
 
 === radio_drift_3 ===
@@ -21,7 +21,7 @@ KASS: Następny kawałek dla wszystkich, którzy jadą nocą przez miasto i nie 
 -> END
 
 === radio_drift_5 ===
-KASS: Szybki komunikat drogowy. Na estakadzie dalej stoi auto z nocy blokady. Nikt po nie nie wrócił. Może to wy. Pomyślcie o tym przy syntezatorze.
+KASS: Szybki komunikat drogowy. Na wiadukcie nad Tysiąclecia dalej stoi auto z nocy blokady. Nikt po nie nie wrócił. Może to wy. Pomyślcie o tym przy syntezatorze.
 -> END
 
 === radio_yoru_1 ===
@@ -29,11 +29,11 @@ YUKI: Konbanwa, dobry wieczór. Yoru FM, siedemdziesiąt sześć i pięć. Mama 
 -> END
 
 === radio_yoru_2 ===
-YUKI: Ta piosenka jest z czasów, kiedy niebo nad Kanałową było niebieskie. Nie pamiętacie? Ja też nie. Ale piosenka pamięta.
+YUKI: Ta piosenka jest z czasów, kiedy niebo nad Trybunałem było niebieskie. Nie pamiętacie? Ja też nie. Ale piosenka pamięta.
 -> END
 
 === radio_yoru_3 ===
-REKLAMA: Ramen u Fumiko na targu pod estakadą. Od czwartej po południu do czwartej rano. Bulion gotowany dłużej niż wasz ostatni związek.
+REKLAMA: Ramen u Fumiko na Podzamczu, przy dworcu autobusowym. Od czwartej po południu do czwartej rano. Bulion gotowany dłużej niż wasz ostatni związek.
 -> END
 
 === radio_yoru_4 ===
@@ -45,7 +45,7 @@ YUKI: Mei z KARAOKE prosi, żeby przypomnieć: od ósmej wieczorem, trzy piosenk
 -> END
 
 === radio_tessen_1 ===
-LEKTORKA: Tessen Info 24. Port pracuje bez przerw. Wczorajsze zamieszki w Dokach okazały się ćwiczeniami. Ćwiczenia przebiegły zgodnie z planem.
+LEKTORKA: Tessen Info 24. Nabrzeże Bystrzycy pracuje bez przerw. Wczorajsze zamieszki przy magazynach okazały się ćwiczeniami. Ćwiczenia przebiegły zgodnie z planem.
 -> END
 
 === radio_tessen_2 ===
@@ -57,9 +57,9 @@ REKLAMA: Ochrona Tessen. Twój spokój jest naszą usługą. Twoje bezpieczeńst
 -> END
 
 === radio_tessen_4 ===
-LEKTORKA: Pogoda. Nad zatoką mgła, nad miastem kwaśny deszcz, nad Tessen jak zawsze bezchmurnie. Zarząd przypomina, że parasole firmowe są dostępne w każdym biurze.
+LEKTORKA: Pogoda. Nad Zalewem Zemborzyckim mgła, nad miastem kwaśny deszcz, nad Tessen jak zawsze bezchmurnie. Zarząd przypomina, że parasole firmowe są dostępne w każdym biurze.
 -> END
 
 === radio_tessen_5 ===
-LEKTORKA: Z kraju. Kagami Biotech zaprzecza pogłoskom o skupie wspomnień w Shinsekai. Kagami podkreśla, że wspomnienia klientów jedynie przechowuje, w ich imieniu i za drobną opłatą.
+LEKTORKA: Z kraju. Kagami Biotech zaprzecza pogłoskom o skupie wspomnień na Krakowskim Przedmieściu. Kagami podkreśla, że wspomnienia klientów jedynie przechowuje, w ich imieniu i za drobną opłatą.
 -> END
