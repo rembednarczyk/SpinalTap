@@ -1,4 +1,4 @@
-// Seki Senshi, M4: Targ pod estakadą.
+// Seki Senshi, M4: the market on Podzamcze (Nowy Plac Targowy, ex Targ pod estakadą, ADR-0042).
 // Hana sells parts from a handcart in the market. She hands out her own jobs (retrieve, protect)
 // and takes Kaito's deliveries. The domain decides what a job is and pays for it; ink only talks.
 
@@ -48,7 +48,7 @@ EXTERNAL deliver_contract()
 + [Co trzeba odzyskać? #tone:main]
     SEKI: Co trzeba odzyskać?
     ~ offer_contract("retrieve")
-    HANA: Hebi zabrali mi skrzynkę z towarem. Trzymają ją pod estakadą, przy wschodniej ścianie, i pilnuje jej kilku chłopaków.
+    HANA: Hebi zabrali mi skrzynkę z towarem. Trzymają ją pod wiaduktem, przy wschodniej ścianie hali, i pilnuje jej kilku chłopaków.
     HANA: Wróć ze skrzynką. Co zrobisz ze strażnikami, to już twoja sprawa.
     -> END
 + { not has_flag("dead:oyaji") && game_hour >= 8 && game_hour < 22 } [Ktoś potrzebuje ochrony? #tone:main]
@@ -73,7 +73,7 @@ HANA: Paczkę już mam. Po pieniądze idź do Kaito, to jego kurs.
 
 = running
 { contract_kind == "retrieve":
-    HANA: Skrzynka dalej jest u Hebi, pod estakadą przy wschodniej ścianie.
+    HANA: Skrzynka dalej jest u Hebi, pod wiaduktem przy wschodniej ścianie.
 - else:
     HANA: Hebi są już na targu. Nie stój przy mnie, pilnuj Oyajiego!
 }

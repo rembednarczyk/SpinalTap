@@ -16,7 +16,7 @@ KAITO: Słyszałem. Klient nie zapłaci za nic, więc ja też nie. Następnym ra
 -> END
 
 === phone_hana_offer ===
-HANA: Na targu coś się ruszyło. Jak masz chwilę, przyjdź do mojego stoiska.
+HANA: Na Podzamczu coś się ruszyło. Jak masz chwilę, przyjdź do mojego stoiska.
 -> END
 
 === phone_hana_paid ===

@@ -192,7 +192,7 @@ MORI: Fiolki już nie ma. Domyślam się, że Kaito ci powiedział.
     SEKI: Mogłeś mi powiedzieć.
     MORI: Mogłem. Ale moduł był już tylko towarem, a ty nie chciałaś go znać.
     MORI: Kupił go Ren Odagiri. Płacił gotówką, której nikt na tej ulicy nie ma.
-- MORI: Nocuje na dachu nad targiem pod estakadą. Na schody pożarowe wchodzi od strony straganów.
+- MORI: Nocuje na dachu nad targiem na Podzamczu, przy wiadukcie. Na schody pożarowe wchodzi od strony straganów.
 ~ set_flag("ren_trail")
 -> END
 

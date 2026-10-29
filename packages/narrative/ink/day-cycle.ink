@@ -13,7 +13,7 @@ VAR time_of_day = "night"
 { game_hour >= 22 || game_hour < 1:
     OYAJI: Zamknięte, zamknięte. Gary już wystygły, roleta w dół.
 - else:
-    OYAJI: O tej godzinie? Śpi cały targ, tylko estakada nie śpi.
+    OYAJI: O tej godzinie? Śpi cały targ, tylko aleja Tysiąclecia nie śpi.
 }
 OYAJI: Wróć po ósmej, jak podniosę roletę. Wtedy pogadamy.
 -> END

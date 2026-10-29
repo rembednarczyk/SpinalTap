@@ -1,4 +1,4 @@
-// Seki Senshi, ADR-0032: street encounters at Targ pod estakadą (see enc-shinsekai.ink for the rules).
+// Seki Senshi, ADR-0032: street encounters on Podzamcze (district id targ, ADR-0042; see enc-shinsekai.ink for the rules).
 
 // Kiku reads fortunes from a cracked AR deck. The cards show other people's memories.
 === enc_targ_fortune ===
@@ -40,15 +40,15 @@ DAIGO: Znosi jajka z certyfikatem. Bez niej jestem facetem z pustą klatką i d�
     SEKI: Czemu ona ucieka?
     DAIGO: Bo jest mądrzejsza ode mnie. Firma dała jej ten sam procesor co w kasie fiskalnej.
     -> chase
-* [Patrzysz, jak kura wbiega pod estakadę i znika. #tone:main]
-    Kura wskakuje na schody na estakadę i przez chwilę stoi na tle neonów jak na plakacie. Potem jej nie ma.
+* [Patrzysz, jak kura wbiega pod wiadukt i znika. #tone:main]
+    Kura wskakuje na schody na wiadukt i przez chwilę stoi na tle Zamku jak na plakacie. Potem jej nie ma.
     ~ set_flag("enc_targ_chicken_free")
     DAIGO: Wolność. Zawsze o niej mówiła. Znaczy, gdakała. Co ja teraz powiem w banku?
     -> END
 
 // Akane pays her late husband's debt to Hebi. This month she is short.
 === enc_targ_debt ===
-Przy wschodniej ścianie targu kobieta w fartuchu liczy monety na dłoni. Nad nią stoi chłopak Hebi z tabletem.
+Przy wschodniej ścianie hali targowej, od Ruskiej, kobieta w fartuchu liczy monety na dłoni. Nad nią stoi chłopak Hebi z tabletem.
 POBORCA: Brakuje stu dwudziestu. Twój mąż wiedział, na co się pisze, kiedy pożyczał.
 AKANE: Mój mąż nie żyje od roku. Pisał się na wiele rzeczy. Ja na nic się nie pisałam.
 -> ask
@@ -86,7 +86,7 @@ RIKO: Kupisz płytę? Nie mam płyt. Mam kod do pobrania i dobrą wolę.
 = ask
 * [Kto jest na tym hologramie? #tone:optional]
     SEKI: Kto jest na tym hologramie?
-    RIKO: Ja. Pięć lat temu, zanim wytwórnia sprzedała moją twarz innej dziewczynie. Ona teraz gra stadiony. Ja targ.
+    RIKO: Ja. Pięć lat temu, zanim wytwórnia sprzedała moją twarz innej dziewczynie. Ona teraz gra Lubelski Festiwal na Placu Litewskim. Ja Podzamcze.
     -> ask
 * [Zaśpiewaj tę, którą śpiewałaś przed wytwórnią. #tone:main]
     SEKI: Zaśpiewaj tę, którą śpiewałaś przed wytwórnią.

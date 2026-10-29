@@ -44,7 +44,7 @@ Kazałaś sprzedać moduł komuś, kto lubi cudze życie. Ktoś je kupił w jede
 ~ set_flag("seen:act2_opening")
 -> END
 
-// Ren Odagiri on the low roof over the market (present from ren_trail until the "kagami" ending).
+// Ren Odagiri on the low roof over the market on Podzamcze (present from ren_trail until the "kagami" ending).
 === ren_odagiri ===
 {
 - act2_ending == "street": -> after_street
@@ -108,7 +108,7 @@ REN: Reszta archiwum leży u mnie. Kagami chce je z powrotem i wystawiło na mni
 { quest_step == "kaito_job":
     REN: Idź do Kaito. Chcę wiedzieć, ile jestem dla nich wart.
 - else:
-    REN: Kurosawa czeka na estakadzie. Cokolwiek postanowisz, ja tu będę.
+    REN: Kurosawa czeka na wiadukcie. Cokolwiek postanowisz, ja tu będę.
 }
 -> END
 
@@ -159,7 +159,7 @@ REN: Hebi biorą już zamówienia. Wiesz, ile ktoś da za wspomnienie własnego 
 === function cleaners_down() ===
 ~ return has_flag("dead:kagami-cleaner-1") && has_flag("dead:kagami-cleaner-2") && has_flag("dead:kagami-cleaner-3")
 
-// Kurosawa of Kagami on the overpass deck (present from kagami_job until the ambush or the ending).
+// Kurosawa of Kagami on the al. Tysiąclecia viaduct deck (present from kagami_job until the ambush or the ending).
 === kurosawa ===
 { quest_step == "overpass" && choice_archive == "":
     -> deal

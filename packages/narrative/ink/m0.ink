@@ -118,11 +118,11 @@ KAITO: I jeszcze jedno, Seki. Ktoś już pytał o kobietę z wraku. Nie tylko ja
     KAITO: Kagami zapłaciło za Rena co do eddie. Nie pytam, jak się z tym czujesz.
     ~ set_flag("kaito_after_act2")
 - (act2_ending == "street" || act2_ending == "hebi") && not has_flag("kaito_after_act2"):
-    KAITO: Kagami zerwało ze mną umowę przez twój numer na estakadzie. Dobrze, że Hebi i ulica płacą w gotówce.
+    KAITO: Kagami zerwało ze mną umowę przez twój numer na wiadukcie. Dobrze, że Hebi i ulica płacą w gotówce.
     ~ set_flag("kaito_after_act2")
 }
 { contracts_done >= 1 && not has_flag("met_hana"):
-    KAITO: Na targu pod estakadą handluje Hana. Bierze ode mnie towar, a czasem szuka kogoś, kto umie strzelać.
+    KAITO: Na Podzamczu, na Nowym Placu Targowym, handluje Hana. Bierze ode mnie towar, a czasem szuka kogoś, kto umie strzelać.
 }
 -> contract_menu
 
@@ -136,7 +136,7 @@ KAITO: I jeszcze jedno, Seki. Ktoś już pytał o kobietę z wraku. Nie tylko ja
 + { contracts_done >= 1 } [Masz coś do przewiezienia? #tone:main]
     SEKI: Masz coś do przewiezienia?
     ~ offer_contract("delivery")
-    KAITO: Chłodzone moduły dla Hany na targu pod estakadą. Jak się nagrzeją, nikt za nie nie zapłaci.
+    KAITO: Chłodzone moduły dla Hany, na targ na Podzamczu. Jak się nagrzeją, nikt za nie nie zapłaci.
     KAITO: Czas masz na optyce. Oddaj paczkę Hanie i wróć do mnie po pieniądze.
     -> END
 + [Gdzie tu się można podrasować? #tone:optional]
@@ -168,25 +168,25 @@ KAITO: Klient w czystych butach płaci pięć tysięcy za Rena Odagiri i walizk�
     Pięć tysięcy. Prawie tyle, ile Kagami obiecało wam za tamten kurs.
 }
 KAITO: Posłuchaj, to ich wiadomość. Przyszła wczoraj.
-Kaito puszcza nagranie. Mówi Ren, spokojnie i trochę za równo: przekazanie w nocy, na estakadzie nad targiem.
+Kaito puszcza nagranie. Mówi Ren, spokojnie i trochę za równo: przekazanie w nocy, na wiadukcie nad aleją Tysiąclecia, przy targu.
 KAITO: Twój chłopak sam się umawia z Kagami. Albo ktoś mówi jego głosem.
 * [Nie poluję na Rena. #tone:main]
     ~ choice_job = "refused"
     ~ story_choice("job", "refused")
     SEKI: Nie poluję na Rena. Znajdź sobie kogoś innego.
-    KAITO: Znajdę. Kagami też znajdzie. Ich człowiek, Kurosawa, czeka dziś na estakadzie.
+    KAITO: Znajdę. Kagami też znajdzie. Ich człowiek, Kurosawa, czeka dziś na wiadukcie.
     ~ change_rep("fixers", -3)
 * [Biorę. Chcę zobaczyć tego klienta. #tone:main]
     ~ choice_job = "taken"
     ~ story_choice("job", "taken")
     SEKI: Biorę. Chcę zobaczyć tego klienta.
-    KAITO: Rozsądnie. Nazywa się Kurosawa i czeka na estakadzie. Tylko nie rób z tego wojny, to mój klient.
+    KAITO: Rozsądnie. Nazywa się Kurosawa i czeka na wiadukcie. Tylko nie rób z tego wojny, to mój klient.
     ~ change_rep("fixers", 3)
 - ~ set_flag("kagami_job")
 -> END
 
 = delivery_running
-KAITO: Moduły miały już być u Hany. Targ pod estakadą, za Ulicą Kanałową.
+KAITO: Moduły miały już być u Hany. Targ na Podzamczu, zejdziesz przez Stare Miasto i Bramę Grodzką.
 { contract_time_left > 0:
     KAITO: Zostało ci {contract_time_left} s. Nie stój tu.
 }
@@ -274,7 +274,7 @@ UME: Widziałam, jak cię wyciągali z tego auta. Myślałam, że już po tobie.
 + [Gdzie znajdę Rena Odagiri? #tone:main]
     SEKI: Gdzie znajdę Rena Odagiri?
     UME: Wrócił tydzień temu. Chudy, zarośnięty, nie przypomina tego chłopaka sprzed dwóch lat.
-    UME: Śpi na dachu nad targiem pod estakadą. Wchodzi się schodami pożarowymi od strony straganów.
+    UME: Śpi na dachu nad targiem na Podzamczu, przy wiadukcie. Wchodzi się schodami pożarowymi od strony straganów.
     { has_flag("ume_ren"):
         UME: Mówiłam ci, że szukał cię pół roku. Teraz to on się ukrywa.
     }

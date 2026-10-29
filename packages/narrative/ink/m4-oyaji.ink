@@ -1,4 +1,4 @@
-// Seki Senshi, E10: Oyaji's stall on the market, 8:00 to 22:00 (plan §6, ADR-0015).
+// Seki Senshi, E10: Oyaji's stall on the market on Podzamcze, 8:00 to 22:00 (plan §6, ADR-0015).
 // The shop panel opens first; "Porozmawiaj z Oyajim" leads here. At night the schedule swaps
 // his interaction for `oyaji_closed` (day-cycle.ink). Prices live in the domain, ink only talks.
 

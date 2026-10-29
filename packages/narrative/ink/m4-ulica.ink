@@ -1,6 +1,6 @@
 // Seki Senshi, ADR-0026: the people of Stare Miasto (ex Ulica Kanałowa, ADR-0042) and the market stalls on Podzamcze.
 // Small talk with a pinch of rumour: each knot has one question that points at a find or a job
-// (the bag behind the dumpster, the car on the highway deck, the Hebi under the footbridge).
+// (the bag behind the dumpster, the car on the al. Tysiąclecia viaduct, the Hebi under the Grodzka footbridge).
 // No knot pays or hands out items; trade goes through the shop panel, the rest through flags.
 
 // Hideo, a clerk from the Tessen office on the Bystrzyca. Over the Grodzka footbridge to work, back to SAKE at night.
@@ -105,7 +105,7 @@
 { time_of_day == "night":
     SACHIKO: Kiosk nocny, kochana. Gazety z wczoraj, papierosy z jutra.
 - else:
-    SACHIKO: Gazety, karty do automatów, zapalniczki. Ramen jest dalej, u Fumiko, ale dopiero od czwartej.
+    SACHIKO: Gazety, karty do automatów, zapalniczki, wczorajsze cebularze. Ramen jest dalej, u Fumiko, ale dopiero od czwartej. Po zapiekanki idź pod Bramę, na górę.
 }
 -> talk
 
@@ -113,7 +113,7 @@
 + [Co słychać na targu? #tone:optional]
     SEKI: Co słychać na targu?
     { hebi_stance == "hostile":
-        SACHIKO: Hebi o tobie mówią. Nie po imieniu, raczej przekleństwami. Uważaj pod estakadą.
+        SACHIKO: Hebi o tobie mówią. Nie po imieniu, raczej przekleństwami. Uważaj pod wiaduktem.
     - else:
         SACHIKO: Hana ma nowy towar, Oyaji stare ceny, a Hebi te same twarze. Nic się tu nie zmienia.
     }
@@ -121,7 +121,7 @@
 + { not has_flag("sachiko_car") } [Widziałaś tu coś dziwnego? #tone:optional]
     SEKI: Widziałaś tu coś dziwnego?
     ~ set_flag("sachiko_car")
-    SACHIKO: Na estakadzie stoi auto. Ktoś je zostawił w noc blokady i już po nie nie wrócił.
+    SACHIKO: Na wiadukcie nad Tysiąclecia stoi auto. Ktoś je zostawił w noc blokady i już po nie nie wrócił.
     SACHIKO: Do środka nikt nie zaglądał. Przynajmniej nikt, kto by się przyznał.
     -> talk
 + [Dzięki za wszystko. #tone:leave]
@@ -170,11 +170,11 @@ KENTA: Okonomiyaki! Kapusta, ciasto, sos i co tylko chcesz. Z mięsem drożej, b
     SEKI: Prawie prawdziwe?
     KENTA: Prawdziwie jakieś. Ja nie pytam dostawcy, dostawca nie pyta mnie.
     -> talk
-+ { not has_flag("kenta_overpass") } [Co jest na estakadzie? #tone:optional]
-    SEKI: Co jest na estakadzie?
++ { not has_flag("kenta_overpass") } [Co jest na wiadukcie? #tone:optional]
+    SEKI: Co jest na wiadukcie?
     ~ set_flag("kenta_overpass")
     KENTA: Wiatr, pył i czujka Hebi, która w nocy krąży wokół filarów. Od blokady nikt tam nie jeździ.
-    KENTA: Ludzie wchodzą schodami od zachodu, żeby popatrzeć na miasto. Albo żeby czegoś poszukać.
+    KENTA: Ludzie wchodzą schodami od zachodu, żeby popatrzeć na Zamek i Stare Miasto. Albo żeby czegoś poszukać.
     -> talk
 + [Innym razem. #tone:leave]
     KENTA: Płyta będzie gorąca. Zawsze jest.
