@@ -93,6 +93,13 @@ export type ViewDescriptor =
       readonly name?: string;
       /** Seed of the facade's variation (colours, signs, lit windows). */
       readonly look: number;
+      /**
+       * On a slope (ADR-0042): the bottom `plinth` metres of `height` stand below the highest
+       * ground under the outline and are drawn as a plinth (podmurówka), not as a floor.
+       */
+      readonly plinth?: number;
+      /** Shop windows and signs on the ground floor (a shop, a café, a bar inside). */
+      readonly shopfront?: true;
     }
   /** The ground of a chunk (ADR-0042): a height grid the renderer turns into one mesh. */
   | { readonly kind: "terrain"; readonly grid: TerrainGrid }

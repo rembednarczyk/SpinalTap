@@ -8,6 +8,7 @@ import { loadInputs } from "../src/load.ts";
 import { parseOsmXml } from "../src/osm.ts";
 import { REPO } from "../src/paths.ts";
 import { worldToGeo } from "../src/project.ts";
+import { LUBLIN_ANCHOR } from "../../../packages/core/src/world/city-geo.ts";
 
 /** A tiny map: one building, one street with sidewalks, a café inside the building, on a slope. */
 const tinyMap = () => {
@@ -56,7 +57,7 @@ describe("generator", () => {
     expect(b).toMatchObject({ id: "w100", x: 20, z: 17.5, levels: 3, use: "residential", shopfront: true, source: "levels" });
     // On a 5 % slope across 20 m the plinth is 1 m and the foot is at the low corner.
     expect(b.plinth).toBeCloseTo(1, 1);
-    expect(b.y).toBeCloseTo(190 + 10 * 0.05 - 198, 1);
+    expect(b.y).toBeCloseTo(190 + 10 * 0.05 - LUBLIN_ANCHOR.altitude, 1);
     expect(b.height).toBeCloseTo(4 + 2 * 3.2 + b.plinth, 1);
     expect(c.ground.map((g) => g.surface).sort()).toEqual(["road", "sidewalk", "sidewalk"]);
     expect(c.streets).toEqual([expect.objectContaining({ name: "Testowa", kind: "residential" })]);

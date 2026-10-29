@@ -13,8 +13,8 @@ Rozważone źródła:
   - Obrysy budynków, część z wysokością albo liczbą pięter, ulice z typem i szerokością, chodniki, place, rzeka, nazwy.
   - Pochodne dane wolno trzymać w repo z atrybucją.
   - Z tego środowiska działa API `api.openstreetmap.org/api/0.6/map` (bbox do 50 tys. węzłów). Overpass i Geofabrik są niedostępne.
-- **Teren: EU-DEM 25 m** przez opentopodata.
-  - Centrum Lublina ma prawdziwe różnice wysokości: Plac Litewski 198 m, Brama Krakowska 202 m, Plac Zamkowy i Bystrzyca 183 m.
+- **Teren: NMT 1 m z lidaru (GUGiK, Geoportal, WCS)**, z EU-DEM 25 m jako zapasem.
+  - Centrum Lublina ma prawdziwe różnice wysokości (NMT): Plac Litewski 195,8 m, Brama Krakowska 196,7 m, Rynek 195,9 m, Plac Zamkowy 175,5 m, Bystrzyca 166 m.
 
 Gracz wybrał (pytania w sesji):
 - OSM z terenem;
@@ -30,12 +30,12 @@ Gracz wybrał (pytania w sesji):
   - zapisuje surowe dane do `data/osm/` (z plikiem `ATTRIBUTION.md`);
   - generuje treść do `packages/sim/src/content/lublin/` (pliki `*.generated.ts`, wyłączone z limitu `max-lines` jak inne tabele treści).
 - Gra nie łączy się z siecią. Ten sam commit daje ten sam świat, więc złote hashe i zapis pozostają deterministyczne.
-- Atrybucja „© OpenStreetMap contributors (ODbL)” i „EU-DEM (Copernicus)” trafia do README, `data/osm/ATTRIBUTION.md` i napisów w menu tytułowym.
+- Atrybucja „© OpenStreetMap contributors (ODbL)” i „Źródło: GUGiK, NMT” (EU-DEM/Copernicus, jeśli użyty) trafia do README, `data/osm/ATTRIBUTION.md` i napisów w menu tytułowym.
 
 ### Układ współrzędnych
-- `LUBLIN_ANCHOR` (`core/world/city-geo.ts`): Plac Litewski (51,24838 N, 22,55964 E, 198 m n.p.m.) to świat (0, 0, 0).
+- `LUBLIN_ANCHOR` (`core/world/city-geo.ts`): Plac Litewski (51,24838 N, 22,55964 E, 195,8 m n.p.m. według NMT) to świat (0, 0, 0).
 - x rośnie na wschód, z na północ, w metrach. Rzutowanie równoodległościowe wokół kotwicy, błąd poniżej 0,1 % na 2 km.
-- Wysokość w świecie = wysokość n.p.m. − 198.
+- Wysokość w świecie = wysokość n.p.m. − 195,8.
 
 ### Dystrykty (Lublin 2077)
 Obecne identyfikatory dystryktów zostają w kodzie, zmieniają się nazwy, treść i geometria.
@@ -66,6 +66,11 @@ Dokładne prostokąty ustala importer. Każdy dystrykt dzieli się na chunki str
   - przeniesienie postaci, wnętrz (klinika i Neon Koi w prawdziwych kamienicach na Krakowskim), drzwi, metra (stacje przy Placu Litewskim, Bramie Krakowskiej, Placu Zamkowym i na nabrzeżu), tras tłumu, miejsc aktywności, nawigacji, spotkań, urządzeń i zleceń na nowe miejsca;
   - narracja: nazwy miejsc w ink na lubelskie, postacie i frakcje zostają;
   - złote hashe, zapis i e2e zmieniają się wtedy świadomie, z opisem.
+- **Nabrzeże Bystrzycy** leży około 1,2 km na wschód od Podzamcza (tak płynie rzeka). Dojazd metrem, które i tak łączy dystrykty; przejazd pokrywa streaming.
+
+### Zmiany kontraktu
+- `LUBLIN_ANCHOR.altitude` 198 → 195,8 (pomiar NMT pod kotwicą).
+- Widok `building` dostaje `plinth?` (podmurówka na zboczu) i `shopfront?` (witryny na parterze); obie wartości liczy importer.
 
 ### Zapis
 - Przeniesienie świata podbija `SAVE_SCHEMA_VERSION`. Migracja przenosi gracza na start w klinice, bo stare współrzędne nic nie znaczą w nowym mieście, i czyści pozycje zapamiętanych postaci.

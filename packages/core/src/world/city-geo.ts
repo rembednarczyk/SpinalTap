@@ -23,7 +23,7 @@ export interface GeoAnchor {
 }
 
 /** Plac Litewski, by the fountain: the middle of the game's Krakowskie Przedmieście. */
-export const LUBLIN_ANCHOR: GeoAnchor = { lat: 51.24838, lon: 22.55964, altitude: 198 };
+export const LUBLIN_ANCHOR: GeoAnchor = { lat: 51.24838, lon: 22.55964, altitude: 195.8 };
 
 /** What a building is for: chooses its facade, its ground floor and its signs. */
 export type BuildingUse = "residential" | "commercial" | "civic" | "church" | "historic" | "industrial" | "garage" | "other";

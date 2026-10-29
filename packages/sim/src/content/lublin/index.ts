@@ -39,6 +39,8 @@ export const buildingView = (b: LublinBuildingData): ViewDescriptor => ({
   ...(b.roof === undefined ? {} : { roof: b.roof }),
   ...(b.name === undefined ? {} : { name: b.name }),
   look: b.look,
+  ...(b.plinth > 0 ? { plinth: b.plinth } : {}),
+  ...(b.shopfront ? { shopfront: true as const } : {}),
 });
 
 /** The `ground` view of a surface, positioned at the world origin (its points are world points). */
