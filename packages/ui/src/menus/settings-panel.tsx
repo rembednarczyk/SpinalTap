@@ -4,6 +4,7 @@ import type { AimMode, GraphicsQuality, SettingsVm } from "../store/ui-store";
 import { TOKENS } from "../hud/tokens";
 import { useSettingsIntents, useUi } from "../use-ui";
 import { RESERVED_KEYS, keyLabel } from "./key-label";
+import { useFieldOfView } from "./use-field-of-view";
 
 const QUALITY: readonly (readonly [GraphicsQuality, string])[] = [
   ["high", "Wysoka"],
@@ -54,6 +55,12 @@ const Slider = ({
 const times = (v: number) => `${v.toFixed(1).replace(".", ",")}×`;
 const percent = (v: number) => `${Math.round(v * 100)}%`;
 const degrees = (v: number) => `${Math.round(v)}°`;
+
+/** Horizontal field of view from the hip (ADR-0049); the same width of the street on any screen. */
+const FieldOfViewSlider = () => {
+  const fov = useFieldOfView();
+  return <Slider id="horizontalFov" label="Pole widzenia (poziomo)" value={fov.degrees} min={fov.min} max={fov.max} step={1} format={degrees} onChange={fov.set} />;
+};
 
 const Choice = <T extends string>({ label, value, options, onChange }: { label: string; value: T; options: readonly (readonly [T, string])[]; onChange: (v: T) => void }) => (
   <div className="settings__row">
@@ -213,7 +220,7 @@ export const SettingsPanel = () => {
           <Slider id="mouseSensitivity" label="Czułość myszy" value={settings.mouseSensitivity} min={0.2} max={3} step={0.1} format={times} onChange={(v) => set({ mouseSensitivity: v })} />
           <Slider id="adsSensitivity" label="Czułość przy celowaniu" value={settings.adsSensitivity} min={0.3} max={2} step={0.05} format={times} onChange={(v) => set({ adsSensitivity: v })} />
           <Choice label="Odwróć oś Y" value={settings.invertY ? "on" : "off"} options={ON_OFF} onChange={(v) => set({ invertY: v === "on" })} />
-          <Slider id="fov" label="Pole widzenia" value={settings.fov} min={50} max={80} step={1} format={degrees} onChange={(v) => set({ fov: v })} />
+          <FieldOfViewSlider />
           <Choice label="Celowanie (PPM)" value={settings.aimMode} options={AIM_MODES} onChange={(aimMode) => set({ aimMode })} />
           <Choice label="Kucanie" value={settings.crouchMode} options={AIM_MODES} onChange={(crouchMode) => set({ crouchMode })} />
           <Choice label="Sprint" value={settings.sprintMode} options={AIM_MODES} onChange={(sprintMode) => set({ sprintMode })} />

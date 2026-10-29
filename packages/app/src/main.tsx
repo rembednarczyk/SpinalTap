@@ -1,11 +1,11 @@
-import { FOV_REFERENCE_ASPECT, horizontalFovOf } from "@seki/core";
+import { degToRad } from "@seki/core";
 import { BabylonRenderer, BrowserInput, PerfProbe, PreviewStage, Stage, SynthAudio } from "@seki/engine";
 import { audioSampleManifest } from "./audio-manifest";
 import { loadModelManifest } from "./model-manifest";
 import { STORY_SOURCE } from "@seki/narrative";
 import { IndexedDbSaveStore, SavePersistence } from "@seki/persistence";
 import { FixedStepLoop, ground, koiPoint, rayGeometry } from "@seki/sim";
-import { DEFAULT_SETTINGS, GameUi, createUiStore, fovRadians } from "@seki/ui";
+import { DEFAULT_SETTINGS, GameUi, createUiStore } from "@seki/ui";
 import { createRoot } from "react-dom/client";
 import { browserClock } from "./browser-clock";
 import { type DebugApi, createDebugApi } from "./debug-api";
@@ -119,7 +119,7 @@ const applyControls = (s: typeof settings) => {
   controlsFor = s;
   input.keymap = keymapFor(s.bindings);
   input.setButtonModes({ aim: s.aimMode, crouch: s.crouchMode, sprint: s.sprintMode });
-  renderer.rig.horizontalFov = horizontalFovOf(fovRadians(s.fov), FOV_REFERENCE_ASPECT);
+  renderer.rig.horizontalFov = degToRad(s.horizontalFov);
   applyEffects(renderer, s);
 };
 

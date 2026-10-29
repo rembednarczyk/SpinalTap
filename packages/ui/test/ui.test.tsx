@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { GameUi, createUiStore, dismissToast, patchUi, pushToast, type UiIntents, type UiState } from "../src";
+import { DEFAULT_HORIZONTAL_FOV, GameUi, createUiStore, dismissToast, hipVerticalFov, patchUi, pushToast, type UiIntents, type UiState } from "../src";
 import { HUD_CAMERA_FOV, spreadToScreen } from "../src/hud/hud";
 
 const intents = (): UiIntents => ({
@@ -23,6 +23,7 @@ const intents = (): UiIntents => ({
   installCyberwareItem: vi.fn(),
   removeCyberware: vi.fn(),
   changeSettings: vi.fn(),
+  setFieldOfView: vi.fn(),
   bindKey: vi.fn(),
   resetControls: vi.fn(),
   reload: vi.fn(),
@@ -61,6 +62,9 @@ const mount = (state: Partial<UiState> = {}) => {
 };
 
 afterEach(cleanup);
+
+/** The camera's vertical hip angle for the default setting on this window (ADR-0049). */
+const screenFov = (degrees = DEFAULT_HORIZONTAL_FOV) => hipVerticalFov(degrees, window.innerWidth / window.innerHeight);
 
 describe("title screen", () => {
   it("starts a new game", () => {
@@ -110,13 +114,14 @@ describe("HUD", () => {
     const spread = () => Number(cross.style.getPropertyValue("--spread"));
     expect(cross.querySelectorAll(".crosshair__tick")).toHaveLength(4);
     const standing = spread();
-    expect(standing).toBeCloseTo(spreadToScreen(0.02), 3);
+    // Calibrated to the camera's vertical angle on this window's proportions (ADR-0049).
+    expect(standing).toBeCloseTo(spreadToScreen(0.02, 1, screenFov()), 3);
     act(() => patchUi(store, { aimSpread: 0.07 }));
     expect(spread()).toBeGreaterThan(standing * 3);
     act(() => patchUi(store, { aimSpread: 0.008, crouched: true }));
     expect(spread()).toBeLessThan(standing);
     expect(cross.classList.contains("crosshair--crouched")).toBe(true);
-    // Small angles map almost linearly: 0.02 rad is ~4% of half the screen at a 1.08 rad FOV.
+    // Small angles map almost linearly: 0.02 rad is ~4.5% of half the screen at 16:9 and 80 degrees across.
     expect(spreadToScreen(0.02)).toBeCloseTo(Math.tan(0.02) / Math.tan(HUD_CAMERA_FOV / 2));
     expect(spreadToScreen(-1)).toBe(0);
   });
@@ -128,12 +133,31 @@ describe("HUD", () => {
     const hip = spread();
     act(() => patchUi(store, { aimSpread: 0.015, aiming: true, aimZoom: 0.8 }));
     expect(cross.classList.contains("crosshair--aiming")).toBe(true);
-    expect(spread()).toBeCloseTo(spreadToScreen(0.015, 0.8), 3);
+    expect(spread()).toBeCloseTo(spreadToScreen(0.015, 0.8, screenFov()), 3);
     expect(spread()).toBeLessThan(hip);
     // The same cone covers more of a zoomed-in screen.
     expect(spreadToScreen(0.02, 0.6)).toBeGreaterThan(spreadToScreen(0.02));
     act(() => patchUi(store, { aiming: false, blocking: true }));
     expect(cross.classList.contains("crosshair--guard")).toBe(true);
+  });
+
+  it("calibrates the ticks to the field of view setting and the window's proportions (ADR-0049)", () => {
+    const { store } = mount({ screen: "playing", aimSpread: 0.02 });
+    const cross = screen.getByTestId("crosshair");
+    const spread = () => Number(cross.style.getPropertyValue("--spread"));
+    act(() => patchUi(store, { settings: { ...store.getState().settings, horizontalFov: 100 } }));
+    expect(spread()).toBeCloseTo(spreadToScreen(0.02, 1, screenFov(100)), 4);
+    const [w, h] = [window.innerWidth, window.innerHeight];
+    try {
+      // A phone turned sideways: the same horizontal angle is a shorter vertical one.
+      act(() => {
+        Object.assign(window, { innerWidth: 800, innerHeight: 370 });
+        window.dispatchEvent(new Event("resize"));
+      });
+      expect(spread()).toBeCloseTo(spreadToScreen(0.02, 1, hipVerticalFov(100, 800 / 370)), 4);
+    } finally {
+      Object.assign(window, { innerWidth: w, innerHeight: h });
+    }
   });
 
   it("does not re-render the crosshair when the store gets the same spread again", () => {

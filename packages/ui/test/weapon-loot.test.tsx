@@ -22,6 +22,7 @@ const intents = (): UiIntents => ({
   installCyberwareItem: vi.fn(),
   removeCyberware: vi.fn(),
   changeSettings: vi.fn(),
+  setFieldOfView: vi.fn(),
   bindKey: vi.fn(),
   resetControls: vi.fn(),
   reload: vi.fn(),
