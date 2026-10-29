@@ -1,5 +1,5 @@
 import type { StreetPropItem } from "@seki/core";
-import type { CrowdSpot } from "./crowd";
+import type { CrowdSpot } from "./crowd-spot";
 import { ACTIVITY_SPOTS } from "./activity-spots";
 import { furnitureClearance } from "./furniture-index";
 import { inBuilding, nearestWall } from "./lublin/places";

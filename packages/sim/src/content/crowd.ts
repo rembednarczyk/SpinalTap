@@ -8,6 +8,7 @@ import { againstWall, inBuilding, nearestWall } from "./lublin/places";
 import { DOCKS_PLACE, MAP_CHUNKS, MARKET_PLACE } from "./lublin/sites";
 import { furnitureClearance, furnitureNear } from "./furniture-index";
 import { SEAT_SPOTS } from "./crowd-seats";
+import type { CrowdSpot } from "./crowd-spot";
 
 /** The chunks of Lublin that hold the market and the docks (ADR-0045). */
 const MARKET_CHUNK = "podzamcze-1-0";
@@ -35,21 +36,7 @@ export interface CrowdLane {
   readonly points: readonly (readonly [number, number])[];
 }
 
-/** A place where a resident stands and does something, facing `yaw`. */
-export interface CrowdSpot {
-  readonly chunk: string;
-  readonly at: Vec3;
-  readonly yaw: number;
-  /** What it does there; it changes with the passers-by's routine slots. */
-  readonly does: readonly [ActivityId, ...ActivityId[]];
-  /** Under a roof: no umbrella. */
-  readonly indoor?: true;
-  /**
-   * Spots of one group (a bench's seats, a kiosk's queue, ADR-0050): the standers of a chunk take
-   * a group's spots one after another, so people sit and queue together.
-   */
-  readonly group?: string;
-}
+export type { CrowdSpot } from "./crowd-spot";
 
 const EAST = Math.PI / 2;
 const WEST = -Math.PI / 2;

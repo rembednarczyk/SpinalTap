@@ -59,11 +59,13 @@ describe("determinism", () => {
     expect(hashOf(runReplay(1234, script()))).toMatchInlineSnapshot(`"ca34413e"`);
   });
 
-  it("the crowd of residents (ADR-0041) leaves the golden run as it was, at every density", () => {
+  it("the crowd of residents (ADR-0041) and the traffic (ADR-0050) leave the golden run as it was, at every density", () => {
     const golden = hashOf(runReplay(1234, script()));
     for (const crowd of ["low", "high"] as const) {
       const sim = runReplay(1234, script(), crowd);
       expect([...sim.world].some((e) => e.view?.kind === "crowd")).toBe(true);
+      // The traffic follows the crowd's density: cars on Lubartowska and Królewska by Plac Łokietka.
+      if (crowd === "high") expect([...sim.world].some((e) => e.vehicle !== undefined)).toBe(true);
       expect(hashOf(sim)).toBe(golden);
     }
   });
