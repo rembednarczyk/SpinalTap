@@ -143,7 +143,7 @@ const SCENARIOS: readonly Scenario[] = [
   { name: "Genzō, hack running", knot: "genzo", domain: afterM0({}, hack("active", 600)), npcs: ["Genzō"] },
   { name: "Genzō, busy for Hana", knot: "genzo", domain: afterM0({}, retrieve("active")), npcs: ["Genzō"] },
   { name: "Oyaji, closed", knot: "oyaji_closed", domain: { ...afterM0(), clock: { seconds: 23 * 3600 } }, npcs: ["Oyaji"] },
-  // Ulica Kanałowa and the market stalls (ADR-0026), by day and by night.
+  // Stare Miasto and the market stalls on Podzamcze (ADR-0026, ADR-0042), by day and by night.
   { name: "Hideo, on his way to work", knot: "hideo", domain: afterM0(), npcs: ["Hideo"] },
   { name: "Hideo, at SAKE", knot: "hideo", domain: { ...afterM0(), clock: { seconds: 22 * 3600 } }, npcs: ["Hideo"] },
   { name: "Tetsu, first talk", knot: "tetsu", domain: afterM0(), npcs: ["Tetsu"] },

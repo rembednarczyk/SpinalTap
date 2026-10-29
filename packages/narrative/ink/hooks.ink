@@ -3,7 +3,7 @@
 // One or two lines, no choices. Each reveals a systemic way through: a gap in a rotation, a code,
 // a habit of the target. Mails and shards are narration, so they carry no speaker prefix.
 
-// eliminate: Kaito's sites in Shinsekai and under the footbridge.
+// eliminate: Kaito's sites on Krakowskie Przedmieście and under the Grodzka footbridge in Stare Miasto.
 === hook_eliminate_1 ===
 HEBI: Szef co godzinę chodzi sam za myjnię. Mówi, że dzwoni do matki, a wraca pachnący sake.
 -> END
@@ -14,7 +14,7 @@ Shard, nagranie głosowe: „Zmiana warty o drugiej. Kto stoi od ulicy, idzie wt
 
 // delivery: Kaito's cold modules for Hana.
 === hook_delivery_1 ===
-Mail na terminalu. Od: chłodnia Neon Koi. Temat: moduły. „Paczka trzyma temperaturę w cieniu. Kładka nad Kanałową jest kryta i szybsza niż ulica pod nią, gdzie stoją Hebi”.
+Mail na terminalu. Od: chłodnia Neon Koi. Temat: moduły. „Paczka trzyma temperaturę w cieniu. Kładka nad Grodzką jest kryta i szybsza niż ulica pod nią, gdzie stoją Hebi”.
 -> END
 
 === hook_delivery_2 ===

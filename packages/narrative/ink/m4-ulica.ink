@@ -1,9 +1,9 @@
-// Seki Senshi, ADR-0026: the people of Ulica Kanałowa and the market stalls.
+// Seki Senshi, ADR-0026: the people of Stare Miasto (ex Ulica Kanałowa, ADR-0042) and the market stalls on Podzamcze.
 // Small talk with a pinch of rumour: each knot has one question that points at a find or a job
 // (the bag behind the dumpster, the car on the highway deck, the Hebi under the footbridge).
 // No knot pays or hands out items; trade goes through the shop panel, the rest through flags.
 
-// Hideo, a clerk from the Tessen port office. Over the footbridge to work, back to SAKE at night.
+// Hideo, a clerk from the Tessen office on the Bystrzyca. Over the Grodzka footbridge to work, back to SAKE at night.
 === hideo ===
 { civilians_stance == "hostile":
     HIDEO: Nie mam przy sobie pieniędzy. Naprawdę. Proszę iść dalej.
@@ -15,7 +15,7 @@
 - game_hour >= 7 && game_hour < 19:
     HIDEO: Przepraszam, spieszę się. Zmiana w biurze Tessen zaczyna się wtedy, kiedy kierownik tak powie.
 - else:
-    HIDEO: Pod SAKE nalewają do pełna i nikt nie pyta, jak minął dzień. Dlatego tu stoję.
+    HIDEO: Pod SAKE nalewają do pełna i nikt nie pyta, jak minął dzień. Trybunał po drugiej stronie Rynku też nie pyta. Dlatego tu stoję.
 }
 -> talk
 
@@ -27,7 +27,7 @@
 + { not has_flag("hideo_bridge") } [Czemu chodzisz górą, przez kładkę? #tone:optional]
     SEKI: Czemu chodzisz górą, przez kładkę?
     ~ set_flag("hideo_bridge")
-    HIDEO: Bo pod kładką stoją Hebi i liczą ludziom portfele. Z góry przynajmniej widać ich z daleka.
+    HIDEO: Bo pod kładką, na Grodzkiej, stoją Hebi i liczą ludziom portfele. Z góry przynajmniej widać ich z daleka.
     HIDEO: Kaito podobno płaci za takich, co tam handlują. Ja tylko mówię, co widzę.
     -> talk
 + [Trzymaj się. #tone:leave]
@@ -55,13 +55,13 @@
     { game_hour >= 20 || game_hour < 5:
         TETSU: Pod kładką znowu handlują. Hebi z Hebi, chipy za gotówkę. Kaito płaci za takie wieści, ja oddaję je taniej.
     - else:
-        TETSU: Za dnia nic. Kanałowa budzi się dopiero po zmroku, jak Mei zapali KARAOKE.
+        TETSU: Za dnia nic, tylko wycieczki do Archikatedry. Stare Miasto budzi się dopiero po zmroku, jak Mei zapali KARAOKE.
     }
     -> talk
 + { not has_flag("tetsu_alley") } [Coś ciekawego w okolicy? #tone:optional]
     SEKI: Coś ciekawego w okolicy?
     ~ set_flag("tetsu_alley")
-    TETSU: Kontener na śmieci przy przejściu do Shinsekai. Kurierzy Hebi chowają tam za nim torby, kiedy ktoś ich goni.
+    TETSU: Kontener na śmieci pod Bramą Krakowską, od strony deptaka. Kurierzy Hebi chowają tam za nim torby, kiedy ktoś ich goni.
     TETSU: Nie zawsze po nie wracają. Ja nic nie mówiłem.
     -> talk
 + [Na razie. #tone:leave]
@@ -84,7 +84,7 @@
 = talk
 + [Śpiewasz tu co noc? #tone:optional]
     SEKI: Śpiewasz tu co noc?
-    MEI: Od trzech lat. Zanim zabetonowali kanał, śpiewałam pod mostem za drobne. Akustyka była lepsza.
+    MEI: Od trzech lat. Zanim zamknęli piwnice pod Rynkiem, śpiewałam w lochach Trasy Podziemnej za drobne. Akustyka była lepsza.
     -> talk
 + { not has_flag("mei_song") } [Zaśpiewasz coś dla mnie? #tone:optional]
     SEKI: Zaśpiewasz coś dla mnie?
