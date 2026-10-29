@@ -86,6 +86,11 @@ export class ToonMaterials {
     private rig: LightingRig = NIGHT_RIG,
   ) {}
 
+  /** The light rig pushed into every material now (fog and colours of the look on screen). */
+  get currentRig(): LightingRig {
+    return this.rig;
+  }
+
   get(preset: PresetName): ShaderMaterial {
     return this.cached(preset, () => this.create(preset, PRESETS[preset]));
   }
@@ -248,13 +253,14 @@ export class ToonMaterials {
       this.scene,
       { vertexSource: TOON_VERTEX, fragmentSource: TOON_FRAGMENT },
       {
-        attributes: texture ? ["position", "normal", "uv"] : ["position", "normal"],
+        attributes: texture ? ["position", "normal", "uv"] : p.city ? ["position", "normal", "uv", "uv2"] : ["position", "normal"],
         uniforms: [...UNIFORMS],
         samplers: env ? [...SAMPLERS, "envSampler"] : [...SAMPLERS],
         defines: [
           ...(texture ? ["UV1", "TEXTURE", ...(alpha ? [alpha] : []), ...(tint ? ["TINT"] : [])] : []),
           ...(p.surface === "concrete" ? ["CONCRETE_PANELS"] : p.surface === "metal" ? ["METAL_PANELS"] : []),
           ...(p.vertexFlags ? ["DRESS_FLAGS"] : []),
+          ...(p.city === "facade" ? ["UV1", "UV2", "FACADE"] : p.city === "ground" ? ["UV1", "UV2", "MAP_GROUND"] : []),
           ...extra,
           ...(env ? ["ENV_REFLECT"] : []),
         ],
