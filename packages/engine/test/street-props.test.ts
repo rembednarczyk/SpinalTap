@@ -95,13 +95,15 @@ describe("street props in the scene (ADR-0047)", () => {
     return new StreetProps({ scene, materials: new ToonMaterials(scene), quality });
   };
 
-  it("draws one instanced mesh per kind and shape in view, far cells as one baked mesh, and forgets despawned pieces", () => {
+  it("bakes a near cell's pieces into one mesh, far cells into one, and forgets despawned pieces", () => {
     const props = make();
-    props.spawn(1, [item("bench", 10, 10), item("bench", 12, 10), item("lamp-pastoral", 14, 10), item("tree", 300, 300, 0)], { x: 0, y: 0, z: 0 });
+    props.spawn(1, [item("bench", 10, 10), item("bench", 12, 10), item("lamp-pastoral", 14, 10), item("bollard", 16, 10), item("tree", 300, 300, 0)], { x: 0, y: 0, z: 0 });
     props.flush();
     props.update({ x: 10, y: 2, z: 0 });
-    expect(props.stats.drawn).toEqual({ bench: 2, "lamp-pastoral": 1 });
-    expect(props.stats.groups).toBe(2);
+    expect(props.waiting).toBe(0);
+    expect(props.stats.drawn).toEqual({ bench: 2, "lamp-pastoral": 1, bollard: 1 });
+    // Benches, lamp and bollard of one cell: one mesh, whatever the kinds (ADR-0050).
+    expect(props.stats.groups).toBe(1);
     expect(props.stats.far).toBe(1);
     props.despawn(1);
     props.flush();
@@ -117,7 +119,9 @@ describe("street props in the scene (ADR-0047)", () => {
     props.update({ x: 20, y: 2, z: -20 });
     const s = props.stats;
     expect(s.pieces).toBeGreaterThan(3000);
-    // Draw calls follow the kinds in view, not the cells.
-    expect(s.groups).toBeLessThanOrEqual(45);
+    // Draw calls follow the near cells, not the kinds in view (ADR-0050); a few are baked per frame.
+    for (let i = 0; i < 20 && props.waiting > 0; i++) props.update({ x: 20, y: 2, z: -20 });
+    expect(props.waiting).toBe(0);
+    expect(props.stats.groups).toBeLessThanOrEqual(20);
   });
 });
