@@ -182,6 +182,74 @@ const streetLanes = (): CrowdLane[] =>
     return out;
   });
 
+/** Squares this large (m²) get loops of their own: Plac Litewski, Plac Łokietka, the Rynek. */
+const SQUARE_AREA = 1500;
+/** How far towards its middle a square's loop is drawn in, as shares of the way from the edge. */
+const SQUARE_INSETS: readonly number[] = [0.7, 0.5, 0.3];
+/** Most loops a chunk's squares and alleys add. */
+const SQUARE_LANES_PER_CHUNK = 3;
+/** Paths this large (m², some 60 m of a 2.5 m alley) make a loop of their own. */
+const ALLEY_AREA = 150;
+
+const ringOf = (flat: readonly number[]): Pt[] => {
+  const out: Pt[] = [];
+  for (let i = 0; i + 1 < flat.length; i += 2) out.push([flat[i] as number, flat[i + 1] as number]);
+  return out;
+};
+
+const ringArea = (ring: readonly Pt[]): number => Math.abs(ring.reduce((s, p, i) => {
+  const q = ring[(i + 1) % ring.length] as Pt;
+  return s + p[0] * q[1] - q[0] * p[1];
+}, 0)) / 2;
+
+const insideRing = (x: number, z: number, ring: readonly Pt[]): boolean => {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, zi] = ring[i] as Pt;
+    const [xj, zj] = ring[j] as Pt;
+    if (zi > z !== zj > z && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) inside = true !== inside;
+  }
+  return inside;
+};
+
+/**
+ * Loops across the big squares (Plac Litewski's alleys are paths without names, so no street
+ * lane reaches them): the square's outline drawn in towards its middle, kept only where it stays
+ * clear of the walls, the furniture and the fountains' water.
+ */
+const squareLanes = (): CrowdLane[] =>
+  MAP_CHUNKS.filter((c) => c.district === "shinsekai-7" || c.district === "kanal").flatMap((c) => {
+    const water = c.ground.filter((g) => g.surface === "water" || g.surface === "basin").map((g) => ringOf(g.outline));
+    const dry = (loop: readonly Pt[]) => loop.every(([x, z]) => !water.some((w) => insideRing(x, z, w)));
+    const squares = c.ground
+      .filter((g) => g.surface === "square")
+      .map((g) => ringOf(g.outline))
+      .filter((r) => r.length >= 3 && ringArea(r) >= SQUARE_AREA)
+      .sort((a, b) => ringArea(b) - ringArea(a));
+    // The squares' alleys: a path's band is already a loop up one side and back down the other.
+    const alleys = c.ground
+      .filter((g) => g.surface === "footway")
+      .map((g) => ringOf(g.outline))
+      .filter((r) => r.length >= 4 && ringArea(r) >= ALLEY_AREA)
+      .sort((a, b) => ringArea(b) - ringArea(a));
+    const out: CrowdLane[] = [];
+    for (const ring of alleys) {
+      if (out.length >= SQUARE_LANES_PER_CHUNK) break;
+      const loop = weave(ring);
+      if (clearLoop(loop) && dry(loop)) out.push({ id: `${c.id}-square-${out.length}`, chunk: c.id, points: loop });
+    }
+    for (const ring of squares) {
+      const cx = ring.reduce((s, p) => s + p[0], 0) / ring.length;
+      const cz = ring.reduce((s, p) => s + p[1], 0) / ring.length;
+      for (const k of SQUARE_INSETS) {
+        if (out.length >= SQUARE_LANES_PER_CHUNK) break;
+        const loop = weave(ring.map(([x, z]) => [cx + (x - cx) * k, cz + (z - cz) * k] as const));
+        if (clearLoop(loop) && dry(loop)) out.push({ id: `${c.id}-square-${out.length}`, chunk: c.id, points: loop });
+      }
+    }
+    return out;
+  });
+
 /** The market's and the docks' own lanes (ADR-0041), placed with their set pieces. */
 const SET_PIECE_LANES: readonly CrowdLane[] = [
   // The market: round the edge of the square (east of Sachiko's kiosk at the gate), and round
@@ -242,7 +310,7 @@ const SET_PIECE_LANES: readonly CrowdLane[] = [
 
 export { furnitureClearance };
 
-export const CROWD_LANES: readonly CrowdLane[] = [...streetLanes(), ...SET_PIECE_LANES];
+export const CROWD_LANES: readonly CrowdLane[] = [...streetLanes(), ...squareLanes(), ...SET_PIECE_LANES];
 
 const spot = (chunk: string, at: Vec3, yaw: number, does: readonly [ActivityId, ...ActivityId[]], indoor = false): CrowdSpot =>
   indoor ? { chunk, at, yaw, does, indoor: true } : { chunk, at, yaw, does };
