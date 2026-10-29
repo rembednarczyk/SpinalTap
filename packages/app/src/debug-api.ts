@@ -9,6 +9,8 @@ export interface DebugApi {
   ready: boolean;
   /** The reference frame has stopped rendering: it is a still from now on (snapshot and budgets). */
   still: boolean;
+  /** The next frame as a PNG data URL, read from the canvas (the NPR snapshot, ADR-0046). */
+  capture?: () => string;
   state(): {
     screen: string;
     hp: number;

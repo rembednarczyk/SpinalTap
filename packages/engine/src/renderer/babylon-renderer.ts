@@ -421,6 +421,16 @@ export class BabylonRenderer implements RenderPort {
     return this.mapCity?.settled ?? true;
   }
 
+  /**
+   * Draws one frame and reads it straight from the canvas as a PNG data URL (ADR-0046): the
+   * snapshot test compares these pixels instead of waiting for the browser's compositor, which
+   * under SwiftShader may not settle within a test's patience.
+   */
+  captureFrame(): string {
+    this.stage.scene.render();
+    return this.stage.engine.getRenderingCanvas()?.toDataURL("image/png") ?? "";
+  }
+
   /** Character models still loading. */
   get modelsLoading(): number {
     return this.characters.loadingCount;

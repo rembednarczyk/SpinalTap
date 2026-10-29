@@ -223,6 +223,7 @@ const debug = createDebugApi(session, ui, loop, () => probe.sample(), (position,
   () => renderer.modelsLoading,
   () => renderer.citySettled,
 );
+debug.capture = () => renderer.captureFrame();
 window.__seki = debug;
 
 // Wave 1 effects over the whole frame (ADR-0030): hits on the player, quickhack uploads, heat

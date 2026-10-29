@@ -30,7 +30,10 @@ test("NPR reference frame matches the approved snapshot", async ({ page }) => {
   await waitForGame(page);
   // The reference frame stops rendering once Lublin round it is built in detail (ADR-0045).
   await page.waitForFunction(() => window.__seki!.still, null, { timeout: 60_000 });
-  await expect(page.locator("#game-canvas")).toHaveScreenshot("reference-m0.png");
+  // Pixels straight from the canvas (ADR-0046): an element screenshot waits for the compositor,
+  // which under SwiftShader in CI did not settle within the expect timeout.
+  const png = await page.evaluate(() => window.__seki!.capture!());
+  expect(Buffer.from(png.slice(png.indexOf(",") + 1), "base64")).toMatchSnapshot("reference-m0.png", { maxDiffPixelRatio: 0.02, threshold: 0.2 });
 });
 
 test("reference scene stays within the perf budget", async ({ page }) => {
