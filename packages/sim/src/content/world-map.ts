@@ -19,6 +19,7 @@ import {
 } from "./district-targ";
 import { DEVICES, type DeviceDef } from "./devices";
 import { METRO_STATIONS, type MetroStationDef } from "./metro";
+import { DOKI_DOORS, S7_NAV } from "./interiors";
 import { DOKI_NAV, DOKI_QUAY_ACTORS, DOKI_QUAY_BOUNDS, DOKI_QUAY_PROPS, DOKI_YARD_ACTORS, DOKI_YARD_BOUNDS, DOKI_YARD_PROPS } from "./district-doki";
 
 export const DISTRICTS = {
@@ -50,7 +51,8 @@ export const WORLD_CHUNKS: readonly ChunkDef[] = [
   { id: "targ-north", district: "targ", bounds: TARG_NORTH_BOUNDS, props: TARG_NORTH_PROPS, actors: TARG_NORTH_ACTORS },
   // ADR-0024: north of Ulica Kanałowa, through the passage in its north row.
   { id: "doki-yard", district: "doki", bounds: DOKI_YARD_BOUNDS, props: DOKI_YARD_PROPS, actors: DOKI_YARD_ACTORS },
-  { id: "doki-quay", district: "doki", bounds: DOKI_QUAY_BOUNDS, props: DOKI_QUAY_PROPS, actors: DOKI_QUAY_ACTORS },
+  // ADR-0038: the office door after the quay's own props, so their ids stay what they were.
+  { id: "doki-quay", district: "doki", bounds: DOKI_QUAY_BOUNDS, props: [...DOKI_QUAY_PROPS, ...DOKI_DOORS], actors: DOKI_QUAY_ACTORS },
 ];
 
 /** Cameras and hackable devices (ADR-0029); each one names its chunk above. */
@@ -59,8 +61,8 @@ export const WORLD_DEVICES: readonly DeviceDef[] = DEVICES;
 /** Metro platforms (ADR-0034); each one names its chunk above. */
 export const WORLD_METRO: readonly MetroStationDef[] = METRO_STATIONS;
 
-/** Level graph of the whole city (ADR-0021). Shinsekai 7 is flat and has none. */
-export const WORLD_NAV: NavGraph = mergeNav(KANAL_NAV, TARG_NAV, DOKI_NAV);
+/** Level graph of the whole city (ADR-0021). Shinsekai 7 is flat: its graph only joins the street to the interiors (ADR-0038). */
+export const WORLD_NAV: NavGraph = mergeNav(KANAL_NAV, TARG_NAV, DOKI_NAV, S7_NAV);
 
 /** Stashes placed once when the player first comes near: on roofs (ADR-0021), in alleys and dead ends (ADR-0026). */
 export const WORLD_STASHES: readonly RoofStash[] = [TARG_ROOF_STASH, ...S7_STASHES, KANAL_ALLEY_STASH, TARG_OVERPASS_STASH];

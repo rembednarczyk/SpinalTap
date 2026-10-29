@@ -5,6 +5,8 @@ export * from "./district-doki";
 export * from "./world-map";
 export * from "./schedules";
 export * from "./devices";
+export * from "./doors";
+export * from "./interiors";
 export * from "./metro";
 export * from "./encounters";
 export * from "./contract-hooks";
