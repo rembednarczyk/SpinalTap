@@ -13,17 +13,6 @@ export interface StageOptions {
   readonly quality?: RenderQuality;
 }
 
-
-/** Most device pixels per CSS pixel the low preset renders: sharp on phones, still cheap. */
-export const LOW_QUALITY_MAX_RATIO = 1.5;
-
-/**
- * Babylon's hardware scaling level for the low preset: the canvas renders at
- * cssSize / level, so 1 / ratio gives `ratio` device pixels per CSS pixel. A phone with a
- * device pixel ratio of 2.5 renders at 1.5x its CSS size, never below it.
- */
-export const lowQualityScaling = (devicePixelRatio: number): number => 1 / Math.max(1, Math.min(devicePixelRatio || 1, LOW_QUALITY_MAX_RATIO));
-
 /** Most device pixels per CSS pixel the low preset renders: sharp on phones, still cheap. */
 export const LOW_QUALITY_MAX_RATIO = 1.5;
 
