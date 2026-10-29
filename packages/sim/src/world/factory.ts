@@ -80,6 +80,7 @@ export const propEntity = (id: EntityId, prop: StaticProp, chunk: string): Entit
   const e: Entity = { id, ...at(prop.center), view: prop.view, chunk };
   // A building of the map is drawn as scenery (ADR-0045): the entity is its solid alone.
   if (prop.scenery) delete e.view;
+  if (prop.seeThrough) e.seeThrough = true;
   const parts = prop.solid ? prismDefsOf(prop) : null;
   if (parts) {
     e.prisms = prismsAt(parts, prop.center);

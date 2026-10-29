@@ -32,6 +32,8 @@ export interface DebugApi {
     clock: string;
     /** Residents of the crowd in the world (ADR-0041). */
     residents: number;
+    /** Vehicles driving round the player (ADR-0050). */
+    vehicles: number;
   };
   perf(): PerfSample;
   setPaused(paused: boolean): void;
@@ -122,6 +124,7 @@ export const createDebugApi = (
       loadedChunks: sim.streamer.loadedChunks,
       clock: formatClock(sim.clock),
       residents: [...sim.world].filter((e) => e.view?.kind === "crowd").length,
+      vehicles: [...sim.world].filter((e) => e.vehicle !== undefined).length,
     };
   },
   perf,

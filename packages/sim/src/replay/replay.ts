@@ -9,7 +9,8 @@ export interface ReplayFrame {
 
 /**
  * Re-runs a recorded session from its seed. Same seed + same frames = same end state, with or
- * without the crowd of residents (ADR-0041), which is not saved.
+ * without the crowd of residents (ADR-0041) and the traffic that follows its density (ADR-0050),
+ * neither of which is saved.
  */
 export const runReplay = (seed: number, frames: readonly ReplayFrame[], crowd: CrowdDensity = "off"): Simulation => {
   const sim = Simulation.create({ seed, crowd });

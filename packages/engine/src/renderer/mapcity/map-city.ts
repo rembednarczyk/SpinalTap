@@ -322,7 +322,7 @@ export class MapCity {
 
   /** Every cell near the eye has its detailed buildings (they are built a few per frame). */
   get settled(): boolean {
-    return this.waitingNear === 0;
+    return this.waitingNear === 0 && (this.streetProps?.waiting ?? 0) === 0;
   }
 
   /** Night 0 .. day 1 (ADR-0017): lit windows and shop fronts follow, the neon dims. */

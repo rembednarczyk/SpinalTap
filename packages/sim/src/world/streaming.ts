@@ -58,6 +58,15 @@ export interface StreamingRadii {
 
 export const STREAMING_RADII: StreamingRadii = { loadRadius: 30, unloadRadius: 44 };
 
+/**
+ * Ids of the street's solids (ADR-0050): the furniture and the parked cars of each chunk, from
+ * here up, `STREET_IDS_PER_CHUNK` per chunk in table order. Outside the allocator, so adding them
+ * moved no id of the content; above the residents' (1 000 000 + 1 000 per chunk), below the
+ * scenery's (5 000 000).
+ */
+export const STREET_ID_BASE = 2_000_000;
+export const STREET_IDS_PER_CHUNK = 4_000;
+
 /** A recipe for one entity with an id reserved up front, so reloading gives it the same id. */
 interface Template {
   readonly id: EntityId;
@@ -116,7 +125,7 @@ export class WorldStreamer {
     metro: readonly MetroStationDef[] = WORLD_METRO,
   ) {
     this.ground = new GroundField(chunks);
-    for (const chunk of chunks) {
+    chunks.forEach((chunk, order) => {
       const list: Template[] = [];
       for (const prop of chunk.props) {
         const id = ids.take();
@@ -129,8 +138,12 @@ export class WorldStreamer {
         this.byKey.set(def.spawn.key, t);
         this.places.set(def.spawn.key, [...(this.places.get(def.spawn.key) ?? []), t]);
       }
+      (chunk.street ?? []).slice(0, STREET_IDS_PER_CHUNK).forEach((prop, i) => {
+        const id = STREET_ID_BASE + order * STREET_IDS_PER_CHUNK + i;
+        list.push({ id, chunk: chunk.id, key: null, make: () => propEntity(id, prop, chunk.id) });
+      });
       this.content.set(chunk.id, list);
-    }
+    });
     // Devices (ADR-0029) after every chunk's own content, so the ids above stay what they were.
     for (const def of devices) {
       const list = this.content.get(def.chunk);

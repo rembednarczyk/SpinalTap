@@ -25,6 +25,8 @@ export interface StaticProp {
    * of the simulation, while the renderer gets its view once from `WORLD_SCENERY`.
    */
   readonly scenery?: true;
+  /** Street furniture (ADR-0050): the TPP camera's rays pass it. */
+  readonly seeThrough?: true;
 }
 
 /** Parts of a lift: the platform (a solid), the gates at upper levels and the call buttons. */

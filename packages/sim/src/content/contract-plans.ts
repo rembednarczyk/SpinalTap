@@ -51,6 +51,9 @@ const DRINKER_WAYS: Readonly<Partial<Record<ContractSiteId, readonly [Vec3, ...V
 
 export const drinkerWay = (site: ContractSiteId): readonly [Vec3, ...Vec3[]] | undefined => DRINKER_WAYS[site];
 
+/** The sites with a way to the bar. */
+export const DRINKER_SITES = Object.keys(DRINKER_WAYS) as ContractSiteId[];
+
 /** Off to the bar at 22:00, back on the post at 02:00 (ADR-0034, the `drinker` trait). */
 export const DRINKER_FROM = 22 * 60;
 export const DRINKER_TO = 2 * 60;
