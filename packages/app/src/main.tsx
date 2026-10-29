@@ -150,7 +150,7 @@ const loop = new FixedStepLoop(browserClock, {
 // Title screen backdrop: from the corner of Plac Litewski by the wreck, down the deptak.
 const TITLE_VIEW = { position: ground(146, -49, 2.2), target: ground(232, -64, 3.5) };
 // Reference frame for NPR snapshots: Seki on the deptak in front of Neon Koi, under its sign.
-const REFERENCE_VIEW = { position: koiPoint(3.4, 1.55, 4.6), target: koiPoint(5.5, 1.15, 0.9) };
+const REFERENCE_VIEW = { position: koiPoint(2.83, 1.66, 5.59), target: koiPoint(5.5, 1.15, 0.9) };
 const REFERENCE_SPOT = koiPoint(4.6, 0, 0.6);
 
 let lastScreen: string | null = null;
