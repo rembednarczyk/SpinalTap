@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { type AudioCue, type AudioPort, EMPTY_INPUT, type EffectDescriptor, type InputFrame, type RenderPort } from "@seki/core";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
-import { SIM_DT } from "@seki/sim";
+import { SIM_DT, ground } from "@seki/sim";
 import { createUiStore } from "@seki/ui";
 import { GameSession } from "../src/game-session";
 
@@ -71,20 +71,20 @@ describe("HUD weapon strip from the game", () => {
 
 const teleport = (s: GameSession, x: number, z: number, yaw = 0, pitch = 0) => {
   const p = s.sim.player()!;
-  p.position = { x, y: 0, z };
+  p.position = ground(x, z);
   p.prevPosition = p.position;
   p.yaw = yaw;
   p.pitch = pitch;
 };
 
-/** Shoots the guard down in the open street by the spawn (cover in the alley must not matter). */
+/** Shoots the guard down on the deptak by the clinic (cover in the car wash yard must not matter). */
 const shootGuard = (s: GameSession) => {
   for (let i = 0; i < 3000; i++) {
     const guard = [...s.sim.world].find((e) => e.key === "guard");
     if (!guard) return;
-    guard.position = { x: 0, y: 0, z: -16 };
+    guard.position = ground(300, -79);
     guard.prevPosition = guard.position;
-    teleport(s, 0, -20, 0, 0.08);
+    teleport(s, 300, -83, 0, 0.08);
     s.step(frame({ fire: true }));
   }
   throw new Error("the guard survived");

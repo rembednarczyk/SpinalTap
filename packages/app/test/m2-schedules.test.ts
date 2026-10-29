@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { type AudioPort, type EffectDescriptor, EMPTY_INPUT, type EntityId, type RenderPort, type ViewDescriptor } from "@seki/core";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
-import { SCHEDULES } from "@seki/sim";
+import { SCHEDULES, ground, market } from "@seki/sim";
 import { createUiStore } from "@seki/ui";
 import { GameSession } from "../src/game-session";
 
@@ -54,9 +54,9 @@ const frames = (s: GameSession, n: number, interact = false) => {
   }
 };
 
-const goTo = (s: GameSession, x: number, z: number) => {
+const goTo = (s: GameSession, x: number, z: number, y?: number) => {
   const p = s.sim.player()!;
-  p.position = { x, y: 0, z };
+  p.position = { x, y: y ?? ground(x, z).y, z };
   p.prevPosition = p.position;
   frames(s, 1);
 };
@@ -107,11 +107,12 @@ describe("M2: day clock and schedules through the game loop", () => {
   it("Oyaji is closed at night: the prompt and his words say so; by day the closed sign is gone", () => {
     const { session, ui } = setup();
     session.newGame();
-    goTo(session, 40, 78);
+    const gate = market(40, 0, 78);
+    goTo(session, gate.x, gate.z);
     wait(session, 90); // 22:30
     frames(session, 60 * 10);
     const door = oyajiDoor();
-    goTo(session, door.x + 1.5, door.z + 0.8);
+    goTo(session, door.x + 1.5, door.z + 0.8, door.y);
     expect(ui.getState().prompt).toMatch(/zamknięte/);
     frames(session, 1, true);
     const dialogue = ui.getState().dialogue;

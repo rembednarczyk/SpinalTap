@@ -13,7 +13,7 @@ import {
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
 import { createUiStore } from "@seki/ui";
-import { FIXER_CLINIC_SPAWN, FIXER_SPAWN } from "@seki/sim";
+import { FIXER_CLINIC_SPAWN, FIXER_SPAWN, ground } from "@seki/sim";
 import { GameSession } from "../src/game-session";
 
 /** Shared drivers of the main-thread acceptance tests (act I in m3-loop, act II in m3-lustro-loop). */
@@ -50,10 +50,13 @@ export const steps = (s: GameSession, n: number, input: InputFrame = EMPTY_INPUT
   s.render(0);
 };
 
-/** Puts the player at (x, y, z); y is the floor she stands on (a roof, the overpass deck). */
-export const teleport = (s: GameSession, x: number, z: number, yaw = 0, pitch = 0, y = 0) => {
+/**
+ * Puts the player at (x, y, z); y is the floor she stands on (a roof, the overpass deck), by
+ * default the ground of Lublin there (ADR-0045).
+ */
+export const teleport = (s: GameSession, x: number, z: number, yaw = 0, pitch = 0, y?: number) => {
   const p = s.sim.player()!;
-  p.position = { x, y, z };
+  p.position = { x, y: y ?? ground(x, z).y, z };
   p.prevPosition = p.position;
   p.yaw = yaw;
   p.pitch = pitch;
@@ -85,7 +88,7 @@ export const talkTo = (s: GameSession, key: string) => {
 /** Mori's interaction opens the clinic; the counter has a button to talk instead. */
 export const openClinic = (s: GameSession, ui: Ui) => {
   const mori = [...s.sim.world].find((e) => e.key === "mori")!;
-  teleport(s, mori.position.x + 1.5, mori.position.z, -Math.PI / 2);
+  teleport(s, mori.position.x + 1.5, mori.position.z, -Math.PI / 2, 0, mori.position.y);
   steps(s, 1, frame({ interact: true }));
   expect(ui.getState().shopOpen).toBe(true);
 };
