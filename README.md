@@ -56,6 +56,13 @@ Telefon i tablet (wykrywane automatycznie, na komputerze można wymusić `?touch
 - Trafienia w głowę (×1,6), apteczki (+40 HP), karta postaci z cyberware, wspomnieniami i reputacją.
 - Zapis v3 z migracją starszych zapisów.
 
+## Wnętrza i nowe otwarcie (fala 3, [ADR-0038](docs/adr/0038-wnetrza-drzwi-start-w-klinice.md))
+
+- Nowa gra zaczyna się na fotelu zabiegowym w klinice doktora Mori: pierwsza rozmowa z Kaito odbywa się przy fotelu, Mori mówi, co z Seki wyciągnął. Potem Kaito czeka przy ladzie Neon Koi. Wrak na Siódmej zostaje na ulicy.
+- Klinika (poczekalnia i gabinet) i bar Neon Koi (lada, stołki, stoliki, scena, szafa grająca, barman i bywalcy) mają wnętrza.
+- Drzwi automatyczne z czujnikiem: otwierają się przed postacią, zamykają po chwili, zamknięte blokują przejście i widok. Drzwi biura Tessen w Dokach są na kod z haka (4177) albo do wyłamania z alarmem.
+- Zapis v14 (stan drzwi w ruchu) z migracją.
+
 ## Struktura
 
 ```
