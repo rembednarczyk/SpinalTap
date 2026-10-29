@@ -303,11 +303,11 @@ BARMAN: Neon Koi. Pijesz albo słuchasz, oba się liczą.
 { hebi_stance == "hostile":
     BARMAN: I nie strzelaj tu do Hebi. Sprzątam po nich częściej niż po klientach.
 }
-* [Co polecasz?]
+* [Co polecasz? #tone:optional]
     SEKI: Co polecasz?
     BARMAN: Syntetyczną sake. Smakuje jak prawdziwa, jeśli nigdy nie piłaś prawdziwej.
     -> END
-* [Nic, dzięki.]
+* [Nic, dzięki. #tone:leave]
     -> END
 
 === koi_regular ===
