@@ -7,6 +7,8 @@ import type { GameSession } from "./game-session";
 /** Test hook exposed as window.__seki. Used by Playwright smoke, snapshot and perf checks. */
 export interface DebugApi {
   ready: boolean;
+  /** The reference frame has stopped rendering: it is a still from now on (snapshot and budgets). */
+  still: boolean;
   state(): {
     screen: string;
     hp: number;
@@ -47,6 +49,8 @@ export interface DebugApi {
   dressed(): number;
   /** Character models still loading (ADR-0046: measure once none is). */
   modelsLoading(): number;
+  /** Lublin's city is drawn in detail round the camera (ADR-0045): no near cell is still waiting. */
+  citySettled(): boolean;
   /** Height of the game camera in metres (crouch checks). */
   cameraY(): number;
   /** What the character menu's 3D preview shows; null without one. */
@@ -90,8 +94,10 @@ export const createDebugApi = (
   cameraY: () => number = () => 0,
   preview: () => PreviewState | null = () => null,
   modelsLoading: () => number = () => 0,
+  citySettled: () => boolean = () => true,
 ): DebugApi => ({
   ready: false,
+  still: false,
   session,
   state() {
     const sim = session.sim;
@@ -137,6 +143,7 @@ export const createDebugApi = (
   view: setView,
   dressed,
   modelsLoading,
+  citySettled,
   cameraY,
   preview,
   emit(type, payload) {

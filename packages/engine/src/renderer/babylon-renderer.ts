@@ -416,6 +416,11 @@ export class BabylonRenderer implements RenderPort {
     return this.characters.dressedCount;
   }
 
+  /** The map city has drawn every cell near the camera in detail (tests wait for it before a snapshot). */
+  get citySettled(): boolean {
+    return this.mapCity?.settled ?? true;
+  }
+
   /** Character models still loading. */
   get modelsLoading(): number {
     return this.characters.loadingCount;

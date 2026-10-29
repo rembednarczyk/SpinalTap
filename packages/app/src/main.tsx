@@ -221,6 +221,7 @@ const debug = createDebugApi(session, ui, loop, () => probe.sample(), (position,
   () => renderer.rig.camera.position.y,
   () => preview.state,
   () => renderer.modelsLoading,
+  () => renderer.citySettled,
 );
 window.__seki = debug;
 
@@ -250,7 +251,22 @@ if (reference) {
   ui.setState({ toasts: [] });
 }
 
-stage.engine.runRenderLoop(() => loop.frame());
+/**
+ * The reference frame is a still: once the city round it is built in detail, a few more frames
+ * settle the post-process and then rendering stops. Under SwiftShader a frame of Lublin takes
+ * about 600 ms, and a canvas redrawn that slowly never gives the snapshot two equal captures
+ * within its timeout (ADR-0046: the cause, not a longer timeout).
+ */
+const REFERENCE_SETTLE_FRAMES = 8;
+let settledFrames = 0;
+stage.engine.runRenderLoop(() => {
+  loop.frame();
+  if (!reference || !debug.ready || !renderer.citySettled) return;
+  if (++settledFrames >= REFERENCE_SETTLE_FRAMES) {
+    stage.engine.stopRenderLoop();
+    debug.still = true;
+  }
+});
 stage.scene.executeWhenReady(() => {
   debug.ready = true;
 });

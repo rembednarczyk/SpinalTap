@@ -253,6 +253,9 @@ export class MapCity {
   }
 
   /** Levels of detail from the camera, the water's ripples and the signs' hum. */
+  /** Cells near the eye still waiting for their detailed buildings after the last update. */
+  private waitingNear = 0;
+
   update(dt: number, eye: Vec3, frozen: boolean): void {
     const rig = this.deps.materials.currentRig;
     if (rig !== this.rig) {
@@ -265,12 +268,15 @@ export class MapCity {
       this.signs.update(dt);
     }
     let builds = 0;
+    let waiting = 0;
     for (const cell of this.cells.values()) {
       const d = Math.hypot(distanceToBox(eye.x, eye.z, cell.bounds), Math.max(eye.y - 2, 0));
       const wantNear = d < this.lod.near + (cell.lod === "near" ? 15 : 0);
-      if (wantNear && (cell.nearDirty || !cell.near) && cell.frames.length > 0 && builds < NEAR_BUILDS_PER_FRAME) {
-        this.buildNear(cell);
-        builds++;
+      if (wantNear && (cell.nearDirty || !cell.near) && cell.frames.length > 0) {
+        if (builds < NEAR_BUILDS_PER_FRAME) {
+          this.buildNear(cell);
+          builds++;
+        } else waiting++;
       }
       if (!wantNear && cell.near && d > this.lod.near * 2) {
         cell.near.dispose(false, false);
@@ -284,6 +290,12 @@ export class MapCity {
       cell.ground?.setEnabled(d < this.lod.ground);
       cell.water?.setEnabled(d < this.lod.ground);
     }
+    this.waitingNear = waiting;
+  }
+
+  /** Every cell near the eye has its detailed buildings (they are built a few per frame). */
+  get settled(): boolean {
+    return this.waitingNear === 0;
   }
 
   /** Night 0 .. day 1 (ADR-0017): lit windows and shop fronts follow, the neon dims. */

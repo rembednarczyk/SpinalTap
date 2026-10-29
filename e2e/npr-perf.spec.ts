@@ -18,8 +18,9 @@ const record = (scene: string, sample: unknown) => {
   writeFileSync(file, JSON.stringify({ ...report, [scene]: sample }, null, 2));
 };
 
-/** The draw calls and meshes of the frame just drawn, after the test stepped the game. */
+/** The draw calls and meshes of the frame just drawn, after the test stepped the game and the city settled. */
 const sampleNow = async (page: Page) => {
+  await page.waitForFunction(() => window.__seki!.citySettled(), null, { timeout: 60_000 });
   await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
   return perf(page);
 };
@@ -27,7 +28,8 @@ const sampleNow = async (page: Page) => {
 test("NPR reference frame matches the approved snapshot", async ({ page }) => {
   await page.goto("/?reference");
   await waitForGame(page);
-  await page.waitForTimeout(800);
+  // The reference frame stops rendering once Lublin round it is built in detail (ADR-0045).
+  await page.waitForFunction(() => window.__seki!.still, null, { timeout: 60_000 });
   await expect(page.locator("#game-canvas")).toHaveScreenshot("reference-m0.png");
 });
 
