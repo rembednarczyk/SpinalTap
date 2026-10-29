@@ -45,5 +45,6 @@
 | [0041](0041-chodniki-i-mieszkancy-miasta.md) | Chodniki z krawężnikiem tylko w obrazie, mieszkańcy miasta po trasach i miejscach z ziarna i zegara poza zapisem, gęstość od dzielnicy, godziny i jakości grafiki, tłum jedną siatką | Zaakceptowana |
 | [0042](0042-lublin-z-danych-mapowych.md) | Lublin z danych mapowych: OSM i teren EU-DEM importowane offline, kotwica na Placu Litewskim, dystrykty Krakowskie Przedmieście, Stare Miasto, Podzamcze, Nabrzeże Bystrzycy, bryły wypukłe i teren w sim | Zaakceptowana |
 | [0043](0043-pryzmaty-i-teren-w-symulacji.md) | Pryzmaty wypukłe i teren w symulacji: bryły z części wypukłych, grunt z siatki chunka, skarpy powyżej 35° jak ściana, promienie DDA przez teren, piętra AI liczone od gruntu, siatka przestrzenna brył | Zaakceptowana |
+| [0044](0044-renderer-miasta-z-danych-mapowych.md) | Renderer miasta z danych mapowych: fasady NPR z UV w metrach i stylu z ziarna, attyki, dachy, kopuły i wieże, neon i holo w języku polsko-japońskim, teren z fartuchami, drapowane nawierzchnie z krawężnikami, komórki 128 m z bliskim i dalekim LOD, podgląd `?lublin-preview` | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.
