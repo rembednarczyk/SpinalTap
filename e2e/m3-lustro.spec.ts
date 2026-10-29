@@ -7,7 +7,7 @@ test("Kurosawa's deal on the overpass ends act II and Kagami's copy plays", asyn
   test.setTimeout(240_000);
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto("/?seed=11");
+  await page.goto("/?seed=11&models=off");
   await waitForGame(page);
   await page.getByRole("button", { name: "Nowa gra" }).click();
   await expect(page.getByTestId("hud")).toBeVisible();
