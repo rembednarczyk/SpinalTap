@@ -28,7 +28,7 @@ describe("fixer conversation", () => {
   it("first meeting: names Seki, gives the contract and raises met_fixer", () => {
     const { runtime, commands } = setup();
     let view = runtime.start("fixer", createDomainState());
-    expect(view.lines[0]).toEqual({ speaker: "Kaito", text: "No proszę. Chodzący trup z wraku na Siódmej." });
+    expect(view.lines[0]).toEqual({ speaker: "Kaito", text: "No proszę. Chodzący trup z wraku na Krakowskim." });
     expect(view.choices.map((c) => c.text)).toEqual(["Kim jesteś?", "Co mi się stało?"]);
 
     view = runtime.choose(0);

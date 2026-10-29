@@ -34,7 +34,7 @@ EXTERNAL complete_contract()
 
 // The opening (ADR-0038): Seki comes round on the chair in Mori's clinic, Kaito waits by it.
 = first_meeting
-KAITO: No proszę. Chodzący trup z wraku na Siódmej.
+KAITO: No proszę. Chodzący trup z wraku na Krakowskim.
 Biała lampa nad fotelem świeci ci prosto w oczy. Pachnie spirytusem i przypalonym chromem. Ktoś odpina ci pas z nadgarstka.
 MORI: Chodzący to za dużo powiedziane. Siadaj powoli, szwy na karku jeszcze się nie zdecydowały.
 MORI: Wyciągnąłem z ciebie trzy odłamki szyby, kawałek pasa bezpieczeństwa i pół metra cudzego kabla. Szkło było twoje. Kabel nie.
@@ -58,14 +58,14 @@ KAITO: Ratownicy mówili, że w tym wraku walczyłaś z pasami jak z wrogiem. Se
     SEKI: Moje imię gdzieś jest. Odzyskam je.
     KAITO: Jasne. Do tego czasu jesteś Seki.
 - KAITO: Zapłaciłem za twoje łatanie, więc masz dług. U mnie. I zero perspektyw. Ja mam robotę.
-KAITO: Kurier gangu Hebi siedzi w zaułku za myjnią, na północnym końcu ulicy. Nosi coś, co należy do moich klientów.
-KAITO: Zdejmij go. Ma ochronę, więc nie idź tam na spacer. Potem znajdziesz mnie w Neon Koi, po drugiej stronie ulicy.
+KAITO: Kurier gangu Hebi siedzi w podwórku za myjnią, przy Placu Łokietka, na końcu deptaka. Nosi coś, co należy do moich klientów.
+KAITO: Zdejmij go. Ma ochronę, więc nie idź tam na spacer. Potem znajdziesz mnie w Neon Koi, po drugiej stronie deptaka.
 MORI: Drzwi otwierają się same. Nie kop ich, są droższe od ciebie.
 ~ set_flag("met_fixer")
 -> END
 
 = waiting
-KAITO: Kurier dalej oddycha, Seki. Zaułek za myjnią, na północ.
+KAITO: Kurier dalej oddycha, Seki. Podwórko za myjnią, przy Placu Łokietka.
 * [Już idę. #tone:leave]
     -> END
 * [Co wiesz o moim wypadku? #tone:optional]
@@ -100,7 +100,7 @@ KAITO: I jeszcze jedno, Seki. Ktoś już pytał o kobietę z wraku. Nie tylko ja
 
 = contract_offer
 { contracts_done == 0:
-    KAITO: Hebi nie wybaczą ci kuriera. To znaczy, że będą się kręcić po dzielnicy. A ja mam klientów, którzy płacą za ciszę.
+    KAITO: Hebi nie wybaczą ci kuriera. To znaczy, że będą się kręcić po Krakowskim. A ja mam klientów, którzy płacą za ciszę.
 - else:
     KAITO: Hebi znowu wystawili ludzi na moją ulicę. Robota czeka, {alias}.
 }
@@ -241,7 +241,7 @@ KAITO: Słyszałem, że robisz coś dla Hany. Skończ u niej, potem pogadamy.
 }
 UME: Widziałam, jak cię wyciągali z tego auta. Myślałam, że już po tobie.
 { quest_step == "find_fixer":
-    UME: Kaito przesiedział całą noc u doktora Mori, przy twoim fotelu. Klinika jest po lewej stronie ulicy.
+    UME: Kaito przesiedział całą noc u doktora Mori, przy twoim fotelu. Klinika jest po lewej stronie deptaka, bliżej Placu Litewskiego.
 }
 * [Znałaś mnie wcześniej? #tone:main]
     SEKI: Znałaś mnie wcześniej?
@@ -318,6 +318,6 @@ BARMAN: Neon Koi. Pijesz albo słuchasz, oba się liczą.
 { has_flag("reported_back"):
     BYWALEC: To ty zdjęłaś tego kuriera spod myjni? Postawiłbym ci drinka, ale Hebi mają tu uszy.
 - else:
-    BYWALEC: Jukebox gra trzy kawałki na krzyż. Ten jest najlepszy. Albo najgłośniejszy.
+    BYWALEC: Jukebox gra trzy kawałki na krzyż i przyśpiewkę Motoru. Ta ostatnia jest najgłośniejsza, zwłaszcza po meczu.
 }
 -> END

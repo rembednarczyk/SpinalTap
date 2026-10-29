@@ -1,10 +1,10 @@
-// Seki Senshi, ADR-0032: street encounters in Shinsekai, block 7. `ENCOUNTERS` in the sim content
+// Seki Senshi, ADR-0032: street encounters on Krakowskie Przedmieście (district id shinsekai-7, ADR-0042). `ENCOUNTERS` in the sim content
 // says where and when each one starts; the sim plays each knot once. A choice leaves a flag
 // `enc_<district>_<name>_<outcome>` (the reward or the memory of it) and sometimes a reputation change.
 
 // Nobu bet his cyber arm at the PACHINKO parlour and lost it to the machine.
 === enc_s7_pachinko ===
-Na krawężniku przed PACHINKO siedzi starszy facet z pustym rękawem. Z ramienia sterczą mu kable.
+Na ławce przed PACHINKO, przy deptaku, siedzi starszy facet z pustym rękawem. Z ramienia sterczą mu kable.
 NOBU: Panienko, pani wygląda na kogoś, kto rozmawia z maszynami.
 NOBU: Postawiłem rękę. Prawą, z odzysku. Automat ją wygrał i trzyma w podajniku, jak trofeum.
 -> ask
@@ -35,8 +35,8 @@ Na chodniku śpi facet w garniturze. Teczka pod głową, krawat zawiązany jak d
 = look
 * [Hej. Wstawaj, zanim ktoś cię oskubie. #tone:main]
     SEKI: Hej. Wstawaj, zanim ktoś cię oskubie.
-    SARARIMAN: Pani prezes? Raport będzie na dziewiątą, przysięgam.
-    SARARIMAN: Och. Pani nie jest prezesem. To dobrze. Prezes by mnie od razu zwolnił.
+    SARARIMAN: Pani dziekan? Raport dla UMCS Corp będzie na dziewiątą, przysięgam.
+    SARARIMAN: Och. Pani nie jest dziekanem. To dobrze. Dziekan by mnie od razu zwolnił.
     ~ set_flag("enc_s7_salaryman_woken")
     ~ change_rep("civilians", 2)
     SARARIMAN: Dziękuję. Mam tylko kartę na ramen, ale niech pani weźmie. Lepiej, żeby ktoś z niej skorzystał.
@@ -53,7 +53,7 @@ Na chodniku śpi facet w garniturze. Teczka pod głową, krawat zawiązany jak d
 
 // Hina lost her robot cat. It went to the car wash, because the car wash is warm.
 === enc_s7_neko ===
-Dziewczynka w żółtej pelerynie zagląda pod każdy samochód na ulicy.
+Dziewczynka w żółtej pelerynie zagląda pod każdą ławkę i każdy samochód przy deptaku.
 HINA: Widziała pani kota? Srebrny, na baterię. Mruczy jak lodówka.
 -> ask
 
@@ -88,7 +88,7 @@ HINA: Widziała pani kota? Srebrny, na baterię. Mruczy jak lodówka.
 
 // Shiro sold the memories of his wife to Kagami. Now he writes poems about a woman he cannot see.
 === enc_s7_poet ===
-Pod latarnią stoi chudy mężczyzna z kartką. Czyta na głos, choć nikt nie słucha.
+Pod latarnią na Placu Litewskim stoi chudy mężczyzna z kartką. Czyta na głos, choć nikt nie słucha.
 SHIRO: „Miała parasol w kolorze, którego nie pamiętam. Śmiała się z czegoś, czego nie pamiętam.”
 SHIRO: Sprzedałem ją Kagami. Wspomnienia o żonie, cały pakiet, z dopłatą za ślub. Zostały mi wiersze.
 -> ask

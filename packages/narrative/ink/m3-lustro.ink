@@ -256,7 +256,7 @@ Ciało pamięta ten dach: każdą krawędź, każdy skok na sąsiedni. I to, jak
 // Flashback after Kaito plays the client's message (memory "głos").
 === recall_last_call ===
 Głos z nagrania zostaje ci w głowie i ciągnie za sobą inny dźwięk: syk pękniętej chłodnicy.
-Wrak na Siódmej. Wisisz w pasach głową w dół. W uchu dalej masz słuchawkę.
+Wrak na Krakowskim. Wisisz w pasach głową w dół. W uchu dalej masz słuchawkę.
 REN: Zapis zakończony. Obiekt nie reaguje.
 Głos Rena urywa się, a w słuchawce zostaje ktoś inny, starszy i znudzony.
 TECH: Wyłączam filtr Odagiri. Próbka głosu dobrowolna, opłacona z góry. Zbierzcie ją przed świtem.
