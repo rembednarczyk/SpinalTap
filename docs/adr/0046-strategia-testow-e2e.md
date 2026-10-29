@@ -54,7 +54,12 @@ Po falach 2 i 3 oraz przy przenosinach do Lublina e2e blokowały pracę i niewie
    - Lokalne e2e przez `pnpm e2e e2e/<spec>.spec.ts`, czyli `tools/e2e.sh`.
    - Skrypt bierze blokadę (druga sesja czeka) i daje każdemu checkoutowi własny port.
    - Agenty puszczają tylko spece dotyczące swojej zmiany. Pełny zestaw puszcza CI.
-6. **CI.** e2e w trzech shardach równolegle ze sprawdzeniami (wcześniej: jeden job po sprawdzeniach).
+6. **Modele VRoid tylko tam, gdzie są przedmiotem testu.**
+   - Pod SwiftShaderem skinowanie pełnej obsady liczy się na procesorze. W Lublinie start w klinice zajmował 45 s na CI, a klatki blokowały wątek główny tak długo, że `page.evaluate` nie zdążało w 90 s (`inventory`, `smoke`, ślady z CI).
+   - Spece startują z `models=off`, z wyjątkiem:
+     - `models`: ubranie postaci i budżet rysowania;
+     - `character-menu`: podgląd z jednym modelem.
+7. **CI.** e2e w trzech shardach równolegle ze sprawdzeniami (wcześniej: jeden job po sprawdzeniach).
 
 ## Dług: limity podniesione przed tym ADR
 Zostają do czasu przeniesienia lub przyspieszenia, potem do usunięcia:
