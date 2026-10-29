@@ -21,7 +21,7 @@ import { type CharacterTab, type PreviewRect, type RadioStationId, type Screen, 
 import { type Controllers, createControllers } from "./controllers/compose";
 import { isCalm } from "./controllers/hud-sync";
 import { pushToastTimed } from "./controllers/shared";
-import { buildDistrictMap } from "./minimap";
+import { buildDistrictMap, sidewalkProps } from "./minimap";
 import type { GameSessionDeps } from "./session-deps";
 
 export { RECALL_CALM_TICKS } from "./controllers/hud-sync";
@@ -44,7 +44,8 @@ export class GameSession implements UiIntents {
     this.renderSync = new RenderSync(deps.render);
     this.simulation = Simulation.create({ seed: deps.seed(), bus: this.bus });
     // The whole city, so the map keeps working past Shinsekai (the market deck, the footbridge, ADR-0021).
-    patchUi(deps.ui, { map: buildDistrictMap(WORLD_CHUNKS.flatMap((c) => c.props)) });
+    // Sidewalks (ADR-0041) are drawn as the street strips they are.
+    patchUi(deps.ui, { map: buildDistrictMap([...WORLD_CHUNKS.flatMap((c) => c.props), ...sidewalkProps()]) });
     this.c = createControllers(deps, {
       bus: this.bus,
       narrative: this.narrative,
