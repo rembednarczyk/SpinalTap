@@ -57,9 +57,6 @@ export const DOKI_QUAY_BOUNDS: Rect = placeRect(DOCKS_PLACE, { minX: -40, maxX: 
  */
 const OUTER_PARAPET = 1.9;
 
-/** The gate in the yard's south side (the docks' own coordinates). */
-const DOKI_PASSAGE = { x0: 24, x1: 30 } as const;
-
 /** Roof of the warehouse on the west side of the yard. */
 export const WAREHOUSE_TOP = 9;
 /** Walkway of the gantry crane over the quay. */
@@ -187,9 +184,9 @@ const waterfront = (): StaticProp[] => [
   slab(9.6, -0.5, 164, v(3.6, 1.6, 11), "metal"),
   slab(9.6, 0.9, 166, v(2.4, 1.4, 3), "glass"),
   water(-40, 34, QUAY_EDGE, 200, -1.3),
-  // A freighter at anchor: a silhouette in the mist, nothing more.
-  slab(-12, 2.5, 214, v(46, 8, 10), "metal"),
-  neon(-30, 7.2, 208.9, v(0.4, 0.4, 0.15), "#ff3030"),
+  // A barge at anchor in the basin, inside the chunk: a silhouette in the mist, nothing more.
+  slab(-12, 2.5, 179, v(46, 8, 10), "metal"),
+  neon(-30, 7.2, 173.9, v(0.4, 0.4, 0.15), "#ff3030"),
 ];
 
 const YARD_PROPS: readonly StaticProp[] = [

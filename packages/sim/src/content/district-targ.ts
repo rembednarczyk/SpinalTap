@@ -95,24 +95,6 @@ const stall = (rng: SeededRandom, x: number, z: number, front: 1 | -1): StaticPr
   slab(x, 2.55, z + front * 0.4, v(3.2, 0.2, 2.4), pick(rng, AWNINGS)),
 ];
 
-/**
- * Cuts a gap of [x0, x1] out of a facade row (ADR-0024): a block across it becomes the parts on
- * either side. Applied after the generator ran, so no random number moves.
- */
-const withPassage = (row: readonly StaticProp[], x0: number, x1: number): StaticProp[] =>
-  row.flatMap((p): StaticProp[] => {
-    if (p.view.kind !== "block") return [p];
-    const left = p.center.x - p.view.size.x / 2;
-    const right = p.center.x + p.view.size.x / 2;
-    if (right <= x0 || left >= x1) return [p];
-    const { y: h, z: d } = p.view.size;
-    const { material, skin: look } = p.view;
-    const parts: StaticProp[] = [];
-    if (x0 - left > 0.01) parts.push(building((left + x0) / 2, p.center.z, x0 - left, h, d, material, look));
-    if (right - x1 > 0.01) parts.push(building((x1 + right) / 2, p.center.z, right - x1, h, d, material, look));
-    return parts;
-  });
-
 const rng = new SeededRandom(CONTENT_SEED);
 
 // The rows of the old Ulica Kanałowa drew from the generator before the market's: drawn and

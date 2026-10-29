@@ -61,8 +61,9 @@ export const KANAL_SPOTS = {
 } as const;
 
 /**
- * Hideo's way from the Rynek down Grodzka, through Brama Grodzka and over Plac Zamkowy to the
- * market's gate, where the Tessen bus stops (along the streets' middle lines).
+ * Hideo's way from the Rynek down Grodzka, under the footbridge and through Brama Grodzka, to
+ * the bus stop on Zamkowa below the gate (along the streets' middle lines). A minute of play is
+ * an hour of the day (ADR-0017), so a walk of 300 m takes him four hours (ADR-0045).
  */
 export const GRODZKA_WALK: readonly Vec3[] = [
   [561, -40],
@@ -72,13 +73,6 @@ export const GRODZKA_WALK: readonly Vec3[] = [
   [637, 47],
   [708, 134],
   [722, 147],
-  [730, 155],
-  [739, 174],
-  [725, 193],
-  [720, 203],
-  [720, 267],
-  [737, 286],
-  [741, 327],
 ].map(([x, z]) => ground(x as number, z as number));
 
 export const KANAL_PROPS: readonly StaticProp[] = [
@@ -91,7 +85,7 @@ export const KANAL_PROPS: readonly StaticProp[] = [
   ...footbridge(),
   // Tetsu's table of gadgets in front of DENKI, and crates under the footbridge where Hebi meet
   // (Kaito's site `kanal_bridge`).
-  { ...crate(0, 0, 1.4, 0.9, 0.7), center: { ...ground(KANAL_SPOTS.tetsu.x + 0.9, KANAL_SPOTS.tetsu.z - 0.6), y: groundY(KANAL_SPOTS.tetsu.x + 0.9, KANAL_SPOTS.tetsu.z - 0.6) + 0.45 } },
+  { ...crate(0, 0, 1.4, 0.9, 0.7), center: { ...ground(KANAL_SPOTS.tetsu.x + 0.8, KANAL_SPOTS.tetsu.z - 1), y: groundY(KANAL_SPOTS.tetsu.x + 0.8, KANAL_SPOTS.tetsu.z - 1) + 0.45 } },
   { ...crate(0, 0, 1.2, 0.9, 1.0), center: { ...ground(655.5, 76.5), y: groundY(655.5, 76.5) + 0.45 } },
   { ...crate(0, 0, 0.9, 0.8, 0.9), center: { ...ground(663, 71.5), y: groundY(663, 71.5) + 0.4 } },
 ];

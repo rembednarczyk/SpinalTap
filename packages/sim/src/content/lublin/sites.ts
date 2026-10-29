@@ -1,4 +1,4 @@
-import type { Vec3 } from "@seki/core";
+import type { GroundPoint, Vec3 } from "@seki/core";
 import { KRAKOWSKIE_CHUNKS } from "./krakowskie.generated";
 import { NABRZEZE_CHUNKS } from "./nabrzeze.generated";
 import { PODZAMCZE_CHUNKS } from "./podzamcze.generated";
@@ -77,6 +77,26 @@ export const CLINIC_SITE: RoomSite = room("w67499277", -72.5, -1, 318, 325, 10, 
 export const KOI_SITE: RoomSite = room("w66330644", -94, 1, 306.5, 324.5, 10, { x: 315, z: -92.9 });
 
 export const ROOM_SITES: readonly RoomSite[] = [CLINIC_SITE, KOI_SITE];
+
+/** A street passage through a map building at ground level (a city gate), along `from`..`to`. */
+export interface PassageSite {
+  readonly building: string;
+  readonly from: GroundPoint;
+  readonly to: GroundPoint;
+  readonly width: number;
+  /** Clear height over the higher end of the passage. */
+  readonly height: number;
+}
+
+/**
+ * The Old Town's two gates, which the map has as solid buildings: Bramowa through Brama
+ * Krakowska (OSM relation 7224409, the tower with its neighbours) and Grodzka through Brama
+ * Grodzka (OSM way 232362876). Each runs a little beyond both facades.
+ */
+export const PASSAGES: readonly PassageSite[] = [
+  { building: "r7224409", from: { x: 457, z: -95.6 }, to: { x: 487, z: -87.2 }, width: 3.6, height: 4.2 },
+  { building: "w232362876", from: { x: 702, z: 128.4 }, to: { x: 728, z: 152.6 }, width: 3.4, height: 4.2 },
+];
 
 /** Rectangles where the map's buildings and surfaces give way to a set piece. */
 export const CLEARED: readonly GroundRect[] = [DOCKS_AREA, DOCKS_BASIN];

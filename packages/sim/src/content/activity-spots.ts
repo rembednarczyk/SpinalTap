@@ -55,8 +55,8 @@ const spotAt = (id: string, kind: SpotKind, at: Vec3, yaw: number, only?: readon
 };
 
 /** A spot against the facade nearest to (x, z), facing away from it. */
-const wallSpot = (id: string, kind: SpotKind, x: number, z: number, only?: readonly [ActivityId, ...ActivityId[]]): ActivitySpot => {
-  const w = againstWall(x, z, 0.55);
+const wallSpot = (id: string, kind: SpotKind, x: number, z: number, only?: readonly [ActivityId, ...ActivityId[]], off = 0.55): ActivitySpot => {
+  const w = againstWall(x, z, off);
   return spotAt(id, kind, w.at, w.yaw, only);
 };
 
@@ -79,7 +79,8 @@ const SOUTH = Math.PI;
  */
 const KRAKOWSKIE: readonly ActivitySpot[] = [
   wallSpot("s7-koi-wall", "wall", 309, -93),
-  wallSpot("s7-tower-wall", "wall", 323, -93),
+  // Neon Koi's doorway shell stands a little proud of the facade.
+  wallSpot("s7-tower-wall", "wall", 323, -93, undefined, 0.85),
   wallSpot("s7-hotel-wall", "wall", 336, -76),
   wallSpot("s7-ramen", "stall", 314, -73.5),
   wallSpot("s7-ramen-bar", "bar", 316.6, -73.5),

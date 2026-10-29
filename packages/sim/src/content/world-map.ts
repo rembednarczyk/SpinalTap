@@ -17,7 +17,7 @@ import { METRO_STATIONS, type MetroStationDef } from "./metro";
 import { CLINIC_DOOR, KOI_DOOR, S7_NAV } from "./interiors";
 import { DOKI_NAV, DOKI_QUAY_ACTORS, DOKI_QUAY_PROPS, DOKI_YARD_ACTORS, DOKI_YARD_PROPS } from "./district-doki";
 import { type RoomCut, type SceneryItem, chunkBuildings, chunkScenery } from "./lublin/city";
-import { CLINIC_SITE, KOI_SITE, MAP_CHUNKS } from "./lublin/sites";
+import { CLINIC_SITE, KOI_SITE, MAP_CHUNKS, PASSAGES } from "./lublin/sites";
 import { SHAPED_TERRAIN } from "./lublin/terrain";
 
 /** The districts of Lublin 2077 (ADR-0042); the ids are the game's from before the move. */
@@ -76,7 +76,7 @@ const ROOM_CUTS: readonly RoomCut[] = [
 const GAME_PROPS: readonly StaticProp[] = [...DISTRICT_M0_PROPS, ...KANAL_PROPS, ...TARG_SOUTH_PROPS, ...TARG_NORTH_PROPS, ...DOKI_YARD_PROPS, ...DOKI_QUAY_PROPS];
 const GAME_ACTORS: readonly ActorDef[] = [...DISTRICT_M0_ACTORS, ...KANAL_ACTORS, ...TARG_SOUTH_ACTORS, ...TARG_NORTH_ACTORS, ...DOKI_YARD_ACTORS, ...DOKI_QUAY_ACTORS];
 
-const MAP_BUILDINGS: ReadonlyMap<string, readonly StaticProp[]> = new Map(MAP_CHUNKS.map((c) => [c.id, chunkBuildings(c, ROOM_CUTS)]));
+const MAP_BUILDINGS: ReadonlyMap<string, readonly StaticProp[]> = new Map(MAP_CHUNKS.map((c) => [c.id, chunkBuildings(c, ROOM_CUTS, PASSAGES)]));
 
 /**
  * Every chunk of the city (ADR-0045): Lublin's chunks from the map, each with the map's

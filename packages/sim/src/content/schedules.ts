@@ -3,7 +3,6 @@ import type { ScheduleDef } from "../world/components";
 import type { ActorSpawn } from "./builders";
 import { UME_CORNER, UME_HOME } from "./district-m0";
 import { GRODZKA_WALK, KANAL_SPOTS } from "./district-kanal";
-import { market } from "./district-targ";
 import { spotNear } from "./lublin/places";
 import { ground } from "./lublin/terrain";
 import { WORLD_CHUNKS } from "./world-map";
@@ -92,13 +91,13 @@ const hebiLookout = (): ScheduleDef => {
   };
 };
 
-/** Where Hideo waits for the Tessen bus: by Sachiko's kiosk at the market's gate. */
-export const HIDEO_BUS_STOP = market(69.9, 0, 75.6);
+/** Where Hideo waits for the Tessen bus: on Zamkowa, below Brama Grodzka. */
+export const HIDEO_BUS_STOP = spotNear(730, 155);
 
 /**
- * Hideo (ADR-0026): sleeps in a doorway on Bramowa, walks down Grodzka, through Brama Grodzka
- * and over Plac Zamkowy to the Tessen bus at the market in the morning, and comes back the same
- * way to SAKE on the Rynek in the evening, where he stands until two.
+ * Hideo (ADR-0026): sleeps in a doorway on Bramowa, walks down Grodzka and through Brama
+ * Grodzka to the Tessen bus in the morning, and comes back the same way to SAKE on the Rynek in
+ * the evening, where he stands until two.
  */
 const hideo = (): ScheduleDef => {
   const sake = spawnOf("hideo");
@@ -109,7 +108,7 @@ const hideo = (): ScheduleDef => {
     stops: [
       { label: "dom", at: hm(2), path: [bramowa, home], yaw: Math.PI / 2, activity: "sleep" },
       { label: "do pracy", at: hm(7, 30), path: [bramowa, ...GRODZKA_WALK, HIDEO_BUS_STOP], yaw: Math.PI / 2, activity: "phone" },
-      { label: "sake", at: hm(19), path: [HIDEO_BUS_STOP, ...[...GRODZKA_WALK].reverse(), sake.position], yaw: sake.yaw, activity: "drink" },
+      { label: "sake", at: hm(17), path: [HIDEO_BUS_STOP, ...[...GRODZKA_WALK].reverse(), sake.position], yaw: sake.yaw, activity: "drink" },
     ],
   };
 };
