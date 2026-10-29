@@ -192,8 +192,8 @@ export const buildCorpo = (scene: Scene, materials: ToonMaterials, name: string)
   return finish(root, b, sk, { aiming: true, armSpread: 0.14, gun });
 };
 
-/** Babcia Ume: small, long beige coat, grey bun, red umbrella. */
-export const buildCivilian = (scene: Scene, materials: ToonMaterials, name: string): CharacterRig => {
+/** Babcia Ume: small, long beige coat, grey bun, red umbrella (left at home indoors, ADR-0041). */
+export const buildCivilian = (scene: Scene, materials: ToonMaterials, name: string, umbrella = true): CharacterRig => {
   const root = new TransformNode(name, scene);
   const b = new RigBuilder(scene, materials, name);
   const sk = humanoid(
@@ -209,9 +209,11 @@ export const buildCivilian = (scene: Scene, materials: ToonMaterials, name: stri
   // The pole continues the forearm past the hand (local -Y), the canopy's apex points the same
   // way. The hold pose bends the elbow up, which turns local -Y skywards.
   const fore = 0.26 * sk.s;
-  b.cylinder(0.95, 0.02, 0.02, "pole", sk.elbowL, 0, -fore - 0.42, 0);
-  b.cylinder(0.28, 1.15, 0, "umbrella", sk.elbowL, 0, -fore - 0.95, 0);
-  const rig = finish(root, b, sk, { aiming: false, armSpread: 0.1, leftHold: [-0.45, -2.35] });
+  if (umbrella) {
+    b.cylinder(0.95, 0.02, 0.02, "pole", sk.elbowL, 0, -fore - 0.42, 0);
+    b.cylinder(0.28, 1.15, 0, "umbrella", sk.elbowL, 0, -fore - 0.95, 0);
+  }
+  const rig = finish(root, b, sk, umbrella ? { aiming: false, armSpread: 0.1, leftHold: [-0.45, -2.35] } : { aiming: false, armSpread: 0.1 });
   rig.stoop = rig.body.rotation.x = 0.08;
   return rig;
 };

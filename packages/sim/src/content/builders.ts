@@ -62,6 +62,8 @@ export type ActorDef =
       readonly bystander?: true;
       /** Gives the NPC health, so it can be hurt and killed. NPCs without it cannot be. */
       readonly maxHp?: number;
+      /** Stays under a roof (ADR-0041): no umbrella in hand. */
+      readonly indoor?: true;
     }
   | {
       readonly kind: "ganger";

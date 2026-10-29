@@ -40,7 +40,8 @@ export interface Transform {
 /** What the presentation layer should build for an entity. Pure data, engine-agnostic. */
 export type ViewDescriptor =
   | { readonly kind: "heroine" }
-  | { readonly kind: "npc"; readonly preset: "fixer" | "civilian" | "ripperdoc" }
+  /** `umbrella: false` leaves a civilian's umbrella at home: indoors (ADR-0041). */
+  | { readonly kind: "npc"; readonly preset: "fixer" | "civilian" | "ripperdoc"; readonly umbrella?: boolean }
   /**
    * A resident of the city (ADR-0041): one of the crowd on the sidewalks, drawn in bulk and
    * cheaply. `look` seeds the silhouette, the clothes and their colours; `umbrella` is false

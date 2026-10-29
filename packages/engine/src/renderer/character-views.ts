@@ -149,7 +149,10 @@ export class CharacterViews implements FxActors {
 
   spawn(id: EntityId, view: CharacterDescriptor, t: Transform): void {
     const name = `e${id}`;
-    const rig = builderOf(view)(this.deps.scene, this.deps.materials, name);
+    const rig =
+      view.kind === "npc" && view.preset === "civilian"
+        ? buildCivilian(this.deps.scene, this.deps.materials, name, view.umbrella !== false)
+        : builderOf(view)(this.deps.scene, this.deps.materials, name);
     for (const m of rig.meshes) this.deps.shadow.addCaster(m);
     if (view.kind === "enemy" && view.enforcer) markEnforcer(this.deps.scene, this.deps.materials, rig, name);
     const model = modelKeyOf(view);

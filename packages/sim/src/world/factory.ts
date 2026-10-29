@@ -226,7 +226,8 @@ export const actorEntity = (id: EntityId, def: ActorDef, chunk: string): Entity 
 };
 
 const npcEntity = (id: EntityId, def: ActorDef & { kind: "npc" }, chunk: string): Entity => {
-  const e: Entity = { ...actor(id, def.spawn), chunk, view: { kind: "npc", preset: def.preset }, faction: def.faction };
+  const view = def.indoor ? { kind: "npc" as const, preset: def.preset, umbrella: false } : { kind: "npc" as const, preset: def.preset };
+  const e: Entity = { ...actor(id, def.spawn), chunk, view, faction: def.faction };
   if (def.interactable) e.interactable = def.interactable;
   if (def.maxHp !== undefined) e.health = { current: def.maxHp, max: def.maxHp };
   if (def.bystander) {
