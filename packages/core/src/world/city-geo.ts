@@ -61,3 +61,57 @@ export const terrainHeightAt = (grid: TerrainGrid, x: number, z: number): number
 
 /** Ground surfaces drawn from map areas and ways (ADR-0042). */
 export type GroundSurface = "road" | "sidewalk" | "square" | "cobble" | "footway" | "grass" | "water" | "rail";
+
+/**
+ * Street furniture of the map city (ADR-0047), from `docs/world/lublin-props.todo.json`: the
+ * five Lublin lamp types, benches, bollards, trees, bins and the rest. Drawn in bulk per chunk.
+ */
+export type StreetPropKind =
+  | "lamp-pastoral"
+  | "lamp-wall-lantern"
+  | "lamp-candelabra"
+  | "lamp-modern-pole"
+  | "lamp-road"
+  | "lamp-park"
+  | "floodlight"
+  | "bench"
+  | "bollard"
+  | "tree"
+  | "shrubs"
+  | "planter"
+  | "hanging-basket"
+  | "waste-bin"
+  | "bike-rack"
+  | "bike-station"
+  | "advertising-column"
+  | "a-frame-sign"
+  | "street-plate"
+  | "street-cabinet"
+  | "manhole"
+  | "granite-block"
+  | "flagpole"
+  | "traffic-signal"
+  | "bus-shelter"
+  | "bus-stop"
+  | "ticket-machine"
+  | "vending-machine"
+  | "kiosk"
+  | "cafe-garden"
+  | "market-stall"
+  | "trolley-pole"
+  | "fountain-jets"
+  | "monument"
+  | "artwork"
+  | "cctv";
+
+/** One piece of street furniture, in world metres relative to its chunk entity's position. */
+export interface StreetPropItem {
+  readonly prop: StreetPropKind;
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+  /** Facing around Y in radians (a bench's front, a lamp's arm). */
+  readonly yaw: number;
+  /** Seed of the variation (species of tree, colour of a bin, which monument). */
+  readonly variant: number;
+}

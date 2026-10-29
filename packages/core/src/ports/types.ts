@@ -1,5 +1,5 @@
 import type { Vec3 } from "../math/vec3";
-import type { BuildingUse, GroundPoint, GroundSurface, TerrainGrid } from "../world/city-geo";
+import type { BuildingUse, GroundPoint, GroundSurface, StreetPropItem, TerrainGrid } from "../world/city-geo";
 import type { GarmentLook, GarmentSlot, Rarity, WeaponLook, WeaponSlot } from "../items/types";
 
 export type EntityId = number;
@@ -109,6 +109,11 @@ export type ViewDescriptor =
    * renderer drapes them on the terrain of the same chunk.
    */
   | { readonly kind: "ground"; readonly surface: GroundSurface; readonly outline: readonly GroundPoint[] }
+  /**
+   * The street furniture of a chunk (ADR-0047): lamps, benches, trees, bollards and the rest,
+   * drawn instanced per kind. Positions are relative to the entity's position.
+   */
+  | { readonly kind: "street-props"; readonly items: readonly StreetPropItem[] }
   | {
       readonly kind: "neon";
       readonly size: Vec3;
