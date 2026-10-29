@@ -29,12 +29,16 @@ test("phone: on-screen pad moves, looks and talks", async ({ page }) => {
   await expect(page.getByTestId("touch-controls")).toBeVisible();
   const fingers = await touch(page);
 
-  // Left stick up = walk forward (+Z) while the real loop runs.
+  // Left stick up = walk forward while the real loop runs. A new game faces east across the
+  // clinic (ADR-0045): forward is along the view, not +Z.
   const start = (await gameState(page)).player!;
+  const facing = await page.evaluate(() => window.__seki!.session.sim.player()!.yaw);
   await fingers.drag([140, 300], [140, 230], 1500);
   const moved = (await gameState(page)).player!;
-  expect(moved.z - start.z).toBeGreaterThan(1.5);
-  expect(Math.abs(moved.x - start.x)).toBeLessThan(0.5);
+  const ahead = (moved.x - start.x) * Math.sin(facing) + (moved.z - start.z) * Math.cos(facing);
+  const aside = (moved.x - start.x) * Math.cos(facing) - (moved.z - start.z) * Math.sin(facing);
+  expect(ahead).toBeGreaterThan(1.5);
+  expect(Math.abs(aside)).toBeLessThan(0.5);
 
   // Right side drag turns the view.
   const yaw = () => page.evaluate(() => window.__seki!.session.sim.player()!.yaw);

@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { EMPTY_INPUT } from "@seki/core";
-import { GENZO_SPOT, METRO_STATIONS } from "@seki/sim";
+import { GENZO_SPOT, METRO_STATIONS, market } from "@seki/sim";
 import type { GameSession } from "../src/game-session";
 import { type Ui, frame, setup, steps, teleport } from "./story-helpers";
 
 /**
  * Lublin through the whole session (ADR-0045), without a renderer (ADR-0046): what the e2e
- * specs `streaming` and `docks` checked in the browser, the walk through both gates of the Old
- * Town into the market with a save there, and the metro to Nabrzeże Bystrzycy with Genzō's job.
+ * specs `streaming`, `docks` and `market-contract` checked in the browser, the walk through both
+ * gates of the Old Town into the market with a save there, the metro to Nabrzeże Bystrzycy with
+ * Genzō's job, and Hana's job on the market under the viaduct.
  */
 
 /**
@@ -105,5 +106,25 @@ describe("Lublin in the session (ADR-0045)", () => {
     steps(session, 2);
     expect(session.sim.domain.flags).toContain("met_genzo");
     expect(ui.getState().toasts.map((t) => `${t.title}`)).toContain("Nowy kontrakt: Eskorta");
+  });
+
+  it("Hana on the market under the viaduct hands out a job through the dialogue", () => {
+    const { session, ui } = setup();
+    session.newGame();
+    // Next to Hana's cart; one step streams the market in.
+    const cart = market(90.5, 0, 74);
+    teleport(session, cart.x, cart.z, Math.PI / 2);
+    steps(session, 1);
+    expect(session.sim.district).toBe("targ");
+    expect(ui.getState().prompt).toContain("Haną");
+    steps(session, 1, frame({ interact: true }));
+    const text = () => (ui.getState().dialogue?.lines ?? []).map((l) => l.text).join("\n");
+    expect(text()).toContain("Jestem Hana");
+    session.choose(ui.getState().dialogue!.choices.find((c) => c.text.startsWith("Co trzeba odzyskać"))!.index);
+    expect(text()).toContain("skrzynkę z towarem");
+    session.closeDialogue();
+    steps(session, 2);
+    expect(session.sim.domain.flags).toContain("met_hana");
+    expect(ui.getState().toasts.map((t) => t.title)).toContain("Nowy kontrakt: Odzyskanie");
   });
 });
