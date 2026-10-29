@@ -26,11 +26,12 @@ export const SURFACE_LIFT: Readonly<Record<GroundSurface, number>> = {
   square: 0.08,
   cobble: 0.08,
   footway: 0.09,
+  steps: 0.05,
   sidewalk: 0.16,
   basin: 0.32,
 };
 
-const SURFACE_COLOR: Readonly<Record<Exclude<GroundSurface, "water" | "basin">, Rgba>> = {
+const SURFACE_COLOR: Readonly<Record<Exclude<GroundSurface, "water" | "basin" | "steps">, Rgba>> = {
   road: hexColor("#3a3d45", DRESS_FLAG.wet),
   rail: hexColor("#4d4842", DRESS_FLAG.solid),
   square: hexColor("#6d6a66", DRESS_FLAG.solid),
@@ -198,7 +199,7 @@ const kerbs = (sink: MeshSink, ring: readonly P2[], h: HeightAt, roadAt: RoadAt)
 };
 
 /** A ground surface (not water) draped on the terrain, with kerbs on sidewalks along roads. */
-export const planSurface = (sink: MeshSink, surface: Exclude<GroundSurface, "water" | "basin">, ring: readonly P2[], h: HeightAt, roadAt: RoadAt | null): void => {
+export const planSurface = (sink: MeshSink, surface: Exclude<GroundSurface, "water" | "basin" | "steps">, ring: readonly P2[], h: HeightAt, roadAt: RoadAt | null): void => {
   const box = orientedBox(ring);
   const strip = (surface === "road" || surface === "rail") && box.halfLong > box.halfShort * 4 ? box.halfShort * 2 : 0;
   const code = SURFACE_CODE[surface];
