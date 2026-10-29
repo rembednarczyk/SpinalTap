@@ -10,6 +10,7 @@ import { teleportPlayer } from "./helpers";
  * - A bank east of x = 80: 8 m up over 4 m (63°), then a plateau.
  * - West of x = -40, a ridge 3 m high along z = -20 (half width 4 m).
  * - A 10 × 6 m building at (30, 60) turned by 17°, given by its outline (one prism).
+ * - A hexagonal kiosk at (-90, 40), its roof 1 m over the ground: a jump gets on it.
  * - An L-shaped building split into two prisms: a bar x -30..-10, z 100..106 and a leg
  *   x -30..-24, z 106..126.
  */
@@ -42,6 +43,10 @@ const turned = (w: number, d: number, deg: number): GroundPoint[] => {
     [-w / 2, d / 2],
   ].map(([x = 0, z = 0]) => ({ x: x * c - z * s, z: x * s + z * c }));
 };
+
+export const KIOSK_AT = { x: -90, z: 40 } as const;
+/** Top of the kiosk: 1 m over the ground at its uphill edge. */
+export const KIOSK_TOP = hill(-90, 42) + 1;
 
 export const TURNED_AT = { x: 30, z: 60 } as const;
 export const TURNED_OUTLINE = turned(10, 6, 17);
@@ -85,8 +90,17 @@ export const testChunks = (cell = 2): ChunkDef[] => {
       { points: rect(-30, -24, 106, 126, lAt.x, lAt.z), bottom: 0, top: 15 },
     ],
   };
+  // A low hexagonal kiosk, 1 m above the ground on its uphill side: jumped onto.
+  const hex: GroundPoint[] = Array.from({ length: 6 }, (_, k) => ({ x: 2 * Math.cos((k * Math.PI) / 3), z: 2 * Math.sin((k * Math.PI) / 3) }));
+  const kioskBase = baseUnder(west, hex.map((p) => world(p, KIOSK_AT)));
+  const kiosk: StaticProp = {
+    center: { x: KIOSK_AT.x, y: kioskBase, z: KIOSK_AT.z },
+    view: { kind: "block", size: { x: 4, y: 1, z: 4 }, material: "metal" },
+    solid: true,
+    prisms: [{ points: hex, bottom: 0, top: KIOSK_TOP - kioskBase }],
+  };
   return [
-    { id: "test-west", district: "shinsekai-7", bounds: { ...BOUNDS, maxX: 0 }, props: [lBuilding], actors: [], terrain: west },
+    { id: "test-west", district: "shinsekai-7", bounds: { ...BOUNDS, maxX: 0 }, props: [lBuilding, kiosk], actors: [], terrain: west },
     { id: "test-east", district: "shinsekai-7", bounds: { ...BOUNDS, minX: 0 }, props: [turnedBuilding], actors: [], terrain: east },
   ];
 };

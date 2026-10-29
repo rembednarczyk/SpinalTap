@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { GroundField, circleTouchesPrism, gangerEntity, groundOf, hitscan, lineOfSight, stateHash } from "../src";
 import { input, run } from "./helpers";
-import { TURNED_AT, hill, terrainSim, testChunks } from "./terrain-world";
+import { KIOSK_AT, KIOSK_TOP, TURNED_AT, hill, terrainSim, testChunks } from "./terrain-world";
 
 const player = (sim: ReturnType<typeof terrainSim>) => {
   const p = sim.player();
@@ -14,7 +14,7 @@ describe("terrain and prisms in the simulation (ADR-0043)", () => {
     const sim = terrainSim({ x: -10, z: 10 });
     expect(sim.streamer.loadedChunks).toEqual(["test-west", "test-east"]);
     const prismSolids = sim.world.with("solid", "prisms").entities;
-    expect(prismSolids.map((e) => e.prisms.length).sort()).toEqual([1, 2]);
+    expect(prismSolids.map((e) => e.prisms.length).sort()).toEqual([1, 1, 2]);
     expect(groundOf(sim.world).hasTerrain).toBe(true);
   });
 
@@ -78,7 +78,7 @@ describe("terrain and prisms in the simulation (ADR-0043)", () => {
   it("slides along the wall of the building turned by 17° and gets past it", () => {
     // From the south, straight north into the slanted south wall, a little west of its middle.
     const sim = terrainSim({ x: TURNED_AT.x - 1, z: TURNED_AT.z - 12 });
-    const building = sim.world.with("solid", "prisms").entities.find((e) => e.prisms.length === 1);
+    const building = sim.world.with("solid", "prisms").entities.find((e) => e.solid.min.x < TURNED_AT.x && e.solid.max.x > TURNED_AT.x && e.solid.min.z < TURNED_AT.z && e.solid.max.z > TURNED_AT.z);
     const prism = building?.prisms[0];
     if (!prism) throw new Error("no prism");
     let touched = false;
@@ -90,6 +90,21 @@ describe("terrain and prisms in the simulation (ADR-0043)", () => {
     }
     expect(touched).toBe(true);
     expect(player(sim).position.z).toBeGreaterThan(TURNED_AT.z + 6);
+  });
+
+  it("jumps onto a low prism and stands on it", () => {
+    const sim = terrainSim({ x: KIOSK_AT.x, z: KIOSK_AT.z - 4 });
+    run(sim, 20, input({ moveZ: 1 }));
+    sim.step(input({ moveZ: 1, jump: true }));
+    run(sim, 50, input({ moveZ: 1 }));
+    run(sim, 30);
+    const p = player(sim).position;
+    expect(Math.hypot(p.x - KIOSK_AT.x, p.z - KIOSK_AT.z)).toBeLessThan(2);
+    expect(p.y).toBeCloseTo(KIOSK_TOP, 5);
+    // Without the jump the 1 m edge stops the walk.
+    const walk = terrainSim({ x: KIOSK_AT.x, z: KIOSK_AT.z - 4 });
+    run(walk, 120, input({ moveZ: 1 }));
+    expect(player(walk).position.z).toBeLessThan(KIOSK_AT.z - 1.7 - 0.37);
   });
 
   it("stands on the roof of a prism", () => {
