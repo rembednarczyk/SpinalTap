@@ -14,7 +14,7 @@ import { type Uv, quadUv } from "./sink-ops";
  * from the wall outwards), uv2 = (atlas cell, holo seed or name slot; kind), colour rgb = tint,
  * a = brightness.
  */
-export const MAP_SIGN_KIND = { board: 0, holo: 1, name: 2, tube: 3, reflection: 4, blade: 5, disc: 6 } as const;
+export const MAP_SIGN_KIND = { board: 0, holo: 1, name: 2, tube: 3, reflection: 4, blade: 5, disc: 6, ad: 7, beam: 8, mist: 9 } as const;
 
 /** Atlas: eight upright blades (1:4) across the top half, eight boards (4:1) below. */
 export const MAP_SIGN_BLADES = ["APTEKA", "KAWA", "PIWO", "BAR", "24H", "HOTEL", "薬局", "ラーメン"] as const;

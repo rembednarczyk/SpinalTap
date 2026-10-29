@@ -352,7 +352,8 @@ void main(void) {
 `;
 
 /** Holo-ads (scrolling glyph columns, a ring logo, a figure), neon strips and blinking beacons. */
-const LIGHTS_FRAGMENT = /* glsl */ `
+/** Shared with the skyline of Lublin 2077 (ADR-0051). */
+export const LIGHTS_FRAGMENT = /* glsl */ `
 precision highp float;
 varying vec2 vUV;
 varying vec3 vColor;

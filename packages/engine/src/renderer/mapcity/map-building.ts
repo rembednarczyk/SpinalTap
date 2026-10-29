@@ -47,5 +47,6 @@ export const mapBuilding = (id: EntityId, e: BuildingSource, heightAt: (x: numbe
     ...(v.passages?.length ? { passages: v.passages.map((p) => worldPassage(p, e.at)) } : {}),
     ...(v.soffit !== undefined ? { lifted: true } : {}),
     ...(v.signs === "bracket" ? { bracketSigns: true } : {}),
+    ...(v.vertical ? { rise: Math.max(0, v.vertical.rise), clutter: Math.min(1, Math.max(0, v.vertical.clutter)) } : {}),
   };
 };

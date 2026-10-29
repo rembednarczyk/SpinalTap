@@ -33,6 +33,10 @@ export interface MapBuilding {
   readonly lifted?: boolean;
   /** Shop signs hang from wrought-iron brackets (the Old Town, ADR-0048). */
   readonly bracketSigns?: boolean;
+  /** Metres of Lublin 2077's superstructure over `top` (ADR-0051). */
+  readonly rise?: number;
+  /** Density (0..1) of the cables, ads, pipes and neon this building hangs over the street (ADR-0051). */
+  readonly clutter?: number;
 }
 
 /** A doorway in world metres: the middle of the opening on a wall, its width, bottom and top (world y). */
