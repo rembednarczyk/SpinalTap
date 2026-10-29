@@ -1,5 +1,5 @@
 import { type Page, expect, test } from "@playwright/test";
-import { freeze, step, waitForGame } from "./helpers";
+import { freeze, step, teleport, waitForGame } from "./helpers";
 
 /**
  * A phone in landscape (ADR-0035): at 800x370 and 667x375 CSS px no key element of the HUD or
@@ -58,6 +58,8 @@ for (const [w, h] of [
       await waitForGame(page);
       await page.getByRole("button", { name: "Nowa gra" }).tap();
       await freeze(page);
+      // A new game wakes next to Kaito (ADR-0038); the bare layout is checked out on the street.
+      await teleport(page, -4, 4.4);
       await step(page, 1);
       await expect(page.getByTestId("touch-controls")).toBeVisible();
       // No key hints on a touch screen.
