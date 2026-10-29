@@ -50,5 +50,6 @@
 | [0046](0046-strategia-testow-e2e.md) | Strategia testów e2e: przeglądarka tylko do rozruchu, rysowania, HUD telefonu i dotyku; logika w testach sesji bez renderera; krokowanie zamiast zegara; czas klatki jako raport; jedna przeglądarka na maszynę; e2e w trzech shardach | Zaakceptowana |
 | [0047](0047-meble-uliczne-lublina.md) | Meble uliczne Lublina 2077: `pnpm osm:props` z planu do tabeli per chunk, modele NPR pięciu latarń i reszty, instancje cienkie per rodzaj z bliskich komórek, bloki 256 m z daleką siatką i halo latarń bez dynamicznych świateł, galeria `?props-gallery` | Zaakceptowana |
 | [0048](0048-stare-miasto-bramy-kladka-patrole-trasa.md) | Stare Miasto: wyściółka i sklepienie przejść w bramach, kryta kładka nad Grodzką na podsufitce, szyldy na kutych wysięgnikach, patrole Hebi (w nocy czterech, w dzień jeden; neutralnego gracza obserwują), Trasa Podziemna z Trybunału w osobnym chunku | Zaakceptowana |
+| [0051](0051-pionowy-lublin-2077.md) | Pionowy Lublin 2077: nadbudowy (kontenery, kapsuły, szklane boksy) z `look` i dzielnicy, bryły tylko w górę, kable, kładki, reklamy polsko-japońskie, zasłony neonowe, snopy i niska mgła w siatkach komórek, korpo-wieże jako impostory w perspektywie | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.
