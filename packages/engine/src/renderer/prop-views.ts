@@ -37,6 +37,8 @@ export interface PropViewsDeps {
   readonly atmosphere: Atmosphere;
   readonly dressing: WorldDressing;
   readonly cityKit: CityKitLoader;
+  /** Ground height under a point (the map city's terrain), or null where there is none (y = 0). */
+  readonly groundAt?: (x: number, z: number) => number | null;
 }
 
 /**
@@ -196,16 +198,19 @@ export class PropViews {
   private decorate(name: string, view: PropDescriptor, at: Vector3, prop: PropView): Decor {
     const { atmosphere } = this.deps;
     if (view.kind === "lamp" && prop.light) {
+      // From the lamp head down to the ground the lamp stands on (the map city is not at y = 0).
       const l = prop.light.position;
-      const cone = atmosphere.addLightCone(`${name}-cone`, new Vector3(l.x, 5.05, l.z), view.color);
-      const refl = atmosphere.addReflection(`${name}-refl`, new Vector3(l.x, 0, l.z), new Vector3(-Math.sign(at.x) || 1, 0, 0), 1.4, 5, view.color, 0.35);
+      const head = l.y + 0.05;
+      const cone = atmosphere.addLightCone(`${name}-cone`, new Vector3(l.x, head, l.z), view.color, Math.max(1, head - at.y - 0.25));
+      const refl = atmosphere.addReflection(`${name}-refl`, new Vector3(l.x, at.y, l.z), new Vector3(-Math.sign(at.x) || 1, 0, 0), 1.4, 5, view.color, 0.35);
       return { meshes: [cone, refl], flicker: null };
     }
     if (view.kind !== "neon") return { meshes: [], flicker: null };
     const thinX = view.size.x <= view.size.z && view.size.x <= view.size.y;
     const towards = thinX ? new Vector3(at.x > 0 ? -1 : 1, 0, 0) : new Vector3(0, 0, -1);
     const width = thinX ? view.size.z : view.size.x;
-    const refl = atmosphere.addReflection(`${name}-refl`, new Vector3(at.x, 0, at.z), towards, Math.max(1.2, width), 7, view.color, 0.55);
+    const ground = this.deps.groundAt?.(at.x, at.z) ?? 0;
+    const refl = atmosphere.addReflection(`${name}-refl`, new Vector3(at.x, ground, at.z), towards, Math.max(1.2, width), 7, view.color, 0.55);
     const sign = prop.glowing[0]?.material as unknown as { emissiveColor?: Color3 } | null;
     if (sign?.emissiveColor && (view.label === "HOTEL" || view.label === "KUSURI")) {
       const flicker = sign as { emissiveColor: Color3 };
