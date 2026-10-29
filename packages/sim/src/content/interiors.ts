@@ -34,8 +34,12 @@ const box = (x0: number, x1: number, y0: number, y1: number, z0: number, z1: num
   solid,
 });
 
-/** Marks props as parts of an interior (see `StaticProp.interior`). */
-const indoor = (props: readonly StaticProp[]): StaticProp[] => props.map((p) => ({ ...p, interior: true }));
+/**
+ * Marks props as parts of an interior: `StaticProp.interior` for the minimap, and on block views
+ * for the renderer, which draws them merged and without the moon shadow (ADR-0038).
+ */
+const indoor = (props: readonly StaticProp[]): StaticProp[] =>
+  props.map((p) => ({ ...p, interior: true, ...(p.view.kind === "block" ? { view: { ...p.view, interior: true } } : {}) }));
 
 /**
  * A piece of the ground-floor front wall beside the door, with its own kit skin: the facade's

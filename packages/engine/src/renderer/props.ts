@@ -14,7 +14,7 @@ export interface PropView {
   readonly light: { position: { x: number; y: number; z: number }; color: string; range: number; intensity: number } | null;
 }
 
-type Block = Extract<ViewDescriptor, { kind: "block" }>;
+export type Block = Extract<ViewDescriptor, { kind: "block" }>;
 type Neon = Extract<ViewDescriptor, { kind: "neon" }>;
 type Loot = Extract<ViewDescriptor, { kind: "loot" }>;
 type Water = Extract<ViewDescriptor, { kind: "water" }>;

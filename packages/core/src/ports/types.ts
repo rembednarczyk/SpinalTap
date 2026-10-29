@@ -62,6 +62,11 @@ export type ViewDescriptor =
        * instead of a plain box. Collision stays the box; without a kit the box is drawn.
        */
       readonly skin?: BlockSkin;
+      /**
+       * Part of an interior shell or its furniture (ADR-0038): static, under a roof. The renderer
+       * may draw such blocks merged per area and without the moon shadow.
+       */
+      readonly interior?: true;
     }
   | {
       readonly kind: "neon";
