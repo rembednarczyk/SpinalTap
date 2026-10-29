@@ -151,6 +151,7 @@ export const planCanyonSigns = (sink: MeshSink, frames: readonly FacadeFrame[], 
     billboard(sink, s, lite);
     if (lite) continue;
     if (rand() < s.clutter * 0.5) curtain(sink, s, rand);
-    if (s.main) mist(sink, s);
+    // Mist only down the busy canyons: a quiet lane (the Rynek) keeps its clear air and needs no sign mesh for it.
+    if (s.main && s.clutter >= 0.4) mist(sink, s);
   }
 };

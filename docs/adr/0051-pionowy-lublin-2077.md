@@ -57,7 +57,7 @@ Wszystko trafia do siatek komórek 128 m, które już są (bliska i daleka fasad
   - billboardy nad ulicą, obie strony czytelne wzdłuż ulicy, banery wystające z wyższych pięter, reklamy na ścianach nadbudów zwróconych do ulicy;
   - zasłony z neonowych pasów pod kablami;
   - snopy światła spod billboardów do ulicy;
-  - niska mgła w kanionach: dwie miękkie warstwy 0,5 i 1,3 m nad ulicą głównego przęsła, z szumem, wygaszane przy brzegach i przy oku.
+  - niska mgła w kanionach: dwie miękkie warstwy 0,5 i 1,3 m nad ulicą głównego przęsła z `clutter` od 0,4 (nie na Rynku), z szumem, wygaszane przy brzegach i przy oku.
   - Nowe rodzaje w shaderze szyldów: `ad` 7, `beam` 8, `mist` 9.
   - Na `low` zostają reklamy; zasłony, snopy i mgła odpadają.
 - `skyline.ts`, megabudowle (`MapSkyline`):
@@ -79,22 +79,22 @@ Złote hashe w `determinism.test.ts` bez zmian. Bryły rosną tylko w górę, a 
 - Wydajność: patrz tabela w sekcji „Pomiar”.
 
 ### Pomiar
-`pnpm e2e e2e/npr-perf.spec.ts` przed (`6711561`) i po, SwiftShader 1280 × 720, wywołania rysowania / aktywne siatki:
+`pnpm e2e e2e/npr-perf.spec.ts` przed (gałąź z kamerą 80° z ADR-0049, `9bcb004`) i po, SwiftShader 1280 × 720, wywołania rysowania / aktywne siatki:
 
 | Scena | Przed | Po | Budżet |
 |---|---|---|---|
-| `reference` | 179 / 73 | 185 / 77 | 185 / 76 → 191 / 80 |
-| `krakowskie-tpp` | 369 / 156 | 369 / 159 | 378 / 160 bez zmian |
-| `rynek-tpp` | 226 / 86 | 232 / 91 | 232 / 90 → 239 / 94 |
-| `podzamcze-tpp` | 289 / 114 | 297 / 120 | 296 / 118 → 305 / 124 |
-| `nabrzeze` | 266 / 114 | 270 / 117 | 272 / 118 bez zmian |
-| `phone-low` | 232 / 145 | 233 / 146 | 237 / 150 bez zmian |
+| `reference` | 167 / 67 | 170 / 69 | 173 / 70 bez zmian |
+| `krakowskie-tpp` | 359 / 151 | 363 / 154 | 368 / 155 bez zmian |
+| `rynek-tpp` | 209 / 77 | 218 / 83 | 215 / 81 → 225 / 87 |
+| `podzamcze-tpp` | 256 / 96 | 261 / 100 | 263 / 100 bez zmian |
+| `nabrzeze` | 224 / 94 | 228 / 97 | 232 / 99 bez zmian |
+| `phone-low` | 227 / 141 | 228 / 142 | 233 / 145 bez zmian |
 
 - Nadbudowy, kable, kładki, klimatyzatory i reklamy nie dodają siatek: idą do siatek komórek. Wzrost to:
   - panorama wież: 3 wywołania (wieże w kolorze i w G-buforze line artu, gdzie są przycięte za płaszczyzną dalszą, oraz światła; na `low` bez świateł);
-  - siatki szyldów komórek, które dotąd nie miały żadnego szyldu, a teraz mają reklamy albo mgłę (1 do 4 siatek).
-- Budżety podniesione tylko tam, gdzie nowa wartość je przekroczyła, kilka procent nad pomiarem.
-- Migawka NPR (`reference-m0.png`) nowa: przy Neon Koi widać baner 居酒屋 na sąsiedniej kamienicy, klimatyzatory, kable z lampionami i zasłony z neonowych pasów nad deptakiem; fasada Neon Koi i postać bez zmian.
+  - siatki szyldów komórek, które dotąd nie miały żadnego szyldu, a teraz mają reklamy albo mgłę. Pierwsza wersja kładła mgłę pod każdym głównym przęsłem, także na Rynku (221 / 86); mgła tylko w kanionach z `clutter` od 0,4 dała 218 / 83.
+- Budżet podniesiony tylko dla `rynek-tpp`, jedynej sceny ponad budżetem, kilka procent nad pomiarem.
+- Migawka NPR (`reference-m0.png`) nowa: przy Neon Koi widać baner 居酒屋 i klimatyzatory na sąsiedniej kamienicy, banery KINO i HOTEL, kable z lampionami i zasłony z neonowych pasów w głębi deptaka; fasada Neon Koi i postać bez zmian.
 
 ### Do dopracowania
 - Nadbudowy nad dachem spadzistym przebijają dach: wygląda to jak dobudowa, ale bez obróbki blacharskiej.
