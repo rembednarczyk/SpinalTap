@@ -58,6 +58,15 @@ describe("determinism", () => {
     expect(hashOf(runReplay(1234, script()))).toMatchInlineSnapshot(`"181fbc08"`);
   });
 
+  it("the crowd of residents (ADR-0041) leaves the golden run as it was, at every density", () => {
+    const golden = hashOf(runReplay(1234, script()));
+    for (const crowd of ["low", "high"] as const) {
+      const sim = runReplay(1234, script(), crowd);
+      expect([...sim.world].some((e) => e.view?.kind === "crowd")).toBe(true);
+      expect(hashOf(sim)).toBe(golden);
+    }
+  });
+
   it("without the street life of ADR-0026 in the snapshot, the run hashes as before it (content, not rules)", () => {
     // The run reaches the alley: Ulica Kanałowa streams in with its four new people, and the
     // stashes behind Neon Koi, behind PACHINKO and by the passage are placed. Nothing else moved.

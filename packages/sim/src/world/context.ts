@@ -106,6 +106,8 @@ export interface SimContext {
   readonly seed: number;
   readonly streamer: WorldStreamer;
   readonly bus: EventBus<DomainEvents>;
+  /** Most residents of the crowd per chunk (ADR-0041): follows the graphics quality, 0 for none. */
+  readonly crowdCap: number;
   readonly dt: number;
   readonly tick: number;
   input: InputFrame;

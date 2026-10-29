@@ -2,6 +2,7 @@ import type { Vec3 } from "@seki/core";
 import type { Entity } from "../../world/components";
 import type { SimContext } from "../../world/context";
 import { followSchedule } from "../../world/schedule";
+import { walkLane } from "./crowd-walk";
 import { steerPoint } from "./steering";
 
 type Walker = Entity & { velocity: Vec3; passerby: NonNullable<Entity["passerby"]> };
@@ -22,6 +23,11 @@ const WAYPOINT_REACHED = 0.4;
  */
 export const walkRoutine = (ctx: SimContext, self: Walker, dt: number): void => {
   const p = self.passerby;
+  // A resident on a route of the crowd (ADR-0041).
+  if (p.lane) {
+    walkLane(ctx, self as Parameters<typeof walkLane>[1], dt);
+    return;
+  }
   const speed = WALK[p.index % WALK.length] ?? WALK[0];
   const dx = p.goal.x - self.position.x;
   const dz = p.goal.z - self.position.z;

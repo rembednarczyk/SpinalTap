@@ -12,7 +12,7 @@ export const activitySystem: System = {
     const clock = ctx.state.domain.clock;
     const { dialogueActive, focusId } = ctx.session;
     for (const e of ctx.world.with("view")) {
-      if (e.view.kind !== "npc" && e.view.kind !== "enemy") continue;
+      if (e.view.kind !== "npc" && e.view.kind !== "enemy" && e.view.kind !== "crowd") continue;
       const next = activityOf(e, clock, dialogueActive && focusId === e.id);
       if (next === (e.activity ?? null)) continue;
       if (next === null) delete e.activity;

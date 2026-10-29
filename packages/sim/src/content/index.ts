@@ -15,3 +15,4 @@ export * from "./encounter-rewards";
 export * from "./activity-spots";
 export * from "./actor-activities";
 export * from "./sidewalks";
+export * from "./crowd";
