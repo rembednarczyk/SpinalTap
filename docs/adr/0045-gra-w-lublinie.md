@@ -71,7 +71,7 @@ Nowe sceny w `tools/perf-budgets.json` i `e2e/npr-perf.spec.ts`, z pomiaru przy 
 Czas klatki trafia tylko do raportu. Pod SwiftShaderem klatka Lublina to około 600 ms po stronie GPU (CPU 3 ms), więc kadr wzorcowy po zbudowaniu miasta wokół kamery przestaje się rysować (`still`), a migawka czeka na ten stan.
 
 ### Testy
-Według ADR-0046 spece `streaming` i `docks` zastąpił test sesji `packages/app/test/lublin-session.test.ts` (przejście przez obie bramy na targ z zapisem i odczytem, metro z Placu Zamkowego na Nabrzeże i zlecenie Genzō). Zapis starszej wersji ładuje test `packages/app/test/lublin-save.test.ts`.
+Według ADR-0046 spece `streaming`, `docks` i `market-contract` zastąpił test sesji `packages/app/test/lublin-session.test.ts` (przejście przez obie bramy na targ z zapisem i odczytem, metro z Placu Zamkowego na Nabrzeże i zlecenie Genzō, zlecenie Hany na targu). Zapis starszej wersji ładuje test `packages/app/test/lublin-save.test.ts`.
 
 ## Konsekwencje
 - Engine liczy wysokości dekoracji od gruntu (`DressingInput.ground`, `planSignage(chunks, ground)`): pokład wiaduktu, odbicia neonów i szyldy stoją na terenie Lublina, a nie na y = 0.
