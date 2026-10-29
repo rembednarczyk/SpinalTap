@@ -21,7 +21,7 @@ test("Kurosawa's deal on the overpass ends act II and Kagami's copy plays", asyn
       flags: ["act1_ending", "ending:aya", "kagami_job", "met_fixer", "met_ren", "recalled:last_call", "recalled:rooftop", "ren_trail", "reported_back", "seen:act2_opening"],
     }),
   );
-  expect((await gameState(page)).objective).toContain("Kurosawa z Kagami czeka na estakadzie");
+  expect((await gameState(page)).objective).toContain("Kurosawa z Kagami czeka na wiadukcie");
 
   // On the overpass deck, next to him; one step streams the market in.
   await teleport(page, 98.5, 92, Math.PI / 2, 0, 9.9);

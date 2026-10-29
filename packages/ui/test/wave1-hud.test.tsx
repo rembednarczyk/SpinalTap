@@ -193,7 +193,7 @@ describe("heat and detection", () => {
 });
 
 describe("scanner", () => {
-  const target = { id: 12, kind: "person" as const, name: "Akira Tanaka", faction: "Mieszkańcy Shinsekai", profile: ["Kurier dronów", "Dochód: 900 €$/mies."], hostile: false };
+  const target = { id: 12, kind: "person" as const, name: "Akira Tanaka", faction: "Mieszkańcy Lublina", profile: ["Kurier dronów", "Dochód: 900 €$/mies."], hostile: false };
 
   it("lists the target's quickhacks with numbers and RAM, and the RAM bar", () => {
     mount({ scanning: true, scanTarget: target, ram: { current: 3, max: 8 } });

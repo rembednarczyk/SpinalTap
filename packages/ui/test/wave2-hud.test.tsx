@@ -28,10 +28,10 @@ const metroMap: UiState["metroMap"] = {
   from: "kanal",
   refusal: null,
   stops: [
-    { id: "shinsekai", name: "Shinsekai 7", fare: 25, here: false },
-    { id: "kanal", name: "Ulica Kanałowa", fare: 0, here: true },
-    { id: "targ", name: "Targ pod estakadą", fare: 25, here: false },
-    { id: "doki", name: "Doki Tessen", fare: 35, here: false },
+    { id: "shinsekai", name: "Plac Litewski", fare: 25, here: false },
+    { id: "kanal", name: "Brama Krakowska", fare: 0, here: true },
+    { id: "targ", name: "Plac Zamkowy", fare: 25, here: false },
+    { id: "doki", name: "Nabrzeże Bystrzycy", fare: 35, here: false },
   ],
 };
 
@@ -39,10 +39,10 @@ describe("metro", () => {
   it("lists the stops with fares and buys a ticket", () => {
     const { i } = mount({ metroMap, eddies: 30 });
     expect(screen.getByTestId("metro-stop-kanal").textContent).toContain("Jesteś tutaj");
-    fireEvent.click(screen.getByRole("button", { name: /Bilet do: Targ/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Bilet do: Plac Zamkowy/ }));
     expect(i.travelMetro).toHaveBeenCalledWith("targ");
     // 35 €$ is more than the wallet.
-    expect((screen.getByRole("button", { name: /Bilet do: Doki/ }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole("button", { name: /Bilet do: Nabrzeże/ }) as HTMLButtonElement).disabled).toBe(true);
     fireEvent.keyDown(window, { code: "Escape" });
     expect(i.closeMetro).toHaveBeenCalled();
   });
@@ -50,12 +50,12 @@ describe("metro", () => {
   it("shows the refusal and blocks tickets on a watched platform", () => {
     mount({ metroMap: { ...metroMap, refusal: "Ochrona pilnuje peronu." }, eddies: 500 });
     expect(screen.getByTestId("metro-refusal").textContent).toContain("Ochrona");
-    expect((screen.getByRole("button", { name: /Bilet do: Targ/ }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole("button", { name: /Bilet do: Plac Zamkowy/ }) as HTMLButtonElement).disabled).toBe(true);
   });
 
   it("shows the ride with progress and the subtitle, and hides the touch pad", () => {
-    mount({ metroRide: { line: "Linia Kanjō", fromName: "Ulica Kanałowa", toName: "Doki Tessen", progress: 0.4, caption: { speaker: "Staruszka", text: "Następna stacja, doki." } } }, true);
-    expect(screen.getByTestId("metro-ride-to").textContent).toBe("Doki Tessen");
+    mount({ metroRide: { line: "Linia Kanjō", fromName: "Brama Krakowska", toName: "Nabrzeże Bystrzycy", progress: 0.4, caption: { speaker: "Staruszka", text: "Następna stacja, doki." } } }, true);
+    expect(screen.getByTestId("metro-ride-to").textContent).toBe("Nabrzeże Bystrzycy");
     expect(screen.getByRole("progressbar").getAttribute("aria-valuenow")).toBe("40");
     expect(screen.getByTestId("metro-caption").textContent).toBe("Staruszka: Następna stacja, doki.");
     expect(screen.queryByTestId("touch-controls")).toBeNull();
