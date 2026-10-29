@@ -6,7 +6,7 @@ import { againstWall, spotNear } from "./lublin/places";
 import { DOCKS_PLACE, MAP_CHUNKS, MARKET_PLACE } from "./lublin/sites";
 import { seatGroups } from "./lublin/seats";
 import { groundY } from "./lublin/terrain";
-import { WORLD_STREET_PROPS } from "./world-map";
+import { WORLD_STREET_PROPS } from "./street-props";
 
 /**
  * Activity spots (smart spots) of the districts (ADR-0040): a bench to sit on, a wall to lean

@@ -214,6 +214,15 @@ export const CUES: Readonly<Record<AudioCue, Recipe>> = {
       { type: "sine", freq: 120, to: 60, dur: 0.1, gain: 0.16 },
     ],
   },
+  // A car's horn (ADR-0050): two detuned square tones a third apart, filtered like a speaker.
+  horn: {
+    send: 0.45,
+    voices: [
+      { type: "square", freq: 392, dur: 0.55, gain: 0.12, attack: 0.01, filter: 1800, filterType: "lowpass", pan: -0.1 },
+      { type: "square", freq: 494, dur: 0.55, gain: 0.1, attack: 0.01, filter: 1800, filterType: "lowpass", pan: 0.1 },
+      { type: "sawtooth", freq: 196, dur: 0.5, gain: 0.05, attack: 0.02, filter: 900, filterType: "lowpass" },
+    ],
+  },
   "land-hard": {
     send: 0.25,
     voices: [

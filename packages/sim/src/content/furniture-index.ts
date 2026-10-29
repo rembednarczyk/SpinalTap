@@ -1,6 +1,6 @@
 import type { StreetPropItem } from "@seki/core";
 import { distanceToPiece, furnitureRadius } from "./lublin/furniture";
-import { WORLD_STREET_PROPS } from "./world-map";
+import { WORLD_STREET_PROPS } from "./street-props";
 
 /**
  * The game's solid street furniture (ADR-0050) bucketed by 16 m, for the content tables that

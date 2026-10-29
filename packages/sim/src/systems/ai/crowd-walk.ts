@@ -30,6 +30,8 @@ interface Obstacle {
   readonly id: EntityId;
   readonly x: number;
   readonly z: number;
+  /** Half the width of something wider than a body (a vehicle, ADR-0050), walked round further. */
+  readonly r?: number;
 }
 
 const memo = new WeakMap<object, { tick: number; list: Obstacle[] }>();
@@ -40,6 +42,13 @@ const obstacles = (ctx: SimContext): Obstacle[] => {
   if (known && known.tick === ctx.tick) return known.list;
   const list: Obstacle[] = [];
   for (const e of ctx.world.with("body")) list.push({ id: e.id, x: e.position.x, z: e.position.z });
+  // A vehicle (a delivery van on the deptak, ADR-0050) as points along its length.
+  for (const e of ctx.world.with("vehicle")) {
+    const { w, l } = e.vehicle.half;
+    const tx = Math.sin(e.yaw);
+    const tz = Math.cos(e.yaw);
+    for (let k = -l + w; k <= l - w + 1e-6; k += Math.max(0.5, w)) list.push({ id: e.id, x: e.position.x + tx * k, z: e.position.z + tz * k, r: w });
+  }
   memo.set(ctx.world, { tick: ctx.tick, list });
   return list;
 };
@@ -51,19 +60,22 @@ const obstacles = (ctx: SimContext): Obstacle[] => {
  */
 export const asideFor = (others: readonly Obstacle[], self: EntityId, at: { x: number; z: number }, line: { x: number; z: number; tx: number; tz: number }): number => {
   let want = 0;
+  let wide = 0;
   for (const o of others) {
     if (o.id === self) continue;
     const dx = o.x - at.x;
     const dz = o.z - at.z;
     const ahead = dx * line.tx + dz * line.tz;
-    if (ahead < -BEHIND || ahead > AHEAD) continue;
+    if (ahead < -BEHIND - (o.r ?? 0) || ahead > AHEAD + (o.r ?? 0)) continue;
     // Sideways from the line, to the walker's left (heading north, left is west).
     const lat = (o.x - line.x) * -line.tz + (o.z - line.z) * line.tx;
-    if (Math.abs(lat) >= CLEAR) continue;
-    const need = lat >= 0 ? lat - CLEAR : lat + CLEAR;
+    const clear = CLEAR + (o.r ?? 0);
+    if (Math.abs(lat) >= clear) continue;
+    const need = lat >= 0 ? lat - clear : lat + clear;
     if (Math.abs(need) > Math.abs(want)) want = need;
+    wide = Math.max(wide, o.r ?? 0);
   }
-  return Math.max(-MAX_ASIDE, Math.min(MAX_ASIDE, want));
+  return Math.max(-MAX_ASIDE - wide, Math.min(MAX_ASIDE + wide, want));
 };
 
 /** Back to the route after running off or being pushed: to the nearest point of it, round obstacles. */

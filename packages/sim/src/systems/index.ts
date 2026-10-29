@@ -31,6 +31,7 @@ import { streetSceneSystem } from "./street-scene-system";
 import { createPasserbySystem } from "./passerby-system";
 import { createCrowdSystem } from "./crowd-system";
 import { activitySystem } from "./activity-system";
+import { createTrafficSystem } from "./traffic-system";
 
 export { aimSpreadOf, fireShot, GUNFIRE_INTERRUPT_RADIUS, NPC_CRIT } from "./combat-system";
 export { meleeSystem, stagger, startSwing } from "./melee-system";
@@ -104,6 +105,8 @@ export { doorForcedFlag, doorSnapshots, doorSystem, forceDoor, restoreDoors } fr
  * ADR-0040: the passers-by after the daily plans (their routine is set before the AI walks
  * them), the activities right after the movement (they see where everyone ended up).
  * ADR-0041: the residents right after the passers-by, for the same reason.
+ * ADR-0050: the traffic right after the movement (it drives itself, sees where everyone ended up
+ * and pushes the player out of a vehicle), before the activities.
  */
 export const createSystems = (): readonly System[] => [
   clockSystem,
@@ -127,6 +130,7 @@ export const createSystems = (): readonly System[] => [
   elevatorSystem,
   doorSystem,
   movementSystem,
+  createTrafficSystem(),
   activitySystem,
   weaponSystem,
   meleeSystem,

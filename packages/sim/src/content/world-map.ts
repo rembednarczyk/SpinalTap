@@ -1,27 +1,20 @@
-import type { StreetPropItem, TerrainGrid } from "@seki/core";
+import type { TerrainGrid } from "@seki/core";
 import { type ActorDef, type NavGraph, type Rect, type StaticProp, mergeNav } from "./builders";
-import { DISTRICT_M0_ACTORS, DISTRICT_M0_PROPS, S7_STASHES } from "./district-m0";
-import { KANAL_ACTORS, KANAL_ALLEY_STASH, KANAL_PROPS } from "./district-kanal";
-import {
-  type RoofStash,
-  TARG_NAV,
-  TARG_NORTH_ACTORS,
-  TARG_NORTH_PROPS,
-  TARG_OVERPASS_STASH,
-  TARG_ROOF_STASH,
-  TARG_SOUTH_ACTORS,
-  TARG_SOUTH_PROPS,
-} from "./district-targ";
+import { S7_STASHES } from "./district-m0";
+import { KANAL_ALLEY_STASH } from "./district-kanal";
+import { type RoofStash, TARG_NAV, TARG_OVERPASS_STASH, TARG_ROOF_STASH } from "./district-targ";
 import { DEVICES, type DeviceDef } from "./devices";
 import { METRO_STATIONS, type MetroStationDef } from "./metro";
 import { CLINIC_DOOR, KOI_DOOR, S7_NAV } from "./interiors";
-import { DOKI_NAV, DOKI_QUAY_ACTORS, DOKI_QUAY_PROPS, DOKI_YARD_ACTORS, DOKI_YARD_PROPS } from "./district-doki";
+import { DOKI_NAV } from "./district-doki";
 import { type RoomCut, type SceneryItem, chunkBuildings, chunkScenery } from "./lublin/city";
-import { CLEARED_BUILDINGS, CLINIC_SITE, KOI_SITE, MAP_CHUNKS, PASSAGES } from "./lublin/sites";
-import { SHAPED_TERRAIN, groundY } from "./lublin/terrain";
-import { LUBLIN_STREET_PROPS } from "./lublin";
-import { furnitureProps, furnitureRadius } from "./lublin/furniture";
-import { DRINKER_SITES, drinkerWay } from "./contract-plans";
+import { CLINIC_SITE, KOI_SITE, MAP_CHUNKS, PASSAGES } from "./lublin/sites";
+import { SHAPED_TERRAIN } from "./lublin/terrain";
+import { furnitureProps } from "./lublin/furniture";
+import { GAME_ACTORS, GAME_PROPS, WORLD_STREET_PROPS } from "./street-props";
+import { PARKED_CARS, parkedProp, parkedView } from "./parked-cars";
+
+export { WORLD_STREET_PROPS } from "./street-props";
 
 /** The districts of Lublin 2077 (ADR-0042); the ids are the game's from before the move. */
 export const DISTRICTS = {
@@ -80,63 +73,7 @@ const ROOM_CUTS: readonly RoomCut[] = [
   { site: KOI_SITE, doors: [{ x: KOI_DOOR.at.x, width: KOI_DOOR.width, height: KOI_DOOR.height }] },
 ];
 
-/** What the game adds to the map, in the order its entity ids are reserved. */
-const GAME_PROPS: readonly StaticProp[] = [...DISTRICT_M0_PROPS, ...KANAL_PROPS, ...TARG_SOUTH_PROPS, ...TARG_NORTH_PROPS, ...DOKI_YARD_PROPS, ...DOKI_QUAY_PROPS];
-const GAME_ACTORS: readonly ActorDef[] = [...DISTRICT_M0_ACTORS, ...KANAL_ACTORS, ...TARG_SOUTH_ACTORS, ...TARG_NORTH_ACTORS, ...DOKI_YARD_ACTORS, ...DOKI_QUAY_ACTORS];
-
 const MAP_BUILDINGS: ReadonlyMap<string, readonly StaticProp[]> = new Map(MAP_CHUNKS.map((c) => [c.id, chunkBuildings(c, ROOM_CUTS, PASSAGES)]));
-
-/** A set piece's or a game block's clearance from the map's furniture (m). */
-const FURNITURE_CLEARANCE = 1.2;
-
-const gameBlocks: readonly Rect[] = [...GAME_PROPS, ...METRO_STATIONS.flatMap((m) => m.props)].flatMap((p) =>
-  p.view.kind === "block" ? [{ minX: p.center.x - p.view.size.x / 2, maxX: p.center.x + p.view.size.x / 2, minZ: p.center.z - p.view.size.z / 2, maxZ: p.center.z + p.view.size.z / 2 }] : [],
-).concat(METRO_STATIONS.map((m) => ({ minX: m.kiosk.x - 0.6, maxX: m.kiosk.x + 0.6, minZ: m.kiosk.z - 0.6, maxZ: m.kiosk.z + 0.6 })));
-
-type Pt = { readonly x: number; readonly z: number };
-
-/** Horizontal distance from (x, z) to the segment a..b. */
-const segmentDistance = (x: number, z: number, a: Pt, b: Pt): number => {
-  const dx = b.x - a.x;
-  const dz = b.z - a.z;
-  const len2 = dx * dx + dz * dz || 1;
-  const t = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / len2));
-  return Math.hypot(x - (a.x + dx * t), z - (a.z + dz * t));
-};
-
-/** Plac Łokietka on foot: from the deptak past the car wash to the mouth of Brama Krakowska (ADR-0045). */
-const GATE_WALK: readonly Pt[] = [
-  { x: 400, z: -97 },
-  { x: 440, z: -100 },
-  { x: 447, z: -95 },
-  { x: 457, z: -95.6 },
-];
-
-/** Ways the content walks in straight lines (the night drinker's to the bar, the gates' passages): no furniture on them. */
-const KEEP_CLEAR: readonly (readonly [Pt, Pt])[] = [
-  ...DRINKER_SITES.flatMap((site) => {
-    const way = drinkerWay(site) ?? [];
-    return way.slice(1).map((p, k) => [way[k] as Pt, p] as const);
-  }),
-  ...PASSAGES.map((p) => [p.from, p.to] as const),
-  // The way from the deptak across Plac Łokietka into Brama Krakowska.
-  ...GATE_WALK.slice(1).map((p, k) => [GATE_WALK[k] as Pt, p] as const),
-];
-
-/** Does a piece of the map's furniture stand clear of the game's set pieces, blocks and characters? */
-const clearOfGame = (i: StreetPropItem): boolean =>
-  !CLEARED_BUILDINGS.some((r) => distanceToRect(i.x, i.z, r) < 2) &&
-  !gameBlocks.some((b) => distanceToRect(i.x, i.z, b) < FURNITURE_CLEARANCE) &&
-  !GAME_ACTORS.some((a) => Math.hypot(a.spawn.position.x - i.x, a.spawn.position.z - i.z) < FURNITURE_CLEARANCE) &&
-  !KEEP_CLEAR.some(([a, b]) => segmentDistance(i.x, i.z, a, b) < furnitureRadius(i) + 0.7);
-
-/**
- * The street furniture of the game's Lublin per chunk (ADR-0050): the map's pieces (ADR-0047)
- * that stand clear of the set pieces and the game's own blocks, on the shaped terrain.
- */
-export const WORLD_STREET_PROPS: Readonly<Record<string, readonly StreetPropItem[]>> = Object.fromEntries(
-  MAP_CHUNKS.map((c) => [c.id, (LUBLIN_STREET_PROPS[c.id] ?? []).filter(clearOfGame).map((i) => ({ ...i, y: Math.round(groundY(i.x, i.z) * 100) / 100 }))]),
-);
 
 /**
  * Every chunk of the city (ADR-0045): Lublin's chunks from the map, each with the map's
@@ -152,7 +89,7 @@ export const WORLD_CHUNKS: readonly ChunkDef[] = MAP_CHUNKS.map((c) => {
     props: [...(MAP_BUILDINGS.get(c.id) ?? []), ...GAME_PROPS.filter((p) => mapChunkOf(p.center.x, p.center.z) === c.id)],
     actors: GAME_ACTORS.filter((a) => mapChunkOf(a.spawn.position.x, a.spawn.position.z) === c.id),
     ...(terrain ? { terrain } : {}),
-    street: furnitureProps(WORLD_STREET_PROPS[c.id] ?? []),
+    street: [...furnitureProps(WORLD_STREET_PROPS[c.id] ?? []), ...PARKED_CARS.filter((p) => p.chunk === c.id).map(parkedProp)],
   };
 });
 
@@ -165,6 +102,8 @@ export const WORLD_SCENERY: readonly SceneryItem[] = [
   ...MAP_CHUNKS.flatMap((c) => chunkScenery(c, MAP_BUILDINGS.get(c.id) ?? [])),
   // The furniture last (ADR-0050), so the views above keep their scenery ids.
   ...MAP_CHUNKS.map((c): SceneryItem => ({ chunk: c.id, view: { kind: "street-props", items: WORLD_STREET_PROPS[c.id] ?? [] }, at: { x: 0, y: 0, z: 0 } })),
+  // The parked cars (ADR-0050), each drawn where it stands.
+  ...PARKED_CARS.map((p): SceneryItem => ({ chunk: p.chunk, view: parkedView(p), at: { x: p.x, y: p.y, z: p.z }, yaw: p.yaw })),
 ];
 
 /** Cameras and hackable devices (ADR-0029); each one names its chunk above. */
