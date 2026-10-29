@@ -240,11 +240,17 @@ describe("the crowd in the simulation", () => {
     const standers = residents(sim, S7).filter((r) => !r.passerby?.lane);
     expect(walkers.length).toBeGreaterThan(4);
     expect(standers.length).toBeGreaterThan(0);
-    const start = walkers.map((w) => ({ ...w.position }));
-    run(sim, 10 * SIM_HZ);
+    // The way each one walks, summed second by second: routes bend round the furniture and turn at their ends.
+    const walked = walkers.map(() => 0);
+    let last = walkers.map((w) => ({ ...w.position }));
+    for (let s = 0; s < 10; s++) {
+      run(sim, SIM_HZ);
+      walkers.forEach((w, i) => (walked[i]! += flat(w.position, last[i]!)));
+      last = walkers.map((w) => ({ ...w.position }));
+    }
     walkers.forEach((w, i) => {
-      // Ten metres or so in ten seconds along a route that bends round the furniture, still on it (unless someone was in the way).
-      expect(flat(w.position, start[i]!)).toBeGreaterThan(4);
+      // About ten metres in ten seconds, still on the route (unless someone was in the way).
+      expect(walked[i]).toBeGreaterThan(6);
       const lane = CROWD_LANES.find((l) => l.id === w.passerby!.lane!.lane)!;
       const t = laneTarget(lane, w.passerby!.lane!, sim.clock, w.passerby!.lane!.avoid);
       expect(flat(w.position, t)).toBeLessThan(1.2);

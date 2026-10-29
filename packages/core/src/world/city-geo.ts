@@ -59,6 +59,14 @@ export const terrainHeightAt = (grid: TerrainGrid, x: number, z: number): number
   return top * (1 - tz) + bottom * tz;
 };
 
+/** Which sides of a chunk's terrain are the edge of the map data. */
+export interface TerrainOpenSides {
+  readonly south: boolean;
+  readonly north: boolean;
+  readonly west: boolean;
+  readonly east: boolean;
+}
+
 /** Ground surfaces drawn from map areas and ways (ADR-0042). */
 export type GroundSurface = "road" | "sidewalk" | "square" | "cobble" | "footway" | "grass" | "water" | "rail";
 

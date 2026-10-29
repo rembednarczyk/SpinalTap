@@ -160,3 +160,22 @@ describe("map city batches (ADR-0044)", () => {
     expect(s.vertices).toBeLessThan(1_000_000);
   });
 });
+
+describe("roofs over the street (rain stops under them)", () => {
+  it("knows a point under a building's roof from one in the open or above it", () => {
+    const city = makeCity();
+    const square = [
+      { x: -5, z: -5 },
+      { x: 5, z: -5 },
+      { x: 5, z: 5 },
+      { x: -5, z: 5 },
+    ];
+    city.spawn(1, building(square, 1), { x: 100, y: 2, z: 50 });
+    expect(city.roofOver(100, 3, 50)).toBe(true);
+    expect(city.roofOver(104, 15.9, 46)).toBe(true);
+    expect(city.roofOver(100, 16.5, 50)).toBe(false);
+    expect(city.roofOver(106, 3, 50)).toBe(false);
+    city.despawn(1);
+    expect(city.roofOver(100, 3, 50)).toBe(false);
+  });
+});

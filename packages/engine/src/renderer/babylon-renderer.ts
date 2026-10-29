@@ -160,6 +160,7 @@ export class BabylonRenderer implements RenderPort {
       signage: this.signage,
       speedLines: this.speedLines,
       fogScale: options.fogScale ?? 1,
+      roofOver: (x, y, z) => this.mapCity?.roofOver(x, y, z) ?? false,
       actors: this.characters,
       cameraTarget: () => this.cameraTarget,
       scanTargets: (visit) => {

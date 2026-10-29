@@ -85,6 +85,8 @@ export type ActorDef =
       readonly when?: Presence;
       /** Enemy type and its health; without it a Hebi ganger with the default health. */
       readonly enemy?: EnemyTypeId;
+      /** A street patrol (ADR-0048): watches a neutral player instead of attacking her. */
+      readonly patrol?: true;
     };
 
 /** Axis-aligned rectangle on the XZ plane. */

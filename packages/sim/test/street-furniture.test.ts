@@ -17,7 +17,7 @@ const benchOf = (chunk: string): StreetPropItem => {
 describe("street furniture in the game (ADR-0050)", () => {
   it("the scenery draws every chunk's furniture, on the game's terrain, clear of the set pieces", () => {
     const views = WORLD_SCENERY.filter((s) => s.view.kind === "street-props");
-    expect(views).toHaveLength(WORLD_CHUNKS.length);
+    expect(views).toHaveLength(WORLD_CHUNKS.filter((c) => c.street).length);
     let total = 0;
     for (const v of views) {
       if (v.view.kind !== "street-props") continue;

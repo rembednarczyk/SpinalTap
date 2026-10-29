@@ -80,6 +80,10 @@ export const evenStations = (lines: readonly (readonly Pt[])[], count: number): 
 /** How a thing finds its place beside a street axis. */
 export type SideMode = "kerb" | "facade" | "front" | "path";
 
+/** How far from a line's axis a facade or a road edge is looked for, metres. */
+const SIDE_REACH = 16;
+const FACADE_REACH = 36;
+
 /** Where a thing beside the axis goes: the offset along the normal, or null when there is no place. */
 export const sideOffset = (site: Site, p: Pt, n: Pt, mode: SideMode, fallback: number): number | null => {
   const at = (d: number): Pt => ({ x: p.x + n.x * d, z: p.z + n.z * d });
@@ -92,7 +96,10 @@ export const sideOffset = (site: Site, p: Pt, n: Pt, mode: SideMode, fallback: n
   let building: number | null = null;
   let walkFrom: number | null = null;
   let road: number | null = null;
-  for (let d = 0.5; d <= 16; d += 0.5) {
+  // A wall lantern looks for the facade across a whole square (the Rynek is some 60 m wide),
+  // anything else only along a street's width.
+  const reach = mode === "facade" ? FACADE_REACH : SIDE_REACH;
+  for (let d = 0.5; d <= reach; d += 0.5) {
     const s = site.surfaceAt(at(d));
     if (s === "building") {
       building = d;

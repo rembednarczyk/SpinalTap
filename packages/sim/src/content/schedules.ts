@@ -3,6 +3,7 @@ import type { ScheduleDef } from "../world/components";
 import type { ActorSpawn } from "./builders";
 import { UME_CORNER, UME_HOME } from "./district-m0";
 import { GRODZKA_WALK, KANAL_SPOTS } from "./district-kanal";
+import { KANAL_PATROL_SCHEDULES } from "./kanal-patrols";
 import { spotNear } from "./lublin/places";
 import { ground } from "./lublin/terrain";
 import { WORLD_CHUNKS } from "./world-map";
@@ -164,4 +165,5 @@ export const SCHEDULES: Readonly<Record<string, ScheduleDef>> = {
   hideo: hideo(),
   mei: mei(),
   fumiko: fumiko(),
+  ...KANAL_PATROL_SCHEDULES,
 };

@@ -1,4 +1,4 @@
-import { type EntityId, type GroundSurface, type TerrainGrid, type Vec3, type ViewDescriptor, terrainHeightAt } from "@seki/core";
+import { type EntityId, type GroundSurface, type TerrainGrid, type TerrainOpenSides, type Vec3, type ViewDescriptor, terrainHeightAt } from "@seki/core";
 import type { BaseTexture, Mesh, Scene } from "../../babylon";
 import type { LightingRig } from "../../npr/lighting";
 import type { MoonShadow } from "../../npr/moon-shadow";
@@ -7,6 +7,7 @@ import type { ToonMaterials } from "../../npr/toon-material";
 import { sinkToMesh } from "../dressing";
 import { MeshSink } from "../mesh-sink";
 import { type FacadeFrame, type MapBuilding, facadeFrame } from "./facade-frame";
+import { mapBuilding } from "./map-building";
 import { planFarBuilding, planNearBuilding } from "./facade-plan";
 import { SURFACE_LIFT, planSurface, planTerrain, planWater } from "./ground-plan";
 import { MapSignMaterial } from "./map-signs";
@@ -57,6 +58,8 @@ interface GroundEntry {
 
 interface TerrainEntry {
   readonly grid: TerrainGrid;
+  /** Sides at the edge of the map data: an apron runs on from them (ADR-0044). */
+  readonly open: TerrainOpenSides | undefined;
   readonly bounds: Box2;
   mesh: Mesh | null;
 }
@@ -157,7 +160,7 @@ export class MapCity {
     if (view.kind === "terrain") {
       const g = view.grid;
       const bounds = { minX: g.originX, maxX: g.originX + (g.cols - 1) * g.cell, minZ: g.originZ, maxZ: g.originZ + (g.rows - 1) * g.cell };
-      this.terrains.set(id, { grid: g, bounds, mesh: null });
+      this.terrains.set(id, { grid: g, open: view.open, bounds, mesh: null });
       this.terrainsDirty = true;
       this.touch(bounds);
       return;
@@ -213,6 +216,15 @@ export class MapCity {
     this.flush();
   }
 
+  /** Whether a map building's roof is above (x, y, z): a gate's passage, the footbridge, a room under the floors. */
+  roofOver(x: number, y: number, z: number): boolean {
+    for (const id of this.buildingIndex.at(x, z)) {
+      const b = this.buildings.get(id);
+      if (b && y < b.base + b.view.height && pointInRing({ x, z }, b.ring)) return true;
+    }
+    return false;
+  }
+
   /** Ground height at (x, z) from the terrain of the chunk there, or null outside every terrain. */
   heightAt(x: number, z: number): number | null {
     for (const t of this.terrains.values()) {
@@ -247,7 +259,7 @@ export class MapCity {
       for (const [id, t] of this.terrains) {
         if (t.mesh) continue;
         const sink = new MeshSink();
-        planTerrain(sink, t.grid);
+        planTerrain(sink, t.grid, t.open);
         t.mesh = sink.empty ? null : this.mesh(`map-terrain-${id}`, sink, "mapTerrain");
       }
     }
@@ -415,31 +427,9 @@ export class MapCity {
     return false;
   };
 
-  /**
-   * The entity stands at the foot of its outline; on a slope the bottom `plinth` metres are a
-   * plinth, so the ground floor (and the window grid) starts above it.
-   */
+  /** The measured building of an entry (ADR-0044, ADR-0048). */
   private building(id: EntityId, e: BuildingEntry): MapBuilding {
-    const v = e.view;
-    const plinth = Math.min(Math.max(v.plinth ?? 0, 0), v.height - 2);
-    let foot = e.base;
-    for (const p of e.ring) foot = Math.min(foot, this.heightAt(p.x, p.z) ?? e.base);
-    return {
-      id,
-      ring: e.ring,
-      base: e.base + Math.max(plinth, 0),
-      foot,
-      height: v.height - Math.max(plinth, 0),
-      levels: v.levels,
-      use: v.use,
-      look: v.look,
-      ...(v.roof !== undefined ? { roof: v.roof } : {}),
-      ...(v.name ? { name: v.name } : {}),
-      shopfront: v.shopfront === true,
-      ...(v.doorways?.length
-        ? { doorways: v.doorways.map((d) => ({ x: d.at.x + e.at.x, z: d.at.z + e.at.z, width: d.width, bottom: d.bottom + e.at.y, top: d.top + e.at.y })) }
-        : {}),
-    };
+    return mapBuilding(id, e, (x, z) => this.heightAt(x, z));
   }
 
   private buildCell(cell: Cell): void {

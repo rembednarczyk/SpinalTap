@@ -1,14 +1,15 @@
 import type { TerrainGrid } from "@seki/core";
 import { type ActorDef, type NavGraph, type Rect, type StaticProp, mergeNav } from "./builders";
 import { S7_STASHES } from "./district-m0";
-import { KANAL_ALLEY_STASH } from "./district-kanal";
+import { KANAL_ALLEY_STASH, KANAL_SCENERY } from "./district-kanal";
 import { type RoofStash, TARG_NAV, TARG_OVERPASS_STASH, TARG_ROOF_STASH } from "./district-targ";
 import { DEVICES, type DeviceDef } from "./devices";
+import { TRASA_PODZIEMNA_BOUNDS, TRASA_PODZIEMNA_CHUNK, TRASA_PODZIEMNA_PROPS, TRASA_PODZIEMNA_STASH } from "./kanal-underground";
 import { METRO_STATIONS, type MetroStationDef } from "./metro";
 import { CLINIC_DOOR, KOI_DOOR, S7_NAV } from "./interiors";
 import { DOKI_NAV } from "./district-doki";
 import { type RoomCut, type SceneryItem, chunkBuildings, chunkScenery } from "./lublin/city";
-import { CLINIC_SITE, KOI_SITE, MAP_CHUNKS, PASSAGES } from "./lublin/sites";
+import { BUILDING_CUTS, CLINIC_SITE, KOI_SITE, MAP_CHUNKS, PASSAGES } from "./lublin/sites";
 import { SHAPED_TERRAIN } from "./lublin/terrain";
 import { furnitureProps } from "./lublin/furniture";
 import { GAME_ACTORS, GAME_PROPS, WORLD_STREET_PROPS } from "./street-props";
@@ -73,25 +74,30 @@ const ROOM_CUTS: readonly RoomCut[] = [
   { site: KOI_SITE, doors: [{ x: KOI_DOOR.at.x, width: KOI_DOOR.width, height: KOI_DOOR.height }] },
 ];
 
-const MAP_BUILDINGS: ReadonlyMap<string, readonly StaticProp[]> = new Map(MAP_CHUNKS.map((c) => [c.id, chunkBuildings(c, ROOM_CUTS, PASSAGES)]));
+const MAP_BUILDINGS: ReadonlyMap<string, readonly StaticProp[]> = new Map(MAP_CHUNKS.map((c) => [c.id, chunkBuildings(c, ROOM_CUTS, PASSAGES, BUILDING_CUTS)]));
 
 /**
  * Every chunk of the city (ADR-0045): Lublin's chunks from the map, each with the map's
  * buildings as solids and the game's props and characters that stand in it, on the shaped
  * terrain. The order is the creation order (and the order entity ids are reserved in).
  */
-export const WORLD_CHUNKS: readonly ChunkDef[] = MAP_CHUNKS.map((c) => {
-  const terrain = SHAPED_TERRAIN.get(c.id);
-  return {
-    id: c.id,
-    district: c.district,
-    bounds: c.bounds,
-    props: [...(MAP_BUILDINGS.get(c.id) ?? []), ...GAME_PROPS.filter((p) => mapChunkOf(p.center.x, p.center.z) === c.id)],
-    actors: GAME_ACTORS.filter((a) => mapChunkOf(a.spawn.position.x, a.spawn.position.z) === c.id),
-    ...(terrain ? { terrain } : {}),
-    street: [...furnitureProps(WORLD_STREET_PROPS[c.id] ?? []), ...PARKED_CARS.filter((p) => p.chunk === c.id).map(parkedProp)],
-  };
-});
+export const WORLD_CHUNKS: readonly ChunkDef[] = [
+  ...MAP_CHUNKS.map((c): ChunkDef => {
+    const terrain = SHAPED_TERRAIN.get(c.id);
+    return {
+      id: c.id,
+      district: c.district,
+      bounds: c.bounds,
+      props: [...(MAP_BUILDINGS.get(c.id) ?? []), ...GAME_PROPS.filter((p) => mapChunkOf(p.center.x, p.center.z) === c.id)],
+      actors: GAME_ACTORS.filter((a) => mapChunkOf(a.spawn.position.x, a.spawn.position.z) === c.id),
+      ...(terrain ? { terrain } : {}),
+      street: [...furnitureProps(WORLD_STREET_PROPS[c.id] ?? []), ...PARKED_CARS.filter((p) => p.chunk === c.id).map(parkedProp)],
+    };
+  }),
+  // Trasa Podziemna (ADR-0048): a chunk of its own over the cellars, last in the table, so it
+  // streams in only near the Trybunał and the ground and the district there stay the Rynek's.
+  { id: TRASA_PODZIEMNA_CHUNK, district: "kanal", bounds: TRASA_PODZIEMNA_BOUNDS, props: TRASA_PODZIEMNA_PROPS, actors: [] },
+];
 
 /**
  * What the renderer draws of the city for good (ADR-0045): the shaped terrain, the surfaces and
@@ -100,7 +106,9 @@ export const WORLD_CHUNKS: readonly ChunkDef[] = MAP_CHUNKS.map((c) => {
  */
 export const WORLD_SCENERY: readonly SceneryItem[] = [
   ...MAP_CHUNKS.flatMap((c) => chunkScenery(c, MAP_BUILDINGS.get(c.id) ?? [])),
-  // The furniture last (ADR-0050), so the views above keep their scenery ids.
+  // The game's own buildings drawn with the city: the covered footbridge over Grodzka (ADR-0048).
+  ...KANAL_SCENERY.map((s): SceneryItem => ({ chunk: mapChunkOf(s.at.x, s.at.z), view: s.view, at: s.at })),
+  // The furniture (ADR-0050), so the views above keep their scenery ids.
   ...MAP_CHUNKS.map((c): SceneryItem => ({ chunk: c.id, view: { kind: "street-props", items: WORLD_STREET_PROPS[c.id] ?? [] }, at: { x: 0, y: 0, z: 0 } })),
   // The parked cars (ADR-0050), each drawn where it stands.
   ...PARKED_CARS.map((p): SceneryItem => ({ chunk: p.chunk, view: parkedView(p), at: { x: p.x, y: p.y, z: p.z }, yaw: p.yaw })),
@@ -120,7 +128,7 @@ export const WORLD_METRO: readonly MetroStationDef[] = METRO_STATIONS;
 export const WORLD_NAV: NavGraph = mergeNav(TARG_NAV, DOKI_NAV, S7_NAV);
 
 /** Stashes placed once when the player first comes near: on roofs (ADR-0021), in alleys and dead ends (ADR-0026). */
-export const WORLD_STASHES: readonly RoofStash[] = [TARG_ROOF_STASH, ...S7_STASHES, KANAL_ALLEY_STASH, TARG_OVERPASS_STASH];
+export const WORLD_STASHES: readonly RoofStash[] = [TARG_ROOF_STASH, ...S7_STASHES, KANAL_ALLEY_STASH, TARG_OVERPASS_STASH, TRASA_PODZIEMNA_STASH];
 
 /** First chunk (in table order) whose bounds contain the point. */
 export const chunkAt = (x: number, z: number, chunks: readonly ChunkDef[] = WORLD_CHUNKS): ChunkDef | null =>

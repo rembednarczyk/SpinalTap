@@ -149,9 +149,10 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
     const b = areaBand(a);
     if (b && near(b.ring)) bands.push({ ...b, box: ringBounds(b.ring) });
   }
+  const water = bands.filter((b) => b.surface === "water").map((b) => b.ring);
   for (const l of lines) {
     if (!near(l.line)) continue;
-    for (const b of lineBands(l, l.tags.highway ? mapped(l) : false)) bands.push({ ...b, box: ringBounds(b.ring) });
+    for (const b of lineBands(l, l.tags.highway ? mapped(l) : false, water)) bands.push({ ...b, box: ringBounds(b.ring) });
   }
   const pois = allPois(data);
   const results = chunks.map((c) => generateChunk(c, src, buildings, bands, lines, pois));

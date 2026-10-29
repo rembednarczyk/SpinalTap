@@ -84,18 +84,64 @@ export interface PassageSite {
   readonly from: GroundPoint;
   readonly to: GroundPoint;
   readonly width: number;
-  /** Clear height over the higher end of the passage. */
+  /** Clear height over the higher end of the passage: the crown of its vault (ADR-0048). */
   readonly height: number;
+  /** How far the vault rises under the crown; the straight walls stop there. */
+  readonly rise: number;
+  /** The floor at both ends, when it is not the terrain there (a vestibule onto stairs). */
+  readonly floor?: number;
 }
 
 /**
  * The Old Town's two gates, which the map has as solid buildings: Bramowa through Brama
  * Krakowska (OSM relation 7224409, the tower with its neighbours) and Grodzka through Brama
- * Grodzka (OSM way 232362876). Each runs a little beyond both facades.
+ * Grodzka (OSM way 232362876). Each runs a little beyond both facades. Under a round-ish vault
+ * that springs about 3 m up (ADR-0048).
  */
+export const GATE_PASSAGES: readonly PassageSite[] = [
+  { building: "r7224409", from: { x: 457, z: -95.6 }, to: { x: 487, z: -87.2 }, width: 3.6, height: 4.2, rise: 1.25 },
+  { building: "w232362876", from: { x: 702, z: 128.4 }, to: { x: 728, z: 152.6 }, width: 3.4, height: 4.2, rise: 1.2 },
+];
+
+/**
+ * Trasa Podziemna under the Rynek (ADR-0048): its real entrance is in the Trybunał Koronny,
+ * Rynek 1 (OSM way 66264159). A vaulted vestibule from the Trybunał's north-west facade runs
+ * east to the head of the stairs; the stairs go down east to the cellars at `floor`, under the
+ * Trybunał's own footprint (the terrain there is dug out, see `PADS`).
+ */
+export const TRASA_PODZIEMNA = {
+  building: "w66264159",
+  /** Floor of the vestibule and the head of the stairs (the Rynek at the door). */
+  door: round(rawHeight(566, -57)),
+  /** Floor of the cellars. */
+  floor: round(rawHeight(566, -57)) - 3.95,
+  /** The vestibule along z = -57, from outside the facade to the head of the stairs at x = 572. */
+  vestibule: { from: { x: 565.5, z: -57 }, to: { x: 572, z: -57 }, width: 2.2 },
+  /** The stair hall, x 572..583 (the stairs, then a landing to 585), between the walls. */
+  stairs: { minX: 572, maxX: 585, minZ: -58.2, maxZ: -55.8 },
+  /** Clear height of the vestibule and the stair hall over the door. */
+  hall: 3.65,
+} as const;
+
 export const PASSAGES: readonly PassageSite[] = [
-  { building: "r7224409", from: { x: 457, z: -95.6 }, to: { x: 487, z: -87.2 }, width: 3.6, height: 4.2 },
-  { building: "w232362876", from: { x: 702, z: 128.4 }, to: { x: 728, z: 152.6 }, width: 3.4, height: 4.2 },
+  ...GATE_PASSAGES,
+  { building: TRASA_PODZIEMNA.building, ...TRASA_PODZIEMNA.vestibule, height: TRASA_PODZIEMNA.hall, rise: 0.8, floor: TRASA_PODZIEMNA.door },
+];
+
+/** A box cut out of a map building's solid up to `bottom` (world y): rooms under it stay open. */
+export interface BuildingCut {
+  readonly building: string;
+  readonly rect: GroundRect;
+  readonly bottom: number;
+}
+
+/** The stair hall of Trasa Podziemna, open up to the hall's ceiling (with its walls). */
+export const BUILDING_CUTS: readonly BuildingCut[] = [
+  {
+    building: TRASA_PODZIEMNA.building,
+    rect: { minX: 571.7, maxX: 585.3, minZ: TRASA_PODZIEMNA.stairs.minZ - 0.3, maxZ: TRASA_PODZIEMNA.stairs.maxZ + 0.3 },
+    bottom: TRASA_PODZIEMNA.door + TRASA_PODZIEMNA.hall + 0.25,
+  },
 ];
 
 /** Rectangles where the map's buildings and surfaces give way to a set piece. */
@@ -117,6 +163,11 @@ export const PADS: readonly Pad[] = [
   { rect: DOCKS_BASIN, y: DOCKS_PLACE.y - 3, blend: 1.5 },
   { rect: grow(CAR_WASH_AREA, 5), y: CAR_WASH_PLACE.y, blend: 3 },
   ...ROOM_SITES.map((r): Pad => ({ rect: grow(r.rect, 5), y: r.floor, blend: 2 })),
+  // Dug out under the Trybunał for Trasa Podziemna (ADR-0048): the grid points x 575..585,
+  // z -65..-55 of the 5 m grid, so the cells between them are below the cellars' floor and the
+  // slope into the cells around stays inside the Trybunał's walls. 2 m under the floor: the
+  // Rynek's paving, draped in 5 m triangles, then stays under the floor up to the cellars' walls.
+  { rect: { minX: 574, maxX: 586, minZ: -66, maxZ: -54 }, y: TRASA_PODZIEMNA.floor - 2, blend: 0.01 },
 ];
 
 /** Even ramps along the steps of the map (ADR-0045). */

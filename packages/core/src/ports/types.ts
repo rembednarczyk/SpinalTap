@@ -1,5 +1,5 @@
 import type { Vec3 } from "../math/vec3";
-import type { BuildingUse, GroundPoint, GroundSurface, StreetPropItem, TerrainGrid } from "../world/city-geo";
+import type { BuildingUse, GroundPoint, GroundSurface, StreetPropItem, TerrainGrid, TerrainOpenSides } from "../world/city-geo";
 import type { GarmentLook, GarmentSlot, Rarity, WeaponLook, WeaponSlot } from "../items/types";
 
 export type EntityId = number;
@@ -112,9 +112,30 @@ export type ViewDescriptor =
        * outline), `width` along that wall, from `bottom` to `top` metres above `position.y`.
        */
       readonly doorways?: readonly Doorway[];
+      /**
+       * Street passages through the ground floor (a city gate, ADR-0048): the renderer lines
+       * them with walls and a vault, so the inside of the building never shows. The doorways of
+       * their mouths come in `doorways` as before.
+       */
+      readonly passages?: readonly BuildingPassage[];
+      /**
+       * A building lifted over the street (a covered footbridge, ADR-0048): its walls start
+       * `soffit` metres above `position.y` and an underside closes them; `height` counts from
+       * `position.y` as usual.
+       */
+      readonly soffit?: number;
+      /**
+       * How the shops sign their windows: absent, boards over the windows and blades at the
+       * corners (ADR-0044); "bracket", signs hung from wrought-iron brackets (the Old Town, ADR-0048).
+       */
+      readonly signs?: "bracket";
     }
   /** The ground of a chunk (ADR-0042): a height grid the renderer turns into one mesh. */
-  | { readonly kind: "terrain"; readonly grid: TerrainGrid }
+  /**
+   * `open`: the sides that are the edge of the map data (no chunk of the city beyond them); the
+   * renderer runs the ground on from them to the horizon instead of ending in a slab.
+   */
+  | { readonly kind: "terrain"; readonly grid: TerrainGrid; readonly open?: TerrainOpenSides }
   /**
    * A paved or green area laid on the terrain (ADR-0042): roads, sidewalks, squares, cobbles,
    * lawns, the river. Points are world x and z relative to the entity's position; the
@@ -168,6 +189,21 @@ export interface Doorway {
   readonly width: number;
   readonly bottom: number;
   readonly top: number;
+}
+
+/**
+ * A passage through a building (ADR-0048), relative to the building's position like its outline:
+ * the line `from`..`to` (it may end inside the building, at a back wall), `width` across, the
+ * floor at either end (`floor`), straight walls up to `spring` and a barrel vault from there up
+ * to `crown`. Heights in metres above `position.y`.
+ */
+export interface BuildingPassage {
+  readonly from: GroundPoint;
+  readonly to: GroundPoint;
+  readonly width: number;
+  readonly floor: readonly [number, number];
+  readonly spring: number;
+  readonly crown: number;
 }
 
 /** What a skinned block stands for (ADR-0022). */

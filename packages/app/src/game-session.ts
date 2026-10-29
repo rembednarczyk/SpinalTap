@@ -188,6 +188,7 @@ export class GameSession implements UiIntents {
   installMod(weaponUid: string, modUid: string): void { this.c.character.installMod(weaponUid, modUid); }
   removeMod(weaponUid: string, slot: ModSlot): void { this.c.character.removeMod(weaponUid, slot); }
   changeSettings(patch: Partial<SettingsVm>): void { this.c.settings.changeSettings(patch); }
+  setFieldOfView(degrees: number): void { this.c.settings.setFieldOfView(degrees); }
   bindKey(action: string, code: string): void { this.c.settings.bindKey(action, code); }
   resetControls(): void { this.c.settings.resetControls(); }
   reload(): void { this.c.settings.reload(); }

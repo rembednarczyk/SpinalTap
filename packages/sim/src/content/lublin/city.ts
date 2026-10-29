@@ -1,9 +1,9 @@
-import type { Doorway, GroundPoint, Vec3, ViewDescriptor } from "@seki/core";
+import type { BuildingPassage, Doorway, GroundPoint, Vec3, ViewDescriptor } from "@seki/core";
 import type { PrismDef } from "../../world/prism";
 import type { StaticProp } from "../builders";
 import { buildingView, groundView, toPoints } from "./index";
 import { type GroundRect } from "./shape";
-import { CLEARED, CLEARED_BUILDINGS, type PassageSite, ROOM_STOREY, type RoomSite } from "./sites";
+import { type BuildingCut, CLEARED, CLEARED_BUILDINGS, type PassageSite, ROOM_STOREY, type RoomSite } from "./sites";
 import { SHAPED_TERRAIN, groundY } from "./terrain";
 import type { LublinBuildingData, LublinChunkData } from "./types";
 
@@ -111,11 +111,15 @@ const corridor = (p: PassageSite): HalfPlane[] => {
   ];
 };
 
-/** Where the line of a passage crosses the outline of its building (the gate's two mouths). */
-const mouths = (outline: readonly GroundPoint[], p: PassageSite): GroundPoint[] => {
-  const out: GroundPoint[] = [];
+/**
+ * Where the line of a passage crosses the outline of its building (the gate's mouths), with the
+ * width of the opening along that wall: wider than the passage where it meets the wall slantwise.
+ */
+const mouths = (outline: readonly GroundPoint[], p: PassageSite): { at: GroundPoint; width: number }[] => {
+  const out: { at: GroundPoint; width: number }[] = [];
   const dx = p.to.x - p.from.x;
   const dz = p.to.z - p.from.z;
+  const len = Math.hypot(dx, dz) || 1;
   for (let i = 0; i < outline.length; i++) {
     const a = outline[i] as GroundPoint;
     const b = outline[(i + 1) % outline.length] as GroundPoint;
@@ -125,7 +129,9 @@ const mouths = (outline: readonly GroundPoint[], p: PassageSite): GroundPoint[] 
     if (Math.abs(den) < 1e-9) continue;
     const t = ((a.x - p.from.x) * ez - (a.z - p.from.z) * ex) / den;
     const s = ((a.x - p.from.x) * dz - (a.z - p.from.z) * dx) / den;
-    if (t >= 0 && t <= 1 && s >= 0 && s <= 1) out.push({ x: p.from.x + dx * t, z: p.from.z + dz * t });
+    if (t < 0 || t > 1 || s < 0 || s > 1) continue;
+    const cos = Math.abs(den) / (len * (Math.hypot(ex, ez) || 1));
+    out.push({ at: { x: p.from.x + dx * t, z: p.from.z + dz * t }, width: p.width / Math.max(cos, 0.5) });
   }
   return out;
 };
@@ -169,34 +175,78 @@ export const buildingProp = (b: LublinBuildingData, cut?: RoomCut): StaticProp =
   };
 };
 
-/** A building of the map with a street passage through its ground floor, open at both mouths. */
-export const passageProp = (b: LublinBuildingData, p: PassageSite): StaticProp => {
+/** The floor of a passage at its two ends. */
+const passageFloor = (p: PassageSite): readonly [number, number] => (p.floor !== undefined ? [p.floor, p.floor] : [groundY(p.from.x, p.from.z), groundY(p.to.x, p.to.z)]);
+
+/** A region of a building's solid cut away below `bottom` (world y). */
+interface Carve {
+  readonly region: readonly HalfPlane[];
+  readonly bottom: number;
+}
+
+/**
+ * A building of the map with passages through its ground floor (open at their mouths, lined by
+ * the renderer, ADR-0048) and boxes cut out of its solid. Each part of the solid is split by the
+ * carved regions in turn: the pieces outside stay whole, the piece inside starts at the region's
+ * bottom.
+ */
+export const carvedProp = (b: LublinBuildingData, passages: readonly PassageSite[], cuts: readonly BuildingCut[] = []): StaticProp => {
   const prop = buildingProp(b);
-  const floor = Math.max(groundY(p.from.x, p.from.z), groundY(p.to.x, p.to.z));
-  const bottom = floor + p.height - b.y;
-  const region = corridor(p);
+  const carves: Carve[] = [
+    ...passages.map((p) => ({ region: corridor(p), bottom: Math.max(...passageFloor(p)) + p.height })),
+    ...cuts.map((c) => ({ region: rectRegion(c.rect), bottom: c.bottom })),
+  ];
   const prisms: PrismDef[] = [];
   for (const part of b.parts) {
-    const { outside, inside } = splitBy(absolute(part, b), region);
-    for (const o of outside) prisms.push({ points: relative(o, b), bottom: 0, top: b.height });
-    if (inside.length > 0) prisms.push({ points: relative(inside, b), bottom, top: b.height });
+    let rest: Poly[] = [absolute(part, b)];
+    for (const c of carves) {
+      const next: Poly[] = [];
+      for (const piece of rest) {
+        const { outside, inside } = splitBy(piece, c.region);
+        next.push(...outside);
+        if (inside.length > 0) prisms.push({ points: relative(inside, b), bottom: c.bottom - b.y, top: b.height });
+      }
+      rest = next;
+    }
+    for (const o of rest) prisms.push({ points: relative(o, b), bottom: 0, top: b.height });
   }
-  const doorways: Doorway[] = mouths(absolute(b.outline, b), p).map((m) => ({
-    at: { x: m.x - b.x, z: m.z - b.z },
-    width: p.width,
-    bottom: groundY(m.x, m.z) - 0.3 - b.y,
-    top: bottom,
-  }));
-  return { ...prop, view: prop.view.kind === "building" ? { ...prop.view, doorways } : prop.view, prisms };
+  const outline = absolute(b.outline, b);
+  const doorways: Doorway[] = passages.flatMap((p) => {
+    const crown = Math.max(...passageFloor(p)) + p.height;
+    return mouths(outline, p).map((m) => ({
+      at: { x: m.at.x - b.x, z: m.at.z - b.z },
+      width: m.width,
+      bottom: Math.min(...passageFloor(p)) - 0.3 - b.y,
+      top: crown - b.y,
+    }));
+  });
+  const views: BuildingPassage[] = passages.map((p) => {
+    const floor = passageFloor(p);
+    const crown = Math.max(...floor) + p.height;
+    return {
+      from: { x: p.from.x - b.x, z: p.from.z - b.z },
+      to: { x: p.to.x - b.x, z: p.to.z - b.z },
+      width: p.width,
+      floor: [floor[0] - b.y, floor[1] - b.y],
+      spring: crown - p.rise - b.y,
+      crown: crown - b.y,
+    };
+  });
+  return { ...prop, view: prop.view.kind === "building" ? { ...prop.view, doorways, passages: views } : prop.view, prisms };
 };
 
-/** The buildings of a chunk that stay, as props (rooms cut into those named by `cuts`, passages through gates). */
-export const chunkBuildings = (c: LublinChunkData, cuts: readonly RoomCut[], passages: readonly PassageSite[] = []): StaticProp[] =>
+/** Old Town buildings sign their shops on wrought-iron brackets (ADR-0048). */
+const oldTownSigns = (prop: StaticProp): StaticProp => (prop.view.kind === "building" ? { ...prop, view: { ...prop.view, signs: "bracket" } } : prop);
+
+/** The buildings of a chunk that stay, as props (rooms cut into those named by `rooms`, passages and cuts through others). */
+export const chunkBuildings = (c: LublinChunkData, rooms: readonly RoomCut[], passages: readonly PassageSite[] = [], cuts: readonly BuildingCut[] = []): StaticProp[] =>
   c.buildings
     .filter((b) => !clearedBuilding(b))
     .map((b) => {
-      const passage = passages.find((p) => p.building === b.id);
-      return passage ? passageProp(b, passage) : buildingProp(b, cuts.find((r) => r.site.building === b.id));
+      const through = passages.filter((p) => p.building === b.id);
+      const boxes = cuts.filter((k) => k.building === b.id);
+      const prop = through.length > 0 || boxes.length > 0 ? carvedProp(b, through, boxes) : buildingProp(b, rooms.find((r) => r.site.building === b.id));
+      return c.district === "kanal" ? oldTownSigns(prop) : prop;
     });
 
 const ORIGIN: Vec3 = { x: 0, y: 0, z: 0 };

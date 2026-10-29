@@ -27,6 +27,12 @@ export interface MapBuilding {
   readonly shopfront?: boolean;
   /** Openings through the facade into a room on the ground floor (ADR-0045), in world metres. */
   readonly doorways?: readonly WorldDoorway[];
+  /** Street passages through the ground floor, lined inside (ADR-0048). */
+  readonly passages?: readonly WorldPassage[];
+  /** Lifted over the street (a covered footbridge, ADR-0048): the walls start at `foot`, an underside closes them; `base` stays the street. */
+  readonly lifted?: boolean;
+  /** Shop signs hang from wrought-iron brackets (the Old Town, ADR-0048). */
+  readonly bracketSigns?: boolean;
 }
 
 /** A doorway in world metres: the middle of the opening on a wall, its width, bottom and top (world y). */
@@ -36,6 +42,17 @@ export interface WorldDoorway {
   readonly width: number;
   readonly bottom: number;
   readonly top: number;
+}
+
+/** A passage through the building in world metres (ADR-0048): the view's, moved to the building's position. */
+export interface WorldPassage {
+  readonly from: P2;
+  readonly to: P2;
+  readonly width: number;
+  /** World y of the floor at `from` and at `to`. */
+  readonly floor: readonly [number, number];
+  readonly spring: number;
+  readonly crown: number;
 }
 
 export interface Wall {

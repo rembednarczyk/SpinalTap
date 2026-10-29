@@ -86,7 +86,7 @@ export const mountGame = ({ seed, touch = false }: GameOptions) => {
   const session = new GameSession({ render, audio, persistence, ui, preview, story: STORY_SOURCE, seed: () => seed, now: () => new Date(2026, 9, 27, 21, 0), touch });
   // Never ticks: the clock stands still and nothing calls frame(); the test steps the session.
   const loop = new FixedStepLoop({ now: () => 0 }, { update() {}, render() {} });
-  const seki: DebugApi = createDebugApi(session, ui, loop, () => ({ fps: 0, frameTimeMs: 0, drawCalls: 0, activeMeshes: 0, totalMeshes: 0, materials: 0, particles: 0 }), () => {});
+  const seki: DebugApi = createDebugApi(session, ui, loop, () => ({ fps: 0, frameTimeMs: 0, drawCalls: 0, activeMeshes: 0, totalMeshes: 0, materials: 0, particles: 0, byName: {} }), () => {});
   const view = mount(<GameUi store={ui} intents={session} touch={touch ? touchPad() : undefined} />);
   /** Steps the simulation as the debug API does, inside act() so React applies the store changes. */
   const step = (n: number, input: Partial<InputFrame> = {}) => act(() => seki.step(n, input));
