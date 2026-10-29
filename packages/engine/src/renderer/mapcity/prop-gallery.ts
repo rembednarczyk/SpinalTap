@@ -42,24 +42,26 @@ export interface PropGallery {
   readonly depth: number;
 }
 
+const rowWidth = (row: readonly StreetPropKind[]): number => row.reduce((s, k) => s + (WIDTH[k] ?? 2) * (PROP_SHAPES[k] ?? 1), 0);
+
 export const propGallery = (): PropGallery => {
   const items: StreetPropItem[] = [];
-  let width = 0;
+  const width = Math.max(...ROWS.map(rowWidth));
   ROWS.forEach((row, r) => {
-    let x = 0;
+    // Rows centred on the square.
+    let x = (width - rowWidth(row)) / 2;
     for (const kind of row) {
       const shapes = PROP_SHAPES[kind] ?? 1;
       for (let s = 0; s < shapes; s++) {
         const w = WIDTH[kind] ?? 2;
         x += w / 2;
-        // Trees and flagpoles face sideways: their crowns and flags read best from the front.
+        // Flagpoles face sideways: their flags read best from the front.
         const yaw = kind === "flagpole" ? -Math.PI / 2 : Math.PI;
         // Variant: the shape in the low bits and the middle size for trees and shrubs.
         items.push({ prop: kind, x, y: 0, z: r * GALLERY_ROW, yaw, variant: s + 7 * 16 * shapes });
         x += w / 2;
       }
     }
-    width = Math.max(width, x);
   });
   // Every kind of the contract is in the gallery.
   for (const k of PROP_KINDS) if (!items.some((i) => i.prop === k)) items.push({ prop: k, x: width + 2, y: 0, z: 0, yaw: Math.PI, variant: 0 });

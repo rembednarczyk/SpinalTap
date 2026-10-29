@@ -49,16 +49,16 @@ export interface GalleryShot {
 export const galleryShots = (): Readonly<Record<string, GalleryShot>> => {
   const g = propGallery();
   const mid = g.width / 2;
-  const whole = { position: { x: mid, y: 22, z: -26 }, target: { x: mid, y: 0, z: g.depth / 2 + 1 } };
+  const whole = { position: { x: mid, y: 15, z: -20 }, target: { x: mid, y: 1, z: g.depth / 2 + 2 } };
   const row = (r: number, x: number, y: number, back: number, look: number) => ({ position: { x, y, z: r * GALLERY_ROW - back }, target: { x, y: look, z: r * GALLERY_ROW } });
   return {
     galeria: { ...whole, hour: 13, fog: 0.05 },
     "galeria-noc": { ...whole, hour: 23, fog: 0.05 },
-    latarnie: { ...row(0, 13, 4, 11, 3.5), hour: 23, fog: 0.05 },
-    "latarnie-dzien": { ...row(0, 13, 4, 11, 3.5), hour: 13, fog: 0.05 },
-    zielen: { ...row(1, 19, 7, 15, 4), hour: 14, fog: 0.05 },
-    drobne: { ...row(2, 18, 4, 10, 0.8), hour: 14, fog: 0.05 },
-    "drobne-noc": { ...row(2, 18, 4, 10, 0.8), hour: 23, fog: 0.05 },
+    latarnie: { ...row(0, mid, 4, 15, 3.5), hour: 23, fog: 0.05 },
+    "latarnie-dzien": { ...row(0, mid, 4, 15, 3.5), hour: 13, fog: 0.05 },
+    zielen: { ...row(1, mid, 7, 18, 4), hour: 14, fog: 0.05 },
+    drobne: { ...row(2, mid, 4, 13, 0.8), hour: 14, fog: 0.05 },
+    "drobne-noc": { ...row(2, mid, 4, 13, 0.8), hour: 23, fog: 0.05 },
     stoiska: { ...row(3, 19, 5, 12, 1.5), hour: 14, fog: 0.05 },
     rzezby: { ...row(3, 52, 6, 15, 3), hour: 14, fog: 0.05 },
   };

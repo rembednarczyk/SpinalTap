@@ -57,8 +57,8 @@ export const PREVIEW_VIEWS: Readonly<Record<string, PreviewView>> = {
   dzien: { position: { x: 20, y: 16, z: -20 }, target: { x: 56, y: 9, z: 87 }, hour: 13 },
   // Street furniture (ADR-0047): Plac Litewski's benches, trees, poles and fountain; the pastoral
   // lamps of the deptak; the wall lanterns of the Rynek; the candelabra of Plac Zamkowy.
-  litewski: { position: { x: 45, y: 9.5, z: -45 }, target: { x: -20, y: 1, z: 30 }, hour: 23 },
-  pastoraly: { position: { x: 232, y: 2.4, z: -66 }, target: { x: 300, y: 3.2, z: -84 }, hour: 22 },
+  litewski: { position: { x: 72, y: 14, z: -56 }, target: { x: -12, y: 1, z: 30 }, hour: 23 },
+  pastoraly: { position: { x: 244, y: 2.3, z: -70 }, target: { x: 290, y: 3.4, z: -80 }, hour: 22 },
   latarenki: { position: { x: 558, y: 2.6, z: -70 }, target: { x: 592, y: 3.9, z: -100 }, hour: 22 },
   kandelabry: { position: { x: 727, y: 2.8, z: 237 }, target: { x: 716, y: 3.2, z: 224 }, hour: 22 },
 };

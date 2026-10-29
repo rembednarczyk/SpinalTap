@@ -98,8 +98,8 @@ export const lampWallLantern = (shape: number): PropModel => {
   path(sink, [v3(0, 3.78, 0.02), v3(0, 3.86, 0.2), v3(0, 3.98, 0.38), v3(0, 4.1, 0.5)], 0.016, IRON, 4);
   path(sink, arc(v3(0, 4.02, 0.6), v3(0, 0, -1), v3(0, -1, 0), 0.09, 0, Math.PI * 1.5, 6), 0.012, IRON, 4);
   pyramid(sink, v3(0, 4.12, 0.78), 0.05, 0.05, 0.1, IRON);
-  const c = lantern(sink, v3(0, 4.1, 0.72), 1, shape === 1 ? COLD : WARM);
-  return { sink, lights: [{ at: c, color: shape === 1 ? "#bfe9ff" : "#ffc978", size: 1.5, pool: true }] };
+  const c = lantern(sink, v3(0, 4.1, 0.72), 1.15, shape === 1 ? COLD : WARM);
+  return { sink, lights: [{ at: c, color: shape === 1 ? "#bfe9ff" : "#ffc978", size: 2.0, pool: true }] };
 };
 
 const CANDELABRA_GLOBES = ["#ff4fd2", "#45e3ff", "#ffc35a", "#a47bff"];
