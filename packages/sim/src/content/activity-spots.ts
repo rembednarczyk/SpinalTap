@@ -4,6 +4,9 @@ import { type StaticProp, placeAt, v } from "./builders";
 import { TARG_NORTH_PROPS, TARG_SOUTH_PROPS } from "./district-targ";
 import { againstWall, spotNear } from "./lublin/places";
 import { DOCKS_PLACE, MAP_CHUNKS, MARKET_PLACE } from "./lublin/sites";
+import { seatGroups } from "./lublin/seats";
+import { groundY } from "./lublin/terrain";
+import { WORLD_STREET_PROPS } from "./world-map";
 
 /**
  * Activity spots (smart spots) of the districts (ADR-0040): a bench to sit on, a wall to lean
@@ -54,6 +57,31 @@ const spotAt = (id: string, kind: SpotKind, at: Vec3, yaw: number, only?: readon
   return only ? { id, chunk, kind, at, yaw, only } : { id, chunk, kind, at, yaw };
 };
 
+/** Benches of the map's furniture are this close to a hand-placed bench spot to take it over (m). */
+const BENCH_SNAP = 12;
+
+/**
+ * A bench spot on the map's nearest real bench (ADR-0050): its middle seat, facing its front,
+ * or the hand-placed point when there is no bench near.
+ */
+const benchSpot = (id: string, x: number, z: number, yaw: number): ActivitySpot => {
+  let best: { x: number; z: number; yaw: number } | null = null;
+  let bestD = BENCH_SNAP;
+  for (const items of Object.values(WORLD_STREET_PROPS)) {
+    for (const i of items) {
+      if (i.prop !== "bench") continue;
+      const d = Math.hypot(i.x - x, i.z - z);
+      if (d >= bestD) continue;
+      const seats = seatGroups(i)[0] ?? [];
+      const seat = seats[Math.floor(seats.length / 2)];
+      if (!seat) continue;
+      bestD = d;
+      best = seat;
+    }
+  }
+  return best ? spotAt(id, "bench", { x: best.x, y: groundY(best.x, best.z), z: best.z }, best.yaw) : spotAt(id, "bench", spotNear(x, z), yaw);
+};
+
 /** A spot against the facade nearest to (x, z), facing away from it. */
 const wallSpot = (id: string, kind: SpotKind, x: number, z: number, only?: readonly [ActivityId, ...ActivityId[]], off = 0.55): ActivitySpot => {
   const w = againstWall(x, z, off);
@@ -86,10 +114,10 @@ const KRAKOWSKIE: readonly ActivitySpot[] = [
   wallSpot("s7-ramen-bar", "bar", 316.6, -73.5),
   wallSpot("s7-pachinko-vending", "vending", 304, -72.4),
   wallSpot("s7-kusuri-vending", "vending", 300.5, -93),
-  spotAt("pl-bench-1", "bench", spotNear(62, -31), NORTH),
-  spotAt("pl-bench-2", "bench", spotNear(80, -33), NORTH),
-  spotAt("pl-bench-3", "bench", spotNear(100, -37), NORTH),
-  spotAt("pl-bench-4", "bench", spotNear(118, -41), WEST),
+  benchSpot("pl-bench-1", 62, -31, NORTH),
+  benchSpot("pl-bench-2", 80, -33, NORTH),
+  benchSpot("pl-bench-3", 100, -37, NORTH),
+  benchSpot("pl-bench-4", 118, -41, WEST),
 ];
 
 /** Stare Miasto: the Rynek round the Trybunał, the corner of Grodzka. */
@@ -99,7 +127,7 @@ const KANAL: readonly ActivitySpot[] = [
   wallSpot("kanal-south-wall", "wall", 600, -95),
   wallSpot("kanal-north-wall", "wall", 530, -53),
   wallSpot("kanal-vending", "vending", 594, -17),
-  spotAt("kanal-bench", "bench", spotNear(585, -88), WEST),
+  benchSpot("kanal-bench", 585, -88, WEST),
 ];
 
 const SOUTH_STALLS = stallsAt(TARG_SOUTH_PROPS, 68);

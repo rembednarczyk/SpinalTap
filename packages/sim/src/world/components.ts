@@ -440,6 +440,11 @@ export interface Entity {
    * Static only: lifts, gates and doors stay boxes.
    */
   prisms?: readonly Prism[];
+  /**
+   * A piece of street furniture (ADR-0050): a solid for bodies, bullets and the AI, but the TPP
+   * camera looks past it (a lamp post between the camera and the player does not pull it in).
+   */
+  seeThrough?: true;
   /** Sloped top of the solid (stairs, ramps, stair railings). */
   slope?: Slope;
   /** Vertical speed while airborne (a fall, or a jump while positive), m/s. Transient, not saved. */

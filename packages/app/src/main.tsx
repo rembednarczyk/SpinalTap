@@ -109,7 +109,7 @@ const session = new GameSession({
 });
 // The TPP camera stops at the map's buildings and the terrain too (ADR-0045): the simulation's
 // own ray through its solids, handed to the camera through the app.
-renderer.rig.setOccluder((origin, dir, maxDist) => rayGeometry(session.sim.world, origin, dir, maxDist));
+renderer.rig.setOccluder((origin, dir, maxDist) => rayGeometry(session.sim.world, origin, dir, maxDist, true));
 
 /** Controls from the settings: key bindings, hold or toggle buttons and the field of view. */
 let controlsFor: unknown = null;

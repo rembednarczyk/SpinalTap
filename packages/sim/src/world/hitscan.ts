@@ -30,14 +30,16 @@ export const bodyAabb = (e: Entity): Aabb | null => {
 
 /**
  * Distance along a ray to the first static geometry: solids (boxes, slopes, prisms) and the
- * terrain (ADR-0043), or null within `maxDist`.
+ * terrain (ADR-0043), or null within `maxDist`. For the `camera`, street furniture does not count.
  */
-export const rayGeometry = (world: World<Entity>, origin: Vec3, dir: Vec3, maxDist: number): number | null => {
+export const rayGeometry = (world: World<Entity>, origin: Vec3, dir: Vec3, maxDist: number, camera = false): number | null => {
   let best = maxDist;
   let hit = false;
   const end = { x: origin.x + dir.x * maxDist, y: 0, z: origin.z + dir.z * maxDist };
   // The nearest hit does not depend on the order: the index hands over the solids along the ray.
   for (const e of solidIndexOf(world).alongSegment(origin, end)) {
+    // The TPP camera looks past street furniture (ADR-0050).
+    if (camera && e.seeThrough) continue;
     const t = raySolidEntity(origin, dir, e, best);
     if (t !== null && t < best) {
       best = t;
