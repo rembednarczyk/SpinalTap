@@ -42,5 +42,7 @@ export const presentWorld: Presenter = ({ bus, render, audio, ui, hooks, toast, 
     else toast("reputation", "Przechodnie uciekają", `${FACTIONS[e.faction]} boją się ciebie`);
   }),
   bus.on("CameraModeChanged", (e) => render.setCameraMode(e.mode)),
+  // A car held up by the player sounds its horn (ADR-0050).
+  bus.on("VehicleHorned", () => audio.play("horn")),
   bus.on("TimeSkipped", (e) => toast("system", `Mija czas: ${formatClock(e.clock)}`, `${Math.floor(e.minutes / 60)} h ${e.minutes % 60} min później`)),
 ];

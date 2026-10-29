@@ -23,7 +23,7 @@ const DOCKS_CHUNK = "nabrzeze-1-1";
 export type CrowdDensity = "off" | "low" | "medium" | "high";
 
 /** Most residents a chunk ever holds, per density. */
-export const CROWD_CAP: Readonly<Record<CrowdDensity, number>> = { off: 0, low: 6, medium: 14, high: 24 };
+export const CROWD_CAP: Readonly<Record<CrowdDensity, number>> = { off: 0, low: 6, medium: 18, high: 32 };
 
 /**
  * A closed route along the sidewalks, as a polygon of points (x, z) on the ground. Walkers go
@@ -67,6 +67,10 @@ const LANE_HALVES: readonly number[] = [STREET_LANE_HALF, 1, 2.2, 2.8, 0.7, 3.4]
 const LANE_CLEARANCE = 1.15;
 /** Streets shorter than this make no lane. */
 const MIN_LANE_LENGTH = 30;
+/** The chunks of the deptak and the Rynek: the evening's full streets (ADR-0050). */
+const BUSY_CHUNKS: ReadonlySet<string> = new Set(["krakowskie-1-0", "krakowskie-2-0", "stare-miasto-0-0", "stare-miasto-0-1"]);
+/** Most lanes in such a chunk. */
+const BUSY_LANES_PER_CHUNK = 6;
 /** Most lanes per chunk: its longest streets. */
 const LANES_PER_CHUNK = 3;
 
@@ -175,13 +179,17 @@ const streetLanes = (): CrowdLane[] =>
       .filter((pts) => pts.length >= 2 && polyLength(pts) >= MIN_LANE_LENGTH)
       .sort((a, b) => polyLength(b) - polyLength(a));
     const out: CrowdLane[] = [];
+    // The deptak and the Rynek (ADR-0050): more routes, two side by side on a wide street.
+    const busy = BUSY_CHUNKS.has(c.id);
     for (const line of lines) {
-      if (out.length >= LANES_PER_CHUNK) break;
+      const used: number[] = [];
       for (const half of LANE_HALVES) {
+        if (out.length >= (busy ? BUSY_LANES_PER_CHUNK : LANES_PER_CHUNK) || used.length >= (busy ? 2 : 1)) break;
+        if (used.some((u) => Math.abs(u - half) < 1.4)) continue;
         const loop = weave(loopAround(line, half));
         if (!clearLoop(loop)) continue;
         out.push({ id: `${c.id}-${out.length}`, chunk: c.id, points: loop });
-        break;
+        used.push(half);
       }
     }
     return out;
@@ -315,8 +323,7 @@ export const CROWD_BY_HOUR: Readonly<Record<string, readonly number[]>> = {
   evening: [0.9, 0.8, 0.6, 0.4, 0.2, 0.15, 0.2, 0.35, 0.5, 0.55, 0.6, 0.65, 0.7, 0.7, 0.7, 0.7, 0.8, 0.95, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
 };
 
-/** The chunks of the deptak and the Rynek: the evening's full streets (ADR-0050). */
-const EVENING_CHUNKS: ReadonlySet<string> = new Set(["krakowskie-1-0", "krakowskie-2-0", "stare-miasto-0-0", "stare-miasto-0-1"]);
+
 
 /** Each chunk's crowd: its profile by the hour and its share of the cap. */
 export const CROWD_CHUNKS: Readonly<Record<string, { readonly profile: keyof typeof CROWD_BY_HOUR; readonly share: number }>> = Object.fromEntries(
@@ -327,7 +334,7 @@ export const CROWD_CHUNKS: Readonly<Record<string, { readonly profile: keyof typ
         ? { profile: "market" as const, share: 1 }
         : c.id === DOCKS_CHUNK
           ? { profile: "docks" as const, share: 0.6 }
-          : EVENING_CHUNKS.has(c.id)
+          : BUSY_CHUNKS.has(c.id)
             ? { profile: "evening" as const, share: 1 }
             : c.district === "shinsekai-7"
               ? { profile: "nightlife" as const, share: 0.6 }

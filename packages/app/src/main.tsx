@@ -52,6 +52,7 @@ const qualityParam = params.get("quality");
 const quality = qualityParam === "low" || qualityParam === "medium" || qualityParam === "high" ? qualityParam : settings.quality;
 const renderQuality = quality;
 const crowdParam = params.get("crowd");
+const trafficParam = params.get("traffic");
 const stage = new Stage(canvas, { reference, quality: renderQuality });
 // Buildings and vehicles from the CC0 city kit (public/city/README.md, ADR-0022); ?city=off keeps
 // the plain blocks. The reference frame uses it too: the scene is ready only once it is in.
@@ -94,6 +95,8 @@ const session = new GameSession({
   touch: touchDevice,
   // The crowd follows the graphics quality (ADR-0041); ?crowd=off|low|medium|high overrides it.
   crowd: crowdParam === "off" || crowdParam === "low" || crowdParam === "medium" || crowdParam === "high" ? crowdParam : quality,
+  // The traffic follows the crowd (ADR-0050); ?traffic=off|low|medium|high overrides it.
+  ...(trafficParam === "off" || trafficParam === "low" || trafficParam === "medium" || trafficParam === "high" ? { traffic: trafficParam } : {}),
   hints: { seen: loadHintsSeen(storage), save: (seen) => saveHintsSeen(storage, seen) },
   settings: {
     applied: { ...settings, quality },

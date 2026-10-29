@@ -19,6 +19,7 @@ import { WorldDressing } from "./dressing";
 import { FarCity } from "./far-city";
 import { MapCity, type MapCityStats, isMapView } from "./mapcity/map-city";
 import { MetroRide, type MetroRideView, type RideCast } from "./metro-ride";
+import { VehicleViews } from "./vehicle-views";
 import type { CharacterModelManifest } from "./model-library";
 import { PropViews } from "./prop-views";
 import { type GameplayFxEvent, ScreenFx } from "./screen-fx";
@@ -52,7 +53,7 @@ export interface RendererOptions {
 }
 
 /** How far the crowd is drawn per quality (m): phones see the nearest residents only. */
-const CROWD_DRAW_DISTANCE = { high: 60, medium: 50, low: 36 } as const;
+const CROWD_DRAW_DISTANCE = { high: 90, medium: 70, low: 40 } as const;
 
 const isCharacter = (view: ViewDescriptor): view is CharacterDescriptor => view.kind === "heroine" || view.kind === "npc" || view.kind === "enemy";
 
@@ -81,6 +82,8 @@ export class BabylonRenderer implements RenderPort {
   private readonly props: PropViews;
   /** The residents of the city, drawn in bulk (ADR-0041). */
   private readonly crowd: CrowdViews;
+  /** The street's traffic and parked cars on the city kit (ADR-0050). */
+  private readonly vehicles: VehicleViews;
   private readonly fx: ScreenFx;
   private readonly cityKit: CityKitLoader;
   /** The metro car between districts (ADR-0036). */
@@ -146,6 +149,7 @@ export class BabylonRenderer implements RenderPort {
     this.dressing = new WorldDressing(scene, this.materials, options.cityKit ? "pending" : "bare", { built: (m) => this.shadow.addStaticCaster(m) }, world);
     this.cityKit = new CityKitLoader({ stage, materials: this.materials, shadow: this.shadow, dressing: this.dressing, blocks: () => this.props.blockViews() });
     this.props = new PropViews({ stage, materials: this.materials, shadow: this.shadow, atmosphere: this.atmosphere, dressing: this.dressing, cityKit: this.cityKit });
+    this.vehicles = new VehicleViews({ scene, kit: () => this.cityKit.kit, glow: stage.glow, eye: () => eye, quality: stage.options.quality ?? "high" });
     this.warmUpMaterials();
     this.fx = new ScreenFx({
       stage,
@@ -244,15 +248,16 @@ export class BabylonRenderer implements RenderPort {
   }
 
   spawn(id: EntityId, view: ViewDescriptor, t: Transform): void {
-    if (this.characters.has(id) || this.props.has(id) || this.crowd.has(id) || this.mapCity?.has(id)) this.despawn(id);
+    if (this.characters.has(id) || this.props.has(id) || this.crowd.has(id) || this.vehicles.has(id) || this.mapCity?.has(id)) this.despawn(id);
     if (isMapView(view)) this.city().spawn(id, view, t.position);
     else if (isCharacter(view)) this.characters.spawn(id, view, t);
     else if (view.kind === "crowd") this.crowd.spawn(id, view, t);
+    else if (view.kind === "vehicle") this.vehicles.spawn(id, view, t);
     else this.props.spawn(id, view, t);
   }
 
   updateTransform(id: EntityId, t: Transform): void {
-    if (!this.props.move(id, t) && !this.characters.move(id, t)) this.crowd.move(id, t);
+    if (!this.props.move(id, t) && !this.characters.move(id, t) && !this.vehicles.move(id, t)) this.crowd.move(id, t);
   }
 
   despawn(id: EntityId, reason: DespawnReason = "removed"): void {
@@ -263,6 +268,7 @@ export class BabylonRenderer implements RenderPort {
     if (this.mapCity?.has(id)) this.mapCity.despawn(id);
     else if (this.characters.has(id)) this.characters.despawn(id, !this.resetting && reason === "removed" && id !== this.cameraTarget);
     else if (this.crowd.has(id)) this.crowd.despawn(id);
+    else if (this.vehicles.has(id)) this.vehicles.despawn(id);
     else this.props.despawn(id);
   }
 
@@ -341,6 +347,7 @@ export class BabylonRenderer implements RenderPort {
     this.metro.update(dt);
     this.characters.update(dt);
     this.crowd.update(dt);
+    this.vehicles.update();
     const target = this.cameraTargetTransform;
     this.rig.update(target, dt);
     this.metro.afterCamera();
@@ -375,6 +382,7 @@ export class BabylonRenderer implements RenderPort {
     this.activities.clear();
     this.characters.clear();
     this.crowd.clear();
+    this.vehicles.clear();
     this.resetting = false;
   }
 
@@ -412,6 +420,11 @@ export class BabylonRenderer implements RenderPort {
     return { residents: this.crowd.size, drawn: this.crowd.drawn };
   }
 
+  /** The street's vehicles: driving, drawn near and far, parked, and their meshes (debug and tests). */
+  get vehicleStats(): VehicleViews["stats"] {
+    return this.vehicles.stats;
+  }
+
   get dressedCount(): number {
     return this.characters.dressedCount;
   }
@@ -442,6 +455,6 @@ export class BabylonRenderer implements RenderPort {
   }
 
   get entityCount(): number {
-    return this.characters.size + this.props.size + this.crowd.size + (this.mapCity?.size ?? 0);
+    return this.characters.size + this.props.size + this.crowd.size + this.vehicles.size + (this.mapCity?.size ?? 0);
   }
 }

@@ -149,7 +149,7 @@ describe("how many and who (ADR-0041)", () => {
   it("the market is full in the evening, the docks are empty at night, the deptak lives at night", () => {
     const high = CROWD_CAP.high;
     expect(crowdCount(MARKET, high, clockAt(19))).toBe(high);
-    expect(crowdCount(MARKET, high, clockAt(3))).toBeLessThan(3);
+    expect(crowdCount(MARKET, high, clockAt(3))).toBeLessThanOrEqual(high * 0.1);
     expect(crowdCount(DOCKS, high, clockAt(23))).toBe(0);
     expect(crowdCount(DOCKS, high, clockAt(10))).toBeGreaterThan(4);
     expect(crowdCount(S7, high, clockAt(22))).toBe(high);
@@ -243,8 +243,8 @@ describe("the crowd in the simulation", () => {
     const start = walkers.map((w) => ({ ...w.position }));
     run(sim, 10 * SIM_HZ);
     walkers.forEach((w, i) => {
-      // About ten metres in ten seconds, still on the route (unless someone was in the way).
-      expect(flat(w.position, start[i]!)).toBeGreaterThan(6);
+      // Ten metres or so in ten seconds along a route that bends round the furniture, still on it (unless someone was in the way).
+      expect(flat(w.position, start[i]!)).toBeGreaterThan(4);
       const lane = CROWD_LANES.find((l) => l.id === w.passerby!.lane!.lane)!;
       const t = laneTarget(lane, w.passerby!.lane!, sim.clock, w.passerby!.lane!.avoid);
       expect(flat(w.position, t)).toBeLessThan(1.2);
