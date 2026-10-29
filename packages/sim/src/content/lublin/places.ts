@@ -39,10 +39,14 @@ const insideOutline = (x: number, z: number, pts: readonly GroundPoint[]): boole
 /** Is (x, z) inside a building of the map? */
 export const inBuilding = (x: number, z: number): boolean => OUTLINES.some((o) => insideOutline(x, z, o));
 
-/** The nearest wall point to (x, z), its distance and the wall's outward normal. */
-export const nearestWall = (x: number, z: number): { readonly p: GroundPoint; readonly d: number; readonly nx: number; readonly nz: number } => {
+/**
+ * The nearest wall point to (x, z), its distance and the wall's outward normal. With `facing`,
+ * only walls whose outside faces the point count (a party wall seen from its other side does not).
+ */
+export const nearestWall = (x: number, z: number, facing = false): { readonly p: GroundPoint; readonly d: number; readonly nx: number; readonly nz: number } => {
   let best = { p: { x, z }, d: Infinity, nx: 0, nz: 1 };
   for (const w of WALLS) {
+    if (facing && (x - w.a.x) * (w.b.z - w.a.z) - (z - w.a.z) * (w.b.x - w.a.x) < 0) continue;
     const dx = w.b.x - w.a.x;
     const dz = w.b.z - w.a.z;
     const len2 = dx * dx + dz * dz;
@@ -75,9 +79,13 @@ export const spotNear = (x: number, z: number, clearance = 0.6): Vec3 => {
   return { x: Math.round(px * 100) / 100, y: groundY(px, pz), z: Math.round(pz * 100) / 100 };
 };
 
-/** A point `off` metres in front of the wall nearest to (x, z), and the yaw facing away from it. */
+/**
+ * A point `off` metres in front of the wall nearest to (x, z) (its outside, the side the point is
+ * on; from inside a building, first out of it), and the yaw facing away from the wall.
+ */
 export const againstWall = (x: number, z: number, off = 0.5): { readonly at: Vec3; readonly yaw: number } => {
-  const w = nearestWall(x, z);
+  const from = inBuilding(x, z) ? spotNear(x, z) : { x, z };
+  const w = nearestWall(from.x, from.z, true);
   const px = Math.round((w.p.x + w.nx * off) * 100) / 100;
   const pz = Math.round((w.p.z + w.nz * off) * 100) / 100;
   return { at: { x: px, y: groundY(px, pz), z: pz }, yaw: Math.atan2(w.nx, w.nz) };

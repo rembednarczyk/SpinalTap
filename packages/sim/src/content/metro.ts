@@ -83,7 +83,7 @@ export const METRO_STATIONS: readonly MetroStationDef[] = [
   // Brama Krakowska: on Bramowa, inside the gate, on the Old Town's side.
   station("kanal", "Brama Krakowska", "kanal", "stare-miasto-0-0", 492, -80, "METRO"),
   // Plac Zamkowy: against the houses on the west side of the square, by the market.
-  station("targ", "Plac Zamkowy", "targ", "podzamcze-0-0", 705, 289.5, "METRO"),
+  station("targ", "Plac Zamkowy", "targ", "podzamcze-0-0", 717.5, 296, "METRO"),
   docksStation(),
 ];
 
