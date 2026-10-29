@@ -1,3 +1,4 @@
+import type { RadioStationId } from "../world/wave2";
 import type { Vec3 } from "../math/vec3";
 import type { AudioCue } from "./types";
 
@@ -32,4 +33,6 @@ export interface AudioScenePort {
   /** Linear volume 0..1; values outside are clamped. */
   setVolume(bus: AudioBus, value: number): void;
   getVolume(bus: AudioBus): number;
+  /** Radio on the music bus (ADR-0036); null switches it off. Dialogue ducks it like music. */
+  setRadioStation?(id: RadioStationId | null): void;
 }

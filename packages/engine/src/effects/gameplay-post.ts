@@ -4,7 +4,7 @@ import type { FxUniforms } from "./gameplay-fx";
 /**
  * One full-screen pass for every gameplay event (ADR-0030): chromatic aberration and slice
  * glitch on hits and quickhacks, the scanner (scanlines, vignette, drained colour), the red-blue
- * heat glow at the edges and red after a hit. Uniforms only; nothing recompiles at runtime.
+ * heat glow at the edges, red after a hit and the zoom blur of a dash. Uniforms only; nothing recompiles at runtime.
  */
 const FX_FRAGMENT = /* glsl */ `
 precision highp float;
@@ -18,6 +18,7 @@ uniform float scan;
 uniform float heat;
 uniform float heatMix;
 uniform float hurt;
+uniform float blur;
 uniform float reduce;
 
 float hash(float x) { return fract(sin(x * 127.1) * 43758.5453); }
@@ -38,6 +39,13 @@ void main(void) {
     col = vec3(texture2D(textureSampler, uv + off).r, texture2D(textureSampler, uv).g, texture2D(textureSampler, uv - off).b);
   } else {
     col = texture2D(textureSampler, uv).rgb;
+  }
+  // Dash (ADR-0036): a zoom blur towards the middle, the centre stays sharp.
+  if (blur > 0.001) {
+    vec3 acc = col;
+    float k = blur * 0.028 * smoothstep(0.1, 0.7, length(d) * 2.0);
+    for (int i = 1; i <= 5; i++) acc += texture2D(textureSampler, uv - d * k * float(i)).rgb;
+    col = acc / 6.0;
   }
   // Distance to the frame edge, 0 in the middle, 1 at the border.
   float edge = max(abs(d.x), abs(d.y)) * 2.0;
@@ -64,7 +72,7 @@ void main(void) {
 }
 `;
 
-const NAMES = ["screenSize", "time", "aberration", "glitch", "scan", "heat", "heatMix", "hurt", "reduce"];
+const NAMES = ["screenSize", "time", "aberration", "glitch", "scan", "heat", "heatMix", "hurt", "blur", "reduce"];
 
 /**
  * The pass itself. It stays off the camera while nothing is on screen, so idle frames (and the
@@ -92,6 +100,7 @@ export class GameplayPost {
       effect.setFloat("heat", v?.heat ?? 0);
       effect.setFloat("heatMix", v?.heatMix ?? 0);
       effect.setFloat("hurt", v?.hurt ?? 0);
+      effect.setFloat("blur", v?.blur ?? 0);
       effect.setFloat("reduce", v?.reduce ?? 0);
     };
     this.setActive(false);

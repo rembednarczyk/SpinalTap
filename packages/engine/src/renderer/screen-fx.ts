@@ -1,5 +1,5 @@
 import { type AbstractMesh, Color4, Vector3 } from "../babylon";
-import type { EffectDescriptor, EntityId, HackTargetKind, Transform } from "@seki/core";
+import type { EffectDescriptor, EntityId, HackTargetKind, Transform, Vec3 } from "@seki/core";
 import type { DistrictId } from "@seki/sim";
 import type { CameraRig } from "../camera/camera-rig";
 import { Effects } from "../effects/effects";
@@ -7,8 +7,11 @@ import { FlashLimiter } from "../effects/flash-limiter";
 import { GameplayFxState } from "../effects/gameplay-fx";
 import { GameplayPost } from "../effects/gameplay-post";
 import { createRain } from "../effects/rain";
+import { TrailMeshes } from "../effects/trail-meshes";
+import { TrailState } from "../effects/trails";
 import { DISTRICT_PALETTES, PaletteBlend, districtAt, rigWithPalette } from "../npr/district-palette";
 import { Grading } from "../npr/grading";
+import { qualityTier } from "../npr/quality";
 import { rigForDaylight } from "../npr/lighting";
 import type { SpeedLines } from "../npr/speed-lines";
 import type { ToonMaterials } from "../npr/toon-material";
@@ -30,7 +33,11 @@ export type GameplayFxEvent =
   /** A quickhack upload started or landed. */
   | { readonly kind: "quickhack"; readonly phase: "started" | "applied" }
   /** Heat level 0..3; `searching` while the hunters have lost the player. */
-  | { readonly kind: "heat"; readonly level: number; readonly searching: boolean };
+  | { readonly kind: "heat"; readonly level: number; readonly searching: boolean }
+  /** Someone dashed from `at` (Dashed, ADR-0036): streaks behind them; blur and speed lines for the player. */
+  | { readonly kind: "dash"; readonly entityId: EntityId; readonly at: Vec3; readonly air: boolean }
+  /** A blade sent a bullet back (ProjectileReflected): a spark at `at` and a light trail to `to`. */
+  | { readonly kind: "reflect"; readonly defenderId: EntityId; readonly at: Vec3; readonly to: Vec3 };
 
 /** Visits one entity the scanner may outline: its own scan class and, lazily, its meshes. */
 export type ScanVisitor = (id: EntityId, own: ScanClass | null, meshes: () => readonly AbstractMesh[]) => void;
@@ -74,6 +81,9 @@ export class ScreenFx {
   private readonly fxPost: GameplayPost;
   private readonly effects: Effects;
   private readonly lasers: Lasers;
+  /** Dash streaks and reflected bullets (ADR-0036); the reflection's spark shares the flash budget. */
+  private readonly trails = new TrailState(this.limiter);
+  private readonly trailMeshes: TrailMeshes;
   private readonly rain: ReturnType<typeof createRain> | null;
   private readonly splashes: ReturnType<typeof createSplashes> | null;
   /** District colour script on screen, blending when the camera crosses a seam. */
@@ -92,15 +102,16 @@ export class ScreenFx {
   constructor(private readonly deps: ScreenFxDeps) {
     const { stage, camera } = deps;
     const { scene } = stage;
-    const high = (stage.options.quality ?? "high") === "high";
+    const tier = qualityTier(stage.options.quality);
     this.grading = new Grading(scene, camera.camera, { reference: stage.options.reference }, this.limiter);
     // After the grading pipeline, so the scanner drains the graded colour.
     this.fxPost = new GameplayPost(scene, camera.camera);
     this.applyLook();
     this.effects = new Effects(scene, stage.glow);
     this.lasers = new Lasers(scene, stage.glow);
+    this.trailMeshes = new TrailMeshes(scene, stage.glow);
     this.rain = stage.options.reference ? null : createRain(scene);
-    this.splashes = stage.options.reference || !high ? null : createSplashes(scene);
+    this.splashes = stage.options.reference || !tier.splashes ? null : createSplashes(scene);
     if (!stage.options.reference) {
       // Manhole in the street and the vent behind the car wash.
       createSteam(scene, new Vector3(1.8, 0.05, 5.5), new Color4(0.6, 0.74, 0.85, 0.3), 22);
@@ -248,7 +259,23 @@ export class ScreenFx {
       case "heat":
         this.fx.setHeat(e.level, e.searching);
         return;
+      case "dash":
+        this.trails.dash(e.entityId, e.at);
+        if (!this.isCameraTarget(e.entityId)) return;
+        this.fx.dash(e.air);
+        this.deps.speedLines.pulse(this.reduceFlashes ? 0.5 : 1);
+        return;
+      case "reflect":
+        this.reflect(e.defenderId, e.at, e.to);
+        return;
     }
+  }
+
+  /** Spark on the blade, a trail to where the bullet went, and the street lit only within the flash budget. */
+  private reflect(defenderId: EntityId, at: Vec3, to: Vec3): void {
+    this.effects.hitSpark(v3(at), true);
+    if (this.trails.reflect(at, to, this.reduceFlashes)) this.flash = { x: at.x, y: at.y, z: at.z, life: 0.05 };
+    if (this.isCameraTarget(defenderId)) this.deps.camera.shake(0.2);
   }
 
   /** The scanner is held: scanlines and drained colour, targets outlined by kind. */
@@ -280,6 +307,15 @@ export class ScreenFx {
     this.scanHighlight.release(keep);
   }
 
+  /** Under a roof (the metro car, ADR-0036): no rain or splashes in front of the camera. */
+  setIndoor(on: boolean): void {
+    for (const p of [this.rain, this.splashes]) {
+      if (!p) continue;
+      if (on) p.system.stop();
+      else p.system.start();
+    }
+  }
+
   /** Starts a frame: the flash budget moves on before anything asks it. */
   beginFrame(dt: number): void {
     this.limiter.advance(dt);
@@ -291,9 +327,11 @@ export class ScreenFx {
     const reference = stage.options.reference;
     this.effects.update(dt);
     this.lasers.update(dt, (id) => this.deps.actors.transformOf(id));
+    this.trails.update(dt, (id) => this.deps.actors.transformOf(id)?.position ?? null);
+    this.trailMeshes.update(this.trails.trails);
     if (this.flash) {
       this.flash.life -= dt;
-      const intensity = Math.max(0, this.flash.life / 0.07);
+      const intensity = Math.max(0, Math.min(1, this.flash.life / 0.07));
       materials.setFlash(this.flash.x, this.flash.y, this.flash.z, intensity);
       if (this.flash.life <= 0) this.flash = null;
     }
@@ -313,6 +351,7 @@ export class ScreenFx {
   /** A new game or a load lands anywhere: lasers off, the next district's colours at once, no heat. */
   clear(): void {
     this.lasers.clear();
+    this.trails.clear();
     this.snapPalette = true;
     this.scanHighlight.release();
     this.fx.setHeat(0, false);

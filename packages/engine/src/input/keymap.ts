@@ -150,7 +150,7 @@ export const mapKeyboardMouse = (
     weaponCycle: cyclePressed(keys.pressed, map),
     scan,
     quickhack: scan ? quickhackPressed(keys.pressed) : 0,
-  dash: any(keys.pressed, map.dash),
+    dash: any(keys.pressed, map.dash),
   };
 };
 
@@ -160,6 +160,39 @@ export interface PadState {
   readonly buttons: readonly boolean[];
   /** Buttons that went down since the last poll. */
   readonly pressed: readonly boolean[];
+  /** B was tapped twice within `DOUBLE_TAP_SECONDS` (see `DoubleTap`): the dash. */
+  readonly dash?: boolean;
+}
+
+/** Longest gap between the two taps of a double tap. */
+export const DOUBLE_TAP_SECONDS = 0.3;
+
+/**
+ * Double-tap detector for one button, fed with its press edges and the time between polls.
+ * The pad dashes on a double tap of B (ADR-0036): B already crouches while held, every face
+ * button and shoulder is taken, and a double tap of the crouch button is the dodge of
+ * Cyberpunk 2077, so players bring the habit with them. A third tap starts a new pair.
+ */
+export class DoubleTap {
+  private sinceTap = Infinity;
+
+  constructor(private readonly window = DOUBLE_TAP_SECONDS) {}
+
+  /** True on the second press within the window. */
+  update(pressed: boolean, dt: number): boolean {
+    this.sinceTap += Math.max(0, dt);
+    if (!pressed) return false;
+    if (this.sinceTap <= this.window) {
+      this.sinceTap = Infinity;
+      return true;
+    }
+    this.sinceTap = 0;
+    return false;
+  }
+
+  reset(): void {
+    this.sinceTap = Infinity;
+  }
 }
 
 export const PAD_DEADZONE = 0.16;
@@ -202,8 +235,8 @@ export const mapGamepad = (pad: PadState, dt: number): InputFrame => ({
   // Scanner on the right stick click (ADR-0028); quickhacks are picked in the touch/HUD list.
   scan: pad.buttons[11] ?? false,
   quickhack: 0,
-  // The pad's dash binding comes with the wave 2 input work (ADR-0032).
-  dash: false,
+  // Double tap of B (ADR-0036), detected by `DoubleTap` while polling.
+  dash: pad.dash ?? false,
 });
 
 /** Combines devices: axes are summed and clamped, buttons are OR-ed. */

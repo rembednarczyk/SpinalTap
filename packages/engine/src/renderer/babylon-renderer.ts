@@ -1,4 +1,4 @@
-import { Matrix, MeshBuilder } from "../babylon";
+import { type AbstractMesh, Matrix, MeshBuilder } from "../babylon";
 import type { AppearanceDescriptor, CameraMode, DespawnReason, EffectDescriptor, EntityId, HackTargetKind, RenderPort, Transform, ViewDescriptor } from "@seki/core";
 import type { DistrictId } from "@seki/sim";
 import { CameraRig } from "../camera/camera-rig";
@@ -7,20 +7,24 @@ import { LineArt } from "../npr/line-art";
 import { SpeedLines } from "../npr/speed-lines";
 import { NIGHT_RIG } from "../npr/lighting";
 import { MoonShadow } from "../npr/moon-shadow";
+import { WET_PRESETS, qualityTier } from "../npr/quality";
 import { ToonMaterials } from "../npr/toon-material";
 import { Atmosphere } from "./atmosphere";
 import { type CharacterDescriptor, CharacterViews } from "./character-views";
 import { CityKitLoader } from "./city-kit-loader";
 import { WorldDressing } from "./dressing";
 import { FarCity } from "./far-city";
+import { MetroRide, type MetroRideView } from "./metro-ride";
 import type { CharacterModelManifest } from "./model-library";
 import { PropViews } from "./prop-views";
 import { type GameplayFxEvent, ScreenFx } from "./screen-fx";
 import { Signage } from "./signage";
+import { WetProbe } from "./wet-probe";
 import type { Stage } from "./stage";
 import type { WeaponManifest } from "./weapon-mount";
 
 export type { GameplayFxEvent } from "./screen-fx";
+export type { MetroRideView } from "./metro-ride";
 
 export interface RendererOptions {
   /**
@@ -55,6 +59,11 @@ export class BabylonRenderer implements RenderPort {
   private readonly props: PropViews;
   private readonly fx: ScreenFx;
   private readonly cityKit: CityKitLoader;
+  /** The metro car between districts (ADR-0036). */
+  private readonly metro: MetroRide;
+  /** Static reflection probe of the wet asphalt on medium and high quality (ADR-0036). */
+  private readonly wet: WetProbe | null;
+  private kitMeshes = 0;
   private cameraTarget: EntityId | null = null;
   private resetting = false;
 
@@ -65,8 +74,12 @@ export class BabylonRenderer implements RenderPort {
   ) {
     const { scene } = stage;
     this.materials = new ToonMaterials(scene);
-    const high = (stage.options.quality ?? "high") === "high";
-    this.shadow = new MoonShadow(scene, NIGHT_RIG, 28, high ? 2048 : 1024);
+    const tier = qualityTier(stage.options.quality);
+    const high = tier.shadowMap > 1024;
+    // Before any material: the wet presets compile with the probe in them.
+    this.wet = tier.wetProbe ? new WetProbe(scene, tier.wetProbe, () => this.reflectedMeshes()) : null;
+    if (this.wet) this.materials.setEnvironment(this.wet.texture, WET_PRESETS);
+    this.shadow = new MoonShadow(scene, NIGHT_RIG, 28, tier.shadowMap);
     this.materials.setShadow({
       texture: this.shadow.texture,
       matrix: this.shadow.update({ x: 0, y: 0, z: 0 }) ?? Matrix.Identity(),
@@ -80,7 +93,7 @@ export class BabylonRenderer implements RenderPort {
     };
     this.characters = new CharacterViews({ scene, materials: this.materials, shadow: this.shadow, camera: this.rig, cameraTarget: () => this.cameraTarget });
     // Line art must be attached before the grading pipeline so the ink gets graded too.
-    this.lineArt = high ? new LineArt(scene, this.rig.camera) : null;
+    this.lineArt = tier.lineArt ? new LineArt(scene, this.rig.camera) : null;
     if (this.lineArt) this.lineArt.geometryBuffer.renderTransparentMeshes = false;
     this.speedLines = new SpeedLines(scene, this.rig.camera);
     this.atmosphere = new Atmosphere(scene, NIGHT_RIG);
@@ -109,6 +122,7 @@ export class BabylonRenderer implements RenderPort {
       },
     });
     this.grading = this.fx.grading;
+    this.metro = new MetroRide({ scene, materials: this.materials, shadow: this.shadow, camera: this.rig, cast: this.characters });
     if (options.cityKit) this.cityKit.load(options.cityKit);
   }
 
@@ -129,6 +143,18 @@ export class BabylonRenderer implements RenderPort {
     }
     // The holo shader too (ADR-0030); the gameplay post-process compiles when it is created.
     this.signage.warmUp();
+  }
+
+  /** What the wet-asphalt probe mirrors: the sky, the far city, the signs and everything that glows. */
+  private reflectedMeshes(): AbstractMesh[] {
+    const glowing = this.stage.scene.meshes.filter((m) => m.isEnabled() && m.isVisible && this.stage.glow.hasMesh(m) && !m.name.startsWith("metro-"));
+    const fixed = [this.atmosphere.skyMesh, this.signage.mesh, ...this.farCity.meshes].filter((m): m is NonNullable<typeof m> => m !== null);
+    return [...new Set<AbstractMesh>([...fixed, ...glowing])];
+  }
+
+  /** Renders of the wet-asphalt probe so far, null without one (debug and tests). */
+  get wetProbeRenders(): number | null {
+    return this.wet?.renderCount ?? null;
   }
 
   /** Kit meshes built for skinned blocks (debug and tests). */
@@ -164,7 +190,10 @@ export class BabylonRenderer implements RenderPort {
 
   playEffect(effect: EffectDescriptor): void {
     this.fx.play(effect);
-    if (effect.kind === "time-of-day") this.cityKit.setDaylight(effect.daylight);
+    if (effect.kind === "time-of-day") {
+      this.cityKit.setDaylight(effect.daylight);
+      this.wet?.schedule.invalidate();
+    }
   }
 
   /** District whose colours are on screen (debug and tests). */
@@ -175,6 +204,22 @@ export class BabylonRenderer implements RenderPort {
   /** Accessibility (ADR-0028): no aberration, glitch or flicker anywhere; slow fades only. */
   setReduceFlashes(on: boolean): void {
     this.fx.setReduceFlashes(on);
+    this.metro.setCalm(on);
+  }
+
+  /**
+   * A metro ride (ADR-0036; proposed as an optional `RenderPort` method): the inside of a car with
+   * the city sliding past and a few riders, from `MetroDeparted` until null on `MetroArrived`.
+   * The world keeps streaming behind it.
+   */
+  setMetroRide(ride: MetroRideView | null): void {
+    this.metro.set(ride);
+    this.fx.setIndoor(ride !== null);
+  }
+
+  /** True while the metro car is on screen (debug, tests). */
+  get metroRiding(): boolean {
+    return this.metro.active;
   }
 
   /** A gameplay moment over the whole frame (ADR-0030): a hit, a quickhack, heat. */
@@ -196,19 +241,38 @@ export class BabylonRenderer implements RenderPort {
   frame(dt: number): void {
     this.fx.beginFrame(dt);
     this.cityKit.flush();
-    if (this.dressing.flush()) this.farCity.setResident(this.dressing.residentChunks());
+    if (this.dressing.flush()) {
+      this.farCity.setResident(this.dressing.residentChunks());
+      this.wet?.schedule.invalidate();
+    }
+    this.metro.update(dt);
     this.characters.update(dt);
     const target = this.cameraTargetTransform;
     this.rig.update(target, dt);
-    // Shadow follows what the camera looks at: the player, or the fixed reference view.
-    const focus = target ? target.position : this.rig.camera.position;
+    this.metro.afterCamera();
+    // Shadow follows what the camera looks at: the player, the metro car or the fixed reference view.
+    const focus = target && !this.metro.active ? target.position : this.rig.camera.position;
     const moved = this.shadow.update(focus);
     this.materials.setLightFocus(this.rig.camera.position.x, this.rig.camera.position.z);
     if (moved) this.materials.setShadowMatrix(moved);
     this.fx.update(dt);
+    this.updateWetProbe(dt);
+  }
+
+  /** Re-renders the probe on a new district or when what it mirrors changed; never in the metro. */
+  private updateWetProbe(dt: number): void {
+    const wet = this.wet;
+    if (!wet || this.metro.active) return;
+    if (this.cityKit.meshCount !== this.kitMeshes) {
+      this.kitMeshes = this.cityKit.meshCount;
+      wet.schedule.invalidate();
+    }
+    wet.schedule.setDistrict(this.fx.paletteDistrict);
+    wet.update(dt, this.rig.camera.position);
   }
 
   clear(): void {
+    this.setMetroRide(null);
     this.fx.clear();
     this.resetting = true;
     for (const id of this.props.ids()) this.despawn(id);

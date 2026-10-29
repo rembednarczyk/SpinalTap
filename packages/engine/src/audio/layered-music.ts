@@ -25,6 +25,9 @@ export class LayeredMusic {
   private mood: MusicMood | null = null;
   private fadeFrom: MusicMood | null = null;
   private moodChangedAt = -Infinity;
+  /** Level of the whole score 0..1 under the radio (ADR-0036). */
+  private score = 1;
+  private scoreChangedAt = -Infinity;
 
   constructor(
     private readonly voices: SynthVoices,
@@ -73,8 +76,35 @@ export class LayeredMusic {
     this.fadeFrom = this.mood;
     this.mood = mood;
     this.moodChangedAt = now;
-    for (const l of LAYERS) g.layers[l].gain.setTargetAtTime(LAYER_MIX[mood][l] * LAYER_LEVEL[l], now, LAYER_TC);
+    this.retarget(g, now);
     g.musicFilter.frequency.setTargetAtTime(MOOD_CUTOFF[mood], now, LAYER_TC);
+  }
+
+  /**
+   * Lowers or silences the score under the radio (ADR-0036). A silent score schedules no notes
+   * once its fade is over, so the radio does not pay for both.
+   */
+  setScore(g: Graph, level: number, now: number): void {
+    const k = Math.max(0, Math.min(1, level));
+    if (Math.abs(k - this.score) < 0.02 && (k !== 0 || this.score === 0)) return;
+    this.score = k;
+    this.scoreChangedAt = now;
+    if (this.on && this.mood) this.retarget(g, now);
+  }
+
+  /** True between `start` and `stop`: the soundscape runs, the radio may play too. */
+  get running(): boolean {
+    return this.on;
+  }
+
+  /** Score level the layers fade to. */
+  get scoreLevel(): number {
+    return this.score;
+  }
+
+  private retarget(g: Graph, now: number): void {
+    const mood = this.mood ?? "explore";
+    for (const l of LAYERS) g.layers[l].gain.setTargetAtTime(LAYER_MIX[mood][l] * LAYER_LEVEL[l] * this.score, now, LAYER_TC);
   }
 
   /** Schedules the notes of the next LOOKAHEAD seconds. */
@@ -84,7 +114,14 @@ export class LayeredMusic {
     if (this.nextStep < now - 0.1) this.nextStep = now + 0.05;
     const mood = this.mood ?? "explore";
     const from = now - this.moodChangedAt < LAYER_TC * 5 ? this.fadeFrom : null;
+    const silent = this.score === 0 && now - this.scoreChangedAt >= LAYER_TC * 5;
     while (this.nextStep < now + LOOKAHEAD) {
+      if (silent) {
+        // Keep the clock running, so the score comes back on the beat.
+        this.step = (this.step + 1) % LOOP_STEPS;
+        this.nextStep += STEP_SECONDS;
+        continue;
+      }
       for (const e of this.sequencer.at(this.step)) {
         // Silent layers play nothing, unless they are still fading out.
         if (LAYER_MIX[mood][e.layer] === 0 && (!from || LAYER_MIX[from][e.layer] === 0)) continue;

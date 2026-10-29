@@ -92,3 +92,16 @@ export type ActivityId =
   | "guard";
 
 export const ACTIVITY_IDS: readonly ActivityId[] = ["idle", "smoke", "phone", "lean", "sit", "eat", "drink", "cook", "sweep", "talk", "sleep", "terminal", "guard"];
+
+/** Radio stations (ADR-0036): Neon Drift 88.1, Yoru FM 76.5, Tessen Info 24. */
+export type RadioStationId = "drift" | "yoru" | "tessen";
+
+export const RADIO_STATION_IDS: readonly RadioStationId[] = ["drift", "yoru", "tessen"];
+
+/** A metro ride on screen: the renderer shows the car while the destination streams in. */
+export interface MetroRideView {
+  readonly from: MetroStationId;
+  readonly to: MetroStationId;
+  /** Length of the ride in seconds. */
+  readonly seconds: number;
+}
