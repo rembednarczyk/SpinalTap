@@ -25,6 +25,17 @@ export interface MapBuilding {
   readonly look: number;
   /** Shop windows on the ground floor (from the map); absent: chosen from the look. */
   readonly shopfront?: boolean;
+  /** Openings through the facade into a room on the ground floor (ADR-0045), in world metres. */
+  readonly doorways?: readonly WorldDoorway[];
+}
+
+/** A doorway in world metres: the middle of the opening on a wall, its width, bottom and top (world y). */
+export interface WorldDoorway {
+  readonly x: number;
+  readonly z: number;
+  readonly width: number;
+  readonly bottom: number;
+  readonly top: number;
 }
 
 export interface Wall {

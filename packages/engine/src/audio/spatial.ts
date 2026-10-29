@@ -1,5 +1,5 @@
 import type { AudioListenerPose, Vec3 } from "@seki/core";
-import { DISTRICT_M0_PROPS, PLAYER_SPAWN } from "@seki/sim";
+import { DISTRICT_M0_PROPS, PLAYER_SPAWN, STEAM_VENTS } from "@seki/sim";
 
 export interface Emitter {
   readonly position: Vec3;
@@ -59,14 +59,11 @@ export const neonEmitters = (props = DISTRICT_M0_PROPS): Emitter[] =>
   });
 
 /** Steam vents, matching the renderer's steam particles (manhole and car-wash vent). */
-export const DISTRICT_M0_VENTS: readonly Emitter[] = [
-  { position: { x: 1.8, y: 0.05, z: 5.5 }, level: 1 },
-  { position: { x: -5.2, y: 1.45, z: 44 }, level: 0.8 },
-];
+export const DISTRICT_M0_VENTS: readonly Emitter[] = STEAM_VENTS.map((position, i) => ({ position, level: i === 0 ? 1 : 0.8 }));
 
 /** Where the player starts, so ambience sounds right before the first listener update. */
 export const DEFAULT_POSE: AudioListenerPose = {
-  position: { x: PLAYER_SPAWN.position.x, y: 1.6, z: PLAYER_SPAWN.position.z },
+  position: { x: PLAYER_SPAWN.position.x, y: PLAYER_SPAWN.position.y + 1.6, z: PLAYER_SPAWN.position.z },
   yaw: PLAYER_SPAWN.yaw,
   speed: 0,
 };

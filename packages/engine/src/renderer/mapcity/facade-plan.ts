@@ -1,6 +1,6 @@
 import { prng } from "../city-kit-data";
 import { DRESS_FLAG, type MeshSink, type Rgba, hexColor } from "../mesh-sink";
-import { type FacadeFrame, type Palette, frameWallMeta, hiddenWall, roofMeta, trimMeta } from "./facade-frame";
+import { type FacadeFrame, type Palette, type Wall, type WorldDoorway, frameWallMeta, hiddenWall, roofMeta, trimMeta } from "./facade-frame";
 import { band, slab, wallQuad } from "./facade-parts";
 import { WINDOW_STYLE } from "./facade-style";
 import { type P2, offsetRing } from "./polygon";
@@ -67,11 +67,43 @@ const paletteOf = (f: FacadeFrame): Palette => ({
   roof: hexColor(f.style.roofColor, DRESS_FLAG.solid),
 });
 
-/** Walls from the foot of the slope to `to`, skipping those a neighbour hides completely. */
+/** The doorways lying on a wall, as ranges along it (metres from `a`), in order. */
+export const doorwaysOn = (w: Wall, doorways: readonly WorldDoorway[]): { u0: number; u1: number; bottom: number; top: number }[] => {
+  const dx = (w.b.x - w.a.x) / w.length;
+  const dz = (w.b.z - w.a.z) / w.length;
+  return doorways
+    .flatMap((d) => {
+      const u = (d.x - w.a.x) * dx + (d.z - w.a.z) * dz;
+      const off = Math.abs((d.x - w.a.x) * w.nx + (d.z - w.a.z) * w.nz);
+      if (off > 0.4 || u < 0 || u > w.length) return [];
+      return [{ u0: Math.max(0, u - d.width / 2), u1: Math.min(w.length, u + d.width / 2), bottom: d.bottom, top: d.top }];
+    })
+    .sort((p, q) => p.u0 - q.u0);
+};
+
+/** Walls from the foot of the slope to `to`, skipping those a neighbour hides completely; doorways stay open. */
 const walls = (sink: MeshSink, f: FacadeFrame, to: number, color: Rgba): void => {
+  const doorways = f.b.doorways ?? [];
   for (const w of f.walls) {
     if (hiddenWall(f, w)) continue;
-    wallQuad(sink, w.a, w.b, { x: w.nx, z: w.nz }, f.b.foot - 0.2, to, f.b.base, color, frameWallMeta(f, w));
+    const n = { x: w.nx, z: w.nz };
+    const meta = frameWallMeta(f, w);
+    const from = f.b.foot - 0.2;
+    const openings = doorways.length > 0 ? doorwaysOn(w, doorways) : [];
+    if (openings.length === 0) {
+      wallQuad(sink, w.a, w.b, n, from, to, f.b.base, color, meta);
+      continue;
+    }
+    // The wall in pieces: full height between the openings, over and under each opening.
+    const at = (u: number): P2 => ({ x: w.a.x + ((w.b.x - w.a.x) * u) / w.length, z: w.a.z + ((w.b.z - w.a.z) * u) / w.length });
+    let u = 0;
+    for (const o of openings) {
+      if (o.u0 > u) wallQuad(sink, at(u), at(o.u0), n, from, to, f.b.base, color, meta);
+      if (o.top < to) wallQuad(sink, at(o.u0), at(o.u1), n, o.top, to, f.b.base, color, meta);
+      if (o.bottom > from) wallQuad(sink, at(o.u0), at(o.u1), n, from, o.bottom, f.b.base, color, meta);
+      u = Math.max(u, o.u1);
+    }
+    if (u < w.length) wallQuad(sink, at(u), w.b, n, from, to, f.b.base, color, meta);
   }
 };
 
@@ -92,8 +124,8 @@ export const planNearBuilding = (sink: MeshSink, f: FacadeFrame): void => {
   const trim = trimMeta(s.seed);
   walls(sink, f, f.eave, p.wall);
   if (f.top > f.eave + 0.01) atticFaces(sink, f, p.wall);
-  // Plinth: dark stone around the foot, up to the window sills of the ground floor.
-  band(sink, ring, 0.06, b.foot - 0.2, b.base + 0.55, p.plinth, trim, b.base);
+  // Plinth: dark stone around the foot, up to the window sills of the ground floor (none across a doorway).
+  if (!b.doorways?.length) band(sink, ring, 0.06, b.foot - 0.2, b.base + 0.55, p.plinth, trim, b.base);
   if (s.stringCourse && f.ground + 0.6 < f.eave - b.base) band(sink, ring, 0.12, b.base + f.ground, b.base + f.ground + 0.22, p.trim, trim, b.base);
   if (s.cornice) {
     band(sink, ring, 0.18, f.eave - 0.55, f.eave - 0.3, p.trim, trim, b.base);

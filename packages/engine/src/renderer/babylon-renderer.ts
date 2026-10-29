@@ -24,6 +24,7 @@ import { PropViews } from "./prop-views";
 import { type GameplayFxEvent, ScreenFx } from "./screen-fx";
 import { Signage } from "./signage";
 import { WetProbe } from "./wet-probe";
+import { groundLift } from "./ground-lift";
 import type { Stage } from "./stage";
 import type { WeaponManifest } from "./weapon-mount";
 
@@ -43,6 +44,11 @@ export interface RendererOptions {
   readonly world?: readonly ChunkDef[];
   /** Multiplies the fog density (1 in the game; the map preview sees further, ADR-0044). */
   readonly fogScale?: number;
+  /**
+   * Draws the far city of the old map (stand-ins, tower rings, megabuildings on the horizon).
+   * Off in Lublin (ADR-0045): the map's own city is drawn to the horizon.
+   */
+  readonly farCity?: boolean;
 }
 
 /** How far the crowd is drawn per quality (m): phones see the nearest residents only. */
@@ -83,6 +89,8 @@ export class BabylonRenderer implements RenderPort {
   private readonly wet: WetProbe | null;
   /** Buildings, terrain and ground from map data (ADR-0044), created with the first of them. */
   private mapCity: MapCity | null = null;
+  /** Feet lift on the map's surfaces (ADR-0045), or on the old street's sidewalks without map data. */
+  private readonly liftAt = (x: number, y: number, z: number): number => (this.mapCity ? this.mapCity.surfaceLift(x, y, z) : groundLift(x, y, z));
   private daylight = 0;
   private reduceFlashes = false;
   private kitMeshes = 0;
@@ -121,16 +129,18 @@ export class BabylonRenderer implements RenderPort {
       camera: this.rig,
       cameraTarget: () => this.cameraTarget,
       pose: (id, rig, speed, dt, retarget) => this.activities.apply(id, rig, speed, dt, retarget),
+      lift: this.liftAt,
     });
     const eye = this.rig.camera.position;
-    this.crowd = new CrowdViews({ scene, materials: this.materials, eye: () => eye, drawDistance: CROWD_DRAW_DISTANCE[stage.options.quality ?? "high"] });
+    this.crowd = new CrowdViews({ scene, materials: this.materials, eye: () => eye, drawDistance: CROWD_DRAW_DISTANCE[stage.options.quality ?? "high"], lift: this.liftAt });
     // Line art must be attached before the grading pipeline so the ink gets graded too.
     this.lineArt = tier.lineArt ? new LineArt(scene, this.rig.camera) : null;
     if (this.lineArt) this.lineArt.geometryBuffer.renderTransparentMeshes = false;
     this.speedLines = new SpeedLines(scene, this.rig.camera);
     this.atmosphere = new Atmosphere(scene, NIGHT_RIG);
     const world = options.world ?? WORLD_CHUNKS;
-    this.farCity = new FarCity(scene, NIGHT_RIG, world);
+    this.farCity = new FarCity(scene, NIGHT_RIG, options.farCity === false ? [] : world);
+    if (options.farCity === false) for (const m of this.farCity.meshes) m.setEnabled(false);
     this.signage = new Signage(scene, world);
     // Without a kit the dressing goes in with the first chunk; with one, once it is known whether it loaded.
     this.dressing = new WorldDressing(scene, this.materials, options.cityKit ? "pending" : "bare", { built: (m) => this.shadow.addStaticCaster(m) }, world);
