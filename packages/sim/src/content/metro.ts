@@ -1,14 +1,16 @@
 import type { MetroStationId, Vec3, ViewDescriptor } from "@seki/core";
-import { type StaticProp, neon, slab, v } from "./builders";
+import { type StaticProp, placeAt, v } from "./builders";
+import { againstWall } from "./lublin/places";
+import { DOCKS_PLACE } from "./lublin/sites";
+import { groundY } from "./lublin/terrain";
 /** District ids as world-map.ts names them (kept local: world-map imports this table). */
 type DistrictId = "shinsekai-7" | "kanal" | "targ" | "doki";
 
 /**
- * Metro platforms (ADR-0034): one per district, each a ticket kiosk against a wall with a
- * canopy over the stairs down, and the point where a rider comes up again. Kept apart from the
- * district tables (one entry in world-map.ts hooks them up), like the devices of wave 1. Every
- * place stands in a dead end or against a facade, off the streets, the NPC routes and the level
- * graph (checked by test/metro.test.ts): the kiosk is the only solid, everything else is drawn.
+ * Metro platforms (ADR-0034, moved into Lublin by ADR-0045): one per district, each a ticket
+ * kiosk against a facade with a canopy over the stairs down, and the point where a rider comes
+ * up again. Kept apart from the district tables (one entry in world-map.ts hooks them up), like
+ * the devices of wave 1. The kiosk is the only solid, everything else is drawn.
  */
 export interface MetroStationDef {
   readonly id: MetroStationId;
@@ -33,63 +35,56 @@ export const KIOSK_REACH = 2.2;
 
 export const kioskView: ViewDescriptor = { kind: "block", size: KIOSK_SIZE, material: "glass" };
 
-/** Canopy and stairwell next to a kiosk with its back to a wall on the south (`side` 1) or north (-1) side. */
-const platform = (x: number, wallZ: number, side: 1 | -1, dx: number): StaticProp[] => [
-  // Over the stairs down: high enough to walk under, drawn only.
-  slab(x + dx, 2.9, wallZ + side * 1.0, v(4.4, 0.15, 2.0), "glass"),
-  // The stairwell's edge on the pavement, flush with the ground.
-  slab(x + dx * 1.6, 0.02, wallZ + side * 0.9, v(2.6, 0.04, 1.6), "metal"),
-];
+/**
+ * A platform against the facade nearest to (x, z) (ADR-0045): the kiosk with its back to the
+ * wall, the canopy over the stairs down beside it (to the kiosk's right), the rider coming up in
+ * front of it. The canopy and the stairwell's edge are drawn only.
+ */
+const station = (id: MetroStationId, name: string, district: DistrictId, chunk: string, x: number, z: number, sign?: string): MetroStationDef => {
+  const wall = againstWall(x, z, 0.36);
+  const yaw = wall.yaw;
+  const fx = Math.sin(yaw);
+  const fz = Math.cos(yaw);
+  // The kiosk's right, seen from the street: the facing turned a quarter clockwise on the map.
+  const rx = fz;
+  const rz = -fx;
+  const k = wall.at;
+  const along = Math.abs(fx) > Math.abs(fz) ? "z" : "x";
+  const canopy = v(along === "x" ? 4.4 : 2, 0.15, along === "x" ? 2 : 4.4);
+  const edge = v(along === "x" ? 2.6 : 1.6, 0.04, along === "x" ? 1.6 : 2.6);
+  const props: StaticProp[] = [
+    // Over the stairs down: high enough to walk under.
+    { center: v(k.x + rx * 2.2 + fx * 0.65, k.y + 2.9, k.z + rz * 2.2 + fz * 0.65), view: { kind: "block", size: canopy, material: "glass" }, solid: false },
+    // The stairwell's edge on the pavement, flush with the ground.
+    { center: v(k.x + rx * 3.5 + fx * 0.55, k.y + 0.02, k.z + rz * 3.5 + fz * 0.55), view: { kind: "block", size: edge, material: "metal" }, solid: false },
+  ];
+  if (sign) {
+    const facing = along === "x" ? (fz > 0 ? "z+" : "z-") : fx > 0 ? "x+" : "x-";
+    props.push({ center: v(k.x - rx * 1.6 - fx * 0.2, k.y + 3.6, k.z - rz * 1.6 - fz * 0.2), view: { kind: "neon", size: along === "x" ? v(2.4, 0.6, 0.12) : v(0.12, 0.6, 2.4), color: "#36c5ff", label: sign, facing }, solid: false });
+  }
+  const ax = k.x + fx * 1.5;
+  const az = k.z + fz * 1.5;
+  return { id, name, district, chunk, kiosk: k, yaw, arrival: v(ax, groundY(ax, az), az), arrivalYaw: yaw, props };
+};
+
+/** The docks' platform stays where the set piece had it: the yard's south edge by its wall. */
+const docksStation = (): MetroStationDef => {
+  const local = (x: number, y: number, z: number) => placeAt(DOCKS_PLACE, v(x, y, z));
+  const props: StaticProp[] = [
+    { center: local(-33 + 2.2, 2.9, 91.2 + 1.0), view: { kind: "block", size: v(4.4, 0.15, 2.0), material: "glass" }, solid: false },
+    { center: local(-33 + 2.2 * 1.6, 0.02, 91.2 + 0.9), view: { kind: "block", size: v(2.6, 0.04, 1.6), material: "metal" }, solid: false },
+  ];
+  return { id: "doki", name: "Nabrzeże Bystrzycy", district: "doki", chunk: "nabrzeze-1-1", kiosk: local(-33, 0, 91.55), yaw: 0, arrival: local(-33, 0, 92.9), arrivalYaw: Math.PI / 2, props };
+};
 
 export const METRO_STATIONS: readonly MetroStationDef[] = [
-  // Shinsekai 7: the dead end south of the west tenement, by the district's south wall.
-  {
-    id: "shinsekai",
-    name: "Shinsekai 7",
-    district: "shinsekai-7",
-    chunk: "shinsekai-7",
-    kiosk: v(-15, 0, -35.65),
-    yaw: 0,
-    arrival: v(-15, 0, -34.2),
-    arrivalYaw: Math.PI / 2,
-    props: platform(-15, -36, 1, 2.2),
-  },
-  // Ulica Kanałowa: against the south row, across the street from the passage to the docks.
-  {
-    id: "kanal",
-    name: "Kanałowa",
-    district: "kanal",
-    chunk: "kanal",
-    kiosk: v(20, 0, 74.35),
-    yaw: 0,
-    arrival: v(20, 0, 75.9),
-    arrivalYaw: Math.PI / 2,
-    props: platform(20, 74, 1, -2.2),
-  },
-  // The market: under the north wall, east of the stalls.
-  {
-    id: "targ",
-    name: "Targ pod estakadą",
-    district: "targ",
-    chunk: "targ-north",
-    kiosk: v(118, 0, 105.65),
-    yaw: Math.PI,
-    arrival: v(118, 0, 104.1),
-    arrivalYaw: -Math.PI / 2,
-    props: [...platform(118, 106, -1, -2.2), neon(115, 3.6, 105.9, v(2.4, 0.6, 0.12), "#36c5ff", "METRO")],
-  },
-  // Doki: the yard's south edge, the far west end of the strip by the boundary wall.
-  {
-    id: "doki",
-    name: "Doki Tessen",
-    district: "doki",
-    chunk: "doki-yard",
-    kiosk: v(-33, 0, 91.55),
-    yaw: 0,
-    arrival: v(-33, 0, 92.9),
-    arrivalYaw: Math.PI / 2,
-    props: platform(-33, 91.2, 1, 2.2),
-  },
+  // Plac Litewski: against the house on the corner of the square and the deptak.
+  station("shinsekai", "Plac Litewski", "shinsekai-7", "krakowskie-1-0", 158, -58.5, "METRO"),
+  // Brama Krakowska: on Bramowa, inside the gate, on the Old Town's side.
+  station("kanal", "Brama Krakowska", "kanal", "stare-miasto-0-0", 492, -80, "METRO"),
+  // Plac Zamkowy: against the houses on the west side of the square, by the market.
+  station("targ", "Plac Zamkowy", "targ", "podzamcze-0-0", 705, 289.5, "METRO"),
+  docksStation(),
 ];
 
 export const metroStation = (id: MetroStationId): MetroStationDef => {

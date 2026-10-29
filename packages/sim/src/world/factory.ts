@@ -78,6 +78,8 @@ const prismDefsOf = (prop: StaticProp): readonly PrismDef[] | null => {
 
 export const propEntity = (id: EntityId, prop: StaticProp, chunk: string): Entity => {
   const e: Entity = { id, ...at(prop.center), view: prop.view, chunk };
+  // A building of the map is drawn as scenery (ADR-0045): the entity is its solid alone.
+  if (prop.scenery) delete e.view;
   const parts = prop.solid ? prismDefsOf(prop) : null;
   if (parts) {
     e.prisms = prismsAt(parts, prop.center);

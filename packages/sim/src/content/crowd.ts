@@ -1,6 +1,12 @@
-import type { ActivityId } from "@seki/core";
-import { v } from "./builders";
-import type { Vec3 } from "@seki/core";
+import type { ActivityId, Vec3 } from "@seki/core";
+import { placeAt, v } from "./builders";
+import { KOI_CROWD_SPOTS } from "./interiors";
+import { againstWall, inBuilding, nearestWall } from "./lublin/places";
+import { DOCKS_PLACE, MAP_CHUNKS, MARKET_PLACE } from "./lublin/sites";
+
+/** The chunks of Lublin that hold the market and the docks (ADR-0045). */
+const MARKET_CHUNK = "podzamcze-1-0";
+const DOCKS_CHUNK = "nabrzeze-1-1";
 
 /**
  * The residents of the city (ADR-0041): the crowd on the sidewalks. Pure data: the routes the
@@ -40,91 +46,122 @@ const WEST = -Math.PI / 2;
 const NORTH = 0;
 const SOUTH = Math.PI;
 
-export const CROWD_LANES: readonly CrowdLane[] = [
-  // Shinsekai 7: north along the east sidewalk, over the crossing at the north end, south along
-  // the west sidewalk and back over the crossing by the south wall.
-  {
-    id: "s7-main",
-    chunk: "shinsekai-7",
-    points: [
-      [5.5, -34.4],
-      [5.5, 41.6],
-      [-5.5, 41.6],
-      [-5.5, -34.4],
-    ],
-  },
-  // Kanałowa: up the west side from Shinsekai (round a crate), east along the north kerb (round
-  // the benches and the footbridge stairs), over the road by the market gate, back west along
-  // the south kerb (round the stairs and the van) and down the middle of the narrow street.
-  {
-    id: "kanal-loop",
-    chunk: "kanal",
-    points: [
-      [4.75, 53],
-      [4.75, 67.8],
-      [6.35, 69.2],
-      [6.35, 70.8],
-      [4.75, 72.2],
-      [4.75, 80.75],
-      [41, 80.75],
-      [41.6, 79.25],
-      [62.9, 79.25],
-      [63.4, 80.75],
-      [65, 80.75],
-      [65, 75.25],
-      [53, 75.25],
-      [52.6, 78.1],
-      [43.4, 78.1],
-      [43, 75.25],
-      [34.6, 75.25],
-      [34, 78.2],
-      [26, 78.2],
-      [25.4, 75.25],
-      [10.6, 75.25],
-      [8.6, 74.7],
-      [7.4, 72.5],
-      [7.4, 53],
-    ],
-  },
-  // The market: round the edge of the south square (east of Sachiko's kiosk at the gate), and
-  // round the stalls in its middle.
-  {
+/** A lane of a set piece in the world, from its own coordinates. */
+const placedLane = (d: Vec3, lane: CrowdLane): CrowdLane => ({ ...lane, points: lane.points.map(([x, z]) => [x + d.x, z + d.z] as const) });
+
+/** Half the width of a lane laid along a street of the map: walkers go up one side and back down the other. */
+const STREET_LANE_HALF = 1.6;
+/** Every point of a street's lane keeps this far from the walls (the walkers' own offset and a body included). */
+const LANE_CLEARANCE = 1.15;
+/** Streets shorter than this make no lane. */
+const MIN_LANE_LENGTH = 30;
+/** Most lanes per chunk: its longest streets. */
+const LANES_PER_CHUNK = 3;
+
+type Pt = readonly [number, number];
+
+/** The loop round a polyline `half` metres either side of it (the left side out, the right side back). */
+const loopAround = (line: readonly Pt[], half: number): Pt[] => {
+  const side = (sign: 1 | -1): Pt[] =>
+    line.map(([x, z], i) => {
+      const [px, pz] = line[Math.max(0, i - 1)] as Pt;
+      const [nx, nz] = line[Math.min(line.length - 1, i + 1)] as Pt;
+      const dx = nx - px;
+      const dz = nz - pz;
+      const len = Math.hypot(dx, dz) || 1;
+      // Left of the way along the line (+X east, +Z north): (-dz, dx).
+      return [Math.round((x - (dz / len) * half * sign) * 100) / 100, Math.round((z + (dx / len) * half * sign) * 100) / 100] as const;
+    });
+  return [...side(1), ...side(-1).reverse()];
+};
+
+/** Is every metre along the loop clear of the map's walls? */
+const clearLoop = (loop: readonly Pt[]): boolean => {
+  for (let i = 0; i < loop.length; i++) {
+    const [ax, az] = loop[i] as Pt;
+    const [bx, bz] = loop[(i + 1) % loop.length] as Pt;
+    const n = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az)));
+    for (let k = 0; k < n; k++) {
+      const x = ax + ((bx - ax) * k) / n;
+      const z = az + ((bz - az) * k) / n;
+      if (inBuilding(x, z) || nearestWall(x, z).d < LANE_CLEARANCE) return false;
+    }
+  }
+  return true;
+};
+
+const polyLength = (line: readonly Pt[]): number => line.reduce((s, p, i) => (i === 0 ? 0 : s + Math.hypot(p[0] - (line[i - 1] as Pt)[0], p[1] - (line[i - 1] as Pt)[1])), 0);
+
+/**
+ * Lanes along the pedestrian streets of the map (ADR-0045): for each chunk of Krakowskie
+ * Przedmieście and Stare Miasto, loops round its longest deptak, square and alley lines that
+ * stay clear of the walls (a narrower loop where the wide one touches a wall).
+ */
+const streetLanes = (): CrowdLane[] =>
+  MAP_CHUNKS.filter((c) => c.district === "shinsekai-7" || c.district === "kanal").flatMap((c) => {
+    const lines = c.streets
+      .filter((st) => st.kind === "pedestrian" || st.kind === "living_street")
+      .map((st) => {
+        const pts: Pt[] = [];
+        for (let i = 0; i + 1 < st.line.length; i += 2) pts.push([st.line[i] as number, st.line[i + 1] as number]);
+        return pts;
+      })
+      .filter((pts) => pts.length >= 2 && polyLength(pts) >= MIN_LANE_LENGTH)
+      .sort((a, b) => polyLength(b) - polyLength(a));
+    const out: CrowdLane[] = [];
+    for (const line of lines) {
+      if (out.length >= LANES_PER_CHUNK) break;
+      for (const half of [STREET_LANE_HALF, 1]) {
+        const loop = loopAround(line, half);
+        if (!clearLoop(loop)) continue;
+        out.push({ id: `${c.id}-${out.length}`, chunk: c.id, points: loop });
+        break;
+      }
+    }
+    return out;
+  });
+
+/** The market's and the docks' own lanes (ADR-0041), placed with their set pieces. */
+const SET_PIECE_LANES: readonly CrowdLane[] = [
+  // The market: round the edge of the square (east of Sachiko's kiosk at the gate), and round
+  // the stalls in its middle.
+  placedLane(MARKET_PLACE, {
     id: "targ-square",
-    chunk: "targ-south",
+    chunk: MARKET_CHUNK,
     points: [
       [77.65, 65.1],
       [112.75, 65.1],
       [112.75, 82.6],
       [77.65, 82.6],
     ],
-  },
-  {
+  }),
+  placedLane(MARKET_PLACE, {
     id: "targ-stalls",
-    chunk: "targ-south",
+    chunk: MARKET_CHUNK,
     points: [
       [80.5, 70.6],
       [109, 70.6],
       [109, 77.8],
       [80.5, 77.8],
     ],
-  },
-  // Under the overpass: along the north shop fronts, down past the east pillars, back west
-  // between the pillar pairs and up past the stairs.
-  {
+  }),
+  // Under the viaduct: along the north stalls, down past the east pillars, back west between
+  // the pillar pairs and up past the stairs.
+  placedLane(MARKET_PLACE, {
     id: "targ-deck",
-    chunk: "targ-north",
+    chunk: MARKET_CHUNK,
     points: [
       [69.4, 104.75],
       [117, 104.75],
       [117, 90.8],
       [69.4, 90.8],
     ],
-  },
+  }),
   // The docks: the footpath along the east wall, west along the quay fence, back east past the
   // office and the vending machine, north up the yard.
-  {
+  placedLane(DOCKS_PLACE, {
     id: "doki-round",
-    chunk: "doki-quay",
+    chunk: DOCKS_CHUNK,
     points: [
       [31.3, 93],
       [31.3, 113.6],
@@ -139,45 +176,54 @@ export const CROWD_LANES: readonly CrowdLane[] = [
       [24.4, 122.6],
       [24.4, 93],
     ],
-  },
+  }),
 ];
 
-const spot = (chunk: string, x: number, z: number, yaw: number, does: readonly [ActivityId, ...ActivityId[]], indoor = false): CrowdSpot =>
-  indoor ? { chunk, at: v(x, 0, z), yaw, does, indoor: true } : { chunk, at: v(x, 0, z), yaw, does };
+export const CROWD_LANES: readonly CrowdLane[] = [...streetLanes(), ...SET_PIECE_LANES];
+
+const spot = (chunk: string, at: Vec3, yaw: number, does: readonly [ActivityId, ...ActivityId[]], indoor = false): CrowdSpot =>
+  indoor ? { chunk, at, yaw, does, indoor: true } : { chunk, at, yaw, does };
+
+/** A stander against the facade nearest to (x, z), facing away from it. */
+const wallSpot = (chunk: string, x: number, z: number, does: readonly [ActivityId, ...ActivityId[]]): CrowdSpot => {
+  const w = againstWall(x, z, 0.45);
+  return spot(chunk, w.at, w.yaw, does);
+};
+
+const inMarket = (x: number, z: number): Vec3 => placeAt(MARKET_PLACE, v(x, 0, z));
+const inDocks = (x: number, z: number): Vec3 => placeAt(DOCKS_PLACE, v(x, 0, z));
 
 /**
- * Where residents stand: at the walls of the sidewalks (out of the walkers' way), in pairs that
- * talk, at the Neon Koi counter. Clear of the passers-by's spots and the named characters.
+ * Where residents stand: at the shop fronts of the deptak and the Rynek (out of the walkers'
+ * way), at the Neon Koi counter, in the market and on the quay. Clear of the passers-by's spots
+ * and the named characters.
  */
 export const CROWD_SPOTS: readonly CrowdSpot[] = [
-  spot("shinsekai-7", 6.45, -26, WEST, ["smoke", "phone"]),
-  spot("shinsekai-7", -6.45, -27.5, EAST, ["phone", "lean"]),
-  spot("shinsekai-7", -6.45, -9.2, SOUTH, ["talk"]),
-  spot("shinsekai-7", 6.45, 13, WEST, ["lean", "smoke"]),
-  spot("shinsekai-7", -6.45, 27, EAST, ["smoke", "phone"]),
-  spot("shinsekai-7", -6.45, -10.3, NORTH, ["talk"]),
-  spot("shinsekai-7", 12.85, -2.6, EAST, ["drink"], true),
-  spot("shinsekai-7", 12.85, -0.7, EAST, ["talk", "drink"], true),
-  spot("shinsekai-7", 12.85, 5.7, EAST, ["drink"], true),
-  spot("shinsekai-7", 11.5, -6.15, NORTH, ["lean", "phone"], true),
-  spot("kanal", 4.45, 58, EAST, ["lean", "smoke"]),
-  spot("kanal", 24, 81.55, SOUTH, ["smoke", "phone"]),
-  spot("kanal", 14, 74.45, NORTH, ["phone", "lean"]),
-  spot("kanal", 58, 74.45, NORTH, ["smoke"]),
-  spot("kanal", 48, 81.55, SOUTH, ["talk", "phone"]),
-  spot("targ-south", 76, 64.45, SOUTH, ["phone"]),
-  spot("targ-south", 89.4, 64.45, EAST, ["talk"]),
-  spot("targ-south", 113.55, 76, WEST, ["smoke", "lean"]),
-  spot("targ-south", 90.5, 64.45, WEST, ["talk"]),
-  spot("targ-south", 100, 64.45, SOUTH, ["phone", "lean"]),
-  spot("targ-north", 88, 105.55, NORTH, ["phone"]),
-  spot("targ-north", 100, 105.55, NORTH, ["lean", "phone"]),
-  spot("targ-north", 96, 87.2, SOUTH, ["smoke", "lean"]),
-  spot("targ-north", 118, 105.55, NORTH, ["smoke"]),
-  spot("doki-yard", 12.6, 101.2, WEST, ["smoke", "lean"]),
-  spot("doki-yard", 26, 104, NORTH, ["phone"]),
-  spot("doki-quay", 12.6, 137.5, NORTH, ["lean", "smoke"]),
-  spot("doki-quay", 5.5, 134, SOUTH, ["talk", "phone"]),
+  wallSpot("krakowskie-2-0", 300, -73, ["smoke", "phone"]),
+  wallSpot("krakowskie-2-0", 333, -77, ["phone", "lean"]),
+  wallSpot("krakowskie-2-0", 291, -95, ["talk"]),
+  wallSpot("krakowskie-2-0", 326.5, -93, ["lean", "smoke"]),
+  wallSpot("krakowskie-2-0", 344, -97, ["smoke", "phone"]),
+  wallSpot("krakowskie-1-0", 160, -60.5, ["talk", "phone"]),
+  ...KOI_CROWD_SPOTS.map((s, i) => spot("krakowskie-2-0", s.at, s.yaw, i === 1 ? ["talk", "drink"] : i === 3 ? ["lean", "phone"] : ["drink"], true)),
+  wallSpot("stare-miasto-0-0", 536, -60, ["lean", "smoke"]),
+  wallSpot("stare-miasto-0-0", 566, -48, ["smoke", "phone"]),
+  wallSpot("stare-miasto-0-0", 604, -100, ["phone", "lean"]),
+  wallSpot("stare-miasto-0-0", 520, -60, ["smoke"]),
+  wallSpot("stare-miasto-0-0", 590, -42, ["talk", "phone"]),
+  spot(MARKET_CHUNK, inMarket(76, 64.45), SOUTH, ["phone"]),
+  spot(MARKET_CHUNK, inMarket(89.4, 64.45), EAST, ["talk"]),
+  spot(MARKET_CHUNK, inMarket(113.55, 76), WEST, ["smoke", "lean"]),
+  spot(MARKET_CHUNK, inMarket(90.5, 64.45), WEST, ["talk"]),
+  spot(MARKET_CHUNK, inMarket(100, 64.45), SOUTH, ["phone", "lean"]),
+  spot(MARKET_CHUNK, inMarket(88, 105.55), NORTH, ["phone"]),
+  spot(MARKET_CHUNK, inMarket(100, 105.55), NORTH, ["lean", "phone"]),
+  spot(MARKET_CHUNK, inMarket(96, 87.2), SOUTH, ["smoke", "lean"]),
+  spot(MARKET_CHUNK, inMarket(118, 105.55), NORTH, ["smoke"]),
+  spot(DOCKS_CHUNK, inDocks(12.6, 101.2), WEST, ["smoke", "lean"]),
+  spot(DOCKS_CHUNK, inDocks(26, 104), NORTH, ["phone"]),
+  spot(DOCKS_CHUNK, inDocks(12.6, 137.5), NORTH, ["lean", "smoke"]),
+  spot(DOCKS_CHUNK, inDocks(5.5, 134), SOUTH, ["talk", "phone"]),
 ];
 
 /**
@@ -193,11 +239,19 @@ export const CROWD_BY_HOUR: Readonly<Record<string, readonly number[]>> = {
 };
 
 /** Each chunk's crowd: its profile by the hour and its share of the cap. */
-export const CROWD_CHUNKS: Readonly<Record<string, { readonly profile: keyof typeof CROWD_BY_HOUR; readonly share: number }>> = {
-  "shinsekai-7": { profile: "nightlife", share: 1 },
-  kanal: { profile: "street", share: 0.8 },
-  "targ-south": { profile: "market", share: 1 },
-  "targ-north": { profile: "market", share: 0.75 },
-  "doki-yard": { profile: "docks", share: 0.25 },
-  "doki-quay": { profile: "docks", share: 0.6 },
-};
+export const CROWD_CHUNKS: Readonly<Record<string, { readonly profile: keyof typeof CROWD_BY_HOUR; readonly share: number }>> = Object.fromEntries(
+  MAP_CHUNKS.flatMap((c) => {
+    if (!CROWD_LANES.some((l) => l.chunk === c.id) && !CROWD_SPOTS.some((sp) => sp.chunk === c.id)) return [];
+    const crowd =
+      c.id === MARKET_CHUNK
+        ? { profile: "market" as const, share: 1 }
+        : c.id === DOCKS_CHUNK
+          ? { profile: "docks" as const, share: 0.6 }
+          : c.id === "krakowskie-2-0" || c.id === "krakowskie-1-0"
+            ? { profile: "nightlife" as const, share: 1 }
+            : c.district === "shinsekai-7"
+              ? { profile: "nightlife" as const, share: 0.6 }
+              : { profile: "street" as const, share: 0.8 };
+    return [[c.id, crowd]];
+  }),
+);

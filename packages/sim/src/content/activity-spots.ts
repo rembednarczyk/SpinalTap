@@ -1,7 +1,9 @@
-import type { ActivityId } from "@seki/core";
+import type { ActivityId, Vec3 } from "@seki/core";
 import type { ActivitySpot, SpotKind } from "../world/activity-types";
-import { type StaticProp, v } from "./builders";
+import { type StaticProp, placeAt, v } from "./builders";
 import { TARG_NORTH_PROPS, TARG_SOUTH_PROPS } from "./district-targ";
+import { againstWall, spotNear } from "./lublin/places";
+import { DOCKS_PLACE, MAP_CHUNKS, MARKET_PLACE } from "./lublin/sites";
 
 /**
  * Activity spots (smart spots) of the districts (ADR-0040): a bench to sit on, a wall to lean
@@ -39,12 +41,29 @@ export const spotWeightsAt = (hour: number): Readonly<Record<SpotKind, number>> 
   return out;
 };
 
-/** X of the food stalls' counters in a row at `z` (the market's generator placed them). */
+/** X of the food stalls' counters in a row at local `z` (the market's generator placed them), in the world. */
 const stallsAt = (props: readonly StaticProp[], z: number): number[] =>
-  props.flatMap((p) => (p.view.kind === "block" && p.solid && p.center.z === z && p.view.size.x === 2.6 && p.view.size.z === 1.3 ? [p.center.x] : []));
+  props.flatMap((p) => (p.view.kind === "block" && p.solid && p.center.z === z + MARKET_PLACE.z && p.view.size.x === 2.6 && p.view.size.z === 1.3 ? [p.center.x] : []));
 
-const spot = (id: string, chunk: string, kind: SpotKind, x: number, z: number, yaw: number, only?: readonly [ActivityId, ...ActivityId[]]): ActivitySpot =>
-  only ? { id, chunk, kind, at: v(x, 0, z), yaw, only } : { id, chunk, kind, at: v(x, 0, z), yaw };
+/** The chunk of Lublin a spot stands in (the first holding it, as streaming does). */
+const chunkOf = (x: number, z: number): string =>
+  MAP_CHUNKS.find((c) => x >= c.bounds.minX && x <= c.bounds.maxX && z >= c.bounds.minZ && z <= c.bounds.maxZ)?.id ?? "";
+
+const spotAt = (id: string, kind: SpotKind, at: Vec3, yaw: number, only?: readonly [ActivityId, ...ActivityId[]]): ActivitySpot => {
+  const chunk = chunkOf(at.x, at.z);
+  return only ? { id, chunk, kind, at, yaw, only } : { id, chunk, kind, at, yaw };
+};
+
+/** A spot against the facade nearest to (x, z), facing away from it. */
+const wallSpot = (id: string, kind: SpotKind, x: number, z: number, only?: readonly [ActivityId, ...ActivityId[]]): ActivitySpot => {
+  const w = againstWall(x, z, 0.55);
+  return spotAt(id, kind, w.at, w.yaw, only);
+};
+
+/** A spot of the market or the docks, in their own coordinates. */
+const marketSpot = (id: string, kind: SpotKind, x: number, z: number, yaw: number): ActivitySpot => spotAt(id, kind, placeAt(MARKET_PLACE, v(x, 0, z)), yaw);
+const docksSpot = (id: string, kind: SpotKind, x: number, z: number, yaw: number, only?: readonly [ActivityId, ...ActivityId[]]): ActivitySpot =>
+  spotAt(id, kind, placeAt(DOCKS_PLACE, v(x, 0, z)), yaw, only);
 
 /** On the open quay there is nothing to lean on. */
 const STANDING: readonly [ActivityId, ...ActivityId[]] = ["smoke", "phone"];
@@ -54,26 +73,32 @@ const WEST = -Math.PI / 2;
 const NORTH = 0;
 const SOUTH = Math.PI;
 
-/** Shinsekai 7: the main street, X ∈ [-7, 7]. Kept off Kaito's corner, the clinic door and the alley. */
-const SHINSEKAI: readonly ActivitySpot[] = [
-  spot("s7-koi-wall", "shinsekai-7", "wall", 6.5, -4.5, WEST),
-  spot("s7-tower-wall", "shinsekai-7", "wall", 6.5, -19.5, WEST),
-  spot("s7-hotel-wall", "shinsekai-7", "wall", -6.5, -5, EAST),
-  spot("s7-ramen", "shinsekai-7", "stall", -6.5, 9.5, WEST),
-  spot("s7-ramen-bar", "shinsekai-7", "bar", -6.5, 12.8, WEST),
-  spot("s7-pachinko-vending", "shinsekai-7", "vending", -6.5, 21, WEST),
-  spot("s7-kusuri-bench", "shinsekai-7", "bench", 6.5, 22, WEST),
-  spot("s7-kusuri-vending", "shinsekai-7", "vending", 6.5, 17, EAST),
+/**
+ * Krakowskie Przedmieście: the shop fronts of the deptak round the clinic and Neon Koi, kept
+ * off Kaito's counter, the doors and Ume; the benches of Plac Litewski.
+ */
+const KRAKOWSKIE: readonly ActivitySpot[] = [
+  wallSpot("s7-koi-wall", "wall", 309, -93),
+  wallSpot("s7-tower-wall", "wall", 323, -93),
+  wallSpot("s7-hotel-wall", "wall", 336, -76),
+  wallSpot("s7-ramen", "stall", 314, -73.5),
+  wallSpot("s7-ramen-bar", "bar", 316.6, -73.5),
+  wallSpot("s7-pachinko-vending", "vending", 304, -72.4),
+  wallSpot("s7-kusuri-vending", "vending", 300.5, -93),
+  spotAt("pl-bench-1", "bench", spotNear(62, -31), NORTH),
+  spotAt("pl-bench-2", "bench", spotNear(80, -33), NORTH),
+  spotAt("pl-bench-3", "bench", spotNear(100, -37), NORTH),
+  spotAt("pl-bench-4", "bench", spotNear(118, -41), WEST),
 ];
 
-/** Ulica Kanałowa: the bend by SAKE, both kerbs of segment B. Clear of the footbridge stairs and the van. */
+/** Stare Miasto: the Rynek round the Trybunał, the corner of Grodzka. */
 const KANAL: readonly ActivitySpot[] = [
-  spot("kanal-sake-bar", "kanal", "bar", 9.45, 61.2, EAST),
-  spot("kanal-karaoke-bar", "kanal", "bar", 18, 81.5, NORTH),
-  spot("kanal-south-wall", "kanal", "wall", 22, 74.5, NORTH),
-  spot("kanal-north-wall", "kanal", "wall", 36, 81.5, SOUTH),
-  spot("kanal-vending", "kanal", "vending", 38, 74.5, SOUTH),
-  spot("kanal-bench", "kanal", "bench", 64, 74.5, NORTH),
+  wallSpot("kanal-sake-bar", "bar", 541, -68),
+  wallSpot("kanal-karaoke-bar", "bar", 560, -36),
+  wallSpot("kanal-south-wall", "wall", 600, -95),
+  wallSpot("kanal-north-wall", "wall", 530, -53),
+  wallSpot("kanal-vending", "vending", 594, -17),
+  spotAt("kanal-bench", "bench", spotNear(585, -88), WEST),
 ];
 
 const SOUTH_STALLS = stallsAt(TARG_SOUTH_PROPS, 68);
@@ -81,37 +106,38 @@ const NORTH_STALLS = stallsAt(TARG_NORTH_PROPS, 102);
 
 /**
  * The market: in front of the stalls of both rows (the south row's customers face south, the
- * north row's north), the TAKO and PACHI facades on the east side, a pillar under the deck.
+ * north row's north), the TAKO and PACHI facades on the east side, a pillar under the viaduct.
  */
 const TARG: readonly ActivitySpot[] = [
-  ...SOUTH_STALLS.slice(1, 3).map((x, i) => spot(`targ-south-stall-${i}`, "targ-south", "stall", x, 69.1, SOUTH)),
-  spot("targ-tako-bar", "targ-south", "bar", 113.5, 66.5, EAST),
-  spot("targ-tako-vending", "targ-south", "vending", 113.5, 71, EAST),
-  spot("targ-pachi-wall", "targ-south", "wall", 113.5, 81, WEST),
-  ...NORTH_STALLS.slice(0, 1).map((x) => spot("targ-north-stall", "targ-north", "stall", x, 100.9, NORTH)),
-  ...NORTH_STALLS.slice(2, 3).map((x) => spot("targ-yatai-bar", "targ-north", "bar", x, 100.9, NORTH)),
-  spot("targ-pillar-wall", "targ-north", "wall", 96, 94.3, SOUTH),
-  spot("targ-north-vending", "targ-north", "vending", 110, 105.55, NORTH),
-  spot("targ-north-bench", "targ-north", "bench", 84, 105.55, SOUTH),
+  ...SOUTH_STALLS.slice(1, 3).map((x, i) => spotAt(`targ-south-stall-${i}`, "stall", placeAt(MARKET_PLACE, v(x - MARKET_PLACE.x, 0, 69.1)), SOUTH)),
+  marketSpot("targ-tako-bar", "bar", 113.5, 66.5, EAST),
+  marketSpot("targ-tako-vending", "vending", 113.5, 71, EAST),
+  marketSpot("targ-pachi-wall", "wall", 113.5, 81, WEST),
+  ...NORTH_STALLS.slice(0, 1).map((x) => spotAt("targ-north-stall", "stall", placeAt(MARKET_PLACE, v(x - MARKET_PLACE.x, 0, 100.9)), NORTH)),
+  ...NORTH_STALLS.slice(2, 3).map((x) => spotAt("targ-yatai-bar", "bar", placeAt(MARKET_PLACE, v(x - MARKET_PLACE.x, 0, 100.9)), NORTH)),
+  marketSpot("targ-pillar-wall", "wall", 96, 94.3, SOUTH),
+  marketSpot("targ-north-vending", "vending", 110, 105.55, NORTH),
+  marketSpot("targ-north-bench", "bench", 84, 105.55, SOUTH),
 ];
 
 /** The docks: the vending machine by the office, the open quay. Tessen's yard has no idlers. */
 const DOKI: readonly ActivitySpot[] = [
-  spot("doki-vending", "doki-quay", "vending", -24, 126.75, NORTH),
-  spot("doki-quay-wall", "doki-quay", "wall", 2, 128.5, SOUTH, STANDING),
-  spot("doki-fence-wall", "doki-quay", "wall", -10, 141, NORTH, STANDING),
+  docksSpot("doki-vending", "vending", -24, 126.75, NORTH),
+  docksSpot("doki-quay-wall", "wall", 2, 128.5, SOUTH, STANDING),
+  docksSpot("doki-fence-wall", "wall", -10, 141, NORTH, STANDING),
 ];
 
-export const ACTIVITY_SPOTS: readonly ActivitySpot[] = [...SHINSEKAI, ...KANAL, ...TARG, ...DOKI];
+export const ACTIVITY_SPOTS: readonly ActivitySpot[] = [...KRAKOWSKIE, ...KANAL, ...TARG, ...DOKI];
 
 /** Most background passers-by a chunk ever holds (ADR-0040's budget). */
 export const MAX_PASSERSBY_PER_CHUNK = 3;
 
 /** Background passers-by per chunk, in the chunk table's order. Capped by MAX_PASSERSBY_PER_CHUNK. */
 export const PASSERSBY: Readonly<Record<string, number>> = {
-  "shinsekai-7": 3,
-  kanal: 3,
-  "targ-south": 2,
-  "targ-north": 2,
-  "doki-quay": 1,
+  "krakowskie-1-0": 2,
+  "krakowskie-2-0": 3,
+  "stare-miasto-0-0": 3,
+  "stare-miasto-0-1": 1,
+  "podzamcze-1-0": 3,
+  "nabrzeze-1-1": 1,
 };

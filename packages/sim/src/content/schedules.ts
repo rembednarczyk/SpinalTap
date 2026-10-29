@@ -1,7 +1,11 @@
 import { type GameClock, type Vec3, hm, minuteOfDay } from "@seki/core";
 import type { ScheduleDef } from "../world/components";
-import { type ActorSpawn, v } from "./builders";
-import { FOOTBRIDGE_WALK, KANAL_SPOTS } from "./district-targ";
+import type { ActorSpawn } from "./builders";
+import { UME_CORNER, UME_HOME } from "./district-m0";
+import { GRODZKA_WALK, KANAL_SPOTS } from "./district-kanal";
+import { market } from "./district-targ";
+import { spotNear } from "./lublin/places";
+import { ground } from "./lublin/terrain";
 import { WORLD_CHUNKS } from "./world-map";
 
 /**
@@ -24,11 +28,11 @@ const offset = (p: Vec3, dx: number, dz: number): Vec3 => ({ x: p.x + dx, y: p.y
 const CIVILIAN_WALK = 1.2;
 const PATROL_WALK = 1.6;
 
-/** Babcia Ume: on the street from early morning, home in the doorway by the south lamp late at night. */
+/** Babcia Ume: on the deptak from early morning, home in the doorway by the clinic late at night. */
 const ume = (): ScheduleDef => {
   const spot = spawnOf("ume");
-  const corner = offset(spot.position, -0.2, -4);
-  const home = offset(spot.position, -1.1, -7.5);
+  const corner = UME_CORNER;
+  const home = UME_HOME;
   return {
     speed: CIVILIAN_WALK,
     stops: [
@@ -88,31 +92,32 @@ const hebiLookout = (): ScheduleDef => {
   };
 };
 
+/** Where Hideo waits for the Tessen bus: by Sachiko's kiosk at the market's gate. */
+export const HIDEO_BUS_STOP = market(69.9, 0, 75.6);
+
 /**
- * Hideo (ADR-0026): sleeps in the doorway of the west block, crosses the footbridge to the
- * market gate in the morning (the Tessen office bus stops there), and comes back over it to
- * the SAKE bar in the evening, where he stands until two.
+ * Hideo (ADR-0026): sleeps in a doorway on Bramowa, walks down Grodzka, through Brama Grodzka
+ * and over Plac Zamkowy to the Tessen bus at the market in the morning, and comes back the same
+ * way to SAKE on the Rynek in the evening, where he stands until two.
  */
 const hideo = (): ScheduleDef => {
   const sake = spawnOf("hideo");
-  const { hideoHome: home, hideoKiosk: kiosk } = KANAL_SPOTS;
-  const bend = v(7, 0, 72);
-  const kerb = v(7, 0, 78.8);
-  const westEnd = v(12, 0, 79);
+  const { hideoHome: home } = KANAL_SPOTS;
+  const bramowa = ground(520, -63);
   return {
     speed: CIVILIAN_WALK,
     stops: [
-      { label: "dom", at: hm(2), path: [bend, home], yaw: Math.PI / 2, activity: "sleep" },
-      { label: "do pracy", at: hm(7, 30), path: [kerb, ...FOOTBRIDGE_WALK, kiosk], yaw: Math.PI / 2, activity: "phone" },
-      { label: "sake", at: hm(19), path: [kiosk, ...[...FOOTBRIDGE_WALK].reverse(), westEnd, bend, sake.position], yaw: sake.yaw, activity: "drink" },
+      { label: "dom", at: hm(2), path: [bramowa, home], yaw: Math.PI / 2, activity: "sleep" },
+      { label: "do pracy", at: hm(7, 30), path: [bramowa, ...GRODZKA_WALK, HIDEO_BUS_STOP], yaw: Math.PI / 2, activity: "phone" },
+      { label: "sake", at: hm(19), path: [HIDEO_BUS_STOP, ...[...GRODZKA_WALK].reverse(), sake.position], yaw: sake.yaw, activity: "drink" },
     ],
   };
 };
 
-/** Mei sings at KARAOKE from 20:00 to 4:00; by day she waits out the light in the corner by the bend. */
+/** Mei sings at KARAOKE from 20:00 to 4:00; by day she waits out the light in a doorway off the Rynek. */
 const mei = (): ScheduleDef => {
   const stage = spawnOf("mei");
-  const corner = v(9, 0, 80.6);
+  const corner = spotNear(545, -46);
   return {
     speed: CIVILIAN_WALK,
     stops: [

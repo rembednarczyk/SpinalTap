@@ -2,10 +2,16 @@ import type { ContractSiteId, EnemyTypeId, Vec3 } from "@seki/core";
 import {
   type ActorDef,
   type BlockMaterial,
+  type DoorDef,
   type NavGraph,
   type Rect,
   type StaticProp,
   building,
+  placeAt,
+  placeDoor,
+  placeNav,
+  placeProps,
+  placeRect,
   crate,
   deck,
   ladderParts,
@@ -19,22 +25,30 @@ import {
   v,
   water,
 } from "./builders";
+import { doorParts } from "./doors";
+import { DOOR_TOP } from "./interiors";
+import { DOCKS_PLACE } from "./lublin/sites";
 
 /**
- * Doki (ADR-0024): the port at the mouth of the canal, north of Ulica Kanałowa. A narrow
- * passage leaves the street through a gap in its north row (X ∈ [24, 30]) into the container
- * yard; past the yard lies the quay with Tessen's office, a gantry crane and a pier into the
- * water. Everything is hand-placed: no generator, so nothing here moves the other districts.
+ * Nabrzeże Bystrzycy (district `doki`, ADR-0024, moved by ADR-0045): Tessen's docks on the
+ * Bystrzyca, north-east of the old town, reached by the metro. The yard behind its walls, past
+ * it the quay with Tessen's office, a gantry crane and a pier into a basin dug off the river.
+ * Everything is hand-made around its own origin (x -40..34, z 90..218) and placed by
+ * `DOCKS_PLACE`: everything exported here is in the world. Heights such as `WAREHOUSE_TOP` stay
+ * above the docks' floor (`DOCKS_PLACE.y`).
  *
  * Levels (ADR-0020/0021): a ladder up a container stack and a catwalk between stacks (player
  * only), stairs onto the warehouse roof and onto the crane deck (NPCs too, through DOKI_NAV).
  * The quay edge and the pier are fenced too high to jump: the water is scenery.
  */
 
+/** A point of the docks in the world: its own coordinates moved by `DOCKS_PLACE`. */
+export const docks = (x: number, y: number, z: number): Vec3 => placeAt(DOCKS_PLACE, v(x, y, z));
+
 /** The yard: from the street's north row to the start of the quay. */
-export const DOKI_YARD_BOUNDS: Rect = { minX: -40, maxX: 34, minZ: 90.2, maxZ: 124 };
+export const DOKI_YARD_BOUNDS: Rect = placeRect(DOCKS_PLACE, { minX: -40, maxX: 34, minZ: 90.2, maxZ: 124 });
 /** The quay, the pier and the water in front of it. */
-export const DOKI_QUAY_BOUNDS: Rect = { minX: -40, maxX: 34, minZ: 124.2, maxZ: 218 };
+export const DOKI_QUAY_BOUNDS: Rect = placeRect(DOCKS_PLACE, { minX: -40, maxX: 34, minZ: 124.2, maxZ: 218 });
 
 /**
  * Parapet on the outer edges of the warehouse roof: higher than a jump clears (about 1.7 m),
@@ -43,8 +57,8 @@ export const DOKI_QUAY_BOUNDS: Rect = { minX: -40, maxX: 34, minZ: 124.2, maxZ: 
  */
 const OUTER_PARAPET = 1.9;
 
-/** Gap in the north row of Ulica Kanałowa that leads into the docks. */
-export const DOKI_PASSAGE = { x0: 24, x1: 30 } as const;
+/** The gate in the yard's south side (the docks' own coordinates). */
+const DOKI_PASSAGE = { x0: 24, x1: 30 } as const;
 
 /** Roof of the warehouse on the west side of the yard. */
 export const WAREHOUSE_TOP = 9;
@@ -178,7 +192,7 @@ const waterfront = (): StaticProp[] => [
   neon(-30, 7.2, 208.9, v(0.4, 0.4, 0.15), "#ff3030"),
 ];
 
-export const DOKI_YARD_PROPS: readonly StaticProp[] = [
+const YARD_PROPS: readonly StaticProp[] = [
   slab(-3, -0.1, 107, v(74, 0.2, 34), "asphalt"),
   // Outer walls: west, east, and south of the yard where the street's buildings do not reach.
   building(-39, 120, 2, 8, 60, "metal"),
@@ -199,7 +213,22 @@ export const DOKI_YARD_PROPS: readonly StaticProp[] = [
   crate(27, 120, 2, 1.5, 4.2, skin("car", "z-")),
 ];
 
-export const DOKI_QUAY_PROPS: readonly StaticProp[] = [
+export const DOKI_YARD_PROPS: readonly StaticProp[] = placeProps(DOCKS_PLACE, YARD_PROPS);
+
+/** The side door of Tessen's office onto the quay (x = -18.15), opening z ∈ [131, 133], on the code from the hook (ADR-0038). */
+const OFFICE_DOOR: DoorDef = {
+  key: "door:tessen-office",
+  at: v(-18.15, 0, 132),
+  along: "z",
+  width: 2,
+  height: DOOR_TOP,
+  leaves: 2,
+  lock: { kind: "code", staff: "tessen", during: "infiltrate" },
+  panel: v(-17.94, 1.3, 133.6),
+};
+export const TESSEN_OFFICE_DOOR: DoorDef = placeDoor(DOCKS_PLACE, OFFICE_DOOR);
+
+const QUAY_PROPS: readonly StaticProp[] = [
   slab(-3, -0.1, 137, v(74, 0.2, 26), "asphalt"),
   slab(-3, 0.04, QUAY_EDGE - 1.2, v(70, 0.08, 2.4), "concrete"),
   ...office(),
@@ -216,17 +245,19 @@ export const DOKI_QUAY_PROPS: readonly StaticProp[] = [
   lamp(-8, 147.5, SODIUM),
   lamp(28, 133, SODIUM),
   ...waterfront(),
+  // ADR-0038: the office door and the lintel over it (the walls are 3.6 m high).
+  { ...deck(-18.3, -18, 131, 133, 3.6, 3.6 - DOOR_TOP, "concrete"), interior: true },
 ];
+
+export const DOKI_QUAY_PROPS: readonly StaticProp[] = [...placeProps(DOCKS_PLACE, QUAY_PROPS), ...doorParts(TESSEN_OFFICE_DOOR)];
 
 /**
  * Level graph of the docks (ADR-0021): the yard floor around the containers, the foot and the
  * head of the warehouse stairs and points on its roof, the quay and the crane walkway. The
  * container ladders and the catwalk are left out on purpose: those roofs are the player's.
  */
-export const DOKI_NAV: NavGraph = {
+const LOCAL_NAV: NavGraph = {
   nodes: [
-    // On Ulica Kanałowa in front of the passage: joins this graph to the street's (KANAL_NAV).
-    { id: "doki-passage-s", at: v(27, 0, 79) },
     { id: "doki-gate", at: v(27, 0, 93) },
     { id: "doki-yard-s", at: v(13, 0, 96) },
     { id: "doki-yard-e", at: v(17, 0, 106) },
@@ -258,8 +289,6 @@ export const DOKI_NAV: NavGraph = {
     { id: "doki-quay-e", at: v(29.5, 0, 122.5) },
   ],
   edges: [
-    { a: "kanal-street-w", b: "doki-passage-s" },
-    { a: "doki-passage-s", b: "doki-gate" },
     { a: "doki-gate", b: "doki-yard-s" },
     { a: "doki-yard-s", b: "doki-yard-e" },
     { a: "doki-yard-e", b: "doki-yard-n" },
@@ -292,8 +321,10 @@ export const DOKI_NAV: NavGraph = {
   ],
 };
 
+export const DOKI_NAV: NavGraph = placeNav(DOCKS_PLACE, LOCAL_NAV);
+
 /** Genzō, the smuggler who hands out the docks jobs, stands by his container office. */
-export const GENZO_SPOT = v(20.6, 0, 97.6);
+export const GENZO_SPOT = docks(20.6, 0, 97.6);
 
 export const DOKI_YARD_ACTORS: readonly ActorDef[] = [
   {
@@ -307,7 +338,7 @@ export const DOKI_YARD_ACTORS: readonly ActorDef[] = [
 
 export const DOKI_QUAY_ACTORS: readonly ActorDef[] = [
   // A docker on a smoke break by the east fence: life in the port, nothing to say.
-  { kind: "npc", spawn: { key: "doker", position: v(27, 0, 147.4), yaw: Math.PI }, preset: "civilian", faction: "civilians", bystander: true },
+  { kind: "npc", spawn: { key: "doker", position: docks(27, 0, 147.4), yaw: Math.PI }, preset: "civilian", faction: "civilians", bystander: true },
 ];
 
 /**
@@ -322,14 +353,14 @@ export interface ContractPost {
 }
 
 const post = (x: number, y: number, z: number, yaw: number, type: EnemyTypeId = "tessen_guard", onAlarm = false): ContractPost =>
-  onAlarm ? { at: v(x, y, z), yaw, type, onAlarm: true } : { at: v(x, y, z), yaw, type };
+  onAlarm ? { at: docks(x, y, z), yaw, type, onAlarm: true } : { at: docks(x, y, z), yaw, type };
 
 /**
  * Sniper perches (ADR-0024): the north-east and north-west corners of the warehouse roof and the
  * south rail of the crane walkway. Each stands right at a parapet, so the shooter sees down onto
  * the quay over it.
  */
-export const SNIPER_PERCHES: readonly Vec3[] = [v(-19, WAREHOUSE_TOP, 119.3), v(-36.4, WAREHOUSE_TOP, 119.3), v(20.5, CRANE_TOP, 138.7)];
+export const SNIPER_PERCHES: readonly Vec3[] = [docks(-19, WAREHOUSE_TOP, 119.3), docks(-36.4, WAREHOUSE_TOP, 119.3), docks(20.5, CRANE_TOP, 138.7)];
 
 /**
  * Posts of the docks jobs, in target index order (the first one decides the chunk, so it lies on
@@ -362,25 +393,25 @@ export const DOKI_CONTRACT_POSTS: Readonly<Partial<Record<ContractSiteId, readon
 
 /** Mika's way from Genzō's corner to the boat: around the office, up the east aisle, across the quay, down the pier. */
 export const ESCORT_ROUTE: readonly [Vec3, ...Vec3[]] = [
-  v(18.4, 0, 97.6),
-  v(13.6, 0, 97.8),
-  v(14, 0, 106),
-  v(16, 0, 122),
-  v(4, 0, 128),
-  v(2, 0, 136),
-  v(2, 0, 149),
-  v(2, 0, 169),
+  docks(18.4, 0, 97.6),
+  docks(13.6, 0, 97.8),
+  docks(14, 0, 106),
+  docks(16, 0, 122),
+  docks(4, 0, 128),
+  docks(2, 0, 136),
+  docks(2, 0, 149),
+  docks(2, 0, 169),
 ];
 
 /** Mika passing this line (past the yard, onto the quay) springs the ambush. */
-export const ESCORT_AMBUSH_Z = 124;
+export const ESCORT_AMBUSH_Z = 124 + DOCKS_PLACE.z;
 
 /** Where the data of an infiltration lies (on the office desk) and where the hack terminal stands. */
 export const DOKI_ITEM_SPOTS: Readonly<Partial<Record<ContractSiteId, Vec3>>> = {
-  tessen_office: v(-27.6, 0.9, 133),
+  tessen_office: docks(-27.6, 0.9, 133),
 };
 export const DOKI_TERMINAL_SPOTS: Readonly<Partial<Record<ContractSiteId, Vec3>>> = {
-  quay_terminal: v(8, 0, 134),
+  quay_terminal: docks(8, 0, 134),
 };
 
 /** Spawn points by site, for the shared table (the posts' positions). */

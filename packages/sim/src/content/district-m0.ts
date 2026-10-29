@@ -1,18 +1,59 @@
 import type { ContractSiteId, Vec3 } from "@seki/core";
 import { M0_TARGET_TAG } from "@seki/core";
-import { KANAL_CONTRACT_SITE_SPAWNS, type RoofStash, TARG_CONTRACT_SITE_FACING, TARG_CONTRACT_SITE_SPAWNS } from "./district-targ";
+import { KANAL_CONTRACT_SITE_SPAWNS } from "./district-kanal";
+import { type RoofStash, TARG_CONTRACT_SITE_FACING, TARG_CONTRACT_SITE_SPAWNS } from "./district-targ";
 import { DOKI_CONTRACT_SITE_SPAWNS } from "./district-doki";
-import { type ActorDef, type ActorSpawn, type GangerSpawn, type Rect, type StaticProp, building, crate, lamp, neon, rail, skin, slab, v } from "./builders";
-import { BARMAN_SPAWN, CLINIC_WAKE_SPOT, FIXER_BAR_SPAWN, FIXER_CLINIC_SPAWN, KOI_REGULAR_SPAWNS, MORI_SPAWN, S7_INTERIORS } from "./interiors";
-
-/** Width of the main street between the facades (X from -7 to 7). */
-const STREET = 14;
+import {
+  type ActorDef,
+  type ActorSpawn,
+  type GangerSpawn,
+  type Placement,
+  type StaticProp,
+  building,
+  crate,
+  lamp,
+  neon,
+  placeAt,
+  placeProps,
+  skin,
+  slab,
+  v,
+} from "./builders";
+import { BARMAN_SPAWN, CLINIC_WAKE_SPOT, CLINIC_WAKE_YAW, FIXER_BAR_SPAWN, FIXER_CLINIC_SPAWN, KOI_REGULAR_SPAWNS, MORI_SPAWN, S7_INTERIORS } from "./interiors";
+import { CAR_WASH_PLACE } from "./lublin/sites";
+import { ground, groundY } from "./lublin/terrain";
 
 /**
- * MYJNIA 24H (ADR-0026) in the bay of the east row between the tower and the alley block
- * (X ∈ [7, 21], Z ∈ [26, 35]): the machine room against the district wall, a canopy on two
- * posts over the bay, the wash gantry and a car being washed. The sign hangs on the canopy,
- * facing the street. The contract site `car_wash` is the alley behind it, to the north.
+ * Krakowskie Przedmieście (district `shinsekai-7`, ADR-0045): the deptak from Plac Litewski to
+ * Brama Krakowska. The clinic and Neon Koi face each other across the deptak at x ≈ 320 (the
+ * rooms in `interiors.ts`), the wreck Seki was pulled out of lies at the corner of Plac
+ * Litewski, the van of the east lot is parked on the square, the car wash and the yard behind it
+ * stand on Plac Łokietka at the end of the deptak. The buildings are the map's
+ * (`lublin/world.ts`); this table holds what the game adds. World coordinates, y on the
+ * terrain.
+ */
+
+/** A group of props moved as one: drawn around its own origin, put on the ground at (x, z). */
+const group = (x: number, z: number): Placement => ({ x, y: groundY(x, z), z });
+
+/** The wreck and the old south gate of Shinsekai, at the corner of Plac Litewski (old origin near (0, -30)). */
+const WRECK = group(150, -20);
+/** The east lot with Tetsuo's van, on Plac Litewski (old origin (0, 0)). */
+const EAST_LOT = group(100, -30);
+/** Behind Neon Koi: the courtyard south of the bar (old origin (0, 0) of the street north of the bar). */
+const KOI_BACK = group(300, -132);
+
+/** A point of a group in the world, on the terrain under it. */
+const on = (g: Placement, x: number, z: number): Vec3 => {
+  const p = placeAt(g, v(x, 0, z));
+  return v(p.x, groundY(p.x, p.z), p.z);
+};
+
+/**
+ * MYJNIA 24H (ADR-0026) on Plac Łokietka: the machine room, a canopy on two posts over the
+ * bay, the wash gantry and a car being washed; the yard behind it (north) with a dumpster,
+ * crates and a parked car is the contract site `car_wash`. Old coordinates, placed by
+ * `CAR_WASH_PLACE`.
  */
 const carWash = (): StaticProp[] => [
   building(18, 30.5, 6, 4.6, 9, "concrete", skin("shop", "x-", { signs: false })),
@@ -25,108 +66,99 @@ const carWash = (): StaticProp[] => [
   slab(12.5, 3.5, 30.5, v(1.2, 0.36, 5.5), "metal"),
   crate(11.2, 30.5, 4.2, 1.5, 2, skin("car", "x+")),
   neon(8.2, 5.1, 30.5, v(0.15, 0.9, 6), "#ff4040", "MYJNIA 24H"),
-];
-
-/**
- * Shinsekai, block 7: the M0 vertical-slice district. Pure data, consumed by the world factory.
- * Coordinates: Y up, +Z north. The main street runs north along X ∈ [-7, 7]. The car wash
- * stands in the bay of the east row (Z ∈ [26, 35]); the alley behind it runs north to a gap in
- * the north wall (X ∈ [4.8, 9]) that leads onto Ulica Kanałowa.
- */
-export const DISTRICT_M0_PROPS: readonly StaticProp[] = [
-  { center: v(0, -0.1, 7), view: { kind: "block", size: v(46, 0.2, 88), material: "asphalt" }, solid: false },
-  // Sidewalks (visual only).
-  { center: v(-7.8, 0.04, -2), view: { kind: "block", size: v(1.6, 0.08, 66), material: "concrete" }, solid: false },
-  { center: v(7.8, 0.04, -2), view: { kind: "block", size: v(1.6, 0.08, 66), material: "concrete" }, solid: false },
-  // West block. Looks (ADR-0022): the street's own neon hangs on the clinic, ramen bar and
-  // pachinko facades, so those get no generic signs. The clinic and ramen block between the
-  // towers is in S7_INTERIORS (ADR-0038).
-  building(-14, -26, 14, 18, 14, "concrete", skin("tenement", "x+", { street: STREET })),
-  building(-14, -9, 14, 26, 16, "glass", skin("tower", "x+")),
-  building(-14, 24, 14, 30, 14, "glass", skin("tower", "x+")),
-  // East block. The Neon Koi bar between the towers is in S7_INTERIORS.
-  building(14, -25, 14, 22, 16, "glass", skin("tower", "x-")),
-  building(14, 20, 14, 34, 12, "glass", skin("tower", "x-")),
-  // Northern alley behind the car wash.
-  building(-14, 40, 14, 20, 18, "concrete", skin("tenement", "x+", { street: 14 })),
-  building(15, 42, 12, 16, 14, "metal", skin("tenement", "x-", { signs: false })),
-  // District bounds.
-  building(0, -37, 46, 6, 2, "metal"),
-  // North wall, split around the passage to Ulica Kanałowa (X ∈ [4.8, 9]). Under 8 m, so the
-  // engine's set dressing does not treat the pieces as buildings.
-  building(-9.1, 51, 27.8, 6, 2, "metal"),
-  building(16, 51, 14, 6, 2, "metal"),
-  building(-22, 7, 2, 8, 88, "metal"),
-  building(22, 7, 2, 8, 88, "metal"),
-  // The wreck Seki was pulled out of; she comes round in Mori's clinic (ADR-0038).
-  crate(2.6, -31, 2, 1.4, 4.4, skin("wreck", "z-")),
-  // Parked van in the east lot.
-  crate(12, -12, 2.4, 2.2, 5, skin("van", "z+")),
-  // Alley cover: crates, two dumpsters and a parked car.
+  // The yard: crates, two dumpsters and a parked car, a lamp.
   crate(-3, 36, 1.6, 1.2, 1.2),
   crate(4, 38.5, 1.2, 1.2, 2.4, skin("dumpster", "x-")),
   crate(-5, 44, 2.4, 1.4, 1.4, skin("dumpster", "z-")),
   crate(5.5, 45.5, 2, 1.5, 4.2, skin("car", "z+")),
-  // Neon signage.
-  neon(6.9, 6.2, 2, v(0.15, 1.6, 8), "#ff2e88", "NEON KOI"),
-  neon(-6.9, 11, -9, v(0.15, 7, 1.6), "#00e5ff", "HOTEL"),
-  neon(-6.9, 5, 8, v(0.15, 1.4, 5), "#ffb000", "RAMEN"),
-  neon(6.9, 14, 20, v(0.15, 8, 1.6), "#b46cff", "KUSURI"),
-  neon(-6.9, 7, 24, v(0.15, 1.2, 6), "#39ff8a", "PACHINKO"),
-  neon(-6.9, 3.4, 2.4, v(0.15, 0.9, 3.4), "#39ffd0", "KLINIKA"),
-  // Street lamps (each one is also a point light).
-  lamp(-6.4, -22, "#9ad7ff"),
-  lamp(6.4, -6, "#ff9ad0"),
-  lamp(-6.4, 10, "#9ad7ff"),
-  lamp(6.4, 26, "#ffcf8a"),
   lamp(-1, 40, "#ff6a6a"),
-  // ADR-0026, appended so the props above keep their order.
-  ...carWash(),
-  // The 2 m slots between the west blocks: the south two are fenced off above a jump, the
-  // north one hides a Hebi courier's drop (S7_STASHES). Behind Neon Koi, the bar's bins.
-  rail(-7.4, -7.2, -19, -17, 0, 2.7),
-  rail(-7.4, -7.2, -1, 1, 0, 2.7),
-  crate(19.7, 12.5, 1.2, 1.3, 2.2, skin("dumpster", "x-")),
+];
+
+/** Signs and lamps of the deptak around the clinic and the bar. */
+const deptak = (): StaticProp[] => [
+  { ...neon(314, 3.2, -72.75, v(5, 1.1, 0.15), "#ffb000", "RAMEN"), center: ground(314, -72.75, 3.2) },
+  { ...neon(306.5, 4.6, -71.95, v(6, 1.2, 0.15), "#39ff8a", "PACHINKO"), center: ground(306.5, -71.95, 4.6) },
+  { ...neon(296.5, 5.5, -93.9, v(0.15, 5, 1.4), "#b46cff", "KUSURI"), center: ground(298.4, -93.4, 5.5), view: { kind: "neon", size: v(1.4, 5, 0.15), color: "#b46cff", label: "KUSURI", facing: "z+" } },
+  { ...lamp(0, 0, "#9ad7ff"), center: ground(304, -76.4), view: { kind: "lamp", color: "#9ad7ff", facing: "z-" } },
+  { ...lamp(0, 0, "#ff9ad0"), center: ground(334, -80.2), view: { kind: "lamp", color: "#ff9ad0", facing: "z-" } },
+  { ...lamp(0, 0, "#ffcf8a"), center: ground(297, -90.4), view: { kind: "lamp", color: "#ffcf8a", facing: "z+" } },
+  { ...lamp(0, 0, "#9ad7ff"), center: ground(326, -92.6), view: { kind: "lamp", color: "#9ad7ff", facing: "z+" } },
+  // Plac Litewski: the lamp Shiro reads his poems under, one by the wreck.
+  { ...lamp(0, 0, "#ffcf8a"), center: ground(100, -21), view: { kind: "lamp", color: "#ffcf8a", facing: "x+" } },
+  { ...lamp(0, 0, "#9ad7ff"), center: ground(160, -48), view: { kind: "lamp", color: "#9ad7ff", facing: "x-" } },
+];
+
+/**
+ * What the game adds to Krakowskie Przedmieście: the wreck, the van, the car wash, the bins
+ * behind Neon Koi, the signs and lamps, and the interiors with their doors.
+ */
+export const DISTRICT_M0_PROPS: readonly StaticProp[] = [
+  // The wreck Seki was pulled out of; she comes round in Mori's clinic (ADR-0038).
+  ...placeProps(WRECK, [crate(2.6, -31, 2, 1.4, 4.4, skin("wreck", "z-"))]),
+  // The van of the east lot.
+  ...placeProps(EAST_LOT, [crate(12, -12, 2.4, 2.2, 5, skin("van", "z+"))]),
+  ...placeProps(CAR_WASH_PLACE, carWash()),
+  // Behind Neon Koi, the bar's bins.
+  ...placeProps(KOI_BACK, [crate(6.5, 19.2, 1.2, 1.3, 2.2, skin("dumpster", "x-"))]),
+  ...deptak(),
   // ADR-0038: the clinic, the bar and their doors.
   ...S7_INTERIORS,
 ];
 
+/**
+ * Where steam rises (the renderer's particles and the ambience's hiss): a manhole on the deptak
+ * in front of the clinic and the vent behind the car wash.
+ */
+export const STEAM_VENTS: readonly Vec3[] = [ground(312, -83, 0.05), placeAt(CAR_WASH_PLACE, v(-5.2, 1.45, 44))];
+
 /** A new game: Seki comes round on the treatment chair in Mori's clinic (ADR-0038). */
-export const PLAYER_SPAWN: ActorSpawn = { key: "player", position: CLINIC_WAKE_SPOT, yaw: 0 };
+export const PLAYER_SPAWN: ActorSpawn = { key: "player", position: CLINIC_WAKE_SPOT, yaw: CLINIC_WAKE_YAW };
 
 /** Kaito's place once the first conversation is over: at the counter of Neon Koi. */
 export const FIXER_SPAWN: ActorSpawn = FIXER_BAR_SPAWN;
 
-export const CIVILIAN_SPAWN: ActorSpawn = { key: "ume", position: v(-5.4, 0, -13), yaw: Math.PI / 2 };
+/** Babcia Ume sweeps the deptak in front of the clinic. */
+export const CIVILIAN_SPAWN: ActorSpawn = { key: "ume", position: ground(328.5, -76.8), yaw: -Math.PI / 2 };
+/** Her doorway for the night, by the clinic's building, and the corner on the way there. */
+export const UME_HOME: Vec3 = ground(329.2, -73.4);
+export const UME_CORNER: Vec3 = ground(329, -75.2);
 
-/** Doktor Mori, the ripperdoc, in his clinic on the west side. */
+/** Doktor Mori, the ripperdoc, in his clinic on the north side. */
 export const RIPPERDOC_SPAWN: ActorSpawn = MORI_SPAWN;
 
 /** Kaito met Seki in the clinic: from then on he is at the bar (ADR-0038). */
 const MET_FIXER = "met_fixer";
 
-/** Spawn points for procedural contracts (up to four gangers per site), the market's included. */
+/** Spawn points for procedural contracts (up to four gangers per site), the other districts' included. */
 export const CONTRACT_SITE_SPAWNS: Readonly<Record<ContractSiteId, readonly Vec3[]>> = {
   ...TARG_CONTRACT_SITE_SPAWNS,
   ...DOKI_CONTRACT_SITE_SPAWNS,
   ...KANAL_CONTRACT_SITE_SPAWNS,
-  east_lot: [v(10.5, 0, -15.5), v(13.5, 0, -8.5), v(16, 0, -14), v(9.5, 0, -9)],
-  koi_back: [v(3, 0, 12), v(-3, 0, 14.5), v(5, 0, 17), v(-1, 0, 10)],
-  car_wash: [v(1, 0, 43), v(-2.5, 0, 39.5), v(4, 0, 47), v(-4, 0, 47)],
-  south_gate: [v(-4, 0, -33), v(4.5, 0, -34.5), v(-1, 0, -35), v(6.5, 0, -33.5)],
+  east_lot: [on(EAST_LOT, 10.5, -15.5), on(EAST_LOT, 13.5, -8.5), on(EAST_LOT, 16, -14), on(EAST_LOT, 9.5, -9)],
+  koi_back: [on(KOI_BACK, 3, 12), on(KOI_BACK, -3, 14.5), on(KOI_BACK, 5, 17), on(KOI_BACK, -1, 10)],
+  car_wash: [on(CAR_WASH_PLACE, 1, 43), on(CAR_WASH_PLACE, -2.5, 39.5), on(CAR_WASH_PLACE, 4, 47), on(CAR_WASH_PLACE, -4, 47)],
+  south_gate: [on(WRECK, -4, -33), on(WRECK, 4.5, -34.5), on(WRECK, -1, -35), on(WRECK, 6.5, -33.5)],
 };
+
+/** Points of the contract variations (ADR-0034) of Kaito's sites, by the same groups. */
+export const KRAKOWSKIE_SITE_POINTS = {
+  east_lot: (x: number, z: number) => on(EAST_LOT, x, z),
+  koi_back: (x: number, z: number) => on(KOI_BACK, x, z),
+  car_wash: (x: number, z: number) => on(CAR_WASH_PLACE, x, z),
+  south_gate: (x: number, z: number) => on(WRECK, x, z),
+} as const;
 
 /**
  * The point each contract crew faces when it spawns (audit W11): the way trouble comes from.
- * Kaito's sites look onto the main street or towards Kaito's corner; the market's are in
+ * Kaito's sites look onto the deptak or the square; the market's are in
  * `TARG_CONTRACT_SITE_FACING`. The docks posts carry their own yaw (ADR-0024).
  */
 export const CONTRACT_SITE_FACING: Readonly<Partial<Record<ContractSiteId, Vec3>>> = {
   ...TARG_CONTRACT_SITE_FACING,
-  east_lot: v(0, 0, -12),
-  koi_back: v(FIXER_SPAWN.position.x, 0, FIXER_SPAWN.position.z),
-  car_wash: v(0, 0, 30),
-  south_gate: v(0, 0, -20),
+  east_lot: on(EAST_LOT, 0, -12),
+  koi_back: on(KOI_BACK, 0, 0),
+  car_wash: on(CAR_WASH_PLACE, 0, 30),
+  south_gate: on(WRECK, 0, -20),
 };
 
 /**
@@ -145,9 +177,10 @@ export const contractSpawnYaw = (site: ContractSiteId, position: Vec3): number =
   return Math.hypot(dx, dz) < 1e-6 ? 0 : Math.atan2(dx, dz);
 };
 
+/** The M0 courier and his guard, in the yard behind the car wash. */
 export const GANGER_SPAWNS: readonly GangerSpawn[] = [
-  { key: "courier", position: v(1, 0, 43), yaw: Math.PI, tag: M0_TARGET_TAG },
-  { key: "guard", position: v(-2.5, 0, 39.5), yaw: Math.PI, tag: null },
+  { key: "courier", position: on(CAR_WASH_PLACE, 1, 43), yaw: Math.PI, tag: M0_TARGET_TAG },
+  { key: "guard", position: on(CAR_WASH_PLACE, -2.5, 39.5), yaw: Math.PI, tag: null },
 ];
 
 /** Every keyed character of the district, in creation order. */
@@ -208,14 +241,14 @@ export const DISTRICT_M0_ACTORS: readonly ActorDef[] = [
 ];
 
 /**
- * Small finds in Shinsekai's dead ends (ADR-0026): what a Hebi courier stuffed into the slot
- * behind PACHINKO, and the bins behind Neon Koi. Both lie more than 40 m from the player's
- * spawn, so a new game places them only once Seki walks up the street.
+ * Small finds in the dead ends of the deptak (ADR-0026): what a Hebi courier stuffed behind the
+ * PACHINKO block, and the bins behind Neon Koi. Both lie more than 40 m from the clinic, so a
+ * new game places them only once Seki walks along the deptak.
  */
 export const S7_STASHES: readonly RoofStash[] = [
   {
     key: "stash:s7-pachinko",
-    at: v(-19.6, 0, 16),
+    at: ground(272.5, -67),
     lines: [
       { kind: "eddies", qty: 80 },
       { kind: "ammo", ammo: "9mm", qty: 18 },
@@ -224,7 +257,7 @@ export const S7_STASHES: readonly RoofStash[] = [
   },
   {
     key: "stash:s7-koi-back",
-    at: v(18.2, 0, 12.5),
+    at: on(KOI_BACK, 5, 19.2),
     lines: [
       { kind: "eddies", qty: 30 },
       { kind: "stack", item: "bandage", qty: 1 },
@@ -232,6 +265,3 @@ export const S7_STASHES: readonly RoofStash[] = [
     ],
   },
 ];
-
-/** Footprint of the district including its outer walls. */
-export const DISTRICT_M0_BOUNDS: Rect = { minX: -23, maxX: 23, minZ: -38, maxZ: 52 };
