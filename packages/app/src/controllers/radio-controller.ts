@@ -1,4 +1,4 @@
-import type { AudioPort } from "@seki/core";
+import type { AudioPort, AudioScenePort } from "@seki/core";
 import { RADIO_STATIONS, type RadioIntents, type RadioStationId, type SettingsVm, type UiStore, radioStationName } from "@seki/ui";
 import type { KnotPool } from "../phone";
 
@@ -8,13 +8,8 @@ export const RADIO_INSERT_SECONDS = 45;
 /** The order B walks through: every station, then off. */
 const DIAL: readonly (RadioStationId | null)[] = [...RADIO_STATIONS.map((s) => s.id), null];
 
-/**
- * Proposed audio contract (ADR-0035): the engine plays the station as a sequencer programme;
- * null stops it. Optional, so the app calls it only when the adapter has it.
- */
-export interface RadioAudio {
-  setRadioStation?(id: RadioStationId | null): void;
-}
+/** The audio adapter's radio (`AudioScenePort.setRadioStation`, ADR-0036); called only when it has one. */
+export type RadioAudio = Partial<Pick<AudioScenePort, "setRadioStation">>;
 
 export interface RadioControllerDeps {
   readonly ui: UiStore;

@@ -1,4 +1,6 @@
-import type { BuffId, DisguiseRole, MetroStationId } from "@seki/core";
+import type { BuffId, DisguiseRole, MetroStationId, RadioStationId } from "@seki/core";
+
+export type { RadioStationId };
 
 /**
  * View models of wave 2 (ADR-0032, ADR-0035): the metro, the radio, cyberware capacity, buffs,
@@ -40,9 +42,8 @@ export interface MetroRideVm {
 
 // ---- radio ----
 
-/** Stations of the radio (ADR-0035). Ink inserts live in knots `radio_<id>_<n>`. */
-export type RadioStationId = "drift" | "yoru" | "tessen";
 
+/** Stations of the radio (ADR-0035) with their names; ids from core. Ink inserts live in knots `radio_<id>_<n>`. */
 export interface RadioStationInfo {
   readonly id: RadioStationId;
   readonly name: string;
