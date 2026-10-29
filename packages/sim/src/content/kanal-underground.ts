@@ -11,8 +11,9 @@ import { TRASA_PODZIEMNA as T } from "./lublin/sites";
  * along the Trybunał's south side, and from its end a doorway opens into the loch where Mei sang
  * for coins before the cellars were shut (`m4-ulica.ink`). Somebody left a bag there.
  *
- * The cellars are a shell of interior blocks (ADR-0038) under the Trybunał's footprint; the
- * terrain under them is dug out (`PADS` in sites.ts), so the floors are slabs.
+ * The cellars are a shell of interior blocks (ADR-0038) under the Trybunał's footprint, in a
+ * streaming chunk of their own (the Rynek does not draw them from afar); the terrain under them
+ * is dug out (`PADS` in sites.ts), so the floors are slabs.
  */
 
 /** Floor of the vestibule (the Rynek at the door), of the cellars, and the ceilings. */
@@ -91,6 +92,10 @@ const lights = (): StaticProp[] => [
 const stage = (): StaticProp[] => [box(578, 581.5, F, F + 0.25, -60.6, HZ0 - WALL, "metal"), box(581.6, 582.2, F, F + 1.1, -59.4, -58.6, "metal")];
 
 export const TRASA_PODZIEMNA_PROPS: readonly StaticProp[] = [...hall(), ...cellars(), ...lights(), ...stage()];
+
+/** The streaming chunk of the cellars: their shell's footprint (the Rynek's own chunk holds the Trybunał). */
+export const TRASA_PODZIEMNA_CHUNK = "stare-miasto-trasa-podziemna";
+export const TRASA_PODZIEMNA_BOUNDS = { minX: 570, maxX: HX1 + WALL, minZ: WEST_Z0 - WALL, maxZ: HZ1 + WALL } as const;
 
 /** Where the loch is, for tests and the debug camera: the middle of its floor. */
 export const LOCH_SPOT: Vec3 = { x: 579, y: F, z: -60.3 };

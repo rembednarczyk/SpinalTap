@@ -13,7 +13,7 @@ import {
   TARG_SOUTH_PROPS,
 } from "./district-targ";
 import { DEVICES, type DeviceDef } from "./devices";
-import { TRASA_PODZIEMNA_PROPS, TRASA_PODZIEMNA_STASH } from "./kanal-underground";
+import { TRASA_PODZIEMNA_BOUNDS, TRASA_PODZIEMNA_CHUNK, TRASA_PODZIEMNA_PROPS, TRASA_PODZIEMNA_STASH } from "./kanal-underground";
 import { METRO_STATIONS, type MetroStationDef } from "./metro";
 import { CLINIC_DOOR, KOI_DOOR, S7_NAV } from "./interiors";
 import { DOKI_NAV, DOKI_QUAY_ACTORS, DOKI_QUAY_PROPS, DOKI_YARD_ACTORS, DOKI_YARD_PROPS } from "./district-doki";
@@ -74,7 +74,7 @@ const ROOM_CUTS: readonly RoomCut[] = [
 ];
 
 /** What the game adds to the map, in the order its entity ids are reserved. */
-const GAME_PROPS: readonly StaticProp[] = [...DISTRICT_M0_PROPS, ...KANAL_PROPS, ...TRASA_PODZIEMNA_PROPS, ...TARG_SOUTH_PROPS, ...TARG_NORTH_PROPS, ...DOKI_YARD_PROPS, ...DOKI_QUAY_PROPS];
+const GAME_PROPS: readonly StaticProp[] = [...DISTRICT_M0_PROPS, ...KANAL_PROPS, ...TARG_SOUTH_PROPS, ...TARG_NORTH_PROPS, ...DOKI_YARD_PROPS, ...DOKI_QUAY_PROPS];
 const GAME_ACTORS: readonly ActorDef[] = [...DISTRICT_M0_ACTORS, ...KANAL_ACTORS, ...TARG_SOUTH_ACTORS, ...TARG_NORTH_ACTORS, ...DOKI_YARD_ACTORS, ...DOKI_QUAY_ACTORS];
 
 const MAP_BUILDINGS: ReadonlyMap<string, readonly StaticProp[]> = new Map(MAP_CHUNKS.map((c) => [c.id, chunkBuildings(c, ROOM_CUTS, PASSAGES, BUILDING_CUTS)]));
@@ -84,17 +84,22 @@ const MAP_BUILDINGS: ReadonlyMap<string, readonly StaticProp[]> = new Map(MAP_CH
  * buildings as solids and the game's props and characters that stand in it, on the shaped
  * terrain. The order is the creation order (and the order entity ids are reserved in).
  */
-export const WORLD_CHUNKS: readonly ChunkDef[] = MAP_CHUNKS.map((c) => {
-  const terrain = SHAPED_TERRAIN.get(c.id);
-  return {
-    id: c.id,
-    district: c.district,
-    bounds: c.bounds,
-    props: [...(MAP_BUILDINGS.get(c.id) ?? []), ...GAME_PROPS.filter((p) => mapChunkOf(p.center.x, p.center.z) === c.id)],
-    actors: GAME_ACTORS.filter((a) => mapChunkOf(a.spawn.position.x, a.spawn.position.z) === c.id),
-    ...(terrain ? { terrain } : {}),
-  };
-});
+export const WORLD_CHUNKS: readonly ChunkDef[] = [
+  ...MAP_CHUNKS.map((c): ChunkDef => {
+    const terrain = SHAPED_TERRAIN.get(c.id);
+    return {
+      id: c.id,
+      district: c.district,
+      bounds: c.bounds,
+      props: [...(MAP_BUILDINGS.get(c.id) ?? []), ...GAME_PROPS.filter((p) => mapChunkOf(p.center.x, p.center.z) === c.id)],
+      actors: GAME_ACTORS.filter((a) => mapChunkOf(a.spawn.position.x, a.spawn.position.z) === c.id),
+      ...(terrain ? { terrain } : {}),
+    };
+  }),
+  // Trasa Podziemna (ADR-0048): a chunk of its own over the cellars, last in the table, so it
+  // streams in only near the Trybunał and the ground and the district there stay the Rynek's.
+  { id: TRASA_PODZIEMNA_CHUNK, district: "kanal", bounds: TRASA_PODZIEMNA_BOUNDS, props: TRASA_PODZIEMNA_PROPS, actors: [] },
+];
 
 /**
  * What the renderer draws of the city for good (ADR-0045): the shaped terrain, the surfaces and

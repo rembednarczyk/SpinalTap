@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { EMPTY_INPUT, type GroundPoint } from "@seki/core";
-import { LOCH_SPOT, MAP_CHUNKS, Simulation, TRASA_PODZIEMNA, TRASA_PODZIEMNA_STASH, TRASA_PODZIEMNA_WALK, WORLD_CHUNKS, WORLD_SCENERY, groundY, rawHeight } from "../src";
+import { LOCH_SPOT, MAP_CHUNKS, Simulation, TRASA_PODZIEMNA, TRASA_PODZIEMNA_STASH, TRASA_PODZIEMNA_CHUNK, TRASA_PODZIEMNA_WALK, WORLD_CHUNKS, WORLD_SCENERY, chunkAt, groundY, rawHeight } from "../src";
 import { teleportPlayer } from "./helpers";
 
 /**
@@ -75,9 +75,13 @@ describe("Trasa Podziemna (ADR-0048)", () => {
     expect(sim.player()!.position.y).toBeCloseTo(groundY(x0, z0), 1);
   }, 60_000);
 
-  it("keeps its shell inside the Trybunał's chunk, as interior blocks", () => {
-    const chunk = WORLD_CHUNKS.find((c) => c.id === "stare-miasto-0-0")!;
+  it("streams in as a chunk of its own, last in the table, a shell of interior blocks", () => {
+    const chunk = WORLD_CHUNKS.find((c) => c.id === TRASA_PODZIEMNA_CHUNK)!;
+    expect(chunk.district).toBe("kanal");
+    expect(WORLD_CHUNKS.at(-1)).toBe(chunk);
     const shell = chunk.props.filter((p) => p.interior && p.center.y < TRASA_PODZIEMNA.door);
     expect(shell.length).toBeGreaterThan(10);
+    // The ground and the district over it stay the Rynek's.
+    expect(chunkAt(LOCH_SPOT.x, LOCH_SPOT.z)?.id).toBe("stare-miasto-0-0");
   });
 });
