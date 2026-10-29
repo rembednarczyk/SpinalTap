@@ -214,6 +214,15 @@ export class MapCity {
     this.flush();
   }
 
+  /** Whether a map building's roof is above (x, y, z): a gate's passage, the footbridge, a room under the floors. */
+  roofOver(x: number, y: number, z: number): boolean {
+    for (const id of this.buildingIndex.at(x, z)) {
+      const b = this.buildings.get(id);
+      if (b && y < b.base + b.view.height && pointInRing({ x, z }, b.ring)) return true;
+    }
+    return false;
+  }
+
   /** Ground height at (x, z) from the terrain of the chunk there, or null outside every terrain. */
   heightAt(x: number, z: number): number | null {
     for (const t of this.terrains.values()) {
