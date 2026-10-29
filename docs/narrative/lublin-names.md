@@ -72,7 +72,7 @@ Zapowiedzi zostają dwujęzyczne: japońskie „Tsugi wa … desu” z polską n
 ## Do zrobienia poza narracją (inni właściciele)
 
 Teksty spoza ink, które dalej używają starych nazw (stan przy tej zmianie):
-- nazwy dystryktów, toasty i stacje metra w `packages/sim/src/content/` i `packages/app/src/metro.ts` (testy `m2-streaming`, `wave2`, `wave2-hud`, e2e `hud-wave2`, `docks`);
+- nazwy dystryktów, toasty i stacje metra w `packages/sim/src/content/` i `packages/app/src/metro.ts` (testy `m2-streaming`, `wave2`, `wave2-hud`, `hud-ui` w `packages/app/test`, `docks`);
 - cele zadań w `core` („Kurosawa z Kagami czeka na estakadzie nad targiem”, „Czyściciele Kagami atakują na estakadzie”, „Hana z targu”): zgodnie z tą listą „estakada” to „wiadukt nad aleją Tysiąclecia”;
 - frakcja „Mieszkańcy Shinsekai” w skanerze (`app`, `ui`), menu tytułowe i panel sklepu w `ui`;
 - etykiety miejsc zleceń (`contract_site`, np. „parking przy furgonetce”) przychodzą z domeny, nie z ink.
