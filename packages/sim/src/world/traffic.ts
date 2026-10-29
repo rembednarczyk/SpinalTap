@@ -83,7 +83,12 @@ export const vehicleCount = (seed: number, route: number, density: TrafficDensit
   if (r.use === "deliveries") return deliveryLane(seed, r, clock) ? 1 : 0;
   const level = TRAFFIC_BY_HOUR[hourOf(clock)] ?? 0;
   if (r.use === "trolley") return level < 0.2 ? 0 : r.vehicles;
-  return Math.min(VEHICLE_IDS_PER_ROUTE, Math.round(r.vehicles * share * level));
+  // A fractional count rounds up with the probability of its fraction, drawn per lane and hour:
+  // on a phone's thin share a lane with half a car drives one half the time instead of never.
+  const want = r.vehicles * share * level;
+  const whole = Math.floor(want);
+  const extra = deriveRandom(seed, `traffic-count:${r.id}:${hourOf(clock)}`).next() < want - whole ? 1 : 0;
+  return Math.min(VEHICLE_IDS_PER_ROUTE, whole + extra);
 };
 
 /** Where a vehicle's timetable puts it: arc length along its lane and the timetable's own speed there. */

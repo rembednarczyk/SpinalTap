@@ -67,6 +67,16 @@ describe("the lanes of the traffic (ADR-0050)", () => {
     expect(vans.every((i) => vehicleCount(3, i, "high", { seconds: 20 * 3600 }) === 0)).toBe(true);
   });
 
+  it("a phone's thin share still drives some cars, about the share of the full count", () => {
+    const cars = TRAFFIC_ROUTES.map((r, i) => (r.use === "cars" ? i : -1)).filter((i) => i >= 0);
+    const at = (density: "low" | "high") => cars.reduce((n, i) => n + vehicleCount(3, i, density, { seconds: 8 * 3600 }), 0);
+    const low = at("low");
+    expect(low).toBeGreaterThan(0);
+    expect(low).toBeLessThan(at("high"));
+    // The same seed and hour always give the same count.
+    expect(at("low")).toBe(low);
+  });
+
   it("a trolleybus stands at its stops on its timetable", () => {
     const route = TRAFFIC_ROUTES.findIndex((r) => r.use === "trolley" && r.stops.length > 0);
     expect(route).toBeGreaterThanOrEqual(0);
