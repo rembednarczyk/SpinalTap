@@ -141,11 +141,17 @@ const straighten = (pts: readonly GroundPoint[], front: number, r: GroundRect): 
 const relative = (pts: readonly GroundPoint[], b: LublinBuildingData): GroundPoint[] => pts.map((p) => ({ x: p.x - b.x, z: p.z - b.z }));
 const absolute = (flat: readonly number[], b: LublinBuildingData): GroundPoint[] => toPoints(flat).map((p) => ({ x: p.x + b.x, z: p.z + b.z }));
 
-/** A building of the map as a solid prop of the game, drawn as scenery. */
-export const buildingProp = (b: LublinBuildingData, cut?: RoomCut): StaticProp => {
-  const view = buildingView(b);
+type District = LublinChunkData["district"];
+
+/** Top of a building's solid: its height and the superstructure over it (ADR-0051, upwards only). */
+const solidTop = (b: LublinBuildingData, view: ViewDescriptor): number => b.height + (view.kind === "building" ? (view.vertical?.rise ?? 0) : 0);
+
+/** A building of the map as a solid prop of the game, drawn as scenery (with its district's vertical layer, ADR-0051). */
+export const buildingProp = (b: LublinBuildingData, cut?: RoomCut, district?: District): StaticProp => {
+  const view = buildingView(b, district);
+  const top = solidTop(b, view);
   if (!cut) {
-    const prisms: PrismDef[] = b.parts.map((p) => ({ points: toPoints(p), bottom: 0, top: b.height }));
+    const prisms: PrismDef[] = b.parts.map((p) => ({ points: toPoints(p), bottom: 0, top }));
     return { center: { x: b.x, y: b.y, z: b.z }, view, solid: true, prisms, scenery: true };
   }
   const { site } = cut;
@@ -154,8 +160,8 @@ export const buildingProp = (b: LublinBuildingData, cut?: RoomCut): StaticProp =
   for (const part of b.parts) {
     const pts = straighten(absolute(part, b), site.front, site.rect);
     const { outside, inside } = splitBy(pts, rectRegion(site.rect));
-    for (const o of outside) prisms.push({ points: relative(o, b), bottom: 0, top: b.height });
-    if (inside.length > 0) prisms.push({ points: relative(inside, b), bottom: roomBottom, top: b.height });
+    for (const o of outside) prisms.push({ points: relative(o, b), bottom: 0, top });
+    if (inside.length > 0) prisms.push({ points: relative(inside, b), bottom: roomBottom, top });
   }
   const doorways: Doorway[] = cut.doors.map((d) => ({
     at: { x: d.x - b.x, z: site.front - b.z },
@@ -188,8 +194,9 @@ interface Carve {
  * carved regions in turn: the pieces outside stay whole, the piece inside starts at the region's
  * bottom.
  */
-export const carvedProp = (b: LublinBuildingData, passages: readonly PassageSite[], cuts: readonly BuildingCut[] = []): StaticProp => {
-  const prop = buildingProp(b);
+export const carvedProp = (b: LublinBuildingData, passages: readonly PassageSite[], cuts: readonly BuildingCut[] = [], district?: District): StaticProp => {
+  const prop = buildingProp(b, undefined, district);
+  const top = solidTop(b, prop.view);
   const carves: Carve[] = [
     ...passages.map((p) => ({ region: corridor(p), bottom: Math.max(...passageFloor(p)) + p.height })),
     ...cuts.map((c) => ({ region: rectRegion(c.rect), bottom: c.bottom })),
@@ -202,11 +209,11 @@ export const carvedProp = (b: LublinBuildingData, passages: readonly PassageSite
       for (const piece of rest) {
         const { outside, inside } = splitBy(piece, c.region);
         next.push(...outside);
-        if (inside.length > 0) prisms.push({ points: relative(inside, b), bottom: c.bottom - b.y, top: b.height });
+        if (inside.length > 0) prisms.push({ points: relative(inside, b), bottom: c.bottom - b.y, top });
       }
       rest = next;
     }
-    for (const o of rest) prisms.push({ points: relative(o, b), bottom: 0, top: b.height });
+    for (const o of rest) prisms.push({ points: relative(o, b), bottom: 0, top });
   }
   const outline = absolute(b.outline, b);
   const doorways: Doorway[] = passages.flatMap((p) => {
@@ -243,7 +250,7 @@ export const chunkBuildings = (c: LublinChunkData, rooms: readonly RoomCut[], pa
     .map((b) => {
       const through = passages.filter((p) => p.building === b.id);
       const boxes = cuts.filter((k) => k.building === b.id);
-      const prop = through.length > 0 || boxes.length > 0 ? carvedProp(b, through, boxes) : buildingProp(b, rooms.find((r) => r.site.building === b.id));
+      const prop = through.length > 0 || boxes.length > 0 ? carvedProp(b, through, boxes, c.district) : buildingProp(b, rooms.find((r) => r.site.building === b.id), c.district);
       return c.district === "kanal" ? oldTownSigns(prop) : prop;
     });
 

@@ -30,7 +30,7 @@ const lublinViews = (props: boolean): Fixture => ({
   attribution: "Dane mapy © OpenStreetMap contributors (ODbL) · teren: GUGiK NMT",
   views: LUBLIN_CHUNKS.flatMap((c): Placed[] => [
     { position: ORIGIN, view: terrainView(c) },
-    ...c.buildings.map((b) => ({ position: { x: b.x, y: b.y, z: b.z }, view: buildingView(b) })),
+    ...c.buildings.map((b) => ({ position: { x: b.x, y: b.y, z: b.z }, view: buildingView(b, c.district) })),
     ...c.ground.map((g) => ({ position: ORIGIN, view: groundView(g) })),
     ...(props ? [{ position: ORIGIN, view: streetPropsView(c.id) }] : []),
   ]),

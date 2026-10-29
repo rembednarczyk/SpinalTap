@@ -123,6 +123,13 @@ export type ViewDescriptor =
        * corners (ADR-0044); "bracket", signs hung from wrought-iron brackets (the Old Town, ADR-0048).
        */
       readonly signs?: "bracket";
+      /**
+       * Lublin 2077's vertical layer over the real building (ADR-0051), absent on landmarks:
+       * a superstructure of `rise` metres over `height` (container floors, capsule flats, glass
+       * boxes, rooftop gear; the solid grows by as much, upwards only) and how densely
+       * cables, ads, pipes and neon hang from the building over the street (`clutter`, 0..1).
+       */
+      readonly vertical?: BuildingVertical;
     }
   /** The ground of a chunk (ADR-0042): a height grid the renderer turns into one mesh. */
   | { readonly kind: "terrain"; readonly grid: TerrainGrid }
@@ -179,6 +186,16 @@ export interface BuildingPassage {
   readonly floor: readonly [number, number];
   readonly spring: number;
   readonly crown: number;
+}
+
+/**
+ * The fictional vertical layer of Lublin 2077 over a real building (ADR-0051): `rise` metres of
+ * superstructure over its height (0 for none, multiples of a 3 m storey) and the density of the
+ * layer over the street hanging from it (`clutter`, 0 none .. 1 the densest canyon).
+ */
+export interface BuildingVertical {
+  readonly rise: number;
+  readonly clutter: number;
 }
 
 /** What a skinned block stands for (ADR-0022). */
