@@ -8,9 +8,9 @@ import { doorParts } from "./doors";
  *
  * - the storeys above the ground floor stay a city kit block with its skin (the kit fills a
  *   block's whole volume with closed building models, so a skinned block cannot have a hole);
- * - the ground floor is a shell of plain blocks with thickness: the front wall with its window
- *   and door opening, side walls, a ceiling slab under the upper block, a floor slab, and a
- *   solid filler at the back that serves as the back wall;
+ * - the ground floor is a shell of blocks with thickness: the front wall (its pieces beside the
+ *   door carry the facade's skin, see `storefront`), side walls, a ceiling slab under the upper
+ *   block, a floor slab, and a solid filler at the back that serves as the back wall;
  * - the furniture is plain blocks too: solid where it stops a body (counter, chair, tables),
  *   visual only where a character should be able to stand at it (stools, chairs).
  *
@@ -37,12 +37,14 @@ const box = (x0: number, x1: number, y0: number, y1: number, z0: number, z1: num
 /** Marks props as parts of an interior (see `StaticProp.interior`). */
 const indoor = (props: readonly StaticProp[]): StaticProp[] => props.map((p) => ({ ...p, interior: true }));
 
-/** A shop window in a front wall along Z: concrete sill and header, glass between. */
-const window = (x0: number, x1: number, z0: number, z1: number, sill: number, head: number): StaticProp[] => [
-  box(x0, x1, 0, sill, z0, z1, "concrete"),
-  box(x0, x1, sill, head, z0, z1, "glass"),
-  box(x0, x1, head, GROUND, z0, z1, "concrete"),
-];
+/**
+ * A piece of the ground-floor front wall beside the door, with its own kit skin: the facade's
+ * skin lives on these thin solids, so the shop windows, the bar's storefront and its BAR sign
+ * stay on the street while the door opening between them is real. The kit squeezes its
+ * models to the wall's thickness, which nobody sees from the street.
+ */
+const storefront = (x0: number, x1: number, z0: number, z1: number, style: "shop" | "bar", front: "x+" | "x-"): StaticProp =>
+  box(x0, x1, 0, GROUND, z0, z1, "concrete", true, skin(style, front, { street: STREET, signs: false }));
 
 /** Where Seki wakes up: on the treatment chair, facing the length of the room. */
 export const CLINIC_CHAIR_TOP = 0.45;
@@ -76,7 +78,7 @@ const clinic = (): StaticProp[] =>
     // Front wall: the door's pocket, the lintel, the window north of the door.
     box(-7.3, -7, 0, GROUND, 1, 3.6, "concrete"),
     box(-7.3, -7, DOOR_TOP, GROUND, 3.6, 5.2, "concrete"),
-    ...window(-7.3, -7, 5.2, 8, 0.9, 2.7),
+    storefront(-7.3, -7, 5.2, 8, "shop", "x+"),
     box(-17, -7.3, CEILING, GROUND, 1.3, 7.7, "concrete"),
     slab(-12.15, 0.02, 4.5, v(9.7, 0.04, 6.4), "metal"),
     // Partition between the waiting room and the surgery, with a doorway z ∈ [4.8, 6.4].
@@ -116,11 +118,11 @@ const koi = (): StaticProp[] =>
     box(7.3, 17, 0, GROUND, -7, -6.7, "concrete"),
     box(7.3, 17, 0, GROUND, 10.7, 11, "concrete"),
     // Front wall: windows either side, the leaves' pockets, the lintel.
-    ...window(7, 7.3, -7, -1, 0.8, 2.8),
+    storefront(7, 7.3, -7, -1, "shop", "x-"),
     box(7, 7.3, 0, GROUND, -1, 0.4, "concrete"),
     box(7, 7.3, DOOR_TOP, GROUND, 0.4, 2.6, "concrete"),
     box(7, 7.3, 0, GROUND, 2.6, 4, "concrete"),
-    ...window(7, 7.3, 4, 11, 0.8, 2.8),
+    storefront(7, 7.3, 4, 11, "bar", "x-"),
     box(7.3, 17, CEILING, GROUND, -6.7, 10.7, "concrete"),
     slab(12.15, 0.02, 2, v(9.7, 0.04, 17.4), "concrete"),
     // Counter, shelf with its neon, stools (visual: a character can stand at one).
