@@ -1,25 +1,21 @@
 import type { TerrainGrid } from "@seki/core";
 import { type ActorDef, type NavGraph, type Rect, type StaticProp, mergeNav } from "./builders";
-import { DISTRICT_M0_ACTORS, DISTRICT_M0_PROPS, S7_STASHES } from "./district-m0";
-import { KANAL_ACTORS, KANAL_ALLEY_STASH, KANAL_PROPS, KANAL_SCENERY } from "./district-kanal";
-import {
-  type RoofStash,
-  TARG_NAV,
-  TARG_NORTH_ACTORS,
-  TARG_NORTH_PROPS,
-  TARG_OVERPASS_STASH,
-  TARG_ROOF_STASH,
-  TARG_SOUTH_ACTORS,
-  TARG_SOUTH_PROPS,
-} from "./district-targ";
+import { S7_STASHES } from "./district-m0";
+import { KANAL_ALLEY_STASH, KANAL_SCENERY } from "./district-kanal";
+import { type RoofStash, TARG_NAV, TARG_OVERPASS_STASH, TARG_ROOF_STASH } from "./district-targ";
 import { DEVICES, type DeviceDef } from "./devices";
 import { TRASA_PODZIEMNA_BOUNDS, TRASA_PODZIEMNA_CHUNK, TRASA_PODZIEMNA_PROPS, TRASA_PODZIEMNA_STASH } from "./kanal-underground";
 import { METRO_STATIONS, type MetroStationDef } from "./metro";
 import { CLINIC_DOOR, KOI_DOOR, S7_NAV } from "./interiors";
-import { DOKI_NAV, DOKI_QUAY_ACTORS, DOKI_QUAY_PROPS, DOKI_YARD_ACTORS, DOKI_YARD_PROPS } from "./district-doki";
+import { DOKI_NAV } from "./district-doki";
 import { type RoomCut, type SceneryItem, chunkBuildings, chunkScenery } from "./lublin/city";
 import { BUILDING_CUTS, CLINIC_SITE, KOI_SITE, MAP_CHUNKS, PASSAGES } from "./lublin/sites";
 import { SHAPED_TERRAIN } from "./lublin/terrain";
+import { furnitureProps } from "./lublin/furniture";
+import { GAME_ACTORS, GAME_PROPS, WORLD_STREET_PROPS } from "./street-props";
+import { PARKED_CARS, parkedProp, parkedView } from "./parked-cars";
+
+export { WORLD_STREET_PROPS } from "./street-props";
 
 /** The districts of Lublin 2077 (ADR-0042); the ids are the game's from before the move. */
 export const DISTRICTS = {
@@ -46,6 +42,11 @@ export interface ChunkDef {
    * must give the same heights where their bounds meet. Without it the ground is y = 0.
    */
   readonly terrain?: TerrainGrid;
+  /**
+   * Solids of the street (ADR-0050): the furniture a body stumbles on, drawn by the scenery.
+   * Their ids come from `STREET_ID_BASE`, not the allocator, so no id of the content moves.
+   */
+  readonly street?: readonly StaticProp[];
 }
 
 /** Horizontal distance from a point to a rectangle; 0 inside. */
@@ -73,10 +74,6 @@ const ROOM_CUTS: readonly RoomCut[] = [
   { site: KOI_SITE, doors: [{ x: KOI_DOOR.at.x, width: KOI_DOOR.width, height: KOI_DOOR.height }] },
 ];
 
-/** What the game adds to the map, in the order its entity ids are reserved. */
-const GAME_PROPS: readonly StaticProp[] = [...DISTRICT_M0_PROPS, ...KANAL_PROPS, ...TARG_SOUTH_PROPS, ...TARG_NORTH_PROPS, ...DOKI_YARD_PROPS, ...DOKI_QUAY_PROPS];
-const GAME_ACTORS: readonly ActorDef[] = [...DISTRICT_M0_ACTORS, ...KANAL_ACTORS, ...TARG_SOUTH_ACTORS, ...TARG_NORTH_ACTORS, ...DOKI_YARD_ACTORS, ...DOKI_QUAY_ACTORS];
-
 const MAP_BUILDINGS: ReadonlyMap<string, readonly StaticProp[]> = new Map(MAP_CHUNKS.map((c) => [c.id, chunkBuildings(c, ROOM_CUTS, PASSAGES, BUILDING_CUTS)]));
 
 /**
@@ -94,6 +91,7 @@ export const WORLD_CHUNKS: readonly ChunkDef[] = [
       props: [...(MAP_BUILDINGS.get(c.id) ?? []), ...GAME_PROPS.filter((p) => mapChunkOf(p.center.x, p.center.z) === c.id)],
       actors: GAME_ACTORS.filter((a) => mapChunkOf(a.spawn.position.x, a.spawn.position.z) === c.id),
       ...(terrain ? { terrain } : {}),
+      street: [...furnitureProps(WORLD_STREET_PROPS[c.id] ?? []), ...PARKED_CARS.filter((p) => p.chunk === c.id).map(parkedProp)],
     };
   }),
   // Trasa Podziemna (ADR-0048): a chunk of its own over the cellars, last in the table, so it
@@ -110,6 +108,10 @@ export const WORLD_SCENERY: readonly SceneryItem[] = [
   ...MAP_CHUNKS.flatMap((c) => chunkScenery(c, MAP_BUILDINGS.get(c.id) ?? [])),
   // The game's own buildings drawn with the city: the covered footbridge over Grodzka (ADR-0048).
   ...KANAL_SCENERY.map((s): SceneryItem => ({ chunk: mapChunkOf(s.at.x, s.at.z), view: s.view, at: s.at })),
+  // The furniture (ADR-0050), so the views above keep their scenery ids.
+  ...MAP_CHUNKS.map((c): SceneryItem => ({ chunk: c.id, view: { kind: "street-props", items: WORLD_STREET_PROPS[c.id] ?? [] }, at: { x: 0, y: 0, z: 0 } })),
+  // The parked cars (ADR-0050), each drawn where it stands.
+  ...PARKED_CARS.map((p): SceneryItem => ({ chunk: p.chunk, view: parkedView(p), at: { x: p.x, y: p.y, z: p.z }, yaw: p.yaw })),
 ];
 
 /** Cameras and hackable devices (ADR-0029); each one names its chunk above. */

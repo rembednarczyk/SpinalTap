@@ -52,7 +52,7 @@ export class RenderSync {
   private showScenery(): void {
     if (this.sceneryShown) return;
     this.sceneryShown = true;
-    this.scenery.forEach((s, i) => this.port.spawn(SCENERY_ID_BASE + i, s.view, { position: s.at, yaw: 0, pitch: 0, speed: 0 }));
+    this.scenery.forEach((s, i) => this.port.spawn(SCENERY_ID_BASE + i, s.view, { position: s.at, yaw: s.yaw ?? 0, pitch: 0, speed: 0 }));
   }
 
   sync(world: World<Entity>, alpha: number, streamedOut?: ReadonlySet<EntityId>, domain?: DomainState): void {

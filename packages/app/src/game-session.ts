@@ -43,7 +43,7 @@ export class GameSession implements UiIntents {
     this.narrative = new NarrativeRuntime(deps.story, (cmd) => this.simulation.enqueue(cmd));
     // Lublin's terrain, surfaces and buildings are drawn for good, streamed in or not (ADR-0045).
     this.renderSync = new RenderSync(deps.render, deps.scenery === false ? [] : WORLD_SCENERY);
-    this.simulation = Simulation.create({ seed: deps.seed(), bus: this.bus, crowd: deps.crowd ?? "off" });
+    this.simulation = Simulation.create({ seed: deps.seed(), bus: this.bus, crowd: deps.crowd ?? "off", traffic: deps.traffic ?? deps.crowd ?? "off" });
     // The whole city (ADR-0045): Lublin's streets, buildings and names under the game's decks and links (ADR-0021).
     patchUi(deps.ui, { map: buildCityMap() });
     this.c = createControllers(deps, {
@@ -123,7 +123,7 @@ export class GameSession implements UiIntents {
   // ---- SessionIntents ----
 
   newGame(): void {
-    this.replaceSimulation(Simulation.create({ seed: this.deps.seed(), bus: this.bus, crowd: this.deps.crowd ?? "off" }));
+    this.replaceSimulation(Simulation.create({ seed: this.deps.seed(), bus: this.bus, crowd: this.deps.crowd ?? "off", traffic: this.deps.traffic ?? this.deps.crowd ?? "off" }));
     this.narrative.resetState();
     this.c.hints.start();
     this.setScreen("playing");
@@ -154,7 +154,7 @@ export class GameSession implements UiIntents {
   /** Replaces the running game with `snapshot`, ink state included: a load without the slot. */
   restore(snapshot: SaveSnapshot): void {
     this.closePanels();
-    this.replaceSimulation(Simulation.fromSnapshot(snapshot, this.bus, this.deps.crowd ?? "off"));
+    this.replaceSimulation(Simulation.fromSnapshot(snapshot, this.bus, this.deps.crowd ?? "off", this.deps.traffic ?? this.deps.crowd ?? "off"));
     this.c.wave1.inbox.clear();
     if (snapshot.narrative) this.narrative.loadState(snapshot.narrative);
     else this.narrative.resetState();

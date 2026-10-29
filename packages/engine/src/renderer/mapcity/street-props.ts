@@ -5,29 +5,25 @@ import type { ToonMaterials } from "../../npr/toon-material";
 import { sinkToMesh } from "../dressing";
 import { MeshSink } from "../mesh-sink";
 import { cellBounds, cellKey } from "./map-index";
-import { type WorldProp, bake, collectInstances, countByKind, planHalos, toWorld } from "./prop-batch";
+import { type WorldProp, bake, planHalos, toWorld } from "./prop-batch";
 import { PropHaloMaterial } from "./prop-halo";
 import { farModel, propModel } from "./prop-models";
-import { type BlockBand, type CellBand, PROP_BLOCK, PROP_LOD, type PropLod, blockBand, cellBand, detailBand } from "./prop-shapes";
+import { type BlockBand, PROP_BLOCK, PROP_LOD, type PropLod, blockBand } from "./prop-shapes";
 import { type Box2, distanceToBox } from "./polygon";
 
-/** A 128 m cell of the map city: its pieces and what of them is drawn in detail. */
-interface PropCell {
-  readonly key: string;
-  readonly block: string;
-  readonly bounds: Box2;
-  readonly pieces: Map<EntityId, WorldProp[]>;
-  band: CellBand;
-}
-
-/** A 256 m block: the baked far mesh and the halos of the cells in it. */
+/**
+ * A 256 m block of the map city's street furniture: its pieces, the detailed mesh baked when it
+ * first comes near and the far mesh of simplified trees, lamps and monuments.
+ */
 interface PropBlock {
   readonly key: string;
   readonly bounds: Box2;
-  readonly cells: Set<string>;
+  readonly pieces: Map<EntityId, WorldProp[]>;
   band: BlockBand;
+  near: Mesh | null;
+  /** Its detailed mesh is baked for its pieces as they are now. */
+  baked: boolean;
   far: Mesh | null;
-  halo: Mesh | null;
   dirty: boolean;
 }
 
@@ -40,10 +36,11 @@ export interface StreetPropsDeps {
 export interface StreetPropsStats {
   /** Pieces held. */
   readonly pieces: number;
+  /** Blocks with pieces. */
   readonly cells: number;
   /** Detailed pieces drawn now, per kind. */
   readonly drawn: Readonly<Record<string, number>>;
-  /** Instanced meshes with at least one piece. */
+  /** Detailed block meshes drawn now (one draw call per pass each). */
   readonly groups: number;
   /** Blocks drawing their far mesh. */
   readonly far: number;
@@ -52,27 +49,30 @@ export interface StreetPropsStats {
 /** The kinds that light the street at night and get halos. */
 const LIT = (kind: StreetPropKind): boolean => kind.startsWith("lamp-") || kind === "floodlight";
 
+/** Blocks baked per frame at most: a block coming near does not stall more than a frame. */
+const BAKES_PER_FRAME = 1;
+
 const distance = (eye: Vec3, b: Box2): number => Math.hypot(distanceToBox(eye.x, eye.z, b), Math.max(eye.y - 2, 0));
 
 /**
- * Street furniture of the map city (ADR-0047) behind the `BabylonRenderer` facade. Pieces fall
- * into the map city's 128 m cells, the cells into 256 m blocks. A block close to the camera has
- * its cells draw their pieces in detail (small things only in the nearest cells); a block further
- * away draws one baked far mesh of simplified trees, lamps and monuments. The detailed pieces of
- * all near cells are thin instances, one mesh per kind and shape, so the draw calls follow the
- * kinds in view, not the number of cells. Lamps' halos are one additive mesh per block.
+ * Street furniture of the map city (ADR-0047, ADR-0050) behind the `BabylonRenderer` facade.
+ * Pieces fall into 256 m blocks. A block within the detail distance draws all its pieces baked
+ * into one mesh (baked when it first comes near, kept after); further away its far mesh of
+ * simplified trees, lamps and monuments; beyond that nothing. So the draw calls follow the
+ * blocks in view (two or three), not the kinds of furniture in them, which as thin instances per
+ * kind cost one draw call per kind in view. The halos of every lamp of the city are one
+ * additive mesh.
  */
 export class StreetProps {
   private readonly entities = new Map<EntityId, Set<string>>();
-  private readonly cells = new Map<string, PropCell>();
   private readonly blocks = new Map<string, PropBlock>();
-  private readonly groups = new Map<string, Mesh>();
   private readonly halo: PropHaloMaterial;
+  private haloMesh: Mesh | null = null;
   private readonly lod: PropLod;
-  private instancesDirty = false;
   private drawn: Record<string, number> = {};
   private night = 1;
   private fog = -1;
+  private waitingBlocks = 0;
 
   constructor(private readonly deps: StreetPropsDeps) {
     this.halo = new PropHaloMaterial(deps.scene);
@@ -94,17 +94,17 @@ export class StreetProps {
   spawn(id: EntityId, items: readonly StreetPropItem[], at: Vec3): void {
     this.despawn(id);
     const keys = new Set<string>();
-    const byCell = new Map<string, WorldProp[]>();
+    const byBlock = new Map<string, WorldProp[]>();
     for (const p of toWorld(items, at)) {
-      const k = cellKey(p.x, p.z);
-      const list = byCell.get(k);
+      const k = cellKey(p.x, p.z, PROP_BLOCK);
+      const list = byBlock.get(k);
       if (list) list.push(p);
-      else byCell.set(k, [p]);
+      else byBlock.set(k, [p]);
     }
-    for (const [k, list] of byCell) {
-      const cell = this.cellOf(k, list[0]!);
-      cell.pieces.set(id, list);
-      this.blocks.get(cell.block)!.dirty = true;
+    for (const [k, list] of byBlock) {
+      const block = this.blockOf(k);
+      block.pieces.set(id, list);
+      block.dirty = true;
       keys.add(k);
     }
     this.entities.set(id, keys);
@@ -115,56 +115,64 @@ export class StreetProps {
     if (!keys) return;
     this.entities.delete(id);
     for (const k of keys) {
-      const cell = this.cells.get(k);
-      if (!cell) continue;
-      cell.pieces.delete(id);
-      const block = this.blocks.get(cell.block);
-      if (block) block.dirty = true;
+      const block = this.blocks.get(k);
+      if (!block) continue;
+      block.pieces.delete(id);
+      block.dirty = true;
     }
   }
 
-  /** Rebuilds the far and halo meshes of changed blocks. */
+  /** Rebuilds the far meshes of changed blocks and the halos; forgets their detailed meshes. */
   flush(): boolean {
     let changed = false;
     for (const [key, block] of this.blocks) {
       if (!block.dirty) continue;
       changed = true;
       block.dirty = false;
-      this.instancesDirty = true;
       block.far?.dispose(false, false);
-      block.halo?.dispose(false, false);
-      block.far = block.halo = null;
-      for (const k of [...block.cells]) {
-        if (this.cells.get(k)?.pieces.size) continue;
-        this.cells.delete(k);
-        block.cells.delete(k);
-      }
-      if (block.cells.size === 0) this.blocks.delete(key);
-      else this.buildBlock(block);
+      block.near?.dispose(false, false);
+      block.far = block.near = null;
+      block.baked = false;
+      block.band = "off";
+      if (block.pieces.size === 0) this.blocks.delete(key);
+      else this.buildFar(block);
     }
+    if (changed) this.buildHalos();
     return changed;
   }
 
-  /** Bands of the blocks and cells from the camera, the instance buffers when a band changed, the halos' look. */
+  /** Bands of the blocks from the camera, the detailed meshes they need, the halos' look. */
   update(eye: Vec3): void {
     const rig = this.deps.materials.currentRig;
     if (rig.fogDensity !== this.fog) {
       this.fog = rig.fogDensity;
       this.halo.setLook(1 - this.night, this.fog);
     }
+    let budget = BAKES_PER_FRAME;
+    let waiting = 0;
+    const drawn: Record<string, number> = {};
     for (const block of this.blocks.values()) {
       block.band = blockBand(distance(eye, block.bounds), this.lod, block.band);
-      block.far?.setEnabled(block.band === "far");
-      block.halo?.setEnabled(block.band !== "off" && this.night > 0.02);
-    }
-    for (const cell of this.cells.values()) {
-      const band = detailBand(cellBand(distance(eye, cell.bounds), this.lod, cell.band), this.blocks.get(cell.block)?.band ?? "off");
-      if (band !== cell.band) {
-        cell.band = band;
-        this.instancesDirty = true;
+      if (block.band === "near" && !block.baked) {
+        if (budget > 0) {
+          budget -= 1;
+          this.bakeNear(block);
+        } else waiting += 1;
       }
+      const detailed = block.band === "near" && block.baked;
+      block.near?.setEnabled(detailed);
+      // The far mesh stands in for a near block until its detail is baked.
+      block.far?.setEnabled(block.band === "far" || (block.band === "near" && !block.baked));
+      if (detailed) for (const list of block.pieces.values()) for (const p of list) drawn[p.prop] = (drawn[p.prop] ?? 0) + 1;
     }
-    if (this.instancesDirty) this.rebuildInstances();
+    this.haloMesh?.setEnabled(this.night > 0.02);
+    this.waitingBlocks = waiting;
+    this.drawn = drawn;
+  }
+
+  /** Blocks near the camera still waiting for their detailed mesh. */
+  get waiting(): number {
+    return this.waitingBlocks;
   }
 
   /** Night 0 .. day 1 (ADR-0017): lamps' glass and the neon dim by day, the halos go out. */
@@ -177,84 +185,71 @@ export class StreetProps {
 
   get stats(): StreetPropsStats {
     let pieces = 0;
-    for (const c of this.cells.values()) for (const l of c.pieces.values()) pieces += l.length;
-    const far = [...this.blocks.values()].filter((b) => b.band === "far" && b.far).length;
-    return { pieces, cells: this.cells.size, drawn: { ...this.drawn }, groups: [...this.groups.values()].filter((m) => m.isEnabled()).length, far };
+    let groups = 0;
+    let far = 0;
+    for (const b of this.blocks.values()) {
+      for (const l of b.pieces.values()) pieces += l.length;
+      if (b.near?.isEnabled()) groups++;
+      if (b.far?.isEnabled()) far++;
+    }
+    return { pieces, cells: this.blocks.size, drawn: { ...this.drawn }, groups, far };
   }
 
   /** Every mesh built (debug and tests). */
   get meshes(): Mesh[] {
-    const out = [...this.groups.values()];
-    for (const b of this.blocks.values()) for (const m of [b.far, b.halo]) if (m) out.push(m);
+    const out: Mesh[] = [];
+    for (const b of this.blocks.values()) for (const m of [b.near, b.far]) if (m) out.push(m);
+    if (this.haloMesh) out.push(this.haloMesh);
     return out;
   }
 
-  private cellOf(key: string, at: WorldProp): PropCell {
-    let c = this.cells.get(key);
-    if (!c) {
-      const block = cellKey(at.x, at.z, PROP_BLOCK);
-      c = { key, block, bounds: cellBounds(key), pieces: new Map(), band: "off" };
-      this.cells.set(key, c);
-      let b = this.blocks.get(block);
-      if (!b) {
-        b = { key: block, bounds: cellBounds(block, PROP_BLOCK), cells: new Set(), band: "off", far: null, halo: null, dirty: true };
-        this.blocks.set(block, b);
-      }
-      b.cells.add(key);
+  private blockOf(key: string): PropBlock {
+    let b = this.blocks.get(key);
+    if (!b) {
+      b = { key, bounds: cellBounds(key, PROP_BLOCK), pieces: new Map(), band: "off", near: null, baked: false, far: null, dirty: true };
+      this.blocks.set(key, b);
     }
-    return c;
+    return b;
   }
 
-  private buildBlock(block: PropBlock): void {
-    const far = new MeshSink();
-    const halo = new MeshSink();
-    for (const k of [...block.cells].sort()) {
-      const cell = this.cells.get(k)!;
-      for (const id of [...cell.pieces.keys()].sort((a, b) => a - b)) {
-        for (const p of cell.pieces.get(id)!) {
-          const f = farModel(p.prop, p.shape);
-          if (f) bake(far, f, p);
-          if (LIT(p.prop)) planHalos(halo, p, propModel(p.prop, p.shape).lights);
-        }
-      }
-    }
-    if (!far.empty) {
-      block.far = sinkToMesh(this.deps.scene, `props-far-${block.key}`, far);
-      block.far.material = this.deps.materials.get("streetProp");
-      block.far.setEnabled(false);
-    }
-    if (!halo.empty) {
-      block.halo = sinkToMesh(this.deps.scene, `props-halo-${block.key}`, halo, true);
-      block.halo.material = this.halo.material;
-      block.halo.setEnabled(false);
-    }
-    block.band = "off";
+  private sorted(block: PropBlock): WorldProp[] {
+    return [...block.pieces.keys()].sort((a, b) => a - b).flatMap((id) => block.pieces.get(id)!);
   }
 
-  private group(key: string): Mesh {
-    let m = this.groups.get(key);
-    if (!m) {
-      const cut = key.lastIndexOf(":");
-      m = sinkToMesh(this.deps.scene, `props-${key}`, propModel(key.slice(0, cut) as StreetPropKind, Number(key.slice(cut + 1))).sink);
-      m.material = this.deps.materials.get("streetProp");
-      this.groups.set(key, m);
-    }
+  private mesh(name: string, sink: MeshSink): Mesh | null {
+    if (sink.empty) return null;
+    const m = sinkToMesh(this.deps.scene, name, sink);
+    m.material = this.deps.materials.get("streetProp");
+    m.setEnabled(false);
     return m;
   }
 
-  private rebuildInstances(): void {
-    this.instancesDirty = false;
-    const sets = collectInstances([...this.cells.values()].map((c) => ({ band: c.band, pieces: [...c.pieces.values()].flat() })));
-    for (const [key, m] of this.groups) {
-      if (sets.has(key)) continue;
-      m.thinInstanceCount = 0;
-      m.setEnabled(false);
+  private buildFar(block: PropBlock): void {
+    const far = new MeshSink();
+    for (const p of this.sorted(block)) {
+      const f = farModel(p.prop, p.shape);
+      if (f) bake(far, f, p);
     }
-    for (const [key, matrices] of sets) {
-      const m = this.group(key);
-      m.thinInstanceSetBuffer("matrix", matrices, 16, false);
-      m.setEnabled(true);
-    }
-    this.drawn = countByKind(sets);
+    block.far = this.mesh(`props-far-${block.key}`, far);
+  }
+
+  /** Bakes a block's detailed pieces into one mesh on the street props' material (ADR-0050). */
+  private bakeNear(block: PropBlock): void {
+    block.baked = true;
+    const sink = new MeshSink();
+    for (const p of this.sorted(block)) bake(sink, propModel(p.prop, p.shape).sink, p);
+    block.near = this.mesh(`props-${block.key}`, sink);
+  }
+
+  /** The halos of every lamp of the city in one additive mesh, outside the G-buffer, shadow and glow. */
+  private buildHalos(): void {
+    this.haloMesh?.dispose(false, false);
+    this.haloMesh = null;
+    const sink = new MeshSink();
+    for (const key of [...this.blocks.keys()].sort()) for (const p of this.sorted(this.blocks.get(key)!)) if (LIT(p.prop)) planHalos(sink, p, propModel(p.prop, p.shape).lights);
+    if (sink.empty) return;
+    this.haloMesh = sinkToMesh(this.deps.scene, "props-halo", sink, true);
+    this.haloMesh.material = this.halo.material;
+    this.haloMesh.setEnabled(false);
   }
 }

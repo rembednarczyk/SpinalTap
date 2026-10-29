@@ -126,6 +126,8 @@ export interface DomainEvents {
   Disturbance: { kind: DisturbanceKind; at: Vec3; radius: number; sourceId: EntityId };
   /** A bystander's reaction changed (presentation: animation, bark, minimap). */
   CrowdReacted: { entityId: EntityId; state: CrowdState };
+  /** A vehicle stopped by the player in its way sounds its horn (ADR-0050). Presentation only. */
+  VehicleHorned: { vehicleId: EntityId; at: Vec3 };
   /** A civilian started phoning it in; the call lands after `duration` seconds unless cut off. */
   WitnessCalling: { witnessId: EntityId; crime: CrimeKind; duration: number };
   /** A crime reached the district's security. `witnessId` is the civilian, camera or patrol. */

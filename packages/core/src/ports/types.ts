@@ -50,6 +50,12 @@ export type ViewDescriptor =
    */
   | { readonly kind: "crowd"; readonly look: number; readonly umbrella: boolean }
   /**
+   * A vehicle of the street (ADR-0050): a car of the city kit's models, a delivery van or a
+   * trolleybus, driving along a road (moving, its transform sent every step) or `parked` at a
+   * kerb (static). `tint` seeds the paint. Drawn in bulk; collision is the simulation's.
+   */
+  | { readonly kind: "vehicle"; readonly model: VehicleModel; readonly tint: number; readonly parked?: true }
+  /**
    * "corpo": Tessen's security in the docks (ADR-0024); "ganger": Hebi. `enforcer`: sees through
    * disguises (ADR-0033), the HUD marks it with an icon.
    */
@@ -168,6 +174,21 @@ export type ViewDescriptor =
   | { readonly kind: "water"; readonly size: Vec3 }
   /** A bag dropped by a defeated enemy (ADR-0015). `best` is the rarest item inside, for the neon strip. */
   | { readonly kind: "loot"; readonly style: "bag"; readonly best: Rarity | null };
+
+/** The street's vehicles (ADR-0050): five cars of the city kit (ADR-0022) and the procedural trolleybus. */
+export type VehicleModel = "sedan" | "hatchback" | "taxi" | "van" | "delivery" | "trolleybus";
+
+export const VEHICLE_MODELS: readonly VehicleModel[] = ["sedan", "hatchback", "taxi", "van", "delivery", "trolleybus"];
+
+/** Footprint and height of each vehicle model in metres (x across, z along, front +z), shared by collision and drawing. */
+export const VEHICLE_SIZE: Readonly<Record<VehicleModel, { readonly width: number; readonly length: number; readonly height: number }>> = {
+  sedan: { width: 1.82, length: 4.5, height: 1.45 },
+  hatchback: { width: 1.75, length: 4.1, height: 1.4 },
+  taxi: { width: 1.82, length: 4.6, height: 1.6 },
+  van: { width: 1.95, length: 5.0, height: 1.95 },
+  delivery: { width: 2.05, length: 5.8, height: 2.45 },
+  trolleybus: { width: 2.55, length: 12, height: 3.4 },
+};
 
 /** An opening through a map building's facade (ADR-0045). */
 export interface Doorway {
@@ -324,4 +345,6 @@ export type AudioCue =
   // Jumps, landings and ladders (ADR-0021).
   | "jump"
   | "land"
-  | "land-hard";
+  | "land-hard"
+  // A car's horn at the player in its way (ADR-0050).
+  | "horn";

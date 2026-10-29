@@ -19,6 +19,8 @@ export * from "./activity-spots";
 export * from "./actor-activities";
 export * from "./sidewalks";
 export * from "./crowd";
+export { TRAFFIC_ROUTES, type TrafficDensity, type TrafficRoute } from "./traffic";
+export { PARKED_CARS } from "./parked-cars";
 export * from "./lublin/sites";
 export * from "./lublin/terrain";
 export { againstWall, inBuilding, nearestWall, spotNear } from "./lublin/places";

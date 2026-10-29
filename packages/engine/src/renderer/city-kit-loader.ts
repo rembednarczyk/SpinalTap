@@ -37,6 +37,11 @@ export class CityKitLoader {
 
   constructor(private readonly deps: CityKitLoaderDeps) {}
 
+  /** The kit once it has loaded (its models and material also draw the street's vehicles, ADR-0050). */
+  get kit(): CityKit | null {
+    return this.city;
+  }
+
   /** Loads the kit in the background; the scene is not ready (reference frames wait) until it is in. */
   load(url: string): void {
     const { scene } = this.deps.stage;

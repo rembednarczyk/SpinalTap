@@ -1,5 +1,5 @@
 import type { AudioPort, PersistencePort, RenderPort } from "@seki/core";
-import type { CrowdDensity } from "@seki/sim";
+import type { CrowdDensity, TrafficDensity } from "@seki/sim";
 import type { UiStore } from "@seki/ui";
 import type { PreviewHost } from "./character-view";
 import type { HintsHost } from "./controllers/hint-sync";
@@ -30,6 +30,8 @@ export interface GameSessionDeps {
   readonly touch?: boolean;
   /** The crowd of residents (ADR-0041), as the graphics quality allows; none without. */
   readonly crowd?: CrowdDensity;
+  /** The street's traffic (ADR-0050); the crowd's density without. */
+  readonly traffic?: TrafficDensity;
   /**
    * Hand the map's scenery (Lublin's terrain, surfaces and buildings, ADR-0045) to the render
    * port. Default on; headless tests that count the port's spawns may leave it out.

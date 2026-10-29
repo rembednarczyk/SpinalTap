@@ -26,6 +26,8 @@ export interface SceneryItem {
   readonly chunk: string;
   readonly view: ViewDescriptor;
   readonly at: Vec3;
+  /** Facing (a parked car, ADR-0050); 0 when absent. */
+  readonly yaw?: number;
 }
 
 const insideRect = (r: GroundRect, x: number, z: number): boolean => x >= r.minX && x <= r.maxX && z >= r.minZ && z <= r.maxZ;
