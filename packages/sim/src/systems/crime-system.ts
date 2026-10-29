@@ -249,7 +249,7 @@ const runCameras = (ctx: SimContext, player: Entity | null, dt: number, aware: M
 };
 
 /** A disguise of the camera's faction whose role belongs in its no-go zones (ADR-0033). */
-const staffPass = (ctx: SimContext, faction: FactionId): boolean => {
+export const staffPass = (ctx: SimContext, faction: FactionId): boolean => {
   const role = ctx.state.domain.disguise.role;
   return role !== null && ZONE_ACCESS[role] && coveredFrom(ctx, faction);
 };

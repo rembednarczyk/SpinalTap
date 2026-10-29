@@ -9,6 +9,7 @@ import type { WorldDressing } from "./dressing";
 import { type PropView, buildBlock, buildLamp, buildLootBag, buildNeon, buildWater } from "./props";
 import type { ScanVisitor } from "./screen-fx";
 import type { Stage } from "./stage";
+import { InteriorBatches } from "./interior-batch";
 
 /** Everything in the world that is not a character: blocks, neon, lamps, water, loot. */
 export type PropDescriptor = Exclude<ViewDescriptor, { kind: "heroine" | "npc" | "enemy" }>;
@@ -49,18 +50,31 @@ export class PropViews {
   /** Blocks in view, for the walked-roof test (ADR-0027, C8). */
   private readonly blocks = new Map<EntityId, DressBlock>();
 
-  constructor(private readonly deps: PropViewsDeps) {}
+  /** Plain interior blocks, merged (ADR-0038). */
+  private readonly interiors: InteriorBatches;
+
+  constructor(private readonly deps: PropViewsDeps) {
+    this.interiors = new InteriorBatches(deps.stage.scene, deps.materials, (old, next) => {
+      if (old) this.blockers.delete(old);
+      if (next) this.blockers.add(next);
+    });
+  }
 
   has(id: EntityId): boolean {
-    return this.props.has(id);
+    return this.props.has(id) || this.interiors.has(id);
   }
 
   get size(): number {
-    return this.props.size;
+    return this.props.size + this.interiors.size;
   }
 
   ids(): EntityId[] {
-    return [...this.props.keys()];
+    return [...this.props.keys(), ...this.interiors.ids()];
+  }
+
+  /** Rebuilds the merged interior meshes that changed. Call once per frame before rendering. */
+  flush(): void {
+    this.interiors.flush();
   }
 
   isBlocker(mesh: AbstractMesh): boolean {
@@ -78,6 +92,14 @@ export class PropViews {
     const at = v3(t.position);
     switch (view.kind) {
       case "block":
+        if (view.interior && !view.skin && !view.slope && !view.rungs) {
+          this.interiors.add(id, view, t.position);
+          this.deps.dressing.addBlock(id, view, at);
+          this.blocks.set(id, { center: { ...t.position }, size: view.size, material: view.material });
+          return;
+        }
+        this.spawnLit(id, name, view, at);
+        return;
       case "neon":
       case "lamp":
         this.spawnLit(id, name, view, at);
@@ -143,6 +165,12 @@ export class PropViews {
   }
 
   despawn(id: EntityId): void {
+    if (this.interiors.has(id)) {
+      this.interiors.remove(id);
+      this.deps.dressing.remove(id);
+      this.blocks.delete(id);
+      return;
+    }
     const e = this.props.get(id);
     if (!e) return;
     this.props.delete(id);

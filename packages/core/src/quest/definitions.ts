@@ -21,7 +21,7 @@ export const QUEST_FIRST_CONTRACT: QuestDefinition = {
   steps: [
     {
       id: "find_fixer",
-      objective: "Znajdź fixera przy barze „Neon Koi” [E]",
+      objective: "Porozmawiaj z Kaito przy fotelu w klinice [E]",
       completeWhen: { type: "flag", flag: "met_fixer" },
       rewards: [],
     },

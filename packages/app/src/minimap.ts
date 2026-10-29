@@ -44,6 +44,11 @@ export const buildDistrictMap = (props: readonly StaticProp[]): MapVm => {
     if (link) links.push(link);
     // Lift gates and buttons, ladder grab points: nothing to draw.
     if (p.mechanism && p.mechanism.kind !== "platform") continue;
+    // An interior (ADR-0038): drawn as the building it is cut from.
+    if (p.interior) {
+      if (p.solid) blocks.push(r);
+      continue;
+    }
     const bottom = p.center.y - p.view.size.y / 2;
     if (p.solid && bottom >= RAISED) decks.push(r);
     else if (p.solid && !link) blocks.push(r);

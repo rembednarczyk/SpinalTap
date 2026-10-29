@@ -39,6 +39,7 @@
 | [0035](0035-hud-fali-2.md) | App i UI fali 2: kontrolery metra i radia, układ dotykowy telefonu, prezentery ciała, przebrań i haków, minimapa z zoomem i obszarami, łuk dotykowy | Zaakceptowana |
 | [0036](0036-engine-fali-2.md) | Engine fali 2: wagon metra z paralaksą, radio z trzema stacjami i głośnikami w lokalach, smugi zrywu i ślad odbicia, odcienie przebrań na proceduralnej obsadzie, progi mokrego asfaltu ze statyczną sondą | Zaakceptowana |
 | [0037](0037-fala-3-wnetrza-dialog-rutyny.md) | Fala 3 z uwag gracza: wnętrza i drzwi automatyczne, start w klinice, dialog na kole, rutyny i aktywności NPC | Zaakceptowana |
+| [0038](0038-wnetrza-drzwi-start-w-klinice.md) | Wnętrza kliniki i Neon Koi wycięte z bloków city kitu, drzwi automatyczne z czujnikiem i zamkami (biuro Tessen na kod), start na fotelu w klinice, zapis v14 | Zaakceptowana |
 | [0039](0039-dialog-na-kole.md) | Dialog na kole: rodzaje opcji z tagów ink, łuk przy rozmówcy, sterowanie myszą, klawiaturą, dotykiem, propozycja dla pada | Zaakceptowana |
 | [0040](0040-rutyny-aktywnosci-przechodnie.md) | Rutyny i aktywności postaci: aktywność z harmonogramu, nawyku i posterunku, miejsca aktywności, przechodnie tła z ziarna i zegara poza zapisem, pozy i rzeczy w rękach za fasadą renderera | Zaakceptowana |
 

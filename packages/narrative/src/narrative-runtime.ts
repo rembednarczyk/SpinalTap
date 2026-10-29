@@ -45,6 +45,9 @@ const SPEAKERS: Readonly<Record<string, string>> = {
   GORO: "Goro",
   KENTA: "Kenta",
   FUMIKO: "Fumiko",
+  // Neon Koi (ADR-0038).
+  BARMAN: "Barman",
+  BYWALEC: "Bywalec",
   // Street encounters (ADR-0032).
   NOBU: "Nobu",
   SARARIMAN: "Sarariman",

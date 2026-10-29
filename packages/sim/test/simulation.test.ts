@@ -1,23 +1,23 @@
 import { describe, expect, it } from "vitest";
 import { M0_TARGET_TAG, QUEST_FIRST_CONTRACT, currentStep, killedFlag } from "@seki/core";
-import { GANGER_MAX_HP, PLAYER_SPAWN, Simulation } from "../src";
-import { byKey, collect, input, run, teleportPlayer } from "./helpers";
+import { GANGER_MAX_HP, type Simulation } from "../src";
+import { STREET_START, byKey, collect, input, run, teleportPlayer, streetSim } from "./helpers";
 
-const newSim = () => Simulation.create({ seed: 7 });
+const newSim = () => streetSim({ seed: 7 });
 
 describe("simulation: movement and camera", () => {
   it("walks forward along +Z at walk speed", () => {
     const sim = newSim();
     run(sim, 60, input({ moveZ: 1 }));
     const p = sim.player();
-    expect(p?.position.z).toBeCloseTo(PLAYER_SPAWN.position.z + 4.2, 1);
+    expect(p?.position.z).toBeCloseTo(STREET_START.z + 4.2, 1);
     expect(p?.position.x).toBeCloseTo(0, 5);
   });
 
   it("sprints faster than it walks", () => {
     const sim = newSim();
     run(sim, 60, input({ moveZ: 1, sprint: true }));
-    expect(sim.player()!.position.z - PLAYER_SPAWN.position.z).toBeGreaterThan(6.5);
+    expect(sim.player()!.position.z - STREET_START.z).toBeGreaterThan(6.5);
   });
 
   it("strafes right relative to the view", () => {
@@ -55,7 +55,8 @@ describe("simulation: interaction and narrative commands", () => {
     const sim = newSim();
     const focus = collect<{ prompt: string | null }>(sim, "InteractionFocusChanged");
     const started = collect<{ dialogueId: string }>(sim, "InteractionStarted");
-    teleportPlayer(sim, { x: 4.5, y: 0, z: 1.5 });
+    // Kaito waits by the chair in the clinic until they have talked (ADR-0038).
+    teleportPlayer(sim, { x: -12.3, y: 0, z: 3.2 });
     sim.step();
     expect(focus.at(-1)?.prompt).toBe("Rozmawiaj z Kaito");
     sim.step(input({ interact: true }));

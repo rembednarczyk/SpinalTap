@@ -12,6 +12,7 @@ import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
 import { CONTRACT_ITEM_SPOTS } from "@seki/sim";
 import { createUiStore } from "@seki/ui";
+import { nearKaito } from "./story-helpers";
 import { GameSession } from "../src/game-session";
 
 /** What the debrief card pays on top of the reward (ADR-0029); subscribe right before the payment. */
@@ -89,7 +90,7 @@ const close = (s: GameSession) => {
 };
 
 const talkToKaito = (s: GameSession) => {
-  teleport(s, 4.6, 1.5, Math.PI / 2);
+  teleport(s, ...nearKaito(s));
   steps(s, 1, frame({ interact: true }));
 };
 
@@ -193,7 +194,8 @@ describe("M4 acceptance: market contracts → eddies → cyberware", () => {
     expect(eddies()).toBeGreaterThanOrEqual(400 + 250 + 470 + 550 - 1);
     // Shinsekai is streamed out while Seki is on the market; walking up to the clinic brings it back.
     expect(session.sim.streamer.isLoaded("shinsekai-7")).toBe(false);
-    teleport(session, -4.7, 2.4, -Math.PI / 2);
+    // Mori is at the monitors behind the chair in the clinic (ADR-0038).
+    teleport(session, -15, 5.2, -Math.PI / 2);
     steps(session, 1, frame({ interact: true }));
     expect(ui.getState().shopOpen).toBe(true);
     before = eddies();

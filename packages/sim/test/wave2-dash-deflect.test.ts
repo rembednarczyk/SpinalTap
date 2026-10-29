@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { CyberwareLoadout, DomainState, ItemInstance } from "@seki/core";
 import { DASH_COOLDOWN, DASH_IFRAMES, DASH_SPEED, DASH_TIME, DEFLECT_THRESHOLD, JUMP_SPEED, SIM_DT, Simulation, freshPerks, gangerEntity, type Entity } from "../src";
-import { collect, input, run } from "./helpers";
+import { collect, input, run, streetSim } from "./helpers";
 
 const ticks = (seconds: number) => Math.ceil(seconds / SIM_DT - 1e-9);
 
 /** A new game with these implants (and `patch`), loaded through a snapshot; the street's AI removed. */
 const simWith = (cyberware: CyberwareLoadout, patch: (d: DomainState) => DomainState = (d) => d): Simulation => {
-  const base = Simulation.create({ seed: 21 });
+  const base = streetSim({ seed: 21 });
   const snap = base.snapshot(null, "t", "");
   const domain = patch({ ...snap.domain, character: { ...snap.domain.character, cyberware } });
   const sim = Simulation.fromSnapshot({ ...snap, domain });

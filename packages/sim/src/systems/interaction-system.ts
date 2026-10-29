@@ -5,6 +5,7 @@ import type { SimContext, System } from "../world/context";
 import { clearContract, raiseFlag } from "../world/domain-ops";
 import { raiseAlarm } from "./contract-system";
 import { callElevator } from "./elevator-system";
+import { forceDoor } from "./door-system";
 import { grabLadder } from "./ladder-system";
 import { readHookTerminal } from "../world/hook-tracker";
 import { helpPasserBy } from "../world/micro-events";
@@ -78,6 +79,10 @@ export const interactionSystem: System = {
       const { interactable, faction } = best;
       if (interactable.kind === "elevator") {
         callElevator(ctx, interactable, player);
+        return;
+      }
+      if (interactable.kind === "door") {
+        forceDoor(ctx, best);
         return;
       }
       if (interactable.kind === "ladder") {

@@ -11,7 +11,7 @@ import {
   inPlayerView,
   stateHash,
 } from "../src";
-import { byKey, collect, input, run, teleportPlayer } from "./helpers";
+import { byKey, collect, input, run, teleportPlayer, streetSim } from "./helpers";
 
 // Long runs of the street (a 20 s search, four directions of spawns): roomy on a busy machine.
 vi.setConfig({ testTimeout: 20_000 });
@@ -35,7 +35,7 @@ const fireUp = (sim: Simulation) => {
 
 describe("last known position (ADR-0029)", () => {
   it("a ganger that lost the player goes where it last saw them, looks around, then goes home", () => {
-    const sim = Simulation.create({ seed: 3 });
+    const sim = streetSim({ seed: 3 });
     tough(sim);
     const home = at(0, 0);
     const g = gangerEntity(90001, { key: "watcher", position: home, yaw: 0 }, null, 80, "shinsekai-7");
@@ -72,7 +72,7 @@ describe("last known position (ADR-0029)", () => {
   });
 
   it("the search survives a save and continues the same", () => {
-    const sim = Simulation.create({ seed: 3 });
+    const sim = streetSim({ seed: 3 });
     tough(sim);
     const guard = byKey(sim, "guard")!;
     guard.ai!.lastKnown = at(-2, 20);
@@ -90,7 +90,7 @@ describe("last known position (ADR-0029)", () => {
 
 describe("the crowd (ADR-0029)", () => {
   it("a shot sends a bystander running away from it, a close one floors it first; then it calms down", () => {
-    const sim = Simulation.create({ seed: 4 });
+    const sim = streetSim({ seed: 4 });
     const ume = byKey(sim, "ume")!;
     const reacted = collect<DomainEvents["CrowdReacted"]>(sim, "CrowdReacted");
     const noise = collect<DomainEvents["Disturbance"]>(sim, "Disturbance");
@@ -111,7 +111,7 @@ describe("the crowd (ADR-0029)", () => {
     expect(hers().at(-1)).toEqual({ entityId: ume.id, state: "calm" });
 
     // Point blank: cowering, then running, then calm.
-    const close = Simulation.create({ seed: 4 });
+    const close = streetSim({ seed: 4 });
     const u = byKey(close, "ume")!;
     const seen = collect<DomainEvents["CrowdReacted"]>(close, "CrowdReacted");
     teleportPlayer(close, at(u.position.x + 3, u.position.z), -Math.PI / 2);
@@ -134,7 +134,7 @@ describe("the street people of ADR-0026 in the crowd", () => {
   it("everyone on Ulica Kanałowa and at the market stalls reacts to a shot nearby", () => {
     for (const keys of [["hideo", "tetsu", "mei", "sachiko"], ["kenta", "fumiko", "goro"]]) {
       for (const key of keys) {
-        const sim = Simulation.create({ seed: 7 });
+        const sim = streetSim({ seed: 7 });
         const first = byKey(sim, key);
         // Stream the person's chunk in: stand on them first, then step back.
         const spot = first?.position ?? sim.streamer.chunks.flatMap((c) => c.actors).find((a) => a.spawn.key === key)!.spawn.position;
@@ -155,7 +155,7 @@ describe("the street people of ADR-0026 in the crowd", () => {
 describe("witnesses, the call and the heat (ADR-0028, ADR-0029)", () => {
   /** Seki fires into the sky in front of babcia Ume, with no gang fighting nearby: a crime. */
   const shootInFrontOfUme = (seed = 5) => {
-    const sim = Simulation.create({ seed });
+    const sim = streetSim({ seed });
     tough(sim);
     const ume = byKey(sim, "ume")!;
     teleportPlayer(sim, at(ume.position.x + 9, ume.position.z), -Math.PI / 2);
@@ -243,7 +243,7 @@ describe("witnesses, the call and the heat (ADR-0028, ADR-0029)", () => {
   });
 
   it("a reinforcement never comes in where the player looks", () => {
-    const base = Simulation.create({ seed: 6 });
+    const base = streetSim({ seed: 6 });
     const snap = base.snapshot(null, "t", "");
     const heat = { level: 2 as const, faction: "hebi" as const, searching: true, lastKnown: at(0, -20), searchLeft: 30, cooldown: 0 };
     for (const yaw of [0, Math.PI / 2, Math.PI, -Math.PI / 2]) {

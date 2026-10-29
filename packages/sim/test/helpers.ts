@@ -1,5 +1,5 @@
 import { EMPTY_INPUT, type InputFrame, type Vec3 } from "@seki/core";
-import type { Simulation } from "../src";
+import { Simulation, type SimulationOptions } from "../src";
 
 export const input = (partial: Partial<InputFrame> = {}): InputFrame => ({ ...EMPTY_INPUT, ...partial });
 
@@ -16,7 +16,20 @@ export const teleportPlayer = (sim: Simulation, position: Vec3, yaw = 0, pitch =
   p.pitch = pitch;
 };
 
-export const byKey = (sim: Simulation, key: string) => [...sim.world].find((e) => e.key === key);
+/**
+ * Where a new game started before ADR-0038 (on the street by the wreck). A new game now wakes up
+ * in Mori's clinic; tests of movement, combat and the street start out here, as they always did.
+ */
+export const STREET_START: Vec3 = { x: 0, y: 0, z: -28 };
+
+/** A new game with the player moved out onto the street, before the first step. */
+export const streetSim = (options: SimulationOptions): Simulation => {
+  const sim = Simulation.create(options);
+  teleportPlayer(sim, STREET_START);
+  return sim;
+};
+
+export const byKey =(sim: Simulation, key: string) => [...sim.world].find((e) => e.key === key);
 
 export const collect = <T>(sim: Simulation, type: Parameters<Simulation["bus"]["on"]>[0]): T[] => {
   const out: T[] = [];

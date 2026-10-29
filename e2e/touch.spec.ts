@@ -40,7 +40,8 @@ test("phone: on-screen pad moves, looks and talks", async ({ page }) => {
   expect(await yaw()).toBeGreaterThan(yaw0 + 0.3);
 
   // E lights up near Kaito and opens the dialogue; the pad hides during it.
-  await teleport(page, 4.6, 1.5, Math.PI / 2);
+  // Kaito waits by the chair in the clinic (ADR-0038).
+  await teleport(page, -13.3, 4.7, Math.PI);
   await expect(page.getByRole("button", { name: "Interakcja" })).toHaveClass(/touch__btn--hot/);
   await page.getByRole("button", { name: "Interakcja" }).tap();
   await expect(page.getByTestId("dialogue")).toBeVisible();

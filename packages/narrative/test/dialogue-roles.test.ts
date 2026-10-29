@@ -103,7 +103,11 @@ interface Scenario {
 
 const KAITO = ["Kaito"];
 const SCENARIOS: readonly Scenario[] = [
-  { name: "Kaito, first meeting", knot: "fixer", domain: m0(0), npcs: KAITO },
+  // The opening in the clinic (ADR-0038): Mori has his say by the chair.
+  { name: "Kaito, first meeting", knot: "fixer", domain: m0(0), npcs: ["Kaito", "Doktor Mori"] },
+  { name: "Neon Koi barman, before Kaito", knot: "koi_barman", domain: m0(0), npcs: ["Barman"] },
+  { name: "Neon Koi barman", knot: "koi_barman", domain: afterM0(), npcs: ["Barman"] },
+  { name: "Neon Koi regular", knot: "koi_regular", domain: afterM0(), npcs: ["Bywalec"] },
   { name: "Kaito, courier still alive", knot: "fixer", domain: m0(1), npcs: KAITO },
   { name: "Kaito, report back", knot: "fixer", domain: m0(2), npcs: KAITO },
   { name: "Kaito, contract offer", knot: "fixer", domain: afterM0({}, null, 0), npcs: KAITO },

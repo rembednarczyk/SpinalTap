@@ -32,9 +32,14 @@ EXTERNAL complete_contract()
 - else: -> after
 }
 
+// The opening (ADR-0038): Seki comes round on the chair in Mori's clinic, Kaito waits by it.
 = first_meeting
 KAITO: No proszę. Chodzący trup z wraku na Siódmej.
+Biała lampa nad fotelem świeci ci prosto w oczy. Pachnie spirytusem i przypalonym chromem. Ktoś odpina ci pas z nadgarstka.
+MORI: Chodzący to za dużo powiedziane. Siadaj powoli, szwy na karku jeszcze się nie zdecydowały.
+MORI: Wyciągnąłem z ciebie trzy odłamki szyby, kawałek pasa bezpieczeństwa i pół metra cudzego kabla. Szkło było twoje. Kabel nie.
 KAITO: Ripperdoc mówił, że nie przeżyjesz nocy. Pomylił się. Zdarza mu się.
+MORI: Mówiłem, że nie przeżyjesz jej za darmo. On zapłacił.
 * [Kim jesteś? #tone:main]
     SEKI: Kim ty jesteś?
     KAITO: Kaito. Załatwiam sprawy. A ty, jak słyszę, nie pamiętasz nawet, jak się nazywasz.
@@ -52,9 +57,10 @@ KAITO: Ratownicy mówili, że w tym wraku walczyłaś z pasami jak z wrogiem. Se
     ~ set_alias("Seki Senshi")
     SEKI: Moje imię gdzieś jest. Odzyskam je.
     KAITO: Jasne. Do tego czasu jesteś Seki.
-- KAITO: Masz dług u ripperdoca i zero perspektyw. Ja mam robotę.
+- KAITO: Zapłaciłem za twoje łatanie, więc masz dług. U mnie. I zero perspektyw. Ja mam robotę.
 KAITO: Kurier gangu Hebi siedzi w zaułku za myjnią, na północnym końcu ulicy. Nosi coś, co należy do moich klientów.
-KAITO: Zdejmij go. Ma ochronę, więc nie idź tam na spacer.
+KAITO: Zdejmij go. Ma ochronę, więc nie idź tam na spacer. Potem znajdziesz mnie w Neon Koi, po drugiej stronie ulicy.
+MORI: Drzwi otwierają się same. Nie kop ich, są droższe od ciebie.
 ~ set_flag("met_fixer")
 -> END
 
@@ -235,7 +241,7 @@ KAITO: Słyszałem, że robisz coś dla Hany. Skończ u niej, potem pogadamy.
 }
 UME: Widziałam, jak cię wyciągali z tego auta. Myślałam, że już po tobie.
 { quest_step == "find_fixer":
-    UME: Jeśli szukasz roboty, Kaito stoi pod Neon Koi. Po prawej stronie ulicy.
+    UME: Kaito przesiedział całą noc u doktora Mori, przy twoim fotelu. Klinika jest po lewej stronie ulicy.
 }
 * [Znałaś mnie wcześniej? #tone:main]
     SEKI: Znałaś mnie wcześniej?
@@ -285,4 +291,33 @@ UME: Ren Odagiri, ten od Hebi, z którym biegałaś po dachach. Szukał cię, ki
 UME: Potem przyszli ludzie w czystych butach i też o ciebie pytali. Od tamtej pory nikt Rena nie widział.
 ~ set_flag("ume_ren")
 ~ change_rep("civilians", 3)
+-> END
+
+// Neon Koi (ADR-0038): the barman behind the counter and the regulars at the tables.
+=== koi_barman ===
+{ quest_step == "find_fixer":
+    BARMAN: Kaito? Nie było go całą noc. Siedział u Moriego, przy jakiejś dziewczynie z wraku.
+    -> END
+}
+BARMAN: Neon Koi. Pijesz albo słuchasz, oba się liczą.
+{ hebi_stance == "hostile":
+    BARMAN: I nie strzelaj tu do Hebi. Sprzątam po nich częściej niż po klientach.
+}
+* [Co polecasz?]
+    SEKI: Co polecasz?
+    BARMAN: Syntetyczną sake. Smakuje jak prawdziwa, jeśli nigdy nie piłaś prawdziwej.
+    -> END
+* [Nic, dzięki.]
+    -> END
+
+=== koi_regular ===
+{ civilians_stance == "hostile":
+    BYWALEC: Odsuń się. Słyszałem, co robisz na tej ulicy.
+    -> END
+}
+{ has_flag("reported_back"):
+    BYWALEC: To ty zdjęłaś tego kuriera spod myjni? Postawiłbym ci drinka, ale Hebi mają tu uszy.
+- else:
+    BYWALEC: Jukebox gra trzy kawałki na krzyż. Ten jest najlepszy. Albo najgłośniejszy.
+}
 -> END

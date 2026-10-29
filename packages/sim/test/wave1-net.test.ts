@@ -27,7 +27,7 @@ import {
   stateHash,
   worldTimeScale,
 } from "../src";
-import { byKey, collect, input, run, teleportPlayer } from "./helpers";
+import { byKey, collect, input, run, teleportPlayer, streetSim } from "./helpers";
 
 const at = (x: number, z: number, y = 0) => ({ x, y, z });
 const roundTrip = (s: SaveSnapshot): SaveSnapshot => JSON.parse(JSON.stringify(s)) as SaveSnapshot;
@@ -60,7 +60,7 @@ const hack = (sim: Simulation, slot: 1 | 2 | 3 | 4 | 5, seconds: number) => {
  * (not part of any job). By default it stands 14 m west, looking away.
  */
 const yard = (opts: { guardAt?: Vec3; guardYaw?: number } = {}) => {
-  const sim = Simulation.create({ seed: 21 });
+  const sim = streetSim({ seed: 21 });
   teleportPlayer(sim, at(16, 97), -Math.PI / 2);
   sim.step();
   tough(sim);
@@ -250,7 +250,7 @@ describe("cameras (ADR-0029)", () => {
   });
 
   it("the office camera spots Seki in the office during an infiltration and raises the alarm", () => {
-    const sim = Simulation.create({ seed: 8 });
+    const sim = streetSim({ seed: 8 });
     teleportPlayer(sim, at(GENZO_SPOT.x + 0.4, GENZO_SPOT.z - 2), 0);
     sim.step();
     tough(sim);
@@ -286,7 +286,7 @@ const crew = (sim: Simulation, c: Contract) => [...sim.world].filter((e) => e.ta
 describe("the contract layer (ADR-0028, ADR-0029)", () => {
   it("a clean, quick elimination earns S: the card, the bonus and Kaito's style are paid in one transfer", () => {
     // Hebi on good terms: the targets do not go for Seki on sight, so nobody detects her.
-    const base = Simulation.create({ seed: 31 });
+    const base = streetSim({ seed: 31 });
     const snap = base.snapshot(null, "t", "");
     const sim = Simulation.fromSnapshot({ ...snap, domain: { ...snap.domain, reputation: { ...snap.domain.reputation, hebi: 60 } } });
     const bonus = collect<DomainEvents["ContractBonusChanged"]>(sim, "ContractBonusChanged");
@@ -313,7 +313,7 @@ describe("the contract layer (ADR-0028, ADR-0029)", () => {
   });
 
   it("getting hurt on a protection job loses the bonus once and lowers the rank", () => {
-    const sim = Simulation.create({ seed: 32 });
+    const sim = streetSim({ seed: 32 });
     teleportPlayer(sim, at(90.5, 74), Math.PI / 2);
     sim.step();
     const bonus = collect<DomainEvents["ContractBonusChanged"]>(sim, "ContractBonusChanged");
@@ -336,7 +336,7 @@ describe("the contract layer (ADR-0028, ADR-0029)", () => {
   });
 
   it("killing someone who is not a target costs `clean`; the counters are saved and start at zero in a new game", () => {
-    const sim = Simulation.create({ seed: 33 });
+    const sim = streetSim({ seed: 33 });
     const c = take(sim, "eliminate");
     const bystander = gangerEntity(90020, { key: "extra", position: at(3, -20), yaw: 0 }, null, 1, "shinsekai-7");
     sim.world.add(bystander);
@@ -348,11 +348,11 @@ describe("the contract layer (ADR-0028, ADR-0029)", () => {
     expect(restored.domain.contracts.tally).toEqual(sim.domain.contracts.tally);
     expect(restored.domain.contracts.active?.id).toBe(c.id);
     expect(createDomainState().contracts.tally).toBeUndefined();
-    expect(Simulation.create({ seed: 33 }).domain.contracts.tally).toBeUndefined();
+    expect(streetSim({ seed: 33 }).domain.contracts.tally).toBeUndefined();
   });
 
   it("entering a fixer's district without a job brings one offer by phone, once per entry", () => {
-    const sim = Simulation.create({ seed: 34 });
+    const sim = streetSim({ seed: 34 });
     sim.enqueue({ type: "set-flag", flag: "met_hana" });
     teleportPlayer(sim, at(40, 78), Math.PI / 2);
     sim.step();
@@ -377,7 +377,7 @@ describe("the contract layer (ADR-0028, ADR-0029)", () => {
 
 describe("Breach Protocol on the docks terminal (ADR-0029)", () => {
   it("applies the daemons once: ICEpick shortens the hack and makes hacks cheaper, Datamine pays", () => {
-    const sim = Simulation.create({ seed: 41 });
+    const sim = streetSim({ seed: 41 });
     teleportPlayer(sim, at(GENZO_SPOT.x + 0.4, GENZO_SPOT.z - 2), 0);
     sim.step();
     tough(sim);
@@ -419,7 +419,7 @@ describe("Breach Protocol on the docks terminal (ADR-0029)", () => {
 
 describe("breach without daemons and kill markers (ADR-0028 contract changes)", () => {
   it("disconnecting with nothing won closes the breach; a cut-short one can be opened again", () => {
-    const sim = Simulation.create({ seed: 42 });
+    const sim = streetSim({ seed: 42 });
     teleportPlayer(sim, at(GENZO_SPOT.x + 0.4, GENZO_SPOT.z - 2), 0);
     sim.step();
     tough(sim);
@@ -439,7 +439,7 @@ describe("breach without daemons and kill markers (ADR-0028 contract changes)", 
   });
 
   it("EntityKilled names the killer when it is known", () => {
-    const sim = Simulation.create({ seed: 43 });
+    const sim = streetSim({ seed: 43 });
     const killed = collect<DomainEvents["EntityKilled"]>(sim, "EntityKilled");
     const g = gangerEntity(90040, { key: "victim", position: at(3, -20), yaw: 0 }, null, 1, "shinsekai-7");
     sim.world.add(g);

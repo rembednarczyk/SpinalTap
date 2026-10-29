@@ -70,6 +70,13 @@ Opis w [ADR-0035](docs/adr/0035-hud-fali-2.md).
 - Tracker zlecenia pokazuje odkryte haki, karta podsumowania wariant zlecenia.
 - Dotyk: na telefonie widać tylko ogień, celowanie, skok i łuk (przeładowanie, skaner, zryw, „więcej”); „Użyj” pojawia się przy promptcie, a reszta jest pod „więcej”. Nic się nie nakłada przy 800×370 i 667×375 CSS, bez podpowiedzi klawiszy.
 
+## Wnętrza i nowe otwarcie (fala 3, [ADR-0038](docs/adr/0038-wnetrza-drzwi-start-w-klinice.md))
+
+- Nowa gra zaczyna się na fotelu zabiegowym w klinice doktora Mori: pierwsza rozmowa z Kaito odbywa się przy fotelu, Mori mówi, co z Seki wyciągnął. Potem Kaito czeka przy ladzie Neon Koi. Wrak na Siódmej zostaje na ulicy.
+- Klinika (poczekalnia i gabinet) i bar Neon Koi (lada, stołki, stoliki, scena, szafa grająca, barman i bywalcy) mają wnętrza.
+- Drzwi automatyczne z czujnikiem: otwierają się przed postacią, zamykają po chwili, zamknięte blokują przejście i widok. Drzwi biura Tessen w Dokach są na kod z haka (4177) albo do wyłamania z alarmem.
+- Zapis v14 (stan drzwi w ruchu) z migracją.
+
 ## Struktura
 
 ```

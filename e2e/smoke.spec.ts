@@ -25,7 +25,8 @@ test.describe("M0 smoke", () => {
     expect((await gameState(page)).player!.z).toBeGreaterThan(start.z + 3);
 
     // Talk to Kaito through the real dialogue UI.
-    await teleport(page, 4.6, 1.5, Math.PI / 2);
+    // Kaito waits by the chair in the clinic (ADR-0038): 1.5 m north of him, facing him.
+    await teleport(page, -13.3, 4.7, Math.PI);
     await step(page, 1);
     await expect(page.getByTestId("prompt")).toContainText("Kaito");
     await step(page, 1, { interact: true });
@@ -85,7 +86,8 @@ test("ripperdoc clinic sells a medkit through the UI", async ({ page }) => {
   await waitForGame(page);
   await page.getByRole("button", { name: "Nowa gra" }).click();
   await freeze(page);
-  await teleport(page, -4.6, 2.4, -Math.PI / 2);
+  // Mori at his monitors behind the chair (ADR-0038).
+  await teleport(page, -15.2, 5.2, -Math.PI / 2);
   await step(page, 1);
   await expect(page.getByTestId("prompt")).toContainText("Mori");
   await step(page, 1, { interact: true });
@@ -129,7 +131,7 @@ test("journal, minimap and settings", async ({ page }) => {
   const journal = page.getByTestId("journal");
   await expect(journal).toBeVisible();
   await expect(journal).toContainText("Pierwsze zlecenie");
-  await expect(journal).toContainText("Znajdź fixera");
+  await expect(journal).toContainText("Porozmawiaj z Kaito");
   await page.keyboard.press("KeyJ");
   await expect(journal).toBeHidden();
 

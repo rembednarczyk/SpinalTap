@@ -268,6 +268,7 @@ export class BabylonRenderer implements RenderPort {
   frame(dt: number): void {
     this.fx.beginFrame(dt);
     this.cityKit.flush();
+    this.props.flush();
     if (this.dressing.flush()) {
       this.farCity.setResident(this.dressing.residentChunks());
       this.wet?.schedule.invalidate();

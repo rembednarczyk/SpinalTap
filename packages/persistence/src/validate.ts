@@ -39,6 +39,8 @@ export const findSchemaError = (s: Json): string | null => {
   }
   const st = s.streaming;
   if (!isObject(st) || !Array.isArray(st.loadedChunks) || !st.loadedChunks.every((c) => typeof c === "string")) return "streaming";
+  // ADR-0038: leaves of resident doors that are moving or about to close.
+  if (!Array.isArray(s.doors) || !s.doors.every((x) => isObject(x) && typeof x.key === "string" && isNum(x.open) && isNum(x.idle))) return "doors";
   const d = s.domain;
   if (!isObject(d)) return "domain";
   const c = d.character;

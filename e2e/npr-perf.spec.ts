@@ -37,6 +37,8 @@ test("street view in TPP stays within the perf budget", async ({ page }) => {
   await page.getByRole("button", { name: "Nowa gra" }).click();
   await freeze(page);
   await step(page, 1, { toggleCamera: true });
+  // Out on the street where a new game started before ADR-0038 (it now wakes up in the clinic).
+  await teleport(page, 0, -28, 0);
   await step(page, 60, { moveZ: 1 });
   await page.waitForTimeout(1500);
   const sample = await perf(page);

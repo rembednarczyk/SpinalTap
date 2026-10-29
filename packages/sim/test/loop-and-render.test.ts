@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ActivityId, CameraMode, EffectDescriptor, EntityId, RenderPort, Transform, ViewDescriptor } from "@seki/core";
 import { FixedStepLoop, RenderSync, Simulation } from "../src";
-import { input } from "./helpers";
+import { input, streetSim } from "./helpers";
 
 class FakeRenderPort implements RenderPort {
   readonly views = new Map<EntityId, ViewDescriptor>();
@@ -45,7 +45,7 @@ describe("RenderSync", () => {
   it("spawns, interpolates, despawns and attaches the camera through the port", () => {
     const port = new FakeRenderPort();
     const sync = new RenderSync(port);
-    const sim = Simulation.create({ seed: 3 });
+    const sim = streetSim({ seed: 3 });
     sync.sync(sim.world, 0);
     const player = sim.player()!;
     expect(port.camera).toBe(player.id);

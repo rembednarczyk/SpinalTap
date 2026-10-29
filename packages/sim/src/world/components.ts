@@ -292,7 +292,7 @@ export interface Interactable {
    * terminal (an observation hook, `dialogueId` its knot), "help" a passer-by in need (a
    * micro-event).
    */
-  readonly kind: "dialogue" | "shop" | "pickup" | "loot" | "elevator" | "ladder" | "terminal" | "metro" | "read" | "help";
+  readonly kind: "dialogue" | "shop" | "pickup" | "loot" | "elevator" | "ladder" | "terminal" | "metro" | "read" | "help" | "door";
   readonly station?: MetroStationId;
   /** For a shop: which one (the clinic when absent). `dialogueId` is then the shopkeeper's ink knot. */
   readonly shopId?: ShopId;
@@ -328,6 +328,31 @@ export interface ElevatorGate {
   /** The gate's box while closed; open, it sinks by `travel` into the floor. */
   readonly closed: Aabb;
   readonly travel: number;
+}
+
+/**
+ * The lock of an automatic door (ADR-0038). "sealed": never opens. "code": opens for the staff of
+ * `staff`, and for the player who knows the code of the running job of kind `during` (an
+ * observation hook, ADR-0034), wears the staff's overalls (ADR-0033) or broke the lock open at
+ * the panel.
+ */
+export type DoorLock = { readonly kind: "sealed" } | { readonly kind: "code"; readonly staff: FactionId; readonly during: ContractKind };
+
+/** A leaf of an automatic door (ADR-0038). Its state goes into saves under `key`. */
+export interface DoorLeaf {
+  /** `<door>#<leaf>`. */
+  readonly key: string;
+  readonly door: string;
+  /** The leaf's box while closed; open, it is moved by `slide`. */
+  readonly closed: Aabb;
+  readonly slide: { readonly x: number; readonly z: number };
+  /** Middle of the opening at floor height: the sensor's centre. */
+  readonly sensor: Vec3;
+  readonly lock?: DoorLock;
+  /** 0 closed, 1 open. */
+  open: number;
+  /** Seconds the sensor has been empty, up to the close delay. */
+  idle: number;
 }
 
 /**
@@ -425,6 +450,9 @@ export interface Entity {
   ladder?: LadderDef;
   elevator?: Elevator;
   gate?: ElevatorGate;
+  door?: DoorLeaf;
+  /** The lock panel of a coded door (ADR-0038): the door's key. */
+  doorPanel?: string;
   body?: CharacterBody;
   posture?: Posture;
   player?: true;

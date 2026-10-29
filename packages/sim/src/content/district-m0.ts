@@ -3,6 +3,7 @@ import { M0_TARGET_TAG } from "@seki/core";
 import { KANAL_CONTRACT_SITE_SPAWNS, type RoofStash, TARG_CONTRACT_SITE_FACING, TARG_CONTRACT_SITE_SPAWNS } from "./district-targ";
 import { DOKI_CONTRACT_SITE_SPAWNS } from "./district-doki";
 import { type ActorDef, type ActorSpawn, type GangerSpawn, type Rect, type StaticProp, building, crate, lamp, neon, rail, skin, slab, v } from "./builders";
+import { BARMAN_SPAWN, CLINIC_WAKE_SPOT, FIXER_BAR_SPAWN, FIXER_CLINIC_SPAWN, KOI_REGULAR_SPAWNS, MORI_SPAWN, S7_INTERIORS } from "./interiors";
 
 /** Width of the main street between the facades (X from -7 to 7). */
 const STREET = 14;
@@ -38,14 +39,13 @@ export const DISTRICT_M0_PROPS: readonly StaticProp[] = [
   { center: v(-7.8, 0.04, -2), view: { kind: "block", size: v(1.6, 0.08, 66), material: "concrete" }, solid: false },
   { center: v(7.8, 0.04, -2), view: { kind: "block", size: v(1.6, 0.08, 66), material: "concrete" }, solid: false },
   // West block. Looks (ADR-0022): the street's own neon hangs on the clinic, ramen bar and
-  // pachinko facades, so those get no generic signs.
+  // pachinko facades, so those get no generic signs. The clinic and ramen block between the
+  // towers is in S7_INTERIORS (ADR-0038).
   building(-14, -26, 14, 18, 14, "concrete", skin("tenement", "x+", { street: STREET })),
   building(-14, -9, 14, 26, 16, "glass", skin("tower", "x+")),
-  building(-14, 8, 14, 14, 14, "concrete", skin("shop", "x+", { street: STREET, signs: false })),
   building(-14, 24, 14, 30, 14, "glass", skin("tower", "x+")),
-  // East block. E2 is the Neon Koi bar.
+  // East block. The Neon Koi bar between the towers is in S7_INTERIORS.
   building(14, -25, 14, 22, 16, "glass", skin("tower", "x-")),
-  building(14, 2, 14, 10, 18, "concrete", skin("bar", "x-", { signs: false })),
   building(14, 20, 14, 34, 12, "glass", skin("tower", "x-")),
   // Northern alley behind the car wash.
   building(-14, 40, 14, 20, 18, "concrete", skin("tenement", "x+", { street: 14 })),
@@ -58,7 +58,7 @@ export const DISTRICT_M0_PROPS: readonly StaticProp[] = [
   building(16, 51, 14, 6, 2, "metal"),
   building(-22, 7, 2, 8, 88, "metal"),
   building(22, 7, 2, 8, 88, "metal"),
-  // The wreck Seki wakes up next to.
+  // The wreck Seki was pulled out of; she comes round in Mori's clinic (ADR-0038).
   crate(2.6, -31, 2, 1.4, 4.4, skin("wreck", "z-")),
   // Parked van in the east lot.
   crate(12, -12, 2.4, 2.2, 5, skin("van", "z+")),
@@ -87,16 +87,23 @@ export const DISTRICT_M0_PROPS: readonly StaticProp[] = [
   rail(-7.4, -7.2, -19, -17, 0, 2.7),
   rail(-7.4, -7.2, -1, 1, 0, 2.7),
   crate(19.7, 12.5, 1.2, 1.3, 2.2, skin("dumpster", "x-")),
+  // ADR-0038: the clinic, the bar and their doors.
+  ...S7_INTERIORS,
 ];
 
-export const PLAYER_SPAWN: ActorSpawn = { key: "player", position: v(0, 0, -28), yaw: 0 };
+/** A new game: Seki comes round on the treatment chair in Mori's clinic (ADR-0038). */
+export const PLAYER_SPAWN: ActorSpawn = { key: "player", position: CLINIC_WAKE_SPOT, yaw: 0 };
 
-export const FIXER_SPAWN: ActorSpawn = { key: "fixer", position: v(6.2, 0, 1.5), yaw: -Math.PI / 2 };
+/** Kaito's place once the first conversation is over: at the counter of Neon Koi. */
+export const FIXER_SPAWN: ActorSpawn = FIXER_BAR_SPAWN;
 
 export const CIVILIAN_SPAWN: ActorSpawn = { key: "ume", position: v(-5.4, 0, -13), yaw: Math.PI / 2 };
 
-/** Doktor Mori, the ripperdoc, in front of the clinic on the west side. */
-export const RIPPERDOC_SPAWN: ActorSpawn = { key: "mori", position: v(-6.2, 0, 2.4), yaw: Math.PI / 2 };
+/** Doktor Mori, the ripperdoc, in his clinic on the west side. */
+export const RIPPERDOC_SPAWN: ActorSpawn = MORI_SPAWN;
+
+/** Kaito met Seki in the clinic: from then on he is at the bar (ADR-0038). */
+const MET_FIXER = "met_fixer";
 
 /** Spawn points for procedural contracts (up to four gangers per site), the market's included. */
 export const CONTRACT_SITE_SPAWNS: Readonly<Record<ContractSiteId, readonly Vec3[]>> = {
@@ -147,7 +154,16 @@ export const GANGER_SPAWNS: readonly GangerSpawn[] = [
 export const DISTRICT_M0_ACTORS: readonly ActorDef[] = [
   {
     kind: "npc",
+    spawn: FIXER_CLINIC_SPAWN,
+    when: { none: [MET_FIXER] },
+    preset: "fixer",
+    faction: "fixers",
+    interactable: { kind: "dialogue", dialogueId: "fixer", prompt: "Rozmawiaj z Kaito", radius: 2.6 },
+  },
+  {
+    kind: "npc",
     spawn: FIXER_SPAWN,
+    when: { all: [MET_FIXER] },
     preset: "fixer",
     faction: "fixers",
     interactable: { kind: "dialogue", dialogueId: "fixer", prompt: "Rozmawiaj z Kaito", radius: 2.6 },
@@ -168,6 +184,25 @@ export const DISTRICT_M0_ACTORS: readonly ActorDef[] = [
     interactable: { kind: "shop", dialogueId: "mori", prompt: "Klinika doktora Mori", radius: 2.4 },
   },
   ...GANGER_SPAWNS.map((spawn): ActorDef => ({ kind: "ganger", spawn })),
+  // Neon Koi's barman and regulars (ADR-0038).
+  {
+    kind: "npc",
+    spawn: BARMAN_SPAWN,
+    preset: "civilian",
+    faction: "civilians",
+    bystander: true,
+    interactable: { kind: "dialogue", dialogueId: "koi_barman", prompt: "Rozmawiaj z barmanem", radius: 2.6 },
+  },
+  ...KOI_REGULAR_SPAWNS.map(
+    (spawn): ActorDef => ({
+      kind: "npc",
+      spawn,
+      preset: "civilian",
+      faction: "civilians",
+      bystander: true,
+      interactable: { kind: "dialogue", dialogueId: "koi_regular", prompt: "Zagadaj", radius: 2 },
+    }),
+  ),
 ];
 
 /**

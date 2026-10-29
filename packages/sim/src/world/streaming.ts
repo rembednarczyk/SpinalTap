@@ -92,6 +92,8 @@ const NO_CHANGE: StreamingChange = { loaded: [], unloaded: [] };
 export class WorldStreamer {
   private readonly content = new Map<string, Template[]>();
   private readonly byKey = new Map<string, Template>();
+  /** Every place of a keyed actor of the content; one key can have one per condition (ADR-0038). */
+  private readonly places = new Map<string, Template[]>();
   private contract: Template[] = [];
   private readonly resident = new Set<string>();
   private readonly dormant = new Map<string, EntitySnapshot>();
@@ -120,6 +122,7 @@ export class WorldStreamer {
         const t: Template = { id, chunk: chunk.id, key: def.spawn.key, make: () => actorEntity(id, def, chunk.id), ...(def.when ? { when: def.when } : {}) };
         list.push(t);
         this.byKey.set(def.spawn.key, t);
+        this.places.set(def.spawn.key, [...(this.places.get(def.spawn.key) ?? []), t]);
       }
       this.content.set(chunk.id, list);
     }
@@ -308,7 +311,7 @@ export class WorldStreamer {
         applyEntitySnapshot(e, s);
         continue;
       }
-      const t = this.byKey.get(s.key);
+      const t = (this.places.get(s.key) ?? []).find((x) => isPresent(x.when, flags)) ?? this.byKey.get(s.key);
       if (!t || isDead(flags, s.key) || flags.includes(takenFlag(s.key)) || !isPresent(t.when, flags)) continue;
       if (s.alerted || s.lastKnown) {
         // It was chasing (or looking for) the player when the save was made: pinned, alive outside its chunk.
@@ -351,18 +354,24 @@ export class WorldStreamer {
     this.presenceFlags = flags;
     const live = new Map<string, Entity>();
     for (const e of world) if (e.key) live.set(e.key, e);
-    for (const chunk of this.chunks) {
-      // The contract's people too: a variation's targets come and go with the clock (ADR-0034).
-      for (const t of [...(this.content.get(chunk.id) ?? []), ...this.contract.filter((c) => c.chunk === chunk.id)]) {
-        if (!t.when || t.key === null) continue;
-        if (isPresent(t.when, flags)) {
-          if (this.resident.has(chunk.id) && !live.has(t.key)) this.spawnActors(world, flags, [t], clock);
-          continue;
-        }
-        this.dormant.delete(t.key);
-        const e = live.get(t.key);
-        if (e) world.remove(e);
+    // The contract's people too: a variation's targets come and go with the clock (ADR-0034).
+    const conditional = this.chunks.flatMap((chunk) =>
+      [...(this.content.get(chunk.id) ?? []), ...this.contract.filter((c) => c.chunk === chunk.id)].filter((t) => t.when && t.key !== null),
+    );
+    // Leaving first: one key may have a place per condition (Kaito in the clinic, then at the bar; ADR-0038).
+    for (const t of conditional) {
+      if (t.key === null || isPresent(t.when, flags)) continue;
+      const e = live.get(t.key);
+      if (e && e.id !== t.id) continue;
+      this.dormant.delete(t.key);
+      if (e) {
+        world.remove(e);
+        live.delete(t.key);
       }
+    }
+    for (const t of conditional) {
+      if (t.key === null || !isPresent(t.when, flags)) continue;
+      if (this.resident.has(t.chunk) && !live.has(t.key)) this.spawnActors(world, flags, [t], clock);
     }
   }
 

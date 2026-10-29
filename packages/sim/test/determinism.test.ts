@@ -1,16 +1,28 @@
 import { describe, expect, it } from "vitest";
 import type { DomainState, SaveSnapshot } from "@seki/core";
 import { Simulation, gangerEntity, runReplay, stateHash, type ReplayFrame } from "../src";
-import { input, run } from "./helpers";
+import { input, run, streetSim } from "./helpers";
 
 /**
- * A scripted run: walk north into the alley, look around, creep forward crouched, then fire at
- * whatever is ahead while strafing, half of the time crouched, then aimed down sights.
+ * Out of Mori's clinic, where a new game starts (ADR-0038): off the chair, through the doorway
+ * in the partition, out of the automatic door onto the street, facing north again.
+ */
+const outOfTheClinic = (): ReplayFrame[] => {
+  const walk = (n: number): ReplayFrame[] => Array.from({ length: n }, () => ({ input: input({ moveZ: 1 }) }));
+  const turn = (yaw: number): ReplayFrame => ({ input: input({ lookYaw: yaw }) });
+  return [...walk(43), turn(Math.PI / 2), ...walk(80), turn(Math.PI / 2), ...walk(17), turn(-Math.PI / 2), ...walk(130), turn(-Math.PI / 2)];
+};
+
+/**
+ * A scripted run: out of the clinic, walk north up the street towards the alley, look around,
+ * creep forward crouched, then fire at whatever is ahead while strafing, half of the time
+ * crouched, then aimed down sights.
  */
 const script = (): ReplayFrame[] => {
   const frames: ReplayFrame[] = [];
   frames.push({ input: input(), commands: [{ type: "set-flag", flag: "met_fixer" }] });
-  for (let i = 0; i < 420; i++) frames.push({ input: input({ moveZ: 1, sprint: true }) });
+  frames.push(...outOfTheClinic());
+  for (let i = 0; i < 150; i++) frames.push({ input: input({ moveZ: 1, sprint: true }) });
   for (let i = 0; i < 30; i++) frames.push({ input: input({ lookYaw: 0.01, lookPitch: 0.002 }) });
   for (let i = 0; i < 60; i++) frames.push({ input: input({ moveZ: 1, crouch: true }) });
   for (let i = 0; i < 360; i++) {
@@ -35,7 +47,7 @@ describe("determinism", () => {
     const a = runReplay(1234, script());
     const b = runReplay(1234, script());
     expect(hashOf(a)).toBe(hashOf(b));
-    expect(a.tick).toBe(1155);
+    expect(a.tick).toBe(1159);
   });
 
   it("a different seed diverges once randomness is involved", () => {
@@ -43,7 +55,7 @@ describe("determinism", () => {
   });
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
-    expect(hashOf(runReplay(1234, script()))).toMatchInlineSnapshot(`"3b18f8a4"`);
+    expect(hashOf(runReplay(1234, script()))).toMatchInlineSnapshot(`"181fbc08"`);
   });
 
   it("without the street life of ADR-0026 in the snapshot, the run hashes as before it (content, not rules)", () => {
@@ -56,8 +68,9 @@ describe("determinism", () => {
     // of ADR-0034 (v12), the buffs, the shards and the disguise of ADR-0033 (v13).
     const { metro: _metro, encounters: _encounters, buffs, capacityShards, disguise, ...domain } = snap.domain;
     expect({ buffs, capacityShards, disguise }).toEqual({ buffs: [], capacityShards: 0, disguise: { role: null, blown: false } });
+    const { doors: _doors, ...rest } = snap;
     const before = {
-      ...snap,
+      ...rest,
       version: 11,
       entities: snap.entities.filter((e) => !added.has(e.key)),
       domain: {
@@ -68,22 +81,25 @@ describe("determinism", () => {
     } as unknown as SaveSnapshot;
     expect(snap.entities.filter((e) => added.has(e.key))).toHaveLength(4);
     // The hash of the same run with the rules of ADR-0029 (wave 1), without this content and the wave 2 fields.
-    expect(stateHash(before)).toBe("bef1026f");
+    // Re-recorded for ADR-0038: the run now starts in Mori's clinic and walks out of its door.
+    expect(stateHash(before)).toBe("35b2130d");
   });
 
   it("without the v13 fields of ADR-0033 the replay hashes as with sim B of wave 2 (fields, not rules)", () => {
     const snap = runReplay(1234, script()).snapshot(null, "test", "");
     const { buffs: _b, capacityShards: _c, disguise: _d, ...domain } = snap.domain;
-    expect(stateHash({ ...snap, version: 12, domain } as unknown as SaveSnapshot)).toBe("87733351");
+    const { doors: _doors, ...rest } = snap;
+    // Re-recorded for ADR-0038 (the run starts in the clinic); the v14 door states are left out too.
+    expect(stateHash({ ...rest, version: 12, domain } as unknown as SaveSnapshot)).toBe("09a78a85");
   });
 
   it("a loaded snapshot continues exactly like the original run", () => {
     const frames = script();
     // Split while standing with a settled aim: crouch and bloom are transient and not saved (ADR-0016).
-    const original = runReplay(1234, frames.slice(0, 451));
+    const original = runReplay(1234, frames.slice(0, 455));
     const restored = Simulation.fromSnapshot(original.snapshot(null, "mid", ""));
     expect(hashOf(restored)).toBe(hashOf(original));
-    for (const f of frames.slice(451)) {
+    for (const f of frames.slice(455)) {
       original.step(f.input);
       restored.step(f.input);
     }
@@ -92,7 +108,7 @@ describe("determinism", () => {
 
   it("a melee duel replays to its golden hash (ADR-0019)", () => {
     const duel = () => {
-      const base = Simulation.create({ seed: 77 });
+      const base = streetSim({ seed: 77 });
       const snap = base.snapshot(null, "t", "");
       const d: DomainState = snap.domain;
       const domain: DomainState = {
@@ -118,7 +134,7 @@ describe("determinism", () => {
     // Swings both ways, a blocked blow and staggers: the duel exercises the whole package.
     for (const t of ["MeleeSwing", "AttackBlocked", "Staggered", "DamageDealt"]) expect(seen).toContain(t);
     expect(hashOf(sim)).toBe(hashOf(duel().sim));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"825838fe"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"74312929"`);
   });
 
   it("restores killed NPCs as absent", () => {

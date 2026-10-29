@@ -126,7 +126,7 @@ export class GameSession implements UiIntents {
     this.narrative.resetState();
     this.c.hints.start();
     this.setScreen("playing");
-    pushToastTimed(this.deps.ui, "system", "Shinsekai, kwartał 7", "Budzisz się obok wraku. Nie pamiętasz swojego imienia.");
+    pushToastTimed(this.deps.ui, "system", "Shinsekai, kwartał 7", "Budzisz się na fotelu w klinice doktora Mori. Nie pamiętasz swojego imienia. Obok czeka Kaito.");
   }
 
   resume(): void {

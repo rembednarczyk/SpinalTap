@@ -161,6 +161,9 @@ describe("SynthAudio music", () => {
 
   it("fades exploration layers in and crossfades to combat on gunfire", () => {
     const { ctx, audio } = setup();
+    // Out on the street, away from the bar speakers: a new game now starts in the clinic next to
+    // RAMEN's speaker (ADR-0038), whose radio would duck the music.
+    audio.setListener({ position: { x: 0, y: 1.6, z: -28 }, yaw: 0, speed: 0 });
     audio.unlock();
     const { layers } = graph(ctx);
     expect(audio.currentMood).toBe("explore");
