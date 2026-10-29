@@ -87,7 +87,7 @@ const ROW_SPACING: Partial<Record<StreetPropKind, number>> = { tree: 9, shrubs: 
 const AREA_GAP: Partial<Record<StreetPropKind, number>> = { "market-stall": 3.6, "cafe-garden": 4.5, "fountain-jets": 2.2 };
 
 /** Jets a fountain basin gets (the plan counts the fountain, not its jets). */
-const JETS: Readonly<Record<string, number>> = { "fountain-multimedia": 28, fountain: 8 };
+const JETS: Readonly<Record<string, number>> = { "fountain-multimedia": 16, fountain: 6 };
 
 /** How pieces of a line find their place, from the plan's note. */
 const lineMode = (item: PlanItem, prop: StreetPropKind): { mode: SideMode | "axis"; sides: 1 | 2 } => {
@@ -106,25 +106,45 @@ interface Slot {
   readonly key: string;
 }
 
-const besideLine = (site: Site, item: PlanItem, prop: StreetPropKind, slots: readonly Slot[]): Placed[] => {
+/** Something placed before that a lamp keeps `r` metres from (a tree's crown, a bench). */
+interface Obstacle {
+  readonly x: number;
+  readonly z: number;
+  readonly r: number;
+}
+
+const blocked = (obstacles: readonly Obstacle[], p: Pt, extra = 0): boolean =>
+  obstacles.some((q) => Math.abs(q.x - p.x) < q.r + extra && Math.abs(q.z - p.z) < q.r + extra && Math.hypot(q.x - p.x, q.z - p.z) < q.r + extra);
+
+/** Slides along the line, a few metres either way, to where nothing placed stands in the way. */
+const SLIDES = [0, 2.5, -2.5, 5, -5];
+
+const besideLine = (site: Site, item: PlanItem, prop: StreetPropKind, slots: readonly Slot[], obstacles: readonly Obstacle[]): Placed[] => {
   const { mode } = lineMode(item, prop);
   const out: Placed[] = [];
   const fallback = FALLBACK[prop] ?? 2;
+  const clear = (p: Pt) => mode === "facade" || !blocked(obstacles, p);
   for (const { st, side, key } of slots) {
     if (mode === "axis") {
       out.push({ prop, p: st.p, yaw: null, key });
       continue;
     }
     const n = { x: -st.dir.z * side, z: st.dir.x * side };
-    const d = sideOffset(site, st.p, n, mode, fallback);
-    if (d === null) continue;
-    // Lamps' arms, lanterns and café fronts face the street's axis.
-    out.push({ prop, p: { x: st.p.x + n.x * d, z: st.p.z + n.z * d }, yaw: yawOf(-n.x, -n.z), key });
+    for (const s of SLIDES) {
+      const at = { x: st.p.x + st.dir.x * s, z: st.p.z + st.dir.z * s };
+      const d = sideOffset(site, at, n, mode, fallback);
+      if (d === null) continue;
+      const p = { x: at.x + n.x * d, z: at.z + n.z * d };
+      if (!clear(p)) continue;
+      // Lamps' arms, lanterns and café fronts face the street's axis.
+      out.push({ prop, p, yaw: yawOf(-n.x, -n.z), key });
+      break;
+    }
   }
   return out;
 };
 
-const onLines = (site: Site, item: PlanItem, prop: StreetPropKind): Placed[] => {
+const onLines = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: readonly Obstacle[]): Placed[] => {
   const lines = linesOf(item);
   const spacing = item.spacing ?? ROW_SPACING[prop];
   const { sides, mode } = lineMode(item, prop);
@@ -133,7 +153,7 @@ const onLines = (site: Site, item: PlanItem, prop: StreetPropKind): Placed[] => 
   if (spacing === undefined) {
     // A count spread over the lines, alternating sides for things on both.
     const sts = evenStations(lines, item.count ?? lines.length);
-    return besideLine(site, item, prop, sts.map((st, k) => ({ st, side: sides === 2 && k % 2 === 1 ? -1 : 1, key: `${item.id}@${k}` })));
+    return besideLine(site, item, prop, sts.map((st, k) => ({ st, side: sides === 2 && k % 2 === 1 ? -1 : 1, key: `${item.id}@${k}` })), obstacles);
   }
   const slots: Slot[] = [];
   lines.forEach((l, i) => {
@@ -142,7 +162,7 @@ const onLines = (site: Site, item: PlanItem, prop: StreetPropKind): Placed[] => 
     // The far side's stations sit half a step on, so the two rows alternate.
     if (sides === 2) stations(l, step, step).forEach((st, k) => slots.push({ st, side: -1, key: `${item.id}@${i}:${k}:b` }));
   });
-  return besideLine(site, item, prop, slots);
+  return besideLine(site, item, prop, slots, obstacles);
 };
 
 /** One structure on its outline (kiosk, shelter): at the centroid, its front along the longest edge. */
@@ -166,7 +186,7 @@ const onOutline = (site: Site, item: PlanItem, prop: StreetPropKind, ring: reado
 
 const SINGLE_OUTLINE: ReadonlySet<StreetPropKind> = new Set(["kiosk", "bus-shelter", "bus-stop", "vending-machine"]);
 
-const placeItem = (site: Site, item: PlanItem, prop: StreetPropKind): Placed[] => {
+const placeItem = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: readonly Obstacle[]): Placed[] => {
   if (item.position) return [{ prop, p: item.position, yaw: item.yaw === undefined ? null : (item.yaw * Math.PI) / 180, key: typeof item.osm === "string" ? item.osm : item.id }];
   if (item.points) return item.points.map((q, i) => ({ prop, p: { x: q[0], z: q[1] }, yaw: null, key: osmAt(item, i) }));
   if (item.polygon) {
@@ -175,14 +195,45 @@ const placeItem = (site: Site, item: PlanItem, prop: StreetPropKind): Placed[] =
     const count = JETS[item.kind] ?? item.count ?? 1;
     return scatter(site, ring, count, item.id, AREA_GAP[prop] ?? 2).map((p, k) => ({ prop, p, yaw: null, key: `${item.id}~${k}` }));
   }
-  if (item.line || item.lines) return onLines(site, item, prop);
+  if (item.line || item.lines) return [...onLines(site, item, prop, obstacles), ...fillPlace(site, item, prop, obstacles)];
   return [];
 };
+
+/**
+ * Squares whose lamps the plan asks to spread over the whole square, not only along the axes
+ * ("po obrysie placu i wzdłuż alejek"): the extra lamps scattered on its paving.
+ */
+const PLACE_FILL: Readonly<Record<string, { readonly ring: readonly Pt[]; readonly count: number; readonly gap: number }>> = {
+  // Plac Litewski, x -100..135, z -55..70 in the plan.
+  "lamps.plac-litewski": {
+    ring: [
+      { x: -95, z: -50 },
+      { x: 130, z: -50 },
+      { x: 130, z: 66 },
+      { x: -95, z: 66 },
+    ],
+    count: 18,
+    gap: 17,
+  },
+};
+
+
+const fillPlace = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: readonly Obstacle[]): Placed[] => {
+  const f = PLACE_FILL[item.id];
+  if (!f) return [];
+  const open = (p: Pt) => site.surfaceAt(p) === "walk" && !blocked(obstacles, p, 1);
+  const paved = { surfaceAt: (p: Pt) => site.surfaceAt(p), standable: open } as Site;
+  return scatter(paved, f.ring, f.count, `${item.id}#fill`, f.gap).map((p, k) => ({ prop, p, yaw: null, key: `${item.id}#fill${k}` }));
+};
+
+/** What a lamp beside a line keeps clear of, and how far (m): trees by their crowns. */
+const OBSTACLE: Partial<Record<StreetPropKind, number>> = { tree: 3.4, bench: 1.8, "advertising-column": 1.8, kiosk: 2.5, "bus-shelter": 2.5, monument: 2.5, artwork: 1.8, "cafe-garden": 3, "fountain-jets": 1.8 };
 
 /** Shapes the plan pins down: the Union obelisk, Koziołki, shrines, the tall mast. */
 const shapeOf = (item: PlanItem, prop: StreetPropKind, key: string): number | undefined => {
   const text = `${item.id} ${item.look ?? ""}`.toLowerCase();
   if (prop === "flagpole") return item.kind === "flagpole-tall" ? 1 : 0;
+  if (prop === "advertising-column") return text.includes("żółty") ? 1 : 0;
   if (prop !== "monument" && prop !== "artwork") return undefined;
   if (text.includes("obelisk") || item.id.endsWith("pomnik-unii")) return 0;
   if (text.includes("koziołek") || text.includes("koziolek")) return item.points ? [2, 3, 1][fnv(key) % 3] : 2;
@@ -228,7 +279,8 @@ const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>):
       deferred.push(item);
       continue;
     }
-    for (const x of placeItem(site, item, prop)) {
+    const obstacles = placed.flatMap((x) => (OBSTACLE[x.prop] ? [{ x: x.p.x, z: x.p.z, r: OBSTACLE[x.prop]! }] : []));
+    for (const x of placeItem(site, item, prop, obstacles)) {
       const shape = shapeOf(item, prop, x.key);
       const p = shape === undefined ? { ...x, from: item.id } : { ...x, shape, from: item.id };
       placed.push(p);

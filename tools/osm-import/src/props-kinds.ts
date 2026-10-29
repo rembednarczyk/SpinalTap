@@ -127,9 +127,9 @@ export const knownKind = (kind: string): boolean => propOf(kind) !== null || kin
  * Shapes chosen by the low bits of `variant` (ADR-0047), the same table as the renderer's
  * `PROP_SHAPES`: monument and artwork 0 obelisk, 1 figure on a plinth, 2 Koziołek, 3 abstract;
  * flagpole 0 ordinary, 1 tall mast; tree 0 lime, 1 maple, 2 horse chestnut; bench 0 slatted
- * bench without a back, 1 with a back.
+ * bench without a back, 1 with a back; advertising column 0 graphite, 1 the yellow one with a dome.
  */
-export const SHAPES: Readonly<Partial<Record<StreetPropKind, number>>> = { monument: 4, artwork: 4, flagpole: 2, tree: 3, bench: 2 };
+export const SHAPES: Readonly<Partial<Record<StreetPropKind, number>>> = { monument: 4, artwork: 4, flagpole: 2, tree: 3, bench: 2, "advertising-column": 2 };
 
 /** `hash` with its shape forced to `shape` (kept within 16 bits). */
 export const withShape = (hash: number, kind: StreetPropKind, shape: number): number => {
