@@ -47,7 +47,7 @@ VAR tessen_stance = "neutral"
 + [Który terminal mam złamać? #tone:main]
     SEKI: Który terminal mam złamać?
     ~ offer_contract("hack")
-    GENZO: Terminal portowy pod dźwigiem. Podłączysz się i musisz przy nim wytrzymać, aż skończy.
+    GENZO: Terminal Tessen pod dźwigiem nad rzeką. Podłączysz się i musisz przy nim wytrzymać, aż skończy.
     GENZO: Ochrona przyjdzie od razu, a na dachu magazynu siedzi strzelec. Czerwony laser znaczy, że masz sekundę na osłonę.
     -> END
 + [Nie teraz. #tone:leave]
