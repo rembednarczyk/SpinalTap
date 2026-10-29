@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { freeze, gameState, step, teleport, waitForGame } from "./helpers";
+import { freeze, gameState, place, step, teleportTo, waitForGame } from "./helpers";
 
 test("Hana on the market hands out a job through the dialogue UI", async ({ page }) => {
   // A cold boot takes about a minute on a CI runner (SwiftShader) and streaming in a district
@@ -13,8 +13,8 @@ test("Hana on the market hands out a job through the dialogue UI", async ({ page
   await expect(page.getByTestId("hud")).toBeVisible();
   await freeze(page);
 
-  // Next to Hana's cart; one step streams the market in.
-  await teleport(page, 90.5, 74, Math.PI / 2);
+  // Next to Hana's cart on the market under the viaduct; one step streams it in (ADR-0045).
+  await teleportTo(page, await place(page, "market", 90.5, 74), Math.PI / 2);
   await step(page, 1);
   expect((await gameState(page)).district).toBe("targ");
   await expect(page.getByTestId("prompt")).toContainText("Haną");

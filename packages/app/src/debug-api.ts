@@ -1,6 +1,6 @@
 import { type BreachDaemonId, type DomainEvents, type DomainState, EMPTY_INPUT, type InputFrame, type MetroStationId, formatClock } from "@seki/core";
 import type { PerfSample, PreviewState } from "@seki/engine";
-import type { FixedStepLoop } from "@seki/sim";
+import { type FixedStepLoop, clinicPoint, docks, koiPoint, market } from "@seki/sim";
 import type { UiStore } from "@seki/ui";
 import type { GameSession } from "./game-session";
 
@@ -31,7 +31,7 @@ export interface DebugApi {
   };
   perf(): PerfSample;
   setPaused(paused: boolean): void;
-  /** Moves the player; `y` is the floor to stand on (a roof, the overpass deck), 0 by default. */
+  /** Moves the player; `y` is the floor to stand on (a roof, the overpass deck), Lublin's ground by default. */
   teleport(x: number, z: number, yaw?: number, pitch?: number, y?: number): void;
   /**
    * Restarts the running game from its own snapshot with part of the domain replaced, e.g. to
@@ -58,8 +58,25 @@ export interface DebugApi {
   breach(terminalKey: string, daemons?: readonly BreachDaemonId[]): void;
   /** Opens the metro line map as the kiosk at `from` would (ADR-0035). */
   metro(from: MetroStationId): void;
+  /**
+   * A point of a set piece in its own coordinates, in the world (ADR-0045): the market and the
+   * docks are moved, the clinic and Neon Koi are turned into their tenements.
+   */
+  place(frame: PlaceFrame, x: number, y: number, z: number): { x: number; y: number; z: number };
+  /**
+   * Sprints along a route of (x, z) waypoints, turning towards each one, stepping the
+   * simulation in the page; stops at a waypoint it cannot reach. Returns how many it reached.
+   */
+  walk(route: readonly (readonly [number, number])[], maxSteps?: number): number;
   session: GameSession;
 }
+
+export type PlaceFrame = "market" | "docks" | "clinic" | "koi";
+
+const FRAMES: Readonly<Record<PlaceFrame, (x: number, y: number, z: number) => { x: number; y: number; z: number }>> = { market, docks, clinic: clinicPoint, koi: koiPoint };
+
+/** Shortest turn from `a` to `b`, radians. */
+const turn = (a: number, b: number): number => Math.atan2(Math.sin(b - a), Math.cos(b - a));
 
 export const createDebugApi = (
   session: GameSession,
@@ -134,5 +151,24 @@ export const createDebugApi = (
   step(n, input = {}) {
     for (let i = 0; i < n; i++) session.step({ ...EMPTY_INPUT, ...input });
     session.render(0);
+  },
+  place(frame, x, y, z) {
+    return FRAMES[frame](x, y, z);
+  },
+  walk(route, maxSteps = 1500) {
+    let reached = 0;
+    for (const [x, z] of route) {
+      let steps = 0;
+      for (; steps < maxSteps; steps++) {
+        const p = session.sim.player();
+        if (!p || Math.hypot(x - p.position.x, z - p.position.z) < 0.6) break;
+        const lookYaw = turn(p.yaw, Math.atan2(x - p.position.x, z - p.position.z));
+        session.step({ ...EMPTY_INPUT, moveZ: 1, sprint: true, lookYaw });
+      }
+      if (steps >= maxSteps) break;
+      reached++;
+    }
+    session.render(0);
+    return reached;
   },
 });

@@ -1,6 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { type Page, expect, test } from "@playwright/test";
-import { freeze, gameState, perf, step, teleport, waitForGame } from "./helpers";
+import { type Frame, freeze, gameState, perf, place, step, teleport, teleportTo, waitForGame } from "./helpers";
 
 const budgets = JSON.parse(readFileSync("tools/perf-budgets.json", "utf8")) as {
   scenes: Record<string, { drawCalls: number; activeMeshes: number }>;
@@ -46,53 +46,57 @@ test("reference scene stays within the perf budget", async ({ page }) => {
   expect(sample.frameTimeMs).toBeLessThanOrEqual(budgets.frameTimeMs);
 });
 
-test("street view in TPP stays within the perf budget", async ({ page }) => {
-  await page.goto("/?seed=3&models=off");
+/** Checks a sample against its scene's budget and keeps it for the report. */
+const within = (scene: string, sample: Awaited<ReturnType<typeof perf>>) => {
+  report[scene] = sample;
+  const budget = budgets.scenes[scene]!;
+  expect(sample.drawCalls).toBeLessThanOrEqual(budget.drawCalls);
+  expect(sample.activeMeshes).toBeLessThanOrEqual(budget.activeMeshes);
+  expect(sample.frameTimeMs).toBeLessThanOrEqual(budgets.frameTimeMs);
+};
+
+/** A new game in TPP, the player put at a spot of Lublin (ADR-0045) and walked a little. */
+const tppAt = async (page: Page, at: { frame?: Frame; x: number; z: number; yaw: number; walk: number }, query = "/?seed=3&models=off") => {
+  await page.goto(query);
   await waitForGame(page);
   await page.getByRole("button", { name: "Nowa gra" }).click();
   await freeze(page);
   await step(page, 1, { toggleCamera: true });
-  // Out on the street where a new game started before ADR-0038 (it now wakes up in the clinic).
-  await teleport(page, 0, -28, 0);
-  await step(page, 60, { moveZ: 1 });
-  const sample = await settledPerf(page);
-  report["street-tpp"] = sample;
-  expect(sample.drawCalls).toBeLessThanOrEqual(budgets.scenes["street-tpp"]!.drawCalls);
-  expect(sample.activeMeshes).toBeLessThanOrEqual(budgets.scenes["street-tpp"]!.activeMeshes);
-  expect(sample.frameTimeMs).toBeLessThanOrEqual(budgets.frameTimeMs);
+  if (at.frame) await teleportTo(page, await place(page, at.frame, at.x, at.z), at.yaw);
+  else await teleport(page, at.x, at.z, at.yaw);
+  await step(page, at.walk, { moveZ: 1 });
+};
+
+test("Krakowskie Przedmieście in TPP stays within the perf budget", async ({ page }) => {
+  // The deptak west of the clinic and Neon Koi, walking east between the tenements.
+  await tppAt(page, { x: 270, z: -81, yaw: Math.PI / 2, walk: 60 });
+  expect((await gameState(page)).district).toBe("shinsekai-7");
+  within("krakowskie-tpp", await settledPerf(page));
 });
 
-test("market under the overpass in TPP stays within the perf budget", async ({ page }) => {
-  await page.goto("/?seed=3&models=off");
-  await waitForGame(page);
-  await page.getByRole("button", { name: "Nowa gra" }).click();
-  await freeze(page);
-  await step(page, 1, { toggleCamera: true });
+test("the Rynek in TPP stays within the perf budget", async ({ page }) => {
+  // Up Bramowa from Brama Krakowska onto the Rynek, the Trybunał ahead.
+  await tppAt(page, { x: 520, z: -63, yaw: Math.atan2(41, 23), walk: 60 });
+  expect((await gameState(page)).district).toBe("kanal");
+  within("rynek-tpp", await settledPerf(page));
+});
+
+test("the market under the viaduct in TPP stays within the perf budget", async ({ page }) => {
   // East end of the market, looking back west over the stalls, under the deck towards the gate.
-  await teleport(page, 106, 79, -Math.PI / 2);
-  await step(page, 30, { moveZ: 1 });
-  expect((await gameState(page)).loadedChunks).not.toContain("shinsekai-7");
-  const sample = await settledPerf(page);
-  report["market-tpp"] = sample;
-  expect(sample.drawCalls).toBeLessThanOrEqual(budgets.scenes["market-tpp"]!.drawCalls);
-  expect(sample.activeMeshes).toBeLessThanOrEqual(budgets.scenes["market-tpp"]!.activeMeshes);
-  expect(sample.frameTimeMs).toBeLessThanOrEqual(budgets.frameTimeMs);
+  await tppAt(page, { frame: "market", x: 106, z: 79, yaw: -Math.PI / 2, walk: 30 });
+  expect((await gameState(page)).loadedChunks).not.toContain("krakowskie-2-0");
+  within("podzamcze-tpp", await settledPerf(page));
 });
 
-test("docks at night in TPP stay within the perf budget", async ({ page }) => {
-  await page.goto("/?seed=3&models=off");
-  await waitForGame(page);
-  await page.getByRole("button", { name: "Nowa gra" }).click();
-  await freeze(page);
-  await step(page, 1, { toggleCamera: true });
+test("Nabrzeże Bystrzycy at night in TPP stays within the perf budget", async ({ page }) => {
   // East end of the quay, looking west along the fence: water and mist, the crane, the office.
-  await teleport(page, 27, 145, -Math.PI / 2);
-  await step(page, 30, { moveZ: 1 });
-  const loaded = (await gameState(page)).loadedChunks;
-  expect(loaded).toEqual(["doki-yard", "doki-quay"]);
-  const sample = await settledPerf(page);
-  report.docks = sample;
-  expect(sample.drawCalls).toBeLessThanOrEqual(budgets.scenes.docks!.drawCalls);
-  expect(sample.activeMeshes).toBeLessThanOrEqual(budgets.scenes.docks!.activeMeshes);
-  expect(sample.frameTimeMs).toBeLessThanOrEqual(budgets.frameTimeMs);
+  await tppAt(page, { frame: "docks", x: 27, z: 145, yaw: -Math.PI / 2, walk: 30 });
+  expect((await gameState(page)).loadedChunks).toEqual(["nabrzeze-1-1"]);
+  within("nabrzeze", await settledPerf(page));
+});
+
+test("a phone (low quality, 800x370) on the deptak stays within the perf budget", async ({ page }) => {
+  await page.setViewportSize({ width: 800, height: 370 });
+  await tppAt(page, { x: 270, z: -81, yaw: Math.PI / 2, walk: 60 }, "/?seed=3&models=off&quality=low&touch");
+  within("phone-low", await settledPerf(page));
 });

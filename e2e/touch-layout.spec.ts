@@ -58,8 +58,9 @@ for (const [w, h] of [
       await waitForGame(page);
       await page.getByRole("button", { name: "Nowa gra" }).tap();
       await freeze(page);
-      // A new game wakes next to Kaito (ADR-0038); the bare layout is checked out on the street.
-      await teleport(page, -4, 4.4);
+      // A new game wakes next to Kaito (ADR-0038); the bare layout is checked out on the deptak
+      // in front of the clinic (ADR-0045).
+      await teleport(page, 321.4, -80);
       await step(page, 1);
       await expect(page.getByTestId("touch-controls")).toBeVisible();
       // No key hints on a touch screen.

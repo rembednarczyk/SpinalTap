@@ -1,18 +1,7 @@
-import { type Page, expect, test } from "@playwright/test";
-import { freeze, gameState, step, teleport, waitForGame } from "./helpers";
+import { expect, test } from "@playwright/test";
+import { freeze, gameState, place, step, teleport, teleportTo, waitForGame } from "./helpers";
 
-/** Sprints along `yaw` from the current position until `done` holds (or gives up). */
-const sprint = async (page: Page, yaw: number, done: (p: { x: number; z: number }) => boolean) => {
-  let p = (await gameState(page)).player!;
-  await teleport(page, p.x, p.z, yaw);
-  for (let i = 0; i < 40 && !done(p); i++) {
-    await step(page, 15, { moveZ: 1, sprint: true });
-    p = (await gameState(page)).player!;
-  }
-  expect(done(p)).toBe(true);
-};
-
-test("walks from Ulica Kanałowa into the docks without a reload and takes Genzō's job in the dialogue", async ({ page }) => {
+test("rides the metro from Plac Zamkowy to Nabrzeże Bystrzycy without a reload and takes Genzō's job in the dialogue", async ({ page }) => {
   test.slow();
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
@@ -23,20 +12,32 @@ test("walks from Ulica Kanałowa into the docks without a reload and takes Genz�
   await freeze(page);
   await page.evaluate(() => ((window as unknown as { __marker: number }).__marker = 1));
 
-  // On the street, south of the passage in its north row.
-  await teleport(page, 27, 77, 0);
+  // Plac Zamkowy below the castle: the docks are reached by the metro only (ADR-0045).
+  await teleport(page, 717.5, 296, 0);
   await step(page, 1);
-  expect((await gameState(page)).district).toBe("kanal");
-  // Through the passage and up to Genzō's corner on foot.
-  await sprint(page, 0, (p) => p.z >= 95);
+  expect((await gameState(page)).district).toBe("targ");
+  // In front of the station's kiosk, facing it.
+  const front = await page.evaluate(() => {
+    const k = [...window.__seki!.session.sim.world].find((e) => e.interactable?.kind === "metro" && e.interactable.station === "targ")!;
+    return { x: k.position.x + Math.sin(k.yaw), z: k.position.z + Math.cos(k.yaw), yaw: k.yaw + Math.PI };
+  });
+  await teleport(page, front.x, front.z, front.yaw);
+  await step(page, 1);
+  await expect(page.getByTestId("prompt")).toContainText("Bilet");
+  await step(page, 1, { interact: true });
+  await expect(page.getByTestId("metro-map")).toBeVisible();
+  await page.getByRole("button", { name: /Bilet do: Nabrzeże Bystrzycy/ }).click();
+  await expect.poll(async () => {
+    await step(page, 60);
+    return (await gameState(page)).district;
+  }, { timeout: 60_000 }).toBe("doki");
   let s = await gameState(page);
-  expect(s.district).toBe("doki");
-  expect(s.loadedChunks).toContain("doki-yard");
-  expect(s.loadedChunks).not.toContain("shinsekai-7");
+  expect(s.loadedChunks).toContain("nabrzeze-1-1");
+  expect(s.loadedChunks).not.toContain("krakowskie-2-0");
   expect(await page.evaluate(() => (window as unknown as { __marker?: number }).__marker)).toBe(1);
 
   // Genzō stands by his container office.
-  await teleport(page, 20.9, 95.8, 0);
+  await teleportTo(page, await place(page, "docks", 20.9, 95.8), 0);
   await step(page, 1);
   await expect(page.getByTestId("prompt")).toContainText("Genzō");
   await step(page, 1, { interact: true });

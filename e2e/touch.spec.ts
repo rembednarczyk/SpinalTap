@@ -1,5 +1,5 @@
 import { type Page, expect, test } from "@playwright/test";
-import { gameState, teleport, waitForGame } from "./helpers";
+import { gameState, place, teleportTo, waitForGame } from "./helpers";
 
 // Landscape phone: coarse pointer, touch events, notch insets ignored.
 test.use({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
@@ -43,8 +43,8 @@ test("phone: on-screen pad moves, looks and talks", async ({ page }) => {
   expect(await yaw()).toBeGreaterThan(yaw0 + 0.3);
 
   // E lights up near Kaito and opens the dialogue; the pad hides during it.
-  // Kaito waits by the chair in the clinic (ADR-0038).
-  await teleport(page, -13.3, 4.7, Math.PI);
+  // Kaito waits by the chair in the clinic (ADR-0038), a tenement's room since ADR-0045.
+  await teleportTo(page, await place(page, "clinic", -13.3, 4.7), Math.PI * 1.5);
   await expect(page.getByRole("button", { name: "Interakcja" })).toHaveClass(/touch__btn--hot/);
   await page.getByRole("button", { name: "Interakcja" }).tap();
   await expect(page.getByTestId("dialogue")).toBeVisible();

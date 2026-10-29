@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { freeze, gameState, step, teleport, waitForGame } from "./helpers";
+import { freeze, gameState, place, step, teleportTo, waitForGame } from "./helpers";
 
 /** Act II (ADR-0023): the key conversation, Kurosawa's offer on the overpass, through the dialogue UI. */
 test("Kurosawa's deal on the overpass ends act II and Kagami's copy plays", async ({ page }) => {
@@ -23,8 +23,8 @@ test("Kurosawa's deal on the overpass ends act II and Kagami's copy plays", asyn
   );
   expect((await gameState(page)).objective).toContain("Kurosawa z Kagami czeka na wiadukcie");
 
-  // On the overpass deck, next to him; one step streams the market in.
-  await teleport(page, 98.5, 92, Math.PI / 2, 0, 9.9);
+  // On the viaduct's deck over aleja Tysiąclecia, next to him; one step streams the market in.
+  await teleportTo(page, await place(page, "market", 98.5, 92, 9.9), Math.PI / 2);
   await step(page, 2);
   await expect
     .poll(
