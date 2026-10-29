@@ -98,7 +98,7 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
   obrażenia), wybory w domenie, nowa frakcja Kagami Biotech, walka z czyścicielami albo układ bez
   walki, trzy zakończenia (Archiwum ulicy, Wspólnicy, Kopia) z reputacją Hebi, mieszkańców i
   korporacji. Postacie pojawiają się i znikają według flag. Zapis v9 z migracją. Akceptacja:
-  `packages/app/test/m3-lustro-loop.test.ts`, kluczowa rozmowa w `e2e/m3-lustro.spec.ts`.
+  `packages/app/test/m3-lustro-loop.test.ts`, kluczowa rozmowa przez UI w `packages/app/test/m3-lustro-ui.test.tsx`.
 - **[gotowe] Przeskok na krawędź (mantle).** Skok przy murku do ok. 2,5 m kończy się podciągnięciem
   na jego wierzch w pół sekundy (dopisek w ADR-0021); bez strzału i skoku w trakcie.
 - **[gotowe] Sterowanie PC według standardu i pierwsze uruchomienie.** Kółko myszy zmienia broń,
