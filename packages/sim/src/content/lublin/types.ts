@@ -1,4 +1,4 @@
-import type { BuildingUse, GroundSurface, TerrainGrid } from "@seki/core";
+import type { BuildingUse, GroundSurface, StreetPropKind, TerrainGrid } from "@seki/core";
 
 /**
  * Lublin's centre from map data (ADR-0042), as `tools/osm-import` writes it into
@@ -76,3 +76,10 @@ export interface LublinChunkData {
   readonly streets: readonly LublinStreetData[];
   readonly pois: readonly LublinPoiData[];
 }
+
+/**
+ * Street furniture of the chunks (ADR-0047), as `pnpm osm:props` writes it: per chunk id, per
+ * `StreetPropKind`, flat rows of x, y, z (world metres, y from the chunk's terrain), yaw
+ * (radians from +z towards +x) and variant.
+ */
+export type LublinPropTable = Readonly<Record<string, Readonly<Partial<Record<StreetPropKind, readonly number[]>>>>>;
