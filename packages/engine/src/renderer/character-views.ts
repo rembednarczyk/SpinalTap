@@ -131,6 +131,11 @@ export class CharacterViews implements FxActors {
     return this.dressed.size;
   }
 
+  /** Models still loading for characters in the scene (tests wait for none before measuring). */
+  get loadingCount(): number {
+    return this.loadingModels.size;
+  }
+
   ids(): EntityId[] {
     return [...this.views.keys()];
   }

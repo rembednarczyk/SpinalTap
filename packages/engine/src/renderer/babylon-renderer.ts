@@ -416,6 +416,11 @@ export class BabylonRenderer implements RenderPort {
     return this.characters.dressedCount;
   }
 
+  /** Character models still loading. */
+  get modelsLoading(): number {
+    return this.characters.loadingCount;
+  }
+
   /** Interpolated transform of the entity the camera follows (the player), if any. */
   get cameraTargetTransform(): Transform | null {
     return this.cameraTarget === null ? null : this.characters.transformOf(this.cameraTarget);

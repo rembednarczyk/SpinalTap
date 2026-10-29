@@ -220,6 +220,7 @@ const debug = createDebugApi(session, ui, loop, () => probe.sample(), (position,
   () => renderer.dressedCount,
   () => renderer.rig.camera.position.y,
   () => preview.state,
+  () => renderer.modelsLoading,
 );
 window.__seki = debug;
 

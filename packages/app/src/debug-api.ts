@@ -45,6 +45,8 @@ export interface DebugApi {
   view(position: { x: number; y: number; z: number } | null, target?: { x: number; y: number; z: number }): void;
   /** Characters currently wearing an imported model. */
   dressed(): number;
+  /** Character models still loading (ADR-0046: measure once none is). */
+  modelsLoading(): number;
   /** Height of the game camera in metres (crouch checks). */
   cameraY(): number;
   /** What the character menu's 3D preview shows; null without one. */
@@ -87,6 +89,7 @@ export const createDebugApi = (
   dressed: () => number = () => 0,
   cameraY: () => number = () => 0,
   preview: () => PreviewState | null = () => null,
+  modelsLoading: () => number = () => 0,
 ): DebugApi => ({
   ready: false,
   session,
@@ -133,6 +136,7 @@ export const createDebugApi = (
   },
   view: setView,
   dressed,
+  modelsLoading,
   cameraY,
   preview,
   emit(type, payload) {

@@ -1,33 +1,28 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { type Page, expect, test } from "@playwright/test";
 import { type Frame, freeze, gameState, perf, place, step, teleport, teleportTo, waitForGame } from "./helpers";
 
 const budgets = JSON.parse(readFileSync("tools/perf-budgets.json", "utf8")) as {
   scenes: Record<string, { drawCalls: number; activeMeshes: number }>;
-  frameTimeMs: number;
 };
-const report: Record<string, unknown> = {};
 
 /**
- * A sample once the scene has settled: frame time is a one-second average, and the first frames
- * after streaming in a district (kit models, shader compiles) can take seconds on a SwiftShader
- * runner. Waits up to 15 s for it to drop to the budget, so only a lasting overrun fails.
+ * Keeps a sample in reports/perf.json at once, so a failed test (which restarts the worker)
+ * does not lose the others'. Frame time is reported, not checked: under SwiftShader it measures
+ * the runner, not the game (ADR-0046).
  */
-const settledPerf = async (page: Page) => {
-  await page.waitForTimeout(1500);
-  const deadline = Date.now() + 15_000;
-  let sample = await perf(page);
-  while (sample.frameTimeMs > budgets.frameTimeMs && Date.now() < deadline) {
-    await page.waitForTimeout(500);
-    sample = await perf(page);
-  }
-  return sample;
+const record = (scene: string, sample: unknown) => {
+  mkdirSync("reports", { recursive: true });
+  const file = "reports/perf.json";
+  const report = existsSync(file) ? (JSON.parse(readFileSync(file, "utf8")) as Record<string, unknown>) : {};
+  writeFileSync(file, JSON.stringify({ ...report, [scene]: sample }, null, 2));
 };
 
-test.afterAll(() => {
-  mkdirSync("reports", { recursive: true });
-  writeFileSync("reports/perf.json", JSON.stringify(report, null, 2));
-});
+/** The draw calls and meshes of the frame just drawn, after the test stepped the game. */
+const sampleNow = async (page: Page) => {
+  await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+  return perf(page);
+};
 
 test("NPR reference frame matches the approved snapshot", async ({ page }) => {
   await page.goto("/?reference");
@@ -39,21 +34,16 @@ test("NPR reference frame matches the approved snapshot", async ({ page }) => {
 test("reference scene stays within the perf budget", async ({ page }) => {
   await page.goto("/?reference");
   await waitForGame(page);
-  const sample = await settledPerf(page);
-  report.reference = sample;
-  expect(sample.drawCalls).toBeLessThanOrEqual(budgets.scenes.reference!.drawCalls);
-  expect(sample.activeMeshes).toBeLessThanOrEqual(budgets.scenes.reference!.activeMeshes);
-  expect(sample.frameTimeMs).toBeLessThanOrEqual(budgets.frameTimeMs);
+  within("reference", await sampleNow(page));
 });
 
 /** Checks a sample against its scene's budget and keeps it for the report. */
-const within = (scene: string, sample: Awaited<ReturnType<typeof perf>>) => {
-  report[scene] = sample;
+function within(scene: string, sample: Awaited<ReturnType<typeof perf>>) {
+  record(scene, sample);
   const budget = budgets.scenes[scene]!;
   expect(sample.drawCalls).toBeLessThanOrEqual(budget.drawCalls);
   expect(sample.activeMeshes).toBeLessThanOrEqual(budget.activeMeshes);
-  expect(sample.frameTimeMs).toBeLessThanOrEqual(budgets.frameTimeMs);
-};
+}
 
 /** A new game in TPP, the player put at a spot of Lublin (ADR-0045) and walked a little. */
 const tppAt = async (page: Page, at: { frame?: Frame; x: number; z: number; yaw: number; walk: number }, query = "/?seed=3&models=off") => {
@@ -71,32 +61,32 @@ test("Krakowskie Przedmieście in TPP stays within the perf budget", async ({ pa
   // The deptak west of the clinic and Neon Koi, walking east between the tenements.
   await tppAt(page, { x: 270, z: -81, yaw: Math.PI / 2, walk: 60 });
   expect((await gameState(page)).district).toBe("shinsekai-7");
-  within("krakowskie-tpp", await settledPerf(page));
+  within("krakowskie-tpp", await sampleNow(page));
 });
 
 test("the Rynek in TPP stays within the perf budget", async ({ page }) => {
   // Up Bramowa from Brama Krakowska onto the Rynek, the Trybunał ahead.
   await tppAt(page, { x: 520, z: -63, yaw: Math.atan2(41, 23), walk: 60 });
   expect((await gameState(page)).district).toBe("kanal");
-  within("rynek-tpp", await settledPerf(page));
+  within("rynek-tpp", await sampleNow(page));
 });
 
 test("the market under the viaduct in TPP stays within the perf budget", async ({ page }) => {
   // East end of the market, looking back west over the stalls, under the deck towards the gate.
   await tppAt(page, { frame: "market", x: 106, z: 79, yaw: -Math.PI / 2, walk: 30 });
   expect((await gameState(page)).loadedChunks).not.toContain("krakowskie-2-0");
-  within("podzamcze-tpp", await settledPerf(page));
+  within("podzamcze-tpp", await sampleNow(page));
 });
 
 test("Nabrzeże Bystrzycy at night in TPP stays within the perf budget", async ({ page }) => {
   // East end of the quay, looking west along the fence: water and mist, the crane, the office.
   await tppAt(page, { frame: "docks", x: 27, z: 145, yaw: -Math.PI / 2, walk: 30 });
   expect((await gameState(page)).loadedChunks).toEqual(["nabrzeze-1-1"]);
-  within("nabrzeze", await settledPerf(page));
+  within("nabrzeze", await sampleNow(page));
 });
 
 test("a phone (low quality, 800x370) on the deptak stays within the perf budget", async ({ page }) => {
   await page.setViewportSize({ width: 800, height: 370 });
   await tppAt(page, { x: 270, z: -81, yaw: Math.PI / 2, walk: 60 }, "/?seed=3&models=off&quality=low&touch");
-  within("phone-low", await settledPerf(page));
+  within("phone-low", await sampleNow(page));
 });
