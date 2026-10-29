@@ -46,5 +46,6 @@
 | [0042](0042-lublin-z-danych-mapowych.md) | Lublin z danych mapowych: OSM i teren EU-DEM importowane offline, kotwica na Placu Litewskim, dystrykty Krakowskie Przedmieście, Stare Miasto, Podzamcze, Nabrzeże Bystrzycy, bryły wypukłe i teren w sim | Zaakceptowana |
 | [0043](0043-pryzmaty-i-teren-w-symulacji.md) | Pryzmaty wypukłe i teren w symulacji: bryły z części wypukłych, grunt z siatki chunka, skarpy powyżej 35° jak ściana, promienie DDA przez teren, piętra AI liczone od gruntu, siatka przestrzenna brył | Zaakceptowana |
 | [0044](0044-renderer-miasta-z-danych-mapowych.md) | Renderer miasta z danych mapowych: fasady NPR z UV w metrach i stylu z ziarna, attyki, dachy, kopuły i wieże, neon i holo w języku polsko-japońskim, teren z fartuchami, drapowane nawierzchnie z krawężnikami, komórki 128 m z bliskim i dalekim LOD, podgląd `?lublin-preview` | Zaakceptowana |
+| [0045](0045-gra-w-lublinie.md) | Gra w Lublinie: świat gry na 20 chunkach Lublina, budynki jako bryły i scenografia, wnętrza w kamienicach, przejścia przez bramy, kamera TPP z okluderem z app, mapa i minimapa z danych mapowych, nazwy po lubelsku, zapis v15 | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.
