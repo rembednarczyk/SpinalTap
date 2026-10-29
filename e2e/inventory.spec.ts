@@ -4,7 +4,7 @@ import { freeze, gameState, step, teleport, waitForGame } from "./helpers";
 test("the weapon strip counts rounds down and the pistol reloads on R", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto("/?seed=7");
+  await page.goto("/?seed=7&models=off");
   await waitForGame(page);
   await page.getByRole("button", { name: "Nowa gra" }).click();
   await freeze(page);
@@ -26,7 +26,7 @@ test("the weapon strip counts rounds down and the pistol reloads on R", async ({
 test("a killed ganger leaves a bag; E opens it and Weź wszystko empties it", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto("/?seed=7");
+  await page.goto("/?seed=7&models=off");
   await waitForGame(page);
   await page.getByRole("button", { name: "Nowa gra" }).click();
   await freeze(page);

@@ -21,7 +21,8 @@
     "artifact": "pnpm build && node tools/build-artifact.mjs",
     "osm:fetch": "node tools/osm-import/src/fetch.ts",
     "osm:build": "node tools/osm-import/src/build.ts",
-    "osm:preview": "node tools/osm-import/src/preview.ts"
+    "osm:preview": "node tools/osm-import/src/preview.ts",
+    "osm:props": "node tools/osm-import/src/props.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

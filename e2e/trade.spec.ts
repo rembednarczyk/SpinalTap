@@ -7,7 +7,7 @@ test("by day Oyaji's stall buys a medkit through the Sprzedaj tab", async ({ pag
   test.slow();
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto("/?seed=5");
+  await page.goto("/?seed=5&models=off");
   await waitForGame(page);
   await page.getByRole("button", { name: "Nowa gra" }).click();
   await freeze(page);

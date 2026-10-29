@@ -14,11 +14,12 @@ import { MapWaterMaterial } from "./map-water";
 import { BinIndex, cellBounds, cellKey, cellsOf, grow } from "./map-index";
 import { type Box2, type P2, boundsOf, centroid, cleanRing, distanceToBox, pointInRing } from "./polygon";
 import { planBuildingSigns } from "./sign-plan";
+import { StreetProps, type StreetPropsStats } from "./street-props";
 
 /** Views drawn by the map city (ADR-0042, ADR-0044). */
-export type MapView = Extract<ViewDescriptor, { kind: "building" | "terrain" | "ground" }>;
+export type MapView = Extract<ViewDescriptor, { kind: "building" | "terrain" | "ground" | "street-props" }>;
 
-export const isMapView = (v: ViewDescriptor): v is MapView => v.kind === "building" || v.kind === "terrain" || v.kind === "ground";
+export const isMapView = (v: ViewDescriptor): v is MapView => v.kind === "building" || v.kind === "terrain" || v.kind === "ground" || v.kind === "street-props";
 
 /** Distances (m, from the camera to a cell) per quality: detail, any building, ground, signs. */
 export interface MapLod {
@@ -95,6 +96,8 @@ export interface MapCityStats {
   readonly near: number;
   readonly far: number;
   readonly vertices: number;
+  /** Street furniture (ADR-0047), null before the first `street-props` view. */
+  readonly props: StreetPropsStats | null;
 }
 
 /** A passage of a building view in world metres. */
@@ -130,6 +133,8 @@ export class MapCity {
   private rig: LightingRig | null = null;
   private daylight = 0;
   private terrainsDirty = false;
+  /** Street furniture, made on the first `street-props` view (ADR-0047). */
+  private streetProps: StreetProps | null = null;
 
   constructor(private readonly deps: MapCityDeps) {
     this.signs = new MapSignMaterial(deps.scene, deps.signAtlas);
@@ -142,19 +147,23 @@ export class MapCity {
   }
 
   has(id: EntityId): boolean {
-    return this.buildings.has(id) || this.grounds.has(id) || this.terrains.has(id);
+    return this.buildings.has(id) || this.grounds.has(id) || this.terrains.has(id) || (this.streetProps?.has(id) ?? false);
   }
 
   ids(): EntityId[] {
-    return [...this.buildings.keys(), ...this.grounds.keys(), ...this.terrains.keys()];
+    return [...this.buildings.keys(), ...this.grounds.keys(), ...this.terrains.keys(), ...(this.streetProps?.ids() ?? [])];
   }
 
   get size(): number {
-    return this.buildings.size + this.grounds.size + this.terrains.size;
+    return this.buildings.size + this.grounds.size + this.terrains.size + (this.streetProps?.size ?? 0);
   }
 
   spawn(id: EntityId, view: MapView, at: Vec3): void {
     this.despawn(id);
+    if (view.kind === "street-props") {
+      this.props().spawn(id, view.items, at);
+      return;
+    }
     if (view.kind === "terrain") {
       const g = view.grid;
       const bounds = { minX: g.originX, maxX: g.originX + (g.cols - 1) * g.cell, minZ: g.originZ, maxZ: g.originZ + (g.rows - 1) * g.cell };
@@ -183,6 +192,10 @@ export class MapCity {
   }
 
   despawn(id: EntityId): void {
+    if (this.streetProps?.has(id)) {
+      this.streetProps.despawn(id);
+      return;
+    }
     const t = this.terrains.get(id);
     if (t) {
       this.terrains.delete(id);
@@ -237,7 +250,7 @@ export class MapCity {
 
   /** Rebuilds what changed: terrain meshes and the cells' far, sign and ground meshes. */
   flush(): boolean {
-    let changed = false;
+    let changed = this.streetProps?.flush() ?? false;
     if (this.terrainsDirty) {
       this.terrainsDirty = false;
       changed = true;
@@ -301,6 +314,7 @@ export class MapCity {
       cell.water?.setEnabled(d < this.lod.ground);
     }
     this.waitingNear = waiting;
+    this.streetProps?.update(eye);
   }
 
   /** Every cell near the eye has its detailed buildings (they are built a few per frame). */
@@ -315,6 +329,7 @@ export class MapCity {
     this.deps.materials.get("facade").setFloat("selfLit", self);
     this.deps.materials.get("mapGround").setFloat("selfLit", self);
     this.deps.materials.get("mapTerrain").setFloat("selfLit", self);
+    this.streetProps?.setDaylight(daylight);
     this.rig = null;
   }
 
@@ -337,7 +352,7 @@ export class MapCity {
       for (const m of [c.near, c.far, c.signs, c.ground, c.water]) if (m) vertices += m.getTotalVertices();
     }
     for (const t of this.terrains.values()) vertices += t.mesh?.getTotalVertices() ?? 0;
-    return { buildings: this.buildings.size, grounds: this.grounds.size, terrains: this.terrains.size, cells: this.cells.size, near, far, vertices };
+    return { buildings: this.buildings.size, grounds: this.grounds.size, terrains: this.terrains.size, cells: this.cells.size, near, far, vertices, props: this.streetProps?.stats ?? null };
   }
 
   /** Every mesh the map city has built (debug and tests). */
@@ -345,7 +360,16 @@ export class MapCity {
     const out: Mesh[] = [];
     for (const c of this.cells.values()) for (const m of [c.near, c.far, c.signs, c.ground, c.water]) if (m) out.push(m);
     for (const t of this.terrains.values()) if (t.mesh) out.push(t.mesh);
+    out.push(...(this.streetProps?.meshes ?? []));
     return out;
+  }
+
+  private props(): StreetProps {
+    if (!this.streetProps) {
+      this.streetProps = new StreetProps({ scene: this.deps.scene, materials: this.deps.materials, quality: this.deps.quality });
+      this.streetProps.setDaylight(this.daylight);
+    }
+    return this.streetProps;
   }
 
   private cellOf(key: string): Cell {

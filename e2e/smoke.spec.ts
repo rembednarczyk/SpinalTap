@@ -8,7 +8,7 @@ test.describe("M0 smoke", () => {
     test.setTimeout(180_000);
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(e.message));
-    await page.goto("/?seed=7");
+    await page.goto("/?seed=7&models=off");
     await waitForGame(page);
 
     // Title screen with the scene rendering behind it.
@@ -70,7 +70,7 @@ test.describe("M0 smoke", () => {
   });
 
   test("camera toggles between FPP and TPP", async ({ page }) => {
-    await page.goto("/?seed=7");
+    await page.goto("/?seed=7&models=off");
     await waitForGame(page);
     await page.getByRole("button", { name: "Nowa gra" }).click();
     await freeze(page);
@@ -83,7 +83,7 @@ test.describe("M0 smoke", () => {
 });
 
 test("ripperdoc clinic sells a medkit through the UI", async ({ page }) => {
-  await page.goto("/?seed=7");
+  await page.goto("/?seed=7&models=off");
   await waitForGame(page);
   await page.getByRole("button", { name: "Nowa gra" }).click();
   await freeze(page);
@@ -118,7 +118,7 @@ test("ripperdoc clinic sells a medkit through the UI", async ({ page }) => {
 test("journal, minimap and settings", async ({ page }) => {
   // Two cold page loads; on a busy CI runner they alone can take a minute.
   test.slow();
-  await page.goto("/?seed=7");
+  await page.goto("/?seed=7&models=off");
   await waitForGame(page);
   await page.getByRole("button", { name: "Nowa gra" }).click();
   await freeze(page);
@@ -149,7 +149,7 @@ test("journal, minimap and settings", async ({ page }) => {
 
 test("touch layout keeps the minimap off the pad", async ({ page }) => {
   await page.setViewportSize({ width: 844, height: 390 });
-  await page.goto("/?seed=7&touch");
+  await page.goto("/?seed=7&touch&models=off");
   await waitForGame(page);
   await page.getByRole("button", { name: "Nowa gra" }).click();
   await freeze(page);
@@ -170,7 +170,7 @@ test("touch layout keeps the minimap off the pad", async ({ page }) => {
 
 test("touch layout keeps the weapon strip off the pad and the minimap", async ({ page }) => {
   await page.setViewportSize({ width: 844, height: 390 });
-  await page.goto("/?seed=7&touch");
+  await page.goto("/?seed=7&touch&models=off");
   await waitForGame(page);
   await page.getByRole("button", { name: "Nowa gra" }).click();
   await freeze(page);

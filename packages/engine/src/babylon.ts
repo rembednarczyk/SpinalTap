@@ -60,6 +60,7 @@ import "@babylonjs/core/Shaders/ShadersInclude/morphTargetsVertexDeclaration";
 import "@babylonjs/core/Shaders/ShadersInclude/morphTargetsVertexGlobal";
 import "@babylonjs/core/Shaders/ShadersInclude/morphTargetsVertex";
 import "@babylonjs/core/Particles/particleSystemComponent";
+import "@babylonjs/core/Meshes/thinInstanceMesh";
 import "@babylonjs/core/Layers/effectLayerSceneComponent";
 import "@babylonjs/core/PostProcesses/RenderPipeline/postProcessRenderPipelineManagerSceneComponent";
 export { ReflectionProbe } from "@babylonjs/core/Probes/reflectionProbe";
