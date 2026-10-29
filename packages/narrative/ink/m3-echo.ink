@@ -17,7 +17,7 @@ EXTERNAL end_act()
 
 === recall_courier_case ===
 Obraz rwie się jak zły sygnał. Przez sekundę widzisz dwa miejsca naraz.
-Rampa za magazynem w porcie. Leje. Na nadgarstku masz kajdanki, a do nich przypiętą walizkę z logo Kagami Biotech.
+Rampa za magazynem nad Bystrzycą. Leje. Na nadgarstku masz kajdanki, a do nich przypiętą walizkę z logo Kagami Biotech.
 REN: Jeszcze dwie przecznice i jesteśmy kwita. Nie zaglądaj do środka.
 REN: Płacą nam za to, żebyśmy nie wiedzieli, co wieziemy.
 Zamek walizki jest tani. Wystarczy paznokieć.

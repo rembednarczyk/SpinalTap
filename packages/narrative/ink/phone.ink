@@ -28,7 +28,7 @@ HANA: Nic z tego nie będzie. Przyjdź, jak ochłoniesz, pogadamy o następnym.
 -> END
 
 === phone_genzo_offer ===
-GENZO: Port potrzebuje kogoś, kto chodzi cicho. Kontener przy nabrzeżu, jak zwykle.
+GENZO: Nabrzeże potrzebuje kogoś, kto chodzi cicho. Kontener nad Bystrzycą, jak zwykle.
 -> END
 
 === phone_genzo_paid ===

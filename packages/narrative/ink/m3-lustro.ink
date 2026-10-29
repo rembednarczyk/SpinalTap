@@ -225,7 +225,7 @@ Kurosawa unosi dwa palce i odchodzi w stronę windy. Od strony szybu idą ludzie
 // Plays on its own after the "kagami" ending (memory "lustro").
 === recall_mirror ===
 Chip z białego etui wchodzi gładko, jakby ktoś go do ciebie przyciął.
-Kuchnia z oknem na port. Matka kroi rybę i nuci. Szkoła, pierwsza praca, pierwszy kurs dla Kagami.
+Kuchnia z oknem na Bystrzycę. Matka kroi rybę i nuci. Szkoła, pierwsza praca, pierwszy kurs dla Kagami.
 Wszystko się zgadza. Każda data, każda twarz. Za dobrze, jak w katalogu.
 TECH: Zapis kompletny. Nosicielka przyjęła pakiet bez odrzutu.
 Nie wiesz, czy ten głos jest częścią wspomnienia, czy ktoś mówi do ciebie teraz.
@@ -236,7 +236,7 @@ Nie wiesz, czy ten głos jest częścią wspomnienia, czy ktoś mówi do ciebie 
 === recall_rooftop ===
 Ten sam dach, dwa lata wcześniej. Pada, a pod wami szumi targ.
 Ren liczy na palcach pieniądze, których jeszcze nie macie.
-REN: Kagami płaci za jeden kurs tyle, co Hebi za rok. Walizka z portu do ich laboratorium i jesteśmy wolni.
+REN: Kagami płaci za jeden kurs tyle, co Hebi za rok. Walizka z nabrzeża do ich laboratorium i jesteśmy wolni.
 REN: Jedziemy razem. Ty prowadzisz, ja siedzę na kanale.
 * [Podajesz mu rękę. #tone:main]
     ~ choice_rooftop = "together"
