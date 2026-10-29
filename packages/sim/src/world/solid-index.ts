@@ -21,6 +21,8 @@ export class SolidIndex {
   private readonly parts = new WeakMap<SolidEntity, readonly Collider[]>();
   private stamp = 0;
   private readonly seen = new WeakMap<SolidEntity, number>();
+  /** Queries answered and solids handed back, for the cost check in tests (ADR-0046). */
+  readonly stats = { queries: 0, candidates: 0 };
 
   constructor(private readonly world: World<Entity>) {
     const solids = world.with("solid");
@@ -70,6 +72,8 @@ export class SolidIndex {
       }
     }
     if (!staticOnly) out.push(...this.kinematic);
+    this.stats.queries++;
+    this.stats.candidates += out.length;
     return out;
   }
 

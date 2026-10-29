@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { GroundPoint } from "@seki/core";
 import { type ChunkDef, Simulation, type StaticProp, gangerEntity } from "../src";
+import { solidIndexOf } from "../src/world/solid-index";
 import { input, teleportPlayer } from "./helpers";
 import { gridOf } from "./terrain-world";
 
@@ -39,8 +40,11 @@ const denseChunk = (): ChunkDef => {
   return { id: "dense", district: "shinsekai-7", bounds: { minX: -120, maxX: 120, minZ: -90, maxZ: 90 }, props, actors: [], terrain: gridOf(-120, -90, 2, 121, 91, rolling) };
 };
 
+/** Solids per index query, of 300 in range: 13 measured; a scan without the index hands back 300. */
+const PER_QUERY_LIMIT = 20;
+
 describe("cost of a step with 300 prisms in range (ADR-0043)", () => {
-  it("stays under a millisecond per step on a free machine", () => {
+  it("checks only the solids near each query", () => {
     const sim = Simulation.create({ seed: 3, chunks: [denseChunk()] });
     teleportPlayer(sim, { x: 0, y: rolling(0, 5.5), z: 5.5 });
     sim.step();
@@ -54,16 +58,17 @@ describe("cost of a step with 300 prisms in range (ADR-0043)", () => {
     }
     const frame = (i: number) => input({ moveZ: i % 240 < 120 ? 1 : -1, moveX: i % 100 < 50 ? 0.5 : -0.5, fire: i % 30 < 3 });
     for (let i = 0; i < 240; i++) sim.step(frame(i));
-    const samples: number[] = [];
-    for (let round = 0; round < 5; round++) {
-      const t0 = now();
-      for (let i = 0; i < 120; i++) sim.step(frame(i));
-      samples.push((now() - t0) / 120);
-    }
-    samples.sort((a, b) => a - b);
-    const median = samples[2] ?? 0;
-    report(`ADR-0043 bench: 300 prisms, terrain, 10 gangers: ${median.toFixed(3)} ms per step (median of 5 x 120 steps)`);
-    // The budget is 1 ms on a free machine; a loaded CI runner gets headroom before this fails.
-    expect(median).toBeLessThan(4);
+    // Wall-clock time is a report only (ADR-0046): a shared CI runner measures itself, not the
+    // simulation. The gate is the work the spatial index leaves: solids handed back per query.
+    const index = solidIndexOf(sim.world);
+    const before = { ...index.stats };
+    const t0 = now();
+    for (let i = 0; i < 600; i++) sim.step(frame(i));
+    const ms = (now() - t0) / 600;
+    const queries = index.stats.queries - before.queries;
+    const perQuery = (index.stats.candidates - before.candidates) / Math.max(1, queries);
+    report(`ADR-0043 bench: 300 prisms, terrain, 10 gangers: ${ms.toFixed(3)} ms per step, ${(queries / 600).toFixed(1)} queries and ${perQuery.toFixed(2)} solids per query`);
+    expect(queries).toBeGreaterThan(0);
+    expect(perQuery).toBeLessThan(PER_QUERY_LIMIT);
   });
 });
