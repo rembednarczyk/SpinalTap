@@ -111,7 +111,9 @@ export const lineBands = (l: Line, mappedSidewalkNear: boolean, water: readonly 
     } else if (hw === "pedestrian") add(cobbled(t) ? "cobble" : "square", bufferLine(l.line, parseLength(t.width) ?? 8));
     else if (PATHS[hw] !== undefined) {
       const w = parseLength(t.width) ?? PATHS[hw]!;
-      add(t.footway === "sidewalk" ? "sidewalk" : cobbled(t) ? "cobble" : "footway", bufferLine(l.line, w));
+      // Steps: one band per straight run, so the renderer reads the flight's direction off it.
+      if (hw === "steps") for (let i = 0; i + 1 < l.line.length; i++) add("steps", bufferLine([l.line[i]!, l.line[i + 1]!], w));
+      else add(t.footway === "sidewalk" ? "sidewalk" : cobbled(t) ? "cobble" : "footway", bufferLine(l.line, w));
     }
   }
   if (t.railway === "rail" || t.railway === "tram" || t.railway === "light_rail") add("rail", bufferLine(l.line, 3));
@@ -127,7 +129,7 @@ export const areaBand = (a: Area): Band | null => {
 };
 
 /** Draw order: big areas first, then roads, cobbles, sidewalks, paths and rails on top. */
-const ORDER: Record<GroundSurface, number> = { water: 0, grass: 1, square: 2, road: 3, cobble: 4, sidewalk: 5, footway: 6, rail: 7, basin: 8 };
+const ORDER: Record<GroundSurface, number> = { water: 0, grass: 1, square: 2, road: 3, cobble: 4, sidewalk: 5, footway: 6, steps: 7, rail: 8, basin: 9 };
 
 /** Clips bands to a chunk, simplifies and rounds them, in draw order then by source id. */
 export const chunkGround = (bands: readonly Band[], rect: Rect): GroundOut[] => {

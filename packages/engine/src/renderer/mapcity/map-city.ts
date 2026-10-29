@@ -19,6 +19,7 @@ import { type AcrossAt, SPAN_MAX, type Span, findSpans, planFarCanyon, planNearC
 import { planCanyonSigns } from "./canyon-signs";
 import { planFarVertical, planNearVertical } from "./vertical-plan";
 import { planWallClutter } from "./wall-clutter";
+import { planSteps } from "./steps-plan";
 import { StreetProps, type StreetPropsStats } from "./street-props";
 import { MapSkyline } from "./skyline";
 
@@ -485,6 +486,7 @@ export class MapCity {
       const h = (x: number, z: number) => this.heightAt(x, z) ?? g.y;
       if (g.surface === "water") planWater(water, g.ring, h);
       else if (g.surface === "basin") planBasin(water, ground, g.ring, h);
+      else if (g.surface === "steps") planSteps(ground, g.ring, h);
       else planSurface(ground, g.surface, g.ring, h, g.surface === "sidewalk" ? this.roadAt : null);
     }
     cell.ground = ground.empty ? null : this.mesh(`map-ground-${cell.key}`, ground, "mapGround");
