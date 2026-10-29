@@ -42,6 +42,12 @@ export type ViewDescriptor =
   | { readonly kind: "heroine" }
   | { readonly kind: "npc"; readonly preset: "fixer" | "civilian" | "ripperdoc" }
   /**
+   * A resident of the city (ADR-0041): one of the crowd on the sidewalks, drawn in bulk and
+   * cheaply. `look` seeds the silhouette, the clothes and their colours; `umbrella` is false
+   * indoors.
+   */
+  | { readonly kind: "crowd"; readonly look: number; readonly umbrella: boolean }
+  /**
    * "corpo": Tessen's security in the docks (ADR-0024); "ganger": Hebi. `enforcer`: sees through
    * disguises (ADR-0033), the HUD marks it with an icon.
    */
