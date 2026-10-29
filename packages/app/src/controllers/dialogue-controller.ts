@@ -1,5 +1,5 @@
 import type { DomainEvents, EntityId, EventBus, RenderPort, AudioPort } from "@seki/core";
-import type { DialogueView, NarrativeRuntime } from "@seki/narrative";
+import type { DialogueLine, DialogueView, NarrativeRuntime } from "@seki/narrative";
 import { SIM_HZ } from "@seki/sim";
 import { type DialogueIntents, type UiStore, patchUi } from "@seki/ui";
 import type { Focus, SimRef } from "./shared";
@@ -7,7 +7,10 @@ import type { Focus, SimRef } from "./shared";
 /** Mouth movement per character of a spoken line, seconds. */
 const TALK_SECONDS_PER_CHAR = 0.05;
 
-const toDialogueVm = (v: DialogueView) => ({ lines: v.lines, choices: v.choices, ended: v.ended });
+/** Lines kept in the scrollable log of one conversation (ADR-0039). */
+const HISTORY_LINES = 80;
+
+const toDialogueVm = (v: DialogueView, history: readonly DialogueLine[]) => ({ lines: v.lines, choices: v.choices, ended: v.ended, history });
 
 export interface DialogueControllerDeps {
   readonly bus: EventBus<DomainEvents>;
@@ -24,6 +27,9 @@ export class DialogueController implements DialogueIntents {
   private dialogueOpen = false;
   /** Who the player is talking to (from InteractionStarted), for the mouth movement. */
   private talkTarget: EntityId | null = null;
+  /** Lines of the current conversation before its last step, for the log under the wheel. */
+  private history: readonly DialogueLine[] = [];
+  private lastLines: readonly DialogueLine[] = [];
 
   constructor(private readonly deps: DialogueControllerDeps) {
     // Subscribed before the event presenter, which opens the conversation on the same event.
@@ -44,14 +50,19 @@ export class DialogueController implements DialogueIntents {
     const sim = this.deps.sim();
     this.dialogueOpen = true;
     const view = this.deps.narrative.start(dialogueId, sim.domain, { tick: sim.tick, ticksPerSecond: SIM_HZ });
-    patchUi(this.deps.ui, { dialogue: toDialogueVm(this.speak(view)), prompt: null });
+    this.history = [];
+    this.lastLines = view.lines;
+    patchUi(this.deps.ui, { dialogue: toDialogueVm(this.speak(view), this.history), prompt: null });
     this.deps.focus.panel();
   }
 
   choose(index: number): void {
     if (!this.dialogueOpen) return;
     this.deps.audio.play("ui-select");
-    patchUi(this.deps.ui, { dialogue: toDialogueVm(this.speak(this.deps.narrative.choose(index))) });
+    const view = this.speak(this.deps.narrative.choose(index));
+    this.history = [...this.history, ...this.lastLines].slice(-HISTORY_LINES);
+    this.lastLines = view.lines;
+    patchUi(this.deps.ui, { dialogue: toDialogueVm(view, this.history) });
   }
 
   /** Closes the panel without telling the simulation (a load, the title screen, an interruption). */

@@ -15,7 +15,8 @@ const NPC_LINE_RE = /^\s*([A-Z]+):\s*(.+)$/;
 const sourceLines = STORY_SOURCE.split("\n").filter((l) => !l.trim().startsWith("//"));
 const choiceTexts = sourceLines.flatMap((l) => {
   const m = CHOICE_RE.exec(l);
-  return m?.[1] !== undefined ? [m[1].trim()] : [];
+  // Tags inside the brackets (`#tone:main`, ADR-0039) are not part of the text.
+  return m?.[1] !== undefined ? [m[1].replace(/#.*$/, "").trim()] : [];
 });
 const npcBodies = sourceLines.flatMap((l) => {
   const m = NPC_LINE_RE.exec(l);

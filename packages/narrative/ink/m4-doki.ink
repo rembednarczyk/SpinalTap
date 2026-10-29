@@ -32,25 +32,25 @@ VAR tessen_stance = "neutral"
 -> offer
 
 = offer
-+ [Kogo trzeba przeprowadzić?]
++ [Kogo trzeba przeprowadzić? #tone:main]
     SEKI: Kogo trzeba przeprowadzić?
     ~ offer_contract("escort")
     GENZO: Mika, księgowa z biura Tessen. Wie za dużo i chce zniknąć. Czeka przy moim kontenerze.
     GENZO: Odprowadź ją na molo, do łodzi. Tessen będzie na nią polować na nabrzeżu, więc trzymaj się blisko.
     -> END
-+ [Co trzeba wynieść z biura Tessen?]
++ [Co trzeba wynieść z biura Tessen? #tone:main]
     SEKI: Co trzeba wynieść z biura Tessen?
     ~ offer_contract("infiltrate")
     GENZO: Manifesty ładunków, z terminala na biurku. Biuro stoi na nabrzeżu, drzwi od strony dźwigu.
     GENZO: Nikt nie może cię zobaczyć. Jeden alarm i dane znikną, zanim dobiegniesz. Idź nisko i za ich plecami.
     -> END
-+ [Który terminal mam złamać?]
++ [Który terminal mam złamać? #tone:main]
     SEKI: Który terminal mam złamać?
     ~ offer_contract("hack")
     GENZO: Terminal portowy pod dźwigiem. Podłączysz się i musisz przy nim wytrzymać, aż skończy.
     GENZO: Ochrona przyjdzie od razu, a na dachu magazynu siedzi strzelec. Czerwony laser znaczy, że masz sekundę na osłonę.
     -> END
-+ [Nie teraz.]
++ [Nie teraz. #tone:leave]
     GENZO: Będę przy kontenerze. Łódź nie odpływa bez powodu.
     -> END
 

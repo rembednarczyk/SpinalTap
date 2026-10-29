@@ -1,45 +1,24 @@
-import { useEffect } from "react";
+import type { DialogueVm } from "../store/ui-vm";
 import { useDialogueIntents, useUi } from "../use-ui";
+import { DialogueLog } from "./dialogue-log";
+import { DialogueWheel } from "./dialogue-wheel";
+import { useDialogueWheel } from "./use-dialogue-wheel";
+import "./dialogue.css";
 
-export const DialoguePanel = () => {
-  const dialogue = useUi((s) => s.dialogue);
-  const intents = useDialogueIntents();
+const NO_LINES: readonly never[] = [];
 
-  useEffect(() => {
-    if (!dialogue) return;
-    const onKey = (e: KeyboardEvent) => {
-      const n = Number.parseInt(e.key, 10);
-      const choice = dialogue.choices[n - 1];
-      if (choice) intents.choose(choice.index);
-      else if (dialogue.ended && (e.key === "Enter" || e.key === " " || e.key === "e" || e.key === "E")) intents.closeDialogue();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [dialogue, intents]);
-
-  if (!dialogue) return null;
+const Conversation = ({ dialogue }: { dialogue: DialogueVm }) => {
+  const wheel = useDialogueWheel(dialogue, useDialogueIntents());
   return (
     <div className="dialogue" data-testid="dialogue">
-      <div className="dialogue__lines">
-        {dialogue.lines.map((l, i) => (
-          <p key={i} className={l.speaker ? "dialogue__line" : "dialogue__line dialogue__line--narration"}>
-            {l.speaker && <span className="dialogue__speaker">{l.speaker}</span>}
-            {l.text}
-          </p>
-        ))}
-      </div>
-      <div className="dialogue__choices">
-        {dialogue.choices.map((c, i) => (
-          <button key={c.index} type="button" className="dialogue__choice" onClick={() => intents.choose(c.index)}>
-            <span className="dialogue__key">{i + 1}</span> {c.text}
-          </button>
-        ))}
-        {dialogue.ended && (
-          <button type="button" className="dialogue__choice dialogue__choice--end" onClick={() => intents.closeDialogue()}>
-            <span className="dialogue__key">E</span> Zakończ rozmowę
-          </button>
-        )}
-      </div>
+      <DialogueWheel slots={wheel.slots} hot={wheel.hot} onPoint={wheel.point} onPick={wheel.pick} />
+      <DialogueLog history={dialogue.history ?? NO_LINES} lines={dialogue.lines} />
     </div>
   );
+};
+
+/** The conversation on screen: the choice wheel by the speaker, subtitles at the bottom (ADR-0039). */
+export const DialoguePanel = () => {
+  const dialogue = useUi((s) => s.dialogue);
+  return dialogue ? <Conversation dialogue={dialogue} /> : null;
 };

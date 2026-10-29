@@ -274,43 +274,7 @@ kbd {
   color: var(--ink-dim);
 }
 
-/* Dialogue */
-.dialogue {
-  position: absolute;
-  left: 50%;
-  bottom: 40px;
-  transform: translateX(-50%);
-  width: min(760px, calc(100vw - 32px));
-  padding: 18px 22px;
-  background: rgba(6, 10, 16, 0.86);
-  border-top: 2px solid var(--cyan);
-  pointer-events: auto;
-}
-.dialogue__lines { max-height: 38vh; overflow-y: auto; }
-.dialogue__line { margin: 0 0 8px; font-size: 18px; line-height: 1.35; }
-.dialogue__line--narration { font-style: italic; color: var(--magenta); }
-.dialogue__speaker {
-  display: inline-block;
-  min-width: 7em;
-  margin-right: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--cyan);
-}
-.dialogue__choices { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
-.dialogue__choice {
-  text-align: left;
-  padding: 8px 12px;
-  font-size: 17px;
-  color: var(--ink);
-  background: rgba(95, 242, 255, 0.06);
-  border: 1px solid var(--panel-edge);
-  cursor: pointer;
-}
-.dialogue__choice:hover, .dialogue__choice:focus-visible { background: rgba(95, 242, 255, 0.16); outline: none; }
-.dialogue__choice--end { color: var(--ink-dim); }
-.dialogue__key { font-family: var(--font-mono); color: var(--amber); margin-right: 8px; }
+/* Dialogue: dialogue/dialogue.css (ADR-0039). */
 
 /* Full-screen menus */
 .screen {
@@ -827,10 +791,6 @@ kbd {
   .settings__label { flex-basis: 7em; }
   /* Below the objective, which can carry the condition bonus. */
   .touch-mode .gear { top: 92px; left: max(16px, env(safe-area-inset-left, 0px)); }
-  .dialogue { bottom: 8px; padding: 10px 14px; }
-  .dialogue__lines { max-height: 30vh; }
-  .dialogue__line, .dialogue__choice { font-size: 15px; }
-  .dialogue__speaker { min-width: 0; }
   .screen { gap: 12px; }
   .screen__heading { font-size: 28px; }
   .title__name { font-size: clamp(32px, 8vw, 56px); }

@@ -7,17 +7,17 @@ KIKU: Siadaj, dziecko. Karty same mi powiedziały, że przyjdziesz. Albo przyjdz
 -> ask
 
 = ask
-* [Powróż mi. Co widzisz?]
+* [Powróż mi. Co widzisz? #tone:main]
     SEKI: Powróż mi. Co widzisz?
     Kiku odwraca kartę. Hologram pokazuje dach w deszczu i dwie sylwetki przy krawędzi. Karta gaśnie, zanim zdążysz się przyjrzeć.
     KIKU: Dziwne. Ta karta pokazuje przeszłość, a powinna przyszłość. Twoja przeszłość jest jeszcze przed tobą, dziecko.
     ~ set_flag("enc_targ_fortune_read")
     -> END
-* [Skąd masz te karty?]
+* [Skąd masz te karty? #tone:optional]
     SEKI: Skąd masz te karty?
     KIKU: Z kontenera Kagami, który spadł z ciężarówki. Każda karta to kawałek czyjegoś wspomnienia. Ja tylko nadaję im znaczenie.
     -> ask
-* [Nie wierzę we wróżby.]
+* [Nie wierzę we wróżby. #tone:leave]
     SEKI: Nie wierzę we wróżby.
     KIKU: Karty też w ciebie nie wierzą. Remis. Idź z bogami, albo z kim tam chodzisz.
     -> END
@@ -30,17 +30,17 @@ DAIGO: Znosi jajka z certyfikatem. Bez niej jestem facetem z pustą klatką i d�
 -> chase
 
 = chase
-* [Łapiesz kurę w locie.]
+* [Łapiesz kurę w locie. #tone:main]
     Rzucasz się. Kura robi unik jak profesjonalistka, ale ląduje ci prosto w rękach i oburzona gdacze binarnie.
     ~ set_flag("enc_targ_chicken_caught")
     ~ change_rep("civilians", 2)
     DAIGO: Moja ty! Proszę, weź jajko. Certyfikat jest w środku. Nie pytaj, jak go tam włożyli.
     -> END
-* [Czemu ona ucieka?]
+* [Czemu ona ucieka? #tone:optional]
     SEKI: Czemu ona ucieka?
     DAIGO: Bo jest mądrzejsza ode mnie. Firma dała jej ten sam procesor co w kasie fiskalnej.
     -> chase
-* [Patrzysz, jak kura wbiega pod estakadę i znika.]
+* [Patrzysz, jak kura wbiega pod estakadę i znika. #tone:main]
     Kura wskakuje na schody na estakadę i przez chwilę stoi na tle neonów jak na plakacie. Potem jej nie ma.
     ~ set_flag("enc_targ_chicken_free")
     DAIGO: Wolność. Zawsze o niej mówiła. Znaczy, gdakała. Co ja teraz powiem w banku?
@@ -54,14 +54,14 @@ AKANE: Mój mąż nie żyje od roku. Pisał się na wiele rzeczy. Ja na nic się
 -> ask
 
 = ask
-* { hebi_stance == "friendly" } [Ona jest ze mną. Daj jej miesiąc.]
+* { hebi_stance == "friendly" } [Ona jest ze mną. Daj jej miesiąc. #tone:persuade]
     SEKI: Ona jest ze mną. Daj jej miesiąc.
     POBORCA: Skoro ty mówisz. Miesiąc. Ale Kenji się dowie, że to od ciebie.
     ~ set_flag("enc_targ_debt_delayed")
     ~ change_rep("civilians", 2)
     AKANE: Nie wiem, kim jesteś, ale dziękuję. Mam stragan z marynatami, jak coś.
     -> END
-* [Kładziesz dłoń na rękojeści. Poborca to widzi.]
+* [Kładziesz dłoń na rękojeści. Poborca to widzi. #tone:aggressive]
     POBORCA: Spokojnie. Ja tylko liczę. Liczenie nie jest karalne.
     POBORCA: Dobra. Zapiszę, że nikogo nie zastałem. Ale to nie koniec, rozumiesz?
     ~ set_flag("enc_targ_debt_scared")
@@ -69,11 +69,11 @@ AKANE: Mój mąż nie żyje od roku. Pisał się na wiele rzeczy. Ja na nic się
     ~ change_rep("civilians", 3)
     AKANE: Wrócą. Ale może za miesiąc, a nie jutro. To już coś.
     -> END
-* [Ile on był winien?]
+* [Ile on był winien? #tone:optional]
     SEKI: Ile on był winien?
     AKANE: Na początku trzysta. Po roku spłacania jest tysiąc. Hebi mają ciekawą matematykę.
     -> ask
-* [Odchodzisz. To nie twoja sprawa.]
+* [Odchodzisz. To nie twoja sprawa. #tone:leave]
     Za plecami słyszysz brzęk monet przesypywanych na tablet.
     -> END
 
@@ -84,17 +84,17 @@ RIKO: Kupisz płytę? Nie mam płyt. Mam kod do pobrania i dobrą wolę.
 -> ask
 
 = ask
-* [Kto jest na tym hologramie?]
+* [Kto jest na tym hologramie? #tone:optional]
     SEKI: Kto jest na tym hologramie?
     RIKO: Ja. Pięć lat temu, zanim wytwórnia sprzedała moją twarz innej dziewczynie. Ona teraz gra stadiony. Ja targ.
     -> ask
-* [Zaśpiewaj tę, którą śpiewałaś przed wytwórnią.]
+* [Zaśpiewaj tę, którą śpiewałaś przed wytwórnią. #tone:main]
     SEKI: Zaśpiewaj tę, którą śpiewałaś przed wytwórnią.
     Riko gasi hologram. Śpiewa ciszej, bez podkładu. Kilku straganiarzy przestaje ważyć towar.
     ~ set_flag("enc_targ_idol_song")
     ~ change_rep("civilians", 1)
     RIKO: Nikt mnie o nią nie prosił od pięciu lat. Masz, to ten kod. Prawdziwy.
     -> END
-* [Wrzucasz jej coś do puszki i idziesz dalej.]
+* [Wrzucasz jej coś do puszki i idziesz dalej. #tone:leave]
     RIKO: Dzięki! Wróć jutro, będę tu z tym samym repertuarem i tą samą twarzą.
     -> END

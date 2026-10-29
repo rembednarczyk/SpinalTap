@@ -20,17 +20,17 @@
 -> talk
 
 = talk
-+ [Co robisz w Tessen?]
++ [Co robisz w Tessen? #tone:optional]
     SEKI: Co robisz w Tessen?
     HIDEO: Liczę kontenery, których nie ma. Wpisuję je do systemu, a potem wypisuję. Płacą za to, żebym nie pamiętał.
     -> talk
-+ { not has_flag("hideo_bridge") } [Czemu chodzisz górą, przez kładkę?]
++ { not has_flag("hideo_bridge") } [Czemu chodzisz górą, przez kładkę? #tone:optional]
     SEKI: Czemu chodzisz górą, przez kładkę?
     ~ set_flag("hideo_bridge")
     HIDEO: Bo pod kładką stoją Hebi i liczą ludziom portfele. Z góry przynajmniej widać ich z daleka.
     HIDEO: Kaito podobno płaci za takich, co tam handlują. Ja tylko mówię, co widzę.
     -> talk
-+ [Trzymaj się.]
++ [Trzymaj się. #tone:leave]
     SEKI: Trzymaj się.
     HIDEO: Poręczy. Codziennie rano i codziennie wieczorem.
     -> END
@@ -50,7 +50,7 @@
 -> talk
 
 = talk
-+ [Co słychać na ulicy?]
++ [Co słychać na ulicy? #tone:optional]
     SEKI: Co słychać na ulicy?
     { game_hour >= 20 || game_hour < 5:
         TETSU: Pod kładką znowu handlują. Hebi z Hebi, chipy za gotówkę. Kaito płaci za takie wieści, ja oddaję je taniej.
@@ -58,13 +58,13 @@
         TETSU: Za dnia nic. Kanałowa budzi się dopiero po zmroku, jak Mei zapali KARAOKE.
     }
     -> talk
-+ { not has_flag("tetsu_alley") } [Coś ciekawego w okolicy?]
++ { not has_flag("tetsu_alley") } [Coś ciekawego w okolicy? #tone:optional]
     SEKI: Coś ciekawego w okolicy?
     ~ set_flag("tetsu_alley")
     TETSU: Kontener na śmieci przy przejściu do Shinsekai. Kurierzy Hebi chowają tam za nim torby, kiedy ktoś ich goni.
     TETSU: Nie zawsze po nie wracają. Ja nic nie mówiłem.
     -> talk
-+ [Na razie.]
++ [Na razie. #tone:leave]
     TETSU: Jak coś zacznie iskrzyć, wiesz, gdzie mnie szukać.
     -> END
 
@@ -82,17 +82,17 @@
 -> talk
 
 = talk
-+ [Śpiewasz tu co noc?]
++ [Śpiewasz tu co noc? #tone:optional]
     SEKI: Śpiewasz tu co noc?
     MEI: Od trzech lat. Zanim zabetonowali kanał, śpiewałam pod mostem za drobne. Akustyka była lepsza.
     -> talk
-+ { not has_flag("mei_song") } [Zaśpiewasz coś dla mnie?]
++ { not has_flag("mei_song") } [Zaśpiewasz coś dla mnie? #tone:optional]
     SEKI: Zaśpiewasz coś dla mnie?
     ~ set_flag("mei_song")
     Mei nuci pod nosem kilka taktów. Melodia brzmi znajomo, choć nie wiesz skąd.
     MEI: Stara piosenka z dachów. Patrzysz, jakbyś ją kiedyś znała. Może znałaś.
     -> talk
-+ [Dobranoc.]
++ [Dobranoc. #tone:leave]
     MEI: Dobranoc to się mówi rano. Ale niech będzie.
     -> END
 
@@ -110,7 +110,7 @@
 -> talk
 
 = talk
-+ [Co słychać na targu?]
++ [Co słychać na targu? #tone:optional]
     SEKI: Co słychać na targu?
     { hebi_stance == "hostile":
         SACHIKO: Hebi o tobie mówią. Nie po imieniu, raczej przekleństwami. Uważaj pod estakadą.
@@ -118,13 +118,13 @@
         SACHIKO: Hana ma nowy towar, Oyaji stare ceny, a Hebi te same twarze. Nic się tu nie zmienia.
     }
     -> talk
-+ { not has_flag("sachiko_car") } [Widziałaś tu coś dziwnego?]
++ { not has_flag("sachiko_car") } [Widziałaś tu coś dziwnego? #tone:optional]
     SEKI: Widziałaś tu coś dziwnego?
     ~ set_flag("sachiko_car")
     SACHIKO: Na estakadzie stoi auto. Ktoś je zostawił w noc blokady i już po nie nie wrócił.
     SACHIKO: Do środka nikt nie zaglądał. Przynajmniej nikt, kto by się przyznał.
     -> talk
-+ [Dzięki za wszystko.]
++ [Dzięki za wszystko. #tone:leave]
     SEKI: Dzięki za wszystko.
     SACHIKO: Nie dziękuj. Następnym razem coś kup.
     -> END
@@ -143,16 +143,16 @@
 -> talk
 
 = talk
-+ [Dobrze idzie interes?]
++ [Dobrze idzie interes? #tone:optional]
     SEKI: Dobrze idzie interes?
     GORO: Jak pada, sprzedaję. Jak nie pada, opowiadam, że zaraz lunie. W tym mieście zawsze mam rację.
     -> talk
-+ { not has_flag("goro_oyaji") } [Długo znasz Oyajiego?]
++ { not has_flag("goro_oyaji") } [Długo znasz Oyajiego? #tone:optional]
     SEKI: Długo znasz Oyajiego?
     ~ set_flag("goro_oyaji")
     GORO: Trzydzieści lat handlujemy na tym targu. On naprawia, ja sprzedaję, obaj płacimy Hebi. Sąsiedzka przyjaźń.
     -> talk
-+ [Muszę lecieć.]
++ [Muszę lecieć. #tone:leave]
     GORO: Weź parasol następnym razem. Mówię poważnie.
     -> END
 
@@ -166,17 +166,17 @@ KENTA: Okonomiyaki! Kapusta, ciasto, sos i co tylko chcesz. Z mięsem drożej, b
 -> talk
 
 = talk
-+ [Prawie prawdziwe?]
++ [Prawie prawdziwe? #tone:optional]
     SEKI: Prawie prawdziwe?
     KENTA: Prawdziwie jakieś. Ja nie pytam dostawcy, dostawca nie pyta mnie.
     -> talk
-+ { not has_flag("kenta_overpass") } [Co jest na estakadzie?]
++ { not has_flag("kenta_overpass") } [Co jest na estakadzie? #tone:optional]
     SEKI: Co jest na estakadzie?
     ~ set_flag("kenta_overpass")
     KENTA: Wiatr, pył i czujka Hebi, która w nocy krąży wokół filarów. Od blokady nikt tam nie jeździ.
     KENTA: Ludzie wchodzą schodami od zachodu, żeby popatrzeć na miasto. Albo żeby czegoś poszukać.
     -> talk
-+ [Innym razem.]
++ [Innym razem. #tone:leave]
     KENTA: Płyta będzie gorąca. Zawsze jest.
     -> END
 
@@ -199,16 +199,16 @@ KENTA: Okonomiyaki! Kapusta, ciasto, sos i co tylko chcesz. Z mięsem drożej, b
 -> talk
 
 = talk
-+ [Ramen naprawdę leczy?]
++ [Ramen naprawdę leczy? #tone:optional]
     SEKI: Ramen naprawdę leczy?
     FUMIKO: Głód i zmęczenie. Na kule weź apteczkę od Mori. Moim się nie opatrzysz w biegu, trzeba usiąść i zjeść.
     -> talk
-+ { not has_flag("fumiko_night") } [Czemu otwierasz dopiero po południu?]
++ { not has_flag("fumiko_night") } [Czemu otwierasz dopiero po południu? #tone:optional]
     SEKI: Czemu otwierasz dopiero po południu?
     ~ set_flag("fumiko_night")
     FUMIKO: Za dnia ludzie jedzą w biurach, a w nocy ci, którzy biur nie mają. Ci drudzy płacą gotówką i mniej narzekają.
     -> talk
-+ [Wrócę głodna.]
++ [Wrócę głodna. #tone:leave]
     SEKI: Wrócę głodna.
     FUMIKO: Wszyscy wracają. Garnek stoi do czwartej rano.
     -> END
