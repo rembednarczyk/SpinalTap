@@ -7,6 +7,7 @@ import type { ToonMaterials } from "../../npr/toon-material";
 import { sinkToMesh } from "../dressing";
 import { MeshSink } from "../mesh-sink";
 import { type FacadeFrame, type MapBuilding, facadeFrame } from "./facade-frame";
+import { mapBuilding } from "./map-building";
 import { planFarBuilding, planNearBuilding } from "./facade-plan";
 import { SURFACE_LIFT, planSurface, planTerrain, planWater } from "./ground-plan";
 import { MapSignMaterial } from "./map-signs";
@@ -415,31 +416,9 @@ export class MapCity {
     return false;
   };
 
-  /**
-   * The entity stands at the foot of its outline; on a slope the bottom `plinth` metres are a
-   * plinth, so the ground floor (and the window grid) starts above it.
-   */
+  /** The measured building of an entry (ADR-0044, ADR-0048). */
   private building(id: EntityId, e: BuildingEntry): MapBuilding {
-    const v = e.view;
-    const plinth = Math.min(Math.max(v.plinth ?? 0, 0), v.height - 2);
-    let foot = e.base;
-    for (const p of e.ring) foot = Math.min(foot, this.heightAt(p.x, p.z) ?? e.base);
-    return {
-      id,
-      ring: e.ring,
-      base: e.base + Math.max(plinth, 0),
-      foot,
-      height: v.height - Math.max(plinth, 0),
-      levels: v.levels,
-      use: v.use,
-      look: v.look,
-      ...(v.roof !== undefined ? { roof: v.roof } : {}),
-      ...(v.name ? { name: v.name } : {}),
-      shopfront: v.shopfront === true,
-      ...(v.doorways?.length
-        ? { doorways: v.doorways.map((d) => ({ x: d.at.x + e.at.x, z: d.at.z + e.at.z, width: d.width, bottom: d.bottom + e.at.y, top: d.top + e.at.y })) }
-        : {}),
-    };
+    return mapBuilding(id, e, (x, z) => this.heightAt(x, z));
   }
 
   private buildCell(cell: Cell): void {

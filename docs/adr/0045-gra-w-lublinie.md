@@ -86,10 +86,9 @@ Krakowskie Przedmieście:
 - brzęczenie neonów i para z kratki tylko na deptaku (`DISTRICT_M0_PROPS`), nie w całym mieście;
 - mieszkańcy idą po pasach z ulic pieszych, bez przejść przez jezdnię i bez ruchu aut.
 
-Stare Miasto:
-- przejścia przez bramy nie mają wyściółki: w otworze widać wnętrze bryły;
-- kryta kładka nad Grodzką to prosty blok; brak Trasy Podziemnej i lochów Mei;
-- teren Hebi bez patrolu, a DENKI i KARAOKE to szyldy na kamienicach mapy bez wnętrz.
+Stare Miasto (wyściółka bram, kładka, patrole Hebi i Trasa Podziemna zrobione w ADR-0048):
+- DENKI i KARAOKE to szyldy na kamienicach mapy bez wnętrz;
+- dalsze punkty w „Do dopracowania” ADR-0048.
 
 Podzamcze:
 - targ to scenka z dawnego miasta przeniesiona w całości pod wiadukt; nie odpowiada hali na Nowym Placu Targowym;

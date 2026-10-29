@@ -144,6 +144,13 @@ export interface GangerAi {
    * from the key, so it needs no saving.
    */
   readonly enforcer?: true;
+  /**
+   * A street patrol on its own ground (ADR-0048): Hebi walking the Old Town among the people
+   * who live there. Neutral to the player, it keeps an eye on her instead of attacking; a hostile
+   * standing, the heat's hunt, a blown disguise of its faction or a provocation alert it like
+   * any ganger. Fixed by content, so it needs no saving.
+   */
+  readonly patrol?: true;
 }
 
 /**

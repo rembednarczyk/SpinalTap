@@ -1,7 +1,9 @@
-import type { Vec3 } from "@seki/core";
+import type { Vec3, ViewDescriptor } from "@seki/core";
 import { type ActorDef, type StaticProp, crate, v } from "./builders";
 import type { RoofStash } from "./district-targ";
+import { KANAL_PATROL_ACTORS } from "./kanal-patrols";
 import { againstWall, spotNear } from "./lublin/places";
+import { TRASA_PODZIEMNA } from "./lublin/sites";
 import { ground, groundY } from "./lublin/terrain";
 
 /**
@@ -32,20 +34,34 @@ const streetLamp = (x: number, z: number, color: string, facing: "x+" | "x-" | "
   solid: false,
 });
 
-/** Height of the covered footbridge's walkway over Grodzka (drawn only: it joins two houses). */
-export const FOOTBRIDGE_TOP = 5;
-/** The middle of Grodzka under the footbridge. */
-const BRIDGE = { x: 659, z: 74 } as const;
+/** Height of the covered footbridge's floor over Grodzka (drawn only: it joins two houses). */
+export const FOOTBRIDGE_TOP = 4.6;
+/**
+ * The covered footbridge over Grodzka (ADR-0048): a one-storey house on a soffit between the
+ * hotel at Grodzka 20 and the "Pod Akacją" house across the street, drawn by the map city with
+ * the Old Town's plaster, windows, cornice and a tiled hipped roof. Its ends stand 0.4 m into
+ * the houses; across Grodzka it is 3.2 m deep. Out of reach, so only scenery.
+ */
+const FOOTBRIDGE = (() => {
+  const hotel = { x: 652.36, z: 79.52 };
+  const akacja = { x: 666.37, z: 72.24 };
+  const len = Math.hypot(akacja.x - hotel.x, akacja.z - hotel.z);
+  const n = { x: (akacja.x - hotel.x) / len, z: (akacja.z - hotel.z) / len };
+  const u = { x: -n.z, z: n.x };
+  const c = { x: (hotel.x + akacja.x) / 2, z: (hotel.z + akacja.z) / 2 };
+  const half = len / 2 + 0.4;
+  const depth = 1.6;
+  const corner = (a: number, b: number) => ({ x: n.x * half * a + u.x * depth * b, z: n.z * half * a + u.z * depth * b });
+  return { center: c, outline: [corner(-1, -1), corner(1, -1), corner(1, 1), corner(-1, 1)] };
+})();
 
-/** The covered footbridge over Grodzka: a glazed box between the houses on either side, out of reach. */
-const footbridge = (): StaticProp[] => {
-  const y = groundY(BRIDGE.x, BRIDGE.z) + FOOTBRIDGE_TOP;
-  return [
-    { center: v(BRIDGE.x, y - 0.15, BRIDGE.z), view: { kind: "block", size: v(16, 0.3, 2.4), material: "metal" }, solid: false },
-    { center: v(BRIDGE.x, y + 1.25, BRIDGE.z), view: { kind: "block", size: v(16, 2.5, 2.2), material: "glass" }, solid: false },
-    { center: v(BRIDGE.x, y + 2.6, BRIDGE.z), view: { kind: "block", size: v(16.4, 0.2, 2.6), material: "metal" }, solid: false },
-  ];
-};
+/** The footbridge as a building of the map city (ADR-0048), drawn for good like the city. */
+export const KANAL_SCENERY: readonly { readonly view: ViewDescriptor; readonly at: Vec3 }[] = [
+  {
+    at: ground(FOOTBRIDGE.center.x, FOOTBRIDGE.center.z),
+    view: { kind: "building", outline: FOOTBRIDGE.outline, height: FOOTBRIDGE_TOP + 3.4, levels: 2, use: "residential", roof: 1.4, look: 0x6b1ad6e, soffit: FOOTBRIDGE_TOP },
+  },
+];
 
 /**
  * Where the people of Stare Miasto stand (ADR-0026). Hideo, a clerk of the Tessen office,
@@ -79,10 +95,11 @@ export const KANAL_PROPS: readonly StaticProp[] = [
   facadeNeon(546, -73, 3.2, 0.9 * 1.4, 3.6, "#ffb000", "SAKE"),
   facadeNeon(556, -36.5, 4.2, 6, 1.2, "#ff2e88", "KARAOKE"),
   facadeNeon(571, -29.5, 4.6, 5, 1.2, "#00e5ff", "DENKI"),
+  // Over the Trybunał's door into Trasa Podziemna (ADR-0048), clear of the slanting facade.
+  { center: v(566.8, TRASA_PODZIEMNA.door + 4.35, -57), view: { kind: "neon", size: v(0.15, 0.5, 1.8), color: "#ffcf8a", label: "TRASA PODZIEMNA", facing: "x-" }, solid: false },
   streetLamp(552, -48, "#9ad7ff", "x+"),
   streetLamp(598, -28, "#ffcf8a", "x-"),
   streetLamp(652, 70, "#ffcf8a", "x+"),
-  ...footbridge(),
   // Tetsu's table of gadgets in front of DENKI, and crates under the footbridge where Hebi meet
   // (Kaito's site `kanal_bridge`).
   { ...crate(0, 0, 1.4, 0.9, 0.7), center: { ...ground(KANAL_SPOTS.tetsu.x + 0.8, KANAL_SPOTS.tetsu.z - 1), y: groundY(KANAL_SPOTS.tetsu.x + 0.8, KANAL_SPOTS.tetsu.z - 1) + 0.45 } },
@@ -115,6 +132,7 @@ export const KANAL_ACTORS: readonly ActorDef[] = [
     bystander: true,
     interactable: { kind: "dialogue", dialogueId: "mei", prompt: "Rozmawiaj z Mei", radius: 2.4 },
   },
+  ...KANAL_PATROL_ACTORS,
 ];
 
 /** Kaito's job under the footbridge (ADR-0026): Hebi trading chips on Grodzka in its shadow. */

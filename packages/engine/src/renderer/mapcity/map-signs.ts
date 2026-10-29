@@ -61,7 +61,21 @@ void main(void) {
   vec3 col = vColor.rgb;
   float a = 0.0;
   float hum = 0.92 + 0.08 * sin(time * 2.3 + seed * 5.0 + vWorld.x) * (1.0 - reduce);
-  if (kind < 0.5 || kind > 4.5) {
+  if (kind > 5.5) {
+    // A round sign on an Old Town bracket (ADR-0048): a neon rim and a glyph of strokes.
+    vec2 q = uv * 2.0 - 1.0;
+    float r = length(q);
+    float disc = 1.0 - step(1.0, r);
+    float rim = disc * step(0.82, r);
+    vec2 g = (q * 0.66 + 0.5) * 4.0;
+    vec2 cell = floor(g);
+    vec2 fr = fract(g);
+    float h = hash(cell + floor(seed * 37.0));
+    float strokes = max(step(0.55, h) * step(abs(fr.y - 0.5), 0.13), step(h, 0.3) * step(abs(fr.x - 0.5), 0.13));
+    float glyph = strokes * step(0.0, g.x) * step(g.x, 4.0) * step(0.0, g.y) * step(g.y, 4.0) * step(r, 0.7);
+    a = (rim * 1.15 + glyph * 0.95 + disc * 0.08) * hum;
+    col = mix(col, vec3(1.0), glyph * 0.3);
+  } else if (kind < 0.5 || kind > 4.5) {
     vec2 c = clamp(uv, 0.004, 0.996);
     float cell = floor(seed + 0.5);
     vec2 auv = kind > 4.5 ? vec2((cell + c.x) / 8.0, 0.5 + c.y * 0.5) : vec2((mod(cell, 2.0) + c.x) / 2.0, 0.5 - (floor(cell / 2.0) + 1.0) / 8.0 + c.y / 8.0);
