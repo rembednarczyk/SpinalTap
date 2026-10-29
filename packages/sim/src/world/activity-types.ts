@@ -50,4 +50,26 @@ export interface Passerby {
   /** Where it walks right now on the way (round an obstacle), and the seconds until it looks again. */
   waypoint: Vec3 | null;
   repath: number;
+  /** A resident walking a route of the crowd (ADR-0041) instead of going to a spot. */
+  lane?: LaneWalk;
+}
+
+/**
+ * A resident's walk round its route (ADR-0041). Where it should be is a pure function of the
+ * clock (`phase` plus the way it goes times its speed); `shift`, `avoid` and `rejoin` are
+ * transient: how far it fell behind after running off, how far it stepped aside for someone in
+ * its way, and where it heads back to the route.
+ */
+export interface LaneWalk {
+  readonly lane: string;
+  /** Arc length at clock zero (m). */
+  readonly phase: number;
+  /** Walking speed (m/s). */
+  readonly speed: number;
+  /** 1 round the lane's points in order, -1 the other way. */
+  readonly dir: 1 | -1;
+  shift: number;
+  avoid: number;
+  /** Arc length of the lane point it walks back to after running off; null while on its way round. */
+  rejoin: number | null;
 }

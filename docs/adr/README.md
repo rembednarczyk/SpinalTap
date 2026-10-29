@@ -42,5 +42,6 @@
 | [0038](0038-wnetrza-drzwi-start-w-klinice.md) | Wnętrza kliniki i Neon Koi wycięte z bloków city kitu, drzwi automatyczne z czujnikiem i zamkami (biuro Tessen na kod), start na fotelu w klinice, zapis v14 | Zaakceptowana |
 | [0039](0039-dialog-na-kole.md) | Dialog na kole: rodzaje opcji z tagów ink, łuk przy rozmówcy, sterowanie myszą, klawiaturą, dotykiem, propozycja dla pada | Zaakceptowana |
 | [0040](0040-rutyny-aktywnosci-przechodnie.md) | Rutyny i aktywności postaci: aktywność z harmonogramu, nawyku i posterunku, miejsca aktywności, przechodnie tła z ziarna i zegara poza zapisem, pozy i rzeczy w rękach za fasadą renderera | Zaakceptowana |
+| [0041](0041-chodniki-i-mieszkancy-miasta.md) | Chodniki z krawężnikiem tylko w obrazie, mieszkańcy miasta po trasach i miejscach z ziarna i zegara poza zapisem, gęstość od dzielnicy, godziny i jakości grafiki, tłum jedną siatką | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.

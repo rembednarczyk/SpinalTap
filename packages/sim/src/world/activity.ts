@@ -42,7 +42,8 @@ export const activityOf = (e: Entity, clock: GameClock, talking = false): Activi
   if (talking) return "talk";
   const v = e.velocity;
   if (v && Math.hypot(v.x, v.z) > ACTIVITY_STILL_SPEED) return null;
-  if (e.passerby) return near(e.position, e.passerby.goal) ? e.passerby.activity : null;
+  // A resident walking its route (ADR-0041) does nothing but walk.
+  if (e.passerby) return !e.passerby.lane && near(e.position, e.passerby.goal) ? e.passerby.activity : null;
   if (e.schedule) return scheduledActivity(e, clock);
   // A bystander pushed off its spot does nothing until it is back.
   if (e.civilian && !near(e.position, e.civilian.home)) return null;

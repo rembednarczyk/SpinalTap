@@ -191,6 +191,7 @@ export const DISTRICT_M0_ACTORS: readonly ActorDef[] = [
     preset: "civilian",
     faction: "civilians",
     bystander: true,
+    indoor: true,
     interactable: { kind: "dialogue", dialogueId: "koi_barman", prompt: "Rozmawiaj z barmanem", radius: 2.6 },
   },
   ...KOI_REGULAR_SPAWNS.map(
@@ -200,6 +201,7 @@ export const DISTRICT_M0_ACTORS: readonly ActorDef[] = [
       preset: "civilian",
       faction: "civilians",
       bystander: true,
+      indoor: true,
       interactable: { kind: "dialogue", dialogueId: "koi_regular", prompt: "Zagadaj", radius: 2 },
     }),
   ),

@@ -29,6 +29,7 @@ import { hookSystem } from "../world/hook-tracker";
 import { contractPlanSystem } from "./contract-plan-system";
 import { streetSceneSystem } from "./street-scene-system";
 import { createPasserbySystem } from "./passerby-system";
+import { createCrowdSystem } from "./crowd-system";
 import { activitySystem } from "./activity-system";
 
 export { aimSpreadOf, fireShot, GUNFIRE_INTERRUPT_RADIUS, NPC_CRIT } from "./combat-system";
@@ -102,6 +103,7 @@ export { doorForcedFlag, doorSnapshots, doorSystem, forceDoor, restoreDoors } fr
  * ADR-0038: the doors after the lifts and before movement (both move solids the collision sees).
  * ADR-0040: the passers-by after the daily plans (their routine is set before the AI walks
  * them), the activities right after the movement (they see where everyone ended up).
+ * ADR-0041: the residents right after the passers-by, for the same reason.
  */
 export const createSystems = (): readonly System[] => [
   clockSystem,
@@ -116,6 +118,7 @@ export const createSystems = (): readonly System[] => [
   ladderSystem,
   scheduleSystem,
   createPasserbySystem(),
+  createCrowdSystem(),
   scannerSystem,
   createGangerAiSystem(),
   sniperAiSystem,

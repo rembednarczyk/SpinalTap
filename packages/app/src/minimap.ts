@@ -1,5 +1,5 @@
 import { type ContractLog, type EntityId, M0_TARGET_TAG, contractTag } from "@seki/core";
-import type { Entity, StaticProp } from "@seki/sim";
+import { type Entity, SIDEWALKS, SIDEWALK_HEIGHT, type StaticProp } from "@seki/sim";
 import type { MapLinkVm, MapMarkerVm, MapPlayerVm, MapRectVm, MapVm } from "@seki/ui";
 
 /** Flat walkable strips (sidewalks) are thinner than this; anything solid is a building or cover. */
@@ -66,6 +66,14 @@ export const buildDistrictMap = (props: readonly StaticProp[]): MapVm => {
     ...(water.length > 0 ? { water } : {}),
   };
 };
+
+/** The sidewalks (ADR-0041) as the flat, non-solid strips the map draws along the streets. */
+export const sidewalkProps = (): StaticProp[] =>
+  SIDEWALKS.map((w) => ({
+    center: { x: (w.minX + w.maxX) / 2, y: SIDEWALK_HEIGHT / 2, z: (w.minZ + w.maxZ) / 2 },
+    view: { kind: "block", size: { x: w.maxX - w.minX, y: SIDEWALK_HEIGHT, z: w.maxZ - w.minZ }, material: "concrete" },
+    solid: false,
+  }));
 
 /** Metres; positions are snapped to this so the store only changes when the map would. */
 const SNAP = 0.25;
