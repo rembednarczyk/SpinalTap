@@ -50,12 +50,14 @@ const settings = reference ? deviceDefaults : loadSettings(storage, deviceDefaul
 const qualityParam = params.get("quality");
 // ?quality wins over the saved setting, so tests and bug reports can force either.
 const quality = qualityParam === "low" || qualityParam === "high" ? qualityParam : settings.quality;
-const stage = new Stage(canvas, { reference, quality });
+// ?quality=medium: the middle tier (line art, wet-asphalt probe; ADR-0036) until the settings offer it.
+const renderQuality = qualityParam === "medium" ? "medium" : quality;
+const stage = new Stage(canvas, { reference, quality: renderQuality });
 // Buildings and vehicles from the CC0 city kit (public/city/README.md, ADR-0022); ?city=off keeps
 // the plain blocks. The reference frame uses it too: the scene is ready only once it is in.
 const renderer = new BabylonRenderer(stage, { cityKit: params.get("city") === "off" ? null : new URL("city/city-kit.glb", document.baseURI).href });
 // The character menu's 3D preview: a second scene on the same engine and canvas (ADR-0015).
-const preview = new PreviewStage(stage.engine, canvas, { quality });
+const preview = new PreviewStage(stage.engine, canvas, { quality: renderQuality });
 // Imported character models: models/manifest.json next to the game, ?models=<url> for another
 // cast, ?models=off for the procedural one. The reference frame stays procedural so the NPR
 // snapshot does not depend on downloads; perf tests pass `off` for the same reason.
@@ -223,6 +225,11 @@ session.bus.on("QuickhackStarted", () => renderer.gameplayFx({ kind: "quickhack"
 session.bus.on("QuickhackApplied", () => renderer.gameplayFx({ kind: "quickhack", phase: "applied" }));
 session.bus.on("HeatChanged", (e) => renderer.gameplayFx({ kind: "heat", level: e.level, searching: e.searching }));
 session.bus.on("ScanFocusChanged", (e) => renderer.setScanFocus(e.targetId, e.kind));
+// Wave 2 (ADR-0036): dash and reflection effects, the metro car while the destination streams in.
+session.bus.on("Dashed", (e) => renderer.gameplayFx({ kind: "dash", entityId: e.entityId, at: e.at, air: e.air }));
+session.bus.on("ProjectileReflected", (e) => renderer.gameplayFx({ kind: "reflect", defenderId: e.defenderId, at: e.at, to: e.to }));
+session.bus.on("MetroDeparted", (e) => renderer.setMetroRide({ from: e.from, to: e.to, seconds: e.seconds }));
+session.bus.on("MetroArrived", () => renderer.setMetroRide(null));
 
 if (reference) {
   // The snapshot guards the 3D look only; the HUD has its own component tests.
