@@ -1,4 +1,4 @@
-import { type AwarenessState, type DomainState, type FactionStance, type Vec3, angleTo, factionStance } from "@seki/core";
+import { type AwarenessState, DISGUISE_FACTION, type DomainState, type FactionStance, type Vec3, angleTo, factionStance } from "@seki/core";
 import type { Entity } from "../../world/components";
 import type { SimContext } from "../../world/context";
 import { chestOf, eyeOf, lineOfSight } from "../../world/hitscan";
@@ -144,6 +144,16 @@ export const perceiveVictim = (ctx: SimContext, g: Entity, victim: Entity): Vict
 };
 
 /**
+ * A street patrol (ADR-0048) lets a neutral player walk its ground: it only watches her, unless
+ * the heat sends it after her or she was caught in its own colours (a blown disguise).
+ */
+const tolerates = (ctx: SimContext, g: Ganger, stance: FactionStance, hunted: boolean): boolean => {
+  if (!g.ai.patrol || stance !== "neutral" || hunted) return false;
+  const d = ctx.state.domain.disguise;
+  return !(d.blown && d.role !== null && DISGUISE_FACTION[d.role] === g.faction);
+};
+
+/**
  * What a ganger makes of the player this step: how far they are and whether it sees them. A
  * cone-sighted guard fills its suspicion first and believes its eyes only at 1. Seeing a player
  * its faction dislikes alerts it, and so does being the security that hunts them (ADR-0029).
@@ -177,7 +187,7 @@ export const perceivePlayer = (
   }
   // The district's security hunting the player (ADR-0029) attacks on sight whatever the stance.
   const hunted = heat.level > 0 && heat.faction === (g.faction ?? "hebi");
-  if (visible && (stance !== "friendly" || hunted)) g.ai.alerted = true;
+  if (visible && (stance !== "friendly" || hunted) && !tolerates(ctx, g, stance, hunted)) g.ai.alerted = true;
   g.ai.sees = visible;
   return { player, distance, visible };
 };

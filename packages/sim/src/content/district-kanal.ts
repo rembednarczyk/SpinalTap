@@ -1,6 +1,7 @@
 import type { Vec3, ViewDescriptor } from "@seki/core";
 import { type ActorDef, type StaticProp, crate, v } from "./builders";
 import type { RoofStash } from "./district-targ";
+import { KANAL_PATROL_ACTORS } from "./kanal-patrols";
 import { againstWall, spotNear } from "./lublin/places";
 import { TRASA_PODZIEMNA } from "./lublin/sites";
 import { ground, groundY } from "./lublin/terrain";
@@ -131,6 +132,7 @@ export const KANAL_ACTORS: readonly ActorDef[] = [
     bystander: true,
     interactable: { kind: "dialogue", dialogueId: "mei", prompt: "Rozmawiaj z Mei", radius: 2.4 },
   },
+  ...KANAL_PATROL_ACTORS,
 ];
 
 /** Kaito's job under the footbridge (ADR-0026): Hebi trading chips on Grodzka in its shadow. */
