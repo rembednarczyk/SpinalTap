@@ -51,7 +51,8 @@ export const elevatorSystem: System = {
     const { world } = ctx;
     const lifts = inCreationOrder(world.with("elevator", "solid"));
     if (lifts.length === 0) return;
-    const bodies = inCreationOrder(world.with("body"));
+    // Passers-by (ADR-0040) neither ride nor hold a lift: they never change the saved state.
+    const bodies = inCreationOrder(world.with("body")).filter((b) => !b.passerby);
     for (const e of lifts) {
       const el = e.elevator;
       if (!el.settled) {

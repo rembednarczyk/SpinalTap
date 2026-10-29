@@ -80,7 +80,8 @@ describe("world streaming: loading and unloading", () => {
     expect(sim.streamer.loadedChunks).toEqual(["shinsekai-7"]);
     expect(byKey(sim, "fixer")?.id).toBe(fixerId);
     expect(sim.streamer.streamedOut.has(fixerId)).toBe(false);
-    expect(chunkEntities(sim, "shinsekai-7")).toHaveLength(propCount);
+    // Everything that was there, and the background passers-by of ADR-0040, who come in with the first step.
+    expect(chunkEntities(sim, "shinsekai-7")).toHaveLength(propCount + (sim.streamer.passerbyIds.get("shinsekai-7")?.length ?? 0));
   });
 
   it("uses hysteresis: loads within the load radius, unloads only beyond the unload radius", () => {

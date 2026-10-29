@@ -1,4 +1,4 @@
-import type { AppearanceDescriptor, EntityId, Transform } from "@seki/core";
+import type { ActivityId, AppearanceDescriptor, EntityId, Transform } from "@seki/core";
 import type { Mesh, Scene } from "../babylon";
 import type { CameraRig } from "../camera/camera-rig";
 import type { MoonShadow } from "../npr/moon-shadow";
@@ -30,6 +30,8 @@ const viewOf = (r: Rider): CharacterDescriptor =>
 export interface RideCast {
   spawn(id: EntityId, view: CharacterDescriptor, t: Transform): void;
   setAppearance(id: EntityId, appearance: AppearanceDescriptor): void;
+  /** What a rider does on the way (ADR-0040): sits on the bench, looks at a phone. */
+  setActivity?(id: EntityId, activity: ActivityId | null): void;
   despawn(id: EntityId, fall: boolean): void;
 }
 
@@ -148,6 +150,7 @@ export class MetroRide {
       cast.spawn(id, viewOf(r), { position: at(r.at), yaw: r.yaw, pitch: 0, speed: 0 });
       // Nobody rides with a gun out: the armed presets get an empty loadout.
       cast.setAppearance(id, NO_WEAPONS);
+      if (r.activity) cast.setActivity?.(id, r.activity);
       this.riders.push(id);
     });
   }

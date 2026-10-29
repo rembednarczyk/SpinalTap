@@ -7,3 +7,6 @@ export * from "./hitboxes";
 export * from "./schedule";
 export * from "./knockback";
 export { DEFLECT_COST, DEFLECT_THRESHOLD, deflects } from "./deflect";
+export * from "./activity";
+export * from "./activity-types";
+export * from "./passersby";

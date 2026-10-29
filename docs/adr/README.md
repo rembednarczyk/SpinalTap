@@ -40,5 +40,6 @@
 | [0036](0036-engine-fali-2.md) | Engine fali 2: wagon metra z paralaksą, radio z trzema stacjami i głośnikami w lokalach, smugi zrywu i ślad odbicia, odcienie przebrań na proceduralnej obsadzie, progi mokrego asfaltu ze statyczną sondą | Zaakceptowana |
 | [0037](0037-fala-3-wnetrza-dialog-rutyny.md) | Fala 3 z uwag gracza: wnętrza i drzwi automatyczne, start w klinice, dialog na kole, rutyny i aktywności NPC | Zaakceptowana |
 | [0039](0039-dialog-na-kole.md) | Dialog na kole: rodzaje opcji z tagów ink, łuk przy rozmówcy, sterowanie myszą, klawiaturą, dotykiem, propozycja dla pada | Zaakceptowana |
+| [0040](0040-rutyny-aktywnosci-przechodnie.md) | Rutyny i aktywności postaci: aktywność z harmonogramu, nawyku i posterunku, miejsca aktywności, przechodnie tła z ziarna i zegara poza zapisem, pozy i rzeczy w rękach za fasadą renderera | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.

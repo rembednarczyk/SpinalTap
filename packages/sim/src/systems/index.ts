@@ -27,6 +27,8 @@ import { metroSystem } from "../world/metro-ride";
 import { hookSystem } from "../world/hook-tracker";
 import { contractPlanSystem } from "./contract-plan-system";
 import { streetSceneSystem } from "./street-scene-system";
+import { createPasserbySystem } from "./passerby-system";
+import { activitySystem } from "./activity-system";
 
 export { aimSpreadOf, fireShot, GUNFIRE_INTERRUPT_RADIUS, NPC_CRIT } from "./combat-system";
 export { meleeSystem, stagger, startSwing } from "./melee-system";
@@ -95,6 +97,8 @@ export { createBodySystem, cyberCapacityOf } from "./body-system";
  * ADR-0034: the metro before streaming (a rider's destination streams in), the contract plan and
  * the hooks after the contract system (a shard's bag exists once its carrier is down), the street
  * scenes after the contract layer.
+ * ADR-0040: the passers-by after the daily plans (their routine is set before the AI walks
+ * them), the activities right after the movement (they see where everyone ended up).
  */
 export const createSystems = (): readonly System[] => [
   clockSystem,
@@ -108,6 +112,7 @@ export const createSystems = (): readonly System[] => [
   perkSystem,
   ladderSystem,
   scheduleSystem,
+  createPasserbySystem(),
   scannerSystem,
   createGangerAiSystem(),
   sniperAiSystem,
@@ -115,6 +120,7 @@ export const createSystems = (): readonly System[] => [
   escortAiSystem,
   elevatorSystem,
   movementSystem,
+  activitySystem,
   weaponSystem,
   meleeSystem,
   combatSystem,

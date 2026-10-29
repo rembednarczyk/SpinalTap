@@ -163,7 +163,8 @@ const witness = (ctx: SimContext, o: Offence, player: Entity): void => {
   }
   for (const c of inCreationOrder(ctx.world.with("civilian"))) {
     const mind = c.civilian.crowd;
-    if ((c.health?.current ?? 1) <= 0 || mind?.call || (mind?.scared ?? 0) > 0 || !civilianSees(ctx, c, player)) continue;
+    // Background passers-by (ADR-0040) run like anyone but never phone it in: they are not saved.
+    if (c.passerby || (c.health?.current ?? 1) <= 0 || mind?.call || (mind?.scared ?? 0) > 0 || !civilianSees(ctx, c, player)) continue;
     scare(ctx, c, "fleeing", player.position);
     const m = c.civilian.crowd;
     if (!m) continue;
