@@ -6,6 +6,7 @@ import { type DeviceDef, deviceView } from "../content/devices";
 import { DOOR_CLOSE_DELAY } from "../content/doors";
 import { SCHEDULES } from "../content/schedules";
 import { aabbFromCenter } from "./collision";
+import { type PrismDef, boundsOfPrisms, isConvex, prismsAt } from "./prism";
 import type { Combatant, Entity, MeleeState } from "./components";
 import { isEnforcer } from "./enforcer";
 
@@ -64,9 +65,24 @@ const LADDER_REACH = 1.1;
 /** Reach of a lift's call button, metres. */
 const BUTTON_REACH = 3;
 
+/**
+ * The convex parts of a solid prop (ADR-0043): its own `prisms`, or a building's outline when
+ * that is convex. A concave outline without parts is a content error: the importer splits it.
+ */
+const prismDefsOf = (prop: StaticProp): readonly PrismDef[] | null => {
+  if (prop.prisms) return prop.prisms;
+  if (prop.view.kind !== "building") return null;
+  if (!isConvex(prop.view.outline)) throw new Error(`building outline at ${prop.center.x},${prop.center.z} is concave: give its convex prisms`);
+  return [{ points: prop.view.outline, bottom: 0, top: prop.view.height }];
+};
+
 export const propEntity = (id: EntityId, prop: StaticProp, chunk: string): Entity => {
   const e: Entity = { id, ...at(prop.center), view: prop.view, chunk };
-  if (prop.solid && prop.view.kind === "block") {
+  const parts = prop.solid ? prismDefsOf(prop) : null;
+  if (parts) {
+    e.prisms = prismsAt(parts, prop.center);
+    e.solid = boundsOfPrisms(e.prisms);
+  } else if (prop.solid && prop.view.kind === "block") {
     e.solid = aabbFromCenter(prop.center, prop.view.size);
     if (prop.view.slope) e.slope = prop.view.slope;
   }

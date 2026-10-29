@@ -1,11 +1,18 @@
 import type { BlockSkin, BlockStyle, EnemyTypeId, FactionId, BlockFront, Vec3, ViewDescriptor } from "@seki/core";
 import type { DoorLock, Interactable, LadderDef } from "../world/components";
+import type { PrismDef } from "../world/prism";
 
 /** Shared vocabulary of the content tables. Coordinates: Y up, +Z north, yaw 0 faces +Z. */
 export interface StaticProp {
   readonly center: Vec3;
   readonly view: ViewDescriptor;
   readonly solid: boolean;
+  /**
+   * The solid's shape as convex prisms (ADR-0043), corners relative to `center` on the XZ plane
+   * and heights relative to `center.y`. Without it a solid `block` is its box, and a solid
+   * `building` with a convex outline is one prism from y = center.y to the building's height.
+   */
+  readonly prisms?: readonly PrismDef[];
   /** Moving part of a lift (ADR-0020); the prop is then kinematic. */
   readonly mechanism?: Mechanism;
   /**

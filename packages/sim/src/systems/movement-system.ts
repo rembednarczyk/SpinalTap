@@ -1,6 +1,7 @@
 import { applyDamage } from "@seki/core";
-import { overFootprint, resolveCircleAabb, topAt } from "../world/collision";
 import type { Entity } from "../world/components";
+import { type GroundField, MAX_WALK_SLOPE, groundOf } from "../world/ground";
+import { type Collider, circleTouches, collidersOf, colliderTop, overCollider, pushCircleOut } from "../world/solids";
 import type { SimContext, System } from "../world/context";
 import { inCreationOrder } from "../world/ordering";
 import { worldTimeScale } from "./ability-system";
@@ -25,35 +26,34 @@ export const HARD_LANDING_HEIGHT = 2.5;
 export const HARD_LANDING_SLOW = 0.35;
 export const HURT_LANDING_SLOW = 0.6;
 
-type Solid = Entity & { solid: NonNullable<Entity["solid"]> };
+const near = { x: 0, z: 0 };
 
-/** Does the solid stop a character whose feet are at `feet` (ADR-0020)? Ledges low enough are stepped onto. */
-const blocks = (s: Solid, x: number, z: number, radius: number, feet: number, height: number): boolean => {
-  if (s.solid.min.y >= feet + height) return false;
-  const cx = Math.max(s.solid.min.x, Math.min(x, s.solid.max.x));
-  const cz = Math.max(s.solid.min.z, Math.min(z, s.solid.max.z));
-  const dx = x - cx;
-  const dz = z - cz;
-  if (dx * dx + dz * dz >= radius * radius) return false;
-  return topAt(s.solid, s.slope, cx, cz) > feet + STEP_HEIGHT;
+/** Does the collider stop a character whose feet are at `feet` (ADR-0020)? Ledges low enough are stepped onto. */
+const blocks = (c: Collider, x: number, z: number, radius: number, feet: number, height: number): boolean => {
+  if (c.box.min.y >= feet + height) return false;
+  if (!circleTouches(c, x, z, radius, near)) return false;
+  return colliderTop(c, near.x, near.z) > feet + STEP_HEIGHT;
 };
 
-/** Height of the floor under a point for feet at `feet`: the street (0) or the highest top within a step up. */
-export const groundAt = (solids: readonly Solid[], x: number, z: number, feet: number): number => {
-  let ground = 0;
-  for (const s of solids) {
-    if (!overFootprint(s.solid, x, z, EDGE_MARGIN)) continue;
-    const top = topAt(s.solid, s.slope, x, z);
+/**
+ * Height of the floor under a point for feet at `feet`: the ground (the street plane, or the
+ * terrain of the chunk, ADR-0043) or the highest top within a step up.
+ */
+export const groundAt = (solids: readonly Collider[], field: GroundField, x: number, z: number, feet: number): number => {
+  let ground = field.heightAt(x, z);
+  for (const c of solids) {
+    if (!overCollider(c, x, z, EDGE_MARGIN)) continue;
+    const top = colliderTop(c, x, z);
     if (top > ground && top <= feet + STEP_HEIGHT) ground = top;
   }
   return ground;
 };
 
 /** Lowest underside above a head at `head` over the point, or Infinity: a jump stops there. */
-const ceilingAt = (solids: readonly Solid[], x: number, z: number, head: number): number => {
+const ceilingAt = (solids: readonly Collider[], x: number, z: number, head: number): number => {
   let ceiling = Infinity;
-  for (const s of solids) {
-    if (s.solid.min.y >= head - 1e-6 && s.solid.min.y < ceiling && overFootprint(s.solid, x, z)) ceiling = s.solid.min.y;
+  for (const c of solids) {
+    if (c.box.min.y >= head - 1e-6 && c.box.min.y < ceiling && overCollider(c, x, z)) ceiling = c.box.min.y;
   }
   return ceiling;
 };
@@ -71,7 +71,7 @@ const MANTLE_INSET = 0.12;
  * blocks at `to`, whose top is a step to MANTLE_REACH above the feet, with room to stand on it.
  * Returns where the pull-up ends, or null.
  */
-const ledgeAhead = (solids: readonly Solid[], e: Entity & { body: NonNullable<Entity["body"]> }, x: number, z: number, vx: number, vz: number): Entity["position"] | null => {
+const ledgeAhead = (solids: readonly Collider[], field: GroundField, e: Entity & { body: NonNullable<Entity["body"]> }, x: number, z: number, vx: number, vz: number): Entity["position"] | null => {
   const speed = Math.hypot(vx, vz);
   if (speed < 0.5) return null;
   const feet = e.position.y;
@@ -82,10 +82,10 @@ const ledgeAhead = (solids: readonly Solid[], e: Entity & { body: NonNullable<En
     const reach = e.body.radius + MANTLE_INSET;
     const tx = e.position.x + dx * (reach + e.body.radius);
     const tz = e.position.z + dz * (reach + e.body.radius);
-    if (!overFootprint(s.solid, tx, tz)) continue;
-    const top = topAt(s.solid, s.slope, tx, tz);
+    if (!overCollider(s, tx, tz)) continue;
+    const top = colliderTop(s, tx, tz);
     if (top - feet <= STEP_HEIGHT || top - feet > MANTLE_REACH) continue;
-    if (groundAt(solids, tx, tz, top) !== top || ceilingAt(solids, tx, tz, top) < top + e.body.height) continue;
+    if (groundAt(solids, field, tx, tz, top) !== top || ceilingAt(solids, tx, tz, top) < top + e.body.height) continue;
     return { x: tx, y: top, z: tz };
   }
   return null;
@@ -142,13 +142,37 @@ const land = (ctx: SimContext, e: Entity, ground: number): void => {
   ctx.bus.emit("Landed", { entityId: e.id, drop, hard, damage, at });
 };
 
+const slope = { x: 0, z: 0 };
+
+/** Rises by less than this per step do not count as climbing (rounding on the contour). */
+const RISE_EPS = 1e-3;
+
+/**
+ * A step up terrain steeper than MAX_WALK_SLOPE is a wall (ADR-0043): the uphill part of the
+ * move is dropped, so the character slides along the bank's contour; when even that climbs
+ * steeply, it stays. Feet above the terrain there (a jump, a roof) are not stopped.
+ */
+const offTheBank = (field: GroundField, from: Entity["position"], x: number, z: number, feet: number): { x: number; z: number } => {
+  if (field.heightAt(x, z) <= feet + RISE_EPS || !field.steepAt(x, z)) return { x, z };
+  const g = field.gradientAt(x, z, slope);
+  const len = Math.hypot(g.x, g.z);
+  const dx = x - from.x;
+  const dz = z - from.z;
+  const up = (dx * g.x + dz * g.z) / len;
+  const sx = from.x + dx - (g.x / len) * Math.max(0, up);
+  const sz = from.z + dz - (g.z / len) * Math.max(0, up);
+  const rise = field.heightAt(sx, sz) - feet;
+  if (rise <= RISE_EPS || rise <= MAX_WALK_SLOPE * Math.hypot(sx - from.x, sz - from.z) || !field.steepAt(sx, sz)) return { x: sx, z: sz };
+  return { x: from.x, z: from.z };
+};
+
 type Body = Entity & { body: NonNullable<Entity["body"]> };
 type Mover = Body & { velocity: NonNullable<Entity["velocity"]> };
 
 /** Pushes a footprint at (x, z) out of the solids it bumps into and the bodies it overlaps. */
-const pushOut = (solids: readonly Solid[], bodies: readonly Body[], e: Mover, x: number, z: number, feet: number): { x: number; z: number } => {
+const pushOut = (solids: readonly Collider[], bodies: readonly Body[], e: Mover, x: number, z: number, feet: number): { x: number; z: number } => {
   for (let i = 0; i < ITERATIONS; i++) {
-    for (const s of solids) if (blocks(s, x, z, e.body.radius, feet, e.body.height)) ({ x, z } = resolveCircleAabb(x, z, e.body.radius, s.solid));
+    for (const s of solids) if (blocks(s, x, z, e.body.radius, feet, e.body.height)) ({ x, z } = pushCircleOut(s, x, z, e.body.radius));
     for (const other of bodies) {
       if (other === e || Math.abs(other.position.y - feet) >= e.body.height) continue;
       const dx = x - other.position.x;
@@ -168,16 +192,17 @@ const pushOut = (solids: readonly Solid[], bodies: readonly Body[], e: Mover, x:
  * The horizontal part of a step: velocity, then push-out. Returns where the feet end up, or
  * null when the player caught a ledge in the air and starts a pull-up instead.
  */
-const moveAcross = (ctx: SimContext, e: Mover, solids: readonly Solid[], bodies: readonly Body[], dt: number): { x: number; z: number } | null => {
+const moveAcross = (ctx: SimContext, e: Mover, solids: readonly Collider[], field: GroundField, bodies: readonly Body[], dt: number): { x: number; z: number } | null => {
   const feet = e.position.y;
   let x = e.position.x;
   let z = e.position.z;
   if (e.velocity.x !== 0 || e.velocity.z !== 0) {
     x += e.velocity.x * dt;
     z += e.velocity.z * dt;
+    if (field.hasTerrain) ({ x, z } = offTheBank(field, e.position, x, z, feet));
     // In the air, pressing into a ledge within reach: pull up onto it instead of sliding down.
     if (e.player && e.fall !== undefined) {
-      const to = ledgeAhead(solids, e, x, z, e.velocity.x, e.velocity.z);
+      const to = ledgeAhead(solids, field, e, x, z, e.velocity.x, e.velocity.z);
       if (to && !leavesWorld(ctx, e.position, to)) {
         e.mantle = { from: e.position, to, duration: MANTLE_TIME, t: 0 };
         delete e.fall;
@@ -201,9 +226,9 @@ const moveAcross = (ctx: SimContext, e: Mover, solids: readonly Solid[], bodies:
  * The vertical part of a step at (x, z): on the floor (stepping up, following stairs down),
  * or in the air (falling, or flying a jump up to a ceiling). Returns the new height of the feet.
  */
-const moveVertically = (ctx: SimContext, e: Mover, solids: readonly Solid[], x: number, z: number, dt: number): number => {
+const moveVertically = (ctx: SimContext, e: Mover, solids: readonly Collider[], field: GroundField, x: number, z: number, dt: number): number => {
   const feet = e.position.y;
-  const ground = groundAt(solids, x, z, feet);
+  const ground = groundAt(solids, field, x, z, feet);
   const rising = (e.fall ?? 0) > 0;
   if (!rising && (ground >= feet || (e.fall === undefined && feet - ground <= SNAP_DOWN))) {
     if (e.fall !== undefined) land(ctx, e, ground);
@@ -242,7 +267,8 @@ export const movementSystem: System = {
     const enemyDt = ctx.dt * worldTimeScale(ctx);
     // Creation order, not world order: chunks streamed back in are appended to the world, and
     // push-out against overlapping boxes depends on the order they are visited.
-    const solids = inCreationOrder(world.with("solid"));
+    const solids = collidersOf(inCreationOrder(world.with("solid")));
+    const field = groundOf(world);
     // Background passers-by (ADR-0040) give way to everyone and push nobody: they never change the saved state.
     const bodies = inCreationOrder(world.with("body")).filter((b) => !b.passerby);
     for (const e of inCreationOrder(world.with("velocity", "body"))) {
@@ -252,10 +278,10 @@ export const movementSystem: System = {
         stepMantle(e.mantle, e, dt);
         continue;
       }
-      const across = moveAcross(ctx, e, solids, bodies, dt);
+      const across = moveAcross(ctx, e, solids, field, bodies, dt);
       if (!across) continue;
       const { x, z } = across;
-      const y = moveVertically(ctx, e, solids, x, z, dt);
+      const y = moveVertically(ctx, e, solids, field, x, z, dt);
       if (x !== e.position.x || y !== e.position.y || z !== e.position.z) e.position = { x, y, z };
     }
   },

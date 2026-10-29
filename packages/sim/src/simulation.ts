@@ -17,9 +17,10 @@ import { aimSpreadOf, createSystems, playerStatsOf } from "./systems";
 import type { Entity } from "./world/components";
 import { type DomainHolder, type SessionState, type SimContext, type System, freshSession } from "./world/context";
 import { PLAYER_SPAWN } from "./content/district-m0";
-import type { DistrictId } from "./content/world-map";
+import type { ChunkDef, DistrictId } from "./content/world-map";
 import { IdAllocator, entitySnapshotOf, playerEntity } from "./world/factory";
 import { WorldStreamer } from "./world/streaming";
+import { bindGround } from "./world/ground";
 import { applyCommand } from "./world/command-table";
 import { syncPlayerWeapon } from "./world/player-weapon";
 import { SIM_DT } from "./step-rate";
@@ -36,6 +37,11 @@ export interface SimulationOptions {
   readonly bus?: EventBus<DomainEvents>;
   /** The crowd of residents (ADR-0041); none without. Never saved, so it changes no outcome. */
   readonly crowd?: CrowdDensity;
+  /**
+   * The chunks of the world; the city's own (WORLD_CHUNKS) by default. Tests and tools give a
+   * small world of their own here (ADR-0043: a chunk with terrain and prisms).
+   */
+  readonly chunks?: readonly ChunkDef[];
 }
 
 /**
@@ -59,7 +65,7 @@ export class Simulation {
    * Builds the world around `focus`: the player first in id order, then every chunk's content
    * (ids reserved up front, see WorldStreamer), then the targets of an active contract.
    */
-  private constructor(seed: number, domain: DomainState, bus: EventBus<DomainEvents>, saved?: SaveSnapshot) {
+  private constructor(seed: number, domain: DomainState, bus: EventBus<DomainEvents>, saved?: SaveSnapshot, chunks?: readonly ChunkDef[]) {
     this.seed = seed;
     this.bus = bus;
     this.rng = new SeededRandom(seed);
@@ -67,7 +73,8 @@ export class Simulation {
     this.world = new World<Entity>();
     const ids = new IdAllocator();
     const player = playerEntity(ids.take());
-    this.streamer = new WorldStreamer(ids);
+    this.streamer = chunks ? new WorldStreamer(ids, chunks) : new WorldStreamer(ids);
+    bindGround(this.world, this.streamer.ground);
     const contract = domain.contracts.active;
     // A done job with an ambush by the way out (ADR-0034) still has people in the world.
     if (contract && (contract.status === "active" || hasAmbush(contract))) this.streamer.registerContract(this.world, domain.flags, domain.contracts.completed, contract);
@@ -77,7 +84,7 @@ export class Simulation {
   }
 
   static create(options: SimulationOptions): Simulation {
-    const sim = new Simulation(options.seed, createDomainState(), options.bus ?? new EventBus<DomainEvents>());
+    const sim = new Simulation(options.seed, createDomainState(), options.bus ?? new EventBus<DomainEvents>(), undefined, options.chunks);
     sim.setCrowd(options.crowd ?? "off");
     return sim;
   }

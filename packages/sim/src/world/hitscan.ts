@@ -1,6 +1,8 @@
 import type { CameraMode, EntityId, HitZone, Vec3 } from "@seki/core";
 import type { World } from "miniplex";
-import { type Aabb, rayAabb, raySolid } from "./collision";
+import { type Aabb, rayAabb } from "./collision";
+import { groundOf } from "./ground";
+import { raySolidEntity } from "./solids";
 import type { Entity } from "./components";
 import { bodyHeightOf, crouchOf, rayHitboxes } from "./hitboxes";
 
@@ -25,15 +27,30 @@ export const bodyAabb = (e: Entity): Aabb | null => {
   };
 };
 
+/**
+ * Distance along a ray to the first static geometry: solids (boxes, slopes, prisms) and the
+ * terrain (ADR-0043), or null within `maxDist`.
+ */
+export const rayGeometry = (world: World<Entity>, origin: Vec3, dir: Vec3, maxDist: number): number | null => {
+  let best = maxDist;
+  let hit = false;
+  for (const e of world.with("solid")) {
+    const t = raySolidEntity(origin, dir, e, best);
+    if (t !== null && t < best) {
+      best = t;
+      hit = true;
+    }
+  }
+  const t = groundOf(world).rayHit(origin, dir, best);
+  if (t !== null && t < best) return t;
+  return hit ? best : null;
+};
+
 /** Casts a ray against static geometry and character bodies. Returns the nearest hit, or the ray end. */
 export const hitscan = (world: World<Entity>, origin: Vec3, dir: Vec3, maxDist: number, ignore: EntityId): HitscanResult => {
-  let best = maxDist;
+  let best = rayGeometry(world, origin, dir, maxDist) ?? maxDist;
   let hitEntity: Entity | null = null;
   let zone: HitZone | null = null;
-  for (const e of world.with("solid")) {
-    const t = raySolid(origin, dir, e.solid, e.slope, best);
-    if (t !== null && t < best) best = t;
-  }
   for (const e of world.with("body", "health")) {
     if (e.id === ignore) continue;
     const box = bodyAabb(e);
@@ -53,8 +70,8 @@ export const hitscan = (world: World<Entity>, origin: Vec3, dir: Vec3, maxDist: 
   };
 };
 
-/** True when nothing static blocks the segment between two points. */
-export const lineOfSight = (world: World<Entity>, from: Vec3, to: Vec3): boolean => {
+/** True when nothing static (solids, and the terrain unless `terrain` is false) blocks the segment between two points. */
+export const lineOfSight = (world: World<Entity>, from: Vec3, to: Vec3, terrain = true): boolean => {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
   const dz = to.z - from.z;
@@ -62,9 +79,9 @@ export const lineOfSight = (world: World<Entity>, from: Vec3, to: Vec3): boolean
   if (len < 1e-6) return true;
   const dir = { x: dx / len, y: dy / len, z: dz / len };
   for (const e of world.with("solid")) {
-    if (raySolid(from, dir, e.solid, e.slope, len) !== null) return false;
+    if (raySolidEntity(from, dir, e, len) !== null) return false;
   }
-  return true;
+  return !terrain || groundOf(world).rayHit(from, dir, len) === null;
 };
 
 export const EYE_HEIGHT = 1.62;

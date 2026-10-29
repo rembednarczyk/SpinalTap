@@ -1,3 +1,4 @@
+import type { TerrainGrid } from "@seki/core";
 import { type ActorDef, type NavGraph, type Rect, type StaticProp, mergeNav } from "./builders";
 import { DISTRICT_M0_ACTORS, DISTRICT_M0_BOUNDS, DISTRICT_M0_PROPS, S7_STASHES } from "./district-m0";
 import {
@@ -41,6 +42,11 @@ export interface ChunkDef {
   readonly bounds: Rect;
   readonly props: readonly StaticProp[];
   readonly actors: readonly ActorDef[];
+  /**
+   * The chunk's terrain (ADR-0043): characters stand on it, rays stop on it. Neighbouring chunks
+   * must give the same heights where their bounds meet. Without it the ground is y = 0.
+   */
+  readonly terrain?: TerrainGrid;
 }
 
 /** Every chunk of the city, in the order their content is created (and entity ids reserved). */

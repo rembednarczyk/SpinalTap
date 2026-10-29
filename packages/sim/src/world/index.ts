@@ -12,3 +12,7 @@ export * from "./activity-types";
 export * from "./passersby";
 export * from "./crowd";
 export * from "./crowd-lanes";
+export * from "./prism";
+export * from "./ground";
+export * from "./solids";
+export * from "./placement";
