@@ -38,7 +38,7 @@ const fromBindings = (controls: readonly ControlBindingVm[]): [string, string][]
 
 const FIXED: readonly [string, string][] = [
   ["Mysz", "rozglądanie"],
-  ["I / Tab / J", "ekwipunek / karta / dziennik"],
+  ["I / Tab / J / M", "ekwipunek / karta / dziennik / mapa"],
   ["F5 / F9", "szybki zapis / odczyt"],
   ["Esc / P", "pauza"],
 ];

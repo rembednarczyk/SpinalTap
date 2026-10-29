@@ -39,7 +39,7 @@ const inside = (l: MapLabelVm, w: MapBox | null): boolean => w === null || (l.x 
 /** Surfaces and buildings in the window (all of them without one). */
 export const CityShapes = memo(({ city, window, prefix }: { city: CityIndex; window: MapBox | null; prefix: string }) => (
   <g className={`${prefix}__city`}>
-    {city.areas.map((a, i) => (overlaps(a.box, window) ? <polygon key={i} className={`${prefix}__area ${prefix}__area--${a.kind}`} points={a.points} /> : null))}
+    {city.areas.map((a, i) => (overlaps(a.box, window) ? <polygon key={i} className={`${prefix}__surface ${prefix}__surface--${a.kind}`} points={a.points} /> : null))}
     {city.buildings.map((b, i) => (overlaps(b.box, window) ? <polygon key={i} className={`${prefix}__building`} points={b.points} /> : null))}
   </g>
 ));

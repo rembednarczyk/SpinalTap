@@ -195,7 +195,7 @@ describe("Lublin on the minimap and the map tab (ADR-0045)", () => {
   it("draws the surfaces, the buildings near the player and the street names", () => {
     mount({ screen: "playing", map: city, mapPlayer: { x: 0, z: 0, yaw: 0 } });
     const root = screen.getByTestId("minimap");
-    expect(root.querySelectorAll(".minimap__area--road")).toHaveLength(1);
+    expect(root.querySelectorAll(".minimap__surface--road")).toHaveLength(1);
     // The far building is out of the window round the player.
     expect(root.querySelectorAll(".minimap__building")).toHaveLength(1);
     const names = [...root.querySelectorAll(".minimap__label")].map((t) => t.textContent);

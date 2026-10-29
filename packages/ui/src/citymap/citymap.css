@@ -1,9 +1,9 @@
 /* Lublin on the minimap and the map tab (ADR-0045). Map space is metres: strokes are too. */
-.minimap__area--road { fill: rgba(70, 86, 100, 0.55); }
-.minimap__area--walk { fill: rgba(95, 242, 255, 0.1); }
-.minimap__area--green { fill: rgba(70, 150, 90, 0.28); }
-.minimap__area--water { fill: rgba(30, 90, 140, 0.45); }
-.minimap__area--rail { fill: rgba(120, 110, 100, 0.3); }
+.minimap__surface--road { fill: rgba(70, 86, 100, 0.55); }
+.minimap__surface--walk { fill: rgba(95, 242, 255, 0.1); }
+.minimap__surface--green { fill: rgba(70, 150, 90, 0.28); }
+.minimap__surface--water { fill: rgba(30, 90, 140, 0.45); }
+.minimap__surface--rail { fill: rgba(120, 110, 100, 0.3); }
 .minimap__building { fill: rgba(4, 7, 12, 0.85); stroke: rgba(95, 242, 255, 0.45); stroke-width: 0.35; }
 .minimap__label {
   fill: rgba(225, 245, 255, 0.85);
@@ -21,11 +21,11 @@
 .citymap__svg { flex: 1; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
 .citymap__svg:active { cursor: grabbing; }
 .citymap__ground { fill: rgba(20, 30, 38, 0.9); }
-.citymap__area--road { fill: rgba(70, 86, 100, 0.8); }
-.citymap__area--walk { fill: rgba(95, 242, 255, 0.12); }
-.citymap__area--green { fill: rgba(70, 150, 90, 0.35); }
-.citymap__area--water { fill: rgba(30, 90, 140, 0.6); }
-.citymap__area--rail { fill: rgba(120, 110, 100, 0.4); }
+.citymap__surface--road { fill: rgba(70, 86, 100, 0.8); }
+.citymap__surface--walk { fill: rgba(95, 242, 255, 0.12); }
+.citymap__surface--green { fill: rgba(70, 150, 90, 0.35); }
+.citymap__surface--water { fill: rgba(30, 90, 140, 0.6); }
+.citymap__surface--rail { fill: rgba(120, 110, 100, 0.4); }
 .citymap__water { fill: rgba(30, 90, 140, 0.6); }
 .citymap__building { fill: rgba(4, 7, 12, 0.9); stroke: rgba(95, 242, 255, 0.5); stroke-width: 0.5; }
 .citymap__block { fill: rgba(255, 61, 139, 0.18); stroke: rgba(255, 61, 139, 0.5); stroke-width: 0.4; }
