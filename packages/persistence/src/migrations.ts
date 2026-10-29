@@ -212,6 +212,17 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
       },
     };
   },
+  // v13 -> v14 (ADR-0038): every door was shut. Kaito and Mori moved indoors: the street spots an
+  // old save remembers for them are dropped, so they stand where the content puts them now.
+  13: (old) => {
+    const entities = Array.isArray(old.entities) ? old.entities : [];
+    return {
+      ...old,
+      version: 14,
+      entities: entities.filter((e: unknown) => !(isObject(e) && (e.key === "fixer" || e.key === "mori"))),
+      doors: Array.isArray(old.doors) ? old.doors : [],
+    };
+  },
 };
 
 export class MigrationError extends Error {}

@@ -25,6 +25,7 @@ import { syncPlayerWeapon } from "./world/player-weapon";
 import { SIM_DT } from "./step-rate";
 import { isMicroKey } from "./world/micro-events";
 import { hasAmbush } from "./world/contract-plan";
+import { doorSnapshots, restoreDoors } from "./systems/door-system";
 
 export { BREACH_DATAMINE_EDDIES, BREACH_ICEPICK_SECONDS, BREACH_MARK_SECONDS } from "./world/contract-commands";
 export { SIM_DT, SIM_HZ } from "./step-rate";
@@ -80,6 +81,7 @@ export class Simulation {
     sim.rng.setState(snapshot.rngState);
     sim.tickCount = snapshot.tick;
     sim.streamer.restoreEntities(sim.world, snapshot.domain.flags, snapshot.entities);
+    restoreDoors(sim, snapshot.doors ?? []);
     return sim;
   }
 
@@ -174,6 +176,7 @@ export class Simulation {
       tick: this.tickCount,
       entities,
       streaming: { loadedChunks: this.streamer.loadedChunks },
+      doors: doorSnapshots(this),
       domain: this.holder.domain,
       narrative,
       meta: { label, objective },

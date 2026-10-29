@@ -5,6 +5,7 @@ import { combatSystem } from "./combat-system";
 import { contractSystem } from "./contract-system";
 import { deathSystem } from "./death-system";
 import { elevatorSystem } from "./elevator-system";
+import { doorSystem } from "./door-system";
 import { interactionSystem } from "./interaction-system";
 import { interpolationSystem } from "./interpolation-system";
 import { ladderSystem } from "./ladder-system";
@@ -81,6 +82,7 @@ export {
   perksOf,
 } from "./perk-system";
 export { createBodySystem, cyberCapacityOf } from "./body-system";
+export { doorForcedFlag, doorSnapshots, doorSystem, forceDoor, restoreDoors } from "./door-system";
 
 /**
  * Explicit, fixed system order (determinism: never derived from map iteration).
@@ -95,6 +97,7 @@ export { createBodySystem, cyberCapacityOf } from "./body-system";
  * ADR-0034: the metro before streaming (a rider's destination streams in), the contract plan and
  * the hooks after the contract system (a shard's bag exists once its carrier is down), the street
  * scenes after the contract layer.
+ * ADR-0038: the doors after the lifts and before movement (both move solids the collision sees).
  */
 export const createSystems = (): readonly System[] => [
   clockSystem,
@@ -114,6 +117,7 @@ export const createSystems = (): readonly System[] => [
   createCivilianAiSystem(),
   escortAiSystem,
   elevatorSystem,
+  doorSystem,
   movementSystem,
   weaponSystem,
   meleeSystem,

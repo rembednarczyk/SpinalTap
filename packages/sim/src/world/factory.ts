@@ -3,6 +3,7 @@ import { PLAYER_SPAWN } from "../content/district-m0";
 import { SNIPER_PERCHES } from "../content/district-doki";
 import type { ActorDef, ActorSpawn, StaticProp } from "../content/builders";
 import { type DeviceDef, deviceView } from "../content/devices";
+import { DOOR_CLOSE_DELAY } from "../content/doors";
 import { SCHEDULES } from "../content/schedules";
 import { aabbFromCenter } from "./collision";
 import type { Combatant, Entity, MeleeState } from "./components";
@@ -76,6 +77,13 @@ export const propEntity = (id: EntityId, prop: StaticProp, chunk: string): Entit
   } else if (m?.kind === "gate" && e.solid) {
     e.gate = { elevator: m.elevator, level: m.level, closed: e.solid, travel: m.travel };
     e.velocity = { x: 0, y: 0, z: 0 };
+  } else if (m?.kind === "door" && e.solid) {
+    const d = m.door;
+    e.door = { key: `${d.key}#${m.leaf}`, door: d.key, closed: e.solid, slide: m.slide, sensor: d.at, open: 0, idle: DOOR_CLOSE_DELAY, ...(d.lock ? { lock: d.lock } : {}) };
+    // A sealed door never moves: a static solid, so the AI's ground raster sees it as a wall.
+    if (d.lock?.kind !== "sealed") e.velocity = { x: 0, y: 0, z: 0 };
+  } else if (m?.kind === "door-panel") {
+    e.doorPanel = m.door;
   } else if (m?.kind === "button") {
     // Hung about 1.2 m above its level's floor: the interaction's height check keeps it to that level.
     e.interactable = { kind: "elevator", elevator: { key: m.elevator, level: m.level }, dialogueId: m.elevator, prompt: "Winda", radius: BUTTON_REACH };
