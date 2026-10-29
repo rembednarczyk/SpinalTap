@@ -16,6 +16,7 @@ import {
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
 import { createUiStore } from "@seki/ui";
+import { nearKaito } from "./story-helpers";
 import { GameSession } from "../src/game-session";
 
 class FakeRender implements RenderPort {
@@ -91,7 +92,7 @@ describe("M0 vertical slice: input → sim → narrative → domain → save →
     expect(render.mode).toBe("TPP");
 
     // 1. Talk to Kaito.
-    teleport(session, 4.6, 1.5, Math.PI / 2);
+    teleport(session, ...nearKaito(session));
     steps(session, 1);
     expect(ui.getState().prompt).toBe("Rozmawiaj z Kaito");
     steps(session, 1, frame({ interact: true }));
@@ -118,7 +119,7 @@ describe("M0 vertical slice: input → sim → narrative → domain → save →
     expect(ui.getState().screen).toBe("playing");
 
     // 3. Report back and get paid.
-    teleport(session, 4.6, 1.5, Math.PI / 2);
+    teleport(session, ...nearKaito(session));
     steps(session, 1, frame({ interact: true }));
     talkThrough(session, ui);
     steps(session, 1);
@@ -142,7 +143,7 @@ describe("M0 vertical slice: input → sim → narrative → domain → save →
     expect(courier()).toBeUndefined();
 
     // After the first contract Kaito moves on to repeatable jobs.
-    teleport(session, 4.6, 1.5, Math.PI / 2);
+    teleport(session, ...nearKaito(session));
     steps(session, 1, frame({ interact: true }));
     expect(ui.getState().dialogue?.choices[0]?.text).toBe("Biorę robotę.");
   });
@@ -150,7 +151,7 @@ describe("M0 vertical slice: input → sim → narrative → domain → save →
   it("refuses to save mid-dialogue and reports corrupt or empty slots", async () => {
     const { session, ui, store } = setup();
     session.newGame();
-    teleport(session, 4.6, 1.5, Math.PI / 2);
+    teleport(session, ...nearKaito(session));
     steps(session, 1, frame({ interact: true }));
     expect(await session.saveAsync("slot-1")).toBe(false);
     session.closeDialogue();

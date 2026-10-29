@@ -4,6 +4,7 @@ import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
 import { CROUCH_TIME, SIM_DT, type Entity } from "@seki/sim";
 import { createUiStore } from "@seki/ui";
+import { nearKaito } from "./story-helpers";
 import { GameSession, RECALL_CALM_TICKS } from "../src/game-session";
 
 const render: RenderPort = {
@@ -61,10 +62,11 @@ const byKey = (s: GameSession, key: string) => [...s.sim.world].find((e) => e.ke
 
 /** Starts the first talk with Kaito and walks the courier's guard up behind the player, angry. */
 const talkUnderFire = (s: GameSession) => {
-  teleport(s.sim.player()!, 4.6, 1.5, Math.PI / 2);
+  const [x, z, yaw] = nearKaito(s);
+  teleport(s.sim.player()!, x, z, yaw);
   steps(s, 1, frame({ interact: true }));
   const guard = byKey(s, "guard");
-  teleport(guard, 4.6, -4, 0);
+  teleport(guard, x - 1.2, z + 2, Math.PI);
   guard.ai!.alerted = true;
   return guard;
 };
@@ -100,7 +102,7 @@ describe("violence interrupts a conversation (app loop)", () => {
     session.sim.world.remove(byKey(session, "guard"));
     for (const g of [...session.sim.world.with("ai")]) g.ai.alerted = false;
     session.sim.player()!.health = { current: 100, max: 100 };
-    teleport(session.sim.player()!, 4.6, 1.5, Math.PI / 2);
+    teleport(session.sim.player()!, ...nearKaito(session));
     steps(session, 1, frame({ interact: true }));
     expect(ui.getState().dialogue?.lines[0]).toEqual(firstLine);
     for (let g = 0; g < 10 && !ui.getState().dialogue?.ended; g++) session.choose(0);

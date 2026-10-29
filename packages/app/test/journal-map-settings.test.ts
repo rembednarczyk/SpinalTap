@@ -42,7 +42,7 @@ describe("journal view model", () => {
     expect(j.memories).toEqual([]);
     expect(j.quests).toHaveLength(1);
     expect(j.quests[0]).toMatchObject({ id: "m0_first_contract", kind: "main", status: "active" });
-    expect(j.quests[0]?.steps).toEqual([{ objective: expect.stringContaining("fixera"), done: false }]);
+    expect(j.quests[0]?.steps).toEqual([{ objective: expect.stringContaining("Kaito"), done: false }]);
   });
 
   it("marks done steps, lists contracts and memories", () => {
@@ -142,7 +142,8 @@ describe("minimap data", () => {
     expect(ui.getState().map?.blocks.length).toBeGreaterThan(0);
     s.newGame();
     const st = ui.getState();
-    expect(st.mapPlayer).toMatchObject({ x: 0, z: -28 });
+    // On the chair in the clinic (ADR-0038).
+    expect(st.mapPlayer).toMatchObject({ x: -14.5, z: 2.5 });
     expect(st.mapMarkers.map((m) => m.kind).sort()).toEqual(["fixer", "ripperdoc", "target"]);
     expect(st.journal.quests[0]?.title).toBe("Pierwsze zlecenie");
     const before = ui.getState().mapPlayer;

@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 import { type DomainState, type GameCommand, newInstance } from "@seki/core";
 import { stateHash } from "../src/replay";
 import { Simulation } from "../src/simulation";
-import { collect, input, run } from "./helpers";
+import { collect, input, run, streetSim } from "./helpers";
 
 /** A new game with a looted Hebi SMG ("i4"), a holo sight ("i5") and some scrap in the bag. */
 const withSmg = (seed = 11): Simulation => {
-  const snap = Simulation.create({ seed }).snapshot(null, "t", "");
+  const snap = streetSim({ seed }).snapshot(null, "t", "");
   const d: DomainState = snap.domain;
   const domain: DomainState = {
     ...d,

@@ -3,13 +3,13 @@ import type { DomainState, EnemyTypeId, GarmentId, ItemInstance } from "@seki/co
 import { SIM_DT, Simulation, deviceEntity, gangerEntity, type Entity } from "../src";
 import { isEnforcer } from "../src/world/disguise";
 import { sniperEntity } from "../src/world/factory";
-import { collect, input, run } from "./helpers";
+import { collect, input, run, streetSim } from "./helpers";
 
 const ticks = (seconds: number) => Math.ceil(seconds / SIM_DT - 1e-9);
 
 /** The player wears `garment` on the torso (or her own jacket); every AI of the street removed. */
 const simWearing = (garment: GarmentId | null, patch: (d: DomainState) => DomainState = (d) => d): Simulation => {
-  const base = Simulation.create({ seed: 9 });
+  const base = streetSim({ seed: 9 });
   const snap = base.snapshot(null, "t", "");
   const d = snap.domain;
   const piece: ItemInstance = { uid: "i9", def: garment ?? "seki_jacket", rarity: "common", condition: 100 };

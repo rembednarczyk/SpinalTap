@@ -25,6 +25,10 @@ const setup = (opts: { touch?: boolean; seen?: string[]; hints?: boolean } = {})
   });
   if (opts.hints === false) session.changeSettings({ hints: false });
   session.newGame();
+  // Out on the street, away from Kaito by the chair in the clinic (ADR-0038): no talk prompt.
+  const p = session.sim.player()!;
+  p.position = { x: 0, y: 0, z: -28 };
+  p.prevPosition = p.position;
   return { session, ui, saved };
 };
 

@@ -9,7 +9,6 @@ import {
   GUNFIRE_INTERRUPT_RADIUS,
   RenderSync,
   SIM_DT,
-  Simulation,
   aimSpreadOf,
   bodyAabb,
   eyeOf,
@@ -17,7 +16,7 @@ import {
   rayHitboxes,
   type Entity,
 } from "../src";
-import { byKey, collect, input, run, teleportPlayer } from "./helpers";
+import { byKey, collect, input, run, teleportPlayer, streetSim } from "./helpers";
 
 const crouchTicks = Math.ceil(CROUCH_TIME / SIM_DT);
 
@@ -38,7 +37,7 @@ const shootAt = (e: Entity, y: number, x = 0) => rayHitboxes(e, { x, y, z: 5 }, 
 
 describe("crouching", () => {
   it("eases down over CROUCH_TIME while held and back up on release", () => {
-    const sim = Simulation.create({ seed: 1 });
+    const sim = streetSim({ seed: 1 });
     const p = sim.player()!;
     sim.step(input({ crouch: true }));
     expect(p.posture!.amount).toBeGreaterThan(0);
@@ -53,7 +52,7 @@ describe("crouching", () => {
 
   it("moves slower and cannot sprint", () => {
     const speed = (frame: Parameters<typeof input>[0]) => {
-      const sim = Simulation.create({ seed: 1 });
+      const sim = streetSim({ seed: 1 });
       run(sim, crouchTicks + 1, input(frame));
       const v = sim.player()!.velocity!;
       return Math.hypot(v.x, v.z);
@@ -73,7 +72,7 @@ describe("crouching", () => {
   });
 
   it("keeps the stance frozen during dialogue", () => {
-    const sim = Simulation.create({ seed: 1 });
+    const sim = streetSim({ seed: 1 });
     run(sim, crouchTicks + 1, input({ crouch: true }));
     sim.session.dialogueActive = true;
     run(sim, 10);
@@ -81,7 +80,7 @@ describe("crouching", () => {
   });
 
   it("sends the interpolated crouch to the renderer", () => {
-    const sim = Simulation.create({ seed: 1 });
+    const sim = streetSim({ seed: 1 });
     sim.step(input({ crouch: true }));
     const updates: { crouch?: number }[] = [];
     const port = {
@@ -125,7 +124,7 @@ describe("hit zones", () => {
   });
 
   it("hitscan reports the zone and stops at walls", () => {
-    const sim = Simulation.create({ seed: 1 });
+    const sim = streetSim({ seed: 1 });
     const guard = byKey(sim, "guard")!;
     const from = { x: guard.position.x, y: 1.7, z: guard.position.z - 4 };
     const hit = hitscan(sim.world, from, { x: 0, y: 0, z: 1 }, 30, sim.player()!.id);
@@ -136,7 +135,7 @@ describe("hit zones", () => {
   });
 
   it("damage events carry the zone", () => {
-    const sim = Simulation.create({ seed: 5 });
+    const sim = streetSim({ seed: 5 });
     const hits = collect<{ zone: string; sourceId: number }>(sim, "DamageDealt");
     const guard = byKey(sim, "guard")!;
     // Past the crate, 2.5 m away. Crouched, the eye is at 1.14 m: aim down at one thigh (not between the legs).
@@ -150,7 +149,7 @@ describe("hit zones", () => {
 
 describe("aim spread in the sim", () => {
   it("crouching narrows it, moving and shooting widen it, and bloom recovers", () => {
-    const sim = Simulation.create({ seed: 2 });
+    const sim = streetSim({ seed: 2 });
     const standing = sim.aimSpread();
     run(sim, crouchTicks + 1, input({ crouch: true }));
     const crouched = sim.aimSpread();
@@ -167,7 +166,7 @@ describe("aim spread in the sim", () => {
   });
 
   it("follows the starting optics' stability; a ganger has none", () => {
-    const sim = Simulation.create({ seed: 2 });
+    const sim = streetSim({ seed: 2 });
     expect(sim.aimSpread()).toBeCloseTo(WEAPON_CATALOG.unity9.spread.base * 0.9);
     const guard = byKey(sim, "guard")!;
     expect(aimSpreadOf(guard, null)).toBeCloseTo(WEAPON_CATALOG.hebi_smg.npc.spread.base);
@@ -175,7 +174,7 @@ describe("aim spread in the sim", () => {
 
   it("is deterministic: the same seed spreads the same shots", () => {
     const shots = (seed: number) => {
-      const sim = Simulation.create({ seed });
+      const sim = streetSim({ seed });
       const out = collect<{ to: { x: number; y: number } }>(sim, "ShotFired");
       run(sim, 120, input({ fire: true }));
       return out.map((s) => `${s.to.x.toFixed(4)},${s.to.y.toFixed(4)}`);
@@ -188,7 +187,7 @@ describe("aim spread in the sim", () => {
 describe("violence interrupts a conversation", () => {
   /** Puts the player in a conversation next to the alerted guard, in its line of fire. */
   const talkingNearGuard = (distance: number) => {
-    const sim = Simulation.create({ seed: 4 });
+    const sim = streetSim({ seed: 4 });
     const guard = byKey(sim, "guard")!;
     // Only the guard: other gangers in the alley would shoot from further away.
     for (const g of [...sim.world.with("ai")]) if (g !== guard) sim.world.remove(g);
