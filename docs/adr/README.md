@@ -47,5 +47,6 @@
 | [0043](0043-pryzmaty-i-teren-w-symulacji.md) | Pryzmaty wypukłe i teren w symulacji: bryły z części wypukłych, grunt z siatki chunka, skarpy powyżej 35° jak ściana, promienie DDA przez teren, piętra AI liczone od gruntu, siatka przestrzenna brył | Zaakceptowana |
 | [0044](0044-renderer-miasta-z-danych-mapowych.md) | Renderer miasta z danych mapowych: fasady NPR z UV w metrach i stylu z ziarna, attyki, dachy, kopuły i wieże, neon i holo w języku polsko-japońskim, teren z fartuchami, drapowane nawierzchnie z krawężnikami, komórki 128 m z bliskim i dalekim LOD, podgląd `?lublin-preview` | Zaakceptowana |
 | [0046](0046-strategia-testow-e2e.md) | Strategia testów e2e: przeglądarka tylko do rozruchu, rysowania, HUD telefonu i dotyku; logika w testach sesji bez renderera; krokowanie zamiast zegara; czas klatki jako raport; jedna przeglądarka na maszynę; e2e w trzech shardach | Zaakceptowana |
+| [0047](0047-meble-uliczne-lublina.md) | Meble uliczne Lublina 2077: `pnpm osm:props` z planu do tabeli per chunk, modele NPR pięciu latarń i reszty, instancje cienkie per rodzaj z bliskich komórek, bloki 256 m z daleką siatką i halo latarń bez dynamicznych świateł, galeria `?props-gallery` | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.
