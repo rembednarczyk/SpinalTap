@@ -103,9 +103,12 @@ export const chestOf = (e: Entity): Vec3 => {
   return { x: e.position.x, y: e.position.y + CHEST_HEIGHT * scale, z: e.position.z };
 };
 
-/** Over-the-shoulder offset of the TPP camera. The camera sits on the aim ray, so the crosshair stays exact. */
+/**
+ * Over-the-shoulder offset of the TPP camera. The camera sits on the aim ray, so the crosshair
+ * stays exact. At eye height, low over the right shoulder (ADR-0049; 0.12 m higher before).
+ */
 export const TPP_SHOULDER_OFFSET = 0.55;
-export const TPP_HEIGHT_OFFSET = 0.12;
+export const TPP_HEIGHT_OFFSET = 0;
 
 /** Where the player's shots start: the eye in FPP, the camera shoulder line in TPP. */
 export const aimOrigin = (e: Entity, mode: CameraMode): Vec3 => {

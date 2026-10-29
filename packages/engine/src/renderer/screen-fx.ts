@@ -64,6 +64,8 @@ export interface ScreenFxDeps {
   readonly scanTargets: (visit: ScanVisitor) => void;
   /** Multiplies the fog density of every look (1 in the game; the map preview sees further, ADR-0044). */
   readonly fogScale?: number;
+  /** Whether a roof is above a point: rain does not fall in a gate's passage or indoors. */
+  readonly roofOver?: (x: number, y: number, z: number) => boolean;
 }
 
 const v3 = (p: { x: number; y: number; z: number }) => new Vector3(p.x, p.y, p.z);
@@ -112,7 +114,7 @@ export class ScreenFx {
     this.effects = new Effects(scene, stage.glow);
     this.lasers = new Lasers(scene, stage.glow);
     this.trailMeshes = new TrailMeshes(scene, stage.glow);
-    this.rain = stage.options.reference ? null : createRain(scene);
+    this.rain = stage.options.reference ? null : createRain(scene, deps.roofOver);
     this.splashes = stage.options.reference || !tier.splashes ? null : createSplashes(scene);
     if (!stage.options.reference) {
       // The manhole on the deptak and the vent behind the car wash (ADR-0045).

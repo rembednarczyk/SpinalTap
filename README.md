@@ -37,6 +37,8 @@ Parametry URL: `?seed=123` (stałe ziarno nowej gry), `?reference` (deterministy
 
 Pad (standard mapping): lewa gałka ruch, prawa rozglądanie, RT strzał, A rozmowa, Y kamera, RB zdolność, X apteczka, L3 sprint.
 
+Kamera ([ADR-0049](docs/adr/0049-kamera-i-pole-widzenia.md)): pole widzenia ustawia się w Ustawieniach, zakładka „Mysz i kamera”, suwak „Pole widzenia (poziomo)” od 70° do 100°, domyślnie 80°. To kąt w poziomie, więc monitor 16:9 i telefon w poziomie widzą tyle samo ulicy; monitor 21:9 dostaje kilka stopni więcej. Sprint lekko poszerza widok, celowanie zawęża go o zoom broni. Kamera TPP stoi 2,2 m za postacią, na wysokości oczu nad prawym ramieniem, i podjeżdża przed ścianę, gdy budynek zasłania widok.
+
 Telefon i tablet (wykrywane automatycznie, na komputerze można wymusić `?touch`): grę obracamy poziomo. Lewa połowa ekranu to pływająca gałka ruchu (pełne wychylenie = sprint), prawa to rozglądanie przeciąganiem. Przycisk strzału też obraca widok, gdy przesuwasz po nim palec. Wokół niego są przeładowanie, skaner, zryw i „więcej” (apteczka, następna broń, kucanie, kamera, chowanie broni), obok celowanie i skok, a „Użyj” pojawia się przy rzeczach, których można użyć. U góry w jednym rzędzie są karta postaci, telefon i pauza.
 
 Dialog na kole ([ADR-0039](docs/adr/0039-dialog-na-kole.md)): kwestie układają się na łuku obok rozmówcy, z ikoną i kolorem rodzaju (◆ złoty wątek główny, ◇ niebieskie pytanie, ✕ wyjście zawsze na dole, ▲ groźba, ◎ perswazja, ⬡ hack, ✦ opcja z przeszłości). Podświetloną wybiera się myszą, cyfrą, strzałkami albo kółkiem i potwierdza E, Enterem lub Spacją, na telefonie tapnięciem. Napisy z przewijaną historią rozmowy zostają na dole.

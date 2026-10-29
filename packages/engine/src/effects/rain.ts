@@ -1,7 +1,11 @@
 import { Color4, DynamicTexture, ParticleSystem, type Scene, Vector3 } from "../babylon";
 
-/** Camera-following rain: stretched additive particles in a box around the viewer. */
-export const createRain = (scene: Scene): { system: ParticleSystem; follow: (p: Vector3) => void } => {
+/**
+ * Camera-following rain: stretched additive particles in a box around the viewer. A drop that
+ * finds a roof above it (`roofOver`: a gate's passage, the footbridge over Grodzka, a room) ends
+ * there, so it does not fall through the building onto the street under it.
+ */
+export const createRain = (scene: Scene, roofOver?: (x: number, y: number, z: number) => boolean): { system: ParticleSystem; follow: (p: Vector3) => void } => {
   const tex = new DynamicTexture("rain-tex", { width: 8, height: 64 }, scene, false);
   const ctx = tex.getContext() as CanvasRenderingContext2D;
   const g = ctx.createLinearGradient(0, 0, 0, 64);
@@ -35,6 +39,13 @@ export const createRain = (scene: Scene): { system: ParticleSystem; follow: (p: 
   ps.billboardMode = ParticleSystem.BILLBOARDMODE_STRETCHED;
   ps.blendMode = ParticleSystem.BLENDMODE_ADD;
   ps.updateSpeed = 1 / 60;
+  if (roofOver) {
+    const move = ps.updateFunction;
+    ps.updateFunction = (particles) => {
+      move(particles);
+      for (const p of particles) if (roofOver(p.position.x, p.position.y, p.position.z)) p.age = p.lifeTime;
+    };
+  }
   ps.start();
   return { system: ps, follow: (p) => emitter.set(p.x, p.y + 10, p.z) };
 };

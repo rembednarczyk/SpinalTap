@@ -1,10 +1,11 @@
+import { degToRad } from "@seki/core";
 import { BabylonRenderer, BrowserInput, PerfProbe, PreviewStage, Stage, SynthAudio } from "@seki/engine";
 import { audioSampleManifest } from "./audio-manifest";
 import { loadModelManifest } from "./model-manifest";
 import { STORY_SOURCE } from "@seki/narrative";
 import { IndexedDbSaveStore, SavePersistence } from "@seki/persistence";
 import { FixedStepLoop, ground, koiPoint, rayGeometry } from "@seki/sim";
-import { DEFAULT_SETTINGS, GameUi, createUiStore, fovRadians } from "@seki/ui";
+import { DEFAULT_SETTINGS, GameUi, createUiStore } from "@seki/ui";
 import { createRoot } from "react-dom/client";
 import { browserClock } from "./browser-clock";
 import { type DebugApi, createDebugApi } from "./debug-api";
@@ -118,7 +119,7 @@ const applyControls = (s: typeof settings) => {
   controlsFor = s;
   input.keymap = keymapFor(s.bindings);
   input.setButtonModes({ aim: s.aimMode, crouch: s.crouchMode, sprint: s.sprintMode });
-  renderer.rig.baseFov = fovRadians(s.fov);
+  renderer.rig.horizontalFov = degToRad(s.horizontalFov);
   applyEffects(renderer, s);
 };
 
@@ -149,7 +150,7 @@ const loop = new FixedStepLoop(browserClock, {
 // Title screen backdrop: from the corner of Plac Litewski by the wreck, down the deptak.
 const TITLE_VIEW = { position: ground(146, -49, 2.2), target: ground(232, -64, 3.5) };
 // Reference frame for NPR snapshots: Seki on the deptak in front of Neon Koi, under its sign.
-const REFERENCE_VIEW = { position: koiPoint(3.4, 1.55, 4.6), target: koiPoint(5.5, 1.15, 0.9) };
+const REFERENCE_VIEW = { position: koiPoint(2.83, 1.66, 5.59), target: koiPoint(5.5, 1.15, 0.9) };
 const REFERENCE_SPOT = koiPoint(4.6, 0, 0.6);
 
 let lastScreen: string | null = null;

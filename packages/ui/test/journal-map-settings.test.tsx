@@ -266,8 +266,14 @@ describe("settings", () => {
     expect(i.changeSettings).toHaveBeenCalledWith({ crouchMode: "hold" });
     fireEvent.click(within(screen.getByRole("radiogroup", { name: "Odwróć oś Y" })).getByRole("radio", { name: "Tak" }));
     expect(i.changeSettings).toHaveBeenCalledWith({ invertY: true });
-    fireEvent.change(screen.getByLabelText(/Pole widzenia/), { target: { value: "70" } });
-    expect(i.changeSettings).toHaveBeenCalledWith({ fov: 70 });
+    // Field of view (ADR-0049): horizontal degrees, 70..100, through the camera intent.
+    const fov = screen.getByLabelText(/Pole widzenia/);
+    expect(fov).toHaveProperty("value", "80");
+    expect(fov.getAttribute("min")).toBe("70");
+    expect(fov.getAttribute("max")).toBe("100");
+    expect(screen.getByTestId("settings").textContent).toContain("80°");
+    fireEvent.change(fov, { target: { value: "92" } });
+    expect(i.setFieldOfView).toHaveBeenCalledWith(92);
     expect(screen.queryByTestId("settings-reload")).toBeNull();
   });
 

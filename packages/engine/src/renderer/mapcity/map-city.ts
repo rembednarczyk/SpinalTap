@@ -1,4 +1,4 @@
-import { type EntityId, type GroundSurface, type TerrainGrid, type Vec3, type ViewDescriptor, terrainHeightAt } from "@seki/core";
+import { type EntityId, type GroundSurface, type TerrainGrid, type TerrainOpenSides, type Vec3, type ViewDescriptor, terrainHeightAt } from "@seki/core";
 import type { BaseTexture, Mesh, Scene } from "../../babylon";
 import type { LightingRig } from "../../npr/lighting";
 import type { MoonShadow } from "../../npr/moon-shadow";
@@ -9,7 +9,7 @@ import { MeshSink } from "../mesh-sink";
 import { type FacadeFrame, type MapBuilding, facadeFrame } from "./facade-frame";
 import { mapBuilding } from "./map-building";
 import { planFarBuilding, planNearBuilding } from "./facade-plan";
-import { SURFACE_LIFT, planSurface, planTerrain, planWater } from "./ground-plan";
+import { SURFACE_LIFT, planBasin, planSurface, planTerrain, planWater } from "./ground-plan";
 import { MapSignMaterial } from "./map-signs";
 import { MapWaterMaterial } from "./map-water";
 import { BinIndex, cellBounds, cellKey, cellsOf, grow } from "./map-index";
@@ -58,6 +58,8 @@ interface GroundEntry {
 
 interface TerrainEntry {
   readonly grid: TerrainGrid;
+  /** Sides at the edge of the map data: an apron runs on from them (ADR-0044). */
+  readonly open: TerrainOpenSides | undefined;
   readonly bounds: Box2;
   mesh: Mesh | null;
 }
@@ -158,7 +160,7 @@ export class MapCity {
     if (view.kind === "terrain") {
       const g = view.grid;
       const bounds = { minX: g.originX, maxX: g.originX + (g.cols - 1) * g.cell, minZ: g.originZ, maxZ: g.originZ + (g.rows - 1) * g.cell };
-      this.terrains.set(id, { grid: g, bounds, mesh: null });
+      this.terrains.set(id, { grid: g, open: view.open, bounds, mesh: null });
       this.terrainsDirty = true;
       this.touch(bounds);
       return;
@@ -175,7 +177,7 @@ export class MapCity {
     } else {
       this.grounds.set(id, { surface: view.surface, ring, y: at.y, bounds, cell });
       if (view.surface === "road") this.roadIndex.add(id, bounds);
-      if (view.surface !== "water") this.surfaceIndex.add(id, bounds);
+      if (view.surface !== "water" && view.surface !== "basin") this.surfaceIndex.add(id, bounds);
       this.cellOf(cell).grounds.add(id);
     }
     // Neighbours' firewalls and kerbs depend on this one.
@@ -214,6 +216,15 @@ export class MapCity {
     this.flush();
   }
 
+  /** Whether a map building's roof is above (x, y, z): a gate's passage, the footbridge, a room under the floors. */
+  roofOver(x: number, y: number, z: number): boolean {
+    for (const id of this.buildingIndex.at(x, z)) {
+      const b = this.buildings.get(id);
+      if (b && y < b.base + b.view.height && pointInRing({ x, z }, b.ring)) return true;
+    }
+    return false;
+  }
+
   /** Ground height at (x, z) from the terrain of the chunk there, or null outside every terrain. */
   heightAt(x: number, z: number): number | null {
     for (const t of this.terrains.values()) {
@@ -248,7 +259,7 @@ export class MapCity {
       for (const [id, t] of this.terrains) {
         if (t.mesh) continue;
         const sink = new MeshSink();
-        planTerrain(sink, t.grid);
+        planTerrain(sink, t.grid, t.open);
         t.mesh = sink.empty ? null : this.mesh(`map-terrain-${id}`, sink, "mapTerrain");
       }
     }
@@ -446,6 +457,7 @@ export class MapCity {
       if (!g) continue;
       const h = (x: number, z: number) => this.heightAt(x, z) ?? g.y;
       if (g.surface === "water") planWater(water, g.ring, h);
+      else if (g.surface === "basin") planBasin(water, ground, g.ring, h);
       else planSurface(ground, g.surface, g.ring, h, g.surface === "sidewalk" ? this.roadAt : null);
     }
     cell.ground = ground.empty ? null : this.mesh(`map-ground-${cell.key}`, ground, "mapGround");
