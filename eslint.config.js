@@ -38,6 +38,8 @@ export default tseslint.config(
     // Data tables, not logic: content of the districts, the item catalogue, the city kit's model table.
     files: [
       "packages/sim/src/content/district-*.ts",
+      // Generated from map data by tools/osm-import (ADR-0042).
+      "packages/sim/src/content/lublin/*.generated.ts",
       "packages/core/src/items/catalog.ts",
       "packages/engine/src/renderer/city-kit-data.ts",
     ],

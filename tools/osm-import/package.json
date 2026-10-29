@@ -1,0 +1,10 @@
+{
+  "name": "@seki/osm-import",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Offline importer of Lublin's centre from OpenStreetMap and the GUGiK terrain model (ADR-0042).",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  }
+}
