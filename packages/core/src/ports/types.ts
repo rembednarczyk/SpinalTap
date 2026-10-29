@@ -100,6 +100,12 @@ export type ViewDescriptor =
       readonly plinth?: number;
       /** Shop windows and signs on the ground floor (a shop, a café, a bar inside). */
       readonly shopfront?: true;
+      /**
+       * Openings through the facade into an interior on the ground floor (ADR-0045): `at` is the
+       * middle of the opening on a wall of the outline (relative to the position like the
+       * outline), `width` along that wall, from `bottom` to `top` metres above `position.y`.
+       */
+      readonly doorways?: readonly Doorway[];
     }
   /** The ground of a chunk (ADR-0042): a height grid the renderer turns into one mesh. */
   | { readonly kind: "terrain"; readonly grid: TerrainGrid }
@@ -114,8 +120,14 @@ export type ViewDescriptor =
       readonly size: Vec3;
       readonly color: string;
       readonly label?: string;
+      /**
+       * The way the sign faces (ADR-0045). Absent: a sign thin along X faces west when it stands
+       * at x > 0 and east otherwise (the old streets ran along x = 0), any other faces south.
+       */
+      readonly facing?: BlockFront;
     }
-  | { readonly kind: "lamp"; readonly color: string }
+  /** A street lamp; its arm reaches towards `facing` (absent: west at x > 0, east otherwise). */
+  | { readonly kind: "lamp"; readonly color: string; readonly facing?: BlockFront }
   /**
    * Open water (ADR-0024): a dark plane at the block's top, with mist over it. Not walkable and
    * never solid; the edge it lies beyond is railed off.
@@ -123,6 +135,14 @@ export type ViewDescriptor =
   | { readonly kind: "water"; readonly size: Vec3 }
   /** A bag dropped by a defeated enemy (ADR-0015). `best` is the rarest item inside, for the neon strip. */
   | { readonly kind: "loot"; readonly style: "bag"; readonly best: Rarity | null };
+
+/** An opening through a map building's facade (ADR-0045). */
+export interface Doorway {
+  readonly at: GroundPoint;
+  readonly width: number;
+  readonly bottom: number;
+  readonly top: number;
+}
 
 /** What a skinned block stands for (ADR-0022). */
 export type BlockStyle =
