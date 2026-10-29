@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./lublin": "./src/content/lublin/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p ."
