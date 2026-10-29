@@ -1,5 +1,5 @@
 import { MeshSink } from "../mesh-sink";
-import { blob, block, glow, paint, path, pyramid, ring, tube, v3 } from "./prop-kit";
+import { blob, block, glow, paint, path, pyramid, tube, v3 } from "./prop-kit";
 
 /**
  * Small street furniture (ADR-0047), front +z: the slatted benches of Plac Litewski, granite
@@ -38,9 +38,9 @@ export const bollard = (): MeshSink => {
   block(sink, 0, -0.2, 0, 0.26, 0.95, 0.26, GRANITE);
   pyramid(sink, v3(0, 0.75, 0), 0.26, 0.26, 0.12, GRANITE_DARK);
   const iron = paint("#1b1d21");
-  ring(sink, v3(0, 0.62, 0), 0.14, 0.012, iron, 8);
-  sink.cable(v3(0.14, 0.6, 0), v3(1.0, 0.6, 0), 0.12, iron, 0.025);
-  sink.cable(v3(-0.14, 0.6, 0), v3(-1.0, 0.6, 0), 0.12, iron, 0.025);
+  sink.box(v3(0, 0.62, 0), 0.28, 0.04, 0.28, iron);
+  // Half a sagging chain to each neighbour, three links' worth of tube a side.
+  for (const sx of [-1, 1]) path(sink, [v3(sx * 0.14, 0.6, 0), v3(sx * 0.42, 0.5, 0), v3(sx * 0.72, 0.46, 0), v3(sx * 1.0, 0.48, 0)], 0.018, iron, 4);
   sink.box(v3(0, 0.66, 0.135), 0.1, 0.02, 0.01, glow("#ff3355"));
   return sink;
 };
