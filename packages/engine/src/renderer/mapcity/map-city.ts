@@ -1,4 +1,4 @@
-import { type EntityId, type GroundSurface, type TerrainGrid, type Vec3, type ViewDescriptor, terrainHeightAt } from "@seki/core";
+import { type EntityId, type GroundSurface, type TerrainGrid, type TerrainOpenSides, type Vec3, type ViewDescriptor, terrainHeightAt } from "@seki/core";
 import type { BaseTexture, Mesh, Scene } from "../../babylon";
 import type { LightingRig } from "../../npr/lighting";
 import type { MoonShadow } from "../../npr/moon-shadow";
@@ -58,6 +58,8 @@ interface GroundEntry {
 
 interface TerrainEntry {
   readonly grid: TerrainGrid;
+  /** Sides at the edge of the map data: an apron runs on from them (ADR-0044). */
+  readonly open: TerrainOpenSides | undefined;
   readonly bounds: Box2;
   mesh: Mesh | null;
 }
@@ -158,7 +160,7 @@ export class MapCity {
     if (view.kind === "terrain") {
       const g = view.grid;
       const bounds = { minX: g.originX, maxX: g.originX + (g.cols - 1) * g.cell, minZ: g.originZ, maxZ: g.originZ + (g.rows - 1) * g.cell };
-      this.terrains.set(id, { grid: g, bounds, mesh: null });
+      this.terrains.set(id, { grid: g, open: view.open, bounds, mesh: null });
       this.terrainsDirty = true;
       this.touch(bounds);
       return;
@@ -257,7 +259,7 @@ export class MapCity {
       for (const [id, t] of this.terrains) {
         if (t.mesh) continue;
         const sink = new MeshSink();
-        planTerrain(sink, t.grid);
+        planTerrain(sink, t.grid, t.open);
         t.mesh = sink.empty ? null : this.mesh(`map-terrain-${id}`, sink, "mapTerrain");
       }
     }

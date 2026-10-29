@@ -115,3 +115,23 @@ describe("Lublin from map data (ADR-0042)", () => {
     expect(terrainView(c).kind).toBe("terrain");
   });
 });
+
+describe("edges of the map data (ADR-0044 aprons)", () => {
+  it("open only the sides no other chunk lies against", () => {
+    const byId = new Map(LUBLIN_CHUNKS.map((c) => [c.id, c]));
+    const view = (id: string) => terrainView(byId.get(id)!);
+    const sides = (id: string) => {
+      const v = view(id);
+      return v.kind === "terrain" ? v.open : undefined;
+    };
+    // The middle of Krakowskie's bottom row: chunks west, east and north of it, the data's edge south.
+    expect(sides("krakowskie-1-0")).toEqual({ south: true, north: false, west: false, east: false });
+    // The Nabrzeże stands alone 1.2 km east: its outer sides are all open.
+    expect(sides("nabrzeze-1-1")).toMatchObject({ north: true, east: true });
+    const open = LUBLIN_CHUNKS.filter((c) => {
+      const s = sides(c.id);
+      return s && (s.south || s.north || s.west || s.east);
+    });
+    expect(open.length).toBeLessThan(LUBLIN_CHUNKS.length);
+  });
+});

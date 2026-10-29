@@ -1,4 +1,4 @@
-import { type GroundSurface, type TerrainGrid, terrainHeightAt } from "@seki/core";
+import { type GroundSurface, type TerrainGrid, type TerrainOpenSides, terrainHeightAt } from "@seki/core";
 import { DRESS_FLAG, type MeshSink, type Rgba, type Vec, hexColor } from "../mesh-sink";
 import { type P2, obbLocal, orientedBox, pointInRing, triangulate } from "./polygon";
 import { face, quadUv, vertex } from "./sink-ops";
@@ -57,7 +57,15 @@ const groundNormal = (h: HeightAt, x: number, z: number): Vec => {
 };
 
 /** The chunk's terrain: vertices exactly on `terrainHeightAt`, a skirt hanging 1.5 m below the edges. */
-export const planTerrain = (sink: MeshSink, grid: TerrainGrid): void => {
+/** How far an open edge's apron runs on towards the horizon, metres (the fog takes it from there). */
+export const TERRAIN_APRON = 400;
+
+/**
+ * The terrain of a chunk: one mesh from its grid, skirts under its edges (no cracks against a
+ * neighbour on another grid) and, on the `open` sides at the edge of the map data, a level apron
+ * running on to the horizon, so the map does not end in a slab there.
+ */
+export const planTerrain = (sink: MeshSink, grid: TerrainGrid, open?: TerrainOpenSides): void => {
   const sub = Math.max(1, Math.ceil(grid.cell / DRAPE_STEP));
   const step = grid.cell / sub;
   const nx = (grid.cols - 1) * sub + 1;
@@ -98,6 +106,24 @@ export const planTerrain = (sink: MeshSink, grid: TerrainGrid): void => {
   edge(0, nz - 1, 1, 0, nx, { x: 0, y: 0, z: 1 });
   edge(0, 0, 0, 1, nz, { x: -1, y: 0, z: 0 });
   edge(nx - 1, 0, 0, 1, nz, { x: 1, y: 0, z: 0 });
+  if (!open) return;
+  const apron = (i0: number, j0: number, di: number, dj: number, count: number, out: Vec) => {
+    for (let k = 0; k + 1 < count; k++) {
+      const p = (s: number) => ({ x: grid.originX + (i0 + di * s) * step, z: grid.originZ + (j0 + dj * s) * step });
+      const a = p(k);
+      const b = p(k + 1);
+      const ya = h(a.x, a.z);
+      const yb = h(b.x, b.z);
+      const fa = { x: a.x + out.x * TERRAIN_APRON, y: ya, z: a.z + out.z * TERRAIN_APRON };
+      const fb = { x: b.x + out.x * TERRAIN_APRON, y: yb, z: b.z + out.z * TERRAIN_APRON };
+      // `face` turns each triangle towards `up`, so the corner order does not matter.
+      quadUv(sink, [{ x: a.x, y: ya, z: a.z }, { x: b.x, y: yb, z: b.z }, fb, fa], up, TERRAIN, [[a.x, a.z], [b.x, b.z], [fb.x, fb.z], [fa.x, fa.z]], meta);
+    }
+  };
+  if (open.south) apron(0, 0, 1, 0, nx, { x: 0, y: 0, z: -1 });
+  if (open.north) apron(0, nz - 1, 1, 0, nx, { x: 0, y: 0, z: 1 });
+  if (open.west) apron(0, 0, 0, 1, nz, { x: -1, y: 0, z: 0 });
+  if (open.east) apron(nx - 1, 0, 0, 1, nz, { x: 1, y: 0, z: 0 });
 };
 
 /** Triangles of a ring, each cut into an n x n barycentric grid so no edge is longer than `step`. */
