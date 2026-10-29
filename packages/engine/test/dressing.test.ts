@@ -1,6 +1,6 @@
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import type { ViewDescriptor } from "@seki/core";
-import { type StaticProp, WORLD_CHUNKS } from "@seki/sim";
+import { MARKET_PLACE, type StaticProp, WORLD_CHUNKS, groundY } from "@seki/sim";
 import { describe, expect, it } from "vitest";
 import { Scene } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
@@ -24,36 +24,46 @@ const blocksOf = (props: readonly StaticProp[]): DressBlock[] =>
 
 const chunk = (id: string) => WORLD_CHUNKS.find((c) => c.id === id)!;
 const world = WORLD_CHUNKS.flatMap((c) => blocksOf(c.props));
+/** Lublin's chunks (ADR-0045): the market under the viaduct, Grodzka with the footbridge, the deptak. */
+const MARKET = "podzamcze-1-0";
+const GRODZKA = "stare-miasto-1-1";
+const DEPTAK = "krakowskie-2-0";
+/** The map's buildings are drawn by the map city: only the game's own blocks are dressed. */
+const DRESSED = WORLD_CHUNKS.filter((c) => blocksOf(c.props).length >= 10);
+const dress = (blocks: readonly DressBlock[], kit = false) => planDressing({ blocks, world, signs: [], kit, ground: groundY });
 
 describe("procedural dressing (ADR-0027)", () => {
-  it("dresses every chunk of the map without the city kit (W9)", () => {
-    for (const c of WORLD_CHUNKS) {
-      const sink = planDressing({ blocks: blocksOf(c.props), world, signs: [], kit: false });
-      expect(sink.vertexCount, c.id).toBeGreaterThan(200);
+  it("dresses the chunks with the game's buildings without the city kit (W9)", () => {
+    expect(DRESSED.map((c) => c.id)).toEqual(expect.arrayContaining([DEPTAK, MARKET, "nabrzeze-1-1"]));
+    // The market and the docks are the game's own buildings; the deptak's rooms are cut into the map's.
+    expect(dress(blocksOf(chunk(MARKET).props)).vertexCount).toBeGreaterThan(2000);
+    expect(dress(blocksOf(chunk("nabrzeze-1-1").props)).vertexCount).toBeGreaterThan(200);
+    for (const c of DRESSED) {
+      const sink = dress(blocksOf(c.props));
       expect(sink.colors.length / 4).toBe(sink.vertexCount);
       expect(sink.indices.length % 3).toBe(0);
     }
   });
 
   it("leaves skinned buildings to the kit when it is there", () => {
-    const blocks = blocksOf(chunk("kanal").props);
+    const blocks = blocksOf(chunk(MARKET).props);
     const bare = planDressing({ blocks, world, signs: [], kit: false });
     const kit = planDressing({ blocks, world, signs: [], kit: true });
     expect(kit.vertexCount).toBeLessThan(bare.vertexCount / 2);
   });
 
   it("is deterministic", () => {
-    const blocks = blocksOf(chunk("targ-south").props);
+    const blocks = blocksOf(chunk(MARKET).props);
     const a = planDressing({ blocks, world, signs: [], kit: false });
     const b = planDressing({ blocks, world, signs: [], kit: false });
     expect(a.positions).toEqual(b.positions);
   });
 
   it("marks the overpass as a road deck and paints lanes, joints and studs on it (C7)", () => {
-    const decks = blocksOf(chunk("targ-north").props).filter(isRoadDeck);
+    const decks = blocksOf(chunk(MARKET).props).filter((b) => isRoadDeck(b, groundY));
     expect(decks).toHaveLength(1);
     const deck = decks[0]!;
-    const sink = planDressing({ blocks: [deck], world, signs: [], kit: true });
+    const sink = dress([deck], true);
     const top = deck.center.y + deck.size.y / 2;
     let onTop = 0;
     let lit = 0;
@@ -71,20 +81,22 @@ describe("procedural dressing (ADR-0027)", () => {
     expect(lit).toBeGreaterThan(0);
     expect(below).toBeGreaterThan(0);
     // A footbridge or a balcony is not a road.
-    expect(blocksOf(chunk("kanal").props).filter(isRoadDeck)).toHaveLength(0);
+    expect(blocksOf(chunk(GRODZKA).props).filter((b) => isRoadDeck(b, groundY))).toHaveLength(0);
   });
 
   it("finds the walked roofs of the market's south row by their ladders and rails (C8)", () => {
-    const south = blocksOf(chunk("targ-south").props).filter((b) => isBuilding(b) && b.center.z < 62);
-    const walked = south.filter((b) => isWalkedRoof(b, world)).map((b) => Math.round(b.center.x));
+    // The market keeps its own coordinates, moved by MARKET_PLACE (ADR-0045).
+    const south = blocksOf(chunk(MARKET).props).filter((b) => isBuilding(b) && b.center.z < MARKET_PLACE.z + 62);
+    const walked = south.filter((b) => isWalkedRoof(b, world)).map((b) => Math.round(b.center.x - MARKET_PLACE.x));
     // Glass by the gate, the concrete roof with the stash and the glass roof to the east (railed).
     expect(walked).toEqual(expect.arrayContaining([74, 89]));
-    const tower = blocksOf(chunk("shinsekai-7").props).find((b) => b.size.y === 34)!;
-    expect(isWalkedRoof(tower, world)).toBe(false);
+    // The hall's east wall, on Ruska's side, is no roof anyone walks.
+    const wall = blocksOf(chunk(MARKET).props).find((b) => b.size.x === 2 && b.size.z === 32)!;
+    expect(isWalkedRoof(wall, world)).toBe(false);
   });
 
   it("puts no roof clutter on walked roofs", () => {
-    const south = blocksOf(chunk("targ-south").props).filter((b) => isBuilding(b) && isWalkedRoof(b, world));
+    const south = blocksOf(chunk(MARKET).props).filter((b) => isBuilding(b) && isWalkedRoof(b, world));
     for (const b of south) {
       const sink = planDressing({ blocks: [b], world, signs: [], kit: false });
       const top = b.center.y + b.size.y / 2;
@@ -117,14 +129,14 @@ describe("WorldDressing", () => {
   it("builds a chunk's dressing when its blocks stream in and releases it when they go", () => {
     const built: string[] = [];
     const dressing = new WorldDressing(scene, materials, "pending", { built: (m) => built.push(m.name) });
-    const props = chunk("targ-south").props.filter(isBlock);
+    const props = chunk(MARKET).props.filter(isBlock);
     props.forEach((p, i) => dressing.addBlock(100 + i, p.view, p.center));
     expect(dressing.flush()).toBe(false);
     expect(dressing.meshes).toHaveLength(0);
     dressing.setKit("bare");
     expect(dressing.flush()).toBe(true);
-    expect(built).toEqual(["dressing-targ-south"]);
-    expect([...dressing.residentChunks()]).toEqual(["targ-south"]);
+    expect(built).toEqual([`dressing-${MARKET}`]);
+    expect([...dressing.residentChunks()]).toEqual([MARKET]);
     const mesh = dressing.meshes[0]!;
     expect(mesh.material).toBe(materials.get("dressing"));
     expect(dressing.flush()).toBe(false);
