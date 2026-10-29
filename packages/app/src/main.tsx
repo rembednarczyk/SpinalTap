@@ -3,7 +3,7 @@ import { audioSampleManifest } from "./audio-manifest";
 import { loadModelManifest } from "./model-manifest";
 import { STORY_SOURCE } from "@seki/narrative";
 import { IndexedDbSaveStore, SavePersistence } from "@seki/persistence";
-import { FixedStepLoop } from "@seki/sim";
+import { FixedStepLoop, ground, koiPoint, rayGeometry } from "@seki/sim";
 import { DEFAULT_SETTINGS, GameUi, createUiStore, fovRadians } from "@seki/ui";
 import { createRoot } from "react-dom/client";
 import { browserClock } from "./browser-clock";
@@ -55,7 +55,8 @@ const crowdParam = params.get("crowd");
 const stage = new Stage(canvas, { reference, quality: renderQuality });
 // Buildings and vehicles from the CC0 city kit (public/city/README.md, ADR-0022); ?city=off keeps
 // the plain blocks. The reference frame uses it too: the scene is ready only once it is in.
-const renderer = new BabylonRenderer(stage, { cityKit: params.get("city") === "off" ? null : new URL("city/city-kit.glb", document.baseURI).href });
+// Lublin is drawn to the horizon from the map (ADR-0045): no far city of the old streets.
+const renderer = new BabylonRenderer(stage, { cityKit: params.get("city") === "off" ? null : new URL("city/city-kit.glb", document.baseURI).href, farCity: false });
 // The character menu's 3D preview: a second scene on the same engine and canvas (ADR-0015).
 const preview = new PreviewStage(stage.engine, canvas, { quality: renderQuality });
 // Imported character models: models/manifest.json next to the game, ?models=<url> for another
@@ -106,6 +107,9 @@ const session = new GameSession({
     else input.releasePointerLock();
   },
 });
+// The TPP camera stops at the map's buildings and the terrain too (ADR-0045): the simulation's
+// own ray through its solids, handed to the camera through the app.
+renderer.rig.setOccluder((origin, dir, maxDist) => rayGeometry(session.sim.world, origin, dir, maxDist));
 
 /** Controls from the settings: key bindings, hold or toggle buttons and the field of view. */
 let controlsFor: unknown = null;
@@ -142,10 +146,11 @@ const loop = new FixedStepLoop(browserClock, {
   },
 });
 
-// Title screen backdrop: a slow look down the street from above the wreck.
-const TITLE_VIEW = { position: { x: -3.5, y: 2.2, z: -33 }, target: { x: 2, y: 3.5, z: 0 } };
-// Reference frame for NPR snapshots: Seki in front of Kaito under the Neon Koi sign.
-const REFERENCE_VIEW = { position: { x: 3.4, y: 1.55, z: 4.6 }, target: { x: 5.5, y: 1.15, z: 0.9 } };
+// Title screen backdrop: from the corner of Plac Litewski by the wreck, down the deptak.
+const TITLE_VIEW = { position: ground(146, -49, 2.2), target: ground(232, -64, 3.5) };
+// Reference frame for NPR snapshots: Seki on the deptak in front of Neon Koi, under its sign.
+const REFERENCE_VIEW = { position: koiPoint(3.4, 1.55, 4.6), target: koiPoint(5.5, 1.15, 0.9) };
+const REFERENCE_SPOT = koiPoint(4.6, 0, 0.6);
 
 let lastScreen: string | null = null;
 /** Fixed camera on the title screen and in reference mode; reacts to screen changes only. */
@@ -239,7 +244,7 @@ if (reference) {
   session.newGame();
   input.enabled = false;
   loop.paused = true;
-  debug.teleport(4.6, 0.6, Math.PI / 2 - 0.3);
+  debug.teleport(REFERENCE_SPOT.x, REFERENCE_SPOT.z, Math.PI - 0.3);
   session.render(0);
   ui.setState({ toasts: [] });
 }

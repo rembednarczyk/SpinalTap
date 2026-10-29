@@ -100,10 +100,11 @@ export const createDebugApi = (
   setPaused(paused) {
     loop.paused = paused;
   },
-  teleport(x, z, yaw = 0, pitch = 0, y = 0) {
+  teleport(x, z, yaw = 0, pitch = 0, y) {
     const p = session.sim.player();
     if (!p) return;
-    p.position = { x, y, z };
+    // On the ground of the map (ADR-0045) unless a height is given (a deck, a roof).
+    p.position = { x, y: y ?? session.sim.streamer.ground.heightAt(x, z), z };
     p.prevPosition = p.position;
     p.yaw = yaw;
     p.prevYaw = yaw;

@@ -30,4 +30,9 @@ export interface GameSessionDeps {
   readonly touch?: boolean;
   /** The crowd of residents (ADR-0041), as the graphics quality allows; none without. */
   readonly crowd?: CrowdDensity;
+  /**
+   * Hand the map's scenery (Lublin's terrain, surfaces and buildings, ADR-0045) to the render
+   * port. Default on; headless tests that count the port's spawns may leave it out.
+   */
+  readonly scenery?: boolean;
 }
