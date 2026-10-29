@@ -23,7 +23,7 @@ test("phone: on-screen pad moves, looks and talks", async ({ page }) => {
   // A cold boot takes about a minute on a CI runner (SwiftShader) and streaming in a district
   // another 20 s: more than the default 90 s.
   test.setTimeout(180_000);
-  await page.goto("/?seed=7");
+  await page.goto("/?seed=7&models=off");
   await waitForGame(page);
   await page.getByRole("button", { name: "Nowa gra" }).tap();
   await expect(page.getByTestId("touch-controls")).toBeVisible();
@@ -59,7 +59,7 @@ test("phone: on-screen pad moves, looks and talks", async ({ page }) => {
 
 test("phone in portrait asks to rotate", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/?seed=7");
+  await page.goto("/?seed=7&models=off");
   await waitForGame(page);
   await expect(page.getByText("Obróć telefon poziomo")).toBeVisible();
 });

@@ -93,6 +93,8 @@ export const PRESETS = {
   facade: { base: "#ffffff", gloss: 0.12, rimStrength: 0.08, rim: "#8fb3c9", vertexFlags: true, city: "facade" },
   mapGround: { base: "#ffffff", gloss: 0.2, rimStrength: 0, vertexFlags: true, city: "ground" },
   mapTerrain: { base: "#ffffff", gloss: 0, rimStrength: 0, vertexFlags: true, city: "ground" },
+  // Street furniture of the map city (ADR-0047): thin instances and far meshes coloured per vertex, self-lit glass and neon in the alpha.
+  streetProp: { base: "#ffffff", gloss: 0.25, rimStrength: 0.14, rim: "#8fb3c9", vertexFlags: true },
 } as const satisfies Record<string, ToonPreset>;
 
 export type PresetName = keyof typeof PRESETS;

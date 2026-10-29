@@ -17,9 +17,9 @@ export const createOverlay = (root: HTMLElement, clean: boolean): PreviewOverlay
         box.textContent = attribution;
         return;
       }
-      const m = map as { buildings?: number; near?: number; far?: number; vertices?: number } | null;
+      const m = map as { buildings?: number; near?: number; far?: number; vertices?: number; props?: { pieces: number; groups: number } | null } | null;
       const hh = String(Math.floor(hour)).padStart(2, "0");
-      box.textContent = `Lublin 2077, podgląd mapy · ${hh}:00 · ${perf.fps} fps · ${perf.drawCalls} wywołań · ${perf.activeMeshes} siatek · budynki ${m?.buildings ?? 0} (blisko ${m?.near ?? 0} / daleko ${m?.far ?? 0} komórek) · ${Math.round((m?.vertices ?? 0) / 1000)}k wierzchołków\n${HELP}\n${attribution}`;
+      box.textContent = `Lublin 2077, podgląd mapy · ${hh}:00 · ${perf.fps} fps · ${perf.drawCalls} wywołań · ${perf.activeMeshes} siatek · budynki ${m?.buildings ?? 0} (blisko ${m?.near ?? 0} / daleko ${m?.far ?? 0} komórek) · meble ${m?.props?.pieces ?? 0} (${m?.props?.groups ?? 0} siatek) · ${Math.round((m?.vertices ?? 0) / 1000)}k wierzchołków\n${HELP}\n${attribution}`;
     },
   };
 };
