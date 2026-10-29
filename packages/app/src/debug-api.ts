@@ -26,6 +26,8 @@ export interface DebugApi {
     loadedChunks: readonly string[];
     /** Game time, "HH:MM". */
     clock: string;
+    /** Residents of the crowd in the world (ADR-0041). */
+    residents: number;
   };
   perf(): PerfSample;
   setPaused(paused: boolean): void;
@@ -91,6 +93,7 @@ export const createDebugApi = (
       district: sim.district,
       loadedChunks: sim.streamer.loadedChunks,
       clock: formatClock(sim.clock),
+      residents: [...sim.world].filter((e) => e.view?.kind === "crowd").length,
     };
   },
   perf,
