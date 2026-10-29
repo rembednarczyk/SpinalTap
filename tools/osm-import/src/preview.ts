@@ -21,6 +21,7 @@ const SURFACE: Record<string, string> = {
   cobble: "#b08a67",
   sidewalk: "#d0d0d6",
   footway: "#efe3b0",
+  steps: "#c9b98f",
   rail: "#5a4a3a",
 };
 const USE: Record<string, string> = {
