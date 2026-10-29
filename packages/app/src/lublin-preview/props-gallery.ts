@@ -2,7 +2,7 @@ import type { Vec3, ViewDescriptor } from "@seki/core";
 import { GALLERY_ROW, propGallery } from "@seki/engine";
 
 /**
- * `?lublin-preview&props-gallery` (ADR-0047): every street prop kind and shape in rows on a flat
+ * `?props-gallery` (ADR-0047): every street prop kind and shape in rows on a flat
  * granite square, to judge the models without the city around them.
  */
 
