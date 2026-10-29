@@ -1,0 +1,12 @@
+{
+  "source": "GUGiK NMT 1 m (geoportal.gov.pl, WCS DTM_PL-KRON86-NH_TIFF)",
+  "crs": "EPSG:2180",
+  "vertical": "PL-KRON86-NH",
+  "e0": 750555,
+  "n0": 382426,
+  "cols": 525,
+  "rows": 545,
+  "step": 1,
+  "offset": 100,
+  "scale": 0.1
+}

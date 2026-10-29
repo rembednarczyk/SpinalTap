@@ -1,0 +1,78 @@
+import type { BuildingUse, GroundSurface, TerrainGrid } from "@seki/core";
+
+/**
+ * Lublin's centre from map data (ADR-0042), as `tools/osm-import` writes it into
+ * `*.generated.ts`. World metres around `LUBLIN_ANCHOR`: x east, z north, y = height above sea
+ * level − `LUBLIN_ANCHOR.altitude`. Point lists are flat `[x0, z0, x1, z1, …]`, rounded to 0.1 m.
+ */
+export type FlatPoints = readonly number[];
+
+export interface LublinBuildingData {
+  /** OSM element: `w<id>` a way, `r<id>` a multipolygon (`r<id>/<k>` its k-th outer ring). */
+  readonly id: string;
+  /** Position: the outline's centroid on the ground plane. */
+  readonly x: number;
+  readonly z: number;
+  /** World y of the foot: the lowest point of the 1 m terrain model under the outline. */
+  readonly y: number;
+  /** Counter-clockwise outline relative to (x, z), simplified to about 0.3 m. Holes (courtyards of multipolygons) are filled. */
+  readonly outline: FlatPoints;
+  /** Convex counter-clockwise parts of the outline relative to (x, z), for prism solids; their areas sum to the outline's. */
+  readonly parts: readonly FlatPoints[];
+  /** From `y` to the eaves, metres, plinth included. */
+  readonly height: number;
+  /** Ground difference under the outline: on a slope the bottom `plinth` metres are a plinth (podmurówka). */
+  readonly plinth: number;
+  readonly levels: number;
+  readonly use: BuildingUse;
+  /** Pitched or domed roof above `height`, metres; absent means flat. */
+  readonly roof?: number;
+  /** Landmark name (named OSM building, or a named hotel or sight mapped as a point inside it). */
+  readonly name?: string;
+  /** Seed of the facade's variation: FNV-1a of `id`. */
+  readonly look: number;
+  /** Shops on the ground floor (a 4 m storey). */
+  readonly shopfront?: true;
+  /** Where the height came from: the `height` tag, `building:levels`, or the district's defaults. */
+  readonly source: "height" | "levels" | "default";
+}
+
+export interface LublinGroundData {
+  readonly surface: GroundSurface;
+  /** World points, counter-clockwise, clipped to the chunk. Listed in draw order (water first, rails last). */
+  readonly outline: FlatPoints;
+  /** On a bridge: not draped on the terrain. */
+  readonly bridge?: true;
+}
+
+export interface LublinStreetData {
+  readonly name: string;
+  /** The OSM `highway` value. */
+  readonly kind: string;
+  /** World polyline, clipped to the chunk. */
+  readonly line: FlatPoints;
+}
+
+export type LublinPoiKind = "shop" | "food" | "bar" | "stop" | "hotel" | "sight" | "culture" | "church" | "service" | "office";
+
+export interface LublinPoiData {
+  readonly x: number;
+  readonly z: number;
+  readonly kind: LublinPoiKind;
+  /** The OSM tag it came from, like `shop=bakery`. */
+  readonly tag: string;
+  readonly name: string;
+}
+
+export interface LublinChunkData {
+  readonly id: string;
+  readonly district: "shinsekai-7" | "kanal" | "targ" | "doki";
+  /** The chunk's rectangle. Buildings belong to the chunk holding their centroid and may reach past it. */
+  readonly bounds: { readonly minX: number; readonly maxX: number; readonly minZ: number; readonly maxZ: number };
+  /** Terrain over exactly `bounds`; the cell is finer where the ground is steep. */
+  readonly terrain: TerrainGrid;
+  readonly buildings: readonly LublinBuildingData[];
+  readonly ground: readonly LublinGroundData[];
+  readonly streets: readonly LublinStreetData[];
+  readonly pois: readonly LublinPoiData[];
+}
