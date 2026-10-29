@@ -16,7 +16,7 @@ pnpm dev          # http://localhost:5173
 pnpm build && pnpm preview   # build produkcyjny, http://localhost:4173
 ```
 
-Parametry URL: `?seed=123` (stałe ziarno nowej gry), `?reference` (deterministyczny kadr do testów migawkowych).
+Parametry URL: `?seed=123` (stałe ziarno nowej gry), `?reference` (deterministyczny kadr do testów migawkowych), `?crowd=off|low|medium|high` (gęstość tłumu, domyślnie jak jakość grafiki).
 
 ## Sterowanie
 
@@ -76,6 +76,12 @@ Opis w [ADR-0035](docs/adr/0035-hud-fali-2.md).
 - Klinika (poczekalnia i gabinet) i bar Neon Koi (lada, stołki, stoliki, scena, szafa grająca, barman i bywalcy) mają wnętrza.
 - Drzwi automatyczne z czujnikiem: otwierają się przed postacią, zamykają po chwili, zamknięte blokują przejście i widok. Drzwi biura Tessen w Dokach są na kod z haka (4177) albo do wyłamania z alarmem.
 - Zapis v14 (stan drzwi w ruchu) z migracją.
+
+## Chodniki i mieszkańcy miasta ([ADR-0041](docs/adr/0041-chodniki-i-mieszkancy-miasta.md))
+
+- Chodniki z krawężnikiem, fugami i żółtym pasem dotykowym wzdłuż ulic Shinsekai, Kanałowej, targu i ścieżki w dokach, zebry tam, gdzie mieszkańcy przechodzą przez jezdnię. Są tylko w obrazie: nikogo nie blokują, a postać na chodniku jest w nim podniesiona o 12 cm.
+- Mieszkańcy chodzą po chodnikach w obie strony (trzymając się lewej), stoją przy ścianach, rozmawiają w parach, piją przy ladzie Neon Koi. Ilu ich jest, zależy od dzielnicy i godziny: targ tłoczny wieczorem, Shinsekai żywe nocą, doki puste po zmroku. Strzał ich płoszy, potem wracają na trasę.
+- Gęstość idzie za jakością grafiki (telefon `low`: do 4 na chunk, komputer `high`: do 12), `?crowd=off|low|medium|high` ją nadpisuje. Tłum jest rysowany jedną wspólną siatką, poza zapisem i bez wpływu na złote hashe.
 
 ## Struktura
 
