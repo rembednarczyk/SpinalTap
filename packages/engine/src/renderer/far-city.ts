@@ -191,7 +191,8 @@ export const planFarCity = (chunks: readonly ChunkDef[] = WORLD_CHUNKS): FarCity
     { margin: 52, depth: 30, wMin: 16, wMax: 32, hMin: 45, hMax: 120, fog: 0.5, ads: 0.22 },
     { margin: 100, depth: 50, wMin: 24, wMax: 46, hMin: 70, hMax: 170, fog: 0.4, ads: 0.25 },
   ] as const;
-  for (const r of rings) {
+  // Without chunks (the map preview, ADR-0044) there are no bounds to ring: only the horizon.
+  for (const r of chunks.length > 0 ? rings : []) {
     const e = { minX: B.minX - r.margin, maxX: B.maxX + r.margin, minZ: B.minZ - r.margin, maxZ: B.maxZ + r.margin };
     const edges: readonly [number, number, number, number][] = [
       [e.minX, e.minZ, e.maxX, e.minZ],
