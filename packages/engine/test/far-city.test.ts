@@ -13,7 +13,12 @@ describe("far city (ADR-0027)", () => {
     expect(plan.chunks).toEqual(WORLD_CHUNKS.map((c) => c.id).slice(0, FAR_CHUNK_SLOTS));
     const slots = new Set<number>();
     for (let i = 0; i < plan.world.vertexCount; i++) slots.add(plan.world.uvs2[i * 2 + 1]!);
-    for (let k = 1; k <= WORLD_CHUNKS.length; k++) expect(slots.has(k)).toBe(true);
+    // Lublin has more chunks than slots, and the map's buildings are no blocks: a stand-in for
+    // every slotted chunk with blocks of the game's own (ADR-0045; the game draws the map city, far city off).
+    WORLD_CHUNKS.slice(0, FAR_CHUNK_SLOTS).forEach((c, k) => {
+      const bulk = c.props.some((p) => p.solid && p.view.kind === "block" && !p.view.rungs && !p.view.slope && p.view.size.y >= 2.5 && Math.min(p.view.size.x, p.view.size.z) >= 0.3);
+      expect(slots.has(k + 1), c.id).toBe(bulk);
+    });
     expect(slots.has(0)).toBe(true);
   });
 

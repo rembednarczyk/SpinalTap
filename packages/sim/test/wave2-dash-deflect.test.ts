@@ -27,7 +27,7 @@ const withBlade = (d: DomainState): DomainState => {
 /** An alerted Hebi with an SMG `distance` m north of the player, facing her. */
 const shooter = (sim: Simulation, distance = 7): Entity => {
   const p = sim.player()!;
-  const e = gangerEntity(4000, { key: "shooter", position: { x: p.position.x, y: 0, z: p.position.z + distance }, yaw: Math.PI }, null, 5000, p.chunk ?? "", undefined, "hebi_ganger");
+  const e = gangerEntity(4000, { key: "shooter", position: { x: p.position.x, y: p.position.y, z: p.position.z + distance }, yaw: Math.PI }, null, 5000, p.chunk ?? "", undefined, "hebi_ganger");
   e.ai!.alerted = true;
   return sim.world.add(e);
 };

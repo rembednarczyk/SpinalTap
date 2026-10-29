@@ -34,4 +34,4 @@ export const QUALITY_TIERS: Readonly<Record<RenderQuality, QualityTier>> = {
 export const qualityTier = (q: RenderQuality | undefined): QualityTier => QUALITY_TIERS[q ?? "high"];
 
 /** Surfaces that hold water and sample the probe: the road, puddles, the harbour, wet dressing. */
-export const WET_PRESETS: ReadonlySet<PresetName> = new Set<PresetName>(["asphalt", "puddle", "water", "dressing"]);
+export const WET_PRESETS: ReadonlySet<PresetName> = new Set<PresetName>(["asphalt", "puddle", "water", "dressing", "mapGround"]);

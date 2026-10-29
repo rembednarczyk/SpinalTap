@@ -10,7 +10,7 @@ export const FACTIONS = {
   /** The street gang holding the alley behind the car wash. */
   hebi: "Gang Hebi",
   /** Ordinary residents of the street. */
-  civilians: "Mieszkańcy Shinsekai",
+  civilians: "Mieszkańcy Lublina",
   /** Doktor Mori's ripperdoc clinic. */
   clinic: "Klinika Mori",
   /** The corporation that records and rewrites memories (act II, ADR-0023). */

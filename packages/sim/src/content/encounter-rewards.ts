@@ -1,6 +1,8 @@
 import type { StackableId, Vec3 } from "@seki/core";
-import { v } from "./builders";
 import type { DistrictId } from "./world-map";
+import { market } from "./district-targ";
+import { docks } from "./district-doki";
+import { spotNear } from "./lublin/places";
 
 /**
  * What a street encounter pays (ADR-0034). The ink of an encounter ends by raising a flag
@@ -36,8 +38,8 @@ export const ENCOUNTER_REWARDS: Readonly<Record<string, EncounterReward>> = {
  * the one farthest from the player within reach is used.
  */
 export const MICRO_SPOTS: Readonly<Record<DistrictId, readonly Vec3[]>> = {
-  "shinsekai-7": [v(-3, 0, 18), v(2, 0, -12), v(-2, 0, 32)],
-  kanal: [v(30, 0, 78), v(58, 0, 77.5), v(7, 0, 60)],
-  targ: [v(80, 0, 70), v(104, 0, 70), v(84, 0, 87)],
-  doki: [v(0, 0, 100), v(20, 0, 112), v(-10, 0, 112)],
+  "shinsekai-7": [spotNear(290, -84), spotNear(352, -92), spotNear(205, -63)],
+  kanal: [spotNear(528, -58), spotNear(620, 26), spotNear(688, 110)],
+  targ: [market(80, 0, 70), market(104, 0, 70), market(84, 0, 87)],
+  doki: [docks(0, 0, 100), docks(20, 0, 112), docks(-10, 0, 112)],
 };

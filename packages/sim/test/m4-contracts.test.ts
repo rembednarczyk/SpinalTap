@@ -8,10 +8,11 @@ import {
   contractTag,
   takenFlag,
 } from "@seki/core";
-import { CONTRACT_ITEM_SPOTS, OYAJI_MAX_HP, SIM_HZ, Simulation, stateHash } from "../src";
+import { CONTRACT_ITEM_SPOTS, OYAJI_MAX_HP, SIM_HZ, Simulation, ground, market, stateHash } from "../src";
 import { byKey, collect, input, run, teleportPlayer, debriefExtras } from "./helpers";
 
-const at = (x: number, z: number) => ({ x, y: 0, z });
+/** A point on the ground at (x, z) (the terrain of ADR-0045). */
+const at = (x: number, z: number) => ground(x, z);
 
 const roundTrip = (s: SaveSnapshot): SaveSnapshot => JSON.parse(JSON.stringify(s)) as SaveSnapshot;
 
@@ -27,7 +28,7 @@ const withDomain = (sim: Simulation, patch: (d: Simulation["domain"]) => Simulat
 
 /** Next to Hana's cart in the market; one step lets streaming load the market around the player. */
 const toMarket = (sim: Simulation) => {
-  teleportPlayer(sim, at(90.5, 74), Math.PI / 2);
+  teleportPlayer(sim, market(90.5, 0, 74), Math.PI / 2);
   sim.step();
 };
 
@@ -184,7 +185,7 @@ describe("retrieval (Hana's crate from the Hebi stash)", () => {
     grab(restored);
     expect(restored.domain.contracts.active?.status).toBe("cleared");
     // Leave the market and come back, then save and load: still gone.
-    teleportPlayer(restored, at(0, 0));
+    teleportPlayer(restored, at(300, -84));
     restored.step();
     toMarket(restored);
     expect(crateOf(restored, c)).toBeUndefined();

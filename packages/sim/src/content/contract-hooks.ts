@@ -1,5 +1,7 @@
 import type { ContractHookDef, Vec3 } from "@seki/core";
-import { v } from "./builders";
+import { docks } from "./district-doki";
+import { market } from "./district-targ";
+import { spotNear } from "./lublin/places";
 
 /**
  * Observation hooks (ADR-0032, ADR-0034): one or two per kind of contract, found on site while
@@ -56,8 +58,8 @@ export const CONTRACT_HOOKS: readonly SimHookDef[] = [
     kind: "delivery",
     source: "terminal",
     knot: "hook_delivery_1",
-    text: "Kładka nad Kanałową jest szybsza i nikt tam nie stoi",
-    carrier: { at: v(12.5, 0, 74.6) },
+    text: "Grodzką pod kładką jest szybciej i nikt tam nie stoi",
+    carrier: { at: spotNear(649, 61) },
     reveal: { kind: "intel" },
   },
   {
@@ -65,7 +67,7 @@ export const CONTRACT_HOOKS: readonly SimHookDef[] = [
     kind: "delivery",
     source: "bark",
     knot: "hook_delivery_2",
-    text: "Hebi łapią kurierów pod kładką, na górę nie wchodzą",
+    text: "Hebi łapią kurierów pod kładką na Grodzkiej, Placu po Farze nie pilnują",
     carrier: { key: "hebi-lookout" },
     reveal: { kind: "intel" },
   },
@@ -83,7 +85,7 @@ export const CONTRACT_HOOKS: readonly SimHookDef[] = [
     kind: "retrieve",
     source: "shard",
     knot: "hook_retrieve_2",
-    text: "Z estakady widać skrytkę; strażnicy pilnują tylko przejścia",
+    text: "Z wiaduktu widać skrytkę; strażnicy pilnują tylko przejścia",
     carrier: { post: 1 },
     reveal: { kind: "intel" },
   },
@@ -102,7 +104,7 @@ export const CONTRACT_HOOKS: readonly SimHookDef[] = [
     source: "terminal",
     knot: "hook_protect_2",
     text: "Z balkonu schodów pożarowych widać całe przejście",
-    carrier: { at: v(93, 0, 70.5) },
+    carrier: { at: market(93, 0, 70.5) },
     reveal: { kind: "intel" },
   },
   {
@@ -120,7 +122,7 @@ export const CONTRACT_HOOKS: readonly SimHookDef[] = [
     source: "terminal",
     knot: "hook_escort_2",
     text: "Wschodnia alejka placu bez obsady od 1:00 do 3:00",
-    carrier: { at: v(10, 0, 98.5) },
+    carrier: { at: docks(10, 0, 98.5) },
     reveal: { kind: "rotation_gap", post: 3, period: DAY, from: at(1), to: at(3) },
   },
   {
@@ -129,7 +131,7 @@ export const CONTRACT_HOOKS: readonly SimHookDef[] = [
     source: "terminal",
     knot: "hook_infiltrate_1",
     text: "Kod do bocznych drzwi biura: 4177 (kamera bierze cię za personel)",
-    carrier: { at: v(-15.4, 0, 126.6) },
+    carrier: { at: docks(-15.4, 0, 126.6) },
     reveal: { kind: "code" },
   },
   {

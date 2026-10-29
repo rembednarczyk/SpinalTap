@@ -1,4 +1,5 @@
 import { factionStance, normalize, sub, type Vec3 } from "@seki/core";
+import { aboveGround, heightApart } from "../../world/ground";
 import type { Entity } from "../../world/components";
 import type { SimContext, System } from "../../world/context";
 import { chestOf, eyeOf, lineOfSight } from "../../world/hitscan";
@@ -70,8 +71,8 @@ export const retreatPerch = (perches: readonly Vec3[], self: Vec3, player: Vec3)
  */
 const walkTo = (ctx: SimContext, self: Sniper, goal: Vec3): void => {
   const from = self.position;
-  const apart = Math.abs(goal.y - from.y) > LEVEL_GAP;
-  const raised = from.y > LEVEL_GAP || goal.y > LEVEL_GAP;
+  const apart = heightApart(ctx.world, goal, from) > LEVEL_GAP;
+  const raised = aboveGround(ctx.world, from) > LEVEL_GAP || aboveGround(ctx.world, goal) > LEVEL_GAP;
   const sameFloor = !apart && (straightWalk(ctx.world, from, goal) || detourStep(ctx.world, from, goal) !== null || !raised);
   const leg = sameFloor ? goal : (routeAcrossLevels(ctx.world, WORLD_NAV, from, goal)?.next ?? goal);
   const next = steerPoint(ctx.world, from, leg);

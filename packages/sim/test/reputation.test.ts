@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CYBERWARE_CATALOG, STACKABLE_CATALOG, type ReputationState, priceWithTerms, shopTerms } from "@seki/core";
-import { FLEE_RADIUS, HOSTILE_AGGRO_MULTIPLIER, Simulation, effectiveAggroRange, stateHash } from "../src";
+import { FLEE_RADIUS, HOSTILE_AGGRO_MULTIPLIER, KRAKOWSKIE_SITE_POINTS, Simulation, effectiveAggroRange, ground, stateHash } from "../src";
 import { byKey, collect, input, run, teleportPlayer } from "./helpers";
 
 /** A fresh game whose standings are patched in, built the way a load would build it. */
@@ -14,8 +14,11 @@ const gangerShots = (sim: Simulation) => {
   return () => shots.filter((s) => s.shooterId !== sim.player()?.id);
 };
 
-/** Stands the player in the alley mouth, in plain view of the guard. */
-const intoAlley = (sim: Simulation) => teleportPlayer(sim, { x: 0, y: 0, z: 33 });
+/** The M0 guard's post in the yard behind the car wash on Plac Łokietka (ADR-0045). */
+const POST = KRAKOWSKIE_SITE_POINTS.car_wash(-2.5, 39.5);
+
+/** Stands the player at the mouth of the yard on Plac Łokietka, in plain view of the guard. */
+const intoAlley = (sim: Simulation) => teleportPlayer(sim, ground(POST.x + 0.5, POST.z + 7));
 
 describe("reputation from deeds", () => {
   it("killing a ganger costs standing with Hebi and the street", () => {
@@ -66,7 +69,7 @@ describe("the ripperdoc", () => {
     const started = collect(sim, "InteractionStarted");
     sim.enqueue({ type: "buy-item", itemId: "medkit" });
     const mori = byKey(sim, "mori")!;
-    teleportPlayer(sim, { x: mori.position.x + 1.2, y: 0, z: mori.position.z });
+    teleportPlayer(sim, { x: mori.position.x + 1.2, y: mori.position.y, z: mori.position.z });
     sim.step();
     sim.step(input({ interact: true }));
     expect(failed).toEqual([{ reason: "refused", shopId: "clinic" }]);
@@ -80,7 +83,7 @@ describe("the ripperdoc", () => {
     const sim = simWith({});
     const started = collect(sim, "InteractionStarted");
     const mori = byKey(sim, "mori")!;
-    teleportPlayer(sim, { x: mori.position.x + 1.2, y: 0, z: mori.position.z });
+    teleportPlayer(sim, { x: mori.position.x + 1.2, y: mori.position.y, z: mori.position.z });
     sim.step();
     sim.step(input({ interact: true }));
     expect(started).toEqual([{ targetId: mori.id, dialogueId: "mori", kind: "shop", shopId: "clinic" }]);
@@ -111,7 +114,7 @@ describe("gangers and Hebi's stance", () => {
     expect(warns.every((w) => w.faction === "hebi")).toBe(true);
     // The guard turned to face the player but stayed at its post.
     const guard = byKey(sim, "guard")!;
-    expect(Math.hypot(guard.position.x - -2.5, guard.position.z - 39.5)).toBeLessThan(0.05);
+    expect(Math.hypot(guard.position.x - POST.x, guard.position.z - POST.z)).toBeLessThan(0.05);
   });
 
   it("a friendly gang fights back once provoked", () => {
@@ -129,8 +132,8 @@ describe("gangers and Hebi's stance", () => {
     expect(effectiveAggroRange(17, "hostile")).toBe(17 * HOSTILE_AGGRO_MULTIPLIER);
     expect(effectiveAggroRange(17, "neutral")).toBe(17);
     expect(effectiveAggroRange(17, "friendly")).toBe(17);
-    // ~21 m from the guard, straight down the street: beyond the base range, within the hostile one.
-    const at = { x: -2.5, y: 0, z: 18.5 };
+    // 21 m from the guard, straight out over Plac Łokietka: beyond the base range, within the hostile one.
+    const at = ground(POST.x, POST.z + 21);
     const neutral = simWith({});
     teleportPlayer(neutral, at);
     run(neutral, 5);
@@ -153,7 +156,7 @@ describe("civilians and the street's opinion", () => {
     const sim = simWith({});
     const ume = byKey(sim, "ume")!;
     const home = ume.position;
-    teleportPlayer(sim, { x: home.x + 2, y: 0, z: home.z });
+    teleportPlayer(sim, { x: home.x + 2, y: home.y, z: home.z });
     run(sim, 120);
     expect(byKey(sim, "ume")!.position).toEqual(home);
   });
@@ -162,12 +165,12 @@ describe("civilians and the street's opinion", () => {
     const sim = simWith({ civilians: -30 });
     const reactions = collect<{ reaction: string; faction: string }>(sim, "NpcReacted");
     const home = byKey(sim, "ume")!.position;
-    teleportPlayer(sim, { x: home.x + 2, y: 0, z: home.z });
+    teleportPlayer(sim, { x: home.x + 2, y: home.y, z: home.z });
     run(sim, 60);
     expect(umeDistance(sim)).toBeGreaterThan(2.5);
     expect(reactions).toEqual([{ entityId: byKey(sim, "ume")!.id, faction: "civilians", reaction: "flee" }]);
     // The player walks away; once out of range she returns to her spot.
-    teleportPlayer(sim, { x: 0, y: 0, z: 30 });
+    teleportPlayer(sim, ground(290, -88));
     run(sim, 900);
     const ume = byKey(sim, "ume")!;
     expect(Math.hypot(ume.position.x - home.x, ume.position.z - home.z)).toBeLessThanOrEqual(0.3);
@@ -177,7 +180,7 @@ describe("civilians and the street's opinion", () => {
   it("only flee within the flee radius", () => {
     const sim = simWith({ civilians: -30 });
     const home = byKey(sim, "ume")!.position;
-    teleportPlayer(sim, { x: home.x + FLEE_RADIUS + 1.5, y: 0, z: home.z });
+    teleportPlayer(sim, { x: home.x + FLEE_RADIUS + 1.5, y: home.y, z: home.z });
     run(sim, 60);
     expect(byKey(sim, "ume")!.position).toEqual(home);
   });
@@ -187,7 +190,7 @@ describe("civilians and the street's opinion", () => {
     const mori = byKey(sim, "mori")!;
     const home = mori.position;
     expect(mori.faction).toBe("clinic");
-    teleportPlayer(sim, { x: home.x + 1.5, y: 0, z: home.z });
+    teleportPlayer(sim, { x: home.x + 1.5, y: home.y, z: home.z });
     run(sim, 60);
     expect(byKey(sim, "mori")!.position).toEqual(home);
   });
@@ -195,7 +198,7 @@ describe("civilians and the street's opinion", () => {
   it("a load mid-escape continues exactly like the original", () => {
     const sim = simWith({ civilians: -30 }, 11);
     const home = byKey(sim, "ume")!.position;
-    teleportPlayer(sim, { x: home.x + 2, y: 0, z: home.z });
+    teleportPlayer(sim, { x: home.x + 2, y: home.y, z: home.z });
     run(sim, 20);
     const restored = Simulation.fromSnapshot(sim.snapshot(null, "x", ""));
     const frame = input({ moveX: -1 });

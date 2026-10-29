@@ -2,10 +2,11 @@ import { describe, expect, it, vi } from "vitest";
 import { type AudioPort, type DomainState, EMPTY_INPUT, type RenderPort, createDomainState } from "@seki/core";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
-import { DISTRICT_M0_PROPS, type Entity, KANAL_PROPS, TARG_NORTH_PROPS, TARG_SOUTH_PROPS } from "@seki/sim";
+import { DISTRICT_M0_PROPS, type Entity, KANAL_PROPS, TARG_NORTH_PROPS, TARG_SOUTH_PROPS, ground } from "@seki/sim";
 import { DEFAULT_SETTINGS, createUiStore } from "@seki/ui";
 import { GameSession, type SettingsHost } from "../src/game-session";
 import { buildJournal, createJournalCache } from "../src/journal";
+import { buildCityMap, readableAngle } from "../src/city-map";
 import { buildDistrictMap, createMinimapTracker } from "../src/minimap";
 import { SETTINGS_KEY, loadSettings, sanitizeSettings, saveSettings, scaleLook } from "../src/settings";
 
@@ -61,7 +62,7 @@ describe("journal view model", () => {
     const contract = j.quests.find((q) => q.id === "contract-c3");
     expect(contract?.title).toBe("Kontrakt 3 · Kaito");
     expect(contract?.steps.map((s) => s.done)).toEqual([true, false]);
-    expect(contract?.steps[0]?.objective).toContain("zaułek za myjnią");
+    expect(contract?.steps[0]?.objective).toContain("podwórko za myjnią");
     expect(j.quests.find((q) => q.id === "contracts-done")?.steps[0]?.objective).toBe("Wykonane i opłacone: 2");
     expect(j.memories).toEqual([expect.objectContaining({ id: "combat_reflex", title: "Wspomnienie: odruch" })]);
   });
@@ -76,22 +77,49 @@ describe("journal view model", () => {
 });
 
 describe("minimap data", () => {
-  it("turns district content into an outline, buildings and sidewalks", () => {
+  it("turns the game's blocks into buildings and cover, and nothing into nothing", () => {
     const map = buildDistrictMap(DISTRICT_M0_PROPS);
-    expect(map.bounds).toEqual({ x: 0, z: 7, w: 46, d: 88 });
-    expect(map.streets).toHaveLength(2);
     expect(map.blocks.length).toBeGreaterThan(10);
     expect(buildDistrictMap([]).bounds.w).toBe(0);
-    // Shinsekai 7 is flat: no upper floors, no stairs.
+    // Krakowskie Przedmieście's own props have no upper floors and no stairs.
     expect(map.decks).toBeUndefined();
     expect(map.links).toBeUndefined();
   });
 
+  it("draws Lublin from the map: its chunks, surfaces, buildings and names (ADR-0045)", () => {
+    const map = buildCityMap();
+    expect(map.ground).toHaveLength(20);
+    // From the west end of Krakowskie Przedmieście to the east end of Nabrzeże Bystrzycy.
+    expect(map.bounds.x - map.bounds.w / 2).toBe(-200);
+    expect(map.bounds.x + map.bounds.w / 2).toBe(2700);
+    expect(map.buildings!.length).toBeGreaterThan(500);
+    // The map's centre has no railway in it.
+    expect(new Set(map.areas!.map((a) => a.kind))).toEqual(new Set(["road", "walk", "green", "water"]));
+    const names = (kind: string) => map.labels!.filter((l) => l.kind === kind).map((l) => l.text);
+    expect(names("street")).toEqual(expect.arrayContaining(["Krakowskie Przedmieście", "Grodzka", "Bramowa", "Lubartowska"]));
+    expect(names("district")).toEqual(["Krakowskie Przedmieście", "Stare Miasto", "Podzamcze", "Nabrzeże Bystrzycy"]);
+    expect(names("landmark")).toEqual(expect.arrayContaining(["Brama Krakowska", "Brama Grodzka", "Zamek w Lublinie", "Trybunał Koronny"]));
+    expect(names("station")).toEqual(["Ⓜ Plac Litewski", "Ⓜ Brama Krakowska", "Ⓜ Plac Zamkowy", "Ⓜ Nabrzeże Bystrzycy"]);
+    // Names never run upside down.
+    for (const l of map.labels!) expect(l.angle > -Math.PI / 2 - 1e-9 && l.angle <= Math.PI / 2 + 1e-9, l.text).toBe(true);
+    expect(map.places!.map((p) => p.name)).toEqual(names("district"));
+    // The game's content stays on top: the clinic's walls, the market's deck and links.
+    expect(map.blocks.length).toBeGreaterThan(10);
+    expect(map.decks?.length).toBeGreaterThan(0);
+  });
+
+  it("keeps a name readable whichever way its street was drawn", () => {
+    expect(readableAngle(0.3)).toBeCloseTo(0.3);
+    expect(readableAngle(0.3 + Math.PI)).toBeCloseTo(0.3);
+    expect(readableAngle(-Math.PI / 2)).toBeCloseTo(Math.PI / 2);
+  });
+
   it("marks floors above the street, stairs, the lift and ladders (ADR-0021)", () => {
-    const map = buildDistrictMap([...KANAL_PROPS, ...TARG_SOUTH_PROPS, ...TARG_NORTH_PROPS]);
+    // Heights from the ground under them: the market stands 20 m below Krakowskie (ADR-0045).
+    const map = buildDistrictMap([...KANAL_PROPS, ...TARG_SOUTH_PROPS, ...TARG_NORTH_PROPS], (x, z) => ground(x, z).y);
     const kinds = (map.links ?? []).map((l) => l.kind);
-    // The footbridge's two flights and the market stairs; one lift; three fire escape ladders.
-    expect(kinds.filter((k) => k === "stairs")).toHaveLength(3);
+    // The market's stairs (the covered footbridge over Grodzka has none, ADR-0045); one lift; three fire escape ladders.
+    expect(kinds.filter((k) => k === "stairs")).toHaveLength(1);
     expect(kinds.filter((k) => k === "lift")).toHaveLength(1);
     expect(kinds.filter((k) => k === "ladder")).toHaveLength(3);
     // The overpass deck is a floor above, not a building.
@@ -142,8 +170,8 @@ describe("minimap data", () => {
     expect(ui.getState().map?.blocks.length).toBeGreaterThan(0);
     s.newGame();
     const st = ui.getState();
-    // On the chair in the clinic (ADR-0038).
-    expect(st.mapPlayer).toMatchObject({ x: -14.5, z: 2.5 });
+    // On the chair in the clinic (ADR-0038), on Krakowskie Przedmieście (ADR-0045).
+    expect(st.mapPlayer).toMatchObject({ x: 319.5, z: -64.75 });
     expect(st.mapMarkers.map((m) => m.kind).sort()).toEqual(["fixer", "target"]);
     expect(st.journal.quests[0]?.title).toBe("Pierwsze zlecenie");
     const before = ui.getState().mapPlayer;

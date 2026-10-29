@@ -129,7 +129,7 @@ void main(void) {
 `;
 
 /** Pseudo-kanji: a few strokes on a 3x3 grid, for the labels that are not Latin. */
-const drawGlyph = (ctx: CanvasRenderingContext2D, x: number, y: number, s: number, rand: () => number) => {
+export const drawGlyph = (ctx: CanvasRenderingContext2D, x: number, y: number, s: number, rand: () => number) => {
   const t = Math.max(3, s * 0.12);
   for (let k = 0; k < 4 + Math.floor(rand() * 3); k++) {
     const gx = Math.floor(rand() * 3);

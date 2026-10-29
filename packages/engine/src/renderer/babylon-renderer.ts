@@ -1,6 +1,7 @@
 import { type AbstractMesh, Matrix, MeshBuilder } from "../babylon";
 import type { ActivityId, AppearanceDescriptor, CameraMode, DespawnReason, EffectDescriptor, EntityId, HackTargetKind, RenderPort, Transform, ViewDescriptor } from "@seki/core";
-import type { DistrictId } from "@seki/sim";
+import type { ChunkDef, DistrictId } from "@seki/sim";
+import { WORLD_CHUNKS } from "@seki/sim";
 import { CameraRig } from "../camera/camera-rig";
 import type { Grading } from "../npr/grading";
 import { LineArt } from "../npr/line-art";
@@ -16,12 +17,14 @@ import { CityKitLoader } from "./city-kit-loader";
 import { CrowdViews } from "./crowd-views";
 import { WorldDressing } from "./dressing";
 import { FarCity } from "./far-city";
+import { MapCity, type MapCityStats, isMapView } from "./mapcity/map-city";
 import { MetroRide, type MetroRideView, type RideCast } from "./metro-ride";
 import type { CharacterModelManifest } from "./model-library";
 import { PropViews } from "./prop-views";
 import { type GameplayFxEvent, ScreenFx } from "./screen-fx";
 import { Signage } from "./signage";
 import { WetProbe } from "./wet-probe";
+import { groundLift } from "./ground-lift";
 import type { Stage } from "./stage";
 import type { WeaponManifest } from "./weapon-mount";
 
@@ -34,6 +37,18 @@ export interface RendererOptions {
    * then, and without it, they are plain boxes.
    */
   readonly cityKit?: string | null;
+  /**
+   * The game's chunk table for the dressing, the far city and the street signage (default
+   * `WORLD_CHUNKS`); the map preview passes none, so only the city from map data is drawn.
+   */
+  readonly world?: readonly ChunkDef[];
+  /** Multiplies the fog density (1 in the game; the map preview sees further, ADR-0044). */
+  readonly fogScale?: number;
+  /**
+   * Draws the far city of the old map (stand-ins, tower rings, megabuildings on the horizon).
+   * Off in Lublin (ADR-0045): the map's own city is drawn to the horizon.
+   */
+  readonly farCity?: boolean;
 }
 
 /** How far the crowd is drawn per quality (m): phones see the nearest residents only. */
@@ -72,6 +87,12 @@ export class BabylonRenderer implements RenderPort {
   private readonly metro: MetroRide;
   /** Static reflection probe of the wet asphalt on medium and high quality (ADR-0036). */
   private readonly wet: WetProbe | null;
+  /** Buildings, terrain and ground from map data (ADR-0044), created with the first of them. */
+  private mapCity: MapCity | null = null;
+  /** Feet lift on the map's surfaces (ADR-0045), or on the old street's sidewalks without map data. */
+  private readonly liftAt = (x: number, y: number, z: number): number => (this.mapCity ? this.mapCity.surfaceLift(x, y, z) : groundLift(x, y, z));
+  private daylight = 0;
+  private reduceFlashes = false;
   private kitMeshes = 0;
   private cameraTarget: EntityId | null = null;
   private resetting = false;
@@ -108,20 +129,21 @@ export class BabylonRenderer implements RenderPort {
       camera: this.rig,
       cameraTarget: () => this.cameraTarget,
       pose: (id, rig, speed, dt, retarget) => this.activities.apply(id, rig, speed, dt, retarget),
+      lift: this.liftAt,
     });
     const eye = this.rig.camera.position;
-    this.crowd = new CrowdViews({ scene, materials: this.materials, eye: () => eye, drawDistance: CROWD_DRAW_DISTANCE[stage.options.quality ?? "high"] });
+    this.crowd = new CrowdViews({ scene, materials: this.materials, eye: () => eye, drawDistance: CROWD_DRAW_DISTANCE[stage.options.quality ?? "high"], lift: this.liftAt });
     // Line art must be attached before the grading pipeline so the ink gets graded too.
     this.lineArt = tier.lineArt ? new LineArt(scene, this.rig.camera) : null;
     if (this.lineArt) this.lineArt.geometryBuffer.renderTransparentMeshes = false;
     this.speedLines = new SpeedLines(scene, this.rig.camera);
     this.atmosphere = new Atmosphere(scene, NIGHT_RIG);
-    this.farCity = new FarCity(scene, NIGHT_RIG);
-    this.signage = new Signage(scene);
+    const world = options.world ?? WORLD_CHUNKS;
+    this.farCity = new FarCity(scene, NIGHT_RIG, options.farCity === false ? [] : world);
+    if (options.farCity === false) for (const m of this.farCity.meshes) m.setEnabled(false);
+    this.signage = new Signage(scene, world);
     // Without a kit the dressing goes in with the first chunk; with one, once it is known whether it loaded.
-    this.dressing = new WorldDressing(scene, this.materials, options.cityKit ? "pending" : "bare", {
-      built: (m) => this.shadow.addStaticCaster(m),
-    });
+    this.dressing = new WorldDressing(scene, this.materials, options.cityKit ? "pending" : "bare", { built: (m) => this.shadow.addStaticCaster(m) }, world);
     this.cityKit = new CityKitLoader({ stage, materials: this.materials, shadow: this.shadow, dressing: this.dressing, blocks: () => this.props.blockViews() });
     this.props = new PropViews({ stage, materials: this.materials, shadow: this.shadow, atmosphere: this.atmosphere, dressing: this.dressing, cityKit: this.cityKit });
     this.warmUpMaterials();
@@ -133,6 +155,7 @@ export class BabylonRenderer implements RenderPort {
       farCity: this.farCity,
       signage: this.signage,
       speedLines: this.speedLines,
+      fogScale: options.fogScale ?? 1,
       actors: this.characters,
       cameraTarget: () => this.cameraTarget,
       scanTargets: (visit) => {
@@ -195,9 +218,35 @@ export class BabylonRenderer implements RenderPort {
     return this.cityKit.meshCount;
   }
 
+  /** The map city, made on first use so scenes without map data stay exactly as they were. */
+  private city(): MapCity {
+    if (!this.mapCity) {
+      this.mapCity = new MapCity({ scene: this.stage.scene, materials: this.materials, shadow: this.shadow, quality: this.stage.options.quality ?? "high" });
+      this.mapCity.setDaylight(this.daylight);
+      this.mapCity.setReduceFlashes(this.reduceFlashes);
+    }
+    return this.mapCity;
+  }
+
+  /** Multiplies the fog density (1 in the game; the map preview sees further, ADR-0044). */
+  setFogScale(scale: number): void {
+    this.fx.setFogScale(scale);
+  }
+
+  /** Terrain height of the map city at (x, z), null outside its terrain (preview camera, tests). */
+  mapHeightAt(x: number, z: number): number | null {
+    return this.mapCity?.heightAt(x, z) ?? null;
+  }
+
+  /** What the map city holds and draws (debug and tests); null before the first map view. */
+  get mapStats(): MapCityStats | null {
+    return this.mapCity?.stats ?? null;
+  }
+
   spawn(id: EntityId, view: ViewDescriptor, t: Transform): void {
-    if (this.characters.has(id) || this.props.has(id) || this.crowd.has(id)) this.despawn(id);
-    if (isCharacter(view)) this.characters.spawn(id, view, t);
+    if (this.characters.has(id) || this.props.has(id) || this.crowd.has(id) || this.mapCity?.has(id)) this.despawn(id);
+    if (isMapView(view)) this.city().spawn(id, view, t.position);
+    else if (isCharacter(view)) this.characters.spawn(id, view, t);
     else if (view.kind === "crowd") this.crowd.spawn(id, view, t);
     else this.props.spawn(id, view, t);
   }
@@ -211,7 +260,8 @@ export class BabylonRenderer implements RenderPort {
     // out clears them at once.
     // Held things leave first: they may sit in the hand of a model that goes back to its pool.
     this.activities.forget(id);
-    if (this.characters.has(id)) this.characters.despawn(id, !this.resetting && reason === "removed" && id !== this.cameraTarget);
+    if (this.mapCity?.has(id)) this.mapCity.despawn(id);
+    else if (this.characters.has(id)) this.characters.despawn(id, !this.resetting && reason === "removed" && id !== this.cameraTarget);
     else if (this.crowd.has(id)) this.crowd.despawn(id);
     else this.props.despawn(id);
   }
@@ -228,6 +278,8 @@ export class BabylonRenderer implements RenderPort {
   playEffect(effect: EffectDescriptor): void {
     this.fx.play(effect);
     if (effect.kind === "time-of-day") {
+      this.daylight = effect.daylight;
+      this.mapCity?.setDaylight(effect.daylight);
       this.cityKit.setDaylight(effect.daylight);
       this.wet?.schedule.invalidate();
     }
@@ -242,6 +294,8 @@ export class BabylonRenderer implements RenderPort {
   setReduceFlashes(on: boolean): void {
     this.fx.setReduceFlashes(on);
     this.metro.setCalm(on);
+    this.reduceFlashes = on;
+    this.mapCity?.setReduceFlashes(on);
   }
 
   /**
@@ -283,12 +337,14 @@ export class BabylonRenderer implements RenderPort {
       this.farCity.setResident(this.dressing.residentChunks());
       this.wet?.schedule.invalidate();
     }
+    if (this.mapCity?.flush()) this.wet?.schedule.invalidate();
     this.metro.update(dt);
     this.characters.update(dt);
     this.crowd.update(dt);
     const target = this.cameraTargetTransform;
     this.rig.update(target, dt);
     this.metro.afterCamera();
+    this.mapCity?.update(dt, this.rig.camera.position, this.stage.options.reference);
     // Shadow follows what the camera looks at: the player, the metro car or the fixed reference view.
     const focus = target && !this.metro.active ? target.position : this.rig.camera.position;
     const moved = this.shadow.update(focus);
@@ -315,6 +371,7 @@ export class BabylonRenderer implements RenderPort {
     this.fx.clear();
     this.resetting = true;
     for (const id of this.props.ids()) this.despawn(id);
+    for (const id of this.mapCity?.ids() ?? []) this.despawn(id);
     this.activities.clear();
     this.characters.clear();
     this.crowd.clear();
@@ -359,12 +416,32 @@ export class BabylonRenderer implements RenderPort {
     return this.characters.dressedCount;
   }
 
+  /** The map city has drawn every cell near the camera in detail (tests wait for it before a snapshot). */
+  get citySettled(): boolean {
+    return this.mapCity?.settled ?? true;
+  }
+
+  /**
+   * Draws one frame and reads it straight from the canvas as a PNG data URL (ADR-0046): the
+   * snapshot test compares these pixels instead of waiting for the browser's compositor, which
+   * under SwiftShader may not settle within a test's patience.
+   */
+  captureFrame(): string {
+    this.stage.scene.render();
+    return this.stage.engine.getRenderingCanvas()?.toDataURL("image/png") ?? "";
+  }
+
+  /** Character models still loading. */
+  get modelsLoading(): number {
+    return this.characters.loadingCount;
+  }
+
   /** Interpolated transform of the entity the camera follows (the player), if any. */
   get cameraTargetTransform(): Transform | null {
     return this.cameraTarget === null ? null : this.characters.transformOf(this.cameraTarget);
   }
 
   get entityCount(): number {
-    return this.characters.size + this.props.size + this.crowd.size;
+    return this.characters.size + this.props.size + this.crowd.size + (this.mapCity?.size ?? 0);
   }
 }

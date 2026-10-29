@@ -7,9 +7,11 @@ import {
   OVERPASS_TOP,
   ROOF_MID_TOP,
   ROOF_WEST_TOP,
+  MARKET_PLACE,
   Simulation,
   TARG_ROOF_STASH,
   fallDamage,
+  market,
 } from "../src";
 import { collect, input, run, teleportPlayer } from "./helpers";
 
@@ -17,18 +19,25 @@ const SOUTH = Math.PI;
 const WEST = -Math.PI / 2;
 const EAST = Math.PI / 2;
 
+/**
+ * The market keeps its own coordinates, moved onto Aleja Tysiąclecia by `MARKET_PLACE`
+ * (ADR-0045): the player is put at a point of the market and read back in its coordinates.
+ */
 const at = (x: number, y: number, z: number, yaw = 0): Simulation => {
   const sim = Simulation.create({ seed: 1 });
-  teleportPlayer(sim, { x, y, z }, yaw);
+  teleportPlayer(sim, market(x, y, z), yaw);
   run(sim, 2);
-  teleportPlayer(sim, { x, y, z }, yaw);
+  teleportPlayer(sim, market(x, y, z), yaw);
   // Nobody shoots at the test subject.
   for (const g of [...sim.world.with("ai")]) sim.world.remove(g);
   return sim;
 };
 
 const player = (sim: Simulation) => sim.player()!;
-const pos = (sim: Simulation) => player(sim).position;
+const pos = (sim: Simulation) => {
+  const p = player(sim).position;
+  return { x: p.x - MARKET_PLACE.x, y: p.y - MARKET_PLACE.y, z: p.z - MARKET_PLACE.z };
+};
 
 /** A market stall counter, 1 m high, x ∈ [95.4, 98], z ∈ [67.35, 68.65]. */
 const COUNTER = { x: 96.7, front: 69.2, top: 1 } as const;
@@ -37,7 +46,7 @@ describe("jump (ADR-0021)", () => {
   it("cannot walk onto a 1 m counter, but jumps onto it", () => {
     const walk = at(COUNTER.x, 0, 70, SOUTH);
     run(walk, 60, input({ moveZ: 1 }));
-    expect(pos(walk).y).toBe(0);
+    expect(pos(walk).y).toBeCloseTo(0, 5);
     expect(pos(walk).z).toBeGreaterThan(68.65);
 
     const sim = at(COUNTER.x, 0, COUNTER.front, SOUTH);
@@ -69,7 +78,7 @@ describe("jump (ADR-0021)", () => {
     expect(player(sim).fall!).toBeLessThan(mid);
     run(sim, 60);
     expect(jumped).toHaveLength(1);
-    expect(pos(sim).y).toBe(0);
+    expect(pos(sim).y).toBeCloseTo(0, 5);
   });
 
   it("coyote time: a jump just after walking off an edge still takes off, a late one does not", () => {
@@ -155,7 +164,7 @@ describe("fire escape ladders (ADR-0021)", () => {
     // On the ladder: no fire, no gravity, forward climbs.
     run(sim, 30, input({ moveZ: 1, fire: true }));
     expect(pos(sim).y).toBeGreaterThan(0.9);
-    expect(pos(sim).x).toBe(73.2);
+    expect(pos(sim).x).toBeCloseTo(73.2, 5);
     for (let i = 0; i < 200 && player(sim).climb; i++) sim.step(input({ moveZ: 1 }));
     expect(pos(sim).y).toBeCloseTo(BALCONY_TOP, 5);
     run(sim, 5);
@@ -198,7 +207,7 @@ describe("fire escape ladders (ADR-0021)", () => {
     const loaded = Simulation.fromSnapshot(sim.snapshot(null, "ladder", ""));
     run(loaded, 30);
     expect(loaded.player()!.climb?.ladder).toBe("targ-escape-1");
-    expect(loaded.player()!.position.y).toBeCloseTo(y, 5);
+    expect(loaded.player()!.position.y - MARKET_PLACE.y).toBeCloseTo(y, 5);
   });
 
   it("the third ladder leads to Hebi's roof stash, placed once when the player comes near", () => {
@@ -206,7 +215,7 @@ describe("fire escape ladders (ADR-0021)", () => {
     const bag = () => sim.world.with("lootBag").entities.find((e) => e.lootBag.key === TARG_ROOF_STASH.key);
     run(sim, 2);
     expect(sim.domain.loot.containers.some((c) => c.key === TARG_ROOF_STASH.key)).toBe(true);
-    expect(bag()?.position.y).toBeCloseTo(ROOF_MID_TOP, 5);
+    expect(bag()?.position.y).toBeCloseTo(ROOF_MID_TOP + MARKET_PLACE.y, 5);
     sim.step(input({ interact: true }));
     expect(player(sim).climb?.ladder).toBe("targ-escape-3");
     for (let i = 0; i < 300 && player(sim).climb; i++) sim.step(input({ moveZ: 1 }));

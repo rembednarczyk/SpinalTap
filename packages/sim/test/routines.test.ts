@@ -4,6 +4,7 @@ import {
   ACTIVITY_SPOTS,
   ACTOR_ACTIVITIES,
   FLEE_SECONDS,
+  KANAL_SPOTS,
   MAX_PASSERSBY_PER_CHUNK,
   PASSERSBY,
   ROUTINE_SLOT_SECONDS,
@@ -17,6 +18,7 @@ import {
   passerbyStop,
   planActivity,
   routineOf,
+  spotNear,
   spotsOf,
   stateHash,
 } from "../src";
@@ -27,6 +29,11 @@ import { byKey, input, run, teleportPlayer } from "./helpers";
 vi.setConfig({ testTimeout: 30_000 });
 
 const at = (x: number, z: number) => ({ x, y: 0, z });
+/** Hideo's stool at the SAKE bar on the Rynek. */
+const SAKE = KANAL_SPOTS.hideoSake;
+/** The chunk of the deptak with the clinic and Neon Koi, and the Rynek's (ADR-0045). */
+const DEPTAK = "krakowskie-2-0";
+const RYNEK = "stare-miasto-0-0";
 const flat = (a: { x: number; z: number }, b: { x: number; z: number }) => Math.hypot(a.x - b.x, a.z - b.z);
 const hash = (sim: Simulation) => stateHash(sim.snapshot(null, "t", ""));
 const roundTrip = (s: SaveSnapshot): SaveSnapshot => JSON.parse(JSON.stringify(s)) as SaveSnapshot;
@@ -79,10 +86,11 @@ describe("activities from the daily plan", () => {
   it("Hideo drinks at SAKE in the evening, stops when a shot sends him running and goes back to it", () => {
     const sim = Simulation.create({ seed: 5 });
     skipTo(sim, hm(22));
-    teleportPlayer(sim, at(12, 70), 0);
+    // On the Rynek, a few steps from the SAKE bar (ADR-0045).
+    teleportPlayer(sim, spotNear(SAKE.x + 3, SAKE.z + 3), 0);
     run(sim, 3);
     const hideo = byKey(sim, "hideo")!;
-    expect(flat(hideo.position, at(8.6, 63.5))).toBeLessThan(0.1);
+    expect(flat(hideo.position, SAKE)).toBeLessThan(0.1);
     expect(hideo.activity).toBe("drink");
     fireUp(sim);
     run(sim, 2);
@@ -92,7 +100,7 @@ describe("activities from the daily plan", () => {
     expect(hideo.civilian?.crowd?.state).toBe("calm");
     // Calm again, he walks back to the bar and picks his drink up again.
     run(sim, 12 * SIM_HZ);
-    expect(flat(hideo.position, at(8.6, 63.5))).toBeLessThan(0.35);
+    expect(flat(hideo.position, SAKE)).toBeLessThan(0.35);
     expect(hideo.activity).toBe("drink");
   });
 
@@ -119,12 +127,12 @@ describe("activity spots", () => {
       const b = chunk.bounds;
       expect(s.at.x >= b.minX && s.at.x <= b.maxX && s.at.z >= b.minZ && s.at.z <= b.maxZ, s.id).toBe(true);
       for (const box of solids) {
-        if (box.max.y <= 0.3 || box.min.y >= 1.8) continue;
+        if (box.max.y - s.at.y <= 0.3 || box.min.y - s.at.y >= 1.8) continue;
         const dx = Math.max(box.min.x - s.at.x, 0, s.at.x - box.max.x);
         const dz = Math.max(box.min.z - s.at.z, 0, s.at.z - box.max.z);
         expect(Math.hypot(dx, dz), s.id).toBeGreaterThanOrEqual(0.38);
       }
-      for (const p of actors) if (Math.abs(p.y) < 1) expect(flat(p, s.at), s.id).toBeGreaterThan(1.5);
+      for (const p of actors) if (Math.abs(p.y - s.at.y) < 1) expect(flat(p, s.at), s.id).toBeGreaterThan(1.5);
     }
     expect(new Set(ACTIVITY_SPOTS.map((s) => s.id)).size).toBe(ACTIVITY_SPOTS.length);
   });
@@ -139,17 +147,17 @@ describe("activity spots", () => {
 
 describe("routines of the background passers-by (ADR-0040)", () => {
   it("a slot's plan is a pure function of seed, chunk and slot, with distinct spots", () => {
-    const a = routineOf(7, "kanal", 3, 1234);
-    expect(routineOf(7, "kanal", 3, 1234)).toEqual(a);
+    const a = routineOf(7, RYNEK, 3, 1234);
+    expect(routineOf(7, RYNEK, 3, 1234)).toEqual(a);
     expect(new Set(a.map((s) => s.spot.id)).size).toBe(3);
     for (const s of a) expect((s.spot.only ?? SPOT_ACTIVITIES[s.spot.kind]).includes(s.activity)).toBe(true);
-    const many = Array.from({ length: 40 }, (_, slot) => routineOf(7, "kanal", 3, slot).map((s) => s.spot.id).join());
+    const many = Array.from({ length: 40 }, (_, slot) => routineOf(7, RYNEK, 3, slot).map((s) => s.spot.id).join());
     expect(new Set(many).size).toBeGreaterThan(10);
   });
 
   it("nights go to the bars, mornings to the vending machines", () => {
     const slotAt = (day: number, hour: number) => Math.floor((day * 86400 + hour * 3600) / ROUTINE_SLOT_SECONDS);
-    const kinds = (hour: number) => Array.from({ length: 60 }, (_, day) => routineOf(11, "shinsekai-7", 3, slotAt(day, hour))).flat().map((s) => s.spot.kind);
+    const kinds = (hour: number) => Array.from({ length: 60 }, (_, day) => routineOf(11, DEPTAK, 3, slotAt(day, hour))).flat().map((s) => s.spot.kind);
     const count = (list: string[], kind: string) => list.filter((k) => k === kind).length;
     const night = kinds(23);
     const morning = kinds(7);
@@ -162,8 +170,8 @@ describe("routines of the background passers-by (ADR-0040)", () => {
     const sim = Simulation.create({ seed: 9 });
     expect(passersby(sim)).toHaveLength(0);
     sim.step();
-    const here = passersby(sim, "shinsekai-7");
-    expect(here).toHaveLength(PASSERSBY["shinsekai-7"]!);
+    const here = passersby(sim, DEPTAK);
+    expect(here).toHaveLength(PASSERSBY[DEPTAK]!);
     for (const p of here) {
       expect(p.key).toBeUndefined();
       expect(p.health).toBeUndefined();
@@ -176,7 +184,7 @@ describe("routines of the background passers-by (ADR-0040)", () => {
     run(sim, 2 * ROUTINE_SLOT_SECONDS);
     expect(here.some((p, i) => p.passerby!.goal !== first[i])).toBe(true);
     for (const p of here) {
-      const stop = passerbyStop(sim.seed, "shinsekai-7", p.passerby!.index, here.length, sim.clock)!;
+      const stop = passerbyStop(sim.seed, DEPTAK, p.passerby!.index, here.length, sim.clock)!;
       expect(p.passerby!.goal).toBe(stop.spot.at);
     }
   });
@@ -201,15 +209,19 @@ describe("routines of the background passers-by (ADR-0040)", () => {
   it("run from a shot like anyone, but never phone it in, and go back to their routine", () => {
     const sim = Simulation.create({ seed: 9 });
     sim.step();
-    const p = passersby(sim, "shinsekai-7")[0]!;
-    teleportPlayer(sim, at(p.position.x > 0 ? p.position.x - 4 : p.position.x + 4, p.position.z), 0);
+    const p = passersby(sim, DEPTAK)[0]!;
+    // On the deptak the car wash crew would hear the shot and Ume would phone it in, and the
+    // alarm would send everyone running again (ADR-0045): only the passers-by stay.
+    for (const g of [...sim.world.with("ai")]) sim.world.remove(g);
+    for (const c of [...sim.world.with("civilian")]) if (!c.passerby) sim.world.remove(c);
+    teleportPlayer(sim, spotNear(p.position.x + 4, p.position.z), 0);
     run(sim, 2);
     fireUp(sim);
     run(sim, 2);
     expect(p.civilian?.crowd?.state).not.toBe("calm");
     expect(p.activity).toBeUndefined();
     expect(p.civilian?.crowd?.call ?? null).toBeNull();
-    run(sim, (FLEE_SECONDS + 25) * SIM_HZ);
+    run(sim, (FLEE_SECONDS + 35) * SIM_HZ);
     expect(p.civilian?.crowd?.state).toBe("calm");
     expect(flat(p.position, p.passerby!.goal)).toBeLessThan(0.4);
     expect(p.activity).toBe(p.passerby!.activity);

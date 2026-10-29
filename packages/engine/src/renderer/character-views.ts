@@ -79,6 +79,8 @@ const applyTransform = (rig: CharacterRig, t: Transform, lift: number): void => 
 };
 
 export interface CharacterViewsDeps {
+  /** How far the picture lifts feet standing at (x, y, z) (sidewalks, ADR-0041/0045); default the old street's. */
+  readonly lift?: (x: number, y: number, z: number) => number;
   readonly scene: Scene;
   readonly materials: ToonMaterials;
   readonly shadow: MoonShadow;
@@ -129,6 +131,11 @@ export class CharacterViews implements FxActors {
     return this.dressed.size;
   }
 
+  /** Models still loading for characters in the scene (tests wait for none before measuring). */
+  get loadingCount(): number {
+    return this.loadingModels.size;
+  }
+
   ids(): EntityId[] {
     return [...this.views.keys()];
   }
@@ -159,7 +166,7 @@ export class CharacterViews implements FxActors {
     for (const m of rig.meshes) this.deps.shadow.addCaster(m);
     if (view.kind === "enemy" && view.enforcer) markEnforcer(this.deps.scene, this.deps.materials, rig, name);
     const model = modelKeyOf(view);
-    const lift = groundLift(t.position.x, t.position.y, t.position.z);
+    const lift = (this.deps.lift ?? groundLift)(t.position.x, t.position.y, t.position.z);
     this.views.set(id, { rig, transform: t, model, name, scan: scanClassOfView(view), lift });
     applyTransform(rig, t, lift);
     this.dress(rig, model, name);
@@ -207,7 +214,7 @@ export class CharacterViews implements FxActors {
       }
       const t = v.transform;
       // On a sidewalk the figure stands on its top (ADR-0041); the kerb is a short step.
-      const lift = easeLift(v.lift, groundLift(t.position.x, t.position.y, t.position.z), dt);
+      const lift = easeLift(v.lift, (this.deps.lift ?? groundLift)(t.position.x, t.position.y, t.position.z), dt);
       if (lift !== v.lift) {
         v.lift = lift;
         v.rig.root.position.y = t.position.y + lift;

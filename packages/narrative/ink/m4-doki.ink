@@ -1,6 +1,6 @@
-// Seki Senshi, M4: Doki Tessen (ADR-0024).
-// Genzō runs boats out of the docks for Kaito's network. He hands out three jobs against Tessen,
-// the corporation that owns the port: walking a defector to his boat, copying data from the
+// Seki Senshi, M4: Nabrzeże Bystrzycy, ex Doki Tessen (ADR-0024, ADR-0042).
+// Genzō runs boats on the Bystrzyca for Kaito's network. He hands out three jobs against Tessen,
+// the corporation that owns the riverside warehouses and the crane: walking a defector to his boat, copying data from the
 // Tessen office unseen, holding a hacked terminal. The domain decides and pays; ink only talks.
 
 // Synced like the other factions' stances before each conversation.
@@ -8,7 +8,7 @@ VAR tessen_stance = "neutral"
 
 === genzo ===
 { fixers_stance == "hostile":
-    GENZO: Kaito mówi, żeby z tobą nie gadać. W porcie słucha się Kaito.
+    GENZO: Kaito mówi, żeby z tobą nie gadać. Na nabrzeżu słucha się Kaito.
     -> END
 }
 {
@@ -21,10 +21,10 @@ VAR tessen_stance = "neutral"
 = greeting
 { not has_flag("met_genzo"):
     GENZO: Ty od Kaito? Genzō. Pływam nocą, a Tessen płaci ludziom, żeby tego nie widzieli.
-    GENZO: Port jest ich, woda jest moja. Czasem potrzebuję kogoś na lądzie.
+    GENZO: Nabrzeże jest ich, Bystrzyca jest moja. Czasem potrzebuję kogoś na lądzie.
     ~ set_flag("met_genzo")
 - else:
-    GENZO: Mgła dzisiaj gęsta. Dobra noc na robotę.
+    GENZO: Mgła znad rzeki dzisiaj gęsta. Dobra noc na robotę.
 }
 { tessen_stance == "hostile":
     GENZO: Ochrona Tessen zna już twoją twarz. Uważaj na dachy, mają tam strzelców.
@@ -47,7 +47,7 @@ VAR tessen_stance = "neutral"
 + [Który terminal mam złamać? #tone:main]
     SEKI: Który terminal mam złamać?
     ~ offer_contract("hack")
-    GENZO: Terminal portowy pod dźwigiem. Podłączysz się i musisz przy nim wytrzymać, aż skończy.
+    GENZO: Terminal Tessen pod dźwigiem nad rzeką. Podłączysz się i musisz przy nim wytrzymać, aż skończy.
     GENZO: Ochrona przyjdzie od razu, a na dachu magazynu siedzi strzelec. Czerwony laser znaczy, że masz sekundę na osłonę.
     -> END
 + [Nie teraz. #tone:leave]
@@ -68,14 +68,14 @@ VAR tessen_stance = "neutral"
     }
 }
 { contract_variation != "":
-    GENZO: Ludzie z portu mówią tak. {contract_variation}
+    GENZO: Ludzie z nabrzeża mówią tak. {contract_variation}
 }
 -> END
 
 = payday
 {
 - contract_kind == "escort":
-    GENZO: Mika na pokładzie. Do rana będzie po drugiej stronie zatoki.
+    GENZO: Mika na pokładzie. Do rana będzie po drugiej stronie Zalewu Zemborzyckiego.
 - contract_kind == "infiltrate":
     GENZO: Czyste dane i nikt nic nie widział. Kaito się ucieszy.
 - else:
@@ -86,5 +86,5 @@ GENZO: {contract_reward} eddies. Liczone przy latarni, wszystko się zgadza.
 -> offer
 
 = busy
-GENZO: Masz już robotę. Skończ ją, a potem wróć do portu.
+GENZO: Masz już robotę. Skończ ją, a potem wróć nad Bystrzycę.
 -> END

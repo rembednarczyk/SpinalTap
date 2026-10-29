@@ -9,21 +9,22 @@ import type { ContractVariation } from "../world/wave2";
 
 /** Places where a contract sends Seki. Positions live in sim content. */
 export const CONTRACT_SITES = {
-  east_lot: { id: "east_lot", label: "parking przy furgonetce, wschodnia strona" },
-  koi_back: { id: "koi_back", label: "ulica na wysokości baru Neon Koi" },
-  car_wash: { id: "car_wash", label: "zaułek za myjnią" },
-  south_gate: { id: "south_gate", label: "brama południowa przy wraku" },
-  // Ulica Kanałowa (ADR-0026).
-  kanal_bridge: { id: "kanal_bridge", label: "pod kładką na Ulicy Kanałowej" },
-  // Targ pod estakadą (M4).
-  hana_stall: { id: "hana_stall", label: "wózek Hany na targu pod estakadą" },
-  hebi_stash: { id: "hebi_stash", label: "skrytka Hebi pod estakadą, wschodni koniec targu" },
-  raid_north: { id: "raid_north", label: "stragan Oyaji, Hebi idą spod estakady" },
-  raid_east: { id: "raid_east", label: "stragan Oyaji, Hebi idą od wschodniej ściany" },
-  // Doki (M4, ADR-0024).
-  docks_escort: { id: "docks_escort", label: "z placu kontenerowego w Dokach na molo, do łodzi" },
-  tessen_office: { id: "tessen_office", label: "biuro Tessen na nabrzeżu w Dokach" },
-  quay_terminal: { id: "quay_terminal", label: "terminal portowy pod dźwigiem w Dokach" },
+  // Krakowskie Przedmieście (ADR-0045).
+  east_lot: { id: "east_lot", label: "parking przy furgonetce na Placu Litewskim" },
+  koi_back: { id: "koi_back", label: "podwórko za barem Neon Koi" },
+  car_wash: { id: "car_wash", label: "podwórko za myjnią przy Placu Łokietka" },
+  south_gate: { id: "south_gate", label: "wrak na Krakowskim, przy Placu Litewskim" },
+  // Stare Miasto (ADR-0026, ADR-0045).
+  kanal_bridge: { id: "kanal_bridge", label: "pod kładką na Grodzkiej" },
+  // Podzamcze: the market under the viaduct over aleja Tysiąclecia (M4, ADR-0045).
+  hana_stall: { id: "hana_stall", label: "wózek Hany na targu na Podzamczu" },
+  hebi_stash: { id: "hebi_stash", label: "skrytka Hebi pod wiaduktem, wschodni koniec targu" },
+  raid_north: { id: "raid_north", label: "stragan Oyaji, Hebi idą spod wiaduktu" },
+  raid_east: { id: "raid_east", label: "stragan Oyaji, Hebi idą od wschodniej ściany hali, od Ruskiej" },
+  // Nabrzeże Bystrzycy (M4, ADR-0024, ADR-0045).
+  docks_escort: { id: "docks_escort", label: "z placu kontenerowego na Nabrzeżu na molo, do łodzi" },
+  tessen_office: { id: "tessen_office", label: "biuro Tessen na Nabrzeżu Bystrzycy" },
+  quay_terminal: { id: "quay_terminal", label: "terminal Tessen pod dźwigiem nad rzeką" },
 } as const;
 
 export type ContractSiteId = keyof typeof CONTRACT_SITES;
@@ -32,7 +33,7 @@ export const CONTRACT_SITE_IDS = Object.keys(CONTRACT_SITES) as ContractSiteId[]
 
 /**
  * Where Kaito's elimination jobs happen: the M1 sites in their original order, then the spot
- * under the footbridge on Ulica Kanałowa (ADR-0026).
+ * under the footbridge on Grodzka (ADR-0026, ADR-0045).
  */
 export const ELIMINATION_SITE_IDS: readonly ContractSiteId[] = ["east_lot", "koi_back", "car_wash", "south_gate", "kanal_bridge"];
 

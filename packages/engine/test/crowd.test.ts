@@ -1,6 +1,6 @@
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import { describe, expect, it } from "vitest";
-import { SIDEWALKS, SIDEWALK_HEIGHT } from "@seki/sim";
+import { type Crossing, SIDEWALKS, SIDEWALK_HEIGHT, type Walkway } from "@seki/sim";
 import { Scene } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
 import { crowdLook } from "../src/renderer/crowd-look";
@@ -125,12 +125,12 @@ describe("crowd views (ADR-0041)", () => {
 });
 
 describe("sidewalks in the picture (ADR-0041)", () => {
-  it("lift whoever stands on one, eased like a step; floors above the street stay as they are", () => {
-    const w = SIDEWALKS[0]!;
-    const x = (w.minX + w.maxX) / 2;
-    const z = (w.minZ + w.maxZ) / 2;
-    expect(groundLift(x, 0, z)).toBe(SIDEWALK_HEIGHT);
-    expect(groundLift(x, 5, z)).toBe(0);
+  /** A strip of the game's own along a street (Lublin's come from the map, ADR-0045). */
+  const WALK: Walkway = { chunk: "test", minX: 0, maxX: 20, minZ: 0, maxZ: 3, kerbs: ["z+"] };
+  const CROSS: Crossing = { chunk: "test", minX: 8, maxX: 11, minZ: 3, maxZ: 10, along: "z" };
+
+  it("lift nobody when the content has no strips of its own; ease a lift like a step", () => {
+    expect(SIDEWALKS).toHaveLength(0);
     expect(groundLift(0, 0, 0)).toBe(0);
     expect(easeLift(0, SIDEWALK_HEIGHT, 1 / 60)).toBeGreaterThan(0);
     expect(easeLift(0, SIDEWALK_HEIGHT, 1)).toBe(SIDEWALK_HEIGHT);
@@ -139,12 +139,12 @@ describe("sidewalks in the picture (ADR-0041)", () => {
 
   it("bake slabs, kerbs, joints and crossings into a chunk's dressing, nothing for a chunk without", () => {
     const sink = new MeshSink();
-    planSidewalks(sink, "shinsekai-7");
-    expect(sink.vertexCount).toBeGreaterThan(500);
+    planSidewalks(sink, "test", [WALK], [CROSS]);
+    expect(sink.vertexCount).toBeGreaterThan(100);
     const top = Math.max(...sink.positions.filter((_, i) => i % 3 === 1));
     expect(top).toBeCloseTo(SIDEWALK_HEIGHT + 0.012, 3);
     const none = new MeshSink();
-    planSidewalks(none, "nowhere");
+    planSidewalks(none, "nowhere", [WALK], [CROSS]);
     expect(none.empty).toBe(true);
   });
 });

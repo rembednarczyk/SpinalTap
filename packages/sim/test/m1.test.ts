@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ABILITY_CATALOG, CONTRACT_SITE_SPAWNS_COUNT_GUARD, contractTag, type Contract } from "./m1-helpers";
-import { GANGER_SPEED, Simulation, contractGangerHp, stateHash } from "../src";
+import { CONTRACT_SITE_SPAWNS, GANGER_SPEED, Simulation, contractGangerHp, ground, groundY, stateHash } from "../src";
 import { byKey, collect, input, run, teleportPlayer, debriefExtras } from "./helpers";
 
 /** A copy of the simulation with a patched domain, built the way a load would build it. */
@@ -11,11 +11,18 @@ const withDomain = (sim: Simulation, patch: (d: Simulation["domain"]) => Simulat
 
 const contractTargets = (sim: Simulation, c: Contract) => [...sim.world].filter((e) => e.tag === contractTag(c.id));
 
+/**
+ * Takes Kaito's job and goes to its site: his sites lie along the deptak and on Plac Litewski
+ * (ADR-0045), so the site's chunk streams in with the player.
+ */
 const acceptContract = (sim: Simulation): Contract => {
   sim.enqueue({ type: "accept-contract" });
   sim.step();
   const c = sim.domain.contracts.active;
   if (!c) throw new Error("no contract");
+  const site = CONTRACT_SITE_SPAWNS[c.siteId][0]!;
+  teleportPlayer(sim, { x: site.x, y: site.y, z: site.z - 6 });
+  sim.step();
   return c;
 };
 
@@ -86,7 +93,7 @@ describe("fixer contracts", () => {
     byKey(sim, "guard")!.health = { current: 0, max: 80 };
     contractTargets(sim, c)[0]!.health = { current: 0, max: 80 };
     sim.step();
-    teleportPlayer(sim, { x: 0, y: 0, z: 0 });
+    teleportPlayer(sim, ground(300, -84));
     const restored = Simulation.fromSnapshot(sim.snapshot(null, "x", ""));
     const frames = [input({ moveZ: 1, fire: true }), input({ moveX: 1, lookYaw: 0.02, fire: true }), input({ moveZ: -1 })];
     for (let i = 0; i < 600; i++) {
@@ -122,7 +129,7 @@ describe("ripperdoc", () => {
     const sim = Simulation.create({ seed: 1 });
     const started = collect<{ kind: string; dialogueId: string }>(sim, "InteractionStarted");
     const mori = byKey(sim, "mori")!;
-    teleportPlayer(sim, { x: mori.position.x + 1.5, y: 0, z: mori.position.z });
+    teleportPlayer(sim, { x: mori.position.x + 1.5, y: mori.position.y, z: mori.position.z });
     sim.step(input({ interact: true }));
     expect(started).toEqual([expect.objectContaining({ kind: "shop", dialogueId: "mori" })]);
   });
@@ -162,12 +169,13 @@ describe("reflex overdrive", () => {
     const off = collect(sim, "AbilityEnded");
     const guard = byKey(sim, "guard")!;
     guard.ai!.alerted = true;
-    teleportPlayer(sim, { x: -2.5, y: 0, z: 20 });
+    // Out on Plac Łokietka, 19.5 m north of the guard in the yard behind the car wash.
+    teleportPlayer(sim, { x: guard.position.x, y: groundY(guard.position.x, guard.position.z + 19.5), z: guard.position.z + 19.5 });
     sim.step(input({ ability: true }));
     expect(on).toHaveLength(1);
     const z0 = guard.position.z;
     run(sim, 30);
-    const slowed = z0 - guard.position.z;
+    const slowed = guard.position.z - z0;
     expect(slowed).toBeCloseTo(GANGER_SPEED * 0.5 * ABILITY_CATALOG.reflex_overdrive.enemyTimeScale, 1);
     run(sim, 60 * 4);
     expect(off).toHaveLength(1);
@@ -186,7 +194,7 @@ describe("headshots", () => {
       const all = collect<{ amount: number; zone: string; critical: boolean; sourceId: number }>(sim, "DamageDealt");
       const hits = () => all.filter((h) => h.sourceId === sim.player()!.id);
       const guard = byKey(sim, "guard")!;
-      teleportPlayer(sim, { x: guard.position.x, y: 0, z: guard.position.z - 4 }, 0, pitch);
+      teleportPlayer(sim, { x: guard.position.x, y: guard.position.y, z: guard.position.z - 4 }, 0, pitch);
       for (let i = 0; i < 40 && hits().length === 0; i++) sim.step(input({ fire: true }));
       return hits()[0]!;
     };

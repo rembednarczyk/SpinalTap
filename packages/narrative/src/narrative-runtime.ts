@@ -37,7 +37,7 @@ const SPEAKERS: Readonly<Record<string, string>> = {
   HANA: "Hana",
   OYAJI: "Oyaji",
   GENZO: "Genzō",
-  // Ulica Kanałowa and the market stalls (ADR-0026).
+  // Stare Miasto (ex Ulica Kanałowa) and the market stalls on Podzamcze (ADR-0026, ADR-0042).
   HIDEO: "Hideo",
   TETSU: "Tetsu",
   MEI: "Mei",

@@ -65,7 +65,7 @@ export const describeObjective = (domain: DomainState, tick: number | null = nul
   }
   const started = QUEST_DEFINITIONS.some((q) => q.main && domain.quests[q.id]);
   if (!started) return { title: null, objective: null };
-  const givers = [...(hasFlag(domain.flags, "met_hana") ? ["Hana z targu"] : []), ...(hasFlag(domain.flags, "met_genzo") ? ["Genzō w Dokach"] : [])];
+  const givers = [...(hasFlag(domain.flags, "met_hana") ? ["Hana z targu na Podzamczu"] : []), ...(hasFlag(domain.flags, "met_genzo") ? ["Genzō na Nabrzeżu"] : [])];
   const work = givers.length > 0 ? `Kaito ma kolejne kontrakty, ${givers.join(" i ")} też.` : "Kaito ma kolejne kontrakty.";
   return contractView ?? { title: "Wolna ręka", objective: `${work} Mori sprzedaje cyberware.` };
 };

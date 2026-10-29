@@ -42,7 +42,7 @@ export const presentQuests: Presenter = ({ bus, render, audio, toast }) => [
   }),
   bus.on("ContractAlarm", (e) => {
     const escort = contractKind(e.contract) === "escort";
-    toast("quest", escort ? "Zasadzka Tessen" : "Alarm w porcie", escort ? "Osłoń Mikę" : "Utrzymaj terminal, ochrona już idzie");
+    toast("quest", escort ? "Zasadzka Tessen" : "Alarm na Nabrzeżu", escort ? "Osłoń Mikę" : "Utrzymaj terminal, ochrona już idzie");
     audio.play("quest-update");
   }),
   bus.on("ContractFailed", (e) => {

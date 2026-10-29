@@ -1,4 +1,5 @@
 import type { Vec3 } from "../math/vec3";
+import type { BuildingUse, GroundPoint, GroundSurface, StreetPropItem, TerrainGrid } from "../world/city-geo";
 import type { GarmentLook, GarmentSlot, Rarity, WeaponLook, WeaponSlot } from "../items/types";
 
 export type EntityId = number;
@@ -75,13 +76,63 @@ export type ViewDescriptor =
        */
       readonly interior?: true;
     }
+  /**
+   * A building from the map (ADR-0042): the outline in metres relative to the entity's position
+   * (counter-clockwise seen from above), extruded from the ground to `height` above
+   * `position.y`. The renderer builds the facade from `use` and `levels` (windows per floor,
+   * shop fronts, signs); collision is the simulation's business. `name` labels landmarks.
+   */
+  | {
+      readonly kind: "building";
+      readonly outline: readonly GroundPoint[];
+      readonly height: number;
+      readonly levels: number;
+      readonly use: BuildingUse;
+      /** A pitched or domed roof on top of `height`, in metres; absent means flat. */
+      readonly roof?: number;
+      readonly name?: string;
+      /** Seed of the facade's variation (colours, signs, lit windows). */
+      readonly look: number;
+      /**
+       * On a slope (ADR-0042): the bottom `plinth` metres of `height` stand below the highest
+       * ground under the outline and are drawn as a plinth (podmurówka), not as a floor.
+       */
+      readonly plinth?: number;
+      /** Shop windows and signs on the ground floor (a shop, a café, a bar inside). */
+      readonly shopfront?: true;
+      /**
+       * Openings through the facade into an interior on the ground floor (ADR-0045): `at` is the
+       * middle of the opening on a wall of the outline (relative to the position like the
+       * outline), `width` along that wall, from `bottom` to `top` metres above `position.y`.
+       */
+      readonly doorways?: readonly Doorway[];
+    }
+  /** The ground of a chunk (ADR-0042): a height grid the renderer turns into one mesh. */
+  | { readonly kind: "terrain"; readonly grid: TerrainGrid }
+  /**
+   * A paved or green area laid on the terrain (ADR-0042): roads, sidewalks, squares, cobbles,
+   * lawns, the river. Points are world x and z relative to the entity's position; the
+   * renderer drapes them on the terrain of the same chunk.
+   */
+  | { readonly kind: "ground"; readonly surface: GroundSurface; readonly outline: readonly GroundPoint[] }
+  /**
+   * The street furniture of a chunk (ADR-0047): lamps, benches, trees, bollards and the rest,
+   * drawn instanced per kind. Positions are relative to the entity's position.
+   */
+  | { readonly kind: "street-props"; readonly items: readonly StreetPropItem[] }
   | {
       readonly kind: "neon";
       readonly size: Vec3;
       readonly color: string;
       readonly label?: string;
+      /**
+       * The way the sign faces (ADR-0045). Absent: a sign thin along X faces west when it stands
+       * at x > 0 and east otherwise (the old streets ran along x = 0), any other faces south.
+       */
+      readonly facing?: BlockFront;
     }
-  | { readonly kind: "lamp"; readonly color: string }
+  /** A street lamp; its arm reaches towards `facing` (absent: west at x > 0, east otherwise). */
+  | { readonly kind: "lamp"; readonly color: string; readonly facing?: BlockFront }
   /**
    * Open water (ADR-0024): a dark plane at the block's top, with mist over it. Not walkable and
    * never solid; the edge it lies beyond is railed off.
@@ -89,6 +140,14 @@ export type ViewDescriptor =
   | { readonly kind: "water"; readonly size: Vec3 }
   /** A bag dropped by a defeated enemy (ADR-0015). `best` is the rarest item inside, for the neon strip. */
   | { readonly kind: "loot"; readonly style: "bag"; readonly best: Rarity | null };
+
+/** An opening through a map building's facade (ADR-0045). */
+export interface Doorway {
+  readonly at: GroundPoint;
+  readonly width: number;
+  readonly bottom: number;
+  readonly top: number;
+}
 
 /** What a skinned block stands for (ADR-0022). */
 export type BlockStyle =

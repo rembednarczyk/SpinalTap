@@ -11,7 +11,7 @@ import {
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
 import { createUiStore } from "@seki/ui";
-import { CONTRACT_SITE_SPAWNS } from "@seki/sim";
+import { CONTRACT_SITE_SPAWNS, ground } from "@seki/sim";
 import { nearKaito } from "./story-helpers";
 import { GameSession } from "../src/game-session";
 
@@ -63,7 +63,7 @@ const setup = async () => {
 
 const teleport = (s: GameSession, x: number, z: number, yaw = 0, pitch = 0) => {
   const p = s.sim.player()!;
-  p.position = { x, y: 0, z };
+  p.position = ground(x, z);
   p.prevPosition = p.position;
   p.yaw = yaw;
   p.pitch = pitch;
@@ -92,9 +92,12 @@ const shootDown = (s: GameSession, key: string): number[] => {
   for (let i = 0; i < 2000; i++) {
     const t = [...s.sim.world].find((e) => e.key === key);
     if (!t) break;
-    t.position = { x: 0, y: 0, z: -16 };
-    t.prevPosition = t.position;
-    teleport(s, 0, -20, 0, 0.1);
+    // Where it stands, 4 m in front of it: its chunk stays loaded (ADR-0045).
+    const p = s.sim.player()!;
+    p.position = { x: t.position.x, y: t.position.y, z: t.position.z - 4 };
+    p.prevPosition = p.position;
+    p.yaw = 0;
+    p.pitch = 0.1;
     s.step(frame({ fire: true }));
   }
   off();

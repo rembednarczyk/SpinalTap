@@ -1,5 +1,5 @@
 import { Color3, DynamicTexture, type Mesh, MeshBuilder, MeshClass, type Scene, StandardMaterial, TransformNode, Vector3, VertexBuffer, VertexData } from "../babylon";
-import type { ViewDescriptor } from "@seki/core";
+import type { BlockFront, ViewDescriptor } from "@seki/core";
 import type { ToonMaterials } from "../npr/toon-material";
 import type { PresetName } from "../npr/presets";
 
@@ -231,6 +231,10 @@ const neonTexture = (scene: Scene, name: string, label: string, color: string, v
   return tex;
 };
 
+/** Rotation of a sign's plane facing each way (a plane faces south unrotated). */
+const FACING_YAW: Readonly<Record<BlockFront, number>> = { "z-": 0, "z+": Math.PI, "x-": Math.PI / 2, "x+": -Math.PI / 2 };
+const FACING_DIR: Readonly<Record<BlockFront, { readonly x: number; readonly z: number }>> = { "z-": { x: 0, z: -1 }, "z+": { x: 0, z: 1 }, "x-": { x: -1, z: 0 }, "x+": { x: 1, z: 0 } };
+
 export const buildNeon = (scene: Scene, name: string, v: Neon, at: Vector3): PropView => {
   const root = new TransformNode(name, scene);
   root.position.copyFrom(at);
@@ -240,7 +244,9 @@ export const buildNeon = (scene: Scene, name: string, v: Neon, at: Vector3): Pro
   const plane = MeshBuilder.CreatePlane(`${name}-mesh`, { width, height }, scene);
   plane.parent = root;
   // Face the street: east-side signs look west, west-side signs look east, the rest look south.
-  plane.rotation.y = thinX ? (at.x > 0 ? Math.PI / 2 : -Math.PI / 2) : 0;
+  // A sign that says where it faces (ADR-0045) does so wherever it stands.
+  const facing = v.facing ?? (thinX ? (at.x > 0 ? "x-" : "x+") : "z-");
+  plane.rotation.y = FACING_YAW[facing];
   plane.isPickable = false;
   const mat = new StandardMaterial(`${name}-mat`, scene);
   mat.disableLighting = true;
@@ -254,31 +260,34 @@ export const buildNeon = (scene: Scene, name: string, v: Neon, at: Vector3): Pro
   mat.backFaceCulling = false;
   plane.material = mat;
   plane.freezeWorldMatrix();
-  const outward = thinX ? (at.x > 0 ? -1.2 : 1.2) : 0;
+  const out = FACING_DIR[facing];
   return {
     root,
     glowing: [plane],
     blockers: [],
     casters: [],
-    light: { position: { x: at.x + outward, y: at.y, z: at.z + (thinX ? 0 : -1.2) }, color: v.color, range: 11, intensity: 0.55 },
+    light: { position: { x: at.x + out.x * 1.2, y: at.y, z: at.z + out.z * 1.2 }, color: v.color, range: 11, intensity: 0.55 },
   };
 };
 
-export const buildLamp = (scene: Scene, materials: ToonMaterials, name: string, color: string, at: Vector3): PropView => {
+export const buildLamp = (scene: Scene, materials: ToonMaterials, name: string, color: string, at: Vector3, facing?: BlockFront): PropView => {
   const root = new TransformNode(name, scene);
   root.position.copyFrom(at);
-  const towardStreet = at.x > 0 ? -1 : 1;
+  // The arm reaches over the street: west at x > 0, east otherwise, or where the lamp says.
+  const dir = FACING_DIR[facing ?? (at.x > 0 ? "x-" : "x+")];
   const pole = MeshBuilder.CreateCylinder(`${name}-pole`, { height: 5.2, diameter: 0.14, tessellation: 10 }, scene);
   pole.parent = root;
   pole.position.y = 2.6;
   pole.material = materials.get("pole");
   const arm = MeshBuilder.CreateBox(`${name}-arm`, { width: 1.3, height: 0.08, depth: 0.1 }, scene);
   arm.parent = root;
-  arm.position.set(towardStreet * 0.6, 5.15, 0);
+  arm.position.set(dir.x * 0.6, 5.15, dir.z * 0.6);
+  if (dir.z !== 0) arm.rotation.y = Math.PI / 2;
   arm.material = materials.get("pole");
   const bulb = MeshBuilder.CreateBox(`${name}-bulb`, { width: 0.5, height: 0.07, depth: 0.22 }, scene);
   bulb.parent = root;
-  bulb.position.set(towardStreet * 1.05, 5.07, 0);
+  bulb.position.set(dir.x * 1.05, 5.07, dir.z * 1.05);
+  if (dir.z !== 0) bulb.rotation.y = Math.PI / 2;
   const mat = new StandardMaterial(`${name}-mat`, scene);
   mat.disableLighting = true;
   mat.emissiveColor = Color3.FromHexString(color);
@@ -292,6 +301,6 @@ export const buildLamp = (scene: Scene, materials: ToonMaterials, name: string, 
     glowing: [bulb],
     blockers: [],
     casters: [pole, arm],
-    light: { position: { x: at.x + towardStreet * 1.05, y: 4.6, z: at.z }, color, range: 14, intensity: 0.85 },
+    light: { position: { x: at.x + dir.x * 1.05, y: at.y + 4.6, z: at.z + dir.z * 1.05 }, color, range: 14, intensity: 0.85 },
   };
 };

@@ -36,7 +36,7 @@ const JOBS = [
   "Student cybernetyki",
   "Mechanik skuterów",
   "Barman w Neon Koi",
-  "Operator dźwigu w porcie",
+  "Operator dźwigu na Nabrzeżu",
   "Bezrobotny",
   "Dostawca makaronu",
 ] as const;

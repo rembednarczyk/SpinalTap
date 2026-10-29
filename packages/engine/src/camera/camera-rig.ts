@@ -28,6 +28,13 @@ export const aimedFov = (aim: number, zoom: number, base: number = BASE_FOV): nu
  */
 export const lookScaleFor = (fov: number, base: number = BASE_FOV): number => Math.tan(fov / 2) / Math.tan(base / 2);
 
+/**
+ * Distance along a ray to the first static geometry of the world (ADR-0045), or null within
+ * `maxDist`: the camera's view of what the scene's meshes do not stand for (the map's buildings
+ * and the terrain live in the simulation). The app supplies it; the camera only asks.
+ */
+export type CameraOccluder = (origin: Vec3, dir: Vec3, maxDist: number) => number | null;
+
 interface ViewOffset {
   x: number;
   y: number;
@@ -97,6 +104,7 @@ export class CameraRig {
   private meleeMesh: AbstractMesh | null = null;
   private readonly materials: ToonMaterials;
   private reference: { position: Vector3; target: Vector3 } | null = null;
+  private occluder: CameraOccluder | null = null;
   onBodyVisibility: (visible: boolean) => void = () => {};
 
   constructor(
@@ -196,6 +204,11 @@ export class CameraRig {
     this.placeholderGun = null;
   }
 
+  /** What else stops the TPP camera besides the scene's blockers (null: the blockers alone). */
+  setOccluder(occluder: CameraOccluder | null): void {
+    this.occluder = occluder;
+  }
+
   setMode(mode: CameraMode): void {
     this.mode = mode;
   }
@@ -288,6 +301,9 @@ export class CameraRig {
     if (distance > 0.01) {
       const hit = this.scene.pickWithRay(new Ray(shoulder, back, distance + WALL_MARGIN), this.isBlocker);
       if (hit?.hit) distance = Math.max(0.2, Math.min(distance, hit.distance - WALL_MARGIN));
+      // Buildings and the terrain of the map (ADR-0045): the simulation's own ray.
+      const t = this.occluder?.({ x: shoulder.x, y: shoulder.y, z: shoulder.z }, { x: back.x, y: back.y, z: back.z }, distance + WALL_MARGIN) ?? null;
+      if (t !== null) distance = Math.max(0.2, Math.min(distance, t - WALL_MARGIN));
     }
     // Pull in immediately, ease back out.
     this.currentDistance = distance < this.currentDistance ? distance : this.currentDistance + (distance - this.currentDistance) * Math.min(1, dt * 8);

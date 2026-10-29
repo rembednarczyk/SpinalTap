@@ -22,6 +22,8 @@ interface Member {
 }
 
 export interface CrowdViewsDeps {
+  /** How far the picture lifts feet standing at (x, y, z) (sidewalks, ADR-0041/0045); default the old street's. */
+  readonly lift?: (x: number, y: number, z: number) => number;
   readonly scene: Scene;
   readonly materials: ToonMaterials;
   /** Where the camera is (ground plane). */
@@ -85,7 +87,7 @@ export class CrowdViews {
       template = buildPuppet(crowdLook(view.look), view.umbrella);
       this.templates.set(key, template);
     }
-    this.members.set(id, { template, umbrella: view.umbrella, transform: t, state: freshPuppet(), lift: groundLift(t.position.x, t.position.y, t.position.z), offset: 0, shown: false });
+    this.members.set(id, { template, umbrella: view.umbrella, transform: t, state: freshPuppet(), lift: (this.deps.lift ?? groundLift)(t.position.x, t.position.y, t.position.z), offset: 0, shown: false });
     this.dirty = true;
   }
 
@@ -133,7 +135,7 @@ export class CrowdViews {
       any = true;
       const t = m.transform;
       stepPuppet(m.state, t.speed, t.crouch ?? 0, dt);
-      m.lift = easeLift(m.lift, groundLift(p.x, p.y, p.z), dt);
+      m.lift = easeLift(m.lift, (this.deps.lift ?? groundLift)(p.x, p.y, p.z), dt);
       const pose = puppetPose(m.state, t.speed, m.template.dims, m.umbrella);
       poseParts(this.parts, m.template.dims, pose, p.x, p.y + m.lift, p.z, t.yaw);
       this.write(m);

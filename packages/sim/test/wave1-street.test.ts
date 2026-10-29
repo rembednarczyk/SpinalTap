@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { type DomainEvents, HEAT_SEARCH_SECONDS, NO_HEAT, type SaveSnapshot, WITNESS_CALL_SECONDS } from "@seki/core";
+import { type DomainEvents, HEAT_SEARCH_SECONDS, NO_HEAT, type SaveSnapshot, type Vec3, WITNESS_CALL_SECONDS } from "@seki/core";
 import {
   COWER_SECONDS,
   FLEE_SECONDS,
@@ -8,15 +8,18 @@ import {
   SPAWN_MIN,
   Simulation,
   gangerEntity,
+  ground,
   inPlayerView,
+  spotNear,
   stateHash,
 } from "../src";
-import { byKey, collect, input, run, teleportPlayer, streetSim } from "./helpers";
+import { alleySim, byKey, collect, input, run, teleportPlayer, streetSim } from "./helpers";
 
 // Long runs of the street (a 20 s search, four directions of spawns): roomy on a busy machine.
 vi.setConfig({ testTimeout: 20_000 });
 
-const at = (x: number, z: number, y = 0) => ({ x, y, z });
+/** A point on the ground (ADR-0045), or at height `y` when given. */
+const at = (x: number, z: number, y?: number): Vec3 => (y === undefined ? ground(x, z) : { x, y, z });
 const roundTrip = (s: SaveSnapshot): SaveSnapshot => JSON.parse(JSON.stringify(s)) as SaveSnapshot;
 const hash = (sim: Simulation) => stateHash(sim.snapshot(null, "t", ""));
 const flat = (a: { x: number; z: number }, b: { x: number; z: number }) => Math.hypot(a.x - b.x, a.z - b.z);
@@ -35,22 +38,24 @@ const fireUp = (sim: Simulation) => {
 
 describe("last known position (ADR-0029)", () => {
   it("a ganger that lost the player goes where it last saw them, looks around, then goes home", () => {
-    const sim = streetSim({ seed: 3 });
+    const sim = alleySim({ seed: 3 });
+    sim.step();
     tough(sim);
-    const home = at(0, 0);
-    const g = gangerEntity(90001, { key: "watcher", position: home, yaw: 0 }, null, 80, "shinsekai-7");
+    // On the deptak west of Neon Koi, by the passage to the yards behind it (ADR-0045).
+    const home = at(292, -84);
+    const g = gangerEntity(90001, { key: "watcher", position: home, yaw: 0 }, null, 80, "krakowskie-2-0");
     sim.world.add(g);
     const seen = collect<DomainEvents["AwarenessChanged"]>(sim, "AwarenessChanged");
-    teleportPlayer(sim, at(0, 8), Math.PI);
+    teleportPlayer(sim, at(292, -91), Math.PI);
     for (let i = 0; i < 60 && !g.ai!.alerted; i++) sim.step();
     expect(g.ai!.alerted).toBe(true);
-    // Into the alley behind the west block, out of its sight, long enough for the trail to go cold.
-    const hide = at(-10, 16);
+    // Into the passage behind the houses, out of its sight, long enough for the trail to go cold.
+    const hide = spotNear(283, -108);
     teleportPlayer(sim, hide, 0);
     run(sim, 2 * SIM_HZ);
     expect(flat(g.ai!.lastKnown!, hide)).toBeLessThan(0.5);
-    // Then far away: it still goes to the alley, not to where the player really is.
-    teleportPlayer(sim, at(0, -36), 0);
+    // Then far away in the yards: it still goes to the passage, not to where the player really is.
+    teleportPlayer(sim, spotNear(330, -150), 0);
     let searchAt: { x: number; z: number } | null = null;
     for (let i = 0; i < 20 * SIM_HZ && !searchAt; i++) {
       sim.step();
@@ -75,7 +80,7 @@ describe("last known position (ADR-0029)", () => {
     const sim = streetSim({ seed: 3 });
     tough(sim);
     const guard = byKey(sim, "guard")!;
-    guard.ai!.lastKnown = at(-2, 20);
+    guard.ai!.lastKnown = { x: guard.position.x + 0.5, y: guard.position.y, z: guard.position.z - 19.5 };
     guard.ai!.search = 0;
     run(sim, 60);
     const restored = Simulation.fromSnapshot(roundTrip(sim.snapshot(null, "s", "")));
@@ -131,14 +136,14 @@ describe("the crowd (ADR-0029)", () => {
 });
 
 describe("the street people of ADR-0026 in the crowd", () => {
-  it("everyone on Ulica Kanałowa and at the market stalls reacts to a shot nearby", () => {
+  it("everyone on the Rynek and at the market stalls reacts to a shot nearby", () => {
     for (const keys of [["hideo", "tetsu", "mei", "sachiko"], ["kenta", "fumiko", "goro"]]) {
       for (const key of keys) {
         const sim = streetSim({ seed: 7 });
         const first = byKey(sim, key);
         // Stream the person's chunk in: stand on them first, then step back.
         const spot = first?.position ?? sim.streamer.chunks.flatMap((c) => c.actors).find((a) => a.spawn.key === key)!.spawn.position;
-        teleportPlayer(sim, at(spot.x, spot.z), 0);
+        teleportPlayer(sim, spot, 0);
         sim.step();
         const npc = byKey(sim, key)!;
         teleportPlayer(sim, at(npc.position.x + 2, npc.position.z, npc.position.y), 0);
@@ -204,10 +209,10 @@ describe("witnesses, the call and the heat (ADR-0028, ADR-0029)", () => {
 
   it("a witness who runs out of the loaded world does not get through", () => {
     const { sim, reports } = shootInFrontOfUme();
-    // Far enough that Shinsekai unloads: Ume goes to sleep with her chunk, her call with her.
-    teleportPlayer(sim, at(110, 100), 0);
+    // Far enough that the deptak's chunk unloads: Ume goes to sleep with it, her call with her.
+    teleportPlayer(sim, at(60, 40), 0);
     run(sim, 2);
-    expect(sim.streamer.isLoaded("shinsekai-7")).toBe(false);
+    expect(sim.streamer.isLoaded("krakowskie-2-0")).toBe(false);
     run(sim, (WITNESS_CALL_SECONDS + 1) * SIM_HZ);
     expect(reports).toHaveLength(0);
   });
@@ -224,8 +229,8 @@ describe("witnesses, the call and the heat (ADR-0028, ADR-0029)", () => {
     expect(g.faction).toBe("hebi");
     expect(flat(g.position, sim.player()!.position)).toBeGreaterThanOrEqual(SPAWN_MIN);
     expect(heat.some((h) => h.searching)).toBe(true);
-    // Away down Ulica Kanałowa, out of everyone's sight: the search runs out and the heat goes.
-    teleportPlayer(sim, at(40, 78), Math.PI / 2);
+    // Away into the Old Town, out of everyone's sight: the search runs out and the heat goes.
+    teleportPlayer(sim, at(600, 0), Math.PI / 2);
     run(sim, (HEAT_SEARCH_SECONDS[1] + 1) * SIM_HZ);
     expect(sim.domain.heat).toEqual(NO_HEAT);
     expect(heat.at(-1)).toMatchObject({ level: 0, previous: 1, searching: false });
@@ -243,12 +248,14 @@ describe("witnesses, the call and the heat (ADR-0028, ADR-0029)", () => {
   });
 
   it("a reinforcement never comes in where the player looks", () => {
+    // On the deptak between the clinic and Neon Koi.
+    const STREET = { x: 300, z: -83 };
     const base = streetSim({ seed: 6 });
     const snap = base.snapshot(null, "t", "");
-    const heat = { level: 2 as const, faction: "hebi" as const, searching: true, lastKnown: at(0, -20), searchLeft: 30, cooldown: 0 };
+    const heat = { level: 2 as const, faction: "hebi" as const, searching: true, lastKnown: at(STREET.x, STREET.z), searchLeft: 30, cooldown: 0 };
     for (const yaw of [0, Math.PI / 2, Math.PI, -Math.PI / 2]) {
       const sim = Simulation.fromSnapshot({ ...snap, domain: { ...snap.domain, heat } });
-      teleportPlayer(sim, at(0, -20), yaw);
+      teleportPlayer(sim, at(STREET.x, STREET.z), yaw);
       const spawned: { x: number; z: number; inView: boolean }[] = [];
       for (let i = 0; i < 10 * SIM_HZ; i++) {
         const before = new Set([...sim.world].filter((e) => e.security).map((e) => e.id));
@@ -257,12 +264,12 @@ describe("witnesses, the call and the heat (ADR-0028, ADR-0029)", () => {
           if (e.security && !before.has(e.id)) spawned.push({ ...e.position, inView: inPlayerView({ world: sim.world } as never, sim.player()!, e.position) });
         }
         // The player stands still and looks the same way.
-        teleportPlayer(sim, at(0, -20), yaw);
+        teleportPlayer(sim, at(STREET.x, STREET.z), yaw);
       }
       expect(spawned.length).toBeGreaterThan(0);
       for (const s of spawned) {
         expect(s.inView).toBe(false);
-        expect(flat(s, at(0, -20))).toBeGreaterThanOrEqual(SPAWN_MIN);
+        expect(flat(s, at(STREET.x, STREET.z))).toBeGreaterThanOrEqual(SPAWN_MIN);
       }
     }
   });

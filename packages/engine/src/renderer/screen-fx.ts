@@ -1,6 +1,6 @@
 import { type AbstractMesh, Color4, Vector3 } from "../babylon";
 import type { EffectDescriptor, EntityId, HackTargetKind, Transform, Vec3 } from "@seki/core";
-import type { DistrictId } from "@seki/sim";
+import { type DistrictId, STEAM_VENTS } from "@seki/sim";
 import type { CameraRig } from "../camera/camera-rig";
 import { Effects } from "../effects/effects";
 import { FlashLimiter } from "../effects/flash-limiter";
@@ -62,6 +62,8 @@ export interface ScreenFxDeps {
   readonly cameraTarget: () => EntityId | null;
   /** Every entity the scanner may outline. */
   readonly scanTargets: (visit: ScanVisitor) => void;
+  /** Multiplies the fog density of every look (1 in the game; the map preview sees further, ADR-0044). */
+  readonly fogScale?: number;
 }
 
 const v3 = (p: { x: number; y: number; z: number }) => new Vector3(p.x, p.y, p.z);
@@ -113,9 +115,10 @@ export class ScreenFx {
     this.rain = stage.options.reference ? null : createRain(scene);
     this.splashes = stage.options.reference || !tier.splashes ? null : createSplashes(scene);
     if (!stage.options.reference) {
-      // Manhole in the street and the vent behind the car wash.
-      createSteam(scene, new Vector3(1.8, 0.05, 5.5), new Color4(0.6, 0.74, 0.85, 0.3), 22);
-      createSteam(scene, new Vector3(-5.2, 1.45, 44), new Color4(0.8, 0.58, 0.64, 0.26), 14);
+      // The manhole on the deptak and the vent behind the car wash (ADR-0045).
+      const [manhole, vent] = STEAM_VENTS;
+      if (manhole) createSteam(scene, new Vector3(manhole.x, manhole.y, manhole.z), new Color4(0.6, 0.74, 0.85, 0.3), 22);
+      if (vent) createSteam(scene, new Vector3(vent.x, vent.y, vent.z), new Color4(0.8, 0.58, 0.64, 0.26), 14);
     }
   }
 
@@ -210,7 +213,9 @@ export class ScreenFx {
   private applyLook(): void {
     const { materials, atmosphere, farCity, signage } = this.deps;
     const p = this.palette.value;
-    const rig = rigWithPalette(rigForDaylight(this.daylight), p, this.daylight);
+    const look = rigWithPalette(rigForDaylight(this.daylight), p, this.daylight);
+    const scale = this.fogScale ?? this.deps.fogScale ?? 1;
+    const rig = scale === 1 ? look : { ...look, fogDensity: look.fogDensity * scale };
     materials.setRig(rig);
     materials.setRimTint(p.rim, p.rimWeight * (1 - 0.5 * Math.max(0, Math.min(1, this.daylight))));
     atmosphere.setDaylight(rig, this.daylight);
@@ -230,6 +235,14 @@ export class ScreenFx {
       this.snapPalette = false;
     }
     if (this.palette.update(dt)) this.applyLook();
+  }
+
+  private fogScale: number | null = null;
+
+  /** Multiplies the fog density from now on (the map preview's overview shots, ADR-0044). */
+  setFogScale(scale: number): void {
+    this.fogScale = scale;
+    this.applyLook();
   }
 
   /** District whose colours are on screen (debug and tests). */
@@ -345,7 +358,9 @@ export class ScreenFx {
     this.grading.update(dt);
     this.deps.speedLines.update(dt);
     this.rain?.follow(camera.camera.position);
-    this.splashes?.follow(camera.camera.position);
+    const target = this.deps.cameraTarget();
+    const feet = (target === null ? null : this.deps.actors.transformOf(target)?.position.y) ?? camera.camera.position.y - 1.6;
+    this.splashes?.follow(camera.camera.position, feet);
   }
 
   /** A new game or a load lands anywhere: lasers off, the next district's colours at once, no heat. */

@@ -2,6 +2,8 @@ import type { Vec3 } from "../math/vec3";
 import type { DomainState } from "../state/domain-state";
 
 /**
+ * v15: the world is Lublin (ADR-0045): no new fields, but every position of an older save is in
+ * the old city's coordinates; the migration wakes the player in Mori's clinic again.
  * v14: automatic doors that are not shut and at rest (ADR-0038).
  * v13: buffs, capacity shards and the disguise (ADR-0033).
  * v12: a metro ride in progress, the street encounters played (ADR-0034); the contract's variation
@@ -10,7 +12,7 @@ import type { DomainState } from "../state/domain-state";
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 14;
+export const SAVE_SCHEMA_VERSION = 15;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {

@@ -14,6 +14,8 @@ export interface ToonPreset {
   readonly surface?: "concrete" | "metal";
   /** Vertex alpha carries flags (ADR-0027): 1 painted, 0.5 wet, 0 self-lit. */
   readonly vertexFlags?: boolean;
+  /** City from map data (ADR-0044): facades or ground surfaces painted from two UV channels. */
+  readonly city?: "facade" | "ground";
 }
 
 const CHAR = { rim: "#9ff6ff", rimStrength: 0.55, outline: true, fill: 0.55 } as const;
@@ -87,6 +89,12 @@ export const PRESETS = {
   importedProp: { base: "#ffffff", rimStrength: 0.12, rim: "#8fb3c9" },
   // City kit buildings and vehicles (ADR-0022): colour from the swatch palette.
   cityKit: { base: "#ffffff", gloss: 0.12, rimStrength: 0.1, rim: "#8fb3c9" },
+  // Buildings and ground of the city from map data (ADR-0044): colour per vertex, patterns from the UVs.
+  facade: { base: "#ffffff", gloss: 0.12, rimStrength: 0.08, rim: "#8fb3c9", vertexFlags: true, city: "facade" },
+  mapGround: { base: "#ffffff", gloss: 0.2, rimStrength: 0, vertexFlags: true, city: "ground" },
+  mapTerrain: { base: "#ffffff", gloss: 0, rimStrength: 0, vertexFlags: true, city: "ground" },
+  // Street furniture of the map city (ADR-0047): thin instances and far meshes coloured per vertex, self-lit glass and neon in the alpha.
+  streetProp: { base: "#ffffff", gloss: 0.25, rimStrength: 0.14, rim: "#8fb3c9", vertexFlags: true },
 } as const satisfies Record<string, ToonPreset>;
 
 export type PresetName = keyof typeof PRESETS;

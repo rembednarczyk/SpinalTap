@@ -134,7 +134,7 @@ describe("scanner view models", () => {
   it("tells people, devices and cameras apart", () => {
     const civ = { ...base, id: 31, health: { current: 50, max: 50 }, civilian: {}, faction: "civilians" } as unknown as Entity;
     expect(scanKind(civ)).toBe("person");
-    expect(scanTargetVm(civ)).toMatchObject({ kind: "person", name: passerBy(31).name, faction: "Mieszkańcy Shinsekai", hostile: false });
+    expect(scanTargetVm(civ)).toMatchObject({ kind: "person", name: passerBy(31).name, faction: "Mieszkańcy Lublina", hostile: false });
     const enemy = { ...base, id: 32, health: { current: 80, max: 80 }, ai: {}, enemy: { type: "tessen_guard" }, faction: "tessen" } as unknown as Entity;
     expect(scanTargetVm(enemy)).toMatchObject({ name: "Strażnik Tessen", hostile: true });
     const kaito = { ...base, id: 33, health: { current: 50, max: 50 }, interactable: { kind: "dialogue", dialogueId: "fixer" } } as unknown as Entity;

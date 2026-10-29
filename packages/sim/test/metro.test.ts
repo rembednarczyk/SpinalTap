@@ -15,6 +15,7 @@ import {
   stateHash,
 } from "../src";
 import { lineOfSight } from "../src/world/hitscan";
+import { circleTouchesPrism } from "../src/world/prism";
 import { collect, input, run, teleportPlayer } from "./helpers";
 
 const roundTrip = (s: SaveSnapshot): SaveSnapshot => JSON.parse(JSON.stringify(s)) as SaveSnapshot;
@@ -52,17 +53,22 @@ describe("metro platforms (ADR-0034)", () => {
     const sim = sceneAt(s.arrival);
     const kiosk = [...sim.world].find((e) => e.interactable?.kind === "metro" && e.interactable.station === s.id)!;
     expect(kiosk.solid).toBeDefined();
-    const solids = [...sim.world].filter((e) => e.solid && e !== kiosk).map((e) => e.solid!);
     const box = kiosk.solid!;
-    const overlaps = solids.filter((b) => b.min.x < box.max.x && b.max.x > box.min.x && b.min.z < box.max.z && b.max.z > box.min.z && b.min.y < box.max.y && b.max.y > box.min.y);
+    // A building of the map (ADR-0045) is its prisms, not the box round them.
+    const overlaps = [...sim.world].filter((e) => {
+      if (!e.solid || e === kiosk) return false;
+      if (e.prisms) return e.prisms.some((p) => p.bottom < box.max.y && p.top > box.min.y && circleTouchesPrism(p, s.kiosk.x, s.kiosk.z, KIOSK_SIZE.z / 2 - 0.05));
+      const b = e.solid;
+      return b.min.x < box.max.x && b.max.x > box.min.x && b.min.z < box.max.z && b.max.z > box.min.z && b.min.y < box.max.y && b.max.y > box.min.y;
+    });
     expect(overlaps).toEqual([]);
     // Its back is to a wall: a solid within 0.1 m behind it.
     const back = { x: s.kiosk.x - Math.sin(s.yaw) * (KIOSK_SIZE.z / 2 + 0.1), y: 1, z: s.kiosk.z - Math.cos(s.yaw) * (KIOSK_SIZE.z / 2 + 0.1) };
-    expect(lineOfSight(sim.world, { ...back, y: 0.5 }, { ...back, y: 1.5 })).toBe(false);
+    expect(lineOfSight(sim.world, { ...back, y: s.kiosk.y + 0.5 }, { ...back, y: s.kiosk.y + 1.5 })).toBe(false);
     // The rider comes up on open ground, with room to walk away.
     for (const [dx, dz] of [[0, 0], [0.5, 0], [-0.5, 0], [0, 0.4]] as const) {
       const p = { x: s.arrival.x + dx, y: 0, z: s.arrival.z + dz };
-      expect(lineOfSight(sim.world, { ...p, y: 0.3 }, { ...p, y: 1.7 })).toBe(true);
+      expect(lineOfSight(sim.world, { ...p, y: s.arrival.y + 0.3 }, { ...p, y: s.arrival.y + 1.7 })).toBe(true);
     }
     // Nothing anyone else uses is within 3 m of the kiosk or the arrival point.
     for (const p of busyPoints()) {
@@ -83,7 +89,7 @@ describe("metro platforms (ADR-0034)", () => {
 
 const atKiosk = (sim: Simulation, id: Parameters<typeof metroStation>[0]) => {
   const s = metroStation(id);
-  teleportPlayer(sim, { x: s.arrival.x, y: 0, z: s.arrival.z }, s.yaw + Math.PI);
+  teleportPlayer(sim, s.arrival, s.yaw + Math.PI);
   run(sim, 2);
 };
 
@@ -135,7 +141,7 @@ describe("riding the metro (ADR-0034)", () => {
     expect(sim.player()).toBeUndefined();
     expect(sim.domain.metro.ride).toMatchObject({ from: "shinsekai", to: "doki" });
     run(sim, 3);
-    expect(sim.streamer.isLoaded("doki-yard")).toBe(true);
+    expect(sim.streamer.isLoaded("nabrzeze-1-1")).toBe(true);
     run(sim, metroRideSeconds("shinsekai", "doki") * SIM_HZ);
     expect(arrived).toEqual([{ station: "doki" }]);
     const p = sim.player()!;

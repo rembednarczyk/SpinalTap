@@ -16,12 +16,12 @@ import {
   pendingScene,
 } from "@seki/core";
 import { NarrativeRuntime } from "@seki/narrative";
-import { RenderSync, SIM_HZ, Simulation, WORLD_CHUNKS } from "@seki/sim";
+import { RenderSync, SIM_HZ, Simulation, WORLD_SCENERY } from "@seki/sim";
 import { type CharacterTab, type PreviewRect, type RadioStationId, type Screen, type SettingsVm, type UiIntents, patchUi } from "@seki/ui";
 import { type Controllers, createControllers } from "./controllers/compose";
 import { isCalm } from "./controllers/hud-sync";
 import { pushToastTimed } from "./controllers/shared";
-import { buildDistrictMap, sidewalkProps } from "./minimap";
+import { buildCityMap } from "./city-map";
 import type { GameSessionDeps } from "./session-deps";
 
 export { RECALL_CALM_TICKS } from "./controllers/hud-sync";
@@ -41,11 +41,11 @@ export class GameSession implements UiIntents {
 
   constructor(private readonly deps: GameSessionDeps) {
     this.narrative = new NarrativeRuntime(deps.story, (cmd) => this.simulation.enqueue(cmd));
-    this.renderSync = new RenderSync(deps.render);
+    // Lublin's terrain, surfaces and buildings are drawn for good, streamed in or not (ADR-0045).
+    this.renderSync = new RenderSync(deps.render, deps.scenery === false ? [] : WORLD_SCENERY);
     this.simulation = Simulation.create({ seed: deps.seed(), bus: this.bus, crowd: deps.crowd ?? "off" });
-    // The whole city, so the map keeps working past Shinsekai (the market deck, the footbridge, ADR-0021).
-    // Sidewalks (ADR-0041) are drawn as the street strips they are.
-    patchUi(deps.ui, { map: buildDistrictMap([...WORLD_CHUNKS.flatMap((c) => c.props), ...sidewalkProps()]) });
+    // The whole city (ADR-0045): Lublin's streets, buildings and names under the game's decks and links (ADR-0021).
+    patchUi(deps.ui, { map: buildCityMap() });
     this.c = createControllers(deps, {
       bus: this.bus,
       narrative: this.narrative,
@@ -127,7 +127,7 @@ export class GameSession implements UiIntents {
     this.narrative.resetState();
     this.c.hints.start();
     this.setScreen("playing");
-    pushToastTimed(this.deps.ui, "system", "Shinsekai, kwartał 7", "Budzisz się na fotelu w klinice doktora Mori. Nie pamiętasz swojego imienia. Obok czeka Kaito.");
+    pushToastTimed(this.deps.ui, "system", "Krakowskie Przedmieście", "Budzisz się na fotelu w klinice doktora Mori, przy deptaku. Nie pamiętasz swojego imienia. Obok czeka Kaito.");
   }
 
   resume(): void {

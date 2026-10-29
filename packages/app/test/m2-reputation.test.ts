@@ -3,6 +3,7 @@ import { type AudioPort, type CameraMode, EMPTY_INPUT, type EffectDescriptor, ty
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
 import { createUiStore } from "@seki/ui";
+import { KRAKOWSKIE_SITE_POINTS } from "@seki/sim";
 import { GameSession } from "../src/game-session";
 
 const render: RenderPort = {
@@ -35,7 +36,7 @@ const sessionWith = async (reputation: Partial<ReputationState>) => {
 const standNextTo = (s: GameSession, key: string) => {
   const npc = [...s.sim.world].find((e) => e.key === key)!;
   const p = s.sim.player()!;
-  p.position = { x: npc.position.x + 1.5, y: 0, z: npc.position.z };
+  p.position = { x: npc.position.x + 1.5, y: npc.position.y, z: npc.position.z };
   p.prevPosition = p.position;
   p.yaw = -Math.PI / 2;
 };
@@ -69,7 +70,8 @@ describe("M2: NPCs react to reputation", () => {
   it("a friendly gang lets Seki walk into the alley", async () => {
     const { session, ui } = await sessionWith({ hebi: 30 });
     const p = session.sim.player()!;
-    p.position = { x: 0, y: 0, z: 33 };
+    // At the mouth of the yard behind the car wash on Plac Łokietka, in view of the guard.
+    p.position = KRAKOWSKIE_SITE_POINTS.car_wash(0, 33);
     p.prevPosition = p.position;
     steps(session, 180);
     expect(p.health?.current).toBe(p.health?.max);

@@ -16,7 +16,7 @@ KAITO: Słyszałem. Klient nie zapłaci za nic, więc ja też nie. Następnym ra
 -> END
 
 === phone_hana_offer ===
-HANA: Na targu coś się ruszyło. Jak masz chwilę, przyjdź do mojego stoiska.
+HANA: Na Podzamczu coś się ruszyło. Jak masz chwilę, przyjdź do mojego stoiska.
 -> END
 
 === phone_hana_paid ===
@@ -28,7 +28,7 @@ HANA: Nic z tego nie będzie. Przyjdź, jak ochłoniesz, pogadamy o następnym.
 -> END
 
 === phone_genzo_offer ===
-GENZO: Port potrzebuje kogoś, kto chodzi cicho. Kontener przy nabrzeżu, jak zwykle.
+GENZO: Nabrzeże potrzebuje kogoś, kto chodzi cicho. Kontener nad Bystrzycą, jak zwykle.
 -> END
 
 === phone_genzo_paid ===

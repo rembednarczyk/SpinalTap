@@ -1,3 +1,5 @@
+import { FACADE_GLSL, GROUND_GLSL } from "./toon-city";
+
 /** Number of point lights the toon shader evaluates per fragment. */
 export const MAX_POINT_LIGHTS = 8;
 
@@ -17,6 +19,10 @@ varying vec2 vUV;
 #ifdef VERTEXCOLOR
 attribute vec4 color;
 varying vec4 vColor;
+#endif
+#ifdef UV2
+attribute vec2 uv2;
+varying vec2 vUV2;
 #endif
 #include<instancesDeclaration>
 #include<bonesDeclaration>
@@ -46,6 +52,9 @@ void main(void) {
 #ifdef VERTEXCOLOR
   vColor = color;
 #endif
+#ifdef UV2
+  vUV2 = uv2;
+#endif
   gl_Position = viewProjection * wp;
 }
 `;
@@ -65,6 +74,9 @@ varying vec2 vUV;
 #endif
 #ifdef VERTEXCOLOR
 varying vec4 vColor;
+#endif
+#ifdef UV2
+varying vec2 vUV2;
 #endif
 #ifdef TEXTURE
 uniform sampler2D baseSampler;
@@ -131,7 +143,7 @@ float gridLine(float x, float period, float w) {
   float d = abs(fract(x / period + 0.5) - 0.5) * period;
   return 1.0 - step(w, d);
 }
-
+${FACADE_GLSL}${GROUND_GLSL}
 #if defined(CONCRETE_PANELS) || defined(METAL_PANELS)
 /**
  * Procedural surface of bare structures (ADR-0027): poured concrete with formwork seams, tie
@@ -257,6 +269,12 @@ void main(void) {
 #endif
 #endif
   float dist = length(cameraPosition - vWorldPos);
+#ifdef FACADE
+  albedo = facadePaint(albedo, vUV, vUV2, n, vWorldPos, dist);
+#endif
+#ifdef MAP_GROUND
+  albedo = groundPaint(albedo, vUV, vUV2, vWorldPos, dist);
+#endif
 #if defined(CONCRETE_PANELS) || defined(METAL_PANELS)
   albedo = surfacePattern(albedo, vWorldPos, n, dist);
 #endif
@@ -347,7 +365,19 @@ void main(void) {
   if (texel.a > 0.06 && texel.a < 0.25) glowColor = shopGlass(glowColor, vWorldPos, n);
   color = mix(color, glowColor * selfLit, selfLitMask);
 #endif
+#ifdef FACADE
+  // Windows and shop fronts (ADR-0044): dark glass keeps the street lights' highlights, lit
+  // glass is self-lit; the lower floors catch the neon of the street in the district colour.
+  float night = clamp(selfLit * 2.0 - 1.0, 0.0, 1.0);
+  float facadeGlow;
+  vec4 glass = facadeGlass(vUV, vUV2, n, v, dist, night, facadeGlow);
+  color = mix(color, glass.rgb + spec * 0.6 * (1.0 - facadeGlow), glass.a);
+  if (abs(n.y) < 0.5) color += albedo * mix(vec3(1.0, 0.45, 0.75), rimTint.rgb, rimTint.a) * (1.0 - smoothstep(0.0, 9.0, vUV.y)) * 0.22 * night * (1.0 - glass.a);
+#endif
   float fog = 1.0 - exp(-pow(dist * fogDensity, 2.0));
+#ifdef FACADE
+  fog *= 1.0 - 0.4 * facadeGlow;
+#endif
 #ifdef CITYKIT
   fog *= 1.0 - 0.35 * selfLitMask;
 #endif

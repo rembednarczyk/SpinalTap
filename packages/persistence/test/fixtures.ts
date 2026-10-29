@@ -17,6 +17,13 @@ export const snapshot = (overrides: Partial<SaveSnapshot> = {}): SaveSnapshot =>
   ...overrides,
 });
 
+/** Where the v15 migration (ADR-0045) wakes the player of an older save: the chair in Mori's clinic, in Lublin. */
+export const CLINIC_CHAIR = { x: 319.6, y: -0.05, z: -64.86 } as const;
+
+/** What the v15 migration leaves of an older save's entities: the player on the chair, nobody else. */
+export const wokenInClinic = (entities: SaveSnapshot["entities"]): SaveSnapshot["entities"] =>
+  entities.filter((e) => e.key === "player").map((e) => ({ ...e, position: CLINIC_CHAIR, yaw: Math.PI / 2, pitch: 0, alerted: false }));
+
 /** What v6 (world streaming) wrote: a medkit counter, no day clock, no equipment. */
 export const v6Payload = (medkits = 3) => {
   const s = snapshot();

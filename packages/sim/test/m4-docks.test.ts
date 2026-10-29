@@ -29,17 +29,27 @@ import {
   routeAcrossLevels,
   sniperEntity,
   stateHash,
+  DOCKS_PLACE,
+  docks,
+  ground,
+  market,
 } from "../src";
 import { byKey, collect, input, run, teleportPlayer, debriefExtras } from "./helpers";
 
-const at = (x: number, z: number, y = 0) => ({ x, y, z });
+/**
+ * The docks keep their own coordinates, moved to the Bystrzyca by `DOCKS_PLACE` (ADR-0045): `at`
+ * is a point of the docks, `w` a point on the ground in the world (next to a character).
+ */
+const at = (x: number, z: number, y = 0) => docks(x, y, z);
+const w = (x: number, z: number) => ground(x, z);
+const D = DOCKS_PLACE;
 const roundTrip = (s: SaveSnapshot): SaveSnapshot => JSON.parse(JSON.stringify(s)) as SaveSnapshot;
 const reload = (sim: Simulation): Simulation => Simulation.fromSnapshot(roundTrip(sim.snapshot(null, "mid", "")));
 const hash = (sim: Simulation) => stateHash(sim.snapshot(null, "t", ""));
 
 /** Next to Genzō in the yard; one step streams the docks in around the player. */
 const toGenzo = (sim: Simulation) => {
-  teleportPlayer(sim, at(GENZO_SPOT.x + 0.4, GENZO_SPOT.z - 2), 0);
+  teleportPlayer(sim, w(GENZO_SPOT.x + 0.4, GENZO_SPOT.z - 2), 0);
   sim.step();
 };
 
@@ -64,41 +74,41 @@ const complete = (sim: Simulation) => {
 };
 
 describe("streaming into the docks (ADR-0024)", () => {
-  it("walks from Ulica Kanałowa through the passage into the yard, without the other districts", () => {
+  it("walks in from the riverside through the yard's gate, with no other district around (ADR-0045)", () => {
     const sim = Simulation.create({ seed: 2 });
-    teleportPlayer(sim, at(27, 78), 0);
+    teleportPlayer(sim, at(27, 84), 0);
     sim.step();
-    expect(sim.district).toBe("kanal");
-    expect(sim.streamer.loadedChunks).toContain("doki-yard");
-    // The passage is open: sprinting north crosses the street's north row.
-    for (let i = 0; i < 300 && sim.player()!.position.z < 104; i++) sim.step(input({ moveZ: 1, sprint: true }));
-    expect(sim.player()!.position.z).toBeGreaterThanOrEqual(104);
+    expect(sim.district).toBe("doki");
+    expect(sim.streamer.loadedChunks.every((id) => id.startsWith("nabrzeze-"))).toBe(true);
+    // The gate is open: sprinting north crosses the yard's south wall.
+    for (let i = 0; i < 300 && sim.player()!.position.z - D.z < 104; i++) sim.step(input({ moveZ: 1, sprint: true }));
+    expect(sim.player()!.position.z - D.z).toBeGreaterThanOrEqual(104);
     expect(sim.district).toBe("doki");
     expect(byKey(sim, "genzo")).toBeDefined();
-    teleportPlayer(sim, at(2, 160), Math.PI);
+    teleportPlayer(sim, at(2, 145), Math.PI);
     sim.step();
-    expect(sim.streamer.loadedChunks).toEqual(["doki-yard", "doki-quay"]);
+    expect(sim.streamer.loadedChunks).toEqual(["nabrzeze-1-1"]);
     expect(byKey(sim, "doker")).toBeDefined();
-    // Far enough from the yard, it sleeps too; back in the yard, Genzō is where he was.
-    teleportPlayer(sim, at(-10, 0, 0), 0);
+    // Back in town the docks sleep; in the yard again, Genzō is where he was.
+    teleportPlayer(sim, w(300, -84), 0);
     sim.step();
     expect(byKey(sim, "genzo")).toBeUndefined();
     toGenzo(sim);
     expect(byKey(sim, "genzo")!.position).toEqual(GENZO_SPOT);
   });
 
-  it("the docks chunks do not overlap any other chunk; the street's level graph leads in", () => {
-    const docks = WORLD_CHUNKS.filter((c) => c.district === "doki");
-    expect(docks.map((c) => c.id)).toEqual(["doki-yard", "doki-quay"]);
+  it("the docks lie in a chunk of the riverside that overlaps no other; the yard's level graph leads in from the gate", () => {
+    const docksChunks = WORLD_CHUNKS.filter((c) => c.district === "doki");
+    expect(docksChunks.map((c) => c.id)).toEqual(["nabrzeze-0-0", "nabrzeze-1-0", "nabrzeze-0-1", "nabrzeze-1-1"]);
     const overlap = (a: Rect, b: Rect) => a.minX < b.maxX && b.minX < a.maxX && a.minZ < b.maxZ && b.minZ < a.maxZ;
-    for (const d of docks) for (const c of WORLD_CHUNKS) if (c !== d) expect(overlap(d.bounds, c.bounds), `${d.id} / ${c.id}`).toBe(false);
+    for (const d of docksChunks) for (const c of WORLD_CHUNKS) if (c !== d) expect(overlap(d.bounds, c.bounds), `${d.id} / ${c.id}`).toBe(false);
     const sim = Simulation.create({ seed: 2 });
-    teleportPlayer(sim, at(40, 78), 0);
+    teleportPlayer(sim, at(27, 84), 0);
     sim.step();
-    // From the street up onto the warehouse roof: through the passage, not straight at it.
-    const route = routeAcrossLevels(sim.world, WORLD_NAV, at(40, 78), at(-30, 108, WAREHOUSE_TOP));
+    // From outside the gate up onto the warehouse roof: through the gate, not straight at it.
+    const route = routeAcrossLevels(sim.world, WORLD_NAV, at(27, 84), at(-30, 108, WAREHOUSE_TOP));
     expect(route).not.toBeNull();
-    expect(route!.next.z).toBeLessThan(90);
+    expect(route!.next.z - D.z).toBeLessThan(100);
   });
 
   it("a jump from the warehouse roof does not clear its outer parapet", () => {
@@ -110,15 +120,8 @@ describe("streaming into the docks (ADR-0024)", () => {
       run(sim, 50, input({ moveZ: 1, sprint: true }));
     }
     const p = sim.player()!.position;
-    expect(p.x).toBeGreaterThan(-38);
-    expect(p.y).toBeCloseTo(WAREHOUSE_TOP, 1);
-  });
-
-  it("the minimap's ground plate is still Shinsekai's street, not the docks' larger yard", () => {
-    const flats = WORLD_CHUNKS.flatMap((c) => c.props).filter((p) => !p.solid && p.view.kind === "block" && p.view.size.y <= 0.3);
-    const area = (p: (typeof flats)[number]) => (p.view.kind === "block" ? p.view.size.x * p.view.size.z : 0);
-    const ground = flats.reduce((best, p) => (area(p) > area(best) ? p : best));
-    expect(WORLD_CHUNKS[0]!.props).toContain(ground);
+    expect(p.x - D.x).toBeGreaterThan(-38);
+    expect(p.y - D.y).toBeCloseTo(WAREHOUSE_TOP, 1);
   });
 
   it("the level graph takes NPCs up the warehouse stairs and onto the crane", () => {
@@ -130,7 +133,7 @@ describe("streaming into the docks (ADR-0024)", () => {
     const crane = routeAcrossLevels(sim.world, WORLD_NAV, at(2, 130), SNIPER_PERCHES[2]!);
     expect(crane).not.toBeNull();
     // First towards the foot of the crane stairs, not straight up.
-    expect(crane!.next.y).toBe(0);
+    expect(crane!.next.y).toBeCloseTo(D.y, 5);
   });
 });
 
@@ -154,7 +157,7 @@ describe("escort (Mika to the boat)", () => {
     let alarmAt = -1;
     for (let i = 0; i < 80 * SIM_HZ && sim.domain.contracts.active?.status === "active"; i++) {
       const m = mika().position;
-      teleportPlayer(sim, at(m.x, m.z - 2.2), 0);
+      teleportPlayer(sim, w(m.x, m.z - 2.2), 0);
       sim.step();
       if (alarmAt < 0 && sim.domain.flags.includes(contractAlarmFlag(c.id))) {
         alarmAt = i;
@@ -197,7 +200,7 @@ describe("escort (Mika to the boat)", () => {
     const c = accept(sim, "escort");
     for (let i = 0; i < 60 * SIM_HZ && !sim.domain.flags.includes(contractAlarmFlag(c.id)); i++) {
       const m = byKey(sim, contractEscortKey(c.id))!.position;
-      teleportPlayer(sim, at(m.x, m.z - 2.2), 0);
+      teleportPlayer(sim, w(m.x, m.z - 2.2), 0);
       sim.step();
     }
     run(sim, 30);
@@ -221,7 +224,7 @@ describe("infiltration (data from the Tessen office)", () => {
     expect(officeGuards(sim, c)).toHaveLength(c.targets);
     expect(byKey(sim, contractItemKey(c.id))?.interactable?.prompt).toBe("Zgraj dane Tessen");
     const spot = DOKI_ITEM_SPOTS.tessen_office!;
-    teleportPlayer(sim, at(spot.x + 1.1, spot.z), -Math.PI / 2);
+    teleportPlayer(sim, w(spot.x + 1.1, spot.z), -Math.PI / 2);
     sim.step(input({ interact: true, crouch: true }));
     expect(sim.domain.contracts.active?.status).toBe("cleared");
     // Seen afterwards does not matter any more.
@@ -240,7 +243,7 @@ describe("infiltration (data from the Tessen office)", () => {
     const c = accept(sim, "infiltrate");
     const door = guard(sim, c, 1);
     // Eight metres in front of the door guard, standing.
-    teleportPlayer(sim, at(door.position.x + 8, door.position.z), -Math.PI / 2);
+    teleportPlayer(sim, w(door.position.x + 8, door.position.z), -Math.PI / 2);
     sim.step();
     expect(door.ai!.alerted).toBe(false);
     expect(door.ai!.suspicion).toBeGreaterThan(0);
@@ -255,7 +258,7 @@ describe("infiltration (data from the Tessen office)", () => {
     const c = accept(sim, "infiltrate");
     const quay = guard(sim, c, 2);
     // Behind the quay guard (he looks east, over the quay), crouched, three metres off.
-    teleportPlayer(sim, at(quay.position.x - 3, quay.position.z - 0.2), Math.PI / 2);
+    teleportPlayer(sim, w(quay.position.x - 3, quay.position.z - 0.2), Math.PI / 2);
     run(sim, 4 * SIM_HZ, input({ crouch: true }));
     expect(quay.ai!.alerted).toBe(false);
     expect(crew(sim, c).every((g) => !g.ai!.alerted)).toBe(true);
@@ -267,7 +270,7 @@ describe("hack (the quay terminal)", () => {
   const terminalSpot = () => DOKI_TERMINAL_SPOTS.quay_terminal!;
   const toTerminal = (sim: Simulation) => {
     const t = terminalSpot();
-    teleportPlayer(sim, at(t.x, t.z - 1.4), 0);
+    teleportPlayer(sim, w(t.x, t.z - 1.4), 0);
   };
   const start = (sim: Simulation): Contract => {
     toGenzo(sim);
@@ -311,14 +314,14 @@ describe("hack (the quay terminal)", () => {
     const c = start(sim);
     killCrew(sim, c);
     const t = terminalSpot();
-    teleportPlayer(sim, at(t.x, t.z - 12), 0);
+    teleportPlayer(sim, w(t.x, t.z - 12), 0);
     run(sim, HACK_GRACE_SECONDS * SIM_HZ - 1);
     expect(failed).toHaveLength(0);
     // Coming back in time resets the count.
     toTerminal(sim);
     sim.step();
     expect(sim.domain.contracts.active?.away).toBe(0);
-    teleportPlayer(sim, at(t.x, t.z - 12), 0);
+    teleportPlayer(sim, w(t.x, t.z - 12), 0);
     run(sim, HACK_GRACE_SECONDS * SIM_HZ);
     expect(failed.map((f) => f.reason)).toEqual(["connection-lost"]);
   });
@@ -340,7 +343,7 @@ describe("sniper AI", () => {
   const withSniper = (perch = 0) => {
     const sim = Simulation.create({ seed: 12 });
     toGenzo(sim);
-    const s = sniperEntity(9000, { key: "sniper", position: SNIPER_PERCHES[perch]!, yaw: 1 }, null, 70, "doki-quay");
+    const s = sniperEntity(9000, { key: "sniper", position: SNIPER_PERCHES[perch]!, yaw: 1 }, null, 70, "nabrzeze-1-1");
     sim.world.add(s);
     return { sim, s };
   };
@@ -350,7 +353,7 @@ describe("sniper AI", () => {
     const aims = collect<{ entityId: number; duration: number }>(sim, "SniperAimed");
     const shots = collect<{ shooterId: number }>(sim, "ShotFired");
     const t = DOKI_TERMINAL_SPOTS.quay_terminal!;
-    teleportPlayer(sim, at(t.x, t.z - 1.4), 0);
+    teleportPlayer(sim, w(t.x, t.z - 1.4), 0);
     sim.step();
     expect(aims).toEqual([{ entityId: s.id, targetId: sim.player()!.id, duration: SNIPER_AIM_TIME }]);
     run(sim, Math.round(SNIPER_AIM_TIME * SIM_HZ) - 2);
@@ -365,7 +368,7 @@ describe("sniper AI", () => {
     const aims = collect<{ duration: number }>(sim, "SniperAimed");
     const shots = collect<{ shooterId: number }>(sim, "ShotFired");
     const t = DOKI_TERMINAL_SPOTS.quay_terminal!;
-    teleportPlayer(sim, at(t.x, t.z - 1.4), 0);
+    teleportPlayer(sim, w(t.x, t.z - 1.4), 0);
     sim.step();
     run(sim, 30);
     // Into the Tessen office: walls all round.
@@ -384,7 +387,7 @@ describe("sniper AI", () => {
     run(sim, 8 * SIM_HZ);
     const far = SNIPER_PERCHES[1]!;
     expect(Math.hypot(s.position.x - far.x, s.position.z - far.z)).toBeLessThan(1);
-    expect(s.position.y).toBeCloseTo(WAREHOUSE_TOP, 1);
+    expect(s.position.y - D.y).toBeCloseTo(WAREHOUSE_TOP, 1);
   });
 
   it("from the crane it takes the stairs down and up to the roof", () => {
@@ -399,20 +402,20 @@ describe("sniper AI", () => {
       sim.step();
       lowest = Math.min(lowest, s.position.y);
     }
-    expect(lowest).toBeLessThan(0.5);
-    expect(s.position.y).toBeCloseTo(WAREHOUSE_TOP, 1);
+    expect(lowest - D.y).toBeLessThan(0.5);
+    expect(s.position.y - D.y).toBeCloseTo(WAREHOUSE_TOP, 1);
   });
 });
 
 describe("no sniper outside the docks", () => {
-  it("market and Shinsekai jobs never bring Tessen", () => {
+  it("market and Krakowskie jobs never bring Tessen", () => {
     for (const kind of ["eliminate", "retrieve", "protect"] as const) {
       const sim = Simulation.create({ seed: 4 });
-      teleportPlayer(sim, at(90.5, 74), 0);
+      teleportPlayer(sim, market(90.5, 0, 74), 0);
       sim.step();
       const c = accept(sim, kind);
       const site = CONTRACT_SITE_SPAWNS[c.siteId][0]!;
-      teleportPlayer(sim, at(site.x + 1, site.z), 0);
+      teleportPlayer(sim, w(site.x + 1, site.z), 0);
       sim.step();
       const types = crew(sim, c).map((e) => e.enemy?.type);
       expect(types).toHaveLength(c.targets);

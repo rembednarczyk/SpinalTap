@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { CorruptSaveError, SAVE_SCHEMA_VERSION, createDomainState } from "@seki/core";
 import { MIGRATIONS, checksum, decodeSave, encodeSave, findSchemaError, migrate, sanitizeItems } from "../src";
-import { snapshot, v1Payload, v6Payload, v7Payload } from "./fixtures";
+import { snapshot, v1Payload, v6Payload, v7Payload, wokenInClinic } from "./fixtures";
 
 const wrap = (payload: unknown) => {
   const text = JSON.stringify(payload);
@@ -152,7 +152,8 @@ describe("migrations", () => {
     const loaded = decodeSave("m3", wrap({ ...v5, version: 5 }));
     expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
     expect(loaded.streaming).toEqual({ loadedChunks: [] });
-    expect(loaded.entities).toEqual(v5.entities);
+    // Through v15 (ADR-0045): the player wakes in the clinic in Lublin, nobody else is remembered.
+    expect(loaded.entities).toEqual(wokenInClinic(v5.entities));
     expect(loaded.domain).toEqual(v5.domain);
   });
 
@@ -164,8 +165,9 @@ describe("migrations", () => {
     // 21:00 plus 5400 ticks of one game second each: 22:30.
     expect(loaded.domain.clock).toEqual({ seconds: 21 * 3600 + 5400 });
     expect(loaded.domain).toEqual({ ...v6Domain, clock: { seconds: 81000 } });
-    expect(loaded.entities).toEqual(s.entities);
-    expect(loaded.streaming).toEqual(s.streaming);
+    expect(loaded.entities).toEqual(wokenInClinic(s.entities));
+    // Lublin's chunks load round the player (ADR-0045).
+    expect(loaded.streaming).toEqual({ loadedChunks: [] });
   });
 
   it("the v6 migration keeps an existing clock and tolerates a missing tick or domain", () => {

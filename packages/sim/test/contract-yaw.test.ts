@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { type Vec3, contractTag } from "@seki/core";
-import { CONTRACT_SITE_SPAWNS, Simulation, contractSpawnYaw } from "../src";
+import { CONTRACT_SITE_SPAWNS, Simulation, contractSpawnYaw, market } from "../src";
 import { byKey, teleportPlayer } from "./helpers";
 
-const at = (x: number, z: number, y = 0): Vec3 => ({ x, y, z });
 
 describe("contract crews face the way trouble comes from (audit W11)", () => {
   const face = (from: Vec3, to: Vec3) => Math.atan2(to.x - from.x, to.z - from.z);
@@ -13,7 +12,7 @@ describe("contract crews face the way trouble comes from (audit W11)", () => {
     const sites = new Set<string>();
     for (const seed of [2, 3, 5, 8, 13]) {
       const sim = Simulation.create({ seed });
-      teleportPlayer(sim, at(90.5, 74), Math.PI / 2);
+      teleportPlayer(sim, market(90.5, 0, 74), Math.PI / 2);
       sim.step();
       sim.enqueue({ type: "accept-contract", kind: "protect" });
       sim.step();

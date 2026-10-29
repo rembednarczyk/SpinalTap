@@ -11,7 +11,11 @@ import {
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
 import { createUiStore } from "@seki/ui";
+import { ground, market } from "@seki/sim";
 import { GameSession } from "../src/game-session";
+
+/** The market floor under the viaduct (ADR-0045). */
+const IN_MARKET = market(96, 0, 90);
 
 class FakeRender implements RenderPort {
   readonly views = new Map<EntityId, ViewDescriptor>();
@@ -56,7 +60,7 @@ const setup = () => {
 
 const goTo = (s: GameSession, x: number, z: number) => {
   const p = s.sim.player()!;
-  p.position = { x, y: 0, z };
+  p.position = ground(x, z);
   p.prevPosition = p.position;
   s.step(EMPTY_INPUT);
   s.render(0);
@@ -65,31 +69,34 @@ const goTo = (s: GameSession, x: number, z: number) => {
 const toastTitles = (ui: ReturnType<typeof createUiStore>) => ui.getState().toasts.map((t) => t.title);
 
 describe("M2: districts without a reload", () => {
-  it("streams the market in and Shinsekai out through the render port, naming each district once", () => {
+  it("streams the market in and the deptak out through the render port, naming each district once", () => {
     const { session, render, ui } = setup();
     session.newGame();
     const before = render.views.size;
     const fixer = session.sim.world.with("interactable").entities.find((e) => e.key === "fixer")!.id;
 
-    goTo(session, 7, 60);
-    expect(toastTitles(ui)).toContain("Ulica Kanałowa");
+    // Through Brama Krakowska onto Bramowa (ADR-0045).
+    goTo(session, 497, -79);
+    expect(toastTitles(ui)).toContain("Stare Miasto");
     expect(render.views.size).toBeGreaterThan(before);
 
-    goTo(session, 40, 78);
-    goTo(session, 95, 78);
-    expect(toastTitles(ui)).toContain("Targ pod estakadą");
+    // Plac Zamkowy, then the market floor under the viaduct.
+    goTo(session, 717.5, 296);
+    goTo(session, IN_MARKET.x, IN_MARKET.z);
+    expect(toastTitles(ui)).toContain("Podzamcze");
     expect(render.views.has(fixer)).toBe(false);
     expect(render.unloaded).toContain(fixer);
     // A step inside the same district does not repeat the toast.
-    goTo(session, 96, 78);
-    expect(toastTitles(ui).filter((t) => t === "Targ pod estakadą")).toHaveLength(1);
+    goTo(session, IN_MARKET.x + 1, IN_MARKET.z);
+    expect(toastTitles(ui).filter((t) => t === "Podzamcze")).toHaveLength(1);
   });
 
   it("a save in the market loads back into the market, through the real codec", async () => {
     const { session, ui } = setup();
     session.newGame();
-    goTo(session, 40, 78);
-    goTo(session, 92, 70);
+    goTo(session, 717.5, 296);
+    const stalls = market(92, 0, 70);
+    goTo(session, stalls.x, stalls.z);
     expect(await session.saveAsync("slot-1")).toBe(true);
     const saved = session.sim.player()!.position;
 
@@ -98,8 +105,8 @@ describe("M2: districts without a reload", () => {
     expect(await session.loadAsync("slot-1")).toBe(true);
     expect(session.sim.player()!.position).toEqual(saved);
     expect(session.sim.district).toBe("targ");
-    expect(session.sim.streamer.loadedChunks).toEqual(["kanal", "targ-south", "targ-north"]);
+    expect(session.sim.streamer.loadedChunks).toEqual(["podzamcze-1-0"]);
     // Loading is not crossing a border: no district toast.
-    expect(toastTitles(ui)).not.toContain("Targ pod estakadą");
+    expect(toastTitles(ui)).not.toContain("Podzamcze");
   });
 });

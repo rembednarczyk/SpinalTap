@@ -20,7 +20,8 @@ describe("automatic doors and the interiors (v13 to v14, ADR-0038)", () => {
     const loaded = decodeSave("v13", wrap(v13Payload()));
     expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
     expect(loaded.doors).toEqual([]);
-    expect(loaded.entities.map((e) => e.key)).toEqual(["player", "guard"]);
+    // And through v15 (ADR-0045), nobody but the player is remembered.
+    expect(loaded.entities.map((e) => e.key)).toEqual(["player"]);
   });
 
   it("tolerates a save without entities and keeps doors already there", () => {

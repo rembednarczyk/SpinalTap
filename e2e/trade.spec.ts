@@ -1,5 +1,5 @@
 import { type Page, expect, test } from "@playwright/test";
-import { freeze, gameState, step, teleport, waitForGame } from "./helpers";
+import { freeze, gameState, place, step, teleport, teleportTo, waitForGame } from "./helpers";
 
 const wait = (page: Page, minutes: number) => page.evaluate((m) => window.__seki!.wait(m), minutes);
 
@@ -7,13 +7,13 @@ test("by day Oyaji's stall buys a medkit through the Sprzedaj tab", async ({ pag
   test.slow();
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto("/?seed=5");
+  await page.goto("/?seed=5&models=off");
   await waitForGame(page);
   await page.getByRole("button", { name: "Nowa gra" }).click();
   await freeze(page);
 
   // To the market, then on to noon of the next day: the stall is up and Oyaji stands behind it.
-  await teleport(page, 40, 78);
+  await teleportTo(page, await place(page, "market", 40, 78));
   await step(page, 1);
   await wait(page, 15 * 60);
   await step(page, 2);

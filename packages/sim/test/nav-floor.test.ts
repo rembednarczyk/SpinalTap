@@ -1,11 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { type EnemyTypeId, type Vec3, contractTag } from "@seki/core";
-import { OYAJI_MAX_HP, Simulation, gangerEntity, stateHash } from "../src";
+import { DOCKS_PLACE, MARKET_PLACE, OYAJI_MAX_HP, Simulation, docks, gangerEntity, market, stateHash } from "../src";
 import { chestOf, eyeOf, lineOfSight } from "../src/world/hitscan";
 import { detourStep, steerPoint, straightWalk } from "../src/systems/ai/steering";
 import { byKey, teleportPlayer } from "./helpers";
 
-const at = (x: number, z: number, y = 0): Vec3 => ({ x, y, z });
+/**
+ * The market and the docks keep their own coordinates, moved into Lublin by `MARKET_PLACE` and
+ * `DOCKS_PLACE` (ADR-0045): `atM` and `atD` are points of them.
+ */
+const atM = (x: number, z: number, y = 0): Vec3 => market(x, y, z);
+const atD = (x: number, z: number, y = 0): Vec3 => docks(x, y, z);
+const M = MARKET_PLACE;
+const D = DOCKS_PLACE;
 
 /** Keeps the player alive and in place: the tests are about where the gangers go. */
 const hold = (sim: Simulation, steps: number, each?: () => boolean): number => {
@@ -48,7 +55,7 @@ describe("walking around obstacles on one floor (ADR-0025, audit W3)", () => {
     const base = Simulation.create({ seed: 2 });
     const snap = base.snapshot(null, "t", "");
     const sim = Simulation.fromSnapshot({ ...snap, domain: { ...snap.domain, contracts: { active: null, completed: 6 } } });
-    teleportPlayer(sim, at(90.5, 74), Math.PI / 2);
+    teleportPlayer(sim, atM(90.5, 74), Math.PI / 2);
     sim.step();
     sim.enqueue({ type: "accept-contract", kind: "protect" });
     sim.step();
@@ -63,11 +70,11 @@ describe("walking around obstacles on one floor (ADR-0025, audit W3)", () => {
     expect(sim.domain.flags).toContain("dead:oyaji");
     // The audit's stand: all four under the south rail of the stairs, Seki north of the flight.
     wave.forEach((g, i) => {
-      g.position = at(71.3 + i * 0.65, 96.6);
+      g.position = atM(71.3 + i * 0.65, 96.6);
       g.prevPosition = g.position;
       g.ai.alerted = true;
     });
-    const seki = at(70, 104);
+    const seki = atM(70, 104);
     teleportPlayer(sim, seki);
     // The straight walk runs into the rail: the old pursuit pressed against it for good.
     for (const g of wave) expect(straightWalk(sim.world, g.position, seki)).toBe(false);
@@ -90,34 +97,34 @@ describe("walking around obstacles on one floor (ADR-0025, audit W3)", () => {
   });
 
   it("goes round the west end of the overpass stairs to a target on the far side", () => {
-    const target = at(76, 102);
+    const target = atM(76, 102);
     const sim = scene(target);
-    const g = spawn(sim, at(80, 95));
+    const g = spawn(sim, atM(80, 95));
     const reached = hold(sim, 60 * 15, () => flat(g.position, target) < 2.5);
     expect(reached).toBeLessThan(60 * 15);
     // On the street the whole way: it went round the flight, not over it.
-    expect(g.position.y).toBeLessThan(0.5);
+    expect(g.position.y - M.y).toBeLessThan(0.5);
   });
 
   it("the way round is a pure function: same query, same step, with or without the memo", () => {
-    const sim = scene(at(70, 104));
-    const a = detourStep(sim.world, at(72, 96.6), at(70, 104));
+    const sim = scene(atM(70, 104));
+    const a = detourStep(sim.world, atM(72, 96.6), atM(70, 104));
     const fresh = Simulation.create({ seed: 5 });
-    teleportPlayer(fresh, at(70, 104));
+    teleportPlayer(fresh, atM(70, 104));
     fresh.step();
     fresh.step();
-    const b = detourStep(fresh.world, at(72, 96.6), at(70, 104));
+    const b = detourStep(fresh.world, atM(72, 96.6), atM(70, 104));
     expect(a).not.toBeNull();
     expect(a).toEqual(b);
     // It leads west, towards the gap between the wall and the end of the stairs.
-    expect(a!.x).toBeLessThan(72);
+    expect(a!.x - M.x).toBeLessThan(72);
     // A free line is walked straight; a goal on another floor is the level graph's business.
-    expect(steerPoint(sim.world, at(80, 92), at(90, 92))).toEqual(at(90, 92));
-    expect(detourStep(sim.world, at(80, 92), at(90, 92, 9.9))).toBeNull();
+    expect(steerPoint(sim.world, atM(80, 92), atM(90, 92))).toEqual(atM(90, 92));
+    expect(detourStep(sim.world, atM(80, 92), atM(90, 92, 9.9))).toBeNull();
   });
 
   it("a save while walking round the stairs continues exactly like the original", () => {
-    const target = at(76, 102);
+    const target = atM(76, 102);
     const sim = Simulation.create({ seed: 5 });
     teleportPlayer(sim, target);
     sim.step();
@@ -125,11 +132,11 @@ describe("walking around obstacles on one floor (ADR-0025, audit W3)", () => {
     teleportPlayer(sim, target);
     // The market's own lookout (a keyed ganger, so the save carries it), sent round the flight.
     const g = byKey(sim, "hebi-lookout")!;
-    g.position = at(80, 95);
+    g.position = atM(80, 95);
     g.prevPosition = g.position;
     g.ai!.alerted = true;
     hold(sim, 90);
-    expect(g.position.x).toBeLessThan(78);
+    expect(g.position.x - M.x).toBeLessThan(78);
     const restored = Simulation.fromSnapshot(JSON.parse(JSON.stringify(sim.snapshot(null, "mid", ""))));
     hold(sim, 240);
     hold(restored, 240);
@@ -138,12 +145,12 @@ describe("walking around obstacles on one floor (ADR-0025, audit W3)", () => {
   });
 });
 
-describe("the docks and the footbridge (ADR-0025)", () => {
+describe("the docks (ADR-0025)", () => {
   it("crosses the container rows in the yard without getting stuck", () => {
     // Seki in the north aisle, the ganger south of the first row: a wall of containers between.
-    const target = at(0, 113.5);
+    const target = atD(0, 113.5);
     const sim = scene(target);
-    const g = spawn(sim, at(-4, 97));
+    const g = spawn(sim, atD(-4, 97));
     let anchor = g.position;
     let anchorTick = sim.tick;
     const reached = hold(sim, 60 * 25, () => {
@@ -160,32 +167,18 @@ describe("the docks and the footbridge (ADR-0025)", () => {
   });
 
   it("walks round the containers on the quay and the office to a target behind them", () => {
-    const target = at(-13, 148.4);
+    const target = atD(-13, 148.4);
     const sim = scene(target);
-    const g = spawn(sim, at(-13, 141));
+    const g = spawn(sim, atD(-13, 141));
     const reached = hold(sim, 60 * 20, () => flat(g.position, target) < 2.5);
     expect(reached).toBeLessThan(60 * 20);
   });
 
   it("takes the warehouse stairs in the docks", () => {
-    const target = at(-23, 116.8, 9);
+    const target = atD(-23, 116.8, 9);
     const sim = scene(target);
-    const g = spawn(sim, at(10, 105));
-    const reached = hold(sim, 60 * 40, () => g.position.y > 8.9 && flat(g.position, target) < 2.5);
+    const g = spawn(sim, atD(10, 105));
+    const reached = hold(sim, 60 * 40, () => g.position.y - D.y > 8.9 && flat(g.position, target) < 2.5);
     expect(reached).toBeLessThan(60 * 40);
-  });
-
-  it("crosses the footbridge on Ulica Kanałowa from one kerb to the other", () => {
-    // Up the west flight, over the walkway, down the east flight: the player waits at the east foot.
-    const target = at(53, 81, 5);
-    const sim = scene(target);
-    const g = spawn(sim, at(36, 76));
-    let top = 0;
-    const reached = hold(sim, 60 * 25, () => {
-      top = Math.max(top, g.position.y);
-      return g.position.y > 4.9 && flat(g.position, target) < 2;
-    });
-    expect(reached).toBeLessThan(60 * 25);
-    expect(top).toBeCloseTo(5, 3);
   });
 });

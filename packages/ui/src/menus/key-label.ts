@@ -47,4 +47,4 @@ export const keyLabel = (code: string): string => {
 };
 
 /** Keys the game keeps for itself (menus, saves, pause, the phone on T, the radio on B); they cannot be bound to a control. */
-export const RESERVED_KEYS: ReadonlySet<string> = new Set(["Escape", "F5", "F9", "KeyP", "KeyI", "Tab", "KeyJ", "KeyT", "KeyB"]);
+export const RESERVED_KEYS: ReadonlySet<string> = new Set(["Escape", "F5", "F9", "KeyP", "KeyI", "Tab", "KeyJ", "KeyM", "KeyT", "KeyB"]);

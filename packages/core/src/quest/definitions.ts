@@ -27,7 +27,7 @@ export const QUEST_FIRST_CONTRACT: QuestDefinition = {
     },
     {
       id: "eliminate_courier",
-      objective: "Zneutralizuj kuriera Hebi w zaułku na północy",
+      objective: "Zneutralizuj kuriera Hebi na podwórku za myjnią przy Placu Łokietka",
       completeWhen: { type: "flag", flag: `killed:${M0_TARGET_TAG}` },
       rewards: [{ type: "memory", memoryId: "combat_reflex" }],
     },
@@ -133,10 +133,10 @@ export const QUEST_MIRROR: QuestDefinition = {
     },
     {
       id: "overpass",
-      objective: "Kurosawa z Kagami czeka na estakadzie nad targiem. Zdecyduj, co stanie się z archiwum",
+      objective: "Kurosawa z Kagami czeka na wiadukcie nad aleją Tysiąclecia. Zdecyduj, co stanie się z archiwum",
       variants: [
         { when: CLEANERS_DOWN, objective: "Czyściciele Kagami leżą. Wróć do Rena na dach nad targiem" },
-        { when: { type: "flag", flag: KAGAMI_AMBUSH_FLAG }, objective: "Czyściciele Kagami atakują na estakadzie. Odeprzyj ich" },
+        { when: { type: "flag", flag: KAGAMI_AMBUSH_FLAG }, objective: "Czyściciele Kagami atakują na wiadukcie. Odeprzyj ich" },
       ],
       completeWhen: { type: "all", of: [{ type: "flag", flag: recalledFlag("last_call") }, { type: "flag", flag: ACT_TWO_ENDING_FLAG }] },
       rewards: [],

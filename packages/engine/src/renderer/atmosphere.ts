@@ -343,7 +343,7 @@ export const createSteam = (scene: Scene, at: Vector3, tint: Color4, rate = 18):
 };
 
 /** Raindrops bouncing off the asphalt in a box around the camera. */
-export const createSplashes = (scene: Scene): { system: ParticleSystem; follow: (p: Vector3) => void } => {
+export const createSplashes = (scene: Scene): { system: ParticleSystem; follow: (p: Vector3, ground?: number) => void } => {
   const tex = new DynamicTexture("splash-tex", { width: 16, height: 16 }, scene, false);
   const ctx = tex.getContext() as CanvasRenderingContext2D;
   ctx.fillStyle = "rgba(210,235,255,0.9)";
@@ -373,5 +373,6 @@ export const createSplashes = (scene: Scene): { system: ParticleSystem; follow: 
   ps.colorDead = new Color4(0.8, 0.9, 1, 0);
   ps.blendMode = ParticleSystem.BLENDMODE_ADD;
   ps.start();
-  return { system: ps, follow: (p) => emitter.set(p.x, 0.02, p.z) };
+  // On the ground under the camera: the feet of whoever it follows (the terrain of ADR-0042).
+  return { system: ps, follow: (p, ground = 0) => emitter.set(p.x, ground + 0.02, p.z) };
 };

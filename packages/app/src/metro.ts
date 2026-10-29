@@ -7,10 +7,10 @@ export { metroFare };
 export const METRO_LINE = "Linia Kanjō";
 
 export const METRO_STATION_NAMES: Readonly<Record<MetroStationId, string>> = {
-  shinsekai: "Shinsekai 7",
-  kanal: "Ulica Kanałowa",
-  targ: "Targ pod estakadą",
-  doki: "Doki Tessen",
+  shinsekai: "Plac Litewski",
+  kanal: "Brama Krakowska",
+  targ: "Plac Zamkowy",
+  doki: "Nabrzeże Bystrzycy",
 };
 
 /** The platform of a district (the simulation's district ids), for a kiosk that names no station. */

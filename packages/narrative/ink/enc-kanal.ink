@@ -1,8 +1,8 @@
-// Seki Senshi, ADR-0032: street encounters on Ulica Kanałowa (see enc-shinsekai.ink for the rules).
+// Seki Senshi, ADR-0032: street encounters in Stare Miasto (district id kanal, ADR-0042; see enc-shinsekai.ink for the rules).
 
 // Takumi has brought Mei flowers every night for a month and never gone in.
 === enc_kanal_flowers ===
-Pod KARAOKE stoi chłopak z bukietem. Kwiaty są plastikowe, ale ktoś je starannie podlewa.
+Pod KARAOKE przy Rynku stoi chłopak z bukietem. Kwiaty są plastikowe, ale ktoś je starannie podlewa.
 TAKUMI: Nie patrz tak. Jestem fanem. Fani tak mają.
 TAKUMI: Trzydzieści nocy z rzędu stoję tu z kwiatami dla Mei. Trzydzieści nocy z rzędu nogi mówią mi „nie”.
 -> ask
@@ -30,11 +30,11 @@ TAKUMI: Trzydzieści nocy z rzędu stoję tu z kwiatami dla Mei. Trzydzieści no
     TAKUMI: Wiem. Dlatego przychodzę. Jutro też tu będę, z tymi samymi kwiatami.
     -> END
 
-// Old Sabu fishes through a drain grate where the canal used to be.
+// Old Sabu fishes through a drain grate over the Czechówka, which runs in pipes under the old town.
 === enc_kanal_fisherman ===
-Przy krawężniku siedzi staruszek na skrzynce i trzyma wędkę spuszczoną w kratkę ściekową.
+Przy krawężniku na Grodzkiej siedzi staruszek na skrzynce i trzyma wędkę spuszczoną w kratkę ściekową.
 SABU: Cicho. Bierze.
-SABU: Kanał zabetonowali dwadzieścia lat temu, ale woda dalej płynie pod spodem. Ryby o tym wiedzą, urzędnicy nie.
+SABU: Czechówkę zamknęli w rurach, zanim się urodziłaś, ale woda dalej płynie pod spodem. Ryby o tym wiedzą, urzędnicy nie.
 -> ask
 
 = ask
@@ -60,14 +60,14 @@ SABU: Kanał zabetonowali dwadzieścia lat temu, ale woda dalej płynie pod spod
     SABU: Ktoś będzie jej szukał. Mnie tu nie było, ja tylko łowię.
     -> END
 * [Wrzucasz torbę z powrotem do kratki. #tone:main]
-    Torba plaska w ciemnej wodzie i odpływa pod ulicą.
+    Torba plaska w ciemnej wodzie i odpływa z Czechówką pod Starym Miastem.
     ~ set_flag("enc_kanal_fisherman_released")
     SABU: Szkoda. Ale masz rację. Niektóre ryby trzeba wypuszczać.
     -> END
 
 // A vending machine with a mind of its own, due to be scrapped in the morning.
 === enc_kanal_vending ===
-Automat z napojami przy DENKI mruga do ciebie diodą. Z głośnika płynie syntetyczny głos.
+Automat z napojami przy DENKI, na rogu Rynku, mruga do ciebie diodą. Z głośnika płynie syntetyczny głos.
 AUTOMAT: Dzień dobry. Rekomenduję zieloną herbatę. Rekomenduję także ewakuację mnie z tego miejsca.
 AUTOMAT: Jutro o szóstej przyjeżdża ciężarówka z kasacji. Mam czterdzieści dwa smaki i jedną świadomość. Nie chcę na złom.
 -> ask
@@ -91,7 +91,7 @@ AUTOMAT: Jutro o szóstej przyjeżdża ciężarówka z kasacji. Mam czterdzieśc
 
 // Koji is new to Hebi and practises his threats on passers-by.
 === enc_kanal_recruit ===
-Pod kładką chłopak w za dużej kurtce Hebi zastępuje ci drogę. Głos mu się łamie.
+Pod kładką nad Grodzką chłopak w za dużej kurtce Hebi zastępuje ci drogę. Głos mu się łamie.
 KOJI: Ej, ty. Dawaj... dawaj portfel. Albo coś. Proszę.
 KOJI: Kurczę. Bez „proszę”. Jeszcze raz. Dawaj portfel albo... albo będzie źle!
 -> ask

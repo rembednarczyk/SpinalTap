@@ -38,12 +38,13 @@ describe("district colour script (ADR-0030)", () => {
   });
 
   it("names districts by camera position as the simulation does (later chunks win at seams)", () => {
-    expect(districtAt(0, 0)).toBe("shinsekai-7");
-    expect(districtAt(106, 79)).toBe("targ");
-    expect(districtAt(27, 145)).toBe("doki");
-    expect(districtAt(20, 70)).toBe("kanal");
-    // Under the market gate Kanałowa runs on into the market's bounds: the market wins.
-    expect(districtAt(70, 70)).toBe("targ");
+    // Plac Litewski, the market under the viaduct, the docks, the Rynek (ADR-0045).
+    expect(districtAt(70, -50)).toBe("shinsekai-7");
+    expect(districtAt(785, 350)).toBe("targ");
+    expect(districtAt(2587, 445)).toBe("doki");
+    expect(districtAt(560, -40)).toBe("kanal");
+    // Where the Old Town's chunk meets Podzamcze's below Brama Grodzka, Podzamcze wins.
+    expect(districtAt(700, 160)).toBe("targ");
     expect(districtAt(1000, 1000)).toBeNull();
   });
 

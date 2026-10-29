@@ -66,12 +66,22 @@ export const isBuilding = (b: Pick<DressBlock, "size" | "material">): boolean =>
 /** Something that hides a wall behind it: a building, an outer wall, a kiosk. */
 const isBulk = (b: DressBlock): boolean => b.material !== "asphalt" && b.size.y >= 2.5 && Math.min(b.size.x, b.size.z) >= 0.3 && !b.rungs && !b.slope;
 
+/** Height of the ground under a point (Lublin's terrain, ADR-0045); the street plane by default. */
+export type DressGround = (x: number, z: number) => number;
+const FLAT: DressGround = () => 0;
+
 /**
  * An elevated road deck (the overpass): a slab at least a lane wide and long, its underside
- * clear of the street. It gets lanes, joints and kerbs on top and girders underneath.
+ * clear of the ground under it. It gets lanes, joints and kerbs on top and girders underneath.
  */
-export const isRoadDeck = (b: DressBlock): boolean =>
-  b.material === "concrete" && !b.slope && b.size.y >= 0.25 && b.size.y <= 1.8 && b.center.y - b.size.y / 2 >= 2.5 && Math.min(b.size.x, b.size.z) >= 6 && Math.max(b.size.x, b.size.z) >= 20;
+export const isRoadDeck = (b: DressBlock, ground: DressGround = FLAT): boolean =>
+  b.material === "concrete" &&
+  !b.slope &&
+  b.size.y >= 0.25 &&
+  b.size.y <= 1.8 &&
+  b.center.y - b.size.y / 2 - ground(b.center.x, b.center.z) >= 2.5 &&
+  Math.min(b.size.x, b.size.z) >= 6 &&
+  Math.max(b.size.x, b.size.z) >= 20;
 
 const top = (b: DressBlock) => b.center.y + b.size.y / 2;
 const bottom = (b: DressBlock) => b.center.y - b.size.y / 2;
@@ -161,6 +171,8 @@ export interface DressingInput {
   readonly signs: readonly DressSign[];
   /** The city kit draws skinned buildings: leave them bare (their facades come with the kit). */
   readonly kit: boolean;
+  /** The ground under the blocks; the street plane when absent. */
+  readonly ground?: DressGround;
 }
 
 const C = (hex: string, flag: number = DRESS_FLAG.solid): Rgba => hexColor(hex, flag);
@@ -181,8 +193,8 @@ export const planDressing = (input: DressingInput): MeshSink => {
       if (faceOpen(b, b.skin.front, input.world, 2.5)) dressKerb(sink, b, faceOf(b, b.skin.front));
       dressCables(sink, b);
     } else if (isBuilding(b)) dressBuilding(sink, b, input.world, near);
-    else if (isRoadDeck(b)) dressDeck(sink, b);
-    else if (b.material === "asphalt" && top(b) < 0.4) dressGround(sink, b);
+    else if (isRoadDeck(b, input.ground)) dressDeck(sink, b);
+    else if (b.material === "asphalt" && top(b) - (input.ground ?? FLAT)(b.center.x, b.center.z) < 0.4) dressGround(sink, b);
   }
   return sink;
 };

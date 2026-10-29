@@ -1,5 +1,5 @@
 import type { Vec3 } from "@seki/core";
-import { type ChunkDef, WORLD_CHUNKS } from "@seki/sim";
+import { type ChunkDef, WORLD_CHUNKS, groundY } from "@seki/sim";
 import { SIGN_COLORS, prng, seedOf } from "./city-kit-data";
 import { type DressBlock, type Face, SIDES, faceOf, faceOpen, isBuilding } from "./dressing-plan";
 import { MeshSink, type Rgba, type Vec } from "./mesh-sink";
@@ -70,10 +70,12 @@ const bladeQuads = (sink: MeshSink, f: Face, u: number, y: number, out0: number,
   }
 };
 
-/** Neon thrown on the wet street in front of a sign: a strip from the wall foot outwards. */
-const reflection = (sink: MeshSink, f: Face, u: number, w: number, length: number, color: Rgba, seed: number) => {
-  const y = 0.035;
-  const c = [f.at(u - w / 2, 0, 0.3), f.at(u + w / 2, 0, 0.3), f.at(u + w / 2, 0, 0.3 + length), f.at(u - w / 2, 0, 0.3 + length)].map((p) => ({ x: p.x, y, z: p.z })) as [Vec, Vec, Vec, Vec];
+/** Height of the ground under a point (Lublin's terrain, ADR-0045). */
+export type SignGround = (x: number, z: number) => number;
+
+/** Neon thrown on the wet street in front of a sign: a strip from the wall foot outwards, on the ground. */
+const reflection = (sink: MeshSink, f: Face, u: number, w: number, length: number, color: Rgba, seed: number, ground: SignGround) => {
+  const c = [f.at(u - w / 2, 0, 0.3), f.at(u + w / 2, 0, 0.3), f.at(u + w / 2, 0, 0.3 + length), f.at(u - w / 2, 0, 0.3 + length)].map((p) => ({ x: p.x, y: ground(p.x, p.z) + 0.035, z: p.z })) as [Vec, Vec, Vec, Vec];
   sink.quad(c, { x: 0, y: 1, z: 0 }, color, UV_FLAT, [seed, SIGNAGE_KIND.reflection]);
 };
 
@@ -87,7 +89,7 @@ const blockOf = (p: ChunkDef["props"][number]): DressBlock | null => {
  * Plans the signage of every chunk from the chunk table: deterministic per building, nothing
  * placed by hand, so a district the content adds gets its signs too.
  */
-export const planSignage = (chunks: readonly ChunkDef[] = WORLD_CHUNKS): MeshSink => {
+export const planSignage = (chunks: readonly ChunkDef[] = WORLD_CHUNKS, ground: SignGround = groundY): MeshSink => {
   const sink = new MeshSink();
   const world = chunks.flatMap((c) => c.props.map(blockOf).filter((b): b is DressBlock => b !== null));
   const keepout: Keepout[] = chunks.flatMap((c) => c.props.flatMap((p) => (p.view.kind === "neon" ? [{ center: p.center, size: p.view.size }] : [])));
@@ -107,10 +109,10 @@ export const planSignage = (chunks: readonly ChunkDef[] = WORLD_CHUNKS): MeshSin
       if (!side || !faceOpen(b, side, world, 2.5)) continue;
       const f = faceOf(b, side);
       buildings.push({ b, f });
-      signBuilding(sink, b, f, clear);
+      signBuilding(sink, b, f, clear, ground);
     }
     // Holo-ads on the tallest fronts of the chunk.
-    const tall = buildings.filter(({ b }) => b.size.y >= 11 && b.center.y - b.size.y / 2 < 1).sort((p, q) => q.b.size.y - p.b.size.y || p.b.center.x - q.b.center.x || p.b.center.z - q.b.center.z);
+    const tall = buildings.filter(({ b }) => b.size.y >= 11 && b.center.y - b.size.y / 2 - ground(b.center.x, b.center.z) < 1).sort((p, q) => q.b.size.y - p.b.size.y || p.b.center.x - q.b.center.x || p.b.center.z - q.b.center.z);
     tall.slice(0, HOLO_PER_CHUNK).forEach(({ b, f }, i) => {
       const rand = prng(seedOf(b.center) ^ 0x4010);
       const w = Math.min(6.5, f.width * (0.45 + rand() * 0.2));
@@ -127,9 +129,9 @@ export const planSignage = (chunks: readonly ChunkDef[] = WORLD_CHUNKS): MeshSin
 };
 
 /** Corner blades and a shop board on one building front, with their reflections. */
-const signBuilding = (sink: MeshSink, b: DressBlock, f: Face, clear: (p: Vec3, pad: number) => boolean): void => {
+const signBuilding = (sink: MeshSink, b: DressBlock, f: Face, clear: (p: Vec3, pad: number) => boolean, ground: SignGround): void => {
   const rand = prng(seedOf(b.center) ^ 0x519a);
-  const onStreet = b.center.y - b.size.y / 2 < 0.5;
+  const onStreet = b.center.y - b.size.y / 2 - ground(b.center.x, b.center.z) < 0.5;
   const w = f.width;
   // Blade signs at the corners of the front, above the awnings.
   for (const end of [-1, 1]) {
@@ -141,7 +143,7 @@ const signBuilding = (sink: MeshSink, b: DressBlock, f: Face, clear: (p: Vec3, p
     const cell = Math.floor(rand() * ATLAS_BLADES);
     const color = SIGN_COLORS[Math.floor(rand() * SIGN_COLORS.length)] ?? "#ff2e88";
     bladeQuads(sink, f, u, y, 0.15, 0.85, h, tint(color, 0.95), [cell, SIGNAGE_KIND.sign]);
-    if (onStreet) reflection(sink, f, u, 1.3, 4.5 + rand() * 2, tint(color, 0.4), rand());
+    if (onStreet) reflection(sink, f, u, 1.3, 4.5 + rand() * 2, tint(color, 0.4), rand(), ground);
   }
   // A board over the shop fronts; skinned buildings carry the kit's own boards there.
   if (!b.skin && w >= 5 && rand() < 0.7) {
@@ -152,7 +154,7 @@ const signBuilding = (sink: MeshSink, b: DressBlock, f: Face, clear: (p: Vec3, p
       const cell = ATLAS_BLADES + Math.floor(rand() * ATLAS_BOARDS);
       const color = SIGN_COLORS[Math.floor(rand() * SIGN_COLORS.length)] ?? "#00e5ff";
       flatQuad(sink, f, u, y, 0.1, bw, bw / 4, tint(color, 0.9), [cell, SIGNAGE_KIND.sign]);
-      if (onStreet) reflection(sink, f, u, bw * 0.9, 4 + rand() * 2, tint(color, 0.35), rand());
+      if (onStreet) reflection(sink, f, u, bw * 0.9, 4 + rand() * 2, tint(color, 0.35), rand(), ground);
     }
   }
 };

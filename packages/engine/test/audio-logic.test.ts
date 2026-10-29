@@ -186,9 +186,10 @@ describe("positional ambience", () => {
 
   it("hums louder under the Neon Koi sign than in the middle of nowhere", () => {
     const neon = neonEmitters();
-    // The street's signs and the screens and strips inside the clinic and the bar (ADR-0038).
-    expect(neon).toHaveLength(15);
-    const near = emitterMix(at(6, 2), neon);
+    // The deptak's signs and the screens and strips inside the clinic and the bar (ADR-0038).
+    expect(neon).toHaveLength(14);
+    // On the deptak in front of Neon Koi (ADR-0045); far off on the west end of Krakowskie.
+    const near = emitterMix(at(312, -91), neon);
     const far = emitterMix(at(0, -60), neon);
     expect(near.gain).toBeGreaterThan(0.5);
     expect(far.gain).toBe(0);

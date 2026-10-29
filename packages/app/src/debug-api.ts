@@ -1,12 +1,16 @@
 import { type BreachDaemonId, type DomainEvents, type DomainState, EMPTY_INPUT, type InputFrame, type MetroStationId, formatClock } from "@seki/core";
 import type { PerfSample, PreviewState } from "@seki/engine";
-import type { FixedStepLoop } from "@seki/sim";
+import { type FixedStepLoop, clinicPoint, docks, koiPoint, market } from "@seki/sim";
 import type { UiStore } from "@seki/ui";
 import type { GameSession } from "./game-session";
 
 /** Test hook exposed as window.__seki. Used by Playwright smoke, snapshot and perf checks. */
 export interface DebugApi {
   ready: boolean;
+  /** The reference frame has stopped rendering: it is a still from now on (snapshot and budgets). */
+  still: boolean;
+  /** The next frame as a PNG data URL, read from the canvas (the NPR snapshot, ADR-0046). */
+  capture?: () => string;
   state(): {
     screen: string;
     hp: number;
@@ -31,7 +35,7 @@ export interface DebugApi {
   };
   perf(): PerfSample;
   setPaused(paused: boolean): void;
-  /** Moves the player; `y` is the floor to stand on (a roof, the overpass deck), 0 by default. */
+  /** Moves the player; `y` is the floor to stand on (a roof, the overpass deck), Lublin's ground by default. */
   teleport(x: number, z: number, yaw?: number, pitch?: number, y?: number): void;
   /**
    * Restarts the running game from its own snapshot with part of the domain replaced, e.g. to
@@ -45,6 +49,10 @@ export interface DebugApi {
   view(position: { x: number; y: number; z: number } | null, target?: { x: number; y: number; z: number }): void;
   /** Characters currently wearing an imported model. */
   dressed(): number;
+  /** Character models still loading (ADR-0046: measure once none is). */
+  modelsLoading(): number;
+  /** Lublin's city is drawn in detail round the camera (ADR-0045): no near cell is still waiting. */
+  citySettled(): boolean;
   /** Height of the game camera in metres (crouch checks). */
   cameraY(): number;
   /** What the character menu's 3D preview shows; null without one. */
@@ -58,8 +66,25 @@ export interface DebugApi {
   breach(terminalKey: string, daemons?: readonly BreachDaemonId[]): void;
   /** Opens the metro line map as the kiosk at `from` would (ADR-0035). */
   metro(from: MetroStationId): void;
+  /**
+   * A point of a set piece in its own coordinates, in the world (ADR-0045): the market and the
+   * docks are moved, the clinic and Neon Koi are turned into their tenements.
+   */
+  place(frame: PlaceFrame, x: number, y: number, z: number): { x: number; y: number; z: number };
+  /**
+   * Sprints along a route of (x, z) waypoints, turning towards each one, stepping the
+   * simulation in the page; stops at a waypoint it cannot reach. Returns how many it reached.
+   */
+  walk(route: readonly (readonly [number, number])[], maxSteps?: number): number;
   session: GameSession;
 }
+
+export type PlaceFrame = "market" | "docks" | "clinic" | "koi";
+
+const FRAMES: Readonly<Record<PlaceFrame, (x: number, y: number, z: number) => { x: number; y: number; z: number }>> = { market, docks, clinic: clinicPoint, koi: koiPoint };
+
+/** Shortest turn from `a` to `b`, radians. */
+const turn = (a: number, b: number): number => Math.atan2(Math.sin(b - a), Math.cos(b - a));
 
 export const createDebugApi = (
   session: GameSession,
@@ -70,8 +95,11 @@ export const createDebugApi = (
   dressed: () => number = () => 0,
   cameraY: () => number = () => 0,
   preview: () => PreviewState | null = () => null,
+  modelsLoading: () => number = () => 0,
+  citySettled: () => boolean = () => true,
 ): DebugApi => ({
   ready: false,
+  still: false,
   session,
   state() {
     const sim = session.sim;
@@ -100,10 +128,11 @@ export const createDebugApi = (
   setPaused(paused) {
     loop.paused = paused;
   },
-  teleport(x, z, yaw = 0, pitch = 0, y = 0) {
+  teleport(x, z, yaw = 0, pitch = 0, y) {
     const p = session.sim.player();
     if (!p) return;
-    p.position = { x, y, z };
+    // On the ground of the map (ADR-0045) unless a height is given (a deck, a roof).
+    p.position = { x, y: y ?? session.sim.streamer.ground.heightAt(x, z), z };
     p.prevPosition = p.position;
     p.yaw = yaw;
     p.prevYaw = yaw;
@@ -115,6 +144,8 @@ export const createDebugApi = (
   },
   view: setView,
   dressed,
+  modelsLoading,
+  citySettled,
   cameraY,
   preview,
   emit(type, payload) {
@@ -133,5 +164,24 @@ export const createDebugApi = (
   step(n, input = {}) {
     for (let i = 0; i < n; i++) session.step({ ...EMPTY_INPUT, ...input });
     session.render(0);
+  },
+  place(frame, x, y, z) {
+    return FRAMES[frame](x, y, z);
+  },
+  walk(route, maxSteps = 1500) {
+    let reached = 0;
+    for (const [x, z] of route) {
+      let steps = 0;
+      for (; steps < maxSteps; steps++) {
+        const p = session.sim.player();
+        if (!p || Math.hypot(x - p.position.x, z - p.position.z) < 0.6) break;
+        const lookYaw = turn(p.yaw, Math.atan2(x - p.position.x, z - p.position.z));
+        session.step({ ...EMPTY_INPUT, moveZ: 1, sprint: true, lookYaw });
+      }
+      if (steps >= maxSteps) break;
+      reached++;
+    }
+    session.render(0);
+    return reached;
   },
 });

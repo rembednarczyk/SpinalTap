@@ -16,8 +16,13 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "e2e": "bash tools/e2e.sh",
     "ci": "pnpm typecheck && pnpm lint && pnpm depcheck && pnpm test:coverage && pnpm build && pnpm test:e2e",
-    "artifact": "pnpm build && node tools/build-artifact.mjs"
+    "artifact": "pnpm build && node tools/build-artifact.mjs",
+    "osm:fetch": "node tools/osm-import/src/fetch.ts",
+    "osm:build": "node tools/osm-import/src/build.ts",
+    "osm:preview": "node tools/osm-import/src/preview.ts",
+    "osm:props": "node tools/osm-import/src/props.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

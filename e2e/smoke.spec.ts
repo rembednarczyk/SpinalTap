@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { freeze, gameState, step, teleport, waitForGame } from "./helpers";
+import { freeze, gameState, place, step, teleportTo, waitForGame } from "./helpers";
 
 test.describe("M0 smoke", () => {
   test("title → new game → dialogue → quicksave/quickload → reload and load from IndexedDB", async ({ page }) => {
@@ -8,7 +8,7 @@ test.describe("M0 smoke", () => {
     test.setTimeout(180_000);
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(e.message));
-    await page.goto("/?seed=7");
+    await page.goto("/?seed=7&models=off");
     await waitForGame(page);
 
     // Title screen with the scene rendering behind it.
@@ -19,14 +19,15 @@ test.describe("M0 smoke", () => {
     await freeze(page);
     expect((await gameState(page)).screen).toBe("playing");
 
-    // Movement goes through the whole loop.
+    // Movement goes through the whole loop: off the chair, east across the clinic (ADR-0045).
     const start = (await gameState(page)).player!;
     await step(page, 60, { moveZ: 1 });
-    expect((await gameState(page)).player!.z).toBeGreaterThan(start.z + 3);
+    const moved = (await gameState(page)).player!;
+    expect(Math.hypot(moved.x - start.x, moved.z - start.z)).toBeGreaterThan(2.5);
 
     // Talk to Kaito through the real dialogue UI.
-    // Kaito waits by the chair in the clinic (ADR-0038): 1.5 m north of him, facing him.
-    await teleport(page, -13.3, 4.7, Math.PI);
+    // Kaito waits by the chair in the clinic (ADR-0038), a tenement's room since ADR-0045.
+    await teleportTo(page, await place(page, "clinic", -13.3, 4.7), Math.PI * 1.5);
     await step(page, 1);
     await expect(page.getByTestId("prompt")).toContainText("Kaito");
     await step(page, 1, { interact: true });
@@ -69,7 +70,7 @@ test.describe("M0 smoke", () => {
   });
 
   test("camera toggles between FPP and TPP", async ({ page }) => {
-    await page.goto("/?seed=7");
+    await page.goto("/?seed=7&models=off");
     await waitForGame(page);
     await page.getByRole("button", { name: "Nowa gra" }).click();
     await freeze(page);
@@ -82,12 +83,12 @@ test.describe("M0 smoke", () => {
 });
 
 test("ripperdoc clinic sells a medkit through the UI", async ({ page }) => {
-  await page.goto("/?seed=7");
+  await page.goto("/?seed=7&models=off");
   await waitForGame(page);
   await page.getByRole("button", { name: "Nowa gra" }).click();
   await freeze(page);
   // Mori at his monitors behind the chair (ADR-0038).
-  await teleport(page, -15.2, 5.2, -Math.PI / 2);
+  await teleportTo(page, await place(page, "clinic", -15.2, 5.2), 0);
   await step(page, 1);
   await expect(page.getByTestId("prompt")).toContainText("Mori");
   await step(page, 1, { interact: true });
@@ -117,7 +118,7 @@ test("ripperdoc clinic sells a medkit through the UI", async ({ page }) => {
 test("journal, minimap and settings", async ({ page }) => {
   // Two cold page loads; on a busy CI runner they alone can take a minute.
   test.slow();
-  await page.goto("/?seed=7");
+  await page.goto("/?seed=7&models=off");
   await waitForGame(page);
   await page.getByRole("button", { name: "Nowa gra" }).click();
   await freeze(page);
@@ -148,7 +149,7 @@ test("journal, minimap and settings", async ({ page }) => {
 
 test("touch layout keeps the minimap off the pad", async ({ page }) => {
   await page.setViewportSize({ width: 844, height: 390 });
-  await page.goto("/?seed=7&touch");
+  await page.goto("/?seed=7&touch&models=off");
   await waitForGame(page);
   await page.getByRole("button", { name: "Nowa gra" }).click();
   await freeze(page);
@@ -169,7 +170,7 @@ test("touch layout keeps the minimap off the pad", async ({ page }) => {
 
 test("touch layout keeps the weapon strip off the pad and the minimap", async ({ page }) => {
   await page.setViewportSize({ width: 844, height: 390 });
-  await page.goto("/?seed=7&touch");
+  await page.goto("/?seed=7&touch&models=off");
   await waitForGame(page);
   await page.getByRole("button", { name: "Nowa gra" }).click();
   await freeze(page);

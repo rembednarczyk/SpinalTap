@@ -1,9 +1,9 @@
-// Seki Senshi, ADR-0032: street encounters in Doki Tessen (see enc-shinsekai.ink for the rules).
+// Seki Senshi, ADR-0032: street encounters on Nabrzeże Bystrzycy (district id doki, ADR-0042; see enc-shinsekai.ink for the rules).
 
 // Tomo was laid off by an algorithm this morning. Nobody told the gate, so he keeps working.
 === enc_doki_laidoff ===
-Przy kontenerach doker w kamizelce Tessen pali papierosa i patrzy w telefon, jakby ten go obraził.
-TOMO: Dwadzieścia dwa lata w porcie. Dziś rano algorytm napisał, że moje stanowisko „przestaje być optymalne”.
+Przy kontenerach pod magazynami Tessen doker w kamizelce pali papierosa i patrzy w telefon, jakby ten go obraził.
+TOMO: Dwadzieścia dwa lata na nabrzeżu. Dziś rano algorytm napisał, że moje stanowisko „przestaje być optymalne”.
 TOMO: Ale bramka dalej mnie wpuszcza. Nikt jej nie powiedział. Więc przychodzę i pracuję. Za darmo, jak się okazuje.
 -> ask
 
@@ -60,7 +60,7 @@ GLOS: Halo? Ktoś tam jest? Nie mamy już wody. Jest nas sześcioro.
     GLOS: Pośrednik z Tessen. Obiecał pracę w zakładzie. Zakład okazał się kontenerem, a praca czekaniem.
     -> ask
 * [Zrywasz plombę i otwierasz drzwi. #tone:main]
-    Drzwi skrzypią. W środku sześć osób w kombinezonach, mrużą oczy przed światłem lamp portowych.
+    Drzwi skrzypią. W środku sześć osób w kombinezonach, mrużą oczy przed światłem lamp nad rzeką.
     ~ set_flag("enc_doki_container_opened")
     ~ change_rep("tessen", -3)
     ~ change_rep("civilians", 3)

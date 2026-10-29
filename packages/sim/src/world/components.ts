@@ -18,6 +18,7 @@ import type {
 } from "@seki/core";
 import type { ActivityPlan, Passerby } from "./activity-types";
 import type { Aabb } from "./collision";
+import type { Prism } from "./prism";
 
 export interface CharacterBody {
   readonly radius: number;
@@ -433,6 +434,12 @@ export interface Entity {
   view?: ViewDescriptor;
   /** Geometry: collides, blocks line of sight and is walked on (ADR-0020). Moves only on lifts and gates. */
   solid?: Aabb;
+  /**
+   * The solid is made of convex prisms (ADR-0043): a building from map data. `solid` is then
+   * their bounding box, the broad phase; collision, rays and the AI's raster use the prisms.
+   * Static only: lifts, gates and doors stay boxes.
+   */
+  prisms?: readonly Prism[];
   /** Sloped top of the solid (stairs, ramps, stair railings). */
   slope?: Slope;
   /** Vertical speed while airborne (a fall, or a jump while positive), m/s. Transient, not saved. */

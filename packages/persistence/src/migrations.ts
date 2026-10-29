@@ -223,6 +223,43 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
       doors: Array.isArray(old.doors) ? old.doors : [],
     };
   },
+  // v14 -> v15 (ADR-0045): the city moved to Lublin, so no position of an older save means
+  // anything any more. The player wakes on the chair in Mori's clinic on Krakowskie
+  // Przedmieście, as in a new game; everyone else stands where the content puts them (the dead
+  // stay dead by their flags); every door is shut and the chunks load round the player. Bags
+  // lying in the old streets are put down in the clinic with what is in them; stashes not yet
+  // emptied are placed again where the new content has them, full. The heat's last known
+  // position goes with the old map. A metro ride goes on: it arrives at the new station.
+  14: (old) => {
+    const domain = isObject(old.domain) ? old.domain : {};
+    const flags = Array.isArray(domain.flags) ? domain.flags : [];
+    const loot = isObject(domain.loot) ? domain.loot : { containers: [], dropSeq: 0 };
+    const containers = Array.isArray(loot.containers) ? loot.containers : [];
+    // Numbers are spelled out: a migration describes the world of its time.
+    const chair = { x: 319.6, y: -0.05, z: -64.86 };
+    const isStash = (c: unknown) => isObject(c) && typeof c.key === "string" && c.key.startsWith("stash:");
+    const stashes = new Set(containers.filter(isStash).map((c: unknown) => (c as { key: string }).key));
+    const bags = containers.filter((c: unknown) => isObject(c) && !isStash(c));
+    const entities = Array.isArray(old.entities) ? old.entities : [];
+    const player = entities.find((e: unknown) => isObject(e) && e.key === "player");
+    return {
+      ...old,
+      version: 15,
+      entities: isObject(player) ? [{ ...player, position: chair, yaw: Math.PI / 2, pitch: 0, alerted: false }] : [],
+      streaming: { loadedChunks: [] },
+      doors: [],
+      domain: {
+        ...domain,
+        flags: flags.filter((f: unknown) => !(typeof f === "string" && f.startsWith("placed:") && stashes.has(f.slice("placed:".length)))),
+        loot: {
+          ...loot,
+          // In a row along the clinic's floor, 0.6 m apart, east of the chair.
+          containers: bags.map((c: Record<string, unknown>, i: number) => ({ ...c, position: { x: 320.4 + (i % 6) * 0.6, y: -0.5, z: -67.2 - Math.floor(i / 6) * 0.6 }, chunk: "krakowskie-2-0" })),
+        },
+        heat: { level: 0, faction: null, searching: false, lastKnown: null, searchLeft: 0, cooldown: 0 },
+      },
+    };
+  },
 };
 
 export class MigrationError extends Error {}

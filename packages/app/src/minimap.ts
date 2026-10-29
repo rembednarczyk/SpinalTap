@@ -21,13 +21,17 @@ const linkOf = (p: StaticProp): MapLinkVm | null => {
   return null;
 };
 
+/** Height of the ground under a point; the street plane by default. */
+export type GroundAt = (x: number, z: number) => number;
+const FLAT_GROUND: GroundAt = () => 0;
+
 /**
  * Minimap geometry from district content: the ground plate is the outline, solid blocks are
  * buildings and cover, other flat blocks are sidewalks along the streets. Floors up in the air
- * (the overpass deck, the footbridge, a balcony) are a layer of their own, and stairs, lifts
- * and ladders are marked (ADR-0021).
+ * (the overpass deck, a balcony) are a layer of their own, measured from the ground under them
+ * (Lublin's terrain, ADR-0045), and stairs, lifts and ladders are marked (ADR-0021).
  */
-export const buildDistrictMap = (props: readonly StaticProp[]): MapVm => {
+export const buildDistrictMap = (props: readonly StaticProp[], groundAt: GroundAt = FLAT_GROUND): MapVm => {
   const blocks: MapRectVm[] = [];
   const flats: MapRectVm[] = [];
   const decks: MapRectVm[] = [];
@@ -49,7 +53,7 @@ export const buildDistrictMap = (props: readonly StaticProp[]): MapVm => {
       if (p.solid) blocks.push(r);
       continue;
     }
-    const bottom = p.center.y - p.view.size.y / 2;
+    const bottom = p.center.y - p.view.size.y / 2 - groundAt(p.center.x, p.center.z);
     if (p.solid && bottom >= RAISED) decks.push(r);
     else if (p.solid && !link) blocks.push(r);
     else if (!p.solid && p.view.size.y <= FLAT) flats.push(r);
@@ -148,9 +152,10 @@ export const targetZoom = (speed: number, sprinting: boolean, ctx: MinimapContex
   return sprinting || speed > RUN_SPEED ? MAP_ZOOM_RUN : 1;
 };
 
-const playerVm = (e: Entity, moving: boolean): MapPlayerVm => {
+const playerVm = (e: Entity, moving: boolean, groundAt: GroundAt): MapPlayerVm => {
   const at = { x: snap(e.position.x, SNAP), z: snap(e.position.z, SNAP), yaw: snap(e.yaw, ANGLE_SNAP) };
-  const up = e.position.y > UPPER ? { ...at, level: Math.round(e.position.y) } : at;
+  const height = e.position.y - groundAt(e.position.x, e.position.z);
+  const up = height > UPPER ? { ...at, level: Math.round(height) } : at;
   return moving ? { ...up, moving: true } : up;
 };
 
@@ -160,7 +165,7 @@ const playerVm = (e: Entity, moving: boolean): MapPlayerVm => {
  * Returns the previous objects when nothing moved past the snap, so per-frame syncs do not
  * re-render.
  */
-export const createMinimapTracker = () => {
+export const createMinimapTracker = (groundAt: GroundAt = FLAT_GROUND) => {
   let player: MapPlayerVm | null = null;
   let markers: readonly MapMarkerVm[] = [];
   let zoom = 1;
@@ -178,7 +183,7 @@ export const createMinimapTracker = () => {
         // Movement over the last step (an entity built by hand in a test may have no previous position).
         const prev = (e.prevPosition as Entity["prevPosition"] | undefined) ?? e.position;
         const speed = Math.hypot(e.position.x - prev.x, e.position.z - prev.z) * ctx.ticksPerSecond;
-        nextPlayer = playerVm(e, !ctx.riding && speed > MOVING_SPEED);
+        nextPlayer = playerVm(e, !ctx.riding && speed > MOVING_SPEED, groundAt);
         goal = targetZoom(speed, e.posture?.sprinting ?? false, ctx);
         continue;
       }

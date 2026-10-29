@@ -83,6 +83,20 @@ Opis w [ADR-0035](docs/adr/0035-hud-fali-2.md).
 - Mieszkańcy chodzą po chodnikach w obie strony (trzymając się lewej), stoją przy ścianach, rozmawiają w parach, piją przy ladzie Neon Koi. Ilu ich jest, zależy od dzielnicy i godziny: targ tłoczny wieczorem, Shinsekai żywe nocą, doki puste po zmroku. Strzał ich płoszy, potem wracają na trasę.
 - Gęstość idzie za jakością grafiki (telefon `low`: do 4 na chunk, komputer `high`: do 12), `?crowd=off|low|medium|high` ją nadpisuje. Tłum jest rysowany jedną wspólną siatką, poza zapisem i bez wpływu na złote hashe.
 
+## Dane mapowe ([ADR-0042](docs/adr/0042-lublin-z-danych-mapowych.md))
+
+Centrum Lublina (Krakowskie Przedmieście, Stare Miasto, Podzamcze, Nabrzeże Bystrzycy) powstaje z danych mapowych narzędziem `tools/osm-import`. Gra nie łączy się z siecią.
+
+```bash
+pnpm osm:fetch      # pobiera OSM i teren do data/ (sieć, ręcznie; --only=<dystrykt>, --refresh, --eudem)
+pnpm osm:build      # generuje packages/sim/src/content/lublin/*.generated.ts offline z data/
+pnpm osm:preview <katalog>   # podgląd SVG dystryktów: teren, nawierzchnie, budynki, nazwy
+```
+
+- Mapa: © OpenStreetMap contributors, licencja [ODbL 1.0](https://www.openstreetmap.org/copyright). Wyciągi w `data/osm/` i wygenerowane tabele są bazą pochodną na ODbL.
+- Teren: Główny Urząd Geodezji i Kartografii (geoportal.gov.pl), NMT 1 m. Zapasowo EU-DEM v1.1 (Copernicus).
+- Szczegóły i warunki: [`data/osm/ATTRIBUTION.md`](data/osm/ATTRIBUTION.md).
+
 ## Struktura
 
 ```
@@ -96,7 +110,8 @@ packages/
   app/          kompozycja i punkt wejścia
 e2e/            Playwright: smoke, migawka NPR, budżety wydajności
 docs/adr/       decyzje architektoniczne
-tools/          budżety wydajności
+tools/          budżety wydajności, importer map (osm-import)
+data/           surowe dane mapowe i teren (ADR-0042)
 ```
 
 ## Bramki jakości

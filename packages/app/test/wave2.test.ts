@@ -119,7 +119,7 @@ describe("MetroController without a session", () => {
     bus.emit("MetroDeparted", { from: "kanal", to: "doki", seconds: 4 });
     expect(metro.riding).toBe(true);
     const start = ui.getState().metroRide;
-    expect(start).toMatchObject({ fromName: "Ulica Kanałowa", toName: "Doki Tessen", progress: 0 });
+    expect(start).toMatchObject({ fromName: "Brama Krakowska", toName: "Nabrzeże Bystrzycy", progress: 0 });
     expect(start?.caption?.text.length).toBeGreaterThan(0);
     metro.tick(2);
     expect(ui.getState().metroRide?.progress).toBeCloseTo(0.5);

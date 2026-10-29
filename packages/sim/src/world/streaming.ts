@@ -44,6 +44,8 @@ import {
 } from "./factory";
 import { inCreationOrder } from "./ordering";
 import { placeOnSchedule } from "./schedule";
+import { GroundField } from "./ground";
+import { settle } from "./placement";
 
 /**
  * Hysteresis: a chunk loads once the player is within `loadRadius` of its bounds and unloads
@@ -103,6 +105,8 @@ export class WorldStreamer {
   readonly streamedOut = new Set<EntityId>();
   /** Ids reserved for each chunk's background passers-by (ADR-0040); the passer-by system spawns them. */
   readonly passerbyIds = new Map<string, readonly EntityId[]>();
+  /** The ground of these chunks (ADR-0043): their terrain, or the street plane. */
+  readonly ground: GroundField;
 
   constructor(
     private readonly ids: IdAllocator,
@@ -111,6 +115,7 @@ export class WorldStreamer {
     devices: readonly DeviceDef[] = WORLD_DEVICES,
     metro: readonly MetroStationDef[] = WORLD_METRO,
   ) {
+    this.ground = new GroundField(chunks);
     for (const chunk of chunks) {
       const list: Template[] = [];
       for (const prop of chunk.props) {
@@ -402,13 +407,20 @@ export class WorldStreamer {
         this.dormant.delete(t.key);
       }
       if (clock && e.schedule) placeOnSchedule(e, e.schedule.def, clock);
+      settle(world, this.ground, e);
       world.add(e);
       this.streamedOut.delete(t.id);
     }
   }
 
   private unload(world: World<Entity>, chunkIds: ReadonlySet<string>): void {
-    const leaving = inCreationOrder([...world].filter((e) => e.chunk !== undefined && chunkIds.has(e.chunk)));
+    const staying = (id: string | undefined): boolean => id !== undefined && this.resident.has(id) && !chunkIds.has(id);
+    // A character on a daily plan walks out of its chunk (300 m down Grodzka in Lublin, ADR-0045):
+    // it sleeps only once neither its own chunk nor the one it stands in stays loaded.
+    const standing = (e: Entity): string | undefined => (e.schedule ? this.chunkIdAt(e.position) : undefined);
+    const leaving = inCreationOrder(
+      [...world].filter((e) => e.chunk !== undefined && (chunkIds.has(e.chunk) || chunkIds.has(standing(e) ?? "")) && !staying(e.chunk) && !staying(standing(e))),
+    );
     for (const e of leaving) {
       // Chasing or looking for the player (ADR-0029): it stays.
       if (e.ai?.alerted || e.ai?.lastKnown) continue;

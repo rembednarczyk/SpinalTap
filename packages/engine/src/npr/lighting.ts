@@ -18,24 +18,28 @@ export interface LightingRig {
   readonly fillColor: string;
 }
 
-/** Night in Shinsekai: cold moonlight, violet ambient, teal haze. */
+/**
+ * Night over Lublin: cold moonlight, violet ambient, teal haze. The haze is thin enough for the
+ * city's landmarks to read down a street (ADR-0045): Brama Krakowska from the deptak, about 70 m,
+ * is half in the haze, the castle from Plac Zamkowy, about 100 m, three quarters.
+ */
 export const NIGHT_RIG: LightingRig = {
   sunDir: { x: -0.35, y: 0.8, z: -0.45 },
   sunColor: "#4d5f86",
   ambient: "#3b3550",
   fogColor: "#141d26",
-  fogDensity: 0.021,
+  fogDensity: 0.0115,
   shadeTint: "#7d7ab2",
   fillColor: "#b9c6e0",
 };
 
-/** Overcast day over Shinsekai: flat grey-blue light, thin haze. The neon still carries the colour. */
+/** Overcast day over Lublin: flat grey-blue light, thin haze. The neon still carries the colour. */
 export const DAY_RIG: LightingRig = {
   sunDir: NIGHT_RIG.sunDir,
   sunColor: "#c4cad6",
   ambient: "#80869a",
   fogColor: "#6f7e8c",
-  fogDensity: 0.011,
+  fogDensity: 0.007,
   shadeTint: "#9496c2",
   fillColor: "#e2e7f0",
 };

@@ -17,7 +17,7 @@ EXTERNAL end_act()
 
 === recall_courier_case ===
 Obraz rwie się jak zły sygnał. Przez sekundę widzisz dwa miejsca naraz.
-Rampa za magazynem w porcie. Leje. Na nadgarstku masz kajdanki, a do nich przypiętą walizkę z logo Kagami Biotech.
+Rampa za magazynem nad Bystrzycą. Leje. Na nadgarstku masz kajdanki, a do nich przypiętą walizkę z logo Kagami Biotech.
 REN: Jeszcze dwie przecznice i jesteśmy kwita. Nie zaglądaj do środka.
 REN: Płacą nam za to, żebyśmy nie wiedzieli, co wieziemy.
 Zamek walizki jest tani. Wystarczy paznokieć.
@@ -32,7 +32,7 @@ Zamek walizki jest tani. Wystarczy paznokieć.
     ~ story_choice("case", "sealed")
     Niesiesz walizkę dalej. Jest lżejsza, niż powinna. Ren klepie cię w ramię.
     REN: Dobra robota. Za takie zlecenie kupimy sobie pół roku spokoju.
-- Deszcz, rampa i Ren znikają. Stoisz na ulicy w Shinsekai, a ręka sama szuka kajdanek.
+- Deszcz, rampa i Ren znikają. Stoisz na Krakowskim Przedmieściu, a ręka sama szuka kajdanek.
 Kagami Biotech. Ta nazwa siedzi w głowie jak drzazga. Mori cię składał, więc może wie, skąd to się bierze.
 ~ set_flag("recalled:courier_case")
 -> END
@@ -77,7 +77,7 @@ Głos w słuchawce brzmi jak Ren. Trochę za spokojnie.
     Wiadukt jest coraz bliżej. Dron schodzi niżej i strzela w opony.
     Ostatnie, co słyszysz przed uderzeniem, to głos Rena: zapis zakończony.
 - Stoisz przed kliniką Mori i trzymasz się framugi. Kark masz mokry od potu.
-To była ta noc. Wrak na Siódmej. Teraz wiesz, jak trafiłaś na tę ulicę.
+To była ta noc. Wrak na Krakowskim, przy Placu Litewskim. Teraz wiesz, jak trafiłaś na ten deptak.
 ~ set_flag("recalled:crash_night")
 -> END
 
@@ -192,7 +192,7 @@ MORI: Fiolki już nie ma. Domyślam się, że Kaito ci powiedział.
     SEKI: Mogłeś mi powiedzieć.
     MORI: Mogłem. Ale moduł był już tylko towarem, a ty nie chciałaś go znać.
     MORI: Kupił go Ren Odagiri. Płacił gotówką, której nikt na tej ulicy nie ma.
-- MORI: Nocuje na dachu nad targiem pod estakadą. Na schody pożarowe wchodzi od strony straganów.
+- MORI: Nocuje na dachu nad targiem na Podzamczu, przy wiadukcie. Na schody pożarowe wchodzi od strony straganów.
 ~ set_flag("ren_trail")
 -> END
 

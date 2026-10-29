@@ -1,8 +1,11 @@
 import type { Vec3 } from "@seki/core";
 import type { World } from "miniplex";
-import { type Aabb, topAt } from "../../world/collision";
+import type { Aabb } from "../../world/collision";
 import type { Entity } from "../../world/components";
+import { type GroundField, MAX_WALK_SLOPE, groundOf, heightApart } from "../../world/ground";
 import { lineOfSight } from "../../world/hitscan";
+import { solidIndexOf } from "../../world/solid-index";
+import { type Collider, closestXZ, collidersOf, colliderTop, overCollider } from "../../world/solids";
 import { SNAP_DOWN, STEP_HEIGHT } from "../movement-system";
 
 /**
@@ -19,6 +22,10 @@ import { SNAP_DOWN, STEP_HEIGHT } from "../movement-system";
  * of the solids, the floor height and the goal: the raster and the field are memoised per
  * world, but a miss gives exactly what a hit would, so a loaded game continues like the
  * original. Kinematic solids (lift platforms and gates) are left out: they move.
+ *
+ * On terrain (ADR-0043) the ground floor follows it: each cell is measured from the terrain
+ * under it, and a cell on a bank steeper than MAX_WALK_SLOPE is closed. Prisms close the cells
+ * their walls touch, like boxes.
  */
 
 /** Cell edge, metres. Narrow enough that the 2.4 m gap past the market stairs has open cells. */
@@ -99,19 +106,14 @@ const recall = <T>(map: Map<string, T>, key: string): T | undefined => {
   return v;
 };
 
-/** The floor a character walks on, rounded so that a sidewalk kerb is still the street. */
-export const floorOf = (y: number): number => (y < STEP_HEIGHT ? 0 : Math.round(y * 4) / 4);
+/**
+ * The floor a character walks on, rounded so that a sidewalk kerb is still the street. `ground`
+ * is the terrain under it (ADR-0043): 0, the ground floor, is anywhere within a step of it.
+ */
+export const floorOf = (y: number, ground = 0): number => (y - ground < STEP_HEIGHT ? 0 : Math.round(y * 4) / 4);
 
-const staticSolidsIn = (world: World<Entity>, x0: number, z0: number, x1: number, z1: number): Solid[] => {
-  const out: Solid[] = [];
-  for (const e of world.with("solid")) {
-    if (e.velocity) continue;
-    const s = e.solid;
-    if (s.max.x < x0 || s.min.x > x1 || s.max.z < z0 || s.min.z > z1) continue;
-    out.push(e);
-  }
-  return out;
-};
+/** Static solids whose box overlaps the window (the raster and its signature do not depend on their order). */
+const staticSolidsIn = (world: World<Entity>, x0: number, z0: number, x1: number, z1: number): Solid[] => solidIndexOf(world).near(x0, z0, x1, z1, true);
 
 /** Identity of a set of solids (order-free): which ones they are. Static solids never change shape. */
 const signature = (solids: readonly Solid[]): string => {
@@ -129,37 +131,76 @@ const cellRange = (lo: number, hi: number, origin: number): [number, number] => 
   Math.min(CELLS - 1, Math.floor((hi - origin) / NAV_CELL - 0.5)),
 ];
 
-const rasterise = (solids: readonly Solid[], floor: number, x0: number, z0: number): Raster => {
+const centre = (i: number, origin: number) => origin + (i + 0.5) * NAV_CELL;
+
+/** Terrain height at every cell centre of the window, or null where the world has no terrain. */
+const terrainOf = (ground: GroundField, x0: number, z0: number): Float64Array | null => {
+  if (!ground.hasTerrain) return null;
+  const base = new Float64Array(CELLS * CELLS);
+  for (let iz = 0; iz < CELLS; iz++) for (let ix = 0; ix < CELLS; ix++) base[iz * CELLS + ix] = ground.heightAt(centre(ix, x0), centre(iz, z0));
+  return base;
+};
+
+/** Cells of the ground floor on a bank too steep to walk (ADR-0043) are closed. */
+const closeBanks = (open: Uint8Array, base: Float64Array, ground: GroundField, x0: number, z0: number): void => {
+  // A cheap test on the cell grid first (half the limit, over two cells, edges one-sided);
+  // the movement system's own slope decides the rest.
+  const rough = 0.5 * MAX_WALK_SLOPE * NAV_CELL;
+  const at = (ix: number, iz: number) => base[Math.min(CELLS - 1, Math.max(0, iz)) * CELLS + Math.min(CELLS - 1, Math.max(0, ix))] ?? 0;
+  for (let iz = 0; iz < CELLS; iz++) {
+    for (let ix = 0; ix < CELLS; ix++) {
+      const gx = Math.abs(at(ix + 1, iz) - at(ix - 1, iz));
+      const gz = Math.abs(at(ix, iz + 1) - at(ix, iz - 1));
+      if (Math.hypot(gx, gz) < rough) continue;
+      if (ground.steepAt(centre(ix, x0), centre(iz, z0))) open[iz * CELLS + ix] = 0;
+    }
+  }
+};
+
+const near = { x: 0, z: 0 };
+
+const rasterise = (solids: readonly Collider[], floor: number, x0: number, z0: number, ground: GroundField): Raster => {
   const open = new Uint8Array(CELLS * CELLS);
-  const centre = (i: number, origin: number) => origin + (i + 0.5) * NAV_CELL;
-  if (floor === 0) open.fill(1);
-  else {
+  const base = terrainOf(ground, x0, z0);
+  if (floor === 0) {
+    open.fill(1);
+    if (base) closeBanks(open, base, ground, x0, z0);
+  } else {
     // Above the street only tops at about this height are floor; everything else is a drop.
-    for (const { solid: b, slope } of solids) {
+    for (const c of solids) {
+      const b = c.box;
       const [ix0, ix1] = cellRange(b.min.x, b.max.x, x0);
       const [iz0, iz1] = cellRange(b.min.z, b.max.z, z0);
       for (let iz = iz0; iz <= iz1; iz++) {
         for (let ix = ix0; ix <= ix1; ix++) {
-          const top = topAt(b, slope, centre(ix, x0), centre(iz, z0));
+          const x = centre(ix, x0);
+          const z = centre(iz, z0);
+          if (c.prism && !overCollider(c, x, z)) continue;
+          const top = colliderTop(c, x, z);
           if (top >= floor - SNAP_DOWN && top <= floor + STEP_HEIGHT) open[iz * CELLS + ix] = 1;
         }
       }
     }
+    // A hillside at the height of a roof or a deck is floor too.
+    if (base) for (let i = 0; i < base.length; i++) if ((base[i] ?? 0) >= floor - SNAP_DOWN && (base[i] ?? 0) <= floor + STEP_HEIGHT) open[i] = 1;
   }
   // Closed where the body would touch a solid it cannot step onto (movementSystem's rule, a wider body).
   const r2 = CLEARANCE * CLEARANCE;
-  for (const { solid: b, slope } of solids) {
-    if (b.min.y >= floor + BODY_HEIGHT || b.max.y <= floor + STEP_HEIGHT) continue;
+  const relative = floor === 0 && base !== null;
+  for (const c of solids) {
+    const b = c.box;
+    if (!relative && (b.min.y >= floor + BODY_HEIGHT || b.max.y <= floor + STEP_HEIGHT)) continue;
     const [ix0, ix1] = cellRange(b.min.x - CLEARANCE, b.max.x + CLEARANCE, x0);
     const [iz0, iz1] = cellRange(b.min.z - CLEARANCE, b.max.z + CLEARANCE, z0);
     for (let iz = iz0; iz <= iz1; iz++) {
       const z = centre(iz, z0);
-      const cz = Math.max(b.min.z, Math.min(z, b.max.z));
       for (let ix = ix0; ix <= ix1; ix++) {
         const x = centre(ix, x0);
-        const cx = Math.max(b.min.x, Math.min(x, b.max.x));
-        if ((x - cx) ** 2 + (z - cz) ** 2 >= r2) continue;
-        if (topAt(b, slope, cx, cz) > floor + STEP_HEIGHT) open[iz * CELLS + ix] = 0;
+        const q = closestXZ(c, x, z, near);
+        if ((x - q.x) ** 2 + (z - q.z) ** 2 >= r2) continue;
+        const ref = relative ? (base[iz * CELLS + ix] ?? 0) : floor;
+        if (relative && b.min.y >= ref + BODY_HEIGHT) continue;
+        if (colliderTop(c, q.x, q.z) > ref + STEP_HEIGHT) open[iz * CELLS + ix] = 0;
       }
     }
   }
@@ -286,7 +327,8 @@ const fieldFor = (world: World<Entity>, floor: number, goal: Vec3): Field | null
   const solids = staticSolidsIn(world, x0 - CLEARANCE, z0 - CLEARANCE, x0 + 2 * WINDOW_HALF + CLEARANCE, z0 + 2 * WINDOW_HALF + CLEARANCE);
   const memo = memoOf(world);
   const rasterKey = `${floor}|${cx}|${cz}|${signature(solids)}`;
-  const raster = recall(memo.rasters, rasterKey) ?? remember(memo.rasters, rasterKey, rasterise(solids, floor, x0, z0), MAX_RASTERS);
+  const raster =
+    recall(memo.rasters, rasterKey) ?? remember(memo.rasters, rasterKey, rasterise(collidersOf(solids), floor, x0, z0, groundOf(world)), MAX_RASTERS);
   const goalCell = cellIndex(raster, goal.x, goal.z);
   if (goalCell < 0) return null;
   const source = nearest(goalCell, GOAL_SEARCH, (n) => raster.open[n] === 1);
@@ -297,8 +339,27 @@ const fieldFor = (world: World<Entity>, floor: number, goal: Vec3): Field | null
 
 /** Is the straight walk from `from` to `to` free at knee height (ADR-0021's walk test)? */
 export const KNEE_HEIGHT = 0.6;
-export const straightWalk = (world: World<Entity>, from: Vec3, to: Vec3): boolean =>
-  lineOfSight(world, { x: from.x, y: from.y + KNEE_HEIGHT, z: from.z }, { x: to.x, y: to.y + KNEE_HEIGHT, z: to.z });
+/**
+ * On terrain (ADR-0043) the knee-high line ignores the ground itself (it dips under every
+ * crest) and instead the way must not cross a bank too steep to walk.
+ */
+export const straightWalk = (world: World<Entity>, from: Vec3, to: Vec3): boolean => {
+  const ground = groundOf(world);
+  const knee = (p: Vec3) => ({ x: p.x, y: p.y + KNEE_HEIGHT, z: p.z });
+  if (!ground.hasTerrain) return lineOfSight(world, knee(from), knee(to));
+  return lineOfSight(world, knee(from), knee(to), false) && !bankBetween(ground, from, to);
+};
+
+/** Does the way from `a` to `b` on the ground cross a bank too steep to walk? Sampled every half cell. */
+const bankBetween = (ground: GroundField, a: Vec3, b: Vec3): boolean => {
+  const len = Math.hypot(b.x - a.x, b.z - a.z);
+  const n = Math.ceil(len / NAV_CELL);
+  for (let i = 1; i <= n; i++) {
+    const t = i / n;
+    if (ground.steepAt(a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t)) return true;
+  }
+  return false;
+};
 
 /** A way round obstacles to one goal: the distance field the walker follows. */
 export interface Detour {
@@ -307,12 +368,12 @@ export interface Detour {
 }
 
 /** Bodies of other characters closed off in a private copy of the raster (a repath after getting stuck). */
-const withBodies = (field: Field, avoid: readonly Vec3[]): Field => {
+const withBodies = (field: Field, avoid: readonly Vec3[], ground: GroundField): Field => {
   const r = field.raster;
   const open = Uint8Array.from(r.open);
   const reach = 0.38 + CLEARANCE;
   for (const b of avoid) {
-    if (Math.abs(b.y - r.floor) > SAME_FLOOR) continue;
+    if (Math.abs(b.y - (r.floor === 0 ? ground.heightAt(b.x, b.z) : r.floor)) > SAME_FLOOR) continue;
     const [ix0, ix1] = cellRange(b.x - reach, b.x + reach, r.x0);
     const [iz0, iz1] = cellRange(b.z - reach, b.z + reach, r.z0);
     for (let iz = iz0; iz <= iz1; iz++) {
@@ -333,10 +394,11 @@ const withBodies = (field: Field, avoid: readonly Vec3[]): Field => {
  * field, not memoised, for a walker that got stuck behind its own people.
  */
 export const planDetour = (world: World<Entity>, from: Vec3, goal: Vec3, avoid: readonly Vec3[] = []): Detour | null => {
-  if (Math.abs(goal.y - from.y) > SAME_FLOOR) return null;
-  const field = fieldFor(world, floorOf(from.y), goal);
+  if (heightApart(world, goal, from) > SAME_FLOOR) return null;
+  const ground = groundOf(world);
+  const field = fieldFor(world, floorOf(from.y, ground.heightAt(from.x, from.z)), goal);
   if (!field) return null;
-  return { goal, field: avoid.length > 0 ? withBodies(field, avoid) : field };
+  return { goal, field: avoid.length > 0 ? withBodies(field, avoid, ground) : field };
 };
 
 /**
@@ -387,7 +449,7 @@ export const detourStep = (world: World<Entity>, from: Vec3, goal: Vec3): Vec3 |
  * progress for a while) takes the way around even when the knee-high line looks free.
  */
 export const steerPoint = (world: World<Entity>, from: Vec3, goal: Vec3, forceDetour = false): Vec3 => {
-  if (Math.abs(goal.y - from.y) > SAME_FLOOR) return goal;
+  if (heightApart(world, goal, from) > SAME_FLOOR) return goal;
   if (!forceDetour && straightWalk(world, from, goal)) return goal;
   return detourStep(world, from, goal) ?? goal;
 };

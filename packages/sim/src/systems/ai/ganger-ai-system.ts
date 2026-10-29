@@ -1,4 +1,5 @@
 import { BehaviourTree, State } from "mistreevous";
+import { aboveGround, heightApart } from "../../world/ground";
 
 type Agent = ConstructorParameters<typeof BehaviourTree>[1];
 import { angleTo, normalize, strikeAt, sub, type EntityId, type Vec3 } from "@seki/core";
@@ -196,8 +197,8 @@ class GangerAgent {
     const { ctx, self } = this;
     if (!ctx || !self) return;
     const from = self.position;
-    const apart = Math.abs(to.y - from.y) > LEVEL_GAP;
-    const raised = from.y > LEVEL_GAP || to.y > LEVEL_GAP;
+    const apart = heightApart(ctx.world, to, from) > LEVEL_GAP;
+    const raised = aboveGround(ctx.world, from) > LEVEL_GAP || aboveGround(ctx.world, to) > LEVEL_GAP;
     if (!apart) {
       const step = this.head(to);
       if (step || !raised) {
@@ -231,7 +232,7 @@ class GangerAgent {
     const { ctx, self } = this;
     if (!ctx || !self) return null;
     const from = self.position;
-    if (Math.abs(goal.y - from.y) > SAME_FLOOR) return goal;
+    if (heightApart(ctx.world, goal, from) > SAME_FLOOR) return goal;
     const plan = this.progress?.plan;
     if (this.unsticking() && plan && Math.hypot(plan.goal.x - goal.x, plan.goal.z - goal.z) < PLAN_DRIFT) {
       const p = followDetour(plan, from);

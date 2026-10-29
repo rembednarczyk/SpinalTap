@@ -4,7 +4,7 @@ import { freeze, step, waitForGame } from "./helpers";
 test("crouching lowers the view and pulls the crosshair in; running spreads it", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto("/?seed=7");
+  await page.goto("/?seed=7&models=off");
   await waitForGame(page);
   await page.getByRole("button", { name: "Nowa gra" }).click();
   await expect(page.getByTestId("hud")).toBeVisible();

@@ -44,7 +44,7 @@ Kazałaś sprzedać moduł komuś, kto lubi cudze życie. Ktoś je kupił w jede
 ~ set_flag("seen:act2_opening")
 -> END
 
-// Ren Odagiri on the low roof over the market (present from ren_trail until the "kagami" ending).
+// Ren Odagiri on the low roof over the market on Podzamcze (present from ren_trail until the "kagami" ending).
 === ren_odagiri ===
 {
 - act2_ending == "street": -> after_street
@@ -108,7 +108,7 @@ REN: Reszta archiwum leży u mnie. Kagami chce je z powrotem i wystawiło na mni
 { quest_step == "kaito_job":
     REN: Idź do Kaito. Chcę wiedzieć, ile jestem dla nich wart.
 - else:
-    REN: Kurosawa czeka na estakadzie. Cokolwiek postanowisz, ja tu będę.
+    REN: Kurosawa czeka na wiadukcie. Cokolwiek postanowisz, ja tu będę.
 }
 -> END
 
@@ -159,7 +159,7 @@ REN: Hebi biorą już zamówienia. Wiesz, ile ktoś da za wspomnienie własnego 
 === function cleaners_down() ===
 ~ return has_flag("dead:kagami-cleaner-1") && has_flag("dead:kagami-cleaner-2") && has_flag("dead:kagami-cleaner-3")
 
-// Kurosawa of Kagami on the overpass deck (present from kagami_job until the ambush or the ending).
+// Kurosawa of Kagami on the al. Tysiąclecia viaduct deck (present from kagami_job until the ambush or the ending).
 === kurosawa ===
 { quest_step == "overpass" && choice_archive == "":
     -> deal
@@ -225,7 +225,7 @@ Kurosawa unosi dwa palce i odchodzi w stronę windy. Od strony szybu idą ludzie
 // Plays on its own after the "kagami" ending (memory "lustro").
 === recall_mirror ===
 Chip z białego etui wchodzi gładko, jakby ktoś go do ciebie przyciął.
-Kuchnia z oknem na port. Matka kroi rybę i nuci. Szkoła, pierwsza praca, pierwszy kurs dla Kagami.
+Kuchnia z oknem na Bystrzycę. Matka kroi rybę i nuci. Szkoła, pierwsza praca, pierwszy kurs dla Kagami.
 Wszystko się zgadza. Każda data, każda twarz. Za dobrze, jak w katalogu.
 TECH: Zapis kompletny. Nosicielka przyjęła pakiet bez odrzutu.
 Nie wiesz, czy ten głos jest częścią wspomnienia, czy ktoś mówi do ciebie teraz.
@@ -236,7 +236,7 @@ Nie wiesz, czy ten głos jest częścią wspomnienia, czy ktoś mówi do ciebie 
 === recall_rooftop ===
 Ten sam dach, dwa lata wcześniej. Pada, a pod wami szumi targ.
 Ren liczy na palcach pieniądze, których jeszcze nie macie.
-REN: Kagami płaci za jeden kurs tyle, co Hebi za rok. Walizka z portu do ich laboratorium i jesteśmy wolni.
+REN: Kagami płaci za jeden kurs tyle, co Hebi za rok. Walizka z nabrzeża do ich laboratorium i jesteśmy wolni.
 REN: Jedziemy razem. Ty prowadzisz, ja siedzę na kanale.
 * [Podajesz mu rękę. #tone:main]
     ~ choice_rooftop = "together"
@@ -256,7 +256,7 @@ Ciało pamięta ten dach: każdą krawędź, każdy skok na sąsiedni. I to, jak
 // Flashback after Kaito plays the client's message (memory "głos").
 === recall_last_call ===
 Głos z nagrania zostaje ci w głowie i ciągnie za sobą inny dźwięk: syk pękniętej chłodnicy.
-Wrak na Siódmej. Wisisz w pasach głową w dół. W uchu dalej masz słuchawkę.
+Wrak na Krakowskim. Wisisz w pasach głową w dół. W uchu dalej masz słuchawkę.
 REN: Zapis zakończony. Obiekt nie reaguje.
 Głos Rena urywa się, a w słuchawce zostaje ktoś inny, starszy i znudzony.
 TECH: Wyłączam filtr Odagiri. Próbka głosu dobrowolna, opłacona z góry. Zbierzcie ją przed świtem.
