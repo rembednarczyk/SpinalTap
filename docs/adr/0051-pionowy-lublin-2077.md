@@ -93,7 +93,7 @@ Złote hashe w `determinism.test.ts` bez zmian. Bryły rosną tylko w górę, a 
 - Nadbudowy, kable, kładki, klimatyzatory i reklamy nie dodają siatek: idą do siatek komórek. Wzrost to:
   - panorama wież: 3 wywołania (wieże w kolorze i w G-buforze line artu, gdzie są przycięte za płaszczyzną dalszą, oraz światła; na `low` bez świateł);
   - siatki szyldów komórek, które dotąd nie miały żadnego szyldu, a teraz mają reklamy albo mgłę. Pierwsza wersja kładła mgłę pod każdym głównym przęsłem, także na Rynku (221 / 86); mgła tylko w kanionach z `clutter` od 0,4 dała 218 / 83.
-- Budżet podniesiony tylko dla `rynek-tpp`, jedynej sceny ponad budżetem, kilka procent nad pomiarem.
+- Budżet podniesiony tylko dla `rynek-tpp`, jedynej sceny ponad budżetem, kilka procent nad pomiarem. Po scaleniu ze schodami z OSM i snopami latarń na gruncie mapy `podzamcze-tpp` dało 262 / 101 (o siatkę ponad), budżet 263 / 100 → 270 / 104.
 - Migawka NPR (`reference-m0.png`) nowa: przy Neon Koi widać baner 居酒屋 i klimatyzatory na sąsiedniej kamienicy, banery KINO i HOTEL, kable z lampionami i zasłony z neonowych pasów w głębi deptaka; fasada Neon Koi i postać bez zmian.
 
 ### Do dopracowania
