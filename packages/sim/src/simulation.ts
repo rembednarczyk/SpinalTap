@@ -23,6 +23,9 @@ import { WorldStreamer } from "./world/streaming";
 import { applyCommand } from "./world/command-table";
 import { syncPlayerWeapon } from "./world/player-weapon";
 import { SIM_DT } from "./step-rate";
+import { isMicroKey } from "./world/micro-events";
+import { hasAmbush } from "./world/contract-plan";
+import { doorSnapshots, restoreDoors } from "./systems/door-system";
 
 export { BREACH_DATAMINE_EDDIES, BREACH_ICEPICK_SECONDS, BREACH_MARK_SECONDS } from "./world/contract-commands";
 export { SIM_DT, SIM_HZ } from "./step-rate";
@@ -62,7 +65,8 @@ export class Simulation {
     const player = playerEntity(ids.take());
     this.streamer = new WorldStreamer(ids);
     const contract = domain.contracts.active;
-    if (contract?.status === "active") this.streamer.registerContract(this.world, domain.flags, domain.contracts.completed, contract);
+    // A done job with an ambush by the way out (ADR-0034) still has people in the world.
+    if (contract && (contract.status === "active" || hasAmbush(contract))) this.streamer.registerContract(this.world, domain.flags, domain.contracts.completed, contract);
     const focus = saved?.entities.find((e) => e.key === "player")?.position ?? PLAYER_SPAWN.position;
     this.streamer.loadInitial(this.world, domain.flags, focus, saved?.streaming.loadedChunks ?? [], domain.clock, () => this.world.add(player));
     if (player.combatant) syncPlayerWeapon(domain, player.combatant);
@@ -77,6 +81,7 @@ export class Simulation {
     sim.rng.setState(snapshot.rngState);
     sim.tickCount = snapshot.tick;
     sim.streamer.restoreEntities(sim.world, snapshot.domain.flags, snapshot.entities);
+    restoreDoors(sim, snapshot.doors ?? []);
     return sim;
   }
 
@@ -156,8 +161,12 @@ export class Simulation {
   }
 
   snapshot(narrative: string | null, label: string, objective: string): SaveSnapshot {
-    const entities: EntitySnapshot[] = [...this.streamer.dormantSnapshots()];
-    for (const e of this.world) if (e.key) entities.push(entitySnapshotOf({ ...e, key: e.key }));
+    const entities: EntitySnapshot[] = this.streamer.dormantSnapshots().filter((s) => !isMicroKey(s.key));
+    // The people of a micro-event are transient (ADR-0034): a save leaves them out.
+    for (const e of this.world) if (e.key && !isMicroKey(e.key)) entities.push(entitySnapshotOf({ ...e, key: e.key }));
+    // A metro rider is out of the world, already on the destination platform (ADR-0034).
+    const rider = this.session.passenger;
+    if (rider?.key) entities.push(entitySnapshotOf({ ...rider, key: rider.key }));
     // Sorted by key: world iteration order is not stable across removals.
     entities.sort((a, b) => a.key.localeCompare(b.key));
     return {
@@ -167,6 +176,7 @@ export class Simulation {
       tick: this.tickCount,
       entities,
       streaming: { loadedChunks: this.streamer.loadedChunks },
+      doors: doorSnapshots(this),
       domain: this.holder.domain,
       narrative,
       meta: { label, objective },

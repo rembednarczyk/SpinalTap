@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { PhoneMessageVm, PhoneThreadVm } from "../store/hud-vm";
 import { usePhoneIntents, useUi } from "../use-ui";
+import { RadioTuner } from "../radio/radio";
 
 /** The phone key; kept out of the key bindings (menus.RESERVED_KEYS). */
 export const PHONE_KEY = "KeyT";
@@ -126,6 +127,7 @@ export const PhonePanel = () => {
           ✕
         </button>
       </header>
+      <RadioTuner />
       {phone.threads.length === 0 ? (
         <p className="phone__empty">Brak wiadomości.</p>
       ) : (

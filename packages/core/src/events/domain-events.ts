@@ -12,6 +12,8 @@ import type { GameClock } from "../time/game-clock";
 import type { BreachDaemonId, HackTargetKind, QuickhackFailure, QuickhackId } from "../hacking/quickhacks";
 import type { CrimeKind, CrowdState, DisturbanceKind, HeatLevel, WitnessChannel } from "../crime/heat";
 import type { BonusCondition, ContractBadge, ContractRank } from "../contracts/debrief";
+import type { BuffId, ContractVariation, DisguiseRole, MetroStationId } from "../world/wave2";
+import type { MetroRefusal } from "../world/metro";
 
 export interface DomainEvents {
   ShotFired: { shooterId: EntityId; from: Vec3; to: Vec3; hitEntity: EntityId | null };
@@ -26,9 +28,11 @@ export interface DomainEvents {
   /**
    * kind "shop" opens the ripperdoc panel instead of an ink conversation; kind "loot" opens the
    * loot panel, and `dialogueId` is then the container key. A shop says which one (`shopId`,
-   * the clinic when absent); `dialogueId` is then the shopkeeper's ink knot.
+   * the clinic when absent); `dialogueId` is then the shopkeeper's ink knot. Kind "metro"
+   * (ADR-0034) is a ticket kiosk: the app opens the line map for `station`, sends
+   * `travel-metro` or `end-dialogue`.
    */
-  InteractionStarted: { targetId: EntityId; dialogueId: string; kind: "dialogue" | "shop" | "loot"; shopId?: ShopId };
+  InteractionStarted: { targetId: EntityId; dialogueId: string; kind: "dialogue" | "shop" | "loot" | "metro"; shopId?: ShopId; station?: MetroStationId };
   /** The NPC will not deal with the player because of their faction's standing. */
   /**
    * A conversation or the shop was cut short by violence: the player was hurt, or someone
@@ -162,9 +166,40 @@ export interface DomainEvents {
     bonus: number;
     styleBonus: number;
     seconds: number;
+    /** The plan the job was done under (ADR-0034); absent for a plain job. */
+    variation?: ContractVariation;
   };
   /** A text or a call on the phone (ADR-0028); the app renders `knot` from ink. */
   PhoneMessage: { from: string; kind: "text" | "call"; knot: string; priority: PhonePriority };
+  // Wave 2 (ADR-0032).
+  /** A burst of speed on the ground or in the air (legs cyberware). */
+  Dashed: { entityId: EntityId; air: boolean; at: Vec3 };
+  /**
+   * A guarding blade sent a bullet back towards where the defender looks. `at`: where the guard
+   * caught it; `to`: where the bullet went (ADR-0033), `hitEntity` who it hit.
+   */
+  ProjectileReflected: { defenderId: EntityId; attackerId: EntityId; at: Vec3; to: Vec3; hitEntity: EntityId | null };
+  /** Cyberware capacity in use and the limit (installing above the limit is refused). */
+  CyberwareCapacityChanged: { used: number; max: number };
+  BuffApplied: { buffId: BuffId; duration: number };
+  BuffEnded: { buffId: BuffId };
+  /** The player now passes for `role`, or for nobody (null). */
+  DisguiseChanged: { role: DisguiseRole | null };
+  /** An enforcer saw through the disguise, or a forbidden act gave it away. */
+  DisguiseBlown: { observerId: EntityId; role: DisguiseRole };
+  /** The train left: the destination streams in during `seconds` of ride. */
+  MetroDeparted: { from: MetroStationId; to: MetroStationId; seconds: number };
+  MetroArrived: { station: MetroStationId };
+  /** A street encounter (a short ink scene) began with `npcId`. */
+  EncounterStarted: { encounterId: string; knot: string; npcId: EntityId | null };
+  EncounterEnded: { encounterId: string; outcome: string };
+  /** The player learned something that opens another way through the running contract. */
+  ContractHookFound: { contractId: string; hookId: string; text: string };
+  // Wave 2, sim B (ADR-0034).
+  /** The kiosk did not sell the ticket; nothing was paid. */
+  MetroRefused: { reason: MetroRefusal; to: MetroStationId };
+  /** A guard said something the player overheard (an observation hook); the app renders `knot`. */
+  GuardBark: { entityId: EntityId; knot: string };
 }
 
 /** Awareness of the player, from not noticing to fighting. */

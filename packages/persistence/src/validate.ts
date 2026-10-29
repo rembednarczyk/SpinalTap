@@ -1,6 +1,8 @@
 import {
+  DISGUISE_FACTION,
   FACTIONS,
   QUICKHACK_IDS,
+  isBuffId,
   isFactionId,
   isContractKind,
   isContractSiteId,
@@ -14,6 +16,7 @@ import {
   isStoryOption,
 } from "@seki/core";
 import { findItemsError } from "./validate-items";
+import { findContractWave2Error, findEncountersError, findMetroError } from "./validate-wave2";
 
 type Json = Record<string, unknown>;
 
@@ -36,6 +39,8 @@ export const findSchemaError = (s: Json): string | null => {
   }
   const st = s.streaming;
   if (!isObject(st) || !Array.isArray(st.loadedChunks) || !st.loadedChunks.every((c) => typeof c === "string")) return "streaming";
+  // ADR-0038: leaves of resident doors that are moving or about to close.
+  if (!Array.isArray(s.doors) || !s.doors.every((x) => isObject(x) && typeof x.key === "string" && isNum(x.open) && isNum(x.idle))) return "doors";
   const d = s.domain;
   if (!isObject(d)) return "domain";
   const c = d.character;
@@ -51,6 +56,7 @@ export const findSchemaError = (s: Json): string | null => {
   }
   if (!Array.isArray(d.flags) || !d.flags.every((f) => typeof f === "string")) return "flags";
   if (!isObject(d.preferences) || (d.preferences.cameraMode !== "FPP" && d.preferences.cameraMode !== "TPP")) return "preferences";
+  if (d.preferences.trackedQuest !== undefined && typeof d.preferences.trackedQuest !== "string") return "preferences";
   const itemsError = findItemsError(d);
   if (itemsError) return itemsError;
   const contracts = d.contracts;
@@ -76,7 +82,11 @@ export const findSchemaError = (s: Json): string | null => {
   if (contracts.tally !== undefined && contracts.tally !== null && findTallyError(contracts.tally)) return "contract tally";
   const heatError = findHeatError(d.heat) ?? findNetrunError(d.netrun);
   if (heatError) return heatError;
+  const wave2Error = findContractWave2Error(contracts) ?? findMetroError(d.metro) ?? findEncountersError(d.encounters);
+  if (wave2Error) return wave2Error;
   if (!isObject(d.ability) || !isNum(d.ability.activeTime) || !isNum(d.ability.cooldown)) return "ability";
+  const bodyError = findBodyError(d);
+  if (bodyError) return bodyError;
   const story = d.story;
   if (!isObject(story) || !isObject(story.choices)) return "story";
   for (const [choice, option] of Object.entries(story.choices)) {
@@ -114,6 +124,16 @@ const findNetrunError = (n: unknown): string | null => {
   if (u === null) return null;
   if (!isObject(u) || typeof u.hackId !== "string" || !(QUICKHACK_IDS as readonly string[]).includes(u.hackId)) return "netrun upload";
   if (typeof u.target !== "string" || !isNum(u.left) || !isNum(u.ram)) return "netrun upload";
+  return null;
+};
+
+/** Buffs, capacity shards and the disguise (ADR-0033). */
+const findBodyError = (d: Json): string | null => {
+  if (!Array.isArray(d.buffs) || !d.buffs.every((b) => isObject(b) && isBuffId(b.id) && isNum(b.left) && b.left > 0)) return "buffs";
+  if (new Set(d.buffs.map((b: Json) => b.id)).size !== d.buffs.length) return "buffs";
+  if (!Number.isInteger(d.capacityShards) || (d.capacityShards as number) < 0) return "capacity shards";
+  const g = d.disguise;
+  if (!isObject(g) || typeof g.blown !== "boolean" || !(g.role === null || (typeof g.role === "string" && Object.hasOwn(DISGUISE_FACTION, g.role)))) return "disguise";
   return null;
 };
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { BASE_STATS, type DomainState, type ItemInstance, PARRY_COOLDOWN, WEAPON_CATALOG } from "@seki/core";
 import { KNOCKBACK_SPEED, KNOCKBACK_TIME, MELEE_CHASE_SPEED, RenderSync, SIM_DT, SPRINT_MULTIPLIER, Simulation, aimSpreadOf, gangerEntity, idleMelee, playerStatsOf, type Entity } from "../src";
-import { byKey, collect, input, run, teleportPlayer } from "./helpers";
+import { byKey, collect, input, run, teleportPlayer, streetSim } from "./helpers";
 
 const ticks = (seconds: number) => Math.ceil(seconds / SIM_DT - 1e-9);
 const UNITY = WEAPON_CATALOG.unity9;
@@ -9,7 +9,7 @@ const BATON = WEAPON_CATALOG.baton.melee;
 
 /** A new game with `patch` applied to the domain, loaded through a snapshot; other gangers removed. */
 const simWith = (patch: (d: DomainState) => DomainState = (d) => d, seed = 5): Simulation => {
-  const base = Simulation.create({ seed });
+  const base = streetSim({ seed });
   const sim = Simulation.fromSnapshot({ ...base.snapshot(null, "t", ""), domain: patch(base.snapshot(null, "t", "").domain) });
   for (const g of [...sim.world.with("ai")]) sim.world.remove(g);
   return sim;
@@ -108,7 +108,7 @@ describe("aim down sights (ADR-0019)", () => {
   });
 
   it("aims a ganger's weapon up while it fights", () => {
-    const sim = Simulation.create({ seed: 11 });
+    const sim = streetSim({ seed: 11 });
     const guard = byKey(sim, "guard")!;
     teleportPlayer(sim, { x: guard.position.x, y: 0, z: guard.position.z - 6 });
     guard.ai!.alerted = true;
@@ -289,7 +289,7 @@ describe("guard and parry (ADR-0019)", () => {
 
   it("a shot into the guard is only partly blocked", () => {
     const shot = (guarding: boolean) => {
-      const sim = Simulation.fromSnapshot({ ...Simulation.create({ seed: 11 }).snapshot(null, "t", ""), domain: withBaton(Simulation.create({ seed: 11 }).domain) });
+      const sim = Simulation.fromSnapshot({ ...streetSim({ seed: 11 }).snapshot(null, "t", ""), domain: withBaton(streetSim({ seed: 11 }).domain) });
       const guard = byKey(sim, "guard")!;
       for (const g of [...sim.world.with("ai")]) if (g !== guard) sim.world.remove(g);
       teleportPlayer(sim, { x: guard.position.x, y: 0, z: guard.position.z - 4 }, 0);

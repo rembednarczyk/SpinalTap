@@ -54,9 +54,11 @@ import {
   type TradeVm,
   type WeaponStripVm,
 } from "./ui-vm";
+import type { BuffVm, CapacityVm, ContractHookVm, DashVm, DisguiseVm, MetroMapVm, MetroRideVm } from "./wave2-vm";
 
 export * from "./hud-vm";
 export * from "./ui-vm";
+export * from "./wave2-vm";
 
 // ---- Areas of the UI state (ADR-0031) ----
 // One flat Zustand store; each area below is its own type, and the comment says who writes it.
@@ -131,6 +133,8 @@ export interface ContractsUiState {
   readonly contractsDone: number;
   readonly debrief: ContractDebriefVm | null;
   readonly contractBonus: ContractBonusVm | null;
+  /** Hooks found during the running contract (ADR-0032), for the tracker. */
+  readonly contractHooks: readonly ContractHookVm[];
 }
 
 /** The conversation on screen. Written by the dialogue controller. */
@@ -187,6 +191,8 @@ export interface MapUiState {
   readonly lastKnown: { readonly x: number; readonly z: number } | null;
   /** Civilians phoning a crime in, as minimap markers. */
   readonly witnesses: readonly MapPointVm[];
+  /** Minimap range as a multiple of the default (ADR-0035): above 1 while sprinting or dashing. */
+  readonly mapZoom: number;
 }
 
 /** The phone (ADR-0028). Written by the phone controller and the phone presenter. */
@@ -217,6 +223,22 @@ export interface SettingsUiState {
   readonly reloadNeeded: boolean;
 }
 
+/** The metro (ADR-0035): the line map at the kiosk and the ride screen. Written by the metro controller. */
+export interface MetroUiState {
+  readonly metroMap: MetroMapVm | null;
+  readonly metroRide: MetroRideVm | null;
+}
+
+/** Wave 2 body HUD (ADR-0035): implant capacity, buffs, the dash and the disguise. Written by the wave 2 presenters. */
+export interface BodyUiState {
+  /** Cyberware capacity in use and the limit; null until the simulation reports it. */
+  readonly capacity: CapacityVm | null;
+  readonly buffs: readonly BuffVm[];
+  /** The dash icon; null until the player has dashed once. */
+  readonly dash: DashVm | null;
+  readonly disguise: DisguiseVm | null;
+}
+
 /** The whole UI state: the sum of the areas above, flat at run time. */
 export type UiState = SessionUiState &
   PlayerHudUiState &
@@ -229,7 +251,9 @@ export type UiState = SessionUiState &
   MapUiState &
   PhoneUiState &
   HackingUiState &
-  SettingsUiState;
+  SettingsUiState &
+  MetroUiState &
+  BodyUiState;
 
 export const initialUiState: UiState = {
   screen: "title",
@@ -307,6 +331,14 @@ export const initialUiState: UiState = {
   upload: null,
   scanNote: null,
   breach: null,
+  contractHooks: [],
+  mapZoom: 1,
+  metroMap: null,
+  metroRide: null,
+  capacity: null,
+  buffs: [],
+  dash: null,
+  disguise: null,
 };
 
 export type UiStore = StoreApi<UiState>;

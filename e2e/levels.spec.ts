@@ -62,6 +62,8 @@ test("jump onto a stall counter and the fire escape onto the roof (ADR-0021)", a
   await waitForGame(page);
   await page.getByRole("button", { name: "Nowa gra" }).click();
   await expect(page.getByTestId("hud")).toBeVisible();
+  // A new game wakes on the clinic chair (ADR-0038): jump from the street, where the floor is 0.
+  await teleport(page, -4, 4.4);
 
   // The real Space key jumps while the loop runs (after a click into the canvas gives it the
   // keys). Done in Shinsekai at the start: the light scene keeps the real loop ticking even on

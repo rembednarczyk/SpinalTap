@@ -3,10 +3,13 @@ import { useStore } from "zustand";
 import type {
   CharacterIntents,
   ContractIntents,
+  JournalIntents,
   DialogueIntents,
   HackIntents,
   LootIntents,
+  MetroIntents,
   PhoneIntents,
+  RadioIntents,
   SessionIntents,
   SettingsIntents,
   ShopIntents,
@@ -35,4 +38,7 @@ export const useCharacterIntents = (): CharacterIntents => useUiContext().intent
 export const useSettingsIntents = (): SettingsIntents => useUiContext().intents;
 export const usePhoneIntents = (): PhoneIntents => useUiContext().intents;
 export const useContractIntents = (): ContractIntents => useUiContext().intents;
+export const useJournalIntents = (): JournalIntents => useUiContext().intents;
 export const useHackIntents = (): HackIntents => useUiContext().intents;
+export const useMetroIntents = (): MetroIntents => useUiContext().intents;
+export const useRadioIntents = (): RadioIntents => useUiContext().intents;

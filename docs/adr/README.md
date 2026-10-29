@@ -33,5 +33,14 @@
 | [0029](0029-fala-1-symulacja-swiadkowie-heat-quickhacki.md) | Fala 1 w symulacji: ostatnia znana pozycja, tłum i świadkowie, heat i wsparcie poza wzrokiem, skaner i quickhacki, kamery i Breach, debrief zlecenia, zapis v11 | Zaakceptowana |
 | [0030](0030-wizualia-fali-1.md) | Wizualia fali 1: paleta dystryktów, szyldy i holoreklamy z atlasu, post-process zdarzeń z limitem błysków, skaner | Zaakceptowana |
 | [0031](0031-rozbicie-god-objectow.md) | Audyt god objectów i docelowy podział: wąskie intencje UI, obszary stanu, kontrolery sesji, fasada renderera, strażnik w ESLint | Zaakceptowana |
+| [0032](0032-fala-2-kontrakty.md) | Kontrakty fali 2: metro, radio, przebrania, pojemność cyberware i zryw, buffy, warianty zleceń i haki, spotkania uliczne | Zaakceptowana |
+| [0033](0033-fala-2-cialo-zryw-pojemnosc-buffy-przebrania.md) | Fala 2 w symulacji (sim A): zryw i zryw w powietrzu, odbijanie pocisków, pojemność cyberware i shardy, buffy z jedzenia, przebrania i egzekutorzy | Zaakceptowana |
+| [0034](0034-metro-warianty-haki-spotkania.md) | Sim B fali 2: metro z peronami i przejazdem, warianty zleceń, haki obserwacyjne, spotkania uliczne i mikrozdarzenia | Zaakceptowana |
+| [0035](0035-hud-fali-2.md) | App i UI fali 2: kontrolery metra i radia, układ dotykowy telefonu, prezentery ciała, przebrań i haków, minimapa z zoomem i obszarami, łuk dotykowy | Zaakceptowana |
+| [0036](0036-engine-fali-2.md) | Engine fali 2: wagon metra z paralaksą, radio z trzema stacjami i głośnikami w lokalach, smugi zrywu i ślad odbicia, odcienie przebrań na proceduralnej obsadzie, progi mokrego asfaltu ze statyczną sondą | Zaakceptowana |
+| [0037](0037-fala-3-wnetrza-dialog-rutyny.md) | Fala 3 z uwag gracza: wnętrza i drzwi automatyczne, start w klinice, dialog na kole, rutyny i aktywności NPC | Zaakceptowana |
+| [0038](0038-wnetrza-drzwi-start-w-klinice.md) | Wnętrza kliniki i Neon Koi wycięte z bloków city kitu, drzwi automatyczne z czujnikiem i zamkami (biuro Tessen na kod), start na fotelu w klinice, zapis v14 | Zaakceptowana |
+| [0039](0039-dialog-na-kole.md) | Dialog na kole: rodzaje opcji z tagów ink, łuk przy rozmówcy, sterowanie myszą, klawiaturą, dotykiem, propozycja dla pada | Zaakceptowana |
+| [0040](0040-rutyny-aktywnosci-przechodnie.md) | Rutyny i aktywności postaci: aktywność z harmonogramu, nawyku i posterunku, miejsca aktywności, przechodnie tła z ziarna i zegara poza zapisem, pozy i rzeczy w rękach za fasadą renderera | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.

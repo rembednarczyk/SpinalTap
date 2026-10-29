@@ -39,6 +39,8 @@ export interface InputFrame {
   readonly scan: boolean;
   /** Edge-triggered quickhack choice while scanning: the n-th hack of the list, 0 none. */
   readonly quickhack: QuickhackSlotInput;
+  /** Edge-triggered: dash (ADR-0032), on the ground or in the air with the right legs cyberware. */
+  readonly dash: boolean;
 }
 
 export type QuickhackSlotInput = 0 | 1 | 2 | 3 | 4 | 5;
@@ -67,6 +69,7 @@ export const EMPTY_INPUT: InputFrame = Object.freeze({
   weaponCycle: 0,
   scan: false,
   quickhack: 0,
+  dash: false,
 });
 
 export interface InputPort {

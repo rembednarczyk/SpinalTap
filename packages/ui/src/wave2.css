@@ -1,0 +1,185 @@
+/* Wave 2 HUD (ADR-0035): metro, radio, capacity, buffs, dash, disguise, minimap areas, touch arc. */
+
+/* ---- metro: the line map at the kiosk ---- */
+.metro {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding: 20px 24px;
+  background: rgba(6, 10, 16, 0.95);
+  border-top: 2px solid var(--amber);
+  pointer-events: auto;
+}
+.metro__head { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 2px 12px; }
+.metro__eyebrow { grid-column: 1 / -1; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--amber); }
+.metro__line { margin: 0; font-size: 26px; letter-spacing: 0.08em; }
+.metro__wallet { font-family: var(--font-mono); font-size: 16px; color: var(--amber); }
+.metro__refusal { margin: 10px 0 0; padding: 8px 10px; border-left: 3px solid var(--danger); color: var(--danger); background: rgba(255, 77, 94, 0.08); }
+.metro__stops { position: relative; margin: 16px 0; padding: 0 0 0 34px; list-style: none; }
+/* The line itself: one stroke down the stops. */
+.metro__stops::before { content: ""; position: absolute; left: 10px; top: 22px; bottom: 22px; width: 4px; background: var(--amber); border-radius: 2px; }
+.metro__stop { position: relative; display: flex; align-items: center; gap: 12px; min-height: 52px; }
+.metro__dot { position: absolute; left: -32px; width: 16px; height: 16px; border-radius: 50%; background: #0b1016; border: 3px solid var(--amber); }
+.metro__stop--here .metro__dot { background: var(--amber); box-shadow: 0 0 12px rgba(255, 191, 74, 0.7); }
+.metro__name { flex: 1; font-size: 18px; font-weight: 700; letter-spacing: 0.04em; }
+.metro__here { font-family: var(--font-mono); font-size: 13px; color: var(--amber); }
+.metro__ticket, .metro__close {
+  min-height: 44px;
+  padding: 6px 14px;
+  font-size: 15px;
+  color: var(--ink);
+  background: rgba(255, 191, 74, 0.1);
+  border: 1px solid rgba(255, 191, 74, 0.55);
+  cursor: pointer;
+}
+.metro__ticket:disabled { opacity: 0.45; cursor: default; }
+.metro__close { background: transparent; border-color: var(--panel-edge); }
+
+/* ---- metro: the ride ---- */
+.metro-ride { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: max(24px, env(safe-area-inset-top, 0px)) 16px max(28px, env(safe-area-inset-bottom, 0px)); pointer-events: none; }
+.metro-ride__panel { width: min(420px, calc(100vw - 32px)); padding: 10px 16px; background: var(--panel); border-left: 3px solid var(--amber); }
+.metro-ride__line { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--amber); }
+.metro-ride__route { margin-top: 2px; font-size: 18px; }
+.metro-ride__bar { height: 6px; margin-top: 8px; background: rgba(255, 255, 255, 0.08); }
+.metro-ride__fill { height: 100%; background: var(--amber); transition: width 200ms linear; }
+.metro-ride__caption { max-width: min(720px, calc(100vw - 32px)); margin: 0; padding: 8px 14px; font-size: 18px; text-align: center; background: rgba(4, 7, 12, 0.78); }
+
+/* ---- radio (in the phone) ---- */
+.radio { padding: 8px 12px; border-bottom: 1px solid var(--panel-edge); }
+.radio__title { margin: 0 0 6px; font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-dim); }
+.radio__stations { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+.radio__station { display: flex; flex-direction: column; align-items: flex-start; min-height: 44px; padding: 4px 10px; color: var(--ink); text-align: left; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--panel-edge); }
+.radio__station--on { border-color: var(--cyan); background: rgba(95, 242, 255, 0.14); }
+.radio__name { font-weight: 700; }
+.radio__genre { font-size: 12px; color: var(--ink-dim); }
+.toast--radio { border-color: #b48cff; }
+.toast--radio .toast__icon { color: #b48cff; }
+
+/* ---- cyberware capacity at the ripperdoc ---- */
+.capacity { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; margin: 0 0 10px; font-family: var(--font-mono); font-size: 14px; }
+.capacity__label { color: var(--ink-dim); }
+.capacity__bar { flex: 1; height: 8px; background: rgba(255, 255, 255, 0.08); }
+.capacity__fill { height: 100%; background: #39ffd0; }
+.capacity--full .capacity__fill { background: var(--amber); }
+.shop__capacity { display: inline-block; margin: 2px 0; font-family: var(--font-mono); font-size: 12px; color: #39ffd0; }
+
+/* ---- buffs, the dash, the disguise ---- */
+.buffs { position: absolute; left: 212px; bottom: 112px; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.buff { position: relative; display: grid; grid-template-columns: auto auto; gap: 0 6px; align-items: center; padding: 4px 8px 6px; background: var(--panel); border-bottom: 2px solid var(--ok); font-size: 13px; }
+.buff__icon { grid-row: span 2; font-size: 18px; color: var(--ok); }
+.buff__name { font-weight: 700; }
+.buff__left { font-family: var(--font-mono); color: var(--ink-dim); }
+.buff__bar { position: absolute; left: 0; right: 0; bottom: -2px; height: 2px; background: var(--ink); transform-origin: left; }
+.buff--ending { animation: buff-blink 0.8s steps(2) infinite; }
+@keyframes buff-blink { 50% { opacity: 0.5; } }
+.reduce-flashes .buff--ending, .reduce-flashes .disguise--blown { animation: none; }
+.dash { position: absolute; right: 28px; bottom: 160px; display: flex; flex-direction: column; align-items: center; width: 52px; font-family: var(--font-mono); font-size: 11px; }
+.dash svg { width: 40px; height: 40px; transform: rotate(-90deg); }
+.dash__track { fill: var(--panel); stroke: rgba(255, 255, 255, 0.1); stroke-width: 3; }
+.dash__ring { fill: none; stroke: var(--ink-dim); stroke-width: 3; }
+.dash--ready .dash__ring { stroke: var(--cyan); }
+.dash__glyph { fill: none; stroke: var(--ink); stroke-width: 2; transform: rotate(90deg); transform-origin: 18px 18px; }
+.dash__state { color: var(--ink-dim); }
+.disguise { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 13px; color: var(--amber); }
+.disguise__icon { display: grid; place-items: center; width: 18px; height: 18px; border: 1px solid currentColor; border-radius: 50%; font-size: 11px; }
+.disguise--blown { color: var(--danger); animation: buff-blink 0.6s steps(2) 4; }
+
+/* ---- contract hooks and the debrief's variation ---- */
+.hud__hooks { margin: 4px 0 0; padding: 0; list-style: none; font-size: 14px; color: var(--cyan); }
+.hud__hook + .hud__hook { margin-top: 2px; }
+.debrief__variation { margin: 6px 0 0; font-family: var(--font-mono); font-size: 13px; color: var(--ink-dim); }
+.debrief__twist { color: var(--amber); }
+
+/* ---- minimap: target areas and enforcers ---- */
+.minimap svg g { transition: transform 240ms ease-out; }
+.minimap__area { fill: rgba(255, 61, 139, 0.16); stroke: var(--tok-objective, var(--magenta)); stroke-width: 0.6; stroke-dasharray: 1.6 1; }
+.minimap__marker--area { stroke: none; }
+.minimap__marker--enforcer { fill: var(--danger); }
+.minimap__marker--enforcer path { stroke: rgba(4, 7, 12, 0.9); stroke-width: 0.5; }
+
+/* ---- touch layout (ADR-0035): a phone in landscape, 667x375 and up ----
+   Right thumb: fire with an arc of reload, scanner, dash and "more"; aim, jump and the ability
+   beside it; "Use" only while there is something to use. Top right: one row of menu, phone and
+   pause, the wallet and the clock to its left, the minimap under it. Left: the objective on top,
+   the move stick, health only when it matters. No key hints anywhere. Every target is 44 px+. */
+.touch-mode .touch__actions {
+  right: max(16px, env(safe-area-inset-right, 0px));
+  bottom: max(10px, env(safe-area-inset-bottom, 0px));
+  width: 400px;
+  height: 200px;
+}
+.touch-mode .touch__btn--fire { right: 8px; bottom: 12px; width: 88px; height: 88px; }
+.touch__arc { position: absolute; inset: 0; pointer-events: none; }
+/* Around the fire button, upper left of it, 4 px apart so no two targets share a square. */
+.touch__arc .touch__btn--arc { width: 48px; height: 48px; font-size: 18px; }
+.touch__arc .touch__btn--arc-1 { right: 28px; bottom: 124px; color: var(--amber); }
+.touch__arc .touch__btn--arc-2 { right: 80px; bottom: 112px; color: var(--tok-hack, var(--cyan)); }
+.touch__arc .touch__btn--arc-3 { right: 104px; bottom: 60px; color: var(--magenta); }
+.touch__arc .touch__btn--arc-4 { right: 104px; bottom: 8px; }
+.touch__btn--cooling { opacity: 0.45; }
+.touch__btn:disabled { opacity: 0.35; }
+.touch-mode .touch__btn--aim { right: 184px; bottom: 10px; width: 52px; height: 52px; }
+.touch-mode .touch__btn--q { right: 184px; bottom: 72px; width: 52px; height: 52px; }
+.touch-mode .touch__btn--jump { right: 176px; bottom: 136px; width: 52px; height: 52px; }
+/* "Use": a pill near the crosshair, naming what happens. */
+.touch-mode .touch__btn--use {
+  right: 248px;
+  bottom: 136px;
+  width: auto;
+  min-width: 96px;
+  max-width: 168px;
+  height: 48px;
+  padding: 0 14px;
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.1;
+}
+.touch__use-verb { font-family: var(--font-ui); font-size: 15px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.touch__use-what { max-width: 140px; overflow: hidden; font-family: var(--font-ui); font-size: 11px; white-space: nowrap; text-overflow: ellipsis; }
+/* "More" unfolds one row left of the cluster. */
+.touch__more { position: absolute; right: 248px; bottom: 86px; display: flex; gap: 6px; pointer-events: none; }
+.touch__more .touch__btn { position: relative; right: auto; bottom: auto; width: 44px; height: 44px; font-size: 16px; }
+.touch__more .touch__btn--h { color: var(--ok); }
+
+/* Top right: one row of buttons, the wallet and clock left of it, the minimap under it. */
+.touch-mode .touch__top { top: max(8px, env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); gap: 6px; }
+.touch-mode .minimap { top: max(60px, calc(env(safe-area-inset-top, 0px) + 52px)); right: max(16px, env(safe-area-inset-right, 0px)); width: 88px; height: 88px; }
+.touch-mode .hud__wallet { top: max(8px, env(safe-area-inset-top, 0px)); right: calc(max(16px, env(safe-area-inset-right, 0px)) + 152px); font-size: 15px; padding: 4px 10px; }
+.touch-mode .hud__clock { top: max(44px, calc(env(safe-area-inset-top, 0px) + 36px)); right: calc(max(16px, env(safe-area-inset-right, 0px)) + 152px); font-size: 12px; padding: 2px 8px; }
+.touch-mode .toasts { top: max(76px, calc(env(safe-area-inset-top, 0px) + 68px)); right: calc(max(16px, env(safe-area-inset-right, 0px)) + 104px); width: min(260px, 36vw); gap: 4px; }
+.touch-mode .toast { padding: 4px 8px; }
+.touch-mode .toast:nth-last-child(n + 3) { display: none; }
+
+/* Left: the objective, the stick, health only when it matters, the active weapon. */
+.touch-mode .hud__objective { left: max(16px, env(safe-area-inset-left, 0px)); top: max(8px, env(safe-area-inset-top, 0px)); max-width: calc(100vw - 380px); font-size: 13px; padding: 4px 10px; }
+.touch-mode .hud__quest-title { font-size: 10px; }
+.touch-mode .hud__identity { left: max(16px, env(safe-area-inset-left, 0px)); bottom: max(10px, env(safe-area-inset-bottom, 0px)); width: 160px; padding: 4px 8px; }
+.touch-mode .hud__identity--calm { display: none; }
+.touch-mode .hud__name { display: none; }
+.touch-mode .hud__hp { margin-top: 0; }
+.touch-mode .hud__hp-label { font-size: 11px; }
+.touch-mode .touch__stick-hint { bottom: max(80px, calc(env(safe-area-inset-bottom, 0px) + 70px)); }
+.touch-mode .weapon-strip { left: calc(max(16px, env(safe-area-inset-left, 0px)) + 172px); right: auto; bottom: max(10px, env(safe-area-inset-bottom, 0px)); align-items: flex-start; }
+.touch-mode .weapon-strip__slot:not(.weapon-strip__slot--active) { display: none; }
+.touch-mode .weapon-strip__key { display: none; }
+
+/* Fewer things at once, and no keys to name on a touch screen. */
+.touch-mode .gear, .touch-mode .dash, .touch-mode .hud__prompt { display: none; }
+.touch-mode .hud kbd { display: none; }
+.touch-mode .buffs { left: max(16px, env(safe-area-inset-left, 0px)); right: auto; top: max(84px, calc(env(safe-area-inset-top, 0px) + 76px)); bottom: auto; flex-direction: row; }
+.touch-mode .buff { grid-template-columns: auto; padding: 2px 6px 4px; }
+.touch-mode .buff__name { display: none; }
+.touch-mode .buff__icon { grid-row: auto; }
+
+
+@media (max-height: 500px), (max-width: 760px) {
+  .buffs { left: calc(max(16px, env(safe-area-inset-left, 0px)) + 132px); bottom: 76px; }
+  .metro { padding: 12px 16px; }
+  .metro__stop { min-height: 46px; }
+}

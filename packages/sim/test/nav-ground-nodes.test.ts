@@ -43,6 +43,8 @@ describe("ground nodes of the level graphs (ADR-0025)", () => {
 
   it("every ground edge of the graph is a straight walk", () => {
     const sim = scene(at(0, 110));
+    // A door on the way opens for whoever walks the edge (ADR-0038).
+    for (const d of [...sim.world.with("door")]) sim.world.remove(d);
     const node = (id: string) => WORLD_NAV.nodes.find((n) => n.id === id)!.at;
     for (const e of WORLD_NAV.edges) {
       const a = node(e.a);

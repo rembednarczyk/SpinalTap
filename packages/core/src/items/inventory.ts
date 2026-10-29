@@ -1,5 +1,5 @@
 import type { Health } from "../combat/combat-rules";
-import { AMMO_CATALOG, GARMENT_CATALOG, STACKABLE_CATALOG, WEAPON_CATALOG, isGarmentId, isWeaponId } from "./catalog";
+import { AMMO_CATALOG, GARMENT_CATALOG, STACKABLE_CATALOG, type StackableDefinition, WEAPON_CATALOG, isGarmentId, isWeaponId } from "./catalog";
 import type { AmmoId, ConsumableId, EquipSlot, InstanceDefId, ModSlot, Rarity, StackableId, WeaponSlot } from "./types";
 
 /** One piece with state of its own. Where it is (bag, slot, weapon) is said by `Equipment` and `mods`. */
@@ -189,11 +189,20 @@ export type UseResult =
   | { readonly ok: true; readonly inventory: InventoryState; readonly health: Health; readonly healed: number }
   | { readonly ok: false; readonly reason: "none" | "full-health" };
 
-/** Uses one consumable. At full health it is kept. */
+/**
+ * Is the consumable only worth using when hurt? Medical kit and plain food are; anything that
+ * starts a buff or grows the cyberware capacity (ADR-0033) is used at full health too.
+ */
+export const needsWounds = (id: ConsumableId): boolean => {
+  const def: StackableDefinition = STACKABLE_CATALOG[id];
+  return def.buff === undefined && def.cyberCapacity === undefined;
+};
+
+/** Uses one consumable. At full health it is kept, unless it does more than heal (`needsWounds`). */
 export const useConsumable = (inv: InventoryState, id: ConsumableId, health: Health): UseResult => {
   const inventory = removeStack(inv, id, 1);
   if (!inventory) return { ok: false, reason: "none" };
-  if (health.current >= health.max) return { ok: false, reason: "full-health" };
+  if (health.current >= health.max && needsWounds(id)) return { ok: false, reason: "full-health" };
   const current = Math.min(health.max, health.current + STACKABLE_CATALOG[id].heal);
   return { ok: true, inventory, health: { ...health, current }, healed: current - health.current };
 };

@@ -56,6 +56,19 @@ describe("DialogueController without a session (ADR-0031)", () => {
     expect(calls).toEqual(["panel"]);
   });
 
+  it("hands the wheel each choice's tone and keeps earlier lines in the log (ADR-0039)", () => {
+    const { ui, dialogue } = setup();
+    dialogue.open("fixer");
+    const first = ui.getState().dialogue;
+    expect(first?.history).toEqual([]);
+    expect(first?.choices.every((c) => c.tone !== undefined)).toBe(true);
+    dialogue.choose(0);
+    expect(ui.getState().dialogue?.history).toEqual(first?.lines);
+    dialogue.closeSilently();
+    dialogue.open("fixer");
+    expect(ui.getState().dialogue?.history).toEqual([]);
+  });
+
   it("moves the partner's mouth after InteractionStarted and stops it on close", () => {
     const { bus, dialogue, effects, commands, calls } = setup();
     bus.emit("InteractionStarted", { targetId: 42, dialogueId: "fixer", kind: "dialogue" });

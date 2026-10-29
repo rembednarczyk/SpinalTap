@@ -6,6 +6,7 @@ import type { ShopId, ShopItemId } from "../shop/shops";
 import type { StoryChoiceId, StoryOption } from "../story/story";
 import type { EquipSlot, ItemRef, ModSlot } from "../items/types";
 import type { BreachDaemonId } from "../hacking/quickhacks";
+import type { MetroStationId } from "../world/wave2";
 
 /**
  * Requests from outside the simulation (narrative, UI). They are queued and applied at
@@ -64,4 +65,9 @@ export type GameCommand =
    * won so far (possibly nothing); a breach cut short by damage sends nothing and the terminal
    * can be breached again.
    */
-  | { readonly type: "breach-result"; readonly terminalKey: string; readonly daemons: readonly BreachDaemonId[] };
+  | { readonly type: "breach-result"; readonly terminalKey: string; readonly daemons: readonly BreachDaemonId[] }
+  // Wave 2 (ADR-0032).
+  /** Buys a ticket at the platform the player stands on and rides to `to`. */
+  | { readonly type: "travel-metro"; readonly to: MetroStationId }
+  /** Follow this journal entry on the HUD (a quest id or `contract-<id>`); null lets the game pick. */
+  | { readonly type: "track-quest"; readonly questId: string | null };

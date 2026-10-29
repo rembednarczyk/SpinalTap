@@ -23,6 +23,7 @@ import {
 } from "@seki/core";
 import type { TradeItemVm } from "../store/ui-store";
 import { useShopIntents, useUi } from "../use-ui";
+import { CapacityBar, CapacityCost, useCapacityFit } from "./capacity-bar";
 
 const SLOT_LABEL: Readonly<Record<CyberwareSlot, string>> = { optics: "Optyka", nervous: "Układ nerwowy", skeleton: "Szkielet", arms: "Ramiona" };
 const SLOTS: readonly CyberwareSlot[] = ["optics", "nervous", "skeleton", "arms"];
@@ -56,32 +57,38 @@ export const BuyTab = ({ shopId, terms }: { readonly shopId: ShopId; readonly te
   );
 };
 
-const ImplantOffers = ({ terms }: { readonly terms: ShopTerms }) => {
+const ImplantOffers = ({ terms }: { readonly terms: ShopTerms }) => (
+  <>
+    <CapacityBar />
+    {IMPLANTS.map((id) => (
+      <ImplantOffer key={id} id={id} terms={terms} />
+    ))}
+  </>
+);
+
+/** One implant on offer, with its capacity cost; one over the limit cannot be bought (ADR-0032). */
+const ImplantOffer = ({ id, terms }: { readonly id: CyberwareId; readonly terms: ShopTerms }) => {
   const eddies = useUi((s) => s.eddies);
   const loadout = useUi((s) => s.cyberware);
   const freeCells = useUi((s) => s.trade.freeCells);
   const intents = useShopIntents();
+  const fit = useCapacityFit(id);
+  const def = CYBERWARE_CATALOG[id];
+  const price = priceWithTerms(def.price, terms);
+  const installed = loadout[def.slot] === id;
+  const replaces = !installed ? loadout[def.slot] : undefined;
   return (
-    <>
-      {IMPLANTS.map((id) => {
-        const def = CYBERWARE_CATALOG[id];
-        const price = priceWithTerms(def.price, terms);
-        const installed = loadout[def.slot] === id;
-        const replaces = !installed ? loadout[def.slot] : undefined;
-        return (
-          <article key={id} className={`shop__item${installed ? " shop__item--installed" : ""}`}>
-            <div className="shop__slot">{SLOT_LABEL[def.slot]}</div>
-            <h3 className="shop__name">{def.name}</h3>
-            <p className="shop__desc">{def.description}</p>
-            {replaces && <p className="shop__warn">Zastąpi: {CYBERWARE_CATALOG[replaces].name}</p>}
-            {replaces && freeCells < 1 && <p className="shop__warn">Brak miejsca: stary implant przepadnie</p>}
-            <button type="button" className="shop__buy" disabled={installed || eddies < price} onClick={() => intents.buyCyberware(id)}>
-              {installed ? "Zainstalowane" : `Wszczep · ${eur(price)}`}
-            </button>
-          </article>
-        );
-      })}
-    </>
+    <article className={`shop__item${installed ? " shop__item--installed" : ""}`} data-testid={`implant-${id}`}>
+      <div className="shop__slot">{SLOT_LABEL[def.slot]}</div>
+      <h3 className="shop__name">{def.name}</h3>
+      <p className="shop__desc">{def.description}</p>
+      <CapacityCost fit={fit} />
+      {replaces && <p className="shop__warn">Zastąpi: {CYBERWARE_CATALOG[replaces].name}</p>}
+      {replaces && freeCells < 1 && <p className="shop__warn">Brak miejsca: stary implant przepadnie</p>}
+      <button type="button" className="shop__buy" disabled={installed || eddies < price || fit.over} onClick={() => intents.buyCyberware(id)}>
+        {installed ? "Zainstalowane" : fit.over ? "Ponad limit" : `Wszczep · ${eur(price)}`}
+      </button>
+    </article>
   );
 };
 
@@ -205,37 +212,47 @@ export const RepairTab = () => {
 };
 
 /** Implants in Seki's body (taken out free) and in her bag (fitted for a quarter of the value). */
-export const ImplantsTab = ({ terms }: { readonly terms: ShopTerms }) => {
+/** An implant in the bag, fitted for a fee unless it would go over the capacity (ADR-0032). */
+const BagImplant = ({ item, terms }: { readonly item: TradeItemVm & { defId: CyberwareId }; readonly terms: ShopTerms }) => {
   const eddies = useUi((s) => s.eddies);
+  const loadout = useUi((s) => s.cyberware);
+  const intents = useShopIntents();
+  const fit = useCapacityFit(item.defId);
+  const def = CYBERWARE_CATALOG[item.defId];
+  const fee = installFee({ def: item.defId, rarity: item.rarity ?? "common" }, terms);
+  const installed = loadout[def.slot] === item.defId;
+  const replaces = installed ? undefined : loadout[def.slot];
+  return (
+    <li className={`shop__line${rarityClass(item)}`} data-testid="shop-bag-implant">
+      <span className="shop__line-name">{def.name}</span>
+      <span className="shop__line-meta">
+        {SLOT_LABEL[def.slot]}
+        {replaces && ` · zastąpi: ${CYBERWARE_CATALOG[replaces].name} (wróci do plecaka)`}
+      </span>
+      <CapacityCost fit={fit} />
+      <button type="button" className="shop__buy" disabled={installed || eddies < fee || fit.over} onClick={() => intents.installCyberwareItem(item.key)}>
+        {installed ? "Już wszczepiony" : fit.over ? "Ponad limit" : `Zamontuj · ${eur(fee)}`}
+      </button>
+    </li>
+  );
+};
+
+export const ImplantsTab = ({ terms }: { readonly terms: ShopTerms }) => {
   const loadout = useUi((s) => s.cyberware);
   const trade = useUi((s) => s.trade);
   const intents = useShopIntents();
   const bag = trade.items.filter((i): i is TradeItemVm & { defId: CyberwareId } => isCyberwareId(i.defId));
   return (
     <>
+      <CapacityBar />
       <h3 className="shop__section">Z plecaka</h3>
       {bag.length === 0 ? (
         <p className="shop__empty">W plecaku nie masz żadnego wszczepu.</p>
       ) : (
         <ul className="shop__lines" data-testid="shop-bag-implants">
-          {bag.map((item) => {
-            const def = CYBERWARE_CATALOG[item.defId];
-            const fee = installFee({ def: item.defId, rarity: item.rarity ?? "common" }, terms);
-            const installed = loadout[def.slot] === item.defId;
-            const replaces = installed ? undefined : loadout[def.slot];
-            return (
-              <li key={item.key} className={`shop__line${rarityClass(item)}`} data-testid="shop-bag-implant">
-                <span className="shop__line-name">{def.name}</span>
-                <span className="shop__line-meta">
-                  {SLOT_LABEL[def.slot]}
-                  {replaces && ` · zastąpi: ${CYBERWARE_CATALOG[replaces].name} (wróci do plecaka)`}
-                </span>
-                <button type="button" className="shop__buy" disabled={installed || eddies < fee} onClick={() => intents.installCyberwareItem(item.key)}>
-                  {installed ? "Już wszczepiony" : `Zamontuj · ${eur(fee)}`}
-                </button>
-              </li>
-            );
-          })}
+          {bag.map((item) => (
+            <BagImplant key={item.key} item={item} terms={terms} />
+          ))}
         </ul>
       )}
       <h3 className="shop__section">Wszczepione</h3>

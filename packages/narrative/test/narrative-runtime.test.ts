@@ -90,7 +90,7 @@ describe("Ume conversation", () => {
   it("returns a memory once, then remembers she told it", () => {
     const { runtime, commands } = setup();
     let view = runtime.start("ume", createDomainState());
-    expect(view.lines.some((l) => l.text.includes("Neon Koi"))).toBe(true);
+    expect(view.lines.some((l) => l.text.includes("doktora Mori"))).toBe(true);
     view = runtime.choose(0);
     expect(view.lines.find((l) => l.speaker === null)?.text).toContain("deszcz");
     expect(commands).toContainEqual({ type: "unlock-memory", memoryId: "street_runner" });

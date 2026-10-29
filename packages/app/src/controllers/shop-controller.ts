@@ -1,7 +1,7 @@
-import type { CyberwareId, CyberwareSlot, ItemRef, ShopId, ShopItemId } from "@seki/core";
-import { type ShopIntents, type TradeVm, type UiStore, patchUi } from "@seki/ui";
+import { type CyberwareId, type CyberwareSlot, type ItemRef, type ShopId, type ShopItemId, isCyberwareId } from "@seki/core";
+import { type ShopIntents, type TradeVm, type UiStore, capacityFit, overCapacityText, patchUi } from "@seki/ui";
 import { createTradeTracker } from "../trade-view";
-import type { Focus, SimRef } from "./shared";
+import { type Focus, type SimRef, pushToastTimed } from "./shared";
 
 export interface ShopControllerDeps {
   readonly sim: SimRef;
@@ -39,7 +39,7 @@ export class ShopController implements ShopIntents {
   }
 
   buyCyberware(id: CyberwareId): void {
-    if (this.atCounter("clinic")) this.deps.sim().enqueue({ type: "buy-cyberware", cyberwareId: id });
+    if (this.atCounter("clinic") && this.fits(id)) this.deps.sim().enqueue({ type: "buy-cyberware", cyberwareId: id });
   }
 
   buyItem(id: ShopItemId): void {
@@ -59,7 +59,10 @@ export class ShopController implements ShopIntents {
   }
 
   installCyberwareItem(uid: string): void {
-    if (this.atCounter("clinic")) this.deps.sim().enqueue({ type: "install-cyberware-item", uid });
+    if (!this.atCounter("clinic")) return;
+    const defId = this.deps.ui.getState().trade.items.find((i) => i.key === uid)?.defId;
+    if (defId && isCyberwareId(defId) && !this.fits(defId)) return;
+    this.deps.sim().enqueue({ type: "install-cyberware-item", uid });
   }
 
   removeCyberware(slot: CyberwareSlot): void {
@@ -86,6 +89,18 @@ export class ShopController implements ShopIntents {
   closeSilently(): void {
     this.shopOpen = false;
     patchUi(this.deps.ui, { shopOpen: false });
+  }
+
+  /**
+   * The implant fits the cyberware capacity left (ADR-0032); otherwise the clinic refuses here
+   * with a message, before the simulation would refuse it silently.
+   */
+  private fits(id: CyberwareId): boolean {
+    const { cyberware, capacity } = this.deps.ui.getState();
+    const fit = capacityFit(id, cyberware, capacity);
+    if (!fit.over || !capacity) return true;
+    pushToastTimed(this.deps.ui, "cyberware", "Mori kręci głową", overCapacityText(fit, capacity));
+    return false;
   }
 
   /** Trade commands go out only while that counter is open. */

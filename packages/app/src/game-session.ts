@@ -8,6 +8,7 @@ import {
   EventBus,
   type InputFrame,
   type ItemRef,
+  type MetroStationId,
   type ModSlot,
   type QuickhackSlotInput,
   type SaveSnapshot,
@@ -15,8 +16,8 @@ import {
   pendingScene,
 } from "@seki/core";
 import { NarrativeRuntime } from "@seki/narrative";
-import { RenderSync, Simulation, WORLD_CHUNKS } from "@seki/sim";
-import { type CharacterTab, type PreviewRect, type Screen, type SettingsVm, type UiIntents, patchUi } from "@seki/ui";
+import { RenderSync, SIM_HZ, Simulation, WORLD_CHUNKS } from "@seki/sim";
+import { type CharacterTab, type PreviewRect, type RadioStationId, type Screen, type SettingsVm, type UiIntents, patchUi } from "@seki/ui";
 import { type Controllers, createControllers } from "./controllers/compose";
 import { isCalm } from "./controllers/hud-sync";
 import { pushToastTimed } from "./controllers/shared";
@@ -67,8 +68,9 @@ export class GameSession implements UiIntents {
 
   /** True while the player is in control (playing, no dialogue, no menu). */
   get inControl(): boolean {
-    const { dialogue, shop, loot, character, phone, hack } = this.c;
-    return this.screen === "playing" && !dialogue.isOpen && !shop.isOpen && !loot.isOpen && !character.isOpen && !phone.isOpen && !hack.breachOpen;
+    const { dialogue, shop, loot, character, phone, hack, metro } = this.c;
+    const panel = dialogue.isOpen || shop.isOpen || loot.isOpen || character.isOpen || phone.isOpen || hack.breachOpen || metro.isOpen || metro.riding;
+    return this.screen === "playing" && !panel;
   }
 
   /**
@@ -87,6 +89,8 @@ export class GameSession implements UiIntents {
   step(input: InputFrame): void {
     if (!this.running) return;
     this.simulation.step(this.inControl ? this.c.hack.withTouchScan(input) : EMPTY_INPUT);
+    this.c.metro.tick(1 / SIM_HZ);
+    this.c.radio.tick(1 / SIM_HZ);
     patchUi(this.deps.ui, { scanning: this.inControl && this.c.hack.scanning(input) });
     this.playPendingRecall();
     this.c.hints.step(this.inControl, this.c.character.isOpen);
@@ -122,7 +126,7 @@ export class GameSession implements UiIntents {
     this.narrative.resetState();
     this.c.hints.start();
     this.setScreen("playing");
-    pushToastTimed(this.deps.ui, "system", "Shinsekai, kwartał 7", "Budzisz się obok wraku. Nie pamiętasz swojego imienia.");
+    pushToastTimed(this.deps.ui, "system", "Shinsekai, kwartał 7", "Budzisz się na fotelu w klinice doktora Mori. Nie pamiętasz swojego imienia. Obok czeka Kaito.");
   }
 
   resume(): void {
@@ -190,11 +194,19 @@ export class GameSession implements UiIntents {
   closePhone(): void { this.c.phone.closePhone(); }
   readThread(from: string): void { this.c.phone.readThread(from); }
   dismissDebrief(): void { this.c.hud.dismissDebrief(); }
+  trackQuest(questId: string | null): void { this.simulation.enqueue({ type: "track-quest", questId }); }
   setScan(on: boolean): void { this.c.hack.setScan(on); }
   pickQuickhack(slot: Exclude<QuickhackSlotInput, 0>): void { this.c.hack.pickQuickhack(slot); }
   submitBreach(daemons: readonly BreachDaemonId[]): void { this.c.hack.submitBreach(daemons); }
   /** Shows the breach minigame for a terminal (debug API for now; the terminals of the simulation will open it). */
   openBreach(terminalKey: string, daemons?: readonly BreachDaemonId[]): void { this.c.hack.openBreach(terminalKey, daemons); }
+
+  travelMetro(to: MetroStationId): void { this.c.metro.travelMetro(to); }
+  closeMetro(): void { this.c.metro.closeMetro(); }
+  setRadioStation(id: RadioStationId | null): void { this.c.radio.setRadioStation(id); }
+  nextRadioStation(): void { this.c.radio.nextRadioStation(); }
+  /** Shows the line map of a kiosk (debug API; the kiosks of the simulation open it by interaction). */
+  openMetro(from: MetroStationId): void { this.c.metro.open(from, false); }
 
   // ---- composition ----
 
@@ -212,7 +224,8 @@ export class GameSession implements UiIntents {
 
   /** Every panel and the menu close without telling the simulation. */
   private closePanels(): void {
-    const { dialogue, character, shop, loot, phone, hack } = this.c;
+    const { dialogue, character, shop, loot, phone, hack, metro } = this.c;
+    metro.closeSilently();
     dialogue.closeSilently();
     character.closeSilently();
     shop.closeSilently();
@@ -226,6 +239,7 @@ export class GameSession implements UiIntents {
     this.simulation = next;
     this.c.hud.reset(next);
     this.c.hack.reset();
+    this.c.metro.reset();
     this.deps.render.setCameraMode(next.domain.preferences.cameraMode);
     patchUi(this.deps.ui, { prompt: null, toasts: [] });
     this.render(0);

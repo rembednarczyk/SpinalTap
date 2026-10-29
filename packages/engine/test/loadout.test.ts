@@ -4,7 +4,10 @@ import { describe, expect, it } from "vitest";
 import { type AbstractMesh, MeshBuilder, Scene, type Texture, type TransformNode } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
 import { buildHeroine, setWeaponDrawn } from "../src/renderer/characters";
-import { GARMENT_TINT, Loadouts } from "../src/renderer/loadout";
+import { GARMENT_TINT, Loadouts, rigTintOf } from "../src/renderer/loadout";
+import { skinParts } from "../src/renderer/character-skin";
+import { VertexBuffer } from "../src/babylon";
+import { PRESETS } from "../src/npr/presets";
 import { ModelLibrary, type ToonSource, readSourceMaterial } from "../src/renderer/model-library";
 import { HumanoidRetarget } from "../src/renderer/model-rig";
 import { WeaponMounts } from "../src/renderer/weapon-mount";
@@ -225,5 +228,44 @@ describe("Loadouts", () => {
     loadouts.dispose(rig);
     loadouts.set(rig, look(), "hero");
     expect(modelNodes(scene)).toEqual([]);
+  });
+
+  /** Colour of the first vertex of the rig's part with `preset`, as hex. */
+  const partColor = (rig: ReturnType<typeof buildHeroine>, preset: string): string | null => {
+    for (const mesh of rig.meshes) {
+      const part = skinParts(mesh).find((p) => p.preset === preset);
+      const data = mesh.getVerticesData(VertexBuffer.ColorKind);
+      if (!part || !data) continue;
+      const i = part.start * 4;
+      const h = (v: number) => Math.round(v * 255).toString(16).padStart(2, "0");
+      return "#" + h(data[i]!) + h(data[i + 1]!) + h(data[i + 2]!);
+    }
+    return null;
+  };
+
+  it("dresses the procedural rig in the garment tints too: a disguise reads without models (ADR-0036)", () => {
+    const { loadouts, rig } = setup();
+    expect(partColor(rig, "sekiTop")).toBe(PRESETS.sekiTop.base);
+    // Hebi's jacket over the top, Tessen's uniform: the cloth takes the tint, skin and hair do not.
+    loadouts.set(rig, look({}, { torso: { tint: "jacket-hebi" } }), "hero");
+    expect(partColor(rig, "sekiTop")).toBe(GARMENT_TINT["jacket-hebi"]);
+    expect(partColor(rig, "sekiPants")).toBe(PRESETS.sekiPants.base);
+    expect(partColor(rig, "skin")).toBe(PRESETS.skin.base);
+    loadouts.set(rig, look({}, { torso: { tint: "jacket-tessen", attachments: [{ point: "chest", mesh: "vest-plate" }] }, legs: { tint: "kevlar" } }), "hero");
+    expect(partColor(rig, "sekiTop")).toBe(GARMENT_TINT["jacket-tessen"]);
+    expect(partColor(rig, "sekiPants")).toBe(GARMENT_TINT.kevlar);
+    expect(loadouts.attachments(rig).map((a) => a.id)).toEqual(["vest-plate"]);
+    // Seki's own jacket keeps her colours.
+    loadouts.set(rig, look({}, { torso: { tint: "jacket-seki" } }), "hero");
+    expect(partColor(rig, "sekiTop")).toBe(PRESETS.sekiTop.base);
+    expect(partColor(rig, "sekiPants")).toBe(PRESETS.sekiPants.base);
+  });
+
+  it("maps cloth presets to garment slots", () => {
+    const hebi = look({}, { torso: { tint: "jacket-hebi" }, legs: { tint: "kevlar" } });
+    expect(rigTintOf(hebi, "gangerHood")).toBe(GARMENT_TINT["jacket-hebi"]);
+    expect(rigTintOf(hebi, "fixerPants")).toBe(GARMENT_TINT.kevlar);
+    expect(rigTintOf(hebi, "skin")).toBeNull();
+    expect(rigTintOf(look(), "sekiTop")).toBeNull();
   });
 });

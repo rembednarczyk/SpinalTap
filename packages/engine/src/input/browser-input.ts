@@ -1,5 +1,5 @@
 import { EMPTY_INPUT, type InputFrame, type InputPort } from "@seki/core";
-import { type ButtonMode, DEFAULT_KEYMAP, InputLatches, type KeyMap, mapGamepad, mapKeyboardMouse, mergeFrames } from "./keymap";
+import { type ButtonMode, DEFAULT_KEYMAP, DoubleTap, InputLatches, type KeyMap, mapGamepad, mapKeyboardMouse, mergeFrames } from "./keymap";
 import { VirtualPad } from "./virtual-pad";
 
 const MOUSE_SENSITIVITY = 0.0022;
@@ -25,6 +25,8 @@ export class BrowserInput implements InputPort {
   private yaw = 0;
   private pitch = 0;
   private padPrev: boolean[] = [];
+  /** B tapped twice dashes (ADR-0036). */
+  private readonly padDash = new DoubleTap();
   private lastPoll: number | null = null;
   private readonly disposers: (() => void)[] = [];
   private readonly latches = new InputLatches();
@@ -38,8 +40,9 @@ export class BrowserInput implements InputPort {
       this.disposers.push(() => window.removeEventListener(type, fn));
     };
     on("keydown", (e) => {
-      // Space jumps in play; it must not also scroll the page or press a focused button.
-      if (this.active && e.code === "Space") e.preventDefault();
+      // Space jumps and Alt dashes in play: neither may scroll the page, press a focused button
+      // or open the browser's menu bar.
+      if (this.active && (e.code === "Space" || e.code === "AltLeft")) e.preventDefault();
       if (e.repeat) return;
       this.held.add(e.code);
       this.pressed.add(e.code);
@@ -174,6 +177,7 @@ export class BrowserInput implements InputPort {
 
   private clearBuffered(): void {
     this.virtualPad.flush();
+    this.padDash.reset();
     this.wheel = 0;
     this.clearDeviceBuffers();
   }
@@ -191,6 +195,7 @@ export class BrowserInput implements InputPort {
     const buttons = pad.buttons.map((b) => b.pressed);
     const pressed = buttons.map((b, i) => b && !this.padPrev[i]);
     this.padPrev = buttons;
-    return mapGamepad({ axes: pad.axes, buttons, pressed }, dt);
+    const dash = this.padDash.update(pressed[1] ?? false, dt);
+    return mapGamepad({ axes: pad.axes, buttons, pressed, dash }, dt);
   }
 }

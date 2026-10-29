@@ -276,7 +276,7 @@ class GangerAgent {
     else self.velocity = { x: 0, y: 0, z: 0 };
     const watch = self.ai.watch;
     if ((self.ai.suspicion ?? 0) > 0 && this.seen.player) this.face(this.seen.player);
-    else if (watch && ctx && d <= 0.3) self.yaw = watch.yaw + WATCH_SWEEP * Math.sin((2 * Math.PI * ctx.tick * ctx.dt) / WATCH_PERIOD + watch.phase);
+    else if (watch && ctx && d <= 0.3) self.yaw = watch.yaw + WATCH_SWEEP * Math.sin((2 * Math.PI * ctx.tick * ctx.dt) / (watch.period ?? WATCH_PERIOD) + watch.phase);
     return State.SUCCEEDED;
   };
 
@@ -331,7 +331,7 @@ class GangerAgent {
     p.since = ctx.tick;
     const crowd: Vec3[] = [];
     for (const e of inCreationOrder(ctx.world.with("body"))) {
-      if (e === self || e.player || Math.hypot(e.position.x - x, e.position.z - z) > CROWD_RADIUS) continue;
+      if (e === self || e.player || e.passerby || Math.hypot(e.position.x - x, e.position.z - z) > CROWD_RADIUS) continue;
       crowd.push(e.position);
     }
     p.plan = this.goal ? planDetour(ctx.world, self.position, this.goal, crowd) : null;

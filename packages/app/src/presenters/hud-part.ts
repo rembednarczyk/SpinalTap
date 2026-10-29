@@ -49,6 +49,29 @@ export interface HudPartFrame {
 
 export type HudPatch = { -readonly [K in keyof UiState]?: UiState[K] };
 
+/**
+ * Hands back the previous objects for values that did not change, so React stays still. Keeps
+ * its own memory of what it handed out last.
+ */
+export const createReuse = () => {
+  let last: Record<string, unknown> = {};
+  const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+  return {
+    apply(out: Partial<UiState>): Partial<UiState> {
+      const result: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(out)) {
+        const prev = last[k];
+        result[k] = prev !== undefined && same(prev, v) ? prev : v;
+      }
+      last = { ...last, ...result };
+      return result as Partial<UiState>;
+    },
+    clear(): void {
+      last = {};
+    },
+  };
+};
+
 /** A presenter of one wave 1 area: its events, its per-frame fields and its reset (ADR-0031). */
 export interface HudPart {
   readonly offs: readonly (() => void)[];

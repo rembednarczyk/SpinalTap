@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type ActTwoEndingId, type Contract, type DomainState, type EndingId, createDomainState } from "@seki/core";
+import { type ActTwoEndingId, type Contract, type ContractVariation, type DomainState, type EndingId, createDomainState } from "@seki/core";
 import { type DialogueView, NarrativeRuntime, STORY_SOURCE } from "../src";
 
 /**
@@ -15,7 +15,8 @@ const NPC_LINE_RE = /^\s*([A-Z]+):\s*(.+)$/;
 const sourceLines = STORY_SOURCE.split("\n").filter((l) => !l.trim().startsWith("//"));
 const choiceTexts = sourceLines.flatMap((l) => {
   const m = CHOICE_RE.exec(l);
-  return m?.[1] !== undefined ? [m[1].trim()] : [];
+  // Tags inside the brackets (`#tone:main`, ADR-0039) are not part of the text.
+  return m?.[1] !== undefined ? [m[1].replace(/#.*$/, "").trim()] : [];
 });
 const npcBodies = sourceLines.flatMap((l) => {
   const m = NPC_LINE_RE.exec(l);
@@ -85,6 +86,7 @@ const hack = (status: Contract["status"], progress?: number): Contract => ({
   status,
   ...(progress === undefined ? {} : { progress, away: 0 }),
 });
+const VARIATION: ContractVariation = { modifiers: ["night_only", "bodyguards"], security: "lockdown", trait: "drinker" };
 const escort = (status: Contract["status"]): Contract => ({ id: "c3", kind: "escort", siteId: "docks_escort", targets: 2, reward: 580, status });
 
 interface Scenario {
@@ -95,11 +97,17 @@ interface Scenario {
   readonly npcs: readonly string[];
   /** Flashback choices are actions in narration ("Otwierasz walizkę."), not Seki's words. */
   readonly actions?: boolean;
+  /** Rolled plan of the running contract (ADR-0032), passed to the runtime. */
+  readonly variation?: ContractVariation;
 }
 
 const KAITO = ["Kaito"];
 const SCENARIOS: readonly Scenario[] = [
-  { name: "Kaito, first meeting", knot: "fixer", domain: m0(0), npcs: KAITO },
+  // The opening in the clinic (ADR-0038): Mori has his say by the chair.
+  { name: "Kaito, first meeting", knot: "fixer", domain: m0(0), npcs: ["Kaito", "Doktor Mori"] },
+  { name: "Neon Koi barman, before Kaito", knot: "koi_barman", domain: m0(0), npcs: ["Barman"] },
+  { name: "Neon Koi barman", knot: "koi_barman", domain: afterM0(), npcs: ["Barman"] },
+  { name: "Neon Koi regular", knot: "koi_regular", domain: afterM0(), npcs: ["Bywalec"] },
   { name: "Kaito, courier still alive", knot: "fixer", domain: m0(1), npcs: KAITO },
   { name: "Kaito, report back", knot: "fixer", domain: m0(2), npcs: KAITO },
   { name: "Kaito, contract offer", knot: "fixer", domain: afterM0({}, null, 0), npcs: KAITO },
@@ -188,6 +196,29 @@ const SCENARIOS: readonly Scenario[] = [
   { name: "flashback: rooftop", knot: "recall_rooftop", domain: lustro(1, "aya"), npcs: ["Ren"], actions: true },
   { name: "flashback: last call", knot: "recall_last_call", domain: lustro(2, "aya"), npcs: ["Ren", "Technik Kagami"], actions: true },
   { name: "flashback: mirror", knot: "recall_mirror", domain: afterLustro("kagami"), npcs: ["Technik Kagami"], actions: true },
+  // Wave 2 (ADR-0032): the fixers mention the rolled variation of a running job.
+  { name: "Kaito, hit running with a variation", knot: "fixer", domain: afterM0({}, hit("active")), npcs: KAITO, variation: VARIATION },
+  { name: "Kaito, delivery with a variation", knot: "fixer", domain: afterM0({}, delivery("active")), npcs: KAITO, variation: VARIATION },
+  { name: "Hana, retrieve with a variation", knot: "hana", domain: afterM0({}, retrieve("active")), npcs: ["Hana"], variation: VARIATION },
+  { name: "Genzō, hack with a variation", knot: "genzo", domain: afterM0({}, hack("active", 600)), npcs: ["Genzō"], variation: VARIATION },
+  // Street encounters, one scenario per scene (and per branch the street's mood opens).
+  { name: "encounter: pachinko", knot: "enc_s7_pachinko", domain: afterM0(), npcs: ["Nobu"] },
+  { name: "encounter: salaryman", knot: "enc_s7_salaryman", domain: afterM0(), npcs: ["Sarariman"] },
+  { name: "encounter: robot cat", knot: "enc_s7_neko", domain: afterM0(), npcs: ["Hina"] },
+  { name: "encounter: poet", knot: "enc_s7_poet", domain: afterM0(), npcs: ["Shiro"] },
+  { name: "encounter: poet, after the table", knot: "enc_s7_poet", domain: echo(2, memories("operating_table")), npcs: ["Shiro"] },
+  { name: "encounter: flowers for Mei", knot: "enc_kanal_flowers", domain: afterM0(), npcs: ["Takumi"] },
+  { name: "encounter: fisherman", knot: "enc_kanal_fisherman", domain: afterM0(), npcs: ["Dziadek Sabu"] },
+  { name: "encounter: vending machine", knot: "enc_kanal_vending", domain: afterM0(), npcs: ["Automat"] },
+  { name: "encounter: Hebi recruit", knot: "enc_kanal_recruit", domain: afterM0(), npcs: ["Koji"] },
+  { name: "encounter: fortune teller", knot: "enc_targ_fortune", domain: afterM0(), npcs: ["Wróżka Kiku"] },
+  { name: "encounter: chicken", knot: "enc_targ_chicken", domain: afterM0(), npcs: ["Daigo"] },
+  { name: "encounter: debt", knot: "enc_targ_debt", domain: afterM0(), npcs: ["Akane", "Poborca Hebi"] },
+  { name: "encounter: debt, Hebi friendly", knot: "enc_targ_debt", domain: afterM0({ reputation: { ...createDomainState().reputation, hebi: 40 } }), npcs: ["Akane", "Poborca Hebi"] },
+  { name: "encounter: idol", knot: "enc_targ_idol", domain: afterM0(), npcs: ["Riko"] },
+  { name: "encounter: laid off", knot: "enc_doki_laidoff", domain: afterM0(), npcs: ["Tomo"] },
+  { name: "encounter: gull", knot: "enc_doki_gull", domain: afterM0(), npcs: ["Strażnik Tessen"] },
+  { name: "encounter: container", knot: "enc_doki_container", domain: afterM0(), npcs: ["Głos z kontenera"] },
 ];
 
 const firstWord = (s: string): string => (s.toLocaleLowerCase("pl").match(/\p{L}+/u) ?? [""])[0];
@@ -244,7 +275,7 @@ const explore = (scenario: Scenario): { choices: number; problems: string[] } =>
     }
   };
 
-  walk(runtime.start(scenario.knot, scenario.domain), [], new Set());
+  walk(runtime.start(scenario.knot, scenario.domain, undefined, scenario.variation), [], new Set());
   return { choices, problems };
 };
 

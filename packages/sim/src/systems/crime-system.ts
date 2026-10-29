@@ -15,6 +15,7 @@ import {
   WITNESS_CALL_SECONDS,
   type WitnessChannel,
   angleTo,
+  ZONE_ACCESS,
   contractKind,
   factionStance,
   heatContact,
@@ -28,7 +29,9 @@ import type { Offence, SimContext, StreetDisturbance, System } from "../world/co
 import { gangerEntity } from "../world/factory";
 import { chestOf, eyeOf, lineOfSight } from "../world/hitscan";
 import { inCreationOrder } from "../world/ordering";
+import { codeKnown } from "../world/hook-tracker";
 import { disturb, noteAlarm, noteDetected } from "../world/street";
+import { coveredFrom } from "../world/disguise";
 import { worldTimeScale } from "./ability-system";
 import { COWER_RADIUS, scare } from "./ai/civilian-ai-system";
 import { effectiveAggroRange, giveLead, guardSees } from "./ai/ganger-perception";
@@ -160,7 +163,8 @@ const witness = (ctx: SimContext, o: Offence, player: Entity): void => {
   }
   for (const c of inCreationOrder(ctx.world.with("civilian"))) {
     const mind = c.civilian.crowd;
-    if ((c.health?.current ?? 1) <= 0 || mind?.call || (mind?.scared ?? 0) > 0 || !civilianSees(ctx, c, player)) continue;
+    // Background passers-by (ADR-0040) run like anyone but never phone it in: they are not saved.
+    if (c.passerby || (c.health?.current ?? 1) <= 0 || mind?.call || (mind?.scared ?? 0) > 0 || !civilianSees(ctx, c, player)) continue;
     scare(ctx, c, "fleeing", player.position);
     const m = c.civilian.crowd;
     if (!m) continue;
@@ -203,7 +207,8 @@ const runCalls = (ctx: SimContext, player: Entity | null, dt: number): void => {
 const zoneActive = (ctx: SimContext, zone: NonNullable<NonNullable<Entity["device"]>["restricted"]>): boolean => {
   if (!zone.during) return true;
   const c = ctx.state.domain.contracts.active;
-  return c?.status === "active" && contractKind(c) === zone.during;
+  // A door code from an observation hook (ADR-0034): the camera takes the player for staff.
+  return c?.status === "active" && contractKind(c) === zone.during && !codeKnown(ctx);
 };
 
 /** Cameras watching no-go zones (ADR-0029): the spot meter, the alarm, the guards sent to look. */
@@ -213,8 +218,16 @@ const runCameras = (ctx: SimContext, player: Entity | null, dt: number, aware: M
     if (d.kind !== "camera") continue;
     d.cooldown = Math.max(0, d.cooldown - dt);
     const zone = d.restricted;
+    // The office staff's overalls belong in the office (ADR-0033): the camera takes her for staff.
     const inside =
-      !!player && !!zone && zoneActive(ctx, zone) && player.position.x >= zone.minX && player.position.x <= zone.maxX && player.position.z >= zone.minZ && player.position.z <= zone.maxZ;
+      !!player &&
+      !!zone &&
+      zoneActive(ctx, zone) &&
+      !staffPass(ctx, d.faction) &&
+      player.position.x >= zone.minX &&
+      player.position.x <= zone.maxX &&
+      player.position.z >= zone.minZ &&
+      player.position.z <= zone.maxZ;
     const sees = inside && !!player && cameraSees(ctx, cam, player);
     d.spot = Math.max(0, Math.min(1, d.spot + (sees ? dt / CAMERA_SPOT_SECONDS : -dt * 0.5)));
     if (player && sees && d.spot >= 1 && d.cooldown === 0) {
@@ -235,8 +248,15 @@ const runCameras = (ctx: SimContext, player: Entity | null, dt: number, aware: M
   }
 };
 
-/** Does anyone of the hunting security see the player (contact)? */
+/** A disguise of the camera's faction whose role belongs in its no-go zones (ADR-0033). */
+export const staffPass = (ctx: SimContext, faction: FactionId): boolean => {
+  const role = ctx.state.domain.disguise.role;
+  return role !== null && ZONE_ACCESS[role] && coveredFrom(ctx, faction);
+};
+
+/** Does anyone of the hunting security see the player (contact)? Not while her disguise holds against them (ADR-0033). */
 const hunterContact = (ctx: SimContext, faction: FactionId, player: Entity): boolean => {
+  if (coveredFrom(ctx, faction)) return false;
   for (const g of ctx.world.with("ai")) if (g.faction === faction && g.ai.sees) return true;
   for (const cam of ctx.world.with("device")) if (cam.device.faction === faction && cameraSees(ctx, cam, player)) return true;
   return false;

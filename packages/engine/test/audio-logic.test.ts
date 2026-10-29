@@ -186,7 +186,8 @@ describe("positional ambience", () => {
 
   it("hums louder under the Neon Koi sign than in the middle of nowhere", () => {
     const neon = neonEmitters();
-    expect(neon).toHaveLength(7);
+    // The street's signs and the screens and strips inside the clinic and the bar (ADR-0038).
+    expect(neon).toHaveLength(15);
     const near = emitterMix(at(6, 2), neon);
     const far = emitterMix(at(0, -60), neon);
     expect(near.gain).toBeGreaterThan(0.5);

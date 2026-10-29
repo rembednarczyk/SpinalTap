@@ -14,6 +14,8 @@ export interface FxUniforms {
   readonly heatMix: number;
   /** Red at the edges after a hit. */
   readonly hurt: number;
+  /** Radial motion blur of the player's own dash (ADR-0036); halved with reduced flashes. */
+  readonly blur: number;
   /** Seconds, for the scanline crawl and the slice pattern; frozen with reduced flashes. */
   readonly time: number;
   /** 1 with reduced flashes: the shader keeps everything still. */
@@ -45,6 +47,7 @@ export class GameplayFxState {
   private heatPhase = 0;
   private time = 0;
   private reduce = false;
+  private blur = 0;
 
   constructor(readonly limiter: FlashLimiter = new FlashLimiter()) {}
 
@@ -82,6 +85,14 @@ export class GameplayFxState {
     this.aberration = Math.max(this.aberration, phase === "applied" ? 0.45 : 0.3);
   }
 
+  /**
+   * The player dashed (ADR-0036): a short radial blur, a little stronger in the air. Not a
+   * flash (nothing brightens), so it does not ask the limiter; reduced flashes halve it.
+   */
+  dash(air: boolean): void {
+    this.blur = Math.max(this.blur, (air ? 1 : 0.85) * (this.reduce ? 0.5 : 1));
+  }
+
   setScanning(on: boolean): void {
     this.scanTarget = on ? 1 : 0;
   }
@@ -103,6 +114,7 @@ export class GameplayFxState {
     if (!this.reduce) this.time += step;
     this.aberration = Math.max(0, this.aberration - step / 0.35);
     this.glitch = Math.max(0, this.glitch - step / 0.3);
+    this.blur = Math.max(0, this.blur - step / 0.28);
     this.hurtTarget = Math.max(0, this.hurtTarget - step / (this.reduce ? 1.4 : 0.9));
     // A hit snaps the red in; with reduced flashes it fades in over a third of a second.
     this.hurt = this.reduce ? approach(this.hurt, this.hurtTarget, 3, step) : this.hurtTarget > this.hurt ? this.hurtTarget : approach(this.hurt, this.hurtTarget, 1.1, step);
@@ -124,6 +136,7 @@ export class GameplayFxState {
       heat: this.heat * pulse,
       heatMix,
       hurt: this.hurt,
+      blur: this.blur,
       time: this.time,
       reduce: this.reduce ? 1 : 0,
     };
@@ -131,6 +144,6 @@ export class GameplayFxState {
 
   /** Anything on screen: the post-process can stay detached otherwise. */
   get active(): boolean {
-    return this.aberration > 0.001 || this.glitch > 0.001 || this.scan > 0.001 || this.hurt > 0.001 || this.heat > 0.001 || this.heatTarget > 0 || this.scanTarget > 0;
+    return this.blur > 0.001 || this.aberration > 0.001 || this.glitch > 0.001 || this.scan > 0.001 || this.hurt > 0.001 || this.heat > 0.001 || this.heatTarget > 0 || this.scanTarget > 0;
   }
 }

@@ -45,18 +45,18 @@ EXTERNAL deliver_contract()
 { not has_flag("dead:oyaji") && (game_hour >= 22 || game_hour < 8):
     HANA: Oyaji już zamknął stragan. Hebi przychodzą do niego za dnia, kiedy ma utarg.
 }
-+ [Co trzeba odzyskać?]
++ [Co trzeba odzyskać? #tone:main]
     SEKI: Co trzeba odzyskać?
     ~ offer_contract("retrieve")
     HANA: Hebi zabrali mi skrzynkę z towarem. Trzymają ją pod estakadą, przy wschodniej ścianie, i pilnuje jej kilku chłopaków.
     HANA: Wróć ze skrzynką. Co zrobisz ze strażnikami, to już twoja sprawa.
     -> END
-+ { not has_flag("dead:oyaji") && game_hour >= 8 && game_hour < 22 } [Ktoś potrzebuje ochrony?]
++ { not has_flag("dead:oyaji") && game_hour >= 8 && game_hour < 22 } [Ktoś potrzebuje ochrony? #tone:main]
     SEKI: Ktoś potrzebuje ochrony?
     ~ offer_contract("protect")
     HANA: Oyaji nie zapłacił Hebi w tym miesiącu i właśnie po niego idą. Pilnuj go, aż padnie ostatni z nich.
     -> END
-+ [Nie teraz.]
++ [Nie teraz. #tone:leave]
     HANA: Będę przy wózku, między straganami.
     -> END
 
@@ -76,6 +76,9 @@ HANA: Paczkę już mam. Po pieniądze idź do Kaito, to jego kurs.
     HANA: Skrzynka dalej jest u Hebi, pod estakadą przy wschodniej ścianie.
 - else:
     HANA: Hebi są już na targu. Nie stój przy mnie, pilnuj Oyajiego!
+}
+{ contract_variation != "":
+    HANA: Słyszałam jeszcze coś między straganami. {contract_variation}
 }
 -> END
 

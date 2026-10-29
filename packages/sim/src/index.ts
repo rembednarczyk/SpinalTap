@@ -55,6 +55,14 @@ export {
   cameraSees,
   inPlayerView,
   securityAt,
+  DASH_COOLDOWN,
+  DASH_EXIT_SPEED,
+  DASH_IFRAMES,
+  DASH_SPEED,
+  DASH_TIME,
+  cyberCapacityOf,
+  freshPerks,
+  perksOf,
 } from "./systems";
 export {
   CIVILIAN_FLEE_SPEED,

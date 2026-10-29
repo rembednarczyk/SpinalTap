@@ -46,6 +46,11 @@ const intents = (): UiIntents => ({
   setScan: vi.fn(),
   pickQuickhack: vi.fn(),
   submitBreach: vi.fn(),
+  travelMetro: vi.fn(),
+  closeMetro: vi.fn(),
+  setRadioStation: vi.fn(),
+  nextRadioStation: vi.fn(),
+  trackQuest: vi.fn(),
 });
 
 const mount = (state: Partial<UiState> = {}) => {
@@ -367,6 +372,8 @@ describe("touch controls", () => {
 
   it("toggles crouch: one tap holds it, the next lets go", () => {
     const { store, pad } = mountTouch();
+    // Crouch sits behind "more" (ADR-0035).
+    fireEvent.pointerDown(screen.getByTestId("touch-more"));
     const crouch = screen.getByTestId("touch-crouch");
     fireEvent.pointerDown(crouch, { pointerId: 3 });
     fireEvent.pointerUp(crouch, { pointerId: 3 });

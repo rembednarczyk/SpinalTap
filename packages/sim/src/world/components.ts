@@ -1,4 +1,5 @@
 import type {
+  ActivityId,
   ContractKind,
   CrimeKind,
   CrowdState,
@@ -6,6 +7,7 @@ import type {
   EntityId,
   FactionId,
   Health,
+  MetroStationId,
   ShopId,
   Slope,
   Vec3,
@@ -14,6 +16,7 @@ import type {
   WeaponSlot,
   WeaponStats,
 } from "@seki/core";
+import type { ActivityPlan, Passerby } from "./activity-types";
 import type { Aabb } from "./collision";
 
 export interface CharacterBody {
@@ -122,7 +125,7 @@ export interface GangerAi {
   /** How sure the guard is that it saw someone, 0..1; at 1 it is alerted. Transient, not saved. */
   suspicion?: number;
   /** A guard on a post looks around: its facing sweeps around `yaw` (ADR-0024). */
-  readonly watch?: { readonly yaw: number; readonly phase: number };
+  readonly watch?: { readonly yaw: number; readonly phase: number; readonly period?: number };
   /**
    * Where it last saw the player, or a lead it was given (a noise, a camera, a trace) (ADR-0029).
    * An alerted AI chases it once the player is out of sight; an unalerted one walks there to
@@ -135,6 +138,11 @@ export interface GangerAi {
   lost?: number;
   /** It saw the player this step (read by the heat after the AI ran). Transient. */
   sees?: boolean;
+  /**
+   * Sees through disguises (ADR-0033): a Tessen shift boss, every third Hebi. Fixed at spawn
+   * from the key, so it needs no saving.
+   */
+  readonly enforcer?: true;
 }
 
 /**
@@ -243,6 +251,8 @@ export interface ScheduleStop {
    * the NPC's own (e.g. a closed stall), or null for none. Omitted: the NPC's own.
    */
   readonly interaction?: Interactable | null;
+  /** What the NPC does once it stands at the stop (ADR-0040); omitted: it just stands. */
+  readonly activity?: ActivityPlan;
 }
 
 /** A daily plan: stops sorted by `at`, repeated every day. The day wraps from the last stop to the first. */
@@ -278,9 +288,12 @@ export interface Interactable {
   /**
    * "pickup": taken on the spot (a contract crate); no conversation opens. "loot": a bag;
    * `dialogueId` is then the container key. "terminal": a hack job's terminal, the key starts
-   * the hack.
+   * the hack. Wave 2 (ADR-0034): "metro" is a ticket kiosk of `station`, "read" a mail on a
+   * terminal (an observation hook, `dialogueId` its knot), "help" a passer-by in need (a
+   * micro-event).
    */
-  readonly kind: "dialogue" | "shop" | "pickup" | "loot" | "elevator" | "ladder" | "terminal";
+  readonly kind: "dialogue" | "shop" | "pickup" | "loot" | "elevator" | "ladder" | "terminal" | "metro" | "read" | "help" | "door";
+  readonly station?: MetroStationId;
   /** For a shop: which one (the clinic when absent). `dialogueId` is then the shopkeeper's ink knot. */
   readonly shopId?: ShopId;
   /** For an elevator call button: which elevator and the level the button stands on. */
@@ -318,6 +331,31 @@ export interface ElevatorGate {
 }
 
 /**
+ * The lock of an automatic door (ADR-0038). "sealed": never opens. "code": opens for the staff of
+ * `staff`, and for the player who knows the code of the running job of kind `during` (an
+ * observation hook, ADR-0034), wears the staff's overalls (ADR-0033) or broke the lock open at
+ * the panel.
+ */
+export type DoorLock = { readonly kind: "sealed" } | { readonly kind: "code"; readonly staff: FactionId; readonly during: ContractKind };
+
+/** A leaf of an automatic door (ADR-0038). Its state goes into saves under `key`. */
+export interface DoorLeaf {
+  /** `<door>#<leaf>`. */
+  readonly key: string;
+  readonly door: string;
+  /** The leaf's box while closed; open, it is moved by `slide`. */
+  readonly closed: Aabb;
+  readonly slide: { readonly x: number; readonly z: number };
+  /** Middle of the opening at floor height: the sensor's centre. */
+  readonly sensor: Vec3;
+  readonly lock?: DoorLock;
+  /** 0 closed, 1 open. */
+  open: number;
+  /** Seconds the sensor has been empty, up to the close delay. */
+  idle: number;
+}
+
+/**
  * A fire escape ladder (ADR-0021): climbed, not walked on. The climber hangs at (`x`, `z`)
  * facing `yaw` (towards the wall), feet between `bottom` and `top`, and steps off at the top
  * onto `exit`.
@@ -346,6 +384,25 @@ export interface JumpState {
   coyote: number;
   /** Seconds left of a press made too early (in the air), so it fires on landing (jump buffer). */
   buffer: number;
+}
+
+/**
+ * The player's perks in motion (ADR-0033): the dash and the guard's stamina for deflecting
+ * bullets. Transient like the jump timers: a loaded game starts rested, with the dash ready.
+ */
+export interface PerkState {
+  /** Seconds left of the dash burst. */
+  dash: number;
+  /** Direction of the burst on the ground plane (unit). */
+  dashDir: { x: number; z: number };
+  /** Seconds until the next dash. */
+  dashCooldown: number;
+  /** The one dash of this time in the air is used; resets on the ground. */
+  airDash: boolean;
+  /** Seconds left in which shots pass the player by. */
+  iframes: number;
+  /** 0..1; deflecting a bullet takes some, it comes back over time. */
+  stamina: number;
 }
 
 /** On a ladder (ADR-0021). Transient; a game saved on a ladder grabs it again on load. */
@@ -385,12 +442,17 @@ export interface Entity {
   /** Seconds left of the slow walk after a hard landing (ADR-0021). Transient. */
   landing?: number;
   jump?: JumpState;
+  /** Dash and deflection (ADR-0033), the player only. */
+  perks?: PerkState;
   climb?: Climbing;
   /** Pulling up onto a ledge (mantle). Transient, not saved: a game saved mid-mantle loads on the ground below. */
   mantle?: Mantle;
   ladder?: LadderDef;
   elevator?: Elevator;
   gate?: ElevatorGate;
+  door?: DoorLeaf;
+  /** The lock panel of a coded door (ADR-0038): the door's key. */
+  doorPanel?: string;
   body?: CharacterBody;
   posture?: Posture;
   player?: true;
@@ -418,4 +480,11 @@ export interface Entity {
   security?: true;
   /** The player hurt it while it was not fighting them: its death is a crime (ADR-0029). Transient. */
   wronged?: true;
+  /**
+   * What the character does where it stands (ADR-0040), set by the activity system from its
+   * plan, its spot or its role. Derived from the clock and the content every step: not saved.
+   */
+  activity?: ActivityId;
+  /** A background passer-by (ADR-0040): unkeyed, not saved, rebuilt from the seed and the clock. */
+  passerby?: Passerby;
 }

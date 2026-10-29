@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { CameraMode, EffectDescriptor, EntityId, RenderPort, Transform, ViewDescriptor } from "@seki/core";
+import type { ActivityId, CameraMode, EffectDescriptor, EntityId, RenderPort, Transform, ViewDescriptor } from "@seki/core";
 import { FixedStepLoop, RenderSync, Simulation } from "../src";
-import { input } from "./helpers";
+import { input, streetSim } from "./helpers";
 
 class FakeRenderPort implements RenderPort {
   readonly views = new Map<EntityId, ViewDescriptor>();
@@ -17,6 +17,8 @@ class FakeRenderPort implements RenderPort {
   attachCamera(id: EntityId) { this.camera = id; }
   playEffect(e: EffectDescriptor) { this.effects.push(e); }
   setAppearance() {}
+  readonly activities: [EntityId, ActivityId | null][] = [];
+  setActivity(id: EntityId, a: ActivityId | null) { this.activities.push([id, a]); }
 }
 
 describe("FixedStepLoop", () => {
@@ -43,15 +45,16 @@ describe("RenderSync", () => {
   it("spawns, interpolates, despawns and attaches the camera through the port", () => {
     const port = new FakeRenderPort();
     const sync = new RenderSync(port);
-    const sim = Simulation.create({ seed: 3 });
+    const sim = streetSim({ seed: 3 });
     sync.sync(sim.world, 0);
     const player = sim.player()!;
     expect(port.camera).toBe(player.id);
     expect(port.views.get(player.id)).toEqual({ kind: "heroine" });
-    const viewCount = port.views.size;
 
     sim.step(input({ moveZ: 1 }));
     sync.sync(sim.world, 0.5);
+    // The first step brings the background passers-by in (ADR-0040).
+    const viewCount = port.views.size;
     const t = port.transforms.get(player.id)!;
     expect(t.position.z).toBeCloseTo((player.prevPosition.z + player.position.z) / 2);
     expect(t.speed).toBeGreaterThan(4);
@@ -64,5 +67,26 @@ describe("RenderSync", () => {
 
     sync.reset();
     expect(port.views.size).toBe(0);
+  });
+});
+
+describe("RenderSync and activities (ADR-0040)", () => {
+  it("sends an activity once when it starts, null when it stops, nothing in between", () => {
+    const port = new FakeRenderPort();
+    const sync = new RenderSync(port);
+    const sim = Simulation.create({ seed: 3 });
+    sim.step();
+    sync.sync(sim.world, 0);
+    sim.step();
+    sync.sync(sim.world, 0);
+    const doing = [...sim.world].filter((e) => e.activity);
+    expect(doing.length).toBeGreaterThan(0);
+    const first = doing[0]!;
+    expect(port.activities.filter(([id]) => id === first.id)).toEqual([[first.id, first.activity]]);
+    sync.sync(sim.world, 0);
+    expect(port.activities.filter(([id]) => id === first.id)).toHaveLength(1);
+    delete first.activity;
+    sync.sync(sim.world, 0);
+    expect(port.activities.at(-1)).toEqual([first.id, null]);
   });
 });

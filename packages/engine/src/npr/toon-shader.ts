@@ -98,6 +98,11 @@ uniform vec3 shadowParams;
 uniform vec4 flashLight;
 /** City kit: brightness of self-lit swatches (1 at night, dimmer by day). */
 uniform float selfLit;
+#ifdef ENV_REFLECT
+/** Static wet-asphalt probe (ADR-0036): neon, signs, far city and sky, seen from under the street. */
+uniform samplerCube envSampler;
+uniform float envStrength;
+#endif
 
 float band(float x) {
   return smoothstep(0.03, 0.07, x) * 0.55 + smoothstep(0.42, 0.47, x) * 0.45;
@@ -290,6 +295,25 @@ void main(void) {
       spec += pointColor[i].rgb * pointColor[i].a * smoothstep(0.18, 0.22, s) * g;
     }
   }
+
+#ifdef ENV_REFLECT
+  // Wet ground mirrors the probe in a few flat steps (cel paint), strongest in the puddles and
+  // at grazing angles; walls and dry dressing stay matte.
+  float wetK = min(g, 1.0);
+#if defined(DRESS_FLAGS) && defined(VERTEXCOLOR)
+  wetK = wetFlag;
+#endif
+  if (wetK > 0.4 && n.y > 0.6 && envStrength > 0.0) {
+    vec3 r = reflect(-v, n);
+    r.y = abs(r.y);
+    // Only what glows: the sky's haze is cut away, neon and signs stay, in flat steps.
+    vec3 env = max(textureCube(envSampler, r).rgb - vec3(0.18), vec3(0.0));
+    env = floor(env * 6.0 + 0.3) / 6.0;
+    float puddle = mix(0.15, 1.0, step(0.5, vnoise(vWorldPos.xz * 0.45)));
+    float graze = 0.25 + 0.75 * pow(1.0 - max(dot(n, v), 0.0), 3.0);
+    spec += env * envStrength * puddle * graze * wetK;
+  }
+#endif
 
   if (flashLight.w > 0.0) {
     vec3 toF = flashLight.xyz - vWorldPos;

@@ -5,7 +5,10 @@ import type { SimContext, System } from "../world/context";
 import { clearContract, raiseFlag } from "../world/domain-ops";
 import { raiseAlarm } from "./contract-system";
 import { callElevator } from "./elevator-system";
+import { forceDoor } from "./door-system";
 import { grabLadder } from "./ladder-system";
+import { readHookTerminal } from "../world/hook-tracker";
+import { helpPasserBy } from "../world/micro-events";
 
 /**
  * Picking up the crate of the running retrieval job, or the data of an infiltration (ADR-0024):
@@ -78,6 +81,10 @@ export const interactionSystem: System = {
         callElevator(ctx, interactable, player);
         return;
       }
+      if (interactable.kind === "door") {
+        forceDoor(ctx, best);
+        return;
+      }
       if (interactable.kind === "ladder") {
         if (interactable.ladder) grabLadder(ctx, player, interactable.ladder.key, interactable.ladder.end);
         return;
@@ -88,6 +95,15 @@ export const interactionSystem: System = {
       }
       if (interactable.kind === "terminal") {
         startHack(ctx, best);
+        return;
+      }
+      // Wave 2 (ADR-0034): a hook's mail, a passer-by in need.
+      if (interactable.kind === "read") {
+        readHookTerminal(ctx, best);
+        return;
+      }
+      if (interactable.kind === "help") {
+        helpPasserBy(ctx, best);
         return;
       }
       if (interactable.kind === "shop" && faction && !shopTerms(ctx.state.domain.reputation[faction]).open) {
@@ -103,6 +119,8 @@ export const interactionSystem: System = {
         dialogueId: interactable.dialogueId,
         kind: interactable.kind,
         ...(interactable.kind === "shop" ? { shopId: interactable.shopId ?? "clinic" } : {}),
+        // A ticket kiosk (ADR-0034): the app opens the line map and answers with travel-metro.
+        ...(interactable.station ? { station: interactable.station } : {}),
       });
     }
   },

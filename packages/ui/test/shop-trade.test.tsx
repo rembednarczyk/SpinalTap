@@ -46,6 +46,11 @@ const intents = (): UiIntents => ({
   setScan: vi.fn(),
   pickQuickhack: vi.fn(),
   submitBreach: vi.fn(),
+  travelMetro: vi.fn(),
+  closeMetro: vi.fn(),
+  setRadioStation: vi.fn(),
+  nextRadioStation: vi.fn(),
+  trackQuest: vi.fn(),
 });
 
 const piece = (key: string, defId: TradeItemVm["defId"], name: string, patch: Partial<TradeItemVm> = {}): TradeItemVm => ({

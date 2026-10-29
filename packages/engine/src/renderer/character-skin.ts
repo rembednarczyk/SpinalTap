@@ -53,12 +53,57 @@ const bakePart = (m: Mesh, rootInverse: Matrix, preset: PresetName, boneIndex: n
   m.setVerticesData(VertexBuffer.MatricesWeightsKind, weights);
 };
 
+/** Vertices of a merged character mesh that came from one part, with the part's preset. */
+export interface SkinPart {
+  readonly preset: PresetName;
+  readonly start: number;
+  readonly count: number;
+}
+
+const PARTS = new WeakMap<Mesh, readonly SkinPart[]>();
+/** Last colours a mesh was painted with, so an unchanged look writes nothing. */
+const PAINTED = new WeakMap<Mesh, string>();
+
+/** The parts of a merged character mesh in vertex order (empty for any other mesh). */
+export const skinParts = (mesh: Mesh): readonly SkinPart[] => PARTS.get(mesh) ?? [];
+
+/**
+ * Repaints the vertex colours of a merged character mesh part by part (ADR-0036): `colorOf`
+ * gives a part's new colour, or null for its preset's own. Returns whether anything changed.
+ */
+export const recolorSkin = (mesh: Mesh, colorOf: (preset: PresetName) => string | null): boolean => {
+  const parts = PARTS.get(mesh);
+  if (!parts) return false;
+  const hexes = parts.map((p) => colorOf(p.preset) ?? PRESETS[p.preset].base);
+  const key = hexes.join();
+  const current = PAINTED.get(mesh) ?? parts.map((p) => PRESETS[p.preset].base).join();
+  if (key === current) return false;
+  const data = mesh.getVerticesData(VertexBuffer.ColorKind);
+  if (!data) return false;
+  const colors = Float32Array.from(data);
+  parts.forEach((p, i) => {
+    const c = Color3.FromHexString(hexes[i]!);
+    for (let v = p.start; v < p.start + p.count; v++) colors.set([c.r, c.g, c.b, 1], v * 4);
+  });
+  mesh.setVerticesData(VertexBuffer.ColorKind, colors, true);
+  PAINTED.set(mesh, key);
+  return true;
+};
+
 /** One merged, skinned mesh per look group. */
 const mergeGroups = (b: RigBuilder, root: TransformNode, skeleton: Skeleton, groups: Map<string, LookGroup>): Mesh[] => {
   const out: Mesh[] = [];
   for (const [key, g] of groups) {
+    const parts: SkinPart[] = [];
+    let start = 0;
+    for (const m of g.meshes) {
+      const count = m.getTotalVertices();
+      parts.push({ preset: b.presets.get(m) ?? "charVertexColor", start, count });
+      start += count;
+    }
     const merged = MeshClass.MergeMeshes(g.meshes, true, true);
     if (!merged) continue;
+    PARTS.set(merged, parts);
     merged.name = `${b.name}-${key}`;
     merged.parent = root;
     merged.skeleton = skeleton;

@@ -41,8 +41,11 @@ export interface Transform {
 export type ViewDescriptor =
   | { readonly kind: "heroine" }
   | { readonly kind: "npc"; readonly preset: "fixer" | "civilian" | "ripperdoc" }
-  /** "corpo": Tessen's security in the docks (ADR-0024); "ganger": Hebi. */
-  | { readonly kind: "enemy"; readonly preset: "ganger" | "corpo" }
+  /**
+   * "corpo": Tessen's security in the docks (ADR-0024); "ganger": Hebi. `enforcer`: sees through
+   * disguises (ADR-0033), the HUD marks it with an icon.
+   */
+  | { readonly kind: "enemy"; readonly preset: "ganger" | "corpo"; readonly enforcer?: boolean }
   | {
       readonly kind: "block";
       readonly size: Vec3;
@@ -59,6 +62,11 @@ export type ViewDescriptor =
        * instead of a plain box. Collision stays the box; without a kit the box is drawn.
        */
       readonly skin?: BlockSkin;
+      /**
+       * Part of an interior shell or its furniture (ADR-0038): static, under a roof. The renderer
+       * may draw such blocks merged per area and without the moon shadow.
+       */
+      readonly interior?: true;
     }
   | {
       readonly kind: "neon";

@@ -32,8 +32,8 @@ const ume = (): ScheduleDef => {
   return {
     speed: CIVILIAN_WALK,
     stops: [
-      { label: "ulica", at: hm(6, 30), path: [corner, spot.position], yaw: spot.yaw },
-      { label: "dom", at: hm(23), path: [corner, home], yaw: spot.yaw },
+      { label: "ulica", at: hm(6, 30), path: [corner, spot.position], yaw: spot.yaw, activity: { cycle: ["sweep", "talk"], minutes: 40 } },
+      { label: "dom", at: hm(23), path: [corner, home], yaw: spot.yaw, activity: "sleep" },
     ],
   };
 };
@@ -55,12 +55,14 @@ const oyaji = (): ScheduleDef => {
   return {
     speed: CIVILIAN_WALK,
     stops: [
-      { label: "stragan", at: OYAJI_HOURS.open, path: [front, stall.position], yaw: stall.yaw },
+      // He lays out and rearranges his wares (the hands-on-the-counter loop), and sweeps up.
+      { label: "stragan", at: OYAJI_HOURS.open, path: [front, stall.position], yaw: stall.yaw, activity: { cycle: ["cook", "cook", "sweep"], minutes: 20 } },
       {
         label: "dom",
         at: OYAJI_HOURS.close,
         path: [front, door],
         yaw: stall.yaw,
+        activity: "sit",
         interaction: { kind: "dialogue", dialogueId: "oyaji_closed", prompt: "Stragan Oyajiego: zamknięte do 8:00", radius: 2.4 },
       },
     ],
@@ -74,7 +76,7 @@ const hebiLookout = (): ScheduleDef => {
   return {
     speed: PATROL_WALK,
     stops: [
-      { label: "posterunek", at: hm(5), path: [p], yaw: post.yaw },
+      { label: "posterunek", at: hm(5), path: [p], yaw: post.yaw, activity: { cycle: ["guard", "smoke"], minutes: 30 } },
       {
         label: "patrol",
         at: hm(22),
@@ -100,9 +102,9 @@ const hideo = (): ScheduleDef => {
   return {
     speed: CIVILIAN_WALK,
     stops: [
-      { label: "dom", at: hm(2), path: [bend, home], yaw: Math.PI / 2 },
-      { label: "do pracy", at: hm(7, 30), path: [kerb, ...FOOTBRIDGE_WALK, kiosk], yaw: Math.PI / 2 },
-      { label: "sake", at: hm(19), path: [kiosk, ...[...FOOTBRIDGE_WALK].reverse(), westEnd, bend, sake.position], yaw: sake.yaw },
+      { label: "dom", at: hm(2), path: [bend, home], yaw: Math.PI / 2, activity: "sleep" },
+      { label: "do pracy", at: hm(7, 30), path: [kerb, ...FOOTBRIDGE_WALK, kiosk], yaw: Math.PI / 2, activity: "phone" },
+      { label: "sake", at: hm(19), path: [kiosk, ...[...FOOTBRIDGE_WALK].reverse(), westEnd, bend, sake.position], yaw: sake.yaw, activity: "drink" },
     ],
   };
 };
@@ -114,8 +116,9 @@ const mei = (): ScheduleDef => {
   return {
     speed: CIVILIAN_WALK,
     stops: [
-      { label: "dom", at: hm(4), path: [corner, KANAL_SPOTS.meiHome], yaw: Math.PI / 2 },
-      { label: "karaoke", at: hm(20), path: [corner, stage.position], yaw: stage.yaw },
+      { label: "dom", at: hm(4), path: [corner, KANAL_SPOTS.meiHome], yaw: Math.PI / 2, activity: "sit" },
+      // A cigarette under the KARAOKE sign between songs.
+      { label: "karaoke", at: hm(20), path: [corner, stage.position], yaw: stage.yaw, activity: { cycle: ["smoke", "talk"], minutes: 15 } },
     ],
   };
 };
@@ -142,9 +145,10 @@ const fumiko = (): ScheduleDef => {
         at: YATAI_HOURS.close,
         path: [behind, stool],
         yaw: stall.yaw,
+        activity: "sit",
         interaction: { kind: "dialogue", dialogueId: "fumiko_closed", prompt: "Ramen u Fumiko: zamknięte do 16:00", radius: 3 },
       },
-      { label: "stragan", at: YATAI_HOURS.open, path: [behind, stall.position], yaw: stall.yaw },
+      { label: "stragan", at: YATAI_HOURS.open, path: [behind, stall.position], yaw: stall.yaw, activity: { cycle: ["cook", "sweep"], minutes: 20 } },
     ],
   };
 };

@@ -18,6 +18,7 @@ import type { SimContext } from "./context";
 import { adjustReputation, grantMemory, raiseFlag } from "./domain-ops";
 import { inCreationOrder } from "./ordering";
 import { placeOnSchedule } from "./schedule";
+import { endEncounter } from "./street-scenes";
 
 type Command<K extends GameCommand["type"]> = Extract<GameCommand, { type: K }>;
 
@@ -34,6 +35,8 @@ export const applyAlias = (ctx: SimContext, cmd: Command<"set-alias">): void => 
 
 export const endDialogue = (ctx: SimContext): void => {
   ctx.session.dialogueActive = false;
+  // A street encounter's scene is over (ADR-0034).
+  endEncounter(ctx);
 };
 
 /** A main-thread choice; the first answer sticks, a repeat changes nothing. */
@@ -87,4 +90,11 @@ export const applyResolveEnding = (ctx: SimContext, cmd: Command<"resolve-ending
   raiseFlag(ctx, ACT_ONE_ENDING_FLAG);
   raiseFlag(ctx, endingFlag(ending));
   ctx.bus.emit("EndingReached", { act: 1, endingId: ending, title: ENDINGS[ending].title });
+};
+
+/** The journal entry the HUD follows; null (or an empty id) hands the choice back to the game. */
+export const trackQuest = (ctx: SimContext, cmd: Command<"track-quest">): void => {
+  const { trackedQuest: _old, ...rest } = ctx.state.domain.preferences;
+  const preferences = cmd.questId ? { ...rest, trackedQuest: cmd.questId } : rest;
+  ctx.state.domain = { ...ctx.state.domain, preferences };
 };

@@ -12,6 +12,7 @@ import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
 import { createUiStore } from "@seki/ui";
 import { CONTRACT_SITE_SPAWNS } from "@seki/sim";
+import { nearKaito } from "./story-helpers";
 import { GameSession } from "../src/game-session";
 
 /** What the debrief card pays on top of the reward (ADR-0029); subscribe right before the payment. */
@@ -74,7 +75,7 @@ const steps = (s: GameSession, n: number, input: InputFrame = EMPTY_INPUT) => {
 };
 
 const talkToKaito = (s: GameSession) => {
-  teleport(s, 4.6, 1.5, Math.PI / 2);
+  teleport(s, ...nearKaito(s));
   steps(s, 1, frame({ interact: true }));
 };
 

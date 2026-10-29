@@ -17,14 +17,47 @@ const CONTRACT_STEPS: ReadonlySet<string> = new Set(["echo_contract"]);
 /** "Kontrakt 3 · Hana": the number and who gave it. */
 export const contractTitle = (c: Contract): string => `Kontrakt ${c.id.slice(1)} · ${contractGiver(c).name}`;
 
+/** Journal id of the running contract, as the journal lists it. */
+export const contractEntryId = (c: Contract): string => `contract-${c.id}`;
+
+type ObjectiveView = { title: string | null; objective: string | null };
+
+/** The entry the player pinned in the journal, while it is still running; null otherwise. */
+const pinnedView = (domain: DomainState, contractView: ObjectiveView | null): { id: string; view: ObjectiveView } | null => {
+  const id = domain.preferences.trackedQuest;
+  if (!id) return null;
+  const contract = domain.contracts.active;
+  if (contract && id === contractEntryId(contract) && contractView) return { id, view: contractView };
+  const quest = QUEST_DEFINITIONS.find((q) => q.id === id);
+  const progress = domain.quests[id];
+  const step = quest && progress?.status === "active" ? quest.steps[progress.stepIndex] : undefined;
+  return quest && step ? { id, view: { title: quest.title, objective: stepObjective(step, domain.flags) } } : null;
+};
+
 /**
- * Main-quest title and objective for the HUD. With `tick` a running delivery shows its clock;
- * the save label leaves it out.
+ * Journal id of the entry the HUD shows: the one the player pinned while it runs, else the main
+ * thread's quest, else the running contract. Null before the story starts.
  */
-export const describeObjective = (domain: DomainState, tick: number | null = null): { title: string | null; objective: string | null } => {
+export const shownEntryId = (domain: DomainState): string | null => {
+  const contract = domain.contracts.active;
+  const pinned = pinnedView(domain, contract ? { title: null, objective: null } : null);
+  if (pinned) return pinned.id;
+  const main = activeMainStep(domain.quests, QUEST_DEFINITIONS);
+  if (main && !(contract && CONTRACT_STEPS.has(main.step.id))) return main.quest.id;
+  return contract ? contractEntryId(contract) : null;
+};
+
+/**
+ * Title and objective for the HUD: the journal entry the player pinned, else the main thread
+ * (or the contract it is about), else the running contract. With `tick` a running delivery shows
+ * its clock; the save label leaves it out.
+ */
+export const describeObjective = (domain: DomainState, tick: number | null = null): ObjectiveView => {
   const contract = domain.contracts.active;
   const left = contract && tick !== null ? contractSecondsLeft(contract, tick, SIM_HZ) : null;
   const contractView = contract ? { title: contractTitle(contract), objective: contractObjective(contract, left) } : null;
+  const pinned = pinnedView(domain, contractView);
+  if (pinned) return pinned.view;
   const main = activeMainStep(domain.quests, QUEST_DEFINITIONS);
   if (main) {
     if (contractView && CONTRACT_STEPS.has(main.step.id)) return contractView;

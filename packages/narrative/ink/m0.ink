@@ -6,6 +6,8 @@ VAR quest_step = ""
 VAR alias = ""
 VAR contract_state = ""
 VAR contract_site = ""
+// The rolled variation of the running contract as one or two sentences (ADR-0032), "" without one.
+VAR contract_variation = ""
 VAR contracts_done = 0
 // Faction stances from the domain: "hostile", "neutral" or "friendly".
 VAR fixers_stance = "neutral"
@@ -30,37 +32,43 @@ EXTERNAL complete_contract()
 - else: -> after
 }
 
+// The opening (ADR-0038): Seki comes round on the chair in Mori's clinic, Kaito waits by it.
 = first_meeting
 KAITO: No proszę. Chodzący trup z wraku na Siódmej.
+Biała lampa nad fotelem świeci ci prosto w oczy. Pachnie spirytusem i przypalonym chromem. Ktoś odpina ci pas z nadgarstka.
+MORI: Chodzący to za dużo powiedziane. Siadaj powoli, szwy na karku jeszcze się nie zdecydowały.
+MORI: Wyciągnąłem z ciebie trzy odłamki szyby, kawałek pasa bezpieczeństwa i pół metra cudzego kabla. Szkło było twoje. Kabel nie.
 KAITO: Ripperdoc mówił, że nie przeżyjesz nocy. Pomylił się. Zdarza mu się.
-* [Kim jesteś?]
+MORI: Mówiłem, że nie przeżyjesz jej za darmo. On zapłacił.
+* [Kim jesteś? #tone:main]
     SEKI: Kim ty jesteś?
     KAITO: Kaito. Załatwiam sprawy. A ty, jak słyszę, nie pamiętasz nawet, jak się nazywasz.
-* [Co mi się stało?]
+* [Co mi się stało? #tone:main]
     SEKI: Co mi się stało?
     KAITO: Wypadek. Twoje auto, czyjś dron, dużo chromu na asfalcie. Resztę musisz sobie przypomnieć sama.
     KAITO: Jestem Kaito, gdybyś pytała. Załatwiam sprawy.
 - KAITO: Potrzebujesz imienia. Ulica nie lubi pustych miejsc.
 KAITO: Ratownicy mówili, że w tym wraku walczyłaś z pasami jak z wrogiem. Seki Senshi. Wojowniczka z kroniki wypadków.
-* [Niech będzie. Seki Senshi.]
+* [Niech będzie. Seki Senshi. #tone:main]
     ~ set_alias("Seki Senshi")
     ~ change_rep("fixers", 5)
     SEKI: Niech będzie. Na razie.
-* [Moje imię gdzieś jest. Odzyskam je.]
+* [Moje imię gdzieś jest. Odzyskam je. #tone:main]
     ~ set_alias("Seki Senshi")
     SEKI: Moje imię gdzieś jest. Odzyskam je.
     KAITO: Jasne. Do tego czasu jesteś Seki.
-- KAITO: Masz dług u ripperdoca i zero perspektyw. Ja mam robotę.
+- KAITO: Zapłaciłem za twoje łatanie, więc masz dług. U mnie. I zero perspektyw. Ja mam robotę.
 KAITO: Kurier gangu Hebi siedzi w zaułku za myjnią, na północnym końcu ulicy. Nosi coś, co należy do moich klientów.
-KAITO: Zdejmij go. Ma ochronę, więc nie idź tam na spacer.
+KAITO: Zdejmij go. Ma ochronę, więc nie idź tam na spacer. Potem znajdziesz mnie w Neon Koi, po drugiej stronie ulicy.
+MORI: Drzwi otwierają się same. Nie kop ich, są droższe od ciebie.
 ~ set_flag("met_fixer")
 -> END
 
 = waiting
 KAITO: Kurier dalej oddycha, Seki. Zaułek za myjnią, na północ.
-* [Już idę.]
+* [Już idę. #tone:leave]
     -> END
-* [Co wiesz o moim wypadku?]
+* [Co wiesz o moim wypadku? #tone:optional]
     SEKI: Co wiesz o moim wypadku?
     KAITO: Mniej, niż byś chciała. Więcej, niż powiem za darmo. Najpierw robota.
     -> END
@@ -68,11 +76,11 @@ KAITO: Kurier dalej oddycha, Seki. Zaułek za myjnią, na północ.
 = payday
 KAITO: Słyszałem strzały. I ciszę po nich. Lubię taką ciszę.
 KAITO: Coś ci się przypomniało, prawda? Widzę po oczach.
-* [Pamiętam, jak się strzela. Nie pamiętam skąd.]
+* [Pamiętam, jak się strzela. Nie pamiętam skąd. #tone:main]
     SEKI: Pamiętam, jak się strzela. Nie pamiętam skąd.
     KAITO: Mięśnie mają lepszą pamięć niż ludzie. Trzymaj się tego.
     ~ change_rep("fixers", 5)
-* [Ile mi płacisz?]
+* [Ile mi płacisz? #tone:main]
     SEKI: Ile mi płacisz?
     KAITO: Tyle, ile wart jest kurier Hebi. Wolisz gadać o pieniądzach niż o wspomnieniach? Zawodowiec. Podoba mi się.
 - ~ change_rep("hebi", -15)
@@ -120,26 +128,26 @@ KAITO: I jeszcze jedno, Seki. Ktoś już pytał o kobietę z wraku. Nie tylko ja
 
 // The choices alone: side questions come back here without repeating Kaito's opening lines.
 = contract_menu
-+ [Biorę robotę.]
++ [Biorę robotę. #tone:main]
     SEKI: Biorę.
     ~ accept_contract()
     KAITO: Lokalizację wysłałem ci na optykę. Wróć, jak będzie po wszystkim.
     -> END
-+ { contracts_done >= 1 } [Masz coś do przewiezienia?]
++ { contracts_done >= 1 } [Masz coś do przewiezienia? #tone:main]
     SEKI: Masz coś do przewiezienia?
     ~ offer_contract("delivery")
     KAITO: Chłodzone moduły dla Hany na targu pod estakadą. Jak się nagrzeją, nikt za nie nie zapłaci.
     KAITO: Czas masz na optyce. Oddaj paczkę Hanie i wróć do mnie po pieniądze.
     -> END
-+ [Gdzie tu się można podrasować?]
++ [Gdzie tu się można podrasować? #tone:optional]
     SEKI: Gdzie tu się można podrasować?
     KAITO: Jeśli chcesz lepszego sprzętu, idź do doktora Mori. Klinika naprzeciwko baru. Bierze gotówkę i nie zadaje pytań.
     -> contract_menu
-+ [Nie dziś.]
++ [Nie dziś. #tone:leave]
     KAITO: Twoja strata. Hebi nie biorą wolnego.
     -> END
 // Unlocked by the "stół" memory (act I, m3-echo.ink).
-* { has_memory("operating_table") } [Co wiesz o Kagami Biotech?]
+* { has_memory("operating_table") } [Co wiesz o Kagami Biotech? #tone:lifepath]
     SEKI: Co wiesz o Kagami Biotech?
     KAITO: Kupują od ludzi wspomnienia i sprzedają je bogatym, którzy chcą coś przeżyć bez ryzyka.
     KAITO: Ich kurierzy dobrze zarabiają. Dopóki nie zaczną pytać, co wiozą.
@@ -147,6 +155,9 @@ KAITO: I jeszcze jedno, Seki. Ktoś już pytał o kobietę z wraku. Nie tylko ja
 
 = contract_running
 KAITO: Kontrakt dalej otwarty. Cel: {contract_site}.
+{ contract_variation != "":
+    KAITO: Jeszcze jedno, zanim pójdziesz. {contract_variation}
+}
 -> END
 
 // Act II (m3-lustro.ink): the hook from a fixer job into the main thread.
@@ -159,13 +170,13 @@ KAITO: Klient w czystych butach płaci pięć tysięcy za Rena Odagiri i walizk�
 KAITO: Posłuchaj, to ich wiadomość. Przyszła wczoraj.
 Kaito puszcza nagranie. Mówi Ren, spokojnie i trochę za równo: przekazanie w nocy, na estakadzie nad targiem.
 KAITO: Twój chłopak sam się umawia z Kagami. Albo ktoś mówi jego głosem.
-* [Nie poluję na Rena.]
+* [Nie poluję na Rena. #tone:main]
     ~ choice_job = "refused"
     ~ story_choice("job", "refused")
     SEKI: Nie poluję na Rena. Znajdź sobie kogoś innego.
     KAITO: Znajdę. Kagami też znajdzie. Ich człowiek, Kurosawa, czeka dziś na estakadzie.
     ~ change_rep("fixers", -3)
-* [Biorę. Chcę zobaczyć tego klienta.]
+* [Biorę. Chcę zobaczyć tego klienta. #tone:main]
     ~ choice_job = "taken"
     ~ story_choice("job", "taken")
     SEKI: Biorę. Chcę zobaczyć tego klienta.
@@ -178,6 +189,9 @@ KAITO: Twój chłopak sam się umawia z Kagami. Albo ktoś mówi jego głosem.
 KAITO: Moduły miały już być u Hany. Targ pod estakadą, za Ulicą Kanałową.
 { contract_time_left > 0:
     KAITO: Zostało ci {contract_time_left} s. Nie stój tu.
+}
+{ contract_variation != "":
+    KAITO: I pamiętaj. {contract_variation}
 }
 -> END
 
@@ -227,9 +241,9 @@ KAITO: Słyszałem, że robisz coś dla Hany. Skończ u niej, potem pogadamy.
 }
 UME: Widziałam, jak cię wyciągali z tego auta. Myślałam, że już po tobie.
 { quest_step == "find_fixer":
-    UME: Jeśli szukasz roboty, Kaito stoi pod Neon Koi. Po prawej stronie ulicy.
+    UME: Kaito przesiedział całą noc u doktora Mori, przy twoim fotelu. Klinika jest po lewej stronie ulicy.
 }
-* [Znałaś mnie wcześniej?]
+* [Znałaś mnie wcześniej? #tone:main]
     SEKI: Znałaś mnie wcześniej?
     UME: Każdy cię tu znał. Biegałaś po dachach z tym chłopakiem od Hebi, aż zrobiło się o was głośno.
     UME: Potem zniknęłaś na dwa lata. Aż do wczoraj.
@@ -238,16 +252,16 @@ UME: Widziałam, jak cię wyciągali z tego auta. Myślałam, że już po tobie.
     ~ change_rep("civilians", 5)
     ~ set_flag("ume_memory")
     -> END
-* [Muszę iść.]
+* [Muszę iść. #tone:leave]
     -> END
-* { has_memory("courier_case") && not has_flag("ume_ren") } [Pamiętasz Rena?]
+* { has_memory("courier_case") && not has_flag("ume_ren") } [Pamiętasz Rena? #tone:lifepath]
     -> ren_talk
 
 // Unlocked by the "walizka" memory (act I, m3-echo.ink).
 = ren
-+ [Pamiętasz Rena?]
++ [Pamiętasz Rena? #tone:lifepath]
     -> ren_talk
-+ [Muszę iść.]
++ [Muszę iść. #tone:leave]
     -> END
 
 // Act II (m3-lustro.ink): Ren is back and hiding.
@@ -257,7 +271,7 @@ UME: Widziałam, jak cię wyciągali z tego auta. Myślałam, że już po tobie.
 - else:
     UME: Szukasz kogoś. Widzę, jak patrzysz po dachach.
 }
-+ [Gdzie znajdę Rena Odagiri?]
++ [Gdzie znajdę Rena Odagiri? #tone:main]
     SEKI: Gdzie znajdę Rena Odagiri?
     UME: Wrócił tydzień temu. Chudy, zarośnięty, nie przypomina tego chłopaka sprzed dwóch lat.
     UME: Śpi na dachu nad targiem pod estakadą. Wchodzi się schodami pożarowymi od strony straganów.
@@ -267,7 +281,7 @@ UME: Widziałam, jak cię wyciągali z tego auta. Myślałam, że już po tobie.
     ~ set_flag("ren_trail")
     ~ change_rep("civilians", 2)
     -> END
-+ [Nieważne.]
++ [Nieważne. #tone:leave]
     UME: Jak zechcesz pogadać, wiesz, gdzie stoję.
     -> END
 
@@ -277,4 +291,33 @@ UME: Ren Odagiri, ten od Hebi, z którym biegałaś po dachach. Szukał cię, ki
 UME: Potem przyszli ludzie w czystych butach i też o ciebie pytali. Od tamtej pory nikt Rena nie widział.
 ~ set_flag("ume_ren")
 ~ change_rep("civilians", 3)
+-> END
+
+// Neon Koi (ADR-0038): the barman behind the counter and the regulars at the tables.
+=== koi_barman ===
+{ quest_step == "find_fixer":
+    BARMAN: Kaito? Nie było go całą noc. Siedział u Moriego, przy jakiejś dziewczynie z wraku.
+    -> END
+}
+BARMAN: Neon Koi. Pijesz albo słuchasz, oba się liczą.
+{ hebi_stance == "hostile":
+    BARMAN: I nie strzelaj tu do Hebi. Sprzątam po nich częściej niż po klientach.
+}
+* [Co polecasz? #tone:optional]
+    SEKI: Co polecasz?
+    BARMAN: Syntetyczną sake. Smakuje jak prawdziwa, jeśli nigdy nie piłaś prawdziwej.
+    -> END
+* [Nic, dzięki. #tone:leave]
+    -> END
+
+=== koi_regular ===
+{ civilians_stance == "hostile":
+    BYWALEC: Odsuń się. Słyszałem, co robisz na tej ulicy.
+    -> END
+}
+{ has_flag("reported_back"):
+    BYWALEC: To ty zdjęłaś tego kuriera spod myjni? Postawiłbym ci drinka, ale Hebi mają tu uszy.
+- else:
+    BYWALEC: Jukebox gra trzy kawałki na krzyż. Ten jest najlepszy. Albo najgłośniejszy.
+}
 -> END

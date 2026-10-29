@@ -11,7 +11,8 @@ const perHp = (id: "medkit" | "bandage" | "ramen" | "yakitori"): number => STACK
 describe("street food (ADR-0026)", () => {
   it("is a consumable sold by the ramen stall only", () => {
     expect(CONSUMABLE_IDS).toEqual(expect.arrayContaining(["ramen", "yakitori"]));
-    expect(SHOPS.yatai.stock.map((e) => e.item)).toEqual(["ramen", "yakitori"]);
+    // Wave 2 (ADR-0033): Fumiko also pours the synthetic coffee.
+    expect(SHOPS.yatai.stock.map((e) => e.item)).toEqual(["ramen", "yakitori", "synth_coffee"]);
     for (const shop of ["clinic", "oyaji"] as const) expect(SHOPS[shop].stock.some((e) => e.item === "ramen" || e.item === "yakitori")).toBe(false);
   });
 

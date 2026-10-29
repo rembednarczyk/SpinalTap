@@ -1,4 +1,4 @@
-import { type BreachDaemonId, type DomainEvents, type DomainState, EMPTY_INPUT, type InputFrame, formatClock } from "@seki/core";
+import { type BreachDaemonId, type DomainEvents, type DomainState, EMPTY_INPUT, type InputFrame, type MetroStationId, formatClock } from "@seki/core";
 import type { PerfSample, PreviewState } from "@seki/engine";
 import type { FixedStepLoop } from "@seki/sim";
 import type { UiStore } from "@seki/ui";
@@ -54,6 +54,8 @@ export interface DebugApi {
   emit<K extends keyof DomainEvents>(type: K, payload: DomainEvents[K]): void;
   /** Opens the breach minigame for a terminal, as the terminals of the simulation will. */
   breach(terminalKey: string, daemons?: readonly BreachDaemonId[]): void;
+  /** Opens the metro line map as the kiosk at `from` would (ADR-0035). */
+  metro(from: MetroStationId): void;
   session: GameSession;
 }
 
@@ -118,6 +120,9 @@ export const createDebugApi = (
   },
   breach(terminalKey, daemons) {
     session.openBreach(terminalKey, daemons);
+  },
+  metro(from) {
+    session.openMetro(from);
   },
   wait(minutes) {
     session.sim.enqueue({ type: "wait", minutes });

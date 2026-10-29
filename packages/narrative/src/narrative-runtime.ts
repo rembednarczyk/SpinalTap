@@ -1,5 +1,6 @@
 import { Compiler, type Story } from "inkjs/full";
 import {
+  type ContractVariation,
   type DomainState,
   type GameCommand,
   CONTRACT_KINDS,
@@ -23,7 +24,8 @@ import {
   resolveEnding,
   stanceOf,
 } from "@seki/core";
-import type { DialogueLine, DialogueView } from "./dialogue-view";
+import { describeVariation, variationOf } from "./contract-variation";
+import { type DialogueLine, type DialogueView, toneOf } from "./dialogue-view";
 
 const SPEAKERS: Readonly<Record<string, string>> = {
   KAITO: "Kaito",
@@ -43,6 +45,36 @@ const SPEAKERS: Readonly<Record<string, string>> = {
   GORO: "Goro",
   KENTA: "Kenta",
   FUMIKO: "Fumiko",
+  // Neon Koi (ADR-0038).
+  BARMAN: "Barman",
+  BYWALEC: "Bywalec",
+  // Street encounters (ADR-0032).
+  NOBU: "Nobu",
+  SARARIMAN: "Sarariman",
+  HINA: "Hina",
+  SHIRO: "Shiro",
+  TAKUMI: "Takumi",
+  SABU: "Dziadek Sabu",
+  AUTOMAT: "Automat",
+  KOJI: "Koji",
+  KIKU: "Wróżka Kiku",
+  DAIGO: "Daigo",
+  POBORCA: "Poborca Hebi",
+  AKANE: "Akane",
+  RIKO: "Riko",
+  TOMO: "Tomo",
+  STRAZNIK: "Strażnik Tessen",
+  GLOS: "Głos z kontenera",
+  // Observation hooks, the metro car and the radio (ADR-0032).
+  HEBI: "Hebi",
+  GLOSNIK: "Głośnik",
+  PASAZER: "Pasażer",
+  PASAZERKA: "Pasażerka",
+  DZIECKO: "Dziecko",
+  REKLAMA: "Reklama",
+  KASS: "DJ Kass",
+  YUKI: "Mama Yuki",
+  LEKTORKA: "Tessen Info",
 };
 const SPEAKER_RE = /^([A-Z]+):\s*(.*)$/;
 
@@ -99,9 +131,11 @@ export class NarrativeRuntime {
 
   /**
    * Opens the knot `dialogueId`. `clock` (the simulation tick and rate) lets the dialogue read
-   * how much time a delivery has left; without it the time reads as 0.
+   * how much time a delivery has left; without it the time reads as 0. `variation` is the rolled
+   * plan of the running contract (ADR-0032); it defaults to the one stored on the contract, and
+   * the fixers mention it only when there is one.
    */
-  start(dialogueId: string, domain: DomainState, clock?: ConversationClock): DialogueView {
+  start(dialogueId: string, domain: DomainState, clock?: ConversationClock, variation?: ContractVariation): DialogueView {
     this.checkpoint = this.story.state.toJson();
     this.effects = 0;
     this.domain = domain;
@@ -119,6 +153,7 @@ export class NarrativeRuntime {
     this.story.variablesState.$("contract_reward", contract?.reward ?? 0);
     const left = contract && clock ? contractSecondsLeft(contract, clock.tick, clock.ticksPerSecond) : null;
     this.story.variablesState.$("contract_time_left", left ?? 0);
+    this.story.variablesState.$("contract_variation", contract ? describeVariation(variation ?? variationOf(contract)) : "");
     for (const f of FACTION_IDS) this.story.variablesState.$(`${f}_stance`, stanceOf(domain.reputation[f]));
     // The domain owns the main-thread choices; ink sees them as plain string variables.
     for (const choice of Object.keys(STORY_CHOICES) as StoryChoiceId[]) {
@@ -183,7 +218,7 @@ export class NarrativeRuntime {
       const text = (this.story.Continue() ?? "").trim();
       if (text) lines.push(this.parseLine(text));
     }
-    const choices = this.story.currentChoices.map((c) => ({ index: c.index, text: c.text }));
+    const choices = this.story.currentChoices.map((c) => ({ index: c.index, text: c.text.trim(), tone: toneOf(c.tags) }));
     return { dialogueId: this.dialogueId, lines, choices, ended: choices.length === 0 };
   }
 

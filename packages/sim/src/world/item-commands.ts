@@ -1,4 +1,7 @@
 import {
+  STACKABLE_CATALOG,
+  type StackableDefinition,
+  applyBuff,
   type GameCommand,
   type ItemDefId,
   type LootLine,
@@ -19,6 +22,7 @@ import {
 } from "@seki/core";
 import type { SimContext } from "./context";
 import { dropLoot } from "./domain-ops";
+import { noteHookLoot } from "./hook-tracker";
 
 type ItemCommandType = "equip-item" | "unequip-item" | "use-item" | "drop-item" | "install-mod" | "remove-mod" | "take-loot";
 
@@ -58,7 +62,12 @@ const useItem = (ctx: SimContext, cmd: Command<"use-item">): void => {
   const r = useConsumable(domain.inventory, cmd.ref.stack, player.health);
   if (!r.ok) return;
   player.health = r.health;
-  ctx.state.domain = { ...domain, inventory: r.inventory };
+  // Wave 2 (ADR-0033): a buff starts (or refreshes), a capacity shard counts for good. The body
+  // system reports both (BuffApplied, CyberwareCapacityChanged) at its turn in this step.
+  const def: StackableDefinition = STACKABLE_CATALOG[cmd.ref.stack];
+  const buffs = def.buff ? applyBuff(domain.buffs, def.buff) : domain.buffs;
+  const capacityShards = domain.capacityShards + (def.cyberCapacity ? 1 : 0);
+  ctx.state.domain = { ...domain, inventory: r.inventory, buffs, capacityShards };
   ctx.bus.emit("ItemUsed", { itemId: cmd.ref.stack, healed: r.healed });
   ctx.bus.emit("ItemRemoved", { ref: cmd.ref, qty: 1, reason: "used" });
 };
@@ -92,6 +101,8 @@ const takeLootLine = (ctx: SimContext, cmd: Command<"take-loot">): void => {
   const blocked = r.full.find((id): id is ItemDefId => !isAmmoId(id));
   if (blocked !== undefined) ctx.bus.emit("InventoryFull", { defId: blocked });
   ctx.bus.emit("LootTaken", { containerKey: container.key, lines: r.taken, left: r.left.length });
+  // A shard of an observation hook (ADR-0034).
+  noteHookLoot(ctx, container.key, r.taken);
 };
 
 /** Takes what `drop-item` names out of the bag: the loot line it becomes and the domain without it; null if refused. */

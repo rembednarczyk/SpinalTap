@@ -6,6 +6,7 @@ import { inCreationOrder } from "../../world/ordering";
 import { followSchedule } from "../../world/schedule";
 import { worldTimeScale } from "../ability-system";
 import { CIVILIAN_TREE } from "./civilian-tree";
+import { walkRoutine } from "./passerby-walk";
 import { steerPoint, straightWalk } from "./steering";
 
 type Agent = ConstructorParameters<typeof BehaviourTree>[1];
@@ -56,6 +57,8 @@ export const scare = (ctx: SimContext, c: Entity, state: CrowdState, from: Vec3)
 };
 
 type Civilian = Entity & { civilian: NonNullable<Entity["civilian"]>; velocity: NonNullable<Entity["velocity"]> };
+
+const hasRoutine = (c: Civilian): c is Civilian & { passerby: NonNullable<Entity["passerby"]> } => c.passerby !== undefined;
 
 class CivilianAgent {
   ctx: SimContext | null = null;
@@ -143,6 +146,11 @@ class CivilianAgent {
     const { self, ctx } = this;
     if (!self) return State.FAILED;
     this.fleeing = false;
+    // A background passer-by goes on with its routine (ADR-0040).
+    if (ctx && hasRoutine(self)) {
+      walkRoutine(ctx, self, ctx.dt);
+      return State.SUCCEEDED;
+    }
     const pose = self.schedule?.pose;
     if (pose && ctx) {
       followSchedule(self, pose, CIVILIAN_SCHEDULE_SPEED, ctx.dt);

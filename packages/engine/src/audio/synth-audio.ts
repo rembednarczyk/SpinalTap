@@ -5,11 +5,14 @@ import { FootstepClock } from "./footsteps";
 import { LayeredMusic } from "./layered-music";
 import { MixState } from "./mixer";
 import { mulberry32 } from "./music";
+import { RadioPlayer } from "./radio";
+import type { RadioStationId } from "./radio-stations";
 import { DEFAULT_POSE, type EmitterMix } from "./spatial";
 import { type AudioSampleManifest, type FetchBytes, SampleBank, manifestUrls } from "./samples";
 import { SynthVoices } from "./synth-voices";
 
 export { CUES, type Recipe, type Voice } from "./cues";
+export { RADIO_STATIONS, RADIO_STATION_IDS, type RadioStationId } from "./radio-stations";
 export { crushCurve } from "./audio-graph";
 
 export interface SynthAudioOptions {
@@ -41,7 +44,7 @@ const CUE_RETRIGGER = 0.025;
  * gesture; without WebAudio every method is a silent no-op.
  *
  * A facade (ADR-0031): voices and effects live in `SynthVoices`, the soundscape in
- * `AmbientScape`, the music in `LayeredMusic`, bus levels in `MixState`; this class owns the
+ * `AmbientScape`, the music in `LayeredMusic`, the radio in `RadioPlayer`, bus levels in `MixState`; this class owns the
  * context, the scheduler timer and the listener pose.
  */
 export class SynthAudio implements AudioPort, AudioScenePort {
@@ -58,6 +61,7 @@ export class SynthAudio implements AudioPort, AudioScenePort {
   private readonly voices: SynthVoices;
   private readonly ambient: AmbientScape;
   private readonly music: LayeredMusic;
+  private readonly radio: RadioPlayer;
   /** Last start of each cue; identical cues in the same instant would only phase and cost voices. */
   private readonly lastCue = new Map<AudioCue, number>();
   private lastTick = 0;
@@ -68,6 +72,8 @@ export class SynthAudio implements AudioPort, AudioScenePort {
     this.voices = new SynthVoices(opts.maxVoices ?? 40, this.bank, this.samples, this.rnd);
     this.ambient = new AmbientScape(this.voices, this.bank, this.samples, this.rnd);
     this.music = new LayeredMusic(this.voices, this.mix);
+    this.radio = new RadioPlayer(this.voices);
+    this.radio.updateListener(this.pose);
   }
 
   /** Loaded recordings (tests, debug overlay). */
@@ -97,6 +103,30 @@ export class SynthAudio implements AudioPort, AudioScenePort {
 
   get currentMood(): MusicMood {
     return this.music.moodAt(this.g?.ctx.currentTime ?? 0);
+  }
+
+  /** The player's own station, null while her radio is off. */
+  get radioStation(): RadioStationId | null {
+    return this.radio.station;
+  }
+
+  /** The station heard right now: her own, a speaker's nearby, or none (debug, tests). */
+  get radioAudible(): RadioStationId | null {
+    return this.radio.audible;
+  }
+
+  /** Level of the score under the radio, 0..1 (debug, tests). */
+  get scoreLevel(): number {
+    return this.music.scoreLevel;
+  }
+
+  /**
+   * The player's radio (ADR-0036): one of three stations, or off with null. While exploring it
+   * replaces the score, in a fight the score comes back over it; dialogue ducks it like music.
+   */
+  setRadioStation(id: RadioStationId | null): void {
+    this.radio.setStation(id);
+    if (this.g) this.tick();
   }
 
   // ----------------------------------------------------------------------------- AudioPort
@@ -150,6 +180,7 @@ export class SynthAudio implements AudioPort, AudioScenePort {
     this.voices.stopAll(now);
     this.ambient.stop(now);
     this.music.stop(g, now);
+    this.radio.stop(now);
   }
 
   // ------------------------------------------------------------------------ AudioScenePort
@@ -162,6 +193,7 @@ export class SynthAudio implements AudioPort, AudioScenePort {
 
   setListener(pose: AudioListenerPose): void {
     this.pose = pose;
+    this.radio.updateListener(pose);
     if (this.g) this.ambient.updatePositional(pose, this.g.ctx.currentTime, false);
   }
 
@@ -198,7 +230,11 @@ export class SynthAudio implements AudioPort, AudioScenePort {
     this.lastTick = now;
     this.voices.prune(now);
     this.music.refresh(g, now);
+    const mood = this.music.moodAt(now);
+    this.music.setScore(g, this.radio.scoreLevel(mood), now);
     this.music.schedule(g, now);
+    // Like the score, the radio plays once the soundscape runs (autoStart or startAmbience).
+    if (this.music.running) this.radio.schedule(g, now, mood);
     this.ambient.tick(g, now);
     const n = this.steps.advance(this.pose.speed, dt);
     for (let i = 0; i < n; i++) this.voices.footstep(g, now + 0.01 + i * 0.05, this.pose.speed, this.steps);

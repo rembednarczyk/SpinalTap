@@ -4,6 +4,8 @@ import type { SimContext } from "../../world/context";
 import { chestOf, eyeOf, lineOfSight } from "../../world/hitscan";
 import { LEVEL_GAP } from "../../world/nav";
 import { noteDetected } from "../../world/street";
+import { coveredFrom } from "../../world/disguise";
+import { disguisedSight } from "./disguise-sight";
 
 /*
  * What a ganger knows (ADR-0024, ADR-0029): sight of the player and of a victim, a guard's
@@ -145,6 +147,7 @@ export const perceiveVictim = (ctx: SimContext, g: Entity, victim: Entity): Vict
  * What a ganger makes of the player this step: how far they are and whether it sees them. A
  * cone-sighted guard fills its suspicion first and believes its eyes only at 1. Seeing a player
  * its faction dislikes alerts it, and so does being the security that hunts them (ADR-0029).
+ * In a disguise of its faction (ADR-0033) it sees one of its own until the disguise is blown.
  */
 export const perceivePlayer = (
   ctx: SimContext,
@@ -158,7 +161,13 @@ export const perceivePlayer = (
   const aggro = effectiveAggroRange(g.ai.aggroRange, stance);
   const blind = (g.hackFx?.blind ?? 0) > 0;
   let visible = !blind && !!player && distance <= aggro && lineOfSight(ctx.world, eyeOf(g), chestOf(player));
-  if (g.ai.cone && player && !g.ai.alerted) {
+  if (player && coveredFrom(ctx, g.faction)) {
+    const sees = g.ai.cone && !g.ai.alerted ? guardSees(g, player, distance, visible, aggro) : visible;
+    visible = disguisedSight(ctx, g, player, sees, distance, aggro, timeScale);
+  } else if (!g.ai.cone && (g.ai.suspicion ?? 0) > 0) {
+    // Suspicion of a disguise that is gone (blown, or taken off) drains away.
+    g.ai.suspicion = Math.max(0, (g.ai.suspicion ?? 0) - SUSPICION_DECAY * ctx.dt * timeScale);
+  } else if (g.ai.cone && player && !g.ai.alerted) {
     // A corporate guard needs a moment of looking before it believes its eyes.
     const sees = guardSees(g, player, distance, visible, aggro);
     const before = g.ai.suspicion ?? 0;

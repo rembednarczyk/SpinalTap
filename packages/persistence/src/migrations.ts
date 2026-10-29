@@ -182,6 +182,47 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
       },
     };
   },
+  // v11 -> v12 (ADR-0034): nobody was on the metro and no street encounter had played. A running
+  // contract stays plain (no variation) with no hooks found: both are optional fields.
+  11: (old) => {
+    const domain = isObject(old.domain) ? old.domain : {};
+    return {
+      ...old,
+      version: 12,
+      domain: {
+        ...domain,
+        metro: isObject(domain.metro) ? domain.metro : { ride: null },
+        encounters: isObject(domain.encounters) ? domain.encounters : { used: [], nights: {} },
+      },
+    };
+  },
+  // v12 -> v13 (ADR-0033): no buffs running, no capacity shard used yet, and no disguise seen
+  // through. The role itself follows the worn torso garment on the first step (a Hebi jacket
+  // worn in an old save becomes a disguise then).
+  12: (old) => {
+    const domain = isObject(old.domain) ? old.domain : {};
+    return {
+      ...old,
+      version: 13,
+      domain: {
+        ...domain,
+        buffs: Array.isArray(domain.buffs) ? domain.buffs : [],
+        capacityShards: typeof domain.capacityShards === "number" ? domain.capacityShards : 0,
+        disguise: isObject(domain.disguise) ? domain.disguise : { role: null, blown: false },
+      },
+    };
+  },
+  // v13 -> v14 (ADR-0038): every door was shut. Kaito and Mori moved indoors: the street spots an
+  // old save remembers for them are dropped, so they stand where the content puts them now.
+  13: (old) => {
+    const entities = Array.isArray(old.entities) ? old.entities : [];
+    return {
+      ...old,
+      version: 14,
+      entities: entities.filter((e: unknown) => !(isObject(e) && (e.key === "fixer" || e.key === "mori"))),
+      doors: Array.isArray(old.doors) ? old.doors : [],
+    };
+  },
 };
 
 export class MigrationError extends Error {}

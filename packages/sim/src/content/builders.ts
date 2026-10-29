@@ -1,5 +1,5 @@
 import type { BlockSkin, BlockStyle, EnemyTypeId, FactionId, BlockFront, Vec3, ViewDescriptor } from "@seki/core";
-import type { Interactable, LadderDef } from "../world/components";
+import type { DoorLock, Interactable, LadderDef } from "../world/components";
 
 /** Shared vocabulary of the content tables. Coordinates: Y up, +Z north, yaw 0 faces +Z. */
 export interface StaticProp {
@@ -8,6 +8,11 @@ export interface StaticProp {
   readonly solid: boolean;
   /** Moving part of a lift (ADR-0020); the prop is then kinematic. */
   readonly mechanism?: Mechanism;
+  /**
+   * Part of an interior (ADR-0038): its shell, ceiling and furniture. The minimap draws the solid
+   * parts as the building they are cut from and leaves the rest out.
+   */
+  readonly interior?: true;
 }
 
 /** Parts of a lift: the platform (a solid), the gates at upper levels and the call buttons. */
@@ -17,7 +22,10 @@ export type Mechanism =
   | { readonly kind: "button"; readonly elevator: string; readonly level: number }
   /** A fire escape ladder (ADR-0021) and the grab points at its ends. */
   | { readonly kind: "ladder"; readonly ladder: LadderDef }
-  | { readonly kind: "ladder-end"; readonly ladder: string; readonly end: "bottom" | "top" };
+  | { readonly kind: "ladder-end"; readonly ladder: string; readonly end: "bottom" | "top" }
+  /** A leaf of an automatic door (ADR-0038): it slides by `slide` when open; the panel of a coded one. */
+  | { readonly kind: "door"; readonly door: DoorDef; readonly leaf: number; readonly slide: { readonly x: number; readonly z: number } }
+  | { readonly kind: "door-panel"; readonly door: string };
 
 export interface ActorSpawn {
   readonly key: string;
@@ -160,6 +168,27 @@ export const stairRail = (x0: number, x1: number, z0: number, z1: number, y0: nu
   const b = box(x0, x1, y0, y1 + height, z0, z1, "metal");
   return { ...b, view: { kind: "block", size: v(x1 - x0, y1 + height - y0, z1 - z0), material: "metal", slope: { axis, dir, low: height } } };
 };
+
+/** An automatic door (ADR-0038): `doorParts` in doors.ts turns it into props. */
+export interface DoorDef {
+  readonly key: string;
+  /** Middle of the opening, at floor height. */
+  readonly at: Vec3;
+  /** The wall the door sits in runs along this axis; the leaves slide along it. */
+  readonly along: "x" | "z";
+  /** Width of the opening, metres. */
+  readonly width: number;
+  readonly height: number;
+  readonly leaves: 1 | 2;
+  /** A single leaf slides this way along `along`. */
+  readonly dir?: 1 | -1;
+  /** Thickness of a leaf; it hides in the wall's thickness when open. */
+  readonly thickness?: number;
+  readonly material?: BlockMaterial;
+  readonly lock?: DoorLock;
+  /** Where the lock's panel hangs (a coded door). */
+  readonly panel?: Vec3;
+}
 
 /** A lift between levels (ADR-0020): parts of the platform, gates and call buttons. */
 export interface LiftDef {

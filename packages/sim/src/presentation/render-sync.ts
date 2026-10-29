@@ -1,4 +1,4 @@
-import { type AppearanceDescriptor, type DomainState, ENEMY_TYPES, type EntityId, type RenderPort, type Transform, appearanceOf, appearanceOfEnemy, lerp, lerpAngle, sameAppearance } from "@seki/core";
+import { type ActivityId, type AppearanceDescriptor, type DomainState, ENEMY_TYPES, type EntityId, type RenderPort, type Transform, appearanceOf, appearanceOfEnemy, lerp, lerpAngle, sameAppearance } from "@seki/core";
 import type { World } from "miniplex";
 import type { Entity } from "../world/components";
 
@@ -28,6 +28,8 @@ export class RenderSync {
   private cameraTarget: EntityId | null = null;
   /** Last appearance sent per entity; a new one goes out only when it differs (ADR-0015). */
   private readonly looks = new Map<EntityId, AppearanceDescriptor>();
+  /** Last activity sent per entity (ADR-0040); a change goes out once, null when it stops. */
+  private readonly activities = new Map<EntityId, ActivityId>();
   private playerLook: { inv: unknown; eq: unknown; cyber: unknown; look: AppearanceDescriptor } | null = null;
 
   constructor(private readonly port: RenderPort) {}
@@ -61,6 +63,7 @@ export class RenderSync {
         this.looks.set(e.id, look);
         this.port.setAppearance(e.id, look);
       }
+      this.syncActivity(e);
       if (e.player && this.cameraTarget !== e.id) {
         this.cameraTarget = e.id;
         this.port.attachCamera(e.id);
@@ -70,6 +73,7 @@ export class RenderSync {
       if (seen.has(id)) continue;
       this.spawned.delete(id);
       this.looks.delete(id);
+      this.activities.delete(id);
       this.port.despawn(id, streamedOut?.has(id) ? "unloaded" : "removed");
     }
   }
@@ -79,8 +83,18 @@ export class RenderSync {
     this.port.clear();
     this.spawned.clear();
     this.looks.clear();
+    this.activities.clear();
     this.playerLook = null;
     this.cameraTarget = null;
+  }
+
+  /** What the character does where it stands (ADR-0040), sent when it changes. */
+  private syncActivity(e: Entity): void {
+    const next = e.activity ?? null;
+    if ((this.activities.get(e.id) ?? null) === next) return;
+    if (next === null) this.activities.delete(e.id);
+    else this.activities.set(e.id, next);
+    this.port.setActivity?.(e.id, next);
   }
 
   /** The player's look follows the equipment; an enemy's comes from its type. */

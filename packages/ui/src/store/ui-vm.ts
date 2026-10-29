@@ -1,5 +1,6 @@
 import type { ItemCategory, ItemDefId, ItemRef, Rarity, WeaponSlot } from "@seki/core";
 import type { ColorblindMode, DamageNumbersMode } from "./hud-vm";
+import type { RadioStationId } from "./wave2-vm";
 
 // View models of the UI store: what the areas of `UiState` hold (ADR-0031).
 
@@ -10,10 +11,23 @@ export interface DialogueLineVm {
   readonly text: string;
 }
 
+/** Kind of a dialogue option (ADR-0039); the same set as the narrative's `DialogueTone`. */
+export type DialogueToneVm = "main" | "optional" | "leave" | "aggressive" | "persuade" | "hack" | "lifepath";
+
+export interface DialogueChoiceVm {
+  readonly index: number;
+  readonly text: string;
+  /** `optional` when missing. */
+  readonly tone?: DialogueToneVm;
+}
+
 export interface DialogueVm {
+  /** The lines of the last step, under the wheel. */
   readonly lines: readonly DialogueLineVm[];
-  readonly choices: readonly { readonly index: number; readonly text: string }[];
+  readonly choices: readonly DialogueChoiceVm[];
   readonly ended: boolean;
+  /** Earlier lines of this conversation, oldest first, for the scrollable log. */
+  readonly history?: readonly DialogueLineVm[];
 }
 
 export interface AbilityVm {
@@ -26,7 +40,7 @@ export interface AbilityVm {
 
 export interface Toast {
   readonly id: number;
-  readonly kind: "quest" | "memory" | "money" | "reputation" | "system" | "cyberware" | "heat";
+  readonly kind: "quest" | "memory" | "money" | "reputation" | "system" | "cyberware" | "heat" | "radio";
   readonly title: string;
   readonly text: string;
 }
@@ -43,6 +57,10 @@ export interface JournalQuestVm {
   readonly status: "active" | "completed";
   /** Steps reached so far, in order; the current one is the last with `done: false`. */
   readonly steps: readonly JournalStepVm[];
+  /** The HUD follows this entry now. */
+  readonly tracked?: boolean;
+  /** The player chose it (as opposed to the game picking it). */
+  readonly pinned?: boolean;
 }
 
 export interface JournalMemoryVm {
@@ -87,13 +105,16 @@ export interface MapVm {
   readonly water?: readonly MapRectVm[];
 }
 
-export type MapMarkerKind = "fixer" | "ripperdoc" | "vendor" | "target";
+/** "enforcer": someone who sees through the player's disguise (ADR-0032). */
+export type MapMarkerKind = "fixer" | "ripperdoc" | "vendor" | "target" | "enforcer";
 
 export interface MapMarkerVm {
   readonly id: string;
   readonly kind: MapMarkerKind;
   readonly x: number;
   readonly z: number;
+  /** A target shown as an area around (x, z) instead of a point, metres (ADR-0035). */
+  readonly radius?: number;
 }
 
 export interface MapPlayerVm {
@@ -103,6 +124,8 @@ export interface MapPlayerVm {
   readonly yaw: number;
   /** Height above the street in whole metres while the player is up on a level (ADR-0021); absent on the street. */
   readonly level?: number;
+  /** Moving: the minimap looks ahead, with the arrow in the lower third (ADR-0035). */
+  readonly moving?: boolean;
 }
 
 export interface WeaponSlotVm {
@@ -189,7 +212,7 @@ export interface CharacterStatsVm {
   readonly moveSpeed: number;
 }
 
-export type GraphicsQuality = "high" | "low";
+export type GraphicsQuality = "high" | "medium" | "low";
 
 /** The aim button held down, or pressed once to aim and again to stop (ADR-0019). */
 export type AimMode = "hold" | "toggle";
@@ -231,6 +254,13 @@ export interface SettingsVm {
   readonly untimedBreach: boolean;
   /** Colour tokens for colour vision deficiencies (each token has an icon as well). */
   readonly colorblind: ColorblindMode;
+  // Wave 2 (ADR-0035).
+  /** Radio station playing, null when off. */
+  readonly radioStation: RadioStationId | null;
+  /** Objective and fixer markers on the minimap; off is the no-markers mode. */
+  readonly mapMarkers: boolean;
+  /** Outlines of interactive objects in the world; the engine reads it. */
+  readonly highlights: boolean;
 }
 
 /** Vertical field of view of the camera by default, degrees (shown rounded; it is 1.08 rad). */
@@ -259,6 +289,9 @@ export const DEFAULT_SETTINGS: SettingsVm = {
   reduceFlashes: false,
   untimedBreach: false,
   colorblind: "off",
+  radioStation: null,
+  mapMarkers: true,
+  highlights: true,
 };
 
 /** A first-run hint: the keys (as labels) and the action, e.g. ["W", "A", "S", "D"] "ruch". */

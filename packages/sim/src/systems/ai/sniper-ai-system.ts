@@ -8,6 +8,7 @@ import { LEVEL_GAP, routeAcrossLevels } from "../../world/nav";
 import { WORLD_NAV } from "../../content/world-map";
 import { worldTimeScale } from "../ability-system";
 import { noteDetected } from "../../world/street";
+import { coveredFrom } from "../../world/disguise";
 import { detourStep, steerPoint, straightWalk } from "./steering";
 import { NPC_CRIT, aimSpreadOf, fireShot } from "../combat-system";
 
@@ -117,7 +118,8 @@ const reposition = (ctx: SimContext, self: Sniper, player: Entity, perch: Vec3):
 /** A hostile, seeing sniper with the player in range and a clear line to their chest. */
 const seesTarget = (ctx: SimContext, self: Sniper, player: Entity): boolean => {
   const range = self.combatant?.stats?.range ?? 0;
-  const hostile = factionStance(ctx.state.domain.reputation, self.faction ?? "tessen") !== "friendly";
+  // In a Tessen disguise (ADR-0033) the sniper sees a colleague on the quay.
+  const hostile = factionStance(ctx.state.domain.reputation, self.faction ?? "tessen") !== "friendly" && !coveredFrom(ctx, self.faction ?? "tessen");
   // Optics rebooted by a quickhack (ADR-0029): it sees nothing.
   const blind = (self.hackFx?.blind ?? 0) > 0;
   return hostile && !blind && dist3(player.position, self.position) <= range && lineOfSight(ctx.world, eyeOf(self), chestOf(player));

@@ -1,5 +1,5 @@
 import type { InputFrame } from "@seki/core";
-import { type AimMode, type ColorblindMode, DEFAULT_SETTINGS, type DamageNumbersMode, type GraphicsQuality, HUD_SCALE_RANGE, type SettingsVm } from "@seki/ui";
+import { type AimMode, type ColorblindMode, DEFAULT_SETTINGS, type DamageNumbersMode, type GraphicsQuality, HUD_SCALE_RANGE, type SettingsVm, isRadioStationId } from "@seki/ui";
 
 export const SETTINGS_KEY = "seki.settings.v1";
 
@@ -9,7 +9,7 @@ export type SettingsStorage = Pick<Storage, "getItem" | "setItem">;
 const clamp = (v: unknown, min: number, max: number, fallback: number): number =>
   typeof v === "number" && Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback;
 
-const isQuality = (v: unknown): v is GraphicsQuality => v === "high" || v === "low";
+const isQuality = (v: unknown): v is GraphicsQuality => v === "high" || v === "medium" || v === "low";
 const isAimMode = (v: unknown): v is AimMode => v === "hold" || v === "toggle";
 const isDamageMode = (v: unknown): v is DamageNumbersMode => v === "off" || v === "hit" || v === "total";
 const isColorblind = (v: unknown): v is ColorblindMode => v === "off" || v === "protan" || v === "deutan" || v === "tritan";
@@ -52,6 +52,10 @@ export const sanitizeSettings = (raw: unknown, defaults: SettingsVm = DEFAULT_SE
     reduceFlashes: bool(r.reduceFlashes, defaults.reduceFlashes),
     untimedBreach: bool(r.untimedBreach, defaults.untimedBreach),
     colorblind: isColorblind(r.colorblind) ? r.colorblind : defaults.colorblind,
+    // Wave 2 (ADR-0035).
+    radioStation: r.radioStation === null || isRadioStationId(r.radioStation) ? r.radioStation : defaults.radioStation,
+    mapMarkers: bool(r.mapMarkers, defaults.mapMarkers),
+    highlights: bool(r.highlights, defaults.highlights),
   };
 };
 
@@ -89,10 +93,13 @@ export const scaleLook = (frame: InputFrame, factor: number, invertY = false): I
  */
 export interface EffectsTarget {
   setReduceFlashes?(on: boolean): void;
+  /** Proposed render contract (ADR-0035): outlines of interactive objects on or off. */
+  setHighlights?(on: boolean): void;
 }
 
-export const applyEffects = (target: object, settings: Pick<SettingsVm, "reduceFlashes">): void => {
+export const applyEffects = (target: object, settings: Pick<SettingsVm, "reduceFlashes"> & Partial<Pick<SettingsVm, "highlights">>): void => {
   (target as EffectsTarget).setReduceFlashes?.(settings.reduceFlashes);
+  if (settings.highlights !== undefined) (target as EffectsTarget).setHighlights?.(settings.highlights);
 };
 
 /** Settings that the running game cannot change on the fly. */

@@ -21,7 +21,7 @@ const lootTheGuard = async (page: Page, tap: boolean) => {
     guard.health = { current: 0, max: guard.health!.max };
   });
   await step(page, 2);
-  const bag = await page.evaluate(() => window.__seki!.session.sim.domain.loot.containers[0] ?? null);
+  const bag = await page.evaluate(() => window.__seki!.session.sim.domain.loot.containers.find((c) => c.key === "loot:guard") ?? null);
   expect(bag?.key).toBe("loot:guard");
   await teleport(page, bag!.position.x, bag!.position.z - 1);
   await step(page, 1, { interact: true });

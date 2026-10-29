@@ -2,11 +2,15 @@ import type { Vec3 } from "../math/vec3";
 import type { DomainState } from "../state/domain-state";
 
 /**
+ * v14: automatic doors that are not shut and at rest (ADR-0038).
+ * v13: buffs, capacity shards and the disguise (ADR-0033).
+ * v12: a metro ride in progress, the street encounters played (ADR-0034); the contract's variation
+ * and hooks found are optional fields of the contract log.
  * v11: heat, the cyberdeck (RAM, upload) and the contract's debrief counters (ADR-0029).
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 11;
+export const SAVE_SCHEMA_VERSION = 14;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {
@@ -28,6 +32,14 @@ export interface EntitySnapshot {
   readonly lost?: number;
 }
 
+/** An automatic door's leaf (ADR-0038): how far open (0..1) and seconds its sensor has been empty. */
+export interface DoorSnapshot {
+  /** `<door>#<leaf>`. */
+  readonly key: string;
+  readonly open: number;
+  readonly idle: number;
+}
+
 /** World streaming state: which chunks are resident. Their content is rebuilt from the content tables. */
 export interface StreamingSnapshot {
   /** Loaded chunk ids, in content-table order. Unknown ids are ignored on load. */
@@ -43,6 +55,8 @@ export interface SaveSnapshot {
   /** Live keyed entities plus the ones asleep in unloaded chunks. */
   readonly entities: readonly EntitySnapshot[];
   readonly streaming: StreamingSnapshot;
+  /** Leaves of resident doors that are moving or about to close; every other door is shut. */
+  readonly doors: readonly DoorSnapshot[];
   readonly domain: DomainState;
   /** Serialized ink story state (inkjs JSON). */
   readonly narrative: string | null;

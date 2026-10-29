@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { LOOT_LIFETIME_SECONDS, LOOT_TABLES, MAX_LOOT_CONTAINERS, type DomainState, type LootLine, rollLoot } from "@seki/core";
 import { type ReplayFrame, SIM_HZ, Simulation, deriveRandom, runReplay, stateHash } from "../src";
-import { byKey, collect, input, run, teleportPlayer } from "./helpers";
+import { byKey, collect, input, run, teleportPlayer, streetSim } from "./helpers";
 
 const bags = (sim: Simulation) => [...sim.world.with("lootBag")];
 /** Bags dropped in play: everything but the stashes placed as Seki walks the city (ADR-0026). */
@@ -10,7 +10,7 @@ const dropBags = (sim: Simulation) => bags(sim).filter((b) => !b.lootBag.key.sta
 
 /** Only the guard stays in the alley, calm, so nothing but the test touches the main stream. */
 const quietAlley = (seed = 21) => {
-  const sim = Simulation.create({ seed });
+  const sim = streetSim({ seed });
   const guard = byKey(sim, "guard")!;
   for (const g of [...sim.world.with("ai")]) if (g !== guard) sim.world.remove(g);
   return { sim, guard };
@@ -49,7 +49,7 @@ describe("loot from enemies (plan E6)", () => {
       return sim.domain.loot.containers[0]!.lines;
     };
     expect(lines(0)).toEqual(lines(90));
-    const other = Simulation.create({ seed: 34 });
+    const other = streetSim({ seed: 34 });
     kill(other, "guard");
     // Different seeds give different streams (over many keys at least one bag differs).
     const differs = ["a", "b", "c", "d", "e"].some((k) => JSON.stringify(rollLoot(LOOT_TABLES.hebi_common, deriveRandom(33, k))) !== JSON.stringify(rollLoot(LOOT_TABLES.hebi_common, deriveRandom(34, k))));
@@ -165,7 +165,7 @@ describe("loot from enemies (plan E6)", () => {
   });
 
   it("contract targets drop their own bags", () => {
-    const sim = Simulation.create({ seed: 8 });
+    const sim = streetSim({ seed: 8 });
     sim.enqueue({ type: "accept-contract" });
     sim.step();
     const contract = sim.domain.contracts.active!;
@@ -179,7 +179,7 @@ describe("loot from enemies (plan E6)", () => {
 
 describe("dropping items", () => {
   const withBag = (patch: (d: DomainState) => DomainState) => {
-    const base = Simulation.create({ seed: 3 });
+    const base = streetSim({ seed: 3 });
     return Simulation.fromSnapshot({ ...base.snapshot(null, "t", ""), domain: patch(base.domain) });
   };
 

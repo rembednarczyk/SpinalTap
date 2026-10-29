@@ -136,18 +136,67 @@ export class PhoneInbox {
  * never disturbs the conversation in progress or the ink state that goes into the save, and
  * any command the knot would send is dropped. A missing knot shows a short fallback.
  */
-export const createKnotRenderer = (source: string) => {
-  let runtime: NarrativeRuntime | null = null;
+export const createKnotRenderer = (source: string | KnotLines) => {
+  const lines = typeof source === "string" ? createKnotLines(source) : source;
   return (knot: string, domain: DomainState): PhoneLineVm[] => {
+    const out = lines(knot, domain);
+    return out && out.length > 0 ? out : [{ speaker: null, text: "Nowa wiadomość." }];
+  };
+};
+
+/** The lines of a knot, or null when there is no such knot (or ink fails on it). */
+export type KnotLines = (knot: string, domain: DomainState) => PhoneLineVm[] | null;
+
+/**
+ * Renders knots to lines with a runtime of its own (compiled on first use), as the phone does:
+ * the conversation in progress and the saved ink state are never touched, commands are dropped.
+ * Shared by the phone, the metro ride and the radio (ADR-0035).
+ */
+export const createKnotLines = (source: string): KnotLines => {
+  let runtime: NarrativeRuntime | null = null;
+  return (knot, domain) => {
     try {
       runtime ??= new NarrativeRuntime(source, () => {});
       const view = runtime.start(knot, domain);
       runtime.interrupt();
-      const lines = view.lines.map((l) => ({ speaker: l.speaker, text: l.text }));
-      if (lines.length > 0) return lines;
+      return view.lines.map((l) => ({ speaker: l.speaker, text: l.text }));
     } catch {
-      // Unknown knot (content not written yet) or an ink error: the fallback below.
+      // Unknown knot (content not written yet) or an ink error.
+      return null;
     }
-    return [{ speaker: null, text: "Nowa wiadomość." }];
   };
 };
+
+/** Most numbered knots of one pool (`metro_ride_1`, `radio_koi_1`...) the app looks for. */
+export const KNOT_POOL_LIMIT = 12;
+
+/**
+ * A numbered pool of knots, `<prefix>1` up to the first missing one: the content can grow
+ * without the app knowing. `next()` walks through them in turn and gives null for an empty
+ * pool, so a missing knot is simply skipped.
+ */
+export const createKnotPool = (lines: KnotLines, prefix: string, domain: () => DomainState) => {
+  let size: number | null = null;
+  let turn = 0;
+  const count = (): number => {
+    if (size !== null) return size;
+    let n = 0;
+    while (n < KNOT_POOL_LIMIT && lines(`${prefix}${n + 1}`, domain()) !== null) n++;
+    size = n;
+    return n;
+  };
+  return {
+    get size(): number {
+      return count();
+    },
+    next(): PhoneLineVm[] | null {
+      const n = count();
+      if (n === 0) return null;
+      const knot = `${prefix}${(turn++ % n) + 1}`;
+      const out = lines(knot, domain());
+      return out && out.length > 0 ? out : null;
+    },
+  };
+};
+
+export type KnotPool = ReturnType<typeof createKnotPool>;

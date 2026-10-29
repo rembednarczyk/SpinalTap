@@ -1,3 +1,4 @@
+import type { ActivityId, MetroRideView } from "../world/wave2";
 import type { AppearanceDescriptor, CameraMode, DespawnReason, EffectDescriptor, EntityId, Transform, ViewDescriptor } from "./types";
 
 export interface RenderPort {
@@ -21,4 +22,8 @@ export interface RenderPort {
   setAppearance(entityId: EntityId, appearance: AppearanceDescriptor): void;
   /** Accessibility (ADR-0028): no chromatic aberration, glitch or flicker; slow fades only. */
   setReduceFlashes?(on: boolean): void;
+  /** The character now does `activity` where it stands (ADR-0037); null returns it to walking and idling. */
+  setActivity?(entityId: EntityId, activity: ActivityId | null): void;
+  /** The metro car on screen while the player rides (ADR-0036); null back to the city. */
+  setMetroRide?(ride: MetroRideView | null): void;
 }

@@ -45,6 +45,11 @@ const intents = (): UiIntents => ({
   setScan: vi.fn(),
   pickQuickhack: vi.fn(),
   submitBreach: vi.fn(),
+  travelMetro: vi.fn(),
+  closeMetro: vi.fn(),
+  setRadioStation: vi.fn(),
+  nextRadioStation: vi.fn(),
+  trackQuest: vi.fn(),
 });
 
 const pad = (): TouchPadSink => ({ setStick: vi.fn(), look: vi.fn(), press: vi.fn(), release: vi.fn(), reset: vi.fn(), selectWeaponSlot: vi.fn() });
