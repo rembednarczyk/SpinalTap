@@ -1,5 +1,6 @@
 import { prng } from "../city-kit-data";
 import type { MeshSink, Rgba, Vec } from "../mesh-sink";
+import { SIGN_OUT, SIGN_RADIUS, bracketSpots } from "./bracket-plan";
 import { type FacadeFrame, type Wall, hiddenWall } from "./facade-frame";
 import { type Uv, quadUv } from "./sink-ops";
 
@@ -13,7 +14,7 @@ import { type Uv, quadUv } from "./sink-ops";
  * from the wall outwards), uv2 = (atlas cell, holo seed or name slot; kind), colour rgb = tint,
  * a = brightness.
  */
-export const MAP_SIGN_KIND = { board: 0, holo: 1, name: 2, tube: 3, reflection: 4, blade: 5 } as const;
+export const MAP_SIGN_KIND = { board: 0, holo: 1, name: 2, tube: 3, reflection: 4, blade: 5, disc: 6 } as const;
 
 /** Atlas: eight upright blades (1:4) across the top half, eight boards (4:1) below. */
 export const MAP_SIGN_BLADES = ["APTEKA", "KAWA", "PIWO", "BAR", "24H", "HOTEL", "薬局", "ラーメン"] as const;
@@ -126,6 +127,22 @@ const shopSigns = (sink: MeshSink, f: FacadeFrame, rand: () => number): void => 
   }
 };
 
+/** Round neon signs hung from the Old Town's brackets, both faces along the street (ADR-0048). */
+const bracketSigns = (sink: MeshSink, f: FacadeFrame): void => {
+  for (const s of bracketSpots(f)) {
+    const w = s.wall;
+    const dx = (w.b.x - w.a.x) / w.length;
+    const dz = (w.b.z - w.a.z) / w.length;
+    const y = s.y - SIGN_RADIUS - 0.12;
+    const color = tint(NEON[Math.floor(s.seed * NEON.length) % NEON.length] ?? "#ffb000", 1);
+    const corner = (out: number, yy: number, side: number): Vec => ({ x: w.a.x + dx * (s.u + side * 0.015) + w.nx * out, y: yy, z: w.a.z + dz * (s.u + side * 0.015) + w.nz * out });
+    const face = (side: number) => [corner(SIGN_OUT - SIGN_RADIUS, y - SIGN_RADIUS, side), corner(SIGN_OUT + SIGN_RADIUS, y - SIGN_RADIUS, side), corner(SIGN_OUT + SIGN_RADIUS, y + SIGN_RADIUS, side), corner(SIGN_OUT - SIGN_RADIUS, y + SIGN_RADIUS, side)] as const;
+    quadUv(sink, face(1), { x: dx, y: 0, z: dz }, color, UV_MIRROR, [s.seed * 8, MAP_SIGN_KIND.disc]);
+    quadUv(sink, face(-1), { x: -dx, y: 0, z: -dz }, color, UV, [s.seed * 8, MAP_SIGN_KIND.disc]);
+    reflection(sink, w, s.u, f.b.base + 0.16, 1, 4, [color[0], color[1], color[2], 0.5], s.seed);
+  }
+};
+
 /** Neon tube under the main cornice along every street wall. */
 const tubes = (sink: MeshSink, f: FacadeFrame, color: string): void => {
   for (const w of f.walls) {
@@ -138,7 +155,8 @@ const tubes = (sink: MeshSink, f: FacadeFrame, color: string): void => {
 export const planBuildingSigns = (sink: MeshSink, f: FacadeFrame, nameSlot: (name: string) => number | null): void => {
   const rand = prng((f.b.look ^ 0x5191) >>> 0);
   // A room or a gate the game cut into the building (ADR-0045) carries the game's own sign there.
-  if (f.style.signs > 0 && !(f.b.doorways && f.b.doorways.length > 0)) shopSigns(sink, f, rand);
+  if (f.b.bracketSigns) bracketSigns(sink, f);
+  else if (f.style.signs > 0 && !(f.b.doorways && f.b.doorways.length > 0)) shopSigns(sink, f, rand);
   if (f.style.neonTrim && f.style.cornice) tubes(sink, f, f.style.neonTrim);
   holos(sink, f, rand);
   if (f.b.name) {

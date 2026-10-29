@@ -1,4 +1,4 @@
-import { type EntityId, type GroundSurface, type TerrainGrid, type Vec3, type ViewDescriptor, terrainHeightAt } from "@seki/core";
+import { type BuildingPassage, type EntityId, type GroundSurface, type TerrainGrid, type Vec3, type ViewDescriptor, terrainHeightAt } from "@seki/core";
 import type { BaseTexture, Mesh, Scene } from "../../babylon";
 import type { LightingRig } from "../../npr/lighting";
 import type { MoonShadow } from "../../npr/moon-shadow";
@@ -6,7 +6,7 @@ import type { RenderQuality } from "../../npr/quality";
 import type { ToonMaterials } from "../../npr/toon-material";
 import { sinkToMesh } from "../dressing";
 import { MeshSink } from "../mesh-sink";
-import { type FacadeFrame, type MapBuilding, facadeFrame } from "./facade-frame";
+import { type FacadeFrame, type MapBuilding, type WorldPassage, facadeFrame } from "./facade-frame";
 import { planFarBuilding, planNearBuilding } from "./facade-plan";
 import { SURFACE_LIFT, planSurface, planTerrain, planWater } from "./ground-plan";
 import { MapSignMaterial } from "./map-signs";
@@ -96,6 +96,16 @@ export interface MapCityStats {
   readonly far: number;
   readonly vertices: number;
 }
+
+/** A passage of a building view in world metres. */
+const worldPassage = (p: BuildingPassage, at: Vec3): WorldPassage => ({
+  from: { x: p.from.x + at.x, z: p.from.z + at.z },
+  to: { x: p.to.x + at.x, z: p.to.z + at.z },
+  width: p.width,
+  floor: [p.floor[0] + at.y, p.floor[1] + at.y],
+  spring: p.spring + at.y,
+  crown: p.crown + at.y,
+});
 
 const toRing = (outline: readonly { x: number; z: number }[], at: Vec3): P2[] => cleanRing(outline.map((p) => ({ x: p.x + at.x, z: p.z + at.z })));
 
@@ -397,15 +407,16 @@ export class MapCity {
    */
   private building(id: EntityId, e: BuildingEntry): MapBuilding {
     const v = e.view;
-    const plinth = Math.min(Math.max(v.plinth ?? 0, 0), v.height - 2);
-    let foot = e.base;
-    for (const p of e.ring) foot = Math.min(foot, this.heightAt(p.x, p.z) ?? e.base);
+    // A footbridge (ADR-0048) keeps the street as its ground floor and draws from its soffit up.
+    const plinth = v.soffit !== undefined ? 0 : Math.min(Math.max(v.plinth ?? 0, 0), v.height - 2);
+    let foot = v.soffit !== undefined ? e.base + Math.min(Math.max(v.soffit, 0), v.height - 1) : e.base;
+    if (v.soffit === undefined) for (const p of e.ring) foot = Math.min(foot, this.heightAt(p.x, p.z) ?? e.base);
     return {
       id,
       ring: e.ring,
-      base: e.base + Math.max(plinth, 0),
+      base: e.base + plinth,
       foot,
-      height: v.height - Math.max(plinth, 0),
+      height: v.height - plinth,
       levels: v.levels,
       use: v.use,
       look: v.look,
@@ -415,6 +426,9 @@ export class MapCity {
       ...(v.doorways?.length
         ? { doorways: v.doorways.map((d) => ({ x: d.at.x + e.at.x, z: d.at.z + e.at.z, width: d.width, bottom: d.bottom + e.at.y, top: d.top + e.at.y })) }
         : {}),
+      ...(v.passages?.length ? { passages: v.passages.map((p) => worldPassage(p, e.at)) } : {}),
+      ...(v.soffit !== undefined ? { lifted: true } : {}),
+      ...(v.signs === "bracket" ? { bracketSigns: true } : {}),
     };
   }
 

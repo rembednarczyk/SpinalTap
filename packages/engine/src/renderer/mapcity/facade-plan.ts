@@ -1,9 +1,12 @@
 import { prng } from "../city-kit-data";
 import { DRESS_FLAG, type MeshSink, type Rgba, hexColor } from "../mesh-sink";
 import { type FacadeFrame, type Palette, type Wall, type WorldDoorway, frameWallMeta, hiddenWall, roofMeta, trimMeta } from "./facade-frame";
-import { band, slab, wallQuad } from "./facade-parts";
+import { planBrackets } from "./bracket-plan";
+import { DOWN, band, slab, wallQuad } from "./facade-parts";
+import { planPassages } from "./passage-plan";
 import { WINDOW_STYLE } from "./facade-style";
-import { type P2, offsetRing } from "./polygon";
+import { type P2, offsetRing, triangulate } from "./polygon";
+import { polygon } from "./sink-ops";
 import { addDome, addHipRoof, addTowers } from "./roof-plan";
 
 
@@ -88,7 +91,8 @@ const walls = (sink: MeshSink, f: FacadeFrame, to: number, color: Rgba): void =>
     if (hiddenWall(f, w)) continue;
     const n = { x: w.nx, z: w.nz };
     const meta = frameWallMeta(f, w);
-    const from = f.b.foot - 0.2;
+    // A lifted building (a footbridge) starts at its soffit; the others reach under the terrain.
+    const from = f.b.lifted ? f.b.foot : f.b.foot - 0.2;
     const openings = doorways.length > 0 ? doorwaysOn(w, doorways) : [];
     if (openings.length === 0) {
       wallQuad(sink, w.a, w.b, n, from, to, f.b.base, color, meta);
@@ -125,8 +129,9 @@ export const planNearBuilding = (sink: MeshSink, f: FacadeFrame): void => {
   walls(sink, f, f.eave, p.wall);
   if (f.top > f.eave + 0.01) atticFaces(sink, f, p.wall);
   // Plinth: dark stone around the foot, up to the window sills of the ground floor (none across a doorway).
-  if (!b.doorways?.length) band(sink, ring, 0.06, b.foot - 0.2, b.base + 0.55, p.plinth, trim, b.base);
-  if (s.stringCourse && f.ground + 0.6 < f.eave - b.base) band(sink, ring, 0.12, b.base + f.ground, b.base + f.ground + 0.22, p.trim, trim, b.base);
+  if (b.lifted) soffit(sink, f, p.plinth);
+  else if (!b.doorways?.length) band(sink, ring, 0.06, b.foot - 0.2, b.base + 0.55, p.plinth, trim, b.base);
+  if (s.stringCourse && !b.lifted && f.ground + 0.6 < f.eave - b.base) band(sink, ring, 0.12, b.base + f.ground, b.base + f.ground + 0.22, p.trim, trim, b.base);
   if (s.cornice) {
     band(sink, ring, 0.18, f.eave - 0.55, f.eave - 0.3, p.trim, trim, b.base);
     band(sink, ring, 0.42, f.eave - 0.3, f.eave, p.trim, trim, b.base);
@@ -134,6 +139,17 @@ export const planNearBuilding = (sink: MeshSink, f: FacadeFrame): void => {
   if (s.window === WINDOW_STYLE.block) band(sink, ring, 0.08, f.top - 0.1, f.top + 0.15, p.trim, trim, b.base);
   roofOf(sink, f, p);
   if (s.tower) addTowers(sink, f, p, true);
+  planPassages(sink, f);
+  planBrackets(sink, f);
+};
+
+/** The underside of a lifted building with a band round its edge (a footbridge's floor seen from the street). */
+const soffit = (sink: MeshSink, f: FacadeFrame, color: Rgba): void => {
+  const ring = f.b.ring;
+  const y = f.b.foot;
+  const pts = ring.map((q) => ({ x: q.x, y, z: q.z }));
+  polygon(sink, pts, triangulate(ring), DOWN, color, (q) => [q.x, q.z], trimMeta(f.style.seed));
+  band(sink, ring, 0.08, y - 0.22, y + 0.1, color, trimMeta(f.style.seed), f.b.base);
 };
 
 const roofOf = (sink: MeshSink, f: FacadeFrame, p: Palette): void => {
@@ -159,5 +175,7 @@ export const planFarBuilding = (sink: MeshSink, f: FacadeFrame): void => {
   const top = f.top + (f.b.roof ?? 0) * 0.35;
   walls(sink, f, top, p.wall);
   slab(sink, f.b.ring, top, p.roof, roofMeta(f.style.seed));
+  if (f.b.lifted) soffit(sink, f, p.plinth);
   if (f.style.tower) addTowers(sink, f, p, false);
+  planPassages(sink, f);
 };
