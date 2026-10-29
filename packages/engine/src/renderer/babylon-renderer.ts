@@ -13,6 +13,7 @@ import { Atmosphere } from "./atmosphere";
 import { CharacterActivities } from "./character-activities";
 import { type CharacterDescriptor, CharacterViews } from "./character-views";
 import { CityKitLoader } from "./city-kit-loader";
+import { CrowdViews } from "./crowd-views";
 import { WorldDressing } from "./dressing";
 import { FarCity } from "./far-city";
 import { MetroRide, type MetroRideView, type RideCast } from "./metro-ride";
@@ -34,6 +35,9 @@ export interface RendererOptions {
    */
   readonly cityKit?: string | null;
 }
+
+/** How far the crowd is drawn per quality (m): phones see the nearest residents only. */
+const CROWD_DRAW_DISTANCE = { high: 60, medium: 50, low: 36 } as const;
 
 const isCharacter = (view: ViewDescriptor): view is CharacterDescriptor => view.kind === "heroine" || view.kind === "npc" || view.kind === "enemy";
 
@@ -60,6 +64,8 @@ export class BabylonRenderer implements RenderPort {
   /** What the characters do where they stand (ADR-0040). */
   private readonly activities: CharacterActivities;
   private readonly props: PropViews;
+  /** The residents of the city, drawn in bulk (ADR-0041). */
+  private readonly crowd: CrowdViews;
   private readonly fx: ScreenFx;
   private readonly cityKit: CityKitLoader;
   /** The metro car between districts (ADR-0036). */
@@ -103,6 +109,8 @@ export class BabylonRenderer implements RenderPort {
       cameraTarget: () => this.cameraTarget,
       pose: (id, rig, speed, dt, retarget) => this.activities.apply(id, rig, speed, dt, retarget),
     });
+    const eye = this.rig.camera.position;
+    this.crowd = new CrowdViews({ scene, materials: this.materials, eye: () => eye, drawDistance: CROWD_DRAW_DISTANCE[stage.options.quality ?? "high"] });
     // Line art must be attached before the grading pipeline so the ink gets graded too.
     this.lineArt = tier.lineArt ? new LineArt(scene, this.rig.camera) : null;
     if (this.lineArt) this.lineArt.geometryBuffer.renderTransparentMeshes = false;
@@ -188,13 +196,14 @@ export class BabylonRenderer implements RenderPort {
   }
 
   spawn(id: EntityId, view: ViewDescriptor, t: Transform): void {
-    if (this.characters.has(id) || this.props.has(id)) this.despawn(id);
+    if (this.characters.has(id) || this.props.has(id) || this.crowd.has(id)) this.despawn(id);
     if (isCharacter(view)) this.characters.spawn(id, view, t);
+    else if (view.kind === "crowd") this.crowd.spawn(id, view, t);
     else this.props.spawn(id, view, t);
   }
 
   updateTransform(id: EntityId, t: Transform): void {
-    if (!this.props.move(id, t)) this.characters.move(id, t);
+    if (!this.props.move(id, t) && !this.characters.move(id, t)) this.crowd.move(id, t);
   }
 
   despawn(id: EntityId, reason: DespawnReason = "removed"): void {
@@ -203,6 +212,7 @@ export class BabylonRenderer implements RenderPort {
     // Held things leave first: they may sit in the hand of a model that goes back to its pool.
     this.activities.forget(id);
     if (this.characters.has(id)) this.characters.despawn(id, !this.resetting && reason === "removed" && id !== this.cameraTarget);
+    else if (this.crowd.has(id)) this.crowd.despawn(id);
     else this.props.despawn(id);
   }
 
@@ -275,6 +285,7 @@ export class BabylonRenderer implements RenderPort {
     }
     this.metro.update(dt);
     this.characters.update(dt);
+    this.crowd.update(dt);
     const target = this.cameraTargetTransform;
     this.rig.update(target, dt);
     this.metro.afterCamera();
@@ -306,6 +317,7 @@ export class BabylonRenderer implements RenderPort {
     for (const id of this.props.ids()) this.despawn(id);
     this.activities.clear();
     this.characters.clear();
+    this.crowd.clear();
     this.resetting = false;
   }
 
@@ -320,6 +332,7 @@ export class BabylonRenderer implements RenderPort {
   /** What the character does where it stands (ADR-0040); null returns it to walking and idling. */
   setActivity(id: EntityId, activity: ActivityId | null): void {
     if (this.characters.has(id)) this.activities.set(id, activity);
+    else this.crowd.setActivity(id, activity);
   }
 
   /** Activity a character plays now (debug and tests). */
@@ -337,6 +350,11 @@ export class BabylonRenderer implements RenderPort {
     this.characters.setCharacterModels(manifest);
   }
 
+  /** Residents in the world and how many of them were drawn last frame (debug and tests). */
+  get crowdStats(): { readonly residents: number; readonly drawn: number } {
+    return { residents: this.crowd.size, drawn: this.crowd.drawn };
+  }
+
   get dressedCount(): number {
     return this.characters.dressedCount;
   }
@@ -347,6 +365,6 @@ export class BabylonRenderer implements RenderPort {
   }
 
   get entityCount(): number {
-    return this.characters.size + this.props.size;
+    return this.characters.size + this.props.size + this.crowd.size;
   }
 }

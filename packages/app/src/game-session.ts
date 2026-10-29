@@ -21,7 +21,7 @@ import { type CharacterTab, type PreviewRect, type RadioStationId, type Screen, 
 import { type Controllers, createControllers } from "./controllers/compose";
 import { isCalm } from "./controllers/hud-sync";
 import { pushToastTimed } from "./controllers/shared";
-import { buildDistrictMap } from "./minimap";
+import { buildDistrictMap, sidewalkProps } from "./minimap";
 import type { GameSessionDeps } from "./session-deps";
 
 export { RECALL_CALM_TICKS } from "./controllers/hud-sync";
@@ -42,9 +42,10 @@ export class GameSession implements UiIntents {
   constructor(private readonly deps: GameSessionDeps) {
     this.narrative = new NarrativeRuntime(deps.story, (cmd) => this.simulation.enqueue(cmd));
     this.renderSync = new RenderSync(deps.render);
-    this.simulation = Simulation.create({ seed: deps.seed(), bus: this.bus });
+    this.simulation = Simulation.create({ seed: deps.seed(), bus: this.bus, crowd: deps.crowd ?? "off" });
     // The whole city, so the map keeps working past Shinsekai (the market deck, the footbridge, ADR-0021).
-    patchUi(deps.ui, { map: buildDistrictMap(WORLD_CHUNKS.flatMap((c) => c.props)) });
+    // Sidewalks (ADR-0041) are drawn as the street strips they are.
+    patchUi(deps.ui, { map: buildDistrictMap([...WORLD_CHUNKS.flatMap((c) => c.props), ...sidewalkProps()]) });
     this.c = createControllers(deps, {
       bus: this.bus,
       narrative: this.narrative,
@@ -122,7 +123,7 @@ export class GameSession implements UiIntents {
   // ---- SessionIntents ----
 
   newGame(): void {
-    this.replaceSimulation(Simulation.create({ seed: this.deps.seed(), bus: this.bus }));
+    this.replaceSimulation(Simulation.create({ seed: this.deps.seed(), bus: this.bus, crowd: this.deps.crowd ?? "off" }));
     this.narrative.resetState();
     this.c.hints.start();
     this.setScreen("playing");
@@ -153,7 +154,7 @@ export class GameSession implements UiIntents {
   /** Replaces the running game with `snapshot`, ink state included: a load without the slot. */
   restore(snapshot: SaveSnapshot): void {
     this.closePanels();
-    this.replaceSimulation(Simulation.fromSnapshot(snapshot, this.bus));
+    this.replaceSimulation(Simulation.fromSnapshot(snapshot, this.bus, this.deps.crowd ?? "off"));
     this.c.wave1.inbox.clear();
     if (snapshot.narrative) this.narrative.loadState(snapshot.narrative);
     else this.narrative.resetState();

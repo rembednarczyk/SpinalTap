@@ -2,6 +2,9 @@ import { expect, test } from "@playwright/test";
 import { freeze, gameState, step, teleport, waitForGame } from "./helpers";
 
 test("Hana on the market hands out a job through the dialogue UI", async ({ page }) => {
+  // A cold boot takes about a minute on a CI runner (SwiftShader) and streaming in a district
+  // another 20 s: more than the default 90 s.
+  test.setTimeout(180_000);
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/?seed=11");

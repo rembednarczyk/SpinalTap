@@ -10,3 +10,5 @@ export { DEFLECT_COST, DEFLECT_THRESHOLD, deflects } from "./deflect";
 export * from "./activity";
 export * from "./activity-types";
 export * from "./passersby";
+export * from "./crowd";
+export * from "./crowd-lanes";

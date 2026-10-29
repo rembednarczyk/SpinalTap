@@ -4,6 +4,7 @@ import { type Mesh, MeshClass, type Scene, VertexData } from "../babylon";
 import type { ToonMaterials } from "../npr/toon-material";
 import { type DressBlock, type DressSign, planDressing } from "./dressing-plan";
 import type { MeshSink } from "./mesh-sink";
+import { planSidewalks } from "./sidewalk-plan";
 
 type BlockView = Extract<ViewDescriptor, { kind: "block" }>;
 type NeonView = Extract<ViewDescriptor, { kind: "neon" }>;
@@ -155,6 +156,8 @@ export class WorldDressing {
         signs: [...b.signs.values()],
         kit: this.kit === "kit",
       });
+      // The chunk's sidewalks and crossings (ADR-0041) go into the same mesh.
+      planSidewalks(sink, key);
       if (sink.empty) continue;
       const mesh = sinkToMesh(this.scene, `dressing-${key || "free"}`, sink);
       mesh.material = this.materials.get("dressing");

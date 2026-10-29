@@ -17,6 +17,7 @@ import {
 } from "./characters";
 import { markEnforcer } from "./enforcer-mark";
 import { withinDrawDistance } from "./character-lod";
+import { easeLift, groundLift } from "./ground-lift";
 import { Loadouts } from "./loadout";
 import { type CharacterModelKey, type CharacterModelManifest, type ModelInstance, ModelLibrary } from "./model-library";
 import { HumanoidRetarget } from "./model-rig";
@@ -34,6 +35,8 @@ interface CharacterView {
   readonly model: CharacterModelKey | null;
   readonly name: string;
   readonly scan: ScanClass | null;
+  /** Height of the sidewalk it stands on, eased (ADR-0041). */
+  lift: number;
 }
 
 /** An imported model dressed over a procedural rig, which keeps animating invisibly. */
@@ -70,8 +73,8 @@ const builderOf = (view: CharacterDescriptor) =>
           ? buildRipperdoc
           : buildCivilian;
 
-const applyTransform = (rig: CharacterRig, t: Transform): void => {
-  rig.root.position.set(t.position.x, t.position.y, t.position.z);
+const applyTransform = (rig: CharacterRig, t: Transform, lift: number): void => {
+  rig.root.position.set(t.position.x, t.position.y + lift, t.position.z);
   rig.root.rotation.y = t.yaw;
 };
 
@@ -149,12 +152,16 @@ export class CharacterViews implements FxActors {
 
   spawn(id: EntityId, view: CharacterDescriptor, t: Transform): void {
     const name = `e${id}`;
-    const rig = builderOf(view)(this.deps.scene, this.deps.materials, name);
+    const rig =
+      view.kind === "npc" && view.preset === "civilian"
+        ? buildCivilian(this.deps.scene, this.deps.materials, name, view.umbrella !== false)
+        : builderOf(view)(this.deps.scene, this.deps.materials, name);
     for (const m of rig.meshes) this.deps.shadow.addCaster(m);
     if (view.kind === "enemy" && view.enforcer) markEnforcer(this.deps.scene, this.deps.materials, rig, name);
     const model = modelKeyOf(view);
-    this.views.set(id, { rig, transform: t, model, name, scan: scanClassOfView(view) });
-    applyTransform(rig, t);
+    const lift = groundLift(t.position.x, t.position.y, t.position.z);
+    this.views.set(id, { rig, transform: t, model, name, scan: scanClassOfView(view), lift });
+    applyTransform(rig, t, lift);
     this.dress(rig, model, name);
   }
 
@@ -163,7 +170,7 @@ export class CharacterViews implements FxActors {
     const v = this.views.get(id);
     if (!v) return false;
     v.transform = t;
-    applyTransform(v.rig, t);
+    applyTransform(v.rig, t, v.lift);
     return true;
   }
 
@@ -199,6 +206,12 @@ export class CharacterViews implements FxActors {
         if (!near) continue;
       }
       const t = v.transform;
+      // On a sidewalk the figure stands on its top (ADR-0041); the kerb is a short step.
+      const lift = easeLift(v.lift, groundLift(t.position.x, t.position.y, t.position.z), dt);
+      if (lift !== v.lift) {
+        v.lift = lift;
+        v.rig.root.position.y = t.position.y + lift;
+      }
       const motion = { ...(t.air !== undefined ? { air: t.air } : {}), ...(t.climb !== undefined ? { climb: t.climb } : {}) };
       animateRig(v.rig, t.speed, dt, t.crouch, { aim: t.aim ?? 0, guard: t.guard ?? 0 }, motion);
       this.deps.pose?.(id, v.rig, t.speed, dt, this.dressed.get(v.rig)?.retarget ?? null);

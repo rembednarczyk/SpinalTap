@@ -74,6 +74,8 @@ export const PRESETS = {
   // Merged procedural characters: colour per vertex, baked from the part presets above.
   charVertexColor: { base: "#ffffff", ...CHAR },
   charVertexColorFlat: { base: "#ffffff", rimStrength: 0, outline: false, fill: 0.45 },
+  // The crowd of residents (ADR-0041): colour per vertex, the alpha flags self-lit trims as the dressing's.
+  crowd: { base: "#ffffff", ...CHAR, vertexFlags: true },
   // District dressing: merged props coloured per vertex.
   dressing: { base: "#ffffff", gloss: 0.15, rimStrength: 0.1, rim: "#8fb3c9", vertexFlags: true },
   puddle: { base: "#16181f", gloss: 1.8, rimStrength: 0 },

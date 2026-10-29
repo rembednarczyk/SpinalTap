@@ -112,7 +112,8 @@ export const doorSystem: System = {
   run(ctx) {
     const leaves = inCreationOrder(ctx.world.with("door", "solid"));
     if (leaves.length === 0) return;
-    const bodies = inCreationOrder(ctx.world.with("body"));
+    // Passers-by and residents (ADR-0040, ADR-0041) are not saved: they never move a door, which is.
+    const bodies = inCreationOrder(ctx.world.with("body")).filter((b) => !b.passerby);
     const step = ctx.dt / DOOR_MOVE_TIME;
     for (const e of leaves) {
       const d = e.door;

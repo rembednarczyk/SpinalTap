@@ -45,6 +45,8 @@ export class RenderSync {
         pitch: e.pitch,
         speed: e.velocity ? Math.hypot(e.velocity.x, e.velocity.z) : 0,
         ...(e.posture ? { crouch: e.posture.prevAmount + (e.posture.amount - e.posture.prevAmount) * alpha } : {}),
+        // A bystander cowering from a shot (ADR-0029) is drawn down on its haunches (ADR-0041).
+        ...(e.civilian?.crowd?.state === "cowering" ? { crouch: 1 } : {}),
         ...aimOf(e, alpha),
         // Jumps, falls and ladders (ADR-0021).
         ...(e.fall !== undefined ? { air: e.fall } : {}),

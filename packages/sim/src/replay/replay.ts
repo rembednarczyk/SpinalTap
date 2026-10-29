@@ -1,4 +1,5 @@
 import type { GameCommand, InputFrame, SaveSnapshot } from "@seki/core";
+import type { CrowdDensity } from "../content/crowd";
 import { Simulation } from "../simulation";
 
 export interface ReplayFrame {
@@ -6,9 +7,12 @@ export interface ReplayFrame {
   readonly commands?: readonly GameCommand[];
 }
 
-/** Re-runs a recorded session from its seed. Same seed + same frames = same end state. */
-export const runReplay = (seed: number, frames: readonly ReplayFrame[]): Simulation => {
-  const sim = Simulation.create({ seed });
+/**
+ * Re-runs a recorded session from its seed. Same seed + same frames = same end state, with or
+ * without the crowd of residents (ADR-0041), which is not saved.
+ */
+export const runReplay = (seed: number, frames: readonly ReplayFrame[], crowd: CrowdDensity = "off"): Simulation => {
+  const sim = Simulation.create({ seed, crowd });
   for (const f of frames) {
     for (const c of f.commands ?? []) sim.enqueue(c);
     sim.step(f.input);

@@ -1,4 +1,5 @@
 import type { AudioPort, PersistencePort, RenderPort } from "@seki/core";
+import type { CrowdDensity } from "@seki/sim";
 import type { UiStore } from "@seki/ui";
 import type { PreviewHost } from "./character-view";
 import type { HintsHost } from "./controllers/hint-sync";
@@ -27,4 +28,6 @@ export interface GameSessionDeps {
   readonly hints?: HintsHost;
   /** Touch controls on screen: hints use touch words instead of keys. */
   readonly touch?: boolean;
+  /** The crowd of residents (ADR-0041), as the graphics quality allows; none without. */
+  readonly crowd?: CrowdDensity;
 }

@@ -12,7 +12,7 @@ import type { Stage } from "./stage";
 import { InteriorBatches } from "./interior-batch";
 
 /** Everything in the world that is not a character: blocks, neon, lamps, water, loot. */
-export type PropDescriptor = Exclude<ViewDescriptor, { kind: "heroine" | "npc" | "enemy" }>;
+export type PropDescriptor = Exclude<ViewDescriptor, { kind: "heroine" | "npc" | "enemy" | "crowd" }>;
 
 /** Atmosphere pieces added for a prop, taken back when the prop goes (world streaming). */
 interface Decor {

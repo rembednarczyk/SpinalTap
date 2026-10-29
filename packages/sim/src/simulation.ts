@@ -23,6 +23,7 @@ import { WorldStreamer } from "./world/streaming";
 import { applyCommand } from "./world/command-table";
 import { syncPlayerWeapon } from "./world/player-weapon";
 import { SIM_DT } from "./step-rate";
+import { CROWD_CAP, type CrowdDensity } from "./content/crowd";
 import { isMicroKey } from "./world/micro-events";
 import { hasAmbush } from "./world/contract-plan";
 import { doorSnapshots, restoreDoors } from "./systems/door-system";
@@ -33,6 +34,8 @@ export { SIM_DT, SIM_HZ } from "./step-rate";
 export interface SimulationOptions {
   readonly seed: number;
   readonly bus?: EventBus<DomainEvents>;
+  /** The crowd of residents (ADR-0041); none without. Never saved, so it changes no outcome. */
+  readonly crowd?: CrowdDensity;
 }
 
 /**
@@ -50,6 +53,7 @@ export class Simulation {
   private readonly commands: GameCommand[] = [];
   readonly streamer: WorldStreamer;
   private tickCount = 0;
+  private crowdCap = 0;
 
   /**
    * Builds the world around `focus`: the player first in id order, then every chunk's content
@@ -73,16 +77,24 @@ export class Simulation {
   }
 
   static create(options: SimulationOptions): Simulation {
-    return new Simulation(options.seed, createDomainState(), options.bus ?? new EventBus<DomainEvents>());
+    const sim = new Simulation(options.seed, createDomainState(), options.bus ?? new EventBus<DomainEvents>());
+    sim.setCrowd(options.crowd ?? "off");
+    return sim;
   }
 
-  static fromSnapshot(snapshot: SaveSnapshot, bus?: EventBus<DomainEvents>): Simulation {
+  static fromSnapshot(snapshot: SaveSnapshot, bus?: EventBus<DomainEvents>, crowd: CrowdDensity = "off"): Simulation {
     const sim = new Simulation(snapshot.seed, snapshot.domain, bus ?? new EventBus<DomainEvents>(), snapshot);
+    sim.setCrowd(crowd);
     sim.rng.setState(snapshot.rngState);
     sim.tickCount = snapshot.tick;
     sim.streamer.restoreEntities(sim.world, snapshot.domain.flags, snapshot.entities);
     restoreDoors(sim, snapshot.doors ?? []);
     return sim;
+  }
+
+  /** How many residents a chunk holds (ADR-0041); takes effect from the next step. */
+  setCrowd(density: CrowdDensity): void {
+    this.crowdCap = CROWD_CAP[density];
   }
 
   get domain(): DomainState {
@@ -150,6 +162,7 @@ export class Simulation {
       seed: this.seed,
       streamer: this.streamer,
       bus: this.bus,
+      crowdCap: this.crowdCap,
       dt: SIM_DT,
       tick: this.tickCount,
       input,

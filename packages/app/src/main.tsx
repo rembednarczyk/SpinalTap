@@ -51,6 +51,7 @@ const qualityParam = params.get("quality");
 // ?quality wins over the saved setting, so tests and bug reports can force any tier (ADR-0036).
 const quality = qualityParam === "low" || qualityParam === "medium" || qualityParam === "high" ? qualityParam : settings.quality;
 const renderQuality = quality;
+const crowdParam = params.get("crowd");
 const stage = new Stage(canvas, { reference, quality: renderQuality });
 // Buildings and vehicles from the CC0 city kit (public/city/README.md, ADR-0022); ?city=off keeps
 // the plain blocks. The reference frame uses it too: the scene is ready only once it is in.
@@ -90,6 +91,8 @@ const session = new GameSession({
   seed: () => (seedParam ? Number(seedParam) : reference ? 42 : randomSeed()),
   now: () => new Date(),
   touch: touchDevice,
+  // The crowd follows the graphics quality (ADR-0041); ?crowd=off|low|medium|high overrides it.
+  crowd: crowdParam === "off" || crowdParam === "low" || crowdParam === "medium" || crowdParam === "high" ? crowdParam : quality,
   hints: { seen: loadHintsSeen(storage), save: (seen) => saveHintsSeen(storage, seen) },
   settings: {
     applied: { ...settings, quality },
