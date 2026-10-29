@@ -1,8 +1,11 @@
 import { expect, test } from "@playwright/test";
 import { freeze, step, waitForGame } from "./helpers";
 
-/** Draw calls with the whole cast dressed (measured, ADR-0046). */
-const MODELS_DRAW_CALLS = 9999;
+/**
+ * Draw calls with the whole cast dressed (ADR-0046): measured 480 and 483 with all 12 characters
+ * in range dressed (Lublin, ADR-0045); the passers-by's hand props move it by a few.
+ */
+const MODELS_DRAW_CALLS = 495;
 
 test("placeholder VRoid cast dresses the characters", async ({ page }) => {
   test.setTimeout(150_000);
