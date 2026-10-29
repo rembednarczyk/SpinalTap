@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { freeze, gameState, place, step, teleportTo, waitForGame } from "./helpers";
+import { freeze, gameState, place, step, teleport, teleportTo, waitForGame } from "./helpers";
 
 test.describe("M0 smoke", () => {
   test("title → new game → dialogue → quicksave/quickload → reload and load from IndexedDB", async ({ page }) => {
@@ -136,6 +136,15 @@ test("journal, minimap and settings", async ({ page }) => {
   await page.keyboard.press("KeyJ");
   await expect(journal).toBeHidden();
 
+  // The character menu's box is where the canvas draws the 3D preview: a real part of the screen.
+  await page.keyboard.press("KeyI");
+  await expect(page.getByTestId("character-screen")).toBeVisible();
+  const box = (await page.getByTestId("character-preview").boundingBox())!;
+  expect(box.width).toBeGreaterThan(180);
+  expect(box.height).toBeGreaterThan(300);
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("character-screen")).toBeHidden();
+
   // Headless Chromium may hold the pointer lock, which swallows Esc; pause through the session.
   await page.evaluate(() => window.__seki!.session.pause());
   await expect(page.getByTestId("pause-menu")).toBeVisible();
@@ -145,6 +154,56 @@ test("journal, minimap and settings", async ({ page }) => {
   await page.reload();
   await waitForGame(page);
   expect(await page.evaluate(() => (JSON.parse(localStorage.getItem("seki.settings.v1") ?? "{}") as { quality?: string }).quality)).toBe("low");
+});
+
+/**
+ * The one check of the real input path (ADR-0046): mouse and keyboard events on the page reach
+ * the simulation through BrowserInput and the running loop. What the buttons do is tested
+ * without a browser (app/test/posture-ui, levels-ui; engine/test/keymap, browser-input).
+ */
+test("real input: the right mouse button aims and Space jumps in the running loop", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.goto("/?seed=7&models=off");
+  await waitForGame(page);
+  await page.getByRole("button", { name: "Nowa gra" }).click();
+  await expect(page.getByTestId("hud")).toBeVisible();
+  // On the deptak in front of the clinic (ADR-0045): the light scene keeps the real loop
+  // ticking even on a slow SwiftShader runner.
+  await teleport(page, 321.4, -80);
+  // Into the canvas, so the mouse and the keys drive the game (pointer lock or its fallback).
+  await page.mouse.click(640, 360);
+  const before = (await gameState(page)).tick;
+  await expect.poll(async () => (await gameState(page)).tick, { timeout: 60_000 }).toBeGreaterThan(before + 10);
+
+  const crosshair = page.getByTestId("crosshair");
+  await page.mouse.down({ button: "right" });
+  await expect(crosshair).toHaveClass(/crosshair--aiming/);
+  await expect.poll(() => page.evaluate(() => window.__seki!.session.sim.player()!.posture!.aim)).toBe(1);
+  await page.mouse.up({ button: "right" });
+  await expect(crosshair).not.toHaveClass(/crosshair--aiming/);
+
+  // The jump lasts 0.7 s, shorter than a few slow frames: record the highest point every frame
+  // instead of polling for it, and tap again if a press landed in a hitch.
+  const base = (await gameState(page)).player!.y;
+  await page.evaluate(() => {
+    const w = window as unknown as { __peakY: number };
+    w.__peakY = -Infinity;
+    const sample = () => {
+      w.__peakY = Math.max(w.__peakY, window.__seki!.state().player!.y);
+      requestAnimationFrame(sample);
+    };
+    requestAnimationFrame(sample);
+  });
+  const peak = () => page.evaluate(() => (window as unknown as { __peakY: number }).__peakY);
+  for (let i = 0; i < 4 && (await peak()) - base <= 0.3; i++) {
+    await page.keyboard.down("Space");
+    await page.waitForTimeout(150);
+    await page.keyboard.up("Space");
+    await expect.poll(peak, { timeout: 8000 }).toBeGreaterThan(base + 0.3).catch(() => undefined);
+  }
+  expect(await peak()).toBeGreaterThan(base + 0.3);
+  expect(errors).toEqual([]);
 });
 
 test("touch layout keeps the minimap off the pad", async ({ page }) => {

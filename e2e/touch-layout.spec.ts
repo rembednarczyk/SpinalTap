@@ -67,6 +67,15 @@ for (const [w, h] of [
       await expect(page.getByTestId("objective")).not.toContainText("[E]");
       await expect(page.getByTestId("touch-use")).toHaveCount(0);
       await check(page, w, h);
+      // The character menu replaces the pad; its box is where the canvas draws the 3D preview.
+      await page.getByRole("button", { name: "Postać" }).tap();
+      await expect(page.getByTestId("character-screen")).toBeVisible();
+      await expect(page.getByTestId("touch-controls")).toBeHidden();
+      const preview = (await page.getByTestId("character-preview").boundingBox())!;
+      expect(preview.width).toBeGreaterThan(100);
+      expect(preview.height).toBeGreaterThan(150);
+      await page.getByRole("button", { name: "Zamknij menu postaci" }).tap();
+      await expect(page.getByTestId("touch-controls")).toBeVisible();
       await page.evaluate(() => window.__seki!.emit("InteractionFocusChanged", { targetId: 1, prompt: "Porozmawiaj z Kaito" }));
       await expect(page.getByTestId("touch-use")).toContainText("Porozmawiaj z Kaito");
       await page.getByTestId("touch-more").tap();
