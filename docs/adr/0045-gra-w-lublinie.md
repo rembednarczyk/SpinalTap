@@ -56,7 +56,22 @@ Złote hashe zmienione świadomie (`vitest -u`), bo zmienił się świat, a pote
 - historyczny hash ADR-0026 (35b2130d) usunięty: zamrażał przebieg, który wczytywał Ulicę Kanałową, a Stare Miasto jest teraz 140 m od tego przebiegu.
 
 ### Budżety wydajności
-Nowe sceny w `tools/perf-budgets.json` i `e2e/npr-perf.spec.ts` (SwiftShader, pomiary w komentarzu pliku): `reference` (Neon Koi), `krakowskie-tpp` (deptak), `rynek-tpp` (Bramowa i Rynek), `podzamcze-tpp` (targ pod wiaduktem), `nabrzeze` (nabrzeże nocą), `phone-low` (800 × 370, jakość `low`, dotyk).
+Nowe sceny w `tools/perf-budgets.json` i `e2e/npr-perf.spec.ts`, z pomiaru przy krokowaniu gry z testu (ADR-0046), wywołania rysowania / aktywne siatki, budżet kilka procent wyżej:
+
+| Scena | Pomiar | Budżet |
+|---|---|---|
+| `reference` (Neon Koi od deptaka) | 179 / 73 | 185 / 76 |
+| `krakowskie-tpp` (deptak na zachód od kliniki) | 365 do 369 / 156 | 378 / 160 |
+| `rynek-tpp` (Bramowa i Rynek) | 204 / 80 | 210 / 84 |
+| `podzamcze-tpp` (targ pod wiaduktem) | 289 / 114 | 296 / 118 |
+| `nabrzeze` (nabrzeże nocą) | 266 / 114 | 272 / 118 |
+| `phone-low` (800 × 370, `low`, dotyk) | 231 / 145 | 237 / 150 |
+| `models` (12 ubranych postaci w zasięgu) | 480 do 483 wywołań | 495 |
+
+Czas klatki trafia tylko do raportu. Pod SwiftShaderem klatka Lublina to około 600 ms po stronie GPU (CPU 3 ms), więc kadr wzorcowy po zbudowaniu miasta wokół kamery przestaje się rysować (`still`), a migawka czeka na ten stan.
+
+### Testy
+Według ADR-0046 spece `streaming` i `docks` zastąpił test sesji `packages/app/test/lublin-session.test.ts` (przejście przez obie bramy na targ z zapisem i odczytem, metro z Placu Zamkowego na Nabrzeże i zlecenie Genzō). Zapis starszej wersji ładuje test `packages/app/test/lublin-save.test.ts`.
 
 ## Konsekwencje
 - Engine liczy wysokości dekoracji od gruntu (`DressingInput.ground`, `planSignage(chunks, ground)`): pokład wiaduktu, odbicia neonów i szyldy stoją na terenie Lublina, a nie na y = 0.
@@ -66,6 +81,7 @@ Nowe sceny w `tools/perf-budgets.json` i `e2e/npr-perf.spec.ts` (SwiftShader, po
 ### Do dopracowania
 Krakowskie Przedmieście:
 - wnętrza kliniki i Neon Koi to dalej proste bryły w kamienicy, bez stropu łączącego się z fasadą i bez witryn widocznych od środka;
+- poświata neonów z deptaka prześwituje przez ściany kliniki (halo rysowane bez testu głębi);
 - wrak, parking i myjnia to bloki z dawnego miasta; ławki Placu Litewskiego są tylko miejscami aktywności, bez modeli;
 - brzęczenie neonów i para z kratki tylko na deptaku (`DISTRICT_M0_PROPS`), nie w całym mieście;
 - mieszkańcy idą po pasach z ulic pieszych, bez przejść przez jezdnię i bez ruchu aut.
