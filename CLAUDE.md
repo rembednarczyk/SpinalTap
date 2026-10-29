@@ -31,5 +31,12 @@ Zmiana w cudzym obszarze idzie przez zmianę kontraktu (port, typ zdarzenia, kom
 - Zmiana reguł symulacji zmienia złoty hash w `packages/sim/test/determinism.test.ts`; aktualizuj go świadomie (`vitest -u`) i napisz w commicie dlaczego.
 - Zmiana wyglądu NPR: `pnpm build && pnpm exec playwright test e2e/npr-perf.spec.ts --update-snapshots=all`, a nową migawkę obejrzyj przed commitem.
 
+## Testy (ADR-0046)
+- Logikę i UI sprawdzaj testami sesji bez renderera (`packages/app/test`, fałszywy `RenderPort`) i testami komponentów (`packages/ui/test`). Przeglądarka tylko do rozruchu, rysowania (migawka NPR, budżety, modele), układu HUD na telefonie i dotyku.
+- Testy krokują symulację (`freeze` + `step`) i czekają na stan gry, nie na zegar.
+- Podniesienie limitu czasu albo budżetu nie jest poprawką. Najpierw ustal przyczynę (ślad, nagranie, pomiar). Wyjątek wymaga uzasadnienia w commicie i wpisu do długu w ADR-0046.
+- Lokalne e2e: `pnpm e2e e2e/<spec>.spec.ts`. Skrypt trzyma jedną przeglądarkę na maszynę i daje własny port na checkout. Agenty puszczają tylko spece swojej zmiany; pełny zestaw puszcza CI.
+- Czas klatki pod SwiftShaderem to raport. Bramką są wywołania rysowania i aktywne siatki.
+
 ## Definition of Done
-Zielone: `pnpm typecheck`, `pnpm lint`, `pnpm depcheck`, `pnpm test:coverage`, `pnpm build`, `pnpm test:e2e`. Conventional Commits, małe zmiany.
+Zielone: `pnpm typecheck`, `pnpm lint`, `pnpm depcheck`, `pnpm test:coverage`, `pnpm build`, e2e dotkniętych speców przez `pnpm e2e`, a pełne `pnpm test:e2e` w CI. Conventional Commits, małe zmiany.
