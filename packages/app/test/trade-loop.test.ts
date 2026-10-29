@@ -3,7 +3,11 @@ import { type AudioCue, type AudioPort, EMPTY_INPUT, type InputFrame, type LootL
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
 import { createUiStore } from "@seki/ui";
+import { ground, market } from "@seki/sim";
 import { GameSession } from "../src/game-session";
+
+/** Between the market's stall rows under the viaduct (ADR-0045). */
+const STALLS = market(80, 0, 64);
 
 const render: RenderPort = {
   spawn() {},
@@ -42,7 +46,7 @@ const steps = (s: GameSession, n: number, input: InputFrame = EMPTY_INPUT) => {
 
 const teleport = (s: GameSession, x: number, z: number, yaw = 0, pitch = 0) => {
   const p = s.sim.player()!;
-  p.position = { x, y: 0, z };
+  p.position = ground(x, z);
   p.prevPosition = p.position;
   p.yaw = yaw;
   p.pitch = pitch;
@@ -52,9 +56,9 @@ const shootGuard = (s: GameSession) => {
   for (let i = 0; i < 3000; i++) {
     const guard = [...s.sim.world].find((e) => e.key === "guard");
     if (!guard) return;
-    guard.position = { x: 0, y: 0, z: -16 };
+    guard.position = ground(300, -79);
     guard.prevPosition = guard.position;
-    teleport(s, 0, -20, 0, 0.08);
+    teleport(s, 300, -83, 0, 0.08);
     s.step(frame({ fire: true }));
   }
   throw new Error("the guard survived");
@@ -93,7 +97,7 @@ describe("trade loop: loot, Oyaji's stall, a mod, the clinic (E10, E11)", () => 
 
     // 21:00: Oyaji is still at his stall on the market.
     const oyaji = () => [...session.sim.world].find((e) => e.key === "oyaji");
-    teleport(session, 80, 64);
+    teleport(session, STALLS.x, STALLS.z);
     steps(session, 2);
     expect(oyaji()).toBeDefined();
     teleport(session, oyaji()!.position.x, oyaji()!.position.z - 1.4);
@@ -130,7 +134,7 @@ describe("trade loop: loot, Oyaji's stall, a mod, the clinic (E10, E11)", () => 
     expect(session.inControl).toBe(true);
 
     // Mori fits the stabiliser from the bag for a quarter of its value.
-    teleport(session, 0, 0);
+    teleport(session, 300, -83);
     steps(session, 2);
     const mori = [...session.sim.world].find((e) => e.key === "mori")!;
     teleport(session, mori.position.x + 1.5, mori.position.z, -Math.PI / 2);
@@ -154,7 +158,7 @@ describe("trade loop: loot, Oyaji's stall, a mod, the clinic (E10, E11)", () => 
   it("after 22:00 Oyaji's stall is shut and he only talks", () => {
     const { session, ui } = setup();
     session.sim.enqueue({ type: "wait", minutes: 61 });
-    teleport(session, 80, 64);
+    teleport(session, STALLS.x, STALLS.z);
     steps(session, 2);
     const oyaji = [...session.sim.world].find((e) => e.key === "oyaji")!;
     teleport(session, oyaji.position.x + 1.5, oyaji.position.z + 0.8);

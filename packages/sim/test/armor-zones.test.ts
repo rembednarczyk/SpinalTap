@@ -11,7 +11,7 @@ const facingGuard = (distance: number, pitch = 0, patch?: (d: DomainState) => Do
   if (patch) sim = Simulation.fromSnapshot({ ...sim.snapshot(null, "t", ""), domain: patch(sim.domain) });
   const guard = byKey(sim, "guard")!;
   for (const g of [...sim.world.with("ai")]) if (g !== guard) sim.world.remove(g);
-  teleportPlayer(sim, { x: guard.position.x, y: 0, z: guard.position.z - distance }, 0, pitch);
+  teleportPlayer(sim, { x: guard.position.x, y: guard.position.y, z: guard.position.z - distance }, 0, pitch);
   return { sim, guard, hits: collect<Hit>(sim, "DamageDealt") };
 };
 

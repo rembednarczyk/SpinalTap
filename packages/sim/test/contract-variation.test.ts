@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type Contract, type ContractVariation, type SaveSnapshot, type Vec3, SECONDS_PER_HOUR, contractTag } from "@seki/core";
-import { BAR_SPOT, CONTRACT_SITE_SPAWNS, SITE_PLANS, SIM_HZ, Simulation, drinkerWay, stateHash } from "../src";
+import { BAR_SPOT, CONTRACT_SITE_SPAWNS, SITE_PLANS, SIM_HZ, Simulation, drinkerWay, ground, spotNear, stateHash } from "../src";
 import { ambushFlag, dayFlag, decoyTag } from "../src/world/contract-plan";
 import { lineOfSight } from "../src/world/hitscan";
 import { straightWalk } from "../src/systems/ai/steering";
@@ -32,9 +32,10 @@ const job = (variation: ContractVariation, extra: Partial<Contract> = {}): Contr
   ...extra,
 });
 
-const lot = { x: 2, y: 0, z: -12 };
-/** Up the street, out of the crew's sight: nobody fights. */
-const far = { x: -3, y: 0, z: 40 };
+/** By the van of the east lot on Plac Litewski (ADR-0045). */
+const lot = ground(102, -42);
+/** Down Kapucyńska behind the houses, in the same chunk but out of the crew's sight: nobody fights. */
+const far = spotNear(155, -180);
 const near = (e: { position: Vec3 } | undefined, p: Vec3): boolean => !!e && Math.hypot(e.position.x - p.x, e.position.z - p.z) < 0.5;
 
 describe("contract variations in the world (ADR-0034)", () => {
@@ -90,7 +91,8 @@ describe("contract variations in the world (ADR-0034)", () => {
     const drinker = withJob(job({ modifiers: [], security: "standard", trait: "drinker" }), far, 23);
     const mark = byKey(drinker, "c3-g0")!;
     expect(mark.schedule?.def.stops.map((s) => s.label)).toEqual(["posterunek", "bar"]);
-    run(drinker, 30 * SIM_HZ);
+    // Along the deptak from Plac Litewski (ADR-0045): a walk of three minutes.
+    run(drinker, 180 * SIM_HZ);
     expect(Math.hypot(mark.position.x - BAR_SPOT.x, mark.position.z - BAR_SPOT.z)).toBeLessThan(1.5);
   });
 
@@ -135,16 +137,16 @@ describe("contract variations in the world (ADR-0034)", () => {
 });
 
 describe("where the variations stand (ADR-0034)", () => {
-  const standable = (sim: Simulation, p: Vec3): boolean => lineOfSight(sim.world, { x: p.x, y: 0.3, z: p.z }, { x: p.x + 0.01, y: 1.7, z: p.z });
+  const standable = (sim: Simulation, p: Vec3): boolean => lineOfSight(sim.world, { x: p.x, y: p.y + 0.3, z: p.z }, { x: p.x + 0.01, y: p.y + 1.7, z: p.z });
 
   it.each(Object.entries(SITE_PLANS))("%s: every spot is open ground", (_site, plan) => {
     const spots = [...(plan.guards ?? []), ...(plan.twin ? [plan.twin] : []), ...(plan.lookout ? [plan.lookout] : []), ...(plan.ambush ?? [])];
     for (const p of spots) {
       const sim = Simulation.create({ seed: 1 });
-      teleportPlayer(sim, { x: p.x, y: 0, z: p.z });
+      teleportPlayer(sim, { x: p.x, y: p.y, z: p.z });
       run(sim, 1);
       for (const [dx, dz] of [[0, 0], [0.38, 0], [-0.38, 0], [0, 0.38], [0, -0.38]] as const) {
-        expect(standable(sim, { x: p.x + dx, y: 0, z: p.z + dz }), `${p.x},${p.z}`).toBe(true);
+        expect(standable(sim, { x: p.x + dx, y: p.y, z: p.z + dz }), `${p.x},${p.z}`).toBe(true);
       }
     }
   });
@@ -152,7 +154,8 @@ describe("where the variations stand (ADR-0034)", () => {
   it.each(["east_lot", "koi_back", "car_wash", "south_gate"] as const)("%s: the drinker's way to the bar is a straight walk", (site) => {
     const way = drinkerWay(site)!;
     const sim = Simulation.create({ seed: 1 });
-    teleportPlayer(sim, { x: 0, y: 0, z: 0 });
+    // Where the chunks of Plac Litewski and of the deptak meet: both streamed in.
+    teleportPlayer(sim, ground(240, -66));
     run(sim, 1);
     for (let i = 1; i < way.length; i++) expect(straightWalk(sim.world, way[i - 1]!, way[i]!), `${site} leg ${i}`).toBe(true);
   });

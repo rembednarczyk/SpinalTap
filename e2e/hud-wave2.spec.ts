@@ -23,7 +23,7 @@ test("metro, radio and the wave 2 badges from the debug API", async ({ page }) =
 
   // The ride with an ink subtitle, until the train arrives.
   await page.evaluate(() => window.__seki!.emit("MetroDeparted", { from: "shinsekai", to: "doki", seconds: 6 }));
-  await expect(page.getByTestId("metro-ride")).toContainText("Doki Tessen");
+  await expect(page.getByTestId("metro-ride")).toContainText("Nabrzeże Bystrzycy");
   await expect(page.getByTestId("metro-caption")).not.toBeEmpty();
   await page.evaluate(() => window.__seki!.emit("MetroArrived", { station: "doki" }));
   await expect(page.getByTestId("metro-ride")).toBeHidden();

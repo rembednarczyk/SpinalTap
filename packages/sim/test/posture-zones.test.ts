@@ -44,10 +44,10 @@ describe("crouching", () => {
     expect(p.posture!.amount).toBeLessThan(1);
     run(sim, crouchTicks, input({ crouch: true }));
     expect(p.posture!.amount).toBe(1);
-    expect(eyeOf(p).y).toBeCloseTo(CROUCH_EYE_HEIGHT);
+    expect(eyeOf(p).y - p.position.y).toBeCloseTo(CROUCH_EYE_HEIGHT);
     run(sim, crouchTicks + 1);
     expect(p.posture!.amount).toBe(0);
-    expect(eyeOf(p).y).toBeCloseTo(EYE_HEIGHT);
+    expect(eyeOf(p).y - p.position.y).toBeCloseTo(EYE_HEIGHT);
   });
 
   it("moves slower and cannot sprint", () => {

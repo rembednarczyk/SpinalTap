@@ -1,5 +1,6 @@
 import { AMMO_CATALOG, type AmmoId } from "@seki/core";
 import { useEffect, useRef } from "react";
+import { CityMapPanel } from "../citymap/city-map-panel";
 import { InventoryTab } from "../inventory/inventory-tab";
 import { JournalPanel } from "../journal/journal-panel";
 import type { CharacterTab } from "../store/ui-store";
@@ -10,9 +11,10 @@ const TABS: readonly (readonly [CharacterTab, string, string])[] = [
   ["inventory", "Ekwipunek", "I"],
   ["sheet", "Karta", "Tab"],
   ["journal", "Dziennik", "J"],
+  ["map", "Mapa", "M"],
 ];
 
-const KEYS: Readonly<Record<string, CharacterTab>> = { KeyI: "inventory", Tab: "sheet", KeyJ: "journal" };
+const KEYS: Readonly<Record<string, CharacterTab>> = { KeyI: "inventory", Tab: "sheet", KeyJ: "journal", KeyM: "map" };
 
 const AMMO_ORDER = Object.keys(AMMO_CATALOG) as AmmoId[];
 
@@ -32,9 +34,9 @@ const AmmoSummary = () => {
 };
 
 /**
- * The character screen (plan §7): Ekwipunek, Karta and Dziennik as tabs of one full-screen
- * menu. I, Tab and J open it on their tab and close it from there; Esc or the cross closes
- * it. While it is open the game clock stands (the app stops the simulation).
+ * The character screen (plan §7): Ekwipunek, Karta, Dziennik and Mapa (ADR-0045) as tabs of
+ * one full-screen menu. I, Tab, J and M open it on their tab and close it from there; Esc or
+ * the cross closes it. While it is open the game clock stands (the app stops the simulation).
  */
 export const CharacterScreen = () => {
   const tab = useUi((s) => s.characterTab);
@@ -104,6 +106,7 @@ export const CharacterScreen = () => {
           {tab === "inventory" && <InventoryTab />}
           {tab === "sheet" && <CharacterPanel />}
           {tab === "journal" && <JournalPanel />}
+          {tab === "map" && <CityMapPanel />}
         </div>
       </div>
     </div>

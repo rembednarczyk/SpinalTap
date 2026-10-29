@@ -1,5 +1,5 @@
 import { ABILITY_CATALOG, type DomainState, type RenderPort, dayOf, dayPhase, daylight, formatClock, loadoutAbility, secondOfDay, stackRoom } from "@seki/core";
-import { DISTRICTS, type DistrictId, type Entity, SIM_HZ, type Simulation } from "@seki/sim";
+import { DISTRICTS, type DistrictId, type Entity, SIM_HZ, type Simulation, ground } from "@seki/sim";
 import { type AbilityVm, type ContractIntents, type LootVm, type Screen, type TradeVm, type UiStore, patchUi } from "@seki/ui";
 import { createStatsCache } from "../character-view";
 import { createJournalCache } from "../journal";
@@ -68,7 +68,8 @@ export interface HudSyncDeps {
 export class HudSync implements ContractIntents {
   private readonly characterStats = createStatsCache();
   private readonly journal = createJournalCache();
-  private readonly minimap = createMinimapTracker();
+  // Up on a level counts from Lublin's ground there (ADR-0045).
+  private readonly minimap = createMinimapTracker((x, z) => ground(x, z).y);
   private readonly weaponHud = createWeaponHud();
   private lastAbilityVm: AbilityVm | null = null;
   /** Last district the player was seen in; a change raises a toast. */

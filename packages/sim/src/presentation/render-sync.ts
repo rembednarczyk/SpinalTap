@@ -1,6 +1,10 @@
 import { type ActivityId, type AppearanceDescriptor, type DomainState, ENEMY_TYPES, type EntityId, type RenderPort, type Transform, appearanceOf, appearanceOfEnemy, lerp, lerpAngle, sameAppearance } from "@seki/core";
 import type { World } from "miniplex";
 import type { Entity } from "../world/components";
+import type { SceneryItem } from "../content/lublin/city";
+
+/** Ids of the scenery's views (ADR-0045): far above the entities' and the crowd's. */
+export const SCENERY_ID_BASE = 5_000_000;
 
 type AimFields = Pick<Transform, "aim" | "aimZoom" | "guard">;
 
@@ -32,9 +36,27 @@ export class RenderSync {
   private readonly activities = new Map<EntityId, ActivityId>();
   private playerLook: { inv: unknown; eq: unknown; cyber: unknown; look: AppearanceDescriptor } | null = null;
 
-  constructor(private readonly port: RenderPort) {}
+  /** The scenery has been handed to the port (again after every reset). */
+  private sceneryShown = false;
+
+  /**
+   * `scenery`: views the port draws for good, outside the entities (the map's terrain, surfaces
+   * and buildings, ADR-0045), spawned once and again after a reset.
+   */
+  constructor(
+    private readonly port: RenderPort,
+    private readonly scenery: readonly SceneryItem[] = [],
+  ) {}
+
+  /** Hands the scenery to the port, unless it has it already. */
+  private showScenery(): void {
+    if (this.sceneryShown) return;
+    this.sceneryShown = true;
+    this.scenery.forEach((s, i) => this.port.spawn(SCENERY_ID_BASE + i, s.view, { position: s.at, yaw: 0, pitch: 0, speed: 0 }));
+  }
 
   sync(world: World<Entity>, alpha: number, streamedOut?: ReadonlySet<EntityId>, domain?: DomainState): void {
+    this.showScenery();
     const seen = new Set<EntityId>();
     for (const e of world.with("view")) {
       seen.add(e.id);
@@ -83,6 +105,7 @@ export class RenderSync {
   /** Despawns everything, e.g. before swapping in a freshly loaded world. */
   reset(): void {
     this.port.clear();
+    this.sceneryShown = false;
     this.spawned.clear();
     this.looks.clear();
     this.activities.clear();

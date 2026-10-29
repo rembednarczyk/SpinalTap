@@ -1,5 +1,5 @@
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
-import { WORLD_CHUNKS, chunkAt } from "@seki/sim";
+import { WORLD_CHUNKS, chunkAt, groundY } from "@seki/sim";
 import { describe, expect, it } from "vitest";
 import { RawTexture, Scene } from "../src/babylon";
 import { NIGHT_RIG } from "../src/npr/lighting";
@@ -32,14 +32,17 @@ describe("signage (ADR-0030)", () => {
     expect(planSignage(WORLD_CHUNKS).positions).toEqual(plan.positions);
   });
 
-  it("puts signs, holo-ads and reflections in every district", () => {
-    for (const district of new Set(WORLD_CHUNKS.map((c) => c.district))) {
+  it("puts signs, holo-ads and reflections in the districts with buildings of the game's own", () => {
+    // Krakowskie's and the Old Town's buildings are the map's: their shopfronts and the content's
+    // neon carry the signs (ADR-0045). The market and the docks are built by the game.
+    for (const district of ["targ", "doki"]) {
       const mine = all.filter((q) => chunkAt(q.x, q.z)?.district === district);
       expect(mine.some((q) => q.kind === SIGNAGE_KIND.sign), district).toBe(true);
       expect(mine.some((q) => q.kind === SIGNAGE_KIND.reflection), district).toBe(true);
     }
     const holos = all.filter((q) => q.kind === SIGNAGE_KIND.holo);
-    expect(holos.length).toBeGreaterThanOrEqual(4);
+    // Few of the game's own buildings are tall enough (the map city draws the rest).
+    expect(holos.length).toBeGreaterThanOrEqual(1);
     expect(holos.length).toBeLessThanOrEqual(HOLO_PER_CHUNK * WORLD_CHUNKS.length);
   });
 
@@ -53,11 +56,13 @@ describe("signage (ADR-0030)", () => {
 
   it("lays reflections flat on the street and hangs signs above head height", () => {
     for (const q of all) {
+      // On Lublin's ground (ADR-0045): the market stands 20 m below Krakowskie.
+      const ground = groundY(q.x, q.z);
       if (q.kind === SIGNAGE_KIND.reflection) {
-        expect(q.y).toBeCloseTo(0.035);
+        expect(Math.abs(q.y - ground - 0.035)).toBeLessThan(0.15);
         expect(q.ny).toBe(1);
       } else {
-        expect(q.y).toBeGreaterThan(2.9);
+        expect(q.y - ground).toBeGreaterThan(2.9);
         expect(q.ny).toBe(0);
       }
     }

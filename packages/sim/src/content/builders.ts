@@ -20,6 +20,11 @@ export interface StaticProp {
    * parts as the building they are cut from and leaves the rest out.
    */
   readonly interior?: true;
+  /**
+   * Drawn by the map's scenery (ADR-0045), not by the entity: a building from the map is a solid
+   * of the simulation, while the renderer gets its view once from `WORLD_SCENERY`.
+   */
+  readonly scenery?: true;
 }
 
 /** Parts of a lift: the platform (a solid), the gates at upper levels and the call buttons. */
@@ -289,3 +294,64 @@ export interface NavGraph {
 }
 
 export const mergeNav = (...graphs: readonly NavGraph[]): NavGraph => ({ nodes: graphs.flatMap((g) => g.nodes), edges: graphs.flatMap((g) => g.edges) });
+
+/**
+ * A hand-made set piece moved into the city (ADR-0045): content drawn around its own origin,
+ * shifted by `d` (the district's place in Lublin, `d.y` the level of its flattened ground).
+ */
+export interface Placement {
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+}
+
+/** A point of a set piece in the world. */
+export const placeAt = (d: Placement, p: Vec3): Vec3 => v(p.x + d.x, p.y + d.y, p.z + d.z);
+
+/** A rectangle of a set piece in the world. */
+export const placeRect = (d: Placement, r: Rect): Rect => ({ minX: r.minX + d.x, maxX: r.maxX + d.x, minZ: r.minZ + d.z, maxZ: r.maxZ + d.z });
+
+/** A spawn of a set piece in the world. */
+export const placeSpawn = <T extends ActorSpawn>(d: Placement, s: T): T => ({ ...s, position: placeAt(d, s.position) });
+
+/** An actor of a set piece in the world. */
+export const placeActor = (d: Placement, a: ActorDef): ActorDef => (a.kind === "npc" ? { ...a, spawn: placeSpawn(d, a.spawn) } : { ...a, spawn: placeSpawn(d, a.spawn) });
+
+/** A door of a set piece in the world. */
+export const placeDoor = (d: Placement, door: DoorDef): DoorDef => ({ ...door, at: placeAt(d, door.at), ...(door.panel ? { panel: placeAt(d, door.panel) } : {}) });
+
+const placeLadder = (d: Placement, l: LadderDef): LadderDef => ({ ...l, x: l.x + d.x, z: l.z + d.z, bottom: l.bottom + d.y, top: l.top + d.y, exit: placeAt(d, l.exit) });
+
+const placeMechanism = (d: Placement, m: Mechanism): Mechanism => {
+  switch (m.kind) {
+    case "platform": {
+      const [first, ...rest] = m.levels;
+      return { ...m, levels: [first + d.y, ...rest.map((l) => l + d.y)] };
+    }
+    case "ladder":
+      return { ...m, ladder: placeLadder(d, m.ladder) };
+    case "door":
+      return { ...m, door: placeDoor(d, m.door) };
+    default:
+      return m;
+  }
+};
+
+/**
+ * A prop of a set piece in the world. Signs and lamps keep facing the way they did around the
+ * set piece's own origin (the renderer would otherwise turn them by the sign of the world x).
+ */
+export const placeProp = (d: Placement, p: StaticProp): StaticProp => {
+  let view = p.view;
+  const thinX = view.kind === "neon" && view.size.x <= view.size.z && view.size.x <= view.size.y;
+  if ((thinX || view.kind === "lamp") && (view.kind === "neon" || view.kind === "lamp") && !view.facing) view = { ...view, facing: p.center.x > 0 ? "x-" : "x+" };
+  return { ...p, center: placeAt(d, p.center), view, ...(p.mechanism ? { mechanism: placeMechanism(d, p.mechanism) } : {}) };
+};
+
+export const placeProps = (d: Placement, props: readonly StaticProp[]): StaticProp[] => props.map((p) => placeProp(d, p));
+
+/** A level graph of a set piece in the world. */
+export const placeNav = (d: Placement, g: NavGraph): NavGraph => ({
+  nodes: g.nodes.map((n) => ({ ...n, at: placeAt(d, n.at) })),
+  edges: g.edges.map((e) => (e.via ? { ...e, via: placeRect(d, e.via) } : e)),
+});

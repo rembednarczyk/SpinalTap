@@ -63,7 +63,7 @@ export const createCrowdSystem = (): System => {
             if (!fresh && !look) continue;
             const plan = residentOf(ctx.seed, chunk.id, i);
             if (!plan) continue;
-            const made = residentEntity(id, ctx.seed, plan, clock);
+            const made = residentEntity(id, ctx.seed, plan, clock, (x, z) => ctx.streamer.ground.heightAt(x, z));
             if (!fresh && watched(ctx, player, made.position)) continue;
             live.set(id, { entity: ctx.world.add(made), plan, slot });
             ctx.streamer.streamedOut.delete(id);

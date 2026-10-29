@@ -11,7 +11,7 @@ import {
 } from "@seki/core";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
-import { DOKI_ITEM_SPOTS, DOKI_TERMINAL_SPOTS, GENZO_SPOT, SIM_HZ } from "@seki/sim";
+import { DOKI_ITEM_SPOTS, DOKI_TERMINAL_SPOTS, GENZO_SPOT, SIM_HZ, ground } from "@seki/sim";
 import { createUiStore } from "@seki/ui";
 import { GameSession } from "../src/game-session";
 
@@ -65,9 +65,9 @@ const setup = async () => {
   return { session, ui };
 };
 
-const teleport = (s: GameSession, x: number, z: number, yaw = 0, y = 0) => {
+const teleport = (s: GameSession, x: number, z: number, yaw = 0, y?: number) => {
   const p = s.sim.player()!;
-  p.position = { x, y, z };
+  p.position = { x, y: y ?? ground(x, z).y, z };
   p.prevPosition = p.position;
   p.yaw = yaw;
   p.pitch = 0;
@@ -127,7 +127,7 @@ describe("M4 acceptance: the docks", () => {
     const t = DOKI_TERMINAL_SPOTS.quay_terminal!;
     teleport(session, t.x, t.z - 1.4, 0);
     steps(session, 1, frame({ interact: true }));
-    expect(toasts(ui)).toContain("Alarm w porcie: Utrzymaj terminal, ochrona już idzie");
+    expect(toasts(ui)).toContain("Alarm na Nabrzeżu: Utrzymaj terminal, ochrona już idzie");
     downTheWave(session);
     steps(session, 10 * SIM_HZ);
     expect(ui.getState().objective).toMatch(/Utrzymaj połączenie z terminalem \(zostało 0:\d\d\)/);
@@ -162,7 +162,7 @@ describe("M4 acceptance: the docks", () => {
     expect(text(ui)).toContain("Czyste dane");
     close(session);
     expect(session.sim.domain.contracts.completed).toBe(3);
-    expect(ui.getState().objective).toBe("Kaito ma kolejne kontrakty, Genzō w Dokach też. Mori sprzedaje cyberware.");
+    expect(ui.getState().objective).toBe("Kaito ma kolejne kontrakty, Genzō na Nabrzeżu też. Mori sprzedaje cyberware.");
   });
 
   it("the sniper's laser reaches the renderer as an effect", async () => {

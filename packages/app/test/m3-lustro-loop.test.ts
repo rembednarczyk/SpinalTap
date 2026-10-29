@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { type ActTwoEndingId, type EndingId, KAGAMI_CLEANER_KEYS, QUEST_MIRROR, type SaveSnapshot } from "@seki/core";
 import { MemorySaveStore } from "@seki/persistence";
 import { type Ui, allText, finishDialogue, objective, playActOne, setup, steps, talkTo, talkToKaito, talkToMori, teleport, shootDown } from "./story-helpers";
+import { market } from "@seki/sim";
 import type { GameSession } from "../src/game-session";
 
 /**
@@ -11,8 +12,9 @@ import type { GameSession } from "../src/game-session";
  * from that save.
  */
 
-const REN_ROOF = { x: 86, y: 12.7, z: 59.6 } as const;
-const DECK = { x: 98.5, y: 9.9, z: 92 } as const;
+/** Ren's roof over the market's south row and the viaduct's deck, in the market's frame (ADR-0045). */
+const REN_ROOF = market(86, 12.7, 59.6);
+const DECK = market(98.5, 9.9, 92);
 
 /** Moves to a spot of another district and lets streaming bring it (and its people) in. */
 const goTo = (s: GameSession, at: { x: number; y: number; z: number }) => {
@@ -70,7 +72,7 @@ const kaitoJob = (s: GameSession, ui: Ui, jobPick: number, voicePick: number) =>
   expect(s.sim.domain.character.memories).toContain("last_call");
   expect(allText(ui)).toContain("Wyłączam filtr Odagiri.");
   finishDialogue(s, ui, voicePick);
-  expect(objective(ui)).toBe("Kurosawa z Kagami czeka na estakadzie nad targiem. Zdecyduj, co stanie się z archiwum");
+  expect(objective(ui)).toBe("Kurosawa z Kagami czeka na wiadukcie nad aleją Tysiąclecia. Zdecyduj, co stanie się z archiwum");
 };
 
 /** Step 4 up to the decision: Kurosawa's offer on the overpass deck. */
@@ -118,7 +120,7 @@ describe("M3 acceptance: act II from the end of act I to each of its endings", (
     } else {
       // The deal is off: Kurosawa leaves and his cleaners attack on the deck.
       expect(present(session, "kurosawa")).toBe(false);
-      expect(objective(ui)).toBe("Czyściciele Kagami atakują na estakadzie. Odeprzyj ich");
+      expect(objective(ui)).toBe("Czyściciele Kagami atakują na wiadukcie. Odeprzyj ich");
       for (const key of KAGAMI_CLEANER_KEYS) shootDown(session, key);
       steps(session, 1);
       expect(objective(ui)).toBe("Czyściciele Kagami leżą. Wróć do Rena na dach nad targiem");

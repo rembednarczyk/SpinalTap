@@ -137,7 +137,8 @@ const tubes = (sink: MeshSink, f: FacadeFrame, color: string): void => {
 /** Signs of one building. `nameSlot` gives the plaque's row in the names atlas (null: no room). */
 export const planBuildingSigns = (sink: MeshSink, f: FacadeFrame, nameSlot: (name: string) => number | null): void => {
   const rand = prng((f.b.look ^ 0x5191) >>> 0);
-  if (f.style.signs > 0) shopSigns(sink, f, rand);
+  // A room or a gate the game cut into the building (ADR-0045) carries the game's own sign there.
+  if (f.style.signs > 0 && !(f.b.doorways && f.b.doorways.length > 0)) shopSigns(sink, f, rand);
   if (f.style.neonTrim && f.style.cornice) tubes(sink, f, f.style.neonTrim);
   holos(sink, f, rand);
   if (f.b.name) {

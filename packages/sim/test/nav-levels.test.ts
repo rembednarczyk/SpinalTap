@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { EnemyTypeId, Vec3 } from "@seki/core";
-import { FOOTBRIDGE_TOP, type NavGraph, OVERPASS_TOP, ROOF_WEST_TOP, Simulation, WORLD_NAV, gangerEntity } from "../src";
+import { MARKET_PLACE, type NavGraph, OVERPASS_TOP, ROOF_WEST_TOP, Simulation, WORLD_NAV, gangerEntity, market } from "../src";
 import { firingPosition, routeAcrossLevels } from "../src/world/nav";
 import { collect, run, teleportPlayer } from "./helpers";
+
+/** The market keeps its own coordinates, moved by `MARKET_PLACE` (ADR-0045): every point here is one of it. */
+const M = MARKET_PLACE;
 
 /** The player stands still at `p`; every other ganger is gone. */
 const scene = (p: Vec3): Simulation => {
@@ -39,76 +42,59 @@ const lift = (sim: Simulation) => sim.world.with("elevator", "solid").entities.f
 
 describe("NPC navigation between levels (ADR-0021)", () => {
   it("a brawler chases the player up the market stairs onto the overpass", () => {
-    const target = { x: 100, y: OVERPASS_TOP, z: 92 };
+    const target = market(100, OVERPASS_TOP, 92);
     const sim = scene(target);
-    const g = spawn(sim, { x: 96, y: 0, z: 80 }, "hebi_brawler");
-    let maxY = 0;
+    const g = spawn(sim, market(96, 0, 80), "hebi_brawler");
+    let maxY = -Infinity;
     hold(sim, target, 60 * 40, () => {
-      maxY = Math.max(maxY, g.position.y);
-      return Math.hypot(g.position.x - target.x, g.position.z - target.z) < 2 && g.position.y > OVERPASS_TOP - 0.1;
+      maxY = Math.max(maxY, g.position.y - M.y);
+      return Math.hypot(g.position.x - target.x, g.position.z - target.z) < 2 && g.position.y - M.y > OVERPASS_TOP - 0.1;
     });
     expect(maxY).toBeCloseTo(OVERPASS_TOP, 3);
     expect(Math.hypot(g.position.x - target.x, g.position.z - target.z)).toBeLessThan(2.5);
   });
 
   it("takes the stairs, not the lift, even standing right by the lift", () => {
-    const target = { x: 108, y: OVERPASS_TOP, z: 90 };
+    const target = market(108, OVERPASS_TOP, 90);
     const sim = scene(target);
-    const g = spawn(sim, { x: 108, y: 0, z: 82.5 }, "hebi_brawler");
-    const reached = hold(sim, target, 60 * 45, () => g.position.y > OVERPASS_TOP - 0.1 && Math.hypot(g.position.x - target.x, g.position.z - target.z) < 2.5);
+    const g = spawn(sim, market(108, 0, 82.5), "hebi_brawler");
+    const reached = hold(sim, target, 60 * 45, () => g.position.y - M.y > OVERPASS_TOP - 0.1 && Math.hypot(g.position.x - target.x, g.position.z - target.z) < 2.5);
     expect(reached).toBeLessThan(60 * 45);
     expect(lift(sim).elevator.target).toBe(0);
-    expect(lift(sim).solid.max.y).toBeCloseTo(0.15, 5);
-  });
-
-  it("follows the player over the footbridge on Ulica Kanałowa", () => {
-    const target = { x: 53, y: FOOTBRIDGE_TOP, z: 78 };
-    const sim = scene(target);
-    const g = spawn(sim, { x: 36, y: 0, z: 78 }, "hebi_brawler");
-    const reached = hold(sim, target, 60 * 25, () => g.position.y > FOOTBRIDGE_TOP - 0.1 && Math.hypot(g.position.x - target.x, g.position.z - target.z) < 2.5);
-    expect(reached).toBeLessThan(60 * 25);
-  });
-
-  it("a brawler under the footbridge does not swing at the player above", () => {
-    const target = { x: 53, y: FOOTBRIDGE_TOP, z: 78 };
-    const sim = scene(target);
-    spawn(sim, { x: 56, y: 0, z: 78 }, "hebi_brawler");
-    const swings = collect(sim, "MeleeSwing");
-    hold(sim, target, 30);
-    expect(swings).toEqual([]);
+    expect(lift(sim).solid.max.y - M.y).toBeCloseTo(0.15, 5);
   });
 
   it("a gunner finds a firing position for a player on a roof instead of standing under it", () => {
-    const target = { x: 74, y: ROOF_WEST_TOP, z: 63.4 };
+    const target = market(74, ROOF_WEST_TOP, 63.4);
     const sim = scene(target);
-    const g = spawn(sim, { x: 90, y: 0, z: 82 }, "hebi_ganger");
+    const g = spawn(sim, market(90, 0, 82), "hebi_ganger");
     const shots = collect<{ shooterId: number }>(sim, "ShotFired");
     hold(sim, target, 60 * 8, () => shots.some((s) => s.shooterId === g.id));
     expect(shots.some((s) => s.shooterId === g.id)).toBe(true);
     // It shoots from the market floor, out in the open, not from under the roof edge.
-    expect(g.position.z).toBeGreaterThan(70);
+    expect(g.position.z - M.z).toBeGreaterThan(70);
   });
 
   it("a brawler with no way up goes back to its post", () => {
-    const target = { x: 74, y: ROOF_WEST_TOP, z: 61 };
+    const target = market(74, ROOF_WEST_TOP, 61);
     const sim = scene(target);
-    const home = { x: 92, y: 0, z: 80 };
-    const g = spawn(sim, { x: 74, y: 0, z: 66 }, "hebi_brawler", home);
+    const home = market(92, 0, 80);
+    const g = spawn(sim, market(74, 0, 66), "hebi_brawler", home);
     hold(sim, target, 60 * 8);
     expect(Math.hypot(g.position.x - home.x, g.position.z - home.z)).toBeLessThan(1);
   });
 
   it("routes are pure: no graph, no route; the same query gives the same answer", () => {
-    const sim = scene({ x: 100, y: OVERPASS_TOP, z: 92 });
+    const sim = scene(market(100, OVERPASS_TOP, 92));
     const empty: NavGraph = { nodes: [], edges: [] };
-    expect(routeAcrossLevels(sim.world, empty, { x: 96, y: 0, z: 80 }, { x: 100, y: OVERPASS_TOP, z: 92 })).toBeNull();
-    expect(firingPosition(sim.world, empty, { x: 96, y: 0, z: 80 }, { x: 100, y: OVERPASS_TOP, z: 92 }, 15)).toBeNull();
-    const a = routeAcrossLevels(sim.world, WORLD_NAV, { x: 96, y: 0, z: 80 }, { x: 100, y: OVERPASS_TOP, z: 92 });
-    const b = routeAcrossLevels(sim.world, WORLD_NAV, { x: 96, y: 0, z: 80 }, { x: 100, y: OVERPASS_TOP, z: 92 });
+    expect(routeAcrossLevels(sim.world, empty, market(96, 0, 80), market(100, OVERPASS_TOP, 92))).toBeNull();
+    expect(firingPosition(sim.world, empty, market(96, 0, 80), market(100, OVERPASS_TOP, 92), 15)).toBeNull();
+    const a = routeAcrossLevels(sim.world, WORLD_NAV, market(96, 0, 80), market(100, OVERPASS_TOP, 92));
+    const b = routeAcrossLevels(sim.world, WORLD_NAV, market(96, 0, 80), market(100, OVERPASS_TOP, 92));
     expect(a).toEqual(b);
-    expect(a?.next).toEqual({ x: 72, y: 0, z: 85.5 });
+    expect(a?.next).toEqual(market(72, 0, 85.5));
     // Nothing connects the street to a roof.
-    expect(routeAcrossLevels(sim.world, WORLD_NAV, { x: 96, y: 0, z: 80 }, { x: 74, y: ROOF_WEST_TOP, z: 61 })).toBeNull();
-    expect(() => routeAcrossLevels(sim.world, { nodes: [], edges: [{ a: "x", b: "y" }] }, { x: 0, y: 0, z: 0 }, { x: 0, y: 5, z: 0 })).not.toThrow();
+    expect(routeAcrossLevels(sim.world, WORLD_NAV, market(96, 0, 80), market(74, ROOF_WEST_TOP, 61))).toBeNull();
+    expect(() => routeAcrossLevels(sim.world, { nodes: [], edges: [{ a: "x", b: "y" }] }, market(0, 0, 0), market(0, 5, 0))).not.toThrow();
   });
 });

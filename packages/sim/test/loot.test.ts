@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { LOOT_LIFETIME_SECONDS, LOOT_TABLES, MAX_LOOT_CONTAINERS, type DomainState, type LootLine, rollLoot } from "@seki/core";
 import { type ReplayFrame, SIM_HZ, Simulation, deriveRandom, runReplay, stateHash } from "../src";
-import { byKey, collect, input, run, teleportPlayer, streetSim } from "./helpers";
+import { ALLEY_START, AWAY, alleySim, byKey, collect, input, run, teleportPlayer, streetSim } from "./helpers";
 
 const bags = (sim: Simulation) => [...sim.world.with("lootBag")];
 /** Bags dropped in play: everything but the stashes placed as Seki walks the city (ADR-0026). */
@@ -10,7 +10,7 @@ const dropBags = (sim: Simulation) => bags(sim).filter((b) => !b.lootBag.key.sta
 
 /** Only the guard stays in the alley, calm, so nothing but the test touches the main stream. */
 const quietAlley = (seed = 21) => {
-  const sim = streetSim({ seed });
+  const sim = alleySim({ seed });
   const guard = byKey(sim, "guard")!;
   for (const g of [...sim.world.with("ai")]) if (g !== guard) sim.world.remove(g);
   return { sim, guard };
@@ -33,8 +33,8 @@ describe("loot from enemies (plan E6)", () => {
     const container = sim.domain.loot.containers[0]!;
     expect(container.key).toBe("loot:guard");
     expect(container.lines).toEqual(rollLoot(LOOT_TABLES.hebi_common, deriveRandom(21, "loot:guard")));
-    expect(container.position).toEqual({ x: guard.position.x, y: 0, z: guard.position.z });
-    expect(container.chunk).toBe("shinsekai-7");
+    expect(container.position).toEqual({ x: guard.position.x, y: guard.position.y, z: guard.position.z });
+    expect(container.chunk).toBe("krakowskie-2-0");
     expect(container.expiresAtTick).toBe(sim.tick - 1 + LOOT_LIFETIME_SECONDS * SIM_HZ);
     expect(dropped).toEqual([expect.objectContaining({ containerKey: "loot:guard" })]);
     expect(bags(sim)).toHaveLength(1);
@@ -49,7 +49,7 @@ describe("loot from enemies (plan E6)", () => {
       return sim.domain.loot.containers[0]!.lines;
     };
     expect(lines(0)).toEqual(lines(90));
-    const other = streetSim({ seed: 34 });
+    const other = alleySim({ seed: 34 });
     kill(other, "guard");
     // Different seeds give different streams (over many keys at least one bag differs).
     const differs = ["a", "b", "c", "d", "e"].some((k) => JSON.stringify(rollLoot(LOOT_TABLES.hebi_common, deriveRandom(33, k))) !== JSON.stringify(rollLoot(LOOT_TABLES.hebi_common, deriveRandom(34, k))));
@@ -65,7 +65,7 @@ describe("loot from enemies (plan E6)", () => {
     const started = collect<{ kind: string; dialogueId: string }>(sim, "InteractionStarted");
     const taken = collect<{ containerKey: string; left: number }>(sim, "LootTaken");
     const money = collect<{ delta: number; source?: string }>(sim, "EddiesChanged");
-    teleportPlayer(sim, { x: guard.position.x, y: 0, z: guard.position.z - 1 });
+    teleportPlayer(sim, { x: guard.position.x, y: guard.position.y, z: guard.position.z - 1 });
     sim.step(input({ interact: true }));
     expect(started).toEqual([expect.objectContaining({ kind: "loot", dialogueId: "loot:guard" })]);
     expect(sim.session.dialogueActive).toBe(true);
@@ -147,18 +147,18 @@ describe("loot from enemies (plan E6)", () => {
   it("a bag in an unloaded chunk sleeps, keeps ageing, and never returns once expired", () => {
     const { sim } = quietAlley();
     kill(sim, "guard");
-    teleportPlayer(sim, { x: 40, y: 0, z: 160 });
+    teleportPlayer(sim, AWAY);
     run(sim, 2);
-    expect(sim.streamer.isLoaded("shinsekai-7")).toBe(false);
+    expect(sim.streamer.isLoaded("krakowskie-2-0")).toBe(false);
     expect(bags(sim)).toHaveLength(0);
     expect(drops(sim)).toHaveLength(1);
-    teleportPlayer(sim, { x: 0, y: 0, z: 30 });
+    teleportPlayer(sim, ALLEY_START);
     run(sim, 2);
     expect(dropBags(sim)).toHaveLength(1);
-    teleportPlayer(sim, { x: 40, y: 0, z: 160 });
+    teleportPlayer(sim, AWAY);
     const expires = drops(sim)[0]!.expiresAtTick;
     run(sim, expires - sim.tick + 1);
-    teleportPlayer(sim, { x: 0, y: 0, z: 30 });
+    teleportPlayer(sim, ALLEY_START);
     run(sim, 2);
     expect(dropBags(sim)).toHaveLength(0);
     expect(drops(sim)).toEqual([]);

@@ -19,6 +19,10 @@ import {
   type Rect,
   type StaticProp,
   building,
+  placeAt,
+  placeNav,
+  placeProps,
+  placeRect,
   crate,
   deck,
   ladderParts,
@@ -32,16 +36,15 @@ import {
   stairs,
   v,
 } from "./builders";
-import { DOKI_PASSAGE } from "./district-doki";
+import { MARKET_PLACE } from "./lublin/sites";
 
 /**
- * Ulica Kanałowa and Targ pod estakadą: the M2 districts north-east of Shinsekai 7.
- *
- * The street leaves Shinsekai through the passage behind the car wash, runs north (segment A,
- * X ∈ [4, 10]) and turns east (segment B, Z ∈ [74, 82]) into the market under the elevated
- * highway (X ∈ [66, 126], Z ∈ [56, 116]). The bend keeps each district out of sight of the
- * other, so streaming one out never shows a hole. Facades, stalls and heights come from a
- * fixed-seed generator: the same tables on every run and every machine.
+ * The market of Podzamcze (district `targ`, ADR-0045): the old Targ pod estakadą, moved onto
+ * Aleja Tysiąclecia between Plac Zamkowy and the bus station. Its deck is the viaduct over the
+ * avenue, its stalls stand on the avenue's closed lanes under it; the south row of houses with
+ * the fire escape is the market hall. Drawn in its own coordinates (x 66..126, z 56..116, the
+ * gate on the west side) and placed by `MARKET_PLACE`: everything exported here is in the world.
+ * Facades, stalls and heights come from a fixed-seed generator: the same tables on every run.
  */
 
 /** Fixed content seed. Changing it reshuffles the districts (and the golden replay hash). */
@@ -92,196 +95,21 @@ const stall = (rng: SeededRandom, x: number, z: number, front: 1 | -1): StaticPr
   slab(x, 2.55, z + front * 0.4, v(3.2, 0.2, 2.4), pick(rng, AWNINGS)),
 ];
 
-/**
- * Cuts a gap of [x0, x1] out of a facade row (ADR-0024): a block across it becomes the parts on
- * either side. Applied after the generator ran, so no random number moves.
- */
-const withPassage = (row: readonly StaticProp[], x0: number, x1: number): StaticProp[] =>
-  row.flatMap((p): StaticProp[] => {
-    if (p.view.kind !== "block") return [p];
-    const left = p.center.x - p.view.size.x / 2;
-    const right = p.center.x + p.view.size.x / 2;
-    if (right <= x0 || left >= x1) return [p];
-    const { y: h, z: d } = p.view.size;
-    const { material, skin: look } = p.view;
-    const parts: StaticProp[] = [];
-    if (x0 - left > 0.01) parts.push(building((left + x0) / 2, p.center.z, x0 - left, h, d, material, look));
-    if (right - x1 > 0.01) parts.push(building((x1 + right) / 2, p.center.z, right - x1, h, d, material, look));
-    return parts;
-  });
-
 const rng = new SeededRandom(CONTENT_SEED);
 
-// ---------------------------------------------------------------- Ulica Kanałowa
+// The rows of the old Ulica Kanałowa drew from the generator before the market's: drawn and
+// dropped, so the market's stalls and roofs stay where they were (ADR-0045).
+facadeRow(rng, 10, 66, 63, 22, [12, 20], [16, 20], "z+", 8);
+facadeRow(rng, 4, 66, 86, 8, [10, 22], [13, 17], "z-", 8);
 
-export const KANAL_BOUNDS: Rect = { minX: -8, maxX: 78, minZ: 52, maxZ: 90 };
-
-/** Height of the footbridge walkway over Ulica Kanałowa. */
-export const FOOTBRIDGE_TOP = 5;
-
-/**
- * Footbridge across segment B (ADR-0020): a walkway 5 m over the road at X ∈ [52, 54], reached
- * by a flight of stairs along each kerb, both with a railing on the road side.
- */
-const footbridge = (): StaticProp[] => {
-  const top = FOOTBRIDGE_TOP;
-  return [
-    deck(52, 54, 74.2, 81.8, top),
-    stairs(44, 52, 74.2, 75.8, 0, top, "x", 1),
-    stairRail(44, 52, 75.8, 76, 0, top, "x", 1),
-    stairs(54, 62, 80.2, 81.8, 0, top, "x", -1),
-    stairRail(54, 62, 80, 80.2, 0, top, "x", -1),
-    rail(51.8, 52, 75.8, 82, top),
-    rail(54, 54.2, 74, 80.2, top),
-    rail(52, 54, 74, 74.2, top),
-    rail(52, 54, 81.8, 82, top),
-  ];
-};
-
-/**
- * Level graph of the street (ADR-0021): the road on both sides of the footbridge, the foot and
- * the head of each flight, the north end of the walkway.
- */
-export const KANAL_NAV: NavGraph = {
-  nodes: [
-    { id: "kanal-street-w", at: v(40, 0, 78) },
-    { id: "kanal-w-foot", at: v(43.4, 0, 75) },
-    { id: "kanal-w-top", at: v(52.6, FOOTBRIDGE_TOP, 75) },
-    { id: "kanal-bridge-n", at: v(53, FOOTBRIDGE_TOP, 81) },
-    { id: "kanal-e-foot", at: v(62.6, 0, 81) },
-    { id: "kanal-street-e", at: v(66, 0, 78) },
-  ],
-  edges: [
-    { a: "kanal-street-w", b: "kanal-w-foot" },
-    { a: "kanal-w-foot", b: "kanal-w-top", via: { minX: 43.2, maxX: 52.6, minZ: 74.2, maxZ: 75.8 } },
-    { a: "kanal-w-top", b: "kanal-bridge-n" },
-    { a: "kanal-bridge-n", b: "kanal-e-foot", via: { minX: 53.4, maxX: 62.8, minZ: 80.2, maxZ: 81.8 } },
-    { a: "kanal-e-foot", b: "kanal-street-e" },
-  ],
-};
-
-export const KANAL_PROPS: readonly StaticProp[] = [
-  slab(29, -0.1, 71, v(74, 0.2, 40), "asphalt"),
-  // Strip of road under the market gate, below the market's own ground (6 cm: no z-fighting).
-  slab(72, -0.16, 78, v(12, 0.2, 12), "asphalt"),
-  slab(35, 0.04, 81.2, v(62, 0.08, 1.6), "concrete"),
-  // West of segment A, closing the bend.
-  building(-2, 71, 12, 18, 38, "concrete", skin("tenement", "x+", { street: 6 })),
-  // South of segment B: one long block that hides Shinsekai from the eastern half of the street.
-  ...facadeRow(rng, 10, 66, 63, 22, [12, 20], [16, 20], "z+", 8),
-  // North of segment B, with the passage into the docks (ADR-0024).
-  ...withPassage(facadeRow(rng, 4, 66, 86, 8, [10, 22], [13, 17], "z-", 8), DOKI_PASSAGE.x0, DOKI_PASSAGE.x1),
-  slab((DOKI_PASSAGE.x0 + DOKI_PASSAGE.x1) / 2, 0.03, 86, v(DOKI_PASSAGE.x1 - DOKI_PASSAGE.x0, 0.06, 8), "concrete"),
-  neon((DOKI_PASSAGE.x0 + DOKI_PASSAGE.x1) / 2, 6.4, 81.9, v(4.4, 1.2, 0.15), "#39d0ff", "DOKI"),
-  // Kiosk just inside the market gate: the street's view ends on it, not on the market behind.
-  // Sachiko sells over its west counter (ADR-0026); the city kit hangs its shop signs there.
-  building(74, 78, 6, 3.2, 10, "metal", skin("shop", "x-")),
-  // Clutter.
-  crate(8.7, 58, 1.4, 1.3, 2.6, skin("dumpster", "x-")),
-  crate(5.2, 70, 0.9, 1.1, 0.9),
-  // A box truck parked on the south kerb.
-  crate(30, 76.4, 6, 2.6, 2.2, skin("van", "x+")),
-  neon(9.9, 6, 62, v(0.15, 4.5, 1.4), "#ffb000", "SAKE"),
-  neon(13, 5.2, 81.9, v(7, 1.3, 0.15), "#ff2e88", "KARAOKE"),
-  neon(44, 7, 81.9, v(5, 1.4, 0.15), "#00e5ff", "DENKI"),
-  lamp(9.3, 67, "#9ad7ff"),
-  lamp(50, 81.2, "#ffcf8a"),
-  ...footbridge(),
-  // ADR-0026, appended so the props above keep their order. Tetsu's table of gadgets in front
-  // of DENKI, and crates under the footbridge where Hebi meet (Kaito's site `kanal_bridge`).
-  // Both crates keep off the middle of the road (Z ∈ [77.4, 80.4]), where traffic and chases run.
-  crate(42.6, 80.9, 1.4, 0.9, 0.7),
-  crate(53, 80.9, 1.2, 0.9, 1.0),
-  crate(51.2, 76.9, 0.9, 0.8, 0.9),
-];
-
-/**
- * Where the people of Ulica Kanałowa stand (ADR-0026). Hideo, a clerk from the Tessen office,
- * crosses the footbridge to work and back to the SAKE bar; Mei sings at KARAOKE by night;
- * Tetsu keeps DENKI; Sachiko the kiosk at the market gate.
- */
-export const KANAL_SPOTS = {
-  hideoSake: v(8.6, 0, 63.5),
-  hideoHome: v(4.7, 0, 76),
-  hideoKiosk: v(69.9, 0, 75.6),
-  meiKaraoke: v(14, 0, 80.9),
-  meiHome: v(5.3, 0, 80.4),
-  tetsu: v(44.6, 0, 80.9),
-  sachiko: v(70.4, 0, 79.6),
-} as const;
-
-/**
- * Hideo's way over the footbridge from the west kerb to the market gate (ADR-0026), on the
- * walkable surface: the west flight, the walkway, the east flight. Reversed for the way back.
- */
-export const FOOTBRIDGE_WALK: readonly Vec3[] = [
-  v(40, 0, 78.6),
-  v(43.4, 0, 75),
-  v(52, FOOTBRIDGE_TOP, 75),
-  v(52.6, FOOTBRIDGE_TOP, 75.4),
-  v(53, FOOTBRIDGE_TOP, 81),
-  v(54, FOOTBRIDGE_TOP, 81),
-  v(62, 0, 81),
-  v(63, 0, 81),
-  v(66, 0, 78.6),
-];
-
-export const KANAL_ACTORS: readonly ActorDef[] = [
-  {
-    kind: "npc",
-    spawn: { key: "hideo", position: KANAL_SPOTS.hideoSake, yaw: -Math.PI / 2 },
-    preset: "civilian",
-    faction: "civilians",
-    bystander: true,
-    interactable: { kind: "dialogue", dialogueId: "hideo", prompt: "Rozmawiaj z Hideo", radius: 2.4 },
-  },
-  {
-    kind: "npc",
-    spawn: { key: "tetsu", position: KANAL_SPOTS.tetsu, yaw: Math.PI },
-    preset: "civilian",
-    faction: "civilians",
-    bystander: true,
-    interactable: { kind: "dialogue", dialogueId: "tetsu", prompt: "Rozmawiaj z Tetsu (DENKI)", radius: 2.4 },
-  },
-  {
-    kind: "npc",
-    spawn: { key: "mei", position: KANAL_SPOTS.meiKaraoke, yaw: Math.PI },
-    preset: "civilian",
-    faction: "civilians",
-    bystander: true,
-    interactable: { kind: "dialogue", dialogueId: "mei", prompt: "Rozmawiaj z Mei", radius: 2.4 },
-  },
-  {
-    kind: "npc",
-    spawn: { key: "sachiko", position: KANAL_SPOTS.sachiko, yaw: -Math.PI / 2 },
-    preset: "civilian",
-    faction: "civilians",
-    bystander: true,
-    interactable: { kind: "dialogue", dialogueId: "sachiko", prompt: "Kiosk Sachiko", radius: 2.4 },
-  },
-];
-
-/** Kaito's job under the footbridge (ADR-0026): Hebi trading chips in the shadow of the walkway. */
-export const KANAL_CONTRACT_SITE_SPAWNS: Readonly<Record<"kanal_bridge", readonly Vec3[]>> = {
-  kanal_bridge: [v(53.2, 0, 78.2), v(49.5, 0, 77.4), v(56.5, 0, 77.8), v(52.8, 0, 76.4)],
-};
-
-/** A bag left behind the dumpster by the passage to Shinsekai (ADR-0026). */
-export const KANAL_ALLEY_STASH: RoofStash = {
-  key: "stash:kanal-alley",
-  at: v(9.1, 0, 55.6),
-  lines: [
-    { kind: "eddies", qty: 60 },
-    { kind: "stack", item: "bandage", qty: 1 },
-    { kind: "stack", item: "yakitori", qty: 2 },
-    { kind: "stack", item: "scrap", qty: 2 },
-  ],
-};
+/** A point of the market in the world: its own coordinates moved by `MARKET_PLACE`. */
+export const market = (x: number, y: number, z: number): Vec3 => placeAt(MARKET_PLACE, v(x, y, z));
 
 // ---------------------------------------------------------------- Targ pod estakadą
 
-export const TARG_SOUTH_BOUNDS: Rect = { minX: 66, maxX: 126, minZ: 56, maxZ: 84 };
-export const TARG_NORTH_BOUNDS: Rect = { minX: 66, maxX: 126, minZ: 82, maxZ: 116 };
+/** The two halves of the market in the world: the square and the hall, the viaduct and the north stalls. */
+export const TARG_SOUTH_BOUNDS: Rect = placeRect(MARKET_PLACE, { minX: 66, maxX: 126, minZ: 56, maxZ: 84 });
+export const TARG_NORTH_BOUNDS: Rect = placeRect(MARKET_PLACE, { minX: 66, maxX: 126, minZ: 82, maxZ: 116 });
 
 /** Oyaji keeps the first stall of the southern row. */
 const OYAJI_STALL = { x: 80, z: 68 } as const;
@@ -308,7 +136,7 @@ const southBlock = (x: number): { x0: number; x1: number; top: number } => {
   throw new Error(`no facade at x = ${x}`);
 };
 
-/** Height of the fire escape balcony on the market face of the south row. */
+/** Height of the fire escape balcony on the market face of the south row, above the market's floor. */
 export const BALCONY_TOP = 4.5;
 /** North face of the south row (the market side). */
 const ROW_FACE = 64;
@@ -318,6 +146,7 @@ const HANG = 0.4;
 const ROOF_WEST = southBlock(70);
 const ROOF_MID = southBlock(88);
 const ROOF_EAST = southBlock(105);
+/** Roof heights of the south row above the market's floor (add `MARKET_PLACE.y` for the world). */
 export const ROOF_WEST_TOP = ROOF_WEST.top;
 export const ROOF_MID_TOP = ROOF_MID.top;
 
@@ -354,7 +183,7 @@ export interface RoofStash {
 
 export const TARG_ROOF_STASH: RoofStash = {
   key: "stash:targ-roof",
-  at: v(91.2, ROOF_MID_TOP, 60.4),
+  at: market(91.2, ROOF_MID_TOP, 60.4),
   lines: [
     { kind: "eddies", qty: 180 },
     { kind: "ammo", ammo: "556", qty: 30 },
@@ -363,12 +192,8 @@ export const TARG_ROOF_STASH: RoofStash = {
   ],
 };
 
-export const TARG_SOUTH_PROPS: readonly StaticProp[] = [
-  slab(96, -0.1, 70, v(60, 0.2, 28), "asphalt"),
-  // Outer walls; the gap in the west wall (Z ∈ [74, 82]) is the gate from Ulica Kanałowa.
-  building(67, 65, 2, 8, 18, "metal"),
-  building(96, 57, 60, 6, 2, "metal"),
-  building(125, 70, 2, 8, 28, "metal"),
+/** The market's square: the hall (south row), the east houses, the stalls, Sachiko's kiosk by the gate. */
+const SOUTH_PROPS: readonly StaticProp[] = [
   ...SOUTH_ROW,
   ...facadeRow(rng, 114, 124, 64, 12, [12, 20], [10, 10], "x-"),
   ...facadeRow(rng, 114, 124, 77, 14, [12, 20], [10, 10], "x-"),
@@ -381,7 +206,11 @@ export const TARG_SOUTH_PROPS: readonly StaticProp[] = [
   lamp(110, 73, "#ff9ad0"),
   lamp(88, 72.5, "#9ad7ff"),
   ...fireEscape(),
+  // Sachiko's kiosk just inside the gate, her counter on its west side (ADR-0026).
+  building(74, 78, 6, 3.2, 10, "metal", skin("shop", "x-")),
 ];
+
+export const TARG_SOUTH_PROPS: readonly StaticProp[] = placeProps(MARKET_PLACE, SOUTH_PROPS);
 
 const STALL_SIGNS = [
   ["RAMEN", "#ffb000"],
@@ -456,12 +285,11 @@ const overpass = (): StaticProp[] => {
   ];
 };
 
-export const TARG_NORTH_PROPS: readonly StaticProp[] = [
-  slab(96, -0.1, 100, v(60, 0.2, 32), "asphalt"),
-  building(67, 99, 2, 8, 34, "metal"),
-  building(96, 115, 60, 6, 2, "metal"),
+/** The viaduct with its stairs and lift, the pillars, the north stalls and Hebi's corner. */
+const NORTH_PROPS: readonly StaticProp[] = [
+  // The east wall under the viaduct's end: Hebi's corner backs onto it (the camera, the HEBI sign).
   building(125, 100, 2, 8, 32, "metal"),
-  // The elevated highway: a deck on six pillars, walkable underneath and, since ADR-0020, on top.
+  // The viaduct: a deck on six pillars, walkable underneath and, since ADR-0020, on top.
   ...overpass(),
   ...[78, 96, 114].flatMap((x) => [building(x, 88.5, 1.4, 8.5, 1.4), building(x, 95.5, 1.4, 8.5, 1.4)]),
   neon(96, 7.4, 86.9, v(8, 1.4, 0.15), "#ffb000", "TARG"),
@@ -469,12 +297,13 @@ export const TARG_NORTH_PROPS: readonly StaticProp[] = [
   // Hebi stash in the east corner under the highway: cover in front of the crate.
   crate(119.8, 92, 1.0, 1.1, 2.4),
   crate(122.5, 96.6, 1.6, 1.4, 1.4),
-  ...facadeRow(rng, 68, 124, 110, 8, [10, 18], [12, 18], "z-"),
   lamp(116, 99, "#ffcf8a"),
   // ADR-0026, hand-placed after the generated rows: no random number moves. A car left on the
   // highway deck since the night of the blockade, cover on the west end of the walkway.
   { ...crate(76, 90, 4.2, 1.5, 2, skin("car", "x+")), center: v(76, OVERPASS_TOP + 0.75, 90) },
 ];
+
+export const TARG_NORTH_PROPS: readonly StaticProp[] = placeProps(MARKET_PLACE, NORTH_PROPS);
 
 /**
  * Level graph of the market (ADR-0021): the floor between the stall rows, the west end under
@@ -482,7 +311,7 @@ export const TARG_NORTH_PROPS: readonly StaticProp[] = [
  * out on purpose (NPCs take the stairs), and so are the fire escape ladders: two points on the
  * market floor that see over the roof edges are firing positions instead.
  */
-export const TARG_NAV: NavGraph = {
+const LOCAL_NAV: NavGraph = {
   nodes: [
     { id: "targ-floor-c", at: v(92, 0, 84) },
     { id: "targ-floor-w", at: v(72, 0, 85.5) },
@@ -516,10 +345,12 @@ export const TARG_NAV: NavGraph = {
   ],
 };
 
+export const TARG_NAV: NavGraph = placeNav(MARKET_PLACE, LOCAL_NAV);
+
 /** What the car abandoned on the highway deck still holds (ADR-0026). */
 export const TARG_OVERPASS_STASH: RoofStash = {
   key: "stash:targ-overpass",
-  at: v(75.2, OVERPASS_TOP, 91.6),
+  at: market(75.2, OVERPASS_TOP, 91.6),
   lines: [
     { kind: "eddies", qty: 120 },
     { kind: "ammo", ammo: "9mm", qty: 18 },
@@ -535,9 +366,9 @@ export const TARG_OVERPASS_STASH: RoofStash = {
  * to his stall, and a keeper there would stand in their way.
  */
 export const STALL_KEEPERS = {
-  kenta: v(77.2, 0, 103.4),
-  fumiko: v(93.6, 0, 103.4),
-  goro: v(103.1, 0, 103.4),
+  kenta: market(77.2, 0, 103.4),
+  fumiko: market(93.6, 0, 103.4),
+  goro: market(103.1, 0, 103.4),
 } as const;
 
 /** Oyaji can be hurt: Hebi come for him in Hana's protection jobs. */
@@ -548,11 +379,11 @@ export const OYAJI_MAX_HP = 120;
  * ladder, near Hebi's stash (act II, ADR-0023). He turns up once someone told Seki where he is
  * and is gone after the "kagami" ending, when Kagami takes him.
  */
-export const REN_SPOT: Vec3 = v(86, ROOF_MID_TOP, 59.6);
+export const REN_SPOT: Vec3 = market(86, ROOF_MID_TOP, 59.6);
 
 /** Kurosawa of Kagami waits on the overpass deck, and his cleaners come from the lift side. */
-export const KUROSAWA_SPOT: Vec3 = v(100, OVERPASS_TOP, 92);
-const CLEANER_SPOTS: readonly Vec3[] = [v(105, OVERPASS_TOP, 89.5), v(107, OVERPASS_TOP, 94.5), v(111, OVERPASS_TOP, 92)];
+export const KUROSAWA_SPOT: Vec3 = market(100, OVERPASS_TOP, 92);
+const CLEANER_SPOTS: readonly Vec3[] = [market(105, OVERPASS_TOP, 89.5), market(107, OVERPASS_TOP, 94.5), market(111, OVERPASS_TOP, 92)];
 
 /** Tag of the cleaners (their deaths raise `killed:kagami_cleaner`). */
 export const KAGAMI_CLEANER_TAG = "kagami_cleaner";
@@ -587,7 +418,7 @@ const CLEANERS: readonly ActorDef[] = KAGAMI_CLEANER_KEYS.map(
 export const TARG_SOUTH_ACTORS: readonly ActorDef[] = [
   {
     kind: "npc",
-    spawn: { key: "oyaji", position: v(OYAJI_STALL.x, 0, OYAJI_STALL.z - 1.4), yaw: 0 },
+    spawn: { key: "oyaji", position: market(OYAJI_STALL.x, 0, OYAJI_STALL.z - 1.4), yaw: 0 },
     preset: "civilian",
     faction: "civilians",
     bystander: true,
@@ -597,16 +428,24 @@ export const TARG_SOUTH_ACTORS: readonly ActorDef[] = [
   },
   {
     kind: "npc",
-    spawn: { key: "hana", position: v(HANA_SPOT.x, 0, HANA_SPOT.z), yaw: -Math.PI / 2 },
+    spawn: { key: "hana", position: market(HANA_SPOT.x, 0, HANA_SPOT.z), yaw: -Math.PI / 2 },
     preset: "civilian",
     faction: "civilians",
     interactable: { kind: "dialogue", dialogueId: "hana", prompt: "Rozmawiaj z Haną", radius: 2.4 },
   },
   REN,
+  {
+    kind: "npc",
+    spawn: { key: "sachiko", position: market(70.4, 0, 79.6), yaw: -Math.PI / 2 },
+    preset: "civilian",
+    faction: "civilians",
+    bystander: true,
+    interactable: { kind: "dialogue", dialogueId: "sachiko", prompt: "Kiosk Sachiko", radius: 2.4 },
+  },
 ];
 
 export const TARG_NORTH_ACTORS: readonly ActorDef[] = [
-  { kind: "ganger", spawn: { key: "hebi-lookout", position: v(104, 0, 92), yaw: Math.PI, tag: null } },
+  { kind: "ganger", spawn: { key: "hebi-lookout", position: market(104, 0, 92), yaw: Math.PI, tag: null } },
   KUROSAWA,
   ...CLEANERS,
   {
@@ -641,10 +480,10 @@ export const TARG_NORTH_ACTORS: readonly ActorDef[] = [
  * its points are around Hana's cart, kept for symmetry.
  */
 export const TARG_CONTRACT_SITE_SPAWNS: Readonly<Record<"hana_stall" | "hebi_stash" | "raid_north" | "raid_east", readonly Vec3[]>> = {
-  hana_stall: [v(90.5, 0, 74), v(90.5, 0, 75.5), v(90.5, 0, 72.5), v(89, 0, 74)],
-  hebi_stash: [v(118, 0, 89), v(119.5, 0, 95.5), v(116.5, 0, 92.5), v(121.5, 0, 88)],
-  raid_north: [v(90, 0, 91), v(94, 0, 93), v(98, 0, 90.5), v(86, 0, 92.5)],
-  raid_east: [v(110, 0, 74), v(111.5, 0, 78), v(108.5, 0, 71.5), v(112, 0, 81)],
+  hana_stall: [market(90.5, 0, 74), market(90.5, 0, 75.5), market(90.5, 0, 72.5), market(89, 0, 74)],
+  hebi_stash: [market(118, 0, 89), market(119.5, 0, 95.5), market(116.5, 0, 92.5), market(121.5, 0, 88)],
+  raid_north: [market(90, 0, 91), market(94, 0, 93), market(98, 0, 90.5), market(86, 0, 92.5)],
+  raid_east: [market(110, 0, 74), market(111.5, 0, 78), market(108.5, 0, 71.5), market(112, 0, 81)],
 };
 
 /**
@@ -653,13 +492,13 @@ export const TARG_CONTRACT_SITE_SPAWNS: Readonly<Record<"hana_stall" | "hebi_sta
  * Hana. Their yaw is the direction from each spawn point to this point.
  */
 export const TARG_CONTRACT_SITE_FACING: Readonly<Record<"hana_stall" | "hebi_stash" | "raid_north" | "raid_east", Vec3>> = {
-  hana_stall: v(HANA_SPOT.x, 0, HANA_SPOT.z),
-  hebi_stash: v(100, 0, 90),
-  raid_north: v(OYAJI_STALL.x, 0, OYAJI_STALL.z - 1.4),
-  raid_east: v(OYAJI_STALL.x, 0, OYAJI_STALL.z - 1.4),
+  hana_stall: market(HANA_SPOT.x, 0, HANA_SPOT.z),
+  hebi_stash: market(100, 0, 90),
+  raid_north: market(OYAJI_STALL.x, 0, OYAJI_STALL.z - 1.4),
+  raid_east: market(OYAJI_STALL.x, 0, OYAJI_STALL.z - 1.4),
 };
 
 /** Where the crate of a retrieval job lies (centre of the box). */
 export const CONTRACT_ITEM_SPOTS: Readonly<Partial<Record<ContractSiteId, Vec3>>> = {
-  hebi_stash: v(122.2, 0.3, 92),
+  hebi_stash: market(122.2, 0.3, 92),
 };

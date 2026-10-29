@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { type AudioCue, type AudioPort, EMPTY_INPUT, type InputFrame, type RenderPort, recallDialogueId } from "@seki/core";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
-import { CROUCH_TIME, SIM_DT, type Entity } from "@seki/sim";
+import { CROUCH_TIME, SIM_DT, type Entity, ground } from "@seki/sim";
 import { createUiStore } from "@seki/ui";
 import { nearKaito } from "./story-helpers";
 import { GameSession, RECALL_CALM_TICKS } from "../src/game-session";
@@ -52,7 +52,7 @@ const steps = (s: GameSession, n: number, input: InputFrame = EMPTY_INPUT) => {
 };
 
 const teleport = (e: Entity, x: number, z: number, yaw = 0) => {
-  e.position = { x, y: 0, z };
+  e.position = ground(x, z);
   e.prevPosition = e.position;
   e.yaw = yaw;
   e.prevYaw = yaw;
@@ -119,7 +119,8 @@ describe("violence interrupts a conversation (app loop)", () => {
     steps(session, 1, frame({ interact: true }));
     expect(ui.getState().shopOpen).toBe(true);
     const guard = byKey(session, "guard");
-    teleport(guard, mori.position.x + 1.5, mori.position.z + 5, Math.PI);
+    // Across the clinic from the counter, in the room (the clinic faces the deptak, ADR-0045).
+    teleport(guard, mori.position.x + 1.5, mori.position.z - 5, 0);
     guard.ai!.alerted = true;
     for (let i = 0; i < 600 && ui.getState().shopOpen; i++) steps(session, 1);
     expect(ui.getState().shopOpen).toBe(false);

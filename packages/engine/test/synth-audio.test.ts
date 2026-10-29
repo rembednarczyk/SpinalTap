@@ -261,12 +261,13 @@ describe("SynthAudio voices and performance", () => {
     audio.unlock();
     audio.setListener(pose(0, -60));
     const far = audio.positional;
-    audio.setListener(pose(5.8, 2));
+    // On the deptak west of the Neon Koi sign, facing north; by the manhole (ADR-0045).
+    audio.setListener(pose(311, -91));
     const sign = audio.positional;
-    audio.setListener(pose(1.8, 5.5));
+    audio.setListener(pose(312.5, -81));
     const vent = audio.positional;
     expect(sign.hum.gain).toBeGreaterThan(far.hum.gain);
-    expect(sign.hum.pan).toBeGreaterThan(0); // the bar is on the east (right) side
+    expect(sign.hum.pan).toBeGreaterThan(0); // the bar's sign is on the east (right) side
     expect(vent.steam.gain).toBeGreaterThan(far.steam.gain);
   });
 

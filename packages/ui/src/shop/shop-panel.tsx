@@ -33,7 +33,7 @@ interface Counter {
 const COUNTER: Readonly<Record<ShopId, Counter>> = {
   clinic: {
     label: "Klinika doktora Mori",
-    eyebrow: "Klinika · Shinsekai 7",
+    eyebrow: "Klinika · Krakowskie Przedmieście",
     title: "Doktor Mori",
     quote: "„Płacisz z góry. Znieczulenie wliczone, gwarancja nie.”",
     talk: "Porozmawiaj z Mori",
@@ -42,7 +42,7 @@ const COUNTER: Readonly<Record<ShopId, Counter>> = {
   },
   oyaji: {
     label: "Stragan Oyajiego",
-    eyebrow: "Stragan · Targ pod estakadą",
+    eyebrow: "Stragan · Targ na Podzamczu",
     title: "Oyaji",
     quote: "„Wszystko działa. Prawie wszystko. Skupuję, naprawiam, nie pytam skąd.”",
     talk: "Porozmawiaj z Oyajim",
@@ -51,7 +51,7 @@ const COUNTER: Readonly<Record<ShopId, Counter>> = {
   },
   yatai: {
     label: "Ramen u Fumiko",
-    eyebrow: "Stragan z ramenem · Targ pod estakadą",
+    eyebrow: "Stragan z ramenem · Podzamcze, przy dworcu",
     title: "Fumiko",
     quote: "„Tonkotsu albo yakitori. Innego menu nie ma i nie będzie.”",
     talk: "Porozmawiaj z Fumiko",

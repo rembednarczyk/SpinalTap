@@ -25,7 +25,19 @@ import {
   residentOf,
   roundCorners,
   stateHash,
+  ROOM_SITES,
+  WORLD_SCENERY,
+  docks,
+  ground,
+  groundY,
+  inBuilding,
+  koiPoint,
+  nearestWall,
 } from "../src";
+
+/** The chunks of Lublin with the market and the docks (ADR-0045). */
+const MARKET = "podzamcze-1-0";
+const DOCKS = "nabrzeze-1-1";
 import type { Entity } from "../src";
 import { asideFor } from "../src/systems/ai/crowd-walk";
 import { byKey, input, run, teleportPlayer } from "./helpers";
@@ -33,6 +45,9 @@ import { byKey, input, run, teleportPlayer } from "./helpers";
 vi.setConfig({ testTimeout: 30_000 });
 
 const at = (x: number, z: number) => ({ x, y: 0, z });
+/** The deptak between the clinic and Neon Koi (ADR-0045), and the chunk it lies in. */
+const DEPTAK = ground(300, -84);
+const S7 = "krakowskie-2-0";
 const flat = (a: { x: number; z: number }, b: { x: number; z: number }) => Math.hypot(a.x - b.x, a.z - b.z);
 const hash = (sim: Simulation) => stateHash(sim.snapshot(null, "t", ""));
 const roundTrip = (s: SaveSnapshot): SaveSnapshot => JSON.parse(JSON.stringify(s)) as SaveSnapshot;
@@ -48,26 +63,33 @@ const skipTo = (sim: Simulation, minute: number) => {
   sim.step();
 };
 
-/** Solids at foot level: what a walker would bump into. */
-const solids = WORLD_CHUNKS.flatMap((c) => c.props.flatMap((p) => (p.solid && p.view.kind === "block" ? [aabbFromCenter(p.center, p.view.size)] : []))).filter(
-  (b) => b.max.y > 0.3 && b.min.y < 1.8,
+/** Solids at foot level: what a walker would bump into (blocks above their ground, ADR-0045). */
+const solids = WORLD_CHUNKS.flatMap((c) =>
+  c.props.flatMap((p) => {
+    if (!p.solid || p.view.kind !== "block") return [];
+    const b = aabbFromCenter(p.center, p.view.size);
+    const floor = groundY(p.center.x, p.center.z);
+    return b.max.y > floor + 0.3 && b.min.y < floor + 1.8 ? [b] : [];
+  }),
 );
+/** In a room cut into a tenement (ADR-0045): its own shell of blocks are its walls. */
+const inRoom = (x: number, z: number) => ROOM_SITES.some((r) => x >= r.rect.minX && x <= r.rect.maxX && z >= r.rect.minZ && z <= r.rect.maxZ);
+/** Distance to the nearest solid: a block, or a wall of the map's buildings (0 inside one). */
 const clearance = (x: number, z: number) =>
-  Math.min(...solids.map((b) => Math.hypot(Math.max(b.min.x - x, 0, x - b.max.x), Math.max(b.min.z - z, 0, z - b.max.z))));
+  Math.min(
+    inRoom(x, z) ? Infinity : inBuilding(x, z) ? 0 : nearestWall(x, z).d,
+    ...solids.map((b) => Math.hypot(Math.max(b.min.x - x, 0, x - b.max.x), Math.max(b.min.z - z, 0, z - b.max.z))),
+  );
 
-describe("sidewalks (ADR-0041)", () => {
-  it("lie in their chunk, flat and low, and every crossing joins two of them across a road", () => {
+describe("sidewalks (ADR-0041, ADR-0045)", () => {
+  it("come from the map in Lublin: the game keeps no hand-made strips of its own", () => {
     expect(SIDEWALK_HEIGHT).toBeLessThan(0.2);
-    for (const w of SIDEWALKS) {
-      const b = WORLD_CHUNKS.find((c) => c.id === w.chunk)!.bounds;
-      expect(w.minX >= b.minX && w.maxX <= b.maxX && w.minZ >= b.minZ && w.maxZ <= b.maxZ, `${w.chunk} ${w.minX},${w.minZ}`).toBe(true);
-      expect(w.maxX - w.minX).toBeGreaterThan(1);
-      expect(w.maxZ - w.minZ).toBeGreaterThan(1);
-    }
-    for (const c of CROSSINGS) expect(WORLD_CHUNKS.some((k) => k.id === c.chunk)).toBe(true);
-    expect(new Set(SIDEWALKS.map((w) => w.chunk))).toEqual(new Set(["shinsekai-7", "kanal", "targ-south", "targ-north", "doki-yard", "doki-quay"]));
-    expect(onSidewalk(-6, 0)).toBe(true);
-    expect(onSidewalk(0, 0)).toBe(false);
+    expect(SIDEWALKS).toEqual([]);
+    expect(CROSSINGS).toEqual([]);
+    expect(onSidewalk(DEPTAK.x, DEPTAK.z)).toBe(false);
+    // The map's own sidewalks and squares are the scenery's surfaces.
+    const surfaces = new Set(WORLD_SCENERY.flatMap((s) => (s.view.kind === "ground" ? [s.view.surface] : [])));
+    for (const s of ["sidewalk", "footway", "square", "road"]) expect(surfaces.has(s as never), s).toBe(true);
   });
 });
 
@@ -122,25 +144,25 @@ describe("routes and spots of the crowd", () => {
 });
 
 describe("how many and who (ADR-0041)", () => {
-  it("the market is full in the evening, the docks are empty at night, Shinsekai lives at night", () => {
+  it("the market is full in the evening, the docks are empty at night, the deptak lives at night", () => {
     const high = CROWD_CAP.high;
-    expect(crowdCount("targ-south", high, clockAt(19))).toBe(high);
-    expect(crowdCount("targ-south", high, clockAt(3))).toBeLessThan(3);
-    expect(crowdCount("doki-quay", high, clockAt(23))).toBe(0);
-    expect(crowdCount("doki-quay", high, clockAt(10))).toBeGreaterThan(4);
-    expect(crowdCount("shinsekai-7", high, clockAt(22))).toBe(high);
-    expect(crowdCount("shinsekai-7", high, clockAt(5))).toBeLessThan(crowdCount("shinsekai-7", high, clockAt(22)) / 3);
+    expect(crowdCount(MARKET, high, clockAt(19))).toBe(high);
+    expect(crowdCount(MARKET, high, clockAt(3))).toBeLessThan(3);
+    expect(crowdCount(DOCKS, high, clockAt(23))).toBe(0);
+    expect(crowdCount(DOCKS, high, clockAt(10))).toBeGreaterThan(4);
+    expect(crowdCount(S7, high, clockAt(22))).toBe(high);
+    expect(crowdCount(S7, high, clockAt(5))).toBeLessThan(crowdCount(S7, high, clockAt(22)) / 3);
     // Phones: a few per chunk at most.
     for (const chunk of Object.keys(CROWD_CHUNKS)) for (let h = 0; h < 24; h++) expect(crowdCount(chunk, CROWD_CAP.low, clockAt(h))).toBeLessThanOrEqual(4);
-    expect(crowdCount("shinsekai-7", CROWD_CAP.off, clockAt(22))).toBe(0);
+    expect(crowdCount(S7, CROWD_CAP.off, clockAt(22))).toBe(0);
     expect(crowdCount("nowhere", high, clockAt(22))).toBe(0);
   });
 
   it("who a resident is depends on the seed, the chunk and its index only; nobody indoors carries an umbrella", () => {
-    const a = residentOf(7, "shinsekai-7", 4);
-    expect(residentOf(7, "shinsekai-7", 4)).toBe(a);
-    expect(residentOf(8, "shinsekai-7", 4)?.look).not.toBe(a?.look);
-    const all = Array.from({ length: 200 }, (_, seed) => Array.from({ length: CROWD_CAP.high }, (_, i) => residentOf(seed, "shinsekai-7", i)!)).flat();
+    const a = residentOf(7, S7, 4);
+    expect(residentOf(7, S7, 4)).toBe(a);
+    expect(residentOf(8, S7, 4)?.look).not.toBe(a?.look);
+    const all = Array.from({ length: 200 }, (_, seed) => Array.from({ length: CROWD_CAP.high }, (_, i) => residentOf(seed, S7, i)!)).flat();
     const indoor = all.filter((r) => r.role.kind === "stander" && r.role.spot.indoor);
     expect(indoor.length).toBeGreaterThan(0);
     expect(indoor.every((r) => !r.umbrella)).toBe(true);
@@ -149,19 +171,19 @@ describe("how many and who (ADR-0041)", () => {
     expect(share).toBeGreaterThan(0.25);
     expect(share).toBeLessThan(0.45);
     // A third stands, the rest walk, both ways round the routes.
-    const roles = Array.from({ length: CROWD_CAP.high }, (_, i) => residentOf(3, "targ-south", i)!.role);
+    const roles = Array.from({ length: CROWD_CAP.high }, (_, i) => residentOf(3, MARKET, i)!.role);
     expect(roles.filter((r) => r.kind === "stander")).toHaveLength(4);
     const walkers = roles.flatMap((r) => (r.kind === "walker" ? [r] : []));
-    expect(new Set(walkers.map((w) => `${w.lane.id}:${w.dir}`)).size).toBe(4);
-    // Without a route a chunk's residents all stand, as many as there are spots.
-    expect(residentOf(3, "doki-yard", 0)?.role.kind).toBe("stander");
-    expect(residentOf(3, "doki-yard", 5)).toBeNull();
+    // Three routes in the market, both ways round each.
+    expect(new Set(walkers.map((w) => `${w.lane.id}:${w.dir}`)).size).toBe(6);
+    // A chunk without routes or spots has nobody.
+    expect(residentOf(3, "podzamcze-2-0", 0)).toBeNull();
   });
 
   it("walkers one way round a lane keep apart and never catch up", () => {
     const groups = new Map<string, { phase: number; speed: number; length: number }[]>();
     for (let i = 0; i < CROWD_CAP.high; i++) {
-      const r = residentOf(12, "shinsekai-7", i)!.role;
+      const r = residentOf(12, S7, i)!.role;
       if (r.kind !== "walker") continue;
       const key = `${r.lane.id}:${r.dir}`;
       groups.set(key, [...(groups.get(key) ?? []), { phase: r.phase, speed: r.speed, length: laneGeom(r.lane).length }]);
@@ -189,14 +211,14 @@ describe("how many and who (ADR-0041)", () => {
 });
 
 describe("the crowd in the simulation", () => {
-  it("is not there without a crowd density, and is there with one: residents of the night in Shinsekai", () => {
+  it("is not there without a crowd density, and is there with one: residents of the night on the deptak", () => {
     const none = Simulation.create({ seed: 4 });
     run(none, 2);
     expect(residents(none)).toHaveLength(0);
     const sim = Simulation.create({ seed: 4, crowd: "high" });
     run(sim, 2);
-    const here = residents(sim, "shinsekai-7");
-    expect(here).toHaveLength(crowdCount("shinsekai-7", CROWD_CAP.high, sim.clock));
+    const here = residents(sim, S7);
+    expect(here).toHaveLength(crowdCount(S7, CROWD_CAP.high, sim.clock));
     for (const r of here) {
       expect(r.id).toBeGreaterThanOrEqual(CROWD_ID_BASE);
       expect(r.key).toBeUndefined();
@@ -204,15 +226,15 @@ describe("the crowd in the simulation", () => {
     }
     const low = Simulation.create({ seed: 4, crowd: "low" });
     run(low, 2);
-    expect(residents(low, "shinsekai-7").length).toBeLessThanOrEqual(CROWD_CAP.low);
+    expect(residents(low, S7).length).toBeLessThanOrEqual(CROWD_CAP.low);
   });
 
   it("walkers go round their route on their own side, standers stand at their spot doing something", () => {
     const sim = Simulation.create({ seed: 6, crowd: "high" });
-    teleportPlayer(sim, at(0, -30), 0);
+    teleportPlayer(sim, DEPTAK, 0);
     run(sim, 2);
-    const walkers = residents(sim, "shinsekai-7").filter((r) => r.passerby?.lane);
-    const standers = residents(sim, "shinsekai-7").filter((r) => !r.passerby?.lane);
+    const walkers = residents(sim, S7).filter((r) => r.passerby?.lane);
+    const standers = residents(sim, S7).filter((r) => !r.passerby?.lane);
     expect(walkers.length).toBeGreaterThan(4);
     expect(standers.length).toBeGreaterThan(0);
     const start = walkers.map((w) => ({ ...w.position }));
@@ -234,7 +256,7 @@ describe("the crowd in the simulation", () => {
 
   it("a shot sends them running; calm again, they walk back to the route and carry on", () => {
     const sim = Simulation.create({ seed: 8, crowd: "high" });
-    teleportPlayer(sim, at(0, 0), 0);
+    teleportPlayer(sim, DEPTAK, Math.PI / 2);
     run(sim, 2);
     const reacted: DomainEvents["CrowdReacted"][] = [];
     sim.bus.on("CrowdReacted", (e) => reacted.push(e));
@@ -242,13 +264,13 @@ describe("the crowd in the simulation", () => {
     sim.step(input({ fire: true }));
     run(sim, 2);
     // The shooter walks off, so nobody stays pinned down by a gun pointed at them.
-    teleportPlayer(sim, at(0, -34), Math.PI);
-    const near = residents(sim, "shinsekai-7").filter((r) => flat(r.position, at(0, 0)) < 15);
+    teleportPlayer(sim, ground(266, -73), -Math.PI / 2);
+    const near = residents(sim, S7).filter((r) => flat(r.position, DEPTAK) < 15);
     expect(near.length).toBeGreaterThan(0);
     expect(reacted.some((e) => e.entityId >= CROWD_ID_BASE)).toBe(true);
     expect(near.some((r) => r.civilian?.crowd?.state !== "calm")).toBe(true);
     run(sim, 40 * SIM_HZ);
-    for (const r of residents(sim, "shinsekai-7")) {
+    for (const r of residents(sim, S7)) {
       expect(r.civilian?.crowd?.state ?? "calm").toBe("calm");
       const w = r.passerby!.lane;
       if (!w) continue;
@@ -260,17 +282,17 @@ describe("the crowd in the simulation", () => {
   it("thins out by the hour, and nobody leaves or comes where the player is looking", () => {
     const sim = Simulation.create({ seed: 2, crowd: "high" });
     skipTo(sim, hm(15));
-    teleportPlayer(sim, at(10, 135), Math.PI);
+    teleportPlayer(sim, docks(10, 0, 135), Math.PI);
     run(sim, 5);
-    const day = residents(sim, "doki-quay").length;
+    const day = residents(sim, DOCKS).length;
     expect(day).toBeGreaterThan(3);
     skipTo(sim, hm(23));
     run(sim, 2 * SIM_HZ);
-    expect(residents(sim, "doki-quay").length).toBeLessThan(day);
+    expect(residents(sim, DOCKS).length).toBeLessThan(day);
     // Far from anyone's eyes they are all gone after a while.
-    teleportPlayer(sim, at(-30, 100), 0);
+    teleportPlayer(sim, docks(-30, 0, 100), 0);
     run(sim, 2 * SIM_HZ);
-    expect(residents(sim, "doki-quay")).toHaveLength(0);
+    expect(residents(sim, DOCKS)).toHaveLength(0);
   });
 
   it("does not change the saved state: same hash with and without, out of the save, back after a load", () => {
@@ -279,8 +301,8 @@ describe("the crowd in the simulation", () => {
     };
     const plain = Simulation.create({ seed: 31 });
     const busy = Simulation.create({ seed: 31, crowd: "high" });
-    teleportPlayer(plain, at(0, -25));
-    teleportPlayer(busy, at(0, -25));
+    teleportPlayer(plain, DEPTAK);
+    teleportPlayer(busy, DEPTAK);
     frames(plain);
     frames(busy);
     expect(residents(busy).length).toBeGreaterThan(5);
@@ -295,15 +317,16 @@ describe("the crowd in the simulation", () => {
 
   it("residents by the Neon Koi door never open it", () => {
     const sim = Simulation.create({ seed: 3, crowd: "high" });
-    teleportPlayer(sim, at(-5, -30), 0);
+    teleportPlayer(sim, DEPTAK, 0);
     run(sim, 2);
-    const r = residents(sim, "shinsekai-7").find((e) => e.passerby?.lane)!;
+    const r = residents(sim, S7).find((e) => e.passerby?.lane)!;
     // Hold one in the doorway's sensor for a while.
     for (let i = 0; i < 60; i++) {
-      r.position = at(6.2, 1.5);
+      r.position = koiPoint(6.2, 0, 1.5);
       sim.step();
     }
-    const door = [...sim.world].find((e) => e.door?.key === "koi-door" || (e.door && Math.abs(e.position.x - 7.15) < 0.3));
+    const door = [...sim.world].find((e) => e.door?.door === "door:neon-koi");
+    expect(door).toBeDefined();
     expect(door?.door?.open ?? 0).toBe(0);
     expect(byKey(sim, "player")).toBeDefined();
   });

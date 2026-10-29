@@ -414,7 +414,13 @@ export class WorldStreamer {
   }
 
   private unload(world: World<Entity>, chunkIds: ReadonlySet<string>): void {
-    const leaving = inCreationOrder([...world].filter((e) => e.chunk !== undefined && chunkIds.has(e.chunk)));
+    const staying = (id: string | undefined): boolean => id !== undefined && this.resident.has(id) && !chunkIds.has(id);
+    // A character on a daily plan walks out of its chunk (300 m down Grodzka in Lublin, ADR-0045):
+    // it sleeps only once neither its own chunk nor the one it stands in stays loaded.
+    const standing = (e: Entity): string | undefined => (e.schedule ? this.chunkIdAt(e.position) : undefined);
+    const leaving = inCreationOrder(
+      [...world].filter((e) => e.chunk !== undefined && (chunkIds.has(e.chunk) || chunkIds.has(standing(e) ?? "")) && !staying(e.chunk) && !staying(standing(e))),
+    );
     for (const e of leaving) {
       // Chasing or looking for the player (ADR-0029): it stays.
       if (e.ai?.alerted || e.ai?.lastKnown) continue;

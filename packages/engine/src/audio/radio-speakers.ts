@@ -27,6 +27,8 @@ export interface RadioSpeaker {
 
 /** Height of the speaker over the street: above the door, under the sign. */
 const SPEAKER_HEIGHT = 2.4;
+/** The speaker hangs this far under the bottom of its sign. */
+const SPEAKER_DROP = 0.4;
 
 /** Speakers of every chunk (or the ones given), one per venue sign. */
 export const radioSpeakers = (chunks: readonly ChunkDef[] = WORLD_CHUNKS): RadioSpeaker[] =>
@@ -34,7 +36,9 @@ export const radioSpeakers = (chunks: readonly ChunkDef[] = WORLD_CHUNKS): Radio
     c.props.flatMap((p) => {
       if (p.view.kind !== "neon" || !p.view.label) return [];
       const station = VENUE_STATIONS[p.view.label];
-      return station ? [{ position: { x: p.center.x, y: SPEAKER_HEIGHT, z: p.center.z }, station, label: p.view.label }] : [];
+      // Under the sign, over the door (the signs hang a metre or two above the speakers).
+      const y = Math.max(p.center.y - p.view.size.y / 2 - SPEAKER_DROP, p.center.y - SPEAKER_HEIGHT);
+      return station ? [{ position: { x: p.center.x, y, z: p.center.z }, station, label: p.view.label }] : [];
     }),
   );
 

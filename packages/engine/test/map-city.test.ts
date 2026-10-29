@@ -49,6 +49,12 @@ describe("facades of map buildings (ADR-0044)", () => {
     planBuildingSigns(signs, shop, () => null);
     const kinds = new Set(Array.from({ length: signs.vertexCount }, (_, i) => signs.uvs2[i * 2 + 1]));
     expect(kinds.has(MAP_SIGN_KIND.board)).toBe(true);
+    // A room the game cut into it hangs the game's own sign: no shop boards of the map's (ADR-0045).
+    const cut = facadeFrame(tenement(2, rect(0, 0, 18, 12), { shopfront: true, doorways: [{ x: 9, z: 0, width: 1.6, bottom: 0, top: 2.6 }] }), none);
+    const cutSigns = new MeshSink();
+    planBuildingSigns(cutSigns, cut, () => null);
+    const cutKinds = new Set(Array.from({ length: cutSigns.vertexCount }, (_, i) => cutSigns.uvs2[i * 2 + 1]));
+    expect(cutKinds.has(MAP_SIGN_KIND.board)).toBe(false);
   });
 
   it("leaves the walls against a neighbour blank, skips those it hides and hangs holo on the firewall above it", () => {

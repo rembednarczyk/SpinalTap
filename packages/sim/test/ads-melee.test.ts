@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { BASE_STATS, type DomainState, type ItemInstance, PARRY_COOLDOWN, WEAPON_CATALOG } from "@seki/core";
 import { KNOCKBACK_SPEED, KNOCKBACK_TIME, MELEE_CHASE_SPEED, RenderSync, SIM_DT, SPRINT_MULTIPLIER, Simulation, aimSpreadOf, gangerEntity, idleMelee, playerStatsOf, type Entity } from "../src";
-import { byKey, collect, input, run, teleportPlayer, streetSim } from "./helpers";
+import { STREET_START, byKey, collect, input, run, teleportPlayer, streetSim } from "./helpers";
 
 const ticks = (seconds: number) => Math.ceil(seconds / SIM_DT - 1e-9);
 const UNITY = WEAPON_CATALOG.unity9;
@@ -24,8 +24,8 @@ const withBaton = (d: DomainState): DomainState => {
 /** A target with plenty of health `z` metres north of the origin (x to the side), facing south. */
 const target = (id: number, x: number, z: number, patch: Partial<Entity> = {}): Entity => ({
   id,
-  position: { x, y: 0, z },
-  prevPosition: { x, y: 0, z },
+  position: { x, y: STREET_START.y, z },
+  prevPosition: { x, y: STREET_START.y, z },
   yaw: Math.PI,
   prevYaw: Math.PI,
   pitch: 0,
@@ -37,7 +37,7 @@ const target = (id: number, x: number, z: number, patch: Partial<Entity> = {}): 
 /** A Hebi brawler (baton) `distance` m north of the player, alerted. */
 const brawler = (sim: Simulation, distance: number): Entity => {
   const p = sim.player()!;
-  const e = gangerEntity(4000, { key: "brawler", position: { x: p.position.x, y: 0, z: p.position.z + distance }, yaw: Math.PI }, null, 10_000, p.chunk ?? "", undefined, "hebi_brawler");
+  const e = gangerEntity(4000, { key: "brawler", position: { x: p.position.x, y: p.position.y, z: p.position.z + distance }, yaw: Math.PI }, null, 10_000, p.chunk ?? "", undefined, "hebi_brawler");
   e.ai!.alerted = true;
   return sim.world.add(e);
 };
@@ -110,7 +110,7 @@ describe("aim down sights (ADR-0019)", () => {
   it("aims a ganger's weapon up while it fights", () => {
     const sim = streetSim({ seed: 11 });
     const guard = byKey(sim, "guard")!;
-    teleportPlayer(sim, { x: guard.position.x, y: 0, z: guard.position.z - 6 });
+    teleportPlayer(sim, { x: guard.position.x, y: guard.position.y, z: guard.position.z - 6 });
     guard.ai!.alerted = true;
     sim.step();
     expect(guard.combatant!.engaged).toBe(true);
@@ -292,7 +292,7 @@ describe("guard and parry (ADR-0019)", () => {
       const sim = Simulation.fromSnapshot({ ...streetSim({ seed: 11 }).snapshot(null, "t", ""), domain: withBaton(streetSim({ seed: 11 }).domain) });
       const guard = byKey(sim, "guard")!;
       for (const g of [...sim.world.with("ai")]) if (g !== guard) sim.world.remove(g);
-      teleportPlayer(sim, { x: guard.position.x, y: 0, z: guard.position.z - 4 }, 0);
+      teleportPlayer(sim, { x: guard.position.x, y: guard.position.y, z: guard.position.z - 4 }, 0);
       guard.ai!.alerted = true;
       const p = sim.player()!;
       const hits = collect<Hit>(sim, "DamageDealt");

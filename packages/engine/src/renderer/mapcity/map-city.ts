@@ -8,7 +8,7 @@ import { sinkToMesh } from "../dressing";
 import { MeshSink } from "../mesh-sink";
 import { type FacadeFrame, type MapBuilding, facadeFrame } from "./facade-frame";
 import { planFarBuilding, planNearBuilding } from "./facade-plan";
-import { planSurface, planTerrain, planWater } from "./ground-plan";
+import { SURFACE_LIFT, planSurface, planTerrain, planWater } from "./ground-plan";
 import { MapSignMaterial } from "./map-signs";
 import { MapWaterMaterial } from "./map-water";
 import { BinIndex, cellBounds, cellKey, cellsOf, grow } from "./map-index";
@@ -40,6 +40,7 @@ const NEAR_BUILDS_PER_FRAME = 2;
 interface BuildingEntry {
   readonly ring: readonly P2[];
   readonly view: Extract<MapView, { kind: "building" }>;
+  readonly at: Vec3;
   readonly base: number;
   readonly bounds: Box2;
   readonly cell: string;
@@ -111,6 +112,8 @@ export class MapCity {
   private readonly cells = new Map<string, Cell>();
   private readonly buildingIndex = new BinIndex();
   private readonly roadIndex = new BinIndex();
+  /** Every surface but water, for the lift of the feet standing on one (ADR-0045). */
+  private readonly surfaceIndex = new BinIndex();
   private readonly signs: MapSignMaterial;
   private readonly water: MapWaterMaterial;
   private readonly lod: MapLod;
@@ -156,12 +159,13 @@ export class MapCity {
     const c = centroid(ring);
     const cell = cellKey(c.x, c.z);
     if (view.kind === "building") {
-      this.buildings.set(id, { ring, view, base: at.y, bounds, cell });
+      this.buildings.set(id, { ring, view, at: { x: at.x, y: at.y, z: at.z }, base: at.y, bounds, cell });
       this.buildingIndex.add(id, bounds);
       this.cellOf(cell).buildings.add(id);
     } else {
       this.grounds.set(id, { surface: view.surface, ring, y: at.y, bounds, cell });
       if (view.surface === "road") this.roadIndex.add(id, bounds);
+      if (view.surface !== "water") this.surfaceIndex.add(id, bounds);
       this.cellOf(cell).grounds.add(id);
     }
     // Neighbours' firewalls and kerbs depend on this one.
@@ -184,6 +188,7 @@ export class MapCity {
     this.grounds.delete(id);
     this.buildingIndex.remove(id);
     this.roadIndex.remove(id);
+    this.surfaceIndex.remove(id);
     const cell = this.cells.get(e.cell);
     cell?.buildings.delete(id);
     cell?.grounds.delete(id);
@@ -202,6 +207,22 @@ export class MapCity {
       if (x >= b.minX - 0.01 && x <= b.maxX + 0.01 && z >= b.minZ - 0.01 && z <= b.maxZ + 0.01) return terrainHeightAt(t.grid, x, z);
     }
     return null;
+  }
+
+  /**
+   * How far the picture lifts feet at (x, y, z) above the terrain (ADR-0045): a character the
+   * simulation keeps on the terrain stands on the surface drawn there (a sidewalk 16 cm up, a
+   * square 8 cm). Feet off the ground (stairs, decks, floors) are left alone.
+   */
+  surfaceLift(x: number, y: number, z: number): number {
+    const ground = this.heightAt(x, z);
+    if (ground === null || Math.abs(y - ground) > 0.3) return 0;
+    let lift = 0;
+    for (const id of this.surfaceIndex.at(x, z)) {
+      const g = this.grounds.get(id);
+      if (g && SURFACE_LIFT[g.surface] > lift && pointInRing({ x, z }, g.ring)) lift = SURFACE_LIFT[g.surface];
+    }
+    return lift;
   }
 
   /** Rebuilds what changed: terrain meshes and the cells' far, sign and ground meshes. */
@@ -232,6 +253,9 @@ export class MapCity {
   }
 
   /** Levels of detail from the camera, the water's ripples and the signs' hum. */
+  /** Cells near the eye still waiting for their detailed buildings after the last update. */
+  private waitingNear = 0;
+
   update(dt: number, eye: Vec3, frozen: boolean): void {
     const rig = this.deps.materials.currentRig;
     if (rig !== this.rig) {
@@ -244,12 +268,15 @@ export class MapCity {
       this.signs.update(dt);
     }
     let builds = 0;
+    let waiting = 0;
     for (const cell of this.cells.values()) {
       const d = Math.hypot(distanceToBox(eye.x, eye.z, cell.bounds), Math.max(eye.y - 2, 0));
       const wantNear = d < this.lod.near + (cell.lod === "near" ? 15 : 0);
-      if (wantNear && (cell.nearDirty || !cell.near) && cell.frames.length > 0 && builds < NEAR_BUILDS_PER_FRAME) {
-        this.buildNear(cell);
-        builds++;
+      if (wantNear && (cell.nearDirty || !cell.near) && cell.frames.length > 0) {
+        if (builds < NEAR_BUILDS_PER_FRAME) {
+          this.buildNear(cell);
+          builds++;
+        } else waiting++;
       }
       if (!wantNear && cell.near && d > this.lod.near * 2) {
         cell.near.dispose(false, false);
@@ -263,6 +290,12 @@ export class MapCity {
       cell.ground?.setEnabled(d < this.lod.ground);
       cell.water?.setEnabled(d < this.lod.ground);
     }
+    this.waitingNear = waiting;
+  }
+
+  /** Every cell near the eye has its detailed buildings (they are built a few per frame). */
+  get settled(): boolean {
+    return this.waitingNear === 0;
   }
 
   /** Night 0 .. day 1 (ADR-0017): lit windows and shop fronts follow, the neon dims. */
@@ -379,6 +412,9 @@ export class MapCity {
       ...(v.roof !== undefined ? { roof: v.roof } : {}),
       ...(v.name ? { name: v.name } : {}),
       shopfront: v.shopfront === true,
+      ...(v.doorways?.length
+        ? { doorways: v.doorways.map((d) => ({ x: d.at.x + e.at.x, z: d.at.z + e.at.z, width: d.width, bottom: d.bottom + e.at.y, top: d.top + e.at.y })) }
+        : {}),
     };
   }
 

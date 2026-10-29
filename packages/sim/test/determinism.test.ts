@@ -5,7 +5,8 @@ import { input, run, streetSim } from "./helpers";
 
 /**
  * Out of Mori's clinic, where a new game starts (ADR-0038): off the chair, through the doorway
- * in the partition, out of the automatic door onto the street, facing north again.
+ * in the partition, out of the automatic door onto the deptak, facing east along it again
+ * (the clinic is a room of a tenement on Krakowskie Przedmieście since ADR-0045).
  */
 const outOfTheClinic = (): ReplayFrame[] => {
   const walk = (n: number): ReplayFrame[] => Array.from({ length: n }, () => ({ input: input({ moveZ: 1 }) }));
@@ -14,7 +15,7 @@ const outOfTheClinic = (): ReplayFrame[] => {
 };
 
 /**
- * A scripted run: out of the clinic, walk north up the street towards the alley, look around,
+ * A scripted run: out of the clinic, sprint east down the deptak towards Plac Łokietka, look around,
  * creep forward crouched, then fire at whatever is ahead while strafing, half of the time
  * crouched, then aimed down sights.
  */
@@ -55,7 +56,7 @@ describe("determinism", () => {
   });
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
-    expect(hashOf(runReplay(1234, script()))).toMatchInlineSnapshot(`"181fbc08"`);
+    expect(hashOf(runReplay(1234, script()))).toMatchInlineSnapshot(`"ca34413e"`);
   });
 
   it("the crowd of residents (ADR-0041) leaves the golden run as it was, at every density", () => {
@@ -67,39 +68,13 @@ describe("determinism", () => {
     }
   });
 
-  it("without the street life of ADR-0026 in the snapshot, the run hashes as before it (content, not rules)", () => {
-    // The run reaches the alley: Ulica Kanałowa streams in with its four new people, and the
-    // stashes behind Neon Koi, behind PACHINKO and by the passage are placed. Nothing else moved.
-    const snap = runReplay(1234, script()).snapshot(null, "test", "");
-    const added = new Set(["hideo", "tetsu", "mei", "sachiko"]);
-    const stash = /^(placed:)?stash:(s7|kanal)-/;
-    // Wave 2 left the run alone and only added fields to the save: the metro and the encounters
-    // of ADR-0034 (v12), the buffs, the shards and the disguise of ADR-0033 (v13).
-    const { metro: _metro, encounters: _encounters, buffs, capacityShards, disguise, ...domain } = snap.domain;
-    expect({ buffs, capacityShards, disguise }).toEqual({ buffs: [], capacityShards: 0, disguise: { role: null, blown: false } });
-    const { doors: _doors, ...rest } = snap;
-    const before = {
-      ...rest,
-      version: 11,
-      entities: snap.entities.filter((e) => !added.has(e.key)),
-      domain: {
-        ...domain,
-        flags: snap.domain.flags.filter((f) => !stash.test(f)),
-        loot: { ...snap.domain.loot, containers: snap.domain.loot.containers.filter((c) => !stash.test(c.key)) },
-      },
-    } as unknown as SaveSnapshot;
-    expect(snap.entities.filter((e) => added.has(e.key))).toHaveLength(4);
-    // The hash of the same run with the rules of ADR-0029 (wave 1), without this content and the wave 2 fields.
-    // Re-recorded for ADR-0038: the run now starts in Mori's clinic and walks out of its door.
-    expect(stateHash(before)).toBe("35b2130d");
-  });
-
   it("without the v13 fields of ADR-0033 the replay hashes as with sim B of wave 2 (fields, not rules)", () => {
     const snap = runReplay(1234, script()).snapshot(null, "test", "");
     const { buffs: _b, capacityShards: _c, disguise: _d, ...domain } = snap.domain;
     const { doors: _doors, ...rest } = snap;
-    // Re-recorded for ADR-0038 (the run starts in the clinic); the v14 door states are left out too.
-    expect(stateHash({ ...rest, version: 12, domain } as unknown as SaveSnapshot)).toBe("09a78a85");
+    // Re-recorded for ADR-0038 (the run starts in the clinic) and ADR-0045 (the clinic is on
+    // Krakowskie Przedmieście); the v14 door states are left out too.
+    expect(stateHash({ ...rest, version: 12, domain } as unknown as SaveSnapshot)).toBe("32388f9c");
   });
 
   it("a loaded snapshot continues exactly like the original run", () => {
@@ -127,7 +102,7 @@ describe("determinism", () => {
       };
       const sim = Simulation.fromSnapshot({ ...snap, domain });
       const p = sim.player()!;
-      const b = gangerEntity(4000, { key: "brawler", position: { x: p.position.x, y: 0, z: p.position.z + 4 }, yaw: Math.PI }, null, 90, p.chunk ?? "", undefined, "hebi_brawler");
+      const b = gangerEntity(4000, { key: "brawler", position: { x: p.position.x, y: p.position.y, z: p.position.z + 4 }, yaw: Math.PI }, null, 90, p.chunk ?? "", undefined, "hebi_brawler");
       b.ai!.alerted = true;
       sim.world.add(b);
       const seen: string[] = [];
@@ -143,7 +118,7 @@ describe("determinism", () => {
     // Swings both ways, a blocked blow and staggers: the duel exercises the whole package.
     for (const t of ["MeleeSwing", "AttackBlocked", "Staggered", "DamageDealt"]) expect(seen).toContain(t);
     expect(hashOf(sim)).toBe(hashOf(duel().sim));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"74312929"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"9dbab235"`);
   });
 
   it("restores killed NPCs as absent", () => {

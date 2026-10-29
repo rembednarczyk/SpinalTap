@@ -1,5 +1,5 @@
 import type { EntityId, Vec3, ViewDescriptor } from "@seki/core";
-import { type ChunkDef, WORLD_CHUNKS, chunkAt, distanceToRect } from "@seki/sim";
+import { type ChunkDef, WORLD_CHUNKS, chunkAt, distanceToRect, groundY } from "@seki/sim";
 import { type Mesh, MeshClass, type Scene, VertexData } from "../babylon";
 import type { ToonMaterials } from "../npr/toon-material";
 import { type DressBlock, type DressSign, planDressing } from "./dressing-plan";
@@ -155,6 +155,7 @@ export class WorldDressing {
         world,
         signs: [...b.signs.values()],
         kit: this.kit === "kit",
+        ground: groundY,
       });
       // The chunk's sidewalks and crossings (ADR-0041) go into the same mesh.
       planSidewalks(sink, key);

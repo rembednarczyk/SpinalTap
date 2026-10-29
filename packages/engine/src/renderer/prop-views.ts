@@ -127,7 +127,7 @@ export class PropViews {
         ? buildBlock(scene, materials, name, view, at)
         : view.kind === "neon"
           ? buildNeon(scene, name, view, at)
-          : buildLamp(scene, materials, name, view.color, at);
+          : buildLamp(scene, materials, name, view.color, at, view.facing);
     for (const m of prop.glowing) glow.addIncludedOnlyMesh(m);
     for (const m of prop.blockers) this.blockers.add(m);
     for (const m of prop.casters) shadow.addStaticCaster(m);

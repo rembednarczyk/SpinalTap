@@ -10,10 +10,13 @@ import {
 } from "@seki/core";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
-import { CONTRACT_ITEM_SPOTS } from "@seki/sim";
+import { CONTRACT_ITEM_SPOTS, clinicPoint, ground, market } from "@seki/sim";
 import { createUiStore } from "@seki/ui";
 import { nearKaito } from "./story-helpers";
 import { GameSession } from "../src/game-session";
+
+/** In front of Hana's cart on the market floor (ADR-0045). */
+const HANA = market(90.5, 0, 74);
 
 /** What the debrief card pays on top of the reward (ADR-0029); subscribe right before the payment. */
 const extraPay = (session: GameSession): (() => number) => {
@@ -64,7 +67,7 @@ const setup = async () => {
 
 const teleport = (s: GameSession, x: number, z: number, yaw = 0, pitch = 0) => {
   const p = s.sim.player()!;
-  p.position = { x, y: 0, z };
+  p.position = ground(x, z);
   p.prevPosition = p.position;
   p.yaw = yaw;
   p.pitch = pitch;
@@ -96,7 +99,7 @@ const talkToKaito = (s: GameSession) => {
 
 /** Hana's cart is on the market; arriving there streams it in during the same step. */
 const talkToHana = (s: GameSession) => {
-  teleport(s, 90.5, 74, Math.PI / 2);
+  teleport(s, HANA.x, HANA.z, Math.PI / 2);
   steps(s, 1, frame({ interact: true }));
 };
 
@@ -188,14 +191,15 @@ describe("M4 acceptance: market contracts → eddies → cyberware", () => {
     close(session);
     expect(eddies()).toBe(before + protection.reward + extra());
     expect(session.sim.domain.contracts).toEqual({ active: null, completed: 4 });
-    expect(ui.getState().objective).toBe("Kaito ma kolejne kontrakty, Hana z targu też. Mori sprzedaje cyberware.");
+    expect(ui.getState().objective).toBe("Kaito ma kolejne kontrakty, Hana z targu na Podzamczu też. Mori sprzedaje cyberware.");
 
     // Three market jobs pay for an implant at Mori's.
     expect(eddies()).toBeGreaterThanOrEqual(400 + 250 + 470 + 550 - 1);
     // Shinsekai is streamed out while Seki is on the market; walking up to the clinic brings it back.
-    expect(session.sim.streamer.isLoaded("shinsekai-7")).toBe(false);
+    expect(session.sim.streamer.isLoaded("krakowskie-2-0")).toBe(false);
     // Mori is at the monitors behind the chair in the clinic (ADR-0038).
-    teleport(session, -15, 5.2, -Math.PI / 2);
+    const monitors = clinicPoint(-15, 0, 5.2);
+    teleport(session, monitors.x, monitors.z, 0);
     steps(session, 1, frame({ interact: true }));
     expect(ui.getState().shopOpen).toBe(true);
     before = eddies();
