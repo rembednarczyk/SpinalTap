@@ -38,5 +38,6 @@
 | [0033](0033-fala-2-cialo-zryw-pojemnosc-buffy-przebrania.md) | Fala 2 w symulacji (sim A): zryw i zryw w powietrzu, odbijanie pocisków, pojemność cyberware i shardy, buffy z jedzenia, przebrania i egzekutorzy | Zaakceptowana |
 | [0034](0034-metro-warianty-haki-spotkania.md) | Sim B fali 2: metro z peronami i przejazdem, warianty zleceń, haki obserwacyjne, spotkania uliczne i mikrozdarzenia | Zaakceptowana |
 | [0036](0036-engine-fali-2.md) | Engine fali 2: wagon metra z paralaksą, radio z trzema stacjami i głośnikami w lokalach, smugi zrywu i ślad odbicia, odcienie przebrań na proceduralnej obsadzie, progi mokrego asfaltu ze statyczną sondą | Zaakceptowana |
+| [0038](0038-wnetrza-drzwi-start-w-klinice.md) | Wnętrza kliniki i Neon Koi wycięte z bloków city kitu, drzwi automatyczne z czujnikiem i zamkami (biuro Tessen na kod), start na fotelu w klinice, zapis v14 | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.
