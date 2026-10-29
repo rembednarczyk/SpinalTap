@@ -10,7 +10,7 @@ import {
   endingFlag,
   recalledFlag,
 } from "@seki/core";
-import { Simulation, stateHash } from "../src";
+import { Simulation, market, stateHash } from "../src";
 import { collect, run } from "./helpers";
 
 /** Act II at `stepIndex`, after the "aya" ending, built the way a load would build it. */
@@ -29,8 +29,9 @@ const inActTwo = (stepIndex: number, flags: string[] = [], at?: { x: number; y: 
   });
 };
 
-const ROOF = { x: 85, y: 12.7, z: 59.6 };
-const DECK = { x: 98.5, y: 9.9, z: 92 };
+// On the roof of the market hall and on the viaduct (the market moved by ADR-0045).
+const ROOF = market(85, 12.7, 59.6);
+const DECK = market(98.5, 9.9, 92);
 const has = (sim: Simulation, key: string) => [...sim.world].some((e) => e.key === key);
 
 describe("act II in the simulation (ADR-0023)", () => {

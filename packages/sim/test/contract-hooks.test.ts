@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CONTRACT_KIND_IDS, type Contract, type SaveSnapshot, type Vec3, SECONDS_PER_HOUR } from "@seki/core";
-import { CONTRACT_HOOKS, Simulation, hooksOfKind, stateHash } from "../src";
+import { CONTRACT_HOOKS, Simulation, ground, hooksOfKind, market, stateHash } from "../src";
 import { hookTerminalKey, offPostFlag } from "../src/world/contract-plan";
 import { lineOfSight } from "../src/world/hitscan";
 import { byKey, collect, input, run, teleportPlayer } from "./helpers";
@@ -32,9 +32,9 @@ describe("the hook table (ADR-0034)", () => {
   it.each(CONTRACT_HOOKS.filter((h) => "at" in h.carrier).map((h) => [h.id, h] as const))("%s: the terminal stands on open ground", (_id, h) => {
     const p = (h.carrier as { at: Vec3 }).at;
     const sim = Simulation.create({ seed: 1 });
-    teleportPlayer(sim, { x: p.x + 1, y: 0, z: p.z });
+    teleportPlayer(sim, { x: p.x + 1, y: p.y, z: p.z });
     run(sim, 1);
-    expect(lineOfSight(sim.world, { x: p.x, y: 0.3, z: p.z }, { x: p.x + 0.01, y: 1.7, z: p.z })).toBe(true);
+    expect(lineOfSight(sim.world, { x: p.x, y: p.y + 0.3, z: p.z }, { x: p.x + 0.01, y: p.y + 1.7, z: p.z })).toBe(true);
   });
 });
 
@@ -42,13 +42,13 @@ const stash: Contract = { id: "c3", kind: "retrieve", siteId: "hebi_stash", targ
 
 describe("finding hooks (ADR-0034)", () => {
   it("a guard's bark is heard up close and found once", () => {
-    const sim = withJob(stash, { x: 96, y: 0, z: 86 });
+    const sim = withJob(stash, market(96, 0, 86));
     const barks = collect<{ knot: string }>(sim, "GuardBark");
     const found = collect<{ hookId: string; text: string }>(sim, "ContractHookFound");
     run(sim, 5);
     expect(barks).toEqual([]);
     const g0 = byKey(sim, "c3-g0")!;
-    teleportPlayer(sim, { x: g0.position.x - 3, y: 0, z: g0.position.z });
+    teleportPlayer(sim, { x: g0.position.x - 3, y: g0.position.y, z: g0.position.z });
     run(sim, 3);
     expect(barks.map((b) => b.knot)).toEqual(["hook_retrieve_1"]);
     expect(found).toEqual([{ contractId: "c3", hookId: "hook_retrieve_1", text: expect.stringContaining("ramen") }]);
@@ -60,7 +60,7 @@ describe("finding hooks (ADR-0034)", () => {
   });
 
   it("the rotation gap takes the guard off his post in its window", () => {
-    const sim = withJob(stash, { x: 96, y: 0, z: 86 }, 0);
+    const sim = withJob(stash, market(96, 0, 86), 0);
     run(sim, 2);
     expect(sim.domain.flags).toContain(offPostFlag("c3", 1));
     expect(byKey(sim, "c3-g1")).toBeUndefined();
@@ -74,7 +74,7 @@ describe("finding hooks (ADR-0034)", () => {
     const job: Contract = { id: "c4", kind: "infiltrate", siteId: "tessen_office", targets: 3, reward: 600, status: "active" };
     const h = CONTRACT_HOOKS.find((x) => x.id === "hook_infiltrate_1")!;
     const p = (h.carrier as { at: Vec3 }).at;
-    const sim = withJob(job, { x: p.x + 1, y: 0, z: p.z });
+    const sim = withJob(job, { x: p.x + 1, y: p.y, z: p.z });
     expect(byKey(sim, hookTerminalKey("c4", h.id))).toBeDefined();
     const started = collect<{ kind: string; dialogueId: string }>(sim, "InteractionStarted");
     sim.step(input({ interact: true }));
@@ -84,7 +84,8 @@ describe("finding hooks (ADR-0034)", () => {
 
   it("a shard lies in its carrier's bag and is found when taken", () => {
     const job: Contract = { id: "c5", kind: "eliminate", siteId: "east_lot", targets: 3, reward: 600, status: "active" };
-    const sim = withJob(job, { x: -3, y: 0, z: 40 });
+    // On Plac Litewski, by the east lot (ADR-0045).
+    const sim = withJob(job, ground(90, -40));
     const g1 = byKey(sim, "c5-g1")!;
     g1.health = { current: 0, max: 80 };
     run(sim, 2);

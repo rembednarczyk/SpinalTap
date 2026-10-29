@@ -20,7 +20,8 @@ const flat = (a: Vec3, b: { x: number; z: number }): number => Math.hypot(a.x - 
 
 /** A passer-by standing at a point: drawn, with a body, no AI (a scene, a mugging, an aid). */
 export const passerBy = (ctx: SimContext, at: Vec3, yaw: number, hp: number, key?: string): Entity => {
-  const position = { x: at.x, y: 0, z: at.z };
+  // On the ground there (the terrain of ADR-0043).
+  const position = { x: at.x, y: ctx.streamer.ground.heightAt(at.x, at.z), z: at.z };
   const e: Entity = {
     id: ctx.streamer.takeId(),
     chunk: ctx.streamer.chunkIdAt(position),
@@ -52,7 +53,7 @@ const actorOf = (ctx: SimContext, def: EncounterDef): EntityId | null => {
 const stage = (ctx: SimContext, def: EncounterDef, player: Entity): void => {
   if (!def.npcKey || actorOf(ctx, def) !== null) return;
   if (flat(player.position, def.at) > def.radius + ENCOUNTER_SPAWN_MARGIN) return;
-  const at = { x: def.at.x, y: 0, z: def.at.z };
+  const at = { x: def.at.x, y: ctx.streamer.ground.heightAt(def.at.x, def.at.z), z: def.at.z };
   const yaw = Math.atan2(player.position.x - at.x, player.position.z - at.z);
   ctx.session.street2.npcs = { ...ctx.session.street2.npcs, [def.id]: passerBy(ctx, at, yaw, 60).id };
 };

@@ -2,7 +2,7 @@ import type { ContractSiteId, Vec3 } from "@seki/core";
 import { KRAKOWSKIE_SITE_POINTS } from "./district-m0";
 import { docks } from "./district-doki";
 import { market } from "./district-targ";
-import { KOI_BAR_SPOT, koiPoint } from "./interiors";
+import { koiPoint } from "./interiors";
 import { spotNear } from "./lublin/places";
 import { ground } from "./lublin/terrain";
 import type { ScheduleDef } from "../world/components";
@@ -27,7 +27,7 @@ const { east_lot: lot, koi_back: back, car_wash: wash, south_gate: gate } = KRAK
 export const SITE_PLANS: Readonly<Partial<Record<ContractSiteId, SitePlan>>> = {
   east_lot: { guards: [lot(9, -16.2), lot(11.8, -16.3)], twin: lot(17.5, -10), lookout: lot(6, -12), ambush: [lot(5, -13), lot(4, -6), lot(5, -20)] },
   koi_back: { guards: [back(4.2, 11.2), back(2, 13.2)], twin: back(-4, 11), lookout: back(0, 20), ambush: [back(0, 22), back(-5, 5), back(4, -2)] },
-  car_wash: { guards: [wash(0, 44.2), wash(2.2, 42.4)], twin: wash(-1.5, 46.5), lookout: wash(2, 36.5), ambush: [wash(0, 33), wash(-4, 30), wash(4, 31)] },
+  car_wash: { guards: [wash(0, 44.2), wash(2.2, 42.4)], twin: wash(-1.5, 46.5), lookout: wash(2, 36.5), ambush: [wash(0, 33), wash(-1.5, 29.5), wash(4, 31)] },
   south_gate: { guards: [gate(-5, -34.2), gate(-3, -34.6)], twin: gate(8.5, -34.5), lookout: gate(-3, -29), ambush: [gate(0, -24), gate(-5, -26), gate(5, -25)] },
   kanal_bridge: { guards: [spotNear(660.5, 75.5), spotNear(658, 73.5)], twin: spotNear(664, 79.5), lookout: spotNear(650, 63), ambush: [spotNear(646, 58), spotNear(668, 84), spotNear(652, 66)] },
   hebi_stash: { guards: [market(117, 0, 88.2), market(119, 0, 90)], lookout: market(110, 0, 92), ambush: [market(106, 0, 90), market(108, 0, 96), market(106, 0, 86)] },
@@ -38,19 +38,15 @@ export const SITE_PLANS: Readonly<Partial<Record<ContractSiteId, SitePlan>>> = {
   docks_escort: { lookout: docks(0, 0, 113) },
 };
 
-/** Where the night drinker drinks: at the counter by Neon Koi's door. */
-export const BAR_SPOT: Vec3 = KOI_BAR_SPOT;
-
-/** In front of Neon Koi's door and just inside it: every way to the bar ends through them. */
-const KOI_OUT = koiPoint(5.4, 0, 1.5);
-const KOI_IN = koiPoint(8.7, 0, 1.5);
+/** Where the night drinker drinks: at the street counter by Neon Koi's door, on the deptak. */
+export const BAR_SPOT: Vec3 = koiPoint(5.6, 0, 3);
 
 /** From the mark's post (the site's first point) to the bar along the deptak, and back the same way. */
 const DRINKER_WAYS: Readonly<Partial<Record<ContractSiteId, readonly [Vec3, ...Vec3[]]>>> = {
-  east_lot: [lot(10.5, -15.5), ground(150, -53), ground(240, -66), ground(300, -86.5), KOI_OUT, KOI_IN, BAR_SPOT],
-  koi_back: [back(3, 12), ground(286, -112), ground(286, -88), KOI_OUT, KOI_IN, BAR_SPOT],
-  car_wash: [wash(1, 43), ground(420, -98), ground(342, -91.5), KOI_OUT, KOI_IN, BAR_SPOT],
-  south_gate: [gate(-4, -33), ground(240, -66), ground(300, -86.5), KOI_OUT, KOI_IN, BAR_SPOT],
+  east_lot: [lot(10.5, -15.5), ground(150, -53), ground(240, -66), ground(300, -86.5), BAR_SPOT],
+  koi_back: [back(3, 12), ground(296, -112), ground(283, -108), ground(282, -88), ground(300, -89), BAR_SPOT],
+  car_wash: [wash(1, 43), ground(420, -98), ground(342, -91.5), BAR_SPOT],
+  south_gate: [gate(-4, -33), ground(240, -66), ground(300, -86.5), BAR_SPOT],
 };
 
 export const drinkerWay = (site: ContractSiteId): readonly [Vec3, ...Vec3[]] | undefined => DRINKER_WAYS[site];

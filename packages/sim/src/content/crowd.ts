@@ -1,6 +1,9 @@
 import type { ActivityId, Vec3 } from "@seki/core";
 import { placeAt, v } from "./builders";
+import { DISTRICT_M0_PROPS } from "./district-m0";
+import { KANAL_PROPS } from "./district-kanal";
 import { KOI_CROWD_SPOTS } from "./interiors";
+import { METRO_STATIONS } from "./metro";
 import { againstWall, inBuilding, nearestWall } from "./lublin/places";
 import { DOCKS_PLACE, MAP_CHUNKS, MARKET_PLACE } from "./lublin/sites";
 
@@ -75,7 +78,18 @@ const loopAround = (line: readonly Pt[], half: number): Pt[] => {
   return [...side(1), ...side(-1).reverse()];
 };
 
-/** Is every metre along the loop clear of the map's walls? */
+/** The game's own solid blocks on the streets (the wreck, the van, kiosks, crates): routes keep off them too. */
+const BLOCKS: readonly { minX: number; maxX: number; minZ: number; maxZ: number }[] = [...DISTRICT_M0_PROPS, ...KANAL_PROPS, ...METRO_STATIONS.flatMap((m) => m.props)]
+  .flatMap((p) => (p.solid && p.view.kind === "block" ? [{ minX: p.center.x - p.view.size.x / 2, maxX: p.center.x + p.view.size.x / 2, minZ: p.center.z - p.view.size.z / 2, maxZ: p.center.z + p.view.size.z / 2 }] : []))
+  .concat(METRO_STATIONS.map((m) => ({ minX: m.kiosk.x - 0.5, maxX: m.kiosk.x + 0.5, minZ: m.kiosk.z - 0.5, maxZ: m.kiosk.z + 0.5 })));
+
+/** Clearance a route keeps from the game's blocks (the walkers' own offset and a body included). */
+const BLOCK_CLEARANCE = 0.9;
+
+const nearBlock = (x: number, z: number): boolean =>
+  BLOCKS.some((b) => Math.hypot(Math.max(b.minX - x, 0, x - b.maxX), Math.max(b.minZ - z, 0, z - b.maxZ)) < BLOCK_CLEARANCE);
+
+/** Is every metre along the loop clear of the map's walls and the game's blocks? */
 const clearLoop = (loop: readonly Pt[]): boolean => {
   for (let i = 0; i < loop.length; i++) {
     const [ax, az] = loop[i] as Pt;
@@ -84,7 +98,7 @@ const clearLoop = (loop: readonly Pt[]): boolean => {
     for (let k = 0; k < n; k++) {
       const x = ax + ((bx - ax) * k) / n;
       const z = az + ((bz - az) * k) / n;
-      if (inBuilding(x, z) || nearestWall(x, z).d < LANE_CLEARANCE) return false;
+      if (inBuilding(x, z) || nearestWall(x, z).d < LANE_CLEARANCE || nearBlock(x, z)) return false;
     }
   }
   return true;
@@ -184,10 +198,14 @@ export const CROWD_LANES: readonly CrowdLane[] = [...streetLanes(), ...SET_PIECE
 const spot = (chunk: string, at: Vec3, yaw: number, does: readonly [ActivityId, ...ActivityId[]], indoor = false): CrowdSpot =>
   indoor ? { chunk, at, yaw, does, indoor: true } : { chunk, at, yaw, does };
 
-/** A stander against the facade nearest to (x, z), facing away from it. */
-const wallSpot = (chunk: string, x: number, z: number, does: readonly [ActivityId, ...ActivityId[]]): CrowdSpot => {
+/** The chunk of Lublin holding a point (the first one, as streaming counts). */
+const chunkOf = (x: number, z: number): string =>
+  MAP_CHUNKS.find((c) => x >= c.bounds.minX && x <= c.bounds.maxX && z >= c.bounds.minZ && z <= c.bounds.maxZ)?.id ?? "";
+
+/** A stander against the facade nearest to (x, z), facing away from it, in the chunk it ends up in. */
+const wallSpot = (x: number, z: number, does: readonly [ActivityId, ...ActivityId[]]): CrowdSpot => {
   const w = againstWall(x, z, 0.45);
-  return spot(chunk, w.at, w.yaw, does);
+  return spot(chunkOf(w.at.x, w.at.z), w.at, w.yaw, does);
 };
 
 const inMarket = (x: number, z: number): Vec3 => placeAt(MARKET_PLACE, v(x, 0, z));
@@ -199,18 +217,18 @@ const inDocks = (x: number, z: number): Vec3 => placeAt(DOCKS_PLACE, v(x, 0, z))
  * and the named characters.
  */
 export const CROWD_SPOTS: readonly CrowdSpot[] = [
-  wallSpot("krakowskie-2-0", 300, -73, ["smoke", "phone"]),
-  wallSpot("krakowskie-2-0", 333, -77, ["phone", "lean"]),
-  wallSpot("krakowskie-2-0", 291, -95, ["talk"]),
-  wallSpot("krakowskie-2-0", 326.5, -93, ["lean", "smoke"]),
-  wallSpot("krakowskie-2-0", 344, -97, ["smoke", "phone"]),
-  wallSpot("krakowskie-1-0", 160, -60.5, ["talk", "phone"]),
+  wallSpot(300, -73, ["smoke", "phone"]),
+  wallSpot(333, -77, ["phone", "lean"]),
+  wallSpot(291, -95, ["talk"]),
+  wallSpot(326.5, -93, ["lean", "smoke"]),
+  wallSpot(344, -97, ["smoke", "phone"]),
+  wallSpot(160, -60.5, ["talk", "phone"]),
   ...KOI_CROWD_SPOTS.map((s, i) => spot("krakowskie-2-0", s.at, s.yaw, i === 1 ? ["talk", "drink"] : i === 3 ? ["lean", "phone"] : ["drink"], true)),
-  wallSpot("stare-miasto-0-0", 536, -60, ["lean", "smoke"]),
-  wallSpot("stare-miasto-0-0", 566, -48, ["smoke", "phone"]),
-  wallSpot("stare-miasto-0-0", 604, -100, ["phone", "lean"]),
-  wallSpot("stare-miasto-0-0", 520, -60, ["smoke"]),
-  wallSpot("stare-miasto-0-0", 590, -42, ["talk", "phone"]),
+  wallSpot(536, -60, ["lean", "smoke"]),
+  wallSpot(566, -48, ["smoke", "phone"]),
+  wallSpot(604, -100, ["phone", "lean"]),
+  wallSpot(520, -60, ["smoke"]),
+  wallSpot(590, -42, ["talk", "phone"]),
   spot(MARKET_CHUNK, inMarket(76, 64.45), SOUTH, ["phone"]),
   spot(MARKET_CHUNK, inMarket(89.4, 64.45), EAST, ["talk"]),
   spot(MARKET_CHUNK, inMarket(113.55, 76), WEST, ["smoke", "lean"]),

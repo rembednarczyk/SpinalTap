@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ACT_ONE_ENDING_FLAG, QUEST_ECHO, contractTag, progressFlag, recalledFlag } from "@seki/core";
-import { Simulation, stateHash } from "../src";
-import { collect, run } from "./helpers";
+import { CONTRACT_SITE_SPAWNS, Simulation, stateHash } from "../src";
+import { collect, run, teleportPlayer } from "./helpers";
 
 /** A simulation that has just finished M0, built the way a load would build it. */
 const afterM0 = (patch: (d: Simulation["domain"]) => Simulation["domain"] = (d) => d): Simulation => {
@@ -20,6 +20,9 @@ const clearContract = (sim: Simulation) => {
   sim.enqueue({ type: "accept-contract" });
   sim.step();
   const c = sim.domain.contracts.active!;
+  // Kaito's sites lie along the deptak and beyond it (ADR-0045): go there, so its chunk streams in.
+  teleportPlayer(sim, CONTRACT_SITE_SPAWNS[c.siteId][0]!);
+  run(sim, 2);
   for (const e of [...sim.world].filter((x) => x.tag === contractTag(c.id))) e.health = { current: 0, max: e.health!.max };
   run(sim, 2);
   sim.enqueue({ type: "complete-contract" });

@@ -59,7 +59,8 @@ describe("RenderSync", () => {
     expect(t.position.z).toBeCloseTo((player.prevPosition.z + player.position.z) / 2);
     expect(t.speed).toBeGreaterThan(4);
 
-    const guard = [...sim.world].find((e) => e.key === "guard")!;
+    // Any drawn thing but the player: on Plac Litewski, the wreck or a prop of the square.
+    const guard = [...sim.world].find((e) => e.view && !e.player && e.view.kind !== "crowd")!;
     sim.world.remove(guard);
     sync.sync(sim.world, 0);
     expect(port.views.has(guard.id)).toBe(false);

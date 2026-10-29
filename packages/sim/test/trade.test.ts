@@ -29,7 +29,7 @@ describe("Oyaji's stall (E10)", () => {
   it("opens as a shop by day, with Oyaji's ink knot behind it", () => {
     const sim = Simulation.create({ seed: 5 });
     const started = collect(sim, "InteractionStarted");
-    teleportPlayer(sim, { x: STALL.x, y: 0, z: STALL.z - 1.4 });
+    teleportPlayer(sim, { x: STALL.x, y: STALL.y, z: STALL.z - 1.4 });
     sim.step();
     expect(byKey(sim, "oyaji")?.interactable).toMatchObject({ kind: "shop", shopId: "oyaji", prompt: "Stragan Oyajiego" });
     sim.step(input({ interact: true }));

@@ -128,7 +128,7 @@ export const standerActivity = (seed: number, plan: ResidentPlan, clock: GameClo
 };
 
 /** A resident where its plan puts it at the clock's time: unkeyed, unsaved, a bystander like the passers-by. */
-export const residentEntity = (id: EntityId, seed: number, plan: ResidentPlan, clock: GameClock): Entity => {
+export const residentEntity = (id: EntityId, seed: number, plan: ResidentPlan, clock: GameClock, groundY: (x: number, z: number) => number = () => 0): Entity => {
   const role = plan.role;
   let at: Vec3;
   let yaw: number;
@@ -136,7 +136,8 @@ export const residentEntity = (id: EntityId, seed: number, plan: ResidentPlan, c
   if (role.kind === "walker") {
     lane = { lane: role.lane.id, phase: role.phase, speed: role.speed, dir: role.dir, shift: 0, avoid: 0, rejoin: null };
     const t = laneTarget(role.lane, lane, clock);
-    at = { x: t.x, y: 0, z: t.z };
+    // On the ground of the route's point (the terrain of ADR-0043; 0 on the old flat street).
+    at = { x: t.x, y: groundY(t.x, t.z), z: t.z };
     yaw = Math.atan2(t.tx, t.tz);
   } else {
     at = { ...role.spot.at };

@@ -30,14 +30,14 @@ export const MARKET_PLACE: Vec3 = { x: 689, y: -20.6, z: 260 };
 /** Tessen's docks on the Bystrzyca (local x -40..34, z 90..218), reached by the metro only. */
 export const DOCKS_PLACE: Vec3 = { x: 2560, y: -28.6, z: 300 };
 /** The car wash at the end of the deptak, on Plac Łokietka (local x -6..22, z 25..49). */
-export const CAR_WASH_PLACE: Vec3 = { x: 419, y: round(rawHeight(427, -115)), z: -152 };
+export const CAR_WASH_PLACE: Vec3 = { x: 423, y: round(rawHeight(431, -115)), z: -152 };
 
 /** The market's area in the world. */
 export const MARKET_AREA: GroundRect = { minX: 755, maxX: 815, minZ: 316, maxZ: 376 };
 /** The docks' yard and quay, and the basin dug in front of the quay. */
 export const DOCKS_AREA: GroundRect = { minX: 2520, maxX: 2594, minZ: 390, maxZ: 450 };
 export const DOCKS_BASIN: GroundRect = { minX: 2520, maxX: 2594, minZ: 452, maxZ: 500 };
-export const CAR_WASH_AREA: GroundRect = { minX: 413, maxX: 441, minZ: -127, maxZ: -103 };
+export const CAR_WASH_AREA: GroundRect = { minX: 417, maxX: 445, minZ: -127, maxZ: -103 };
 
 /**
  * A room cut into the ground floor of a tenement (ADR-0045). The front wall of the building is

@@ -48,7 +48,8 @@ const spawn = (ctx: SimContext, kind: MicroEventKind, at: Vec3): MicroEventRun =
   const attackers: number[] = [];
   if (kind === "mugging") {
     for (let i = 0; i < MUGGERS; i++) {
-      const position = { x: at.x + (i === 0 ? 1.4 : -1.4), y: 0, z: at.z + 1.2 };
+      const px = at.x + (i === 0 ? 1.4 : -1.4);
+      const position = { x: px, y: ctx.streamer.ground.heightAt(px, at.z + 1.2), z: at.z + 1.2 };
       const g = gangerEntity(ctx.streamer.takeId(), { key: `${id}:m${i}`, position, yaw: Math.PI }, null, GANGER_MAX_HP, victim.chunk ?? "", victimKey);
       ctx.world.add(g);
       attackers.push(g.id);
