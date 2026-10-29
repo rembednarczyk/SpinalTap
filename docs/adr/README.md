@@ -43,5 +43,6 @@
 | [0039](0039-dialog-na-kole.md) | Dialog na kole: rodzaje opcji z tagów ink, łuk przy rozmówcy, sterowanie myszą, klawiaturą, dotykiem, propozycja dla pada | Zaakceptowana |
 | [0040](0040-rutyny-aktywnosci-przechodnie.md) | Rutyny i aktywności postaci: aktywność z harmonogramu, nawyku i posterunku, miejsca aktywności, przechodnie tła z ziarna i zegara poza zapisem, pozy i rzeczy w rękach za fasadą renderera | Zaakceptowana |
 | [0041](0041-chodniki-i-mieszkancy-miasta.md) | Chodniki z krawężnikiem tylko w obrazie, mieszkańcy miasta po trasach i miejscach z ziarna i zegara poza zapisem, gęstość od dzielnicy, godziny i jakości grafiki, tłum jedną siatką | Zaakceptowana |
+| [0042](0042-lublin-z-danych-mapowych.md) | Lublin z danych mapowych: OSM i teren EU-DEM importowane offline, kotwica na Placu Litewskim, dystrykty Krakowskie Przedmieście, Stare Miasto, Podzamcze, Nabrzeże Bystrzycy, bryły wypukłe i teren w sim | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.

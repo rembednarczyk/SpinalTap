@@ -1,4 +1,5 @@
 import type { Vec3 } from "../math/vec3";
+import type { BuildingUse, GroundPoint, GroundSurface, TerrainGrid } from "../world/city-geo";
 import type { GarmentLook, GarmentSlot, Rarity, WeaponLook, WeaponSlot } from "../items/types";
 
 export type EntityId = number;
@@ -75,6 +76,32 @@ export type ViewDescriptor =
        */
       readonly interior?: true;
     }
+  /**
+   * A building from the map (ADR-0042): the outline in metres relative to the entity's position
+   * (counter-clockwise seen from above), extruded from the ground to `height` above
+   * `position.y`. The renderer builds the facade from `use` and `levels` (windows per floor,
+   * shop fronts, signs); collision is the simulation's business. `name` labels landmarks.
+   */
+  | {
+      readonly kind: "building";
+      readonly outline: readonly GroundPoint[];
+      readonly height: number;
+      readonly levels: number;
+      readonly use: BuildingUse;
+      /** A pitched or domed roof on top of `height`, in metres; absent means flat. */
+      readonly roof?: number;
+      readonly name?: string;
+      /** Seed of the facade's variation (colours, signs, lit windows). */
+      readonly look: number;
+    }
+  /** The ground of a chunk (ADR-0042): a height grid the renderer turns into one mesh. */
+  | { readonly kind: "terrain"; readonly grid: TerrainGrid }
+  /**
+   * A paved or green area laid on the terrain (ADR-0042): roads, sidewalks, squares, cobbles,
+   * lawns, the river. Points are world x and z relative to the entity's position; the
+   * renderer drapes them on the terrain of the same chunk.
+   */
+  | { readonly kind: "ground"; readonly surface: GroundSurface; readonly outline: readonly GroundPoint[] }
   | {
       readonly kind: "neon";
       readonly size: Vec3;
