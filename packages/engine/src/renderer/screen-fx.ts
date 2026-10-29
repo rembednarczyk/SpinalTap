@@ -62,6 +62,8 @@ export interface ScreenFxDeps {
   readonly cameraTarget: () => EntityId | null;
   /** Every entity the scanner may outline. */
   readonly scanTargets: (visit: ScanVisitor) => void;
+  /** Multiplies the fog density of every look (1 in the game; the map preview sees further, ADR-0044). */
+  readonly fogScale?: number;
 }
 
 const v3 = (p: { x: number; y: number; z: number }) => new Vector3(p.x, p.y, p.z);
@@ -210,7 +212,9 @@ export class ScreenFx {
   private applyLook(): void {
     const { materials, atmosphere, farCity, signage } = this.deps;
     const p = this.palette.value;
-    const rig = rigWithPalette(rigForDaylight(this.daylight), p, this.daylight);
+    const look = rigWithPalette(rigForDaylight(this.daylight), p, this.daylight);
+    const scale = this.fogScale ?? this.deps.fogScale ?? 1;
+    const rig = scale === 1 ? look : { ...look, fogDensity: look.fogDensity * scale };
     materials.setRig(rig);
     materials.setRimTint(p.rim, p.rimWeight * (1 - 0.5 * Math.max(0, Math.min(1, this.daylight))));
     atmosphere.setDaylight(rig, this.daylight);
@@ -230,6 +234,14 @@ export class ScreenFx {
       this.snapPalette = false;
     }
     if (this.palette.update(dt)) this.applyLook();
+  }
+
+  private fogScale: number | null = null;
+
+  /** Multiplies the fog density from now on (the map preview's overview shots, ADR-0044). */
+  setFogScale(scale: number): void {
+    this.fogScale = scale;
+    this.applyLook();
   }
 
   /** District whose colours are on screen (debug and tests). */
