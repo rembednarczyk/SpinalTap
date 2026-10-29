@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { type Vec3, hm } from "@seki/core";
 import {
   CONTRACT_SITE_SPAWNS,
+  HIDEO_BUS_STOP,
   KANAL_SPOTS,
+  MARKET_PLACE,
   SCHEDULES,
   STALL_KEEPERS,
   type ScheduleDef,
@@ -12,18 +14,24 @@ import {
   WORLD_STASHES,
   YATAI_HOURS,
   chunkAt,
+  ground,
   scheduledPose,
+  spotNear,
   yataiOpen,
 } from "../src";
-import { byKey, collect, input, run, teleportPlayer } from "./helpers";
+import { AWAY, byKey, collect, input, run, teleportPlayer } from "./helpers";
 
 /**
- * ADR-0026: the people, stashes and the job that bring Ulica Kanałowa, the market stalls and
- * Shinsekai's dead ends to life. Geometry first (nothing new stands in anyone's way), then the
- * rules that use it: the daily plans, Fumiko's stall, the stashes.
+ * ADR-0026: the people, stashes and the job that bring the Old Town, the market stalls and
+ * the dead ends off the deptak to life (in Lublin since ADR-0045). Geometry first (nothing new
+ * stands in anyone's way), then the rules that use it: the daily plans, Fumiko's stall, the
+ * stashes.
  */
 
-const at = (x: number, z: number): Vec3 => ({ x, y: 0, z });
+/** The covered footbridge over Grodzka, which Hideo walks under on his way to the bus. */
+const FOOTBRIDGE = { x: 659, z: 74 };
+/** Where Fumiko's customers stand: in front of her counter in the market's north row. */
+const atFumiko = (): Vec3 => ({ x: STALL_KEEPERS.fumiko.x, y: STALL_KEEPERS.fumiko.y, z: MARKET_PLACE.z + 100.6 });
 const SOLIDS: readonly StaticProp[] = WORLD_CHUNKS.flatMap((c) => c.props).filter((p) => p.solid && p.view.kind === "block" && !p.mechanism);
 /** A character's radius, with a little room to spare. */
 const BODY = 0.4;
@@ -101,52 +109,63 @@ describe("new places stand clear of every walk (ADR-0026)", () => {
       expect(chunkAt(p.x, p.z), `${p.x},${p.z}`).not.toBeNull();
       expect(blockers(p).map((s) => s.center), `${p.x},${p.z}`).toEqual([]);
     }
-    expect(chunkAt(53.2, 78.2)?.id).toBe("kanal");
+    expect(chunkAt(FOOTBRIDGE.x, FOOTBRIDGE.z)?.district).toBe("kanal");
   });
 
-  it("the road along Ulica Kanałowa stays open from the bend to the market gate", () => {
-    for (const z of [78.5, 79, 79.5]) {
-      const hits = [];
-      for (let x = 8; x <= 66; x += 0.25) hits.push(...blockers(at(x, z)).map((s) => `${x},${z} hits ${s.center.x},${s.center.z}`));
-      expect(hits).toEqual([]);
+  it("Grodzka stays open under the footbridge, a metre either side of the middle line", () => {
+    const hits = [];
+    for (let t = 0; t <= 1; t += 0.01) {
+      for (const side of [-1, 0, 1]) {
+        // Along Grodzka from Plac po Farze to Brama Grodzka, which runs south-west to north-east.
+        const x = 637 + 71 * t + side * 0.77;
+        const z = 47 + 87 * t - side * 0.63;
+        hits.push(...blockers(ground(x, z)).map((s) => `${x.toFixed(2)},${z.toFixed(2)} hits ${s.center.x},${s.center.z}`));
+      }
     }
+    expect(hits).toEqual([]);
   });
 
-  it("the car wash keeps the car_wash site (the alley behind it) and Kaito's spot free", () => {
+  it("the car wash keeps the car_wash site (the yard behind it) free, and Kaito's places too", () => {
     for (const p of CONTRACT_SITE_SPAWNS.car_wash ?? []) expect(blockers(p)).toEqual([]);
-    expect(blockers(at(6.2, 1.5))).toEqual([]);
+    const kaito = WORLD_CHUNKS.flatMap((c) => c.actors).filter((a) => a.spawn.key === "fixer");
+    expect(kaito.length).toBeGreaterThan(0);
+    for (const a of kaito) expect(blockers(a.spawn.position)).toEqual([]);
   });
 });
 
 describe("daily plans on the street (ADR-0026)", () => {
-  it("Hideo crosses the footbridge to the market gate in the morning", () => {
+  it("Hideo walks down Grodzka under the footbridge to the bus stop in the morning", () => {
     const sim = Simulation.create({ seed: 1 });
     skipTo(sim, hm(7, 29));
-    teleportPlayer(sim, at(40, 70));
+    teleportPlayer(sim, spotNear(KANAL_SPOTS.hideoHome.x + 3, KANAL_SPOTS.hideoHome.z));
     sim.step();
     const hideo = byKey(sim, "hideo")!;
     expect(Math.hypot(hideo.position.x - KANAL_SPOTS.hideoHome.x, hideo.position.z - KANAL_SPOTS.hideoHome.z)).toBeLessThan(0.1);
-    let highest = 0;
+    let closest = Infinity;
     let worst = 0;
-    for (let i = 0; i < 60 * 90; i++) {
+    // The player follows twenty seconds behind, so the chunks on his way stream in.
+    const trail: Vec3[] = [];
+    for (let i = 0; i < 60 * 300; i++) {
+      trail.push({ ...hideo.position });
+      if (i % 30 === 0 && trail.length > 1200) teleportPlayer(sim, trail[trail.length - 1200]!);
       sim.step();
-      highest = Math.max(highest, hideo.position.y);
+      closest = Math.min(closest, Math.hypot(hideo.position.x - FOOTBRIDGE.x, hideo.position.z - FOOTBRIDGE.z));
       const pose = hideo.schedule!.pose!.position;
       worst = Math.max(worst, Math.hypot(hideo.position.x - pose.x, hideo.position.z - pose.z));
     }
-    expect(highest).toBeGreaterThan(4.5);
+    expect(closest).toBeLessThan(1.5);
     expect(worst).toBeLessThan(1.5);
-    expect(Math.hypot(hideo.position.x - KANAL_SPOTS.hideoKiosk.x, hideo.position.z - KANAL_SPOTS.hideoKiosk.z)).toBeLessThan(0.2);
-  }, 30_000);
+    expect(Math.hypot(hideo.position.x - HIDEO_BUS_STOP.x, hideo.position.z - HIDEO_BUS_STOP.z)).toBeLessThan(0.2);
+  }, 60_000);
 
   it("Mei sings under KARAOKE at night and waits by the bend by day", () => {
     const night = Simulation.create({ seed: 1 });
-    teleportPlayer(night, at(20, 78));
+    teleportPlayer(night, spotNear(KANAL_SPOTS.meiKaraoke.x - 3, KANAL_SPOTS.meiKaraoke.z - 3));
     night.step();
     expect(byKey(night, "mei")!.position).toMatchObject({ x: KANAL_SPOTS.meiKaraoke.x, z: KANAL_SPOTS.meiKaraoke.z });
     const day = Simulation.create({ seed: 1 });
     skipTo(day, hm(12));
-    teleportPlayer(day, at(20, 78));
+    teleportPlayer(day, spotNear(KANAL_SPOTS.meiKaraoke.x - 3, KANAL_SPOTS.meiKaraoke.z - 3));
     day.step();
     expect(byKey(day, "mei")!.position).toMatchObject({ x: KANAL_SPOTS.meiHome.x, z: KANAL_SPOTS.meiHome.z });
   });
@@ -162,7 +181,7 @@ describe("Fumiko's ramen stall (ADR-0026)", () => {
 
   it("opens its counter at night, sells ramen that heals from the bag", () => {
     const sim = withEddies(100);
-    teleportPlayer(sim, at(STALL_KEEPERS.fumiko.x, 100.6), 0);
+    teleportPlayer(sim, atFumiko(), 0);
     sim.step();
     const started = collect<{ kind: string; shopId?: string; dialogueId: string }>(sim, "InteractionStarted");
     sim.step(input({ interact: true }));
@@ -185,7 +204,7 @@ describe("Fumiko's ramen stall (ADR-0026)", () => {
   it("is closed by day: the prompt says so and the counter refuses to sell", () => {
     const sim = withEddies(100);
     skipTo(sim, hm(10));
-    teleportPlayer(sim, at(STALL_KEEPERS.fumiko.x, 100.6), 0);
+    teleportPlayer(sim, atFumiko(), 0);
     run(sim, 60 * 10);
     const fumiko = byKey(sim, "fumiko")!;
     expect(fumiko.interactable?.dialogueId).toBe("fumiko_closed");
@@ -203,7 +222,7 @@ describe("stashes in the dead ends (ADR-0026)", () => {
     const keys = () => sim.domain.loot.containers.map((c) => c.key);
     expect(keys()).toEqual([]);
     const stash = WORLD_STASHES.find((s) => s.key === "stash:kanal-alley")!;
-    teleportPlayer(sim, at(stash.at.x - 1, stash.at.z), Math.PI / 2);
+    teleportPlayer(sim, { ...stash.at, x: stash.at.x - 1 }, Math.PI / 2);
     run(sim, 2);
     expect(keys()).toContain("stash:kanal-alley");
     const before = sim.domain.wallet.eddies;
@@ -212,9 +231,9 @@ describe("stashes in the dead ends (ADR-0026)", () => {
     expect(sim.domain.wallet.eddies).toBe(before + 60);
     expect(sim.domain.inventory.stacks.yakitori).toBe(2);
     expect(keys()).not.toContain("stash:kanal-alley");
-    teleportPlayer(sim, at(0, -28));
+    teleportPlayer(sim, AWAY);
     run(sim, 2);
-    teleportPlayer(sim, at(stash.at.x - 1, stash.at.z));
+    teleportPlayer(sim, { ...stash.at, x: stash.at.x - 1 });
     run(sim, 2);
     expect(keys()).not.toContain("stash:kanal-alley");
   });

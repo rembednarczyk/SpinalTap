@@ -17,19 +17,32 @@ import {
 import {
   BREACH_DATAMINE_EDDIES,
   BREACH_ICEPICK_SECONDS,
+  DOCKS_PLACE,
   DOKI_TERMINAL_SPOTS,
   GENZO_SPOT,
   SIM_HZ,
   Simulation,
   cameraSees,
+  docks,
   gangerEntity,
+  ground,
+  market,
   phoneKnot,
   stateHash,
   worldTimeScale,
 } from "../src";
 import { byKey, collect, input, run, teleportPlayer, streetSim } from "./helpers";
 
-const at = (x: number, z: number, y = 0) => ({ x, y, z });
+/** A point of the docks in their own coordinates, moved to Nabrzeże Bystrzycy by ADR-0045. */
+const at = (x: number, z: number, y = 0): Vec3 => docks(x, y, z);
+/** The chunk the docks stand in, and a point on its floor in world coordinates. */
+const DOCKS_CHUNK = "nabrzeze-1-1";
+const onDocks = (x: number, z: number): Vec3 => ({ x, y: DOCKS_PLACE.y, z });
+/** The market's floor (Hana's district) and the Old Town just outside it. */
+const IN_MARKET = market(90.5, 0, 74);
+const OLD_TOWN = ground(600, 0);
+/** Somebody on Plac Litewski, in the street start's chunk. */
+const BYSTANDER = ground(73, -40);
 const roundTrip = (s: SaveSnapshot): SaveSnapshot => JSON.parse(JSON.stringify(s)) as SaveSnapshot;
 const hash = (sim: Simulation) => stateHash(sim.snapshot(null, "t", ""));
 
@@ -64,7 +77,7 @@ const yard = (opts: { guardAt?: Vec3; guardYaw?: number } = {}) => {
   teleportPlayer(sim, at(16, 97), -Math.PI / 2);
   sim.step();
   tough(sim);
-  const g = gangerEntity(90010, { key: "test-guard", position: opts.guardAt ?? at(2, 96), yaw: opts.guardYaw ?? -Math.PI / 2 }, null, 110, "doki-yard", undefined, "tessen_guard");
+  const g = gangerEntity(90010, { key: "test-guard", position: opts.guardAt ?? at(2, 96), yaw: opts.guardYaw ?? -Math.PI / 2 }, null, 110, DOCKS_CHUNK, undefined, "tessen_guard");
   sim.world.add(g);
   sim.step();
   return { sim, g };
@@ -207,7 +220,7 @@ describe("quickhacks (ADR-0028, ADR-0029)", () => {
 
     const poor = Simulation.fromSnapshot({ ...sim.snapshot(null, "p", ""), domain: { ...sim.domain, netrun: { ram: 1, upload: null } } });
     const refused = collect<DomainEvents["QuickhackFailed"]>(poor, "QuickhackFailed");
-    poor.world.add(gangerEntity(90011, { key: "test-guard", position: g.position, yaw: g.yaw }, null, 110, "doki-yard", undefined, "tessen_guard"));
+    poor.world.add(gangerEntity(90011, { key: "test-guard", position: g.position, yaw: g.yaw }, null, 110, DOCKS_CHUNK, undefined, "tessen_guard"));
     poor.step();
     lookAt(poor, chest(byKey(poor, "test-guard")!));
     poor.step(input({ scan: true, quickhack: 4 }));
@@ -251,7 +264,7 @@ describe("cameras (ADR-0029)", () => {
 
   it("the office camera spots Seki in the office during an infiltration and raises the alarm", () => {
     const sim = streetSim({ seed: 8 });
-    teleportPlayer(sim, at(GENZO_SPOT.x + 0.4, GENZO_SPOT.z - 2), 0);
+    teleportPlayer(sim, onDocks(GENZO_SPOT.x + 0.4, GENZO_SPOT.z - 2), 0);
     sim.step();
     tough(sim);
     sim.enqueue({ type: "accept-contract", kind: "infiltrate" });
@@ -264,7 +277,7 @@ describe("cameras (ADR-0029)", () => {
     const reports = collect<DomainEvents["CrimeReported"]>(sim, "CrimeReported");
     const aware = collect<DomainEvents["AwarenessChanged"]>(sim, "AwarenessChanged");
     // Six metres in front of it, inside the office.
-    teleportPlayer(sim, at(cam.position.x + Math.sin(cam.yaw) * 6, cam.position.z + Math.cos(cam.yaw) * 6), 0);
+    teleportPlayer(sim, onDocks(cam.position.x + Math.sin(cam.yaw) * 6, cam.position.z + Math.cos(cam.yaw) * 6), 0);
     run(sim, 0.5 * SIM_HZ);
     expect(reports).toHaveLength(0);
     expect(aware.filter((a) => a.observerId === cam.id).at(-1)?.state).toBe("suspicious");
@@ -314,7 +327,7 @@ describe("the contract layer (ADR-0028, ADR-0029)", () => {
 
   it("getting hurt on a protection job loses the bonus once and lowers the rank", () => {
     const sim = streetSim({ seed: 32 });
-    teleportPlayer(sim, at(90.5, 74), Math.PI / 2);
+    teleportPlayer(sim, IN_MARKET, Math.PI / 2);
     sim.step();
     const bonus = collect<DomainEvents["ContractBonusChanged"]>(sim, "ContractBonusChanged");
     const cards = collect<DomainEvents["ContractDebrief"]>(sim, "ContractDebrief");
@@ -338,7 +351,7 @@ describe("the contract layer (ADR-0028, ADR-0029)", () => {
   it("killing someone who is not a target costs `clean`; the counters are saved and start at zero in a new game", () => {
     const sim = streetSim({ seed: 33 });
     const c = take(sim, "eliminate");
-    const bystander = gangerEntity(90020, { key: "extra", position: at(3, -20), yaw: 0 }, null, 1, "shinsekai-7");
+    const bystander = gangerEntity(90020, { key: "extra", position: BYSTANDER, yaw: 0 }, null, 1, "krakowskie-1-0");
     sim.world.add(bystander);
     bystander.lastHitBy = sim.player()!.id;
     bystander.health = { current: 0, max: 1 };
@@ -354,22 +367,22 @@ describe("the contract layer (ADR-0028, ADR-0029)", () => {
   it("entering a fixer's district without a job brings one offer by phone, once per entry", () => {
     const sim = streetSim({ seed: 34 });
     sim.enqueue({ type: "set-flag", flag: "met_hana" });
-    teleportPlayer(sim, at(40, 78), Math.PI / 2);
+    teleportPlayer(sim, OLD_TOWN, Math.PI / 2);
     sim.step();
     const phone = collect<DomainEvents["PhoneMessage"]>(sim, "PhoneMessage");
-    teleportPlayer(sim, at(90.5, 74), Math.PI / 2);
+    teleportPlayer(sim, IN_MARKET, Math.PI / 2);
     run(sim, 30);
     expect(phone).toEqual([{ from: "hana", kind: "text", knot: phoneKnot("hana", "offer"), priority: "contract" }]);
-    teleportPlayer(sim, at(40, 78), Math.PI / 2);
+    teleportPlayer(sim, OLD_TOWN, Math.PI / 2);
     run(sim, 2);
-    teleportPlayer(sim, at(90.5, 74), Math.PI / 2);
+    teleportPlayer(sim, IN_MARKET, Math.PI / 2);
     run(sim, 2);
     expect(phone).toHaveLength(2);
     // With a job running, nothing.
     take(sim, "retrieve");
-    teleportPlayer(sim, at(40, 78), Math.PI / 2);
+    teleportPlayer(sim, OLD_TOWN, Math.PI / 2);
     run(sim, 2);
-    teleportPlayer(sim, at(90.5, 74), Math.PI / 2);
+    teleportPlayer(sim, IN_MARKET, Math.PI / 2);
     run(sim, 2);
     expect(phone).toHaveLength(2);
   });
@@ -378,7 +391,7 @@ describe("the contract layer (ADR-0028, ADR-0029)", () => {
 describe("Breach Protocol on the docks terminal (ADR-0029)", () => {
   it("applies the daemons once: ICEpick shortens the hack and makes hacks cheaper, Datamine pays", () => {
     const sim = streetSim({ seed: 41 });
-    teleportPlayer(sim, at(GENZO_SPOT.x + 0.4, GENZO_SPOT.z - 2), 0);
+    teleportPlayer(sim, onDocks(GENZO_SPOT.x + 0.4, GENZO_SPOT.z - 2), 0);
     sim.step();
     tough(sim);
     const c = take(sim, "hack");
@@ -389,7 +402,7 @@ describe("Breach Protocol on the docks terminal (ADR-0029)", () => {
     sim.enqueue({ type: "breach-result", terminalKey: contractTerminalKey(c.id), daemons: ["icepick"] });
     sim.step();
     expect(breach).toHaveLength(0);
-    teleportPlayer(sim, at(t.x, t.z - 1.4), 0);
+    teleportPlayer(sim, { x: t.x, y: t.y, z: t.z - 1.4 }, 0);
     sim.step(input({ interact: true }));
     // The key opens the network for the HUD's minigame.
     expect(opened).toEqual([{ terminalKey: contractTerminalKey(c.id), daemons: ["icepick", "datamine", "mass_vulnerability"] }]);
@@ -408,7 +421,7 @@ describe("Breach Protocol on the docks terminal (ADR-0029)", () => {
     sim.step(input({ interact: true }));
     expect(opened).toHaveLength(1);
     // ICEpick: a quickhack costs one RAM less while the job runs.
-    const guard = gangerEntity(90030, { key: "near", position: at(t.x + 4, t.z - 1.4), yaw: 0 }, null, 110, "doki-quay", undefined, "tessen_guard");
+    const guard = gangerEntity(90030, { key: "near", position: { x: t.x + 4, y: t.y, z: t.z - 1.4 }, yaw: 0 }, null, 110, DOCKS_CHUNK, undefined, "tessen_guard");
     sim.world.add(guard);
     sim.step();
     lookAt(sim, chest(guard));
@@ -420,14 +433,14 @@ describe("Breach Protocol on the docks terminal (ADR-0029)", () => {
 describe("breach without daemons and kill markers (ADR-0028 contract changes)", () => {
   it("disconnecting with nothing won closes the breach; a cut-short one can be opened again", () => {
     const sim = streetSim({ seed: 42 });
-    teleportPlayer(sim, at(GENZO_SPOT.x + 0.4, GENZO_SPOT.z - 2), 0);
+    teleportPlayer(sim, onDocks(GENZO_SPOT.x + 0.4, GENZO_SPOT.z - 2), 0);
     sim.step();
     tough(sim);
     const c = take(sim, "hack");
     const t = DOKI_TERMINAL_SPOTS.quay_terminal!;
     const opened = collect<DomainEvents["BreachStarted"]>(sim, "BreachStarted");
     const breach = collect<DomainEvents["BreachCompleted"]>(sim, "BreachCompleted");
-    teleportPlayer(sim, at(t.x, t.z - 1.4), 0);
+    teleportPlayer(sim, { x: t.x, y: t.y, z: t.z - 1.4 }, 0);
     sim.step(input({ interact: true }));
     // Cut short by damage: the HUD sends nothing, the key opens the network again.
     sim.step(input({ interact: true }));
@@ -441,7 +454,7 @@ describe("breach without daemons and kill markers (ADR-0028 contract changes)", 
   it("EntityKilled names the killer when it is known", () => {
     const sim = streetSim({ seed: 43 });
     const killed = collect<DomainEvents["EntityKilled"]>(sim, "EntityKilled");
-    const g = gangerEntity(90040, { key: "victim", position: at(3, -20), yaw: 0 }, null, 1, "shinsekai-7");
+    const g = gangerEntity(90040, { key: "victim", position: BYSTANDER, yaw: 0 }, null, 1, "krakowskie-1-0");
     sim.world.add(g);
     g.lastHitBy = sim.player()!.id;
     g.health = { current: 0, max: 1 };

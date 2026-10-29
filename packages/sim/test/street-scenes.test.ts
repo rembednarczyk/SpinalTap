@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { MICRO_EVENT_CHANCE, MICRO_EVENT_REWARD, SECONDS_PER_HOUR, type SaveSnapshot } from "@seki/core";
-import { Simulation, deriveRandom } from "../src";
-import { byKey, collect, input, run, teleportPlayer } from "./helpers";
+import { Simulation, deriveRandom, ground } from "../src";
+import { ALLEY_START, byKey, collect, input, run, teleportPlayer } from "./helpers";
+
+/** Shiro's lamp on Plac Litewski and the salaryman's pavement by Neon Koi (ADR-0045). */
+const POET = { x: 102, z: -23 };
+const SALARYMAN = { x: 328, z: -91 };
 
 const roundTrip = (s: SaveSnapshot): SaveSnapshot => JSON.parse(JSON.stringify(s)) as SaveSnapshot;
 
@@ -18,12 +22,12 @@ describe("street encounters (ADR-0034)", () => {
     const sim = street(21);
     const started = collect<{ encounterId: string; knot: string; npcId: number | null }>(sim, "EncounterStarted");
     const ended = collect<{ encounterId: string; outcome: string }>(sim, "EncounterEnded");
-    teleportPlayer(sim, { x: -5, y: 0, z: -10 });
+    teleportPlayer(sim, ground(POET.x, POET.z + 10));
     run(sim, 2);
     expect(started).toEqual([]);
-    const poet = [...sim.world].find((e) => !e.key && e.view?.kind === "npc" && Math.hypot(e.position.x + 5, e.position.z + 20) < 0.5);
+    const poet = [...sim.world].find((e) => !e.key && e.view?.kind === "npc" && Math.hypot(e.position.x - POET.x, e.position.z - POET.z) < 0.5);
     expect(poet).toBeDefined();
-    teleportPlayer(sim, { x: -5, y: 0, z: -17 });
+    teleportPlayer(sim, ground(POET.x, POET.z + 3));
     run(sim, 1);
     expect(started).toEqual([{ encounterId: "s7_poet", knot: "enc_s7_poet", npcId: poet!.id }]);
     expect(sim.session.dialogueActive).toBe(true);
@@ -42,16 +46,16 @@ describe("street encounters (ADR-0034)", () => {
 
   it("waits for its hours, for the prologue, and an outcome with a reward pays once", () => {
     const early = street(12);
-    teleportPlayer(early, { x: 5, y: 0, z: -4 });
+    teleportPlayer(early, ground(SALARYMAN.x, SALARYMAN.z + 2));
     const none = collect(early, "EncounterStarted");
     run(early, 2);
     expect(none).toEqual([]);
     const fresh = Simulation.create({ seed: 6 });
-    teleportPlayer(fresh, { x: -5, y: 0, z: -18 });
+    teleportPlayer(fresh, ground(POET.x, POET.z + 2));
     run(fresh, 2);
     expect(fresh.session.street2.encounter).toBeNull();
     const night = street(2);
-    teleportPlayer(night, { x: 5, y: 0, z: -4 });
+    teleportPlayer(night, ground(SALARYMAN.x, SALARYMAN.z + 2));
     run(night, 1);
     expect(night.session.street2.encounter).toBe("s7_salaryman");
     const eddies = night.domain.wallet.eddies;
@@ -72,16 +76,16 @@ const tickFor = (seed: number, from: number, kind: "mugging" | "aid"): number =>
   }
 };
 
-/** Walks from Shinsekai into Kanałowa on the step whose roll starts `kind`. */
+/** Walks from Krakowskie through Brama Krakowska into the Old Town on the step whose roll starts `kind`. */
 const enterKanal = (kind: "mugging" | "aid") => {
   const sim = street(21, 13);
-  teleportPlayer(sim, { x: 6, y: 0, z: 45 });
+  teleportPlayer(sim, ground(450, -96));
   run(sim, 2);
   const t = tickFor(sim.seed, sim.tick + 1, kind);
   while (sim.tick < t) sim.step();
   const started = collect<{ encounterId: string; npcId: number }>(sim, "EncounterStarted");
   const ended = collect<{ encounterId: string; outcome: string }>(sim, "EncounterEnded");
-  teleportPlayer(sim, { x: 7, y: 0, z: 60 });
+  teleportPlayer(sim, ground(497, -79));
   sim.step();
   return { sim, started, ended };
 };
@@ -108,12 +112,12 @@ describe("micro-events (ADR-0034)", () => {
   it("an aid: help the passer-by with the interact key; walking away ends a mugging with nothing", () => {
     const { sim, ended } = enterKanal("aid");
     const victim = [...sim.world].find((e) => e.id === sim.session.street2.micro!.victim)!;
-    teleportPlayer(sim, { x: victim.position.x + 1, y: 0, z: victim.position.z });
+    teleportPlayer(sim, { x: victim.position.x + 1, y: victim.position.y, z: victim.position.z });
     run(sim, 1);
     sim.step(input({ interact: true }));
     expect(ended.map((e) => e.outcome)).toEqual(["helped"]);
     const mug = enterKanal("mugging");
-    teleportPlayer(mug.sim, { x: 6, y: 0, z: 0 });
+    teleportPlayer(mug.sim, ALLEY_START);
     run(mug.sim, 2);
     expect(mug.ended.map((e) => e.outcome)).toEqual(["left"]);
     expect(byKey(mug.sim, `${mug.started[0]!.encounterId}:m0`)).toBeUndefined();

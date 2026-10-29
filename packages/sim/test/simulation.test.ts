@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { M0_TARGET_TAG, QUEST_FIRST_CONTRACT, currentStep, killedFlag } from "@seki/core";
-import { GANGER_MAX_HP, type Simulation } from "../src";
-import { STREET_START, byKey, collect, input, run, teleportPlayer, streetSim } from "./helpers";
+import { GANGER_MAX_HP, KRAKOWSKIE_SITE_POINTS, Simulation, clinicPoint } from "../src";
+import { STREET_START, alleySim, byKey, collect, input, run, teleportPlayer, streetSim } from "./helpers";
 
 const newSim = () => streetSim({ seed: 7 });
 
@@ -11,7 +11,7 @@ describe("simulation: movement and camera", () => {
     run(sim, 60, input({ moveZ: 1 }));
     const p = sim.player();
     expect(p?.position.z).toBeCloseTo(STREET_START.z + 4.2, 1);
-    expect(p?.position.x).toBeCloseTo(0, 5);
+    expect(p?.position.x).toBeCloseTo(STREET_START.x, 5);
   });
 
   it("sprints faster than it walks", () => {
@@ -23,14 +23,18 @@ describe("simulation: movement and camera", () => {
   it("strafes right relative to the view", () => {
     const sim = newSim();
     run(sim, 30, input({ moveX: 1 }));
-    expect(sim.player()!.position.x).toBeGreaterThan(1.5);
+    expect(sim.player()!.position.x - STREET_START.x).toBeGreaterThan(1.5);
   });
 
   it("stops at the district wall", () => {
     const sim = newSim();
     run(sim, 600, input({ moveZ: -1 }));
-    // South wall spans z ∈ [-38, -36]; the 0.38 m body must stay north of it.
-    expect(sim.player()!.position.z).toBeGreaterThanOrEqual(-36 + 0.38 - 1e-6);
+    // The houses on the south side of Plac Litewski stand ~17 m behind the start (ADR-0045):
+    // the player walks up to their wall and stays there.
+    const stopped = sim.player()!.position.z;
+    expect(stopped).toBeLessThan(STREET_START.z - 15);
+    run(sim, 120, input({ moveZ: -1 }));
+    expect(sim.player()!.position.z).toBeCloseTo(stopped, 1);
   });
 
   it("applies and clamps look input", () => {
@@ -56,7 +60,7 @@ describe("simulation: interaction and narrative commands", () => {
     const focus = collect<{ prompt: string | null }>(sim, "InteractionFocusChanged");
     const started = collect<{ dialogueId: string }>(sim, "InteractionStarted");
     // Kaito waits by the chair in the clinic until they have talked (ADR-0038).
-    teleportPlayer(sim, { x: -12.3, y: 0, z: 3.2 });
+    teleportPlayer(sim, clinicPoint(-12.3, 0, 3.2));
     sim.step();
     expect(focus.at(-1)?.prompt).toBe("Rozmawiaj z Kaito");
     sim.step(input({ interact: true }));
@@ -94,7 +98,7 @@ describe("simulation: combat", () => {
   /** Puts the player in the alley, aiming straight at the courier. */
   const aimAtCourier = (sim: Simulation) => {
     const courier = byKey(sim, "courier")!;
-    const from = { x: courier.position.x, y: 0, z: courier.position.z - 6 };
+    const from = { x: courier.position.x, y: courier.position.y, z: courier.position.z - 6 };
     teleportPlayer(sim, from, 0, 0.05);
     return courier;
   };
@@ -108,7 +112,7 @@ describe("simulation: combat", () => {
     sim.step(input({ fire: true }));
     expect(courier.ai?.alerted).toBe(true);
     for (let i = 0; i < 600 && killed.length === 0; i++) {
-      teleportPlayer(sim, { x: courier.position.x, y: 0, z: courier.position.z - 6 }, 0, 0.05);
+      teleportPlayer(sim, { x: courier.position.x, y: courier.position.y, z: courier.position.z - 6 }, 0, 0.05);
       sim.step(input({ fire: true }));
     }
     expect(killed[0]?.tag).toBe(M0_TARGET_TAG);
@@ -128,9 +132,10 @@ describe("simulation: combat", () => {
   });
 
   it("gangers notice, approach and shoot a visible player", () => {
-    const sim = newSim();
+    const sim = alleySim({ seed: 7 });
     const hurt = collect<{ targetId: number }>(sim, "DamageDealt");
-    teleportPlayer(sim, { x: 1, y: 0, z: 30 });
+    // In the yard behind the car wash on Plac Łokietka, 10 m in front of the guard.
+    teleportPlayer(sim, KRAKOWSKIE_SITE_POINTS.car_wash(1, 30));
     run(sim, 600);
     const playerId = sim.player()!.id;
     expect(byKey(sim, "guard")?.ai?.alerted).toBe(true);
@@ -139,7 +144,8 @@ describe("simulation: combat", () => {
   });
 
   it("ignores a player hidden far away", () => {
-    const sim = newSim();
+    // A new game wakes up in the clinic, 80 m up the deptak from the guard.
+    const sim = Simulation.create({ seed: 7 });
     run(sim, 120);
     expect(byKey(sim, "guard")?.ai?.alerted).toBe(false);
     expect(byKey(sim, "guard")?.health?.current).toBe(GANGER_MAX_HP);
