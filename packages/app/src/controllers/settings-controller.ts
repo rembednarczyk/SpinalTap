@@ -1,6 +1,6 @@
-import { type SettingsIntents, type SettingsVm, type UiStore, patchUi } from "@seki/ui";
+import { type CameraIntents, type SettingsIntents, type SettingsVm, type UiStore, patchUi } from "@seki/ui";
 import { bindKey, controlsVm } from "../controls";
-import { needsReload, sanitizeSettings } from "../settings";
+import { clampFieldOfView, needsReload, sanitizeSettings } from "../settings";
 
 export interface SettingsHost {
   /** Settings the page started with; graphics quality stays at these until a reload. */
@@ -10,7 +10,7 @@ export interface SettingsHost {
 }
 
 /** Settings and key bindings: sanitised, saved through the host, and in the store at once. */
-export class SettingsController implements SettingsIntents {
+export class SettingsController implements SettingsIntents, CameraIntents {
   private readonly appliedSettings: SettingsVm;
 
   constructor(
@@ -27,6 +27,11 @@ export class SettingsController implements SettingsIntents {
     const next = sanitizeSettings({ ...current, ...patch }, current);
     patchUi(this.ui, { settings: next, controls: controlsVm(next.bindings), reloadNeeded: needsReload(this.appliedSettings, next) });
     this.host?.save(next);
+  }
+
+  /** The camera reads the setting every frame (main.tsx), so it applies at once (ADR-0049). */
+  setFieldOfView(degrees: number): void {
+    this.changeSettings({ horizontalFov: clampFieldOfView(degrees, this.ui.getState().settings.horizontalFov) });
   }
 
   bindKey(action: string, code: string): void {

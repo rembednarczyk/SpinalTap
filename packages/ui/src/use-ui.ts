@@ -1,6 +1,7 @@
 import { createContext, useContext } from "react";
 import { useStore } from "zustand";
 import type {
+  CameraIntents,
   CharacterIntents,
   ContractIntents,
   JournalIntents,
@@ -36,6 +37,7 @@ export const useShopIntents = (): ShopIntents => useUiContext().intents;
 export const useLootIntents = (): LootIntents => useUiContext().intents;
 export const useCharacterIntents = (): CharacterIntents => useUiContext().intents;
 export const useSettingsIntents = (): SettingsIntents => useUiContext().intents;
+export const useCameraIntents = (): CameraIntents => useUiContext().intents;
 export const usePhoneIntents = (): PhoneIntents => useUiContext().intents;
 export const useContractIntents = (): ContractIntents => useUiContext().intents;
 export const useJournalIntents = (): JournalIntents => useUiContext().intents;

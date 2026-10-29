@@ -190,7 +190,7 @@ describe("settings", () => {
   it("round-trips through storage and survives broken or missing storage", () => {
     const st = memoryStorage();
     expect(loadSettings(st)).toEqual(DEFAULT_SETTINGS);
-    const custom = { ...DEFAULT_SETTINGS, quality: "low", aimMode: "toggle", crouchMode: "hold", invertY: true, fov: 70, mouseSensitivity: 2, touchSensitivity: 0.5, volume: 0.3, bindings: { jump: ["KeyJ"] } } as const;
+    const custom = { ...DEFAULT_SETTINGS, quality: "low", aimMode: "toggle", crouchMode: "hold", invertY: true, horizontalFov: 90, mouseSensitivity: 2, touchSensitivity: 0.5, volume: 0.3, bindings: { jump: ["KeyJ"] } } as const;
     expect(saveSettings(st, custom)).toBe(true);
     expect(loadSettings(st)).toEqual(custom);
     st.data.set(SETTINGS_KEY, "{not json");
@@ -211,7 +211,7 @@ describe("settings", () => {
 
   it("clamps and fills bad values", () => {
     expect(
-      sanitizeSettings({ quality: "ultra", aimMode: "sometimes", crouchMode: 3, mouseSensitivity: 99, touchSensitivity: "x", volume: -1, fov: 200, invertY: "yes", bindings: { jump: ["Space"], fire: "Mouse0", aim: [1] } }),
+      sanitizeSettings({ quality: "ultra", aimMode: "sometimes", crouchMode: 3, mouseSensitivity: 99, touchSensitivity: "x", volume: -1, horizontalFov: 200, invertY: "yes", bindings: { jump: ["Space"], fire: "Mouse0", aim: [1] } }),
     ).toEqual({
       ...DEFAULT_SETTINGS,
       quality: "high",
@@ -219,7 +219,7 @@ describe("settings", () => {
       mouseSensitivity: 3,
       touchSensitivity: 1,
       volume: 0,
-      fov: 80,
+      horizontalFov: 100,
       bindings: { jump: ["Space"] },
     });
     expect(sanitizeSettings(null)).toEqual(DEFAULT_SETTINGS);
@@ -250,6 +250,33 @@ describe("settings", () => {
     expect(ui.getState().reloadNeeded).toBe(false);
     s.reload();
     expect(host.reload).toHaveBeenCalled();
+  });
+
+  it("takes the field of view in horizontal degrees, clamped and saved, without a reload (ADR-0049)", () => {
+    const host = { applied: DEFAULT_SETTINGS, save: vi.fn(), reload: vi.fn() };
+    const { s, ui } = session(host);
+    expect(ui.getState().settings.horizontalFov).toBe(80);
+    s.setFieldOfView(91.6);
+    expect(host.save).toHaveBeenLastCalledWith(expect.objectContaining({ horizontalFov: 92 }));
+    s.setFieldOfView(140);
+    expect(ui.getState().settings.horizontalFov).toBe(100);
+    s.setFieldOfView(10);
+    expect(ui.getState().settings.horizontalFov).toBe(70);
+    s.setFieldOfView(Number.NaN);
+    expect(ui.getState().settings.horizontalFov).toBe(70);
+    expect(ui.getState().reloadNeeded).toBe(false);
+  });
+
+  it("reads the vertical field of view of entries saved before ADR-0049", () => {
+    // The untouched old default (62 degrees tall, ~94 across 16:9) becomes the new default.
+    expect(sanitizeSettings({ fov: 62 }).horizontalFov).toBe(80);
+    // A chosen value keeps its width on 16:9, within the new range.
+    expect(sanitizeSettings({ fov: 50 }).horizontalFov).toBe(79);
+    expect(sanitizeSettings({ fov: 56 }).horizontalFov).toBe(87);
+    expect(sanitizeSettings({ fov: 80 }).horizontalFov).toBe(100);
+    // The new field wins over a stale old one.
+    expect(sanitizeSettings({ fov: 50, horizontalFov: 95 }).horizontalFov).toBe(95);
+    expect(sanitizeSettings({ fov: "wide" }).horizontalFov).toBe(80);
   });
 
   it("works without a settings host for the session only", () => {

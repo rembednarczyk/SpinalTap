@@ -1,7 +1,7 @@
 import { type CSSProperties, useEffect, useState } from "react";
 import type { DayPhase } from "@seki/core";
 import { keyLabel } from "../menus/key-label";
-import { type ControlBindingVm, fovRadians } from "../store/ui-store";
+import { type ControlBindingVm, DEFAULT_HORIZONTAL_FOV, hipVerticalFov } from "../store/ui-store";
 import { useUi } from "../use-ui";
 import { AbilityWidget } from "./ability-widget";
 import { Minimap } from "./minimap";
@@ -14,9 +14,10 @@ import { ScannerHud } from "./scanner";
 import { DetectionRing, HeatStars } from "./stealth";
 import { PhoneNotice } from "../phone/phone";
 import { BuffIcons, DashIcon, DisguiseBadge, HookList } from "./body-hud";
+import { useViewportAspect } from "./use-viewport-aspect";
 
-/** Default vertical field of view of the game camera in radians (engine CameraRig; the settings change it). */
-export const HUD_CAMERA_FOV = 1.08;
+/** Default vertical field of view of the game camera at 16:9 in radians (engine CameraRig, ADR-0049; the settings and the screen change it). */
+export const HUD_CAMERA_FOV = hipVerticalFov(DEFAULT_HORIZONTAL_FOV, 16 / 9);
 
 /**
  * Aim cone half-angle -> tick offset as a share of half the viewport height. `zoom` is the
@@ -39,8 +40,11 @@ const Crosshair = () => {
   const aiming = useUi((s) => s.aiming);
   const zoom = useUi((s) => s.aimZoom);
   const blocking = useUi((s) => s.blocking);
-  // The camera's hip field of view follows the settings.
-  const fov = useUi((s) => fovRadians(s.settings.fov));
+  // The camera's hip field of view follows the settings and the screen's proportions (ADR-0049).
+  const fov = hipVerticalFov(
+    useUi((s) => s.settings.horizontalFov),
+    useViewportAspect(),
+  );
   const [flash, setFlash] = useState<"hit" | "head" | null>(null);
   const [mark, setMark] = useState<"crit" | "kill" | null>(null);
   useEffect(() => {

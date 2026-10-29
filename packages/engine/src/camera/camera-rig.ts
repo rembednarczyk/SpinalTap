@@ -1,15 +1,20 @@
 import { type AbstractMesh, FreeCamera, MeshBuilder, Ray, type Scene, TransformNode, Vector3 } from "../babylon";
-import { type CameraMode, type Transform, type Vec3, type WeaponLook, directionFromAngles } from "@seki/core";
+import { type CameraMode, FOV_REFERENCE_ASPECT, type Transform, type Vec3, type WeaponLook, degToRad, directionFromAngles, verticalFov } from "@seki/core";
 import { TPP_HEIGHT_OFFSET, TPP_SHOULDER_OFFSET, eyeHeightAt } from "@seki/sim";
 import { applyOutline } from "../npr/outline";
 import type { ToonMaterials } from "../npr/toon-material";
 
-const TPP_DISTANCE = 2.7;
+/** Over-the-shoulder distance behind the pivot (ADR-0049: 2.7 m before). */
+const TPP_DISTANCE = 2.2;
 const WALL_MARGIN = 0.25;
 const BLEND_SPEED = 6;
 const VIEWMODEL = { x: 0.2, y: -0.22, z: 0.62 } as const;
-/** Vertical field of view from the hip (the HUD calibrates the crosshair against it). */
-export const BASE_FOV = 1.08;
+/** Horizontal field of view from the hip by default (ADR-0049); the settings change it. */
+export const DEFAULT_HORIZONTAL_FOV = degToRad(80);
+/** Vertical field of view from the hip at 16:9 (the HUD calibrates the crosshair against the same numbers). */
+export const BASE_FOV = verticalFov(DEFAULT_HORIZONTAL_FOV, FOV_REFERENCE_ASPECT);
+/** Sprint widens the view by this share; eased in and out. */
+const SPRINT_WIDEN = 0.1;
 /** Viewmodel aimed down sights: centred, the sights on the eye line, pulled in (ADR-0019). */
 const VIEWMODEL_ADS = { x: 0, y: -0.078, z: 0.4 } as const;
 /** How much closer the TPP camera comes over the shoulder at full aim. */
@@ -89,11 +94,13 @@ export class CameraRig {
   private recoil = 0;
   private shakeAmount = 0;
   private bobPhase = 0;
-  /** Sprint widening of the FOV, eased; the aim zoom on top follows the simulation exactly. */
+  /** Sprint widening of the FOV as a share, eased; the aim zoom follows the simulation exactly. */
   private sprintFov = 0;
-  private fov = BASE_FOV;
-  /** Hip field of view from the settings (vertical, radians); aiming and sprint work from it. */
-  baseFov = BASE_FOV;
+  /**
+   * Hip field of view from the settings, horizontal and in radians (ADR-0049). The camera turns
+   * it into a vertical angle for the screen's proportions; aiming and sprint work from that.
+   */
+  horizontalFov = DEFAULT_HORIZONTAL_FOV;
   /** Eased 0..1 guard of the FPP melee viewmodel. */
   private guard = 0;
   private swing: { strike: number; windup: number; recovery: number; elapsed: number } | null = null;
@@ -166,7 +173,12 @@ export class CameraRig {
 
   /** Current look speed multiplier from the aim zoom (ADR-0019); 1 from the hip. */
   get lookScale(): number {
-    return lookScaleFor(this.camera.fov, this.baseFov);
+    return lookScaleFor(this.camera.fov, this.hipFov);
+  }
+
+  /** Vertical field of view from the hip on the current screen (radians). */
+  get hipFov(): number {
+    return verticalFov(this.horizontalFov, this.scene.getEngine().getAspectRatio(this.camera));
   }
 
   /**
@@ -277,6 +289,8 @@ export class CameraRig {
     if (this.reference) {
       this.camera.position.copyFrom(this.reference.position);
       this.camera.setTarget(this.reference.target);
+      // The reference frame and the title backdrop see what the player sees from the hip.
+      this.camera.fov = this.hipFov;
       this.viewmodel.setEnabled(false);
       this.onBodyVisibility(true);
       return;
@@ -296,7 +310,7 @@ export class CameraRig {
     // Aiming down sights (ADR-0019): the zoom follows the simulation's eased aim exactly, so the
     // HUD crosshair (which uses the same numbers) stays calibrated.
     const aim = Math.min(1, Math.max(0, target.aim ?? 0));
-    const adsFov = aimedFov(aim, target.aimZoom ?? 1, this.baseFov);
+    const adsFov = aimedFov(aim, target.aimZoom ?? 1, this.hipFov);
     let distance = TPP_DISTANCE * this.blend * (1 - TPP_ADS_PULL * smooth(aim));
     if (distance > 0.01) {
       const hit = this.scene.pickWithRay(new Ray(shoulder, back, distance + WALL_MARGIN), this.isBlocker);
@@ -314,9 +328,8 @@ export class CameraRig {
     // Aimed in, the walk barely moves the view.
     const bob = (1 - this.blend) * moving * (1 - 0.8 * aim);
     const sprinting = target.speed > 5.2 ? 1 : 0;
-    this.sprintFov += (0.12 * sprinting - this.sprintFov) * Math.min(1, dt * 6);
-    this.fov = adsFov + this.sprintFov;
-    this.camera.fov = this.fov;
+    this.sprintFov += (SPRINT_WIDEN * sprinting - this.sprintFov) * Math.min(1, dt * 6);
+    this.camera.fov = adsFov * (1 + this.sprintFov);
     this.shakeAmount = Math.max(0, this.shakeAmount - dt * 3);
     const sh = this.shakeAmount * this.shakeAmount;
     const t = this.bobPhase;

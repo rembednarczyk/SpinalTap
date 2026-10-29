@@ -1,4 +1,4 @@
-import type { ItemCategory, ItemDefId, ItemRef, Rarity, WeaponSlot } from "@seki/core";
+import { type ItemCategory, type ItemDefId, type ItemRef, type Rarity, type WeaponSlot, degToRad, verticalFov } from "@seki/core";
 import type { ColorblindMode, DamageNumbersMode } from "./hud-vm";
 import type { MapAreaVm, MapLabelVm, MapPlaceVm, MapPolygon } from "./map-vm";
 import type { RadioStationId } from "./wave2-vm";
@@ -242,8 +242,11 @@ export interface SettingsVm {
   /** Mouse up looks down. */
   readonly invertY: boolean;
   readonly touchSensitivity: number;
-  /** Vertical field of view in degrees from the hip. */
-  readonly fov: number;
+  /**
+   * Horizontal field of view from the hip, degrees (ADR-0049): the same width of the street on
+   * any screen; the camera works out the vertical angle for the screen's proportions.
+   */
+  readonly horizontalFov: number;
   /** Master volume 0..1. */
   readonly volume: number;
   /** Key bindings that differ from the defaults: action id -> codes. */
@@ -274,11 +277,14 @@ export interface SettingsVm {
   readonly highlights: boolean;
 }
 
-/** Vertical field of view of the camera by default, degrees (shown rounded; it is 1.08 rad). */
-export const DEFAULT_FOV = 62;
+/** Horizontal field of view by default, degrees (ADR-0049; the engine's DEFAULT_HORIZONTAL_FOV). */
+export const DEFAULT_HORIZONTAL_FOV = 80;
 
-/** The settings' field of view in radians; the default is exactly the camera's 1.08 rad, so the NPR reference frame never moves. */
-export const fovRadians = (degrees: number): number => (degrees === DEFAULT_FOV ? 1.08 : (degrees * Math.PI) / 180);
+/** Horizontal field of view the settings allow, degrees. */
+export const HORIZONTAL_FOV_RANGE: readonly [number, number] = [70, 100];
+
+/** Vertical field of view from the hip (radians) for the setting on a screen of `aspect`, as the camera does it. */
+export const hipVerticalFov = (horizontalDegrees: number, aspect: number): number => verticalFov(degToRad(horizontalDegrees), aspect);
 
 export const DEFAULT_SETTINGS: SettingsVm = {
   quality: "high",
@@ -289,7 +295,7 @@ export const DEFAULT_SETTINGS: SettingsVm = {
   adsSensitivity: 1,
   invertY: false,
   touchSensitivity: 1,
-  fov: DEFAULT_FOV,
+  horizontalFov: DEFAULT_HORIZONTAL_FOV,
   volume: 0.6,
   bindings: {},
   hints: true,
