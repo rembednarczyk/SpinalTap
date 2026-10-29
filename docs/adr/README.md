@@ -48,5 +48,6 @@
 | [0044](0044-renderer-miasta-z-danych-mapowych.md) | Renderer miasta z danych mapowych: fasady NPR z UV w metrach i stylu z ziarna, attyki, dachy, kopuły i wieże, neon i holo w języku polsko-japońskim, teren z fartuchami, drapowane nawierzchnie z krawężnikami, komórki 128 m z bliskim i dalekim LOD, podgląd `?lublin-preview` | Zaakceptowana |
 | [0045](0045-gra-w-lublinie.md) | Gra w Lublinie: świat gry na 20 chunkach Lublina, budynki jako bryły i scenografia, wnętrza w kamienicach, przejścia przez bramy, kamera TPP z okluderem z app, mapa i minimapa z danych mapowych, nazwy po lubelsku, zapis v15 | Zaakceptowana |
 | [0046](0046-strategia-testow-e2e.md) | Strategia testów e2e: przeglądarka tylko do rozruchu, rysowania, HUD telefonu i dotyku; logika w testach sesji bez renderera; krokowanie zamiast zegara; czas klatki jako raport; jedna przeglądarka na maszynę; e2e w trzech shardach | Zaakceptowana |
+| [0047](0047-meble-uliczne-lublina.md) | Meble uliczne Lublina 2077: `pnpm osm:props` z planu do tabeli per chunk, modele NPR pięciu latarń i reszty, instancje cienkie per rodzaj z bliskich komórek, bloki 256 m z daleką siatką i halo latarń bez dynamicznych świateł, galeria `?props-gallery` | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.
