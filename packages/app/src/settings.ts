@@ -1,5 +1,15 @@
-import type { InputFrame } from "@seki/core";
-import { type AimMode, type ColorblindMode, DEFAULT_SETTINGS, type DamageNumbersMode, type GraphicsQuality, HUD_SCALE_RANGE, type SettingsVm, isRadioStationId } from "@seki/ui";
+import { FOV_REFERENCE_ASPECT, type InputFrame, degToRad, horizontalFovOf, radToDeg } from "@seki/core";
+import {
+  type AimMode,
+  type ColorblindMode,
+  DEFAULT_SETTINGS,
+  type DamageNumbersMode,
+  type GraphicsQuality,
+  HORIZONTAL_FOV_RANGE,
+  HUD_SCALE_RANGE,
+  type SettingsVm,
+  isRadioStationId,
+} from "@seki/ui";
 
 export const SETTINGS_KEY = "seki.settings.v1";
 
@@ -15,8 +25,23 @@ const isDamageMode = (v: unknown): v is DamageNumbersMode => v === "off" || v ==
 const isColorblind = (v: unknown): v is ColorblindMode => v === "off" || v === "protan" || v === "deutan" || v === "tritan";
 const bool = (v: unknown, fallback: boolean): boolean => (typeof v === "boolean" ? v : fallback);
 
-/** Vertical field of view the settings allow, degrees. */
-export const FOV_RANGE: readonly [number, number] = [50, 80];
+/** The vertical field of view entries saved before ADR-0049 held by default, degrees. */
+const LEGACY_DEFAULT_FOV = 62;
+
+/**
+ * Horizontal field of view of an entry (ADR-0049). Entries saved before it hold `fov`, the
+ * vertical degrees: the untouched default becomes the new default, a value someone chose keeps
+ * its width on a 16:9 screen.
+ */
+const horizontalFovOf16x9 = (r: Record<string, unknown>): unknown => {
+  if (r.horizontalFov !== undefined || typeof r.fov !== "number" || !Number.isFinite(r.fov)) return r.horizontalFov;
+  if (Math.round(r.fov) === LEGACY_DEFAULT_FOV) return undefined;
+  return radToDeg(horizontalFovOf(degToRad(r.fov), FOV_REFERENCE_ASPECT));
+};
+
+/** Clamps a field of view request to the allowed horizontal degrees. */
+export const clampFieldOfView = (degrees: unknown, fallback: number = DEFAULT_SETTINGS.horizontalFov): number =>
+  Math.round(clamp(degrees, HORIZONTAL_FOV_RANGE[0], HORIZONTAL_FOV_RANGE[1], fallback));
 
 /** Only string lists of at most three codes per action survive. */
 const sanitizeBindings = (raw: unknown): Record<string, readonly string[]> => {
@@ -40,7 +65,7 @@ export const sanitizeSettings = (raw: unknown, defaults: SettingsVm = DEFAULT_SE
     adsSensitivity: clamp(r.adsSensitivity, 0.3, 2, defaults.adsSensitivity),
     invertY: typeof r.invertY === "boolean" ? r.invertY : defaults.invertY,
     touchSensitivity: clamp(r.touchSensitivity, 0.2, 3, defaults.touchSensitivity),
-    fov: Math.round(clamp(r.fov, FOV_RANGE[0], FOV_RANGE[1], defaults.fov)),
+    horizontalFov: clampFieldOfView(horizontalFovOf16x9(r), defaults.horizontalFov),
     volume: clamp(r.volume, 0, 1, defaults.volume),
     bindings: sanitizeBindings(r.bindings),
     hints: typeof r.hints === "boolean" ? r.hints : defaults.hints,

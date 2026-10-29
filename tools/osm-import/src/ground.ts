@@ -6,7 +6,7 @@
 import { type GroundSurface } from "../../../packages/core/src/world/city-geo.ts";
 import { parseLength } from "./building-tags.ts";
 import { type Area, type Line } from "./features.ts";
-import { type Pt, type Rect, bufferLine, ccw, clipRingToRect, r1, removeCollinear, signedArea, simplifyRing, stripAlong } from "./geometry.ts";
+import { type Pt, type Rect, bufferLine, ccw, clipRingToRect, pointInRing, r1, removeCollinear, signedArea, simplifyRing, stripAlong } from "./geometry.ts";
 import { type GroundOut } from "./model.ts";
 import { type Tags } from "./osm.ts";
 
@@ -16,6 +16,7 @@ const cobbled = (t: Tags) => COBBLES.has(t.surface ?? "");
 /** Surface of a mapped area, or null when it is not ground. */
 export const areaSurface = (t: Tags): GroundSurface | null => {
   if (t.building !== undefined) return null;
+  if (t.amenity === "fountain" && t.fountain !== "splash_pad" && t.natural === "water") return "basin";
   if (t.natural === "water" || t.waterway === "riverbank" || t.landuse === "reservoir" || t.landuse === "basin") return "water";
   if (t.place === "square" || t.highway === "pedestrian" || t["area:highway"] === "pedestrian" || t.amenity === "marketplace") return cobbled(t) ? "cobble" : "square";
   if (t["area:highway"] === "footway" || t.highway === "footway") return cobbled(t) ? "cobble" : "footway";
@@ -78,8 +79,19 @@ export const sidewalkSides = (t: Tags, mappedNearby: boolean): { left: boolean; 
   return { left: true, right: true };
 };
 
-/** Bands from one line; `mappedSidewalkNear` tells whether separate sidewalks run along it. */
-export const lineBands = (l: Line, mappedSidewalkNear: boolean): Band[] => {
+/** Whether most points of `line` lie in one of the mapped water areas (a river already drawn as a polygon). */
+export const coveredByWater = (line: readonly Pt[], water: readonly (readonly Pt[])[]): boolean => {
+  if (water.length === 0 || line.length === 0) return false;
+  const inside = line.filter((p) => water.some((ring) => pointInRing(p, ring))).length;
+  return inside / line.length >= 0.6;
+};
+
+/**
+ * Bands from one line; `mappedSidewalkNear` tells whether separate sidewalks run along it.
+ * A river whose bed is mapped as a water area gets no band of its own: the buffered centre
+ * line would lay a second, wider strip over the real banks.
+ */
+export const lineBands = (l: Line, mappedSidewalkNear: boolean, water: readonly (readonly Pt[])[] = []): Band[] => {
   const t = l.tags;
   if (underground(t) || l.line.length < 2) return [];
   const bridge = t.bridge !== undefined && t.bridge !== "no";
@@ -103,7 +115,7 @@ export const lineBands = (l: Line, mappedSidewalkNear: boolean): Band[] => {
     }
   }
   if (t.railway === "rail" || t.railway === "tram" || t.railway === "light_rail") add("rail", bufferLine(l.line, 3));
-  if (t.waterway === "river" && !t.tunnel) add("water", bufferLine(l.line, parseLength(t.width) ?? 15));
+  if (t.waterway === "river" && !t.tunnel && !coveredByWater(l.line, water)) add("water", bufferLine(l.line, parseLength(t.width) ?? 15));
   if ((t.waterway === "stream" || t.waterway === "canal" || t.waterway === "ditch") && !underground(t)) add("water", bufferLine(l.line, parseLength(t.width) ?? 3));
   return out;
 };
@@ -115,7 +127,7 @@ export const areaBand = (a: Area): Band | null => {
 };
 
 /** Draw order: big areas first, then roads, cobbles, sidewalks, paths and rails on top. */
-const ORDER: Record<GroundSurface, number> = { water: 0, grass: 1, square: 2, road: 3, cobble: 4, sidewalk: 5, footway: 6, rail: 7 };
+const ORDER: Record<GroundSurface, number> = { water: 0, grass: 1, square: 2, road: 3, cobble: 4, sidewalk: 5, footway: 6, rail: 7, basin: 8 };
 
 /** Clips bands to a chunk, simplifies and rounds them, in draw order then by source id. */
 export const chunkGround = (bands: readonly Band[], rect: Rect): GroundOut[] => {

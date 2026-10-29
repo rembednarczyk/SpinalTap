@@ -1,5 +1,5 @@
 import type { Vec3 } from "../math/vec3";
-import type { BuildingUse, GroundPoint, GroundSurface, StreetPropItem, TerrainGrid } from "../world/city-geo";
+import type { BuildingUse, GroundPoint, GroundSurface, StreetPropItem, TerrainGrid, TerrainOpenSides } from "../world/city-geo";
 import type { GarmentLook, GarmentSlot, Rarity, WeaponLook, WeaponSlot } from "../items/types";
 
 export type EntityId = number;
@@ -132,7 +132,11 @@ export type ViewDescriptor =
       readonly vertical?: BuildingVertical;
     }
   /** The ground of a chunk (ADR-0042): a height grid the renderer turns into one mesh. */
-  | { readonly kind: "terrain"; readonly grid: TerrainGrid }
+  /**
+   * `open`: the sides that are the edge of the map data (no chunk of the city beyond them); the
+   * renderer runs the ground on from them to the horizon instead of ending in a slab.
+   */
+  | { readonly kind: "terrain"; readonly grid: TerrainGrid; readonly open?: TerrainOpenSides }
   /**
    * A paved or green area laid on the terrain (ADR-0042): roads, sidewalks, squares, cobbles,
    * lawns, the river. Points are world x and z relative to the entity's position; the

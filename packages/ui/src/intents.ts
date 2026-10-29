@@ -85,6 +85,12 @@ export interface SettingsIntents {
   reload(): void;
 }
 
+/** The game camera (ADR-0049). */
+export interface CameraIntents {
+  /** Horizontal field of view from the hip, degrees; the app clamps it to the allowed range and saves it. */
+  setFieldOfView(degrees: number): void;
+}
+
 /** The phone (ADR-0028). */
 export interface PhoneIntents {
   /** The phone (T or the touch button): the inbox with a thread per contact. */
@@ -126,6 +132,7 @@ export type UiIntents = SessionIntents &
   LootIntents &
   CharacterIntents &
   SettingsIntents &
+  CameraIntents &
   PhoneIntents &
   ContractIntents &
   JournalIntents &
