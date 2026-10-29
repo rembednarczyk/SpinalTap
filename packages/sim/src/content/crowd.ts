@@ -6,6 +6,9 @@ import { KOI_CROWD_SPOTS } from "./interiors";
 import { METRO_STATIONS } from "./metro";
 import { againstWall, inBuilding, nearestWall } from "./lublin/places";
 import { DOCKS_PLACE, MAP_CHUNKS, MARKET_PLACE } from "./lublin/sites";
+import { furnitureClearance, furnitureNear } from "./furniture-index";
+import { SEAT_SPOTS } from "./crowd-seats";
+import type { CrowdSpot } from "./crowd-spot";
 
 /** The chunks of Lublin that hold the market and the docks (ADR-0045). */
 const MARKET_CHUNK = "podzamcze-1-0";
@@ -21,7 +24,7 @@ const DOCKS_CHUNK = "nabrzeze-1-1";
 export type CrowdDensity = "off" | "low" | "medium" | "high";
 
 /** Most residents a chunk ever holds, per density. */
-export const CROWD_CAP: Readonly<Record<CrowdDensity, number>> = { off: 0, low: 4, medium: 8, high: 12 };
+export const CROWD_CAP: Readonly<Record<CrowdDensity, number>> = { off: 0, low: 6, medium: 18, high: 32 };
 
 /**
  * A closed route along the sidewalks, as a polygon of points (x, z) on the ground. Walkers go
@@ -33,16 +36,7 @@ export interface CrowdLane {
   readonly points: readonly (readonly [number, number])[];
 }
 
-/** A place where a resident stands and does something, facing `yaw`. */
-export interface CrowdSpot {
-  readonly chunk: string;
-  readonly at: Vec3;
-  readonly yaw: number;
-  /** What it does there; it changes with the passers-by's routine slots. */
-  readonly does: readonly [ActivityId, ...ActivityId[]];
-  /** Under a roof: no umbrella. */
-  readonly indoor?: true;
-}
+export type { CrowdSpot } from "./crowd-spot";
 
 const EAST = Math.PI / 2;
 const WEST = -Math.PI / 2;
@@ -54,10 +48,16 @@ const placedLane = (d: Vec3, lane: CrowdLane): CrowdLane => ({ ...lane, points: 
 
 /** Half the width of a lane laid along a street of the map: walkers go up one side and back down the other. */
 const STREET_LANE_HALF = 1.6;
+/** Half widths tried for a street's lane, widest usual first: furniture (ADR-0050) can push a loop in or out. */
+const LANE_HALVES: readonly number[] = [STREET_LANE_HALF, 1, 2.2, 2.8, 0.7, 3.4];
 /** Every point of a street's lane keeps this far from the walls (the walkers' own offset and a body included). */
 const LANE_CLEARANCE = 1.15;
 /** Streets shorter than this make no lane. */
 const MIN_LANE_LENGTH = 30;
+/** The chunks of the deptak and the Rynek: the evening's full streets (ADR-0050). */
+const BUSY_CHUNKS: ReadonlySet<string> = new Set(["krakowskie-1-0", "krakowskie-2-0", "stare-miasto-0-0", "stare-miasto-0-1"]);
+/** Most lanes in such a chunk. */
+const BUSY_LANES_PER_CHUNK = 6;
 /** Most lanes per chunk: its longest streets. */
 const LANES_PER_CHUNK = 3;
 
@@ -86,8 +86,51 @@ const BLOCKS: readonly { minX: number; maxX: number; minZ: number; maxZ: number 
 /** Clearance a route keeps from the game's blocks (the walkers' own offset and a body included). */
 const BLOCK_CLEARANCE = 0.9;
 
+/** How far a lane bends round a piece of furniture: the walkers' own side, a body and a margin (m). */
+const WEAVE_CLEARANCE = 1.0;
+
+/** Pushes a point out of every furniture circle it is too close to. */
+const pushOut = (p: Pt): Pt => {
+  let [x, z] = p;
+  for (const f of furnitureNear(x, z)) {
+    const d = Math.hypot(x - f.x, z - f.z);
+    const want = f.r + WEAVE_CLEARANCE;
+    if (d >= want) continue;
+    // Straight through the middle: out to the east.
+    const ux = d > 1e-6 ? (x - f.x) / d : 1;
+    const uz = d > 1e-6 ? (z - f.z) / d : 0;
+    x = f.x + ux * want;
+    z = f.z + uz * want;
+  }
+  return [Math.round(x * 100) / 100, Math.round(z * 100) / 100];
+};
+
+/**
+ * A loop bent round the furniture on it (ADR-0050): resampled every metre, each sample pushed
+ * out of the pieces it is too close to, then smoothed so the walk curves instead of zigzagging.
+ */
+const weave = (loop: readonly Pt[]): Pt[] => {
+  const dense: Pt[] = [];
+  for (let i = 0; i < loop.length; i++) {
+    const [ax, az] = loop[i] as Pt;
+    const [bx, bz] = loop[(i + 1) % loop.length] as Pt;
+    const n = Math.max(1, Math.round(Math.hypot(bx - ax, bz - az)));
+    for (let k = 0; k < n; k++) dense.push([ax + ((bx - ax) * k) / n, az + ((bz - az) * k) / n]);
+  }
+  if (!dense.some((p) => furnitureClearance(p[0], p[1]) < WEAVE_CLEARANCE)) return [...loop];
+  let pts = dense.map(pushOut);
+  for (let pass = 0; pass < 2; pass++) {
+    pts = pts.map((p, i) => {
+      const a = pts[(i + pts.length - 1) % pts.length] as Pt;
+      const b = pts[(i + 1) % pts.length] as Pt;
+      return pushOut([(a[0] + 2 * p[0] + b[0]) / 4, (a[1] + 2 * p[1] + b[1]) / 4]);
+    });
+  }
+  return pts;
+};
+
 const nearBlock = (x: number, z: number): boolean =>
-  BLOCKS.some((b) => Math.hypot(Math.max(b.minX - x, 0, x - b.maxX), Math.max(b.minZ - z, 0, z - b.maxZ)) < BLOCK_CLEARANCE);
+  furnitureClearance(x, z) < BLOCK_CLEARANCE || BLOCKS.some((b) => Math.hypot(Math.max(b.minX - x, 0, x - b.maxX), Math.max(b.minZ - z, 0, z - b.maxZ)) < BLOCK_CLEARANCE);
 
 /** Is every metre along the loop clear of the map's walls and the game's blocks? */
 const clearLoop = (loop: readonly Pt[]): boolean => {
@@ -123,13 +166,17 @@ const streetLanes = (): CrowdLane[] =>
       .filter((pts) => pts.length >= 2 && polyLength(pts) >= MIN_LANE_LENGTH)
       .sort((a, b) => polyLength(b) - polyLength(a));
     const out: CrowdLane[] = [];
+    // The deptak and the Rynek (ADR-0050): more routes, two side by side on a wide street.
+    const busy = BUSY_CHUNKS.has(c.id);
     for (const line of lines) {
-      if (out.length >= LANES_PER_CHUNK) break;
-      for (const half of [STREET_LANE_HALF, 1]) {
-        const loop = loopAround(line, half);
+      const used: number[] = [];
+      for (const half of LANE_HALVES) {
+        if (out.length >= (busy ? BUSY_LANES_PER_CHUNK : LANES_PER_CHUNK) || used.length >= (busy ? 2 : 1)) break;
+        if (used.some((u) => Math.abs(u - half) < 1.4)) continue;
+        const loop = weave(loopAround(line, half));
         if (!clearLoop(loop)) continue;
         out.push({ id: `${c.id}-${out.length}`, chunk: c.id, points: loop });
-        break;
+        used.push(half);
       }
     }
     return out;
@@ -193,6 +240,8 @@ const SET_PIECE_LANES: readonly CrowdLane[] = [
   }),
 ];
 
+export { furnitureClearance };
+
 export const CROWD_LANES: readonly CrowdLane[] = [...streetLanes(), ...SET_PIECE_LANES];
 
 const spot = (chunk: string, at: Vec3, yaw: number, does: readonly [ActivityId, ...ActivityId[]], indoor = false): CrowdSpot =>
@@ -242,11 +291,14 @@ export const CROWD_SPOTS: readonly CrowdSpot[] = [
   spot(DOCKS_CHUNK, inDocks(26, 104), NORTH, ["phone"]),
   spot(DOCKS_CHUNK, inDocks(12.6, 137.5), NORTH, ["lean", "smoke"]),
   spot(DOCKS_CHUNK, inDocks(5.5, 134), SOUTH, ["talk", "phone"]),
+  // At the street furniture (ADR-0050): benches, café gardens, kiosks, bus shelters.
+  ...SEAT_SPOTS,
 ];
 
 /**
  * How full a district is by the hour (0..1 of the chunk's share of the cap): Shinsekai lives at
- * night, the market is busiest in the evening, the docks work by day and are empty at night.
+ * night, the market is busiest in the evening, the docks work by day and are empty at night, the
+ * deptak and the Rynek are full in the evening (ADR-0050).
  */
 export const CROWD_BY_HOUR: Readonly<Record<string, readonly number[]>> = {
   //            0    1    2    3    4    5    6    7    8    9   10   11   12   13   14   15   16   17   18   19   20   21   22   23
@@ -254,7 +306,11 @@ export const CROWD_BY_HOUR: Readonly<Record<string, readonly number[]>> = {
   street: [0.5, 0.4, 0.3, 0.2, 0.1, 0.2, 0.4, 0.7, 0.8, 0.6, 0.6, 0.7, 0.8, 0.7, 0.6, 0.6, 0.7, 0.9, 0.9, 0.8, 0.8, 0.7, 0.6, 0.6],
   market: [0.4, 0.3, 0.1, 0.1, 0.1, 0.1, 0.3, 0.5, 0.5, 0.6, 0.7, 0.8, 0.9, 0.8, 0.7, 0.7, 0.8, 1.0, 1.0, 1.0, 1.0, 1.0, 0.8, 0.6],
   docks: [0, 0, 0, 0, 0, 0.2, 0.5, 0.8, 0.9, 0.9, 0.9, 0.9, 0.7, 0.9, 0.9, 0.9, 0.8, 0.6, 0.3, 0.1, 0, 0, 0, 0],
+  // The deptak of Krakowskie Przedmieście and the Rynek (ADR-0050): full from the evening to past midnight.
+  evening: [0.9, 0.8, 0.6, 0.4, 0.2, 0.15, 0.2, 0.35, 0.5, 0.55, 0.6, 0.65, 0.7, 0.7, 0.7, 0.7, 0.8, 0.95, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
 };
+
+
 
 /** Each chunk's crowd: its profile by the hour and its share of the cap. */
 export const CROWD_CHUNKS: Readonly<Record<string, { readonly profile: keyof typeof CROWD_BY_HOUR; readonly share: number }>> = Object.fromEntries(
@@ -265,11 +321,15 @@ export const CROWD_CHUNKS: Readonly<Record<string, { readonly profile: keyof typ
         ? { profile: "market" as const, share: 1 }
         : c.id === DOCKS_CHUNK
           ? { profile: "docks" as const, share: 0.6 }
-          : c.id === "krakowskie-2-0" || c.id === "krakowskie-1-0"
-            ? { profile: "nightlife" as const, share: 1 }
+          : BUSY_CHUNKS.has(c.id)
+            ? { profile: "evening" as const, share: 1 }
             : c.district === "shinsekai-7"
               ? { profile: "nightlife" as const, share: 0.6 }
-              : { profile: "street" as const, share: 0.8 };
+              : c.district === "kanal"
+                ? { profile: "street" as const, share: 0.8 }
+                : c.district === "targ"
+                  ? { profile: "street" as const, share: 0.7 }
+                  : { profile: "street" as const, share: 0.4 };
     return [[c.id, crowd]];
   }),
 );

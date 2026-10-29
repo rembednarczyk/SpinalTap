@@ -40,6 +40,7 @@ const MARKET = "podzamcze-1-0";
 const DOCKS = "nabrzeze-1-1";
 import type { Entity } from "../src";
 import { asideFor } from "../src/systems/ai/crowd-walk";
+import { furnitureClearance } from "../src/content/crowd";
 import { byKey, input, run, teleportPlayer } from "./helpers";
 
 vi.setConfig({ testTimeout: 30_000 });
@@ -74,10 +75,11 @@ const solids = WORLD_CHUNKS.flatMap((c) =>
 );
 /** In a room cut into a tenement (ADR-0045): its own shell of blocks are its walls. */
 const inRoom = (x: number, z: number) => ROOM_SITES.some((r) => x >= r.rect.minX && x <= r.rect.maxX && z >= r.rect.minZ && z <= r.rect.maxZ);
-/** Distance to the nearest solid: a block, or a wall of the map's buildings (0 inside one). */
+/** Distance to the nearest solid: a block, a piece of street furniture (ADR-0050), or a wall of the map's buildings (0 inside one). */
 const clearance = (x: number, z: number) =>
   Math.min(
     inRoom(x, z) ? Infinity : inBuilding(x, z) ? 0 : nearestWall(x, z).d,
+    furnitureClearance(x, z),
     ...solids.map((b) => Math.hypot(Math.max(b.min.x - x, 0, x - b.max.x), Math.max(b.min.z - z, 0, z - b.max.z))),
   );
 
@@ -111,7 +113,7 @@ describe("routes and spots of the crowd", () => {
     expect(lanePoint(g, s - 3 * g.length).x).toBeCloseTo(5);
   });
 
-  it("both sides of every route stay clear of the walls, the stalls and the parked cars", () => {
+  it("both sides of every route stay clear of the walls, the stalls, the parked cars and the street furniture", () => {
     for (const lane of CROWD_LANES) {
       const g = laneGeom(lane);
       for (let s = 0; s < g.length; s += 0.5) {
@@ -147,13 +149,14 @@ describe("how many and who (ADR-0041)", () => {
   it("the market is full in the evening, the docks are empty at night, the deptak lives at night", () => {
     const high = CROWD_CAP.high;
     expect(crowdCount(MARKET, high, clockAt(19))).toBe(high);
-    expect(crowdCount(MARKET, high, clockAt(3))).toBeLessThan(3);
+    expect(crowdCount(MARKET, high, clockAt(3))).toBeLessThanOrEqual(high * 0.1);
     expect(crowdCount(DOCKS, high, clockAt(23))).toBe(0);
     expect(crowdCount(DOCKS, high, clockAt(10))).toBeGreaterThan(4);
     expect(crowdCount(S7, high, clockAt(22))).toBe(high);
     expect(crowdCount(S7, high, clockAt(5))).toBeLessThan(crowdCount(S7, high, clockAt(22)) / 3);
-    // Phones: a few per chunk at most.
-    for (const chunk of Object.keys(CROWD_CHUNKS)) for (let h = 0; h < 24; h++) expect(crowdCount(chunk, CROWD_CAP.low, clockAt(h))).toBeLessThanOrEqual(4);
+    // Phones: a few per chunk at most (ADR-0050: six).
+    expect(CROWD_CAP.low).toBeLessThanOrEqual(6);
+    for (const chunk of Object.keys(CROWD_CHUNKS)) for (let h = 0; h < 24; h++) expect(crowdCount(chunk, CROWD_CAP.low, clockAt(h))).toBeLessThanOrEqual(CROWD_CAP.low);
     expect(crowdCount(S7, CROWD_CAP.off, clockAt(22))).toBe(0);
     expect(crowdCount("nowhere", high, clockAt(22))).toBe(0);
   });
@@ -170,14 +173,14 @@ describe("how many and who (ADR-0041)", () => {
     const share = outdoor.filter((r) => r.umbrella).length / outdoor.length;
     expect(share).toBeGreaterThan(0.25);
     expect(share).toBeLessThan(0.45);
-    // A third stands, the rest walk, both ways round the routes.
+    // Two of five stand (ADR-0050), the rest walk, both ways round the routes.
     const roles = Array.from({ length: CROWD_CAP.high }, (_, i) => residentOf(3, MARKET, i)!.role);
-    expect(roles.filter((r) => r.kind === "stander")).toHaveLength(4);
+    expect(roles.filter((r) => r.kind === "stander")).toHaveLength(Math.floor(CROWD_CAP.high / 5) * 2 + (CROWD_CAP.high % 5 > 1 ? 1 : 0) + (CROWD_CAP.high % 5 > 3 ? 1 : 0));
     const walkers = roles.flatMap((r) => (r.kind === "walker" ? [r] : []));
     // Three routes in the market, both ways round each.
     expect(new Set(walkers.map((w) => `${w.lane.id}:${w.dir}`)).size).toBe(6);
     // A chunk without routes or spots has nobody.
-    expect(residentOf(3, "podzamcze-2-0", 0)).toBeNull();
+    expect(residentOf(3, "nowhere", 0)).toBeNull();
   });
 
   it("walkers one way round a lane keep apart and never catch up", () => {
@@ -237,11 +240,17 @@ describe("the crowd in the simulation", () => {
     const standers = residents(sim, S7).filter((r) => !r.passerby?.lane);
     expect(walkers.length).toBeGreaterThan(4);
     expect(standers.length).toBeGreaterThan(0);
-    const start = walkers.map((w) => ({ ...w.position }));
-    run(sim, 10 * SIM_HZ);
+    // The way each one walks, summed second by second: routes bend round the furniture and turn at their ends.
+    const walked = walkers.map(() => 0);
+    let last = walkers.map((w) => ({ ...w.position }));
+    for (let s = 0; s < 10; s++) {
+      run(sim, SIM_HZ);
+      walkers.forEach((w, i) => (walked[i]! += flat(w.position, last[i]!)));
+      last = walkers.map((w) => ({ ...w.position }));
+    }
     walkers.forEach((w, i) => {
       // About ten metres in ten seconds, still on the route (unless someone was in the way).
-      expect(flat(w.position, start[i]!)).toBeGreaterThan(6);
+      expect(walked[i]).toBeGreaterThan(6);
       const lane = CROWD_LANES.find((l) => l.id === w.passerby!.lane!.lane)!;
       const t = laneTarget(lane, w.passerby!.lane!, sim.clock, w.passerby!.lane!.avoid);
       expect(flat(w.position, t)).toBeLessThan(1.2);

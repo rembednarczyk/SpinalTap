@@ -48,18 +48,45 @@ export const crowdCount = (chunk: string, cap: number, clock: GameClock): number
 const lanesOf = (chunk: string): CrowdLane[] => CROWD_LANES.filter((l) => l.chunk === chunk);
 const spotsOf = (chunk: string): CrowdSpot[] => CROWD_SPOTS.filter((s) => s.chunk === chunk);
 
-/** Every third resident stands at a spot while there are spots; the rest walk (all stand without a route). */
-const isStander = (index: number, lanes: number, spots: number): boolean =>
-  lanes === 0 ? index < spots : index % 3 === 2 && Math.floor(index / 3) < spots;
+/**
+ * Which spot a stander takes: two of every five residents stand while there are spots (ADR-0050,
+ * the second and the fourth), the rest walk; without a route all stand. -1 for a walker.
+ */
+const standerRank = (index: number, lanes: number, spots: number): number => {
+  if (lanes === 0) return index < spots ? index : -1;
+  const k = index % 5;
+  if (k !== 1 && k !== 3) return -1;
+  const rank = Math.floor(index / 5) * 2 + (k === 3 ? 1 : 0);
+  return rank < spots ? rank : -1;
+};
+
+const isStander = (index: number, lanes: number, spots: number): boolean => standerRank(index, lanes, spots) >= 0;
+
+const orders = new Map<string, CrowdSpot[]>();
 
 /** The spots of a chunk in an order of the seed's, so each game has its own corners taken. */
 const spotOrder = (seed: number, chunk: string, spots: readonly CrowdSpot[]): CrowdSpot[] => {
+  const known = orders.get(`${seed}:${chunk}`);
+  if (known) return known;
   const rng = deriveRandom(seed, `crowd-spots:${chunk}`);
-  const out = [...spots];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(rng.next() * (i + 1));
-    [out[i], out[j]] = [out[j] as CrowdSpot, out[i] as CrowdSpot];
+  // Groups (a bench's seats, a kiosk's queue) move as one, so standers fill them together.
+  const groups: CrowdSpot[][] = [];
+  const byKey = new Map<string, CrowdSpot[]>();
+  for (const s of spots) {
+    const g = s.group === undefined ? undefined : byKey.get(s.group);
+    if (g) g.push(s);
+    else {
+      const fresh = [s];
+      groups.push(fresh);
+      if (s.group !== undefined) byKey.set(s.group, fresh);
+    }
   }
+  for (let i = groups.length - 1; i > 0; i--) {
+    const j = Math.floor(rng.next() * (i + 1));
+    [groups[i], groups[j]] = [groups[j] as CrowdSpot[], groups[i] as CrowdSpot[]];
+  }
+  const out = groups.flat();
+  orders.set(`${seed}:${chunk}`, out);
   return out;
 };
 
@@ -89,7 +116,7 @@ export const residentOf = (seed: number, chunk: string, index: number): Resident
   const spots = spotsOf(chunk);
   let role: ResidentRole | null = null;
   if (isStander(index, lanes.length, spots.length)) {
-    const spot = spotOrder(seed, chunk, spots)[lanes.length === 0 ? index : Math.floor(index / 3)];
+    const spot = spotOrder(seed, chunk, spots)[standerRank(index, lanes.length, spots.length)];
     if (spot) role = { kind: "stander", spot };
   } else if (lanes.length > 0) {
     let standers = 0;

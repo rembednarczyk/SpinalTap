@@ -1,3 +1,4 @@
+import type { TrafficDensity } from "../content/traffic";
 import type { CrimeKind, DisturbanceKind, DomainEvents, DomainState, EntityId, EventBus, InputFrame, Vec3 } from "@seki/core";
 import type { World } from "miniplex";
 import type { SeededRandom } from "../rng/seeded-random";
@@ -108,6 +109,8 @@ export interface SimContext {
   readonly bus: EventBus<DomainEvents>;
   /** Most residents of the crowd per chunk (ADR-0041): follows the graphics quality, 0 for none. */
   readonly crowdCap: number;
+  /** How much traffic drives round the player (ADR-0050): follows the crowd's density unless set. */
+  readonly traffic: TrafficDensity;
   readonly dt: number;
   readonly tick: number;
   input: InputFrame;
