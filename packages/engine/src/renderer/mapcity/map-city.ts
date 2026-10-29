@@ -9,12 +9,13 @@ import { MeshSink } from "../mesh-sink";
 import { type FacadeFrame, type MapBuilding, facadeFrame } from "./facade-frame";
 import { mapBuilding } from "./map-building";
 import { planFarBuilding, planNearBuilding } from "./facade-plan";
-import { SURFACE_LIFT, planSurface, planTerrain, planWater } from "./ground-plan";
+import { SURFACE_LIFT, planBasin, planSurface, planTerrain, planWater } from "./ground-plan";
 import { MapSignMaterial } from "./map-signs";
 import { MapWaterMaterial } from "./map-water";
 import { BinIndex, cellBounds, cellKey, cellsOf, grow } from "./map-index";
 import { type Box2, type P2, boundsOf, centroid, cleanRing, distanceToBox, pointInRing } from "./polygon";
 import { planBuildingSigns } from "./sign-plan";
+import { planSteps } from "./steps-plan";
 import { StreetProps, type StreetPropsStats } from "./street-props";
 
 /** Views drawn by the map city (ADR-0042, ADR-0044). */
@@ -177,7 +178,7 @@ export class MapCity {
     } else {
       this.grounds.set(id, { surface: view.surface, ring, y: at.y, bounds, cell });
       if (view.surface === "road") this.roadIndex.add(id, bounds);
-      if (view.surface !== "water") this.surfaceIndex.add(id, bounds);
+      if (view.surface !== "water" && view.surface !== "basin") this.surfaceIndex.add(id, bounds);
       this.cellOf(cell).grounds.add(id);
     }
     // Neighbours' firewalls and kerbs depend on this one.
@@ -457,6 +458,8 @@ export class MapCity {
       if (!g) continue;
       const h = (x: number, z: number) => this.heightAt(x, z) ?? g.y;
       if (g.surface === "water") planWater(water, g.ring, h);
+      else if (g.surface === "basin") planBasin(water, ground, g.ring, h);
+      else if (g.surface === "steps") planSteps(ground, g.ring, h);
       else planSurface(ground, g.surface, g.ring, h, g.surface === "sidewalk" ? this.roadAt : null);
     }
     cell.ground = ground.empty ? null : this.mesh(`map-ground-${cell.key}`, ground, "mapGround");

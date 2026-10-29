@@ -68,7 +68,11 @@ export interface TerrainOpenSides {
 }
 
 /** Ground surfaces drawn from map areas and ways (ADR-0042). */
-export type GroundSurface = "road" | "sidewalk" | "square" | "cobble" | "footway" | "grass" | "water" | "rail";
+/**
+ * `basin`: a fountain's water inside its stone rim, standing above the square. `steps`: one
+ * straight run of outdoor steps; its long side is the direction of the flight.
+ */
+export type GroundSurface = "road" | "sidewalk" | "square" | "cobble" | "footway" | "steps" | "grass" | "water" | "basin" | "rail";
 
 /**
  * Street furniture of the map city (ADR-0047), from `docs/world/lublin-props.todo.json`: the

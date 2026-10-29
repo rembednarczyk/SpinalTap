@@ -148,7 +148,15 @@ export class BabylonRenderer implements RenderPort {
     // Without a kit the dressing goes in with the first chunk; with one, once it is known whether it loaded.
     this.dressing = new WorldDressing(scene, this.materials, options.cityKit ? "pending" : "bare", { built: (m) => this.shadow.addStaticCaster(m) }, world);
     this.cityKit = new CityKitLoader({ stage, materials: this.materials, shadow: this.shadow, dressing: this.dressing, blocks: () => this.props.blockViews() });
-    this.props = new PropViews({ stage, materials: this.materials, shadow: this.shadow, atmosphere: this.atmosphere, dressing: this.dressing, cityKit: this.cityKit });
+    this.props = new PropViews({
+      stage,
+      materials: this.materials,
+      shadow: this.shadow,
+      atmosphere: this.atmosphere,
+      dressing: this.dressing,
+      cityKit: this.cityKit,
+      groundAt: (x, z) => this.mapCity?.heightAt(x, z) ?? null,
+    });
     this.vehicles = new VehicleViews({ scene, kit: () => this.cityKit.kit, glow: stage.glow, eye: () => eye, quality: stage.options.quality ?? "high" });
     this.warmUpMaterials();
     this.fx = new ScreenFx({

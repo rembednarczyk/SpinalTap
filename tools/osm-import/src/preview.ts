@@ -14,12 +14,14 @@ import { type ChunkOut } from "./model.ts";
 const SCALE = 2;
 const SURFACE: Record<string, string> = {
   water: "#5b8fd6",
+  basin: "#4a82c9",
   grass: "#9ccf7f",
   square: "#e6dcc3",
   road: "#7d7d85",
   cobble: "#b08a67",
   sidewalk: "#d0d0d6",
   footway: "#efe3b0",
+  steps: "#c9b98f",
   rail: "#5a4a3a",
 };
 const USE: Record<string, string> = {
