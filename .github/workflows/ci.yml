@@ -31,10 +31,15 @@ jobs:
           name: coverage
           path: reports/coverage
 
+  # ADR-0046: three shards in parallel with the checks; each builds once and runs a third
+  # of the specs (a single job took 40 min, most of it cold boots under SwiftShader).
   e2e:
-    name: Build, E2E smoke, NPR snapshot, perf budget
+    name: E2E ${{ matrix.shard }}/3 (build, smoke, NPR snapshot, perf budget)
     runs-on: ubuntu-latest
-    needs: checks
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -45,13 +50,13 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm test:e2e
+      - run: pnpm test:e2e --shard=${{ matrix.shard }}/3
         env:
           CI: "true"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: e2e-reports
+          name: e2e-reports-${{ matrix.shard }}
           path: |
             reports/perf.json
             reports/playwright
