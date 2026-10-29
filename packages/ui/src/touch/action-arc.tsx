@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type { WeaponStripVm } from "../store/ui-store";
 import { useHackIntents, useUi } from "../use-ui";
 import { PadButtonView, swallowGhostClick, touchGuards } from "./pad-button";
@@ -123,12 +124,30 @@ export const MoreActions = ({ pad, crouchOn, setCrouchOn }: { pad: TouchPadSink;
   );
 };
 
+/** How long "Use" stays after the prompt goes, so a target at the edge of reach does not make it blink. */
+export const USE_LINGER_MS = 600;
+
+/** The prompt, held for `USE_LINGER_MS` after it goes away; a new prompt shows at once. */
+const useLingeringPrompt = (): string | null => {
+  const prompt = useUi((s) => s.prompt);
+  const [held, setHeld] = useState<string | null>(prompt);
+  useEffect(() => {
+    if (prompt) {
+      setHeld(prompt);
+      return;
+    }
+    const t = setTimeout(() => setHeld(null), USE_LINGER_MS);
+    return () => clearTimeout(t);
+  }, [prompt]);
+  return prompt ?? held;
+};
+
 /**
  * The contextual "Use" button (ADR-0035): there only while something can be used, and it
  * names what (the prompt) instead of showing a key.
  */
 export const UseButton = ({ pad }: { pad: TouchPadSink }) => {
-  const prompt = useUi((s) => s.prompt);
+  const prompt = useLingeringPrompt();
   if (!prompt) return null;
   return (
     <PadButtonView
