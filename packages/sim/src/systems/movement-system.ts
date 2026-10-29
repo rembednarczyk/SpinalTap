@@ -4,9 +4,12 @@ import { type GroundField, MAX_WALK_SLOPE, groundOf } from "../world/ground";
 import { type Collider, circleTouches, collidersOf, colliderTop, overCollider, pushCircleOut } from "../world/solids";
 import type { SimContext, System } from "../world/context";
 import { inCreationOrder } from "../world/ordering";
+import { solidIndexOf } from "../world/solid-index";
 import { worldTimeScale } from "./ability-system";
 
 const ITERATIONS = 2;
+/** How far around a mover's step its colliders are gathered, beyond its radius, metres. */
+const REACH_MARGIN = 3;
 
 /** Highest ledge a character walks up without noticing (a stair, a kerb), metres. */
 export const STEP_HEIGHT = 0.45;
@@ -169,10 +172,30 @@ const offTheBank = (field: GroundField, from: Entity["position"], x: number, z: 
 type Body = Entity & { body: NonNullable<Entity["body"]> };
 type Mover = Body & { velocity: NonNullable<Entity["velocity"]> };
 
-/** Pushes a footprint at (x, z) out of the solids it bumps into and the bodies it overlaps. */
-const pushOut = (solids: readonly Collider[], bodies: readonly Body[], e: Mover, x: number, z: number, feet: number): { x: number; z: number } => {
+/** Where the colliders handed to a mover are complete: a footprint centred outside it may touch others. */
+interface Reach {
+  readonly minX: number;
+  readonly minZ: number;
+  readonly maxX: number;
+  readonly maxZ: number;
+}
+
+const within = (r: Reach | null, x: number, z: number): boolean => !r || (x >= r.minX && x <= r.maxX && z >= r.minZ && z <= r.maxZ);
+
+/** A push-out that left the reach of its colliders: done again with every solid. */
+const FAR = { x: NaN, z: NaN } as const;
+
+/**
+ * Pushes a footprint at (x, z) out of the solids it bumps into and the bodies it overlaps.
+ * Returns FAR when a push carried it out of `reach` (the colliders near the mover).
+ */
+const pushOut = (solids: readonly Collider[], bodies: readonly Body[], e: Mover, x: number, z: number, feet: number, reach: Reach | null): { x: number; z: number } => {
   for (let i = 0; i < ITERATIONS; i++) {
-    for (const s of solids) if (blocks(s, x, z, e.body.radius, feet, e.body.height)) ({ x, z } = pushCircleOut(s, x, z, e.body.radius));
+    for (const s of solids) {
+      if (!blocks(s, x, z, e.body.radius, feet, e.body.height)) continue;
+      ({ x, z } = pushCircleOut(s, x, z, e.body.radius));
+      if (!within(reach, x, z)) return FAR;
+    }
     for (const other of bodies) {
       if (other === e || Math.abs(other.position.y - feet) >= e.body.height) continue;
       const dx = x - other.position.x;
@@ -182,6 +205,7 @@ const pushOut = (solids: readonly Collider[], bodies: readonly Body[], e: Mover,
       if (d < min && d > 1e-6) {
         x = other.position.x + (dx / d) * min;
         z = other.position.z + (dz / d) * min;
+        if (!within(reach, x, z)) return FAR;
       }
     }
   }
@@ -192,7 +216,15 @@ const pushOut = (solids: readonly Collider[], bodies: readonly Body[], e: Mover,
  * The horizontal part of a step: velocity, then push-out. Returns where the feet end up, or
  * null when the player caught a ledge in the air and starts a pull-up instead.
  */
-const moveAcross = (ctx: SimContext, e: Mover, solids: readonly Collider[], field: GroundField, bodies: readonly Body[], dt: number): { x: number; z: number } | null => {
+const moveAcross = (
+  ctx: SimContext,
+  e: Mover,
+  solids: readonly Collider[],
+  field: GroundField,
+  bodies: readonly Body[],
+  dt: number,
+  reach: Reach | null,
+): { x: number; z: number } | null => {
   const feet = e.position.y;
   let x = e.position.x;
   let z = e.position.z;
@@ -211,7 +243,8 @@ const moveAcross = (ctx: SimContext, e: Mover, solids: readonly Collider[], fiel
         return null;
       }
     }
-    ({ x, z } = pushOut(solids, bodies, e, x, z, feet));
+    ({ x, z } = pushOut(solids, bodies, e, x, z, feet, reach));
+    if (Number.isNaN(x)) return FAR;
   }
   // The edge of the world is a wall: a jump over a parapet or an outer wall never lands
   // outside every district (the street plane y = 0 runs on beyond them).
@@ -266,8 +299,12 @@ export const movementSystem: System = {
     const { world } = ctx;
     const enemyDt = ctx.dt * worldTimeScale(ctx);
     // Creation order, not world order: chunks streamed back in are appended to the world, and
-    // push-out against overlapping boxes depends on the order they are visited.
-    const solids = collidersOf(inCreationOrder(world.with("solid")));
+    // push-out against overlapping boxes depends on the order they are visited. Each mover gets
+    // the colliders near it from the index (ADR-0043), in that order; a push that carries it
+    // beyond them is done again against every solid, so the outcome is the full scan's.
+    const index = solidIndexOf(world);
+    let all: Collider[] | null = null;
+    const everything = (): Collider[] => (all ??= collidersOf(inCreationOrder(world.with("solid"))));
     const field = groundOf(world);
     // Background passers-by (ADR-0040) give way to everyone and push nobody: they never change the saved state.
     const bodies = inCreationOrder(world.with("body")).filter((b) => !b.passerby);
@@ -278,7 +315,17 @@ export const movementSystem: System = {
         stepMantle(e.mantle, e, dt);
         continue;
       }
-      const across = moveAcross(ctx, e, solids, field, bodies, dt);
+      const m = e.body.radius + REACH_MARGIN;
+      const tx = e.position.x + e.velocity.x * dt;
+      const tz = e.position.z + e.velocity.z * dt;
+      const q = { minX: Math.min(e.position.x, tx) - m, minZ: Math.min(e.position.z, tz) - m, maxX: Math.max(e.position.x, tx) + m, maxZ: Math.max(e.position.z, tz) + m };
+      let solids: readonly Collider[] = index.collidersNear(q.minX, q.minZ, q.maxX, q.maxZ);
+      const inset = e.body.radius + 0.1;
+      let across = moveAcross(ctx, e, solids, field, bodies, dt, { minX: q.minX + inset, minZ: q.minZ + inset, maxX: q.maxX - inset, maxZ: q.maxZ - inset });
+      if (across === FAR) {
+        solids = everything();
+        across = moveAcross(ctx, e, solids, field, bodies, dt, null);
+      }
       if (!across) continue;
       const { x, z } = across;
       const y = moveVertically(ctx, e, solids, field, x, z, dt);

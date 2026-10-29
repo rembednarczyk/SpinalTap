@@ -4,6 +4,7 @@ import type { Aabb } from "../../world/collision";
 import type { Entity } from "../../world/components";
 import { type GroundField, MAX_WALK_SLOPE, groundOf, heightApart } from "../../world/ground";
 import { lineOfSight } from "../../world/hitscan";
+import { solidIndexOf } from "../../world/solid-index";
 import { type Collider, closestXZ, collidersOf, colliderTop, overCollider } from "../../world/solids";
 import { SNAP_DOWN, STEP_HEIGHT } from "../movement-system";
 
@@ -111,16 +112,8 @@ const recall = <T>(map: Map<string, T>, key: string): T | undefined => {
  */
 export const floorOf = (y: number, ground = 0): number => (y - ground < STEP_HEIGHT ? 0 : Math.round(y * 4) / 4);
 
-const staticSolidsIn = (world: World<Entity>, x0: number, z0: number, x1: number, z1: number): Solid[] => {
-  const out: Solid[] = [];
-  for (const e of world.with("solid")) {
-    if (e.velocity) continue;
-    const s = e.solid;
-    if (s.max.x < x0 || s.min.x > x1 || s.max.z < z0 || s.min.z > z1) continue;
-    out.push(e);
-  }
-  return out;
-};
+/** Static solids whose box overlaps the window (the raster and its signature do not depend on their order). */
+const staticSolidsIn = (world: World<Entity>, x0: number, z0: number, x1: number, z1: number): Solid[] => solidIndexOf(world).near(x0, z0, x1, z1, true);
 
 /** Identity of a set of solids (order-free): which ones they are. Static solids never change shape. */
 const signature = (solids: readonly Solid[]): string => {
@@ -150,15 +143,16 @@ const terrainOf = (ground: GroundField, x0: number, z0: number): Float64Array | 
 
 /** Cells of the ground floor on a bank too steep to walk (ADR-0043) are closed. */
 const closeBanks = (open: Uint8Array, base: Float64Array, ground: GroundField, x0: number, z0: number): void => {
-  // A cheap test on the cell grid first; the movement system's own slope decides the rest.
-  const rough = 0.8 * MAX_WALK_SLOPE * 2 * NAV_CELL;
-  for (let iz = 1; iz < CELLS - 1; iz++) {
-    for (let ix = 1; ix < CELLS - 1; ix++) {
-      const c = iz * CELLS + ix;
-      const gx = Math.abs((base[c + 1] ?? 0) - (base[c - 1] ?? 0));
-      const gz = Math.abs((base[c + CELLS] ?? 0) - (base[c - CELLS] ?? 0));
+  // A cheap test on the cell grid first (half the limit, over two cells, edges one-sided);
+  // the movement system's own slope decides the rest.
+  const rough = 0.5 * MAX_WALK_SLOPE * NAV_CELL;
+  const at = (ix: number, iz: number) => base[Math.min(CELLS - 1, Math.max(0, iz)) * CELLS + Math.min(CELLS - 1, Math.max(0, ix))] ?? 0;
+  for (let iz = 0; iz < CELLS; iz++) {
+    for (let ix = 0; ix < CELLS; ix++) {
+      const gx = Math.abs(at(ix + 1, iz) - at(ix - 1, iz));
+      const gz = Math.abs(at(ix, iz + 1) - at(ix, iz - 1));
       if (Math.hypot(gx, gz) < rough) continue;
-      if (ground.steepAt(centre(ix, x0), centre(iz, z0))) open[c] = 0;
+      if (ground.steepAt(centre(ix, x0), centre(iz, z0))) open[iz * CELLS + ix] = 0;
     }
   }
 };

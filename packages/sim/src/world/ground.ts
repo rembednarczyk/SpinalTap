@@ -123,40 +123,98 @@ export class GroundField {
     return this.hasTerrain && this.slopeAt(x, z) > MAX_WALK_SLOPE;
   }
 
-  /** Height of the ray above the terrain at distance t; +Infinity over the street plane. */
-  private clearance(origin: Vec3, dir: Vec3, t: number): number {
-    const x = origin.x + dir.x * t;
-    const z = origin.z + dir.z * t;
-    const grid = this.gridAt(x, z);
-    return grid ? origin.y + dir.y * t - terrainHeightAt(grid, x, z) : Infinity;
+  /** Height of the ray above the ground at distance t (the street plane counts as -Infinity below). */
+  private clearance(origin: Vec3, dir: Vec3, t: number, grid: TerrainGrid): number {
+    return origin.y + dir.y * t - terrainHeightAt(grid, origin.x + dir.x * t, origin.z + dir.z * t);
   }
 
   /**
    * Distance along a ray (normalised direction) to where it goes into the terrain, or null.
-   * Marches in steps of half the finest cell, so a ridge between two samples is never missed,
-   * then bisects. Only terrain stops rays: the street plane never did.
+   * Walks the ray cell by cell through the grids (DDA): inside one cell the bilinear ground
+   * along a straight line is a quadratic, fitted exactly from three samples, so no ridge between
+   * grid points is ever stepped over, however fine the grid. Only terrain stops rays: the street
+   * plane never did.
    */
   rayHit(origin: Vec3, dir: Vec3, maxDist: number): number | null {
     if (!this.hasTerrain || Math.min(origin.y, origin.y + dir.y * maxDist) > this.maxHeight) return null;
-    if (this.clearance(origin, dir, 0) < 0) return 0;
-    let prev = 0;
-    for (let t = this.rayStep; ; t += this.rayStep) {
-      const at = Math.min(t, maxDist);
-      if (this.clearance(origin, dir, at) < 0) {
-        let lo = prev;
-        let hi = at;
-        for (let i = 0; i < 12; i++) {
-          const mid = (lo + hi) / 2;
-          if (this.clearance(origin, dir, mid) < 0) hi = mid;
-          else lo = mid;
-        }
-        return hi;
+    let t = 0;
+    for (let guard = 0; guard < 100_000 && t < maxDist; guard++) {
+      const x = origin.x + dir.x * t;
+      const z = origin.z + dir.z * t;
+      const chunk = this.chunks[this.chunkIndex(x, z)];
+      if (!chunk) return null;
+      const out = rectExit(chunk.bounds, x, z, dir);
+      const grid = chunk.terrain;
+      if (out < 0) {
+        // Outside every chunk (the nearest one's ground): short plain steps.
+        const end = Math.min(maxDist, t + this.rayStep);
+        if (grid && this.clearance(origin, dir, end, grid) < 0) return end;
+        t = end;
+        continue;
       }
-      if (at >= maxDist) return null;
-      prev = at;
+      if (!grid) {
+        t = Math.min(maxDist, t + out + 1e-6);
+        continue;
+      }
+      const fx = (x - grid.originX) / grid.cell;
+      const fz = (z - grid.originZ) / grid.cell;
+      const step = Math.min(out, nextLine(fx, dir.x / grid.cell, grid.cols - 1), nextLine(fz, dir.z / grid.cell, grid.rows - 1));
+      const end = Math.min(maxDist, t + Math.max(step, 1e-6));
+      const hit = firstBelow(this.clearance(origin, dir, t, grid), this.clearance(origin, dir, (t + end) / 2, grid), this.clearance(origin, dir, end, grid));
+      if (hit !== null) return t + (end - t) * hit;
+      t = end;
     }
+    return null;
   }
 }
+
+/** Distance along the ray (XZ part of `dir`) from (x, z) to where it leaves the rectangle; -1 when outside. */
+const rectExit = (r: Rect, x: number, z: number, dir: Vec3): number => {
+  if (!inside(r, x, z)) return -1;
+  const tx = dir.x > 1e-12 ? (r.maxX - x) / dir.x : dir.x < -1e-12 ? (r.minX - x) / dir.x : Infinity;
+  const tz = dir.z > 1e-12 ? (r.maxZ - z) / dir.z : dir.z < -1e-12 ? (r.minZ - z) / dir.z : Infinity;
+  return Math.min(tx, tz);
+};
+
+/**
+ * Ray distance to the next grid line of a coordinate `f` (in cells) moving at `df` cells per
+ * metre, among the lines 0..last (outside them the grid is clamped: the height does not change
+ * along that axis). Infinity when there is none ahead.
+ */
+const nextLine = (f: number, df: number, last: number): number => {
+  if (Math.abs(df) < 1e-12) return Infinity;
+  if (df > 0) {
+    if (f >= last) return Infinity;
+    const target = f < 0 ? 0 : Math.floor(f + 1e-9) + 1;
+    return (Math.min(target, last) - f) / df;
+  }
+  if (f <= 0) return Infinity;
+  const target = f > last ? last : Math.ceil(f - 1e-9) - 1;
+  return (Math.max(target, 0) - f) / df;
+};
+
+/**
+ * First u in [0, 1] where the quadratic through (0, f0), (½, fm), (1, f1) goes below zero, or
+ * null. Inside one grid cell the ray's height above the terrain is exactly such a quadratic.
+ */
+const firstBelow = (f0: number, fm: number, f1: number): number | null => {
+  if (f0 < 0) return 0;
+  const a = 2 * f0 - 4 * fm + 2 * f1;
+  const b = -3 * f0 + 4 * fm - f1;
+  if (Math.abs(a) < 1e-12) {
+    if (b >= 0) return null;
+    const r = -f0 / b;
+    return r <= 1 ? r : null;
+  }
+  const disc = b * b - 4 * a * f0;
+  if (disc < 0) return null;
+  const s = Math.sqrt(disc);
+  const lo = Math.min((-b - s) / (2 * a), (-b + s) / (2 * a));
+  const hi = Math.max((-b - s) / (2 * a), (-b + s) / (2 * a));
+  // f0 >= 0: a dip (a > 0) goes below between the roots, an arch (a < 0) after the second.
+  const r = a > 0 ? lo : hi;
+  return r >= 0 && r <= 1 ? r : null;
+};
 
 const gradScratch = { x: 0, z: 0 };
 

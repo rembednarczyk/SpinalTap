@@ -14,18 +14,20 @@ const ROUNDS = 3;
  */
 export const clearSpot = (world: World<Entity>, ground: GroundField, p: Vec3, radius: number): Vec3 => {
   let { x, z } = p;
+  const lift = (px: number, pz: number) => (ground.hasTerrain ? Math.max(p.y, ground.heightAt(px, pz)) : p.y);
+  const feet = lift(x, z);
   for (let round = 0; round < ROUNDS; round++) {
     let moved = false;
     for (const s of world.with("solid", "prisms")) {
       for (const prism of s.prisms) {
-        if (prism.bottom >= p.y + 1.8 || prism.top <= p.y + 0.45 || !circleTouchesPrism(prism, x, z, radius)) continue;
+        if (prism.bottom >= feet + 1.8 || prism.top <= feet + 0.45 || !circleTouchesPrism(prism, x, z, radius)) continue;
         ({ x, z } = resolveCirclePrism(x, z, radius, prism));
         moved = true;
       }
     }
     if (!moved) break;
   }
-  const y = ground.hasTerrain ? Math.max(p.y, ground.heightAt(x, z)) : p.y;
+  const y = lift(x, z);
   return x === p.x && y === p.y && z === p.z ? p : { x, y, z };
 };
 
