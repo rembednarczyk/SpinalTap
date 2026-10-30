@@ -25,7 +25,7 @@ test("phone: on-screen pad moves, looks and talks", async ({ page }) => {
   test.setTimeout(180_000);
   await page.goto("/?seed=7&models=off");
   await waitForGame(page);
-  await page.getByRole("button", { name: "Nowa gra" }).tap();
+  await page.getByRole("button", { name: "New Game" }).tap();
   await expect(page.getByTestId("touch-controls")).toBeVisible();
   const fingers = await touch(page);
 

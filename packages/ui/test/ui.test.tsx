@@ -69,16 +69,16 @@ const screenFov = (degrees = DEFAULT_HORIZONTAL_FOV) => hipVerticalFov(degrees, 
 describe("title screen", () => {
   it("starts a new game", () => {
     const { i } = mount();
-    fireEvent.click(screen.getByText("Nowa gra"));
+    fireEvent.click(screen.getByText("New Game"));
     expect(i.newGame).toHaveBeenCalled();
   });
 
   it("disables loading without saves and lists slots with saves", () => {
     mount();
-    expect(screen.getByText("Wczytaj").closest("button")?.disabled).toBe(true);
+    expect(screen.getByText("Load Game").closest("button")?.disabled).toBe(true);
     cleanup();
     const { i } = mount({ hasSaves: true, slots: [{ slot: "slot-2", savedAtLabel: "22:10", objective: "Wróć do Kaito" }] });
-    fireEvent.click(screen.getByText("Wczytaj"));
+    fireEvent.click(screen.getByText("Load Game"));
     expect(screen.getByText("Slot 1").closest("button")?.disabled).toBe(true);
     fireEvent.click(screen.getByText("Slot 2"));
     expect(i.load).toHaveBeenCalledWith("slot-2");
@@ -252,20 +252,20 @@ describe("dialogue panel", () => {
 describe("pause and death screens", () => {
   it("pause menu resumes, saves into a slot and quits", () => {
     const { i } = mount({ screen: "paused" });
-    fireEvent.click(screen.getByText("Wróć do gry"));
+    fireEvent.click(screen.getByText("Resume"));
     expect(i.resume).toHaveBeenCalled();
-    fireEvent.click(screen.getByText("Zapisz"));
+    fireEvent.click(screen.getByText("Save Game"));
     fireEvent.click(screen.getByText("Slot 3"));
     expect(i.save).toHaveBeenCalledWith("slot-3");
-    fireEvent.click(screen.getByText("Wróć"));
-    fireEvent.click(screen.getByText("Menu główne"));
+    fireEvent.click(screen.getByText("Back"));
+    fireEvent.click(screen.getByText("Main Menu"));
     expect(i.quitToTitle).toHaveBeenCalled();
   });
 
   it("pause menu can switch to loading", () => {
     const { i } = mount({ screen: "paused", slots: [{ slot: "quick", savedAtLabel: "x", objective: "y" }] });
-    fireEvent.click(screen.getByText("Wczytaj"));
-    fireEvent.click(screen.getByText("Szybki zapis"));
+    fireEvent.click(screen.getByText("Load Game"));
+    fireEvent.click(screen.getByText("Quicksave"));
     expect(i.load).toHaveBeenCalledWith("quick");
   });
 

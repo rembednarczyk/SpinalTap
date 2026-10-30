@@ -56,7 +56,7 @@ for (const [w, h] of [
       test.setTimeout(180_000);
       await page.goto("/?seed=7&models=off&audio=off&touch");
       await waitForGame(page);
-      await page.getByRole("button", { name: "Nowa gra" }).tap();
+      await page.getByRole("button", { name: "New Game" }).tap();
       await freeze(page);
       // A new game wakes next to Kaito (ADR-0038); the bare layout is checked out on the deptak
       // in front of the clinic (ADR-0045).

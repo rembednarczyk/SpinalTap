@@ -283,20 +283,20 @@ describe("combat feedback and the contextual HUD", () => {
 describe("accessibility", () => {
   it("has its own settings tab and sends the changes", () => {
     const { i } = mount({ screen: "paused" });
-    fireEvent.click(screen.getByText("Ustawienia"));
-    fireEvent.click(screen.getByRole("tab", { name: "Dostępność" }));
-    fireEvent.click(within(screen.getByRole("radiogroup", { name: "Ogranicz błyski i glitch" })).getByRole("radio", { name: "Tak" }));
+    fireEvent.click(screen.getByText("Settings"));
+    fireEvent.click(screen.getByRole("tab", { name: "Accessibility" }));
+    fireEvent.click(within(screen.getByRole("radiogroup", { name: "Reduce flashes and glitch effects" })).getByRole("radio", { name: "On" }));
     expect(i.changeSettings).toHaveBeenCalledWith({ reduceFlashes: true });
-    fireEvent.click(within(screen.getByRole("radiogroup", { name: "Minigra bez limitu czasu" })).getByRole("radio", { name: "Tak" }));
+    fireEvent.click(within(screen.getByRole("radiogroup", { name: "Untimed breach minigame" })).getByRole("radio", { name: "On" }));
     expect(i.changeSettings).toHaveBeenCalledWith({ untimedBreach: true });
     fireEvent.click(screen.getByRole("radio", { name: "Deuteranopia" }));
     expect(i.changeSettings).toHaveBeenCalledWith({ colorblind: "deutan" });
-    fireEvent.change(screen.getByLabelText(/Skala HUD/), { target: { value: "1.2" } });
+    fireEvent.change(screen.getByLabelText(/HUD scale/), { target: { value: "1.2" } });
     expect(i.changeSettings).toHaveBeenCalledWith({ hudScale: 1.2 });
     // Every colour token comes with its icon.
-    expect(screen.getByTestId("token-legend").textContent).toContain("▲Zagrożenie");
-    fireEvent.click(screen.getByRole("tab", { name: "Ogólne" }));
-    fireEvent.click(screen.getByRole("radio", { name: "Suma" }));
+    expect(screen.getByTestId("token-legend").textContent).toContain("▲Threat");
+    fireEvent.click(screen.getByRole("tab", { name: "General" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Running total" }));
     expect(i.changeSettings).toHaveBeenCalledWith({ damageNumbers: "total" });
   });
 

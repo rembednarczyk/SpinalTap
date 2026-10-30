@@ -223,14 +223,14 @@ describe("Lublin on the minimap and the map tab (ADR-0045)", () => {
     expect(store.getState().characterTab).toBeNull();
   });
 
-  it("credits the map data on the title screen, small, and in full under Autorzy", () => {
+  it("credits the map data on the title screen, small, and in full under Credits", () => {
     mount({ screen: "title" });
-    expect(screen.getByTestId("title-attribution").textContent).toBe("Dane mapy © OpenStreetMap contributors (ODbL) · teren: GUGiK NMT");
-    fireEvent.click(screen.getByRole("button", { name: "Autorzy" }));
+    expect(screen.getByTestId("title-attribution").textContent).toBe("Map data © OpenStreetMap contributors (ODbL) · terrain: GUGiK NMT");
+    fireEvent.click(screen.getByRole("button", { name: "Credits" }));
     const credits = screen.getByTestId("credits");
     expect(credits.textContent).toContain("Open Database License");
     expect(credits.textContent).toContain("GUGiK");
-    fireEvent.click(within(credits).getByRole("button", { name: "Wróć" }));
+    fireEvent.click(within(credits).getByRole("button", { name: "Back" }));
     expect(screen.queryByTestId("credits")).toBeNull();
   });
 });
@@ -238,36 +238,36 @@ describe("Lublin on the minimap and the map tab (ADR-0045)", () => {
 describe("settings", () => {
   const openSettings = (state: Partial<UiState> = {}) => {
     const r = mount({ screen: "paused", ...state });
-    fireEvent.click(screen.getByText("Ustawienia"));
+    fireEvent.click(screen.getByText("Settings"));
     return r;
   };
 
   it("shows the current values and sends changes as intents", () => {
     const { i } = openSettings({ settings: { ...DEFAULT_SETTINGS, quality: "high", aimMode: "hold", mouseSensitivity: 1.5, touchSensitivity: 0.8, volume: 0.4 } });
     // General: graphics, sound, hints, touch.
-    expect(screen.getByRole("radio", { name: "Wysoka" }).getAttribute("aria-checked")).toBe("true");
+    expect(screen.getByRole("radio", { name: "High" }).getAttribute("aria-checked")).toBe("true");
     expect(screen.getByTestId("settings").textContent).toContain("40%");
-    expect(screen.getByTestId("settings").textContent).toContain("0,8×");
-    fireEvent.click(screen.getByRole("radio", { name: "Niska" }));
+    expect(screen.getByTestId("settings").textContent).toContain("0.8×");
+    fireEvent.click(screen.getByRole("radio", { name: "Low" }));
     expect(i.changeSettings).toHaveBeenCalledWith({ quality: "low" });
-    fireEvent.change(screen.getByLabelText(/Czułość dotyku/), { target: { value: "1.2" } });
+    fireEvent.change(screen.getByLabelText(/Touch sensitivity/), { target: { value: "1.2" } });
     expect(i.changeSettings).toHaveBeenCalledWith({ touchSensitivity: 1.2 });
-    fireEvent.change(screen.getByLabelText(/Głośność/), { target: { value: "0.25" } });
+    fireEvent.change(screen.getByLabelText(/Volume/), { target: { value: "0.25" } });
     expect(i.changeSettings).toHaveBeenCalledWith({ volume: 0.25 });
     // Mouse and camera.
-    fireEvent.click(screen.getByRole("tab", { name: "Mysz i kamera" }));
-    expect(screen.getByLabelText(/Czułość myszy/)).toHaveProperty("value", "1.5");
-    fireEvent.change(screen.getByLabelText(/Czułość myszy/), { target: { value: "2" } });
+    fireEvent.click(screen.getByRole("tab", { name: "Mouse & Camera" }));
+    expect(screen.getByLabelText(/Mouse sensitivity/)).toHaveProperty("value", "1.5");
+    fireEvent.change(screen.getByLabelText(/Mouse sensitivity/), { target: { value: "2" } });
     expect(i.changeSettings).toHaveBeenCalledWith({ mouseSensitivity: 2 });
-    const aim = screen.getByRole("radiogroup", { name: "Celowanie (PPM)" });
-    fireEvent.click(within(aim).getByRole("radio", { name: "Przełącz" }));
+    const aim = screen.getByRole("radiogroup", { name: "Aim (RMB)" });
+    fireEvent.click(within(aim).getByRole("radio", { name: "Toggle" }));
     expect(i.changeSettings).toHaveBeenCalledWith({ aimMode: "toggle" });
-    fireEvent.click(within(screen.getByRole("radiogroup", { name: "Kucanie" })).getByRole("radio", { name: "Przytrzymaj" }));
+    fireEvent.click(within(screen.getByRole("radiogroup", { name: "Crouch" })).getByRole("radio", { name: "Hold" }));
     expect(i.changeSettings).toHaveBeenCalledWith({ crouchMode: "hold" });
-    fireEvent.click(within(screen.getByRole("radiogroup", { name: "Odwróć oś Y" })).getByRole("radio", { name: "Tak" }));
+    fireEvent.click(within(screen.getByRole("radiogroup", { name: "Invert Y axis" })).getByRole("radio", { name: "On" }));
     expect(i.changeSettings).toHaveBeenCalledWith({ invertY: true });
     // Field of view (ADR-0049): horizontal degrees, 70..100, through the camera intent.
-    const fov = screen.getByLabelText(/Pole widzenia/);
+    const fov = screen.getByLabelText(/Field of view/);
     expect(fov).toHaveProperty("value", "80");
     expect(fov.getAttribute("min")).toBe("70");
     expect(fov.getAttribute("max")).toBe("100");
@@ -279,30 +279,34 @@ describe("settings", () => {
 
   it("rebinds a key by pressing it, refuses menu keys and resets to defaults", () => {
     const controls = [
-      { action: "jump", label: "Skok", codes: ["Space"] },
-      { action: "fire", label: "Strzał / cios", codes: ["Mouse0"] },
+      { action: "jump", label: "Jump", codes: ["Space"] },
+      { action: "fire", label: "Fire / strike", codes: ["Mouse0"] },
+      { action: "future", label: "Future control", codes: [] },
     ];
     const { i } = openSettings({ controls });
-    fireEvent.click(screen.getByRole("tab", { name: "Klawisze" }));
-    expect(screen.getByTestId("key-bindings").textContent).toContain("Spacja");
-    expect(screen.getByTestId("key-bindings").textContent).toContain("LPM");
-    fireEvent.click(screen.getByRole("button", { name: "Zmień klawisz: Skok" }));
-    expect(screen.getByTestId("key-bindings").textContent).toContain("Naciśnij klawisz");
+    fireEvent.click(screen.getByRole("tab", { name: "Controls" }));
+    const keys = screen.getByTestId("key-bindings");
+    expect(keys.textContent).toContain("Space");
+    expect(keys.textContent).toContain("LMB");
+    // A control the catalogs do not know yet keeps the app's label.
+    expect(keys.textContent).toContain("Future controlunbound");
+    fireEvent.click(screen.getByRole("button", { name: "Change key: Jump" }));
+    expect(keys.textContent).toContain("Press a key");
     fireEvent.keyDown(window, { code: "KeyP" });
     expect(i.bindKey).not.toHaveBeenCalled();
-    expect(screen.getByTestId("key-bindings").textContent).toContain("zajęty przez menu");
+    expect(screen.getByTestId("key-bindings").textContent).toContain("P is reserved for the game menus");
     fireEvent.keyDown(window, { code: "KeyG" });
     expect(i.bindKey).toHaveBeenCalledWith("jump", "KeyG");
-    fireEvent.click(screen.getByText("Przywróć domyślne klawisze"));
+    fireEvent.click(screen.getByText("Restore default controls"));
     expect(i.resetControls).toHaveBeenCalled();
   });
 
   it("offers a reload when a change needs one, and goes back to the menu", () => {
     const { i } = openSettings({ reloadNeeded: true });
-    expect(screen.getByTestId("settings-reload").textContent).toContain("po przeładowaniu");
-    fireEvent.click(screen.getByText("Przeładuj teraz"));
+    expect(screen.getByTestId("settings-reload").textContent).toContain("after a reload");
+    fireEvent.click(screen.getByText("Reload now"));
     expect(i.reload).toHaveBeenCalled();
-    fireEvent.click(screen.getByText("Wróć"));
+    fireEvent.click(screen.getByText("Back"));
     expect(screen.queryByTestId("settings")).toBeNull();
   });
 });

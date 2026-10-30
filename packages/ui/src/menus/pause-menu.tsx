@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useT } from "../i18n/use-t";
 import { useSessionIntents } from "../use-ui";
 import { ControlsHelp } from "./controls-help";
 import { SaveSlots } from "./save-slots";
@@ -6,26 +7,27 @@ import { SettingsPanel } from "./settings-panel";
 
 export const PauseMenu = () => {
   const intents = useSessionIntents();
+  const t = useT();
   const [tab, setTab] = useState<"main" | "save" | "load" | "settings">("main");
   return (
     <div className="screen screen--pause" data-testid="pause-menu">
-      <h2 className="screen__heading">Pauza</h2>
+      <h2 className="screen__heading">{t("pause.heading")}</h2>
       {tab === "main" && (
         <div className="menu">
           <button type="button" className="menu__item" onClick={() => intents.resume()}>
-            Wróć do gry
+            {t("pause.resume")}
           </button>
           <button type="button" className="menu__item" onClick={() => setTab("save")}>
-            Zapisz
+            {t("pause.save")}
           </button>
           <button type="button" className="menu__item" onClick={() => setTab("load")}>
-            Wczytaj
+            {t("pause.load")}
           </button>
           <button type="button" className="menu__item" onClick={() => setTab("settings")}>
-            Ustawienia
+            {t("pause.settings")}
           </button>
           <button type="button" className="menu__item menu__item--ghost" onClick={() => intents.quitToTitle()}>
-            Menu główne
+            {t("pause.mainMenu")}
           </button>
           <ControlsHelp />
         </div>
@@ -34,7 +36,7 @@ export const PauseMenu = () => {
         <div className="menu">
           {tab === "settings" ? <SettingsPanel /> : <SaveSlots mode={tab} />}
           <button type="button" className="menu__item menu__item--ghost" onClick={() => setTab("main")}>
-            Wróć
+            {t("menu.back")}
           </button>
         </div>
       )}

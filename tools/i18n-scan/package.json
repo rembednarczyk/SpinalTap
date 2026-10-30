@@ -1,0 +1,13 @@
+{
+  "name": "@seki/i18n-scan",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The language ratchet (ADR-0056): Polish text written into the code outside the catalogs, counted per package.",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}

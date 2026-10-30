@@ -1,4 +1,4 @@
-import { type ItemCategory, type ItemDefId, type ItemRef, type Rarity, type WeaponSlot, degToRad, verticalFov } from "@seki/core";
+import { DEFAULT_LOCALE, type ItemCategory, type ItemDefId, type ItemRef, type Locale, type Rarity, type WeaponSlot, degToRad, verticalFov } from "@seki/core";
 import type { ColorblindMode, DamageNumbersMode } from "./hud-vm";
 import type { MapAreaVm, MapLabelVm, MapPlaceVm, MapPolygon } from "./map-vm";
 import type { RadioStationId } from "./wave2-vm";
@@ -275,6 +275,8 @@ export interface SettingsVm {
   readonly mapMarkers: boolean;
   /** Outlines of interactive objects in the world; the engine reads it. */
   readonly highlights: boolean;
+  /** Language of the menus and texts (ADR-0056); a player setting, never in the save. */
+  readonly locale: Locale;
 }
 
 /** Horizontal field of view by default, degrees (ADR-0049; the engine's DEFAULT_HORIZONTAL_FOV). */
@@ -309,6 +311,7 @@ export const DEFAULT_SETTINGS: SettingsVm = {
   radioStation: null,
   mapMarkers: true,
   highlights: true,
+  locale: DEFAULT_LOCALE,
 };
 
 /** A first-run hint: the keys (as labels) and the action, e.g. ["W", "A", "S", "D"] "ruch". */

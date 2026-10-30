@@ -267,6 +267,22 @@ describe("settings", () => {
     expect(ui.getState().reloadNeeded).toBe(false);
   });
 
+  it("keeps the language with the settings: English by default and for old entries, saved, no reload (ADR-0056)", () => {
+    expect(DEFAULT_SETTINGS.locale).toBe("en");
+    expect(sanitizeSettings({ quality: "low", volume: 0.3 }).locale).toBe("en");
+    expect(sanitizeSettings({ locale: "de" }).locale).toBe("en");
+    expect(sanitizeSettings({ locale: "pl" }).locale).toBe("pl");
+    const st = memoryStorage();
+    saveSettings(st, { ...DEFAULT_SETTINGS, locale: "pl" });
+    expect(loadSettings(st).locale).toBe("pl");
+    const host = { applied: DEFAULT_SETTINGS, save: vi.fn(), reload: vi.fn() };
+    const { s, ui } = session(host);
+    s.changeSettings({ locale: "pl" });
+    expect(ui.getState().settings.locale).toBe("pl");
+    expect(host.save).toHaveBeenLastCalledWith(expect.objectContaining({ locale: "pl" }));
+    expect(ui.getState().reloadNeeded).toBe(false);
+  });
+
   it("reads the vertical field of view of entries saved before ADR-0049", () => {
     // The untouched old default (62 degrees tall, ~94 across 16:9) becomes the new default.
     expect(sanitizeSettings({ fov: 62 }).horizontalFov).toBe(80);

@@ -197,11 +197,11 @@ describe("touch of wave 2", () => {
 describe("settings of wave 2", () => {
   it("has the no-markers mode and the highlights switch", () => {
     const { i } = mount({ screen: "paused" });
-    fireEvent.click(screen.getByText("Ustawienia"));
-    const markers = screen.getByRole("radiogroup", { name: "Znaczniki na minimapie" });
+    fireEvent.click(screen.getByText("Settings"));
+    const markers = screen.getByRole("radiogroup", { name: "Minimap markers" });
     fireEvent.click(markers.querySelector('[aria-checked="false"]')!);
     expect(i.changeSettings).toHaveBeenCalledWith({ mapMarkers: false });
-    const highlights = screen.getByRole("radiogroup", { name: "Podświetlenia obiektów" });
+    const highlights = screen.getByRole("radiogroup", { name: "Object highlights" });
     fireEvent.click(highlights.querySelector('[aria-checked="false"]')!);
     expect(i.changeSettings).toHaveBeenCalledWith({ highlights: false });
   });

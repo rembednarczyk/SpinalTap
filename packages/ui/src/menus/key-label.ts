@@ -1,9 +1,25 @@
+import type { MessageKey } from "../i18n/en";
+import { type Translate, translator } from "../i18n/t";
+
+/** Keys whose name depends on the language (ADR-0056). */
+const LOCALIZED: Readonly<Record<string, MessageKey>> = {
+  Space: "key.space",
+  ShiftRight: "key.rightShift",
+  ControlRight: "key.rightCtrl",
+  Mouse0: "key.mouse0",
+  Mouse1: "key.mouse1",
+  Mouse2: "key.mouse2",
+  Mouse3: "key.mouse3",
+  Mouse4: "key.mouse4",
+  WheelUp: "key.wheelUp",
+  WheelDown: "key.wheelDown",
+  MouseMove: "key.mouse",
+};
+
+/** Keys named the same in every language. */
 const NAMED: Readonly<Record<string, string>> = {
-  Space: "Spacja",
   ShiftLeft: "Shift",
-  ShiftRight: "P.Shift",
   ControlLeft: "Ctrl",
-  ControlRight: "P.Ctrl",
   AltLeft: "Alt",
   AltRight: "Alt Gr",
   Tab: "Tab",
@@ -15,14 +31,6 @@ const NAMED: Readonly<Record<string, string>> = {
   ArrowDown: "↓",
   ArrowLeft: "←",
   ArrowRight: "→",
-  Mouse0: "LPM",
-  Mouse1: "ŚPM",
-  Mouse2: "PPM",
-  Mouse3: "Mysz 4",
-  Mouse4: "Mysz 5",
-  WheelUp: "Kółko ↑",
-  WheelDown: "Kółko ↓",
-  MouseMove: "Mysz",
   Backquote: "`",
   Minus: "-",
   Equal: "=",
@@ -36,8 +44,16 @@ const NAMED: Readonly<Record<string, string>> = {
   Backslash: "\\",
 };
 
-/** A physical code as a player reads it: "KeyW" -> "W", "Mouse2" -> "PPM", "Numpad1" -> "Num 1". */
-export const keyLabel = (code: string): string => {
+/** The HUD's key hints are still Polish until stage 2 of ADR-0056 hands them a translator. */
+const POLISH = translator("pl");
+
+/**
+ * A physical code as a player reads it in the translator's language: "KeyW" -> "W",
+ * "Mouse2" -> "RMB", "Numpad1" -> "Num 1".
+ */
+export const keyLabel = (code: string, t: Translate = POLISH): string => {
+  const localized = LOCALIZED[code];
+  if (localized) return t(localized);
   const named = NAMED[code];
   if (named) return named;
   if (code.startsWith("Key")) return code.slice(3);

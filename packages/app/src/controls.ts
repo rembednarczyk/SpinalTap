@@ -1,30 +1,33 @@
 import { type Action, DEFAULT_KEYMAP, type KeyMap } from "@seki/engine";
 import type { ControlBindingVm } from "@seki/ui";
 
-/** The remappable controls in the order the settings list them, with their Polish names. */
+/**
+ * The remappable controls in the order the settings list them. The UI names them in the chosen
+ * language from its catalogs (ADR-0056); these English names are only its fallback.
+ */
 export const CONTROL_LABELS: readonly (readonly [Action, string])[] = [
-  ["forward", "Naprzód"],
-  ["back", "Wstecz"],
-  ["left", "W lewo"],
-  ["right", "W prawo"],
+  ["forward", "Move forward"],
+  ["back", "Move back"],
+  ["left", "Strafe left"],
+  ["right", "Strafe right"],
   ["sprint", "Sprint"],
-  ["crouch", "Kucanie"],
-  ["jump", "Skok"],
-  ["fire", "Strzał / cios"],
-  ["aim", "Celowanie / blok"],
-  ["reload", "Przeładowanie"],
-  ["interact", "Interakcja"],
-  ["ability", "Zdolność cyberware"],
-  ["scan", "Skaner (przytrzymaj)"],
-  ["dash", "Zryw (dash)"],
-  ["useItem", "Apteczka"],
-  ["toggleWeapon", "Schowaj / dobądź broń"],
-  ["slot1", "Broń główna"],
-  ["slot2", "Broń boczna"],
-  ["slot3", "Broń do walki wręcz"],
-  ["nextWeapon", "Następna broń"],
-  ["prevWeapon", "Poprzednia broń"],
-  ["toggleCamera", "Widok FPP / TPP"],
+  ["crouch", "Crouch"],
+  ["jump", "Jump"],
+  ["fire", "Fire / strike"],
+  ["aim", "Aim / block"],
+  ["reload", "Reload"],
+  ["interact", "Interact"],
+  ["ability", "Cyberware ability"],
+  ["scan", "Scanner (hold)"],
+  ["dash", "Dash"],
+  ["useItem", "Medkit"],
+  ["toggleWeapon", "Holster / draw weapon"],
+  ["slot1", "Primary weapon"],
+  ["slot2", "Sidearm"],
+  ["slot3", "Melee weapon"],
+  ["nextWeapon", "Next weapon"],
+  ["prevWeapon", "Previous weapon"],
+  ["toggleCamera", "FPP / TPP view"],
 ];
 
 const isAction = (a: string): a is Action => a in DEFAULT_KEYMAP;
