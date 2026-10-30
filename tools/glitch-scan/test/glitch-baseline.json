@@ -1,0 +1,10 @@
+{
+  "car-lane-off-road": 1,
+  "lane-in-building": 0,
+  "walker-on-car-lane": 0,
+  "furniture-in-car-lane": 1,
+  "furniture-in-wall": 1,
+  "parked-car-in-furniture": 0,
+  "prop-off-ground": 0,
+  "bridge-without-deck": 0
+}
