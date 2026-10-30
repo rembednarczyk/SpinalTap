@@ -142,8 +142,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /**
    * A car lane (trolleybuses too) that ends inside the map, more than 6 m from its edge, with no
    * lane starting within 3 m of its end the same way: its vehicles stop there and wait while the
-   * player watches. What is left: the junctions without turns (G-006, later), the chunk seams
-   * (G-021), the short laneless chains (G-022) and the one-way streets running into a pedestrian
+   * player watches. What is left: the junctions without turns (G-006, later), the short
+   * laneless chains (G-022) and the one-way streets running into a pedestrian
    * one (G-023, no lane back to turn round onto).
    */
   "lane-dead-end": () => {
@@ -166,6 +166,23 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       const joins = (p: (typeof ends)[number]) =>
         ROAD_CHAINS.some((o, k) => o !== c && laneChains.has(k) && o.kind === c.kind && o.oneway === c.oneway && [o.points[0]!, o.points[o.points.length - 1]!].some((q) => Math.hypot(q[0] - p[0], q[1] - p[1]) < 1));
       return ends.every(joins) ? [{ at: near(ends[0]![0], ends[0]![1]), what: `${c.name} ${polylineLength(c.points).toFixed(1)} m` }] : [];
+    }),
+  /**
+   * Two car roads of one name whose ends lie 0.6–8 m apart inside the map, more than 6 m from its
+   * edge: a street broken where a chunk seam cut a short piece of it off (G-021).
+   */
+  "street-seam-gap": () =>
+    carStreets.flatMap((c, i) => {
+      const ends = (r: RoadChain) => [r.points[0]!, r.points[r.points.length - 1]!];
+      return carStreets.slice(i + 1).flatMap((o) => {
+        if (o.name !== c.name) return [];
+        return ends(c).flatMap((p) =>
+          ends(o).flatMap((q) => {
+            const d = Math.hypot(q[0] - p[0], q[1] - p[1]);
+            return d >= 0.6 && d <= 8 && deepInMap(p[0], p[1], 6) ? [{ at: near(p[0], p[1]), what: `${c.name} ${d.toFixed(1)} m` }] : [];
+          }),
+        );
+      });
     }),
   /** A lane through a building's solid (a delivery van too), its passages aside. */
   "lane-in-building": () => TRAFFIC_ROUTES.flatMap((r) => along(r, 1).filter((p) => inBuilding(p.x, p.z) && !inPassage(p.x, p.z)).map((p) => ({ at: near(p.x, p.z), what: r.id }))),

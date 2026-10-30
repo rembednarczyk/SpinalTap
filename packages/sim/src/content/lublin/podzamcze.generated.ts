@@ -176,6 +176,7 @@ export const PODZAMCZE_CHUNKS: readonly LublinChunkData[] = [
       {"surface":"footway","outline":[670.3,240.7,671.1,240.7,671.1,243.2,670.2,243.2]},
     ],
     streets: [
+      {"name":"Lubartowska","kind":"tertiary","line":[585,366.5,586.3,370],"oneway":true},
       {"name":"Aleja Solidarności","kind":"primary","line":[559.7,370,585,366.5],"oneway":true},
       {"name":"Kowalska","kind":"residential","line":[520,186.2,567.7,160],"oneway":true},
       {"name":"Furmańska","kind":"residential","line":[625.7,160,633.1,243.1,632.3,252],"oneway":true},
@@ -1397,6 +1398,7 @@ export const PODZAMCZE_CHUNKS: readonly LublinChunkData[] = [
       {"name":"Ruska","kind":"tertiary","line":[1000,462.2,1055.1,456.2],"oneway":true},
       {"name":"Ruska","kind":"tertiary","line":[1055.1,456.2,1081.5,449.8],"oneway":true},
       {"name":"Ruska","kind":"tertiary","line":[1000,462.2,962.3,468,930.5,478.1]},
+      {"name":"Lwowska","kind":"tertiary","line":[1120,493.9,1116,492],"oneway":true},
       {"name":"Rondo Metropolity Piotra Mohyły","kind":"secondary","line":[1083.2,477.2,1081.5,449.8],"oneway":true},
       {"name":"Ruska","kind":"tertiary","line":[1083.2,477.2,1059.5,467.5,1044.1,464.4,1000,462.2],"oneway":true},
       {"name":"Podzamcze","kind":"secondary","line":[1106.2,519.2,1097,546.5,1091.4,574.8],"oneway":true},

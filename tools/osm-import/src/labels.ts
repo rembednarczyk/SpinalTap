@@ -28,6 +28,20 @@ const NAME_FIXES: Readonly<Record<string, string>> = {
   "Aleje Tysiąclecia": "Aleja Tysiąclecia",
 };
 
+/**
+ * Shorter pieces are noise, unless the chunk's edge cut them off a longer way: dropped there,
+ * they leave a hole in the street at the seam (G-021). Under half a metre the roads join over
+ * the gap anyway (`JOIN` in the sim's `roads.ts`).
+ */
+const MIN_PIECE = 5;
+const MIN_SEAM_PIECE = 0.5;
+
+const onEdge = (p: Pt, r: Rect): boolean => Math.min(Math.abs(p.x - r.minX), Math.abs(p.x - r.maxX), Math.abs(p.z - r.minZ), Math.abs(p.z - r.maxZ)) < 1e-6;
+const keepPiece = (piece: readonly Pt[], rect: Rect): boolean => {
+  const len = lineLength(piece);
+  return len >= MIN_PIECE || (len >= MIN_SEAM_PIECE && (onEdge(piece[0]!, rect) || onEdge(piece[piece.length - 1]!, rect)));
+};
+
 export const chunkStreets = (lines: readonly Line[], rect: Rect): StreetOut[] => {
   const out: StreetOut[] = [];
   for (const l of lines) {
@@ -38,7 +52,7 @@ export const chunkStreets = (lines: readonly Line[], rect: Rect): StreetOut[] =>
     const one = oneway(l.tags);
     const line = l.tags.oneway === "-1" ? [...l.line].reverse() : l.line;
     for (const piece of clipLineToRect(line, rect)) {
-      if (lineLength(piece) < 5) continue;
+      if (!keepPiece(piece, rect)) continue;
       const simple = simplifyLine(piece, 1).flatMap((p) => [r1(p.x), r1(p.z)]);
       out.push({ name, kind, line: simple, ...(one ? { oneway: true as const } : {}) });
     }

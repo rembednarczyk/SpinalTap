@@ -5,7 +5,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ## Otwarte
 
 ### G-001 Test migawki NPR przekracza 90 s na wolnym runnerze CI
-- Status: weryfikacja PRZYJĘTE, w PR. Tryb `?reference` rysuje dopiero przy gotowej scenie; migawka 18–42 s zamiast 72 s. Ryzyko szczątkowe: `still` nie czeka na `ProbeSchedule` (inwalidacja sondy < 1 s przed gotowością); zapas w pomiarach > 2,6 s.
+- Status: naprawione (#39). Tryb `?reference` rysuje dopiero przy gotowej scenie; migawka 18–42 s zamiast 72 s. Ryzyko szczątkowe: `still` nie czeka na `ProbeSchedule` (inwalidacja sondy < 1 s przed gotowością); zapas w pomiarach > 2,6 s.
 - Ważność: S1 (czerwone CI) · Zasięg: każdy PR · Koszt: średni
 - Gdzie: `e2e/npr-perf.spec.ts` „NPR reference frame matches the approved snapshot”, PR #28 (E2E 1/3, dwa razy)
 - Dowód (pomiar lokalny, SwiftShader):
@@ -182,7 +182,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Trop poza zakresem: 12 bezimiennych dróg dla aut odrzuconych przez import (`labels.ts:27`, m.in. primary_link 60149306, 232464399) może dawać podobne przerwy na łącznikach.
 
 ### G-021 Szwy chunków ucinają krótkie kawałki ulic: dziury w pasach aut (Narutowicza, Lubartowska ×2)
-- Status: przyjęte
+- Status: weryfikacja PRZYJĘTE, w PR. `street-seam-gap` 3 → 0, `lane-dead-end` 66 → 61. Pasy Świętoduska:0 i Narutowicza:f zaczynają się 0,8–1,3 m za krawędzią mapy (bez skutków, `car-lane-off-road` tego nie liczy).
 - Ważność: S3 · Zasięg: lokalny (3 miejsca, 7 ślepych końców pasów) · Koszt: mały
 - Gdzie: Narutowicza szew x = 240 ((238,3, −171,6)–(268,6, −161,6), #8 ma 30,3 m bez pasa); Lubartowska szew z = −20 (brak 4,2 m przy (442,2, −20)); Lubartowska szew z = 370 (brak 3,8 m przy (585, 366,5), #39 ma 9,3 m bez pasa)
 - Dowód: łowca (pomiar `clipLineToRect`); `krakowskie.generated.ts:688` kończy Lubartowską na (442,2, −20), `:1492` zaczyna na (442,3, −15,8). OSM w40051392, w40050981, w60145297.
@@ -193,7 +193,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-022 Pas aut kończy się przed krótkim łańcuchem tej samej jezdni, który nie dostaje pasa
 - Status: przyjęte (po G-020 i G-021, te same pliki)
 - Ważność: S3 · Zasięg: lokalny (6 miejsc, 8 ślepych końców) · Koszt: średni
-- Gdzie: Cerkiewna#92 (912, 346) → pętla #90 (44,4 m); Aleja Unii Lubelskiej#96 (1099, 272) → Aleja Tysiąclecia#84 (21 m); Kalinowszczyzna#131 (2361, 430); Łęczyńska#121 (2659, 95); Kapucyńska#10 (150, −160); Kołłątaja#2 / Peowiaków#0 (−100, −169) → Zesłańców Sybiru#5 (35 m)
+- Gdzie: Lubartowska#38:1 (588, 379): dwa pasy jednokierunkowe schodzą w jeden dwukierunkowej (po G-021); Cerkiewna#92 (912, 346) → pętla #90 (44,4 m); Aleja Unii Lubelskiej#96 (1099, 272) → Aleja Tysiąclecia#84 (21 m); Kalinowszczyzna#131 (2361, 430); Łęczyńska#121 (2659, 95); Kapucyńska#10 (150, −160); Kołłątaja#2 / Peowiaków#0 (−100, −169) → Zesłańców Sybiru#5 (35 m)
 - Dowód: łowca: koniec łańcucha z pasami dotyka (≤ 8 m) łańcucha aut < 45 m z 0 pasami.
 - Przyczyna (przypuszczalna): klucz łączenia w `roads.ts:71` zawiera `oneway`; `MIN_ROUTE` (`traffic.ts:83`) liczony dla łańcucha, nie dla ciągu łańcuchów.
 - Pakiet właściciela: packages/sim (`content/lublin/roads.ts`, `content/traffic.ts`)
@@ -264,6 +264,34 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S2 (proponowana: niestabilne e2e) · Koszt: nieznany
 - Dowód: naprawiacz G-001: przy obciążeniu 5–11 za każdym razem pada inny test (Krakowskie, Rynek, targ, Nabrzeże, quicksave/quickload); przypuszczalnie ten sam mechanizm co G-001 w zwykłym trybie (pełne klatki w trakcie ładowania i kroków budują kolejkę GPU SwiftShadera). `captureFrame` rysuje dodatkową klatkę mimo `preserveDrawingBuffer` (1,3–5,8 s na przechwycenie).
 - Pakiet właściciela: packages/app / e2e
+
+### G-032 Słupki przy ulicach stoją chaotycznie: łańcuchy celują w różne strony i nie łączą sąsiadów; słupki za małe
+- Status: przyjęte (zgłoszenie użytkownika: słupki to charakterystyczny element Lublina)
+- Ważność: S3 · Zasięg: szeroki (Plac Litewski, Krakowskie Przedmieście, deptak, Plac Łokietka; ok. 53 słupki z OSM) · Koszt: średni
+- Dowód: model `bollard()` (`engine/.../mapcity/prop-street.ts:36`) ma stałe odcinki łańcucha ±1 m w lokalnej osi X, a obrót słupka nie wynika z rzędu, w którym stoi; odstępy w rzędach 1,9–2,8 m (`docs/world/lublin-props.todo.json`). Słupek 0,26 × 0,95 m.
+- Pakiet właściciela: tools/osm-import (rzędy i obrót), packages/engine (model, łańcuch), packages/sim (`furniture.ts`, bryła)
+- Test przyjęcia: słupki w rzędzie mają obrót wzdłuż rzędu; łańcuch łączy dokładnie sąsiednie słupki rzędu (koniec łańcucha przy sąsiedzie, bez wolnych końców w powietrzu); słupek większy (wymiary z dokumentacji/zdjęć Lublina), bryła w sim zgodna z modelem; migawka NPR obejrzana i świadomie zaktualizowana, budżety bez podnoszenia.
+
+### G-033 Postać, która przechodzi w inne miejsce według flag, „umiera”: renderer gra upadek
+- Status: przyjęte (zgłoszenie użytkownika: Kaito „umiera” po pierwszej rozmowie)
+- Ważność: S2 · Zasięg: każda postać warunkowa (Kaito klinika → bar, cele wariantów kontraktów) · Koszt: mały
+- Dowód: po `met_fixer` `Streaming.syncPresence` usuwa Kaito z kliniki; `RenderSync` (`presentation/render-sync.ts:101`) zgłasza `despawn(id, "removed")`, bo usunięcie nie jest w `streamedOut`, a `CharacterViews.despawn` z `fall` gra animację śmierci.
+- Pakiet właściciela: packages/sim (`world/streaming.ts`, `presentation/render-sync.ts`)
+- Test przyjęcia: test sesji: po ustawieniu flagi postać warunkowa znika z `despawn(..., "unloaded")`; zabity NPC dalej dostaje `"removed"`.
+
+### G-034 Kaito od początku w Neon Koi (decyzja użytkownika)
+- Status: przyjęte (propozycja użytkownika: Kaito ma być u siebie od razu; zmienia start z ADR-0038)
+- Ważność: S3 · Zasięg: prolog · Koszt: średni
+- Zmiana: jedna postać Kaito w barze bez warunku `met_fixer`; prolog w `m0.ink` i cel HUD prowadzą z kliniki do Neon Koi; pierwsza rozmowa w barze.
+- Pakiet właściciela: packages/sim (`content/district-m0.ts`), packages/narrative (`ink/m0.ink`), packages/app (`objective.ts`)
+- Test przyjęcia: test sesji prologu: nowa gra w klinice, cel wskazuje Neon Koi, rozmowa z Kaito w barze ustawia `met_fixer` i daje zlecenie kuriera, Kaito się nie przemieszcza.
+
+### G-035 Wskaźniki zadań nie prowadzą do postaci z wątku: nie da się znaleźć babci Ume
+- Status: przyjęte (zgłoszenie użytkownika)
+- Ważność: S2 (blokuje postęp wątku głównego, akt II) · Zasięg: każdy krok „porozmawiaj z X” (Ume, Mori, Ren, Kurosawa) · Koszt: średni
+- Dowód: `minimap.ts` `markerKind` oznacza tylko zleceniodawców (`fixer`/`hana`/`genzo`) i cele z tagiem; kroki zadań (`core/quest/definitions.ts`) mają tylko tekst `objective`, bez celu. „Zapytaj babcię Ume o Rena Odagiri” nie mówi, gdzie ona jest (deptak przy klinice ok. (328, −77) od 6:30, w nocy brama obok, `schedules.ts`).
+- Pakiet właściciela: packages/core (`quest`, krok z celem), packages/app (`minimap.ts`, HUD), packages/ui (znacznik)
+- Test przyjęcia: test sesji: w kroku z celem-postacią minimapa ma znacznik celu na tej postaci (o każdej porze, także gdy postać śpi albo jest poza wczytanym chunkiem: znacznik na jej miejscu z harmonogramu); dla Ume w kroku `m3_lustro` znacznik w ok. (328, −77) w dzień.
 
 ### G-006 Skręty aut na skrzyżowaniach
 - Status: w naprawie (decyzja użytkownika przy G-024: skręty w boczne ulice; ADR-0055)

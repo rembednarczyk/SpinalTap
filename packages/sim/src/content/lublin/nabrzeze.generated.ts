@@ -493,6 +493,7 @@ export const NABRZEZE_CHUNKS: readonly LublinChunkData[] = [
       {"name":"Aleja Władysława Andersa","kind":"secondary","line":[2419,316.5,2397.4,331.2,2387.5,343],"oneway":true},
       {"name":"Mełgiewska","kind":"secondary","line":[2458.7,302.7,2419,316.5],"oneway":true},
       {"name":"Kalinowszczyzna","kind":"tertiary","line":[2377.2,434.8,2367.8,435.6,2361.1,432.1],"oneway":true},
+      {"name":"Towarowa","kind":"residential","line":[2300,345.4,2304.8,346.1]},
       {"name":"Mełgiewska","kind":"secondary","line":[2407,277.6,2419.1,270],"oneway":true},
       {"name":"Mełgiewska","kind":"secondary","line":[2300,278.5,2333.7,284.7,2369.9,283.8],"oneway":true},
       {"name":"Kalinowszczyzna","kind":"tertiary","line":[2361.1,432.1,2368.5,424.9,2373.2,415.8],"oneway":true},

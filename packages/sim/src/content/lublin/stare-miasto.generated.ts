@@ -149,7 +149,9 @@ export const STARE_MIASTO_CHUNKS: readonly LublinChunkData[] = [
       {"name":"Teodora Gruella","kind":"pedestrian","line":[587.6,-154.2,586.6,-140.5]},
       {"name":"Bramowa","kind":"pedestrian","line":[473,-91.3,466.4,-93.7]},
       {"name":"Plac Katedralny","kind":"pedestrian","line":[588.9,-169.6,591.8,-198.4]},
+      {"name":"Rynek","kind":"pedestrian","line":[609.1,-50.9,610,-49.7]},
       {"name":"Teodora Gruella","kind":"pedestrian","line":[596.3,-108.2,586.5,-138]},
+      {"name":"Bramowa","kind":"pedestrian","line":[463.7,-94.8,460,-95.1]},
       {"name":"Rynek","kind":"pedestrian","line":[532.3,-55.7,540.7,-61.9,551.8,-66,598.9,-96.5]},
     ],
     markings: [
@@ -353,6 +355,7 @@ export const STARE_MIASTO_CHUNKS: readonly LublinChunkData[] = [
       {"name":"Podwale","kind":"residential","line":[612.9,-220.1,630.1,-212.3,676.6,-203.5,708.8,-194.5,735.3,-184.8]},
       {"name":"Prymasa Stefana Wyszyńskiego","kind":"residential","line":[612.9,-220.1,616.6,-232.7]},
       {"name":"Jezuicka","kind":"pedestrian","line":[682.8,-126.1,610,-136.8],"oneway":true},
+      {"name":"Królewska","kind":"residential","line":[612.9,-220.1,610,-216.6]},
       {"name":"Misjonarska","kind":"footway","line":[629.5,-240,627.5,-225.5]},
       {"name":"Złota","kind":"pedestrian","line":[687.4,-57.3,695.1,-58.3]},
       {"name":"Archidiakońska","kind":"pedestrian","line":[686.2,-40,687.4,-57.3],"oneway":true},

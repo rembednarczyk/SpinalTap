@@ -1,7 +1,8 @@
 {
   "car-lane-off-road": 1,
-  "lane-dead-end": 66,
+  "lane-dead-end": 61,
   "car-road-hole": 0,
+  "street-seam-gap": 0,
   "lane-in-building": 0,
   "walker-on-car-lane": 0,
   "furniture-in-car-lane": 1,
