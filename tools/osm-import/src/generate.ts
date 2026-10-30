@@ -7,9 +7,9 @@ import { makeBuilding } from "./buildings.ts";
 import { ALL_CHUNKS, type ChunkSpec } from "./config.ts";
 import { type HeightSource } from "./dtm.ts";
 import { type Area, type Line, extractFeatures } from "./features.ts";
-import { type Band, areaBand, chunkGround, crossingBand, crossingWay, lineBands, markedCrossing, roadWidth } from "./ground.ts";
+import { type Band, areaBand, chunkGround, crossingBand, crossingWay, cutSidewalk, lineBands, markedCrossing, roadWidth } from "./ground.ts";
 import { geoToWorld } from "./project.ts";
-import { type Pt, type Rect, centroid, inRect, rectsOverlap, ringBounds } from "./geometry.ts";
+import { type Pt, type Rect, centroid, inRect, pointInRing, rectsOverlap, ringBounds } from "./geometry.ts";
 import { allPois, chunkPois, chunkStreets } from "./labels.ts";
 import { type ChunkOut } from "./model.ts";
 import { type OsmData } from "./osm.ts";
@@ -174,6 +174,14 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
     if (!near([at]) || onCrossingWay(at)) continue;
     const b = crossingBand(`n${n.id}`, at, roads);
     if (b) bands.push({ ...b, box: ringBounds(b.ring) });
+  }
+  // A laid sidewalk stops at the kerb of the street it meets (ADR-0042): cut where it runs over another carriageway.
+  const carriageways = bands.filter((b) => b.carriageway);
+  const laid = bands.filter((b) => b.along);
+  for (const b of laid) {
+    const others = carriageways.filter((c) => c.source !== b.source && rectsOverlap(c.box, b.box));
+    const pieces = cutSidewalk(b, (p) => others.some((c) => p.x >= c.box.minX && p.x <= c.box.maxX && p.z >= c.box.minZ && p.z <= c.box.maxZ && pointInRing(p, c.ring)));
+    bands.splice(bands.indexOf(b), 1, ...pieces.map((x) => ({ ...x, box: ringBounds(x.ring) })));
   }
   const pois = allPois(data);
   const results = chunks.map((c) => generateChunk(c, src, buildings, bands, lines, pois));
