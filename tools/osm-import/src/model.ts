@@ -3,6 +3,7 @@
  * (the importer does not import sim, the sim test checks the generated files against its types).
  * Point lists are flat `[x0, z0, x1, z1, …]` in metres rounded to 0.1.
  */
+import { type MarkingOut } from "./markings.ts";
 import { type BuildingUse, type GroundSurface, type TerrainGrid } from "../../../packages/core/src/world/city-geo.ts";
 
 export interface BuildingOut {
@@ -63,5 +64,7 @@ export interface ChunkOut {
   readonly buildings: readonly BuildingOut[];
   readonly ground: readonly GroundOut[];
   readonly streets: readonly StreetOut[];
+  /** Road markings (ADR-0052). */
+  readonly markings: readonly MarkingOut[];
   readonly pois: readonly PoiOut[];
 }

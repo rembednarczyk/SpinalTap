@@ -134,7 +134,7 @@ vec4 facadeGlass(vec2 q, vec2 meta, vec3 n, vec3 v, float dist, float night, out
 /**
  * Ground surfaces: uv = metres in the surface's box (along, across), uv2.x = surface code
  * (0 terrain, 1 road, 2 sidewalk, 3 square, 4 cobble, 5 footway, 6 grass, 7 rail, 8 kerb),
- * uv2.y = width of a long strip (road markings) or 0.
+ * uv2.y = width of a long strip (a railway's sleepers) or 0; road markings are geometry (ADR-0052).
  */
 export const GROUND_GLSL = /* glsl */ `
 #ifdef MAP_GROUND
@@ -147,12 +147,6 @@ vec3 groundPaint(vec3 albedo, vec2 q, vec2 meta, vec3 p, float dist) {
     k = 0.82 + 0.18 * step(0.5, vnoise(w * 0.35)) - 0.08 * step(0.7, vnoise(w * 1.7));
   } else if (code < 1.5) {
     k = 0.92 + 0.08 * step(0.6, vnoise(w * 0.3)) - 0.1 * step(0.74, vnoise(w * 0.07 + 3.0));
-    float hw = meta.y * 0.5;
-    if (hw > 1.6) {
-      float centre = (1.0 - step(0.07, abs(q.y))) * step(fract(q.x / 6.0), 0.5);
-      float edge = step(hw - 0.45, abs(q.y)) * (1.0 - step(hw - 0.3, abs(q.y)));
-      if (max(centre, edge) > 0.5) return vec3(0.72, 0.72, 0.66) * (0.9 + 0.1 * vnoise(w * 3.0));
-    }
   } else if (code < 2.5) {
     k -= 0.24 * max(gridLine(q.x, 1.0, 0.018), gridLine(q.y, 1.0, 0.018)) * near;
     k += 0.06 * (hash(floor(q)) - 0.5);

@@ -76,6 +76,17 @@ export interface TerrainOpenSides {
 export type GroundSurface = "road" | "sidewalk" | "square" | "cobble" | "footway" | "steps" | "crossing" | "grass" | "water" | "basin" | "rail";
 
 /**
+ * Road markings of the map city (ADR-0052), from the carriageways' lanes, direction and tags:
+ * - `centre-dash`: the broken line between the two directions (P-1);
+ * - `centre-double`: the double solid line between them on four lanes and more (P-4);
+ * - `lane-dash`: the broken line between two lanes of one direction;
+ * - `edge`: the solid line along the edge of a main road (P-7);
+ * - `stop`: the stop line across the lanes before traffic lights (P-14);
+ * - `cycle-lane`, `bus-lane`: a lane of its own along the kerb.
+ */
+export type RoadMarkingKind = "centre-dash" | "centre-double" | "lane-dash" | "edge" | "stop" | "cycle-lane" | "bus-lane";
+
+/**
  * Street furniture of the map city (ADR-0047), from `docs/world/lublin-props.todo.json`: the
  * five Lublin lamp types, benches, bollards, trees, bins and the rest. Drawn in bulk per chunk.
  */

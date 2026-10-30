@@ -287,5 +287,40 @@ export const lineLength = (line: readonly Pt[]): number => {
   return s;
 };
 
+/** The point at arc length `s` along a polyline (clamped to its ends). */
+export const pointAlong = (line: readonly Pt[], s: number): Pt => {
+  let left = Math.max(0, s);
+  for (let i = 0; i + 1 < line.length; i++) {
+    const a = line[i]!;
+    const b = line[i + 1]!;
+    const len = Math.hypot(b.x - a.x, b.z - a.z);
+    if (left <= len) return { x: a.x + ((b.x - a.x) * left) / (len || 1), z: a.z + ((b.z - a.z) * left) / (len || 1) };
+    left -= len;
+  }
+  return line[line.length - 1] ?? { x: 0, z: 0 };
+};
+
+/** The part of a polyline between arc lengths `from` and `to`, ends interpolated. */
+export const sliceLine = (line: readonly Pt[], from: number, to: number): Pt[] => {
+  const out: Pt[] = [];
+  let s = 0;
+  for (let i = 0; i + 1 < line.length; i++) {
+    const a = line[i]!;
+    const b = line[i + 1]!;
+    const len = Math.hypot(b.x - a.x, b.z - a.z);
+    const at = (d: number): Pt => ({ x: a.x + ((b.x - a.x) * d) / (len || 1), z: a.z + ((b.z - a.z) * d) / (len || 1) });
+    if (s + len >= from && s <= to) {
+      if (out.length === 0) out.push(at(Math.max(0, from - s)));
+      if (s + len <= to) out.push(b);
+      else {
+        out.push(at(to - s));
+        break;
+      }
+    }
+    s += len;
+  }
+  return out;
+};
+
 /** Rounds to 0.1 m. */
 export const r1 = (v: number): number => Math.round(v * 10) / 10 + 0;

@@ -116,10 +116,10 @@ const cleanTags = (tags: Tags | undefined): Tags | undefined => {
   return Object.keys(out).length > 0 ? out : undefined;
 };
 
-/** The tags of a crossing node the generator reads. */
+/** The tags of a crossing or traffic lights node the generator reads. */
 const crossingTags = (tags: Tags): Tags => {
   const out: Record<string, string> = {};
-  for (const k of ["crossing", "crossing:markings", "highway"]) if (tags[k] !== undefined) out[k] = tags[k]!;
+  for (const k of ["crossing", "crossing:markings", "highway", "traffic_signals:direction"]) if (tags[k] !== undefined) out[k] = tags[k]!;
   return out;
 };
 
@@ -148,8 +148,8 @@ export const filterOsm = (data: OsmData): OsmData => {
   for (const n of data.nodes.values()) {
     const poi = n.tags?.name !== undefined && keeps(n.tags, POI_KEYS);
     if (!poi && !nodeIds.has(n.id)) continue;
-    // A way's node keeps only its crossing tags: the zebras are drawn from them.
-    const tags = poi ? cleanTags(n.tags) : n.tags?.highway === "crossing" ? crossingTags(n.tags) : undefined;
+    // A way's node keeps only its crossing and traffic light tags: zebras and stop lines are drawn from them.
+    const tags = poi ? cleanTags(n.tags) : n.tags?.highway === "crossing" || n.tags?.highway === "traffic_signals" ? crossingTags(n.tags) : undefined;
     nodes.set(n.id, { id: n.id, lat: n.lat, lon: n.lon, ...(tags ? { tags } : {}) });
   }
   return { nodes, ways, relations };

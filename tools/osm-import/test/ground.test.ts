@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type Line } from "../src/features.ts";
-import { CROSSING_ALONG, coveredByWater, crossingBand, lineBands, markedCrossing } from "../src/ground.ts";
+import { CROSSING_ALONG, coveredByWater, crossingBand, cutSidewalk, lineBands, markedCrossing } from "../src/ground.ts";
 
 const river: Line = { id: "w1", osmId: 1, tags: { waterway: "river" }, line: [{ x: 0, z: 0 }, { x: 50, z: 0 }, { x: 100, z: 0 }] };
 const bed = [{ x: -10, z: -20 }, { x: 110, z: -20 }, { x: 110, z: 20 }, { x: -10, z: 20 }];
@@ -42,5 +42,22 @@ describe("zebra crossings (ADR-0042)", () => {
     expect(Math.max(...zs) - Math.min(...zs)).toBeCloseTo(6.5, 5);
     // Off the carriageway (a crossing of a park path): no zebra.
     expect(crossingBand("n2", { x: 10, z: 8 }, [street])).toBeNull();
+  });
+});
+
+describe("sidewalks at the streets they meet (ADR-0042)", () => {
+  it("stop at the kerb of a crossing street instead of running across its asphalt", () => {
+    const main: Line = { id: "w10", osmId: 10, tags: { highway: "residential", sidewalk: "both" }, line: [{ x: -40, z: 0 }, { x: 40, z: 0 }] };
+    const side = lineBands(main, false).filter((b) => b.surface === "sidewalk");
+    expect(side.length).toBe(2);
+    // A street 8 m wide crosses at x = 0.
+    const onRoad = (p: { x: number; z: number }) => Math.abs(p.x) < 4;
+    for (const b of side) {
+      const pieces = cutSidewalk(b, onRoad);
+      expect(pieces.length).toBe(2);
+      for (const piece of pieces) for (const p of piece.ring) expect(Math.abs(p.x)).toBeGreaterThan(3.4);
+    }
+    // Nothing in the way: the sidewalk stays whole.
+    expect(cutSidewalk(side[0]!, () => false)).toEqual([side[0]]);
   });
 });

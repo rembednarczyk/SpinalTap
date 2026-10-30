@@ -36,8 +36,46 @@ const insideOutline = (x: number, z: number, pts: readonly GroundPoint[]): boole
   return inside;
 };
 
+/** Grid cell of the indexes below (m). */
+const CELL = 16;
+const cellOf = (v: number): number => Math.floor(v / CELL);
+const key = (cx: number, cz: number): number => cx * 100003 + cz;
+
+/** Indexes into `list` by the grid cells their bounds touch, in ascending order per cell. */
+const gridOf = (list: readonly (readonly GroundPoint[])[]): Map<number, number[]> => {
+  const grid = new Map<number, number[]>();
+  list.forEach((pts, i) => {
+    const xs = pts.map((p) => p.x);
+    const zs = pts.map((p) => p.z);
+    for (let cx = cellOf(Math.min(...xs)); cx <= cellOf(Math.max(...xs)); cx++) {
+      for (let cz = cellOf(Math.min(...zs)); cz <= cellOf(Math.max(...zs)); cz++) {
+        const k = key(cx, cz);
+        const cell = grid.get(k);
+        if (cell) cell.push(i);
+        else grid.set(k, [i]);
+      }
+    }
+  });
+  return grid;
+};
+
+const OUTLINE_GRID = gridOf(OUTLINES);
+const WALL_GRID = gridOf(WALLS.map((w) => [w.a, w.b]));
+/** Furthest ring of cells the wall search looks in before it falls back to every wall. */
+const MAX_RING = 40;
+
 /** Is (x, z) inside a building of the map? */
-export const inBuilding = (x: number, z: number): boolean => OUTLINES.some((o) => insideOutline(x, z, o));
+export const inBuilding = (x: number, z: number): boolean => (OUTLINE_GRID.get(key(cellOf(x), cellOf(z))) ?? []).some((i) => insideOutline(x, z, OUTLINES[i] as readonly GroundPoint[]));
+
+/** The walls whose cells lie on ring `r` (Chebyshev distance in cells) round (cx, cz). */
+const ringWalls = (cx: number, cz: number, r: number, out: Set<number>): void => {
+  for (let dx = -r; dx <= r; dx++) {
+    for (let dz = -r; dz <= r; dz++) {
+      if (Math.max(Math.abs(dx), Math.abs(dz)) !== r) continue;
+      for (const i of WALL_GRID.get(key(cx + dx, cz + dz)) ?? []) out.add(i);
+    }
+  }
+};
 
 /**
  * The nearest wall point to (x, z), its distance and the wall's outward normal. With `facing`,
@@ -45,22 +83,37 @@ export const inBuilding = (x: number, z: number): boolean => OUTLINES.some((o) =
  */
 export const nearestWall = (x: number, z: number, facing = false): { readonly p: GroundPoint; readonly d: number; readonly nx: number; readonly nz: number } => {
   let best = { p: { x, z }, d: Infinity, nx: 0, nz: 1 };
-  for (const w of WALLS) {
-    if (facing && (x - w.a.x) * (w.b.z - w.a.z) - (z - w.a.z) * (w.b.x - w.a.x) < 0) continue;
+  let bestIndex = Infinity;
+  const consider = (i: number): void => {
+    const w = WALLS[i] as Wall;
+    if (facing && (x - w.a.x) * (w.b.z - w.a.z) - (z - w.a.z) * (w.b.x - w.a.x) < 0) return;
     const dx = w.b.x - w.a.x;
     const dz = w.b.z - w.a.z;
     const len2 = dx * dx + dz * dz;
-    if (len2 < 1e-9) continue;
+    if (len2 < 1e-9) return;
     const t = Math.max(0, Math.min(1, ((x - w.a.x) * dx + (z - w.a.z) * dz) / len2));
     const px = w.a.x + dx * t;
     const pz = w.a.z + dz * t;
     const d = Math.hypot(x - px, z - pz);
-    if (d < best.d) {
+    // The first of equally near walls in table order, as a scan of every wall finds it.
+    if (d < best.d || (d === best.d && i < bestIndex)) {
       const len = Math.sqrt(len2);
       // Counter-clockwise outlines: the outward normal is (dz, -dx).
       best = { p: { x: px, z: pz }, d, nx: dz / len, nz: -dx / len };
+      bestIndex = i;
     }
+  };
+  // Ring by ring outwards: once the nearest wall is no further than the inner edge of the next
+  // ring, no wall beyond can be nearer.
+  const cx = cellOf(x);
+  const cz = cellOf(z);
+  for (let r = 0; r <= MAX_RING; r++) {
+    const walls = new Set<number>();
+    ringWalls(cx, cz, r, walls);
+    for (const i of [...walls].sort((a, b) => a - b)) consider(i);
+    if (best.d < r * CELL) return best;
   }
+  for (let i = 0; i < WALLS.length; i++) consider(i);
   return best;
 };
 

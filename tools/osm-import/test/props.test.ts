@@ -29,6 +29,7 @@ const street = (): LublinChunkData => ({
     { surface: "road", outline: [0, 26, 100, 26, 100, 34, 0, 34] },
   ],
   streets: [{ name: "Testowa", kind: "residential", line: [0, 30, 100, 30] }],
+  markings: [],
   pois: [],
 });
 

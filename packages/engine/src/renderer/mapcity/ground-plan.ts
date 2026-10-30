@@ -17,17 +17,22 @@ import { face, quadUv, vertex } from "./sink-ops";
 
 export const SURFACE_CODE = { terrain: 0, road: 1, sidewalk: 2, square: 3, cobble: 4, footway: 5, grass: 6, rail: 7, kerb: 8 } as const;
 
-/** Lift above the terrain per surface (m): order of drawing where they overlap. */
+/**
+ * Lift above the terrain per surface (m): order of drawing where they overlap. The carriageway
+ * and what is painted on it (a few centimetres up: the drapes of the two differ that much on a
+ * slope) lie over the squares' paving and the paths it crosses (a street
+ * through Plac Łokietka, a park path meeting a road), under the raised sidewalks only.
+ */
 export const SURFACE_LIFT: Readonly<Record<GroundSurface, number>> = {
   water: 0.03,
   grass: 0.04,
-  road: 0.06,
-  rail: 0.07,
+  steps: 0.05,
   square: 0.08,
   cobble: 0.08,
   footway: 0.09,
-  steps: 0.05,
-  crossing: 0.085,
+  road: 0.1,
+  rail: 0.105,
+  crossing: 0.13,
   sidewalk: 0.16,
   basin: 0.32,
 };
@@ -202,7 +207,8 @@ const kerbs = (sink: MeshSink, ring: readonly P2[], h: HeightAt, roadAt: RoadAt)
 /** A ground surface (not water) draped on the terrain, with kerbs on sidewalks along roads. */
 export const planSurface = (sink: MeshSink, surface: Exclude<GroundSurface, "water" | "basin" | "steps" | "crossing">, ring: readonly P2[], h: HeightAt, roadAt: RoadAt | null): void => {
   const box = orientedBox(ring);
-  const strip = (surface === "road" || surface === "rail") && box.halfLong > box.halfShort * 4 ? box.halfShort * 2 : 0;
+  // Rails get their sleepers along the strip; roads get their markings from the map (ADR-0052).
+  const strip = surface === "rail" && box.halfLong > box.halfShort * 4 ? box.halfShort * 2 : 0;
   const code = SURFACE_CODE[surface];
   drape(sink, ring, h, SURFACE_LIFT[surface], SURFACE_COLOR[surface], (p) => {
     const l = obbLocal(box, p);

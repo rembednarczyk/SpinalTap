@@ -6,7 +6,7 @@
 import { type GroundSurface } from "../../../packages/core/src/world/city-geo.ts";
 import { parseLength } from "./building-tags.ts";
 import { type Area, type Line } from "./features.ts";
-import { type Pt, type Rect, bufferLine, ccw, clipRingToRect, pointInRing, r1, removeCollinear, signedArea, simplifyRing, stripAlong } from "./geometry.ts";
+import { type Pt, type Rect, bufferLine, ccw, clipRingToRect, lineLength, offsetLine, pointAlong, pointInRing, r1, removeCollinear, signedArea, simplifyRing, sliceLine, stripAlong } from "./geometry.ts";
 import { type GroundOut } from "./model.ts";
 import { type Tags } from "./osm.ts";
 
@@ -64,6 +64,10 @@ export interface Band {
   readonly ring: readonly Pt[];
   readonly bridge: boolean;
   readonly source: string;
+  /** A carriageway's own band (not a parking area or a road area). */
+  readonly carriageway?: true;
+  /** A sidewalk's line (laid along a road, or mapped on its own): `width` wide from `from` metres off `line`. */
+  readonly along?: { readonly line: readonly Pt[]; readonly from: number; readonly width: number };
 }
 
 /** Sidewalk sides a road gets: tagged ones, or both on city streets without tags and without mapped sidewalks nearby. */
@@ -96,18 +100,18 @@ export const lineBands = (l: Line, mappedSidewalkNear: boolean, water: readonly 
   if (underground(t) || l.line.length < 2) return [];
   const bridge = t.bridge !== undefined && t.bridge !== "no";
   const out: Band[] = [];
-  const add = (surface: GroundSurface, ring: Pt[]) => {
-    if (ring.length >= 3) out.push({ surface, ring, bridge, source: l.id });
+  const add = (surface: GroundSurface, ring: Pt[], extra: Pick<Band, "carriageway" | "along"> = {}) => {
+    if (ring.length >= 3) out.push({ surface, ring, bridge, source: l.id, ...extra });
   };
   const hw = t.highway;
   if (hw && t.area !== "yes") {
     if (ROAD_WIDTH[hw] !== undefined) {
       const w = roadWidth(t);
-      add(cobbled(t) ? "cobble" : "road", bufferLine(l.line, w));
+      add(cobbled(t) ? "cobble" : "road", bufferLine(l.line, w), { carriageway: true });
       const sides = sidewalkSides(t, mappedSidewalkNear);
       const sw = parseLength(t["sidewalk:width"]) ?? (hw === "primary" || hw === "secondary" ? 3 : 2.5);
-      if (sides.left) add("sidewalk", stripAlong(l.line, w / 2, sw));
-      if (sides.right) add("sidewalk", stripAlong(l.line, -w / 2 - sw, sw));
+      if (sides.left) add("sidewalk", stripAlong(l.line, w / 2, sw), { along: { line: l.line, from: w / 2, width: sw } });
+      if (sides.right) add("sidewalk", stripAlong(l.line, -w / 2 - sw, sw), { along: { line: l.line, from: -w / 2 - sw, width: sw } });
     } else if (hw === "pedestrian") add(cobbled(t) ? "cobble" : "square", bufferLine(l.line, parseLength(t.width) ?? 8));
     else if (PATHS[hw] !== undefined) {
       const w = parseLength(t.width) ?? PATHS[hw]!;
@@ -116,7 +120,8 @@ export const lineBands = (l: Line, mappedSidewalkNear: boolean, water: readonly 
       // A path's crossing of a carriageway: a zebra where it is marked, the road itself where not.
       else if (crossingWay(t)) {
         if (markedCrossing({ ...t, highway: "crossing" })) add("crossing", bufferLine(l.line, Math.max(w, CROSSING_ALONG)));
-      } else add(t.footway === "sidewalk" ? "sidewalk" : cobbled(t) ? "cobble" : "footway", bufferLine(l.line, w));
+      } else if (t.footway === "sidewalk") add("sidewalk", bufferLine(l.line, w), { along: { line: l.line, from: -w / 2, width: w } });
+      else add(cobbled(t) ? "cobble" : "footway", bufferLine(l.line, w));
     }
   }
   if (t.railway === "rail" || t.railway === "tram" || t.railway === "light_rail") add("rail", bufferLine(l.line, 3));
@@ -168,6 +173,39 @@ export const areaBand = (a: Area): Band | null => {
   const s = areaSurface(a.tags);
   if (!s || underground(a.tags)) return null;
   return { surface: s, ring: a.ring, bridge: false, source: a.id };
+};
+
+/** Stretches of a laid sidewalk shorter than this are dropped, metres. */
+const MIN_SIDEWALK = 1.5;
+
+/**
+ * A sidewalk, laid along a road or mapped on its own, cut where its middle runs over another
+ * carriageway: it stops at the kerb of the street it meets instead of running across its asphalt.
+ * `onRoad(p)` says whether a point lies on another carriageway. Sampled every half metre.
+ */
+export const cutSidewalk = (b: Band, onRoad: (p: Pt) => boolean): Band[] => {
+  if (!b.along) return [b];
+  const { line, from, width } = b.along;
+  const mid = offsetLine(line, from + width / 2);
+  const total = lineLength(line);
+  const step = 0.5;
+  const runs: [number, number][] = [];
+  let start: number | null = null;
+  for (let s = 0; s <= total + 1e-6; s += step) {
+    const p = pointAlong(mid, (s / (total || 1)) * lineLength(mid));
+    const free = !onRoad(p);
+    if (free && start === null) start = s;
+    if (!free && start !== null) {
+      runs.push([start, s - step]);
+      start = null;
+    }
+  }
+  if (start !== null) runs.push([start, total]);
+  if (runs.length === 1 && runs[0]![0] === 0 && runs[0]![1] >= total - 1e-6) return [b];
+  return runs
+    .filter(([a, c]) => c - a >= MIN_SIDEWALK)
+    .map(([a, c]) => ({ surface: b.surface, ring: stripAlong(sliceLine(line, a, c), from, width), bridge: b.bridge, source: b.source }))
+    .filter((r) => r.ring.length >= 3);
 };
 
 /** Draw order: big areas first, then roads, cobbles, sidewalks, paths and rails on top. */
