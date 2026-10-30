@@ -136,6 +136,12 @@ export interface StreetPropItem {
   readonly z: number;
   /** Facing around Y in radians (a bench's front, a lamp's arm). */
   readonly yaw: number;
-  /** Seed of the variation (species of tree, colour of a bin, which monument). */
+  /**
+   * Seed of the variation (species of tree, colour of a bin, which monument), up to 16 bits. For
+   * a bollard its chains (G-032), 0 for none: bits 0-8 where the chain along its +x ends (cm from
+   * its centre, at the next post's face or a lamp's shaft), bits 9-17 where a second chain ends
+   * behind it, back to a lamp of its row (cm), bits 18-24 that chain's turn off its -x towards
+   * +z (degrees + 64).
+   */
   readonly variant: number;
 }

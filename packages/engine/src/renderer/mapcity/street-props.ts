@@ -7,7 +7,7 @@ import { MeshSink } from "../mesh-sink";
 import { cellBounds, cellKey } from "./map-index";
 import { type WorldProp, bake, planHalos, toWorld } from "./prop-batch";
 import { PropHaloMaterial } from "./prop-halo";
-import { farModel, propModel } from "./prop-models";
+import { chainModel, farModel, propModel } from "./prop-models";
 import { type BlockBand, PROP_BLOCK, PROP_LOD, type PropLod, blockBand } from "./prop-shapes";
 import { type Box2, distanceToBox } from "./polygon";
 
@@ -237,7 +237,10 @@ export class StreetProps {
   private bakeNear(block: PropBlock): void {
     block.baked = true;
     const sink = new MeshSink();
-    for (const p of this.sorted(block)) bake(sink, propModel(p.prop, p.shape).sink, p);
+    for (const p of this.sorted(block)) {
+      bake(sink, propModel(p.prop, p.shape).sink, p);
+      for (const c of p.chains ?? []) bake(sink, chainModel(c.end), { ...p, yaw: c.yaw });
+    }
     block.near = this.mesh(`props-${block.key}`, sink);
   }
 

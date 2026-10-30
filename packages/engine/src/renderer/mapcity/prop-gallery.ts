@@ -57,8 +57,8 @@ export const propGallery = (): PropGallery => {
         x += w / 2;
         // Flagpoles face sideways: their flags read best from the front.
         const yaw = kind === "flagpole" ? -Math.PI / 2 : Math.PI;
-        // Variant: the shape in the low bits and the middle size for trees and shrubs.
-        items.push({ prop: kind, x, y: 0, z: r * GALLERY_ROW, yaw, variant: s + 7 * 16 * shapes });
+        // Variant: the shape in the low bits and the middle size for trees and shrubs; a bollard's is its chain, none alone.
+        items.push({ prop: kind, x, y: 0, z: r * GALLERY_ROW, yaw, variant: kind === "bollard" ? 0 : s + 7 * 16 * shapes });
         x += w / 2;
       }
     }

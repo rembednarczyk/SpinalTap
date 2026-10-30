@@ -1,5 +1,6 @@
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import type { StreetPropItem, StreetPropKind } from "@seki/core";
+import { BOLLARD, chainDir, chainVariant } from "@seki/sim";
 import { LUBLIN_CHUNKS, LUBLIN_STREET_PROPS } from "@seki/sim/lublin";
 import { describe, expect, it } from "vitest";
 import { Scene } from "../src/babylon";
@@ -7,7 +8,7 @@ import { ToonMaterials } from "../src/npr/toon-material";
 import { MeshSink } from "../src/renderer/mesh-sink";
 import { collectInstances, countByKind, planHalos, toWorld, writeMatrix } from "../src/renderer/mapcity/prop-batch";
 import { propGallery } from "../src/renderer/mapcity/prop-gallery";
-import { PROP_KINDS, buildPropModel, farModel, propModel } from "../src/renderer/mapcity/prop-models";
+import { PROP_KINDS, buildPropModel, chainModel, farModel, propModel } from "../src/renderer/mapcity/prop-models";
 import { PROP_LOD, PROP_SHAPES, bandOf, cellBand, shapeOf, showsNear } from "../src/renderer/mapcity/prop-shapes";
 import { StreetProps } from "../src/renderer/mapcity/street-props";
 
@@ -33,6 +34,27 @@ describe("street furniture models (ADR-0047)", () => {
     const trees = [0, 1, 2].map((s) => JSON.stringify(buildPropModel("tree", s).sink.positions));
     expect(new Set(trees).size).toBe(3);
     expect(shapeOf("monument", 4 * 1234 + 2)).toBe(2);
+  });
+
+  it("draws a bollard as big as its solid and its chain from its face to the next post's (G-032)", () => {
+    const post = propModel("bollard", 0).sink;
+    const xs = (s: MeshSink) => s.positions.filter((_, k) => k % 3 === 0);
+    const ys = post.positions.filter((_, k) => k % 3 === 1);
+    expect(Math.max(...ys)).toBeCloseTo(BOLLARD.height, 3);
+    expect(Math.max(...xs(post).map(Math.abs))).toBeLessThan(BOLLARD.side / 2 + 0.02);
+    // No chain on the post itself: a lone post or a row's last has none out past it.
+    expect(Math.max(...xs(post))).toBeLessThan(BOLLARD.side);
+    // A chain along +x ending at 2.13 m, and one back to a lamp 1.5 m behind, turned 10 degrees.
+    const [p] = toWorld([item("bollard", 0, 0, chainVariant(2.13, 1.5, (10 * Math.PI) / 180))], { x: 0, y: 0, z: 0 });
+    expect(p!.chains!.map((c) => c.end)).toEqual([2.13, 1.5]);
+    expect(p!.chains![0]!.yaw).toBe(0);
+    const back = chainDir(p!.chains![1]!.yaw);
+    expect(back.x).toBeCloseTo(-Math.cos((10 * Math.PI) / 180), 2);
+    const chain = chainModel(p!.chains![0]!.end);
+    expect(valid(chain)).toBe(true);
+    expect(Math.min(...xs(chain))).toBeCloseTo(BOLLARD.side / 2, 1);
+    expect(Math.max(...xs(chain))).toBeCloseTo(2.13, 1);
+    expect(toWorld([item("bollard", 0, 0, 0)], { x: 0, y: 0, z: 0 })[0]!.chains).toEqual([]);
   });
 
   it("lights the lamps and simplifies the tall kinds far away, and nothing small is drawn far", () => {

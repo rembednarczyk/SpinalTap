@@ -5,7 +5,7 @@ import { farTree, hangingBasket, planter, shrubs, tree } from "./prop-green";
 import { glow, paint, v3 } from "./prop-kit";
 import { type PropLight, type PropModel, floodlight, lampCandelabra, lampModernPole, lampPark, lampPastoral, lampRoad, lampWallLantern } from "./prop-lamps";
 import { PROP_SHAPES } from "./prop-shapes";
-import { aFrameSign, advertisingColumn, bench, bikeRack, bikeStation, bollard, cctv, flagpole, graniteBlock, manhole, streetCabinet, streetPlate, trafficSignal, trolleyPole, wasteBin } from "./prop-street";
+import { aFrameSign, advertisingColumn, bench, bikeRack, bikeStation, bollard, bollardChain, cctv, flagpole, graniteBlock, manhole, streetCabinet, streetPlate, trafficSignal, trolleyPole, wasteBin } from "./prop-street";
 
 export type { PropLight, PropModel };
 
@@ -67,6 +67,19 @@ export const propModel = (kind: StreetPropKind, shape: number): PropModel => {
   if (!m) {
     m = buildPropModel(kind, s);
     cache.set(key, m);
+  }
+  return m;
+};
+
+const chains = new Map<number, MeshSink>();
+
+/** A bollard's chain ending `end` metres from the post (G-032), built once per centimetre. */
+export const chainModel = (end: number): MeshSink => {
+  const cm = Math.round(end * 100);
+  let m = chains.get(cm);
+  if (!m) {
+    m = bollardChain(cm / 100);
+    chains.set(cm, m);
   }
   return m;
 };

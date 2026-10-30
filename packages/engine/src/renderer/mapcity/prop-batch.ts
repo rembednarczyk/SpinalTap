@@ -1,4 +1,5 @@
 import type { StreetPropItem, StreetPropKind, Vec3 } from "@seki/core";
+import { type BollardChain, bollardChains } from "@seki/sim";
 import type { MeshSink } from "../mesh-sink";
 import type { PropLight } from "./prop-lamps";
 import { type CellBand, scaleOf, shapeOf, showsNear } from "./prop-shapes";
@@ -18,10 +19,12 @@ export interface WorldProp {
   readonly yaw: number;
   readonly shape: number;
   readonly scale: number;
+  /** A bollard's chains to the next post or lamp of its row (G-032). */
+  readonly chains?: readonly BollardChain[];
 }
 
 export const toWorld = (items: readonly StreetPropItem[], at: Vec3): WorldProp[] =>
-  items.map((i) => ({ prop: i.prop, x: i.x + at.x, y: i.y + at.y, z: i.z + at.z, yaw: i.yaw, shape: shapeOf(i.prop, i.variant), scale: scaleOf(i.prop, i.variant) }));
+  items.map((i) => ({ prop: i.prop, x: i.x + at.x, y: i.y + at.y, z: i.z + at.z, yaw: i.yaw, shape: shapeOf(i.prop, i.variant), scale: scaleOf(i.prop, i.variant), chains: bollardChains(i) }));
 
 /** One instanced mesh per kind and shape. */
 export const groupKey = (kind: StreetPropKind, shape: number): string => `${kind}:${shape}`;
