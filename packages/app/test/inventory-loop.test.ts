@@ -112,7 +112,7 @@ describe("loot loop: kill, bag, take, save, load (plan E6)", () => {
     expect(session.inControl).toBe(false);
     expect(await session.saveAsync("slot-1")).toBe(false);
 
-    session.takeLoot("all");
+    session.intents.takeLoot("all");
     steps(session, 1);
     expect(session.sim.domain.wallet.eddies).toBe(wallet + eddies);
     expect(session.sim.domain.loot.containers.filter((c) => !c.key.startsWith("stash:"))).toEqual([]);
@@ -150,16 +150,16 @@ describe("loot loop: kill, bag, take, save, load (plan E6)", () => {
     const c = session.sim.domain.loot.containers[0]!;
     teleport(session, c.position.x, c.position.z - 1);
     steps(session, 1, frame({ interact: true }));
-    session.takeLoot(c.lines.length - 1);
+    session.intents.takeLoot(c.lines.length - 1);
     steps(session, 1);
     expect(ui.getState().loot?.lines).toHaveLength(c.lines.length - 1);
-    session.closeLoot();
-    session.closeLoot();
+    session.intents.closeLoot();
+    session.intents.closeLoot();
     steps(session, 1);
     expect(ui.getState().loot).toBeNull();
     expect(session.inControl).toBe(true);
     expect(session.sim.domain.loot.containers[0]?.lines).toHaveLength(c.lines.length - 1);
-    session.takeLoot("all");
+    session.intents.takeLoot("all");
     steps(session, 1);
     expect(session.sim.domain.loot.containers[0]?.lines).toHaveLength(c.lines.length - 1);
   });

@@ -64,37 +64,37 @@ describe("character menu in the app (plan §8.5 contract)", () => {
   it("hands the preview its rectangle and the look when the menu opens, and takes them away on close", async () => {
     const { session, ui, preview } = await setup();
     // The box measures itself before the screen reports that it opened (React effect order).
-    session.setPreviewViewport(RECT);
+    session.intents.setPreviewViewport(RECT);
     expect(preview.rect).toBeNull();
-    session.openCharacterScreen("inventory");
+    session.intents.openCharacterScreen("inventory");
     expect(preview.rect).toEqual(RECT);
     expect(preview.look?.weapons).toEqual({ primary: null, secondary: "pistol", melee: null, active: "secondary" });
     expect(preview.look?.garments).toEqual({ torso: { tint: "jacket-seki" }, legs: { tint: "cargo" } });
     expect(ui.getState()).toMatchObject({ characterTab: "inventory", prompt: null });
     expect(session.characterScreenOpen).toBe(true);
 
-    session.rotatePreview(0.4);
-    session.resetPreview();
+    session.intents.rotatePreview(0.4);
+    session.intents.resetPreview();
     expect(preview).toMatchObject({ yaw: 0.4, resets: 1 });
 
-    session.closeCharacterScreen();
+    session.intents.closeCharacterScreen();
     expect(preview.rect).toBeNull();
     expect(ui.getState().characterTab).toBeNull();
     expect(session.characterScreenOpen).toBe(false);
     // While closed a stray rectangle does not show the preview.
-    session.setPreviewViewport(RECT);
+    session.intents.setPreviewViewport(RECT);
     expect(preview.rect).toBeNull();
   });
 
   it("stops the clock while open; an equip applies at once and reaches the preview in the same frame", async () => {
     const { session, ui, preview } = await setup();
-    session.openCharacterScreen("inventory");
+    session.intents.openCharacterScreen("inventory");
     const tick = session.sim.tick;
     session.step({ ...EMPTY_INPUT, moveZ: 1 });
     expect(session.sim.tick).toBe(tick);
     expect(session.inControl).toBe(false);
 
-    session.equip("i4");
+    session.intents.equip("i4");
     expect(session.sim.tick).toBe(tick);
     expect(session.sim.domain.equipment.primary).toBe("i4");
     expect(ui.getState().equipment.primary).toBe("i4");
@@ -104,23 +104,23 @@ describe("character menu in the app (plan §8.5 contract)", () => {
     // Unchanged look: the same descriptor, nothing new for the preview.
     expect(preview.looks).toHaveLength(looks);
 
-    session.unequip("primary");
+    session.intents.unequip("primary");
     expect(preview.look?.weapons.primary).toBeNull();
-    session.useItem({ stack: "medkit" });
-    session.installMod("i4", "nope");
-    session.removeMod("i4", "sight");
-    session.dropItem({ uid: "i4" }, 1);
+    session.intents.useItem({ stack: "medkit" });
+    session.intents.installMod("i4", "nope");
+    session.intents.removeMod("i4", "sight");
+    session.intents.dropItem({ uid: "i4" }, 1);
     expect(session.sim.domain.inventory.items.some((i) => i.uid === "i4")).toBe(false);
     expect(session.sim.domain.loot.containers).toHaveLength(1);
 
-    session.closeCharacterScreen();
+    session.intents.closeCharacterScreen();
     session.step(EMPTY_INPUT);
     expect(session.sim.tick).toBe(tick + 1);
   });
 
   it("ignores menu commands while the menu is shut", async () => {
     const { session } = await setup();
-    session.equip("i4");
+    session.intents.equip("i4");
     session.step(EMPTY_INPUT);
     expect(session.sim.domain.equipment.primary).toBeNull();
   });
@@ -129,23 +129,23 @@ describe("character menu in the app (plan §8.5 contract)", () => {
     const { session, ui, preview } = await setup();
     ui.setState({ characterTab: "inventory" });
     (session as unknown as { c: { shop: { shopOpen: boolean } } }).c.shop.shopOpen = true;
-    session.openCharacterScreen("inventory");
+    session.intents.openCharacterScreen("inventory");
     expect(ui.getState().characterTab).toBeNull();
     expect(session.characterScreenOpen).toBe(false);
     (session as unknown as { c: { shop: { shopOpen: boolean } } }).c.shop.shopOpen = false;
 
-    session.openCharacterScreen("sheet");
-    session.openCharacterScreen("journal");
+    session.intents.openCharacterScreen("sheet");
+    session.intents.openCharacterScreen("journal");
     expect(ui.getState()).toMatchObject({ characterTab: "journal", journalOpen: true });
-    session.setPreviewViewport(RECT);
+    session.intents.setPreviewViewport(RECT);
     await session.loadAsync("t");
     expect(session.characterScreenOpen).toBe(false);
     expect(preview.rect).toBeNull();
 
-    session.openCharacterScreen("inventory");
+    session.intents.openCharacterScreen("inventory");
     session.sim.player()!.health = { current: 0, max: 100 };
-    session.closeCharacterScreen();
-    session.openCharacterScreen("inventory");
+    session.intents.closeCharacterScreen();
+    session.intents.openCharacterScreen("inventory");
     (session as unknown as { setScreen(s: string): void }).setScreen("dead");
     expect(ui.getState().characterTab).toBeNull();
     expect(session.characterScreenOpen).toBe(false);

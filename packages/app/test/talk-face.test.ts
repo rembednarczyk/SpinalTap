@@ -36,9 +36,9 @@ describe("the conversation partner's mouth moves (face expressions)", () => {
     const talks = () => effects.filter((e): e is Extract<EffectDescriptor, { kind: "talk" }> => e.kind === "talk");
     expect(talks()[0]).toMatchObject({ entityId: kaito.id });
     expect(talks()[0]!.seconds).toBeGreaterThan(0.5);
-    session.choose(0);
+    session.intents.choose(0);
     expect(talks().length).toBeGreaterThan(1);
-    session.closeDialogue();
+    session.intents.closeDialogue();
     expect(talks().at(-1)).toEqual({ kind: "talk", entityId: kaito.id, seconds: 0 });
   });
 });

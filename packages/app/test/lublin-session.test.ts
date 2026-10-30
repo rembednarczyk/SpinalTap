@@ -78,7 +78,7 @@ describe("Lublin in the session (ADR-0045)", () => {
     steps(session, 1, frame({ interact: true }));
     expect(ui.getState().metroMap?.from).toBe("targ");
     const eddies = session.sim.domain.wallet.eddies;
-    session.travelMetro("doki");
+    session.intents.travelMetro("doki");
     for (let i = 0; i < 60 * 30 && session.sim.district !== "doki"; i++) {
       session.step(EMPTY_INPUT);
       session.render(0);
@@ -99,10 +99,10 @@ describe("Lublin in the session (ADR-0045)", () => {
     steps(session, 1, frame({ interact: true }));
     const text = () => (ui.getState().dialogue?.lines ?? []).map((l) => l.text).join("\n");
     expect(text()).toContain("Pływam nocą");
-    const pick = (start: string) => session.choose(ui.getState().dialogue!.choices.find((c) => c.text.startsWith(start))!.index);
+    const pick = (start: string) => session.intents.choose(ui.getState().dialogue!.choices.find((c) => c.text.startsWith(start))!.index);
     pick("Kogo trzeba przeprowadzić");
     expect(text()).toContain("Mika");
-    session.closeDialogue();
+    session.intents.closeDialogue();
     steps(session, 2);
     expect(session.sim.domain.flags).toContain("met_genzo");
     expect(ui.getState().toasts.map((t) => `${t.title}`)).toContain("Nowy kontrakt: Eskorta");
@@ -120,9 +120,9 @@ describe("Lublin in the session (ADR-0045)", () => {
     steps(session, 1, frame({ interact: true }));
     const text = () => (ui.getState().dialogue?.lines ?? []).map((l) => l.text).join("\n");
     expect(text()).toContain("Jestem Hana");
-    session.choose(ui.getState().dialogue!.choices.find((c) => c.text.startsWith("Co trzeba odzyskać"))!.index);
+    session.intents.choose(ui.getState().dialogue!.choices.find((c) => c.text.startsWith("Co trzeba odzyskać"))!.index);
     expect(text()).toContain("skrzynkę z towarem");
-    session.closeDialogue();
+    session.intents.closeDialogue();
     steps(session, 2);
     expect(session.sim.domain.flags).toContain("met_hana");
     expect(ui.getState().toasts.map((t) => t.title)).toContain("Nowy kontrakt: Odzyskanie");

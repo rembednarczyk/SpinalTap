@@ -111,8 +111,8 @@ describe("M1 acceptance: contract → eddies → cyberware → stronger in comba
 
     // Kaito offers a contract; accept it through ink.
     talkToKaito(session);
-    session.choose(0);
-    session.closeDialogue();
+    session.intents.choose(0);
+    session.intents.closeDialogue();
     steps(session, 1);
     const contract = session.sim.domain.contracts.active!;
     expect(contract.status).toBe("active");
@@ -131,8 +131,8 @@ describe("M1 acceptance: contract → eddies → cyberware → stronger in comba
     steps(session, 1);
     expect(session.sim.domain.wallet.eddies).toBe(before + contract.reward + extra());
     expect(session.sim.domain.contracts.completed).toBe(1);
-    session.choose(2);
-    session.closeDialogue();
+    session.intents.choose(2);
+    session.intents.closeDialogue();
     steps(session, 1);
 
     // Mori's clinic: buy and install the grip stabiliser (+4 damage) and a medkit.
@@ -140,10 +140,10 @@ describe("M1 acceptance: contract → eddies → cyberware → stronger in comba
     teleport(session, mori.position.x + 1.5, mori.position.z, -Math.PI / 2);
     steps(session, 1, frame({ interact: true }));
     expect(ui.getState().shopOpen).toBe(true);
-    session.buyCyberware("steady_grip");
-    session.buyItem("medkit");
+    session.intents.buyCyberware("steady_grip");
+    session.intents.buyItem("medkit");
     steps(session, 1);
-    session.closeShop();
+    session.intents.closeShop();
     steps(session, 1);
     expect(session.sim.domain.character.cyberware.arms).toBe("steady_grip");
     expect(session.sim.domain.inventory.stacks.medkit).toBe(2);
@@ -152,8 +152,8 @@ describe("M1 acceptance: contract → eddies → cyberware → stronger in comba
 
     // Next contract: the same pistol now hits harder.
     talkToKaito(session);
-    session.choose(0);
-    session.closeDialogue();
+    session.intents.choose(0);
+    session.intents.closeDialogue();
     steps(session, 1);
     const next = session.sim.domain.contracts.active!;
     // The site may be off the street (under the Kanałowa footbridge): walk there so it streams in.
@@ -174,7 +174,7 @@ describe("M1 acceptance: contract → eddies → cyberware → stronger in comba
     steps(session, 1, frame({ interact: true }));
     expect(await session.saveAsync("slot-1")).toBe(false);
     expect(session.inControl).toBe(false);
-    session.closeShop();
+    session.intents.closeShop();
     expect(session.inControl).toBe(true);
   });
 });

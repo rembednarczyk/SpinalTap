@@ -84,11 +84,11 @@ const text = (ui: Ui) => (ui.getState().dialogue?.lines ?? []).map((l) => l.text
 const choose = (s: GameSession, ui: Ui, option: string) => {
   const index = ui.getState().dialogue?.choices.find((c) => c.text === option)?.index;
   if (index === undefined) throw new Error(`no option "${option}" in ${JSON.stringify(ui.getState().dialogue?.choices)}`);
-  s.choose(index);
+  s.intents.choose(index);
 };
 
 const close = (s: GameSession) => {
-  s.closeDialogue();
+  s.intents.closeDialogue();
   steps(s, 1);
 };
 
@@ -203,9 +203,9 @@ describe("M4 acceptance: market contracts → eddies → cyberware", () => {
     steps(session, 1, frame({ interact: true }));
     expect(ui.getState().shopOpen).toBe(true);
     before = eddies();
-    session.buyCyberware("subdermal_weave");
+    session.intents.buyCyberware("subdermal_weave");
     steps(session, 1);
-    session.closeShop();
+    session.intents.closeShop();
     steps(session, 1);
     expect(session.sim.domain.character.cyberware.skeleton).toBe("subdermal_weave");
     expect(eddies()).toBeLessThan(before);

@@ -305,6 +305,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (z G-006)
 - Ważność: S4 (skan) · Gdzie: koniec trolejbusu na Mełgiewskiej ok. (2456, 245) ukryty przez początek pasa aut.
 
+### G-039 Łańcuch słupków przechodzi przez podstawę latarni na Placu Łokietka
+- Status: zgłoszone (z G-032)
+- Ważność: S4 · Gdzie: `lamp-pastoral` (439,2; −96,1) w rzędzie słupków (439; −94,4)–(439; −96,8)
+- Przyczyna (przypuszczalna): słupki są w `LOOSE` (`props-solid.ts`), więc latarnia stawiana później ich nie widzi; łańcuch od G-032 łączy sąsiadów przez latarnię.
+- Test przyjęcia: kontrola skanu „łańcuch słupków przez mebel” daje 0.
+
 ### G-006 Skręty aut na skrzyżowaniach
 - Status: w naprawie (decyzja użytkownika przy G-024: skręty w boczne ulice; ADR-0055)
 - Ważność: S3 · Zasięg: szeroki (33 ślepe końce pasów na skrzyżowaniach i 6 z G-024) · Koszt: duży

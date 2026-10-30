@@ -1,39 +1,44 @@
 import {
   type BreachDaemonId,
-  type CyberwareId,
-  type CyberwareSlot,
   type DomainEvents,
   EMPTY_INPUT,
-  type EquipSlot,
   EventBus,
   type InputFrame,
-  type ItemRef,
   type MetroStationId,
-  type ModSlot,
-  type QuickhackSlotInput,
   type SaveSnapshot,
-  type ShopItemId,
   pendingScene,
 } from "@seki/core";
 import { NarrativeRuntime } from "@seki/narrative";
 import { RenderSync, SIM_HZ, Simulation, WORLD_SCENERY } from "@seki/sim";
-import { type CharacterTab, type PreviewRect, type RadioStationId, type Screen, type SettingsVm, type UiIntents, patchUi } from "@seki/ui";
+import { type Screen, type SessionIntents, type UiIntents, patchUi } from "@seki/ui";
 import { type Controllers, createControllers } from "./controllers/compose";
 import { isCalm } from "./controllers/hud-sync";
 import { pushToastTimed } from "./controllers/shared";
 import { buildCityMap } from "./city-map";
+import { type ControllerIntents, composeIntents, controllerIntents } from "./intents";
 import type { GameSessionDeps } from "./session-deps";
 
 export { RECALL_CALM_TICKS } from "./controllers/hud-sync";
 export type { GameSessionDeps, HintsHost, SettingsHost } from "./session-deps";
 
 /**
- * Application service: owns the running simulation and the loop (step, render, screen), and
- * composes the controllers that implement the UI intents (ADR-0031). Contains no browser or
- * Babylon code, so the whole M0 loop runs headless.
+ * The controllers' intents are also own properties of the session (copied in the constructor),
+ * so `main.tsx` can still hand the session itself to `GameUi`. New code passes `intents`.
  */
-export class GameSession implements UiIntents {
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging, @typescript-eslint/no-empty-object-type
+export interface GameSession extends ControllerIntents {}
+
+/**
+ * Application service: owns the running simulation and the loop (step, render, screen) and the
+ * session's own intents (new game, pause, saves). The other intents come from the controllers,
+ * composed in `intents.ts` (ADR-0031). Contains no browser or Babylon code, so the whole M0
+ * loop runs headless.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
+export class GameSession implements SessionIntents {
   readonly bus = new EventBus<DomainEvents>();
+  /** Everything the UI can ask: the session's own intents and each controller's part. */
+  readonly intents: UiIntents;
   readonly narrative: NarrativeRuntime;
   private readonly renderSync: RenderSync;
   private simulation: Simulation;
@@ -56,6 +61,9 @@ export class GameSession implements UiIntents {
       interrupt: () => this.interruptDialogue(),
       restore: (snapshot) => this.restore(snapshot),
     });
+    const parts = controllerIntents(this.c, () => this.simulation);
+    this.intents = composeIntents(this, parts);
+    Object.assign(this, parts);
     void this.refreshSlots();
   }
 
@@ -161,52 +169,10 @@ export class GameSession implements UiIntents {
     this.setScreen("playing");
   }
 
-  // ---- the other intents, delegated to their controllers ----
+  // ---- debug API (main.tsx and debug-api.ts) ----
 
-  choose(index: number): void { this.c.dialogue.choose(index); }
-  closeDialogue(): void { this.c.dialogue.closeDialogue(); }
-  buyCyberware(id: CyberwareId): void { this.c.shop.buyCyberware(id); }
-  buyItem(id: ShopItemId): void { this.c.shop.buyItem(id); }
-  sellItem(ref: ItemRef, qty: number): void { this.c.shop.sellItem(ref, qty); }
-  repairItem(uid: string, useParts: number): void { this.c.shop.repairItem(uid, useParts); }
-  upgradeBackpack(): void { this.c.shop.upgradeBackpack(); }
-  installCyberwareItem(uid: string): void { this.c.shop.installCyberwareItem(uid); }
-  removeCyberware(slot: CyberwareSlot): void { this.c.shop.removeCyberware(slot); }
-  closeShop(): void { this.c.shop.closeShop(); }
-  talkToShopkeeper(): void { this.c.shop.talkToShopkeeper(); }
-  takeLoot(line: number | "all"): void { this.c.loot.takeLoot(line); }
-  closeLoot(): void { this.c.loot.closeLoot(); }
-  openCharacterScreen(tab: CharacterTab): void { this.c.character.openCharacterScreen(tab); }
-  closeCharacterScreen(): void { this.c.character.closeCharacterScreen(); }
-  setPreviewViewport(rect: PreviewRect | null): void { this.c.character.setPreviewViewport(rect); }
-  rotatePreview(deltaYaw: number): void { this.c.character.rotatePreview(deltaYaw); }
-  resetPreview(): void { this.c.character.resetPreview(); }
-  equip(uid: string, slot?: EquipSlot): void { this.c.character.equip(uid, slot); }
-  unequip(slot: EquipSlot): void { this.c.character.unequip(slot); }
-  useItem(ref: ItemRef): void { this.c.character.useItem(ref); }
-  dropItem(ref: ItemRef, qty: number): void { this.c.character.dropItem(ref, qty); }
-  installMod(weaponUid: string, modUid: string): void { this.c.character.installMod(weaponUid, modUid); }
-  removeMod(weaponUid: string, slot: ModSlot): void { this.c.character.removeMod(weaponUid, slot); }
-  changeSettings(patch: Partial<SettingsVm>): void { this.c.settings.changeSettings(patch); }
-  setFieldOfView(degrees: number): void { this.c.settings.setFieldOfView(degrees); }
-  bindKey(action: string, code: string): void { this.c.settings.bindKey(action, code); }
-  resetControls(): void { this.c.settings.resetControls(); }
-  reload(): void { this.c.settings.reload(); }
-  openPhone(): void { this.c.phone.openPhone(); }
-  closePhone(): void { this.c.phone.closePhone(); }
-  readThread(from: string): void { this.c.phone.readThread(from); }
-  dismissDebrief(): void { this.c.hud.dismissDebrief(); }
-  trackQuest(questId: string | null): void { this.simulation.enqueue({ type: "track-quest", questId }); }
-  setScan(on: boolean): void { this.c.hack.setScan(on); }
-  pickQuickhack(slot: Exclude<QuickhackSlotInput, 0>): void { this.c.hack.pickQuickhack(slot); }
-  submitBreach(daemons: readonly BreachDaemonId[]): void { this.c.hack.submitBreach(daemons); }
   /** Shows the breach minigame for a terminal (debug API for now; the terminals of the simulation will open it). */
   openBreach(terminalKey: string, daemons?: readonly BreachDaemonId[]): void { this.c.hack.openBreach(terminalKey, daemons); }
-
-  travelMetro(to: MetroStationId): void { this.c.metro.travelMetro(to); }
-  closeMetro(): void { this.c.metro.closeMetro(); }
-  setRadioStation(id: RadioStationId | null): void { this.c.radio.setRadioStation(id); }
-  nextRadioStation(): void { this.c.radio.nextRadioStation(); }
   /** Shows the line map of a kiosk (debug API; the kiosks of the simulation open it by interaction). */
   openMetro(from: MetroStationId): void { this.c.metro.open(from, false); }
 
