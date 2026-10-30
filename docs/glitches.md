@@ -135,7 +135,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `parked-car-on-crossing` w skanie = 0 (żaden punkt obrysu na `crossing`).
 
 ### G-015 Auta zaparkowane tyłem do ruchu na ulicach jednokierunkowych
-- Status: weryfikacja
+- Status: weryfikacja PRZYJĘTE, w PR
 - Ważność: S4 · Zasięg: lokalny · Koszt: mały
 - Gdzie: 10 aut, m.in. Lubartowska (449,9, 40,7), Aleja Tysiąclecia (920,0, 329,9), Nowy Plac Targowy, Nadstawna
 - Dowód: sonda weryfikatora G-014 (kierunek auta wobec najbliższej osi ulicy; do potwierdzenia).
@@ -160,6 +160,15 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 (proponowana) · Zasięg: lokalny
 - Gdzie: Plac Litewski (20, 10), kadr z yaw 3,14
 - Dowód: zrzut naprawiacza G-013 (pionowy pas czarnych poziomych kresek na środku bruku; może decal albo odpływ).
+
+### G-019 Auto z krawężnika Cerkiewnej wysunięte na jezdnię Alei Tysiąclecia
+- Status: zgłoszone (do potwierdzenia przez łowcę)
+- Ważność: S3 (proponowana) · Zasięg: lokalny · Koszt: mały
+- Gdzie: (920,0, 329,9), Aleja Tysiąclecia przy Cerkiewnej
+- Dowód: weryfikator G-015, sonda: auto 2,5 m od osi Alei, pod kątem ok. 35° do niej; pozycja sprzed G-015.
+- Przyczyna (przypuszczalna): `kerbCars()` sprawdza tylko powierzchnię, nie odległość od osi innej jezdni; krawężnik Cerkiewnej przy wlocie leży na Alei.
+- Pakiet właściciela: packages/sim (`content/parked-cars.ts`)
+- Test przyjęcia: kontrola skanu „auto zaparkowane bliżej niż pół szerokości jezdni od osi innej drogi” daje 0.
 
 ### G-006 Skręty aut na skrzyżowaniach
 - Status: później (to funkcja, nie glitch: wymaga sieci pasów; ADR-0050 „Na później”)
