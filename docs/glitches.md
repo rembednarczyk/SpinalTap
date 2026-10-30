@@ -48,7 +48,8 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet: `tools/osm-import` (meble przy ścianach stawiane z `ON_BUILDINGS`)
 
 ### G-008 Budynki z OSM wchodzą w sceny targu i doków
-- Status: przyjęte
+- Status: weryfikacja PRZYJĘTE, w PR
+- Decyzja orkiestratora: budynek znika, gdy przecina pełny blok sceny albo ponad 25% jego powierzchni leży w prostokątach; Dworzec Autobusowy (2,6%, bez kolizji) zostaje. Znikają w1354195809 i „Hunek” w458298766.
 - Ważność: S3 · Zasięg: lokalny · Koszt: mały
 - Gdzie: w1354195809 przy dokach (2595, 391), wbity w ścianę doków i 1,2 m nad wyrównanym placem; „Hunek" w458298766 (817, 373,5) we wschodniej ścianie targu; w66264171 (789, 396) na placu targu
 - Dowód:
@@ -56,7 +57,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
   - zrzut `doki-east-wall.png`.
 - Przyczyna: `CLEARED_BUILDINGS` usuwa budynek tylko wtedy, gdy jego środek leży w prostokącie (`places.ts` i warstwa rysowania).
 - Pakiet: `packages/sim` (`lublin/places.ts`, `sites.ts`, scenografia)
-- Test przyjęcia: żaden budynek mapy nie przecina `CLEARED_BUILDINGS`; kontrola `building-in-set-piece` w skanie = 0.
+- Test przyjęcia: żaden budynek zostający w grze nie przecina pełnego bloku sceny ani nie leży w prostokątach w ponad 25%; kontrola `building-in-set-piece` w skanie = 0.
 
 ### G-009 Auta zaparkowane przy krawężniku stoją na trawniku i chodniku
 - Status: naprawione (#31)
