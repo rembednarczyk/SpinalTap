@@ -138,10 +138,27 @@ describe("the traffic in the simulation (ADR-0050)", () => {
     }
   });
 
+  /** Does another lane cross lane `route` between arc lengths `from` and `to` (within 4 m, at over 45 degrees)? */
+  const crossingAhead = (route: number, from: number, to: number): boolean => {
+    const lane = TRAFFIC_ROUTES[route]!;
+    for (let s = from; s <= to; s += 2) {
+      const p = lanePose(lane, s);
+      for (const [i, other] of TRAFFIC_ROUTES.entries()) {
+        if (i === route) continue;
+        for (let k = 0; k < other.length; k += 2) {
+          const q = lanePose(other, k);
+          if (Math.hypot(q.x - p.x, q.z - p.z) < 4 && Math.abs(q.tx * p.tx + q.tz * p.tz) < 0.7) return true;
+        }
+      }
+    }
+    return false;
+  };
+
   it("stops before the player standing in its lane, sounds the horn and goes round", () => {
     const sim = busySim();
     run(sim, 20);
-    const v = vehicles(sim).find((x) => x.view?.kind === "vehicle" && x.view.model !== "trolleybus" && x.vehicle.v > 5 && x.vehicle.s < TRAFFIC_ROUTES[x.vehicle.route]!.length - 80)!;
+    // One with no crossing between it and the player: there it would wait its turn instead.
+    const v = vehicles(sim).find((x) => x.view?.kind === "vehicle" && x.view.model !== "trolleybus" && x.vehicle.v > 5 && x.vehicle.s < TRAFFIC_ROUTES[x.vehicle.route]!.length - 80 && !crossingAhead(x.vehicle.route, x.vehicle.s, x.vehicle.s + 45))!;
     expect(v).toBeDefined();
     const lane = TRAFFIC_ROUTES[v.vehicle.route]!;
     const ahead = lanePose(lane, v.vehicle.s + 35);
@@ -158,6 +175,28 @@ describe("the traffic in the simulation (ADR-0050)", () => {
     // Then round them, off its lane.
     run(sim, 10 * 60);
     expect(Math.abs(v.vehicle.aside) > 1 || v.vehicle.s > startS + 40 || !sim.world.has(v)).toBe(true);
+  });
+
+  it("takes turns at crossings: two vehicles crossing each other's way never drive into each other", () => {
+    const sim = busySim();
+    let crossings = 0;
+    for (let t = 0; t < 20 * 60; t++) {
+      sim.step();
+      if (t % 6 !== 0) continue;
+      const vs = vehicles(sim);
+      for (let i = 0; i < vs.length; i++) {
+        for (let j = i + 1; j < vs.length; j++) {
+          const a = vs[i]!;
+          const b = vs[j]!;
+          if (Math.abs(Math.sin(a.yaw) * Math.sin(b.yaw) + Math.cos(a.yaw) * Math.cos(b.yaw)) > 0.7) continue;
+          const d = Math.hypot(a.position.x - b.position.x, a.position.z - b.position.z);
+          if (d < 12) crossings += 1;
+          expect(d, `${a.id} and ${b.id} at step ${t}`).toBeGreaterThan(a.vehicle.half.w + b.vehicle.half.w);
+        }
+      }
+    }
+    // The run does meet crossing traffic.
+    expect(crossings).toBeGreaterThan(0);
   });
 
   it("pushes the player out of its body: no going through a car", () => {
