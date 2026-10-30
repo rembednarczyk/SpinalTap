@@ -156,7 +156,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: budynek z `amenity=shelter` (lub `building=roof`/`shelter`) ma wysokość wiaty (≤ 3,5 m, jedna kondygnacja) albo staje się meblem `bus-shelter`.
 
 ### G-018 Pionowy pas czarnych kresek na bruku Placu Litewskiego
-- Status: zgłoszone (do potwierdzenia przez łowcę)
+- Status: przyjęte (potwierdzone zrzutem orkiestratora po G-013: `scratchpad/g018/litewski-back.png` i `litewski-down.png`). Kreski leżą dokładnie na pionowym szwie, gdzie wzór płyt bruku się przesuwa (ok. x 20, z 2–6 przed kamerą w (20, 10) z yaw 3,14); przypuszczalnie dwie nachodzące na siebie nawierzchnie placu w jednej płaszczyźnie (z-fighting) i kontur NPR na nieciągłości głębokości. Do ustalenia: obrysy `square` w `stare-miasto`/`krakowskie` w tym miejscu albo offset w `ground.ts`.
 - Ważność: S3 (proponowana) · Zasięg: lokalny
 - Gdzie: Plac Litewski (20, 10), kadr z yaw 3,14
 - Dowód: zrzut naprawiacza G-013 (pionowy pas czarnych poziomych kresek na środku bruku; może decal albo odpływ).
