@@ -17,6 +17,7 @@ const AREA: Readonly<Record<GroundSurface, MapAreaKind>> = {
   cobble: "walk",
   footway: "walk",
   steps: "walk",
+  crossing: "road",
   grass: "green",
   water: "water",
   basin: "water",

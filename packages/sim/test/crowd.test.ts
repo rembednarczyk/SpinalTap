@@ -41,6 +41,7 @@ const DOCKS = "nabrzeze-1-1";
 import type { Entity } from "../src";
 import { asideFor } from "../src/systems/ai/crowd-walk";
 import { furnitureClearance } from "../src/content/crowd";
+import { TRAFFIC_ROUTES } from "../src/content/traffic";
 import { byKey, input, run, teleportPlayer } from "./helpers";
 
 vi.setConfig({ testTimeout: 30_000 });
@@ -130,6 +131,20 @@ describe("routes and spots of the crowd", () => {
     const west = CROWD_LANES.filter((l) => l.chunk === "krakowskie-0-1");
     expect(west.length).toBeGreaterThan(0);
     for (const lane of west) expect(laneGeom(lane).length, lane.id).toBeGreaterThan(40);
+  });
+
+  it("keep the squares' and alleys' walkers off the carriageways the traffic drives", () => {
+    const segs = TRAFFIC_ROUTES.filter((r) => r.use !== "deliveries").flatMap((r) => r.points.slice(1).map((p, i) => [r.points[i]!, p] as const));
+    const fromLanes = (x: number, z: number) =>
+      Math.min(...segs.map(([[ax, az], [bx, bz]]) => {
+        const dx = bx - ax;
+        const dz = bz - az;
+        const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz || 1)));
+        return Math.hypot(ax + dx * t - x, az + dz * t - z);
+      }));
+    for (const lane of CROWD_LANES.filter((l) => l.id.includes("-square-"))) {
+      for (const [x, z] of lane.points) expect(fromLanes(x, z), `${lane.id} at ${x},${z}`).toBeGreaterThanOrEqual(2.5);
+    }
   });
 
   it("spots stand in their chunk, clear of the solids, the passers-by's spots and the named characters", () => {

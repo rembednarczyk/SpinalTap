@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type Line } from "../src/features.ts";
-import { coveredByWater, lineBands } from "../src/ground.ts";
+import { CROSSING_ALONG, coveredByWater, crossingBand, lineBands, markedCrossing } from "../src/ground.ts";
 
 const river: Line = { id: "w1", osmId: 1, tags: { waterway: "river" }, line: [{ x: 0, z: 0 }, { x: 50, z: 0 }, { x: 100, z: 0 }] };
 const bed = [{ x: -10, z: -20 }, { x: 110, z: -20 }, { x: 110, z: 20 }, { x: -10, z: 20 }];
@@ -19,5 +19,28 @@ describe("river bands", () => {
     const pond = [{ x: -10, z: -5 }, { x: 10, z: -5 }, { x: 10, z: 5 }, { x: -10, z: 5 }];
     expect(coveredByWater(river.line, [pond])).toBe(false);
     expect(lineBands(river, false, [pond])).toHaveLength(1);
+  });
+});
+
+describe("zebra crossings (ADR-0042)", () => {
+  const street: Line = { id: "w2", osmId: 2, tags: { highway: "residential" }, line: [{ x: -50, z: 0 }, { x: 50, z: 0 }] };
+
+  it("stripe a marked footway crossing instead of paving it across the road, and leave an unmarked one to the asphalt", () => {
+    const across = (crossing: string): Line => ({ id: "w3", osmId: 3, tags: { highway: "footway", footway: "crossing", crossing }, line: [{ x: 0, z: -4 }, { x: 0, z: 4 }] });
+    expect(lineBands(across("zebra"), false).map((b) => b.surface)).toEqual(["crossing"]);
+    expect(lineBands(across("unmarked"), false)).toEqual([]);
+  });
+
+  it("put a band across the carriageway at a crossing node, as wide as the road and 3 m along it", () => {
+    expect(markedCrossing({ highway: "crossing" })).toBe(true);
+    expect(markedCrossing({ highway: "crossing", crossing: "unmarked" })).toBe(false);
+    const band = crossingBand("n1", { x: 10, z: 0.2 }, [street])!;
+    expect(band.surface).toBe("crossing");
+    const xs = band.ring.map((p) => p.x);
+    const zs = band.ring.map((p) => p.z);
+    expect(Math.max(...xs) - Math.min(...xs)).toBeCloseTo(CROSSING_ALONG, 5);
+    expect(Math.max(...zs) - Math.min(...zs)).toBeCloseTo(6.5, 5);
+    // Off the carriageway (a crossing of a park path): no zebra.
+    expect(crossingBand("n2", { x: 10, z: 8 }, [street])).toBeNull();
   });
 });

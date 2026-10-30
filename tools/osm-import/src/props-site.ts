@@ -37,7 +37,7 @@ const flat = (f: readonly number[], dx = 0, dz = 0): Pt[] => {
 };
 
 // Nothing stands on a flight of steps, so they count with the rails.
-const surfaceOf = (s: GroundSurface): SiteSurface => (s === "road" ? "road" : WALK.has(s) ? "walk" : s === "grass" ? "green" : s === "water" || s === "basin" ? "water" : "rail");
+const surfaceOf = (s: GroundSurface): SiteSurface => (s === "road" || s === "crossing" ? "road" : WALK.has(s) ? "walk" : s === "grass" ? "green" : s === "water" || s === "basin" ? "water" : "rail");
 
 /** Point queries over a set of chunks. */
 export class Site {

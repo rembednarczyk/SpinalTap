@@ -27,11 +27,12 @@ export const SURFACE_LIFT: Readonly<Record<GroundSurface, number>> = {
   cobble: 0.08,
   footway: 0.09,
   steps: 0.05,
+  crossing: 0.085,
   sidewalk: 0.16,
   basin: 0.32,
 };
 
-const SURFACE_COLOR: Readonly<Record<Exclude<GroundSurface, "water" | "basin" | "steps">, Rgba>> = {
+const SURFACE_COLOR: Readonly<Record<Exclude<GroundSurface, "water" | "basin" | "steps" | "crossing">, Rgba>> = {
   road: hexColor("#3a3d45", DRESS_FLAG.wet),
   rail: hexColor("#4d4842", DRESS_FLAG.solid),
   square: hexColor("#6d6a66", DRESS_FLAG.solid),
@@ -150,7 +151,7 @@ export const drapeTriangles = (ring: readonly P2[], step = DRAPE_STEP): P2[][] =
 };
 
 /** Lays `ring` on the ground at `lift` above it: shared vertices per sub-triangle grid point. */
-const drape = (sink: MeshSink, ring: readonly P2[], h: HeightAt, lift: number, color: Rgba, uvOf: (p: P2) => readonly [number, number], meta: readonly [number, number]): void => {
+export const drape = (sink: MeshSink, ring: readonly P2[], h: HeightAt, lift: number, color: Rgba, uvOf: (p: P2) => readonly [number, number], meta: readonly [number, number]): void => {
   const seen = new Map<string, number>();
   const up = { x: 0, y: 1, z: 0 };
   const at = (p: P2): number => {
@@ -199,7 +200,7 @@ const kerbs = (sink: MeshSink, ring: readonly P2[], h: HeightAt, roadAt: RoadAt)
 };
 
 /** A ground surface (not water) draped on the terrain, with kerbs on sidewalks along roads. */
-export const planSurface = (sink: MeshSink, surface: Exclude<GroundSurface, "water" | "basin" | "steps">, ring: readonly P2[], h: HeightAt, roadAt: RoadAt | null): void => {
+export const planSurface = (sink: MeshSink, surface: Exclude<GroundSurface, "water" | "basin" | "steps" | "crossing">, ring: readonly P2[], h: HeightAt, roadAt: RoadAt | null): void => {
   const box = orientedBox(ring);
   const strip = (surface === "road" || surface === "rail") && box.halfLong > box.halfShort * 4 ? box.halfShort * 2 : 0;
   const code = SURFACE_CODE[surface];

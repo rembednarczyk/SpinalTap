@@ -7,7 +7,8 @@ import { makeBuilding } from "./buildings.ts";
 import { ALL_CHUNKS, type ChunkSpec } from "./config.ts";
 import { type HeightSource } from "./dtm.ts";
 import { type Area, type Line, extractFeatures } from "./features.ts";
-import { type Band, areaBand, chunkGround, lineBands, roadWidth } from "./ground.ts";
+import { type Band, areaBand, chunkGround, crossingBand, crossingWay, lineBands, markedCrossing, roadWidth } from "./ground.ts";
+import { geoToWorld } from "./project.ts";
 import { type Pt, type Rect, centroid, inRect, rectsOverlap, ringBounds } from "./geometry.ts";
 import { allPois, chunkPois, chunkStreets } from "./labels.ts";
 import { type ChunkOut } from "./model.ts";
@@ -139,6 +140,14 @@ const generateChunk = (spec: ChunkSpec, src: HeightSource, buildings: readonly A
   return { chunk, stats };
 };
 
+/** Distance from p to the segment a-b. */
+const segmentDistance = (p: Pt, a: Pt, b: Pt): number => {
+  const dx = b.x - a.x;
+  const dz = b.z - a.z;
+  const k = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+  return Math.hypot(a.x + dx * k - p.x, a.z + dz * k - p.z);
+};
+
 export const generate = (data: OsmData, src: HeightSource, chunks: readonly ChunkSpec[] = ALL_CHUNKS): Generated => {
   const { areas, lines } = extractFeatures(data);
   const buildings = buildingAreas(areas, data);
@@ -153,6 +162,18 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   for (const l of lines) {
     if (!near(l.line)) continue;
     for (const b of lineBands(l, l.tags.highway ? mapped(l) : false, water)) bands.push({ ...b, box: ringBounds(b.ring) });
+  }
+  // Zebras at the crossing nodes of the carriageways, in node order.
+  const roads = lines.filter((l) => l.tags.highway !== undefined && near(l.line));
+  // A crossing node a mapped crossing way runs through is striped by that way already.
+  const crossingWays = roads.filter((l) => crossingWay(l.tags));
+  const onCrossingWay = (p: Pt) => crossingWays.some((l) => l.line.some((q, i) => i + 1 < l.line.length && segmentDistance(p, q, l.line[i + 1]!) < 1.5));
+  for (const n of [...data.nodes.values()].sort((a, b) => a.id - b.id)) {
+    if (!n.tags || !markedCrossing(n.tags)) continue;
+    const at = geoToWorld(n.lat, n.lon);
+    if (!near([at]) || onCrossingWay(at)) continue;
+    const b = crossingBand(`n${n.id}`, at, roads);
+    if (b) bands.push({ ...b, box: ringBounds(b.ring) });
   }
   const pois = allPois(data);
   const results = chunks.map((c) => generateChunk(c, src, buildings, bands, lines, pois));
