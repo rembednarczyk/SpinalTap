@@ -78,6 +78,17 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       const hit = [-0.5, 0, 0.5].some((t) => furnitureClearance(c.x + Math.sin(c.yaw) * length * t, c.z + Math.cos(c.yaw) * length * t) < width / 2);
       return hit ? [{ at: near(c.x, c.z), what: c.model }] : [];
     }),
+  /** A parked car with a corner or its middle off the carriageway and the squares (on grass, a pavement). */
+  "parked-car-off-road": () =>
+    PARKED_CARS.flatMap((c) => {
+      const { width, length } = VEHICLE_SIZE[c.model];
+      const fx = Math.sin(c.yaw);
+      const fz = Math.cos(c.yaw);
+      const at = (a: number, b: number) => surfacesAt(c.x + fx * length * b + fz * width * a, c.z + fz * length * b - fx * width * a);
+      const spots = [at(0, 0), at(-0.5, -0.5), at(0.5, -0.5), at(0.5, 0.5), at(-0.5, 0.5)];
+      const off = spots.filter((s) => !s.some((k) => k === "road" || k === "crossing" || k === "cobble" || k === "square")).length;
+      return off > 0 ? [{ at: near(c.x, c.z), what: `${c.model} ${off}/5 off` }] : [];
+    }),
   /** A game block standing on the ground (not an awning or a deck) that floats or sinks. */
   "prop-off-ground": () =>
     GAME_PROPS.flatMap((p) => {
