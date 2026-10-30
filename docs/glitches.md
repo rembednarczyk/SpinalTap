@@ -245,7 +245,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: auto po resynchronizacji w łuku nie przekracza `TURN_SPEED`; test zawrotki bez złagodzenia przechodzi z G-020.
 
 ### G-029 Kliknięcie „Nowa gra” w `models.spec.ts` wisi ponad 60 s na CI
-- Status: zgłoszone (po ponowieniu PR #37 zielony; naprawiacz G-001 wskazuje ten sam mechanizm: pełne klatki rysowane w trakcie ładowania budują kolejkę GPU SwiftShadera; testy TPP i smoke save/load padają przy obciążeniu)
+- Status: weryfikacja (naprawa: `GpuPacer` w engine, najwyżej 2 klatki w kolejce GPU; ekran tytułowy 20 → 2 klatki przed płotem, `models.spec` 15–33 s; kryterium < 10 s do potwierdzenia na CI)
 - Ważność: S1 (proponowana: czerwone CI, niestabilne) · Zasięg: każdy PR · Koszt: nieznany
 - Gdzie: `e2e/models.spec.ts:16`, shard E2E 1/3
 - Dowód: PR #37 (CI 41089511069) pada w obu próbach, PR #33 (CI 41069178665) przeszedł przy drugiej. Playwright: element widoczny i stabilny, „performing click action” bez końca, więc wątek strony zablokowany.
@@ -260,27 +260,27 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (animacja postaci) / packages/app (`?reference`)
 
 ### G-031 Testy TPP w `npr-perf` i smoke save/load przekraczają limit przy obciążeniu
-- Status: zgłoszone (powiązane z G-029)
+- Status: zgłoszone (po G-029 testy TPP i quicksave przeszły przy obciążeniu 25→6, bez porównania A/B; `captureFrame` i podgląd postaci dalej rysują poza pacerem)
 - Ważność: S2 (proponowana: niestabilne e2e) · Koszt: nieznany
 - Dowód: naprawiacz G-001: przy obciążeniu 5–11 za każdym razem pada inny test (Krakowskie, Rynek, targ, Nabrzeże, quicksave/quickload); przypuszczalnie ten sam mechanizm co G-001 w zwykłym trybie (pełne klatki w trakcie ładowania i kroków budują kolejkę GPU SwiftShadera). `captureFrame` rysuje dodatkową klatkę mimo `preserveDrawingBuffer` (1,3–5,8 s na przechwycenie).
 - Pakiet właściciela: packages/app / e2e
 
 ### G-032 Słupki przy ulicach stoją chaotycznie: łańcuchy celują w różne strony i nie łączą sąsiadów; słupki za małe
-- Status: przyjęte (zgłoszenie użytkownika: słupki to charakterystyczny element Lublina)
+- Status: w naprawie (3. runda: latarnia jako ogniwo rzędu i wolne wyloty przejść dla pieszych, decyzje użytkownika)
 - Ważność: S3 · Zasięg: szeroki (Plac Litewski, Krakowskie Przedmieście, deptak, Plac Łokietka; ok. 53 słupki z OSM) · Koszt: średni
 - Dowód: model `bollard()` (`engine/.../mapcity/prop-street.ts:36`) ma stałe odcinki łańcucha ±1 m w lokalnej osi X, a obrót słupka nie wynika z rzędu, w którym stoi; odstępy w rzędach 1,9–2,8 m (`docs/world/lublin-props.todo.json`). Słupek 0,26 × 0,95 m.
 - Pakiet właściciela: tools/osm-import (rzędy i obrót), packages/engine (model, łańcuch), packages/sim (`furniture.ts`, bryła)
 - Test przyjęcia: słupki w rzędzie mają obrót wzdłuż rzędu; łańcuch łączy dokładnie sąsiednie słupki rzędu (koniec łańcucha przy sąsiedzie, bez wolnych końców w powietrzu); słupek większy (wymiary z dokumentacji/zdjęć Lublina), bryła w sim zgodna z modelem; migawka NPR obejrzana i świadomie zaktualizowana, budżety bez podnoszenia.
 
 ### G-033 Postać, która przechodzi w inne miejsce według flag, „umiera”: renderer gra upadek
-- Status: przyjęte (zgłoszenie użytkownika: Kaito „umiera” po pierwszej rozmowie)
+- Status: w naprawie (razem z G-034)
 - Ważność: S2 · Zasięg: każda postać warunkowa (Kaito klinika → bar, cele wariantów kontraktów) · Koszt: mały
 - Dowód: po `met_fixer` `Streaming.syncPresence` usuwa Kaito z kliniki; `RenderSync` (`presentation/render-sync.ts:101`) zgłasza `despawn(id, "removed")`, bo usunięcie nie jest w `streamedOut`, a `CharacterViews.despawn` z `fall` gra animację śmierci.
 - Pakiet właściciela: packages/sim (`world/streaming.ts`, `presentation/render-sync.ts`)
 - Test przyjęcia: test sesji: po ustawieniu flagi postać warunkowa znika z `despawn(..., "unloaded")`; zabity NPC dalej dostaje `"removed"`.
 
 ### G-034 Kaito od początku w Neon Koi (decyzja użytkownika)
-- Status: przyjęte (propozycja użytkownika: Kaito ma być u siebie od razu; zmienia start z ADR-0038)
+- Status: w naprawie (razem z G-033)
 - Ważność: S3 · Zasięg: prolog · Koszt: średni
 - Zmiana: jedna postać Kaito w barze bez warunku `met_fixer`; prolog w `m0.ink` i cel HUD prowadzą z kliniki do Neon Koi; pierwsza rozmowa w barze.
 - Pakiet właściciela: packages/sim (`content/district-m0.ts`), packages/narrative (`ink/m0.ink`), packages/app (`objective.ts`)
@@ -298,7 +298,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Gdzie: ok. (756, 345) · Dowód: naprawiacz G-006: półokręgi o różnym promieniu sięgają tego samego wierzchołka; 24 zdarzenia kolizji na seedach 1–2 już na starej bazie (rodzina G-025/G-026, `turnRound`/`uTurn`).
 
 ### G-037 Pas Andersy kończy się na pasach Mełgiewskiej: auta czekają na siebie
-- Status: zgłoszone (z G-006, do ustalenia, czy wprowadzone przez skręty)
+- Status: w naprawie razem z G-006 (koniec Andersy staje 5 m przed pasami Mełgiewskiej; blokada istniała na bazie)
 - Ważność: S3 · Gdzie: ok. (2401, 282) · Dowód: kąt 31°, pojazdy obu tras biorą się nawzajem za „auto przed sobą”, resynchronizacja co ok. 40 m.
 
 ### G-038 `lane-dead-end` nie sprawdza użycia początku, który „spotyka” koniec
@@ -306,7 +306,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 (skan) · Gdzie: koniec trolejbusu na Mełgiewskiej ok. (2456, 245) ukryty przez początek pasa aut.
 
 ### G-039 Łańcuch słupków przechodzi przez podstawę latarni na Placu Łokietka
-- Status: zgłoszone (z G-032)
+- Status: w naprawie razem z G-032 (rząd przerwany przed latarnią, w 3. rundzie latarnia jako ogniwo)
 - Ważność: S4 · Gdzie: `lamp-pastoral` (439,2; −96,1) w rzędzie słupków (439; −94,4)–(439; −96,8)
 - Przyczyna (przypuszczalna): słupki są w `LOOSE` (`props-solid.ts`), więc latarnia stawiana później ich nie widzi; łańcuch od G-032 łączy sąsiadów przez latarnię.
 - Test przyjęcia: kontrola skanu „łańcuch słupków przez mebel” daje 0.
