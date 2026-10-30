@@ -1,4 +1,4 @@
-import { type AbstractMesh, Matrix, MeshBuilder } from "../babylon";
+import { type AbstractMesh, Matrix, MeshBuilder, type Vector3 } from "../babylon";
 import type { ActivityId, AppearanceDescriptor, CameraMode, DespawnReason, EffectDescriptor, EntityId, HackTargetKind, RenderPort, Transform, ViewDescriptor } from "@seki/core";
 import type { ChunkDef, DistrictId } from "@seki/sim";
 import { WORLD_CHUNKS } from "@seki/sim";
@@ -18,6 +18,7 @@ import { CrowdViews } from "./crowd-views";
 import { WorldDressing } from "./dressing";
 import { FarCity } from "./far-city";
 import { MapCity, type MapCityStats, isMapView } from "./mapcity/map-city";
+import { sightBlocked } from "./mapcity/sight";
 import { MetroRide, type MetroRideView, type RideCast } from "./metro-ride";
 import { VehicleViews } from "./vehicle-views";
 import type { CharacterModelManifest } from "./model-library";
@@ -231,6 +232,12 @@ export class BabylonRenderer implements RenderPort {
     return this.cityKit.meshCount;
   }
 
+  /** Line of sight through the map city: its buildings and its terrain hide what is behind. */
+  private readonly mapSight = (from: Vector3, to: Vector3): boolean => {
+    const city = this.mapCity;
+    return city !== null && sightBlocked((x, y, z) => city.roofOver(x, y, z) || y < (city.heightAt(x, z) ?? -Infinity) - 0.3, from, to);
+  };
+
   /** The map city, made on first use so scenes without map data stay exactly as they were. */
   private city(): MapCity {
     if (!this.mapCity) {
@@ -258,8 +265,10 @@ export class BabylonRenderer implements RenderPort {
 
   spawn(id: EntityId, view: ViewDescriptor, t: Transform): void {
     if (this.characters.has(id) || this.props.has(id) || this.crowd.has(id) || this.vehicles.has(id) || this.mapCity?.has(id)) this.despawn(id);
-    if (isMapView(view)) this.city().spawn(id, view, t.position);
-    else if (isCharacter(view)) this.characters.spawn(id, view, t);
+    if (isMapView(view)) {
+      this.city().spawn(id, view, t.position);
+      if (view.kind === "terrain") this.props.settleGround();
+    } else if (isCharacter(view)) this.characters.spawn(id, view, t);
     else if (view.kind === "crowd") this.crowd.spawn(id, view, t);
     else if (view.kind === "vehicle") this.vehicles.spawn(id, view, t);
     else this.props.spawn(id, view, t);
@@ -361,6 +370,7 @@ export class BabylonRenderer implements RenderPort {
     this.rig.update(target, dt);
     this.metro.afterCamera();
     this.mapCity?.update(dt, this.rig.camera.position, this.stage.options.reference);
+    if (this.mapCity) this.props.updateGlow(this.rig.camera.position, this.mapSight);
     // Shadow follows what the camera looks at: the player, the metro car or the fixed reference view.
     const focus = target && !this.metro.active ? target.position : this.rig.camera.position;
     const moved = this.shadow.update(focus);
