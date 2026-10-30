@@ -1,5 +1,5 @@
 import type { Vec3 } from "../math/vec3";
-import type { BuildingUse, GroundPoint, GroundSurface, StreetPropItem, TerrainGrid, TerrainOpenSides } from "../world/city-geo";
+import type { BuildingUse, GroundPoint, GroundSurface, RoadMarkingKind, StreetPropItem, TerrainGrid, TerrainOpenSides } from "../world/city-geo";
 import type { GarmentLook, GarmentSlot, Rarity, WeaponLook, WeaponSlot } from "../items/types";
 
 export type EntityId = number;
@@ -154,6 +154,12 @@ export type ViewDescriptor =
    * drawn instanced per kind. Positions are relative to the entity's position.
    */
   | { readonly kind: "street-props"; readonly items: readonly StreetPropItem[] }
+  /**
+   * One line of a carriageway's road markings (ADR-0052): a centre or lane line, an edge, a stop
+   * line, a cycle or bus lane. Points are world x and z relative to the entity's position, along
+   * the line; the renderer paints it on the road in its own dashes and colours.
+   */
+  | { readonly kind: "road-marking"; readonly marking: RoadMarkingKind; readonly line: readonly GroundPoint[] }
   | {
       readonly kind: "neon";
       readonly size: Vec3;

@@ -9,6 +9,7 @@ import { type HeightSource } from "./dtm.ts";
 import { type Area, type Line, extractFeatures } from "./features.ts";
 import { type Band, areaBand, chunkGround, crossingBand, crossingWay, cutSidewalk, lineBands, markedCrossing, roadWidth } from "./ground.ts";
 import { geoToWorld } from "./project.ts";
+import { type Marking, chunkMarkings, cutLine, roadMarkings, stopLines } from "./markings.ts";
 import { type Pt, type Rect, centroid, inRect, pointInRing, rectsOverlap, ringBounds } from "./geometry.ts";
 import { allPois, chunkPois, chunkStreets } from "./labels.ts";
 import { type ChunkOut } from "./model.ts";
@@ -89,7 +90,7 @@ const sidewalkIndex = (lines: readonly Line[]) => {
 
 const grow = (r: Rect, m: number): Rect => ({ minX: r.minX - m, minZ: r.minZ - m, maxX: r.maxX + m, maxZ: r.maxZ + m });
 
-const generateChunk = (spec: ChunkSpec, src: HeightSource, buildings: readonly Area[], bands: readonly (Band & { box: Rect })[], lines: readonly Line[], pois: ReturnType<typeof allPois>) => {
+const generateChunk = (spec: ChunkSpec, src: HeightSource, buildings: readonly Area[], bands: readonly (Band & { box: Rect })[], lines: readonly Line[], pois: ReturnType<typeof allPois>, markings: readonly Marking[]) => {
   const altitude = LUBLIN_ANCHOR.altitude;
   const t = chunkTerrain(sampleField(src, spec.rect, 12), spec.rect, altitude);
   const shopPoints = pois.filter((p) => p.kind === "shop" || p.kind === "food" || p.kind === "bar" || p.kind === "service").map((p) => p.at);
@@ -122,6 +123,7 @@ const generateChunk = (spec: ChunkSpec, src: HeightSource, buildings: readonly A
     buildings: out,
     ground,
     streets: chunkStreets(lines, spec.rect),
+    markings: chunkMarkings(markings, spec.rect),
     pois: chunkPois(pois, spec.rect),
   };
   const stats: ChunkStats = {
@@ -183,7 +185,18 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
     const pieces = cutSidewalk(b, (p) => others.some((c) => p.x >= c.box.minX && p.x <= c.box.maxX && p.z >= c.box.minZ && p.z <= c.box.maxZ && pointInRing(p, c.ring)));
     bands.splice(bands.indexOf(b), 1, ...pieces.map((x) => ({ ...x, box: ringBounds(x.ring) })));
   }
+  // Road markings (ADR-0052): cut where they run into another carriageway or a zebra.
+  const zebras = bands.filter((b) => b.surface === "crossing");
+  const onOther = (p: Pt, source: string) => carriageways.some((c) => c.source !== source && p.x >= c.box.minX && p.x <= c.box.maxX && p.z >= c.box.minZ && p.z <= c.box.maxZ && pointInRing(p, c.ring));
+  const onZebra = (p: Pt) => zebras.some((c) => p.x >= c.box.minX && p.x <= c.box.maxX && p.z >= c.box.minZ && p.z <= c.box.maxZ && pointInRing(p, c.ring));
+  const markings: Marking[] = [];
+  for (const l of roads) for (const m of roadMarkings(l)) for (const piece of cutLine(m.line, (p) => onOther(p, m.source) || onZebra(p))) markings.push({ ...m, line: piece });
+  for (const n of [...data.nodes.values()].sort((a, b) => a.id - b.id)) {
+    if (n.tags?.highway !== "traffic_signals") continue;
+    const at = geoToWorld(n.lat, n.lon);
+    if (near([at])) markings.push(...stopLines(`n${n.id}`, at, roads, onOther));
+  }
   const pois = allPois(data);
-  const results = chunks.map((c) => generateChunk(c, src, buildings, bands, lines, pois));
+  const results = chunks.map((c) => generateChunk(c, src, buildings, bands, lines, pois, markings));
   return { chunks: results.map((r) => r.chunk), stats: results.map((r) => r.stats) };
 };

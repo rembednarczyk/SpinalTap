@@ -5,7 +5,7 @@ import { PODZAMCZE_CHUNKS } from "./podzamcze.generated";
 import { decodePropTable, propsViewOf } from "./props";
 import { LUBLIN_PROP_TABLE } from "./props.generated";
 import { STARE_MIASTO_CHUNKS } from "./stare-miasto.generated";
-import type { FlatPoints, LublinBuildingData, LublinChunkData, LublinGroundData } from "./types";
+import type { FlatPoints, LublinBuildingData, LublinChunkData, LublinGroundData, LublinMarkingData } from "./types";
 import { verticalOf } from "./vertical";
 
 export type * from "./types";
@@ -56,6 +56,8 @@ export const buildingView = (b: LublinBuildingData, district?: LublinChunkData["
 
 /** The `ground` view of a surface, positioned at the world origin (its points are world points). */
 export const groundView = (g: LublinGroundData): ViewDescriptor => ({ kind: "ground", surface: g.surface, outline: toPoints(g.outline) });
+/** A line of road markings (ADR-0052), positioned at the world origin. */
+export const markingView = (m: LublinMarkingData): ViewDescriptor => ({ kind: "road-marking", marking: m.kind, line: toPoints(m.line) });
 
 type Bounds = LublinChunkData["bounds"];
 const EDGE = 0.05;

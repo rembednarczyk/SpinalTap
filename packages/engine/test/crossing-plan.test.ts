@@ -17,11 +17,20 @@ describe("zebra crossings (ADR-0042)", () => {
     planCrossing(sink, band, () => 2);
     const xs: number[] = [];
     const zs: number[] = [];
+    const glow: number[] = [];
     for (let i = 0; i < sink.vertexCount; i++) {
+      expect(sink.positions[i * 3 + 1]).toBeCloseTo(2 + SURFACE_LIFT.crossing, 5);
+      // Self-lit (alpha 0): the cyan edges; the rest is the white paint.
+      if (sink.colors[i * 4 + 3]! < 0.25) {
+        glow.push(sink.positions[i * 3]!);
+        continue;
+      }
       xs.push(sink.positions[i * 3]!);
       zs.push(sink.positions[i * 3 + 2]!);
-      expect(sink.positions[i * 3 + 1]).toBeCloseTo(2 + SURFACE_LIFT.crossing, 5);
     }
+    // Lublin 2077: a glowing line just outside each edge of the zebra.
+    expect(Math.min(...glow)).toBeLessThan(-1.5);
+    expect(Math.max(...glow)).toBeGreaterThan(1.5);
     // Along the road the stripes span the band; across it they stop short of the kerbs.
     expect(Math.min(...xs)).toBeCloseTo(-1.5, 5);
     expect(Math.max(...xs)).toBeCloseTo(1.5, 5);

@@ -1,4 +1,4 @@
-import { type EntityId, type GroundSurface, type TerrainGrid, type TerrainOpenSides, type Vec3, type ViewDescriptor, terrainHeightAt } from "@seki/core";
+import { type EntityId, type GroundSurface, type RoadMarkingKind, type TerrainGrid, type TerrainOpenSides, type Vec3, type ViewDescriptor, terrainHeightAt } from "@seki/core";
 import type { BaseTexture, Mesh, Scene } from "../../babylon";
 import type { LightingRig } from "../../npr/lighting";
 import type { MoonShadow } from "../../npr/moon-shadow";
@@ -16,6 +16,7 @@ import { BinIndex, cellBounds, cellKey, cellsOf, grow } from "./map-index";
 import { type Box2, type P2, boundsOf, centroid, cleanRing, distanceToBox, pointInRing } from "./polygon";
 import { planBuildingSigns } from "./sign-plan";
 import { planCrossing } from "./crossing-plan";
+import { planMarking } from "./marking-plan";
 import { type AcrossAt, SPAN_MAX, type Span, findSpans, planFarCanyon, planNearCanyon } from "./canyon-plan";
 import { planCanyonSigns } from "./canyon-signs";
 import { planFarVertical, planNearVertical } from "./vertical-plan";
@@ -25,9 +26,9 @@ import { StreetProps, type StreetPropsStats } from "./street-props";
 import { MapSkyline } from "./skyline";
 
 /** Views drawn by the map city (ADR-0042, ADR-0044). */
-export type MapView = Extract<ViewDescriptor, { kind: "building" | "terrain" | "ground" | "street-props" }>;
+export type MapView = Extract<ViewDescriptor, { kind: "building" | "terrain" | "ground" | "street-props" | "road-marking" }>;
 
-export const isMapView = (v: ViewDescriptor): v is MapView => v.kind === "building" || v.kind === "terrain" || v.kind === "ground" || v.kind === "street-props";
+export const isMapView = (v: ViewDescriptor): v is MapView => v.kind === "building" || v.kind === "terrain" || v.kind === "ground" || v.kind === "street-props" || v.kind === "road-marking";
 
 /** Distances (m, from the camera to a cell) per quality: detail, any building, ground, signs. */
 export interface MapLod {
@@ -57,6 +58,8 @@ interface BuildingEntry {
 
 interface GroundEntry {
   readonly surface: GroundSurface;
+  /** A line of road markings (ADR-0052): `ring` is its open line, `surface` the road it lies on. */
+  readonly marking?: RoadMarkingKind;
   readonly ring: readonly P2[];
   readonly y: number;
   readonly bounds: Box2;
@@ -174,6 +177,16 @@ export class MapCity {
       const bounds = { minX: g.originX, maxX: g.originX + (g.cols - 1) * g.cell, minZ: g.originZ, maxZ: g.originZ + (g.rows - 1) * g.cell };
       this.terrains.set(id, { grid: g, open: view.open, bounds, mesh: null });
       this.terrainsDirty = true;
+      this.touch(bounds);
+      return;
+    }
+    if (view.kind === "road-marking") {
+      const line = view.line.map((p) => ({ x: p.x + at.x, z: p.z + at.z }));
+      if (line.length < 2) return;
+      const bounds = boundsOf(line);
+      const cell = cellKey((bounds.minX + bounds.maxX) / 2, (bounds.minZ + bounds.maxZ) / 2);
+      this.grounds.set(id, { surface: "road", marking: view.marking, ring: line, y: at.y, bounds, cell });
+      this.cellOf(cell).grounds.add(id);
       this.touch(bounds);
       return;
     }
@@ -491,7 +504,8 @@ export class MapCity {
       const g = this.grounds.get(id);
       if (!g) continue;
       const h = (x: number, z: number) => this.heightAt(x, z) ?? g.y;
-      if (g.surface === "water") planWater(water, g.ring, h);
+      if (g.marking) planMarking(ground, g.marking, g.ring, h);
+      else if (g.surface === "water") planWater(water, g.ring, h);
       else if (g.surface === "basin") planBasin(water, ground, g.ring, h);
       else if (g.surface === "steps") planSteps(ground, g.ring, h);
       else if (g.surface === "crossing") planCrossing(ground, g.ring, h);

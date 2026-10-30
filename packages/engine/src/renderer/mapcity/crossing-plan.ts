@@ -4,6 +4,9 @@ import { type P2, obbLocal, orientedBox } from "./polygon";
 
 /** Worn white road paint, wet like the asphalt under it. */
 const PAINT = hexColor("#c9ccc6", DRESS_FLAG.wet);
+/** Lublin 2077: a self-lit cyan line along both edges of the zebra, kerb to kerb (ADR-0052). */
+const GLOW = hexColor("#2fc6e0", DRESS_FLAG.lit);
+const GLOW_WIDTH = 0.07;
 
 /** Width of a zebra's stripe and of the gap between two, metres (Polish P-10). */
 export const ZEBRA_STRIPE = 0.5;
@@ -13,7 +16,8 @@ const KERB_GAP = 0.25;
 /**
  * A zebra crossing (ADR-0042) on its band across the carriageway: white stripes along the road,
  * `ZEBRA_STRIPE` wide with as wide a gap, repeated from kerb to kerb. The band's long side runs
- * across the road (the importer makes it as long as the road is wide and 3 m along it).
+ * across the road (the importer makes it as long as the road is wide and 3 m along it). Its two
+ * edges glow cyan.
  */
 export const planCrossing = (sink: MeshSink, ring: readonly P2[], h: HeightAt): void => {
   if (ring.length < 3) return;
@@ -32,5 +36,10 @@ export const planCrossing = (sink: MeshSink, ring: readonly P2[], h: HeightAt): 
       const l = obbLocal(box, p);
       return [l.u, l.v];
     }, [SURFACE_CODE.road, 0]);
+  }
+  for (const side of [-1, 1]) {
+    const v0 = side * (along + 0.12);
+    const edge = [at(-across, v0 - GLOW_WIDTH / 2), at(across, v0 - GLOW_WIDTH / 2), at(across, v0 + GLOW_WIDTH / 2), at(-across, v0 + GLOW_WIDTH / 2)];
+    drape(sink, edge, h, SURFACE_LIFT.crossing, GLOW, (p) => [p.x, p.z], [SURFACE_CODE.road, 0]);
   }
 };

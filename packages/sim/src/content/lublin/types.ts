@@ -1,4 +1,4 @@
-import type { BuildingUse, GroundSurface, StreetPropKind, TerrainGrid } from "@seki/core";
+import type { BuildingUse, GroundSurface, RoadMarkingKind, StreetPropKind, TerrainGrid } from "@seki/core";
 
 /**
  * Lublin's centre from map data (ADR-0042), as `tools/osm-import` writes it into
@@ -53,6 +53,12 @@ export interface LublinStreetData {
   readonly line: FlatPoints;
 }
 
+export interface LublinMarkingData {
+  readonly kind: RoadMarkingKind;
+  /** World polyline along the line. */
+  readonly line: FlatPoints;
+}
+
 export type LublinPoiKind = "shop" | "food" | "bar" | "stop" | "hotel" | "sight" | "culture" | "church" | "service" | "office";
 
 export interface LublinPoiData {
@@ -74,6 +80,8 @@ export interface LublinChunkData {
   readonly buildings: readonly LublinBuildingData[];
   readonly ground: readonly LublinGroundData[];
   readonly streets: readonly LublinStreetData[];
+  /** Road markings (ADR-0052), cut to the chunk: world polylines. */
+  readonly markings: readonly LublinMarkingData[];
   readonly pois: readonly LublinPoiData[];
 }
 

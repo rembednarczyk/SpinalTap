@@ -207,7 +207,8 @@ const kerbs = (sink: MeshSink, ring: readonly P2[], h: HeightAt, roadAt: RoadAt)
 /** A ground surface (not water) draped on the terrain, with kerbs on sidewalks along roads. */
 export const planSurface = (sink: MeshSink, surface: Exclude<GroundSurface, "water" | "basin" | "steps" | "crossing">, ring: readonly P2[], h: HeightAt, roadAt: RoadAt | null): void => {
   const box = orientedBox(ring);
-  const strip = (surface === "road" || surface === "rail") && box.halfLong > box.halfShort * 4 ? box.halfShort * 2 : 0;
+  // Rails get their sleepers along the strip; roads get their markings from the map (ADR-0052).
+  const strip = surface === "rail" && box.halfLong > box.halfShort * 4 ? box.halfShort * 2 : 0;
   const code = SURFACE_CODE[surface];
   drape(sink, ring, h, SURFACE_LIFT[surface], SURFACE_COLOR[surface], (p) => {
     const l = obbLocal(box, p);

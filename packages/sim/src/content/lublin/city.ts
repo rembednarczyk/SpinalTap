@@ -1,7 +1,7 @@
 import type { BuildingPassage, Doorway, GroundPoint, Vec3, ViewDescriptor } from "@seki/core";
 import type { PrismDef } from "../../world/prism";
 import type { StaticProp } from "../builders";
-import { buildingView, groundView, toPoints } from "./index";
+import { buildingView, groundView, markingView, toPoints } from "./index";
 import { type GroundRect } from "./shape";
 import { type BuildingCut, CLEARED, CLEARED_BUILDINGS, type PassageSite, ROOM_STOREY, type RoomSite } from "./sites";
 import { SHAPED_TERRAIN, groundY } from "./terrain";
@@ -258,12 +258,13 @@ export const chunkBuildings = (c: LublinChunkData, rooms: readonly RoomCut[], pa
 
 const ORIGIN: Vec3 = { x: 0, y: 0, z: 0 };
 
-/** What the renderer draws of a chunk for good: its shaped terrain, its surfaces and its buildings. */
+/** What the renderer draws of a chunk for good: its shaped terrain, its surfaces, its road markings and its buildings. */
 export const chunkScenery = (c: LublinChunkData, buildings: readonly StaticProp[]): SceneryItem[] => {
   const terrain = SHAPED_TERRAIN.get(c.id) ?? c.terrain;
   return [
     { chunk: c.id, view: { kind: "terrain", grid: terrain }, at: ORIGIN },
     ...c.ground.filter((g) => !clearedSurface(toPoints(g.outline))).map((g): SceneryItem => ({ chunk: c.id, view: groundView(g), at: ORIGIN })),
+    ...c.markings.map((m): SceneryItem => ({ chunk: c.id, view: markingView(m), at: ORIGIN })),
     ...buildings.map((p): SceneryItem => ({ chunk: c.id, view: p.view, at: p.center })),
   ];
 };
