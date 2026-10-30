@@ -132,6 +132,42 @@ const weave = (loop: readonly Pt[]): Pt[] => {
 const nearBlock = (x: number, z: number): boolean =>
   furnitureClearance(x, z) < BLOCK_CLEARANCE || BLOCKS.some((b) => Math.hypot(Math.max(b.minX - x, 0, x - b.maxX), Math.max(b.minZ - z, 0, z - b.maxZ)) < BLOCK_CLEARANCE);
 
+/** Shortest out-and-back walk worth a lane, metres. */
+const MIN_RUN = 25;
+
+const clearAt = (x: number, z: number): boolean => !inBuilding(x, z) && nearestWall(x, z).d >= LANE_CLEARANCE && !nearBlock(x, z);
+
+/**
+ * The longest stretch of a loop clear of walls and blocks, walked there and back (an alley of
+ * Plac Litewski's park runs by a tenement's wall at one end): null when no stretch is
+ * `MIN_RUN` metres long. Sampled every metre, so the stretch is too.
+ */
+const clearRun = (loop: readonly Pt[]): Pt[] | null => {
+  const dense: Pt[] = [];
+  for (let i = 0; i < loop.length; i++) {
+    const [ax, az] = loop[i] as Pt;
+    const [bx, bz] = loop[(i + 1) % loop.length] as Pt;
+    const n = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az)));
+    for (let k = 0; k < n; k++) dense.push([Math.round((ax + ((bx - ax) * k) / n) * 100) / 100, Math.round((az + ((bz - az) * k) / n) * 100) / 100]);
+  }
+  const ok = dense.map(([x, z]) => clearAt(x, z));
+  const start = ok.indexOf(false);
+  if (start < 0) return null;
+  let best: Pt[] = [];
+  let run: Pt[] = [];
+  // From the first blocked sample once round, so a stretch across the loop's seam stays whole.
+  for (let k = 1; k <= dense.length; k++) {
+    const i = (start + k) % dense.length;
+    if (ok[i]) run.push(dense[i] as Pt);
+    else {
+      if (run.length > best.length) best = run;
+      run = [];
+    }
+  }
+  if (best.length < MIN_RUN) return null;
+  return [...best, ...best.slice(1, -1).reverse()];
+};
+
 /** Is every metre along the loop clear of the map's walls and the game's blocks? */
 const clearLoop = (loop: readonly Pt[]): boolean => {
   for (let i = 0; i < loop.length; i++) {
@@ -236,7 +272,9 @@ const squareLanes = (): CrowdLane[] =>
     for (const ring of alleys) {
       if (out.length >= SQUARE_LANES_PER_CHUNK) break;
       const loop = weave(ring);
-      if (clearLoop(loop) && dry(loop)) out.push({ id: `${c.id}-square-${out.length}`, chunk: c.id, points: loop });
+      // An alley that touches a wall or a block somewhere is still walked where it is clear.
+      const walk = clearLoop(loop) ? loop : clearRun(loop);
+      if (walk && dry(walk)) out.push({ id: `${c.id}-square-${out.length}`, chunk: c.id, points: walk });
     }
     for (const ring of squares) {
       const cx = ring.reduce((s, p) => s + p[0], 0) / ring.length;

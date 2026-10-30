@@ -125,6 +125,13 @@ describe("routes and spots of the crowd", () => {
     }
   });
 
+  it("walk the west of Plac Litewski too, along its park's alleys where they are clear", () => {
+    // krakowskie-0-1: the square's west half and its park, with no street lane of its own.
+    const west = CROWD_LANES.filter((l) => l.chunk === "krakowskie-0-1");
+    expect(west.length).toBeGreaterThan(0);
+    for (const lane of west) expect(laneGeom(lane).length, lane.id).toBeGreaterThan(40);
+  });
+
   it("spots stand in their chunk, clear of the solids, the passers-by's spots and the named characters", () => {
     const actors = WORLD_CHUNKS.flatMap((c) => c.actors.map((a) => a.spawn.position)).filter((p) => Math.abs(p.y) < 1);
     for (const s of CROWD_SPOTS) {
