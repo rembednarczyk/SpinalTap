@@ -1,13 +1,13 @@
 import { AMMO_CATALOG, type DomainState, type LootContainer, type LootLine, STACKABLE_CATALOG, itemSummary } from "@seki/core";
-import type { LootLineVm, LootVm } from "@seki/ui";
+import type { LootLineVm, LootVm, Translate } from "@seki/ui";
 
-/** Display name of one loot line. */
-export const lootLabel = (l: LootLine): string => {
+/** Catalog name of one loot line; for ammo the round's name, which the UI puts in a sentence. */
+const lootName = (l: LootLine): string => {
   switch (l.kind) {
     case "eddies":
       return "€$";
     case "ammo":
-      return `Amunicja ${AMMO_CATALOG[l.ammo].name}`;
+      return AMMO_CATALOG[l.ammo].name;
     case "stack":
       return STACKABLE_CATALOG[l.item].name;
     case "item":
@@ -15,18 +15,21 @@ export const lootLabel = (l: LootLine): string => {
   }
 };
 
-const lineVm = (l: LootLine, index: number): LootLineVm => ({ index, kind: l.kind, label: lootLabel(l), qty: l.qty, rarity: l.kind === "item" ? l.rarity : null });
+/** Display name of one loot line in the player's language ("9mm ammo"). */
+export const lootLabel = (t: Translate, l: LootLine): string => (l.kind === "ammo" ? t("loot.ammo", { name: lootName(l) }) : lootName(l));
 
-/** The panel view of a bag; "Torba gangera" for an enemy's, "Twoja torba" for a drop. */
+const lineVm = (l: LootLine, index: number): LootLineVm => ({ index, kind: l.kind, label: lootName(l), qty: l.qty, rarity: l.kind === "item" ? l.rarity : null });
+
+/** The panel view of a bag: the player's own drop or an enemy's, which the panel names. */
 export const lootVm = (c: LootContainer): LootVm => ({
   key: c.key,
-  title: c.key.startsWith("drop:") ? "Twoja torba" : "Torba gangera",
+  owner: c.key.startsWith("drop:") ? "own" : "ganger",
   lines: c.lines.map(lineVm),
 });
 
 /** Short summary of what was taken, for the toast. */
-export const lootSummary = (lines: readonly LootLine[]): string =>
-  lines.map((l) => (l.kind === "eddies" ? `${l.qty} €$` : l.qty > 1 ? `${lootLabel(l)} × ${l.qty}` : lootLabel(l))).join(", ");
+export const lootSummary = (t: Translate, lines: readonly LootLine[]): string =>
+  lines.map((l) => (l.kind === "eddies" ? `${l.qty} €$` : l.qty > 1 ? `${lootLabel(t, l)} × ${l.qty}` : lootLabel(t, l))).join(", ");
 
 /** Tracks the open bag's view; returns the same object while the container is unchanged. */
 export const createLootTracker = () => {

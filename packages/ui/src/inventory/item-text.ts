@@ -5,53 +5,35 @@ import {
   type InstanceDefId,
   type ItemCategory,
   type ItemDefId,
+  type Locale,
   MOD_CATALOG,
   type ModSlot,
+  type Rarity,
   STACKABLE_CATALOG,
   type StatKey,
   WEAPON_CATALOG,
-  type WeaponClass,
   isGarmentId,
   isModId,
   isStackableId,
   isWeaponId,
   itemSummary,
 } from "@seki/core";
+import { formatNumber } from "../i18n/number";
+import type { Translate } from "../i18n/t";
 
-/** Polish labels and number formats of the character menu. Numbers come from core. */
+/** Labels and number formats of the character menu, in the player's language. Numbers come from core. */
 
-export const SLOT_LABEL: Readonly<Record<EquipSlot, string>> = {
-  primary: "Główna",
-  secondary: "Boczna",
-  melee: "Wręcz",
-  head: "Głowa",
-  torso: "Tors",
-  legs: "Nogi",
-};
+export const slotLabel = (t: Translate, slot: EquipSlot): string => t(`inventory.slot.${slot}`);
 
-/** "slot główny" and the like, for "(slot główny pusty)". */
-export const SLOT_NOUN: Readonly<Record<EquipSlot, string>> = {
-  primary: "slot główny",
-  secondary: "slot boczny",
-  melee: "slot do walki wręcz",
-  head: "slot głowy",
-  torso: "slot torsu",
-  legs: "slot nóg",
-};
+/** "primary slot" and the like, for "(primary slot empty)". */
+export const slotNoun = (t: Translate, slot: EquipSlot): string => t(`inventory.slotNoun.${slot}`);
 
-export const MOD_SLOT_LABEL: Readonly<Record<ModSlot, string>> = { muzzle: "Lufa", sight: "Celownik", magazine: "Magazynek" };
+export const modSlotLabel = (t: Translate, slot: ModSlot): string => t(`inventory.modSlot.${slot}`);
 
-const CLASS_LABEL: Readonly<Record<WeaponClass, string>> = {
-  pistol: "Pistolet",
-  revolver: "Rewolwer",
-  smg: "Pistolet maszynowy",
-  shotgun: "Strzelba",
-  rifle: "Karabinek",
-  baton: "Pałka",
-  blade: "Ostrze",
-};
+/** Rarity as the panels write it. */
+export const rarityLabel = (t: Translate, rarity: Rarity): string => t(`inventory.rarity.${rarity}`);
 
-/** Short names that fit a 52 px cell. */
+/** Short names that fit a 52 px cell; item names, so they wait for stage 3 of ADR-0056 with the catalog. */
 const SHORT: Readonly<Partial<Record<ItemDefId, string>>> = {
   unity9: "U-9",
   oni44: ".44",
@@ -90,23 +72,17 @@ export const description = (def: ItemDefId): string => {
 };
 
 /** Line under the name: what kind of thing it is. */
-export const kindLabel = (def: ItemDefId): string => {
-  if (isStackableId(def)) return STACKABLE_CATALOG[def].category === "consumable" ? "Do użycia" : "Drobiazg na sprzedaż";
-  if (isWeaponId(def)) return `${CLASS_LABEL[WEAPON_CATALOG[def].class]} · ${SLOT_LABEL[WEAPON_CATALOG[def].slot].toLowerCase()}`;
-  if (isGarmentId(def)) return `Odzież · ${SLOT_LABEL[GARMENT_CATALOG[def].slot].toLowerCase()}`;
-  if (isModId(def)) return `Modyfikacja broni · ${MOD_SLOT_LABEL[MOD_CATALOG[def].slot].toLowerCase()}`;
-  return "Wszczep do montażu w klinice";
+export const kindLabel = (t: Translate, def: ItemDefId): string => {
+  if (isStackableId(def)) return t(STACKABLE_CATALOG[def].category === "consumable" ? "inventory.kind.consumable" : "inventory.kind.junk");
+  if (isWeaponId(def)) return `${t(`inventory.class.${WEAPON_CATALOG[def].class}`)} · ${slotLabel(t, WEAPON_CATALOG[def].slot).toLowerCase()}`;
+  if (isGarmentId(def)) return t("inventory.kind.garment", { slot: slotLabel(t, GARMENT_CATALOG[def].slot).toLowerCase() });
+  if (isModId(def)) return t("inventory.kind.mod", { slot: modSlotLabel(t, MOD_CATALOG[def].slot).toLowerCase() });
+  return t("inventory.kind.cyberware");
 };
 
 export type GridFilter = "all" | "weapon" | "garment" | "consumable" | "other";
 
-export const FILTERS: readonly (readonly [GridFilter, string])[] = [
-  ["all", "Wszystko"],
-  ["weapon", "Broń"],
-  ["garment", "Odzież"],
-  ["consumable", "Zużywalne"],
-  ["other", "Inne"],
-];
+export const FILTERS: readonly GridFilter[] = ["all", "weapon", "garment", "consumable", "other"];
 
 export const categoryOf = (def: ItemDefId): ItemCategory => itemSummary(def).category;
 
@@ -120,47 +96,34 @@ export const matchesFilter = (def: ItemDefId, filter: GridFilter): boolean => {
 /** Sort order of categories in the grid. */
 export const CATEGORY_ORDER: readonly ItemCategory[] = ["weapon", "garment", "mod", "consumable", "cyberware", "ammo", "junk"];
 
-export const STAT_LABEL: Readonly<Record<StatKey, string>> = {
-  damage: "Obrażenia",
-  rate: "Na minutę",
-  magazine: "Magazynek",
-  reload: "Przeładowanie",
-  spread: "Rozrzut",
-  range: "Zasięg",
-  "armor-head": "Pancerz głowy",
-  "armor-torso": "Pancerz torsu",
-  "armor-arm": "Pancerz rąk",
-  "armor-leg": "Pancerz nóg",
-  speed: "Szybkość",
-  heal: "Leczy",
-};
+export const statLabel = (t: Translate, key: StatKey): string => t(`inventory.stat.${key}`);
 
-const num = (n: number, digits = 1): string => n.toLocaleString("pl-PL", { maximumFractionDigits: digits, minimumFractionDigits: 0 });
+const num = (locale: Locale, n: number, digits = 1): string => formatNumber(locale, n, { maximumFractionDigits: digits, minimumFractionDigits: 0 });
 
-/** A stat with its unit, e.g. "1,4 s", "25 m", "3,2°". */
-export const formatStat = (key: StatKey, value: number): string => {
+/** A stat with its unit, e.g. "1,4 s", "25 m", "3,2°" in Polish, "1.4 s" in English. */
+export const formatStat = (locale: Locale, key: StatKey, value: number): string => {
   switch (key) {
     case "rate":
     case "magazine":
-      return num(Math.round(value), 0);
+      return num(locale, Math.round(value), 0);
     case "reload":
-      return `${num(value)} s`;
+      return `${num(locale, value)} s`;
     case "spread":
-      return `${num(value)}°`;
+      return `${num(locale, value)}°`;
     case "range":
-      return `${num(value, 0)} m`;
+      return `${num(locale, value, 0)} m`;
     case "speed":
-      return `${value > 0 ? "+" : ""}${num(value)} m/s`;
+      return `${value > 0 ? "+" : ""}${num(locale, value)} m/s`;
     case "heal":
-      return `${num(value, 0)} HP`;
+      return `${num(locale, value, 0)} HP`;
     default:
-      return num(value);
+      return num(locale, value);
   }
 };
 
 /** Difference with its sign, in the stat's own format. */
-export const formatDelta = (key: StatKey, delta: number): string => {
-  const text = formatStat(key, Math.abs(delta)).replace(/^\+/, "");
+export const formatDelta = (locale: Locale, key: StatKey, delta: number): string => {
+  const text = formatStat(locale, key, Math.abs(delta)).replace(/^\+/, "");
   return `${delta > 0 ? "+" : "-"}${text}`;
 };
 

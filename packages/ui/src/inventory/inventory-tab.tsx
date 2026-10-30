@@ -1,5 +1,7 @@
 import { type Equipment, type InventoryState, bagCells, findItem, usedCells } from "@seki/core";
 import { useMemo, useState } from "react";
+import { useLocale } from "../i18n/number";
+import { useT } from "../i18n/use-t";
 import type { CharacterIntents } from "../intents";
 import type { CharacterStatsVm } from "../store/ui-store";
 import { useCharacterIntents, useUi } from "../use-ui";
@@ -7,7 +9,7 @@ import { type ActionContext, ConfirmSheet, QuantityPicker } from "./actions";
 import { CharacterPreview } from "./character-preview";
 import { EquipmentSlots } from "./equipment-slots";
 import { ItemDetail } from "./item-detail";
-import { type GridSort, GridFilters, ItemGrid, NEXT_SORT, SORT_LABEL, arrangeCells, refKey } from "./item-grid";
+import { type GridSort, GridFilters, ItemGrid, NEXT_SORT, arrangeCells, refKey } from "./item-grid";
 import type { GridFilter } from "./item-text";
 import { ModOverlay } from "./mod-overlay";
 import { StatsPanel } from "./stats-panel";
@@ -21,9 +23,10 @@ interface PanelProps {
 
 /** Left: the worn pieces around the 3D preview, the weapon slots and the stats. */
 const PaperDoll = ({ inventory, equipment, sel, stats }: PanelProps & { readonly stats: CharacterStatsVm | null }) => {
+  const t = useT();
   const selectSlot = (uid: string) => sel.select({ uid }, null);
   return (
-    <section className="inv__left" aria-label="Postać">
+    <section className="inv__left" aria-label={t("inventory.section.character")}>
       <div className="inv__stage">
         <EquipmentSlots kind="garments" inventory={inventory} equipment={equipment} selectedUid={sel.selectedUid} onSelect={selectSlot} />
         <CharacterPreview />
@@ -36,12 +39,14 @@ const PaperDoll = ({ inventory, equipment, sel, stats }: PanelProps & { readonly
 
 /** Middle: the bag with its filters, the grid, the cell count and the sort button. */
 const BagPanel = ({ inventory, equipment, sel }: PanelProps) => {
+  const t = useT();
+  const locale = useLocale();
   const [filter, setFilter] = useState<GridFilter>("all");
   const [sort, setSort] = useState<GridSort>("category");
-  const cells = useMemo(() => arrangeCells(bagCells(inventory, equipment), filter, sort), [inventory, equipment, filter, sort]);
+  const cells = useMemo(() => arrangeCells(bagCells(inventory, equipment), filter, sort, locale), [inventory, equipment, filter, sort, locale]);
   const used = usedCells(inventory, equipment);
   return (
-    <section className="inv__mid" aria-label="Torba">
+    <section className="inv__mid" aria-label={t("inventory.section.bag")}>
       <GridFilters value={filter} onChange={setFilter} />
       <ItemGrid
         cells={cells}
@@ -55,7 +60,7 @@ const BagPanel = ({ inventory, equipment, sel }: PanelProps) => {
           {used} / {inventory.capacity}
         </span>
         <button type="button" className="inv__sort" onClick={() => setSort(NEXT_SORT[sort])}>
-          Sortuj: {SORT_LABEL[sort]}
+          {t("inventory.sort", { order: t(`inventory.sort.${sort}`) })}
         </button>
       </footer>
     </section>
@@ -63,14 +68,17 @@ const BagPanel = ({ inventory, equipment, sel }: PanelProps) => {
 };
 
 /** Right: details of the selection with the comparison and the actions. */
-const DetailPanel = ({ inventory, equipment, sel }: PanelProps) => (
-  <section className="inv__right" aria-label="Szczegóły">
-    <button type="button" className="inv__back" aria-label="Zamknij szczegóły" onClick={sel.closeDetail}>
-      ✕
-    </button>
-    <ItemDetail selected={sel.ref} inventory={inventory} equipment={equipment} actions={sel.actions} onAction={(id) => sel.act(id)} />
-  </section>
-);
+const DetailPanel = ({ inventory, equipment, sel }: PanelProps) => {
+  const t = useT();
+  return (
+    <section className="inv__right" aria-label={t("inventory.section.details")}>
+      <button type="button" className="inv__back" aria-label={t("inventory.closeDetails")} onClick={sel.closeDetail}>
+        ✕
+      </button>
+      <ItemDetail selected={sel.ref} inventory={inventory} equipment={equipment} actions={sel.actions} onAction={(id) => sel.act(id)} />
+    </section>
+  );
+};
 
 /** The sheet over the tab: mods of a weapon, how many to drop, or a rare drop to confirm. */
 const InventorySheets = ({ inventory, equipment, sel, intents }: PanelProps & { readonly intents: CharacterIntents }) => {

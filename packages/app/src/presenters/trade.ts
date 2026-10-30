@@ -1,61 +1,50 @@
-import { CYBERWARE_CATALOG, type PurchaseFailure, type ShopId, itemSummary, shopItemName } from "@seki/core";
+import { CYBERWARE_CATALOG, itemSummary, shopItemName } from "@seki/core";
+import { type Translate, type UiStore, formatNumber, translator } from "@seki/ui";
 import type { Presenter } from "./context";
 
-/** Who shakes their head when a trade does not happen. */
-const SHOPKEEPER: Readonly<Record<ShopId, string>> = { clinic: "Mori", oyaji: "Oyaji", yatai: "Fumiko" };
-
-const FAILURE_TEXT: Readonly<Record<PurchaseFailure, string>> = {
-  "insufficient-funds": "Za mało eddies.",
-  "already-installed": "To już masz.",
-  "inventory-full": "Nie uniesiesz więcej.",
-  refused: "Nie obsługuję takich jak ty.",
-  closed: "Zamknięte. Wróć za dnia.",
-  "not-found": "Nie masz tego przy sobie.",
-  "in-use": "Najpierw to zdejmij.",
-  "not-sold-here": "Tego tu nie ma.",
-  "not-bought-here": "Tego nie skupuję.",
-  worthless: "Nikt za to nie zapłaci.",
-  "not-damaged": "Tu nie ma czego naprawiać.",
-  "max-capacity": "Większego plecaka nie mam.",
-  "empty-slot": "Tam nic nie siedzi.",
-  "over-capacity": "Twoje ciało więcej nie uciągnie. Za mało pojemności cyberware.",
-};
+/** The toasts' texts in the language of the settings at the moment of the event (ADR-0056). */
+export const uiText = (ui: UiStore): Translate => translator(ui.getState().settings.locale);
 
 /** Trade and money: purchases, sales, repairs, implants, transfers and refusals at the counter. */
-export const presentTrade: Presenter = ({ bus, audio, toast }) => [
+export const presentTrade: Presenter = ({ bus, audio, toast, ui }) => [
   bus.on("EddiesChanged", (e) => {
-    if (e.delta > 0 && e.source === undefined) toast("money", `+${e.delta.toLocaleString("pl-PL")} €$`, "Przelew");
+    if (e.delta > 0 && e.source === undefined) toast("money", `+${formatNumber(ui.getState().settings.locale, e.delta)} €$`, uiText(ui)("shop.toast.transfer"));
   }),
   bus.on("CyberwareInstalled", (e) => {
+    const t = uiText(ui);
     const def = CYBERWARE_CATALOG[e.cyberwareId];
     const old = e.replaced ? CYBERWARE_CATALOG[e.replaced].name : null;
-    const text = old === null ? def.description : e.stowed ? `${old} wraca do plecaka` : `Usunięto: ${old}`;
-    toast("cyberware", `Wszczepiono: ${def.name}`, text);
+    const text = old === null ? def.description : t(e.stowed ? "shop.toast.stowed" : "shop.toast.replaced", { name: old });
+    toast("cyberware", t("shop.toast.implanted", { name: def.name }), text);
     audio.play("purchase");
   }),
   bus.on("CyberwareRemoved", (e) => {
-    toast("cyberware", `Wymontowano: ${CYBERWARE_CATALOG[e.cyberwareId].name}`, "Implant w plecaku");
+    const t = uiText(ui);
+    toast("cyberware", t("shop.toast.removed", { name: CYBERWARE_CATALOG[e.cyberwareId].name }), t("shop.toast.inBackpack"));
     audio.play("ui-select");
   }),
   bus.on("ItemBought", (e) => {
     const qty = (e.qty ?? 1) > 1 ? ` × ${e.qty}` : "";
-    toast("system", `Kupiono: ${shopItemName(e.itemId)}${qty}`, `-${e.price} €$`);
+    toast("system", `${uiText(ui)("shop.toast.bought", { name: shopItemName(e.itemId) })}${qty}`, `-${e.price} €$`);
     audio.play("purchase");
   }),
   bus.on("ItemSold", (e) => {
-    toast("money", `Sprzedano: ${itemSummary(e.defId).name}${e.qty > 1 ? ` × ${e.qty}` : ""}`, `+${e.price} €$`);
+    toast("money", `${uiText(ui)("shop.toast.sold", { name: itemSummary(e.defId).name })}${e.qty > 1 ? ` × ${e.qty}` : ""}`, `+${e.price} €$`);
     audio.play("sell");
   }),
   bus.on("ItemRepaired", (e) => {
-    toast("system", `Naprawiono: ${itemSummary(e.defId).name}`, e.parts > 0 ? `-${e.price} €$, części: ${e.parts}` : `-${e.price} €$`);
+    const t = uiText(ui);
+    toast("system", t("shop.toast.repaired", { name: itemSummary(e.defId).name }), e.parts > 0 ? t("shop.toast.repairParts", { price: e.price, parts: e.parts }) : `-${e.price} €$`);
     audio.play("repair");
   }),
   bus.on("CapacityUpgraded", (e) => {
-    toast("system", "Większy plecak", `Miejsc: ${e.capacity}`);
+    const t = uiText(ui);
+    toast("system", t("shop.backpack.name"), t("shop.toast.slots", { count: e.capacity }));
     audio.play("purchase");
   }),
   bus.on("PurchaseFailed", (e) => {
-    toast("system", `${SHOPKEEPER[e.shopId ?? "clinic"]} kręci głową`, FAILURE_TEXT[e.reason]);
+    const t = uiText(ui);
+    toast("system", t(`shop.refused.${e.shopId ?? "clinic"}`), t(`shop.failure.${e.reason}`));
     audio.play("denied");
   }),
 ];

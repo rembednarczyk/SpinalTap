@@ -4,7 +4,7 @@ import {
   type InventoryState,
   type ItemRef,
   MOD_CATALOG,
-  RARITY,
+  type ModSlot,
   type StatLine,
   compareItems,
   findItem,
@@ -14,17 +14,20 @@ import {
   stackCount,
   weaponStatsOf,
 } from "@seki/core";
+import { useLocale } from "../i18n/number";
+import { useT } from "../i18n/use-t";
 import { ActionBar, type ActionId, type ItemAction } from "./actions";
-import { MOD_SLOT_LABEL, SLOT_NOUN, STAT_LABEL, description, formatDelta, formatStat, itemName, kindLabel } from "./item-text";
+import { description, formatDelta, formatStat, itemName, kindLabel, modSlotLabel, rarityLabel, slotNoun, statLabel } from "./item-text";
 
 /** Change against the piece in the slot: arrow and colour, always with the number too. */
 export const StatDelta = ({ line }: { line: StatLine }) => {
+  const locale = useLocale();
   if (line.current === null) return <span className="stat-delta stat-delta--none">-</span>;
   if (line.trend === null) return <span className="stat-delta stat-delta--same">=</span>;
   const delta = line.value - line.current;
   return (
     <span className={`stat-delta stat-delta--${line.trend}`} data-testid={`delta-${line.key}`}>
-      {line.trend === "better" ? "▲" : "▼"} {formatDelta(line.key, delta)}
+      {line.trend === "better" ? "▲" : "▼"} {formatDelta(locale, line.key, delta)}
     </span>
   );
 };
@@ -43,18 +46,20 @@ export const ItemDetail = ({
   actions: readonly ItemAction[];
   onAction: (id: ActionId) => void;
 }) => {
+  const t = useT();
+  const locale = useLocale();
   const compare = selected ? compareItems(inventory, equipment, selected) : null;
   if (!selected || !compare) {
     return (
       <div className="inv__detail inv__detail--empty" data-testid="item-detail">
-        <p className="inv__hint">Wybierz przedmiot z torby albo slot po lewej.</p>
+        <p className="inv__hint">{t("inventory.detail.hint")}</p>
       </div>
     );
   }
   const item = "uid" in selected ? findItem(inventory, selected.uid) : undefined;
   const def = item ? item.def : "stack" in selected ? selected.stack : null;
   if (def === null) return null;
-  const tier = item ? RARITY[item.rarity].label : null;
+  const tier = item ? rarityLabel(t, item.rarity) : null;
   const against = compare.against ? findItem(inventory, compare.against) : undefined;
   const stats = item && isWeaponId(item.def) ? weaponStatsOf(inventory, item.uid) : null;
   const mods = item?.mods ? Object.entries(item.mods) : [];
@@ -65,26 +70,25 @@ export const ItemDetail = ({
         {tier && <span className={`inv__tier inv__tier--${item!.rarity}`}>{tier}</span>}
       </header>
       <div className="inv__kind">
-        {kindLabel(def)}
-        {"stack" in selected && ` · masz ${stackCount(inventory, selected.stack)}`}
+        {kindLabel(t, def)}
+        {"stack" in selected && ` · ${t("inventory.detail.have", { count: stackCount(inventory, selected.stack) })}`}
       </div>
       <p className="inv__desc">{description(def)}</p>
       {stats?.ammo && (
-        <div className="inv__meta">
-          W magazynku {item?.loaded ?? 0} / {stats.magazine} · {AMMO_CATALOG[stats.ammo].name}
-        </div>
+        <div className="inv__meta">{t("inventory.detail.loaded", { loaded: item?.loaded ?? 0, magazine: stats.magazine, ammo: AMMO_CATALOG[stats.ammo].name })}</div>
       )}
-      {item && isGarmentId(item.def) && <div className="inv__meta">Stan {Math.round(item.condition ?? 100)}%</div>}
+      {item && isGarmentId(item.def) && <div className="inv__meta">{t("inventory.detail.condition", { pct: Math.round(item.condition ?? 100) })}</div>}
       {mods.length > 0 && (
         <div className="inv__meta">
-          Mody:{" "}
-          {mods
-            .map(([slot, uid]) => {
-              const m = findItem(inventory, uid);
-              return m && isModId(m.def) ? `${MOD_CATALOG[m.def].name} (${MOD_SLOT_LABEL[slot as keyof typeof MOD_SLOT_LABEL].toLowerCase()})` : null;
-            })
-            .filter(Boolean)
-            .join(", ")}
+          {t("inventory.detail.mods", {
+            mods: mods
+              .map(([slot, uid]) => {
+                const m = findItem(inventory, uid);
+                return m && isModId(m.def) ? `${MOD_CATALOG[m.def].name} (${modSlotLabel(t, slot as ModSlot).toLowerCase()})` : null;
+              })
+              .filter(Boolean)
+              .join(", "),
+          })}
         </div>
       )}
       {compare.lines.length > 0 && (
@@ -93,8 +97,8 @@ export const ItemDetail = ({
             <thead>
               <tr>
                 <th />
-                <th>ta</th>
-                <th>{against ? itemName(against.def) : "założona"}</th>
+                <th>{t("inventory.detail.this")}</th>
+                <th>{against ? itemName(against.def) : t("inventory.detail.worn")}</th>
                 <th />
               </tr>
             </thead>
@@ -102,9 +106,9 @@ export const ItemDetail = ({
           <tbody>
             {compare.lines.map((l) => (
               <tr key={l.key} className={l.trend ? `inv__row--${l.trend}` : undefined}>
-                <th scope="row">{STAT_LABEL[l.key]}</th>
-                <td>{formatStat(l.key, l.value)}</td>
-                <td>{l.current === null ? "" : formatStat(l.key, l.current)}</td>
+                <th scope="row">{statLabel(t, l.key)}</th>
+                <td>{formatStat(locale, l.key, l.value)}</td>
+                <td>{l.current === null ? "" : formatStat(locale, l.key, l.current)}</td>
                 <td>
                   <StatDelta line={l} />
                 </td>
@@ -113,8 +117,8 @@ export const ItemDetail = ({
           </tbody>
         </table>
       )}
-      {compare.equipped && <p className="inv__note">Założona</p>}
-      {compare.slot && !compare.equipped && !compare.against && <p className="inv__note">({SLOT_NOUN[compare.slot]} pusty)</p>}
+      {compare.equipped && <p className="inv__note">{t("inventory.detail.equipped")}</p>}
+      {compare.slot && !compare.equipped && !compare.against && <p className="inv__note">{t("inventory.detail.slotEmpty", { slot: slotNoun(t, compare.slot) })}</p>}
       <ActionBar actions={actions} onAction={onAction} />
     </div>
   );

@@ -53,7 +53,7 @@ describe("day clock in the game", () => {
 });
 
 describe("Oyaji's stall in the game", () => {
-  it("by day Oyaji's stall buys a medkit through the Sprzedaj tab", () => {
+  it("by day Oyaji's stall buys a medkit through the Sell tab", () => {
     const g = start();
     // To the market, then on to noon of the next day: the stall is up and Oyaji stands behind it.
     toMarket(g, 40, 78);
@@ -69,16 +69,16 @@ describe("Oyaji's stall in the game", () => {
     const shop = screen.getByTestId("shop");
     expect(shop.textContent).toContain("Oyaji");
     const before = g.seki.state().eddies;
-    fireEvent.click(within(shop).getByRole("tab", { name: "Sprzedaj" }));
+    fireEvent.click(within(shop).getByRole("tab", { name: "Sell" }));
     const medkit = () => within(shop).queryAllByTestId("shop-sell-line").filter((l) => l.textContent?.includes("Apteczka"));
     expect(medkit()).toHaveLength(1);
-    fireEvent.click(within(medkit()[0]!).getByRole("button", { name: /Sprzedaj · 22 €\$/ }));
+    fireEvent.click(within(medkit()[0]!).getByRole("button", { name: /Sell · 22 €\$/ }));
     g.step(1);
     expect(g.seki.state().eddies).toBe(before + 22);
     expect(screen.getByTestId("gear").textContent).not.toContain("Apteczki × 1");
     expect(medkit()).toHaveLength(0);
 
-    fireEvent.click(within(shop).getByRole("button", { name: /Odejdź od straganu/ }));
+    fireEvent.click(within(shop).getByRole("button", { name: /Step away from the stall/ }));
     expect(screen.queryByTestId("shop")).toBeNull();
     g.step(1);
     expect(g.seki.state().dialogue).toBe(false);

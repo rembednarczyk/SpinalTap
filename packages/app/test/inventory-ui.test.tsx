@@ -28,7 +28,7 @@ describe("weapon strip and loot in the game", () => {
     expect(ammo()).toMatch(/12 \/ (4[0-4])/);
   });
 
-  it("a killed ganger leaves a bag; E opens it and Weź wszystko empties it", () => {
+  it("a killed ganger leaves a bag; E opens it and Take all empties it", () => {
     const { seki, session, step } = start();
     // Down the guard in the alley and walk up to its bag.
     const guard = [...session.sim.world].find((e) => e.key === "guard")!;
@@ -44,7 +44,7 @@ describe("weapon strip and loot in the game", () => {
     step(1, { interact: true });
 
     const panel = screen.getByTestId("loot");
-    expect(panel.textContent).toContain("Torba gangera");
+    expect(panel.textContent).toContain("Ganger's bag");
     expect(within(panel).getAllByTestId("loot-line")[0]!.textContent).toContain("€$");
     fireEvent.click(within(panel).getByTestId("loot-take-all"));
     step(2);

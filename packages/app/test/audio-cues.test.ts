@@ -66,10 +66,10 @@ describe("weapon, loot and trade cues (E12)", () => {
     bus.emit("CyberwareInstalled", { cyberwareId: "synapse_booster", replaced: "kairos_overclock", price: 900, stowed: false });
     const toasts = ui.getState().toasts.map((t) => `${t.title} | ${t.text}`);
     expect(toasts.slice(-4)).toEqual([
-      "Oyaji kręci głową | Zamknięte. Wróć za dnia.",
-      "Wymontowano: Stabilizator chwytu | Implant w plecaku",
-      "Wszczepiono: Akcelerator Kairos | Wzmacniacz synaps wraca do plecaka",
-      "Wszczepiono: Wzmacniacz synaps | Usunięto: Akcelerator Kairos",
+      "Oyaji shakes his head | Closed. Come back in the daytime.",
+      "Uninstalled: Stabilizator chwytu | Implant in the backpack",
+      "Implanted: Akcelerator Kairos | Wzmacniacz synaps goes back to the backpack",
+      "Implanted: Wzmacniacz synaps | Removed: Akcelerator Kairos",
     ]);
     // The toast list keeps the last four; check the earlier ones by listening again.
     const again = setup();
@@ -79,10 +79,25 @@ describe("weapon, loot and trade cues (E12)", () => {
     again.bus.emit("CapacityUpgraded", { capacity: 30, price: 600 });
     again.bus.emit("ItemBought", { itemId: "9mm", price: 24, shopId: "oyaji", qty: 24 });
     expect(again.ui.getState().toasts.map((t) => `${t.title} | ${t.text}`)).toEqual([
-      "Sprzedano: Złom elektroniczny × 2 | +24 €$",
+      "Sold: Złom elektroniczny × 2 | +24 €$",
+      "Repaired: Kurtka Seki | -20 €$, parts: 1",
+      "Bigger backpack | Slots: 30",
+      "Bought: 9 mm × 24 | -24 €$",
+    ]);
+  });
+
+  it("writes the trade and loot toasts in Polish as before when Polish is chosen (ADR-0056)", () => {
+    const { bus, ui } = setup();
+    ui.setState({ settings: { ...ui.getState().settings, locale: "pl" } });
+    bus.emit("EddiesChanged", { balance: 13000, delta: 12500 });
+    bus.emit("ItemRepaired", { uid: "i2", defId: "seki_jacket", price: 20, parts: 1 });
+    bus.emit("PurchaseFailed", { reason: "closed", shopId: "oyaji" });
+    bus.emit("LootExpired", { containerKey: "loot:guard" });
+    expect(ui.getState().toasts.map((t) => `${t.title} | ${t.text}`)).toEqual([
+      "+12 500 €$ | Przelew",
       "Naprawiono: Kurtka Seki | -20 €$, części: 1",
-      "Większy plecak | Miejsc: 30",
-      "Kupiono: 9 mm × 24 | -24 €$",
+      "Oyaji kręci głową | Zamknięte. Wróć za dnia.",
+      "Torba przepadła | Ktoś był szybszy.",
     ]);
   });
 

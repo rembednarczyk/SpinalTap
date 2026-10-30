@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useT } from "../i18n/use-t";
 import type { PreviewRect } from "../intents";
 import { useCharacterIntents } from "../use-ui";
 
@@ -19,6 +20,7 @@ const rectOf = (el: HTMLElement): PreviewRect | null => {
  * One finger or the mouse turns the character; a double tap brings it back to the front.
  */
 export const CharacterPreview = () => {
+  const t = useT();
   const intents = useCharacterIntents();
   const box = useRef<HTMLDivElement>(null);
   const drag = useRef<{ id: number; x: number; startX: number; startY: number; moved: boolean } | null>(null);
@@ -53,7 +55,7 @@ export const CharacterPreview = () => {
       className="preview"
       data-testid="character-preview"
       role="img"
-      aria-label="Podgląd postaci. Przeciągnij, żeby obrócić, stuknij dwa razy, żeby wrócić do przodu."
+      aria-label={t("inventory.preview")}
       onPointerDown={(e) => {
         e.currentTarget.setPointerCapture?.(e.pointerId);
         drag.current = { id: e.pointerId, x: e.clientX, startX: e.clientX, startY: e.clientY, moved: false };

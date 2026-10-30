@@ -18,15 +18,17 @@ import {
   stackCount,
 } from "@seki/core";
 import { useState } from "react";
+import type { MessageKey } from "../i18n/t";
+import { useT } from "../i18n/use-t";
 import { itemName } from "./item-text";
 
 export type ActionId = "use" | "equip" | "unequip" | "mods" | "drop";
 
 export interface ItemAction {
   readonly id: ActionId;
-  readonly label: string;
-  /** Why the action cannot be done now; null when it can. */
-  readonly blocked: string | null;
+  readonly label: MessageKey;
+  /** Why the action cannot be done now (a catalog key); null when it can. */
+  readonly blocked: MessageKey | null;
   /** Keyboard shortcut shown on the button. */
   readonly key?: string;
 }
@@ -49,8 +51,8 @@ export const itemActions = (ref: ItemRef, ctx: ActionContext): ItemAction[] => {
   const { inventory: inv, equipment: eq } = ctx;
   if ("stack" in ref) {
     const out: ItemAction[] = [];
-    if (isConsumableId(ref.stack)) out.push({ id: "use", label: "Użyj", key: "E", blocked: ctx.hp >= ctx.maxHp && needsWounds(ref.stack) ? "Zdrowie jest pełne" : null });
-    out.push({ id: "drop", label: "Wyrzuć", key: "X", blocked: null });
+    if (isConsumableId(ref.stack)) out.push({ id: "use", label: "inventory.action.use", key: "E", blocked: ctx.hp >= ctx.maxHp && needsWounds(ref.stack) ? "inventory.blocked.fullHealth" : null });
+    out.push({ id: "drop", label: "inventory.action.drop", key: "X", blocked: null });
     return out;
   }
   const item = findItem(inv, ref.uid);
@@ -59,15 +61,15 @@ export const itemActions = (ref: ItemRef, ctx: ActionContext): ItemAction[] => {
   const held = slotHolding(eq, item.uid);
   const hasMods = isWeaponId(item.def) && WEAPON_CATALOG[item.def].modSlots.length > 0;
   if (held) {
-    out.push({ id: "unequip", label: "Zdejmij", blocked: freeCells(inv, eq) < 1 ? "Brak miejsca w torbie" : null });
+    out.push({ id: "unequip", label: "inventory.action.unequip", blocked: freeCells(inv, eq) < 1 ? "inventory.blocked.bagFull" : null });
   } else if (slotFor(item.def) !== null) {
-    out.push({ id: "equip", label: "Załóż", key: "E", blocked: null });
+    out.push({ id: "equip", label: "inventory.action.equip", key: "E", blocked: null });
   }
-  if (hasMods) out.push({ id: "mods", label: "Mody", blocked: null });
+  if (hasMods) out.push({ id: "mods", label: "inventory.action.mods", blocked: null });
   if (!held) {
     const mounted = isPlaced(inv, eq, item.uid);
     const modded = Object.keys(item.mods ?? {}).length > 0;
-    out.push({ id: "drop", label: "Wyrzuć", key: "X", blocked: mounted ? "Zamontowany w broni" : modded ? "Najpierw zdejmij mody" : null });
+    out.push({ id: "drop", label: "inventory.action.drop", key: "X", blocked: mounted ? "inventory.blocked.mounted" : modded ? "inventory.blocked.modsFirst" : null });
   }
   return out;
 };
@@ -77,6 +79,7 @@ export const defaultAction = (ref: ItemRef, ctx: ActionContext): ItemAction | nu
   itemActions(ref, ctx).find((a) => (a.id === "equip" || a.id === "use") && a.blocked === null) ?? null;
 
 export const ActionBar = ({ actions, onAction }: { actions: readonly ItemAction[]; onAction: (id: ActionId) => void }) => {
+  const t = useT();
   const blocked = actions.find((a) => a.blocked)?.blocked ?? null;
   return (
     <div className="inv__actions" data-testid="item-actions">
@@ -86,37 +89,36 @@ export const ActionBar = ({ actions, onAction }: { actions: readonly ItemAction[
           type="button"
           className={`inv__action inv__action--${a.id}`}
           disabled={a.blocked !== null}
-          title={a.blocked ?? undefined}
+          title={a.blocked === null ? undefined : t(a.blocked)}
           onClick={() => onAction(a.id)}
         >
-          {a.label}
+          {t(a.label)}
           {a.key && <kbd className="inv__action-key">{a.key}</kbd>}
         </button>
       ))}
-      {blocked && <p className="inv__blocked">{blocked}</p>}
+      {blocked && <p className="inv__blocked">{t(blocked)}</p>}
     </div>
   );
 };
 
 /** How many of a stack to drop. */
 export const QuantityPicker = ({ stack, inventory, onConfirm, onCancel }: { stack: StackableId; inventory: InventoryState; onConfirm: (qty: number) => void; onCancel: () => void }) => {
+  const t = useT();
   const total = stackCount(inventory, stack);
   const [qty, setQty] = useState(1);
   return (
-    <div className="inv__sheet" role="dialog" aria-label="Ile wyrzucić" data-testid="quantity-picker">
-      <p className="inv__sheet-text">
-        Ile wyrzucić? {STACKABLE_CATALOG[stack].name}, masz {total}.
-      </p>
+    <div className="inv__sheet" role="dialog" aria-label={t("inventory.quantity.label")} data-testid="quantity-picker">
+      <p className="inv__sheet-text">{t("inventory.quantity.text", { name: STACKABLE_CATALOG[stack].name, count: total })}</p>
       <label className="inv__qty">
-        <input type="range" min={1} max={total} step={1} value={qty} aria-label="Ilość" onChange={(e) => setQty(Number(e.currentTarget.value))} />
+        <input type="range" min={1} max={total} step={1} value={qty} aria-label={t("inventory.quantity.amount")} onChange={(e) => setQty(Number(e.currentTarget.value))} />
         <span className="inv__qty-value">{qty}</span>
       </label>
       <div className="inv__sheet-actions">
         <button type="button" className="inv__action" onClick={onCancel}>
-          Anuluj
+          {t("inventory.cancel")}
         </button>
         <button type="button" className="inv__action inv__action--drop" onClick={() => onConfirm(qty)}>
-          Wyrzuć × {qty}
+          {t("inventory.quantity.confirm", { qty })}
         </button>
       </div>
     </div>
@@ -124,16 +126,19 @@ export const QuantityPicker = ({ stack, inventory, onConfirm, onCancel }: { stac
 };
 
 /** Asks before a rare or unique piece goes on the street. */
-export const ConfirmSheet = ({ def, onConfirm, onCancel }: { def: ItemDefId; onConfirm: () => void; onCancel: () => void }) => (
-  <div className="inv__sheet" role="alertdialog" aria-label="Potwierdź wyrzucenie" data-testid="confirm-drop">
-    <p className="inv__sheet-text">Wyrzucić {itemName(def)}? Takiej rzeczy łatwo nie znajdziesz drugi raz.</p>
-    <div className="inv__sheet-actions">
-      <button type="button" className="inv__action" onClick={onCancel}>
-        Zostaw
-      </button>
-      <button type="button" className="inv__action inv__action--drop" onClick={onConfirm}>
-        Wyrzuć
-      </button>
+export const ConfirmSheet = ({ def, onConfirm, onCancel }: { def: ItemDefId; onConfirm: () => void; onCancel: () => void }) => {
+  const t = useT();
+  return (
+    <div className="inv__sheet" role="alertdialog" aria-label={t("inventory.confirm.label")} data-testid="confirm-drop">
+      <p className="inv__sheet-text">{t("inventory.confirm.text", { name: itemName(def) })}</p>
+      <div className="inv__sheet-actions">
+        <button type="button" className="inv__action" onClick={onCancel}>
+          {t("inventory.confirm.keep")}
+        </button>
+        <button type="button" className="inv__action inv__action--drop" onClick={onConfirm}>
+          {t("inventory.action.drop")}
+        </button>
+      </div>
     </div>
-  </div>
-);
+  );
+};

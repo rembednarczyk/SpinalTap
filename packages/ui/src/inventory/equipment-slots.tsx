@@ -1,5 +1,6 @@
-import { type EquipSlot, type Equipment, GARMENT_SLOTS, type InventoryState, RARITY, WEAPON_SLOTS, findItem } from "@seki/core";
-import { SLOT_LABEL, itemName } from "./item-text";
+import { type EquipSlot, type Equipment, GARMENT_SLOTS, type InventoryState, WEAPON_SLOTS, findItem } from "@seki/core";
+import { useT } from "../i18n/use-t";
+import { itemName, rarityLabel, slotLabel } from "./item-text";
 
 const KEY: Readonly<Partial<Record<EquipSlot, number>>> = { primary: 1, secondary: 2, melee: 3 };
 
@@ -17,6 +18,7 @@ export const EquipmentSlots = ({
   selectedUid: string | null;
   onSelect: (uid: string) => void;
 }) => {
+  const t = useT();
   const slots = kind === "weapons" ? WEAPON_SLOTS : GARMENT_SLOTS;
   return (
     <div className={`inv__slots inv__slots--${kind}`} data-testid={`slots-${kind}`}>
@@ -33,15 +35,15 @@ export const EquipmentSlots = ({
               item && item.rarity !== "common" ? ` rarity--${item.rarity}` : ""
             }`}
             data-testid={`slot-${slot}`}
-            aria-label={`${SLOT_LABEL[slot]}: ${name ?? "pusto"}${item && item.rarity !== "common" ? `, ${RARITY[item.rarity].label}` : ""}`}
+            aria-label={`${slotLabel(t, slot)}: ${name ?? t("inventory.empty")}${item && item.rarity !== "common" ? `, ${rarityLabel(t, item.rarity)}` : ""}`}
             disabled={!item}
             onClick={() => item && onSelect(item.uid)}
           >
             <span className="inv__slot-label">
               {KEY[slot] !== undefined && <span className="inv__slot-key">{KEY[slot]}</span>}
-              {SLOT_LABEL[slot]}
+              {slotLabel(t, slot)}
             </span>
-            <span className="inv__slot-name">{name ?? "pusto"}</span>
+            <span className="inv__slot-name">{name ?? t("inventory.empty")}</span>
           </button>
         );
       })}

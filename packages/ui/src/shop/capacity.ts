@@ -1,4 +1,5 @@
 import { CYBERWARE_CATALOG, type CyberwareId, type CyberwareLoadout, capacityAfter, fitsCapacity } from "@seki/core";
+import type { Translate } from "../i18n/t";
 import type { CapacityVm } from "../store/ui-store";
 
 /** What an implant takes of the cyberware capacity (ADR-0033): the catalogue's own number, 2 to 8. */
@@ -22,4 +23,4 @@ export const capacityFit = (id: CyberwareId, loadout: CyberwareLoadout, capacity
 };
 
 /** The refusal shown and toasted when an implant does not fit. */
-export const overCapacityText = (fit: CapacityFit, capacity: CapacityVm): string => `Za mało pojemności: ${fit.after} / ${capacity.max}`;
+export const overCapacityText = (t: Translate, fit: CapacityFit, capacity: CapacityVm): string => t("shop.capacity.over", { after: fit.after, max: capacity.max });

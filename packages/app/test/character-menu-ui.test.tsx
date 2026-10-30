@@ -59,19 +59,19 @@ const scenario = async (phone: boolean) => {
   fireEvent.click(cell("hebi_smg"));
   const detail = screen.getByTestId("item-detail");
   expect(detail.textContent).toContain("Hebi SMG");
-  expect(detail.textContent).toContain("niezwykły");
-  expect(detail.textContent).toContain("slot główny pusty");
-  expect(screen.getByTestId("item-compare").textContent).toContain("Obrażenia");
+  expect(detail.textContent).toContain("uncommon");
+  expect(detail.textContent).toContain("primary slot empty");
+  expect(screen.getByTestId("item-compare").textContent).toContain("Damage");
 
   // Equip: applies at once with the clock stopped, and the preview carries the SMG.
   const look = preview.look;
-  fireEvent.click(within(detail).getByRole("button", { name: /Załóż/ }));
+  fireEvent.click(within(detail).getByRole("button", { name: /Equip/ }));
   expect(screen.getByTestId("slot-primary").textContent).toContain("Hebi SMG");
   expect(session.sim.domain.equipment.primary).toBe(smg);
   expect(g.seki.state().tick).toBe(tick);
   expect(preview.look).not.toBe(look);
   expect(preview.look?.weapons).toMatchObject({ primary: "smg", active: "secondary" });
-  expect(screen.getByTestId("item-detail").textContent).toContain("Założona");
+  expect(screen.getByTestId("item-detail").textContent).toContain("Equipped");
 
   // Turn the character with a finger or the mouse.
   const box = screen.getByTestId("character-preview");
@@ -81,10 +81,10 @@ const scenario = async (phone: boolean) => {
   expect(preview.yaw).toBeGreaterThan(0.5);
 
   // The sheet and the journal are tabs of the same screen; the preview goes with the inventory.
-  fireEvent.click(screen.getByRole("tab", { name: /Karta/ }));
+  fireEvent.click(screen.getByRole("tab", { name: /Sheet/ }));
   expect(screen.getByTestId("character-panel")).toBeTruthy();
   expect(preview.rect).toBeNull();
-  if (phone) fireEvent.click(screen.getByRole("button", { name: "Zamknij menu postaci" }));
+  if (phone) fireEvent.click(screen.getByRole("button", { name: "Close the character menu" }));
   else fireEvent.keyDown(window, { code: "Escape" });
   expect(screen.queryByTestId("character-screen")).toBeNull();
   g.step(1);
@@ -141,7 +141,7 @@ describe("character menu in the game", () => {
 
     for (const def of ["moto_helmet", "ballistic_vest"]) {
       fireEvent.click(cell(def));
-      fireEvent.click(within(screen.getByTestId("item-detail")).getByRole("button", { name: /Załóż/ }));
+      fireEvent.click(within(screen.getByTestId("item-detail")).getByRole("button", { name: /Equip/ }));
     }
     const garments = g.preview.look!.garments;
     expect([...(garments.head?.attachments ?? []), ...(garments.torso?.attachments ?? [])].map((a) => a.mesh)).toEqual(["helmet", "vest-plate"]);

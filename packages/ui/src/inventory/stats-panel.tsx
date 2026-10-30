@@ -1,10 +1,15 @@
+import type { Locale } from "@seki/core";
+import { formatNumber, useLocale } from "../i18n/number";
+import { useT } from "../i18n/use-t";
 import type { CharacterStatsVm } from "../store/ui-store";
 
 const pct = (n: number) => `${Math.round(n * 100)}%`;
-const one = (n: number) => n.toLocaleString("pl-PL", { maximumFractionDigits: 1 });
+const oneIn = (locale: Locale) => (n: number) => formatNumber(locale, n, { maximumFractionDigits: 1 });
 
 /** HP, armor per zone, crits and the aim cone of the weapon in hand, as the game counts them. */
 export const StatsPanel = ({ stats }: { stats: CharacterStatsVm | null }) => {
+  const t = useT();
+  const one = oneIn(useLocale());
   if (!stats) return null;
   const a = stats.armor;
   return (
@@ -15,21 +20,19 @@ export const StatsPanel = ({ stats }: { stats: CharacterStatsVm | null }) => {
           {Math.ceil(stats.hp)}/{stats.maxHp}
         </dd>
       </div>
-      <div className="inv__stat" title="Pancerz: głowa, tors, ręce, nogi">
-        <dt>Pancerz</dt>
-        <dd>
-          G{one(a.head)} T{one(a.torso)} R{one(a.arm)} N{one(a.leg)}
-        </dd>
+      <div className="inv__stat" title={t("inventory.stats.armorHint")}>
+        <dt>{t("inventory.stats.armor")}</dt>
+        <dd>{t("inventory.stats.armorValue", { head: one(a.head), torso: one(a.torso), arm: one(a.arm), leg: one(a.leg) })}</dd>
       </div>
       <div className="inv__stat">
-        <dt>Kryt</dt>
+        <dt>{t("inventory.stats.crit")}</dt>
         <dd>
           {pct(stats.critChance)} ×{one(stats.critMultiplier)}
         </dd>
       </div>
       <div className="inv__stat">
-        <dt>Rozrzut</dt>
-        <dd>{stats.spread === null ? "brak" : `${one(stats.spread)}°`}</dd>
+        <dt>{t("inventory.stats.spread")}</dt>
+        <dd>{stats.spread === null ? t("inventory.stats.none") : `${one(stats.spread)}°`}</dd>
       </div>
     </dl>
   );

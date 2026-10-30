@@ -1,5 +1,5 @@
 import { type CyberwareId, type CyberwareSlot, type ItemRef, type ShopId, type ShopItemId, isCyberwareId } from "@seki/core";
-import { type ShopIntents, type TradeVm, type UiStore, capacityFit, overCapacityText, patchUi } from "@seki/ui";
+import { type ShopIntents, type TradeVm, type UiStore, capacityFit, overCapacityText, patchUi, translator } from "@seki/ui";
 import { createTradeTracker } from "../trade-view";
 import { type Focus, type SimRef, pushToastTimed } from "./shared";
 
@@ -14,7 +14,7 @@ export interface ShopControllerDeps {
 /** The open shop counter: trade commands go out only while it is open, and only to that counter. */
 export class ShopController implements ShopIntents {
   private shopOpen = false;
-  /** Counter behind the open shop panel, and the ink knot of its keeper ("Porozmawiaj"). */
+  /** Counter behind the open shop panel, and the ink knot of its keeper ("Talk to …"). */
   private shopId: ShopId = "clinic";
   private shopTalk = "mori";
   private readonly tradeView = createTradeTracker();
@@ -96,10 +96,11 @@ export class ShopController implements ShopIntents {
    * with a message, before the simulation would refuse it silently.
    */
   private fits(id: CyberwareId): boolean {
-    const { cyberware, capacity } = this.deps.ui.getState();
+    const { cyberware, capacity, settings } = this.deps.ui.getState();
     const fit = capacityFit(id, cyberware, capacity);
     if (!fit.over || !capacity) return true;
-    pushToastTimed(this.deps.ui, "cyberware", "Mori kręci głową", overCapacityText(fit, capacity));
+    const t = translator(settings.locale);
+    pushToastTimed(this.deps.ui, "cyberware", t("shop.refused.clinic"), overCapacityText(t, fit, capacity));
     return false;
   }
 

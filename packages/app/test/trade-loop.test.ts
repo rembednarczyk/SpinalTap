@@ -113,8 +113,8 @@ describe("trade loop: loot, Oyaji's stall, a mod, the clinic (E10, E11)", () => 
     expect(session.sim.domain.wallet.eddies).toBe(afterLoot + 48 + 280);
     expect(ui.getState().trade.items.some((i) => i.defId === "hebi_smg")).toBe(false);
     expect(audio.cues.filter((c) => c === "sell")).toHaveLength(2);
-    expect(ui.getState().toasts.some((t) => t.title === "Sprzedano: Hebi SMG")).toBe(true);
-    expect(ui.getState().toasts.some((t) => t.text === "Przelew")).toBe(false);
+    expect(ui.getState().toasts.some((t) => t.title === "Sold: Hebi SMG")).toBe(true);
+    expect(ui.getState().toasts.some((t) => t.text === "Transfer")).toBe(false);
 
     session.intents.buyItem("holo_sight");
     // The stall does not fit implants.
@@ -148,8 +148,8 @@ describe("trade loop: loot, Oyaji's stall, a mod, the clinic (E10, E11)", () => 
     expect(session.sim.domain.character.cyberware.arms).toBe("steady_grip");
     expect(session.sim.domain.wallet.eddies).toBe(afterStall - 125);
     expect(session.sim.domain.inventory.items.some((i) => i.def === "steady_grip")).toBe(false);
-    expect(ui.getState().toasts.some((t) => t.title === "Mori kręci głową")).toBe(true);
-    expect(ui.getState().toasts.some((t) => t.title === "Wszczepiono: Stabilizator chwytu")).toBe(true);
+    expect(ui.getState().toasts.some((t) => t.title === "Mori shakes his head")).toBe(true);
+    expect(ui.getState().toasts.some((t) => t.title === "Implanted: Stabilizator chwytu")).toBe(true);
     session.intents.closeShop();
     steps(session, 1);
     expect(session.inControl).toBe(true);
