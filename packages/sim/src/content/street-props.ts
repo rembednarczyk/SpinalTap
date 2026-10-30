@@ -8,7 +8,7 @@ import { METRO_STATIONS } from "./metro";
 import { CLEARED_BUILDINGS, MAP_CHUNKS, PASSAGES } from "./lublin/sites";
 import { groundY } from "./lublin/terrain";
 import { LUBLIN_STREET_PROPS } from "./lublin";
-import { furnitureRadius } from "./lublin/furniture";
+import { anchors, bollardChains, chainSegments, distanceToPiece, dropChains, furnitureRadius } from "./lublin/furniture";
 import { DRINKER_SITES, drinkerWay } from "./contract-plans";
 
 /**
@@ -82,11 +82,29 @@ export const clearOfGame = (x: number, z: number, r: number, pad = 0): boolean =
   !GAME_ACTORS.some((a) => Math.hypot(a.spawn.position.x - x, a.spawn.position.z - z) < FURNITURE_CLEARANCE + pad) &&
   !KEEP_CLEAR.some(([a, b]) => segmentDistance(x, z, a, b) < r + 0.7);
 
+/** The map's pieces clear of the game, on the shaped terrain. */
+const kept: Readonly<Record<string, readonly StreetPropItem[]>> = Object.fromEntries(
+  MAP_CHUNKS.map((c) => [c.id, (LUBLIN_STREET_PROPS[c.id] ?? []).filter((i) => clearOfGame(i.x, i.z, furnitureRadius(i))).map((i) => ({ ...i, y: Math.round(groundY(i.x, i.z) * 100) / 100 }))]),
+);
+
+const keptPieces = Object.values(kept).flat();
+
+/** Is a chain ending at `to` held there by another post or a pole the game kept (G-032)? */
+const held = (i: StreetPropItem, to: { x: number; z: number }): boolean =>
+  keptPieces.some((o) => o !== i && Math.abs(o.x - to.x) < 1 && Math.abs(o.z - to.z) < 1 && (o.prop === "bollard" ? distanceToPiece(o, to.x, to.z) <= 0.2 : anchors(o, to)));
+
+/** A bollard without the chains whose far end gave way to the game. */
+const unhung = (i: StreetPropItem): StreetPropItem => {
+  const loose = chainSegments(i).map((s) => !held(i, s.to));
+  return loose.some(Boolean) ? dropChains(i, bollardChains(i).filter((_, k) => loose[k])) : i;
+};
+
 /**
  * The street furniture of the game's Lublin per chunk (ADR-0050): the map's pieces (ADR-0047)
- * that stand clear of the set pieces and the game's own blocks, on the shaped terrain.
+ * that stand clear of the set pieces and the game's own blocks, on the shaped terrain. A bollard
+ * whose next post of the row gave way to the game ends the row there, with no chain into the air.
  */
 export const WORLD_STREET_PROPS: Readonly<Record<string, readonly StreetPropItem[]>> = Object.fromEntries(
-  MAP_CHUNKS.map((c) => [c.id, (LUBLIN_STREET_PROPS[c.id] ?? []).filter((i) => clearOfGame(i.x, i.z, furnitureRadius(i))).map((i) => ({ ...i, y: Math.round(groundY(i.x, i.z) * 100) / 100 }))]),
+  Object.entries(kept).map(([id, items]) => [id, items.map(unhung)]),
 );
 

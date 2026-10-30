@@ -7,9 +7,11 @@
  */
 import type { StreetPropItem, StreetPropKind } from "../../../packages/core/src/world/city-geo.ts";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
+import { crossingBands } from "../../../packages/sim/src/content/lublin/crossing-bands.ts";
 import { type Pt, centroid } from "./geometry.ts";
 import { MAPPED, propOf, withShape } from "./props-kinds.ts";
 import { type SideMode, type Station, evenStations, fnv, offRoad, offWall, openFacing, scatter, sideOffset, stations, towardsStreet, unit, yawOf } from "./props-place.ts";
+import { type BollardRef, stringBollards } from "./props-rows.ts";
 import { Site } from "./props-site.ts";
 import { SolidIndex, clearSpot } from "./props-solid.ts";
 import { nearTraffic, placeStreetGroup } from "./props-streets.ts";
@@ -328,6 +330,9 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
   const solids = new SolidIndex();
   const perItem: Record<string, [number, number]> = {};
   for (const item of plan.items) if (propOf(item.kind)) perItem[item.id] = [item.count ?? 0, 0];
+  // The plan's bollards (not the drinking fountains drawn as one), to string into rows.
+  const bollardGroups = new Set(plan.items.filter((i) => i.kind === "bollard").map((i) => i.id));
+  const bollards: (BollardRef & { district: string; from: string })[] = [];
   let outside = 0;
   let inBuilding = 0;
   let merged = 0;
@@ -368,7 +373,8 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
       continue;
     }
     const hash = fnv(x.key) & 0xffff;
-    const variant = x.shape === undefined ? hash : withShape(hash, x.prop, x.shape);
+    // A bollard's variant is its chain (none until its row is strung), not a hash.
+    const variant = x.prop === "bollard" ? 0 : x.shape === undefined ? hash : withShape(hash, x.prop, x.shape);
     // Earlier groups win: a bin beside a bench steps aside from a tree's trunk, on the same ground.
     const surface = site.surfaceAt(x.p);
     const fits = (q: Pt) => site.surfaceAt(q) === surface && site.chunkAt(q) === chunk && (room === undefined || offWall(site, q, room) === q);
@@ -380,12 +386,22 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
     same.push({ x: item.x, z: item.z });
     kept.set(x.prop, same);
     solids.add(item);
-    byChunk.get(chunk.id)!.push({ ...item, y: r2(site.heightAt(item)) });
+    const list = byChunk.get(chunk.id)!;
+    list.push({ ...item, y: r2(site.heightAt(item)) });
+    if (bollardGroups.has(x.from ?? "")) bollards.push({ chunk: chunk.id, index: list.length - 1, district: chunk.district, from: x.from ?? "" });
     perKind[x.prop] = (perKind[x.prop] ?? 0) + 1;
     perDistrict[chunk.district] = (perDistrict[chunk.district] ?? 0) + 1;
     const from = x.from ?? "";
     perItem[from] = [perItem[from]?.[0] ?? 0, (perItem[from]?.[1] ?? 0) + 1];
   }
+  // Rows, chains and the zebras' mouths; a post with no room out of a mouth goes.
+  const table = byChunk as Map<string, (StreetPropItem | undefined)[]>;
+  for (const r of stringBollards(site, table, bollards, crossingBands(chunks))) {
+    perKind.bollard = perKind.bollard! - 1;
+    perDistrict[r.district] = perDistrict[r.district]! - 1;
+    perItem[r.from] = [perItem[r.from]![0], perItem[r.from]![1] - 1];
+  }
+  for (const [id, list] of table) byChunk.set(id, list.filter((i): i is StreetPropItem => i !== undefined));
   const mapped: Record<string, string> = {};
   for (const item of plan.items) if (MAPPED[item.kind]) mapped[item.kind] = MAPPED[item.kind]!.prop;
   return { byChunk, stats: { perKind, perDistrict, skipped, mapped, outside, inBuilding, offRoad: moved, onRoad, merged, crowded, perItem } };

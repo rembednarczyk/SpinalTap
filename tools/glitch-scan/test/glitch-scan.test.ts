@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { type StreetPropItem, VEHICLE_SIZE } from "../../../packages/core/src";
 import { CROWD_LANES } from "../../../packages/sim/src/content/crowd";
 import { furnitureClearance } from "../../../packages/sim/src/content/furniture-index";
-import { furniturePrisms, furnitureRadius } from "../../../packages/sim/src/content/lublin/furniture";
+import { BOLLARD, alongSegment, anchors, chainSegments, chainThrough, distanceToPiece, furniturePrisms, furnitureRadius } from "../../../packages/sim/src/content/lublin/furniture";
 import { inBuilding, nearestWall } from "../../../packages/sim/src/content/lublin/places";
 import { ROAD_CHAINS, type RoadChain, polylineLength, surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
 import { clearedBuilding } from "../../../packages/sim/src/content/cleared-buildings";
@@ -12,6 +12,7 @@ import { CLEARED_BUILDINGS, MAP_CHUNKS, PASSAGES } from "../../../packages/sim/s
 import { groundY } from "../../../packages/sim/src/content/lublin/terrain";
 import { PARKED_CARS } from "../../../packages/sim/src/content/parked-cars";
 import { GAME_PROPS, WORLD_STREET_PROPS } from "../../../packages/sim/src/content/street-props";
+import { crossingBands, inCrossingBand } from "../../../packages/sim/src/content/lublin/crossing-bands";
 import { MIN_ROUTE, TRAFFIC_ROUTES, type TrafficRoute, pointAt, projectOn, roadHalfWidth } from "../../../packages/sim/src/content/traffic";
 
 /**
@@ -133,6 +134,9 @@ const setPieceBlocks: readonly Rect[] = GAME_PROPS.flatMap((p) => {
 });
 
 /** The road chains (by index) with a car lane: a lane's id names its chain, two when it turns round onto another. */
+/** The mouths of the zebra crossings (G-032). */
+const BANDS = crossingBands(MAP_CHUNKS);
+
 const laneChains = new Set(TRAFFIC_ROUTES.filter((r) => r.use === "cars").flatMap((r) => [...r.id.matchAll(/#(\d+):/g)].map((m) => Number(m[1]))));
 
 const CHECKS: Readonly<Record<string, () => Finding[]>> = {
@@ -221,6 +225,46 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       }),
     );
   },
+  /** A bollard's chain whose end hangs in the air: more than 0.2 m from every other bollard and off the shaft of a pole (G-032). */
+  "bollard-chain-loose": () => {
+    const pieces = Object.values(WORLD_STREET_PROPS).flat();
+    const posts = pieces.filter((i) => i.prop === "bollard");
+    return posts.flatMap((i) =>
+      chainSegments(i).flatMap(({ to }) => {
+        const close = (o: StreetPropItem) => o !== i && Math.abs(o.x - to.x) < 1 && Math.abs(o.z - to.z) < 1;
+        const held = pieces.some((o) => close(o) && (o.prop === "bollard" ? distanceToPiece(o, to.x, to.z) <= 0.2 : anchors(o, to)));
+        return held ? [] : [{ at: near(to.x, to.z), what: `chain of the bollard at ${near(i.x, i.z)}` }];
+      }),
+    );
+  },
+  /** A bollard's chain through a building, a third post or the solid of another piece of furniture (G-032). */
+  "bollard-chain-through-furniture": () => {
+    const pieces = Object.values(WORLD_STREET_PROPS).flat();
+    // Other furniture and other posts than the one holding the chain and the one it ends at.
+    const solids = pieces.filter((i) => furnitureRadius(i) > 0);
+    return pieces.flatMap((i) =>
+      chainSegments(i).flatMap(({ from, to }) => {
+        const wall = alongSegment(from, to, 0.1).find((p) => inBuilding(p.x, p.z));
+        const hit = solids
+          // The post or the lamp a chain hangs on is its end, not in its way.
+          .filter((o) => o !== i && !(o.prop === "bollard" ? distanceToPiece(o, to.x, to.z) <= 0.2 : anchors(o, to)))
+          .filter((o) => Math.hypot(o.x - i.x, o.z - i.z) < 4 + furnitureRadius(o) && chainThrough(from, to, o))
+          .map((o) => ({ at: near(i.x, i.z), what: `chain through ${o.prop} at ${near(o.x, o.z)}` }));
+        return wall ? [...hit, { at: near(i.x, i.z), what: `chain through a building at ${near(wall.x, wall.z)}` }] : hit;
+      }),
+    );
+  },
+  /** A bollard or its chain in the mouth of a zebra crossing, where the walkers step off it (G-032). */
+  "bollard-blocks-crossing": () =>
+    Object.values(WORLD_STREET_PROPS)
+      .flat()
+      .filter((i) => i.prop === "bollard")
+      .flatMap((i) => {
+        const close = BANDS.filter((b) => Math.hypot(b.c.x - i.x, b.c.z - i.z) < b.along + b.across + 4);
+        const post = close.some((b) => inCrossingBand(b, i, BOLLARD.side / 2));
+        const chain = chainSegments(i).some((s) => close.some((b) => alongSegment(s.from, s.to, 0.1).some((p) => inCrossingBand(b, p))));
+        return post || chain ? [{ at: near(i.x, i.z), what: post ? "bollard" : "chain" }] : [];
+      }),
   /** A piece of furniture (wall lanterns aside, they hang on a facade) standing more than 0.5 m inside a building. */
   "furniture-in-building": () =>
     Object.values(WORLD_STREET_PROPS)

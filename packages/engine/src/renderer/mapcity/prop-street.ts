@@ -1,3 +1,4 @@
+import { BOLLARD } from "@seki/sim";
 import { MeshSink } from "../mesh-sink";
 import { blob, block, glow, paint, path, pyramid, tube, v3 } from "./prop-kit";
 
@@ -32,16 +33,39 @@ export const bench = (shape: number): MeshSink => {
   return sink;
 };
 
-/** A granite post with a pyramid top and chain stubs to its neighbours (Plac Łokietka). */
+const IRON = paint("#1b1d21");
+/** Height of the chain's eyes on a bollard's collar (m). */
+const CHAIN_Y = 0.74;
+/** A bollard's pyramid cap (m), on the shaft up to `BOLLARD.height`. */
+const CAP = 0.15;
+
+/**
+ * A hewn granite post of the old town (Plac Łokietka, Plac Litewski; G-032), `BOLLARD` square:
+ * a shaft sunk 0.2 m into the ground under a low pyramid cap, an iron collar with the chain's
+ * eyes and, for 2077, a ring of LED round the shaft. Its chain is drawn apart (`bollardChain`).
+ */
 export const bollard = (): MeshSink => {
   const sink = new MeshSink();
-  block(sink, 0, -0.2, 0, 0.26, 0.95, 0.26, GRANITE);
-  pyramid(sink, v3(0, 0.75, 0), 0.26, 0.26, 0.12, GRANITE_DARK);
-  const iron = paint("#1b1d21");
-  sink.box(v3(0, 0.62, 0), 0.28, 0.04, 0.28, iron);
-  // Half a sagging chain to each neighbour, three links' worth of tube a side.
-  for (const sx of [-1, 1]) path(sink, [v3(sx * 0.14, 0.6, 0), v3(sx * 0.42, 0.5, 0), v3(sx * 0.72, 0.46, 0), v3(sx * 1.0, 0.48, 0)], 0.018, iron, 4);
-  sink.box(v3(0, 0.66, 0.135), 0.1, 0.02, 0.01, glow("#ff3355"));
+  const w = BOLLARD.side;
+  block(sink, 0, -0.2, 0, w, BOLLARD.height - CAP + 0.2, w, GRANITE);
+  pyramid(sink, v3(0, BOLLARD.height - CAP, 0), w, w, CAP, GRANITE_DARK);
+  sink.box(v3(0, CHAIN_Y + 0.02, 0), w + 0.02, 0.05, w + 0.02, IRON);
+  sink.box(v3(0, 0.5, 0), w + 0.012, 0.03, w + 0.012, glow("#ff3355"));
+  return sink;
+};
+
+/**
+ * A bollard's chain from its face along its +x to `end` metres from its centre: the next post's
+ * face or a lamp's shaft (G-032; the piece is turned along the chain). It sags by a twentieth of
+ * its length, five links' worth of tube.
+ */
+export const bollardChain = (end: number): MeshSink => {
+  const sink = new MeshSink();
+  const a = BOLLARD.side / 2;
+  const b = end;
+  const sag = 0.05 * (b - a);
+  const pts = Array.from({ length: 6 }, (_, i) => v3(a + ((b - a) * i) / 5, CHAIN_Y - sag * 4 * (i / 5) * (1 - i / 5), 0));
+  path(sink, pts, BOLLARD.chain, IRON, 4);
   return sink;
 };
 

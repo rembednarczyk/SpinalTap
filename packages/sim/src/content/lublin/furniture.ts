@@ -39,11 +39,18 @@ const shapeOf = (kind: StreetPropKind, variant: number): number => variant % (SH
 /** Trees grow 0.8 to 1.25 (bits 4 to 7), like the renderer's `scaleOf`. */
 const treeScale = (variant: number): number => 0.8 + 0.45 * (((variant >> 4) % 16) / 15);
 
+/**
+ * A granite bollard of the old town (G-032), as the renderer draws it: `side` square, `height`
+ * to the tip of its cap, `chain` the radius of its chain. Its `variant` holds its chains
+ * (`bollardChains` in `bollards.ts`).
+ */
+export const BOLLARD = { side: 0.34, height: 1.05, chain: 0.018 } as const;
+
 /** The parts of each solid kind, by shape. Heights are above the foot. */
 const PARTS: Partial<Record<StreetPropKind, (shape: number, variant: number) => readonly Part[]>> = {
   // Shape 0 the long ława of the squares (no back), 1 the bench with a back.
   bench: (s) => (s === 0 ? [box(0, 0, 1.1, 0.27, 0.55)] : [box(0, -0.03, 0.9, 0.3, 1.0)]),
-  bollard: () => [box(0, 0, 0.14, 0.14, 0.95)],
+  bollard: () => [box(0, 0, BOLLARD.side / 2, BOLLARD.side / 2, BOLLARD.height)],
   "waste-bin": () => [post(0.28, 0.95)],
   "lamp-pastoral": () => [post(0.2, 4)],
   "lamp-candelabra": () => [box(0, 0, 0.32, 0.32, 3.4)],
@@ -140,6 +147,96 @@ export const distanceToPiece = (item: StreetPropItem, x: number, z: number): num
     best = Math.min(best, inside ? 0 : edge);
   }
   return best;
+};
+
+/**
+ * The chains of the bollards (G-032). A bollard holds up to two chains, read from its
+ * `variant`: bits 0-8 where its chain along its +x ends (cm from its centre, at the next post's
+ * face or a lamp's shaft), bits 9-17 where a second chain ends, behind it, towards a lamp of the
+ * row, and bits 18-24 that chain's turn off its -x (degrees + 64); 0 for none.
+ */
+
+/** Radius of a pole's shaft at the chain's height, as the renderer draws it: the poles a row of bollards may run its chain through (G-032). */
+export const POLE_SHAFT: Readonly<Partial<Record<StreetPropKind, number>>> = {
+  "lamp-pastoral": 0.09,
+  "lamp-road": 0.11,
+  "lamp-modern-pole": 0.07,
+  "lamp-candelabra": 0.13,
+  "lamp-park": 0.055,
+  "traffic-signal": 0.07,
+  "trolley-pole": 0.135,
+};
+
+/** A chain a bollard holds: the yaw that turns the post's +x along it (the renderer's frame) and where it ends (m from the centre). */
+export interface BollardChain {
+  readonly yaw: number;
+  readonly end: number;
+  /** The chain behind the post, back to a lamp. */
+  readonly back: boolean;
+}
+
+const cm = (m: number): number => Math.max(0, Math.min(0x1ff, Math.round(m * 100)));
+
+/** The variant of a bollard with a chain ending `fwd` metres along its +x, and one `back` metres behind it, turned `turn` radians off its -x (towards +z). */
+export const chainVariant = (fwd: number, back = 0, turn = 0): number => {
+  const deg = Math.max(-64, Math.min(63, Math.round((turn * 180) / Math.PI)));
+  return cm(fwd) + (back > 0 ? cm(back) * 0x200 + (deg + 64) * 0x40000 : 0);
+};
+
+/** A bollard's chains; none for other kinds. */
+export const bollardChains = (item: StreetPropItem): BollardChain[] => {
+  if (item.prop !== "bollard") return [];
+  const v = item.variant;
+  const out: BollardChain[] = [];
+  const fwd = (v & 0x1ff) / 100;
+  const back = ((v >> 9) & 0x1ff) / 100;
+  if (fwd > BOLLARD.side / 2) out.push({ yaw: item.yaw, end: fwd, back: false });
+  if (back > BOLLARD.side / 2) {
+    const turn = ((((v >> 18) & 0x7f) - 64) * Math.PI) / 180;
+    const d = turnLocal(item.yaw, -Math.cos(turn), Math.sin(turn));
+    out.push({ yaw: Math.atan2(-d.z, d.x), end: back, back: true });
+  }
+  return out;
+};
+
+/** A bollard without some of its chains (whose far end the game left out). */
+export const dropChains = (item: StreetPropItem, drop: readonly BollardChain[]): StreetPropItem => {
+  const fwd = drop.some((c) => !c.back) ? 0 : item.variant & 0x1ff;
+  const back = drop.some((c) => c.back) ? 0 : item.variant & ~0x1ff;
+  return { ...item, variant: fwd + back };
+};
+
+/** The world direction a chain's yaw turns a post's +x to. */
+export const chainDir = (yaw: number): GroundPoint => ({ x: Math.cos(yaw), z: -Math.sin(yaw) });
+
+/** A bollard's chains in the world, from its face to their ends. */
+export const chainSegments = (item: StreetPropItem): { from: GroundPoint; to: GroundPoint }[] =>
+  bollardChains(item).map((c) => {
+    const d = chainDir(c.yaw);
+    return { from: { x: item.x + d.x * (BOLLARD.side / 2), z: item.z + d.z * (BOLLARD.side / 2) }, to: { x: item.x + d.x * c.end, z: item.z + d.z * c.end } };
+  });
+
+/** Points along a segment every `step` metres or less, both ends included. */
+export const alongSegment = (a: GroundPoint, b: GroundPoint, step: number): GroundPoint[] => {
+  const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / step));
+  return Array.from({ length: n + 1 }, (_, k) => ({ x: a.x + ((b.x - a.x) * k) / n, z: a.z + ((b.z - a.z) * k) / n }));
+};
+
+/** Is `piece` what a chain ending at `end` hangs on: a pole whose shaft it reaches? */
+export const anchors = (piece: StreetPropItem, end: GroundPoint): boolean => {
+  const r = POLE_SHAFT[piece.prop];
+  return r !== undefined && Math.hypot(piece.x - end.x, piece.z - end.z) <= r + 0.2;
+};
+
+/**
+ * Does a chain from `a` to `b` (its two ends) run through the solid of `piece`? Sampled every
+ * 5 cm within the chain's radius, a few centimetres short of either end.
+ */
+export const chainThrough = (a: GroundPoint, b: GroundPoint, piece: StreetPropItem): boolean => {
+  const len = Math.hypot(b.x - a.x, b.z - a.z);
+  if (len <= 0.1) return false;
+  const u = { x: (b.x - a.x) / len, z: (b.z - a.z) / len };
+  return alongSegment({ x: a.x + u.x * 0.05, z: a.z + u.z * 0.05 }, { x: b.x - u.x * 0.05, z: b.z - u.z * 0.05 }, 0.05).some((p) => distanceToPiece(piece, p.x, p.z) <= BOLLARD.chain);
 };
 
 /** Seen nowhere: the renderer draws the piece from the scenery's `street-props` view. */

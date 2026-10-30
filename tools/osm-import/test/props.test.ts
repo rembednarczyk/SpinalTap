@@ -51,7 +51,8 @@ describe("street furniture generator (ADR-0047)", () => {
         total++;
         expect(i.x >= c.bounds.minX - 0.05 && i.x <= c.bounds.maxX + 0.05 && i.z >= c.bounds.minZ - 0.05 && i.z <= c.bounds.maxZ + 0.05, `${i.prop} in ${c.id}`).toBe(true);
         expect(Math.abs(i.y - terrainHeightAt(c.terrain, i.x, i.z))).toBeLessThan(0.2);
-        expect(Number.isInteger(i.variant) && i.variant >= 0 && i.variant <= 0xffff).toBe(true);
+        // A bollard's chains take 25 bits (G-032), the rest's variant 16.
+        expect(Number.isInteger(i.variant) && i.variant >= 0 && i.variant <= (i.prop === "bollard" ? 0x1ffffff : 0xffff)).toBe(true);
       }
     }
     expect(total).toBeGreaterThan(3000);
