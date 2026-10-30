@@ -12,6 +12,7 @@ import { type RoomCut, type SceneryItem, chunkBuildings, chunkScenery } from "./
 import { BUILDING_CUTS, CLINIC_SITE, KOI_SITE, MAP_CHUNKS, PASSAGES } from "./lublin/sites";
 import { SHAPED_TERRAIN } from "./lublin/terrain";
 import { furnitureProps } from "./lublin/furniture";
+import { basinRimProps } from "./lublin/basins";
 import { GAME_ACTORS, GAME_PROPS, WORLD_STREET_PROPS } from "./street-props";
 import { PARKED_CARS, parkedProp, parkedView } from "./parked-cars";
 
@@ -91,7 +92,7 @@ export const WORLD_CHUNKS: readonly ChunkDef[] = [
       props: [...(MAP_BUILDINGS.get(c.id) ?? []), ...GAME_PROPS.filter((p) => mapChunkOf(p.center.x, p.center.z) === c.id)],
       actors: GAME_ACTORS.filter((a) => mapChunkOf(a.spawn.position.x, a.spawn.position.z) === c.id),
       ...(terrain ? { terrain } : {}),
-      street: [...furnitureProps(WORLD_STREET_PROPS[c.id] ?? []), ...PARKED_CARS.filter((p) => p.chunk === c.id).map(parkedProp)],
+      street: [...furnitureProps(WORLD_STREET_PROPS[c.id] ?? []), ...basinRimProps(c), ...PARKED_CARS.filter((p) => p.chunk === c.id).map(parkedProp)],
     };
   }),
   // Trasa Podziemna (ADR-0048): a chunk of its own over the cellars, last in the table, so it
