@@ -89,6 +89,18 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       const off = spots.filter((s) => !s.some((k) => k === "road" || k === "crossing" || k === "cobble" || k === "square")).length;
       return off > 0 ? [{ at: near(c.x, c.z), what: `${c.model} ${off}/5 off` }] : [];
     }),
+  /** A parked car with any of its footprint (sampled every half metre) on a zebra crossing. */
+  "parked-car-on-crossing": () =>
+    PARKED_CARS.flatMap((c) => {
+      const { width, length } = VEHICLE_SIZE[c.model];
+      const fx = Math.sin(c.yaw);
+      const fz = Math.cos(c.yaw);
+      let on = 0;
+      for (let a = -width / 2; a <= width / 2 + 1e-6; a += width / Math.ceil(width / 0.5))
+        for (let b = -length / 2; b <= length / 2 + 1e-6; b += length / Math.ceil(length / 0.5))
+          if (surfacesAt(c.x + fx * b + fz * a, c.z + fz * b - fx * a).includes("crossing")) on++;
+      return on > 0 ? [{ at: near(c.x, c.z), what: `${c.model} ${on} points on a zebra` }] : [];
+    }),
   /** A game block standing on the ground (not an awning or a deck) that floats or sinks. */
   "prop-off-ground": () =>
     GAME_PROPS.flatMap((p) => {
