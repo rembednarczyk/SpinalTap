@@ -272,6 +272,20 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (rzędy i obrót), packages/engine (model, łańcuch), packages/sim (`furniture.ts`, bryła)
 - Test przyjęcia: słupki w rzędzie mają obrót wzdłuż rzędu; łańcuch łączy dokładnie sąsiednie słupki rzędu (koniec łańcucha przy sąsiedzie, bez wolnych końców w powietrzu); słupek większy (wymiary z dokumentacji/zdjęć Lublina), bryła w sim zgodna z modelem; migawka NPR obejrzana i świadomie zaktualizowana, budżety bez podnoszenia.
 
+### G-033 Postać, która przechodzi w inne miejsce według flag, „umiera”: renderer gra upadek
+- Status: przyjęte (zgłoszenie użytkownika: Kaito „umiera” po pierwszej rozmowie)
+- Ważność: S2 · Zasięg: każda postać warunkowa (Kaito klinika → bar, cele wariantów kontraktów) · Koszt: mały
+- Dowód: po `met_fixer` `Streaming.syncPresence` usuwa Kaito z kliniki; `RenderSync` (`presentation/render-sync.ts:101`) zgłasza `despawn(id, "removed")`, bo usunięcie nie jest w `streamedOut`, a `CharacterViews.despawn` z `fall` gra animację śmierci.
+- Pakiet właściciela: packages/sim (`world/streaming.ts`, `presentation/render-sync.ts`)
+- Test przyjęcia: test sesji: po ustawieniu flagi postać warunkowa znika z `despawn(..., "unloaded")`; zabity NPC dalej dostaje `"removed"`.
+
+### G-034 Kaito od początku w Neon Koi (decyzja użytkownika)
+- Status: przyjęte (propozycja użytkownika: Kaito ma być u siebie od razu; zmienia start z ADR-0038)
+- Ważność: S3 · Zasięg: prolog · Koszt: średni
+- Zmiana: jedna postać Kaito w barze bez warunku `met_fixer`; prolog w `m0.ink` i cel HUD prowadzą z kliniki do Neon Koi; pierwsza rozmowa w barze.
+- Pakiet właściciela: packages/sim (`content/district-m0.ts`), packages/narrative (`ink/m0.ink`), packages/app (`objective.ts`)
+- Test przyjęcia: test sesji prologu: nowa gra w klinice, cel wskazuje Neon Koi, rozmowa z Kaito w barze ustawia `met_fixer` i daje zlecenie kuriera, Kaito się nie przemieszcza.
+
 ### G-006 Skręty aut na skrzyżowaniach
 - Status: w naprawie (decyzja użytkownika przy G-024: skręty w boczne ulice; ADR-0055)
 - Ważność: S3 · Zasięg: szeroki (33 ślepe końce pasów na skrzyżowaniach i 6 z G-024) · Koszt: duży
