@@ -122,7 +122,8 @@ export const facadeFrame = (b: MapBuilding, neighbour: NeighbourAt): FacadeFrame
   const levels = Math.max(1, Math.round(b.levels));
   const zone = Math.max(eave - b.base - (style.cornice ? 0.7 : 0.25), 2.4);
   const church = style.window === WINDOW_STYLE.church;
-  const storey = church ? zone / 1.25 : Math.min(Math.max(zone / (levels + 0.25), 2.4), 7.5);
+  // A free-standing tower stands in tiers of about 8 m; a church's windows are one tall row.
+  const storey = style.freeTower ? zone / Math.max(1, Math.round(zone / 8) + 0.25) : church ? zone / 1.25 : Math.min(Math.max(zone / (levels + 0.25), 2.4), 7.5);
   const walls: Wall[] = [];
   for (let i = 0; i < b.ring.length; i++) {
     const a = b.ring[i] as P2;

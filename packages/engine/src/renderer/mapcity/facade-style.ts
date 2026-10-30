@@ -53,6 +53,8 @@ export interface FacadeStyle {
   readonly roof: RoofKind;
   /** A bell tower (churches). */
   readonly tower: boolean;
+  /** The building is a free-standing tower: its storeys are tiers of about 8 m. */
+  readonly freeTower: boolean;
   /** Neon tube along the cornice. */
   readonly neonTrim: string | null;
   /** Signs over the shop windows (0 none). */
@@ -144,19 +146,29 @@ const roofKindFor = (s: StyleInput, rand: () => number): RoofKind => {
   return "hip";
 };
 
+/**
+ * A free-standing tower of the old town (Wieża Trynitarska): historic, sacred or civic, at
+ * least 20 m tall and two and a half times as tall as it is wide. It gets the tall, widely
+ * spaced windows of a civic building in tiers of about 8 m, a church's pale plaster and roof,
+ * no shops and no signs, instead of a tenement's grid of storeys.
+ */
+const isTower = (s: StyleInput): boolean => (s.use === "historic" || s.use === "church" || s.use === "civic") && s.height >= 20 && s.height >= 2.5 * s.width;
+
 /** The facade of a building from its descriptor: deterministic in `look`. */
 export const facadeStyle = (s: StyleInput): FacadeStyle => {
   const rand = prng((s.look ^ 0x51ab1e) >>> 0);
-  const window = windowFor(s.use, s.levels, rand);
-  const plaster = plasterFor(s.use, rand);
+  const tower = isTower(s);
+  const sacred = tower ? "church" : s.use;
+  const window = windowFor(tower ? "civic" : s.use, s.levels, rand);
+  const plaster = plasterFor(sacred, rand);
   const oldTown = s.use === "historic" || s.use === "residential" || s.use === "commercial";
-  const shopfront = s.shopfront !== undefined ? s.shopfront : s.use === "commercial" ? true : s.use === "residential" || s.use === "historic" ? rand() < 0.55 : s.use === "other" ? rand() < 0.25 : false;
+  const shopfront = tower ? false : s.shopfront !== undefined ? s.shopfront : s.use === "commercial" ? true : s.use === "residential" || s.use === "historic" ? rand() < 0.55 : s.use === "other" ? rand() < 0.25 : false;
   const roof = roofKindFor(s, rand);
   const flat = roof === "flat";
   const attic: AtticKind = window === WINDOW_STYLE.block || s.use === "garage" || s.use === "industrial" ? (flat ? "parapet" : "none") : flat ? (s.use === "historic" && rand() < 0.6 ? "crenel" : "parapet") : rand() < 0.3 ? "parapet" : "none";
-  const roofColor = roof === "dome" || (s.use === "church" && rand() < 0.6) ? pick(rand, ROOFS_COPPER) : oldTown && rand() < 0.7 ? pick(rand, ROOFS_TILE) : pick(rand, ROOFS_METAL);
+  const roofColor = roof === "dome" || (sacred === "church" && rand() < 0.6) ? pick(rand, ROOFS_COPPER) : oldTown && rand() < 0.7 ? pick(rand, ROOFS_TILE) : pick(rand, ROOFS_METAL);
   const bay = window === WINDOW_STYLE.civic ? 3.6 + rand() * 0.6 : window === WINDOW_STYLE.church ? 4.2 + rand() : window === WINDOW_STYLE.modern ? 3 + rand() * 0.6 : window === WINDOW_STYLE.block ? 2.9 + rand() * 0.3 : 2.6 + rand() * 0.6;
-  const lively = s.use === "commercial" || shopfront;
+  const lively = !tower && (s.use === "commercial" || shopfront);
   return {
     plaster,
     trim: lighten(plaster, 0.35),
@@ -171,6 +183,7 @@ export const facadeStyle = (s: StyleInput): FacadeStyle => {
     stringCourse: window === WINDOW_STYLE.tenement || window === WINDOW_STYLE.civic,
     roof,
     tower: s.use === "church",
+    freeTower: tower,
     neonTrim: lively && rand() < 0.4 ? pick(rand, NEON) : null,
     signs: lively ? 1 + Math.floor(rand() * 2) : 0,
     seed: rand(),

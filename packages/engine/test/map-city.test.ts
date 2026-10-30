@@ -31,6 +31,19 @@ describe("facades of map buildings (ADR-0044)", () => {
     expect(looks.size).toBeGreaterThan(12);
   });
 
+  it("gives a slender old-town tower tall windows in tiers and no shops, and leaves a tenement as it was", () => {
+    // Wieża Trynitarska: 42 m on a plan 14 m across, mapped as historic.
+    for (let look = 0; look < 20; look++) {
+      const tower = facadeStyle({ use: "historic", levels: 13, height: 42, roof: 6, look, area: 220, width: 13.9 });
+      expect(tower.window).toBe(WINDOW_STYLE.civic);
+      expect(tower.freeTower).toBe(true);
+      expect(tower.shopfront).toBe(false);
+      expect(tower.signs).toBe(0);
+      const tenement = facadeStyle({ use: "historic", levels: 4, height: 16, roof: 4, look, area: 220, width: 13.9 });
+      expect(tenement.window).toBe(WINDOW_STYLE.tenement);
+    }
+  });
+
   it("encodes storeys, bays, style and seed so the shader reads them back", () => {
     const [x, y] = wallMeta(3.6, 2.87, WINDOW_STYLE.tenement + SHOPFRONT_BIT, 0.4);
     expect(Math.floor(x + 0.0005) / 10).toBeCloseTo(3.6, 9);
