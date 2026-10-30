@@ -46,6 +46,18 @@ describe("heights from tags", () => {
     expect(massing({ building: "church", "tower:type": "bell_tower" }, opts).walls).toBe(30);
   });
 
+  it("keeps shelters and carports to one low storey without flats (G-017)", () => {
+    // The bus shelters on Aleja Tysiąclecia (w672635874: 14 m x 2 m, about 28 m²).
+    const stop = { amenity: "shelter", building: "yes", shelter_type: "public_transport" };
+    for (const tags of [stop, { building: "shelter" }, { building: "carport" }]) {
+      expect(buildingUse(tags)).toBe("garage");
+      const m = massing(tags, { ...opts, area: 28, look: 1 });
+      expect(m).toMatchObject({ levels: 1, roof: 0, source: "default" });
+      expect(m.walls).toBeLessThanOrEqual(3.5);
+    }
+    expect(massing(stop, { ...opts, area: 28, shops: true }).walls).toBeLessThanOrEqual(3.5);
+  });
+
   it("raises roofs by shape", () => {
     expect(roofHeight({ "roof:shape": "flat" }, "residential", 10)).toBe(0);
     expect(roofHeight({ "roof:shape": "gabled" }, "residential", 10)).toBe(3);
