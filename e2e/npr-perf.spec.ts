@@ -39,7 +39,9 @@ test("NPR reference frame matches the approved snapshot", async ({ page }) => {
 test("reference scene stays within the perf budget", async ({ page }) => {
   await page.goto("/?reference");
   await waitForGame(page);
-  within("reference", await sampleNow(page));
+  // The reference frame draws only its still (G-001): the sample is of the snapshot's frame.
+  await page.waitForFunction(() => window.__seki!.still, null, { timeout: 60_000 });
+  within("reference", await perf(page));
 });
 
 /** Checks a sample against its scene's budget and keeps it for the report. */

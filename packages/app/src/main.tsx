@@ -128,6 +128,8 @@ const applyControls = (s: typeof settings) => {
 
 /** Frames the renderer has updated its camera and city in (debug `frames()`, G-013). */
 let framesDrawn = 0;
+/** False while the reference frame waits for its city: the frames update it but draw nothing. */
+let drawScene = !reference;
 const loop = new FixedStepLoop(browserClock, {
   update: () => {
     const s = ui.getState().settings;
@@ -149,7 +151,7 @@ const loop = new FixedStepLoop(browserClock, {
     framesDrawn++;
     const player = renderer.cameraTargetTransform;
     if (player) audio.setListener({ position: player.position, yaw: player.yaw, speed: player.speed });
-    stage.scene.render();
+    if (drawScene) stage.scene.render();
   },
 });
 
@@ -265,20 +267,21 @@ if (reference) {
 }
 
 /**
- * The reference frame is a still: once the city round it is built in detail, a few more frames
- * settle the post-process and then rendering stops. Under SwiftShader a frame of Lublin takes
- * about 600 ms, and a canvas redrawn that slowly never gives the snapshot two equal captures
- * within its timeout (ADR-0046: the cause, not a longer timeout).
+ * The reference frame is a still: rendering stops once it is drawn complete. Under SwiftShader a
+ * frame of Lublin takes about 600 ms, and a canvas redrawn that slowly never gives the snapshot
+ * two equal captures within its timeout (ADR-0046: the cause, not a longer timeout).
+ * Its frames build the city but draw only once it is in and every shader round it compiled
+ * (G-001): SwiftShader rasterizes behind the page, so each frame drawn while Lublin streamed in
+ * or shaders compiled queued seconds of GPU work that the snapshot's first readback waited out.
+ * A drawn frame can ask for more shaders (shadows, the probe); the still is the first after which
+ * the scene stays ready.
  */
-const REFERENCE_SETTLE_FRAMES = 8;
-let settledFrames = 0;
 stage.engine.runRenderLoop(() => {
+  if (reference) drawScene = debug.ready && renderer.citySettled && stage.scene.isReady(true);
   loop.frame();
-  if (!reference || !debug.ready || !renderer.citySettled) return;
-  if (++settledFrames >= REFERENCE_SETTLE_FRAMES) {
-    stage.engine.stopRenderLoop();
-    debug.still = true;
-  }
+  if (!reference || !drawScene || !stage.scene.isReady(true)) return;
+  stage.engine.stopRenderLoop();
+  debug.still = true;
 });
 stage.scene.executeWhenReady(() => {
   debug.ready = true;
