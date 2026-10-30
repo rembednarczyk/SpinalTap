@@ -4,6 +4,7 @@
  * Point lists are flat `[x0, z0, x1, z1, …]` in metres rounded to 0.1.
  */
 import { type MarkingOut } from "./markings.ts";
+import { type PassageOut } from "./passages.ts";
 import { type BuildingUse, type GroundSurface, type TerrainGrid } from "../../../packages/core/src/world/city-geo.ts";
 
 export interface BuildingOut {
@@ -69,4 +70,6 @@ export interface ChunkOut {
   /** Road markings (ADR-0052). */
   readonly markings: readonly MarkingOut[];
   readonly pois: readonly PoiOut[];
+  /** Passages through the chunk's buildings (ADR-0048), when it has any. */
+  readonly passages?: readonly PassageOut[];
 }

@@ -87,6 +87,11 @@ Piwnice w chunku Rynku dawały 262 / 104 (szkielet i lampy rysowane spod bruku),
 - Test rutyny Hideo usuwa patrole przed strzałem na Rynku, bo patrol odpowiada na strzał.
 - Latarenki ścienne i ogródki Rynku daje generator mebli (ADR-0047). Ta zmiana ich nie dubluje.
 
+### Przejścia z mapy
+Importer (`tools/osm-import/src/passages.ts`) robi przejście z każdej drogi `tunnel=building_passage`, która wchodzi pod budynek i wychodzi z niego po drugiej stronie. Przejście biegnie prosto od wejścia do wyjścia i wystaje 0,6 m za obie fasady. Szerokość bierze z tagu `width`, a bez niego: przejazd (`service`) 3,2 m, deptak 3,4 m, ścieżka 2,4 m. Szersze od 3 m mają 4 m wysokości pod zwornikiem, węższe 3,4 m. Droga, która tylko wchodzi pod budynek (na podwórko, którego obrys nie wycina), przejścia nie dostaje: jej koniec otwierałby się w bryłę.
+
+Chunk ma `passages` z przejściami przez swoje budynki. `PASSAGES` w `sites.ts` dokłada je do bram zrobionych ręcznie i pomija budynki bram. W centrum jest ich 20, m.in. Rybna i Ku Farze na Starym Mieście oraz bramy kamienic przy Krakowskim Przedmieściu. Wcześniej dostawczaki na Rybnej i Ku Farze przejeżdżały przez ściany.
+
 ### Do dopracowania
 - Wykop pod piwnicami siedzi na siatce 5 m. Przy północno-wschodniej ścianie Trybunału bruk opada do 37 cm, 2 m dalej do 12 cm. Lepsze byłyby piwnice jako „studnia” w polu gruntu albo drobniejsza siatka pod Trybunałem.
 - Sklepienie bramy jest gładkie: bez cegieł, żeber i oświetlenia w przejściu. Deszcz pada w przejściu.

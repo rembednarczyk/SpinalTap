@@ -12,6 +12,7 @@ import { geoToWorld } from "./project.ts";
 import { type Marking, chunkMarkings, cutLine, roadMarkings, stopLines } from "./markings.ts";
 import { type Pt, type Rect, centroid, inRect, pointInRing, rectsOverlap, ringBounds } from "./geometry.ts";
 import { allPois, chunkPois, chunkStreets } from "./labels.ts";
+import { type PassageOut, buildingPassages } from "./passages.ts";
 import { type ChunkOut } from "./model.ts";
 import { type OsmData } from "./osm.ts";
 import { chunkTerrain, sampleField } from "./terrain.ts";
@@ -90,7 +91,16 @@ const sidewalkIndex = (lines: readonly Line[]) => {
 
 const grow = (r: Rect, m: number): Rect => ({ minX: r.minX - m, minZ: r.minZ - m, maxX: r.maxX + m, maxZ: r.maxZ + m });
 
-const generateChunk = (spec: ChunkSpec, src: HeightSource, buildings: readonly Area[], bands: readonly (Band & { box: Rect })[], lines: readonly Line[], pois: ReturnType<typeof allPois>, markings: readonly Marking[]) => {
+const generateChunk = (
+  spec: ChunkSpec,
+  src: HeightSource,
+  buildings: readonly Area[],
+  bands: readonly (Band & { box: Rect })[],
+  lines: readonly Line[],
+  pois: ReturnType<typeof allPois>,
+  markings: readonly Marking[],
+  passages: readonly PassageOut[],
+) => {
   const altitude = LUBLIN_ANCHOR.altitude;
   const t = chunkTerrain(sampleField(src, spec.rect, 12), spec.rect, altitude);
   const shopPoints = pois.filter((p) => p.kind === "shop" || p.kind === "food" || p.kind === "bar" || p.kind === "service").map((p) => p.at);
@@ -115,6 +125,8 @@ const generateChunk = (spec: ChunkSpec, src: HeightSource, buildings: readonly A
     spec.rect,
   );
   const r = spec.rect;
+  const own = new Set(out.map((b) => b.id));
+  const through = passages.filter((p) => own.has(p.building));
   const chunk: ChunkOut = {
     id: spec.id,
     district: spec.district.id,
@@ -125,6 +137,7 @@ const generateChunk = (spec: ChunkSpec, src: HeightSource, buildings: readonly A
     streets: chunkStreets(lines, spec.rect),
     markings: chunkMarkings(markings, spec.rect),
     pois: chunkPois(pois, spec.rect),
+    ...(through.length > 0 ? { passages: through } : {}),
   };
   const stats: ChunkStats = {
     id: spec.id,
@@ -197,6 +210,7 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
     if (near([at])) markings.push(...stopLines(`n${n.id}`, at, roads, onOther));
   }
   const pois = allPois(data);
-  const results = chunks.map((c) => generateChunk(c, src, buildings, bands, lines, pois, markings));
+  const passages = buildingPassages(lines.filter((l) => near(l.line)), buildings);
+  const results = chunks.map((c) => generateChunk(c, src, buildings, bands, lines, pois, markings, passages));
   return { chunks: results.map((r) => r.chunk), stats: results.map((r) => r.stats) };
 };

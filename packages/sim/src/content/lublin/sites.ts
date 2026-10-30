@@ -128,9 +128,15 @@ export const TRASA_PODZIEMNA = {
   hall: 3.65,
 } as const;
 
+/**
+ * Every passage through the map's buildings: the gates and Trasa Podziemna's vestibule by hand,
+ * then the tenements' gateways and the covered lanes from the map (Rybna, Ku Farze), the gates'
+ * own buildings left to the hand-made ones.
+ */
 export const PASSAGES: readonly PassageSite[] = [
   ...GATE_PASSAGES,
   { building: TRASA_PODZIEMNA.building, ...TRASA_PODZIEMNA.vestibule, height: TRASA_PODZIEMNA.hall, rise: 0.8, floor: TRASA_PODZIEMNA.door },
+  ...MAP_CHUNKS.flatMap((c) => c.passages ?? []).filter((p) => !GATE_PASSAGES.some((g) => g.building === p.building)),
 ];
 
 /** A box cut out of a map building's solid up to `bottom` (world y): rooms under it stay open. */

@@ -243,6 +243,12 @@ export const KRAKOWSKIE_CHUNKS: readonly LublinChunkData[] = [
       {"x":-129.2,"z":-38.9,"kind":"shop","tag":"shop=gold_buyer","name":"Mennica Polska"},
       {"x":-157.5,"z":-152,"kind":"sight","tag":"tourism=artwork","name":"harmonoise23112025"},
     ],
+    passages: [
+      {"building":"w69672600","from":{"x":-96.7,"z":-96.7},"to":{"x":-91.5,"z":-74.4},"width":2.4,"height":3.4,"rise":0.9},
+      {"building":"w55897040","from":{"x":-120.6,"z":-13.2},"to":{"x":-133.1,"z":-13.1},"width":3.2,"height":4,"rise":1.1},
+      {"building":"w55897053","from":{"x":-197.4,"z":-48.4},"to":{"x":-197.9,"z":-32.2},"width":3.2,"height":4,"rise":1.1},
+      {"building":"w1306444453","from":{"x":-168.2,"z":-47.4},"to":{"x":-168.7,"z":-31.5},"width":3.2,"height":4,"rise":1.1},
+    ],
   },
   {
     id: "krakowskie-1-0",
@@ -1109,6 +1115,9 @@ export const KRAKOWSKIE_CHUNKS: readonly LublinChunkData[] = [
       {"x":-119.5,"z":158.6,"kind":"shop","tag":"shop=hairdresser","name":"Męskie Klimaty Barber Shop"},
       {"x":-194.1,"z":68.6,"kind":"office","tag":"office=government","name":"Pierwszy Urząd Skarbowy"},
     ],
+    passages: [
+      {"building":"w232674395","from":{"x":42,"z":141.7},"to":{"x":29.5,"z":144.9},"width":3.2,"height":4,"rise":1.1},
+    ],
   },
   {
     id: "krakowskie-1-1",
@@ -1364,6 +1373,12 @@ export const KRAKOWSKIE_CHUNKS: readonly LublinChunkData[] = [
       {"x":183.5,"z":143.8,"kind":"shop","tag":"shop=hairdresser","name":"Piotr Oszust"},
       {"x":142.5,"z":98.5,"kind":"sight","tag":"historic=memorial","name":"Maria Rechtszaft"},
       {"x":213,"z":36.3,"kind":"office","tag":"office=ngo","name":"Fundacja Siła Jedności"},
+    ],
+    passages: [
+      {"building":"w69915878","from":{"x":212.8,"z":31.7},"to":{"x":220.6,"z":41.4},"width":3.2,"height":4,"rise":1.1},
+      {"building":"w232674409","from":{"x":133.4,"z":102.8},"to":{"x":136.5,"z":118.5},"width":3.2,"height":4,"rise":1.1},
+      {"building":"w69915878","from":{"x":232.8,"z":67.9},"to":{"x":235.7,"z":75},"width":3.2,"height":4,"rise":1.1},
+      {"building":"w232674407","from":{"x":46,"z":157.2},"to":{"x":30.7,"z":161},"width":3.2,"height":4,"rise":1.1},
     ],
   },
   {

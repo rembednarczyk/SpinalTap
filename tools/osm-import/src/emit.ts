@@ -17,6 +17,7 @@ const chunkText = (c: ChunkOut): string =>
     `    streets: ${list(c.streets)},`,
     `    markings: ${list(c.markings)},`,
     `    pois: ${list(c.pois)},`,
+    ...(c.passages ? [`    passages: ${list(c.passages)},`] : []),
     "  },",
   ].join("\n");
 

@@ -133,7 +133,7 @@ describe("routes and spots of the crowd", () => {
     for (const lane of west) expect(laneGeom(lane).length, lane.id).toBeGreaterThan(40);
   });
 
-  it("keep the squares' and alleys' walkers off the carriageways the traffic drives", () => {
+  it("keep the deptak's, the squares' and the alleys' walkers off the carriageways the traffic drives", () => {
     const segs = TRAFFIC_ROUTES.filter((r) => r.use !== "deliveries").flatMap((r) => r.points.slice(1).map((p, i) => [r.points[i]!, p] as const));
     const fromLanes = (x: number, z: number) =>
       Math.min(...segs.map(([[ax, az], [bx, bz]]) => {
@@ -142,7 +142,8 @@ describe("routes and spots of the crowd", () => {
         const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz || 1)));
         return Math.hypot(ax + dx * t - x, az + dz * t - z);
       }));
-    for (const lane of CROWD_LANES.filter((l) => l.id.includes("-square-"))) {
+    // The market's and the docks' own lanes are their set pieces' (ADR-0041).
+    for (const lane of CROWD_LANES.filter((l) => !l.id.startsWith("targ-") && !l.id.startsWith("doki-"))) {
       for (const [x, z] of lane.points) expect(fromLanes(x, z), `${lane.id} at ${x},${z}`).toBeGreaterThanOrEqual(2.5);
     }
   });

@@ -397,6 +397,10 @@ export const STARE_MIASTO_CHUNKS: readonly LublinChunkData[] = [
       {"x":683.4,"z":-65.2,"kind":"food","tag":"amenity=cafe","name":"Kawiarnia Legend"},
       {"x":631.3,"z":-43.8,"kind":"sight","tag":"historic=memorial","name":"Franciszka Arnsztajnowa"},
     ],
+    passages: [
+      {"building":"w66286347","from":{"x":691.1,"z":-124.4},"to":{"x":700.8,"z":-122.2},"width":2.4,"height":3.4,"rise":0.9},
+      {"building":"w364550282","from":{"x":708,"z":-81.9},"to":{"x":715.7,"z":-84},"width":2.4,"height":3.4,"rise":0.9},
+    ],
   },
   {
     id: "stare-miasto-0-1",
@@ -602,6 +606,9 @@ export const STARE_MIASTO_CHUNKS: readonly LublinChunkData[] = [
       {"x":472.1,"z":55.5,"kind":"food","tag":"amenity=fast_food","name":"Garmażerka Krokiecik"},
       {"x":544.2,"z":157.1,"kind":"sight","tag":"tourism=attraction","name":"Przystanek Lublin"},
       {"x":568,"z":40.9,"kind":"shop","tag":"shop=massage","name":"Pistacje Face&Body"},
+    ],
+    passages: [
+      {"building":"w66293430","from":{"x":566.4,"z":-14.9},"to":{"x":570.9,"z":-21.4},"width":3.4,"height":4,"rise":1.1},
     ],
   },
   {
@@ -844,6 +851,10 @@ export const STARE_MIASTO_CHUNKS: readonly LublinChunkData[] = [
       {"x":627.1,"z":45.8,"kind":"bar","tag":"amenity=pub","name":"Św. Michał"},
       {"x":677.6,"z":8.7,"kind":"sight","tag":"historic=memorial","name":"Kazimierz Kwiatkowski"},
       {"x":635.7,"z":138.6,"kind":"shop","tag":"shop=electrical","name":"Artykuły elektryczne"},
+    ],
+    passages: [
+      {"building":"w232362876","from":{"x":707.5,"z":133.6},"to":{"x":722,"z":147.3},"width":3.4,"height":4,"rise":1.1},
+      {"building":"w66293395","from":{"x":615.3,"z":45.3},"to":{"x":625.1,"z":38.4},"width":3.4,"height":4,"rise":1.1},
     ],
   },
 ];

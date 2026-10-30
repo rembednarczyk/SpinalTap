@@ -72,6 +72,19 @@ export interface LublinPoiData {
   readonly name: string;
 }
 
+/** A passage through a building of the chunk (ADR-0048), from a way the map has under it. */
+export interface LublinPassageData {
+  /** The building it runs through. */
+  readonly building: string;
+  /** World points a little beyond both facades. */
+  readonly from: { readonly x: number; readonly z: number };
+  readonly to: { readonly x: number; readonly z: number };
+  readonly width: number;
+  /** Clear height under the vault's crown, and how far the vault rises under it (m). */
+  readonly height: number;
+  readonly rise: number;
+}
+
 export interface LublinChunkData {
   readonly id: string;
   readonly district: "shinsekai-7" | "kanal" | "targ" | "doki";
@@ -85,6 +98,8 @@ export interface LublinChunkData {
   /** Road markings (ADR-0052), cut to the chunk: world polylines. */
   readonly markings: readonly LublinMarkingData[];
   readonly pois: readonly LublinPoiData[];
+  /** Passages through its buildings, when it has any. */
+  readonly passages?: readonly LublinPassageData[];
 }
 
 /**
