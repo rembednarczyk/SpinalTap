@@ -30,6 +30,7 @@ Zmiana w cudzym obszarze idzie przez zmianę kontraktu (port, typ zdarzenia, kom
 - Zmiana schematu zapisu: podbij `SAVE_SCHEMA_VERSION` i dodaj migrację w `packages/persistence/src/migrations.ts` z testem.
 - Zmiana reguł symulacji zmienia złoty hash w `packages/sim/test/determinism.test.ts`; aktualizuj go świadomie (`vitest -u`) i napisz w commicie dlaczego.
 - Zmiana wyglądu NPR: `pnpm build && pnpm exec playwright test e2e/npr-perf.spec.ts --update-snapshots=all`, a nową migawkę obejrzyj przed commitem.
+- Teksty dla gracza (ADR-0056): angielski domyślny, polski w opcjach. Nowy tekst trafia do katalogów `i18n/{en,pl}` w obu językach, a `core` i `sim` trzymają klucze, nie zdania. Skan `tools/i18n-scan` liczy polskie literały poza katalogami: baza tylko spada (`I18N_BASELINE=update`). Polski katalog zmieniasz tylko świadomie, bo gracz z polskim ustawieniem nie powinien widzieć zmian przy samym tłumaczeniu.
 
 ## Testy (ADR-0046)
 - Logikę i UI sprawdzaj testami sesji bez renderera (`packages/app/test`, fałszywy `RenderPort`) i testami komponentów (`packages/ui/test`). Przeglądarka tylko do rozruchu, rysowania (migawka NPR, budżety, modele), układu HUD na telefonie i dotyku.
