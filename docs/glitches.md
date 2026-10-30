@@ -5,7 +5,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ## Otwarte
 
 ### G-001 Test migawki NPR przekracza 90 s na wolnym runnerze CI
-- Status: weryfikacja PRZYJĘTE, w PR. Tryb `?reference` rysuje dopiero przy gotowej scenie; migawka 18–42 s zamiast 72 s. Ryzyko szczątkowe: `still` nie czeka na `ProbeSchedule` (inwalidacja sondy < 1 s przed gotowością); zapas w pomiarach > 2,6 s.
+- Status: naprawione (#39). Tryb `?reference` rysuje dopiero przy gotowej scenie; migawka 18–42 s zamiast 72 s. Ryzyko szczątkowe: `still` nie czeka na `ProbeSchedule` (inwalidacja sondy < 1 s przed gotowością); zapas w pomiarach > 2,6 s.
 - Ważność: S1 (czerwone CI) · Zasięg: każdy PR · Koszt: średni
 - Gdzie: `e2e/npr-perf.spec.ts` „NPR reference frame matches the approved snapshot”, PR #28 (E2E 1/3, dwa razy)
 - Dowód (pomiar lokalny, SwiftShader):
