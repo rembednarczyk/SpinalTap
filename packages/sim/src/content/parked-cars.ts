@@ -2,7 +2,7 @@ import { type GroundSurface, VEHICLE_SIZE, type VehicleModel, type ViewDescripto
 import type { StaticProp } from "./builders";
 import { furnitureClearance } from "./furniture-index";
 import { inBuilding, nearestWall } from "./lublin/places";
-import { type Pt, ROAD_CHAINS, polylineLength, surfacesAt } from "./lublin/roads";
+import { type Pt, ROAD_CHAINS, type RoadChain, polylineLength, surfacesAt } from "./lublin/roads";
 import { MAP_CHUNKS } from "./lublin/sites";
 import { groundY } from "./lublin/terrain";
 import { clearOfGame } from "./street-props";
@@ -114,13 +114,32 @@ const clearOfZebras = (x: number, z: number, yaw: number, model: VehicleModel): 
   );
 };
 
+const CAR_STREETS = ROAD_CHAINS.filter((c) => c.use === "cars");
+/** Each car road's carriageway reach right and left of its axis (m), measured once. */
+const CARRIAGEWAY = new Map(CAR_STREETS.map((c) => [c, [roadHalfWidth(c.points, 1), roadHalfWidth(c.points, -1)] as const]));
+
+/**
+ * Is a car of half width `hw` at (x, z) off the carriageway of every car road but its own? A
+ * street's kerb line is set from how far paving reaches beside it, and beside a street that runs
+ * alongside another one (a loop by an avenue) that paving is the other road's: the kerb then
+ * falls on its lanes, which a short piece of road without a lane of its own does not guard.
+ */
+const offOtherRoads = (x: number, z: number, hw: number, own: RoadChain): boolean =>
+  CAR_STREETS.every((c) => {
+    if (c === own) return true;
+    const q = projectOn(c.points, x, z);
+    const [right, left] = CARRIAGEWAY.get(c)!;
+    return q.d >= (q.side >= 0 ? right : left) + hw;
+  });
+
 /**
  * Is a car's footprint at (x, z), facing yaw, wholly on a carriageway or a square and free of
- * walls, furniture, the game's places and other streets' axes? A street's kerb line is set from
- * its median width, so where the carriageway narrows (a bend, a pinch by a pavement) the bay
- * falls on the grass or the pavement unless each corner is checked.
+ * walls, furniture, the game's places and other streets' axes (and carriageways, by the kerb of
+ * `own`)? A street's kerb line is set from its median width, so where the carriageway narrows
+ * (a bend, a pinch by a pavement) the bay falls on the grass or the pavement unless each corner
+ * is checked.
  */
-const fits = (x: number, z: number, yaw: number, model: VehicleModel): boolean => {
+const fits = (x: number, z: number, yaw: number, model: VehicleModel, own?: RoadChain): boolean => {
   if (!parkable(x, z) || !footprint(x, z, yaw, model, 0).every(([px, pz]) => parkable(px, pz)) || !clearOfZebras(x, z, yaw, model)) return false;
   const { width, length } = VEHICLE_SIZE[model];
   const fx = Math.sin(yaw);
@@ -132,6 +151,7 @@ const fits = (x: number, z: number, yaw: number, model: VehicleModel): boolean =
   }
   // Off every lane cars drive (a junction, a bend of a crossing street).
   for (const r of TRAFFIC_ROUTES) if (r.use !== "deliveries" && projectOn(r.points, x, z).d < LANE_CLEAR + width / 2) return false;
+  if (own && !offOtherRoads(x, z, width / 2, own)) return false;
   return clearOfGame(x, z, length / 2, length / 2) && chunkOf(x, z) !== "";
 };
 
@@ -159,7 +179,7 @@ const kerbCars = (): ParkedCar[] => {
         const yaw = turned ? Math.atan2(-p.tx, -p.tz) : Math.atan2(p.tx, p.tz);
         const model = modelAt(p.x, p.z);
         // The kerb line is the street's median one; where the carriageway is locally narrower the car edges in.
-        const shift = KERB_NUDGE.find((d) => fits(p.x + p.tz * d, p.z - p.tx * d, yaw, model));
+        const shift = KERB_NUDGE.find((d) => fits(p.x + p.tz * d, p.z - p.tx * d, yaw, model, c));
         if (shift === undefined) continue;
         const x = p.x + p.tz * shift;
         const z = p.z - p.tx * shift;

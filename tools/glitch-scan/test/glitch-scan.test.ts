@@ -6,13 +6,13 @@ import { CROWD_LANES } from "../../../packages/sim/src/content/crowd";
 import { furnitureClearance } from "../../../packages/sim/src/content/furniture-index";
 import { furniturePrisms, furnitureRadius } from "../../../packages/sim/src/content/lublin/furniture";
 import { inBuilding, nearestWall } from "../../../packages/sim/src/content/lublin/places";
-import { ROAD_CHAINS, surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
+import { ROAD_CHAINS, type RoadChain, surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
 import { clearedBuilding } from "../../../packages/sim/src/content/cleared-buildings";
 import { CLEARED_BUILDINGS, MAP_CHUNKS, PASSAGES } from "../../../packages/sim/src/content/lublin/sites";
 import { groundY } from "../../../packages/sim/src/content/lublin/terrain";
 import { PARKED_CARS } from "../../../packages/sim/src/content/parked-cars";
 import { GAME_PROPS, WORLD_STREET_PROPS } from "../../../packages/sim/src/content/street-props";
-import { TRAFFIC_ROUTES, type TrafficRoute, pointAt, projectOn } from "../../../packages/sim/src/content/traffic";
+import { TRAFFIC_ROUTES, type TrafficRoute, pointAt, projectOn, roadHalfWidth } from "../../../packages/sim/src/content/traffic";
 
 /**
  * The glitch scan (ADR-0054): the map's known kinds of glitch counted over the whole city, each
@@ -27,6 +27,8 @@ type Finding = { readonly at: string; readonly what: string };
 const BASELINE = join(__dirname, "glitch-baseline.json");
 const cars = TRAFFIC_ROUTES.filter((r) => r.use !== "deliveries");
 const carStreets = ROAD_CHAINS.filter((c) => c.use === "cars");
+/** The side streets cars park along (ADR-0050). */
+const kerbStreets = carStreets.filter((c) => c.kind === "residential" || c.kind === "tertiary" || c.kind === "unclassified");
 
 /** Samples along a lane every `step` metres. */
 const along = (r: TrafficRoute, step: number) => {
@@ -220,6 +222,30 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
         if (Math.abs(dot) >= 0.7 && (!street || q.d < street.d)) street = { name: r.name, d: q.d, dot, directed: r.oneway || r.name.startsWith("Rondo") };
       }
       return street?.directed && street.dot < 0 ? [{ at: near(c.x, c.z), what: `${c.model} against ${street.name}` }] : [];
+    }),
+  /**
+   * A kerb car on the carriageway of another car road than the one it parks by: nearer that
+   * road's axis than the paving reaches on the car's side of it and half a metre. Its own street
+   * is the nearest side street within 12 m whose axis runs within 20° of the car; cars with none
+   * (the square's bays) are no kerb cars.
+   */
+  "parked-car-on-other-road": () =>
+    PARKED_CARS.flatMap((c) => {
+      const fx = Math.sin(c.yaw);
+      const fz = Math.cos(c.yaw);
+      let own: { street: RoadChain; d: number } | undefined;
+      for (const r of kerbStreets) {
+        const q = projectOn(r.points, c.x, c.z);
+        const t = pointAt(r.points, q.s);
+        if (q.d <= 12 && Math.abs(t.tx * fx + t.tz * fz) >= Math.cos((20 * Math.PI) / 180) && (!own || q.d < own.d)) own = { street: r, d: q.d };
+      }
+      if (!own) return [];
+      const by = own.street;
+      return carStreets.flatMap((r) => {
+        if (r === by) return [];
+        const q = projectOn(r.points, c.x, c.z);
+        return q.d < roadHalfWidth(r.points, q.side >= 0 ? 1 : -1) + 0.5 ? [{ at: near(c.x, c.z), what: `${c.model} by ${by.name} ${q.d.toFixed(1)} m from ${r.name}` }] : [];
+      });
     }),
   /** A game block standing on the ground (not an awning or a deck) that floats or sinks. */
   "prop-off-ground": () =>
