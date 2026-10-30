@@ -6,13 +6,13 @@ import { CROWD_LANES } from "../../../packages/sim/src/content/crowd";
 import { furnitureClearance } from "../../../packages/sim/src/content/furniture-index";
 import { furniturePrisms, furnitureRadius } from "../../../packages/sim/src/content/lublin/furniture";
 import { inBuilding, nearestWall } from "../../../packages/sim/src/content/lublin/places";
-import { ROAD_CHAINS, type RoadChain, surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
+import { ROAD_CHAINS, type RoadChain, polylineLength, surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
 import { clearedBuilding } from "../../../packages/sim/src/content/cleared-buildings";
 import { CLEARED_BUILDINGS, MAP_CHUNKS, PASSAGES } from "../../../packages/sim/src/content/lublin/sites";
 import { groundY } from "../../../packages/sim/src/content/lublin/terrain";
 import { PARKED_CARS } from "../../../packages/sim/src/content/parked-cars";
 import { GAME_PROPS, WORLD_STREET_PROPS } from "../../../packages/sim/src/content/street-props";
-import { TRAFFIC_ROUTES, type TrafficRoute, pointAt, projectOn, roadHalfWidth } from "../../../packages/sim/src/content/traffic";
+import { MIN_ROUTE, TRAFFIC_ROUTES, type TrafficRoute, pointAt, projectOn, roadHalfWidth } from "../../../packages/sim/src/content/traffic";
 
 /**
  * The glitch scan (ADR-0054): the map's known kinds of glitch counted over the whole city, each
@@ -132,6 +132,9 @@ const setPieceBlocks: readonly Rect[] = GAME_PROPS.flatMap((p) => {
   return CLEARED_BUILDINGS.some((c) => overlaps(c, r)) ? [r] : [];
 });
 
+/** The road chains (by index) with a car lane: a lane's id names its chain, two when it turns round onto another. */
+const laneChains = new Set(TRAFFIC_ROUTES.filter((r) => r.use === "cars").flatMap((r) => [...r.id.matchAll(/#(\d+):/g)].map((m) => Number(m[1]))));
+
 const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /** A car lane off every road surface (on grass, a square, a pavement), away from the map's edges. */
   "car-lane-off-road": () =>
@@ -139,9 +142,9 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /**
    * A car lane (trolleybuses too) that ends inside the map, more than 6 m from its edge, with no
    * lane starting within 3 m of its end the same way: its vehicles stop there and wait while the
-   * player watches. What is left: the junctions without turns (G-006, later), the gap in Aleja
-   * Tysiąclecia (G-020), the chunk seams (G-021), the short laneless chains (G-022) and the
-   * one-way streets running into a pedestrian one (G-023, no lane back to turn round onto).
+   * player watches. What is left: the junctions without turns (G-006, later), the chunk seams
+   * (G-021), the short laneless chains (G-022) and the one-way streets running into a pedestrian
+   * one (G-023, no lane back to turn round onto).
    */
   "lane-dead-end": () => {
     const starts = cars.map((r) => ({ r, p: pointAt(r.points, 0) }));
@@ -152,6 +155,18 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       return met ? [] : [{ at: near(e.x, e.z), what: r.id }];
     });
   },
+  /**
+   * A car road too short for a lane between two roads of the same kind and way that have one: a
+   * hole in the street where its cars stop at a dead end (a street split by a stray name in OSM).
+   */
+  "car-road-hole": () =>
+    carStreets.flatMap((c) => {
+      if (polylineLength(c.points) >= MIN_ROUTE) return [];
+      const ends = [c.points[0]!, c.points[c.points.length - 1]!];
+      const joins = (p: (typeof ends)[number]) =>
+        ROAD_CHAINS.some((o, k) => o !== c && laneChains.has(k) && o.kind === c.kind && o.oneway === c.oneway && [o.points[0]!, o.points[o.points.length - 1]!].some((q) => Math.hypot(q[0] - p[0], q[1] - p[1]) < 1));
+      return ends.every(joins) ? [{ at: near(ends[0]![0], ends[0]![1]), what: `${c.name} ${polylineLength(c.points).toFixed(1)} m` }] : [];
+    }),
   /** A lane through a building's solid (a delivery van too), its passages aside. */
   "lane-in-building": () => TRAFFIC_ROUTES.flatMap((r) => along(r, 1).filter((p) => inBuilding(p.x, p.z) && !inPassage(p.x, p.z)).map((p) => ({ at: near(p.x, p.z), what: r.id }))),
   /** A crowd lane's walker on a car lane (the set pieces' own lanes aside). */

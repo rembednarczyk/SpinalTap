@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { type DomainEvents, VEHICLE_SIZE, hm } from "@seki/core";
 import { Simulation, ground, runReplay, stateHash, type Entity } from "../src";
 import { TRAFFIC_ROUTES, TURN_SPEED, pointAt, projectOn } from "../src/content/traffic";
-import { onRoad } from "../src/content/lublin/roads";
+import { ROAD_CHAINS, onRoad, polylineLength } from "../src/content/lublin/roads";
 import { PARKED_CARS } from "../src/content/parked-cars";
 import { furnitureClearance } from "../src/content/furniture-index";
 import { furnitureRadius } from "../src/content/lublin/furniture";
@@ -63,6 +63,16 @@ describe("the lanes of the traffic (ADR-0050)", () => {
     expect(ways(-102.6, 90).length).toBeGreaterThan(0);
     expect(new Set(ways(-102.6, 90))).toEqual(new Set([1]));
     expect(new Set(ways(-111, 90))).toEqual(new Set([-1]));
+  });
+
+  it("the west carriageway of Aleja Tysiąclecia is one street with a lane all the way and a trolleybus (G-020)", () => {
+    const west = ROAD_CHAINS.filter((c) => c.name === "Aleja Tysiąclecia" && projectOn(c.points, 912, 333).d < 3);
+    expect(west).toHaveLength(1);
+    expect(polylineLength(west[0]!.points)).toBeCloseTo(472, -1);
+    const near = (use: string, x: number, z: number) => TRAFFIC_ROUTES.some((r) => r.use === use && r.street === "Aleja Tysiąclecia" && projectOn(r.points, x, z).d < 2);
+    expect(near("cars", 912, 333)).toBe(true);
+    expect(near("trolley", 912, 333)).toBe(true);
+    expect(near("trolley", 1000, 331)).toBe(true);
   });
 
   it("the roads are busy in the rush hour, quiet at night; delivery vans only in the morning", () => {
@@ -275,6 +285,31 @@ describe("the traffic in the simulation (ADR-0050)", () => {
     }
     expect(through).toBeGreaterThan(0);
     expect(fastest).toBeLessThanOrEqual(TURN_SPEED + 0.01);
+  });
+
+  it("put back on its timetable out of sight inside a turn round, a vehicle drives it slowly (G-028)", () => {
+    // The player by the market looking west, away from the turns round before it.
+    const sim = busySim(3, ground(745, 350));
+    teleportPlayer(sim, ground(745, 350), -Math.PI / 2);
+    let moved: (Entity & { vehicle: NonNullable<Entity["vehicle"]> }) | undefined;
+    for (let t = 0; t < 60 * 60 && !moved; t++) {
+      sim.step();
+      moved = vehicles(sim).find((v) => {
+        const turn = TRAFFIC_ROUTES[v.vehicle.route]!.turns?.[0];
+        const tt = timetable(vehiclePlan(sim.seed, v.vehicle.route, v.vehicle.index), sim.clock);
+        return turn !== undefined && tt.v > TURN_SPEED && tt.s > turn[0] + 5 && tt.s < turn[1] - 5;
+      });
+    }
+    expect(moved).toBeDefined();
+    const v = moved!;
+    // Far behind its timetable at a main road's speed, as after a long hold-up behind a trolleybus.
+    const tt = timetable(vehiclePlan(sim.seed, v.vehicle.route, v.vehicle.index), sim.clock);
+    v.vehicle.s = tt.s - 60;
+    v.vehicle.v = 13.5;
+    sim.step();
+    const turn = TRAFFIC_ROUTES[v.vehicle.route]!.turns![0]!;
+    expect(v.vehicle.s).toBeGreaterThan(turn[0]);
+    expect(v.vehicle.v).toBeLessThanOrEqual(TURN_SPEED + 0.01);
   });
 
   it("parked cars are solids of their chunk", () => {
