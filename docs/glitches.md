@@ -161,14 +161,23 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Gdzie: Plac Litewski (20, 10), kadr z yaw 3,14
 - Dowód: zrzut naprawiacza G-013 (pionowy pas czarnych poziomych kresek na środku bruku; może decal albo odpływ).
 
-### G-019 Auto z krawężnika Cerkiewnej wysunięte na jezdnię Alei Tysiąclecia
-- Status: zgłoszone (do potwierdzenia przez łowcę)
-- Ważność: S3 (proponowana) · Zasięg: lokalny · Koszt: mały
-- Gdzie: (920,0, 329,9), Aleja Tysiąclecia przy Cerkiewnej
-- Dowód: weryfikator G-015, sonda: auto 2,5 m od osi Alei, pod kątem ok. 35° do niej; pozycja sprzed G-015.
-- Przyczyna (przypuszczalna): `kerbCars()` sprawdza tylko powierzchnię, nie odległość od osi innej jezdni; krawężnik Cerkiewnej przy wlocie leży na Alei.
+### G-019 Auto z jednokierunkowej pętli Cerkiewnej stoi na trzypasmowej jezdni Alei Tysiąclecia
+- Status: przyjęte (potwierdzone pomiarem łowcy)
+- Ważność: S3 · Zasięg: lokalny, trasa główna · Koszt: mały
+- Gdzie: (920,02, 329,90), hatchback; 1 na 81 aut w mieście
+- Dowód: 2,49 m od osi „Aleje Tysiąclecia” (OSM way 739432828, primary, 3 pasy), kąt 35°; pętla Cerkiewnej (ways 66322976, 422659195) leży 7–13 m od osi Alei bez pobocza.
+- Przyczyna: `roadHalfWidth()` (`traffic.ts:102`) skanuje każdą nawierzchnię jezdni, więc lewy krawężnik pętli trafia za Aleję (limit 9 m) i `parked-cars.ts:155` stawia auto na pasie Alei; `fits()` sprawdza tylko pasy `TRAFFIC_ROUTES`, a odcinek Alei (36,4 m < `MIN_ROUTE` 45) nie ma pasa.
 - Pakiet właściciela: packages/sim (`content/parked-cars.ts`)
-- Test przyjęcia: kontrola skanu „auto zaparkowane bliżej niż pół szerokości jezdni od osi innej drogi” daje 0.
+- Test przyjęcia: kontrola skanu `parked-car-on-other-road` (auto bliżej niż pół szerokości + 0,5 m od osi innej drogi dla aut) daje 0; dziś 1.
+
+### G-020 Odcinek Alei Tysiąclecia przy Cerkiewnej bez pasa ruchu (literówka nazwy w OSM)
+- Status: zgłoszone (do potwierdzenia)
+- Ważność: S2 (proponowana, jeśli auta przeskakują albo omijają odcinek trasy głównej) · Zasięg: szeroki · Koszt: mały
+- Gdzie: x 894–930, z ok. 331–335; OSM way 739432828 „Aleje Tysiąclecia” (reszta to „Aleja Tysiąclecia”)
+- Dowód: łowca G-019: łańcuch ma 36,4 m < `MIN_ROUTE` (`traffic.ts:83`), więc nie dostaje pasa; pasy #81 i #82 kończą się na jego krańcach.
+- Przyczyna (przypuszczalna): łączenie łańcuchów po nazwie; literówka rozbija Aleję na krótki kawałek.
+- Pakiet właściciela: tools/osm-import (normalizacja nazwy) albo packages/sim (`traffic.ts`)
+- Test przyjęcia: do ustalenia po potwierdzeniu: ciągłość pasów wzdłuż Alei przez ten odcinek.
 
 ### G-006 Skręty aut na skrzyżowaniach
 - Status: później (to funkcja, nie glitch: wymaga sieci pasów; ADR-0050 „Na później”)
