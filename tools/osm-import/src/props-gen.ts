@@ -11,6 +11,7 @@ import { type Pt, centroid } from "./geometry.ts";
 import { MAPPED, propOf, withShape } from "./props-kinds.ts";
 import { type SideMode, type Station, evenStations, fnv, offRoad, offWall, openFacing, scatter, sideOffset, stations, towardsStreet, unit, yawOf } from "./props-place.ts";
 import { Site } from "./props-site.ts";
+import { SolidIndex, clearSpot } from "./props-solid.ts";
 import { nearTraffic, placeStreetGroup } from "./props-streets.ts";
 
 /** One group of the plan, as far as placement reads it. */
@@ -61,6 +62,8 @@ export interface PropsStats {
   readonly offRoad: number;
   readonly onRoad: number;
   readonly merged: number;
+  /** Pieces dropped because their solid ran into one placed before, with no clear spot beside. */
+  readonly crowded: number;
   /** Per group of the plan: pieces asked for and pieces placed. */
   readonly perItem: Record<string, [number, number]>;
 }
@@ -322,11 +325,13 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
   const perKind: Record<string, number> = {};
   const perDistrict: Record<string, number> = {};
   const kept = new Map<StreetPropKind, Pt[]>();
+  const solids = new SolidIndex();
   const perItem: Record<string, [number, number]> = {};
   for (const item of plan.items) if (propOf(item.kind)) perItem[item.id] = [item.count ?? 0, 0];
   let outside = 0;
   let inBuilding = 0;
   let merged = 0;
+  let crowded = 0;
   let moved = 0;
   let onRoad = 0;
   for (const placedAt of placed) {
@@ -362,11 +367,20 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
       merged++;
       continue;
     }
-    same.push(x.p);
-    kept.set(x.prop, same);
     const hash = fnv(x.key) & 0xffff;
     const variant = x.shape === undefined ? hash : withShape(hash, x.prop, x.shape);
-    byChunk.get(chunk.id)!.push({ prop: x.prop, x: r1(x.p.x), y: r2(site.heightAt(x.p)), z: r1(x.p.z), yaw: r2(facingOf(site, x)), variant });
+    // Earlier groups win: a bin beside a bench steps aside from a tree's trunk, on the same ground.
+    const surface = site.surfaceAt(x.p);
+    const fits = (q: Pt) => site.surfaceAt(q) === surface && site.chunkAt(q) === chunk && (room === undefined || offWall(site, q, room) === q);
+    const item = clearSpot(solids, { prop: x.prop, x: r1(x.p.x), y: 0, z: r1(x.p.z), yaw: r2(facingOf(site, x)), variant }, fits);
+    if (!item) {
+      crowded++;
+      continue;
+    }
+    same.push({ x: item.x, z: item.z });
+    kept.set(x.prop, same);
+    solids.add(item);
+    byChunk.get(chunk.id)!.push({ ...item, y: r2(site.heightAt(item)) });
     perKind[x.prop] = (perKind[x.prop] ?? 0) + 1;
     perDistrict[chunk.district] = (perDistrict[chunk.district] ?? 0) + 1;
     const from = x.from ?? "";
@@ -374,5 +388,5 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
   }
   const mapped: Record<string, string> = {};
   for (const item of plan.items) if (MAPPED[item.kind]) mapped[item.kind] = MAPPED[item.kind]!.prop;
-  return { byChunk, stats: { perKind, perDistrict, skipped, mapped, outside, inBuilding, offRoad: moved, onRoad, merged, perItem } };
+  return { byChunk, stats: { perKind, perDistrict, skipped, mapped, outside, inBuilding, offRoad: moved, onRoad, merged, crowded, perItem } };
 };

@@ -4,6 +4,7 @@
   "walker-on-car-lane": 0,
   "furniture-in-car-lane": 1,
   "furniture-in-wall": 0,
+  "furniture-overlap": 0,
   "furniture-in-building": 0,
   "parked-car-in-furniture": 0,
   "parked-car-off-road": 0,
