@@ -126,7 +126,7 @@ const applyControls = (s: typeof settings) => {
   applyEffects(renderer, s);
 };
 
-/** Frames the renderer has updated its camera and city in (debug `frames()`, G-013). */
+/** Frames drawn after the renderer updated its camera and city in them (debug `frames()`, G-013). */
 let framesDrawn = 0;
 /** False while the reference frame waits for its city: the frames update it but draw nothing. */
 let drawScene = !reference;
@@ -148,10 +148,13 @@ const loop = new FixedStepLoop(browserClock, {
     }
     renderer.setScanning(ui.getState().scanning);
     renderer.frame(stage.engine.getDeltaTime() / 1000);
-    framesDrawn++;
     const player = renderer.cameraTargetTransform;
     if (player) audio.setListener({ position: player.position, yaw: player.yaw, speed: player.speed });
-    if (drawScene) stage.scene.render();
+    // A frame waits for the GPU to catch up (G-029); the reference still is drawn as it comes.
+    if (!drawScene || (!reference && !stage.pacer.canDraw)) return;
+    stage.scene.render();
+    if (!reference) stage.pacer.drawn();
+    framesDrawn++;
   },
 });
 
