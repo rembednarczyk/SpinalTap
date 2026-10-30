@@ -84,6 +84,22 @@ export type SideMode = "kerb" | "facade" | "front" | "path";
 const SIDE_REACH = 16;
 const FACADE_REACH = 36;
 
+/**
+ * The wall between the last open sample (`inside` − 0.5) and the first one in a building, to a
+ * centimetre: a lantern hung 0.3 m off a wall placed by the 0.5 m step alone ended up to a
+ * quarter of a metre inside it, its halo glowing out of the plaster.
+ */
+const facadeAt = (site: Site, at: (d: number) => Pt, inside: number): number => {
+  let open = inside - 0.5;
+  let hit = inside;
+  while (hit - open > 0.01) {
+    const mid = (open + hit) / 2;
+    if (site.surfaceAt(at(mid)) === "building") hit = mid;
+    else open = mid;
+  }
+  return open;
+};
+
 /** Where a thing beside the axis goes: the offset along the normal, or null when there is no place. */
 export const sideOffset = (site: Site, p: Pt, n: Pt, mode: SideMode, fallback: number): number | null => {
   const at = (d: number): Pt => ({ x: p.x + n.x * d, z: p.z + n.z * d });
@@ -108,7 +124,7 @@ export const sideOffset = (site: Site, p: Pt, n: Pt, mode: SideMode, fallback: n
     if (axisRoad && walkFrom === null && s !== "road") walkFrom = d;
     if (!axisRoad && road === null && s === "road") road = d;
   }
-  if (mode === "facade") return building === null ? null : building - 0.3;
+  if (mode === "facade") return building === null ? null : facadeAt(site, at, building) - 0.3;
   if (mode === "front") return building === null ? fallback : Math.max(building - fallback, 0.8);
   // Kerb: on the pavement just past the road's edge, or the fallback on a pedestrian street.
   let d: number;

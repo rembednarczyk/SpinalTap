@@ -1,6 +1,7 @@
 import { type BaseTexture, Constants, DynamicTexture, type Scene, ShaderMaterial, Texture } from "../../babylon";
 import { prng } from "../city-kit-data";
 import { drawGlyph } from "../signage";
+import { AD_BANNERS, AD_LANDSCAPE } from "./canyon-signs";
 import { MAP_SIGN_BLADES, MAP_SIGN_BOARDS } from "./sign-plan";
 
 const VERTEX = /* glsl */ `
@@ -42,6 +43,7 @@ varying vec3 vWorld;
 varying float vFacing;
 uniform sampler2D atlas;
 uniform sampler2D names;
+uniform sampler2D ads;
 uniform vec3 cameraPosition;
 uniform float time;
 uniform float intensity;
@@ -61,7 +63,29 @@ void main(void) {
   vec3 col = vColor.rgb;
   float a = 0.0;
   float hum = 0.92 + 0.08 * sin(time * 2.3 + seed * 5.0 + vWorld.x) * (1.0 - reduce);
-  if (kind > 5.5) {
+  if (kind > 8.5) {
+    // Low mist in the canyons (ADR-0051): soft drifting sheets fading at their edges and near the eye.
+    float edge = smoothstep(0.0, 0.3, uv.x) * smoothstep(1.0, 0.7, uv.x) * smoothstep(0.0, 0.35, uv.y) * smoothstep(1.0, 0.65, uv.y);
+    float drift = noise(vWorld.xz * 0.12 + vec2(time * 0.04, seed * 9.0)) * noise(vWorld.xz * 0.31 - vec2(0.0, time * 0.06));
+    float eye = smoothstep(2.0, 6.0, length(cameraPosition - vWorld));
+    a = 0.16 * edge * drift * eye;
+    col *= 0.55;
+  } else if (kind > 7.5) {
+    // A beam of light from a billboard to the street, dust drifting in it.
+    float across = 1.0 - abs(uv.x * 2.0 - 1.0);
+    float dust = 0.65 + 0.35 * noise(vWorld.xz * 0.9 + vec2(0.0, vWorld.y * 0.6 - time * 0.35));
+    a = 0.3 * pow(uv.y, 1.8) * pow(across, 0.8) * dust;
+  } else if (kind > 6.5) {
+    // An ad from the ads atlas (ADR-0051): landscape boards (cells 0-3), banners (4-11).
+    vec2 c = clamp(uv, 0.004, 0.996);
+    float cell = floor(seed + 0.5);
+    vec2 auv = cell < 3.5 ? vec2((mod(cell, 2.0) + c.x) / 2.0, 1.0 - (floor(cell / 2.0) + 1.0 - c.y) / 4.0) : vec2((cell - 4.0 + c.x) / 8.0, c.y * 0.5);
+    float m = texture2D(ads, auv).r;
+    float scan = 0.82 + 0.18 * sin(uv.y * 120.0 + time * 4.0);
+    float flick = 1.0 - 0.5 * step(0.985, hash(vec2(floor(time * 9.0), seed * 13.0 + vWorld.x))) * (1.0 - reduce);
+    a = (m * 1.15 + 0.1) * hum * scan * flick;
+    col = mix(col, vec3(1.0), m * 0.4);
+  } else if (kind > 5.5) {
     // A round sign on an Old Town bracket (ADR-0048): a neon rim and a glyph of strokes.
     vec2 q = uv * 2.0 - 1.0;
     float r = length(q);
@@ -198,6 +222,43 @@ export const drawMapSignAtlas = (ctx: CanvasRenderingContext2D, japanese: boolea
   });
 };
 
+/**
+ * The ads atlas of vertical Lublin (ADR-0051, 1024²): four landscape boards (512 x 256, a big
+ * Polish line over a Japanese one) on top, eight banners (128 x 512, lettered downwards) below.
+ */
+export const drawAdAtlas = (ctx: CanvasRenderingContext2D, japanese: boolean, size = 1024): void => {
+  const rand = prng(0xad2077);
+  ctx.fillStyle = "#000000";
+  ctx.fillRect(0, 0, size, size);
+  ctx.strokeStyle = "#ffffff";
+  ctx.fillStyle = "#ffffff";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  const cw = size / 2;
+  const ch = size / 4;
+  AD_LANDSCAPE.forEach((label, i) => {
+    const x = (i % 2) * cw;
+    const y = Math.floor(i / 2) * ch;
+    ctx.lineWidth = 7;
+    ctx.strokeRect(x + 12, y + 12, cw - 24, ch - 24);
+    const latin = [...label].filter((c) => !isCjk(c)).join("").trim();
+    const kana = [...label].filter(isCjk).join("");
+    drawLabel(ctx, latin, x + cw / 2, y + ch * 0.4, 78, cw - 60, japanese, rand);
+    drawLabel(ctx, kana, x + cw / 2, y + ch * 0.74, 48, cw - 120, japanese, rand);
+  });
+  const bw = size / 8;
+  const bh = size / 2;
+  AD_BANNERS.forEach((label, i) => {
+    const x = i * bw;
+    ctx.lineWidth = 5;
+    ctx.strokeRect(x + 8, bh + 8, bw - 16, bh - 16);
+    const chars = [...label];
+    const step = (bh - 40) / Math.max(chars.length, 3);
+    const start = bh + (bh - step * chars.length) / 2;
+    chars.forEach((c, k) => drawLabel(ctx, c, x + bw / 2, start + step * (k + 0.5), Math.min(84, step * 0.9), bw - 22, japanese, rand));
+  });
+};
+
 /** Rows of the names atlas: 2 columns x 16 rows of 512 x 64. */
 export const NAME_SLOTS = 32;
 
@@ -216,7 +277,7 @@ export const drawName = (ctx: CanvasRenderingContext2D, slot: number, name: stri
   ctx.fillText(name.toUpperCase(), x + 256, y + 34, 480);
 };
 
-/** The sign material of the map city with its two atlases. */
+/** The sign material of the map city with its atlases: signs, names and ads. */
 export class MapSignMaterial {
   readonly material: ShaderMaterial;
   private readonly names: DynamicTexture | null;
@@ -228,12 +289,13 @@ export class MapSignMaterial {
     const m = new ShaderMaterial("map-signs", scene, { vertexSource: VERTEX, fragmentSource: FRAGMENT }, {
       attributes: ["position", "normal", "color", "uv", "uv2"],
       uniforms: ["viewProjection", "cameraPosition", "time", "intensity", "fogDensity", "reduce"],
-      samplers: ["atlas", "names"],
+      samplers: ["atlas", "names", "ads"],
       needAlphaBlending: true,
     });
     if (atlas) {
       m.setTexture("atlas", atlas);
       m.setTexture("names", atlas);
+      m.setTexture("ads", atlas);
       this.names = null;
     } else {
       const tex = new DynamicTexture("map-sign-atlas", { width: 1024, height: 1024 }, scene, true, Texture.TRILINEAR_SAMPLINGMODE);
@@ -242,6 +304,10 @@ export class MapSignMaterial {
       drawMapSignAtlas(ctx, japanese);
       tex.update();
       m.setTexture("atlas", tex);
+      const ads = new DynamicTexture("map-ad-atlas", { width: 1024, height: 1024 }, scene, true, Texture.TRILINEAR_SAMPLINGMODE);
+      drawAdAtlas(ads.getContext() as unknown as CanvasRenderingContext2D, japanese);
+      ads.update();
+      m.setTexture("ads", ads);
       this.names = new DynamicTexture("map-names", { width: 1024, height: 1024 }, scene, true, Texture.TRILINEAR_SAMPLINGMODE);
       const nctx = this.names.getContext() as unknown as CanvasRenderingContext2D;
       nctx.fillStyle = "#000000";
