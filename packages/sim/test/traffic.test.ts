@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { type DomainEvents, hm } from "@seki/core";
 import { Simulation, ground, runReplay, stateHash, type Entity } from "../src";
-import { TRAFFIC_ROUTES, pointAt, projectOn } from "../src/content/traffic";
+import { TRAFFIC_ROUTES, TURN_SPEED, pointAt, projectOn } from "../src/content/traffic";
 import { onRoad } from "../src/content/lublin/roads";
 import { PARKED_CARS } from "../src/content/parked-cars";
 import { inBuilding } from "../src/content/lublin/places";
@@ -9,7 +9,7 @@ import { lanePose, timetable, vehicleCount, vehiclePlan } from "../src/world/tra
 import { STREET_ID_BASE } from "../src/world/streaming";
 import { input, run, teleportPlayer } from "./helpers";
 
-/** Aleja Tysiąclecia below the castle, where both carriageways and the trolleybus line run. */
+/** Aleja Tysiąclecia by the market, where both carriageways and the trolleybus line run. */
 const TYSIACLECIA = ground(820, 352);
 
 const skipTo = (sim: Simulation, minute: number): void => {
@@ -64,7 +64,7 @@ describe("the lanes of the traffic (ADR-0050)", () => {
   });
 
   it("the roads are busy in the rush hour, quiet at night; delivery vans only in the morning", () => {
-    const tys = TRAFFIC_ROUTES.findIndex((r) => r.use === "cars" && r.street === "Aleja Tysiąclecia");
+    const tys = TRAFFIC_ROUTES.reduce((best, r, i) => (r.use === "cars" && r.street === "Aleja Tysiąclecia" && r.vehicles > (TRAFFIC_ROUTES[best]?.vehicles ?? 0) ? i : best), -1);
     const rush = vehicleCount(3, tys, "high", { seconds: 8 * 3600 });
     expect(rush).toBeGreaterThan(5);
     expect(vehicleCount(3, tys, "high", { seconds: 3 * 3600 })).toBeLessThan(rush / 3);
@@ -165,8 +165,11 @@ describe("the traffic in the simulation (ADR-0050)", () => {
   it("stops before the player standing in its lane, sounds the horn and goes round", () => {
     const sim = busySim();
     run(sim, 20);
-    // One with no crossing between it and the player: there it would wait its turn instead.
-    const v = vehicles(sim).find((x) => x.view?.kind === "vehicle" && x.view.model !== "trolleybus" && x.vehicle.v > 5 && x.vehicle.s < TRAFFIC_ROUTES[x.vehicle.route]!.length - 80 && !crossingAhead(x.vehicle.route, x.vehicle.s, x.vehicle.s + 45))!;
+    // One with no crossing between it and the player (there it would wait its turn instead) and
+    // no vehicle ahead of it in its lane (that one would stop for the player first).
+    const clearAhead = (x: Entity & { vehicle: NonNullable<Entity["vehicle"]> }) =>
+      !vehicles(sim).some((o) => o !== x && o.vehicle.route === x.vehicle.route && o.vehicle.s > x.vehicle.s && o.vehicle.s < x.vehicle.s + 60);
+    const v = vehicles(sim).find((x) => x.view?.kind === "vehicle" && x.view.model !== "trolleybus" && x.vehicle.v > 5 && x.vehicle.s < TRAFFIC_ROUTES[x.vehicle.route]!.length - 80 && !crossingAhead(x.vehicle.route, x.vehicle.s, x.vehicle.s + 45) && clearAhead(x))!;
     expect(v).toBeDefined();
     const lane = TRAFFIC_ROUTES[v.vehicle.route]!;
     const ahead = lanePose(lane, v.vehicle.s + 35);
@@ -185,8 +188,11 @@ describe("the traffic in the simulation (ADR-0050)", () => {
     expect(Math.abs(v.vehicle.aside) > 1 || v.vehicle.s > startS + 40 || !sim.world.has(v)).toBe(true);
   });
 
-  it("takes turns at crossings: two vehicles crossing each other's way never drive into each other", () => {
-    const sim = busySim();
+  it.each([
+    ["by the market", TYSIACLECIA],
+    ["east of the market, by Rondo Dmowskiego", ground(860, 334)],
+  ])("takes turns at crossings %s: two vehicles crossing each other's way never drive into each other", (_, at) => {
+    const sim = busySim(3, at);
     let crossings = 0;
     for (let t = 0; t < 20 * 60; t++) {
       sim.step();
@@ -222,7 +228,8 @@ describe("the traffic in the simulation (ADR-0050)", () => {
   });
 
   it("a shot nearby makes vehicles stop dead or speed off", () => {
-    const sim = busySim();
+    // East of the market, on the open avenue.
+    const sim = busySim(3, ground(860, 334));
     run(sim, 60);
     sim.player()!.pitch = 0.3;
     sim.step(input({ fire: true }));
@@ -231,6 +238,36 @@ describe("the traffic in the simulation (ADR-0050)", () => {
     expect(scared.length).toBeGreaterThan(0);
     expect(scared.some((v) => v.vehicle.panic!.kind === "stop")).toBe(true);
     expect(scared.some((v) => v.vehicle.panic!.kind === "flee")).toBe(true);
+  });
+
+  it("turns round before the market on Aleja Tysiąclecia, slowly, and never drives into its halls", () => {
+    const market = { minX: 758, maxX: 815, minZ: 325, maxZ: 366 };
+    for (const r of TRAFFIC_ROUTES.filter((x) => x.street === "Aleja Tysiąclecia")) {
+      for (let s = 0; s < r.length; s += 1) {
+        const p = pointAt(r.points, s);
+        expect(p.x > market.minX + 2 && p.x < market.maxX - 2 && p.z > market.minZ && p.z < market.maxZ, `${r.id} at ${s}`).toBe(false);
+      }
+    }
+    const turning = TRAFFIC_ROUTES.filter((r) => r.use === "cars" && r.turns?.length);
+    expect(turning.length).toBe(4);
+    const sim = busySim(3, ground(745, 350));
+    let through = 0;
+    let fastest = 0;
+    // Only the ones seen driving up to the turn: one can appear in it, out of sight, at its timetable's speed.
+    const coming = new Set<number>();
+    for (let t = 0; t < 50 * 60; t++) {
+      sim.step();
+      for (const v of vehicles(sim)) {
+        const turn = TRAFFIC_ROUTES[v.vehicle.route]!.turns?.[0];
+        if (!turn) continue;
+        if (v.vehicle.s < turn[0] - 15) coming.add(v.id);
+        if (!coming.has(v.id) || v.vehicle.s < turn[0] + 2 || v.vehicle.s > turn[1]) continue;
+        fastest = Math.max(fastest, v.vehicle.v);
+        if (v.vehicle.s > turn[1] - 1) through++;
+      }
+    }
+    expect(through).toBeGreaterThan(0);
+    expect(fastest).toBeLessThanOrEqual(TURN_SPEED + 0.01);
   });
 
   it("parked cars are solids of their chunk", () => {

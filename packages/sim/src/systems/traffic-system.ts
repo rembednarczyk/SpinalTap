@@ -1,5 +1,5 @@
 import type { EntityId, EventBus, DomainEvents, Vec3 } from "@seki/core";
-import { TRAFFIC_RANGE, TRAFFIC_ROUTES, type TrafficRoute } from "../content/traffic";
+import { TRAFFIC_RANGE, TRAFFIC_ROUTES, TURN_SPEED, type TrafficRoute } from "../content/traffic";
 import type { Entity, VehicleState } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { VEHICLE_IDS_PER_ROUTE, halfSize, lanePose, timetable, vehicleCount, vehicleId, vehiclePlan } from "../world/traffic";
@@ -13,6 +13,8 @@ const LOOK_STEPS = 10;
 const BRAKE = 6;
 const ACCEL = 2.5;
 const GAIN = 0.5;
+/** A vehicle slows to `TURN_SPEED` this far before a turn round (m): enough to brake from a main road's speed. */
+const TURN_BRAKE = 12;
 /** Most a vehicle drives over its lane's speed to catch up with its timetable. */
 const HURRY = 1.3;
 /** A body's radius and the margin a vehicle keeps beside it (m). */
@@ -82,6 +84,8 @@ interface Ahead {
 
 /** Margin round a crossing vehicle's body the one giving way keeps (m). */
 const CROSS_MARGIN = 0.5;
+/** Vehicles heading apart by more than this (its cosine) cross or merge: they take turns, not follow. */
+const MERGE_COS = 0.7;
 /** How far ahead both look for a crossing (m): far enough to stop from a hurried drive. */
 const CROSS_LOOK = 25;
 
@@ -141,8 +145,9 @@ const lookAhead = (ctx: SimContext, self: Vehicle, live: ReadonlyMap<EntityId, V
     const ox = Math.sin(o.yaw);
     const oz = Math.cos(o.yaw);
     const along = ox * pose.tx + oz * pose.tz;
-    // Oncoming traffic keeps to its lane; crossing traffic takes turns at the crossing.
-    if (along < 0.3) {
+    // Oncoming traffic keeps to its lane; crossing traffic (merging at a roundabout too, from
+    // 45 degrees on) takes turns at the crossing.
+    if (along < MERGE_COS) {
       if (along > -0.7) yieldAtCrossing(self, o, pose, ox, oz, out);
       continue;
     }
@@ -294,6 +299,7 @@ const drive = (ctx: SimContext, live: Map<EntityId, Vehicle>, v: Vehicle, player
     lag = 0;
   }
   let want = Math.max(0, Math.min(plan.speed * HURRY, tt.v + GAIN * lag));
+  if (lane.turns?.some(([a, b]) => st.s > a - TURN_BRAKE && st.s < b)) want = Math.min(want, TURN_SPEED);
   if (!st.panic && shots.some((p) => flat(p, v.position) < PANIC_RADIUS)) {
     const kind = coin(v.id, ctx.tick) ? "stop" : "flee";
     st.panic = { kind, left: PANIC_SECONDS[kind] };

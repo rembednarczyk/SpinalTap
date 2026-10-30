@@ -78,6 +78,8 @@ Ograniczenia jak zawsze: `core` bez zależności, `sim` tylko `core`, Babylon ty
 | al. Tysiąclecia 8:00 | 301 → 319 | 118 → 126 | 6 → 16 | 86 (6) |
 | telefon, deptak 20:00 | 227 → 233 | 141 → 147 | 8 → 12 | 0 |
 - Kadr referencyjny NPR mieści się w migawce (różnica poniżej progu): latarnie i ławki deptaka w kadrze Neon Koi to drobne zmiany.
+- Targ pod wiaduktem stoi na Alei Tysiąclecia (ADR-0045). Pasy aut kończą się przed bryłami gry, które stoją na jezdni niżej niż 3 m nad terenem (hale, filary, schody); pomost wiaduktu przepuszcza. Pas ucięty przed targiem zawraca półkolem na pas drugiej jezdni, a auto zwalnia w zawrocie do 4 m/s. Wcześniej auta przejeżdżały przez hale i filary.
+- Pojazdy jadące pod kątem od 45° (włączanie się na rondo) ustępują sobie jak na skrzyżowaniu. Wcześniej liczyły się jak jadące tym samym pasem i na rondzie Dmowskiego wjeżdżały w siebie.
 - Na później:
   - fizyka potrąceń i obrażenia od pojazdu, strzelanie do aut (kule przelatują przez pojazdy), wsiadanie;
   - skrzyżowania: auta z różnych pasów przejeżdżają przez siebie na skrzyżowaniu, sygnalizacja nie steruje ruchem, pas kończy się zniknięciem auta zamiast skrętu w inną ulicę;

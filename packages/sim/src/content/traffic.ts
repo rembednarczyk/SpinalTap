@@ -1,6 +1,8 @@
 import type { VehicleModel } from "@seki/core";
 import { type Pt, ROAD_CHAINS, type RoadChain, onRoad, polylineLength } from "./lublin/roads";
-import { WORLD_STREET_PROPS } from "./street-props";
+import { GAME_PROPS, WORLD_STREET_PROPS } from "./street-props";
+import { METRO_STATIONS } from "./metro";
+import { groundY } from "./lublin/terrain";
 
 /**
  * The street's traffic (ADR-0050): the lanes cars drive along on the map's roads, the
@@ -35,6 +37,8 @@ export interface TrafficRoute {
   readonly vehicles: number;
   /** Arc lengths where a trolleybus stops (its stops along the lane). */
   readonly stops: readonly number[];
+  /** Arc length ranges of the lane's turns round (before a block across the road), driven at `TURN_SPEED`. */
+  readonly turns?: readonly (readonly [number, number])[];
 }
 
 /** Cars on each road kind: speed (m/s) and the gap between them at full traffic (m). */
@@ -236,8 +240,148 @@ const lanesOf = (c: RoadChain, k: number, all: readonly RoadChain[]): TrafficRou
   return out;
 };
 
-/** Every lane of the city's traffic, in a stable order (the chains' order, then lane by lane). */
-export const TRAFFIC_ROUTES: readonly TrafficRoute[] = ROAD_CHAINS.flatMap((c, k) => lanesOf(c, k, ROAD_CHAINS));
+/** A vehicle keeps this far from the game's blocks: half the widest car and a margin (m). */
+const BLOCK_REACH = 1.4;
+/** Blocks whose underside is higher than this above the ground (the market's deck, a sign) let vehicles under (m). */
+const VEHICLE_HEADROOM = 3;
+
+/**
+ * The game's solid blocks standing on the roads (the market's halls and the viaduct's pillars on
+ * Aleja Tysiąclecia, ADR-0045), grown by `BLOCK_REACH`: lanes stop short of them.
+ */
+const ROAD_BLOCKS: readonly { minX: number; maxX: number; minZ: number; maxZ: number }[] = [...GAME_PROPS, ...METRO_STATIONS.flatMap((m) => m.props)].flatMap((p) =>
+  p.solid && p.view.kind === "block" && p.center.y - p.view.size.y / 2 < groundY(p.center.x, p.center.z) + VEHICLE_HEADROOM
+    ? [{ minX: p.center.x - p.view.size.x / 2 - BLOCK_REACH, maxX: p.center.x + p.view.size.x / 2 + BLOCK_REACH, minZ: p.center.z - p.view.size.z / 2 - BLOCK_REACH, maxZ: p.center.z + p.view.size.z / 2 + BLOCK_REACH }]
+    : [],
+);
+
+/** The part of a polyline between arc lengths `from` and `to`. */
+const slice = (pts: readonly Pt[], from: number, to: number): Pt[] => {
+  const a = pointAt(pts, from);
+  const b = pointAt(pts, to);
+  const out: Pt[] = [[a.x, a.z]];
+  let s = 0;
+  for (let i = 1; i < pts.length; i++) {
+    s += Math.hypot(pts[i]![0] - pts[i - 1]![0], pts[i]![1] - pts[i - 1]![1]);
+    if (s > from && s < to) out.push(pts[i]!);
+  }
+  out.push([b.x, b.z]);
+  return out;
+};
+
+/** Arc lengths along a lane where it runs into one of the game's blocks, every half metre. */
+const blockedAlong = (r: TrafficRoute): number[] => {
+  const xs = r.points.map((p) => p[0]);
+  const zs = r.points.map((p) => p[1]);
+  const [x0, x1, z0, z1] = [Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)];
+  const near = ROAD_BLOCKS.filter((b) => b.maxX > x0 && b.minX < x1 && b.maxZ > z0 && b.minZ < z1);
+  const out: number[] = [];
+  if (near.length === 0) return out;
+  for (let s = 0; s <= r.length; s += 0.5) {
+    const p = pointAt(r.points, s);
+    if (near.some((b) => p.x > b.minX && p.x < b.maxX && p.z > b.minZ && p.z < b.maxZ)) out.push(s);
+  }
+  return out;
+};
+
+/** A piece of a lane clear of the blocks, and whether a block cut its start or its end. */
+interface Piece {
+  readonly route: TrafficRoute;
+  readonly cutStart: boolean;
+  readonly cutEnd: boolean;
+}
+
+/**
+ * The lanes of one street as their pieces clear of the game's blocks, `MIN_ROUTE` long at least.
+ * A block in one lane closes the street's other lanes there too, so no lane starts among them.
+ */
+const clearOfBlocks = (lanes: readonly TrafficRoute[]): Piece[] => {
+  const blocked = lanes.flatMap(blockedAlong);
+  if (blocked.length === 0) return lanes.map((route) => ({ route, cutStart: false, cutEnd: false }));
+  return lanes.flatMap((r) => {
+    // A lane that runs the other way meets the same block at the other end of its arc length.
+    const back = r.id.endsWith(":b") || r.id.endsWith(":bt");
+    const own = blocked.map((s) => (back ? r.length - s : s)).sort((a, b) => a - b);
+    const free: [number, number][] = [];
+    let from = 0;
+    for (const s of own) {
+      if (s - 0.5 > from) free.push([from, s - 0.5]);
+      from = Math.max(from, s + 0.5);
+    }
+    if (from < r.length) free.push([from, r.length]);
+    return free
+      .filter(([a, b]) => b - a >= MIN_ROUTE)
+      .map(([a, b], n) => ({
+        route: routeOf(`${r.id}/${n}`, r.street, r.use, slice(r.points, a, b), r.speed, Math.max(1, Math.round((r.vehicles * (b - a)) / r.length))),
+        cutStart: a > 0,
+        cutEnd: b < r.length,
+      }));
+  });
+};
+
+/** A lane cut short by a block turns round onto a lane the other way starting this close to its end (m). */
+const TURN_REACH = 16;
+/** Speed through a turn round (m/s). */
+export const TURN_SPEED = 4;
+
+/** Half a circle from `a` heading (tx, tz) round to `b`: the turn round in front of a block. */
+const uTurn = (a: Pt, b: Pt, tx: number, tz: number): Pt[] => {
+  const cx = (a[0] + b[0]) / 2;
+  const cz = (a[1] + b[1]) / 2;
+  const r = Math.hypot(b[0] - a[0], b[1] - a[1]) / 2;
+  const out: Pt[] = [];
+  for (let k = 1; k < 8; k++) {
+    const t = (Math.PI * k) / 8;
+    out.push([cx + (a[0] - cx) * Math.cos(t) + tx * r * Math.sin(t), cz + (a[1] - cz) * Math.cos(t) + tz * r * Math.sin(t)]);
+  }
+  return out;
+};
+
+/**
+ * The pieces as lanes: one cut short by a block turns round there onto the nearest unclaimed
+ * piece of the same use that starts beside its end the other way (the two carriageways of
+ * Aleja Tysiąclecia before the market), so its vehicles do not queue at a dead end.
+ */
+const turnRound = (pieces: readonly Piece[]): TrafficRoute[] => {
+  const pairs: { d: number; i: number; j: number }[] = [];
+  pieces.forEach((a, i) => {
+    if (!a.cutEnd) return;
+    const end = a.route.points[a.route.points.length - 1]!;
+    const ta = pointAt(a.route.points, a.route.length);
+    pieces.forEach((b, j) => {
+      if (!b.cutStart || b.route.use !== a.route.use || i === j) return;
+      const tb = pointAt(b.route.points, 0);
+      const d = Math.hypot(tb.x - end[0], tb.z - end[1]);
+      if (d < TURN_REACH && ta.tx * tb.tx + ta.tz * tb.tz < -0.7) pairs.push({ d, i, j });
+    });
+  });
+  pairs.sort((p, q) => p.d - q.d || p.i - q.i || p.j - q.j);
+  const next = new Map<number, number>();
+  const taken = new Set<number>();
+  for (const p of pairs) {
+    if (next.has(p.i) || taken.has(p.j)) continue;
+    next.set(p.i, p.j);
+    taken.add(p.j);
+  }
+  return pieces.flatMap((a, i) => {
+    if (taken.has(i)) return [];
+    const j = next.get(i);
+    if (j === undefined) return [a.route];
+    const b = pieces[j]!.route;
+    // The half circle bulges forward by its radius: both lanes give that up, so it stays clear of the block.
+    const end = a.route.points[a.route.points.length - 1]!;
+    const r = Math.hypot(b.points[0]![0] - end[0], b.points[0]![1] - end[1]) / 2;
+    const into = slice(a.route.points, 0, a.route.length - r);
+    const out = slice(b.points, r, b.length);
+    const t = pointAt(into, a.route.length - r);
+    const points = [...into, ...uTurn(into[into.length - 1]!, out[0]!, t.tx, t.tz), ...out];
+    const joined = routeOf(`${a.route.id}+${b.id}`, a.route.street, a.route.use, points, a.route.speed, a.route.vehicles + b.vehicles);
+    return [{ ...joined, turns: [[a.route.length - r, joined.length - (b.length - r)]] as const }];
+  });
+};
+
+/** Every lane of the city's traffic, in a stable order (the chains' order, then lane by lane), clear of the game's blocks. */
+export const TRAFFIC_ROUTES: readonly TrafficRoute[] = turnRound(ROAD_CHAINS.flatMap((c, k) => clearOfBlocks(lanesOf(c, k, ROAD_CHAINS))));
 
 /** How busy the roads are by the hour (0..1 of full traffic): the rush hours, a quiet night. */
 export const TRAFFIC_BY_HOUR: readonly number[] = [
