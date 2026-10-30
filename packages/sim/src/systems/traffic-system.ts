@@ -294,12 +294,15 @@ const drive = (ctx: SimContext, live: Map<EntityId, Vehicle>, v: Vehicle, player
   if (lag > lane.length / 2) lag -= lane.length;
   if (lag < -lane.length / 2) lag += lane.length;
   // Far off its timetable (the clock skipped ahead, a long hold-up): back on it where nobody sees.
+  const turning = () => lane.turns?.some(([a, b]) => st.s > a - TURN_BRAKE && st.s < b) === true;
   if (Math.abs(lag) > RESYNC && !watched(ctx, player, v.position, TRAFFIC_RANGE[ctx.traffic].radius)) {
     st.s = tt.s;
     lag = 0;
+    // It lands at the speed of where it lands: braking from its old speed would take it through a turn round fast.
+    st.v = Math.min(st.v, tt.v, turning() ? TURN_SPEED : Infinity);
   }
   let want = Math.max(0, Math.min(plan.speed * HURRY, tt.v + GAIN * lag));
-  if (lane.turns?.some(([a, b]) => st.s > a - TURN_BRAKE && st.s < b)) want = Math.min(want, TURN_SPEED);
+  if (turning()) want = Math.min(want, TURN_SPEED);
   if (!st.panic && shots.some((p) => flat(p, v.position) < PANIC_RADIUS)) {
     const kind = coin(v.id, ctx.tick) ? "stop" : "flee";
     st.panic = { kind, left: PANIC_SECONDS[kind] };

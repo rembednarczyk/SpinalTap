@@ -277,6 +277,31 @@ describe("the traffic in the simulation (ADR-0050)", () => {
     expect(fastest).toBeLessThanOrEqual(TURN_SPEED + 0.01);
   });
 
+  it("put back on its timetable out of sight inside a turn round, a vehicle drives it slowly (G-028)", () => {
+    // The player by the market looking west, away from the turns round before it.
+    const sim = busySim(3, ground(745, 350));
+    teleportPlayer(sim, ground(745, 350), -Math.PI / 2);
+    let moved: (Entity & { vehicle: NonNullable<Entity["vehicle"]> }) | undefined;
+    for (let t = 0; t < 60 * 60 && !moved; t++) {
+      sim.step();
+      moved = vehicles(sim).find((v) => {
+        const turn = TRAFFIC_ROUTES[v.vehicle.route]!.turns?.[0];
+        const tt = timetable(vehiclePlan(sim.seed, v.vehicle.route, v.vehicle.index), sim.clock);
+        return turn !== undefined && tt.v > TURN_SPEED && tt.s > turn[0] + 5 && tt.s < turn[1] - 5;
+      });
+    }
+    expect(moved).toBeDefined();
+    const v = moved!;
+    // Far behind its timetable at a main road's speed, as after a long hold-up behind a trolleybus.
+    const tt = timetable(vehiclePlan(sim.seed, v.vehicle.route, v.vehicle.index), sim.clock);
+    v.vehicle.s = tt.s - 60;
+    v.vehicle.v = 13.5;
+    sim.step();
+    const turn = TRAFFIC_ROUTES[v.vehicle.route]!.turns![0]!;
+    expect(v.vehicle.s).toBeGreaterThan(turn[0]);
+    expect(v.vehicle.v).toBeLessThanOrEqual(TURN_SPEED + 0.01);
+  });
+
   it("parked cars are solids of their chunk", () => {
     const sim = Simulation.create({ seed: 1 });
     teleportPlayer(sim, ground(740, 240));
