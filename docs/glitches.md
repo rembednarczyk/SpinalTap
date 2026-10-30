@@ -5,7 +5,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ## Otwarte
 
 ### G-001 Test migawki NPR przekracza 90 s na wolnym runnerze CI
-- Status: przyjęte
+- Status: weryfikacja PRZYJĘTE, w PR. Tryb `?reference` rysuje dopiero przy gotowej scenie; migawka 18–42 s zamiast 72 s. Ryzyko szczątkowe: `still` nie czeka na `ProbeSchedule` (inwalidacja sondy < 1 s przed gotowością); zapas w pomiarach > 2,6 s.
 - Ważność: S1 (czerwone CI) · Zasięg: każdy PR · Koszt: średni
 - Gdzie: `e2e/npr-perf.spec.ts` „NPR reference frame matches the approved snapshot”, PR #28 (E2E 1/3, dwa razy)
 - Dowód (pomiar lokalny, SwiftShader):
@@ -171,7 +171,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola skanu `parked-car-on-other-road` (auto przy krawężniku w zasięgu nawierzchni innej drogi dla aut + 0,5 m; własna ulica wyznaczana w skanie, nie z pola poprawki) daje 0; dziś 1.
 
 ### G-020 Jezdnia zachodnia Alei Tysiąclecia ma 36 m bez pasa (literówka „Aleje” w OSM)
-- Status: weryfikacja PRZYJĘTE, w PR (po G-028)
+- Status: naprawione (#38)
 - Ważność: S2 · Zasięg: szeroki (trasa główna) · Koszt: mały
 - Gdzie: (930,3, 331,4)–(894,1, 335,1), `ROAD_CHAINS[91]`, OSM way 739432828; 1 w mieście
 - Dowód: pasy #85/#86 kończą się w x 930, #82–#84 zaczynają w x 894. W symulacji (seed 3, 8:00, 90 s) auta stoją na końcu pasa z v = 0 i tworzą korek do 6 aut, w ramce naliczono 18 pojawień i 21 zniknięć. Łańcuch #82 (128,5 m < `MIN_TROLLEY` 150) traci trolejbus.
@@ -236,7 +236,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Dowód: sonda weryfikatora G-023 (seed 3, 8:00, 60 s); może być resynchronizacją auta poza wzrokiem.
 
 ### G-028 Resynchronizacja przenosi auto w łuk zawrotki z pełną prędkością
-- Status: weryfikacja PRZYJĘTE, w PR
+- Status: naprawione (#38)
 - Ważność: S3 · Zasięg: lokalny (każda zawrotka; widać po złączeniu Alei w G-020) · Koszt: mały
 - Gdzie: Aleja Tysiąclecia, zawrotka przed targiem; seed 3: auto za trolejbusem spada ponad `RESYNC` za rozkład, poza wzrokiem przeskakuje z s=204,6 na s=244,8 (w łuku) i jedzie dalej 7,7 m/s przy `TURN_SPEED` 4
 - Dowód: test „turns round before the market on Aleja Tysiąclecia” pada po G-020 (7,69 > 4,01)
@@ -252,6 +252,18 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Przyczyna (przypuszczalna): długa praca synchroniczna po „Nowa gra” (budowa świata, ubieranie postaci VRoid) pod SwiftShaderem; może ta sama kolejka GPU co G-001.
 - Pakiet właściciela: packages/app / packages/engine (do ustalenia śladem)
 - Test przyjęcia: ślad pokazuje, co blokuje wątek; kliknięcie wraca w < 10 s na CI bez podnoszenia limitu.
+
+### G-030 Poza Seki w klatce referencyjnej zależy od czasu zegarowego
+- Status: zgłoszone
+- Ważność: S4 (proponowana: migawka różni się między przebiegami w prostokącie postaci) · Koszt: mały
+- Dowód: naprawiacz G-001: animacja bezczynności dostaje prawdziwe `dt`; dwa przebiegi starego kodu różnią się w x 703–797, y 273–532.
+- Pakiet właściciela: packages/engine (animacja postaci) / packages/app (`?reference`)
+
+### G-031 Testy TPP w `npr-perf` i smoke save/load przekraczają limit przy obciążeniu
+- Status: zgłoszone (powiązane z G-029)
+- Ważność: S2 (proponowana: niestabilne e2e) · Koszt: nieznany
+- Dowód: naprawiacz G-001: przy obciążeniu 5–11 za każdym razem pada inny test (Krakowskie, Rynek, targ, Nabrzeże, quicksave/quickload); przypuszczalnie ten sam mechanizm co G-001 w zwykłym trybie (pełne klatki w trakcie ładowania i kroków budują kolejkę GPU SwiftShadera). `captureFrame` rysuje dodatkową klatkę mimo `preserveDrawingBuffer` (1,3–5,8 s na przechwycenie).
+- Pakiet właściciela: packages/app / e2e
 
 ### G-006 Skręty aut na skrzyżowaniach
 - Status: w naprawie (decyzja użytkownika przy G-024: skręty w boczne ulice; ADR-0055)
