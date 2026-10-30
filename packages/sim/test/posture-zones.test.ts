@@ -126,7 +126,7 @@ describe("hit zones", () => {
   it("hitscan reports the zone and stops at walls", () => {
     const sim = streetSim({ seed: 1 });
     const guard = byKey(sim, "guard")!;
-    const from = { x: guard.position.x, y: 1.7, z: guard.position.z - 4 };
+    const from = { x: guard.position.x, y: guard.position.y + 1.7, z: guard.position.z - 4 };
     const hit = hitscan(sim.world, from, { x: 0, y: 0, z: 1 }, 30, sim.player()!.id);
     expect(hit.entity).toBe(guard);
     expect(hit.zone).toBe("head");

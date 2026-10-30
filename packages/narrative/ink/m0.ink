@@ -58,14 +58,14 @@ KAITO: Ratownicy mówili, że w tym wraku walczyłaś z pasami jak z wrogiem. Se
     SEKI: Moje imię gdzieś jest. Odzyskam je.
     KAITO: Jasne. Do tego czasu jesteś Seki.
 - KAITO: Zapłaciłem za twoje łatanie, więc masz dług. U mnie. I zero perspektyw. Ja mam robotę.
-KAITO: Kurier gangu Hebi siedzi w podwórku za myjnią, przy Placu Łokietka, na końcu deptaka. Nosi coś, co należy do moich klientów.
+KAITO: Kurier gangu Hebi siedzi w podwórku za myjnią, za Placem Łokietka, od strony Przystankowej. Nosi coś, co należy do moich klientów.
 KAITO: Zdejmij go. Ma ochronę, więc nie idź tam na spacer. Potem znajdziesz mnie w Neon Koi, po drugiej stronie deptaka.
 MORI: Drzwi otwierają się same. Nie kop ich, są droższe od ciebie.
 ~ set_flag("met_fixer")
 -> END
 
 = waiting
-KAITO: Kurier dalej oddycha, Seki. Podwórko za myjnią, przy Placu Łokietka.
+KAITO: Kurier dalej oddycha, Seki. Podwórko za myjnią, za Placem Łokietka.
 * [Już idę. #tone:leave]
     -> END
 * [Co wiesz o moim wypadku? #tone:optional]

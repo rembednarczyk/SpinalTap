@@ -166,7 +166,7 @@ describe("world streaming: loading and unloading", () => {
   });
 
   it("a contract is not cleared while its targets sleep in an unloaded chunk", () => {
-    // Seed 6 sends Kaito's job to the yard behind the car wash on Plac Łokietka.
+    // Seed 6 sends Kaito's job to the yard behind the car wash behind Plac Łokietka.
     const sim = Simulation.create({ seed: 6 });
     sim.enqueue({ type: "accept-contract" });
     sim.step();

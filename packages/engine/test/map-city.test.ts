@@ -11,6 +11,7 @@ import { SHOPFRONT_BIT, WINDOW_STYLE, facadeStyle } from "../src/renderer/mapcit
 import { MAP_LOD, MapCity, type MapView } from "../src/renderer/mapcity/map-city";
 import { cleanRing } from "../src/renderer/mapcity/polygon";
 import { MAP_SIGN_KIND, planBuildingSigns } from "../src/renderer/mapcity/sign-plan";
+import { stackTiers } from "../src/renderer/mapcity/vertical-plan";
 
 const rect = (x0: number, z0: number, x1: number, z1: number) => cleanRing([{ x: x0, z: z0 }, { x: x1, z: z0 }, { x: x1, z: z1 }, { x: x0, z: z1 }]);
 
@@ -29,6 +30,19 @@ describe("facades of map buildings (ADR-0044)", () => {
     expect(a.uvs2).toEqual(b.uvs2);
     const looks = new Set(Array.from({ length: 24 }, (_, i) => JSON.stringify(facadeStyle({ use: "residential", levels: 4, height: 16, roof: 4, look: i * 7919, area: 216, width: 12 }))));
     expect(looks.size).toBeGreaterThan(12);
+  });
+
+  it("gives a slender old-town tower tall windows in tiers and no shops, and leaves a tenement as it was", () => {
+    // Wieża Trynitarska: 42 m on a plan 14 m across, mapped as historic.
+    for (let look = 0; look < 20; look++) {
+      const tower = facadeStyle({ use: "historic", levels: 13, height: 42, roof: 6, look, area: 220, width: 13.9 });
+      expect(tower.window).toBe(WINDOW_STYLE.civic);
+      expect(tower.freeTower).toBe(true);
+      expect(tower.shopfront).toBe(false);
+      expect(tower.signs).toBe(0);
+      const tenement = facadeStyle({ use: "historic", levels: 4, height: 16, roof: 4, look, area: 220, width: 13.9 });
+      expect(tenement.window).toBe(WINDOW_STYLE.tenement);
+    }
   });
 
   it("encodes storeys, bays, style and seed so the shader reads them back", () => {
@@ -86,6 +100,23 @@ describe("facades of map buildings (ADR-0044)", () => {
     expect(top(near)).toBeGreaterThan(18 + 8);
     expect(top(far)).toBeGreaterThan(18 + 8);
     expect(far.vertexCount * 4).toBeLessThan(near.vertexCount);
+  });
+
+  it("gives a tenement under a superstructure a flat terrace instead of the pitched roof the tiers would cut through", () => {
+    let checked = 0;
+    for (let id = 0; id < 40; id++) {
+      const f = facadeFrame(tenement(id, rect(0, 0, 18, 12), { rise: 9 }), none);
+      if (f.style.roof !== "hip" || stackTiers(f).length === 0) continue;
+      checked += 1;
+      const top = (s: MeshSink) => Math.max(...s.positions.filter((_, i) => i % 3 === 1));
+      const near = new MeshSink();
+      const far = new MeshSink();
+      planNearBuilding(near, f);
+      planFarBuilding(far, f);
+      expect(top(near)).toBeLessThanOrEqual(f.top + 0.15);
+      expect(top(far)).toBeLessThanOrEqual(f.top + 0.01);
+    }
+    expect(checked).toBeGreaterThan(0);
   });
 
   it("keeps a tenement's pitched roof in the far block, up to the same ridge as near", () => {

@@ -80,7 +80,41 @@ interface Ahead {
   player: number | null;
 }
 
-/** What is in a vehicle's way: anyone with a body in front of it, and the vehicle ahead going its way. */
+/** Margin round a crossing vehicle's body the one giving way keeps (m). */
+const CROSS_MARGIN = 0.5;
+/** How far ahead both look for a crossing (m): far enough to stop from a hurried drive. */
+const CROSS_LOOK = 25;
+
+/**
+ * Turns at a crossing: where the two vehicles' lines meet ahead of `self`, the one nearer the
+ * meeting point goes first (the lower id on a tie) and the other stops short of it; a vehicle
+ * already over the crossing always goes on and clears it, so two never wait for each other.
+ * Lowers `out.allowed` when `self` has to give way.
+ */
+const yieldAtCrossing = (self: Vehicle, o: Vehicle, pose: { x: number; z: number; tx: number; tz: number }, ox: number, oz: number, out: Ahead): void => {
+  const st = self.vehicle;
+  const det = ox * pose.tz - pose.tx * oz;
+  if (Math.abs(det) < 1e-3) return;
+  const dx = o.position.x - pose.x;
+  const dz = o.position.z - pose.z;
+  // Distances along each one's heading to where the lines meet.
+  const mine = (ox * dz - dx * oz) / det;
+  const theirs = (pose.tx * dz - pose.tz * dx) / det;
+  const clear = o.vehicle.half.l + st.half.w + CROSS_MARGIN;
+  if (mine - st.half.l < CROSS_MARGIN || mine > CROSS_LOOK) return;
+  if (theirs < -clear || theirs > CROSS_LOOK) return;
+  const onIt = Math.abs(theirs) < clear;
+  const first = theirs < mine - CROSS_MARGIN || (Math.abs(theirs - mine) <= CROSS_MARGIN && o.id < self.id);
+  if (!onIt && !first) return;
+  const gap = mine - st.half.l - o.vehicle.half.w - CROSS_MARGIN;
+  const allowed = gap <= STOP_GAP ? 0 : Math.sqrt(2 * BRAKE * (gap - STOP_GAP));
+  if (allowed < out.allowed) {
+    out.allowed = allowed;
+    out.player = null;
+  }
+};
+
+/** What is in a vehicle's way: anyone with a body in front of it, the vehicle ahead going its way, and crossing traffic with right of way. */
 const lookAhead = (ctx: SimContext, self: Vehicle, live: ReadonlyMap<EntityId, Vehicle>, pose: { x: number; z: number; tx: number; tz: number }): Ahead => {
   const st = self.vehicle;
   const reach = st.half.l + 4 + (st.v * st.v) / (2 * BRAKE);
@@ -104,10 +138,14 @@ const lookAhead = (ctx: SimContext, self: Vehicle, live: ReadonlyMap<EntityId, V
   }
   for (const o of live.values()) {
     if (o === self) continue;
-    // Only the one ahead going the same way: crossing and oncoming traffic keep to their lanes.
     const ox = Math.sin(o.yaw);
     const oz = Math.cos(o.yaw);
-    if (ox * pose.tx + oz * pose.tz < 0.3) continue;
+    const along = ox * pose.tx + oz * pose.tz;
+    // Oncoming traffic keeps to its lane; crossing traffic takes turns at the crossing.
+    if (along < 0.3) {
+      if (along > -0.7) yieldAtCrossing(self, o, pose, ox, oz, out);
+      continue;
+    }
     const dx = o.position.x - pose.x;
     const dz = o.position.z - pose.z;
     const fwd = dx * pose.tx + dz * pose.tz;
@@ -222,10 +260,19 @@ const comeAndGo = (ctx: SimContext, live: Map<EntityId, Vehicle>, player: Entity
   });
 };
 
-/** Is there a vehicle of the lane too close to arc length `s` for another to appear there? */
+/**
+ * Is there a vehicle too close to arc length `s` of the lane for another to appear there: one
+ * of the lane itself, or one crossing its way within `CROSS_LOOK` (it could not stop in time
+ * for a vehicle that turned up at the crossing)?
+ */
 const crowded = (live: ReadonlyMap<EntityId, Vehicle>, route: number, s: number, lane: TrafficRoute): boolean => {
+  const at = lanePose(lane, s);
   for (const o of live.values()) {
-    if (o.vehicle.route !== route) continue;
+    if (o.vehicle.route !== route) {
+      const across = Math.abs(Math.sin(o.yaw) * at.tx + Math.cos(o.yaw) * at.tz) < 0.7;
+      if (across && flat(o.position, at) < CROSS_LOOK) return true;
+      continue;
+    }
     if (Math.abs(o.vehicle.s - s) < o.vehicle.half.l + 9 || Math.abs(o.vehicle.s - s) > lane.length - 9) return true;
   }
   return false;
