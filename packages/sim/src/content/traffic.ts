@@ -1,5 +1,6 @@
 import type { VehicleModel } from "@seki/core";
 import { type Pt, ROAD_CHAINS, type RoadChain, onRoad, polylineLength } from "./lublin/roads";
+import { MAP_CHUNKS } from "./lublin/sites";
 import { GAME_PROPS, WORLD_STREET_PROPS } from "./street-props";
 import { METRO_STATIONS } from "./metro";
 import { groundY } from "./lublin/terrain";
@@ -284,23 +285,45 @@ const blockedAlong = (r: TrafficRoute): number[] => {
   return out;
 };
 
-/** A piece of a lane clear of the blocks, and whether a block cut its start or its end. */
+/** A piece of a lane clear of the blocks, and whether it stops short at its start or its end: a block cut it, or the street ends there. */
 interface Piece {
   readonly route: TrafficRoute;
   readonly cutStart: boolean;
   readonly cutEnd: boolean;
 }
 
+/** A street's end this far from every other car street and from the map's edge is a dead end (m). */
+const DEAD_END_REACH = 8;
+
+const onMap = (x: number, z: number): boolean => MAP_CHUNKS.some(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ);
+
+/**
+ * Does no car go on from this end of street `k`: the street ends there in OSM, or turns into a
+ * pedestrian street or one for deliveries? Its lanes turn round there, as before a block. An end
+ * at a junction, at a chunk's seam or at the map's edge is not one.
+ */
+const deadEnd = (k: number, [x, z]: Pt): boolean =>
+  [-1, 0, 1].every((a) => [-1, 0, 1].every((b) => onMap(x + a * DEAD_END_REACH, z + b * DEAD_END_REACH))) &&
+  ROAD_CHAINS.every((o, j) => j === k || o.use !== "cars" || projectOn(o.points, x, z).d > DEAD_END_REACH);
+
+type DeadEnds = { readonly first: boolean; readonly last: boolean };
+
+/** Whether a street's first and last points are dead ends. */
+const deadEndsOf = (c: RoadChain, k: number): DeadEnds => ({ first: deadEnd(k, c.points[0]!), last: deadEnd(k, c.points[c.points.length - 1]!) });
+
 /**
  * The lanes of one street as their pieces clear of the game's blocks, `MIN_ROUTE` long at least.
  * A block in one lane closes the street's other lanes there too, so no lane starts among them.
  */
-const clearOfBlocks = (lanes: readonly TrafficRoute[]): Piece[] => {
+const clearOfBlocks = (lanes: readonly TrafficRoute[], dead: DeadEnds): Piece[] => {
   const blocked = lanes.flatMap(blockedAlong);
-  if (blocked.length === 0) return lanes.map((route) => ({ route, cutStart: false, cutEnd: false }));
+  // A lane that runs the other way meets the same block, and the street's ends, at the other end of its arc length.
+  const isBack = (r: TrafficRoute) => r.id.endsWith(":b") || r.id.endsWith(":bt");
+  const deadStart = (r: TrafficRoute) => (isBack(r) ? dead.last : dead.first);
+  const deadStop = (r: TrafficRoute) => (isBack(r) ? dead.first : dead.last);
+  if (blocked.length === 0) return lanes.map((route) => ({ route, cutStart: deadStart(route), cutEnd: deadStop(route) }));
   return lanes.flatMap((r) => {
-    // A lane that runs the other way meets the same block at the other end of its arc length.
-    const back = r.id.endsWith(":b") || r.id.endsWith(":bt");
+    const back = isBack(r);
     const own = blocked.map((s) => (back ? r.length - s : s)).sort((a, b) => a - b);
     const free: [number, number][] = [];
     let from = 0;
@@ -313,13 +336,13 @@ const clearOfBlocks = (lanes: readonly TrafficRoute[]): Piece[] => {
       .filter(([a, b]) => b - a >= MIN_ROUTE)
       .map(([a, b], n) => ({
         route: routeOf(`${r.id}/${n}`, r.street, r.use, slice(r.points, a, b), r.speed, Math.max(1, Math.round((r.vehicles * (b - a)) / r.length))),
-        cutStart: a > 0,
-        cutEnd: b < r.length,
+        cutStart: a > 0 || deadStart(r),
+        cutEnd: b < r.length || deadStop(r),
       }));
   });
 };
 
-/** A lane cut short by a block turns round onto a lane the other way starting this close to its end (m). */
+/** A lane cut short by a block or a dead end turns round onto a lane the other way starting this close to its end (m). */
 const TURN_REACH = 16;
 /** Speed through a turn round (m/s). */
 export const TURN_SPEED = 4;
@@ -338,9 +361,10 @@ const uTurn = (a: Pt, b: Pt, tx: number, tz: number): Pt[] => {
 };
 
 /**
- * The pieces as lanes: one cut short by a block turns round there onto the nearest unclaimed
- * piece of the same use that starts beside its end the other way (the two carriageways of
- * Aleja Tysiąclecia before the market), so its vehicles do not queue at a dead end.
+ * The pieces as lanes: one cut short by a block or a dead end turns round there onto the nearest
+ * unclaimed piece of the same use that starts beside its end the other way (the two carriageways
+ * of Aleja Tysiąclecia before the market, the other lane of a two-way street that runs into a
+ * pedestrian one), so its vehicles do not queue at a dead end. A one-way street has no such lane.
  */
 const turnRound = (pieces: readonly Piece[]): TrafficRoute[] => {
   const pairs: { d: number; i: number; j: number }[] = [];
@@ -381,7 +405,7 @@ const turnRound = (pieces: readonly Piece[]): TrafficRoute[] => {
 };
 
 /** Every lane of the city's traffic, in a stable order (the chains' order, then lane by lane), clear of the game's blocks. */
-export const TRAFFIC_ROUTES: readonly TrafficRoute[] = turnRound(ROAD_CHAINS.flatMap((c, k) => clearOfBlocks(lanesOf(c, k, ROAD_CHAINS))));
+export const TRAFFIC_ROUTES: readonly TrafficRoute[] = turnRound(ROAD_CHAINS.flatMap((c, k) => clearOfBlocks(lanesOf(c, k, ROAD_CHAINS), deadEndsOf(c, k))));
 
 /** How busy the roads are by the hour (0..1 of full traffic): the rush hours, a quiet night. */
 export const TRAFFIC_BY_HOUR: readonly number[] = [

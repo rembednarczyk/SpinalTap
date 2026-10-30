@@ -51,6 +51,9 @@ const inPassage = (x: number, z: number) =>
 
 const near = (x: number, z: number) => `${x.toFixed(0)},${z.toFixed(0)}`;
 const inMap = (x: number, z: number) => MAP_CHUNKS.some((c) => x > c.bounds.minX + 1 && x < c.bounds.maxX - 1 && z > c.bounds.minZ + 1 && z < c.bounds.maxZ - 1);
+const onChunk = (x: number, z: number) => MAP_CHUNKS.some(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ);
+/** Is (x, z) more than `m` from the map's edge (the chunks' seams inside it aside)? */
+const deepInMap = (x: number, z: number, m: number) => [-m, 0, m].every((a) => [-m, 0, m].every((b) => onChunk(x + a, z + b)));
 
 /** Is (x, z) inside a flat outline `[x0, z0, …]` placed at (ox, oz)? */
 const inOutline = (x: number, z: number, flat: readonly number[], ox: number, oz: number) => {
@@ -133,6 +136,22 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /** A car lane off every road surface (on grass, a square, a pavement), away from the map's edges. */
   "car-lane-off-road": () =>
     cars.flatMap((r) => along(r, 3).filter((p) => inMap(p.x, p.z) && !surfacesAt(p.x, p.z).some((s) => s === "road" || s === "crossing" || s === "cobble")).map((p) => ({ at: near(p.x, p.z), what: r.id }))),
+  /**
+   * A car lane (trolleybuses too) that ends inside the map, more than 6 m from its edge, with no
+   * lane starting within 3 m of its end the same way: its vehicles stop there and wait while the
+   * player watches. What is left: the junctions without turns (G-006, later), the gap in Aleja
+   * Tysiąclecia (G-020), the chunk seams (G-021), the short laneless chains (G-022) and the
+   * one-way streets running into a pedestrian one (G-023, no lane back to turn round onto).
+   */
+  "lane-dead-end": () => {
+    const starts = cars.map((r) => ({ r, p: pointAt(r.points, 0) }));
+    return cars.flatMap((r) => {
+      const e = pointAt(r.points, r.length);
+      if (!deepInMap(e.x, e.z, 6)) return [];
+      const met = starts.some(({ r: o, p }) => o !== r && Math.hypot(p.x - e.x, p.z - e.z) < 3 && p.tx * e.tx + p.tz * e.tz > 0.5);
+      return met ? [] : [{ at: near(e.x, e.z), what: r.id }];
+    });
+  },
   /** A lane through a building's solid (a delivery van too), its passages aside. */
   "lane-in-building": () => TRAFFIC_ROUTES.flatMap((r) => along(r, 1).filter((p) => inBuilding(p.x, p.z) && !inPassage(p.x, p.z)).map((p) => ({ at: near(p.x, p.z), what: r.id }))),
   /** A crowd lane's walker on a car lane (the set pieces' own lanes aside). */
