@@ -287,7 +287,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: test sesji prologu: nowa gra w klinice, cel wskazuje Neon Koi, rozmowa z Kaito w barze ustawia `met_fixer` i daje zlecenie kuriera, Kaito się nie przemieszcza.
 
 ### G-035 Wskaźniki zadań nie prowadzą do postaci z wątku: nie da się znaleźć babci Ume
-- Status: weryfikacja PRZYJĘTE, w PR. Cel kroku (`target`) i znacznik `quest` na minimapie i mapie miasta; poza wczytanym chunkiem znacznik na miejscu z harmonogramu. Uwaga weryfikatora: jeśli Ume zginie w kroku ren_trail (po „aya”), krok nie ma innej drogi ukończenia (do osobnego zgłoszenia).
+- Status: naprawione (#43). Cel kroku (`target`) i znacznik `quest` na minimapie i mapie miasta; poza wczytanym chunkiem znacznik na miejscu z harmonogramu. Uwaga weryfikatora: jeśli Ume zginie w kroku ren_trail (po „aya”), krok nie ma innej drogi ukończenia (do osobnego zgłoszenia).
 - Ważność: S2 (blokuje postęp wątku głównego, akt II) · Zasięg: każdy krok „porozmawiaj z X” (Ume, Mori, Ren, Kurosawa) · Koszt: średni
 - Dowód: `minimap.ts` `markerKind` oznacza tylko zleceniodawców (`fixer`/`hana`/`genzo`) i cele z tagiem; kroki zadań (`core/quest/definitions.ts`) mają tylko tekst `objective`, bez celu. „Zapytaj babcię Ume o Rena Odagiri” nie mówi, gdzie ona jest (deptak przy klinice ok. (328, −77) od 6:30, w nocy brama obok, `schedules.ts`).
 - Pakiet właściciela: packages/core (`quest`, krok z celem), packages/app (`minimap.ts`, HUD), packages/ui (znacznik)
