@@ -71,6 +71,12 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       .flat()
       .filter((i) => ["artwork", "monument", "kiosk", "bus-shelter", "bench", "vending-machine", "advertising-column"].includes(i.prop))
       .flatMap((i) => (nearestWall(i.x, i.z).d < furnitureRadius(i) - 0.3 ? [{ at: near(i.x, i.z), what: i.prop }] : [])),
+  /** A piece of furniture (wall lanterns aside, they hang on a facade) standing more than 0.5 m inside a building. */
+  "furniture-in-building": () =>
+    Object.values(WORLD_STREET_PROPS)
+      .flat()
+      .filter((i) => i.prop !== "lamp-wall-lantern" && inBuilding(i.x, i.z) && nearestWall(i.x, i.z).d > 0.5)
+      .map((i) => ({ at: near(i.x, i.z), what: `${i.prop} ${nearestWall(i.x, i.z).d.toFixed(1)} m` })),
   /** A parked car with a piece of furniture inside its body. */
   "parked-car-in-furniture": () =>
     PARKED_CARS.flatMap((c) => {
