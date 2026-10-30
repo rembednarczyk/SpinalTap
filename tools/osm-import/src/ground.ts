@@ -113,13 +113,55 @@ export const lineBands = (l: Line, mappedSidewalkNear: boolean, water: readonly 
       const w = parseLength(t.width) ?? PATHS[hw]!;
       // Steps: one band per straight run, so the renderer reads the flight's direction off it.
       if (hw === "steps") for (let i = 0; i + 1 < l.line.length; i++) add("steps", bufferLine([l.line[i]!, l.line[i + 1]!], w));
-      else add(t.footway === "sidewalk" ? "sidewalk" : cobbled(t) ? "cobble" : "footway", bufferLine(l.line, w));
+      // A path's crossing of a carriageway: a zebra where it is marked, the road itself where not.
+      else if (crossingWay(t)) {
+        if (markedCrossing({ ...t, highway: "crossing" })) add("crossing", bufferLine(l.line, Math.max(w, CROSSING_ALONG)));
+      } else add(t.footway === "sidewalk" ? "sidewalk" : cobbled(t) ? "cobble" : "footway", bufferLine(l.line, w));
     }
   }
   if (t.railway === "rail" || t.railway === "tram" || t.railway === "light_rail") add("rail", bufferLine(l.line, 3));
   if (t.waterway === "river" && !t.tunnel && !coveredByWater(l.line, water)) add("water", bufferLine(l.line, parseLength(t.width) ?? 15));
   if ((t.waterway === "stream" || t.waterway === "canal" || t.waterway === "ditch") && !underground(t)) add("water", bufferLine(l.line, parseLength(t.width) ?? 3));
   return out;
+};
+
+/** How far a zebra runs along the road, metres. */
+export const CROSSING_ALONG = 3;
+
+/** A footway's or a cycleway's stretch across a carriageway (`footway=crossing`). */
+export const crossingWay = (t: Tags): boolean => t.footway === "crossing" || t.cycleway === "crossing" || t.path === "crossing";
+const UNMARKED = new Set(["unmarked", "no", "informal"]);
+
+/** A crossing node with markings on the road (most Lublin crossings are tagged without saying). */
+export const markedCrossing = (t: Tags): boolean => t.highway === "crossing" && !UNMARKED.has(t.crossing ?? "") && t["crossing:markings"] !== "no";
+
+/**
+ * A zebra's band at a crossing node: across the carriageway the node lies on, as wide as that
+ * road and `CROSSING_ALONG` along it. Null when the node is on no carriageway (a crossing of a
+ * footway or a cycleway) or the road is too narrow to stripe.
+ */
+export const crossingBand = (source: string, at: Pt, roads: readonly Line[]): Band | null => {
+  let best: { d: number; tx: number; tz: number; w: number; bridge: boolean } | null = null;
+  for (const l of roads) {
+    const t = l.tags;
+    if (!t.highway || ROAD_WIDTH[t.highway] === undefined || t.area === "yes" || underground(t)) continue;
+    for (let i = 0; i + 1 < l.line.length; i++) {
+      const a = l.line[i]!;
+      const b = l.line[i + 1]!;
+      const dx = b.x - a.x;
+      const dz = b.z - a.z;
+      const len = Math.hypot(dx, dz);
+      if (len < 0.1) continue;
+      const k = Math.max(0, Math.min(1, ((at.x - a.x) * dx + (at.z - a.z) * dz) / (len * len)));
+      const d = Math.hypot(a.x + dx * k - at.x, a.z + dz * k - at.z);
+      if (d < 1 && (!best || d < best.d)) best = { d, tx: dx / len, tz: dz / len, w: roadWidth(t), bridge: t.bridge !== undefined && t.bridge !== "no" };
+    }
+  }
+  if (!best || best.w < 3.5) return null;
+  const { tx, tz, w } = best;
+  const corner = (along: number, across: number): Pt => ({ x: at.x + tx * along - tz * across, z: at.z + tz * along + tx * across });
+  const h = CROSSING_ALONG / 2;
+  return { surface: "crossing", ring: [corner(-h, -w / 2), corner(h, -w / 2), corner(h, w / 2), corner(-h, w / 2)], bridge: best.bridge, source };
 };
 
 export const areaBand = (a: Area): Band | null => {
@@ -129,7 +171,7 @@ export const areaBand = (a: Area): Band | null => {
 };
 
 /** Draw order: big areas first, then roads, cobbles, sidewalks, paths and rails on top. */
-const ORDER: Record<GroundSurface, number> = { water: 0, grass: 1, square: 2, road: 3, cobble: 4, sidewalk: 5, footway: 6, steps: 7, rail: 8, basin: 9 };
+const ORDER: Record<GroundSurface, number> = { water: 0, grass: 1, square: 2, road: 3, cobble: 4, crossing: 5, sidewalk: 6, footway: 7, steps: 8, rail: 9, basin: 10 };
 
 /** Clips bands to a chunk, simplifies and rounds them, in draw order then by source id. */
 export const chunkGround = (bands: readonly Band[], rect: Rect): GroundOut[] => {

@@ -15,6 +15,7 @@ import { MapWaterMaterial } from "./map-water";
 import { BinIndex, cellBounds, cellKey, cellsOf, grow } from "./map-index";
 import { type Box2, type P2, boundsOf, centroid, cleanRing, distanceToBox, pointInRing } from "./polygon";
 import { planBuildingSigns } from "./sign-plan";
+import { planCrossing } from "./crossing-plan";
 import { type AcrossAt, SPAN_MAX, type Span, findSpans, planFarCanyon, planNearCanyon } from "./canyon-plan";
 import { planCanyonSigns } from "./canyon-signs";
 import { planFarVertical, planNearVertical } from "./vertical-plan";
@@ -493,6 +494,7 @@ export class MapCity {
       if (g.surface === "water") planWater(water, g.ring, h);
       else if (g.surface === "basin") planBasin(water, ground, g.ring, h);
       else if (g.surface === "steps") planSteps(ground, g.ring, h);
+      else if (g.surface === "crossing") planCrossing(ground, g.ring, h);
       else planSurface(ground, g.surface, g.ring, h, g.surface === "sidewalk" ? this.roadAt : null);
     }
     cell.ground = ground.empty ? null : this.mesh(`map-ground-${cell.key}`, ground, "mapGround");
