@@ -201,6 +201,26 @@ export const offRoad = (site: Site, p: Pt, reach = 12, inset = 0.6): Pt | null =
   return null;
 };
 
+/** Does a circle of radius `r` round p reach into a building (sampled at its centre and 16 points round it)? */
+const touchesBuilding = (site: Site, p: Pt, r: number): boolean =>
+  site.surfaceAt(p) === "building" || AROUND.some((d, i) => i % 2 === 0 && site.surfaceAt({ x: p.x + d.x * r, z: p.z + d.z * r }) === "building");
+
+/**
+ * p itself when a piece `r` metres round keeps out of the buildings; else the nearest point
+ * within `reach` metres where it does (a sculpture from a node on a facade, the mural's); null
+ * when there is none.
+ */
+export const offWall = (site: Site, p: Pt, r: number, reach = 4): Pt | null => {
+  if (!touchesBuilding(site, p, r)) return p;
+  for (let d = 0.25; d <= reach; d += 0.25) {
+    for (const u of AROUND) {
+      const q = { x: p.x + u.x * d, z: p.z + u.z * d };
+      if (!touchesBuilding(site, q, r)) return q;
+    }
+  }
+  return null;
+};
+
 /** Radical inverse in `base` (Halton sequence). */
 const halton = (i: number, base: number): number => {
   let f = 1;
