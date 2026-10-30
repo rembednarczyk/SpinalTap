@@ -191,6 +191,22 @@ describe("shop signs on wrought-iron brackets (ADR-0048)", () => {
     expect(bracketSpots(facadeFrame(shop({ bracketSigns: true }), none))).toEqual(bracketSpots(facadeFrame(shop({ bracketSigns: true }), none)));
   });
 
+  it("lay the neon's streaks on the street in front, not at the ground floor of a building on a plinth", () => {
+    // A slope: the ground falls 0.1 m per metre towards -z; the building's ground floor is 2 m up.
+    const slope = (_x: number, z: number) => z * 0.1;
+    for (const bracketSigns of [true, false]) {
+      const sink = new MeshSink();
+      planBuildingSigns(sink, facadeFrame(shop({ base: 2, foot: -0.6, bracketSigns }), none), () => null, slope);
+      let streaks = 0;
+      for (let i = 0; i < sink.vertexCount; i++) {
+        if (sink.uvs2[i * 2 + 1] !== MAP_SIGN_KIND.reflection) continue;
+        streaks += 1;
+        expect(sink.positions[i * 3 + 1]).toBeCloseTo(slope(0, sink.positions[i * 3 + 2]!) + 0.02, 5);
+      }
+      expect(streaks).toBeGreaterThan(0);
+    }
+  });
+
   it("leave a building with a game doorway to the game's own sign", () => {
     expect(bracketSpots(facadeFrame(shop({ bracketSigns: true, doorways: [{ x: 9, z: 0, width: 1.6, bottom: 0, top: 2.6 }] }), none))).toEqual([]);
   });

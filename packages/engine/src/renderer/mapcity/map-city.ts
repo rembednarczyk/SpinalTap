@@ -245,6 +245,12 @@ export class MapCity {
     return null;
   }
 
+  /** The drawn ground at (x, z): the terrain and the pavement on it; null outside every terrain. */
+  private readonly drawnGround = (x: number, z: number): number | null => {
+    const h = this.heightAt(x, z);
+    return h === null ? null : h + this.surfaceLift(x, h, z);
+  };
+
   /**
    * How far the picture lifts feet at (x, y, z) above the terrain (ADR-0045): a character the
    * simulation keeps on the terrain stands on the surface drawn there (a sidewalk 16 cm up, a
@@ -468,7 +474,7 @@ export class MapCity {
     for (const f of cell.frames) {
       planFarBuilding(far, f);
       planFarVertical(far, f);
-      planBuildingSigns(signs, f, (name) => this.signs.slotFor(name));
+      planBuildingSigns(signs, f, (name) => this.signs.slotFor(name), this.drawnGround);
     }
     planFarCanyon(far, cell.spans);
     planCanyonSigns(signs, cell.frames, cell.spans, this.deps.quality === "low");

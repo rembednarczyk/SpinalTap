@@ -52,9 +52,23 @@ const flat = (sink: MeshSink, w: Wall, u: number, y: number, out: number, width:
   quadUv(sink, [onWall(w, u - width / 2, y - height / 2, out), onWall(w, u + width / 2, y - height / 2, out), onWall(w, u + width / 2, y + height / 2, out), onWall(w, u - width / 2, y + height / 2, out)], { x: w.nx, y: 0, z: w.nz }, color, UV, uv2);
 };
 
-/** Neon streak on the wet ground in front of a sign, from the wall `reach` metres out. */
-const reflection = (sink: MeshSink, w: Wall, u: number, y: number, width: number, reach: number, color: Rgba, seed: number): void => {
-  quadUv(sink, [onWall(w, u - width / 2, y, 0.15), onWall(w, u + width / 2, y, 0.15), onWall(w, u + width / 2, y, reach), onWall(w, u - width / 2, y, reach)], { x: 0, y: 1, z: 0 }, color, UV, [seed, MAP_SIGN_KIND.reflection]);
+/** The drawn ground (terrain plus its pavement) at a point, or null outside the terrain. */
+export type SignGround = (x: number, z: number) => number | null;
+
+/** Above the drawn ground, so the streak never flickers into the pavement. */
+const STREAK_LIFT = 0.02;
+
+/**
+ * Neon streak on the wet ground in front of a sign, from the wall `reach` metres out. Each
+ * corner lies on the ground there: a building on a slope stands on a plinth, so its ground
+ * floor (`fallback`) can be metres above the street in front of it.
+ */
+const reflection = (sink: MeshSink, w: Wall, u: number, ground: SignGround, fallback: number, width: number, reach: number, color: Rgba, seed: number): void => {
+  const lay = (uu: number, out: number): Vec => {
+    const p = onWall(w, uu, 0, out);
+    return { x: p.x, y: (ground(p.x, p.z) ?? fallback) + STREAK_LIFT, z: p.z };
+  };
+  quadUv(sink, [lay(u - width / 2, 0.15), lay(u + width / 2, 0.15), lay(u + width / 2, reach), lay(u - width / 2, reach)], { x: 0, y: 1, z: 0 }, color, UV, [seed, MAP_SIGN_KIND.reflection]);
 };
 
 /** A blade sign sticking out of the wall at `u`: two faces back to back, both readable. */
@@ -105,9 +119,9 @@ const holos = (sink: MeshSink, f: FacadeFrame, rand: () => number): void => {
 };
 
 /** Shop boards, blades and their reflections on the street walls. */
-const shopSigns = (sink: MeshSink, f: FacadeFrame, rand: () => number): void => {
+const shopSigns = (sink: MeshSink, f: FacadeFrame, rand: () => number, ground: SignGround): void => {
   const walls = streetWalls(f).slice(0, f.style.signs);
-  const groundY = f.b.base + 0.16;
+  const groundY = f.b.foot + 0.16;
   for (const w of walls) {
     const color = NEON[Math.floor(rand() * NEON.length)] ?? "#ff2e88";
     const width = Math.min(w.length * 0.55, 7);
@@ -116,19 +130,19 @@ const shopSigns = (sink: MeshSink, f: FacadeFrame, rand: () => number): void => 
     if (f.style.shopfront) {
       const cell = Math.floor(rand() * MAP_SIGN_BOARDS.length);
       flat(sink, w, u, f.b.base + f.ground - 0.45, 0.1, width, h, tint(color, 1), [cell, MAP_SIGN_KIND.board]);
-      reflection(sink, w, u, groundY, width * 0.9, 6, tint(color, 0.8), rand());
+      reflection(sink, w, u, ground, groundY, width * 0.9, 6, tint(color, 0.8), rand());
     }
     if (rand() < 0.6) {
       const end = rand() < 0.5 ? 0.9 : w.length - 0.9;
       const bc = tint(NEON[Math.floor(rand() * NEON.length)] ?? "#00e5ff", 1);
       blade(sink, w, end, f.b.base + f.ground + 1.7, Math.floor(rand() * MAP_SIGN_BLADES.length), bc);
-      reflection(sink, w, end, groundY, 1.4, 5, [bc[0], bc[1], bc[2], 0.6], rand());
+      reflection(sink, w, end, ground, groundY, 1.4, 5, [bc[0], bc[1], bc[2], 0.6], rand());
     }
   }
 };
 
 /** Round neon signs hung from the Old Town's brackets, both faces along the street (ADR-0048). */
-const bracketSigns = (sink: MeshSink, f: FacadeFrame): void => {
+const bracketSigns = (sink: MeshSink, f: FacadeFrame, ground: SignGround): void => {
   for (const s of bracketSpots(f)) {
     const w = s.wall;
     const dx = (w.b.x - w.a.x) / w.length;
@@ -139,7 +153,7 @@ const bracketSigns = (sink: MeshSink, f: FacadeFrame): void => {
     const face = (side: number) => [corner(SIGN_OUT - SIGN_RADIUS, y - SIGN_RADIUS, side), corner(SIGN_OUT + SIGN_RADIUS, y - SIGN_RADIUS, side), corner(SIGN_OUT + SIGN_RADIUS, y + SIGN_RADIUS, side), corner(SIGN_OUT - SIGN_RADIUS, y + SIGN_RADIUS, side)] as const;
     quadUv(sink, face(1), { x: dx, y: 0, z: dz }, color, UV_MIRROR, [s.seed * 8, MAP_SIGN_KIND.disc]);
     quadUv(sink, face(-1), { x: -dx, y: 0, z: -dz }, color, UV, [s.seed * 8, MAP_SIGN_KIND.disc]);
-    reflection(sink, w, s.u, f.b.base + 0.16, 1, 4, [color[0], color[1], color[2], 0.5], s.seed);
+    reflection(sink, w, s.u, ground, f.b.foot + 0.16, 1, 4, [color[0], color[1], color[2], 0.5], s.seed);
   }
 };
 
@@ -151,12 +165,15 @@ const tubes = (sink: MeshSink, f: FacadeFrame, color: string): void => {
   }
 };
 
-/** Signs of one building. `nameSlot` gives the plaque's row in the names atlas (null: no room). */
-export const planBuildingSigns = (sink: MeshSink, f: FacadeFrame, nameSlot: (name: string) => number | null): void => {
+/**
+ * Signs of one building. `nameSlot` gives the plaque's row in the names atlas (null: no room);
+ * `ground` is where the neon's streaks lie (without it, the outline's lowest ground).
+ */
+export const planBuildingSigns = (sink: MeshSink, f: FacadeFrame, nameSlot: (name: string) => number | null, ground: SignGround = () => null): void => {
   const rand = prng((f.b.look ^ 0x5191) >>> 0);
   // A room or a gate the game cut into the building (ADR-0045) carries the game's own sign there.
-  if (f.b.bracketSigns) bracketSigns(sink, f);
-  else if (f.style.signs > 0 && !(f.b.doorways && f.b.doorways.length > 0)) shopSigns(sink, f, rand);
+  if (f.b.bracketSigns) bracketSigns(sink, f, ground);
+  else if (f.style.signs > 0 && !(f.b.doorways && f.b.doorways.length > 0)) shopSigns(sink, f, rand, ground);
   if (f.style.neonTrim && f.style.cornice) tubes(sink, f, f.style.neonTrim);
   holos(sink, f, rand);
   if (f.b.name) {
