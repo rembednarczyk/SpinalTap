@@ -48,7 +48,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet: `tools/osm-import` (meble przy ścianach stawiane z `ON_BUILDINGS`)
 
 ### G-008 Budynki z OSM wchodzą w sceny targu i doków
-- Status: weryfikacja PRZYJĘTE, w PR
+- Status: naprawione (#33)
 - Decyzja orkiestratora: budynek znika, gdy przecina pełny blok sceny albo ponad 25% jego powierzchni leży w prostokątach; Dworzec Autobusowy (2,6%, bez kolizji) zostaje. Znikają w1354195809 i „Hunek” w458298766.
 - Ważność: S3 · Zasięg: lokalny · Koszt: mały
 - Gdzie: w1354195809 przy dokach (2595, 391), wbity w ścianę doków i 1,2 m nad wyrównanym placem; „Hunek" w458298766 (817, 373,5) we wschodniej ścianie targu; w66264171 (789, 396) na placu targu
@@ -113,7 +113,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `furniture-overlap` w skanie = 0 (meble z bryłą, poza słupkami).
 
 ### G-013 Narzędzie zrzutów: kadr przesunięty o jedno miejsce albo powtórzony
-- Status: przyjęte
+- Status: w naprawie (weryfikacja: NIE PRZYJĘTE, warunek czekania nie sprawdza pitch; seria z jednego miejsca dalej przesunięta)
 - Ważność: S3 (proces: fałszywe dowody łowców) · Zasięg: każde polowanie · Koszt: mały
 - Gdzie: `e2e/glitch-shots.spec.ts`
 - Dowód:
@@ -135,7 +135,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `parked-car-on-crossing` w skanie = 0 (żaden punkt obrysu na `crossing`).
 
 ### G-015 Auta zaparkowane tyłem do ruchu na ulicach jednokierunkowych
-- Status: przyjęte
+- Status: weryfikacja PRZYJĘTE, w PR
 - Ważność: S4 · Zasięg: lokalny · Koszt: mały
 - Gdzie: 10 aut, m.in. Lubartowska (449,9, 40,7), Aleja Tysiąclecia (920,0, 329,9), Nowy Plac Targowy, Nadstawna
 - Dowód: sonda weryfikatora G-014 (kierunek auta wobec najbliższej osi ulicy; do potwierdzenia).
@@ -148,7 +148,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Gdzie: (−115,58, 31,83) 3,0 m, (−103,16, −32,87) 7,75 m, (−115,53, 25,62) 9,0 m za zebrą
 
 ### G-017 Wiaty przystanków z OSM jako trzypiętrowe bloki mieszkalne na Alei Tysiąclecia
-- Status: przyjęte
+- Status: weryfikacja PRZYJĘTE, w PR
 - Ważność: S3 · Zasięg: lokalny · Koszt: mały
 - Gdzie: w672635874 (709,5, 335,3) i w672635872 (781, 365,1), po 3 kondygnacje i 9,7–9,8 m; w672635873 3,3 m
 - Dowód: raport naprawiacza G-011 (obrysy `amenity=shelter` + `building=yes` budowane jako `residential`).
@@ -160,6 +160,26 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 (proponowana) · Zasięg: lokalny
 - Gdzie: Plac Litewski (20, 10), kadr z yaw 3,14
 - Dowód: zrzut naprawiacza G-013 (pionowy pas czarnych poziomych kresek na środku bruku; może decal albo odpływ).
+
+### G-019 Auto z jednokierunkowej pętli Cerkiewnej stoi na trzypasmowej jezdni Alei Tysiąclecia
+- Status: przyjęte (potwierdzone pomiarem łowcy)
+- Ważność: S3 · Zasięg: lokalny, trasa główna · Koszt: mały
+- Gdzie: (920,02, 329,90), hatchback; 1 na 81 aut w mieście
+- Dowód: 2,49 m od osi „Aleje Tysiąclecia” (OSM way 739432828, primary, 3 pasy), kąt 35°; pętla Cerkiewnej (ways 66322976, 422659195) leży 7–13 m od osi Alei bez pobocza.
+- Przyczyna: `roadHalfWidth()` (`traffic.ts:102`) skanuje każdą nawierzchnię jezdni, więc lewy krawężnik pętli trafia za Aleję (limit 9 m) i `parked-cars.ts:155` stawia auto na pasie Alei; `fits()` sprawdza tylko pasy `TRAFFIC_ROUTES`, a odcinek Alei (36,4 m < `MIN_ROUTE` 45) nie ma pasa.
+- Pakiet właściciela: packages/sim (`content/parked-cars.ts`)
+- Test przyjęcia: kontrola skanu `parked-car-on-other-road` (auto bliżej niż pół szerokości + 0,5 m od osi innej drogi dla aut) daje 0; dziś 1.
+
+### G-020 Jezdnia zachodnia Alei Tysiąclecia ma 36 m bez pasa (literówka „Aleje” w OSM)
+- Status: przyjęte (potwierdzone pomiarem łowcy), w kolejce za limitem WIP
+- Ważność: S2 · Zasięg: szeroki (trasa główna) · Koszt: mały
+- Gdzie: (930,3, 331,4)–(894,1, 335,1), `ROAD_CHAINS[91]`, OSM way 739432828; 1 w mieście
+- Dowód: pasy #85/#86 kończą się w x 930, #82–#84 zaczynają w x 894. W symulacji (seed 3, 8:00, 90 s) auta stoją na końcu pasa z v = 0 i tworzą korek do 6 aut, w ramce naliczono 18 pojawień i 21 zniknięć. Łańcuch #82 (128,5 m < `MIN_TROLLEY` 150) traci trolejbus.
+- Przyczyna: `tools/osm-import/src/labels.ts:26` przepisuje nazwę bez korekty; klucz łączenia w `content/lublin/roads.ts:71` zawiera nazwę, więc Aleja rozpada się na 3 łańcuchy. Martwy obejściowy wpis „Aleje Tysiąclecia” w `TROLLEY_STREETS` (`traffic.ts:62`).
+- Pakiet właściciela: tools/osm-import (korekta nazwy) + regeneracja `content/lublin`
+- Test przyjęcia: jeden łańcuch „Aleja Tysiąclecia” ok. 472 m; pas aut bliżej niż 2 m od (912, 333); trolejbus na jezdni zachodniej; kontrola skanu `car-road-hole` (krótki łańcuch między dwoma łańcuchami z pasami, ten sam rodzaj i oneway) daje 0, dziś 1.
+- Uwaga: po złączeniu odcinek dostaje pas, a to może samo usunąć objaw G-019; przyczyna G-019 (krawężnik liczony przez cudzą jezdnię) zostaje osobna.
+- Trop poza zakresem: 12 bezimiennych dróg dla aut odrzuconych przez import (`labels.ts:27`, m.in. primary_link 60149306, 232464399) może dawać podobne przerwy na łącznikach.
 
 ### G-006 Skręty aut na skrzyżowaniach
 - Status: później (to funkcja, nie glitch: wymaga sieci pasów; ADR-0050 „Na później”)

@@ -137,13 +137,18 @@ const fits = (x: number, z: number, yaw: number, model: VehicleModel): boolean =
 
 const modelAt = (x: number, z: number): VehicleModel => PARKED_MODELS[hash(x, z, 3) % PARKED_MODELS.length]!;
 
-/** Cars along the right-hand kerb of the two-way side streets that have the room. */
+/**
+ * Cars along both kerbs of the side streets that have the room: on a two-way street each kerb is
+ * the right-hand one of its way; on a one-way street both face the way it is driven.
+ */
 const kerbCars = (): ParkedCar[] => {
   const out: ParkedCar[] = [];
   for (const c of ROAD_CHAINS) {
     if (c.use !== "cars" || (c.kind !== "residential" && c.kind !== "tertiary" && c.kind !== "unclassified")) continue;
     const len = polylineLength(c.points);
     for (const pts of [c.points, [...c.points].reverse()] as const) {
+      // The far kerb of a one-way street is walked the other way, but its cars turn to the traffic's way.
+      const turned = c.oneway && pts !== c.points;
       const half = roadHalfWidth(pts, 1);
       if (half < KERB_ROOM) continue;
       // By the kerb, and never closer to the axis than the lane's car leaves room for.
@@ -151,7 +156,7 @@ const kerbCars = (): ParkedCar[] => {
       for (let s = JUNCTION_CLEAR; s < len - JUNCTION_CLEAR; s += KERB_BAY) {
         const p = pointAt(kerb, s);
         if (hash(p.x, p.z, 1) / 0x100000000 >= KERB_TAKEN) continue;
-        const yaw = Math.atan2(p.tx, p.tz);
+        const yaw = turned ? Math.atan2(-p.tx, -p.tz) : Math.atan2(p.tx, p.tz);
         const model = modelAt(p.x, p.z);
         // The kerb line is the street's median one; where the carriageway is locally narrower the car edges in.
         const shift = KERB_NUDGE.find((d) => fits(p.x + p.tz * d, p.z - p.tx * d, yaw, model));

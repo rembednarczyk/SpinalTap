@@ -6,7 +6,7 @@ import { CROWD_LANES } from "../../../packages/sim/src/content/crowd";
 import { furnitureClearance } from "../../../packages/sim/src/content/furniture-index";
 import { furnitureRadius } from "../../../packages/sim/src/content/lublin/furniture";
 import { inBuilding, nearestWall } from "../../../packages/sim/src/content/lublin/places";
-import { surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
+import { ROAD_CHAINS, surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
 import { clearedBuilding } from "../../../packages/sim/src/content/cleared-buildings";
 import { CLEARED_BUILDINGS, MAP_CHUNKS, PASSAGES } from "../../../packages/sim/src/content/lublin/sites";
 import { groundY } from "../../../packages/sim/src/content/lublin/terrain";
@@ -26,6 +26,7 @@ type Finding = { readonly at: string; readonly what: string };
 
 const BASELINE = join(__dirname, "glitch-baseline.json");
 const cars = TRAFFIC_ROUTES.filter((r) => r.use !== "deliveries");
+const carStreets = ROAD_CHAINS.filter((c) => c.use === "cars");
 
 /** Samples along a lane every `step` metres. */
 const along = (r: TrafficRoute, step: number) => {
@@ -145,6 +146,23 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
         for (let b = -length / 2; b <= length / 2 + 1e-6; b += length / Math.ceil(length / 0.5))
           if (surfacesAt(c.x + fx * b + fz * a, c.z + fz * b - fx * a).includes("crossing")) on++;
       return on > 0 ? [{ at: near(c.x, c.z), what: `${c.model} ${on} points on a zebra` }] : [];
+    }),
+  /**
+   * A parked car on a one-way street (or a roundabout) facing against its traffic: its street is
+   * the car road whose axis runs nearest alongside it. Plac Zamkowy's car park aside.
+   */
+  "parked-car-against-traffic": () =>
+    PARKED_CARS.filter((c) => !(c.x > 712 && c.x < 762 && c.z > 188 && c.z < 300)).flatMap((c) => {
+      const fx = Math.sin(c.yaw);
+      const fz = Math.cos(c.yaw);
+      let street: { name: string; d: number; dot: number; directed: boolean } | undefined;
+      for (const r of carStreets) {
+        const q = projectOn(r.points, c.x, c.z);
+        const t = pointAt(r.points, q.s);
+        const dot = t.tx * fx + t.tz * fz;
+        if (Math.abs(dot) >= 0.7 && (!street || q.d < street.d)) street = { name: r.name, d: q.d, dot, directed: r.oneway || r.name.startsWith("Rondo") };
+      }
+      return street?.directed && street.dot < 0 ? [{ at: near(c.x, c.z), what: `${c.model} against ${street.name}` }] : [];
     }),
   /** A game block standing on the ground (not an awning or a deck) that floats or sinks. */
   "prop-off-ground": () =>

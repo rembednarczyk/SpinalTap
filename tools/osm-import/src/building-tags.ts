@@ -50,7 +50,7 @@ const CIVIC = new Set([
 const CIVIC_AMENITY = new Set(["townhall", "courthouse", "school", "university", "college", "hospital", "theatre", "library", "police", "post_office", "bus_station", "arts_centre"]);
 const COMMERCIAL = new Set(["commercial", "retail", "office", "hotel", "kiosk", "supermarket", "shop", "mall", "bank"]);
 const INDUSTRIAL = new Set(["industrial", "warehouse", "manufacture", "service", "transformer_tower", "storage_tank", "greenhouse"]);
-const GARAGE = new Set(["garage", "garages", "carport", "shed", "parking", "roof"]);
+const GARAGE = new Set(["garage", "garages", "carport", "shed", "parking", "roof", "shelter"]);
 const RESIDENTIAL = new Set(["apartments", "residential", "house", "detached", "terrace", "dormitory", "semidetached_house"]);
 
 export const buildingUse = (tags: Tags): BuildingUse => {
@@ -60,7 +60,8 @@ export const buildingUse = (tags: Tags): BuildingUse => {
   if (CIVIC.has(b) || CIVIC_AMENITY.has(tags.amenity ?? "")) return "civic";
   if (COMMERCIAL.has(b) || tags.shop !== undefined || tags.tourism === "hotel") return "commercial";
   if (INDUSTRIAL.has(b)) return "industrial";
-  if (GARAGE.has(b)) return "garage";
+  // A shelter is often only `building=yes`; as a plain building it would become a block of flats.
+  if (GARAGE.has(b) || tags.amenity === "shelter") return "garage";
   if (RESIDENTIAL.has(b)) return "residential";
   if (tags.historic !== undefined) return "historic";
   return b === "yes" ? "residential" : "other";
