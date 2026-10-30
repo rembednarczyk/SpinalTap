@@ -37,17 +37,6 @@ describe("G-033: leaving by the flags is not a death", () => {
     expect(despawns).toContainEqual([kurosawa, "unloaded"]);
   });
 
-  it("Kaito leaving the clinic after the first conversation despawns as unloaded", () => {
-    const { session, despawns } = start();
-    const kaito = idOf(session, "fixer");
-    expect(kaito).toBeDefined();
-    despawns.length = 0;
-    session.sim.enqueue({ type: "set-flag", flag: "met_fixer" });
-    steps(session, 1);
-    expect(despawns).toContainEqual([kaito, "unloaded"]);
-    expect(despawns.filter(([, reason]) => reason === "removed")).toEqual([]);
-  });
-
   it("a ganger that is shot down still despawns as removed", () => {
     const { session, despawns } = start();
     const courier = idOf(session, "courier");

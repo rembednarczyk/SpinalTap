@@ -376,7 +376,7 @@ export class WorldStreamer {
     const conditional = this.chunks.flatMap((chunk) =>
       [...(this.content.get(chunk.id) ?? []), ...this.contract.filter((c) => c.chunk === chunk.id)].filter((t) => t.when && t.key !== null),
     );
-    // Leaving first: one key may have a place per condition (Kaito in the clinic, then at the bar; ADR-0038).
+    // Leaving first: one key may have a place per condition (ADR-0038).
     for (const t of conditional) {
       if (t.key === null || isPresent(t.when, flags)) continue;
       const e = live.get(t.key);

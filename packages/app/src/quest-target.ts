@@ -23,7 +23,7 @@ export const shownQuestTarget = (domain: DomainState): QuestTarget | null => {
 
 let actorsByKey: Map<string, ActorDef[]> | null = null;
 
-/** The content's characters by key; Kaito has two, one per place (the clinic, Neon Koi). */
+/** The content's characters by key; a key may have one per place, each with its presence condition. */
 const actorDefs = (key: string): readonly ActorDef[] => {
   if (!actorsByKey) {
     actorsByKey = new Map();

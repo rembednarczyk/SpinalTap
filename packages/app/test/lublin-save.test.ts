@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { checksum, decodeSave } from "@seki/persistence";
-import { CLINIC_WAKE_SPOT, Simulation } from "@seki/sim";
+import { CLINIC_WAKE_SPOT, FIXER_SPAWN, Simulation } from "@seki/sim";
 
 /** An old save as v14 wrote it in the old city: Seki on Ulica Kanałowa, a bag in the alley. */
 const v14Save = (): string => {
@@ -25,8 +25,8 @@ describe("a save from before Lublin (ADR-0045)", () => {
     expect(sim.streamer.loadedChunks).toEqual(["krakowskie-2-0"]);
     expect(sim.district).toBe("shinsekai-7");
     const at = (key: string) => [...sim.world].find((e) => e.key === key)?.position;
-    // Kaito by the chair, Ume on the deptak, the courier's crew in the yard behind the car wash.
-    expect(Math.hypot(at("fixer")!.x - CLINIC_WAKE_SPOT.x, at("fixer")!.z - CLINIC_WAKE_SPOT.z)).toBeLessThan(3);
+    // Kaito at the Neon Koi counter (G-034), the courier's crew in the yard behind the car wash.
+    expect(at("fixer")).toEqual(FIXER_SPAWN.position);
     expect(Math.hypot(at("guard")!.x - CLINIC_WAKE_SPOT.x, at("guard")!.z - CLINIC_WAKE_SPOT.z)).toBeGreaterThan(60);
     // The bag from the old alley lies on the clinic's floor, with what was in it, from the first step.
     sim.step();

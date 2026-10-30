@@ -88,8 +88,18 @@ To była ta noc. Wrak na Krakowskim, przy Placu Litewskim. Teraz wiesz, jak traf
 - quest_step == "ren_trail": -> ren_trail
 - story_ending == "aya": -> after_aya
 - story_ending == "seki": -> after_seki
+- quest_step == "find_fixer": -> wake_up
 - else: -> small_talk
 }
+
+// The opening (ADR-0038, G-034): Seki comes round on Mori's chair; Kaito waits at the bar across the deptak.
+= wake_up
+Biała lampa nad fotelem świeci ci prosto w oczy. Pachnie spirytusem i przypalonym chromem.
+MORI: Siadaj powoli, szwy na karku jeszcze się nie zdecydowały.
+MORI: Wyciągnąłem z ciebie trzy odłamki szyby, kawałek pasa bezpieczeństwa i pół metra cudzego kabla. Szkło było twoje. Kabel nie.
+MORI: Kaito mówi wszystkim, że dawałem ci jedną noc. Mówiłem, że nie przeżyjesz jej za darmo. On zapłacił.
+MORI: Czeka na ciebie w Neon Koi, po drugiej stronie deptaka. Drzwi otwierają się same. Nie kop ich, są droższe od ciebie.
+-> END
 
 = small_talk
 MORI: Coś boli? To dobrze, znaczy, że działa.

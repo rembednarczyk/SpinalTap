@@ -198,9 +198,7 @@ export const S7_INTERIORS: readonly StaticProp[] = [
   ...S7_DOORS.flatMap(doorParts),
 ];
 
-/** Kaito by the chair while Seki comes round (before the first conversation). */
-export const FIXER_CLINIC_SPAWN: ActorSpawn = turnSpawn(CLINIC, { key: "fixer", position: v(-13.3, 0, 3.2), yaw: -Math.PI / 2 });
-/** Kaito at the bar afterwards: at the counter between the stools, looking at the door. */
+/** Kaito at the bar: at the counter between the stools, looking at the door. */
 export const FIXER_BAR_SPAWN: ActorSpawn = turnSpawn(KOI, { key: "fixer", position: v(12.75, 0, 3.5), yaw: -1.91 });
 /** Doktor Mori at the monitors behind the chair. */
 export const MORI_SPAWN: ActorSpawn = turnSpawn(CLINIC, { key: "mori", position: v(-16.2, 0, 5.2), yaw: 2.59 });

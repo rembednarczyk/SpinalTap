@@ -18,7 +18,7 @@ import {
   skin,
   v,
 } from "./builders";
-import { BARMAN_SPAWN, CLINIC_WAKE_SPOT, CLINIC_WAKE_YAW, FIXER_BAR_SPAWN, FIXER_CLINIC_SPAWN, KOI_REGULAR_SPAWNS, MORI_SPAWN, S7_INTERIORS } from "./interiors";
+import { BARMAN_SPAWN, CLINIC_WAKE_SPOT, CLINIC_WAKE_YAW, FIXER_BAR_SPAWN, KOI_REGULAR_SPAWNS, MORI_SPAWN, S7_INTERIORS } from "./interiors";
 import { CAR_WASH_PLACE } from "./lublin/sites";
 import { ground, groundY } from "./lublin/terrain";
 
@@ -92,7 +92,7 @@ export const STEAM_VENTS: readonly Vec3[] = [ground(312, -83, 0.05), placeAt(CAR
 /** A new game: Seki comes round on the treatment chair in Mori's clinic (ADR-0038). */
 export const PLAYER_SPAWN: ActorSpawn = { key: "player", position: CLINIC_WAKE_SPOT, yaw: CLINIC_WAKE_YAW };
 
-/** Kaito's place once the first conversation is over: at the counter of Neon Koi. */
+/** Kaito's place from the start: at the counter of Neon Koi, where Seki first meets him (G-034). */
 export const FIXER_SPAWN: ActorSpawn = FIXER_BAR_SPAWN;
 
 /** Babcia Ume sweeps the deptak in front of the clinic. */
@@ -103,9 +103,6 @@ export const UME_CORNER: Vec3 = ground(329, -75.2);
 
 /** Doktor Mori, the ripperdoc, in his clinic on the north side. */
 export const RIPPERDOC_SPAWN: ActorSpawn = MORI_SPAWN;
-
-/** Kaito met Seki in the clinic: from then on he is at the bar (ADR-0038). */
-const MET_FIXER = "met_fixer";
 
 /** Spawn points for procedural contracts (up to four gangers per site), the other districts' included. */
 export const CONTRACT_SITE_SPAWNS: Readonly<Record<ContractSiteId, readonly Vec3[]>> = {
@@ -165,16 +162,7 @@ export const GANGER_SPAWNS: readonly GangerSpawn[] = [
 export const DISTRICT_M0_ACTORS: readonly ActorDef[] = [
   {
     kind: "npc",
-    spawn: FIXER_CLINIC_SPAWN,
-    when: { none: [MET_FIXER] },
-    preset: "fixer",
-    faction: "fixers",
-    interactable: { kind: "dialogue", dialogueId: "fixer", prompt: "Rozmawiaj z Kaito", radius: 2.6 },
-  },
-  {
-    kind: "npc",
     spawn: FIXER_SPAWN,
-    when: { all: [MET_FIXER] },
     preset: "fixer",
     faction: "fixers",
     interactable: { kind: "dialogue", dialogueId: "fixer", prompt: "Rozmawiaj z Kaito", radius: 2.6 },

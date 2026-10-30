@@ -15,7 +15,7 @@ import {
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
 import { createUiStore } from "@seki/ui";
-import { FIXER_CLINIC_SPAWN, FIXER_SPAWN, ground } from "@seki/sim";
+import { FIXER_SPAWN, ground } from "@seki/sim";
 import { GameSession } from "../src/game-session";
 
 /** Shared drivers of the main-thread acceptance tests (act I in m3-loop, act II in m3-lustro-loop). */
@@ -67,13 +67,10 @@ export const teleport = (s: GameSession, x: number, z: number, yaw = 0, pitch = 
   p.pitch = pitch;
 };
 
-/**
- * Where to stand to talk to Kaito: 1.5 m north of him, facing him. Before the first conversation
- * he waits by the chair in Mori's clinic, afterwards at the Neon Koi counter (ADR-0038).
- */
+/** Where to stand to talk to Kaito: 1.5 m north of him, facing him. He is at the Neon Koi counter (G-034). */
 export const nearKaito = (s: GameSession): [number, number, number] => {
   // Away from Shinsekai he is asleep with its chunk: the content says where he stands.
-  const at = [...s.sim.world].find((e) => e.key === "fixer")?.position ?? (s.sim.domain.flags.includes("met_fixer") ? FIXER_SPAWN : FIXER_CLINIC_SPAWN).position;
+  const at = [...s.sim.world].find((e) => e.key === "fixer")?.position ?? FIXER_SPAWN.position;
   return [at.x, at.z + 1.5, Math.PI];
 };
 

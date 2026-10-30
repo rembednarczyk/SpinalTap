@@ -135,7 +135,7 @@ export class GameSession implements SessionIntents {
     this.narrative.resetState();
     this.c.hints.start();
     this.setScreen("playing");
-    pushToastTimed(this.deps.ui, "system", "Krakowskie Przedmieście", "Budzisz się na fotelu w klinice doktora Mori, przy deptaku. Nie pamiętasz swojego imienia. Obok czeka Kaito.");
+    pushToastTimed(this.deps.ui, "system", "Krakowskie Przedmieście", "Budzisz się na fotelu w klinice doktora Mori, przy deptaku. Nie pamiętasz swojego imienia. Kaito czeka w Neon Koi, po drugiej stronie deptaka.");
   }
 
   resume(): void {

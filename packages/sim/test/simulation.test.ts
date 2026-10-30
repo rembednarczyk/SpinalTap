@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { M0_TARGET_TAG, QUEST_FIRST_CONTRACT, currentStep, killedFlag } from "@seki/core";
-import { GANGER_MAX_HP, KRAKOWSKIE_SITE_POINTS, Simulation, clinicPoint } from "../src";
+import { GANGER_MAX_HP, KRAKOWSKIE_SITE_POINTS, Simulation, koiPoint } from "../src";
 import { STREET_START, alleySim, byKey, collect, input, run, teleportPlayer, streetSim } from "./helpers";
 
 const newSim = () => streetSim({ seed: 7 });
@@ -59,8 +59,8 @@ describe("simulation: interaction and narrative commands", () => {
     const sim = newSim();
     const focus = collect<{ prompt: string | null }>(sim, "InteractionFocusChanged");
     const started = collect<{ dialogueId: string }>(sim, "InteractionStarted");
-    // Kaito waits by the chair in the clinic until they have talked (ADR-0038).
-    teleportPlayer(sim, clinicPoint(-12.3, 0, 3.2));
+    // Kaito waits at the Neon Koi counter from the start (G-034): 1 m in front of him, facing him.
+    teleportPlayer(sim, koiPoint(11.75, 0, 3.5), Math.PI);
     sim.step();
     expect(focus.at(-1)?.prompt).toBe("Rozmawiaj z Kaito");
     sim.step(input({ interact: true }));

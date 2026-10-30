@@ -47,8 +47,8 @@ test("phone: on-screen pad moves, looks and talks", async ({ page }) => {
   expect(await yaw()).toBeGreaterThan(yaw0 + 0.3);
 
   // E lights up near Kaito and opens the dialogue; the pad hides during it.
-  // Kaito waits by the chair in the clinic (ADR-0038), a tenement's room since ADR-0045.
-  await teleportTo(page, await place(page, "clinic", -13.3, 4.7), Math.PI * 1.5);
+  // Kaito waits at the Neon Koi counter from the start (G-034): stand 1.5 m in front of him.
+  await teleportTo(page, await place(page, "koi", 11.25, 3.5), Math.PI);
   await expect(page.getByRole("button", { name: "Interakcja" })).toHaveClass(/touch__btn--hot/);
   await page.getByRole("button", { name: "Interakcja" }).tap();
   await expect(page.getByTestId("dialogue")).toBeVisible();

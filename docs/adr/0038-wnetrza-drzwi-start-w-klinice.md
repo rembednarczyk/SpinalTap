@@ -29,3 +29,9 @@ ADR-0037 zapowiedział wnętrza z ruchomymi drzwiami i nowe otwarcie gry. Budynk
 - Kadr referencyjny NPR się zmienił: przed barem nie stoi Kaito, a front baru to zamknięte drzwi z witrynami kitu obok. Nowa migawka obejrzana.
 - Testy, które zakładały start przy wraku, ruszają z ulicy (`streetSim` w sim, teleport w app i e2e); rozmowa z Kaito idzie tam, gdzie on stoi.
 - Na później: postać przy barze „siedzi” dopiero z aktywnościami z ADR-0037 (stołki są wizualne, by dało się przy nich stanąć); cywile we wnętrzach trzymają parasole jak na ulicy.
+
+## Zmiana: Kaito od początku w Neon Koi (G-034)
+- Decyzja użytkownika: Kaito jest u siebie od razu. Zostaje jedna definicja `fixer` przy ladzie Neon Koi, bez warunku obecności. Seki dalej budzi się na fotelu w klinice.
+- Pierwsza rozmowa (`fixer.first_meeting`) odbywa się w barze, bez wtrąceń Mori. Jego część otwarcia (odłamki, cudzy kabel, kto zapłacił) mówi Mori w klinice, gdy zagadnąć go przed `met_fixer` (`mori.wake_up`), i odsyła Seki do Neon Koi. Krok questa: „Porozmawiaj z Kaito w Neon Koi, po drugiej stronie deptaka [E]”.
+- Zapis v16: migracja 15 → 16 usuwa zapamiętaną pozycję `fixer` z zapisów sprzed `met_fixer` (stał wtedy przy fotelu).
+- Mechanizm kilku miejsc pod jednym kluczem zostaje dla innych postaci.
