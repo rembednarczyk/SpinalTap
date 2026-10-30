@@ -38,5 +38,10 @@ Zmiana w cudzym obszarze idzie przez zmianę kontraktu (port, typ zdarzenia, kom
 - Lokalne e2e: `pnpm e2e e2e/<spec>.spec.ts`. Skrypt trzyma jedną przeglądarkę na maszynę i daje własny port na checkout. Agenty puszczają tylko spece swojej zmiany; pełny zestaw puszcza CI.
 - Czas klatki pod SwiftShaderem to raport. Bramką są wywołania rysowania i aktywne siatki.
 
+## Glitche (ADR-0054)
+- Rejestr: `docs/glitches.md`; triage: umiejętność `glitch-triage`; zespół: `.claude/agents/` (`orchestrator` jako główny agent sesji, `glitch-hunter`, `glitch-fixer`, `fix-verifier`).
+- Skan `tools/glitch-scan/test/glitch-scan.test.ts` liczy znane rodzaje glitchy w całym mieście i porównuje z `glitch-baseline.json`: wzrost to czerwony test. Poprawka obniża bazę (`GLITCH_BASELINE=update`) w tym samym commicie, a nowy policzalny rodzaj dostaje kontrolę w skanie.
+- Poprawka glitcha: test pada bez niej i przechodzi z nią, jeden glitch na commit.
+
 ## Definition of Done
 Zielone: `pnpm typecheck`, `pnpm lint`, `pnpm depcheck`, `pnpm test:coverage`, `pnpm build`, e2e dotkniętych speców przez `pnpm e2e`, a pełne `pnpm test:e2e` w CI. Conventional Commits, małe zmiany.

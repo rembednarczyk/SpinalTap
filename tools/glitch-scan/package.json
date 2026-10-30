@@ -1,0 +1,10 @@
+{
+  "name": "@seki/glitch-scan",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The glitch scan with its ratchet (ADR-0054): known kinds of glitch counted over the whole city.",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  }
+}

@@ -1,3 +1,4 @@
 packages:
   - "packages/*"
   - "tools/osm-import"
+  - "tools/glitch-scan"
