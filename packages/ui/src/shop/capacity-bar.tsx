@@ -1,16 +1,18 @@
 import type { CyberwareId } from "@seki/core";
+import { useT } from "../i18n/use-t";
 import { useUi } from "../use-ui";
 import { type CapacityFit, capacityFit, overCapacityText } from "./capacity";
 
 /** Cyberware capacity in use against the limit (ADR-0032), at the top of the ripperdoc's lists. */
 export const CapacityBar = () => {
+  const t = useT();
   const capacity = useUi((s) => s.capacity);
   if (!capacity) return null;
   const pct = capacity.max > 0 ? Math.min(100, Math.round((capacity.used / capacity.max) * 100)) : 100;
   return (
     <div className={`capacity${capacity.used >= capacity.max ? " capacity--full" : ""}`} data-testid="capacity">
-      <span className="capacity__label">Pojemność cyberware</span>
-      <div className="capacity__bar" role="meter" aria-valuemin={0} aria-valuemax={capacity.max} aria-valuenow={capacity.used} aria-label="Pojemność cyberware">
+      <span className="capacity__label">{t("shop.capacity.label")}</span>
+      <div className="capacity__bar" role="meter" aria-valuemin={0} aria-valuemax={capacity.max} aria-valuenow={capacity.used} aria-label={t("shop.capacity.label")}>
         <div className="capacity__fill" style={{ width: `${pct}%` }} />
       </div>
       <span className="capacity__value" data-testid="capacity-value">
@@ -29,15 +31,16 @@ export const useCapacityFit = (id: CyberwareId): CapacityFit => {
 
 /** The implant's cost, and the refusal when it does not fit. */
 export const CapacityCost = ({ fit }: { fit: CapacityFit }) => {
+  const t = useT();
   const capacity = useUi((s) => s.capacity);
   return (
     <>
       <span className="shop__capacity" data-testid="implant-capacity">
-        Pojemność {fit.cost}
+        {t("shop.capacity.cost", { cost: fit.cost })}
       </span>
       {fit.over && capacity && (
         <p className="shop__warn" data-testid="capacity-over">
-          {overCapacityText(fit, capacity)}
+          {overCapacityText(t, fit, capacity)}
         </p>
       )}
     </>

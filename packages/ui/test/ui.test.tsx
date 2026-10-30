@@ -281,14 +281,14 @@ describe("ripperdoc clinic", () => {
   it("lists implants, disables what is installed or unaffordable, and buys", () => {
     const { i } = mount({ screen: "playing", shopOpen: true, eddies: 700, cyberware: { skeleton: "subdermal_weave" }, medkits: 2 });
     const shop = screen.getByTestId("shop");
-    expect(shop.textContent).toContain("Doktor Mori");
-    expect(screen.getByRole("button", { name: "Zainstalowane" }).hasAttribute("disabled")).toBe(true);
-    expect(screen.getByRole("button", { name: /Wszczep · 1100/ }).hasAttribute("disabled")).toBe(true);
-    fireEvent.click(screen.getByRole("button", { name: /Wszczep · 500/ }));
+    expect(shop.textContent).toContain("Doctor Mori");
+    expect(screen.getByRole("button", { name: "Installed" }).hasAttribute("disabled")).toBe(true);
+    expect(screen.getByRole("button", { name: /Implant · 1,100/ }).hasAttribute("disabled")).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: /Implant · 500/ }));
     expect(i.buyCyberware).toHaveBeenCalledWith("steady_grip");
-    fireEvent.click(screen.getByRole("button", { name: /Kup · 90/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Buy · 90/ }));
     expect(i.buyItem).toHaveBeenCalledWith("medkit");
-    fireEvent.click(screen.getByRole("button", { name: "Porozmawiaj z Mori" }));
+    fireEvent.click(screen.getByRole("button", { name: "Talk to Mori" }));
     expect(i.talkToShopkeeper).toHaveBeenCalled();
     fireEvent.keyDown(window, { key: "Escape" });
     expect(i.closeShop).toHaveBeenCalled();
@@ -297,25 +297,25 @@ describe("ripperdoc clinic", () => {
   it("shows list prices and no note at neutral standing", () => {
     mount({ screen: "playing", shopOpen: true, eddies: 5000 });
     expect(screen.queryByTestId("shop-terms")).toBeNull();
-    expect(screen.getByRole("button", { name: /Kup · 90 €\$/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Buy · 90 €\$/ })).toBeTruthy();
   });
 
   it("gives a regular the discount, and charges a distrusted customer extra", () => {
     const rep = (clinic: number) => ({ fixers: 0, hebi: 0, civilians: 0, clinic, kagami: 0, tessen: 0 });
     mount({ screen: "playing", shopOpen: true, eddies: 5000, reputation: rep(60) });
-    expect(screen.getByTestId("shop-terms").textContent).toBe("Stała klientka · rabat 20%");
-    expect(screen.getByRole("button", { name: /Kup · 72 €\$/ })).toBeTruthy();
-    expect(screen.getByRole("button", { name: /Wszczep · 400 €\$/ })).toBeTruthy();
+    expect(screen.getByTestId("shop-terms").textContent).toBe("Regular customer · 20% off");
+    expect(screen.getByRole("button", { name: /Buy · 72 €\$/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Implant · 400 €\$/ })).toBeTruthy();
     cleanup();
     mount({ screen: "playing", shopOpen: true, eddies: 600, reputation: rep(-20) });
-    expect(screen.getByTestId("shop-terms").textContent).toBe("Klinika ci nie ufa · dopłata 25%");
+    expect(screen.getByTestId("shop-terms").textContent).toBe("The clinic doesn't trust you · 25% surcharge");
     // 500 list, 625 with the surcharge: no longer affordable with 600.
-    expect(screen.getByRole("button", { name: /Wszczep · 625 €\$/ }).hasAttribute("disabled")).toBe(true);
+    expect(screen.getByRole("button", { name: /Implant · 625 €\$/ }).hasAttribute("disabled")).toBe(true);
   });
 
   it("warns which implant a purchase replaces", () => {
     mount({ screen: "playing", shopOpen: true, eddies: 5000, cyberware: { nervous: "synapse_booster" } });
-    expect(screen.getByText("Zastąpi: Wzmacniacz synaps")).toBeTruthy();
+    expect(screen.getByText("Replaces: Wzmacniacz synaps")).toBeTruthy();
   });
 });
 
@@ -333,11 +333,11 @@ describe("gear and character sheet", () => {
     const panel = screen.getByTestId("character-panel");
     expect(panel.textContent).toContain("Optyka Hitomi Mk1");
     expect(panel.textContent).toContain("Wspomnienie: odruch");
-    expect(panel.textContent).toContain("-60 · wrogość");
-    expect(screen.getByTestId("rep-hebi").textContent).toContain("Polują na ciebie");
-    expect(screen.getByTestId("rep-fixers").textContent).toContain("Kaito płaci więcej");
+    expect(panel.textContent).toContain("-60 · hostility");
+    expect(screen.getByTestId("rep-hebi").textContent).toContain("They hunt you");
+    expect(screen.getByTestId("rep-fixers").textContent).toContain("Kaito pays more");
     expect(screen.getByTestId("rep-clinic").textContent).toContain("Klinika Mori");
-    expect(screen.getByTestId("rep-clinic").textContent).toContain("Ceny katalogowe");
+    expect(screen.getByTestId("rep-clinic").textContent).toContain("List prices");
     fireEvent.keyDown(window, { code: "Tab" });
     expect(screen.queryByTestId("character-panel")).toBeNull();
   });
@@ -424,7 +424,7 @@ describe("touch controls", () => {
     fireEvent.click(screen.getByRole("button", { name: "Postać" }));
     expect(screen.getByTestId("inventory-tab")).toBeTruthy();
     expect(screen.queryByTestId("touch-controls")).toBeNull();
-    fireEvent.click(screen.getByRole("tab", { name: /Karta/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /Sheet/ }));
     expect(screen.getByTestId("character-panel")).toBeTruthy();
   });
 

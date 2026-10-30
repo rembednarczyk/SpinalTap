@@ -1,5 +1,6 @@
 import { type Equipment, type InventoryState, MOD_CATALOG, type ModSlot, WEAPON_CATALOG, findItem, freeCells, isModId, isPlaced, isWeaponId } from "@seki/core";
-import { MOD_SLOT_LABEL, itemName } from "./item-text";
+import { useT } from "../i18n/use-t";
+import { itemName, modSlotLabel } from "./item-text";
 
 /**
  * Mods of one weapon (plan §7): its mod slots with what is mounted, and the matching mods
@@ -21,17 +22,18 @@ export const ModOverlay = ({
   onRemove: (slot: ModSlot) => void;
   onClose: () => void;
 }) => {
+  const t = useT();
   const weapon = findItem(inventory, weaponUid);
   if (!weapon || !isWeaponId(weapon.def)) return null;
   const slots = WEAPON_CATALOG[weapon.def].modSlots as readonly ModSlot[];
   const loose = inventory.items.filter((i) => isModId(i.def) && !isPlaced(inventory, equipment, i.uid));
   const roomy = freeCells(inventory, equipment) > 0;
   return (
-    <div className="inv__sheet inv__mods" role="dialog" aria-label={`Mody: ${itemName(weapon.def)}`} data-testid="mod-overlay">
+    <div className="inv__sheet inv__mods" role="dialog" aria-label={t("inventory.mods.label", { name: itemName(weapon.def) })} data-testid="mod-overlay">
       <header className="inv__mods-head">
-        <h3 className="inv__detail-name">Mody · {itemName(weapon.def)}</h3>
+        <h3 className="inv__detail-name">{t("inventory.mods.title", { name: itemName(weapon.def) })}</h3>
         <button type="button" className="inv__action" onClick={onClose}>
-          Gotowe
+          {t("inventory.mods.done")}
         </button>
       </header>
       <ul className="inv__mod-slots">
@@ -41,19 +43,19 @@ export const ModOverlay = ({
           const fitting = loose.filter((m) => isModId(m.def) && MOD_CATALOG[m.def].slot === slot);
           return (
             <li key={slot} className="inv__mod-slot" data-testid={`mod-slot-${slot}`}>
-              <div className="inv__mod-label">{MOD_SLOT_LABEL[slot]}</div>
-              <div className="inv__mod-now">{mounted ? itemName(mounted.def) : "pusto"}</div>
+              <div className="inv__mod-label">{modSlotLabel(t, slot)}</div>
+              <div className="inv__mod-now">{mounted ? itemName(mounted.def) : t("inventory.empty")}</div>
               {mounted && (
-                <button type="button" className="inv__action" disabled={!roomy} title={roomy ? undefined : "Brak miejsca w torbie"} onClick={() => onRemove(slot)}>
-                  Zdejmij
+                <button type="button" className="inv__action" disabled={!roomy} title={roomy ? undefined : t("inventory.blocked.bagFull")} onClick={() => onRemove(slot)}>
+                  {t("inventory.action.unequip")}
                 </button>
               )}
               {fitting.map((m) => (
                 <button key={m.uid} type="button" className="inv__action inv__action--equip" onClick={() => onInstall(m.uid)}>
-                  Zamontuj: {itemName(m.def)}
+                  {t("inventory.mods.mount", { name: itemName(m.def) })}
                 </button>
               ))}
-              {!mounted && fitting.length === 0 && <span className="inv__hint">Brak pasujących modów w torbie</span>}
+              {!mounted && fitting.length === 0 && <span className="inv__hint">{t("inventory.mods.none")}</span>}
             </li>
           );
         })}

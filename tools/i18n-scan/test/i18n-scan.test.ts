@@ -15,6 +15,19 @@ const ROOT = join(__dirname, "..", "..", "..");
 const BASELINE = join(__dirname, "i18n-baseline.json");
 /** The menus and options moved to the catalogs in stage 1: they stay at 0. */
 const STAGE_1_MENUS = ["title-screen", "pause-menu", "save-slots", "settings-panel", "controls-help", "key-label"].map((m) => `packages/ui/src/menus/${m}`);
+/**
+ * Inventory, shops, bags and the character sheet, moved in stage 2a: they stay at 0. The short
+ * cell names in `inventory/item-text.ts` are item names and wait for stage 3 with the catalog.
+ */
+const STAGE_2A_PANELS = [
+  "packages/ui/src/shop/",
+  "packages/ui/src/loot/",
+  "packages/ui/src/menus/character-",
+  "packages/app/src/presenters/trade.ts",
+  "packages/app/src/presenters/loot.ts",
+  "packages/app/src/controllers/shop-controller.ts",
+  "packages/app/src/loot-view.ts",
+];
 
 describe("what counts as Polish", () => {
   it("takes diacritics and frequent Polish words, not English or code", () => {
@@ -69,6 +82,13 @@ describe("i18n scan (ADR-0056)", () => {
   it("finds no Polish in the menus and options translated in stage 1", () => {
     const ui = scanPackages(ROOT).ui ?? [];
     expect(ui.filter((f) => STAGE_1_MENUS.some((m) => f.file.startsWith(m)))).toEqual([]);
+  });
+
+  it("finds no Polish in the panels translated in stage 2a", () => {
+    const found = scanPackages(ROOT);
+    const panels = [...(found.ui ?? []), ...(found.app ?? [])].filter((f) => STAGE_2A_PANELS.some((m) => f.file.startsWith(m)));
+    const inventory = (found.ui ?? []).filter((f) => f.file.startsWith("packages/ui/src/inventory/") && f.file !== "packages/ui/src/inventory/item-text.ts");
+    expect([...panels, ...inventory]).toEqual([]);
   });
 
   it("would turn red on Polish JSX text next to an expression in a stage 1 menu", () => {

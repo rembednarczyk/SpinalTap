@@ -1,4 +1,5 @@
 import type { Message } from "./message";
+import { enTrade } from "./en/trade";
 
 /**
  * English, the default language and the source of every key (ADR-0056). The Polish catalog must
@@ -140,6 +141,7 @@ export const en = {
   "settings.keys.reset": "Restore default controls",
   "settings.reload.note": "Graphics quality changes after a reload. Save your game first: unsaved progress will be lost.",
   "settings.reload.now": "Reload now",
+  ...enTrade,
 } as const satisfies Readonly<Record<string, Message>>;
 
 export type MessageKey = keyof typeof en;

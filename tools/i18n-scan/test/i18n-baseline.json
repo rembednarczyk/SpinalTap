@@ -1,9 +1,9 @@
 {
-  "app": 112,
+  "app": 91,
   "core": 125,
   "engine": 0,
   "narrative": 17,
   "persistence": 1,
   "sim": 26,
-  "ui": 185
+  "ui": 77
 }

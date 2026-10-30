@@ -74,7 +74,7 @@ for (const [w, h] of [
       const preview = (await page.getByTestId("character-preview").boundingBox())!;
       expect(preview.width).toBeGreaterThan(100);
       expect(preview.height).toBeGreaterThan(150);
-      await page.getByRole("button", { name: "Zamknij menu postaci" }).tap();
+      await page.getByRole("button", { name: "Close the character menu" }).tap();
       await expect(page.getByTestId("touch-controls")).toBeVisible();
       await page.evaluate(() => window.__seki!.emit("InteractionFocusChanged", { targetId: 1, prompt: "Porozmawiaj z Kaito" }));
       await expect(page.getByTestId("touch-use")).toContainText("Porozmawiaj z Kaito");

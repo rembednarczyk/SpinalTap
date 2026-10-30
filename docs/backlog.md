@@ -4,6 +4,15 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
 
 ## Następne
 
+- **[w toku] Języki gry (ADR-0056).** Angielski domyślny, polski w opcjach. Etap 1 (menu, opcje, zapadka) i paczka 2a (ekwipunek, sklepy) są gotowe, a 2b (panele świata) jest w weryfikacji. Zostaje:
+  - HUD i dotyk (2c, po G-035);
+  - teksty domeny w `core` jako klucze (etap 3);
+  - treść `sim` (etap 4);
+  - narracja `ink/en` (etap 5, ok. 1900 linii).
+- **[następne] Ekran ładowania z paskiem postępu (ADR-0057).** Nowa gra i wczytanie doładowują modele, city kit, chunki startowe i shadery, a reszta miasta strumieniuje się w tle. Start po G-029 (`main.tsx`, `GpuPacer`).
+- **[po G-029] Sprzątanie god objectów, renderer (ADR-0031).** `babylon-renderer.ts` (39 metod) i `map-city.ts` (562 linie). Ponadto jednolinijkowa zmiana w `main.tsx` na `intents={session.intents}` usunie kopię intencji z refaktoru `game-session.ts`. Do rozważenia osobno, z ADR-em: podział typu `Entity` (50 pól), `GangerAi`, `Interactable` na unię.
+- **[decyzja użytkownika] G-024.** Sześć końców pasów jednokierunkowych (Lubartowska, Kowalska, Świętoduska) nie ma ulicy dla aut w zasięgu skrętu. Opcje: auta jadą dalej ulicą dla dostaw albo zostaje jak jest.
+
 - **[gotowe] Dźwięki z publicznych assetów.** Podmienić lub uzupełnić syntezowane SFX nagraniami CC0 ze
   skanu w `docs/assets-research.md` §6:
   - strzały pistoletu i SMG z The Free Firearm Sound Library (wybrane pliki, nie cała paczka);

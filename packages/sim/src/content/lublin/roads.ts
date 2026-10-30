@@ -59,7 +59,7 @@ const carriesOn = (a: readonly Pt[], b: readonly Pt[]): boolean => {
 
 const piecesOf = (c: LublinChunkData): { key: string; name: string; kind: string; use: StreetUse; directed: boolean; oneway: boolean; pts: Pt[] }[] =>
   c.streets.flatMap((st) => {
-    const use = useOf(st.kind, c.district);
+    const use = st.noVehicles ? null : useOf(st.kind, c.district);
     if (!use) return [];
     const pts: Pt[] = [];
     for (let i = 0; i + 1 < st.line.length; i += 2) pts.push([st.line[i] as number, st.line[i + 1] as number]);

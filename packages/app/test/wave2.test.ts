@@ -207,7 +207,7 @@ describe("ShopController and cyberware capacity", () => {
     shop.open("clinic", "mori");
     shop.buyCyberware("subdermal_weave");
     expect(commands).toEqual([]);
-    expect(ui.getState().toasts.at(-1)?.text).toContain("Za mało pojemności");
+    expect(ui.getState().toasts.at(-1)?.text).toContain("Not enough capacity: 4 / 1");
     ui.setState({ capacity: { used: 2, max: 12 } });
     shop.buyCyberware("subdermal_weave");
     expect(commands).toEqual([{ type: "buy-cyberware", cyberwareId: "subdermal_weave" }]);

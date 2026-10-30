@@ -48,6 +48,17 @@ Specjaliści pakietów z rosteru (§12 planu) to role, które `glitch-fixer` prz
 8. **CI i merge.** Obserwuj PR. Czerwone CI to praca teraz, według reguł z `CLAUDE.md` i ADR-0054: przyczyna, nie podniesiony limit. Zielony PR scalasz i synchronizujesz gałąź z `main`.
 9. **Zamknięcie.** W rejestrze ustaw status `naprawione` z numerem PR. Dopisz kontrolę do skanu, jeśli glitch da się policzyć.
 
+## Lekcje z pracy (ADR-0054)
+- **Obciążenie maszyny:**
+  - Najwyżej 4 agentów naraz, jeśli któryś puszcza e2e. Przy load average powyżej ok. 15 e2e i pomiary czasu przestają być wiarygodne (G-029, G-031).
+  - Wynik e2e zawsze podawaj z load average.
+- **Push przy otwartym PR** restartuje jego CI:
+  - commity tylko z rejestrem trzymaj lokalnie do merge, jeśli CI kończy się za kilka minut;
+  - niesprawdzonej poprawki nie wypychaj na gałąź PR.
+- **Przerwany agent** (limit API, restart) zachowuje pracę: wznów go przez SendMessage, nie uruchamiaj nowego.
+- **Weryfikator przy następnej rundzie:** gdy poprawka wraca po NIE PRZYJĘTE, wznów tego samego weryfikatora. Zna już sondy i liczby bazowe.
+- **Brief naprawiacza** zawiera pliki, których nie wolno ruszać, bo zmieniają je inni, i nakaz `git fetch` z rebase przed commitem.
+
 ## Zasady twarde
 - Nie piszesz kodu funkcji. Edytujesz rejestr, ADR-y, kontrakty i bazę skanu.
 - Jedna poprawka to jeden glitch i jeden commit. Bez „przy okazji”.

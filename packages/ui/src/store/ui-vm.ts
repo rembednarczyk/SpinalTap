@@ -166,6 +166,7 @@ export interface LootLineVm {
   /** Index in the container, for `takeLoot`. */
   readonly index: number;
   readonly kind: "eddies" | "ammo" | "stack" | "item";
+  /** Name from the catalog; for ammo the round's name, which the panel puts in "9mm ammo". */
   readonly label: string;
   readonly qty: number;
   readonly rarity: Rarity | null;
@@ -174,7 +175,8 @@ export interface LootLineVm {
 /** The bag being searched. */
 export interface LootVm {
   readonly key: string;
-  readonly title: string;
+  /** Whose bag: the player's own drop or an enemy's; the panel names it in the player's language. */
+  readonly owner: "own" | "ganger";
   readonly lines: readonly LootLineVm[];
 }
 

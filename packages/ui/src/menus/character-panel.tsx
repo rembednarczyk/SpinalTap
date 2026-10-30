@@ -2,35 +2,19 @@ import {
   CYBERWARE_CATALOG,
   FACTION_IDS,
   FACTIONS,
-  type FactionId,
-  type FactionStance,
   MEMORY_CATALOG,
   type MemoryId,
   reputationTier,
   stanceOf,
 } from "@seki/core";
+import { useT } from "../i18n/use-t";
 import { useUi } from "../use-ui";
 
-const TIER: Record<string, string> = { hostile: "wrogość", wary: "nieufność", neutral: "neutralnie", friendly: "sympatia", trusted: "zaufanie" };
-/** What each faction's stance means on the street, in one line. */
-const CONSEQUENCE: Readonly<Record<FactionId, Readonly<Record<FactionStance, string>>>> = {
-  fixers: { hostile: "Kaito płaci mniej", neutral: "Zwykłe stawki", friendly: "Kaito płaci więcej" },
-  hebi: { hostile: "Polują na ciebie", neutral: "Strzelają bez ostrzeżenia", friendly: "Nie strzelają pierwsi" },
-  civilians: { hostile: "Uciekają przed tobą", neutral: "Nie zwracają uwagi", friendly: "Witają cię na ulicy" },
-  clinic: { hostile: "Mori cię nie obsłuży", neutral: "Ceny katalogowe", friendly: "Rabat u Mori" },
-  kagami: { hostile: "Czyściciele Kagami cię szukają", neutral: "Numer w ich archiwum", friendly: "Kagami ma cię za swoją" },
-  tessen: { hostile: "Strzelcy na dachach portu", neutral: "Ochrona strzela do intruzów", friendly: "Ochrona przymyka oko" },
-};
+const SLOTS = ["optics", "nervous", "skeleton", "arms"] as const;
 
-const SLOTS = [
-  ["optics", "Optyka"],
-  ["nervous", "Układ nerwowy"],
-  ["skeleton", "Szkielet"],
-  ["arms", "Ramiona"],
-] as const;
-
-/** Karta tab of the character screen (Tab): implants, recovered memories, standing with factions. */
+/** Sheet tab of the character screen (Tab): implants, recovered memories, standing with factions. */
 export const CharacterPanel = () => {
+  const t = useT();
   const alias = useUi((s) => s.alias);
   const loadout = useUi((s) => s.cyberware);
   const memories = useUi((s) => s.memories);
@@ -39,26 +23,26 @@ export const CharacterPanel = () => {
 
   return (
     <div className="sheet" data-testid="character-panel">
-      <h2 className="sheet__name">{alias ?? "Nieznana"}</h2>
-      <div className="sheet__sub">Wykonane kontrakty: {contractsDone}</div>
+      <h2 className="sheet__name">{alias ?? t("character.unknown")}</h2>
+      <div className="sheet__sub">{t("character.contracts", { count: contractsDone })}</div>
       <section>
-        <h3 className="sheet__h">Cyberware</h3>
+        <h3 className="sheet__h">{t("character.cyberware")}</h3>
         <dl className="sheet__list">
-          {SLOTS.map(([slot, label]) => {
+          {SLOTS.map((slot) => {
             const id = loadout[slot];
             return (
               <div key={slot} className="sheet__row">
-                <dt>{label}</dt>
-                <dd>{id ? CYBERWARE_CATALOG[id].name : "pusty slot"}</dd>
+                <dt>{t(`character.slot.${slot}`)}</dt>
+                <dd>{id ? CYBERWARE_CATALOG[id].name : t("character.emptySlot")}</dd>
               </div>
             );
           })}
         </dl>
       </section>
       <section>
-        <h3 className="sheet__h">Wspomnienia</h3>
+        <h3 className="sheet__h">{t("character.memories")}</h3>
         {memories.length === 0 ? (
-          <p className="sheet__empty">Pustka. Na razie.</p>
+          <p className="sheet__empty">{t("character.noMemories")}</p>
         ) : (
           <ul className="sheet__memories">
             {memories.map((id) => (
@@ -68,22 +52,22 @@ export const CharacterPanel = () => {
         )}
       </section>
       <section>
-        <h3 className="sheet__h">Reputacja</h3>
+        <h3 className="sheet__h">{t("character.reputation")}</h3>
         <dl className="sheet__list">
           {FACTION_IDS.map((f) => (
             <div key={f} className="sheet__row" data-testid={`rep-${f}`}>
               <dt>{FACTIONS[f]}</dt>
               <dd>
                 {reputation[f] > 0 ? "+" : ""}
-                {reputation[f]} · {TIER[reputationTier(reputation[f])]}
-                <div className={`sheet__effect sheet__effect--${stanceOf(reputation[f])}`}>{CONSEQUENCE[f][stanceOf(reputation[f])]}</div>
+                {reputation[f]} · {t(`character.tier.${reputationTier(reputation[f])}`)}
+                <div className={`sheet__effect sheet__effect--${stanceOf(reputation[f])}`}>{t(`character.effect.${f}.${stanceOf(reputation[f])}`)}</div>
               </dd>
             </div>
           ))}
         </dl>
       </section>
       <div className="sheet__hint">
-        <kbd>Tab</kbd> zamknij · <kbd>I</kbd> ekwipunek · <kbd>J</kbd> dziennik
+        <kbd>Tab</kbd> {t("character.hint.close")} · <kbd>I</kbd> {t("character.hint.inventory")} · <kbd>J</kbd> {t("character.hint.journal")}
       </div>
     </div>
   );

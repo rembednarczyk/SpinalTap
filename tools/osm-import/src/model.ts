@@ -48,6 +48,8 @@ export interface StreetOut {
   readonly line: readonly number[];
   /** Driven one way only, the way the line runs. */
   readonly oneway?: true;
+  /** A passage under a building closed to motor vehicles: no lane, not even for deliveries (G-002). */
+  readonly noVehicles?: true;
 }
 
 export type PoiKind = "shop" | "food" | "bar" | "stop" | "hotel" | "sight" | "culture" | "church" | "service" | "office";

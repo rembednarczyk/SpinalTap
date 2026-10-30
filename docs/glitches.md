@@ -18,7 +18,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: test migawki poniżej 45 s lokalnie, migawka bez zmian; limitu się nie podnosi.
 
 ### G-002 Dostawczak jedzie przez bramę Ku Farze z zakazem wjazdu
-- Status: przyjęte
+- Status: weryfikacja PRZYJĘTE, w PR #44 (naprawa orkiestratora: tylko bramy pod budynkiem z `motor_vehicle=no`; deptaki z `motor_vehicle=no` dalej obsługują dostawy zgodnie z ADR-0050)
 - Ważność: S4 · Zasięg: lokalny · Koszt: mały
 - Gdzie: Ku Farze (616, 44), droga OSM 481583497 `motor_vehicle=no`
 - Dowód: trasa `Ku Farze#66:d` biegnie przez przejście; importer nie zapisuje `motor_vehicle`.
@@ -156,7 +156,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: budynek z `amenity=shelter` (lub `building=roof`/`shelter`) ma wysokość wiaty (≤ 3,5 m, jedna kondygnacja) albo staje się meblem `bus-shelter`.
 
 ### G-018 Pionowy pas czarnych kresek na bruku Placu Litewskiego
-- Status: zgłoszone (do potwierdzenia przez łowcę)
+- Status: przyjęte (potwierdzone zrzutem orkiestratora po G-013: `scratchpad/g018/litewski-back.png` i `litewski-down.png`). Kreski leżą dokładnie na pionowym szwie, gdzie wzór płyt bruku się przesuwa (ok. x 20, z 2–6 przed kamerą w (20, 10) z yaw 3,14); przypuszczalnie dwie nachodzące na siebie nawierzchnie placu w jednej płaszczyźnie (z-fighting) i kontur NPR na nieciągłości głębokości. Pomiar orkiestratora: w tym miejscu leży nawierzchnia `steps` 3 m × 18,6 m (x 17,7–21, z −9,7…8,9, na szwie chunków `krakowskie-0-1`/`1-1`) z linii OSM `highway=steps` (`ground.ts:122`, bufor 3 m), na płaskim placu; renderer rysuje jej stopnie jako ciemne kreski bez różnicy wysokości. Pod nią dwie nawierzchnie `square` w każdym chunku. Kierunek naprawy: schody bez spadku terenu wzdłuż linii (< ok. 0,3 m) nie dają nawierzchni `steps` albo dostają wysokość stopni; plus sprawdzenie podwójnych `square`. Pakiet: tools/osm-import (`ground.ts`), ewentualnie engine (rysowanie `steps`).
 - Ważność: S3 (proponowana) · Zasięg: lokalny
 - Gdzie: Plac Litewski (20, 10), kadr z yaw 3,14
 - Dowód: zrzut naprawiacza G-013 (pionowy pas czarnych poziomych kresek na środku bruku; może decal albo odpływ).
@@ -245,7 +245,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: auto po resynchronizacji w łuku nie przekracza `TURN_SPEED`; test zawrotki bez złagodzenia przechodzi z G-020.
 
 ### G-029 Kliknięcie „Nowa gra” w `models.spec.ts` wisi ponad 60 s na CI
-- Status: zgłoszone (po ponowieniu PR #37 zielony; naprawiacz G-001 wskazuje ten sam mechanizm: pełne klatki rysowane w trakcie ładowania budują kolejkę GPU SwiftShadera; testy TPP i smoke save/load padają przy obciążeniu)
+- Status: w naprawie, 2. runda (weryfikacja NIE PRZYJĘTE: po utracie kontekstu WebGL pacer blokuje rysowanie na stałe; naprawa: `GpuPacer` w engine, najwyżej 2 klatki w kolejce GPU; ekran tytułowy 20 → 2 klatki przed płotem, `models.spec` 15–33 s; kryterium < 10 s do potwierdzenia na CI)
 - Ważność: S1 (proponowana: czerwone CI, niestabilne) · Zasięg: każdy PR · Koszt: nieznany
 - Gdzie: `e2e/models.spec.ts:16`, shard E2E 1/3
 - Dowód: PR #37 (CI 41089511069) pada w obu próbach, PR #33 (CI 41069178665) przeszedł przy drugiej. Playwright: element widoczny i stabilny, „performing click action” bez końca, więc wątek strony zablokowany.
@@ -260,34 +260,34 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (animacja postaci) / packages/app (`?reference`)
 
 ### G-031 Testy TPP w `npr-perf` i smoke save/load przekraczają limit przy obciążeniu
-- Status: zgłoszone (powiązane z G-029)
+- Status: zgłoszone (po G-029 testy TPP i quicksave przeszły przy obciążeniu 25→6, bez porównania A/B; `captureFrame` i podgląd postaci dalej rysują poza pacerem)
 - Ważność: S2 (proponowana: niestabilne e2e) · Koszt: nieznany
 - Dowód: naprawiacz G-001: przy obciążeniu 5–11 za każdym razem pada inny test (Krakowskie, Rynek, targ, Nabrzeże, quicksave/quickload); przypuszczalnie ten sam mechanizm co G-001 w zwykłym trybie (pełne klatki w trakcie ładowania i kroków budują kolejkę GPU SwiftShadera). `captureFrame` rysuje dodatkową klatkę mimo `preserveDrawingBuffer` (1,3–5,8 s na przechwycenie).
 - Pakiet właściciela: packages/app / e2e
 
 ### G-032 Słupki przy ulicach stoją chaotycznie: łańcuchy celują w różne strony i nie łączą sąsiadów; słupki za małe
-- Status: przyjęte (zgłoszenie użytkownika: słupki to charakterystyczny element Lublina)
+- Status: weryfikacja PRZYJĘTE (3. runda), czeka na PR po #44. Na samym Placu Łokietka nie został żaden łańcuch: słupek z wylotu zebry usunięty, sąsiedni zabiera gra (przejście do Bramy Krakowskiej). (Latarnia jako ogniwo rzędu i wolne wyloty przejść dla pieszych, decyzje użytkownika)
 - Ważność: S3 · Zasięg: szeroki (Plac Litewski, Krakowskie Przedmieście, deptak, Plac Łokietka; ok. 53 słupki z OSM) · Koszt: średni
 - Dowód: model `bollard()` (`engine/.../mapcity/prop-street.ts:36`) ma stałe odcinki łańcucha ±1 m w lokalnej osi X, a obrót słupka nie wynika z rzędu, w którym stoi; odstępy w rzędach 1,9–2,8 m (`docs/world/lublin-props.todo.json`). Słupek 0,26 × 0,95 m.
 - Pakiet właściciela: tools/osm-import (rzędy i obrót), packages/engine (model, łańcuch), packages/sim (`furniture.ts`, bryła)
 - Test przyjęcia: słupki w rzędzie mają obrót wzdłuż rzędu; łańcuch łączy dokładnie sąsiednie słupki rzędu (koniec łańcucha przy sąsiedzie, bez wolnych końców w powietrzu); słupek większy (wymiary z dokumentacji/zdjęć Lublina), bryła w sim zgodna z modelem; migawka NPR obejrzana i świadomie zaktualizowana, budżety bez podnoszenia.
 
 ### G-033 Postać, która przechodzi w inne miejsce według flag, „umiera”: renderer gra upadek
-- Status: przyjęte (zgłoszenie użytkownika: Kaito „umiera” po pierwszej rozmowie)
+- Status: w naprawie (razem z G-034)
 - Ważność: S2 · Zasięg: każda postać warunkowa (Kaito klinika → bar, cele wariantów kontraktów) · Koszt: mały
 - Dowód: po `met_fixer` `Streaming.syncPresence` usuwa Kaito z kliniki; `RenderSync` (`presentation/render-sync.ts:101`) zgłasza `despawn(id, "removed")`, bo usunięcie nie jest w `streamedOut`, a `CharacterViews.despawn` z `fall` gra animację śmierci.
 - Pakiet właściciela: packages/sim (`world/streaming.ts`, `presentation/render-sync.ts`)
 - Test przyjęcia: test sesji: po ustawieniu flagi postać warunkowa znika z `despawn(..., "unloaded")`; zabity NPC dalej dostaje `"removed"`.
 
 ### G-034 Kaito od początku w Neon Koi (decyzja użytkownika)
-- Status: przyjęte (propozycja użytkownika: Kaito ma być u siebie od razu; zmienia start z ADR-0038)
+- Status: w naprawie (razem z G-033)
 - Ważność: S3 · Zasięg: prolog · Koszt: średni
 - Zmiana: jedna postać Kaito w barze bez warunku `met_fixer`; prolog w `m0.ink` i cel HUD prowadzą z kliniki do Neon Koi; pierwsza rozmowa w barze.
 - Pakiet właściciela: packages/sim (`content/district-m0.ts`), packages/narrative (`ink/m0.ink`), packages/app (`objective.ts`)
 - Test przyjęcia: test sesji prologu: nowa gra w klinice, cel wskazuje Neon Koi, rozmowa z Kaito w barze ustawia `met_fixer` i daje zlecenie kuriera, Kaito się nie przemieszcza.
 
 ### G-035 Wskaźniki zadań nie prowadzą do postaci z wątku: nie da się znaleźć babci Ume
-- Status: weryfikacja PRZYJĘTE, w PR. Cel kroku (`target`) i znacznik `quest` na minimapie i mapie miasta; poza wczytanym chunkiem znacznik na miejscu z harmonogramu. Uwaga weryfikatora: jeśli Ume zginie w kroku ren_trail (po „aya”), krok nie ma innej drogi ukończenia (do osobnego zgłoszenia).
+- Status: naprawione (#43). Cel kroku (`target`) i znacznik `quest` na minimapie i mapie miasta; poza wczytanym chunkiem znacznik na miejscu z harmonogramu. Uwaga weryfikatora: jeśli Ume zginie w kroku ren_trail (po „aya”), krok nie ma innej drogi ukończenia (do osobnego zgłoszenia).
 - Ważność: S2 (blokuje postęp wątku głównego, akt II) · Zasięg: każdy krok „porozmawiaj z X” (Ume, Mori, Ren, Kurosawa) · Koszt: średni
 - Dowód: `minimap.ts` `markerKind` oznacza tylko zleceniodawców (`fixer`/`hana`/`genzo`) i cele z tagiem; kroki zadań (`core/quest/definitions.ts`) mają tylko tekst `objective`, bez celu. „Zapytaj babcię Ume o Rena Odagiri” nie mówi, gdzie ona jest (deptak przy klinice ok. (328, −77) od 6:30, w nocy brama obok, `schedules.ts`).
 - Pakiet właściciela: packages/core (`quest`, krok z celem), packages/app (`minimap.ts`, HUD), packages/ui (znacznik)
@@ -298,7 +298,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Gdzie: ok. (756, 345) · Dowód: naprawiacz G-006: półokręgi o różnym promieniu sięgają tego samego wierzchołka; 24 zdarzenia kolizji na seedach 1–2 już na starej bazie (rodzina G-025/G-026, `turnRound`/`uTurn`).
 
 ### G-037 Pas Andersy kończy się na pasach Mełgiewskiej: auta czekają na siebie
-- Status: zgłoszone (z G-006, do ustalenia, czy wprowadzone przez skręty)
+- Status: w naprawie razem z G-006 (koniec Andersy staje 5 m przed pasami Mełgiewskiej; blokada istniała na bazie)
 - Ważność: S3 · Gdzie: ok. (2401, 282) · Dowód: kąt 31°, pojazdy obu tras biorą się nawzajem za „auto przed sobą”, resynchronizacja co ok. 40 m.
 
 ### G-038 `lane-dead-end` nie sprawdza użycia początku, który „spotyka” koniec
@@ -306,13 +306,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 (skan) · Gdzie: koniec trolejbusu na Mełgiewskiej ok. (2456, 245) ukryty przez początek pasa aut.
 
 ### G-039 Łańcuch słupków przechodzi przez podstawę latarni na Placu Łokietka
-- Status: zgłoszone (z G-032)
+- Status: w naprawie razem z G-032 (rząd przerwany przed latarnią, w 3. rundzie latarnia jako ogniwo)
 - Ważność: S4 · Gdzie: `lamp-pastoral` (439,2; −96,1) w rzędzie słupków (439; −94,4)–(439; −96,8)
 - Przyczyna (przypuszczalna): słupki są w `LOOSE` (`props-solid.ts`), więc latarnia stawiana później ich nie widzi; łańcuch od G-032 łączy sąsiadów przez latarnię.
 - Test przyjęcia: kontrola skanu „łańcuch słupków przez mebel” daje 0.
 
 ### G-040 Śmierć babci Ume blokuje krok ren_trail
-- Status: zgłoszone (z weryfikacji G-035, do potwierdzenia)
+- Status: odrzucone (Ume nie ma `health` w `district-m0.ts`, a NPC bez niego nie da się zranić ani zabić, `builders.ts:77`; krok nie może się zablokować)
 - Ważność: S2 (proponowana: blokada wątku) · Dowód: krok `ren_trail` (po zakończeniu „aya”) kończy tylko rozmowa z Ume; po `dead:ume` znacznik znika i nie ma innej drogi.
 
 ### G-006 Skręty aut na skrzyżowaniach
@@ -356,4 +356,8 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | Zrzuty: 3 Maja, Lubartowska, Dmowskiego, Plac Zamkowy, Mełgiewska, Plac Litewski, Rynek, Grodzka, Plac Wolności, Łokietka, Królewska, Bazar, mosty Bystrzycy | 2026-10-30 | zrzuty |
 | Podzamcze i Nabrzeże (łowca): trasy przez bloki scen, pomosty, wysokości aktorów, Nowy Plac Targowy, latarnie nad Bystrzycą | 2026-10-30 | pomiar, zrzuty |
 | Krakowskie i Stare Miasto (łowca): 15 bram przechodnich w obie strony, tłum względem budynków i mebli, kable kanionu, podstawy budynków, Narutowicza, Radziwiłłowska, Plac po Farze, Plac Katedralny | 2026-10-30 | pomiar, zrzuty |
-| Nieoglądane: Ruska, Narutowicza, Kalinowszczyzna, Zamek, wnętrza, noc i deszcz z bliska, telefon | - | - |
+| Sieć pasów aut: ślepe końce, szwy chunków, krótkie łańcuchy, łącznice bez nazwy (łowca) | 2026-10-30 | pomiar, skan `lane-dead-end`, `street-seam-gap`, `car-road-hole` |
+| Ruch w czasie: korki, skoki pozycji, kolizje przy skrzyżowaniach (weryfikatorzy G-006) | 2026-10-30 | symulacja-sonda, test `traffic-junction-drive` |
+| Słupki i łańcuchy w całym mieście (G-032) | 2026-10-30 | skan `bollard-chain-*`, zrzuty |
+| Postacie wątku i wskaźniki zadań (G-035) | 2026-10-30 | test sesji |
+| Nieoglądane: Ruska (zrzuty), Kalinowszczyzna, Zamek, wnętrza, noc i deszcz z bliska, telefon, ekran tytułowy i ładowanie | - | - |

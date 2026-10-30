@@ -107,7 +107,7 @@ describe("loot loop: kill, bag, take, save, load (plan E6)", () => {
     steps(session, 1, frame({ interact: true }));
     const panel = ui.getState().loot!;
     expect(panel.key).toBe("loot:guard");
-    expect(panel.title).toBe("Torba gangera");
+    expect(panel.owner).toBe("ganger");
     expect(panel.lines[0]).toMatchObject({ kind: "eddies", label: "€$", qty: eddies });
     expect(session.inControl).toBe(false);
     expect(await session.saveAsync("slot-1")).toBe(false);
@@ -120,7 +120,7 @@ describe("loot loop: kill, bag, take, save, load (plan E6)", () => {
     steps(session, 1);
     expect(session.inControl).toBe(true);
     expect(session.sim.session.dialogueActive).toBe(false);
-    expect(ui.getState().toasts.some((t) => t.title === "Łup")).toBe(true);
+    expect(ui.getState().toasts.some((t) => t.title === "Loot")).toBe(true);
     expect(ui.getState().toasts.some((t) => t.text === "Przelew od Kaito")).toBe(false);
 
     const pockets = { wallet: session.sim.domain.wallet, inventory: session.sim.domain.inventory, ammo: session.sim.domain.ammo };

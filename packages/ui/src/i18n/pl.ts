@@ -1,5 +1,6 @@
 import type { MessageKey } from "./en";
 import type { Message } from "./message";
+import { plTrade } from "./pl/trade";
 
 /** Polish: exactly the English keys (ADR-0056); a missing or extra key does not compile. */
 export const pl = {
@@ -137,4 +138,5 @@ export const pl = {
   "settings.keys.reset": "Przywróć domyślne klawisze",
   "settings.reload.note": "Jakość grafiki zmieni się po przeładowaniu. Najpierw zapisz grę, bo niezapisany postęp przepadnie.",
   "settings.reload.now": "Przeładuj teraz",
+  ...plTrade,
 } as const satisfies Readonly<Record<MessageKey, Message>>;

@@ -134,10 +134,10 @@ describe("HUD weapon strip", () => {
 describe("loot panel", () => {
   const loot = {
     key: "loot:guard",
-    title: "Torba gangera",
+    owner: "ganger" as const,
     lines: [
       { index: 0, kind: "eddies" as const, label: "€$", qty: 17, rarity: null },
-      { index: 1, kind: "ammo" as const, label: "Amunicja 9 mm", qty: 9, rarity: null },
+      { index: 1, kind: "ammo" as const, label: "9 mm", qty: 9, rarity: null },
       { index: 2, kind: "item" as const, label: "Hebi SMG", qty: 1, rarity: "rare" as const },
     ],
   };
@@ -145,22 +145,23 @@ describe("loot panel", () => {
   it("lists the lines with quantities and rarity labels, and hides the pad", () => {
     mount({ loot }, pad());
     const panel = screen.getByTestId("loot");
-    expect(panel.textContent).toContain("Torba gangera");
+    expect(panel.textContent).toContain("Ganger's bag");
     const lines = screen.getAllByTestId("loot-line");
     expect(lines).toHaveLength(3);
     expect(lines[0]!.textContent).toContain("× 17");
-    expect(lines[2]!.textContent).toContain("rzadki");
+    expect(lines[1]!.textContent).toContain("9 mm ammo");
+    expect(lines[2]!.textContent).toContain("rare");
     expect(lines[2]!.className).toContain("rarity--rare");
     expect(screen.queryByTestId("touch-controls")).toBeNull();
   });
 
   it("takes one line, all of it, or leaves", () => {
     const { i } = mount({ loot });
-    fireEvent.click(screen.getAllByRole("button", { name: "Weź" })[1]!);
+    fireEvent.click(screen.getAllByRole("button", { name: "Take" })[1]!);
     expect(i.takeLoot).toHaveBeenCalledWith(1);
     fireEvent.click(screen.getByTestId("loot-take-all"));
     expect(i.takeLoot).toHaveBeenCalledWith("all");
-    fireEvent.click(screen.getByRole("button", { name: "Zostaw" }));
+    fireEvent.click(screen.getByRole("button", { name: "Leave" }));
     expect(i.closeLoot).toHaveBeenCalled();
   });
 
@@ -176,7 +177,7 @@ describe("loot panel", () => {
 
   it("says when the bag is empty and goes away when closed", () => {
     const { store } = mount({ loot: { ...loot, lines: [] } });
-    expect(screen.getByTestId("loot").textContent).toContain("Pusto.");
+    expect(screen.getByTestId("loot").textContent).toContain("Empty.");
     act(() => patchUi(store, { loot: null }));
     expect(screen.queryByTestId("loot")).toBeNull();
   });
