@@ -87,6 +87,23 @@ describe("facades of map buildings (ADR-0044)", () => {
     expect(top(far)).toBeGreaterThan(18 + 8);
     expect(far.vertexCount * 4).toBeLessThan(near.vertexCount);
   });
+
+  it("keeps a tenement's pitched roof in the far block, up to the same ridge as near", () => {
+    let checked = 0;
+    for (let id = 0; id < 40; id++) {
+      const f = facadeFrame(tenement(id), none);
+      if (f.style.roof !== "hip") continue;
+      checked += 1;
+      const near = new MeshSink();
+      const far = new MeshSink();
+      planNearBuilding(near, f);
+      planFarBuilding(far, f);
+      const top = (s: MeshSink) => Math.max(...s.positions.filter((_, i) => i % 3 === 1));
+      expect(top(far)).toBeCloseTo(top(near), 1);
+      expect(top(far)).toBeGreaterThan(f.top + 3);
+    }
+    expect(checked).toBeGreaterThan(0);
+  });
 });
 
 const makeCity = (quality: "high" | "low" = "high") => {

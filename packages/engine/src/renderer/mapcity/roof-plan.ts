@@ -38,8 +38,11 @@ export const lathe = (sink: MeshSink, c: Vec, profile: readonly (readonly [numbe
   }
 };
 
-/** Hipped roof from the eaves at the top of the walls up `rise` metres, with a small overhang. */
-export const addHipRoof = (sink: MeshSink, f: FacadeFrame, rise: number, roofColor: Rgba, trim: Rgba): void => {
+/**
+ * Hipped roof from the eaves at the top of the walls up `rise` metres, with a small overhang;
+ * `underside` closes the overhang from below (the far cells leave it open: no one sees it).
+ */
+export const addHipRoof = (sink: MeshSink, f: FacadeFrame, rise: number, roofColor: Rgba, trim: Rgba, underside = true): void => {
   const ring = f.b.ring;
   const y0 = f.top - 0.08;
   const eaves = offsetRing(ring, 0.35) ?? [...ring];
@@ -80,6 +83,7 @@ export const addHipRoof = (sink: MeshSink, f: FacadeFrame, rise: number, roofCol
       [len, y1 - f.b.base],
       [0, y1 - f.b.base],
     ], meta);
+    if (!underside) continue;
     // Soffit under the overhang.
     const ia = ring[i] as P2;
     const ib = ring[(i + 1) % ring.length] as P2;

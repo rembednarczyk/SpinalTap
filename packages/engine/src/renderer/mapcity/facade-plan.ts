@@ -169,12 +169,19 @@ const roofOf = (sink: MeshSink, f: FacadeFrame, p: Palette): void => {
   if (s.roof === "dome" && roof > 0.3) addDome(sink, f, roof, p.roof, p.wall);
 };
 
-/** One block per building for the far cells: same walls, a flat top, towers as boxes. */
+/** One block per building for the far cells: same walls, the pitched roof or a flat top, towers as boxes. */
 export const planFarBuilding = (sink: MeshSink, f: FacadeFrame): void => {
   const p = paletteOf(f);
-  const top = f.top + (f.b.roof ?? 0) * 0.35;
-  walls(sink, f, top, p.wall);
-  slab(sink, f.b.ring, top, p.roof, roofMeta(f.style.seed));
+  const roof = f.b.roof ?? 0;
+  if (f.style.roof === "hip" && roof > 0.3) {
+    // The same pitched roof as near, so a tenement keeps its red roof across the city.
+    walls(sink, f, f.top, p.wall);
+    addHipRoof(sink, f, roof, p.roof, p.trim, false);
+  } else {
+    const top = f.top + roof * 0.35;
+    walls(sink, f, top, p.wall);
+    slab(sink, f.b.ring, top, p.roof, roofMeta(f.style.seed));
+  }
   if (f.b.lifted) soffit(sink, f, p.plinth);
   if (f.style.tower) addTowers(sink, f, p, false);
   planPassages(sink, f);
