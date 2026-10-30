@@ -14,6 +14,13 @@ import { InteriorBatches } from "./interior-batch";
 /** Everything in the world that is not a character: blocks, neon, lamps, water, loot. */
 export type PropDescriptor = Exclude<ViewDescriptor, { kind: "heroine" | "npc" | "enemy" | "crowd" }>;
 
+/**
+ * True for a prop at height `y` in a room under the street (the cellars of the Trasa Podziemna
+ * under the Rynek): `ground` is the street above it, null outside the map's terrain. Such a prop
+ * gets no streak on the wet street above it.
+ */
+export const underStreet = (y: number, ground: number | null): boolean => ground !== null && y < ground - 0.3;
+
 /** Atmosphere pieces added for a prop, taken back when the prop goes (world streaming). */
 interface Decor {
   readonly meshes: Mesh[];
@@ -23,7 +30,31 @@ interface Decor {
 interface PropEntry {
   readonly prop: PropView;
   readonly lightKey: string | null;
-  readonly decor: Decor;
+  decor: Decor;
+  /** Where the glow is judged from: the prop's position. */
+  readonly at: Vector3;
+  /** Its glowing meshes are in the glow layer (not hidden behind a building). */
+  shown: boolean;
+}
+
+/** Where a prop's light is: the middle of its first glowing part (a lamp's bulb, a sign's face). */
+const glowCentre = (prop: PropView, at: Vector3): Vector3 => {
+  const m = prop.glowing[0];
+  if (!m) return at;
+  m.computeWorldMatrix(true);
+  return m.getBoundingInfo().boundingBox.centerWorld.clone();
+};
+
+/** Re-judge which glowing props are hidden after the eye moves this far, metres. */
+const GLOW_RECHECK_MOVE = 0.75;
+/** Lights further than this keep their glow: the fog swallows it, and the test would cost more. */
+const GLOW_SIGHT_RANGE = 120;
+
+/** A lit prop spawned before the terrain under it: its streak settles when the terrain comes. */
+interface Unsettled {
+  readonly name: string;
+  readonly view: Extract<PropDescriptor, { kind: "block" | "neon" | "lamp" }>;
+  readonly at: Vector3;
 }
 
 
@@ -51,6 +82,9 @@ export class PropViews {
   private readonly blockers = new Set<AbstractMesh>();
   /** Blocks in view, for the walked-roof test (ADR-0027, C8). */
   private readonly blocks = new Map<EntityId, DressBlock>();
+
+  /** Lit props waiting for the map city's terrain under them. */
+  private readonly unsettled = new Map<EntityId, Unsettled>();
 
   /** Plain interior blocks, merged (ADR-0038). */
   private readonly interiors: InteriorBatches;
@@ -108,13 +142,13 @@ export class PropViews {
         return;
       case "water": {
         const prop = buildWater(scene, materials, name, view, at);
-        this.props.set(id, { prop, lightKey: null, decor: { meshes: [], flicker: null } });
+        this.props.set(id, { prop, lightKey: null, decor: { meshes: [], flicker: null }, at, shown: true });
         return;
       }
       case "loot": {
         const prop = buildLootBag(scene, materials, name, view, at);
         for (const m of prop.glowing) glow.addIncludedOnlyMesh(m);
-        this.props.set(id, { prop, lightKey: null, decor: { meshes: [], flicker: null } });
+        this.props.set(id, { prop, lightKey: null, decor: { meshes: [], flicker: null }, at, shown: true });
         return;
       }
     }
@@ -130,15 +164,64 @@ export class PropViews {
         : view.kind === "neon"
           ? buildNeon(scene, name, view, at)
           : buildLamp(scene, materials, name, view.color, at, view.facing);
+    const ground = this.deps.groundAt?.(at.x, at.z) ?? null;
+    const buried = underStreet(at.y, ground);
     for (const m of prop.glowing) glow.addIncludedOnlyMesh(m);
     for (const m of prop.blockers) this.blockers.add(m);
     for (const m of prop.casters) shadow.addStaticCaster(m);
-    const decor = this.decorate(name, view, at, prop);
+    const decor = this.decorate(name, view, at, prop, buried ? null : (ground ?? 0));
     const lightKey = prop.light ? name : null;
     if (prop.light && lightKey) materials.addLight(lightKey, prop.light);
-    this.props.set(id, { prop, lightKey, decor });
+    this.props.set(id, { prop, lightKey, decor, at: glowCentre(prop, at), shown: true });
+    this.glowEye = null;
+    if (ground === null && this.deps.groundAt) this.unsettled.set(id, { name, view, at });
     if (view.kind === "block") this.addBlock(id, view, at, prop);
     else if (view.kind === "neon") this.deps.dressing.addSign(id, view, at);
+  }
+
+  /**
+   * Settles the lit props spawned before the terrain under them (the map city comes with the
+   * chunk's scenery, after the game's own props): a neon's streak moves to the street, or goes
+   * for one under it. Call when terrain arrives.
+   */
+  settleGround(): void {
+    const { atmosphere } = this.deps;
+    for (const [id, u] of this.unsettled) {
+      const e = this.props.get(id);
+      const ground = this.deps.groundAt?.(u.at.x, u.at.z) ?? null;
+      if (e && ground === null) continue;
+      this.unsettled.delete(id);
+      if (!e || ground === null) continue;
+      const buried = underStreet(u.at.y, ground);
+      for (const m of e.decor.meshes) atmosphere.removeDecoration(m);
+      if (e.decor.flicker) atmosphere.removeFlicker(e.decor.flicker);
+      e.decor = this.decorate(u.name, u.view, u.at, e.prop, buried ? null : ground);
+    }
+  }
+
+  /** Where the glow was last judged from; null: judge again. */
+  private glowEye: Vector3 | null = null;
+
+  /**
+   * Takes the lights hidden behind a building or under the street out of the glow layer, and
+   * puts them back when they come into sight. The layer draws only the glowing meshes, without
+   * the walls and the cobbles in front of them, so a neon round the corner bloomed through the
+   * facade. `blocked` is the map city's line of sight; judged again when the eye moves.
+   */
+  updateGlow(eye: Vector3, blocked: (from: Vector3, to: Vector3) => boolean): void {
+    if (this.glowEye && Vector3.DistanceSquared(eye, this.glowEye) < GLOW_RECHECK_MOVE * GLOW_RECHECK_MOVE) return;
+    this.glowEye = eye.clone();
+    const { glow } = this.deps.stage;
+    for (const e of this.props.values()) {
+      if (e.prop.glowing.length === 0) continue;
+      const show = Vector3.Distance(eye, e.at) > GLOW_SIGHT_RANGE || !blocked(eye, e.at);
+      if (show === e.shown) continue;
+      e.shown = show;
+      for (const m of e.prop.glowing) {
+        if (show) glow.addIncludedOnlyMesh(m);
+        else glow.removeIncludedOnlyMesh(m);
+      }
+    }
   }
 
   /** Dressing, the walked-roof record and the kit skin of a block. */
@@ -176,6 +259,7 @@ export class PropViews {
     const e = this.props.get(id);
     if (!e) return;
     this.props.delete(id);
+    this.unsettled.delete(id);
     const { materials, atmosphere } = this.deps;
     this.deps.cityKit.remove(id);
     this.deps.dressing.remove(id);
@@ -195,7 +279,7 @@ export class PropViews {
   }
 
   /** Light shafts, wet-street reflections and flicker for lamps and neon signs. */
-  private decorate(name: string, view: PropDescriptor, at: Vector3, prop: PropView): Decor {
+  private decorate(name: string, view: PropDescriptor, at: Vector3, prop: PropView, street: number | null): Decor {
     const { atmosphere } = this.deps;
     if (view.kind === "lamp" && prop.light) {
       // From the lamp head down to the ground the lamp stands on (the map city is not at y = 0).
@@ -209,14 +293,13 @@ export class PropViews {
     const thinX = view.size.x <= view.size.z && view.size.x <= view.size.y;
     const towards = thinX ? new Vector3(at.x > 0 ? -1 : 1, 0, 0) : new Vector3(0, 0, -1);
     const width = thinX ? view.size.z : view.size.x;
-    const ground = this.deps.groundAt?.(at.x, at.z) ?? 0;
-    const refl = atmosphere.addReflection(`${name}-refl`, new Vector3(at.x, ground, at.z), towards, Math.max(1.2, width), 7, view.color, 0.55);
+    const meshes = street === null ? [] : [atmosphere.addReflection(`${name}-refl`, new Vector3(at.x, street, at.z), towards, Math.max(1.2, width), 7, view.color, 0.55)];
     const sign = prop.glowing[0]?.material as unknown as { emissiveColor?: Color3 } | null;
     if (sign?.emissiveColor && (view.label === "HOTEL" || view.label === "KUSURI")) {
       const flicker = sign as { emissiveColor: Color3 };
       atmosphere.addFlicker(flicker, view.label.length);
-      return { meshes: [refl], flicker };
+      return { meshes, flicker };
     }
-    return { meshes: [refl], flicker: null };
+    return { meshes, flicker: null };
   }
 }

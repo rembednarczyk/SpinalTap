@@ -192,13 +192,13 @@ export class Atmosphere {
   }
 
   /**
-   * A reflection streak on the ground in front of a light source. `towards` is the horizontal
+   * A reflection streak on the ground at `at.y` in front of a light source. `towards` is the horizontal
    * direction the streak runs (away from the wall, into the street).
    */
   addReflection(name: string, at: Vector3, towards: Vector3, width: number, length: number, color: string, intensity = 0.5): Mesh {
     const plane = MeshBuilder.CreateGround(name, { width, height: length }, this.scene);
     const dir = new Vector3(towards.x, 0, towards.z).normalize();
-    plane.position.set(at.x + dir.x * (length / 2), 0.03, at.z + dir.z * (length / 2));
+    plane.position.set(at.x + dir.x * (length / 2), at.y + 0.03, at.z + dir.z * (length / 2));
     // The plane's local +Z is its length axis; point it along `dir` (uv.y = 0 at the far end).
     plane.rotation.y = Math.atan2(-dir.x, -dir.z);
     plane.material = this.material(this.streakMaterials, `${color}:${intensity}`, () => {
