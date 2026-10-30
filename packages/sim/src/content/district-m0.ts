@@ -2,6 +2,7 @@ import type { ContractSiteId, Vec3 } from "@seki/core";
 import { M0_TARGET_TAG } from "@seki/core";
 import { KANAL_CONTRACT_SITE_SPAWNS } from "./district-kanal";
 import { type RoofStash, TARG_CONTRACT_SITE_FACING, TARG_CONTRACT_SITE_SPAWNS } from "./district-targ";
+import { CAR_WASH_PROPS } from "./district-car-wash";
 import { DOKI_CONTRACT_SITE_SPAWNS } from "./district-doki";
 import {
   type ActorDef,
@@ -9,14 +10,12 @@ import {
   type GangerSpawn,
   type Placement,
   type StaticProp,
-  building,
   crate,
   lamp,
   neon,
   placeAt,
   placeProps,
   skin,
-  slab,
   v,
 } from "./builders";
 import { BARMAN_SPAWN, CLINIC_WAKE_SPOT, CLINIC_WAKE_YAW, FIXER_BAR_SPAWN, FIXER_CLINIC_SPAWN, KOI_REGULAR_SPAWNS, MORI_SPAWN, S7_INTERIORS } from "./interiors";
@@ -49,31 +48,6 @@ const on = (g: Placement, x: number, z: number): Vec3 => {
   return v(p.x, groundY(p.x, p.z), p.z);
 };
 
-/**
- * MYJNIA 24H (ADR-0026) in a yard behind Plac Łokietka: the machine room, a canopy on two posts over the
- * bay, the wash gantry and a car being washed; the yard behind it (north) with a dumpster,
- * crates and a parked car is the contract site `car_wash`. Old coordinates, placed by
- * `CAR_WASH_PLACE`.
- */
-const carWash = (): StaticProp[] => [
-  building(18, 30.5, 6, 4.6, 9, "concrete", skin("shop", "x-", { signs: false })),
-  // Canopy and gantry beam: visual, and thicker than a sidewalk so the minimap skips them.
-  slab(11.6, 4.45, 30.5, v(7, 0.36, 8.4), "metal"),
-  building(8.4, 26.6, 0.3, 4.3, 0.3, "metal"),
-  building(8.4, 34.4, 0.3, 4.3, 0.3, "metal"),
-  building(12.5, 27.6, 1.2, 3.4, 0.3, "glass"),
-  building(12.5, 33.4, 1.2, 3.4, 0.3, "glass"),
-  slab(12.5, 3.5, 30.5, v(1.2, 0.36, 5.5), "metal"),
-  crate(11.2, 30.5, 4.2, 1.5, 2, skin("car", "x+")),
-  neon(8.2, 5.1, 30.5, v(0.15, 0.9, 6), "#ff4040", "MYJNIA 24H"),
-  // The yard: crates, two dumpsters and a parked car, a lamp.
-  crate(-3, 36, 1.6, 1.2, 1.2),
-  crate(4, 38.5, 1.2, 1.2, 2.4, skin("dumpster", "x-")),
-  crate(-5, 44, 2.4, 1.4, 1.4, skin("dumpster", "z-")),
-  crate(5.5, 45.5, 2, 1.5, 4.2, skin("car", "z+")),
-  lamp(-1, 40, "#ff6a6a"),
-];
-
 /** Signs and lamps of the deptak around the clinic and the bar. */
 const deptak = (): StaticProp[] => [
   { ...neon(314, 3.2, -72.75, v(5, 1.1, 0.15), "#ffb000", "RAMEN"), center: ground(314, -72.75, 3.2) },
@@ -101,7 +75,7 @@ export const DISTRICT_M0_PROPS: readonly StaticProp[] = [
   ...standing(WRECK, [crate(2.6, -31, 2, 1.4, 4.4, skin("wreck", "z-"))]),
   // The van of the east lot.
   ...standing(EAST_LOT, [crate(12, -12, 2.4, 2.2, 5, skin("van", "z+"))]),
-  ...placeProps(CAR_WASH_PLACE, carWash()),
+  ...CAR_WASH_PROPS,
   // Behind Neon Koi, the bar's bins.
   ...standing(KOI_BACK, [crate(6.5, 19.2, 1.2, 1.3, 2.2, skin("dumpster", "x-"))]),
   ...deptak(),

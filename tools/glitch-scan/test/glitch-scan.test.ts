@@ -7,7 +7,8 @@ import { furnitureClearance } from "../../../packages/sim/src/content/furniture-
 import { furnitureRadius } from "../../../packages/sim/src/content/lublin/furniture";
 import { inBuilding, nearestWall } from "../../../packages/sim/src/content/lublin/places";
 import { surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
-import { MAP_CHUNKS, PASSAGES } from "../../../packages/sim/src/content/lublin/sites";
+import { clearedBuilding } from "../../../packages/sim/src/content/cleared-buildings";
+import { CLEARED_BUILDINGS, MAP_CHUNKS, PASSAGES } from "../../../packages/sim/src/content/lublin/sites";
 import { groundY } from "../../../packages/sim/src/content/lublin/terrain";
 import { PARKED_CARS } from "../../../packages/sim/src/content/parked-cars";
 import { GAME_PROPS, WORLD_STREET_PROPS } from "../../../packages/sim/src/content/street-props";
@@ -47,6 +48,44 @@ const inPassage = (x: number, z: number) =>
 
 const near = (x: number, z: number) => `${x.toFixed(0)},${z.toFixed(0)}`;
 const inMap = (x: number, z: number) => MAP_CHUNKS.some((c) => x > c.bounds.minX + 1 && x < c.bounds.maxX - 1 && z > c.bounds.minZ + 1 && z < c.bounds.maxZ - 1);
+
+/** Is (x, z) inside a flat outline `[x0, z0, …]` placed at (ox, oz)? */
+const inOutline = (x: number, z: number, flat: readonly number[], ox: number, oz: number) => {
+  let inside = false;
+  for (let i = 0, j = flat.length - 2; i < flat.length; j = i, i += 2) {
+    const xi = flat[i]! + ox;
+    const zi = flat[i + 1]! + oz;
+    const xj = flat[j]! + ox;
+    const zj = flat[j + 1]! + oz;
+    if (zi > z !== zj > z && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) inside = !inside;
+  }
+  return inside;
+};
+
+type Rect = (typeof CLEARED_BUILDINGS)[number];
+
+/** Square metres of a rectangle covered by a building's outline, sampled every 0.5 m. */
+const coveredArea = (r: Rect, flat: readonly number[], ox: number, oz: number) => {
+  let n = 0;
+  for (let x = r.minX + 0.25; x < r.maxX; x += 0.5) for (let z = r.minZ + 0.25; z < r.maxZ; z += 0.5) if (inOutline(x, z, flat, ox, oz)) n++;
+  return n * 0.25;
+};
+
+/** The square metres of a building's outline, sampled over its bounds. */
+const outlineArea = (flat: readonly number[], ox: number, oz: number) => {
+  const xs = flat.filter((_, i) => i % 2 === 0).map((x) => x + ox);
+  const zs = flat.filter((_, i) => i % 2 === 1).map((z) => z + oz);
+  return coveredArea({ minX: Math.min(...xs), maxX: Math.max(...xs), minZ: Math.min(...zs), maxZ: Math.max(...zs) }, flat, ox, oz);
+};
+
+const overlaps = (a: Rect, b: Rect) => a.minX < b.maxX && b.minX < a.maxX && a.minZ < b.maxZ && b.minZ < a.maxZ;
+
+/** The game's solid blocks standing on the ground (not interiors, awnings or decks) in the rectangles that clear the map's buildings. */
+const setPieceBlocks: readonly Rect[] = GAME_PROPS.flatMap((p) => {
+  if (p.view.kind !== "block" || !p.solid || p.interior || p.center.y - p.view.size.y / 2 - groundY(p.center.x, p.center.z) > 0.5) return [];
+  const r = { minX: p.center.x - p.view.size.x / 2, maxX: p.center.x + p.view.size.x / 2, minZ: p.center.z - p.view.size.z / 2, maxZ: p.center.z + p.view.size.z / 2 };
+  return CLEARED_BUILDINGS.some((c) => overlaps(c, r)) ? [r] : [];
+});
 
 const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /** A car lane off every road surface (on grass, a square, a pavement), away from the map's edges. */
@@ -114,6 +153,18 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       const gap = p.center.y - p.view.size.y / 2 - groundY(p.center.x, p.center.z);
       return (gap > 0.15 && gap < 1) || gap < -0.3 ? [{ at: near(p.center.x, p.center.z), what: `${p.view.skin?.style ?? p.view.material} ${gap.toFixed(2)} m` }] : [];
     }),
+  /** A map building that stays in the game through a set piece's block, or over a quarter of it on a set piece. */
+  "building-in-set-piece": () =>
+    MAP_CHUNKS.flatMap((c) =>
+      c.buildings
+        .filter((b) => !clearedBuilding(b))
+        .flatMap((b) => {
+          const wall = setPieceBlocks.find((r) => coveredArea(r, b.outline, b.x, b.z) > 0);
+          const share = CLEARED_BUILDINGS.reduce((s, r) => s + coveredArea(r, b.outline, b.x, b.z), 0) / outlineArea(b.outline, b.x, b.z);
+          if (!wall && share <= 0.25) return [];
+          return [{ at: near(b.x, b.z), what: wall ? `${b.id} through a block at ${near((wall.minX + wall.maxX) / 2, (wall.minZ + wall.maxZ) / 2)}` : `${b.id} ${(share * 100).toFixed(0)}% over a set piece` }];
+        }),
+    ),
   /** A piece of road or path on a bridge laid on the valley instead of a deck. */
   "bridge-without-deck": () => MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.bridge && !g.deck).map((g) => ({ at: near(g.outline[0]!, g.outline[1]!), what: g.surface }))),
   /** A passage through a building with an end off every chunk, where there is no ground to come out on. */
