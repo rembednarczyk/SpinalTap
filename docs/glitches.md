@@ -101,7 +101,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `furniture-in-building` w skanie (środek mebla głębiej niż 0,5 m w budynku) = 0.
 
 ### G-012 Meble z bryłą nachodzą na siebie: kosze w pniach drzew na deptaku
-- Status: weryfikacja PRZYJĘTE, w PR. Kontrola `furniture-overlap` liczy nachodzenie brył > 5 cm; para kandelabr–szafka (734, 215) miała 0,8 cm (modele tylko się stykają), więc skan jej nie liczy, a generator i tak ją rozsunął.
+- Status: naprawione (#35). Kontrola `furniture-overlap` liczy nachodzenie brył > 5 cm; para kandelabr–szafka (734, 215) miała 0,8 cm (modele tylko się stykają), więc skan jej nie liczy, a generator i tak ją rozsunął.
 - Ważność: S4 · Zasięg: szeroki · Koszt: mały
 - Gdzie:
   - kosze (175.5, −48.6) i (288, −73.3) w pniach drzew z OSM;
