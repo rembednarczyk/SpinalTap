@@ -6,5 +6,6 @@
   "furniture-in-wall": 1,
   "parked-car-in-furniture": 0,
   "prop-off-ground": 0,
-  "bridge-without-deck": 0
+  "bridge-without-deck": 0,
+  "passage-off-map": 0
 }

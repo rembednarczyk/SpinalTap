@@ -210,7 +210,7 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
     if (near([at])) markings.push(...stopLines(`n${n.id}`, at, roads, onOther));
   }
   const pois = allPois(data);
-  const passages = buildingPassages(lines.filter((l) => near(l.line)), buildings);
+  const passages = buildingPassages(lines.filter((l) => near(l.line)), buildings, chunks.map((c) => c.rect));
   const results = chunks.map((c) => generateChunk(c, src, buildings, bands, lines, pois, markings, passages));
   return { chunks: results.map((r) => r.chunk), stats: results.map((r) => r.stats) };
 };

@@ -87,6 +87,12 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     }),
   /** A piece of road or path on a bridge laid on the valley instead of a deck. */
   "bridge-without-deck": () => MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.bridge && !g.deck).map((g) => ({ at: near(g.outline[0]!, g.outline[1]!), what: g.surface }))),
+  /** A passage through a building with an end off every chunk, where there is no ground to come out on. */
+  "passage-off-map": () =>
+    PASSAGES.filter((p) => [p.from, p.to].some(({ x, z }) => !MAP_CHUNKS.some(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ))).map((p) => ({
+      at: near(p.from.x, p.from.z),
+      what: p.building,
+    })),
 };
 
 describe("the glitch scan (ADR-0054)", () => {
