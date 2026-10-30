@@ -18,7 +18,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: test migawki poniżej 45 s lokalnie, migawka bez zmian; limitu się nie podnosi.
 
 ### G-002 Dostawczak jedzie przez bramę Ku Farze z zakazem wjazdu
-- Status: przyjęte
+- Status: weryfikacja (naprawa orkiestratora: tylko bramy pod budynkiem z `motor_vehicle=no`; deptaki z `motor_vehicle=no` dalej obsługują dostawy zgodnie z ADR-0050)
 - Ważność: S4 · Zasięg: lokalny · Koszt: mały
 - Gdzie: Ku Farze (616, 44), droga OSM 481583497 `motor_vehicle=no`
 - Dowód: trasa `Ku Farze#66:d` biegnie przez przejście; importer nie zapisuje `motor_vehicle`.

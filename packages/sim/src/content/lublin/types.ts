@@ -55,6 +55,8 @@ export interface LublinStreetData {
   readonly line: FlatPoints;
   /** Driven one way only, the way the line runs (`oneway=-1` already turned round). */
   readonly oneway?: true;
+  /** A passage under a building closed to motor vehicles in OSM: no lane, not even for deliveries (G-002). */
+  readonly noVehicles?: true;
 }
 
 export interface LublinMarkingData {

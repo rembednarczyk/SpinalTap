@@ -42,6 +42,13 @@ const keepPiece = (piece: readonly Pt[], rect: Rect): boolean => {
   return len >= MIN_PIECE || (len >= MIN_SEAM_PIECE && (onEdge(piece[0]!, rect) || onEdge(piece[piece.length - 1]!, rect)));
 };
 
+/**
+ * A gate under a building barred to motor vehicles (Ku Farze, G-002). Only passages: most pedestrian
+ * streets carry `motor_vehicle=no` too, yet the game's vans serve them in the morning (ADR-0050).
+ */
+const closedToVehicles = (t: Tags): boolean =>
+  (t.tunnel === "building_passage" || t.tunnel === "yes" || t.covered === "yes") && [t.motor_vehicle, t.motorcar, t.vehicle].some((v) => v === "no");
+
 export const chunkStreets = (lines: readonly Line[], rect: Rect): StreetOut[] => {
   const out: StreetOut[] = [];
   for (const l of lines) {
@@ -50,11 +57,12 @@ export const chunkStreets = (lines: readonly Line[], rect: Rect): StreetOut[] =>
     if (!name || !kind || !STREET_KINDS.has(kind)) continue;
     // A one-way street is drawn the way it is driven (`oneway=-1` turned round).
     const one = oneway(l.tags);
+    const closed = closedToVehicles(l.tags);
     const line = l.tags.oneway === "-1" ? [...l.line].reverse() : l.line;
     for (const piece of clipLineToRect(line, rect)) {
       if (!keepPiece(piece, rect)) continue;
       const simple = simplifyLine(piece, 1).flatMap((p) => [r1(p.x), r1(p.z)]);
-      out.push({ name, kind, line: simple, ...(one ? { oneway: true as const } : {}) });
+      out.push({ name, kind, line: simple, ...(one ? { oneway: true as const } : {}), ...(closed ? { noVehicles: true as const } : {}) });
     }
   }
   return out;
