@@ -56,5 +56,6 @@
 | [0052](0052-oznakowanie-poziome.md) | Oznakowanie poziome: zebry z przejść OSM, linie osi, pasów, krawędzi i zatrzymania z `lanes`/`oneway`/sygnalizacji, pasy rowerowe i autobusowe, w samoświecącej neonowej farbie; jezdnia nad placami i alejkami, chodniki przycięte na krawężniku | Zaakceptowana |
 | [0053](0053-pomosty-mostow.md) | Pomosty mostów: nawierzchnie z dróg `bridge=*` na pomoście od przyczółka do przyczółka w gruncie symulacji, `groundY` i rendererze, z opaską na krawędziach | Zaakceptowana |
 | [0054](0054-proces-glitchy.md) | Proces glitchy end to end: orkiestrator, łowcy, naprawiacze i weryfikator w `.claude/agents`, triage S1–S4, rejestr `docs/glitches.md`, skan z zapadką w CI, zrzuty dla łowców | Zaakceptowana |
+| [0055](0055-skrety-pasow.md) | Skręty pasów na skrzyżowaniach: koniec pasa łączy się łukiem z początkiem pasa innej ulicy w trasę złożoną; pierwszeństwo i sygnalizacja dalej na później | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.

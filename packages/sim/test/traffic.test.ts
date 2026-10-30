@@ -255,7 +255,7 @@ describe("the traffic in the simulation (ADR-0050)", () => {
         expect(p.x > market.minX + 2 && p.x < market.maxX - 2 && p.z > market.minZ && p.z < market.maxZ, `${r.id} at ${s}`).toBe(false);
       }
     }
-    const turning = TRAFFIC_ROUTES.filter((r) => r.use === "cars" && r.turns?.length);
+    const turning = TRAFFIC_ROUTES.filter((r) => r.use === "cars" && r.street === "Aleja Tysiąclecia" && r.turns?.length);
     expect(turning.length).toBe(4);
     const sim = busySim(3, ground(745, 350));
     let through = 0;

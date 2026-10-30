@@ -113,7 +113,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `furniture-overlap` w skanie = 0 (meble z bryłą, poza słupkami).
 
 ### G-013 Narzędzie zrzutów: kadr przesunięty o jedno miejsce albo powtórzony
-- Status: w naprawie (weryfikacja: NIE PRZYJĘTE, warunek czekania nie sprawdza pitch; seria z jednego miejsca dalej przesunięta)
+- Status: weryfikacja PRZYJĘTE (2. runda), w PR. Spec czeka na `frames() > n` po `step` i asertuje pozę kamery (pozycja 3 m, yaw i pitch ±0,01; zakłada FPP i stojącego gracza).
 - Ważność: S3 (proces: fałszywe dowody łowców) · Zasięg: każde polowanie · Koszt: mały
 - Gdzie: `e2e/glitch-shots.spec.ts`
 - Dowód:
@@ -162,7 +162,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Dowód: zrzut naprawiacza G-013 (pionowy pas czarnych poziomych kresek na środku bruku; może decal albo odpływ).
 
 ### G-019 Auto z jednokierunkowej pętli Cerkiewnej stoi na trzypasmowej jezdni Alei Tysiąclecia
-- Status: weryfikacja PRZYJĘTE (2. runda), w PR. Luka skanu do domknięcia osobno: auto przy krawężniku bez rozpoznanej ulicy (> 12 m albo > 20°) jest pomijane, a auto wjechane na inną ulicę osiedlową uznawane za stojące przy niej; generację chroni `offOtherRoads`.
+- Status: naprawione (#36). Luka skanu do domknięcia osobno: auto przy krawężniku bez rozpoznanej ulicy (> 12 m albo > 20°) jest pomijane, a auto wjechane na inną ulicę osiedlową uznawane za stojące przy niej; generację chroni `offOtherRoads`.
 - Ważność: S3 · Zasięg: lokalny, trasa główna · Koszt: mały
 - Gdzie: (920,02, 329,90), hatchback; 1 na 81 aut w mieście
 - Dowód: 2,49 m od osi „Aleje Tysiąclecia” (OSM way 739432828, primary, 3 pasy), kąt 35°; pętla Cerkiewnej (ways 66322976, 422659195) leży 7–13 m od osi Alei bez pobocza.
@@ -171,7 +171,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola skanu `parked-car-on-other-road` (auto przy krawężniku w zasięgu nawierzchni innej drogi dla aut + 0,5 m; własna ulica wyznaczana w skanie, nie z pola poprawki) daje 0; dziś 1.
 
 ### G-020 Jezdnia zachodnia Alei Tysiąclecia ma 36 m bez pasa (literówka „Aleje” w OSM)
-- Status: przyjęte (potwierdzone pomiarem łowcy), w kolejce za limitem WIP
+- Status: naprawa gotowa (895a12b), czeka na G-028; potem weryfikacja
 - Ważność: S2 · Zasięg: szeroki (trasa główna) · Koszt: mały
 - Gdzie: (930,3, 331,4)–(894,1, 335,1), `ROAD_CHAINS[91]`, OSM way 739432828; 1 w mieście
 - Dowód: pasy #85/#86 kończą się w x 930, #82–#84 zaczynają w x 894. W symulacji (seed 3, 8:00, 90 s) auta stoją na końcu pasa z v = 0 i tworzą korek do 6 aut, w ramce naliczono 18 pojawień i 21 zniknięć. Łańcuch #82 (128,5 m < `MIN_TROLLEY` 150) traci trolejbus.
@@ -200,7 +200,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola skanu `lane-end-at-laneless-street` daje 0; dziś 8 (bez G-020, po G-021).
 
 ### G-023 Pasy aut kończą się bez zawrotki przy ulicach dla dostaw i na końcach ulic
-- Status: przyjęte
+- Status: weryfikacja PRZYJĘTE, w PR (częściowo: 7 z 13 końców, dwukierunkowe; 6 końców jednokierunkowych wydzielone do G-024). Skan `lane-dead-end` 75 → 68.
 - Ważność: S3 · Zasięg: szeroki (13 końców, m.in. Lubartowska przy Starym Mieście) · Koszt: średni
 - Gdzie: Lubartowska#37 (460, 56); Kowalska#76 (568, 160), #87 (668, 161); Królewska#19 (459, −156); Kapucyńska#10 (144, −97); Karmelicka#34 (293, 120); Staszica#35 (199, 28); Świętoduska#20 (350, −48); Kościuszki#4 (28, −103); Browarna#102 (532, 407)
 - Dowód: łowca: żaden pas aut w promieniu 6 m od końca; sąsiedni łańcuch ma `use=deliveries` albo OSM ma tylko service/footway/parking. Auto w polu widzenia staje na końcu pasa (`traffic-system.ts:334`) i czeka.
@@ -208,8 +208,55 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (`content/traffic.ts`)
 - Test przyjęcia: kontrola skanu `lane-dead-end` (koniec pasa w mapie, > 6 m od krawędzi, bez początku pasa zgodnego kierunku w 3 m); dziś 75, z czego 33 to G-006 i 2 to G-020; ta poprawka obniża o 13, baza tylko spada.
 
+### G-024 Jednokierunkowe pasy kończą się przed ulicą dla dostaw (Lubartowska, Kowalska, Świętoduska)
+- Status: w naprawie razem z G-006 (decyzja użytkownika: opcja B, skręty w boczne ulice; ADR-0055)
+- Ważność: S3 · Zasięg: lokalny (6 końców) · Koszt: średni
+- Gdzie: Lubartowska#37:0/1 (460, 56), Kowalska#76:0/1 (568, 160), Świętoduska#20:0/1 (350, −48)
+- Dowód: naprawiacz G-023: oba pasy jadą w tę samą stronę, nie ma pasa powrotnego do zawrotki; zawrotka oznaczałaby jazdę pod prąd (regres G-105) albo czołowe zatory.
+- Opcje: A) pasy jadą dalej przez następną ulicę dla dostaw (Kowalska#67 60 m do Furmańskiej#77; Zielona 172 m do Staszica#35; Lubartowska#68 112 m); B) skręty w boczne ulice (G-006).
+- Pakiet właściciela: packages/sim (`content/traffic.ts`), ewentualnie `useOf` w `content/lublin`
+- Test przyjęcia: `lane-dead-end` spada o 6.
+
+### G-025 Istniejące zawrotki na Alei Tysiąclecia wychodzą poza nawierzchnię
+- Status: zgłoszone (do potwierdzenia)
+- Ważność: S3 (proponowana) · Zasięg: lokalny, trasa główna · Koszt: mały
+- Gdzie: Aleja Tysiąclecia #80/#81, zawrotki przy (757,8, 348,5) i (816, 340,6)
+- Dowód: naprawiacz G-023: 4–6 próbek co 0,25 m bez żadnej nawierzchni (`surfacesAt` puste). Możliwe, że to znany 1 w `car-lane-off-road`.
+- Pakiet właściciela: packages/sim (`content/traffic.ts`, `uTurn`)
+
+### G-026 Zawrotki na wąskich ulicach mają promień ok. 1,5 m
+- Status: zgłoszone (S4 proponowana)
+- Gdzie: 7 nowych zawrotek z G-023 (rozstaw pasów 2,7–3,3 m)
+- Dowód: weryfikator G-023: sedan 4,5 m obraca się prawie w miejscu; na Alei promień 8–14,5 m.
+- Test przyjęcia: kontrola minimalnego promienia zawrotki albo zawracanie wielopunktowe.
+
+### G-027 Skok pozycji auta na Zielonej
+- Status: zgłoszone (do potwierdzenia)
+- Gdzie: Zielona#21:d, z (271,6, −18) do (238,6, 4,7) w jednym kroku
+- Dowód: sonda weryfikatora G-023 (seed 3, 8:00, 60 s); może być resynchronizacją auta poza wzrokiem.
+
+### G-028 Resynchronizacja przenosi auto w łuk zawrotki z pełną prędkością
+- Status: w naprawie (razem z G-020, osobny commit przed nim)
+- Ważność: S3 · Zasięg: lokalny (każda zawrotka; widać po złączeniu Alei w G-020) · Koszt: mały
+- Gdzie: Aleja Tysiąclecia, zawrotka przed targiem; seed 3: auto za trolejbusem spada ponad `RESYNC` za rozkład, poza wzrokiem przeskakuje z s=204,6 na s=244,8 (w łuku) i jedzie dalej 7,7 m/s przy `TURN_SPEED` 4
+- Dowód: test „turns round before the market on Aleja Tysiąclecia” pada po G-020 (7,69 > 4,01)
+- Przyczyna: `traffic-system.ts:296-299` ustawia `st.s` z rozkładu, ale zostawia prędkość auta
+- Pakiet właściciela: packages/sim (`systems/traffic-system.ts`)
+- Test przyjęcia: auto po resynchronizacji w łuku nie przekracza `TURN_SPEED`; test zawrotki bez złagodzenia przechodzi z G-020.
+
+### G-029 Kliknięcie „Nowa gra” w `models.spec.ts` wisi ponad 60 s na CI
+- Status: zgłoszone
+- Ważność: S1 (proponowana: czerwone CI, niestabilne) · Zasięg: każdy PR · Koszt: nieznany
+- Gdzie: `e2e/models.spec.ts:16`, shard E2E 1/3
+- Dowód: PR #37 (CI 41089511069) pada w obu próbach, PR #33 (CI 41069178665) przeszedł przy drugiej. Playwright: element widoczny i stabilny, „performing click action” bez końca, więc wątek strony zablokowany.
+- Przyczyna (przypuszczalna): długa praca synchroniczna po „Nowa gra” (budowa świata, ubieranie postaci VRoid) pod SwiftShaderem; może ta sama kolejka GPU co G-001.
+- Pakiet właściciela: packages/app / packages/engine (do ustalenia śladem)
+- Test przyjęcia: ślad pokazuje, co blokuje wątek; kliknięcie wraca w < 10 s na CI bez podnoszenia limitu.
+
 ### G-006 Skręty aut na skrzyżowaniach
-- Status: później (to funkcja, nie glitch: wymaga sieci pasów; ADR-0050 „Na później”)
+- Status: w naprawie (decyzja użytkownika przy G-024: skręty w boczne ulice; ADR-0055)
+- Ważność: S3 · Zasięg: szeroki (33 ślepe końce pasów na skrzyżowaniach i 6 z G-024) · Koszt: duży
+- Test przyjęcia: `lane-dead-end` spada; łuki skrętu na nawierzchni drogi i poza budynkami.
 
 ### G-007 Strzałki na pasach i napis BUS
 - Status: później (ADR-0052 „Na później”)
