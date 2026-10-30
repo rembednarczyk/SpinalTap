@@ -24,5 +24,5 @@ export { PARKED_CARS } from "./parked-cars";
 export * from "./lublin/sites";
 export * from "./lublin/terrain";
 export { againstWall, inBuilding, nearestWall, spotNear } from "./lublin/places";
-export { clearedBuilding } from "./lublin/city";
+export { clearedBuilding } from "./cleared-buildings";
 export type { RoomCut, SceneryItem } from "./lublin/city";

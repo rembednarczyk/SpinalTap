@@ -48,7 +48,8 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet: `tools/osm-import` (meble przy ścianach stawiane z `ON_BUILDINGS`)
 
 ### G-008 Budynki z OSM wchodzą w sceny targu i doków
-- Status: przyjęte
+- Status: weryfikacja PRZYJĘTE, w PR
+- Decyzja orkiestratora: budynek znika, gdy przecina pełny blok sceny albo ponad 25% jego powierzchni leży w prostokątach; Dworzec Autobusowy (2,6%, bez kolizji) zostaje. Znikają w1354195809 i „Hunek” w458298766.
 - Ważność: S3 · Zasięg: lokalny · Koszt: mały
 - Gdzie: w1354195809 przy dokach (2595, 391), wbity w ścianę doków i 1,2 m nad wyrównanym placem; „Hunek" w458298766 (817, 373,5) we wschodniej ścianie targu; w66264171 (789, 396) na placu targu
 - Dowód:
@@ -56,7 +57,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
   - zrzut `doki-east-wall.png`.
 - Przyczyna: `CLEARED_BUILDINGS` usuwa budynek tylko wtedy, gdy jego środek leży w prostokącie (`places.ts` i warstwa rysowania).
 - Pakiet: `packages/sim` (`lublin/places.ts`, `sites.ts`, scenografia)
-- Test przyjęcia: żaden budynek mapy nie przecina `CLEARED_BUILDINGS`; kontrola `building-in-set-piece` w skanie = 0.
+- Test przyjęcia: żaden budynek zostający w grze nie przecina pełnego bloku sceny ani nie leży w prostokątach w ponad 25%; kontrola `building-in-set-piece` w skanie = 0.
 
 ### G-009 Auta zaparkowane przy krawężniku stoją na trawniku i chodniku
 - Status: naprawione (#31)
@@ -85,7 +86,8 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: oba końce każdego przejścia z `PASSAGES` leżą w granicach chunka.
 
 ### G-011 Meble wewnątrz budynków: reflektory w Wieży Trynitarskiej, Archikatedrze i przy Zamku, kioski w swoich budynkach, wiata w ścianie
-- Status: przyjęte
+- Status: naprawione (#32)
+- Uwaga weryfikatora: `SINGLE_OUTLINE` obejmuje też `bus-stop` i `vending-machine`, więc reguła „centroid obrysu jest budynkiem → bez mebla” może kiedyś po cichu usunąć przystanek z obrysu (dziś nic takiego nie znika; przystanki zasilają `stopsAlong` trolejbusów).
 - Ważność: S4 · Zasięg: lokalny · Koszt: mały
 - Gdzie:
   - reflektory: (597, −152), (605, −175), (620, −190), (846, 222/240/258), (890, 205);
@@ -122,7 +124,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: dwa różne punkty dają różne zrzuty, a kadr odpowiada pozycji gracza (np. zapis pozycji kamery obok zrzutu).
 
 ### G-014 Auta zaparkowane na przejściach dla pieszych
-- Status: weryfikacja PRZYJĘTE, w PR
+- Status: naprawione (#32)
 - Ważność: S4 · Zasięg: lokalny · Koszt: mały
 - Gdzie:
   - (−104,9, 35,2) van, 12/153 punktów obrysu na zebrze;
@@ -152,6 +154,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Dowód: raport naprawiacza G-011 (obrysy `amenity=shelter` + `building=yes` budowane jako `residential`).
 - Pakiet: `tools/osm-import` (`building-tags.ts` / `buildings.ts`), wymaga `pnpm osm:build`
 - Test przyjęcia: budynek z `amenity=shelter` (lub `building=roof`/`shelter`) ma wysokość wiaty (≤ 3,5 m, jedna kondygnacja) albo staje się meblem `bus-shelter`.
+
+### G-018 Pionowy pas czarnych kresek na bruku Placu Litewskiego
+- Status: zgłoszone (do potwierdzenia przez łowcę)
+- Ważność: S3 (proponowana) · Zasięg: lokalny
+- Gdzie: Plac Litewski (20, 10), kadr z yaw 3,14
+- Dowód: zrzut naprawiacza G-013 (pionowy pas czarnych poziomych kresek na środku bruku; może decal albo odpływ).
 
 ### G-006 Skręty aut na skrzyżowaniach
 - Status: później (to funkcja, nie glitch: wymaga sieci pasów; ADR-0050 „Na później”)

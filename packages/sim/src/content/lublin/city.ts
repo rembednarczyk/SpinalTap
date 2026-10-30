@@ -2,9 +2,10 @@ import type { BuildingPassage, Doorway, GroundPoint, Vec3, ViewDescriptor } from
 import { makeDeck } from "../../world/deck";
 import type { PrismDef } from "../../world/prism";
 import type { StaticProp } from "../builders";
+import { clearedBuilding } from "../cleared-buildings";
 import { buildingView, groundView, markingView, toPoints } from "./index";
 import { type GroundRect } from "./shape";
-import { type BuildingCut, CLEARED, CLEARED_BUILDINGS, type PassageSite, ROOM_STOREY, type RoomSite, rawHeight } from "./sites";
+import { type BuildingCut, CLEARED, type PassageSite, ROOM_STOREY, type RoomSite, rawHeight } from "./sites";
 import { SHAPED_TERRAIN, groundY } from "./terrain";
 import type { LublinBuildingData, LublinChunkData, LublinGroundData } from "./types";
 
@@ -32,9 +33,6 @@ export interface SceneryItem {
 }
 
 const insideRect = (r: GroundRect, x: number, z: number): boolean => x >= r.minX && x <= r.maxX && z >= r.minZ && z <= r.maxZ;
-
-/** Is a building of the map taken away for a set piece? */
-export const clearedBuilding = (b: LublinBuildingData): boolean => CLEARED_BUILDINGS.some((r) => insideRect(r, b.x, b.z));
 
 /** Is a surface of the map taken away for a set piece (its centre under one)? */
 const clearedSurface = (pts: readonly GroundPoint[]): boolean => {

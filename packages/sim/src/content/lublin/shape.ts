@@ -43,6 +43,45 @@ const weight = (d: number, blend: number): number => {
 
 const rectDistance = (r: GroundRect, x: number, z: number): number => Math.hypot(Math.max(r.minX - x, 0, x - r.maxX), Math.max(r.minZ - z, 0, z - r.maxZ));
 
+/**
+ * Area of a flat outline `[x0, z0, …]` placed at (ox, oz) inside a rectangle: the outline
+ * clipped to each side in turn (exact for a concave outline too, its slivers along a side have
+ * no area).
+ */
+export const rectOverlap = (r: GroundRect, flat: readonly number[], ox: number, oz: number): number => {
+  let pts: [number, number][] = [];
+  for (let i = 0; i + 1 < flat.length; i += 2) pts.push([flat[i]! + ox, flat[i + 1]! + oz]);
+  const sides: readonly (readonly [axis: 0 | 1, sign: 1 | -1, at: number])[] = [
+    [0, 1, r.minX],
+    [0, -1, r.maxX],
+    [1, 1, r.minZ],
+    [1, -1, r.maxZ],
+  ];
+  for (const [axis, sign, at] of sides) {
+    const out: [number, number][] = [];
+    for (let i = 0; i < pts.length; i++) {
+      const a = pts[i]!;
+      const b = pts[(i + 1) % pts.length]!;
+      const sa = sign * (a[axis] - at);
+      const sb = sign * (b[axis] - at);
+      if (sa >= 0) out.push(a);
+      if ((sa > 0 && sb < 0) || (sa < 0 && sb > 0)) {
+        const t = sa / (sa - sb);
+        out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
+      }
+    }
+    pts = out;
+    if (pts.length < 3) return 0;
+  }
+  let s = 0;
+  for (let i = 0; i < pts.length; i++) {
+    const a = pts[i]!;
+    const b = pts[(i + 1) % pts.length]!;
+    s += a[0] * b[1] - b[0] * a[1];
+  }
+  return Math.abs(s) / 2;
+};
+
 /** Height at (x, z) after the ramps and then the pads, from the original height `h`. */
 export const shapeHeight = (x: number, z: number, h: number, pads: readonly Pad[], ramps: readonly Ramp[]): number => {
   let out = h;

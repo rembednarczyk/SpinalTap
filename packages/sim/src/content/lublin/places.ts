@@ -1,5 +1,6 @@
 import type { GroundPoint, Vec3 } from "@seki/core";
-import { CLEARED_BUILDINGS, MAP_CHUNKS } from "./sites";
+import { clearedBuilding } from "../cleared-buildings";
+import { MAP_CHUNKS } from "./sites";
 import { groundY } from "./terrain";
 
 /**
@@ -13,11 +14,9 @@ interface Wall {
   readonly b: GroundPoint;
 }
 
-const insideRect = (r: { minX: number; maxX: number; minZ: number; maxZ: number }, x: number, z: number): boolean => x >= r.minX && x <= r.maxX && z >= r.minZ && z <= r.maxZ;
-
 /** Every outer wall of the map's buildings that stay (not cleared for a set piece), with the outlines for an inside test. */
 const OUTLINES: readonly (readonly GroundPoint[])[] = MAP_CHUNKS.flatMap((c) =>
-  c.buildings.filter((b) => !CLEARED_BUILDINGS.some((r) => insideRect(r, b.x, b.z))).map((b) => {
+  c.buildings.filter((b) => !clearedBuilding(b)).map((b) => {
     const pts: GroundPoint[] = [];
     for (let i = 0; i + 1 < b.outline.length; i += 2) pts.push({ x: b.outline[i]! + b.x, z: b.outline[i + 1]! + b.z });
     return pts;
