@@ -88,18 +88,22 @@ const deptak = (): StaticProp[] => [
   { ...lamp(0, 0, "#9ad7ff"), center: ground(160, -48), view: { kind: "lamp", color: "#9ad7ff", facing: "x-" } },
 ];
 
+/** Props of a group, each standing on the terrain under its own middle (the group's ground slopes away from its origin). */
+const standing = (g: Placement, props: readonly StaticProp[]): StaticProp[] =>
+  placeProps(g, props).map((p) => ({ ...p, center: { ...p.center, y: p.center.y - g.y + groundY(p.center.x, p.center.z) } }));
+
 /**
  * What the game adds to Krakowskie Przedmieście: the wreck, the van, the car wash, the bins
  * behind Neon Koi, the signs and lamps, and the interiors with their doors.
  */
 export const DISTRICT_M0_PROPS: readonly StaticProp[] = [
   // The wreck Seki was pulled out of; she comes round in Mori's clinic (ADR-0038).
-  ...placeProps(WRECK, [crate(2.6, -31, 2, 1.4, 4.4, skin("wreck", "z-"))]),
+  ...standing(WRECK, [crate(2.6, -31, 2, 1.4, 4.4, skin("wreck", "z-"))]),
   // The van of the east lot.
-  ...placeProps(EAST_LOT, [crate(12, -12, 2.4, 2.2, 5, skin("van", "z+"))]),
+  ...standing(EAST_LOT, [crate(12, -12, 2.4, 2.2, 5, skin("van", "z+"))]),
   ...placeProps(CAR_WASH_PLACE, carWash()),
   // Behind Neon Koi, the bar's bins.
-  ...placeProps(KOI_BACK, [crate(6.5, 19.2, 1.2, 1.3, 2.2, skin("dumpster", "x-"))]),
+  ...standing(KOI_BACK, [crate(6.5, 19.2, 1.2, 1.3, 2.2, skin("dumpster", "x-"))]),
   ...deptak(),
   // ADR-0038: the clinic, the bar and their doors.
   ...S7_INTERIORS,
