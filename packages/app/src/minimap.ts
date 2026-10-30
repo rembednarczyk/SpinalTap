@@ -1,6 +1,7 @@
 import { type ContractLog, type EntityId, M0_TARGET_TAG, contractTag } from "@seki/core";
 import { type Entity, SIDEWALKS, SIDEWALK_HEIGHT, type StaticProp } from "@seki/sim";
 import type { MapLinkVm, MapMarkerVm, MapPlayerVm, MapRectVm, MapVm } from "@seki/ui";
+import type { QuestMark } from "./quest-target";
 
 /** Flat walkable strips (sidewalks) are thinner than this; anything solid is a building or cover. */
 const FLAT = 0.3;
@@ -115,6 +116,8 @@ export interface MinimapContext {
   readonly enforcers?: ReadonlySet<EntityId>;
   /** Which job the HUD shows (the journal's pin): only its targets are marked. Both when absent. */
   readonly focus?: "story" | "contract";
+  /** Whom the shown quest step sends the player to, and where they should be if not in the world. */
+  readonly quest?: QuestMark;
 }
 
 /** An enforcer (ADR-0033): its look says so (`view.enforcer`), or it has already seen through the disguise. */
@@ -178,7 +181,9 @@ export const createMinimapTracker = (groundAt: GroundAt = FLAT_GROUND) => {
     let nextPlayer: MapPlayerVm | null = null;
     let goal = 1;
     const nextMarkers: MapMarkerVm[] = [];
+    let questAt: { x: number; z: number } | null = ctx.quest?.spot ?? null;
     for (const e of entities) {
+      if (ctx.quest && e.key === ctx.quest.actor && (e.health?.current ?? 1) > 0) questAt = e.position;
       if (e.player) {
         // Movement over the last step (an entity built by hand in a test may have no previous position).
         const prev = (e.prevPosition as Entity["prevPosition"] | undefined) ?? e.position;
@@ -190,6 +195,8 @@ export const createMinimapTracker = (groundAt: GroundAt = FLAT_GROUND) => {
       const kind = markerKind(e, targetTags, contract, ctx);
       if (kind) nextMarkers.push(markerOf(e, kind));
     }
+    // Also while the character sleeps with its chunk: the map points where its plan puts it.
+    if (ctx.quest && questAt) nextMarkers.push({ id: `quest:${ctx.quest.actor}`, kind: "quest", x: snap(questAt.x, SNAP), z: snap(questAt.z, SNAP) });
     // Eases towards the goal, at least one step a frame, so it always gets there.
     const delta = goal - zoom;
     const move = Math.min(Math.abs(delta), Math.max(ZOOM_STEP, Math.abs(delta) * ZOOM_EASE));

@@ -8,7 +8,7 @@ import { CityLabels, type CityIndex, CityShapes, indexCity, windowAround } from 
 export const MINIMAP_RANGE = 32;
 const EDGE = MINIMAP_RANGE - 2.5;
 
-const LABEL: Record<MapMarkerKind, string> = { fixer: "Zlecenia", ripperdoc: "Klinika Mori", vendor: "Sklep", target: "Cel", enforcer: "Egzekutor: widzi przez przebranie" };
+const LABEL: Record<MapMarkerKind, string> = { fixer: "Zlecenia", ripperdoc: "Klinika Mori", vendor: "Sklep", target: "Cel", enforcer: "Egzekutor: widzi przez przebranie", quest: "Cel zadania" };
 
 const LINK_LABEL: Record<MapLinkKind, string> = { stairs: "Schody", lift: "Winda", ladder: "Drabina" };
 
@@ -89,6 +89,8 @@ const MarkerIcon = ({ kind }: { kind: MapMarkerKind }) => {
   if (kind === "target") return <path d="M0 -2.6 L2.6 0 L0 2.6 L-2.6 0 Z" />;
   // An enforcer: a shield with a slit, the one who sees through a disguise.
   if (kind === "enforcer") return <path d="M0 -2.8 L2.4 -1.8 V0.6 Q2.4 2.2 0 3 Q-2.4 2.2 -2.4 0.6 V-1.8 Z M-1.2 0 H1.2" />;
+  // A ring, so a quest giver's own dot (Kaito's) still shows inside it.
+  if (kind === "quest") return <circle r={3.4} />;
   return <circle r={2} />;
 };
 

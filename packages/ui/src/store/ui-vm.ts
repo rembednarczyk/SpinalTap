@@ -116,8 +116,8 @@ export interface MapVm {
   readonly water?: readonly MapRectVm[];
 }
 
-/** "enforcer": someone who sees through the player's disguise (ADR-0032). */
-export type MapMarkerKind = "fixer" | "ripperdoc" | "vendor" | "target" | "enforcer";
+/** "enforcer": someone who sees through the player's disguise (ADR-0032); "quest": whom the shown step of a quest sends the player to. */
+export type MapMarkerKind = "fixer" | "ripperdoc" | "vendor" | "target" | "enforcer" | "quest";
 
 export interface MapMarkerVm {
   readonly id: string;

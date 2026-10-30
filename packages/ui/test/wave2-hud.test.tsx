@@ -152,6 +152,26 @@ describe("minimap of wave 2", () => {
     expect(screen.queryByTestId("minimap-marker-target")).toBeNull();
     expect(screen.queryByTestId("minimap-marker-enforcer")).toBeNull();
   });
+
+  it("rings the quest step's target, round a fixer's dot, on the edge when far, and hides it in the no-markers mode", () => {
+    const { store } = mount({
+      map,
+      mapPlayer: { x: 0, z: 0, yaw: 0 },
+      mapMarkers: [
+        { id: "fixer", kind: "fixer", x: 4, z: 4 },
+        { id: "quest:fixer", kind: "quest", x: 4, z: 4 },
+      ],
+    });
+    const ring = screen.getByTestId("minimap-marker-quest");
+    expect(ring.getAttribute("class")).toContain("minimap__marker--quest");
+    expect(ring.querySelector("title")?.textContent).toBe("Cel zadania");
+    expect(ring.querySelector("circle")?.getAttribute("r")).toBe("3.4");
+    expect(screen.getByTestId("minimap-marker-fixer")).toBeTruthy();
+    act(() => patchUi(store, { mapMarkers: [{ id: "quest:ume", kind: "quest", x: 900, z: 0 }] }));
+    expect(screen.getByTestId("minimap-marker-quest").getAttribute("class")).toContain("minimap__marker--edge");
+    act(() => patchUi(store, { settings: { ...DEFAULT_SETTINGS, mapMarkers: false } }));
+    expect(screen.queryByTestId("minimap-marker-quest")).toBeNull();
+  });
 });
 
 describe("touch of wave 2", () => {

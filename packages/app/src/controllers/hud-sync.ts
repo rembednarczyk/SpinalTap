@@ -5,6 +5,7 @@ import { createStatsCache } from "../character-view";
 import { createJournalCache } from "../journal";
 import { createMinimapTracker } from "../minimap";
 import { contractEntryId, describeObjective, shownEntryId } from "../objective";
+import { questMark } from "../quest-target";
 import { createWeaponHud } from "../weapon-hud";
 import type { Wave1Hud } from "../wave1-hud";
 import type { Wave2Hud } from "../wave2-hud";
@@ -146,7 +147,7 @@ export class HudSync implements ContractIntents {
     });
   }
 
-  /** The minimap with the wave 2 context (ADR-0035): zoom by speed, enforcers while disguised. */
+  /** The minimap with the wave 2 context (ADR-0035): zoom by speed, enforcers while disguised; the shown step's target. */
   private minimapFrame(sim: Simulation) {
     const { wave2, panels } = this.deps;
     return this.minimap(sim.world, sim.domain.flags, sim.domain.contracts, {
@@ -156,6 +157,7 @@ export class HudSync implements ContractIntents {
       disguised: wave2.disguised,
       enforcers: wave2.enforcers,
       focus: mapFocus(sim.domain),
+      quest: questMark(sim.domain),
     });
   }
 

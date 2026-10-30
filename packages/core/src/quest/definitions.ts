@@ -22,6 +22,7 @@ export const QUEST_FIRST_CONTRACT: QuestDefinition = {
     {
       id: "find_fixer",
       objective: "Porozmawiaj z Kaito przy fotelu w klinice [E]",
+      target: { actor: "fixer" },
       completeWhen: { type: "flag", flag: "met_fixer" },
       rewards: [],
     },
@@ -33,7 +34,8 @@ export const QUEST_FIRST_CONTRACT: QuestDefinition = {
     },
     {
       id: "report_back",
-      objective: "Wróć do Kaito po zapłatę",
+      objective: "Wróć do Kaito po zapłatę (bar Neon Koi)",
+      target: { actor: "fixer" },
       completeWhen: { type: "flag", flag: "reported_back" },
       rewards: [
         { type: "eddies", amount: 500 },
@@ -58,19 +60,22 @@ export const QUEST_ECHO: QuestDefinition = {
   steps: [
     {
       id: "echo_contract",
-      objective: "Weź od Kaito kontrakt i doprowadź go do końca",
+      objective: "Weź od Kaito kontrakt i doprowadź go do końca (bar Neon Koi)",
+      target: { actor: "fixer" },
       completeWhen: { type: "flag", flag: progressFlag("contract_completed", "echo_contract") },
       rewards: [{ type: "memory", memoryId: "courier_case" }],
     },
     {
       id: "ask_mori",
-      objective: "Porozmawiaj z doktorem Mori o tym, co widziałaś",
+      objective: "Porozmawiaj z doktorem Mori o tym, co widziałaś (klinika Mori)",
+      target: { actor: "mori" },
       completeWhen: { type: "all", of: [{ type: "flag", flag: recalledFlag("courier_case") }, { type: "flag", flag: MORI_MODULE_FLAG }] },
       rewards: [{ type: "memory", memoryId: "operating_table" }],
     },
     {
       id: "new_implant",
       objective: "Wszczep u Mori nowy implant. Moduł reaguje na świeży chrom",
+      target: { actor: "mori" },
       completeWhen: {
         type: "all",
         of: [{ type: "flag", flag: recalledFlag("operating_table") }, { type: "flag", flag: progressFlag("cyberware_installed", "new_implant") }],
@@ -79,7 +84,8 @@ export const QUEST_ECHO: QuestDefinition = {
     },
     {
       id: "decide",
-      objective: "Wróć do Mori i zdecyduj, co zrobić z modułem",
+      objective: "Wróć do Mori i zdecyduj, co zrobić z modułem (klinika Mori)",
+      target: { actor: "mori" },
       completeWhen: { type: "all", of: [{ type: "flag", flag: recalledFlag("crash_night") }, { type: "flag", flag: ACT_ONE_ENDING_FLAG }] },
       rewards: [{ type: "reputation", faction: "civilians", delta: 5 }],
     },
@@ -114,28 +120,39 @@ export const QUEST_MIRROR: QuestDefinition = {
   steps: [
     {
       id: "ren_trail",
-      objective: "Ktoś woła cię przez moduł. Zapytaj babcię Ume o Rena Odagiri",
-      variants: [{ when: { type: "flag", flag: endingFlag("seki") }, objective: "Mori sprzedał twój moduł. Zapytaj go, kto go kupił" }],
+      objective: "Ktoś woła cię przez moduł. Zapytaj babcię Ume o Rena Odagiri (deptak przy klinice)",
+      target: { actor: "ume" },
+      variants: [
+        {
+          when: { type: "flag", flag: endingFlag("seki") },
+          objective: "Mori sprzedał twój moduł. Zapytaj go, kto go kupił (klinika Mori)",
+          target: { actor: "mori" },
+        },
+      ],
       completeWhen: { type: "flag", flag: REN_TRAIL_FLAG },
       rewards: [],
     },
     {
       id: "meet_ren",
       objective: "Wejdź schodami pożarowymi na dach nad targiem i znajdź Rena",
+      target: { actor: "ren" },
       completeWhen: { type: "flag", flag: MET_REN_FLAG },
       rewards: [{ type: "memory", memoryId: "rooftop" }],
     },
     {
       id: "kaito_job",
-      objective: "Kaito ma zlecenie na Rena. Dowiedz się, kto za nie płaci",
+      objective: "Kaito ma zlecenie na Rena. Dowiedz się, kto za nie płaci (bar Neon Koi)",
+      target: { actor: "fixer" },
       completeWhen: { type: "all", of: [{ type: "flag", flag: recalledFlag("rooftop") }, { type: "flag", flag: KAGAMI_JOB_FLAG }] },
       rewards: [{ type: "memory", memoryId: "last_call" }],
     },
     {
       id: "overpass",
       objective: "Kurosawa z Kagami czeka na wiadukcie nad aleją Tysiąclecia. Zdecyduj, co stanie się z archiwum",
+      // During the ambush Kurosawa is gone: his spot on the deck still marks where the cleaners are.
+      target: { actor: "kurosawa" },
       variants: [
-        { when: CLEANERS_DOWN, objective: "Czyściciele Kagami leżą. Wróć do Rena na dach nad targiem" },
+        { when: CLEANERS_DOWN, objective: "Czyściciele Kagami leżą. Wróć do Rena na dach nad targiem", target: { actor: "ren" } },
         { when: { type: "flag", flag: KAGAMI_AMBUSH_FLAG }, objective: "Czyściciele Kagami atakują na wiadukcie. Odeprzyj ich" },
       ],
       completeWhen: { type: "all", of: [{ type: "flag", flag: recalledFlag("last_call") }, { type: "flag", flag: ACT_TWO_ENDING_FLAG }] },

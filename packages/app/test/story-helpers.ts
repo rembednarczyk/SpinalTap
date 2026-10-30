@@ -148,7 +148,7 @@ export const playFirstContract = (s: GameSession, ui: Ui) => {
   talkToKaito(s);
   finishDialogue(s, ui);
   expect(s.sim.domain.quests[QUEST_ECHO.id]).toEqual({ status: "active", stepIndex: 0 });
-  expect(objective(ui)).toBe("Weź od Kaito kontrakt i doprowadź go do końca");
+  expect(objective(ui)).toBe("Weź od Kaito kontrakt i doprowadź go do końca (bar Neon Koi)");
 };
 
 /** Fragment 1, unlocked by a finished fixer contract. */
@@ -176,7 +176,7 @@ export const playContractFragment = (s: GameSession, ui: Ui, render: FakeRender,
   // The flashback opens on its own once Kaito is done talking.
   expect(allText(ui)).toContain("Kagami Biotech");
   finishDialogue(s, ui, pick);
-  expect(objective(ui)).toBe("Porozmawiaj z doktorem Mori o tym, co widziałaś");
+  expect(objective(ui)).toBe("Porozmawiaj z doktorem Mori o tym, co widziałaś (klinika Mori)");
 };
 
 /** Fragment 2, unlocked by talking to the ripperdoc. */
@@ -207,7 +207,7 @@ export const playImplantFragment = (s: GameSession, ui: Ui, render: FakeRender, 
   steps(s, 1);
   expect(allText(ui)).toContain("mokra obwodnica");
   finishDialogue(s, ui, pick);
-  expect(objective(ui)).toBe("Wróć do Mori i zdecyduj, co zrobić z modułem");
+  expect(objective(ui)).toBe("Wróć do Mori i zdecyduj, co zrobić z modułem (klinika Mori)");
 };
 
 /** The act-I finale at Mori's. Returns what was said; the act-II opening is then on screen. */

@@ -11,10 +11,20 @@ export type QuestReward =
   | { readonly type: "reputation"; readonly faction: FactionId; readonly delta: number }
   | { readonly type: "memory"; readonly memoryId: MemoryId };
 
+/**
+ * Who the step sends the player to, by the character's key in the content (`fixer`, `ume`).
+ * The map marks that character, or where it should be at the hour when it is not in the world.
+ */
+export interface QuestTarget {
+  readonly actor: string;
+}
+
 /** Another wording of a step's objective while `when` holds (the first match wins). */
 export interface ObjectiveVariant {
   readonly when: QuestCondition;
   readonly objective: string;
+  /** Someone else to find in that situation; the step's own target otherwise. */
+  readonly target?: QuestTarget;
 }
 
 export interface QuestStep {
@@ -22,6 +32,8 @@ export interface QuestStep {
   readonly objective: string;
   /** How the objective reads in another situation, e.g. after a different ending of the act before. */
   readonly variants?: readonly ObjectiveVariant[];
+  /** Whom to find; absent when the step marks its targets itself (a tagged ganger, a contract). */
+  readonly target?: QuestTarget;
   readonly completeWhen: QuestCondition;
   readonly rewards: readonly QuestReward[];
 }
@@ -59,6 +71,10 @@ export const evaluateCondition = (cond: QuestCondition, flags: Flags): boolean =
 /** The objective of `step` as the player should read it now. */
 export const stepObjective = (step: QuestStep, flags: Flags): string =>
   step.variants?.find((v) => evaluateCondition(v.when, flags))?.objective ?? step.objective;
+
+/** Whom `step` sends the player to now, by the same variant as its objective. */
+export const stepTarget = (step: QuestStep, flags: Flags): QuestTarget | undefined =>
+  step.variants?.find((v) => evaluateCondition(v.when, flags))?.target ?? step.target;
 
 export const startQuest = (log: QuestLog, quest: QuestDefinition): QuestLog =>
   log[quest.id] ? log : { ...log, [quest.id]: { status: "active", stepIndex: 0 } };
