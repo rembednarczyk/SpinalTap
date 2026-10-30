@@ -126,6 +126,8 @@ const applyControls = (s: typeof settings) => {
   applyEffects(renderer, s);
 };
 
+/** Frames the renderer has updated its camera and city in (debug `frames()`, G-013). */
+let framesDrawn = 0;
 const loop = new FixedStepLoop(browserClock, {
   update: () => {
     const s = ui.getState().settings;
@@ -144,6 +146,7 @@ const loop = new FixedStepLoop(browserClock, {
     }
     renderer.setScanning(ui.getState().scanning);
     renderer.frame(stage.engine.getDeltaTime() / 1000);
+    framesDrawn++;
     const player = renderer.cameraTargetTransform;
     if (player) audio.setListener({ position: player.position, yaw: player.yaw, speed: player.speed });
     stage.scene.render();
@@ -228,6 +231,11 @@ const debug = createDebugApi(session, ui, loop, () => probe.sample(), (position,
   () => renderer.citySettled,
 );
 debug.capture = () => renderer.captureFrame();
+debug.camera = () => {
+  const { position: p, rotation: r } = renderer.rig.camera;
+  return { x: p.x, y: p.y, z: p.z, yaw: r.y, pitch: r.x };
+};
+debug.frames = () => framesDrawn;
 window.__seki = debug;
 
 // Wave 1 effects over the whole frame (ADR-0030): hits on the player, quickhack uploads, heat
