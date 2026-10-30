@@ -200,13 +200,40 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola skanu `lane-end-at-laneless-street` daje 0; dziś 8 (bez G-020, po G-021).
 
 ### G-023 Pasy aut kończą się bez zawrotki przy ulicach dla dostaw i na końcach ulic
-- Status: przyjęte
+- Status: weryfikacja PRZYJĘTE, w PR (częściowo: 7 z 13 końców, dwukierunkowe; 6 końców jednokierunkowych wydzielone do G-024). Skan `lane-dead-end` 75 → 68.
 - Ważność: S3 · Zasięg: szeroki (13 końców, m.in. Lubartowska przy Starym Mieście) · Koszt: średni
 - Gdzie: Lubartowska#37 (460, 56); Kowalska#76 (568, 160), #87 (668, 161); Królewska#19 (459, −156); Kapucyńska#10 (144, −97); Karmelicka#34 (293, 120); Staszica#35 (199, 28); Świętoduska#20 (350, −48); Kościuszki#4 (28, −103); Browarna#102 (532, 407)
 - Dowód: łowca: żaden pas aut w promieniu 6 m od końca; sąsiedni łańcuch ma `use=deliveries` albo OSM ma tylko service/footway/parking. Auto w polu widzenia staje na końcu pasa (`traffic-system.ts:334`) i czeka.
 - Przyczyna (przypuszczalna): `turnRound()` w `traffic.ts` paruje tylko pasy przecięte blokiem gry; koniec ulicy i zmiana `useOf` nie dostają zawrotki.
 - Pakiet właściciela: packages/sim (`content/traffic.ts`)
 - Test przyjęcia: kontrola skanu `lane-dead-end` (koniec pasa w mapie, > 6 m od krawędzi, bez początku pasa zgodnego kierunku w 3 m); dziś 75, z czego 33 to G-006 i 2 to G-020; ta poprawka obniża o 13, baza tylko spada.
+
+### G-024 Jednokierunkowe pasy kończą się przed ulicą dla dostaw (Lubartowska, Kowalska, Świętoduska)
+- Status: zgłoszone, decyzja użytkownika (zmiana reguł ruchu)
+- Ważność: S3 · Zasięg: lokalny (6 końców) · Koszt: średni
+- Gdzie: Lubartowska#37:0/1 (460, 56), Kowalska#76:0/1 (568, 160), Świętoduska#20:0/1 (350, −48)
+- Dowód: naprawiacz G-023: oba pasy jadą w tę samą stronę, nie ma pasa powrotnego do zawrotki; zawrotka oznaczałaby jazdę pod prąd (regres G-105) albo czołowe zatory.
+- Opcje: A) pasy jadą dalej przez następną ulicę dla dostaw (Kowalska#67 60 m do Furmańskiej#77; Zielona 172 m do Staszica#35; Lubartowska#68 112 m); B) skręty w boczne ulice (G-006).
+- Pakiet właściciela: packages/sim (`content/traffic.ts`), ewentualnie `useOf` w `content/lublin`
+- Test przyjęcia: `lane-dead-end` spada o 6.
+
+### G-025 Istniejące zawrotki na Alei Tysiąclecia wychodzą poza nawierzchnię
+- Status: zgłoszone (do potwierdzenia)
+- Ważność: S3 (proponowana) · Zasięg: lokalny, trasa główna · Koszt: mały
+- Gdzie: Aleja Tysiąclecia #80/#81, zawrotki przy (757,8, 348,5) i (816, 340,6)
+- Dowód: naprawiacz G-023: 4–6 próbek co 0,25 m bez żadnej nawierzchni (`surfacesAt` puste). Możliwe, że to znany 1 w `car-lane-off-road`.
+- Pakiet właściciela: packages/sim (`content/traffic.ts`, `uTurn`)
+
+### G-026 Zawrotki na wąskich ulicach mają promień ok. 1,5 m
+- Status: zgłoszone (S4 proponowana)
+- Gdzie: 7 nowych zawrotek z G-023 (rozstaw pasów 2,7–3,3 m)
+- Dowód: weryfikator G-023: sedan 4,5 m obraca się prawie w miejscu; na Alei promień 8–14,5 m.
+- Test przyjęcia: kontrola minimalnego promienia zawrotki albo zawracanie wielopunktowe.
+
+### G-027 Skok pozycji auta na Zielonej
+- Status: zgłoszone (do potwierdzenia)
+- Gdzie: Zielona#21:d, z (271,6, −18) do (238,6, 4,7) w jednym kroku
+- Dowód: sonda weryfikatora G-023 (seed 3, 8:00, 60 s); może być resynchronizacją auta poza wzrokiem.
 
 ### G-006 Skręty aut na skrzyżowaniach
 - Status: później (to funkcja, nie glitch: wymaga sieci pasów; ADR-0050 „Na później”)
