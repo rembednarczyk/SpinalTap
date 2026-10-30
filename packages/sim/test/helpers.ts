@@ -25,7 +25,8 @@ export const STREET_START: Vec3 = ground(70, -50);
 
 /**
  * The deptak where it opens onto Plac Łokietka (ADR-0045): in the chunk of the clinic, Neon
- * Koi and the car wash, with the M0 courier and his guard in the yard behind it, 25 m east.
+ * Koi and the car wash, with the M0 courier and his guard in the yard behind the square, some
+ * 70 m north.
  */
 export const ALLEY_START: Vec3 = ground(400, -97);
 

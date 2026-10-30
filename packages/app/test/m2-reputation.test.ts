@@ -70,7 +70,7 @@ describe("M2: NPCs react to reputation", () => {
   it("a friendly gang lets Seki walk into the alley", async () => {
     const { session, ui } = await sessionWith({ hebi: 30 });
     const p = session.sim.player()!;
-    // At the mouth of the yard behind the car wash on Plac Łokietka, in view of the guard.
+    // At the mouth of the yard behind the car wash, in view of the guard.
     p.position = KRAKOWSKIE_SITE_POINTS.car_wash(0, 33);
     p.prevPosition = p.position;
     steps(session, 180);

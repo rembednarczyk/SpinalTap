@@ -28,7 +28,7 @@ import { ground, groundY } from "./lublin/terrain";
  * Brama Krakowska. The clinic and Neon Koi face each other across the deptak at x ≈ 320 (the
  * rooms in `interiors.ts`), the wreck Seki was pulled out of lies at the corner of Plac
  * Litewski, the van of the east lot is parked on the square, the car wash and the yard behind it
- * stand on Plac Łokietka at the end of the deptak. The buildings are the map's
+ * stand in a yard behind Plac Łokietka at the end of the deptak. The buildings are the map's
  * (`lublin/world.ts`); this table holds what the game adds. World coordinates, y on the
  * terrain.
  */
@@ -50,7 +50,7 @@ const on = (g: Placement, x: number, z: number): Vec3 => {
 };
 
 /**
- * MYJNIA 24H (ADR-0026) on Plac Łokietka: the machine room, a canopy on two posts over the
+ * MYJNIA 24H (ADR-0026) in a yard behind Plac Łokietka: the machine room, a canopy on two posts over the
  * bay, the wash gantry and a car being washed; the yard behind it (north) with a dumpster,
  * crates and a parked car is the contract site `car_wash`. Old coordinates, placed by
  * `CAR_WASH_PLACE`.

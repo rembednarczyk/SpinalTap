@@ -12,7 +12,7 @@ export const CONTRACT_SITES = {
   // Krakowskie Przedmieście (ADR-0045).
   east_lot: { id: "east_lot", label: "parking przy furgonetce na Placu Litewskim" },
   koi_back: { id: "koi_back", label: "podwórko za barem Neon Koi" },
-  car_wash: { id: "car_wash", label: "podwórko za myjnią przy Placu Łokietka" },
+  car_wash: { id: "car_wash", label: "podwórko za myjnią za Placem Łokietka" },
   south_gate: { id: "south_gate", label: "wrak na Krakowskim, przy Placu Litewskim" },
   // Stare Miasto (ADR-0026, ADR-0045).
   kanal_bridge: { id: "kanal_bridge", label: "pod kładką na Grodzkiej" },

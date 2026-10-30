@@ -41,7 +41,7 @@ const segmentDistance = (x: number, z: number, a: Pt, b: Pt): number => {
   return Math.hypot(x - (a.x + dx * t), z - (a.z + dz * t));
 };
 
-/** Plac Łokietka on foot: from the deptak past the car wash to the mouth of Brama Krakowska (ADR-0045). */
+/** Plac Łokietka on foot: from the deptak across the square to the mouth of Brama Krakowska (ADR-0045). */
 const GATE_WALK: readonly Pt[] = [
   { x: 400, z: -97 },
   { x: 440, z: -100 },

@@ -56,7 +56,7 @@ describe("determinism", () => {
   });
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
-    expect(hashOf(runReplay(1234, script()))).toMatchInlineSnapshot(`"ca34413e"`);
+    expect(hashOf(runReplay(1234, script()))).toMatchInlineSnapshot(`"827b1fcf"`);
   });
 
   it("the crowd of residents (ADR-0041) and the traffic (ADR-0050) leave the golden run as it was, at every density", () => {
@@ -75,8 +75,9 @@ describe("determinism", () => {
     const { buffs: _b, capacityShards: _c, disguise: _d, ...domain } = snap.domain;
     const { doors: _doors, ...rest } = snap;
     // Re-recorded for ADR-0038 (the run starts in the clinic) and ADR-0045 (the clinic is on
-    // Krakowskie Przedmieście); the v14 door states are left out too.
-    expect(stateHash({ ...rest, version: 12, domain } as unknown as SaveSnapshot)).toBe("32388f9c");
+    // Krakowskie Przedmieście), and for the car wash moved off Plac Łokietka into the yard behind
+    // it; the v14 door states are left out too.
+    expect(stateHash({ ...rest, version: 12, domain } as unknown as SaveSnapshot)).toBe("380539e5");
   });
 
   it("a loaded snapshot continues exactly like the original run", () => {
@@ -120,7 +121,7 @@ describe("determinism", () => {
     // Swings both ways, a blocked blow and staggers: the duel exercises the whole package.
     for (const t of ["MeleeSwing", "AttackBlocked", "Staggered", "DamageDealt"]) expect(seen).toContain(t);
     expect(hashOf(sim)).toBe(hashOf(duel().sim));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"9dbab235"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"88ff9fb6"`);
   });
 
   it("restores killed NPCs as absent", () => {

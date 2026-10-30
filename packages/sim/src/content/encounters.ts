@@ -17,7 +17,7 @@ export const ENCOUNTERS: readonly EncounterDef[] = [
   { id: "s7_pachinko", district: "shinsekai-7", knot: "enc_s7_pachinko", fromHour: 19, toHour: 4, at: { x: 306, z: -77 }, radius: 4, npcKey: "enc-nobu", once: true },
   // A salaryman asleep on the pavement by Neon Koi, before dawn.
   { id: "s7_salaryman", district: "shinsekai-7", knot: "enc_s7_salaryman", fromHour: 1, toHour: 6, at: { x: 328, z: -91 }, radius: 4, npcKey: "enc-salaryman", once: true },
-  // Hina looks for her robot cat on Plac Łokietka by the car wash, by day.
+  // Hina looks for her robot cat on Plac Łokietka, by day.
   { id: "s7_neko", district: "shinsekai-7", knot: "enc_s7_neko", fromHour: 9, toHour: 18, at: { x: 428, z: -99 }, radius: 5, npcKey: "enc-hina", once: true },
   // Shiro reads his poems under the lamp on Plac Litewski in the evening.
   { id: "s7_poet", district: "shinsekai-7", knot: "enc_s7_poet", fromHour: 18, toHour: 23, at: { x: 102, z: -23 }, radius: 4, npcKey: "enc-shiro", once: true },

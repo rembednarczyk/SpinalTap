@@ -9,7 +9,7 @@ import type { LublinChunkData } from "./types";
 /**
  * Where the game's places stand in Lublin (ADR-0045): the hand-made set pieces moved into the
  * city (the market under the viaduct on Aleja Tysiąclecia, Tessen's docks on the Bystrzyca, the
- * car wash on Plac Łokietka), the interiors cut into real tenements on Krakowskie Przedmieście,
+ * car wash in a yard behind Plac Łokietka), the interiors cut into real tenements on Krakowskie Przedmieście,
  * and the terrain shaped under them. World metres around `LUBLIN_ANCHOR` (ADR-0042).
  */
 
@@ -29,15 +29,20 @@ const round = (y: number): number => Math.round(y * 100) / 100;
 export const MARKET_PLACE: Vec3 = { x: 689, y: -20.6, z: 260 };
 /** Tessen's docks on the Bystrzyca (local x -40..34, z 90..218), reached by the metro only. */
 export const DOCKS_PLACE: Vec3 = { x: 2560, y: -28.6, z: 300 };
-/** The car wash at the end of the deptak, on Plac Łokietka (local x -6..22, z 25..49). */
-export const CAR_WASH_PLACE: Vec3 = { x: 423, y: round(rawHeight(431, -115)), z: -152 };
+/**
+ * The car wash in the tenements' yard behind Plac Łokietka, open to the car park off
+ * Przystankowa (OSM way 179269921; local x -6..22, z 25..49). It stood on the square itself
+ * before, in front of the town hall. Its north edge is the edge of the deptak's chunk, so the
+ * courier and his guard load with the clinic's district, as they did on the square.
+ */
+export const CAR_WASH_PLACE: Vec3 = { x: 395, y: round(rawHeight(403, -32)), z: -69 };
 
 /** The market's area in the world. */
 export const MARKET_AREA: GroundRect = { minX: 755, maxX: 815, minZ: 316, maxZ: 376 };
 /** The docks' yard and quay, and the basin dug in front of the quay. */
 export const DOCKS_AREA: GroundRect = { minX: 2520, maxX: 2594, minZ: 390, maxZ: 450 };
 export const DOCKS_BASIN: GroundRect = { minX: 2520, maxX: 2594, minZ: 452, maxZ: 500 };
-export const CAR_WASH_AREA: GroundRect = { minX: 417, maxX: 445, minZ: -127, maxZ: -103 };
+export const CAR_WASH_AREA: GroundRect = { minX: 389, maxX: 417, minZ: -44, maxZ: -20 };
 
 /**
  * A room cut into the ground floor of a tenement (ADR-0045). The front wall of the building is

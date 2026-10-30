@@ -45,7 +45,8 @@ export const BAR_SPOT: Vec3 = koiPoint(5.6, 0, 3);
 const DRINKER_WAYS: Readonly<Partial<Record<ContractSiteId, readonly [Vec3, ...Vec3[]]>>> = {
   east_lot: [lot(10.5, -15.5), ground(150, -53), ground(240, -66), ground(300, -86.5), BAR_SPOT],
   koi_back: [back(3, 12), ground(296, -112), ground(283, -108), ground(282, -88), ground(300, -89), BAR_SPOT],
-  car_wash: [wash(1, 43), ground(420, -98), ground(342, -91.5), BAR_SPOT],
+  // Out of the yard by Lubartowska, down to Plac Łokietka and west along the deptak.
+  car_wash: [wash(1, 43), ground(420, -30), ground(441, -40), ground(441, -88), ground(420, -98), ground(342, -91.5), BAR_SPOT],
   south_gate: [gate(-4, -33), ground(240, -66), ground(300, -86.5), BAR_SPOT],
 };
 

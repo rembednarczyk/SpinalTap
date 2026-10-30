@@ -27,7 +27,7 @@ describe("a save from before Lublin (ADR-0045)", () => {
     const at = (key: string) => [...sim.world].find((e) => e.key === key)?.position;
     // Kaito by the chair, Ume on the deptak, the courier's crew in the yard behind the car wash.
     expect(Math.hypot(at("fixer")!.x - CLINIC_WAKE_SPOT.x, at("fixer")!.z - CLINIC_WAKE_SPOT.z)).toBeLessThan(3);
-    expect(at("guard")!.x).toBeGreaterThan(400);
+    expect(Math.hypot(at("guard")!.x - CLINIC_WAKE_SPOT.x, at("guard")!.z - CLINIC_WAKE_SPOT.z)).toBeGreaterThan(60);
     // The bag from the old alley lies on the clinic's floor, with what was in it, from the first step.
     sim.step();
     const bag = [...sim.world.with("lootBag")].find((b) => b.lootBag.key === "loot:guard");
