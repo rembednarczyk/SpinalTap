@@ -48,7 +48,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet: `tools/osm-import` (meble przy ścianach stawiane z `ON_BUILDINGS`)
 
 ### G-008 Budynki z OSM wchodzą w sceny targu i doków
-- Status: weryfikacja PRZYJĘTE, w PR
+- Status: naprawione (#33)
 - Decyzja orkiestratora: budynek znika, gdy przecina pełny blok sceny albo ponad 25% jego powierzchni leży w prostokątach; Dworzec Autobusowy (2,6%, bez kolizji) zostaje. Znikają w1354195809 i „Hunek” w458298766.
 - Ważność: S3 · Zasięg: lokalny · Koszt: mały
 - Gdzie: w1354195809 przy dokach (2595, 391), wbity w ścianę doków i 1,2 m nad wyrównanym placem; „Hunek" w458298766 (817, 373,5) we wschodniej ścianie targu; w66264171 (789, 396) na placu targu
@@ -113,7 +113,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `furniture-overlap` w skanie = 0 (meble z bryłą, poza słupkami).
 
 ### G-013 Narzędzie zrzutów: kadr przesunięty o jedno miejsce albo powtórzony
-- Status: przyjęte
+- Status: w naprawie (weryfikacja: NIE PRZYJĘTE, warunek czekania nie sprawdza pitch; seria z jednego miejsca dalej przesunięta)
 - Ważność: S3 (proces: fałszywe dowody łowców) · Zasięg: każde polowanie · Koszt: mały
 - Gdzie: `e2e/glitch-shots.spec.ts`
 - Dowód:
@@ -135,7 +135,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `parked-car-on-crossing` w skanie = 0 (żaden punkt obrysu na `crossing`).
 
 ### G-015 Auta zaparkowane tyłem do ruchu na ulicach jednokierunkowych
-- Status: przyjęte
+- Status: weryfikacja
 - Ważność: S4 · Zasięg: lokalny · Koszt: mały
 - Gdzie: 10 aut, m.in. Lubartowska (449,9, 40,7), Aleja Tysiąclecia (920,0, 329,9), Nowy Plac Targowy, Nadstawna
 - Dowód: sonda weryfikatora G-014 (kierunek auta wobec najbliższej osi ulicy; do potwierdzenia).
@@ -148,7 +148,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Gdzie: (−115,58, 31,83) 3,0 m, (−103,16, −32,87) 7,75 m, (−115,53, 25,62) 9,0 m za zebrą
 
 ### G-017 Wiaty przystanków z OSM jako trzypiętrowe bloki mieszkalne na Alei Tysiąclecia
-- Status: przyjęte
+- Status: weryfikacja PRZYJĘTE, w PR
 - Ważność: S3 · Zasięg: lokalny · Koszt: mały
 - Gdzie: w672635874 (709,5, 335,3) i w672635872 (781, 365,1), po 3 kondygnacje i 9,7–9,8 m; w672635873 3,3 m
 - Dowód: raport naprawiacza G-011 (obrysy `amenity=shelter` + `building=yes` budowane jako `residential`).
