@@ -26,7 +26,8 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: żadna trasa dostaw nie biegnie odcinkiem z `motor_vehicle=no`.
 
 ### G-003 Zawrót na Alei Tysiąclecia zahacza o skraj chodnika przed targiem
-- Status: zgłoszone
+- Status: przyjęte
+- Uzupełnienie (łowca, 2026-10-30): ten sam zawrót biegnie 2,5 m od linii pieszych `targ-deck` pod wiaduktem (758,4, 350,8–353,8), 5 punktów; skan pomija linie scen. Test przyjęcia obejmuje też to.
 - Ważność: S4 · Zasięg: lokalny · Koszt: mały
 - Gdzie: (758, 349), trasa `Aleja Tysiąclecia#80:1/0+…#81:1/1`
 - Dowód: skan `car-lane-off-road` = 1.
@@ -45,6 +46,31 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Gdzie: (709, 335)
 - Dowód: skan `furniture-in-wall` = 1.
 - Pakiet: `tools/osm-import` (meble przy ścianach stawiane z `ON_BUILDINGS`)
+
+### G-008 Budynki z OSM wchodzą w sceny targu i doków
+- Status: przyjęte
+- Ważność: S3 · Zasięg: lokalny · Koszt: mały
+- Gdzie: w1354195809 przy dokach (2595, 391), wbity w ścianę doków i 1,2 m nad wyrównanym placem; „Hunek" w458298766 (817, 373,5) we wschodniej ścianie targu; w66264171 (789, 396) na placu targu
+- Dowód:
+  - pomiar siatką 0,5 m (obrysy przecięte z `CLEARED_BUILDINGS` i blokami scen);
+  - zrzut `doki-east-wall.png`.
+- Przyczyna: `CLEARED_BUILDINGS` usuwa budynek tylko wtedy, gdy jego środek leży w prostokącie (`places.ts` i warstwa rysowania).
+- Pakiet: `packages/sim` (`lublin/places.ts`, `sites.ts`, scenografia)
+- Test przyjęcia: żaden budynek mapy nie przecina `CLEARED_BUILDINGS`; kontrola `building-in-set-piece` w skanie = 0.
+
+### G-009 Auta zaparkowane przy krawężniku stoją na trawniku i chodniku
+- Status: przyjęte
+- Ważność: S3 · Zasięg: szeroki · Koszt: mały
+- Gdzie:
+  - Ruska (1071,6, 460), (1067,2, 464,1);
+  - Kowalska (533,9, 173,6);
+  - Cerkiewna (909–927, 361–406), 8 aut;
+  - Nowy Plac Targowy, Nadstawna, 2 w krakowskie-0-0.
+- Ile: 19 ze 118 aut ma co najmniej 3 z 5 punktów obrysu poza jezdnią, placem albo parkingiem.
+- Dowód: pomiar `surfacesAt`; zrzuty `ruska-b.png`, `kowalska-van.png`, `cerkiewna.png`.
+- Przyczyna: `kerbCars()` stawia auta na odsunięciu z mediany szerokości całej ulicy; `fits()` nie sprawdza nawierzchni.
+- Pakiet: `packages/sim` (`content/parked-cars.ts`)
+- Test przyjęcia: rogi i środek każdego auta na `road`, `cobble`, `square` albo `parking`; kontrola `parked-car-off-road` w skanie = 0.
 
 ### G-006 Skręty aut na skrzyżowaniach
 - Status: później (to funkcja, nie glitch: wymaga sieci pasów; ADR-0050 „Na później”)
@@ -83,4 +109,5 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | Rekwizyty gry i NPC: wysokość | 2026-10-30 | skan, pomiar |
 | Budynki: nakładanie | 2026-10-30 | pomiar |
 | Zrzuty: 3 Maja, Lubartowska, Dmowskiego, Plac Zamkowy, Mełgiewska, Plac Litewski, Rynek, Grodzka, Plac Wolności, Łokietka, Królewska, Bazar, mosty Bystrzycy | 2026-10-30 | zrzuty |
+| Podzamcze i Nabrzeże (łowca): trasy przez bloki scen, pomosty, wysokości aktorów, Nowy Plac Targowy, latarnie nad Bystrzycą | 2026-10-30 | pomiar, zrzuty |
 | Nieoglądane: Ruska, Narutowicza, Kalinowszczyzna, Zamek, wnętrza, noc i deszcz z bliska, telefon | - | - |
