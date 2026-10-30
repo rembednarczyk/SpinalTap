@@ -23,7 +23,7 @@ const setup = (opts: { touch?: boolean; seen?: string[]; hints?: boolean } = {})
     touch: opts.touch ?? false,
     hints: { seen: opts.seen ?? [], save: (s) => saved.push(s) },
   });
-  if (opts.hints === false) session.changeSettings({ hints: false });
+  if (opts.hints === false) session.intents.changeSettings({ hints: false });
   session.newGame();
   // Out on the street, away from Kaito by the chair in the clinic (ADR-0038): no talk prompt.
   const p = session.sim.player()!;
@@ -52,7 +52,7 @@ describe("first-run hints", () => {
 
   it("follows the player's bindings and words hints for touch", () => {
     const { session, ui } = setup();
-    session.bindKey("forward", "KeyZ");
+    session.intents.bindKey("forward", "KeyZ");
     const fresh = setup({ touch: true });
     steps(fresh.session, 1);
     expect(fresh.ui.getState().hint).toEqual({ id: "move", keys: [], text: HINTS.move.touchText });

@@ -84,11 +84,11 @@ const toasts = (ui: Ui) => ui.getState().toasts.map((t) => `${t.title}: ${t.text
 const choose = (s: GameSession, ui: Ui, option: string) => {
   const index = ui.getState().dialogue?.choices.find((c) => c.text === option)?.index;
   if (index === undefined) throw new Error(`no option "${option}" in ${JSON.stringify(ui.getState().dialogue?.choices)}`);
-  s.choose(index);
+  s.intents.choose(index);
 };
 
 const close = (s: GameSession) => {
-  s.closeDialogue();
+  s.intents.closeDialogue();
   steps(s, 1);
 };
 

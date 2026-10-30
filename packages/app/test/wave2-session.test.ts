@@ -12,7 +12,7 @@ describe("wave 2 in the session", () => {
     expect(ui.getState().metroMap?.from).toBe("kanal");
     expect(ui.getState().dialogue).toBeNull();
     expect(session.inControl).toBe(false);
-    session.closeMetro();
+    session.intents.closeMetro();
     expect(session.inControl).toBe(true);
     session.bus.emit("MetroDeparted", { from: "kanal", to: "doki", seconds: 1 });
     expect(session.inControl).toBe(false);
@@ -29,7 +29,7 @@ describe("wave 2 in the session", () => {
     const from = METRO_STATIONS.find((s) => s.id === "shinsekai")!;
     teleport(session, from.kiosk.x + Math.sin(from.yaw) * 1.2, from.kiosk.z + Math.cos(from.yaw) * 1.2, from.yaw + Math.PI);
     session.openMetro("shinsekai");
-    session.travelMetro("kanal");
+    session.intents.travelMetro("kanal");
     let rode = false;
     for (let i = 0; i < 60 * 12 && !rode; i++) {
       session.step(EMPTY_INPUT);
@@ -58,9 +58,9 @@ describe("wave 2 in the session", () => {
   it("switches the radio and keeps the station in the settings", () => {
     const { session, ui } = setup();
     session.newGame();
-    session.nextRadioStation();
+    session.intents.nextRadioStation();
     expect(ui.getState().settings.radioStation).toBe("drift");
-    session.setRadioStation(null);
+    session.intents.setRadioStation(null);
     expect(ui.getState().settings.radioStation).toBeNull();
   });
 });

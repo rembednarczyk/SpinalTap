@@ -76,7 +76,7 @@ describe("violence interrupts a conversation (app loop)", () => {
     const { session, ui, focus } = setup();
     talkUnderFire(session);
     expect(ui.getState().dialogue).not.toBeNull();
-    session.choose(0);
+    session.intents.choose(0);
     expect(session.inControl).toBe(false);
     for (let i = 0; i < 600 && ui.getState().dialogue; i++) steps(session, 1);
     expect(ui.getState().dialogue).toBeNull();
@@ -86,8 +86,8 @@ describe("violence interrupts a conversation (app loop)", () => {
     expect(ui.getState().toasts.map((t) => t.title)).toContain("Rozmowa przerwana");
     expect(session.narrative.inConversation).toBe(false);
     // Stale UI clicks are ignored: no effects, no second end-dialogue.
-    session.choose(0);
-    session.closeDialogue();
+    session.intents.choose(0);
+    session.intents.closeDialogue();
     steps(session, 1);
     expect(session.sim.domain.flags).not.toContain("met_fixer");
     expect(session.sim.domain.character.alias).toBeNull();
@@ -105,8 +105,8 @@ describe("violence interrupts a conversation (app loop)", () => {
     teleport(session.sim.player()!, ...nearKaito(session));
     steps(session, 1, frame({ interact: true }));
     expect(ui.getState().dialogue?.lines[0]).toEqual(firstLine);
-    for (let g = 0; g < 10 && !ui.getState().dialogue?.ended; g++) session.choose(0);
-    session.closeDialogue();
+    for (let g = 0; g < 10 && !ui.getState().dialogue?.ended; g++) session.intents.choose(0);
+    session.intents.closeDialogue();
     steps(session, 2);
     expect(session.sim.domain.flags.filter((f) => f === "met_fixer")).toHaveLength(1);
     expect(session.sim.domain.reputation.fixers).toBe(5);

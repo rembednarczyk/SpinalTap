@@ -73,9 +73,9 @@ const teleport = (s: GameSession, x: number, z: number, yaw = 0, pitch = 0) => {
 
 /** Walks the dialogue to its end, always taking the first choice. */
 const talkThrough = (s: GameSession, ui: ReturnType<typeof createUiStore>) => {
-  for (let guard = 0; guard < 10 && !ui.getState().dialogue?.ended; guard++) s.choose(0);
+  for (let guard = 0; guard < 10 && !ui.getState().dialogue?.ended; guard++) s.intents.choose(0);
   expect(ui.getState().dialogue?.ended).toBe(true);
-  s.closeDialogue();
+  s.intents.closeDialogue();
 };
 
 describe("M0 vertical slice: input → sim → narrative → domain → save → load", () => {
@@ -154,7 +154,7 @@ describe("M0 vertical slice: input → sim → narrative → domain → save →
     teleport(session, ...nearKaito(session));
     steps(session, 1, frame({ interact: true }));
     expect(await session.saveAsync("slot-1")).toBe(false);
-    session.closeDialogue();
+    session.intents.closeDialogue();
     expect(await session.loadAsync("slot-2")).toBe(false);
     await store.put("slot-3", "{corrupt");
     expect(await session.loadAsync("slot-3")).toBe(false);

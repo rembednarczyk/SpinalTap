@@ -19,7 +19,7 @@ import { GameSession } from "../src/game-session";
 
 /**
  * The game page without a renderer (ADR-0046): the real React UI on the session's store, with
- * the session as its intents, a fake render port and the debug API the e2e specs used. The
+ * the session's intents, a fake render port and the debug API the e2e specs used. The
  * simulation runs only when a test steps it; no clock, no browser loop.
  */
 
@@ -87,7 +87,7 @@ export const mountGame = ({ seed, touch = false }: GameOptions) => {
   // Never ticks: the clock stands still and nothing calls frame(); the test steps the session.
   const loop = new FixedStepLoop({ now: () => 0 }, { update() {}, render() {} });
   const seki: DebugApi = createDebugApi(session, ui, loop, () => ({ fps: 0, frameTimeMs: 0, drawCalls: 0, activeMeshes: 0, totalMeshes: 0, materials: 0, particles: 0, byName: {} }), () => {});
-  const view = mount(<GameUi store={ui} intents={session} touch={touch ? touchPad() : undefined} />);
+  const view = mount(<GameUi store={ui} intents={session.intents} touch={touch ? touchPad() : undefined} />);
   /** Steps the simulation as the debug API does, inside act() so React applies the store changes. */
   const step = (n: number, input: Partial<InputFrame> = {}) => act(() => seki.step(n, input));
   return { ui, render, audio, preview, persistence, session, seki, view, step };

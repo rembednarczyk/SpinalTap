@@ -95,7 +95,7 @@ export const openClinic = (s: GameSession, ui: Ui) => {
 
 export const talkToMori = (s: GameSession, ui: Ui) => {
   openClinic(s, ui);
-  s.talkToShopkeeper();
+  s.intents.talkToShopkeeper();
   expect(ui.getState().shopOpen).toBe(false);
   expect(ui.getState().dialogue).not.toBeNull();
 };
@@ -107,10 +107,10 @@ export const finishDialogue = (s: GameSession, ui: Ui, pick: number | string = 0
   for (let guard = 0; guard < 10 && !ui.getState().dialogue?.ended; guard++) {
     const choices = ui.getState().dialogue?.choices ?? [];
     const index = typeof pick === "number" ? pick : choices.findIndex((c) => c.text.startsWith(pick));
-    s.choose(index < 0 ? 0 : index);
+    s.intents.choose(index < 0 ? 0 : index);
   }
   expect(ui.getState().dialogue?.ended).toBe(true);
-  s.closeDialogue();
+  s.intents.closeDialogue();
   steps(s, 1);
 };
 
@@ -154,8 +154,8 @@ export const playFirstContract = (s: GameSession, ui: Ui) => {
 /** Fragment 1, unlocked by a finished fixer contract. */
 export const playContractFragment = (s: GameSession, ui: Ui, render: FakeRender, pick: number) => {
   talkToKaito(s);
-  s.choose(0); // "Biorę robotę."
-  s.closeDialogue();
+  s.intents.choose(0); // "Biorę robotę."
+  s.intents.closeDialogue();
   steps(s, 1);
   const contract = s.sim.domain.contracts.active!;
   expect(objective(ui)).toContain("Zneutralizuj gangerów Hebi");
@@ -169,8 +169,8 @@ export const playContractFragment = (s: GameSession, ui: Ui, render: FakeRender,
   expect(s.sim.domain.flags).toContain(progressFlag("contract_completed", "echo_contract"));
   expect(s.sim.domain.character.memories).toContain("courier_case");
   expect(render.effects).toContain("memory-glitch");
-  s.choose(2); // "Nie dziś."
-  s.closeDialogue();
+  s.intents.choose(2); // "Nie dziś."
+  s.intents.closeDialogue();
   steps(s, 1);
 
   // The flashback opens on its own once Kaito is done talking.
@@ -196,14 +196,14 @@ export const playMoriFragment = (s: GameSession, ui: Ui, render: FakeRender, pic
 export const playImplantFragment = (s: GameSession, ui: Ui, render: FakeRender, pick: number) => {
   render.effects = [];
   openClinic(s, ui);
-  s.buyCyberware("steady_grip");
+  s.intents.buyCyberware("steady_grip");
   steps(s, 1);
   expect(s.sim.domain.character.cyberware.arms).toBe("steady_grip");
   expect(s.sim.domain.character.memories).toContain("crash_night");
   expect(render.effects).toContain("memory-glitch");
   // No flashback while the clinic is still open.
   expect(ui.getState().dialogue).toBeNull();
-  s.closeShop();
+  s.intents.closeShop();
   steps(s, 1);
   expect(allText(ui)).toContain("mokra obwodnica");
   finishDialogue(s, ui, pick);

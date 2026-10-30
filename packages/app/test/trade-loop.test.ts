@@ -88,7 +88,7 @@ describe("trade loop: loot, Oyaji's stall, a mod, the clinic (E10, E11)", () => 
     steps(session, 1);
     steps(session, 1, frame({ interact: true }));
     expect(ui.getState().loot?.lines).toHaveLength(BAG.length);
-    session.takeLoot("all");
+    session.intents.takeLoot("all");
     steps(session, 2);
     expect(audio.cues).toContain("loot-pickup");
     const smg = session.sim.domain.inventory.items.find((i) => i.def === "hebi_smg")!;
@@ -107,8 +107,8 @@ describe("trade loop: loot, Oyaji's stall, a mod, the clinic (E10, E11)", () => 
     expect(ui.getState()).toMatchObject({ shopOpen: true, shopId: "oyaji" });
     expect(ui.getState().trade.items.map((i) => i.defId)).toEqual(expect.arrayContaining(["scrap", "hebi_smg", "steady_grip"]));
 
-    session.sellItem({ stack: "scrap" }, 4);
-    session.sellItem({ uid: smg.uid }, 1);
+    session.intents.sellItem({ stack: "scrap" }, 4);
+    session.intents.sellItem({ uid: smg.uid }, 1);
     steps(session, 1);
     expect(session.sim.domain.wallet.eddies).toBe(afterLoot + 48 + 280);
     expect(ui.getState().trade.items.some((i) => i.defId === "hebi_smg")).toBe(false);
@@ -116,9 +116,9 @@ describe("trade loop: loot, Oyaji's stall, a mod, the clinic (E10, E11)", () => 
     expect(ui.getState().toasts.some((t) => t.title === "Sprzedano: Hebi SMG")).toBe(true);
     expect(ui.getState().toasts.some((t) => t.text === "Przelew")).toBe(false);
 
-    session.buyItem("holo_sight");
+    session.intents.buyItem("holo_sight");
     // The stall does not fit implants.
-    session.installCyberwareItem(grip.uid);
+    session.intents.installCyberwareItem(grip.uid);
     steps(session, 1);
     expect(session.sim.domain.inventory.items.some((i) => i.def === "holo_sight")).toBe(true);
     expect(session.sim.domain.character.cyberware.arms).toBeUndefined();
@@ -126,10 +126,10 @@ describe("trade loop: loot, Oyaji's stall, a mod, the clinic (E10, E11)", () => 
     expect(afterStall).toBe(afterLoot + 48 + 280 - 300);
 
     // A word with Oyaji, then back to the street.
-    session.talkToShopkeeper();
+    session.intents.talkToShopkeeper();
     expect(ui.getState().shopOpen).toBe(false);
     expect(ui.getState().dialogue?.lines[0]?.speaker).toBe("Oyaji");
-    session.closeDialogue();
+    session.intents.closeDialogue();
     steps(session, 2);
     expect(session.inControl).toBe(true);
 
@@ -142,15 +142,15 @@ describe("trade loop: loot, Oyaji's stall, a mod, the clinic (E10, E11)", () => 
     steps(session, 1, frame({ interact: true }));
     expect(ui.getState()).toMatchObject({ shopOpen: true, shopId: "clinic" });
     expect(ui.getState().trade.items.some((i) => i.defId === "steady_grip")).toBe(true);
-    session.sellItem({ stack: "medkit" }, 1);
-    session.installCyberwareItem(grip.uid);
+    session.intents.sellItem({ stack: "medkit" }, 1);
+    session.intents.installCyberwareItem(grip.uid);
     steps(session, 1);
     expect(session.sim.domain.character.cyberware.arms).toBe("steady_grip");
     expect(session.sim.domain.wallet.eddies).toBe(afterStall - 125);
     expect(session.sim.domain.inventory.items.some((i) => i.def === "steady_grip")).toBe(false);
     expect(ui.getState().toasts.some((t) => t.title === "Mori kręci głową")).toBe(true);
     expect(ui.getState().toasts.some((t) => t.title === "Wszczepiono: Stabilizator chwytu")).toBe(true);
-    session.closeShop();
+    session.intents.closeShop();
     steps(session, 1);
     expect(session.inControl).toBe(true);
   });
@@ -168,10 +168,10 @@ describe("trade loop: loot, Oyaji's stall, a mod, the clinic (E10, E11)", () => 
     expect(ui.getState().shopOpen).toBe(false);
     expect(ui.getState().dialogue?.lines.map((l) => l.text).join(" ")).toContain("Zamknięte");
     // Trade intents do nothing without an open counter.
-    session.sellItem({ stack: "medkit" }, 1);
-    session.upgradeBackpack();
-    session.repairItem("i2", 0);
-    session.removeCyberware("optics");
+    session.intents.sellItem({ stack: "medkit" }, 1);
+    session.intents.upgradeBackpack();
+    session.intents.repairItem("i2", 0);
+    session.intents.removeCyberware("optics");
     steps(session, 1);
     expect(session.sim.domain.inventory.stacks.medkit).toBe(1);
     expect(session.sim.domain.character.cyberware.optics).toBe("hitomi_optics_mk1");

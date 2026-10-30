@@ -239,16 +239,16 @@ describe("settings", () => {
     const host = { applied: { ...DEFAULT_SETTINGS, quality: "low" as const }, save: vi.fn(), reload: vi.fn() };
     const { s, ui } = session(host);
     expect(ui.getState().settings.quality).toBe("low");
-    s.changeSettings({ mouseSensitivity: 1.8 });
+    s.intents.changeSettings({ mouseSensitivity: 1.8 });
     expect(host.save).toHaveBeenLastCalledWith(expect.objectContaining({ mouseSensitivity: 1.8, quality: "low" }));
     expect(ui.getState().reloadNeeded).toBe(false);
-    s.changeSettings({ quality: "high" });
+    s.intents.changeSettings({ quality: "high" });
     expect(ui.getState().reloadNeeded).toBe(true);
-    s.changeSettings({ quality: "low" });
+    s.intents.changeSettings({ quality: "low" });
     expect(ui.getState().reloadNeeded).toBe(false);
-    s.changeSettings({ volume: 0.1 });
+    s.intents.changeSettings({ volume: 0.1 });
     expect(ui.getState().reloadNeeded).toBe(false);
-    s.reload();
+    s.intents.reload();
     expect(host.reload).toHaveBeenCalled();
   });
 
@@ -256,13 +256,13 @@ describe("settings", () => {
     const host = { applied: DEFAULT_SETTINGS, save: vi.fn(), reload: vi.fn() };
     const { s, ui } = session(host);
     expect(ui.getState().settings.horizontalFov).toBe(80);
-    s.setFieldOfView(91.6);
+    s.intents.setFieldOfView(91.6);
     expect(host.save).toHaveBeenLastCalledWith(expect.objectContaining({ horizontalFov: 92 }));
-    s.setFieldOfView(140);
+    s.intents.setFieldOfView(140);
     expect(ui.getState().settings.horizontalFov).toBe(100);
-    s.setFieldOfView(10);
+    s.intents.setFieldOfView(10);
     expect(ui.getState().settings.horizontalFov).toBe(70);
-    s.setFieldOfView(Number.NaN);
+    s.intents.setFieldOfView(Number.NaN);
     expect(ui.getState().settings.horizontalFov).toBe(70);
     expect(ui.getState().reloadNeeded).toBe(false);
   });
@@ -297,8 +297,8 @@ describe("settings", () => {
 
   it("works without a settings host for the session only", () => {
     const { s, ui } = session();
-    s.changeSettings({ touchSensitivity: 2.5 });
+    s.intents.changeSettings({ touchSensitivity: 2.5 });
     expect(ui.getState().settings.touchSensitivity).toBe(2.5);
-    s.reload();
+    s.intents.reload();
   });
 });

@@ -199,12 +199,12 @@ describe("game session: wave 1 events on the HUD", () => {
     emit(session, "PhoneMessage", { from: "hana", kind: "call", knot: "missing", priority: "story" });
     expect(ui.getState().phoneNotice?.holocall).toBe(true);
     // The phone opens, takes the controls and gives them back.
-    session.openPhone();
+    session.intents.openPhone();
     expect(ui.getState().phoneOpen).toBe(true);
     expect(session.inControl).toBe(false);
-    session.readThread("oyaji");
+    session.intents.readThread("oyaji");
     expect(ui.getState().phone.unread).toBe(1);
-    session.closePhone();
+    session.intents.closePhone();
     expect(session.inControl).toBe(true);
   });
 
@@ -216,7 +216,7 @@ describe("game session: wave 1 events on the HUD", () => {
     expect(ui.getState().contractBonus).toBeNull();
     emit(session, "ContractDebrief", { contractId: "c4", badges: ["ghost"], rank: "B", reward: 1200, bonus: 300, styleBonus: 150, seconds: 80 });
     expect(ui.getState().debrief).toMatchObject({ title: "Infiltracja", fixer: "Genzō", rank: "B" });
-    session.dismissDebrief();
+    session.intents.dismissDebrief();
     expect(ui.getState().debrief).toBeNull();
   });
 
@@ -296,7 +296,7 @@ describe("game session: wave 1 events on the HUD", () => {
     expect(ui.getState().combat).toBe(false);
     const hit = (amount: number, critical = false) =>
       emit(session, "DamageDealt", { sourceId: player.id, targetId: npc.id, amount, critical, zone: "torso", at: npc.position });
-    session.changeSettings({ damageNumbers: "total" });
+    session.intents.changeSettings({ damageNumbers: "total" });
     hit(10, true);
     expect(ui.getState().hitKind).toBe("crit");
     hit(5);
@@ -304,7 +304,7 @@ describe("game session: wave 1 events on the HUD", () => {
     expect(ui.getState().combat).toBe(true);
     emit(session, "EntityKilled", { entityId: npc.id, tag: null });
     expect(ui.getState().hitKind).toBe("kill");
-    session.changeSettings({ damageNumbers: "hit" });
+    session.intents.changeSettings({ damageNumbers: "hit" });
     hit(3);
     hit(4);
     expect(ui.getState().damageNumbers.map((n) => n.amount)).toEqual([15, 3, 4]);
@@ -313,7 +313,7 @@ describe("game session: wave 1 events on the HUD", () => {
     steps(session, COMBAT_SECONDS * SIM_HZ);
     expect(ui.getState().combat).toBe(false);
     // Off: nothing is counted.
-    session.changeSettings({ damageNumbers: "off" });
+    session.intents.changeSettings({ damageNumbers: "off" });
     hit(3);
     expect(ui.getState().damageNumbers).toEqual([]);
   });
@@ -324,28 +324,28 @@ describe("game session: wave 1 events on the HUD", () => {
     session.openBreach("crane", ["icepick", "datamine"]);
     expect(ui.getState().breach).toEqual({ terminalKey: "crane", daemons: ["icepick", "datamine"] });
     expect(session.inControl).toBe(false);
-    session.submitBreach(["icepick"]);
+    session.intents.submitBreach(["icepick"]);
     expect(enqueue).toHaveBeenCalledWith({ type: "breach-result", terminalKey: "crane", daemons: ["icepick"] });
     expect(ui.getState().breach).toBeNull();
     expect(session.inControl).toBe(true);
-    session.submitBreach(["datamine"]);
+    session.intents.submitBreach(["datamine"]);
     expect(enqueue).toHaveBeenCalledTimes(1);
   });
 
   it("feeds the touch scanner and a tapped hack into the input frame", () => {
     const { session, ui } = start();
     const step = vi.spyOn(session.sim, "step");
-    session.pickQuickhack(2);
+    session.intents.pickQuickhack(2);
     session.step(frame());
     expect((step.mock.calls.at(-1)?.[0] as InputFrame).quickhack).toBe(0);
-    session.setScan(true);
-    session.pickQuickhack(2);
+    session.intents.setScan(true);
+    session.intents.pickQuickhack(2);
     session.step(frame());
     expect(step.mock.calls.at(-1)?.[0]).toMatchObject({ scan: true, quickhack: 2 });
     expect(ui.getState().scanning).toBe(true);
     session.step(frame());
     expect(step.mock.calls.at(-1)?.[0]).toMatchObject({ scan: true, quickhack: 0 });
-    session.setScan(false);
+    session.intents.setScan(false);
     session.step(frame({ scan: true }));
     expect(ui.getState().scanning).toBe(true);
     session.step(frame());

@@ -118,7 +118,7 @@ describe("M2: day clock and schedules through the game loop", () => {
     const dialogue = ui.getState().dialogue;
     expect(dialogue?.lines[0]?.speaker).toBe("Oyaji");
     expect(dialogue?.lines.map((l) => l.text).join(" ")).toMatch(/ósmej/);
-    session.closeDialogue();
+    session.intents.closeDialogue();
 
     wait(session, 10 * 60); // 08:30
     frames(session, 2);
