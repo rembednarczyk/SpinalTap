@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { type DomainEvents, VEHICLE_SIZE, hm } from "@seki/core";
 import { Simulation, ground, runReplay, stateHash, type Entity } from "../src";
 import { TRAFFIC_ROUTES, TURN_SPEED, pointAt, projectOn } from "../src/content/traffic";
-import { onRoad } from "../src/content/lublin/roads";
+import { ROAD_CHAINS, onRoad, polylineLength } from "../src/content/lublin/roads";
 import { PARKED_CARS } from "../src/content/parked-cars";
 import { furnitureClearance } from "../src/content/furniture-index";
 import { furnitureRadius } from "../src/content/lublin/furniture";
@@ -63,6 +63,16 @@ describe("the lanes of the traffic (ADR-0050)", () => {
     expect(ways(-102.6, 90).length).toBeGreaterThan(0);
     expect(new Set(ways(-102.6, 90))).toEqual(new Set([1]));
     expect(new Set(ways(-111, 90))).toEqual(new Set([-1]));
+  });
+
+  it("the west carriageway of Aleja Tysiąclecia is one street with a lane all the way and a trolleybus (G-020)", () => {
+    const west = ROAD_CHAINS.filter((c) => c.name === "Aleja Tysiąclecia" && projectOn(c.points, 912, 333).d < 3);
+    expect(west).toHaveLength(1);
+    expect(polylineLength(west[0]!.points)).toBeCloseTo(472, -1);
+    const near = (use: string, x: number, z: number) => TRAFFIC_ROUTES.some((r) => r.use === use && r.street === "Aleja Tysiąclecia" && projectOn(r.points, x, z).d < 2);
+    expect(near("cars", 912, 333)).toBe(true);
+    expect(near("trolley", 912, 333)).toBe(true);
+    expect(near("trolley", 1000, 331)).toBe(true);
   });
 
   it("the roads are busy in the rush hour, quiet at night; delivery vans only in the morning", () => {

@@ -60,7 +60,6 @@ const TROLLEY_STREETS: ReadonlySet<string> = new Set([
   "Królewska",
   "Prymasa Stefana Wyszyńskiego",
   "Aleja Tysiąclecia",
-  "Aleje Tysiąclecia",
   "Lwowska",
   "Aleja Unii Lubelskiej",
   "Mełgiewska",
@@ -81,7 +80,7 @@ export const laneOffset = (half: number): number => (half <= 0 ? 1.5 : half >= K
 const MIN_TROLLEY = 150;
 
 /** Streets shorter than this carry nobody. */
-const MIN_ROUTE = 45;
+export const MIN_ROUTE = 45;
 /** A one-way street keeps one lane if a tenth of it is too narrow for two. */
 const NARROW_Q = 0.1;
 

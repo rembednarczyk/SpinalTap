@@ -20,10 +20,18 @@ const STREET_KINDS = new Set([
   "path",
 ]);
 
+/**
+ * Misspelt street names in OSM, corrected here because a street's pieces join into one road by
+ * name: way 739432828 is "Aleje Tysiąclecia", a 36 m gap in Aleja Tysiąclecia's lane (G-020).
+ */
+const NAME_FIXES: Readonly<Record<string, string>> = {
+  "Aleje Tysiąclecia": "Aleja Tysiąclecia",
+};
+
 export const chunkStreets = (lines: readonly Line[], rect: Rect): StreetOut[] => {
   const out: StreetOut[] = [];
   for (const l of lines) {
-    const name = l.tags.name;
+    const name = l.tags.name && (NAME_FIXES[l.tags.name] ?? l.tags.name);
     const kind = l.tags.highway;
     if (!name || !kind || !STREET_KINDS.has(kind)) continue;
     // A one-way street is drawn the way it is driven (`oneway=-1` turned round).
