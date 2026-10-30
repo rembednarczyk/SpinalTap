@@ -113,7 +113,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `furniture-overlap` w skanie = 0 (meble z bryłą, poza słupkami).
 
 ### G-013 Narzędzie zrzutów: kadr przesunięty o jedno miejsce albo powtórzony
-- Status: w naprawie (weryfikacja: NIE PRZYJĘTE, warunek czekania nie sprawdza pitch; seria z jednego miejsca dalej przesunięta)
+- Status: weryfikacja PRZYJĘTE (2. runda), w PR. Spec czeka na `frames() > n` po `step` i asertuje pozę kamery (pozycja 3 m, yaw i pitch ±0,01; zakłada FPP i stojącego gracza).
 - Ważność: S3 (proces: fałszywe dowody łowców) · Zasięg: każde polowanie · Koszt: mały
 - Gdzie: `e2e/glitch-shots.spec.ts`
 - Dowód:
