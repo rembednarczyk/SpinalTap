@@ -259,6 +259,12 @@ export const PODZAMCZE_CHUNKS: readonly LublinChunkData[] = [
       {"x":691.8,"z":322.4,"kind":"hotel","tag":"tourism=apartment","name":"LuxApart 23"},
       {"x":660.9,"z":285.3,"kind":"hotel","tag":"tourism=apartment","name":"LuxApart 9"},
     ],
+    passages: [
+      {"building":"w66322919","from":{"x":677.6,"z":235.8},"to":{"x":692.5,"z":236.3},"width":2.4,"height":3.4,"rise":0.9},
+      {"building":"w66322955","from":{"x":695.5,"z":261.5},"to":{"x":681.3,"z":265.2},"width":2.4,"height":3.4,"rise":0.9},
+      {"building":"w66322948","from":{"x":706,"z":283.9},"to":{"x":694,"z":292.4},"width":2.4,"height":3.4,"rise":0.9},
+      {"building":"w66322927","from":{"x":697.3,"z":211.5},"to":{"x":683.5,"z":206.2},"width":2.4,"height":3.4,"rise":0.9},
+    ],
   },
   {
     id: "podzamcze-1-0",
@@ -482,6 +488,9 @@ export const PODZAMCZE_CHUNKS: readonly LublinChunkData[] = [
       {"x":720.1,"z":302.3,"kind":"sight","tag":"historic=memorial","name":"Jakow Ichak Horowic"},
       {"x":914.6,"z":218.4,"kind":"sight","tag":"tourism=artwork","name":"Rzut kolumny"},
       {"x":905.8,"z":215.2,"kind":"sight","tag":"historic=technical_monument","name":"Kamienie młyńskie"},
+    ],
+    passages: [
+      {"building":"w48500136","from":{"x":852,"z":237.2},"to":{"x":835.6,"z":238.5},"width":2.4,"height":3.4,"rise":0.9},
     ],
   },
   {
@@ -1016,6 +1025,10 @@ export const PODZAMCZE_CHUNKS: readonly LublinChunkData[] = [
       {"x":695,"z":510,"kind":"sight","tag":"tourism=artwork","name":"Warunek cudu"},
       {"x":599.2,"z":432.5,"kind":"sight","tag":"historic=memorial","name":"Anna Langfus"},
       {"x":620.3,"z":494.2,"kind":"shop","tag":"shop=pawnbroker","name":"Loombard"},
+    ],
+    passages: [
+      {"building":"w1306000298","from":{"x":639.1,"z":486.2},"to":{"x":652.7,"z":482.4},"width":3.2,"height":4,"rise":1.1},
+      {"building":"w227690848","from":{"x":594.4,"z":466.4},"to":{"x":592.2,"z":461.1},"width":3.2,"height":4,"rise":1.1},
     ],
   },
   {
