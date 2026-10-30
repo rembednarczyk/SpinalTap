@@ -11,6 +11,7 @@ import { SHOPFRONT_BIT, WINDOW_STYLE, facadeStyle } from "../src/renderer/mapcit
 import { MAP_LOD, MapCity, type MapView } from "../src/renderer/mapcity/map-city";
 import { cleanRing } from "../src/renderer/mapcity/polygon";
 import { MAP_SIGN_KIND, planBuildingSigns } from "../src/renderer/mapcity/sign-plan";
+import { stackTiers } from "../src/renderer/mapcity/vertical-plan";
 
 const rect = (x0: number, z0: number, x1: number, z1: number) => cleanRing([{ x: x0, z: z0 }, { x: x1, z: z0 }, { x: x1, z: z1 }, { x: x0, z: z1 }]);
 
@@ -99,6 +100,23 @@ describe("facades of map buildings (ADR-0044)", () => {
     expect(top(near)).toBeGreaterThan(18 + 8);
     expect(top(far)).toBeGreaterThan(18 + 8);
     expect(far.vertexCount * 4).toBeLessThan(near.vertexCount);
+  });
+
+  it("gives a tenement under a superstructure a flat terrace instead of the pitched roof the tiers would cut through", () => {
+    let checked = 0;
+    for (let id = 0; id < 40; id++) {
+      const f = facadeFrame(tenement(id, rect(0, 0, 18, 12), { rise: 9 }), none);
+      if (f.style.roof !== "hip" || stackTiers(f).length === 0) continue;
+      checked += 1;
+      const top = (s: MeshSink) => Math.max(...s.positions.filter((_, i) => i % 3 === 1));
+      const near = new MeshSink();
+      const far = new MeshSink();
+      planNearBuilding(near, f);
+      planFarBuilding(far, f);
+      expect(top(near)).toBeLessThanOrEqual(f.top + 0.15);
+      expect(top(far)).toBeLessThanOrEqual(f.top + 0.01);
+    }
+    expect(checked).toBeGreaterThan(0);
   });
 
   it("keeps a tenement's pitched roof in the far block, up to the same ridge as near", () => {

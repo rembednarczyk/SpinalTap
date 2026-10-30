@@ -8,6 +8,7 @@ import { WINDOW_STYLE } from "./facade-style";
 import { type P2, offsetRing, triangulate } from "./polygon";
 import { polygon } from "./sink-ops";
 import { addDome, addHipRoof, addTowers } from "./roof-plan";
+import { stackTiers } from "./vertical-plan";
 
 
 /**
@@ -152,9 +153,20 @@ const soffit = (sink: MeshSink, f: FacadeFrame, color: Rgba): void => {
   band(sink, ring, 0.08, y - 0.22, y + 0.1, color, trimMeta(f.style.seed), f.b.base);
 };
 
+/**
+ * The building carries a superstructure of vertical Lublin (ADR-0051): its pitched roof came
+ * off for it, so the tiers stand on a flat terrace instead of cutting through the tiles.
+ */
+const stacked = (f: FacadeFrame): boolean => (f.b.rise ?? 0) > 0 && stackTiers(f).length > 0;
+
 const roofOf = (sink: MeshSink, f: FacadeFrame, p: Palette): void => {
   const s = f.style;
   const roof = f.b.roof ?? 0;
+  if (stacked(f)) {
+    // A low parapet round the terrace; the first tier starts 0.4 m into it.
+    parapet(sink, f, f.top - 0.4, p);
+    return;
+  }
   if (s.roof === "hip" && roof > 0.3) {
     if (s.attic !== "none") parapet(sink, f, f.top - 0.4, p);
     addHipRoof(sink, f, roof, p.roof, p.trim);
@@ -173,7 +185,10 @@ const roofOf = (sink: MeshSink, f: FacadeFrame, p: Palette): void => {
 export const planFarBuilding = (sink: MeshSink, f: FacadeFrame): void => {
   const p = paletteOf(f);
   const roof = f.b.roof ?? 0;
-  if (f.style.roof === "hip" && roof > 0.3) {
+  if (stacked(f)) {
+    walls(sink, f, f.top, p.wall);
+    slab(sink, f.b.ring, f.top, p.roof, roofMeta(f.style.seed));
+  } else if (f.style.roof === "hip" && roof > 0.3) {
     // The same pitched roof as near, so a tenement keeps its red roof across the city.
     walls(sink, f, f.top, p.wall);
     addHipRoof(sink, f, roof, p.roof, p.trim, false);
