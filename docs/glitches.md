@@ -18,7 +18,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: test migawki poniżej 45 s lokalnie, migawka bez zmian; limitu się nie podnosi.
 
 ### G-002 Dostawczak jedzie przez bramę Ku Farze z zakazem wjazdu
-- Status: weryfikacja (naprawa orkiestratora: tylko bramy pod budynkiem z `motor_vehicle=no`; deptaki z `motor_vehicle=no` dalej obsługują dostawy zgodnie z ADR-0050)
+- Status: weryfikacja PRZYJĘTE, w PR #44 (naprawa orkiestratora: tylko bramy pod budynkiem z `motor_vehicle=no`; deptaki z `motor_vehicle=no` dalej obsługują dostawy zgodnie z ADR-0050)
 - Ważność: S4 · Zasięg: lokalny · Koszt: mały
 - Gdzie: Ku Farze (616, 44), droga OSM 481583497 `motor_vehicle=no`
 - Dowód: trasa `Ku Farze#66:d` biegnie przez przejście; importer nie zapisuje `motor_vehicle`.
@@ -245,7 +245,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: auto po resynchronizacji w łuku nie przekracza `TURN_SPEED`; test zawrotki bez złagodzenia przechodzi z G-020.
 
 ### G-029 Kliknięcie „Nowa gra” w `models.spec.ts` wisi ponad 60 s na CI
-- Status: weryfikacja (naprawa: `GpuPacer` w engine, najwyżej 2 klatki w kolejce GPU; ekran tytułowy 20 → 2 klatki przed płotem, `models.spec` 15–33 s; kryterium < 10 s do potwierdzenia na CI)
+- Status: w naprawie, 2. runda (weryfikacja NIE PRZYJĘTE: po utracie kontekstu WebGL pacer blokuje rysowanie na stałe; naprawa: `GpuPacer` w engine, najwyżej 2 klatki w kolejce GPU; ekran tytułowy 20 → 2 klatki przed płotem, `models.spec` 15–33 s; kryterium < 10 s do potwierdzenia na CI)
 - Ważność: S1 (proponowana: czerwone CI, niestabilne) · Zasięg: każdy PR · Koszt: nieznany
 - Gdzie: `e2e/models.spec.ts:16`, shard E2E 1/3
 - Dowód: PR #37 (CI 41089511069) pada w obu próbach, PR #33 (CI 41069178665) przeszedł przy drugiej. Playwright: element widoczny i stabilny, „performing click action” bez końca, więc wątek strony zablokowany.
