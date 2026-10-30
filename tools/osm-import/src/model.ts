@@ -38,6 +38,8 @@ export interface GroundOut {
   readonly outline: readonly number[];
   /** Laid on a bridge, not on the terrain. */
   readonly bridge?: true;
+  /** The bridge's deck axis, `[x0, z0, x1, z1]`: the bridge way's ends, its abutments. */
+  readonly deck?: readonly number[];
 }
 
 export interface StreetOut {

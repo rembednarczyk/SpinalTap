@@ -54,5 +54,6 @@
 | [0050](0050-zywe-ulice-meble-tlum-ruch.md) | Żywe ulice: meble uliczne w grze jako tanie pryzmaty i scenografia (bloki 256 m pieczone w jedną siatkę, jedno halo), gęstszy tłum z grupami przy ławkach, ogródkach, kioskach i wiatach, ruch uliczny i trolejbusy z ziarna i zegara poza zapisem, zaparkowane auta na krawężnikach i Placu Zamkowym | Zaakceptowana |
 | [0051](0051-pionowy-lublin-2077.md) | Pionowy Lublin 2077: nadbudowy (kontenery, kapsuły, szklane boksy) z `look` i dzielnicy, bryły tylko w górę, kable, kładki, reklamy polsko-japońskie, zasłony neonowe, snopy i niska mgła w siatkach komórek, korpo-wieże jako impostory w perspektywie | Zaakceptowana |
 | [0052](0052-oznakowanie-poziome.md) | Oznakowanie poziome: zebry z przejść OSM, linie osi, pasów, krawędzi i zatrzymania z `lanes`/`oneway`/sygnalizacji, pasy rowerowe i autobusowe, w samoświecącej neonowej farbie; jezdnia nad placami i alejkami, chodniki przycięte na krawężniku | Zaakceptowana |
+| [0053](0053-pomosty-mostow.md) | Pomosty mostów: nawierzchnie z dróg `bridge=*` na pomoście od przyczółka do przyczółka w gruncie symulacji, `groundY` i rendererze, z opaską na krawędziach | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.

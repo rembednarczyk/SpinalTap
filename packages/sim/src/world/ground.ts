@@ -2,11 +2,14 @@ import { type TerrainGrid, type Vec3, terrainHeightAt } from "@seki/core";
 import type { World } from "miniplex";
 import type { Rect } from "../content/builders";
 import type { Entity } from "./components";
+import { type GroundDeck, deckAt } from "./deck";
 
 /** What the ground needs of a chunk: where it is and, optionally, its terrain (ADR-0043). */
 export interface GroundChunk {
   readonly bounds: Rect;
   readonly terrain?: TerrainGrid;
+  /** Bridge decks over its terrain (ADR-0053). */
+  readonly decks?: readonly GroundDeck[];
 }
 
 /** Steepest ground a character walks on, as rise over run: tan 35° (ADR-0043). */
@@ -89,11 +92,14 @@ export class GroundField {
     return this.chunks[this.chunkIndex(x, z)]?.terrain ?? null;
   }
 
-  /** Ground height at (x, z): the terrain, or 0. */
+  /** Ground height at (x, z): the terrain, or a bridge's deck over it (ADR-0053), or 0. */
   heightAt(x: number, z: number): number {
     if (!this.hasTerrain) return 0;
-    const grid = this.gridAt(x, z);
-    return grid ? terrainHeightAt(grid, x, z) : 0;
+    const chunk = this.chunks[this.chunkIndex(x, z)];
+    const grid = chunk?.terrain;
+    const h = grid ? terrainHeightAt(grid, x, z) : 0;
+    const deck = chunk?.decks ? deckAt(chunk.decks, x, z) : null;
+    return deck !== null && deck > h ? deck : h;
   }
 
   /**

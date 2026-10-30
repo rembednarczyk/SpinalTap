@@ -26,7 +26,7 @@ console.log(`props.generated.ts: ${(statSync(OUT).size / 1024).toFixed(0)} KiB, 
 console.log("per kind:", Object.entries(stats.perKind).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(", "));
 console.log("per district:", Object.entries(stats.perDistrict).map(([k, n]) => `${k} ${n}`).join(", "));
 console.log(`dropped: ${stats.outside} outside the chunks, ${stats.inBuilding} inside building outlines, ${stats.onRoad} on a road with no pavement near, ${stats.merged} too close to the same kind`);
-console.log(`moved off the road onto the pavement: ${stats.offRoad}`);
+console.log(`moved off the road onto the pavement or away from a wall: ${stats.offRoad}`);
 console.log("mapped:", Object.entries(stats.mapped).map(([k, v]) => `${k} -> ${v} (${MAPPED[k]?.why ?? ""})`).join("; "));
 console.log("skipped:", Object.entries(stats.skipped).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n} (${SKIPPED[k] ?? "unknown kind"})`).join("; "));
 if (process.argv.includes("--items")) {

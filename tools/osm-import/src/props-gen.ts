@@ -9,7 +9,7 @@ import type { StreetPropItem, StreetPropKind } from "../../../packages/core/src/
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
 import { type Pt, centroid } from "./geometry.ts";
 import { MAPPED, propOf, withShape } from "./props-kinds.ts";
-import { type SideMode, type Station, evenStations, fnv, offRoad, openFacing, scatter, sideOffset, stations, towardsStreet, unit, yawOf } from "./props-place.ts";
+import { type SideMode, type Station, evenStations, fnv, offRoad, offWall, openFacing, scatter, sideOffset, stations, towardsStreet, unit, yawOf } from "./props-place.ts";
 import { Site } from "./props-site.ts";
 import { nearTraffic, placeStreetGroup } from "./props-streets.ts";
 
@@ -57,7 +57,7 @@ export interface PropsStats {
   /** Pieces dropped: outside every chunk, inside a building outline, or too close to the same kind. */
   readonly outside: number;
   readonly inBuilding: number;
-  /** Pieces moved off the carriageway onto the pavement, and dropped with no pavement near. */
+  /** Pieces moved off the carriageway onto the pavement or out from a wall, and dropped on a road with no pavement near. */
   readonly offRoad: number;
   readonly onRoad: number;
   readonly merged: number;
@@ -268,6 +268,9 @@ const r1 = (v: number): number => Math.round(v * 10) / 10 + 0;
 /** Kinds that may stand on a building outline: wall-mounted, or a structure that is the outline itself. */
 const ON_BUILDINGS: ReadonlySet<StreetPropKind> = new Set(["lamp-wall-lantern", "floodlight", "cctv", "kiosk", "bus-shelter"]);
 
+/** How far the bulky free-standing pieces keep from the walls (m): about their footprint's radius. */
+const WALL_ROOM: Partial<Record<StreetPropKind, number>> = { artwork: 1.5, monument: 1.5, kiosk: 1.7, "bus-shelter": 2, bench: 1.2, "vending-machine": 0.7, "advertising-column": 0.8 };
+
 /** Kinds that belong on the carriageway: covers in it, bollards closing it. */
 const ON_ROAD: ReadonlySet<StreetPropKind> = new Set(["manhole", "bollard"]);
 
@@ -328,8 +331,15 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
       onRoad++;
       continue;
     }
-    if (off !== at) moved++;
-    const x = off === at ? placedAt : { ...placedAt, p: { x: r1(off.x), z: r1(off.z) } };
+    // A sculpture or a kiosk from a node on a facade stands clear of the wall.
+    const room = ON_BUILDINGS.has(placedAt.prop) ? undefined : WALL_ROOM[placedAt.prop];
+    const free = room === undefined ? off : offWall(site, off, room);
+    if (!free) {
+      inBuilding++;
+      continue;
+    }
+    if (free !== at) moved++;
+    const x = free === at ? placedAt : { ...placedAt, p: { x: r1(free.x), z: r1(free.z) } };
     const chunk = site.chunkAt(x.p);
     if (!chunk) {
       outside++;

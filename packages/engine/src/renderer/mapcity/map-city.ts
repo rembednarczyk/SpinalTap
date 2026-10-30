@@ -16,6 +16,7 @@ import { BinIndex, cellBounds, cellKey, cellsOf, grow } from "./map-index";
 import { type Box2, type P2, boundsOf, centroid, cleanRing, distanceToBox, pointInRing } from "./polygon";
 import { planBuildingSigns } from "./sign-plan";
 import { planCrossing } from "./crossing-plan";
+import { type DeckAxis, Decks, planDeckEdges, planDeckUnderside } from "./deck-plan";
 import { planMarking } from "./marking-plan";
 import { type AcrossAt, SPAN_MAX, type Span, findSpans, planFarCanyon, planNearCanyon } from "./canyon-plan";
 import { planCanyonSigns } from "./canyon-signs";
@@ -60,6 +61,8 @@ interface GroundEntry {
   readonly surface: GroundSurface;
   /** A line of road markings (ADR-0052): `ring` is its open line, `surface` the road it lies on. */
   readonly marking?: RoadMarkingKind;
+  /** On a bridge (ADR-0053): the deck it is laid on. */
+  readonly deck?: DeckAxis;
   readonly ring: readonly P2[];
   readonly y: number;
   readonly bounds: Box2;
@@ -132,6 +135,7 @@ export class MapCity {
   private readonly roadIndex = new BinIndex();
   /** Every surface but water, for the lift of the feet standing on one (ADR-0045). */
   private readonly surfaceIndex = new BinIndex();
+  private readonly decks = new Decks();
   private readonly signs: MapSignMaterial;
   private readonly water: MapWaterMaterial;
   private readonly lod: MapLod;
@@ -200,7 +204,8 @@ export class MapCity {
       this.buildingIndex.add(id, bounds);
       this.cellOf(cell).buildings.add(id);
     } else {
-      this.grounds.set(id, { surface: view.surface, ring, y: at.y, bounds, cell });
+      this.grounds.set(id, { surface: view.surface, ring, y: at.y, bounds, cell, ...(view.deck ? { deck: view.deck } : {}) });
+      if (view.deck) this.decks.add(id, ring, view.deck);
       if (view.surface === "road") this.roadIndex.add(id, bounds);
       if (view.surface !== "water" && view.surface !== "basin") this.surfaceIndex.add(id, bounds);
       this.cellOf(cell).grounds.add(id);
@@ -227,6 +232,7 @@ export class MapCity {
     if (!e) return;
     this.buildings.delete(id);
     this.grounds.delete(id);
+    this.decks.remove(id);
     this.buildingIndex.remove(id);
     this.roadIndex.remove(id);
     this.surfaceIndex.remove(id);
@@ -268,10 +274,11 @@ export class MapCity {
   /**
    * How far the picture lifts feet at (x, y, z) above the terrain (ADR-0045): a character the
    * simulation keeps on the terrain stands on the surface drawn there (a sidewalk 16 cm up, a
-   * square 8 cm). Feet off the ground (stairs, decks, floors) are left alone.
+   * square 8 cm), a bridge's deck included (ADR-0053). Feet off the ground (stairs, decks,
+   * floors) are left alone.
    */
   surfaceLift(x: number, y: number, z: number): number {
-    const ground = this.heightAt(x, z);
+    const ground = this.decks.heightAt(x, z) ?? this.heightAt(x, z);
     if (ground === null || Math.abs(y - ground) > 0.3) return 0;
     let lift = 0;
     for (const id of this.surfaceIndex.at(x, z)) {
@@ -503,9 +510,15 @@ export class MapCity {
     for (const id of [...cell.grounds].sort((a, b) => a - b)) {
       const g = this.grounds.get(id);
       if (!g) continue;
-      const h = (x: number, z: number) => this.heightAt(x, z) ?? g.y;
+      const terrain = (x: number, z: number) => this.heightAt(x, z) ?? g.y;
+      // Laid on a bridge's deck where there is one (ADR-0053); the river stays on the terrain.
+      const h = (x: number, z: number) => this.decks.heightAt(x, z) ?? terrain(x, z);
+      if (g.deck && g.surface !== "water") {
+        planDeckEdges(ground, g.ring, h, SURFACE_LIFT[g.surface], (x, z) => this.decks.heightAt(x, z) !== null);
+        planDeckUnderside(ground, g.ring, h, SURFACE_LIFT[g.surface]);
+      }
       if (g.marking) planMarking(ground, g.marking, g.ring, h);
-      else if (g.surface === "water") planWater(water, g.ring, h);
+      else if (g.surface === "water") planWater(water, g.ring, terrain);
       else if (g.surface === "basin") planBasin(water, ground, g.ring, h);
       else if (g.surface === "steps") planSteps(ground, g.ring, h);
       else if (g.surface === "crossing") planCrossing(ground, g.ring, h);

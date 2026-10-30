@@ -148,7 +148,17 @@ export type ViewDescriptor =
    * lawns, the river. Points are world x and z relative to the entity's position; the
    * renderer drapes them on the terrain of the same chunk.
    */
-  | { readonly kind: "ground"; readonly surface: GroundSurface; readonly outline: readonly GroundPoint[] }
+  | {
+      readonly kind: "ground";
+      readonly surface: GroundSurface;
+      readonly outline: readonly GroundPoint[];
+      /**
+       * On a bridge (ADR-0053): the deck's axis from abutment to abutment, world points with the
+       * deck's height there. The renderer lays the piece, and whatever is painted on it, at the
+       * deck's height (straight between the two, level across) instead of on the terrain.
+       */
+      readonly deck?: { readonly a: Vec3; readonly b: Vec3 };
+    }
   /**
    * The street furniture of a chunk (ADR-0047): lamps, benches, trees, bollards and the rest,
    * drawn instanced per kind. Positions are relative to the entity's position.

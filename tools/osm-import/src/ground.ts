@@ -63,6 +63,8 @@ export interface Band {
   readonly surface: GroundSurface;
   readonly ring: readonly Pt[];
   readonly bridge: boolean;
+  /** On a bridge: the bridge way's two ends, the deck's axis from abutment to abutment. */
+  readonly deck?: readonly [Pt, Pt];
   readonly source: string;
   /** A carriageway's own band (not a parking area or a road area). */
   readonly carriageway?: true;
@@ -99,9 +101,10 @@ export const lineBands = (l: Line, mappedSidewalkNear: boolean, water: readonly 
   const t = l.tags;
   if (underground(t) || l.line.length < 2) return [];
   const bridge = t.bridge !== undefined && t.bridge !== "no";
+  const deck = bridge ? ([l.line[0]!, l.line[l.line.length - 1]!] as const) : undefined;
   const out: Band[] = [];
   const add = (surface: GroundSurface, ring: Pt[], extra: Pick<Band, "carriageway" | "along"> = {}) => {
-    if (ring.length >= 3) out.push({ surface, ring, bridge, source: l.id, ...extra });
+    if (ring.length >= 3) out.push({ surface, ring, bridge, ...(deck ? { deck } : {}), source: l.id, ...extra });
   };
   const hw = t.highway;
   if (hw && t.area !== "yes") {
@@ -204,7 +207,7 @@ export const cutSidewalk = (b: Band, onRoad: (p: Pt) => boolean): Band[] => {
   if (runs.length === 1 && runs[0]![0] === 0 && runs[0]![1] >= total - 1e-6) return [b];
   return runs
     .filter(([a, c]) => c - a >= MIN_SIDEWALK)
-    .map(([a, c]) => ({ surface: b.surface, ring: stripAlong(sliceLine(line, a, c), from, width), bridge: b.bridge, source: b.source }))
+    .map(([a, c]) => ({ surface: b.surface, ring: stripAlong(sliceLine(line, a, c), from, width), bridge: b.bridge, ...(b.deck ? { deck: b.deck } : {}), source: b.source }))
     .filter((r) => r.ring.length >= 3);
 };
 
@@ -223,7 +226,8 @@ export const chunkGround = (bands: readonly Band[], rect: Rect): GroundOut[] => 
     );
     if (simple.length < 3 || Math.abs(signedArea(simple)) < 0.5) return;
     const ring = ccw(simple);
-    out.push({ g: { surface: b.surface, outline: ring.flatMap((p) => [p.x, p.z]), ...(b.bridge ? { bridge: true as const } : {}) }, order: ORDER[b.surface], source: b.source, k });
+    const deck = b.deck ? { deck: [r1(b.deck[0].x), r1(b.deck[0].z), r1(b.deck[1].x), r1(b.deck[1].z)] } : {};
+    out.push({ g: { surface: b.surface, outline: ring.flatMap((p) => [p.x, p.z]), ...(b.bridge ? { bridge: true as const } : {}), ...deck }, order: ORDER[b.surface], source: b.source, k });
   });
   out.sort((a, b) => a.order - b.order || (a.source < b.source ? -1 : a.source > b.source ? 1 : a.k - b.k));
   return out.map((o) => o.g);

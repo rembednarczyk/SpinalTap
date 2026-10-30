@@ -11,7 +11,7 @@ import { REPO } from "../src/paths.ts";
 import { emitProps } from "../src/props-emit.ts";
 import { type PropsPlan, generateProps } from "../src/props-gen.ts";
 import { SHAPES, knownKind, propOf, withShape } from "../src/props-kinds.ts";
-import { evenStations, offRoad, scatter, stations } from "../src/props-place.ts";
+import { evenStations, offRoad, offWall, scatter, stations } from "../src/props-place.ts";
 import { Site } from "../src/props-site.ts";
 
 const CHUNKS = [...KRAKOWSKIE_CHUNKS, ...STARE_MIASTO_CHUNKS, ...PODZAMCZE_CHUNKS, ...NABRZEZE_CHUNKS];
@@ -120,6 +120,14 @@ describe("street furniture generator (ADR-0047)", () => {
     const city = new Site(CHUNKS);
     const onRoad = [...byChunk.values()].flat().filter((i) => city.surfaceAt({ x: i.x, z: i.z }) === "road");
     expect(onRoad.filter((i) => i.prop !== "manhole" && i.prop !== "bollard").length).toBeLessThanOrEqual(1);
+  });
+
+  it("moves a sculpture from a node on a facade out of the wall by its footprint", () => {
+    const site = new Site([street()]);
+    // The houses' south wall is on z = 38.
+    const at = offWall(site, { x: 50, z: 37.8 }, 1.5)!;
+    expect(at.z).toBeLessThanOrEqual(36.5);
+    expect(offWall(site, { x: 50, z: 30 }, 1.5)).toEqual({ x: 50, z: 30 });
   });
 
   it("forces the shapes the plan names into the variant's low bits", () => {
