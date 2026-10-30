@@ -28,7 +28,7 @@ export default tseslint.config(
   },
   {
     // Guard against god objects and god functions (ADR-0031). Blank lines and comments do not count.
-    files: ["packages/*/src/**/*.ts", "packages/*/src/**/*.tsx"],
+    files: ["packages/*/src/**/*.ts", "packages/*/src/**/*.tsx", "tools/*/src/**/*.ts"],
     rules: {
       "max-lines": ["error", { max: 500, skipBlankLines: true, skipComments: true }],
       "max-lines-per-function": ["error", { max: 120, skipBlankLines: true, skipComments: true }],

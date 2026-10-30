@@ -312,7 +312,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola skanu „łańcuch słupków przez mebel” daje 0.
 
 ### G-040 Śmierć babci Ume blokuje krok ren_trail
-- Status: zgłoszone (z weryfikacji G-035, do potwierdzenia)
+- Status: odrzucone (Ume nie ma `health` w `district-m0.ts`, a NPC bez niego nie da się zranić ani zabić, `builders.ts:77`; krok nie może się zablokować)
 - Ważność: S2 (proponowana: blokada wątku) · Dowód: krok `ren_trail` (po zakończeniu „aya”) kończy tylko rozmowa z Ume; po `dead:ume` znacznik znika i nie ma innej drogi.
 
 ### G-006 Skręty aut na skrzyżowaniach
