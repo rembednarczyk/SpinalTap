@@ -248,7 +248,10 @@ const streetLanes = (): CrowdLane[] =>
         if (used.some((u) => Math.abs(u - half) < 1.4)) continue;
         const loop = weave(loopAround(line, half));
         if (!clearLoop(loop)) continue;
-        out.push({ id: `${c.id}-${out.length}`, chunk: c.id, points: loop });
+        // Where the deptak's end meets a street, its walkers turn back at the kerb.
+        const run = clearRun(loop);
+        if (!run) continue;
+        out.push({ id: `${c.id}-${out.length}`, chunk: c.id, points: run });
         used.push(half);
       }
     }
