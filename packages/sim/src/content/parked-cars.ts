@@ -1,4 +1,4 @@
-import { VEHICLE_SIZE, type VehicleModel, type ViewDescriptor } from "@seki/core";
+import { type GroundSurface, VEHICLE_SIZE, type VehicleModel, type ViewDescriptor } from "@seki/core";
 import type { StaticProp } from "./builders";
 import { furnitureClearance } from "./furniture-index";
 import { inBuilding, nearestWall } from "./lublin/places";
@@ -40,6 +40,8 @@ const KERB_BAY = 6.2;
 const JUNCTION_CLEAR = 12;
 /** A parked car's side keeps this far from the axis of a lane cars drive (their half width and a gap, m). */
 const LANE_CLEAR = 1.4;
+/** Sideways shifts tried for a kerb bay, the kerb line's own first (m, negative towards the axis). */
+const KERB_NUDGE = [0, -0.4, -0.8, -1.2, 0.4] as const;
 /** Share of the bays taken. */
 const KERB_TAKEN = 0.62;
 const SQUARE_TAKEN = 0.8;
@@ -47,8 +49,33 @@ const SQUARE_TAKEN = 0.8;
 const chunkOf = (x: number, z: number): string =>
   MAP_CHUNKS.find((c) => x >= c.bounds.minX && x <= c.bounds.maxX && z >= c.bounds.minZ && z <= c.bounds.maxZ)?.id ?? "";
 
-/** Is a car's footprint at (x, z), facing yaw, free of walls, furniture, the game's places and other streets' axes? */
+/** The corners of a car's footprint at (x, z), facing yaw, grown by `pad`. */
+const footprint = (x: number, z: number, yaw: number, model: VehicleModel, pad: number): Pt[] => {
+  const { width, length } = VEHICLE_SIZE[model];
+  const fx = Math.sin(yaw);
+  const fz = Math.cos(yaw);
+  const hw = width / 2 + pad;
+  const hl = length / 2 + pad;
+  return [
+    [x - fx * hl - fz * hw, z - fz * hl + fx * hw],
+    [x + fx * hl - fz * hw, z + fz * hl + fx * hw],
+    [x + fx * hl + fz * hw, z + fz * hl - fx * hw],
+    [x - fx * hl + fz * hw, z - fz * hl - fx * hw],
+  ];
+};
+
+/** Surfaces a car may stand on: the carriageway (a zebra on it too) and the cobbled squares. */
+const PARKABLE: ReadonlySet<GroundSurface> = new Set<GroundSurface>(["road", "crossing", "cobble", "square"]);
+const parkable = (x: number, z: number): boolean => surfacesAt(x, z).some((s) => PARKABLE.has(s));
+
+/**
+ * Is a car's footprint at (x, z), facing yaw, wholly on a carriageway or a square and free of
+ * walls, furniture, the game's places and other streets' axes? A street's kerb line is set from
+ * its median width, so where the carriageway narrows (a bend, a pinch by a pavement) the bay
+ * falls on the grass or the pavement unless each corner is checked.
+ */
 const fits = (x: number, z: number, yaw: number, model: VehicleModel): boolean => {
+  if (!parkable(x, z) || !footprint(x, z, yaw, model, 0).every(([px, pz]) => parkable(px, pz))) return false;
   const { width, length } = VEHICLE_SIZE[model];
   const fx = Math.sin(yaw);
   const fz = Math.cos(yaw);
@@ -80,8 +107,12 @@ const kerbCars = (): ParkedCar[] => {
         if (hash(p.x, p.z, 1) / 0x100000000 >= KERB_TAKEN) continue;
         const yaw = Math.atan2(p.tx, p.tz);
         const model = modelAt(p.x, p.z);
-        if (!fits(p.x, p.z, yaw, model)) continue;
-        out.push({ chunk: chunkOf(p.x, p.z), x: Math.round(p.x * 100) / 100, y: 0, z: Math.round(p.z * 100) / 100, yaw: Math.round(yaw * 1000) / 1000, model, tint: hash(p.x, p.z, 2) });
+        // The kerb line is the street's median one; where the carriageway is locally narrower the car edges in.
+        const shift = KERB_NUDGE.find((d) => fits(p.x + p.tz * d, p.z - p.tx * d, yaw, model));
+        if (shift === undefined) continue;
+        const x = p.x + p.tz * shift;
+        const z = p.z - p.tx * shift;
+        out.push({ chunk: chunkOf(x, z), x: Math.round(x * 100) / 100, y: 0, z: Math.round(z * 100) / 100, yaw: Math.round(yaw * 1000) / 1000, model, tint: hash(p.x, p.z, 2) });
       }
     }
   }
@@ -126,25 +157,10 @@ const squareCars = (): ParkedCar[] => {
   return out;
 };
 
-/** The corners of a car's footprint, grown by `pad`. */
-const cornersOf = (c: ParkedCar, pad: number): Pt[] => {
-  const { width, length } = VEHICLE_SIZE[c.model];
-  const fx = Math.sin(c.yaw);
-  const fz = Math.cos(c.yaw);
-  const hw = width / 2 + pad;
-  const hl = length / 2 + pad;
-  return [
-    [c.x - fx * hl - fz * hw, c.z - fz * hl + fx * hw],
-    [c.x + fx * hl - fz * hw, c.z + fz * hl + fx * hw],
-    [c.x + fx * hl + fz * hw, c.z + fz * hl - fx * hw],
-    [c.x - fx * hl + fz * hw, c.z - fz * hl - fx * hw],
-  ];
-};
-
 /** Do two footprints overlap (separating axes of two rectangles)? */
 const overlap = (a: ParkedCar, b: ParkedCar): boolean => {
-  const pa = cornersOf(a, 0.15);
-  const pb = cornersOf(b, 0.15);
+  const pa = footprint(a.x, a.z, a.yaw, a.model, 0.15);
+  const pb = footprint(b.x, b.z, b.yaw, b.model, 0.15);
   for (const poly of [pa, pb]) {
     for (let i = 0; i < 2; i++) {
       const ex = poly[i + 1]![0] - poly[i]![0];

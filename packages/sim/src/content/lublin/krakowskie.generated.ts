@@ -1378,7 +1378,6 @@ export const KRAKOWSKIE_CHUNKS: readonly LublinChunkData[] = [
       {"building":"w69915878","from":{"x":212.8,"z":31.7},"to":{"x":220.6,"z":41.4},"width":3.2,"height":4,"rise":1.1},
       {"building":"w232674409","from":{"x":133.4,"z":102.8},"to":{"x":136.5,"z":118.5},"width":3.2,"height":4,"rise":1.1},
       {"building":"w69915878","from":{"x":232.8,"z":67.9},"to":{"x":235.7,"z":75},"width":3.2,"height":4,"rise":1.1},
-      {"building":"w232674407","from":{"x":46,"z":157.2},"to":{"x":30.7,"z":161},"width":3.2,"height":4,"rise":1.1},
     ],
   },
   {

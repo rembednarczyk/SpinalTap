@@ -28,4 +28,10 @@ describe("passages through buildings from the map (ADR-0048)", () => {
     expect(buildingPassages([way(4, { highway: "service", tunnel: "building_passage" }, [[10, -5], [10, 6]])], [house])).toEqual([]);
     expect(buildingPassages([way(5, { highway: "service" }, [[10, -5], [10, 20]])], [house])).toEqual([]);
   });
+
+  it("make none with an end off the map's data, where there is no ground to come out on", () => {
+    const gate = way(6, { highway: "service", tunnel: "building_passage" }, [[10, 0], [10, 12]]);
+    expect(buildingPassages([gate], [house], [{ minX: -50, maxX: 50, minZ: -50, maxZ: 12 }])).toEqual([]);
+    expect(buildingPassages([gate], [house], [{ minX: -50, maxX: 50, minZ: -50, maxZ: 12 }, { minX: -50, maxX: 50, minZ: 12, maxZ: 50 }])).toHaveLength(1);
+  });
 });

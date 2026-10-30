@@ -3,7 +3,9 @@
  * lanes the map draws as ways with `tunnel=building_passage` running under a building. Each
  * becomes a straight vaulted passage cut through the building's solid, from a little before its
  * facade on one side to a little past the other. A way that only leads into a building (into a
- * courtyard the outline does not cut out) makes none: its far end would open into the solid.
+ * courtyard the outline does not cut out) makes none: its far end would open into the solid. Nor
+ * does one with an end off the map's data: there is no ground there to come out on, and cut
+ * short it would end inside the building.
  */
 import { parseLength } from "./building-tags.ts";
 import { type Area, type Line } from "./features.ts";
@@ -55,8 +57,14 @@ const extended = (line: readonly Pt[]): Pt[] => {
   return [on(line[0]!, line[1]!), ...line, on(line[line.length - 1]!, line[line.length - 2]!)];
 };
 
-/** The passages of the map's `tunnel=building_passage` ways through the buildings they run under, in the ways' order. */
-export const buildingPassages = (lines: readonly Line[], buildings: readonly Area[]): PassageOut[] => {
+/** Is p in one of the rects (edges included)? */
+const inAny = (p: Pt, area: readonly Rect[]): boolean => area.some((r) => p.x >= r.minX && p.x <= r.maxX && p.z >= r.minZ && p.z <= r.maxZ);
+
+/**
+ * The passages of the map's `tunnel=building_passage` ways through the buildings they run under,
+ * in the ways' order, those with both ends in `area` (the chunks' rects) when it is given.
+ */
+export const buildingPassages = (lines: readonly Line[], buildings: readonly Area[], area?: readonly Rect[]): PassageOut[] => {
   const boxes = buildings.map((b) => ({ b, box: ringBounds(b.ring) as Rect }));
   const out: PassageOut[] = [];
   const seen = new Set<string>();
@@ -75,6 +83,7 @@ export const buildingPassages = (lines: readonly Line[], buildings: readonly Are
         const uz = (leave.z - enter.z) / len;
         const from = { x: enter.x - ux * BEYOND, z: enter.z - uz * BEYOND };
         const to = { x: leave.x + ux * BEYOND, z: leave.z + uz * BEYOND };
+        if (area && !(inAny({ x: r1(from.x), z: r1(from.z) }, area) && inAny({ x: r1(to.x), z: r1(to.z) }, area))) continue;
         const key = `${b.id}:${r1(from.x)},${r1(from.z)}`;
         if (seen.has(key)) continue;
         seen.add(key);
