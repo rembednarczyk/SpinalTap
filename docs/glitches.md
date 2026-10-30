@@ -156,7 +156,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: budynek z `amenity=shelter` (lub `building=roof`/`shelter`) ma wysokość wiaty (≤ 3,5 m, jedna kondygnacja) albo staje się meblem `bus-shelter`.
 
 ### G-018 Pionowy pas czarnych kresek na bruku Placu Litewskiego
-- Status: przyjęte (potwierdzone zrzutem orkiestratora po G-013: `scratchpad/g018/litewski-back.png` i `litewski-down.png`). Kreski leżą dokładnie na pionowym szwie, gdzie wzór płyt bruku się przesuwa (ok. x 20, z 2–6 przed kamerą w (20, 10) z yaw 3,14); przypuszczalnie dwie nachodzące na siebie nawierzchnie placu w jednej płaszczyźnie (z-fighting) i kontur NPR na nieciągłości głębokości. Do ustalenia: obrysy `square` w `stare-miasto`/`krakowskie` w tym miejscu albo offset w `ground.ts`.
+- Status: przyjęte (potwierdzone zrzutem orkiestratora po G-013: `scratchpad/g018/litewski-back.png` i `litewski-down.png`). Kreski leżą dokładnie na pionowym szwie, gdzie wzór płyt bruku się przesuwa (ok. x 20, z 2–6 przed kamerą w (20, 10) z yaw 3,14); przypuszczalnie dwie nachodzące na siebie nawierzchnie placu w jednej płaszczyźnie (z-fighting) i kontur NPR na nieciągłości głębokości. Pomiar orkiestratora: w tym miejscu leży nawierzchnia `steps` 3 m × 18,6 m (x 17,7–21, z −9,7…8,9, na szwie chunków `krakowskie-0-1`/`1-1`) z linii OSM `highway=steps` (`ground.ts:122`, bufor 3 m), na płaskim placu; renderer rysuje jej stopnie jako ciemne kreski bez różnicy wysokości. Pod nią dwie nawierzchnie `square` w każdym chunku. Kierunek naprawy: schody bez spadku terenu wzdłuż linii (< ok. 0,3 m) nie dają nawierzchni `steps` albo dostają wysokość stopni; plus sprawdzenie podwójnych `square`. Pakiet: tools/osm-import (`ground.ts`), ewentualnie engine (rysowanie `steps`).
 - Ważność: S3 (proponowana) · Zasięg: lokalny
 - Gdzie: Plac Litewski (20, 10), kadr z yaw 3,14
 - Dowód: zrzut naprawiacza G-013 (pionowy pas czarnych poziomych kresek na środku bruku; może decal albo odpływ).
@@ -266,7 +266,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/app / e2e
 
 ### G-032 Słupki przy ulicach stoją chaotycznie: łańcuchy celują w różne strony i nie łączą sąsiadów; słupki za małe
-- Status: w naprawie (3. runda: latarnia jako ogniwo rzędu i wolne wyloty przejść dla pieszych, decyzje użytkownika)
+- Status: weryfikacja PRZYJĘTE (3. runda), czeka na PR po #44. Na samym Placu Łokietka nie został żaden łańcuch: słupek z wylotu zebry usunięty, sąsiedni zabiera gra (przejście do Bramy Krakowskiej). (Latarnia jako ogniwo rzędu i wolne wyloty przejść dla pieszych, decyzje użytkownika)
 - Ważność: S3 · Zasięg: szeroki (Plac Litewski, Krakowskie Przedmieście, deptak, Plac Łokietka; ok. 53 słupki z OSM) · Koszt: średni
 - Dowód: model `bollard()` (`engine/.../mapcity/prop-street.ts:36`) ma stałe odcinki łańcucha ±1 m w lokalnej osi X, a obrót słupka nie wynika z rzędu, w którym stoi; odstępy w rzędach 1,9–2,8 m (`docs/world/lublin-props.todo.json`). Słupek 0,26 × 0,95 m.
 - Pakiet właściciela: tools/osm-import (rzędy i obrót), packages/engine (model, łańcuch), packages/sim (`furniture.ts`, bryła)
