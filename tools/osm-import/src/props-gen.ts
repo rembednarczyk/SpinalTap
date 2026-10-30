@@ -9,9 +9,9 @@ import type { StreetPropItem, StreetPropKind } from "../../../packages/core/src/
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
 import { type Pt, centroid } from "./geometry.ts";
 import { MAPPED, propOf, withShape } from "./props-kinds.ts";
-import { type SideMode, type Station, evenStations, fnv, openFacing, scatter, sideOffset, stations, towardsStreet, unit, yawOf } from "./props-place.ts";
+import { type SideMode, type Station, evenStations, fnv, offRoad, openFacing, scatter, sideOffset, stations, towardsStreet, unit, yawOf } from "./props-place.ts";
 import { Site } from "./props-site.ts";
-import { placeStreetGroup } from "./props-streets.ts";
+import { nearTraffic, placeStreetGroup } from "./props-streets.ts";
 
 /** One group of the plan, as far as placement reads it. */
 export interface PlanItem {
@@ -57,6 +57,9 @@ export interface PropsStats {
   /** Pieces dropped: outside every chunk, inside a building outline, or too close to the same kind. */
   readonly outside: number;
   readonly inBuilding: number;
+  /** Pieces moved off the carriageway onto the pavement, and dropped with no pavement near. */
+  readonly offRoad: number;
+  readonly onRoad: number;
   readonly merged: number;
   /** Per group of the plan: pieces asked for and pieces placed. */
   readonly perItem: Record<string, [number, number]>;
@@ -186,6 +189,9 @@ const onOutline = (site: Site, item: PlanItem, prop: StreetPropKind, ring: reado
 
 const SINGLE_OUTLINE: ReadonlySet<StreetPropKind> = new Set(["kiosk", "bus-shelter", "bus-stop", "vending-machine"]);
 
+/** How far scattered pieces keep from a car street's axis (m): its two lanes, a car's half and the piece's own. */
+const TRAFFIC_REACH = 4.5;
+
 const placeItem = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: readonly Obstacle[]): Placed[] => {
   if (item.position) return [{ prop, p: item.position, yaw: item.yaw === undefined ? null : (item.yaw * Math.PI) / 180, key: typeof item.osm === "string" ? item.osm : item.id }];
   if (item.points) return item.points.map((q, i) => ({ prop, p: { x: q[0], z: q[1] }, yaw: null, key: osmAt(item, i) }));
@@ -193,7 +199,9 @@ const placeItem = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: 
     const ring = flat(item.polygon);
     if (SINGLE_OUTLINE.has(prop)) return [onOutline(site, item, prop, ring)];
     const count = JETS[item.kind] ?? item.count ?? 1;
-    return scatter(site, ring, count, item.id, AREA_GAP[prop] ?? 2).map((p, k) => ({ prop, p, yaw: null, key: `${item.id}~${k}` }));
+    // Off the lanes of the streets crossing the area (the car park of Plac Zamkowy under its flea market).
+    const clear = { surfaceAt: (p: Pt) => site.surfaceAt(p), standable: (p: Pt) => site.standable(p) && !nearTraffic(site, p, TRAFFIC_REACH) } as Site;
+    return scatter(clear, ring, count, item.id, AREA_GAP[prop] ?? 2).map((p, k) => ({ prop, p, yaw: null, key: `${item.id}~${k}` }));
   }
   if (item.line || item.lines) return [...onLines(site, item, prop, obstacles), ...fillPlace(site, item, prop, obstacles)];
   return [];
@@ -260,6 +268,9 @@ const r1 = (v: number): number => Math.round(v * 10) / 10 + 0;
 /** Kinds that may stand on a building outline: wall-mounted, or a structure that is the outline itself. */
 const ON_BUILDINGS: ReadonlySet<StreetPropKind> = new Set(["lamp-wall-lantern", "floodlight", "cctv", "kiosk", "bus-shelter"]);
 
+/** Kinds that belong on the carriageway: covers in it, bollards closing it. */
+const ON_ROAD: ReadonlySet<StreetPropKind> = new Set(["manhole", "bollard"]);
+
 /** Least distance between two pieces of one kind before the later one is dropped. */
 const minGap = (prop: StreetPropKind, fromLine: boolean): number => (prop.startsWith("lamp-") && fromLine ? 7 : prop === "trolley-pole" ? 10 : 0.3);
 
@@ -306,7 +317,19 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
   let outside = 0;
   let inBuilding = 0;
   let merged = 0;
-  for (const x of placed) {
+  let moved = 0;
+  let onRoad = 0;
+  for (const placedAt of placed) {
+    // A light, a machine or a tree from a node in the road stands on the nearest pavement.
+    // Judged where it ends up, at the 0.1 m the chunks keep.
+    const at = { x: r1(placedAt.p.x), z: r1(placedAt.p.z) };
+    const off = ON_ROAD.has(placedAt.prop) ? at : offRoad(site, at);
+    if (!off) {
+      onRoad++;
+      continue;
+    }
+    if (off !== at) moved++;
+    const x = off === at ? placedAt : { ...placedAt, p: { x: r1(off.x), z: r1(off.z) } };
     const chunk = site.chunkAt(x.p);
     if (!chunk) {
       outside++;
@@ -334,5 +357,5 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
   }
   const mapped: Record<string, string> = {};
   for (const item of plan.items) if (MAPPED[item.kind]) mapped[item.kind] = MAPPED[item.kind]!.prop;
-  return { byChunk, stats: { perKind, perDistrict, skipped, mapped, outside, inBuilding, merged, perItem } };
+  return { byChunk, stats: { perKind, perDistrict, skipped, mapped, outside, inBuilding, offRoad: moved, onRoad, merged, perItem } };
 };

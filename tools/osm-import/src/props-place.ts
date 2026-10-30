@@ -5,7 +5,7 @@
  * from a hash of the plan's ids, so the same plan gives the same street.
  */
 import { type Pt, pointInRing, ringBounds } from "./geometry.ts";
-import { type Site } from "./props-site.ts";
+import { type Site, type SiteSurface } from "./props-site.ts";
 
 /** FNV-1a, 32 bits. */
 export const fnv = (s: string): number => {
@@ -178,6 +178,27 @@ export const towardsStreet = (site: Site, p: Pt, within = 60): Pt | null => {
     }
   }
   return best;
+};
+
+/** Ground beside a road a thing can stand on: pavement, green or the bare terrain. */
+const beside = (s: SiteSurface): boolean => s === "walk" || s === "green" || s === null;
+
+const AROUND = Array.from({ length: 32 }, (_, i) => ({ x: Math.sin((i * Math.PI) / 16), z: Math.cos((i * Math.PI) / 16) }));
+
+/**
+ * p itself off the carriageway; on it (a traffic light's node in the road's axis), the nearest
+ * pavement, green or bare ground within `reach` metres, `inset` metres in from its edge; null when none is.
+ */
+export const offRoad = (site: Site, p: Pt, reach = 12, inset = 0.6): Pt | null => {
+  if (site.surfaceAt(p) !== "road") return p;
+  for (let r = 0.5; r <= reach; r += 0.5) {
+    for (const d of AROUND) {
+      if (!beside(site.surfaceAt({ x: p.x + d.x * r, z: p.z + d.z * r }))) continue;
+      const q = { x: p.x + d.x * (r + inset), z: p.z + d.z * (r + inset) };
+      if (beside(site.surfaceAt(q))) return q;
+    }
+  }
+  return null;
 };
 
 /** Radical inverse in `base` (Halton sequence). */

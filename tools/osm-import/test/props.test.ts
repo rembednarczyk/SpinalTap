@@ -11,7 +11,7 @@ import { REPO } from "../src/paths.ts";
 import { emitProps } from "../src/props-emit.ts";
 import { type PropsPlan, generateProps } from "../src/props-gen.ts";
 import { SHAPES, knownKind, propOf, withShape } from "../src/props-kinds.ts";
-import { evenStations, scatter, stations } from "../src/props-place.ts";
+import { evenStations, offRoad, scatter, stations } from "../src/props-place.ts";
 import { Site } from "../src/props-site.ts";
 
 const CHUNKS = [...KRAKOWSKIE_CHUNKS, ...STARE_MIASTO_CHUNKS, ...PODZAMCZE_CHUNKS, ...NABRZEZE_CHUNKS];
@@ -105,6 +105,21 @@ describe("street furniture generator (ADR-0047)", () => {
     expect(a).toEqual(scatter(site, ring, 20, "stalls", 3));
     expect(a).toHaveLength(20);
     for (const p of a) expect(site.surfaceAt(p)).not.toBe("building");
+  });
+
+  it("moves a traffic light from its node in the road's axis onto the pavement; covers and bollards stay", () => {
+    const site = new Site([street()]);
+    const at = offRoad(site, { x: 40, z: 30.5 })!;
+    expect(site.surfaceAt(at)).toBe("walk");
+    expect(at.x).toBeCloseTo(40, 5);
+    expect(at.z).toBeCloseTo(34.6, 1);
+    expect(offRoad(site, { x: 40, z: 24 })).toEqual({ x: 40, z: 24 });
+    expect(offRoad(site, { x: 40, z: 30 }, 2)).toBeNull();
+    // Over the whole city: only covers and bollards stand where the cars drive.
+    const { byChunk } = generateProps(PLAN, CHUNKS);
+    const city = new Site(CHUNKS);
+    const onRoad = [...byChunk.values()].flat().filter((i) => city.surfaceAt({ x: i.x, z: i.z }) === "road");
+    expect(onRoad.filter((i) => i.prop !== "manhole" && i.prop !== "bollard").length).toBeLessThanOrEqual(1);
   });
 
   it("forces the shapes the plan names into the variant's low bits", () => {
