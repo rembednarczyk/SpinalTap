@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { type DomainEvents, VEHICLE_SIZE, hm } from "@seki/core";
 import { Simulation, ground, runReplay, stateHash, type Entity } from "../src";
-import { TRAFFIC_ROUTES, TURN_SPEED, pointAt, projectOn } from "../src/content/traffic";
+import { TRAFFIC_ROUTES, TURN_SPEED, type TrafficRoute, pointAt, projectOn } from "../src/content/traffic";
 import { ROAD_CHAINS, onRoad, polylineLength } from "../src/content/lublin/roads";
 import { PARKED_CARS } from "../src/content/parked-cars";
 import { furnitureClearance } from "../src/content/furniture-index";
@@ -25,6 +25,16 @@ const vehicles = (sim: Simulation): (Entity & { vehicle: NonNullable<Entity["veh
   [...sim.world].filter((e): e is Entity & { vehicle: NonNullable<Entity["vehicle"]> } => e.vehicle !== undefined).sort((a, b) => a.id - b.id);
 
 const poses = (sim: Simulation) => vehicles(sim).map((v) => `${v.id}:${v.position.x.toFixed(3)},${v.position.z.toFixed(3)}:${v.vehicle.v.toFixed(3)}`);
+
+/** Does a route drive along `street`: one of its lanes, joined at the junctions into it (ADR-0055), is that street's? */
+const drives = (r: { readonly id: string }, street: string): boolean => r.id.split(">").some((lane) => lane.startsWith(`${street}#`));
+
+/** A route's turn round before the market on Aleja Tysiąclecia, found by place: a route joined at the junctions has other turns too. */
+const marketTurn = (r: TrafficRoute): readonly [number, number] | undefined =>
+  r.turns?.find(([a, b]) => {
+    const p = pointAt(r.points, (a + b) / 2);
+    return p.x > 745 && p.x < 830 && p.z > 320 && p.z < 370;
+  });
 
 const busySim = (seed = 3, at = TYSIACLECIA, hour = 8) => {
   const sim = Simulation.create({ seed, crowd: "high" });
@@ -59,7 +69,7 @@ describe("the lanes of the traffic (ADR-0050)", () => {
 
   it("one-way streets are driven one way: the two carriageways of 3 Maja, north and south", () => {
     const ways = (x: number, z: number) =>
-      TRAFFIC_ROUTES.filter((r) => r.use === "cars" && r.street === "3 Maja" && projectOn(r.points, x, z).d < 3).map((r) => Math.sign(pointAt(r.points, projectOn(r.points, x, z).s).tz));
+      TRAFFIC_ROUTES.filter((r) => r.use === "cars" && drives(r, "3 Maja") && projectOn(r.points, x, z).d < 3).map((r) => Math.sign(pointAt(r.points, projectOn(r.points, x, z).s).tz));
     expect(ways(-102.6, 90).length).toBeGreaterThan(0);
     expect(new Set(ways(-102.6, 90))).toEqual(new Set([1]));
     expect(new Set(ways(-111, 90))).toEqual(new Set([-1]));
@@ -69,14 +79,14 @@ describe("the lanes of the traffic (ADR-0050)", () => {
     const west = ROAD_CHAINS.filter((c) => c.name === "Aleja Tysiąclecia" && projectOn(c.points, 912, 333).d < 3);
     expect(west).toHaveLength(1);
     expect(polylineLength(west[0]!.points)).toBeCloseTo(472, -1);
-    const near = (use: string, x: number, z: number) => TRAFFIC_ROUTES.some((r) => r.use === use && r.street === "Aleja Tysiąclecia" && projectOn(r.points, x, z).d < 2);
+    const near = (use: string, x: number, z: number) => TRAFFIC_ROUTES.some((r) => r.use === use && drives(r, "Aleja Tysiąclecia") && projectOn(r.points, x, z).d < 2);
     expect(near("cars", 912, 333)).toBe(true);
     expect(near("trolley", 912, 333)).toBe(true);
     expect(near("trolley", 1000, 331)).toBe(true);
   });
 
   it("the roads are busy in the rush hour, quiet at night; delivery vans only in the morning", () => {
-    const tys = TRAFFIC_ROUTES.reduce((best, r, i) => (r.use === "cars" && r.street === "Aleja Tysiąclecia" && r.vehicles > (TRAFFIC_ROUTES[best]?.vehicles ?? 0) ? i : best), -1);
+    const tys = TRAFFIC_ROUTES.reduce((best, r, i) => (r.use === "cars" && drives(r, "Aleja Tysiąclecia") && r.vehicles > (TRAFFIC_ROUTES[best]?.vehicles ?? 0) ? i : best), -1);
     const rush = vehicleCount(3, tys, "high", { seconds: 8 * 3600 });
     expect(rush).toBeGreaterThan(5);
     expect(vehicleCount(3, tys, "high", { seconds: 3 * 3600 })).toBeLessThan(rush / 3);
@@ -259,13 +269,14 @@ describe("the traffic in the simulation (ADR-0050)", () => {
 
   it("turns round before the market on Aleja Tysiąclecia, slowly, and never drives into its halls", () => {
     const market = { minX: 758, maxX: 815, minZ: 325, maxZ: 366 };
-    for (const r of TRAFFIC_ROUTES.filter((x) => x.street === "Aleja Tysiąclecia")) {
+    for (const r of TRAFFIC_ROUTES.filter((x) => drives(x, "Aleja Tysiąclecia"))) {
       for (let s = 0; s < r.length; s += 1) {
         const p = pointAt(r.points, s);
         expect(p.x > market.minX + 2 && p.x < market.maxX - 2 && p.z > market.minZ && p.z < market.maxZ, `${r.id} at ${s}`).toBe(false);
       }
     }
-    const turning = TRAFFIC_ROUTES.filter((r) => r.use === "cars" && r.street === "Aleja Tysiąclecia" && r.turns?.length);
+    // Its four car lanes that turn round there, now each on a route joined at the junctions.
+    const turning = TRAFFIC_ROUTES.filter((r) => r.use === "cars" && r.id.split(">").some((lane) => lane.startsWith("Aleja Tysiąclecia#") && lane.includes("+")));
     expect(turning.length).toBe(4);
     const sim = busySim(3, ground(745, 350));
     let through = 0;
@@ -275,7 +286,7 @@ describe("the traffic in the simulation (ADR-0050)", () => {
     for (let t = 0; t < 50 * 60; t++) {
       sim.step();
       for (const v of vehicles(sim)) {
-        const turn = TRAFFIC_ROUTES[v.vehicle.route]!.turns?.[0];
+        const turn = marketTurn(TRAFFIC_ROUTES[v.vehicle.route]!);
         if (!turn) continue;
         if (v.vehicle.s < turn[0] - 15) coming.add(v.id);
         if (!coming.has(v.id) || v.vehicle.s < turn[0] + 2 || v.vehicle.s > turn[1]) continue;
@@ -295,7 +306,7 @@ describe("the traffic in the simulation (ADR-0050)", () => {
     for (let t = 0; t < 60 * 60 && !moved; t++) {
       sim.step();
       moved = vehicles(sim).find((v) => {
-        const turn = TRAFFIC_ROUTES[v.vehicle.route]!.turns?.[0];
+        const turn = marketTurn(TRAFFIC_ROUTES[v.vehicle.route]!);
         const tt = timetable(vehiclePlan(sim.seed, v.vehicle.route, v.vehicle.index), sim.clock);
         return turn !== undefined && tt.v > TURN_SPEED && tt.s > turn[0] + 5 && tt.s < turn[1] - 5;
       });
@@ -307,7 +318,7 @@ describe("the traffic in the simulation (ADR-0050)", () => {
     v.vehicle.s = tt.s - 60;
     v.vehicle.v = 13.5;
     sim.step();
-    const turn = TRAFFIC_ROUTES[v.vehicle.route]!.turns![0]!;
+    const turn = marketTurn(TRAFFIC_ROUTES[v.vehicle.route]!)!;
     expect(v.vehicle.s).toBeGreaterThan(turn[0]);
     expect(v.vehicle.v).toBeLessThanOrEqual(TURN_SPEED + 0.01);
   });

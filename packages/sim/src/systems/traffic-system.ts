@@ -1,5 +1,6 @@
 import type { EntityId, EventBus, DomainEvents, Vec3 } from "@seki/core";
 import { TRAFFIC_RANGE, TRAFFIC_ROUTES, TURN_SPEED, type TrafficRoute } from "../content/traffic";
+import { pointsAlong } from "../content/traffic-lane";
 import type { Entity, VehicleState } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { VEHICLE_IDS_PER_ROUTE, halfSize, lanePose, timetable, vehicleCount, vehicleId, vehiclePlan } from "../world/traffic";
@@ -31,6 +32,8 @@ const FLEE = 1.7;
 const HORN_AFTER = 1;
 const HORN_EVERY = 3.5;
 const PASS_AFTER = 2.5;
+/** Room a vehicle leaves the player's body going round them (m). */
+const PASS_ROOM = 0.5;
 /** Furthest a vehicle steps aside to pass the player, and how fast (m, m/s). */
 const MAX_ASIDE = 2.8;
 const ASIDE_RATE = 1.2;
@@ -39,6 +42,8 @@ const BACK_RATE = 0.6;
 const RESYNC = 40;
 /** Within this share of the radius nobody comes or goes in plain view of the player. */
 const SEEN_SHARE = 0.6;
+/** Across another lane's vehicle, a vehicle appears this far past its side at the least (m): on a parallel lane, not on its line. */
+const SPAWN_BESIDE = 1.1;
 
 /** Distance from a point to a lane's bounding box (the quick reject before looking at a lane's vehicles). */
 const boxes = TRAFFIC_ROUTES.map((r) => {
@@ -80,6 +85,8 @@ interface Ahead {
   allowed: number;
   /** The player is what holds it up, this far to its right (m). */
   player: number | null;
+  /** The player is beside its way, within the room it passes them by, this far to its right (m). */
+  beside: number | null;
 }
 
 /** Margin round a crossing vehicle's body the one giving way keeps (m). */
@@ -118,11 +125,65 @@ const yieldAtCrossing = (self: Vehicle, o: Vehicle, pose: { x: number; z: number
   }
 };
 
+/** Points every `WAY_STEP` along a vehicle's own route, from `from` to `to` metres ahead of it. */
+const wayAhead = (v: Vehicle, to: number, from = 0): { x: number; z: number }[] => {
+  const lane = TRAFFIC_ROUTES[v.vehicle.route]!;
+  return pointsAlong(lane.points, v.vehicle.s + from, Math.min(lane.length, v.vehicle.s + to), WAY_STEP, v.vehicle.aside);
+};
+
+/**
+ * Do two vehicles' ways ahead come within `gap` of each other? The crossing rule reads both ways
+ * as straight lines; on a junction's arc (ADR-0055) a stopped vehicle on the lane beside the one
+ * being turned into lies across that line, but not across the way.
+ */
+const waysMeet = (a: readonly { x: number; z: number }[], b: readonly { x: number; z: number }[], gap: number): boolean => a.some((p) => b.some((q) => flat(p, q) < gap));
+
+/** Steps along a vehicle's own route at which `onItsWay` looks for another's body (m). */
+const WAY_STEP = 1;
+/** Room left beside a body on the way ahead (m): two lanes of a narrow roundabout run 2.6 m apart, and squeeze closer at its corners. */
+const WAY_MARGIN = 0.25;
+
+/**
+ * Another vehicle's body on the way ahead along `self`'s route, not along a straight line: round
+ * a bend or a junction's arc (ADR-0055) one ahead stands off to the side of the heading, and two
+ * lanes merging at a shallow angle never cross the straight lines ahead. Of two that each stand on
+ * the other's way, the one further behind gives way (the lower id on a tie), so they never wait for
+ * each other.
+ */
+const onItsWay = (self: Vehicle, o: Vehicle, wayOf: () => readonly { x: number; z: number }[], reach: number, out: Ahead): void => {
+  const st = self.vehicle;
+  const near = reach + o.vehicle.half.l + st.half.w;
+  const dx = o.position.x - self.position.x;
+  const dz = o.position.z - self.position.z;
+  if (Math.abs(dx) > near || Math.abs(dz) > near || dx * dx + dz * dz > near * near) return;
+  const tx = Math.sin(self.yaw);
+  const tz = Math.cos(self.yaw);
+  const itAhead = dx * tx + dz * tz;
+  if (itAhead <= 0) return;
+  const ox = Math.sin(o.yaw);
+  const oz = Math.cos(o.yaw);
+  const meAhead = -dx * ox - dz * oz;
+  if (itAhead <= 0 || meAhead > itAhead || (meAhead === itAhead && self.id < o.id)) return;
+  const width = st.half.w + o.vehicle.half.w + WAY_MARGIN;
+  const way = wayOf();
+  // `way[k]` lies `k * WAY_STEP` ahead along the route.
+  for (let k = 1; k < way.length && k * WAY_STEP <= reach + o.vehicle.half.l; k++) {
+    if (flat(way[k]!, o.position) >= width) continue;
+    const gap = k * WAY_STEP - st.half.l - o.vehicle.half.l * Math.abs(ox * tx + oz * tz) - o.vehicle.half.w * Math.abs(ox * tz - oz * tx);
+    const allowed = gap <= FOLLOW_GAP ? 0 : Math.sqrt(2 * BRAKE * (gap - FOLLOW_GAP));
+    if (allowed < out.allowed) {
+      out.allowed = allowed;
+      out.player = null;
+    }
+    return;
+  }
+};
+
 /** What is in a vehicle's way: anyone with a body in front of it, the vehicle ahead going its way, and crossing traffic with right of way. */
 const lookAhead = (ctx: SimContext, self: Vehicle, live: ReadonlyMap<EntityId, Vehicle>, pose: { x: number; z: number; tx: number; tz: number }): Ahead => {
   const st = self.vehicle;
   const reach = st.half.l + 4 + (st.v * st.v) / (2 * BRAKE);
-  const out: Ahead = { allowed: Infinity, player: null };
+  const out: Ahead = { allowed: Infinity, player: null, beside: null };
   const passing = st.blocked > PASS_AFTER;
   for (const b of ctx.world.with("body")) {
     const dx = b.position.x - pose.x;
@@ -131,6 +192,7 @@ const lookAhead = (ctx: SimContext, self: Vehicle, live: ReadonlyMap<EntityId, V
     const fwd = dx * pose.tx + dz * pose.tz;
     const lat = dx * pose.tz - dz * pose.tx;
     if (fwd < -st.half.l - BODY || fwd > reach) continue;
+    if (b.player && Math.abs(lat) < st.half.w + BODY + PASS_ROOM + SIDE_MARGIN) out.beside = lat;
     // Passing the player, the vehicle goes by close.
     if (Math.abs(lat) > st.half.w + BODY + (passing && b.player ? 0.1 : SIDE_MARGIN)) continue;
     const gap = fwd - st.half.l - BODY;
@@ -140,22 +202,36 @@ const lookAhead = (ctx: SimContext, self: Vehicle, live: ReadonlyMap<EntityId, V
       out.player = b.player ? lat : null;
     }
   }
+  // Its way ahead, far enough for both the vehicles on it and the crossings.
+  // Its way ahead, far enough for both the vehicles on it and the crossings, read once if needed.
+  let way: { x: number; z: number }[] | null = null;
+  const mine = () => (way ??= wayAhead(self, Math.max(reach + 8, CROSS_LOOK)));
   for (const o of live.values()) {
     if (o === self) continue;
+    onItsWay(self, o, mine, reach, out);
     const ox = Math.sin(o.yaw);
     const oz = Math.cos(o.yaw);
     const along = ox * pose.tx + oz * pose.tz;
     // Oncoming traffic keeps to its lane; crossing traffic (merging at a roundabout too, from
     // 45 degrees on) takes turns at the crossing.
     if (along < MERGE_COS) {
-      if (along > -0.7) yieldAtCrossing(self, o, pose, ox, oz, out);
+      if (along <= -0.7) continue;
+      const allowed = out.allowed;
+      const player = out.player;
+      yieldAtCrossing(self, o, pose, ox, oz, out);
+      // Only where their ways meet: read as straight lines they can cross where the ways do not.
+      if (out.allowed < allowed && !waysMeet(mine(), wayAhead(o, CROSS_LOOK, -o.vehicle.half.l), st.half.w + o.vehicle.half.w + CROSS_MARGIN)) {
+        out.allowed = allowed;
+        out.player = player;
+      }
       continue;
     }
     const dx = o.position.x - pose.x;
     const dz = o.position.z - pose.z;
     const fwd = dx * pose.tx + dz * pose.tz;
     if (fwd <= 0 || fwd > reach + o.vehicle.half.l) continue;
-    if (Math.abs(dx * pose.tz - dz * pose.tx) > st.half.w + o.vehicle.half.w - 0.2) continue;
+    // With a margin: two lanes squeeze together in a sharp bend, and the one behind there gives way.
+    if (Math.abs(dx * pose.tz - dz * pose.tx) > st.half.w + o.vehicle.half.w + SIDE_MARGIN) continue;
     const gap = fwd - st.half.l - o.vehicle.half.l;
     const allowed = gap <= FOLLOW_GAP ? 0 : Math.sqrt(2 * BRAKE * (gap - FOLLOW_GAP));
     if (allowed < out.allowed) {
@@ -276,12 +352,21 @@ const crowded = (live: ReadonlyMap<EntityId, Vehicle>, route: number, s: number,
     if (o.vehicle.route !== route) {
       const across = Math.abs(Math.sin(o.yaw) * at.tx + Math.cos(o.yaw) * at.tz) < 0.7;
       if (across && flat(o.position, at) < CROSS_LOOK) return true;
+      // One of another lane on the same line its way (a trolleybus on a car lane, lanes meeting at a
+      // junction, ADR-0055) keeps it as far as one of its own lane would; one beside it does not.
+      const [ox, oz] = [Math.sin(o.yaw), Math.cos(o.yaw)];
+      const [dx, dz] = [at.x - o.position.x, at.z - o.position.z];
+      if (Math.abs(dx * ox + dz * oz) < o.vehicle.half.l + 9 && Math.abs(dx * oz - dz * ox) < o.vehicle.half.w + SPAWN_BESIDE) return true;
       continue;
     }
     if (Math.abs(o.vehicle.s - s) < o.vehicle.half.l + 9 || Math.abs(o.vehicle.s - s) > lane.length - 9) return true;
   }
   return false;
 };
+
+/** Is the place a vehicle would jump back onto its timetable free: no other vehicle as close as `crowded` lets one appear by? */
+const freeFor = (live: ReadonlyMap<EntityId, Vehicle>, self: Vehicle, at: { x: number; z: number }): boolean =>
+  [...live.values()].every((o) => o === self || flat(o.position, at) >= o.vehicle.half.l + 9);
 
 /** One step of one vehicle: its timetable, what is in its way, a shot, the player; then on along the lane. */
 const drive = (ctx: SimContext, live: Map<EntityId, Vehicle>, v: Vehicle, player: Entity | null, shots: readonly Vec3[]): void => {
@@ -295,7 +380,8 @@ const drive = (ctx: SimContext, live: Map<EntityId, Vehicle>, v: Vehicle, player
   if (lag < -lane.length / 2) lag += lane.length;
   // Far off its timetable (the clock skipped ahead, a long hold-up): back on it where nobody sees.
   const turning = () => lane.turns?.some(([a, b]) => st.s > a - TURN_BRAKE && st.s < b) === true;
-  if (Math.abs(lag) > RESYNC && !watched(ctx, player, v.position, TRAFFIC_RANGE[ctx.traffic].radius)) {
+  // Not onto another vehicle: a queue held up ahead (a junction) would stack its vehicles in one place.
+  if (Math.abs(lag) > RESYNC && !watched(ctx, player, v.position, TRAFFIC_RANGE[ctx.traffic].radius) && freeFor(live, v, lanePose(lane, tt.s))) {
     st.s = tt.s;
     lag = 0;
     // It lands at the speed of where it lands: braking from its old speed would take it through a turn round fast.
@@ -316,20 +402,23 @@ const drive = (ctx: SimContext, live: Map<EntityId, Vehicle>, v: Vehicle, player
   const ahead = lookAhead(ctx, v, live, pose);
   st.horn = Math.max(0, st.horn - dt);
   if (ahead.player !== null && ahead.allowed < 0.5) st.blocked += dt;
-  else st.blocked = Math.max(0, st.blocked - dt);
+  // Going round the player, it keeps going round until past them: a step aside that just clears
+  // them would otherwise end the pass, and back in the lane it is held up again (a van stood so).
+  else if (!(st.blocked > PASS_AFTER && ahead.beside !== null)) st.blocked = Math.max(0, st.blocked - dt);
   if (st.blocked > HORN_AFTER && st.horn <= 0 && ahead.player !== null) {
     st.horn = HORN_EVERY;
     ctx.bus.emit("VehicleHorned", { vehicleId: v.id, at: { ...v.position } });
   }
   let target = 0;
-  if (st.blocked > PASS_AFTER && ahead.player !== null) {
+  const by = ahead.player ?? ahead.beside;
+  if (st.blocked > PASS_AFTER && by !== null) {
     // Round the player on the side away from them, as far as it takes.
-    const clear = st.half.w + BODY + 0.5;
-    target = st.aside + (ahead.player >= 0 ? ahead.player - clear : ahead.player + clear);
+    const clear = st.half.w + BODY + PASS_ROOM;
+    target = st.aside + (by >= 0 ? by - clear : by + clear);
     target = Math.max(-MAX_ASIDE, Math.min(MAX_ASIDE, target));
   }
   const rate = (target !== 0 ? ASIDE_RATE : BACK_RATE) * dt;
-  if (st.blocked > PASS_AFTER || ahead.player === null) st.aside += Math.max(-rate, Math.min(rate, target - st.aside));
+  if (st.blocked > PASS_AFTER || by === null) st.aside += Math.max(-rate, Math.min(rate, target - st.aside));
   const goal = Math.min(want, ahead.allowed);
   st.v += Math.max(-BRAKE * 1.5 * dt, Math.min(ACCEL * dt, goal - st.v));
   if (goal <= 0 && st.v < 0.05) st.v = 0;

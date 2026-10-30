@@ -13,7 +13,7 @@ import { groundY } from "../../../packages/sim/src/content/lublin/terrain";
 import { PARKED_CARS } from "../../../packages/sim/src/content/parked-cars";
 import { GAME_PROPS, WORLD_STREET_PROPS } from "../../../packages/sim/src/content/street-props";
 import { crossingBands, inCrossingBand } from "../../../packages/sim/src/content/lublin/crossing-bands";
-import { MIN_ROUTE, TRAFFIC_ROUTES, type TrafficRoute, pointAt, projectOn, roadHalfWidth } from "../../../packages/sim/src/content/traffic";
+import { MIN_ROUTE, TRAFFIC_LANES, TRAFFIC_ROUTES, type TrafficRoute, pointAt, projectOn, roadHalfWidth } from "../../../packages/sim/src/content/traffic";
 
 /**
  * The glitch scan (ADR-0054): the map's known kinds of glitch counted over the whole city, each
@@ -27,6 +27,8 @@ type Finding = { readonly at: string; readonly what: string };
 
 const BASELINE = join(__dirname, "glitch-baseline.json");
 const cars = TRAFFIC_ROUTES.filter((r) => r.use !== "deliveries");
+/** The car lanes one by one, before the junctions join them into routes (ADR-0055): sampled from each lane's own start. */
+const carLanes = TRAFFIC_LANES.filter((r) => r.use !== "deliveries");
 const carStreets = ROAD_CHAINS.filter((c) => c.use === "cars");
 /** The side streets cars park along (ADR-0050). */
 const kerbStreets = carStreets.filter((c) => c.kind === "residential" || c.kind === "tertiary" || c.kind === "unclassified");
@@ -140,15 +142,20 @@ const BANDS = crossingBands(MAP_CHUNKS);
 const laneChains = new Set(TRAFFIC_ROUTES.filter((r) => r.use === "cars").flatMap((r) => [...r.id.matchAll(/#(\d+):/g)].map((m) => Number(m[1]))));
 
 const CHECKS: Readonly<Record<string, () => Finding[]>> = {
-  /** A car lane off every road surface (on grass, a square, a pavement), away from the map's edges. */
+  /**
+   * A car lane off every road surface (on grass, a square, a pavement), away from the map's edges.
+   * Lane by lane, so a junction's join does not move the samples; the joins' arcs, straight on too,
+   * have `turn-off-road`.
+   */
   "car-lane-off-road": () =>
-    cars.flatMap((r) => along(r, 3).filter((p) => inMap(p.x, p.z) && !surfacesAt(p.x, p.z).some((s) => s === "road" || s === "crossing" || s === "cobble")).map((p) => ({ at: near(p.x, p.z), what: r.id }))),
+    carLanes.flatMap((r) => along(r, 3).filter((p) => inMap(p.x, p.z) && !surfacesAt(p.x, p.z).some((s) => s === "road" || s === "crossing" || s === "cobble")).map((p) => ({ at: near(p.x, p.z), what: r.id }))),
   /**
    * A car lane (trolleybuses too) that ends inside the map, more than 6 m from its edge, with no
    * lane starting within 3 m of its end the same way: its vehicles stop there and wait while the
-   * player watches. What is left: the junctions without turns (G-006, later), the short
-   * laneless chains (G-022) and the one-way streets running into a pedestrian
-   * one (G-023, no lane back to turn round onto).
+   * player watches. What is left: the junctions where no other street's lane starts by the end
+   * (it runs on through the junction: a turn off the middle of a lane, after ADR-0055), the short
+   * laneless chains (G-022) and the one-way streets running into a pedestrian one (G-024, no car
+   * street within a junction's reach).
    */
   "lane-dead-end": () => {
     const starts = cars.map((r) => ({ r, p: pointAt(r.points, 0) }));
@@ -190,6 +197,22 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     }),
   /** A lane through a building's solid (a delivery van too), its passages aside. */
   "lane-in-building": () => TRAFFIC_ROUTES.flatMap((r) => along(r, 1).filter((p) => inBuilding(p.x, p.z) && !inPassage(p.x, p.z)).map((p) => ({ at: near(p.x, p.z), what: r.id }))),
+  /**
+   * A turn of a route (round before a block or at a dead end) or an arc from lane to lane at a
+   * junction (ADR-0055, straight on too) with a point off every road surface or in a building,
+   * every quarter metre.
+   */
+  "turn-off-road": () =>
+    cars.flatMap((r) =>
+      [...(r.turns ?? []), ...(r.arcs ?? []).filter(([a]) => !r.turns?.some(([x]) => x === a))].flatMap(([a, b]) => {
+        for (let s = a; s <= b; s += 0.25) {
+          const p = pointAt(r.points, s);
+          const road = surfacesAt(p.x, p.z).some((k) => k === "road" || k === "crossing" || k === "cobble");
+          if (inMap(p.x, p.z) && (!road || (inBuilding(p.x, p.z) && !inPassage(p.x, p.z)))) return [{ at: near(p.x, p.z), what: `${r.id} at ${s.toFixed(1)}` }];
+        }
+        return [];
+      }),
+    ),
   /** A crowd lane's walker on a car lane (the set pieces' own lanes aside). */
   "walker-on-car-lane": () =>
     CROWD_LANES.filter((l) => !l.id.startsWith("targ-") && !l.id.startsWith("doki-")).flatMap((l) =>

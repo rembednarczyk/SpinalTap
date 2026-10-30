@@ -4,6 +4,10 @@ import { MAP_CHUNKS } from "./lublin/sites";
 import { GAME_PROPS, WORLD_STREET_PROPS } from "./street-props";
 import { METRO_STATIONS } from "./metro";
 import { groundY } from "./lublin/terrain";
+import { type RouteUse, type TrafficRoute, pointAt, slice } from "./traffic-lane";
+import { joinAtJunctions } from "./traffic-junctions";
+
+export { type RouteUse, type TrafficRoute, TURN_SPEED, pointAt } from "./traffic-lane";
 
 /**
  * The street's traffic (ADR-0050): the lanes cars drive along on the map's roads, the
@@ -21,26 +25,6 @@ export const TRAFFIC_RANGE: Readonly<Record<TrafficDensity, { readonly radius: n
   medium: { radius: 200, share: 0.7 },
   high: { radius: 260, share: 1 },
 };
-
-export type RouteUse = "cars" | "trolley" | "deliveries";
-
-/** One lane of one road, driven from its first point to its last. */
-export interface TrafficRoute {
-  readonly id: string;
-  readonly street: string;
-  readonly use: RouteUse;
-  /** The lane's line, offset from the street's axis to its side of the road. */
-  readonly points: readonly Pt[];
-  readonly length: number;
-  /** Cruising speed, m/s. */
-  readonly speed: number;
-  /** Vehicles on it at full traffic. */
-  readonly vehicles: number;
-  /** Arc lengths where a trolleybus stops (its stops along the lane). */
-  readonly stops: readonly number[];
-  /** Arc length ranges of the lane's turns round (before a block across the road), driven at `TURN_SPEED`. */
-  readonly turns?: readonly (readonly [number, number])[];
-}
 
 /** Cars on each road kind: speed (m/s) and the gap between them at full traffic (m). */
 const ROAD_KINDS: Readonly<Record<string, { speed: number; spacing: number }>> = {
@@ -111,24 +95,6 @@ export const roadHalfWidth = (pts: readonly Pt[], side: 1 | -1 = 1, q = 0.5): nu
   if (out.length === 0) return 0;
   out.sort((a, b) => a - b);
   return out[Math.floor((out.length - 1) * q + 0.5)]!;
-};
-
-/** The point at arc length `s` of an open polyline (clamped), with the way along it. */
-export const pointAt = (pts: readonly Pt[], s: number): { x: number; z: number; tx: number; tz: number } => {
-  let left = Math.max(0, s);
-  for (let i = 1; i < pts.length; i++) {
-    const a = pts[i - 1]!;
-    const b = pts[i]!;
-    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
-    if (len < 1e-9) continue;
-    if (left <= len || i === pts.length - 1) {
-      const t = Math.min(1, left / len);
-      return { x: a[0] + (b[0] - a[0]) * t, z: a[1] + (b[1] - a[1]) * t, tx: (b[0] - a[0]) / len, tz: (b[1] - a[1]) / len };
-    }
-    left -= len;
-  }
-  const p = pts[0] ?? [0, 0];
-  return { x: p[0], z: p[1], tx: 0, tz: 1 };
 };
 
 /** Arc length of the polyline's point nearest to (x, z), and how far from the line it is (+ right). */
@@ -255,20 +221,6 @@ const ROAD_BLOCKS: readonly { minX: number; maxX: number; minZ: number; maxZ: nu
     : [],
 );
 
-/** The part of a polyline between arc lengths `from` and `to`. */
-const slice = (pts: readonly Pt[], from: number, to: number): Pt[] => {
-  const a = pointAt(pts, from);
-  const b = pointAt(pts, to);
-  const out: Pt[] = [[a.x, a.z]];
-  let s = 0;
-  for (let i = 1; i < pts.length; i++) {
-    s += Math.hypot(pts[i]![0] - pts[i - 1]![0], pts[i]![1] - pts[i - 1]![1]);
-    if (s > from && s < to) out.push(pts[i]!);
-  }
-  out.push([b.x, b.z]);
-  return out;
-};
-
 /** Arc lengths along a lane where it runs into one of the game's blocks, every half metre. */
 const blockedAlong = (r: TrafficRoute): number[] => {
   const xs = r.points.map((p) => p[0]);
@@ -343,8 +295,6 @@ const clearOfBlocks = (lanes: readonly TrafficRoute[], dead: DeadEnds): Piece[] 
 
 /** A lane cut short by a block or a dead end turns round onto a lane the other way starting this close to its end (m). */
 const TURN_REACH = 16;
-/** Speed through a turn round (m/s). */
-export const TURN_SPEED = 4;
 
 /** Half a circle from `a` heading (tx, tz) round to `b`: the turn round in front of a block. */
 const uTurn = (a: Pt, b: Pt, tx: number, tz: number): Pt[] => {
@@ -404,7 +354,10 @@ const turnRound = (pieces: readonly Piece[]): TrafficRoute[] => {
 };
 
 /** Every lane of the city's traffic, in a stable order (the chains' order, then lane by lane), clear of the game's blocks. */
-export const TRAFFIC_ROUTES: readonly TrafficRoute[] = turnRound(ROAD_CHAINS.flatMap((c, k) => clearOfBlocks(lanesOf(c, k, ROAD_CHAINS), deadEndsOf(c, k))));
+export const TRAFFIC_LANES: readonly TrafficRoute[] = turnRound(ROAD_CHAINS.flatMap((c, k) => clearOfBlocks(lanesOf(c, k, ROAD_CHAINS), deadEndsOf(c, k))));
+
+/** The routes the vehicles drive: the lanes joined at the junctions (ADR-0055). */
+export const TRAFFIC_ROUTES: readonly TrafficRoute[] = joinAtJunctions(TRAFFIC_LANES);
 
 /** How busy the roads are by the hour (0..1 of full traffic): the rush hours, a quiet night. */
 export const TRAFFIC_BY_HOUR: readonly number[] = [
