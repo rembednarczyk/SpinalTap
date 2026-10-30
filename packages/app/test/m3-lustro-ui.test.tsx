@@ -9,7 +9,7 @@ afterEach(unmountGame);
 describe("act II on the overpass in the game", () => {
   it("Kurosawa's deal on the overpass ends act II and Kagami's copy plays", () => {
     const g = mountGame({ seed: 11 });
-    fireEvent.click(screen.getByRole("button", { name: "Nowa gra" }));
+    fireEvent.click(screen.getByRole("button", { name: "New Game" }));
     expect(screen.getByTestId("hud")).toBeTruthy();
 
     // Straight to the last step of act II, after the "aya" ending, Kaito's job taken.

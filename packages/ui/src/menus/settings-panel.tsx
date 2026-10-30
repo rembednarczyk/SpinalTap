@@ -1,21 +1,31 @@
 import { useEffect, useState } from "react";
+import { LOCALES, type Locale } from "@seki/core";
+import type { MessageKey } from "../i18n/en";
+import { type Translate, isMessageKey } from "../i18n/t";
+import { useT } from "../i18n/use-t";
 import { type ColorblindMode, type DamageNumbersMode, HUD_SCALE_RANGE } from "../store/hud-vm";
-import type { AimMode, GraphicsQuality, SettingsVm } from "../store/ui-store";
+import type { AimMode, ControlBindingVm, GraphicsQuality, SettingsVm } from "../store/ui-store";
 import { TOKENS } from "../hud/tokens";
 import { useSettingsIntents, useUi } from "../use-ui";
 import { RESERVED_KEYS, keyLabel } from "./key-label";
 import { useFieldOfView } from "./use-field-of-view";
 
-const QUALITY: readonly (readonly [GraphicsQuality, string])[] = [
-  ["high", "Wysoka"],
-  ["medium", "Średnia"],
-  ["low", "Niska"],
+/** A choice's values with the catalog keys of their names (ADR-0056). */
+type Options<T extends string> = readonly (readonly [T, MessageKey])[];
+
+const QUALITY: Options<GraphicsQuality> = [
+  ["high", "settings.quality.high"],
+  ["medium", "settings.quality.medium"],
+  ["low", "settings.quality.low"],
 ];
 
-const AIM_MODES: readonly (readonly [AimMode, string])[] = [
-  ["hold", "Przytrzymaj"],
-  ["toggle", "Przełącz"],
+const AIM_MODES: Options<AimMode> = [
+  ["hold", "settings.mode.hold"],
+  ["toggle", "settings.mode.toggle"],
 ];
+
+/** Each language under its own name, so a player can find theirs whatever is set now. */
+const LANGUAGES: Options<Locale> = LOCALES.map((l) => [l, `settings.language.${l}`] as const);
 
 const Slider = ({
   id,
@@ -52,84 +62,143 @@ const Slider = ({
   </label>
 );
 
-const times = (v: number) => `${v.toFixed(1).replace(".", ",")}×`;
+/** One decimal as before (`toFixed` rounding); only the separator follows the language. */
+const times = (locale: Locale) => (v: number) => `${locale === "pl" ? v.toFixed(1).replace(".", ",") : v.toFixed(1)}×`;
 const percent = (v: number) => `${Math.round(v * 100)}%`;
 const degrees = (v: number) => `${Math.round(v)}°`;
 
 /** Horizontal field of view from the hip (ADR-0049); the same width of the street on any screen. */
 const FieldOfViewSlider = () => {
   const fov = useFieldOfView();
-  return <Slider id="horizontalFov" label="Pole widzenia (poziomo)" value={fov.degrees} min={fov.min} max={fov.max} step={1} format={degrees} onChange={fov.set} />;
+  const t = useT();
+  return <Slider id="horizontalFov" label={t("settings.fov")} value={fov.degrees} min={fov.min} max={fov.max} step={1} format={degrees} onChange={fov.set} />;
 };
 
-const Choice = <T extends string>({ label, value, options, onChange }: { label: string; value: T; options: readonly (readonly [T, string])[]; onChange: (v: T) => void }) => (
-  <div className="settings__row">
-    <span className="settings__label">{label}</span>
-    <div className="settings__choice" role="radiogroup" aria-label={label}>
-      {options.map(([v, text]) => (
-        <button key={v} type="button" role="radio" aria-checked={value === v} className={`settings__option${value === v ? " settings__option--on" : ""}`} onClick={() => onChange(v)}>
-          {text}
-        </button>
-      ))}
+const Choice = <T extends string>({ label, value, options, onChange }: { label: MessageKey; value: T; options: Options<T>; onChange: (v: T) => void }) => {
+  const t = useT();
+  return (
+    <div className="settings__row">
+      <span className="settings__label">{t(label)}</span>
+      <div className="settings__choice" role="radiogroup" aria-label={t(label)}>
+        {options.map(([v, text]) => (
+          <button key={v} type="button" role="radio" aria-checked={value === v} className={`settings__option${value === v ? " settings__option--on" : ""}`} onClick={() => onChange(v)}>
+            {t(text)}
+          </button>
+        ))}
+      </div>
     </div>
-  </div>
+  );
+};
+
+const ON_OFF: Options<"on" | "off"> = [
+  ["off", "settings.off"],
+  ["on", "settings.on"],
+];
+
+/** A yes-or-no setting as a choice of two. */
+const Toggle = ({ label, on, onChange }: { label: MessageKey; on: boolean; onChange: (on: boolean) => void }) => (
+  <Choice label={label} value={on ? "on" : "off"} options={ON_OFF} onChange={(v) => onChange(v === "on")} />
 );
 
-const ON_OFF: readonly (readonly ["on" | "off", string])[] = [
-  ["off", "Nie"],
-  ["on", "Tak"],
-];
-
 type Section = "general" | "mouse" | "keys" | "access";
-const SECTIONS: readonly (readonly [Section, string])[] = [
-  ["general", "Ogólne"],
-  ["mouse", "Mysz i kamera"],
-  ["keys", "Klawisze"],
-  ["access", "Dostępność"],
+const SECTIONS: Options<Section> = [
+  ["general", "settings.tab.general"],
+  ["mouse", "settings.tab.mouse"],
+  ["keys", "settings.tab.keys"],
+  ["access", "settings.tab.access"],
 ];
 
-const DAMAGE_NUMBERS: readonly (readonly [DamageNumbersMode, string])[] = [
-  ["off", "Wyłączone"],
-  ["hit", "Na trafienie"],
-  ["total", "Suma"],
+const DAMAGE_NUMBERS: Options<DamageNumbersMode> = [
+  ["off", "settings.damageNumbers.off"],
+  ["hit", "settings.damageNumbers.hit"],
+  ["total", "settings.damageNumbers.total"],
 ];
 
-const COLORBLIND: readonly (readonly [ColorblindMode, string])[] = [
-  ["off", "Brak"],
-  ["protan", "Protanopia"],
-  ["deutan", "Deuteranopia"],
-  ["tritan", "Tritanopia"],
+const COLORBLIND: Options<ColorblindMode> = [
+  ["off", "settings.colorblind.off"],
+  ["protan", "settings.colorblind.protan"],
+  ["deutan", "settings.colorblind.deutan"],
+  ["tritan", "settings.colorblind.tritan"],
 ];
 
 /** The colour tokens with their icons, so the chosen palette can be checked at a glance. */
-const TokenLegend = () => (
-  <ul className="tokens" data-testid="token-legend" aria-label="Kolory HUD">
-    {TOKENS.map((t) => (
-      <li key={t.id} className={`token token--${t.id}`}>
-        <span className="token__icon" aria-hidden="true">
-          {t.icon}
-        </span>
-        {t.label}
-      </li>
-    ))}
-  </ul>
-);
+const TokenLegend = () => {
+  const t = useT();
+  return (
+    <ul className="tokens" data-testid="token-legend" aria-label={t("settings.tokens")}>
+      {TOKENS.map((token) => (
+        <li key={token.id} className={`token token--${token.id}`}>
+          <span className="token__icon" aria-hidden="true">
+            {token.icon}
+          </span>
+          {t(`settings.token.${token.id}`)}
+        </li>
+      ))}
+    </ul>
+  );
+};
 
-const Accessibility = ({ settings, set }: { settings: SettingsVm; set: (patch: Partial<SettingsVm>) => void }) => (
-  <>
-    <Slider id="hudScale" label="Skala HUD" value={settings.hudScale} min={HUD_SCALE_RANGE[0]} max={HUD_SCALE_RANGE[1]} step={0.05} format={percent} onChange={(v) => set({ hudScale: v })} />
-    <Choice label="Czytelna czcionka" value={settings.legibleFont ? "on" : "off"} options={ON_OFF} onChange={(v) => set({ legibleFont: v === "on" })} />
-    <Choice label="Ogranicz błyski i glitch" value={settings.reduceFlashes ? "on" : "off"} options={ON_OFF} onChange={(v) => set({ reduceFlashes: v === "on" })} />
-    <Choice label="Minigra bez limitu czasu" value={settings.untimedBreach ? "on" : "off"} options={ON_OFF} onChange={(v) => set({ untimedBreach: v === "on" })} />
-    <Choice label="Tryb dla daltonistów" value={settings.colorblind} options={COLORBLIND} onChange={(colorblind) => set({ colorblind })} />
-    <TokenLegend />
-  </>
-);
+type SectionProps = { readonly settings: SettingsVm; readonly set: (patch: Partial<SettingsVm>) => void };
 
-/** The key list: click "Zmień", then press a key, a mouse button or turn the wheel; Esc cancels. */
+const Accessibility = ({ settings, set }: SectionProps) => {
+  const t = useT();
+  return (
+    <>
+      <Slider id="hudScale" label={t("settings.hudScale")} value={settings.hudScale} min={HUD_SCALE_RANGE[0]} max={HUD_SCALE_RANGE[1]} step={0.05} format={percent} onChange={(v) => set({ hudScale: v })} />
+      <Toggle label="settings.legibleFont" on={settings.legibleFont} onChange={(legibleFont) => set({ legibleFont })} />
+      <Toggle label="settings.reduceFlashes" on={settings.reduceFlashes} onChange={(reduceFlashes) => set({ reduceFlashes })} />
+      <Toggle label="settings.untimedBreach" on={settings.untimedBreach} onChange={(untimedBreach) => set({ untimedBreach })} />
+      <Choice label="settings.colorblind" value={settings.colorblind} options={COLORBLIND} onChange={(colorblind) => set({ colorblind })} />
+      <TokenLegend />
+    </>
+  );
+};
+
+/** Language first: whoever opens the options in a language they do not read finds it at once. */
+const General = ({ settings, set }: SectionProps) => {
+  const t = useT();
+  return (
+    <>
+      <Choice label="settings.language" value={settings.locale} options={LANGUAGES} onChange={(locale) => set({ locale })} />
+      <Choice label="settings.quality" value={settings.quality} options={QUALITY} onChange={(quality) => set({ quality })} />
+      <Slider id="volume" label={t("settings.volume")} value={settings.volume} min={0} max={1} step={0.05} format={percent} onChange={(v) => set({ volume: v })} />
+      <Toggle label="settings.hints" on={settings.hints} onChange={(hints) => set({ hints })} />
+      <Slider id="touchSensitivity" label={t("settings.touchSensitivity")} value={settings.touchSensitivity} min={0.2} max={3} step={0.1} format={times(settings.locale)} onChange={(v) => set({ touchSensitivity: v })} />
+      <Toggle label="settings.hudAlwaysShow" on={settings.hudAlwaysShow} onChange={(hudAlwaysShow) => set({ hudAlwaysShow })} />
+      <Choice label="settings.damageNumbers" value={settings.damageNumbers} options={DAMAGE_NUMBERS} onChange={(damageNumbers) => set({ damageNumbers })} />
+      <Toggle label="settings.mapMarkers" on={settings.mapMarkers} onChange={(mapMarkers) => set({ mapMarkers })} />
+      <Toggle label="settings.highlights" on={settings.highlights} onChange={(highlights) => set({ highlights })} />
+    </>
+  );
+};
+
+const MouseAndCamera = ({ settings, set }: SectionProps) => {
+  const t = useT();
+  const format = times(settings.locale);
+  return (
+    <>
+      <Slider id="mouseSensitivity" label={t("settings.mouseSensitivity")} value={settings.mouseSensitivity} min={0.2} max={3} step={0.1} format={format} onChange={(v) => set({ mouseSensitivity: v })} />
+      <Slider id="adsSensitivity" label={t("settings.adsSensitivity")} value={settings.adsSensitivity} min={0.3} max={2} step={0.05} format={format} onChange={(v) => set({ adsSensitivity: v })} />
+      <Toggle label="settings.invertY" on={settings.invertY} onChange={(invertY) => set({ invertY })} />
+      <FieldOfViewSlider />
+      <Choice label="settings.aimMode" value={settings.aimMode} options={AIM_MODES} onChange={(aimMode) => set({ aimMode })} />
+      <Choice label="settings.crouchMode" value={settings.crouchMode} options={AIM_MODES} onChange={(crouchMode) => set({ crouchMode })} />
+      <Choice label="settings.sprintMode" value={settings.sprintMode} options={AIM_MODES} onChange={(sprintMode) => set({ sprintMode })} />
+    </>
+  );
+};
+
+/** A control's name in the chosen language; one the catalogs do not know keeps the app's label. */
+const controlName = (t: Translate, c: ControlBindingVm): string => {
+  const key = `control.${c.action}`;
+  return isMessageKey(key) ? t(key) : c.label;
+};
+
+/** The key list: click "Change", then press a key, a mouse button or turn the wheel; Esc cancels. */
 const KeyBindings = () => {
   const controls = useUi((s) => s.controls);
   const intents = useSettingsIntents();
+  const t = useT();
   const [listening, setListening] = useState<string | null>(null);
   const [refused, setRefused] = useState<string | null>(null);
   useEffect(() => {
@@ -171,68 +240,55 @@ const KeyBindings = () => {
       <ul className="keys__list">
         {controls.map((c) => (
           <li key={c.action} className={`keys__row${listening === c.action ? " keys__row--listening" : ""}`}>
-            <span className="keys__label">{c.label}</span>
-            <span className="keys__codes">{listening === c.action ? "Naciśnij klawisz…" : c.codes.length > 0 ? c.codes.map(keyLabel).join(" / ") : "brak"}</span>
-            <button type="button" className="settings__option" aria-label={`Zmień klawisz: ${c.label}`} onClick={() => setListening(listening === c.action ? null : c.action)}>
-              {listening === c.action ? "Anuluj" : "Zmień"}
+            <span className="keys__label">{controlName(t, c)}</span>
+            <span className="keys__codes">
+              {listening === c.action ? t("settings.keys.listening") : c.codes.length > 0 ? c.codes.map((code) => keyLabel(code, t)).join(" / ") : t("settings.keys.none")}
+            </span>
+            <button
+              type="button"
+              className="settings__option"
+              aria-label={t("settings.keys.changeLabel", { control: controlName(t, c) })}
+              onClick={() => setListening(listening === c.action ? null : c.action)}
+            >
+              {listening === c.action ? t("settings.keys.cancel") : t("settings.keys.change")}
             </button>
           </li>
         ))}
       </ul>
-      {refused && <p className="settings__note">Klawisz {keyLabel(refused)} jest zajęty przez menu gry.</p>}
+      {refused && <p className="settings__note">{t("settings.keys.reserved", { key: keyLabel(refused, t) })}</p>}
       <button type="button" className="menu__item menu__item--ghost" onClick={() => intents.resetControls()}>
-        Przywróć domyślne klawisze
+        {t("settings.keys.reset")}
       </button>
     </div>
   );
 };
 
-/** Graphics, sound, mouse, camera and keys. The app saves them; this only shows and edits. */
+/** Language, graphics, sound, mouse, camera and keys. The app saves them; this only shows and edits. */
 export const SettingsPanel = () => {
   const settings = useUi((s) => s.settings);
   const reloadNeeded = useUi((s) => s.reloadNeeded);
   const intents = useSettingsIntents();
+  const t = useT();
   const [section, setSection] = useState<Section>("general");
   const set = (patch: Partial<SettingsVm>) => intents.changeSettings(patch);
   return (
     <div className="settings" data-testid="settings">
-      <div className="settings__tabs" role="tablist" aria-label="Ustawienia">
+      <div className="settings__tabs" role="tablist" aria-label={t("settings.heading")}>
         {SECTIONS.map(([id, label]) => (
           <button key={id} type="button" role="tab" aria-selected={section === id} className={`settings__option${section === id ? " settings__option--on" : ""}`} onClick={() => setSection(id)}>
-            {label}
+            {t(label)}
           </button>
         ))}
       </div>
-      {section === "general" && (
-        <>
-          <Choice label="Jakość grafiki" value={settings.quality} options={QUALITY} onChange={(quality) => set({ quality })} />
-          <Slider id="volume" label="Głośność" value={settings.volume} min={0} max={1} step={0.05} format={percent} onChange={(v) => set({ volume: v })} />
-          <Choice label="Podpowiedzi" value={settings.hints ? "on" : "off"} options={ON_OFF} onChange={(v) => set({ hints: v === "on" })} />
-          <Slider id="touchSensitivity" label="Czułość dotyku" value={settings.touchSensitivity} min={0.2} max={3} step={0.1} format={times} onChange={(v) => set({ touchSensitivity: v })} />
-          <Choice label="Zdrowie i amunicja zawsze" value={settings.hudAlwaysShow ? "on" : "off"} options={ON_OFF} onChange={(v) => set({ hudAlwaysShow: v === "on" })} />
-          <Choice label="Liczby obrażeń" value={settings.damageNumbers} options={DAMAGE_NUMBERS} onChange={(damageNumbers) => set({ damageNumbers })} />
-          <Choice label="Znaczniki na minimapie" value={settings.mapMarkers ? "on" : "off"} options={ON_OFF} onChange={(v) => set({ mapMarkers: v === "on" })} />
-          <Choice label="Podświetlenia obiektów" value={settings.highlights ? "on" : "off"} options={ON_OFF} onChange={(v) => set({ highlights: v === "on" })} />
-        </>
-      )}
-      {section === "mouse" && (
-        <>
-          <Slider id="mouseSensitivity" label="Czułość myszy" value={settings.mouseSensitivity} min={0.2} max={3} step={0.1} format={times} onChange={(v) => set({ mouseSensitivity: v })} />
-          <Slider id="adsSensitivity" label="Czułość przy celowaniu" value={settings.adsSensitivity} min={0.3} max={2} step={0.05} format={times} onChange={(v) => set({ adsSensitivity: v })} />
-          <Choice label="Odwróć oś Y" value={settings.invertY ? "on" : "off"} options={ON_OFF} onChange={(v) => set({ invertY: v === "on" })} />
-          <FieldOfViewSlider />
-          <Choice label="Celowanie (PPM)" value={settings.aimMode} options={AIM_MODES} onChange={(aimMode) => set({ aimMode })} />
-          <Choice label="Kucanie" value={settings.crouchMode} options={AIM_MODES} onChange={(crouchMode) => set({ crouchMode })} />
-          <Choice label="Sprint" value={settings.sprintMode} options={AIM_MODES} onChange={(sprintMode) => set({ sprintMode })} />
-        </>
-      )}
+      {section === "general" && <General settings={settings} set={set} />}
+      {section === "mouse" && <MouseAndCamera settings={settings} set={set} />}
       {section === "keys" && <KeyBindings />}
       {section === "access" && <Accessibility settings={settings} set={set} />}
       {reloadNeeded && (
         <div className="settings__note" data-testid="settings-reload">
-          <p>Jakość grafiki zmieni się po przeładowaniu. Najpierw zapisz grę, bo niezapisany postęp przepadnie.</p>
+          <p>{t("settings.reload.note")}</p>
           <button type="button" className="menu__item menu__item--ghost" onClick={() => intents.reload()}>
-            Przeładuj teraz
+            {t("settings.reload.now")}
           </button>
         </div>
       )}

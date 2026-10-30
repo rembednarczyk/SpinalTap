@@ -56,7 +56,7 @@ function within(scene: string, sample: Awaited<ReturnType<typeof perf>>) {
 const tppAt = async (page: Page, at: { frame?: Frame; x: number; z: number; yaw: number; walk: number }, query = "/?seed=3&models=off") => {
   await page.goto(query);
   await waitForGame(page);
-  await page.getByRole("button", { name: "Nowa gra" }).click();
+  await page.getByRole("button", { name: "New Game" }).click();
   await freeze(page);
   await step(page, 1, { toggleCamera: true });
   if (at.frame) await teleportTo(page, await place(page, at.frame, at.x, at.z), at.yaw);

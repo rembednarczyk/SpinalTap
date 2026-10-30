@@ -13,7 +13,7 @@ test("placeholder VRoid cast dresses the characters", async ({ page }) => {
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/?seed=11");
   await waitForGame(page);
-  await page.getByRole("button", { name: "Nowa gra" }).click({ timeout: 60_000 });
+  await page.getByRole("button", { name: "New Game" }).click({ timeout: 60_000 });
   await freeze(page);
   await step(page, 1, { toggleCamera: true });
   // Measured once every character in the scene is dressed, not after the first (ADR-0046).

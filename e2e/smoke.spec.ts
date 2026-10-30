@@ -13,8 +13,8 @@ test.describe("M0 smoke", () => {
 
     // Title screen with the scene rendering behind it.
     await expect(page.getByTestId("title-screen")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Wczytaj" })).toBeDisabled();
-    await page.getByRole("button", { name: "Nowa gra" }).click();
+    await expect(page.getByRole("button", { name: "Load Game" })).toBeDisabled();
+    await page.getByRole("button", { name: "New Game" }).click();
     await expect(page.getByTestId("hud")).toBeVisible();
     await freeze(page);
     expect((await gameState(page)).screen).toBe("playing");
@@ -58,8 +58,8 @@ test.describe("M0 smoke", () => {
     // The save lives in IndexedDB: it survives a page reload.
     await page.reload();
     await waitForGame(page);
-    await page.getByRole("button", { name: "Wczytaj" }).click();
-    await page.getByRole("button", { name: /Szybki zapis/ }).click();
+    await page.getByRole("button", { name: "Load Game" }).click();
+    await page.getByRole("button", { name: /Quicksave/ }).click();
     await expect(page.getByTestId("hud")).toBeVisible();
     await freeze(page);
     const restored = await gameState(page);
@@ -72,7 +72,7 @@ test.describe("M0 smoke", () => {
   test("camera toggles between FPP and TPP", async ({ page }) => {
     await page.goto("/?seed=7&models=off");
     await waitForGame(page);
-    await page.getByRole("button", { name: "Nowa gra" }).click();
+    await page.getByRole("button", { name: "New Game" }).click();
     await freeze(page);
     await step(page, 1, { toggleCamera: true });
     await expect(page.getByText("TPP · [V]")).toBeVisible();
@@ -85,7 +85,7 @@ test.describe("M0 smoke", () => {
 test("ripperdoc clinic sells a medkit through the UI", async ({ page }) => {
   await page.goto("/?seed=7&models=off");
   await waitForGame(page);
-  await page.getByRole("button", { name: "Nowa gra" }).click();
+  await page.getByRole("button", { name: "New Game" }).click();
   await freeze(page);
   // Mori at his monitors behind the chair (ADR-0038).
   await teleportTo(page, await place(page, "clinic", -15.2, 5.2), 0);
@@ -120,7 +120,7 @@ test("journal, minimap and settings", async ({ page }) => {
   test.slow();
   await page.goto("/?seed=7&models=off");
   await waitForGame(page);
-  await page.getByRole("button", { name: "Nowa gra" }).click();
+  await page.getByRole("button", { name: "New Game" }).click();
   await freeze(page);
   await step(page, 1);
 
@@ -148,8 +148,8 @@ test("journal, minimap and settings", async ({ page }) => {
   // Headless Chromium may hold the pointer lock, which swallows Esc; pause through the session.
   await page.evaluate(() => window.__seki!.session.pause());
   await expect(page.getByTestId("pause-menu")).toBeVisible();
-  await page.getByRole("button", { name: "Ustawienia" }).click();
-  await page.getByRole("radio", { name: "Niska" }).click();
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("radio", { name: "Low" }).click();
   await expect(page.getByTestId("settings-reload")).toBeVisible();
   await page.reload();
   await waitForGame(page);
@@ -166,7 +166,7 @@ test("real input: the right mouse button aims and Space jumps in the running loo
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/?seed=7&models=off");
   await waitForGame(page);
-  await page.getByRole("button", { name: "Nowa gra" }).click();
+  await page.getByRole("button", { name: "New Game" }).click();
   await expect(page.getByTestId("hud")).toBeVisible();
   // On the deptak in front of the clinic (ADR-0045): the light scene keeps the real loop
   // ticking even on a slow SwiftShader runner.
@@ -210,7 +210,7 @@ test("touch layout keeps the minimap off the pad", async ({ page }) => {
   await page.setViewportSize({ width: 844, height: 390 });
   await page.goto("/?seed=7&touch&models=off");
   await waitForGame(page);
-  await page.getByRole("button", { name: "Nowa gra" }).click();
+  await page.getByRole("button", { name: "New Game" }).click();
   await freeze(page);
   await step(page, 1);
   const map = await page.getByTestId("minimap").boundingBox();
@@ -231,7 +231,7 @@ test("touch layout keeps the weapon strip off the pad and the minimap", async ({
   await page.setViewportSize({ width: 844, height: 390 });
   await page.goto("/?seed=7&touch&models=off");
   await waitForGame(page);
-  await page.getByRole("button", { name: "Nowa gra" }).click();
+  await page.getByRole("button", { name: "New Game" }).click();
   await freeze(page);
   await step(page, 1);
   const strip = await page.getByTestId("weapon-strip").boundingBox();

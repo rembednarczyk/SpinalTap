@@ -6,7 +6,7 @@ import { mountGame, run, unmountGame } from "./game-ui";
 /** The weapon strip and the loot bag on the real UI (formerly e2e/inventory.spec.ts, ADR-0046). */
 const start = () => {
   const game = mountGame({ seed: 7 });
-  fireEvent.click(screen.getByRole("button", { name: "Nowa gra" }));
+  fireEvent.click(screen.getByRole("button", { name: "New Game" }));
   game.step(1);
   return game;
 };

@@ -1,4 +1,4 @@
-import { FOV_REFERENCE_ASPECT, type InputFrame, degToRad, horizontalFovOf, radToDeg } from "@seki/core";
+import { FOV_REFERENCE_ASPECT, type InputFrame, degToRad, horizontalFovOf, isLocale, radToDeg } from "@seki/core";
 import {
   type AimMode,
   type ColorblindMode,
@@ -81,6 +81,8 @@ export const sanitizeSettings = (raw: unknown, defaults: SettingsVm = DEFAULT_SE
     radioStation: r.radioStation === null || isRadioStationId(r.radioStation) ? r.radioStation : defaults.radioStation,
     mapMarkers: bool(r.mapMarkers, defaults.mapMarkers),
     highlights: bool(r.highlights, defaults.highlights),
+    // ADR-0056: entries saved before the language setting take the default, English.
+    locale: isLocale(r.locale) ? r.locale : defaults.locale,
   };
 };
 

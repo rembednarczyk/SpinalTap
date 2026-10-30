@@ -38,6 +38,7 @@ Użytkownik zdecydował: angielski ma być językiem domyślnym, polski zostaje 
 - **Zapadka.**
   - Skan `tools/i18n-scan` liczy polskie literały tekstowe poza katalogami `i18n`, plikami `ink/pl` i danymi nazw własnych.
   - Baza tylko spada, tak jak w skanie glitchy (ADR-0054). Na końcu migracji wynosi 0.
+  - Ograniczenie: skan rozpoznaje polski tekst po znakach diakrytycznych i krótkiej liście częstych słów, więc tekst bez diakrytyków i spoza tej listy nie jest liczony.
 - **Testy e2e.** Używają domyślnego angielskiego. Selektory z polskimi napisami (np. „Nowa gra”) przechodzą na angielskie w tej samej zmianie, w której tłumaczony jest dany ekran.
 
 ## Etapy (osobne PR-y)

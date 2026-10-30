@@ -19,3 +19,4 @@ export * from "./time";
 export * from "./hacking";
 export * from "./crime";
 export * from "./world";
+export * from "./i18n";

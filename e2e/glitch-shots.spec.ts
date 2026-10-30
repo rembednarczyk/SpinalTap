@@ -24,7 +24,7 @@ test("shots of the hunters' places", async ({ page }) => {
   test.setTimeout(60_000 + spots.length * 40_000);
   await page.goto("/?seed=7&models=off");
   await waitForGame(page);
-  await page.getByRole("button", { name: "Nowa gra" }).click();
+  await page.getByRole("button", { name: "New Game" }).click();
   await freeze(page);
   for (const [name, x, z, yaw, pitch] of spots) {
     await teleport(page, x, z, yaw, pitch);
