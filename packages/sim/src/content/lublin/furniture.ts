@@ -56,6 +56,9 @@ const PARTS: Partial<Record<StreetPropKind, (shape: number, variant: number) => 
   "bus-shelter": () => [box(0, -0.66, 1.74, 0.05, 2.5), box(-1.7, -0.05, 0.05, 0.6, 2.5), box(1.72, -0.05, 0.05, 0.55, 2.2), box(0, -0.4, 1.1, 0.19, 0.5)],
   "advertising-column": () => [post(0.68, 3)],
   "vending-machine": () => [box(0, 0, 0.5, 0.38, 1.9)],
+  "street-cabinet": () => [box(0, 0, 0.4, 0.18, 1.15)],
+  // The counter at the front and the four posts of the canvas roof; open at the back.
+  "market-stall": () => [box(0, 0.55, 1.05, 0.25, 1.05), ...[-1, 1].flatMap((x) => [post(0.06, 2.3, x, -0.7), post(0.06, 2.3, x, 0.7)])],
   "ticket-machine": () => [box(0, 0, 0.28, 0.2, 1.75)],
   "bike-station": () => [box(-1.6, 0, 0.21, 0.15, 2.2)],
   "traffic-signal": () => [post(0.09, 3.3)],

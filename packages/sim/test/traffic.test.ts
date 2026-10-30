@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { type DomainEvents, hm } from "@seki/core";
+import { type DomainEvents, VEHICLE_SIZE, hm } from "@seki/core";
 import { Simulation, ground, runReplay, stateHash, type Entity } from "../src";
 import { TRAFFIC_ROUTES, TURN_SPEED, pointAt, projectOn } from "../src/content/traffic";
 import { onRoad } from "../src/content/lublin/roads";
 import { PARKED_CARS } from "../src/content/parked-cars";
+import { furnitureClearance } from "../src/content/furniture-index";
+import { furnitureRadius } from "../src/content/lublin/furniture";
 import { inBuilding } from "../src/content/lublin/places";
 import { lanePose, timetable, vehicleCount, vehiclePlan } from "../src/world/traffic";
 import { STREET_ID_BASE } from "../src/world/streaming";
@@ -99,13 +101,18 @@ describe("the lanes of the traffic (ADR-0050)", () => {
     expect(dwelt).toBeGreaterThan(10);
   });
 
-  it("parked cars line the kerbs and fill Plac Zamkowy, clear of buildings and of the lanes", () => {
+  it("parked cars line the kerbs and fill Plac Zamkowy, clear of buildings, of the lanes and of the flea market's stalls", () => {
     expect(PARKED_CARS.length).toBeGreaterThan(60);
+    // The flea market's stalls are solid: a car keeps clear of them as of a lamp.
+    expect(furnitureRadius({ prop: "market-stall", x: 0, y: 0, z: 0, yaw: 0, variant: 0 })).toBeGreaterThan(1);
     const square = PARKED_CARS.filter((c) => c.x > 712 && c.x < 762 && c.z > 188 && c.z < 300);
     expect(square.length).toBeGreaterThan(15);
     for (const c of PARKED_CARS) {
       expect(inBuilding(c.x, c.z), `${c.x},${c.z}`).toBe(false);
       for (const r of TRAFFIC_ROUTES) if (r.use === "cars") expect(projectOn(r.points, c.x, c.z).d, `${c.x},${c.z} on ${r.id}`).toBeGreaterThan(1.7);
+      // No stall, cabinet or lamp inside its body.
+      const { width, length } = VEHICLE_SIZE[c.model];
+      for (const t of [-0.5, 0, 0.5]) expect(furnitureClearance(c.x + Math.sin(c.yaw) * length * t, c.z + Math.cos(c.yaw) * length * t), `${c.x},${c.z}`).toBeGreaterThan(width / 2);
     }
   });
 });
