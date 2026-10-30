@@ -170,14 +170,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (`content/parked-cars.ts`)
 - Test przyjęcia: kontrola skanu `parked-car-on-other-road` (auto bliżej niż pół szerokości + 0,5 m od osi innej drogi dla aut) daje 0; dziś 1.
 
-### G-020 Odcinek Alei Tysiąclecia przy Cerkiewnej bez pasa ruchu (literówka nazwy w OSM)
-- Status: zgłoszone (do potwierdzenia)
-- Ważność: S2 (proponowana, jeśli auta przeskakują albo omijają odcinek trasy głównej) · Zasięg: szeroki · Koszt: mały
-- Gdzie: x 894–930, z ok. 331–335; OSM way 739432828 „Aleje Tysiąclecia” (reszta to „Aleja Tysiąclecia”)
-- Dowód: łowca G-019: łańcuch ma 36,4 m < `MIN_ROUTE` (`traffic.ts:83`), więc nie dostaje pasa; pasy #81 i #82 kończą się na jego krańcach.
-- Przyczyna (przypuszczalna): łączenie łańcuchów po nazwie; literówka rozbija Aleję na krótki kawałek.
-- Pakiet właściciela: tools/osm-import (normalizacja nazwy) albo packages/sim (`traffic.ts`)
-- Test przyjęcia: do ustalenia po potwierdzeniu: ciągłość pasów wzdłuż Alei przez ten odcinek.
+### G-020 Jezdnia zachodnia Alei Tysiąclecia ma 36 m bez pasa (literówka „Aleje” w OSM)
+- Status: przyjęte (potwierdzone pomiarem łowcy), w kolejce za limitem WIP
+- Ważność: S2 · Zasięg: szeroki (trasa główna) · Koszt: mały
+- Gdzie: (930,3, 331,4)–(894,1, 335,1), `ROAD_CHAINS[91]`, OSM way 739432828; 1 w mieście
+- Dowód: pasy #85/#86 kończą się w x 930, #82–#84 zaczynają w x 894. W symulacji (seed 3, 8:00, 90 s) auta stoją na końcu pasa z v = 0 i tworzą korek do 6 aut, w ramce naliczono 18 pojawień i 21 zniknięć. Łańcuch #82 (128,5 m < `MIN_TROLLEY` 150) traci trolejbus.
+- Przyczyna: `tools/osm-import/src/labels.ts:26` przepisuje nazwę bez korekty; klucz łączenia w `content/lublin/roads.ts:71` zawiera nazwę, więc Aleja rozpada się na 3 łańcuchy. Martwy obejściowy wpis „Aleje Tysiąclecia” w `TROLLEY_STREETS` (`traffic.ts:62`).
+- Pakiet właściciela: tools/osm-import (korekta nazwy) + regeneracja `content/lublin`
+- Test przyjęcia: jeden łańcuch „Aleja Tysiąclecia” ok. 472 m; pas aut bliżej niż 2 m od (912, 333); trolejbus na jezdni zachodniej; kontrola skanu `car-road-hole` (krótki łańcuch między dwoma łańcuchami z pasami, ten sam rodzaj i oneway) daje 0, dziś 1.
+- Uwaga: po złączeniu odcinek dostaje pas, a to może samo usunąć objaw G-019; przyczyna G-019 (krawężnik liczony przez cudzą jezdnię) zostaje osobna.
+- Trop poza zakresem: 12 bezimiennych dróg dla aut odrzuconych przez import (`labels.ts:27`, m.in. primary_link 60149306, 232464399) może dawać podobne przerwy na łącznikach.
 
 ### G-006 Skręty aut na skrzyżowaniach
 - Status: później (to funkcja, nie glitch: wymaga sieci pasów; ADR-0050 „Na później”)
