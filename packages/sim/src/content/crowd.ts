@@ -9,6 +9,7 @@ import { DOCKS_PLACE, MAP_CHUNKS, MARKET_PLACE } from "./lublin/sites";
 import { furnitureClearance, furnitureNear } from "./furniture-index";
 import { SEAT_SPOTS } from "./crowd-seats";
 import type { CrowdSpot } from "./crowd-spot";
+import { TRAFFIC_ROUTES } from "./traffic";
 
 /** The chunks of Lublin that hold the market and the docks (ADR-0045). */
 const MARKET_CHUNK = "podzamcze-1-0";
@@ -135,11 +136,47 @@ const nearBlock = (x: number, z: number): boolean =>
 /** Shortest out-and-back walk worth a lane, metres. */
 const MIN_RUN = 25;
 
-const clearAt = (x: number, z: number): boolean => !inBuilding(x, z) && nearestWall(x, z).d >= LANE_CLEARANCE && !nearBlock(x, z);
+/** How close to a car or trolleybus lane's line a walker of a square counts as on the carriageway (m). */
+const CAR_LANE_REACH = 2.6;
+const CAR_CELL = 16;
+/** The traffic's lane segments by grid cell, for the carriageway test. */
+const carSegments = (() => {
+  const cells = new Map<string, (readonly [number, number, number, number])[]>();
+  for (const r of TRAFFIC_ROUTES) {
+    if (r.use === "deliveries") continue;
+    for (let i = 0; i + 1 < r.points.length; i++) {
+      const [ax, az] = r.points[i] as Pt;
+      const [bx, bz] = r.points[i + 1] as Pt;
+      const seg = [ax, az, bx, bz] as const;
+      for (let cx = Math.floor((Math.min(ax, bx) - CAR_LANE_REACH) / CAR_CELL); cx <= Math.floor((Math.max(ax, bx) + CAR_LANE_REACH) / CAR_CELL); cx++) {
+        for (let cz = Math.floor((Math.min(az, bz) - CAR_LANE_REACH) / CAR_CELL); cz <= Math.floor((Math.max(az, bz) + CAR_LANE_REACH) / CAR_CELL); cz++) {
+          const key = `${cx},${cz}`;
+          const list = cells.get(key) ?? [];
+          list.push(seg);
+          cells.set(key, list);
+        }
+      }
+    }
+  }
+  return cells;
+})();
+
+/** Is (x, z) on a carriageway the traffic drives (within `CAR_LANE_REACH` of a lane's line)? */
+const onCarLane = (x: number, z: number): boolean =>
+  (carSegments.get(`${Math.floor(x / CAR_CELL)},${Math.floor(z / CAR_CELL)}`) ?? []).some(([ax, az, bx, bz]) => {
+    const dx = bx - ax;
+    const dz = bz - az;
+    const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz || 1)));
+    return Math.hypot(ax + dx * t - x, az + dz * t - z) < CAR_LANE_REACH;
+  });
+
+/** A square's or an alley's walker stays off the walls, the blocks and the carriageways. */
+const clearAt = (x: number, z: number): boolean => !inBuilding(x, z) && nearestWall(x, z).d >= LANE_CLEARANCE && !nearBlock(x, z) && !onCarLane(x, z);
 
 /**
- * The longest stretch of a loop clear of walls and blocks, walked there and back (an alley of
- * Plac Litewski's park runs by a tenement's wall at one end): null when no stretch is
+ * The loop itself when it is clear of walls, blocks and carriageways all round; else its longest
+ * clear stretch, walked there and back (an alley of Plac Litewski's park runs by a tenement's
+ * wall at one end, a sidewalk mapped as a footway touches the road); null when no stretch is
  * `MIN_RUN` metres long. Sampled every metre, so the stretch is too.
  */
 const clearRun = (loop: readonly Pt[]): Pt[] | null => {
@@ -152,7 +189,7 @@ const clearRun = (loop: readonly Pt[]): Pt[] | null => {
   }
   const ok = dense.map(([x, z]) => clearAt(x, z));
   const start = ok.indexOf(false);
-  if (start < 0) return null;
+  if (start < 0) return [...loop];
   let best: Pt[] = [];
   let run: Pt[] = [];
   // From the first blocked sample once round, so a stretch across the loop's seam stays whole.
@@ -272,8 +309,8 @@ const squareLanes = (): CrowdLane[] =>
     for (const ring of alleys) {
       if (out.length >= SQUARE_LANES_PER_CHUNK) break;
       const loop = weave(ring);
-      // An alley that touches a wall or a block somewhere is still walked where it is clear.
-      const walk = clearLoop(loop) ? loop : clearRun(loop);
+      // An alley that touches a wall, a block or the road somewhere is still walked where it is clear.
+      const walk = clearRun(loop);
       if (walk && dry(walk)) out.push({ id: `${c.id}-square-${out.length}`, chunk: c.id, points: walk });
     }
     for (const ring of squares) {
@@ -282,7 +319,8 @@ const squareLanes = (): CrowdLane[] =>
       for (const k of SQUARE_INSETS) {
         if (out.length >= SQUARE_LANES_PER_CHUNK) break;
         const loop = weave(ring.map(([x, z]) => [cx + (x - cx) * k, cz + (z - cz) * k] as const));
-        if (clearLoop(loop) && dry(loop)) out.push({ id: `${c.id}-square-${out.length}`, chunk: c.id, points: loop });
+        const walk = clearRun(loop);
+        if (walk && dry(walk)) out.push({ id: `${c.id}-square-${out.length}`, chunk: c.id, points: walk });
       }
     }
     return out;
