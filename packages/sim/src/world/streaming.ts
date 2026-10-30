@@ -385,6 +385,8 @@ export class WorldStreamer {
       if (e) {
         world.remove(e);
         live.delete(t.key);
+        // It walked off, it did not die: the renderer drops it like an unloaded chunk (G-033).
+        this.streamedOut.add(e.id);
       }
     }
     for (const t of conditional) {

@@ -2,7 +2,9 @@ import { expect } from "vitest";
 import {
   type AudioPort,
   type CameraMode,
+  type DespawnReason,
   EMPTY_INPUT,
+  type EntityId,
   type EffectDescriptor,
   type InputFrame,
   QUEST_ECHO,
@@ -20,9 +22,12 @@ import { GameSession } from "../src/game-session";
 
 export class FakeRender implements RenderPort {
   effects: EffectDescriptor["kind"][] = [];
+  despawns: [EntityId, DespawnReason][] = [];
   spawn() {}
   updateTransform() {}
-  despawn() {}
+  despawn(id: EntityId, reason: DespawnReason) {
+    this.despawns.push([id, reason]);
+  }
   clear() {}
   setCameraMode(_m: CameraMode) {}
   attachCamera() {}
