@@ -209,7 +209,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola skanu `lane-dead-end` (koniec pasa w mapie, > 6 m od krawędzi, bez początku pasa zgodnego kierunku w 3 m); dziś 75, z czego 33 to G-006 i 2 to G-020; ta poprawka obniża o 13, baza tylko spada.
 
 ### G-024 Jednokierunkowe pasy kończą się przed ulicą dla dostaw (Lubartowska, Kowalska, Świętoduska)
-- Status: zgłoszone, decyzja użytkownika (zmiana reguł ruchu)
+- Status: w naprawie razem z G-006 (decyzja użytkownika: opcja B, skręty w boczne ulice; ADR-0055)
 - Ważność: S3 · Zasięg: lokalny (6 końców) · Koszt: średni
 - Gdzie: Lubartowska#37:0/1 (460, 56), Kowalska#76:0/1 (568, 160), Świętoduska#20:0/1 (350, −48)
 - Dowód: naprawiacz G-023: oba pasy jadą w tę samą stronę, nie ma pasa powrotnego do zawrotki; zawrotka oznaczałaby jazdę pod prąd (regres G-105) albo czołowe zatory.
@@ -236,7 +236,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Dowód: sonda weryfikatora G-023 (seed 3, 8:00, 60 s); może być resynchronizacją auta poza wzrokiem.
 
 ### G-006 Skręty aut na skrzyżowaniach
-- Status: później (to funkcja, nie glitch: wymaga sieci pasów; ADR-0050 „Na później”)
+- Status: w naprawie (decyzja użytkownika przy G-024: skręty w boczne ulice; ADR-0055)
+- Ważność: S3 · Zasięg: szeroki (33 ślepe końce pasów na skrzyżowaniach i 6 z G-024) · Koszt: duży
+- Test przyjęcia: `lane-dead-end` spada; łuki skrętu na nawierzchni drogi i poza budynkami.
 
 ### G-007 Strzałki na pasach i napis BUS
 - Status: później (ADR-0052 „Na później”)
