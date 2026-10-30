@@ -244,6 +244,15 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (`systems/traffic-system.ts`)
 - Test przyjęcia: auto po resynchronizacji w łuku nie przekracza `TURN_SPEED`; test zawrotki bez złagodzenia przechodzi z G-020.
 
+### G-029 Kliknięcie „Nowa gra” w `models.spec.ts` wisi ponad 60 s na CI
+- Status: zgłoszone
+- Ważność: S1 (proponowana: czerwone CI, niestabilne) · Zasięg: każdy PR · Koszt: nieznany
+- Gdzie: `e2e/models.spec.ts:16`, shard E2E 1/3
+- Dowód: PR #37 (CI 41089511069) pada w obu próbach, PR #33 (CI 41069178665) przeszedł przy drugiej. Playwright: element widoczny i stabilny, „performing click action” bez końca, więc wątek strony zablokowany.
+- Przyczyna (przypuszczalna): długa praca synchroniczna po „Nowa gra” (budowa świata, ubieranie postaci VRoid) pod SwiftShaderem; może ta sama kolejka GPU co G-001.
+- Pakiet właściciela: packages/app / packages/engine (do ustalenia śladem)
+- Test przyjęcia: ślad pokazuje, co blokuje wątek; kliknięcie wraca w < 10 s na CI bez podnoszenia limitu.
+
 ### G-006 Skręty aut na skrzyżowaniach
 - Status: w naprawie (decyzja użytkownika przy G-024: skręty w boczne ulice; ADR-0055)
 - Ważność: S3 · Zasięg: szeroki (33 ślepe końce pasów na skrzyżowaniach i 6 z G-024) · Koszt: duży
