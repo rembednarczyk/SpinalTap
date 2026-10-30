@@ -223,6 +223,18 @@ describe("Lublin on the minimap and the map tab (ADR-0045)", () => {
     expect(store.getState().characterTab).toBeNull();
   });
 
+  it("rings the quest step's target on the map tab, wider than a fixer's dot", () => {
+    const mapMarkers = [
+      { id: "fixer", kind: "fixer", x: 4, z: 4 },
+      { id: "quest:fixer", kind: "quest", x: 4, z: 4 },
+    ] as const;
+    mount({ screen: "playing", map: city, mapPlayer: { x: 0, z: 0, yaw: 0 }, mapMarkers });
+    fireEvent.keyDown(window, { code: "KeyM" });
+    const r = (kind: string) => Number(screen.getByTestId(`citymap-marker-${kind}`).querySelector("circle")?.getAttribute("r"));
+    expect(screen.getByTestId("citymap-marker-quest").getAttribute("class")).toContain("citymap__marker--quest");
+    expect(r("quest")).toBeGreaterThan(r("fixer"));
+  });
+
   it("credits the map data on the title screen, small, and in full under Credits", () => {
     mount({ screen: "title" });
     expect(screen.getByTestId("title-attribution").textContent).toBe("Map data © OpenStreetMap contributors (ODbL) · terrain: GUGiK NMT");

@@ -33,7 +33,7 @@ Base.displayName = "Base";
 
 const Marker = ({ m, k }: { m: MapMarkerVm; k: number }) => (
   <g className={`citymap__marker citymap__marker--${m.kind}`} transform={`translate(${m.x.toFixed(1)} ${(-m.z).toFixed(1)})`} data-testid={`citymap-marker-${m.kind}`}>
-    {m.radius !== undefined ? <circle className="citymap__area" r={m.radius} /> : <circle r={4 * k} />}
+    {m.radius !== undefined ? <circle className="citymap__area" r={m.radius} /> : <circle r={(m.kind === "quest" ? 7 : 4) * k} />}
   </g>
 );
 

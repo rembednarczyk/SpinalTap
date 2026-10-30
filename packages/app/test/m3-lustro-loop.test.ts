@@ -61,7 +61,7 @@ const meetRen = (s: GameSession, ui: Ui, ending: EndingId, pick: number) => {
   expect(s.sim.domain.character.memories).toContain("rooftop");
   expect(allText(ui)).toContain("Ten sam dach, dwa lata wcześniej.");
   finishDialogue(s, ui, pick);
-  expect(objective(ui)).toBe("Kaito ma zlecenie na Rena. Dowiedz się, kto za nie płaci");
+  expect(objective(ui)).toBe("Kaito ma zlecenie na Rena. Dowiedz się, kto za nie płaci (bar Neon Koi)");
 };
 
 /** Step 3: Kaito's job on Ren, the hook into the overpass; the "głos" flashback follows. */
@@ -104,7 +104,7 @@ describe("M3 acceptance: act II from the end of act I to each of its endings", (
     const { session, ui } = setup(store);
     expect(await session.loadAsync("act2-mid")).toBe(true);
     expect(session.sim.domain.story.choices.rooftop).toBe(rooftop === 0 ? "together" : "alone");
-    expect(objective(ui)).toBe("Kaito ma zlecenie na Rena. Dowiedz się, kto za nie płaci");
+    expect(objective(ui)).toBe("Kaito ma zlecenie na Rena. Dowiedz się, kto za nie płaci (bar Neon Koi)");
 
     kaitoJob(session, ui, job, voice);
     const before = session.sim.domain.reputation;

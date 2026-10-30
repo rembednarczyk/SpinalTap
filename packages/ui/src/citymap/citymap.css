@@ -47,6 +47,7 @@
 .citymap__marker--fixer { fill: var(--amber); }
 .citymap__marker--target { fill: var(--magenta); }
 .citymap__marker--enforcer { fill: var(--danger); }
+.citymap__marker--quest circle { fill: none; stroke: var(--magenta); stroke-width: 2.5; }
 .citymap__area { fill: rgba(255, 61, 139, 0.16); stroke: var(--magenta); stroke-width: 1; stroke-dasharray: 3 2; }
 .citymap__tools { position: absolute; top: 10px; left: 10px; display: flex; flex-wrap: wrap; gap: 6px; max-width: calc(100% - 20px); }
 .citymap__btn {

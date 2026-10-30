@@ -172,7 +172,8 @@ describe("minimap data", () => {
     const st = ui.getState();
     // On the chair in the clinic (ADR-0038), on Krakowskie Przedmieście (ADR-0045).
     expect(st.mapPlayer).toMatchObject({ x: 319.5, z: -64.75 });
-    expect(st.mapMarkers.map((m) => m.kind).sort()).toEqual(["fixer", "target"]);
+    // Kaito by the chair is the first step's target: his fixer dot gets the quest ring too.
+    expect(st.mapMarkers.map((m) => m.kind).sort()).toEqual(["fixer", "quest", "target"]);
     expect(st.journal.quests[0]?.title).toBe("Pierwsze zlecenie");
     const before = ui.getState().mapPlayer;
     s.step(EMPTY_INPUT);
