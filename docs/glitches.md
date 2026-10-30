@@ -41,7 +41,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet: `tools/osm-import` (meble) albo `packages/sim` (trasy przez parking)
 
 ### G-005 Wiata przystanku wchodzi w ścianę przy Alei Tysiąclecia
-- Status: zgłoszone
+- Status: duplikat (G-011)
 - Ważność: S4 · Zasięg: lokalny · Koszt: mały
 - Gdzie: (709, 335)
 - Dowód: skan `furniture-in-wall` = 1.
@@ -71,6 +71,55 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Przyczyna: `kerbCars()` stawia auta na odsunięciu z mediany szerokości całej ulicy; `fits()` nie sprawdza nawierzchni.
 - Pakiet: `packages/sim` (`content/parked-cars.ts`)
 - Test przyjęcia: rogi i środek każdego auta na `road`, `cobble`, `square` albo `parking`; kontrola `parked-car-off-road` w skanie = 0.
+
+### G-010 Brama przy północnej krawędzi mapy kończy się w pustce, posadzka wznosi się o 2,4 m
+- Status: przyjęte
+- Ważność: S4 · Zasięg: rzadki · Koszt: mały
+- Gdzie: kamienica w232674407 (38, 159), przejście (46, 157.2) → (30.7, 161)
+- Dowód:
+  - koniec przejścia leży poza chunkami (z > 160), gdzie `groundY` = 0;
+  - posadzka biegnie od −2,43 do 0, sklepienie ma 6,4 m nad gruntem;
+  - gracz staje na krawędzi świata;
+  - zrzuty `/tmp/gh-a/01-brama-edge.png`, `10-edge-passage-in.png`.
+- Pakiet: `tools/osm-import` (`passages.ts`)
+- Test przyjęcia: oba końce każdego przejścia z `PASSAGES` leżą w granicach chunka.
+
+### G-011 Meble wewnątrz budynków: reflektory w Wieży Trynitarskiej, Archikatedrze i przy Zamku, kioski w swoich budynkach, wiata w ścianie
+- Status: przyjęte
+- Ważność: S4 · Zasięg: lokalny · Koszt: mały
+- Gdzie:
+  - reflektory: (597, −152), (605, −175), (620, −190), (846, 222/240/258), (890, 205);
+  - kioski: w66330705 (291.4, −115.9), w458298771 (835.9, 373.5);
+  - wiata: (709, 335) (dawne G-005).
+- Dowód:
+  - `inBuilding` dla 7 reflektorów i 2 kiosków; środki do 7,8 m w głąb;
+  - zrzut `/tmp/gh-a3/13-katedra-floodlights.png` (brak reflektorów u fasady).
+- Przyczyna: `floodlight`, `kiosk` i `bus-shelter` są w `ON_BUILDINGS` generatora mebli, więc nie dotyczy ich `offWall` ani kontrola głębokości. Kiosk stawiany w centroidzie obrysu, który importer wciąga też jako budynek.
+- Pakiet: `tools/osm-import` (`props-gen.ts`), dane w `docs/world/lublin-props.todo.json`
+- Test przyjęcia: kontrola `furniture-in-building` w skanie (środek mebla głębiej niż 0,5 m w budynku) = 0.
+
+### G-012 Meble z bryłą nachodzą na siebie: kosze w pniach drzew na deptaku
+- Status: przyjęte (po G-011, ten sam plik)
+- Ważność: S4 · Zasięg: szeroki · Koszt: mały
+- Gdzie:
+  - kosze (175.5, −48.6) i (288, −73.3) w pniach drzew z OSM;
+  - stragan i automat (705, 267);
+  - kandelabr i szafka (734, 215).
+- Dowód: odległość środków 0,14 i 0,20 m przy promieniach 0,3 + 0,3.
+- Przyczyna: `placeStreetGroup` (`props-streets.ts`) nie omija innych mebli.
+- Pakiet: `tools/osm-import`
+- Test przyjęcia: kontrola `furniture-overlap` w skanie = 0 (meble z bryłą, poza słupkami).
+
+### G-013 Narzędzie zrzutów: kadr przesunięty o jedno miejsce albo powtórzony
+- Status: przyjęte
+- Ważność: S3 (proces: fałszywe dowody łowców) · Zasięg: każde polowanie · Koszt: mały
+- Gdzie: `e2e/glitch-shots.spec.ts`
+- Dowód:
+  - u łowcy Podzamcza pierwsza seria przesunięta o jeden kadr;
+  - u łowcy Krakowskiego dwa różne punkty dały identyczny zrzut.
+- Przyczyna (przypuszczalna): `citySettled()` jest już prawdą z poprzedniego miejsca, zanim ruszy streaming nowego.
+- Pakiet: `e2e` (QA)
+- Test przyjęcia: dwa różne punkty dają różne zrzuty, a kadr odpowiada pozycji gracza (np. zapis pozycji kamery obok zrzutu).
 
 ### G-006 Skręty aut na skrzyżowaniach
 - Status: później (to funkcja, nie glitch: wymaga sieci pasów; ADR-0050 „Na później”)
@@ -110,4 +159,5 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | Budynki: nakładanie | 2026-10-30 | pomiar |
 | Zrzuty: 3 Maja, Lubartowska, Dmowskiego, Plac Zamkowy, Mełgiewska, Plac Litewski, Rynek, Grodzka, Plac Wolności, Łokietka, Królewska, Bazar, mosty Bystrzycy | 2026-10-30 | zrzuty |
 | Podzamcze i Nabrzeże (łowca): trasy przez bloki scen, pomosty, wysokości aktorów, Nowy Plac Targowy, latarnie nad Bystrzycą | 2026-10-30 | pomiar, zrzuty |
+| Krakowskie i Stare Miasto (łowca): 15 bram przechodnich w obie strony, tłum względem budynków i mebli, kable kanionu, podstawy budynków, Narutowicza, Radziwiłłowska, Plac po Farze, Plac Katedralny | 2026-10-30 | pomiar, zrzuty |
 | Nieoglądane: Ruska, Narutowicza, Kalinowszczyzna, Zamek, wnętrza, noc i deszcz z bliska, telefon | - | - |
