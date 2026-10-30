@@ -55,6 +55,14 @@ describe("the lanes of the traffic (ADR-0050)", () => {
     expect(TRAFFIC_ROUTES.some((r) => r.use === "trolley" && r.street === "Aleja Tysiąclecia")).toBe(true);
   });
 
+  it("one-way streets are driven one way: the two carriageways of 3 Maja, north and south", () => {
+    const ways = (x: number, z: number) =>
+      TRAFFIC_ROUTES.filter((r) => r.use === "cars" && r.street === "3 Maja" && projectOn(r.points, x, z).d < 3).map((r) => Math.sign(pointAt(r.points, projectOn(r.points, x, z).s).tz));
+    expect(ways(-102.6, 90).length).toBeGreaterThan(0);
+    expect(new Set(ways(-102.6, 90))).toEqual(new Set([1]));
+    expect(new Set(ways(-111, 90))).toEqual(new Set([-1]));
+  });
+
   it("the roads are busy in the rush hour, quiet at night; delivery vans only in the morning", () => {
     const tys = TRAFFIC_ROUTES.findIndex((r) => r.use === "cars" && r.street === "Aleja Tysiąclecia");
     const rush = vehicleCount(3, tys, "high", { seconds: 8 * 3600 });

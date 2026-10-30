@@ -1,6 +1,7 @@
 /** Street names for the minimap and texts, and named points of interest for placing content later. */
 import { type Line } from "./features.ts";
 import { type Pt, type Rect, clipLineToRect, inRect, lineLength, r1, simplifyLine } from "./geometry.ts";
+import { oneway } from "./markings.ts";
 import { type PoiKind, type PoiOut, type StreetOut } from "./model.ts";
 import { type OsmData, type Tags } from "./osm.ts";
 import { geoToWorld } from "./project.ts";
@@ -25,10 +26,13 @@ export const chunkStreets = (lines: readonly Line[], rect: Rect): StreetOut[] =>
     const name = l.tags.name;
     const kind = l.tags.highway;
     if (!name || !kind || !STREET_KINDS.has(kind)) continue;
-    for (const piece of clipLineToRect(l.line, rect)) {
+    // A one-way street is drawn the way it is driven (`oneway=-1` turned round).
+    const one = oneway(l.tags);
+    const line = l.tags.oneway === "-1" ? [...l.line].reverse() : l.line;
+    for (const piece of clipLineToRect(line, rect)) {
       if (lineLength(piece) < 5) continue;
       const simple = simplifyLine(piece, 1).flatMap((p) => [r1(p.x), r1(p.z)]);
-      out.push({ name, kind, line: simple });
+      out.push({ name, kind, line: simple, ...(one ? { oneway: true as const } : {}) });
     }
   }
   return out;
