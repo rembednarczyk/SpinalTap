@@ -77,6 +77,8 @@ const MIN_TROLLEY = 150;
 
 /** Streets shorter than this carry nobody. */
 const MIN_ROUTE = 45;
+/** A one-way street keeps one lane if a tenth of it is too narrow for two. */
+const NARROW_Q = 0.1;
 
 const dirAt = (pts: readonly Pt[], i: number): Pt => {
   const a = pts[Math.max(0, i - 1)]!;
@@ -92,8 +94,8 @@ export const offsetLine = (pts: readonly Pt[], off: number): Pt[] =>
     return [Math.round((p[0] + tz * off) * 100) / 100, Math.round((p[1] - tx * off) * 100) / 100] as const;
   });
 
-/** How far the carriageway reaches to the right of a street's axis: the median over samples every 10 m (m). */
-export const roadHalfWidth = (pts: readonly Pt[], side: 1 | -1 = 1): number => {
+/** How far the carriageway reaches to the right of a street's axis: the median (or quantile `q`) over samples every 10 m (m). */
+export const roadHalfWidth = (pts: readonly Pt[], side: 1 | -1 = 1, q = 0.5): number => {
   const out: number[] = [];
   const len = polylineLength(pts);
   for (let s = 5; s < len; s += 10) {
@@ -104,7 +106,7 @@ export const roadHalfWidth = (pts: readonly Pt[], side: 1 | -1 = 1): number => {
   }
   if (out.length === 0) return 0;
   out.sort((a, b) => a - b);
-  return out[Math.floor(out.length / 2)]!;
+  return out[Math.floor((out.length - 1) * q + 0.5)]!;
 };
 
 /** The point at arc length `s` of an open polyline (clamped), with the way along it. */
@@ -212,8 +214,10 @@ const lanesOf = (c: RoadChain, k: number, all: readonly RoadChain[]): TrafficRou
   const cars = (l: number) => Math.max(1, Math.floor(l / road.spacing));
   const trolley = TROLLEY_STREETS.has(c.name) && len >= MIN_TROLLEY;
   const out: TrafficRoute[] = [];
-  if (isCarriageway(c, all)) {
-    const half = Math.max(roadHalfWidth(c.points, 1), roadHalfWidth(c.points, -1));
+  // A one-way street or one carriageway of a dual road: its lanes all go the way it is drawn.
+  if (c.oneway || isCarriageway(c, all)) {
+    // Two lanes side by side only if the asphalt reaches past both of them nearly all the way.
+    const half = Math.min(roadHalfWidth(c.points, 1, NARROW_Q), roadHalfWidth(c.points, -1, NARROW_Q));
     const offsets = half >= 2.6 ? [1.6, -1.6] : [0];
     offsets.forEach((off, n) => out.push(routeOf(`${id}:${n}`, c.name, "cars", offsetLine(c.points, off), road.speed, cars(len))));
     if (trolley) out.push(routeOf(`${id}:t`, c.name, "trolley", offsetLine(c.points, offsets[0]!), TROLLEY_SPEED, Math.max(1, Math.round(len / TROLLEY_SPACING))));

@@ -43,6 +43,8 @@ export interface StreetOut {
   readonly name: string;
   readonly kind: string;
   readonly line: readonly number[];
+  /** Driven one way only, the way the line runs. */
+  readonly oneway?: true;
 }
 
 export type PoiKind = "shop" | "food" | "bar" | "stop" | "hotel" | "sight" | "culture" | "church" | "service" | "office";

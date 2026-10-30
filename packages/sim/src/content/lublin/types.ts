@@ -51,6 +51,8 @@ export interface LublinStreetData {
   readonly kind: string;
   /** World polyline, clipped to the chunk. */
   readonly line: FlatPoints;
+  /** Driven one way only, the way the line runs (`oneway=-1` already turned round). */
+  readonly oneway?: true;
 }
 
 export interface LublinMarkingData {
