@@ -29,6 +29,8 @@ Naprawiasz dokładnie jeden glitch o ID podanym przez orkiestratora. Działasz j
 ## Zakazy
 - Nie dotykasz innych glitchy, nawet obok. Zgłoś je w raporcie.
 - Nie podnosisz limitów czasu ani budżetów. Nie wyłączasz testów.
+- Nie osłabiasz istniejącego testu, żeby przeszedł z Twoją zmianą, np. przez pomijanie przypadków albo luźniejszy próg. Jeśli test łapie prawdziwy błąd, zgłoś go jako osobny glitch (przykład: G-028 wyszedł z G-020).
+- Kontrola skanu nie może zależeć od pola, które dodaje Twoja poprawka. Inaczej nie padnie bez niej (przykład: G-019).
 - Nie zmieniasz kontraktów w `packages/core/src/{ports,events,commands}` bez zgody orkiestratora (to granica: ADR).
 - Nie pushujesz i nie otwierasz PR. Integruje orkiestrator.
 
