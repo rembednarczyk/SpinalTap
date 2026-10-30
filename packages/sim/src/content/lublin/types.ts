@@ -43,6 +43,8 @@ export interface LublinGroundData {
   readonly outline: FlatPoints;
   /** On a bridge: not draped on the terrain. */
   readonly bridge?: true;
+  /** The bridge's deck axis, `[x0, z0, x1, z1]`: the bridge way's ends, its abutments. */
+  readonly deck?: FlatPoints;
 }
 
 export interface LublinStreetData {

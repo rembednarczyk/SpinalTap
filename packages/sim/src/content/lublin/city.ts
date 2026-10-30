@@ -1,11 +1,12 @@
 import type { BuildingPassage, Doorway, GroundPoint, Vec3, ViewDescriptor } from "@seki/core";
+import { makeDeck } from "../../world/deck";
 import type { PrismDef } from "../../world/prism";
 import type { StaticProp } from "../builders";
 import { buildingView, groundView, markingView, toPoints } from "./index";
 import { type GroundRect } from "./shape";
-import { type BuildingCut, CLEARED, CLEARED_BUILDINGS, type PassageSite, ROOM_STOREY, type RoomSite } from "./sites";
+import { type BuildingCut, CLEARED, CLEARED_BUILDINGS, type PassageSite, ROOM_STOREY, type RoomSite, rawHeight } from "./sites";
 import { SHAPED_TERRAIN, groundY } from "./terrain";
-import type { LublinBuildingData, LublinChunkData } from "./types";
+import type { LublinBuildingData, LublinChunkData, LublinGroundData } from "./types";
 
 /**
  * The map's city as the game's content (ADR-0045): every building of a chunk is a solid prop
@@ -190,6 +191,14 @@ interface Carve {
   readonly bottom: number;
 }
 
+/** A piece of ground, on a bridge with its deck's axis and heights (ADR-0053). */
+const bridgeView = (g: LublinGroundData): ViewDescriptor => {
+  const view = groundView(g);
+  if (!g.deck || view.kind !== "ground") return view;
+  const d = makeDeck(g.outline, g.deck, rawHeight);
+  return { ...view, deck: { a: { x: d.a.x, y: d.ya, z: d.a.z }, b: { x: d.b.x, y: d.yb, z: d.b.z } } };
+};
+
 /**
  * A building of the map with passages through its ground floor (open at their mouths, lined by
  * the renderer, ADR-0048) and boxes cut out of its solid. Each part of the solid is split by the
@@ -263,7 +272,7 @@ export const chunkScenery = (c: LublinChunkData, buildings: readonly StaticProp[
   const terrain = SHAPED_TERRAIN.get(c.id) ?? c.terrain;
   return [
     { chunk: c.id, view: { kind: "terrain", grid: terrain }, at: ORIGIN },
-    ...c.ground.filter((g) => !clearedSurface(toPoints(g.outline))).map((g): SceneryItem => ({ chunk: c.id, view: groundView(g), at: ORIGIN })),
+    ...c.ground.filter((g) => !clearedSurface(toPoints(g.outline))).map((g): SceneryItem => ({ chunk: c.id, view: bridgeView(g), at: ORIGIN })),
     ...c.markings.map((m): SceneryItem => ({ chunk: c.id, view: markingView(m), at: ORIGIN })),
     ...buildings.map((p): SceneryItem => ({ chunk: c.id, view: p.view, at: p.center })),
   ];

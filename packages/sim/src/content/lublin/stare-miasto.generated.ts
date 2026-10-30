@@ -704,7 +704,7 @@ export const STARE_MIASTO_CHUNKS: readonly LublinChunkData[] = [
       {"surface":"road","outline":[760,94.4,746.6,101.2,741.6,91.5,760,82.5]},
       {"surface":"road","outline":[757.2,160,757.1,159.7,760,158,760,160]},
       {"surface":"cobble","outline":[634.2,43.5,680.7,5.5,685.8,11.7,639.3,49.7]},
-      {"surface":"cobble","outline":[730.3,160,727.6,157.6,732.5,151.3,738.1,156.2,741.5,160],"bridge":true},
+      {"surface":"cobble","outline":[730.3,160,727.6,157.6,732.5,151.3,738.1,156.2,741.5,160],"bridge":true,"deck":[761,185.6,730.1,154.5]},
       {"surface":"cobble","outline":[679.3,8.4,682.2,-40,690.3,-40,687.3,8.8]},
       {"surface":"cobble","outline":[610,7.7,639.8,44.1,633.7,49.2,610,20.2]},
       {"surface":"cobble","outline":[710.7,131.1,724.2,144,718.7,149.8,705.2,136.9]},

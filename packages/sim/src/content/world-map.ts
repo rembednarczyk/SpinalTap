@@ -11,6 +11,8 @@ import { DOKI_NAV } from "./district-doki";
 import { type RoomCut, type SceneryItem, chunkBuildings, chunkScenery } from "./lublin/city";
 import { BUILDING_CUTS, CLINIC_SITE, KOI_SITE, MAP_CHUNKS, PASSAGES } from "./lublin/sites";
 import { SHAPED_TERRAIN } from "./lublin/terrain";
+import { BRIDGE_DECKS } from "./lublin/decks";
+import type { GroundDeck } from "../world/deck";
 import { furnitureProps } from "./lublin/furniture";
 import { basinRimProps } from "./lublin/basins";
 import { GAME_ACTORS, GAME_PROPS, WORLD_STREET_PROPS } from "./street-props";
@@ -43,6 +45,8 @@ export interface ChunkDef {
    * must give the same heights where their bounds meet. Without it the ground is y = 0.
    */
   readonly terrain?: TerrainGrid;
+  /** Bridge decks over the terrain (ADR-0053): the ground there. */
+  readonly decks?: readonly GroundDeck[];
   /**
    * Solids of the street (ADR-0050): the furniture a body stumbles on, drawn by the scenery.
    * Their ids come from `STREET_ID_BASE`, not the allocator, so no id of the content moves.
@@ -92,6 +96,7 @@ export const WORLD_CHUNKS: readonly ChunkDef[] = [
       props: [...(MAP_BUILDINGS.get(c.id) ?? []), ...GAME_PROPS.filter((p) => mapChunkOf(p.center.x, p.center.z) === c.id)],
       actors: GAME_ACTORS.filter((a) => mapChunkOf(a.spawn.position.x, a.spawn.position.z) === c.id),
       ...(terrain ? { terrain } : {}),
+      ...((BRIDGE_DECKS.get(c.id) ?? []).length > 0 ? { decks: BRIDGE_DECKS.get(c.id) } : {}),
       street: [...furnitureProps(WORLD_STREET_PROPS[c.id] ?? []), ...basinRimProps(c), ...PARKED_CARS.filter((p) => p.chunk === c.id).map(parkedProp)],
     };
   }),
