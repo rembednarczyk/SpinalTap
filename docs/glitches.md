@@ -101,7 +101,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `furniture-in-building` w skanie (środek mebla głębiej niż 0,5 m w budynku) = 0.
 
 ### G-012 Meble z bryłą nachodzą na siebie: kosze w pniach drzew na deptaku
-- Status: weryfikacja PRZYJĘTE, w PR. Kontrola `furniture-overlap` liczy nachodzenie brył > 5 cm; para kandelabr–szafka (734, 215) miała 0,8 cm (modele tylko się stykają), więc skan jej nie liczy, a generator i tak ją rozsunął.
+- Status: naprawione (#35). Kontrola `furniture-overlap` liczy nachodzenie brył > 5 cm; para kandelabr–szafka (734, 215) miała 0,8 cm (modele tylko się stykają), więc skan jej nie liczy, a generator i tak ją rozsunął.
 - Ważność: S4 · Zasięg: szeroki · Koszt: mały
 - Gdzie:
   - kosze (175.5, −48.6) i (288, −73.3) w pniach drzew z OSM;
@@ -162,7 +162,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Dowód: zrzut naprawiacza G-013 (pionowy pas czarnych poziomych kresek na środku bruku; może decal albo odpływ).
 
 ### G-019 Auto z jednokierunkowej pętli Cerkiewnej stoi na trzypasmowej jezdni Alei Tysiąclecia
-- Status: w naprawie (weryfikacja: NIE PRZYJĘTE, kontrola skanu zależała od pola dodanego w poprawce i nie padała bez niej)
+- Status: weryfikacja PRZYJĘTE (2. runda), w PR. Luka skanu do domknięcia osobno: auto przy krawężniku bez rozpoznanej ulicy (> 12 m albo > 20°) jest pomijane, a auto wjechane na inną ulicę osiedlową uznawane za stojące przy niej; generację chroni `offOtherRoads`.
 - Ważność: S3 · Zasięg: lokalny, trasa główna · Koszt: mały
 - Gdzie: (920,02, 329,90), hatchback; 1 na 81 aut w mieście
 - Dowód: 2,49 m od osi „Aleje Tysiąclecia” (OSM way 739432828, primary, 3 pasy), kąt 35°; pętla Cerkiewnej (ways 66322976, 422659195) leży 7–13 m od osi Alei bez pobocza.
