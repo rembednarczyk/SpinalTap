@@ -52,5 +52,6 @@
 | [0048](0048-stare-miasto-bramy-kladka-patrole-trasa.md) | Stare Miasto: wyściółka i sklepienie przejść w bramach, kryta kładka nad Grodzką na podsufitce, szyldy na kutych wysięgnikach, patrole Hebi (w nocy czterech, w dzień jeden; neutralnego gracza obserwują), Trasa Podziemna z Trybunału w osobnym chunku | Zaakceptowana |
 | [0049](0049-kamera-i-pole-widzenia.md) | Kamera i pole widzenia: ustawienie w stopniach poziomo (70-100°, domyślnie 80°) przeliczane na pion z proporcji ekranu, poziom stały od 4:3 do 2,2, TPP 2,2 m na wysokości oczu nad prawym ramieniem, kadr referencyjny z kątem gry, niższe budżety scen | Zaakceptowana |
 | [0050](0050-zywe-ulice-meble-tlum-ruch.md) | Żywe ulice: meble uliczne w grze jako tanie pryzmaty i scenografia (bloki 256 m pieczone w jedną siatkę, jedno halo), gęstszy tłum z grupami przy ławkach, ogródkach, kioskach i wiatach, ruch uliczny i trolejbusy z ziarna i zegara poza zapisem, zaparkowane auta na krawężnikach i Placu Zamkowym | Zaakceptowana |
+| [0051](0051-pionowy-lublin-2077.md) | Pionowy Lublin 2077: nadbudowy (kontenery, kapsuły, szklane boksy) z `look` i dzielnicy, bryły tylko w górę, kable, kładki, reklamy polsko-japońskie, zasłony neonowe, snopy i niska mgła w siatkach komórek, korpo-wieże jako impostory w perspektywie | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.

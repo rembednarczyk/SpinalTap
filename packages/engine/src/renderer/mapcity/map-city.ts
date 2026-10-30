@@ -15,8 +15,13 @@ import { MapWaterMaterial } from "./map-water";
 import { BinIndex, cellBounds, cellKey, cellsOf, grow } from "./map-index";
 import { type Box2, type P2, boundsOf, centroid, cleanRing, distanceToBox, pointInRing } from "./polygon";
 import { planBuildingSigns } from "./sign-plan";
+import { type AcrossAt, SPAN_MAX, type Span, findSpans, planFarCanyon, planNearCanyon } from "./canyon-plan";
+import { planCanyonSigns } from "./canyon-signs";
+import { planFarVertical, planNearVertical } from "./vertical-plan";
+import { planWallClutter } from "./wall-clutter";
 import { planSteps } from "./steps-plan";
 import { StreetProps, type StreetPropsStats } from "./street-props";
+import { MapSkyline } from "./skyline";
 
 /** Views drawn by the map city (ADR-0042, ADR-0044). */
 export type MapView = Extract<ViewDescriptor, { kind: "building" | "terrain" | "ground" | "street-props" }>;
@@ -74,6 +79,8 @@ interface Cell {
   readonly grounds: Set<EntityId>;
   dirty: boolean;
   frames: FacadeFrame[];
+  /** What hangs over the streets from this cell's buildings (ADR-0051). */
+  spans: Span[];
   near: Mesh | null;
   nearDirty: boolean;
   far: Mesh | null;
@@ -129,10 +136,13 @@ export class MapCity {
   private terrainsDirty = false;
   /** Street furniture, made on the first `street-props` view (ADR-0047). */
   private streetProps: StreetProps | null = null;
+  /** The megabuildings over the roofs (ADR-0051). */
+  private readonly skyline: MapSkyline;
 
   constructor(private readonly deps: MapCityDeps) {
     this.signs = new MapSignMaterial(deps.scene, deps.signAtlas);
     this.water = new MapWaterMaterial(deps.scene);
+    this.skyline = new MapSkyline(deps.scene, deps.quality !== "low");
     this.lod = MAP_LOD[deps.quality];
     const terrain = deps.materials.get("mapTerrain");
     // Terrain gives way in depth to the surfaces laid on it, at any distance.
@@ -181,8 +191,8 @@ export class MapCity {
       if (view.surface !== "water" && view.surface !== "basin") this.surfaceIndex.add(id, bounds);
       this.cellOf(cell).grounds.add(id);
     }
-    // Neighbours' firewalls and kerbs depend on this one.
-    this.touch(grow(bounds, 1));
+    // Neighbours' firewalls and kerbs depend on this one, and the spans across the street (ADR-0051).
+    this.touch(grow(bounds, view.kind === "building" ? SPAN_MAX : 1));
   }
 
   despawn(id: EntityId): void {
@@ -294,6 +304,7 @@ export class MapCity {
       this.rig = rig;
       this.water.setLook(rig, this.daylight);
       this.signs.setDaylight(this.daylight, rig.fogDensity);
+      this.skyline.setLook(rig, this.daylight);
     }
     if (!frozen) {
       this.water.update(dt);
@@ -324,6 +335,7 @@ export class MapCity {
     }
     this.waitingNear = waiting;
     this.streetProps?.update(eye);
+    this.skyline.update(dt, eye, this.deps.scene.activeCamera?.maxZ ?? 320, frozen);
   }
 
   /** Every cell near the eye has its detailed buildings (they are built a few per frame). */
@@ -344,6 +356,7 @@ export class MapCity {
 
   setReduceFlashes(on: boolean): void {
     this.signs.setReduceFlashes(on);
+    this.skyline.setReduceFlashes(on);
   }
 
   /** Level of the cell around (x, z) (debug and tests). */
@@ -384,7 +397,7 @@ export class MapCity {
   private cellOf(key: string): Cell {
     let c = this.cells.get(key);
     if (!c) {
-      c = { key, bounds: cellBounds(key), buildings: new Set(), grounds: new Set(), dirty: true, frames: [], near: null, nearDirty: true, far: null, signs: null, ground: null, water: null, lod: "off" };
+      c = { key, bounds: cellBounds(key), buildings: new Set(), grounds: new Set(), dirty: true, frames: [], spans: [], near: null, nearDirty: true, far: null, signs: null, ground: null, water: null, lod: "off" };
       this.cells.set(key, c);
     }
     return c;
@@ -414,6 +427,7 @@ export class MapCity {
     cell.near = cell.far = cell.signs = cell.ground = cell.water = null;
     cell.nearDirty = true;
     cell.frames = [];
+    cell.spans = [];
   }
 
   private neighbourAt = (x: number, z: number, self: number): number | null => {
@@ -424,6 +438,15 @@ export class MapCity {
       if (b && pointInRing({ x, z }, b.ring)) top = Math.max(top ?? -Infinity, b.base + b.view.height);
     }
     return top;
+  };
+
+  /** The building across the street at (x, z), for the spans over it (ADR-0051). */
+  private acrossAt: AcrossAt = (x, z, self) => {
+    for (const id of this.buildingIndex.at(x, z)) {
+      const b = this.buildings.get(id);
+      if (id !== self && b && pointInRing({ x, z }, b.ring)) return { id, top: b.base + b.view.height, clutter: b.view.vertical?.clutter ?? 0 };
+    }
+    return null;
   };
 
   private roadAt = (x: number, z: number): boolean => {
@@ -445,12 +468,16 @@ export class MapCity {
       const e = this.buildings.get(id);
       return e ? [facadeFrame(this.building(id, e), this.neighbourAt)] : [];
     });
+    cell.spans = cell.frames.flatMap((f) => findSpans(f, this.acrossAt));
     const far = new MeshSink();
     const signs = new MeshSink();
     for (const f of cell.frames) {
       planFarBuilding(far, f);
+      planFarVertical(far, f);
       planBuildingSigns(signs, f, (name) => this.signs.slotFor(name), this.drawnGround);
     }
+    planFarCanyon(far, cell.spans);
+    planCanyonSigns(signs, cell.frames, cell.spans, this.deps.quality === "low");
     cell.far = far.empty ? null : this.mesh(`map-far-${cell.key}`, far, "facade");
     if (!signs.empty) {
       const m = sinkToMesh(this.deps.scene, `map-signs-${cell.key}`, signs, true);
@@ -483,7 +510,13 @@ export class MapCity {
     cell.near = null;
     cell.nearDirty = false;
     const sink = new MeshSink();
-    for (const f of cell.frames) planNearBuilding(sink, f);
+    const lite = this.deps.quality === "low";
+    for (const f of cell.frames) {
+      planNearBuilding(sink, f);
+      planNearVertical(sink, f);
+      if (!lite) planWallClutter(sink, f);
+    }
+    planNearCanyon(sink, cell.spans, lite);
     if (sink.empty) return;
     const m = this.mesh(`map-near-${cell.key}`, sink, "facade");
     m.setEnabled(false);
