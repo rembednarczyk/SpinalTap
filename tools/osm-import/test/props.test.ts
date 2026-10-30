@@ -13,6 +13,7 @@ import { type PropsPlan, generateProps } from "../src/props-gen.ts";
 import { SHAPES, knownKind, propOf, withShape } from "../src/props-kinds.ts";
 import { evenStations, offRoad, offWall, scatter, stations } from "../src/props-place.ts";
 import { Site } from "../src/props-site.ts";
+import { SolidIndex, clearSpot } from "../src/props-solid.ts";
 
 const CHUNKS = [...KRAKOWSKIE_CHUNKS, ...STARE_MIASTO_CHUNKS, ...PODZAMCZE_CHUNKS, ...NABRZEZE_CHUNKS];
 const PLAN = JSON.parse(readFileSync(join(REPO, "docs/world/lublin-props.todo.json"), "utf8")) as PropsPlan;
@@ -141,5 +142,18 @@ describe("street furniture generator (ADR-0047)", () => {
     const out = generateProps(PLAN, CHUNKS);
     const unia = [...out.byChunk.values()].flat().find((i) => i.prop === "monument" && Math.abs(i.x - 47.8) < 0.2 && Math.abs(i.z + 25.7) < 0.2);
     expect(unia && unia.variant % 4).toBe(0);
+  });
+
+  it("steps a piece placed later out of the solids placed before it, or drops it with no room (G-012)", () => {
+    const solids = new SolidIndex();
+    solids.add({ prop: "tree", x: 0, y: 0, z: 0, yaw: 0, variant: 0 });
+    const bin = { prop: "waste-bin" as const, x: 0.1, y: 0, z: 0.1, yaw: 0, variant: 0 };
+    expect(solids.clashes(bin)).toBe(true);
+    const moved = clearSpot(solids, bin, () => true)!;
+    expect(solids.clashes(moved)).toBe(false);
+    expect(Math.hypot(moved.x - bin.x, moved.z - bin.z)).toBeLessThanOrEqual(1.6);
+    expect(clearSpot(solids, bin, () => false)).toBeNull();
+    // Bollards keep to their own rows; nothing else is held to them.
+    expect(solids.clashes({ ...bin, prop: "bollard" })).toBe(false);
   });
 });

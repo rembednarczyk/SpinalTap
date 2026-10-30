@@ -1,10 +1,10 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { VEHICLE_SIZE } from "../../../packages/core/src";
+import { type StreetPropItem, VEHICLE_SIZE } from "../../../packages/core/src";
 import { CROWD_LANES } from "../../../packages/sim/src/content/crowd";
 import { furnitureClearance } from "../../../packages/sim/src/content/furniture-index";
-import { furnitureRadius } from "../../../packages/sim/src/content/lublin/furniture";
+import { furniturePrisms, furnitureRadius } from "../../../packages/sim/src/content/lublin/furniture";
 import { inBuilding, nearestWall } from "../../../packages/sim/src/content/lublin/places";
 import { ROAD_CHAINS, surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
 import { clearedBuilding } from "../../../packages/sim/src/content/cleared-buildings";
@@ -79,6 +79,45 @@ const outlineArea = (flat: readonly number[], ox: number, oz: number) => {
   return coveredArea({ minX: Math.min(...xs), maxX: Math.max(...xs), minZ: Math.min(...zs), maxZ: Math.max(...zs) }, flat, ox, oz);
 };
 
+type Pt = { readonly x: number; readonly z: number };
+type Poly = readonly Pt[];
+
+/** The convex hull of points (monotone chain). */
+const hull = (pts: Poly): Pt[] => {
+  const s = [...pts].sort((a, b) => a.x - b.x || a.z - b.z);
+  const cross = (o: Pt, a: Pt, b: Pt) => (a.x - o.x) * (b.z - o.z) - (a.z - o.z) * (b.x - o.x);
+  const half = (list: Poly) => {
+    const out: Pt[] = [];
+    for (const p of list) {
+      while (out.length >= 2 && cross(out[out.length - 2]!, out[out.length - 1]!, p) <= 0) out.pop();
+      out.push(p);
+    }
+    return out.slice(0, -1);
+  };
+  return [...half(s), ...half([...s].reverse())];
+};
+
+/** The ground a piece takes in world metres: the hull of its solid's parts (a stall's posts with the space under its canvas). */
+const footprint = (i: StreetPropItem) => hull(furniturePrisms(i).flatMap((p) => p.points.map((q) => ({ x: i.x + q.x, z: i.z + q.z }))));
+
+/** How deep two convex polygons run into each other (m), by separating axes; 0 when apart. */
+const depth = (a: Poly, b: Poly) => {
+  let least = Infinity;
+  for (const poly of [a, b])
+    for (let k = 0; k < poly.length; k++) {
+      const p = poly[k]!;
+      const q = poly[(k + 1) % poly.length]!;
+      const len = Math.hypot(q.x - p.x, q.z - p.z) || 1;
+      const nx = -(q.z - p.z) / len;
+      const nz = (q.x - p.x) / len;
+      const sa = a.map((v) => v.x * nx + v.z * nz);
+      const sb = b.map((v) => v.x * nx + v.z * nz);
+      least = Math.min(least, Math.min(Math.max(...sa), Math.max(...sb)) - Math.max(Math.min(...sa), Math.min(...sb)));
+      if (least <= 0) return 0;
+    }
+  return least;
+};
+
 const overlaps = (a: Rect, b: Rect) => a.minX < b.maxX && b.minX < a.maxX && a.minZ < b.maxZ && b.minZ < a.maxZ;
 
 /** The game's solid blocks standing on the ground (not interiors, awnings or decks) in the rectangles that clear the map's buildings. */
@@ -111,6 +150,24 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       .flat()
       .filter((i) => ["artwork", "monument", "kiosk", "bus-shelter", "bench", "vending-machine", "advertising-column"].includes(i.prop))
       .flatMap((i) => (nearestWall(i.x, i.z).d < furnitureRadius(i) - 0.3 ? [{ at: near(i.x, i.z), what: i.prop }] : [])),
+  /**
+   * Two solid pieces (bollards aside, they stand in rows) whose footprints run more than 5 cm into
+   * each other. Judged on the real prisms, not their radii, which reach far past a long bench's
+   * sides; a stall or a shelter takes the ground between its posts and walls too.
+   */
+  "furniture-overlap": () => {
+    const solid = Object.values(WORLD_STREET_PROPS)
+      .flat()
+      .filter((i) => i.prop !== "bollard" && i.prop !== "manhole" && furnitureRadius(i) > 0)
+      .map((i) => ({ i, r: furnitureRadius(i), f: footprint(i) }));
+    return solid.flatMap((a, k) =>
+      solid.slice(k + 1).flatMap((b) => {
+        if (Math.hypot(a.i.x - b.i.x, a.i.z - b.i.z) >= a.r + b.r) return [];
+        const d = depth(a.f, b.f);
+        return d > 0.05 ? [{ at: near(a.i.x, a.i.z), what: `${a.i.prop} and ${b.i.prop} ${d.toFixed(2)} m` }] : [];
+      }),
+    );
+  },
   /** A piece of furniture (wall lanterns aside, they hang on a facade) standing more than 0.5 m inside a building. */
   "furniture-in-building": () =>
     Object.values(WORLD_STREET_PROPS)
