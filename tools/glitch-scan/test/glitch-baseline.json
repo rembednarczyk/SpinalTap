@@ -3,9 +3,11 @@
   "lane-in-building": 0,
   "walker-on-car-lane": 0,
   "furniture-in-car-lane": 1,
-  "furniture-in-wall": 1,
+  "furniture-in-wall": 0,
+  "furniture-in-building": 0,
   "parked-car-in-furniture": 0,
   "parked-car-off-road": 0,
+  "parked-car-on-crossing": 0,
   "prop-off-ground": 0,
   "bridge-without-deck": 0,
   "passage-off-map": 0

@@ -197,7 +197,8 @@ const placeItem = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: 
   if (item.points) return item.points.map((q, i) => ({ prop, p: { x: q[0], z: q[1] }, yaw: null, key: osmAt(item, i) }));
   if (item.polygon) {
     const ring = flat(item.polygon);
-    if (SINGLE_OUTLINE.has(prop)) return [onOutline(site, item, prop, ring)];
+    // A kiosk or a shelter whose outline the importer already raised as a building would stand inside its own double.
+    if (SINGLE_OUTLINE.has(prop)) return site.surfaceAt(centroid(ring)) === "building" ? [] : [onOutline(site, item, prop, ring)];
     const count = JETS[item.kind] ?? item.count ?? 1;
     // Off the lanes of the streets crossing the area (the car park of Plac Zamkowy under its flea market).
     const clear = { surfaceAt: (p: Pt) => site.surfaceAt(p), standable: (p: Pt) => site.standable(p) && !nearTraffic(site, p, TRAFFIC_REACH) } as Site;
@@ -265,11 +266,17 @@ export const facingOf = (site: Site, x: Placed): number => {
 const r2 = (v: number): number => Math.round(v * 100) / 100 + 0;
 const r1 = (v: number): number => Math.round(v * 10) / 10 + 0;
 
-/** Kinds that may stand on a building outline: wall-mounted, or a structure that is the outline itself. */
-const ON_BUILDINGS: ReadonlySet<StreetPropKind> = new Set(["lamp-wall-lantern", "floodlight", "cctv", "kiosk", "bus-shelter"]);
+/** Kinds that may stand on a building outline: the wall-mounted ones. */
+const ON_BUILDINGS: ReadonlySet<StreetPropKind> = new Set(["lamp-wall-lantern", "cctv"]);
 
 /** How far the bulky free-standing pieces keep from the walls (m): about their footprint's radius. */
-const WALL_ROOM: Partial<Record<StreetPropKind, number>> = { artwork: 1.5, monument: 1.5, kiosk: 1.7, "bus-shelter": 2, bench: 1.2, "vending-machine": 0.7, "advertising-column": 0.8 };
+const WALL_ROOM: Partial<Record<StreetPropKind, number>> = { artwork: 1.5, monument: 1.5, kiosk: 1.7, "bus-shelter": 2, bench: 1.2, "vending-machine": 0.7, "advertising-column": 0.8, floodlight: 0.4 };
+
+/**
+ * How far a piece may be moved out from a wall (m), beyond the default 4: the plan sketches the
+ * floodlights on the lit building's outline, up to 8 m inside the Trinitarian Tower.
+ */
+const WALL_REACH: Partial<Record<StreetPropKind, number>> = { floodlight: 10 };
 
 /** Kinds that belong on the carriageway: covers in it, bollards closing it. */
 const ON_ROAD: ReadonlySet<StreetPropKind> = new Set(["manhole", "bollard"]);
@@ -333,7 +340,7 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
     }
     // A sculpture or a kiosk from a node on a facade stands clear of the wall.
     const room = ON_BUILDINGS.has(placedAt.prop) ? undefined : WALL_ROOM[placedAt.prop];
-    const free = room === undefined ? off : offWall(site, off, room);
+    const free = room === undefined ? off : offWall(site, off, room, WALL_REACH[placedAt.prop]);
     if (!free) {
       inBuilding++;
       continue;

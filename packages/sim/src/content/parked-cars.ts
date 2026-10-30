@@ -64,9 +64,55 @@ const footprint = (x: number, z: number, yaw: number, model: VehicleModel, pad: 
   ];
 };
 
-/** Surfaces a car may stand on: the carriageway (a zebra on it too) and the cobbled squares. */
-const PARKABLE: ReadonlySet<GroundSurface> = new Set<GroundSurface>(["road", "crossing", "cobble", "square"]);
+/** Surfaces a car may stand on: the carriageway and the cobbled squares (never a zebra, see `clearOfZebras`). */
+const PARKABLE: ReadonlySet<GroundSurface> = new Set<GroundSurface>(["road", "cobble", "square"]);
 const parkable = (x: number, z: number): boolean => surfacesAt(x, z).some((s) => PARKABLE.has(s));
+
+/**
+ * Room a parked car leaves a zebra (m). The Polish code (art. 49 ust. 1 pkt 2 PoRD) bans parking
+ * on a crossing and less than 10 m before it, so the free stretch runs ahead of the car's front
+ * (its facing is the lane's way); behind it and to its sides the body only keeps a gap.
+ */
+const ZEBRA_AHEAD = 10;
+const ZEBRA_GAP = 1;
+const ZEBRAS = MAP_CHUNKS.flatMap((c) =>
+  c.ground
+    .filter((g) => g.surface === "crossing")
+    .map((g) => {
+      const pts = Array.from({ length: g.outline.length / 2 }, (_, i): Pt => [g.outline[2 * i]!, g.outline[2 * i + 1]!]);
+      const xs = pts.map((p) => p[0]);
+      const zs = pts.map((p) => p[1]);
+      return { pts, minX: Math.min(...xs), maxX: Math.max(...xs), minZ: Math.min(...zs), maxZ: Math.max(...zs) };
+    }),
+);
+
+const cross = (o: Pt, a: Pt, b: Pt): number => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+const segmentsGap = (a: Pt, b: Pt, c: Pt, d: Pt): number => {
+  if (cross(a, b, c) * cross(a, b, d) < 0 && cross(c, d, a) * cross(c, d, b) < 0) return 0;
+  return Math.min(segmentDistance(a[0], a[1], c, d), segmentDistance(b[0], b[1], c, d), segmentDistance(c[0], c[1], a, b), segmentDistance(d[0], d[1], a, b));
+};
+
+/**
+ * Does a car at (x, z), facing yaw, keep off every zebra and out of the 10 m before one? Its body
+ * is taken as its axis grown by half its width and the gap (a capsule round the footprint, so no
+ * corner slips onto a zebra), the axis drawn on ahead of the front by the banned stretch.
+ */
+const clearOfZebras = (x: number, z: number, yaw: number, model: VehicleModel): boolean => {
+  if (surfacesAt(x, z).includes("crossing")) return false;
+  const { width, length } = VEHICLE_SIZE[model];
+  const fx = Math.sin(yaw);
+  const fz = Math.cos(yaw);
+  const back: Pt = [x - (fx * length) / 2, z - (fz * length) / 2];
+  const reach = width / 2 + ZEBRA_GAP;
+  // The capsule's round tip reaches `reach` past the axis' end: the stretch ahead of the front is then just ZEBRA_AHEAD.
+  const ahead = length / 2 + Math.max(0, ZEBRA_AHEAD - reach);
+  const front: Pt = [x + fx * ahead, z + fz * ahead];
+  const r = reach + ahead;
+  return ZEBRAS.every(
+    ({ pts, minX, maxX, minZ, maxZ }) =>
+      x < minX - r || x > maxX + r || z < minZ - r || z > maxZ + r || pts.every((p, i) => segmentsGap(back, front, pts[(i + 1) % pts.length]!, p) >= reach),
+  );
+};
 
 /**
  * Is a car's footprint at (x, z), facing yaw, wholly on a carriageway or a square and free of
@@ -75,7 +121,7 @@ const parkable = (x: number, z: number): boolean => surfacesAt(x, z).some((s) =>
  * falls on the grass or the pavement unless each corner is checked.
  */
 const fits = (x: number, z: number, yaw: number, model: VehicleModel): boolean => {
-  if (!parkable(x, z) || !footprint(x, z, yaw, model, 0).every(([px, pz]) => parkable(px, pz))) return false;
+  if (!parkable(x, z) || !footprint(x, z, yaw, model, 0).every(([px, pz]) => parkable(px, pz)) || !clearOfZebras(x, z, yaw, model)) return false;
   const { width, length } = VEHICLE_SIZE[model];
   const fx = Math.sin(yaw);
   const fz = Math.cos(yaw);
