@@ -120,14 +120,14 @@ describe("M4 acceptance: the docks", () => {
     expect(hack.kind).toBe("hack");
     expect(ui.getState().questTitle).toBe("Kontrakt 2 · Genzō");
     expect(ui.getState().objective).toContain("Włam się do terminala");
-    expect(toasts(ui).some((t) => t.startsWith("Nowy kontrakt: Włamanie do terminala"))).toBe(true);
+    expect(toasts(ui).some((t) => t.startsWith("New contract: Włamanie do terminala"))).toBe(true);
     // The terminal is on the minimap.
     expect(ui.getState().mapMarkers.some((m) => m.id === `${hack.id}-terminal` && m.kind === "target")).toBe(true);
 
     const t = DOKI_TERMINAL_SPOTS.quay_terminal!;
     teleport(session, t.x, t.z - 1.4, 0);
     steps(session, 1, frame({ interact: true }));
-    expect(toasts(ui)).toContain("Alarm na Nabrzeżu: Utrzymaj terminal, ochrona już idzie");
+    expect(toasts(ui)).toContain("Alarm on Nabrzeże: Hold the terminal, security is on its way");
     downTheWave(session);
     steps(session, 10 * SIM_HZ);
     expect(ui.getState().objective).toMatch(/Utrzymaj połączenie z terminalem \(zostało 0:\d\d\)/);

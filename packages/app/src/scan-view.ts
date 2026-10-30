@@ -1,18 +1,19 @@
-import { type EnemyTypeId, FACTIONS, type HackTargetKind } from "@seki/core";
+import { type EnemyTypeId, FACTIONS, type HackTargetKind, type Locale } from "@seki/core";
 import type { Entity } from "@seki/sim";
-import type { ScanTargetVm } from "@seki/ui";
+import { type MessageKey, type ScanTargetVm, translate } from "@seki/ui";
 
-const ENEMY_NAMES: Readonly<Record<EnemyTypeId, string>> = {
-  hebi_ganger: "Gangster Hebi",
-  hebi_lookout: "Czujka Hebi",
-  hebi_enforcer: "Egzekutor Hebi",
-  hebi_brawler: "Zabijaka Hebi",
-  kagami_cleaner: "Czyściciel Kagami",
-  tessen_guard: "Strażnik Tessen",
-  tessen_sniper: "Snajper Tessen",
+/** What the scanner calls an enemy, by type: a catalog key (ADR-0056). */
+const ENEMY_NAMES: Readonly<Record<EnemyTypeId, MessageKey>> = {
+  hebi_ganger: "scan.enemy.hebi_ganger",
+  hebi_lookout: "scan.enemy.hebi_lookout",
+  hebi_enforcer: "scan.enemy.hebi_enforcer",
+  hebi_brawler: "scan.enemy.hebi_brawler",
+  kagami_cleaner: "scan.enemy.kagami_cleaner",
+  tessen_guard: "scan.enemy.tessen_guard",
+  tessen_sniper: "scan.enemy.tessen_sniper",
 };
 
-/** People the player knows by name, by the ink knot they talk through. */
+/** People the player knows by name, by the ink knot they talk through; names stay as they are (ADR-0056). */
 const NAMED: Readonly<Record<string, string>> = {
   fixer: "Kaito",
   kaito: "Kaito",
@@ -26,35 +27,10 @@ const NAMED: Readonly<Record<string, string>> = {
 
 const GIVEN = ["Akira", "Yumi", "Kenji", "Rin", "Daichi", "Mei", "Sora", "Haru", "Nao", "Ren", "Emi", "Taro"] as const;
 const FAMILY = ["Tanaka", "Suzuki", "Kobayashi", "Watanabe", "Ito", "Nakamura", "Yamada", "Kato", "Hayashi", "Ogawa"] as const;
-const JOBS = [
-  "Kurier dronów",
-  "Kucharz w barze ramen",
-  "Technik sieci miejskiej",
-  "Sprzedawca na targu",
-  "Ochroniarz na kontrakcie",
-  "Pielęgniarka w klinice",
-  "Student cybernetyki",
-  "Mechanik skuterów",
-  "Barman w Neon Koi",
-  "Operator dźwigu na Nabrzeżu",
-  "Bezrobotny",
-  "Dostawca makaronu",
-] as const;
-const INCOME = ["Dochód: 900 €$/mies.", "Dochód: 1 400 €$/mies.", "Dochód: 2 300 €$/mies.", "Dochód: 4 100 €$/mies.", "Dochód: brak danych"] as const;
-const QUIRKS = [
-  "Zadłużony u Hebi",
-  "Kolekcjonuje stare winyle",
-  "Dwa wszczepy z czarnego rynku",
-  "Śpi cztery godziny na dobę",
-  "Pisze anonimowo na netboardach",
-  "Ma brata w ochronie Tessen",
-  "Właśnie dostał eksmisję",
-  "Co noc gra w pachinko",
-  "Nie ufa Kagami Biotech",
-  "Uczy się kaligrafii",
-  "Karany za drobne kradzieże",
-  "Wspiera schronisko dla kotów",
-] as const;
+/** A passer-by's job, income and one thing about them: catalog keys, picked by position. */
+const JOBS = ["scan.job.0", "scan.job.1", "scan.job.2", "scan.job.3", "scan.job.4", "scan.job.5", "scan.job.6", "scan.job.7", "scan.job.8", "scan.job.9", "scan.job.10", "scan.job.11"] as const satisfies readonly MessageKey[];
+const INCOME = ["scan.income.0", "scan.income.1", "scan.income.2", "scan.income.3", "scan.income.4"] as const satisfies readonly MessageKey[];
+const QUIRKS = ["scan.quirk.0", "scan.quirk.1", "scan.quirk.2", "scan.quirk.3", "scan.quirk.4", "scan.quirk.5", "scan.quirk.6", "scan.quirk.7", "scan.quirk.8", "scan.quirk.9", "scan.quirk.10", "scan.quirk.11"] as const satisfies readonly MessageKey[];
 
 /** A 32-bit integer hash (lowbias32), so a passer-by's profile follows from their id alone. */
 export const hashId = (id: number): number => {
@@ -69,10 +45,13 @@ export const hashId = (id: number): number => {
 
 const from = <T,>(list: readonly T[], seed: number, salt: number): T => list[(hashId(seed + salt * 7919) % list.length) | 0] as T;
 
-/** Name and three lines of a passer-by's profile (Watch Dogs 2 style), the same for the same id. */
-export const passerBy = (id: number): { name: string; profile: string[] } => ({
+/**
+ * Name and three lines of a passer-by's profile (Watch Dogs 2 style), the same for the same id;
+ * the lines in `locale`, picked by position, so a passer-by is the same person in every language.
+ */
+export const passerBy = (id: number, locale: Locale): { name: string; profile: string[] } => ({
   name: `${from(GIVEN, id, 1)} ${from(FAMILY, id, 2)}`,
-  profile: [from(JOBS, id, 3), from(INCOME, id, 4), from(QUIRKS, id, 5)],
+  profile: [from(JOBS, id, 3), from(INCOME, id, 4), from(QUIRKS, id, 5)].map((key) => translate(locale, key)),
 });
 
 /**
@@ -87,15 +66,15 @@ export const scanKind = (e: Entity): HackTargetKind => {
   return "device";
 };
 
-export const scanTargetVm = (e: Entity): ScanTargetVm => {
+export const scanTargetVm = (e: Entity, locale: Locale): ScanTargetVm => {
   const kind = scanKind(e);
   const hostile = e.ai !== undefined || e.enemy !== undefined || e.sniper !== undefined;
   const faction = e.faction ? FACTIONS[e.faction] : null;
-  if (kind === "camera") return { id: e.id, kind, name: "Kamera ochrony", faction, profile: null, hostile: false };
-  if (kind === "device") return { id: e.id, kind, name: e.interactable?.kind === "terminal" ? "Terminal" : "Urządzenie", faction, profile: null, hostile: false };
+  if (kind === "camera") return { id: e.id, kind, name: translate(locale, "scan.camera"), faction, profile: null, hostile: false };
+  if (kind === "device") return { id: e.id, kind, name: translate(locale, e.interactable?.kind === "terminal" ? "scan.terminal" : "scan.device"), faction, profile: null, hostile: false };
   const named = e.interactable ? NAMED[e.interactable.dialogueId] : undefined;
   if (named) return { id: e.id, kind, name: named, faction, profile: null, hostile };
-  if (e.enemy) return { id: e.id, kind, name: ENEMY_NAMES[e.enemy.type], faction, profile: [from(QUIRKS, e.id, 5)], hostile };
-  const p = passerBy(e.id);
+  if (e.enemy) return { id: e.id, kind, name: translate(locale, ENEMY_NAMES[e.enemy.type]), faction, profile: [translate(locale, from(QUIRKS, e.id, 5))], hostile };
+  const p = passerBy(e.id, locale);
   return { id: e.id, kind, name: p.name, faction, profile: p.profile, hostile };
 };

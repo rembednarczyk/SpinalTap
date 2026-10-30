@@ -162,7 +162,7 @@ describe("M4 acceptance: market contracts → eddies → cyberware", () => {
     expect(session.sim.domain.contracts.active?.status).toBe("cleared");
     expect(ui.getState().objective).toBe("Skrzynka zabrana. Wróć do Hany po zapłatę");
     const entry = ui.getState().journal.quests.find((q) => q.id === `contract-${retrieval.id}`);
-    expect(entry).toMatchObject({ title: "Kontrakt 3 · Hana", steps: [{ done: true }, { objective: "Wróć do Hany po zapłatę", done: false }] });
+    expect(entry).toMatchObject({ title: "Kontrakt 3 · Hana", steps: [{ done: true }, { objective: "Go back to Hana for your pay", done: false }] });
 
     before = eddies();
     extra = extraPay(session);
@@ -219,7 +219,7 @@ describe("M4 acceptance: market contracts → eddies → cyberware", () => {
     const c = session.sim.domain.contracts.active!;
     steps(session, c.deadlineTick! - session.sim.tick + 1);
     expect(session.sim.domain.contracts.active).toBeNull();
-    expect(toasts(ui)).toContain("Kontrakt przepadł: Paczka nie dotarła na czas. Kaito nie będzie zadowolony");
+    expect(toasts(ui)).toContain("Contract lost: Paczka nie dotarła na czas. Kaito nie będzie zadowolony");
     expect(session.sim.domain.reputation.fixers).toBe(-4);
     talkToHana(session);
     expect(text(ui)).not.toContain("Od Kaito?");

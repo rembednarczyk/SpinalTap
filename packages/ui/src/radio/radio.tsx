@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { RADIO_STATIONS } from "../store/ui-store";
 import { useRadioIntents, useUi } from "../use-ui";
+import { useT } from "../i18n/use-t";
 
 /** The radio key (ADR-0035): next station, then off; kept out of the key bindings (menus.RESERVED_KEYS). */
 export const RADIO_KEY = "KeyB";
@@ -24,13 +25,15 @@ export const RadioKey = () => {
 export const RadioTuner = () => {
   const station = useUi((s) => s.settings.radioStation);
   const intents = useRadioIntents();
-  const options = [...RADIO_STATIONS.map((s) => ({ id: s.id, name: s.name, genre: s.genre })), { id: null, name: "Wyłączone", genre: "cisza" }];
+  const t = useT();
+  // Station names stay as they are in every language (ADR-0056); the genres are translated.
+  const options = [...RADIO_STATIONS.map((s) => ({ id: s.id, name: s.name, genre: t(`radio.genre.${s.id}`) })), { id: null, name: t("radio.off"), genre: t("radio.silence") }];
   return (
-    <section className="radio" aria-label="Radio" data-testid="radio-tuner">
+    <section className="radio" aria-label={t("radio.title")} data-testid="radio-tuner">
       <h3 className="radio__title">
-        Radio <kbd>B</kbd>
+        {t("radio.title")} <kbd>B</kbd>
       </h3>
-      <div className="radio__stations" role="radiogroup" aria-label="Stacja radiowa">
+      <div className="radio__stations" role="radiogroup" aria-label={t("radio.station")}>
         {options.map((o) => (
           <button
             key={o.id ?? "off"}

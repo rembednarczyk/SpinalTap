@@ -51,7 +51,7 @@ describe("wave 1 HUD in the game", () => {
     const breach = screen.getByTestId("breach");
     expect(within(breach).getAllByRole("gridcell")).toHaveLength(25);
     expect(session.inControl).toBe(false);
-    fireEvent.click(screen.getByRole("button", { name: "Autorozwiązanie (1 demon)" }));
+    fireEvent.click(screen.getByRole("button", { name: "Auto-solve (1 daemon)" }));
     expect(screen.queryByTestId("breach")).toBeNull();
     expect(session.inControl).toBe(true);
   });
@@ -64,7 +64,7 @@ describe("wave 2 HUD in the game", () => {
     // The kiosk's line map, left with Esc.
     run(() => seki.metro("shinsekai"));
     expect(screen.getByTestId("metro-map")).toBeTruthy();
-    expect(screen.getByTestId("metro-stop-shinsekai").textContent).toContain("Jesteś tutaj");
+    expect(screen.getByTestId("metro-stop-shinsekai").textContent).toContain("You are here");
     key("Escape");
     expect(screen.queryByTestId("metro-map")).toBeNull();
 

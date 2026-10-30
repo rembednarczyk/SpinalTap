@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { PhoneMessageVm, PhoneThreadVm } from "../store/hud-vm";
 import { usePhoneIntents, useUi } from "../use-ui";
 import { RadioTuner } from "../radio/radio";
+import { useT } from "../i18n/use-t";
 
 /** The phone key; kept out of the key bindings (menus.RESERVED_KEYS). */
 export const PHONE_KEY = "KeyT";
@@ -28,6 +29,7 @@ const firstLine = (m: PhoneMessageVm) => m.lines.find((l) => l.text)?.text ?? ""
  */
 export const PhoneNotice = ({ touch = false }: { touch?: boolean }) => {
   const notice = useUi((s) => s.phoneNotice);
+  const t = useT();
   if (!notice) return null;
   const m = notice.message;
   if (notice.holocall) {
@@ -36,7 +38,7 @@ export const PhoneNotice = ({ touch = false }: { touch?: boolean }) => {
         <Portrait name={m.contact} big />
         <div className="holocall__body">
           <div className="holocall__who">
-            <span className="holocall__tag">{m.kind === "call" ? "Holorozmowa" : "Pilne"}</span> {m.contact}
+            <span className="holocall__tag">{m.kind === "call" ? t("phone.holocall") : t("phone.urgent")}</span> {m.contact}
           </div>
           {m.lines.map((l, i) => (
             <p key={i} className="holocall__line">
@@ -62,29 +64,32 @@ export const PhoneNotice = ({ touch = false }: { touch?: boolean }) => {
   );
 };
 
-const Thread = ({ thread }: { thread: PhoneThreadVm }) => (
-  <div className="phone__thread" data-testid="phone-thread">
-    <div className="phone__thread-head">
-      <Portrait name={thread.contact} />
-      <span>{thread.contact}</span>
+const Thread = ({ thread }: { thread: PhoneThreadVm }) => {
+  const t = useT();
+  return (
+    <div className="phone__thread" data-testid="phone-thread">
+      <div className="phone__thread-head">
+        <Portrait name={thread.contact} />
+        <span>{thread.contact}</span>
+      </div>
+      <ol className="phone__messages">
+        {thread.messages.map((m) => (
+          <li key={m.id} className={`phone__message phone__message--${m.priority}`}>
+            <span className="phone__time">
+              {m.time} · {m.kind === "call" ? t("phone.call") : t("phone.sms")}
+            </span>
+            {m.lines.map((l, i) => (
+              <p key={i} className="phone__text">
+                {l.speaker && l.speaker !== thread.contact && <b>{l.speaker}: </b>}
+                {l.text}
+              </p>
+            ))}
+          </li>
+        ))}
+      </ol>
     </div>
-    <ol className="phone__messages">
-      {thread.messages.map((m) => (
-        <li key={m.id} className={`phone__message phone__message--${m.priority}`}>
-          <span className="phone__time">
-            {m.time} · {m.kind === "call" ? "rozmowa" : "SMS"}
-          </span>
-          {m.lines.map((l, i) => (
-            <p key={i} className="phone__text">
-              {l.speaker && l.speaker !== thread.contact && <b>{l.speaker}: </b>}
-              {l.text}
-            </p>
-          ))}
-        </li>
-      ))}
-    </ol>
-  </div>
-);
+  );
+};
 
 /**
  * The phone (T): an inbox with one thread per contact. Opening a thread marks it read. T or Esc
@@ -96,6 +101,7 @@ export const PhonePanel = () => {
   const blocked = useUi((s) => s.dialogue !== null || s.shopOpen || s.loot !== null || s.characterTab !== null || s.breach !== null);
   const intents = usePhoneIntents();
   const [selected, setSelected] = useState<string | null>(null);
+  const t = useT();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -111,7 +117,7 @@ export const PhonePanel = () => {
     return () => window.removeEventListener("keydown", onKey);
   }, [open, blocked, intents]);
 
-  const current = phone.threads.find((t) => t.from === selected) ?? phone.threads[0] ?? null;
+  const current = phone.threads.find((th) => th.from === selected) ?? phone.threads[0] ?? null;
   // The shown thread is read.
   const unreadShown = open && current !== null && current.unread > 0 ? current.from : null;
   useEffect(() => {
@@ -120,33 +126,33 @@ export const PhonePanel = () => {
 
   if (!open) return null;
   return (
-    <div className="phone" role="dialog" aria-label="Telefon" data-testid="phone">
+    <div className="phone" role="dialog" aria-label={t("phone.label")} data-testid="phone">
       <header className="phone__bar">
-        <span className="phone__title">Telefon</span>
-        <button type="button" className="phone__close" aria-label="Zamknij telefon" onClick={() => intents.closePhone()}>
+        <span className="phone__title">{t("phone.label")}</span>
+        <button type="button" className="phone__close" aria-label={t("phone.close")} onClick={() => intents.closePhone()}>
           ✕
         </button>
       </header>
       <RadioTuner />
       {phone.threads.length === 0 ? (
-        <p className="phone__empty">Brak wiadomości.</p>
+        <p className="phone__empty">{t("phone.empty")}</p>
       ) : (
         <div className="phone__body">
-          <ul className="phone__contacts" role="tablist" aria-label="Kontakty">
-            {phone.threads.map((t) => (
-              <li key={t.from}>
+          <ul className="phone__contacts" role="tablist" aria-label={t("phone.contacts")}>
+            {phone.threads.map((th) => (
+              <li key={th.from}>
                 <button
                   type="button"
                   role="tab"
-                  aria-selected={current?.from === t.from}
-                  className={`phone__contact${current?.from === t.from ? " phone__contact--on" : ""}`}
-                  onClick={() => setSelected(t.from)}
+                  aria-selected={current?.from === th.from}
+                  className={`phone__contact${current?.from === th.from ? " phone__contact--on" : ""}`}
+                  onClick={() => setSelected(th.from)}
                 >
-                  <Portrait name={t.contact} />
-                  <span className="phone__contact-name">{t.contact}</span>
-                  {t.unread > 0 && (
-                    <span className="phone__unread" aria-label={`Nieprzeczytane: ${t.unread}`}>
-                      {t.unread}
+                  <Portrait name={th.contact} />
+                  <span className="phone__contact-name">{th.contact}</span>
+                  {th.unread > 0 && (
+                    <span className="phone__unread" aria-label={t("phone.unread", { count: th.unread })}>
+                      {th.unread}
                     </span>
                   )}
                 </button>

@@ -61,16 +61,16 @@ describe("journal", () => {
   it("lists active jobs, finished ones with their steps, and memories", () => {
     mount({ screen: "playing", journal, journalOpen: true });
     const active = screen.getByTestId("journal-quest-contract-c2");
-    expect(active.textContent).toContain("Kontrakt");
+    expect(active.textContent).toContain("Contract");
     expect(active.textContent).toContain("podwórko za myjnią");
     expect(screen.queryByTestId("journal-quest-m0_first_contract")).toBeNull();
 
-    fireEvent.click(screen.getByRole("tab", { name: /Ukończone/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /Completed/ }));
     const done = screen.getByTestId("journal-quest-m0_first_contract");
-    expect(done.textContent).toContain("Wątek główny");
+    expect(done.textContent).toContain("Main story");
     expect(done.querySelectorAll(".journal__step--done")).toHaveLength(2);
 
-    fireEvent.click(screen.getByRole("tab", { name: /Wspomnienia/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /Memories/ }));
     expect(screen.getByTestId("journal-memory-combat_reflex").textContent).toContain("Ręce wiedzą");
   });
 
@@ -89,11 +89,11 @@ describe("journal", () => {
 
   it("says so when a tab is empty", () => {
     mount({ screen: "playing", journalOpen: true });
-    expect(screen.getByText(/Nic na teraz/)).toBeTruthy();
-    fireEvent.click(screen.getByRole("tab", { name: /Ukończone/ }));
-    expect(screen.getByText("Jeszcze nic nie skończyłaś.")).toBeTruthy();
-    fireEvent.click(screen.getByRole("tab", { name: /Wspomnienia/ }));
-    expect(screen.getByText("Pustka. Na razie.")).toBeTruthy();
+    expect(screen.getByText(/Nothing for now/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("tab", { name: /Completed/ }));
+    expect(screen.getByText("You haven't finished anything yet.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("tab", { name: /Memories/ }));
+    expect(screen.getByText("Empty. For now.")).toBeTruthy();
   });
 
   it("opens from the touch top bar through the character screen", () => {
@@ -217,7 +217,7 @@ describe("Lublin on the minimap and the map tab (ADR-0045)", () => {
     const before = svg.getAttribute("viewBox");
     fireEvent.click(within(tab).getByText("Stare Miasto", { selector: "button" }));
     expect(svg.getAttribute("viewBox")).not.toBe(before);
-    fireEvent.click(within(tab).getByLabelText("Oddal"));
+    fireEvent.click(within(tab).getByLabelText("Zoom out"));
     expect(svg.getAttribute("viewBox")).toContain("630.0");
     fireEvent.keyDown(window, { code: "KeyM" });
     expect(store.getState().characterTab).toBeNull();

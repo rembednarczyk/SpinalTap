@@ -1,6 +1,6 @@
-import type { DomainState, PhonePriority } from "@seki/core";
+import type { DomainState, Locale, PhonePriority } from "@seki/core";
 import { NarrativeRuntime } from "@seki/narrative";
-import type { PhoneLineVm, PhoneMessageVm, PhoneNoticeVm, PhoneThreadVm, PhoneVm } from "@seki/ui";
+import { type PhoneLineVm, type PhoneMessageVm, type PhoneNoticeVm, type PhoneThreadVm, type PhoneVm, translate } from "@seki/ui";
 
 /** Display names of the phone contacts; an unknown id is shown capitalised. */
 export const CONTACT_NAMES: Readonly<Record<string, string>> = {
@@ -134,13 +134,14 @@ export class PhoneInbox {
 /**
  * Renders a phone knot to lines with a runtime of its own (compiled on first use), so a text
  * never disturbs the conversation in progress or the ink state that goes into the save, and
- * any command the knot would send is dropped. A missing knot shows a short fallback.
+ * any command the knot would send is dropped. A missing knot shows a short fallback, in the
+ * language `locale` gives at that moment (ADR-0056).
  */
-export const createKnotRenderer = (source: string | KnotLines) => {
+export const createKnotRenderer = (source: string | KnotLines, locale: () => Locale) => {
   const lines = typeof source === "string" ? createKnotLines(source) : source;
   return (knot: string, domain: DomainState): PhoneLineVm[] => {
     const out = lines(knot, domain);
-    return out && out.length > 0 ? out : [{ speaker: null, text: "Nowa wiadomość." }];
+    return out && out.length > 0 ? out : [{ speaker: null, text: translate(locale(), "phone.newMessage") }];
   };
 };
 

@@ -39,7 +39,7 @@ const session = (settings?: SettingsHost) => {
 
 describe("journal view model", () => {
   it("shows the reached steps of the first contract and nothing else at the start", () => {
-    const j = buildJournal(createDomainState());
+    const j = buildJournal(createDomainState(), "en");
     expect(j.memories).toEqual([]);
     expect(j.quests).toHaveLength(1);
     expect(j.quests[0]).toMatchObject({ id: "m0_first_contract", kind: "main", status: "active" });
@@ -54,7 +54,7 @@ describe("journal view model", () => {
       quests: { m0_first_contract: { status: "completed" } },
       contracts: { active: { id: "c3", siteId: "car_wash", targets: 3, reward: 625, status: "cleared" }, completed: 2 },
     };
-    const j = buildJournal(domain);
+    const j = buildJournal(domain, "en");
     const main = j.quests.find((q) => q.id === "m0_first_contract");
     expect(main?.status).toBe("completed");
     expect(main?.steps.every((s) => s.done)).toBe(true);
@@ -62,17 +62,22 @@ describe("journal view model", () => {
     const contract = j.quests.find((q) => q.id === "contract-c3");
     expect(contract?.title).toBe("Kontrakt 3 · Kaito");
     expect(contract?.steps.map((s) => s.done)).toEqual([true, false]);
+    expect(contract?.steps[1]?.objective).toBe("Go back to Kaito for your pay");
+    expect(buildJournal(domain, "pl").quests.find((q) => q.id === "contract-c3")?.steps[1]?.objective).toBe("Wróć do Kaito po zapłatę");
     expect(contract?.steps[0]?.objective).toContain("podwórko za myjnią");
-    expect(j.quests.find((q) => q.id === "contracts-done")?.steps[0]?.objective).toBe("Wykonane i opłacone: 2");
+    expect(j.quests.find((q) => q.id === "contracts-done")).toMatchObject({ title: "Completed contracts", steps: [{ objective: "Done and paid: 2", done: true }] });
+    expect(buildJournal(domain, "pl").quests.find((q) => q.id === "contracts-done")).toMatchObject({ title: "Wykonane kontrakty", steps: [{ objective: "Wykonane i opłacone: 2", done: true }] });
     expect(j.memories).toEqual([expect.objectContaining({ id: "combat_reflex", title: "Wspomnienie: odruch" })]);
   });
 
   it("reuses the last view model while the domain parts it reads are unchanged", () => {
     const cache = createJournalCache();
     const d = createDomainState();
-    const first = cache(d);
-    expect(cache({ ...d, wallet: { eddies: 5 } })).toBe(first);
-    expect(cache({ ...d, quests: { ...d.quests } })).not.toBe(first);
+    const first = cache(d, "en");
+    expect(cache({ ...d, wallet: { eddies: 5 } }, "en")).toBe(first);
+    // A language change rebuilds it in the new language.
+    expect(cache(d, "pl")).not.toBe(first);
+    expect(cache({ ...d, quests: { ...d.quests } }, "pl")).not.toBe(first);
   });
 });
 

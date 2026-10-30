@@ -1,3 +1,4 @@
+import { enWorld } from "./en/world";
 import type { Message } from "./message";
 import { enTrade } from "./en/trade";
 
@@ -142,6 +143,7 @@ export const en = {
   "settings.reload.note": "Graphics quality changes after a reload. Save your game first: unsaved progress will be lost.",
   "settings.reload.now": "Reload now",
   ...enTrade,
+  ...enWorld,
 } as const satisfies Readonly<Record<string, Message>>;
 
 export type MessageKey = keyof typeof en;

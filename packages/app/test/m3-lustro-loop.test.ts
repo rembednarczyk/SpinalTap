@@ -135,7 +135,7 @@ describe("M3 acceptance: act II from the end of act I to each of its endings", (
     const d = session.sim.domain;
     expect(d.story.act2Ending).toBe(act2);
     expect(d.quests[QUEST_MIRROR.id]).toEqual({ status: "completed" });
-    expect(ui.getState().toasts.some((t) => t.title === "Koniec aktu II: Lustro")).toBe(true);
+    expect(ui.getState().toasts.some((t) => t.title === "End of Act II: Lustro")).toBe(true);
     expect(d.character.memories).toEqual(expect.arrayContaining(["rooftop", "last_call"]));
     expect(d.story.choices).toMatchObject({
       rooftop: rooftop === 0 ? "together" : "alone",

@@ -83,7 +83,7 @@ describe("violence interrupts a conversation (app loop)", () => {
     expect(session.inControl).toBe(true);
     expect(session.sim.session.dialogueActive).toBe(false);
     expect(focus.at(-1)).toBe(true);
-    expect(ui.getState().toasts.map((t) => t.title)).toContain("Rozmowa przerwana");
+    expect(ui.getState().toasts.map((t) => t.title)).toContain("Conversation interrupted");
     expect(session.narrative.inConversation).toBe(false);
     // Stale UI clicks are ignored: no effects, no second end-dialogue.
     session.intents.choose(0);

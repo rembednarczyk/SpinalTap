@@ -37,7 +37,7 @@ describe.each(stores)("PersistencePort contract (%s)", (_name, makeStore) => {
     expect(await port.list()).toEqual([
       { slot: "slot-1", savedAtLabel: "A", objective: "B" },
       { slot: "slot-2", savedAtLabel: "26.10 22:30", objective: "Zneutralizuj kuriera" },
-      { slot: "slot-3", savedAtLabel: "—", objective: "Uszkodzony zapis" },
+      { slot: "slot-3", savedAtLabel: "—", objective: "save.corrupt" },
     ]);
   });
 

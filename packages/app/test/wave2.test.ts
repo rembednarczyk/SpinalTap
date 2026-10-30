@@ -8,7 +8,7 @@ import { MetroController } from "../src/controllers/metro-controller";
 import { RadioController } from "../src/controllers/radio-controller";
 import { ShopController } from "../src/controllers/shop-controller";
 import { debriefVm } from "../src/contract-hud";
-import { METRO_GUARDED, metroFare, metroMapVm, stationOfDistrict } from "../src/metro";
+import { metroFare, metroMapVm, stationOfDistrict } from "../src/metro";
 import { MAP_ZOOM_DASH, MAP_ZOOM_RUN, TARGET_AREA_RADIUS, createMinimapTracker } from "../src/minimap";
 import { createKnotLines, createKnotPool, createKnotRenderer } from "../src/phone";
 import { sanitizeSettings } from "../src/settings";
@@ -31,6 +31,9 @@ const fakeAudio = (cues: AudioCue[]) => ({ play: (c: AudioCue) => cues.push(c), 
 const lines = createKnotLines(STORY_SOURCE);
 const domain = () => createDomainState();
 
+/** What the kiosk says while the platform is watched, in the default English. */
+const GUARDED = "Security is watching the platform. Lose the pursuit before you board.";
+
 describe("knot pools (ADR-0035)", () => {
   it("finds the numbered knots of the story and skips a missing pool", () => {
     const ride = createKnotPool(lines, "metro_ride_", domain);
@@ -41,7 +44,8 @@ describe("knot pools (ADR-0035)", () => {
     expect(none.next()).toBeNull();
     expect(lines("no_such_knot", createDomainState())).toBeNull();
     // The phone keeps its fallback for a missing knot.
-    expect(createKnotRenderer(lines)("no_such_knot", createDomainState())).toEqual([{ speaker: null, text: "Nowa wiadomość." }]);
+    expect(createKnotRenderer(lines, () => "en")("no_such_knot", createDomainState())).toEqual([{ speaker: null, text: "New message." }]);
+    expect(createKnotRenderer(lines, () => "pl")("no_such_knot", createDomainState())).toEqual([{ speaker: null, text: "Nowa wiadomość." }]);
   });
 
   it("has five inserts per radio station", () => {
@@ -51,16 +55,19 @@ describe("knot pools (ADR-0035)", () => {
 
 describe("metro data", () => {
   it("prices a ride by stops and maps kiosks and districts to platforms", () => {
-    expect(metroMapVm("shinsekai", false).stops[0]?.fare).toBe(0);
+    expect(metroMapVm("shinsekai", false, "en").stops[0]?.fare).toBe(0);
     expect(metroFare("shinsekai", "kanal")).toBe(20);
     expect(metroFare("doki", "shinsekai")).toBe(30);
     expect(stationOfDistrict("shinsekai-7")).toBe("shinsekai");
     expect(stationOfDistrict("doki")).toBe("doki");
     expect(stationOfDistrict(null)).toBeNull();
-    const map = metroMapVm("kanal", true);
+    const map = metroMapVm("kanal", true, "en");
     expect(map.stops.map((s) => s.id)).toEqual(["shinsekai", "kanal", "targ", "doki"]);
     expect(map.stops.find((s) => s.here)?.id).toBe("kanal");
-    expect(map.refusal).toBe(METRO_GUARDED);
+    expect(map.line).toBe("Kanjō Line");
+    expect(map.refusal).toBe(GUARDED);
+    // Polish as before; station names stay Polish in both.
+    expect(metroMapVm("kanal", true, "pl")).toMatchObject({ line: "Linia Kanjō", refusal: "Ochrona pilnuje peronu. Zgub pościg, zanim wsiądziesz.", stops: map.stops });
   });
 });
 
@@ -97,7 +104,7 @@ describe("MetroController without a session", () => {
     expect(poor.cues).toEqual(["denied"]);
     const hot = setup({ guarded: true });
     hot.metro.open("kanal");
-    expect(hot.ui.getState().metroMap?.refusal).toBe(METRO_GUARDED);
+    expect(hot.ui.getState().metroMap?.refusal).toBe(GUARDED);
     hot.metro.travelMetro("doki");
     expect(hot.commands).toEqual([]);
     hot.metro.closeMetro();
@@ -110,7 +117,7 @@ describe("MetroController without a session", () => {
     const cues: AudioCue[] = [];
     new MetroController({ bus, sim: fakeSim().sim, ui: createUiStore(), audio: fakeAudio(cues), focus: fakeFocus().focus, canOpen: () => true, guarded: () => false, rideLines: createKnotPool(lines, "metro_ride_", domain), toast: (_t, text) => toasts.push(text) });
     bus.emit("MetroRefused", { reason: "watched", to: "doki" });
-    expect(toasts).toEqual([METRO_GUARDED]);
+    expect(toasts).toEqual([GUARDED]);
     expect(cues).toEqual(["denied"]);
   });
 
@@ -164,13 +171,20 @@ describe("RadioController without a session", () => {
     expect(tuned).toEqual([null]);
     radio.nextRadioStation();
     expect(ui.getState().settings.radioStation).toBe("drift");
-    expect(toasts[0]?.[0]).toBe("Neon Drift 88.1");
+    expect(toasts[0]).toEqual(["Neon Drift 88.1", "synthwave"]);
     radio.nextRadioStation();
     radio.nextRadioStation();
     radio.nextRadioStation();
     expect(radio.station).toBeNull();
     expect(tuned).toEqual([null, "drift", "yoru", "tessen", null]);
-    expect(toasts.at(-1)?.[0]).toBe("Radio wyłączone");
+    expect(toasts.slice(2)).toEqual([["Tessen Info 24", "corporate news"], ["Radio off", ""]]);
+    // In Polish as before; the station names stay.
+    ui.setState({ settings: { ...ui.getState().settings, locale: "pl" } });
+    radio.nextRadioStation();
+    radio.nextRadioStation();
+    radio.nextRadioStation();
+    radio.nextRadioStation();
+    expect(toasts.slice(-2)).toEqual([["Tessen Info 24", "wiadomości korporacji"], ["Radio wyłączone", ""]]);
   });
 
   it("plays a saved station from the start and puts inserts up as subtitles", () => {

@@ -1,3 +1,4 @@
+import type { MessageKey } from "../i18n/t";
 import type { DialogueChoiceVm, DialogueToneVm, DialogueVm } from "../store/ui-vm";
 
 /**
@@ -5,15 +6,18 @@ import type { DialogueChoiceVm, DialogueToneVm, DialogueVm } from "../store/ui-v
  * each one sits on the arc. The component only renders this; the tests read it directly.
  */
 
-/** Colour comes from CSS (`.wheel__opt--<tone>`); the icon and the label make sure colour is never alone. */
-export const TONE_STYLE: Readonly<Record<DialogueToneVm, { readonly icon: string; readonly label: string }>> = {
-  main: { icon: "◆", label: "wątek główny" },
-  optional: { icon: "◇", label: "pytanie" },
-  leave: { icon: "✕", label: "zakończ" },
-  aggressive: { icon: "▲", label: "groźba" },
-  persuade: { icon: "◎", label: "perswazja" },
-  hack: { icon: "⬡", label: "hack" },
-  lifepath: { icon: "✦", label: "z przeszłości" },
+/**
+ * Colour comes from CSS (`.wheel__opt--<tone>`); the icon and the label make sure colour is never
+ * alone. The label is a catalog key (ADR-0056).
+ */
+export const TONE_STYLE: Readonly<Record<DialogueToneVm, { readonly icon: string; readonly label: MessageKey }>> = {
+  main: { icon: "◆", label: "dialogue.tone.main" },
+  optional: { icon: "◇", label: "dialogue.tone.optional" },
+  leave: { icon: "✕", label: "dialogue.tone.leave" },
+  aggressive: { icon: "▲", label: "dialogue.tone.aggressive" },
+  persuade: { icon: "◎", label: "dialogue.tone.persuade" },
+  hack: { icon: "⬡", label: "dialogue.tone.hack" },
+  lifepath: { icon: "✦", label: "dialogue.tone.lifepath" },
 };
 
 export type SlotAction = { readonly kind: "choose"; readonly index: number } | { readonly kind: "close" };
@@ -27,16 +31,15 @@ export interface WheelSlot {
   readonly action: SlotAction;
 }
 
-export const END_TEXT = "Zakończ rozmowę";
-
 const toneOf = (c: DialogueChoiceVm): DialogueToneVm => c.tone ?? "optional";
 
 /**
  * Slots top to bottom: the choices in ink order, the ones that end the talk last, so the way
- * out always sits at the bottom of the arc. An ended talk has a single slot, the way out.
+ * out always sits at the bottom of the arc. An ended talk has a single slot, the way out, with
+ * `endText` on it (the interface's own words; the choices are the ink's).
  */
-export const wheelSlots = (dialogue: DialogueVm): readonly WheelSlot[] => {
-  if (dialogue.ended) return [{ key: "end", text: END_TEXT, tone: "leave", hint: "E", action: { kind: "close" } }];
+export const wheelSlots = (dialogue: DialogueVm, endText: string): readonly WheelSlot[] => {
+  if (dialogue.ended) return [{ key: "end", text: endText, tone: "leave", hint: "E", action: { kind: "close" } }];
   const stay = dialogue.choices.filter((c) => toneOf(c) !== "leave");
   const leave = dialogue.choices.filter((c) => toneOf(c) === "leave");
   return [...stay, ...leave].map((c, i) => ({

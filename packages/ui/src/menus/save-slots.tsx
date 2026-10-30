@@ -3,6 +3,9 @@ import { useSessionIntents, useUi } from "../use-ui";
 
 export const SAVE_SLOTS = ["slot-1", "slot-2", "slot-3"] as const;
 
+/** What persistence puts as the objective of an unreadable slot: a catalog key, said here. */
+const CORRUPT_SLOT = "save.corrupt";
+
 export const SaveSlots = ({ mode }: { mode: "save" | "load" }) => {
   const slots = useUi((s) => s.slots);
   const busy = useUi((s) => s.busy);
@@ -23,7 +26,7 @@ export const SaveSlots = ({ mode }: { mode: "save" | "load" }) => {
             onClick={() => (mode === "save" ? intents.save(slot) : intents.load(slot))}
           >
             <span className="slots__name">{slot === "quick" ? t("slots.quick") : t("slots.slot", { n: slot.replace("slot-", "") })}</span>
-            <span className="slots__meta">{info ? `${info.savedAtLabel} · ${info.objective}` : t("slots.empty")}</span>
+            <span className="slots__meta">{info ? `${info.savedAtLabel} · ${info.objective === CORRUPT_SLOT ? t(CORRUPT_SLOT) : info.objective}` : t("slots.empty")}</span>
           </button>
         );
       })}

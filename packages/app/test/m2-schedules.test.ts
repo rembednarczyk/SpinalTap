@@ -81,7 +81,7 @@ describe("M2: day clock and schedules through the game loop", () => {
     expect(ui.getState().clock).toBe("22:00");
     wait(session, 3 * 60);
     expect(ui.getState()).toMatchObject({ clock: "01:00", day: 2, dayPhase: "night" });
-    expect(ui.getState().toasts.map((t) => t.title)).toContain("Mija czas: 01:00");
+    expect(ui.getState().toasts.map((t) => t.title)).toContain("Time passes: 01:00");
   });
 
   it("sends the time of day to the renderer only when the light level moves", () => {

@@ -1,5 +1,5 @@
 import { type EntityId, QUICKHACKS, type QuickhackFailure } from "@seki/core";
-import { type ScanNoteVm, patchUi } from "@seki/ui";
+import { type ScanNoteVm, patchUi, translate } from "@seki/ui";
 import { scanTargetVm } from "../scan-view";
 import type { HudPart, HudPartContext, HudPartFrame, HudPatch } from "./hud-part";
 
@@ -12,8 +12,6 @@ export const FAILURE_TEXT: Readonly<Record<QuickhackFailure, string>> = {
   "wrong-target": "Ten hack nie działa na ten cel",
   busy: "Trwa inny upload",
 };
-
-const DAEMON_TEXT: Readonly<Record<string, string>> = { icepick: "ICEpick", datamine: "Kopacz danych", mass_vulnerability: "Masowa podatność" };
 
 /** Scanner and quickhacks (ADR-0028): the scanned target, RAM, the upload, notes, and the breach result. */
 export class HackingHud implements HudPart {
@@ -41,9 +39,12 @@ export class HackingHud implements HudPart {
         this.note("fail", `${QUICKHACKS[e.hackId].title}: ${FAILURE_TEXT[e.reason]}`);
       }),
       bus.on("QuickhackTraced", () => this.note("traced", "Namierzono cię! Sieć zna twoją pozycję")),
-      bus.on("BreachCompleted", (e) =>
-        ctx.toast("system", "Włamanie zakończone", e.daemons.length > 0 ? `Demony: ${e.daemons.map((d) => DAEMON_TEXT[d] ?? d).join(", ")}` : "Nic nie wgrano"),
-      ),
+      bus.on("BreachCompleted", (e) => {
+        // The result in the language of the moment (ADR-0056), the daemons by their catalog names.
+        const locale = ui.getState().settings.locale;
+        const daemons = e.daemons.map((d) => translate(locale, `breach.daemon.${d}`)).join(", ");
+        ctx.toast("system", translate(locale, "breach.done"), e.daemons.length > 0 ? translate(locale, "breach.daemons", { daemons }) : translate(locale, "breach.nothing"));
+      }),
     ];
   }
 
@@ -58,7 +59,7 @@ export class HackingHud implements HudPart {
       const target = f.found.get(this.focusId);
       const prev = ui.getState().scanTarget;
       if (!target) out.scanTarget = null;
-      else if (prev?.id !== target.id) out.scanTarget = scanTargetVm(target);
+      else if (prev?.id !== target.id) out.scanTarget = scanTargetVm(target, ui.getState().settings.locale);
     }
     if (ui.getState().scanNote && f.tick - this.noteTick >= NOTE_SECONDS * this.ctx.hooks.ticksPerSecond) out.scanNote = null;
     return out;

@@ -8,6 +8,12 @@ export interface SaveStore {
   keys(): Promise<string[]>;
 }
 
+/**
+ * The objective of an unreadable slot in the slot list: a catalog key, not a text, so the UI
+ * says it in the player's language (ADR-0056). The save format does not change.
+ */
+export const CORRUPT_SLOT_OBJECTIVE = "save.corrupt";
+
 /** PersistencePort over any SaveStore: encoding, checksums and migrations live here, storage stays dumb. */
 export class SavePersistence implements PersistencePort {
   constructor(private readonly store: SaveStore) {}
@@ -30,7 +36,7 @@ export class SavePersistence implements PersistencePort {
         if (s) out.push({ slot, savedAtLabel: s.meta.label, objective: s.meta.objective });
       } catch (e) {
         if (!(e instanceof CorruptSaveError)) throw e;
-        out.push({ slot, savedAtLabel: "—", objective: "Uszkodzony zapis" });
+        out.push({ slot, savedAtLabel: "—", objective: CORRUPT_SLOT_OBJECTIVE });
       }
     }
     return out;

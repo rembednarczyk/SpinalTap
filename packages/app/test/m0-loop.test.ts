@@ -158,7 +158,7 @@ describe("M0 vertical slice: input → sim → narrative → domain → save →
     expect(await session.loadAsync("slot-2")).toBe(false);
     await store.put("slot-3", "{corrupt");
     expect(await session.loadAsync("slot-3")).toBe(false);
-    expect(ui.getState().toasts.at(-1)?.text).toBe("Plik zapisu jest uszkodzony.");
+    expect(ui.getState().toasts.at(-1)?.text).toBe("The save file is corrupted.");
   });
 
   it("goes to the death screen when the player flatlines, and pause blocks the sim", () => {

@@ -35,7 +35,7 @@ test.describe("M0 smoke", () => {
     await expect(dialogue).toContainText("Chodzący trup");
     await dialogue.getByRole("button", { name: /Kim jesteś/ }).click();
     await dialogue.getByRole("button", { name: /Niech będzie/ }).click();
-    await dialogue.getByRole("button", { name: /Zakończ rozmowę/ }).click();
+    await dialogue.getByRole("button", { name: /End conversation/ }).click();
     await expect(dialogue).toBeHidden();
     await step(page, 2);
     await expect(page.getByTestId("objective")).toContainText("kuriera Hebi");
@@ -43,7 +43,7 @@ test.describe("M0 smoke", () => {
 
     // Quicksave, move away, quickload: position and quest state come back.
     await page.keyboard.press("F5");
-    await expect(page.getByText("Zapisano grę")).toBeVisible();
+    await expect(page.getByText("Game saved")).toBeVisible();
     const saved = await gameState(page);
     await step(page, 120, { moveZ: -1 });
     expect((await gameState(page)).player).not.toEqual(saved.player);
@@ -110,7 +110,7 @@ test("ripperdoc clinic sells a medkit through the UI", async ({ page }) => {
   const dialogue = page.getByTestId("dialogue");
   // Before the first talk with Kaito, Mori sends Seki to him at Neon Koi (G-034).
   await expect(dialogue).toContainText("Czeka na ciebie w Neon Koi");
-  await dialogue.getByRole("button", { name: /Zakończ rozmowę/ }).click();
+  await dialogue.getByRole("button", { name: /End conversation/ }).click();
   await expect(dialogue).toBeHidden();
   await step(page, 1);
   expect((await gameState(page)).dialogue).toBe(false);

@@ -1,4 +1,5 @@
 import type { BreachDaemonId } from "@seki/core";
+import type { MessageKey } from "../i18n/t";
 
 /**
  * Breach Protocol (ADR-0028) as pure functions: the UI draws the matrix with any random source
@@ -125,11 +126,11 @@ export const generateBreach = (rng: Rng, daemons: readonly BreachDaemonId[], opt
   }
 };
 
-/** Polish names and one-line effects of the daemons. */
-export const DAEMON_INFO: Readonly<Record<BreachDaemonId, { readonly name: string; readonly effect: string }>> = {
-  icepick: { name: "ICEpick", effect: "Quickhacki w tej sieci kosztują mniej RAM" },
-  datamine: { name: "Kopacz danych", effect: "Eddies z kont sieci" },
-  mass_vulnerability: { name: "Masowa podatność", effect: "Ochrona sieci słabnie" },
+/** Catalog keys of the daemons' names and one-line effects (ADR-0056). */
+export const DAEMON_INFO: Readonly<Record<BreachDaemonId, { readonly name: MessageKey; readonly effect: MessageKey }>> = {
+  icepick: { name: "breach.daemon.icepick", effect: "breach.daemon.icepick.effect" },
+  datamine: { name: "breach.daemon.datamine", effect: "breach.daemon.datamine.effect" },
+  mass_vulnerability: { name: "breach.daemon.mass_vulnerability", effect: "breach.daemon.mass_vulnerability.effect" },
 };
 
 /** Seconds on the clock of a timed breach; the timer starts with the first pick. */

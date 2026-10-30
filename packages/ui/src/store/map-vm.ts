@@ -33,9 +33,6 @@ export interface MapPlaceVm {
   readonly z: number;
 }
 
-/** Where the map data comes from, shown on the map tab. */
-export const MAP_ATTRIBUTION = "Dane mapy © OpenStreetMap contributors (ODbL) · teren: GUGiK NMT";
-
 /** Bounding box of a polygon. */
 export interface MapBox {
   readonly minX: number;

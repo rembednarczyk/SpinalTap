@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useT } from "../i18n/use-t";
 import type { DialogueLineVm } from "../store/ui-vm";
 
 const Line = ({ line, past }: { line: DialogueLineVm; past: boolean }) => {
@@ -18,12 +19,13 @@ const Line = ({ line, past }: { line: DialogueLineVm; past: boolean }) => {
  */
 export const DialogueLog = ({ history, lines }: { history: readonly DialogueLineVm[]; lines: readonly DialogueLineVm[] }) => {
   const ref = useRef<HTMLDivElement>(null);
+  const t = useT();
   useEffect(() => {
     const el = ref.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [lines]);
   return (
-    <div className="subs" ref={ref} data-dialogue-log="" role="log" aria-label="Rozmowa" tabIndex={-1}>
+    <div className="subs" ref={ref} data-dialogue-log="" role="log" aria-label={t("dialogue.log")} tabIndex={-1}>
       {history.map((l, i) => (
         <Line key={`h${i}`} line={l} past />
       ))}

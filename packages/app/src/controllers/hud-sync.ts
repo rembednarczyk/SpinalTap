@@ -138,7 +138,7 @@ export class HudSync implements ContractIntents {
       aiming: player?.posture?.aiming ?? false,
       aimZoom: aimZoomOf(player),
       blocking: player?.melee?.guard ?? false,
-      journal: this.journal(sim.domain),
+      journal: this.journal(sim.domain, this.deps.ui.getState().settings.locale),
       clock: formatClock(sim.clock),
       day: dayOf(sim.clock),
       dayPhase: dayPhase(sim.clock),

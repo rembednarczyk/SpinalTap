@@ -28,19 +28,19 @@ const mount = (d: DialogueVm | null = dialogue) => {
   const closeDialogue = vi.fn();
   const intents = new Proxy({} as UiIntents, { get: (_t, k) => (k === "choose" ? choose : k === "closeDialogue" ? closeDialogue : vi.fn()) });
   render(<GameUi store={store} intents={intents} />);
-  const options = () => within(screen.getByRole("group", { name: "Odpowiedź" })).getAllByRole("button");
+  const options = () => within(screen.getByRole("group", { name: "Reply" })).getAllByRole("button");
   const hot = () => options().findIndex((b) => b.getAttribute("aria-current") === "true");
   return { store, choose, closeDialogue, options, hot };
 };
 
 describe("wheel layout", () => {
   it("puts the way out at the bottom and numbers the slots top to bottom", () => {
-    const slots = wheelSlots(dialogue);
+    const slots = wheelSlots(dialogue, "End conversation");
     expect(slots.map((s) => s.text)).toEqual(["Biorę robotę.", "Gdzie tu się można podrasować?", "Co wiesz o Kagami Biotech?", "Nie dziś."]);
     expect(slots.map((s) => s.hint)).toEqual(["1", "2", "3", "4"]);
     expect(slots.at(-1)?.action).toEqual({ kind: "choose", index: 1 });
-    expect(wheelSlots({ lines: [], choices: [{ index: 0, text: "A" }], ended: false })[0]?.tone).toBe("optional");
-    expect(wheelSlots({ lines: [], choices: [], ended: true })).toEqual([{ key: "end", text: "Zakończ rozmowę", tone: "leave", hint: "E", action: { kind: "close" } }]);
+    expect(wheelSlots({ lines: [], choices: [{ index: 0, text: "A" }], ended: false }, "x")[0]?.tone).toBe("optional");
+    expect(wheelSlots({ lines: [], choices: [], ended: true }, "Zakończ rozmowę")).toEqual([{ key: "end", text: "Zakończ rozmowę", tone: "leave", hint: "E", action: { kind: "close" } }]);
   });
 
   it("lays out an arc without empty slots: one slot level with the hub, symmetric, curving back at the ends", () => {
@@ -77,8 +77,8 @@ describe("dialogue wheel", () => {
     expect(buttons[0]?.className).toContain("wheel__opt--main");
     expect(buttons[0]?.textContent).toContain("◆");
     expect(buttons[3]?.className).toContain("wheel__opt--leave");
-    expect(screen.getByRole("button", { name: /Co wiesz o Kagami Biotech\?.*z przeszłości/ })).toBeTruthy();
-    const log = screen.getByRole("log", { name: "Rozmowa" });
+    expect(screen.getByRole("button", { name: /Co wiesz o Kagami Biotech\?.*from the past/ })).toBeTruthy();
+    const log = screen.getByRole("log", { name: "Conversation" });
     expect(within(log).getByText("No proszę.").className).toContain("subs__line--past");
     expect(within(log).getByText("Robota czeka.").className).not.toContain("subs__line--past");
   });
@@ -132,7 +132,7 @@ describe("dialogue wheel", () => {
     act(() => patchUi(store, { dialogue: { lines: [], choices: [], ended: true } }));
     expect(options().map((b) => b.dataset.tone)).toEqual(["leave"]);
     fireEvent.keyDown(window, { key: "E" });
-    fireEvent.click(screen.getByRole("button", { name: /Zakończ rozmowę/ }));
+    fireEvent.click(screen.getByRole("button", { name: /End conversation/ }));
     expect(closeDialogue).toHaveBeenCalledTimes(2);
   });
 

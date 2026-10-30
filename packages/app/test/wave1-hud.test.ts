@@ -97,11 +97,14 @@ describe("phone inbox and knots", () => {
   });
 
   it("renders an ink knot on its own runtime, with a fallback for a missing one", () => {
-    const render = createKnotRenderer(STORY_SOURCE);
+    let locale: "en" | "pl" = "en";
+    const render = createKnotRenderer(STORY_SOURCE, () => locale);
     const domain = createDomainState();
     const lines = render("oyaji_closed", domain);
     expect(lines[0]?.speaker).toBe("Oyaji");
     expect(lines.at(-1)?.text).toContain("Wróć po ósmej");
+    expect(render("no_such_knot", domain)).toEqual([{ speaker: null, text: "New message." }]);
+    locale = "pl";
     expect(render("no_such_knot", domain)).toEqual([{ speaker: null, text: "Nowa wiadomość." }]);
   });
 });
@@ -126,25 +129,32 @@ describe("contract view models", () => {
 describe("scanner view models", () => {
   const base = { prevPosition: { x: 0, y: 0, z: 0 }, position: { x: 0, y: 0, z: 0 }, yaw: 0, prevYaw: 0, pitch: 0 };
   it("profiles a passer-by from the id alone", () => {
-    expect(passerBy(31)).toEqual(passerBy(31));
-    expect(passerBy(31).profile).toHaveLength(3);
+    expect(passerBy(31, "en")).toEqual(passerBy(31, "en"));
+    expect(passerBy(31, "en").profile).toHaveLength(3);
+    // The same person in both languages: the same name, the lines picked by position.
+    const pl = passerBy(31, "pl");
+    expect(pl.name).toBe(passerBy(31, "en").name);
+    expect(pl.profile).toHaveLength(3);
+    expect(pl.profile).not.toEqual(passerBy(31, "en").profile);
     expect(hashId(1)).not.toBe(hashId(2));
   });
 
   it("tells people, devices and cameras apart", () => {
     const civ = { ...base, id: 31, health: { current: 50, max: 50 }, civilian: {}, faction: "civilians" } as unknown as Entity;
     expect(scanKind(civ)).toBe("person");
-    expect(scanTargetVm(civ)).toMatchObject({ kind: "person", name: passerBy(31).name, faction: "Mieszkańcy Lublina", hostile: false });
+    expect(scanTargetVm(civ, "en")).toMatchObject({ kind: "person", name: passerBy(31, "en").name, faction: "Mieszkańcy Lublina", hostile: false });
     const enemy = { ...base, id: 32, health: { current: 80, max: 80 }, ai: {}, enemy: { type: "tessen_guard" }, faction: "tessen" } as unknown as Entity;
-    expect(scanTargetVm(enemy)).toMatchObject({ name: "Strażnik Tessen", hostile: true });
+    expect(scanTargetVm(enemy, "en")).toMatchObject({ name: "Tessen guard", hostile: true });
+    expect(scanTargetVm(enemy, "pl")).toMatchObject({ name: "Strażnik Tessen" });
     const kaito = { ...base, id: 33, health: { current: 50, max: 50 }, interactable: { kind: "dialogue", dialogueId: "fixer" } } as unknown as Entity;
-    expect(scanTargetVm(kaito)).toMatchObject({ name: "Kaito", profile: null });
+    expect(scanTargetVm(kaito, "en")).toMatchObject({ name: "Kaito", profile: null });
     const terminal = { ...base, id: 34, interactable: { kind: "terminal", dialogueId: "crane" } } as unknown as Entity;
-    expect(scanTargetVm(terminal)).toMatchObject({ kind: "device", name: "Terminal" });
+    expect(scanTargetVm(terminal, "en")).toMatchObject({ kind: "device", name: "Terminal" });
     const sign = { ...base, id: 36 } as unknown as Entity;
-    expect(scanTargetVm(sign)).toMatchObject({ kind: "device", name: "Urządzenie", faction: null });
+    expect(scanTargetVm(sign, "en")).toMatchObject({ kind: "device", name: "Device", faction: null });
+    expect(scanTargetVm(sign, "pl")).toMatchObject({ name: "Urządzenie" });
     const camera = { ...base, id: 35, key: "docks-camera-1" } as unknown as Entity;
-    expect(scanTargetVm(camera)).toMatchObject({ kind: "camera", name: "Kamera ochrony" });
+    expect(scanTargetVm(camera, "en")).toMatchObject({ kind: "camera", name: "Security camera" });
   });
 });
 
@@ -287,8 +297,15 @@ describe("game session: wave 1 events on the HUD", () => {
     expect(ui.getState().scanNote).toBeNull();
     emit(session, "ScanFocusChanged", { targetId: null });
     expect(ui.getState().scanTarget).toBeNull();
-    emit(session, "BreachCompleted", { terminalKey: "crane", daemons: ["datamine"] });
-    expect(ui.getState().toasts.at(-1)?.text).toContain("Kopacz danych");
+    emit(session, "BreachCompleted", { terminalKey: "crane", daemons: ["datamine", "icepick"] });
+    expect(ui.getState().toasts.at(-1)).toMatchObject({ title: "Breach complete", text: "Daemons: Datamine, ICEpick" });
+    emit(session, "BreachCompleted", { terminalKey: "crane", daemons: [] });
+    expect(ui.getState().toasts.at(-1)).toMatchObject({ title: "Breach complete", text: "Nothing uploaded" });
+    patchUi(ui, { settings: { ...ui.getState().settings, locale: "pl" } });
+    emit(session, "BreachCompleted", { terminalKey: "crane", daemons: ["datamine", "mass_vulnerability"] });
+    expect(ui.getState().toasts.at(-1)).toMatchObject({ title: "Włamanie zakończone", text: "Demony: Kopacz danych, Masowa podatność" });
+    emit(session, "BreachCompleted", { terminalKey: "crane", daemons: [] });
+    expect(ui.getState().toasts.at(-1)).toMatchObject({ title: "Włamanie zakończone", text: "Nic nie wgrano" });
   });
 
   it("marks crits and kills by the player, counts damage numbers and keeps the HUD in combat", () => {
