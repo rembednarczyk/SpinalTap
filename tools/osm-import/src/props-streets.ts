@@ -43,6 +43,10 @@ const baskets = (item: PlanItem, placed: readonly Placed[]): Placed[] => {
 /** Streets that carry traffic (not paths, steps or service lanes). */
 const ROADS: ReadonlySet<string> = new Set(["primary", "secondary", "tertiary", "residential", "unclassified", "living_street", "primary_link", "secondary_link", "tertiary_link", "trunk"]);
 
+/** Is p within `reach` metres of the axis of a street cars drive (where the traffic's lanes run)? */
+export const nearTraffic = (site: Site, p: Pt, reach: number): boolean =>
+  site.streets.some((st) => ROADS.has(st.kind) && st.kind !== "living_street" && distToLine(p, st.line) < reach);
+
 const lengthOf = (line: readonly Pt[]): number => {
   let len = 0;
   for (let k = 1; k < line.length; k++) len += Math.hypot(line[k]!.x - line[k - 1]!.x, line[k]!.z - line[k - 1]!.z);
