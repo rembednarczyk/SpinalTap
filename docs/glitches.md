@@ -59,7 +59,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: żaden budynek mapy nie przecina `CLEARED_BUILDINGS`; kontrola `building-in-set-piece` w skanie = 0.
 
 ### G-009 Auta zaparkowane przy krawężniku stoją na trawniku i chodniku
-- Status: przyjęte
+- Status: weryfikacja PRZYJĘTE, w PR
 - Ważność: S3 · Zasięg: szeroki · Koszt: mały
 - Gdzie:
   - Ruska (1071,6, 460), (1067,2, 464,1);
@@ -73,7 +73,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: rogi i środek każdego auta na `road`, `cobble`, `square` albo `parking`; kontrola `parked-car-off-road` w skanie = 0.
 
 ### G-010 Brama przy północnej krawędzi mapy kończy się w pustce, posadzka wznosi się o 2,4 m
-- Status: przyjęte
+- Status: weryfikacja PRZYJĘTE, w PR
 - Ważność: S4 · Zasięg: rzadki · Koszt: mały
 - Gdzie: kamienica w232674407 (38, 159), przejście (46, 157.2) → (30.7, 161)
 - Dowód:
@@ -120,6 +120,17 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Przyczyna (przypuszczalna): `citySettled()` jest już prawdą z poprzedniego miejsca, zanim ruszy streaming nowego.
 - Pakiet: `e2e` (QA)
 - Test przyjęcia: dwa różne punkty dają różne zrzuty, a kadr odpowiada pozycji gracza (np. zapis pozycji kamery obok zrzutu).
+
+### G-014 Auta zaparkowane na przejściach dla pieszych
+- Status: przyjęte
+- Ważność: S4 · Zasięg: lokalny · Koszt: mały
+- Gdzie:
+  - (−104,9, 35,2) van, 12/153 punktów obrysu na zebrze;
+  - (−111,8, −42,2) dostawczy, 44/153;
+  - (920,4, 469,2) hatchback, środek na zebrze.
+- Dowód: sonda weryfikatora G-009 (153 punkty obrysu na auto). Auta stały tam przed G-009.
+- Pakiet: `packages/sim` (`content/parked-cars.ts`)
+- Test przyjęcia: kontrola `parked-car-on-crossing` w skanie = 0 (żaden punkt obrysu na `crossing`).
 
 ### G-006 Skręty aut na skrzyżowaniach
 - Status: później (to funkcja, nie glitch: wymaga sieci pasów; ADR-0050 „Na później”)
