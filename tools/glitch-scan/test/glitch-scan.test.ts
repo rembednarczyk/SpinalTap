@@ -179,7 +179,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     return cars.flatMap((r) => {
       const e = pointAt(r.points, r.length);
       if (!deepInMap(e.x, e.z, 6)) return [];
-      const met = starts.some(({ r: o, p }) => o !== r && Math.hypot(p.x - e.x, p.z - e.z) < 3 && p.tx * e.tx + p.tz * e.tz > 0.5);
+      const met = starts.some(({ r: o, p }) => o !== r && o.use === r.use && Math.hypot(p.x - e.x, p.z - e.z) < 3 && p.tx * e.tx + p.tz * e.tz > 0.5);
       return met ? [] : [{ at: near(e.x, e.z), what: r.id }];
     });
   },

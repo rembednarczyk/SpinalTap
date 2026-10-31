@@ -87,7 +87,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Gdzie: ok. (2401, 282) · Dowód: kąt 31°, pojazdy obu tras biorą się nawzajem za „auto przed sobą”, resynchronizacja co ok. 40 m.
 
 ### G-038 `lane-dead-end` nie sprawdza użycia początku, który „spotyka” koniec
-- Status: zgłoszone (z G-006)
+- Status: w weryfikacji (kontrola wymaga tego samego `use`; po G-006 koniec trolejbusu (2456, 245) i tak jest już liczony, więc licznik 44 się nie zmienia, zmiana tylko uszczelnia kontrolę)
 - Ważność: S4 (skan) · Gdzie: koniec trolejbusu na Mełgiewskiej ok. (2456, 245) ukryty przez początek pasa aut.
 
 ### G-041 Wzór bruku placu przesuwa się na granicy chunków
