@@ -6,7 +6,7 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
 
 - **Plan z audytu luk (31.10, `docs/audyt-luk.md`).** Priorytety: P0 blokuje grę albo inne prace, P1 standard gatunku o dużym wpływie, P2 ważne później, P3 opcjonalne. Kolejność P0 i P1 według zależności:
   - **P0, teraz:**
-    1. Autozapis (po kroku zadania, kontrakcie, wejściu do lokalu, co kilka minut) i zapis przy `visibilitychange`/`pagehide` na telefonie. Koszt S. Niezależne.
+    1. [gotowe, #56] Autozapis (po kroku zadania, kontrakcie, zmianie dzielnicy, co 5 minut) i zapis przy `visibilitychange`/`pagehide` na telefonie; wejście do lokalu z ADR-0061.
     2. Stabilne e2e (G-031, G-043) i ekran ładowania (ADR-0057). W toku.
     3. Języki: etapy 2c–5 (ADR-0056). W toku.
     4. Obezwładnienie bez zabijania, ogłuszenie, przenoszenie ciał (ADR do napisania). Koszt M. Musi być przed etapem 3 ADR-0059, bo drzewko Cień i XP za skradanie je zakładają.
@@ -41,7 +41,7 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
   - **Przeciwnicy i kontrakty**: poziom wroga z pasma dzielnicy i poziomu gracza; stawki, skład i nagrody kontraktów liczone z tego samego poziomu zamiast `ukończone / 3`.
   - Zasady: wszystko w `core` jako czyste funkcje z `RandomPort`, zmiana schematu zapisu z migracją (poziom, doświadczenie, poziom przedmiotów; stare przedmioty dostają poziom z ich rzadkości), złote hashe aktualizowane świadomie, teksty przez klucze (ADR-0056), balans testami symulacji (krzywa doświadczenia, rozkład łupów na poziomach).
 - **[ADR-0058 etap 9, 31.10] Assety drzwi automatycznych i rozsuwanych.** Dziś skrzydła drzwi to proceduralne bryły (ADR-0038). Modele CC0 (Quaternius Cyberpunk `Door`, elementy sci-fi Kenneya): przeszklone drzwi sklepu, drzwi pancerne na kod, rolety, panele z diodą stanu zamka. Podmiana wyglądu bez zmian w symulacji.
-- **[ADR-0061, 31.10] Zdarzenie wejścia do lokalu pod autozapis.** Autozapis (w weryfikacji) zapisuje dziś przy zmianie dzielnicy zamiast przy wejściu do lokalu, bo takiego zdarzenia nie ma. ADR-0061: obszary `INTERIORS`, zdarzenia `InteriorEntered`/`InteriorLeft`, autozapis przy wejściu; to samo zdarzenie posłuży pogłosowi i otoczeniu (ADR-0060). Po merge'u autozapisu.
+- **[ADR-0061, 31.10] Zdarzenie wejścia do lokalu pod autozapis.** Autozapis (#56, w main) zapisuje dziś przy zmianie dzielnicy zamiast przy wejściu do lokalu, bo takiego zdarzenia nie ma. ADR-0061: obszary `INTERIORS`, zdarzenia `InteriorEntered`/`InteriorLeft`, autozapis przy wejściu; to samo zdarzenie posłuży pogłosowi i otoczeniu (ADR-0060). Po merge'u autozapisu.
 - **[ADR-0060, 31.10] Głosy postaci i bohaterki oraz rozbudowa dźwięku.** Decyzje: całość z TTS (bez aktorów), VO po angielsku z napisami en/pl, wyzwalacze kwestii (interakcja, zaczepki, zasłyszane rozmowy NPC); sześć etapów w ADR-0060. Dziś gra nie ma dialogów mówionych (VO): są napisy i syntezowane „głosy” efektów (`engine/src/audio/synth-voices.ts`), a SFX to nagrania CC0 i synteza (`app/public/audio`, ADR-0013). W audycie VO było P3; użytkownik podnosi je do planu. Do ADR-u:
   - **Zakres głosów, od najtańszego:**
     1. odzywki (barki) w walce, skradaniu i tłumie: wrogowie, cywile, Seki (ok. 20–40 linii na typ postaci);
