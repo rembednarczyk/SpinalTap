@@ -609,6 +609,31 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     });
   },
   /**
+   * A marketplace of the map data (`amenity=marketplace`, G-064) with fewer than one stall per
+   * 150 m² of its open ground (sampled every metre, the chunks' rectangles in, its buildings out):
+   * a market square left as bare paving.
+   */
+  "marketplace-empty": () => {
+    const stalls = Object.values(WORLD_STREET_PROPS)
+      .flat()
+      .filter((i) => i.prop === "market-stall");
+    return [...SOURCE_OSM.ways.values()].flatMap((w) => {
+      if (w.tags?.amenity !== "marketplace") return [];
+      const ring = w.nodes.flatMap((id) => {
+        const n = SOURCE_OSM.nodes.get(id);
+        return n ? [geoToWorld(n.lat, n.lon)] : [];
+      });
+      if (ring.length < 4) return [];
+      const xs = ring.map((p) => p.x);
+      const zs = ring.map((p) => p.z);
+      let area = 0;
+      for (let x = Math.floor(Math.min(...xs)) + 0.5; x < Math.max(...xs); x++)
+        for (let z = Math.floor(Math.min(...zs)) + 0.5; z < Math.max(...zs); z++) if (onChunk(x, z) && pointInRing({ x, z }, ring) && !inBuilding(x, z)) area++;
+      const n = stalls.filter((i) => pointInRing(i, ring)).length;
+      return area >= 150 && n * 150 < area ? [{ at: near(ring[0]!.x, ring[0]!.z), what: `w${w.id} ${w.tags.name ?? ""}: ${n} stalls on ${area} m²` }] : [];
+    });
+  },
+  /**
    * A church with parts from the map lifted onto it (its nave, turrets, chapels, G-049) whose block
    * the renderer still crowns with bell towers of its own, matching nothing in the data (G-057).
    */
