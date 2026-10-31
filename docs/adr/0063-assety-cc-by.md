@@ -18,7 +18,7 @@ Użytkownik zdecydował (31.10): dopuszczamy CC-BY 4.0.
 - **Licencje:** CC0 albo CC-BY 4.0. Inne (CC-BY-SA, CC-BY-NC, płatne, bez licencji) dalej odpadają. Dotyczy modeli, tekstur i dźwięków (ADR-0060 bez zmian w części o głosach).
 - **Uznanie autorstwa:**
   - każdy plik CC-BY ma wiersz w README katalogu (`packages/app/public/*/README.md`): tytuł, autor z linkiem, źródło, licencja z linkiem, opis zmian („uproszczony, kolory sprowadzone do palety”);
-  - ekran „Twórcy” w menu tytułowym i pauzy czyta listę z jednego pliku danych (`credits`), żeby README i ekran się nie rozjechały; test sprawdza, że każdy plik CC-BY w `public` ma wpis;
+  - ekran „Autorzy” w menu tytułowym i pauzy czyta listę z jednego pliku danych (`credits`), żeby README i ekran się nie rozjechały; test sprawdza, że każdy plik CC-BY w `public` ma wpis;
   - teksty ekranu przez katalogi i18n (ADR-0056), nazwy autorów i tytuły zostają oryginalne.
 - **Źródła:** surowe pliki nie trafiają do repo. `tools/assets/sources.json` dostaje URL pobrania, sha256, autora, licencję i link do strony modelu, a `tools/assets/fetch.mjs` je pobiera (ADR-0058).
 - **Dopasowanie do stylu NPR:** tak jak paczki z ADR-0058, modele przechodzą przez `tools/city_kit.py` (albo bliźniacze wejście):
@@ -30,9 +30,9 @@ Użytkownik zdecydował (31.10): dopuszczamy CC-BY 4.0.
   2. `sci-fi_megacity_cluster`: megawieże na horyzoncie poza danymi Lublina (pierścień panoramy, ADR-0051), tylko daleki LOD, jedna wspólna siatka.
   3. `futuristic_compact_room`: wnętrze kapsułowego mieszkania (kryjówka Seki albo pokój do wynajęcia), z obszarem `INTERIORS` i autozapisem przy wejściu (ADR-0061).
   4. `cyberpunk_building` i `hw_4_cyberpunk_sci-fi_building`: nowe budynki w miejscach, gdzie Lublin 2077 celowo odchodzi od dzisiejszego miasta, np. Alchemia na Placu Ofiar Getta (backlog), po przeglądzie kuratora topografii i z wpisem T-0xx; nigdy w miejsce prawdziwej kamienicy.
-- **Etapy (osobne PR-y):** 1) licencje, ekran „Twórcy”, potok i rekwizyty (słup, robopies); 2) panorama megacity; 3) wnętrze kapsuły; 4) budynki (Alchemia).
+- **Etapy (osobne PR-y):** 1) licencje, ekran „Autorzy”, potok i rekwizyty (słup, robopies); 2) panorama megacity; 3) wnętrze kapsuły; 4) budynki (Alchemia).
 
 ## Konsekwencje
-- Więcej gotowych modeli w stylu cyberpunk, kosztem obowiązku podpisu; ekran „Twórcy” robi się stałym elementem menu.
+- Więcej gotowych modeli w stylu cyberpunk, kosztem obowiązku podpisu; ekran „Autorzy” robi się stałym elementem menu.
 - Pliki źródłowe są duże (do 62 MB); do gry trafiają uproszczone wersje bez tekstur, więc rozmiar buildu i budżety (`tools/perf-budgets.json`) pilnują wyniku.
 - ADR-0058 zostaje w mocy poza zdaniem „Tylko CC0”, które zastępuje ten ADR.

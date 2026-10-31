@@ -63,7 +63,11 @@ void main(void) {
   vec3 col = vColor.rgb;
   float a = 0.0;
   float hum = 0.92 + 0.08 * sin(time * 2.3 + seed * 5.0 + vWorld.x) * (1.0 - reduce);
-  if (kind > 8.5) {
+  if (kind > 9.5) {
+    // A checkpoint's strip (ADR-0062): blinking in pairs, steady at half with flashes reduced.
+    float on = step(0.5, fract(time * 1.6 + seed));
+    a = mix(0.45 + 0.8 * on, 0.7, reduce);
+  } else if (kind > 8.5) {
     // Low mist in the canyons (ADR-0051): soft drifting sheets fading at their edges and near the eye.
     float edge = smoothstep(0.0, 0.3, uv.x) * smoothstep(1.0, 0.7, uv.x) * smoothstep(0.0, 0.35, uv.y) * smoothstep(1.0, 0.65, uv.y);
     float drift = noise(vWorld.xz * 0.12 + vec2(time * 0.04, seed * 9.0)) * noise(vWorld.xz * 0.31 - vec2(0.0, time * 0.06));
