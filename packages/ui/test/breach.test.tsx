@@ -108,34 +108,34 @@ describe("breach panel", () => {
     }
     expect(screen.getByTestId("breach-result").textContent).toContain("ICEpick");
     expect(screen.getByTestId("breach-daemon-datamine").className).toContain("breach__daemon--won");
-    fireEvent.click(screen.getByText("Zakończ"));
+    fireEvent.click(screen.getByText("Finish"));
     expect(i.submitBreach).toHaveBeenCalledWith(["icepick", "datamine", "mass_vulnerability"]);
   });
 
   it("auto-solves into one daemon, and disconnecting sends what was won so far", () => {
     const { i } = mount({});
-    fireEvent.click(screen.getByText("Autorozwiązanie (1 demon)"));
+    fireEvent.click(screen.getByText("Auto-solve (1 daemon)"));
     expect(i.submitBreach).toHaveBeenLastCalledWith(["icepick"]);
-    fireEvent.click(screen.getByText("Odłącz"));
+    fireEvent.click(screen.getByText("Disconnect"));
     expect(i.submitBreach).toHaveBeenLastCalledWith([]);
   });
 
   it("runs the clock from the first pick and stops the run when it is out", () => {
     vi.useFakeTimers();
     const { puzzle } = mount({});
-    expect(screen.getByTestId("breach-timer").textContent).toContain("start po 1. wyborze");
+    expect(screen.getByTestId("breach-timer").textContent).toContain("starts on the first pick");
     const first = puzzle.solution[0]!;
     fireEvent.click(screen.getByTestId(`breach-cell-${first.row}-${first.col}`));
     act(() => vi.advanceTimersByTime(5000));
     expect(Number.parseFloat(screen.getByTestId("breach-timer").textContent ?? "")).toBeLessThan(26);
     act(() => vi.advanceTimersByTime(30000));
-    expect(screen.getByTestId("breach-result").textContent).toContain("Czas minął");
+    expect(screen.getByTestId("breach-result").textContent).toContain("Time's up");
   });
 
   it("has no clock with the untimed setting", () => {
     mount({ settings: { ...DEFAULT_SETTINGS, untimedBreach: true } });
     expect(screen.queryByTestId("breach-timer")).toBeNull();
-    expect(screen.getByText("bez limitu czasu")).toBeTruthy();
+    expect(screen.getByText("no time limit")).toBeTruthy();
   });
 
   it("shows nothing without a breach", () => {

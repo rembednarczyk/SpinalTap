@@ -42,10 +42,10 @@ describe("tracking a journal entry on the HUD", () => {
   });
 
   it("marks the followed entry in the journal and whether the player chose it", () => {
-    const auto = buildJournal(busy());
+    const auto = buildJournal(busy(), "en");
     expect(auto.quests.find((q) => q.id === "m0_first_contract")).toMatchObject({ tracked: true, pinned: false });
     expect(auto.quests.find((q) => q.id === "contract-c4")?.tracked).toBeUndefined();
-    const chosen = buildJournal(pin(busy(), "contract-c4"));
+    const chosen = buildJournal(pin(busy(), "contract-c4"), "en");
     expect(chosen.quests.find((q) => q.id === "contract-c4")).toMatchObject({ tracked: true, pinned: true });
     expect(chosen.quests.find((q) => q.id === "m0_first_contract")?.tracked).toBeUndefined();
   });
@@ -53,9 +53,9 @@ describe("tracking a journal entry on the HUD", () => {
   it("rebuilds the cached journal when only the pin changes", () => {
     const cache = createJournalCache();
     const d = busy();
-    const a = cache(d);
-    expect(cache(d)).toBe(a);
-    expect(cache(pin(d, "contract-c4"))).not.toBe(a);
+    const a = cache(d, "en");
+    expect(cache(d, "en")).toBe(a);
+    expect(cache(pin(d, "contract-c4"), "en")).not.toBe(a);
   });
 
   it("goes through the simulation as a command and lands in the saved preferences", () => {

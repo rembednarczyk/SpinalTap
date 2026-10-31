@@ -126,7 +126,7 @@ export const createControllers = (deps: GameSessionDeps, s: SessionHooks): Contr
     tick: () => sim().tick,
     ticksPerSecond: SIM_HZ,
     damageMode: () => ui.getState().settings.damageNumbers,
-    renderKnot: createKnotRenderer(lines),
+    renderKnot: createKnotRenderer(lines, () => ui.getState().settings.locale),
   };
   const wave1 = new Wave1Hud(bus, ui, hudHooks);
   const wave2 = new Wave2Hud(bus, ui, hudHooks);

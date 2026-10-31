@@ -38,11 +38,11 @@ const metroMap: UiState["metroMap"] = {
 describe("metro", () => {
   it("lists the stops with fares and buys a ticket", () => {
     const { i } = mount({ metroMap, eddies: 30 });
-    expect(screen.getByTestId("metro-stop-kanal").textContent).toContain("Jesteś tutaj");
-    fireEvent.click(screen.getByRole("button", { name: /Bilet do: Plac Zamkowy/ }));
+    expect(screen.getByTestId("metro-stop-kanal").textContent).toContain("You are here");
+    fireEvent.click(screen.getByRole("button", { name: /Ticket to: Plac Zamkowy/ }));
     expect(i.travelMetro).toHaveBeenCalledWith("targ");
     // 35 €$ is more than the wallet.
-    expect((screen.getByRole("button", { name: /Bilet do: Nabrzeże/ }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole("button", { name: /Ticket to: Nabrzeże/ }) as HTMLButtonElement).disabled).toBe(true);
     fireEvent.keyDown(window, { code: "Escape" });
     expect(i.closeMetro).toHaveBeenCalled();
   });
@@ -50,7 +50,7 @@ describe("metro", () => {
   it("shows the refusal and blocks tickets on a watched platform", () => {
     mount({ metroMap: { ...metroMap, refusal: "Ochrona pilnuje peronu." }, eddies: 500 });
     expect(screen.getByTestId("metro-refusal").textContent).toContain("Ochrona");
-    expect((screen.getByRole("button", { name: /Bilet do: Plac Zamkowy/ }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole("button", { name: /Ticket to: Plac Zamkowy/ }) as HTMLButtonElement).disabled).toBe(true);
   });
 
   it("shows the ride with progress and the subtitle, and hides the touch pad", () => {

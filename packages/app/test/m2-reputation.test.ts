@@ -55,7 +55,7 @@ describe("M2: NPCs react to reputation", () => {
     steps(session, 1, frame({ interact: true }));
     expect(ui.getState().shopOpen).toBe(false);
     expect(session.inControl).toBe(true);
-    expect(ui.getState().toasts.map((t) => t.title)).toContain("Mori zamyka drzwi kliniki");
+    expect(ui.getState().toasts.map((t) => t.title)).toContain("Mori shuts the clinic door");
     expect(played).toContain("denied");
   });
 
@@ -63,7 +63,7 @@ describe("M2: NPCs react to reputation", () => {
     const { session, ui } = await sessionWith({ civilians: -40 });
     standNextTo(session, "ume");
     steps(session, 45);
-    expect(ui.getState().toasts.map((t) => t.title)).toContain("Przechodnie uciekają");
+    expect(ui.getState().toasts.map((t) => t.title)).toContain("Passers-by run away");
     expect(ui.getState().reputation.civilians).toBe(-40);
   });
 
@@ -75,6 +75,6 @@ describe("M2: NPCs react to reputation", () => {
     p.prevPosition = p.position;
     steps(session, 180);
     expect(p.health?.current).toBe(p.health?.max);
-    expect(ui.getState().toasts.map((t) => t.text)).toContain("Gangerzy cię przepuszczają");
+    expect(ui.getState().toasts.map((t) => t.text)).toContain("The gangers let you pass");
   });
 });

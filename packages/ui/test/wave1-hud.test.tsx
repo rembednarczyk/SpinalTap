@@ -49,7 +49,7 @@ describe("phone", () => {
   it("shows a holocall with the caller's portrait and the caption", () => {
     mount({ phoneNotice: { holocall: true, message: message({ priority: "story", kind: "call", contact: "Hana Ito", lines: [{ speaker: "Hana Ito", text: "Seki, uciekaj." }] }) } });
     const call = screen.getByTestId("holocall");
-    expect(call.textContent).toContain("Holorozmowa");
+    expect(call.textContent).toContain("Holocall");
     expect(call.textContent).toContain("HI");
     expect(call.textContent).toContain("Seki, uciekaj.");
     expect(screen.queryByTestId("phone-notice")).toBeNull();
@@ -87,7 +87,7 @@ describe("phone", () => {
     fireEvent.keyDown(window, { code: "KeyT" });
     expect(i.openPhone).not.toHaveBeenCalled();
     act(() => patchUi(store, { dialogue: null, phoneOpen: true }));
-    expect(screen.getByTestId("phone").textContent).toContain("Brak wiadomości");
+    expect(screen.getByTestId("phone").textContent).toContain("No messages");
     fireEvent.keyDown(window, { code: "KeyT" });
     expect(i.closePhone).toHaveBeenCalled();
   });

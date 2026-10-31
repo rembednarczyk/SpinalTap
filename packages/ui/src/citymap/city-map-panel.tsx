@@ -1,7 +1,8 @@
 import { memo, useMemo } from "react";
 import "./citymap.css";
 import { CityLabels, type CityIndex, CityShapes, EMPTY_CITY, indexCity } from "../hud/city-layer";
-import { MAP_ATTRIBUTION, type MapLabelKind } from "../store/map-vm";
+import { useT } from "../i18n/use-t";
+import type { MapLabelKind } from "../store/map-vm";
 import type { MapMarkerVm, MapPlayerVm, MapRectVm, MapVm } from "../store/ui-store";
 import { useUi } from "../use-ui";
 import { type CityMapView, useMapView } from "./use-map-view";
@@ -55,31 +56,32 @@ export const CityMapPanel = () => {
   const player = useUi((s) => s.mapPlayer);
   const markers = useUi((s) => s.mapMarkers);
   const showMarkers = useUi((s) => s.settings.mapMarkers);
+  const t = useT();
   const city = useMemo(() => (map ? indexCity(map) : EMPTY_CITY), [map]);
   const { view, zoomIn, zoomOut, centre, handlers } = useMapView({ x: player?.x ?? 0, z: player?.z ?? 0, span: 420 });
   const kinds = useMemo(() => kindsAt(view.span), [view.span]);
   const size = useMemo(() => sizeAt(view.span), [view.span]);
-  if (!map) return <p className="sheet__empty">Brak mapy.</p>;
+  if (!map) return <p className="sheet__empty">{t("map.none")}</p>;
   // Icons keep their size on screen: 1 at a 420 m view.
   const k = view.span / 420;
   return (
     <div className="citymap" data-testid="city-map">
-      <svg className="citymap__svg" viewBox={viewBox(view)} preserveAspectRatio="xMidYMid meet" role="img" aria-label="Mapa Lublina" {...handlers}>
+      <svg className="citymap__svg" viewBox={viewBox(view)} preserveAspectRatio="xMidYMid meet" role="img" aria-label={t("map.label")} {...handlers}>
         <Base map={map} city={city} />
         <CityLabels city={city} window={null} prefix="citymap" kinds={kinds} size={size} />
         {showMarkers && markers.map((m) => <Marker key={m.id} m={m} k={k} />)}
         {player && <Player p={player} k={k} />}
       </svg>
       <div className="citymap__tools">
-        <button type="button" className="citymap__btn" onClick={zoomIn} aria-label="Przybliż">
+        <button type="button" className="citymap__btn" onClick={zoomIn} aria-label={t("map.zoomIn")}>
           +
         </button>
-        <button type="button" className="citymap__btn" onClick={zoomOut} aria-label="Oddal">
+        <button type="button" className="citymap__btn" onClick={zoomOut} aria-label={t("map.zoomOut")}>
           −
         </button>
         {player && (
           <button type="button" className="citymap__btn citymap__btn--wide" onClick={() => centre(player.x, player.z)}>
-            Ja
+            {t("map.me")}
           </button>
         )}
         {(map.places ?? []).map((p) => (
@@ -89,7 +91,7 @@ export const CityMapPanel = () => {
         ))}
       </div>
       <div className="citymap__credit" data-testid="map-attribution">
-        {MAP_ATTRIBUTION}
+        {t("map.attribution")}
       </div>
     </div>
   );

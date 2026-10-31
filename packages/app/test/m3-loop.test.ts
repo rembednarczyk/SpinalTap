@@ -43,7 +43,7 @@ describe("M3 acceptance: act I from a new game to each ending", () => {
     expect(session.sim.domain.character.memories).toEqual(
       expect.arrayContaining(["combat_reflex", "courier_case", "operating_table", "crash_night"]),
     );
-    expect(ui.getState().toasts.some((t) => t.title === "Koniec aktu I: Echo")).toBe(true);
+    expect(ui.getState().toasts.some((t) => t.title === "End of Act I: Echo")).toBe(true);
 
     // Act II opens on its own, in the light of the ending (ADR-0023).
     expect(allText(ui)).toContain(ending === "aya" ? "Babcia Ume wie" : "Mori sprzedał fiolkę");

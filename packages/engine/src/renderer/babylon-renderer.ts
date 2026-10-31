@@ -132,7 +132,7 @@ export class BabylonRenderer implements RenderPort {
       shadow: this.shadow,
       camera: this.rig,
       cameraTarget: () => this.cameraTarget,
-      pose: (id, rig, speed, dt, retarget) => this.activities.apply(id, rig, speed, dt, retarget),
+      pose: (id, rig, speed, dt, retarget, clock) => this.activities.apply(id, rig, speed, dt, retarget, clock),
       lift: this.liftAt,
     });
     const eye = this.rig.camera.position;
@@ -363,8 +363,8 @@ export class BabylonRenderer implements RenderPort {
     }
     if (this.mapCity?.flush()) this.wet?.schedule.invalidate();
     this.metro.update(dt);
-    this.characters.update(dt);
-    this.crowd.update(dt);
+    this.characters.update(dt, this.stage.options.reference);
+    this.crowd.update(dt, this.stage.options.reference);
     this.vehicles.update();
     const target = this.cameraTargetTransform;
     this.rig.update(target, dt);

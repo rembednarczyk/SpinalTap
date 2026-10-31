@@ -38,10 +38,10 @@ describe("act II on the overpass in the game", () => {
     expect(dialogue().textContent).toContain("przyjęła pani zlecenie");
     fireEvent.click(within(dialogue()).getByRole("button", { name: /Bierzcie Rena i archiwum/ }));
     expect(dialogue().textContent).toContain("chip w białym etui");
-    fireEvent.click(within(dialogue()).getByRole("button", { name: /Zakończ rozmowę/ }));
+    fireEvent.click(within(dialogue()).getByRole("button", { name: /End conversation/ }));
     g.step(2);
 
-    expect(screen.getByText("Koniec aktu II: Lustro")).toBeTruthy();
+    expect(screen.getByText("End of Act II: Lustro")).toBeTruthy();
     expect(g.seki.state().flags).toEqual(expect.arrayContaining(["act2_ending", "ending:kagami"]));
     // The recording from Kagami plays on its own as a flashback.
     expect(dialogue().textContent).toContain("Wszystko się zgadza.");

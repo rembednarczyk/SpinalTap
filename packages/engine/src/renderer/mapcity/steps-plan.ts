@@ -1,5 +1,5 @@
 import { DRESS_FLAG, type MeshSink, hexColor } from "../mesh-sink";
-import type { HeightAt } from "./ground-plan";
+import { type HeightAt, drape } from "./ground-plan";
 import { type P2, orientedBox } from "./polygon";
 import { quadUv } from "./sink-ops";
 
@@ -10,12 +10,19 @@ const RISER = hexColor("#4f4b46", DRESS_FLAG.solid);
 export const STEP_DEPTH = 0.33;
 /** Treads stand this far above the terrain they follow, like a sidewalk over the road. */
 const LIFT = 0.05;
+/**
+ * The least mean riser of a flight, metres. The terrain model is smoothed (steps and kerbs
+ * removed), so a run whose ground climbs less than this per tread has no flight to draw: its
+ * risers would be a row of dark lines a centimetre or two high on level paving (G-018).
+ */
+export const MIN_RISER = 0.045;
 
 /**
  * A flight of outdoor steps (ADR-0044) on one straight run of a map's `highway=steps`: the band's
  * long side is the run, cut into treads `STEP_DEPTH` deep. Each tread is level at the terrain
  * height at its higher end and a riser joins it to the next, so the flight follows the slope in
- * steps instead of lying on it as a ramp or sinking into it.
+ * steps instead of lying on it as a ramp or sinking into it. A run on ground too gentle for
+ * `MIN_RISER` lies on it as paving instead.
  */
 export const planSteps = (sink: MeshSink, ring: readonly P2[], h: HeightAt): void => {
   if (ring.length < 3) return;
@@ -34,6 +41,12 @@ export const planSteps = (sink: MeshSink, ring: readonly P2[], h: HeightAt): voi
   };
   const levels: number[] = [];
   for (let k = 0; k < count; k++) levels.push(Math.max(ground(-box.halfLong + k * depth), ground(-box.halfLong + (k + 1) * depth)) + LIFT);
+  // A level run keeps its treads: it draws no riser between them, only the kerbs at its ends.
+  const rise = Math.max(...levels) - Math.min(...levels);
+  if (rise >= 0.01 && rise / count < MIN_RISER) {
+    drape(sink, ring, h, LIFT, TREAD, (p) => [p.x, p.z], [0, 0]);
+    return;
+  }
   const up = { x: 0, y: 1, z: 0 };
   const uv = (p: P2): [number, number] => [p.x, p.z];
   const riser = (u: number, from: number, to: number) => {

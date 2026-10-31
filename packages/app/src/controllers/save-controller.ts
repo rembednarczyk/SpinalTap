@@ -1,7 +1,7 @@
-import { type AudioPort, CorruptSaveError, type PersistencePort, type SaveSnapshot } from "@seki/core";
+import { type AudioPort, CorruptSaveError, type Locale, type PersistencePort, type SaveSnapshot } from "@seki/core";
 import type { NarrativeRuntime } from "@seki/narrative";
-import { type UiStore, patchUi } from "@seki/ui";
-import { describeObjective, saveLabel } from "../objective";
+import { type MessageKey, type MessageParams, type UiStore, patchUi, translate } from "@seki/ui";
+import { describeObjective } from "../objective";
 import { type SimRef, pushToastTimed } from "./shared";
 
 export interface SaveControllerDeps {
@@ -17,9 +17,25 @@ export interface SaveControllerDeps {
   readonly restore: (snapshot: SaveSnapshot) => void;
 }
 
+/**
+ * When a slot was saved, as its label shows it: day, month and time, written as the language
+ * writes dates. Polish keeps the format the game always had (pl-PL), English is en-GB.
+ */
+export const slotDateLabel = (date: Date, locale: Locale): string =>
+  date.toLocaleString(locale === "pl" ? "pl-PL" : "en-GB", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+
 /** Saves, loads and the slot list (asynchronous persistence around the running game). */
 export class SaveController {
   constructor(private readonly deps: SaveControllerDeps) {}
+
+  private get locale(): Locale {
+    return this.deps.ui.getState().settings.locale;
+  }
+
+  /** The toasts speak the language of the moment (ADR-0056). */
+  private t(key: MessageKey, params?: MessageParams): string {
+    return translate(this.locale, key, params);
+  }
 
   save(slot: string): void {
     void this.saveAsync(slot);
@@ -32,23 +48,23 @@ export class SaveController {
   snapshot(): SaveSnapshot {
     const sim = this.deps.sim();
     const { objective } = describeObjective(sim.domain);
-    return sim.snapshot(this.deps.narrative.saveState(), saveLabel(this.deps.now()), objective ?? "");
+    return sim.snapshot(this.deps.narrative.saveState(), slotDateLabel(this.deps.now(), this.locale), objective ?? "");
   }
 
   async saveAsync(slot: string): Promise<boolean> {
     const { ui } = this.deps;
     if (!this.deps.canSave()) {
-      pushToastTimed(ui, "system", "Nie można teraz zapisać");
+      pushToastTimed(ui, "system", this.t("save.unavailable"));
       return false;
     }
     patchUi(ui, { busy: true });
     try {
       await this.deps.persistence.save(slot, this.snapshot());
       this.deps.audio.play("save");
-      pushToastTimed(ui, "system", "Zapisano grę", slot === "quick" ? "Szybki zapis" : slot);
+      pushToastTimed(ui, "system", this.t("save.saved"), slot === "quick" ? this.t("slots.quick") : slot);
       return true;
     } catch (e) {
-      pushToastTimed(ui, "system", "Zapis nieudany", String(e));
+      pushToastTimed(ui, "system", this.t("save.failed"), String(e));
       return false;
     } finally {
       patchUi(ui, { busy: false });
@@ -62,15 +78,15 @@ export class SaveController {
     try {
       const snapshot = await this.deps.persistence.load(slot);
       if (!snapshot) {
-        pushToastTimed(ui, "system", "Pusty slot", slot);
+        pushToastTimed(ui, "system", this.t("save.emptySlot"), slot);
         return false;
       }
       this.deps.restore(snapshot);
-      pushToastTimed(ui, "system", "Wczytano grę", snapshot.meta.label);
+      pushToastTimed(ui, "system", this.t("save.loaded"), snapshot.meta.label);
       return true;
     } catch (e) {
-      const text = e instanceof CorruptSaveError ? "Plik zapisu jest uszkodzony." : String(e);
-      pushToastTimed(ui, "system", "Nie udało się wczytać", text);
+      const text = e instanceof CorruptSaveError ? this.t("save.corruptFile") : String(e);
+      pushToastTimed(ui, "system", this.t("save.loadFailed"), text);
       return false;
     } finally {
       patchUi(ui, { busy: false });

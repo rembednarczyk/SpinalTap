@@ -1,5 +1,5 @@
 import type { AudioPort, AudioScenePort } from "@seki/core";
-import { RADIO_STATIONS, type RadioIntents, type RadioStationId, type SettingsVm, type UiStore, radioStationName } from "@seki/ui";
+import { RADIO_STATIONS, type RadioIntents, type RadioStationId, type SettingsVm, type UiStore, radioStationName, translate } from "@seki/ui";
 import type { KnotPool } from "../phone";
 
 /** Seconds of play between two inserts of the station (a DJ line, an ad, the news). */
@@ -44,7 +44,10 @@ export class RadioController implements RadioIntents {
     if (id === this.station) return;
     this.deps.changeSettings({ radioStation: id });
     this.tune(id);
-    this.deps.toast(radioStationName(id), id ? (RADIO_STATIONS.find((s) => s.id === id)?.genre ?? "") : "");
+    // The station keeps its name in every language; the genre and "off" follow the setting (ADR-0056).
+    const locale = this.deps.ui.getState().settings.locale;
+    if (id) this.deps.toast(radioStationName(id), translate(locale, `radio.genre.${id}`));
+    else this.deps.toast(translate(locale, "radio.offToast"), "");
   }
 
   nextRadioStation(): void {

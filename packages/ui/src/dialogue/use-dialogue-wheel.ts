@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useT } from "../i18n/use-t";
 import type { DialogueIntents } from "../intents";
 import type { DialogueVm } from "../store/ui-vm";
 import { type WheelSlot, stepSlot, wheelSlots } from "./wheel-layout";
@@ -25,7 +26,9 @@ const scrollsItself = (target: EventTarget | null): boolean => target instanceof
  * new step of the conversation.
  */
 export const useDialogueWheel = (dialogue: DialogueVm, intents: DialogueIntents): DialogueWheelState => {
-  const slots = useMemo(() => wheelSlots(dialogue), [dialogue]);
+  const t = useT();
+  const endText = t("dialogue.end");
+  const slots = useMemo(() => wheelSlots(dialogue, endText), [dialogue, endText]);
   const [state, setState] = useState({ of: dialogue, slot: 0 });
   const hot = state.of === dialogue ? Math.min(state.slot, slots.length - 1) : 0;
   const point = useCallback((slot: number) => setState({ of: dialogue, slot }), [dialogue]);

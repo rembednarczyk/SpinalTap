@@ -26,11 +26,14 @@ export const setPuppetActivity = (s: PuppetState, activity: ActivityId | null): 
 const MOVING = 0.3;
 const COWER_RATE = 4;
 
-/** One frame: the stride, the activity blend and the cower ease. */
-export const stepPuppet = (s: PuppetState, speed: number, crouch: number, dt: number): void => {
-  s.time += dt;
-  if (speed > 0.05) s.phase += dt * (4 + speed * 1.9);
-  stepBlend(s.blend, dt, speed > MOVING);
+/**
+ * One frame: the stride, the activity blend and the cower ease. `clock` moves the cycles (stride,
+ * bob, activity): `dt` in play, 0 in the reference still so the pose does not hang on load time (G-044).
+ */
+export const stepPuppet = (s: PuppetState, speed: number, crouch: number, dt: number, clock = dt): void => {
+  s.time += clock;
+  if (speed > 0.05) s.phase += clock * (4 + speed * 1.9);
+  stepBlend(s.blend, dt, speed > MOVING, clock);
   const to = crouch > 0.5 ? 1 : 0;
   s.cower += Math.max(-COWER_RATE * dt, Math.min(COWER_RATE * dt, to - s.cower));
 };

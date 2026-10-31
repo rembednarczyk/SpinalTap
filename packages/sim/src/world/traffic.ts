@@ -1,5 +1,6 @@
 import { type EntityId, type GameClock, VEHICLE_SIZE, type VehicleModel, hourOf } from "@seki/core";
-import { CAR_MODELS, DELIVERY_HOURS, TRAFFIC_BY_HOUR, TRAFFIC_RANGE, TRAFFIC_ROUTES, type TrafficDensity, type TrafficRoute, pointAt } from "../content/traffic";
+import { CAR_MODELS, DELIVERY_HOURS, TRAFFIC_BY_HOUR, TRAFFIC_RANGE, TRAFFIC_ROUTES, type TrafficDensity, type TrafficRoute } from "../content/traffic";
+import { pointOn } from "../content/traffic-lane";
 import { deriveRandom } from "../rng/derive-random";
 import { realSeconds } from "./crowd";
 
@@ -115,7 +116,7 @@ export const timetable = (plan: VehiclePlan, clock: GameClock): { readonly s: nu
 
 /** The pose on a lane at arc length `s`, stepped `aside` metres to the right of it. */
 export const lanePose = (route: TrafficRoute, s: number, aside = 0): { x: number; z: number; yaw: number; tx: number; tz: number } => {
-  const p = pointAt(route.points, s);
+  const p = pointOn(route.points, s);
   return { x: p.x + p.tz * aside, z: p.z - p.tx * aside, yaw: Math.atan2(p.tx, p.tz), tx: p.tx, tz: p.tz };
 };
 

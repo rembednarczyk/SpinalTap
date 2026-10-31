@@ -31,6 +31,7 @@ Szukasz glitchy w jednym obszarze, który wskazał orkiestrator, i zgłaszasz je
 - Każde znalezisko musi być powtarzalne. Podaj współrzędne świata (x, z), liczbę wystąpień w mieście i dowód: liczbę ze skanu lub pomiaru, ścieżkę zrzutu albo tag OSM.
 - Nie zgłaszaj przypuszczeń bez dowodu. Jeśli nie umiesz odtworzyć, napisz „niepotwierdzone” i co sprawdziłeś.
 - Nie zmieniaj kodu poza plikami `zz-*` i zrzutami w katalogu tymczasowym.
+- Katalog tymczasowy (scratchpad) jest wspólny dla wszystkich agentów sesji. Pliki w nim nazywaj z prefiksem swojego zadania, np. `g018-pomiar.ts`, a nie `probe.ts`, bo inny agent nadpisze Ci plik. Nie usuwaj cudzych plików.
 
 ## Raport
 Lista zgłoszeń w szablonie z `glitch-triage` (tytuł, gdzie, ile, dowód, proponowana ważność, przypuszczalna przyczyna i pakiet). Na końcu jedno zdanie o tym, co obejrzałeś bez wyników, żeby orkiestrator zaktualizował mapę pokrycia.

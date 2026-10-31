@@ -1,10 +1,10 @@
-import { METRO_STATION_IDS, type MetroRefusal, type MetroStationId, isMetroStationId, metroFare } from "@seki/core";
-import type { MetroMapVm } from "@seki/ui";
+import { type Locale, METRO_STATION_IDS, type MetroRefusal, type MetroStationId, isMetroStationId, metroFare } from "@seki/core";
+import { type MessageKey, type MetroMapVm, translate } from "@seki/ui";
 
 export { metroFare };
 
-/** The one line of the city (ADR-0035), its stops in order along the track. */
-export const METRO_LINE = "Linia Kanjō";
+/** The one line of the city (ADR-0035), its stops in order along the track; the station names stay Polish (ADR-0056). */
+export const metroLine = (locale: Locale): string => translate(locale, "metro.line");
 
 export const METRO_STATION_NAMES: Readonly<Record<MetroStationId, string>> = {
   shinsekai: "Plac Litewski",
@@ -21,20 +21,22 @@ export const stationOfDistrict = (district: string | null): MetroStationId | nul
 };
 
 /** Said at the kiosk while a contract is hot: the platform is watched (ADR-0032). */
-export const METRO_GUARDED = "Ochrona pilnuje peronu. Zgub pościg, zanim wsiądziesz.";
+export const METRO_GUARDED: MessageKey = "metro.guarded";
 
 /** Why the kiosk refused a ticket (`MetroRefused`, ADR-0034), as the toast says it. */
-export const METRO_REFUSAL_TEXT: Readonly<Record<MetroRefusal, string>> = {
-  riding: "Już jedziesz.",
-  "not-at-kiosk": "Bilet kupisz tylko przy kiosku.",
-  "same-station": "Jesteś na tej stacji.",
+const METRO_REFUSAL: Readonly<Record<MetroRefusal, MessageKey>> = {
+  riding: "metro.refusal.riding",
+  "not-at-kiosk": "metro.refusal.notAtKiosk",
+  "same-station": "metro.refusal.sameStation",
   watched: METRO_GUARDED,
-  funds: "Za mało €$ na bilet.",
+  funds: "metro.refusal.funds",
 };
 
-export const metroMapVm = (from: MetroStationId, guarded: boolean): MetroMapVm => ({
-  line: METRO_LINE,
+export const metroRefusalText = (locale: Locale, reason: MetroRefusal): string => translate(locale, METRO_REFUSAL[reason]);
+
+export const metroMapVm = (from: MetroStationId, guarded: boolean, locale: Locale): MetroMapVm => ({
+  line: metroLine(locale),
   from,
   stops: METRO_STATION_IDS.map((id) => ({ id, name: METRO_STATION_NAMES[id], fare: id === from ? 0 : metroFare(from, id), here: id === from })),
-  refusal: guarded ? METRO_GUARDED : null,
+  refusal: guarded ? translate(locale, METRO_GUARDED) : null,
 });

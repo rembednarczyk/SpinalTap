@@ -1,6 +1,6 @@
 import type { AudioPort, DomainEvents, EventBus, MetroStationId } from "@seki/core";
-import { type MetroIntents, type MetroRideVm, type PhoneLineVm, type UiStore, patchUi } from "@seki/ui";
-import { METRO_LINE, METRO_REFUSAL_TEXT, METRO_STATION_NAMES, metroFare, metroMapVm } from "../metro";
+import { type MetroIntents, type MetroRideVm, type PhoneLineVm, type UiStore, patchUi, translate } from "@seki/ui";
+import { METRO_STATION_NAMES, metroFare, metroLine, metroMapVm, metroRefusalText } from "../metro";
 import type { KnotPool } from "../phone";
 import type { Focus, SimRef } from "./shared";
 
@@ -52,7 +52,8 @@ export class MetroController implements MetroIntents {
     deps.bus.on("MetroArrived", () => this.arrive());
     deps.bus.on("MetroRefused", (e) => {
       deps.audio.play("denied");
-      deps.toast?.("Kiosk odmawia", METRO_REFUSAL_TEXT[e.reason]);
+      const locale = deps.ui.getState().settings.locale;
+      deps.toast?.(translate(locale, "metro.refused"), metroRefusalText(locale, e.reason));
     });
   }
 
@@ -68,7 +69,7 @@ export class MetroController implements MetroIntents {
   open(from: MetroStationId, interaction = true): void {
     if (this.kiosk || this.ride || !this.deps.canOpen()) return;
     this.kiosk = { from, interaction };
-    patchUi(this.deps.ui, { metroMap: metroMapVm(from, this.deps.guarded()), prompt: null });
+    patchUi(this.deps.ui, { metroMap: metroMapVm(from, this.deps.guarded(), this.deps.ui.getState().settings.locale), prompt: null });
     this.deps.focus.panel();
   }
 
@@ -142,7 +143,7 @@ export class MetroController implements MetroIntents {
     const caption = line ? { speaker: line.speaker, text: line.text } : null;
     const prev = this.lastRide;
     if (prev && prev.progress === progress && prev.caption?.text === caption?.text) return;
-    this.lastRide = { line: METRO_LINE, fromName: METRO_STATION_NAMES[ride.from], toName: METRO_STATION_NAMES[ride.to], progress, caption };
+    this.lastRide = { line: metroLine(this.deps.ui.getState().settings.locale), fromName: METRO_STATION_NAMES[ride.from], toName: METRO_STATION_NAMES[ride.to], progress, caption };
     patchUi(this.deps.ui, { metroRide: this.lastRide });
   }
 }

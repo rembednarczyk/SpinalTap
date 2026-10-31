@@ -244,7 +244,7 @@ describe("dialogue panel", () => {
   it("closes an ended conversation", () => {
     const { i } = mount({ screen: "playing", dialogue: { ...dialogue, choices: [], ended: true } });
     fireEvent.keyDown(window, { key: "e" });
-    fireEvent.click(screen.getByText("Zakończ rozmowę"));
+    fireEvent.click(screen.getByText("End conversation"));
     expect(i.closeDialogue).toHaveBeenCalledTimes(2);
   });
 });

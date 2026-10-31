@@ -65,6 +65,19 @@ describe("outdoor steps", () => {
     for (let i = 0; i < sink.positions.length; i += 3) expect((sink.positions[i + 1] ?? 0) + 1e-6).toBeGreaterThanOrEqual(Math.min((sink.positions[i] ?? 0) / 3, 2.2) - 0.34);
   });
 
+  it("lie as paving on ground too gentle for a flight, not as a row of dark lines (G-018)", () => {
+    const sink = new MeshSink();
+    // Plac Litewski: a run 18.6 m long rising 0.87 m, 1.5 cm per tread of STEP_DEPTH.
+    const ground = (x: number) => (x / 18.6) * 0.87;
+    planSteps(sink, [{ x: 0, z: 0 }, { x: 18.6, z: 0 }, { x: 18.6, z: 3 }, { x: 0, z: 3 }], ground);
+    expect(sink.empty).toBe(false);
+    for (let v = 0; v < sink.vertexCount; v++) {
+      // No riser: every face looks up, and lies on the ground just above it.
+      expect(sink.normals[v * 3 + 1] ?? 0).toBeGreaterThan(0.9);
+      expect((sink.positions[v * 3 + 1] ?? 0) - ground(sink.positions[v * 3] ?? 0)).toBeCloseTo(0.05, 3);
+    }
+  });
+
   it("leave a flat run as level treads, with only the kerb at either end", () => {
     const sink = new MeshSink();
     planSteps(sink, [{ x: 0, z: 0 }, { x: 3, z: 0 }, { x: 3, z: 2 }, { x: 0, z: 2 }], () => 0);

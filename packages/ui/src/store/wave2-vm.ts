@@ -43,22 +43,26 @@ export interface MetroRideVm {
 // ---- radio ----
 
 
-/** Stations of the radio (ADR-0035) with their names; ids from core. Ink inserts live in knots `radio_<id>_<n>`. */
+/**
+ * Stations of the radio (ADR-0035) with their names, the same in every language (ADR-0056); ids
+ * from core. The genres are in the catalogs (`radio.genre.<id>`). Ink inserts live in knots
+ * `radio_<id>_<n>`.
+ */
 export interface RadioStationInfo {
   readonly id: RadioStationId;
   readonly name: string;
-  readonly genre: string;
 }
 
 export const RADIO_STATIONS: readonly RadioStationInfo[] = [
-  { id: "drift", name: "Neon Drift 88.1", genre: "synthwave" },
-  { id: "yoru", name: "Yoru FM 76.5", genre: "city pop" },
-  { id: "tessen", name: "Tessen Info 24", genre: "wiadomości korporacji" },
+  { id: "drift", name: "Neon Drift 88.1" },
+  { id: "yoru", name: "Yoru FM 76.5" },
+  { id: "tessen", name: "Tessen Info 24" },
 ];
 
 export const isRadioStationId = (v: unknown): v is RadioStationId => RADIO_STATIONS.some((s) => s.id === v);
 
-export const radioStationName = (id: RadioStationId | null): string => RADIO_STATIONS.find((s) => s.id === id)?.name ?? "Radio wyłączone";
+/** A station's name; the toast for the radio switched off is the catalog's `radio.offToast`. */
+export const radioStationName = (id: RadioStationId): string => RADIO_STATIONS.find((s) => s.id === id)?.name ?? id;
 
 // ---- body: cyberware capacity, buffs, the dash, disguises ----
 

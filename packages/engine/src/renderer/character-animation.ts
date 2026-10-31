@@ -63,6 +63,8 @@ export interface RigMotion {
   readonly air?: number;
   /** Climbing speed on a ladder, m/s; absent off it. */
   readonly climb?: number;
+  /** Seconds the idle clock (breathing, flinch, stagger rock) moves on; `dt` when absent. */
+  readonly clock?: number;
 }
 
 /** Take-off speed the jump pose is scaled to (the simulation's JUMP_SPEED). */
@@ -233,7 +235,7 @@ const poseBody = (rig: CharacterRig, { c, thigh, knee, lean, run, amount }: Gait
  * a melee guard; melee swings and staggers come from `startSwing` and `startStagger`.
  */
 export const animateRig = (rig: CharacterRig, speed: number, dt: number, crouch = 0, combat: RigCombat = {}, motion: RigMotion = {}): void => {
-  rig.time += dt;
+  rig.time += motion.clock ?? dt;
   if (rig.dying !== null) {
     rig.dying += dt;
     animateDeath(rig, rig.dying);

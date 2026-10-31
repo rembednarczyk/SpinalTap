@@ -1,11 +1,18 @@
 import { useEffect } from "react";
+import type { Locale } from "@seki/core";
+import { useT } from "../i18n/use-t";
 import type { MetroMapVm, MetroStopVm } from "../store/ui-store";
 import { useMetroIntents, useUi } from "../use-ui";
 
-const eur = (n: number) => `${n.toLocaleString("pl-PL")} €$`;
+/** Amounts as the language writes them: Polish as before, English as en-GB. */
+const amount = (locale: Locale, n: number) => n.toLocaleString(locale === "pl" ? "pl-PL" : "en-GB");
+const eur = (locale: Locale, n: number) => `${amount(locale, n)} €$`;
 
 const Stop = ({ stop, map, eddies }: { stop: MetroStopVm; map: MetroMapVm; eddies: number }) => {
   const intents = useMetroIntents();
+  const t = useT();
+  const locale = useUi((s) => s.settings.locale);
+  const fare = eur(locale, stop.fare);
   const short = eddies < stop.fare;
   const disabled = stop.here || short || map.refusal !== null;
   return (
@@ -13,10 +20,10 @@ const Stop = ({ stop, map, eddies }: { stop: MetroStopVm; map: MetroMapVm; eddie
       <span className="metro__dot" aria-hidden="true" />
       <span className="metro__name">{stop.name}</span>
       {stop.here ? (
-        <span className="metro__here">Jesteś tutaj</span>
+        <span className="metro__here">{t("metro.here")}</span>
       ) : (
-        <button type="button" className="metro__ticket" disabled={disabled} onClick={() => intents.travelMetro(stop.id)} aria-label={`Bilet do: ${stop.name}, ${eur(stop.fare)}`}>
-          {short ? `Brak środków · ${eur(stop.fare)}` : `Bilet · ${eur(stop.fare)}`}
+        <button type="button" className="metro__ticket" disabled={disabled} onClick={() => intents.travelMetro(stop.id)} aria-label={t("metro.ticketTo", { station: stop.name, fare })}>
+          {short ? t("metro.noFunds", { fare }) : t("metro.ticket", { fare })}
         </button>
       )}
     </li>
@@ -30,7 +37,9 @@ const Stop = ({ stop, map, eddies }: { stop: MetroStopVm; map: MetroMapVm; eddie
 export const MetroMap = () => {
   const map = useUi((s) => s.metroMap);
   const eddies = useUi((s) => s.eddies);
+  const locale = useUi((s) => s.settings.locale);
   const intents = useMetroIntents();
+  const t = useT();
   useEffect(() => {
     if (!map) return;
     const onKey = (e: KeyboardEvent) => {
@@ -41,11 +50,11 @@ export const MetroMap = () => {
   }, [map, intents]);
   if (!map) return null;
   return (
-    <div className="metro" role="dialog" aria-label="Mapa metra" data-testid="metro-map">
+    <div className="metro" role="dialog" aria-label={t("metro.dialog")} data-testid="metro-map">
       <header className="metro__head">
-        <div className="metro__eyebrow">Kiosk biletowy</div>
+        <div className="metro__eyebrow">{t("metro.kiosk")}</div>
         <h2 className="metro__line">{map.line}</h2>
-        <div className="metro__wallet">€$ {eddies.toLocaleString("pl-PL")}</div>
+        <div className="metro__wallet">€$ {amount(locale, eddies)}</div>
       </header>
       {map.refusal && (
         <p className="metro__refusal" role="alert" data-testid="metro-refusal">
@@ -58,7 +67,7 @@ export const MetroMap = () => {
         ))}
       </ol>
       <button type="button" className="metro__close" onClick={() => intents.closeMetro()}>
-        <span className="dialogue__key">E</span> Odejdź od kiosku
+        <span className="dialogue__key">E</span> {t("metro.leave")}
       </button>
     </div>
   );
@@ -67,6 +76,7 @@ export const MetroMap = () => {
 /** The ride (ADR-0035): the line, the destination, the progress and the ink lines as subtitles. The 3D car is the engine's. */
 export const MetroRide = () => {
   const ride = useUi((s) => s.metroRide);
+  const t = useT();
   if (!ride) return null;
   const pct = Math.round(ride.progress * 100);
   return (
@@ -76,7 +86,7 @@ export const MetroRide = () => {
         <div className="metro-ride__route">
           {ride.fromName} <span aria-hidden="true">→</span> <b data-testid="metro-ride-to">{ride.toName}</b>
         </div>
-        <div className="metro-ride__bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label="Postęp przejazdu">
+        <div className="metro-ride__bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label={t("metro.progress")}>
           <div className="metro-ride__fill" style={{ width: `${pct}%` }} />
         </div>
       </div>
