@@ -1,9 +1,10 @@
-import { useText } from "../i18n/use-t";
+import { useT, useText } from "../i18n/use-t";
 import { useUi } from "../use-ui";
 
 /** Active ability state and medkit count, bottom-right above the camera badge. */
 export const AbilityWidget = () => {
   const tx = useText();
+  const t = useT();
   const ability = useUi((s) => s.ability);
   const medkits = useUi((s) => s.medkits);
   const ready = ability ? ability.cooldown <= 0 : false;
@@ -20,11 +21,11 @@ export const AbilityWidget = () => {
               <div className="gear__fill" style={{ width: `${active ? 100 : pct}%` }} />
             </div>
           </div>
-          <span className="gear__state">{active ? `${ability.activeTime.toFixed(1)} s` : ready ? "gotowe" : `${Math.ceil(ability.cooldown)} s`}</span>
+          <span className="gear__state">{active ? `${ability.activeTime.toFixed(1)} s` : ready ? t("hud.ability.ready") : `${Math.ceil(ability.cooldown)} s`}</span>
         </div>
       )}
       <div className="gear__item">
-        <kbd>H</kbd> Apteczki × {medkits}
+        <kbd>H</kbd> {t("hud.medkits", { count: medkits })}
       </div>
     </div>
   );
