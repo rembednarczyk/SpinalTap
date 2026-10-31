@@ -12,6 +12,7 @@ import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
 import { geoToWorld } from "../../osm-import/src/project.ts";
 import { CROWD_LANES } from "../../../packages/sim/src/content/crowd";
+import { INTERIORS } from "../../../packages/sim/src/content/interior-areas";
 import { furnitureClearance } from "../../../packages/sim/src/content/furniture-index";
 import { BOLLARD, alongSegment, anchors, chainSegments, chainThrough, distanceToPiece, furniturePrisms, furnitureRadius } from "../../../packages/sim/src/content/lublin/furniture";
 import { buildingView, isLandmark } from "../../../packages/sim/src/content/lublin";
@@ -596,6 +597,26 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       return top > 0.5 ? [{ at: near(s.at.x, s.at.z), what: `${s.view.name ?? "church"}: ${top.toFixed(1)} m over its roof` }] : [];
     });
   },
+  /**
+   * An interior (ADR-0061) of a map building reaching out of its outline by more than 0.3 m
+   * anywhere along a room's walls (sampled every 0.5 m), or over its eaves.
+   */
+  "interior-outside-building": () =>
+    INTERIORS.flatMap((i) => {
+      if (i.building === null) return [];
+      const b = MAP_CHUNKS.flatMap((c) => c.buildings).find((m) => m.id === i.building);
+      if (!b) return [{ at: i.id, what: `${i.building} not on the map` }];
+      const ring = worldOutline(b);
+      return i.rooms.flatMap((r) => {
+        const edge: Pt[] = [{ x: r.maxX, z: r.maxZ }];
+        for (let x = r.minX; x <= r.maxX; x += 0.5) edge.push({ x, z: r.minZ }, { x, z: r.maxZ });
+        for (let z = r.minZ; z <= r.maxZ; z += 0.5) edge.push({ x: r.minX, z }, { x: r.maxX, z });
+        const out = edge.filter((p) => !inOutline(p.x, p.z, b.outline, b.x, b.z) && outlineGap([p], ring) > 0.3);
+        const eaves = b.y + b.height;
+        if (out.length === 0 && r.top <= eaves) return [];
+        return [{ at: near(r.minX, r.minZ), what: out.length > 0 ? `${i.id} ${out.length} wall points out of ${b.id}` : `${i.id} up to ${r.top.toFixed(1)}, eaves ${eaves.toFixed(1)}` }];
+      });
+    }),
 };
 
 describe("the glitch scan (ADR-0054)", () => {
