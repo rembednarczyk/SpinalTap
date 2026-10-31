@@ -59,7 +59,35 @@ Odtworzenie pliku:
 ```
 NODE_USE_ENV_PROXY=1 node tools/assets/fetch.mjs /tmp/city-assets
 python3 -I -B tools/city_kit.py --props /tmp/city-assets \
-  --quaternius /tmp/city-assets/quaternius-cyberpunk-kit --out packages/app/public/city
+  --quaternius /tmp/city-assets/quaternius-cyberpunk-kit --ccby /tmp/city-assets \
+  --out packages/app/public/city
 ```
+
+## Rekwizyty ulic na licencji CC-BY 4.0 (ADR-0063)
+
+Dwa modele w `city-props.glb` są na licencji **CC-BY 4.0**: wolno je używać, zmieniać i
+rozpowszechniać, także komercyjnie, pod warunkiem podania autora, źródła i licencji oraz zaznaczenia
+zmian. Ten sam podpis jest na ekranie „Twórcy” w menu gry (`packages/ui/src/credits/credits.ts`);
+węzeł modelu w pliku ma `extras.credit` z identyfikatorem źródła z `tools/assets/sources.json`.
+
+| Klucz w pliku | Tytuł | Autor | Źródło | Licencja | Zmiany |
+|---|---|---|---|---|---|
+| `pr-pole` (słupy z kablami nad bocznymi ulicami Podzamcza i Nabrzeża) | Electric pole | [Eh (Just_Eh)](https://sketchfab.com/Just_Eh) | [Sketchfab](https://sketchfab.com/3d-models/electric-pole-a41cc931ffd84947b8f7b566acc33384) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | jeden z czterech słupów z pliku, uproszczony z 3,7 do 1,4 tys. trójkątów, kolory sprowadzone do palety, skala 3,4 (8,6 m) |
+| `pr-robodog` (robopies przy straganach i bramach) | Robotic Animal | [igor.tesV](https://sketchfab.com/igor.tesV) | [Sketchfab](https://sketchfab.com/3d-models/robotic-animal-d36aed18ec8f4638901e6e5c7ab4e7f6) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | uproszczony z 9,6 do 1,4 tys. trójkątów, kolory z tekstur sprowadzone do palety, bez tekstur, skala 0,025 (0,5 m) |
+
+Zmiany względem oryginałów (`tools/city_ccby.py`): kolor trójkąta z płaskiego materiału (słup) albo
+uśredniony z tekstury (robopies), przypisany do roli palety; emisja przechodzi w neon albo lampę.
+Siatka uproszczona przez grupowanie wierzchołków w siatce sześcianów (najdrobniejsza siatka, która
+mieści model w 1,4 tys. trójkątów), normalne płaskie. Front na +Z, metry, `extras.size`,
+`extras.styles` (`pole`, `robodog`), `extras.lights` (lampa słupa, pod halo).
+
+Renderer stawia słup zamiast latarni drogowej przy bocznej ulicy (OSM `residential`, `service`…)
+Podzamcza i Nabrzeża, w miejscu jej bryły, i rozpina kable do najbliższego słupa; robopies leży bokiem
+przy ladzie co trzeciego straganu Podzamcza i przy fasadzie obok bram (Krakowska, Grodzka, część
+przejść bramnych). Bez nowych brył w symulacji i bez nowych wywołań rysowania.
+
+Pozostałe cztery modele z tej paczki (`cyberpunk_building`, `futuristic_compact_room`,
+`hw_4_cyberpunk_sci-fi_building`, `sci-fi_megacity_cluster`) są w `sources.json`, ale jeszcze nie w
+grze (etapy 2–4 ADR-0063); dostaną wiersz tutaj, gdy trafią do pliku.
 
 Wyłączenie w grze: `?city=off` (zostają gołe bryły, bez kitu i bez rekwizytów).

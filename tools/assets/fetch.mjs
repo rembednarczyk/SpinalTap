@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 /**
- * Downloads the CC0 packs of tools/assets/sources.json (ADR-0058) into DIR and checks their
- * sha256; a file already there with the right hash is kept. Zips are unpacked with the system
- * `unzip` into DIR/<id>/<unzip>/, single files land in DIR/<id>/<path>. The result is what
- * `tools/city_kit.py --props DIR --quaternius DIR/quaternius-cyberpunk-kit` reads.
+ * Downloads the packs and models of tools/assets/sources.json (CC0, ADR-0058; CC-BY 4.0,
+ * ADR-0063) into DIR and checks their sha256; a file already there with the right hash is kept.
+ * Zips are unpacked with the system `unzip` into DIR/<id>/<unzip>/, single files land in
+ * DIR/<id>/<path>. The result is what `tools/city_kit.py --props DIR --quaternius
+ * DIR/quaternius-cyberpunk-kit --ccby DIR` reads. A source under any other licence, or a CC-BY one
+ * without its author and page (the credit needs them), is refused.
  *
  *   node tools/assets/fetch.mjs DIR [--only id,id]
  *
@@ -28,6 +30,16 @@ if (!out || out.startsWith("--")) {
 }
 const onlyAt = args.indexOf("--only");
 const only = onlyAt >= 0 ? new Set((args[onlyAt + 1] ?? "").split(",")) : null;
+
+/** Licences the game takes (ADR-0063). */
+const LICENSES = new Set(["CC0", "CC-BY-4.0"]);
+
+/** Why a source may not be fetched, or null. */
+const refused = (s) => {
+  if (!LICENSES.has(s.license)) return `licence ${s.license} is not CC0 or CC-BY-4.0`;
+  if (s.license === "CC-BY-4.0" && !(s.author && s.page && s.licenseUrl)) return "a CC-BY source needs author, page and licenseUrl";
+  return null;
+};
 
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 
@@ -58,6 +70,8 @@ let failed = 0;
 for (const s of sources) {
   if (only && !only.has(s.id)) continue;
   try {
+    const why = refused(s);
+    if (why) throw new Error(why);
     if (s.url) {
       const zip = inside(s.id, s.file);
       const fresh = await fetchChecked(s.url, zip, s.sha256);
