@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
-import { INTERIORS, clinicPoint, koiPoint } from "@seki/sim";
+import { INTERIORS, SIM_HZ, clinicPoint, koiPoint } from "@seki/sim";
 import { createUiStore, isMessageKey, translate } from "@seki/ui";
-import { AUTOSAVE_SLOT } from "../src/controllers/autosave-controller";
+import { AUTOSAVE_PLACE_COOLDOWN_TICKS, AUTOSAVE_SLOT } from "../src/controllers/autosave-controller";
 import { GameSession, RECALL_CALM_TICKS } from "../src/game-session";
 import { FakeRender, steps, teleport } from "./story-helpers";
 
@@ -75,6 +75,49 @@ describe("autosave on entering an interior (ADR-0061)", () => {
     expect(autos(store)).toBe(0);
     steps(session, RECALL_CALM_TICKS);
     await flush();
+    expect(autos(store)).toBe(1);
+  });
+
+  it("saves once for a run of 20 crossings of the clinic's door a second apart, again after the cooldown", async () => {
+    const { session, store, seen } = start();
+    const inside = clinicPoint(-10, 0, 4.4);
+    for (let k = 0; k < 20; k++) {
+      outAndInto(session, inside);
+      steps(session, SIM_HZ - 2);
+      await flush();
+    }
+    expect(seen.filter((e) => e === "in:clinic")).toHaveLength(20);
+    expect(autos(store)).toBe(1);
+    steps(session, AUTOSAVE_PLACE_COOLDOWN_TICKS);
+    outAndInto(session, inside);
+    await flush();
+    expect(autos(store)).toBe(2);
+  });
+
+  it("saves at most once for a stick trembling on the threshold, 0.35 m in and out every 20 ticks", async () => {
+    const { session, store, seen } = start();
+    const [a, b] = [clinicPoint(-7.0, 0, 4.4), clinicPoint(-7.35, 0, 4.4)];
+    for (let k = 0; k < 20; k++) {
+      const p = k % 2 === 0 ? a : b;
+      teleport(session, p.x, p.z, 0, 0, p.y);
+      steps(session, 20);
+      await flush();
+    }
+    expect(seen.length).toBeGreaterThan(2);
+    expect(autos(store)).toBeLessThanOrEqual(1);
+  });
+
+  it("saves once for a run back and forth over a district's border", async () => {
+    const { session, store } = start();
+    const street = clinicPoint(-4, 0, 4.4);
+    for (let k = 0; k < 10; k++) {
+      teleport(session, 717.5, 296);
+      steps(session, 15);
+      expect(session.sim.district).toBe("targ");
+      teleport(session, street.x, street.z, 0, 0, street.y);
+      steps(session, 15);
+      await flush();
+    }
     expect(autos(store)).toBe(1);
   });
 

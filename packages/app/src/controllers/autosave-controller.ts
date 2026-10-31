@@ -11,6 +11,15 @@ export const AUTOSAVE_INTERVAL_TICKS = 5 * 60 * SIM_HZ;
 /** What asked for an autosave; the toast names none of them, one save covers them all. */
 export type AutosaveTrigger = "quest-step" | "quest" | "contract" | "district" | "interior" | "interval";
 
+/**
+ * A place trigger (an interior, a district) soon after an autosave asks for nothing: walking in
+ * and out of a door, or along a district's border, would save at every crossing (ADR-0061). 60 s.
+ */
+export const AUTOSAVE_PLACE_COOLDOWN_TICKS = 60 * SIM_HZ;
+
+/** Triggers that come from where the player walks, held back by `AUTOSAVE_PLACE_COOLDOWN_TICKS`. */
+const PLACE_TRIGGERS: ReadonlySet<AutosaveTrigger> = new Set(["district", "interior"]);
+
 /** Shows that an autosave went through or failed: a toast, once per save. */
 export interface AutosaveView {
   saved(): void;
@@ -51,6 +60,8 @@ export class AutosaveController {
   /** The tick the page was last saved on hiding: `pagehide` after `visibilitychange` writes nothing new. */
   private hiddenTick: number | null = null;
   private district: DistrictId | null = null;
+  /** The tick of the last autosave written in this game, null before the first. */
+  private savedTick: number | null = null;
 
   constructor(private readonly deps: AutosaveControllerDeps) {
     const ask = (trigger: AutosaveTrigger) => () => this.request(trigger);
@@ -66,6 +77,8 @@ export class AutosaveController {
   }
 
   request(trigger: AutosaveTrigger): void {
+    const saved = this.savedTick;
+    if (PLACE_TRIGGERS.has(trigger) && saved !== null && this.deps.sim().tick - saved < AUTOSAVE_PLACE_COOLDOWN_TICKS) return;
     this.pending ??= trigger;
   }
 
@@ -75,6 +88,7 @@ export class AutosaveController {
     this.pending = null;
     this.sinceTick = sim.tick;
     this.hiddenTick = null;
+    this.savedTick = null;
     this.district = sim.district;
   }
 
@@ -106,6 +120,7 @@ export class AutosaveController {
     this.inFlight = true;
     this.pending = null;
     this.sinceTick = this.deps.sim().tick;
+    this.savedTick = this.sinceTick;
     try {
       await this.deps.write(AUTOSAVE_SLOT);
       if (announce) this.deps.view.saved();
