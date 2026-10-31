@@ -106,7 +106,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | `part-buried-in-roof` | Część z OSM podniesiona na obrys (`soffit`), której szczyt (ściany i dach) leży poniżej połaci dachu obrysu nad środkiem części; połać liczona jak `addHipRoof` (wcięcie `min(rise/0,84+0,35; 1,15·pole/obwód)`) | 1 (w619138853 na Ratuszu, G-117) |
 | `fractional-levels-rounded` | Obrys albo część z ułamkowym `building:levels` bez `height`, w których ściany nad cokołem przekraczają `building:levels × 3,2 m` o ponad 0,5 m | 6 (G-116) |
 | `landmark-colour-ignored` | Budynek z `isLandmark` z `roof:colour` albo `building:colour` w OSM, któremu gra rysuje dach albo tynk z innej rodziny kolorów | 25 (G-118) |
-- Źródło: audyt topografii 1 (kurator, 31.10); cztery ostatnie: audyt gmachów publicznych (kurator, 31.10).
+| `vehicle-below-surface` | Pojazd z `PARKED_CARS` albo blok sceny ze skórką `car`, `van`, `wreck`: w środku i 4 narożnikach obrysu `groundY + SURFACE_LIFT(nawierzchnia)` wyżej od spodu pojazdu o ponad 0,15 m | 38 z 87 (G-130) |
+| `vehicle-on-pavement` | Pojazd jak wyżej z ≥ 1 narożnikiem na `sidewalk`, `footway`, `steps` albo `square` bez `road` i `cobble`, poza listą celowych z rejestru (T-077: wrak (152.6, −51), furgonetka (112, −42)) | 3 bez listy (2 auta z 1/5 narożnika na `footway` przy (922.9, 430.6) i (745.9, 447.7), blok `car` (400.5, −23.5)); 0 po dopisaniu do rejestru albo poprawce |
+| `small-freestanding-tall` | Obrys `source: "default"` o polu < 60 m², bez wierzchołka innego obrysu bliżej niż 1 m, z `levels` ≥ 3 | 24 (G-127) |
+| `landmark-monument-generic` | Pomnik z `LANDMARK_MONUMENTS`, którego rekwizyt `monument` ma kształt ogólny (`figure` albo `abstract`) zamiast własnego | 2 (G-128) |
+- Źródło: audyt topografii 1 (kurator, 31.10); `part-buried-in-roof`…`landmark-colour-ignored`: audyt gmachów publicznych (kurator, 31.10); cztery ostatnie: audyt Placu Litewskiego i Pedetu (kurator, 31.10).
 
 ### G-055 Liczba wywołań rysowania skacze między klatkami w ustalonym mieście
 - Status: zgłoszone (z weryfikacji G-031)
@@ -222,7 +226,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `pedestrian-bare` 59 → ≤ 10
 
 ### G-082 Domyślna szerokość jezdni wycina zmapowane chodniki
-- Status: w PR #98 (przyjęte; 262 → 131 m, zostaje otwarte do 0: Zielona, Podwale przy 4,5 m, Łęczyńska przy skrzyżowaniu; reszta G-113 osobno)
+- Status: częściowo naprawione (#98: 262 → 131 m); zostaje otwarte do 0 (Zielona, Podwale przy 4,5 m, Łęczyńska przy skrzyżowaniu); przesunięcie jezdni od chodnika jednostronnego: G-113
 - Gdzie: Podwale w40052391/w305027452, Staszica w1150131461, w232805965, Zielona w173533827, Łęczyńska w85717509
 - Przyczyna: `roadWidth` bez `width`/`lanes` = 6,5/5 m, a `cutSidewalk` usuwa chodnik, którego środek leży na cudzej jezdni
 - Propozycja: zwęzić domyślną jezdnię do 2 × (odległość osi od chodnika − pół chodnika), min. 3 m
@@ -414,12 +418,49 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: wysokość z LOD2 albo NMPT (mediana w obrysie) i dach z LOD2; rozbieżność > 20% z OSM do przeglądu kuratora
 
-### G-130 Samochód wbudowany w ziemię na chodniku przy Pedecie (zgłoszenie użytkownika)
-- Status: zgłoszone (31.10, obserwacja użytkownika); kurator ustala pojazd, pozycję i przyczynę w ramach audytu Pedetu
-- Ważność: S3 (proponowana; widoczne na głównym ciągu pieszym) · Zasięg: do policzenia w całym mieście · Koszt: do ustalenia
-- Gdzie: przy domu towarowym Pedet, na chodniku dla pieszych
-- Pakiet właściciela: do ustalenia (sim content/traffic albo osm-import props)
-- Test przyjęcia: kontrola skanu pojazdów zaparkowanych na chodniku z OSM albo z dnem poniżej terenu → 0
+### G-126 Pedet z domyślną wysokością `commercial` i fasadą kamienicy
+- Status: później (czeka na źródło wysokości: ADR-0064 etap 11 (LOD2) albo 14 (NMPT), albo zdjęcie; bez tego poprawka byłaby zgadywaniem). Zgłoszenie użytkownika 31.10: „brakuje rozbudowania galerii Pedet”
+- Ważność: S3 (proponowana; punkt orientacyjny Krakowskiego z podpisem) · Zasięg: 1 (zasada dotyczy też innych `building=retail` bez `building:levels`) · Koszt: mały (wysokość), średni (fasada domu towarowego)
+- Gdzie: w67508935 (124.1, −128.1), Krakowskie Przedmieście 40; T-073
+- Dowód: OSM `building=retail`, `shop=mall`, bez `building:levels`, `height` i `building:part`. W grze `levels: 3`, `source: "default"`, ściany 10,4 m nad najwyższym terenem; zrzuty `pedet-ne.png`, `pedet-east.png` (scratchpad kuratora) pokazują fasadę kamienicy z siatką okien
+- Przyczyna: `defaultLevels` w `tools/osm-import/src/building-tags.ts` daje każdemu `commercial` 3 kondygnacje, a renderer rysuje go jak kamienicę z witryną
+- Pakiet właściciela: tools/osm-import (wysokość: `corrections.ts` z wpisem T-073 albo dane LOD2/NMPT); packages/engine/src/renderer/mapcity (fasada `shop=mall`/`department_store`: pasy witryn i pełne ściany pięter handlowych zamiast okien mieszkań)
+- Test przyjęcia: wysokość Pedetu z LOD2/NMPT albo potwierdzona zdjęciem (rozbieżność > 20% z wpisem do przeglądu kuratora); `shop=mall` dostaje fasadę handlową (test planu fasady w engine); baza `landmark-overbuilt` bez wzrostu
+
+### G-127 Parterowy pawilon na skwerze jako czterokondygnacyjna wieża (Bar Centralny przed Pedetem)
+- Status: zgłoszone (audyt Placu Litewskiego i Pedetu, kurator 31.10)
+- Ważność: S3 (proponowana; stoi na osi widoku z deptaku na Pedet i zasłania go) · Zasięg: 24 wolnostojące obrysy < 60 m² w mieście · Koszt: mały
+- Gdzie: w665959137 (112.5, −84.6), skwer Witkowskiego; T-074. Inne: w631242940 (−86, 19.8) na Placu Litewskim, w67499328 (130.8, 17.5), w458298770 „VapeTube” (851.5, 369.7), w458298766 „Hunek” (817.1, 373.5) i 19 dalszych (lista w `topo-pedet-raport.md`)
+- Dowód: okrągły obrys o średnicy 6,7 m (pole 33 m²), `building=yes` bez kondygnacji; w grze `levels: 4`, 13,7 m, `residential` z witryną
+- Przyczyna: `defaultLevels` daje 1 kondygnację tylko pod 25 m²; większy wolnostojący pawilon dostaje piętra dzielnicy jak kamienica
+- Pakiet właściciela: tools/osm-import (`building-tags.ts`)
+- Test przyjęcia: nowa kontrola `small-freestanding-tall` (niżej) 24 → co najwyżej przypadki potwierdzone przez kuratora; w665959137 ma 1 kondygnację
+
+### G-128 Pomniki Placu Litewskiego jako ta sama stojąca postać (Piłsudski bez konia)
+- Status: zgłoszone (audyt Placu Litewskiego, kurator 31.10). Zgłoszenie użytkownika: „brakuje pomnika Józefa Piłsudskiego”
+- Ważność: S3 (proponowana; zabytek z listy kuratora nie do rozpoznania) · Zasięg: 2 z 3 pomników `LANDMARK_MONUMENTS` (Piłsudski n481952877, 3 Maja n481952880); Unia n481952879 ma własny obelisk · Koszt: średni (model konny), mały (blok 3 Maja)
+- Gdzie: (−45.8, −13.3) i (−87.1, −22.6); T-075; zrzuty `pilsudski.png`, `pilsudski-diag.png`
+- Dowód: `shapeOf` w `tools/osm-import/src/props-gen.ts` daje każdemu `monument` poza obeliskiem i koziołkiem kształt 1 (`figure`): cokół 1,8 m i postać ok. 2,1 m, razem ok. 3,9 m. `landmark-missing` liczy tylko obecność rekwizytu, więc daje 0
+- Pakiet właściciela: packages/engine/src/renderer/mapcity (`prop-civic.ts`: kształty `equestrian` i `constitution`); tools/osm-import (`shapeOf` po ID planu); packages/sim (`furniture.ts`: kolizja cokołu nowego kształtu)
+- Test przyjęcia: n481952877 rysowany jako pomnik konny ok. 7,3 m (cokół ok. 3 m, koń z jeźdźcem ok. 4,3 m) w brązie, warstwa 2077 według planu (neonowy kontur, graffiti AR na cokole); 3 Maja jako blok z orłem; kontrola `landmark-monument-generic` 2 → 0; budżet wywołań rysowania bez wzrostu (kształt w siatce mebli bloku)
+
+### G-129 Fontanna multimedialna na Placu Litewskim bez strumieni, czaszy i pokazu
+- Status: zgłoszone (audyt Placu Litewskiego, kurator 31.10). Prośba użytkownika: „fontanna na Litewskim powinna być spektakularna”
+- Ważność: S3 (proponowana; najważniejsza atrakcja placu) · Zasięg: 1 (zasada dotyczy też kaskady w503047622 i fontanny z wieżą ciśnień w256406832) · Koszt: średni
+- Gdzie: w503047621 (x −35..−4.7, z 18.9..56.6); T-076; zrzuty `fountain.png`, `fountain-wide.png`
+- Dowód: 16 dysz `fountain-jets` (`JETS["fountain-multimedia"] = 16` w `props-gen.ts`), każda to rurka 1 m z kulką (`fountainJets` w `prop-civic.ts`); woda w niecce płaska, bez czaszy w środku, balustrady i stopni-siedzisk
+- Propozycja (NPR, 2077, bez nowych siatek): (1) dysze w siatce mebli bloku jako 3 pierścienie po obrysie (np. 48 + 32 + 16) i pióropusz w środku; strumienie to pionowe wstęgi z przecięciem w kształcie krzyża (2 quady, bez przezroczystości sortowanej), wysokości 1–4 m, w środku 8–12 m; (2) czasza z balustradą i drewniane stopnie z obrysu w siatce terenu, jak obrzeże `planBasin`; (3) poświata w siatce halo miasta (już jedna): kolory strumieni z palety neonu ADR-0051 (cyjan, magenta, bursztyn), nocą mocniejsze; (4) pokaz: wieczorem (21:00, w grze codziennie albo w piątki i soboty z `ClockPort`) wysokość i kolor z fazy w atrybucie wierzchołka, czytany przez istniejący materiał w shaderze; bez animacji CPU na wierzchołkach; (5) mgła z dysz jako istniejące cząsteczki pary (`STEAM_VENTS`), do 2 źródeł. Holo nad strumieniami (ADR-0051) opcjonalnie, w warstwie reklam
+- Pakiet właściciela: packages/engine/src/renderer/mapcity (`prop-civic.ts`, `ground-plan.ts`); tools/osm-import (`props-gen.ts`: liczba i układ dysz z obrysu)
+- Test przyjęcia: test planu: fontanna multimedialna ma ≥ 96 strumieni i czaszę w środku obrysu; `npr-perf` krakowskie-tpp bez wzrostu wywołań rysowania i aktywnych siatek (dziś 386 / 164); zrzut nocny z pokazem obejrzany przez kuratora
+
+### G-130 Pojazdy zapadnięte pod nawierzchnię (wrak na deptaku przy Pedecie)
+- Status: zgłoszone (31.10, obserwacja użytkownika; ustalenia kuratora)
+- Ważność: S3 (proponowana; widoczne na głównym ciągu pieszym) · Zasięg: 38 z 87 pojazdów w mieście zapadniętych ponad 0,15 m pod rysowaną nawierzchnię, 8 ponad 0,25 m · Koszt: mały
+- Gdzie: wrak (152.6, −51.0) na deptaku Krakowskiego Przedmieścia przy wylocie Kapucyńskiej, ok. 50 m od Pedetu; T-077. Najgłębiej: dostawczak (544.7, 167.7) 0,36 m, furgonetki na Placu Zamkowym (757, 249.4) 0,30 m, taxi (810.3, 481.3) 0,29 m
+- Dowód: pojazd ze zgłoszenia to blok sceny `wreck` z `DISTRICT_M0_PROPS` (`district-m0.ts`, grupa `WRECK` (150, −20), skrzynia (2.6, −31)), nie auto zaparkowane: w promieniu 80 m od Pedetu nie ma żadnego z 80 `PARKED_CARS`. Stoi na nawierzchni `square` (4/5 narożników). Jego spód leży na terenie w środku (y 0,54), teren pod narożnikami ma 0,50–0,61, a renderer kładzie `square` 0,08 m nad terenem (`SURFACE_LIFT`). Koła są więc do 0,15 m pod płytami. To samo dotyczy aut zaparkowanych i jadących: `PARKED_CARS` i `vehicleEntity` biorą `groundY` ze środka, z `pitch: 0`, a jezdnia jest rysowana +0,10 m, chodnik +0,16 m. Zrzuty `wreck.png`, `wreck-side.png`, `pedet-wide.png`
+- Przyczyna: wysokość pojazdu liczona od gołego terenu w jednym punkcie, bez podniesienia nawierzchni i bez pochylenia na spadku
+- Pakiet właściciela: packages/sim (`content/parked-cars.ts`, `content/district-m0.ts` przez `standing`, `systems/traffic-system.ts`), a wysokości nawierzchni z `packages/engine/src/renderer/mapcity/ground-plan.ts` (`SURFACE_LIFT`) przenieść do kontraktu w `core`, żeby sim je znał
+- Test przyjęcia: kontrola `vehicle-below-surface` 38 → 0; dla wraku najwyższy narożnik nawierzchni ≤ spód + 0,05 m; złoty hash symulacji zmieniony świadomie, jeśli zmieni się y aut
 
 ### G-131 Etap 1 obezwładnienia: trzy błędy z weryfikacji (w naprawie przed PR)
 - Status: w naprawie (gałąź `feat/adr-0065-takedown`); nie w main
