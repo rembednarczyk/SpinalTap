@@ -109,7 +109,7 @@ test("ripperdoc clinic sells a medkit through the UI", async ({ page }) => {
   await expect(shop).toBeHidden();
   const dialogue = page.getByTestId("dialogue");
   // Before the first talk with Kaito, Mori sends Seki to him at Neon Koi (G-034).
-  await expect(dialogue).toContainText("Czeka na ciebie w Neon Koi");
+  await expect(dialogue).toContainText("He's waiting for you at the Neon Koi");
   await dialogue.getByRole("button", { name: /End conversation/ }).click();
   await expect(dialogue).toBeHidden();
   await step(page, 1);
