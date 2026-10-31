@@ -177,10 +177,8 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/ui / e2e (QA)
 
 ### G-059 Testy sesji `m2-schedules` i `m3-loop` trwają ok. 5 s i przekraczają limit vitest pod obciążeniem
-- Status: zgłoszone (z weryfikacji etapu 5 ADR-0056)
-- Ważność: S4 (proponowana) · Koszt: mały
-- Dowód: na bazie 5,2 s przy load 14–23, domyślny limit 5 s; osobno przechodzą. Ustalić, co trwa (kompilacja ink, liczba kroków symulacji), zamiast podnosić limit (ADR-0046)
-- Pakiet właściciela: packages/app (testy)
+- Status: odrzucone (pomiar, 31.10)
+- Ustalenie orkiestratora: główny `vitest.config.ts` daje `testTimeout: 20_000` właśnie dla testów całych aktów. Limit 5 s działa tylko przy vitest puszczonym z katalogu pakietu, bez głównej konfiguracji. Z roota przy load 30: najdłuższy test 7,6 s (zegar HUD, 3600 klatek), wszystkie 10 zielonych. Testy uruchamiamy z roota repo
 
 ## Naprawione
 | ID | Glitch | PR |
