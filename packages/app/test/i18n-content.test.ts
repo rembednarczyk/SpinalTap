@@ -2,7 +2,7 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { Locale } from "@seki/core";
-import { METRO_STATIONS } from "@seki/sim";
+import { CONTRACT_HOOKS, METRO_STATIONS } from "@seki/sim";
 import { isMessageKey, patchUi, translate } from "@seki/ui";
 import { metroMapVm } from "../src/metro";
 import { type Ui, nearKaito, setup, steps, teleport } from "./story-helpers";
@@ -76,5 +76,16 @@ describe("interaction prompts", () => {
     const names = ["Plac Litewski", "Brama Krakowska", "Plac Zamkowy", "Nabrzeże Bystrzycy"];
     expect(metroMapVm("targ", false, "en").stops.map((s) => s.name)).toEqual(names);
     expect(metroMapVm("targ", false, "pl").stops.map((s) => s.name)).toEqual(names);
+  });
+});
+
+describe("observation hooks", () => {
+  it("name their tracker line by key, written in both languages", () => {
+    for (const hook of CONTRACT_HOOKS) {
+      expect(hook.text, hook.id).toBe(`hook.${hook.id.replace(/^hook_/, "")}`);
+      expectWritten(hook.text);
+    }
+    expect(translate("pl", "hook.retrieve_1")).toBe("Po północy drugi strażnik skrytki idzie na kwadrans po ramen");
+    expect(translate("en", "hook.retrieve_1")).toBe("After midnight the stash's second guard goes out for ramen for a quarter of an hour");
   });
 });

@@ -307,7 +307,18 @@ describe("Wave2Hud presenters", () => {
     const hook = CONTRACT_HOOKS[0]!;
     set({ contracts: { active: null, completed: 0, hooks: [hook.id, "unknown"] } });
     hud.reset();
-    expect(ui.getState().contractHooks).toEqual([{ id: hook.id, text: hook.text }]);
+    expect(ui.getState().contractHooks).toEqual([{ id: hook.id, text: "Every hour the crew boss steps aside on his own" }]);
+  });
+
+  it("writes a hook's line, sim-keyed, in the player's language and rewrites it on a change (ADR-0056)", () => {
+    const { bus, ui, hud } = setup();
+    bus.emit("ContractHookFound", { contractId: "c1", hookId: "hook_retrieve_1", text: "hook.retrieve_1" });
+    const en = "After midnight the stash's second guard goes out for ramen for a quarter of an hour";
+    expect(ui.getState().contractHooks).toEqual([{ id: "hook_retrieve_1", text: en }]);
+    expect(ui.getState().toasts.at(-1)).toMatchObject({ text: en });
+    expect(hud.sync(undefined, false, true).contractHooks).toBeUndefined();
+    patchUi(ui, { settings: { ...ui.getState().settings, locale: "pl" } });
+    expect(hud.sync(undefined, false, true).contractHooks).toEqual([{ id: "hook_retrieve_1", text: "Po północy drugi strażnik skrytki idzie na kwadrans po ramen" }]);
   });
 });
 

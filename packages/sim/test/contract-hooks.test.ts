@@ -51,7 +51,7 @@ describe("finding hooks (ADR-0034)", () => {
     teleportPlayer(sim, { x: g0.position.x - 3, y: g0.position.y, z: g0.position.z });
     run(sim, 3);
     expect(barks.map((b) => b.knot)).toEqual(["hook_retrieve_1"]);
-    expect(found).toEqual([{ contractId: "c3", hookId: "hook_retrieve_1", text: expect.stringContaining("ramen") }]);
+    expect(found).toEqual([{ contractId: "c3", hookId: "hook_retrieve_1", text: "hook.retrieve_1" }]);
     expect(sim.domain.contracts.hooks).toEqual(["hook_retrieve_1"]);
     // Saved with the job.
     const loaded = Simulation.fromSnapshot(roundTrip(sim.snapshot(null, "t", "")));
