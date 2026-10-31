@@ -11,7 +11,7 @@ export const dashCooldownSeconds = (domain: DomainState): number => DASH_COOLDOW
 
 export const capacityVm = (domain: DomainState): CapacityVm => ({
   used: capacityUsed(domain.character.cyberware),
-  max: capacityMax(domain.contracts.completed, domain.capacityShards),
+  max: capacityMax(domain.progression.level, domain.capacityShards),
 });
 
 /**
