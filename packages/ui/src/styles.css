@@ -170,6 +170,12 @@ kbd {
   font-size: 18px;
 }
 
+/* A takedown's kill (ADR-0065): the second action on the same target, a step quieter. */
+.hud__prompt-hold {
+  font-size: 15px;
+  opacity: 0.8;
+}
+
 .hud__hint {
   position: absolute;
   left: 50%;

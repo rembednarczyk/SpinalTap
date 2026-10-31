@@ -23,6 +23,7 @@ import { SaveController } from "./save-controller";
 import { SettingsController } from "./settings-controller";
 import { type Focus, type SimRef, focusOf, pushToastTimed } from "./shared";
 import { ShopController } from "./shop-controller";
+import { TakedownController } from "./takedown-controller";
 
 /** What the controllers need from the session that composes them. */
 export interface SessionHooks {
@@ -56,6 +57,8 @@ export interface Controllers {
   readonly wave2: Wave2Hud;
   readonly metro: MetroController;
   readonly radio: RadioController;
+  // Takedowns (ADR-0065).
+  readonly takedown: TakedownController;
 }
 
 /** The metro and the radio: their ink pools come from one knot renderer shared with the phone. */
@@ -169,5 +172,6 @@ export const createControllers = (deps: GameSessionDeps, s: SessionHooks): Contr
     view: autosaveView(ui, audio),
     ...(deps.autosaveIntervalTicks ? { intervalTicks: deps.autosaveIntervalTicks } : {}),
   });
-  return { focus, hints, dialogue, shop, loot, character, settings, phone, hack, saves, autosave, wave1, hud, wave2, ...travel };
+  const takedown = new TakedownController(sim);
+  return { focus, hints, dialogue, shop, loot, character, settings, phone, hack, saves, autosave, wave1, hud, wave2, takedown, ...travel };
 };
