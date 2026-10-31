@@ -1,9 +1,11 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { type StreetPropItem, VEHICLE_SIZE } from "../../../packages/core/src";
 import { planSteps } from "../../../packages/engine/src/renderer/mapcity/steps-plan";
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
+import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
+import { geoToWorld } from "../../osm-import/src/project.ts";
 import { CROWD_LANES } from "../../../packages/sim/src/content/crowd";
 import { furnitureClearance } from "../../../packages/sim/src/content/furniture-index";
 import { BOLLARD, alongSegment, anchors, chainSegments, chainThrough, distanceToPiece, furniturePrisms, furnitureRadius } from "../../../packages/sim/src/content/lublin/furniture";
@@ -28,6 +30,13 @@ import { MIN_ROUTE, TRAFFIC_LANES, TRAFFIC_ROUTES, type TrafficRoute, pointAt, p
 type Finding = { readonly at: string; readonly what: string };
 
 const BASELINE = join(__dirname, "glitch-baseline.json");
+/** The map data the city is generated from (ADR-0042), for what the import may lose. */
+const OSM_DIR = join(__dirname, "../../../data/osm");
+const SOURCE_OSM = mergeOsm(
+  readdirSync(OSM_DIR)
+    .filter((f) => f.endsWith(".json"))
+    .map((f) => parseExtract(readFileSync(join(OSM_DIR, f), "utf8"))),
+);
 const cars = TRAFFIC_ROUTES.filter((r) => r.use !== "deliveries");
 /** The car lanes one by one, before the junctions join them into routes (ADR-0055): sampled from each lane's own start. */
 const carLanes = TRAFFIC_LANES.filter((r) => r.use !== "deliveries");
@@ -432,6 +441,28 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       at: near(p.from.x, p.from.z),
       what: p.building,
     })),
+  /**
+   * A part of a building in the map data (`building:part`: a tower, a helmet, a nave, G-049) over
+   * which the game's walls stop more than a storey under the part's own eaves.
+   */
+  "building-part-ignored": () => {
+    const kept = MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)));
+    return [...SOURCE_OSM.ways.values()].flatMap((w) => {
+      const t = w.tags ?? {};
+      const height = Number(t.height ?? NaN) - Number(t["roof:height"] ?? 0);
+      const eaves = Number.isFinite(height) ? height : Number(t["building:levels"] ?? NaN) * 3.2;
+      if (!t["building:part"] || t["building:part"] === "no" || t.building || !Number.isFinite(eaves)) return [];
+      const pts = w.nodes.slice(1).flatMap((id) => {
+        const n = SOURCE_OSM.nodes.get(id);
+        return n ? [geoToWorld(n.lat, n.lon)] : [];
+      });
+      const c = { x: pts.reduce((s, p) => s + p.x, 0) / pts.length, z: pts.reduce((s, p) => s + p.z, 0) / pts.length };
+      const over = kept.filter((b) => inOutline(c.x, c.z, b.outline, b.x, b.z));
+      if (pts.length === 0 || over.length === 0) return [];
+      const top = Math.max(...over.map((b) => b.y + b.height)) - Math.min(...over.map((b) => b.y + b.plinth));
+      return top < eaves - 3.2 ? [{ at: near(c.x, c.z), what: `w${w.id} walls to ${eaves.toFixed(1)} m, the game's to ${top.toFixed(1)} m` }] : [];
+    });
+  },
 };
 
 describe("the glitch scan (ADR-0054)", () => {

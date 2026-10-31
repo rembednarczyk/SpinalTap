@@ -107,7 +107,8 @@ const classify = (b: MapBuilding, a: P2, c: P2, neighbour: NeighbourAt): { blind
   let covered = Infinity;
   for (const t of SAMPLES) {
     const top = neighbour(a.x + (c.x - a.x) * t + nx * 0.6, a.z + (c.z - a.z) * t + nz * 0.6, b.id);
-    if (top === null) return { blind: false, coveredTo: -Infinity };
+    // A part lifted onto its building (G-049) stands over it: the building under its walls is no firewall.
+    if (top === null || (b.lifted && top <= b.foot + 0.1)) return { blind: false, coveredTo: -Infinity };
     covered = Math.min(covered, top);
   }
   return { blind: true, coveredTo: covered };
@@ -116,7 +117,7 @@ const classify = (b: MapBuilding, a: P2, c: P2, neighbour: NeighbourAt): { blind
 export const facadeFrame = (b: MapBuilding, neighbour: NeighbourAt): FacadeFrame => {
   const box = orientedBox(b.ring);
   const area = Math.abs(signedArea(b.ring));
-  const style = facadeStyle({ use: b.use, levels: b.levels, height: b.height, ...(b.roof !== undefined ? { roof: b.roof } : {}), look: b.look, area, width: box.halfShort * 2, ...(b.shopfront !== undefined ? { shopfront: b.shopfront } : {}) });
+  const style = facadeStyle({ use: b.use, levels: b.levels, height: b.height, ...(b.roof !== undefined ? { roof: b.roof } : {}), look: b.look, area, width: box.halfShort * 2, ...(b.shopfront !== undefined ? { shopfront: b.shopfront } : {}), ...(b.lifted ? { lifted: true } : {}) });
   const top = b.base + b.height;
   const eave = top - style.atticHeight;
   const levels = Math.max(1, Math.round(b.levels));

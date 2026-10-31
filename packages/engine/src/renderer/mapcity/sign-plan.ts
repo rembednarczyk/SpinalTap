@@ -111,9 +111,11 @@ const holos = (sink: MeshSink, f: FacadeFrame, rand: () => number): void => {
     flat(sink, w, w.length / 2, from + exposed / 2, 0.45, width, height, tint(NEON[Math.floor(rand() * NEON.length)] ?? "#00e5ff", 1), [rand(), MAP_SIGN_KIND.holo]);
   }
   const w = streetWalls(f)[0];
-  if (w && f.b.height > 22 && rand() < 0.5) {
+  // A lifted part (G-049) has only its own walls to hang an ad on, not the building's under it.
+  const tall = f.b.lifted ? f.top - f.b.foot : f.b.height;
+  if (w && tall > 22 && rand() < 0.5) {
     const width = Math.min(w.length * 0.5, 10);
-    const height = Math.min(width * 1.4, f.b.height * 0.4);
+    const height = Math.min(width * 1.4, tall * 0.4);
     flat(sink, w, w.length * (0.3 + rand() * 0.4), f.top - height / 2 - 2, 0.8, width, height, tint(NEON[Math.floor(rand() * NEON.length)] ?? "#ff2e88", 1), [rand(), MAP_SIGN_KIND.holo]);
   }
 };

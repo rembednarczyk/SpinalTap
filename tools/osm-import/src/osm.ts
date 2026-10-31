@@ -90,6 +90,8 @@ export const parseOsmXml = (xml: string): OsmData => {
 /** Keys whose elements the generator reads. */
 const AREA_OR_LINE_KEYS = [
   "building",
+  // Towers, helmets and naves of landmarks are mapped as parts of the outline (Simple 3D Buildings).
+  "building:part",
   "highway",
   "area:highway",
   "landuse",
