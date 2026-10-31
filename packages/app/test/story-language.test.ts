@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
-import type { AudioPort } from "@seki/core";
+import { type AudioPort, type Locale, createDomainState } from "@seki/core";
 import { STORY_SOURCES } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
 import { createUiStore } from "@seki/ui";
 import { GameSession } from "../src/game-session";
+import { createKnotLines } from "../src/phone";
 import { FakeRender, type Ui, steps, talkToKaito } from "./story-helpers";
 
 /**
@@ -56,9 +57,18 @@ describe("story language in a session (ADR-0056)", () => {
     expect(ui.getState().dialogue?.lines[0]?.speaker).toBe("Ty");
     expect(choices(ui)).toEqual(["Niech będzie. Seki Senshi.", "Moje imię gdzieś jest. Odzyskam je."]);
     // The lines already on screen stay in the log as they were said.
-    expect(ui.getState().dialogue?.history.map((l) => l.text)).toContain("He pulled half a meter of someone else's cable out of you. Makes you wonder whose.");
+    expect((ui.getState().dialogue?.history ?? []).map((l) => l.text)).toContain("He pulled half a meter of someone else's cable out of you. Makes you wonder whose.");
     talkThrough(session, ui);
     expect(session.sim.domain.character.alias).toBe("Seki Senshi");
+  });
+
+  it("renders the phone, metro and radio knots in the language of the moment", () => {
+    let locale: Locale = "en";
+    const lines = createKnotLines(STORY_SOURCES, () => locale);
+    expect(lines("phone_kaito_offer", createDomainState())).toEqual([{ speaker: "Kaito", text: "Got a quick job. Swing by the Neon Koi before someone else grabs it." }]);
+    expect(lines("metro_ride_3", createDomainState())?.[1]).toEqual({ speaker: "Kid", text: "Mom, why is that man sleeping standing up?" });
+    locale = "pl";
+    expect(lines("metro_ride_3", createDomainState())?.[1]).toEqual({ speaker: "Dziecko", text: "Mamo, czemu ten pan śpi na stojąco?" });
   });
 
   it("loads a Polish save in English, the ink state with it", async () => {
