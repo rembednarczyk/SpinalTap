@@ -89,7 +89,7 @@ export const startTakedown = (ctx: SimContext, cmd: Extract<GameCommand, { type:
   if (!found) return;
   // Only the takedown that holds the prompt (the interaction system's choice of the last step).
   if (ctx.session.takedownTarget?.id !== found.target.id) return;
-  ctx.session.takedown = { target: found.target.id, left: TAKEDOWN_TIME, lethal: cmd.lethal, health: player.health.current };
+  ctx.session.takedown = { target: found.target.id, left: TAKEDOWN_TIME, lethal: cmd.lethal, health: player.health.current, steps: 0, held: 0 };
   if (player.velocity) player.velocity = { ...ZERO };
   hold(found.target);
   ctx.bus.emit("TakedownStarted", { target: found.target.id, duration: TAKEDOWN_TIME });
@@ -138,16 +138,20 @@ const advance = (ctx: SimContext, run: TakedownRun, player: Entity | null): void
   }
   if ((player.health?.current ?? 0) < run.health) {
     ctx.session.takedown = null;
+    ctx.session.attackLock = ctx.input.fire;
     breakFree(target, player);
     ctx.bus.emit("TakedownBroken", { target: run.target, reason: "damage" });
     return;
   }
   hold(target);
+  run.steps += 1;
+  if (ctx.input.fire) run.held += 1;
   run.left -= ctx.dt;
   if (run.left > TIME_EPSILON) return;
   ctx.session.takedown = null;
-  // Holding the attack button to the end turns it into a kill.
-  const lethal = run.lethal || ctx.input.fire;
+  // Holding the attack button through most of it turns it into a kill; still held, it fires nothing.
+  const lethal = run.lethal || run.held * 2 > run.steps;
+  ctx.session.attackLock = ctx.input.fire;
   if (lethal) kill(ctx, target, player);
   else knockOut(ctx, target);
   ctx.bus.emit("TakedownDone", { target: target.id, lethal, witnessed: false });

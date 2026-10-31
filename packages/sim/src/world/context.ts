@@ -35,6 +35,11 @@ export interface SessionState {
    * nearer to talk to, open or climb), so the HUD and the key agree.
    */
   takedownTarget: { readonly id: EntityId; readonly distance: number } | null;
+  /**
+   * The attack button held through the end of a takedown (ADR-0065): it fires nothing until it is
+   * let go. Transient, not saved.
+   */
+  attackLock: boolean;
 }
 
 /** A takedown in progress (ADR-0065): the player and `target` stand still until `left` runs out. */
@@ -42,8 +47,11 @@ export interface TakedownRun {
   readonly target: EntityId;
   /** Seconds left. */
   left: number;
-  /** Asked for by the command; holding the attack button at the end kills as well. */
+  /** Asked for by the command; holding the attack button through most of it kills as well. */
   readonly lethal: boolean;
+  /** Steps of the takedown so far, and how many of them with the attack button held. */
+  steps: number;
+  held: number;
   /** The player's health when it began: any damage below it breaks the hold. */
   readonly health: number;
 }
@@ -117,6 +125,7 @@ export const freshSession = (): SessionState => ({
   interior: undefined,
   takedown: null,
   takedownTarget: null,
+  attackLock: false,
 });
 
 /** Mutable holder for the immutable domain state, plus a dirty marker for quest evaluation. */

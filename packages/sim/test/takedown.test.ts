@@ -160,7 +160,7 @@ describe("takedown in the simulation (ADR-0065)", () => {
     expect(sim.domain.flags).toContain("dead:guard");
   });
 
-  it("kills when the attack button is held to the end, and fires nothing meanwhile", () => {
+  it("kills when the attack button is held through most of it, and fires nothing until let go", () => {
     const sim = quietStreet();
     const guard = guardAt(sim, 1.2);
     const done = collect<DomainEvents["TakedownDone"]>(sim, "TakedownDone");
@@ -168,11 +168,30 @@ describe("takedown in the simulation (ADR-0065)", () => {
     const swings = collect(sim, "MeleeSwing");
     sim.step(CROUCH);
     sim.enqueue({ type: "takedown", lethal: false });
-    run(sim, ticks(TAKEDOWN_TIME), input({ crouch: true, fire: true }));
+    const fire = input({ crouch: true, fire: true });
+    run(sim, ticks(TAKEDOWN_TIME), fire);
     expect(done).toEqual([{ target: guard.id, lethal: true, witnessed: false }]);
+    // Still held after the kill: no shot, no swing.
+    run(sim, 30, fire);
     expect(shots).toHaveLength(0);
     expect(swings).toHaveLength(0);
+    // Let go and pressed again: the gun fires as before.
+    sim.step(CROUCH);
+    run(sim, 5, fire);
+    expect(shots.length).toBeGreaterThan(0);
   });
+
+  it("knocks out when the attack button is held only for the last moment", () => {
+    const sim = quietStreet();
+    const guard = guardAt(sim, 1.2);
+    const done = collect<DomainEvents["TakedownDone"]>(sim, "TakedownDone");
+    sim.step(CROUCH);
+    sim.enqueue({ type: "takedown", lethal: false });
+    run(sim, ticks(TAKEDOWN_TIME) - 5, CROUCH);
+    run(sim, 5, input({ crouch: true, fire: true }));
+    expect(done).toEqual([{ target: guard.id, lethal: false, witnessed: false }]);
+  });
+
   it("does not take down past a nearer prompt (talk, loot, a door): the key is theirs", () => {
     const sim = quietStreet();
     const guard = guardAt(sim, 1.4);
