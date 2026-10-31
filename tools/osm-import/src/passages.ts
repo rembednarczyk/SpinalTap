@@ -35,6 +35,12 @@ const widthOf = (l: Line): number => parseLength(l.tags.width) ?? (l.tags.highwa
 
 /** Clear height under the crown when the map gives a `maxheight` only as under the default (m): a lorry's 4 m will not pass. */
 const BELOW_DEFAULT = 3.6;
+/**
+ * The range a mapped `maxheight` may set the crown to (m): above a walker's head with the
+ * springing above a door, and no higher than a gate in a house front. A typo in the map
+ * ("1.8" for a car park barrier, "50") would otherwise seal or swallow the passage.
+ */
+const VAULT_RANGE: readonly [number, number] = [2.2, 5];
 
 /**
  * Crown and rise of the vault (m): the default by width, or lower to the map's `maxheight` (G-089),
@@ -45,7 +51,8 @@ const vaultOf = (l: Line, width: number): { height: number; rise: number } => {
   const rise = width >= 3 ? 1.1 : 0.9;
   const max = l.tags.maxheight === "below_default" ? Math.min(height, BELOW_DEFAULT) : parseLength(l.tags.maxheight);
   if (max === null) return { height, rise };
-  return { height: Math.round(max * 100) / 100, rise: Math.round(((rise * max) / height) * 100) / 100 };
+  const crown = Math.min(VAULT_RANGE[1], Math.max(VAULT_RANGE[0], max));
+  return { height: Math.round(crown * 100) / 100, rise: Math.round(((rise * crown) / height) * 100) / 100 };
 };
 
 /** The runs of `line` inside `ring`, as arc lengths [enter, leave] that both lie strictly within the line. */
