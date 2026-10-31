@@ -22,6 +22,6 @@ Importer oznaczał nawierzchnie z dróg `bridge=*` flagą `bridge`, ale nikt jej
 
 ## Konsekwencje
 - W centrum jest 9 kawałków na mostach: jezdnie i chodniki Mełgiewskiej nad Bystrzycą, kładka przy dokach, most na podjeździe pod zamek i krótka kładka na Podzamczu. Złote hashe bez zmian.
-- Pod mostem nie da się przejść brzegiem: grunt jest tam pomostem.
+- Pod mostem nie da się przejść brzegiem: grunt jest tam pomostem. Uzupełnienie (G-062): pomost wyżej niż `DECK_HEADROOM` (2 m) nad terenem jest gruntem tylko dla stóp, które sięgają go krokiem (`GroundField.heightAt` z `reach`); pod nim grunt to teren, a spód pomostu jest sufitem skoku. Renderer kładzie tam drogę pod mostem na terenie i pocienia pomost (`deckDepth`), żeby głowa przechodnia mieściła się pod spodem. Kawałek pomostu leży na własnej osi. `groundY` treści i ruch aut dalej widzą najwyższy pomost.
 - Kule przelatują przez pomost, a promienie widzą tylko teren.
 - Most nie ma przęseł, filarów ani balustrad, tylko opaskę. Do dopracowania razem z kładkami nad ulicami (ADR-0051).

@@ -16,7 +16,7 @@ import { BinIndex, cellBounds, cellKey, cellsOf, grow } from "./map-index";
 import { type Box2, type P2, boundsOf, centroid, cleanRing, distanceToBox, pointInRing } from "./polygon";
 import { planBuildingSigns } from "./sign-plan";
 import { planCrossing } from "./crossing-plan";
-import { type DeckAxis, Decks, planDeckEdges, planDeckUnderside } from "./deck-plan";
+import { type DeckAxis, Decks, deckHeight, planDeckEdges, planDeckUnderside } from "./deck-plan";
 import { planMarking } from "./marking-plan";
 import { type AcrossAt, SPAN_MAX, type Span, findSpans, planFarCanyon, planNearCanyon } from "./canyon-plan";
 import { planCanyonSigns } from "./canyon-signs";
@@ -25,6 +25,7 @@ import { planWallClutter } from "./wall-clutter";
 import { type PropSlot, bakeSlots, planFacadeExtras } from "./facade-props";
 import type { CityProps } from "../city-props";
 import { planSteps } from "./steps-plan";
+import { surfaceLiftAt } from "./surface-lift";
 import { StreetProps, type StreetPropsStats } from "./street-props";
 import { MapSkyline } from "./skyline";
 
@@ -279,21 +280,9 @@ export class MapCity {
     return h === null ? null : h + this.surfaceLift(x, h, z);
   };
 
-  /**
-   * How far the picture lifts feet at (x, y, z) above the terrain (ADR-0045): a character the
-   * simulation keeps on the terrain stands on the surface drawn there (a sidewalk 16 cm up, a
-   * square 8 cm), a bridge's deck included (ADR-0053). Feet off the ground (stairs, decks,
-   * floors) are left alone.
-   */
+  /** How far the picture lifts feet at (x, y, z) above the terrain: `surfaceLiftAt`. */
   surfaceLift(x: number, y: number, z: number): number {
-    const ground = this.decks.heightAt(x, z) ?? this.heightAt(x, z);
-    if (ground === null || Math.abs(y - ground) > 0.3) return 0;
-    let lift = 0;
-    for (const id of this.surfaceIndex.at(x, z)) {
-      const g = this.grounds.get(id);
-      if (g && SURFACE_LIFT[g.surface] > lift && pointInRing({ x, z }, g.ring)) lift = SURFACE_LIFT[g.surface];
-    }
-    return lift;
+    return surfaceLiftAt(x, y, z, this.decks.heightAt(x, z), () => this.heightAt(x, z), [...this.surfaceIndex.at(x, z)].map((id) => this.grounds.get(id)));
   }
 
   /** Rebuilds what changed: terrain meshes and the cells' far, sign and ground meshes. */
@@ -540,11 +529,14 @@ export class MapCity {
       const g = this.grounds.get(id);
       if (!g) continue;
       const terrain = (x: number, z: number) => this.heightAt(x, z) ?? g.y;
-      // Laid on a bridge's deck where there is one (ADR-0053); the river stays on the terrain.
-      const h = (x: number, z: number) => this.decks.heightAt(x, z) ?? terrain(x, z);
+      // Laid on a bridge's deck where there is one (ADR-0053); the river stays on the terrain, and
+      // so does a way under the bridge where the deck has headroom over it (G-062). A piece of the
+      // deck follows its own axis: on its outline the test for the ring may fall either way.
+      const own = g.deck;
+      const h = own ? (x: number, z: number) => deckHeight(own, x, z) : (x: number, z: number) => this.decks.heightAt(x, z, g.marking ? undefined : terrain(x, z)) ?? terrain(x, z);
       if (g.deck && g.surface !== "water") {
-        planDeckEdges(ground, g.ring, h, SURFACE_LIFT[g.surface], (x, z) => this.decks.heightAt(x, z) !== null);
-        planDeckUnderside(ground, g.ring, h, SURFACE_LIFT[g.surface]);
+        planDeckEdges(ground, g.ring, h, SURFACE_LIFT[g.surface], (x, z) => this.decks.heightAt(x, z) !== null, terrain);
+        planDeckUnderside(ground, g.ring, h, SURFACE_LIFT[g.surface], terrain);
       }
       if (g.marking) planMarking(ground, g.marking, g.ring, h);
       else if (g.surface === "water") planWater(water, g.ring, terrain);
