@@ -53,7 +53,7 @@ Metoda: tylko odczyt (grep/sed/wc) dokumentów (`CLAUDE.md`, `docs/seki-senshi-p
 | Technika | Ekran ładowania i shadery na starcie | ADR-0057, G-029 | wysoki | M | tak | P0 (w toku planu) |
 | Technika | Brak raportowania błędów i telemetrii (nawet lokalnej: `window.onerror`, utrata kontekstu WebGL pokazana graczowi) | grep `onerror|unhandledrejection`: nie znaleziono; `stage.ts` l. 50 tylko reset pacera | wysoki | S–M | nie | P1: bez tego błędy z telefonów są niewidoczne |
 | Technika | Brak PWA/offline i cache assetów po stronie klienta | brak manifestu i service workera w `packages/app` | średni | M | nie | P2 |
-| Technika | Brak widocznej wersji gry i kanału wydań (wersja 0.1.0 nie trafia do UI, brak changelogu) | `packages/app/package.json`, grep `VERSION` w `vite.config`: nic | niski | S | częściowo (#81: wersja i commit na ekranie tytułowym; changelog dalej brak) | P2: potrzebne do zgłoszeń błędów |
+| Technika | Brak widocznej wersji gry i kanału wydań (wersja 0.1.0 nie trafia do UI, brak changelogu) | `packages/app/package.json`, grep `VERSION` w `vite.config`: nic | niski | S | częściowo (w main, #81: wersja i commit na ekranie tytułowym; changelog dalej brak) | P2: potrzebne do zgłoszeń błędów |
 | Technika | Niestabilne e2e pod obciążeniem, rozjazd migawki NPR z main | G-031, G-043, G-046 | średni (zespół) | M | tak (backlog „najpierw G-031”) | P0 (w planie) |
 | Technika | God objecty renderera | ADR-0031, backlog | niski (gracz) | M | tak | P1 (w planie) |
 | Produkcja | Lokalizacja: HUD, `core`, `sim`, ink en | ADR-0056 etapy 2c–5 | wysoki (gracz anglojęzyczny) | L | tak | P0 (w planie, etap 5 największy). **Stan 31.10:** etapy 2c–5 w main (#59, #63, #64, #66); zostały drobne resztki z backlogu |
