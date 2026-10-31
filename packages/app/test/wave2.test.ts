@@ -302,6 +302,12 @@ describe("Wave2Hud presenters", () => {
     bus.emit("ContractHookFound", { contractId: "c1", hookId: "h1", text: "Strażnik pali o 23:00 za magazynem." });
     bus.emit("ContractHookFound", { contractId: "c1", hookId: "h1", text: "Strażnik pali o 23:00 za magazynem." });
     expect(ui.getState().contractHooks).toEqual([{ id: "h1", text: "Strażnik pali o 23:00 za magazynem." }]);
+    // The toast for a new lead speaks the player's language (ADR-0056).
+    expect(ui.getState().toasts.at(-1)).toMatchObject({ title: "New lead" });
+    patchUi(ui, { settings: { ...ui.getState().settings, locale: "pl" } });
+    bus.emit("ContractHookFound", { contractId: "c1", hookId: "h2", text: "x" });
+    expect(ui.getState().toasts.at(-1)).toMatchObject({ title: "Nowy trop" });
+    patchUi(ui, { settings: { ...ui.getState().settings, locale: "en" } });
     bus.emit("ContractFailed", { contractId: "c1" } as never);
     expect(ui.getState().contractHooks).toEqual([]);
     const hook = CONTRACT_HOOKS[0]!;
