@@ -65,10 +65,12 @@ export const mast = (sink: MeshSink, c: P2, y0: number, y1: number, phase: numbe
   const red = lit("#ff2a2a");
   const h = y1 - y0;
   sink.prism({ x: c.x, y: y0, z: c.z }, 0.05, h - 0.2, 6, metal, true, 0.03);
-  for (const [k, w] of [
+  // Arms no wider than the mast is tall: it tops the spire, it does not outgrow it (T-034).
+  for (const [k, wide] of [
     [0.3, 1.1],
     [0.58, 0.7],
   ] as const) {
+    const w = Math.min(wide, h * (k < 0.5 ? 0.9 : 0.6));
     const y = y0 + h * k;
     sink.box({ x: c.x, y, z: c.z }, w, 0.04, 0.04, metal, { rotY: phase });
     sink.box({ x: c.x, y, z: c.z }, 0.04, 0.04, w * 0.6, metal, { rotY: phase });

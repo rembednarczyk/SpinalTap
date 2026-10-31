@@ -14,7 +14,7 @@ import type { BlindRow, HelmProfile } from "./recipes";
  * painted plain by the facade shader (`trimMeta`: no window grid).
  */
 
-/** The kit's swatches: Lublin's Gothic brick, limestone, white Baroque plaster, the helmet's patina. */
+/** The kit's swatches: Lublin's Gothic brick, limestone, white Baroque plaster, the helmet's copper patina. */
 export const SWATCH = {
   brick: "#8b4632",
   brickDark: "#6a3323",
@@ -23,7 +23,8 @@ export const SWATCH = {
   plasterTrim: "#f7f3ea",
   niche: "#ddd3bd",
   opening: "#151a22",
-  helm: "#3d4d48",
+  // The helmet's copper under its green patina (T-032).
+  patina: "#5a9a80",
   tile: "#7a3b2e",
   metal: "#2b2f36",
 } as const;
@@ -214,31 +215,47 @@ export const helmBase = (ring: readonly P2[]): HelmBase => {
   return { c, r: Number.isFinite(r) ? r : 1, phase };
 };
 
-/** The helmet's profile in metres over its base: the shell, the lantern, its cupola and the spire up to the mast. */
-export const helmProfile = (h: HelmProfile, r: number, roof: number): { shell: [number, number][]; lantern: [number, number][]; cap: [number, number][]; spire: [number, number][] } => {
+/** The parts of a helmet's profile in metres over its base. */
+export interface HelmShape {
+  readonly shell: [number, number][];
+  readonly lantern: [number, number][];
+  readonly onion: [number, number][];
+  readonly spire: [number, number][];
+  readonly ball: [number, number][];
+}
+
+/** The helmet's profile in metres over its base: the bell, the lantern, the onion over it and the spire with its ball up to the mast. */
+export const helmProfile = (h: HelmProfile, r: number, height: number): HelmShape => {
   const lr = r * h.lanternRadius;
   const [l0, l1] = h.lantern;
-  const capTop = l1 + (h.mast - l1) * 0.45;
+  const at = (t: number) => height * (l1 + (h.onion - l1) * t);
+  const neck = Math.max(lr * 0.12, 0.06);
+  const rb = Math.max(lr * 0.22, 0.12);
+  const yb = height * h.ball;
   return {
-    shell: h.shell.map(([k, t]) => [r * k, roof * t]),
+    shell: h.shell.map(([k, t]) => [r * k, height * t]),
     lantern: [
-      [lr, roof * l0 - 0.05],
-      [lr, roof * l1],
+      [lr, height * l0 - 0.05],
+      [lr, height * l1],
     ],
-    cap: [
-      [lr * 1.18, roof * l1],
-      [lr * 1.1, roof * l1 + 0.12],
-      [lr * 0.7, roof * (l1 + (capTop - l1) * 0.6)],
-      [Math.max(lr * 0.16, 0.08), roof * capTop],
+    // A cornice over the lantern's columns, a neck, the bulb and its point.
+    onion: [
+      [lr * 1.2, height * l1],
+      [lr * 1.2, height * l1 + 0.1],
+      [lr * 1.02, height * l1 + 0.16],
+      [lr * 1.3, at(0.4)],
+      [lr * 0.95, at(0.72)],
+      [neck, height * h.onion],
     ],
     spire: [
-      [Math.max(lr * 0.16, 0.08), roof * capTop],
-      [0.05, roof * h.mast],
+      [neck, height * h.onion],
+      [0.04, height * h.mast],
     ],
+    ball: [-1, -0.6, 0, 0.6, 1].map((s): [number, number] => [rb * Math.sqrt(1 - s * s), yb + rb * s]),
   };
 };
 
-/** A helmet on the part: the shell, the lantern with dark openings, its cupola and the spire (the mast is Lublin 2077's). */
+/** A helmet on the part: the bell, the lantern with dark openings between its columns, the onion and the spire with its ball (the mast is Lublin 2077's). */
 export const helmet = (sink: MeshSink, f: FacadeFrame, h: HelmProfile, roof: number, color: Rgba, trim: Rgba, near: boolean): HelmBase => {
   const base = helmBase(f.b.ring);
   const meta = trimMeta(f.style.seed);
@@ -259,8 +276,9 @@ export const helmet = (sink: MeshSink, f: FacadeFrame, h: HelmProfile, roof: num
       quadUv(sink, [q(-w, y0), q(w, y0), q(w, y1), q(-w, y1)], n, solid(SWATCH.opening), [[0, 0], [1, 0], [1, 1], [0, 1]], meta);
     }
   }
-  revolve(sink, at, p.cap, 8, base.phase, color, meta);
+  revolve(sink, at, near ? p.onion : [p.onion[0] as [number, number], p.onion[3] as [number, number], p.onion[5] as [number, number]], 8, base.phase, color, meta);
   revolve(sink, at, p.spire, near ? 6 : 4, base.phase, color, meta);
+  if (near) revolve(sink, at, p.ball, 6, base.phase, color, meta);
   return base;
 };
 

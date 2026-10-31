@@ -22,19 +22,22 @@ export interface BlindRow {
 /**
  * The top of a part: flat (a slab with a coping), a low skirt roof from the eaves up to the part
  * standing on it (`rise` metres, never more than the data's roof), or a helmet of revolution
- * filling the data's roof.
+ * `height` metres tall up to the data's peak: the rest of the data's roof under it is wall.
  */
-export type Crown = { readonly kind: "flat" } | { readonly kind: "skirt"; readonly rise: number; readonly inset: number } | { readonly kind: "helm"; readonly profile: HelmProfile };
+export type Crown = { readonly kind: "flat" } | { readonly kind: "skirt"; readonly rise: number; readonly inset: number } | { readonly kind: "helm"; readonly height: number; readonly profile: HelmProfile };
 
 /**
  * A helmet as a profile of revolution: [radius, height] from the eaves up, the radius a fraction
- * of the part's inner radius and the height a fraction of the data's roof. `lantern` is the open
- * lantern (from, to) and `mast` where the spire turns into Lublin 2077's mast, both as fractions.
+ * of the part's inner radius and the height a fraction of the helmet's. The bell is `shell`, then
+ * the open lantern (from, to) of `lanternRadius`, the onion up to `onion`, the spire with its ball
+ * centred at `ball`, and from `mast` up Lublin 2077's mast, all as fractions of the height.
  */
 export interface HelmProfile {
   readonly shell: readonly (readonly [number, number])[];
   readonly lantern: readonly [number, number];
   readonly lanternRadius: number;
+  readonly onion: number;
+  readonly ball: number;
   readonly mast: number;
 }
 
@@ -53,6 +56,13 @@ export interface Tier {
   readonly openings: boolean;
   /** A clock face on the walls facing the two sides of the landmark. */
   readonly clock: boolean;
+  /**
+   * Metres over the tier's foot where its lower zone (the clocks) ends and the upper one starts
+   * (the openings, round-headed on every wall), a string course between them; absent for one zone.
+   */
+  readonly split?: number;
+  /** A gallery with a balustrade at the foot of the wall facing the new town, a door behind it. */
+  readonly gallery?: boolean;
 }
 
 /** One OSM building or `building:part` of a landmark with its tier and crown. */
@@ -92,8 +102,11 @@ const NO_BLINDS: readonly BlindRow[] = [];
 /**
  * Brama Krakowska (r7224409 with its parts, G-049): the Gothic brick tower on a stone plinth over
  * the passage and the annex towards Krakowskie Przedmieście, the white Baroque octagon on the
- * tower and the helmet with a lantern (Merlini, 1782). Heights from the data: the annex and the
- * tower's foot to 7.1 m, the tower to 16.7 m, the octagon to 19.9 m and its helmet 9.6 m.
+ * tower and the copper helmet with a lantern (Merlini, 1782). Heights from the data: the annex
+ * and the tower's foot to 7.1 m, the tower to 16.7 m and the peak at 29.5 m. The data's octagon
+ * (to 19.9 m under a 9.6 m roof) is squat against the photograph (T-032): its walls go to 22.5 m,
+ * a lower zone with the clocks and the west gallery to 20 m and an upper one with round-headed
+ * windows, and the helmet is 7 m (bell, open lantern, onion, spire with a ball).
  */
 const BRAMA_KRAKOWSKA: LandmarkRecipe = {
   key: "brama-krakowska",
@@ -123,22 +136,26 @@ const BRAMA_KRAKOWSKA: LandmarkRecipe = {
     },
     {
       osm: "w617878341",
-      tier: { material: "plaster", plinth: 0, blinds: NO_BLINDS, pilasters: true, cornice: true, base: true, openings: true, clock: true },
+      tier: { material: "plaster", plinth: 0, blinds: NO_BLINDS, pilasters: true, cornice: true, base: true, openings: true, clock: true, split: 3.3, gallery: true },
       crown: {
         kind: "helm",
+        height: 7,
         profile: {
-          // A Baroque bell: out over the cornice, swelling, drawn in to the lantern's neck.
+          // A broad Baroque bell: out over the cornice, swelling, drawn in to the lantern's foot.
           shell: [
             [1.06, 0],
-            [1.02, 0.04],
-            [0.94, 0.12],
-            [0.76, 0.22],
-            [0.5, 0.3],
-            [0.34, 0.34],
+            [1.03, 0.03],
+            [0.95, 0.1],
+            [0.8, 0.17],
+            [0.58, 0.24],
+            [0.38, 0.285],
+            [0.27, 0.3],
           ],
-          lantern: [0.34, 0.5],
-          lanternRadius: 0.3,
-          mast: 0.8,
+          lantern: [0.3, 0.6],
+          lanternRadius: 0.23,
+          onion: 0.78,
+          ball: 0.84,
+          mast: 0.9,
         },
       },
     },

@@ -4,14 +4,18 @@ import { LUBLIN_CHUNKS, type LublinBuildingData } from "@seki/sim/lublin";
 import { describe, expect, it } from "vitest";
 import { RawTexture, Scene } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
-import { DRESS_FLAG, MeshSink } from "../src/renderer/mesh-sink";
+import { DRESS_FLAG, MeshSink, hexColor } from "../src/renderer/mesh-sink";
 import { type FacadeFrame, facadeFrame } from "../src/renderer/mapcity/facade-frame";
 import { planNearBuilding } from "../src/renderer/mapcity/facade-plan";
 import { ROOF_STYLE } from "../src/renderer/mapcity/facade-style";
 import { type LandmarkFrame, landmarkAt, planFarLandmark, planLandmarkSigns, planNearLandmark, withLandmark } from "../src/renderer/mapcity/landmarks";
+import { GALLERY } from "../src/renderer/mapcity/landmarks/elevation";
+import { SWATCH, helmBase, helmProfile } from "../src/renderer/mapcity/landmarks/kit";
+import { clockSpot, clockWalls } from "../src/renderer/mapcity/landmarks/landmark-plan";
+import { facing } from "../src/renderer/mapcity/landmarks/layer2077";
 import { mapBuilding } from "../src/renderer/mapcity/map-building";
 import { MapCity, type MapView } from "../src/renderer/mapcity/map-city";
-import { type P2, cleanRing, pointInRing } from "../src/renderer/mapcity/polygon";
+import { type P2, centroid, cleanRing, pointInRing } from "../src/renderer/mapcity/polygon";
 import { MAP_SIGN_KIND } from "../src/renderer/mapcity/sign-plan";
 
 /**
@@ -55,6 +59,12 @@ const near3 = (f: FacadeFrame): MeshSink => {
 };
 
 const points = (sink: MeshSink) => Array.from({ length: sink.vertexCount }, (_, i) => ({ x: sink.positions[i * 3]!, y: sink.positions[i * 3 + 1]!, z: sink.positions[i * 3 + 2]!, u2: sink.uvs2[i * 2]!, v2: sink.uvs2[i * 2 + 1]!, a: sink.colors[i * 4 + 3]! }));
+
+/** The points of the sink in a swatch's colour. */
+const colored = (sink: MeshSink, hex: string) => {
+  const [r, g, b] = hexColor(hex);
+  return points(sink).filter((_, i) => Math.abs(sink.colors[i * 4]! - r) < 1e-4 && Math.abs(sink.colors[i * 4 + 1]! - g) < 1e-4 && Math.abs(sink.colors[i * 4 + 2]! - b) < 1e-4);
+};
 
 /** Distance from a point outside the ring to its nearest edge (0 inside). */
 const outside = (r: readonly P2[], p: P2): number => {
@@ -178,6 +188,74 @@ describe("Brama Krakowska from the landmark kit (ADR-0062)", () => {
     // The names hang on the west (Krakowskie Przedmieście) side of the gate.
     const names = points(signs).filter((p) => Math.round(p.v2) === MAP_SIGN_KIND.name);
     expect(Math.max(...names.map((p) => p.x))).toBeLessThan(466);
+  });
+
+  it("gives the octagon walls to 22.5 m in two zones under a 7 m helmet, the peak the data's (T-032)", () => {
+    const d = data("w617878341");
+    const f = frameOf("w617878341") as LandmarkFrame;
+    const roof = f.b.roof ?? 0;
+    expect(f.b.foot - d.y).toBeCloseTo(16.7, 6);
+    expect(f.top - d.y).toBeCloseTo(22.5, 6);
+    expect(roof).toBeCloseTo(7, 6);
+    expect(f.top + roof).toBeCloseTo(d.y + d.height + d.roof!, 6);
+    // The lower zone with the clocks over the gallery's door, up to 20 m; the round-headed windows over it.
+    const split = f.b.foot + f.landmark.part.tier.split!;
+    expect(split - d.y).toBeCloseTo(20, 6);
+    const { neon, old } = clockWalls(f);
+    expect(neon && old).toBeTruthy();
+    expect(facing(neon!, f.landmark.recipe.layer.newTown)).toBeGreaterThan(0.9);
+    expect(facing(old!, f.landmark.recipe.layer.newTown)).toBeLessThan(-0.9);
+    for (const w of [neon!, old!]) {
+      const c = clockSpot(f, w);
+      expect(c.y - c.r).toBeGreaterThanOrEqual(f.b.foot + GALLERY.floor + GALLERY.door);
+      expect(c.y + c.r).toBeLessThanOrEqual(split);
+      expect(c.r).toBeGreaterThan(0.5);
+    }
+    const sink = near3(f);
+    const dark = colored(sink, SWATCH.opening).filter((p) => p.y < f.top);
+    const c0 = centroid(f.b.ring);
+    // Windows on at least six of the eight sides (by the direction from the centre, in 45° steps).
+    const walls = new Set(dark.filter((p) => p.y > split).map((p) => Math.round((Math.atan2(p.z - c0.z, p.x - c0.x) / Math.PI) * 4)));
+    expect(walls.size).toBeGreaterThanOrEqual(6);
+    // Below the split only the gallery's door is dark: on the clock's wall, under the clock.
+    for (const p of dark.filter((q) => q.y < split)) expect(p.y).toBeLessThanOrEqual(f.b.foot + GALLERY.floor + GALLERY.door + 1e-6);
+  });
+
+  it("puts the gallery with its balustrade on the octagon's west wall, over the tower's roof", () => {
+    const f = frameOf("w617878341") as LandmarkFrame;
+    const tower = frameOf("w617597407");
+    const west = clockWalls(f).neon!;
+    const white = colored(near3(f), SWATCH.plasterTrim).filter((p) => p.y > f.b.foot + GALLERY.floor - 0.2 && p.y < f.b.foot + GALLERY.floor + GALLERY.rail + 0.1 && outside(f.b.ring, p) > 0.3);
+    expect(white.length).toBeGreaterThan(40);
+    for (const p of white) {
+      expect((p.x - west.a.x) * west.nx + (p.z - west.a.z) * west.nz).toBeGreaterThan(0);
+      expect(outside(f.b.ring, p)).toBeLessThan(GALLERY.depth + 0.1);
+      expect(pointInRing(p, tower.b.ring)).toBe(true);
+    }
+  });
+
+  it("shapes the helmet as a bell, an open lantern, an onion and a spire with a ball in green patina", () => {
+    const f = frameOf("w617878341") as LandmarkFrame;
+    const c = f.landmark.part.crown;
+    if (c.kind !== "helm") throw new Error("the octagon has a helmet");
+    const base = helmBase(f.b.ring);
+    const roof = f.b.roof!;
+    const p = helmProfile(c.profile, base.r, roof);
+    const top = (s: [number, number][]) => s[s.length - 1]![1] / roof;
+    expect(top(p.shell)).toBeCloseTo(0.3, 6);
+    expect(p.lantern[1]![1] / roof).toBeCloseTo(0.6, 6);
+    expect(p.lantern[0]![0] / base.r).toBeCloseTo(0.23, 6);
+    expect(top(p.onion)).toBeCloseTo(0.78, 6);
+    // The onion swells wider than the lantern; the ball sits on the spire.
+    expect(Math.max(...p.onion.map((q) => q[0]))).toBeGreaterThan(p.lantern[0]![0] * 1.2);
+    expect(c.profile.ball).toBeGreaterThan(c.profile.onion);
+    expect(c.profile.ball).toBeLessThan(c.profile.mast);
+    // The mast is no longer than the spire (T-034).
+    expect(1 - c.profile.mast).toBeLessThanOrEqual(c.profile.mast - c.profile.onion);
+    expect(SWATCH.patina).toBe("#5a9a80");
+    const helm = colored(near3(f), SWATCH.patina);
+    expect(helm.length).toBeGreaterThan(100);
+    expect(Math.min(...helm.map((q) => q.y))).toBeGreaterThanOrEqual(f.top - 1e-6);
   });
 
   it("draws the gate from its recipe in the map city: no tiled roof over the octagon", () => {

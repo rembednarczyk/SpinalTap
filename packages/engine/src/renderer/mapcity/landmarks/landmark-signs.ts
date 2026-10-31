@@ -4,8 +4,8 @@ import { spanAt } from "../passage-plan";
 import { MAP_SIGN_KIND } from "../sign-plan";
 import { type Uv, quadUv } from "../sink-ops";
 import { onWall } from "./kit";
-import { type LandmarkFrame, clockSpot, mouthWall, screenSpot, uplightsOn } from "./landmark-plan";
-import { facing, passageAxis } from "./layer2077";
+import { type LandmarkFrame, clockSpot, clockWalls, mouthWall, screenSpot, uplightsOn } from "./landmark-plan";
+import { passageAxis } from "./layer2077";
 
 /**
  * Lublin 2077's neon on a landmark (ADR-0062) in the cell's additive sign mesh: the screen over
@@ -82,8 +82,7 @@ export const planLandmarkSigns = (sink: MeshSink, f: LandmarkFrame, nameSlot: (n
   const old = mouthWall(f, "old");
   if (old) for (const u of uplightsOn(old)) flat(sink, old.w, u, f.b.foot + 2.6, 0.06, 1.5, 5, tint(layer.warm, 0.9), [u, MAP_SIGN_KIND.beam], UV_UP);
   if (f.landmark.part.tier.clock) {
-    let best: Wall | null = null;
-    for (const w of f.walls) if (!w.blind && (!best || facing(w, layer.newTown) > facing(best, layer.newTown))) best = w;
+    const best = clockWalls(f).neon;
     if (best) {
       const c = clockSpot(f, best);
       flat(sink, best, best.length / 2, c.y, 0.14, c.r * 2.3, c.r * 2.3, tint("#5ce1ff", 0.9), [HOLO_RING_SEED, MAP_SIGN_KIND.holo]);
