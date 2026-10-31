@@ -155,7 +155,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: nowa kontrola skanu `building-part-lower-ignored` (okap części > 1 kondygnację niżej od ścian obrysu w jej środku), baza 2 → 0
 
 ### G-061 Część `building:part` bez obrysu `building` nie trafia do gry (pawilon Bona)
-- Status: zgłoszone (z przeglądu topografii G-049)
+- Status: w PR #74 (szkic, czeka na weryfikację i kuratora)
 - Ważność: S4 (proponowana) · Zasięg: 1 · Koszt: mały
 - Gdzie: w1236054202 (708.4, 166.8), Podzamcze; T-020
 - Pakiet właściciela: tools/osm-import
