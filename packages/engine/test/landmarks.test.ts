@@ -11,6 +11,7 @@ import { ROOF_STYLE } from "../src/renderer/mapcity/facade-style";
 import { type LandmarkFrame, landmarkAt, planFarLandmark, planLandmarkSigns, planNearLandmark, withLandmark } from "../src/renderer/mapcity/landmarks";
 import { cableRuns, planLandmarkCables } from "../src/renderer/mapcity/landmarks/cables";
 import { GALLERY } from "../src/renderer/mapcity/landmarks/elevation";
+import { landmarkIndex } from "../src/renderer/mapcity/landmarks/match";
 import { SWATCH, helmBase, helmProfile } from "../src/renderer/mapcity/landmarks/kit";
 import { clockSpot, clockWalls, mouthWall, screenOn } from "../src/renderer/mapcity/landmarks/landmark-plan";
 import { facing } from "../src/renderer/mapcity/landmarks/layer2077";
@@ -252,6 +253,17 @@ describe("Brama Krakowska from the landmark kit (ADR-0062)", () => {
     planLandmarkCables(sink, tower);
     expect(sink.vertexCount).toBeGreaterThan(0);
     for (const id of ["r7224409", "w617878341"]) expect(cableRuns(frameOf(id) as LandmarkFrame)).toEqual([]);
+  });
+
+  it("takes the parts over a part and the cables' tenements from the map data: none when they are missing", () => {
+    const full = landmarkIndex(LUBLIN_CHUNKS);
+    const bare = landmarkIndex(LUBLIN_CHUNKS.map((c) => ({ ...c, buildings: c.buildings.filter((b) => b.id !== "w66286400" && b.id !== "w617597407") })));
+    const key = (id: string) => [...full.entries()].find(([, p]) => p.part.osm === id)![0];
+    expect(full.get(key("r7224409"))!.above!.length).toBe(1);
+    expect(full.get(key("w617597407"))!.cableTo!.length).toBe(1);
+    expect(bare.get(key("r7224409"))!.above).toBeUndefined();
+    expect(bare.get(key("w617597407"))).toBeUndefined();
+    expect(full.get(key("w617878341"))!.cableTo).toBeUndefined();
   });
 
   it("hangs the screen on the tower over the battlements, clear of the painting's niche over the arch (T-033, T-034)", () => {

@@ -24,7 +24,8 @@ export const landmarkIndex = (chunks: readonly LublinChunkData[]): ReadonlyMap<s
   for (const b of found) {
     const part = RECIPE_BY_OSM.get(b.id) as LandmarkPart;
     const ring = ringOf(b);
-    const above = found.filter((o) => o !== b && o.soffit !== undefined && RECIPE_BY_OSM.get(o.id)?.recipe === part.recipe && pointInRing(centroid(ringOf(o)), ring)).map(ringOf);
+    // Standing on its top, from the data: the tower on the annex, not the octagon on the tower.
+    const above = found.filter((o) => o !== b && o.soffit !== undefined && Math.abs(o.y + o.soffit - b.y - b.height) < 0.3 && RECIPE_BY_OSM.get(o.id)?.recipe === part.recipe && pointInRing(centroid(ringOf(o)), ring)).map(ringOf);
     const cableTo = (part.part.tier.cables ?? []).flatMap((id) => anchors.get(id) ?? []);
     out.set(keyOf(b.x, b.z, b.outline.length / 2), { ...part, ...(above.length > 0 ? { above } : {}), ...(cableTo.length > 0 ? { cableTo } : {}) });
   }
