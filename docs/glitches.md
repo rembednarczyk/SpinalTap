@@ -248,11 +248,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-086 Nawierzchnie: kostka na jezdni jako asfalt, ścieżki gruntowe jako utwardzone
 - Status: zgłoszone (audyt dróg) (T-052) · Ważność: S4 · Koszt: średni (kontrakt `GroundSurface` w core, ADR)
 
-### G-087 `stepRamps` tylko dla nazwanych schodów
-- Status: w PR #97 (rozstrzygnięte opisem: rampy tylko dla nazwanych schodów, reszta biegów na terenie zgodnym z NMT; bez zmiany zachowania)
-- Gdzie: `packages/sim/src/content/lublin/shape.ts` `stepRamps` czyta `c.streets` (tylko nazwy) → 3 rampy z 69 biegów
-- Decyzja: albo rampy dla wszystkich biegów (wtedy sprawdzić `terrain-off-pads`, `steps-micro-riser`), albo poprawić komentarz
-
 ### G-088 Zamkowa zapada się o 3,5 m nad tunelem pieszym przed Zamkiem
 - Status: zgłoszone (z przeglądu kuratora G-077)
 - Ważność: S3 (proponowana; dojście do Zamku, obejście 6 m od osi) · Zasięg: lokalny · Koszt: średni
@@ -499,6 +494,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | G-052 | Teatr Osterwy i Kościół Bernardynów poza danymi miasta (brzeg Krakowskiego na z = −200) | #87 |
 | G-094 | Przedsionek Trasy Podziemnej: pierwsze 4,5 m poza obszarem wnętrza | #90 |
 | G-125 | Ekranu opcji nie da się przewijać na telefonie | #94 |
+| G-087 | `stepRamps` tylko dla nazwanych schodów | #97 |
 
 ## Odrzucone
 - G-005 Wiata przystanku wchodzi w ścianę przy Alei Tysiąclecia: duplikat (G-011)
