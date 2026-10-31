@@ -146,7 +146,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Źródło: audyt topografii 1 (kurator, 31.10).
 
 ### G-054 Narzędzie zrzutów `glitch-shots` może zapisać klatkę sprzed ułożenia miasta
-- Status: zgłoszone (z weryfikacji G-031)
+- Status: w PR #62 (czeka na weryfikację)
 - Ważność: S4 (narzędzie, poza CI) · Koszt: mały
 - Dowód: po G-031 `captureFrame` nie rysuje własnej klatki. `e2e/glitch-shots.spec.ts:34-35` czeka na `frames() > n && citySettled()`, więc gdy miasto ułoży się w klatce pominiętej przez pacer, zrzut pokazuje ostatnią klatkę sprzed końca wczytywania. Sonda: 2 z 15 punktów, (520, −63) i (146, −49), przy load 11–12. Poprawka: czekać na klatkę narysowaną już po `citySettled`, jak `sampleNow` w npr-perf.
 - Pakiet właściciela: e2e (QA)
