@@ -37,6 +37,11 @@ export const enContent = {
   "prompt.help": "Help",
   "prompt.door.force": "Force the lock (raises the alarm)",
   "prompt.door.locked": "Keypad door: locked",
+  // Interiors (sim `INTERIORS`, ADR-0061); Lublin's own places keep their names.
+  "interior.clinic": "Doctor Mori's clinic",
+  "interior.neon-koi": "Neon Koi",
+  "interior.tessen-office": "Tessen office",
+  "interior.trasa-podziemna": "Trasa Podziemna",
   "prompt.loot": "Search",
   // Observation hooks of contracts (ADR-0032): the tracker line once found.
   "hook.eliminate_1": "Every hour the crew boss steps aside on his own",
