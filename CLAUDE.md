@@ -49,7 +49,8 @@ Zmiana w cudzym obszarze idzie przez zmianę kontraktu (port, typ zdarzenia, kom
 - Czas klatki pod SwiftShaderem to raport. Bramką są wywołania rysowania i aktywne siatki.
 
 ## Glitche (ADR-0054)
-- Rejestr: `docs/glitches.md`; triage: umiejętność `glitch-triage`; zespół: `.claude/agents/` (`orchestrator` jako główny agent sesji, `glitch-hunter`, `glitch-fixer`, `fix-verifier`).
+- Rejestr otwartych spraw: `docs/glitches.md`, naprawione w `docs/glitches-archiwum.md`; triage: umiejętność `glitch-triage`; zespół: `.claude/agents/` (`orchestrator` jako główny agent sesji, `glitch-hunter`, `glitch-fixer`, `feature-builder`, `change-verifier`).
+- Jedna zmiana, jedna gałąź i jeden PR; ryzykowne zmiany (symulacja, renderer, ruch, zapis) zawsze osobno.
 - Skan `tools/glitch-scan/test/glitch-scan.test.ts` liczy znane rodzaje glitchy w całym mieście i porównuje z `glitch-baseline.json`: wzrost to czerwony test. Poprawka obniża bazę (`GLITCH_BASELINE=update`) w tym samym commicie, a nowy policzalny rodzaj dostaje kontrolę w skanie.
 - Poprawka glitcha: test pada bez niej i przechodzi z nią, jeden glitch na commit.
 
