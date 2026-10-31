@@ -25,6 +25,8 @@ import m4DokiEn from "../ink/en/m4-doki.ink?raw";
 import dayCycleEn from "../ink/en/day-cycle.ink?raw";
 import m4UlicaEn from "../ink/en/m4-ulica.ink?raw";
 import phoneEn from "../ink/en/phone.ink?raw";
+import encShinsekaiEn from "../ink/en/enc-shinsekai.ink?raw";
+import encKanalEn from "../ink/en/enc-kanal.ink?raw";
 
 /**
  * The ink files of the build in story order, one per dialogue group (knots are the dialogue ids).
@@ -84,6 +86,8 @@ export const INK_EN: Readonly<Partial<Record<InkFile, string>>> = {
   "day-cycle": dayCycleEn,
   "m4-ulica": m4UlicaEn,
   phone: phoneEn,
+  "enc-shinsekai": encShinsekaiEn,
+  "enc-kanal": encKanalEn,
 };
 
 /** The whole story in `language`, file by file, Polish where a translation is missing. */
