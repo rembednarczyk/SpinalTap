@@ -232,6 +232,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | G-004 | Kandelabr na krawędzi pasa aut na Placu Zamkowym | #51 |
 | G-038 | `lane-dead-end` nie sprawdza użycia początku, który „spotyka” koniec | #51 |
 | G-031 | Testy TPP w `npr-perf` i smoke save/load przekraczają limit przy obciążeniu | #57 |
+| G-049 | Zabytki bez wież i hełmów: import pomijał `building:part` | #65 |
 
 ## Odrzucone
 - G-005 Wiata przystanku wchodzi w ścianę przy Alei Tysiąclecia: duplikat (G-011)
@@ -258,4 +259,3 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | Słupki i łańcuchy w całym mieście (G-032) | 2026-10-30 | skan `bollard-chain-*`, zrzuty |
 | Postacie wątku i wskaźniki zadań (G-035) | 2026-10-30 | test sesji |
 | Nieoglądane: Ruska (zrzuty), Kalinowszczyzna, Zamek, wnętrza, noc i deszcz z bliska, telefon, ekran tytułowy i ładowanie | - | - |
-| G-049 | Zabytki bez wież i hełmów: import pomijał `building:part` | #65 |
