@@ -24,7 +24,7 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
     8. Samouczek w misji i podpowiedzi systemowe (heat, Breach, przebrania).
     9. Ikony przedmiotów i assety ubrań (już w planie), żywe miasto (ADR-0058, w toku), podział renderera (ADR-0031).
   - **P2:** szefowie, ragdoll i reakcje śmierci, większy arsenał (broń ciężka i inteligentna, blok NPC), patrole po trasie, zagrożenia środowiska i alternatywne wejścia, relacje z postaciami i widoczne konsekwencje wyborów, pogoda jako stan w `sim`, mieszkanie gracza, aktywności otwartego świata, osobne ustawienia grafiki, eksport zapisu, PWA/offline, odzywki walki.
-  - **P3:** pojazdy prowadzone przez gracza (świadome cięcie przy metrze i mieście pieszym), kreator postaci, NG+, VO, muzyka per dzielnica, osiągnięcia, tryb foto, kodeks, modowanie.
+  - **P3:** pojazdy prowadzone przez gracza (świadome cięcie przy metrze i mieście pieszym), kreator postaci, NG+, muzyka per dzielnica, osiągnięcia, tryb foto, kodeks, modowanie.
   - Łańcuch krytyczny: autozapis → obezwładnienie → trudność → ADR-0059 etapy 1–7 → osłony i AI → granaty → balans (ADR-0059 etap 8) → treść poboczna i akt III. Równolegle: i18n przed treścią; raporty błędów → jakość na telefonie.
 - **Kolejność uzgodniona z użytkownikiem (31.10):** najpierw G-031 (niestabilne e2e), dokończenie języków, ekran ładowania i podział renderera; drobne glitche równolegle, po jednym w przerwach.
 - **[w toku: etap 1 ADR-0058] Żywe, kolorowe miasto: znacznie więcej assetów CC0 z internetu.** Rozpoznanie: 33 paczki CC0 (Kenney, Quaternius, OpenGameArt, ambientCG). Rekwizyty ulicy (automaty, stragany, rośliny, skutery, ekrany), więcej pojazdów i elementów fasad, postacie tłumu, decale. Wpięcie przez `tools/city_kit.py` (wspólna paleta, jedna siatka na komórkę), z ADR-em i pomiarem budżetów (`tools/perf-budgets.json`).
@@ -40,6 +40,34 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
   - **Łup dopasowany do postaci**: wagi tabel przesuwają się w stronę broni i stylu, którego gracz używa (rodzaj broni, umiejętności), z ochroną przed pechem (gwarantowany lepszy łup po serii słabych).
   - **Przeciwnicy i kontrakty**: poziom wroga z pasma dzielnicy i poziomu gracza; stawki, skład i nagrody kontraktów liczone z tego samego poziomu zamiast `ukończone / 3`.
   - Zasady: wszystko w `core` jako czyste funkcje z `RandomPort`, zmiana schematu zapisu z migracją (poziom, doświadczenie, poziom przedmiotów; stare przedmioty dostają poziom z ich rzadkości), złote hashe aktualizowane świadomie, teksty przez klucze (ADR-0056), balans testami symulacji (krzywa doświadczenia, rozkład łupów na poziomach).
+- **[plan, 31.10] Głosy postaci i bohaterki oraz rozbudowa dźwięku.** Dziś gra nie ma dialogów mówionych (VO): są napisy i syntezowane „głosy” efektów (`engine/src/audio/synth-voices.ts`), a SFX to nagrania CC0 i synteza (`app/public/audio`, ADR-0013). W audycie VO było P3; użytkownik podnosi je do planu. Do ADR-u:
+  - **Zakres głosów, od najtańszego:**
+    1. odzywki (barki) w walce, skradaniu i tłumie: wrogowie, cywile, Seki (ok. 20–40 linii na typ postaci);
+    2. kluczowe linie wątku głównego (powitania, zwroty akcji, zakończenia aktów);
+    3. pełne dialogi postaci nazwanych (Kaito, Mori, Ume, Hana, Genzō…) i Seki.
+  - **Źródło głosów** (licencja musi pozwalać na dystrybucję w grze; zapis źródła i licencji w README katalogu jak przy assetach):
+    - nagrania aktorów;
+    - syntezowanie przez otwarty TTS na licencji pozwalającej na użycie komercyjne (każdy głos sprawdzony osobno);
+    - mieszane: TTS na odzywki, aktorzy na główne linie.
+  - **Języki (ADR-0056):** VO po angielsku z napisami w obu językach, albo w obu językach. Struktura ink z `#voice:` jako tagiem linii, a pliki audio według klucza linii i języka.
+  - **Technika:**
+    - odtwarzanie przez `AudioPort` i szynę dialogu (suwak w opcjach z audytu);
+    - ściszanie muzyki pod mową;
+    - przestrzenne odzywki w świecie;
+    - kompresja OGG/Opus;
+    - ładowanie strumieniowe, nie na starcie;
+    - budżet rozmiaru dla telefonu.
+  - **Dźwięki:**
+    - kroki według nawierzchni (bruk, asfalt, metal, kałuże);
+    - foley broni i przeładowań;
+    - warstwy otoczenia per dzielnica (targ, deptak, nabrzeże, Stare Miasto);
+    - ruch aut i trolejbusów;
+    - drony i neony;
+    - deszcz zależny od pogody;
+    - UI;
+    - wnętrza z pogłosem.
+    
+    Źródła CC0 (Kenney, Freesound CC0, OpenGameArt), z tą samą zasadą licencji.
 - **[w toku] Języki gry (ADR-0056).** Angielski domyślny, polski w opcjach. Etap 1 (menu, opcje, zapadka) i paczka 2a (ekwipunek, sklepy) są gotowe, 2b (panele świata) jest w PR #47. Zostaje:
   - HUD i dotyk (2c): część w PR #50, dalsza część na gałęzi `i18n2c2` (ekran śmierci, zegar, pościg, wykrycie, minimapa, skaner); zostaje karta kontraktu, pasek broni („Boczna: …”), plakietka „Spalona przykrywka” w `hud.tsx`, nazwy buffów z `core` (etap 3) i rzutowanie `key as MessageKey` w `hint-sync.ts` do zastąpienia typem;
   - teksty domeny w `core` jako klucze (etap 3);
