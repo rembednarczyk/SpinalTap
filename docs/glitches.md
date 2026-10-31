@@ -185,6 +185,46 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: kontrola skanu `building-part-orphan` (część bez obrysu i bez bryły w grze), baza 1 → 0
 
+### G-062 Przejścia pod mostami zablokowane: grunt pod pomostem to pomost (Podwale, bulwar Bystrzycy)
+- Status: zgłoszone (audyt topografii 2, 31.10)
+- Ważność: S3 (proponowana) · Zasięg: lokalny (2 miejsca, 6 par droga × most) · Koszt: średni
+- Gdzie: Podwale w66318260 (747, 166) z chodnikami w56965511, w56965514 i schodami w56965515 pod wiaduktem Zamkowej (teren −19,2, pomost −13,5); ścieżka bulwaru w307943890 pod mostami Mełgiewskiej (2435, 262) i (2450, 306); T-024
+- Dowód: `groundY` zwraca pomost (sonda kuratora `topo-deck`); ADR-0053 to przyznaje
+- Pakiet właściciela: packages/sim (world/deck, lublin/decks), packages/engine (mapcity)
+- Test przyjęcia: idąc Podwalem i bulwarem, grunt pod pomostem nie skacze o więcej niż 0,5 m; kontrola `under-deck-blocked` 6 → 0
+
+### G-063 Zadaszenia `building=roof` pominięte (perony dworca, daszki Targu na Ruskiej, studnia)
+- Status: zgłoszone (audyt topografii 2)
+- Ważność: S3 (proponowana) · Zasięg: 8 w mieście · Koszt: średni
+- Gdzie: w458862470 (837, 386), w1547216433/35/36/37 (747..813, 529..577), w828763988 (859, 226), w175886790 (2619, 207), w1382568876 (340, −16); T-025
+- Dowód: `SKIP_BUILDING` w `tools/osm-import/src/generate.ts`
+- Pakiet właściciela: tools/osm-import, packages/engine (mapcity)
+- Test przyjęcia: każde z 8 zadaszeń jest daszkiem na słupach, przez który da się przejść; kontrola `osm-roof-skipped` 8 → 0
+
+### G-064 Targowiska bez straganów (Targ na Ruskiej, Bazar, Giełda na Kresowej)
+- Status: zgłoszone (audyt topografii 2)
+- Ważność: S4 (proponowana) · Zasięg: 3 · Koszt: mały
+- Gdzie: w182461192 (787, 561), w67502759 (681, 413), w231445090 (x 2300..2383); T-026
+- Dowód: `props.generated` nie ma `market-stall` w podzamcze-1-1 i 0-1
+- Pakiet właściciela: tools/osm-import (props-gen)
+- Test przyjęcia: każdy obrys `amenity=marketplace` w dzielnicach ma ≥ 1 stragan na 150 m²; kontrola `marketplace-empty` 3 → 0
+
+### G-065 Budynki podpisane nazwą muralu lub tablicy pamiątkowej
+- Status: zgłoszone (audyt topografii 2; ta sama przyczyna co G-051, naprawiać razem)
+- Ważność: S4 (proponowana) · Zasięg: 13 w mieście · Koszt: mały
+- Gdzie (Podzamcze): w73833875 (682.4, 512.6), w1306000299 (658.8, 503), w73833890 (727.5, 532.9), w444375213 (596.4, 445.6); T-027
+- Dowód: nazwa z węzłów n9059454201, n8175404403, n13252131249; `labels.ts` traktuje `tourism=artwork` i `historic=memorial` jako „sight”
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: kontrola `building-named-by-artwork` 13 → 0
+
+### G-066 Nadbudowa na zabytkowej Karczmie „Budzyń”
+- Status: zgłoszone (audyt topografii 2)
+- Ważność: S4 (proponowana) · Zasięg: 1 · Koszt: mały
+- Gdzie: w294483985 (2620.7, 368.2), Nabrzeże; T-029
+- Dowód: `verticalOf` daje rise 3, bo `building=house` z `historic=yes` dostaje `use=residential`
+- Pakiet właściciela: tools/osm-import (building-tags) albo packages/sim (vertical.ts)
+- Test przyjęcia: kontrola `heritage-overbuilt` (budynek z `historic`/`heritage` poza Starym Miastem z rise > 0) daje 0 po G-050 i tej poprawce
+
 ## Naprawione
 | ID | Glitch | PR |
 |---|---|---|
