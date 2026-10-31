@@ -16,11 +16,13 @@ export const M0_TARGET_TAG = "hebi_courier";
 
 export const QUEST_FIRST_CONTRACT: QuestDefinition = {
   id: "m0_first_contract",
+  xp: 600,
   title: "Pierwsze zlecenie",
   main: true,
   steps: [
     {
       id: "find_fixer",
+      xp: 100,
       objective: "Porozmawiaj z Kaito w Neon Koi, po drugiej stronie deptaka [E]",
       target: { actor: "fixer" },
       completeWhen: { type: "flag", flag: "met_fixer" },
@@ -28,12 +30,14 @@ export const QUEST_FIRST_CONTRACT: QuestDefinition = {
     },
     {
       id: "eliminate_courier",
+      xp: 300,
       objective: "Zneutralizuj kuriera Hebi na podwórku za myjnią przy Placu Łokietka",
       completeWhen: { type: "flag", flag: `killed:${M0_TARGET_TAG}` },
       rewards: [{ type: "memory", memoryId: "combat_reflex" }],
     },
     {
       id: "report_back",
+      xp: 250,
       objective: "Wróć do Kaito po zapłatę (bar Neon Koi)",
       target: { actor: "fixer" },
       completeWhen: { type: "flag", flag: "reported_back" },
@@ -54,12 +58,14 @@ export const MORI_MODULE_FLAG = "mori_module";
  */
 export const QUEST_ECHO: QuestDefinition = {
   id: "m3_echo",
+  xp: 2500,
   title: "Echo",
   main: true,
   startsAfter: QUEST_FIRST_CONTRACT.id,
   steps: [
     {
       id: "echo_contract",
+      xp: 500,
       objective: "Weź od Kaito kontrakt i doprowadź go do końca (bar Neon Koi)",
       target: { actor: "fixer" },
       completeWhen: { type: "flag", flag: progressFlag("contract_completed", "echo_contract") },
@@ -67,6 +73,7 @@ export const QUEST_ECHO: QuestDefinition = {
     },
     {
       id: "ask_mori",
+      xp: 400,
       objective: "Porozmawiaj z doktorem Mori o tym, co widziałaś (klinika Mori)",
       target: { actor: "mori" },
       completeWhen: { type: "all", of: [{ type: "flag", flag: recalledFlag("courier_case") }, { type: "flag", flag: MORI_MODULE_FLAG }] },
@@ -74,6 +81,7 @@ export const QUEST_ECHO: QuestDefinition = {
     },
     {
       id: "new_implant",
+      xp: 500,
       objective: "Wszczep u Mori nowy implant. Moduł reaguje na świeży chrom",
       target: { actor: "mori" },
       completeWhen: {
@@ -84,6 +92,7 @@ export const QUEST_ECHO: QuestDefinition = {
     },
     {
       id: "decide",
+      xp: 700,
       objective: "Wróć do Mori i zdecyduj, co zrobić z modułem (klinika Mori)",
       target: { actor: "mori" },
       completeWhen: { type: "all", of: [{ type: "flag", flag: recalledFlag("crash_night") }, { type: "flag", flag: ACT_ONE_ENDING_FLAG }] },
@@ -114,12 +123,14 @@ export const CLEANERS_DOWN: QuestCondition = { type: "all", of: KAGAMI_CLEANER_K
  */
 export const QUEST_MIRROR: QuestDefinition = {
   id: "m3_lustro",
+  xp: 3000,
   title: "Lustro",
   main: true,
   startsAfter: QUEST_ECHO.id,
   steps: [
     {
       id: "ren_trail",
+      xp: 600,
       objective: "Ktoś woła cię przez moduł. Zapytaj babcię Ume o Rena Odagiri (deptak przy klinice)",
       target: { actor: "ume" },
       variants: [
@@ -134,6 +145,7 @@ export const QUEST_MIRROR: QuestDefinition = {
     },
     {
       id: "meet_ren",
+      xp: 1000,
       objective: "Wejdź schodami pożarowymi na dach nad targiem i znajdź Rena",
       target: { actor: "ren" },
       completeWhen: { type: "flag", flag: MET_REN_FLAG },
@@ -141,6 +153,7 @@ export const QUEST_MIRROR: QuestDefinition = {
     },
     {
       id: "kaito_job",
+      xp: 1000,
       objective: "Kaito ma zlecenie na Rena. Dowiedz się, kto za nie płaci (bar Neon Koi)",
       target: { actor: "fixer" },
       completeWhen: { type: "all", of: [{ type: "flag", flag: recalledFlag("rooftop") }, { type: "flag", flag: KAGAMI_JOB_FLAG }] },
@@ -148,6 +161,7 @@ export const QUEST_MIRROR: QuestDefinition = {
     },
     {
       id: "overpass",
+      xp: 1500,
       objective: "Kurosawa z Kagami czeka na wiadukcie nad aleją Tysiąclecia. Zdecyduj, co stanie się z archiwum",
       // During the ambush Kurosawa is gone: his spot on the deck still marks where the cleaners are.
       target: { actor: "kurosawa" },
