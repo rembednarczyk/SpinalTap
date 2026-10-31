@@ -208,7 +208,7 @@ describe("save slots", () => {
     const store = mount(<SaveSlots mode="load" />, { slots: withAuto });
     const names = () => [...document.querySelectorAll(".slots__name")].map((m) => m.textContent);
     expect(names()).toEqual(["Autosave", "Slot 1", "Slot 2", "Slot 3"]);
-    expect(screen.getByRole("button", { name: /Autosave/ }).hasAttribute("disabled")).toBe(false);
+    expect(screen.getByRole("button", { name: /^Autosave/ }).hasAttribute("disabled")).toBe(false);
     speak(store, "pl");
     expect(names()[0]).toBe("Autozapis");
     cleanup();

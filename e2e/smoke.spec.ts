@@ -60,8 +60,8 @@ test.describe("M0 smoke", () => {
     await waitForGame(page);
     await page.getByRole("button", { name: "Load Game" }).click();
     // The conversation that gave the job autosaved once it closed (P0 of the gap audit).
-    await expect(page.getByRole("button", { name: /Autosave/ })).toBeEnabled();
-    await page.getByRole("button", { name: /Quicksave/ }).click();
+    await expect(page.getByRole("button", { name: /^Autosave/ })).toBeEnabled();
+    await page.getByRole("button", { name: /^Quicksave/ }).click();
     await expect(page.getByTestId("hud")).toBeVisible();
     await freeze(page);
     const restored = await gameState(page);

@@ -293,7 +293,13 @@ kbd {
   gap: 24px;
   pointer-events: auto;
   padding: 16px;
+  /* Taller than a phone held sideways (settings, slots, credits): scroll, centred only while it fits. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  justify-content: safe center;
+  touch-action: pan-y;
 }
+.screen > * { flex-shrink: 0; }
 .screen--title {
   background:
     radial-gradient(ellipse at 30% 30%, rgba(255, 61, 139, 0.18), transparent 60%),
@@ -358,6 +364,13 @@ kbd {
   text-align: left;
 }
 .slots__slot:disabled { opacity: 0.4; cursor: default; }
+.slots__row { display: flex; gap: 6px; align-items: stretch; }
+.slots__row .slots__slot { flex: 1; min-width: 0; }
+.slots__export { flex: none; padding: 0 12px; color: var(--ink-dim); background: transparent; border: 1px solid rgba(255, 191, 74, 0.3); font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; cursor: pointer; }
+.slots__export:disabled { opacity: 0.4; cursor: default; }
+.slots__import { align-self: flex-start; padding: 6px 12px; color: var(--ink-dim); border: 1px dashed rgba(255, 191, 74, 0.3); font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; cursor: pointer; }
+.slots__import input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.slots__import--busy { opacity: 0.4; cursor: default; }
 .slots__name { font-weight: 700; letter-spacing: 0.12em; }
 .slots__meta { font-size: 13px; color: var(--ink-dim); font-family: var(--font-mono); }
 

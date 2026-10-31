@@ -41,6 +41,9 @@ describe("passages through buildings from the map (ADR-0048)", () => {
     expect(gate("3.2 m")).toMatchObject({ height: 3.2, rise: 0.88 });
     expect(gate("3,5")).toMatchObject({ height: 3.5 });
     expect(gate("none")).toMatchObject({ height: 4, rise: 1.1 });
+    // A typo in the map neither seals the passage nor lifts the crown out of the house front.
+    expect(gate("1.8")).toMatchObject({ height: 2.2, rise: 0.61 });
+    expect(gate("50")).toMatchObject({ height: 5, rise: 1.38 });
     const lane = buildingPassages([way(8, { highway: "footway", tunnel: "building_passage", maxheight: "below_default" }, [[5, -3], [5, 15]])], [house])[0]!;
     expect(lane).toMatchObject({ height: 3.4, rise: 0.9 });
   });

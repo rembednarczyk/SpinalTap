@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { EMPTY_INPUT, type DomainEvents } from "@seki/core";
 import { CLINIC_WAKE_SPOT, INTERIORS, Simulation, TRASA_PODZIEMNA_WALK, clinicPoint, docks, groundY, interiorAt, koiPoint, stateHash } from "../src";
+import { inBuilding } from "../src/content/lublin/places";
+import { TRASA_PODZIEMNA } from "../src/content/lublin/sites";
+import { INTERIOR_KEEP } from "../src/systems/interior-system";
 import { input, run, teleportPlayer } from "./helpers";
 
 /**
@@ -53,6 +56,18 @@ describe("interiors as areas (ADR-0061)", () => {
     expect(interiorAt(docks(-16.6, 0, 132))).toBeNull();
     // A storey above the clinic is not in it.
     expect(interiorAt(clinicPoint(-10, 4.5, 6.6))).toBeNull();
+  });
+
+  it("starts Trasa Podziemna at the Trybunał's facade, not metres into its vestibule (G-094)", () => {
+    const { from } = TRASA_PODZIEMNA.vestibule;
+    let facade = from.x;
+    while (!inBuilding(facade, from.z)) facade += 0.01;
+    const feet = (x: number) => ({ x, y: TRASA_PODZIEMNA.door + 0.1, z: from.z });
+    expect(interiorAt(feet(facade + 0.3))?.id).toBe("trasa-podziemna");
+    expect(interiorAt(feet(facade - 0.3))).toBeNull();
+    // On the way out the interior holds as far as the doorway, and no further onto the Rynek.
+    expect(interiorAt(feet(facade - 0.05), "trasa-podziemna", INTERIOR_KEEP)?.id).toBe("trasa-podziemna");
+    expect(interiorAt(feet(facade - 0.3), "trasa-podziemna", INTERIOR_KEEP)).toBeNull();
   });
 
   it("walks out of the clinic and back in through its door: one event each way, in order", () => {
