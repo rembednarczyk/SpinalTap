@@ -1,12 +1,9 @@
-import { type Contract, type DomainState, type Locale, MEMORY_CATALOG, QUEST_DEFINITIONS, contractGiver, contractObjective, stepObjective } from "@seki/core";
+import { type Contract, type DomainState, type Locale, MEMORY_CATALOG, QUEST_DEFINITIONS, contractGiver, contractObjective, giverText, stepObjective, textRef } from "@seki/core";
 import { contractEntryId, contractTitle, shownEntryId } from "./objective";
 import { type JournalMemoryVm, type JournalQuestVm, type JournalVm, translate, translateText } from "@seki/ui";
 
-/** "Go back to the giver for your pay"; Polish names the giver in the genitive (ADR-0056). */
-export const returnForPay = (locale: Locale, c: Contract): string => {
-  const giver = contractGiver(c);
-  return translate(locale, "journal.returnForPay", { giver: locale === "pl" ? giver.genitive : giver.name });
-};
+/** "Go back to the giver for your pay"; the catalog names the giver (the genitive in Polish, ADR-0056). */
+export const returnForPay = (locale: Locale, c: Contract): string => translateText(locale, textRef("journal.returnForPay", { giver: giverText(contractGiver(c).id) }));
 
 /**
  * Quest log, contracts and recovered memories as the journal shows them, all in `locale`: the
@@ -32,11 +29,11 @@ export const buildJournal = (domain: DomainState, locale: Locale): JournalVm => 
   if (active) {
     quests.push({
       id: contractEntryId(active),
-      title: contractTitle(active),
+      title: contractTitle(active, locale),
       kind: "contract",
       status: "active",
       steps: [
-        { objective: contractObjective({ ...active, status: "active" }), done: active.status === "cleared" },
+        { objective: translateText(locale, contractObjective({ ...active, status: "active" })), done: active.status === "cleared" },
         ...(active.status === "cleared" ? [{ objective: returnForPay(locale, active), done: false }] : []),
       ],
     });

@@ -10,6 +10,13 @@ import {
   QUEST_DEFINITIONS,
   QUICKHACKS,
   BUFF_CATALOG,
+  CONTRACT_BONUS,
+  CONTRACT_GIVERS,
+  CONTRACT_KINDS,
+  CONTRACT_KIND_IDS,
+  CONTRACT_SITES,
+  type Contract,
+  type ContractFailure,
   CYBERWARE_CATALOG,
   GARMENT_CATALOG,
   MOD_CATALOG,
@@ -17,6 +24,10 @@ import {
   SHOPS,
   STACKABLE_CATALOG,
   WEAPON_CATALOG,
+  contractClearedNote,
+  contractFailureNote,
+  contractObjective,
+  giverText,
   starterKit,
   stockEntry,
   stockName,
@@ -36,6 +47,9 @@ const intents = (): UiIntents => {
   return new Proxy({}, { get: (_, key) => spies.get(key) ?? spies.set(key, vi.fn()).get(key) }) as UiIntents;
 };
 
+const job: Contract = { id: "c3", siteId: "car_wash", targets: 3, reward: 625, status: "active" };
+const FAILURES: readonly ContractFailure[] = ["timeout", "protectee-killed", "escort-killed", "detected", "connection-lost"];
+
 /** Every key the core catalogs hand over. */
 const coreKeys = (): string[] => [
   ...Object.values(STACKABLE_CATALOG).flatMap((d) => [d.name, d.description]),
@@ -53,6 +67,13 @@ const coreKeys = (): string[] => [
   ...Object.values(ACT_TWO_ENDINGS).map((d) => d.title),
   ...Object.values(FACTIONS),
   ...Object.values(QUICKHACKS).map((d) => d.title),
+  ...Object.values(CONTRACT_KINDS).map((k) => k.title),
+  ...Object.values(CONTRACT_SITES).map((s) => s.text),
+  ...Object.values(CONTRACT_BONUS).map((b) => b.label),
+  ...Object.keys(CONTRACT_GIVERS).map((g) => giverText(g as keyof typeof CONTRACT_GIVERS).key),
+  ...CONTRACT_KIND_IDS.map((kind) => contractClearedNote({ ...job, kind })),
+  ...FAILURES.map((r) => contractFailureNote(r)),
+  contractFailureNote("timeout", "eliminate"),
   ...QUEST_DEFINITIONS.flatMap((q) => [q.title, ...q.steps.flatMap((s) => [s.objective, ...(s.variants ?? []).map((v) => v.objective)])]),
 ];
 
@@ -61,6 +82,24 @@ afterEach(cleanup);
 describe("domain texts (ADR-0056, stage 3)", () => {
   it("every key core hands over is in the catalogs", () => {
     expect(coreKeys().filter((k) => !isMessageKey(k))).toEqual([]);
+  });
+
+  it("writes contract objectives in English, and in Polish exactly as core wrote them before", () => {
+    const delivery: Contract = { ...job, kind: "delivery", siteId: "hana_stall", targets: 0 };
+    const hack: Contract = { ...job, kind: "hack", siteId: "quay_terminal", progress: 600 };
+    expect(translateText("en", contractObjective(job))).toBe("Take out the Hebi gangers (3): the yard behind the car wash past Plac Łokietka");
+    expect(translateText("pl", contractObjective(job))).toBe("Zneutralizuj gangerów Hebi (3): podwórko za myjnią za Placem Łokietka");
+    expect(translateText("en", contractObjective(delivery, 75))).toBe("Carry Kaito's package to Hana: Hana's cart at the Podzamcze market (1:15 left)");
+    expect(translateText("pl", contractObjective(delivery, 75))).toBe("Zanieś paczkę od Kaito Hanie: wózek Hany na targu na Podzamczu (zostało 1:15)");
+    expect(translateText("pl", contractObjective(delivery))).toBe("Zanieś paczkę od Kaito Hanie: wózek Hany na targu na Podzamczu");
+    expect(translateText("pl", contractObjective(hack, 25))).toBe("Utrzymaj połączenie z terminalem (zostało 0:25): terminal Tessen pod dźwigiem nad rzeką");
+    expect(translateText("pl", contractObjective({ ...hack, progress: undefined } as Contract))).toBe("Włam się do terminala i utrzymaj połączenie 40 s: terminal Tessen pod dźwigiem nad rzeką");
+    const retrieved: Contract = { ...job, kind: "retrieve", siteId: "hebi_stash", status: "cleared" };
+    expect(translateText("en", contractObjective(retrieved))).toBe("Crate taken. Go back to Hana for your pay");
+    expect(translateText("pl", contractObjective(retrieved))).toBe("Skrzynka zabrana. Wróć do Hany po zapłatę");
+    expect(translateText("pl", contractFailureNote("timeout", "eliminate"))).toBe("Termin minął. Zleceniodawca szuka kogoś szybszego");
+    expect(translateText("en", CONTRACT_KINDS.hack.title)).toBe("Terminal hack");
+    expect(translateText("pl", CONTRACT_BONUS.delivery.label)).toBe("Bez alarmu i bez heat");
   });
 
   it("translates a key, a key with parameters and the texts inside them; a non-key stays as it is", () => {

@@ -23,11 +23,11 @@ export const presentQuests: Presenter = ({ bus, render, audio, ui, toast }) => {
       audio.play("quest-update");
     }),
     bus.on("ContractAccepted", (e) => {
-      toast("quest", t("quest.contractNew", { kind: CONTRACT_KINDS[contractKind(e.contract)].title }), acceptedText(t, e.contract));
+      toast("quest", t("quest.contractNew", { kind: t(CONTRACT_KINDS[contractKind(e.contract)].title) }), acceptedText(t, e.contract));
       audio.play("quest-update");
     }),
     bus.on("ContractCleared", (e) => {
-      toast("quest", contractClearedNote(e.contract), returnForPay(locale(), e.contract));
+      toast("quest", tx(contractClearedNote(e.contract)), returnForPay(locale(), e.contract));
       audio.play("quest-update");
     }),
     bus.on("ContractAlarm", (e) => {
@@ -36,7 +36,7 @@ export const presentQuests: Presenter = ({ bus, render, audio, ui, toast }) => {
       audio.play("quest-update");
     }),
     bus.on("ContractFailed", (e) => {
-      toast("quest", t("quest.failed"), contractFailureNote(e.reason, contractKind(e.contract)));
+      toast("quest", t("quest.failed"), tx(contractFailureNote(e.reason, contractKind(e.contract))));
       audio.play("denied");
     }),
     bus.on("ReputationChanged", (e) => {

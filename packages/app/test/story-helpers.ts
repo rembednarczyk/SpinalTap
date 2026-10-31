@@ -160,7 +160,7 @@ export const playContractFragment = (s: GameSession, ui: Ui, render: FakeRender,
   s.intents.closeDialogue();
   steps(s, 1);
   const contract = s.sim.domain.contracts.active!;
-  expect(objective(ui)).toContain("Zneutralizuj gangerów Hebi");
+  expect(objective(ui)).toContain("Take out the Hebi gangers");
   for (const e of [...s.sim.world].filter((x) => x.tag === contractTag(contract.id))) shootDown(s, e.key!);
   steps(s, 1);
 

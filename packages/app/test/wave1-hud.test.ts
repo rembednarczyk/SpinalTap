@@ -115,7 +115,7 @@ describe("contract view models", () => {
   it("builds the debrief with the fixer's style badges", () => {
     const e: DomainEvents["ContractDebrief"] = { contractId: "c4", badges: ["ghost", "netrunner"], rank: "B", reward: 1200, bonus: 0, styleBonus: 150, seconds: 90 };
     const vm = debriefVm(e, contract);
-    expect(vm.title).toBe("Infiltracja");
+    expect(vm.title).toBe("Infiltration");
     expect(vm.fixer).toBe("Genzō");
     expect(vm.badges).toHaveLength(6);
     expect(vm.badges.find((b) => b.id === "ghost")).toEqual({ id: "ghost", earned: true, style: true });
@@ -227,7 +227,7 @@ describe("game session: wave 1 events on the HUD", () => {
     emit(session, "ContractCompleted", { contract, reward: 1200 });
     expect(ui.getState().contractBonus).toBeNull();
     emit(session, "ContractDebrief", { contractId: "c4", badges: ["ghost"], rank: "B", reward: 1200, bonus: 300, styleBonus: 150, seconds: 80 });
-    expect(ui.getState().debrief).toMatchObject({ title: "Infiltracja", fixer: "Genzō", rank: "B" });
+    expect(ui.getState().debrief).toMatchObject({ title: "Infiltration", fixer: "Genzō", rank: "B" });
     session.intents.dismissDebrief();
     expect(ui.getState().debrief).toBeNull();
   });

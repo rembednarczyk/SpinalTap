@@ -9,15 +9,16 @@ import {
   contractSecondsLeft,
   hasFlag,
   stepObjective,
+  textRef,
 } from "@seki/core";
 import { SIM_HZ } from "@seki/sim";
-import { translateText } from "@seki/ui";
+import { translate, translateText } from "@seki/ui";
 
 /** Main steps that are about fixer work: while a contract runs, the HUD shows the contract itself. */
 const CONTRACT_STEPS: ReadonlySet<string> = new Set(["echo_contract"]);
 
-/** "Kontrakt 3 · Hana": the number and who gave it. */
-export const contractTitle = (c: Contract): string => `Kontrakt ${c.id.slice(1)} · ${contractGiver(c).name}`;
+/** "Contract 3 · Hana": the number and who gave it, in `locale`. */
+export const contractTitle = (c: Contract, locale: Locale): string => translate(locale, "contract.title", { n: c.id.slice(1), giver: contractGiver(c).name });
 
 /** Journal id of the running contract, as the journal lists it. */
 export const contractEntryId = (c: Contract): string => `contract-${c.id}`;
@@ -49,6 +50,14 @@ export const shownEntryId = (domain: DomainState): string | null => {
   return contract ? contractEntryId(contract) : null;
 };
 
+/** Who else has work once the main thread is quiet: Hana and Genzō, once met. */
+const freeHand = (domain: DomainState) => {
+  const hana = hasFlag(domain.flags, "met_hana") ? textRef("objective.free.hana") : null;
+  const genzo = hasFlag(domain.flags, "met_genzo") ? textRef("objective.free.genzo") : null;
+  const givers = hana && genzo ? textRef("objective.free.both", { a: hana, b: genzo }) : (hana ?? genzo);
+  return givers ? textRef("objective.free.more", { givers }) : textRef("objective.free.kaito");
+};
+
 /**
  * Title and objective for the HUD in `locale`: the journal entry the player pinned, else the main
  * thread (or the contract it is about), else the running contract. With `tick` a running delivery
@@ -57,7 +66,7 @@ export const shownEntryId = (domain: DomainState): string | null => {
 export const describeObjective = (domain: DomainState, locale: Locale, tick: number | null = null): ObjectiveView => {
   const contract = domain.contracts.active;
   const left = contract && tick !== null ? contractSecondsLeft(contract, tick, SIM_HZ) : null;
-  const contractView = contract ? { title: contractTitle(contract), objective: contractObjective(contract, left) } : null;
+  const contractView = contract ? { title: contractTitle(contract, locale), objective: translateText(locale, contractObjective(contract, left)) } : null;
   const pinned = pinnedView(domain, locale, contractView);
   if (pinned) return pinned.view;
   const main = activeMainStep(domain.quests, QUEST_DEFINITIONS);
@@ -67,9 +76,7 @@ export const describeObjective = (domain: DomainState, locale: Locale, tick: num
   }
   const started = QUEST_DEFINITIONS.some((q) => q.main && domain.quests[q.id]);
   if (!started) return { title: null, objective: null };
-  const givers = [...(hasFlag(domain.flags, "met_hana") ? ["Hana z targu na Podzamczu"] : []), ...(hasFlag(domain.flags, "met_genzo") ? ["Genzō na Nabrzeżu"] : [])];
-  const work = givers.length > 0 ? `Kaito ma kolejne kontrakty, ${givers.join(" i ")} też.` : "Kaito ma kolejne kontrakty.";
-  return contractView ?? { title: "Wolna ręka", objective: `${work} Mori sprzedaje cyberware.` };
+  return contractView ?? { title: translate(locale, "objective.free.title"), objective: translateText(locale, freeHand(domain)) };
 };
 
 export const saveLabel = (date: Date): string =>

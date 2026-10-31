@@ -30,7 +30,7 @@ describe("tracking a journal entry on the HUD", () => {
   it("shows the pinned contract instead of the main thread, and back again when unpinned", () => {
     const d = pin(busy(), "contract-c4");
     expect(shownEntryId(d)).toBe("contract-c4");
-    expect(describeObjective(d, "en").title).toBe("Kontrakt 4 · Kaito");
+    expect(describeObjective(d, "en").title).toBe("Contract 4 · Kaito");
     expect(describeObjective(pin(d, undefined), "en").title).toBe("First job");
   });
 
