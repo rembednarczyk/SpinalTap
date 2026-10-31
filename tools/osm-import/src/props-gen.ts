@@ -14,7 +14,7 @@ import { type SideMode, type Station, evenStations, fnv, offRoad, offWall, openF
 import { type BollardRef, stringBollards } from "./props-rows.ts";
 import { Site } from "./props-site.ts";
 import { SolidIndex, clearSpot } from "./props-solid.ts";
-import { nearTraffic, placeStreetGroup } from "./props-streets.ts";
+import { BASKET, BASKET_LAMPS, nearTraffic, placeStreetGroup } from "./props-streets.ts";
 
 /** One group of the plan, as far as placement reads it. */
 export interface PlanItem {
@@ -136,8 +136,9 @@ const besideLine = (site: Site, item: PlanItem, prop: StreetPropKind, slots: rea
   const fallback = FALLBACK[prop] ?? 2;
   // Off a road the offset is a guess, not a measured kerb: on a paved square cars still drive the
   // axes of its streets (Plac Zamkowy's cobbles, G-004), so the guess keeps clear of their lanes.
+  const lamp = prop.startsWith("lamp-") && mode !== "facade";
   const clear = (at: Pt, p: Pt) =>
-    mode === "facade" || (!blocked(obstacles, p) && (mode === "front" || site.surfaceAt(at) === "road" || !nearTraffic(site, p, LAMP_TRAFFIC_REACH)));
+    mode === "facade" || (!blocked(obstacles, p) && (!lamp || site.surfaceAt(at) === "road" || !nearTraffic(site, p, LAMP_TRAFFIC_REACH)));
   for (const { st, side, key } of slots) {
     if (mode === "axis") {
       out.push({ prop, p: st.p, yaw: null, key });
@@ -345,7 +346,15 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
   let crowded = 0;
   let moved = 0;
   let onRoad = 0;
-  for (const placedAt of placed) {
+  // Where each lamp ended up: its basket was picked before the lamps were merged or moved.
+  const lampAt = new Map<string, Pt>();
+  for (const piece of placed) {
+    const lamp = piece.prop === "hanging-basket" ? lampAt.get(piece.key.slice(0, -BASKET.length)) : undefined;
+    if (piece.prop === "hanging-basket" && !lamp) {
+      merged++;
+      continue;
+    }
+    const placedAt = lamp ? { ...piece, p: lamp } : piece;
     // A light, a machine or a tree from a node in the road stands on the nearest pavement.
     // Judged where it ends up, at the 0.1 m the chunks keep.
     const at = { x: r1(placedAt.p.x), z: r1(placedAt.p.z) };
@@ -389,6 +398,7 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
       crowded++;
       continue;
     }
+    if (BASKET_LAMPS.has(x.prop)) lampAt.set(x.key, { x: item.x, z: item.z });
     same.push({ x: item.x, z: item.z });
     kept.set(x.prop, same);
     solids.add(item);

@@ -265,6 +265,14 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       }),
     );
   },
+  /** A flower basket hanging in the air: no pastoral lamp or candelabrum within 0.3 m to hang on (G-004). */
+  "hanging-basket-orphan": () => {
+    const pieces = Object.values(WORLD_STREET_PROPS).flat();
+    const lamps = pieces.filter((i) => i.prop === "lamp-pastoral" || i.prop === "lamp-candelabra");
+    return pieces
+      .filter((i) => i.prop === "hanging-basket")
+      .flatMap((i) => (lamps.some((l) => Math.hypot(l.x - i.x, l.z - i.z) <= 0.3) ? [] : [{ at: near(i.x, i.z), what: i.prop }]));
+  },
   /** A bollard's chain whose end hangs in the air: more than 0.2 m from every other bollard and off the shaft of a pole (G-032). */
   "bollard-chain-loose": () => {
     const pieces = Object.values(WORLD_STREET_PROPS).flat();

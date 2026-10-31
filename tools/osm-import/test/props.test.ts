@@ -105,6 +105,23 @@ describe("street furniture generator (ADR-0047)", () => {
     for (const l of lamps) expect(Math.hypot(Math.max(l.x - 20, 0), l.z - 34), `lamp at ${l.x}, ${l.z}`).toBeGreaterThan(3);
   });
 
+  it("hangs a basket only on a lamp that stays, where it stands (G-004)", () => {
+    // The second row runs 3 m behind the first, so its lamps are merged away; the baskets were picked from both.
+    const plan: PropsPlan = {
+      items: [
+        { id: "a", kind: "lamp-pastoral", lines: [[0, 30, 100, 30]], spacing: 25 },
+        { id: "b", kind: "lamp-pastoral", lines: [[3, 30, 100, 30]], spacing: 25 },
+        { id: "baskets", kind: "hanging-basket", lines: [[0, 30, 100, 30]], count: 8 },
+      ],
+    };
+    const items = generateProps(plan, [street()]).byChunk.get("test-0-0")!;
+    const lamps = items.filter((i) => i.prop === "lamp-pastoral");
+    const baskets = items.filter((i) => i.prop === "hanging-basket");
+    expect(lamps).toHaveLength(4);
+    expect(baskets.length).toBeGreaterThan(0);
+    for (const b of baskets) expect(lamps.some((l) => l.x === b.x && l.z === b.z), `basket at ${b.x}, ${b.z}`).toBe(true);
+  });
+
   it("spreads lines and areas deterministically, inside the area and off the buildings", () => {
     const line = [
       { x: 0, z: 0 },
