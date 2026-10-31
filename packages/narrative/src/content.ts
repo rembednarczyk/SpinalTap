@@ -29,6 +29,9 @@ import encShinsekaiEn from "../ink/en/enc-shinsekai.ink?raw";
 import encKanalEn from "../ink/en/enc-kanal.ink?raw";
 import encTargEn from "../ink/en/enc-targ.ink?raw";
 import encDokiEn from "../ink/en/enc-doki.ink?raw";
+import hooksEn from "../ink/en/hooks.ink?raw";
+import metroEn from "../ink/en/metro.ink?raw";
+import radioEn from "../ink/en/radio.ink?raw";
 
 /**
  * The ink files of the build in story order, one per dialogue group (knots are the dialogue ids).
@@ -92,6 +95,9 @@ export const INK_EN: Readonly<Partial<Record<InkFile, string>>> = {
   "enc-kanal": encKanalEn,
   "enc-targ": encTargEn,
   "enc-doki": encDokiEn,
+  hooks: hooksEn,
+  metro: metroEn,
+  radio: radioEn,
 };
 
 /** The whole story in `language`, file by file, Polish where a translation is missing. */

@@ -12,12 +12,8 @@ import { INK_EN, INK_FILES, INK_PL, type InkFile, STORY_SOURCES, compileInk } fr
  * taken out (the containers, their indices and the visit-count paths the ink state refers to).
  */
 
-/** Files with no English version yet: they play in Polish. Only ever shrinks, to empty. */
-const UNTRANSLATED: readonly InkFile[] = [
-  "hooks",
-  "metro",
-  "radio",
-];
+/** Files with no English version yet, which play in Polish: none since stage 5; a new file comes in both languages. */
+const UNTRANSLATED: readonly InkFile[] = [];
 
 /**
  * Words with Polish letters the English text may keep: Lublin's proper names (streets, squares,
@@ -29,6 +25,8 @@ const POLISH_NAMES: ReadonlySet<string> = new Set<string>([
   "Przedmieście",
   "Trybunał",
   "Czechówka",
+  "Nabrzeże",
+  "Wieża",
 ]);
 
 const POLISH_LETTER = /[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/;
