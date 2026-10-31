@@ -329,7 +329,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer/mapcity) / tools/osm-import
 
 ### G-006 Skręty aut na skrzyżowaniach
-- Status: w naprawie (decyzja użytkownika przy G-024: skręty w boczne ulice; ADR-0055)
+- Status: weryfikacja PRZYJĘTE (3. runda), w PR. `lane-dead-end` 61 → 44; zator Ruska/Lwowska usunięty; nowa kontrola `turn-off-road` 6 (zawrotki targu, G-025). CPU sceny targu 3,8 → 4,3 s na 3000 kroków
 - Ważność: S3 · Zasięg: szeroki (33 ślepe końce pasów na skrzyżowaniach i 6 z G-024) · Koszt: duży
 - Test przyjęcia: `lane-dead-end` spada; łuki skrętu na nawierzchni drogi i poza budynkami.
 
