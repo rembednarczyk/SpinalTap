@@ -94,7 +94,7 @@ describe("body HUD", () => {
     // A disguise keeps the identity block on screen.
     expect(screen.getByTestId("identity").classList.contains("hud__identity--calm")).toBe(false);
     act(() => patchUi(store, { disguise: { role: "hebi", label: "Przebranie: Hebi", blown: true }, dash: { cooldown: 0, total: 1.2 } }));
-    expect(screen.getByTestId("disguise").textContent).toContain("Spalona przykrywka");
+    expect(screen.getByTestId("disguise").textContent).toContain("Cover blown");
     expect(screen.getByTestId("dash").getAttribute("aria-label")).toBe("Zryw gotowy");
   });
 

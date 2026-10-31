@@ -89,6 +89,6 @@ describe("wave 2 HUD in the game", () => {
     expect(screen.getByTestId("buff-regen")).toBeTruthy();
     expect(screen.getByTestId("disguise").textContent).toContain("Tessen security");
     run(() => seki.jump({ disguise: { role: "tessen_guard", blown: true } }));
-    expect(screen.getByTestId("disguise").textContent).toContain("Spalona przykrywka");
+    expect(screen.getByTestId("disguise").textContent).toContain("Cover blown");
   });
 });
