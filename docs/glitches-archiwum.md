@@ -397,3 +397,9 @@ Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [r
 - Gdzie: w980143457 (771.1, 190.5), `location=underground`, `layer=-1`, bryła 6,9 m na osi w154962966; T-041
 - Pakiet właściciela: tools/osm-import (`buildingAreas`)
 - Test przyjęcia: kontrola `building-underground-solid` 1 → 0
+
+### G-058 Dotknięcie pierwszego wyboru tuż po otwarciu dialogu czasem ginie (e2e touch)
+- Status: naprawione (#50, e970b3d: osłona przed „ghost click” G-048 wygasa przy następnym `pointerdown`). Na bazach z czerwonymi przebiegami (c07dea9, gałąź etapu 5) tej poprawki nie było; ślad: tap 325 ms po „Use” zjadany w fazie capture. Na main 20/20 zielonych przy `--repeat-each=10` i 14/14 z dławieniem CPU ×6 i ×20; test komponentu `ghost-click.test.tsx` („a real tap on a choice right after the talk opens…”) pada na starym pliku
+- Ważność: S3 (proponowana: flake w CI i możliwy błąd dotyku na telefonie) · Koszt: mały
+- Dowód: `e2e/touch.spec.ts:56-57` „on-screen pad”: 1/4 czerwony na bazie c07dea9 i 2/5 na etapie 5 przy load 6–9; dotknięcie wyboru zaraz po otwarciu koła kwestii nie wybiera kwestii. Sprawdzić, czy koło przyjmuje dotyk przed pierwszym renderem albo czy działa osłona przed „ghost click” (G-048)
+- Pakiet właściciela: packages/ui / e2e (QA)
