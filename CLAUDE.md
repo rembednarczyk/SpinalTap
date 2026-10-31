@@ -2,6 +2,15 @@
 
 Pełny kontekst: `docs/seki-senshi-plan.md` (§11–13) i `docs/adr/`.
 
+## Start nowej sesji
+Sesje w chmurze nie mają pamięci między sobą: trwałe jest tylko to, co jest wypchnięte do repo. Na starcie przeczytaj:
+- `docs/backlog.md` (sekcja „Następne”): kolejność prac i decyzje użytkownika;
+- `docs/glitches.md`: statusy glitchy, w tym „w naprawie” i „w PR #…”;
+- `.claude/agents/orchestrator.md` („Lekcje z pracy”), jeśli prowadzisz agentów;
+- otwarte PR-y w GitHubie.
+
+Praca agentów w worktree, której nie zintegrowano i nie wypchnięto, ginie z kontenerem. Stan i decyzje zapisuj w rejestrze i backlogu na bieżąco.
+
 ## Własność pakietów
 | Obszar | Pakiet / katalog |
 |---|---|
