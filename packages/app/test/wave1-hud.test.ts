@@ -286,11 +286,20 @@ describe("game session: wave 1 events on the HUD", () => {
     expect(ui.getState().upload).toMatchObject({ hackId: "ping", seconds: 0.6 });
     emit(session, "QuickhackApplied", { hackId: "ping", targetId: npc.id, duration: 12 });
     expect(ui.getState().upload).toBeNull();
-    expect(ui.getState().scanNote).toMatchObject({ tone: "ok", text: "Ping: wgrano" });
+    expect(ui.getState().scanNote).toMatchObject({ tone: "ok", text: "Ping: uploaded" });
     emit(session, "QuickhackStarted", { hackId: "short_circuit", targetId: npc.id, upload: 1.5, ram: 5 });
     emit(session, "QuickhackFailed", { hackId: "short_circuit", targetId: npc.id, reason: "lost-target" });
     expect(ui.getState().upload).toBeNull();
-    expect(ui.getState().scanNote?.text).toContain("wraca połowa RAM");
+    expect(ui.getState().scanNote?.text).toBe("Short Circuit: Target lost, half the RAM comes back");
+    // The same notes in Polish, word for word as before (ADR-0056).
+    patchUi(ui, { settings: { ...ui.getState().settings, locale: "pl" } });
+    emit(session, "QuickhackApplied", { hackId: "ping", targetId: npc.id, duration: 12 });
+    expect(ui.getState().scanNote?.text).toBe("Ping: wgrano");
+    emit(session, "QuickhackFailed", { hackId: "short_circuit", targetId: npc.id, reason: "lost-target" });
+    expect(ui.getState().scanNote?.text).toBe("Zwarcie: Utracono cel, wraca połowa RAM");
+    emit(session, "QuickhackTraced", { hackId: "ping", targetId: npc.id });
+    expect(ui.getState().scanNote?.text).toBe("Namierzono cię! Sieć zna twoją pozycję");
+    patchUi(ui, { settings: { ...ui.getState().settings, locale: "en" } });
     emit(session, "QuickhackTraced", { hackId: "ping", targetId: npc.id });
     expect(ui.getState().scanNote?.tone).toBe("traced");
     steps(session, 3 * SIM_HZ);
