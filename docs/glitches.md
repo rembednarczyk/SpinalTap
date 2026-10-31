@@ -120,12 +120,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Dowód: w tym samym punkcie (300, −60) przy ustalonym mieście kolejne klatki dają 223 i 163 wywołania. Sprawdzić, skąd różnica (komórki przebudowywane leniwie, glow, cienie), i czy nie zaszumia budżetów w `npr-perf`.
 - Pakiet właściciela: packages/engine
 
-### G-056 Kształt dachu z OSM (`roof:shape`) ignorowany: hełmy, kopuły i dachy dwuspadowe jako czterospadowe
-- Status: w PR #78 (ADR-0064 etap 1)
-- Ważność: S3 (proponowana) · Zasięg: zabytki Starego Miasta i Krakowskiego · Koszt: średni (pole w widoku `building`, czyli kontrakt w core/ports i ADR)
-- Dowód: hełm wieży Bramy Krakowskiej rysuje się jako dach czterospadowy i zasłania 3,2 m ścian ośmioboku; to samo przy cebulach i kopułach
-- Pakiet właściciela: tools/osm-import, packages/engine (mapcity), kontrakt: architekt
-
 ### G-058 Dotknięcie pierwszego wyboru tuż po otwarciu dialogu czasem ginie (e2e touch)
 - Status: zgłoszone (z weryfikacji etapu 5 ADR-0056)
 - Ważność: S3 (proponowana: flake w CI i możliwy błąd dotyku na telefonie) · Koszt: mały
@@ -143,13 +137,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Dowód: części OSM w73833861/65 i w587306232 mają 4 kondygnacje, w73833864 ma 2, a obrysy w grze mają 16 m (pokrycie 43% i 32%). Tagowanie OSM niespójne; możliwe rozwiązanie: rysować części, resztę obrysu zostawić
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: nowa kontrola skanu `building-part-lower-ignored` (okap części > 1 kondygnację niżej od ścian obrysu w jej środku), baza 2 → 0
-
-### G-061 Część `building:part` bez obrysu `building` nie trafia do gry (pawilon Bona)
-- Status: w PR #74
-- Ważność: S4 (proponowana) · Zasięg: 1 · Koszt: mały
-- Gdzie: w1236054202 (708.4, 166.8), Podzamcze; T-020
-- Pakiet właściciela: tools/osm-import
-- Test przyjęcia: kontrola skanu `building-part-orphan` (część bez obrysu i bez bryły w grze), baza 1 → 0
 
 ### G-063 Zadaszenia `building=roof` pominięte (perony dworca, daszki Targu na Ruskiej, studnia)
 - Status: zgłoszone (audyt topografii 2)
@@ -261,6 +248,46 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (`mapcity/roof-shapes.ts`)
 - Test przyjęcia: osobna kalenica lub połać na każde skrzydło obrysu wklęsłego
 
+### G-081 Deptaki węższe niż pierzeja: goły teren między pasem bruku a fasadami
+- Status: zgłoszone (audyt dróg, T-045)
+- Ważność: S3 (proponowana: główna ulica Lublina wygląda jak 8 m chodnik w błocie) · Zasięg: deptaki bez `width`, 59 z 206 przekrojów · Koszt: średni
+- Gdzie: Krakowskie Przedmieście w177528393 (266..327, −73..−86), Jezuicka w173565066 (541..619, −120..−135), Grodzka w385706810 (663..679, 82..105)
+- Dowód: przekroje co 10 m od osi do fasady: KP 21,2 m między fasadami, 9,6 m bez nawierzchni
+- Przyczyna: `lineBands` (`ground.ts`) buforuje `pedestrian` na `width ?? 8`
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: kontrola `pedestrian-bare` 59 → ≤ 10
+
+### G-082 Domyślna szerokość jezdni wycina zmapowane chodniki
+- Status: zgłoszone (audyt dróg) (T-046) · Ważność: S3 · Zasięg: 6 ulic, 262 m chodników · Koszt: mały
+- Gdzie: Podwale w40052391/w305027452, Staszica w1150131461, w232805965, Zielona w173533827, Łęczyńska w85717509
+- Przyczyna: `roadWidth` bez `width`/`lanes` = 6,5/5 m, a `cutSidewalk` usuwa chodnik, którego środek leży na cudzej jezdni
+- Propozycja: zwęzić domyślną jezdnię do 2 × (odległość osi od chodnika − pół chodnika), min. 3 m
+- Pakiet: tools/osm-import · Test przyjęcia: `sidewalk-under-carriageway` 262 → 0
+
+### G-083 Drogi dla aut bez nazwy i łącznice bez pasów ruchu
+- Status: zgłoszone (audyt dróg) (T-047) · Ważność: S3 · Zasięg: 7 dróg bez nazwy + 3 łącznice, ok. 550 m · Koszt: mały–średni
+- Przyczyna: `labels.ts` `chunkStreets` wymaga `name`, `STREET_KINDS` nie ma `primary_link`/`secondary_link`/`tertiary_link`
+- Uwaga: po dodaniu pasów sprawdzić `lane-dead-end`, `car-road-hole`, `turn-off-road`
+- Pakiet: tools/osm-import (+ sim roads.ts klucz łączenia dla dróg bez nazwy) · Test przyjęcia: `car-way-without-lane` 10 → 0
+
+### G-084 Place bez nazw na mapie miasta
+- Status: zgłoszone (audyt dróg) (T-048) · Ważność: S4 · Zasięg: 6 placów · Koszt: mały
+- Przyczyna: import zapisuje nazwy tylko z linii; `city-map.ts` podpisuje `streets` i budynki
+- Pakiet: tools/osm-import + packages/app (city-map) · Test przyjęcia: `square-name-missing` 6 → 0
+
+### G-085 Ścieżki w remoncie (`highway=construction`) bez nawierzchni
+- Status: zgłoszone (audyt dróg) (T-050) · Ważność: S4 · Zasięg: 3 drogi, 316 m · Koszt: mały
+- Propozycja: korekta typu na `path` (poprzednia wersja OSM) z odsyłaczem T-050
+- Pakiet: tools/osm-import
+
+### G-086 Nawierzchnie: kostka na jezdni jako asfalt, ścieżki gruntowe jako utwardzone
+- Status: zgłoszone (audyt dróg) (T-052) · Ważność: S4 · Koszt: średni (kontrakt `GroundSurface` w core, ADR)
+
+### G-087 `stepRamps` tylko dla nazwanych schodów
+- Status: zgłoszone (audyt dróg) (z audytu dróg, bez T: teren = NMT) · Ważność: S4 · Koszt: mały
+- Gdzie: `packages/sim/src/content/lublin/shape.ts` `stepRamps` czyta `c.streets` (tylko nazwy) → 3 rampy z 69 biegów
+- Decyzja: albo rampy dla wszystkich biegów (wtedy sprawdzić `terrain-off-pads`, `steps-micro-riser`), albo poprawić komentarz
+
 ## Naprawione
 | ID | Glitch | PR |
 |---|---|---|
@@ -317,6 +344,8 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | G-064 | Targowiska bez straganów | #76 |
 | G-051 | Podpis muzeum na kamienicy Jezuicka 3 zamiast na Bramie Krakowskiej | #75 |
 | G-067 | Klasztor Dominikanów z proceduralnymi wieżami kościoła | #72 |
+| G-056 | Kształt dachu z OSM (`roof:shape`) ignorowany: hełmy, kopuły i dachy dwuspadowe jako czterospadowe | #78 |
+| G-061 | Część `building:part` bez obrysu `building` nie trafia do gry (pawilon Bona) | #74 |
 
 ## Odrzucone
 - G-005 Wiata przystanku wchodzi w ścianę przy Alei Tysiąclecia: duplikat (G-011)

@@ -368,3 +368,16 @@ Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [r
 - Dowód: `props.generated` nie ma `market-stall` w podzamcze-1-1 i 0-1
 - Pakiet właściciela: tools/osm-import (props-gen)
 - Test przyjęcia: każdy obrys `amenity=marketplace` w dzielnicach ma ≥ 1 stragan na 150 m²; kontrola `marketplace-empty` 3 → 0
+
+### G-056 Kształt dachu z OSM (`roof:shape`) ignorowany: hełmy, kopuły i dachy dwuspadowe jako czterospadowe
+- Status: naprawione (#78, ADR-0064 etap 1). Dachy z `roof:shape`/`roof:orientation`; skan `roof-shape-ignored` = 0. Dalej: G-080
+- Ważność: S3 (proponowana) · Zasięg: zabytki Starego Miasta i Krakowskiego · Koszt: średni (pole w widoku `building`, czyli kontrakt w core/ports i ADR)
+- Dowód: hełm wieży Bramy Krakowskiej rysuje się jako dach czterospadowy i zasłania 3,2 m ścian ośmioboku; to samo przy cebulach i kopułach
+- Pakiet właściciela: tools/osm-import, packages/engine (mapcity), kontrakt: architekt
+
+### G-061 Część `building:part` bez obrysu `building` nie trafia do gry (pawilon Bona)
+- Status: naprawione (#74). Osierocone części jako budynki (`orphanParts`/`asBuilding`); skan `building-part-orphan` = 0
+- Ważność: S4 (proponowana) · Zasięg: 1 · Koszt: mały
+- Gdzie: w1236054202 (708.4, 166.8), Podzamcze; T-020
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: kontrola skanu `building-part-orphan` (część bez obrysu i bez bryły w grze), baza 1 → 0
