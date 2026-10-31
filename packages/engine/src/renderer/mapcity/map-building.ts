@@ -57,5 +57,6 @@ export const mapBuilding = (id: EntityId, e: BuildingSource, heightAt: (x: numbe
     ...(carriesPart(e, around) ? { carriesParts: true } : {}),
     ...(v.signs === "bracket" ? { bracketSigns: true } : {}),
     ...(v.vertical ? { rise: Math.max(0, v.vertical.rise), clutter: Math.min(1, Math.max(0, v.vertical.clutter)) } : {}),
+    ...(v.vertical?.landmarks?.length ? { landmarks: v.vertical.landmarks.map((l) => ({ ring: l.outline.map((p) => ({ x: p.x + e.at.x, z: p.z + e.at.z })), top: l.top + e.at.y })) } : {}),
   };
 };

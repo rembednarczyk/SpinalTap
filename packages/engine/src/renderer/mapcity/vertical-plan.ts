@@ -77,6 +77,16 @@ const inside = (ring: readonly P2[], r: readonly P2[], margin: number): boolean 
   return !ring.some((v) => pointInRing(v, r));
 };
 
+/**
+ * Metres a tier keeps off the outline of a landmark it rises over (G-050, `BuildingVertical.landmarks`):
+ * the house next to a gate still rises, set back, and the gate keeps its silhouette.
+ */
+const LANDMARK_CLEAR = 5;
+
+/** The rectangle stands at least `LANDMARK_CLEAR` off each outline: outside it and not within reach of its walls. */
+const clearOf = (r: readonly P2[], rings: readonly (readonly P2[])[]): boolean =>
+  rings.every((l) => !l.some((p) => pointInRing(p, r)) && !r.some((p) => pointInRing(p, l)) && r.every((p) => edgeDistance(p, l) >= LANDMARK_CLEAR) && l.every((p) => edgeDistance(p, r) >= LANDMARK_CLEAR));
+
 /** Storeys per tier: one to three, the last tier takes what is left. */
 const tierStoreys = (total: number, rand: () => number): number[] => {
   const out: number[] = [];
@@ -102,17 +112,29 @@ const CENTRES: readonly (readonly [number, number])[] = [
   [-0.4, 0.4],
 ];
 
-/** The largest rectangle near the wanted size and centre that fits 0.9 m inside the outline. */
-const fitRect = (f: FacadeFrame, su: number, sv: number, cu: number, cv: number): { u0: number; u1: number; v0: number; v1: number; ring: P2[] } | null => {
+/** Sides of the box (signs along and across) a tier backs onto, a metre in, away from a landmark (G-050). */
+const SET_BACK: readonly (readonly [number, number])[] = [
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+  [1, 1],
+  [-1, -1],
+  [1, -1],
+  [-1, 1],
+];
+
+/** The largest rectangle near the wanted size and centre that fits 0.9 m inside the outline, clear of the landmark outlines `off`. */
+const fitRect = (f: FacadeFrame, su: number, sv: number, cu: number, cv: number, off: readonly (readonly P2[])[]): { u0: number; u1: number; v0: number; v1: number; ring: P2[] } | null => {
   for (let k = 0; k < 8; k++) {
     const hu = f.box.halfLong * su * 0.85 ** k;
     const hv = f.box.halfShort * sv * 0.88 ** k;
     if (hv < 1.2 || hu < 1.5) return null;
-    for (const [du, dv] of [[cu, cv] as const, ...CENTRES]) {
-      const mu = Math.max(-1, Math.min(1, du)) * (f.box.halfLong - hu);
-      const mv = Math.max(-1, Math.min(1, dv)) * (f.box.halfShort - hv);
+    const at = [[cu, cv] as const, ...CENTRES].map(([du, dv]) => [Math.max(-1, Math.min(1, du)) * (f.box.halfLong - hu), Math.max(-1, Math.min(1, dv)) * (f.box.halfShort - hv)] as const);
+    if (off.length > 0) for (const [du, dv] of SET_BACK) at.push([du * Math.max(0, f.box.halfLong - hu - 1), dv * Math.max(0, f.box.halfShort - hv - 1)]);
+    for (const [mu, mv] of at) {
       const ring = rectRing(f, mu - hu, mu + hu, mv - hv, mv + hv);
-      if (inside(f.b.ring, ring, 0.9)) return { u0: mu - hu, u1: mu + hu, v0: mv - hv, v1: mv + hv, ring };
+      if (inside(f.b.ring, ring, 0.9) && clearOf(ring, off)) return { u0: mu - hu, u1: mu + hu, v0: mv - hv, v1: mv + hv, ring };
     }
   }
   return null;
@@ -121,7 +143,9 @@ const fitRect = (f: FacadeFrame, su: number, sv: number, cu: number, cv: number)
 /**
  * The tiers of a building's superstructure (empty without a rise or room for one). Each tier
  * is a rectangle a little inside the outline (1 m in from the walls), shifted and resized
- * from the one under it, overhanging it at times like the cantilevered capsules of a megablock.
+ * from the one under it, overhanging it at times like the cantilevered capsules of a megablock,
+ * and set back from the landmarks next door it rises over (G-050); the stack ends at the first
+ * tier with no room left.
  */
 export const stackTiers = (f: FacadeFrame): StackTier[] => {
   const rise = f.b.rise ?? 0;
@@ -136,10 +160,12 @@ export const stackTiers = (f: FacadeFrame): StackTier[] => {
   let cu = (rand() - 0.5) * 0.3;
   let cv = (rand() - 0.5) * 0.2;
   for (const n of tierStoreys(storeys, rand)) {
-    const fit = fitRect(f, su, sv, cu, cv);
+    const h = n * STACK_STOREY;
+    // Only the landmarks this tier rises over: under their tops it may stand against them.
+    const off = (f.b.landmarks ?? []).filter((l) => l.top < y + h).map((l) => l.ring);
+    const fit = fitRect(f, su, sv, cu, cv, off);
     if (!fit) break;
     const { u0, u1, v0, v1, ring } = fit;
-    const h = n * STACK_STOREY;
     const r = rand();
     const kind: TierKind = r < 0.45 ? "container" : r < 0.75 ? "capsule" : "glass";
     const color = kind === "container" ? pick(rand, CONTAINER) : kind === "capsule" ? pick(rand, CAPSULE) : pick(rand, GLASS);
