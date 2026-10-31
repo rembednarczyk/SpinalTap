@@ -32,9 +32,9 @@ test.describe("M0 smoke", () => {
     await expect(page.getByTestId("prompt")).toContainText("Kaito");
     await step(page, 1, { interact: true });
     const dialogue = page.getByTestId("dialogue");
-    await expect(dialogue).toContainText("Chodzący trup");
-    await dialogue.getByRole("button", { name: /Kim jesteś/ }).click();
-    await dialogue.getByRole("button", { name: /Niech będzie/ }).click();
+    await expect(dialogue).toContainText("walking corpse");
+    await dialogue.getByRole("button", { name: /Who are you/ }).click();
+    await dialogue.getByRole("button", { name: /Fine\. Seki Senshi/ }).click();
     await dialogue.getByRole("button", { name: /End conversation/ }).click();
     await expect(dialogue).toBeHidden();
     await step(page, 2);
@@ -111,7 +111,7 @@ test("ripperdoc clinic sells a medkit through the UI", async ({ page }) => {
   await expect(shop).toBeHidden();
   const dialogue = page.getByTestId("dialogue");
   // Before the first talk with Kaito, Mori sends Seki to him at Neon Koi (G-034).
-  await expect(dialogue).toContainText("Czeka na ciebie w Neon Koi");
+  await expect(dialogue).toContainText("He's waiting for you at the Neon Koi");
   await dialogue.getByRole("button", { name: /End conversation/ }).click();
   await expect(dialogue).toBeHidden();
   await step(page, 1);

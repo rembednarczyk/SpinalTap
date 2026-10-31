@@ -134,7 +134,7 @@ const hookTerminal = (c: Contract, hookId: string, knot: string, at: Vec3): Extr
       prevYaw: 0,
       pitch: 0,
       view: { kind: "block", size: { x: 0.6, y: 1.4, z: 0.4 }, material: "glass" },
-      interactable: { kind: "read", dialogueId: knot, prompt: "Czytaj terminal", radius: 1.6 },
+      interactable: { kind: "read", dialogueId: knot, prompt: "prompt.terminal.read", radius: 1.6 },
     }),
   };
 };

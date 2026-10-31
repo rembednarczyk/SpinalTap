@@ -127,7 +127,7 @@ describe("M4 acceptance: market contracts → eddies → cyberware", () => {
     close(session);
     const delivery = session.sim.domain.contracts.active!;
     expect(delivery.kind).toBe("delivery");
-    expect(ui.getState().questTitle).toBe("Kontrakt 2 · Kaito");
+    expect(ui.getState().questTitle).toBe("Contract 2 · Kaito");
     expect(ui.getState().objective).toMatch(/Zanieś paczkę od Kaito Hanie: .* \(zostało \d:\d\d\)/);
     steps(session, 120);
     expect(ui.getState().objective).toMatch(/zostało \d:\d\d/);
@@ -154,7 +154,7 @@ describe("M4 acceptance: market contracts → eddies → cyberware", () => {
     close(session);
     const retrieval = session.sim.domain.contracts.active!;
     expect(retrieval.kind).toBe("retrieve");
-    expect(ui.getState().questTitle).toBe("Kontrakt 3 · Hana");
+    expect(ui.getState().questTitle).toBe("Contract 3 · Hana");
     expect(ui.getState().mapMarkers.some((m) => m.kind === "target" && m.id === `${retrieval.id}-item`)).toBe(true);
     const crate = CONTRACT_ITEM_SPOTS.hebi_stash!;
     teleport(session, crate.x - 1, crate.z, Math.PI / 2);
@@ -162,7 +162,7 @@ describe("M4 acceptance: market contracts → eddies → cyberware", () => {
     expect(session.sim.domain.contracts.active?.status).toBe("cleared");
     expect(ui.getState().objective).toBe("Skrzynka zabrana. Wróć do Hany po zapłatę");
     const entry = ui.getState().journal.quests.find((q) => q.id === `contract-${retrieval.id}`);
-    expect(entry).toMatchObject({ title: "Kontrakt 3 · Hana", steps: [{ done: true }, { objective: "Go back to Hana for your pay", done: false }] });
+    expect(entry).toMatchObject({ title: "Contract 3 · Hana", steps: [{ done: true }, { objective: "Go back to Hana for your pay", done: false }] });
 
     before = eddies();
     extra = extraPay(session);
@@ -191,7 +191,7 @@ describe("M4 acceptance: market contracts → eddies → cyberware", () => {
     close(session);
     expect(eddies()).toBe(before + protection.reward + extra());
     expect(session.sim.domain.contracts).toEqual({ active: null, completed: 4 });
-    expect(ui.getState().objective).toBe("Kaito ma kolejne kontrakty, Hana z targu na Podzamczu też. Mori sprzedaje cyberware.");
+    expect(ui.getState().objective).toBe("More contracts from Kaito, and from Hana at the Podzamcze market too. Mori sells cyberware.");
 
     // Three market jobs pay for an implant at Mori's.
     expect(eddies()).toBeGreaterThanOrEqual(400 + 250 + 470 + 550 - 1);

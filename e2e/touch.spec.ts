@@ -54,7 +54,7 @@ test("phone: on-screen pad moves, looks and talks", async ({ page }) => {
   await expect(page.getByTestId("dialogue")).toBeVisible();
   await expect(page.getByTestId("touch-controls")).toBeHidden();
   await page.getByTestId("dialogue").getByRole("button").first().tap();
-  await expect(page.getByTestId("dialogue")).toContainText("Kim ty jesteś?");
+  await expect(page.getByTestId("dialogue")).toContainText("I fix things.");
 });
 
 test("phone in portrait asks to rotate", async ({ page }) => {

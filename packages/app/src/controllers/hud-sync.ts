@@ -108,7 +108,7 @@ export class HudSync implements ContractIntents {
     const sim = this.deps.sim();
     const loot = this.deps.panels.loot();
     const player = sim.player();
-    const { title, objective } = describeObjective(sim.domain, sim.tick);
+    const { title, objective } = describeObjective(sim.domain, this.deps.ui.getState().settings.locale, sim.tick);
     const hp = player?.health?.current ?? 0;
     const maxHp = player?.health?.max ?? 100;
     patchUi(this.deps.ui, {

@@ -15,6 +15,7 @@ import { type Controllers, createControllers } from "./controllers/compose";
 import { isCalm } from "./controllers/hud-sync";
 import { pushToastTimed } from "./controllers/shared";
 import { buildCityMap } from "./city-map";
+import { narrativeText } from "./content-text";
 import { composeIntents, controllerIntents } from "./intents";
 import type { GameSessionDeps } from "./session-deps";
 
@@ -37,7 +38,12 @@ export class GameSession implements SessionIntents {
   private readonly c: Controllers;
 
   constructor(private readonly deps: GameSessionDeps) {
-    this.narrative = new NarrativeRuntime(deps.story, (cmd) => this.simulation.enqueue(cmd));
+    // The ink in the player's language from the start, the narrative's own words (speakers' roles,
+    // a contract's variation) in the language of the moment (ADR-0056).
+    this.narrative = new NarrativeRuntime(deps.story, (cmd) => this.simulation.enqueue(cmd), {
+      locale: deps.ui.getState().settings.locale,
+      text: narrativeText(() => deps.ui.getState().settings.locale),
+    });
     // Lublin's terrain, surfaces and buildings are drawn for good, streamed in or not (ADR-0045).
     this.renderSync = new RenderSync(deps.render, deps.scenery === false ? [] : WORLD_SCENERY);
     this.simulation = Simulation.create({ seed: deps.seed(), bus: this.bus, crowd: deps.crowd ?? "off", traffic: deps.traffic ?? deps.crowd ?? "off" });

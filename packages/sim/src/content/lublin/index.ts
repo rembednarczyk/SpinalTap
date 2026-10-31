@@ -50,6 +50,7 @@ export const buildingView = (b: LublinBuildingData, district?: LublinChunkData["
     look: b.look,
     ...(b.plinth > 0 ? { plinth: b.plinth } : {}),
     ...(b.shopfront ? { shopfront: true as const } : {}),
+    ...(b.soffit === undefined ? {} : { soffit: b.soffit }),
     ...(vertical ? { vertical } : {}),
   };
 };

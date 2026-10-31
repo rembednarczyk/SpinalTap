@@ -152,7 +152,7 @@ export const buildingProp = (b: LublinBuildingData, cut?: RoomCut, district?: Di
   const view = buildingView(b, district);
   const top = solidTop(b, view);
   if (!cut) {
-    const prisms: PrismDef[] = b.parts.map((p) => ({ points: toPoints(p), bottom: 0, top }));
+    const prisms: PrismDef[] = b.parts.map((p) => ({ points: toPoints(p), bottom: b.soffit ?? 0, top }));
     return { center: { x: b.x, y: b.y, z: b.z }, view, solid: true, prisms, scenery: true };
   }
   const { site } = cut;

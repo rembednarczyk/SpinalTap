@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type Contract, type ContractVariation, type DomainState, type HookContractKind, createDomainState } from "@seki/core";
-import { NarrativeRuntime, STORY_SOURCE, describeVariation, variationOf } from "../src";
+import { NarrativeRuntime, STORY_SOURCE, describeVariation, variationKeys, variationOf } from "../src";
 
 /** Wave 2 texts (ADR-0032): hooks, metro, radio and the fixers' word on a contract's variation. */
 
@@ -68,16 +68,18 @@ describe("radio breaks", () => {
 
 describe("contract variations in the fixers' lines", () => {
   const variation: ContractVariation = { modifiers: ["time_limit", "twin"], security: "light", trait: "armored", twist: "setup" };
+  /** Without the app's words the sentence is its keys, which is what the ink gets here. */
   const text = describeVariation(variation);
 
-  it("describes the modifiers, the security and the trait, never the twist", () => {
-    expect(text).toContain("Klient liczy czas");
-    expect(text).toContain("dwóch");
-    expect(text).toContain("cienka");
-    expect(text).toContain("pancerz");
-    expect(text).not.toMatch(/ustawk|podstaw/i);
+  it("names the modifiers, the security and the trait by key, never the twist", () => {
+    expect(variationKeys(variation)).toEqual(["brief.modifier.time_limit", "brief.modifier.twin", "brief.security.light", "brief.trait.armored"]);
+    expect(variationKeys({ modifiers: ["night_only"], security: "lockdown" })).toEqual(["brief.modifier.night_only", "brief.security.lockdown"]);
     expect(describeVariation({ modifiers: [], security: "standard" })).toBe("");
     expect(describeVariation(undefined)).toBe("");
+  });
+
+  it("writes the sentence with the app's words, one line per key", () => {
+    expect(describeVariation(variation, (key) => `<${key}>`)).toBe("<brief.modifier.time_limit> <brief.modifier.twin> <brief.security.light> <brief.trait.armored>");
   });
 
   it("reads the variation stored on a contract and ignores anything else", () => {

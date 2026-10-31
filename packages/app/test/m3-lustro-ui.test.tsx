@@ -29,8 +29,8 @@ describe("act II on the overpass in the game", () => {
     });
     g.step(2);
     const prompt = () => screen.queryByTestId("prompt")?.textContent ?? "";
-    for (let i = 0; i < 120 && !prompt().includes("Kurosawą"); i++) g.step(1);
-    expect(prompt()).toContain("Kurosawą");
+    for (let i = 0; i < 120 && !prompt().includes("Talk to Kurosawa"); i++) g.step(1);
+    expect(prompt()).toContain("Talk to Kurosawa");
     g.step(1, { interact: true });
 
     const dialogue = () => screen.getByTestId("dialogue");

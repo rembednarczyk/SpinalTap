@@ -222,7 +222,7 @@ describe("infiltration (data from the Tessen office)", () => {
     const c = accept(sim, "infiltrate");
     expect(c).toMatchObject({ kind: "infiltrate", siteId: "tessen_office" });
     expect(officeGuards(sim, c)).toHaveLength(c.targets);
-    expect(byKey(sim, contractItemKey(c.id))?.interactable?.prompt).toBe("Zgraj dane Tessen");
+    expect(byKey(sim, contractItemKey(c.id))?.interactable?.prompt).toBe("prompt.pickup.data");
     const spot = DOKI_ITEM_SPOTS.tessen_office!;
     teleportPlayer(sim, w(spot.x + 1.1, spot.z), -Math.PI / 2);
     sim.step(input({ interact: true, crouch: true }));

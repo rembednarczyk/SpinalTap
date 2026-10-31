@@ -121,7 +121,7 @@ export const createControllers = (deps: GameSessionDeps, s: SessionHooks): Contr
     onDialogueInterrupted: () => s.interrupt(),
     onLoot: (key) => loot.open(key),
   });
-  const lines = createKnotLines(deps.story);
+  const lines = createKnotLines(deps.story, () => ui.getState().settings.locale);
   const hudHooks = {
     playerId: () => sim().player()?.id ?? null,
     domain: () => sim().domain,
