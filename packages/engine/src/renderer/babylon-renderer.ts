@@ -454,12 +454,14 @@ export class BabylonRenderer implements RenderPort {
   }
 
   /**
-   * Draws one frame and reads it straight from the canvas as a PNG data URL (ADR-0046): the
+   * Reads the last drawn frame straight from the canvas as a PNG data URL (ADR-0046): the
    * snapshot test compares these pixels instead of waiting for the browser's compositor, which
-   * under SwiftShader may not settle within a test's patience.
+   * under SwiftShader may not settle within a test's patience. It draws nothing itself (G-031):
+   * the canvas keeps its frame (`preserveDrawingBuffer`), and a frame drawn here, past the GPU
+   * pacer, put a whole frame of SwiftShader work in front of the readback. Callers wait for a
+   * frame drawn after their step (debug `frames()`) or for the reference still.
    */
   captureFrame(): string {
-    this.stage.scene.render();
     return this.stage.engine.getRenderingCanvas()?.toDataURL("image/png") ?? "";
   }
 

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { waitForGame } from "./helpers";
+import { freeze, step, waitForGame } from "./helpers";
 
 /**
  * Frames the game may draw while the GPU works off what it was handed before (G-029): the two
@@ -31,6 +31,35 @@ test("the title screen draws no further ahead of the GPU than the pacer allows (
     return out;
   }, WAITS);
   test.info().annotations.push({ type: "gpu-queue", description: `frames drawn while the GPU caught up: ${ahead.join(", ")}` });
+  expect(Math.max(...ahead)).toBeLessThanOrEqual(MOST_AHEAD);
+});
+
+test("the character menu's preview draws no further ahead of the GPU than the pacer allows (G-031)", async ({ page }) => {
+  test.setTimeout(150_000);
+  await page.goto("/?seed=7&models=off");
+  await waitForGame(page);
+  await page.getByRole("button", { name: "New Game" }).click();
+  await freeze(page);
+  await step(page, 1);
+  await page.keyboard.press("KeyI");
+  await expect(page.getByTestId("character-screen")).toBeVisible();
+  // The preview redraws every frame on medium and high: unpaced, it drew 22-24 frames while the
+  // GPU worked off the 2-3 s queue in front of each fence (load 12-19).
+  const ahead = await page.evaluate(async (waits) => {
+    const gl = (document.getElementById("game-canvas") as HTMLCanvasElement).getContext("webgl2")!;
+    const renders = () => window.__seki!.preview()!.renders;
+    const nextFrame = () => new Promise((done) => requestAnimationFrame(done));
+    const out: number[] = [];
+    for (let i = 0; i < waits; i++) {
+      const fence = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0)!;
+      const from = renders();
+      while (gl.getSyncParameter(fence, gl.SYNC_STATUS) !== gl.SIGNALED) await nextFrame();
+      gl.deleteSync(fence);
+      out.push(renders() - from);
+    }
+    return out;
+  }, WAITS);
+  test.info().annotations.push({ type: "gpu-queue", description: `preview frames drawn while the GPU caught up: ${ahead.join(", ")}` });
   expect(Math.max(...ahead)).toBeLessThanOrEqual(MOST_AHEAD);
 });
 
