@@ -240,7 +240,7 @@ document.addEventListener("pointerlockchange", () => {
 // A phone kills a tab in the background without warning: autosave the moment it hides.
 if (!reference) bindPageHidden(document, window, () => session.pageHidden());
 
-createRoot(uiRoot).render(<GameUi store={ui} intents={session.intents} touch={touchDevice ? input.virtualPad : undefined} />);
+createRoot(uiRoot).render(<GameUi store={ui} intents={session.intents} touch={touchDevice ? input.virtualPad : undefined} version={__APP_VERSION__} />);
 
 const debug = createDebugApi(session, ui, loop, () => probe.sample(), (position, target) => renderer.rig.setReferenceView(position, target),
   () => renderer.dressedCount,
