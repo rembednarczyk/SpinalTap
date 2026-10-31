@@ -178,7 +178,14 @@ describe("touch of wave 2", () => {
   it("has the action arc around fire and a Use button that names the prompt", () => {
     const { pad, store } = mount({ prompt: "Kup bilet" }, true);
     const use = screen.getByTestId("touch-use");
-    expect(use.textContent).toBe("UżyjKup bilet");
+    expect(use.textContent).toBe("UseKup bilet");
+    expect(use.getAttribute("aria-label")).toBe("Interact: Kup bilet");
+    // The pad in Polish, word for word as before (ADR-0056).
+    act(() => patchUi(store, { settings: { ...store.getState().settings, locale: "pl" } }));
+    expect(screen.getByTestId("touch-use").textContent).toBe("UżyjKup bilet");
+    expect(screen.getByTestId("touch-use").getAttribute("aria-label")).toBe("Interakcja: Kup bilet");
+    expect(screen.getByRole("button", { name: "Postać" })).toBeTruthy();
+    act(() => patchUi(store, { settings: { ...store.getState().settings, locale: "en" } }));
     expect(use.classList.contains("touch__btn--hot")).toBe(true);
     fireEvent.pointerDown(use);
     expect(pad.press).toHaveBeenCalledWith("interact");

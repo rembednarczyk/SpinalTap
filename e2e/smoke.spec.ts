@@ -259,5 +259,5 @@ test("touch layout keeps the weapon strip off the pad and the minimap", async ({
   // The strip's slots are touch targets of at least 44 px.
   const slot = await page.getByRole("button", { name: /Boczna: Unity-9/ }).boundingBox();
   expect(slot!.height).toBeGreaterThanOrEqual(44);
-  await expect(page.getByRole("button", { name: "Przeładuj" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Reload" })).toBeVisible();
 });

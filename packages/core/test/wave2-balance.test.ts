@@ -4,7 +4,6 @@ import {
   BASE_CYBER_CAPACITY,
   BUFF_CATALOG,
   CYBERWARE_CATALOG,
-  CYBER_CAPACITY_STEPS,
   type ContractKind,
   type CyberwareDefinition,
   type CyberwareSlot,
@@ -43,8 +42,8 @@ describe("cyberware capacity (ADR-0033)", () => {
     expect(optics + CYBERWARE_CATALOG.kairos_overclock.capacity + CYBERWARE_CATALOG.tsubame_reflex.capacity).toBeGreaterThan(BASE_CYBER_CAPACITY);
   });
 
-  it("all the contract steps do not fit the fullest build: shards close the gap", () => {
-    const steps = capacityMax(Math.max(...CYBER_CAPACITY_STEPS.map((s) => s.contracts)), 0);
+  it("the pool after the first district (level 10, ADR-0059) does not fit the fullest build: shards close the gap", () => {
+    const steps = capacityMax(10, 0);
     expect(fullBuild()).toBeGreaterThan(steps);
     const shards = Math.ceil((fullBuild() - steps) / SHARD_CYBER_CAPACITY);
     expect(shards).toBeGreaterThanOrEqual(1);

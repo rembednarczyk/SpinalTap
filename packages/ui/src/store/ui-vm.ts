@@ -44,6 +44,8 @@ export interface Toast {
   readonly kind: "quest" | "memory" | "money" | "reputation" | "system" | "cyberware" | "heat" | "radio";
   readonly title: string;
   readonly text: string;
+  /** Outlives ordinary toasts when too many come at once (a level up, a failed load). */
+  readonly keep?: boolean;
 }
 
 export interface JournalStepVm {

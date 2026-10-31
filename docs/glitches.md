@@ -24,12 +24,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: później (S4; pełny art. 49 PoRD dla dróg dwukierunkowych, po G-015)
 - Gdzie: (−115,58, 31,83) 3,0 m, (−103,16, −32,87) 7,75 m, (−115,53, 25,62) 9,0 m za zebrą
 
-### G-018 Pionowy pas czarnych kresek na bruku Placu Litewskiego
-- Status: weryfikacja PRZYJĘTE, w PR #47. Bieg o średnim podstopniu < 4,5 cm rysowany jako bruk; skan `steps-micro-riser` 42 → 0. Uwaga weryfikatora: reguła zmienia 60 ze 101 pasów schodów, w tym zbocza Podzamcza (np. (798, 272), spadek 12%), które teraz są rampą w kolorze stopni
-- Ważność: S3 (proponowana) · Zasięg: lokalny
-- Gdzie: Plac Litewski (20, 10), kadr z yaw 3,14
-- Dowód: zrzut naprawiacza G-013 (pionowy pas czarnych poziomych kresek na środku bruku; może decal albo odpływ).
-
 ### G-022 Pas aut kończy się przed krótkim łańcuchem tej samej jezdni, który nie dostaje pasa
 - Status: przyjęte (po G-020 i G-021, te same pliki)
 - Ważność: S3 · Zasięg: lokalny (6 miejsc, 8 ślepych końców) · Koszt: średni
@@ -66,12 +60,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Gdzie: Zielona#21:d, z (271,6, −18) do (238,6, 4,7) w jednym kroku
 - Dowód: sonda weryfikatora G-023 (seed 3, 8:00, 60 s); może być resynchronizacją auta poza wzrokiem.
 
-### G-030 Poza Seki w klatce referencyjnej zależy od czasu zegarowego
-- Status: weryfikacja PRZYJĘTE, w PR #47. Zegary bezczynności postaci stoją w trybie `?reference`; dwa przebiegi migawki: 1106 px różnicy → 0
-- Ważność: S4 (proponowana: migawka różni się między przebiegami w prostokącie postaci) · Koszt: mały
-- Dowód: naprawiacz G-001: animacja bezczynności dostaje prawdziwe `dt`; dwa przebiegi starego kodu różnią się w x 703–797, y 273–532.
-- Pakiet właściciela: packages/engine (animacja postaci) / packages/app (`?reference`)
-
 ### G-031 Testy TPP w `npr-perf` i smoke save/load przekraczają limit przy obciążeniu
 - Status: zgłoszone (po G-029 testy TPP i quicksave przeszły przy obciążeniu 25→6, bez porównania A/B; `captureFrame` i podgląd postaci dalej rysują poza pacerem)
 - Ważność: S2 (proponowana: niestabilne e2e) · Koszt: nieznany
@@ -87,7 +75,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Gdzie: ok. (2401, 282) · Dowód: kąt 31°, pojazdy obu tras biorą się nawzajem za „auto przed sobą”, resynchronizacja co ok. 40 m.
 
 ### G-038 `lane-dead-end` nie sprawdza użycia początku, który „spotyka” koniec
-- Status: zgłoszone (z G-006)
+- Status: w weryfikacji (kontrola wymaga tego samego `use`; po G-006 koniec trolejbusu (2456, 245) i tak jest już liczony, więc licznik 44 się nie zmienia, zmiana tylko uszczelnia kontrolę)
 - Ważność: S4 (skan) · Gdzie: koniec trolejbusu na Mełgiewskiej ok. (2456, 245) ukryty przez początek pasa aut.
 
 ### G-041 Wzór bruku placu przesuwa się na granicy chunków
@@ -109,40 +97,17 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Dowód: naprawiacz i weryfikator G-030: `e2e/__snapshots__/npr-perf.spec.ts/reference-m0.png` różni się od deterministycznej klatki main (b5507ce) o 39 806 px poza Seki (bbox 0,0–1280,533); m.in. brak białej smugi odblasku na lewym oknie Neon Koi (y ok. 290). Test przechodzi tylko dzięki `maxDiffPixelRatio: 0.02`. Ustalić, który commit zmienił klatkę: regresja czy niezaktualizowana migawka.
 - Pakiet właściciela: packages/engine / e2e (QA)
 
-### G-044 Tłum i pozy czynności animują się zegarem ściennym także w klatce referencyjnej
-- Status: w weryfikacji, w PR #47 (cykle chodu, kołysania i czynności idą z `clock`, w `?reference` 0)
-- Ważność: S4 (proponowana; dziś poza kadrem referencyjnym) · Koszt: mały
-- Dowód: naprawiacz G-030: `crowd-pose.ts` (`stepPuppet`, `s.time`) i `activity-poses.ts` (`b.time`) idą z `dt`; jeśli wejdą w kadr `?reference`, wróci niedeterminizm migawki.
-- Pakiet właściciela: packages/engine (renderer)
-
-### G-045 Test `far-city.test.ts` przekracza 5 s pod obciążeniem
-- Status: w weryfikacji, w PR #47. Przyczyna: `expect` na każdą parę wierzchołek × chunk; teraz jedna asercja na liście naruszeń, 3773 ms → 12 ms, kontrola ta sama (odwrócony warunek pada)
-- Ważność: S3 (proponowana: niestabilny test jednostkowy) · Koszt: mały
-- Dowód: „keeps rings and fillers off every chunk's ground” 5182 ms przy load 16 i padł przy load ok. 8; sam przechodzi 5/5. Ustalić, co jest drogie (podniesienie limitu nie jest poprawką).
-- Pakiet właściciela: packages/engine
-
 ### G-046 Smoke M0: kierunek ruchu po `freeze` zależy od chwili zamrożenia
-- Status: zgłoszone (z weryfikacji i18n 2b)
+- Status: w weryfikacji. Przyczyna w grze: Chromium po wejściu w pointer lock wysyła jeden `mousemove` z ruchem równym minus pozycja kursora (−640 px), `BrowserInput` brał go za obrót (yaw π/2 → 0,16); pierwszy ruch po zmianie stanu blokady nie obraca już widoku
 - Ważność: S2 (proponowana: niestabilne e2e) · Koszt: mały
 - Dowód: weryfikator i18n 2b, sonda: New Game, `freeze`, 6×10 kroków `moveZ`; `tick0` wypada 10, 15 albo 20 i każdy daje inny kierunek; przy `tick0=15` gracz idzie na ścianę z=−62,88 i staje po 2,09 m, więc `smoke.spec.ts:26` (ruch > 2,5) pada. Na czystym main (b5507ce) 3/4 przebiegów sondy trafia na ścianę. Test zakłada kierunek, który zależy od liczby ticków przed `freeze`.
 - Pakiet właściciela: e2e (QA) / packages/app
-
-### G-047 Karta skanu hackowania nie zmienia języka do zmiany celu
-- Status: weryfikacja PRZYJĘTE, w PR #47 (presenter pamięta język karty)
-- Ważność: S4 (proponowana) · Koszt: mały
-- Dowód: `hacking-hud.ts:62` przelicza kartę tylko przy zmianie celu; po zmianie języka w pauzie karta tego samego celu zostaje w starym języku.
-- Pakiet właściciela: packages/app (HUD), etap 2c ADR-0056
 
 ### G-048 Prawdziwy tap tuż po przycisku pada ginie jako „ghost click”
 - Status: w weryfikacji (poprawka dffff88, `packages/ui/src/touch/ghost-click.ts`)
 - Ważność: S2 (niestabilne e2e `touch.spec`, a na telefonie zgubiony pierwszy wybór w dialogu) · Koszt: mały
 - Dowód: `pointerdown` na przycisku pada uzbraja `swallowNextClick` na 700 ms, a ten sam przycisk w `touchend` robi `preventDefault`, więc klik zgodności nie przychodzi i nasłuch zjada pierwszy prawdziwy tap w wybór dialogu. Pomiar: padły 3 z 5 przebiegów (odstępy 432–679 ms), przeszły przy 1,6–1,8 s; bez G-006 też 2 z 5. Poprawka: nasłuch wygasa przy następnym `pointerdown`.
 - Pakiet właściciela: packages/ui (touch)
-
-### G-006 Skręty aut na skrzyżowaniach
-- Status: weryfikacja PRZYJĘTE (3. runda), w PR. `lane-dead-end` 61 → 44; zator Ruska/Lwowska usunięty; nowa kontrola `turn-off-road` 6 (zawrotki targu, G-025). CPU sceny targu 3,8 → 4,3 s na 3000 kroków
-- Ważność: S3 · Zasięg: szeroki (33 ślepe końce pasów na skrzyżowaniach i 6 z G-024) · Koszt: duży
-- Test przyjęcia: `lane-dead-end` spada; łuki skrętu na nawierzchni drogi i poza budynkami.
 
 ### G-007 Strzałki na pasach i napis BUS
 - Status: później (ADR-0052 „Na później”)
@@ -183,6 +148,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | G-034 | Kaito od początku w Neon Koi (decyzja użytkownika) | #46 |
 | G-035 | Wskaźniki zadań nie prowadzą do postaci z wątku: nie da się znaleźć babci Ume | #43 |
 | G-039 | Łańcuch słupków przechodzi przez podstawę latarni na Placu Łokietka | #45 |
+| G-018 | Pionowy pas czarnych kresek na bruku Placu Litewskiego | #47 |
+| G-030 | Poza Seki w klatce referencyjnej zależy od czasu zegarowego | #47 |
+| G-044 | Tłum i pozy czynności animują się zegarem ściennym także w klatce referencyjnej | #47 |
+| G-045 | Test `far-city.test.ts` przekracza 5 s pod obciążeniem | #47 |
+| G-047 | Karta skanu hackowania nie zmienia języka do zmiany celu | #47 |
+| G-006 | Skręty aut na skrzyżowaniach | #47 |
 
 ## Odrzucone
 - G-005 Wiata przystanku wchodzi w ścianę przy Alei Tysiąclecia: duplikat (G-011)

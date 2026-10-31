@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useT } from "../i18n/use-t";
 import { useHackIntents, usePhoneIntents, useSessionIntents, useUi } from "../use-ui";
 import { ActionArc, MoreActions, UseButton } from "./action-arc";
 import { PadButtonView, useLookDrag } from "./pad-button";
@@ -59,6 +60,7 @@ const Stick = ({ pad }: { pad: TouchPadSink }) => {
 
 /** Menu, phone and pause in one row along the top edge, clear of the minimap and the wallet. */
 const TopBar = () => {
+  const t = useT();
   const phone = usePhoneIntents();
   const session = useSessionIntents();
   const toggleCharacter = useUi((s) => s.toggleCharacter);
@@ -66,13 +68,13 @@ const TopBar = () => {
   return (
     <div className="touch__top">
       {/* One button for the whole character screen instead of separate sheet and journal ones (plan §7). */}
-      <button type="button" className="touch__btn touch__btn--small touch__btn--menu" aria-label="Postać" data-testid="touch-character" onClick={() => toggleCharacter("inventory")}>
+      <button type="button" className="touch__btn touch__btn--small touch__btn--menu" aria-label={t("touch.character")} data-testid="touch-character" onClick={() => toggleCharacter("inventory")}>
         ☰
       </button>
-      <button type="button" className="touch__btn touch__btn--small touch__btn--phone" aria-label="Telefon" data-testid="touch-phone" onClick={() => phone.openPhone()}>
+      <button type="button" className="touch__btn touch__btn--small touch__btn--phone" aria-label={t("touch.phone")} data-testid="touch-phone" onClick={() => phone.openPhone()}>
         ☏{unread > 0 && <span className="touch__badge">{unread}</span>}
       </button>
-      <button type="button" className="touch__btn touch__btn--small" aria-label="Pauza" onClick={() => session.pause()}>
+      <button type="button" className="touch__btn touch__btn--small" aria-label={t("touch.pause")} onClick={() => session.pause()}>
         II
       </button>
     </div>
@@ -86,6 +88,7 @@ const TopBar = () => {
  * ability only with its implant. The rest unfolds behind "more".
  */
 export const TouchControls = ({ pad }: { pad: TouchPadSink }) => {
+  const t = useT();
   const hack = useHackIntents();
   const hasAbility = useUi((s) => s.ability !== null);
   // Lit while aiming down sights or guarding, which in toggle mode outlasts the press.
@@ -118,11 +121,11 @@ export const TouchControls = ({ pad }: { pad: TouchPadSink }) => {
       <Stick pad={pad} />
       <TopBar />
       <div className="touch__actions">
-        <PadButtonView pad={pad} button="fire" label="●" hint="Strzał" className="touch__btn--fire" lookToo />
+        <PadButtonView pad={pad} button="fire" label="●" hint={t("touch.fire")} className="touch__btn--fire" lookToo />
         <ActionArc pad={pad} more={more} onMore={() => setMore(!more)} />
-        <PadButtonView pad={pad} button="aim" label="◎" hint="Celuj lub blokuj" className={`touch__btn--aim${aimOn ? " touch__btn--on" : ""}`} lookToo testId="touch-aim" />
-        <PadButtonView pad={pad} button="jump" label="⤒" hint="Skok" className="touch__btn--jump" testId="touch-jump" />
-        {hasAbility && <PadButtonView pad={pad} button="ability" label="⚡" hint="Zdolność" className="touch__btn--q" />}
+        <PadButtonView pad={pad} button="aim" label="◎" hint={t("touch.aim")} className={`touch__btn--aim${aimOn ? " touch__btn--on" : ""}`} lookToo testId="touch-aim" />
+        <PadButtonView pad={pad} button="jump" label="⤒" hint={t("touch.jump")} className="touch__btn--jump" testId="touch-jump" />
+        {hasAbility && <PadButtonView pad={pad} button="ability" label="⚡" hint={t("touch.ability")} className="touch__btn--q" />}
         <UseButton pad={pad} />
         {more && <MoreActions pad={pad} crouchOn={crouchOn} setCrouchOn={setCrouchOn} />}
       </div>

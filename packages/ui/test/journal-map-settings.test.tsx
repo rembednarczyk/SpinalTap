@@ -98,7 +98,7 @@ describe("journal", () => {
 
   it("opens from the touch top bar through the character screen", () => {
     mount({ screen: "playing" }, true);
-    fireEvent.click(screen.getByRole("button", { name: "Postać" }));
+    fireEvent.click(screen.getByRole("button", { name: "Character" }));
     fireEvent.click(screen.getByRole("tab", { name: /Journal/ }));
     expect(screen.getByTestId("journal")).toBeTruthy();
   });

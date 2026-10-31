@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ABILITY_CATALOG, BUFF_CATALOG, type DomainState, STACKABLE_CATALOG, SHARD_CYBER_CAPACITY } from "@seki/core";
+import { ABILITY_CATALOG, BUFF_CATALOG, type DomainState, STACKABLE_CATALOG, SHARD_CYBER_CAPACITY, progressionFromXp, xpForLevel } from "@seki/core";
 import { SIM_DT, Simulation } from "../src";
 import { collect, input, run } from "./helpers";
 
@@ -47,11 +47,11 @@ describe("cyberware capacity (ADR-0033)", () => {
     expect(capacity.at(-1)).toEqual({ used: 17, max: 18 });
   });
 
-  it("grows with finished contracts and keeps the shards through a save", () => {
-    const sim = simWith((d) => ({ ...d, contracts: { ...d.contracts, completed: 6 }, capacityShards: 1 }));
+  it("grows every third level (ADR-0059) and keeps the shards through a save", () => {
+    const sim = simWith((d) => ({ ...d, contracts: { ...d.contracts, completed: 6 }, progression: progressionFromXp(xpForLevel(6)), capacityShards: 1 }));
     const capacity = collect<{ used: number; max: number }>(sim, "CyberwareCapacityChanged");
     sim.step();
-    expect(capacity).toEqual([{ used: 2, max: 20 }]);
+    expect(capacity).toEqual([{ used: 2, max: 12 + 4 + SHARD_CYBER_CAPACITY }]);
     expect(Simulation.fromSnapshot(sim.snapshot(null, "t", "")).domain.capacityShards).toBe(1);
   });
 

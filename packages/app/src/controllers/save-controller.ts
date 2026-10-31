@@ -73,7 +73,7 @@ export class SaveController {
       pushToastTimed(ui, "system", this.t("save.saved"), slot === "quick" ? this.t("slots.quick") : slot);
       return true;
     } catch (e) {
-      pushToastTimed(ui, "system", this.t("save.failed"), String(e));
+      pushToastTimed(ui, "system", this.t("save.failed"), String(e), true);
       return false;
     } finally {
       patchUi(ui, { busy: false });
@@ -95,7 +95,7 @@ export class SaveController {
       return true;
     } catch (e) {
       const text = e instanceof CorruptSaveError ? this.t("save.corruptFile") : String(e);
-      pushToastTimed(ui, "system", this.t("save.loadFailed"), text);
+      pushToastTimed(ui, "system", this.t("save.loadFailed"), text, true);
       return false;
     } finally {
       patchUi(ui, { busy: false });
