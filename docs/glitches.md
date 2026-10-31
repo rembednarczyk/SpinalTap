@@ -215,22 +215,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (traffic-junctions)
 - Test przyjęcia: `traffic-junction-drive` w progach na gałęzi G-052 i na main
 
-### G-076 Przejazdy bramne z `tunnel=yes` zamknięte bryłą (Gruella pod Trynitarską, Królewska, Sąd Okręgowy, Rynek 5)
-- Status: w PR #80 (przyjęte przez weryfikatora i kuratora)
-- Ważność: S2 (proponowana) · Zasięg: 9 miejsc, w tym zabytek · Koszt: mały
-- Gdzie: Gruella w298307007 (587.6, −147); Sąd Okręgowy w343899807 (1.4, −96.1); Peowiaków 13 w343899804 (−48.5, −167.8); Królewska, 5 bram kamienic (x 387..489); Rynek 5 w1222303436 (562, −29.1); T-036…T-039
-- Dowód: zalewanie siatki 0,25 m: ciało 0,38 m nie przechodzi; tagi OSM `tunnel=yes`
-- Przyczyna (przypuszczalna): `passages.ts` bierze tylko `tunnel=building_passage`, a `underground()` w `ground.ts` zabiera nawierzchnię
-- Pakiet właściciela: tools/osm-import
-- Test przyjęcia: kontrola `passage-blocked` (definicja kuratora w `scratchpad/topo-bramy-raport.md`), baza 9 → 0
-
-### G-077 Budynek podziemny zbudowany na powierzchni ul. Zamkowej
-- Status: w PR #80 (przyjęte przez weryfikatora i kuratora)
-- Ważność: S2 (proponowana: zasłania 11,5 m osi drogi na dojściu do Zamku) · Koszt: mały
-- Gdzie: w980143457 (771.1, 190.5), `location=underground`, `layer=-1`, bryła 6,9 m na osi w154962966; T-041
-- Pakiet właściciela: tools/osm-import (`buildingAreas`)
-- Test przyjęcia: kontrola `building-underground-solid` 1 → 0
-
 ### G-078 Brama Zamku z domyślnymi wymiarami przejazdu
 - Status: zgłoszone (audyt bram i przejazdów) · Ważność: S4 · Koszt: mały
 - Gdzie: brama wjazdowa Zamku, 2,4 × 3,4 m domyślnie; T-040
@@ -362,6 +346,8 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | G-067 | Klasztor Dominikanów z proceduralnymi wieżami kościoła | #72 |
 | G-056 | Kształt dachu z OSM (`roof:shape`) ignorowany: hełmy, kopuły i dachy dwuspadowe jako czterospadowe | #78 |
 | G-061 | Część `building:part` bez obrysu `building` nie trafia do gry (pawilon Bona) | #74 |
+| G-076 | Przejazdy bramne z `tunnel=yes` zamknięte bryłą (Gruella pod Trynitarską, Królewska, Sąd Okręgowy, Rynek 5) | #80 |
+| G-077 | Budynek podziemny zbudowany na powierzchni ul. Zamkowej | #80 |
 
 ## Odrzucone
 - G-005 Wiata przystanku wchodzi w ścianę przy Alei Tysiąclecia: duplikat (G-011)

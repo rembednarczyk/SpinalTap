@@ -381,3 +381,19 @@ Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [r
 - Gdzie: w1236054202 (708.4, 166.8), Podzamcze; T-020
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: kontrola skanu `building-part-orphan` (część bez obrysu i bez bryły w grze), baza 1 → 0
+
+### G-076 Przejazdy bramne z `tunnel=yes` zamknięte bryłą (Gruella pod Trynitarską, Królewska, Sąd Okręgowy, Rynek 5)
+- Status: naprawione (#80). `streetLevelTunnels`: przejazdy `tunnel=yes`/`covered=yes` na poziomie ulicy jako przejścia; skan `passage-blocked` 9 → 0. Dalej: G-089 (maxheight), G-079 (w586408568)
+- Ważność: S2 (proponowana) · Zasięg: 9 miejsc, w tym zabytek · Koszt: mały
+- Gdzie: Gruella w298307007 (587.6, −147); Sąd Okręgowy w343899807 (1.4, −96.1); Peowiaków 13 w343899804 (−48.5, −167.8); Królewska, 5 bram kamienic (x 387..489); Rynek 5 w1222303436 (562, −29.1); T-036…T-039
+- Dowód: zalewanie siatki 0,25 m: ciało 0,38 m nie przechodzi; tagi OSM `tunnel=yes`
+- Przyczyna (przypuszczalna): `passages.ts` bierze tylko `tunnel=building_passage`, a `underground()` w `ground.ts` zabiera nawierzchnię
+- Test przyjęcia: kontrola `passage-blocked` (definicja kuratora w `scratchpad/topo-bramy-raport.md`), baza 9 → 0
+
+
+### G-077 Budynek podziemny zbudowany na powierzchni ul. Zamkowej
+- Status: naprawione (#80). `buildingAreas` pomija `location=underground`; skan `building-underground-solid` 1 → 0. Odsłonięte: G-088
+- Ważność: S2 (proponowana: zasłania 11,5 m osi drogi na dojściu do Zamku) · Koszt: mały
+- Gdzie: w980143457 (771.1, 190.5), `location=underground`, `layer=-1`, bryła 6,9 m na osi w154962966; T-041
+- Pakiet właściciela: tools/osm-import (`buildingAreas`)
+- Test przyjęcia: kontrola `building-underground-solid` 1 → 0
