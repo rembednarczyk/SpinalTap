@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { type StreetPropItem, VEHICLE_SIZE } from "../../../packages/core/src";
+import { type StreetPropItem, VEHICLE_SIZE, terrainHeightAt } from "../../../packages/core/src";
 import { planSteps } from "../../../packages/engine/src/renderer/mapcity/steps-plan";
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
@@ -14,6 +14,11 @@ import { ROAD_CHAINS, type RoadChain, polylineLength, surfacesAt } from "../../.
 import { clearedBuilding } from "../../../packages/sim/src/content/cleared-buildings";
 import { CLEARED_BUILDINGS, MAP_CHUNKS, PASSAGES } from "../../../packages/sim/src/content/lublin/sites";
 import { groundY } from "../../../packages/sim/src/content/lublin/terrain";
+import { BRIDGE_DECKS } from "../../../packages/sim/src/content/lublin/decks";
+import { WORLD_CHUNKS } from "../../../packages/sim/src/content/world-map";
+import { type GroundDeck, deckAt } from "../../../packages/sim/src/world/deck";
+import { GroundField } from "../../../packages/sim/src/world/ground";
+import { groundAt } from "../../../packages/sim/src/systems/movement-system";
 import { PARKED_CARS } from "../../../packages/sim/src/content/parked-cars";
 import { GAME_PROPS, WORLD_STREET_PROPS } from "../../../packages/sim/src/content/street-props";
 import { crossingBands, inCrossingBand } from "../../../packages/sim/src/content/lublin/crossing-bands";
@@ -163,6 +168,32 @@ const riserHeights = (outline: readonly number[]) => {
     out.push(Math.max(...ys) - Math.min(...ys));
   }
   return out;
+};
+
+/** The ground the simulation walks (ADR-0043, ADR-0053), terrain and decks of every chunk. */
+const FIELD = new GroundField(WORLD_CHUNKS);
+/** The bridges: decks whose bounds touch are pieces of one bridge (its carriageways, its sidewalks, its chunks). */
+const BRIDGES = (() => {
+  const decks = [...BRIDGE_DECKS.values()].flat();
+  const near = (a: GroundDeck, b: GroundDeck) => a.box.minX <= b.box.maxX + 1 && b.box.minX <= a.box.maxX + 1 && a.box.minZ <= b.box.maxZ + 1 && b.box.minZ <= a.box.maxZ + 1;
+  const groups: GroundDeck[][] = [];
+  for (const d of decks) {
+    const joined = groups.filter((g) => g.some((e) => near(e, d)));
+    groups.splice(0, groups.length, ...groups.filter((g) => !joined.includes(g)), [...joined.flat(), d]);
+  }
+  return groups;
+})();
+/** A map way's points every half metre, world x and z. */
+const wayPoints = (nodes: readonly number[]) => {
+  const pts = nodes.flatMap((id) => {
+    const n = SOURCE_OSM.nodes.get(id);
+    return n ? [geoToWorld(n.lat, n.lon)] : [];
+  });
+  return pts.slice(1).flatMap((b, i) => {
+    const a = pts[i]!;
+    const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 0.5));
+    return Array.from({ length: n }, (_, k) => ({ x: a.x + ((b.x - a.x) * k) / n, z: a.z + ((b.z - a.z) * k) / n }));
+  });
 };
 
 const laneChains = new Set(TRAFFIC_ROUTES.filter((r) => r.use === "cars").flatMap((r) => [...r.id.matchAll(/#(\d+):/g)].map((m) => Number(m[1]))));
@@ -435,6 +466,35 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     ),
   /** A piece of road or path on a bridge laid on the valley instead of a deck. */
   "bridge-without-deck": () => MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.bridge && !g.deck).map((g) => ({ at: near(g.outline[0]!, g.outline[1]!), what: g.surface }))),
+  /**
+   * A way of the map off the bridge (a street, a path, steps) under a bridge's deck more than 2 m
+   * over the terrain, which a walker cannot follow under it (G-062): walked on the simulation's
+   * ground from 5 m before the deck to 5 m past it, the feet jump by more than 0.5 m in a step.
+   */
+  "under-deck-blocked": () =>
+    [...SOURCE_OSM.ways.values()].flatMap((w) => {
+      const t = w.tags ?? {};
+      if (!t.highway || (t.bridge && t.bridge !== "no")) return [];
+      const pts = wayPoints(w.nodes);
+      return BRIDGES.flatMap((bridge) => {
+        const terrain = (p: { x: number; z: number }) => {
+          const g = FIELD.gridAt(p.x, p.z);
+          return g ? terrainHeightAt(g, p.x, p.z) : 0;
+        };
+        const under = pts.flatMap((p, i) => ((deckAt(bridge, p.x, p.z) ?? -Infinity) - terrain(p) > 2 ? [i] : []));
+        if (under.length === 0) return [];
+        const walk = pts.slice(Math.max(0, under[0]! - 10), under[under.length - 1]! + 11);
+        let feet = terrain(walk[0]!);
+        let jump = 0;
+        for (const p of walk) {
+          const y = groundAt([], FIELD, p.x, p.z, feet);
+          jump = Math.max(jump, Math.abs(y - feet));
+          feet = y;
+        }
+        const at = pts[under[0]!]!;
+        return jump > 0.5 ? [{ at: near(at.x, at.z), what: `w${w.id} ${t.name ?? t.highway} under a deck, a step of ${jump.toFixed(1)} m` }] : [];
+      });
+    }),
   /** A passage through a building with an end off every chunk, where there is no ground to come out on. */
   "passage-off-map": () =>
     PASSAGES.filter((p) => [p.from, p.to].some(({ x, z }) => !MAP_CHUNKS.some(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ))).map((p) => ({
