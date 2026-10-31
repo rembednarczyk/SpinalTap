@@ -26,6 +26,38 @@ describe("vertical Lublin 2077 (ADR-0051)", () => {
     }
   });
 
+  it("keeps a building against a landmark under the landmark's top (G-050)", () => {
+    const ring = (b: (typeof all)[number]["b"]) => Array.from({ length: b.outline.length / 2 }, (_, i) => [b.outline[i * 2]! + b.x, b.outline[i * 2 + 1]! + b.z] as const);
+    const gap = (a: readonly (readonly [number, number])[], c: readonly (readonly [number, number])[]) => {
+      let d = Infinity;
+      for (const [from, to] of [[a, c], [c, a]] as const)
+        for (const [x, z] of from)
+          for (let k = 0; k < to.length; k++) {
+            const [x0, z0] = to[k]!;
+            const [x1, z1] = to[(k + 1) % to.length]!;
+            const t = Math.max(0, Math.min(1, ((x - x0) * (x1 - x0) + (z - z0) * (z1 - z0)) / ((x1 - x0) ** 2 + (z1 - z0) ** 2 || 1)));
+            d = Math.min(d, Math.hypot(x0 + (x1 - x0) * t - x, z0 + (z1 - z0) * t - z));
+          }
+      return d;
+    };
+    const top = (b: (typeof all)[number]["b"]) => b.y + b.height + (b.roof ?? 0);
+    const landmarks = all.filter(({ b }) => isLandmark(b)).map(({ b }) => ({ b, ring: ring(b) }));
+    const over: string[] = [];
+    for (const { district, b } of all) {
+      const view = buildingView(b, district);
+      const rise = view.kind === "building" ? (view.vertical?.rise ?? 0) : 0;
+      if (rise === 0) continue;
+      for (const l of landmarks) if (top(b) + rise > top(l.b) + 0.01 && Math.hypot(l.b.x - b.x, l.b.z - b.z) < 200 && gap(ring(b), l.ring) < 4) over.push(`${b.id} over ${l.b.id}`);
+    }
+    expect(over).toEqual([]);
+    // Grodzka 36a against the Grodzka Gate, already as high as the gate: no superstructure at all.
+    const grodzka = all.find(({ b }) => b.id === "w66293355")!;
+    const view = buildingView(grodzka.b, grodzka.district);
+    expect(view.kind === "building" ? (view.vertical?.rise ?? 0) : -1).toBe(0);
+    // The district's rule alone would give it five storeys.
+    expect(verticalOf(grodzka.b, grodzka.district)?.rise).toBe(15);
+  });
+
   it("rises in whole storeys, most on Krakowskie and Podzamcze, not round the Rynek", () => {
     const rises: Record<string, number[]> = {};
     for (const { district, b } of all) {

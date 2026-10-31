@@ -7,6 +7,7 @@ import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 import { CROWD_LANES } from "../../../packages/sim/src/content/crowd";
 import { furnitureClearance } from "../../../packages/sim/src/content/furniture-index";
 import { BOLLARD, alongSegment, anchors, chainSegments, chainThrough, distanceToPiece, furniturePrisms, furnitureRadius } from "../../../packages/sim/src/content/lublin/furniture";
+import { buildingView, isLandmark } from "../../../packages/sim/src/content/lublin";
 import { inBuilding, nearestWall } from "../../../packages/sim/src/content/lublin/places";
 import { ROAD_CHAINS, type RoadChain, polylineLength, surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
 import { clearedBuilding } from "../../../packages/sim/src/content/cleared-buildings";
@@ -126,6 +127,29 @@ const depth = (a: Poly, b: Poly) => {
       if (least <= 0) return 0;
     }
   return least;
+};
+
+/** A building's outline in world points. */
+const worldOutline = (b: { readonly x: number; readonly z: number; readonly outline: readonly number[] }): Pt[] => {
+  const out: Pt[] = [];
+  for (let i = 0; i + 1 < b.outline.length; i += 2) out.push({ x: b.outline[i]! + b.x, z: b.outline[i + 1]! + b.z });
+  return out;
+};
+
+/** The gap between two outlines (m): the shortest from a corner of one to an edge of the other. */
+const outlineGap = (a: Poly, b: Poly) => {
+  let d = Infinity;
+  for (const [from, to] of [[a, b], [b, a]] as const)
+    for (const p of from)
+      for (let k = 0; k < to.length; k++) {
+        const q = to[k]!;
+        const r = to[(k + 1) % to.length]!;
+        const dx = r.x - q.x;
+        const dz = r.z - q.z;
+        const t = Math.max(0, Math.min(1, ((p.x - q.x) * dx + (p.z - q.z) * dz) / (dx * dx + dz * dz || 1)));
+        d = Math.min(d, Math.hypot(q.x + dx * t - p.x, q.z + dz * t - p.z));
+      }
+  return d;
 };
 
 const overlaps = (a: Rect, b: Rect) => a.minX < b.maxX && b.minX < a.maxX && a.minZ < b.maxZ && b.minZ < a.maxZ;
@@ -426,6 +450,21 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     ),
   /** A piece of road or path on a bridge laid on the valley instead of a deck. */
   "bridge-without-deck": () => MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.bridge && !g.deck).map((g) => ({ at: near(g.outline[0]!, g.outline[1]!), what: g.surface }))),
+  /**
+   * A building whose superstructure (ADR-0051) lifts its top over a landmark it stands against,
+   * under 4 m from its outline (no street between them): the house over the gate (G-050).
+   */
+  "landmark-overbuilt": () => {
+    const buildings = MAP_CHUNKS.flatMap((c) => c.buildings.map((b) => ({ b, district: c.district, outline: worldOutline(b), top: b.y + b.height + (b.roof ?? 0) })));
+    const landmarks = buildings.filter(({ b }) => isLandmark(b));
+    return buildings.flatMap(({ b, district, outline, top }) => {
+      const view = buildingView(b, district);
+      const rise = view.kind === "building" ? (view.vertical?.rise ?? 0) : 0;
+      if (rise === 0) return [];
+      const over = landmarks.find((l) => top + rise > l.top + 0.01 && Math.hypot(l.b.x - b.x, l.b.z - b.z) < 200 && outlineGap(outline, l.outline) < 4);
+      return over ? [{ at: near(b.x, b.z), what: `${b.id} top ${(top + rise).toFixed(1)} over ${over.b.name ?? over.b.id} ${over.top.toFixed(1)}` }] : [];
+    });
+  },
   /** A passage through a building with an end off every chunk, where there is no ground to come out on. */
   "passage-off-map": () =>
     PASSAGES.filter((p) => [p.from, p.to].some(({ x, z }) => !MAP_CHUNKS.some(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ))).map((p) => ({
