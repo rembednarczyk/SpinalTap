@@ -90,12 +90,12 @@ describe("body HUD", () => {
       disguise: { role: "hebi", label: "Przebranie: Hebi", blown: false },
     });
     expect(screen.getByTestId("buff-regen").textContent).toContain("12 s");
-    expect(screen.getByTestId("dash").getAttribute("aria-label")).toBe("Zryw za 0.6 s");
+    expect(screen.getByTestId("dash").getAttribute("aria-label")).toBe("Dash in 0.6 s");
     // A disguise keeps the identity block on screen.
     expect(screen.getByTestId("identity").classList.contains("hud__identity--calm")).toBe(false);
     act(() => patchUi(store, { disguise: { role: "hebi", label: "Przebranie: Hebi", blown: true }, dash: { cooldown: 0, total: 1.2 } }));
     expect(screen.getByTestId("disguise").textContent).toContain("Cover blown");
-    expect(screen.getByTestId("dash").getAttribute("aria-label")).toBe("Zryw gotowy");
+    expect(screen.getByTestId("dash").getAttribute("aria-label")).toBe("Dash ready");
   });
 
   it("lists hooks under the objective and the variation on the debrief", () => {

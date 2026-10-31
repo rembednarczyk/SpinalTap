@@ -130,6 +130,7 @@ const Hint = () => {
 export const withoutKeyHints = (text: string): string => text.replace(/\s*\[[A-Za-z0-9]{1,5}\]/g, "");
 
 export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
+  const t = useT();
   const hp = useUi((s) => s.hp);
   const maxHp = useUi((s) => s.maxHp);
   const eddies = useUi((s) => s.eddies);
@@ -155,7 +156,7 @@ export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
       <DamageNumbers />
       <div className={`hud__identity${calm ? " hud__identity--calm" : ""}`} data-testid="identity">
         <div className="hud__name">{alias ?? "???"}</div>
-        <div className="hud__hp" aria-label="Zdrowie">
+        <div className="hud__hp" aria-label={t("hud.health")}>
           <div className={`hud__hp-fill${hpPct < 30 ? " hud__hp-fill--low" : ""}`} style={{ width: `${hpPct}%` }} />
         </div>
         <div className="hud__hp-label">
