@@ -66,7 +66,7 @@ void main(void) {
   if (kind > 9.5) {
     // A checkpoint's strip (ADR-0062): blinking in pairs, steady at half with flashes reduced.
     float on = step(0.5, fract(time * 1.6 + seed));
-    a = mix(0.25 + 0.95 * on, 0.6, reduce);
+    a = mix(0.45 + 0.8 * on, 0.7, reduce);
   } else if (kind > 8.5) {
     // Low mist in the canyons (ADR-0051): soft drifting sheets fading at their edges and near the eye.
     float edge = smoothstep(0.0, 0.3, uv.x) * smoothstep(1.0, 0.7, uv.x) * smoothstep(0.0, 0.35, uv.y) * smoothstep(1.0, 0.65, uv.y);

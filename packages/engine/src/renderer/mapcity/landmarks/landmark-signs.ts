@@ -56,7 +56,7 @@ const jambStrips = (sink: MeshSink, f: FacadeFrame, color: Rgba): void => {
       ] as const) {
         const at = (tt: number, y: number): Vec => ({ x: ax.o.x + ax.u.x * tt + ax.n.x * s, y, z: ax.o.z + ax.u.z * tt + ax.n.z * s });
         const n = { x: -ax.n.x * side, y: 0, z: -ax.n.z * side };
-        quadUv(sink, [at(t - 0.06, floor + 0.5), at(t + 0.06, floor + 0.5), at(t + 0.06, p.spring - 0.1), at(t - 0.06, p.spring - 0.1)], n, color, UV, [k * 0.5 + (side > 0 ? 0 : 0.25), MAP_SIGN_KIND.strobe]);
+        quadUv(sink, [at(t - 0.09, floor + 0.5), at(t + 0.09, floor + 0.5), at(t + 0.09, p.spring - 0.1), at(t - 0.09, p.spring - 0.1)], n, color, UV, [k * 0.5 + (side > 0 ? 0 : 0.25), MAP_SIGN_KIND.strobe]);
       }
     }
   }
@@ -72,9 +72,12 @@ export const planLandmarkSigns = (sink: MeshSink, f: LandmarkFrame, nameSlot: (n
     if (s && slot !== null) flat(sink, fresh.w, s.u, s.y, 0.16, s.width, s.height, tint("#5ce1ff", 1), [slot, MAP_SIGN_KIND.name]);
   }
   if (fresh && layer.plaque) {
-    const slot = nameSlot(layer.plaque);
-    const width = Math.min(3.6, fresh.u0 - 0.6);
-    if (slot !== null && width > 1.5) flat(sink, fresh.w, fresh.u0 - 0.4 - width / 2, f.b.base + 2.3, 0.08, width, width / 8, tint("#fff1d6", 1), [slot, MAP_SIGN_KIND.name]);
+    // Beside the mouth, on the side with more room, under the blind niches.
+    const left = fresh.u0 >= fresh.w.length - fresh.u1;
+    const width = Math.min(3.6, (left ? fresh.u0 : fresh.w.length - fresh.u1) - 0.6);
+    const u = left ? fresh.u0 - 0.4 - width / 2 : fresh.u1 + 0.4 + width / 2;
+    const slot = width > 1.5 ? nameSlot(layer.plaque) : null;
+    if (slot !== null) flat(sink, fresh.w, u, f.b.base + 2.3, 0.08, width, width / 8, tint("#fff1d6", 1), [slot, MAP_SIGN_KIND.name]);
   }
   const old = mouthWall(f, "old");
   if (old) for (const u of uplightsOn(old)) flat(sink, old.w, u, f.b.foot + 2.6, 0.06, 1.5, 5, tint(layer.warm, 0.9), [u, MAP_SIGN_KIND.beam], UV_UP);
