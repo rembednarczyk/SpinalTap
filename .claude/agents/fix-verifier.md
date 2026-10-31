@@ -9,7 +9,7 @@ Dostajesz ID glitcha, ścieżkę worktree i hash commita naprawiacza. Twoim zada
 
 ## Sprawdź
 1. **Zgodność ze zgłoszeniem.** Czy commit naprawia glitch z `docs/glitches.md` u przyczyny, czy tylko objaw?
-2. **Dowód.** Uruchom test sam. Musi przechodzić z poprawką i padać po cofnięciu plików źródłowych (`git stash push <src>`, test, `git stash pop`).
+2. **Dowód.** Uruchom test sam. Musi przechodzić z poprawką i padać po cofnięciu plików źródłowych (`git show <hash>^:<plik> > <plik>`, test, `git checkout -- <plik>`). Nie używaj `git stash`: lista stashy jest wspólna dla wszystkich worktree, a przy zacommitowanej poprawce `stash push` nic nie cofa, więc `stash pop` zdejmuje cudzy wpis.
 3. **Regresje:**
    - pełne testy dotkniętych pakietów i skan glitchy (`tools/glitch-scan/test/glitch-scan.test.ts`), żaden licznik nie rośnie;
    - złote hashe w `packages/sim/test/determinism.test.ts` bez zmian albo zmiana uzasadniona w commicie.

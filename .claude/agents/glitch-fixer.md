@@ -12,7 +12,7 @@ Naprawiasz dokładnie jeden glitch o ID podanym przez orkiestratora. Działasz j
 2. **Przyczyna.** Znajdź źródło: dane importu, treść, system, renderer. Popraw je u źródła, nie objawowo. Ślad z innego miejsca (np. auto przez mebel) naprawiasz tam, gdzie powstaje (generator mebli, trasy), nie w miejscu, gdzie go widać.
 3. **Test najpierw.** Napisz test w pakiecie właściciela albo dopisz kontrolę do `tools/glitch-scan/test/glitch-scan.test.ts`. Pokaż, że pada na obecnym kodzie.
 4. **Poprawka.** Zmiana minimalna, w stylu otaczającego kodu. Komentarze tylko tam, gdzie mówią „dlaczego”. Limity z `CLAUDE.md`: 500 linii na plik, 120 na funkcję.
-5. **Dowód.** Ten sam test przechodzi z poprawką i pada bez niej (np. `git stash push <pliki src>`).
+5. **Dowód.** Ten sam test przechodzi z poprawką i pada bez niej (np. `git show HEAD:<plik> > /tmp/...` i podmiana pliku, potem `git checkout -- <plik>`). Nie używaj `git stash`: lista stashy jest wspólna dla wszystkich worktree.
 6. **DoD w zakresie zmiany:**
    - `pnpm typecheck` i `pnpm lint`;
    - testy pakietów, których dotyczy zmiana;
