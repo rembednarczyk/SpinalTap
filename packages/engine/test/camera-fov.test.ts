@@ -55,6 +55,28 @@ describe("camera field of view (ADR-0049)", () => {
     expect(rig.camera.fov).toBeCloseTo(BASE_FOV * 0.6, 3);
     expect(rig.lookScale).toBeLessThan(0.7);
   });
+
+  it("holds still with camera motion off: no walking bob, hit shake or sprint widening (gap audit, accessibility)", () => {
+    const moving = (motion: boolean) => {
+      const rig = rigOn(1280, 720);
+      rig.cameraMotion = motion;
+      const heights: number[] = [];
+      for (let t = 0; t < 2; t += 0.05) {
+        rig.shake(0.5);
+        rig.update({ ...standing, speed: 7 }, 0.05);
+        heights.push(rig.camera.position.y);
+      }
+      return { bob: Math.max(...heights) - Math.min(...heights), roll: Math.abs(rig.camera.rotation.z), fov: rig.camera.fov };
+    };
+    const on = moving(true);
+    expect(on.bob).toBeGreaterThan(0.01);
+    expect(on.roll).toBeGreaterThan(0);
+    expect(on.fov).toBeGreaterThan(BASE_FOV * 1.05);
+    const off = moving(false);
+    expect(off.bob).toBeCloseTo(0, 6);
+    expect(off.roll).toBe(0);
+    expect(off.fov).toBeCloseTo(BASE_FOV, 4);
+  });
 });
 
 describe("TPP camera (ADR-0049)", () => {

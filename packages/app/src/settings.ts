@@ -80,6 +80,7 @@ export const sanitizeSettings = (raw: unknown, defaults: SettingsVm = DEFAULT_SE
     hudScale: Math.round(clamp(r.hudScale, HUD_SCALE_RANGE[0], HUD_SCALE_RANGE[1], defaults.hudScale) * 20) / 20,
     legibleFont: bool(r.legibleFont, defaults.legibleFont),
     reduceFlashes: bool(r.reduceFlashes, defaults.reduceFlashes),
+    cameraMotion: bool(r.cameraMotion, defaults.cameraMotion),
     untimedBreach: bool(r.untimedBreach, defaults.untimedBreach),
     colorblind: isColorblind(r.colorblind) ? r.colorblind : defaults.colorblind,
     // Wave 2 (ADR-0035).
