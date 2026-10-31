@@ -306,6 +306,24 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (ground)
 - Test przyjęcia: kontrola `car-road-hole` (albo nowa) wykrywa i spada do 0
 
+### G-094 Przedsionek Trasy Podziemnej: pierwsze 4,5 m poza obszarem wnętrza
+- Status: zgłoszone (glitch hunt wnętrz, 31.10)
+- Ważność: S4 (proponowana) · Zasięg: 1 wejście · Koszt: mały
+- Gdzie: wejście do Trybunału w66264159, przedsionek z = −57, x 565,5…570
+- Dowód: `interiorAt` na stopie (y = podłoga przedsionka + 0,1, z = −57): x 565,6/567/569/569,9 → null, x 570,1 → `trasa-podziemna`; `TRASA_PODZIEMNA.vestibule.from.x` = 565,5, pierwszy pokój `minX: 570`; zrzut `scratchpad/shots1/p1-trasa-vest.png`; test w `interior-areas.test.ts` zaczyna chód od x = 563, a wyjście liczy od 571, więc tego nie łapie
+- Skutek: `InteriorEntered` (autozapis, ambient ADR-0060) 4,5 m za drzwiami, już w ciemnym korytarzu; wyjście symetrycznie
+- Przyczyna (przypuszczalna): pierwszy pokój zaczyna się od zgadniętego `minX: 570` w `content/kanal-underground.ts` zamiast od `T.vestibule.from.x`
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: `interiorAt` na (vestibule.from.x + 0,3, −57, door + 0,1) zwraca `trasa-podziemna`; kontrola skanu `interior-entrance-gap` (punkt 0,3 m za fasadą przy drzwiach/przejściu budynku wnętrza leży w obszarze) 1 → 0
+
+### G-095 Żółty kabel kanionu przez przedsionek Trasy Podziemnej (do potwierdzenia)
+- Status: niepotwierdzone (glitch hunt wnętrz, 31.10)
+- Ważność: S4 (proponowana) · Koszt: mały
+- Dowód: zrzut `scratchpad/shots1/p1-trasa-vest.png` (kamera 567, 1,93, −57, yaw π/2): żółta linia na wysokości głowy w poprzek przedsionka i krótki odcinek na tylnej ścianie
+- Do ustalenia: czy to kabel z `renderer/mapcity/canyon-plan.ts` albo `landmarks/cables.ts` przechodzący przez bryłę; ile takich w mieście
+- Pakiet właściciela: packages/engine (jeśli się potwierdzi)
+- Test przyjęcia: kontrola `cable-through-interior` (odcinek kabla wchodzi w bryłę wnętrza `interior: true`) z bazą → 0
+
 ## Naprawione
 | ID | Glitch | PR |
 |---|---|---|
@@ -393,4 +411,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | Ruch w czasie: korki, skoki pozycji, kolizje przy skrzyżowaniach (weryfikatorzy G-006) | 2026-10-30 | symulacja-sonda, test `traffic-junction-drive` |
 | Słupki i łańcuchy w całym mieście (G-032) | 2026-10-30 | skan `bollard-chain-*`, zrzuty |
 | Postacie wątku i wskaźniki zadań (G-035) | 2026-10-30 | test sesji |
-| Nieoglądane: Ruska (zrzuty), Kalinowszczyzna, Zamek, wnętrza, noc i deszcz z bliska, telefon, ekran tytułowy i ładowanie | - | - |
+| Wnętrza (klinika, Neon Koi, Tessen, Trasa Podziemna): spójność pomieszczeń, NPC w środku 240 s, obszary na progu, zrzuty FPP (łowca) | 2026-10-31 | pomiar kolizji, symulacja, zrzuty |
+| Zamek i Podzamcze wokół (Plac Zamkowy, brama, Dziedziniec, Donżon, Kaplica): dostępność pieszo, szew chunków x = 920 (zapas ok. 5 m przy `loadRadius` 30), nakładanie brył (łowca) | 2026-10-31 | pomiar, zrzuty |
+| Nieoglądane: wnętrza w TPP w ciasnym pokoju, zapis i wczytanie w środku, 60 s przerwy autozapisu, schody na wzgórze zamkowe, latarnie i AI na zboczu, Ruska (zrzuty), Kalinowszczyzna, noc i deszcz z bliska, telefon, ekran tytułowy i ładowanie | - | - |
