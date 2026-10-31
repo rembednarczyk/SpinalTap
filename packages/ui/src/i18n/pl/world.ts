@@ -213,6 +213,8 @@ export const plWorld = {
   "dash.cooldown": "Zryw za {seconds} s",
   "contract.hooks": "Odkryte haki",
   "hud.health": "Zdrowie",
+  "hud.ability.ready": "gotowe",
+  "hud.medkits": "Apteczki × {count}",
   "contract.untitled": "Zlecenie",
   "variation.modifier.night_only": "tylko nocą",
   "variation.modifier.time_limit": "na czas",
