@@ -8,6 +8,7 @@ import { WINDOW_STYLE } from "./facade-style";
 import { type P2, offsetRing, triangulate } from "./polygon";
 import { polygon } from "./sink-ops";
 import { addDome, addHipRoof, addTowers } from "./roof-plan";
+import { type PlanesKind, addOnion, addPlanesRoof } from "./roof-shapes";
 import { stackTiers } from "./vertical-plan";
 
 
@@ -159,6 +160,19 @@ const soffit = (sink: MeshSink, f: FacadeFrame, color: Rgba): void => {
  */
 const stacked = (f: FacadeFrame): boolean => (f.b.rise ?? 0) > 0 && stackTiers(f).length > 0;
 
+/** The roofs of planes over the outline (ADR-0064): gables, half-hips, mansards, skillions. */
+const PLANES: ReadonlySet<string> = new Set<PlanesKind>(["gable", "half-hip", "mansard", "skillion"]);
+const planesKind = (f: FacadeFrame): PlanesKind | null => (PLANES.has(f.style.roof) && (f.b.roof ?? 0) > 0.3 ? (f.style.roof as PlanesKind) : null);
+/** A roof sloping from the eaves: hipped, a pyramid or one of planes. */
+const pitched = (f: FacadeFrame): boolean => (f.b.roof ?? 0) > 0.3 && (f.style.roof === "hip" || f.style.roof === "pyramid" || planesKind(f) !== null);
+
+const slopes = (sink: MeshSink, f: FacadeFrame, p: Palette, underside: boolean): void => {
+  const roof = f.b.roof ?? 0;
+  const planes = planesKind(f);
+  if (planes) addPlanesRoof(sink, f, planes, roof, p, underside);
+  else addHipRoof(sink, f, roof, p.roof, p.trim, underside, f.style.roof === "pyramid");
+};
+
 const roofOf = (sink: MeshSink, f: FacadeFrame, p: Palette): void => {
   const s = f.style;
   const roof = f.b.roof ?? 0;
@@ -167,9 +181,9 @@ const roofOf = (sink: MeshSink, f: FacadeFrame, p: Palette): void => {
     parapet(sink, f, f.top - 0.4, p);
     return;
   }
-  if (s.roof === "hip" && roof > 0.3) {
+  if (pitched(f)) {
     if (s.attic !== "none") parapet(sink, f, f.top - 0.4, p);
-    addHipRoof(sink, f, roof, p.roof, p.trim);
+    slopes(sink, f, p, true);
     return;
   }
   if (s.attic === "none") {
@@ -179,6 +193,7 @@ const roofOf = (sink: MeshSink, f: FacadeFrame, p: Palette): void => {
     if (s.attic === "crenel") merlons(sink, f, p.trim);
   }
   if (s.roof === "dome" && roof > 0.3) addDome(sink, f, roof, p.roof, p.wall);
+  if (s.roof === "onion" && roof > 0.3) addOnion(sink, f, roof, p.roof);
 };
 
 /** One block per building for the far cells: same walls, the pitched roof or a flat top, towers as boxes. */
@@ -188,10 +203,15 @@ export const planFarBuilding = (sink: MeshSink, f: FacadeFrame): void => {
   if (stacked(f)) {
     walls(sink, f, f.top, p.wall);
     slab(sink, f.b.ring, f.top, p.roof, roofMeta(f.style.seed));
-  } else if (f.style.roof === "hip" && roof > 0.3) {
+  } else if (pitched(f)) {
     // The same pitched roof as near, so a tenement keeps its red roof across the city.
     walls(sink, f, f.top, p.wall);
-    addHipRoof(sink, f, roof, p.roof, p.trim, false);
+    slopes(sink, f, p, false);
+  } else if (f.style.roof === "onion" && roof > 0.3) {
+    // A helmet stays a helmet from afar: the landmark's silhouette.
+    walls(sink, f, f.top, p.wall);
+    slab(sink, f.b.ring, f.top, p.roof, roofMeta(f.style.seed));
+    addOnion(sink, f, roof, p.roof, true);
   } else {
     const top = f.top + roof * 0.35;
     walls(sink, f, top, p.wall);
