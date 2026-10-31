@@ -99,3 +99,19 @@ describe("the extract keeps building parts", () => {
     expect(d.nodes.size).toBe(4);
   });
 });
+
+describe("a part on no outline (G-061)", () => {
+  it("builds the Bona pavilion, mapped only as building:part, as a building of its own", () => {
+    const inputs = loadInputs();
+    const specs = ALL_CHUNKS.filter((c) => inRect({ x: 708.4, z: 166.8 }, c.rect));
+    const all = generate(inputs.osm, inputs.src, specs).chunks.flatMap((c) => c.buildings);
+    const bona = all.find((b) => b.id === "w1236054202");
+    expect(bona).toBeDefined();
+    expect(bona!.soffit).toBeUndefined();
+    expect(pointInRing({ x: 708.4, z: 166.8 }, ring(bona!))).toBe(true);
+    // A one-storey glass pavilion of a restaurant, not a block of flats taller than its neighbour (T-020).
+    expect(bona!.levels).toBe(1);
+    expect(bona!.height - bona!.plinth).toBeLessThan(6);
+    expect(bona!.use).toBe("commercial");
+  });
+});

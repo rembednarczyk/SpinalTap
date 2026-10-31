@@ -578,6 +578,22 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       return top < eaves - 3.2 ? [{ at: near(c.x, c.z), what: `w${w.id} walls to ${eaves.toFixed(1)} m, the game's to ${top.toFixed(1)} m` }] : [];
     });
   },
+  /** A `building:part` of the map on the map's ground with no building of the game round it: dropped (G-061). */
+  "building-part-orphan": () => {
+    const all = MAP_CHUNKS.flatMap((c) => c.buildings);
+    return [...SOURCE_OSM.ways.values()].flatMap((w) => {
+      const t = w.tags ?? {};
+      if (!t["building:part"] || t["building:part"] === "no" || t.building) return [];
+      const pts = w.nodes.slice(1).flatMap((id) => {
+        const n = SOURCE_OSM.nodes.get(id);
+        return n ? [geoToWorld(n.lat, n.lon)] : [];
+      });
+      if (pts.length === 0) return [];
+      const c = { x: pts.reduce((s, p) => s + p.x, 0) / pts.length, z: pts.reduce((s, p) => s + p.z, 0) / pts.length };
+      if (!inMap(c.x, c.z) || all.some((b) => inOutline(c.x, c.z, b.outline, b.x, b.z))) return [];
+      return [{ at: near(c.x, c.z), what: `w${w.id} ${t.name ?? t["building:part"]}` }];
+    });
+  },
   /**
    * A marketplace of the map data (`amenity=marketplace`, G-064) with fewer than one stall per
    * 150 m² of its open ground (sampled every metre, the chunks' rectangles in, its buildings out):
