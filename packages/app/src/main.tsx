@@ -12,7 +12,7 @@ import { type DebugApi, createDebugApi } from "./debug-api";
 import { GameSession } from "./game-session";
 import { keymapFor } from "./controls";
 import { bindPageHidden } from "./page-lifecycle";
-import { type SettingsStorage, applyEffects, loadHintsSeen, loadSettings, saveHintsSeen, saveSettings, scaleLook } from "./settings";
+import { type SettingsStorage, applyEffects, applyVolumes, loadHintsSeen, loadSettings, saveHintsSeen, saveSettings, scaleLook } from "./settings";
 
 declare global {
   interface Window {
@@ -87,7 +87,7 @@ const input = new BrowserInput(canvas);
 // Recorded CC0 sounds from public/audio, loaded after the first gesture; ?audio=off keeps the
 // pure synth. Anything missing or undecodable (e.g. Vorbis on old Safari) is synthesized.
 const audio = new SynthAudio({ samples: params.get("audio") === "off" ? {} : audioSampleManifest(new URL("audio/", document.baseURI).href) });
-audio.setVolume("master", settings.volume);
+applyVolumes(audio, settings);
 const ui = createUiStore();
 const probe = new PerfProbe(stage.engine, stage.scene);
 
@@ -190,18 +190,19 @@ const applyBackdrop = () => {
 ui.subscribe(applyBackdrop);
 applyBackdrop();
 
-// Music ducks under conversations; master volume follows the settings live.
+// Music ducks under conversations; the volumes follow the settings live.
 let talking = false;
-let volume = settings.volume;
+let volumes = settings;
 ui.subscribe((s) => {
   const nowTalking = s.dialogue !== null;
   if (nowTalking !== talking) {
     talking = nowTalking;
     audio.setMood(talking ? "dialog" : "explore");
   }
-  if (s.settings.volume !== volume) {
-    volume = s.settings.volume;
-    audio.setVolume("master", volume);
+  const v = s.settings;
+  if (v.volume !== volumes.volume || v.musicVolume !== volumes.musicVolume || v.sfxVolume !== volumes.sfxVolume || v.ambienceVolume !== volumes.ambienceVolume) {
+    volumes = v;
+    applyVolumes(audio, v);
   }
 });
 
