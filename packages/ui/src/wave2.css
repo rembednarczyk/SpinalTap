@@ -46,7 +46,8 @@
 .metro-ride__route { margin-top: 2px; font-size: 18px; }
 .metro-ride__bar { height: 6px; margin-top: 8px; background: rgba(255, 255, 255, 0.08); }
 .metro-ride__fill { height: 100%; background: var(--amber); transition: width 200ms linear; }
-.metro-ride__caption { max-width: min(720px, calc(100vw - 32px)); margin: 0; padding: 8px 14px; font-size: 18px; text-align: center; background: rgba(4, 7, 12, 0.78); }
+.subs-solid .metro-ride__caption { background: rgb(2, 4, 8); }
+.metro-ride__caption { max-width: min(720px, calc(100vw - 32px)); margin: 0; padding: 8px 14px; font-size: calc(18px * var(--subs-scale, 1)); text-align: center; background: rgba(4, 7, 12, 0.78); }
 
 /* ---- radio (in the phone) ---- */
 .radio { padding: 8px 12px; border-bottom: 1px solid var(--panel-edge); }

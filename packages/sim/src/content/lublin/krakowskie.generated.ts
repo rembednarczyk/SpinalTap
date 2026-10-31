@@ -1019,8 +1019,8 @@ export const KRAKOWSKIE_CHUNKS: readonly LublinChunkData[] = [
       {"x":397.3,"z":-254.8,"kind":"office","tag":"office=religion","name":"Kancelaria parafialna"},
     ],
     passages: [
-      {"building":"w66335286","from":{"x":450.4,"z":-164.8},"to":{"x":439.3,"z":-173.7},"width":3.2,"height":4,"rise":1.1},
-      {"building":"w66335277","from":{"x":437.1,"z":-149.6},"to":{"x":427.2,"z":-157.6},"width":3.2,"height":4,"rise":1.1},
+      {"building":"w66335286","from":{"x":450.4,"z":-164.8},"to":{"x":439.3,"z":-173.7},"width":3.2,"height":3.6,"rise":0.99},
+      {"building":"w66335277","from":{"x":437.1,"z":-149.6},"to":{"x":427.2,"z":-157.6},"width":3.2,"height":3.6,"rise":0.99},
       {"building":"w67498745","from":{"x":387.7,"z":-171.7},"to":{"x":376.4,"z":-176.2},"width":3.2,"height":4,"rise":1.1},
       {"building":"w66330536","from":{"x":248.2,"z":-203.2},"to":{"x":261.4,"z":-197.9},"width":2.4,"height":3.4,"rise":0.9},
     ],

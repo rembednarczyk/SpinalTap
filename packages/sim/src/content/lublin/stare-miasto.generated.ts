@@ -244,7 +244,7 @@ export const STARE_MIASTO_CHUNKS: readonly LublinChunkData[] = [
     passages: [
       {"building":"w66286371","from":{"x":587.6,"z":-154.6},"to":{"x":586.5,"z":-139.7},"width":3.4,"height":4,"rise":1.1},
       {"building":"w66286388","from":{"x":488.2,"z":-168.6},"to":{"x":498.3,"z":-156.9},"width":3.2,"height":4,"rise":1.1},
-      {"building":"w364550283","from":{"x":481.6,"z":-137.5},"to":{"x":468.6,"z":-146.8},"width":3.2,"height":4,"rise":1.1},
+      {"building":"w364550283","from":{"x":481.6,"z":-137.5},"to":{"x":468.6,"z":-146.8},"width":3.2,"height":3.6,"rise":0.99},
     ],
   },
   {

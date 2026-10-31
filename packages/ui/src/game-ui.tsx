@@ -20,7 +20,8 @@ import { MetroMap, MetroRide } from "./metro/metro-panel";
 import { RadioKey } from "./radio/radio";
 
 /**
- * Accessibility settings on the document root (ADR-0028): HUD scale as `--hud-scale`, the
+ * Accessibility settings on the document root (ADR-0028): HUD scale as `--hud-scale`, subtitle size
+ * as `--subs-scale` and an opaque subtitle box as `subs-solid`, the
  * legible font, reduced flashes and the colour-blind palette as attributes the styles read.
  */
 const Accessibility = () => {
@@ -28,14 +29,18 @@ const Accessibility = () => {
   const legible = useUi((s) => s.settings.legibleFont);
   const reduce = useUi((s) => s.settings.reduceFlashes);
   const palette = useUi((s) => s.settings.colorblind);
+  const subs = useUi((s) => s.settings.subtitleScale);
+  const subsBox = useUi((s) => s.settings.subtitleBackground);
   useEffect(() => {
     const root = document.documentElement;
     root.style.setProperty("--hud-scale", String(scale));
+    root.style.setProperty("--subs-scale", String(subs));
+    root.classList.toggle("subs-solid", subsBox);
     root.classList.toggle("legible-font", legible);
     root.classList.toggle("reduce-flashes", reduce);
     if (palette === "off") delete root.dataset.palette;
     else root.dataset.palette = palette;
-  }, [scale, legible, reduce, palette]);
+  }, [scale, legible, reduce, palette, subs, subsBox]);
   return null;
 };
 
