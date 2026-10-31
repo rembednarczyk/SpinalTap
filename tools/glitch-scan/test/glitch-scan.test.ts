@@ -76,6 +76,13 @@ const inPassage = (x: number, z: number) =>
     return Math.hypot(p.from.x + dx * t - x, p.from.z + dz * t - z) < p.width / 2;
   });
 
+/** The landmarks of the curator's audits (docs/topografia.md): buildings by map id, and the statues of Plac Litewski. */
+const LANDMARK_BUILDINGS = [
+  ...["r7224409", "w66286371", "w66286341", "w66264159", "w66264120", "w232362876", "w66286338", "r2366732"],
+  ...["w48500136", "w450180469", "w66258167", "w67508958", "w66330578"],
+];
+const LANDMARK_MONUMENTS = ["n481952877", "n481952879", "n481952880"];
+
 const near = (x: number, z: number) => `${x.toFixed(0)},${z.toFixed(0)}`;
 const inMap = (x: number, z: number) => MAP_CHUNKS.some((c) => x > c.bounds.minX + 1 && x < c.bounds.maxX - 1 && z > c.bounds.minZ + 1 && z < c.bounds.maxZ - 1);
 const onChunk = (x: number, z: number) => MAP_CHUNKS.some(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ);
@@ -618,6 +625,29 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
         return over ? [{ at: near(b.x, b.z), what: `${b.id} tier ${k} up to ${t.y1.toFixed(1)}, ${ringGap(t.ring, over.outline).toFixed(1)} m off ${over.b.name ?? over.b.id} (top ${over.top.toFixed(1)})` }] : [];
       });
     });
+  },
+  /**
+   * A landmark from the curator's list (docs/topografia.md) with no building in the game: off
+   * every chunk of the map (G-052) or cleared by a set piece.
+   */
+  "landmark-missing": () => {
+    const kept = new Set(MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)).map((b) => b.id)));
+    const buildings = LANDMARK_BUILDINGS.filter((id) => !kept.has(id)).map((id) => {
+      const w = id.startsWith("w") ? SOURCE_OSM.ways.get(Number(id.slice(1))) : undefined;
+      const n = w && SOURCE_OSM.nodes.get(w.nodes[0]!);
+      const at = n ? geoToWorld(n.lat, n.lon) : { x: 0, z: 0 };
+      return { at: near(at.x, at.z), what: `${id} ${w?.tags?.name ?? ""}`.trim() };
+    });
+    const monuments = Object.values(WORLD_STREET_PROPS)
+      .flat()
+      .filter((i) => i.prop === "monument");
+    const statues = LANDMARK_MONUMENTS.flatMap((id) => {
+      const n = SOURCE_OSM.nodes.get(Number(id.slice(1)));
+      const at = n ? geoToWorld(n.lat, n.lon) : null;
+      if (at && monuments.some((m) => Math.hypot(m.x - at.x, m.z - at.z) <= 1)) return [];
+      return [{ at: at ? near(at.x, at.z) : "?", what: `${id} ${n?.tags?.name ?? ""}`.trim() }];
+    });
+    return [...buildings, ...statues];
   },
   /**
    * A way of the map through a gateway, a tunnel or a covered lane under a building
