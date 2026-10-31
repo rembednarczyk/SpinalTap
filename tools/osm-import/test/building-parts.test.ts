@@ -100,5 +100,9 @@ describe("a part on no outline (G-061)", () => {
     expect(bona).toBeDefined();
     expect(bona!.soffit).toBeUndefined();
     expect(pointInRing({ x: 708.4, z: 166.8 }, ring(bona!))).toBe(true);
+    // A one-storey glass pavilion of a restaurant, not a block of flats taller than its neighbour (T-020).
+    expect(bona!.levels).toBe(1);
+    expect(bona!.height - bona!.plinth).toBeLessThan(6);
+    expect(bona!.use).toBe("commercial");
   });
 });

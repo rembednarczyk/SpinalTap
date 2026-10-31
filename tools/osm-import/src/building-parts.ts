@@ -33,8 +33,16 @@ export const partsByBuilding = (buildings: readonly Area[], parts: readonly Area
  */
 export const orphanParts = (buildings: readonly Area[], parts: readonly Area[]): Area[] => parts.filter((p) => !buildings.some((b) => pointInRing(centroid(p.ring), b.ring)));
 
-/** An orphan part as a building: `building:part=yes` becomes `building=yes`, a kind stays the kind. */
-export const asBuilding = (p: Area): Area => ({ ...p, tags: { ...p.tags, building: p.tags["building:part"] ?? "yes" } });
+/**
+ * An orphan part as a building: `building:part=yes` becomes `building=yes` (a restaurant pavilion
+ * `building=commercial`), a kind stays the kind. Without its own height or storeys it is a
+ * one-storey pavilion, not a block of the district's default height (T-020).
+ */
+export const asBuilding = (p: Area): Area => {
+  const kind = p.tags["building:part"] === "yes" && p.tags.amenity !== undefined ? "commercial" : (p.tags["building:part"] ?? "yes");
+  const own = p.tags.height !== undefined || p.tags["building:levels"] !== undefined;
+  return { ...p, tags: { ...p.tags, building: kind, ...(own ? {} : { "building:levels": "1" }) } };
+};
 
 /** A part's walls over the outline's base (the top of its plinth), metres. */
 export interface Tier {
