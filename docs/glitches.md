@@ -346,6 +346,18 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Dowód: „keeps rings and fillers off every chunk's ground” 5182 ms przy load 16 i padł przy load ok. 8; sam przechodzi 5/5. Ustalić, co jest drogie (podniesienie limitu nie jest poprawką).
 - Pakiet właściciela: packages/engine
 
+### G-046 Smoke M0: kierunek ruchu po `freeze` zależy od chwili zamrożenia
+- Status: zgłoszone (z weryfikacji i18n 2b)
+- Ważność: S2 (proponowana: niestabilne e2e) · Koszt: mały
+- Dowód: weryfikator i18n 2b, sonda: New Game, `freeze`, 6×10 kroków `moveZ`; `tick0` wypada 10, 15 albo 20 i każdy daje inny kierunek; przy `tick0=15` gracz idzie na ścianę z=−62,88 i staje po 2,09 m, więc `smoke.spec.ts:26` (ruch > 2,5) pada. Na czystym main (b5507ce) 3/4 przebiegów sondy trafia na ścianę. Test zakłada kierunek, który zależy od liczby ticków przed `freeze`.
+- Pakiet właściciela: e2e (QA) / packages/app
+
+### G-047 Karta skanu hackowania nie zmienia języka do zmiany celu
+- Status: zgłoszone (z weryfikacji i18n 2b)
+- Ważność: S4 (proponowana) · Koszt: mały
+- Dowód: `hacking-hud.ts:62` przelicza kartę tylko przy zmianie celu; po zmianie języka w pauzie karta tego samego celu zostaje w starym języku.
+- Pakiet właściciela: packages/app (HUD), etap 2c ADR-0056
+
 ### G-006 Skręty aut na skrzyżowaniach
 - Status: weryfikacja PRZYJĘTE (3. runda), w PR. `lane-dead-end` 61 → 44; zator Ruska/Lwowska usunięty; nowa kontrola `turn-off-road` 6 (zawrotki targu, G-025). CPU sceny targu 3,8 → 4,3 s na 3000 kroków
 - Ważność: S3 · Zasięg: szeroki (33 ślepe końce pasów na skrzyżowaniach i 6 z G-024) · Koszt: duży
