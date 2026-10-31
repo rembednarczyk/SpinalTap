@@ -86,32 +86,36 @@ describe("HUD weapon strip", () => {
     const el = screen.getByTestId("weapon-strip");
     expect(el.textContent).toContain("Hebi SMG");
     expect(el.textContent).toContain("Unity-9");
-    expect(el.textContent).toContain("Wręcz");
+    expect(el.textContent).toContain("Melee");
     expect(screen.getByTestId("weapon-ammo").textContent).toContain("7 / 36");
     expect(screen.getByTestId("weapon-ammo").textContent).toContain("9 mm");
     expect(el.querySelector(".weapon-strip__slot--active")?.textContent).toContain("Unity-9");
     expect(el.querySelector(".rarity--uncommon")?.textContent).toContain("Hebi SMG");
     // Without a touch pad the slots are not buttons.
-    expect(screen.queryByRole("button", { name: /Główna/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Primary/ })).toBeNull();
   });
 
   it("tells reloading, empty, dry and holstered apart", () => {
     const { store } = mount({ weapons: strip({ reloading: true }) });
-    expect(screen.getByTestId("weapon-ammo").textContent).toContain("przeładowanie");
+    expect(screen.getByTestId("weapon-ammo").textContent).toContain("reloading");
     act(() => patchUi(store, { weapons: strip({ loaded: 0 }) }));
-    expect(screen.getByTestId("weapon-ammo").textContent).toContain("pusty magazynek [R]");
+    expect(screen.getByTestId("weapon-ammo").textContent).toContain("empty magazine [R]");
     expect(screen.getByTestId("weapon-ammo").className).toContain("weapon-strip__ammo--empty");
     act(() => patchUi(store, { weapons: strip({ loaded: 0, reserve: 0 }) }));
-    expect(screen.getByTestId("weapon-ammo").textContent).toContain("brak amunicji");
+    expect(screen.getByTestId("weapon-ammo").textContent).toContain("no ammo");
     act(() => patchUi(store, { weapons: strip({ holstered: true }) }));
-    expect(screen.getByTestId("weapon-ammo").textContent).toContain("schowana");
+    expect(screen.getByTestId("weapon-ammo").textContent).toContain("holstered");
   });
 
   it("labels melee and an empty hand without a round count", () => {
     const { store } = mount({ weapons: strip({ active: "primary", loaded: null, reserve: null, magazine: null, ammoName: null }) });
+    expect(screen.getByTestId("weapon-ammo").textContent).toBe("melee");
+    // Polish word for word as before (ADR-0056).
+    act(() => patchUi(store, { settings: { ...store.getState().settings, locale: "pl" } }));
     expect(screen.getByTestId("weapon-ammo").textContent).toBe("wręcz");
+    act(() => patchUi(store, { settings: { ...store.getState().settings, locale: "en" } }));
     act(() => patchUi(store, { weapons: strip({ active: "melee", loaded: null, reserve: null, magazine: null, ammoName: null }) }));
-    expect(screen.getByTestId("weapon-ammo").textContent).toBe("bez broni");
+    expect(screen.getByTestId("weapon-ammo").textContent).toBe("unarmed");
     act(() => patchUi(store, { weapons: null }));
     expect(screen.queryByTestId("weapon-strip")).toBeNull();
   });
@@ -119,9 +123,9 @@ describe("HUD weapon strip", () => {
   it("on a touch screen the slots pick the weapon through the pad, and R reloads", () => {
     const p = pad();
     mount({ weapons: strip() }, p);
-    fireEvent.pointerDown(screen.getByRole("button", { name: "Główna: Hebi SMG" }));
+    fireEvent.pointerDown(screen.getByRole("button", { name: "Primary: Hebi SMG" }));
     expect(p.selectWeaponSlot).toHaveBeenCalledWith(1);
-    fireEvent.pointerDown(screen.getByRole("button", { name: "Wręcz: pusto" }));
+    fireEvent.pointerDown(screen.getByRole("button", { name: "Melee: empty" }));
     expect(p.selectWeaponSlot).toHaveBeenCalledWith(3);
     const reload = screen.getByRole("button", { name: "Reload" });
     fireEvent.pointerDown(reload, { pointerId: 5 });

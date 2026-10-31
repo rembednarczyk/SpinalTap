@@ -4,10 +4,11 @@
  */
 export type TokenId = "threat" | "objective" | "friendly" | "loot" | "hack";
 
-export const TOKENS: readonly { readonly id: TokenId; readonly label: string; readonly icon: string }[] = [
-  { id: "threat", label: "Zagrożenie", icon: "▲" },
-  { id: "objective", label: "Cel", icon: "◆" },
-  { id: "friendly", label: "Przyjazny", icon: "●" },
-  { id: "loot", label: "Łup", icon: "■" },
-  { id: "hack", label: "Hack", icon: "⬡" },
+/** The legend names are `settings.token.<id>` in the catalogs (ADR-0056). */
+export const TOKENS: readonly { readonly id: TokenId; readonly icon: string }[] = [
+  { id: "threat", icon: "▲" },
+  { id: "objective", icon: "◆" },
+  { id: "friendly", icon: "●" },
+  { id: "loot", icon: "■" },
+  { id: "hack", icon: "⬡" },
 ];

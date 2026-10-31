@@ -222,8 +222,11 @@ describe("HUD", () => {
     expect(screen.queryByTestId("clock")).toBeNull();
     cleanup();
     const { store } = mount({ screen: "playing", clock: "21:00", day: 1, dayPhase: "night" });
-    expect(screen.getByTestId("clock").textContent).toBe("Dzień 1noc21:00");
+    expect(screen.getByTestId("clock").textContent).toBe("Day 1night21:00");
     act(() => patchUi(store, { clock: "07:30", day: 2, dayPhase: "day" }));
+    expect(screen.getByTestId("clock").textContent).toBe("Day 2day07:30");
+    // Polish word for word as before (ADR-0056).
+    act(() => patchUi(store, { settings: { ...store.getState().settings, locale: "pl" } }));
     expect(screen.getByTestId("clock").textContent).toBe("Dzień 2dzień07:30");
     expect(screen.getByTestId("clock").className).toContain("hud__clock--day");
   });
@@ -294,7 +297,7 @@ describe("pause and death screens", () => {
   it("death screen restarts", () => {
     const { i } = mount({ screen: "dead" });
     expect(screen.getByText("FLATLINE")).toBeTruthy();
-    fireEvent.click(screen.getByText("Zacznij od nowa"));
+    fireEvent.click(screen.getByText("Start over"));
     expect(i.newGame).toHaveBeenCalled();
   });
 });
