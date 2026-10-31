@@ -334,3 +334,11 @@ Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [r
 - Dowód: `groundY` zwraca pomost (sonda kuratora `topo-deck`); ADR-0053 to przyznaje
 - Pakiet właściciela: packages/sim (world/deck, lublin/decks), packages/engine (mapcity)
 - Test przyjęcia: idąc Podwalem i bulwarem, grunt pod pomostem nie skacze o więcej niż 0,5 m; kontrola `under-deck-blocked` 6 → 0
+
+### G-068 AI nie widzi przejścia pod mostem: walczący wręcz utyka na skarpie bulwaru
+- Status: naprawione (#71). Pomost jest sufitem dla AI tylko, gdy NPC albo cel stoi pod nim; pierwsza wersja (7b118fd) odrzucona za regresję na wiadukcie Zamkowej
+- Ważność: S3 (proponowana: bezpieczne miejsce przed walką wręcz) · Zasięg: przejścia pod pomostami (Mełgiewska, Podwale) · Koszt: mały
+- Gdzie: gracz pod dolnym mostem Mełgiewskiej (2445.9, 302.2); `hebi_brawler` startujący od południa (2449, 318) utyka w (2458.4, 314.2) i przez 20 s zostaje 16–17 m od gracza
+- Przyczyna: `packages/sim/src/systems/ai/steering.ts` `terrainOf` (l.140), `closeBanks` (l.155), `bankBetween` (l.359) wołają `heightAt`/`steepAt` bez `reach` (G-062), więc AI widzi pomost jako grunt
+- Pakiet właściciela: packages/sim/src/systems/ai
+- Test przyjęcia: zaalarmowany walczący wręcz dociera do gracza pod mostem Mełgiewskiej z obu stron w < 10 s

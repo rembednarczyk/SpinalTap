@@ -201,14 +201,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (building-tags) / packages/engine (mapcity)
 - Test przyjęcia: klasztor bez wież proceduralnych; kościół obok zachowuje swoje
 
-### G-068 AI nie widzi przejścia pod mostem: walczący wręcz utyka na skarpie bulwaru
-- Status: w PR #71
-- Ważność: S3 (proponowana: bezpieczne miejsce przed walką wręcz) · Zasięg: przejścia pod pomostami (Mełgiewska, Podwale) · Koszt: mały
-- Gdzie: gracz pod dolnym mostem Mełgiewskiej (2445.9, 302.2); `hebi_brawler` startujący od południa (2449, 318) utyka w (2458.4, 314.2) i przez 20 s zostaje 16–17 m od gracza
-- Przyczyna: `packages/sim/src/systems/ai/steering.ts` `terrainOf` (l.140), `closeBanks` (l.155), `bankBetween` (l.359) wołają `heightAt`/`steepAt` bez `reach` (G-062), więc AI widzi pomost jako grunt
-- Pakiet właściciela: packages/sim/src/systems/ai
-- Test przyjęcia: zaalarmowany walczący wręcz dociera do gracza pod mostem Mełgiewskiej z obu stron w < 10 s
-
 ### G-069 Postać zespawnowana pod mostem trafia na pomost
 - Status: zgłoszone (z weryfikacji G-062)
 - Ważność: S4 (proponowana) · Zasięg: pod pomostami · Koszt: mały
@@ -290,6 +282,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | G-057 | Proceduralne wieże obok wieżyczek z OSM (Archikatedra, Dominikanie) | #69 |
 | G-050 | Nadbudowa przy Bramie Grodzkiej góruje nad bramą (piętra odsunięte ≥ 5 m) | #60 |
 | G-062 | Przejścia pod mostami zablokowane (Podwale, bulwar Bystrzycy) | #70 |
+| G-068 | AI nie widziało przejścia pod mostem | #71 |
 
 ## Odrzucone
 - G-005 Wiata przystanku wchodzi w ścianę przy Alei Tysiąclecia: duplikat (G-011)
