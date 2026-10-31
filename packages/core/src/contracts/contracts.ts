@@ -1,5 +1,4 @@
 import { contractPayout } from "../economy/wallet";
-import { INK_SITE_LABELS_PL } from "../i18n/ink-sites-pl";
 import { type TextRef, textRef } from "../i18n/text";
 import type { RandomPort } from "../ports/random-port";
 import type { FactionId, ReputationState } from "../reputation/reputation";
@@ -11,9 +10,9 @@ import type { ContractVariation } from "../world/wave2";
 
 /**
  * Places where a contract sends Seki. Positions live in sim content. `text` is the catalog key of
- * the place (ADR-0056); `label` is its Polish name for the ink dialogues until stage 5.
+ * the place (ADR-0056), for the HUD and for the ink dialogues alike.
  */
-const site = <const Id extends keyof typeof INK_SITE_LABELS_PL>(id: Id) => ({ id, label: INK_SITE_LABELS_PL[id], text: `contract.site.${id}` as const });
+const site = <const Id extends string>(id: Id) => ({ id, text: `contract.site.${id}` as const });
 
 export const CONTRACT_SITES = {
   // Krakowskie Przedmieście (ADR-0045).

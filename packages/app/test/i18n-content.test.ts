@@ -2,7 +2,7 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { type ContractModifier, type ContractVariation, type DomainState, type Locale, type TargetTrait, createDomainState } from "@seki/core";
-import { describeVariation, variationKeys } from "@seki/narrative";
+import { NarrativeRuntime, STORY_SOURCES, describeVariation, variationKeys } from "@seki/narrative";
 import { CONTRACT_HOOKS, METRO_STATIONS } from "@seki/sim";
 import { isMessageKey, patchUi, translate } from "@seki/ui";
 import { narrativeText } from "../src/content-text";
@@ -145,5 +145,22 @@ describe("the HUD's own objective", () => {
     expect(describeObjective(between(["met_hana", "met_genzo"]), "en").objective).toBe(
       "More contracts from Kaito, and from Hana at the Podzamcze market and Genzō on the Nabrzeże too. Mori sells cyberware.",
     );
+  });
+});
+
+describe("the contract site in Kaito's lines", () => {
+  const probe = (base: string) => `${base}\n=== site_probe ===\nKAITO: {contract_site}\n-> END\n`;
+  const sources = { pl: probe(STORY_SOURCES.pl), en: probe(STORY_SOURCES.en ?? "") };
+  const running = (): DomainState => {
+    const d = createDomainState();
+    const active = { id: "c3", kind: "eliminate", siteId: "kanal_bridge", status: "active", targets: 2, reward: 100, acceptedTick: 0 } as unknown as NonNullable<DomainState["contracts"]["active"]>;
+    return { ...d, contracts: { ...d.contracts, active } };
+  };
+  const site = (locale: Locale) =>
+    new NarrativeRuntime(sources, () => {}, { locale, text: narrativeText(() => locale) }).start("site_probe", running()).lines.map((l) => l.text);
+
+  it("names the place in the story's language, Polish word for word as before", () => {
+    expect(site("pl")).toEqual(["pod kładką na Grodzkiej"]);
+    expect(site("en")).toEqual(["under the footbridge on Grodzka"]);
   });
 });
