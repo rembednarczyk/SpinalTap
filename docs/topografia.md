@@ -10,7 +10,7 @@ Statusy: `celowe`, `do poprawy` (z G-NNN), `poprawione (#PR)`.
 - [ ] Bramy i przejazdy: bramy miejskie, przejazdy bramne, przejścia przez budynki (drożność, sklepienie, kolizja).
 - [ ] Prześwity: pod mostami, wiaduktami, kładkami i nadwieszeniami (gracz i AI).
 - [ ] Drogi: ciągłość sieci ulic, ścieżek i schodów, kierunki, szerokości, nawierzchnie, połączenia dzielnic.
-- [ ] Wnętrza zabytków: które budowle mają wnętrze w grze i czy obszar zgadza się z budynkiem (ADR-0061).
+- [x] Wnętrza zabytków: które budowle mają wnętrze w grze i czy obszar zgadza się z budynkiem (ADR-0061). Wynik (31.10) i plan dalszych wnętrz: `docs/plany/wnetrza-zabytkow.md`. Wnętrze ma dziś tylko Trybunał w66264159: powłoka Trasy Podziemnej leży w obrysie (od 1,37 do 10,2 m od ścian, przedsionek wychodzi 1,8 m przed fasadę jako przejście), zgodne. Lista `INTERIORS` z ADR-0061 nie jest jeszcze w kodzie. Import gubi węzły `entrance=*` (44 w `data/osm/cache`, 0 w wyciągach). Kandydaci na wpisy do potwierdzenia w audycie bram: przejazd Gruella pod Wieżą Trynitarską (`tunnel=yes` bez przejścia w grze), wejście do piwnic Trybunału n2969572858 16 m od wejścia Trasy w grze, wysokość Kaplicy Trójcy z wartości domyślnej, wymiary bramy Zamku.
 
 ## Odstępstwa
 
