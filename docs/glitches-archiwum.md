@@ -427,3 +427,23 @@ Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [r
 - Pakiet właściciela: packages/sim (content/traffic)
 - Test przyjęcia: z łatką G-082 (`scratchpad/g082-wip.patch`) `furniture-in-car-lane` 2 → 0 bez wzrostu `car-lane-off-road`, `lane-dead-end`, `turn-off-road`; świadoma zmiana złotego hasha, jeśli ruch się zmienia
 - Uwaga z naprawy G-082: ulice ok. 3–4 m mają w sim dwa pasy, a auta (pół szerokości 0,9 m) zachodzą na chodnik; żadna kontrola tego nie liczy
+
+### G-052 Teatr Osterwy i Kościół Bernardynów poza danymi miasta (brzeg Krakowskiego na z = −200)
+- Status: naprawione (#87). Krakowskie do z = −270 (Teatr Osterwy, Bernardyni, Brygidki, III LO); baza `lane-dead-end` 45 (G-074 odłożone), budżet reference 194/81 z długiem w ADR-0046; uwagi kuratora: G-096…G-099, T-057…T-061
+- Ważność: S3 (proponowana) · Zasięg: lokalny (Narutowicza, Bernardyńska) · Koszt: duży (prostokąt w config.ts, ADR-0042, regeneracja, budżety)
+- Gdzie: (118.0, −205.7), (364.7, −239.8); ile w mieście: 2 zabytki z listy kuratora
+- Dowód: brak w66330578 i w67508958 w `*.generated.ts`, `DISTRICTS[0].rect.minZ = −200`; T-014
+- Przyczyna (przypuszczalna): zasięg prostokąta Krakowskiego (ADR-0042)
+- Pakiet właściciela: tools/osm-import (decyzja: Architekt, ADR-0042)
+- Test przyjęcia: kontrola `landmark-missing` daje 0
+- Źródło: audyt topografii 1 (kurator, 31.10).
+
+### G-094 Przedsionek Trasy Podziemnej: pierwsze 4,5 m poza obszarem wnętrza
+- Status: naprawione (#90). Początek Trasy Podziemnej z obrysu OSM (`facadeAt`); kontrola `interior-entrance-gap` 1 → 0; resztka: G-111
+- Ważność: S4 (proponowana) · Zasięg: 1 wejście · Koszt: mały
+- Gdzie: wejście do Trybunału w66264159, przedsionek z = −57; fasada przecina go skośnie (x 567,5…568,2), luka w obszarze wnętrza x 567,6…570 (2,4 m; poprawka naprawiacza)
+- Dowód: `interiorAt` na stopie (y = podłoga przedsionka + 0,1, z = −57): x 565,6/567/569/569,9 → null, x 570,1 → `trasa-podziemna`; `TRASA_PODZIEMNA.vestibule.from.x` = 565,5, pierwszy pokój `minX: 570`; zrzut `scratchpad/shots1/p1-trasa-vest.png`; test w `interior-areas.test.ts` zaczyna chód od x = 563, a wyjście liczy od 571, więc tego nie łapie
+- Skutek: `InteriorEntered` (autozapis, ambient ADR-0060) 4,5 m za drzwiami, już w ciemnym korytarzu; wyjście symetrycznie
+- Przyczyna (przypuszczalna): pierwszy pokój zaczyna się od zgadniętego `minX: 570` w `content/kanal-underground.ts` zamiast od `T.vestibule.from.x`
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: `interiorAt` na (vestibule.from.x + 0,3, −57, door + 0,1) zwraca `trasa-podziemna`; kontrola skanu `interior-entrance-gap` (punkt 0,3 m za fasadą przy drzwiach/przejściu budynku wnętrza leży w obszarze) 1 → 0

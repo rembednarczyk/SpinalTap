@@ -82,16 +82,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-007 Strzałki na pasach i napis BUS
 - Status: później (ADR-0052 „Na później”)
 
-### G-052 Teatr Osterwy i Kościół Bernardynów poza danymi miasta (brzeg Krakowskiego na z = −200)
-- Status: w PR #87 (przyjęte przez weryfikatora i kuratora; uwagi bez blokady: G-096…G-099, T-057…T-061)
-- Ważność: S3 (proponowana) · Zasięg: lokalny (Narutowicza, Bernardyńska) · Koszt: duży (prostokąt w config.ts, ADR-0042, regeneracja, budżety)
-- Gdzie: (118.0, −205.7), (364.7, −239.8); ile w mieście: 2 zabytki z listy kuratora
-- Dowód: brak w66330578 i w67508958 w `*.generated.ts`, `DISTRICTS[0].rect.minZ = −200`; T-014
-- Przyczyna (przypuszczalna): zasięg prostokąta Krakowskiego (ADR-0042)
-- Pakiet właściciela: tools/osm-import (decyzja: Architekt, ADR-0042)
-- Test przyjęcia: kontrola `landmark-missing` daje 0
-- Źródło: audyt topografii 1 (kurator, 31.10).
-
 ### G-053 Plac po Farze bez fundamentów fary; ruiny z OSM pominięte
 - Status: zgłoszone
 - Ważność: S4 (proponowana) · Zasięg: lokalny (Plac po Farze na trasie Grodzkiej) · Koszt: średni (nowa bryła niskiego muru w imporcie i rendererze)
@@ -291,16 +281,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (ground)
 - Test przyjęcia: kontrola `car-road-hole` (albo nowa) wykrywa i spada do 0
 
-### G-094 Przedsionek Trasy Podziemnej: pierwsze 4,5 m poza obszarem wnętrza
-- Status: w PR #90 (przyjęte przez weryfikatora z uwagami; resztka: G-111)
-- Ważność: S4 (proponowana) · Zasięg: 1 wejście · Koszt: mały
-- Gdzie: wejście do Trybunału w66264159, przedsionek z = −57; fasada przecina go skośnie (x 567,5…568,2), luka w obszarze wnętrza x 567,6…570 (2,4 m; poprawka naprawiacza)
-- Dowód: `interiorAt` na stopie (y = podłoga przedsionka + 0,1, z = −57): x 565,6/567/569/569,9 → null, x 570,1 → `trasa-podziemna`; `TRASA_PODZIEMNA.vestibule.from.x` = 565,5, pierwszy pokój `minX: 570`; zrzut `scratchpad/shots1/p1-trasa-vest.png`; test w `interior-areas.test.ts` zaczyna chód od x = 563, a wyjście liczy od 571, więc tego nie łapie
-- Skutek: `InteriorEntered` (autozapis, ambient ADR-0060) 4,5 m za drzwiami, już w ciemnym korytarzu; wyjście symetrycznie
-- Przyczyna (przypuszczalna): pierwszy pokój zaczyna się od zgadniętego `minX: 570` w `content/kanal-underground.ts` zamiast od `T.vestibule.from.x`
-- Pakiet właściciela: packages/sim
-- Test przyjęcia: `interiorAt` na (vestibule.from.x + 0,3, −57, door + 0,1) zwraca `trasa-podziemna`; kontrola skanu `interior-entrance-gap` (punkt 0,3 m za fasadą przy drzwiach/przejściu budynku wnętrza leży w obszarze) 1 → 0
-
 ### G-095 Żółty kabel kanionu przez przedsionek Trasy Podziemnej (do potwierdzenia)
 - Status: niepotwierdzone (glitch hunt wnętrz, 31.10)
 - Ważność: S4 (proponowana) · Koszt: mały
@@ -446,6 +426,8 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | G-075 | Kolizje aut na przecięciu pasów 3 Maja przy Zesłańców Sybiru | #85 |
 | G-089 | Bramy z maxheight=below_default ze sklepieniem 4 m | #89 |
 | G-090 | Przesunięcie pasa ruchu z mediany szerokości całego łańcucha ulicy | #88 |
+| G-052 | Teatr Osterwy i Kościół Bernardynów poza danymi miasta (brzeg Krakowskiego na z = −200) | #87 |
+| G-094 | Przedsionek Trasy Podziemnej: pierwsze 4,5 m poza obszarem wnętrza | #90 |
 
 ## Odrzucone
 - G-005 Wiata przystanku wchodzi w ścianę przy Alei Tysiąclecia: duplikat (G-011)
