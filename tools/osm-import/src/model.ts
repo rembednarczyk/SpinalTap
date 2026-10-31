@@ -5,6 +5,7 @@
  */
 import { type MarkingOut } from "./markings.ts";
 import { type PassageOut } from "./passages.ts";
+import type { RoofShape } from "../../../packages/core/src/ports/types.ts";
 import { type BuildingUse, type GroundSurface, type TerrainGrid } from "../../../packages/core/src/world/city-geo.ts";
 
 export interface BuildingOut {
@@ -26,6 +27,10 @@ export interface BuildingOut {
   readonly levels: number;
   readonly use: BuildingUse;
   readonly roof?: number;
+  /** The roof's shape from `roof:shape` (ADR-0064); absent, the renderer picks one. */
+  readonly roofShape?: RoofShape;
+  /** `roof:orientation=across`: the ridge across the outline's long side. */
+  readonly roofAcross?: true;
   readonly name?: string;
   readonly look: number;
   /** Shops on the ground floor (a 4 m storey). */

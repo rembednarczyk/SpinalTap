@@ -2,6 +2,7 @@
  * Building tags to game numbers (ADR-0042): use, height, floors and roof. Storeys are 3.2 m, a
  * ground floor with shops 4 m. Without tags a building gets its district's default floors.
  */
+import type { RoofShape } from "../../../packages/core/src/ports/types.ts";
 import { type BuildingUse } from "../../../packages/core/src/world/city-geo.ts";
 import { type Tags } from "./osm.ts";
 
@@ -86,12 +87,40 @@ export const roofHeight = (tags: Tags, use: BuildingUse, size: number): number =
   return 0;
 };
 
+/** OSM `roof:shape` values to the game's shapes (ADR-0064); kindred values map to the nearest one. */
+const SHAPES: Readonly<Record<string, RoofShape>> = {
+  gabled: "gabled",
+  side_hipped: "gabled",
+  saltbox: "gabled",
+  "half-hipped": "half-hipped",
+  mansard: "mansard",
+  gambrel: "mansard",
+  hipped: "hipped",
+  pyramidal: "pyramidal",
+  cone: "pyramidal",
+  skillion: "skillion",
+  lean_to: "skillion",
+  dome: "dome",
+  onion: "onion",
+  flat: "flat",
+};
+
+/** The roof's shape and ridge from `roof:shape` and `roof:orientation`; nothing for an untagged or unknown shape. */
+export const roofShapeOf = (tags: Tags): { readonly shape?: RoofShape; readonly across?: true } => {
+  const shape = SHAPES[tags["roof:shape"] ?? ""];
+  if (!shape) return {};
+  return tags["roof:orientation"] === "across" ? { shape, across: true } : { shape };
+};
+
 export interface Massing {
   /** Walls from the ground to the eaves, metres. */
   readonly walls: number;
   readonly roof: number;
   readonly levels: number;
   readonly source: "height" | "levels" | "default";
+  /** The roof's shape from the tags (ADR-0064); absent, the renderer's own choice. */
+  readonly shape?: RoofShape;
+  readonly across?: true;
 }
 
 /** Default floors when tags are silent: by use and size, otherwise the district's range picked by `look`. */
@@ -105,7 +134,9 @@ const defaultLevels = (tags: Tags, use: BuildingUse, area: number, range: readon
   return range[0] + (look % (range[1] - range[0] + 1));
 };
 
-export const massing = (tags: Tags, opts: { area: number; shops: boolean; range: readonly [number, number]; look: number }): Massing => {
+export const massing = (tags: Tags, opts: { area: number; shops: boolean; range: readonly [number, number]; look: number }): Massing => ({ ...heights(tags, opts), ...roofShapeOf(tags) });
+
+const heights = (tags: Tags, opts: { area: number; shops: boolean; range: readonly [number, number]; look: number }): Massing => {
   const use = buildingUse(tags);
   const size = Math.sqrt(opts.area);
   const roof = roofHeight(tags, use, size);
