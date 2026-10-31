@@ -7,7 +7,7 @@
  * simulation's prisms follow them.
  */
 import { type BuildingUse } from "../../../packages/core/src/world/city-geo.ts";
-import { STOREY, type Massing, parseLength, parseLevels, roofHeight } from "./building-tags.ts";
+import { STOREY, type Massing, parseLength, parseLevels, roofHeight, roofShapeOf } from "./building-tags.ts";
 import { type Area } from "./features.ts";
 import { type Pt, centroid, pointInRing, ringBounds, signedArea } from "./geometry.ts";
 
@@ -36,6 +36,9 @@ export interface Tier {
   readonly roof: number;
   readonly levels: number;
   readonly source: Massing["source"];
+  /** The part's own roof shape (a helmet's onion, a chapel's dome, ADR-0064). */
+  readonly shape?: Massing["shape"];
+  readonly across?: true;
 }
 
 const DOMED = new Set(["dome", "onion", "pyramidal", "cone", "round"]);
@@ -59,10 +62,10 @@ export const partTier = (p: Area, use: BuildingUse): Tier | null => {
     if (height <= bottom) return null;
     // A helmet mapped as a part of its own is nearly all roof: a metre of walls carries it.
     const r = Math.min(roof, height * 0.5, Math.max(height - bottom - 1, 0));
-    return { area: p, bottom, eaves: height - r, roof: r, levels: levels ?? Math.max(1, Math.round((height - r - bottom) / STOREY)), source: "height" };
+    return { area: p, bottom, eaves: height - r, roof: r, levels: levels ?? Math.max(1, Math.round((height - r - bottom) / STOREY)), source: "height", ...roofShapeOf(t) };
   }
   const n = Math.max(1, Math.round(levels!));
-  return { area: p, bottom, eaves: Math.max(n * STOREY, bottom + 1), roof, levels: n, source: "levels" };
+  return { area: p, bottom, eaves: Math.max(n * STOREY, bottom + 1), roof, levels: n, source: "levels", ...roofShapeOf(t) };
 };
 
 /** Share of the outline (1 m samples) under parts that stand on the ground. */
@@ -108,7 +111,7 @@ export const stackParts = (outline: readonly Pt[], base: Massing, tiers: readonl
   if (groundCover(outline, tiers) >= COVERS) {
     const ground = tiers.filter((t) => t.bottom === 0).sort((a, b) => a.eaves - b.eaves || Math.abs(signedArea(b.area.ring)) - Math.abs(signedArea(a.area.ring)));
     const low = ground[0]!;
-    if (low.eaves < base.walls - 0.5) own = { walls: low.eaves, roof: low.roof, levels: low.levels, source: low.source };
+    if (low.eaves < base.walls - 0.5) own = { walls: low.eaves, roof: low.roof, levels: low.levels, source: low.source, ...(low.shape ? { shape: low.shape } : {}), ...(low.across ? { across: low.across } : {}) };
     // As high as the outline, the lowest part is the outline's own body, roof tags and all.
     if (low.eaves <= own.walls + 0.5) rest = rest.filter((t) => t !== low);
   }

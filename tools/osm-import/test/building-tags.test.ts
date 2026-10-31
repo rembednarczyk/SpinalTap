@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildingUse, landmarkName, lookOf, massing, parseLength, parseLevels, roofHeight } from "../src/building-tags.ts";
+import { buildingUse, landmarkName, lookOf, massing, parseLength, parseLevels, roofHeight, roofShapeOf } from "../src/building-tags.ts";
 
 const opts = { area: 200, shops: false, range: [3, 4] as const, look: 0 };
 
@@ -64,6 +64,33 @@ describe("heights from tags", () => {
     expect(roofHeight({ "roof:shape": "dome" }, "historic", 10)).toBe(4);
     expect(roofHeight({ "roof:levels": "1" }, "residential", 10)).toBe(3.2);
     expect(roofHeight({}, "residential", 10)).toBe(0);
+  });
+});
+
+describe("roof shapes from tags (ADR-0064)", () => {
+  it("reads roof:shape and roof:orientation into the game's shapes", () => {
+    expect(roofShapeOf({ "roof:shape": "gabled" })).toEqual({ shape: "gabled" });
+    expect(roofShapeOf({ "roof:shape": "gabled", "roof:orientation": "across" })).toEqual({ shape: "gabled", across: true });
+    expect(roofShapeOf({ "roof:shape": "gabled", "roof:orientation": "along" })).toEqual({ shape: "gabled" });
+    for (const s of ["half-hipped", "mansard", "hipped", "pyramidal", "dome", "onion", "flat", "skillion"] as const) expect(roofShapeOf({ "roof:shape": s }).shape).toBe(s);
+    expect(roofShapeOf({ "roof:shape": "lean_to" }).shape).toBe("skillion");
+    expect(roofShapeOf({ "roof:shape": "gambrel" }).shape).toBe("mansard");
+    expect(roofShapeOf({ "roof:shape": "cone" }).shape).toBe("pyramidal");
+  });
+
+  it("leaves untagged and unknown shapes to the renderer, as before", () => {
+    expect(roofShapeOf({})).toEqual({});
+    expect(roofShapeOf({ "roof:shape": "crosspitched" })).toEqual({});
+    // An orientation alone says nothing without a shape.
+    expect(roofShapeOf({ "roof:orientation": "across" })).toEqual({});
+  });
+
+  it("carries the shape in the massing without changing the heights", () => {
+    const tags = { building: "apartments", "building:levels": "3", "roof:shape": "mansard" };
+    const m = massing(tags, opts);
+    expect(m).toMatchObject({ shape: "mansard", levels: 3 });
+    expect(m.roof).toBe(roofHeight(tags, "residential", Math.sqrt(opts.area)));
+    expect(massing({ building: "apartments", "building:levels": "3" }, opts).shape).toBeUndefined();
   });
 });
 

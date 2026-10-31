@@ -89,6 +89,8 @@ const liftedPart = (l: Lifted, of: BuildingOut): BuildingOut[] => {
     levels: t.levels,
     use: of.use,
     ...(t.roof > 0 ? { roof: r1(t.roof) } : {}),
+    ...(t.shape ? { roofShape: t.shape } : {}),
+    ...(t.across ? { roofAcross: true as const } : {}),
     look: lookOf(t.area.id),
     source: t.source,
   };
@@ -124,6 +126,8 @@ export const makeBuilding = (a: Area, ctx: BuildingContext, ownParts: readonly A
     levels: m.levels,
     use,
     ...(m.roof > 0 ? { roof: r1(m.roof) } : {}),
+    ...(m.shape ? { roofShape: m.shape } : {}),
+    ...(m.across ? { roofAcross: true as const } : {}),
     ...(name ? { name } : {}),
     look,
     ...(shops ? { shopfront: true as const } : {}),
