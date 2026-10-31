@@ -62,7 +62,7 @@ describe("the click a lifted finger leaves behind (mobile dialogue bug)", () => 
     const intents = new Proxy({} as UiIntents, { get: (_t, k) => (k === "choose" ? choose : vi.fn()) });
     const pad = { setStick: vi.fn(), look: vi.fn(), press: vi.fn(), release: vi.fn(), reset: vi.fn(), selectWeaponSlot: vi.fn() };
     render(<GameUi store={store} intents={intents} touch={pad} />);
-    fireEvent.pointerDown(screen.getByLabelText(/^Interakcja/), { pointerId: 1, pointerType: "touch" });
+    fireEvent.pointerDown(screen.getByLabelText(/^Interact/), { pointerId: 1, pointerType: "touch" });
     act(() => patchUi(store, { dialogue, prompt: null }));
     // The pad's touchend cancelled the ghost click; a new finger taps the choice within the window.
     act(() => vi.advanceTimersByTime(300));
