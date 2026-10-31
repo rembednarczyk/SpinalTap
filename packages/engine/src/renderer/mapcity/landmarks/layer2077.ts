@@ -34,7 +34,7 @@ export const sideOf = (w: Wall, layer: Layer2077): "new" | "old" | "edge" => {
 export const corniceLights = (sink: MeshSink, f: FacadeFrame, y: number, out: number, layer: Layer2077): void => {
   const meta = trimMeta(f.style.seed);
   for (const w of shownWalls(f)) {
-    const neon = sideOf(w, layer) === "new";
+    const neon = !layer.subdued && sideOf(w, layer) === "new";
     const h = neon ? 0.11 : 0.04;
     panel(sink, w, 0, w.length, y - h / 2, y + h / 2, out, lit(neon ? layer.neon : layer.warm), meta);
   }
@@ -97,13 +97,12 @@ export const camera = (sink: MeshSink, w: Wall, u: number, y: number): void => {
   sink.box({ x: lens.x + dx * 0.05, y: y + 0.03, z: lens.z + dz * 0.05 }, 0.04, 0.04, 0.04, lit("#ff3030"));
 };
 
-/** Uplights on the ground at the foot of a wall: warm lit fittings (their beams are signs). */
-export const uplightFittings = (sink: MeshSink, f: FacadeFrame, w: Wall, us: readonly number[], color: string): void => {
-  const meta = trimMeta(f.style.seed);
+/** Uplights on the ground (world y) at the foot of a wall: warm lit fittings (their beams are signs). */
+export const uplightFittings = (sink: MeshSink, w: Wall, ground: number, us: readonly number[], color: string, meta: Uv): void => {
   for (const u of us) {
     // Against the wall, within a cornice's depth of it (0.3 m, T-034).
-    sink.box(onWall(w, u, f.b.foot + 0.08, 0.16), 0.34, 0.16, 0.22, solid(SWATCH.metal), { rotY: Math.atan2(-(w.b.z - w.a.z), w.b.x - w.a.x) });
-    quadUv(sink, [onWall(w, u - 0.13, f.b.foot + 0.165, 0.07), onWall(w, u + 0.13, f.b.foot + 0.165, 0.07), onWall(w, u + 0.13, f.b.foot + 0.165, 0.25), onWall(w, u - 0.13, f.b.foot + 0.165, 0.25)], { x: 0, y: 1, z: 0 }, lit(color), UNIT, meta);
+    sink.box(onWall(w, u, ground + 0.08, 0.16), 0.34, 0.16, 0.22, solid(SWATCH.metal), { rotY: Math.atan2(-(w.b.z - w.a.z), w.b.x - w.a.x) });
+    quadUv(sink, [onWall(w, u - 0.13, ground + 0.165, 0.07), onWall(w, u + 0.13, ground + 0.165, 0.07), onWall(w, u + 0.13, ground + 0.165, 0.25), onWall(w, u - 0.13, ground + 0.165, 0.25)], { x: 0, y: 1, z: 0 }, lit(color), UNIT, meta);
   }
 };
 

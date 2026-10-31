@@ -4,7 +4,7 @@ import { spanAt } from "../passage-plan";
 import { MAP_SIGN_KIND } from "../sign-plan";
 import { type Uv, quadUv } from "../sink-ops";
 import { onWall } from "./kit";
-import { type LandmarkFrame, clockSpot, clockWalls, mouthWall, screenOn, uplightsOn } from "./landmark-plan";
+import { type LandmarkFrame, clockSpot, clockWalls, litMouths, mouthWall, screenOn, uplightsOn } from "./landmark-plan";
 import { passageAxis } from "./layer2077";
 
 /**
@@ -77,8 +77,7 @@ export const planLandmarkSigns = (sink: MeshSink, f: LandmarkFrame, nameSlot: (n
     const slot = width > 1.5 ? nameSlot(layer.plaque) : null;
     if (slot !== null) flat(sink, fresh.w, u, f.b.base + 2.3, 0.08, width, width / 8, tint("#fff1d6", 1), [slot, MAP_SIGN_KIND.name]);
   }
-  const old = mouthWall(f, "old");
-  if (old) for (const u of uplightsOn(old)) flat(sink, old.w, u, f.b.foot + 2.6, 0.06, 1.5, 5, tint(layer.warm, 0.9), [u, MAP_SIGN_KIND.beam], UV_UP);
+  for (const m of litMouths(f)) for (const u of uplightsOn(m)) flat(sink, m.w, u, m.ground + 2.6, 0.06, 1.5, 5, tint(layer.warm, 0.9), [u, MAP_SIGN_KIND.beam], UV_UP);
   if (f.landmark.part.tier.clock) {
     const best = clockWalls(f).neon;
     if (best) {

@@ -23,12 +23,15 @@ export interface BlindRow {
  * The top of a part: flat (a slab with a coping), battlements (merlons `merlon` metres tall every
  * `pitch` metres, within the data's height), a low skirt roof from the eaves up to the part
  * standing on it (`rise` metres, never more than the data's roof), or a helmet of revolution
- * `height` metres tall up to the data's peak: the rest of the data's roof under it is wall.
+ * `height` metres tall up to the data's peak: the rest of the data's roof under it is wall. `roof`
+ * is the data's own roof in the shape it gives (`roof:shape`, ADR-0064) and its height, in tiles.
  */
 export type Crown =
   | { readonly kind: "flat" }
   | { readonly kind: "crenel"; readonly merlon: number; readonly pitch: number }
-  | { readonly kind: "skirt"; readonly rise: number; readonly inset: number } | { readonly kind: "helm"; readonly height: number; readonly profile: HelmProfile };
+  | { readonly kind: "skirt"; readonly rise: number; readonly inset: number }
+  | { readonly kind: "helm"; readonly height: number; readonly profile: HelmProfile }
+  | { readonly kind: "roof" };
 
 /**
  * A helmet as a profile of revolution: [radius, height] from the eaves up, the radius a fraction
@@ -81,6 +84,15 @@ export interface Tier {
   readonly screen?: boolean;
   /** OSM ids of the neighbouring tenements Lublin 2077's cables run to from this tier's wall facing the new town. */
   readonly cables?: readonly string[];
+  /** The plaster's colour from the kit's swatches (OSM `building:colour`); absent: white. */
+  readonly colour?: "beige";
+  /**
+   * A classicist front (Merlini's Brama Grodzka, 1785): the walls rusticated up to a string course
+   * over the passage's arch with a keystone in it, `rows` rows of up to `windows` framed windows
+   * over it, the pilasters from the string course up, and on a gabled roof a raking cornice with
+   * a round window in the gable.
+   */
+  readonly front?: { readonly rows: number; readonly windows: number };
 }
 
 /** One OSM building or `building:part` of a landmark with its tier and crown. */
@@ -107,6 +119,11 @@ export interface Layer2077 {
   readonly checkpoint: boolean;
   /** A plaque by the passage on the new town's side (the museum inside, G-051). */
   readonly plaque?: string;
+  /**
+   * The Old Town's subdued layer on every side (ADR-0058: the Rynek and the Old Town sparingly):
+   * thin warm lines on the cornices, uplights at both mouths of the passage, no neon.
+   */
+  readonly subdued?: boolean;
 }
 
 export interface LandmarkRecipe {
@@ -175,7 +192,29 @@ const BRAMA_KRAKOWSKA: LandmarkRecipe = {
   layer: { newTown: { x: -0.96, z: -0.27 }, neon: "#ff2e88", warm: "#ffc98a", screen: "STARE MIASTO 旧市街", checkpoint: true, plaque: "Muzeum Historii Miasta Lublina" },
 };
 
-export const LANDMARK_RECIPES: readonly LandmarkRecipe[] = [BRAMA_KRAKOWSKA];
+/**
+ * Brama Grodzka (w232362876, ADR-0062 stage 2): the gate between the Old Town and the castle,
+ * rebuilt by Merlini in 1785 as a plastered classicist gate house, beige (`building:colour`) under
+ * a tiled gabled roof (`roof:shape=gabled`, `roof:material=roof_tiles`). The solid is the data's:
+ * 19 x 8 m along Grodzka, the passage through its length, three storeys (`building:levels`) with
+ * the walls to y -2.0 and the ridge 3.7 m over them. Its two fronts are the passage's ends, the
+ * long walls stand against the tenements next door. The whole gate is in the Old Town: the
+ * subdued layer on both fronts, the camera on the Old Town's (Grodzka's) front.
+ */
+const BRAMA_GRODZKA: LandmarkRecipe = {
+  key: "brama-grodzka",
+  parts: [
+    {
+      osm: "w232362876",
+      tier: { material: "plaster", colour: "beige", plinth: 0, blinds: NO_BLINDS, pilasters: true, cornice: true, base: false, openings: false, clock: false, front: { rows: 2, windows: 3 } },
+      crown: { kind: "roof" },
+    },
+  ],
+  // The outer front faces Podzamcze and the castle, the Old Town's front Grodzka up to Plac po Farze.
+  layer: { newTown: { x: 0.75, z: 0.66 }, neon: "#ffc98a", warm: "#ffc98a", checkpoint: false, subdued: true },
+};
+
+export const LANDMARK_RECIPES: readonly LandmarkRecipe[] = [BRAMA_KRAKOWSKA, BRAMA_GRODZKA];
 
 /** A neighbour a landmark's cables run to: its world outline and the world y of its top. */
 export interface CableAnchor {

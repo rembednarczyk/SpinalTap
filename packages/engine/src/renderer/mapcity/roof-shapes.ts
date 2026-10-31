@@ -209,6 +209,15 @@ export const addPlanesRoof = (sink: MeshSink, f: FacadeFrame, kind: PlanesKind, 
   if (underside && eaves.length === f.b.ring.length) soffits(sink, f, eaves, y0, colors.trim);
 };
 
+/**
+ * The roof's height over its eaves (`f.top - 0.08`) along the wall a..b at every bend, as
+ * [share of the wall, metres]: the outline of a gable end (0 where the roof slopes off the wall).
+ */
+export const roofLine = (f: FacadeFrame, kind: PlanesKind, rise: number, a: P2, b: P2): [number, number][] => {
+  const planes = roofPlanes(f, kind, rise, offsetRing(f.b.ring, EAVES) ?? [...f.b.ring]);
+  return bends(planes, a, b).map((t) => [t, Math.max(lowest(planes, { x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t }), 0)]);
+};
+
 /** Distance from the centroid to the nearest wall: the radius a helmet over the outline may take. */
 const inRadius = (ring: readonly P2[], c: P2): number => {
   let r = Infinity;
