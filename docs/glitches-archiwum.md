@@ -315,3 +315,14 @@ Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [r
 - Dowód: po G-049 Archikatedra ma wieżyczki z części OSM i proceduralne wieże z `roof-plan`
 - Pakiet właściciela: packages/engine (mapcity)
 - Test przyjęcia: kościół, który ma części `building:part`, nie dostaje proceduralnych wież
+
+### G-050 Nadbudowa Podzamcza przy Bramie Grodzkiej góruje 16 m nad bramą
+- Status: naprawione (#60). Piętra nadbudowy ponad zabytkiem ≥ 5 m od jego obrysu, próg przylegania 5 m; skan `landmark-overbuilt` 25 → 0. Kurator proponuje dalej regułę 45° (T-011), do decyzji użytkownika
+- Ważność: S3 (proponowana) · Zasięg: lokalny (widok z Zamku i Placu Zamkowego na bramę) · Koszt: mały (vertical.ts)
+- Gdzie: Grodzka 36a w66293355 (717.5, 162), Podzamcze; ile w mieście: 2 (z kontrolą `landmark-overbuilt` niżej; druga to w66324576 przy Kościele Ewangelicznym r6476361)
+- Dowód: `verticalOf` daje `rise=15`, szczyt na y 17,5, a brama ma szczyt na y 1,7; T-011
+- Przyczyna (przypuszczalna): reguła `targ` nie bierze pod uwagę sąsiadującego landmarku
+- Pakiet właściciela: packages/sim (content/lublin/vertical.ts)
+- Test przyjęcia (decyzja użytkownika 31.10: nadbudowy zostają, lekko odsunięte): budynek PRZYLEGAJĄCY do landmarku (odstęp obrysów < 5 m; zabytki i gmachy publiczne, także `civic` bez nazwy) zachowuje nadbudowę, ale żadne piętro nadbudowy ponad szczytem landmarku nie stoi bliżej niż ok. 5 m od jego obrysu. Obcinanie wysokości z e783f82 odrzucone; zostaje tylko tam, gdzie po odsunięciu nie mieści się żadne piętro
+- Uwaga: odsunięcie wymaga informacji o stronie landmarku w `BuildingVertical` (port w core, obszar architekta): rozszerzenie kontraktu z dopiskiem do ADR-0051
+- Źródło: audyt topografii 1 (kurator, 31.10).

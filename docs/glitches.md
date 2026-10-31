@@ -82,17 +82,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-007 Strzałki na pasach i napis BUS
 - Status: później (ADR-0052 „Na później”)
 
-### G-050 Nadbudowa Podzamcza przy Bramie Grodzkiej góruje 16 m nad bramą
-- Status: przyjęte przez weryfikatora (0869b0c, PR #60), czeka na przegląd kuratora
-- Ważność: S3 (proponowana) · Zasięg: lokalny (widok z Zamku i Placu Zamkowego na bramę) · Koszt: mały (vertical.ts)
-- Gdzie: Grodzka 36a w66293355 (717.5, 162), Podzamcze; ile w mieście: 2 (z kontrolą `landmark-overbuilt` niżej; druga to w66324576 przy Kościele Ewangelicznym r6476361)
-- Dowód: `verticalOf` daje `rise=15`, szczyt na y 17,5, a brama ma szczyt na y 1,7; T-011
-- Przyczyna (przypuszczalna): reguła `targ` nie bierze pod uwagę sąsiadującego landmarku
-- Pakiet właściciela: packages/sim (content/lublin/vertical.ts)
-- Test przyjęcia (decyzja użytkownika 31.10: nadbudowy zostają, lekko odsunięte): budynek PRZYLEGAJĄCY do landmarku (odstęp obrysów < 5 m; zabytki i gmachy publiczne, także `civic` bez nazwy) zachowuje nadbudowę, ale żadne piętro nadbudowy ponad szczytem landmarku nie stoi bliżej niż ok. 5 m od jego obrysu. Obcinanie wysokości z e783f82 odrzucone; zostaje tylko tam, gdzie po odsunięciu nie mieści się żadne piętro
-- Uwaga: odsunięcie wymaga informacji o stronie landmarku w `BuildingVertical` (port w core, obszar architekta): rozszerzenie kontraktu z dopiskiem do ADR-0051
-- Źródło: audyt topografii 1 (kurator, 31.10).
-
 ### G-051 Podpis „Muzeum Historii Miasta Lublina” na kamienicy Jezuicka 3 zamiast na Bramie Krakowskiej
 - Status: w weryfikacji razem z etapem 1 ADR-0062 (d65e7f2)
 - Ważność: S4 (proponowana) · Zasięg: lokalny · Koszt: mały (labels/buildings w tools/osm-import)
@@ -299,6 +288,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | G-049 | Zabytki bez wież i hełmów: import pomijał `building:part` | #65 |
 | G-054 | `glitch-shots` mógł zapisać klatkę sprzed ułożenia miasta | #62 |
 | G-057 | Proceduralne wieże obok wieżyczek z OSM (Archikatedra, Dominikanie) | #69 |
+| G-050 | Nadbudowa przy Bramie Grodzkiej góruje nad bramą (piętra odsunięte ≥ 5 m) | #60 |
 
 ## Odrzucone
 - G-005 Wiata przystanku wchodzi w ścianę przy Alei Tysiąclecia: duplikat (G-011)
