@@ -17,11 +17,12 @@ swatches of its procedural decor (AC units, cables, sign backs) on the same pale
 
 Usage (each source an unpacked kit; the zips are listed in the README next to the output):
   python3 -I tools/city_kit.py --commercial DIR --cars DIR --roads DIR --neontown DIR --out DIR
-  python3 -I tools/city_kit.py --props DIR --quaternius DIR --out DIR
+  python3 -I tools/city_kit.py --props DIR --quaternius DIR --ccby DIR --out DIR
 DIR for Kenney kits is the folder holding the .glb files and Textures/colormap.png. The second
 form bakes city-props.glb (ADR-0058, tools/city_props.py): --props is the folder
 `tools/assets/fetch.mjs` filled (one unpacked Kenney kit per source id), --quaternius the
-Cyberpunk Game Kit's folder holding Platforms/.
+Cyberpunk Game Kit's folder holding Platforms/, --ccby the same folder for the CC-BY models
+(ADR-0063, tools/city_ccby.py: DIR/<source id>/<file>.glb).
 """
 import argparse, os, sys, zlib
 import numpy as np
@@ -238,16 +239,16 @@ def build_kit(dirs, out_dir):
 def main():
     ap = argparse.ArgumentParser()
     kit_args = ('commercial', 'cars', 'roads', 'neontown')
-    for k in kit_args + ('props', 'quaternius'):
+    for k in kit_args + ('props', 'quaternius', 'ccby'):
         ap.add_argument('--' + k)
     ap.add_argument('--out', required=True)
     args = ap.parse_args()
     kit = [getattr(args, k) for k in kit_args]
-    props = [args.props, args.quaternius]
+    props = [args.props, args.quaternius, args.ccby]
     if any(kit) and not all(kit):
         ap.error('the city kit needs all of --commercial --cars --roads --neontown')
     if any(props) and not all(props):
-        ap.error('the props need both --props and --quaternius')
+        ap.error('the props need all of --props --quaternius --ccby')
     if not any(kit) and not any(props):
         ap.error('nothing to build')
     os.makedirs(args.out, exist_ok=True)
@@ -255,7 +256,7 @@ def main():
         build_kit(dict(zip(kit_args, kit)), args.out)
     if all(props):
         from city_props import build_props
-        build_props(args.props, args.quaternius, args.out)
+        build_props(args.props, args.quaternius, args.ccby, args.out)
 
 
 if __name__ == '__main__':

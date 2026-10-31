@@ -21,6 +21,8 @@ const read = (name: string): ArrayBuffer => {
 };
 const propsFile = read("city-props.glb");
 const props = parseCityProps(propsFile);
+/** The facade props: not the CC-BY street props (ADR-0063, `ccby-street.test.ts`), a pole 8.6 m tall with its lamp. */
+const facadeModels = [...props.models.values()].filter((m) => !m.styles.includes("pole") && !m.styles.includes("robodog"));
 const kit = parseCityKit(read("city-kit.glb"));
 
 const bounds = (p: Float32Array) => {
@@ -55,8 +57,8 @@ const windsWithNormals = (positions: Float32Array | number[], normals: Float32Ar
 describe("city-props.glb (ADR-0058)", () => {
   it("holds the facade props: keys pr-*, metres, at most 1.5 thousand triangles each, a small file", () => {
     expect(propsFile.byteLength).toBeLessThan(512 * 1024);
-    expect(props.models.size).toBeGreaterThanOrEqual(10);
-    for (const m of props.models.values()) {
+    expect(facadeModels.length).toBeGreaterThanOrEqual(10);
+    for (const m of facadeModels) {
       expect(m.key).toMatch(/^pr-[a-z0-9-]+$/);
       expect(triangleCount(m)).toBeLessThanOrEqual(1500);
       expect(m.size.x).toBeGreaterThan(0.05);
@@ -65,7 +67,7 @@ describe("city-props.glb (ADR-0058)", () => {
       for (const i of m.indices) expect(i).toBeLessThan(m.positions.length / 3);
     }
     // Nothing of a facade prop is self-lit (pr-ac-stack's label strip is paint, not neon).
-    for (const m of props.models.values()) {
+    for (const m of facadeModels) {
       for (let i = 0; i < m.uvs.length; i += 2) {
         const k = Math.min(props.grid - 1, Math.floor(m.uvs[i]! * props.grid)) + props.grid * Math.min(props.grid - 1, Math.floor(m.uvs[i + 1]! * props.grid));
         expect(props.swatches[k]!.kind, m.key).not.toBe("glow");
