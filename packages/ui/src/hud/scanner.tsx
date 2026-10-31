@@ -8,20 +8,14 @@ import { useHackIntents, useUi } from "../use-ui";
 export { quickhacksFor };
 
 const RamBar = ({ ram }: { ram: RamVm }) => {
+  const t = useT();
   const cells = Math.max(1, Math.round(ram.max));
   return (
-    <div
-      className="ram"
-      data-testid="ram"
-      aria-label={`RAM ${Math.floor(ram.current)} z ${ram.max}`}
-    >
+    <div className="ram" data-testid="ram" aria-label={t("scan.ram", { current: Math.floor(ram.current), max: ram.max })}>
       <span className="ram__label">RAM</span>
       <span className="ram__cells">
         {Array.from({ length: cells }, (_, i) => (
-          <span
-            key={i}
-            className={`ram__cell${i < Math.floor(ram.current) ? " ram__cell--on" : ""}`}
-          />
+          <span key={i} className={`ram__cell${i < Math.floor(ram.current) ? " ram__cell--on" : ""}`} />
         ))}
       </span>
       <span className="ram__value">
@@ -39,9 +33,7 @@ const UploadBar = () => {
   const style = { "--upload": `${upload.seconds}s` } as CSSProperties;
   return (
     <div className="upload" data-testid="upload" style={style}>
-      <span className="upload__label">
-        {t("scan.upload", { hack: t(`quickhack.${upload.hackId}`) })}
-      </span>
+      <span className="upload__label">{t("scan.upload", { hack: t(`quickhack.${upload.hackId}`) })}</span>
       <span className="upload__bar">
         <span key={upload.seq} className="upload__fill" />
       </span>
@@ -54,12 +46,7 @@ const ScanNote = () => {
   if (!note) return null;
   const icon = note.tone === "traced" ? "⚠" : note.tone === "fail" ? "✗" : "✓";
   return (
-    <div
-      key={note.seq}
-      className={`scan-note scan-note--${note.tone}`}
-      data-testid="scan-note"
-      role="status"
-    >
+    <div key={note.seq} className={`scan-note scan-note--${note.tone}`} data-testid="scan-note" role="status">
       <span aria-hidden="true">{icon}</span> {note.text}
     </div>
   );
@@ -71,24 +58,15 @@ const ScanTarget = ({ touch }: { touch: boolean }) => {
   const ram = useUi((s) => s.ram);
   const intents = useHackIntents();
   const t = useT();
-  if (!target)
-    return (
-      <div className="scan-card scan-card--empty">{t("scan.noTarget")}</div>
-    );
+  if (!target) return <div className="scan-card scan-card--empty">{t("scan.noTarget")}</div>;
   const hacks = quickhacksFor(target.kind);
   return (
-    <div
-      className={`scan-card${target.hostile ? " scan-card--hostile" : ""}`}
-      data-testid="scan-card"
-    >
+    <div className={`scan-card${target.hostile ? " scan-card--hostile" : ""}`} data-testid="scan-card">
       <div className="scan-card__kind">
-        <span aria-hidden="true">{target.hostile ? "▲" : "●"}</span>{" "}
-        {t(`scan.kind.${target.kind}`)}
+        <span aria-hidden="true">{target.hostile ? "▲" : "●"}</span> {t(`scan.kind.${target.kind}`)}
       </div>
       <div className="scan-card__name">{target.name}</div>
-      {target.faction && (
-        <div className="scan-card__faction">{target.faction}</div>
-      )}
+      {target.faction && <div className="scan-card__faction">{target.faction}</div>}
       {target.profile && (
         <ul className="scan-card__profile">
           {target.profile.map((p) => (
@@ -96,7 +74,7 @@ const ScanTarget = ({ touch }: { touch: boolean }) => {
           ))}
         </ul>
       )}
-      <ol className="hacks" aria-label="Quickhacki">
+      <ol className="hacks" aria-label={t("scan.quickhacks")}>
         {hacks.map((id, i) => {
           const def = QUICKHACKS[id];
           const short = ram.current < def.ram;
@@ -105,18 +83,12 @@ const ScanTarget = ({ touch }: { touch: boolean }) => {
             <>
               <kbd className="hacks__key">{slot}</kbd>
               <span className="hacks__title">{t(`quickhack.${def.id}`)}</span>
-              <span className="hacks__cat">
-                {t(`scan.cat.${def.category}`)}
-              </span>
+              <span className="hacks__cat">{t(`scan.cat.${def.category}`)}</span>
               <span className="hacks__ram">{def.ram} RAM</span>
             </>
           );
           return (
-            <li
-              key={id}
-              className={`hacks__row hacks__row--${def.category}${short ? " hacks__row--short" : ""}`}
-              data-testid={`hack-${id}`}
-            >
+            <li key={id} className={`hacks__row hacks__row--${def.category}${short ? " hacks__row--short" : ""}`} data-testid={`hack-${id}`}>
               {touch ? (
                 <button
                   type="button"

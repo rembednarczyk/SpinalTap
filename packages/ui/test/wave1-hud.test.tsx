@@ -215,7 +215,7 @@ describe("scanner", () => {
     expect(screen.getByTestId("hack-ping").textContent).toContain("1");
     expect(screen.getByTestId("hack-ping").textContent).toContain("2 RAM");
     expect(screen.getByTestId("hack-short_circuit").className).toContain("hacks__row--short");
-    expect(screen.getByTestId("ram").getAttribute("aria-label")).toBe("RAM 3 z 8");
+    expect(screen.getByTestId("ram").getAttribute("aria-label")).toBe("RAM 3 of 8");
   });
 
   it("devices and cameras get their own lists", () => {

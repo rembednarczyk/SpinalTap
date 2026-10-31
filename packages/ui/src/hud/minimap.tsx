@@ -1,24 +1,9 @@
 import { memo, useMemo } from "react";
 import "../citymap/citymap.css";
-import type {
-  MapBox,
-  MapLabelKind,
-  MapLinkKind,
-  MapLinkVm,
-  MapMarkerKind,
-  MapMarkerVm,
-  MapRectVm,
-  MapVm,
-} from "../store/ui-store";
+import type { MapBox, MapLabelKind, MapLinkKind, MapLinkVm, MapMarkerKind, MapMarkerVm, MapRectVm, MapVm } from "../store/ui-store";
 import { useUi } from "../use-ui";
 import { useT } from "../i18n/use-t";
-import {
-  CityLabels,
-  type CityIndex,
-  CityShapes,
-  indexCity,
-  windowAround,
-} from "./city-layer";
+import { CityLabels, type CityIndex, CityShapes, indexCity, windowAround } from "./city-layer";
 
 /** Metres from the player to the edge of the minimap. */
 export const MINIMAP_RANGE = 32;
@@ -34,11 +19,7 @@ const LINK_ICON: Record<MapLinkKind, string> = {
 const Link = ({ link }: { link: MapLinkVm }) => {
   const t = useT();
   return (
-    <g
-      className={`minimap__link minimap__link--${link.kind}`}
-      transform={`translate(${link.x.toFixed(2)} ${(-link.z).toFixed(2)})`}
-      data-testid={`minimap-link-${link.kind}`}
-    >
+    <g className={`minimap__link minimap__link--${link.kind}`} transform={`translate(${link.x.toFixed(2)} ${(-link.z).toFixed(2)})`} data-testid={`minimap-link-${link.kind}`}>
       <title>{t(`map.link.${link.kind}`)}</title>
       <path d={LINK_ICON[link.kind]} />
     </g>
@@ -47,14 +28,7 @@ const Link = ({ link }: { link: MapLinkVm }) => {
 
 const rect = (r: MapRectVm, className: string, key?: number) => (
   // Map space: x east, y = -z so north points up.
-  <rect
-    key={key}
-    className={className}
-    x={r.x - r.w / 2}
-    y={-(r.z + r.d / 2)}
-    width={r.w}
-    height={r.d}
-  />
+  <rect key={key} className={className} x={r.x - r.w / 2} y={-(r.z + r.d / 2)} width={r.w} height={r.d} />
 );
 
 /** The minimap's names: the streets only, three metres high. */
@@ -65,30 +39,20 @@ const CITY_WINDOW = 100;
 const CITY_CELL = 32;
 
 /** District layer; it re-renders when the geometry changes or the player crosses a cell of the city's window. */
-const District = memo(
-  ({ map, city, window }: { map: MapVm; city: CityIndex; window: MapBox }) => (
-    <>
-      {map.ground
-        ? map.ground.map((g, i) => rect(g, "minimap__ground", i))
-        : rect(map.bounds, "minimap__ground")}
-      <CityShapes city={city} window={window} prefix="minimap" />
-      {map.water?.map((w, i) => rect(w, "minimap__water", i))}
-      {map.streets.map((s, i) => rect(s, "minimap__street", i))}
-      {map.blocks.map((b, i) => rect(b, "minimap__block", i))}
-      {map.decks?.map((d, i) => rect(d, "minimap__deck", i))}
-      {map.links?.map((l, i) => (
-        <Link key={i} link={l} />
-      ))}
-      <CityLabels
-        city={city}
-        window={window}
-        prefix="minimap"
-        kinds={STREET_NAMES}
-        size={NAME_SIZE}
-      />
-    </>
-  ),
-);
+const District = memo(({ map, city, window }: { map: MapVm; city: CityIndex; window: MapBox }) => (
+  <>
+    {map.ground ? map.ground.map((g, i) => rect(g, "minimap__ground", i)) : rect(map.bounds, "minimap__ground")}
+    <CityShapes city={city} window={window} prefix="minimap" />
+    {map.water?.map((w, i) => rect(w, "minimap__water", i))}
+    {map.streets.map((s, i) => rect(s, "minimap__street", i))}
+    {map.blocks.map((b, i) => rect(b, "minimap__block", i))}
+    {map.decks?.map((d, i) => rect(d, "minimap__deck", i))}
+    {map.links?.map((l, i) => (
+      <Link key={i} link={l} />
+    ))}
+    <CityLabels city={city} window={window} prefix="minimap" kinds={STREET_NAMES} size={NAME_SIZE} />
+  </>
+));
 District.displayName = "District";
 
 /**
@@ -105,10 +69,7 @@ export interface MapView {
 export const LOOK_AHEAD = 1 / 3;
 
 /** The view of a frame: centred on the player, or ahead of a moving one along the view direction. */
-export const mapView = (
-  player: { x: number; z: number; yaw: number; moving?: boolean },
-  zoom = 1,
-): Required<MapView> => {
+export const mapView = (player: { x: number; z: number; yaw: number; moving?: boolean }, zoom = 1): Required<MapView> => {
   const lead = player.moving ? MINIMAP_RANGE * zoom * LOOK_AHEAD : 0;
   return {
     x: player.x + Math.sin(player.yaw) * lead,
@@ -118,10 +79,7 @@ export const mapView = (
 };
 
 /** Marker position relative to the view centre; markers out of range stick to the edge. */
-export const markerOffset = (
-  m: { x: number; z: number },
-  view: MapView,
-): { x: number; y: number; edge: boolean } => {
+export const markerOffset = (m: { x: number; z: number }, view: MapView): { x: number; y: number; edge: boolean } => {
   const k = view.k ?? 1;
   const x = (m.x - view.x) * k;
   const y = -(m.z - view.z) * k;
@@ -134,10 +92,7 @@ export const markerOffset = (
 const MarkerIcon = ({ kind }: { kind: MapMarkerKind }) => {
   if (kind === "target") return <path d="M0 -2.6 L2.6 0 L0 2.6 L-2.6 0 Z" />;
   // An enforcer: a shield with a slit, the one who sees through a disguise.
-  if (kind === "enforcer")
-    return (
-      <path d="M0 -2.8 L2.4 -1.8 V0.6 Q2.4 2.2 0 3 Q-2.4 2.2 -2.4 0.6 V-1.8 Z M-1.2 0 H1.2" />
-    );
+  if (kind === "enforcer") return <path d="M0 -2.8 L2.4 -1.8 V0.6 Q2.4 2.2 0 3 Q-2.4 2.2 -2.4 0.6 V-1.8 Z M-1.2 0 H1.2" />;
   // A ring, so a quest giver's own dot (Kaito's) still shows inside it.
   if (kind === "quest") return <circle r={3.4} />;
   return <circle r={2} />;
@@ -153,42 +108,18 @@ const Marker = ({ marker, view }: { marker: MapMarkerVm; view: MapView }) => {
       transform={`translate(${o.x.toFixed(2)} ${o.y.toFixed(2)})`}
       data-testid={`minimap-marker-${marker.kind}`}
     >
-      <title>
-        {t(
-          marker.kind === "target" && marker.radius !== undefined
-            ? "map.marker.targetArea"
-            : `map.marker.${marker.kind}`,
-        )}
-      </title>
-      {area ? (
-        <circle
-          className="minimap__area"
-          r={(marker.radius ?? 0) * (view.k ?? 1)}
-          data-testid="minimap-area"
-        />
-      ) : (
-        <MarkerIcon kind={marker.kind} />
-      )}
+      <title>{t(marker.kind === "target" && marker.radius !== undefined ? "map.marker.targetArea" : `map.marker.${marker.kind}`)}</title>
+      {area ? <circle className="minimap__area" r={(marker.radius ?? 0) * (view.k ?? 1)} data-testid="minimap-area" /> : <MarkerIcon kind={marker.kind} />}
     </g>
   );
 };
 
 /** A phone over a civilian who is calling it in (ADR-0028). */
-const Witness = ({
-  at,
-  view,
-}: {
-  at: { x: number; z: number };
-  view: MapView;
-}) => {
+const Witness = ({ at, view }: { at: { x: number; z: number }; view: MapView }) => {
   const o = markerOffset(at, view);
   const t = useT();
   return (
-    <g
-      className={`minimap__witness${o.edge ? " minimap__marker--edge" : ""}`}
-      transform={`translate(${o.x.toFixed(2)} ${o.y.toFixed(2)})`}
-      data-testid="minimap-witness"
-    >
+    <g className={`minimap__witness${o.edge ? " minimap__marker--edge" : ""}`} transform={`translate(${o.x.toFixed(2)} ${o.y.toFixed(2)})`} data-testid="minimap-witness">
       <title>{t("map.witness")}</title>
       <rect x={-1.6} y={-2.6} width={3.2} height={5.2} rx={0.6} />
       <path d="M-0.8 -1.6 H0.8 M-0.4 1.8 H0.4" />
@@ -197,20 +128,10 @@ const Witness = ({
 };
 
 /** Where the enemies last saw the player: a hollow silhouette (Deus Ex style). */
-const Silhouette = ({
-  at,
-  view,
-}: {
-  at: { x: number; z: number };
-  view: MapView;
-}) => {
+const Silhouette = ({ at, view }: { at: { x: number; z: number }; view: MapView }) => {
   const o = markerOffset(at, view);
   return (
-    <g
-      className="minimap__ghost"
-      transform={`translate(${o.x.toFixed(2)} ${o.y.toFixed(2)})`}
-      data-testid="minimap-last-known"
-    >
+    <g className="minimap__ghost" transform={`translate(${o.x.toFixed(2)} ${o.y.toFixed(2)})`} data-testid="minimap-last-known">
       <title>Ostatnia znana pozycja</title>
       <circle cx={0} cy={-2.2} r={1.1} />
       <path d="M-1.6 2.8 V0.4 Q-1.6 -0.8 0 -0.8 Q1.6 -0.8 1.6 0.4 V2.8 Z" />
@@ -235,62 +156,31 @@ export const Minimap = () => {
   const city = useMemo(() => (map ? indexCity(map) : null), [map]);
   const cx = player ? Math.round(player.x / CITY_CELL) : 0;
   const cz = player ? Math.round(player.z / CITY_CELL) : 0;
-  const window = useMemo(
-    () => windowAround(cx * CITY_CELL, cz * CITY_CELL, CITY_WINDOW, CITY_CELL),
-    [cx, cz],
-  );
+  const window = useMemo(() => windowAround(cx * CITY_CELL, cz * CITY_CELL, CITY_WINDOW, CITY_CELL), [cx, cz]);
   if (!map || !player || !city) return null;
   const deg = (player.yaw * 180) / Math.PI;
   const view = mapView(player, zoom);
   const me = markerOffset(player, view);
-  const at =
-    me.x === 0 && me.y === 0
-      ? ""
-      : `translate(${me.x.toFixed(2)} ${me.y.toFixed(2)}) `;
+  const at = me.x === 0 && me.y === 0 ? "" : `translate(${me.x.toFixed(2)} ${me.y.toFixed(2)}) `;
   return (
-    <div
-      className={`minimap${player.level !== undefined ? " minimap--upper" : ""}`}
-      data-testid="minimap"
-      data-zoom={zoom.toFixed(2)}
-      aria-label="Minimapa"
-    >
-      <svg
-        viewBox={`${-MINIMAP_RANGE} ${-MINIMAP_RANGE} ${MINIMAP_RANGE * 2} ${MINIMAP_RANGE * 2}`}
-        role="img"
-      >
-        <g
-          transform={`scale(${view.k.toFixed(3)}) translate(${(-view.x).toFixed(2)} ${view.z.toFixed(2)})`}
-        >
+    <div className={`minimap${player.level !== undefined ? " minimap--upper" : ""}`} data-testid="minimap" data-zoom={zoom.toFixed(2)} aria-label={t("map.minimap")}>
+      <svg viewBox={`${-MINIMAP_RANGE} ${-MINIMAP_RANGE} ${MINIMAP_RANGE * 2} ${MINIMAP_RANGE * 2}`} role="img">
+        <g transform={`scale(${view.k.toFixed(3)}) translate(${(-view.x).toFixed(2)} ${view.z.toFixed(2)})`}>
           <District map={map} city={city} window={window} />
         </g>
-        {showMarkers &&
-          markers.map((m) => <Marker key={m.id} marker={m} view={view} />)}
+        {showMarkers && markers.map((m) => <Marker key={m.id} marker={m} view={view} />)}
         {lastKnown && <Silhouette at={lastKnown} view={view} />}
         {witnesses.map((w) => (
           <Witness key={w.id} at={w} view={view} />
         ))}
-        <g
-          className="minimap__player"
-          transform={`${at}rotate(${deg.toFixed(1)})`}
-          data-testid="minimap-player"
-        >
-          <path
-            className="minimap__cone"
-            d="M0 0 L-7 -14 A16 16 0 0 1 7 -14 Z"
-          />
-          <path
-            className="minimap__arrow"
-            d="M0 -3.4 L2.4 2.4 L0 1.2 L-2.4 2.4 Z"
-          />
+        <g className="minimap__player" transform={`${at}rotate(${deg.toFixed(1)})`} data-testid="minimap-player">
+          <path className="minimap__cone" d="M0 0 L-7 -14 A16 16 0 0 1 7 -14 Z" />
+          <path className="minimap__arrow" d="M0 -3.4 L2.4 2.4 L0 1.2 L-2.4 2.4 Z" />
         </g>
       </svg>
       <div className="minimap__north">N</div>
       {player.level !== undefined && (
-        <div
-          className="minimap__level"
-          data-testid="minimap-level"
-          title={t("map.above")}
-        >
+        <div className="minimap__level" data-testid="minimap-level" title={t("map.above")}>
           ▲ {player.level} m
         </div>
       )}
