@@ -38,6 +38,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: lokalny · Koszt: mały
 - Gdzie: (738, 282)
 - Dowód: skan `furniture-in-car-lane` = 1 (0,9 m od linii pasa).
+- Pomiar (orkiestrator, 31.10, po G-006): `lamp-candelabra` z chunku podzamcze-1-0 (737,7; 282,3) stoi 0,04 m od osi jezdni „Plac Zamkowy” (`residential`, `cars`) i 1,34 m od linii pasa `Plac Zamkowy#84:f` (promień 0,45 + pół auta 0,9). Mebel z OSM leży na jezdni, więc poprawka należy do importu mebli (odsunięcie na krawędź albo pominięcie), a nie do tras.
 - Pakiet: `tools/osm-import` (meble) albo `packages/sim` (trasy przez parking)
 
 ### G-005 Wiata przystanku wchodzi w ścianę przy Alei Tysiąclecia
