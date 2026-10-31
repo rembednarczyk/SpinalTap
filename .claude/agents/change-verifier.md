@@ -28,6 +28,8 @@ Dostajesz ID glitcha albo etap funkcji (np. ADR-0058 etap 1), ścieżkę worktre
    - licencje assetów (CC0, źródło w README), jeśli doszły pliki.
 7. **Zakres.** Jedna zmiana, bez „przy okazji”, bez podniesionych limitów i wyłączonych testów.
 
+Testy puszczaj z roota repo (`npx vitest run packages/<pakiet>`): w katalogu pakietu vitest nie czyta głównego `vitest.config.ts` i ma limit 5 s zamiast 20 s.
+
 Sondy i pomiary w katalogu tymczasowym nazywaj z prefiksem zadania (np. `v-g018-sonda.ts`), bo katalog jest wspólny dla agentów sesji. Pracuj w worktree autora albo we własnym (`git worktree add`), nigdy w głównym checkoucie orkiestratora.
 
 ## Werdykt (najwyżej ok. 30 linii; szczegóły, tabele i logi do pliku `v-<zadanie>-raport.md` w scratchpadzie)
