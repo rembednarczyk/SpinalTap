@@ -305,22 +305,28 @@ describe("the traffic in the simulation (ADR-0050)", () => {
     const turning = TRAFFIC_ROUTES.filter((r) => r.use === "cars" && r.id.split(">").some((lane) => lane.startsWith("Aleja Tysiąclecia#") && lane.includes("+")));
     expect(turning.length).toBe(4);
     const sim = busySim(3, ground(745, 350));
-    let through = 0;
+    const through = new Set<number>();
     let fastest = 0;
     // Only the ones seen driving up to the turn: one can appear in it, out of sight, at its timetable's speed.
     const coming = new Set<number>();
-    for (let t = 0; t < 50 * 60; t++) {
+    // Each route's turn worked out once, not for every car on every step.
+    const turns = new Map<number, readonly [number, number] | undefined>();
+    const turnOf = (route: number) => (turns.has(route) ? turns.get(route) : turns.set(route, marketTurn(TRAFFIC_ROUTES[route]!)).get(route));
+    // 25 s of traffic: ten cars drive the turn (23 in 50 s), so the speed is checked on as many
+    // as before at half the cost; the 50 s went over the 20 s limit on a loaded CI runner.
+    for (let t = 0; t < 25 * 60; t++) {
       sim.step();
-      for (const v of vehicles(sim)) {
-        const turn = marketTurn(TRAFFIC_ROUTES[v.vehicle.route]!);
+      for (const v of sim.world) {
+        if (!v.vehicle) continue;
+        const turn = turnOf(v.vehicle.route);
         if (!turn) continue;
         if (v.vehicle.s < turn[0] - 15) coming.add(v.id);
         if (!coming.has(v.id) || v.vehicle.s < turn[0] + 2 || v.vehicle.s > turn[1]) continue;
         fastest = Math.max(fastest, v.vehicle.v);
-        if (v.vehicle.s > turn[1] - 1) through++;
+        if (v.vehicle.s > turn[1] - 1) through.add(v.id);
       }
     }
-    expect(through).toBeGreaterThan(0);
+    expect(through.size).toBeGreaterThanOrEqual(5);
     expect(fastest).toBeLessThanOrEqual(TURN_SPEED + 0.01);
   });
 
