@@ -32,7 +32,7 @@ export class PhoneHud implements HudPart {
     const message = {
       id: ++this.messageSeq,
       from: e.from,
-      contact: contactName(e.from),
+      contact: contactName(e.from, ui.getState().settings.locale),
       kind: e.kind,
       priority: e.priority,
       lines: hooks.renderKnot(e.knot, hooks.domain()),

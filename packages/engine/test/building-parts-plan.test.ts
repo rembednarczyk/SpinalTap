@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
+import { LUBLIN_CHUNKS, type LublinBuildingData, buildingView } from "@seki/sim/lublin";
 import { MeshSink } from "../src/renderer/mesh-sink";
 import { type MapBuilding, facadeFrame } from "../src/renderer/mapcity/facade-frame";
 import { planFarBuilding, planNearBuilding } from "../src/renderer/mapcity/facade-plan";
 import { facadeStyle } from "../src/renderer/mapcity/facade-style";
-import { type P2, cleanRing } from "../src/renderer/mapcity/polygon";
+import { type BuildingSource, mapBuilding } from "../src/renderer/mapcity/map-building";
+import { type P2, centroid, cleanRing, pointInRing } from "../src/renderer/mapcity/polygon";
 import { planBuildingSigns } from "../src/renderer/mapcity/sign-plan";
 
 /**
@@ -64,6 +66,60 @@ describe("parts lifted onto a landmark (G-049)", () => {
       const sink = new MeshSink();
       planBuildingSigns(sink, facadeFrame(body, () => 42), () => null);
       for (let i = 0; i < sink.vertexCount; i++) expect(sink.positions[i * 3 + 1]!, `look ${look}`).toBeGreaterThanOrEqual(42 - 0.01);
+    }
+  });
+});
+
+/** A building of the generated centre as the renderer gets it (ADR-0044). */
+const sourceOf = (b: LublinBuildingData): BuildingSource => {
+  const view = buildingView(b);
+  if (view.kind !== "building") throw new Error("not a building");
+  const at = { x: b.x, y: b.y, z: b.z };
+  return { ring: cleanRing(view.outline.map((p) => ({ x: p.x + at.x, z: p.z + at.z }))), view, at };
+};
+
+/** The top (world y) of a building's block among the buildings round it: over its roof only with towers. */
+const blockTop = (e: BuildingSource, around: readonly BuildingSource[], near = false): number =>
+  topOf((s) => (near ? planNearBuilding : planFarBuilding)(s, facadeFrame(mapBuilding(1, e, () => null, around), () => null)));
+const roofTop = (e: BuildingSource): number => e.at.y + e.view.height + (e.view.roof ?? 0) + 0.5;
+
+describe("a church whose parts come from the map (G-057)", () => {
+  const all = LUBLIN_CHUNKS.flatMap((c) => c.buildings);
+  const byId = (id: string): BuildingSource => {
+    const b = all.find((o) => o.id === id);
+    if (!b) throw new Error(`no ${id}`);
+    return sourceOf(b);
+  };
+
+  it("raises no procedural towers over the parts it has (Archikatedra, Dominicans)", () => {
+    for (const [church, parts] of [
+      ["w66286341", ["w617763433", "w617763434", "w617763435"]],
+      ["w66286338", ["w618270604", "w618270605", "w617763428", "w617763429"]],
+    ] as const) {
+      const e = byId(church);
+      expect(e.view.use).toBe("church");
+      for (const near of [false, true]) expect(blockTop(e, parts.map(byId), near), `${church} near ${near}`).toBeLessThanOrEqual(roofTop(e));
+    }
+  });
+
+  it("keeps them with no part on it: none, or a part of another church", () => {
+    const e = byId("w66286341");
+    expect(blockTop(e, [])).toBeGreaterThan(roofTop(e) + 5);
+    expect(blockTop(e, [byId("w617763428")])).toBeGreaterThan(roofTop(e) + 5);
+    // The parts themselves stay without towers (G-049) whatever stands round them.
+    expect(blockTop(byId("w617763433"), [e])).toBeLessThanOrEqual(roofTop(byId("w617763433")));
+  });
+
+  it("over the whole centre: no church a part stands on keeps towers, every other church does", () => {
+    const sources = all.map(sourceOf);
+    const lifted = sources.filter((s) => s.view.soffit !== undefined);
+    const churches = sources.filter((s) => s.view.use === "church" && s.view.soffit === undefined);
+    const carrying = churches.filter((c) => lifted.some((p) => pointInRing(centroid(p.ring), c.ring)));
+    expect(carrying.length).toBe(2);
+    for (const c of churches) {
+      const top = blockTop(c, sources);
+      if (carrying.includes(c)) expect(top).toBeLessThanOrEqual(roofTop(c));
+      else expect(top).toBeGreaterThan(roofTop(c));
     }
   });
 });
