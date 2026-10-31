@@ -235,7 +235,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet: tools/osm-import · Test przyjęcia: `sidewalk-under-carriageway` 262 → 0
 
 ### G-083 Drogi dla aut bez nazwy i łącznice bez pasów ruchu
-- Status: zgłoszone (audyt dróg) (T-047) · Ważność: S3 · Zasięg: 7 dróg bez nazwy + 3 łącznice, ok. 550 m · Koszt: mały–średni
+- Status: odłożone (samochody na później, decyzja użytkownika 31.10); zgłoszone (audyt dróg) (T-047) · Ważność: S3 · Zasięg: 7 dróg bez nazwy + 3 łącznice, ok. 550 m · Koszt: mały–średni
 - Przyczyna: `labels.ts` `chunkStreets` wymaga `name`, `STREET_KINDS` nie ma `primary_link`/`secondary_link`/`tertiary_link`
 - Uwaga: po dodaniu pasów sprawdzić `lane-dead-end`, `car-road-hole`, `turn-off-road`
 - Pakiet: tools/osm-import (+ sim roads.ts klucz łączenia dla dróg bez nazwy) · Test przyjęcia: `car-way-without-lane` 10 → 0
@@ -291,7 +291,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: test komponentu: kliknięcie z dotyku, który zaczął się przed otwarciem koła, nie wybiera kwestii
 
 ### G-092 Ulice ok. 3–4 m z dwoma pasami: auto zachodzi na chodnik
-- Status: zgłoszone (z naprawy G-082 i G-090)
+- Status: odłożone (samochody na później, decyzja użytkownika 31.10); zgłoszone (z naprawy G-082 i G-090)
 - Ważność: S3 (proponowana) · Zasięg: wąskie ulice dwukierunkowe (po G-082 m.in. Staszica miejscami, Łęczyńska#120) · Koszt: średni
 - Dowód: po stronie pasa mniej niż 2,1 m asfaltu; przy dolnym progu `laneOffset` (1,2 m) pół auta (0,9 m) wychodzi poza jezdnię; test G-090 celowo pomija takie odcinki
 - Przyczyna (przypuszczalna): `lanesOf` w `packages/sim/src/content/traffic.ts` zawsze daje dwa pasy ulicy dwukierunkowej, bez względu na szerokość
@@ -299,7 +299,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola skanu „auto poza jezdnią” (pół szerokości auta od pasa poza `surfacesAt` jezdni) z bazą; ulica węższa niż 2 × 2,1 m dostaje jeden pas albo mijankę
 
 ### G-093 Dziura w nawierzchni jezdni Narutowicza
-- Status: zgłoszone (z naprawy G-090)
+- Status: odłożone (samochody na później, decyzja użytkownika 31.10); zgłoszone (z naprawy G-090)
 - Ważność: S4 (proponowana) · Zasięg: lokalny · Koszt: mały
 - Gdzie: Narutowicza, ok. 62 m wzdłuż łańcucha, 1,75 m od osi: `surfacesAt` pusty
 - Dowód: sonda G-090 (`scratchpad/g090-scan.sh`); pas zwęża się przed dziurą
