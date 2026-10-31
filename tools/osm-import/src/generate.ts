@@ -108,7 +108,7 @@ const generateChunk = (
   const shopPoints = pois.filter((p) => p.kind === "shop" || p.kind === "food" || p.kind === "bar" || p.kind === "service").map((p) => p.at);
   const namedPoints = pois
     .filter((p) => p.kind === "hotel" || p.kind === "sight" || p.kind === "culture" || p.kind === "church")
-    .map((p) => ({ at: p.at, name: p.kind === "hotel" && !/hotel/i.test(p.name) ? `Hotel ${p.name}` : p.name }));
+    .map((p) => ({ at: p.at, name: p.kind === "hotel" && !/hotel/i.test(p.name) ? `Hotel ${p.name}` : p.name, ...(p.addr ? { addr: p.addr } : {}) }));
   const out = [];
   let skipped = 0;
   let withHoles = 0;

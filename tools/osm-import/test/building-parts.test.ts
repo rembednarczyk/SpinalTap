@@ -68,6 +68,12 @@ describe("building parts (G-049)", () => {
     for (const p of parts) expect(p.soffit!).toBeGreaterThan(p.plinth);
     for (const p of parts) expect(p.height - p.soffit!).toBeGreaterThanOrEqual(1);
   });
+
+  it("leaves the museum in Brama Krakowska off Jezuicka 3, whose outline its point falls in (G-051)", () => {
+    // n993790419 (Plac Łokietka 3) lies 6 m off the gate (Bramowa 1), inside Jezuicka 3.
+    expect(byId("w66286384")?.name).toBeUndefined();
+    expect(byId("r7224409")?.name).toBe("Brama Krakowska");
+  });
 });
 
 describe("the extract keeps building parts", () => {
