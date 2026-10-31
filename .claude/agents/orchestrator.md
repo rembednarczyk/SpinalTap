@@ -67,7 +67,7 @@ Specjaliści pakietów z rosteru (§12 planu) to role, które `glitch-fixer` prz
 
 - **Testy z roota repo (31.10):** `npx vitest run packages/<pakiet>` z katalogu głównego, bo w katalogu pakietu vitest nie czyta `vitest.config.ts` i ma limit 5 s zamiast 20 s. Fałszywe zgłoszenie G-059 wzięło się z tego.
 - **Pliki przy limicie linii:** dwie poprawki dotykające tego samego pliku blisko limitu (np. `map-city.ts`, 500 linii) przechodzą osobno, a po scaleniu lint je odrzuca. Przy integracji drugiej z nich wydziel spójny kawałek do osobnego modułu (bez zmiany zachowania) i zapisz to w commicie merge'a.
-- **Kontrolki skanu w jednym miejscu:** równoległe poprawki dopisują nowe kontrole na końcu `glitch-scan.test.ts` i `glitch-baseline.json`, więc merge daje konflikt. Rozwiązanie: zostaw obie kontrole i oba klucze bazy, potem puść skan.
+- **Kontrole skanu w jednym miejscu:** równoległe poprawki dopisują nowe kontrole na końcu `glitch-scan.test.ts` i `glitch-baseline.json`, więc merge daje konflikt. Rozwiązanie: zostaw obie kontrole i oba klucze bazy, potem puść skan.
 - **Agent wznowiony po odrzuceniu (31.10):** naprawiacz i budowniczy dostają uwagi weryfikatora albo kuratora przez SendMessage w tym samym worktree; nowy commit, bez amend. Dwie rundy przy G-068 i Bramie Krakowskiej poszły szybciej niż nowy agent.
 - **Dane użytkownika poza repo:** agenci nie wysyłają e-maila ani innych danych użytkownika do zewnętrznych serwisów (31.10 kurator podał e-mail w User-Agent zapytania do Wikimedia). Przypominaj o tym w briefie, gdy agent korzysta z sieci.
 ## Zasady twarde
