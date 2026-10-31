@@ -1,6 +1,7 @@
 /**
  * Passages through buildings (ADR-0048): the tenements' gateways and the Old Town's covered
- * lanes the map draws as ways with `tunnel=building_passage` running under a building. Each
+ * lanes the map draws as ways with `tunnel=building_passage` running under a building, or as
+ * tunnels at street level (`streetLevelTunnels`). Each
  * becomes a straight vaulted passage cut through the building's solid, from a little before its
  * facade on one side to a little past the other. A way that only leads into a building (into a
  * courtyard the outline does not cut out) makes none: its far end would open into the solid. Nor
@@ -10,6 +11,7 @@
 import { parseLength } from "./building-tags.ts";
 import { type Area, type Line } from "./features.ts";
 import { type Pt, type Rect, lineLength, pointAlong, pointInRing, r1, rectsOverlap, ringBounds } from "./geometry.ts";
+import { type OsmData, type Tags } from "./osm.ts";
 
 export interface PassageOut {
   /** The building it runs through (`w<id>`, `r<id>`). */
@@ -60,16 +62,38 @@ const extended = (line: readonly Pt[]): Pt[] => {
 /** Is p in one of the rects (edges included)? */
 const inAny = (p: Pt, area: readonly Rect[]): boolean => area.some((r) => p.x >= r.minX && p.x <= r.maxX && p.z >= r.minZ && p.z <= r.maxZ);
 
+/** A way under ground or under a roof: a tunnel, a cellar's corridor, a covered lane. */
+const tunnelled = (t: Tags): boolean => t.tunnel === "yes" || t.covered === "yes" || Number(t.layer ?? 0) < 0;
+
 /**
- * The passages of the map's `tunnel=building_passage` ways through the buildings they run under,
- * in the ways' order, those with both ends in `area` (the chunks' rects) when it is given.
+ * The map's tunnels at street level (G-076), by OSM id: highways with `tunnel=yes` or
+ * `covered=yes` that share no node with another tunnelled way. Lublin's mappers draw many a
+ * gateway so (Gruella under the Trinitarian Tower, the tenements' gates on Królewska, often with
+ * `layer=-1`), open to the street at both ends. Tunnels joined to one another (the Underground
+ * Route under the Old Town) lie wholly under the streets and make no passage.
  */
-export const buildingPassages = (lines: readonly Line[], buildings: readonly Area[], area?: readonly Rect[]): PassageOut[] => {
+export const streetLevelTunnels = (data: OsmData): Set<number> => {
+  const under = new Map<number, number>();
+  for (const w of data.ways.values()) if (w.tags?.highway && tunnelled(w.tags)) for (const n of new Set(w.nodes)) under.set(n, (under.get(n) ?? 0) + 1);
+  const out = new Set<number>();
+  for (const w of data.ways.values()) {
+    const t = w.tags;
+    if (t?.highway && (t.tunnel === "yes" || t.covered === "yes") && w.nodes.every((n) => under.get(n) === 1)) out.add(w.id);
+  }
+  return out;
+};
+
+/**
+ * The passages of the map's `tunnel=building_passage` ways and of its tunnels at street level
+ * (`atStreet`, OSM ids) through the buildings they run under, in the ways' order, those with both
+ * ends in `area` (the chunks' rects) when it is given.
+ */
+export const buildingPassages = (lines: readonly Line[], buildings: readonly Area[], area?: readonly Rect[], atStreet: ReadonlySet<number> = new Set()): PassageOut[] => {
   const boxes = buildings.map((b) => ({ b, box: ringBounds(b.ring) as Rect }));
   const out: PassageOut[] = [];
   const seen = new Set<string>();
   for (const l of lines) {
-    if (l.tags.tunnel !== "building_passage" || !l.tags.highway || l.line.length < 2) continue;
+    if (!(l.tags.tunnel === "building_passage" || atStreet.has(l.osmId)) || !l.tags.highway || l.line.length < 2) continue;
     const line = extended(l.line);
     const box = ringBounds(line);
     for (const { b, box: bb } of boxes) {

@@ -14,7 +14,7 @@ import { geoToWorld } from "./project.ts";
 import { type Marking, chunkMarkings, cutLine, roadMarkings, stopLines } from "./markings.ts";
 import { type Pt, type Rect, centroid, inRect, pointInRing, rectsOverlap, ringBounds } from "./geometry.ts";
 import { allPois, chunkPois, chunkStreets } from "./labels.ts";
-import { type PassageOut, buildingPassages } from "./passages.ts";
+import { type PassageOut, buildingPassages, streetLevelTunnels } from "./passages.ts";
 import { type ChunkOut } from "./model.ts";
 import { type OsmData } from "./osm.ts";
 import { chunkTerrain, sampleField } from "./terrain.ts";
@@ -46,7 +46,8 @@ const buildingAreas = (areas: readonly Area[], data: OsmData): Area[] => {
     if (r.tags?.building === undefined) continue;
     for (const m of r.members) if (m.type === "way" && m.role !== "inner") inRelation.add(`w${m.ref}`);
   }
-  return areas.filter((a) => a.tags.building !== undefined && !SKIP_BUILDING.has(a.tags.building) && !inRelation.has(a.id));
+  // A building under ground (a cellar, a shelter, G-077) has nothing over the street above it.
+  return areas.filter((a) => a.tags.building !== undefined && !SKIP_BUILDING.has(a.tags.building) && a.tags.location !== "underground" && !inRelation.has(a.id));
 };
 
 /** A coarse spatial hash of points along mapped sidewalks (`footway=sidewalk`). */
@@ -184,9 +185,13 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
     if (b && near(b.ring)) bands.push({ ...b, box: ringBounds(b.ring) });
   }
   const water = bands.filter((b) => b.surface === "water").map((b) => b.ring);
+  const rects = chunks.map((c) => c.rect);
+  const tunnels = streetLevelTunnels(data);
+  // Paved only where it runs through a building: elsewhere it may pass under a street of its own.
+  const atStreet = new Set([...tunnels].filter((id) => lines.some((l) => l.osmId === id && buildingPassages([l], buildings, rects, tunnels).length > 0)));
   for (const l of lines) {
     if (!near(l.line)) continue;
-    for (const b of lineBands(l, l.tags.highway ? mapped(l) : false, water)) bands.push({ ...b, box: ringBounds(b.ring) });
+    for (const b of lineBands(l, l.tags.highway ? mapped(l) : false, water, atStreet.has(l.osmId))) bands.push({ ...b, box: ringBounds(b.ring) });
   }
   // Zebras at the crossing nodes of the carriageways, in node order.
   const roads = lines.filter((l) => l.tags.highway !== undefined && near(l.line));
@@ -220,7 +225,7 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
     if (near([at])) markings.push(...stopLines(`n${n.id}`, at, roads, onOther));
   }
   const pois = allPois(data);
-  const passages = buildingPassages(lines.filter((l) => near(l.line)), buildings, chunks.map((c) => c.rect));
+  const passages = buildingPassages(lines.filter((l) => near(l.line)), buildings, rects, atStreet);
   const parts = partsByBuilding(buildings, partAreas.filter((p) => !orphans.has(p)));
   const results = chunks.map((c) => generateChunk(c, src, buildings, bands, lines, pois, markings, passages, parts));
   return { chunks: results.map((r) => r.chunk), stats: results.map((r) => r.stats) };
