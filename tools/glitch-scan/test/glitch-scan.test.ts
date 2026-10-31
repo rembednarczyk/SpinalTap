@@ -10,6 +10,7 @@ import { centroid, cleanRing, pointInRing } from "../../../packages/engine/src/r
 import { stackTiers } from "../../../packages/engine/src/renderer/mapcity/vertical-plan";
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
+import { addressOf } from "../../osm-import/src/labels.ts";
 import { geoToWorld } from "../../osm-import/src/project.ts";
 import { CROWD_LANES } from "../../../packages/sim/src/content/crowd";
 import { INTERIORS, interiorAt } from "../../../packages/sim/src/content/interior-areas";
@@ -863,7 +864,36 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       const want = (b.roof ?? 0) <= 0.3 ? "flat" : ROOF_KIND[b.roofShape!];
       return drawn === want ? [] : [{ at: near(b.x, b.z), what: `${b.id} ${b.name ?? ""} roof:shape=${b.roofShape} drawn as ${drawn}` }];
     }),
+  /**
+   * A public building drawn as a house (G-097, G-120): its own tags say an office of government, a
+   * town hall, a court, a library, a theatre, a post office or an arts centre (A), or a point of a
+   * town hall, a court, a theatre, a library or an arts centre lies in its plain outline at the
+   * same street address or with none on either (B, as G-051); its use is neither civic, historic
+   * nor church.
+   */
+  "civic-as-residential": () => {
+    const points = [...SOURCE_OSM.nodes.values()].filter((n) => CIVIC_POINT.has(n.tags?.amenity ?? "")).map((n) => ({ at: geoToWorld(n.lat, n.lon), tags: n.tags! }));
+    return MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b) && b.soffit === undefined && !PUBLIC_USE.has(b.use))).flatMap((b) => {
+      const t = osmTags(b.id);
+      if (t.office === "government" || t.government !== undefined || CIVIC_OWN.has(t.amenity ?? "")) return [{ at: near(b.x, b.z), what: `A ${b.id} ${t.name ?? ""} ${b.use}` }];
+      if (!PLAIN_BUILDING.has(t.building ?? "")) return [];
+      const own = addressOf(t);
+      const p = points.find((q) => inOutline(q.at.x, q.at.z, b.outline, b.x, b.z) && (own === undefined || addressOf(q.tags) === undefined || addressOf(q.tags) === own));
+      return p ? [{ at: near(b.x, b.z), what: `B ${b.id} amenity=${p.tags.amenity} ${p.tags.name ?? ""} ${b.use}` }] : [];
+    });
+  },
 };
+
+/** A building's own tags in the map data, by the game's id (`w…`, `r…`, a split's `/n` dropped). */
+const osmTags = (id: string): Readonly<Record<string, string>> => {
+  const key = id.split("/")[0]!;
+  const n = Number(key.slice(1));
+  return (key.startsWith("r") ? SOURCE_OSM.relations.get(n)?.tags : SOURCE_OSM.ways.get(n)?.tags) ?? {};
+};
+const PUBLIC_USE = new Set(["civic", "historic", "church"]);
+const CIVIC_OWN = new Set(["townhall", "courthouse", "library", "theatre", "post_office", "arts_centre"]);
+const CIVIC_POINT = new Set(["townhall", "courthouse", "theatre", "library", "arts_centre"]);
+const PLAIN_BUILDING = new Set(["yes", "public", "government", "civic"]);
 
 /** The renderer's roof for each `roof:shape` (ADR-0064). */
 const ROOF_KIND: Readonly<Record<string, string>> = { gabled: "gable", "half-hipped": "half-hip", mansard: "mansard", hipped: "hip", pyramidal: "pyramid", skillion: "skillion", dome: "dome", onion: "onion", flat: "flat" };

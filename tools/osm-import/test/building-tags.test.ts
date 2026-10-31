@@ -113,6 +113,14 @@ describe("use, names and looks", () => {
     expect(buildingUse({ building: "bunker" })).toBe("other");
   });
 
+  it("makes an office of government a public building with its name, not a block of flats (G-120)", () => {
+    const townHall = { building: "yes", office: "government", name: "Urząd Miasta Lublin" };
+    expect(buildingUse(townHall)).toBe("civic");
+    expect(landmarkName(townHall, buildingUse(townHall))).toBe("Urząd Miasta Lublin");
+    expect(buildingUse({ building: "yes", government: "education", name: "Kuratorium Oświaty" })).toBe("civic");
+    expect(buildingUse({ building: "yes", office: "company" })).toBe("residential");
+  });
+
   it("names landmarks, not blocks of flats", () => {
     expect(landmarkName({ name: "Trybunał Koronny" }, "civic")).toBe("Trybunał Koronny");
     expect(landmarkName({ name: "Kamienica X" }, "residential")).toBeUndefined();

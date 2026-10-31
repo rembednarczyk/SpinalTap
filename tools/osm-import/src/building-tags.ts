@@ -59,7 +59,8 @@ export const buildingUse = (tags: Tags): BuildingUse => {
   const b = tags.building ?? "yes";
   if (CHURCH.has(b) || tags.amenity === "place_of_worship") return "church";
   if (HISTORIC.has(b) || HISTORIC.has(tags.historic ?? "") || tags["tower:type"] !== undefined) return "historic";
-  if (CIVIC.has(b) || CIVIC_AMENITY.has(tags.amenity ?? "")) return "civic";
+  // An office of government in a plain `building=yes` is a public building, not a block of flats (G-120).
+  if (CIVIC.has(b) || CIVIC_AMENITY.has(tags.amenity ?? "") || tags.office === "government" || tags.government !== undefined) return "civic";
   if (COMMERCIAL.has(b) || tags.shop !== undefined || tags.tourism === "hotel") return "commercial";
   if (INDUSTRIAL.has(b)) return "industrial";
   // A shelter is often only `building=yes`; as a plain building it would become a block of flats.
