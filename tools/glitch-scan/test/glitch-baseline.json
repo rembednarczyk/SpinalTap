@@ -34,5 +34,7 @@
   "roof-shape-ignored": 0,
   "building-part-orphan": 0,
   "marketplace-empty": 0,
-  "sidewalk-under-carriageway": 12
+  "sidewalk-under-carriageway": 122,
+  "kerb-fit-sparse": 0,
+  "two-way-fit-narrow": 0
 }

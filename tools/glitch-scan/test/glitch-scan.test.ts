@@ -11,6 +11,7 @@ import { stackTiers } from "../../../packages/engine/src/renderer/mapcity/vertic
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 import { extractFeatures } from "../../osm-import/src/features.ts";
 import { roadWidth } from "../../osm-import/src/ground.ts";
+import { oneway } from "../../osm-import/src/markings.ts";
 import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
 import { geoToWorld } from "../../osm-import/src/project.ts";
 import { CROWD_LANES } from "../../../packages/sim/src/content/crowd";
@@ -826,10 +827,78 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       });
     });
   },
+  /**
+   * A street narrowed to its mapped sidewalks (G-082) although they run along less than half of it
+   * on either side (G-112): the width came from where a sidewalk turns in to a junction's crossing.
+   */
+  "kerb-fit-sparse": () => FITTED().flatMap((r) => (r.cover * 2 < 1 ? [{ at: r.at, what: `${r.id} ${r.name}: ${r.width.toFixed(1)} m, sidewalks along ${(r.cover * 100).toFixed(0)} %` }] : [])),
+  /** A two-way street (no `oneway`) narrowed to its mapped sidewalks below two 2.25 m lanes (G-113). */
+  "two-way-fit-narrow": () => FITTED().flatMap((r) => (!r.oneway && r.width < 4.4 ? [{ at: r.at, what: `${r.id} ${r.name}: ${r.width.toFixed(1)} m` }] : [])),
 };
 
 /** The carriageways of the map's lines, by `highway` (the importer's `ROAD_WIDTH`). */
 const CARRIAGEWAYS = new Set(["motorway", "trunk", "primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link", "unclassified", "residential", "living_street", "service", "busway", "road"]);
+
+/**
+ * The map's streets without `width` or `lanes` whose asphalt in the game is narrower than the
+ * importer's width by type (by over 0.5 m, the median over samples every 2 m more than 3 m inside
+ * the chunks, measured across from the axis every 5 cm): the ones fitted to their sidewalks. With
+ * `cover`, the larger share of the street's samples that a mapped sidewalk runs along on one side
+ * (parallel, beside it, its axis on the carriageway by type).
+ */
+const FITTED = (() => {
+  let memo: { id: string; name: string; at: string; width: number; cover: number; oneway: boolean }[] | null = null;
+  return () => {
+    if (memo) return memo;
+    const lines = extractFeatures(SOURCE_OSM).lines;
+    const walks = lines.filter((l) => l.tags.footway === "sidewalk").flatMap((l) => l.line.slice(1).map((b, i) => ({ a: l.line[i]!, b })));
+    const deep = (x: number, z: number) => MAP_CHUNKS.some(({ bounds: b }) => x > b.minX + 3 && x < b.maxX - 3 && z > b.minZ + 3 && z < b.maxZ - 3);
+    memo = lines.flatMap((l) => {
+      const t = l.tags;
+      if (!CARRIAGEWAYS.has(t.highway ?? "") || t.area === "yes" || t.tunnel !== undefined || Number(t.layer ?? 0) < 0 || t.width !== undefined || t["width:carriageway"] !== undefined || t.lanes !== undefined) return [];
+      const w = roadWidth(t);
+      const widths: number[] = [];
+      const sides = [0, 0];
+      let total = 0;
+      for (let i = 0; i + 1 < l.line.length; i++) {
+        const a = l.line[i]!;
+        const b = l.line[i + 1]!;
+        const len = Math.hypot(b.x - a.x, b.z - a.z);
+        if (len < 1e-3) continue;
+        const [tx, tz] = [(b.x - a.x) / len, (b.z - a.z) / len];
+        for (let s = 0; s < len; s += 2) {
+          const x = a.x + tx * s;
+          const z = a.z + tz * s;
+          total++;
+          const side = [false, false];
+          for (const q of walks) {
+            const dx = q.b.x - q.a.x;
+            const dz = q.b.z - q.a.z;
+            const ql = Math.hypot(dx, dz);
+            if (ql < 1e-3 || Math.abs((dx * tx + dz * tz) / ql) < 0.9) continue;
+            const k = ((x - q.a.x) * dx + (z - q.a.z) * dz) / (ql * ql);
+            if (k < 0 || k > 1) continue;
+            const across = (q.a.z + dz * k - z) * tx - (q.a.x + dx * k - x) * tz;
+            if (Math.abs(across) < w / 2) side[across >= 0 ? 0 : 1] = true;
+          }
+          side.forEach((on, k) => (sides[k]! += on ? 1 : 0));
+          if (!deep(x, z) || !surfacesAt(x, z).includes("road")) continue;
+          const reach = (sgn: number) => {
+            let d = 0;
+            while (d < w / 2 + 1 && surfacesAt(x - tz * sgn * (d + 0.05), z + tx * sgn * (d + 0.05)).includes("road")) d += 0.05;
+            return d;
+          };
+          widths.push(reach(1) + reach(-1));
+        }
+      }
+      if (widths.length < 5) return [];
+      const width = [...widths].sort((p, q) => p - q)[Math.floor(widths.length / 2)]!;
+      if (width >= w - 0.5) return [];
+      return [{ id: l.id, name: t.name ?? "", at: near(l.line[0]!.x, l.line[0]!.z), width, cover: Math.max(...sides) / (total || 1), oneway: oneway(t) }];
+    });
+    return memo;
+  };
+})();
 
 /** The renderer's roof for each `roof:shape` (ADR-0064). */
 const ROOF_KIND: Readonly<Record<string, string>> = { gabled: "gable", "half-hipped": "half-hip", mansard: "mansard", hipped: "hip", pyramidal: "pyramid", skillion: "skillion", dome: "dome", onion: "onion", flat: "flat" };

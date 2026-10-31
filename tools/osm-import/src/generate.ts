@@ -11,7 +11,7 @@ import { type HeightSource } from "./dtm.ts";
 import { type Area, type Line, extractFeatures } from "./features.ts";
 import { type Band, areaBand, chunkGround, crossingBand, crossingWay, cutSidewalk, fitToKerb, lineBands, markedCrossing, roadWidth } from "./ground.ts";
 import { geoToWorld } from "./project.ts";
-import { type Marking, chunkMarkings, cutLine, roadMarkings, stopLines } from "./markings.ts";
+import { type Marking, chunkMarkings, cutLine, oneway, roadMarkings, stopLines } from "./markings.ts";
 import { type Pt, type Rect, centroid, inRect, pointInRing, rectsOverlap, ringBounds } from "./geometry.ts";
 import { allPois, chunkPois, chunkStreets } from "./labels.ts";
 import { type PassageOut, buildingPassages, streetLevelTunnels } from "./passages.ts";
@@ -107,13 +107,15 @@ const sidewalkIndex = (lines: readonly Line[]) => {
     /**
      * How far from the road's axis its carriageway may reach, `KERB_MARGIN` short of its mapped
      * sidewalks where they run along it (parallel, beside it) with their axis on its carriageway
-     * by type: the median on each side, the nearer side's. Null when no side has one along
-     * `MIN_KERB_SAMPLES` samples.
+     * by type: the median on each side, the nearer side's. Only a side whose sidewalk runs along
+     * half the road and more counts (`MIN_KERB_SAMPLES` at least): a sidewalk turning in to a
+     * crossing at a junction says nothing of the rest of the street (T-062). Null without one.
      */
     kerb: (road: Line): number | null => {
       const reach = roadWidth(road.tags) / 2;
       const sides: [number[], number[]] = [[], []];
-      for (const p of samplesAlong(road.line, 2)) {
+      const samples = samplesAlong(road.line, 2);
+      for (const p of samples) {
         const best = [Infinity, Infinity];
         for (const q of around(p)) {
           const along = (q.x - p.x) * p.tx + (q.z - p.z) * p.tz;
@@ -126,7 +128,7 @@ const sidewalkIndex = (lines: readonly Line[]) => {
           if (Number.isFinite(b)) sides[side]!.push(b);
         });
       }
-      const medians = sides.filter((s) => s.length >= MIN_KERB_SAMPLES).map((s) => [...s].sort((a, b) => a - b)[Math.floor(s.length / 2)]!);
+      const medians = sides.filter((s) => s.length >= MIN_KERB_SAMPLES && s.length * 2 >= samples.length).map((s) => [...s].sort((a, b) => a - b)[Math.floor(s.length / 2)]!);
       return medians.length > 0 ? Math.min(...medians) : null;
     },
   };
@@ -214,7 +216,7 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   const areas = features.areas.map((a) => corrected(a));
   // A street of default width ends where the sidewalks mapped along it begin (T-046).
   const sidewalks = sidewalkIndex(features.lines);
-  const lines = features.lines.map((l) => (l.tags.highway ? { ...l, tags: fitToKerb(l.tags, sidewalks.kerb(l)) } : l));
+  const lines = features.lines.map((l) => (l.tags.highway ? { ...l, tags: fitToKerb(l.tags, sidewalks.kerb(l), oneway(l.tags)) } : l));
   const outlines = buildingAreas(areas, data);
   const partAreas = areas.filter(isPart);
   const orphans = new Set(orphanParts(outlines, partAreas));
