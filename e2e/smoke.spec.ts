@@ -99,7 +99,7 @@ test("ripperdoc clinic sells a medkit through the UI", async ({ page }) => {
   await expect(shop.getByRole("button", { name: /Implant · 650/ })).toBeDisabled();
   await shop.getByRole("button", { name: /Buy · 90/ }).click();
   await step(page, 1);
-  await expect(page.getByTestId("gear")).toContainText("Apteczki × 2");
+  await expect(page.getByTestId("gear")).toContainText("Medkits × 2");
   expect((await gameState(page)).eddies).toBe(30);
   await shop.getByRole("button", { name: /Leave the clinic/ }).click();
   await expect(shop).toBeHidden();
