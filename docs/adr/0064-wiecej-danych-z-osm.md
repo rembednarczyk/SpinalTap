@@ -40,3 +40,12 @@ Użytkownik dołożył pozycje 20, 23, 25 i 26 z sekcji C przeglądu. Każdy eta
 - Widok `building` (`core/ports/types.ts`) dostaje dwa pola opcjonalne i wsteczne: `roofShape` (`RoofShape`: `gabled`, `half-hipped`, `mansard`, `hipped`, `pyramidal`, `skillion`, `dome`, `onion`, `flat`) z OSM `roof:shape` oraz `roofAcross` z `roof:orientation=across` (kalenica w poprzek dłuższego boku obrysu; bez pola wzdłuż). Import mapuje pokrewne wartości: `lean_to` na `skillion`, `gambrel` na `mansard`, `cone` na `pyramidal`, `side_hipped` i `saltbox` na `gabled`; inne wartości zostają bez pola.
 - Bez pola renderer rysuje dach jak dotąd (czterospadowy, czasem kopuła na zwartym zabytku), z tymi samymi losowaniami wyglądu. Z polem kształt idzie z danych, także w częściach `building:part` (G-049).
 - Wysokość dachu (`roof`) i bryły kolizji się nie zmieniają: kształt to sam wygląd, złote hashe zostają.
+
+## Uzupełnienie (31.10): szyldy lokali, decyzja użytkownika
+Użytkownik uznał zestaw lokali w grze za ubogi i wybrał (31.10) wariant „parodie + kolory” dla etapu 4 (lokale w parterach):
+- każdy prawdziwy lokal z OSM (ok. 380: sklepy, restauracje, bary, kawiarnie, banki, apteki, kluby) dostaje szyld w swoim miejscu na właściwej elewacji;
+- nazwa jest przerobiona na wersję Lublina 2077 (gra słów, skrót, futurystyczny wariant), rozpoznawalna dla mieszkańca, bez logo i bez dosłownej nazwy sieci; zasada ADR-0058 „bez prawdziwych marek” zostaje, bo chroni przed ryzykiem znaków towarowych;
+- kolorystyka szyldu nawiązuje do prawdziwej (`brand:colour`, `colour` z OSM albo przypisana ręcznie w tabeli danych), w palecie kitu (ADR-0022) jako neon;
+- szyldy i neony z paczki Sketchfab (ADR-0063, paczka 2) zostają z napisami jak dostarczone (fikcyjne), w kolorach paczki sprowadzonych do palety;
+- nazwy dla gracza przez katalogi i18n tam, gdzie są słowami (rodzaj lokalu), a nazwy własne 2077 jako dane (jak nazwy autorów w „Autorach”), w jednej tabeli `venue-names` z testem, że żadna nie jest dosłowną nazwą z OSM.
+Etap 4 przesuwa się w kolejności przed etapy 2 i 3, zaraz po pracach w toku.
