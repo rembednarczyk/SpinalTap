@@ -151,7 +151,8 @@
   pointer-events: auto;
   outline: none;
 }
-.subs__line { margin: 0 0 6px; font-size: 18px; line-height: 1.35; }
+.subs__line { margin: 0 0 6px; font-size: calc(18px * var(--subs-scale, 1)); line-height: 1.35; }
+.subs-solid .subs { background: rgb(2, 4, 8); }
 .subs__line--past { opacity: 0.55; }
 .subs__line--narration { font-style: italic; color: var(--magenta); }
 .subs__speaker {
@@ -191,8 +192,8 @@
     max-height: 44%;
     padding: 8px 10px 2px;
   }
-  .subs__line { font-size: 14px; margin-bottom: 4px; }
-  .subs__speaker { display: block; min-width: 0; margin: 0; font-size: 12px; }
+  .subs__line { font-size: calc(14px * var(--subs-scale, 1)); margin-bottom: 4px; }
+  .subs__speaker { display: block; min-width: 0; margin: 0; font-size: calc(12px * var(--subs-scale, 1)); }
 }
 
 /* No slide or pulse with reduced flashes (Dostępność) or a system-wide reduced motion. */
