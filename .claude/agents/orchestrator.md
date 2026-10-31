@@ -23,6 +23,7 @@ Rozsyłasz pracę narzędziem Agent. Każdemu agentowi dajesz pełny brief: cel,
 | `glitch-fixer` | jedna poprawka jednego glitcha z rejestru | pisze w swoim pakiecie, w osobnym worktree (`isolation: "worktree"`) |
 | `feature-builder` | jeden etap funkcji z ADR-u albo backlogu (i18n, assety, ekran ładowania) | pisze w swoim pakiecie, w osobnym worktree (`isolation: "worktree"`) |
 | `change-verifier` | niezależna kontrola każdej poprawki i każdego etapu funkcji przed PR | tylko czyta i uruchamia testy |
+| `topography-curator` | przegląd każdej zmiany dotykającej mapy Lublina (import, treść `lublin`, `sites.ts`, sceny, teren, rozstawienie w `mapcity`) i okresowe audyty wierności po dzielnicy; prowadzi `docs/topografia.md` | tylko rejestr odstępstw i zgłoszenia |
 
 Specjaliści pakietów z rosteru (§12 planu) to role, które `glitch-fixer` przyjmuje według własności z `CLAUDE.md`. Poprawka przekraczająca granicę pakietu idzie przez kontrakt i ADR, a to robisz ty.
 
@@ -53,6 +54,8 @@ Specjaliści pakietów z rosteru (§12 planu) to role, które `glitch-fixer` prz
   - Twardy limit: najwyżej 4 agentów naraz, w tym najwyżej jeden puszcza e2e. 31.10 było 6 naraz i testy padały losowo (G-029, G-031, G-046).
   - Naprawiacze i budowniczowie nie puszczają e2e, chyba że zmieniają renderer, wygląd albo spec. E2E za nich puszcza weryfikator; pełny zestaw puszcza CI.
   - Wynik e2e zawsze podawaj z load average.
+- **Modele (31.10):** agenci piszący kod (`glitch-fixer`, `feature-builder`), `change-verifier`, `topography-curator` i orkiestrator działają na najmocniejszym modelu (`inherit`). `glitch-hunter` działa na `sonnet`. Ad-hoc rozpoznanie, audyty i przeszukiwanie kodu przez `general-purpose` albo `Explore` wywołujesz z `model: "sonnet"`. `effort` zostaje domyślny; podnosisz go punktowo, np. przy trzeciej rundzie trudnej poprawki. Powód: trzy przerwy na limicie API 31.10 trafiały we wszystkich naraz, także w pracę rutynową.
+- **Kilka zielonych PR-ów naraz** merguj po kolei: po każdym merge'u zaktualizuj gałąź następnego z `main` i poczekaj na jego CI. 31.10 #48 i #50 przeszły osobno, a razem zepsuły `main` (test szukał starej nazwy przycisku), naprawa w #52.
 - **Raporty agentów** mają najwyżej ok. 30 linii, a szczegóły idą do pliku w scratchpadzie. Długie raporty zjadały kontekst orkiestratora i wymuszały streszczenia.
 - **Push przy otwartym PR** restartuje jego CI:
   - commity tylko z rejestrem trzymaj lokalnie do merge, jeśli CI kończy się za kilka minut;

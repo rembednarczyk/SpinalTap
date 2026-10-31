@@ -12,14 +12,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Dowód: skan `car-lane-off-road` = 1.
 - Pakiet: `packages/sim` (`traffic.ts`, `uTurn`)
 
-### G-004 Kandelabr na krawędzi pasa aut na Placu Zamkowym
-- Status: w naprawie (decyzja użytkownika: jak na prawdziwej mapie, czyli według tagów OSM: bez pasa aut, jeśli OSM zakazuje ruchu, inaczej lampy na krawędzi)
-- Ważność: S4 · Zasięg: lokalny · Koszt: mały
-- Gdzie: (738, 282)
-- Dowód: skan `furniture-in-car-lane` = 1 (0,9 m od linii pasa).
-- Pomiar (orkiestrator, 31.10, po G-006): `lamp-candelabra` z chunku podzamcze-1-0 (737,7; 282,3) stoi 0,04 m od osi jezdni „Plac Zamkowy” (`residential`, `cars`) i 1,34 m od linii pasa `Plac Zamkowy#84:f` (promień 0,45 + pół auta 0,9). Mebel z OSM leży na jezdni, więc poprawka należy do importu mebli (odsunięcie na krawędź albo pominięcie), a nie do tras. Nawierzchnia w tym miejscu to `cobble` (bruk placu, nie `road`), więc `props-place.ts` (`surfaceAt(p) === "road"`) nie widzi jezdni, choć `sim` puszcza tamtędy pas aut. Do wyboru przy naprawie: import mebli traktuje oś ulicy z pasem aut jak jezdnię (lampy na krawędź), albo bruk placu nie dostaje pasa aut.
-- Pakiet: `tools/osm-import` (meble) albo `packages/sim` (trasy przez parking)
-
 ### G-016 Auta zaparkowane do 10 m za zebrą na dwukierunkowej 3 Maja
 - Status: później (S4; pełny art. 49 PoRD dla dróg dwukierunkowych, po G-015)
 - Gdzie: (−115,58, 31,83) 3,0 m, (−103,16, −32,87) 7,75 m, (−115,53, 25,62) 9,0 m za zebrą
@@ -74,10 +66,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: w naprawie razem z G-006 (koniec Andersy staje 5 m przed pasami Mełgiewskiej; blokada istniała na bazie)
 - Ważność: S3 · Gdzie: ok. (2401, 282) · Dowód: kąt 31°, pojazdy obu tras biorą się nawzajem za „auto przed sobą”, resynchronizacja co ok. 40 m.
 
-### G-038 `lane-dead-end` nie sprawdza użycia początku, który „spotyka” koniec
-- Status: w weryfikacji (kontrola wymaga tego samego `use`; po G-006 koniec trolejbusu (2456, 245) i tak jest już liczony, więc licznik 44 się nie zmienia, zmiana tylko uszczelnia kontrolę)
-- Ważność: S4 (skan) · Gdzie: koniec trolejbusu na Mełgiewskiej ok. (2456, 245) ukryty przez początek pasa aut.
-
 ### G-041 Wzór bruku placu przesuwa się na granicy chunków
 - Status: zgłoszone (z G-018)
 - Ważność: S4 (proponowana) · Zasięg: każdy plac `square` na granicy chunków · Koszt: mały
@@ -97,20 +85,70 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Dowód: naprawiacz i weryfikator G-030: `e2e/__snapshots__/npr-perf.spec.ts/reference-m0.png` różni się od deterministycznej klatki main (b5507ce) o 39 806 px poza Seki (bbox 0,0–1280,533); m.in. brak białej smugi odblasku na lewym oknie Neon Koi (y ok. 290). Test przechodzi tylko dzięki `maxDiffPixelRatio: 0.02`. Ustalić, który commit zmienił klatkę: regresja czy niezaktualizowana migawka.
 - Pakiet właściciela: packages/engine / e2e (QA)
 
-### G-046 Smoke M0: kierunek ruchu po `freeze` zależy od chwili zamrożenia
-- Status: w weryfikacji. Przyczyna w grze: Chromium po wejściu w pointer lock wysyła jeden `mousemove` z ruchem równym minus pozycja kursora (−640 px), `BrowserInput` brał go za obrót (yaw π/2 → 0,16); pierwszy ruch po zmianie stanu blokady nie obraca już widoku
-- Ważność: S2 (proponowana: niestabilne e2e) · Koszt: mały
-- Dowód: weryfikator i18n 2b, sonda: New Game, `freeze`, 6×10 kroków `moveZ`; `tick0` wypada 10, 15 albo 20 i każdy daje inny kierunek; przy `tick0=15` gracz idzie na ścianę z=−62,88 i staje po 2,09 m, więc `smoke.spec.ts:26` (ruch > 2,5) pada. Na czystym main (b5507ce) 3/4 przebiegów sondy trafia na ścianę. Test zakłada kierunek, który zależy od liczby ticków przed `freeze`.
-- Pakiet właściciela: e2e (QA) / packages/app
-
-### G-048 Prawdziwy tap tuż po przycisku pada ginie jako „ghost click”
-- Status: w weryfikacji (poprawka dffff88, `packages/ui/src/touch/ghost-click.ts`)
-- Ważność: S2 (niestabilne e2e `touch.spec`, a na telefonie zgubiony pierwszy wybór w dialogu) · Koszt: mały
-- Dowód: `pointerdown` na przycisku pada uzbraja `swallowNextClick` na 700 ms, a ten sam przycisk w `touchend` robi `preventDefault`, więc klik zgodności nie przychodzi i nasłuch zjada pierwszy prawdziwy tap w wybór dialogu. Pomiar: padły 3 z 5 przebiegów (odstępy 432–679 ms), przeszły przy 1,6–1,8 s; bez G-006 też 2 z 5. Poprawka: nasłuch wygasa przy następnym `pointerdown`.
-- Pakiet właściciela: packages/ui (touch)
-
 ### G-007 Strzałki na pasach i napis BUS
 - Status: później (ADR-0052 „Na później”)
+
+### G-049 Zabytki tracą wieże, hełmy i wysokość: import pomija `building:part` (Trynitarska 42 zamiast 60 m)
+- Status: zgłoszone
+- Ważność: S3 (proponowana) · Zasięg: szeroki (panorama Starego Miasta, Plac Łokietka, Rynek) · Koszt: średni (fetch, osm.ts, massing, buildings w tools/osm-import; regeneracja danych)
+- Gdzie: Trynitarska (591.3, −147.3), Brama Krakowska (472.6, −91.2), Ratusz (415, −79), Archikatedra (634, −184), Dominikanie (731, −55); ile w mieście: co najmniej 5 w próbce, pełna liczba po ponownym pobraniu
+- Dowód: OSM w617763432 `height=60 min_height=55 roof:shape=pyramidal` w obrysie w66286371; w617878341 `building:levels=6 roof:shape=onion` w r7224409; w619138854 `building:part=tower building:levels=7.5`; T-006 do T-010
+- Przyczyna (przypuszczalna): `filterOsm` nie zachowuje `building:part`, a `massing` liczy jedną bryłę z tagów obrysu zewnętrznego
+- Pakiet właściciela: tools/osm-import (dane: packages/sim/src/content/lublin/*.generated.ts)
+- Test przyjęcia: test w tools/osm-import na wycinku z Trynitarską: najwyższy punkt bryły ≥ 59 m nad stopą, a przybudówka Bramy Krakowskiej ≤ 2 kondygnacje. Dziś pada (42 m, 5 kondygnacji)
+- Źródło: audyt topografii 1 (kurator, 31.10).
+
+### G-050 Nadbudowa Podzamcza przy Bramie Grodzkiej góruje 16 m nad bramą
+- Status: zgłoszone
+- Ważność: S3 (proponowana) · Zasięg: lokalny (widok z Zamku i Placu Zamkowego na bramę) · Koszt: mały (vertical.ts)
+- Gdzie: Grodzka 36a w66293355 (717.5, 162), Podzamcze; ile w mieście: 2 (z kontrolą `landmark-overbuilt` niżej; druga to w66324576 przy Kościele Ewangelicznym r6476361)
+- Dowód: `verticalOf` daje `rise=15`, szczyt na y 17,5, a brama ma szczyt na y 1,7; T-011
+- Przyczyna (przypuszczalna): reguła `targ` nie bierze pod uwagę sąsiadującego landmarku
+- Pakiet właściciela: packages/sim (content/lublin/vertical.ts)
+- Test przyjęcia: w lublin-vertical.test.ts żaden budynek z nadbudową w promieniu 30 m od landmarku nie przewyższa jego szczytu. Dziś pada na w66293355
+- Źródło: audyt topografii 1 (kurator, 31.10).
+
+### G-051 Podpis „Muzeum Historii Miasta Lublina” na kamienicy Jezuicka 3 zamiast na Bramie Krakowskiej
+- Status: zgłoszone
+- Ważność: S4 (proponowana) · Zasięg: lokalny · Koszt: mały (labels/buildings w tools/osm-import)
+- Gdzie: w66286384 (478.7, −114.4); ile w mieście: 1 znane
+- Dowód: węzeł n993790419 `addr:street=Plac Władysława Łokietka addr:housenumber=3` leży w obrysie Jezuickiej 3, 6 m od r7224409; T-013
+- Przyczyna (przypuszczalna): nazwa trafia do budynku zawierającego punkt, a adres węzła nie jest porównywany z adresem budynku. Możliwa też poprawka położenia węzła w OSM
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: po regeneracji w66286384 nie ma nazwy muzeum, a r7224409 nosi nazwę Bramy Krakowskiej (nazwa budynku ma pierwszeństwo przed punktem)
+- Źródło: audyt topografii 1 (kurator, 31.10).
+
+### G-052 Teatr Osterwy i Kościół Bernardynów poza danymi miasta (brzeg Krakowskiego na z = −200)
+- Status: zgłoszone
+- Ważność: S3 (proponowana) · Zasięg: lokalny (Narutowicza, Bernardyńska) · Koszt: duży (prostokąt w config.ts, ADR-0042, regeneracja, budżety)
+- Gdzie: (118.0, −205.7), (364.7, −239.8); ile w mieście: 2 zabytki z listy kuratora
+- Dowód: brak w66330578 i w67508958 w `*.generated.ts`, `DISTRICTS[0].rect.minZ = −200`; T-014
+- Przyczyna (przypuszczalna): zasięg prostokąta Krakowskiego (ADR-0042)
+- Pakiet właściciela: tools/osm-import (decyzja: Architekt, ADR-0042)
+- Test przyjęcia: kontrola `landmark-missing` daje 0
+- Źródło: audyt topografii 1 (kurator, 31.10).
+
+### G-053 Plac po Farze bez fundamentów fary; ruiny z OSM pominięte
+- Status: zgłoszone
+- Ważność: S4 (proponowana) · Zasięg: lokalny (Plac po Farze na trasie Grodzkiej) · Koszt: średni (nowa bryła niskiego muru w imporcie i rendererze)
+- Gdzie: w173519315 (672.8, 43.2) i 3 budynki `building=ruins` (T-015); ile w mieście: 4 w dwóch dzielnicach
+- Dowód: `SKIP_BUILDING` w generate.ts; `props-kinds.ts` „ruins: structures (later)”
+- Przyczyna (przypuszczalna): ruiny nie mają reprezentacji
+- Pakiet właściciela: tools/osm-import i packages/engine (renderer/mapcity)
+- Test przyjęcia: zarys fundamentów fary jest w danych chunku stare-miasto-1-1 jako niski mur (≤ 1 m) i nie ma kolizji z nawierzchnią placu
+
+## Proponowane kontrole skanu (`tools/glitch-scan`)
+
+| Kontrola | Definicja | Baza |
+|---|---|---|
+| `landmark-missing` | Lista ID z OSM: r7224409, w66286371, w66286341, w66264159, w66264120, w232362876, w66286338, r2366732, w48500136, w450180469, w66258167, w67508958, w66330578. Liczy ID, których nie ma w `MAP_CHUNKS` albo które usuwa `clearedBuilding`. Do tego monumenty Placu Litewskiego (n481952877, n481952879, n481952880) wśród rekwizytów `monument` w promieniu 1 m | 2 (Osterwy, Bernardyni) |
+| `landmark-overbuilt` | Budynek z `verticalOf(...).rise > 0` w promieniu 30 m od środka landmarku, którego nazwa pasuje do /brama\|wieża\|trybuna\|katedr\|ratusz\|zamek\|donżon\|kościół\|bazylika\|kaplica/i, i którego `y + height + roof + rise` przekracza szczyt landmarku | 2 (w66293355 przy Bramie Grodzkiej, w66324576 przy Kościele Ewangelicznym). Dla pełnego `isLandmark` baza wynosi 12 (m.in. pałace i urzędy w Krakowskim) |
+| `terrain-off-pads` | `\|groundY − rawHeight\| > 0,3 m` na siatce co 5 m poza `PADS` (z `blend`), rampami schodów i pomostami | 0 |
+| `terrain-off-dtm` | Test w tools/osm-import, bo potrzebuje `data/terrain`: `\|rawHeight − NMT 1 m\| > 1,0 m` na siatce co 10 m w prostokątach dzielnic | 2 w Krakowskim i na Starym Mieście; reszta miasta niezmierzona |
+| `street-attr-mismatch` | Kawałek ulicy, którego nazwa, flaga `oneway` albo kierunek różni się od najbliższej drogi OSM o tej nazwie (≤ 1 m) | 0 |
+| `building-cleared-unregistered` | Budynek usuwany przez `clearedBuilding` spoza listy z rejestru topografii | 0 (lista: w672635872, w672635873, w458298766, w1354195809) |
+| `building-part-ignored` | Test importu: budynek z `building:part` wyższym od własnej bryły o ponad 3 m. Wymaga zachowania części w ekstrakcie | ≥ 5 w próbce, do ustalenia po ponownym pobraniu |
+- Źródło: audyt topografii 1 (kurator, 31.10).
 
 ## Naprawione
 | ID | Glitch | PR |
@@ -154,6 +192,10 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | G-045 | Test `far-city.test.ts` przekracza 5 s pod obciążeniem | #47 |
 | G-047 | Karta skanu hackowania nie zmienia języka do zmiany celu | #47 |
 | G-006 | Skręty aut na skrzyżowaniach | #47 |
+| G-046 | Smoke M0: kierunek ruchu po `freeze` zależy od chwili zamrożenia | #49 |
+| G-048 | Prawdziwy tap tuż po przycisku pada ginie jako „ghost click” | #48 |
+| G-004 | Kandelabr na krawędzi pasa aut na Placu Zamkowym | #51 |
+| G-038 | `lane-dead-end` nie sprawdza użycia początku, który „spotyka” koniec | #51 |
 
 ## Odrzucone
 - G-005 Wiata przystanku wchodzi w ścianę przy Alei Tysiąclecia: duplikat (G-011)

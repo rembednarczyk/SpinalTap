@@ -150,7 +150,10 @@ const loop = new FixedStepLoop(browserClock, {
     session.render(alpha);
     // The menu covers the game, which stays frozen: draw only the preview (and the menu colour).
     if (session.characterScreenOpen) {
+      // The preview waits for the GPU as the game does (G-029, G-031): it redraws every frame.
+      if (!stage.pacer.canDraw) return;
       preview.render(stage.engine.getDeltaTime() / 1000);
+      stage.pacer.drawn();
       return;
     }
     renderer.setScanning(ui.getState().scanning);
