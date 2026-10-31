@@ -78,10 +78,10 @@ if (modelsParam !== "off" && (modelsParam || !reference)) {
   // CC0 weapon models replace the box pistols (see public/weapons/README.md).
   const weapons = new URL("weapons/", document.baseURI);
   const weaponModels = { pistol: new URL("pistol.glb", weapons).href, smg: new URL("smg.glb", weapons).href };
-  void loadModelManifest(modelsParam ?? "./models/manifest.json").then((m) => {
-    if (Object.keys(m).length > 0) renderer.setCharacterModels(m);
-    preview.setModels(m, weaponModels);
-  });
+  // The loading screen waits for the manifest and loads its files (ADR-0057).
+  const manifest = loadModelManifest(modelsParam ?? "./models/manifest.json");
+  renderer.loadCharacterModels(manifest);
+  void manifest.then((m) => preview.setModels(m, weaponModels));
   renderer.setWeaponModels(weaponModels);
   preview.setModels({}, weaponModels);
 }
@@ -116,6 +116,9 @@ const session = new GameSession({
   onFocusChange: (wantsPointer) => {
     input.enabled = wantsPointer;
     if (touchDevice) return;
+    // The game can start after the loading screen, long after the click (ADR-0057): a lock asked
+    // for without a gesture is refused for good, so the next click on the game takes it instead.
+    if (wantsPointer && navigator.userActivation?.isActive === false) return;
     if (wantsPointer) input.requestPointerLock();
     else input.releasePointerLock();
   },
@@ -138,7 +141,7 @@ const applyControls = (s: typeof settings) => {
 
 /** Frames drawn after the renderer updated its camera and city in them (debug `frames()`, G-013). */
 let framesDrawn = 0;
-/** False while the reference frame waits for its city: the frames update it but draw nothing. */
+/** False while the reference frame waits for its start: the frames update the scene but draw nothing. */
 let drawScene = !reference;
 const loop = new FixedStepLoop(browserClock, {
   update: () => {
@@ -164,7 +167,8 @@ const loop = new FixedStepLoop(browserClock, {
     const player = renderer.cameraTargetTransform;
     if (player) audio.setListener({ position: player.position, yaw: player.yaw, speed: player.speed });
     // A frame waits for the GPU to catch up (G-029); the reference still is drawn as it comes.
-    if (!drawScene || (!reference && !stage.pacer.canDraw)) return;
+    // Behind the loading screen the preparation draws its own warm-up frames (ADR-0057).
+    if (!drawScene || session.preparing || (!reference && !stage.pacer.canDraw)) return;
     stage.scene.render();
     if (!reference) stage.pacer.drawn();
     framesDrawn++;
@@ -296,14 +300,14 @@ if (reference) {
  * The reference frame is a still: rendering stops once it is drawn complete. Under SwiftShader a
  * frame of Lublin takes about 600 ms, and a canvas redrawn that slowly never gives the snapshot
  * two equal captures within its timeout (ADR-0046: the cause, not a longer timeout).
- * Its frames build the city but draw only once it is in and every shader round it compiled
- * (G-001): SwiftShader rasterizes behind the page, so each frame drawn while Lublin streamed in
- * or shaders compiled queued seconds of GPU work that the snapshot's first readback waited out.
- * A drawn frame can ask for more shaders (shadows, the probe); the still is the first after which
- * the scene stays ready.
+ * Its frames build the city but draw only once the loading screen's preparation is over (G-001,
+ * ADR-0057): the city in, every shader compiled and warmed up. SwiftShader rasterizes behind the
+ * page, so each frame drawn while Lublin streamed in or shaders compiled queued seconds of GPU
+ * work that the snapshot's first readback waited out. A drawn frame can ask for more shaders
+ * (shadows, the probe); the still is the first after which the scene stays ready.
  */
 stage.engine.runRenderLoop(() => {
-  if (reference) drawScene = debug.ready && renderer.citySettled && stage.scene.isReady(true);
+  if (reference) drawScene = session.screen === "playing";
   loop.frame();
   if (!reference || !drawScene || !stage.scene.isReady(true)) return;
   stage.engine.stopRenderLoop();
