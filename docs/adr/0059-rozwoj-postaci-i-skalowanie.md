@@ -112,3 +112,4 @@ Atrybutów jest pięć. Każdy ma wartość od 3 do 15. Na starcie są po 3, a n
 - Rośnie stan domeny i zapis. Poziom ma każda instancja przedmiotu, a progresja trzyma statystykę stylu.
 - Wartości liczbowe (krzywa, +4% na poziom, pasma, wagi) są wstępne. Ustala je test balansu z etapu 8, a ich zmiany nie wymagają nowego ADR-u.
 - **Zależność z audytu (31.10):** gra nie ma jeszcze obezwładnień (takedown, ogłuszenie). Źródło XP „skradanie” i perki drzewka Cień, które ich wymagają, czekają na osobny ADR obezwładnień. Etap 1 emituje tylko XP z tego, co istnieje.
+- **Z weryfikacji etapu 1 (31.10):** walidacja zapisu wymaga, żeby poziom był równy poziomowi z krzywej dla XP. Zmiana krzywej w etapie 8 musi więc mieć migrację albo przeliczenie poziomu przy wczytaniu. Liczenie wydanych perków (suma rang) aktualizuje etap 3. XP za quickhack przysługuje raz na cel, a pamięć celów ma 256 wpisów.
