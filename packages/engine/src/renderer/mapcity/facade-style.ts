@@ -1,4 +1,4 @@
-import type { BuildingUse } from "@seki/core";
+import type { BuildingUse, RoofShape } from "@seki/core";
 import { prng } from "../city-kit-data";
 
 /**
@@ -32,7 +32,20 @@ export const SHOPFRONT_BIT = 8;
 export const ROOF_STYLE = 16;
 
 export type AtticKind = "none" | "parapet" | "crenel";
-export type RoofKind = "flat" | "hip" | "dome";
+export type RoofKind = "flat" | "hip" | "dome" | "gable" | "half-hip" | "mansard" | "pyramid" | "skillion" | "onion";
+
+/** The renderer's roof for each shape from the map (ADR-0064). */
+const SHAPE_ROOF: Readonly<Record<RoofShape, RoofKind>> = {
+  gabled: "gable",
+  "half-hipped": "half-hip",
+  mansard: "mansard",
+  hipped: "hip",
+  pyramidal: "pyramid",
+  skillion: "skillion",
+  dome: "dome",
+  onion: "onion",
+  flat: "flat",
+};
 
 export interface FacadeStyle {
   readonly plaster: string;
@@ -102,6 +115,8 @@ export interface StyleInput {
   readonly shopfront?: boolean;
   /** Lifted onto another building (a footbridge, a part of a landmark). */
   readonly lifted?: boolean;
+  /** The roof's shape from the map (ADR-0064); absent, a hipped roof or now and then a dome. */
+  readonly shape?: RoofShape;
 }
 
 const windowFor = (use: BuildingUse, levels: number, rand: () => number): number => {
@@ -168,10 +183,12 @@ export const facadeStyle = (s: StyleInput): FacadeStyle => {
   const plaster = plasterFor(sacred, rand);
   const oldTown = s.use === "historic" || s.use === "residential" || s.use === "commercial";
   const shopfront = tower ? false : s.shopfront !== undefined ? s.shopfront : s.use === "commercial" ? true : s.use === "residential" || s.use === "historic" ? rand() < 0.55 : s.use === "other" ? rand() < 0.25 : false;
-  const roof = roofKindFor(s, rand);
+  // The old choice draws first either way, so a tagged building keeps the colours it had.
+  const chosen = roofKindFor(s, rand);
+  const roof = s.shape && chosen !== "flat" ? SHAPE_ROOF[s.shape] : chosen;
   const flat = roof === "flat";
   const attic: AtticKind = window === WINDOW_STYLE.block || s.use === "garage" || s.use === "industrial" ? (flat ? "parapet" : "none") : flat ? (s.use === "historic" && rand() < 0.6 ? "crenel" : "parapet") : rand() < 0.3 ? "parapet" : "none";
-  const roofColor = roof === "dome" || (sacred === "church" && rand() < 0.6) ? pick(rand, ROOFS_COPPER) : oldTown && rand() < 0.7 ? pick(rand, ROOFS_TILE) : pick(rand, ROOFS_METAL);
+  const roofColor = roof === "dome" || roof === "onion" || (sacred === "church" && rand() < 0.6) ? pick(rand, ROOFS_COPPER) : oldTown && rand() < 0.7 ? pick(rand, ROOFS_TILE) : pick(rand, ROOFS_METAL);
   const bay = window === WINDOW_STYLE.civic ? 3.6 + rand() * 0.6 : window === WINDOW_STYLE.church ? 4.2 + rand() : window === WINDOW_STYLE.modern ? 3 + rand() * 0.6 : window === WINDOW_STYLE.block ? 2.9 + rand() * 0.3 : 2.6 + rand() * 0.6;
   const lively = !tower && (s.use === "commercial" || shopfront);
   return {
