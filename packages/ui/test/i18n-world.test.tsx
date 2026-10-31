@@ -203,6 +203,19 @@ describe("save slots", () => {
     expect(metas()).toEqual(["30/10, 19:17 · Wróć do Kaito", "30.10, 19:17 · Wróć do Kaito", "— · Uszkodzony zapis"]);
   });
 
+  it("lists the autosave first when loading, named in the chosen language, and never offers it for saving", () => {
+    const withAuto: UiState["slots"] = [...slots, { slot: "auto", savedAtLabel: "31/10, 10:05", objective: "Wróć do Kaito" }];
+    const store = mount(<SaveSlots mode="load" />, { slots: withAuto });
+    const names = () => [...document.querySelectorAll(".slots__name")].map((m) => m.textContent);
+    expect(names()).toEqual(["Autosave", "Slot 1", "Slot 2", "Slot 3"]);
+    expect(screen.getByRole("button", { name: /Autosave/ }).hasAttribute("disabled")).toBe(false);
+    speak(store, "pl");
+    expect(names()[0]).toBe("Autozapis");
+    cleanup();
+    mount(<SaveSlots mode="save" />, { slots: withAuto });
+    expect(names()).toEqual(["Slot 1", "Slot 2", "Slot 3"]);
+  });
+
   it("is English by default", () => {
     expect(DEFAULT_SETTINGS.locale).toBe("en");
   });

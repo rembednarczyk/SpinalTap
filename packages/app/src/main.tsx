@@ -11,6 +11,7 @@ import { browserClock } from "./browser-clock";
 import { type DebugApi, createDebugApi } from "./debug-api";
 import { GameSession } from "./game-session";
 import { keymapFor } from "./controls";
+import { bindPageHidden } from "./page-lifecycle";
 import { type SettingsStorage, applyEffects, loadHintsSeen, loadSettings, saveHintsSeen, saveSettings, scaleLook } from "./settings";
 
 declare global {
@@ -231,6 +232,8 @@ window.addEventListener("pointerdown", () => {
 document.addEventListener("pointerlockchange", () => {
   if (!input.locked && session.inControl && !reference) session.pause();
 });
+// A phone kills a tab in the background without warning: autosave the moment it hides.
+if (!reference) bindPageHidden(document, window, () => session.pageHidden());
 
 createRoot(uiRoot).render(<GameUi store={ui} intents={session.intents} touch={touchDevice ? input.virtualPad : undefined} />);
 

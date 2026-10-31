@@ -104,6 +104,7 @@ export const plWorld = {
   // Saving and loading.
   "save.unavailable": "Nie można teraz zapisać",
   "save.saved": "Zapisano grę",
+  "save.autosaved": "Zapisano automatycznie",
   "save.failed": "Zapis nieudany",
   "save.emptySlot": "Pusty slot",
   "save.loaded": "Wczytano grę",

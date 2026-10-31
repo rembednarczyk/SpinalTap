@@ -163,6 +163,7 @@ const General = ({ settings, set }: SectionProps) => {
       <Choice label="settings.quality" value={settings.quality} options={QUALITY} onChange={(quality) => set({ quality })} />
       <Slider id="volume" label={t("settings.volume")} value={settings.volume} min={0} max={1} step={0.05} format={percent} onChange={(v) => set({ volume: v })} />
       <Toggle label="settings.hints" on={settings.hints} onChange={(hints) => set({ hints })} />
+      <Toggle label="settings.autosave" on={settings.autosave} onChange={(autosave) => set({ autosave })} />
       <Slider id="touchSensitivity" label={t("settings.touchSensitivity")} value={settings.touchSensitivity} min={0.2} max={3} step={0.1} format={times(settings.locale)} onChange={(v) => set({ touchSensitivity: v })} />
       <Toggle label="settings.hudAlwaysShow" on={settings.hudAlwaysShow} onChange={(hudAlwaysShow) => set({ hudAlwaysShow })} />
       <Choice label="settings.damageNumbers" value={settings.damageNumbers} options={DAMAGE_NUMBERS} onChange={(damageNumbers) => set({ damageNumbers })} />

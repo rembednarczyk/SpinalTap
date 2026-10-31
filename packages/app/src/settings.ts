@@ -69,6 +69,8 @@ export const sanitizeSettings = (raw: unknown, defaults: SettingsVm = DEFAULT_SE
     volume: clamp(r.volume, 0, 1, defaults.volume),
     bindings: sanitizeBindings(r.bindings),
     hints: typeof r.hints === "boolean" ? r.hints : defaults.hints,
+    // Entries saved before autosave existed keep it on.
+    autosave: bool(r.autosave, defaults.autosave),
     // Wave 1 (ADR-0028): entries saved before these fields existed take the defaults.
     hudAlwaysShow: bool(r.hudAlwaysShow, defaults.hudAlwaysShow),
     damageNumbers: isDamageMode(r.damageNumbers) ? r.damageNumbers : defaults.damageNumbers,

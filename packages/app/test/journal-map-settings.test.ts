@@ -273,6 +273,13 @@ describe("settings", () => {
     expect(ui.getState().reloadNeeded).toBe(false);
   });
 
+  it("keeps autosave on by default and for entries saved before it existed", () => {
+    expect(DEFAULT_SETTINGS.autosave).toBe(true);
+    expect(sanitizeSettings({ quality: "low" }).autosave).toBe(true);
+    expect(sanitizeSettings({ autosave: "no" }).autosave).toBe(true);
+    expect(sanitizeSettings({ autosave: false }).autosave).toBe(false);
+  });
+
   it("keeps the language with the settings: English by default and for old entries, saved, no reload (ADR-0056)", () => {
     expect(DEFAULT_SETTINGS.locale).toBe("en");
     expect(sanitizeSettings({ quality: "low", volume: 0.3 }).locale).toBe("en");
