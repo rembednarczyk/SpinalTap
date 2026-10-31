@@ -12,14 +12,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Dowód: skan `car-lane-off-road` = 1.
 - Pakiet: `packages/sim` (`traffic.ts`, `uTurn`)
 
-### G-004 Kandelabr na krawędzi pasa aut na Placu Zamkowym
-- Status: w naprawie (decyzja użytkownika: jak na prawdziwej mapie, czyli według tagów OSM: bez pasa aut, jeśli OSM zakazuje ruchu, inaczej lampy na krawędzi)
-- Ważność: S4 · Zasięg: lokalny · Koszt: mały
-- Gdzie: (738, 282)
-- Dowód: skan `furniture-in-car-lane` = 1 (0,9 m od linii pasa).
-- Pomiar (orkiestrator, 31.10, po G-006): `lamp-candelabra` z chunku podzamcze-1-0 (737,7; 282,3) stoi 0,04 m od osi jezdni „Plac Zamkowy” (`residential`, `cars`) i 1,34 m od linii pasa `Plac Zamkowy#84:f` (promień 0,45 + pół auta 0,9). Mebel z OSM leży na jezdni, więc poprawka należy do importu mebli (odsunięcie na krawędź albo pominięcie), a nie do tras. Nawierzchnia w tym miejscu to `cobble` (bruk placu, nie `road`), więc `props-place.ts` (`surfaceAt(p) === "road"`) nie widzi jezdni, choć `sim` puszcza tamtędy pas aut. Do wyboru przy naprawie: import mebli traktuje oś ulicy z pasem aut jak jezdnię (lampy na krawędź), albo bruk placu nie dostaje pasa aut.
-- Pakiet: `tools/osm-import` (meble) albo `packages/sim` (trasy przez parking)
-
 ### G-016 Auta zaparkowane do 10 m za zebrą na dwukierunkowej 3 Maja
 - Status: później (S4; pełny art. 49 PoRD dla dróg dwukierunkowych, po G-015)
 - Gdzie: (−115,58, 31,83) 3,0 m, (−103,16, −32,87) 7,75 m, (−115,53, 25,62) 9,0 m za zebrą
@@ -73,10 +65,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-037 Pas Andersy kończy się na pasach Mełgiewskiej: auta czekają na siebie
 - Status: w naprawie razem z G-006 (koniec Andersy staje 5 m przed pasami Mełgiewskiej; blokada istniała na bazie)
 - Ważność: S3 · Gdzie: ok. (2401, 282) · Dowód: kąt 31°, pojazdy obu tras biorą się nawzajem za „auto przed sobą”, resynchronizacja co ok. 40 m.
-
-### G-038 `lane-dead-end` nie sprawdza użycia początku, który „spotyka” koniec
-- Status: w weryfikacji (kontrola wymaga tego samego `use`; po G-006 koniec trolejbusu (2456, 245) i tak jest już liczony, więc licznik 44 się nie zmienia, zmiana tylko uszczelnia kontrolę)
-- Ważność: S4 (skan) · Gdzie: koniec trolejbusu na Mełgiewskiej ok. (2456, 245) ukryty przez początek pasa aut.
 
 ### G-041 Wzór bruku placu przesuwa się na granicy chunków
 - Status: zgłoszone (z G-018)
@@ -144,6 +132,8 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | G-006 | Skręty aut na skrzyżowaniach | #47 |
 | G-046 | Smoke M0: kierunek ruchu po `freeze` zależy od chwili zamrożenia | #49 |
 | G-048 | Prawdziwy tap tuż po przycisku pada ginie jako „ghost click” | #48 |
+| G-004 | Kandelabr na krawędzi pasa aut na Placu Zamkowym | #51 |
+| G-038 | `lane-dead-end` nie sprawdza użycia początku, który „spotyka” koniec | #51 |
 
 ## Odrzucone
 - G-005 Wiata przystanku wchodzi w ścianę przy Alei Tysiąclecia: duplikat (G-011)
