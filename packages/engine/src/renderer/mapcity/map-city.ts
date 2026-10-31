@@ -25,6 +25,7 @@ import { planWallClutter } from "./wall-clutter";
 import { type PropSlot, bakeSlots, planFacadeExtras } from "./facade-props";
 import type { CityProps } from "../city-props";
 import { planSteps } from "./steps-plan";
+import { surfaceLiftAt } from "./surface-lift";
 import { StreetProps, type StreetPropsStats } from "./street-props";
 import { MapSkyline } from "./skyline";
 
@@ -279,24 +280,9 @@ export class MapCity {
     return h === null ? null : h + this.surfaceLift(x, h, z);
   };
 
-  /**
-   * How far the picture lifts feet at (x, y, z) above the terrain (ADR-0045): a character the
-   * simulation keeps on the terrain stands on the surface drawn there (a sidewalk 16 cm up, a
-   * square 8 cm), a bridge's deck included (ADR-0053). Feet off the ground (stairs, decks,
-   * floors) are left alone.
-   */
+  /** How far the picture lifts feet at (x, y, z) above the terrain: `surfaceLiftAt`. */
   surfaceLift(x: number, y: number, z: number): number {
-    const deck = this.decks.heightAt(x, z);
-    // Feet under a bridge stand on the way there, not on the deck over them (G-062).
-    const onDeck = deck !== null && Math.abs(y - deck) <= 0.3;
-    const ground = onDeck ? deck : this.heightAt(x, z);
-    if (ground === null || Math.abs(y - ground) > 0.3) return 0;
-    let lift = 0;
-    for (const id of this.surfaceIndex.at(x, z)) {
-      const g = this.grounds.get(id);
-      if (g && (onDeck || !g.deck) && SURFACE_LIFT[g.surface] > lift && pointInRing({ x, z }, g.ring)) lift = SURFACE_LIFT[g.surface];
-    }
-    return lift;
+    return surfaceLiftAt(x, y, z, this.decks.heightAt(x, z), () => this.heightAt(x, z), [...this.surfaceIndex.at(x, z)].map((id) => this.grounds.get(id)));
   }
 
   /** Rebuilds what changed: terrain meshes and the cells' far, sign and ground meshes. */
