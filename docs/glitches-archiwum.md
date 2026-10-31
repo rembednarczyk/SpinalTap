@@ -308,3 +308,10 @@ Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [r
 - Ważność: S4 (narzędzie, poza CI) · Koszt: mały
 - Dowód: po G-031 `captureFrame` nie rysuje własnej klatki. `e2e/glitch-shots.spec.ts:34-35` czeka na `frames() > n && citySettled()`, więc gdy miasto ułoży się w klatce pominiętej przez pacer, zrzut pokazuje ostatnią klatkę sprzed końca wczytywania. Sonda: 2 z 15 punktów, (520, −63) i (146, −49), przy load 11–12. Poprawka: czekać na klatkę narysowaną już po `citySettled`, jak `sampleNow` w npr-perf.
 - Pakiet właściciela: e2e (QA)
+
+### G-057 Kościoły z wieżyczkami z OSM dostają dodatkowo proceduralne wieże renderera
+- Status: naprawione (#69). Flaga `carriesParts` dla obrysu z częściami z `soffit`; skan `church-towers-over-parts` 2 → 0
+- Ważność: S3 (proponowana) · Zasięg: Archikatedra i inne kościoły z `building:part` · Koszt: mały
+- Dowód: po G-049 Archikatedra ma wieżyczki z części OSM i proceduralne wieże z `roof-plan`
+- Pakiet właściciela: packages/engine (mapcity)
+- Test przyjęcia: kościół, który ma części `building:part`, nie dostaje proceduralnych wież
