@@ -363,7 +363,7 @@ export class BabylonRenderer implements RenderPort {
     }
     if (this.mapCity?.flush()) this.wet?.schedule.invalidate();
     this.metro.update(dt);
-    this.characters.update(dt);
+    this.characters.update(dt, this.stage.options.reference);
     this.crowd.update(dt);
     this.vehicles.update();
     const target = this.cameraTargetTransform;

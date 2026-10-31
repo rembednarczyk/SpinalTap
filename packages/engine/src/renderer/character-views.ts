@@ -201,8 +201,13 @@ export class CharacterViews implements FxActors {
     for (const rig of this.dying.splice(0)) this.disposeRig(rig);
   }
 
-  /** Animation, the death falls, the dressed models and the loadouts on them. */
-  update(dt: number): void {
+  /**
+   * Animation, the death falls, the dressed models and the loadouts on them. `frozen` stops the
+   * idle clocks (breathing, blinks) and keeps the eases: the reference still is drawn after however
+   * long the page took to load, and its pose must not depend on that (G-030).
+   */
+  update(dt: number, frozen = false): void {
+    const clock = frozen ? 0 : dt;
     const eye = this.deps.camera.camera.position;
     const followed = this.deps.cameraTarget();
     for (const [id, v] of this.views) {
@@ -219,7 +224,7 @@ export class CharacterViews implements FxActors {
         v.lift = lift;
         v.rig.root.position.y = t.position.y + lift;
       }
-      const motion = { ...(t.air !== undefined ? { air: t.air } : {}), ...(t.climb !== undefined ? { climb: t.climb } : {}) };
+      const motion = { ...(t.air !== undefined ? { air: t.air } : {}), ...(t.climb !== undefined ? { climb: t.climb } : {}), clock };
       animateRig(v.rig, t.speed, dt, t.crouch, { aim: t.aim ?? 0, guard: t.guard ?? 0 }, motion);
       this.deps.pose?.(id, v.rig, t.speed, dt, this.dressed.get(v.rig)?.retarget ?? null);
     }
@@ -236,7 +241,7 @@ export class CharacterViews implements FxActors {
       if (!d.model.root.isEnabled()) continue;
       d.retarget.update();
       d.springs?.update(dt);
-      d.model.face?.update(dt);
+      d.model.face?.update(clock);
     }
     for (const v of this.views.values()) if (v.rig.root.isEnabled(false)) this.loadouts.update(v.rig);
     for (const rig of this.dying) this.loadouts.update(rig);
