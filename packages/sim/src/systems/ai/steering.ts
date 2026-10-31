@@ -58,6 +58,8 @@ interface Raster {
   readonly x0: number;
   readonly z0: number;
   readonly floor: number;
+  /** The `reach` its ground is seen with: a bridge's deck high over the terrain is ground or overhead (G-062). */
+  readonly reach: number;
   /** 1 where a body can stand, row-major by z then x. */
   readonly open: Uint8Array;
 }
@@ -133,16 +135,27 @@ const cellRange = (lo: number, hi: number, origin: number): [number, number] => 
 
 const centre = (i: number, origin: number) => origin + (i + 0.5) * NAV_CELL;
 
+/**
+ * How a walk from `a` to `b` sees the bridges' decks high over the terrain (G-062): as overhead
+ * (`-Infinity`) when either end stands under one, so the way under the bridge is open and the
+ * deck's edges over it are no bank; as ground (`Infinity`) otherwise, so a way over the bridge
+ * between two ends off it stays open.
+ */
+const deckReach = (ground: GroundField, a: Vec3, b: Vec3): number => {
+  const underDeck = (p: Vec3) => ground.heightAt(p.x, p.z, p.y + STEP_HEIGHT) < ground.heightAt(p.x, p.z);
+  return underDeck(a) || underDeck(b) ? -Infinity : Infinity;
+};
+
 /** Terrain height at every cell centre of the window, or null where the world has no terrain. */
-const terrainOf = (ground: GroundField, x0: number, z0: number): Float64Array | null => {
+const terrainOf = (ground: GroundField, x0: number, z0: number, reach: number): Float64Array | null => {
   if (!ground.hasTerrain) return null;
   const base = new Float64Array(CELLS * CELLS);
-  for (let iz = 0; iz < CELLS; iz++) for (let ix = 0; ix < CELLS; ix++) base[iz * CELLS + ix] = ground.heightAt(centre(ix, x0), centre(iz, z0));
+  for (let iz = 0; iz < CELLS; iz++) for (let ix = 0; ix < CELLS; ix++) base[iz * CELLS + ix] = ground.heightAt(centre(ix, x0), centre(iz, z0), reach);
   return base;
 };
 
 /** Cells of the ground floor on a bank too steep to walk (ADR-0043) are closed. */
-const closeBanks = (open: Uint8Array, base: Float64Array, ground: GroundField, x0: number, z0: number): void => {
+const closeBanks = (open: Uint8Array, base: Float64Array, ground: GroundField, x0: number, z0: number, reach: number): void => {
   // A cheap test on the cell grid first (half the limit, over two cells, edges one-sided);
   // the movement system's own slope decides the rest.
   const rough = 0.5 * MAX_WALK_SLOPE * NAV_CELL;
@@ -152,19 +165,19 @@ const closeBanks = (open: Uint8Array, base: Float64Array, ground: GroundField, x
       const gx = Math.abs(at(ix + 1, iz) - at(ix - 1, iz));
       const gz = Math.abs(at(ix, iz + 1) - at(ix, iz - 1));
       if (Math.hypot(gx, gz) < rough) continue;
-      if (ground.steepAt(centre(ix, x0), centre(iz, z0))) open[iz * CELLS + ix] = 0;
+      if (ground.steepAt(centre(ix, x0), centre(iz, z0), reach)) open[iz * CELLS + ix] = 0;
     }
   }
 };
 
 const near = { x: 0, z: 0 };
 
-const rasterise = (solids: readonly Collider[], floor: number, x0: number, z0: number, ground: GroundField): Raster => {
+const rasterise = (solids: readonly Collider[], floor: number, reach: number, x0: number, z0: number, ground: GroundField): Raster => {
   const open = new Uint8Array(CELLS * CELLS);
-  const base = terrainOf(ground, x0, z0);
+  const base = terrainOf(ground, x0, z0, reach);
   if (floor === 0) {
     open.fill(1);
-    if (base) closeBanks(open, base, ground, x0, z0);
+    if (base) closeBanks(open, base, ground, x0, z0, reach);
   } else {
     // Above the street only tops at about this height are floor; everything else is a drop.
     for (const c of solids) {
@@ -204,7 +217,7 @@ const rasterise = (solids: readonly Collider[], floor: number, x0: number, z0: n
       }
     }
   }
-  return { x0, z0, floor, open };
+  return { x0, z0, floor, reach, open };
 };
 
 /** Distance of a cell the field does not reach. */
@@ -319,16 +332,17 @@ const walkable = (r: Raster, a: Vec3, b: Vec3): boolean => {
   return true;
 };
 
-const fieldFor = (world: World<Entity>, floor: number, goal: Vec3): Field | null => {
+const fieldFor = (world: World<Entity>, floor: number, reach: number, goal: Vec3): Field | null => {
   const cx = Math.round(goal.x / WINDOW_SNAP) * WINDOW_SNAP;
   const cz = Math.round(goal.z / WINDOW_SNAP) * WINDOW_SNAP;
   const x0 = cx - WINDOW_HALF;
   const z0 = cz - WINDOW_HALF;
   const solids = staticSolidsIn(world, x0 - CLEARANCE, z0 - CLEARANCE, x0 + 2 * WINDOW_HALF + CLEARANCE, z0 + 2 * WINDOW_HALF + CLEARANCE);
   const memo = memoOf(world);
-  const rasterKey = `${floor}|${cx}|${cz}|${signature(solids)}`;
+  const rasterKey = `${floor}|${reach}|${cx}|${cz}|${signature(solids)}`;
   const raster =
-    recall(memo.rasters, rasterKey) ?? remember(memo.rasters, rasterKey, rasterise(collidersOf(solids), floor, x0, z0, groundOf(world)), MAX_RASTERS);
+    recall(memo.rasters, rasterKey) ??
+    remember(memo.rasters, rasterKey, rasterise(collidersOf(solids), floor, reach, x0, z0, groundOf(world)), MAX_RASTERS);
   const goalCell = cellIndex(raster, goal.x, goal.z);
   if (goalCell < 0) return null;
   const source = nearest(goalCell, GOAL_SEARCH, (n) => raster.open[n] === 1);
@@ -347,16 +361,16 @@ export const straightWalk = (world: World<Entity>, from: Vec3, to: Vec3): boolea
   const ground = groundOf(world);
   const knee = (p: Vec3) => ({ x: p.x, y: p.y + KNEE_HEIGHT, z: p.z });
   if (!ground.hasTerrain) return lineOfSight(world, knee(from), knee(to));
-  return lineOfSight(world, knee(from), knee(to), false) && !bankBetween(ground, from, to);
+  return lineOfSight(world, knee(from), knee(to), false) && !bankBetween(ground, from, to, deckReach(ground, from, to));
 };
 
 /** Does the way from `a` to `b` on the ground cross a bank too steep to walk? Sampled every half cell. */
-const bankBetween = (ground: GroundField, a: Vec3, b: Vec3): boolean => {
+const bankBetween = (ground: GroundField, a: Vec3, b: Vec3, reach: number): boolean => {
   const len = Math.hypot(b.x - a.x, b.z - a.z);
   const n = Math.ceil(len / NAV_CELL);
   for (let i = 1; i <= n; i++) {
     const t = i / n;
-    if (ground.steepAt(a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t)) return true;
+    if (ground.steepAt(a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t, reach)) return true;
   }
   return false;
 };
@@ -373,7 +387,7 @@ const withBodies = (field: Field, avoid: readonly Vec3[], ground: GroundField): 
   const open = Uint8Array.from(r.open);
   const reach = 0.38 + CLEARANCE;
   for (const b of avoid) {
-    if (Math.abs(b.y - (r.floor === 0 ? ground.heightAt(b.x, b.z) : r.floor)) > SAME_FLOOR) continue;
+    if (Math.abs(b.y - (r.floor === 0 ? ground.heightAt(b.x, b.z, r.reach) : r.floor)) > SAME_FLOOR) continue;
     const [ix0, ix1] = cellRange(b.x - reach, b.x + reach, r.x0);
     const [iz0, iz1] = cellRange(b.z - reach, b.z + reach, r.z0);
     for (let iz = iz0; iz <= iz1; iz++) {
@@ -396,7 +410,7 @@ const withBodies = (field: Field, avoid: readonly Vec3[], ground: GroundField): 
 export const planDetour = (world: World<Entity>, from: Vec3, goal: Vec3, avoid: readonly Vec3[] = []): Detour | null => {
   if (heightApart(world, goal, from) > SAME_FLOOR) return null;
   const ground = groundOf(world);
-  const field = fieldFor(world, floorOf(from.y, ground.heightAt(from.x, from.z)), goal);
+  const field = fieldFor(world, floorOf(from.y, ground.heightAt(from.x, from.z, from.y + STEP_HEIGHT)), deckReach(ground, from, goal), goal);
   if (!field) return null;
   return { goal, field: avoid.length > 0 ? withBodies(field, avoid, ground) : field };
 };
