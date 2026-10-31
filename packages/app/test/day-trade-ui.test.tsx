@@ -30,8 +30,8 @@ describe("day clock in the game", () => {
   it("the HUD clock follows game time; Oyaji's stall is closed at night and open by day", () => {
     const g = start();
     const clock = () => screen.getByTestId("clock").textContent ?? "";
-    expect(clock()).toContain("Dzień 1");
-    expect(clock()).toContain("noc");
+    expect(clock()).toContain("Day 1");
+    expect(clock()).toContain("night");
     expect(clock()).toMatch(/21:0\d/);
 
     // Walk up to the market (streams it in), then let the evening pass to after closing time.
@@ -46,8 +46,8 @@ describe("day clock in the game", () => {
     // A morning later the closed sign is gone and the clock reads day.
     wait(g, 10 * 60);
     g.step(2);
-    expect(clock()).toContain("dzień");
-    expect(clock()).toContain("Dzień 2");
+    expect(clock()).toContain("day");
+    expect(clock()).toContain("Day 2");
     expect(screen.queryByTestId("prompt")).toBeNull();
   });
 });

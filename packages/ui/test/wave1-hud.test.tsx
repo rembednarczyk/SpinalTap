@@ -117,18 +117,22 @@ const debrief: ContractDebriefVm = {
 };
 
 describe("contract debrief", () => {
-  it("shows rank, badges with icons and Polish labels, the pay split and the time", () => {
-    const { i } = mount({ debrief });
+  it("shows rank, badges with icons and labels, the pay split and the time", () => {
+    const { i, store } = mount({ debrief });
     const card = screen.getByTestId("debrief");
     expect(screen.getByTestId("debrief-rank").textContent).toContain("S");
     expect(screen.getByTestId("badge-ghost").className).toContain("debrief__badge--earned");
     expect(screen.getByTestId("badge-ghost").className).toContain("debrief__badge--style");
-    expect(screen.getByTestId("badge-ghost").textContent).toContain("Duch");
+    expect(screen.getByTestId("badge-ghost").textContent).toContain("Ghost");
     expect(screen.getByTestId("badge-ghost").querySelector("svg")).not.toBeNull();
     expect(screen.getByTestId("badge-clean").className).not.toContain("earned");
     expect(screen.getByTestId("badge-netrunner").textContent).toContain("Netrunner");
-    expect(card.textContent).toContain("Bonus za styl (Genzō)");
-    expect(screen.getByTestId("debrief-total").textContent).toMatch(/1\s?650/);
+    expect(card.textContent).toContain("Style bonus (Genzō)");
+    expect(screen.getByTestId("debrief-total").textContent).toBe("1,650 €$");
+    act(() => store.setState({ settings: { ...store.getState().settings, locale: "pl" } }));
+    expect(screen.getByTestId("badge-ghost").textContent).toContain("Duch");
+    expect(screen.getByTestId("debrief-total").textContent).toBe("1650 €$");
+    act(() => store.setState({ settings: { ...store.getState().settings, locale: "en" } }));
     expect(card.textContent).toContain("4:14");
     fireEvent.keyDown(window, { code: "Enter" });
     expect(i.dismissDebrief).toHaveBeenCalled();
@@ -155,7 +159,10 @@ describe("contract debrief", () => {
     expect(screen.getByTestId("contract-bonus").textContent).toContain("✓");
     act(() => patchUi(store, { contractBonus: { label: "Nie podnoś alarmu", badge: "no_alarm", bonus: 300, kept: false } }));
     expect(screen.getByTestId("contract-bonus").className).toContain("hud__bonus--lost");
-    expect(screen.getByTestId("contract-bonus").getAttribute("aria-label")).toContain("stracony");
+    expect(screen.getByTestId("contract-bonus").getAttribute("aria-label")).toBe("Bonus condition lost");
+    // Polish word for word as before (ADR-0056), money in the Polish way.
+    act(() => patchUi(store, { settings: { ...store.getState().settings, locale: "pl" } }));
+    expect(screen.getByTestId("contract-bonus").getAttribute("aria-label")).toBe("Warunek bonusowy stracony");
   });
 });
 
@@ -166,7 +173,10 @@ describe("heat and detection", () => {
     const { store } = mount({ heat: { level: 2, searching: false, ending: false } });
     const heat = screen.getByTestId("heat");
     expect(heat.querySelectorAll(".heat__star--on")).toHaveLength(2);
-    expect(heat.getAttribute("aria-label")).toBe("Pościg: 2 z 3");
+    expect(heat.getAttribute("aria-label")).toBe("Chase: 2 of 3");
+    act(() => patchUi(store, { settings: { ...store.getState().settings, locale: "pl" } }));
+    expect(screen.getByTestId("heat").getAttribute("aria-label")).toBe("Pościg: 2 z 3");
+    act(() => patchUi(store, { settings: { ...store.getState().settings, locale: "en" } }));
     act(() => patchUi(store, { heat: { level: 2, searching: true, ending: true } }));
     expect(screen.getByTestId("heat").className).toContain("heat--searching");
     expect(screen.getByTestId("heat").className).toContain("heat--ending");
@@ -205,7 +215,7 @@ describe("scanner", () => {
     expect(screen.getByTestId("hack-ping").textContent).toContain("1");
     expect(screen.getByTestId("hack-ping").textContent).toContain("2 RAM");
     expect(screen.getByTestId("hack-short_circuit").className).toContain("hacks__row--short");
-    expect(screen.getByTestId("ram").getAttribute("aria-label")).toBe("RAM 3 z 8");
+    expect(screen.getByTestId("ram").getAttribute("aria-label")).toBe("RAM 3 of 8");
   });
 
   it("devices and cameras get their own lists", () => {
@@ -215,7 +225,7 @@ describe("scanner", () => {
 
   it("says when nothing is in focus, and hides without the scanner", () => {
     const { store } = mount({ scanning: true });
-    expect(screen.getByText("Brak celu w polu skanu")).toBeTruthy();
+    expect(screen.getByText("No target in scan range")).toBeTruthy();
     act(() => patchUi(store, { scanning: false }));
     expect(screen.queryByTestId("scanner")).toBeNull();
     expect(screen.queryByTestId("ram")).toBeNull();
@@ -223,9 +233,13 @@ describe("scanner", () => {
 
   it("keeps the upload bar and the notes after the scanner is let go", () => {
     mount({ scanning: false, upload: { seq: 1, hackId: "reboot_optics", seconds: 1 }, scanNote: { seq: 1, tone: "traced", text: "Namierzono cię!" } });
-    expect(screen.getByTestId("upload").textContent).toContain("Restart optyki");
+    expect(screen.getByTestId("upload").textContent).toContain("Reboot Optics");
     expect(screen.getByTestId("ram")).toBeTruthy();
     expect(screen.getByTestId("scan-note").className).toContain("scan-note--traced");
+    // The scanner in Polish, word for word as before (ADR-0056).
+    cleanup();
+    mount({ scanning: false, upload: { seq: 1, hackId: "reboot_optics", seconds: 1 }, settings: { ...DEFAULT_SETTINGS, locale: "pl" } });
+    expect(screen.getByTestId("upload").textContent).toContain("Upload: Restart optyki");
   });
 
   it("on touch: the scanner button toggles it and a tap on a hack uploads it", () => {
@@ -233,7 +247,7 @@ describe("scanner", () => {
     fireEvent.pointerDown(screen.getByTestId("touch-scan"));
     expect(i.setScan).toHaveBeenCalledWith(true);
     act(() => patchUi(store, { scanning: true }));
-    fireEvent.click(screen.getByRole("button", { name: "Paraliż ruchu, 4 RAM" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cripple Movement, 4 RAM" }));
     expect(i.pickQuickhack).toHaveBeenCalledWith(3);
     fireEvent.click(screen.getByTestId("touch-phone"));
     expect(i.openPhone).toHaveBeenCalled();

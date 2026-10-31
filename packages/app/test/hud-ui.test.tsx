@@ -42,7 +42,7 @@ describe("wave 1 HUD in the game", () => {
     });
     expect(screen.getByTestId("debrief").textContent).toContain("Infiltracja");
     expect(screen.getByTestId("debrief-rank").textContent).toContain("S");
-    expect(screen.getByTestId("debrief-total").textContent).toContain("1650");
+    expect(screen.getByTestId("debrief-total").textContent).toContain("1,650");
     key("Enter");
     expect(screen.queryByTestId("debrief")).toBeNull();
 
@@ -89,6 +89,6 @@ describe("wave 2 HUD in the game", () => {
     expect(screen.getByTestId("buff-regen")).toBeTruthy();
     expect(screen.getByTestId("disguise").textContent).toContain("Tessen security");
     run(() => seki.jump({ disguise: { role: "tessen_guard", blown: true } }));
-    expect(screen.getByTestId("disguise").textContent).toContain("Spalona przykrywka");
+    expect(screen.getByTestId("disguise").textContent).toContain("Cover blown");
   });
 });

@@ -6,6 +6,15 @@ export const SAVE_SLOTS = ["slot-1", "slot-2", "slot-3"] as const;
 /** What persistence puts as the objective of an unreadable slot: a catalog key, said here. */
 const CORRUPT_SLOT = "save.corrupt";
 
+/** The slot the app autosaves to (only listed when loading: the player never saves into it). */
+export const AUTOSAVE_SLOT = "auto";
+
+const slotName = (slot: string, t: ReturnType<typeof useT>): string => {
+  if (slot === AUTOSAVE_SLOT) return t("slots.auto");
+  if (slot === "quick") return t("slots.quick");
+  return t("slots.slot", { n: slot.replace("slot-", "") });
+};
+
 export const SaveSlots = ({ mode }: { mode: "save" | "load" }) => {
   const slots = useUi((s) => s.slots);
   const busy = useUi((s) => s.busy);
@@ -25,7 +34,7 @@ export const SaveSlots = ({ mode }: { mode: "save" | "load" }) => {
             disabled={disabled}
             onClick={() => (mode === "save" ? intents.save(slot) : intents.load(slot))}
           >
-            <span className="slots__name">{slot === "quick" ? t("slots.quick") : t("slots.slot", { n: slot.replace("slot-", "") })}</span>
+            <span className="slots__name">{slotName(slot, t)}</span>
             <span className="slots__meta">{info ? `${info.savedAtLabel} · ${info.objective === CORRUPT_SLOT ? t(CORRUPT_SLOT) : info.objective}` : t("slots.empty")}</span>
           </button>
         );

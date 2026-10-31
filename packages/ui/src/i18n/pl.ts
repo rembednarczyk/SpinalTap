@@ -27,6 +27,7 @@ export const pl = {
   "pause.mainMenu": "Menu główne",
   // Save slots.
   "slots.quick": "Szybki zapis",
+  "slots.auto": "Autozapis",
   "slots.slot": "Slot {n}",
   "slots.empty": "pusty",
   // Controls help.
@@ -97,7 +98,11 @@ export const pl = {
   "settings.quality.medium": "Średnia",
   "settings.quality.low": "Niska",
   "settings.volume": "Głośność",
+  "settings.musicVolume": "Muzyka i radio",
+  "settings.sfxVolume": "Efekty",
+  "settings.ambienceVolume": "Odgłosy miasta",
   "settings.hints": "Podpowiedzi",
+  "settings.autosave": "Autozapis",
   "settings.touchSensitivity": "Czułość dotyku",
   "settings.hudAlwaysShow": "Zdrowie i amunicja zawsze",
   "settings.damageNumbers": "Liczby obrażeń",

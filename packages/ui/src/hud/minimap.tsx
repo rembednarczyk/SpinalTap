@@ -2,15 +2,12 @@ import { memo, useMemo } from "react";
 import "../citymap/citymap.css";
 import type { MapBox, MapLabelKind, MapLinkKind, MapLinkVm, MapMarkerKind, MapMarkerVm, MapRectVm, MapVm } from "../store/ui-store";
 import { useUi } from "../use-ui";
+import { useT } from "../i18n/use-t";
 import { CityLabels, type CityIndex, CityShapes, indexCity, windowAround } from "./city-layer";
 
 /** Metres from the player to the edge of the minimap. */
 export const MINIMAP_RANGE = 32;
 const EDGE = MINIMAP_RANGE - 2.5;
-
-const LABEL: Record<MapMarkerKind, string> = { fixer: "Zlecenia", ripperdoc: "Klinika Mori", vendor: "Sklep", target: "Cel", enforcer: "Egzekutor: widzi przez przebranie", quest: "Cel zadania" };
-
-const LINK_LABEL: Record<MapLinkKind, string> = { stairs: "Schody", lift: "Winda", ladder: "Drabina" };
 
 /** Icons of the level links (ADR-0021), about 4 m across: three steps, a cage with arrows, rungs. */
 const LINK_ICON: Record<MapLinkKind, string> = {
@@ -19,12 +16,15 @@ const LINK_ICON: Record<MapLinkKind, string> = {
   ladder: "M-1 -2 V2 M1 -2 V2 M-1 -1 H1 M-1 0 H1 M-1 1 H1",
 };
 
-const Link = ({ link }: { link: MapLinkVm }) => (
-  <g className={`minimap__link minimap__link--${link.kind}`} transform={`translate(${link.x.toFixed(2)} ${(-link.z).toFixed(2)})`} data-testid={`minimap-link-${link.kind}`}>
-    <title>{LINK_LABEL[link.kind]}</title>
-    <path d={LINK_ICON[link.kind]} />
-  </g>
-);
+const Link = ({ link }: { link: MapLinkVm }) => {
+  const t = useT();
+  return (
+    <g className={`minimap__link minimap__link--${link.kind}`} transform={`translate(${link.x.toFixed(2)} ${(-link.z).toFixed(2)})`} data-testid={`minimap-link-${link.kind}`}>
+      <title>{t(`map.link.${link.kind}`)}</title>
+      <path d={LINK_ICON[link.kind]} />
+    </g>
+  );
+};
 
 const rect = (r: MapRectVm, className: string, key?: number) => (
   // Map space: x east, y = -z so north points up.
@@ -71,7 +71,11 @@ export const LOOK_AHEAD = 1 / 3;
 /** The view of a frame: centred on the player, or ahead of a moving one along the view direction. */
 export const mapView = (player: { x: number; z: number; yaw: number; moving?: boolean }, zoom = 1): Required<MapView> => {
   const lead = player.moving ? MINIMAP_RANGE * zoom * LOOK_AHEAD : 0;
-  return { x: player.x + Math.sin(player.yaw) * lead, z: player.z + Math.cos(player.yaw) * lead, k: 1 / Math.max(0.5, zoom) };
+  return {
+    x: player.x + Math.sin(player.yaw) * lead,
+    z: player.z + Math.cos(player.yaw) * lead,
+    k: 1 / Math.max(0.5, zoom),
+  };
 };
 
 /** Marker position relative to the view centre; markers out of range stick to the edge. */
@@ -97,13 +101,14 @@ const MarkerIcon = ({ kind }: { kind: MapMarkerKind }) => {
 const Marker = ({ marker, view }: { marker: MapMarkerVm; view: MapView }) => {
   const o = markerOffset(marker, view);
   const area = marker.radius !== undefined && !o.edge;
+  const t = useT();
   return (
     <g
       className={`minimap__marker minimap__marker--${marker.kind}${o.edge ? " minimap__marker--edge" : ""}${area ? " minimap__marker--area" : ""}`}
       transform={`translate(${o.x.toFixed(2)} ${o.y.toFixed(2)})`}
       data-testid={`minimap-marker-${marker.kind}`}
     >
-      <title>{marker.kind === "target" && marker.radius !== undefined ? "Obszar celu" : LABEL[marker.kind]}</title>
+      <title>{t(marker.kind === "target" && marker.radius !== undefined ? "map.marker.targetArea" : `map.marker.${marker.kind}`)}</title>
       {area ? <circle className="minimap__area" r={(marker.radius ?? 0) * (view.k ?? 1)} data-testid="minimap-area" /> : <MarkerIcon kind={marker.kind} />}
     </g>
   );
@@ -112,9 +117,10 @@ const Marker = ({ marker, view }: { marker: MapMarkerVm; view: MapView }) => {
 /** A phone over a civilian who is calling it in (ADR-0028). */
 const Witness = ({ at, view }: { at: { x: number; z: number }; view: MapView }) => {
   const o = markerOffset(at, view);
+  const t = useT();
   return (
     <g className={`minimap__witness${o.edge ? " minimap__marker--edge" : ""}`} transform={`translate(${o.x.toFixed(2)} ${o.y.toFixed(2)})`} data-testid="minimap-witness">
-      <title>Świadek dzwoni</title>
+      <title>{t("map.witness")}</title>
       <rect x={-1.6} y={-2.6} width={3.2} height={5.2} rx={0.6} />
       <path d="M-0.8 -1.6 H0.8 M-0.4 1.8 H0.4" />
     </g>
@@ -139,6 +145,7 @@ const Silhouette = ({ at, view }: { at: { x: number; z: number }; view: MapView 
  * (ADR-0035). The no-markers setting hides objective and fixer markers.
  */
 export const Minimap = () => {
+  const t = useT();
   const map = useUi((s) => s.map);
   const player = useUi((s) => s.mapPlayer);
   const markers = useUi((s) => s.mapMarkers);
@@ -156,7 +163,7 @@ export const Minimap = () => {
   const me = markerOffset(player, view);
   const at = me.x === 0 && me.y === 0 ? "" : `translate(${me.x.toFixed(2)} ${me.y.toFixed(2)}) `;
   return (
-    <div className={`minimap${player.level !== undefined ? " minimap--upper" : ""}`} data-testid="minimap" data-zoom={zoom.toFixed(2)} aria-label="Minimapa">
+    <div className={`minimap${player.level !== undefined ? " minimap--upper" : ""}`} data-testid="minimap" data-zoom={zoom.toFixed(2)} aria-label={t("map.minimap")}>
       <svg viewBox={`${-MINIMAP_RANGE} ${-MINIMAP_RANGE} ${MINIMAP_RANGE * 2} ${MINIMAP_RANGE * 2}`} role="img">
         <g transform={`scale(${view.k.toFixed(3)}) translate(${(-view.x).toFixed(2)} ${view.z.toFixed(2)})`}>
           <District map={map} city={city} window={window} />
@@ -173,7 +180,7 @@ export const Minimap = () => {
       </svg>
       <div className="minimap__north">N</div>
       {player.level !== undefined && (
-        <div className="minimap__level" data-testid="minimap-level" title="Jesteś wyżej niż ulica">
+        <div className="minimap__level" data-testid="minimap-level" title={t("map.above")}>
           ▲ {player.level} m
         </div>
       )}
