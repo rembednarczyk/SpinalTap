@@ -38,7 +38,7 @@ test.describe("M0 smoke", () => {
     await dialogue.getByRole("button", { name: /End conversation/ }).click();
     await expect(dialogue).toBeHidden();
     await step(page, 2);
-    await expect(page.getByTestId("objective")).toContainText("kuriera Hebi");
+    await expect(page.getByTestId("objective")).toContainText("Hebi courier");
     expect((await gameState(page)).alias).toBe("Seki Senshi");
 
     // Quicksave, move away, quickload: position and quest state come back.
