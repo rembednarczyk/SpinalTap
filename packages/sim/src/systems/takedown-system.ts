@@ -87,6 +87,8 @@ export const startTakedown = (ctx: SimContext, cmd: Extract<GameCommand, { type:
   if (!player?.health || ctx.session.takedown) return;
   const found = takedownCandidate(ctx, player);
   if (!found) return;
+  // Only the takedown that holds the prompt (the interaction system's choice of the last step).
+  if (ctx.session.takedownTarget?.id !== found.target.id) return;
   ctx.session.takedown = { target: found.target.id, left: TAKEDOWN_TIME, lethal: cmd.lethal, health: player.health.current };
   if (player.velocity) player.velocity = { ...ZERO };
   hold(found.target);

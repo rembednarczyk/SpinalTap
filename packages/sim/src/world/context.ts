@@ -29,7 +29,11 @@ export interface SessionState {
   interior: string | null | undefined;
   /** The takedown under way (ADR-0065), null when none. Transient, not saved. */
   takedown: TakedownRun | null;
-  /** Whom the interact key would take down now (the HUD's prompt), null when nobody. */
+  /**
+   * Whom the interact key would take down now, null when nobody. The takedown system names the
+   * candidate; the interaction system keeps it only when the takedown holds the prompt (nothing
+   * nearer to talk to, open or climb), so the HUD and the key agree.
+   */
   takedownTarget: { readonly id: EntityId; readonly distance: number } | null;
 }
 

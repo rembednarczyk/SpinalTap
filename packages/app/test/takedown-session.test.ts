@@ -63,6 +63,21 @@ describe("takedown in the session (ADR-0065)", () => {
     expect(guard.unconscious).toBe(true);
   });
 
+  it("talks to whoever is nearer than the guard instead of taking it down", () => {
+    const { session, ui, guard } = behindGuard();
+    const p = session.sim.player()!;
+    const at = { x: p.position.x + 0.5, y: p.position.y, z: p.position.z };
+    session.sim.world.add({ id: 99_999, position: at, prevPosition: at, yaw: 0, prevYaw: 0, pitch: 0, interactable: { kind: "dialogue", dialogueId: "fixer", prompt: "prompt.talk.kaito", radius: 2 } });
+    const started = collect(session, "TakedownStarted");
+    steps(session, 1, CROUCH);
+    expect(ui.getState().prompt).toBe("Talk to Kaito");
+    expect(ui.getState().promptHold).toBeNull();
+    steps(session, 1, frame({ crouch: true, interact: true }));
+    expect(started).toEqual([]);
+    expect(guard.unconscious).toBeUndefined();
+    expect(session.sim.session.dialogueActive).toBe(true);
+  });
+
   it("sends the command only for the interact key on a takedown's target", () => {
     const { session, guard } = behindGuard();
     const enqueue = vi.spyOn(session.sim, "enqueue");

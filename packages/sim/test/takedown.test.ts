@@ -173,6 +173,22 @@ describe("takedown in the simulation (ADR-0065)", () => {
     expect(shots).toHaveLength(0);
     expect(swings).toHaveLength(0);
   });
+  it("does not take down past a nearer prompt (talk, loot, a door): the key is theirs", () => {
+    const sim = quietStreet();
+    const guard = guardAt(sim, 1.4);
+    const p = sim.player()!;
+    const at = { x: p.position.x + 0.5, y: p.position.y, z: p.position.z };
+    sim.world.add({ id: 99_999, position: at, prevPosition: at, yaw: 0, prevYaw: 0, pitch: 0, interactable: { kind: "dialogue", dialogueId: "kaito", prompt: "prompt.talk.kaito", radius: 2 } });
+    const focus = collect<DomainEvents["InteractionFocusChanged"]>(sim, "InteractionFocusChanged");
+    const started = collect(sim, "TakedownStarted");
+    sim.step(CROUCH);
+    expect(focus.at(-1)?.prompt).toBe("prompt.talk.kaito");
+    expect(sim.session.takedownTarget).toBeNull();
+    sim.enqueue({ type: "takedown", lethal: false });
+    sim.step(CROUCH);
+    expect(started).toHaveLength(0);
+    expect(guard.unconscious).toBeUndefined();
+  });
 
   it("breaks when the player is hurt: the guard breaks free alerted", () => {
     const sim = quietStreet();
@@ -242,7 +258,9 @@ describe("takedown in the simulation (ADR-0065)", () => {
     expect(ganger?.key).toBeDefined();
     // She stands right by it, where it is at home (its chunk stays loaded).
     teleportPlayer(sim, { ...ganger!.position, z: ganger!.position.z - 1.2 });
-    // Unaware of her before the first step: the takedown is open from any side.
+    // Blinded by a hack, it stays unaware of her: the takedown is open from any side.
+    ganger!.hackFx = { pinged: 0, blind: 100, crippled: 0 };
+    sim.step(input());
     sim.enqueue({ type: "takedown", lethal: false });
     run(sim, ticks(TAKEDOWN_TIME), input());
     expect(ganger!.unconscious).toBe(true);

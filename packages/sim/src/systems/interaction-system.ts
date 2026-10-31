@@ -72,6 +72,8 @@ export const interactionSystem: System = {
     }
     const takedown = session.takedown ? { id: session.takedown.target, distance: 0 } : session.takedownTarget;
     const takingDown = takedown !== null && takedown.distance < bestDist;
+    // The interact key takes down only what the prompt names (ADR-0065).
+    if (!takingDown) session.takedownTarget = null;
     const focusId = takingDown ? takedown.id : (best?.id ?? null);
     const prompt = takingDown ? TAKEDOWN_PROMPT : (best?.interactable.prompt ?? null);
     if (focusId !== session.focusId || prompt !== session.focusPrompt) {
