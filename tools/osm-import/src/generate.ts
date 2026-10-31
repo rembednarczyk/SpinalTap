@@ -5,6 +5,7 @@
 import { LUBLIN_ANCHOR } from "../../../packages/core/src/world/city-geo.ts";
 import { asBuilding, isPart, orphanParts, partsByBuilding } from "./building-parts.ts";
 import { makeBuilding } from "./buildings.ts";
+import { corrected } from "./corrections.ts";
 import { ALL_CHUNKS, type ChunkSpec } from "./config.ts";
 import { type HeightSource } from "./dtm.ts";
 import { type Area, type Line, extractFeatures } from "./features.ts";
@@ -108,7 +109,7 @@ const generateChunk = (
   const shopPoints = pois.filter((p) => p.kind === "shop" || p.kind === "food" || p.kind === "bar" || p.kind === "service").map((p) => p.at);
   const namedPoints = pois
     .filter((p) => p.kind === "hotel" || p.kind === "sight" || p.kind === "culture" || p.kind === "church")
-    .map((p) => ({ at: p.at, name: p.kind === "hotel" && !/hotel/i.test(p.name) ? `Hotel ${p.name}` : p.name }));
+    .map((p) => ({ at: p.at, name: p.kind === "hotel" && !/hotel/i.test(p.name) ? `Hotel ${p.name}` : p.name, ...(p.addr ? { addr: p.addr } : {}) }));
   const out = [];
   let skipped = 0;
   let withHoles = 0;
@@ -167,7 +168,10 @@ const segmentDistance = (p: Pt, a: Pt, b: Pt): number => {
 };
 
 export const generate = (data: OsmData, src: HeightSource, chunks: readonly ChunkSpec[] = ALL_CHUNKS): Generated => {
-  const { areas, lines } = extractFeatures(data);
+  const features = extractFeatures(data);
+  // The explicit corrections of estimated tags (corrections.ts), before anything reads them.
+  const areas = features.areas.map((a) => corrected(a));
+  const lines = features.lines;
   const outlines = buildingAreas(areas, data);
   const partAreas = areas.filter(isPart);
   const orphans = new Set(orphanParts(outlines, partAreas));

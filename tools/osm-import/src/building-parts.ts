@@ -40,7 +40,7 @@ export const orphanParts = (buildings: readonly Area[], parts: readonly Area[]):
  */
 export const asBuilding = (p: Area): Area => {
   const kind = p.tags["building:part"] === "yes" && p.tags.amenity !== undefined ? "commercial" : (p.tags["building:part"] ?? "yes");
-  const own = p.tags.height !== undefined || p.tags["building:levels"] !== undefined;
+  const own = p.tags.height !== undefined || p.tags["building:height"] !== undefined || p.tags["building:levels"] !== undefined;
   return { ...p, tags: { ...p.tags, building: kind, ...(own ? {} : { "building:levels": "1" }) } };
 };
 
