@@ -120,7 +120,7 @@ const land = (ctx: SimContext, f: Fighter, profile: MeleeProfile): boolean => {
     t.health = applyDamage(t.health, outcome.damage);
     t.lastHitBy = f.id;
     if (t.player) wearPlayerClothes(ctx, outcome.zone);
-    if (t.ai) t.ai.alerted = true;
+    if (t.ai && !t.unconscious) t.ai.alerted = true;
     ctx.bus.emit("DamageDealt", { sourceId: f.id, targetId: t.id, amount: outcome.damage, critical: outcome.critical, zone: outcome.zone, at: chest });
     if (guard.blocked) ctx.bus.emit("AttackBlocked", { attackerId: f.id, defenderId: t.id, parried: false, kind: "melee", at: chest });
     else {

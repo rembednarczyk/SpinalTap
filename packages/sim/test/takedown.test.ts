@@ -190,6 +190,29 @@ describe("takedown in the simulation (ADR-0065)", () => {
     expect(guard.unconscious).toBeUndefined();
   });
 
+  it("wipes the mind of a guard knocked out mid-fight: it no longer counts as fighting", () => {
+    const sim = quietStreet();
+    const guard = guardAt(sim, 1.2, Math.PI);
+    guard.ai!.alerted = true;
+    guard.ai!.lastKnown = { ...sim.player()!.position };
+    // Stunned by a parry: open from the front.
+    guard.melee!.stagger = 2;
+    guard.melee!.stunned = true;
+    sim.step(CROUCH);
+    sim.enqueue({ type: "takedown", lethal: false });
+    run(sim, ticks(TAKEDOWN_TIME), CROUCH);
+    expect(guard.unconscious).toBe(true);
+    expect(guard.ai!.alerted).toBe(false);
+    expect(guard.ai!.lastKnown ?? null).toBeNull();
+    expect(guard.ai!.search ?? 0).toBe(0);
+    // A shot into the body hurts it, but provokes nothing.
+    const hits = collect<DomainEvents["DamageDealt"]>(sim, "DamageDealt");
+    teleportPlayer(sim, { ...guard.position, z: guard.position.z - 3 }, 0, 0.1);
+    run(sim, 3, input({ fire: true }));
+    expect(hits.some((h) => h.targetId === guard.id)).toBe(true);
+    expect(guard.ai!.alerted).toBe(false);
+  });
+
   it("breaks when the player is hurt: the guard breaks free alerted", () => {
     const sim = quietStreet();
     const guard = guardAt(sim, 1.2);

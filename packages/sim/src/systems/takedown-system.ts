@@ -102,11 +102,18 @@ const breakFree = (target: Target, player: Entity): void => {
   target.ai.lastKnown = { ...player.position };
 };
 
-/** Knocked out: down for good until stage 2 of the ADR brings the waking. */
+/**
+ * Knocked out: down for good until stage 2 of the ADR brings the waking. Its mind is wiped: it
+ * no longer counts as fighting (the RAM, the activities, the contract's alarm read `alerted`).
+ */
 const knockOut = (ctx: SimContext, target: Target): void => {
   ctx.world.addComponent(target, "unconscious", true);
   hold(target);
   if (target.ai) {
+    target.ai.alerted = false;
+    target.ai.lastKnown = null;
+    target.ai.search = 0;
+    target.ai.lost = 0;
     target.ai.suspicion = 0;
     target.ai.sees = false;
     // The HUD drops its awareness marker.

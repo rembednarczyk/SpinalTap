@@ -181,8 +181,8 @@ const hitWithPellet = (
   target.health = applyDamage(health, outcome.damage);
   target.lastHitBy = shot.shooter.id;
   if (target.player) wearPlayerClothes(ctx, outcome.zone);
-  // Getting shot provokes any AI, whatever it thought of the shooter before.
-  if (target.ai) target.ai.alerted = true;
+  // Getting shot provokes any AI, whatever it thought of the shooter before; not one knocked out.
+  if (target.ai && !target.unconscious) target.ai.alerted = true;
   ctx.bus.emit("DamageDealt", {
     sourceId: shot.shooter.id,
     targetId: target.id,
