@@ -113,8 +113,8 @@ export class CrowdViews {
     this.dirty = true;
   }
 
-  /** Poses everyone in range and uploads the figures. Call once per frame before rendering. */
-  update(dt: number): void {
+  /** Poses everyone in range and uploads the figures. Call once per frame before rendering; `frozen` stops the cycles (G-044). */
+  update(dt: number, frozen = false): void {
     if (this.dirty) this.rebuild();
     const mesh = this.mesh;
     if (!mesh) return;
@@ -134,7 +134,7 @@ export class CrowdViews {
       m.shown = true;
       any = true;
       const t = m.transform;
-      stepPuppet(m.state, t.speed, t.crouch ?? 0, dt);
+      stepPuppet(m.state, t.speed, t.crouch ?? 0, dt, frozen ? 0 : dt);
       m.lift = easeLift(m.lift, (this.deps.lift ?? groundLift)(p.x, p.y, p.z), dt);
       const pose = puppetPose(m.state, t.speed, m.template.dims, m.umbrella);
       poseParts(this.parts, m.template.dims, pose, p.x, p.y + m.lift, p.z, t.yaw);

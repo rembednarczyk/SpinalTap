@@ -91,10 +91,10 @@ export class CharacterActivities {
    * One frame of a character, right after `animateRig`: eases the blend and lays the pose over
    * the walk. `retarget` is the imported model dressed over the rig, if any.
    */
-  apply(id: EntityId, rig: CharacterRig, speed: number, dt: number, retarget: HumanoidRetarget | null): void {
+  apply(id: EntityId, rig: CharacterRig, speed: number, dt: number, retarget: HumanoidRetarget | null, clock = dt): void {
     const d = this.doing.get(id);
     if (!d) return;
-    const showing = stepBlend(d.blend, dt, speed > MOVING);
+    const showing = stepBlend(d.blend, dt, speed > MOVING, clock);
     const joints = blendJoints(d.blend);
     applyActivityPose(rig, joints ?? zeroJoints, showing && joints ? blendWeight(d.blend) : 0);
     if (!showing) {

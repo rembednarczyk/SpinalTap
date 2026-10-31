@@ -88,7 +88,7 @@ export interface CharacterViewsDeps {
   /** The entity the camera follows, if any. */
   readonly cameraTarget: () => EntityId | null;
   /** Lays more over the walk animation of a character each frame (its activity, ADR-0040), before the model follows. */
-  readonly pose?: (id: EntityId, rig: CharacterRig, speed: number, dt: number, retarget: HumanoidRetarget | null) => void;
+  readonly pose?: (id: EntityId, rig: CharacterRig, speed: number, dt: number, retarget: HumanoidRetarget | null, clock: number) => void;
 }
 
 /**
@@ -226,7 +226,7 @@ export class CharacterViews implements FxActors {
       }
       const motion = { ...(t.air !== undefined ? { air: t.air } : {}), ...(t.climb !== undefined ? { climb: t.climb } : {}), clock };
       animateRig(v.rig, t.speed, dt, t.crouch, { aim: t.aim ?? 0, guard: t.guard ?? 0 }, motion);
-      this.deps.pose?.(id, v.rig, t.speed, dt, this.dressed.get(v.rig)?.retarget ?? null);
+      this.deps.pose?.(id, v.rig, t.speed, dt, this.dressed.get(v.rig)?.retarget ?? null, clock);
     }
     for (let i = this.dying.length - 1; i >= 0; i--) {
       const rig = this.dying[i];

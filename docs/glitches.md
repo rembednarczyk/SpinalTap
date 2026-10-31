@@ -335,7 +335,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine / e2e (QA)
 
 ### G-044 Tłum i pozy czynności animują się zegarem ściennym także w klatce referencyjnej
-- Status: zgłoszone (z G-030)
+- Status: w weryfikacji, w PR #47 (cykle chodu, kołysania i czynności idą z `clock`, w `?reference` 0)
 - Ważność: S4 (proponowana; dziś poza kadrem referencyjnym) · Koszt: mały
 - Dowód: naprawiacz G-030: `crowd-pose.ts` (`stepPuppet`, `s.time`) i `activity-poses.ts` (`b.time`) idą z `dt`; jeśli wejdą w kadr `?reference`, wróci niedeterminizm migawki.
 - Pakiet właściciela: packages/engine (renderer)
@@ -353,7 +353,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: e2e (QA) / packages/app
 
 ### G-047 Karta skanu hackowania nie zmienia języka do zmiany celu
-- Status: zgłoszone (z weryfikacji i18n 2b)
+- Status: weryfikacja PRZYJĘTE, w PR #47 (presenter pamięta język karty)
 - Ważność: S4 (proponowana) · Koszt: mały
 - Dowód: `hacking-hud.ts:62` przelicza kartę tylko przy zmianie celu; po zmianie języka w pauzie karta tego samego celu zostaje w starym języku.
 - Pakiet właściciela: packages/app (HUD), etap 2c ADR-0056
