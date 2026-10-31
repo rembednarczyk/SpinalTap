@@ -27,6 +27,7 @@ import type { CityProps } from "../city-props";
 import { planSteps } from "./steps-plan";
 import { StreetProps, type StreetPropsStats } from "./street-props";
 import { MapSkyline } from "./skyline";
+import { type LandmarkPart, isLandmarkFrame, landmarkAt, planFarLandmark, planLandmarkSigns, planNearLandmark, withLandmark } from "./landmarks";
 
 /** Views drawn by the map city (ADR-0042, ADR-0044). */
 export type MapView = Extract<ViewDescriptor, { kind: "building" | "terrain" | "ground" | "street-props" | "road-marking" }>;
@@ -57,6 +58,8 @@ interface BuildingEntry {
   readonly base: number;
   readonly bounds: Box2;
   readonly cell: string;
+  /** Drawn from its recipe (ADR-0062) instead of the facade plan. */
+  readonly landmark: LandmarkPart | null;
 }
 
 interface GroundEntry {
@@ -206,7 +209,7 @@ export class MapCity {
     const c = centroid(ring);
     const cell = cellKey(c.x, c.z);
     if (view.kind === "building") {
-      this.buildings.set(id, { ring, view, at: { x: at.x, y: at.y, z: at.z }, base: at.y, bounds, cell });
+      this.buildings.set(id, { ring, view, at: { x: at.x, y: at.y, z: at.z }, base: at.y, bounds, cell, landmark: landmarkAt(at.x, at.z, view.outline.length) });
       this.buildingIndex.add(id, bounds);
       this.cellOf(cell).buildings.add(id);
     } else {
@@ -507,12 +510,13 @@ export class MapCity {
     const ids = [...cell.buildings].sort((a, b) => a - b);
     cell.frames = ids.flatMap((id) => {
       const e = this.buildings.get(id);
-      return e ? [facadeFrame(this.building(id, e), this.neighbourAt)] : [];
+      return e ? [withLandmark(facadeFrame(this.building(id, e), this.neighbourAt), e.landmark)] : [];
     });
     cell.spans = cell.frames.flatMap((f) => findSpans(f, this.acrossAt));
     const far = new MeshSink();
     const signs = new MeshSink();
     for (const f of cell.frames) {
+      if (isLandmarkFrame(f)) { planFarLandmark(far, f); planLandmarkSigns(signs, f, (name) => this.signs.slotFor(name)); continue; }
       planFarBuilding(far, f);
       planFarVertical(far, f);
       planBuildingSigns(signs, f, (name) => this.signs.slotFor(name), this.drawnGround);
@@ -563,6 +567,7 @@ export class MapCity {
     const slots: PropSlot[] = [];
     const place = this.facadeProps ? (s: PropSlot) => slots.push(s) > 0 : undefined;
     for (const f of cell.frames) {
+      if (isLandmarkFrame(f)) { planNearLandmark(sink, f); continue; }
       planNearBuilding(sink, f);
       planNearVertical(sink, f, place);
       if (!lite) planWallClutter(sink, f, place);
