@@ -32,41 +32,41 @@ const domain = () => createDomainState();
 const texts = (view: { lines: readonly { text: string }[] }) => view.lines.map((l) => l.text);
 
 describe("narrative language (ADR-0056)", () => {
-  it("speaks the language asked for, with the speakers named in it", () => {
-    const en = new NarrativeRuntime(SOURCES, () => {}, "en").start("lang_probe", domain());
+  it("speaks the language asked for; the speakers' roles stay keys for the app's words", () => {
+    const en = new NarrativeRuntime(SOURCES, () => {}, { locale: "en" }).start("lang_probe", domain());
     expect(texts(en)).toEqual(["Good morning."]);
-    expect(en.lines[0]?.speaker).toBe("Grandma Ume");
+    expect(en.lines[0]?.speaker).toBe("speaker.ume");
     expect(en.choices.map((c) => [c.text, c.tone])).toEqual([["Who are you?", "main"], ["Leaving.", "leave"]]);
-    const pl = new NarrativeRuntime(SOURCES, () => {}, "pl").start("lang_probe", domain());
+    const pl = new NarrativeRuntime(SOURCES, () => {}, { locale: "pl" }).start("lang_probe", domain());
     expect(texts(pl)).toEqual(["Dzień dobry."]);
-    expect(pl.lines[0]?.speaker).toBe("Babcia Ume");
+    expect(pl.lines[0]?.speaker).toBe("speaker.ume");
   });
 
   it("switches from the next line on, in the middle of a conversation", () => {
     const flags: string[] = [];
-    const runtime = new NarrativeRuntime(SOURCES, (c) => c.type === "set-flag" && flags.push(c.flag), "pl");
+    const runtime = new NarrativeRuntime(SOURCES, (c) => c.type === "set-flag" && flags.push(c.flag), { locale: "pl" });
     runtime.start("lang_probe", domain());
     runtime.setLanguage("en");
     expect(runtime.language).toBe("en");
     expect(runtime.inConversation).toBe(true);
     const view = runtime.choose(0);
     expect(texts(view)).toEqual(["Who are you?", "I'm Ume."]);
-    expect(view.lines[0]?.speaker).toBe("You");
+    expect(view.lines[0]?.speaker).toBe("speaker.you");
     expect(flags).toEqual(["asked"]);
   });
 
   it("loads a save written in the other language, visit counts and all", () => {
-    const pl = new NarrativeRuntime(SOURCES, () => {}, "pl");
+    const pl = new NarrativeRuntime(SOURCES, () => {}, { locale: "pl" });
     pl.start("lang_probe", domain());
     pl.choose(0);
     const save = pl.saveState();
-    const en = new NarrativeRuntime(SOURCES, () => {}, "en");
+    const en = new NarrativeRuntime(SOURCES, () => {}, { locale: "en" });
     en.loadState(save);
     expect(texts(en.start("lang_probe", domain()))).toEqual(["You again.", "Good morning."]);
   });
 
   it("keeps the state across a switch and back, and rolls an interrupted talk back in either", () => {
-    const runtime = new NarrativeRuntime(SOURCES, () => {}, "en");
+    const runtime = new NarrativeRuntime(SOURCES, () => {}, { locale: "en" });
     runtime.start("lang_probe", domain());
     runtime.setLanguage("pl");
     expect(runtime.interrupt()).toBe(true);
@@ -75,9 +75,9 @@ describe("narrative language (ADR-0056)", () => {
   });
 
   it("plays Polish where a language has no source of its own", () => {
-    const plain = new NarrativeRuntime(SOURCES.pl, () => {}, "en");
+    const plain = new NarrativeRuntime(SOURCES.pl, () => {}, { locale: "en" });
     expect(plain.language).toBe("pl");
-    expect(plain.start("lang_probe", domain()).lines[0]?.speaker).toBe("Babcia Ume");
+    expect(texts(plain.start("lang_probe", domain()))).toEqual(["Dzień dobry."]);
     const partial = new NarrativeRuntime({ pl: SOURCES.pl }, () => {});
     partial.setLanguage("en");
     expect(partial.language).toBe("pl");

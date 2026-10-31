@@ -113,7 +113,7 @@ describe("M2: day clock and schedules through the game loop", () => {
     frames(session, 60 * 10);
     const door = oyajiDoor();
     goTo(session, door.x + 1.5, door.z + 0.8, door.y);
-    expect(ui.getState().prompt).toMatch(/zamknięte/);
+    expect(ui.getState().prompt).toBe("Oyaji's stall: closed until 8:00");
     frames(session, 1, true);
     const dialogue = ui.getState().dialogue;
     expect(dialogue?.lines[0]?.speaker).toBe("Oyaji");
@@ -122,7 +122,7 @@ describe("M2: day clock and schedules through the game loop", () => {
 
     wait(session, 10 * 60); // 08:30
     frames(session, 2);
-    expect(ui.getState().prompt ?? "").not.toMatch(/zamknięte/);
+    expect(ui.getState().prompt ?? "").not.toMatch(/closed/);
   });
 
   it("save and load keep the time of day and resend it to a cleared renderer", async () => {

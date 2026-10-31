@@ -107,7 +107,7 @@ const shootDown = (s: GameSession, key: string): number[] => {
 describe("M1 acceptance: contract → eddies → cyberware → stronger in combat", () => {
   it("runs the whole loop", async () => {
     const { session, ui } = await setup();
-    expect(ui.getState().objective).toContain("Kaito ma kolejne kontrakty");
+    expect(ui.getState().objective).toContain("Kaito has more contracts");
 
     // Kaito offers a contract; accept it through ink.
     talkToKaito(session);

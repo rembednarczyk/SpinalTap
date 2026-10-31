@@ -1,8 +1,53 @@
-import { SAVE_SCHEMA_VERSION } from "@seki/core";
+import { SAVE_SCHEMA_VERSION, SHARD_CYBER_CAPACITY, capacityMax, progressionFromXp } from "@seki/core";
 
 type Json = Record<string, unknown>;
 
 const isObject = (v: unknown): v is Json => typeof v === "object" && v !== null && !Array.isArray(v);
+
+/**
+ * Experience of the quests as v17 pays it (ADR-0059): each step's XP and the bonus for the whole
+ * quest. Spelled out, like the ids: a migration describes the content of its time.
+ */
+const V17_QUEST_XP: Readonly<Record<string, { readonly steps: readonly number[]; readonly quest: number }>> = {
+  m0_first_contract: { steps: [100, 300, 250], quest: 600 },
+  m3_echo: { steps: [500, 400, 500, 700], quest: 2500 },
+  m3_lustro: { steps: [600, 1000, 1000, 1500], quest: 3000 },
+};
+
+/**
+ * XP of an old save's finished contract: the kinds of the finished ones are not kept, so an
+ * average job (between a delivery, 500, and a docks job with guards, 1200; an elimination of
+ * three is 1000).
+ */
+export const V17_CONTRACT_XP = 850;
+
+/** The v16 cyberware pool: 12, +3 at 3, 6 and 10 finished contracts, +2 per shard (ADR-0033). */
+const v16CapacityMax = (completed: number, shards: number): number =>
+  12 + [3, 6, 10].filter((n) => completed >= n).length * 3 + shards * 2;
+
+/**
+ * Capacity shards that keep an old save's cyberware pool at least as big as it was: the pool
+ * of v17 grows with the level, which a save with many contracts may not have reached yet.
+ */
+export const compensatingShards = (completed: number, shards: number, level: number): number => {
+  const missing = v16CapacityMax(completed, shards) - capacityMax(level, shards);
+  return missing > 0 ? Math.ceil(missing / SHARD_CYBER_CAPACITY) : 0;
+};
+
+/** XP an old save earned with the quests and contracts it finished (kills and hacks left no record). */
+export const retroactiveXp = (domain: Json): number => {
+  const quests = isObject(domain.quests) ? domain.quests : {};
+  let xp = 0;
+  for (const [id, table] of Object.entries(V17_QUEST_XP)) {
+    const q = quests[id];
+    if (!isObject(q)) continue;
+    const done = q.status === "completed" ? table.steps.length : Number.isInteger(q.stepIndex) ? (q.stepIndex as number) : 0;
+    xp += table.steps.slice(0, Math.max(0, done)).reduce((a, b) => a + b, 0) + (q.status === "completed" ? table.quest : 0);
+  }
+  const contracts = isObject(domain.contracts) ? domain.contracts : {};
+  const completed = Number.isInteger(contracts.completed) ? Math.max(0, contracts.completed as number) : 0;
+  return xp + completed * V17_CONTRACT_XP;
+};
 
 /**
  * Migration n upgrades a version-n payload to version n+1. Every schema change bumps
@@ -268,6 +313,20 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
     const met = Array.isArray(domain.flags) && domain.flags.includes("met_fixer");
     const entities = Array.isArray(old.entities) ? old.entities : [];
     return { ...old, version: 16, entities: met ? entities : entities.filter((e: unknown) => !(isObject(e) && e.key === "fixer")) };
+  },
+  // v16 -> v17 (ADR-0059): character progression. The XP is counted back from the quests and
+  // contracts the save finished; the level follows the curve, every point it gave is still to
+  // spend and the attributes start at 3. The cyberware pool now grows with the level; where
+  // that is smaller than the old pool from finished contracts, capacity shards make up the
+  // difference, so no implant worn or kept in the bag stops fitting.
+  16: (old) => {
+    const domain = isObject(old.domain) ? old.domain : {};
+    const progression = progressionFromXp(retroactiveXp(domain));
+    const contracts = isObject(domain.contracts) ? domain.contracts : {};
+    const completed = Number.isInteger(contracts.completed) ? Math.max(0, contracts.completed as number) : 0;
+    const shards = Number.isInteger(domain.capacityShards) ? Math.max(0, domain.capacityShards as number) : 0;
+    const capacityShards = shards + compensatingShards(completed, shards, progression.level);
+    return { ...old, version: 17, domain: { ...domain, progression, ...(isObject(old.domain) ? { capacityShards } : {}) } };
   },
 };
 

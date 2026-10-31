@@ -101,3 +101,27 @@ describe("BrowserInput with the touch pad", () => {
     expect(i.poll().interact).toBe(false);
   });
 });
+
+describe("BrowserInput entering pointer lock (G-046)", () => {
+  const lockTo = (el: Element | null) => Object.defineProperty(document, "pointerLockElement", { configurable: true, get: () => el });
+  const move = (dx: number, dy = 0) => {
+    const e = new MouseEvent("mousemove");
+    Object.defineProperties(e, { movementX: { value: dx }, movementY: { value: dy } });
+    window.dispatchEvent(e);
+  };
+  afterEach(() => lockTo(null));
+
+  it("does not turn the view with the jump Chromium reports as the first move under a new lock", () => {
+    const canvas = document.createElement("canvas");
+    input = new BrowserInput(canvas);
+    input.enabled = true;
+    // The cursor rests on the New Game button at (640, 274); the lock comes in after the click.
+    move(640, 274);
+    lockTo(canvas);
+    move(-640, -274);
+    expect(input.poll()).toMatchObject({ lookYaw: 0, lookPitch: 0 });
+    // The mouse turns the view again from the next move on.
+    move(10);
+    expect(input.poll().lookYaw).toBeCloseTo(0.022);
+  });
+});

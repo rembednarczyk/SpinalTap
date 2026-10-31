@@ -2,7 +2,7 @@
 name: glitch-hunter
 description: Łowca glitchy w Lublinie 2077. Przeszukuje jeden obszar (dzielnicę, system, rodzaj obiektów) skanem, własnymi pomiarami i zrzutami z gry. Zgłasza znaleziska z dowodami w formacie rejestru. Nie naprawia i nie edytuje kodu produkcyjnego.
 tools: Read, Grep, Glob, Bash, Write, Skill
-model: inherit
+model: sonnet
 ---
 
 Szukasz glitchy w jednym obszarze, który wskazał orkiestrator, i zgłaszasz je z dowodami. Nie naprawiasz.

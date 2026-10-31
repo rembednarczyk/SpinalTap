@@ -13,6 +13,9 @@ import {
   VARIATION_FROM_COMPLETED,
   applyVariation,
   rollContractVariation,
+  UNDETECTED_CONTRACT_XP,
+  breachXp,
+  contractXp,
 } from "@seki/core";
 import { deriveRandom } from "../rng/derive-random";
 import { DOKI_TERMINAL_SPOTS } from "../content/district-doki";
@@ -23,6 +26,7 @@ import { SIM_HZ } from "../step-rate";
 import type { SimContext } from "./context";
 import { applyReputationCause, clearContract, raiseProgress } from "./domain-ops";
 import { BREACH_DAEMONS, giverOfContract, hackFxOf, noteHacked, phoneFromFixer } from "./street";
+import { grantXp } from "./progression-ops";
 
 /** Daemons of a terminal breach (ADR-0029): ICEpick cuts the hack short, Datamine pays, Mass Vulnerability marks the wave. */
 export const BREACH_ICEPICK_SECONDS = 10;
@@ -75,7 +79,8 @@ export const completeContract = (ctx: SimContext): void => {
   if (contract?.status !== "cleared") return;
   // The card (ADR-0029): badges from the counters, the condition's bonus and the fixer's style, paid in one transfer.
   const kind = contractKind(contract);
-  const card = debriefOf(kind, domain.contracts.tally ?? freshTally(ctx.tick), contract.reward, ctx.tick, SIM_HZ);
+  const tally = domain.contracts.tally ?? freshTally(ctx.tick);
+  const card = debriefOf(kind, tally, contract.reward, ctx.tick, SIM_HZ);
   const total = contract.reward + card.bonus + card.styleBonus;
   const paid = credit(domain.wallet, total);
   ctx.state.domain = {
@@ -88,6 +93,9 @@ export const completeContract = (ctx: SimContext): void => {
   ctx.bus.emit("ContractCompleted", { contract, reward: contract.reward });
   ctx.bus.emit("ContractDebrief", { contractId: contract.id, reward: contract.reward, ...card, ...(contract.variation ? { variation: contract.variation } : {}) });
   phoneFromFixer(ctx, giverOfContract(contract), "paid");
+  // Experience by difficulty (ADR-0059), and a stealth bonus when nobody noticed the player.
+  grantXp(ctx, contractXp(kind, contract.targets), "contract");
+  if (!tally.detected) grantXp(ctx, UNDETECTED_CONTRACT_XP, "stealth");
   raiseProgress(ctx, "contract_completed");
 };
 
@@ -123,4 +131,5 @@ export const applyBreach = (ctx: SimContext, { terminalKey, daemons: won }: Comm
   }
   noteHacked(ctx);
   ctx.bus.emit("BreachCompleted", { terminalKey, daemons });
+  grantXp(ctx, breachXp(daemons.length), "hack");
 };

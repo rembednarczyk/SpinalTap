@@ -54,4 +54,21 @@ describe("the click a lifted finger leaves behind (mobile dialogue bug)", () => 
     fireEvent.click(screen.getByRole("button", { name: /Nic, na razie/ }));
     expect(choose).toHaveBeenCalledWith(1);
   });
+
+  it("a real tap on a choice right after the talk opens still picks it (touch.spec flake)", () => {
+    vi.useFakeTimers();
+    const store = createUiStore({ screen: "playing", prompt: "Kaito" });
+    const choose = vi.fn();
+    const intents = new Proxy({} as UiIntents, { get: (_t, k) => (k === "choose" ? choose : vi.fn()) });
+    const pad = { setStick: vi.fn(), look: vi.fn(), press: vi.fn(), release: vi.fn(), reset: vi.fn(), selectWeaponSlot: vi.fn() };
+    render(<GameUi store={store} intents={intents} touch={pad} />);
+    fireEvent.pointerDown(screen.getByLabelText(/^Interact/), { pointerId: 1, pointerType: "touch" });
+    act(() => patchUi(store, { dialogue, prompt: null }));
+    // The pad's touchend cancelled the ghost click; a new finger taps the choice within the window.
+    act(() => vi.advanceTimersByTime(300));
+    const option = screen.getByRole("button", { name: /Kim jesteś/ });
+    fireEvent.pointerDown(option, { pointerId: 2, pointerType: "touch" });
+    fireEvent.click(option);
+    expect(choose).toHaveBeenCalledWith(0);
+  });
 });

@@ -4,7 +4,7 @@ import type { SimContext, System } from "../world/context";
 /** Cyberware capacity in use and the pool, from the domain (ADR-0033). */
 export const cyberCapacityOf = (domain: DomainState): { used: number; max: number } => ({
   used: capacityUsed(domain.character.cyberware),
-  max: capacityMax(domain.contracts.completed, domain.capacityShards),
+  max: capacityMax(domain.progression.level, domain.capacityShards),
 });
 
 /** A buff that is new since the last step, or got longer (eaten again), is reported with its seconds left. */
@@ -39,8 +39,7 @@ const runDisguise = (ctx: SimContext): void => {
 
 /**
  * The body of the player (ADR-0033): buffs tick and heal, the disguise follows the clothes, and
- * the cyberware capacity is reported whenever it changes (an implant, a shard, a finished
- * contract). A buff is reported when it shows up (eaten, or running in a loaded game) and when
+ * the cyberware capacity is reported whenever it changes (an implant, a shard, a level). A buff is reported when it shows up (eaten, or running in a loaded game) and when
  * it is refreshed; the first step also announces a worn disguise, so the HUD starts right. No
  * randomness; the announcements are presentation only.
  */

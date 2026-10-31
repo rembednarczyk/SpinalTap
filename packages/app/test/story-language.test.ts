@@ -66,7 +66,7 @@ describe("story language in a session (ADR-0056)", () => {
     let locale: Locale = "en";
     const lines = createKnotLines(STORY_SOURCES, () => locale);
     expect(lines("phone_kaito_offer", createDomainState())).toEqual([{ speaker: "Kaito", text: "Got a quick job. Swing by the Neon Koi before someone else grabs it." }]);
-    expect(lines("metro_ride_3", createDomainState())?.[1]).toEqual({ speaker: "Kid", text: "Mom, why is that man sleeping standing up?" });
+    expect(lines("metro_ride_3", createDomainState())?.[1]).toEqual({ speaker: "Child", text: "Mom, why is that man sleeping standing up?" });
     locale = "pl";
     expect(lines("metro_ride_3", createDomainState())?.[1]).toEqual({ speaker: "Dziecko", text: "Mamo, czemu ten pan śpi na stojąco?" });
   });

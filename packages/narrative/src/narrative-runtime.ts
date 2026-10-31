@@ -28,9 +28,18 @@ import {
 } from "@seki/core";
 import { describeVariation, variationOf } from "./contract-variation";
 import { type DialogueLine, type DialogueView, toneOf } from "./dialogue-view";
-import { type StorySources, narrativeText } from "./language";
+import type { StorySources } from "./language";
+import { type NarrativeText, YOU, keyText, speakerName } from "./narrative-text";
 
 const SPEAKER_RE = /^([A-Z]+):\s*(.*)$/;
+
+/** How a runtime speaks (ADR-0056). */
+export interface NarrativeOptions {
+  /** The language of the ink lines at the start; `setLanguage()` changes it later. English by default. */
+  readonly locale?: Locale;
+  /** Writes the narrative's own keys (speakers' roles, the variation lines) in the player's language. */
+  readonly text?: NarrativeText;
+}
 
 export class InkCompileError extends Error {}
 
@@ -65,6 +74,7 @@ const mainStepId = (domain: DomainState): string => activeMainStep(domain.quests
  */
 export class NarrativeRuntime {
   private readonly sources: StorySources;
+  private readonly text: NarrativeText;
   /** Compiled stories by the language of their source, each with the externals bound. */
   private readonly stories = new Map<Locale, Story>();
   private story: Story;
@@ -81,10 +91,11 @@ export class NarrativeRuntime {
   constructor(
     source: string | StorySources,
     private readonly sink: (command: GameCommand) => void,
-    language: Locale = DEFAULT_LOCALE,
+    { locale = DEFAULT_LOCALE, text = keyText }: NarrativeOptions = {},
   ) {
+    this.text = text;
     this.sources = typeof source === "string" ? { pl: source } : source;
-    this.storyLanguage = this.sourceLanguage(language);
+    this.storyLanguage = this.sourceLanguage(locale);
     this.story = this.storyIn(this.storyLanguage);
   }
 
@@ -151,7 +162,7 @@ export class NarrativeRuntime {
     this.story.variablesState.$("contract_reward", contract?.reward ?? 0);
     const left = contract && clock ? contractSecondsLeft(contract, clock.tick, clock.ticksPerSecond) : null;
     this.story.variablesState.$("contract_time_left", left ?? 0);
-    this.story.variablesState.$("contract_variation", contract ? describeVariation(variation ?? variationOf(contract), this.storyLanguage) : "");
+    this.story.variablesState.$("contract_variation", contract ? describeVariation(variation ?? variationOf(contract), this.text) : "");
     for (const f of FACTION_IDS) this.story.variablesState.$(`${f}_stance`, stanceOf(domain.reputation[f]));
     // The domain owns the main-thread choices; ink sees them as plain string variables.
     for (const choice of Object.keys(STORY_CHOICES) as StoryChoiceId[]) {
@@ -224,8 +235,7 @@ export class NarrativeRuntime {
     const m = SPEAKER_RE.exec(text);
     if (!m) return { speaker: null, text };
     const [, code = "", body = ""] = m;
-    const names = narrativeText(this.storyLanguage);
-    const speaker = code === "SEKI" ? (this.domain?.character.alias ?? names.you) : (names.speakers[code] ?? code);
+    const speaker = code === "SEKI" ? (this.domain?.character.alias ?? this.text(YOU)) : speakerName(code, this.text);
     return { speaker, text: body };
   }
 

@@ -1,5 +1,6 @@
-import { DEFAULT_LOCALE, type DomainState, type Locale, type PhonePriority } from "@seki/core";
+import type { DomainState, Locale, PhonePriority } from "@seki/core";
 import { NarrativeRuntime, type StorySources } from "@seki/narrative";
+import { narrativeText } from "./content-text";
 import { type PhoneLineVm, type PhoneMessageVm, type PhoneNoticeVm, type PhoneThreadVm, type PhoneVm, translate } from "@seki/ui";
 
 /** Display names of the phone contacts; an unknown id is shown capitalised. */
@@ -151,14 +152,14 @@ export type KnotLines = (knot: string, domain: DomainState) => PhoneLineVm[] | n
 /**
  * Renders knots to lines with a runtime of its own (compiled on first use), as the phone does:
  * the conversation in progress and the saved ink state are never touched, commands are dropped.
- * Shared by the phone, the metro ride and the radio (ADR-0035). The lines come in `locale` as it
- * is when they are rendered (ADR-0056); English without one.
+ * Shared by the phone, the metro ride and the radio (ADR-0035). The lines and the speakers' roles
+ * come in the language `locale` gives when they are rendered (ADR-0056).
  */
-export const createKnotLines = (source: string | StorySources, locale: () => Locale = () => DEFAULT_LOCALE): KnotLines => {
+export const createKnotLines = (source: string | StorySources, locale: () => Locale): KnotLines => {
   let runtime: NarrativeRuntime | null = null;
   return (knot, domain) => {
     try {
-      runtime ??= new NarrativeRuntime(source, () => {}, locale());
+      runtime ??= new NarrativeRuntime(source, () => {}, { locale: locale(), text: narrativeText(locale) });
       runtime.setLanguage(locale());
       const view = runtime.start(knot, domain);
       runtime.interrupt();

@@ -105,7 +105,7 @@ export const propEntity = (id: EntityId, prop: StaticProp, chunk: string): Entit
     e.doorPanel = m.door;
   } else if (m?.kind === "button") {
     // Hung about 1.2 m above its level's floor: the interaction's height check keeps it to that level.
-    e.interactable = { kind: "elevator", elevator: { key: m.elevator, level: m.level }, dialogueId: m.elevator, prompt: "Winda", radius: BUTTON_REACH };
+    e.interactable = { kind: "elevator", elevator: { key: m.elevator, level: m.level }, dialogueId: m.elevator, prompt: "prompt.elevator", radius: BUTTON_REACH };
   } else if (m?.kind === "ladder") {
     e.ladder = m.ladder;
   } else if (m?.kind === "ladder-end") {
@@ -115,7 +115,7 @@ export const propEntity = (id: EntityId, prop: StaticProp, chunk: string): Entit
       kind: "ladder",
       ladder: { key: m.ladder, end: m.end },
       dialogueId: m.ladder,
-      prompt: m.end === "bottom" ? "Wspinaj się" : "Zejdź po drabinie",
+      prompt: m.end === "bottom" ? "prompt.ladder.up" : "prompt.ladder.down",
       radius: LADDER_REACH,
     };
   }
@@ -229,7 +229,7 @@ export const terminalEntity = (id: EntityId, key: string, foot: Vec3, chunk: str
   chunk,
   ...at({ x: foot.x, y: foot.y + TERMINAL.y / 2, z: foot.z }),
   view: { kind: "block", size: TERMINAL, material: "glass" },
-  interactable: { kind: "terminal", dialogueId: key, prompt: "Włam się do terminala", radius: 2 },
+  interactable: { kind: "terminal", dialogueId: key, prompt: "prompt.terminal.hack", radius: 2 },
 });
 
 export const actorEntity = (id: EntityId, def: ActorDef, chunk: string): Entity => {
@@ -297,7 +297,7 @@ export const pickupEntity = (id: EntityId, key: string, position: Vec3, chunk: s
   chunk,
   ...at(position),
   view: { kind: "block", size: what === "crate" ? CRATE : DATA, material: "glass" },
-  interactable: { kind: "pickup", dialogueId: key, prompt: what === "crate" ? "Zabierz skrzynkę Hany" : "Zgraj dane Tessen", radius: 1.8 },
+  interactable: { kind: "pickup", dialogueId: key, prompt: what === "crate" ? "prompt.pickup.crate" : "prompt.pickup.data", radius: 1.8 },
 });
 
 /** Contract targets get tougher as Seki completes more jobs. */

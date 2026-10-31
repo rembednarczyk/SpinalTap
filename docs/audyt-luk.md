@@ -1,0 +1,80 @@
+# Seki Senshi: audyt luk względem standardów gatunku (31.10.2026)
+
+Metoda: tylko odczyt (grep/sed/wc) dokumentów (`CLAUDE.md`, `docs/seki-senshi-plan.md`, `docs/backlog.md`, `docs/adr/README.md`, ADR-0057/58/59, `docs/glitches.md`) i kodu `packages/*/src`, `e2e`, `tools`, `.github`. „Nie znaleziono” znaczy, że grep po podanych słowach w `packages/*/src` nic nie dał. Nic nie było budowane ani uruchamiane.
+
+## Co już jest (skrót, z dowodami)
+- Treść: 3 zadania główne (`core/src/quest/definitions.ts`: `m0_first_contract`, `m3_echo`, `m3_lustro`), zakończenia aktu I (2) i II (3) (`core/src/story/story.ts`), 7 rodzajów kontraktów proceduralnych z wariantami i hakami (`core/src/contracts/kinds.ts`, `variation.ts`, ADR-0032/0034), spotkania uliczne w 4 dzielnicach (`narrative/ink/enc-*.ink`), ok. 1900 linii ink.
+- Walka: 8 broni w 7 klasach (`core/src/items/types.ts`), mody, ADS, rozrzut i strefy trafień (ADR-0016/0019), wręcz z combo, blokiem i parowaniem, flinch, stagger, dying w rigu (`engine/src/renderer/character-animation.ts`), hitmarker i liczby obrażeń (`app/src/presenters/combat.ts`, `ui/src/hud/damage-numbers.tsx`), snajper z laserem (ADR-0024), 6 typów wrogów (`core/src/items/enemies.ts`).
+- Immersive sim: świadkowie i heat, ostatnia znana pozycja, skaner, 5 quickhacków i 3 daemony Breach, kamery i urządzenia w sieciach, przebrania, hałas strzałów i ciosów (ADR-0028/0029/0033, `core/src/hacking/quickhacks.ts`, `sim/src/content/devices.ts`).
+- Świat: Lublin z OSM na 20 chunkach (ADR-0042/0045), zegar doby z harmonogramami NPC i światłem dnia (ADR-0017, `engine/src/renderer/atmosphere.ts` `setDaylight`), tłum, ruch aut i trolejbusów (ADR-0041/0050), metro jako podróż (ADR-0034), radio, 3 sklepy i ripperdoc (`core/src/shop`), skrytki w zaułkach (ADR-0026), 6 frakcji z 5 progami reputacji (`core/src/reputation/reputation.ts`).
+- UI/dostępność: HUD, minimapa z piętrami, mapa miasta, dziennik z przypinaniem, ekwipunek z porównaniem (`core/src/items/compare.ts`), podpowiedzi pierwszej gry (`app/src/hints.ts`), napisy dialogów z mówcą (`ui/src/dialogue/dialogue-log.tsx`), skala HUD, czytelna czcionka, 3 tryby daltonizmu, mniej błysków, Breach bez czasu, remapowanie klawiatury, przytrzymaj/przełącz, FOV, odwrócona oś (`app/src/settings.ts`).
+- Platformy/technika: pad standardowy w rozgrywce (`engine/src/input/browser-input.ts`), dotyk z łukiem akcji (ADR-0035), pełny ekran i blokada poziomu na telefonie (`ui/src/menus/title-screen.tsx`), 3 sloty + szybki zapis F5/F9, IndexedDB, schemat v16 z migracjami, budżety draw calli w CI (`tools/perf-budgets.json`, `.github/workflows/ci.yml`), determinizm i replay, 210 plików testów, skany glitchy i i18n.
+
+## Tabela luk
+
+| Obszar | Luka (konkretnie) | Dowód | Wpływ | Koszt | W planie? | Priorytet |
+|---|---|---|---|---|---|---|
+| Pętla | Brak progresji postaci i celu średnioterminowego (poziomy, atrybuty, drzewka) | `core/src/items/rarity.ts`, stałe mnożniki; brak `core/progression` | wysoki | XL | ADR-0059 | P0: oś całej pętli, od niej zależy balans |
+| Pętla | Brak autorskich zadań pobocznych z historią; poboczne to kontrakty proceduralne i small talk (`m4-ulica.ink`: „No knot pays”) | `narrative/ink/m4-*.ink`, `core/src/quest/definitions.ts` (3 questy) | wysoki | L (treść) | nie | P1: standard gatunku to wiele ręcznie pisanych pobocznych z wyborem |
+| Pętla | Wątek główny krótki: 2 akty, brak aktu domykającego, brak sekwencji końcowej i epilogu | `story.ts` (ACT_TWO_ENDINGS), `ui/src/store/ui-vm.ts` (brak ekranu końca) | wysoki | L | nie | P1 |
+| Pętla | Mało aktywności otwartego świata poza kontraktami (brak wyścigów, polowań na nagrody, minigier, kolekcji) | grep `race|bounty|collect` w `core/sim`: nie znaleziono | średni | M–L | nie | P2 |
+| Pętla | Brak NG+ i stanu „po grze” | grep `newGamePlus|NG+`: nie znaleziono | niski | M | nie | P3 |
+| Walka | Brak poziomu trudności (i presetów wspomagania) | grep `difficulty` w `app/ui/core`: tylko `variationDifficulty` kontraktu | wysoki | M | nie | P0: dostępność i balans ADR-0059 potrzebują osi trudności |
+| Walka | Brak granatów i urządzeń rzucanych (EMP, dym, flash) | `ItemCategory`, `ConsumableId` w `core/src/items/types.ts` | wysoki | M | nie | P1: standard taktyki i kontra na grupy |
+| Walka | Brak systemu osłon u AI i gracza; drzewo AI: strzel/goń/obserwuj/sprawdź | `sim/src/systems/ai/ganger-tree.ts` | wysoki | L | nie | P1: walka wygląda płasko bez osłon i flankowania |
+| Walka | Brak koordynacji grupy (flankowanie, tłumienie, wycofanie przy niskim HP) | j.w.; `flank` tylko w komentarzu `steering.ts` | wysoki | L | nie | P1 (po osłonach) |
+| Walka | Brak walk z szefami (wzorce, fazy) | grep `boss` w sim: tylko „shift boss” jako strażnik (`world/enforcer.ts`) | średni | L | nie | P2 |
+| Walka | Mały arsenał (8 broni, 1 karabin snajperski NPC), brak broni ciężkiej i inteligentnej; brak ciężkiego ataku wręcz i bloku NPC | `types.ts` `WeaponId`; backlog „Później: blok u NPC, ciężki atak” | średni | M | częściowo (backlog) | P2: zależy od poziomu przedmiotu ADR-0059 |
+| Walka | Brak ragdolla i zależnej od trafienia reakcji śmierci (jest jedna poza dying) | `character-animation.ts`, grep `ragdoll`: nie znaleziono | średni | M | nie | P2 |
+| Skradanie | Brak obezwładnienia (takedown), ogłuszenia bez zabicia i ukrywania ciał, choć ADR-0059 liczy XP i perki „Cień” za obezwładnienia | ADR-0059 l. 26, 41, 46; grep `takedown|subdue|unconscious` w sim: nie znaleziono | wysoki | M | nie (zależność ADR-0059) | P0: blokuje etap 1–3 ADR-0059 dla drzewka Cień |
+| Skradanie | Brak patroli po trasie (posterunki z rozglądaniem) | ADR-0024 „Na później: patrol po trasie” | średni | M | backlog w ADR | P2 |
+| Imm. sim | Mało interakcji systemowych: brak zagrożeń środowiska (wybuchowe beczki, prąd, para), wytrychów, alternatywnych wejść poza drzwiami na kod | grep `explosive|hazard` w sim: nie znaleziono; `sim/src/content/devices.ts` (kamera, automat, głośnik, neon) | średni | M | nie | P2 |
+| Postać | Brak kreatora/wyglądu ciała (stała bohaterka); jest tylko odzież | `core/src/items/appearance.ts` | niski | L | nie | P3: stała protagonistka jest decyzją fabularną |
+| Postać | Brak relacji/romansów i pamięci postaci o graczu poza flagami i reputacją frakcji | grep `romance|affinity|relationship` w core: nie znaleziono | średni | L | nie | P2 |
+| Postać | Konsekwencje wyborów słabo widoczne w świecie (brak reakcji NPC i świata po zakończeniach poza reputacją) | `story.ts` (zmiany reputacji i wspomnienie) | średni | M | nie | P2 |
+| Świat | Brak systemu pogody; deszcz stały, bez stanu w sim | `engine/src/effects/rain.ts`; grep `weather` w core/sim: nie znaleziono; research `visuals_webgl.md` l. 79 | średni | M | nie | P2 |
+| Świat | Gracz nie prowadzi pojazdów (auta tylko jako ruch i dekoracja) | `core/src/ports/types.ts` l. 53–57 (vehicle w widoku), brak sterowania | średni (miasto pieszo) | XL | nie | P3: przy skali 20 chunków i metrze to świadome cięcie, nie luka krytyczna |
+| Świat | Brak szybkiej podróży poza metrem i brak trasy GPS / własnego znacznika gracza na mapie | `app/src/quest-target.ts` (tylko cel kroku), grep `waypoint|gps`: nie znaleziono; G-035 | wysoki | M | częściowo (G-035) | P1: na telefonie nawigacja bez trasy męczy |
+| Świat | Brak mieszkania gracza (schowek, łóżko/odpoczynek do godziny, garderoba) | grep `apartment|safehouse`: nie znaleziono | średni | M | nie | P2 |
+| UI/UX | Brak samouczka w misji (są tylko podpowiedzi klawiszy) i brak podpowiedzi systemowych (heat, Breach, przebrania) | `app/src/hints.ts` (7 podpowiedzi) | średni | S–M | nie | P1: dużo systemów, mało objaśnień |
+| UI/UX | Brak ikon przedmiotów | backlog „Assety ubrań i ekwipunku” | średni | M | tak (backlog) | P1 |
+| UI/UX | Brak kodeksu/bazy wiedzy (frakcje, postacie, słownik) i brak historii komunikatów | grep `codex|kodeks` w ui: nie znaleziono | niski | S | nie | P3 |
+| UI/UX | Pad nie steruje menu i dialogiem (propozycja w ADR-0039, w UI brak obsługi) | ADR-0039 l. 22; grep `gamepad` w `ui/src`: tylko komentarz | wysoki dla pada | M | propozycja w ADR | P1 |
+| Dostępność | Tylko głośność główna; brak suwaków muzyki/SFX/dialogu/radia | `app/src/main.tsx` l. 83 `setVolume("master")`, szyny miksu są (ADR-0013) | średni | S | nie | P1: tanie, szyny już są |
+| Dostępność | Brak wyłączenia kołysania kamery i wstrząsów (motion sickness) | `engine/src/camera/camera-rig.ts` l. 325–334, brak pola w `settings.ts` | średni | S | nie | P1: tanie |
+| Dostępność | Brak rozmiaru napisów i tła napisów osobno od skali HUD; brak remapowania pada i dotyku | `settings.ts` (`hudScale`, `bindings` tylko klawisze) | średni | S–M | nie | P2 |
+| Dostępność | Brak wspomagania celowania (pad i dotyk) i opcji przytrzymań zamiast szybkich naciśnięć | backlog „Celowanie na telefonie” | wysoki (telefon) | M | tak (backlog, dotyk) | P0 dla telefonu; pad dopisać do tego ADR-u |
+| Platformy | Brak autozapisu (po kroku zadania, kontrakcie, wejściu do lokalu) i zapisu przy `visibilitychange`/`pagehide` na telefonie | grep `autosave|visibilitychange|pagehide` w app: nie znaleziono; jedyny automatyczny slot to `quick` z F5 | wysoki | S | nie | P0: na telefonie system zabija kartę, gracz traci postęp (plan §10: utrata postępu to najgorszy defekt) |
+| Platformy | Brak eksportu/importu zapisu i chmury | `persistence/src` (tylko IndexedDB), `render.yaml` „Saves live in the player's browser” | średni | S (eksport) / L (chmura) | nie | P2: eksport do pliku tani |
+| Platformy | Brak automatycznego doboru jakości, limitu klatek i trybu oszczędzania baterii | `engine/src/renderer/stage.ts` l. 43 (skalowanie tylko na „low”), grep `deviceMemory|fps cap`: nie znaleziono | wysoki (telefon) | M | nie | P1 |
+| Platformy | Brak osobnych ustawień grafiki (cienie, tłum, zasięg widzenia, rozdzielczość); jest jeden preset 3-stopniowy | `settings.ts` `quality` | średni | M | nie | P2 |
+| Audio | Brak dialogów mówionych (VO), nawet szczątkowych odzywek walki/barków | `engine/src/audio/synth-voices.ts` (efekty), `app/public/audio` (SFX) | średni | XL | nie | P3: napisy wystarczą przy budżecie; odzywki walki P2 |
+| Audio | Muzyka warstwowa z 4 nastrojami jest, brak muzyki per dzielnica i per misja/szef | `core/src/ports/audio-port.ts` `MusicMood` | niski | M | częściowo (backlog muzyka CC0) | P3 |
+| Technika | Ekran ładowania i shadery na starcie | ADR-0057, G-029 | wysoki | M | tak | P0 (w toku planu) |
+| Technika | Brak raportowania błędów i telemetrii (nawet lokalnej: `window.onerror`, utrata kontekstu WebGL pokazana graczowi) | grep `onerror|unhandledrejection`: nie znaleziono; `stage.ts` l. 50 tylko reset pacera | wysoki | S–M | nie | P1: bez tego błędy z telefonów są niewidoczne |
+| Technika | Brak PWA/offline i cache assetów po stronie klienta | brak manifestu i service workera w `packages/app` | średni | M | nie | P2 |
+| Technika | Brak widocznej wersji gry i kanału wydań (wersja 0.1.0 nie trafia do UI, brak changelogu) | `packages/app/package.json`, grep `VERSION` w `vite.config`: nic | niski | S | nie | P2: potrzebne do zgłoszeń błędów |
+| Technika | Niestabilne e2e pod obciążeniem, rozjazd migawki NPR z main | G-031, G-043, G-046 | średni (zespół) | M | tak (backlog „najpierw G-031”) | P0 (w planie) |
+| Technika | God objecty renderera | ADR-0031, backlog | niski (gracz) | M | tak | P1 (w planie) |
+| Produkcja | Lokalizacja: HUD, `core`, `sim`, ink en | ADR-0056 etapy 2c–5 | wysoki (gracz anglojęzyczny) | L | tak | P0 (w planie, etap 5 największy) |
+| Produkcja | Brak osiągnięć/wyzwań i statystyk gracza | grep `achievement`: nie znaleziono | niski | S–M | nie | P3 |
+| Produkcja | Brak trybu foto | grep `photo`: nie znaleziono | niski | S–M | nie | P3 (pasuje do NPR, tani marketing) |
+| Produkcja | Brak modowania i edytora treści poza ink i skryptami (`tools/osm-import`, `city_kit.py`); kontrakty i spotkania w TS | `sim/src/content/*.ts` | niski | L | nie | P3 |
+| Produkcja | Brak testu balansu przejścia całej gry (planowany tylko dla ADR-0059) | ADR-0059 etap 8 | średni | M | tak | P1 (w planie) |
+
+## 10 najważniejszych luk spoza obecnego planu (kolejność) i zależności
+
+1. **Autozapis i zapis przy ukryciu karty** (S, P0). Niezależny; robić od razu. Potrzebny przed każdym dłuższym testem na telefonie.
+2. **Obezwładnienie bez zabijania (takedown), ogłuszenie, przenoszenie ciał** (M). Musi być przed etapami 1–3 ADR-0059, bo XP i drzewko Cień je zakładają. Zależy od istniejących świadków i heatu (ADR-0029).
+3. **Poziom trudności z presetami wspomagania** (M). Przed testem balansu ADR-0059 (etap 8): balans liczy się dla poziomu „normalny”, a mnożniki trudności wchodzą przez te same `StatModifiers`.
+4. **Raportowanie błędów i widoczna wersja** (S–M). Przed szerszym udostępnieniem i przed pracą nad wydajnością telefonu (bez danych z urządzeń nie da się dobrać presetów).
+5. **Automatyczny dobór jakości, limit klatek, tryb baterii na telefonie** (M). Po ekranie ładowania (ADR-0057) i podziale renderera (ADR-0031); korzysta z raportów z punktu 4.
+6. **AI walki: osłony, potem koordynacja grupy (flankowanie, tłumienie, wycofanie)** (L). Najpierw punkty osłon w danych chunków (sim `content`) i w nawigacji (ADR-0025), potem zachowania grupowe. Przed granatami (AI musi uciekać z zasięgu) i przed walkami z szefami.
+7. **Granaty i urządzenia rzucane** (M). Po punktach osłon z punktu 6 (wrogowie reagują ucieczką), przed poziomem przedmiotu (etap 4 ADR-0059), żeby wejść do tabel łupów od razu z poziomem.
+8. **Nawigacja: własny znacznik i trasa GPS na minimapie i mapie** (M). Po G-035 (wskaźniki zadań do postaci); trasa korzysta z grafu chodników (ADR-0041). Ważne przed rozbudową treści pobocznej, bo każdy nowy cel jej potrzebuje.
+9. **Autorskie zadania poboczne i domknięcie wątku głównego (akt III, epilog, ekran końca)** (L, treść). Po etapie 5 ADR-0056 (ink en o tej samej strukturze), żeby nowa treść od razu powstawała w obu językach; po ADR-0059 etapy 1 i 5 (nagrody XP, pasma dzielnic). Szefowie (P2) jako część tych misji, po punkcie 6.
+10. **Pad w menu i dialogu oraz tanie opcje dostępności (suwaki szyn audio, wyłączenie wstrząsów i kołysania, rozmiar napisów)** (S–M). Niezależne od reszty; pad w UI przed testami na konsolowych przeglądarkach i TV; warto dołączyć do ADR-u celowania na telefonie wspomaganie dla pada.
+
+Łańcuch krytyczny: autozapis (1) → takedown (2) → trudność (3) → ADR-0059 etapy 1–7 → osłony i AI (6) → granaty (7) → ADR-0059 etap 8 (balans) → treść poboczna i akt III (9). Równolegle: i18n etapy 3–5 przed (9); raporty błędów (4) → jakość na telefonie (5) po ADR-0057 i ADR-0031; nawigacja (8) po G-035.
+
+Uwagi metodyczne: nie sprawdzałem zachowania w działającej grze. Stan „brak” opiera się na grep po nazwach w kodzie i dokumentach, więc mechanika zaimplementowana pod inną nazwą mogła umknąć (np. obezwładnienia szukałem jako `takedown|subdue|knockout|unconscious|nieprzytom`).

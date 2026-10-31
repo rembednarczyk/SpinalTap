@@ -48,14 +48,15 @@ describe("cyberware capacity (ADR-0033)", () => {
     }
   });
 
-  it("the pool grows at 3, 6 and 10 finished contracts and with every shard", () => {
-    expect(capacityMax(0, 0)).toBe(BASE_CYBER_CAPACITY);
+  it("the pool grows by 2 every third level (ADR-0059) and with every shard", () => {
+    expect(capacityMax(1, 0)).toBe(BASE_CYBER_CAPACITY);
     expect(capacityMax(2, 0)).toBe(12);
-    expect(capacityMax(3, 0)).toBe(15);
-    expect(capacityMax(6, 0)).toBe(18);
-    expect(capacityMax(10, 0)).toBe(21);
-    expect(capacityMax(40, 0)).toBe(21);
-    expect(capacityMax(0, 2)).toBe(12 + 2 * SHARD_CYBER_CAPACITY);
+    expect(capacityMax(3, 0)).toBe(14);
+    expect(capacityMax(5, 0)).toBe(14);
+    expect(capacityMax(6, 0)).toBe(16);
+    expect(capacityMax(10, 0)).toBe(18);
+    expect(capacityMax(30, 0)).toBe(32);
+    expect(capacityMax(1, 2)).toBe(12 + 2 * SHARD_CYBER_CAPACITY);
   });
 
   it("counts the installed implants and what a swap would leave", () => {
