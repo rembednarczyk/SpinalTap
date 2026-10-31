@@ -144,6 +144,28 @@ describe("the roof's shape from the map (ADR-0064)", () => {
     }
   });
 
+  it("covers an L-shaped outline under the rise, with no hole and no spike", () => {
+    const ell = cleanRing([
+      { x: 0, z: 0 },
+      { x: 24, z: 0 },
+      { x: 24, z: 8 },
+      { x: 8, z: 8 },
+      { x: 8, z: 20 },
+      { x: 0, z: 20 },
+    ]);
+    for (const shape of ["gabled", "half-hipped", "mansard", "skillion"] as const) {
+      for (const roofAcross of [false, true]) {
+        const tris = plan(house(shape, { ring: ell, roofAcross })).filter((t) => t.roof && t.n.y > 0.05);
+        const pts = tris.flatMap((t) => t.pts);
+        expect(pts.every((p) => Number.isFinite(p.y) && p.y >= 12 - 0.5 && p.y <= 12 + 4), shape).toBe(true);
+        // The slopes cover the outline: their area seen from above is the eaves' (the L of 288 m² and the overhang).
+        const area = tris.reduce((s, t) => s + Math.abs((t.pts[1]!.x - t.pts[0]!.x) * (t.pts[2]!.z - t.pts[0]!.z) - (t.pts[2]!.x - t.pts[0]!.x) * (t.pts[1]!.z - t.pts[0]!.z)) / 2, 0);
+        expect(area, `${shape} across ${roofAcross}`).toBeGreaterThan(288);
+        expect(area, `${shape} across ${roofAcross}`).toBeLessThan(288 + 0.36 * 88 + 1);
+      }
+    }
+  });
+
   it("keeps the far block's roof the same shape as near", () => {
     for (const shape of ["gabled", "half-hipped", "mansard", "pyramidal"] as const) {
       expect(top(plan(house(shape), true)), shape).toBeCloseTo(top(plan(house(shape))), 1);
