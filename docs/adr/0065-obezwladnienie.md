@@ -45,3 +45,13 @@ Bez obezwładnień etapy 1–3 ADR-0059 dla drzewka Cień nie mają czego liczy�
 - Rośnie liczba stanów AI do przetestowania (nieświadomy, ogłuszony, znalazł ciało); każdy etap ma testy sesji z `freeze` + `step` (ADR-0046).
 - Zapis gry zmienia schemat w etapie 3.
 - Cywile też mogą być obezwładnieni, co otwiera nadużycia (czyszczenie ulic bez heatu); hamulcem jest znalezione ciało i czujność dzielnicy, a balans sprawdzi etap 8 ADR-0059.
+
+## Wdrożenie
+- **Etap 1** (gałąź `feat/adr-0065-takedown`):
+  - kontrakty: komenda `takedown { lethal }`, zdarzenia `TakedownStarted { target, duration }`, `TakedownDone { target, lethal, witnessed }` (`witnessed` zawsze `false` do etapu 2) i `TakedownBroken { target, reason }` (`damage`: obrażenie gracza, cel zaalarmowany ze znaną pozycją gracza; `gone`: cel zginął z innej ręki albo zniknął ze świata), pole `unconscious` w `Transform` widoku (renderer rysuje pozę w etapie 4);
+  - `sim`: system `takedown` po `combat`, a przed `interaction` i `death` (obrażenie z tego kroku przerywa, zabicie umiera w tym samym kroku); cel to NPC z `combatant` i `health` (gangerzy, ochrona, snajperzy) w zasięgu 1,6 m i do 0,8 m różnicy wysokości, z linią wzroku, w stożku 120° za plecami albo dowolnie, gdy jest ogłuszony parowaniem (`melee.stunned` przy `stagger` z `parryStun`) lub nieświadomy (`awarenessOf` „unaware”, snajper w fazie `idle`); najbliższy, remis wygrywa starszy byt; bez losowania;
+  - w trakcie gracz stoi (bez ruchu, rozglądania, strzału, ciosu, zdolności, zrywu i przedmiotów: `playerHeld`), a cel stoi z bronią w dół i jest pominięty przez AI; wariant zabicia: `lethal` w komendzie albo przytrzymany atak w ostatnim kroku;
+  - ogłuszony (`unconscious`): pomija go AI gangerów i snajperów, nie dostaje tropów (`giveLead`), nie słyszy alarmu walki (`alertNearbyGangers`), nie jest świadkiem patrolu ani cywilem dzwoniącym, nie jest ofiarą (`victimsOf`), nie liczy się jako walczący (`isEngaged`), nie da się z nim rozmawiać; trafienie z broni nadal go rani i może zabić;
+  - cywile bez `combatant` nie są jeszcze celem: ich obezwładnienie przychodzi razem ze świadkami i heatem w etapie 2;
+  - zapis: stan `unconscious` nie trafia do zapisu ani do uśpionego chunku; po wczytaniu albo powrocie chunku ogłuszony jest przytomny jak przed obezwładnieniem (etap 3 zmienia schemat);
+  - HUD: podpowiedź `prompt.takedown` na przycisku interakcji (wygrywa z bliższym niż każdy inny cel interakcji) i druga akcja `prompt.takedown.kill` z klawiszem ataku (`promptHold` w stanie UI); na dotyku ten sam przycisk „Użyj” i przytrzymanie ataku, bez nowego przycisku; aplikacja zamienia klawisz interakcji na komendę w `TakedownController`; ustawienie domyślnego wariantu dochodzi później.
