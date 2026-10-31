@@ -178,6 +178,8 @@ export class MapCity {
     this.despawn(id);
     if (view.kind === "street-props") {
       this.props().spawn(id, view.items, at);
+      // The awnings keep clear of the furniture (ADR-0058): the facades by it are rebuilt.
+      if (this.facadeProps && view.items.length > 0) this.touchNear(boundsOf(view.items.map((p) => ({ x: p.x + at.x, z: p.z + at.z }))));
       return;
     }
     if (view.kind === "terrain") {
@@ -434,6 +436,14 @@ export class MapCity {
     return c;
   }
 
+  /** The near meshes of the cells round a box are rebuilt (their facades' props depend on it). */
+  private touchNear(b: Box2): void {
+    for (const k of cellsOf(grow(b, 4))) {
+      const c = this.cells.get(k);
+      if (c) c.nearDirty = true;
+    }
+  }
+
   /** Marks the cells a box touches for a rebuild (only cells that exist). */
   private touch(b: Box2): void {
     for (const k of cellsOf(b)) {
@@ -556,7 +566,7 @@ export class MapCity {
       planNearBuilding(sink, f);
       planNearVertical(sink, f, place);
       if (!lite) planWallClutter(sink, f, place);
-      if (!lite && place) planFacadeExtras(f, place);
+      if (!lite && place) planFacadeExtras(f, place, (x, z, r) => this.streetProps?.obstacles(x, z, r) ?? []);
     }
     if (this.facadeProps) bakeSlots(sink, this.facadeProps, slots, lite);
     planNearCanyon(sink, cell.spans, lite);

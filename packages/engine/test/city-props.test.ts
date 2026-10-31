@@ -6,8 +6,9 @@ import { GeometrySink, parseCityKit, planSkin } from "../src/renderer/city-kit-d
 import { LITE, addPropToKit, addPropToSink, facing, kitUvs, onWall, parseCityProps, pickProp, transformProp, triangleCount } from "../src/renderer/city-props";
 import { planKitProps } from "../src/renderer/kit-props";
 import { MeshSink } from "../src/renderer/mesh-sink";
-import { type MapBuilding, facadeFrame } from "../src/renderer/mapcity/facade-frame";
-import { type PropSlot, bakeSlots, placeSlot, planFacadeExtras } from "../src/renderer/mapcity/facade-props";
+import { type FacadeFrame, type MapBuilding, facadeFrame } from "../src/renderer/mapcity/facade-frame";
+import { AWNING_GAP, AWNING_HEADROOM, AWNING_UNDER_TOP, type Obstacle, type ObstacleQuery, type PropSlot, bakeSlots, placeSlot, planFacadeExtras, wallRectHits } from "../src/renderer/mapcity/facade-props";
+import { shopBoardOn } from "../src/renderer/mapcity/sign-plan";
 import { cleanRing } from "../src/renderer/mapcity/polygon";
 import { planNearVertical } from "../src/renderer/mapcity/vertical-plan";
 import { planWallClutter } from "../src/renderer/mapcity/wall-clutter";
@@ -62,6 +63,13 @@ describe("city-props.glb (ADR-0058)", () => {
       expect(Math.max(m.size.x, m.size.y, m.size.z)).toBeLessThan(5);
       expect(m.styles.length).toBeGreaterThan(0);
       for (const i of m.indices) expect(i).toBeLessThan(m.positions.length / 3);
+    }
+    // Nothing of a facade prop is self-lit (pr-ac-stack's label strip is paint, not neon).
+    for (const m of props.models.values()) {
+      for (let i = 0; i < m.uvs.length; i += 2) {
+        const k = Math.min(props.grid - 1, Math.floor(m.uvs[i]! * props.grid)) + props.grid * Math.min(props.grid - 1, Math.floor(m.uvs[i + 1]! * props.grid));
+        expect(props.swatches[k]!.kind, m.key).not.toBe("glow");
+      }
     }
     for (const style of ["ac-wall", "ac-roof", "ac-firewall", "antenna", "dish", "pipe", "pipe-corner", "awning", "awning-flat"]) expect(props.byStyle.get(style)?.length ?? 0).toBeGreaterThan(0);
     // The phone's cheap air conditioners.
@@ -189,23 +197,76 @@ describe("props on the map city's facades (ADR-0058)", () => {
     for (const k of ["ac-wall", "dish-roof", "antenna", "pipe-corner"] as const) expect(kinds.has(k)).toBe(true);
   });
 
+  const extras = (b: MapBuilding, obstacles?: ObstacleQuery) => {
+    const out: PropSlot[] = [];
+    planFacadeExtras(facadeFrame(b, none), (s) => out.push(s) > 0, obstacles);
+    return out;
+  };
+  // Tall enough a ground floor for awnings under the biggest boards (1.3 m).
+  const shop = (extra: Partial<MapBuilding> = {}) => building({ height: 16, ...extra });
+  /** The street wall a slot hangs on. */
+  const wallOf = (f: FacadeFrame, s: PropSlot) =>
+    f.walls.find((w) => Math.abs((s.at.x - w.a.x) * w.nx + (s.at.z - w.a.z) * w.nz) < 1e-6 && Math.abs(w.nx - s.out.x) < 1e-9 && Math.abs(w.nz - s.out.z) < 1e-9)!;
+
   it("hang dishes and awnings by the clutter, none in the Old Town or on buildings of the game", () => {
-    const slots = (b: MapBuilding) => {
-      const out: PropSlot[] = [];
-      planFacadeExtras(facadeFrame(b, none), (s) => out.push(s) > 0);
-      return out;
-    };
-    const busy = slots(building());
+    const busy = extras(shop());
     expect(busy.some((s) => s.kind === "awning")).toBe(true);
     expect(busy.some((s) => s.kind === "dish")).toBe(true);
-    expect(slots(building())).toEqual(busy);
-    expect(slots(building({ clutter: 0.25 }))).toEqual([]);
-    expect(slots(building({ doorways: [{ x: 12, z: 0, width: 1.2, bottom: 0, top: 2.4 }] }))).toEqual([]);
-    // Awnings hang under the shop boards' middle and over people's heads.
-    const f = facadeFrame(building(), none);
-    for (const s of busy.filter((x) => x.kind === "awning")) {
-      expect(s.at.y + 0.5).toBeLessThanOrEqual(f.b.base + f.ground - 0.8 + 1e-9);
-      expect(s.at.y).toBeGreaterThanOrEqual(f.b.base + 1.99);
+    expect(extras(shop())).toEqual(busy);
+    expect(extras(shop({ clutter: 0.25 }))).toEqual([]);
+    expect(extras(shop({ doorways: [{ x: 12, z: 0, width: 1.2, bottom: 0, top: 2.4 }] }))).toEqual([]);
+  });
+
+  it("hang awnings under the bottom of the shop board, boards up to 1.3 m tall, with 2 m of headroom", () => {
+    let checked = 0;
+    const heights = new Set<number>();
+    for (const [w, d, h] of [[24, 14, 16], [9, 7, 16], [5, 12, 15], [30, 10, 18], [24, 14, 13]] as const) {
+      for (const look of [0x2077, 0x1234, 0xbeef, 0x51]) {
+        const f = facadeFrame(shop({ ring: rect(0, 0, w, d), height: h, look }), none);
+        for (const s of extras(f.b).filter((x) => x.kind === "awning" || x.kind === "awning-flat")) {
+          const wall = wallOf(f, s);
+          const board = shopBoardOn(f, wall);
+          if (board !== null) heights.add(board);
+          // Under the board's bottom, or under the ground floor's top on a wall without a board.
+          const boardBottom = board === null ? f.b.base + f.ground - AWNING_UNDER_TOP + AWNING_GAP : f.b.base + f.ground - 0.45 - board / 2;
+          for (const p of placeSlot(props, s, false)) {
+            const ys = [...transformProp(p.model, p.xf).positions].filter((_, i) => i % 3 === 1);
+            expect(Math.max(...ys)).toBeLessThanOrEqual(boardBottom - AWNING_GAP + 1e-3);
+            expect(Math.min(...ys)).toBeGreaterThanOrEqual(f.b.base + AWNING_HEADROOM - 1e-3);
+          }
+          checked++;
+        }
+      }
+    }
+    expect(checked).toBeGreaterThan(10);
+    expect(Math.max(...heights)).toBe(1.3);
+    expect(Math.min(...heights)).toBeLessThan(1.3);
+  });
+
+  it("leave an awning out where a parasol, a shelter or a tree stands by the wall", () => {
+    const f = facadeFrame(shop(), none);
+    const free = extras(f.b).filter((s) => s.kind === "awning");
+    expect(free.length).toBeGreaterThan(0);
+    // A café garden's parasol (radius 2 m) 1.5 m out from the first awning's middle.
+    const a = free[0]!;
+    const parasol: Obstacle = { x: a.at.x + a.out.x * 1.5, z: a.at.z + a.out.z * 1.5, r: 2 };
+    const query: ObstacleQuery = (x, z, r) => (Math.hypot(parasol.x - x, parasol.z - z) < r + parasol.r ? [parasol] : []);
+    const crowded = extras(f.b, query).filter((s) => s.kind === "awning");
+    expect(crowded.length).toBeLessThan(free.length);
+    for (const s of crowded) {
+      const w = wallOf(f, s);
+      const u = (s.at.x - w.a.x) * ((w.b.x - w.a.x) / w.length) + (s.at.z - w.a.z) * ((w.b.z - w.a.z) / w.length);
+      expect(wallRectHits(w, u - s.width! / 2, u + s.width! / 2, 1, [parasol])).toBe(false);
+    }
+    // Far furniture changes nothing.
+    expect(extras(f.b, () => [{ x: 500, z: 500, r: 2 }]).filter((s) => s.kind === "awning")).toEqual(free);
+  });
+
+  it("hang one dish per pier and storey", () => {
+    for (const look of [0x2077, 0x1234, 0xbeef, 0x51, 0x777]) {
+      const dishes = extras(shop({ look, ring: rect(0, 0, 40, 14) })).filter((s) => s.kind === "dish");
+      const keys = dishes.map((s) => `${s.at.x.toFixed(3)}:${s.at.y.toFixed(3)}:${s.at.z.toFixed(3)}`);
+      expect(new Set(keys).size).toBe(keys.length);
     }
   });
 

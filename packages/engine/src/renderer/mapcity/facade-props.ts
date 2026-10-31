@@ -2,6 +2,7 @@ import { prng } from "../city-kit-data";
 import { type CityProps, type PropXform, addPropToSink, facing, onWall, pickProp, pickUnit, pointSeed, propHash } from "../city-props";
 import type { MeshSink, Vec } from "../mesh-sink";
 import { type FacadeFrame, type Wall, hiddenWall } from "./facade-frame";
+import { shopBoardOn } from "./sign-plan";
 
 /**
  * Facade props of the map city (ADR-0058): the near facade plans (wall clutter, rooftop gear of
@@ -39,8 +40,38 @@ const WALL_DETAILED = 0.25;
 /** Roof gear without a procedural stand-in goes on every other roof spot. */
 const onRoof = (seed: number): boolean => propHash(seed, 4) % 2 === 0;
 
-/** Heights of the awnings: a sloping cloth, a flat canopy. */
-const AWNING_HEIGHT = { awning: 0.5, "awning-flat": 0.28 } as const;
+/** Heights and depths (out of the wall) of the awnings: a sloping cloth, a flat canopy. */
+const AWNING_HEIGHT = { awning: 0.4, "awning-flat": 0.28 } as const;
+const AWNING_DEPTH = { awning: 1.0, "awning-flat": 1.3 } as const;
+
+/** Gap between a shop board's bottom and an awning's top, and the least headroom under an awning. */
+export const AWNING_GAP = 0.08;
+/** An awning's top under the ground floor's top on a wall without a shop board. */
+export const AWNING_UNDER_TOP = 0.3;
+export const AWNING_HEADROOM = 2.0;
+
+/** Street furniture standing up by a wall (a parasol's canopy, a shelter, a tree's crown): a circle on the ground. */
+export interface Obstacle {
+  readonly x: number;
+  readonly z: number;
+  readonly r: number;
+}
+
+/** The street furniture within `r` of (x, z). */
+export type ObstacleQuery = (x: number, z: number, r: number) => readonly Obstacle[];
+
+/** Does a rectangle on the wall's ground (u0..u1 along it, 0..out from it) touch an obstacle? */
+export const wallRectHits = (w: Wall, u0: number, u1: number, out: number, obstacles: readonly Obstacle[]): boolean => {
+  const dx = (w.b.x - w.a.x) / w.length;
+  const dz = (w.b.z - w.a.z) / w.length;
+  return obstacles.some((o) => {
+    const u = (o.x - w.a.x) * dx + (o.z - w.a.z) * dz;
+    const t = (o.x - w.a.x) * w.nx + (o.z - w.a.z) * w.nz;
+    const du = Math.max(u0 - u, 0, u - u1);
+    const dt = Math.max(-t, 0, t - out);
+    return Math.hypot(du, dt) < o.r;
+  });
+};
 
 const clamp = (v: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, v));
 const uniform = (s: number) => ({ x: s, y: s, z: s });
@@ -73,7 +104,7 @@ export const placeSlot = (props: CityProps, slot: PropSlot, lite: boolean): { mo
     case "awning":
     case "awning-flat": {
       const w = slot.width ?? 2.5;
-      const depth = slot.kind === "awning" ? 1.0 : 1.3;
+      const depth = AWNING_DEPTH[slot.kind];
       const h = AWNING_HEIGHT[slot.kind];
       return one(slot.kind, (m) => onWall(m, slot.at, slot.out, { x: w / m.size.x, y: h / m.size.y, z: depth / m.size.z }));
     }
@@ -105,11 +136,13 @@ export const bakeSlots = (sink: MeshSink, props: CityProps, slots: readonly Prop
 };
 
 /**
- * Dishes on the piers between the windows of the upper floors and awnings over shop windows, by
- * the building's `clutter`: the Old Town (little clutter) and buildings with doorways or
- * passages of the game get none.
+ * Dishes on the piers between the windows of the upper floors (one per pier and storey) and
+ * awnings over shop windows, by the building's `clutter`: the Old Town (little clutter) and
+ * buildings with doorways or passages of the game get none. An awning hangs under the bottom of
+ * the wall's shop board with 2 m of headroom, and not where street furniture stands up by the
+ * wall (`obstacles`: parasols, shelters, kiosks, trees).
  */
-export const planFacadeExtras = (f: FacadeFrame, place: PropPlacer): void => {
+export const planFacadeExtras = (f: FacadeFrame, place: PropPlacer, obstacles: ObstacleQuery = () => []): void => {
   const c = f.b.clutter ?? 0;
   if (c < 0.3 || (f.b.doorways?.length ?? 0) > 0 || (f.b.passages?.length ?? 0) > 0 || f.b.lifted) return;
   const rand = prng((f.b.look ^ 0x58d) >>> 0);
@@ -118,21 +151,31 @@ export const planFacadeExtras = (f: FacadeFrame, place: PropPlacer): void => {
     if (w.blind || hiddenWall(f, w) || w.bay <= 0 || w.length < 3) continue;
     const bays = Math.max(1, Math.round(w.length / w.bay));
     const dishes = rows > 0 && bays > 1 ? Math.floor(c * (w.length / 14) * (0.5 + rand())) : 0;
+    const taken = new Set<string>();
     for (let k = 0; k < dishes; k++) {
-      const u = (1 + Math.floor(rand() * (bays - 1))) * w.bay;
+      const pier = 1 + Math.floor(rand() * (bays - 1));
       const row = Math.floor(rand() * rows);
-      place({ kind: "dish", at: wallPoint(w, u, f.b.base + f.ground + row * f.storey + 0.6), out: wallOut(w) });
+      // One dish per pier and storey: a second draw of the same spot is left out.
+      if (taken.has(`${pier}:${row}`)) continue;
+      taken.add(`${pier}:${row}`);
+      place({ kind: "dish", at: wallPoint(w, pier * w.bay, f.b.base + f.ground + row * f.storey + 0.6), out: wallOut(w) });
     }
-    if (!f.style.shopfront || f.ground < 3.3) continue;
+    if (!f.style.shopfront) continue;
+    const kind = f.style.tower ? "awning-flat" : "awning";
+    // The top under the bottom of the wall's shop board (ADR-0044), or just under the ground floor's
+    // top on a wall without one; the cloth slopes out over the shop window.
+    const board = shopBoardOn(f, w);
+    const top = f.b.base + f.ground - (board === null ? AWNING_UNDER_TOP : 0.45 + board / 2 + AWNING_GAP);
+    const y = top - AWNING_HEIGHT[kind];
+    if (y < f.b.base + AWNING_HEADROOM) continue;
+    const mid = wallPoint(w, w.length / 2, 0);
+    const near = obstacles(mid.x, mid.z, w.length / 2 + 6);
     for (let i = 0; i < bays; i++) {
       if (rand() > 0.5 * c) continue;
       const width = Math.min(w.bay * 0.85, 3.6);
-      if (width < 1.2) continue;
-      // The top under the middle of the shop boards (ADR-0044: 0.45 m under the ground floor's top), the
-      // cloth sloping out over the shop window, its edge 2 m or more over the pavement.
-      const flat = f.style.tower;
-      const y = f.b.base + f.ground - 0.8 - AWNING_HEIGHT[flat ? "awning-flat" : "awning"];
-      place({ kind: flat ? "awning-flat" : "awning", at: wallPoint(w, (i + 0.5) * w.bay, y), out: wallOut(w), width });
+      const u = (i + 0.5) * w.bay;
+      if (width < 1.2 || wallRectHits(w, u - width / 2, u + width / 2, AWNING_DEPTH[kind] + 0.15, near)) continue;
+      place({ kind, at: wallPoint(w, u, y), out: wallOut(w), width });
     }
   }
 };
