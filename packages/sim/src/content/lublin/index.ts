@@ -50,6 +50,8 @@ export const buildingView = (b: LublinBuildingData, district?: LublinChunkData["
     levels: b.levels,
     use: b.use,
     ...(b.roof === undefined ? {} : { roof: b.roof }),
+    ...(b.roofShape === undefined ? {} : { roofShape: b.roofShape }),
+    ...(b.roofAcross ? { roofAcross: true as const } : {}),
     ...(b.name === undefined ? {} : { name: b.name }),
     look: b.look,
     ...(b.plinth > 0 ? { plinth: b.plinth } : {}),

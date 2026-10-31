@@ -100,6 +100,27 @@ describe("the extract keeps building parts", () => {
   });
 });
 
+describe("roof shapes of the landmarks' parts (ADR-0064, G-056)", () => {
+  const inputs = loadInputs();
+  const at = (p: Pt) => ALL_CHUNKS.filter((c) => inRect(p, c.rect));
+  const specs = [...new Set([...at({ x: 472.6, z: -91.2 }), ...at({ x: 634.2, z: -183.8 }), ...at({ x: 731.1, z: -55.5 })])];
+  const all = generate(inputs.osm, inputs.src, specs).chunks.flatMap((c) => c.buildings);
+  const byId = (id: string) => all.find((b) => b.id === id);
+
+  it("gives the octagon of Brama Krakowska its onion, the turrets and chapels their domes, the naves their gables", () => {
+    expect(byId("w617878341")?.roofShape).toBe("onion");
+    for (const id of ["w617763434", "w617763435", "w617763428", "w617763429"]) expect(byId(id)?.roofShape, id).toBe("dome");
+    expect(byId("w617763433")?.roofShape).toBe("gabled");
+    expect(byId("w618270604")).toMatchObject({ roofShape: "gabled", roofAcross: true });
+  });
+
+  it("keeps the shape off buildings without the tag", () => {
+    const untagged = all.filter((b) => b.id.startsWith("w") && !inputs.osm.ways.get(Number(b.id.slice(1)))?.tags?.["roof:shape"]);
+    expect(untagged.length).toBeGreaterThan(20);
+    for (const b of untagged) expect(b.roofShape, b.id).toBeUndefined();
+  });
+});
+
 describe("a part on no outline (G-061)", () => {
   it("builds the Bona pavilion, mapped only as building:part, as a building of its own", () => {
     const inputs = loadInputs();

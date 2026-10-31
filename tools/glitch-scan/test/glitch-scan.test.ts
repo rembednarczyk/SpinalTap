@@ -637,7 +637,22 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       return top > 0.5 ? [{ at: near(s.at.x, s.at.z), what: `${s.view.name ?? "church"}: ${top.toFixed(1)} m over its roof` }] : [];
     });
   },
+  /**
+   * A building whose map data gives its roof a shape (`roof:shape`: a gable, a mansard, a dome, an
+   * onion helmet, ADR-0064) that the renderer draws as another, a hipped roof most of all (G-056).
+   */
+  "roof-shape-ignored": () =>
+    MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b) && b.roofShape !== undefined)).flatMap((b, i) => {
+      const view = buildingView(b) as BuildingSource["view"];
+      const source: BuildingSource = { ring: cleanRing(view.outline.map((p) => ({ x: p.x + b.x, z: p.z + b.z }))), view, at: { x: b.x, y: b.y, z: b.z } };
+      const drawn = facadeFrame(mapBuilding(i + 1, source, () => null), () => null).style.roof;
+      const want = (b.roof ?? 0) <= 0.3 ? "flat" : ROOF_KIND[b.roofShape!];
+      return drawn === want ? [] : [{ at: near(b.x, b.z), what: `${b.id} ${b.name ?? ""} roof:shape=${b.roofShape} drawn as ${drawn}` }];
+    }),
 };
+
+/** The renderer's roof for each `roof:shape` (ADR-0064). */
+const ROOF_KIND: Readonly<Record<string, string>> = { gabled: "gable", "half-hipped": "half-hip", mansard: "mansard", hipped: "hip", pyramidal: "pyramid", skillion: "skillion", dome: "dome", onion: "onion", flat: "flat" };
 
 describe("the glitch scan (ADR-0054)", () => {
   it("stacks Grodzka 36a 5 m back from the Grodzka Gate instead of over it (G-050)", () => {
