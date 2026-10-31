@@ -301,7 +301,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: w66335239 i w66293168 w `MAP_CHUNKS`, bez uskoku gruntu na x = 460; propozycja: `stare-miasto` minZ −270 z `zEdges` [−270, −40, 160] (rząd 230 m, identyfikatory chunków bez zmian); kontrola `historic-cut-by-edge` (budynek zabytkowy z obrysem w prostokącie dzielnicy i środkiem poza wszystkimi) 4 → 1 (Pałac Tarłów zostaje, T-057)
 
 ### G-097 Teatr Osterwy jako kamienica mieszkalna
-- Status: zgłoszone (z przeglądu kuratora G-052) · Ważność: S4 · Zasięg: 1 · Koszt: mały
+- Status: w weryfikacji (gałąź `fix/g120-g097-g116-gmachy`: d75f335 G-120, 6083980 G-097, 9c45df3 G-116)
 - Gdzie: w67508958 (118.0, −205.7); T-059
 - Przyczyna: `buildingUse` czyta tylko tagi obrysu (`building=yes`); punkt `amenity=theatre` w obrysie daje nazwę, nie przeznaczenie
 - Pakiet właściciela: tools/osm-import
@@ -360,7 +360,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: podstawa wieży poniżej linii terenu panoramy z każdego punktu Nabrzeża
 
 ### G-116 Ułamkowe `building:levels` zaokrąglane w górę (Ratusz o 1,6 m za wysoki)
-- Status: zgłoszone (audyt gmachów publicznych, kurator 31.10)
+- Status: w weryfikacji (gałąź `fix/g120-g097-g116-gmachy`: d75f335 G-120, 6083980 G-097, 9c45df3 G-116)
 - Ważność: S4 (proponowana) · Zasięg: 6 obrysów i części (Ratusz w66264120 z wieżą w619138854, kościół Dominikanów w66286338 z w618270604 i w618270605, w55897040) · Koszt: mały
 - Gdzie: Ratusz (416.1, −69.6); T-064
 - Dowód: `heights` w `tools/osm-import/src/building-tags.ts`: `levels = Math.round(4.5) = 5` i `walls = floors(levels)`, czyli 16 m zamiast 14,4 m. Wieża Ratusza 7,5 → 8 kondygnacji
@@ -395,7 +395,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: przepis Ratusza: ryzalit w osi fasady południowej z wejściem głównym, wieża z OSM z tarczą zegara (do potwierdzenia zdjęciem), kondygnacje w rytmie fasady klasycystycznej, kolory z T-066, warstwa 2077 bez nadbudowy (podpis, światło na gzymsach). Przepis Trybunału: wieżyczka zegarowa na kalenicy, jeśli potwierdzi ją zdjęcie. Przegląd kuratora ze zdjęciem; migawka NPR obejrzana
 
 ### G-120 Urzędy z `office=government` w tagach obrysu jako kamienice z nadbudową
-- Status: zgłoszone (audyt gmachów publicznych, kurator 31.10)
+- Status: w weryfikacji (gałąź `fix/g120-g097-g116-gmachy`: d75f335 G-120, 6083980 G-097, 9c45df3 G-116)
 - Ważność: S3 (proponowana; nadbudowa 2,4–3,4 raza wyższa od gmachu) · Zasięg: 2 (Kuratorium Oświaty w55897069, Urząd Miasta przy Placu Litewskim 1 w67498728) · Koszt: mały
 - Gdzie: (−132.0, 74.5) i (118.7, 35.9); T-068
 - Dowód: `buildingUse` nie czyta `office` ani `government`, więc z `building=yes` wychodzi `residential`. `landmarkName` gubi wtedy nazwę, a `verticalOf` daje +24 m i +21 m
@@ -428,7 +428,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: wysokość Pedetu z LOD2/NMPT albo potwierdzona zdjęciem (rozbieżność > 20% z wpisem do przeglądu kuratora); `shop=mall` dostaje fasadę handlową (test planu fasady w engine); baza `landmark-overbuilt` bez wzrostu
 
 ### G-127 Parterowy pawilon na skwerze jako czterokondygnacyjna wieża (Bar Centralny przed Pedetem)
-- Status: zgłoszone (audyt Placu Litewskiego i Pedetu, kurator 31.10)
+- Status: w weryfikacji (gałąź `ccr-ec2c4269-ilh8k8-g127`, cfd0e55: `smallAlone`, `small-freestanding-tall` 16 → 2; Bar Centralny 1 kondygnacja)
 - Ważność: S3 (proponowana; stoi na osi widoku z deptaku na Pedet i zasłania go) · Zasięg: 24 wolnostojące obrysy < 60 m² w mieście · Koszt: mały
 - Gdzie: w665959137 (112.5, −84.6), skwer Witkowskiego; T-074. Inne: w631242940 (−86, 19.8) na Placu Litewskim, w67499328 (130.8, 17.5), w458298770 „VapeTube” (851.5, 369.7), w458298766 „Hunek” (817.1, 373.5) i 19 dalszych (lista w `topo-pedet-raport.md`)
 - Dowód: okrągły obrys o średnicy 6,7 m (pole 33 m²), `building=yes` bez kondygnacji; w grze `levels: 4`, 13,7 m, `residential` z witryną; zrzut `pedet-north.png`: czerwona kamienica z roletami po prawej, przed Pedetem
@@ -463,7 +463,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `vehicle-below-surface` 38 → 0; dla wraku najwyższy narożnik nawierzchni ≤ spód + 0,05 m; złoty hash symulacji zmieniony świadomie, jeśli zmieni się y aut
 
 ### G-131 Etap 1 obezwładnienia: trzy błędy z weryfikacji (w naprawie przed PR)
-- Status: w naprawie (gałąź `feat/adr-0065-takedown`); nie w main
+- Status: przyjęte po poprawkach; w PR #100 (ADR-0065 etap 1)
 - Błędy: klawisz interakcji obezwładnia mimo podpowiedzi bliższego celu (rozmowa, łup, drzwi); ogłuszony po parowaniu zostaje „w walce” (`ai.alerted`, RAM i aktywności); przytrzymany atak jako „zabij” strzela po obezwładnieniu
 - Pakiet właściciela: packages/sim, packages/app
 - Test przyjęcia: sondy weryfikatora (`scratchpad/v-a-probes/`) jako testy, padające przed poprawką
