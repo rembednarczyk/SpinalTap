@@ -127,7 +127,7 @@
       "files": [
         { "path": "sci-fi_megacity_cluster.glb", "url": "https://drive.usercontent.google.com/download?id=1r1ZoCodVTDDmQre5_j7yhH28bY7T3-ol&export=download&confirm=t", "sha256": "2f554a39458b7b52d5b8cab740204fc976dbab32b815a6ea7cf014e3b01d5e5e" }
       ],
-      "used": []
+      "used": ["mc-tower-a", "mc-tower-b", "mc-tower-c", "mc-tower-d"]
     }
   ]
 }
