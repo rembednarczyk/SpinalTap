@@ -307,9 +307,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `car-road-hole` (albo nowa) wykrywa i spada do 0
 
 ### G-094 Przedsionek Trasy Podziemnej: pierwsze 4,5 m poza obszarem wnętrza
-- Status: zgłoszone (glitch hunt wnętrz, 31.10)
+- Status: w weryfikacji (commit 967f13c, gałąź `worktree-agent-acd7c723ef1ea6a32`: początek z obrysu OSM `facadeAt`, pokój drzwi 1 m + pełna szerokość; kontrola `interior-entrance-gap` 1 → 0)
 - Ważność: S4 (proponowana) · Zasięg: 1 wejście · Koszt: mały
-- Gdzie: wejście do Trybunału w66264159, przedsionek z = −57, x 565,5…570
+- Gdzie: wejście do Trybunału w66264159, przedsionek z = −57; fasada przecina go skośnie (x 567,5…568,2), luka w obszarze wnętrza x 567,6…570 (2,4 m; poprawka naprawiacza)
 - Dowód: `interiorAt` na stopie (y = podłoga przedsionka + 0,1, z = −57): x 565,6/567/569/569,9 → null, x 570,1 → `trasa-podziemna`; `TRASA_PODZIEMNA.vestibule.from.x` = 565,5, pierwszy pokój `minX: 570`; zrzut `scratchpad/shots1/p1-trasa-vest.png`; test w `interior-areas.test.ts` zaczyna chód od x = 563, a wyjście liczy od 571, więc tego nie łapie
 - Skutek: `InteriorEntered` (autozapis, ambient ADR-0060) 4,5 m za drzwiami, już w ciemnym korytarzu; wyjście symetrycznie
 - Przyczyna (przypuszczalna): pierwszy pokój zaczyna się od zgadniętego `minX: 570` w `content/kanal-underground.ts` zamiast od `T.vestibule.from.x`
