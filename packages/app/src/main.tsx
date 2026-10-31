@@ -97,6 +97,12 @@ const session = new GameSession({
   render: renderer,
   audio,
   persistence: new SavePersistence(new IndexedDbSaveStore()),
+  download: (fileName, text) => {
+    const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+    const a = Object.assign(document.createElement("a"), { href: url, download: fileName });
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  },
   ui,
   preview,
   story: STORY_SOURCES,

@@ -16,6 +16,8 @@ export interface SessionIntents {
   pause(): void;
   save(slot: string): void;
   load(slot: string): void;
+  /** Writes a saved slot to a file for the player to keep. */
+  exportSave(slot: string): void;
   quitToTitle(): void;
 }
 
