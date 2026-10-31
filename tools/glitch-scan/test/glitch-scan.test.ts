@@ -2,6 +2,8 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { type StreetPropItem, VEHICLE_SIZE } from "../../../packages/core/src";
+import { planSteps } from "../../../packages/engine/src/renderer/mapcity/steps-plan";
+import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 import { CROWD_LANES } from "../../../packages/sim/src/content/crowd";
 import { furnitureClearance } from "../../../packages/sim/src/content/furniture-index";
 import { BOLLARD, alongSegment, anchors, chainSegments, chainThrough, distanceToPiece, furniturePrisms, furnitureRadius } from "../../../packages/sim/src/content/lublin/furniture";
@@ -138,6 +140,21 @@ const setPieceBlocks: readonly Rect[] = GAME_PROPS.flatMap((p) => {
 /** The road chains (by index) with a car lane: a lane's id names its chain, two when it turns round onto another. */
 /** The mouths of the zebra crossings (G-032). */
 const BANDS = crossingBands(MAP_CHUNKS);
+
+/** The risers of a map steps surface as the renderer draws it on the game's terrain: each one's height, metres. */
+const riserHeights = (outline: readonly number[]) => {
+  const ring: Pt[] = [];
+  for (let i = 0; i + 1 < outline.length; i += 2) ring.push({ x: outline[i]!, z: outline[i + 1]! });
+  const sink = new MeshSink();
+  planSteps(sink, ring, groundY);
+  const out: number[] = [];
+  for (let v = 0; v < sink.vertexCount; v += 4) {
+    if (Math.abs(sink.normals[v * 3 + 1]!) > 0.5) continue;
+    const ys = [0, 1, 2, 3].map((k) => sink.positions[(v + k) * 3 + 1]!);
+    out.push(Math.max(...ys) - Math.min(...ys));
+  }
+  return out;
+};
 
 const laneChains = new Set(TRAFFIC_ROUTES.filter((r) => r.use === "cars").flatMap((r) => [...r.id.matchAll(/#(\d+):/g)].map((m) => Number(m[1]))));
 
@@ -382,6 +399,21 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
           const share = CLEARED_BUILDINGS.reduce((s, r) => s + coveredArea(r, b.outline, b.x, b.z), 0) / outlineArea(b.outline, b.x, b.z);
           if (!wall && share <= 0.25) return [];
           return [{ at: near(b.x, b.z), what: wall ? `${b.id} through a block at ${near((wall.minX + wall.maxX) / 2, (wall.minZ + wall.maxZ) / 2)}` : `${b.id} ${(share * 100).toFixed(0)}% over a set piece` }];
+        }),
+    ),
+  /**
+   * A flight of map steps drawn with most of its risers under 4.5 cm (G-018): too low to read as
+   * steps, each is only a dark line on the paving, and a gentle slope gets a row of them. A real
+   * flight on uneven ground may have a few.
+   */
+  "steps-micro-riser": () =>
+    MAP_CHUNKS.flatMap((c) =>
+      c.ground
+        .filter((g) => g.surface === "steps")
+        .flatMap((g) => {
+          const risers = riserHeights(g.outline);
+          const low = risers.filter((h) => h < 0.045).length;
+          return low * 2 > risers.length ? [{ at: near(g.outline[0]!, g.outline[1]!), what: `${c.id} ${low} of ${risers.length} risers under 4.5 cm` }] : [];
         }),
     ),
   /** A piece of road or path on a bridge laid on the valley instead of a deck. */
