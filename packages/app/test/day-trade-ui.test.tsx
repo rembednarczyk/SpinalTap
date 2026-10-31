@@ -41,7 +41,7 @@ describe("day clock in the game", () => {
     expect(g.seki.state().clock).toMatch(/^22:3\d$/);
     toMarket(g, 74.5, 65.4);
     g.step(1);
-    expect(screen.getByTestId("prompt").textContent).toContain("zamknięte");
+    expect(screen.getByTestId("prompt").textContent).toContain("closed");
 
     // A morning later the closed sign is gone and the clock reads day.
     wait(g, 10 * 60);
@@ -63,7 +63,7 @@ describe("Oyaji's stall in the game", () => {
     const oyaji = [...g.session.sim.world].find((x) => x.key === "oyaji")!;
     run(() => g.seki.teleport(oyaji.position.x, oyaji.position.z - 1.4));
     g.step(1);
-    expect(screen.getByTestId("prompt").textContent).toContain("Stragan Oyajiego");
+    expect(screen.getByTestId("prompt").textContent).toContain("Oyaji's stall");
     g.step(1, { interact: true });
 
     const shop = screen.getByTestId("shop");

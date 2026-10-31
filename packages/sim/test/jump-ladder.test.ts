@@ -184,7 +184,7 @@ describe("fire escape ladders (ADR-0021)", () => {
   it("the interact key climbs down from the top; back steps down, and jump lets go", () => {
     const sim = at(69.2, ROOF_WEST_TOP, 63.3, 0);
     run(sim, 2);
-    expect(sim.session.focusPrompt).toBe("Zejdź po drabinie");
+    expect(sim.session.focusPrompt).toBe("prompt.ladder.down");
     sim.step(input({ interact: true }));
     expect(player(sim).climb?.ladder).toBe("targ-escape-2");
     run(sim, 1);

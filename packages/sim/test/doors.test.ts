@@ -174,7 +174,7 @@ describe("the coded door of Tessen's office (ADR-0038, the hook of ADR-0034)", (
     const sim = withJob(INFILTRATION, docks(-17.4, 0, 133.6), []);
     const alarms = collect(sim, "ContractAlarm");
     run(sim, 1);
-    expect(sim.session.focusPrompt).toBe("Wyłam zamek (podniesie alarm)");
+    expect(sim.session.focusPrompt).toBe("prompt.door.force");
     sim.step(input({ interact: true }));
     expect(sim.domain.flags).toContain(doorForcedFlag(TESSEN_OFFICE_DOOR.key, INFILTRATION));
     expect(sim.domain.flags).toContain(contractAlarmFlag(INFILTRATION.id));
@@ -211,7 +211,7 @@ describe("the opening in the clinic (ADR-0038)", () => {
     expect(byKey(sim, "fixer")!.position).toEqual(FIXER_SPAWN.position);
     expect(byKey(sim, "mori")!.position).toEqual(MORI_SPAWN.position);
     // Kaito is across the deptak, out of reach of the chair.
-    expect(focus.at(-1)?.prompt ?? null).not.toBe("Rozmawiaj z Kaito");
+    expect(focus.at(-1)?.prompt ?? null).not.toBe("prompt.talk.kaito");
     for (const key of ["koi-barman", "koi-regular-1", "koi-regular-2"]) expect(byKey(sim, key), key).toBeDefined();
   });
 

@@ -74,7 +74,7 @@ describe("Lublin in the session (ADR-0045)", () => {
     teleport(session, from.kiosk.x + Math.sin(from.yaw), from.kiosk.z + Math.cos(from.yaw), from.yaw + Math.PI);
     steps(session, 1);
     expect(session.sim.district).toBe("targ");
-    expect(ui.getState().prompt).toContain("Bilet");
+    expect(ui.getState().prompt).toContain("Ticket");
     steps(session, 1, frame({ interact: true }));
     expect(ui.getState().metroMap?.from).toBe("targ");
     const eddies = session.sim.domain.wallet.eddies;
@@ -116,7 +116,7 @@ describe("Lublin in the session (ADR-0045)", () => {
     teleport(session, cart.x, cart.z, Math.PI / 2);
     steps(session, 1);
     expect(session.sim.district).toBe("targ");
-    expect(ui.getState().prompt).toContain("Haną");
+    expect(ui.getState().prompt).toContain("Talk to Hana");
     steps(session, 1, frame({ interact: true }));
     const text = () => (ui.getState().dialogue?.lines ?? []).map((l) => l.text).join("\n");
     expect(text()).toContain("Jestem Hana");

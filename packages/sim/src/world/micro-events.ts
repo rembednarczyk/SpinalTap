@@ -55,7 +55,7 @@ const spawn = (ctx: SimContext, kind: MicroEventKind, at: Vec3): MicroEventRun =
       attackers.push(g.id);
     }
   } else {
-    ctx.world.addComponent(victim, "interactable", { kind: "help", dialogueId: id, prompt: "Pomóż", radius: 1.8 });
+    ctx.world.addComponent(victim, "interactable", { kind: "help", dialogueId: id, prompt: "prompt.help", radius: 1.8 });
   }
   ctx.bus.emit("EncounterStarted", { encounterId: id, knot: "", npcId: victim.id });
   return { id, kind, at, victim: victim.id, attackers };

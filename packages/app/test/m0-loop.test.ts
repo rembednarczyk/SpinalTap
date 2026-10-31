@@ -94,7 +94,7 @@ describe("M0 vertical slice: input → sim → narrative → domain → save →
     // 1. Talk to Kaito.
     teleport(session, ...nearKaito(session));
     steps(session, 1);
-    expect(ui.getState().prompt).toBe("Rozmawiaj z Kaito");
+    expect(ui.getState().prompt).toBe("Talk to Kaito");
     steps(session, 1, frame({ interact: true }));
     expect(ui.getState().dialogue?.lines[0]?.speaker).toBe("Kaito");
     talkThrough(session, ui);
