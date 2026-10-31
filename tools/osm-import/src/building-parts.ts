@@ -27,6 +27,15 @@ export const partsByBuilding = (buildings: readonly Area[], parts: readonly Area
   return out;
 };
 
+/**
+ * Parts standing on no building outline (G-061): a pavilion mapped only as `building:part`. They
+ * become buildings of their own, with the part's value as the building's kind.
+ */
+export const orphanParts = (buildings: readonly Area[], parts: readonly Area[]): Area[] => parts.filter((p) => !buildings.some((b) => pointInRing(centroid(p.ring), b.ring)));
+
+/** An orphan part as a building: `building:part=yes` becomes `building=yes`, a kind stays the kind. */
+export const asBuilding = (p: Area): Area => ({ ...p, tags: { ...p.tags, building: p.tags["building:part"] ?? "yes" } });
+
 /** A part's walls over the outline's base (the top of its plinth), metres. */
 export interface Tier {
   readonly area: Area;
