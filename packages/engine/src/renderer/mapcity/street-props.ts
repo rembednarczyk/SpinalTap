@@ -5,7 +5,8 @@ import type { ToonMaterials } from "../../npr/toon-material";
 import { sinkToMesh } from "../dressing";
 import { MeshSink } from "../mesh-sink";
 import { cellBounds, cellKey } from "./map-index";
-import { type WorldProp, bake, planHalos, toWorld } from "./prop-batch";
+import { type WorldProp, bake, placePoint, planHalos, toWorld } from "./prop-batch";
+import type { Obstacle } from "./facade-props";
 import { PropHaloMaterial } from "./prop-halo";
 import { chainModel, farModel, propModel } from "./prop-models";
 import { type BlockBand, PROP_BLOCK, PROP_LOD, type PropLod, blockBand } from "./prop-shapes";
@@ -45,6 +46,31 @@ export interface StreetPropsStats {
   /** Blocks drawing their far mesh. */
   readonly far: number;
 }
+
+/**
+ * Furniture that stands up into the height of an awning (ADR-0058), as a circle round a point of
+ * its model: a café garden's parasol (canopy radius 1.9 m at 2.25 m), shelters, kiosks, stalls,
+ * tree crowns, columns and poles. Low pieces (benches, bins, bollards) pass under an awning.
+ */
+const STANDING: Partial<Record<StreetPropKind, { readonly r: number; readonly z?: number }>> = {
+  "cafe-garden": { r: 2.0, z: -0.2 },
+  "bus-shelter": { r: 2.3 },
+  kiosk: { r: 1.8 },
+  "market-stall": { r: 1.7 },
+  tree: { r: 2.6 },
+  "advertising-column": { r: 0.8 },
+  monument: { r: 1.5 },
+  "lamp-wall-lantern": { r: 0.6 },
+  "lamp-pastoral": { r: 0.6 },
+  "lamp-candelabra": { r: 0.8 },
+  "lamp-modern-pole": { r: 0.5 },
+  "lamp-road": { r: 0.5 },
+  "lamp-park": { r: 0.5 },
+  floodlight: { r: 0.5 },
+  flagpole: { r: 0.3 },
+  "traffic-signal": { r: 0.4 },
+  "trolley-pole": { r: 0.3 },
+};
 
 /** The kinds that light the street at night and get halos. */
 const LIT = (kind: StreetPropKind): boolean => kind.startsWith("lamp-") || kind === "floodlight";
@@ -108,6 +134,25 @@ export class StreetProps {
       keys.add(k);
     }
     this.entities.set(id, keys);
+  }
+
+  /** Furniture standing up within `r` of (x, z), for the awnings of the facades (ADR-0058). */
+  obstacles(x: number, z: number, r: number): Obstacle[] {
+    const out: Obstacle[] = [];
+    for (let i = Math.floor((x - r) / PROP_BLOCK); i <= Math.floor((x + r) / PROP_BLOCK); i++) {
+      for (let j = Math.floor((z - r) / PROP_BLOCK); j <= Math.floor((z + r) / PROP_BLOCK); j++) {
+        for (const list of this.blocks.get(`${i}:${j}`)?.pieces.values() ?? []) {
+          for (const p of list) {
+            const s = STANDING[p.prop];
+            if (!s) continue;
+            const c = placePoint(p, { x: 0, y: 0, z: s.z ?? 0 });
+            const reach = s.r * p.scale;
+            if (Math.hypot(c.x - x, c.z - z) < r + reach) out.push({ x: c.x, z: c.z, r: reach });
+          }
+        }
+      }
+    }
+    return out;
   }
 
   despawn(id: EntityId): void {

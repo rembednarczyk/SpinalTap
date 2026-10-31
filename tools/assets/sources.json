@@ -1,0 +1,49 @@
+{
+  "about": "CC0 packs baked into packages/app/public/city/city-props.glb (ADR-0058). tools/assets/fetch.mjs downloads them and checks sha256; the zips and unpacked packs are not committed.",
+  "sources": [
+    {
+      "id": "kenney-modular-buildings",
+      "title": "Modular Buildings 2.1",
+      "author": "Kenney (www.kenney.nl)",
+      "page": "https://opengameart.org/content/modular-buildings",
+      "license": "CC0",
+      "licenseQuote": "License: (Creative Commons Zero, CC0) http://creativecommons.org/publicdomain/zero/1.0/ You can use this content for personal, educational, and commercial purposes.",
+      "url": "https://opengameart.org/sites/default/files/kenney_modular-buildings.zip",
+      "file": "modular-buildings.zip",
+      "sha256": "47e1614686b4c0fe55190e88b22ff2b8b10935edf61f37f478a9b6a99477edc6",
+      "unzip": "x",
+      "used": ["detail-ac-a", "detail-ac-b", "roof-flat-awning-a", "roof-flat-awning-c"]
+    },
+    {
+      "id": "kenney-retro-urban-kit",
+      "title": "Retro Urban Kit 2.0",
+      "author": "Kenney (www.kenney.nl)",
+      "page": "https://opengameart.org/content/retro-urban-kit",
+      "license": "CC0",
+      "licenseQuote": "License: (Creative Commons Zero, CC0) http://creativecommons.org/publicdomain/zero/1.0/",
+      "url": "https://opengameart.org/sites/default/files/kenney_retro-urban-kit.zip",
+      "file": "retro-urban.zip",
+      "sha256": "19201cbcb0d90080dfc33b54f5b4be2089de927c2a23274180798e7166d6b6ca",
+      "unzip": "x",
+      "used": ["detail-awning-wide", "detail-awning-small"]
+    },
+    {
+      "id": "quaternius-cyberpunk-kit",
+      "title": "Cyberpunk Game Kit",
+      "author": "Quaternius (quaternius.com)",
+      "page": "https://drive.google.com/drive/folders/1GyKLypoBxrpLN6GERF9U610Wiub48v9y",
+      "license": "CC0",
+      "licenseQuote": "License: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication https://creativecommons.org/publicdomain/zero/1.0/",
+      "files": [
+        { "path": "License.txt", "url": "https://drive.usercontent.google.com/download?id=1-hNes9woutDvbaJCpPYOKJlvO_cTMSU8&export=download&confirm=t", "sha256": "1e7741941054577bc37e366eac85893c044db807278607eff88a75e626edde06" },
+        { "path": "Platforms/AC.gltf", "url": "https://drive.usercontent.google.com/download?id=14h_AVm3rBQDIQSb_QGirPiRcFoDTzk_g&export=download&confirm=t", "sha256": "756a3ce9a8d0de03aaf185b156a5adc8c62cb0c6a553ebd82872a1af019516e3" },
+        { "path": "Platforms/AC_Side.gltf", "url": "https://drive.usercontent.google.com/download?id=1y9XdBi2Es3blllLD6kEpeyGrCAX-u-dT&export=download&confirm=t", "sha256": "31bb92371c136b69e25b0a98b54addf3d5d3af4e18b1a295d17c9ea82321693a" },
+        { "path": "Platforms/AC_Stacked.gltf", "url": "https://drive.usercontent.google.com/download?id=1Jh-qpuy8umzk-lozgXkuN4KG9c3qqAQO&export=download&confirm=t", "sha256": "cc3f402027b0397759fd0e7b403196f0e9b7bbeb4a852645c2b5e14583d3ef7b" },
+        { "path": "Platforms/Antenna_1.gltf", "url": "https://drive.usercontent.google.com/download?id=1YhIftWvLIeHwCosQCuG7zFbiVXNetERr&export=download&confirm=t", "sha256": "98a364e1aba5a485efd2723dc72075735fba96243e276322b569dbc9b0965fcb" },
+        { "path": "Platforms/Antenna_2.gltf", "url": "https://drive.usercontent.google.com/download?id=1BSBjqi4yRPrPeIG1iJ6gRizillq1BqG8&export=download&confirm=t", "sha256": "6a5716d4e41fa9705e11d7c7ee2288b5c25e2edfac6a9c3a2965524439b6dae1" },
+        { "path": "Platforms/Pipe_1.gltf", "url": "https://drive.usercontent.google.com/download?id=1-hhtKUwroDLlY_17kR2HwR4iczYR42DW&export=download&confirm=t", "sha256": "63ded98e33fc83718f2117eebec79341ba82c89b0da072394829478f52bab45d" },
+        { "path": "Platforms/Pipe_Corner.gltf", "url": "https://drive.usercontent.google.com/download?id=1stVoDPtUdYE3-vvuKZvMwDE9DEAHItPc&export=download&confirm=t", "sha256": "355e192edd933df06dc553255fb3a382387556fc71a0049165dde8bc9f6d947e" }
+      ]
+    }
+  ]
+}

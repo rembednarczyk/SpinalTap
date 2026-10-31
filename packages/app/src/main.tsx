@@ -59,7 +59,13 @@ const stage = new Stage(canvas, { reference, quality: renderQuality });
 // Buildings and vehicles from the CC0 city kit (public/city/README.md, ADR-0022); ?city=off keeps
 // the plain blocks. The reference frame uses it too: the scene is ready only once it is in.
 // Lublin is drawn to the horizon from the map (ADR-0045): no far city of the old streets.
-const renderer = new BabylonRenderer(stage, { cityKit: params.get("city") === "off" ? null : new URL("city/city-kit.glb", document.baseURI).href, farCity: false });
+const cityOn = params.get("city") !== "off";
+const renderer = new BabylonRenderer(stage, {
+  cityKit: cityOn ? new URL("city/city-kit.glb", document.baseURI).href : null,
+  // Facade props (ADR-0058), after the kit; ?city=off leaves them out too.
+  cityProps: cityOn ? new URL("city/city-props.glb", document.baseURI).href : null,
+  farCity: false,
+});
 // The character menu's 3D preview: a second scene on the same engine and canvas (ADR-0015).
 const preview = new PreviewStage(stage.engine, canvas, { quality: renderQuality });
 // Imported character models: models/manifest.json next to the game, ?models=<url> for another
