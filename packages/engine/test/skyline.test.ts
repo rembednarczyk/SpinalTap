@@ -4,8 +4,8 @@ import { LUBLIN_CHUNKS } from "@seki/sim/lublin";
 import { describe, expect, it } from "vitest";
 import { parseCityProps, triangleCount } from "../src/renderer/city-props";
 import { MEGA_SITES, planSkyline } from "../src/renderer/mapcity/skyline";
-import { BODY_GLOW, MEGATOWER, megaBodies } from "../src/renderer/mapcity/skyline-bodies";
-import type { MeshSink } from "../src/renderer/mesh-sink";
+import { BODY_GLOW, MEGATOWER, addBody, bodyScale, megaBodies } from "../src/renderer/mapcity/skyline-bodies";
+import { MeshSink } from "../src/renderer/mesh-sink";
 
 /** The skyline's megatowers from the CC-BY megacity cluster (ADR-0063 stage 2, ADR-0051). */
 
@@ -75,6 +75,18 @@ describe("skyline megatowers (ADR-0063)", () => {
     expect(a.towers.uvs2.filter((u, i) => i % 2 === 0 && u === BODY_GLOW).length).toBeGreaterThan(0);
     // One ad and one beacon per tower: the bodies' own bands stand for the corner neon.
     expect(a.lights.vertexCount).toBe(towerCount * 2 * 4);
+  });
+
+  it("hangs the ad of a body tower in front of it, at its middle (not inside the body)", () => {
+    for (const body of bodies) {
+      for (const front of [{ x: 1, z: 0 }, { x: 0, z: -1 }]) {
+        const at = { x: 3000, z: 2000, h: 700, front };
+        const reach = addBody(new MeshSink(), body, at, 0.3);
+        const { across } = bodyScale(body, at.h);
+        expect(reach, body.model.key).toBeGreaterThan(across * Math.min(body.model.size.x, body.model.size.z) * 0.1);
+        expect(reach, body.model.key).toBeLessThanOrEqual(across * Math.hypot(body.model.size.x, body.model.size.z) * 0.5 + 1e-6);
+      }
+    }
   });
 
   it("stands well outside Lublin's map data, towers and their lights", () => {

@@ -105,7 +105,7 @@ najmniej 20% trójkątów komórki, góra jej ścian dostaje pas światła (`win
 Stoi na y = 0, wyśrodkowana, `extras.size`.
 
 Renderer (`packages/engine/src/renderer/mapcity/skyline-bodies.ts`) daje każdej z dwunastu wież
-panoramy (ADR-0051) po kolei jedną z czterech brył, w skali jej wysokości (w poprzek 0,55 tej skali),
+panoramy (ADR-0051) po kolei jedną z czterech brył, w skali jej wysokości (w poprzek 0,8 tej skali),
 frontem do centrum, w tej samej siatce wież co dotąd: bez nowych wywołań rysowania. Na telefonie
 (`low`) zostają proceduralne wieże.
 
