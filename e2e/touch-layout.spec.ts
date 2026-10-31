@@ -68,7 +68,7 @@ for (const [w, h] of [
       await expect(page.getByTestId("touch-use")).toHaveCount(0);
       await check(page, w, h);
       // The character menu replaces the pad; its box is where the canvas draws the 3D preview.
-      await page.getByRole("button", { name: "Postać" }).tap();
+      await page.getByRole("button", { name: "Character" }).tap();
       await expect(page.getByTestId("character-screen")).toBeVisible();
       await expect(page.getByTestId("touch-controls")).toBeHidden();
       const preview = (await page.getByTestId("character-preview").boundingBox())!;

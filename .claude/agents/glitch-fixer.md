@@ -18,8 +18,9 @@ Naprawiasz dokładnie jeden glitch o ID podanym przez orkiestratora. Działasz j
    - testy pakietów, których dotyczy zmiana;
    - `pnpm depcheck`, gdy zmieniasz importy;
    - `pnpm osm:build` / `pnpm osm:props`, gdy zmieniasz importer (wygenerowane pliki w tym samym commicie);
-   - `pnpm build && pnpm e2e e2e/npr-perf.spec.ts`, gdy zmieniasz renderer albo to, co widać w scenach perf.
-7. **Commit.** Jeden commit w Conventional Commits. Treść mówi:
+   - `pnpm build && pnpm e2e e2e/<spec>.spec.ts` tylko wtedy, gdy zmieniasz renderer, wygląd albo sam spec (wtedy z load average). W innych przypadkach e2e puszcza weryfikator albo CI.
+7. **Samoweryfikacja** według listy `change-verifier` (punkty 1–7), zanim oddasz pracę: dowód przez podmianę pliku, własne sondy brzegowe (inne ziarno, inne miejsce, inny język, brak celu), regresje i bramki. Połowa pierwszych rund wracała, bo weryfikator znajdował przypadek, którego autor nie sprawdził.
+8. **Commit.** Jeden commit w Conventional Commits. Treść mówi:
    - jaki glitch (ID);
    - jaka przyczyna;
    - co zmienione;
@@ -35,5 +36,7 @@ Naprawiasz dokładnie jeden glitch o ID podanym przez orkiestratora. Działasz j
 - Nie pushujesz i nie otwierasz PR. Integruje orkiestrator.
 - Katalog tymczasowy (scratchpad) jest wspólny dla wszystkich agentów sesji. Pliki w nim nazywaj z prefiksem swojego zadania, np. `g018-pomiar.ts`, a nie `probe.ts`, bo inny agent nadpisze Ci plik. Nie usuwaj cudzych plików.
 
-## Raport
-ID, przyczyna w jednym zdaniu, zmienione pliki, test (nazwa, pada przed, przechodzi po), wyniki DoD, hash commita w worktree i ścieżka worktree.
+- Nie obchodzisz zabezpieczeń stron ani usług. Gdy coś jest zablokowane, zgłoś to.
+
+## Raport (najwyżej ok. 30 linii; szczegóły, tabele i logi do pliku `<zadanie>-raport.md` w scratchpadzie)
+ID, przyczyna w jednym zdaniu, zmienione pliki, test (nazwa, pada przed, przechodzi po), wynik samoweryfikacji i DoD, hash commita, gałąź i ścieżka worktree, znaleziska poboczne (jedna linia każde).

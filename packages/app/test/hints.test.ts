@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { EMPTY_INPUT, type InputFrame, type RenderPort } from "@seki/core";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
-import { createUiStore } from "@seki/ui";
+import { createUiStore, isMessageKey, translate } from "@seki/ui";
 import { GameSession } from "../src/game-session";
 import { HINTS, HintTracker } from "../src/hints";
 
@@ -41,7 +41,7 @@ describe("first-run hints", () => {
   it("teaches walking with the bound keys, then sprinting, and remembers what was seen", () => {
     const { session, ui, saved } = setup();
     steps(session, 1);
-    expect(ui.getState().hint).toEqual({ id: "move", keys: ["KeyW", "KeyA", "KeyS", "KeyD", "MouseMove"], text: HINTS.move.text });
+    expect(ui.getState().hint).toEqual({ id: "move", keys: ["KeyW", "KeyA", "KeyS", "KeyD", "MouseMove"], text: "move and look around" });
     steps(session, 90, frame({ moveZ: 1 }));
     expect(ui.getState().hint?.id).toBe("sprint");
     expect(saved.at(-1)).toContain("move");
@@ -55,9 +55,23 @@ describe("first-run hints", () => {
     session.intents.bindKey("forward", "KeyZ");
     const fresh = setup({ touch: true });
     steps(fresh.session, 1);
-    expect(fresh.ui.getState().hint).toEqual({ id: "move", keys: [], text: HINTS.move.touchText });
+    expect(fresh.ui.getState().hint).toEqual({ id: "move", keys: [], text: "Left thumb: move. Right: look around." });
     steps(session, 1);
     expect(ui.getState().hint?.keys[0]).toBe("KeyZ");
+  });
+
+  it("speaks the player's language, both catalogs, and switches the shown hint at once (ADR-0056)", () => {
+    for (const h of Object.values(HINTS)) {
+      expect(isMessageKey(`hint.${h.id}`), h.id).toBe(true);
+      if ("touch" in h) expect(isMessageKey(`hint.${h.id}.touch`), h.id).toBe(true);
+    }
+    expect(translate("pl", "hint.move")).toBe("ruch i rozglądanie");
+    const { session, ui } = setup();
+    steps(session, 1);
+    expect(ui.getState().hint?.text).toBe("move and look around");
+    session.intents.changeSettings({ locale: "pl" });
+    steps(session, 1);
+    expect(ui.getState().hint?.text).toBe("ruch i rozglądanie");
   });
 
   it("stays quiet when seen before or switched off, and gives up after its time", () => {

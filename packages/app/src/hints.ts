@@ -4,22 +4,21 @@ import type { DomainEvents, EntityId } from "@seki/core";
 export interface HintDef {
   readonly id: string;
   readonly keys: readonly string[];
-  readonly text: string;
-  /** Touch devices get their own words and no keys. */
-  readonly touchText?: string;
+  /** Touch devices get their own words (`hint.<id>.touch`) and no keys; the text is `hint.<id>` (ADR-0056). */
+  readonly touch?: boolean;
   /** Seconds on screen at most, even when the player never does it. */
   readonly seconds: number;
 }
 
 /** The first-run hints, in the order they usually come up. Keys are actions or `code:` codes. */
 export const HINTS = {
-  move: { id: "move", keys: ["forward", "left", "back", "right", "code:MouseMove"], text: "ruch i rozglądanie", touchText: "Lewy kciuk: ruch. Prawy: rozglądanie.", seconds: 20 },
-  sprint: { id: "sprint", keys: ["sprint", "jump", "crouch"], text: "sprint, skok, kucanie", seconds: 10 },
-  talk: { id: "talk", keys: ["interact"], text: "rozmowa i interakcja", touchText: "Stuknij przycisk akcji, żeby porozmawiać.", seconds: 15 },
-  fight: { id: "fight", keys: ["fire", "aim", "reload"], text: "strzał, celowanie, przeładowanie", touchText: "Ogień i celowanie po prawej stronie.", seconds: 12 },
-  loot: { id: "loot", keys: ["interact"], text: "przeszukaj torbę", touchText: "Podejdź do torby i stuknij akcję.", seconds: 20 },
-  inventory: { id: "inventory", keys: ["code:KeyI", "nextWeapon"], text: "ekwipunek i zmiana broni", touchText: "Przycisk „Postać” otwiera ekwipunek.", seconds: 10 },
-  journal: { id: "journal", keys: ["code:KeyJ"], text: "dziennik zadań", touchText: "Dziennik jest w menu postaci.", seconds: 8 },
+  move: { id: "move", keys: ["forward", "left", "back", "right", "code:MouseMove"], touch: true, seconds: 20 },
+  sprint: { id: "sprint", keys: ["sprint", "jump", "crouch"], seconds: 10 },
+  talk: { id: "talk", keys: ["interact"], touch: true, seconds: 15 },
+  fight: { id: "fight", keys: ["fire", "aim", "reload"], touch: true, seconds: 12 },
+  loot: { id: "loot", keys: ["interact"], touch: true, seconds: 20 },
+  inventory: { id: "inventory", keys: ["code:KeyI", "nextWeapon"], touch: true, seconds: 10 },
+  journal: { id: "journal", keys: ["code:KeyJ"], touch: true, seconds: 8 },
 } as const satisfies Record<string, HintDef>;
 
 type HintId = keyof typeof HINTS;

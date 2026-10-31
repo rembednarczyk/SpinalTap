@@ -123,7 +123,7 @@ describe("HUD weapon strip", () => {
     expect(p.selectWeaponSlot).toHaveBeenCalledWith(1);
     fireEvent.pointerDown(screen.getByRole("button", { name: "Wręcz: pusto" }));
     expect(p.selectWeaponSlot).toHaveBeenCalledWith(3);
-    const reload = screen.getByRole("button", { name: "Przeładuj" });
+    const reload = screen.getByRole("button", { name: "Reload" });
     fireEvent.pointerDown(reload, { pointerId: 5 });
     expect(p.press).toHaveBeenCalledWith("reload");
     fireEvent.pointerUp(reload, { pointerId: 5 });

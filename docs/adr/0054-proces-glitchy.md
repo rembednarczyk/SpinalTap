@@ -17,7 +17,8 @@ Plan (§11–13) przewiduje orkiestratora i specjalistów, ale nie opisuje proce
 | `orchestrator` | prowadzi rejestr, triage, przydział, integrację, PR i merge; główny agent sesji (`claude --agent orchestrator`) | rejestr, ADR, bazę skanu |
 | `glitch-hunter` | szuka w jednym obszarze, zgłasza z dowodem | nic poza tymczasowymi `zz-*` |
 | `glitch-fixer` | jedna poprawka jednego glitcha, test najpierw, osobny worktree | kod pakietu właściciela |
-| `fix-verifier` | niezależna kontrola poprawki, werdykt PRZYJĘTE / NIE PRZYJĘTE | nic |
+| `change-verifier` | niezależna kontrola poprawki albo etapu funkcji (dawniej `fix-verifier`), werdykt PRZYJĘTE / NIE PRZYJĘTE | nic |
+| `feature-builder` | jeden etap funkcji z ADR-u w osobnym worktree, z samoweryfikacją (dodany 31.10) | swój pakiet |
 
 Specjaliści pakietów z rosteru (plan §12) to role, które przyjmuje naprawiacz według własności z `CLAUDE.md`.
 

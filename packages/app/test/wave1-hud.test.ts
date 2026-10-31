@@ -269,7 +269,14 @@ describe("game session: wave 1 events on the HUD", () => {
     expect(ui.getState().witnesses).toEqual([expect.objectContaining({ id: `w${npc.id}` })]);
     emit(session, "CrimeReported", { crime: "gunfire", channel: "civilian", witnessId: npc.id, offenderId: player.id, at: player.position });
     expect(ui.getState().witnesses).toEqual([]);
-    expect(ui.getState().toasts.at(-1)).toMatchObject({ kind: "heat", title: "Świadek zadzwonił: strzelanina" });
+    expect(ui.getState().toasts.at(-1)).toMatchObject({ kind: "heat", title: "A witness called it in: gunfire", text: "Reported to security" });
+    // In Polish word for word as before (ADR-0056).
+    patchUi(ui, { settings: { ...ui.getState().settings, locale: "pl" } });
+    emit(session, "CrimeReported", { crime: "hacking", channel: "camera", witnessId: npc.id, offenderId: player.id, at: player.position });
+    expect(ui.getState().toasts.at(-1)).toMatchObject({ title: "Kamera nagrała: włamanie do sieci", text: "Zgłoszone ochronie" });
+    emit(session, "HeatChanged", { level: 2, previous: 0, searching: false, lastKnown: null, searchLeft: 30 });
+    expect(ui.getState().toasts.at(-1)).toMatchObject({ title: "Pościg: ★★", text: "Ochrona dystryktu cię szuka" });
+    patchUi(ui, { settings: { ...ui.getState().settings, locale: "en" } });
     // A call that is never reported fades after its time.
     emit(session, "WitnessCalling", { witnessId: npc.id, crime: "assault", duration: 1 });
     steps(session, 3 * SIM_HZ);
@@ -286,11 +293,20 @@ describe("game session: wave 1 events on the HUD", () => {
     expect(ui.getState().upload).toMatchObject({ hackId: "ping", seconds: 0.6 });
     emit(session, "QuickhackApplied", { hackId: "ping", targetId: npc.id, duration: 12 });
     expect(ui.getState().upload).toBeNull();
-    expect(ui.getState().scanNote).toMatchObject({ tone: "ok", text: "Ping: wgrano" });
+    expect(ui.getState().scanNote).toMatchObject({ tone: "ok", text: "Ping: uploaded" });
     emit(session, "QuickhackStarted", { hackId: "short_circuit", targetId: npc.id, upload: 1.5, ram: 5 });
     emit(session, "QuickhackFailed", { hackId: "short_circuit", targetId: npc.id, reason: "lost-target" });
     expect(ui.getState().upload).toBeNull();
-    expect(ui.getState().scanNote?.text).toContain("wraca połowa RAM");
+    expect(ui.getState().scanNote?.text).toBe("Short Circuit: Target lost, half the RAM comes back");
+    // The same notes in Polish, word for word as before (ADR-0056).
+    patchUi(ui, { settings: { ...ui.getState().settings, locale: "pl" } });
+    emit(session, "QuickhackApplied", { hackId: "ping", targetId: npc.id, duration: 12 });
+    expect(ui.getState().scanNote?.text).toBe("Ping: wgrano");
+    emit(session, "QuickhackFailed", { hackId: "short_circuit", targetId: npc.id, reason: "lost-target" });
+    expect(ui.getState().scanNote?.text).toBe("Zwarcie: Utracono cel, wraca połowa RAM");
+    emit(session, "QuickhackTraced", { hackId: "ping", targetId: npc.id });
+    expect(ui.getState().scanNote?.text).toBe("Namierzono cię! Sieć zna twoją pozycję");
+    patchUi(ui, { settings: { ...ui.getState().settings, locale: "en" } });
     emit(session, "QuickhackTraced", { hackId: "ping", targetId: npc.id });
     expect(ui.getState().scanNote?.tone).toBe("traced");
     steps(session, 3 * SIM_HZ);

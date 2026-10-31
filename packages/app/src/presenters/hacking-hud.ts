@@ -1,17 +1,9 @@
-import { type EntityId, type Locale, QUICKHACKS, type QuickhackFailure } from "@seki/core";
-import { type ScanNoteVm, patchUi, translate } from "@seki/ui";
+import type { EntityId, Locale } from "@seki/core";
+import { type MessageKey, type MessageParams, type ScanNoteVm, patchUi, translate } from "@seki/ui";
 import { scanTargetVm } from "../scan-view";
 import type { HudPart, HudPartContext, HudPartFrame, HudPatch } from "./hud-part";
 
 const NOTE_SECONDS = 2.5;
-
-export const FAILURE_TEXT: Readonly<Record<QuickhackFailure, string>> = {
-  "no-ram": "Za mało RAM",
-  "out-of-range": "Cel poza zasięgiem",
-  "lost-target": "Utracono cel, wraca połowa RAM",
-  "wrong-target": "Ten hack nie działa na ten cel",
-  busy: "Trwa inny upload",
-};
 
 /** Scanner and quickhacks (ADR-0028): the scanned target, RAM, the upload, notes, and the breach result. */
 export class HackingHud implements HudPart {
@@ -34,13 +26,13 @@ export class HackingHud implements HudPart {
       bus.on("QuickhackStarted", (e) => patchUi(ui, { upload: { seq: ++this.uploadSeq, hackId: e.hackId, seconds: e.upload } })),
       bus.on("QuickhackApplied", (e) => {
         patchUi(ui, { upload: null });
-        this.note("ok", `${QUICKHACKS[e.hackId].title}: wgrano`);
+        this.note("ok", this.t("hack.uploaded", { hack: this.t(`quickhack.${e.hackId}`) }));
       }),
       bus.on("QuickhackFailed", (e) => {
         if (ui.getState().upload?.hackId === e.hackId) patchUi(ui, { upload: null });
-        this.note("fail", `${QUICKHACKS[e.hackId].title}: ${FAILURE_TEXT[e.reason]}`);
+        this.note("fail", this.t("hack.failed", { hack: this.t(`quickhack.${e.hackId}`), reason: this.t(`hack.fail.${e.reason}`) }));
       }),
-      bus.on("QuickhackTraced", () => this.note("traced", "Namierzono cię! Sieć zna twoją pozycję")),
+      bus.on("QuickhackTraced", () => this.note("traced", this.t("hack.traced"))),
       bus.on("BreachCompleted", (e) => {
         // The result in the language of the moment (ADR-0056), the daemons by their catalog names.
         const locale = ui.getState().settings.locale;
@@ -74,6 +66,11 @@ export class HackingHud implements HudPart {
   reset(): HudPatch {
     this.focusId = null;
     return { scanTarget: null, upload: null, scanNote: null };
+  }
+
+  /** A note in the language of the moment (ADR-0056). */
+  private t(key: MessageKey, params?: MessageParams): string {
+    return translate(this.ctx.ui.getState().settings.locale, key, params);
   }
 
   private note(tone: ScanNoteVm["tone"], text: string): void {

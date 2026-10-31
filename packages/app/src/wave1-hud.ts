@@ -10,7 +10,6 @@ import { type HudPart, type HudPatch, type Wave1Hooks, createReuse, hudPartConte
 import { PhoneHud } from "./presenters/phone-hud";
 
 export { COMBAT_SECONDS } from "./presenters/combat-feedback";
-export { FAILURE_TEXT } from "./presenters/hacking-hud";
 export { HEAT_ENDING_SECONDS } from "./presenters/heat-hud";
 export type { Wave1Hooks } from "./presenters/hud-part";
 

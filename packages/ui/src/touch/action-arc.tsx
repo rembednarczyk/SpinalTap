@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useT } from "../i18n/use-t";
 import type { WeaponStripVm } from "../store/ui-store";
 import { useHackIntents, useUi } from "../use-ui";
 import { PadButtonView, swallowGhostClick, touchGuards } from "./pad-button";
@@ -21,16 +22,17 @@ export const nextWeaponKey = (weapons: WeaponStripVm | null): 1 | 2 | 3 | null =
  * the virtual pad (ADR-0036); the scanner goes through the hack intents.
  */
 export const ActionArc = ({ pad, more, onMore }: { pad: TouchPadSink; more: boolean; onMore: () => void }) => {
+  const t = useT();
   const hack = useHackIntents();
   const scanning = useUi((s) => s.scanning);
   const dashReady = useUi((s) => (s.dash ? s.dash.cooldown <= 0 : true));
   return (
     <div className="touch__arc" data-testid="touch-arc">
-      <PadButtonView pad={pad} button="reload" label="R" hint="Przeładuj" className="touch__btn--arc touch__btn--arc-1" testId="touch-reload" />
+      <PadButtonView pad={pad} button="reload" label="R" hint={t("touch.reload")} className="touch__btn--arc touch__btn--arc-1" testId="touch-reload" />
       {/* A toggle on touch; a tap on a hack in the scanner list uploads it. */}
       <button
         type="button"
-        aria-label="Skaner"
+        aria-label={t("touch.scanner")}
         aria-pressed={scanning}
         data-testid="touch-scan"
         className={`touch__btn touch__btn--arc touch__btn--arc-2 touch__btn--scan${scanning ? " touch__btn--on" : ""}`}
@@ -42,10 +44,10 @@ export const ActionArc = ({ pad, more, onMore }: { pad: TouchPadSink; more: bool
       >
         ◈
       </button>
-      <PadButtonView pad={pad} button="dash" label="»" hint="Zryw" className={`touch__btn--arc touch__btn--arc-3${dashReady ? "" : " touch__btn--cooling"}`} testId="touch-dash" />
+      <PadButtonView pad={pad} button="dash" label="»" hint={t("touch.dash")} className={`touch__btn--arc touch__btn--arc-3${dashReady ? "" : " touch__btn--cooling"}`} testId="touch-dash" />
       <button
         type="button"
-        aria-label={more ? "Mniej akcji" : "Więcej akcji"}
+        aria-label={more ? t("touch.less") : t("touch.more")}
         aria-expanded={more}
         data-testid="touch-more"
         className={`touch__btn touch__btn--arc touch__btn--arc-4${more ? " touch__btn--on" : ""}`}
@@ -63,11 +65,12 @@ export const ActionArc = ({ pad, more, onMore }: { pad: TouchPadSink; more: bool
 
 /** Crouch is a toggle on touch: one tap holds the pad button down, the next lets it go. */
 const CrouchToggle = ({ pad, on, setOn }: { pad: TouchPadSink; on: boolean; setOn: (on: boolean) => void }) => {
+  const t = useT();
   const crouched = useUi((s) => s.crouched);
   return (
     <button
       type="button"
-      aria-label="Kucnij lub wstań"
+      aria-label={t("touch.crouch")}
       aria-pressed={on}
       data-testid="touch-crouch"
       className={`touch__btn touch__btn--more${on || crouched ? " touch__btn--on" : ""}`}
@@ -90,6 +93,7 @@ const CrouchToggle = ({ pad, on, setOn }: { pad: TouchPadSink; on: boolean; setO
  * controls, so folding the row does not lose it.
  */
 export const MoreActions = ({ pad, crouchOn, setCrouchOn }: { pad: TouchPadSink; crouchOn: boolean; setCrouchOn: (on: boolean) => void }) => {
+  const t = useT();
   const weapons = useUi((s) => s.weapons);
   const medkits = useUi((s) => s.medkits);
   const next = nextWeaponKey(weapons);
@@ -103,12 +107,12 @@ export const MoreActions = ({ pad, crouchOn, setCrouchOn }: { pad: TouchPadSink;
             +<span className="touch__badge">{medkits}</span>
           </>
         }
-        hint={`Apteczka (${medkits})`}
+        hint={t("touch.medkit", { count: medkits })}
         className="touch__btn--more touch__btn--h"
       />
       <button
         type="button"
-        aria-label="Następna broń"
+        aria-label={t("touch.nextWeapon")}
         data-testid="touch-weapon"
         disabled={next === null}
         className="touch__btn touch__btn--more"
@@ -118,8 +122,8 @@ export const MoreActions = ({ pad, crouchOn, setCrouchOn }: { pad: TouchPadSink;
         ⇄
       </button>
       <CrouchToggle pad={pad} on={crouchOn} setOn={setCrouchOn} />
-      <PadButtonView pad={pad} button="toggleCamera" label="V" hint="Kamera FPP/TPP" className="touch__btn--more" />
-      <PadButtonView pad={pad} button="toggleWeapon" label="X" hint="Schowaj lub wyciągnij broń" className="touch__btn--more" />
+      <PadButtonView pad={pad} button="toggleCamera" label="V" hint={t("touch.camera")} className="touch__btn--more" />
+      <PadButtonView pad={pad} button="toggleWeapon" label="X" hint={t("touch.holster")} className="touch__btn--more" />
     </div>
   );
 };
@@ -147,6 +151,7 @@ const useLingeringPrompt = (): string | null => {
  * names what (the prompt) instead of showing a key.
  */
 export const UseButton = ({ pad }: { pad: TouchPadSink }) => {
+  const t = useT();
   const prompt = useLingeringPrompt();
   if (!prompt) return null;
   return (
@@ -155,11 +160,11 @@ export const UseButton = ({ pad }: { pad: TouchPadSink }) => {
       button="interact"
       label={
         <>
-          <span className="touch__use-verb">Użyj</span>
+          <span className="touch__use-verb">{t("touch.use")}</span>
           <span className="touch__use-what">{prompt}</span>
         </>
       }
-      hint={`Interakcja: ${prompt}`}
+      hint={t("touch.interact", { what: prompt })}
       className="touch__btn--use touch__btn--hot"
       testId="touch-use"
     />

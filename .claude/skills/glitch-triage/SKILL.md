@@ -49,7 +49,7 @@ Kolejka: S1 zawsze pierwsze, potem S2 szerokie, a potem reszta wg priorytetu. Po
 2. Licznik skanu dla tego rodzaju spada, a pozostałe nie rosną. Baza skanu obniżona w tym samym commicie.
 3. DoD z `CLAUDE.md` w zakresie zmiany.
 4. Złote hashe, migawka NPR i budżety bez zmian albo zmienione z uzasadnieniem w commicie.
-5. Werdykt `fix-verifier`: PRZYJĘTE.
+5. Werdykt `change-verifier`: PRZYJĘTE.
 
 ## Rodzaj powtarzalny = kontrola w skanie
 Jeśli glitch należy do rodzaju, który da się policzyć w całym mieście, poprawka dopisuje kontrolę do `tools/glitch-scan/test/glitch-scan.test.ts`. Regresja tego rodzaju zatrzyma wtedy CI.

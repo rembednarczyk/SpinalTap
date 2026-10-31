@@ -319,14 +319,15 @@ const approach = (v: number, to: number, step: number): number => (v < to ? Math
 
 /**
  * One frame of the blend. `moving` (the character walks) holds the pose out, so the walk never
- * fights it. Returns true while there is anything to show.
+ * fights it. `clock` moves the activity's own cycle (`dt` in play, 0 in the reference still, G-044).
+ * Returns true while there is anything to show.
  */
-export const stepBlend = (b: ActivityBlend, dt: number, moving: boolean): boolean => {
+export const stepBlend = (b: ActivityBlend, dt: number, moving: boolean, clock = dt): boolean => {
   const rate = dt / ACTIVITY_BLEND_SECONDS;
   b.weight = approach(b.weight, b.target !== null && !moving ? 1 : 0, rate);
   b.cross = approach(b.cross, 1, rate);
-  b.time += dt;
-  b.fromTime += dt;
+  b.time += clock;
+  b.fromTime += clock;
   if (b.cross >= 1) b.from = null;
   if (b.weight <= 0 && b.target === null) {
     b.current = null;

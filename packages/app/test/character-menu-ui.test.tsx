@@ -33,7 +33,7 @@ const lootTheGuard = (g: Game) => {
 
 /** I on a keyboard, the one "Postać" button on a phone. */
 const openMenu = (phone: boolean) => {
-  if (phone) fireEvent.click(screen.getByRole("button", { name: "Postać" }));
+  if (phone) fireEvent.click(screen.getByRole("button", { name: "Character" }));
   else fireEvent.keyDown(window, { code: "KeyI" });
 };
 

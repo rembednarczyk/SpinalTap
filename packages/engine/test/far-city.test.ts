@@ -23,15 +23,18 @@ describe("far city (ADR-0027)", () => {
   });
 
   it("keeps rings and fillers off every chunk's ground (C2: no towers inside the districts)", () => {
+    // One assertion over the offenders: an `expect` per vertex and chunk took ~4 s (G-045).
+    const offenders: string[] = [];
     for (let i = 0; i < plan.world.vertexCount; i++) {
       if (plan.world.uvs2[i * 2 + 1] !== 0) continue;
       const x = plan.world.positions[i * 3]!;
       const z = plan.world.positions[i * 3 + 2]!;
       for (const c of WORLD_CHUNKS) {
         const inside = x > c.bounds.minX + 0.5 && x < c.bounds.maxX - 0.5 && z > c.bounds.minZ + 0.5 && z < c.bounds.maxZ - 0.5;
-        expect(inside, `${x}, ${z} in ${c.id}`).toBe(false);
+        if (inside) offenders.push(`${x}, ${z} in ${c.id}`);
       }
     }
+    expect(offenders).toEqual([]);
     // The rings reach well beyond the map.
     let far = 0;
     for (let i = 0; i < plan.world.vertexCount; i++) {
