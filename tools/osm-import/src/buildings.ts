@@ -59,6 +59,8 @@ export interface BuildingContext {
    * building, G-051).
    */
   readonly namedPoints: readonly { readonly at: Pt; readonly name: string; readonly addr?: string }[];
+  /** Small buildings standing on their own (`smallAlone`, G-127): one storey when the map gives no height. */
+  readonly alone?: ReadonlySet<string>;
 }
 
 /** A building and the parts of it lifted onto it (`building:part`, G-049). */
@@ -122,7 +124,7 @@ export const makeBuilding = (a: Area, ctx: BuildingContext, ownParts: readonly A
   const look = lookOf(a.id);
   const use = buildingUse(a.tags);
   const shops = use !== "commercial" && ctx.shopPoints.some((p) => pointInRing(p, world));
-  const own = massing(a.tags, { area, shops: shops || use === "commercial", range: ctx.range, look });
+  const own = massing(a.tags, { area, shops: shops || use === "commercial", range: ctx.range, look, alone: ctx.alone?.has(a.id) ?? false });
   const { base: m, lifted } = stackParts(world, own, ownParts.flatMap((p) => partTier(p, use) ?? []));
   const name = landmarkName(a.tags, use) ?? (a.tags.name ? undefined : ctx.namedPoints.find((p) => pointInRing(p.at, world) && sameAddress(p.addr, a.tags))?.name);
   const ok: BuildingOut = {

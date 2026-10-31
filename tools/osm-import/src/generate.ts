@@ -4,6 +4,7 @@
  */
 import { LUBLIN_ANCHOR } from "../../../packages/core/src/world/city-geo.ts";
 import { asBuilding, isPart, orphanParts, partsByBuilding } from "./building-parts.ts";
+import { smallAlone } from "./building-alone.ts";
 import { makeBuilding } from "./buildings.ts";
 import { corrected } from "./corrections.ts";
 import { ALL_CHUNKS, type ChunkSpec } from "./config.ts";
@@ -156,9 +157,10 @@ const generateChunk = (
   const out = [];
   let skipped = 0;
   let withHoles = 0;
+  const alone = smallAlone(buildings);
   for (const a of buildings) {
     if (!inRect(centroid(a.ring), spec.rect)) continue;
-    const r = makeBuilding(a, { src, grid: t.grid, altitude, range: spec.district.defaultLevels, shopPoints, namedPoints }, parts.get(a.id));
+    const r = makeBuilding(a, { src, grid: t.grid, altitude, range: spec.district.defaultLevels, shopPoints, namedPoints, alone }, parts.get(a.id));
     if ("skipped" in r) {
       skipped++;
       continue;
