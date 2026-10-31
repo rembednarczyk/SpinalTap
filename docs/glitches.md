@@ -83,7 +83,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: później (ADR-0052 „Na później”)
 
 ### G-051 Podpis „Muzeum Historii Miasta Lublina” na kamienicy Jezuicka 3 zamiast na Bramie Krakowskiej
-- Status: w weryfikacji razem z etapem 1 ADR-0062 (d65e7f2)
+- Status: w PR #75 (z etapem 1 ADR-0062)
 - Ważność: S4 (proponowana) · Zasięg: lokalny · Koszt: mały (labels/buildings w tools/osm-import)
 - Gdzie: w66286384 (478.7, −114.4); ile w mieście: 1 znane
 - Dowód: węzeł n993790419 `addr:street=Plac Władysława Łokietka addr:housenumber=3` leży w obrysie Jezuickiej 3, 6 m od r7224409; T-013
@@ -170,7 +170,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: każde z 8 zadaszeń jest daszkiem na słupach, przez który da się przejść; kontrola `osm-roof-skipped` 8 → 0
 
 ### G-064 Targowiska bez straganów (Targ na Ruskiej, Bazar, Giełda na Kresowej)
-- Status: zgłoszone (audyt topografii 2)
+- Status: w PR #76 (szkic, przyjęte przez weryfikatora, czeka na kuratora)
 - Ważność: S4 (proponowana) · Zasięg: 3 · Koszt: mały
 - Gdzie: w182461192 (787, 561), w67502759 (681, 413), w231445090 (x 2300..2383); T-026
 - Dowód: `props.generated` nie ma `market-stall` w podzamcze-1-1 i 0-1
@@ -194,7 +194,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `heritage-overbuilt` (budynek z `historic`/`heritage` poza Starym Miastem z rise > 0) daje 0 po G-050 i tej poprawce
 
 ### G-067 Klasztor Dominikanów dostaje proceduralne wieże kościoła
-- Status: w PR #72 (szkic, czeka na weryfikację)
+- Status: w PR #72 (szkic, przyjęte przez weryfikatora, czeka na kuratora)
 - Ważność: S4 (proponowana) · Zasięg: 1 znany · Koszt: mały
 - Gdzie: r2366732 (748.5, −104.4), Stare Miasto
 - Dowód: budynek klasztoru ma `use: church`, więc `addTowers` stawia na nim wieże kościoła, choć to klasztor; widać z ujęcia „Dominikanie od wschodu” (810, −56)
@@ -229,6 +229,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Dodatkowo (weryfikacja G-068): pod wiaduktem Zamkowej zaalarmowany walczący idący Podwalem z lewej strony osi (chunk `stare-miasto-1-1`, 12–20 m od osi) utyka w (749.5–750.6, 180.4–181.4), także przed G-068
 - Pakiet właściciela: packages/sim/src/systems/ai
 - Test przyjęcia: zaalarmowany walczący na pomoście Mełgiewskiej dociera do gracza pod mostem przez zejście w < 20 s
+
+### G-073 Stare stragany pchlego targu na Placu Zamkowym wchodzą w drzewa i meble uliczne
+- Status: zgłoszone (z weryfikacji G-064)
+- Ważność: S4 (proponowana) · Zasięg: 8 straganów · Koszt: mały
+- Gdzie: Plac Zamkowy, np. (704.9, 266); stragany 0,3–0,8 m od drzew, stojaka na rowery, automatu biletowego i słupa ogłoszeniowego
+- Dowód: sonda weryfikatora G-064 na `WORLD_STREET_PROPS`; problem sprzed G-064 (nowe stragany z G-064 nie nachodzą na nic)
+- Pakiet właściciela: tools/osm-import (props-gen)
+- Test przyjęcia: kontrola skanu „stragan na innym rekwizycie” (odstęp < 0,9 m od drzewa, stojaka, automatu, słupa), baza 8 → 0
 
 ## Naprawione
 | ID | Glitch | PR |
