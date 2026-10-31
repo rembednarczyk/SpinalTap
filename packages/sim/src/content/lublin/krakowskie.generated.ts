@@ -834,8 +834,8 @@ export const KRAKOWSKIE_CHUNKS: readonly LublinChunkData[] = [
       {"x":378.6,"z":-176.9,"kind":"shop","tag":"shop=deli","name":"Pomodoro Deli"},
     ],
     passages: [
-      {"building":"w66335286","from":{"x":450.4,"z":-164.8},"to":{"x":439.3,"z":-173.7},"width":3.2,"height":4,"rise":1.1},
-      {"building":"w66335277","from":{"x":437.1,"z":-149.6},"to":{"x":427.2,"z":-157.6},"width":3.2,"height":4,"rise":1.1},
+      {"building":"w66335286","from":{"x":450.4,"z":-164.8},"to":{"x":439.3,"z":-173.7},"width":3.2,"height":3.6,"rise":0.99},
+      {"building":"w66335277","from":{"x":437.1,"z":-149.6},"to":{"x":427.2,"z":-157.6},"width":3.2,"height":3.6,"rise":0.99},
       {"building":"w67498745","from":{"x":387.7,"z":-171.7},"to":{"x":376.4,"z":-176.2},"width":3.2,"height":4,"rise":1.1},
     ],
   },

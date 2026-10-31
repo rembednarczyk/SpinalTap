@@ -658,6 +658,32 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     ]);
     return MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b) && under.has(b.id.split("/")[0]!))).map((b) => ({ at: near(b.x, b.z), what: `${b.id} under ground, ${b.height} m over the street` }));
   },
+  /**
+   * A passage whose way the map signs with a clearance (`maxheight`, in metres or `below_default`,
+   * under 4 m) lower than the game's vault over it (G-089): the passage's middle within 1.5 m of the way.
+   */
+  "passage-maxheight": () =>
+    [...SOURCE_OSM.ways.values()].flatMap((w) => {
+      const t = w.tags ?? {};
+      const max = t.maxheight === "below_default" ? 4 : Number(/^\s*(\d+(?:[.,]\d+)?)\s*m?\s*$/.exec(t.maxheight ?? "")?.[1]?.replace(",", ".") ?? NaN);
+      if (!t.highway || !(max <= 4)) return [];
+      const pts = w.nodes.flatMap((id) => {
+        const n = SOURCE_OSM.nodes.get(id);
+        return n ? [geoToWorld(n.lat, n.lon)] : [];
+      });
+      const off = (p: Pt) =>
+        Math.min(
+          ...pts.slice(1).map((b, i) => {
+            const a = pts[i]!;
+            const dx = b.x - a.x;
+            const dz = b.z - a.z;
+            const u = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+            return Math.hypot(a.x + dx * u - p.x, a.z + dz * u - p.z);
+          }),
+        );
+      const tooHigh = (h: number) => (t.maxheight === "below_default" ? h >= max : h > max + 0.01);
+      return PASSAGES.filter((p) => off({ x: (p.from.x + p.to.x) / 2, z: (p.from.z + p.to.z) / 2 }) < 1.5 && tooHigh(p.height)).map((p) => ({ at: near(p.from.x, p.from.z), what: `w${w.id} maxheight=${t.maxheight}, vault ${p.height} m in ${p.building}` }));
+    }),
   /** A passage through a building with an end off every chunk, where there is no ground to come out on. */
   "passage-off-map": () =>
     PASSAGES.filter((p) => [p.from, p.to].some(({ x, z }) => !MAP_CHUNKS.some(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ))).map((p) => ({
