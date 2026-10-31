@@ -169,7 +169,7 @@ def bake_ccby(key, path, yaw, scale, opts):
     return P, N, roles, [round(float(x), 3) for x in hi - lo], lights
 
 
-def weld(key, P, N, roles, swatch_uv):
+def weld(key, P, N, roles, swatch_uv, max_tris=MAX_TRIS):
     verts = {}
     pos, nor, uvs, ind = [], [], [], []
     for t in range(len(P)):
@@ -185,8 +185,8 @@ def weld(key, P, N, roles, swatch_uv):
                 uvs.append(swatch_uv(s))
             ind.append(vi)
     tris = len(ind) // 3
-    if tris > MAX_TRIS:
-        raise ValueError(f'{key}: {tris} triangles, over {MAX_TRIS}')
+    if tris > max_tris:
+        raise ValueError(f'{key}: {tris} triangles, over {max_tris}')
     return {'key': key, 'pos': np.array(pos, np.float32), 'nor': np.array(nor), 'uv': np.array(uvs), 'ind': np.array(ind, np.uint32)}
 
 
@@ -200,4 +200,7 @@ def build_ccby(ccby_dir, swatch_uv):
         m['roles'] = sorted(set(roles))
         out.append(m)
         extras[key] = {'size': size, 'styles': styles, 'credit': source, **({'lights': lights} if lights else {})}
-    return out, extras
+    # The skyline's megatowers (ADR-0063 stage 2) after the street props: these keep their bytes.
+    from city_megacity import build_megacity
+    towers, tower_extras = build_megacity(ccby_dir, swatch_uv)
+    return out + towers, {**extras, **tower_extras}

@@ -21,8 +21,11 @@ const read = (name: string): ArrayBuffer => {
 };
 const propsFile = read("city-props.glb");
 const props = parseCityProps(propsFile);
-/** The facade props: not the CC-BY street props (ADR-0063, `ccby-street.test.ts`), a pole 8.6 m tall with its lamp. */
-const facadeModels = [...props.models.values()].filter((m) => !m.styles.includes("pole") && !m.styles.includes("robodog"));
+/**
+ * The facade props: not the CC-BY street props (ADR-0063, `ccby-street.test.ts`), a pole 8.6 m tall
+ * with its lamp, nor the skyline's megatowers (`skyline.test.ts`).
+ */
+const facadeModels = [...props.models.values()].filter((m) => !["pole", "robodog", "megatower"].some((s) => m.styles.includes(s)));
 const kit = parseCityKit(read("city-kit.glb"));
 
 const bounds = (p: Float32Array) => {

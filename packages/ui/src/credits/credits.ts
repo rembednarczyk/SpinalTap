@@ -47,6 +47,8 @@ export const CREDITS: readonly Credit[] = [
   // CC-BY 4.0 (ADR-0063): street props of city-props.glb.
   { id: "sketchfab-electric-pole", section: "street", title: "Electric pole", author: "Eh (Just_Eh)", authorUrl: "https://sketchfab.com/Just_Eh", url: "https://sketchfab.com/3d-models/electric-pole-a41cc931ffd84947b8f7b566acc33384", license: "CC-BY-4.0", files: PROPS, changed: true },
   { id: "sketchfab-robotic-animal", section: "street", title: "Robotic Animal", author: "igor.tesV", authorUrl: "https://sketchfab.com/igor.tesV", url: "https://sketchfab.com/3d-models/robotic-animal-d36aed18ec8f4638901e6e5c7ab4e7f6", license: "CC-BY-4.0", files: PROPS, changed: true },
+  // CC-BY 4.0 (ADR-0063 stage 2): the skyline's megatowers, also in city-props.glb.
+  { id: "sketchfab-megacity-cluster", section: "city", title: "Sci-Fi Megacity Cluster – Free  Asset Pac", author: "TRYFIELD", authorUrl: "https://sketchfab.com/tryfield", url: "https://sketchfab.com/3d-models/sci-fi-megacity-cluster-free-asset-pac-458380c745dc4e05ae5e0f6e7b4c69b2", license: "CC-BY-4.0", files: PROPS, changed: true },
   // CC0 (ADR-0022, ADR-0058): the city kit and the facade props.
   { id: "kenney-city-kit-commercial", section: "city", title: "City Kit Commercial 2.1", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://kenney.nl/assets/city-kit-commercial", license: "CC0-1.0", files: CITY, changed: true },
   { id: "kenney-car-kit", section: "city", title: "Car Kit 3.1", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://kenney.nl/assets/car-kit", license: "CC0-1.0", files: CITY, changed: true },

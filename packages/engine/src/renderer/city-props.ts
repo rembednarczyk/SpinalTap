@@ -134,7 +134,7 @@ export const transformProp = (m: KitModel, xf: PropXform): { positions: Float32A
 };
 
 /** Index of the palette swatch a model's UV points at. */
-const swatchAt = (props: CityProps, u: number, v: number): number => Math.min(props.grid - 1, Math.floor(u * props.grid)) + props.grid * Math.min(props.grid - 1, Math.floor(v * props.grid));
+export const swatchAt = (props: CityProps, u: number, v: number): number => Math.min(props.grid - 1, Math.floor(u * props.grid)) + props.grid * Math.min(props.grid - 1, Math.floor(v * props.grid));
 
 /**
  * The city kit's texture coordinates of each swatch of the props' palette, matched by name (the

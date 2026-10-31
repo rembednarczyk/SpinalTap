@@ -86,8 +86,31 @@ Podzamcza i Nabrzeża, w miejscu jej bryły, i rozpina kable do najbliższego s�
 przy ladzie co trzeciego straganu Podzamcza i przy fasadzie obok bram (Krakowska, Grodzka, część
 przejść bramnych). Bez nowych brył w symulacji i bez nowych wywołań rysowania.
 
-Pozostałe cztery modele z tej paczki (`cyberpunk_building`, `futuristic_compact_room`,
-`hw_4_cyberpunk_sci-fi_building`, `sci-fi_megacity_cluster`) są w `sources.json`, ale jeszcze nie w
-grze (etapy 2–4 ADR-0063); dostaną wiersz tutaj, gdy trafią do pliku.
+## Megawieże panoramy na licencji CC-BY 4.0 (ADR-0063, etap 2)
+
+Cztery megawieże w `city-props.glb` (`mc-tower-a` … `mc-tower-d`, `extras.styles` `megatower`) są
+z modelu na licencji **CC-BY 4.0**, z tym samym podpisem na ekranie „Twórcy” i `extras.credit` w węźle.
+
+| Klucz w pliku | Tytuł | Autor | Źródło | Licencja | Zmiany |
+|---|---|---|---|---|---|
+| `mc-tower-a` … `mc-tower-d` (megawieże panoramy za Czechowem, al. Kraśnicką, Zalewem i Tatarami) | Sci-Fi Megacity Cluster – Free  Asset Pac | [TRYFIELD](https://sketchfab.com/tryfield) | [Sketchfab](https://sketchfab.com/3d-models/sci-fi-megacity-cluster-free-asset-pac-458380c745dc4e05ae5e0f6e7b4c69b2) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | cztery wycinki kwartału (z 503 tys. trójkątów: 12,4, 10,9, 5,5 i 19,9 tys.) przerobione na pole wysokości i uproszczone do 0,9–1,2 tys. trójkątów, kolory sprowadzone do palety, światła okien jako pasy neonu, bez tekstur |
+
+Zmiany względem oryginału (`tools/city_megacity.py`): model to jeden kwartał miasta ok. 200 × 200
+jednostek, do 108 wysokości. Każda wieża to kwadratowy wycinek wokół jednego z najwyższych budynków
+(z niższymi budynkami u stóp jako podium), bez płaszczyzn gruntu i piwnic. Wycinek staje się polem
+wysokości na siatce (najdrobniejsza siatka 1–1,3 jednostki, która mieści wieżę w 1,2 tys.
+trójkątów, wysokości co 2 jednostki): dachy scalone w prostokąty, ściany w pasy. Kolor ścian i dachów
+z koloru bazowego pod nimi (cegła, `trim`, `trim-light`), a gdzie tekstura emisji świeci w co
+najmniej 20% trójkątów komórki, góra jej ścian dostaje pas światła (`win-warm` albo najbliższy neon).
+Stoi na y = 0, wyśrodkowana, `extras.size`.
+
+Renderer (`packages/engine/src/renderer/mapcity/skyline-bodies.ts`) daje każdej z dwunastu wież
+panoramy (ADR-0051) po kolei jedną z czterech brył, w skali jej wysokości (w poprzek 0,8 tej skali),
+frontem do centrum, w tej samej siatce wież co dotąd: bez nowych wywołań rysowania. Na telefonie
+(`low`) zostają proceduralne wieże.
+
+Pozostałe trzy modele z paczki CC-BY (`cyberpunk_building`, `futuristic_compact_room`,
+`hw_4_cyberpunk_sci-fi_building`) są w `sources.json`, ale jeszcze nie w grze (etapy 3–4 ADR-0063);
+dostaną wiersz tutaj, gdy trafią do pliku.
 
 Wyłączenie w grze: `?city=off` (zostają gołe bryły, bez kitu i bez rekwizytów).
