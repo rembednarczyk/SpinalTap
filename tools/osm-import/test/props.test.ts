@@ -88,6 +88,23 @@ describe("street furniture generator (ADR-0047)", () => {
     for (const l of lanterns) expect(l.z).toBeCloseTo(37.7, 1);
   });
 
+  it("keeps a lamp of a paved square off the axis of the car street beside it (G-004)", () => {
+    // Plac Zamkowy: a car street on the square's cobbles, no carriageway drawn, and a second one 4 m off for its first 20 m.
+    const square: LublinChunkData = {
+      ...street(),
+      buildings: [],
+      ground: [{ surface: "cobble", outline: [0, 10, 100, 10, 100, 50, 0, 50] }],
+      streets: [
+        { name: "Plac", kind: "residential", line: [0, 30, 100, 30] },
+        { name: "Plac", kind: "residential", line: [0, 34, 20, 34] },
+      ],
+    };
+    const plan: PropsPlan = { items: [{ id: "lamps", kind: "lamp-candelabra", lines: [[0, 30, 100, 30]], spacing: 25 }] };
+    const lamps = generateProps(plan, [square]).byChunk.get("test-0-0")!;
+    expect(lamps.map((l) => l.x)).toEqual([37.5, 62.5, 87.5]);
+    for (const l of lamps) expect(Math.hypot(Math.max(l.x - 20, 0), l.z - 34), `lamp at ${l.x}, ${l.z}`).toBeGreaterThan(3);
+  });
+
   it("spreads lines and areas deterministically, inside the area and off the buildings", () => {
     const line = [
       { x: 0, z: 0 },

@@ -127,11 +127,17 @@ const blocked = (obstacles: readonly Obstacle[], p: Pt, extra = 0): boolean =>
 /** Slides along the line, a few metres either way, to where nothing placed stands in the way. */
 const SLIDES = [0, 2.5, -2.5, 5, -5];
 
+/** How far a lamp set off an axis with no carriageway drawn keeps from a car street's axis (m): the widest lane's offset, a car's half and the lamp's own. */
+const LAMP_TRAFFIC_REACH = 3.6;
+
 const besideLine = (site: Site, item: PlanItem, prop: StreetPropKind, slots: readonly Slot[], obstacles: readonly Obstacle[]): Placed[] => {
   const { mode } = lineMode(item, prop);
   const out: Placed[] = [];
   const fallback = FALLBACK[prop] ?? 2;
-  const clear = (p: Pt) => mode === "facade" || !blocked(obstacles, p);
+  // Off a road the offset is a guess, not a measured kerb: on a paved square cars still drive the
+  // axes of its streets (Plac Zamkowy's cobbles, G-004), so the guess keeps clear of their lanes.
+  const clear = (at: Pt, p: Pt) =>
+    mode === "facade" || (!blocked(obstacles, p) && (mode === "front" || site.surfaceAt(at) === "road" || !nearTraffic(site, p, LAMP_TRAFFIC_REACH)));
   for (const { st, side, key } of slots) {
     if (mode === "axis") {
       out.push({ prop, p: st.p, yaw: null, key });
@@ -143,7 +149,7 @@ const besideLine = (site: Site, item: PlanItem, prop: StreetPropKind, slots: rea
       const d = sideOffset(site, at, n, mode, fallback);
       if (d === null) continue;
       const p = { x: at.x + n.x * d, z: at.z + n.z * d };
-      if (!clear(p)) continue;
+      if (!clear(at, p)) continue;
       // Lamps' arms, lanterns and café fronts face the street's axis.
       out.push({ prop, p, yaw: yawOf(-n.x, -n.z), key });
       break;
