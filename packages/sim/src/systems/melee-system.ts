@@ -52,7 +52,8 @@ export const stagger = (ctx: SimContext, target: Entity, duration: number, cause
   if (!m || duration <= 0) return;
   m.stagger = Math.max(m.stagger, duration);
   // A parry's stun opens the fighter to a takedown from any side while it lasts (ADR-0065).
-  if (cause === "parry") m.stunned = true;
+  // A plain hit's stagger replaces the stun: the window does not outlast it.
+  m.stunned = cause === "parry";
   m.phase = "idle";
   m.timer = 0;
   m.queued = false;

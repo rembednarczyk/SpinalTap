@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { DomainEvents } from "@seki/core";
-import { SIM_DT, Simulation, TAKEDOWN_PROMPT, TAKEDOWN_REACH, TAKEDOWN_TIME, gangerEntity, takedownDistance, type Entity } from "../src";
+import type { DomainEvents, DomainState } from "@seki/core";
+import { SIM_DT, Simulation, TAKEDOWN_PROMPT, TAKEDOWN_REACH, TAKEDOWN_TIME, gangerEntity, stagger, takedownDistance, type Entity } from "../src";
 import { byKey, collect, input, run, streetSim, teleportPlayer } from "./helpers";
 
 const inCreationOrder = <T extends { id: number }>(es: T[]): T[] => [...es].sort((a, b) => a.id - b.id);
@@ -230,6 +230,32 @@ describe("takedown in the simulation (ADR-0065)", () => {
     run(sim, 3, input({ fire: true }));
     expect(hits.some((h) => h.targetId === guard.id)).toBe(true);
     expect(guard.ai!.alerted).toBe(false);
+  });
+
+  it("a plain hit's stagger ends the stun's open window", () => {
+    const sim = quietStreet();
+    const guard = guardAt(sim, 3);
+    stagger(sim as never, guard, 1, "parry");
+    expect(guard.melee!.stunned).toBe(true);
+    stagger(sim as never, guard, 0.2, "hit");
+    expect(guard.melee!.stunned).toBe(false);
+  });
+
+  it("regeneration does not hide a small hit: the hold breaks", () => {
+    const sim = quietStreet();
+    const guard = guardAt(sim, 1.2);
+    const broken = collect<DomainEvents["TakedownBroken"]>(sim, "TakedownBroken");
+    const p = sim.player()!;
+    p.health = { ...p.health!, current: p.health!.max - 20 };
+    sim.step(CROUCH);
+    const h = sim as unknown as { holder: { domain: DomainState } };
+    // Regeneration of 0.5 HP/s gives a point 0.5 s in; the 1-HP hit comes after it.
+    h.holder.domain = { ...h.holder.domain, buffs: [{ id: "regen", left: 30.5 }] };
+    sim.enqueue({ type: "takedown", lethal: false });
+    run(sim, 40, CROUCH);
+    p.health = { ...p.health!, current: p.health!.current - 1 };
+    run(sim, ticks(TAKEDOWN_TIME), CROUCH);
+    expect(broken).toEqual([{ target: guard.id, reason: "damage" }]);
   });
 
   it("breaks when the player is hurt: the guard breaks free alerted", () => {
