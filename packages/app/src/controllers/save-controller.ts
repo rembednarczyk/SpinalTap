@@ -51,6 +51,15 @@ export class SaveController {
     return sim.snapshot(this.deps.narrative.saveState(), slotDateLabel(this.deps.now(), this.locale), objective ?? "");
   }
 
+  /**
+   * Writes a slot without the player's checks or toasts (the autosave has its own). The
+   * snapshot is taken and encoded synchronously, before the store's first await.
+   */
+  async write(slot: string): Promise<void> {
+    await this.deps.persistence.save(slot, this.snapshot());
+    await this.refreshSlots();
+  }
+
   async saveAsync(slot: string): Promise<boolean> {
     const { ui } = this.deps;
     if (!this.deps.canSave()) {
