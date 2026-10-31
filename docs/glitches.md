@@ -83,7 +83,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: później (ADR-0052 „Na później”)
 
 ### G-050 Nadbudowa Podzamcza przy Bramie Grodzkiej góruje 16 m nad bramą
-- Status: w weryfikacji (przeróbka 0869b0c: piętra ≥ 5 m od zabytku, próg przylegania 5 m; potem PR #60)
+- Status: przyjęte przez weryfikatora (0869b0c, PR #60), czeka na przegląd kuratora
 - Ważność: S3 (proponowana) · Zasięg: lokalny (widok z Zamku i Placu Zamkowego na bramę) · Koszt: mały (vertical.ts)
 - Gdzie: Grodzka 36a w66293355 (717.5, 162), Podzamcze; ile w mieście: 2 (z kontrolą `landmark-overbuilt` niżej; druga to w66324576 przy Kościele Ewangelicznym r6476361)
 - Dowód: `verticalOf` daje `rise=15`, szczyt na y 17,5, a brama ma szczyt na y 1,7; T-011
@@ -94,7 +94,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Źródło: audyt topografii 1 (kurator, 31.10).
 
 ### G-051 Podpis „Muzeum Historii Miasta Lublina” na kamienicy Jezuicka 3 zamiast na Bramie Krakowskiej
-- Status: zgłoszone
+- Status: w weryfikacji razem z etapem 1 ADR-0062 (d65e7f2)
 - Ważność: S4 (proponowana) · Zasięg: lokalny · Koszt: mały (labels/buildings w tools/osm-import)
 - Gdzie: w66286384 (478.7, −114.4); ile w mieście: 1 znane
 - Dowód: węzeł n993790419 `addr:street=Plac Władysława Łokietka addr:housenumber=3` leży w obrysie Jezuickiej 3, 6 m od r7224409; T-013
@@ -135,12 +135,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | `building-part-ignored` | Test importu: budynek z `building:part` wyższym od własnej bryły o ponad 3 m. Wymaga zachowania części w ekstrakcie | ≥ 5 w próbce, do ustalenia po ponownym pobraniu |
 - Źródło: audyt topografii 1 (kurator, 31.10).
 
-### G-054 Narzędzie zrzutów `glitch-shots` może zapisać klatkę sprzed ułożenia miasta
-- Status: w PR #62 (czeka na weryfikację)
-- Ważność: S4 (narzędzie, poza CI) · Koszt: mały
-- Dowód: po G-031 `captureFrame` nie rysuje własnej klatki. `e2e/glitch-shots.spec.ts:34-35` czeka na `frames() > n && citySettled()`, więc gdy miasto ułoży się w klatce pominiętej przez pacer, zrzut pokazuje ostatnią klatkę sprzed końca wczytywania. Sonda: 2 z 15 punktów, (520, −63) i (146, −49), przy load 11–12. Poprawka: czekać na klatkę narysowaną już po `citySettled`, jak `sampleNow` w npr-perf.
-- Pakiet właściciela: e2e (QA)
-
 ### G-055 Liczba wywołań rysowania skacze między klatkami w ustalonym mieście
 - Status: zgłoszone (z weryfikacji G-031)
 - Ważność: S4 (proponowana) · Koszt: nieznany
@@ -154,7 +148,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, packages/engine (mapcity), kontrakt: architekt
 
 ### G-057 Kościoły z wieżyczkami z OSM dostają dodatkowo proceduralne wieże renderera
-- Status: w weryfikacji (9ea7d04)
+- Status: w PR #69
 - Ważność: S3 (proponowana) · Zasięg: Archikatedra i inne kościoły z `building:part` · Koszt: mały
 - Dowód: po G-049 Archikatedra ma wieżyczki z części OSM i proceduralne wieże z `roof-plan`
 - Pakiet właściciela: packages/engine (mapcity)
@@ -186,7 +180,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola skanu `building-part-orphan` (część bez obrysu i bez bryły w grze), baza 1 → 0
 
 ### G-062 Przejścia pod mostami zablokowane: grunt pod pomostem to pomost (Podwale, bulwar Bystrzycy)
-- Status: zgłoszone (audyt topografii 2, 31.10)
+- Status: w weryfikacji (1bf85b1)
 - Ważność: S3 (proponowana) · Zasięg: lokalny (2 miejsca, 6 par droga × most) · Koszt: średni
 - Gdzie: Podwale w66318260 (747, 166) z chodnikami w56965511, w56965514 i schodami w56965515 pod wiaduktem Zamkowej (teren −19,2, pomost −13,5); ścieżka bulwaru w307943890 pod mostami Mełgiewskiej (2435, 262) i (2450, 306); T-024
 - Dowód: `groundY` zwraca pomost (sonda kuratora `topo-deck`); ADR-0053 to przyznaje
@@ -281,6 +275,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | G-038 | `lane-dead-end` nie sprawdza użycia początku, który „spotyka” koniec | #51 |
 | G-031 | Testy TPP w `npr-perf` i smoke save/load przekraczają limit przy obciążeniu | #57 |
 | G-049 | Zabytki bez wież i hełmów: import pomijał `building:part` | #65 |
+| G-054 | `glitch-shots` mógł zapisać klatkę sprzed ułożenia miasta | #62 |
 
 ## Odrzucone
 - G-005 Wiata przystanku wchodzi w ścianę przy Alei Tysiąclecia: duplikat (G-011)
