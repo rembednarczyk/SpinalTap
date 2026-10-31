@@ -53,4 +53,11 @@ export const enContent = {
   "hook.infiltrate_2": "The guard at the office door goes out for a smoke every half hour",
   "hook.hack_1": "After its third shot the sniper has four seconds without a laser",
   "hook.hack_2": "Under the crane's jib the sniper can't see you",
+  // What the scanner calls a thing (ScanFocusChanged.name).
+  "scan.name.camera": "Camera",
+  "scan.name.vending": "Vending machine",
+  "scan.name.speaker": "Loudspeaker",
+  "scan.name.neon": "Neon",
+  "scan.name.enemy": "Enemy",
+  "scan.name.passerBy": "Passer-by",
 } as const;

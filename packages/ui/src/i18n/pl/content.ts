@@ -50,4 +50,11 @@ export const plContent = {
   "hook.infiltrate_2": "Strażnik spod drzwi biura co pół godziny wychodzi zapalić",
   "hook.hack_1": "Snajper po trzecim strzale ma cztery sekundy bez lasera",
   "hook.hack_2": "Pod wysięgnikiem dźwigu snajper cię nie widzi",
+  // What the scanner calls a thing (ScanFocusChanged.name).
+  "scan.name.camera": "Kamera",
+  "scan.name.vending": "Automat z napojami",
+  "scan.name.speaker": "Głośnik",
+  "scan.name.neon": "Neon",
+  "scan.name.enemy": "Wróg",
+  "scan.name.passerBy": "Przechodzień",
 } as const satisfies Readonly<Record<keyof typeof en, Message>>;

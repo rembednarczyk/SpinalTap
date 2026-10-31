@@ -44,13 +44,16 @@ export const hackTargetKind = (e: Entity): HackTargetKind | null => {
   return null;
 };
 
-const DEVICE_NAMES: Readonly<Record<DeviceKind, string>> = { camera: "Kamera", vending: "Automat z napojami", speaker: "Głośnik", neon: "Neon" };
+const DEVICE_NAMES: Readonly<Record<DeviceKind, string>> = { camera: "scan.name.camera", vending: "scan.name.vending", speaker: "scan.name.speaker", neon: "scan.name.neon" };
 
-/** What the scanner calls it: the device, the fighter's side, or a passer-by. */
+/**
+ * What the scanner calls it: the device, the fighter's side, or a passer-by. A key of the app's
+ * catalogs (ADR-0056), except a fighter's side, which is the faction's name as core gives it.
+ */
 export const scanName = (e: Entity): string => {
   if (e.device) return DEVICE_NAMES[e.device.kind];
-  if (e.ai || e.sniper) return e.faction ? FACTIONS[e.faction] : "Wróg";
-  return "Przechodzień";
+  if (e.ai || e.sniper) return e.faction ? FACTIONS[e.faction] : "scan.name.enemy";
+  return "scan.name.passerBy";
 };
 
 /** Where the scanner looks at it: a device's centre, a person's chest. */

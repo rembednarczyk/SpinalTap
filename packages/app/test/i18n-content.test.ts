@@ -89,3 +89,10 @@ describe("observation hooks", () => {
     expect(translate("en", "hook.retrieve_1")).toBe("After midnight the stash's second guard goes out for ramen for a quarter of an hour");
   });
 });
+
+describe("the scanner's names", () => {
+  it("are written in both languages for each key the simulation names a thing by", () => {
+    for (const key of ["camera", "vending", "speaker", "neon", "enemy", "passerBy"]) expectWritten(`scan.name.${key}`);
+    expect(translate("pl", "scan.name.vending")).toBe("Automat z napojami");
+  });
+});
