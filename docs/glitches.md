@@ -273,14 +273,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: słupki w rzędzie mają obrót wzdłuż rzędu; łańcuch łączy dokładnie sąsiednie słupki rzędu (koniec łańcucha przy sąsiedzie, bez wolnych końców w powietrzu); słupek większy (wymiary z dokumentacji/zdjęć Lublina), bryła w sim zgodna z modelem; migawka NPR obejrzana i świadomie zaktualizowana, budżety bez podnoszenia.
 
 ### G-033 Postać, która przechodzi w inne miejsce według flag, „umiera”: renderer gra upadek
-- Status: w naprawie (razem z G-034)
+- Status: weryfikacja PRZYJĘTE, w PR
 - Ważność: S2 · Zasięg: każda postać warunkowa (Kaito klinika → bar, cele wariantów kontraktów) · Koszt: mały
 - Dowód: po `met_fixer` `Streaming.syncPresence` usuwa Kaito z kliniki; `RenderSync` (`presentation/render-sync.ts:101`) zgłasza `despawn(id, "removed")`, bo usunięcie nie jest w `streamedOut`, a `CharacterViews.despawn` z `fall` gra animację śmierci.
 - Pakiet właściciela: packages/sim (`world/streaming.ts`, `presentation/render-sync.ts`)
 - Test przyjęcia: test sesji: po ustawieniu flagi postać warunkowa znika z `despawn(..., "unloaded")`; zabity NPC dalej dostaje `"removed"`.
 
 ### G-034 Kaito od początku w Neon Koi (decyzja użytkownika)
-- Status: w naprawie (razem z G-033)
+- Status: weryfikacja PRZYJĘTE (po 2. rundzie: Ume i barman wskazują Neon Koi), w PR. Zapis v16 z migracją; złote hashe replay i pojedynku zmienione przez wersję schematu i pozycję Kaito
 - Ważność: S3 · Zasięg: prolog · Koszt: średni
 - Zmiana: jedna postać Kaito w barze bez warunku `met_fixer`; prolog w `m0.ink` i cel HUD prowadzą z kliniki do Neon Koi; pierwsza rozmowa w barze.
 - Pakiet właściciela: packages/sim (`content/district-m0.ts`), packages/narrative (`ink/m0.ink`), packages/app (`objective.ts`)
