@@ -3,6 +3,7 @@ import type { EntityId, ViewDescriptor } from "@seki/core";
 import type { MoonShadow } from "../npr/moon-shadow";
 import type { ToonMaterials } from "../npr/toon-material";
 import { CityKit } from "./city-kit";
+import { type CityProps, parseCityProps } from "./city-props";
 import { type DressBlock, isWalkedRoof } from "./dressing-plan";
 import type { WorldDressing } from "./dressing";
 import type { Stage } from "./stage";
@@ -23,6 +24,10 @@ export interface CityKitLoaderDeps {
   readonly dressing: WorldDressing;
   /** Blocks in view, for the walked-roof test (ADR-0027, C8). */
   readonly blocks: () => Iterable<DressBlock>;
+  /** Phones: the cheap versions of the facade props (ADR-0058). */
+  readonly lite?: boolean;
+  /** The facade props have loaded (ADR-0058): the map city bakes them into its cells too. */
+  readonly onProps?: (props: CityProps) => void;
 }
 
 /**
@@ -34,6 +39,7 @@ export class CityKitLoader {
   private city: CityKit | null = null;
   private readonly pendingSkins = new Map<EntityId, PendingSkin>();
   private daylight = 0;
+  private cityProps: CityProps | null = null;
 
   constructor(private readonly deps: CityKitLoaderDeps) {}
 
@@ -42,8 +48,16 @@ export class CityKitLoader {
     return this.city;
   }
 
-  /** Loads the kit in the background; the scene is not ready (reference frames wait) until it is in. */
-  load(url: string): void {
+  /** The facade props once they have loaded (ADR-0058). */
+  get props(): CityProps | null {
+    return this.cityProps;
+  }
+
+  /**
+   * Loads the kit in the background, then the facade props (ADR-0058) if there is a URL for
+   * them; the scene is not ready (reference frames wait) until both are in.
+   */
+  load(url: string, propsUrl: string | null = null): void {
     const { scene } = this.deps.stage;
     const token = {};
     scene.addPendingData(token);
@@ -53,11 +67,13 @@ export class CityKitLoader {
         this.city = new CityKit(scene, this.deps.materials, this.deps.stage.glow, data, {
           onCovered: (box) => this.stepBack(box),
           walkedRoof: (center, size) => isWalkedRoof({ center, size }, this.deps.blocks()),
+          lite: this.deps.lite === true,
         });
         this.city.setDaylight(this.daylight);
         for (const [id, p] of this.pendingSkins) this.city.add(id, p.view.skin, p.view.size, p.center, p.box);
         this.pendingSkins.clear();
         this.deps.dressing.setKit("kit");
+        if (propsUrl) this.loadProps(propsUrl);
       })
       .catch((err: unknown) => {
         console.warn(`[city] ${url} failed to load, keeping plain blocks`, err);
@@ -65,6 +81,26 @@ export class CityKitLoader {
         // The plain blocks get the procedural facades of every chunk (W9).
         this.deps.dressing.setKit("bare");
       })
+      .finally(() => scene.removePendingData(token));
+  }
+
+  /** The props come after the kit: without them the procedural decor stays. */
+  private loadProps(url: string): void {
+    const { scene } = this.deps.stage;
+    const token = {};
+    scene.addPendingData(token);
+    fetch(url)
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`city props ${url}: ${res.status}`);
+        return parseCityProps(await res.arrayBuffer());
+      })
+      .then((props) => {
+        if (scene.isDisposed) return;
+        this.cityProps = props;
+        this.city?.setProps(props);
+        this.deps.onProps?.(props);
+      })
+      .catch((err: unknown) => console.warn(`[city] ${url} failed to load, keeping the procedural decor`, err))
       .finally(() => scene.removePendingData(token));
   }
 

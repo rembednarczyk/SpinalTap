@@ -15,6 +15,8 @@ import {
   planSkin,
   signColor,
 } from "./city-kit-data";
+import { type CityProps, addPropToKit, kitUvs } from "./city-props";
+import { planKitProps } from "./kit-props";
 
 /** Side of the square cells the city is cut into: one mesh, so one draw call per pass, per cell. */
 export const CITY_BUCKET = 64;
@@ -46,6 +48,8 @@ export interface CityKitOptions {
    * roofs get models without tall roof parts and lose their roof housings.
    */
   readonly walkedRoof?: (center: Vec3, size: Vec3) => boolean;
+  /** Phones: the cheap versions of the facade props (ADR-0058). */
+  readonly lite?: boolean;
 }
 
 /** RGBA pixels of the sign label atlas (black boards, neon letters), or null without a canvas. */
@@ -138,6 +142,8 @@ export class CityKit {
   private readonly where = new Map<EntityId, string>();
   readonly material: ShaderMaterial;
   private readonly glowColor = new Color3(1, 1, 1);
+  /** Facade props (ADR-0058), once their file has loaded, and the kit UVs of their swatches. */
+  private props: { readonly data: CityProps; readonly uvs: readonly (readonly [number, number])[] } | null = null;
 
   constructor(
     private readonly scene: Scene,
@@ -202,6 +208,12 @@ export class CityKit {
     }
   }
 
+  /** The facade props have loaded: every cell is rebuilt with them. */
+  setProps(props: CityProps): void {
+    this.props = { data: props, uvs: kitUvs(props, this.data) };
+    for (const bucket of this.buckets.values()) bucket.dirty = true;
+  }
+
   has(id: EntityId): boolean {
     return this.where.has(id);
   }
@@ -228,7 +240,9 @@ export class CityKit {
           const model = this.data.models.get(p.key);
           if (model) sink.addModel(model, p, walked);
         }
-        addDecor(sink, this.data, plan);
+        const props = this.props ? planKitProps(this.props.data, plan, m.skin, m.size, { lite: this.options.lite === true, walkedRoof: walked }) : null;
+        addDecor(sink, this.data, props ? { ...plan, decor: props.decor } : plan);
+        for (const p of props?.props ?? []) if (this.props) addPropToKit(sink, this.props.data, this.props.uvs, p.model, p.xf);
         addSigns(sink, plan);
         if (m.box && m.box.isVisible) {
           m.box.isVisible = false;

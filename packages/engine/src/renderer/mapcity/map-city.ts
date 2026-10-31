@@ -22,6 +22,8 @@ import { type AcrossAt, SPAN_MAX, type Span, findSpans, planFarCanyon, planNearC
 import { planCanyonSigns } from "./canyon-signs";
 import { planFarVertical, planNearVertical } from "./vertical-plan";
 import { planWallClutter } from "./wall-clutter";
+import { type PropSlot, bakeSlots, planFacadeExtras } from "./facade-props";
+import type { CityProps } from "../city-props";
 import { planSteps } from "./steps-plan";
 import { StreetProps, type StreetPropsStats } from "./street-props";
 import { MapSkyline } from "./skyline";
@@ -146,6 +148,8 @@ export class MapCity {
   private streetProps: StreetProps | null = null;
   /** The megabuildings over the roofs (ADR-0051). */
   private readonly skyline: MapSkyline;
+  /** Facade props baked into the near meshes (ADR-0058), once loaded. */
+  private facadeProps: CityProps | null = null;
 
   constructor(private readonly deps: MapCityDeps) {
     this.signs = new MapSignMaterial(deps.scene, deps.signAtlas);
@@ -364,6 +368,12 @@ export class MapCity {
     return this.waitingNear === 0 && (this.streetProps?.waiting ?? 0) === 0;
   }
 
+  /** The facade props have loaded (ADR-0058): the near meshes are rebuilt with them. */
+  setProps(props: CityProps): void {
+    this.facadeProps = props;
+    for (const c of this.cells.values()) c.nearDirty = true;
+  }
+
   /** Night 0 .. day 1 (ADR-0017): lit windows and shop fronts follow, the neon dims. */
   setDaylight(daylight: number): void {
     this.daylight = daylight;
@@ -540,11 +550,15 @@ export class MapCity {
     cell.nearDirty = false;
     const sink = new MeshSink();
     const lite = this.deps.quality === "low";
+    const slots: PropSlot[] = [];
+    const place = this.facadeProps ? (s: PropSlot) => slots.push(s) > 0 : undefined;
     for (const f of cell.frames) {
       planNearBuilding(sink, f);
-      planNearVertical(sink, f);
-      if (!lite) planWallClutter(sink, f);
+      planNearVertical(sink, f, place);
+      if (!lite) planWallClutter(sink, f, place);
+      if (!lite && place) planFacadeExtras(f, place);
     }
+    if (this.facadeProps) bakeSlots(sink, this.facadeProps, slots, lite);
     planNearCanyon(sink, cell.spans, lite);
     if (sink.empty) return;
     const m = this.mesh(`map-near-${cell.key}`, sink, "facade");
