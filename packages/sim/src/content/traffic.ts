@@ -82,19 +82,95 @@ export const offsetLine = (pts: readonly Pt[], off: number): Pt[] =>
     return [Math.round((p[0] + tz * off) * 100) / 100, Math.round((p[1] - tx * off) * 100) / 100] as const;
   });
 
+/** How far the carriageway reaches to the right of the polyline at arc length `s`, to 9 m (m; 0 off the road). */
+const reachAt = (pts: readonly Pt[], s: number, side: 1 | -1): number => {
+  const { x, z, tx, tz } = pointAt(pts, s);
+  let w = 0;
+  while (w < 9 && onRoad(x + tz * side * (w + 0.25), z - tx * side * (w + 0.25))) w += 0.25;
+  return w;
+};
+
 /** How far the carriageway reaches to the right of a street's axis: the median (or quantile `q`) over samples every 10 m (m). */
 export const roadHalfWidth = (pts: readonly Pt[], side: 1 | -1 = 1, q = 0.5): number => {
   const out: number[] = [];
   const len = polylineLength(pts);
   for (let s = 5; s < len; s += 10) {
-    const { x, z, tx, tz } = pointAt(pts, s);
-    let w = 0;
-    while (w < 9 && onRoad(x + tz * side * (w + 0.25), z - tx * side * (w + 0.25))) w += 0.25;
+    const w = reachAt(pts, s, side);
     if (w > 0) out.push(w);
   }
   if (out.length === 0) return 0;
   out.sort((a, b) => a - b);
   return out[Math.floor((out.length - 1) * q + 0.5)]!;
+};
+
+/** The local width of a street is sampled this often along it (m), and its narrowest taken over this many samples. */
+const WIDTH_STEP = 5;
+const WIDTH_WINDOW = 5;
+/** Less asphalt than this beside the axis is a chunk's seam or an island, not a lane's room (m). */
+const MIN_REACH = 1;
+/** A lane's car keeps this far inside the kerb: half the widest car and a hand's breadth (m). */
+const LANE_REACH = 1;
+/** How fast a lane edges towards the axis where the carriageway narrows (m aside per m along). */
+const LANE_EDGE = 0.1;
+
+/**
+ * The right-hand lane of a two-way street walked along `pts`: the whole street's lane, `whole` m
+ * from its axis, brought in towards the axis where the carriageway right there is too narrow for
+ * its car. A street of wide and narrow stretches (Staszica) kept the lane of its median and ran
+ * over the narrow stretch's kerb (G-090). The width is the narrowest of a few samples, so a side
+ * street's mouth does not move the lane out, and the lane comes in gently, ahead of the narrowing.
+ */
+const laneLine = (pts: readonly Pt[], whole: number): Pt[] => {
+  const len = polylineLength(pts);
+  const at: number[] = [];
+  for (let s = WIDTH_STEP / 2; s < len; s += WIDTH_STEP) at.push(s);
+  const widths = at.map((s) => reachAt(pts, s, 1));
+  const off = widths.map((_, i) => {
+    const near = widths.slice(Math.max(0, i - (WIDTH_WINDOW >> 1)), i + (WIDTH_WINDOW >> 1) + 1).filter((w) => w >= MIN_REACH);
+    if (near.length === 0) return whole;
+    const half = Math.min(...near);
+    return Math.min(whole, Math.max(laneOffset(half), half - LANE_REACH));
+  });
+  for (let i = 1; i < off.length; i++) off[i] = Math.min(off[i]!, off[i - 1]! + LANE_EDGE * WIDTH_STEP);
+  for (let i = off.length - 2; i >= 0; i--) off[i] = Math.min(off[i]!, off[i + 1]! + LANE_EDGE * WIDTH_STEP);
+  if (off.every((o) => o === whole)) return offsetLine(pts, whole);
+  return offsetAlong(pts, at, off);
+};
+
+/**
+ * The polyline moved to its right by `off[j]` at arc length `at[j]`, linearly between and level
+ * past the ends: its own points keep their way across a corner (as `offsetLine`), and a point is
+ * put in where the offset bends along a straight piece.
+ */
+const offsetAlong = (pts: readonly Pt[], at: readonly number[], off: readonly number[]): Pt[] => {
+  const offAt = (s: number): number => {
+    if (s <= at[0]!) return off[0]!;
+    const j = at.findIndex((a) => a >= s);
+    if (j < 0) return off[off.length - 1]!;
+    return off[j - 1]! + ((off[j]! - off[j - 1]!) * (s - at[j - 1]!)) / (at[j]! - at[j - 1]!);
+  };
+  const round = (v: number) => Math.round(v * 100) / 100;
+  const out: Pt[] = [];
+  let acc = 0;
+  pts.forEach((p, i) => {
+    if (i > 0) {
+      const a = pts[i - 1]!;
+      const seg = Math.hypot(p[0] - a[0], p[1] - a[1]);
+      const [tx, tz] = seg > 1e-9 ? [(p[0] - a[0]) / seg, (p[1] - a[1]) / seg] : [0, 0];
+      at.forEach((s, j) => {
+        const bends = off[j] !== (off[j - 1] ?? off[j]) || off[j] !== (off[j + 1] ?? off[j]);
+        if (!bends || s <= acc + 0.5 || s >= acc + seg - 0.5) return;
+        const x = a[0] + tx * (s - acc);
+        const z = a[1] + tz * (s - acc);
+        out.push([round(x + tz * off[j]!), round(z - tx * off[j]!)]);
+      });
+      acc += seg;
+    }
+    const [tx, tz] = dirAt(pts, i);
+    const o = offAt(acc);
+    out.push([round(p[0] + tz * o), round(p[1] - tx * o)]);
+  });
+  return out;
 };
 
 /** Arc length of the polyline's point nearest to (x, z), and how far from the line it is (+ right). */
@@ -196,8 +272,8 @@ const lanesOf = (c: RoadChain, k: number, all: readonly RoadChain[]): TrafficRou
   const back = [...c.points].reverse();
   const off = laneOffset(roadHalfWidth(c.points, 1));
   const ways: [string, Pt[]][] = [
-    ["f", offsetLine(c.points, off)],
-    ["b", offsetLine(back, off)],
+    ["f", laneLine(c.points, off)],
+    ["b", laneLine(back, off)],
   ];
   for (const [w, pts] of ways) {
     out.push(routeOf(`${id}:${w}`, c.name, "cars", pts, road.speed, cars(len)));
