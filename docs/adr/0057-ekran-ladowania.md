@@ -30,3 +30,13 @@ Każde z tych ładowań blokuje klatki albo wątek strony. Gracz widzi przez to 
 - Kliknięcie „New Game” wraca od razu, bo ekran ładowania pokazuje się w pierwszej klatce, a praca idzie asynchronicznie. Testy e2e czekają na koniec ekranu ładowania, a nie na samo kliknięcie.
 - Pierwsze minuty gry mają mniej szarpnięć, bo nie ma pierwszego użycia shaderów i ubierania na oczach gracza.
 - Start trwa dłużej o czas, który dotąd rozkładał się na grę. Mierzy go e2e w raporcie, a budżet czasu startu ustalamy z pomiaru.
+
+## Wdrożenie
+- **Kontrakt** (zgoda orkiestratora, 31.10): `RenderPort.prepare?(at, onProgress)` oraz `PrepareStage` ze stałą listą `PREPARE_STAGES` w `packages/core/src/ports/render-port.ts`. Port bez `prepare` (fałszywe porty testów, renderer bez tej metody) startuje grę od razu, jak dotąd.
+- **Etapy w kolejności, z wagą w pasku:**
+  1. `models` (0,3): manifest modeli, potem każdy plik postaci i broni wczytany do kontenera, bez ubierania. Plik z błędem liczy się jako skończony, a postać zostaje proceduralna.
+  2. `cityKit` (0,2): city kit i rekwizyty fasad (ADR-0058), wczytane albo odrzucone.
+  3. `city` (0,3): miasto wokół kamery, która stoi przy graczu w `at`. Etap trwa, aż `citySettled` utrzyma się przez dwie kolejne klatki.
+  4. `shaders` (0,2): `scene.whenReadyAsync`, potem rozgrzewające klatki pod ekranem ładowania. Każda klatka rysuje się tylko wtedy, gdy pozwala na to `GpuPacer` (G-029). Etap kończy się, gdy scena zostaje gotowa po narysowanej klatce.
+- **App.** Ekran `loading` prowadzi `LoadingController`. Postęp jest monotoniczny. Symulacja stoi, bo krokuje tylko na ekranie `playing`. Nowy start w trakcie ładowania, np. szybkie wczytanie, unieważnia poprzedni.
+- **Rysowanie.** Na ekranie `loading` pętla gry aktualizuje scenę, ale jej nie rysuje: klatki rysuje sam etap `shaders`. Tryb `?reference` rysuje klatkę wzorcową dopiero po końcu ładowania.
