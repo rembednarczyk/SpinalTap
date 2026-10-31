@@ -58,6 +58,12 @@ Modele są low-poly i mają kolory w palecie albo w płaskich materiałach, czyl
   6. Decale: graffiti, wlepki, tabliczki, kratki ściekowe.
   7. Drony nad kanionami ulic.
   8. Tłum: statyczne pozy (Posed Humans) na ławkach i w kolejkach. Riggowane Modular Men/Women tylko dla nazwanych NPC, bo bez LOD są za ciężkie na wspólną siatkę tłumu.
+  9. **Drzwi automatyczne i rozsuwane** (dodane 31.10): modele skrzydeł, ram, paneli z kodem i podświetlenia zamiast proceduralnych skrzydeł z ADR-0038, dla kliniki, Neon Koi, biura Tessen i kolejnych wnętrz.
+     - Źródła CC0, np. `Door` z Quaternius Cyberpunk Game Kit (pobrany, 324 trójkąty) i elementy sci-fi z paczek Kenneya.
+     - Warianty: przeszklone dwuskrzydłowe drzwi sklepu, stalowe drzwi pancerne na kod, roleta.
+     - Model pasuje do istniejącej bryły kolizji skrzydła, a renderer tylko podmienia wygląd. Ruch dalej idzie przez `updateTransform` z `door-system.ts`, więc symulacja się nie zmienia.
+     - Stan zamka widać po kolorze diody panelu (zamknięte, otwarte, wyłamane).
+     - Do tego dźwięk otwierania z ADR-0060.
 
 ## Konsekwencje
 - Miasto będzie gęstsze i bardziej kolorowe bez nowych wywołań rysowania (poza dronami). Rośnie liczba trójkątów i wierzchołków w siatkach bloków i komórek, co mierzy `npr-perf` na scenach Lublina i telefonie.

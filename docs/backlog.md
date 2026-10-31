@@ -4,6 +4,28 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
 
 ## Następne
 
+- **Plan z audytu luk (31.10, `docs/audyt-luk.md`).** Priorytety: P0 blokuje grę albo inne prace, P1 standard gatunku o dużym wpływie, P2 ważne później, P3 opcjonalne. Kolejność P0 i P1 według zależności:
+  - **P0, teraz:**
+    1. [gotowe, #56] Autozapis (po kroku zadania, kontrakcie, zmianie dzielnicy, co 5 minut) i zapis przy `visibilitychange`/`pagehide` na telefonie; wejście do lokalu z ADR-0061.
+    2. Stabilne e2e (G-031, G-043) i ekran ładowania (ADR-0057). W toku.
+    3. Języki: etapy 2c–5 (ADR-0056). W toku.
+    4. Obezwładnienie bez zabijania, ogłuszenie, przenoszenie ciał (ADR do napisania). Koszt M. Musi być przed etapem 3 ADR-0059, bo drzewko Cień i XP za skradanie je zakładają.
+    5. Poziom trudności z presetami wspomagania (ADR do napisania). Koszt M. Przed etapem 8 ADR-0059 (balans liczony dla „normalnego”).
+    6. Rozwój postaci i skalowanie (ADR-0059), etap 1 w toku.
+    7. Celowanie na telefonie i padzie (wspomaganie, celowanie ze strzałem jednym kciukiem), z padem w tym samym ADR-ze.
+  - **P1, potem:**
+    1. Raportowanie błędów (`window.onerror`, `unhandledrejection`, utrata kontekstu WebGL) i widoczna wersja gry. Koszt S–M.
+    2. Automatyczny dobór jakości, limit klatek, tryb baterii na telefonie. Po ADR-0057 i podziale renderera, z danymi z raportów błędów.
+    3. AI walki: osłony, potem koordynacja grupy (flankowanie, tłumienie, wycofanie). Koszt L.
+    4. Granaty i urządzenia rzucane (EMP, dym, flash). Po osłonach, przed etapem 4 ADR-0059.
+    5. Nawigacja: własny znacznik i trasa GPS na minimapie i mapie (graf chodników z ADR-0041).
+    6. Autorskie zadania poboczne z wyborami oraz akt III z epilogiem i ekranem końca. Po etapie 5 ADR-0056 i etapach 1 i 5 ADR-0059.
+    7. Tanie opcje dostępności: suwaki szyn audio (muzyka, SFX, dialog, radio), wyłączenie kołysania i wstrząsów kamery, rozmiar napisów; pad w menu i dialogu.
+    8. Samouczek w misji i podpowiedzi systemowe (heat, Breach, przebrania).
+    9. Ikony przedmiotów i assety ubrań (już w planie), żywe miasto (ADR-0058, w toku), podział renderera (ADR-0031).
+  - **P2:** szefowie, ragdoll i reakcje śmierci, większy arsenał (broń ciężka i inteligentna, blok NPC), patrole po trasie, zagrożenia środowiska i alternatywne wejścia, relacje z postaciami i widoczne konsekwencje wyborów, pogoda jako stan w `sim`, mieszkanie gracza, aktywności otwartego świata, osobne ustawienia grafiki, eksport zapisu, PWA/offline, odzywki walki.
+  - **P3:** pojazdy prowadzone przez gracza (świadome cięcie przy metrze i mieście pieszym), kreator postaci, NG+, muzyka per dzielnica, osiągnięcia, tryb foto, kodeks, modowanie.
+  - Łańcuch krytyczny: autozapis → obezwładnienie → trudność → ADR-0059 etapy 1–7 → osłony i AI → granaty → balans (ADR-0059 etap 8) → treść poboczna i akt III. Równolegle: i18n przed treścią; raporty błędów → jakość na telefonie.
 - **Kolejność uzgodniona z użytkownikiem (31.10):** najpierw G-031 (niestabilne e2e), dokończenie języków, ekran ładowania i podział renderera; drobne glitche równolegle, po jednym w przerwach.
 - **[w toku: etap 1 ADR-0058] Żywe, kolorowe miasto: znacznie więcej assetów CC0 z internetu.** Rozpoznanie: 33 paczki CC0 (Kenney, Quaternius, OpenGameArt, ambientCG). Rekwizyty ulicy (automaty, stragany, rośliny, skutery, ekrany), więcej pojazdów i elementów fasad, postacie tłumu, decale. Wpięcie przez `tools/city_kit.py` (wspólna paleta, jedna siatka na komórkę), z ADR-em i pomiarem budżetów (`tools/perf-budgets.json`).
 - **[plan, 31.10] Celowanie na telefonie: wspomaganie i celowanie ze strzałem jednym kciukiem.** Dziś nie da się jednocześnie trzymać celowania i strzelać jednym palcem. Do ADR-u:
@@ -18,8 +40,38 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
   - **Łup dopasowany do postaci**: wagi tabel przesuwają się w stronę broni i stylu, którego gracz używa (rodzaj broni, umiejętności), z ochroną przed pechem (gwarantowany lepszy łup po serii słabych).
   - **Przeciwnicy i kontrakty**: poziom wroga z pasma dzielnicy i poziomu gracza; stawki, skład i nagrody kontraktów liczone z tego samego poziomu zamiast `ukończone / 3`.
   - Zasady: wszystko w `core` jako czyste funkcje z `RandomPort`, zmiana schematu zapisu z migracją (poziom, doświadczenie, poziom przedmiotów; stare przedmioty dostają poziom z ich rzadkości), złote hashe aktualizowane świadomie, teksty przez klucze (ADR-0056), balans testami symulacji (krzywa doświadczenia, rozkład łupów na poziomach).
+- **[ADR-0058 etap 9, 31.10] Assety drzwi automatycznych i rozsuwanych.** Dziś skrzydła drzwi to proceduralne bryły (ADR-0038). Modele CC0 (Quaternius Cyberpunk `Door`, elementy sci-fi Kenneya): przeszklone drzwi sklepu, drzwi pancerne na kod, rolety, panele z diodą stanu zamka. Podmiana wyglądu bez zmian w symulacji.
+- **[ADR-0061, 31.10] Zdarzenie wejścia do lokalu pod autozapis.** Autozapis (#56, w main) zapisuje dziś przy zmianie dzielnicy zamiast przy wejściu do lokalu, bo takiego zdarzenia nie ma. ADR-0061: obszary `INTERIORS`, zdarzenia `InteriorEntered`/`InteriorLeft`, autozapis przy wejściu; to samo zdarzenie posłuży pogłosowi i otoczeniu (ADR-0060). Po merge'u autozapisu.
+- **[ADR-0060, 31.10] Głosy postaci i bohaterki oraz rozbudowa dźwięku.** Decyzje: całość z TTS (bez aktorów), VO po angielsku z napisami en/pl, wyzwalacze kwestii (interakcja, zaczepki, zasłyszane rozmowy NPC); sześć etapów w ADR-0060. Dziś gra nie ma dialogów mówionych (VO): są napisy i syntezowane „głosy” efektów (`engine/src/audio/synth-voices.ts`), a SFX to nagrania CC0 i synteza (`app/public/audio`, ADR-0013). W audycie VO było P3; użytkownik podnosi je do planu. Do ADR-u:
+  - **Zakres głosów, od najtańszego:**
+    1. odzywki (barki) w walce, skradaniu i tłumie: wrogowie, cywile, Seki (ok. 20–40 linii na typ postaci);
+    2. kluczowe linie wątku głównego (powitania, zwroty akcji, zakończenia aktów);
+    3. pełne dialogi postaci nazwanych (Kaito, Mori, Ume, Hana, Genzō…) i Seki.
+  - **Źródło głosów** (licencja musi pozwalać na dystrybucję w grze; zapis źródła i licencji w README katalogu jak przy assetach):
+    - nagrania aktorów;
+    - syntezowanie przez otwarty TTS na licencji pozwalającej na użycie komercyjne (każdy głos sprawdzony osobno);
+    - mieszane: TTS na odzywki, aktorzy na główne linie.
+  - **Języki (ADR-0056):** VO po angielsku z napisami w obu językach, albo w obu językach. Struktura ink z `#voice:` jako tagiem linii, a pliki audio według klucza linii i języka.
+  - **Technika:**
+    - odtwarzanie przez `AudioPort` i szynę dialogu (suwak w opcjach z audytu);
+    - ściszanie muzyki pod mową;
+    - przestrzenne odzywki w świecie;
+    - kompresja OGG/Opus;
+    - ładowanie strumieniowe, nie na starcie;
+    - budżet rozmiaru dla telefonu.
+  - **Dźwięki:**
+    - kroki według nawierzchni (bruk, asfalt, metal, kałuże);
+    - foley broni i przeładowań;
+    - warstwy otoczenia per dzielnica (targ, deptak, nabrzeże, Stare Miasto);
+    - ruch aut i trolejbusów;
+    - drony i neony;
+    - deszcz zależny od pogody;
+    - UI;
+    - wnętrza z pogłosem.
+    
+    Źródła CC0 (Kenney, Freesound CC0, OpenGameArt), z tą samą zasadą licencji.
 - **[w toku] Języki gry (ADR-0056).** Angielski domyślny, polski w opcjach. Etap 1 (menu, opcje, zapadka) i paczka 2a (ekwipunek, sklepy) są gotowe, 2b (panele świata) jest w PR #47. Zostaje:
-  - HUD i dotyk (2c, po G-035);
+  - HUD i dotyk (2c): część zmergowana (#50), dalsza część na gałęzi `i18n2c2` (ekran śmierci, zegar, pościg, wykrycie, minimapa, skaner); zostaje karta kontraktu, pasek broni („Boczna: …”), plakietka „Spalona przykrywka” w `hud.tsx`, nazwy buffów z `core` (etap 3) i rzutowanie `key as MessageKey` w `hint-sync.ts` do zastąpienia typem;
   - teksty domeny w `core` jako klucze (etap 3);
   - treść `sim` (etap 4);
   - narracja `ink/en` (etap 5, ok. 1900 linii).
