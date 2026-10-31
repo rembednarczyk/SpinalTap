@@ -26,6 +26,28 @@ describe("vertical Lublin 2077 (ADR-0051)", () => {
     }
   });
 
+  it("keeps the district's rise next to a landmark and tells the renderer where the landmark stands (G-050)", () => {
+    const grodzka = all.find(({ b }) => b.id === "w66293355")!;
+    const gate = all.find(({ b }) => b.name === "Brama Grodzka")!.b;
+    const view = buildingView(grodzka.b, grodzka.district);
+    const vertical = view.kind === "building" ? view.vertical : undefined;
+    // Grodzka 36a keeps the five storeys of the district's rule over the gate it adjoins.
+    expect(vertical?.rise).toBe(15);
+    expect(vertical?.rise).toBe(verticalOf(grodzka.b, grodzka.district)?.rise);
+    // The gate's outline and top, relative to the house.
+    const near = vertical?.landmarks?.find((l) => Math.abs(l.top - (gate.y + gate.height + (gate.roof ?? 0) - grodzka.b.y)) < 1e-6);
+    expect(near?.outline).toHaveLength(gate.outline.length / 2);
+    expect(near!.outline[0]!.x + grodzka.b.x).toBeCloseTo(gate.outline[0]! + gate.x, 6);
+    expect(near!.outline[0]!.z + grodzka.b.z).toBeCloseTo(gate.outline[1]! + gate.z, 6);
+    // Only landmarks lower than the superstructure's top, and none for a building with no rise.
+    for (const { district, b } of all) {
+      const v = buildingView(b, district);
+      const vv = v.kind === "building" ? v.vertical : undefined;
+      for (const l of vv?.landmarks ?? []) expect(l.top).toBeLessThan(b.height + vv!.rise);
+      if (!vv?.rise) expect(vv?.landmarks).toBeUndefined();
+    }
+  });
+
   it("rises in whole storeys, most on Krakowskie and Podzamcze, not round the Rynek", () => {
     const rises: Record<string, number[]> = {};
     for (const { district, b } of all) {

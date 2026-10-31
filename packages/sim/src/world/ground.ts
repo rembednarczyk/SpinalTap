@@ -2,7 +2,7 @@ import { type TerrainGrid, type Vec3, terrainHeightAt } from "@seki/core";
 import type { World } from "miniplex";
 import type { Rect } from "../content/builders";
 import type { Entity } from "./components";
-import { type GroundDeck, deckAt } from "./deck";
+import { type GroundDeck, deckAt, deckCeiling } from "./deck";
 
 /** What the ground needs of a chunk: where it is and, optionally, its terrain (ADR-0043). */
 export interface GroundChunk {
@@ -92,41 +92,54 @@ export class GroundField {
     return this.chunks[this.chunkIndex(x, z)]?.terrain ?? null;
   }
 
-  /** Ground height at (x, z): the terrain, or a bridge's deck over it (ADR-0053), or 0. */
-  heightAt(x: number, z: number): number {
+  /**
+   * Ground height at (x, z): the terrain, or a bridge's deck over it (ADR-0053), or 0. For feet
+   * reaching up to `reach`, a deck high over the terrain and above the reach is overhead: under
+   * it the ground is the terrain (G-062).
+   */
+  heightAt(x: number, z: number, reach = Infinity): number {
     if (!this.hasTerrain) return 0;
     const chunk = this.chunks[this.chunkIndex(x, z)];
     const grid = chunk?.terrain;
     const h = grid ? terrainHeightAt(grid, x, z) : 0;
-    const deck = chunk?.decks ? deckAt(chunk.decks, x, z) : null;
+    const deck = chunk?.decks ? deckAt(chunk.decks, x, z, reach, h) : null;
     return deck !== null && deck > h ? deck : h;
+  }
+
+  /** The lowest underside of a bridge's deck over (x, z) at or above `head`, or Infinity (G-062). */
+  ceilingAt(x: number, z: number, head: number): number {
+    if (!this.hasTerrain) return Infinity;
+    const chunk = this.chunks[this.chunkIndex(x, z)];
+    if (!chunk?.decks) return Infinity;
+    return deckCeiling(chunk.decks, x, z, head, chunk.terrain ? terrainHeightAt(chunk.terrain, x, z) : 0);
   }
 
   /**
    * Gradient of the ground at (x, z), written into `out`: central differences over 0.5 m, a
-   * smoothed normal that ignores bumps finer than that. Zero on the street plane.
+   * smoothed normal that ignores bumps finer than that. Zero on the street plane. `reach` as in
+   * `heightAt`.
    */
-  gradientAt(x: number, z: number, out: { x: number; z: number }): { x: number; z: number } {
+  gradientAt(x: number, z: number, out: { x: number; z: number }, reach = Infinity): { x: number; z: number } {
     if (!this.hasTerrain || !this.gridAt(x, z)) {
       out.x = 0;
       out.z = 0;
       return out;
     }
     const h = SLOPE_HALF_SPAN;
-    out.x = (this.heightAt(x + h, z) - this.heightAt(x - h, z)) / (2 * h);
-    out.z = (this.heightAt(x, z + h) - this.heightAt(x, z - h)) / (2 * h);
+    out.x = (this.heightAt(x + h, z, reach) - this.heightAt(x - h, z, reach)) / (2 * h);
+    out.z = (this.heightAt(x, z + h, reach) - this.heightAt(x, z - h, reach)) / (2 * h);
     return out;
   }
 
   /** Steepness at (x, z) as rise over run. */
-  slopeAt(x: number, z: number): number {
-    const g = this.gradientAt(x, z, gradScratch);
+  slopeAt(x: number, z: number, reach = Infinity): number {
+    const g = this.gradientAt(x, z, gradScratch, reach);
     return Math.hypot(g.x, g.z);
   }
 
   /** Too steep to walk on (a bank, ADR-0043)? */
-  steepAt(x: number, z: number): boolean {
-    return this.hasTerrain && this.slopeAt(x, z) > MAX_WALK_SLOPE;
+  steepAt(x: number, z: number, reach = Infinity): boolean {
+    return this.hasTerrain && this.slopeAt(x, z, reach) > MAX_WALK_SLOPE;
   }
 
   /** Height of the ray above the ground at distance t (the street plane counts as -Infinity below). */
@@ -237,8 +250,11 @@ export const bindGround = (world: World<Entity>, ground: GroundField): void => {
 /** The ground of a world; the flat street when none was bound. */
 export const groundOf = (world: World<Entity>): GroundField => grounds.get(world) ?? FLAT_GROUND;
 
+/** A point this little under a bridge's deck still stands on it; lower down, under the bridge, it does not (G-062). */
+const ON_DECK = 0.5;
+
 /** Height of a point above the ground under it (ADR-0043); its y without terrain. */
-export const aboveGround = (world: World<Entity>, p: Vec3): number => p.y - groundOf(world).heightAt(p.x, p.z);
+export const aboveGround = (world: World<Entity>, p: Vec3): number => p.y - groundOf(world).heightAt(p.x, p.z, p.y + ON_DECK);
 
 /**
  * How far apart in height two points are as floors go (ADR-0043): on terrain, each is measured
@@ -248,7 +264,7 @@ export const aboveGround = (world: World<Entity>, p: Vec3): number => p.y - grou
 export const heightApart = (world: World<Entity>, a: Vec3, b: Vec3): number => {
   const g = groundOf(world);
   if (!g.hasTerrain) return Math.abs(a.y - b.y);
-  return Math.abs(a.y - g.heightAt(a.x, a.z) - (b.y - g.heightAt(b.x, b.z)));
+  return Math.abs(a.y - g.heightAt(a.x, a.z, a.y + ON_DECK) - (b.y - g.heightAt(b.x, b.z, b.y + ON_DECK)));
 };
 
 /**

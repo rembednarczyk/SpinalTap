@@ -40,10 +40,11 @@ const blocks = (c: Collider, x: number, z: number, radius: number, feet: number,
 
 /**
  * Height of the floor under a point for feet at `feet`: the ground (the street plane, or the
- * terrain of the chunk, ADR-0043) or the highest top within a step up.
+ * terrain of the chunk, ADR-0043, or a bridge's deck within a step up, G-062) or the highest top
+ * within a step up.
  */
 export const groundAt = (solids: readonly Collider[], field: GroundField, x: number, z: number, feet: number): number => {
-  let ground = field.heightAt(x, z);
+  let ground = field.heightAt(x, z, feet + STEP_HEIGHT);
   for (const c of solids) {
     if (!overCollider(c, x, z, EDGE_MARGIN)) continue;
     const top = colliderTop(c, x, z);
@@ -156,16 +157,18 @@ const RISE_EPS = 1e-3;
  * steeply, it stays. Feet above the terrain there (a jump, a roof) are not stopped.
  */
 const offTheBank = (field: GroundField, from: Entity["position"], x: number, z: number, feet: number): { x: number; z: number } => {
-  if (field.heightAt(x, z) <= feet + RISE_EPS || !field.steepAt(x, z)) return { x, z };
-  const g = field.gradientAt(x, z, slope);
+  // A bridge's deck high overhead is no bank for feet under it (G-062).
+  const reach = feet + STEP_HEIGHT;
+  if (field.heightAt(x, z, reach) <= feet + RISE_EPS || !field.steepAt(x, z, reach)) return { x, z };
+  const g = field.gradientAt(x, z, slope, reach);
   const len = Math.hypot(g.x, g.z);
   const dx = x - from.x;
   const dz = z - from.z;
   const up = (dx * g.x + dz * g.z) / len;
   const sx = from.x + dx - (g.x / len) * Math.max(0, up);
   const sz = from.z + dz - (g.z / len) * Math.max(0, up);
-  const rise = field.heightAt(sx, sz) - feet;
-  if (rise <= RISE_EPS || rise <= MAX_WALK_SLOPE * Math.hypot(sx - from.x, sz - from.z) || !field.steepAt(sx, sz)) return { x: sx, z: sz };
+  const rise = field.heightAt(sx, sz, reach) - feet;
+  if (rise <= RISE_EPS || rise <= MAX_WALK_SLOPE * Math.hypot(sx - from.x, sz - from.z) || !field.steepAt(sx, sz, reach)) return { x: sx, z: sz };
   return { x: from.x, z: from.z };
 };
 
@@ -272,7 +275,7 @@ const moveVertically = (ctx: SimContext, e: Mover, solids: readonly Collider[], 
   let next = feet + vy * dt;
   if (vy > 0) {
     // Head against an underside: the jump stops rising there.
-    const ceiling = ceilingAt(solids, x, z, feet + e.body.height);
+    const ceiling = Math.min(ceilingAt(solids, x, z, feet + e.body.height), field.ceilingAt(x, z, feet + e.body.height));
     if (next + e.body.height > ceiling) {
       next = Math.max(feet, ceiling - e.body.height);
       vy = 0;
