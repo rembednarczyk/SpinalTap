@@ -228,7 +228,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `pedestrian-bare` 59 → ≤ 10
 
 ### G-082 Domyślna szerokość jezdni wycina zmapowane chodniki
-- Status: w naprawie: łatka nakładana na G-090 (#88), baza `sidewalk-under-carriageway` 12
+- Status: w weryfikacji (commit 921e44d, gałąź `fix/g-082-v2` od G-090: `fitToKerb`, `sidewalk-under-carriageway` 262 → 12); przegląd kuratora w toku
 - Gdzie: Podwale w40052391/w305027452, Staszica w1150131461, w232805965, Zielona w173533827, Łęczyńska w85717509
 - Przyczyna: `roadWidth` bez `width`/`lanes` = 6,5/5 m, a `cutSidewalk` usuwa chodnik, którego środek leży na cudzej jezdni
 - Propozycja: zwęzić domyślną jezdnię do 2 × (odległość osi od chodnika − pół chodnika), min. 3 m
@@ -307,7 +307,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `car-road-hole` (albo nowa) wykrywa i spada do 0
 
 ### G-094 Przedsionek Trasy Podziemnej: pierwsze 4,5 m poza obszarem wnętrza
-- Status: w weryfikacji (commit 967f13c, gałąź `worktree-agent-acd7c723ef1ea6a32`: początek z obrysu OSM `facadeAt`, pokój drzwi 1 m + pełna szerokość; kontrola `interior-entrance-gap` 1 → 0)
+- Status: w PR #90 (przyjęte przez weryfikatora z uwagami; resztka: G-111)
 - Ważność: S4 (proponowana) · Zasięg: 1 wejście · Koszt: mały
 - Gdzie: wejście do Trybunału w66264159, przedsionek z = −57; fasada przecina go skośnie (x 567,5…568,2), luka w obszarze wnętrza x 567,6…570 (2,4 m; poprawka naprawiacza)
 - Dowód: `interiorAt` na stopie (y = podłoga przedsionka + 0,1, z = −57): x 565,6/567/569/569,9 → null, x 570,1 → `trasa-podziemna`; `TRASA_PODZIEMNA.vestibule.from.x` = 565,5, pierwszy pokój `minX: 570`; zrzut `scratchpad/shots1/p1-trasa-vest.png`; test w `interior-areas.test.ts` zaczyna chód od x = 563, a wyjście liczy od 571, więc tego nie łapie
@@ -351,6 +351,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Przyczyna: plan `docs/world/lublin-props.todo.json` (29.10) ma pozycje tylko w starych prostokątach; reguła `lamps.krakowskie-side` nie obejmuje pasa poniżej −200
 - Pakiet właściciela: tools/osm-import (plan mebli)
 - Test przyjęcia: kontrola `lit-street-dark` (odcinki nazwanych dróg z `lit=yes` dalej niż 30 m od latarni, w metrach) w pasie 0; obeliski w promieniu 1 m od węzłów OSM. Ostrożnie z ADR-0064 etap 3 (oświetlenie z `lit`), który robi to samo w całym mieście
+
+### G-111 Resztka G-094: krawędzie przedsionka Trasy Podziemnej
+- Status: zgłoszone (z weryfikacji G-094) · Ważność: S4 · Zasięg: 1 wejście · Koszt: mały
+- Gdzie: `packages/sim/src/content/kanal-underground.ts:113-122`; przy południowej ścianie przedsionka (z −58,0…−57,6) wnętrze zaczyna się 0,81–1,03 m za fasadą, przy północnej 0,06–0,35 m; pokój drzwi wystaje do 0,21 m przed fasadę przy z ≈ −56,5 (z histerezą wnętrze trzyma się do 0,66 m na Rynku)
+- Przyczyna: pokój drzwi ma tylko 1 m szerokości, a fasada ma załamanie z minimum 567,21 przy z −57,7; kontrola `interior-entrance-gap` próbkuje tylko oś przejścia, a `interior-outside-building` ma tolerancję 0,3 m
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: kontrola `interior-entrance-gap` próbkuje całą szerokość przejścia (co 0,25 m) i daje 0; schodkowe pokoje wzdłuż fasady
 
 ## Naprawione
 | ID | Glitch | PR |
