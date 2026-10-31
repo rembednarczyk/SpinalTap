@@ -419,6 +419,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: wysokość z LOD2 albo NMPT (mediana w obrysie) i dach z LOD2; rozbieżność > 20% z OSM do przeglądu kuratora
 
+### G-130 Samochód wbudowany w ziemię na chodniku przy Pedecie (zgłoszenie użytkownika)
+- Status: zgłoszone (31.10, obserwacja użytkownika); kurator ustala pojazd, pozycję i przyczynę w ramach audytu Pedetu
+- Ważność: S3 (proponowana; widoczne na głównym ciągu pieszym) · Zasięg: do policzenia w całym mieście · Koszt: do ustalenia
+- Gdzie: przy domu towarowym Pedet, na chodniku dla pieszych
+- Pakiet właściciela: do ustalenia (sim content/traffic albo osm-import props)
+- Test przyjęcia: kontrola skanu pojazdów zaparkowanych na chodniku z OSM albo z dnem poniżej terenu → 0
+
 ## Naprawione
 | ID | Glitch | PR |
 |---|---|---|
