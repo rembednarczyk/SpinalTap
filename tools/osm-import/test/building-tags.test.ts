@@ -72,6 +72,9 @@ describe("use, names and looks", () => {
     expect(buildingUse({ building: "church" })).toBe("church");
     expect(buildingUse({ building: "yes", amenity: "place_of_worship" })).toBe("church");
     expect(buildingUse({ building: "castle" })).toBe("historic");
+    // The cloister by the church is no church: no towers of its own (G-067).
+    expect(buildingUse({ building: "monastery" })).toBe("historic");
+    expect(buildingUse({ building: "convent" })).toBe("historic");
     expect(buildingUse({ building: "yes", historic: "city_gate" })).toBe("historic");
     expect(buildingUse({ building: "government" })).toBe("civic");
     expect(buildingUse({ building: "retail" })).toBe("commercial");
