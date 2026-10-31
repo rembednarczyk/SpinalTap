@@ -44,6 +44,8 @@ const RESYNC = 40;
 const SEEN_SHARE = 0.6;
 /** Across another lane's vehicle, a vehicle appears this far past its side at the least (m): on a parallel lane, not on its line. */
 const SPAWN_BESIDE = 1.1;
+/** How far along both ways a vehicle appearing beside another looks for them closing in (m). */
+const APPEAR_AHEAD = 12;
 
 /** Distance from a point to a lane's bounding box (the quick reject before looking at a lane's vehicles). */
 const boxes = TRAFFIC_ROUTES.map((r) => {
@@ -140,6 +142,8 @@ const waysMeet = (a: readonly { x: number; z: number }[], b: readonly { x: numbe
 
 /** Steps along a vehicle's own route at which `onItsWay` looks for another's body (m). */
 const WAY_STEP = 1;
+/** How far ahead of another vehicle going its way `onItsWay` reads where it drives next (m). */
+const MERGE_AHEAD = 6;
 /** Room left beside a body on the way ahead (m): two lanes of a narrow roundabout run 2.6 m apart, and squeeze closer at its corners. */
 const WAY_MARGIN = 0.25;
 
@@ -166,9 +170,12 @@ const onItsWay = (self: Vehicle, o: Vehicle, wayOf: () => readonly { x: number; 
   if (itAhead <= 0 || meAhead > itAhead || (meAhead === itAhead && self.id < o.id)) return;
   const width = st.half.w + o.vehicle.half.w + WAY_MARGIN;
   const way = wayOf();
+  // Going its way, where it is and where it drives next: two ways closing in at a shallow angle (a
+  // lane shifting across into the one beside, where that one turns out, G-075) bring one beside the other.
+  const at = ox * tx + oz * tz >= MERGE_COS ? [o.position, ...wayAhead(o, MERGE_AHEAD, WAY_STEP)] : [o.position];
   // `way[k]` lies `k * WAY_STEP` ahead along the route.
   for (let k = 1; k < way.length && k * WAY_STEP <= reach + o.vehicle.half.l; k++) {
-    if (flat(way[k]!, o.position) >= width) continue;
+    if (at.every((p) => flat(way[k]!, p) >= width)) continue;
     const gap = k * WAY_STEP - st.half.l - o.vehicle.half.l * Math.abs(ox * tx + oz * tz) - o.vehicle.half.w * Math.abs(ox * tz - oz * tx);
     const allowed = gap <= FOLLOW_GAP ? 0 : Math.sqrt(2 * BRAKE * (gap - FOLLOW_GAP));
     if (allowed < out.allowed) {
@@ -343,11 +350,13 @@ const comeAndGo = (ctx: SimContext, live: Map<EntityId, Vehicle>, player: Entity
 
 /**
  * Is there a vehicle too close to arc length `s` of the lane for another to appear there: one
- * of the lane itself, or one crossing its way within `CROSS_LOOK` (it could not stop in time
- * for a vehicle that turned up at the crossing)?
+ * of the lane itself, one crossing its way within `CROSS_LOOK` (it could not stop in time
+ * for a vehicle that turned up at the crossing), or one beside it that reaches into its way
+ * (G-075: 3 Maja's left lane shifts across into the lane its right one turns out of)?
  */
 const crowded = (live: ReadonlyMap<EntityId, Vehicle>, route: number, s: number, lane: TrafficRoute): boolean => {
   const at = lanePose(lane, s);
+  let ahead: { x: number; z: number }[] | null = null;
   for (const o of live.values()) {
     if (o.vehicle.route !== route) {
       const across = Math.abs(Math.sin(o.yaw) * at.tx + Math.cos(o.yaw) * at.tz) < 0.7;
@@ -357,6 +366,16 @@ const crowded = (live: ReadonlyMap<EntityId, Vehicle>, route: number, s: number,
       const [ox, oz] = [Math.sin(o.yaw), Math.cos(o.yaw)];
       const [dx, dz] = [at.x - o.position.x, at.z - o.position.z];
       if (Math.abs(dx * ox + dz * oz) < o.vehicle.half.l + 9 && Math.abs(dx * oz - dz * ox) < o.vehicle.half.w + SPAWN_BESIDE) return true;
+      // Turned across its way (in a turn beside it), the other's body reaches out wider than its width.
+      const along = Math.abs(ox * at.tx + oz * at.tz);
+      const reach = o.vehicle.half.w * along + o.vehicle.half.l * Math.sqrt(Math.max(0, 1 - along * along));
+      if (Math.abs(dx * at.tx + dz * at.tz) < o.vehicle.half.l + 9 && Math.abs(dx * at.tz - dz * at.tx) < reach + SPAWN_BESIDE) return true;
+      // Nor one beside it whose way closes in on its own just ahead: they would meet before either could give way.
+      if (flat(o.position, at) < APPEAR_AHEAD + o.vehicle.half.l + 9) {
+        ahead ??= pointsAlong(lane.points, s, Math.min(lane.length, s + APPEAR_AHEAD), WAY_STEP);
+        const theirs = wayAhead(o, APPEAR_AHEAD);
+        if (ahead.some((p) => theirs.some((q) => flat(p, q) < o.vehicle.half.w + SPAWN_BESIDE))) return true;
+      }
       continue;
     }
     if (Math.abs(o.vehicle.s - s) < o.vehicle.half.l + 9 || Math.abs(o.vehicle.s - s) > lane.length - 9) return true;

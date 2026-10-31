@@ -153,6 +153,8 @@ export class GameSession implements SessionIntents {
 
   save(slot: string): void { this.c.saves.save(slot); }
   load(slot: string): void { this.c.saves.load(slot); }
+  exportSave(slot: string): void { this.c.saves.exportSave(slot); }
+  exportAsync(slot: string): Promise<boolean> { return this.c.saves.exportAsync(slot); }
   snapshot(): SaveSnapshot { return this.c.saves.snapshot(); }
   saveAsync(slot: string): Promise<boolean> { return this.c.saves.saveAsync(slot); }
   loadAsync(slot: string): Promise<boolean> { return this.c.saves.loadAsync(slot); }

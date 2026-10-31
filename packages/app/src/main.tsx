@@ -5,12 +5,14 @@ import { loadModelManifest } from "./model-manifest";
 import { STORY_SOURCES } from "@seki/narrative";
 import { IndexedDbSaveStore, SavePersistence } from "@seki/persistence";
 import { FixedStepLoop, ground, koiPoint, rayGeometry } from "@seki/sim";
-import { DEFAULT_SETTINGS, GameUi, createUiStore } from "@seki/ui";
+import { DEFAULT_SETTINGS, GameUi, createUiStore, translate } from "@seki/ui";
 import { createRoot } from "react-dom/client";
 import { browserClock } from "./browser-clock";
 import { type DebugApi, createDebugApi } from "./debug-api";
 import { GameSession } from "./game-session";
 import { keymapFor } from "./controls";
+import { pushToastTimed } from "./controllers/shared";
+import { bindCrashWatch } from "./crash-watch";
 import { bindPageHidden } from "./page-lifecycle";
 import { type SettingsStorage, applyEffects, applyVolumes, loadHintsSeen, loadSettings, saveHintsSeen, saveSettings, scaleLook } from "./settings";
 
@@ -95,6 +97,12 @@ const session = new GameSession({
   render: renderer,
   audio,
   persistence: new SavePersistence(new IndexedDbSaveStore()),
+  download: (fileName, text) => {
+    const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+    const a = Object.assign(document.createElement("a"), { href: url, download: fileName });
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  },
   ui,
   preview,
   story: STORY_SOURCES,
@@ -239,6 +247,13 @@ document.addEventListener("pointerlockchange", () => {
 });
 // A phone kills a tab in the background without warning: autosave the moment it hides.
 if (!reference) bindPageHidden(document, window, () => session.pageHidden());
+// A broken frame or a lost GPU context gets a notice instead of a silent black screen (gap audit).
+bindCrashWatch(window, canvas, () => performance.now(), (r) => {
+  const locale = ui.getState().settings.locale;
+  if (r.kind === "error") pushToastTimed(ui, "system", translate(locale, "crash.error"), translate(locale, "crash.errorText", { message: r.message, version: __APP_VERSION__ }), true);
+  else if (r.kind === "context-lost") pushToastTimed(ui, "system", translate(locale, "crash.contextLost"), translate(locale, "crash.contextLostText"), true);
+  else pushToastTimed(ui, "system", translate(locale, "crash.contextRestored"));
+});
 
 createRoot(uiRoot).render(<GameUi store={ui} intents={session.intents} touch={touchDevice ? input.virtualPad : undefined} version={__APP_VERSION__} />);
 

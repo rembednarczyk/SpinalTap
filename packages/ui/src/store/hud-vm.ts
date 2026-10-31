@@ -173,3 +173,5 @@ export type ColorblindMode = "off" | "protan" | "deutan" | "tritan";
 
 /** HUD scale range of the settings. */
 export const HUD_SCALE_RANGE: readonly [number, number] = [0.8, 1.4];
+/** Subtitle text size relative to the default, on its own (gap audit, accessibility). */
+export const SUBTITLE_SCALE_RANGE: readonly [number, number] = [0.8, 1.6];

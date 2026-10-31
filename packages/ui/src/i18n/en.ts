@@ -44,6 +44,7 @@ export const en = {
   "slots.auto": "Autosave",
   "slots.slot": "Slot {n}",
   "slots.empty": "empty",
+  "slots.export": "Export",
   // Controls help.
   "help.move": "move",
   "help.sprint": "sprint",
@@ -135,6 +136,8 @@ export const en = {
   "settings.mode.hold": "Hold",
   "settings.mode.toggle": "Toggle",
   "settings.hudScale": "HUD scale",
+  "settings.subtitleScale": "Subtitle size",
+  "settings.subtitleBackground": "Solid subtitle background",
   "settings.legibleFont": "Legible font",
   "settings.reduceFlashes": "Reduce flashes and glitch effects",
   "settings.cameraMotion": "Camera bob and shake",

@@ -10,6 +10,7 @@ const intents = (): UiIntents => ({
   pause: vi.fn(),
   save: vi.fn(),
   load: vi.fn(),
+  exportSave: vi.fn(),
   choose: vi.fn(),
   closeDialogue: vi.fn(),
   quitToTitle: vi.fn(),
@@ -82,6 +83,16 @@ describe("title screen", () => {
     expect(screen.getByText("Slot 1").closest("button")?.disabled).toBe(true);
     fireEvent.click(screen.getByText("Slot 2"));
     expect(i.load).toHaveBeenCalledWith("slot-2");
+  });
+
+  it("offers an export next to each saved slot only, not an empty or unreadable one (gap audit)", () => {
+    const { i } = mount({ hasSaves: true, slots: [{ slot: "slot-2", savedAtLabel: "22:10", objective: "x" }, { slot: "slot-3", savedAtLabel: "—", objective: "save.corrupt" }] });
+    fireEvent.click(screen.getByText("Load Game"));
+    const exports = screen.getAllByRole("button", { name: /^Export:/ });
+    expect(exports.map((b) => b.getAttribute("aria-label"))).toEqual(["Export: Slot 2"]);
+    fireEvent.click(exports[0]!);
+    expect(i.exportSave).toHaveBeenCalledWith("slot-2");
+    expect(i.load).not.toHaveBeenCalled();
   });
 });
 

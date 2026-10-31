@@ -33,6 +33,21 @@ const STEP = 0.25;
 /** Width when the map gives none, by the way's kind (m): a gateway for carts, a lane, a footpath. */
 const widthOf = (l: Line): number => parseLength(l.tags.width) ?? (l.tags.highway === "service" ? 3.2 : l.tags.highway === "pedestrian" ? 3.4 : 2.4);
 
+/** Clear height under the crown when the map gives a `maxheight` only as under the default (m): a lorry's 4 m will not pass. */
+const BELOW_DEFAULT = 3.6;
+
+/**
+ * Crown and rise of the vault (m): the default by width, or lower to the map's `maxheight` (G-089),
+ * the vault scaled with it so the walls still spring at the same share of the height.
+ */
+const vaultOf = (l: Line, width: number): { height: number; rise: number } => {
+  const height = width >= 3 ? 4 : 3.4;
+  const rise = width >= 3 ? 1.1 : 0.9;
+  const max = l.tags.maxheight === "below_default" ? Math.min(height, BELOW_DEFAULT) : parseLength(l.tags.maxheight);
+  if (max === null) return { height, rise };
+  return { height: Math.round(max * 100) / 100, rise: Math.round(((rise * max) / height) * 100) / 100 };
+};
+
 /** The runs of `line` inside `ring`, as arc lengths [enter, leave] that both lie strictly within the line. */
 const runsInside = (line: readonly Pt[], ring: readonly Pt[]): [number, number][] => {
   const total = lineLength(line);
@@ -112,7 +127,7 @@ export const buildingPassages = (lines: readonly Line[], buildings: readonly Are
         if (seen.has(key)) continue;
         seen.add(key);
         const width = widthOf(l);
-        out.push({ building: b.id, from: { x: r1(from.x), z: r1(from.z) }, to: { x: r1(to.x), z: r1(to.z) }, width, height: width >= 3 ? 4 : 3.4, rise: width >= 3 ? 1.1 : 0.9 });
+        out.push({ building: b.id, from: { x: r1(from.x), z: r1(from.z) }, to: { x: r1(to.x), z: r1(to.z) }, width, ...vaultOf(l, width) });
       }
     }
   }
