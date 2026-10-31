@@ -82,16 +82,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-007 Strzałki na pasach i napis BUS
 - Status: później (ADR-0052 „Na później”)
 
-### G-051 Podpis „Muzeum Historii Miasta Lublina” na kamienicy Jezuicka 3 zamiast na Bramie Krakowskiej
-- Status: w PR #75 (z etapem 1 ADR-0062)
-- Ważność: S4 (proponowana) · Zasięg: lokalny · Koszt: mały (labels/buildings w tools/osm-import)
-- Gdzie: w66286384 (478.7, −114.4); ile w mieście: 1 znane
-- Dowód: węzeł n993790419 `addr:street=Plac Władysława Łokietka addr:housenumber=3` leży w obrysie Jezuickiej 3, 6 m od r7224409; T-013
-- Przyczyna (przypuszczalna): nazwa trafia do budynku zawierającego punkt, a adres węzła nie jest porównywany z adresem budynku. Możliwa też poprawka położenia węzła w OSM
-- Pakiet właściciela: tools/osm-import
-- Test przyjęcia: po regeneracji w66286384 nie ma nazwy muzeum, a r7224409 nosi nazwę Bramy Krakowskiej (nazwa budynku ma pierwszeństwo przed punktem)
-- Źródło: audyt topografii 1 (kurator, 31.10).
-
 ### G-052 Teatr Osterwy i Kościół Bernardynów poza danymi miasta (brzeg Krakowskiego na z = −200)
 - Status: zgłoszone
 - Ważność: S3 (proponowana) · Zasięg: lokalny (Narutowicza, Bernardyńska) · Koszt: duży (prostokąt w config.ts, ADR-0042, regeneracja, budżety)
@@ -193,14 +183,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (building-tags) albo packages/sim (vertical.ts)
 - Test przyjęcia: kontrola `heritage-overbuilt` (budynek z `historic`/`heritage` poza Starym Miastem z rise > 0) daje 0 po G-050 i tej poprawce
 
-### G-067 Klasztor Dominikanów dostaje proceduralne wieże kościoła
-- Status: w PR #72 (szkic, przyjęte przez weryfikatora, czeka na kuratora)
-- Ważność: S4 (proponowana) · Zasięg: 1 znany · Koszt: mały
-- Gdzie: r2366732 (748.5, −104.4), Stare Miasto
-- Dowód: budynek klasztoru ma `use: church`, więc `addTowers` stawia na nim wieże kościoła, choć to klasztor; widać z ujęcia „Dominikanie od wschodu” (810, −56)
-- Pakiet właściciela: tools/osm-import (building-tags) / packages/engine (mapcity)
-- Test przyjęcia: klasztor bez wież proceduralnych; kościół obok zachowuje swoje
-
 ### G-069 Postać zespawnowana pod mostem trafia na pomost
 - Status: zgłoszone (z weryfikacji G-062)
 - Ważność: S4 (proponowana) · Zasięg: pod pomostami · Koszt: mały
@@ -291,6 +273,8 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | G-050 | Nadbudowa przy Bramie Grodzkiej góruje nad bramą (piętra odsunięte ≥ 5 m) | #60 |
 | G-062 | Przejścia pod mostami zablokowane (Podwale, bulwar Bystrzycy) | #70 |
 | G-068 | AI nie widziało przejścia pod mostem | #71 |
+| G-051 | Podpis muzeum na kamienicy Jezuicka 3 zamiast na Bramie Krakowskiej | #75 |
+| G-067 | Klasztor Dominikanów z proceduralnymi wieżami kościoła | #72 |
 
 ## Odrzucone
 - G-005 Wiata przystanku wchodzi w ścianę przy Alei Tysiąclecia: duplikat (G-011)

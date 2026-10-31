@@ -342,3 +342,21 @@ Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [r
 - Przyczyna: `packages/sim/src/systems/ai/steering.ts` `terrainOf` (l.140), `closeBanks` (l.155), `bankBetween` (l.359) wołają `heightAt`/`steepAt` bez `reach` (G-062), więc AI widzi pomost jako grunt
 - Pakiet właściciela: packages/sim/src/systems/ai
 - Test przyjęcia: zaalarmowany walczący wręcz dociera do gracza pod mostem Mełgiewskiej z obu stron w < 10 s
+
+### G-067 Klasztor Dominikanów dostaje proceduralne wieże kościoła
+- Status: naprawione (#72). `monastery` i `convent` jako `historic`, bez wież proceduralnych
+- Ważność: S4 (proponowana) · Zasięg: 1 znany · Koszt: mały
+- Gdzie: r2366732 (748.5, −104.4), Stare Miasto
+- Dowód: budynek klasztoru ma `use: church`, więc `addTowers` stawia na nim wieże kościoła, choć to klasztor; widać z ujęcia „Dominikanie od wschodu” (810, −56)
+- Pakiet właściciela: tools/osm-import (building-tags) / packages/engine (mapcity)
+- Test przyjęcia: klasztor bez wież proceduralnych; kościół obok zachowuje swoje
+
+### G-051 Podpis „Muzeum Historii Miasta Lublina” na kamienicy Jezuicka 3 zamiast na Bramie Krakowskiej
+- Status: naprawione (#75, z etapem 1 ADR-0062). Nazwa z punktu tylko przy zgodnym adresie
+- Ważność: S4 (proponowana) · Zasięg: lokalny · Koszt: mały (labels/buildings w tools/osm-import)
+- Gdzie: w66286384 (478.7, −114.4); ile w mieście: 1 znane
+- Dowód: węzeł n993790419 `addr:street=Plac Władysława Łokietka addr:housenumber=3` leży w obrysie Jezuickiej 3, 6 m od r7224409; T-013
+- Przyczyna (przypuszczalna): nazwa trafia do budynku zawierającego punkt, a adres węzła nie jest porównywany z adresem budynku. Możliwa też poprawka położenia węzła w OSM
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: po regeneracji w66286384 nie ma nazwy muzeum, a r7224409 nosi nazwę Bramy Krakowskiej (nazwa budynku ma pierwszeństwo przed punktem)
+- Źródło: audyt topografii 1 (kurator, 31.10).
