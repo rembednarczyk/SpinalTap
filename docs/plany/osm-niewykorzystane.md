@@ -34,7 +34,9 @@ Przegląd `data/osm/*.json` (cztery dzielnice) i `tools/osm-import`. Liczby to o
 ## Rekomendacja
 Na początek 1 (lokale i szyldy), 15 (wejścia), 4 (oświetlenie ulic), 3 (dachy, razem z G-056) i 19 (LOD2), bo dają najwięcej wiarygodności Lublina i wspierają plan wnętrz zabytków oraz skradanie.
 
-## C. Geoportal (GUGiK) i źródła miejskie poza OSM (31.10, do decyzji)
+## C. Geoportal (GUGiK) i źródła miejskie poza OSM (31.10)
+
+**Decyzja użytkownika (31.10):** bierzemy 20, 23, 25, 26 (ADR-0064, etapy 12–15).
 Dziś z geoportalu bierzemy tylko NMT 1 m (teren). Dostępność dla centrum Lublina i licencję każdego zbioru trzeba potwierdzić rozpoznaniem przed decyzją o etapie.
 | # | Zbiór | Co da w grze |
 |---|---|---|
