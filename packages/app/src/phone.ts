@@ -1,5 +1,5 @@
-import type { DomainState, Locale, PhonePriority } from "@seki/core";
-import { NarrativeRuntime } from "@seki/narrative";
+import { DEFAULT_LOCALE, type DomainState, type Locale, type PhonePriority } from "@seki/core";
+import { NarrativeRuntime, type StorySources } from "@seki/narrative";
 import { type PhoneLineVm, type PhoneMessageVm, type PhoneNoticeVm, type PhoneThreadVm, type PhoneVm, translate } from "@seki/ui";
 
 /** Display names of the phone contacts; an unknown id is shown capitalised. */
@@ -138,7 +138,7 @@ export class PhoneInbox {
  * language `locale` gives at that moment (ADR-0056).
  */
 export const createKnotRenderer = (source: string | KnotLines, locale: () => Locale) => {
-  const lines = typeof source === "string" ? createKnotLines(source) : source;
+  const lines = typeof source === "string" ? createKnotLines(source, locale) : source;
   return (knot: string, domain: DomainState): PhoneLineVm[] => {
     const out = lines(knot, domain);
     return out && out.length > 0 ? out : [{ speaker: null, text: translate(locale(), "phone.newMessage") }];
@@ -151,13 +151,15 @@ export type KnotLines = (knot: string, domain: DomainState) => PhoneLineVm[] | n
 /**
  * Renders knots to lines with a runtime of its own (compiled on first use), as the phone does:
  * the conversation in progress and the saved ink state are never touched, commands are dropped.
- * Shared by the phone, the metro ride and the radio (ADR-0035).
+ * Shared by the phone, the metro ride and the radio (ADR-0035). The lines come in `locale` as it
+ * is when they are rendered (ADR-0056); English without one.
  */
-export const createKnotLines = (source: string): KnotLines => {
+export const createKnotLines = (source: string | StorySources, locale: () => Locale = () => DEFAULT_LOCALE): KnotLines => {
   let runtime: NarrativeRuntime | null = null;
   return (knot, domain) => {
     try {
-      runtime ??= new NarrativeRuntime(source, () => {});
+      runtime ??= new NarrativeRuntime(source, () => {}, locale());
+      runtime.setLanguage(locale());
       const view = runtime.start(knot, domain);
       runtime.interrupt();
       return view.lines.map((l) => ({ speaker: l.speaker, text: l.text }));

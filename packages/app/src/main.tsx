@@ -2,7 +2,7 @@ import { degToRad } from "@seki/core";
 import { BabylonRenderer, BrowserInput, PerfProbe, PreviewStage, Stage, SynthAudio } from "@seki/engine";
 import { audioSampleManifest } from "./audio-manifest";
 import { loadModelManifest } from "./model-manifest";
-import { STORY_SOURCE } from "@seki/narrative";
+import { STORY_SOURCES } from "@seki/narrative";
 import { IndexedDbSaveStore, SavePersistence } from "@seki/persistence";
 import { FixedStepLoop, ground, koiPoint, rayGeometry } from "@seki/sim";
 import { DEFAULT_SETTINGS, GameUi, createUiStore } from "@seki/ui";
@@ -90,7 +90,7 @@ const session = new GameSession({
   persistence: new SavePersistence(new IndexedDbSaveStore()),
   ui,
   preview,
-  story: STORY_SOURCE,
+  story: STORY_SOURCES,
   seed: () => (seedParam ? Number(seedParam) : reference ? 42 : randomSeed()),
   now: () => new Date(),
   touch: touchDevice,

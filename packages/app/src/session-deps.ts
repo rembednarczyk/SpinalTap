@@ -1,4 +1,5 @@
 import type { AudioPort, PersistencePort, RenderPort } from "@seki/core";
+import type { StorySources } from "@seki/narrative";
 import type { CrowdDensity, TrafficDensity } from "@seki/sim";
 import type { UiStore } from "@seki/ui";
 import type { PreviewHost } from "./character-view";
@@ -14,7 +15,8 @@ export interface GameSessionDeps {
   readonly audio: AudioPort;
   readonly persistence: PersistencePort;
   readonly ui: UiStore;
-  readonly story: string;
+  /** The ink story, one source per language (ADR-0056); a plain string is the Polish one. */
+  readonly story: string | StorySources;
   /** Seed for a new game. Injected so tests and reference mode are reproducible. */
   readonly seed: () => number;
   readonly now: () => Date;

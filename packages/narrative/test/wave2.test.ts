@@ -68,7 +68,7 @@ describe("radio breaks", () => {
 
 describe("contract variations in the fixers' lines", () => {
   const variation: ContractVariation = { modifiers: ["time_limit", "twin"], security: "light", trait: "armored", twist: "setup" };
-  const text = describeVariation(variation);
+  const text = describeVariation(variation, "pl");
 
   it("describes the modifiers, the security and the trait, never the twist", () => {
     expect(text).toContain("Klient liczy czas");
@@ -76,8 +76,18 @@ describe("contract variations in the fixers' lines", () => {
     expect(text).toContain("cienka");
     expect(text).toContain("pancerz");
     expect(text).not.toMatch(/ustawk|podstaw/i);
-    expect(describeVariation({ modifiers: [], security: "standard" })).toBe("");
-    expect(describeVariation(undefined)).toBe("");
+    expect(describeVariation({ modifiers: [], security: "standard" }, "pl")).toBe("");
+    expect(describeVariation(undefined, "en")).toBe("");
+  });
+
+  it("says the same in English (ADR-0056)", () => {
+    const en = describeVariation(variation, "en");
+    expect(en).toContain("watching the clock");
+    expect(en).toContain("two of them");
+    expect(en).toContain("thin");
+    expect(en).toContain("armor");
+    expect(en).not.toMatch(/[ąćęłńóśźż]|setup|frame/i);
+    expect(describeVariation({ modifiers: [], security: "standard" }, "en")).toBe("");
   });
 
   it("reads the variation stored on a contract and ignores anything else", () => {
