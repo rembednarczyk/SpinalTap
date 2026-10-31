@@ -42,8 +42,11 @@ describe("building parts (G-049)", () => {
   it("gives Brama Krakowska a two-storey annex, the tower and the octagon with its helmet on top", () => {
     const gate = byId("r7224409")!;
     expect(gate.levels).toBeLessThanOrEqual(2);
-    expect(gate.height - gate.plinth).toBeLessThanOrEqual(2 * STOREY + 0.05);
+    // The annex's part, not the five storeys of the whole gate: 10 m by the correction of T-033.
+    expect(gate.height).toBeCloseTo(10, 6);
+    expect(gate.source).toBe("height");
     const tower = byId("w617597407");
+    expect(tower!.soffit).toBeCloseTo(gate.height, 6);
     const octagon = byId("w617878341");
     expect(tower).toBeDefined();
     expect(octagon).toBeDefined();
@@ -67,6 +70,12 @@ describe("building parts (G-049)", () => {
     expect(parts.length).toBeGreaterThanOrEqual(10);
     for (const p of parts) expect(p.soffit!).toBeGreaterThan(p.plinth);
     for (const p of parts) expect(p.height - p.soffit!).toBeGreaterThanOrEqual(1);
+  });
+
+  it("leaves the museum in Brama Krakowska off Jezuicka 3, whose outline its point falls in (G-051)", () => {
+    // n993790419 (Plac Łokietka 3) lies 6 m off the gate (Bramowa 1), inside Jezuicka 3.
+    expect(byId("w66286384")?.name).toBeUndefined();
+    expect(byId("r7224409")?.name).toBe("Brama Krakowska");
   });
 });
 

@@ -6,6 +6,7 @@ import { convexParts, isConvex } from "./convex.ts";
 import { type HeightSource } from "./dtm.ts";
 import { type Area } from "./features.ts";
 import { type Pt, ccw, centroid, openRing, pointInRing, r1, removeCollinear, ringBounds, selfIntersects, signedArea, simplifyRing } from "./geometry.ts";
+import { addressOf } from "./labels.ts";
 import { type BuildingOut } from "./model.ts";
 
 export const SIMPLIFY_TOLERANCE = 0.3;
@@ -52,8 +53,12 @@ export interface BuildingContext {
   readonly range: readonly [number, number];
   /** Shops, cafés and the like: a building with one inside has a shop floor. */
   readonly shopPoints: readonly Pt[];
-  /** Named hotels, sights and theatres mapped as points: an unnamed building around one takes its name. */
-  readonly namedPoints: readonly { readonly at: Pt; readonly name: string }[];
+  /**
+   * Named hotels, sights and theatres mapped as points: an unnamed building around one takes its
+   * name, unless both have street addresses and they differ (a point a few metres off its own
+   * building, G-051).
+   */
+  readonly namedPoints: readonly { readonly at: Pt; readonly name: string; readonly addr?: string }[];
 }
 
 /** A building and the parts of it lifted onto it (`building:part`, G-049). */
@@ -97,6 +102,12 @@ const liftedPart = (l: Lifted, of: BuildingOut): BuildingOut[] => {
   return [out];
 };
 
+/** A point's address fits a building's: either has none, or both are the same street and number. */
+const sameAddress = (addr: string | undefined, tags: Area["tags"]): boolean => {
+  const own = addressOf(tags);
+  return addr === undefined || own === undefined || addr === own;
+};
+
 export const makeBuilding = (a: Area, ctx: BuildingContext, ownParts: readonly Area[] = []): BuildingResult => {
   const f = footprint(a.ring);
   if (typeof f === "string") return { skipped: f };
@@ -113,7 +124,7 @@ export const makeBuilding = (a: Area, ctx: BuildingContext, ownParts: readonly A
   const shops = use !== "commercial" && ctx.shopPoints.some((p) => pointInRing(p, world));
   const own = massing(a.tags, { area, shops: shops || use === "commercial", range: ctx.range, look });
   const { base: m, lifted } = stackParts(world, own, ownParts.flatMap((p) => partTier(p, use) ?? []));
-  const name = landmarkName(a.tags, use) ?? (a.tags.name ? undefined : ctx.namedPoints.find((p) => pointInRing(p.at, world))?.name);
+  const name = landmarkName(a.tags, use) ?? (a.tags.name ? undefined : ctx.namedPoints.find((p) => pointInRing(p.at, world) && sameAddress(p.addr, a.tags))?.name);
   const ok: BuildingOut = {
     id: a.id,
     x: center.x,

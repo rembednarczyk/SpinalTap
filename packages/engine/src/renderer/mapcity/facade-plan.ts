@@ -87,7 +87,7 @@ export const doorwaysOn = (w: Wall, doorways: readonly WorldDoorway[]): { u0: nu
 };
 
 /** Walls from the foot of the slope to `to`, skipping those a neighbour hides completely; doorways stay open. */
-const walls = (sink: MeshSink, f: FacadeFrame, to: number, color: Rgba): void => {
+export const walls = (sink: MeshSink, f: FacadeFrame, to: number, color: Rgba): void => {
   const doorways = f.b.doorways ?? [];
   for (const w of f.walls) {
     if (hiddenWall(f, w)) continue;

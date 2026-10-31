@@ -24,6 +24,13 @@ Przegląd z 31.10 (`docs/plany/osm-niewykorzystane.md`) znalazł dane OSM, któr
   11. **Bryły LOD2 z geoportalu** (poz. 19): wysokości i dachy budynków z modelu 3D GUGiK (otwarte dane, jak NMT z ADR-0042) jako źródło wysokości ważniejsze od `building:levels`; OSM zostaje źródłem obrysów i tagów. Wcześniej rozpoznanie: format, zasięg dla centrum Lublina, licencja i rozmiar.
 - Pozycje 2, 5, 6, 10, 11, 14, 16 i 18 z przeglądu nie wchodzą teraz.
 
+## Uzupełnienie (31.10): zbiory geoportalu wybrane przez użytkownika
+Użytkownik dołożył pozycje 20, 23, 25 i 26 z sekcji C przeglądu. Każdy etap zaczyna się od rozpoznania: dostępność dla centrum Lublina, usługa (WCS, WMS/WMTS, WFS, pobranie paczek), licencja i warunki ponownego wykorzystania, rozmiar. Dane pobiera `pnpm osm:fetch` (albo bliźniacze polecenie) do `data/`, gra dalej działa offline, a źródło trafia do `data/osm/ATTRIBUTION.md`.
+12. **Rejestr zabytków NID** (poz. 25): oficjalna lista zabytków z obrysami lub punktami jako źródło statusu zabytku w imporcie (obok tagów OSM). Rozstrzyga sprawy G-050 i G-066 oraz zasilają ADR-0062 etap 7 (przepisy ogólne). Kontrola skanu: zabytek z rejestru z nadbudową albo bez przepisu.
+13. **Punkty adresowe** (poz. 26): adres każdego budynku. Tabliczki z numerami na elewacjach, adresy w celach kontraktów i dialogach, poprawne przypisanie nazw z punktów OSM (G-051, G-065: nazwa tylko przy zgodnym adresie).
+14. **NMPT** (poz. 20): model pokrycia terenu. Wysokość każdego budynku z różnicy NMPT − NMT (mediana w obrysie) zamiast szacunku z `building:levels`, wysokości koron drzew. Uzupełnia i weryfikuje etap 11 (LOD2); budynki z rozbieżnością > 20% trafiają do przeglądu kuratora (np. przedbramie Bramy Krakowskiej 7,1 m wobec ok. 10 m).
+15. **Ortofotomapa** (poz. 23): materiał referencyjny dla kuratora i łowców (zdjęcie z góry zamiast fotografii z sieci) oraz źródło kolorów dachów i nawierzchni dla renderera. Do repo trafiają tylko wyliczone kolory na budynek lub powierzchnię, nie kafle zdjęć.
+
 ## Konsekwencje
 - Miasto zbliża się do prawdziwego Lublina w miejscach, które gracz widzi najczęściej: dachy, wejścia, szyldy, oświetlenie, drzewa.
 - Etapy 2, 3 i 9 dotykają `sim` (wejścia, widoczność, kolizja płotów); złote hashe zmieniają się tylko tam, świadomie.

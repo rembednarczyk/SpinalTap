@@ -28,8 +28,9 @@ export const parseLevels = (v: string | undefined): number | null => {
   return parts.length > 0 ? Math.max(...parts) : null;
 };
 
-const CHURCH = new Set(["church", "cathedral", "chapel", "basilica", "religious", "monastery", "convent"]);
-const HISTORIC = new Set(["castle", "city_gate", "tower", "monument", "fort", "citywalls", "city_walls"]);
+const CHURCH = new Set(["church", "cathedral", "chapel", "basilica", "religious"]);
+// A monastery or a convent is the cloister by the church, not the church: no towers of its own (G-067).
+const HISTORIC = new Set(["monastery", "convent", "castle", "city_gate", "tower", "monument", "fort", "citywalls", "city_walls"]);
 const CIVIC = new Set([
   "government",
   "public",

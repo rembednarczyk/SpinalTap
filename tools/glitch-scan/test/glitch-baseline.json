@@ -28,5 +28,6 @@
   "passage-off-map": 0,
   "building-part-ignored": 0,
   "church-towers-over-parts": 0,
-  "roof-shape-ignored": 0
+  "roof-shape-ignored": 0,
+  "marketplace-empty": 0
 }
