@@ -1,5 +1,5 @@
 {
-  "about": "CC0 packs baked into packages/app/public/city/city-props.glb (ADR-0058). tools/assets/fetch.mjs downloads them and checks sha256; the zips and unpacked packs are not committed.",
+  "about": "Packs and models baked into packages/app/public/city/city-props.glb: CC0 (ADR-0058) and CC-BY 4.0, credited in packages/ui/src/credits/credits.ts (ADR-0063). tools/assets/fetch.mjs downloads them and checks sha256; the zips, unpacked packs and source models are not committed.",
   "sources": [
     {
       "id": "kenney-modular-buildings",
@@ -44,6 +44,90 @@
         { "path": "Platforms/Pipe_1.gltf", "url": "https://drive.usercontent.google.com/download?id=1-hhtKUwroDLlY_17kR2HwR4iczYR42DW&export=download&confirm=t", "sha256": "63ded98e33fc83718f2117eebec79341ba82c89b0da072394829478f52bab45d" },
         { "path": "Platforms/Pipe_Corner.gltf", "url": "https://drive.usercontent.google.com/download?id=1stVoDPtUdYE3-vvuKZvMwDE9DEAHItPc&export=download&confirm=t", "sha256": "355e192edd933df06dc553255fb3a382387556fc71a0049165dde8bc9f6d947e" }
       ]
+    },
+    {
+      "id": "sketchfab-electric-pole",
+      "title": "Electric pole",
+      "author": "Eh (Just_Eh)",
+      "authorUrl": "https://sketchfab.com/Just_Eh",
+      "page": "https://sketchfab.com/3d-models/electric-pole-a41cc931ffd84947b8f7b566acc33384",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "electric_pole.glb", "url": "https://drive.usercontent.google.com/download?id=1GUO6gjbjl6JP4pNVDOZmjPTuCPGRkz3G&export=download&confirm=t", "sha256": "d2fcd652fc2cf2739606f2b4cc495e65c78e3bc374a823143690e8439f0b3a04" }
+      ],
+      "used": ["pr-pole"]
+    },
+    {
+      "id": "sketchfab-robotic-animal",
+      "title": "Robotic Animal",
+      "author": "igor.tesV",
+      "authorUrl": "https://sketchfab.com/igor.tesV",
+      "page": "https://sketchfab.com/3d-models/robotic-animal-d36aed18ec8f4638901e6e5c7ab4e7f6",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "robotic_animal.glb", "url": "https://drive.usercontent.google.com/download?id=1o9x6UUcHANpj9GdFaz0pVcepJpvCPXGB&export=download&confirm=t", "sha256": "6e074924e3508392af4a07589def558536f169281a7a331b023bc1ad2d8837d6" }
+      ],
+      "used": ["pr-robodog"]
+    },
+    {
+      "id": "sketchfab-cyberpunk-building",
+      "title": "Cyberpunk Building",
+      "author": "igor.tesV",
+      "authorUrl": "https://sketchfab.com/igor.tesV",
+      "page": "https://sketchfab.com/3d-models/cyberpunk-building-e79154e588bd4a6c84fa07e9a53f3ff9",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "cyberpunk_building.glb", "url": "https://drive.usercontent.google.com/download?id=1NUvIka3BkJDOeEx7CFp39CLJo4OE7TKS&export=download&confirm=t", "sha256": "e6b855ec02f09f6b26186c1a1a2ae7a820979bf0b6e254ca7592de3cf83f638f" }
+      ],
+      "used": []
+    },
+    {
+      "id": "sketchfab-futuristic-compact-room",
+      "title": "Futuristic Compact Room",
+      "author": "igor.tesV",
+      "authorUrl": "https://sketchfab.com/igor.tesV",
+      "page": "https://sketchfab.com/3d-models/futuristic-compact-room-f49b4d0fbd45427bb47484b0a9ccfe75",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "futuristic_compact_room.glb", "url": "https://drive.usercontent.google.com/download?id=1LWL6tdudHXCxDUU4-_yHnKaDo0qvjdli&export=download&confirm=t", "sha256": "ec3cc9033680e18a17289adfeb5126ae621756d7d8480c1b83547a9a7fb9d0a6" }
+      ],
+      "used": []
+    },
+    {
+      "id": "sketchfab-hw4-cyberpunk-building",
+      "title": "HW 4 Cyberpunk Sci-fi Building",
+      "author": "Eh (Just_Eh)",
+      "authorUrl": "https://sketchfab.com/Just_Eh",
+      "page": "https://sketchfab.com/3d-models/hw-4-cyberpunk-sci-fi-building-99bc36183ca94ca2bd493218566d1209",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "hw_4_cyberpunk_sci-fi_building.glb", "url": "https://drive.usercontent.google.com/download?id=1oaxL4fHcO-XF6VzsECMBp78aAK2bMl0g&export=download&confirm=t", "sha256": "c145e9a2e4857d22061fea5b8dbfb5f032b118309c00b3c878606d70cac1a4ef" }
+      ],
+      "used": []
+    },
+    {
+      "id": "sketchfab-megacity-cluster",
+      "title": "Sci-Fi Megacity Cluster – Free  Asset Pac",
+      "author": "TRYFIELD",
+      "authorUrl": "https://sketchfab.com/tryfield",
+      "page": "https://sketchfab.com/3d-models/sci-fi-megacity-cluster-free-asset-pac-458380c745dc4e05ae5e0f6e7b4c69b2",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "sci-fi_megacity_cluster.glb", "url": "https://drive.usercontent.google.com/download?id=1r1ZoCodVTDDmQre5_j7yhH28bY7T3-ol&export=download&confirm=t", "sha256": "2f554a39458b7b52d5b8cab740204fc976dbab32b815a6ea7cf014e3b01d5e5e" }
+      ],
+      "used": []
     }
   ]
 }

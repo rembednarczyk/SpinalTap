@@ -21,6 +21,8 @@ export interface WorldProp {
   readonly scale: number;
   /** A bollard's chains to the next post or lamp of its row (G-032). */
   readonly chains?: readonly BollardChain[];
+  /** A road lamp drawn as a utility pole (ADR-0063, `utility-poles.ts`). */
+  readonly pole?: boolean;
 }
 
 export const toWorld = (items: readonly StreetPropItem[], at: Vec3): WorldProp[] =>

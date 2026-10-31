@@ -19,6 +19,14 @@ export const pl = {
   "credits.osm": "Ulice, budynki i nazwy: © OpenStreetMap contributors, dane na licencji Open Database License (ODbL), openstreetmap.org/copyright.",
   "credits.terrain": "Ukształtowanie terenu: numeryczny model terenu GUGiK (geoportal.gov.pl).",
   "credits.fiction": "Miasto w grze jest zmyślone: ludzie, firmy i zdarzenia nie mają nic wspólnego z prawdziwym Lublinem.",
+  "credits.assets": "Modele i dźwięki",
+  "credits.section.street": "Rekwizyty ulic",
+  "credits.section.city": "Miasto: budynki, pojazdy, fasady",
+  "credits.section.characters": "Postacie",
+  "credits.section.weapons": "Broń",
+  "credits.section.audio": "Dźwięki",
+  "credits.by": "autor: {author}",
+  "credits.changed": "zmienione na potrzeby gry",
   "menu.back": "Wróć",
   // Pause menu.
   "pause.heading": "Pauza",
@@ -27,6 +35,7 @@ export const pl = {
   "pause.load": "Wczytaj",
   "pause.settings": "Ustawienia",
   "pause.mainMenu": "Menu główne",
+  "pause.credits": "Autorzy",
   // Save slots.
   "slots.quick": "Szybki zapis",
   "slots.auto": "Autozapis",
