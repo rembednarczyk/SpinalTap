@@ -9,8 +9,8 @@ export const returnForPay = (locale: Locale, c: Contract): string => {
 };
 
 /**
- * Quest log, contracts and recovered memories as the journal shows them, the journal's own words
- * in `locale`; quest titles and step objectives come from the game data as they are. Pure.
+ * Quest log, contracts and recovered memories as the journal shows them, all in `locale`: the
+ * journal's own words and the game data's keys (ADR-0056). Pure.
  */
 export const buildJournal = (domain: DomainState, locale: Locale): JournalVm => {
   const quests: JournalQuestVm[] = [];
@@ -20,12 +20,12 @@ export const buildJournal = (domain: DomainState, locale: Locale): JournalVm => 
     const reached = progress.status === "completed" ? q.steps.length : progress.stepIndex + 1;
     quests.push({
       id: q.id,
-      title: q.title,
+      title: translateText(locale, q.title),
       kind: q.main ? "main" : "side",
       status: progress.status,
       steps: q.steps
         .slice(0, reached)
-        .map((s, i) => ({ objective: stepObjective(s, domain.flags), done: progress.status === "completed" || i < progress.stepIndex })),
+        .map((s, i) => ({ objective: translateText(locale, stepObjective(s, domain.flags)), done: progress.status === "completed" || i < progress.stepIndex })),
     });
   }
   const { active, completed } = domain.contracts;

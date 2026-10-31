@@ -132,8 +132,8 @@ test("journal, minimap and settings", async ({ page }) => {
   await page.keyboard.press("KeyJ");
   const journal = page.getByTestId("journal");
   await expect(journal).toBeVisible();
-  await expect(journal).toContainText("Pierwsze zlecenie");
-  await expect(journal).toContainText("Porozmawiaj z Kaito");
+  await expect(journal).toContainText("First job");
+  await expect(journal).toContainText("Talk to Kaito");
   await page.keyboard.press("KeyJ");
   await expect(journal).toBeHidden();
 

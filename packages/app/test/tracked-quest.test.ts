@@ -23,14 +23,15 @@ describe("tracking a journal entry on the HUD", () => {
   it("lets the game pick when nothing is pinned: the main thread first", () => {
     const d = busy();
     expect(shownEntryId(d)).toBe("m0_first_contract");
-    expect(describeObjective(d).title).toBe("Pierwsze zlecenie");
+    expect(describeObjective(d, "en")).toEqual({ title: "First job", objective: "Talk to Kaito in Neon Koi, across the promenade [E]" });
+    expect(describeObjective(d, "pl")).toEqual({ title: "Pierwsze zlecenie", objective: "Porozmawiaj z Kaito w Neon Koi, po drugiej stronie deptaka [E]" });
   });
 
   it("shows the pinned contract instead of the main thread, and back again when unpinned", () => {
     const d = pin(busy(), "contract-c4");
     expect(shownEntryId(d)).toBe("contract-c4");
-    expect(describeObjective(d).title).toBe("Kontrakt 4 · Kaito");
-    expect(describeObjective(pin(d, undefined)).title).toBe("Pierwsze zlecenie");
+    expect(describeObjective(d, "en").title).toBe("Kontrakt 4 · Kaito");
+    expect(describeObjective(pin(d, undefined), "en").title).toBe("First job");
   });
 
   it("falls back to the game's pick once the pinned entry is no longer running", () => {
@@ -38,7 +39,7 @@ describe("tracking a journal entry on the HUD", () => {
     expect(shownEntryId(d)).toBe("m0_first_contract");
     const doneQuest = pin({ ...busy(), quests: { m0_first_contract: { status: "completed" } } }, "m0_first_contract");
     expect(shownEntryId(doneQuest)).toBe("contract-c4");
-    expect(describeObjective(pin(busy(), "no_such_quest")).title).toBe("Pierwsze zlecenie");
+    expect(describeObjective(pin(busy(), "no_such_quest"), "en").title).toBe("First job");
   });
 
   it("marks the followed entry in the journal and whether the player chose it", () => {

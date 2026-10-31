@@ -15,11 +15,11 @@ export const presentQuests: Presenter = ({ bus, render, audio, ui, toast }) => {
   const tx: TranslateText = (text) => translateText(locale(), text);
   return [
     bus.on("QuestAdvanced", (e) => {
-      toast("quest", t("quest.updated"), e.objective);
+      toast("quest", t("quest.updated"), tx(e.objective));
       audio.play("quest-update");
     }),
     bus.on("QuestCompleted", (e) => {
-      toast("quest", t("quest.completed"), e.title);
+      toast("quest", t("quest.completed"), tx(e.title));
       audio.play("quest-update");
     }),
     bus.on("ContractAccepted", (e) => {

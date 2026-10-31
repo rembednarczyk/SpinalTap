@@ -29,6 +29,7 @@ export interface ObjectiveVariant {
 
 export interface QuestStep {
   readonly id: string;
+  /** Catalog key of the objective (`quest.<quest>.<step>`, ADR-0056), as are the variants'. */
   readonly objective: string;
   /** How the objective reads in another situation, e.g. after a different ending of the act before. */
   readonly variants?: readonly ObjectiveVariant[];
@@ -40,6 +41,7 @@ export interface QuestStep {
 
 export interface QuestDefinition {
   readonly id: string;
+  /** Catalog key of the title (`quest.<quest>.title`, ADR-0056). */
   readonly title: string;
   readonly main: boolean;
   /** Id of the quest whose completion starts this one. Without it the quest is started explicitly. */
@@ -68,7 +70,7 @@ export const progressFlag = (event: ProgressEvent, stepId: string): string => `$
 export const evaluateCondition = (cond: QuestCondition, flags: Flags): boolean =>
   cond.type === "flag" ? hasFlag(flags, cond.flag) : cond.of.every((c) => evaluateCondition(c, flags));
 
-/** The objective of `step` as the player should read it now. */
+/** The objective of `step` as the player should read it now: its catalog key. */
 export const stepObjective = (step: QuestStep, flags: Flags): string =>
   step.variants?.find((v) => evaluateCondition(v.when, flags))?.objective ?? step.objective;
 

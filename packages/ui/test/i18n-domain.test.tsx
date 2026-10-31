@@ -7,6 +7,7 @@ import {
   ENDINGS,
   FACTIONS,
   MEMORY_CATALOG,
+  QUEST_DEFINITIONS,
   QUICKHACKS,
   BUFF_CATALOG,
   CYBERWARE_CATALOG,
@@ -52,6 +53,7 @@ const coreKeys = (): string[] => [
   ...Object.values(ACT_TWO_ENDINGS).map((d) => d.title),
   ...Object.values(FACTIONS),
   ...Object.values(QUICKHACKS).map((d) => d.title),
+  ...QUEST_DEFINITIONS.flatMap((q) => [q.title, ...q.steps.flatMap((s) => [s.objective, ...(s.variants ?? []).map((v) => v.objective)])]),
 ];
 
 afterEach(cleanup);

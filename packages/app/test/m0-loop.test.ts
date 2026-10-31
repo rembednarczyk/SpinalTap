@@ -100,7 +100,7 @@ describe("M0 vertical slice: input → sim → narrative → domain → save →
     talkThrough(session, ui);
     steps(session, 1);
     expect(session.sim.domain.character.alias).toBe("Seki Senshi");
-    expect(ui.getState().objective).toContain("kuriera Hebi");
+    expect(ui.getState().objective).toContain("Hebi courier");
 
     // 2. Fight in the alley until the courier is down.
     const courier = () => [...session.sim.world].find((e) => e.key === "courier");
@@ -133,7 +133,7 @@ describe("M0 vertical slice: input → sim → narrative → domain → save →
     // 4. Save, keep playing, load: state matches the save point, narrative included.
     expect(await session.saveAsync("slot-1")).toBe(true);
     const saved = session.snapshot();
-    expect(ui.getState().slots[0]).toMatchObject({ slot: "slot-1", objective: expect.stringContaining("Weź od Kaito kontrakt") });
+    expect(ui.getState().slots[0]).toMatchObject({ slot: "slot-1", objective: expect.stringContaining("Take a contract from Kaito") });
     steps(session, 120, frame({ moveZ: -1 }));
     expect(await session.loadAsync("slot-1")).toBe(true);
     expect(session.snapshot().domain).toEqual(saved.domain);

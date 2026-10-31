@@ -180,7 +180,7 @@ describe("minimap data", () => {
     expect(st.mapPlayer).toMatchObject({ x: 319.5, z: -64.75 });
     // Kaito at the Neon Koi counter is the first step's target: his fixer dot gets the quest ring too.
     expect(st.mapMarkers.map((m) => m.kind).sort()).toEqual(["fixer", "quest", "target"]);
-    expect(st.journal.quests[0]?.title).toBe("Pierwsze zlecenie");
+    expect(st.journal.quests[0]?.title).toBe("First job");
     const before = ui.getState().mapPlayer;
     s.step(EMPTY_INPUT);
     s.render(0);

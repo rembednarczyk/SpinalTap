@@ -1,6 +1,7 @@
 import {
   type Contract,
   type DomainState,
+  type Locale,
   QUEST_DEFINITIONS,
   activeMainStep,
   contractGiver,
@@ -10,6 +11,7 @@ import {
   stepObjective,
 } from "@seki/core";
 import { SIM_HZ } from "@seki/sim";
+import { translateText } from "@seki/ui";
 
 /** Main steps that are about fixer work: while a contract runs, the HUD shows the contract itself. */
 const CONTRACT_STEPS: ReadonlySet<string> = new Set(["echo_contract"]);
@@ -23,7 +25,7 @@ export const contractEntryId = (c: Contract): string => `contract-${c.id}`;
 type ObjectiveView = { title: string | null; objective: string | null };
 
 /** The entry the player pinned in the journal, while it is still running; null otherwise. */
-const pinnedView = (domain: DomainState, contractView: ObjectiveView | null): { id: string; view: ObjectiveView } | null => {
+const pinnedView = (domain: DomainState, locale: Locale, contractView: ObjectiveView | null): { id: string; view: ObjectiveView } | null => {
   const id = domain.preferences.trackedQuest;
   if (!id) return null;
   const contract = domain.contracts.active;
@@ -31,7 +33,7 @@ const pinnedView = (domain: DomainState, contractView: ObjectiveView | null): { 
   const quest = QUEST_DEFINITIONS.find((q) => q.id === id);
   const progress = domain.quests[id];
   const step = quest && progress?.status === "active" ? quest.steps[progress.stepIndex] : undefined;
-  return quest && step ? { id, view: { title: quest.title, objective: stepObjective(step, domain.flags) } } : null;
+  return quest && step ? { id, view: { title: translateText(locale, quest.title), objective: translateText(locale, stepObjective(step, domain.flags)) } } : null;
 };
 
 /**
@@ -40,7 +42,7 @@ const pinnedView = (domain: DomainState, contractView: ObjectiveView | null): { 
  */
 export const shownEntryId = (domain: DomainState): string | null => {
   const contract = domain.contracts.active;
-  const pinned = pinnedView(domain, contract ? { title: null, objective: null } : null);
+  const pinned = pinnedView(domain, "en", contract ? { title: null, objective: null } : null);
   if (pinned) return pinned.id;
   const main = activeMainStep(domain.quests, QUEST_DEFINITIONS);
   if (main && !(contract && CONTRACT_STEPS.has(main.step.id))) return main.quest.id;
@@ -48,20 +50,20 @@ export const shownEntryId = (domain: DomainState): string | null => {
 };
 
 /**
- * Title and objective for the HUD: the journal entry the player pinned, else the main thread
- * (or the contract it is about), else the running contract. With `tick` a running delivery shows
- * its clock; the save label leaves it out.
+ * Title and objective for the HUD in `locale`: the journal entry the player pinned, else the main
+ * thread (or the contract it is about), else the running contract. With `tick` a running delivery
+ * shows its clock; the save label leaves it out.
  */
-export const describeObjective = (domain: DomainState, tick: number | null = null): ObjectiveView => {
+export const describeObjective = (domain: DomainState, locale: Locale, tick: number | null = null): ObjectiveView => {
   const contract = domain.contracts.active;
   const left = contract && tick !== null ? contractSecondsLeft(contract, tick, SIM_HZ) : null;
   const contractView = contract ? { title: contractTitle(contract), objective: contractObjective(contract, left) } : null;
-  const pinned = pinnedView(domain, contractView);
+  const pinned = pinnedView(domain, locale, contractView);
   if (pinned) return pinned.view;
   const main = activeMainStep(domain.quests, QUEST_DEFINITIONS);
   if (main) {
     if (contractView && CONTRACT_STEPS.has(main.step.id)) return contractView;
-    return { title: main.quest.title, objective: stepObjective(main.step, domain.flags) };
+    return { title: translateText(locale, main.quest.title), objective: translateText(locale, stepObjective(main.step, domain.flags)) };
   }
   const started = QUEST_DEFINITIONS.some((q) => q.main && domain.quests[q.id]);
   if (!started) return { title: null, objective: null };

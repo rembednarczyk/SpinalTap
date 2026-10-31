@@ -20,7 +20,7 @@ describe("act II on the overpass in the game", () => {
         flags: ["act1_ending", "ending:aya", "kagami_job", "met_fixer", "met_ren", "recalled:last_call", "recalled:rooftop", "ren_trail", "reported_back", "seen:act2_opening"],
       }),
     );
-    expect(g.seki.state().objective).toContain("Kurosawa z Kagami czeka na wiadukcie");
+    expect(g.seki.state().objective).toContain("Kurosawa from Kagami is waiting on the viaduct");
 
     // On the viaduct's deck over aleja Tysiąclecia, next to him; a step streams the market in.
     run(() => {
