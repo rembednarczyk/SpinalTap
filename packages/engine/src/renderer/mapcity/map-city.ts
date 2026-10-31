@@ -8,26 +8,23 @@ import { sinkToMesh } from "../dressing";
 import { MeshSink } from "../mesh-sink";
 import { type FacadeFrame, type MapBuilding, facadeFrame } from "./facade-frame";
 import { mapBuilding } from "./map-building";
-import { planFarBuilding, planNearBuilding } from "./facade-plan";
 import { SURFACE_LIFT, planBasin, planSurface, planTerrain, planWater } from "./ground-plan";
 import { MapSignMaterial } from "./map-signs";
 import { MapWaterMaterial } from "./map-water";
 import { BinIndex, cellBounds, cellKey, cellsOf, grow } from "./map-index";
 import { type Box2, type P2, boundsOf, centroid, cleanRing, distanceToBox, pointInRing } from "./polygon";
-import { planBuildingSigns } from "./sign-plan";
 import { planCrossing } from "./crossing-plan";
 import { type DeckAxis, Decks, planDeckEdges, planDeckUnderside } from "./deck-plan";
 import { planMarking } from "./marking-plan";
 import { type AcrossAt, SPAN_MAX, type Span, findSpans, planFarCanyon, planNearCanyon } from "./canyon-plan";
 import { planCanyonSigns } from "./canyon-signs";
-import { planFarVertical, planNearVertical } from "./vertical-plan";
-import { planWallClutter } from "./wall-clutter";
-import { type PropSlot, bakeSlots, planFacadeExtras } from "./facade-props";
+import { type PropSlot, bakeSlots } from "./facade-props";
+import { planFarFrames, planNearFrames } from "./cell-plan";
 import type { CityProps } from "../city-props";
 import { planSteps } from "./steps-plan";
 import { StreetProps, type StreetPropsStats } from "./street-props";
 import { MapSkyline } from "./skyline";
-import { type LandmarkPart, isLandmarkFrame, landmarkAt, planFarLandmark, planLandmarkSigns, planNearLandmark, withLandmark } from "./landmarks";
+import { type LandmarkPart, landmarkAt, withLandmark } from "./landmarks";
 
 /** Views drawn by the map city (ADR-0042, ADR-0044). */
 export type MapView = Extract<ViewDescriptor, { kind: "building" | "terrain" | "ground" | "street-props" | "road-marking" }>;
@@ -524,12 +521,7 @@ export class MapCity {
     cell.spans = cell.frames.flatMap((f) => findSpans(f, this.acrossAt));
     const far = new MeshSink();
     const signs = new MeshSink();
-    for (const f of cell.frames) {
-      if (isLandmarkFrame(f)) { planFarLandmark(far, f); planLandmarkSigns(signs, f, (name) => this.signs.slotFor(name)); continue; }
-      planFarBuilding(far, f);
-      planFarVertical(far, f);
-      planBuildingSigns(signs, f, (name) => this.signs.slotFor(name), this.drawnGround);
-    }
+    planFarFrames(far, signs, cell.frames, (name) => this.signs.slotFor(name), this.drawnGround);
     planFarCanyon(far, cell.spans);
     planCanyonSigns(signs, cell.frames, cell.spans, this.deps.quality === "low");
     cell.far = far.empty ? null : this.mesh(`map-far-${cell.key}`, far, "facade");
@@ -575,13 +567,7 @@ export class MapCity {
     const lite = this.deps.quality === "low";
     const slots: PropSlot[] = [];
     const place = this.facadeProps ? (s: PropSlot) => slots.push(s) > 0 : undefined;
-    for (const f of cell.frames) {
-      if (isLandmarkFrame(f)) { planNearLandmark(sink, f); continue; }
-      planNearBuilding(sink, f);
-      planNearVertical(sink, f, place);
-      if (!lite) planWallClutter(sink, f, place);
-      if (!lite && place) planFacadeExtras(f, place, (x, z, r) => this.streetProps?.obstacles(x, z, r) ?? []);
-    }
+    planNearFrames(sink, cell.frames, lite, place, (x, z, r) => this.streetProps?.obstacles(x, z, r) ?? []);
     if (this.facadeProps) bakeSlots(sink, this.facadeProps, slots, lite);
     planNearCanyon(sink, cell.spans, lite);
     if (sink.empty) return;
