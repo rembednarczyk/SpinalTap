@@ -11,7 +11,7 @@ import { MeshSink } from "../src/renderer/mesh-sink";
 import { type WorldProp, toWorld } from "../src/renderer/mapcity/prop-batch";
 import { DOG_DEPTH, clearOf, dogModel, gateDogs, stallDog } from "../src/renderer/mapcity/robodogs";
 import { StreetProps } from "../src/renderer/mapcity/street-props";
-import { CABLE_SPAN, bakePoles, isPoleLamp, poleCables, poleLights, poleModel, polePairs, poleXform } from "../src/renderer/mapcity/utility-poles";
+import { CABLE_SPAN, bakePoles, farPole, isPoleLamp, poleFits, poleCables, poleLights, poleModel, polePairs, poleXform } from "../src/renderer/mapcity/utility-poles";
 
 /** The body's radius (`BODY` in sim's `world/factory.ts`): a body's middle never comes nearer a wall or a solid. */
 const BODY = { radius: 0.38 } as const;
@@ -59,6 +59,32 @@ describe("utility poles over the side streets (ADR-0063)", () => {
     // The main roads keep their lamps: most road lamps of the two districts stay lamps.
     const lamps = pieces.filter((p) => p.prop === "lamp-road" && ["targ", "doki"].includes(chunkAt(p.x, p.z)?.district ?? ""));
     expect(poles.length).toBeLessThan(lamps.length / 2);
+  });
+
+  it("stand clear of the buildings with the whole pole, not just its foot: Ciasna's lamp by the wall stays a lamp", () => {
+    const fitting = poles.filter((p) => poleFits(pole, p));
+    expect(fitting.length).toBeGreaterThan(40);
+    const ciasna = poles.find((p) => Math.hypot(p.x - 634.9, p.z - 538.0) < 0.5);
+    expect(ciasna).toBeDefined();
+    expect(poleFits(pole, ciasna!)).toBe(false);
+    for (const p of fitting) {
+      const { positions } = transformProp(pole, poleXform(p));
+      for (let i = 0; i < positions.length; i += 3) expect(inBuilding(positions[i]!, positions[i + 2]!)).toBe(false);
+    }
+  });
+
+  it("draws the far pole's light where its halo hangs", () => {
+    const far = farPole(pole);
+    const lamp = poleLights(pole)[0]!.at;
+    const lit: number[][] = [];
+    for (let i = 0; i < far.vertexCount; i++) if (far.colors[i * 4 + 3] === 0) lit.push([far.positions[i * 3]!, far.positions[i * 3 + 1]!, far.positions[i * 3 + 2]!]);
+    expect(lit.length).toBeGreaterThan(0);
+    const mid = [0, 1, 2].map((k) => lit.reduce((n, v) => n + v[k]!, 0) / lit.length);
+    expect(mid[0]!).toBeCloseTo(lamp.x, 1);
+    expect(mid[1]!).toBeCloseTo(lamp.y, 1);
+    expect(mid[2]!).toBeCloseTo(lamp.z, 1);
+    // Nothing of the far pole stands above the pole itself (the road lamp's head was at 8.8 m).
+    for (let i = 1; i < far.positions.length; i += 3) expect(far.positions[i]!).toBeLessThanOrEqual(pole.size.y + 0.15);
   });
 
   it("string each pole to a near one, over the street and clear of the buildings", () => {
@@ -144,6 +170,24 @@ describe("the street furniture with the CC-BY props (ADR-0063)", () => {
     const after = near(s);
     expect(after.length).toBe(before.length);
     expect(vertices(s)).toBeGreaterThan(v0);
+  });
+
+  it("rebuilds the far blocks with the far poles once the props load: no lamp head above the poles", () => {
+    const s = make("high");
+    const fitting = poles.filter((p) => chunkAt(p.x, p.z)?.district === "targ" && poleFits(pole, p));
+    const top = () => {
+      let y = -Infinity;
+      for (const m of s.meshes.filter((m) => m.name.startsWith("props-far"))) {
+        const pos = m.getVerticesData("position") ?? [];
+        for (let i = 0; i < pos.length; i += 3) {
+          if (fitting.some((p) => Math.hypot(pos[i]! - p.x, pos[i + 2]! - p.z) < 0.3)) y = Math.max(y, pos[i + 1]! - (fitting.find((p) => Math.hypot(pos[i]! - p.x, pos[i + 2]! - p.z) < 0.3)?.y ?? 0));
+        }
+      }
+      return y;
+    };
+    expect(top()).toBeGreaterThan(8.8);
+    s.setProps(props);
+    expect(top()).toBeLessThanOrEqual(pole.size.y + 0.15);
   });
 
   it("leaves the phones' blocks as they were", () => {

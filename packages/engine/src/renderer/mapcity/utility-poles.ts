@@ -1,9 +1,10 @@
 import { MAP_CHUNKS, chunkAt, inBuilding } from "@seki/sim";
 import type { KitModel } from "../city-kit-data";
-import { type CityProps, type PropXform, addPropToSink, facing } from "../city-props";
-import { type MeshSink, type Vec, hexColor } from "../mesh-sink";
+import { type CityProps, type PropXform, addPropToSink, facing, transformProp } from "../city-props";
+import { MeshSink, type Vec, hexColor } from "../mesh-sink";
 import { cable } from "./canyon-plan";
 import { type WorldProp, placePoint } from "./prop-batch";
+import { glow, paint, v3 } from "./prop-kit";
 import type { PropLight } from "./prop-lamps";
 
 /**
@@ -98,6 +99,36 @@ export const poleXform = (p: WorldProp): PropXform => facing({ x: p.x, y: p.y, z
  * the model's turned half round.
  */
 export const poleLights = (m: KitModel): PropLight[] => (m.lights ?? []).map((l) => ({ at: { x: -l.x, y: l.y, z: -l.z }, ...POLE_LIGHT }));
+
+/**
+ * Does the whole pole stand clear of the buildings: no vertex of the model at this lamp inside an
+ * outline of the map (a lamp a few decimetres from a wall would push the crossarm and the lamp's
+ * hood into the facade)? A lamp whose pole does not fit stays a lamp.
+ */
+export const poleFits = (m: KitModel, p: WorldProp): boolean => {
+  const { positions } = transformProp(m, poleXform(p));
+  for (let i = 0; i < positions.length; i += 3) if (inBuilding(positions[i] ?? 0, positions[i + 2] ?? 0)) return false;
+  return true;
+};
+
+/** How far the pole's crossarms reach from its mast, for the awnings to keep clear (metres). */
+export const POLE_REACH = 1.7;
+
+/**
+ * The pole in the far mesh: its mast, the upper crossarm and a lit box where its lamp is, so the
+ * far pole's light sits where its halo does.
+ */
+export const farPole = (m: KitModel): MeshSink => {
+  const sink = new MeshSink();
+  const dark = paint("#1c1e22");
+  sink.box(v3(0, m.size.y / 2 - 0.1, 0), 0.22, m.size.y + 0.2, 0.22, dark, { bottom: false });
+  sink.box(v3(0, ARMS[0], 0), ARM_X * 2 + 0.3, 0.12, 0.12, dark);
+  for (const l of poleLights(m)) {
+    sink.box(v3(l.at.x / 2, l.at.y + 0.2, l.at.z / 2), Math.abs(l.at.x) + 0.08, 0.08, Math.abs(l.at.z) + 0.08, dark);
+    sink.box(v3(l.at.x, l.at.y, l.at.z), 0.32, 0.3, 0.32, glow(POLE_LIGHT.color));
+  }
+  return sink;
+};
 
 /** Is the straight line between two points clear of the map's buildings (sampled every 2 m)? */
 const clearLine = (a: Vec, b: Vec): boolean => {

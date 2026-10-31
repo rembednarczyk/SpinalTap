@@ -13,7 +13,7 @@ import { type BlockBand, PROP_BLOCK, PROP_LOD, type PropLod, blockBand } from ".
 import { type Box2, distanceToBox } from "./polygon";
 import type { CityProps } from "../city-props";
 import { bakeDogs, clearOf, dogModel, gateDogs, stallDog } from "./robodogs";
-import { bakePoles, isPoleLamp, poleLights, poleModel } from "./utility-poles";
+import { POLE_REACH, bakePoles, farPole, isPoleLamp, poleFits, poleLights, poleModel } from "./utility-poles";
 
 /**
  * A 256 m block of the map city's street furniture: its pieces, the detailed mesh baked when it
@@ -104,6 +104,9 @@ export class StreetProps {
   private waitingBlocks = 0;
   /** The CC-BY street props (ADR-0063): poles and robot dogs, once `city-props.glb` has loaded. */
   private cityProps: CityProps | null = null;
+  /** Lamps whose pole fits clear of the buildings (`poleFits`), worked out once each. */
+  private readonly fits = new WeakMap<WorldProp, boolean>();
+  private farPoleModel: MeshSink | null = null;
 
   constructor(private readonly deps: StreetPropsDeps) {
     this.halo = new PropHaloMaterial(deps.scene);
@@ -145,10 +148,16 @@ export class StreetProps {
   /** The props file has loaded (ADR-0063): the detailed blocks and the halos are made again with its poles and dogs. */
   setProps(props: CityProps): void {
     this.cityProps = props;
+    const pole = this.pole;
+    this.farPoleModel = pole ? farPole(pole) : null;
     for (const b of this.blocks.values()) {
       b.near?.dispose(false, false);
       b.near = null;
       b.baked = false;
+      // The far poles too, enabled again by the next update's band.
+      b.far?.dispose(false, false);
+      b.far = null;
+      this.buildFar(b);
     }
     this.buildHalos();
   }
@@ -163,7 +172,8 @@ export class StreetProps {
             const s = STANDING[p.prop];
             if (!s) continue;
             const c = placePoint(p, { x: 0, y: 0, z: s.z ?? 0 });
-            const reach = s.r * p.scale;
+            // A pole's crossarms reach further than the lamp's mast (ADR-0063).
+            const reach = this.isPole(p) ? POLE_REACH : s.r * p.scale;
             if (Math.hypot(c.x - x, c.z - z) < r + reach) out.push({ x: c.x, z: c.z, r: reach });
           }
         }
@@ -289,7 +299,7 @@ export class StreetProps {
   private buildFar(block: PropBlock): void {
     const far = new MeshSink();
     for (const p of this.sorted(block)) {
-      const f = farModel(p.prop, p.shape);
+      const f = this.isPole(p) ? this.farPoleModel : farModel(p.prop, p.shape);
       if (f) bake(far, f, p);
     }
     block.far = this.mesh(`props-far-${block.key}`, far);
@@ -300,6 +310,18 @@ export class StreetProps {
     return this.deps.quality === "low" ? null : poleModel(this.cityProps);
   }
 
+  /** Is this piece drawn as a utility pole now: a pole lamp, the props loaded, its pole clear of the buildings. */
+  private isPole(p: WorldProp): boolean {
+    const pole = this.pole;
+    if (!pole || !p.pole) return false;
+    let fits = this.fits.get(p);
+    if (fits === undefined) {
+      fits = poleFits(pole, p);
+      this.fits.set(p, fits);
+    }
+    return fits;
+  }
+
   /** Bakes a block's detailed pieces into one mesh on the street props' material (ADR-0050). */
   private bakeNear(block: PropBlock): void {
     block.baked = true;
@@ -307,11 +329,11 @@ export class StreetProps {
     const pole = this.pole;
     const pieces = this.sorted(block);
     for (const p of pieces) {
-      if (pole && p.pole) continue;
+      if (this.isPole(p)) continue;
       bake(sink, propModel(p.prop, p.shape).sink, p);
       for (const c of p.chains ?? []) bake(sink, chainModel(c.end), { ...p, yaw: c.yaw });
     }
-    if (pole && this.cityProps) bakePoles(sink, this.cityProps, pole, pieces.filter((p) => p.pole));
+    if (pole && this.cityProps) bakePoles(sink, this.cityProps, pole, pieces.filter((p) => this.isPole(p)));
     this.bakeBlockDogs(sink, block, pieces);
     block.near = this.mesh(`props-${block.key}`, sink);
   }
@@ -339,7 +361,7 @@ export class StreetProps {
     const pole = this.pole;
     const poleLit = pole ? poleLights(pole) : [];
     for (const key of [...this.blocks.keys()].sort()) {
-      for (const p of this.sorted(this.blocks.get(key)!)) if (LIT(p.prop)) planHalos(sink, p, pole && p.pole ? poleLit : propModel(p.prop, p.shape).lights);
+      for (const p of this.sorted(this.blocks.get(key)!)) if (LIT(p.prop)) planHalos(sink, p, this.isPole(p) ? poleLit : propModel(p.prop, p.shape).lights);
     }
     if (sink.empty) return;
     this.haloMesh = sinkToMesh(this.deps.scene, "props-halo", sink, true);
