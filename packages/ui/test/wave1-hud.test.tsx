@@ -117,18 +117,22 @@ const debrief: ContractDebriefVm = {
 };
 
 describe("contract debrief", () => {
-  it("shows rank, badges with icons and Polish labels, the pay split and the time", () => {
-    const { i } = mount({ debrief });
+  it("shows rank, badges with icons and labels, the pay split and the time", () => {
+    const { i, store } = mount({ debrief });
     const card = screen.getByTestId("debrief");
     expect(screen.getByTestId("debrief-rank").textContent).toContain("S");
     expect(screen.getByTestId("badge-ghost").className).toContain("debrief__badge--earned");
     expect(screen.getByTestId("badge-ghost").className).toContain("debrief__badge--style");
-    expect(screen.getByTestId("badge-ghost").textContent).toContain("Duch");
+    expect(screen.getByTestId("badge-ghost").textContent).toContain("Ghost");
     expect(screen.getByTestId("badge-ghost").querySelector("svg")).not.toBeNull();
     expect(screen.getByTestId("badge-clean").className).not.toContain("earned");
     expect(screen.getByTestId("badge-netrunner").textContent).toContain("Netrunner");
-    expect(card.textContent).toContain("Bonus za styl (Genzō)");
-    expect(screen.getByTestId("debrief-total").textContent).toMatch(/1\s?650/);
+    expect(card.textContent).toContain("Style bonus (Genzō)");
+    expect(screen.getByTestId("debrief-total").textContent).toBe("1,650 €$");
+    act(() => store.setState({ settings: { ...store.getState().settings, locale: "pl" } }));
+    expect(screen.getByTestId("badge-ghost").textContent).toContain("Duch");
+    expect(screen.getByTestId("debrief-total").textContent).toBe("1650 €$");
+    act(() => store.setState({ settings: { ...store.getState().settings, locale: "en" } }));
     expect(card.textContent).toContain("4:14");
     fireEvent.keyDown(window, { code: "Enter" });
     expect(i.dismissDebrief).toHaveBeenCalled();
@@ -155,7 +159,10 @@ describe("contract debrief", () => {
     expect(screen.getByTestId("contract-bonus").textContent).toContain("✓");
     act(() => patchUi(store, { contractBonus: { label: "Nie podnoś alarmu", badge: "no_alarm", bonus: 300, kept: false } }));
     expect(screen.getByTestId("contract-bonus").className).toContain("hud__bonus--lost");
-    expect(screen.getByTestId("contract-bonus").getAttribute("aria-label")).toContain("stracony");
+    expect(screen.getByTestId("contract-bonus").getAttribute("aria-label")).toBe("Bonus condition lost");
+    // Polish word for word as before (ADR-0056), money in the Polish way.
+    act(() => patchUi(store, { settings: { ...store.getState().settings, locale: "pl" } }));
+    expect(screen.getByTestId("contract-bonus").getAttribute("aria-label")).toBe("Warunek bonusowy stracony");
   });
 });
 
