@@ -65,4 +65,17 @@ describe("NPCs and the way under a bridge's deck (G-068, ADR-0053)", () => {
       expect(drop).toBeLessThan(0.3);
     }
   });
+
+  it("a brawler off the viaduct of Zamkowa crosses it on the deck after a player beyond its far end", () => {
+    const zamkowa = BRIDGE_DECKS.get("stare-miasto-1-1")![0]!;
+    const len = Math.hypot(zamkowa.b.x - zamkowa.a.x, zamkowa.b.z - zamkowa.a.z);
+    const u = { x: (zamkowa.b.x - zamkowa.a.x) / len, z: (zamkowa.b.z - zamkowa.a.z) / len };
+    for (const s of [3, 10]) {
+      const from = { x: zamkowa.a.x - u.x * s, z: zamkowa.a.z - u.z * s };
+      const to = { x: zamkowa.b.x + u.x * s, z: zamkowa.b.z + u.z * s };
+      const { at, drop } = chase(from, to, Infinity, 20);
+      expect(at).not.toBeNull();
+      expect(drop).toBeLessThan(0.3);
+    }
+  });
 });

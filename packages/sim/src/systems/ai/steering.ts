@@ -136,13 +136,14 @@ const cellRange = (lo: number, hi: number, origin: number): [number, number] => 
 const centre = (i: number, origin: number) => origin + (i + 0.5) * NAV_CELL;
 
 /**
- * How a walk from `a` to `b` sees the bridges' decks high over the terrain (G-062): as ground
- * (`Infinity`) when either end stands on one, as overhead (`-Infinity`) otherwise, so a way under
- * the bridge is open and the deck's edges over it are no bank.
+ * How a walk from `a` to `b` sees the bridges' decks high over the terrain (G-062): as overhead
+ * (`-Infinity`) when either end stands under one, so the way under the bridge is open and the
+ * deck's edges over it are no bank; as ground (`Infinity`) otherwise, so a way over the bridge
+ * between two ends off it stays open.
  */
 const deckReach = (ground: GroundField, a: Vec3, b: Vec3): number => {
-  const onDeck = (p: Vec3) => ground.heightAt(p.x, p.z, p.y + STEP_HEIGHT) > ground.heightAt(p.x, p.z, -Infinity);
-  return onDeck(a) || onDeck(b) ? Infinity : -Infinity;
+  const underDeck = (p: Vec3) => ground.heightAt(p.x, p.z, p.y + STEP_HEIGHT) < ground.heightAt(p.x, p.z);
+  return underDeck(a) || underDeck(b) ? -Infinity : Infinity;
 };
 
 /** Terrain height at every cell centre of the window, or null where the world has no terrain. */
