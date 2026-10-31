@@ -214,6 +214,8 @@ export const enWorld = {
   "dash.cooldown": "Dash in {seconds} s",
   "contract.hooks": "Leads found",
   "hud.health": "Health",
+  "hud.ability.ready": "ready",
+  "hud.medkits": "Medkits × {count}",
   "contract.untitled": "Job",
   "variation.modifier.night_only": "night only",
   "variation.modifier.time_limit": "against the clock",

@@ -83,8 +83,8 @@ describe("act II quest (Lustro)", () => {
 
   it("reads its first step after the ending of act I", () => {
     const first = QUEST_MIRROR.steps[0]!;
-    expect(stepObjective(first, [endingFlag("aya")])).toContain("babcię Ume");
-    expect(stepObjective(first, [endingFlag("seki")])).toContain("Mori sprzedał twój moduł");
+    expect(stepObjective(first, [endingFlag("aya")])).toBe("quest.m3_lustro.ren_trail");
+    expect(stepObjective(first, [endingFlag("seki")])).toBe("quest.m3_lustro.ren_trail.sold");
   });
 
   it("walks every step only after the flashback of the step before, and follows the fight", () => {
@@ -104,12 +104,12 @@ describe("act II quest (Lustro)", () => {
     expect(advance(KAGAMI_JOB_FLAG)).toEqual([]);
     expect(advance(recalledFlag("rooftop"))).toEqual([{ type: "memory", memoryId: "last_call" }]);
     expect(step()?.id).toBe("overpass");
-    expect(stepObjective(step()!, flags)).toContain("Zdecyduj");
+    expect(stepObjective(step()!, flags)).toBe("quest.m3_lustro.overpass");
     flags.push(KAGAMI_AMBUSH_FLAG);
-    expect(stepObjective(step()!, flags)).toContain("Odeprzyj ich");
+    expect(stepObjective(step()!, flags)).toBe("quest.m3_lustro.overpass.ambush");
     flags.push(...KAGAMI_CLEANER_KEYS.map((k) => `dead:${k}`));
     expect(evaluateCondition(CLEANERS_DOWN, flags)).toBe(true);
-    expect(stepObjective(step()!, flags)).toContain("Wróć do Rena");
+    expect(stepObjective(step()!, flags)).toBe("quest.m3_lustro.overpass.cleared");
     expect(advance(ACT_TWO_ENDING_FLAG)).toEqual([]);
     expect(step()?.id).toBe("overpass");
     advance(recalledFlag("last_call"));

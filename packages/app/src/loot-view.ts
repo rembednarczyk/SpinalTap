@@ -1,7 +1,7 @@
 import { AMMO_CATALOG, type DomainState, type LootContainer, type LootLine, STACKABLE_CATALOG, itemSummary } from "@seki/core";
-import type { LootLineVm, LootVm, Translate } from "@seki/ui";
+import type { LootLineVm, LootVm, Translate, TranslateText } from "@seki/ui";
 
-/** Catalog name of one loot line; for ammo the round's name, which the UI puts in a sentence. */
+/** Catalog key of one loot line's name; for ammo the round's, which the UI puts in a sentence. */
 const lootName = (l: LootLine): string => {
   switch (l.kind) {
     case "eddies":
@@ -16,7 +16,7 @@ const lootName = (l: LootLine): string => {
 };
 
 /** Display name of one loot line in the player's language ("9mm ammo"). */
-export const lootLabel = (t: Translate, l: LootLine): string => (l.kind === "ammo" ? t("loot.ammo", { name: lootName(l) }) : lootName(l));
+export const lootLabel = (t: Translate, tx: TranslateText, l: LootLine): string => (l.kind === "ammo" ? t("loot.ammo", { name: tx(lootName(l)) }) : tx(lootName(l)));
 
 const lineVm = (l: LootLine, index: number): LootLineVm => ({ index, kind: l.kind, label: lootName(l), qty: l.qty, rarity: l.kind === "item" ? l.rarity : null });
 
@@ -28,8 +28,8 @@ export const lootVm = (c: LootContainer): LootVm => ({
 });
 
 /** Short summary of what was taken, for the toast. */
-export const lootSummary = (t: Translate, lines: readonly LootLine[]): string =>
-  lines.map((l) => (l.kind === "eddies" ? `${l.qty} €$` : l.qty > 1 ? `${lootLabel(t, l)} × ${l.qty}` : lootLabel(t, l))).join(", ");
+export const lootSummary = (t: Translate, tx: TranslateText, lines: readonly LootLine[]): string =>
+  lines.map((l) => (l.kind === "eddies" ? `${l.qty} €$` : l.qty > 1 ? `${lootLabel(t, tx, l)} × ${l.qty}` : lootLabel(t, tx, l))).join(", ");
 
 /** Tracks the open bag's view; returns the same object while the container is unchanged. */
 export const createLootTracker = () => {

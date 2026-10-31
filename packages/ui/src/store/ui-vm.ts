@@ -32,6 +32,7 @@ export interface DialogueVm {
 }
 
 export interface AbilityVm {
+  /** Catalog key of the ability's name (ADR-0056). */
   readonly name: string;
   /** Seconds left while active, 0 otherwise. */
   readonly activeTime: number;
@@ -145,7 +146,7 @@ export interface WeaponSlotVm {
   readonly slot: WeaponSlot;
   /** Key and touch number of the slot. */
   readonly key: 1 | 2 | 3;
-  /** Weapon in the slot, null when empty. */
+  /** Catalog key of the weapon's name (ADR-0056), null when the slot is empty. */
   readonly name: string | null;
   readonly rarity: Rarity | null;
 }
@@ -159,6 +160,7 @@ export interface WeaponStripVm {
   readonly magazine: number | null;
   /** Matching rounds in the pouch; null when the weapon takes none. */
   readonly reserve: number | null;
+  /** Catalog key of the round's name. */
   readonly ammoName: string | null;
   readonly reloading: boolean;
   readonly holstered: boolean;
@@ -168,7 +170,7 @@ export interface LootLineVm {
   /** Index in the container, for `takeLoot`. */
   readonly index: number;
   readonly kind: "eddies" | "ammo" | "stack" | "item";
-  /** Name from the catalog; for ammo the round's name, which the panel puts in "9mm ammo". */
+  /** Catalog key of the name; for ammo the round's, which the panel puts in "9mm ammo". */
   readonly label: string;
   readonly qty: number;
   readonly rarity: Rarity | null;
@@ -188,6 +190,7 @@ export interface TradeItemVm {
   readonly key: string;
   readonly ref: ItemRef;
   readonly defId: ItemDefId;
+  /** Catalog key of the name (ADR-0056); the counter writes it in the player's language. */
   readonly name: string;
   readonly category: ItemCategory;
   /** Null for stacks. */

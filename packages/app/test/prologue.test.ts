@@ -41,7 +41,7 @@ describe("the prologue (G-034)", () => {
     finishDialogue(session, ui);
     expect(session.sim.domain.flags).toContain("met_fixer");
     expect(session.sim.domain.character.alias).toBe("Seki Senshi");
-    expect(objective(ui)).toContain("kuriera Hebi");
+    expect(objective(ui)).toContain("Hebi courier");
 
     const after = kaito(session)!;
     expect(after.id).toBe(before.id);

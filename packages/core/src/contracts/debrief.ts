@@ -19,7 +19,7 @@ export const CONTRACT_BADGES: readonly ContractBadge[] = ["ghost", "no_alarm", "
 /** The one optional condition a template can carry; meeting it pays `bonus` on top. */
 export interface BonusCondition {
   readonly badge: ContractBadge;
-  /** Shown in the briefing and on the HUD, e.g. "Nie podnoś alarmu". */
+  /** Catalog key of the condition as the briefing and the HUD show it (`contract.bonus.<kind>`, ADR-0056). */
   readonly label: string;
   readonly bonus: number;
 }

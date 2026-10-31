@@ -73,6 +73,7 @@ export interface CapacityVm {
 
 export interface BuffVm {
   readonly id: BuffId;
+  /** Catalog key of the buff's name (ADR-0056). */
   readonly name: string;
   /** Whole seconds left. */
   readonly left: number;

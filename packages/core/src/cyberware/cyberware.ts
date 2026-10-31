@@ -11,6 +11,7 @@ export type CyberPerk = "dash" | "deflect";
 
 export interface CyberwareDefinition {
   readonly id: string;
+  /** Catalog key of the name (`cyberware.<id>.name`, ADR-0056); `description` likewise. */
   readonly name: string;
   readonly slot: CyberwareSlot;
   readonly price: number;
@@ -26,47 +27,47 @@ export interface CyberwareDefinition {
 export const CYBERWARE_CATALOG = {
   hitomi_optics_mk1: {
     id: "hitomi_optics_mk1",
-    name: "Optyka Hitomi Mk1",
+    name: "cyberware.hitomi_optics_mk1.name",
     slot: "optics",
     price: 0,
-    description: "Optyka startowa z prostym wspomaganiem celowania. Szansa na krytyk +4%, stabilność celowania +10%.",
+    description: "cyberware.hitomi_optics_mk1.desc",
     capacity: 2,
     modifiers: { critChance: 0.04, aimStability: 0.1 },
   },
   subdermal_weave: {
     id: "subdermal_weave",
-    name: "Splot podskórny",
+    name: "cyberware.subdermal_weave.name",
     slot: "skeleton",
     price: 650,
-    description: "Siatka z polimeru pod skórą, także pod skalpem. Pancerz +4, pancerz głowy +3, maks. HP +15.",
+    description: "cyberware.subdermal_weave.desc",
     capacity: 4,
     modifiers: { armor: 4, maxHp: 15, headArmor: 3 },
   },
   synapse_booster: {
     id: "synapse_booster",
-    name: "Wzmacniacz synaps",
+    name: "cyberware.synapse_booster.name",
     slot: "nervous",
     price: 900,
-    description: "Szybsze przetwarzanie celu. Mnożnik krytyka +0,4, stabilność celowania +10%.",
+    description: "cyberware.synapse_booster.desc",
     capacity: 5,
     modifiers: { critMultiplier: 0.4, aimStability: 0.1 },
   },
   kairos_overclock: {
     id: "kairos_overclock",
-    name: "Akcelerator Kairos",
+    name: "cyberware.kairos_overclock.name",
     slot: "nervous",
     price: 1100,
-    description: "Aktywny [Q]: przez 4 s świat zwalnia do 30%. Odnowienie 16 s.",
+    description: "cyberware.kairos_overclock.desc",
     capacity: 7,
     modifiers: {},
     ability: "reflex_overdrive",
   },
   steady_grip: {
     id: "steady_grip",
-    name: "Stabilizator chwytu",
+    name: "cyberware.steady_grip.name",
     slot: "arms",
     price: 500,
-    description: "Mniej odrzutu, pewniejszy strzał. Obrażenia +4, stabilność celowania +30%.",
+    description: "cyberware.steady_grip.desc",
     capacity: 3,
     modifiers: { damageBonus: 4, aimStability: 0.3 },
   },
@@ -74,21 +75,21 @@ export const CYBERWARE_CATALOG = {
   // the dash competes with the subdermal weave: mobility or armour.
   kitsune_tendons: {
     id: "kitsune_tendons",
-    name: "Ścięgna Kitsune",
+    name: "cyberware.kitsune_tendons.name",
     slot: "skeleton",
     price: 950,
     capacity: 6,
-    description: "Wzmocnione ścięgna nóg. [Alt]: zryw na 3 m w kierunku ruchu, także raz w powietrzu. Odnowienie 1,5 s, przez 0,3 s kule przechodzą obok.",
+    description: "cyberware.kitsune_tendons.desc",
     modifiers: { moveSpeed: 0.2 },
     perk: "dash",
   },
   tsubame_reflex: {
     id: "tsubame_reflex",
-    name: "Odruch Tsubame",
+    name: "cyberware.tsubame_reflex.name",
     slot: "arms",
     price: 1150,
     capacity: 8,
-    description: "Sterownik nadgarstka. Blok bronią białą odbija kule tam, gdzie patrzysz, dopóki wytrzymałość jest powyżej 1/3.",
+    description: "cyberware.tsubame_reflex.desc",
     modifiers: {},
     perk: "deflect",
   },

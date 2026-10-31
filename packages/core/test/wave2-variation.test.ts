@@ -12,7 +12,6 @@ import {
   contractFailureNote,
   rollContractVariation,
   variationDifficulty,
-  variationNote,
   variationPayFactor,
 } from "../src";
 
@@ -88,11 +87,8 @@ describe("contract variations (ADR-0034)", () => {
     expect(applyVariation(delivery, PLAIN_VARIATION, 0, 60)).toMatchObject({ targets: 0, deadlineTick: 50, reward: 300 });
   });
 
-  it("describes the plan in one line and tells a missed deadline of a job from a late package", () => {
-    expect(variationNote({ modifiers: ["night_only", "twin"], security: "lockdown", trait: "paranoid", twist: "setup" })).toBe(
-      "cel tylko nocą, sobowtór, ochrona wzmocniona, cel: paranoik",
-    );
-    expect(contractFailureNote("timeout")).toMatch(/Paczka/);
-    expect(contractFailureNote("timeout", "eliminate")).toMatch(/Termin minął/);
+  it("tells a missed deadline of a job from a late package", () => {
+    expect(contractFailureNote("timeout")).toBe("contract.failure.timeout");
+    expect(contractFailureNote("timeout", "eliminate")).toBe("contract.failure.deadline");
   });
 });
