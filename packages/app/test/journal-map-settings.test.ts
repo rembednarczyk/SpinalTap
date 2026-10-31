@@ -278,7 +278,7 @@ describe("settings", () => {
     expect(old).toMatchObject({ volume: 0.3, musicVolume: DEFAULT_SETTINGS.musicVolume, sfxVolume: DEFAULT_SETTINGS.sfxVolume, ambienceVolume: DEFAULT_SETTINGS.ambienceVolume });
     expect(sanitizeSettings({ musicVolume: 3, sfxVolume: -1, ambienceVolume: "x" })).toMatchObject({ musicVolume: 1, sfxVolume: 0, ambienceVolume: DEFAULT_SETTINGS.ambienceVolume });
     const set: [string, number][] = [];
-    applyVolumes({ setVolume: (bus, v) => set.push([bus, v]) }, { volume: 0.5, musicVolume: 0.2, sfxVolume: 0.7, ambienceVolume: 0.1 });
+    applyVolumes({ setVolume: (bus: string, v: number) => set.push([bus, v]) }, { volume: 0.5, musicVolume: 0.2, sfxVolume: 0.7, ambienceVolume: 0.1 });
     expect(set).toEqual([["master", 0.5], ["music", 0.2], ["sfx", 0.7], ["ambience", 0.1]]);
   });
 

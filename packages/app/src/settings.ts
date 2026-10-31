@@ -1,4 +1,4 @@
-import { type AudioPort, FOV_REFERENCE_ASPECT, type InputFrame, degToRad, horizontalFovOf, isLocale, radToDeg } from "@seki/core";
+import { type AudioScenePort, FOV_REFERENCE_ASPECT, type InputFrame, degToRad, horizontalFovOf, isLocale, radToDeg } from "@seki/core";
 import {
   type AimMode,
   type ColorblindMode,
@@ -133,7 +133,7 @@ export const applyEffects = (target: object, settings: Pick<SettingsVm, "reduceF
 };
 
 /** The volumes of the settings on the mix (master and the buses, ADR-0060 stage 1). */
-export const applyVolumes = (audio: Pick<AudioPort, "setVolume">, s: Pick<SettingsVm, "volume" | "musicVolume" | "sfxVolume" | "ambienceVolume">): void => {
+export const applyVolumes = (audio: Pick<AudioScenePort, "setVolume">, s: Pick<SettingsVm, "volume" | "musicVolume" | "sfxVolume" | "ambienceVolume">): void => {
   audio.setVolume("master", s.volume);
   audio.setVolume("music", s.musicVolume);
   audio.setVolume("sfx", s.sfxVolume);
