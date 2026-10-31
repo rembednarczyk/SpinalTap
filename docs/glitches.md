@@ -222,7 +222,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `pedestrian-bare` 59 → ≤ 10
 
 ### G-082 Domyślna szerokość jezdni wycina zmapowane chodniki
-- Status: w weryfikacji po poprawkach kuratora (36a3634: pokrycie ≥ 1/2, minimum 4,5 m dla dwukierunkowych; 262 → 122 m)
+- Status: w PR #98 (przyjęte; 262 → 131 m, zostaje otwarte do 0: Zielona, Podwale przy 4,5 m, Łęczyńska przy skrzyżowaniu; reszta G-113 osobno)
 - Gdzie: Podwale w40052391/w305027452, Staszica w1150131461, w232805965, Zielona w173533827, Łęczyńska w85717509
 - Przyczyna: `roadWidth` bez `width`/`lanes` = 6,5/5 m, a `cutSidewalk` usuwa chodnik, którego środek leży na cudzej jezdni
 - Propozycja: zwęzić domyślną jezdnię do 2 × (odległość osi od chodnika − pół chodnika), min. 3 m
@@ -425,6 +425,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Gdzie: przy domu towarowym Pedet, na chodniku dla pieszych
 - Pakiet właściciela: do ustalenia (sim content/traffic albo osm-import props)
 - Test przyjęcia: kontrola skanu pojazdów zaparkowanych na chodniku z OSM albo z dnem poniżej terenu → 0
+
+### G-131 Etap 1 obezwładnienia: trzy błędy z weryfikacji (w naprawie przed PR)
+- Status: w naprawie (gałąź `feat/adr-0065-takedown`); nie w main
+- Błędy: klawisz interakcji obezwładnia mimo podpowiedzi bliższego celu (rozmowa, łup, drzwi); ogłuszony po parowaniu zostaje „w walce” (`ai.alerted`, RAM i aktywności); przytrzymany atak jako „zabij” strzela po obezwładnieniu
+- Pakiet właściciela: packages/sim, packages/app
+- Test przyjęcia: sondy weryfikatora (`scratchpad/v-a-probes/`) jako testy, padające przed poprawką
 
 ## Naprawione
 | ID | Glitch | PR |
