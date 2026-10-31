@@ -358,7 +358,12 @@ export class MapCity {
 
   /** Every cell near the eye has its detailed buildings (they are built a few per frame). */
   get settled(): boolean {
-    return this.waitingNear === 0 && (this.streetProps?.waiting ?? 0) === 0;
+    return this.waiting === 0;
+  }
+
+  /** Near cells and street props still to build after the last update (the loading bar, ADR-0057). */
+  get waiting(): number {
+    return this.waitingNear + (this.streetProps?.waiting ?? 0);
   }
 
   /** The facade props have loaded (ADR-0058): the near meshes are rebuilt with them. */

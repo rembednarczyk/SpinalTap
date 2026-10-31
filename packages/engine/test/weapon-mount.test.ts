@@ -38,4 +38,19 @@ describe("WeaponMounts", () => {
     gone.dispose();
     expect(await pending).toBeNull();
   });
+
+  it("preloads each weapon file once for the loading screen, and a later mount reuses it (ADR-0057)", async () => {
+    const scene = new Scene(new NullEngine());
+    const library = new ModelLibrary(scene, new ToonMaterials(scene));
+    const broken = "data:model/gltf+json;base64,bm90IGpzb24=";
+    const mounts = new WeaponMounts(library, { pistol: triangleGltf(), smg: broken });
+    const files = mounts.preload();
+    expect(files).toHaveLength(2);
+    const settled = await Promise.allSettled(files);
+    expect(settled.map((s) => s.status)).toEqual(["fulfilled", "rejected"]);
+    const before = scene.meshes.length;
+    expect(await mounts.mount(new TransformNode("hand", scene), "pistol", "h", "hand")).not.toBeNull();
+    expect(scene.meshes.length).toBeGreaterThan(before);
+    expect(new WeaponMounts(library).preload()).toEqual([]);
+  });
 });
