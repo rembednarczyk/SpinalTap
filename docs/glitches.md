@@ -216,7 +216,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: `traffic-junction-drive` w progach na gałęzi G-052 i na main
 
 ### G-076 Przejazdy bramne z `tunnel=yes` zamknięte bryłą (Gruella pod Trynitarską, Królewska, Sąd Okręgowy, Rynek 5)
-- Status: w PR #80 (przyjęte przez weryfikatora, przegląd kuratora w toku)
+- Status: w PR #80 (przyjęte przez weryfikatora i kuratora)
 - Ważność: S2 (proponowana) · Zasięg: 9 miejsc, w tym zabytek · Koszt: mały
 - Gdzie: Gruella w298307007 (587.6, −147); Sąd Okręgowy w343899807 (1.4, −96.1); Peowiaków 13 w343899804 (−48.5, −167.8); Królewska, 5 bram kamienic (x 387..489); Rynek 5 w1222303436 (562, −29.1); T-036…T-039
 - Dowód: zalewanie siatki 0,25 m: ciało 0,38 m nie przechodzi; tagi OSM `tunnel=yes`
@@ -225,7 +225,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `passage-blocked` (definicja kuratora w `scratchpad/topo-bramy-raport.md`), baza 9 → 0
 
 ### G-077 Budynek podziemny zbudowany na powierzchni ul. Zamkowej
-- Status: w PR #80 (przyjęte przez weryfikatora, przegląd kuratora w toku)
+- Status: w PR #80 (przyjęte przez weryfikatora i kuratora)
 - Ważność: S2 (proponowana: zasłania 11,5 m osi drogi na dojściu do Zamku) · Koszt: mały
 - Gdzie: w980143457 (771.1, 190.5), `location=underground`, `layer=-1`, bryła 6,9 m na osi w154962966; T-041
 - Pakiet właściciela: tools/osm-import (`buildingAreas`)
@@ -240,7 +240,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (audyt bram i przejazdów) · Ważność: S4 · Koszt: średni (dziury multipoligonów)
 - Gdzie: r5420680, r2366732; ścieżki wirydarza i przejście w586408568 w środku bryły; T-042
 - Pakiet właściciela: tools/osm-import
-- Test przyjęcia: dziedziniec z `inner` multipoligonu jest otwarty i dostępny przejściem z OSM
+- Test przyjęcia: dziedziniec z `inner` multipoligonu jest otwarty i dostępny przejściem z OSM; `runsInside` widzi dziury, więc w586408568 (wirydarz Dominikanów → Zaułek Giedroycia, `tunnel=yes`) dostaje przejście przez r2366732 (uwaga kuratora z przeglądu G-076)
 
 ### G-080 Dach dwuspadowy i pulpitowy liczony od prostokąta całego obrysu
 - Status: zgłoszone (weryfikacja ADR-0064 etap 1, PR #78) · Ważność: S4 · Koszt: średni
@@ -287,6 +287,22 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (audyt dróg) (z audytu dróg, bez T: teren = NMT) · Ważność: S4 · Koszt: mały
 - Gdzie: `packages/sim/src/content/lublin/shape.ts` `stepRamps` czyta `c.streets` (tylko nazwy) → 3 rampy z 69 biegów
 - Decyzja: albo rampy dla wszystkich biegów (wtedy sprawdzić `terrain-off-pads`, `steps-micro-riser`), albo poprawić komentarz
+
+### G-088 Zamkowa zapada się o 3,5 m nad tunelem pieszym przed Zamkiem
+- Status: zgłoszone (z przeglądu kuratora G-077)
+- Ważność: S3 (proponowana; dojście do Zamku, obejście 6 m od osi) · Zasięg: lokalny · Koszt: średni
+- Gdzie: (781.2, 198.8), Zamkowa w154962966 nad w66258159; T-053
+- Dowód: GroundField wzdłuż osi: −12,5 → −15,6 → −12,8 m; steepAt prawda na pasie od −8 do +5 m od osi
+- Przyczyna (przypuszczalna): NMT bez konstrukcji nad tunelem; ulica bez pomostu (jak BRIDGE_DECKS), a tunel pomija `underground()`
+- Pakiet właściciela: tools/osm-import / packages/sim (pomosty)
+- Test przyjęcia: kontrola `road-dip-over-tunnel` 1 → 0 (droga z OSM przecina tunel bez wspólnego węzła, a grunt w ±8 m od przecięcia leży > 1 m pod cięciwą; w mieście 34 przecięcia, następne 0,35 m); pod pomostem przejście w66258159 drożne (G-062)
+
+### G-089 Bramy z maxheight=below_default ze sklepieniem 4 m
+- Status: zgłoszone (z przeglądu kuratora G-076) · Ważność: S4 · Zasięg: 3 miejsca · Koszt: mały
+- Gdzie: Królewska w755152552/555/560; T-054
+- Przyczyna: `buildingPassages` (wysokość w `out.push`, przy `widthOf`) nie czyta `maxheight`
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: kontrola `passage-maxheight` 3 → 0 (np. sklepienie 3,6 m dla `below_default`)
 
 ## Naprawione
 | ID | Glitch | PR |
