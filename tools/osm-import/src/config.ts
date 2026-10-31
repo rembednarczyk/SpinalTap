@@ -14,6 +14,12 @@ export interface DistrictSpec {
   /** Chunks across (x) and along (z). */
   readonly cols: number;
   readonly rows: number;
+  /**
+   * The chunks' edges along z, south to north, when the rows are not even: a district grown past
+   * its first grid keeps the old edges, so the chunk ids and what the game streams around its
+   * places stay as they were. Even rows over `rect` without it.
+   */
+  readonly zEdges?: readonly number[];
   /** Floors of a building without height tags. */
   readonly defaultLevels: readonly [number, number];
 }
@@ -23,9 +29,12 @@ export const DISTRICTS: readonly DistrictSpec[] = [
     id: "shinsekai-7",
     slug: "krakowskie",
     name: "Krakowskie Przedmieście",
-    rect: { minX: -200, minZ: -200, maxX: 460, maxZ: 160 },
+    // South to z = -270 for Teatr Osterwy and the Bernardine church (G-052, ADR-0042); the
+    // southern row takes the strip, the deptak's seam at z = -20 stays.
+    rect: { minX: -200, minZ: -270, maxX: 460, maxZ: 160 },
     cols: 3,
     rows: 2,
+    zEdges: [-270, -20, 160],
     defaultLevels: [3, 4],
   },
   {
@@ -63,17 +72,18 @@ export interface ChunkSpec {
   readonly rect: Rect;
 }
 
-/** Chunks of a district: a regular grid over its rectangle, west to east, then south to north. */
+/** Chunks of a district: a grid over its rectangle (rows on `zEdges` if given), west to east, then south to north. */
 export const chunksOf = (d: DistrictSpec): ChunkSpec[] => {
   const out: ChunkSpec[] = [];
   const w = (d.rect.maxX - d.rect.minX) / d.cols;
   const h = (d.rect.maxZ - d.rect.minZ) / d.rows;
+  const z = d.zEdges ?? Array.from({ length: d.rows + 1 }, (_, r) => d.rect.minZ + r * h);
   for (let r = 0; r < d.rows; r++) {
     for (let c = 0; c < d.cols; c++) {
       out.push({
         id: `${d.slug}-${c}-${r}`,
         district: d,
-        rect: { minX: d.rect.minX + c * w, minZ: d.rect.minZ + r * h, maxX: d.rect.minX + (c + 1) * w, maxZ: d.rect.minZ + (r + 1) * h },
+        rect: { minX: d.rect.minX + c * w, minZ: z[r]!, maxX: d.rect.minX + (c + 1) * w, maxZ: z[r + 1]! },
       });
     }
   }
