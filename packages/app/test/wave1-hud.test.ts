@@ -179,6 +179,13 @@ describe("settings of wave 1", () => {
     expect(sanitizeSettings({}, { ...DEFAULT_SETTINGS, reduceFlashes: true }).reduceFlashes).toBe(true);
   });
 
+  it("keeps camera motion on for entries saved before the setting, off where the device asks for reduced motion", () => {
+    expect(sanitizeSettings({ quality: "low" }).cameraMotion).toBe(true);
+    expect(sanitizeSettings({ cameraMotion: false }).cameraMotion).toBe(false);
+    expect(sanitizeSettings({ cameraMotion: "no" }).cameraMotion).toBe(true);
+    expect(sanitizeSettings({}, { ...DEFAULT_SETTINGS, cameraMotion: false }).cameraMotion).toBe(false);
+  });
+
   it("hands the flash flag to a renderer that takes it", () => {
     const target = { setReduceFlashes: vi.fn() };
     applyEffects(target, { reduceFlashes: true });

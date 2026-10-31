@@ -46,7 +46,7 @@ const storage = ((): SettingsStorage | null => {
 // The reference frame never shows hints (the NPR snapshot is of the scene alone).
 // A system-wide "reduce motion" turns the flashes and the glitch down from the start (ADR-0028).
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-const deviceDefaults = { ...DEFAULT_SETTINGS, quality: touchDevice ? "low" : "high", hints: !reference, reduceFlashes: reducedMotion } as const;
+const deviceDefaults = { ...DEFAULT_SETTINGS, quality: touchDevice ? "low" : "high", hints: !reference, reduceFlashes: reducedMotion, cameraMotion: !reducedMotion } as const;
 // The reference frame ignores saved settings so the NPR snapshot never depends on the profile.
 const settings = reference ? deviceDefaults : loadSettings(storage, deviceDefaults);
 const qualityParam = params.get("quality");
@@ -130,6 +130,7 @@ const applyControls = (s: typeof settings) => {
   input.keymap = keymapFor(s.bindings);
   input.setButtonModes({ aim: s.aimMode, crouch: s.crouchMode, sprint: s.sprintMode });
   renderer.rig.horizontalFov = degToRad(s.horizontalFov);
+  renderer.rig.cameraMotion = s.cameraMotion;
   applyEffects(renderer, s);
 };
 

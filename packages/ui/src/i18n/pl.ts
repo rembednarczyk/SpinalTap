@@ -134,6 +134,7 @@ export const pl = {
   "settings.hudScale": "Skala HUD",
   "settings.legibleFont": "Czytelna czcionka",
   "settings.reduceFlashes": "Ogranicz błyski i glitch",
+  "settings.cameraMotion": "Kołysanie i wstrząsy kamery",
   "settings.untimedBreach": "Minigra bez limitu czasu",
   "settings.colorblind": "Tryb dla daltonistów",
   "settings.colorblind.off": "Brak",

@@ -137,6 +137,7 @@ export const en = {
   "settings.hudScale": "HUD scale",
   "settings.legibleFont": "Legible font",
   "settings.reduceFlashes": "Reduce flashes and glitch effects",
+  "settings.cameraMotion": "Camera bob and shake",
   "settings.untimedBreach": "Untimed breach minigame",
   "settings.colorblind": "Colorblind mode",
   "settings.colorblind.off": "None",
