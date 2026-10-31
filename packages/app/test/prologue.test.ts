@@ -20,7 +20,7 @@ describe("the prologue (G-034)", () => {
     expect(near(session.sim.player()!.position, PLAYER_SPAWN.position)).toBeLessThan(0.1);
     expect(objective(ui)).toContain("Kaito");
     expect(objective(ui)).toContain("Neon Koi");
-    expect(ui.getState().toasts.map((t) => t.text)).toContainEqual(expect.stringContaining("Kaito czeka w Neon Koi, po drugiej stronie deptaka."));
+    expect(ui.getState().toasts.map((t) => t.text)).toContainEqual(expect.stringContaining("Kaito is waiting at Neon Koi, across the promenade."));
     const before = kaito(session)!;
     expect(before.position).toEqual(FIXER_SPAWN.position);
     expect(near(before.position, CLINIC_WAKE_SPOT)).toBeGreaterThan(10);

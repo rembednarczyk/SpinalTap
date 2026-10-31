@@ -1,26 +1,26 @@
 import { useEffect } from "react";
-import type { ContractBadge, ContractRank } from "@seki/core";
+import type { ContractBadge, Locale } from "@seki/core";
+import { formatNumber, useLocale } from "../i18n/number";
+import { useT } from "../i18n/use-t";
 import { useContractIntents, useUi } from "../use-ui";
 
-/** Icon (24 px SVG path), name and meaning of each badge, in Polish. */
-export const BADGE_INFO: Readonly<Record<ContractBadge, { readonly label: string; readonly hint: string; readonly icon: string }>> = {
-  ghost: { label: "Duch", hint: "Nikt cię nie wykrył", icon: "M2 12 C6 5 18 5 22 12 C18 19 6 19 2 12 Z M12 9 A3 3 0 1 1 11.99 9 Z M4 20 L20 4" },
-  no_alarm: { label: "Bez alarmu", hint: "Nikt nie wezwał ochrony", icon: "M6 17 V11 A6 6 0 0 1 18 11 V17 Z M10 20 H14 M4 20 L20 4" },
-  clean: { label: "Czysta robota", hint: "Zginęły tylko cele", icon: "M12 3 A9 9 0 1 1 11.99 3 Z M12 10 A2 2 0 1 1 11.99 10 Z M12 1 V5 M12 19 V23 M1 12 H5 M19 12 H23" },
-  untouched: { label: "Bez draśnięcia", hint: "Nie oberwałeś", icon: "M12 3 L20 6 V12 C20 17 16 20 12 21 C8 20 4 17 4 12 V6 Z" },
-  swift: { label: "Błyskawica", hint: "W czasie fixera", icon: "M13 2 L4 14 H11 L10 22 L20 9 H13 Z" },
-  netrunner: { label: "Netrunner", hint: "Quickhack lub włamanie", icon: "M7 7 H17 V17 H7 Z M10 3 V7 M14 3 V7 M10 17 V21 M14 17 V21 M3 10 H7 M3 14 H7 M17 10 H21 M17 14 H21" },
+/** Icon (24 px SVG path) of each badge; the name and the meaning are `badge.<id>` and `badge.<id>.hint` (ADR-0056). */
+export const BADGE_ICON: Readonly<Record<ContractBadge, string>> = {
+  ghost: "M2 12 C6 5 18 5 22 12 C18 19 6 19 2 12 Z M12 9 A3 3 0 1 1 11.99 9 Z M4 20 L20 4",
+  no_alarm: "M6 17 V11 A6 6 0 0 1 18 11 V17 Z M10 20 H14 M4 20 L20 4",
+  clean: "M12 3 A9 9 0 1 1 11.99 3 Z M12 10 A2 2 0 1 1 11.99 10 Z M12 1 V5 M12 19 V23 M1 12 H5 M19 12 H23",
+  untouched: "M12 3 L20 6 V12 C20 17 16 20 12 21 C8 20 4 17 4 12 V6 Z",
+  swift: "M13 2 L4 14 H11 L10 22 L20 9 H13 Z",
+  netrunner: "M7 7 H17 V17 H7 Z M10 3 V7 M14 3 V7 M10 17 V21 M14 17 V21 M3 10 H7 M3 14 H7 M17 10 H21 M17 14 H21",
 };
 
 export const BadgeIcon = ({ badge }: { badge: ContractBadge }) => (
   <svg className="badge-icon" viewBox="0 0 24 24" aria-hidden="true">
-    <path d={BADGE_INFO[badge].icon} />
+    <path d={BADGE_ICON[badge]} />
   </svg>
 );
 
-const RANK_TEXT: Readonly<Record<ContractRank, string>> = { S: "Legenda", A: "Profesjonalnie", B: "Robota zrobiona", C: "Ledwo" };
-
-const money = (n: number) => `${n.toLocaleString("pl-PL")} €$`;
+const money = (locale: Locale, n: number) => `${formatNumber(locale, n)} €$`;
 
 /** "m:ss". */
 export const formatSeconds = (s: number): string => {
@@ -41,6 +41,8 @@ export const DebriefCard = () => {
   const talking = useUi((s) => s.dialogue !== null);
   const intents = useContractIntents();
   const shown = debrief !== null && !talking;
+  const t = useT();
+  const locale = useLocale();
 
   useEffect(() => {
     if (!shown) return;
@@ -58,15 +60,18 @@ export const DebriefCard = () => {
   if (!shown) return null;
   const total = debrief.reward + debrief.bonus + debrief.styleBonus;
   return (
-    <section className="debrief" data-testid="debrief" aria-label="Podsumowanie zlecenia">
+    <section className="debrief" data-testid="debrief" aria-label={t("debrief.label")}>
       <header className="debrief__head">
         <div>
-          <div className="debrief__eyebrow">Zlecenie wykonane{debrief.fixer ? ` · ${debrief.fixer}` : ""}</div>
+          <div className="debrief__eyebrow">
+            {t("debrief.done")}
+            {debrief.fixer ? ` · ${debrief.fixer}` : ""}
+          </div>
           <div className="debrief__title">{debrief.title}</div>
         </div>
-        <div className={`debrief__rank debrief__rank--${debrief.rank}`} data-testid="debrief-rank" aria-label={`Ranga ${debrief.rank}`}>
+        <div className={`debrief__rank debrief__rank--${debrief.rank}`} data-testid="debrief-rank" aria-label={t("debrief.rank", { rank: debrief.rank })}>
           {debrief.rank}
-          <span className="debrief__rank-text">{RANK_TEXT[debrief.rank]}</span>
+          <span className="debrief__rank-text">{t(`rank.${debrief.rank}`)}</span>
         </div>
       </header>
       {debrief.variation && (
@@ -81,39 +86,42 @@ export const DebriefCard = () => {
             key={b.id}
             className={`debrief__badge${b.earned ? " debrief__badge--earned" : ""}${b.style ? " debrief__badge--style" : ""}`}
             data-testid={`badge-${b.id}`}
-            title={BADGE_INFO[b.id].hint}
+            title={t(`badge.${b.id}.hint`)}
           >
             <BadgeIcon badge={b.id} />
-            <span className="debrief__badge-label">{BADGE_INFO[b.id].label}</span>
+            <span className="debrief__badge-label">{t(`badge.${b.id}`)}</span>
             <span className="debrief__badge-state">{b.earned ? "✓" : "✗"}</span>
-            {b.style && <span className="debrief__badge-style">styl fixera</span>}
+            {b.style && <span className="debrief__badge-style">{t("debrief.style")}</span>}
           </li>
         ))}
       </ul>
       <dl className="debrief__pay">
         <div>
-          <dt>Stawka</dt>
-          <dd>{money(debrief.reward)}</dd>
+          <dt>{t("debrief.rate")}</dt>
+          <dd>{money(locale, debrief.reward)}</dd>
         </div>
         <div>
-          <dt>Bonus za warunek</dt>
-          <dd>{debrief.bonus > 0 ? `+${money(debrief.bonus)}` : "—"}</dd>
+          <dt>{t("debrief.bonus")}</dt>
+          <dd>{debrief.bonus > 0 ? `+${money(locale, debrief.bonus)}` : "—"}</dd>
         </div>
         <div>
-          <dt>Bonus za styl{debrief.fixer ? ` (${debrief.fixer})` : ""}</dt>
-          <dd>{debrief.styleBonus > 0 ? `+${money(debrief.styleBonus)}` : "—"}</dd>
+          <dt>
+            {t("debrief.styleBonus")}
+            {debrief.fixer ? ` (${debrief.fixer})` : ""}
+          </dt>
+          <dd>{debrief.styleBonus > 0 ? `+${money(locale, debrief.styleBonus)}` : "—"}</dd>
         </div>
         <div className="debrief__total">
-          <dt>Razem</dt>
-          <dd data-testid="debrief-total">{money(total)}</dd>
+          <dt>{t("debrief.total")}</dt>
+          <dd data-testid="debrief-total">{money(locale, total)}</dd>
         </div>
         <div>
-          <dt>Czas</dt>
+          <dt>{t("debrief.time")}</dt>
           <dd>{formatSeconds(debrief.seconds)}</dd>
         </div>
       </dl>
       <button type="button" className="debrief__close" onClick={() => intents.dismissDebrief()}>
-        Dalej <kbd>Enter</kbd>
+        {t("debrief.next")} <kbd>Enter</kbd>
       </button>
     </section>
   );
@@ -122,12 +130,14 @@ export const DebriefCard = () => {
 /** The condition bonus next to the objective: kept (✓) or lost for good (✗, struck through). */
 export const BonusIndicator = () => {
   const bonus = useUi((s) => s.contractBonus);
+  const t = useT();
+  const locale = useLocale();
   if (!bonus) return null;
   return (
-    <div className={`hud__bonus${bonus.kept ? "" : " hud__bonus--lost"}`} data-testid="contract-bonus" aria-label={`Warunek bonusowy ${bonus.kept ? "utrzymany" : "stracony"}`}>
+    <div className={`hud__bonus${bonus.kept ? "" : " hud__bonus--lost"}`} data-testid="contract-bonus" aria-label={t(bonus.kept ? "debrief.bonusKept" : "debrief.bonusLost")}>
       <BadgeIcon badge={bonus.badge} />
       <span className="hud__bonus-label">{bonus.label}</span>
-      <span className="hud__bonus-pay">+{money(bonus.bonus)}</span>
+      <span className="hud__bonus-pay">+{money(locale, bonus.bonus)}</span>
       <span className="hud__bonus-state">{bonus.kept ? "✓" : "✗"}</span>
     </div>
   );

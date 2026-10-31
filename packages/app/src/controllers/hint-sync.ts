@@ -1,6 +1,6 @@
 import type { DomainEvents, EventBus } from "@seki/core";
 import { SIM_HZ } from "@seki/sim";
-import { type HintVm, type MessageKey, type SettingsVm, type UiStore, patchUi, translate } from "@seki/ui";
+import { type HintVm, type SettingsVm, type UiStore, isMessageKey, patchUi, translate } from "@seki/ui";
 import { keymapFor } from "../controls";
 import { type HintDef, HintTracker } from "../hints";
 import type { SimRef } from "./shared";
@@ -59,7 +59,8 @@ export class HintSync {
 
   /** Keys of a hint through the player's bindings (first key of each control). */
   private hintVm(h: HintDef, settings: SettingsVm): HintVm {
-    const text = (key: string): string => translate(settings.locale, key as MessageKey);
+    // A hint without its catalog key shows nothing rather than throwing; hints.test.ts keeps every key there.
+    const text = (key: string): string => (isMessageKey(key) ? translate(settings.locale, key) : "");
     if (this.deps.touch) return { id: h.id, keys: [], text: text(h.touch ? `hint.${h.id}.touch` : `hint.${h.id}`) };
     const map = keymapFor(settings.bindings);
     const keys = h.keys.map((k) => (k.startsWith("code:") ? k.slice(5) : (map[k as keyof typeof map]?.[0] ?? ""))).filter(Boolean);

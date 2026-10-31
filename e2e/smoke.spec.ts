@@ -257,7 +257,7 @@ test("touch layout keeps the weapon strip off the pad and the minimap", async ({
     expect(overlap(strip!, b), `weapon strip overlaps ${await pad.nth(i).getAttribute("aria-label")}`).toBe(false);
   }
   // The strip's slots are touch targets of at least 44 px.
-  const slot = await page.getByRole("button", { name: /Boczna: Unity-9/ }).boundingBox();
+  const slot = await page.getByRole("button", { name: /Secondary: Unity-9/ }).boundingBox();
   expect(slot!.height).toBeGreaterThanOrEqual(44);
   await expect(page.getByRole("button", { name: "Reload" })).toBeVisible();
 });

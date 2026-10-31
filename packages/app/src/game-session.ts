@@ -10,7 +10,7 @@ import {
 } from "@seki/core";
 import { NarrativeRuntime } from "@seki/narrative";
 import { RenderSync, SIM_HZ, Simulation, WORLD_SCENERY } from "@seki/sim";
-import { type Screen, type SessionIntents, type UiIntents, patchUi } from "@seki/ui";
+import { type Screen, type SessionIntents, type UiIntents, patchUi, translate } from "@seki/ui";
 import { type Controllers, createControllers } from "./controllers/compose";
 import { isCalm } from "./controllers/hud-sync";
 import { pushToastTimed } from "./controllers/shared";
@@ -127,7 +127,8 @@ export class GameSession implements SessionIntents {
     this.narrative.resetState();
     this.c.hints.start();
     this.setScreen("playing");
-    pushToastTimed(this.deps.ui, "system", "Krakowskie Przedmieście", "Budzisz się na fotelu w klinice doktora Mori, przy deptaku. Nie pamiętasz swojego imienia. Kaito czeka w Neon Koi, po drugiej stronie deptaka.");
+    const locale = this.deps.ui.getState().settings.locale;
+    pushToastTimed(this.deps.ui, "system", translate(locale, "newGame.place"), translate(locale, "newGame.intro"));
   }
 
   resume(): void {
