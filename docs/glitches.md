@@ -104,7 +104,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: e2e (QA) / packages/app
 
 ### G-048 Prawdziwy tap tuż po przycisku pada ginie jako „ghost click”
-- Status: w weryfikacji (poprawka dffff88, `packages/ui/src/touch/ghost-click.ts`)
+- Status: weryfikacja PRZYJĘTE, w PR #48 (`packages/ui/src/touch/ghost-click.ts`)
 - Ważność: S2 (niestabilne e2e `touch.spec`, a na telefonie zgubiony pierwszy wybór w dialogu) · Koszt: mały
 - Dowód: `pointerdown` na przycisku pada uzbraja `swallowNextClick` na 700 ms, a ten sam przycisk w `touchend` robi `preventDefault`, więc klik zgodności nie przychodzi i nasłuch zjada pierwszy prawdziwy tap w wybór dialogu. Pomiar: padły 3 z 5 przebiegów (odstępy 432–679 ms), przeszły przy 1,6–1,8 s; bez G-006 też 2 z 5. Poprawka: nasłuch wygasa przy następnym `pointerdown`.
 - Pakiet właściciela: packages/ui (touch)

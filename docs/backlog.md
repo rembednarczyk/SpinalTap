@@ -41,7 +41,7 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
   - **Przeciwnicy i kontrakty**: poziom wroga z pasma dzielnicy i poziomu gracza; stawki, skład i nagrody kontraktów liczone z tego samego poziomu zamiast `ukończone / 3`.
   - Zasady: wszystko w `core` jako czyste funkcje z `RandomPort`, zmiana schematu zapisu z migracją (poziom, doświadczenie, poziom przedmiotów; stare przedmioty dostają poziom z ich rzadkości), złote hashe aktualizowane świadomie, teksty przez klucze (ADR-0056), balans testami symulacji (krzywa doświadczenia, rozkład łupów na poziomach).
 - **[w toku] Języki gry (ADR-0056).** Angielski domyślny, polski w opcjach. Etap 1 (menu, opcje, zapadka) i paczka 2a (ekwipunek, sklepy) są gotowe, 2b (panele świata) jest w PR #47. Zostaje:
-  - HUD i dotyk (2c, po G-035);
+  - HUD i dotyk (2c): część w PR #50, dalsza część na gałęzi `i18n2c2` (ekran śmierci, zegar, pościg, wykrycie, minimapa, skaner); zostaje karta kontraktu, pasek broni („Boczna: …”), plakietka „Spalona przykrywka” w `hud.tsx`, nazwy buffów z `core` (etap 3) i rzutowanie `key as MessageKey` w `hint-sync.ts` do zastąpienia typem;
   - teksty domeny w `core` jako klucze (etap 3);
   - treść `sim` (etap 4);
   - narracja `ink/en` (etap 5, ok. 1900 linii).
