@@ -10,6 +10,7 @@
  * Behind an HTTPS proxy run it with NODE_USE_ENV_PROXY=1 (Node 22+). Nothing downloaded is ever
  * executed: the packs are data.
  */
+import { Buffer } from "node:buffer";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -42,7 +43,7 @@ const fetchChecked = async (url, dst, expected) => {
     console.log(`ok    ${dst}`);
     return false;
   }
-  const res = await fetch(url, { redirect: "follow" });
+  const res = await globalThis.fetch(url, { redirect: "follow" });
   if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
   const bytes = Buffer.from(await res.arrayBuffer());
   const got = sha256(bytes);
