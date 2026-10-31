@@ -341,7 +341,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer)
 
 ### G-045 Test `far-city.test.ts` przekracza 5 s pod obciążeniem
-- Status: zgłoszone (z G-030)
+- Status: naprawione, w PR #47. Przyczyna: `expect` na każdą parę wierzchołek × chunk; teraz jedna asercja na liście naruszeń, 3773 ms → 12 ms, kontrola ta sama (odwrócony warunek pada)
 - Ważność: S3 (proponowana: niestabilny test jednostkowy) · Koszt: mały
 - Dowód: „keeps rings and fillers off every chunk's ground” 5182 ms przy load 16 i padł przy load ok. 8; sam przechodzi 5/5. Ustalić, co jest drogie (podniesienie limitu nie jest poprawką).
 - Pakiet właściciela: packages/engine
