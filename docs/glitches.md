@@ -170,6 +170,18 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (mapcity)
 - Test przyjęcia: kościół, który ma części `building:part`, nie dostaje proceduralnych wież
 
+### G-058 Dotknięcie pierwszego wyboru tuż po otwarciu dialogu czasem ginie (e2e touch)
+- Status: zgłoszone (z weryfikacji etapu 5 ADR-0056)
+- Ważność: S3 (proponowana: flake w CI i możliwy błąd dotyku na telefonie) · Koszt: mały
+- Dowód: `e2e/touch.spec.ts:56-57` „on-screen pad”: 1/4 czerwony na bazie c07dea9 i 2/5 na etapie 5 przy load 6–9; dotknięcie wyboru zaraz po otwarciu koła kwestii nie wybiera kwestii. Sprawdzić, czy koło przyjmuje dotyk przed pierwszym renderem albo czy działa osłona przed „ghost click” (G-048)
+- Pakiet właściciela: packages/ui / e2e (QA)
+
+### G-059 Testy sesji `m2-schedules` i `m3-loop` trwają ok. 5 s i przekraczają limit vitest pod obciążeniem
+- Status: zgłoszone (z weryfikacji etapu 5 ADR-0056)
+- Ważność: S4 (proponowana) · Koszt: mały
+- Dowód: na bazie 5,2 s przy load 14–23, domyślny limit 5 s; osobno przechodzą. Ustalić, co trwa (kompilacja ink, liczba kroków symulacji), zamiast podnosić limit (ADR-0046)
+- Pakiet właściciela: packages/app (testy)
+
 ## Naprawione
 | ID | Glitch | PR |
 |---|---|---|
