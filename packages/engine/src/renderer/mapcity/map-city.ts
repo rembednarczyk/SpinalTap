@@ -209,6 +209,7 @@ export class MapCity {
       this.buildings.set(id, { ring, view, at: { x: at.x, y: at.y, z: at.z }, base: at.y, bounds, cell });
       this.buildingIndex.add(id, bounds);
       this.cellOf(cell).buildings.add(id);
+      this.touchUnder(ring, view);
     } else {
       this.grounds.set(id, { surface: view.surface, ring, y: at.y, bounds, cell, ...(view.deck ? { deck: view.deck } : {}) });
       if (view.deck) this.decks.add(id, ring, view.deck);
@@ -236,6 +237,7 @@ export class MapCity {
     const g = this.grounds.get(id);
     const e = b ?? g;
     if (!e) return;
+    if (b) this.touchUnder(b.ring, b.view);
     this.buildings.delete(id);
     this.grounds.delete(id);
     this.decks.remove(id);
@@ -498,9 +500,16 @@ export class MapCity {
     return false;
   };
 
-  /** The measured building of an entry (ADR-0044, ADR-0048). */
+  /** The measured building of an entry (ADR-0044, ADR-0048), with the parts lifted onto it (G-057). */
   private building(id: EntityId, e: BuildingEntry): MapBuilding {
-    return mapBuilding(id, e, (x, z) => this.heightAt(x, z));
+    return mapBuilding(id, e, (x, z) => this.heightAt(x, z), [...this.buildingIndex.within(e.bounds)].flatMap((o) => this.buildings.get(o) ?? []));
+  }
+
+  /** A part lifted onto a building (G-049) takes its towers away (G-057): its cell builds again. */
+  private touchUnder(ring: readonly P2[], view: BuildingEntry["view"]): void {
+    const c = view.soffit === undefined ? null : centroid(ring);
+    const under = c ? [...this.buildingIndex.at(c.x, c.z)].map((id) => this.cells.get(this.buildings.get(id)?.cell ?? "")) : [];
+    for (const cell of under) if (cell) cell.dirty = true;
   }
 
   private buildCell(cell: Cell): void {

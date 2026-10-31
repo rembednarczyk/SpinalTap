@@ -25,5 +25,6 @@
   "bridge-without-deck": 0,
   "landmark-overbuilt": 0,
   "passage-off-map": 0,
-  "building-part-ignored": 0
+  "building-part-ignored": 0,
+  "church-towers-over-parts": 0
 }

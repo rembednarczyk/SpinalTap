@@ -31,6 +31,8 @@ export interface MapBuilding {
   readonly passages?: readonly WorldPassage[];
   /** Lifted over the street (a covered footbridge, ADR-0048): the walls start at `foot`, an underside closes them; `base` stays the street. */
   readonly lifted?: boolean;
+  /** Parts of it from the map stand on it, lifted (G-049): its towers and turrets are theirs. */
+  readonly carriesParts?: boolean;
   /** Shop signs hang from wrought-iron brackets (the Old Town, ADR-0048). */
   readonly bracketSigns?: boolean;
   /** Metres of Lublin 2077's superstructure over `top` (ADR-0051). */
