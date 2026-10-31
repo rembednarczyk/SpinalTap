@@ -121,7 +121,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine
 
 ### G-056 Kształt dachu z OSM (`roof:shape`) ignorowany: hełmy, kopuły i dachy dwuspadowe jako czterospadowe
-- Status: zgłoszone (z naprawy G-049)
+- Status: w PR #78 (ADR-0064 etap 1)
 - Ważność: S3 (proponowana) · Zasięg: zabytki Starego Miasta i Krakowskiego · Koszt: średni (pole w widoku `building`, czyli kontrakt w core/ports i ADR)
 - Dowód: hełm wieży Bramy Krakowskiej rysuje się jako dach czterospadowy i zasłania 3,2 m ścian ośmioboku; to samo przy cebulach i kopułach
 - Pakiet właściciela: tools/osm-import, packages/engine (mapcity), kontrakt: architekt
@@ -145,7 +145,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: nowa kontrola skanu `building-part-lower-ignored` (okap części > 1 kondygnację niżej od ścian obrysu w jej środku), baza 2 → 0
 
 ### G-061 Część `building:part` bez obrysu `building` nie trafia do gry (pawilon Bona)
-- Status: w PR #74 (szkic, czeka na weryfikację i kuratora)
+- Status: w PR #74
 - Ważność: S4 (proponowana) · Zasięg: 1 · Koszt: mały
 - Gdzie: w1236054202 (708.4, 166.8), Podzamcze; T-020
 - Pakiet właściciela: tools/osm-import
@@ -227,6 +227,39 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Dowód: `traffic-junction-drive` na gałęzi G-052: Peowiaków ziarna 3 i 7 po 2 kolizje (próg 0), 3 Maja ziarno 7: 3 (próg 2)
 - Pakiet właściciela: packages/sim (traffic-junctions)
 - Test przyjęcia: `traffic-junction-drive` w progach na gałęzi G-052 i na main
+
+### G-076 Przejazdy bramne z `tunnel=yes` zamknięte bryłą (Gruella pod Trynitarską, Królewska, Sąd Okręgowy, Rynek 5)
+- Status: zgłoszone (audyt bram i przejazdów, 31.10)
+- Ważność: S2 (proponowana) · Zasięg: 9 miejsc, w tym zabytek · Koszt: mały
+- Gdzie: Gruella w298307007 (587.6, −147); Sąd Okręgowy w343899807 (1.4, −96.1); Peowiaków 13 w343899804 (−48.5, −167.8); Królewska, 5 bram kamienic (x 387..489); Rynek 5 w1222303436 (562, −29.1); T-036…T-039
+- Dowód: zalewanie siatki 0,25 m: ciało 0,38 m nie przechodzi; tagi OSM `tunnel=yes`
+- Przyczyna (przypuszczalna): `passages.ts` bierze tylko `tunnel=building_passage`, a `underground()` w `ground.ts` zabiera nawierzchnię
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: kontrola `passage-blocked` (definicja kuratora w `scratchpad/topo-bramy-raport.md`), baza 9 → 0
+
+### G-077 Budynek podziemny zbudowany na powierzchni ul. Zamkowej
+- Status: zgłoszone (audyt bram i przejazdów)
+- Ważność: S2 (proponowana: zasłania 11,5 m osi drogi na dojściu do Zamku) · Koszt: mały
+- Gdzie: w980143457 (771.1, 190.5), `location=underground`, `layer=-1`, bryła 6,9 m na osi w154962966; T-041
+- Pakiet właściciela: tools/osm-import (`buildingAreas`)
+- Test przyjęcia: kontrola `building-underground-solid` 1 → 0
+
+### G-078 Brama Zamku z domyślnymi wymiarami przejazdu
+- Status: zgłoszone (audyt bram i przejazdów) · Ważność: S4 · Koszt: mały
+- Gdzie: brama wjazdowa Zamku, 2,4 × 3,4 m domyślnie; T-040
+- Test przyjęcia: wymiar zmierzony ze zdjęcia jako korekta w `corrections.ts` (ADR-0042)
+
+### G-079 Wypełnione wirydarze klasztorów Kapucynów i Dominikanów
+- Status: zgłoszone (audyt bram i przejazdów) · Ważność: S4 · Koszt: średni (dziury multipoligonów)
+- Gdzie: r5420680, r2366732; ścieżki wirydarza i przejście w586408568 w środku bryły; T-042
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: dziedziniec z `inner` multipoligonu jest otwarty i dostępny przejściem z OSM
+
+### G-080 Dach dwuspadowy i pulpitowy liczony od prostokąta całego obrysu
+- Status: zgłoszone (weryfikacja ADR-0064 etap 1, PR #78) · Ważność: S4 · Koszt: średni
+- Gdzie: budynki wieloskrzydłowe: Zamek w48500136 (jedna połać nad wszystkimi skrzydłami), w232362886, r18246400
+- Pakiet właściciela: packages/engine (`mapcity/roof-shapes.ts`)
+- Test przyjęcia: osobna kalenica lub połać na każde skrzydło obrysu wklęsłego
 
 ## Naprawione
 | ID | Glitch | PR |
