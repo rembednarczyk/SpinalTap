@@ -23,6 +23,8 @@ import m4TargEn from "../ink/en/m4-targ.ink?raw";
 import m4OyajiEn from "../ink/en/m4-oyaji.ink?raw";
 import m4DokiEn from "../ink/en/m4-doki.ink?raw";
 import dayCycleEn from "../ink/en/day-cycle.ink?raw";
+import m4UlicaEn from "../ink/en/m4-ulica.ink?raw";
+import phoneEn from "../ink/en/phone.ink?raw";
 
 /**
  * The ink files of the build in story order, one per dialogue group (knots are the dialogue ids).
@@ -80,6 +82,8 @@ export const INK_EN: Readonly<Partial<Record<InkFile, string>>> = {
   "m4-oyaji": m4OyajiEn,
   "m4-doki": m4DokiEn,
   "day-cycle": dayCycleEn,
+  "m4-ulica": m4UlicaEn,
+  phone: phoneEn,
 };
 
 /** The whole story in `language`, file by file, Polish where a translation is missing. */

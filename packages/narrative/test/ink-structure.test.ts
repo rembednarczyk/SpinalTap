@@ -14,8 +14,6 @@ import { INK_EN, INK_FILES, INK_PL, type InkFile, STORY_SOURCES, compileInk } fr
 
 /** Files with no English version yet: they play in Polish. Only ever shrinks, to empty. */
 const UNTRANSLATED: readonly InkFile[] = [
-  "m4-ulica",
-  "phone",
   "enc-shinsekai",
   "enc-kanal",
   "enc-targ",
@@ -33,6 +31,7 @@ const POLISH_NAMES: ReadonlySet<string> = new Set<string>([
   "Łokietka",
   "Tysiąclecia",
   "Przedmieście",
+  "Trybunał",
 ]);
 
 const POLISH_LETTER = /[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/;
