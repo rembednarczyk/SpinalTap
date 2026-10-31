@@ -2,6 +2,7 @@ import { type CSSProperties, useEffect, useState } from "react";
 import type { DayPhase } from "@seki/core";
 import { keyLabel } from "../menus/key-label";
 import { type ControlBindingVm, DEFAULT_HORIZONTAL_FOV, hipVerticalFov } from "../store/ui-store";
+import { useT } from "../i18n/use-t";
 import { useUi } from "../use-ui";
 import { AbilityWidget } from "./ability-widget";
 import { Minimap } from "./minimap";
@@ -90,18 +91,17 @@ const HurtVignette = () => {
   return hurt > 0 ? <div key={hurt} className="hurt-vignette" /> : null;
 };
 
-const PHASE_LABELS: Readonly<Record<DayPhase, string>> = { night: "noc", dawn: "świt", day: "dzień", dusk: "zmierzch" };
-
-/** Game time of day, e.g. "Dzień 2 · noc 01:40". */
+/** Game time of day, e.g. "Day 2 · night 01:40". */
 const Clock = () => {
   const clock = useUi((s) => s.clock);
   const day = useUi((s) => s.day);
   const phase = useUi((s) => s.dayPhase);
+  const t = useT();
   if (!clock) return null;
   return (
-    <div className={`hud__clock hud__clock--${phase}`} data-testid="clock" aria-label="Czas gry">
-      <span className="hud__clock-day">Dzień {day}</span>
-      <span className="hud__clock-phase">{PHASE_LABELS[phase]}</span>
+    <div className={`hud__clock hud__clock--${phase}`} data-testid="clock" aria-label={t("clock.label")}>
+      <span className="hud__clock-day">{t("clock.day", { day })}</span>
+      <span className="hud__clock-phase">{t(`clock.phase.${phase}`)}</span>
       <span className="hud__clock-time">{clock}</span>
     </div>
   );

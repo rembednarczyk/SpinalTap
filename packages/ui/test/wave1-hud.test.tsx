@@ -166,7 +166,10 @@ describe("heat and detection", () => {
     const { store } = mount({ heat: { level: 2, searching: false, ending: false } });
     const heat = screen.getByTestId("heat");
     expect(heat.querySelectorAll(".heat__star--on")).toHaveLength(2);
-    expect(heat.getAttribute("aria-label")).toBe("Pościg: 2 z 3");
+    expect(heat.getAttribute("aria-label")).toBe("Chase: 2 of 3");
+    act(() => patchUi(store, { settings: { ...store.getState().settings, locale: "pl" } }));
+    expect(screen.getByTestId("heat").getAttribute("aria-label")).toBe("Pościg: 2 z 3");
+    act(() => patchUi(store, { settings: { ...store.getState().settings, locale: "en" } }));
     act(() => patchUi(store, { heat: { level: 2, searching: true, ending: true } }));
     expect(screen.getByTestId("heat").className).toContain("heat--searching");
     expect(screen.getByTestId("heat").className).toContain("heat--ending");
