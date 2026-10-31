@@ -95,7 +95,7 @@ describe("character screen", () => {
   it("replaces the touch sheet and journal buttons with one Postać button", () => {
     mount({}, true);
     expect(screen.queryByRole("button", { name: "Dziennik" })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Postać" }));
+    fireEvent.click(screen.getByRole("button", { name: "Character" }));
     expect(screen.getByTestId("inventory-tab")).toBeTruthy();
     expect(screen.queryByTestId("touch-controls")).toBeNull();
   });

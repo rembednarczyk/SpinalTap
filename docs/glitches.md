@@ -75,7 +75,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Gdzie: ok. (2401, 282) · Dowód: kąt 31°, pojazdy obu tras biorą się nawzajem za „auto przed sobą”, resynchronizacja co ok. 40 m.
 
 ### G-038 `lane-dead-end` nie sprawdza użycia początku, który „spotyka” koniec
-- Status: zgłoszone (z G-006)
+- Status: w weryfikacji (kontrola wymaga tego samego `use`; po G-006 koniec trolejbusu (2456, 245) i tak jest już liczony, więc licznik 44 się nie zmienia, zmiana tylko uszczelnia kontrolę)
 - Ważność: S4 (skan) · Gdzie: koniec trolejbusu na Mełgiewskiej ok. (2456, 245) ukryty przez początek pasa aut.
 
 ### G-041 Wzór bruku placu przesuwa się na granicy chunków
@@ -98,7 +98,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine / e2e (QA)
 
 ### G-046 Smoke M0: kierunek ruchu po `freeze` zależy od chwili zamrożenia
-- Status: zgłoszone (z weryfikacji i18n 2b)
+- Status: w weryfikacji. Przyczyna w grze: Chromium po wejściu w pointer lock wysyła jeden `mousemove` z ruchem równym minus pozycja kursora (−640 px), `BrowserInput` brał go za obrót (yaw π/2 → 0,16); pierwszy ruch po zmianie stanu blokady nie obraca już widoku
 - Ważność: S2 (proponowana: niestabilne e2e) · Koszt: mały
 - Dowód: weryfikator i18n 2b, sonda: New Game, `freeze`, 6×10 kroków `moveZ`; `tick0` wypada 10, 15 albo 20 i każdy daje inny kierunek; przy `tick0=15` gracz idzie na ścianę z=−62,88 i staje po 2,09 m, więc `smoke.spec.ts:26` (ruch > 2,5) pada. Na czystym main (b5507ce) 3/4 przebiegów sondy trafia na ścianę. Test zakłada kierunek, który zależy od liczby ticków przed `freeze`.
 - Pakiet właściciela: e2e (QA) / packages/app

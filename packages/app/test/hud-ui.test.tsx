@@ -87,7 +87,7 @@ describe("wave 2 HUD in the game", () => {
     // No step after it: the simulation recomputes the disguise from the clothes worn.
     run(() => seki.jump({ buffs: [{ id: "regen", left: 30 }], disguise: { role: "tessen_guard", blown: false } }));
     expect(screen.getByTestId("buff-regen")).toBeTruthy();
-    expect(screen.getByTestId("disguise").textContent).toContain("ochrona Tessen");
+    expect(screen.getByTestId("disguise").textContent).toContain("Tessen security");
     run(() => seki.jump({ disguise: { role: "tessen_guard", blown: true } }));
     expect(screen.getByTestId("disguise").textContent).toContain("Spalona przykrywka");
   });

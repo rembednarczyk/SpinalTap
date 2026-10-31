@@ -28,16 +28,22 @@ const distToLine = (p: Pt, line: readonly Pt[]): number => {
   return best;
 };
 
+/** What a basket's key adds to its lamp's. */
+export const BASKET = "+basket";
+
+/** Lamps a basket hangs on. */
+export const BASKET_LAMPS: ReadonlySet<StreetPropKind> = new Set(["lamp-pastoral", "lamp-candelabra"]);
+
 const byKey = (a: Placed, b: Placed): number => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0);
 
 /** Baskets on every second pastoral lamp and candelabrum, those within 12 m of the group's lines first. */
 const baskets = (item: PlanItem, placed: readonly Placed[]): Placed[] => {
   const lines = (item.lines ?? (item.line ? [item.line] : [])).map(flat);
   // Near the plan's lines first, then the other pastoral lamps and candelabra of the city.
-  const all = placed.filter((x) => x.prop === "lamp-pastoral" || x.prop === "lamp-candelabra").sort(byKey);
+  const all = placed.filter((x) => BASKET_LAMPS.has(x.prop)).sort(byKey);
   const near = (x: Placed) => lines.some((l) => distToLine(x.p, l) < 12);
   const lamps = [...all.filter(near), ...all.filter((x) => !near(x))];
-  return lamps.filter((_, i) => i % 2 === 0).slice(0, item.count ?? lamps.length).map((x) => ({ prop: "hanging-basket", p: x.p, yaw: x.yaw, key: `${x.key}+basket` }));
+  return lamps.filter((_, i) => i % 2 === 0).slice(0, item.count ?? lamps.length).map((x) => ({ prop: "hanging-basket", p: x.p, yaw: x.yaw, key: `${x.key}${BASKET}` }));
 };
 
 /** Streets that carry traffic (not paths, steps or service lanes). */

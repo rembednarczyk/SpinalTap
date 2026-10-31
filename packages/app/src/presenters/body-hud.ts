@@ -1,6 +1,6 @@
 import { BUFF_CATALOG, type DomainState, capacityMax, capacityUsed, cooldownRateOf } from "@seki/core";
 import { DASH_COOLDOWN } from "@seki/sim";
-import type { BuffVm, CapacityVm, DashVm } from "@seki/ui";
+import { type BuffVm, type CapacityVm, type DashVm, translate } from "@seki/ui";
 import type { HudPart, HudPartContext, HudPartFrame, HudPatch } from "./hud-part";
 
 /** The minimap stays zoomed out this long after a dash (ADR-0035). */
@@ -32,7 +32,9 @@ export class BodyHud implements HudPart {
         if (isPlayer(e.entityId)) this.dashTick = hooks.tick();
       }),
       bus.on("ProjectileReflected", (e) => {
-        if (isPlayer(e.defenderId)) ctx.toast("system", "Pocisk odbity", "Ostrze odesłało kulę do strzelca");
+        if (!isPlayer(e.defenderId)) return;
+        const locale = ctx.ui.getState().settings.locale;
+        ctx.toast("system", translate(locale, "combat.reflected"), translate(locale, "combat.reflectedText"));
       }),
     ];
   }
