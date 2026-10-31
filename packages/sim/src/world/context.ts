@@ -27,6 +27,21 @@ export interface SessionState {
    * step of a new game or a load has read it from the position. Transient, not saved.
    */
   interior: string | null | undefined;
+  /** The takedown under way (ADR-0065), null when none. Transient, not saved. */
+  takedown: TakedownRun | null;
+  /** Whom the interact key would take down now (the HUD's prompt), null when nobody. */
+  takedownTarget: { readonly id: EntityId; readonly distance: number } | null;
+}
+
+/** A takedown in progress (ADR-0065): the player and `target` stand still until `left` runs out. */
+export interface TakedownRun {
+  readonly target: EntityId;
+  /** Seconds left. */
+  left: number;
+  /** Asked for by the command; holding the attack button at the end kills as well. */
+  readonly lethal: boolean;
+  /** The player's health when it began: any damage below it breaks the hold. */
+  readonly health: number;
 }
 
 /** A street encounter whose dialogue is open, and the micro-event under way (ADR-0034). */
@@ -96,6 +111,8 @@ export const freshSession = (): SessionState => ({
   passenger: null,
   street2: { encounter: null, npcs: {}, micro: null, district: null },
   interior: undefined,
+  takedown: null,
+  takedownTarget: null,
 });
 
 /** Mutable holder for the immutable domain state, plus a dirty marker for quest evaluation. */

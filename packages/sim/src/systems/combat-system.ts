@@ -28,6 +28,7 @@ import { consumeRound, loadedOf, readyToFire } from "../world/player-weapon";
 import { playerStatsOf } from "./player-control-system";
 import { disturb, isEngaged, noteViolence, offend, playerEngaged } from "../world/street";
 import { deflectShot, deflects } from "../world/deflect";
+import { playerHeld } from "../world/takedown";
 
 /** Crit chances of NPC attacks (shots and swings). */
 export const NPC_CRIT = { critChance: 0.05, critMultiplier: 1.5, damageBonus: 0 } as const;
@@ -206,7 +207,8 @@ const warnPlayer = (ctx: SimContext, shot: ShotRequest, hurtPlayer: boolean, imp
 
 export const alertNearbyGangers = (ctx: SimContext, at: { x: number; z: number }, radius: number): void => {
   for (const g of ctx.world.with("ai")) {
-    if (Math.hypot(g.position.x - at.x, g.position.z - at.z) <= radius) g.ai.alerted = true;
+    // Someone knocked out hears nothing (ADR-0065).
+    if (!g.unconscious && Math.hypot(g.position.x - at.x, g.position.z - at.z) <= radius) g.ai.alerted = true;
   }
 };
 
@@ -224,7 +226,7 @@ export const guardAgainst = (target: Entity, from: Vec3, kind: "melee" | "projec
 export const combatSystem: System = {
   name: "combat",
   run(ctx) {
-    if (ctx.session.dialogueActive || ctx.session.gameOver || !ctx.input.fire) return;
+    if (playerHeld(ctx) || !ctx.input.fire) return;
     for (const p of ctx.world.with("player", "combatant")) {
       // Melee weapons swing in the melee system; nobody fires while staggered or on a ladder.
       if (p.combatant.stats?.melee || (p.melee?.stagger ?? 0) > 0 || p.climb || p.mantle) continue;
