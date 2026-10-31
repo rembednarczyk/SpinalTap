@@ -14,7 +14,7 @@ Metoda: tylko odczyt (grep/sed/wc) dokumentów (`CLAUDE.md`, `docs/seki-senshi-p
 
 | Obszar | Luka (konkretnie) | Dowód | Wpływ | Koszt | W planie? | Priorytet |
 |---|---|---|---|---|---|---|
-| Pętla | Brak progresji postaci i celu średnioterminowego (poziomy, atrybuty, drzewka) | `core/src/items/rarity.ts`, stałe mnożniki; brak `core/progression` | wysoki | XL | ADR-0059 | P0: oś całej pętli, od niej zależy balans |
+| Pętla | Brak progresji postaci i celu średnioterminowego (poziomy, atrybuty, drzewka) | `core/src/items/rarity.ts`, stałe mnożniki; brak `core/progression` | wysoki | XL | ADR-0059 | P0: oś całej pętli, od niej zależy balans. **Stan 31.10:** etap 1 (XP, poziomy 1–30, atrybuty, zapis v17) w main (#53); drzewka i skalowanie łupów w toku |
 | Pętla | Brak autorskich zadań pobocznych z historią; poboczne to kontrakty proceduralne i small talk (`m4-ulica.ink`: „No knot pays”) | `narrative/ink/m4-*.ink`, `core/src/quest/definitions.ts` (3 questy) | wysoki | L (treść) | nie | P1: standard gatunku to wiele ręcznie pisanych pobocznych z wyborem |
 | Pętla | Wątek główny krótki: 2 akty, brak aktu domykającego, brak sekwencji końcowej i epilogu | `story.ts` (ACT_TWO_ENDINGS), `ui/src/store/ui-vm.ts` (brak ekranu końca) | wysoki | L | nie | P1 |
 | Pętla | Mało aktywności otwartego świata poza kontraktami (brak wyścigów, polowań na nagrody, minigier, kolekcji) | grep `race|bounty|collect` w `core/sim`: nie znaleziono | średni | M–L | nie | P2 |
@@ -40,11 +40,11 @@ Metoda: tylko odczyt (grep/sed/wc) dokumentów (`CLAUDE.md`, `docs/seki-senshi-p
 | UI/UX | Brak ikon przedmiotów | backlog „Assety ubrań i ekwipunku” | średni | M | tak (backlog) | P1 |
 | UI/UX | Brak kodeksu/bazy wiedzy (frakcje, postacie, słownik) i brak historii komunikatów | grep `codex|kodeks` w ui: nie znaleziono | niski | S | nie | P3 |
 | UI/UX | Pad nie steruje menu i dialogiem (propozycja w ADR-0039, w UI brak obsługi) | ADR-0039 l. 22; grep `gamepad` w `ui/src`: tylko komentarz | wysoki dla pada | M | propozycja w ADR | P1 |
-| Dostępność | Tylko głośność główna; brak suwaków muzyki/SFX/dialogu/radia | `app/src/main.tsx` l. 83 `setVolume("master")`, szyny miksu są (ADR-0013) | średni | S | nie | P1: tanie, szyny już są |
+| Dostępność | Tylko głośność główna; brak suwaków muzyki/SFX/dialogu/radia | `app/src/main.tsx` l. 83 `setVolume("master")`, szyny miksu są (ADR-0013) | średni | S | nie | P1: tanie, szyny już są. **Zrobione 31.10:** suwaki muzyki, SFX i otoczenia (#58); dialog i radio czekają na ADR-0060 |
 | Dostępność | Brak wyłączenia kołysania kamery i wstrząsów (motion sickness) | `engine/src/camera/camera-rig.ts` l. 325–334, brak pola w `settings.ts` | średni | S | nie | P1: tanie |
 | Dostępność | Brak rozmiaru napisów i tła napisów osobno od skali HUD; brak remapowania pada i dotyku | `settings.ts` (`hudScale`, `bindings` tylko klawisze) | średni | S–M | nie | P2 |
 | Dostępność | Brak wspomagania celowania (pad i dotyk) i opcji przytrzymań zamiast szybkich naciśnięć | backlog „Celowanie na telefonie” | wysoki (telefon) | M | tak (backlog, dotyk) | P0 dla telefonu; pad dopisać do tego ADR-u |
-| Platformy | Brak autozapisu (po kroku zadania, kontrakcie, wejściu do lokalu) i zapisu przy `visibilitychange`/`pagehide` na telefonie | grep `autosave|visibilitychange|pagehide` w app: nie znaleziono; jedyny automatyczny slot to `quick` z F5 | wysoki | S | nie | P0: na telefonie system zabija kartę, gracz traci postęp (plan §10: utrata postępu to najgorszy defekt) |
+| Platformy | Brak autozapisu (po kroku zadania, kontrakcie, wejściu do lokalu) i zapisu przy `visibilitychange`/`pagehide` na telefonie | grep `autosave|visibilitychange|pagehide` w app: nie znaleziono; jedyny automatyczny slot to `quick` z F5 | wysoki | S | nie | P0: na telefonie system zabija kartę, gracz traci postęp (plan §10: utrata postępu to najgorszy defekt). **Zrobione 31.10:** slot `auto` po kroku zadania, kontrakcie, zmianie dzielnicy, co 5 min i przy ukryciu karty (#56); wejście do lokalu: ADR-0061 |
 | Platformy | Brak eksportu/importu zapisu i chmury | `persistence/src` (tylko IndexedDB), `render.yaml` „Saves live in the player's browser” | średni | S (eksport) / L (chmura) | nie | P2: eksport do pliku tani |
 | Platformy | Brak automatycznego doboru jakości, limitu klatek i trybu oszczędzania baterii | `engine/src/renderer/stage.ts` l. 43 (skalowanie tylko na „low”), grep `deviceMemory|fps cap`: nie znaleziono | wysoki (telefon) | M | nie | P1 |
 | Platformy | Brak osobnych ustawień grafiki (cienie, tłum, zasięg widzenia, rozdzielczość); jest jeden preset 3-stopniowy | `settings.ts` `quality` | średni | M | nie | P2 |
@@ -56,7 +56,7 @@ Metoda: tylko odczyt (grep/sed/wc) dokumentów (`CLAUDE.md`, `docs/seki-senshi-p
 | Technika | Brak widocznej wersji gry i kanału wydań (wersja 0.1.0 nie trafia do UI, brak changelogu) | `packages/app/package.json`, grep `VERSION` w `vite.config`: nic | niski | S | nie | P2: potrzebne do zgłoszeń błędów |
 | Technika | Niestabilne e2e pod obciążeniem, rozjazd migawki NPR z main | G-031, G-043, G-046 | średni (zespół) | M | tak (backlog „najpierw G-031”) | P0 (w planie) |
 | Technika | God objecty renderera | ADR-0031, backlog | niski (gracz) | M | tak | P1 (w planie) |
-| Produkcja | Lokalizacja: HUD, `core`, `sim`, ink en | ADR-0056 etapy 2c–5 | wysoki (gracz anglojęzyczny) | L | tak | P0 (w planie, etap 5 największy) |
+| Produkcja | Lokalizacja: HUD, `core`, `sim`, ink en | ADR-0056 etapy 2c–5 | wysoki (gracz anglojęzyczny) | L | tak | P0 (w planie, etap 5 największy). **Stan 31.10:** 2c i 4 w main (#59, #63), 5 w integracji, 3 w weryfikacji |
 | Produkcja | Brak osiągnięć/wyzwań i statystyk gracza | grep `achievement`: nie znaleziono | niski | S–M | nie | P3 |
 | Produkcja | Brak trybu foto | grep `photo`: nie znaleziono | niski | S–M | nie | P3 (pasuje do NPR, tani marketing) |
 | Produkcja | Brak modowania i edytora treści poza ink i skryptami (`tools/osm-import`, `city_kit.py`); kontrakty i spotkania w TS | `sim/src/content/*.ts` | niski | L | nie | P3 |
@@ -64,7 +64,7 @@ Metoda: tylko odczyt (grep/sed/wc) dokumentów (`CLAUDE.md`, `docs/seki-senshi-p
 
 ## 10 najważniejszych luk spoza obecnego planu (kolejność) i zależności
 
-1. **Autozapis i zapis przy ukryciu karty** (S, P0). Niezależny; robić od razu. Potrzebny przed każdym dłuższym testem na telefonie.
+1. ~~**Autozapis i zapis przy ukryciu karty** (S, P0).~~ Zrobione (#56); wejście do lokalu w ADR-0061. Niezależny; robić od razu. Potrzebny przed każdym dłuższym testem na telefonie.
 2. **Obezwładnienie bez zabijania (takedown), ogłuszenie, przenoszenie ciał** (M). Musi być przed etapami 1–3 ADR-0059, bo XP i drzewko Cień je zakładają. Zależy od istniejących świadków i heatu (ADR-0029).
 3. **Poziom trudności z presetami wspomagania** (M). Przed testem balansu ADR-0059 (etap 8): balans liczy się dla poziomu „normalny”, a mnożniki trudności wchodzą przez te same `StatModifiers`.
 4. **Raportowanie błędów i widoczna wersja** (S–M). Przed szerszym udostępnieniem i przed pracą nad wydajnością telefonu (bez danych z urządzeń nie da się dobrać presetów).
