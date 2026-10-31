@@ -97,6 +97,18 @@ export const TRASA_PODZIEMNA_PROPS: readonly StaticProp[] = [...hall(), ...cella
 export const TRASA_PODZIEMNA_CHUNK = "stare-miasto-trasa-podziemna";
 export const TRASA_PODZIEMNA_BOUNDS = { minX: 570, maxX: HX1 + WALL, minZ: WEST_Z0 - WALL, maxZ: HZ1 + WALL } as const;
 
+/**
+ * The rooms of the cellars as an interior (ADR-0061), inside the shell's walls: the vestibule
+ * from where the shell starts (inside the Trybunał's facade) to the head of the stairs, the stair
+ * hall down to the landing, and the low cellars under it.
+ */
+export const TRASA_PODZIEMNA_ROOMS = [
+  { minX: 570, maxX: HX0, minZ: VZ0, maxZ: VZ1, bottom: D, top: H },
+  { minX: HX0, maxX: HX1, minZ: HZ0, maxZ: HZ1, bottom: F, top: H },
+  // Up to the hall's south wall, so the way down from the landing never leaves the interior.
+  { minX: LOCH_X0, maxX: HX1, minZ: WEST_Z0, maxZ: HZ0, bottom: F, top: C },
+];
+
 /** Where the loch is, for tests and the debug camera: the middle of its floor. */
 export const LOCH_SPOT: Vec3 = { x: 579, y: F, z: -60.3 };
 /** The way in: outside the Trybunał's door, the head of the stairs, the landing, the loch. */

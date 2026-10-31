@@ -208,6 +208,14 @@ export interface DomainEvents {
   ExperienceGained: { amount: number; source: XpSource };
   /** The character reached `level`; one per level gained, after its ExperienceGained. */
   LevelUp: { level: number };
+  // Interiors (ADR-0061).
+  /**
+   * The player stepped into an interior (`interiorId` of the sim's `INTERIORS`). Not sent when a
+   * new game or a load starts inside one: the state is read from the position then.
+   */
+  InteriorEntered: { interiorId: string };
+  /** The player stepped out of the interior `interiorId`. */
+  InteriorLeft: { interiorId: string };
 }
 
 /** Awareness of the player, from not noticing to fighting. */
