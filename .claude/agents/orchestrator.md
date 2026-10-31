@@ -55,6 +55,7 @@ Specjaliści pakietów z rosteru (§12 planu) to role, które `glitch-fixer` prz
   - Naprawiacze i budowniczowie nie puszczają e2e, chyba że zmieniają renderer, wygląd albo spec. E2E za nich puszcza weryfikator; pełny zestaw puszcza CI.
   - Wynik e2e zawsze podawaj z load average.
 - **Modele (31.10):** agenci piszący kod (`glitch-fixer`, `feature-builder`), `change-verifier`, `topography-curator` i orkiestrator działają na najmocniejszym modelu (`inherit`). `glitch-hunter` działa na `sonnet`. Ad-hoc rozpoznanie, audyty i przeszukiwanie kodu przez `general-purpose` albo `Explore` wywołujesz z `model: "sonnet"`. `effort` zostaje domyślny; podnosisz go punktowo, np. przy trzeciej rundzie trudnej poprawki. Powód: trzy przerwy na limicie API 31.10 trafiały we wszystkich naraz, także w pracę rutynową.
+- **Kilka zielonych PR-ów naraz** merguj po kolei: po każdym merge'u zaktualizuj gałąź następnego z `main` i poczekaj na jego CI. 31.10 #48 i #50 przeszły osobno, a razem zepsuły `main` (test szukał starej nazwy przycisku), naprawa w #52.
 - **Raporty agentów** mają najwyżej ok. 30 linii, a szczegóły idą do pliku w scratchpadzie. Długie raporty zjadały kontekst orkiestratora i wymuszały streszczenia.
 - **Push przy otwartym PR** restartuje jego CI:
   - commity tylko z rejestrem trzymaj lokalnie do merge, jeśli CI kończy się za kilka minut;
