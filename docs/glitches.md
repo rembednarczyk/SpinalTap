@@ -254,7 +254,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: ślad pokazuje, co blokuje wątek; kliknięcie wraca w < 10 s na CI bez podnoszenia limitu.
 
 ### G-030 Poza Seki w klatce referencyjnej zależy od czasu zegarowego
-- Status: zgłoszone
+- Status: weryfikacja PRZYJĘTE, w PR #47. Zegary bezczynności postaci stoją w trybie `?reference`; dwa przebiegi migawki: 1106 px różnicy → 0
 - Ważność: S4 (proponowana: migawka różni się między przebiegami w prostokącie postaci) · Koszt: mały
 - Dowód: naprawiacz G-001: animacja bezczynności dostaje prawdziwe `dt`; dwa przebiegi starego kodu różnią się w x 703–797, y 273–532.
 - Pakiet właściciela: packages/engine (animacja postaci) / packages/app (`?reference`)
@@ -327,6 +327,24 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 (proponowana) · Zasięg: 15 pasów schodów w 100% pod `square`/`cobble`, np. krakowskie-2-0 (414, −90), podzamcze-1-0 (886, 223), stare-miasto-0-0 (575, −70) · Koszt: mały
 - Dowód: naprawiacz G-018. Importer stawia schody na wierzchu (`ORDER` steps: 8), a renderer pod placem (stopnie +0,05, `square` +0,08). Do decyzji, która warstwa wygrywa. Osobno: 15 stromych biegów z płaskimi odcinkami ma pojedyncze podstopnie < 4,5 cm (np. stare-miasto-1-0 (680, −193)), których `steps-micro-riser` nie liczy.
 - Pakiet właściciela: packages/engine (renderer/mapcity) / tools/osm-import
+
+### G-043 Zatwierdzona migawka NPR nie zgadza się z tym, co rysuje main
+- Status: zgłoszone (z G-030)
+- Ważność: S3 (proponowana: migawka przestaje pilnować wyglądu) · Koszt: mały
+- Dowód: naprawiacz i weryfikator G-030: `e2e/__snapshots__/npr-perf.spec.ts/reference-m0.png` różni się od deterministycznej klatki main (b5507ce) o 39 806 px poza Seki (bbox 0,0–1280,533); m.in. brak białej smugi odblasku na lewym oknie Neon Koi (y ok. 290). Test przechodzi tylko dzięki `maxDiffPixelRatio: 0.02`. Ustalić, który commit zmienił klatkę: regresja czy niezaktualizowana migawka.
+- Pakiet właściciela: packages/engine / e2e (QA)
+
+### G-044 Tłum i pozy czynności animują się zegarem ściennym także w klatce referencyjnej
+- Status: zgłoszone (z G-030)
+- Ważność: S4 (proponowana; dziś poza kadrem referencyjnym) · Koszt: mały
+- Dowód: naprawiacz G-030: `crowd-pose.ts` (`stepPuppet`, `s.time`) i `activity-poses.ts` (`b.time`) idą z `dt`; jeśli wejdą w kadr `?reference`, wróci niedeterminizm migawki.
+- Pakiet właściciela: packages/engine (renderer)
+
+### G-045 Test `far-city.test.ts` przekracza 5 s pod obciążeniem
+- Status: zgłoszone (z G-030)
+- Ważność: S3 (proponowana: niestabilny test jednostkowy) · Koszt: mały
+- Dowód: „keeps rings and fillers off every chunk's ground” 5182 ms przy load 16 i padł przy load ok. 8; sam przechodzi 5/5. Ustalić, co jest drogie (podniesienie limitu nie jest poprawką).
+- Pakiet właściciela: packages/engine
 
 ### G-006 Skręty aut na skrzyżowaniach
 - Status: weryfikacja PRZYJĘTE (3. runda), w PR. `lane-dead-end` 61 → 44; zator Ruska/Lwowska usunięty; nowa kontrola `turn-off-road` 6 (zawrotki targu, G-025). CPU sceny targu 3,8 → 4,3 s na 3000 kroków
