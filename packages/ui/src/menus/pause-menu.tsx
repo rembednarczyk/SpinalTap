@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CreditsScreen } from "../credits/credits-screen";
 import { useT } from "../i18n/use-t";
 import { useSessionIntents } from "../use-ui";
 import { ControlsHelp } from "./controls-help";
@@ -8,7 +9,7 @@ import { SettingsPanel } from "./settings-panel";
 export const PauseMenu = () => {
   const intents = useSessionIntents();
   const t = useT();
-  const [tab, setTab] = useState<"main" | "save" | "load" | "settings">("main");
+  const [tab, setTab] = useState<"main" | "save" | "load" | "settings" | "credits">("main");
   return (
     <div className="screen screen--pause" data-testid="pause-menu">
       <h2 className="screen__heading">{t("pause.heading")}</h2>
@@ -29,10 +30,14 @@ export const PauseMenu = () => {
           <button type="button" className="menu__item menu__item--ghost" onClick={() => intents.quitToTitle()}>
             {t("pause.mainMenu")}
           </button>
+          <button type="button" className="menu__item menu__item--ghost" onClick={() => setTab("credits")}>
+            {t("pause.credits")}
+          </button>
           <ControlsHelp />
         </div>
       )}
-      {tab !== "main" && (
+      {tab === "credits" && <CreditsScreen intents={{ closeCredits: () => setTab("main") }} />}
+      {tab !== "main" && tab !== "credits" && (
         <div className="menu">
           {tab === "settings" ? <SettingsPanel /> : <SaveSlots mode={tab} />}
           <button type="button" className="menu__item menu__item--ghost" onClick={() => setTab("main")}>
