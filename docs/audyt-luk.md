@@ -56,7 +56,7 @@ Metoda: tylko odczyt (grep/sed/wc) dokumentów (`CLAUDE.md`, `docs/seki-senshi-p
 | Technika | Brak widocznej wersji gry i kanału wydań (wersja 0.1.0 nie trafia do UI, brak changelogu) | `packages/app/package.json`, grep `VERSION` w `vite.config`: nic | niski | S | nie | P2: potrzebne do zgłoszeń błędów |
 | Technika | Niestabilne e2e pod obciążeniem, rozjazd migawki NPR z main | G-031, G-043, G-046 | średni (zespół) | M | tak (backlog „najpierw G-031”) | P0 (w planie) |
 | Technika | God objecty renderera | ADR-0031, backlog | niski (gracz) | M | tak | P1 (w planie) |
-| Produkcja | Lokalizacja: HUD, `core`, `sim`, ink en | ADR-0056 etapy 2c–5 | wysoki (gracz anglojęzyczny) | L | tak | P0 (w planie, etap 5 największy). **Stan 31.10:** 2c i 4 w main (#59, #63), 5 w integracji, 3 w weryfikacji |
+| Produkcja | Lokalizacja: HUD, `core`, `sim`, ink en | ADR-0056 etapy 2c–5 | wysoki (gracz anglojęzyczny) | L | tak | P0 (w planie, etap 5 największy). **Stan 31.10:** etapy 2c–5 w main (#59, #63, #64, #66); zostały drobne resztki z backlogu |
 | Produkcja | Brak osiągnięć/wyzwań i statystyk gracza | grep `achievement`: nie znaleziono | niski | S–M | nie | P3 |
 | Produkcja | Brak trybu foto | grep `photo`: nie znaleziono | niski | S–M | nie | P3 (pasuje do NPR, tani marketing) |
 | Produkcja | Brak modowania i edytora treści poza ink i skryptami (`tools/osm-import`, `city_kit.py`); kontrakty i spotkania w TS | `sim/src/content/*.ts` | niski | L | nie | P3 |
