@@ -1,37 +1,41 @@
 import type { ContractModifier, ContractVariation, SecurityProfile, TargetTrait } from "@seki/core";
+import { type NarrativeText, keyText } from "./narrative-text";
 
 /**
  * How a fixer sums up the rolled variation of a running contract (ADR-0032). The text goes into
  * the ink variable `contract_variation`; the fixers say it after their own lead-in. The twist is
- * left out on purpose: the fixer does not know about it either.
+ * left out on purpose: the fixer does not know about it either. Each line is a catalog key
+ * (ADR-0056); standard security says nothing.
  */
-const MODIFIER_TEXT: Readonly<Record<ContractModifier, string>> = {
-  night_only: "Robota tylko po zmroku, za dnia cel siedzi w środku.",
-  time_limit: "Klient liczy czas, więc nie zwlekaj.",
-  bodyguards: "Cel chodzi z obstawą.",
-  ambush: "Coś mi tu pachnie zasadzką, miej oczy dookoła głowy.",
-  twin: "Mówią, że jest ich dwóch i wyglądają tak samo.",
+const MODIFIER_KEY: Readonly<Record<ContractModifier, string>> = {
+  night_only: "brief.modifier.night_only",
+  time_limit: "brief.modifier.time_limit",
+  bodyguards: "brief.modifier.bodyguards",
+  ambush: "brief.modifier.ambush",
+  twin: "brief.modifier.twin",
 };
 
-const SECURITY_TEXT: Readonly<Record<SecurityProfile, string>> = {
-  light: "Ochrona jest cienka.",
-  standard: "",
-  lockdown: "Teren zamknięty na głucho, ochrona w pełnej gotowości.",
+const SECURITY_KEY: Readonly<Record<SecurityProfile, string | null>> = { light: "brief.security.light", standard: null, lockdown: "brief.security.lockdown" };
+
+const TRAIT_KEY: Readonly<Record<TargetTrait, string>> = {
+  paranoid: "brief.trait.paranoid",
+  drinker: "brief.trait.drinker",
+  creature_of_habit: "brief.trait.creature_of_habit",
+  armored: "brief.trait.armored",
 };
 
-const TRAIT_TEXT: Readonly<Record<TargetTrait, string>> = {
-  paranoid: "Cel jest przewrażliwiony i ogląda się za siebie.",
-  drinker: "Cel lubi wypić, wieczorem szukaj go przy barze.",
-  creature_of_habit: "Cel chodzi jak w zegarku, zawsze tą samą trasą.",
-  armored: "Cel nosi pancerz, zwykłe kule się od niego odbiją.",
+/** The keys of the fixer's lines about `variation`, in the order they are said. */
+export const variationKeys = (variation: ContractVariation | null | undefined): string[] => {
+  if (!variation) return [];
+  const keys = [...variation.modifiers.map((m) => MODIFIER_KEY[m]), SECURITY_KEY[variation.security], variation.trait ? TRAIT_KEY[variation.trait] : null];
+  return keys.filter((k): k is string => k !== null);
 };
 
-/** The fixer's sentence about `variation`, or "" when there is nothing worth saying. */
-export const describeVariation = (variation: ContractVariation | null | undefined): string => {
-  if (!variation) return "";
-  const parts = [...variation.modifiers.map((m) => MODIFIER_TEXT[m]), SECURITY_TEXT[variation.security], variation.trait ? TRAIT_TEXT[variation.trait] : ""];
-  return parts.filter((p) => p !== "").join(" ");
-};
+/** The fixer's sentence about `variation` written by `text`, or "" when there is nothing worth saying. */
+export const describeVariation = (variation: ContractVariation | null | undefined, text: NarrativeText = keyText): string =>
+  variationKeys(variation)
+    .map((key) => text(key))
+    .join(" ");
 
 const isVariation = (v: unknown): v is ContractVariation =>
   typeof v === "object" && v !== null && "modifiers" in v && Array.isArray(v.modifiers) && "security" in v && typeof v.security === "string";

@@ -18,7 +18,7 @@ const bagEntity = (id: number, c: LootContainer): Entity => {
     pitch: 0,
     view: { kind: "loot", style: "bag", best: bestLootRarity(c.lines) },
     lootBag: { key: c.key },
-    interactable: { kind: "loot", dialogueId: c.key, prompt: "Przeszukaj", radius: LOOT_REACH },
+    interactable: { kind: "loot", dialogueId: c.key, prompt: "prompt.loot", radius: LOOT_REACH },
   };
   if (c.chunk !== "") e.chunk = c.chunk;
   return e;

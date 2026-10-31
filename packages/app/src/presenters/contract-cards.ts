@@ -19,7 +19,7 @@ export class ContractCards implements HudPart {
       bus.on("ContractBonusChanged", (e) => patchUi(ui, { contractBonus: bonusVm(e) })),
       bus.on("ContractDebrief", (e) => {
         const contract = this.lastContract?.id === e.contractId ? this.lastContract : null;
-        patchUi(ui, { debrief: debriefVm(e, contract) });
+        patchUi(ui, { debrief: debriefVm(e, contract, ui.getState().settings.locale) });
       }),
     ];
   }

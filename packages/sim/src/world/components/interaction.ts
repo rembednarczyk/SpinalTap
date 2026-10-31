@@ -18,6 +18,10 @@ export interface Interactable {
   /** For a ladder's grab point: which ladder and which end (ADR-0021). */
   readonly ladder?: { readonly key: string; readonly end: "bottom" | "top" };
   readonly dialogueId: string;
+  /**
+   * What the HUD offers, as a key of the app's catalogs (`prompt.talk.kaito`), never as text:
+   * the app writes it in the player's language (ADR-0056).
+   */
   readonly prompt: string;
   readonly radius: number;
 }

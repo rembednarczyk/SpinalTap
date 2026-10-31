@@ -121,7 +121,8 @@ describe("contract view models", () => {
     expect(vm.badges.find((b) => b.id === "ghost")).toEqual({ id: "ghost", earned: true, style: true });
     expect(vm.badges.find((b) => b.id === "clean")).toEqual({ id: "clean", earned: false, style: true });
     expect(vm.badges.find((b) => b.id === "swift")).toEqual({ id: "swift", earned: false, style: false });
-    expect(debriefVm(e, null)).toMatchObject({ title: "Zlecenie", fixer: null });
+    expect(debriefVm(e, null)).toMatchObject({ title: "Job", fixer: null });
+    expect(debriefVm(e, null, "pl")).toMatchObject({ title: "Zlecenie" });
     expect(bonusVm({ contractId: "c4", condition: { badge: "no_alarm", label: "Bez alarmu", bonus: 300 }, kept: false })).toEqual({ label: "Bez alarmu", badge: "no_alarm", bonus: 300, kept: false });
   });
 });

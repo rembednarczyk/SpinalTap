@@ -165,7 +165,7 @@ export const DISTRICT_M0_ACTORS: readonly ActorDef[] = [
     spawn: FIXER_SPAWN,
     preset: "fixer",
     faction: "fixers",
-    interactable: { kind: "dialogue", dialogueId: "fixer", prompt: "Rozmawiaj z Kaito", radius: 2.6 },
+    interactable: { kind: "dialogue", dialogueId: "fixer", prompt: "prompt.talk.kaito", radius: 2.6 },
   },
   {
     kind: "npc",
@@ -173,14 +173,14 @@ export const DISTRICT_M0_ACTORS: readonly ActorDef[] = [
     preset: "civilian",
     faction: "civilians",
     bystander: true,
-    interactable: { kind: "dialogue", dialogueId: "ume", prompt: "Rozmawiaj z babcią Ume", radius: 2.4 },
+    interactable: { kind: "dialogue", dialogueId: "ume", prompt: "prompt.talk.ume", radius: 2.4 },
   },
   {
     kind: "npc",
     spawn: RIPPERDOC_SPAWN,
     preset: "ripperdoc",
     faction: "clinic",
-    interactable: { kind: "shop", dialogueId: "mori", prompt: "Klinika doktora Mori", radius: 2.4 },
+    interactable: { kind: "shop", dialogueId: "mori", prompt: "prompt.shop.mori", radius: 2.4 },
   },
   ...GANGER_SPAWNS.map((spawn): ActorDef => ({ kind: "ganger", spawn })),
   // Neon Koi's barman and regulars (ADR-0038).
@@ -191,7 +191,7 @@ export const DISTRICT_M0_ACTORS: readonly ActorDef[] = [
     faction: "civilians",
     bystander: true,
     indoor: true,
-    interactable: { kind: "dialogue", dialogueId: "koi_barman", prompt: "Rozmawiaj z barmanem", radius: 2.6 },
+    interactable: { kind: "dialogue", dialogueId: "koi_barman", prompt: "prompt.talk.barman", radius: 2.6 },
   },
   ...KOI_REGULAR_SPAWNS.map(
     (spawn): ActorDef => ({
@@ -201,7 +201,7 @@ export const DISTRICT_M0_ACTORS: readonly ActorDef[] = [
       faction: "civilians",
       bystander: true,
       indoor: true,
-      interactable: { kind: "dialogue", dialogueId: "koi_regular", prompt: "Zagadaj", radius: 2 },
+      interactable: { kind: "dialogue", dialogueId: "koi_regular", prompt: "prompt.chat", radius: 2 },
     }),
   ),
 ];

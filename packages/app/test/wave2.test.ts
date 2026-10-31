@@ -28,7 +28,7 @@ const fakeFocus = () => {
 
 const fakeAudio = (cues: AudioCue[]) => ({ play: (c: AudioCue) => cues.push(c), stopAll() {} });
 
-const lines = createKnotLines(STORY_SOURCE);
+const lines = createKnotLines(STORY_SOURCE, () => "en");
 const domain = () => createDomainState();
 
 /** What the kiosk says while the platform is watched, in the default English. */
@@ -302,12 +302,29 @@ describe("Wave2Hud presenters", () => {
     bus.emit("ContractHookFound", { contractId: "c1", hookId: "h1", text: "Strażnik pali o 23:00 za magazynem." });
     bus.emit("ContractHookFound", { contractId: "c1", hookId: "h1", text: "Strażnik pali o 23:00 za magazynem." });
     expect(ui.getState().contractHooks).toEqual([{ id: "h1", text: "Strażnik pali o 23:00 za magazynem." }]);
+    // The toast for a new lead speaks the player's language (ADR-0056).
+    expect(ui.getState().toasts.at(-1)).toMatchObject({ title: "New lead" });
+    patchUi(ui, { settings: { ...ui.getState().settings, locale: "pl" } });
+    bus.emit("ContractHookFound", { contractId: "c1", hookId: "h2", text: "x" });
+    expect(ui.getState().toasts.at(-1)).toMatchObject({ title: "Nowy trop" });
+    patchUi(ui, { settings: { ...ui.getState().settings, locale: "en" } });
     bus.emit("ContractFailed", { contractId: "c1" } as never);
     expect(ui.getState().contractHooks).toEqual([]);
     const hook = CONTRACT_HOOKS[0]!;
     set({ contracts: { active: null, completed: 0, hooks: [hook.id, "unknown"] } });
     hud.reset();
-    expect(ui.getState().contractHooks).toEqual([{ id: hook.id, text: hook.text }]);
+    expect(ui.getState().contractHooks).toEqual([{ id: hook.id, text: "Every hour the crew boss steps aside on his own" }]);
+  });
+
+  it("writes a hook's line, sim-keyed, in the player's language and rewrites it on a change (ADR-0056)", () => {
+    const { bus, ui, hud } = setup();
+    bus.emit("ContractHookFound", { contractId: "c1", hookId: "hook_retrieve_1", text: "hook.retrieve_1" });
+    const en = "After midnight the stash's second guard goes out for ramen for a quarter of an hour";
+    expect(ui.getState().contractHooks).toEqual([{ id: "hook_retrieve_1", text: en }]);
+    expect(ui.getState().toasts.at(-1)).toMatchObject({ text: en });
+    expect(hud.sync(undefined, false, true).contractHooks).toBeUndefined();
+    patchUi(ui, { settings: { ...ui.getState().settings, locale: "pl" } });
+    expect(hud.sync(undefined, false, true).contractHooks).toEqual([{ id: "hook_retrieve_1", text: "Po północy drugi strażnik skrytki idzie na kwadrans po ramen" }]);
   });
 });
 
@@ -315,7 +332,9 @@ describe("debrief variation", () => {
   it("lists the variation when the contract carries one", () => {
     const e = { contractId: "c1", badges: [], rank: "B", reward: 100, bonus: 0, styleBonus: 0, seconds: 10 } as const;
     const contract = { id: "c1", kind: "eliminate", siteId: "koi_back", targets: 1, reward: 100, status: "cleared", variation: { modifiers: ["night_only", "bodyguards"], security: "lockdown", trait: "drinker", twist: "setup" } };
-    expect(debriefVm(e, contract as never).variation).toEqual({ labels: ["tylko nocą", "ochroniarze", "blokada", "cel pije"], twist: "wystawka" });
+    expect(debriefVm(e, contract as never).variation).toEqual({ labels: ["night only", "bodyguards", "lockdown", "target drinks"], twist: "setup" });
+    // Polish word for word as before (ADR-0056).
+    expect(debriefVm(e, contract as never, "pl").variation).toEqual({ labels: ["tylko nocą", "ochroniarze", "blokada", "cel pije"], twist: "wystawka" });
     expect(debriefVm(e, null).variation).toBeUndefined();
   });
 });
