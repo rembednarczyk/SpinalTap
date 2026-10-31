@@ -380,19 +380,23 @@ export const patchUi = (store: UiStore, patch: Partial<UiState>): void => {
 const TOAST_LIMIT = 4;
 let toastSeq = 0;
 
-/** Story toasts (quests, endings, memories) outlive the rest when too many come at once. */
-const isStoryToast = (t: Toast): boolean => t.kind === "quest" || t.kind === "memory";
+/**
+ * Toasts that outlive the rest when too many come at once: the story (quests, endings,
+ * memories) and the system's (a level up, a failed load).
+ */
+const isKeptToast = (t: Toast): boolean => t.kind === "quest" || t.kind === "memory" || t.kind === "system";
 
 /**
- * Shows a toast; over TOAST_LIMIT the oldest toast goes, but one that is not story first, so a
+ * Shows a toast; over TOAST_LIMIT the oldest toast goes, but one that is not kept first, so a
  * burst (an ending with its reputation, level-up and quest toasts) does not push the ending out.
+ * When every toast is kept, the oldest goes.
  */
 export const pushToast = (store: UiStore, toast: Omit<Toast, "id">): number => {
   const id = ++toastSeq;
   store.setState((s) => {
     const toasts = [...s.toasts, { ...toast, id }];
     while (toasts.length > TOAST_LIMIT) {
-      const minor = toasts.findIndex((t) => !isStoryToast(t));
+      const minor = toasts.findIndex((t) => !isKeptToast(t));
       toasts.splice(minor >= 0 && minor < toasts.length - 1 ? minor : 0, 1);
     }
     return { toasts };

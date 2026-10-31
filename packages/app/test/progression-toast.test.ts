@@ -27,5 +27,7 @@ describe("level up in the session", () => {
       { title: "Awans: poziom 3", text: "Punkt atrybutu i punkt perku do rozdania" },
       { title: "Awans: poziom 4", text: "Punkt atrybutu i punkt perku do rozdania" },
     ]);
+    // Two levels at once take one place in the stack: the newer replaced the older.
+    expect(ui.getState().toasts.filter((t) => /^(Level up|Awans)/.test(t.title)).map((t) => t.title)).toEqual(["Awans: poziom 4"]);
   });
 });
