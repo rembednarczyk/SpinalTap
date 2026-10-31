@@ -173,7 +173,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola skanu `building-part-orphan` (część bez obrysu i bez bryły w grze), baza 1 → 0
 
 ### G-062 Przejścia pod mostami zablokowane: grunt pod pomostem to pomost (Podwale, bulwar Bystrzycy)
-- Status: w weryfikacji (1bf85b1)
+- Status: w PR #70
 - Ważność: S3 (proponowana) · Zasięg: lokalny (2 miejsca, 6 par droga × most) · Koszt: średni
 - Gdzie: Podwale w66318260 (747, 166) z chodnikami w56965511, w56965514 i schodami w56965515 pod wiaduktem Zamkowej (teren −19,2, pomost −13,5); ścieżka bulwaru w307943890 pod mostami Mełgiewskiej (2435, 262) i (2450, 306); T-024
 - Dowód: `groundY` zwraca pomost (sonda kuratora `topo-deck`); ADR-0053 to przyznaje
@@ -219,6 +219,35 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Dowód: budynek klasztoru ma `use: church`, więc `addTowers` stawia na nim wieże kościoła, choć to klasztor; widać z ujęcia „Dominikanie od wschodu” (810, −56)
 - Pakiet właściciela: tools/osm-import (building-tags) / packages/engine (mapcity)
 - Test przyjęcia: klasztor bez wież proceduralnych; kościół obok zachowuje swoje
+
+### G-068 AI nie widzi przejścia pod mostem: walczący wręcz utyka na skarpie bulwaru
+- Status: zgłoszone (z weryfikacji G-062)
+- Ważność: S3 (proponowana: bezpieczne miejsce przed walką wręcz) · Zasięg: przejścia pod pomostami (Mełgiewska, Podwale) · Koszt: mały
+- Gdzie: gracz pod dolnym mostem Mełgiewskiej (2445.9, 302.2); `hebi_brawler` startujący od południa (2449, 318) utyka w (2458.4, 314.2) i przez 20 s zostaje 16–17 m od gracza
+- Przyczyna: `packages/sim/src/systems/ai/steering.ts` `terrainOf` (l.140), `closeBanks` (l.155), `bankBetween` (l.359) wołają `heightAt`/`steepAt` bez `reach` (G-062), więc AI widzi pomost jako grunt
+- Pakiet właściciela: packages/sim/src/systems/ai
+- Test przyjęcia: zaalarmowany walczący wręcz dociera do gracza pod mostem Mełgiewskiej z obu stron w < 10 s
+
+### G-069 Postać zespawnowana pod mostem trafia na pomost
+- Status: zgłoszone (z weryfikacji G-062)
+- Ważność: S4 (proponowana) · Zasięg: pod pomostami · Koszt: mały
+- Dowód: `settle`/`clearSpot` (`placement.ts:17`), teleport w `app/debug-api.ts` (l.145), `street-scenes`, `micro-events` i spawn tłumu biorą najwyższy pomost; rekwizyty ulicy też (artwork (745, 166.4), stragan (750.1, 177.7) na pomoście Zamkowej)
+- Pakiet właściciela: packages/sim (content, world)
+- Test przyjęcia: spawn w punkcie pod pomostem z prześwitem > 2 m stoi na terenie
+
+### G-070 Drzewo i stragan pod wiaduktem Zamkowej wchodzą w pomost
+- Status: zgłoszone (z weryfikacji G-062)
+- Ważność: S4 (proponowana; widoczne z Podwala po G-062) · Zasięg: lokalny · Koszt: mały
+- Gdzie: drzewo pod wiaduktem Zamkowej (koroną przebija pomost), stragan (750.1, 177.7) przy 2,66 m prześwitu
+- Pakiet właściciela: tools/osm-import (props) / packages/engine
+- Test przyjęcia: żaden rekwizyt pod pomostem nie sięga wyżej niż spód pomostu
+
+### G-071 Kule przelatują przez pomost
+- Status: zgłoszone (z weryfikacji G-062)
+- Ważność: S3 (proponowana; po G-062 da się stanąć pod mostem i strzelać przez pomost w obie strony) · Koszt: średni
+- Dowód: ADR-0053 traktuje pomost jako podłogę dla ruchu, nie jako przesłonę dla strzałów i widoczności
+- Pakiet właściciela: packages/sim (walka, linia widzenia)
+- Test przyjęcia: strzał z pomostu do celu pod nim (i odwrotnie) trafia w pomost; świadek pod mostem nie widzi gracza na pomoście
 
 ## Naprawione
 | ID | Glitch | PR |
