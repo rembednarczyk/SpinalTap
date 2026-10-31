@@ -5,6 +5,7 @@ import { applyItemCommand } from "./item-commands";
 import { applyAlias, applyResolveEnding, changeReputation, endDialogue, setFlag, storyChoice, unlockMemory, trackQuest, waitMinutes } from "./story-commands";
 import { applyTradeCommand } from "./trade-commands";
 import { travelMetro } from "./metro-ride";
+import { spendAttribute } from "./progression-ops";
 
 type CommandType = GameCommand["type"];
 
@@ -29,6 +30,8 @@ export const COMMAND_HANDLERS: CommandHandlers = {
   "resolve-ending": applyResolveEnding,
   wait: waitMinutes,
   "track-quest": trackQuest,
+  // Character progression (ADR-0059).
+  "spend-attribute-point": spendAttribute,
   // Contracts and hacking.
   "accept-contract": acceptContract,
   "deliver-contract": deliverContract,
