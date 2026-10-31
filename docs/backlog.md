@@ -8,7 +8,7 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
   - **P0, teraz:**
     1. [gotowe, #56] Autozapis (po kroku zadania, kontrakcie, zmianie dzielnicy, co 5 minut) i zapis przy `visibilitychange`/`pagehide` na telefonie; wejście do lokalu z ADR-0061.
     2. Stabilne e2e (G-031, G-043) i ekran ładowania (ADR-0057). W toku.
-    3. Języki: etapy 2c–5 (ADR-0056). W toku.
+    3. Języki: etapy 3–5 (ADR-0056). W toku: 4 w PR #63, 3 i 5 w weryfikacji.
     4. Obezwładnienie bez zabijania, ogłuszenie, przenoszenie ciał (ADR do napisania). Koszt M. Musi być przed etapem 3 ADR-0059, bo drzewko Cień i XP za skradanie je zakładają.
     5. Poziom trudności z presetami wspomagania (ADR do napisania). Koszt M. Przed etapem 8 ADR-0059 (balans liczony dla „normalnego”).
     6. Rozwój postaci i skalowanie (ADR-0059), etap 1 w toku.
@@ -70,11 +70,12 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
     - wnętrza z pogłosem.
     
     Źródła CC0 (Kenney, Freesound CC0, OpenGameArt), z tą samą zasadą licencji.
-- **[w toku] Języki gry (ADR-0056).** Angielski domyślny, polski w opcjach. Etap 1 (menu, opcje, zapadka) i paczka 2a (ekwipunek, sklepy) są gotowe, 2b (panele świata) jest w PR #47. Zostaje:
-  - HUD i dotyk (2c): część zmergowana (#50), dalsza część na gałęzi `i18n2c2` (ekran śmierci, zegar, pościg, wykrycie, minimapa, skaner); zostaje karta kontraktu, pasek broni („Boczna: …”), plakietka „Spalona przykrywka” w `hud.tsx`, nazwy buffów z `core` (etap 3) i rzutowanie `key as MessageKey` w `hint-sync.ts` do zastąpienia typem;
-  - teksty domeny w `core` jako klucze (etap 3);
-  - treść `sim` (etap 4);
-  - narracja `ink/en` (etap 5, ok. 1900 linii).
+- **[w toku] Języki gry (ADR-0056).** Angielski domyślny, polski w opcjach. Gotowe: etap 1 (menu, opcje, zapadka), 2a (ekwipunek, sklepy), 2b (panele świata), 2c (HUD i dotyk, #50 i #59). Stan pozostałych:
+  - etap 4 (treść `sim` i narracja TS na kluczach) z tagami wariantu kontraktu: przyjęty, PR #63;
+  - etap 3 (teksty domeny w `core`: przedmioty, wszczepy, zadania, kontrakty): zbudowany, w weryfikacji;
+  - etap 5 (narracja `ink/en`, 16 plików, zmiana języka w trakcie rozmowy): zbudowany, w weryfikacji;
+  - resztki po etapach: `CONTACT_NAMES` „Doktor Mori” w `app/src/phone.ts`; nazwy miejsc kontraktów po polsku w liniach ink (`core/src/i18n/ink-sites-pl.ts` do usunięcia po etapie 5); „gotowe” i „Apteczki × N” w `ui/src/hud/ability-widget.tsx` (skan ich nie łapie); nazwy urządzeń i „Wróg” w `sim/src/systems/scanner-system.ts`; 3 linie w `app` (`lublin-preview/preview-overlay.ts`, `metro.ts`); komentarz `ContractHookDef.text` w core nieaktualny; nieczytane pole `ScanFocusChanged.name`;
+  - zachowanie do decyzji: etykieta slotu zapisu, karta podsumowania i toast nowego tropu zostają w języku z chwili zdarzenia.
 - **[następne] Ekran ładowania z paskiem postępu (ADR-0057).** Nowa gra i wczytanie doładowują modele, city kit, chunki startowe i shadery, a reszta miasta strumieniuje się w tle. Start po G-029 (`main.tsx`, `GpuPacer`).
 - **[po G-029] Sprzątanie god objectów, renderer (ADR-0031).** `babylon-renderer.ts` (39 metod) i `map-city.ts` (562 linie). Ponadto jednolinijkowa zmiana w `main.tsx` na `intents={session.intents}` usunie kopię intencji z refaktoru `game-session.ts`. Do rozważenia osobno, z ADR-em: podział typu `Entity` (50 pól), `GangerAi`, `Interactable` na unię.
 - **[decyzja użytkownika] G-024.** Sześć końców pasów jednokierunkowych (Lubartowska, Kowalska, Świętoduska) nie ma ulicy dla aut w zasięgu skrętu. Opcje: auta jadą dalej ulicą dla dostaw albo zostaje jak jest.
