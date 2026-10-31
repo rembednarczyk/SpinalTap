@@ -157,6 +157,19 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Dowód: w tym samym punkcie (300, −60) przy ustalonym mieście kolejne klatki dają 223 i 163 wywołania. Sprawdzić, skąd różnica (komórki przebudowywane leniwie, glow, cienie), i czy nie zaszumia budżetów w `npr-perf`.
 - Pakiet właściciela: packages/engine
 
+### G-056 Kształt dachu z OSM (`roof:shape`) ignorowany: hełmy, kopuły i dachy dwuspadowe jako czterospadowe
+- Status: zgłoszone (z naprawy G-049)
+- Ważność: S3 (proponowana) · Zasięg: zabytki Starego Miasta i Krakowskiego · Koszt: średni (pole w widoku `building`, czyli kontrakt w core/ports i ADR)
+- Dowód: hełm wieży Bramy Krakowskiej rysuje się jako dach czterospadowy i zasłania 3,2 m ścian ośmioboku; to samo przy cebulach i kopułach
+- Pakiet właściciela: tools/osm-import, packages/engine (mapcity), kontrakt: architekt
+
+### G-057 Kościoły z wieżyczkami z OSM dostają dodatkowo proceduralne wieże renderera
+- Status: zgłoszone (z naprawy G-049)
+- Ważność: S3 (proponowana) · Zasięg: Archikatedra i inne kościoły z `building:part` · Koszt: mały
+- Dowód: po G-049 Archikatedra ma wieżyczki z części OSM i proceduralne wieże z `roof-plan`
+- Pakiet właściciela: packages/engine (mapcity)
+- Test przyjęcia: kościół, który ma części `building:part`, nie dostaje proceduralnych wież
+
 ## Naprawione
 | ID | Glitch | PR |
 |---|---|---|
