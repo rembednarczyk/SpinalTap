@@ -83,7 +83,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: później (ADR-0052 „Na później”)
 
 ### G-049 Zabytki tracą wieże, hełmy i wysokość: import pomija `building:part` (Trynitarska 42 zamiast 60 m)
-- Status: zgłoszone
+- Status: w PR #65
 - Ważność: S3 (proponowana) · Zasięg: szeroki (panorama Starego Miasta, Plac Łokietka, Rynek) · Koszt: średni (fetch, osm.ts, massing, buildings w tools/osm-import; regeneracja danych)
 - Gdzie: Trynitarska (591.3, −147.3), Brama Krakowska (472.6, −91.2), Ratusz (415, −79), Archikatedra (634, −184), Dominikanie (731, −55); ile w mieście: co najmniej 5 w próbce, pełna liczba po ponownym pobraniu
 - Dowód: OSM w617763432 `height=60 min_height=55 roof:shape=pyramidal` w obrysie w66286371; w617878341 `building:levels=6 roof:shape=onion` w r7224409; w619138854 `building:part=tower building:levels=7.5`; T-006 do T-010
@@ -179,6 +179,21 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-059 Testy sesji `m2-schedules` i `m3-loop` trwają ok. 5 s i przekraczają limit vitest pod obciążeniem
 - Status: odrzucone (pomiar, 31.10)
 - Ustalenie orkiestratora: główny `vitest.config.ts` daje `testTimeout: 20_000` właśnie dla testów całych aktów. Limit 5 s działa tylko przy vitest puszczonym z katalogu pakietu, bez głównej konfiguracji. Z roota przy load 30: najdłuższy test 7,6 s (zegar HUD, 3600 klatek), wszystkie 10 zielonych. Testy uruchamiamy z roota repo
+
+### G-060 Części `building:part` niższe od obrysu pomijane przy pokryciu < 75% (Podzamcze)
+- Status: zgłoszone (z przeglądu topografii G-049)
+- Ważność: S4 (proponowana) · Zasięg: 2 budynki · Koszt: mały
+- Gdzie: w1306000298 (650.3, 479.5), w1306000299 (658.8, 503); T-019
+- Dowód: części OSM w73833861/65 i w587306232 mają 4 kondygnacje, w73833864 ma 2, a obrysy w grze mają 16 m (pokrycie 43% i 32%). Tagowanie OSM niespójne; możliwe rozwiązanie: rysować części, resztę obrysu zostawić
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: nowa kontrola skanu `building-part-lower-ignored` (okap części > 1 kondygnację niżej od ścian obrysu w jej środku), baza 2 → 0
+
+### G-061 Część `building:part` bez obrysu `building` nie trafia do gry (pawilon Bona)
+- Status: zgłoszone (z przeglądu topografii G-049)
+- Ważność: S4 (proponowana) · Zasięg: 1 · Koszt: mały
+- Gdzie: w1236054202 (708.4, 166.8), Podzamcze; T-020
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: kontrola skanu `building-part-orphan` (część bez obrysu i bez bryły w grze), baza 1 → 0
 
 ## Naprawione
 | ID | Glitch | PR |
