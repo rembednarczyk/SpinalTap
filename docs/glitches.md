@@ -200,7 +200,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola skanu „stragan na innym rekwizycie” (odstęp < 0,9 m od drzewa, stojaka, automatu, słupa), baza 8 → 0
 
 ### G-074 Ślepe końce pasów po poszerzeniu Krakowskiego (Peowiaków, Kapucyńska, Dolna Panny Marii)
-- Status: zgłoszone (z naprawy G-052)
+- Status: odłożone do osobnego etapu ADR-0055 (decyzja użytkownika 31.10: włączenia z pierwszeństwem w systemie ruchu; ogólna reguła łączenia ślepych pasów psuje limity czekania). G-052 wchodzi z bazą `lane-dead-end` 45
 - Ważność: S3 (proponowana: auta znikają albo stają) · Zasięg: 3 skrzyżowania · Koszt: mały–średni
 - Gdzie: Peowiaków (−91, −167): skrzyżowanie trzech ulic, oba wyjazdy zajęte jazdą prosto, jednokierunkowa Peowiaków nie ma skrętu; Kapucyńska (159, −207) i Dolna Panny Marii (336, −185): skrzyżowania T w połowie pasa (znana klasa)
 - Dowód: skan `lane-dead-end` na gałęzi G-052: 44 → 45 (dwa stare końce znikają, trzy nowe)
@@ -208,7 +208,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: `lane-dead-end` na gałęzi G-052 nie wyższy niż 44
 
 ### G-075 Kolizje aut na przecięciu pasów 3 Maja przy Zesłańców Sybiru
-- Status: zgłoszone (z naprawy G-052; błąd istnieje już na main: 1 kolizja przy ziarnie 7)
+- Status: w naprawie (gałąź `g075` od main, poprawka `crowded`/`onItsWay` w traffic-system; z naprawy G-052, błąd jest też na main)
 - Ważność: S3 (proponowana) · Zasięg: jedno skrzyżowanie · Koszt: mały–średni
 - Gdzie: (−110, 56), przecięcie pasów 3 Maja#31:0 i #31:1
 - Dowód: `traffic-junction-drive` na gałęzi G-052: Peowiaków ziarna 3 i 7 po 2 kolizje (próg 0), 3 Maja ziarno 7: 3 (próg 2)
@@ -216,7 +216,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: `traffic-junction-drive` w progach na gałęzi G-052 i na main
 
 ### G-076 Przejazdy bramne z `tunnel=yes` zamknięte bryłą (Gruella pod Trynitarską, Królewska, Sąd Okręgowy, Rynek 5)
-- Status: w weryfikacji (commit e2cb18b, gałąź worktree-agent-aed36d40caedfccfe; z audytu bram i przejazdów, 31.10)
+- Status: w PR #80 (przyjęte przez weryfikatora, przegląd kuratora w toku)
 - Ważność: S2 (proponowana) · Zasięg: 9 miejsc, w tym zabytek · Koszt: mały
 - Gdzie: Gruella w298307007 (587.6, −147); Sąd Okręgowy w343899807 (1.4, −96.1); Peowiaków 13 w343899804 (−48.5, −167.8); Królewska, 5 bram kamienic (x 387..489); Rynek 5 w1222303436 (562, −29.1); T-036…T-039
 - Dowód: zalewanie siatki 0,25 m: ciało 0,38 m nie przechodzi; tagi OSM `tunnel=yes`
@@ -225,7 +225,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `passage-blocked` (definicja kuratora w `scratchpad/topo-bramy-raport.md`), baza 9 → 0
 
 ### G-077 Budynek podziemny zbudowany na powierzchni ul. Zamkowej
-- Status: w weryfikacji (commit 69fd08f, gałąź worktree-agent-aed36d40caedfccfe; z audytu bram i przejazdów)
+- Status: w PR #80 (przyjęte przez weryfikatora, przegląd kuratora w toku)
 - Ważność: S2 (proponowana: zasłania 11,5 m osi drogi na dojściu do Zamku) · Koszt: mały
 - Gdzie: w980143457 (771.1, 190.5), `location=underground`, `layer=-1`, bryła 6,9 m na osi w154962966; T-041
 - Pakiet właściciela: tools/osm-import (`buildingAreas`)
