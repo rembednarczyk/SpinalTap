@@ -32,7 +32,7 @@ export const buildJournal = (domain: DomainState, locale: Locale): JournalVm => 
   if (active) {
     quests.push({
       id: contractEntryId(active),
-      title: contractTitle(active),
+      title: contractTitle(active, locale),
       kind: "contract",
       status: "active",
       steps: [

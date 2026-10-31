@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { DialoguePanel } from "./dialogue/dialogue-panel";
 import { Hud } from "./hud/hud";
+import { useT } from "./i18n/use-t";
 import { CharacterScreen } from "./menus/character-screen";
 import { ShopPanel } from "./shop/shop-panel";
 import { LootPanel } from "./loot/loot-panel";
@@ -43,10 +44,11 @@ const Screens = ({ touch }: { touch: TouchPadSink | undefined }) => {
   const modal = useUi((s) => s.dialogue !== null || s.shopOpen || s.loot !== null || s.phoneOpen || s.breach !== null || s.metroMap !== null || s.metroRide !== null);
   // The character screen covers the whole game; the HUD under it would only show through.
   const menu = useUi((s) => s.characterTab !== null) && screen === "playing";
+  const t = useT();
   return (
     <>
       {touch && screen === "playing" && !modal && !menu && <TouchControls pad={touch} />}
-      {touch && <div className="rotate-hint">Obróć telefon poziomo</div>}
+      {touch && <div className="rotate-hint">{t("touch.rotate")}</div>}
       {screen !== "title" && !menu && <Hud touch={touch} />}
       {screen === "playing" && <DialoguePanel />}
       {screen === "playing" && <ShopPanel />}

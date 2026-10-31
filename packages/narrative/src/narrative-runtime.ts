@@ -26,56 +26,8 @@ import {
 } from "@seki/core";
 import { describeVariation, variationOf } from "./contract-variation";
 import { type DialogueLine, type DialogueView, toneOf } from "./dialogue-view";
+import { type NarrativeText, YOU, keyText, speakerName } from "./narrative-text";
 
-const SPEAKERS: Readonly<Record<string, string>> = {
-  KAITO: "Kaito",
-  UME: "Babcia Ume",
-  MORI: "Doktor Mori",
-  REN: "Ren",
-  TECH: "Technik Kagami",
-  KUROSAWA: "Kurosawa",
-  HANA: "Hana",
-  OYAJI: "Oyaji",
-  GENZO: "Genzō",
-  // Stare Miasto (ex Ulica Kanałowa) and the market stalls on Podzamcze (ADR-0026, ADR-0042).
-  HIDEO: "Hideo",
-  TETSU: "Tetsu",
-  MEI: "Mei",
-  SACHIKO: "Sachiko",
-  GORO: "Goro",
-  KENTA: "Kenta",
-  FUMIKO: "Fumiko",
-  // Neon Koi (ADR-0038).
-  BARMAN: "Barman",
-  BYWALEC: "Bywalec",
-  // Street encounters (ADR-0032).
-  NOBU: "Nobu",
-  SARARIMAN: "Sarariman",
-  HINA: "Hina",
-  SHIRO: "Shiro",
-  TAKUMI: "Takumi",
-  SABU: "Dziadek Sabu",
-  AUTOMAT: "Automat",
-  KOJI: "Koji",
-  KIKU: "Wróżka Kiku",
-  DAIGO: "Daigo",
-  POBORCA: "Poborca Hebi",
-  AKANE: "Akane",
-  RIKO: "Riko",
-  TOMO: "Tomo",
-  STRAZNIK: "Strażnik Tessen",
-  GLOS: "Głos z kontenera",
-  // Observation hooks, the metro car and the radio (ADR-0032).
-  HEBI: "Hebi",
-  GLOSNIK: "Głośnik",
-  PASAZER: "Pasażer",
-  PASAZERKA: "Pasażerka",
-  DZIECKO: "Dziecko",
-  REKLAMA: "Reklama",
-  KASS: "DJ Kass",
-  YUKI: "Mama Yuki",
-  LEKTORKA: "Tessen Info",
-};
 const SPEAKER_RE = /^([A-Z]+):\s*(.*)$/;
 
 export class InkCompileError extends Error {}
@@ -119,6 +71,8 @@ export class NarrativeRuntime {
   constructor(
     source: string,
     private readonly sink: (command: GameCommand) => void,
+    /** Writes the narrative's own keys (speakers' roles, the variation lines) in the player's language. */
+    private readonly text: NarrativeText = keyText,
   ) {
     this.story = compileInk(source);
     this.bindExternals();
@@ -153,7 +107,7 @@ export class NarrativeRuntime {
     this.story.variablesState.$("contract_reward", contract?.reward ?? 0);
     const left = contract && clock ? contractSecondsLeft(contract, clock.tick, clock.ticksPerSecond) : null;
     this.story.variablesState.$("contract_time_left", left ?? 0);
-    this.story.variablesState.$("contract_variation", contract ? describeVariation(variation ?? variationOf(contract)) : "");
+    this.story.variablesState.$("contract_variation", contract ? describeVariation(variation ?? variationOf(contract), this.text) : "");
     for (const f of FACTION_IDS) this.story.variablesState.$(`${f}_stance`, stanceOf(domain.reputation[f]));
     // The domain owns the main-thread choices; ink sees them as plain string variables.
     for (const choice of Object.keys(STORY_CHOICES) as StoryChoiceId[]) {
@@ -226,7 +180,7 @@ export class NarrativeRuntime {
     const m = SPEAKER_RE.exec(text);
     if (!m) return { speaker: null, text };
     const [, code = "", body = ""] = m;
-    const speaker = code === "SEKI" ? (this.domain?.character.alias ?? "Ty") : (SPEAKERS[code] ?? code);
+    const speaker = code === "SEKI" ? (this.domain?.character.alias ?? this.text(YOU)) : speakerName(code, this.text);
     return { speaker, text: body };
   }
 

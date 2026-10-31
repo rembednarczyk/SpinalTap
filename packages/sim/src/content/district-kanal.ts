@@ -114,7 +114,7 @@ export const KANAL_ACTORS: readonly ActorDef[] = [
     preset: "civilian",
     faction: "civilians",
     bystander: true,
-    interactable: { kind: "dialogue", dialogueId: "hideo", prompt: "Rozmawiaj z Hideo", radius: 2.4 },
+    interactable: { kind: "dialogue", dialogueId: "hideo", prompt: "prompt.talk.hideo", radius: 2.4 },
   },
   {
     kind: "npc",
@@ -122,7 +122,7 @@ export const KANAL_ACTORS: readonly ActorDef[] = [
     preset: "civilian",
     faction: "civilians",
     bystander: true,
-    interactable: { kind: "dialogue", dialogueId: "tetsu", prompt: "Rozmawiaj z Tetsu (DENKI)", radius: 2.4 },
+    interactable: { kind: "dialogue", dialogueId: "tetsu", prompt: "prompt.talk.tetsu", radius: 2.4 },
   },
   {
     kind: "npc",
@@ -130,7 +130,7 @@ export const KANAL_ACTORS: readonly ActorDef[] = [
     preset: "civilian",
     faction: "civilians",
     bystander: true,
-    interactable: { kind: "dialogue", dialogueId: "mei", prompt: "Rozmawiaj z Mei", radius: 2.4 },
+    interactable: { kind: "dialogue", dialogueId: "mei", prompt: "prompt.talk.mei", radius: 2.4 },
   },
   ...KANAL_PATROL_ACTORS,
 ];

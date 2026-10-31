@@ -20,7 +20,7 @@ export const metroPieces = (station: MetroStationDef): ((id: EntityId) => Entity
       view: kioskView,
       solid: aabbFromCenter(centre, KIOSK_SIZE),
       // Centred at chest height: the interaction's height check keeps it to the ground level.
-      interactable: { kind: "metro", station: station.id, dialogueId: `metro_${station.id}`, prompt: "Bilet", radius: 1.8 },
+      interactable: { kind: "metro", station: station.id, dialogueId: `metro_${station.id}`, prompt: "prompt.metro", radius: 1.8 },
     };
   },
 ];

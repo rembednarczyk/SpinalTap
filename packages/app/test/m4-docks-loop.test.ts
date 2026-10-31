@@ -118,7 +118,7 @@ describe("M4 acceptance: the docks", () => {
     close(session);
     const hack = session.sim.domain.contracts.active!;
     expect(hack.kind).toBe("hack");
-    expect(ui.getState().questTitle).toBe("Kontrakt 2 · Genzō");
+    expect(ui.getState().questTitle).toBe("Contract 2 · Genzō");
     expect(ui.getState().objective).toContain("Włam się do terminala");
     expect(toasts(ui).some((t) => t.startsWith("New contract: Włamanie do terminala"))).toBe(true);
     // The terminal is on the minimap.
@@ -162,7 +162,7 @@ describe("M4 acceptance: the docks", () => {
     expect(text(ui)).toContain("Czyste dane");
     close(session);
     expect(session.sim.domain.contracts.completed).toBe(3);
-    expect(ui.getState().objective).toBe("Kaito ma kolejne kontrakty, Genzō na Nabrzeżu też. Mori sprzedaje cyberware.");
+    expect(ui.getState().objective).toBe("More contracts from Kaito, and from Genzō on Nabrzeże too. Mori sells cyberware.");
   });
 
   it("the sniper's laser reaches the renderer as an effect", async () => {

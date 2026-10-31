@@ -61,5 +61,5 @@ test("phone in portrait asks to rotate", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/?seed=7&models=off");
   await waitForGame(page);
-  await expect(page.getByText("Obróć telefon poziomo")).toBeVisible();
+  await expect(page.getByText("Turn your phone sideways")).toBeVisible();
 });

@@ -10,11 +10,12 @@ import {
 } from "@seki/core";
 import { NarrativeRuntime } from "@seki/narrative";
 import { RenderSync, SIM_HZ, Simulation, WORLD_SCENERY } from "@seki/sim";
-import { type Screen, type SessionIntents, type UiIntents, patchUi } from "@seki/ui";
+import { type Screen, type SessionIntents, type UiIntents, patchUi, translate } from "@seki/ui";
 import { type Controllers, createControllers } from "./controllers/compose";
 import { isCalm } from "./controllers/hud-sync";
 import { pushToastTimed } from "./controllers/shared";
 import { buildCityMap } from "./city-map";
+import { narrativeText } from "./content-text";
 import { composeIntents, controllerIntents } from "./intents";
 import type { GameSessionDeps } from "./session-deps";
 
@@ -37,7 +38,12 @@ export class GameSession implements SessionIntents {
   private readonly c: Controllers;
 
   constructor(private readonly deps: GameSessionDeps) {
-    this.narrative = new NarrativeRuntime(deps.story, (cmd) => this.simulation.enqueue(cmd));
+    // The narrative's own words (speakers' roles, a contract's variation) in the player's language (ADR-0056).
+    this.narrative = new NarrativeRuntime(
+      deps.story,
+      (cmd) => this.simulation.enqueue(cmd),
+      narrativeText(() => deps.ui.getState().settings.locale),
+    );
     // Lublin's terrain, surfaces and buildings are drawn for good, streamed in or not (ADR-0045).
     this.renderSync = new RenderSync(deps.render, deps.scenery === false ? [] : WORLD_SCENERY);
     this.simulation = Simulation.create({ seed: deps.seed(), bus: this.bus, crowd: deps.crowd ?? "off", traffic: deps.traffic ?? deps.crowd ?? "off" });
@@ -94,6 +100,7 @@ export class GameSession implements SessionIntents {
     patchUi(this.deps.ui, { scanning: this.inControl && this.c.hack.scanning(input) });
     this.playPendingRecall();
     this.c.hints.step(this.inControl, this.c.character.isOpen);
+    this.c.autosave.step();
   }
 
   /**
@@ -126,7 +133,8 @@ export class GameSession implements SessionIntents {
     this.narrative.resetState();
     this.c.hints.start();
     this.setScreen("playing");
-    pushToastTimed(this.deps.ui, "system", "Krakowskie Przedmieście", "Budzisz się na fotelu w klinice doktora Mori, przy deptaku. Nie pamiętasz swojego imienia. Kaito czeka w Neon Koi, po drugiej stronie deptaka.");
+    const locale = this.deps.ui.getState().settings.locale;
+    pushToastTimed(this.deps.ui, "system", translate(locale, "newGame.place"), translate(locale, "newGame.intro"));
   }
 
   resume(): void {
@@ -149,6 +157,8 @@ export class GameSession implements SessionIntents {
   saveAsync(slot: string): Promise<boolean> { return this.c.saves.saveAsync(slot); }
   loadAsync(slot: string): Promise<boolean> { return this.c.saves.loadAsync(slot); }
   refreshSlots(): Promise<void> { return this.c.saves.refreshSlots(); }
+  /** The browser hid the page or is leaving it (main.tsx, `page-lifecycle.ts`): autosave now if it is safe. */
+  pageHidden(): void { this.c.autosave.hidden(); }
 
   /** Replaces the running game with `snapshot`, ink state included: a load without the slot. */
   restore(snapshot: SaveSnapshot): void {
@@ -199,6 +209,7 @@ export class GameSession implements SessionIntents {
     this.c.hud.reset(next);
     this.c.hack.reset();
     this.c.metro.reset();
+    this.c.autosave.reset();
     this.deps.render.setCameraMode(next.domain.preferences.cameraMode);
     patchUi(this.deps.ui, { prompt: null, toasts: [] });
     this.render(0);

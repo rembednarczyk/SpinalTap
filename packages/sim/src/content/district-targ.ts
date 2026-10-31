@@ -394,7 +394,7 @@ const REN: ActorDef = {
   preset: "civilian",
   faction: "hebi",
   when: { all: [REN_TRAIL_FLAG], none: [endingFlag("kagami")] },
-  interactable: { kind: "dialogue", dialogueId: "ren_odagiri", prompt: "Rozmawiaj z Renem", radius: 2.4 },
+  interactable: { kind: "dialogue", dialogueId: "ren_odagiri", prompt: "prompt.talk.ren", radius: 2.4 },
 };
 
 const KUROSAWA: ActorDef = {
@@ -403,7 +403,7 @@ const KUROSAWA: ActorDef = {
   preset: "fixer",
   faction: "kagami",
   when: { all: [KAGAMI_JOB_FLAG], none: [KAGAMI_AMBUSH_FLAG, ACT_TWO_ENDING_FLAG] },
-  interactable: { kind: "dialogue", dialogueId: "kurosawa", prompt: "Rozmawiaj z Kurosawą", radius: 2.4 },
+  interactable: { kind: "dialogue", dialogueId: "kurosawa", prompt: "prompt.talk.kurosawa", radius: 2.4 },
 };
 
 const CLEANERS: readonly ActorDef[] = KAGAMI_CLEANER_KEYS.map(
@@ -424,14 +424,14 @@ export const TARG_SOUTH_ACTORS: readonly ActorDef[] = [
     bystander: true,
     maxHp: OYAJI_MAX_HP,
     // By day the stall (plan §6); from 22:00 the schedule swaps in `oyaji_closed`.
-    interactable: { kind: "shop", shopId: "oyaji", dialogueId: "oyaji", prompt: "Stragan Oyajiego", radius: 3 },
+    interactable: { kind: "shop", shopId: "oyaji", dialogueId: "oyaji", prompt: "prompt.shop.oyaji", radius: 3 },
   },
   {
     kind: "npc",
     spawn: { key: "hana", position: market(HANA_SPOT.x, 0, HANA_SPOT.z), yaw: -Math.PI / 2 },
     preset: "civilian",
     faction: "civilians",
-    interactable: { kind: "dialogue", dialogueId: "hana", prompt: "Rozmawiaj z Haną", radius: 2.4 },
+    interactable: { kind: "dialogue", dialogueId: "hana", prompt: "prompt.talk.hana", radius: 2.4 },
   },
   REN,
   {
@@ -440,7 +440,7 @@ export const TARG_SOUTH_ACTORS: readonly ActorDef[] = [
     preset: "civilian",
     faction: "civilians",
     bystander: true,
-    interactable: { kind: "dialogue", dialogueId: "sachiko", prompt: "Kiosk Sachiko", radius: 2.4 },
+    interactable: { kind: "dialogue", dialogueId: "sachiko", prompt: "prompt.shop.sachiko", radius: 2.4 },
   },
 ];
 
@@ -454,7 +454,7 @@ export const TARG_NORTH_ACTORS: readonly ActorDef[] = [
     preset: "civilian",
     faction: "civilians",
     bystander: true,
-    interactable: { kind: "dialogue", dialogueId: "kenta", prompt: "Okonomiyaki u Kenty", radius: 3 },
+    interactable: { kind: "dialogue", dialogueId: "kenta", prompt: "prompt.shop.kenta", radius: 3 },
   },
   {
     kind: "npc",
@@ -463,7 +463,7 @@ export const TARG_NORTH_ACTORS: readonly ActorDef[] = [
     faction: "civilians",
     bystander: true,
     // From 16:00 to 4:00 the stall (ADR-0026); the rest of the day the schedule swaps in `fumiko_closed`.
-    interactable: { kind: "shop", shopId: "yatai", dialogueId: "fumiko", prompt: "Ramen u Fumiko", radius: 3 },
+    interactable: { kind: "shop", shopId: "yatai", dialogueId: "fumiko", prompt: "prompt.shop.fumiko", radius: 3 },
   },
   {
     kind: "npc",
@@ -471,7 +471,7 @@ export const TARG_NORTH_ACTORS: readonly ActorDef[] = [
     preset: "civilian",
     faction: "civilians",
     bystander: true,
-    interactable: { kind: "dialogue", dialogueId: "goro", prompt: "Parasole u Goro", radius: 3 },
+    interactable: { kind: "dialogue", dialogueId: "goro", prompt: "prompt.shop.goro", radius: 3 },
   },
 ];
 

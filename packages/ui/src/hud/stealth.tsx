@@ -1,8 +1,8 @@
 import { MAX_HEAT } from "@seki/core";
 import type { DetectionVm } from "../store/hud-vm";
+import { useT } from "../i18n/use-t";
 import { useUi } from "../use-ui";
 
-const STATE_LABEL: Readonly<Record<DetectionVm["state"], string>> = { suspicious: "Podejrzliwy", searching: "Szuka", alerted: "Alarm" };
 /** A shape per state as well as a colour: ?, … and !. */
 const STATE_GLYPH: Readonly<Record<DetectionVm["state"], string>> = { suspicious: "?", searching: "…", alerted: "!" };
 
@@ -12,9 +12,10 @@ const STATE_GLYPH: Readonly<Record<DetectionVm["state"], string>> = { suspicious
  */
 export const HeatStars = () => {
   const heat = useUi((s) => s.heat);
+  const t = useT();
   if (heat.level === 0) return null;
   const cls = `heat${heat.searching ? " heat--searching" : ""}${heat.ending ? " heat--ending" : ""}`;
-  const label = `Pościg: ${heat.level} z ${MAX_HEAT}${heat.searching ? ", szukają cię" : ""}`;
+  const label = t(heat.searching ? "heat.labelSearching" : "heat.label", { level: heat.level, max: MAX_HEAT });
   return (
     <div className={cls} data-testid="heat" data-level={heat.level} role="status" aria-label={label}>
       {Array.from({ length: MAX_HEAT }, (_, i) => (
@@ -22,7 +23,7 @@ export const HeatStars = () => {
           {i < heat.level ? "★" : "☆"}
         </span>
       ))}
-      {heat.searching && <span className="heat__note">szukają</span>}
+      {heat.searching && <span className="heat__note">{t("heat.searching")}</span>}
     </div>
   );
 };
@@ -44,14 +45,15 @@ const arcPath = (angle: number, span: number): string => {
  */
 export const DetectionRing = () => {
   const detection = useUi((s) => s.detection);
+  const t = useT();
   if (detection.length === 0) return null;
   return (
-    <svg className="detection" viewBox="-60 -60 120 120" data-testid="detection" aria-label="Wykrycie">
+    <svg className="detection" viewBox="-60 -60 120 120" data-testid="detection" aria-label={t("detection.label")}>
       {detection.map((d) => {
         const tip = { x: Math.sin(d.angle) * (RADIUS + 9), y: -Math.cos(d.angle) * (RADIUS + 9) };
         return (
           <g key={d.id} className={`detection__arc detection__arc--${d.state}`} data-testid={`detection-${d.state}`}>
-            <title>{STATE_LABEL[d.state]}</title>
+            <title>{t(`detection.${d.state}`)}</title>
             <path className="detection__track" d={arcPath(d.angle, ARC)} />
             <path className="detection__fill" d={arcPath(d.angle - (ARC * (1 - d.level)) / 2, ARC * Math.max(0.05, d.level))} />
             <text className="detection__glyph" x={tip.x.toFixed(2)} y={tip.y.toFixed(2)}>

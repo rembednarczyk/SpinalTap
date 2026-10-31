@@ -61,5 +61,7 @@
 | [0057](0057-ekran-ladowania.md) | Ekran ładowania z paskiem postępu przy nowej grze i wczytaniu: `RenderPort.prepare` (modele, city kit, chunki startowe, shadery), reszta miasta strumieniowo w tle | Zaakceptowana |
 | [0058](0058-zywe-miasto-assety-cc0.md) | Żywe miasto z paczek CC0: osobny `city-props.glb` z `tools/city_kit.py`, wspólna paleta, rekwizyty pieczone do istniejących siatek (bez nowych wywołań poza dronami), rozstawienie w rendererze, osiem etapów | Zaakceptowana |
 | [0059](0059-rozwoj-postaci-i-skalowanie.md) | Rozwój postaci: poziomy 1–30 z XP, pięć atrybutów (Krzepa, Refleks, Technika, Sieć, Cień) z drzewkami perków; poziom przedmiotu, rzadkości epicka i legendarna z cechami, pasma dzielnic, poziom wrogów i kontraktów, łup dopasowany do stylu z ochroną przed pechem | Zaakceptowana |
+| [0060](0060-glosy-i-dzwiek.md) | Głosy i dźwięk: całość z otwartego TTS (licencja komercyjna sprawdzana per głos), wyzwalacze kwestii: tylko przy interakcji, zaczepki przechodniów i zasłyszane rozmowy NPC zależne od stanu świata, VO po angielsku z napisami en/pl, tagi `#voice` w ink, szyny i suwaki audio, kroki według nawierzchni, otoczenie dzielnic | Zaakceptowana |
+| [0061](0061-wejscie-do-lokalu.md) | Wnętrza jako obszary w treści `sim` (`INTERIORS`) i zdarzenia `InteriorEntered`/`InteriorLeft` z systemu `interior`: autozapis przy wejściu do lokalu, pogłos i otoczenie wnętrz | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.

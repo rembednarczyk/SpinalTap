@@ -38,7 +38,7 @@ describe("loot from enemies (plan E6)", () => {
     expect(container.expiresAtTick).toBe(sim.tick - 1 + LOOT_LIFETIME_SECONDS * SIM_HZ);
     expect(dropped).toEqual([expect.objectContaining({ containerKey: "loot:guard" })]);
     expect(bags(sim)).toHaveLength(1);
-    expect(bags(sim)[0]).toMatchObject({ lootBag: { key: "loot:guard" }, interactable: { kind: "loot", prompt: "Przeszukaj", radius: 1.6 }, view: { kind: "loot", style: "bag" } });
+    expect(bags(sim)[0]).toMatchObject({ lootBag: { key: "loot:guard" }, interactable: { kind: "loot", prompt: "prompt.loot", radius: 1.6 }, view: { kind: "loot", style: "bag" } });
   });
 
   it("the same enemy with the same seed drops the same bag, however many shots came before", () => {

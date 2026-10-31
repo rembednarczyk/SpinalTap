@@ -88,6 +88,15 @@ const streetWalls = (f: FacadeFrame): Wall[] =>
     .slice()
     .sort((a, b) => b.length - a.length);
 
+/**
+ * Height of the shop board `shopSigns` may hang on this wall (its place along the wall is drawn
+ * at random, so the whole wall counts), or null when the wall gets none (ADR-0058: the awnings).
+ */
+export const shopBoardOn = (f: FacadeFrame, w: Wall): number | null => {
+  if (f.b.bracketSigns || f.style.signs <= 0 || !f.style.shopfront || (f.b.doorways?.length ?? 0) > 0) return null;
+  return streetWalls(f).slice(0, f.style.signs).includes(w) ? shopBoardHeight(w) : null;
+};
+
 /** Lit name plaque under the cornice of the longest street wall (landmarks). */
 const namePlaque = (sink: MeshSink, f: FacadeFrame, slot: number): void => {
   const w = streetWalls(f)[0];
@@ -120,14 +129,20 @@ const holos = (sink: MeshSink, f: FacadeFrame, rand: () => number): void => {
   }
 };
 
+/** Width of the shop board on a street wall (it depends on the wall only). */
+export const shopBoardWidth = (w: Wall): number => Math.min(w.length * 0.55, 7);
+
+/** Height of the shop board on a street wall, centred 0.45 m under the ground floor's top. */
+export const shopBoardHeight = (w: Wall): number => Math.min(Math.max(shopBoardWidth(w) / 4, 0.6), 1.3);
+
 /** Shop boards, blades and their reflections on the street walls. */
 const shopSigns = (sink: MeshSink, f: FacadeFrame, rand: () => number, ground: SignGround): void => {
   const walls = streetWalls(f).slice(0, f.style.signs);
   const groundY = f.b.foot + 0.16;
   for (const w of walls) {
     const color = NEON[Math.floor(rand() * NEON.length)] ?? "#ff2e88";
-    const width = Math.min(w.length * 0.55, 7);
-    const h = Math.min(Math.max(width / 4, 0.6), 1.3);
+    const width = shopBoardWidth(w);
+    const h = shopBoardHeight(w);
     const u = width / 2 + 0.5 + rand() * Math.max(w.length - width - 1, 0);
     if (f.style.shopfront) {
       const cell = Math.floor(rand() * MAP_SIGN_BOARDS.length);

@@ -84,7 +84,7 @@ describe("levels (ADR-0020)", () => {
     const sim = at(108, 0.15, 85.7);
     expect(lift(sim).solid.max.y - MARKET_PLACE.y).toBeCloseTo(0.15);
     run(sim, 2);
-    expect(sim.session.focusPrompt).toBe("Winda");
+    expect(sim.session.focusPrompt).toBe("prompt.elevator");
     sim.step(input({ interact: true }));
     // Riders cannot walk off mid-ride.
     run(sim, 60, input({ moveZ: 1 }));

@@ -23,7 +23,7 @@ describe("weapon strip and loot in the game", () => {
     step(80, { fire: true });
     expect(ammo()).not.toContain("12 / 48");
     step(1, { reload: true });
-    expect(ammo()).toContain("przeładowanie");
+    expect(ammo()).toContain("reloading");
     step(90);
     expect(ammo()).toMatch(/12 \/ (4[0-4])/);
   });
@@ -40,7 +40,7 @@ describe("weapon strip and loot in the game", () => {
     const before = seki.state().eddies;
     run(() => seki.teleport(bag!.position.x, bag!.position.z - 1));
     step(1);
-    expect(screen.getByTestId("prompt").textContent).toContain("Przeszukaj");
+    expect(screen.getByTestId("prompt").textContent).toContain("Search");
     step(1, { interact: true });
 
     const panel = screen.getByTestId("loot");
