@@ -57,6 +57,7 @@ export const plWorld = {
   "phone.call": "rozmowa",
   "phone.sms": "SMS",
   "phone.newMessage": "Nowa wiadomość.",
+  "phone.unknown": "Nieznany",
   // Radio in the phone.
   "radio.title": "Radio",
   "radio.station": "Stacja radiowa",

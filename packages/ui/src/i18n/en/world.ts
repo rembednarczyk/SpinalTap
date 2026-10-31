@@ -59,6 +59,7 @@ export const enWorld = {
   "phone.call": "call",
   "phone.sms": "SMS",
   "phone.newMessage": "New message.",
+  "phone.unknown": "Unknown",
   // Radio in the phone.
   "radio.title": "Radio",
   "radio.station": "Radio station",

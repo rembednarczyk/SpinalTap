@@ -93,7 +93,10 @@ describe("phone inbox and knots", () => {
   it("names contacts", () => {
     expect(contactName("genzo")).toBe("Genzō");
     expect(contactName("ume")).toBe("Ume");
-    expect(contactName("")).toBe("Nieznany");
+    expect(contactName("")).toBe("Unknown");
+    expect(contactName("", "pl")).toBe("Nieznany");
+    expect(contactName("mori")).toBe("Doctor Mori");
+    expect(contactName("mori", "pl")).toBe("Doktor Mori");
   });
 
   it("renders an ink knot on its own runtime, with a fallback for a missing one", () => {
