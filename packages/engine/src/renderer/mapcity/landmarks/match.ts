@@ -1,4 +1,5 @@
-import { LUBLIN_CHUNKS, type LublinChunkData } from "@seki/sim/lublin";
+import { LUBLIN_CHUNKS, type LublinBuildingData, type LublinChunkData } from "@seki/sim/lublin";
+import { type P2, centroid, pointInRing } from "../polygon";
 import { type LandmarkPart, RECIPE_BY_OSM } from "./recipes";
 
 /**
@@ -10,14 +11,18 @@ import { type LandmarkPart, RECIPE_BY_OSM } from "./recipes";
 
 const keyOf = (x: number, z: number, corners: number): string => `${Math.round(x * 10)},${Math.round(z * 10)},${corners}`;
 
-/** Recipe parts by position and corner count, from the given map data. */
+/** The world outline of a building of the data. */
+const ringOf = (b: LublinBuildingData): P2[] => Array.from({ length: b.outline.length / 2 }, (_, i) => ({ x: b.x + (b.outline[i * 2] as number), z: b.z + (b.outline[i * 2 + 1] as number) }));
+
+/** Recipe parts by position and corner count, from the given map data, with the parts lifted onto each. */
 export const landmarkIndex = (chunks: readonly LublinChunkData[]): ReadonlyMap<string, LandmarkPart> => {
+  const found = chunks.flatMap((c) => c.buildings.flatMap((b) => (RECIPE_BY_OSM.has(b.id) ? [b] : [])));
   const out = new Map<string, LandmarkPart>();
-  for (const c of chunks) {
-    for (const b of c.buildings) {
-      const part = RECIPE_BY_OSM.get(b.id);
-      if (part) out.set(keyOf(b.x, b.z, b.outline.length / 2), part);
-    }
+  for (const b of found) {
+    const part = RECIPE_BY_OSM.get(b.id) as LandmarkPart;
+    const ring = ringOf(b);
+    const above = found.filter((o) => o !== b && o.soffit !== undefined && RECIPE_BY_OSM.get(o.id)?.recipe === part.recipe && pointInRing(centroid(ringOf(o)), ring)).map(ringOf);
+    out.set(keyOf(b.x, b.z, b.outline.length / 2), above.length > 0 ? { ...part, above } : part);
   }
   return out;
 };

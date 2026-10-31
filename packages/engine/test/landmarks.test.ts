@@ -11,7 +11,7 @@ import { ROOF_STYLE } from "../src/renderer/mapcity/facade-style";
 import { type LandmarkFrame, landmarkAt, planFarLandmark, planLandmarkSigns, planNearLandmark, withLandmark } from "../src/renderer/mapcity/landmarks";
 import { GALLERY } from "../src/renderer/mapcity/landmarks/elevation";
 import { SWATCH, helmBase, helmProfile } from "../src/renderer/mapcity/landmarks/kit";
-import { clockSpot, clockWalls } from "../src/renderer/mapcity/landmarks/landmark-plan";
+import { clockSpot, clockWalls, mouthWall, screenOn } from "../src/renderer/mapcity/landmarks/landmark-plan";
 import { facing } from "../src/renderer/mapcity/landmarks/layer2077";
 import { mapBuilding } from "../src/renderer/mapcity/map-building";
 import { MapCity, type MapView } from "../src/renderer/mapcity/map-city";
@@ -180,14 +180,69 @@ describe("Brama Krakowska from the landmark kit (ADR-0062)", () => {
     const slots: string[] = [];
     const slot = (name: string) => slots.push(name) - 1;
     const signs = new MeshSink();
-    planLandmarkSigns(signs, frameOf("r7224409") as LandmarkFrame, slot);
-    planLandmarkSigns(signs, frameOf("w617878341") as LandmarkFrame, slot);
-    expect(slots).toEqual(["STARE MIASTO 旧市街", "Muzeum Historii Miasta Lublina"]);
+    for (const id of GATE) planLandmarkSigns(signs, frameOf(id) as LandmarkFrame, slot);
+    expect(slots).toEqual(["Muzeum Historii Miasta Lublina", "STARE MIASTO 旧市街"]);
     const kinds = new Set(points(signs).map((p) => Math.round(p.v2)));
     for (const k of [MAP_SIGN_KIND.name, MAP_SIGN_KIND.holo, MAP_SIGN_KIND.beam, MAP_SIGN_KIND.strobe]) expect(kinds.has(k)).toBe(true);
-    // The names hang on the west (Krakowskie Przedmieście) side of the gate.
-    const names = points(signs).filter((p) => Math.round(p.v2) === MAP_SIGN_KIND.name);
-    expect(Math.max(...names.map((p) => p.x))).toBeLessThan(466);
+    // The names hang on the west (Krakowskie Przedmieście) side of the gate, facing it.
+    const west = (frameOf("r7224409") as LandmarkFrame).landmark.recipe.layer.newTown;
+    const names = points(signs).flatMap((p, i) => (Math.round(p.v2) === MAP_SIGN_KIND.name ? [signs.normals[i * 3]! * west.x + signs.normals[i * 3 + 2]! * west.z] : []));
+    expect(names.length).toBe(8);
+    for (const k of names) expect(k).toBeGreaterThan(0.9);
+  });
+
+  it("builds the brick after the photograph: zendrówki, small windows, battlements over white panels, stone buttresses (T-033)", () => {
+    const annex = frameOf("r7224409") as LandmarkFrame;
+    const tower = frameOf("w617597407") as LandmarkFrame;
+    for (const f of [annex, tower]) {
+      const sink = near3(f);
+      // No white blind niches; dark headers in bands both ways on every shown wall.
+      expect(colored(sink, SWATCH.niche).length).toBe(0);
+      expect(colored(sink, SWATCH.header).length).toBeGreaterThan(200);
+    }
+    // Two or three small windows on each of the tower's long walls, none on the annex.
+    const glass = colored(near3(tower), SWATCH.opening).filter((p) => p.y < tower.top - 0.6);
+    for (const w of tower.walls.filter((x) => x.length > 6)) {
+      const on = glass.filter((p) => Math.abs((p.x - w.a.x) * w.nx + (p.z - w.a.z) * w.nz - 0.035) < 1e-3);
+      expect(on.length / 4).toBeGreaterThanOrEqual(w === screenOn(tower)?.w ? 1 : 2);
+      expect(on.length / 4).toBeLessThanOrEqual(3);
+    }
+    expect(colored(near3(annex), SWATCH.opening).length).toBe(0);
+    // Battlements: merlons up to the data's top over the free walls, with crenels down to a metre under it.
+    const pts = points(near3(annex));
+    const d = data("r7224409");
+    expect(annex.top - d.y).toBeCloseTo(7.1, 6);
+    const front = mouthWall(annex, "new")!.w;
+    const onFront = (y: number) => pts.filter((p) => Math.abs(p.y - y) < 0.05 && Math.abs((p.x - front.a.x) * front.nx + (p.z - front.a.z) * front.nz) < 0.02);
+    expect(onFront(annex.top).length).toBeGreaterThanOrEqual(8);
+    expect(onFront(annex.top - 1).length).toBeGreaterThanOrEqual(8);
+    const white = colored(near3(annex), SWATCH.plasterTrim).filter((p) => p.y > annex.top - 1.8 && p.y < annex.top - 1);
+    expect(white.length / 4).toBeGreaterThanOrEqual(4);
+    // Stone buttresses: battered on the west corner blocks, 4 m tall, within the cornice's depth.
+    const stone = colored(near3(annex), SWATCH.stone).filter((p) => p.y > annex.b.foot + 3.9 && p.y < annex.b.foot + 4.1);
+    expect(stone.length).toBeGreaterThanOrEqual(4);
+    for (const p of colored(near3(annex), SWATCH.stone).filter((q) => q.y < annex.top - 1.1)) expect(outside(annex.b.ring, p)).toBeLessThan(0.46);
+  });
+
+  it("hangs the screen on the tower over the battlements, clear of the painting's niche over the arch (T-033, T-034)", () => {
+    const annex = frameOf("r7224409") as LandmarkFrame;
+    const mouth = mouthWall(annex, "new")!;
+    const picture = colored(near3(annex), SWATCH.picture);
+    expect(picture.length).toBeGreaterThan(0);
+    const along = (p: P2) => ((p.x - mouth.w.a.x) * (mouth.w.b.x - mouth.w.a.x) + (p.z - mouth.w.a.z) * (mouth.w.b.z - mouth.w.a.z)) / mouth.w.length;
+    // Centred over the arch, between its crown and the battlements.
+    for (const p of picture) {
+      expect(along(p)).toBeGreaterThan(mouth.u0);
+      expect(along(p)).toBeLessThan(mouth.u1);
+      expect(p.y).toBeGreaterThan(mouth.top);
+      expect(p.y).toBeLessThan(annex.top - 1);
+    }
+    const tower = frameOf("w617597407") as LandmarkFrame;
+    expect(screenOn(annex)).toBeNull();
+    const s = screenOn(tower)!;
+    expect(s.y0).toBeGreaterThan(annex.top);
+    expect(s.y0).toBeGreaterThan(Math.max(...picture.map((p) => p.y)) + 1);
+    expect(facing(s.w, annex.landmark.recipe.layer.newTown)).toBeGreaterThan(0.9);
   });
 
   it("gives the octagon walls to 22.5 m in two zones under a 7 m helmet, the peak the data's (T-032)", () => {

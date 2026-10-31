@@ -18,11 +18,16 @@ import type { BlindRow, HelmProfile } from "./recipes";
 export const SWATCH = {
   brick: "#8b4632",
   brickDark: "#6a3323",
+  // The dark glazed headers (zendrówki) of the diagonal bands (T-033).
+  header: "#4f241a",
   stone: "#a09a8c",
   plaster: "#ebe5d6",
   plasterTrim: "#f7f3ea",
   niche: "#ddd3bd",
   opening: "#151a22",
+  // The painting in the niche over the gate's arch: blue ground, a light figure.
+  picture: "#2f5c8f",
+  figure: "#e6dcc4",
   // The helmet's copper under its green patina (T-032).
   patina: "#5a9a80",
   tile: "#7a3b2e",

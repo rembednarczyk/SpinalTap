@@ -20,11 +20,15 @@ export interface BlindRow {
 }
 
 /**
- * The top of a part: flat (a slab with a coping), a low skirt roof from the eaves up to the part
+ * The top of a part: flat (a slab with a coping), battlements (merlons `merlon` metres tall every
+ * `pitch` metres, within the data's height), a low skirt roof from the eaves up to the part
  * standing on it (`rise` metres, never more than the data's roof), or a helmet of revolution
  * `height` metres tall up to the data's peak: the rest of the data's roof under it is wall.
  */
-export type Crown = { readonly kind: "flat" } | { readonly kind: "skirt"; readonly rise: number; readonly inset: number } | { readonly kind: "helm"; readonly height: number; readonly profile: HelmProfile };
+export type Crown =
+  | { readonly kind: "flat" }
+  | { readonly kind: "crenel"; readonly merlon: number; readonly pitch: number }
+  | { readonly kind: "skirt"; readonly rise: number; readonly inset: number } | { readonly kind: "helm"; readonly height: number; readonly profile: HelmProfile };
 
 /**
  * A helmet as a profile of revolution: [radius, height] from the eaves up, the radius a fraction
@@ -63,6 +67,18 @@ export interface Tier {
   readonly split?: number;
   /** A gallery with a balustrade at the foot of the wall facing the new town, a door behind it. */
   readonly gallery?: boolean;
+  /** Dark glazed headers (zendrówki) in diagonal bands across the brick. */
+  readonly diaper?: boolean;
+  /** Small windows per wall, at most (fewer on a short wall). */
+  readonly windows?: number;
+  /** A row of small white panels under the battlements. */
+  readonly plaques?: boolean;
+  /** Battered stone buttresses this high (metres over the foot) on the corner blocks of the new town's side. */
+  readonly buttress?: number;
+  /** A niche with a painting over the passage's mouth on the new town's side. */
+  readonly niche?: boolean;
+  /** Lublin 2077's screen hangs on this tier's wall facing the new town (off the niche, T-034). */
+  readonly screen?: boolean;
 }
 
 /** One OSM building or `building:part` of a landmark with its tier and crown. */
@@ -83,7 +99,7 @@ export interface Layer2077 {
   /** Neon of the new town's side and the thin warm lines of the Old Town's side. */
   readonly neon: string;
   readonly warm: string;
-  /** A screen over the passage's mouth on the new town's side, with its text (an in-world sign, ADR-0056). */
+  /** A screen with its text (an in-world sign, ADR-0056) on the tier marked for it, off the niche over the arch. */
   readonly screen?: string;
   /** A checkpoint in the passage (ADR-0048, `hebi-bramowa`): a scanner in the vault, strips on the jambs. */
   readonly checkpoint: boolean;
@@ -113,24 +129,15 @@ const BRAMA_KRAKOWSKA: LandmarkRecipe = {
   parts: [
     {
       osm: "r7224409",
-      tier: { material: "brick", plinth: 1.1, blinds: [{ pitch: 2.6, from: 0.38, to: 0.86 }], pilasters: false, cornice: true, base: false, openings: false, clock: false },
-      crown: { kind: "flat" },
+      // The annex (T-033): brick with zendrówki, battlements over a row of white panels, the
+      // stone buttresses on its west corner blocks and the painting's niche over the arch.
+      tier: { material: "brick", plinth: 0, blinds: NO_BLINDS, pilasters: false, cornice: false, base: false, openings: false, clock: false, diaper: true, plaques: true, buttress: 4, niche: true },
+      crown: { kind: "crenel", merlon: 1, pitch: 1.6 },
     },
     {
       osm: "w617597407",
-      tier: {
-        material: "brick",
-        plinth: 0,
-        blinds: [
-          { pitch: 2.2, from: 0.08, to: 0.46 },
-          { pitch: 2.2, from: 0.54, to: 0.9 },
-        ],
-        pilasters: false,
-        cornice: true,
-        base: false,
-        openings: false,
-        clock: false,
-      },
+      // No white blind niches (T-033): zendrówki, a few small windows and the screen over the battlements.
+      tier: { material: "brick", plinth: 0, blinds: NO_BLINDS, pilasters: false, cornice: true, base: false, openings: false, clock: false, diaper: true, windows: 3, screen: true },
       // The OSM roof (a 4.2 m dome) would bury the octagon (T-017): a low skirt round its foot instead.
       crown: { kind: "skirt", rise: 0.9, inset: 1.2 },
     },
@@ -169,6 +176,8 @@ export const LANDMARK_RECIPES: readonly LandmarkRecipe[] = [BRAMA_KRAKOWSKA];
 export interface LandmarkPart {
   readonly recipe: LandmarkRecipe;
   readonly part: PartRecipe;
+  /** World outlines of the recipe's parts lifted onto this one (from the map data): its walls go on up under them. */
+  readonly above?: readonly (readonly { readonly x: number; readonly z: number }[])[];
 }
 
 /** Recipes by the OSM id of each of their buildings and parts. */

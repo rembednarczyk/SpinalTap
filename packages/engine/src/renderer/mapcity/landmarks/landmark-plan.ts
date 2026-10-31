@@ -5,9 +5,9 @@ import { doorwaysOn, walls } from "../facade-plan";
 import { WINDOW_STYLE } from "../facade-style";
 import { planPassages } from "../passage-plan";
 import { SWATCH, archPanel, blindNiches, clockFace, cornice, helmet, lit, pilasters, shownWalls, skirtRoof, slabRing, solid, stonePlinth } from "./kit";
-import { GALLERY, gallery } from "./elevation";
+import { GALLERY, type WallRect, battlements, buttress, clearOfPassages, diaper, gallery, paintingNiche, plaqueRow, smallWindows } from "./elevation";
 import { camera, corniceLights, facing, helmLeds, mast, scanner, screenFrame, sideOf, uplightFittings } from "./layer2077";
-import type { LandmarkPart, Material, PartRecipe } from "./recipes";
+import type { LandmarkPart, Material, PartRecipe, Tier } from "./recipes";
 
 /**
  * A landmark's building or part from its recipe (ADR-0062), in place of the facade plan: the
@@ -114,8 +114,12 @@ const crown = (sink: MeshSink, f: LandmarkFrame, part: PartRecipe, near: boolean
   const c = part.crown;
   const roof = f.b.roof ?? 0;
   const meta = trimMeta(f.style.seed);
-  if (c.kind === "flat") {
-    slabRing(sink, f.b.ring, f.top, solid(SWATCH.tile), meta);
+  if (c.kind === "crenel" && near) {
+    battlements(sink, f, c.merlon, c.pitch, solid(WALL[part.tier.material]), solid(SWATCH.stone));
+    return;
+  }
+  if (c.kind === "flat" || c.kind === "crenel") {
+    slabRing(sink, f.b.ring, f.top, solid(c.kind === "flat" ? SWATCH.tile : SWATCH.stone), meta);
     if (near) band(sink, f.b.ring, 0.1, f.top - 0.22, f.top + 0.05, solid(TRIM[part.tier.material]), meta, f.b.base);
     return;
   }
@@ -134,20 +138,21 @@ const crown = (sink: MeshSink, f: LandmarkFrame, part: PartRecipe, near: boolean
   else sink.box({ x: base.c.x, y: f.top + roof - 0.15, z: base.c.z }, 0.3, 0.3, 0.3, lit("#ff2a2a"));
 };
 
+/** Top of a part's walls: under the merlons of battlements, else the top. */
+const wallTop = (f: LandmarkFrame): number => (f.landmark.part.crown.kind === "crenel" ? f.top - f.landmark.part.crown.merlon : f.top);
+
 /** Lublin 2077's lit geometry on the walls: cornice lines, the screen's frame, the camera, uplights, the scanner. */
 const layerOn = (sink: MeshSink, f: LandmarkFrame, part: PartRecipe): void => {
   const layer = f.landmark.recipe.layer;
   const meta = trimMeta(f.style.seed);
-  if (part.tier.cornice) corniceLights(sink, f, f.top - 0.44, 0.33, layer);
   const t = part.tier;
+  if (t.cornice) corniceLights(sink, f, f.top - 0.44, 0.33, layer);
+  else if (part.crown.kind === "crenel") corniceLights(sink, f, wallTop(f) - 0.12, 0.03, layer);
   // On the string course between two zones, else on the base moulding.
   if (t.split) corniceLights(sink, f, f.b.foot + t.split - 0.01, 0.13, layer);
   else if (t.base) corniceLights(sink, f, f.b.foot + 0.42, 0.2, layer);
-  const fresh = mouthWall(f, "new");
-  if (fresh && layer.screen) {
-    const s = screenSpot(f, fresh);
-    if (s) screenFrame(sink, fresh.w, s.u, s.y, s.width, s.height, meta);
-  }
+  const s = screenOn(f);
+  if (s) screenFrame(sink, s.w, s.u, s.y, s.width, s.height, meta);
   const old = mouthWall(f, "old");
   if (old) {
     camera(sink, old.w, Math.min(old.u1 + 0.9, old.w.length - 0.4), old.top + 1.1);
@@ -156,17 +161,48 @@ const layerOn = (sink: MeshSink, f: LandmarkFrame, part: PartRecipe): void => {
   if (layer.checkpoint) for (const p of f.b.passages ?? []) scanner(sink, f, p, "#5ce1ff");
 };
 
-/** The screen over a mouth: centred over it, between the arch's crown and the cornice. */
-export const screenSpot = (f: FacadeFrame, m: { w: Wall; u0: number; u1: number; top: number }): { u: number; y: number; width: number; height: number } | null => {
-  const y0 = m.top + 0.45;
-  const y1 = f.top - 0.85;
-  if (y1 - y0 < 0.6) return null;
-  const height = Math.min(y1 - y0, 1.7);
-  return { u: (m.u0 + m.u1) / 2, y: (y0 + y1) / 2, width: Math.min(m.u1 - m.u0 + 1.4, height * 3, m.w.length - 0.4), height };
+/** The screen's place and size: on the wall of a `screen` tier facing the new town, centred, over the battlements in front of it (T-034). */
+export const screenOn = (f: LandmarkFrame): (WallRect & { u: number; y: number; width: number; height: number }) | null => {
+  const layer = f.landmark.recipe.layer;
+  const w = f.landmark.part.tier.screen && layer.screen ? mostFacing(f, layer.newTown) : null;
+  if (!w) return null;
+  const height = Math.min(1.4, f.top - f.b.foot - 2.4);
+  const width = Math.min(height * 2.6, w.length - 0.8);
+  if (height < 0.6 || width < 1.2) return null;
+  const y = f.b.foot + 1 + height / 2;
+  const u = w.length / 2;
+  return { w, u, y, width, height, u0: u - width / 2 - 0.12, u1: u + width / 2 + 0.12, y0: y - height / 2 - 0.12, y1: y + height / 2 + 0.12 };
 };
 
 /** Where the uplights stand along the Old Town's mouth wall: either side of the mouth. */
 export const uplightsOn = (m: { w: Wall; u0: number; u1: number }): number[] => [m.u0 - 1.1, m.u1 + 1.1].filter((u) => u > 0.4 && u < m.w.length - 0.4);
+
+/** The battered buttresses' walls: the new town's side walls with no mouth (the corner blocks) and the short walls by them. */
+export const buttressWalls = (f: LandmarkFrame): Wall[] => {
+  const layer = f.landmark.recipe.layer;
+  const ws = f.walls;
+  const open = (w: Wall) => (f.b.doorways?.length ? doorwaysOn(w, f.b.doorways).length > 0 : false);
+  const out = new Set<Wall>();
+  ws.forEach((w, i) => {
+    if (sideOf(w, layer) !== "new" || open(w) || w.blind) return;
+    out.add(w);
+    for (const n of [ws[(i + ws.length - 1) % ws.length], ws[(i + 1) % ws.length]]) if (n && n.length < 3 && !open(n) && !n.blind) out.add(n);
+  });
+  return [...out];
+};
+
+/** The brick elevation of a tier: zendrówki, small windows, the panels under the battlements, buttresses and the painting's niche (T-033). */
+const brickwork = (sink: MeshSink, f: LandmarkFrame, t: Tier): void => {
+  const top = wallTop(f) - (t.cornice ? 0.6 : 0.05);
+  const from = f.b.lifted ? f.b.foot : f.b.foot - 0.2;
+  if (t.diaper) for (const w of shownWalls(f)) diaper(sink, f, w, from, top, solid(SWATCH.header));
+  if (t.windows) smallWindows(sink, f, t.windows, f.b.foot + 0.6, top, screenOn(f), solid(SWATCH.stone), solid(SWATCH.opening));
+  const layer = f.landmark.recipe.layer;
+  if (t.plaques) plaqueRow(sink, f, wallTop(f) - 0.5, (w) => sideOf(w, layer) !== "old", solid(SWATCH.plasterTrim));
+  if (t.buttress) for (const w of buttressWalls(f)) for (const [u0, u1] of clearOfPassages(f, w, 0.45)) buttress(sink, f, w, u0, u1, t.buttress, 0.45, solid(SWATCH.stone));
+  const m = t.niche ? mouthWall(f, "new") : null;
+  if (m && wallTop(f) - 0.3 - m.top > 0.8) paintingNiche(sink, f, m.w, (m.u0 + m.u1) / 2, m.top + 0.2, Math.min(m.top + 1.8, wallTop(f) - 0.2), solid(SWATCH.stone), solid(SWATCH.picture), solid(SWATCH.figure));
+};
 
 /** The detailed landmark part for the near cells. */
 export const planNearLandmark = (sink: MeshSink, f: LandmarkFrame): void => {
@@ -174,7 +210,7 @@ export const planNearLandmark = (sink: MeshSink, f: LandmarkFrame): void => {
   const t = part.tier;
   const wall = solid(WALL[t.material]);
   const trim = solid(TRIM[t.material]);
-  walls(sink, f, f.top, wall);
+  walls(sink, f, wallTop(f), wall);
   const y0 = f.b.lifted ? f.b.foot : f.b.base;
   const y1 = t.cornice ? f.top - 0.6 : f.top;
   if (t.plinth > 0 && !f.b.lifted) stonePlinth(sink, f, f.b.base + t.plinth, solid(SWATCH.stone));
@@ -182,6 +218,7 @@ export const planNearLandmark = (sink: MeshSink, f: LandmarkFrame): void => {
   if (t.pilasters) pilasters(sink, f, f.b.foot + (t.base ? 0.35 : 0), f.top - 0.55, solid(SWATCH.plasterTrim));
   if (t.base) band(sink, f.b.ring, 0.16, f.b.foot - 0.02, f.b.foot + 0.35, trim, trimMeta(f.style.seed), f.b.base);
   if (t.cornice) cornice(sink, f, f.b.ring, f.top, trim);
+  if (t.material === "brick") brickwork(sink, f, t);
   faces(sink, f, part);
   crown(sink, f, part, true);
   layerOn(sink, f, part);

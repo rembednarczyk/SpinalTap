@@ -4,7 +4,7 @@ import { spanAt } from "../passage-plan";
 import { MAP_SIGN_KIND } from "../sign-plan";
 import { type Uv, quadUv } from "../sink-ops";
 import { onWall } from "./kit";
-import { type LandmarkFrame, clockSpot, clockWalls, mouthWall, screenSpot, uplightsOn } from "./landmark-plan";
+import { type LandmarkFrame, clockSpot, clockWalls, mouthWall, screenOn, uplightsOn } from "./landmark-plan";
 import { passageAxis } from "./layer2077";
 
 /**
@@ -65,14 +65,12 @@ const jambStrips = (sink: MeshSink, f: FacadeFrame, color: Rgba): void => {
 /** The landmark's signs; `nameSlot` gives a text's row in the names atlas (null: no room). */
 export const planLandmarkSigns = (sink: MeshSink, f: LandmarkFrame, nameSlot: (name: string) => number | null): void => {
   const layer = f.landmark.recipe.layer;
+  const s = screenOn(f);
+  const slot = s && layer.screen ? nameSlot(layer.screen) : null;
+  if (s && slot !== null) flat(sink, s.w, s.u, s.y, 0.16, s.width, s.height, tint("#5ce1ff", 1), [slot, MAP_SIGN_KIND.name]);
   const fresh = mouthWall(f, "new");
-  if (fresh && layer.screen) {
-    const s = screenSpot(f, fresh);
-    const slot = s ? nameSlot(layer.screen) : null;
-    if (s && slot !== null) flat(sink, fresh.w, s.u, s.y, 0.16, s.width, s.height, tint("#5ce1ff", 1), [slot, MAP_SIGN_KIND.name]);
-  }
   if (fresh && layer.plaque) {
-    // Beside the mouth, on the side with more room, under the blind niches.
+    // Beside the mouth, on the side with more room, at eye level.
     const left = fresh.u0 >= fresh.w.length - fresh.u1;
     const width = Math.min(3.6, (left ? fresh.u0 : fresh.w.length - fresh.u1) - 0.6);
     const u = left ? fresh.u0 - 0.4 - width / 2 : fresh.u1 + 0.4 + width / 2;
