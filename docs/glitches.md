@@ -228,7 +228,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `pedestrian-bare` 59 → ≤ 10
 
 ### G-082 Domyślna szerokość jezdni wycina zmapowane chodniki
-- Status: w weryfikacji (commit 921e44d, gałąź `fix/g-082-v2` od G-090: `fitToKerb`, `sidewalk-under-carriageway` 262 → 12); przegląd kuratora w toku
+- Status: przyjęte przez weryfikatora (921e44d); poprawki po przeglądzie kuratora (G-112, G-113) w toku, potem ponowna weryfikacja i PR
 - Gdzie: Podwale w40052391/w305027452, Staszica w1150131461, w232805965, Zielona w173533827, Łęczyńska w85717509
 - Przyczyna: `roadWidth` bez `width`/`lanes` = 6,5/5 m, a `cutSidewalk` usuwa chodnik, którego środek leży na cudzej jezdni
 - Propozycja: zwęzić domyślną jezdnię do 2 × (odległość osi od chodnika − pół chodnika), min. 3 m
@@ -377,6 +377,19 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Propozycja: dla ulicy dwukierunkowej minimum 4,5–5 m; gdy ogranicza tylko jedna strona, przesunąć pas jezdni od chodnika (krawędź po wolnej stronie zostaje na szerokości z typu albo do przeszkody), zamiast zwężać ją symetrycznie
 - Pakiet właściciela: tools/osm-import (+ packages/sim content/traffic, jeśli oś pasa przestaje być osią OSM)
 - Test przyjęcia: kontrola `two-way-fit-narrow` (droga bez `oneway` z dopasowaną szerokością < 4,5 m) 4 → 0 (Podwale 3,6, Montażowa 3,6, Łęczyńska 4,1, Staszica 4,4) bez wzrostu `sidewalk-under-carriageway` i `car-lane-off-road`
+
+### G-114 npr-perf Nabrzeże: czasem +98 wywołań rysowania przy tych samych siatkach
+- Status: zgłoszone (z weryfikacji ADR-0063 etap 2) · Ważność: S3 (proponowana; fałszywie czerwony budżet w CI) · Koszt: mały–średni
+- Dowód: 334/102 albo 338/102 zamiast 236/102 w ok. 2 z 7 pełnych przebiegów przy obciążeniu, przy identycznym `byName` siatek i +431 tys. trójkątów; na bazie 0 z 3 próbek (za mało, by wykluczyć)
+- Przyczyna (przypuszczalna): w próbkowanej klatce renderuje się sonda odbicia `WetProbe` (6 ścian × ok. 16 siatek + cień); `ProbeSchedule` dławi rendery do 1 s czasu rzeczywistego, a `citySettled`/`sampleNow` na to nie czeka (por. G-001)
+- Pakiet właściciela: packages/engine (renderer) / e2e (QA)
+- Test przyjęcia: pomiar `npr-perf` czeka na ustalenie sondy; 10 przebiegów Nabrzeża pod obciążeniem bez +98
+
+### G-115 Megawieża Tatar z Nabrzeża: podstawa nad horyzontem
+- Status: zgłoszone (z ADR-0063 etap 2; było już przed nim) · Ważność: S4 · Koszt: mały
+- Gdzie: panorama (ADR-0051), wieża Tatary (1900, 1500) widziana z Nabrzeża; T-056
+- Pakiet właściciela: packages/engine (mapcity/skyline)
+- Test przyjęcia: podstawa wieży poniżej linii terenu panoramy z każdego punktu Nabrzeża
 
 ## Naprawione
 | ID | Glitch | PR |
