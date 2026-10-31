@@ -315,7 +315,9 @@ describe("debrief variation", () => {
   it("lists the variation when the contract carries one", () => {
     const e = { contractId: "c1", badges: [], rank: "B", reward: 100, bonus: 0, styleBonus: 0, seconds: 10 } as const;
     const contract = { id: "c1", kind: "eliminate", siteId: "koi_back", targets: 1, reward: 100, status: "cleared", variation: { modifiers: ["night_only", "bodyguards"], security: "lockdown", trait: "drinker", twist: "setup" } };
-    expect(debriefVm(e, contract as never).variation).toEqual({ labels: ["tylko nocą", "ochroniarze", "blokada", "cel pije"], twist: "wystawka" });
+    expect(debriefVm(e, contract as never).variation).toEqual({ labels: ["night only", "bodyguards", "lockdown", "target drinks"], twist: "setup" });
+    // Polish word for word as before (ADR-0056).
+    expect(debriefVm(e, contract as never, "pl").variation).toEqual({ labels: ["tylko nocą", "ochroniarze", "blokada", "cel pije"], twist: "wystawka" });
     expect(debriefVm(e, null).variation).toBeUndefined();
   });
 });
