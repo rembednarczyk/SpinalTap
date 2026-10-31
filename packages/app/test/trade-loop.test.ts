@@ -149,7 +149,7 @@ describe("trade loop: loot, Oyaji's stall, a mod, the clinic (E10, E11)", () => 
     expect(session.sim.domain.wallet.eddies).toBe(afterStall - 125);
     expect(session.sim.domain.inventory.items.some((i) => i.def === "steady_grip")).toBe(false);
     expect(ui.getState().toasts.some((t) => t.title === "Mori shakes his head")).toBe(true);
-    expect(ui.getState().toasts.some((t) => t.title === "Implanted: Stabilizator chwytu")).toBe(true);
+    expect(ui.getState().toasts.some((t) => t.title === "Implanted: Grip stabiliser")).toBe(true);
     session.intents.closeShop();
     steps(session, 1);
     expect(session.inControl).toBe(true);

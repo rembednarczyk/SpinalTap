@@ -22,7 +22,7 @@ export const debriefVm = (e: DomainEvents["ContractDebrief"], contract: Contract
   const style: readonly string[] = giver ? FIXER_STYLE[giver.id] : [];
   return {
     contractId: e.contractId,
-    title: contract ? CONTRACT_KINDS[contractKind(contract)].title : translate(locale, "contract.untitled"),
+    title: translate(locale, contract ? CONTRACT_KINDS[contractKind(contract)].title : "contract.untitled"),
     fixer: giver?.name ?? null,
     badges: CONTRACT_BADGES.map((id) => ({ id, earned: e.badges.includes(id), style: style.includes(id) })),
     rank: e.rank,

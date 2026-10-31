@@ -209,22 +209,22 @@ describe("shop stock", () => {
     expect(SHOPS.oyaji).toMatchObject({ owner: "civilians", repairs: true, backpacks: true, implants: false });
   });
 
-  it("names and prices entries", () => {
+  it("names and prices entries with catalog keys (ADR-0056)", () => {
     const box = stockEntry("oyaji", "9mm");
-    expect(box && stockName(box)).toBe("9 mm × 24");
+    expect(box && stockName(box)).toEqual({ key: "shop.stock.ammo", params: { ammo: { key: "ammo.9mm" }, qty: 24 } });
     expect(box && stockListPrice(box)).toBe(24);
     const smg = stockEntry("oyaji", "hebi_smg");
     expect(smg && stockListPrice(smg)).toBe(1120);
     const medkit = stockEntry("clinic", "medkit");
-    expect(medkit && [stockName(medkit), stockListPrice(medkit)]).toEqual(["Apteczka", 90]);
+    expect(medkit && [stockName(medkit), stockListPrice(medkit)]).toEqual(["item.medkit.name", 90]);
     expect(stockEntry("clinic", "hebi_smg")).toBeUndefined();
-    expect(shopItemName("12g")).toBe("Śrut 12");
-    expect(shopItemName("holo_sight")).toBe("Celownik holo");
-    expect(shopItemDescription("556")).toContain("5,56 mm");
-    expect(shopItemDescription("bandage")).toContain("15 HP");
-    expect(shopItemDescription("tessen_ar5")).toContain("Karabinek");
-    expect(shopItemDescription("kevlar_pants")).toContain("kevlar");
-    expect(shopItemDescription("suppressor")).toContain("8 m");
+    expect(shopItemName("12g")).toBe("ammo.12g");
+    expect(shopItemName("holo_sight")).toBe("item.holo_sight.name");
+    expect(shopItemDescription("556")).toEqual({ key: "shop.stock.ammoBox", params: { ammo: { key: "ammo.556" } } });
+    expect(shopItemDescription("bandage")).toBe("item.bandage.desc");
+    expect(shopItemDescription("tessen_ar5")).toBe("item.tessen_ar5.desc");
+    expect(shopItemDescription("kevlar_pants")).toBe("item.kevlar_pants.desc");
+    expect(shopItemDescription("suppressor")).toBe("item.suppressor.desc");
   });
 
   it("buys a box of rounds into the pouch, a piece into the bag, a stack piece", () => {

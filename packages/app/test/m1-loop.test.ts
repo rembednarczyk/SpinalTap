@@ -116,7 +116,7 @@ describe("M1 acceptance: contract → eddies → cyberware → stronger in comba
     steps(session, 1);
     const contract = session.sim.domain.contracts.active!;
     expect(contract.status).toBe("active");
-    expect(ui.getState().objective).toContain("Zneutralizuj gangerów Hebi");
+    expect(ui.getState().objective).toContain("Take out the Hebi gangers");
 
     // Clear the targets with the stock pistol and record the damage per body hit.
     const targets = [...session.sim.world].filter((e) => e.tag === contractTag(contract.id)).map((e) => e.key!);

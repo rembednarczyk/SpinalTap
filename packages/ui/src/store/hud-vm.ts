@@ -79,6 +79,7 @@ export interface ContractDebriefVm {
 
 /** The running contract's optional condition, next to the objective. */
 export interface ContractBonusVm {
+  /** Catalog key of the condition (ADR-0056). */
   readonly label: string;
   readonly badge: ContractBadge;
   readonly bonus: number;

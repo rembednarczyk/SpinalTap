@@ -23,7 +23,9 @@ import type {
 
 /**
  * Item catalogs (plan: docs/ekwipunek-i-uzbrojenie.md §2 to §4). Numbers are starting values
- * for balancing; systems read them from here and never hard-code them.
+ * for balancing; systems read them from here and never hard-code them. Names and descriptions
+ * are catalog keys (`item.<id>.name`, `item.<id>.desc`, `ammo.<id>`), never sentences: app and
+ * ui write them in the player's language (ADR-0056).
  */
 
 export interface StackableDefinition {
@@ -46,8 +48,8 @@ export interface StackableDefinition {
 export const STACKABLE_CATALOG = {
   medkit: {
     id: "medkit",
-    name: "Apteczka",
-    description: "Iniektor z biożelem. Przywraca 40 HP.",
+    name: "item.medkit.name",
+    description: "item.medkit.desc",
     category: "consumable",
     value: 90,
     stack: 9,
@@ -55,8 +57,8 @@ export const STACKABLE_CATALOG = {
   },
   bandage: {
     id: "bandage",
-    name: "Opatrunek",
-    description: "Opatrunek z żelem hemostatycznym. Przywraca 15 HP.",
+    name: "item.bandage.name",
+    description: "item.bandage.desc",
     category: "consumable",
     value: 30,
     stack: 9,
@@ -66,8 +68,8 @@ export const STACKABLE_CATALOG = {
   // kit, but eaten from the bag, never by quick use in a fight.
   ramen: {
     id: "ramen",
-    name: "Miska ramenu",
-    description: "Tonkotsu od Fumiko, w kubku z pokrywką. Przywraca 30 HP i przez 2 minuty 0,5 HP/s.",
+    name: "item.ramen.name",
+    description: "item.ramen.desc",
     category: "consumable",
     value: 35,
     stack: 3,
@@ -76,8 +78,8 @@ export const STACKABLE_CATALOG = {
   },
   yakitori: {
     id: "yakitori",
-    name: "Yakitori",
-    description: "Dwa szaszłyki z grilla. Kurczak, podobno. Przywraca 10 HP.",
+    name: "item.yakitori.name",
+    description: "item.yakitori.desc",
     category: "consumable",
     value: 10,
     stack: 6,
@@ -86,8 +88,8 @@ export const STACKABLE_CATALOG = {
   // Wave 2 (ADR-0033): buffs that count in a fight, and the capacity shard.
   synth_coffee: {
     id: "synth_coffee",
-    name: "Kawa syntetyczna",
-    description: "Gorzka, z termosu Fumiko. Przez 90 s odnowienie zdolności i zrywu biegnie 1,5 raza szybciej.",
+    name: "item.synth_coffee.name",
+    description: "item.synth_coffee.desc",
     category: "consumable",
     value: 40,
     stack: 3,
@@ -96,8 +98,8 @@ export const STACKABLE_CATALOG = {
   },
   steady_stim: {
     id: "steady_stim",
-    name: "Stymulant Shizuka",
-    description: "Iniektor doktora Mori z beta-blokerem. Przez 60 s stabilność celowania +20%.",
+    name: "item.steady_stim.name",
+    description: "item.steady_stim.desc",
     category: "consumable",
     value: 70,
     stack: 5,
@@ -106,8 +108,8 @@ export const STACKABLE_CATALOG = {
   },
   capacity_shard: {
     id: "capacity_shard",
-    name: "Shard pojemności",
-    description: "Wojskowy shard kalibracyjny. Wgrany zwiększa pojemność cyberware o 2 na zawsze.",
+    name: "item.capacity_shard.name",
+    description: "item.capacity_shard.desc",
     category: "consumable",
     value: 450,
     stack: 5,
@@ -116,24 +118,24 @@ export const STACKABLE_CATALOG = {
   },
   scrap: {
     id: "scrap",
-    name: "Złom elektroniczny",
-    description: "Płytki, kable i przekaźniki. Ktoś na targu to kupi.",
+    name: "item.scrap.name",
+    description: "item.scrap.desc",
     category: "junk",
     value: 12,
     stack: 20,
   },
   weapon_parts: {
     id: "weapon_parts",
-    name: "Części broni",
-    description: "Sprężyny, iglice, prowadnice. Obniżają koszt naprawy.",
+    name: "item.weapon_parts.name",
+    description: "item.weapon_parts.desc",
     category: "junk",
     value: 25,
     stack: 10,
   },
   datachip: {
     id: "datachip",
-    name: "Chip z danymi",
-    description: "Zaszyfrowany chip. Wart tyle, ile ktoś za niego da.",
+    name: "item.datachip.name",
+    description: "item.datachip.desc",
     category: "junk",
     value: 40,
     stack: 5,
@@ -153,10 +155,10 @@ export interface AmmoDefinition {
 }
 
 export const AMMO_CATALOG = {
-  "9mm": { id: "9mm", name: "9 mm", limit: 180, value: 1 },
-  "44": { id: "44", name: ".44", limit: 48, value: 4 },
-  "12g": { id: "12g", name: "Śrut 12", limit: 40, value: 3 },
-  "556": { id: "556", name: "5,56 mm", limit: 150, value: 2 },
+  "9mm": { id: "9mm", name: "ammo.9mm", limit: 180, value: 1 },
+  "44": { id: "44", name: "ammo.44", limit: 48, value: 4 },
+  "12g": { id: "12g", name: "ammo.12g", limit: 40, value: 3 },
+  "556": { id: "556", name: "ammo.556", limit: 150, value: 2 },
 } as const satisfies Record<AmmoId, AmmoDefinition>;
 
 export interface GarmentDefinition {
@@ -177,8 +179,8 @@ export interface GarmentDefinition {
 export const GARMENT_CATALOG = {
   seki_jacket: {
     id: "seki_jacket",
-    name: "Kurtka Seki",
-    description: "Skórzana kurtka z wypalonym logo kuriera. Trochę chroni tors i ręce.",
+    name: "item.seki_jacket.name",
+    description: "item.seki_jacket.desc",
     category: "garment",
     slot: "torso",
     armor: { torso: 1, arm: 1 },
@@ -187,8 +189,8 @@ export const GARMENT_CATALOG = {
   },
   cargo_pants: {
     id: "cargo_pants",
-    name: "Spodnie cargo",
-    description: "Grube płótno i dużo kieszeni.",
+    name: "item.cargo_pants.name",
+    description: "item.cargo_pants.desc",
     category: "garment",
     slot: "legs",
     armor: { leg: 1 },
@@ -197,8 +199,8 @@ export const GARMENT_CATALOG = {
   },
   tactical_visor: {
     id: "tactical_visor",
-    name: "Wizjer taktyczny",
-    description: "Polimerowa osłona oczu i skroni.",
+    name: "item.tactical_visor.name",
+    description: "item.tactical_visor.desc",
     category: "garment",
     slot: "head",
     armor: { head: 2 },
@@ -207,8 +209,8 @@ export const GARMENT_CATALOG = {
   },
   moto_helmet: {
     id: "moto_helmet",
-    name: "Kask motocyklowy",
-    description: "Ciężki kask z pękniętą szybką. Głowa przeżyje więcej niż ty.",
+    name: "item.moto_helmet.name",
+    description: "item.moto_helmet.desc",
     category: "garment",
     slot: "head",
     armor: { head: 4 },
@@ -217,8 +219,8 @@ export const GARMENT_CATALOG = {
   },
   hebi_jacket: {
     id: "hebi_jacket",
-    name: "Kurtka Hebi",
-    description: "Kurtka gangu z wszytymi płytkami. Chroni tors i ręce.",
+    name: "item.hebi_jacket.name",
+    description: "item.hebi_jacket.desc",
     category: "garment",
     slot: "torso",
     armor: { torso: 3, arm: 2 },
@@ -228,8 +230,8 @@ export const GARMENT_CATALOG = {
   },
   ballistic_vest: {
     id: "ballistic_vest",
-    name: "Kamizelka balistyczna",
-    description: "Płyta na klatce piersiowej. Ciężka, wolniej się w niej biega.",
+    name: "item.ballistic_vest.name",
+    description: "item.ballistic_vest.desc",
     category: "garment",
     slot: "torso",
     armor: { torso: 5 },
@@ -239,8 +241,8 @@ export const GARMENT_CATALOG = {
   },
   kevlar_pants: {
     id: "kevlar_pants",
-    name: "Spodnie z kevlarem",
-    description: "Wkładki z kevlaru na udach i goleniach.",
+    name: "item.kevlar_pants.name",
+    description: "item.kevlar_pants.desc",
     category: "garment",
     slot: "legs",
     armor: { leg: 3 },
@@ -250,8 +252,8 @@ export const GARMENT_CATALOG = {
   // Corporate security in the docks (ADR-0024): plates where a Hebi jacket has patches.
   tessen_vest: {
     id: "tessen_vest",
-    name: "Pancerz Tessen",
-    description: "Korporacyjna kamizelka z płytami na piersi i barkach. Słabe pociski się od niej odbijają.",
+    name: "item.tessen_vest.name",
+    description: "item.tessen_vest.desc",
     category: "garment",
     slot: "torso",
     armor: { torso: 6, arm: 3 },
@@ -261,8 +263,8 @@ export const GARMENT_CATALOG = {
   },
   tessen_helmet: {
     id: "tessen_helmet",
-    name: "Hełm ochrony Tessen",
-    description: "Lekki hełm z daszkiem. Strzał w twarz dalej boli.",
+    name: "item.tessen_helmet.name",
+    description: "item.tessen_helmet.desc",
     category: "garment",
     slot: "head",
     armor: { head: 3 },
@@ -272,8 +274,8 @@ export const GARMENT_CATALOG = {
   // Disguises of the docks (ADR-0033): what the guards and the office staff wear, not armour.
   tessen_uniform: {
     id: "tessen_uniform",
-    name: "Mundur ochrony Tessen",
-    description: "Szara kurtka służbowa z naszywką Tessen. Strażnicy biorą cię za swoją, szef zmiany nie zawsze.",
+    name: "item.tessen_uniform.name",
+    description: "item.tessen_uniform.desc",
     category: "garment",
     slot: "torso",
     armor: { torso: 2, arm: 1 },
@@ -283,8 +285,8 @@ export const GARMENT_CATALOG = {
   },
   tessen_overalls: {
     id: "tessen_overalls",
-    name: "Kombinezon personelu Tessen",
-    description: "Kombinezon obsługi portu z identyfikatorem. Wpuszczają w nim do biura, ale z bronią w ręku nikt nie uwierzy.",
+    name: "item.tessen_overalls.name",
+    description: "item.tessen_overalls.desc",
     category: "garment",
     slot: "torso",
     armor: { torso: 1 },
@@ -320,8 +322,8 @@ export interface ModDefinition {
 export const MOD_CATALOG = {
   suppressor: {
     id: "suppressor",
-    name: "Tłumik",
-    description: "Strzał słychać tylko z bliska (alarm 8 m zamiast 22 m). Obrażenia ×0,95.",
+    name: "item.suppressor.name",
+    description: "item.suppressor.desc",
     category: "mod",
     slot: "muzzle",
     effect: { damage: 0.95, alertRadius: 8 },
@@ -329,8 +331,8 @@ export const MOD_CATALOG = {
   },
   holo_sight: {
     id: "holo_sight",
-    name: "Celownik holo",
-    description: "Rozrzut bazowy ×0,8.",
+    name: "item.holo_sight.name",
+    description: "item.holo_sight.desc",
     category: "mod",
     slot: "sight",
     effect: { spread: 0.8 },
@@ -338,8 +340,8 @@ export const MOD_CATALOG = {
   },
   extended_mag: {
     id: "extended_mag",
-    name: "Magazynek powiększony",
-    description: "Magazynek ×1,5 (strzelba +2 naboje), przeładowanie ×1,15.",
+    name: "item.extended_mag.name",
+    description: "item.extended_mag.desc",
     category: "mod",
     slot: "magazine",
     effect: { magazine: 1.5, perRoundBonus: 2, reload: 1.15 },
@@ -459,8 +461,8 @@ const MELEE_ALERT = 4;
 export const WEAPON_CATALOG = {
   unity9: {
     id: "unity9",
-    name: "Unity-9",
-    description: "Pistolet, z którym się obudziłaś. Celny i przewidywalny.",
+    name: "item.unity9.name",
+    description: "item.unity9.desc",
     category: "weapon",
     class: "pistol",
     slot: "secondary",
@@ -483,8 +485,8 @@ export const WEAPON_CATALOG = {
   },
   oni44: {
     id: "oni44",
-    name: "Oni .44",
-    description: "Rewolwer. Sześć strzałów, każdy jak uderzenie młotem.",
+    name: "item.oni44.name",
+    description: "item.oni44.desc",
     category: "weapon",
     class: "revolver",
     slot: "secondary",
@@ -506,8 +508,8 @@ export const WEAPON_CATALOG = {
   },
   hebi_smg: {
     id: "hebi_smg",
-    name: "Hebi SMG",
-    description: "Pistolet maszynowy gangu Hebi. Szybki i rozrzutny.",
+    name: "item.hebi_smg.name",
+    description: "item.hebi_smg.desc",
     category: "weapon",
     class: "smg",
     slot: "primary",
@@ -530,8 +532,8 @@ export const WEAPON_CATALOG = {
   },
   raijin12: {
     id: "raijin12",
-    name: "Raijin 12",
-    description: "Strzelba z ładowaniem po jednym naboju. W zaułku nie ma sobie równych.",
+    name: "item.raijin12.name",
+    description: "item.raijin12.desc",
     category: "weapon",
     class: "shotgun",
     slot: "primary",
@@ -554,8 +556,8 @@ export const WEAPON_CATALOG = {
   },
   tessen_ar5: {
     id: "tessen_ar5",
-    name: "Tessen AR-5",
-    description: "Karabinek z korporacyjnych magazynów. Celny na całą ulicę.",
+    name: "item.tessen_ar5.name",
+    description: "item.tessen_ar5.desc",
     category: "weapon",
     class: "rifle",
     slot: "primary",
@@ -579,8 +581,8 @@ export const WEAPON_CATALOG = {
   },
   kagero_dmr: {
     id: "kagero_dmr",
-    name: "Kagero DMR",
-    description: "Karabin wyborowy ochrony portu. Jeden strzał, długa przerwa, a potem drugi.",
+    name: "item.kagero_dmr.name",
+    description: "item.kagero_dmr.desc",
     category: "weapon",
     class: "rifle",
     slot: "primary",
@@ -604,8 +606,8 @@ export const WEAPON_CATALOG = {
   },
   baton: {
     id: "baton",
-    name: "Pałka teleskopowa",
-    description: "Cicha i zawsze gotowa. Działa tylko z bliska.",
+    name: "item.baton.name",
+    description: "item.baton.desc",
     category: "weapon",
     class: "baton",
     slot: "melee",
@@ -637,8 +639,8 @@ export const WEAPON_CATALOG = {
   },
   shirasaya: {
     id: "shirasaya",
-    name: "Ostrze Shirasaya",
-    description: "Prosta klinga w drewnianej pochwie. Szybka i bezlitosna.",
+    name: "item.shirasaya.name",
+    description: "item.shirasaya.desc",
     category: "weapon",
     class: "blade",
     slot: "melee",

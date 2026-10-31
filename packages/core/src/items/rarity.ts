@@ -1,7 +1,7 @@
 import type { Rarity } from "./types";
 
 export interface RarityTier {
-  /** Label shown next to the frame colour (never colour alone). */
+  /** Catalog key of the label shown next to the frame colour (never colour alone), ADR-0056. */
   readonly label: string;
   /** Weapon damage multiplier. */
   readonly damage: number;
@@ -15,10 +15,10 @@ export interface RarityTier {
 
 /** Fixed per tier, so a saved item needs only its tier. Unique items carry their own numbers. */
 export const RARITY: Readonly<Record<Rarity, RarityTier>> = {
-  common: { label: "zwykły", damage: 1, spread: 1, armor: 0, value: 1 },
-  uncommon: { label: "niezwykły", damage: 1.08, spread: 0.92, armor: 1, value: 1.6 },
-  rare: { label: "rzadki", damage: 1.16, spread: 0.85, armor: 2, value: 2.6 },
-  unique: { label: "unikat", damage: 1, spread: 1, armor: 0, value: 1 },
+  common: { label: "inventory.rarity.common", damage: 1, spread: 1, armor: 0, value: 1 },
+  uncommon: { label: "inventory.rarity.uncommon", damage: 1.08, spread: 0.92, armor: 1, value: 1.6 },
+  rare: { label: "inventory.rarity.rare", damage: 1.16, spread: 0.85, armor: 2, value: 2.6 },
+  unique: { label: "inventory.rarity.unique", damage: 1, spread: 1, armor: 0, value: 1 },
 };
 
 export const RARITIES: readonly Rarity[] = ["common", "uncommon", "rare", "unique"];
