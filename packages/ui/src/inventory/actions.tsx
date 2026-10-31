@@ -19,7 +19,7 @@ import {
 } from "@seki/core";
 import { useState } from "react";
 import type { MessageKey } from "../i18n/t";
-import { useT } from "../i18n/use-t";
+import { useT, useText } from "../i18n/use-t";
 import { itemName } from "./item-text";
 
 export type ActionId = "use" | "equip" | "unequip" | "mods" | "drop";
@@ -104,11 +104,12 @@ export const ActionBar = ({ actions, onAction }: { actions: readonly ItemAction[
 /** How many of a stack to drop. */
 export const QuantityPicker = ({ stack, inventory, onConfirm, onCancel }: { stack: StackableId; inventory: InventoryState; onConfirm: (qty: number) => void; onCancel: () => void }) => {
   const t = useT();
+  const tx = useText();
   const total = stackCount(inventory, stack);
   const [qty, setQty] = useState(1);
   return (
     <div className="inv__sheet" role="dialog" aria-label={t("inventory.quantity.label")} data-testid="quantity-picker">
-      <p className="inv__sheet-text">{t("inventory.quantity.text", { name: STACKABLE_CATALOG[stack].name, count: total })}</p>
+      <p className="inv__sheet-text">{t("inventory.quantity.text", { name: tx(STACKABLE_CATALOG[stack].name), count: total })}</p>
       <label className="inv__qty">
         <input type="range" min={1} max={total} step={1} value={qty} aria-label={t("inventory.quantity.amount")} onChange={(e) => setQty(Number(e.currentTarget.value))} />
         <span className="inv__qty-value">{qty}</span>
@@ -128,9 +129,10 @@ export const QuantityPicker = ({ stack, inventory, onConfirm, onCancel }: { stac
 /** Asks before a rare or unique piece goes on the street. */
 export const ConfirmSheet = ({ def, onConfirm, onCancel }: { def: ItemDefId; onConfirm: () => void; onCancel: () => void }) => {
   const t = useT();
+  const tx = useText();
   return (
     <div className="inv__sheet" role="alertdialog" aria-label={t("inventory.confirm.label")} data-testid="confirm-drop">
-      <p className="inv__sheet-text">{t("inventory.confirm.text", { name: itemName(def) })}</p>
+      <p className="inv__sheet-text">{t("inventory.confirm.text", { name: itemName(tx, def) })}</p>
       <div className="inv__sheet-actions">
         <button type="button" className="inv__action" onClick={onCancel}>
           {t("inventory.confirm.keep")}

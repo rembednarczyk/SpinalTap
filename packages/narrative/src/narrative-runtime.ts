@@ -154,7 +154,7 @@ export class NarrativeRuntime {
     this.story.variablesState.$("alias", domain.character.alias ?? "");
     const contract = domain.contracts.active;
     this.story.variablesState.$("contract_state", contract?.status ?? "");
-    this.story.variablesState.$("contract_site", contract ? CONTRACT_SITES[contract.siteId].label : "");
+    this.story.variablesState.$("contract_site", contract ? this.text(CONTRACT_SITES[contract.siteId].text) : "");
     this.story.variablesState.$("contracts_done", domain.contracts.completed);
     const kind = contract ? contractKind(contract) : null;
     this.story.variablesState.$("contract_kind", kind ?? "");

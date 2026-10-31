@@ -4,6 +4,7 @@
  */
 export interface AbilityDefinition {
   readonly id: string;
+  /** Catalog key of the name (`ability.<id>.name`, ADR-0056). */
   readonly name: string;
   readonly duration: number;
   readonly cooldown: number;
@@ -14,7 +15,7 @@ export interface AbilityDefinition {
 export const ABILITY_CATALOG = {
   reflex_overdrive: {
     id: "reflex_overdrive",
-    name: "Przeciążenie odruchów",
+    name: "ability.reflex_overdrive.name",
     duration: 4,
     cooldown: 16,
     enemyTimeScale: 0.3,

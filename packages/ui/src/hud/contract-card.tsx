@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import type { ContractBadge, Locale } from "@seki/core";
 import { formatNumber, useLocale } from "../i18n/number";
-import { useT } from "../i18n/use-t";
+import { useT, useText } from "../i18n/use-t";
 import { useContractIntents, useUi } from "../use-ui";
 
 /** Icon (24 px SVG path) of each badge; the name and the meaning are `badge.<id>` and `badge.<id>.hint` (ADR-0056). */
@@ -131,12 +131,13 @@ export const DebriefCard = () => {
 export const BonusIndicator = () => {
   const bonus = useUi((s) => s.contractBonus);
   const t = useT();
+  const tx = useText();
   const locale = useLocale();
   if (!bonus) return null;
   return (
     <div className={`hud__bonus${bonus.kept ? "" : " hud__bonus--lost"}`} data-testid="contract-bonus" aria-label={t(bonus.kept ? "debrief.bonusKept" : "debrief.bonusLost")}>
       <BadgeIcon badge={bonus.badge} />
-      <span className="hud__bonus-label">{bonus.label}</span>
+      <span className="hud__bonus-label">{tx(bonus.label)}</span>
       <span className="hud__bonus-pay">+{money(locale, bonus.bonus)}</span>
       <span className="hud__bonus-state">{bonus.kept ? "✓" : "✗"}</span>
     </div>

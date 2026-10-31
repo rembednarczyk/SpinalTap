@@ -50,8 +50,8 @@ describe("HUD weapon strip from the game", () => {
     const { session, ui, render } = setup();
     session.render(0);
     const first = ui.getState().weapons;
-    expect(first).toMatchObject({ active: "secondary", loaded: 12, magazine: 12, reserve: 48, ammoName: "9 mm", reloading: false });
-    expect(first?.slots.map((s) => s.name)).toEqual([null, "Unity-9", null]);
+    expect(first).toMatchObject({ active: "secondary", loaded: 12, magazine: 12, reserve: 48, ammoName: "ammo.9mm", reloading: false });
+    expect(first?.slots.map((s) => s.name)).toEqual([null, "item.unity9.name", null]);
     steps(session, 1);
     // Nothing changed: the same object, so React does not re-render.
     expect(ui.getState().weapons).toBe(first);

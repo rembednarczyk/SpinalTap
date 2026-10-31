@@ -19,7 +19,7 @@ import {
   itemSummary,
 } from "@seki/core";
 import { formatNumber } from "../i18n/number";
-import type { Translate } from "../i18n/t";
+import { type Translate, type TranslateText, isMessageKey } from "../i18n/t";
 
 /** Labels and number formats of the character menu, in the player's language. Numbers come from core. */
 
@@ -33,42 +33,20 @@ export const modSlotLabel = (t: Translate, slot: ModSlot): string => t(`inventor
 /** Rarity as the panels write it. */
 export const rarityLabel = (t: Translate, rarity: Rarity): string => t(`inventory.rarity.${rarity}`);
 
-/** Short names that fit a 52 px cell; item names, so they wait for stage 3 of ADR-0056 with the catalog. */
-const SHORT: Readonly<Partial<Record<ItemDefId, string>>> = {
-  unity9: "U-9",
-  oni44: ".44",
-  hebi_smg: "SMG",
-  raijin12: "R-12",
-  tessen_ar5: "AR-5",
-  baton: "Pałka",
-  shirasaya: "Ostrze",
-  seki_jacket: "Kurtka",
-  cargo_pants: "Cargo",
-  tactical_visor: "Wizjer",
-  moto_helmet: "Kask",
-  hebi_jacket: "Hebi",
-  ballistic_vest: "Kamiz.",
-  kevlar_pants: "Kevlar",
-  suppressor: "Tłumik",
-  holo_sight: "Holo",
-  extended_mag: "Mag+",
-  medkit: "Apteczka",
-  bandage: "Opatr.",
-  scrap: "Złom",
-  weapon_parts: "Części",
-  datachip: "Chip",
+export const itemName = (tx: TranslateText, def: ItemDefId): string => tx(itemSummary(def).name);
+
+/** A short name that fits a 52 px cell (`item.<id>.short`), else the first letters of the name. */
+export const shortName = (tx: TranslateText, def: ItemDefId): string => {
+  const key = `item.${def}.short`;
+  return isMessageKey(key) ? tx(key) : itemName(tx, def).slice(0, 6);
 };
 
-export const itemName = (def: ItemDefId): string => itemSummary(def).name;
-
-export const shortName = (def: ItemDefId): string => SHORT[def] ?? itemName(def).slice(0, 6);
-
-export const description = (def: ItemDefId): string => {
-  if (isStackableId(def)) return STACKABLE_CATALOG[def].description;
-  if (isWeaponId(def)) return WEAPON_CATALOG[def].description;
-  if (isGarmentId(def)) return GARMENT_CATALOG[def].description;
-  if (isModId(def)) return MOD_CATALOG[def].description;
-  return CYBERWARE_CATALOG[def].description;
+export const description = (tx: TranslateText, def: ItemDefId): string => {
+  if (isStackableId(def)) return tx(STACKABLE_CATALOG[def].description);
+  if (isWeaponId(def)) return tx(WEAPON_CATALOG[def].description);
+  if (isGarmentId(def)) return tx(GARMENT_CATALOG[def].description);
+  if (isModId(def)) return tx(MOD_CATALOG[def].description);
+  return tx(CYBERWARE_CATALOG[def].description);
 };
 
 /** Line under the name: what kind of thing it is. */

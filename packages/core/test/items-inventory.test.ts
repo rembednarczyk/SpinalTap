@@ -52,8 +52,8 @@ const filled = (n: number, base: InventoryState = EMPTY_INVENTORY, equipment = e
 };
 
 describe("rarity", () => {
-  it("has fixed multipliers and a text label for every tier", () => {
-    expect(RARITY.uncommon).toMatchObject({ damage: 1.08, spread: 0.92, armor: 1, value: 1.6, label: "niezwykły" });
+  it("has fixed multipliers and a label key for every tier", () => {
+    expect(RARITY.uncommon).toMatchObject({ damage: 1.08, spread: 0.92, armor: 1, value: 1.6, label: "inventory.rarity.uncommon" });
     expect(RARITY.rare).toMatchObject({ damage: 1.16, spread: 0.85, armor: 2, value: 2.6 });
     expect(isRarity("rare")).toBe(true);
     expect(isRarity("epic")).toBe(false);
@@ -85,11 +85,11 @@ describe("catalog guards", () => {
   });
 
   it("summarises every kind of item", () => {
-    expect(itemSummary("medkit")).toMatchObject({ name: "Apteczka", category: "consumable", value: 90 });
+    expect(itemSummary("medkit")).toMatchObject({ name: "item.medkit.name", category: "consumable", value: 90 });
     expect(itemSummary("hebi_smg")).toMatchObject({ category: "weapon", value: 700 });
     expect(itemSummary("kevlar_pants")).toMatchObject({ category: "garment", value: 500 });
     expect(itemSummary("holo_sight")).toMatchObject({ category: "mod", value: 300 });
-    expect(itemSummary("steady_grip")).toEqual({ name: "Stabilizator chwytu", category: "cyberware", value: 500 });
+    expect(itemSummary("steady_grip")).toEqual({ name: "cyberware.steady_grip.name", category: "cyberware", value: 500 });
   });
 
   it("uses the plan's stack and pouch limits", () => {

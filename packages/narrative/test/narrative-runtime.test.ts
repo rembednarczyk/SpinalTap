@@ -227,7 +227,8 @@ describe("fixer contracts (M1)", () => {
       "fixer",
       afterM0({ active: { id: "c1", siteId: "east_lot", targets: 2, reward: 500, status: "active" }, completed: 0 }),
     );
-    expect(view.lines[0]?.text).toContain("parking przy furgonetce");
+    // The site goes by key; the app writes it in the player's language (app `i18n-content.test.ts`).
+    expect(view.lines[0]?.text).toContain("contract.site.east_lot");
     expect(view.ended).toBe(true);
   });
 

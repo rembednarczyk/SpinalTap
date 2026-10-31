@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useT } from "../i18n/use-t";
+import { useT, useText } from "../i18n/use-t";
 import { rarityLabel } from "../inventory/item-text";
 import { useLootIntents, useUi } from "../use-ui";
 
@@ -10,6 +10,7 @@ import { useLootIntents, useUi } from "../use-ui";
  */
 export const LootPanel = () => {
   const t = useT();
+  const tx = useText();
   const loot = useUi((s) => s.loot);
   const intents = useLootIntents();
 
@@ -36,7 +37,7 @@ export const LootPanel = () => {
         <ul className="loot__lines">
           {loot.lines.map((l) => (
             <li key={l.index} className={`loot__line${l.rarity ? ` rarity--${l.rarity}` : ""}`} data-testid="loot-line">
-              <span className="loot__name">{l.kind === "ammo" ? t("loot.ammo", { name: l.label }) : l.label}</span>
+              <span className="loot__name">{l.kind === "ammo" ? t("loot.ammo", { name: tx(l.label) }) : tx(l.label)}</span>
               {l.rarity && <span className="loot__rarity">{rarityLabel(t, l.rarity)}</span>}
               <span className="loot__qty">{l.qty > 1 || l.kind !== "item" ? `× ${l.qty}` : ""}</span>
               <button type="button" className="loot__take" onClick={() => intents.takeLoot(l.index)}>

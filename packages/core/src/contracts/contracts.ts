@@ -1,4 +1,5 @@
 import { contractPayout } from "../economy/wallet";
+import { type TextRef, textRef } from "../i18n/text";
 import type { RandomPort } from "../ports/random-port";
 import type { FactionId, ReputationState } from "../reputation/reputation";
 import type { Flags } from "../state/flags";
@@ -7,24 +8,29 @@ import type { ContractTally } from "./scoring";
 import type { BreachDaemonId } from "../hacking/quickhacks";
 import type { ContractVariation } from "../world/wave2";
 
-/** Places where a contract sends Seki. Positions live in sim content. */
+/**
+ * Places where a contract sends Seki. Positions live in sim content. `text` is the catalog key of
+ * the place (ADR-0056), for the HUD and for the ink dialogues alike.
+ */
+const site = <const Id extends string>(id: Id) => ({ id, text: `contract.site.${id}` as const });
+
 export const CONTRACT_SITES = {
   // Krakowskie Przedmieście (ADR-0045).
-  east_lot: { id: "east_lot", label: "parking przy furgonetce na Placu Litewskim" },
-  koi_back: { id: "koi_back", label: "podwórko za barem Neon Koi" },
-  car_wash: { id: "car_wash", label: "podwórko za myjnią za Placem Łokietka" },
-  south_gate: { id: "south_gate", label: "wrak na Krakowskim, przy Placu Litewskim" },
+  east_lot: site("east_lot"),
+  koi_back: site("koi_back"),
+  car_wash: site("car_wash"),
+  south_gate: site("south_gate"),
   // Stare Miasto (ADR-0026, ADR-0045).
-  kanal_bridge: { id: "kanal_bridge", label: "pod kładką na Grodzkiej" },
+  kanal_bridge: site("kanal_bridge"),
   // Podzamcze: the market under the viaduct over aleja Tysiąclecia (M4, ADR-0045).
-  hana_stall: { id: "hana_stall", label: "wózek Hany na targu na Podzamczu" },
-  hebi_stash: { id: "hebi_stash", label: "skrytka Hebi pod wiaduktem, wschodni koniec targu" },
-  raid_north: { id: "raid_north", label: "stragan Oyaji, Hebi idą spod wiaduktu" },
-  raid_east: { id: "raid_east", label: "stragan Oyaji, Hebi idą od wschodniej ściany hali, od Ruskiej" },
+  hana_stall: site("hana_stall"),
+  hebi_stash: site("hebi_stash"),
+  raid_north: site("raid_north"),
+  raid_east: site("raid_east"),
   // Nabrzeże Bystrzycy (M4, ADR-0024, ADR-0045).
-  docks_escort: { id: "docks_escort", label: "z placu kontenerowego na Nabrzeżu na molo, do łodzi" },
-  tessen_office: { id: "tessen_office", label: "biuro Tessen na Nabrzeżu Bystrzycy" },
-  quay_terminal: { id: "quay_terminal", label: "terminal Tessen pod dźwigiem nad rzeką" },
+  docks_escort: site("docks_escort"),
+  tessen_office: site("tessen_office"),
+  quay_terminal: site("quay_terminal"),
 } as const;
 
 export type ContractSiteId = keyof typeof CONTRACT_SITES;
@@ -41,13 +47,20 @@ const RAID_SITE_IDS: readonly ContractSiteId[] = ["raid_north", "raid_east"];
 
 export const isContractSiteId = (id: string): id is ContractSiteId => Object.hasOwn(CONTRACT_SITES, id);
 
-/** People who hand out contracts. Their faction's standing scales the pay. */
+/**
+ * People who hand out contracts. Their faction's standing scales the pay. The name stays as it
+ * is in every language; "go back to … for your pay" takes the giver from the catalog
+ * (`contract.giver.<id>`, the genitive in Polish).
+ */
 export const CONTRACT_GIVERS = {
-  kaito: { id: "kaito", name: "Kaito", genitive: "Kaito", faction: "fixers" },
-  hana: { id: "hana", name: "Hana", genitive: "Hany", faction: "civilians" },
+  kaito: { id: "kaito", name: "Kaito", faction: "fixers" },
+  hana: { id: "hana", name: "Hana", faction: "civilians" },
   // A smuggler in the docks, part of Kaito's network: fixer standing scales his pay too.
-  genzo: { id: "genzo", name: "Genzō", genitive: "Genzō", faction: "fixers" },
-} as const satisfies Record<ContractGiverId, { id: ContractGiverId; name: string; genitive: string; faction: FactionId }>;
+  genzo: { id: "genzo", name: "Genzō", faction: "fixers" },
+} as const satisfies Record<ContractGiverId, { id: ContractGiverId; name: string; faction: FactionId }>;
+
+/** The giver as "go back to … for your pay" names them, a text for app and ui. */
+export const giverText = (giver: ContractGiverId): TextRef => textRef(`contract.giver.${giver}`);
 
 export interface Contract {
   readonly id: string;
@@ -232,58 +245,40 @@ export const contractSecondsLeft = (c: Contract, tick: number, ticksPerSecond: n
 
 const clock = (seconds: number): string => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 
-/** What to do next, for the HUD and the journal. `secondsLeft` adds the delivery clock. */
-export const contractObjective = (c: Contract, secondsLeft: number | null = null): string => {
-  if (c.status === "cleared") return `${contractClearedNote(c)}. Wróć do ${contractGiver(c).genitive} po zapłatę`;
-  const site = CONTRACT_SITES[c.siteId].label;
+/**
+ * What to do next, for the HUD and the journal, as a key with parameters (ADR-0056): the site and
+ * the giver are texts of their own, the clock a string. `secondsLeft` adds the delivery clock.
+ */
+export const contractObjective = (c: Contract, secondsLeft: number | null = null): TextRef => {
+  if (c.status === "cleared") return textRef("contract.objective.cleared", { note: textRef(contractClearedNote(c)), giver: giverText(contractGiver(c).id) });
+  const site = textRef(CONTRACT_SITES[c.siteId].text);
+  const targets = c.targets;
+  const timed: Readonly<Record<string, string>> = secondsLeft === null ? {} : { time: clock(secondsLeft) };
   switch (contractKind(c)) {
     case "eliminate":
-      return `Zneutralizuj gangerów Hebi (${c.targets}): ${site}`;
+      return textRef("contract.objective.eliminate", { targets, site });
     case "delivery":
-      return `Zanieś paczkę od Kaito Hanie: ${site}${secondsLeft === null ? "" : ` (zostało ${clock(secondsLeft)})`}`;
+      return textRef(secondsLeft === null ? "contract.objective.delivery" : "contract.objective.deliveryTimed", { site, ...timed });
     case "retrieve":
-      return `Zabierz skrzynkę Hany ze skrytki Hebi (strażnicy: ${c.targets}): ${site}`;
+      return textRef("contract.objective.retrieve", { targets, site });
     case "protect":
-      return `Obroń Oyaji przed Hebi (${c.targets}): ${site}`;
+      return textRef("contract.objective.protect", { targets, site });
     case "escort":
-      return `Odprowadź Mikę do łodzi i osłoń ją przed Tessen (${c.targets}): ${site}`;
+      return textRef("contract.objective.escort", { targets, site });
     case "infiltrate":
-      return `Zgraj dane z terminala, nie daj się zauważyć (strażnicy: ${c.targets}): ${site}`;
+      return textRef("contract.objective.infiltrate", { targets, site });
     case "hack":
-      return c.progress === undefined
-        ? `Włam się do terminala i utrzymaj połączenie ${HACK_SECONDS} s: ${site}`
-        : `Utrzymaj połączenie z terminalem${secondsLeft === null ? "" : ` (zostało ${clock(secondsLeft)})`}: ${site}`;
+      if (c.progress === undefined) return textRef("contract.objective.hack", { seconds: HACK_SECONDS, site });
+      return textRef(secondsLeft === null ? "contract.objective.hackHolding" : "contract.objective.hackHoldingTimed", { site, ...timed });
   }
 };
 
-/** Short note for the moment the job itself is done. */
-export const contractClearedNote = (c: Contract): string => {
-  switch (contractKind(c)) {
-    case "eliminate":
-      return "Cele zneutralizowane";
-    case "delivery":
-      return "Paczka oddana";
-    case "retrieve":
-      return "Skrzynka zabrana";
-    case "protect":
-      return "Oyaji żyje, Hebi leżą";
-    case "escort":
-      return "Mika na łodzi";
-    case "infiltrate":
-      return "Dane zgrane";
-    case "hack":
-      return "Terminal złamany";
-  }
-};
+/** Catalog key of the short note for the moment the job itself is done. */
+export const contractClearedNote = (c: Contract): string => `contract.cleared.${contractKind(c)}`;
 
-const FAILURE_NOTES: Readonly<Record<ContractFailure, string>> = {
-  timeout: "Paczka nie dotarła na czas. Kaito nie będzie zadowolony",
-  "protectee-killed": "Oyaji nie żyje. Zlecenie Hany przepadło",
-  "escort-killed": "Mika nie żyje. Łódź Genzō odpływa pusta",
-  detected: "Ochrona Tessen cię zauważyła. Alarm w biurze, dane przepadły",
-  "connection-lost": "Połączenie z terminalem zerwane. Tessen zamknął lukę",
-};
-
-/** Why a contract fell through, as the HUD says it. A missed deadline of a varied job (ADR-0034) is not about a package. */
+/**
+ * Catalog key of why a contract fell through, as the HUD says it. A missed deadline of a varied
+ * job (ADR-0034) is not about a package.
+ */
 export const contractFailureNote = (reason: ContractFailure, kind: ContractKind = "delivery"): string =>
-  reason === "timeout" && kind !== "delivery" ? "Termin minął. Zleceniodawca szuka kogoś szybszego" : FAILURE_NOTES[reason];
+  reason === "timeout" && kind !== "delivery" ? "contract.failure.deadline" : `contract.failure.${reason}`;

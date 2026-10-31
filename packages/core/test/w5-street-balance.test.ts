@@ -39,6 +39,6 @@ describe("street food (ADR-0026)", () => {
 describe("the job under the footbridge (ADR-0026)", () => {
   it("joins Kaito's eliminations after the four M1 sites", () => {
     expect(ELIMINATION_SITE_IDS).toEqual(["east_lot", "koi_back", "car_wash", "south_gate", "kanal_bridge"]);
-    expect(CONTRACT_SITES.kanal_bridge.label).toContain("kładką");
+    expect(CONTRACT_SITES.kanal_bridge.text).toBe("contract.site.kanal_bridge");
   });
 });

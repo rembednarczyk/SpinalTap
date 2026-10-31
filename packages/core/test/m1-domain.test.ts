@@ -97,8 +97,8 @@ describe("contracts", () => {
 
   it("describes the objective for both states", () => {
     const c = generateContract(EMPTY_CONTRACTS, sequenceRng(0, 0), 0);
-    expect(contractObjective(c)).toContain("(2)");
-    expect(contractObjective({ ...c, status: "cleared" })).toContain("Wróć do Kaito");
+    expect(contractObjective(c).params?.targets).toBe(2);
+    expect(contractObjective({ ...c, status: "cleared" }).params?.giver).toEqual({ key: "contract.giver.kaito" });
     expect(contractTag("c3")).toBe("contract:c3");
   });
 });

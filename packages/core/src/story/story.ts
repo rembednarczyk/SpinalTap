@@ -33,15 +33,16 @@ export type StoryOption = (typeof STORY_CHOICES)[StoryChoiceId][number];
 
 export const ENDINGS = {
   /** Keeps the module and takes her old name back. */
-  aya: { id: "aya", title: "Aya" },
+  aya: { id: "aya", title: "ending.aya.title" },
   /** Has Mori cut the module out and stays the woman from the wreck. */
-  seki: { id: "seki", title: "Seki Senshi" },
+  seki: { id: "seki", title: "ending.seki.title" },
 } as const;
 
 export type EndingId = keyof typeof ENDINGS;
 
 export interface ActTwoEnding {
   readonly id: string;
+  /** Catalog key of the title (`ending.<id>.title`, ADR-0056). */
   readonly title: string;
   /** Standing changes applied when the ending is reached. */
   readonly reputation: readonly { readonly faction: FactionId; readonly delta: number }[];
@@ -54,7 +55,7 @@ export const ACT_TWO_ENDINGS = {
   /** The chips go back to the people whose lives are on them; Kagami sends its cleaners. */
   street: {
     id: "street",
-    title: "Archiwum ulicy",
+    title: "ending.street.title",
     reputation: [
       { faction: "civilians", delta: 15 },
       { faction: "hebi", delta: -5 },
@@ -64,7 +65,7 @@ export const ACT_TWO_ENDINGS = {
   /** Ren keeps the archive and sells it through Hebi; Kagami sends its cleaners. */
   hebi: {
     id: "hebi",
-    title: "Wspólnicy",
+    title: "ending.hebi.title",
     reputation: [
       { faction: "hebi", delta: 15 },
       { faction: "civilians", delta: -5 },
@@ -74,7 +75,7 @@ export const ACT_TWO_ENDINGS = {
   /** She hands Ren and the archive to Kagami and gets her full recording. No fight. */
   kagami: {
     id: "kagami",
-    title: "Kopia",
+    title: "ending.kagami.title",
     reputation: [
       { faction: "kagami", delta: 20 },
       { faction: "fixers", delta: 10 },
