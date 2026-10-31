@@ -21,6 +21,8 @@ interface Shape {
   readonly ring: readonly Pt[];
   readonly box: Rect;
   readonly surface: SiteSurface;
+  /** A footpath's outline: walk, but a way through, not ground to set things on. */
+  readonly path?: boolean;
 }
 
 export interface SiteStreet {
@@ -50,7 +52,7 @@ export class Site {
     const streets: SiteStreet[] = [];
     for (const c of chunks) {
       for (const b of c.buildings) this.add({ ring: flat(b.outline, b.x, b.z), surface: "building", box: { minX: 0, minZ: 0, maxX: 0, maxZ: 0 } });
-      for (const g of c.ground) if (!g.bridge) this.add({ ring: flat(g.outline), surface: surfaceOf(g.surface), box: { minX: 0, minZ: 0, maxX: 0, maxZ: 0 } });
+      for (const g of c.ground) if (!g.bridge) this.add({ ring: flat(g.outline), surface: surfaceOf(g.surface), path: g.surface === "footway", box: { minX: 0, minZ: 0, maxX: 0, maxZ: 0 } });
       for (const s of c.streets) streets.push({ name: s.name, kind: s.kind, line: flat(s.line), chunk: c.id });
     }
     this.streets = streets;
@@ -95,6 +97,12 @@ export class Site {
       if (RANK[s.surface ?? "none"]! > RANK[found ?? "none"]!) found = s.surface;
     }
     return found;
+  }
+
+  /** Whether p lies on a footpath's outline (a market's aisle in the map data, a path across a square). */
+  onPath(p: Pt): boolean {
+    const list = this.bins.get(`${Math.floor(p.x / BIN)}:${Math.floor(p.z / BIN)}`) ?? [];
+    return list.some((s) => s.path === true && p.x >= s.box.minX && p.x <= s.box.maxX && p.z >= s.box.minZ && p.z <= s.box.maxZ && pointInRing(p, s.ring));
   }
 
   /** Whether p is open ground a thing can stand on: not a building, water or rails. */

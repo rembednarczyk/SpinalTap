@@ -66,6 +66,7 @@ export const MAPPED: Readonly<Record<string, { readonly prop: StreetPropKind; re
   recycling: { prop: "waste-bin", why: "bins" },
   "waste-container": { prop: "waste-bin", why: "bins" },
   "post-box": { prop: "street-cabinet", why: "a box on the pavement" },
+  market: { prop: "market-stall", why: "a marketplace's outline: rows of stalls on its open ground (G-064)" },
 };
 
 /** Kinds of the plan left out, and why. */
@@ -93,7 +94,6 @@ export const SKIPPED: Readonly<Record<string, string>> = {
   "archaeological-site": "nothing visible",
   viewpoint: "a place, not a thing",
   playground: "an area with its own equipment (later)",
-  market: "an area; its stalls are market-stall",
   "bus-station": "a building",
   "bus-platform": "a roofed platform, a structure",
   "taxi-rank": "a road marking",
