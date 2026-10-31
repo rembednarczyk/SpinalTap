@@ -4,6 +4,28 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
 
 ## Następne
 
+- **Plan z audytu luk (31.10, `docs/audyt-luk.md`).** Priorytety: P0 blokuje grę albo inne prace, P1 standard gatunku o dużym wpływie, P2 ważne później, P3 opcjonalne. Kolejność P0 i P1 według zależności:
+  - **P0, teraz:**
+    1. Autozapis (po kroku zadania, kontrakcie, wejściu do lokalu, co kilka minut) i zapis przy `visibilitychange`/`pagehide` na telefonie. Koszt S. Niezależne.
+    2. Stabilne e2e (G-031, G-043) i ekran ładowania (ADR-0057). W toku.
+    3. Języki: etapy 2c–5 (ADR-0056). W toku.
+    4. Obezwładnienie bez zabijania, ogłuszenie, przenoszenie ciał (ADR do napisania). Koszt M. Musi być przed etapem 3 ADR-0059, bo drzewko Cień i XP za skradanie je zakładają.
+    5. Poziom trudności z presetami wspomagania (ADR do napisania). Koszt M. Przed etapem 8 ADR-0059 (balans liczony dla „normalnego”).
+    6. Rozwój postaci i skalowanie (ADR-0059), etap 1 w toku.
+    7. Celowanie na telefonie i padzie (wspomaganie, celowanie ze strzałem jednym kciukiem), z padem w tym samym ADR-ze.
+  - **P1, potem:**
+    1. Raportowanie błędów (`window.onerror`, `unhandledrejection`, utrata kontekstu WebGL) i widoczna wersja gry. Koszt S–M.
+    2. Automatyczny dobór jakości, limit klatek, tryb baterii na telefonie. Po ADR-0057 i podziale renderera, z danymi z raportów błędów.
+    3. AI walki: osłony, potem koordynacja grupy (flankowanie, tłumienie, wycofanie). Koszt L.
+    4. Granaty i urządzenia rzucane (EMP, dym, flash). Po osłonach, przed etapem 4 ADR-0059.
+    5. Nawigacja: własny znacznik i trasa GPS na minimapie i mapie (graf chodników z ADR-0041).
+    6. Autorskie zadania poboczne z wyborami oraz akt III z epilogiem i ekranem końca. Po etapie 5 ADR-0056 i etapach 1 i 5 ADR-0059.
+    7. Tanie opcje dostępności: suwaki szyn audio (muzyka, SFX, dialog, radio), wyłączenie kołysania i wstrząsów kamery, rozmiar napisów; pad w menu i dialogu.
+    8. Samouczek w misji i podpowiedzi systemowe (heat, Breach, przebrania).
+    9. Ikony przedmiotów i assety ubrań (już w planie), żywe miasto (ADR-0058, w toku), podział renderera (ADR-0031).
+  - **P2:** szefowie, ragdoll i reakcje śmierci, większy arsenał (broń ciężka i inteligentna, blok NPC), patrole po trasie, zagrożenia środowiska i alternatywne wejścia, relacje z postaciami i widoczne konsekwencje wyborów, pogoda jako stan w `sim`, mieszkanie gracza, aktywności otwartego świata, osobne ustawienia grafiki, eksport zapisu, PWA/offline, odzywki walki.
+  - **P3:** pojazdy prowadzone przez gracza (świadome cięcie przy metrze i mieście pieszym), kreator postaci, NG+, VO, muzyka per dzielnica, osiągnięcia, tryb foto, kodeks, modowanie.
+  - Łańcuch krytyczny: autozapis → obezwładnienie → trudność → ADR-0059 etapy 1–7 → osłony i AI → granaty → balans (ADR-0059 etap 8) → treść poboczna i akt III. Równolegle: i18n przed treścią; raporty błędów → jakość na telefonie.
 - **Kolejność uzgodniona z użytkownikiem (31.10):** najpierw G-031 (niestabilne e2e), dokończenie języków, ekran ładowania i podział renderera; drobne glitche równolegle, po jednym w przerwach.
 - **[w toku: etap 1 ADR-0058] Żywe, kolorowe miasto: znacznie więcej assetów CC0 z internetu.** Rozpoznanie: 33 paczki CC0 (Kenney, Quaternius, OpenGameArt, ambientCG). Rekwizyty ulicy (automaty, stragany, rośliny, skutery, ekrany), więcej pojazdów i elementów fasad, postacie tłumu, decale. Wpięcie przez `tools/city_kit.py` (wspólna paleta, jedna siatka na komórkę), z ADR-em i pomiarem budżetów (`tools/perf-budgets.json`).
 - **[plan, 31.10] Celowanie na telefonie: wspomaganie i celowanie ze strzałem jednym kciukiem.** Dziś nie da się jednocześnie trzymać celowania i strzelać jednym palcem. Do ADR-u:

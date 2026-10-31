@@ -111,3 +111,4 @@ Atrybutów jest pięć. Każdy ma wartość od 3 do 15. Na starcie są po 3, a n
 - Wszczepy zostają drugą osią buildu, a pojemność cyberware zależy teraz od poziomu i Techniki zamiast od liczby kontraktów.
 - Rośnie stan domeny i zapis. Poziom ma każda instancja przedmiotu, a progresja trzyma statystykę stylu.
 - Wartości liczbowe (krzywa, +4% na poziom, pasma, wagi) są wstępne. Ustala je test balansu z etapu 8, a ich zmiany nie wymagają nowego ADR-u.
+- **Zależność z audytu (31.10):** gra nie ma jeszcze obezwładnień (takedown, ogłuszenie). Źródło XP „skradanie” i perki drzewka Cień, które ich wymagają, czekają na osobny ADR obezwładnień. Etap 1 emituje tylko XP z tego, co istnieje.
