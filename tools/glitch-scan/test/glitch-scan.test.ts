@@ -7,13 +7,14 @@ import { facadeFrame } from "../../../packages/engine/src/renderer/mapcity/facad
 import { planFarBuilding } from "../../../packages/engine/src/renderer/mapcity/facade-plan";
 import { type BuildingSource, mapBuilding } from "../../../packages/engine/src/renderer/mapcity/map-building";
 import { centroid, cleanRing, pointInRing } from "../../../packages/engine/src/renderer/mapcity/polygon";
+import { stackTiers } from "../../../packages/engine/src/renderer/mapcity/vertical-plan";
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
 import { geoToWorld } from "../../osm-import/src/project.ts";
 import { CROWD_LANES } from "../../../packages/sim/src/content/crowd";
 import { furnitureClearance } from "../../../packages/sim/src/content/furniture-index";
 import { BOLLARD, alongSegment, anchors, chainSegments, chainThrough, distanceToPiece, furniturePrisms, furnitureRadius } from "../../../packages/sim/src/content/lublin/furniture";
-import { buildingView } from "../../../packages/sim/src/content/lublin";
+import { buildingView, isLandmark } from "../../../packages/sim/src/content/lublin";
 import { inBuilding, nearestWall } from "../../../packages/sim/src/content/lublin/places";
 import { ROAD_CHAINS, type RoadChain, polylineLength, surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
 import { clearedBuilding } from "../../../packages/sim/src/content/cleared-buildings";
@@ -146,6 +147,36 @@ const depth = (a: Poly, b: Poly) => {
     }
   return least;
 };
+
+/** A building's outline in world points. */
+const worldOutline = (b: { readonly x: number; readonly z: number; readonly outline: readonly number[] }): Pt[] => {
+  const out: Pt[] = [];
+  for (let i = 0; i + 1 < b.outline.length; i += 2) out.push({ x: b.outline[i]! + b.x, z: b.outline[i + 1]! + b.z });
+  return out;
+};
+
+/** The gap between two outlines (m): the shortest from a corner of one to an edge of the other. */
+const outlineGap = (a: Poly, b: Poly) => {
+  let d = Infinity;
+  for (const [from, to] of [[a, b], [b, a]] as const)
+    for (const p of from)
+      for (let k = 0; k < to.length; k++) {
+        const q = to[k]!;
+        const r = to[(k + 1) % to.length]!;
+        const dx = r.x - q.x;
+        const dz = r.z - q.z;
+        const t = Math.max(0, Math.min(1, ((p.x - q.x) * dx + (p.z - q.z) * dz) / (dx * dx + dz * dz || 1)));
+        d = Math.min(d, Math.hypot(q.x + dx * t - p.x, q.z + dz * t - p.z));
+      }
+  return d;
+};
+
+/** The gap between two outlines (m), 0 where one reaches into the other. */
+const ringGap = (a: Poly, b: Poly) => (a.some((p) => pointInRing(p, b)) || b.some((p) => pointInRing(p, a)) ? 0 : outlineGap(a, b));
+
+/** The tiers of a building's superstructure as the renderer stacks them (ADR-0051). */
+const tiersOf = (view: Extract<ReturnType<typeof buildingView>, { kind: "building" }>, b: { readonly x: number; readonly y: number; readonly z: number }, outline: Poly, id: number) =>
+  stackTiers(facadeFrame(mapBuilding(id, { ring: cleanRing(outline), view, at: { x: b.x, y: b.y, z: b.z } }, () => null), () => null));
 
 const overlaps = (a: Rect, b: Rect) => a.minX < b.maxX && b.minX < a.maxX && a.minZ < b.maxZ && b.minZ < a.maxZ;
 
@@ -500,6 +531,25 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
         return jump > 0.5 ? [{ at: near(at.x, at.z), what: `w${w.id} ${t.name ?? t.highway} under a deck, a step of ${jump.toFixed(1)} m` }] : [];
       });
     }),
+  /**
+   * A tier of a superstructure (ADR-0051) rising over the top of a landmark less than 5 m from
+   * its outline: the house towering over the gate it adjoins (G-050). The tiers as the renderer
+   * stacks them, the landmarks from the map.
+   */
+  "landmark-overbuilt": () => {
+    const buildings = MAP_CHUNKS.flatMap((c) => c.buildings.map((b) => ({ b, district: c.district, outline: worldOutline(b) })));
+    const landmarks = buildings.filter(({ b }) => isLandmark(b)).map((l) => ({ ...l, top: l.b.y + l.b.height + (l.b.roof ?? 0) }));
+    return buildings.flatMap(({ b, district, outline }, i) => {
+      const view = buildingView(b, district);
+      if (view.kind !== "building" || !view.vertical?.rise) return [];
+      const near5 = landmarks.filter((l) => Math.hypot(l.b.x - b.x, l.b.z - b.z) < 200 && ringGap(outline, l.outline) < 5);
+      if (near5.length === 0) return [];
+      return tiersOf(view, b, outline, i).flatMap((t, k) => {
+        const over = near5.find((l) => t.y1 > l.top + 0.01 && ringGap(t.ring, l.outline) < 5);
+        return over ? [{ at: near(b.x, b.z), what: `${b.id} tier ${k} up to ${t.y1.toFixed(1)}, ${ringGap(t.ring, over.outline).toFixed(1)} m off ${over.b.name ?? over.b.id} (top ${over.top.toFixed(1)})` }] : [];
+      });
+    });
+  },
   /** A passage through a building with an end off every chunk, where there is no ground to come out on. */
   "passage-off-map": () =>
     PASSAGES.filter((p) => [p.from, p.to].some(({ x, z }) => !MAP_CHUNKS.some(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ))).map((p) => ({
@@ -549,6 +599,18 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
 };
 
 describe("the glitch scan (ADR-0054)", () => {
+  it("stacks Grodzka 36a 5 m back from the Grodzka Gate instead of over it (G-050)", () => {
+    const house = MAP_CHUNKS.flatMap((c) => c.buildings.map((b) => ({ b, district: c.district }))).find(({ b }) => b.id === "w66293355")!;
+    const gate = MAP_CHUNKS.flatMap((c) => c.buildings).find((b) => b.name === "Brama Grodzka")!;
+    const view = buildingView(house.b, house.district);
+    if (view.kind !== "building") throw new Error("not a building");
+    expect(view.vertical?.rise).toBeGreaterThan(0);
+    const tiers = tiersOf(view, house.b, worldOutline(house.b), 1);
+    expect(tiers.length).toBeGreaterThan(0);
+    const gateTop = gate.y + gate.height + (gate.roof ?? 0);
+    for (const t of tiers) if (t.y1 > gateTop) expect(ringGap(t.ring, worldOutline(gate))).toBeGreaterThanOrEqual(5);
+  });
+
   it("finds no more glitches of any known kind than its baseline", () => {
     const found = Object.fromEntries(Object.entries(CHECKS).map(([k, check]) => [k, check()]));
     const counts = Object.fromEntries(Object.entries(found).map(([k, f]) => [k, f.length]));
