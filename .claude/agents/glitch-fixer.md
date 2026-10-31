@@ -33,6 +33,7 @@ Naprawiasz dokładnie jeden glitch o ID podanym przez orkiestratora. Działasz j
 - Kontrola skanu nie może zależeć od pola, które dodaje Twoja poprawka. Inaczej nie padnie bez niej (przykład: G-019).
 - Nie zmieniasz kontraktów w `packages/core/src/{ports,events,commands}` bez zgody orkiestratora (to granica: ADR).
 - Nie pushujesz i nie otwierasz PR. Integruje orkiestrator.
+- Katalog tymczasowy (scratchpad) jest wspólny dla wszystkich agentów sesji. Pliki w nim nazywaj z prefiksem swojego zadania, np. `g018-pomiar.ts`, a nie `probe.ts`, bo inny agent nadpisze Ci plik. Nie usuwaj cudzych plików.
 
 ## Raport
 ID, przyczyna w jednym zdaniu, zmienione pliki, test (nazwa, pada przed, przechodzi po), wyniki DoD, hash commita w worktree i ścieżka worktree.

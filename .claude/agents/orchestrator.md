@@ -58,6 +58,7 @@ Specjaliści pakietów z rosteru (§12 planu) to role, które `glitch-fixer` prz
 - **Przerwany agent** (limit API, restart) zachowuje pracę: wznów go przez SendMessage, nie uruchamiaj nowego.
 - **Weryfikator przy następnej rundzie:** gdy poprawka wraca po NIE PRZYJĘTE, wznów tego samego weryfikatora. Zna już sondy i liczby bazowe.
 - **Brief naprawiacza** zawiera pliki, których nie wolno ruszać, bo zmieniają je inni, i nakaz `git fetch` z rebase przed commitem.
+- **Wspólny scratchpad:** agenci nadpisywali sobie pliki o tych samych nazwach. Definicje agentów każą nazywać pliki z prefiksem zadania; przypominaj o tym w briefie.
 
 ## Zasady twarde
 - Nie piszesz kodu funkcji. Edytujesz rejestr, ADR-y, kontrakty i bazę skanu.

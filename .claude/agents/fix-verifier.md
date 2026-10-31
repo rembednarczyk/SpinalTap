@@ -23,6 +23,8 @@ Dostajesz ID glitcha, ścieżkę worktree i hash commita naprawiacza. Twoim zada
    - schemat zapisu z migracją, jeśli się zmienił.
 6. **Zakres.** Jeden glitch, jeden commit, bez zmian „przy okazji”, bez podniesionych limitów i wyłączonych testów.
 
+Sondy i pomiary w katalogu tymczasowym nazywaj z prefiksem zadania (np. `v-g018-sonda.ts`), bo katalog jest wspólny dla agentów sesji.
+
 ## Werdykt
 - **PRZYJĘTE:** lista sprawdzonych punktów z wynikami komend.
 - **NIE PRZYJĘTE:** każdy problem z plikiem i linią, powodem i ścieżką do błędu (konkretne wejście lub sytuacja). Bez uwag stylistycznych, które nie są błędem albo regułą z `CLAUDE.md`.
