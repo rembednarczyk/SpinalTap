@@ -17,6 +17,7 @@ import { type BuffList, NO_BUFFS } from "../abilities/buffs";
 import { type DisguiseState, NO_DISGUISE } from "../crime/disguise";
 import { type MetroState, NO_METRO } from "../world/metro";
 import { type EncounterLog, NO_ENCOUNTERS } from "../world/encounters";
+import { INITIAL_PROGRESSION, type ProgressionState } from "../progression/progression";
 
 export interface Preferences {
   readonly cameraMode: CameraMode;
@@ -61,6 +62,8 @@ export interface DomainState {
   readonly metro: MetroState;
   /** Street encounters already played (ADR-0034). */
   readonly encounters: EncounterLog;
+  /** Experience, level, attributes and the points to spend (ADR-0059). */
+  readonly progression: ProgressionState;
 }
 
 export const createDomainState = (): DomainState => ({
@@ -83,4 +86,5 @@ export const createDomainState = (): DomainState => ({
   disguise: NO_DISGUISE,
   metro: NO_METRO,
   encounters: NO_ENCOUNTERS,
+  progression: INITIAL_PROGRESSION,
 });

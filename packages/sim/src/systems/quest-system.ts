@@ -1,6 +1,7 @@
 import { QUEST_DEFINITIONS, evaluateQuests, stepObjective, type QuestReward } from "@seki/core";
 import type { SimContext, System } from "../world/context";
 import { adjustReputation, grantEddies, grantMemory } from "../world/domain-ops";
+import { grantXp } from "../world/progression-ops";
 
 const applyReward = (ctx: SimContext, reward: QuestReward): void => {
   switch (reward.type) {
@@ -27,6 +28,7 @@ export const questSystem: System = {
     ctx.state.domain = { ...ctx.state.domain, quests: log };
     for (const t of transitions) {
       for (const r of t.rewards) applyReward(ctx, r);
+      if (t.xp > 0) grantXp(ctx, t.xp, "quest");
       if (t.type !== "completed") ctx.bus.emit("QuestAdvanced", { questId: t.questId, stepId: t.step.id, objective: stepObjective(t.step, ctx.state.domain.flags) });
       else ctx.bus.emit("QuestCompleted", { questId: t.questId, title: t.title });
     }

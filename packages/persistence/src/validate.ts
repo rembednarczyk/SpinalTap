@@ -17,6 +17,7 @@ import {
 } from "@seki/core";
 import { findItemsError } from "./validate-items";
 import { findContractWave2Error, findEncountersError, findMetroError } from "./validate-wave2";
+import { findProgressionError } from "./validate-progression";
 
 type Json = Record<string, unknown>;
 
@@ -85,7 +86,7 @@ export const findSchemaError = (s: Json): string | null => {
   const wave2Error = findContractWave2Error(contracts) ?? findMetroError(d.metro) ?? findEncountersError(d.encounters);
   if (wave2Error) return wave2Error;
   if (!isObject(d.ability) || !isNum(d.ability.activeTime) || !isNum(d.ability.cooldown)) return "ability";
-  const bodyError = findBodyError(d);
+  const bodyError = findBodyError(d) ?? findProgressionError(d.progression);
   if (bodyError) return bodyError;
   const story = d.story;
   if (!isObject(story) || !isObject(story.choices)) return "story";

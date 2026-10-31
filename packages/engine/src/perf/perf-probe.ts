@@ -5,6 +5,8 @@ export interface PerfSample {
   readonly frameTimeMs: number;
   readonly drawCalls: number;
   readonly activeMeshes: number;
+  /** Triangles of the active meshes in the last frame (indices / 3), a report like the frame time. */
+  readonly activeTriangles: number;
   readonly totalMeshes: number;
   readonly materials: number;
   readonly particles: number;
@@ -30,6 +32,7 @@ export class PerfProbe {
       frameTimeMs: Math.round(this.instrumentation.frameTimeCounter.lastSecAverage * 100) / 100,
       drawCalls: this.instrumentation.drawCallsCounter.current,
       activeMeshes: this.scene.getActiveMeshes().length,
+      activeTriangles: Math.round(this.scene.getActiveIndices() / 3),
       totalMeshes: this.scene.meshes.length,
       materials: this.scene.materials.length,
       particles: this.scene.particleSystems.reduce((n, ps) => n + ps.getActiveCount(), 0),

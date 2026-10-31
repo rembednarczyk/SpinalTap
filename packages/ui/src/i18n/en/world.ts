@@ -106,12 +106,16 @@ export const enWorld = {
   // Saving and loading.
   "save.unavailable": "Can't save right now",
   "save.saved": "Game saved",
+  "save.autosaved": "Autosaved",
   "save.failed": "Save failed",
   "save.emptySlot": "Empty slot",
   "save.loaded": "Game loaded",
   "save.loadFailed": "Couldn't load the game",
   "save.corruptFile": "The save file is corrupted.",
   "save.corrupt": "Corrupted save",
+  // Character progression (ADR-0059).
+  "progress.levelUp": "Level up: {level}",
+  "progress.levelUpPoints": "An attribute point and a perk point to spend",
   // Quest and contract toasts.
   "quest.updated": "Quest updated",
   "quest.completed": "Job done",
