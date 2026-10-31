@@ -39,3 +39,6 @@ Wymóg użytkownika: wnętrze ma okna tam, gdzie ma je budynek.
 - Szyba nie przepuszcza gracza ani pocisków (kolizja ściany w `sim` bez zmian); linia widzenia przez okno dla AI i świadków jest osobną decyzją przy etapie, który ją potrzebuje.
 - Kontrola w skanie: okno elewacji przy wnętrzu bez otworu we wnętrzu i otwór we wnętrzu bez okna na elewacji, baza 0. Weryfikator i kurator sprawdzają to przy każdym nowym wnętrzu.
 - Dotyczy też istniejących wnętrz (klinika, Neon Koi, biuro Tessen): do sprawdzenia i dorobienia jako osobny etap.
+
+## Uzupełnienie (31.10): limit autozapisu przy wejściu
+Wejście do lokalu i zmiana dzielnicy nie robią autozapisu, gdy poprzedni autozapis (z dowolnego powodu) był mniej niż 60 s wcześniej (`AUTOSAVE_PLACE_COOLDOWN_TICKS`). Taki wyzwalacz jest odrzucany, nie odkładany: wejście do innego lokalu 10 s po zapisie z kroku zadania nie zapisze się do najbliższego interwału. Nowa gra i wczytanie zerują limit. Powód: drzwi są wąskie, a kroczenie w progu bez limitu dawało zapis z dźwiękiem i toastem co kilka sekund.
