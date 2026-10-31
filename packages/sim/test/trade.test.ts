@@ -31,7 +31,7 @@ describe("Oyaji's stall (E10)", () => {
     const started = collect(sim, "InteractionStarted");
     teleportPlayer(sim, { x: STALL.x, y: STALL.y, z: STALL.z - 1.4 });
     sim.step();
-    expect(byKey(sim, "oyaji")?.interactable).toMatchObject({ kind: "shop", shopId: "oyaji", prompt: "Stragan Oyajiego" });
+    expect(byKey(sim, "oyaji")?.interactable).toMatchObject({ kind: "shop", shopId: "oyaji", prompt: "prompt.shop.oyaji" });
     sim.step(input({ interact: true }));
     expect(started).toEqual([expect.objectContaining({ kind: "shop", shopId: "oyaji", dialogueId: "oyaji" })]);
   });

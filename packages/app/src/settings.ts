@@ -1,4 +1,4 @@
-import { FOV_REFERENCE_ASPECT, type InputFrame, degToRad, horizontalFovOf, isLocale, radToDeg } from "@seki/core";
+import { type AudioScenePort, FOV_REFERENCE_ASPECT, type InputFrame, degToRad, horizontalFovOf, isLocale, radToDeg } from "@seki/core";
 import {
   type AimMode,
   type ColorblindMode,
@@ -67,8 +67,13 @@ export const sanitizeSettings = (raw: unknown, defaults: SettingsVm = DEFAULT_SE
     touchSensitivity: clamp(r.touchSensitivity, 0.2, 3, defaults.touchSensitivity),
     horizontalFov: clampFieldOfView(horizontalFovOf16x9(r), defaults.horizontalFov),
     volume: clamp(r.volume, 0, 1, defaults.volume),
+    musicVolume: clamp(r.musicVolume, 0, 1, defaults.musicVolume),
+    sfxVolume: clamp(r.sfxVolume, 0, 1, defaults.sfxVolume),
+    ambienceVolume: clamp(r.ambienceVolume, 0, 1, defaults.ambienceVolume),
     bindings: sanitizeBindings(r.bindings),
     hints: typeof r.hints === "boolean" ? r.hints : defaults.hints,
+    // Entries saved before autosave existed keep it on.
+    autosave: bool(r.autosave, defaults.autosave),
     // Wave 1 (ADR-0028): entries saved before these fields existed take the defaults.
     hudAlwaysShow: bool(r.hudAlwaysShow, defaults.hudAlwaysShow),
     damageNumbers: isDamageMode(r.damageNumbers) ? r.damageNumbers : defaults.damageNumbers,
@@ -127,6 +132,14 @@ export interface EffectsTarget {
 export const applyEffects = (target: object, settings: Pick<SettingsVm, "reduceFlashes"> & Partial<Pick<SettingsVm, "highlights">>): void => {
   (target as EffectsTarget).setReduceFlashes?.(settings.reduceFlashes);
   if (settings.highlights !== undefined) (target as EffectsTarget).setHighlights?.(settings.highlights);
+};
+
+/** The volumes of the settings on the mix (master and the buses, ADR-0060 stage 1). */
+export const applyVolumes = (audio: Pick<AudioScenePort, "setVolume">, s: Pick<SettingsVm, "volume" | "musicVolume" | "sfxVolume" | "ambienceVolume">): void => {
+  audio.setVolume("master", s.volume);
+  audio.setVolume("music", s.musicVolume);
+  audio.setVolume("sfx", s.sfxVolume);
+  audio.setVolume("ambience", s.ambienceVolume);
 };
 
 /** Settings that the running game cannot change on the fly. */

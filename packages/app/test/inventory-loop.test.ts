@@ -100,10 +100,10 @@ describe("loot loop: kill, bag, take, save, load (plan E6)", () => {
     const eddies = container.lines.find((l) => l.kind === "eddies")!.qty;
     const wallet = session.sim.domain.wallet.eddies;
 
-    // Stand next to the bag: the prompt says "Przeszukaj", E opens the panel.
+    // Stand next to the bag: the prompt says "Search", E opens the panel.
     teleport(session, container.position.x, container.position.z - 1);
     steps(session, 1);
-    expect(ui.getState().prompt).toBe("Przeszukaj");
+    expect(ui.getState().prompt).toBe("Search");
     steps(session, 1, frame({ interact: true }));
     const panel = ui.getState().loot!;
     expect(panel.key).toBe("loot:guard");

@@ -37,6 +37,8 @@ export interface QuestStep {
   readonly target?: QuestTarget;
   readonly completeWhen: QuestCondition;
   readonly rewards: readonly QuestReward[];
+  /** Experience for completing the step (ADR-0059); none when absent. */
+  readonly xp?: number;
 }
 
 export interface QuestDefinition {
@@ -47,6 +49,8 @@ export interface QuestDefinition {
   /** Id of the quest whose completion starts this one. Without it the quest is started explicitly. */
   readonly startsAfter?: string;
   readonly steps: readonly QuestStep[];
+  /** Experience for finishing the whole quest, on top of its last step's (ADR-0059). */
+  readonly xp?: number;
 }
 
 export type QuestProgress =
@@ -55,9 +59,10 @@ export type QuestProgress =
 
 export type QuestLog = Readonly<Record<string, QuestProgress>>;
 
+/** `xp`: experience the transition earned (the step done and, on completion, the quest). */
 export type QuestTransition =
-  | { readonly type: "started" | "advanced"; readonly questId: string; readonly step: QuestStep; readonly rewards: readonly QuestReward[] }
-  | { readonly type: "completed"; readonly questId: string; readonly title: string; readonly rewards: readonly QuestReward[] };
+  | { readonly type: "started" | "advanced"; readonly questId: string; readonly step: QuestStep; readonly rewards: readonly QuestReward[]; readonly xp: number }
+  | { readonly type: "completed"; readonly questId: string; readonly title: string; readonly rewards: readonly QuestReward[]; readonly xp: number };
 
 /**
  * Domain facts that only count for the quest step active when they happen ("buy an implant
@@ -103,21 +108,34 @@ export const evaluateQuests = (
       const nextStep = quest.steps[nextIndex];
       if (nextStep) {
         progress = { status: "active", stepIndex: nextIndex };
-        transitions.push({ type: "advanced", questId: quest.id, step: nextStep, rewards: step.rewards });
+        transitions.push({ type: "advanced", questId: quest.id, step: nextStep, rewards: step.rewards, xp: step.xp ?? 0 });
       } else {
         progress = { status: "completed" };
-        transitions.push({ type: "completed", questId: quest.id, title: quest.title, rewards: step.rewards });
+        transitions.push({ type: "completed", questId: quest.id, title: quest.title, rewards: step.rewards, xp: (step.xp ?? 0) + (quest.xp ?? 0) });
         for (const follow of definitions) {
           const first = follow.steps[0];
           if (follow.startsAfter !== quest.id || next[follow.id] || !first) continue;
           next[follow.id] = { status: "active", stepIndex: 0 };
-          transitions.push({ type: "started", questId: follow.id, step: first, rewards: [] });
+          transitions.push({ type: "started", questId: follow.id, step: first, rewards: [], xp: 0 });
         }
       }
       next[quest.id] = progress;
     }
   }
   return { log: next, transitions };
+};
+
+/** Experience a quest log has earned so far: every step done and every quest finished. */
+export const questLogXp = (log: QuestLog, definitions: readonly QuestDefinition[]): number => {
+  let xp = 0;
+  for (const quest of definitions) {
+    const progress = log[quest.id];
+    if (!progress) continue;
+    const done = progress.status === "completed" ? quest.steps.length : progress.stepIndex;
+    for (const step of quest.steps.slice(0, done)) xp += step.xp ?? 0;
+    if (progress.status === "completed") xp += quest.xp ?? 0;
+  }
+  return xp;
 };
 
 export const currentStep = (log: QuestLog, quest: QuestDefinition): QuestStep | null => {

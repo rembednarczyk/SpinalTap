@@ -3,6 +3,9 @@
  * Polish until stage 5 and read the site from `CONTRACT_SITES[id].label`; every other place shows
  * the site through its catalog key `contract.site.<id>`. Stage 5 gives the narrative its own
  * catalogs, and this file goes with it.
+ *
+ * TODO(ADR-0056, stage 5): remove this file once ink writes its words through `NarrativeText`
+ * (the runtime then names `contract_site` by key) and `narrative-runtime.ts` stops reading it.
  */
 export const INK_SITE_LABELS_PL = {
   east_lot: "parking przy furgonetce na Placu Litewskim",

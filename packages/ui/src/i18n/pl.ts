@@ -3,6 +3,7 @@ import type { Message } from "./message";
 import { plTrade } from "./pl/trade";
 import { plWorld } from "./pl/world";
 import { plDomain } from "./pl/domain";
+import { plContent } from "./pl/content";
 
 /** Polish: exactly the English keys (ADR-0056); a missing or extra key does not compile. */
 export const pl = {
@@ -28,6 +29,7 @@ export const pl = {
   "pause.mainMenu": "Menu główne",
   // Save slots.
   "slots.quick": "Szybki zapis",
+  "slots.auto": "Autozapis",
   "slots.slot": "Slot {n}",
   "slots.empty": "pusty",
   // Controls help.
@@ -98,7 +100,11 @@ export const pl = {
   "settings.quality.medium": "Średnia",
   "settings.quality.low": "Niska",
   "settings.volume": "Głośność",
+  "settings.musicVolume": "Muzyka i radio",
+  "settings.sfxVolume": "Efekty",
+  "settings.ambienceVolume": "Odgłosy miasta",
   "settings.hints": "Podpowiedzi",
+  "settings.autosave": "Autozapis",
   "settings.touchSensitivity": "Czułość dotyku",
   "settings.hudAlwaysShow": "Zdrowie i amunicja zawsze",
   "settings.damageNumbers": "Liczby obrażeń",
@@ -143,4 +149,5 @@ export const pl = {
   ...plTrade,
   ...plWorld,
   ...plDomain,
+  ...plContent,
 } as const satisfies Readonly<Record<MessageKey, Message>>;

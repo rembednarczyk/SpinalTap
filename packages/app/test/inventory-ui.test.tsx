@@ -40,7 +40,7 @@ describe("weapon strip and loot in the game", () => {
     const before = seki.state().eddies;
     run(() => seki.teleport(bag!.position.x, bag!.position.z - 1));
     step(1);
-    expect(screen.getByTestId("prompt").textContent).toContain("Przeszukaj");
+    expect(screen.getByTestId("prompt").textContent).toContain("Search");
     step(1, { interact: true });
 
     const panel = screen.getByTestId("loot");

@@ -45,6 +45,8 @@ export interface Toast {
   readonly kind: "quest" | "memory" | "money" | "reputation" | "system" | "cyberware" | "heat" | "radio";
   readonly title: string;
   readonly text: string;
+  /** Outlives ordinary toasts when too many come at once (a level up, a failed load). */
+  readonly keep?: boolean;
 }
 
 export interface JournalStepVm {
@@ -254,10 +256,16 @@ export interface SettingsVm {
   readonly horizontalFov: number;
   /** Master volume 0..1. */
   readonly volume: number;
+  /** Volumes of the mix buses 0..1 (ADR-0060 stage 1): music and radio, effects, the city around. */
+  readonly musicVolume: number;
+  readonly sfxVolume: number;
+  readonly ambienceVolume: number;
   /** Key bindings that differ from the defaults: action id -> codes. */
   readonly bindings: Readonly<Record<string, readonly string[]>>;
   /** First-run hints (controls, interactions) shown while playing. */
   readonly hints: boolean;
+  /** Autosave to its own slot after quest steps, contracts, every few minutes and when the page hides. */
+  readonly autosave: boolean;
   /** Health and ammo stay on screen outside combat too. */
   readonly hudAlwaysShow: boolean;
   /** Damage numbers over the crosshair: none, one per hit, or a running total per target. */
@@ -304,8 +312,12 @@ export const DEFAULT_SETTINGS: SettingsVm = {
   touchSensitivity: 1,
   horizontalFov: DEFAULT_HORIZONTAL_FOV,
   volume: 0.6,
+  musicVolume: 0.55,
+  sfxVolume: 0.9,
+  ambienceVolume: 0.7,
   bindings: {},
   hints: true,
+  autosave: true,
   hudAlwaysShow: false,
   damageNumbers: "off",
   hudScale: 1,

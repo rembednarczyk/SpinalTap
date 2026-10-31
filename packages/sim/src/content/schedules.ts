@@ -67,7 +67,7 @@ const oyaji = (): ScheduleDef => {
         path: [front, door],
         yaw: stall.yaw,
         activity: "sit",
-        interaction: { kind: "dialogue", dialogueId: "oyaji_closed", prompt: "Stragan Oyajiego: zamknięte do 8:00", radius: 2.4 },
+        interaction: { kind: "dialogue", dialogueId: "oyaji_closed", prompt: "prompt.closed.oyaji", radius: 2.4 },
       },
     ],
   };
@@ -151,7 +151,7 @@ const fumiko = (): ScheduleDef => {
         path: [behind, stool],
         yaw: stall.yaw,
         activity: "sit",
-        interaction: { kind: "dialogue", dialogueId: "fumiko_closed", prompt: "Ramen u Fumiko: zamknięte do 16:00", radius: 3 },
+        interaction: { kind: "dialogue", dialogueId: "fumiko_closed", prompt: "prompt.closed.fumiko", radius: 3 },
       },
       { label: "stragan", at: YATAI_HOURS.open, path: [behind, stall.position], yaw: stall.yaw, activity: { cycle: ["cook", "sweep"], minutes: 20 } },
     ],

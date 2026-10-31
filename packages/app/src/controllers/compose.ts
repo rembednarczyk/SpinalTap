@@ -17,6 +17,8 @@ import { HintSync } from "./hint-sync";
 import { HudSync } from "./hud-sync";
 import { LootController } from "./loot-controller";
 import { PhoneController } from "./phone-controller";
+import { autosaveView } from "../presenters/autosave";
+import { AutosaveController } from "./autosave-controller";
 import { SaveController } from "./save-controller";
 import { SettingsController } from "./settings-controller";
 import { type Focus, type SimRef, focusOf, pushToastTimed } from "./shared";
@@ -47,6 +49,7 @@ export interface Controllers {
   readonly phone: PhoneController;
   readonly hack: HackController;
   readonly saves: SaveController;
+  readonly autosave: AutosaveController;
   readonly wave1: Wave1Hud;
   readonly hud: HudSync;
   // Wave 2 (ADR-0035).
@@ -118,7 +121,7 @@ export const createControllers = (deps: GameSessionDeps, s: SessionHooks): Contr
     onDialogueInterrupted: () => s.interrupt(),
     onLoot: (key) => loot.open(key),
   });
-  const lines = createKnotLines(deps.story);
+  const lines = createKnotLines(deps.story, () => ui.getState().settings.locale);
   const hudHooks = {
     playerId: () => sim().player()?.id ?? null,
     domain: () => sim().domain,
@@ -155,5 +158,16 @@ export const createControllers = (deps: GameSessionDeps, s: SessionHooks): Contr
   });
   const canSave = () => !dialogue.isOpen && !shop.isOpen && !loot.isOpen && !travel.metro.isOpen && !travel.metro.riding && s.screen() !== "dead" && s.screen() !== "title";
   const saves = new SaveController({ persistence: deps.persistence, ui, audio, narrative: s.narrative, sim, now: deps.now, canSave, restore: s.restore });
-  return { focus, hints, dialogue, shop, loot, character, settings, phone, hack, saves, wave1, hud, wave2, ...travel };
+  const autosave = new AutosaveController({
+    bus,
+    sim,
+    enabled: () => ui.getState().settings.autosave,
+    // In control (no panel, menu, breach or kiosk) or paused from there, out of combat, alive,
+    // the story not over. A phone player often pauses before switching apps.
+    safe: () => (s.inControl() || s.screen() === "paused") && canSave() && !hud.inCombat && !sim().session.gameOver && (sim().player()?.health?.current ?? 0) > 0,
+    write: (slot) => saves.write(slot),
+    view: autosaveView(ui, audio),
+    ...(deps.autosaveIntervalTicks ? { intervalTicks: deps.autosaveIntervalTicks } : {}),
+  });
+  return { focus, hints, dialogue, shop, loot, character, settings, phone, hack, saves, autosave, wave1, hud, wave2, ...travel };
 };

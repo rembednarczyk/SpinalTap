@@ -25,6 +25,7 @@ import type { DeviceKind, Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { chestOf, eyeOf, lineOfSight } from "../world/hitscan";
 import { inCreationOrder } from "../world/ordering";
+import { grantQuickhackXp } from "../world/progression-ops";
 import { disturb, hackFxOf, isEngaged, noteDetected, noteHacked, noteViolence } from "../world/street";
 import { scanning, worldTimeScale } from "./ability-system";
 import { SEARCH_SECONDS, TRACK_GRACE, effectiveAggroRange, giveLead, guardSees } from "./ai/ganger-perception";
@@ -44,13 +45,16 @@ export const hackTargetKind = (e: Entity): HackTargetKind | null => {
   return null;
 };
 
-const DEVICE_NAMES: Readonly<Record<DeviceKind, string>> = { camera: "Kamera", vending: "Automat z napojami", speaker: "Głośnik", neon: "Neon" };
+const DEVICE_NAMES: Readonly<Record<DeviceKind, string>> = { camera: "scan.name.camera", vending: "scan.name.vending", speaker: "scan.name.speaker", neon: "scan.name.neon" };
 
-/** What the scanner calls it: the device, the fighter's side, or a passer-by. */
+/**
+ * What the scanner calls it: the device, the fighter's side, or a passer-by. A key of the app's
+ * catalogs (ADR-0056), except a fighter's side, which is the faction's name as core gives it.
+ */
 export const scanName = (e: Entity): string => {
   if (e.device) return DEVICE_NAMES[e.device.kind];
-  if (e.ai || e.sniper) return e.faction ? FACTIONS[e.faction] : "Wróg";
-  return "Przechodzień";
+  if (e.ai || e.sniper) return e.faction ? FACTIONS[e.faction] : "scan.name.enemy";
+  return "scan.name.passerBy";
 };
 
 /** Where the scanner looks at it: a device's centre, a person's chest. */
@@ -260,6 +264,7 @@ const apply = (ctx: SimContext, player: Entity, hackId: QuickhackId, target: Ent
   }
   noteHacked(ctx);
   ctx.bus.emit("QuickhackApplied", { hackId, targetId: target.id, duration: def.duration });
+  grantQuickhackXp(ctx, target.key);
 };
 
 /** Starts the n-th hack of the focused target's list (ADR-0028: RAM is paid at the start). */

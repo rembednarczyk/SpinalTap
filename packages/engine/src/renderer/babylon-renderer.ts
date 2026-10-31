@@ -40,6 +40,11 @@ export interface RendererOptions {
    */
   readonly cityKit?: string | null;
   /**
+   * URL of the facade props (ADR-0058), loaded after the kit and baked into its cells and the
+   * map city's; without it the procedural decor stays.
+   */
+  readonly cityProps?: string | null;
+  /**
    * The game's chunk table for the dressing, the far city and the street signage (default
    * `WORLD_CHUNKS`); the map preview passes none, so only the city from map data is drawn.
    */
@@ -148,7 +153,15 @@ export class BabylonRenderer implements RenderPort {
     this.signage = new Signage(scene, world);
     // Without a kit the dressing goes in with the first chunk; with one, once it is known whether it loaded.
     this.dressing = new WorldDressing(scene, this.materials, options.cityKit ? "pending" : "bare", { built: (m) => this.shadow.addStaticCaster(m) }, world);
-    this.cityKit = new CityKitLoader({ stage, materials: this.materials, shadow: this.shadow, dressing: this.dressing, blocks: () => this.props.blockViews() });
+    this.cityKit = new CityKitLoader({
+      stage,
+      materials: this.materials,
+      shadow: this.shadow,
+      dressing: this.dressing,
+      blocks: () => this.props.blockViews(),
+      lite: stage.options.quality === "low",
+      onProps: (props) => this.mapCity?.setProps(props),
+    });
     this.props = new PropViews({
       stage,
       materials: this.materials,
@@ -179,7 +192,7 @@ export class BabylonRenderer implements RenderPort {
     });
     this.grading = this.fx.grading;
     this.metro = new MetroRide({ scene, materials: this.materials, shadow: this.shadow, camera: this.rig, cast: this.rideCast() });
-    if (options.cityKit) this.cityKit.load(options.cityKit);
+    if (options.cityKit) this.cityKit.load(options.cityKit, options.cityProps ?? null);
   }
 
   /** The metro's riders are characters like any other, with their activities (ADR-0040). */
@@ -244,6 +257,7 @@ export class BabylonRenderer implements RenderPort {
       this.mapCity = new MapCity({ scene: this.stage.scene, materials: this.materials, shadow: this.shadow, quality: this.stage.options.quality ?? "high" });
       this.mapCity.setDaylight(this.daylight);
       this.mapCity.setReduceFlashes(this.reduceFlashes);
+      if (this.cityKit.props) this.mapCity.setProps(this.cityKit.props);
     }
     return this.mapCity;
   }
@@ -454,12 +468,14 @@ export class BabylonRenderer implements RenderPort {
   }
 
   /**
-   * Draws one frame and reads it straight from the canvas as a PNG data URL (ADR-0046): the
+   * Reads the last drawn frame straight from the canvas as a PNG data URL (ADR-0046): the
    * snapshot test compares these pixels instead of waiting for the browser's compositor, which
-   * under SwiftShader may not settle within a test's patience.
+   * under SwiftShader may not settle within a test's patience. It draws nothing itself (G-031):
+   * the canvas keeps its frame (`preserveDrawingBuffer`), and a frame drawn here, past the GPU
+   * pacer, put a whole frame of SwiftShader work in front of the readback. Callers wait for a
+   * frame drawn after their step (debug `frames()`) or for the reference still.
    */
   captureFrame(): string {
-    this.stage.scene.render();
     return this.stage.engine.getRenderingCanvas()?.toDataURL("image/png") ?? "";
   }
 

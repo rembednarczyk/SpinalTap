@@ -329,7 +329,7 @@ export const DOKI_YARD_ACTORS: readonly ActorDef[] = [
     spawn: { key: "genzo", position: GENZO_SPOT, yaw: 2.3 },
     preset: "civilian",
     faction: "fixers",
-    interactable: { kind: "dialogue", dialogueId: "genzo", prompt: "Rozmawiaj z Genzō", radius: 2.4 },
+    interactable: { kind: "dialogue", dialogueId: "genzo", prompt: "prompt.talk.genzo", radius: 2.4 },
   },
 ];
 

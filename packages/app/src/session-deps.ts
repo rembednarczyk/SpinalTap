@@ -37,4 +37,9 @@ export interface GameSessionDeps {
    * port. Default on; headless tests that count the port's spawns may leave it out.
    */
   readonly scenery?: boolean;
+  /**
+   * Ticks of play between interval autosaves; `AUTOSAVE_INTERVAL_TICKS` (5 minutes) without.
+   * Headless tests shorten it rather than step five minutes of the city.
+   */
+  readonly autosaveIntervalTicks?: number;
 }

@@ -1,4 +1,5 @@
 import { type Locale, METRO_STATION_IDS, type MetroRefusal, type MetroStationId, isMetroStationId, metroFare } from "@seki/core";
+import { metroStation } from "@seki/sim";
 import { type MessageKey, type MetroMapVm, translate } from "@seki/ui";
 
 export { metroFare };
@@ -6,12 +7,8 @@ export { metroFare };
 /** The one line of the city (ADR-0035), its stops in order along the track; the station names stay Polish (ADR-0056). */
 export const metroLine = (locale: Locale): string => translate(locale, "metro.line");
 
-export const METRO_STATION_NAMES: Readonly<Record<MetroStationId, string>> = {
-  shinsekai: "Plac Litewski",
-  kanal: "Brama Krakowska",
-  targ: "Plac Zamkowy",
-  doki: "Nabrzeże Bystrzycy",
-};
+/** Station names as the simulation's stations have them: Lublin's own, the same in every language. */
+export const METRO_STATION_NAMES: Readonly<Record<MetroStationId, string>> = Object.fromEntries(METRO_STATION_IDS.map((id) => [id, metroStation(id).name])) as Record<MetroStationId, string>;
 
 /** The platform of a district (the simulation's district ids), for a kiosk that names no station. */
 export const stationOfDistrict = (district: string | null): MetroStationId | null => {

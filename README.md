@@ -1,22 +1,74 @@
 # Seki Senshi
 
-Cyberpunkowy sandbox 3D w przeglądarce: FPP z przełączaniem na TPP, cel shading w duchu anime. Bohaterka budzi się po wypadku bez pamięci własnego imienia; fixer Kaito nazywa ją **Seki Senshi**.
+Cyberpunkowa gra akcji RPG w przeglądarce i na telefonie, z widokiem FPP i TPP oraz cel shadingiem w duchu anime. Akcja dzieje się w **Lublinie 2077**. Prawdziwe centrum miasta zbudowane z danych OpenStreetMap i lidaru przykrywają neony, nadbudowy i megawieże na horyzoncie. Bohaterka budzi się w klinice doktora Mori bez pamięci własnego imienia, a fixer Kaito nazywa ją **Seki Senshi**.
 
-Repozytorium realizuje [plan architektury](docs/seki-senshi-plan.md). Obecny stan to **M1, pętla rdzenia** zbudowana na pionowym wycinku M0: jeden dystrykt (Shinsekai, kwartał 7), kontrakty od fixera, klinika z cyberware i zdolność aktywna.
+Domyślnym językiem gry jest angielski, a polski można włączyć w opcjach ([ADR-0056](docs/adr/0056-jezyki-gry.md)).
 
 ![Kadr referencyjny NPR](e2e/__snapshots__/npr-perf.spec.ts/reference-m0.png)
 
 ## Uruchomienie
 
-Wymagania: Node 22+, pnpm 10.
+Wymagania: Node 22+ i pnpm 10.
 
 ```bash
 pnpm install
-pnpm dev          # http://localhost:5173
+pnpm dev                     # http://localhost:5173
 pnpm build && pnpm preview   # build produkcyjny, http://localhost:4173
 ```
 
-Parametry URL: `?seed=123` (stałe ziarno nowej gry), `?reference` (deterministyczny kadr do testów migawkowych), `?crowd=off|low|medium|high` (gęstość tłumu, domyślnie jak jakość grafiki).
+Parametry URL:
+
+| Parametr | Działanie |
+|---|---|
+| `?seed=123` | stałe ziarno nowej gry |
+| `?reference` | deterministyczny kadr do testów migawkowych |
+| `?quality=low\|medium\|high` | jakość grafiki niezależnie od ustawień |
+| `?crowd=off\|low\|medium\|high` | gęstość tłumu (domyślnie jak jakość) |
+| `?traffic=off\|…` | ruch aut i trolejbusów |
+| `?city=off` | bez city kitu i rekwizytów, gołe bryły |
+| `?models=off` | postacie proceduralne zamiast modeli VRM |
+| `?audio=off` | czysta synteza zamiast nagrań |
+| `?touch` | sterowanie dotykowe na komputerze |
+
+## Co jest w grze
+
+- **Miasto.** Krakowskie Przedmieście, Stare Miasto, Podzamcze z targiem pod wiaduktem i Nabrzeże Bystrzycy z danych mapowych:
+  - ulice, budynki, zabytki, teren, meble uliczne i oznakowanie poziome;
+  - mieszkańcy na chodnikach;
+  - ruch aut i trolejbusów ze skrętami na skrzyżowaniach;
+  - zegar doby z harmonogramami;
+  - metro między dzielnicami;
+  - radio.
+- **Fabuła.** Wątek główny w dwóch aktach z zakończeniami, napisany w ink. Do tego wspomnienia jako progresja diegetyczna, spotkania uliczne i 6 frakcji z reputacją.
+- **Kontrakty.** 7 rodzajów zleceń proceduralnych od fixerów, z wariantami, hakami, odznakami stylu i rangą na karcie podsumowania.
+- **Walka.**
+  - 8 broni w 7 klasach, z modami;
+  - celowanie z przyłożenia (ADS);
+  - strefy trafień;
+  - walka wręcz z blokiem i parowaniem;
+  - zryw;
+  - zdolności cyberware.
+- **Skradanie i hackowanie.**
+  - świadkowie, pościg (heat), kamery;
+  - skaner z 5 quickhackami i włamania (Breach) z daemonami;
+  - przebrania.
+- **Postać.**
+  - ekwipunek z porównaniem;
+  - odzież i pancerz według stref ciała;
+  - klinika z wszczepami i pojemnością cyberware;
+  - doświadczenie, poziomy 1–30 i punkty atrybutów (model z etapu 1 [ADR-0059](docs/adr/0059-rozwoj-postaci-i-skalowanie.md));
+  - sklepy, łupy, karta postaci, dziennik, mapa miasta.
+- **Wnętrza.** Klinika, bar Neon Koi i biuro Tessen, z drzwiami automatycznymi.
+- **Zapis.** Trzy sloty w IndexedDB, szybki zapis, autozapis (po kroku questu, kontrakcie, zmianie dzielnicy, co 5 minut, przy schowaniu i zamknięciu karty), suma kontrolna i migracje schematu.
+- **Telefon.** Dotykowa gałka i łuk akcji, układ HUD dla 667×375 i 800×370, jakość `low`.
+- **NPR.**
+  - toon shading z pasmami światła i rim light;
+  - kontury z G-bufora;
+  - neony z poświatą;
+  - deszcz i mokry asfalt;
+  - grading.
+
+W toku i w planie: drzewka atrybutów i skalowanie łupów ([ADR-0059](docs/adr/0059-rozwoj-postaci-i-skalowanie.md)), autozapis przy wejściu do lokalu ([ADR-0061](docs/adr/0061-wejscie-do-lokalu.md)), żywe miasto z assetów CC0 ([ADR-0058](docs/adr/0058-zywe-miasto-assety-cc0.md)), głosy z TTS i zaczepki NPC ([ADR-0060](docs/adr/0060-glosy-i-dzwiek.md)), ekran ładowania ([ADR-0057](docs/adr/0057-ekran-ladowania.md)). Kolejność i priorytety opisują [`docs/backlog.md`](docs/backlog.md) i [`docs/audyt-luk.md`](docs/audyt-luk.md).
 
 ## Sterowanie
 
@@ -24,114 +76,91 @@ Parametry URL: `?seed=123` (stałe ziarno nowej gry), `?reference` (deterministy
 |---|---|
 | WASD / strzałki | ruch |
 | Shift | sprint |
+| C | kucanie |
+| Spacja | skok |
 | Mysz (kliknij w ekran, żeby przechwycić kursor) | rozglądanie |
-| LPM | strzał |
-| E | rozmowa |
-| 1–6, strzałki góra/dół, kółko myszy, E / Enter / Spacja | wybór kwestii na kole dialogowym |
-| V | FPP / TPP |
-| Q | zdolność cyberware (po wszczepieniu Akceleratora Kairos) |
+| LPM / PPM | strzał / celowanie albo blok wręcz |
+| R | przeładowanie |
+| 1–3, kółko myszy | wybór broni |
+| X | schowanie i wyciągnięcie broni |
+| E albo F | rozmowa i interakcja |
+| Z albo środkowy przycisk myszy (przytrzymaj) | skaner i quickhacki |
+| Alt | zryw |
+| Q | zdolność cyberware |
 | H | apteczka |
-| Tab | karta postaci |
+| V | FPP / TPP |
+| I / Tab / J / M | ekwipunek / karta postaci / dziennik / mapa |
+| T | telefon |
+| B | radio |
 | F5 / F9 | szybki zapis / odczyt |
-| Esc | pauza (zapis do slotów, wczytywanie) |
+| Esc albo P | pauza (zapis, wczytywanie, ustawienia) |
 
-Pad (standard mapping): lewa gałka ruch, prawa rozglądanie, RT strzał, A rozmowa, Y kamera, RB zdolność, X apteczka, L3 sprint.
+Klawisze zmienia się w ustawieniach. Pad (standard mapping) obsługuje rozgrywkę.
 
-Kamera ([ADR-0049](docs/adr/0049-kamera-i-pole-widzenia.md)): pole widzenia ustawia się w Ustawieniach, zakładka „Mysz i kamera”, suwak „Pole widzenia (poziomo)” od 70° do 100°, domyślnie 80°. To kąt w poziomie, więc monitor 16:9 i telefon w poziomie widzą tyle samo ulicy; monitor 21:9 dostaje kilka stopni więcej. Sprint lekko poszerza widok, celowanie zawęża go o zoom broni. Kamera TPP stoi 2,2 m za postacią, na wysokości oczu nad prawym ramieniem, i podjeżdża przed ścianę, gdy budynek zasłania widok.
+Na telefonie i tablecie (wykrywane automatycznie):
+- grę obracamy poziomo;
+- lewa połowa ekranu to gałka ruchu, prawa to rozglądanie;
+- wokół przycisku strzału są przeładowanie, skaner, zryw i „więcej”;
+- „Use” pojawia się przy rzeczach, których można użyć.
 
-Telefon i tablet (wykrywane automatycznie, na komputerze można wymusić `?touch`): grę obracamy poziomo. Lewa połowa ekranu to pływająca gałka ruchu (pełne wychylenie = sprint), prawa to rozglądanie przeciąganiem. Przycisk strzału też obraca widok, gdy przesuwasz po nim palec. Wokół niego są przeładowanie, skaner, zryw i „więcej” (apteczka, następna broń, kucanie, kamera, chowanie broni), obok celowanie i skok, a „Użyj” pojawia się przy rzeczach, których można użyć. U góry w jednym rzędzie są karta postaci, telefon i pauza.
-
-Dialog na kole ([ADR-0039](docs/adr/0039-dialog-na-kole.md)): kwestie układają się na łuku obok rozmówcy, z ikoną i kolorem rodzaju (◆ złoty wątek główny, ◇ niebieskie pytanie, ✕ wyjście zawsze na dole, ▲ groźba, ◎ perswazja, ⬡ hack, ✦ opcja z przeszłości). Podświetloną wybiera się myszą, cyfrą, strzałkami albo kółkiem i potwierdza E, Enterem lub Spacją, na telefonie tapnięciem. Napisy z przewijaną historią rozmowy zostają na dole.
-
-## Co jest w M0
-
-- Przebudzenie przy wraku, babcia Ume (wspomnienie „ucieczka”), fixer Kaito w barze Neon Koi.
-- Zlecenie „Pierwsze zlecenie”: rozmowa z Kaito (ink), starcie z dwoma gangerami Hebi w zaułku (drzewo zachowań), powrót po zapłatę.
-- Progresja diegetyczna: zabicie kuriera przywraca wspomnienie „odruch” (+krytyki), co widać jako glitch obrazu.
-- Reputacja (Sieć Kaito, Hebi, mieszkańcy), eddies, cyberware w domenie.
-- Zapis i odczyt: 3 sloty + szybki zapis w IndexedDB, suma kontrolna, migracje schematu, obsługa uszkodzonych zapisów.
-- NPR: toon shading z pasmami światła, rim light, kontury inverted-hull na postaciach, neony z bloomem, deszcz, grading.
-
-## Co doszło w M1
-
-- Po pierwszym zleceniu Kaito oferuje kontrakty proceduralne: 2–4 gangerów Hebi w jednym z czterech miejsc dzielnicy, coraz twardszych z każdym wykonanym zleceniem. Zapłata zależy od reputacji u Kaito.
-- Klinika doktora Mori (naprzeciwko baru): cztery implanty do kupienia i wszczepienia oraz apteczki.
-- Akcelerator Kairos daje zdolność aktywną: przez 4 sekundy przeciwnicy poruszają się i strzelają w 30% tempa.
-- Trafienia w głowę (×1,6), apteczki (+40 HP), karta postaci z cyberware, wspomnieniami i reputacją.
-- Zapis v3 z migracją starszych zapisów.
-
-## HUD fali 2
-
-Opis w [ADR-0035](docs/adr/0035-hud-fali-2.md).
-
-- Metro: przy kiosku biletowym mapa linii Kanjō z czterema stacjami i cenami; w drodze panel z linią, stacją docelową, postępem i napisami z ink.
-- Radio: B przełącza stacje (Neon Drift 88.1, Yoru FM 76.5, Tessen Info 24, wyłączone), wybór jest też w telefonie i zostaje w ustawieniach. Co jakiś czas toast z wstawką stacji.
-- Klinika pokazuje pojemność cyberware i koszt każdego implantu; montaż ponad limit jest zablokowany.
-- Ikony buffów z czasem, ikona zrywu (Alt) z odnowieniem, wskaźnik przebrania przy pasku zdrowia i ostrzeżenie o spalonej przykrywce.
-- Minimapa oddala się przy sprincie i zrywie, przy ruchu patrzy do przodu (strzałka w dolnej tercji), pokazuje tylko fixerów i przyjęte zlecenia, a cel jako obszar. W ustawieniach jest tryb bez znaczników i przełącznik podświetleń.
-- Tracker zlecenia pokazuje odkryte haki, karta podsumowania wariant zlecenia.
-- Dotyk: na telefonie widać tylko ogień, celowanie, skok i łuk (przeładowanie, skaner, zryw, „więcej”); „Użyj” pojawia się przy promptcie, a reszta jest pod „więcej”. Nic się nie nakłada przy 800×370 i 667×375 CSS, bez podpowiedzi klawiszy.
-
-## Wnętrza i nowe otwarcie (fala 3, [ADR-0038](docs/adr/0038-wnetrza-drzwi-start-w-klinice.md))
-
-- Nowa gra zaczyna się na fotelu zabiegowym w klinice doktora Mori: pierwsza rozmowa z Kaito odbywa się przy fotelu, Mori mówi, co z Seki wyciągnął. Potem Kaito czeka przy ladzie Neon Koi. Wrak na Siódmej zostaje na ulicy.
-- Klinika (poczekalnia i gabinet) i bar Neon Koi (lada, stołki, stoliki, scena, szafa grająca, barman i bywalcy) mają wnętrza.
-- Drzwi automatyczne z czujnikiem: otwierają się przed postacią, zamykają po chwili, zamknięte blokują przejście i widok. Drzwi biura Tessen w Dokach są na kod z haka (4177) albo do wyłamania z alarmem.
-- Zapis v14 (stan drzwi w ruchu) z migracją.
-
-## Chodniki i mieszkańcy miasta ([ADR-0041](docs/adr/0041-chodniki-i-mieszkancy-miasta.md))
-
-- Chodniki z krawężnikiem, fugami i żółtym pasem dotykowym wzdłuż ulic Shinsekai, Kanałowej, targu i ścieżki w dokach, zebry tam, gdzie mieszkańcy przechodzą przez jezdnię. Są tylko w obrazie: nikogo nie blokują, a postać na chodniku jest w nim podniesiona o 12 cm.
-- Mieszkańcy chodzą po chodnikach w obie strony (trzymając się lewej), stoją przy ścianach, rozmawiają w parach, piją przy ladzie Neon Koi. Ilu ich jest, zależy od dzielnicy i godziny: targ tłoczny wieczorem, Shinsekai żywe nocą, doki puste po zmroku. Strzał ich płoszy, potem wracają na trasę.
-- Gęstość idzie za jakością grafiki (telefon `low`: do 4 na chunk, komputer `high`: do 12), `?crowd=off|low|medium|high` ją nadpisuje. Tłum jest rysowany jedną wspólną siatką, poza zapisem i bez wpływu na złote hashe.
+Dialog wybiera się na kole kwestii ([ADR-0039](docs/adr/0039-dialog-na-kole.md)) myszą, cyfrą, strzałkami albo tapnięciem.
 
 ## Dane mapowe ([ADR-0042](docs/adr/0042-lublin-z-danych-mapowych.md))
 
-Centrum Lublina (Krakowskie Przedmieście, Stare Miasto, Podzamcze, Nabrzeże Bystrzycy) powstaje z danych mapowych narzędziem `tools/osm-import`. Gra nie łączy się z siecią.
+Miasto powstaje narzędziem `tools/osm-import`, a gra nie łączy się z siecią. Wierności topografii pilnuje rejestr [`docs/topografia.md`](docs/topografia.md).
 
 ```bash
-pnpm osm:fetch      # pobiera OSM i teren do data/ (sieć, ręcznie; --only=<dystrykt>, --refresh, --eudem)
+pnpm osm:fetch      # pobiera OSM i teren do data/ (sieć, ręcznie)
 pnpm osm:build      # generuje packages/sim/src/content/lublin/*.generated.ts offline z data/
-pnpm osm:preview <katalog>   # podgląd SVG dystryktów: teren, nawierzchnie, budynki, nazwy
+pnpm osm:props      # meble uliczne z planu i OSM
+pnpm osm:preview <katalog>   # podgląd SVG dystryktów
 ```
 
-- Mapa: © OpenStreetMap contributors, licencja [ODbL 1.0](https://www.openstreetmap.org/copyright). Wyciągi w `data/osm/` i wygenerowane tabele są bazą pochodną na ODbL.
-- Teren: Główny Urząd Geodezji i Kartografii (geoportal.gov.pl), NMT 1 m. Zapasowo EU-DEM v1.1 (Copernicus).
-- Szczegóły i warunki: [`data/osm/ATTRIBUTION.md`](data/osm/ATTRIBUTION.md).
+- Mapa: © OpenStreetMap contributors, licencja [ODbL 1.0](https://www.openstreetmap.org/copyright).
+- Teren: GUGiK (geoportal.gov.pl), NMT 1 m, zapasowo EU-DEM v1.1.
+- Szczegóły: [`data/osm/ATTRIBUTION.md`](data/osm/ATTRIBUTION.md).
+- Modele, dźwięki i paczki miasta to wyłącznie zasoby CC0. Źródła i licencje są w README katalogów `packages/app/public/*`.
 
 ## Struktura
 
 ```
 packages/
-  core/         domena (czyste TS): porty, zdarzenia, walka, cyberware, ekonomia, reputacja, questy, model zapisu
-  sim/          ECS (miniplex), systemy, pętla fixed-step, RNG z ziarnem, AI (mistreevous), replay
-  engine/       adaptery Babylon.js: renderer, NPR, kamera FPP/TPP, wejście, audio, perf
-  narrative/    runtime ink + treść (.ink)
-  ui/           React + Zustand: HUD, dialogi, menu
+  core/         domena (czyste TS): porty, zdarzenia, komendy, walka, przedmioty, cyberware, hacking, kontrakty, reputacja, questy, progresja, zapis
+  sim/          ECS (miniplex), systemy (kolejność w createSystems), AI, treść miasta, ruch, tłum, replay
+  engine/       adaptery Babylon.js (tylko przez babylon.ts): renderer, NPR, miasto z danych, kamera, wejście, audio
+  narrative/    runtime ink i treść (.ink)
+  ui/           React + Zustand: HUD, dotyk, dialogi, menu, katalogi i18n
   persistence/  IndexedDB, kodek zapisu, migracje
-  app/          kompozycja i punkt wejścia
-e2e/            Playwright: smoke, migawka NPR, budżety wydajności
-docs/adr/       decyzje architektoniczne
-tools/          budżety wydajności, importer map (osm-import)
-data/           surowe dane mapowe i teren (ADR-0042)
+  app/          kompozycja: sesja, kontrolery, prezentery, punkt wejścia
+e2e/            Playwright: rozruch, migawka NPR, budżety wydajności, dotyk, zapis
+tools/          osm-import, glitch-scan, i18n-scan, city_kit (assety CC0), budżety wydajności, e2e.sh
+docs/           plan, ADR-y, backlog, audyt luk, rejestr glitchy, topografia
+data/           surowe dane mapowe i teren
 ```
 
 ## Bramki jakości
 
 ```bash
 pnpm typecheck      # tsc --noEmit we wszystkich pakietach
-pnpm lint           # eslint: brak any oraz Math.random/Date.now w core i sim
+pnpm lint           # eslint: bez any, bez Math.random/Date.now w core i sim, limity linii (ADR-0031)
 pnpm depcheck       # dependency-cruiser: kierunek zależności, brak cykli
-pnpm test:coverage  # vitest + progi pokrycia (core 95%)
-pnpm test:e2e       # Playwright na zbudowanej aplikacji (wymaga pnpm build)
+pnpm test:coverage  # vitest z progami pokrycia
+pnpm e2e e2e/<spec>.spec.ts   # jeden spec lokalnie (blokada przeglądarki, własny port)
+pnpm test:e2e       # pełny zestaw Playwright (CI)
 pnpm ci             # wszystko po kolei
-pnpm artifact       # build + strona do publikacji jako artefakt claude.ai (katalog artifact/)
 ```
 
-Testy obejmują m.in. pełną pętlę M0 bez przeglądarki (`packages/app/test/m0-loop.test.ts`), determinizm i złoty hash replayu (`packages/sim/test/determinism.test.ts`), kontrakt `PersistencePort` dla pamięci i IndexedDB oraz migrację zapisu z v1.
+Logikę i UI sprawdzają testy sesji bez renderera i testy komponentów ([ADR-0046](docs/adr/0046-strategia-testow-e2e.md)). Determinizm pilnuje złoty hash w `packages/sim/test/determinism.test.ts`. Skany z zapadką (`tools/glitch-scan`, `tools/i18n-scan`) liczą znane rodzaje glitchy i polskie literały poza katalogami, a ich liczniki mogą tylko spadać.
 
-## Odstępstwa od planu
+## Jak pracujemy
 
-- **Havok odłożony do M1** ([ADR-0008](docs/adr/0008-kolizje-deterministyczne-havok-odlozony.md)): kolizje są kinematyczne i deterministyczne w `sim`.
-- **Bez XState** ([ADR-0005](docs/adr/0005-automat-questow-reczny.md)): graf questów to dane i czysta funkcja.
-- **Assety proceduralne** ([ADR-0006](docs/adr/0006-assety-proceduralne-w-m0.md), [ADR-0009](docs/adr/0009-audio-syntezowane.md)): brak plików glb i audio w M0.
+- Zasady repozytorium dla ludzi i agentów: [`CLAUDE.md`](CLAUDE.md). Decyzje: [`docs/adr/`](docs/adr/README.md).
+- Glitche: rejestr [`docs/glitches.md`](docs/glitches.md) i archiwum, proces z [ADR-0054](docs/adr/0054-proces-glitchy.md).
+- Zespół agentów w `.claude/agents/`:
+  - orkiestrator;
+  - łowca glitchy;
+  - naprawiacz;
+  - budowniczy funkcji;
+  - weryfikator;
+  - kurator topografii.
+- Każda zmiana idzie własną gałęzią i własnym PR-em, z niezależną weryfikacją przed merge'em.

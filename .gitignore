@@ -9,3 +9,4 @@ test-results/
 artifact/
 .claude/worktrees/
 data/osm/cache/
+__pycache__/

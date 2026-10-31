@@ -94,7 +94,7 @@ describe("M0 vertical slice: input → sim → narrative → domain → save →
     // 1. Talk to Kaito.
     teleport(session, ...nearKaito(session));
     steps(session, 1);
-    expect(ui.getState().prompt).toBe("Rozmawiaj z Kaito");
+    expect(ui.getState().prompt).toBe("Talk to Kaito");
     steps(session, 1, frame({ interact: true }));
     expect(ui.getState().dialogue?.lines[0]?.speaker).toBe("Kaito");
     talkThrough(session, ui);
@@ -133,7 +133,8 @@ describe("M0 vertical slice: input → sim → narrative → domain → save →
     // 4. Save, keep playing, load: state matches the save point, narrative included.
     expect(await session.saveAsync("slot-1")).toBe(true);
     const saved = session.snapshot();
-    expect(ui.getState().slots[0]).toMatchObject({ slot: "slot-1", objective: expect.stringContaining("Take a contract from Kaito") });
+    // The autosave lists first (`auto`); the manual slot keeps its own objective.
+    expect(ui.getState().slots.find((s) => s.slot === "slot-1")).toMatchObject({ objective: expect.stringContaining("Take a contract from Kaito") });
     steps(session, 120, frame({ moveZ: -1 }));
     expect(await session.loadAsync("slot-1")).toBe(true);
     expect(session.snapshot().domain).toEqual(saved.domain);
