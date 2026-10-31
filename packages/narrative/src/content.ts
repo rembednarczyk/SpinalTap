@@ -1,37 +1,110 @@
-import m0Source from "../ink/m0.ink?raw";
-import m3EchoSource from "../ink/m3-echo.ink?raw";
-import m3LustroSource from "../ink/m3-lustro.ink?raw";
-import m4TargSource from "../ink/m4-targ.ink?raw";
-import m4OyajiSource from "../ink/m4-oyaji.ink?raw";
-import m4DokiSource from "../ink/m4-doki.ink?raw";
-import m4UlicaSource from "../ink/m4-ulica.ink?raw";
-import dayCycleSource from "../ink/day-cycle.ink?raw";
-import phoneSource from "../ink/phone.ink?raw";
-import encShinsekaiSource from "../ink/enc-shinsekai.ink?raw";
-import encKanalSource from "../ink/enc-kanal.ink?raw";
-import encTargSource from "../ink/enc-targ.ink?raw";
-import encDokiSource from "../ink/enc-doki.ink?raw";
-import hooksSource from "../ink/hooks.ink?raw";
-import metroSource from "../ink/metro.ink?raw";
-import radioSource from "../ink/radio.ink?raw";
+import type { Locale } from "@seki/core";
+import type { StorySources } from "./language";
+import m0Pl from "../ink/pl/m0.ink?raw";
+import m3EchoPl from "../ink/pl/m3-echo.ink?raw";
+import m3LustroPl from "../ink/pl/m3-lustro.ink?raw";
+import m4TargPl from "../ink/pl/m4-targ.ink?raw";
+import m4OyajiPl from "../ink/pl/m4-oyaji.ink?raw";
+import m4DokiPl from "../ink/pl/m4-doki.ink?raw";
+import m4UlicaPl from "../ink/pl/m4-ulica.ink?raw";
+import dayCyclePl from "../ink/pl/day-cycle.ink?raw";
+import phonePl from "../ink/pl/phone.ink?raw";
+import encShinsekaiPl from "../ink/pl/enc-shinsekai.ink?raw";
+import encKanalPl from "../ink/pl/enc-kanal.ink?raw";
+import encTargPl from "../ink/pl/enc-targ.ink?raw";
+import encDokiPl from "../ink/pl/enc-doki.ink?raw";
+import hooksPl from "../ink/pl/hooks.ink?raw";
+import metroPl from "../ink/pl/metro.ink?raw";
+import radioPl from "../ink/pl/radio.ink?raw";
+import m0En from "../ink/en/m0.ink?raw";
+import m3EchoEn from "../ink/en/m3-echo.ink?raw";
+import m3LustroEn from "../ink/en/m3-lustro.ink?raw";
+import m4TargEn from "../ink/en/m4-targ.ink?raw";
+import m4OyajiEn from "../ink/en/m4-oyaji.ink?raw";
+import m4DokiEn from "../ink/en/m4-doki.ink?raw";
+import dayCycleEn from "../ink/en/day-cycle.ink?raw";
+import m4UlicaEn from "../ink/en/m4-ulica.ink?raw";
+import phoneEn from "../ink/en/phone.ink?raw";
+import encShinsekaiEn from "../ink/en/enc-shinsekai.ink?raw";
+import encKanalEn from "../ink/en/enc-kanal.ink?raw";
+import encTargEn from "../ink/en/enc-targ.ink?raw";
+import encDokiEn from "../ink/en/enc-doki.ink?raw";
+import hooksEn from "../ink/en/hooks.ink?raw";
+import metroEn from "../ink/en/metro.ink?raw";
+import radioEn from "../ink/en/radio.ink?raw";
 
-/** All ink sources of the build, concatenated into one story (knots are the dialogue ids). */
-export const STORY_SOURCE: string = [
-  m0Source,
-  m3EchoSource,
-  m3LustroSource,
-  m4TargSource,
-  m4OyajiSource,
-  m4DokiSource,
-  m4UlicaSource,
-  dayCycleSource,
-  phoneSource,
-  // Wave 2 (ADR-0032): street encounters, observation hooks, metro and radio.
-  encShinsekaiSource,
-  encKanalSource,
-  encTargSource,
-  encDokiSource,
-  hooksSource,
-  metroSource,
-  radioSource,
-].join("\n");
+/**
+ * The ink files of the build in story order, one per dialogue group (knots are the dialogue ids).
+ * Wave 2 (ADR-0032) starts at `enc-shinsekai`: street encounters, observation hooks, metro and radio.
+ */
+export const INK_FILES = [
+  "m0",
+  "m3-echo",
+  "m3-lustro",
+  "m4-targ",
+  "m4-oyaji",
+  "m4-doki",
+  "m4-ulica",
+  "day-cycle",
+  "phone",
+  "enc-shinsekai",
+  "enc-kanal",
+  "enc-targ",
+  "enc-doki",
+  "hooks",
+  "metro",
+  "radio",
+] as const;
+export type InkFile = (typeof INK_FILES)[number];
+
+/** Each file as written (`ink/pl`), the source of truth for the structure. */
+export const INK_PL: Readonly<Record<InkFile, string>> = {
+  "m0": m0Pl,
+  "m3-echo": m3EchoPl,
+  "m3-lustro": m3LustroPl,
+  "m4-targ": m4TargPl,
+  "m4-oyaji": m4OyajiPl,
+  "m4-doki": m4DokiPl,
+  "m4-ulica": m4UlicaPl,
+  "day-cycle": dayCyclePl,
+  "phone": phonePl,
+  "enc-shinsekai": encShinsekaiPl,
+  "enc-kanal": encKanalPl,
+  "enc-targ": encTargPl,
+  "enc-doki": encDokiPl,
+  "hooks": hooksPl,
+  "metro": metroPl,
+  "radio": radioPl,
+};
+
+/**
+ * The English files (`ink/en`), same knots, choices, variables and tags as the Polish ones, other
+ * text (ADR-0056). A file not translated yet is missing here and plays in Polish.
+ */
+export const INK_EN: Readonly<Partial<Record<InkFile, string>>> = {
+  m0: m0En,
+  "m3-echo": m3EchoEn,
+  "m3-lustro": m3LustroEn,
+  "m4-targ": m4TargEn,
+  "m4-oyaji": m4OyajiEn,
+  "m4-doki": m4DokiEn,
+  "day-cycle": dayCycleEn,
+  "m4-ulica": m4UlicaEn,
+  phone: phoneEn,
+  "enc-shinsekai": encShinsekaiEn,
+  "enc-kanal": encKanalEn,
+  "enc-targ": encTargEn,
+  "enc-doki": encDokiEn,
+  hooks: hooksEn,
+  metro: metroEn,
+  radio: radioEn,
+};
+
+/** The whole story in `language`, file by file, Polish where a translation is missing. */
+export const storySource = (language: Locale): string =>
+  INK_FILES.map((f) => (language === "en" ? (INK_EN[f] ?? INK_PL[f]) : INK_PL[f])).join("\n");
+
+export const STORY_SOURCES: StorySources = { en: storySource("en"), pl: storySource("pl") };
+
+/** The Polish story: the original, which the story tests read line by line. */
+export const STORY_SOURCE: string = STORY_SOURCES.pl;
