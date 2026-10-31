@@ -75,7 +75,7 @@ describe("posture on the HUD in the game", () => {
     // The 3 key picks the melee slot.
     g.step(1, { weaponSlot: 3 });
     g.step(30);
-    expect(screen.getByTestId("weapon-strip").textContent).toContain("Pałka");
+    expect(screen.getByTestId("weapon-strip").textContent).toContain("Telescopic baton");
     const melee = () => ({ ...g.session.sim.player()!.melee! });
 
     // Held, as the right mouse button is.

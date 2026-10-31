@@ -38,7 +38,7 @@ test.describe("M0 smoke", () => {
     await dialogue.getByRole("button", { name: /End conversation/ }).click();
     await expect(dialogue).toBeHidden();
     await step(page, 2);
-    await expect(page.getByTestId("objective")).toContainText("kuriera Hebi");
+    await expect(page.getByTestId("objective")).toContainText("Hebi courier");
     expect((await gameState(page)).alias).toBe("Seki Senshi");
 
     // Quicksave, move away, quickload: position and quest state come back.
@@ -134,8 +134,8 @@ test("journal, minimap and settings", async ({ page }) => {
   await page.keyboard.press("KeyJ");
   const journal = page.getByTestId("journal");
   await expect(journal).toBeVisible();
-  await expect(journal).toContainText("Pierwsze zlecenie");
-  await expect(journal).toContainText("Porozmawiaj z Kaito");
+  await expect(journal).toContainText("First job");
+  await expect(journal).toContainText("Talk to Kaito");
   await page.keyboard.press("KeyJ");
   await expect(journal).toBeHidden();
 

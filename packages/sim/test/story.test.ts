@@ -94,7 +94,7 @@ describe("main thread in the simulation", () => {
     sim.step();
     expect(sim.domain.story.ending).toBe("aya");
     expect(sim.domain.flags).toContain(ACT_ONE_ENDING_FLAG);
-    expect(endings).toEqual([{ act: 1, endingId: "aya", title: "Aya" }]);
+    expect(endings).toEqual([{ act: 1, endingId: "aya", title: "ending.aya.title" }]);
     expect(completed.map((c) => c.questId)).toEqual([QUEST_ECHO.id]);
     expect(sim.domain.quests[QUEST_ECHO.id]).toEqual({ status: "completed" });
   });

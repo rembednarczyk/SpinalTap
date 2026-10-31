@@ -62,21 +62,27 @@ describe("docks contracts (ADR-0024)", () => {
   it("a hack shows its own clock once it runs", () => {
     const hack = generateContractOfKind("hack", ctx(), sequenceRng(0));
     expect(contractSecondsLeft(hack, 0, 60)).toBeNull();
-    expect(contractObjective(hack)).toContain(`${HACK_SECONDS} s`);
+    expect(contractObjective(hack)).toEqual({ key: "contract.objective.hack", params: { seconds: HACK_SECONDS, site: { key: CONTRACT_SITES.quay_terminal.text } } });
     const running = { ...hack, progress: 15 * 60 };
     expect(contractSecondsLeft(running, 0, 60)).toBe(HACK_SECONDS - 15);
-    expect(contractObjective(running, contractSecondsLeft(running, 0, 60))).toBe(`Utrzymaj połączenie z terminalem (zostało 0:25): ${CONTRACT_SITES.quay_terminal.label}`);
+    expect(contractObjective(running, contractSecondsLeft(running, 0, 60))).toEqual({
+      key: "contract.objective.hackHoldingTimed",
+      params: { site: { key: "contract.site.quay_terminal" }, time: "0:25" },
+    });
     expect(contractSecondsLeft({ ...hack, progress: HACK_SECONDS * 60 + 5 }, 0, 60)).toBe(0);
   });
 
   it("describes every stage and every failure", () => {
     const [escort, infiltrate] = DOCKS_CONTRACT_KINDS.map((k) => generateContractOfKind(k, ctx(), sequenceRng(0)));
-    expect(contractObjective(escort!)).toContain("Odprowadź Mikę");
-    expect(contractObjective(infiltrate!)).toContain("nie daj się zauważyć");
-    expect(contractObjective({ ...escort!, status: "cleared" })).toBe("Mika na łodzi. Wróć do Genzō po zapłatę");
-    expect(contractFailureNote("escort-killed")).toContain("Mika");
-    expect(contractFailureNote("detected")).toContain("zauważyła");
-    expect(contractFailureNote("connection-lost")).toContain("Połączenie");
+    expect(contractObjective(escort!).key).toBe("contract.objective.escort");
+    expect(contractObjective(infiltrate!).key).toBe("contract.objective.infiltrate");
+    expect(contractObjective({ ...escort!, status: "cleared" })).toEqual({
+      key: "contract.objective.cleared",
+      params: { note: { key: "contract.cleared.escort" }, giver: { key: "contract.giver.genzo" } },
+    });
+    expect(contractFailureNote("escort-killed")).toBe("contract.failure.escort-killed");
+    expect(contractFailureNote("detected")).toBe("contract.failure.detected");
+    expect(contractFailureNote("connection-lost")).toBe("contract.failure.connection-lost");
   });
 
   it("reputation: Tessen notices, the fixers care about Genzō's name", () => {

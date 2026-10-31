@@ -37,12 +37,12 @@ export const presentWorld: Presenter = ({ bus, render, audio, ui, hooks, toast, 
     }),
     bus.on("InteractionRefused", (e) => {
       const own = REFUSAL[e.faction];
-      toast("reputation", own ? t(own) : t("world.refusal", { faction: FACTIONS[e.faction] }), t("world.reputation"));
+      toast("reputation", own ? t(own) : t("world.refusal", { faction: t(FACTIONS[e.faction]) }), t("world.reputation"));
       audio.play("denied");
     }),
     bus.on("NpcReacted", (e) => {
       if (e.reaction === "warn") toast("reputation", t("world.hebiWarn"), t("world.hebiLetPass"));
-      else toast("reputation", t("world.fleeing"), t("world.afraid", { faction: FACTIONS[e.faction] }));
+      else toast("reputation", t("world.fleeing"), t("world.afraid", { faction: t(FACTIONS[e.faction]) }));
     }),
     bus.on("CameraModeChanged", (e) => render.setCameraMode(e.mode)),
     // A car held up by the player sounds its horn (ADR-0050).

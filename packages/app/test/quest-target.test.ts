@@ -42,7 +42,7 @@ const near = (m: MapMarkerVm | undefined, at: { x: number; z: number }, within: 
 describe("G-035: the quest step's target on the map", () => {
   it("says where to find Ume and marks her on the deptak at noon; she talks", async () => {
     const { session, ui } = await loaded();
-    expect(objective(ui)).toBe("Ktoś woła cię przez moduł. Zapytaj babcię Ume o Rena Odagiri (deptak przy klinice)");
+    expect(objective(ui)).toBe("Someone is calling you through the module. Ask Grandma Ume about Ren Odagiri (the promenade by the clinic)");
     waitUntil(session, 12);
     const marks = questMarkers(ui);
     expect(marks).toHaveLength(1);
@@ -85,7 +85,7 @@ describe("G-035: the quest step's target on the map", () => {
     }
     session.intents.closeDialogue();
     steps(session, 2);
-    expect(objective(ui)).toBe("Wejdź schodami pożarowymi na dach nad targiem i znajdź Rena");
+    expect(objective(ui)).toBe("Climb the fire escape to the roof over the market and find Ren");
     const marks = questMarkers(ui);
     expect(marks).toHaveLength(1);
     expect(near(marks[0], market(86, 12.7, 59.6), 1)).toBe(true);

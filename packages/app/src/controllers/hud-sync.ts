@@ -108,7 +108,8 @@ export class HudSync implements ContractIntents {
     const sim = this.deps.sim();
     const loot = this.deps.panels.loot();
     const player = sim.player();
-    const { title, objective } = describeObjective(sim.domain, this.deps.ui.getState().settings.locale, sim.tick);
+    const locale = this.deps.ui.getState().settings.locale;
+    const { title, objective } = describeObjective(sim.domain, locale, sim.tick);
     const hp = player?.health?.current ?? 0;
     const maxHp = player?.health?.max ?? 100;
     patchUi(this.deps.ui, {
@@ -138,7 +139,7 @@ export class HudSync implements ContractIntents {
       aiming: player?.posture?.aiming ?? false,
       aimZoom: aimZoomOf(player),
       blocking: player?.melee?.guard ?? false,
-      journal: this.journal(sim.domain, this.deps.ui.getState().settings.locale),
+      journal: this.journal(sim.domain, locale),
       clock: formatClock(sim.clock),
       day: dayOf(sim.clock),
       dayPhase: dayPhase(sim.clock),
