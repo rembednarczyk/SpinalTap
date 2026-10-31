@@ -92,6 +92,12 @@ const sidewalkIndex = (lines: readonly Line[]) => {
   };
 };
 
+/**
+ * Points that make a plain building round them public (G-097). An office of government is left
+ * out: it is as often a bureau rented in a tenement as an office building of its own.
+ */
+const CIVIC_POINTS = new Set(["amenity=townhall", "amenity=courthouse", "amenity=library", "amenity=theatre", "amenity=arts_centre"]);
+
 const grow = (r: Rect, m: number): Rect => ({ minX: r.minX - m, minZ: r.minZ - m, maxX: r.maxX + m, maxZ: r.maxZ + m });
 
 const generateChunk = (
@@ -111,12 +117,13 @@ const generateChunk = (
   const namedPoints = pois
     .filter((p) => p.kind === "hotel" || p.kind === "sight" || p.kind === "culture" || p.kind === "church")
     .map((p) => ({ at: p.at, name: p.kind === "hotel" && !/hotel/i.test(p.name) ? `Hotel ${p.name}` : p.name, ...(p.addr ? { addr: p.addr } : {}) }));
+  const civicPoints = pois.flatMap((p) => (CIVIC_POINTS.has(p.tag) ? [{ at: p.at, name: p.name, amenity: p.tag.replace("amenity=", ""), ...(p.addr ? { addr: p.addr } : {}) }] : []));
   const out = [];
   let skipped = 0;
   let withHoles = 0;
   for (const a of buildings) {
     if (!inRect(centroid(a.ring), spec.rect)) continue;
-    const r = makeBuilding(a, { src, grid: t.grid, altitude, range: spec.district.defaultLevels, shopPoints, namedPoints }, parts.get(a.id));
+    const r = makeBuilding(a, { src, grid: t.grid, altitude, range: spec.district.defaultLevels, shopPoints, namedPoints, civicPoints }, parts.get(a.id));
     if ("skipped" in r) {
       skipped++;
       continue;

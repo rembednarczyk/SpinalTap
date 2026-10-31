@@ -59,6 +59,11 @@ export interface BuildingContext {
    * building, G-051).
    */
   readonly namedPoints: readonly { readonly at: Pt; readonly name: string; readonly addr?: string }[];
+  /**
+   * Theatres, libraries, courts and town halls mapped as points (G-097): a plain building
+   * (`building=yes`, `public`, …) taken for flats around one at its address is that public building.
+   */
+  readonly civicPoints?: readonly { readonly at: Pt; readonly name: string; readonly amenity: string; readonly addr?: string }[];
 }
 
 /** A building and the parts of it lifted onto it (`building:part`, G-049). */
@@ -108,6 +113,12 @@ const sameAddress = (addr: string | undefined, tags: Area["tags"]): boolean => {
   return addr === undefined || own === undefined || addr === own;
 };
 
+const PLAIN = new Set(["yes", "public", "government", "civic"]);
+
+/** A public point in a plain outline its own tags make a house, at its address (G-097). */
+const civicPointIn = (a: Area, world: readonly Pt[], ctx: BuildingContext) =>
+  buildingUse(a.tags) === "residential" && PLAIN.has(a.tags.building ?? "yes") ? ctx.civicPoints?.find((p) => pointInRing(p.at, world) && sameAddress(p.addr, a.tags)) : undefined;
+
 export const makeBuilding = (a: Area, ctx: BuildingContext, ownParts: readonly Area[] = []): BuildingResult => {
   const f = footprint(a.ring);
   if (typeof f === "string") return { skipped: f };
@@ -120,11 +131,14 @@ export const makeBuilding = (a: Area, ctx: BuildingContext, ownParts: readonly A
   const y = Math.floor(Math.min(ground.min - ctx.altitude, gridMin) * 10 + 1e-9) / 10 + 0;
   const plinth = r1(Math.max(ground.max - ctx.altitude - y, 0));
   const look = lookOf(a.id);
-  const use = buildingUse(a.tags);
+  const civic = civicPointIn(a, world, ctx);
+  // The point's amenity stands for the building's own, so its use, default storeys and name follow.
+  const tags = civic ? { ...a.tags, amenity: civic.amenity } : a.tags;
+  const use = buildingUse(tags);
   const shops = use !== "commercial" && ctx.shopPoints.some((p) => pointInRing(p, world));
-  const own = massing(a.tags, { area, shops: shops || use === "commercial", range: ctx.range, look });
+  const own = massing(tags, { area, shops: shops || use === "commercial", range: ctx.range, look });
   const { base: m, lifted } = stackParts(world, own, ownParts.flatMap((p) => partTier(p, use) ?? []));
-  const name = landmarkName(a.tags, use) ?? (a.tags.name ? undefined : ctx.namedPoints.find((p) => pointInRing(p.at, world) && sameAddress(p.addr, a.tags))?.name);
+  const name = landmarkName(tags, use) ?? (a.tags.name ? undefined : (ctx.namedPoints.find((p) => pointInRing(p.at, world) && sameAddress(p.addr, a.tags))?.name ?? civic?.name));
   const ok: BuildingOut = {
     id: a.id,
     x: center.x,

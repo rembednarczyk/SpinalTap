@@ -106,6 +106,26 @@ describe("generator", () => {
     expect(generate(cellar, slope, tinyChunk).chunks[0]!.buildings).toEqual([]);
   });
 
+  it("makes a plain building around a theatre, library, court or town hall a public building at the same address (G-097)", () => {
+    const withPoint = (point: Record<string, string>, building: Record<string, string> = {}) => {
+      const map = tinyMap();
+      const house = map.ways.get(100)!;
+      const cafe = map.nodes.get(5)!;
+      const ways = new Map([...map.ways, [100, { ...house, tags: { building: "yes", ...building } }]]);
+      const nodes = new Map([...map.nodes, [5, { ...cafe, tags: point }]]);
+      return generate({ ...map, nodes, ways }, slope, tinyChunk).chunks[0]!.buildings[0]!;
+    };
+    const at = { "addr:street": "Testowa", "addr:housenumber": "2" };
+    expect(withPoint({ amenity: "theatre", name: "Teatr" })).toMatchObject({ use: "civic", name: "Teatr", levels: 4 });
+    expect(withPoint({ amenity: "library", name: "Biblioteka", ...at }, at)).toMatchObject({ use: "civic", name: "Biblioteka" });
+    expect(withPoint({ amenity: "courthouse", name: "Sąd" })).toMatchObject({ use: "civic", name: "Sąd" });
+    expect(withPoint({ amenity: "townhall", name: "Urząd" })).toMatchObject({ use: "civic" });
+    // A point a few metres off its own building (G-051), an office in a tenement, a block of flats: houses still.
+    expect(withPoint({ amenity: "theatre", name: "Teatr", "addr:street": "Testowa", "addr:housenumber": "4" }, at).use).toBe("residential");
+    expect(withPoint({ office: "government", name: "Biuro" }).use).toBe("residential");
+    expect(withPoint({ amenity: "theatre", name: "Teatr" }, { building: "apartments" }).use).toBe("residential");
+  });
+
   it("gives the same result twice", () => {
     const a = generate(tinyMap(), slope, tinyChunk);
     const b = generate(tinyMap(), slope, tinyChunk);
