@@ -286,3 +286,9 @@ Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [r
 ### G-038 `lane-dead-end` nie sprawdza użycia początku, który „spotyka” koniec
 - Status: naprawione (#51). Kontrola wymaga tego samego `use`; licznik 44 bez zmian (po G-006 koniec już liczony).
 - Ważność: S4 (skan) · Gdzie: koniec trolejbusu na Mełgiewskiej ok. (2456, 245) ukryty przez początek pasa aut.
+
+### G-031 Testy TPP w `npr-perf` i smoke save/load przekraczają limit przy obciążeniu
+- Status: naprawione (#57). Zgłoszona postać nie odtwarzała się już po G-029 (pacer); #57 domyka `captureFrame` (bez własnego renderu) i podgląd postaci (przez pacer). Pozostałości: G-054, G-055.
+- Ważność: S2 (proponowana: niestabilne e2e) · Koszt: nieznany
+- Dowód: naprawiacz G-001: przy obciążeniu 5–11 za każdym razem pada inny test (Krakowskie, Rynek, targ, Nabrzeże, quicksave/quickload); przypuszczalnie ten sam mechanizm co G-001 w zwykłym trybie (pełne klatki w trakcie ładowania i kroków budują kolejkę GPU SwiftShadera). `captureFrame` rysuje dodatkową klatkę mimo `preserveDrawingBuffer` (1,3–5,8 s na przechwycenie).
+- Pakiet właściciela: packages/app / e2e

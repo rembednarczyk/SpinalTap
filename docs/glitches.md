@@ -52,12 +52,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Gdzie: Zielona#21:d, z (271,6, −18) do (238,6, 4,7) w jednym kroku
 - Dowód: sonda weryfikatora G-023 (seed 3, 8:00, 60 s); może być resynchronizacją auta poza wzrokiem.
 
-### G-031 Testy TPP w `npr-perf` i smoke save/load przekraczają limit przy obciążeniu
-- Status: zgłoszone (po G-029 testy TPP i quicksave przeszły przy obciążeniu 25→6, bez porównania A/B; `captureFrame` i podgląd postaci dalej rysują poza pacerem)
-- Ważność: S2 (proponowana: niestabilne e2e) · Koszt: nieznany
-- Dowód: naprawiacz G-001: przy obciążeniu 5–11 za każdym razem pada inny test (Krakowskie, Rynek, targ, Nabrzeże, quicksave/quickload); przypuszczalnie ten sam mechanizm co G-001 w zwykłym trybie (pełne klatki w trakcie ładowania i kroków budują kolejkę GPU SwiftShadera). `captureFrame` rysuje dodatkową klatkę mimo `preserveDrawingBuffer` (1,3–5,8 s na przechwycenie).
-- Pakiet właściciela: packages/app / e2e
-
 ### G-036 Sąsiednie zawrotki na Alei Tysiąclecia przy targu stykają się w wierzchołku
 - Status: zgłoszone (z G-006)
 - Ważność: S3 · Gdzie: ok. (756, 345) · Dowód: naprawiacz G-006: półokręgi o różnym promieniu sięgają tego samego wierzchołka; 24 zdarzenia kolizji na seedach 1–2 już na starej bazie (rodzina G-025/G-026, `turnRound`/`uTurn`).
@@ -208,6 +202,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | G-048 | Prawdziwy tap tuż po przycisku pada ginie jako „ghost click” | #48 |
 | G-004 | Kandelabr na krawędzi pasa aut na Placu Zamkowym | #51 |
 | G-038 | `lane-dead-end` nie sprawdza użycia początku, który „spotyka” koniec | #51 |
+| G-031 | Testy TPP w `npr-perf` i smoke save/load przekraczają limit przy obciążeniu | #57 |
 
 ## Odrzucone
 - G-005 Wiata przystanku wchodzi w ścianę przy Alei Tysiąclecia: duplikat (G-011)
