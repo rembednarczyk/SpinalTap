@@ -7,7 +7,7 @@ Gra nie ma dialogów mówionych.
 - Miks ma szyny, ale ustawienia mają tylko głośność główną (audyt luk, `docs/audyt-luk.md`).
 
 Decyzje użytkownika (31.10):
-- **Źródło głosów:** mieszane. Odzywki pochodzą z otwartego TTS na licencji komercyjnej, a każdy głos jest sprawdzany osobno. Kluczowe linie Seki i postaci wątku nagrywają aktorzy, o ile się ich znajdzie.
+- **Źródło głosów:** wszystko z otwartego TTS na licencji komercyjnej, każdy głos sprawdzany osobno. Aktorów nie będzie (zmiana decyzji z 31.10: najpierw mieszane, potem pełne TTS).
 - **Język głosów:** angielski, z napisami po angielsku albo po polsku według ustawienia języka (ADR-0056).
 
 ## Decyzja
@@ -19,9 +19,9 @@ Decyzje użytkownika (31.10):
    - Seki: trafienie, przeładowanie, niski poziom zdrowia, udany hack, awans (ADR-0059).
    - Na typ postaci przypada 20–40 linii, w 2–3 wariantach głosu na typ wroga i cywila.
    - Wszystkie odzywki pochodzą z TTS.
-2. **Kluczowe linie wątku:** powitania postaci nazwanych, zwroty akcji, zakończenia aktów i linie Seki w scenach.
-   - Docelowo nagrywają je aktorzy. Do czasu nagrań są w TTS jako wersja zastępcza, z tym samym kluczem.
-3. **Pełne dialogi** postaci nazwanych to etap późniejszy. Domyślnie idą z TTS, a aktorzy podmieniają je stopniowo, linia po linii.
+2. **Kluczowe linie wątku:** powitania postaci nazwanych, zwroty akcji, zakończenia aktów i linie Seki w scenach. Z TTS, każda postać nazwana ma stały, własny głos.
+3. **Pełne dialogi** postaci nazwanych, z TTS, dzielnica po dzielnicy.
+4. **Kwestie środowiskowe:** zaczepki i komentarze przechodniów oraz zasłyszane rozmowy NPC między sobą (sekcja „Wyzwalacze kwestii”).
 
 ### Źródła i licencje
 - **TTS:**
@@ -29,18 +29,32 @@ Decyzje użytkownika (31.10):
   - Każdy model i każdy głos sprawdzamy osobno. Kod, wagi i nagrania treningowe głosu bywają na różnych licencjach, a głos z licencją niekomercyjną odpada.
   - W `packages/app/public/voice/README.md` zapisujemy model, wersję, głos, licencję z cytatem i datę sprawdzenia.
   - Nie klonujemy głosów prawdziwych osób bez ich pisemnej zgody.
-- **Aktorzy:**
-  - Nagrania wchodzą tylko z pisemną zgodą i licencją na użycie w grze. Tej części nie da się zautomatyzować: znalezienie aktorów i umowy należą do użytkownika.
-  - Gra dostarcza aktorom scenariusz: eksport linii postaci z kluczami, kontekstem i emocją.
-  - Ustala też format dostawy: WAV 48 kHz, mono, jeden plik na klucz.
+- **Wybór głosów:** każda postać nazwana dostaje jeden głos i ustawienia (tempo, wysokość, barwa), zapisane w `tools/voice/voices.json`, żeby przy kolejnych generacjach brzmiała tak samo. Typy postaci tła (ganger, strażnik Tessen, cywil, handlarz) mają po 2–3 warianty.
 - **Generowanie TTS:** robi to narzędzie `tools/voice` (offline, deterministyczne ustawienia głosu, normalizacja głośności). Repo trzyma skrypt i wynik, ale nie trzyma modeli.
 
 ### Klucze i struktura
 - Każda linia mówiona ma klucz.
   - W ink jest to tag `#voice:<klucz>` przy linii. Test strukturalny ink (ADR-0056) pilnuje, że `ink/en` i `ink/pl` mają te same tagi.
   - Odzywki są w katalogu `core`/`sim` jako klucze zdarzeń, np. `bark.ganger.alerted`, z listą wariantów.
-- Pliki leżą w `app/public/voice/en/<postać>/<klucz>.ogg` (Opus/OGG). Plik aktora i plik TTS mają ten sam klucz, a aktor wygrywa.
+- Pliki leżą w `app/public/voice/en/<postać>/<klucz>.ogg` (Opus/OGG).
 - Brak pliku nie jest błędem: zostaje sam napis, tak jak dziś.
+
+### Wyzwalacze kwestii
+Trzy rodzaje, wszystkie rozstrzygane w `sim` (deterministycznie, losowość przez `RandomPort`), a odtwarzane w `engine` przez `AudioPort`:
+1. **Tylko przy interakcji:** postacie nazwane (Kaito, Mori, Ume, Hana, Genzō, barman) i handlarze mówią, gdy gracz zacznie rozmowę albo wejdzie w ich scenę. Bez zaczepek, chyba że treść tak chce (np. powitanie przy wejściu do baru jako jedna linia).
+2. **Zaczepki i komentarze (jedna osoba, jedna linia):** przechodzień, handlarz na targu, strażnik czy ganger mówi krótko, gdy gracz przechodzi obok:
+   - warunki z treści: dystans (np. 3–6 m), patrzy w stronę gracza, gracz się zatrzymał albo przechodzi, stan gracza (broń w ręce, przebranie, poziom pościgu, rana, deszcz, pora doby, reputacja frakcji, ukończony krok zadania);
+   - linie wybierane z puli według warunków i wag, bez powtórzeń z ostatnich kilku;
+   - limity: jedna zaczepka na NPC na kilka minut, globalnie najwyżej jedna naraz w zasięgu słuchu i przerwa między nimi.
+3. **Zasłyszane rozmowy NPC (dwie lub trzy osoby, 2–6 linii):** w miejscach z treści (kolejka do budki z jedzeniem, ławka na Placu Litewskim, palacze pod Neon Koi, ochrona przy bramie, handlarze na targu) pary NPC wymieniają kwestie, gdy gracz jest w zasięgu słuchu:
+   - rozmowa startuje, gdy gracz wejdzie w promień miejsca, i toczy się dalej, gdy odejdzie (słychać ją ciszej, z kierunku);
+   - przerwana przez walkę, alarm albo zaczepienie gracza (jeden z NPC zwraca się do gracza krótką linią);
+   - treść rozmów zależy od stanu świata: flag wątku, zakończeń aktów, reputacji, pory doby, więc miasto komentuje to, co gracz zrobił;
+   - każda rozmowa gra raz na jakiś czas (stan „słyszane” w zapisie, z ograniczonym rozmiarem), żeby się nie powtarzała.
+- **Treść:** zaczepki to tabele w `sim/src/content` (klucz, warunki, waga, mówca), rozmowy to krótkie knoty ink `amb-*` z tagami mówców i `#voice`, w obu językach napisów (ADR-0056).
+- **Napisy w świecie:** zaczepki i rozmowy pokazują się jako krótkie napisy nad mówiącym (z nazwą lub typem postaci), znikające; opcja w ustawieniach (wł./wył., rozmiar z ustawień napisów).
+- **Priorytety:** dialog z graczem > odzywki walki i alarmu > zaczepki > rozmowy w tle. Wyższy priorytet ścisza albo przerywa niższy.
+- **Zdarzenia:** `sim` emituje `LineSpoken { speakerId, key, kind }` (kontrakt w `core/events`, zmienia architekt). Dźwięk i napis wynikają ze zdarzenia, więc testy sesji widzą, kto i co powiedział, bez przeglądarki.
 
 ### Odtwarzanie
 - `AudioPort` dostaje nową szynę `dialogue`. Dochodzi też suwak głośności dialogu w opcjach, obok suwaków muzyki, SFX i radia z audytu.
@@ -51,7 +65,7 @@ Decyzje użytkownika (31.10):
   - przerwa między powtórzeniem tej samej linii.
 - **Dialogi:** linia odtwarza się razem z napisem. Pominięcie linii ucina dźwięk.
 - **Ładowanie:**
-  - Pliki pobierają się w tle przy wejściu do dzielnicy.
+  - Pliki pobierają się w tle przy wejściu do dzielnicy (razem z zaczepkami i rozmowami tej dzielnicy).
   - Linie dialogu są pobierane z wyprzedzeniem jednej sceny.
   - Odzywki trafiają do małego wspólnego pakietu, który ładuje się na ekranie ładowania (ADR-0057).
   - Budżet rozmiaru na telefon: pakiet odzywek do ok. 3 MB, a reszta strumieniowo.
@@ -69,16 +83,17 @@ Decyzje użytkownika (31.10):
 ## Etapy
 1. **Szyny i ustawienia:** szyny `dialogue`, `music`, `sfx` i `radio` z suwakami, ducking.
 2. **Kroki i otoczenie:** kroki według nawierzchni, warstwy otoczenia dzielnic, foley broni.
-3. **Potok odzywek:** `tools/voice`, sprawdzone głosy TTS, klucze odzywek w zdarzeniach, odtwarzanie przestrzenne z limitami. Na początek ganger, cywil i Seki.
-4. **Tagi `#voice` w ink i kluczowe linie wątku w TTS:** eksport scenariusza dla aktorów.
-5. **Podmiana na nagrania aktorów,** jeśli się znajdą. To praca użytkownika plus wpięcie plików.
-6. **Pełne dialogi postaci nazwanych,** stopniowo.
+3. **Potok głosów:** `tools/voice`, sprawdzone głosy TTS, `voices.json`, odzywki walki z kluczami w zdarzeniach, odtwarzanie przestrzenne z limitami. Na początek ganger, cywil i Seki.
+4. **Wyzwalacze kwestii:** zdarzenie `LineSpoken`, zaczepki z warunkami i limitami, napisy w świecie, pierwsze zasłyszane rozmowy w Krakowskim i na targu.
+5. **Tagi `#voice` w ink i kluczowe linie wątku w TTS.**
+6. **Pełne dialogi postaci nazwanych i rozmowy w tle w pozostałych dzielnicach,** stopniowo.
 
 ## Konsekwencje
 - Wszystkie głosy są po angielsku, a gracz z polskim ustawieniem słyszy angielski i czyta polskie napisy. Polskiego dubbingu nie planujemy.
+- Bez aktorów cała mowa zależy od jakości TTS: wybór modelu i głosów sprawdzamy na odsłuchu, zanim pójdzie do treści, a jakość ocenia użytkownik.
 - Rośnie rozmiar gry. Odzywki są w pakiecie, a reszta strumieniowo z budżetem dla telefonu.
 - Każdy głos TTS i każde nagranie mają w repo zapis licencji. Głos bez potwierdzonej licencji komercyjnej nie wchodzi do gry.
 - Testy:
-  - logika odtwarzania (limity, ducking, wybór wariantu, aktor przed TTS) testowana w sesji bez przeglądarki, z fałszywym `AudioPort`;
+  - logika wyzwalaczy i odtwarzania (warunki, limity, priorytety, ducking, wybór wariantu, brak powtórzeń, przerwanie rozmowy) testowana w sesji bez przeglądarki, z fałszywym `AudioPort`;
   - kompletność tagów `#voice` sprawdza test ink;
   - rozmiar pakietu pilnowany w budżetach.
