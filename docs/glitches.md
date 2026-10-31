@@ -83,7 +83,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: później (ADR-0052 „Na później”)
 
 ### G-052 Teatr Osterwy i Kościół Bernardynów poza danymi miasta (brzeg Krakowskiego na z = −200)
-- Status: przyjęte przez weryfikatora i kuratora (uwagi bez blokady: G-096…G-099, T-057…T-061); gałąź `g074-075`, integracja z main i PR w toku
+- Status: w PR #87 (przyjęte przez weryfikatora i kuratora; uwagi bez blokady: G-096…G-099, T-057…T-061)
 - Ważność: S3 (proponowana) · Zasięg: lokalny (Narutowicza, Bernardyńska) · Koszt: duży (prostokąt w config.ts, ADR-0042, regeneracja, budżety)
 - Gdzie: (118.0, −205.7), (364.7, −239.8); ile w mieście: 2 zabytki z listy kuratora
 - Dowód: brak w66330578 i w67508958 w `*.generated.ts`, `DISTRICTS[0].rect.minZ = −200`; T-014
@@ -228,7 +228,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `pedestrian-bare` 59 → ≤ 10
 
 ### G-082 Domyślna szerokość jezdni wycina zmapowane chodniki
-- Status: zablokowane przez G-090 (łatka gotowa w `scratchpad/g082-wip.patch`, gałąź `fix/g-082-sidewalk-under-road` bez commita; 262 → 12 m, wariant oś chodnika − 0,5 m, min. 3 m)
+- Status: w naprawie: łatka nakładana na G-090 (#88), baza `sidewalk-under-carriageway` 12
 - Gdzie: Podwale w40052391/w305027452, Staszica w1150131461, w232805965, Zielona w173533827, Łęczyńska w85717509
 - Przyczyna: `roadWidth` bez `width`/`lanes` = 6,5/5 m, a `cutSidewalk` usuwa chodnik, którego środek leży na cudzej jezdni
 - Propozycja: zwęzić domyślną jezdnię do 2 × (odległość osi od chodnika − pół chodnika), min. 3 m
@@ -268,14 +268,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `road-dip-over-tunnel` 1 → 0 (droga z OSM przecina tunel bez wspólnego węzła, a grunt w ±8 m od przecięcia leży > 1 m pod cięciwą; w mieście 34 przecięcia, następne 0,35 m); pod pomostem przejście w66258159 drożne (G-062)
 
 ### G-089 Bramy z maxheight=below_default ze sklepieniem 4 m
-- Status: przyjęte przez kuratora (3,6 m to szacunek dla `below_default`, wymiar do potwierdzenia zdjęciem przy audycie prześwitów); weryfikacja w toku; commit d697da8
+- Status: w PR #89 (przyjęte przez weryfikatora i kuratora; 3,6 m to szacunek dla `below_default`)
 - Gdzie: Królewska w755152552/555/560; T-054
 - Przyczyna: `buildingPassages` (wysokość w `out.push`, przy `widthOf`) nie czyta `maxheight`
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: kontrola `passage-maxheight` 3 → 0 (np. sklepienie 3,6 m dla `below_default`)
 
 ### G-090 Przesunięcie pasa ruchu z mediany szerokości całego łańcucha ulicy
-- Status: w weryfikacji (commit eefd653, gałąź `worktree-agent-adc4f84e10bde1520`: `laneLine`, przesunięcie zwężane lokalnie; z łatką G-082 `furniture-in-car-lane` 2 → 0)
+- Status: w PR #88 (przyjęte przez weryfikatora)
 - Ważność: S3 (proponowana; na łańcuchach o różnej szerokości pas wychodzi poza wąski odcinek, latarnie w pasie) · Zasięg: łańcuchy ulic z odcinkami różnej szerokości · Koszt: mały–średni
 - Gdzie: Staszica (dopasowany w1150131461, połowa asfaltu ok. 2,0–2,5 m, i odcinek 3,25 m); latarnie `lamp-road` (217, 145) i (205, 118) 1,03 m od pasa
 - Przyczyna: `packages/sim/src/content/traffic.ts` `lanesOf` bierze `laneOffset(roadHalfWidth(...))` z mediany całego łańcucha (2,75 → pas 1,375 m od osi) zamiast lokalnej szerokości odcinka (1,2 m)
