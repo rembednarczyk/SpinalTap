@@ -237,6 +237,13 @@ export interface BuildingPassage {
 export interface BuildingVertical {
   readonly rise: number;
   readonly clutter: number;
+  /**
+   * Landmarks under 5 m from the outline that the superstructure would rise over (G-050): their
+   * outlines (x, z relative to the entity's position) and tops (y relative to it). The renderer
+   * keeps every tier rising over a landmark's top at least 5 m off its outline and drops the
+   * tiers that no longer fit.
+   */
+  readonly landmarks?: readonly { readonly outline: readonly GroundPoint[]; readonly top: number }[];
 }
 
 /** What a skinned block stands for (ADR-0022). */
