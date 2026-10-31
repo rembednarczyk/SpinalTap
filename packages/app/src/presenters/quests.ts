@@ -1,5 +1,5 @@
 import { CONTRACT_KINDS, type Contract, FACTIONS, contractClearedNote, contractFailureNote, contractKind } from "@seki/core";
-import { type Translate, translate } from "@seki/ui";
+import { type Translate, type TranslateText, translate, translateText } from "@seki/ui";
 import { returnForPay } from "../journal";
 import type { Presenter } from "./context";
 
@@ -11,6 +11,8 @@ export const presentQuests: Presenter = ({ bus, render, audio, ui, toast }) => {
   // A toast is written in the language of the moment it appears (ADR-0056).
   const locale = () => ui.getState().settings.locale;
   const t: Translate = (key, params) => translate(locale(), key, params);
+  // Events from the simulation carry catalog keys (ADR-0056, stage 3).
+  const tx: TranslateText = (text) => translateText(locale(), text);
   return [
     bus.on("QuestAdvanced", (e) => {
       toast("quest", t("quest.updated"), e.objective);
@@ -38,14 +40,14 @@ export const presentQuests: Presenter = ({ bus, render, audio, ui, toast }) => {
       audio.play("denied");
     }),
     bus.on("ReputationChanged", (e) => {
-      if (e.delta !== 0) toast("reputation", `${FACTIONS[e.faction]} ${e.delta > 0 ? "+" : ""}${e.delta}`, t("world.reputation"));
+      if (e.delta !== 0) toast("reputation", `${t(FACTIONS[e.faction])} ${e.delta > 0 ? "+" : ""}${e.delta}`, t("world.reputation"));
     }),
     bus.on("EndingReached", (e) => {
-      toast("quest", e.act === 2 ? t("quest.endAct2") : t("quest.endAct1"), t("quest.ending", { title: e.title }));
+      toast("quest", e.act === 2 ? t("quest.endAct2") : t("quest.endAct1"), t("quest.ending", { title: tx(e.title) }));
       audio.play("quest-update");
     }),
     bus.on("MemoryUnlocked", (e) => {
-      toast("memory", e.title, e.description);
+      toast("memory", tx(e.title), tx(e.description));
       render.playEffect({ kind: "memory-glitch" });
       audio.play("memory");
     }),

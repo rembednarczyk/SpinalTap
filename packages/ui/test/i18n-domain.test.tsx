@@ -2,7 +2,12 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import {
   ABILITY_CATALOG,
+  ACT_TWO_ENDINGS,
   AMMO_CATALOG,
+  ENDINGS,
+  FACTIONS,
+  MEMORY_CATALOG,
+  QUICKHACKS,
   BUFF_CATALOG,
   CYBERWARE_CATALOG,
   GARMENT_CATALOG,
@@ -42,6 +47,11 @@ const coreKeys = (): string[] => [
   ...Object.values(CYBERWARE_CATALOG).flatMap((d) => [d.name, d.description]),
   ...Object.values(ABILITY_CATALOG).map((d) => d.name),
   ...Object.values(BUFF_CATALOG).map((d) => d.name),
+  ...Object.values(MEMORY_CATALOG).flatMap((d) => [d.title, d.description]),
+  ...Object.values(ENDINGS).map((d) => d.title),
+  ...Object.values(ACT_TWO_ENDINGS).map((d) => d.title),
+  ...Object.values(FACTIONS),
+  ...Object.values(QUICKHACKS).map((d) => d.title),
 ];
 
 afterEach(cleanup);
@@ -83,12 +93,13 @@ describe("domain texts (ADR-0056, stage 3)", () => {
     expect(screen.getByTestId("slot-torso").textContent).toContain("Kurtka Seki");
   });
 
-  it("names implants and buffs on the character sheet and the HUD in the chosen language", () => {
+  it("names implants, memories, factions and buffs on the sheet and the HUD in the chosen language", () => {
     const mount = (locale: "en" | "pl", sheet: boolean) => {
       const store = createUiStore({
         screen: "playing",
         ...(sheet ? { characterTab: "sheet" as const } : {}),
         cyberware: { optics: "hitomi_optics_mk1" },
+        memories: ["combat_reflex"],
         buffs: [{ id: "steady", name: BUFF_CATALOG.steady.name, left: 20, total: 60 }],
         settings: { ...DEFAULT_SETTINGS, locale },
       });
@@ -104,6 +115,10 @@ describe("domain texts (ADR-0056, stage 3)", () => {
       return { sheet, buff };
     };
     expect(shown("en").sheet).toContain("Hitomi Mk1 optics");
+    expect(shown("en").sheet).toContain("Memory: reflex");
+    expect(shown("en").sheet).toContain("Kaito's network");
+    expect(shown("pl").sheet).toContain("Wspomnienie: odruch");
+    expect(shown("pl").sheet).toContain("Sieć Kaito");
     expect(shown("en").buff).toContain("Steady hand");
     expect(shown("pl").sheet).toContain("Optyka Hitomi Mk1");
     expect(shown("pl").buff).toContain("Pewna ręka");

@@ -67,7 +67,8 @@ describe("journal view model", () => {
     expect(contract?.steps[0]?.objective).toContain("podwórko za myjnią");
     expect(j.quests.find((q) => q.id === "contracts-done")).toMatchObject({ title: "Completed contracts", steps: [{ objective: "Done and paid: 2", done: true }] });
     expect(buildJournal(domain, "pl").quests.find((q) => q.id === "contracts-done")).toMatchObject({ title: "Wykonane kontrakty", steps: [{ objective: "Wykonane i opłacone: 2", done: true }] });
-    expect(j.memories).toEqual([expect.objectContaining({ id: "combat_reflex", title: "Wspomnienie: odruch" })]);
+    expect(j.memories).toEqual([expect.objectContaining({ id: "combat_reflex", title: "Memory: reflex" })]);
+    expect(buildJournal(domain, "pl").memories).toEqual([expect.objectContaining({ id: "combat_reflex", title: "Wspomnienie: odruch" })]);
   });
 
   it("reuses the last view model while the domain parts it reads are unchanged", () => {

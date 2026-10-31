@@ -336,11 +336,11 @@ describe("gear and character sheet", () => {
     fireEvent.keyDown(window, { code: "Tab" });
     const panel = screen.getByTestId("character-panel");
     expect(panel.textContent).toContain("Hitomi Mk1 optics");
-    expect(panel.textContent).toContain("Wspomnienie: odruch");
+    expect(panel.textContent).toContain("Memory: reflex");
     expect(panel.textContent).toContain("-60 · hostility");
     expect(screen.getByTestId("rep-hebi").textContent).toContain("They hunt you");
     expect(screen.getByTestId("rep-fixers").textContent).toContain("Kaito pays more");
-    expect(screen.getByTestId("rep-clinic").textContent).toContain("Klinika Mori");
+    expect(screen.getByTestId("rep-clinic").textContent).toContain("Mori's clinic");
     expect(screen.getByTestId("rep-clinic").textContent).toContain("List prices");
     fireEvent.keyDown(window, { code: "Tab" });
     expect(screen.queryByTestId("character-panel")).toBeNull();

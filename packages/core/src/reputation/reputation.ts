@@ -2,21 +2,22 @@ import type { ContractKind } from "../contracts/kinds";
 
 /**
  * Factions of Shinsekai, block 7. Each one is a group the player can be on good or bad
- * terms with; NPCs read their faction's standing to decide how to treat the player.
+ * terms with; NPCs read their faction's standing to decide how to treat the player. Each id
+ * maps to the catalog key of its name (`faction.<id>`, ADR-0056).
  */
 export const FACTIONS = {
   /** Kaito's fixer network, run out of the Neon Koi bar. */
-  fixers: "Sieć Kaito",
+  fixers: "faction.fixers",
   /** The street gang holding the alley behind the car wash. */
-  hebi: "Gang Hebi",
+  hebi: "faction.hebi",
   /** Ordinary residents of the street. */
-  civilians: "Mieszkańcy Lublina",
+  civilians: "faction.civilians",
   /** Doktor Mori's ripperdoc clinic. */
-  clinic: "Klinika Mori",
+  clinic: "faction.clinic",
   /** The corporation that records and rewrites memories (act II, ADR-0023). */
-  kagami: "Kagami Biotech",
+  kagami: "faction.kagami",
   /** Tessen Kōgyō, the corporation that runs the docks, and its private security (ADR-0024). */
-  tessen: "Ochrona Tessen",
+  tessen: "faction.tessen",
 } as const;
 
 export type FactionId = keyof typeof FACTIONS;

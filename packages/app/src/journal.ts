@@ -1,6 +1,6 @@
 import { type Contract, type DomainState, type Locale, MEMORY_CATALOG, QUEST_DEFINITIONS, contractGiver, contractObjective, stepObjective } from "@seki/core";
 import { contractEntryId, contractTitle, shownEntryId } from "./objective";
-import { type JournalMemoryVm, type JournalQuestVm, type JournalVm, translate } from "@seki/ui";
+import { type JournalMemoryVm, type JournalQuestVm, type JournalVm, translate, translateText } from "@seki/ui";
 
 /** "Go back to the giver for your pay"; Polish names the giver in the genitive (ADR-0056). */
 export const returnForPay = (locale: Locale, c: Contract): string => {
@@ -54,7 +54,11 @@ export const buildJournal = (domain: DomainState, locale: Locale): JournalVm => 
   const shown = shownEntryId(domain);
   const pinned = domain.preferences.trackedQuest;
   const marked = quests.map((q) => (q.status === "active" && q.id === shown ? { ...q, tracked: true, pinned: q.id === pinned } : q));
-  const memories: JournalMemoryVm[] = domain.character.memories.map((id) => ({ id, title: MEMORY_CATALOG[id].title, description: MEMORY_CATALOG[id].description }));
+  const memories: JournalMemoryVm[] = domain.character.memories.map((id) => ({
+    id,
+    title: translateText(locale, MEMORY_CATALOG[id].title),
+    description: translateText(locale, MEMORY_CATALOG[id].description),
+  }));
   return { quests: marked, memories };
 };
 

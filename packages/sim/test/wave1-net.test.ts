@@ -89,7 +89,7 @@ describe("the scanner (ADR-0029)", () => {
     const focus = collect<DomainEvents["ScanFocusChanged"]>(sim, "ScanFocusChanged");
     lookAt(sim, chest(g));
     sim.step(input({ scan: true }));
-    expect(focus).toEqual([{ targetId: g.id, kind: "person", name: "Ochrona Tessen", faction: "tessen" }]);
+    expect(focus).toEqual([{ targetId: g.id, kind: "person", name: "faction.tessen", faction: "tessen" }]);
     const ctx = { input: input({ scan: true }), session: sim.session, state: { domain: sim.domain } } as never;
     expect(worldTimeScale(ctx)).toBeCloseTo(0.6);
     sim.step();

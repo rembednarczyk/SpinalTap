@@ -143,7 +143,8 @@ describe("scanner view models", () => {
   it("tells people, devices and cameras apart", () => {
     const civ = { ...base, id: 31, health: { current: 50, max: 50 }, civilian: {}, faction: "civilians" } as unknown as Entity;
     expect(scanKind(civ)).toBe("person");
-    expect(scanTargetVm(civ, "en")).toMatchObject({ kind: "person", name: passerBy(31, "en").name, faction: "Mieszkańcy Lublina", hostile: false });
+    expect(scanTargetVm(civ, "en")).toMatchObject({ kind: "person", name: passerBy(31, "en").name, faction: "People of Lublin", hostile: false });
+    expect(scanTargetVm(civ, "pl").faction).toBe("Mieszkańcy Lublina");
     const enemy = { ...base, id: 32, health: { current: 80, max: 80 }, ai: {}, enemy: { type: "tessen_guard" }, faction: "tessen" } as unknown as Entity;
     expect(scanTargetVm(enemy, "en")).toMatchObject({ name: "Tessen guard", hostile: true });
     expect(scanTargetVm(enemy, "pl")).toMatchObject({ name: "Strażnik Tessen" });

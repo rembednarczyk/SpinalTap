@@ -47,7 +47,7 @@ export const CharacterPanel = () => {
         ) : (
           <ul className="sheet__memories">
             {memories.map((id) => (
-              <li key={id}>{MEMORY_CATALOG[id as MemoryId]?.title ?? id}</li>
+              <li key={id}>{tx(MEMORY_CATALOG[id as MemoryId]?.title ?? id)}</li>
             ))}
           </ul>
         )}
@@ -57,7 +57,7 @@ export const CharacterPanel = () => {
         <dl className="sheet__list">
           {FACTION_IDS.map((f) => (
             <div key={f} className="sheet__row" data-testid={`rep-${f}`}>
-              <dt>{FACTIONS[f]}</dt>
+              <dt>{t(FACTIONS[f])}</dt>
               <dd>
                 {reputation[f] > 0 ? "+" : ""}
                 {reputation[f]} · {t(`character.tier.${reputationTier(reputation[f])}`)}
