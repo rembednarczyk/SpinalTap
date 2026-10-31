@@ -162,6 +162,9 @@ const General = ({ settings, set }: SectionProps) => {
       <Choice label="settings.language" value={settings.locale} options={LANGUAGES} onChange={(locale) => set({ locale })} />
       <Choice label="settings.quality" value={settings.quality} options={QUALITY} onChange={(quality) => set({ quality })} />
       <Slider id="volume" label={t("settings.volume")} value={settings.volume} min={0} max={1} step={0.05} format={percent} onChange={(v) => set({ volume: v })} />
+      <Slider id="musicVolume" label={t("settings.musicVolume")} value={settings.musicVolume} min={0} max={1} step={0.05} format={percent} onChange={(v) => set({ musicVolume: v })} />
+      <Slider id="sfxVolume" label={t("settings.sfxVolume")} value={settings.sfxVolume} min={0} max={1} step={0.05} format={percent} onChange={(v) => set({ sfxVolume: v })} />
+      <Slider id="ambienceVolume" label={t("settings.ambienceVolume")} value={settings.ambienceVolume} min={0} max={1} step={0.05} format={percent} onChange={(v) => set({ ambienceVolume: v })} />
       <Toggle label="settings.hints" on={settings.hints} onChange={(hints) => set({ hints })} />
       <Slider id="touchSensitivity" label={t("settings.touchSensitivity")} value={settings.touchSensitivity} min={0.2} max={3} step={0.1} format={times(settings.locale)} onChange={(v) => set({ touchSensitivity: v })} />
       <Toggle label="settings.hudAlwaysShow" on={settings.hudAlwaysShow} onChange={(hudAlwaysShow) => set({ hudAlwaysShow })} />

@@ -251,6 +251,10 @@ export interface SettingsVm {
   readonly horizontalFov: number;
   /** Master volume 0..1. */
   readonly volume: number;
+  /** Volumes of the mix buses 0..1 (ADR-0060 stage 1): music and radio, effects, the city around. */
+  readonly musicVolume: number;
+  readonly sfxVolume: number;
+  readonly ambienceVolume: number;
   /** Key bindings that differ from the defaults: action id -> codes. */
   readonly bindings: Readonly<Record<string, readonly string[]>>;
   /** First-run hints (controls, interactions) shown while playing. */
@@ -301,6 +305,9 @@ export const DEFAULT_SETTINGS: SettingsVm = {
   touchSensitivity: 1,
   horizontalFov: DEFAULT_HORIZONTAL_FOV,
   volume: 0.6,
+  musicVolume: 0.55,
+  sfxVolume: 0.9,
+  ambienceVolume: 0.7,
   bindings: {},
   hints: true,
   hudAlwaysShow: false,
