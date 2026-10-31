@@ -1,12 +1,6 @@
-import type { DisguiseRole, EntityId } from "@seki/core";
-import type { DisguiseVm } from "@seki/ui";
+import type { EntityId } from "@seki/core";
+import { type DisguiseVm, translate } from "@seki/ui";
 import type { HudPart, HudPartContext, HudPatch } from "./hud-part";
-
-export const DISGUISE_LABELS: Readonly<Record<DisguiseRole, string>> = {
-  hebi: "Przebranie: Hebi",
-  tessen_guard: "Przebranie: ochrona Tessen",
-  tessen_staff: "Przebranie: obsługa Tessen",
-};
 
 /**
  * Disguises (ADR-0033, ADR-0035): the role badge by the health bar, read from the domain so a
@@ -25,7 +19,8 @@ export class DisguiseHud implements HudPart {
       }),
       bus.on("DisguiseBlown", (e) => {
         this.seenBy.add(e.observerId);
-        ctx.toast("heat", "Przykrywka spalona", `${DISGUISE_LABELS[e.role]}: ktoś cię rozpoznał`);
+        const locale = ctx.ui.getState().settings.locale;
+        ctx.toast("heat", translate(locale, "disguise.blown"), translate(locale, "disguise.blownText", { disguise: translate(locale, `disguise.${e.role}`) }));
       }),
       bus.on("EntityKilled", (e) => this.seenBy.delete(e.entityId)),
     ];
@@ -43,7 +38,7 @@ export class DisguiseHud implements HudPart {
 
   frame(): HudPatch {
     const { role, blown } = this.ctx.hooks.domain().disguise;
-    const vm: DisguiseVm | null = role ? { role, label: DISGUISE_LABELS[role], blown } : null;
+    const vm: DisguiseVm | null = role ? { role, label: translate(this.ctx.ui.getState().settings.locale, `disguise.${role}`), blown } : null;
     return { disguise: vm };
   }
 

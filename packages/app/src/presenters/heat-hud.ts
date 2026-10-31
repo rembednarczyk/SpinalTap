@@ -1,6 +1,6 @@
-import type { AwarenessState, CrimeKind, DomainEvents, EntityId, Vec3 } from "@seki/core";
+import type { AwarenessState, DomainEvents, EntityId, Vec3 } from "@seki/core";
 import type { Entity } from "@seki/sim";
-import { type DetectionVm, type HeatVm, type MapPointVm, NO_HEAT } from "@seki/ui";
+import { type DetectionVm, type HeatVm, type MapPointVm, type MessageKey, type MessageParams, NO_HEAT, translate } from "@seki/ui";
 import { type HudPart, type HudPartContext, type HudPartFrame, type HudPatch, snap } from "./hud-part";
 
 /** Seconds of the heat search under which the stars blink. */
@@ -8,20 +8,6 @@ export const HEAT_ENDING_SECONDS = 5;
 const ANGLE_STEP = Math.PI / 36;
 const LEVEL_STEP = 1 / 20;
 const MAP_SNAP = 0.5;
-
-const CRIME_TEXT: Readonly<Record<CrimeKind, string>> = {
-  gunfire: "strzelanina",
-  assault: "napaść",
-  murder: "zabójstwo",
-  trespass: "wtargnięcie",
-  hacking: "włamanie do sieci",
-};
-
-const CHANNEL_TEXT: Readonly<Record<DomainEvents["CrimeReported"]["channel"], string>> = {
-  civilian: "Świadek zadzwonił",
-  camera: "Kamera nagrała",
-  patrol: "Patrol widział",
-};
 
 interface Observer {
   readonly state: Exclude<AwarenessState, "unaware">;
@@ -45,7 +31,7 @@ export class HeatHud implements HudPart {
       bus.on("HeatChanged", (e) => {
         this.heat = e;
         this.heatTick = hooks.tick();
-        if (e.level > e.previous) ctx.toast("heat", `Pościg: ${"★".repeat(e.level)}`, "Ochrona dystryktu cię szuka");
+        if (e.level > e.previous) ctx.toast("heat", this.t("heat.chase", { stars: "★".repeat(e.level) }), this.t("heat.chaseText"));
       }),
       bus.on("AwarenessChanged", (e) => {
         if (e.state === "unaware") this.observers.delete(e.observerId);
@@ -54,13 +40,21 @@ export class HeatHud implements HudPart {
       bus.on("WitnessCalling", (e) => this.witnesses.set(e.witnessId, hooks.tick() + Math.ceil((e.duration + 1) * hooks.ticksPerSecond))),
       bus.on("CrimeReported", (e) => {
         this.witnesses.delete(e.witnessId);
-        if (isPlayer(e.offenderId)) ctx.toast("heat", `${CHANNEL_TEXT[e.channel]}: ${CRIME_TEXT[e.crime]}`, "Zgłoszone ochronie");
+        if (isPlayer(e.offenderId)) {
+          const reported = { channel: this.t(`heat.channel.${e.channel}`), crime: this.t(`heat.crime.${e.crime}`) };
+          ctx.toast("heat", this.t("heat.reported", reported), this.t("heat.reportedText"));
+        }
       }),
       bus.on("EntityKilled", (e) => {
         this.witnesses.delete(e.entityId);
         this.observers.delete(e.entityId);
       }),
     ];
+  }
+
+  /** A toast in the language of the moment (ADR-0056). */
+  private t(key: MessageKey, params?: MessageParams): string {
+    return translate(this.ctx.ui.getState().settings.locale, key, params);
   }
 
   /** Heat on and not searching, or someone fighting the player. */
