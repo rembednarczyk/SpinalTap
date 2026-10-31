@@ -102,7 +102,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | `street-attr-mismatch` | Kawałek ulicy, którego nazwa, flaga `oneway` albo kierunek różni się od najbliższej drogi OSM o tej nazwie (≤ 1 m) | 0 |
 | `building-cleared-unregistered` | Budynek usuwany przez `clearedBuilding` spoza listy z rejestru topografii | 0 (lista: w672635872, w672635873, w458298766, w1354195809) |
 | `building-part-ignored` | Test importu: budynek z `building:part` wyższym od własnej bryły o ponad 3 m. Wymaga zachowania części w ekstrakcie | ≥ 5 w próbce, do ustalenia po ponownym pobraniu |
-- Źródło: audyt topografii 1 (kurator, 31.10).
+| `civic-as-residential` | Budynek gry z `use` ∉ {civic, historic, church}. Część A: jego tagi OSM mają `office=government`, `government=*` albo `amenity` ∈ {townhall, courthouse, library, theatre, post_office, arts_centre}. Część B: w obrysie leży punkt `amenity` ∈ {townhall, courthouse, theatre, library, arts_centre}, obrys ma `building` ∈ {yes, public, government, civic}, a adresy punktu i obrysu są zgodne albo któregoś brak (jak G-051). Test importu, bo potrzebuje tagów i punktów z `data/osm` | A 2 (w55897069, w67498728), B 2 (w67508958 Teatr Osterwy, w55897083), razem 4 na efeb31b (G-097, G-120) |
+| `part-buried-in-roof` | Część z OSM podniesiona na obrys (`soffit`), której szczyt (ściany i dach) leży poniżej połaci dachu obrysu nad środkiem części; połać liczona jak `addHipRoof` (wcięcie `min(rise/0,84+0,35; 1,15·pole/obwód)`) | 1 (w619138853 na Ratuszu, G-117) |
+| `fractional-levels-rounded` | Obrys albo część z ułamkowym `building:levels` bez `height`, w których ściany nad cokołem przekraczają `building:levels × 3,2 m` o ponad 0,5 m | 6 (G-116) |
+| `landmark-colour-ignored` | Budynek z `isLandmark` z `roof:colour` albo `building:colour` w OSM, któremu gra rysuje dach albo tynk z innej rodziny kolorów | 25 (G-118) |
+- Źródło: audyt topografii 1 (kurator, 31.10); cztery ostatnie: audyt gmachów publicznych (kurator, 31.10).
 
 ### G-055 Liczba wywołań rysowania skacze między klatkami w ustalonym mieście
 - Status: zgłoszone (z weryfikacji G-031)
@@ -303,6 +307,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Przyczyna: `buildingUse` czyta tylko tagi obrysu (`building=yes`); punkt `amenity=theatre` w obrysie daje nazwę, nie przeznaczenie
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: punkt `amenity=theatre`/`arts_centre` w obrysie `building=yes` daje `use=civic`; kontrola `theatre-not-civic` 1 → 0; wysokość według zdjęcia lub LOD2 (ADR-0062 etap 7)
+- Uzupełnienie (audyt gmachów publicznych, 31.10): ten sam mechanizm dotyczy punktów `amenity=townhall|courthouse|library` (Pedagogiczna Biblioteka Wojewódzka n10568650059 w w55897083, T-069: `residential` z nadbudową +21 m). Reguła tylko przy zgodnym adresie (jak G-051) i dla `building=yes|public|government|civic`. Punktów `office=government` reguła nie obejmuje, bo bywają lokalem w kamienicy (Biuro Rozwoju Turystyki UM n9529164485 w w66293242). Kontrola `civic-as-residential` (część B) 2 → 0
 
 ### G-098 Wieże zmapowane jako `man_made=tower` bez `building` pominięte
 - Status: zgłoszone (z przeglądu kuratora G-052) · Ważność: S4 · Zasięg: 3 obrysy w Krakowskim · Koszt: mały–średni
@@ -354,6 +359,65 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Gdzie: panorama (ADR-0051), wieża Tatary (1900, 1500) widziana z Nabrzeża; T-056
 - Pakiet właściciela: packages/engine (mapcity/skyline)
 - Test przyjęcia: podstawa wieży poniżej linii terenu panoramy z każdego punktu Nabrzeża
+
+### G-116 Ułamkowe `building:levels` zaokrąglane w górę (Ratusz o 1,6 m za wysoki)
+- Status: zgłoszone (audyt gmachów publicznych, kurator 31.10)
+- Ważność: S4 (proponowana) · Zasięg: 6 obrysów i części (Ratusz w66264120 z wieżą w619138854, kościół Dominikanów w66286338 z w618270604 i w618270605, w55897040) · Koszt: mały
+- Gdzie: Ratusz (416.1, −69.6); T-064
+- Dowód: `heights` w `tools/osm-import/src/building-tags.ts`: `levels = Math.round(4.5) = 5` i `walls = floors(levels)`, czyli 16 m zamiast 14,4 m. Wieża Ratusza 7,5 → 8 kondygnacji
+- Przyczyna: ściany liczone z zaokrąglonej liczby kondygnacji
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: `building:levels=4.5` daje ściany 14,4 m nad cokołem, a w siatce okien 4 kondygnacje (wyższe, po 3,6 m); kontrola `fractional-levels-rounded` 6 → 0
+
+### G-117 Dach całego obrysu przykrywa wyższą część z OSM (ryzalit Ratusza)
+- Status: zgłoszone (audyt gmachów publicznych, kurator 31.10)
+- Ważność: S3 (proponowana; Ratusz z Placu Łokietka) · Zasięg: 1 w mieście (Ratusz); części kościoła Dominikanów przykryte ścianami, ale ich dachy wychodzą ponad połać · Koszt: średni
+- Gdzie: ryzalit w619138853 (414.8, −79.4) na Ratuszu w66264120; T-065
+- Dowód: dach czterospadowy z `addHipRoof` nad całym obrysem od y 17,1 do 24,0; nad środkiem ryzalitu 22,6, a szczyt ryzalitu 20,3 (bez dachu). Widać tylko pas 1,6 m przy okapie
+- Przyczyna: `stackParts` stawia część z OSM na bryle (`soffit` = ściany obrysu), a renderer kryje dachem cały obrys, także pod częściami wyższymi od niego
+- Pakiet właściciela: packages/engine (mapcity/roof-plan) albo przepis zabytku ADR-0062 etap 4
+- Test przyjęcia: połać obrysu nie wchodzi nad obrys części, która jest wyższa od ścian obrysu i dochodzi do jego krawędzi (dach kończy się na ścianach ryzalitu); kontrola `part-buried-in-roof` 1 → 0
+
+### G-118 Kolory z OSM (`building:colour`, `roof:colour`) pomijane na zabytkach
+- Status: zgłoszone (audyt gmachów publicznych, kurator 31.10)
+- Ważność: S4 (proponowana) · Zasięg: 25 budynków gry z kolorami w OSM, wszystkie to zabytki albo ich części · Koszt: średni
+- Gdzie: Ratusz (żółty tynk, czerwony dach, zielona wieża) i Trybunał (beżowy, zielony dach blaszany) jako szare tynki i grafitowe dachy; T-066
+- Dowód: `facade-style.ts`: dla `civic` tynk z `CIVIC_PLASTER` i dach zawsze z `ROOFS_METAL`; import nie przenosi tagów koloru do `LublinBuildingData`
+- Pakiet właściciela: tools/osm-import (pole koloru w widoku) i packages/engine (mapcity/facade-style); kontrakt widoku `building`, więc dopisek do ADR-0064
+- Test przyjęcia: zabytek z `roof:colour=green|red` dostaje dach z odpowiedniej rodziny palety (miedź, dachówka), a z `building:colour` najbliższy tynk palety; kontrola `landmark-colour-ignored` 25 → 0
+
+### G-119 Ratusz i Trybunał bez przepisu zabytku (fasada jak każdy gmach)
+- Status: zgłoszone (audyt gmachów publicznych, kurator 31.10); to praca ADR-0062 etap 4
+- Ważność: S3 (proponowana; dwa główne punkty orientacyjne, zgłoszenie użytkownika „trzeba poprawić urząd miasta”) · Zasięg: szeroki (Plac Łokietka, Rynek) · Koszt: duży
+- Gdzie: Ratusz w66264120 z częściami w619138853 i w619138854; Trybunał w66264159; T-064, T-065, T-067
+- Dowód: zrzuty `ratusz-s`, `ratusz-wide`, `ratusz-ne` i `trybunal-wide` (scratchpad kuratora): Ratusz wygląda jak biurowiec z siatką 5 rzędów okien i bez wejścia, a jego wieża jest grafitowym słupkiem nad połacią
+- Przyczyna: brak przepisu w `landmarks/recipes.ts`; plan fasad dla `civic` (ADR-0051)
+- Pakiet właściciela: packages/engine (mapcity/landmarks)
+- Test przyjęcia: przepis Ratusza: ryzalit w osi fasady południowej z wejściem głównym, wieża z OSM z tarczą zegara (do potwierdzenia zdjęciem), kondygnacje w rytmie fasady klasycystycznej, kolory z T-066, warstwa 2077 bez nadbudowy (podpis, światło na gzymsach). Przepis Trybunału: wieżyczka zegarowa na kalenicy, jeśli potwierdzi ją zdjęcie. Przegląd kuratora ze zdjęciem; migawka NPR obejrzana
+
+### G-120 Urzędy z `office=government` w tagach obrysu jako kamienice z nadbudową
+- Status: zgłoszone (audyt gmachów publicznych, kurator 31.10)
+- Ważność: S3 (proponowana; nadbudowa 2,4–3,4 raza wyższa od gmachu) · Zasięg: 2 (Kuratorium Oświaty w55897069, Urząd Miasta przy Placu Litewskim 1 w67498728) · Koszt: mały
+- Gdzie: (−132.0, 74.5) i (118.7, 35.9); T-068
+- Dowód: `buildingUse` nie czyta `office` ani `government`, więc z `building=yes` wychodzi `residential`. `landmarkName` gubi wtedy nazwę, a `verticalOf` daje +24 m i +21 m
+- Pakiet właściciela: tools/osm-import (`building-tags.ts`)
+- Test przyjęcia: obrys z `office=government` albo `government=*` daje `use=civic` z nazwą; kontrola `civic-as-residential` (część A) 2 → 0; baza `landmark-overbuilt` bez wzrostu
+
+### G-121 Poczta Główna jako sklep z nadbudową
+- Status: zgłoszone (audyt gmachów publicznych, kurator 31.10); przed poprawką trzeba potwierdzić budynek zdjęciem albo w rejestrze NID
+- Ważność: S4 (proponowana) · Zasięg: 1 · Koszt: mały
+- Gdzie: w69672579 (−45, −75), Krakowskie Przedmieście 50; punkt `amenity=post_office` „Poczta Główna” n2526835832; T-070
+- Dowód: OSM `building=retail`, `building:levels=5`, więc w grze `commercial` z witrynami, nadbudową +6 m i bez nazwy
+- Pakiet właściciela: tools/osm-import (`corrections.ts` z wpisem T-070, albo poprawka w OSM)
+- Test przyjęcia: po potwierdzeniu `use=civic` z nazwą „Poczta Główna” i bez nadbudowy
+
+### G-122 Gmachy publiczne z domyślną wysokością i płaskim dachem
+- Status: później (czeka na ADR-0064 etap 11 (LOD2) albo 14 (NMPT); bez danych poprawka byłaby zgadywaniem)
+- Ważność: S4 · Zasięg: 7 (Sąd Okręgowy, Collegium Maximum, Collegium Medicum, Świętoduska 3, Peowiaków 13 ×2, Teatr Osterwy) · Koszt: średni
+- Gdzie: T-071
+- Dowód: `source: "default"` albo brak `roof:shape` przy `use=civic`: 4 kondygnacje i dach płaski
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: wysokość z LOD2 albo NMPT (mediana w obrysie) i dach z LOD2; rozbieżność > 20% z OSM do przeglądu kuratora
 
 ## Naprawione
 | ID | Glitch | PR |
