@@ -4,6 +4,14 @@ Prowadzi go agent `topography-curator` (`.claude/agents/topography-curator.md`).
 
 Statusy: `celowe`, `do poprawy` (z G-NNN), `poprawione (#PR)`.
 
+## Plan audytów (od 31.10)
+- [x] Audyt 1: Krakowskie Przedmieście i Stare Miasto (T-001…T-016).
+- [x] Audyt 2: Podzamcze i Nabrzeże (T-021…T-031).
+- [ ] Bramy i przejazdy: bramy miejskie, przejazdy bramne, przejścia przez budynki (drożność, sklepienie, kolizja).
+- [ ] Prześwity: pod mostami, wiaduktami, kładkami i nadwieszeniami (gracz i AI).
+- [ ] Drogi: ciągłość sieci ulic, ścieżek i schodów, kierunki, szerokości, nawierzchnie, połączenia dzielnic.
+- [ ] Wnętrza zabytków: które budowle mają wnętrze w grze i czy obszar zgadza się z budynkiem (ADR-0061).
+
 ## Odstępstwa
 
 | ID | Miejsce (x, z) | W grze | W rzeczywistości | Rodzaj | Status |

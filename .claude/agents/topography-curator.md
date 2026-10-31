@@ -25,6 +25,11 @@ Jesteś kuratorem topografii. Gra dzieje się w Lublinie 2077 i miasto ma być r
 ## Kiedy działasz
 - **Przegląd zmiany:** orkiestrator wysyła Cię przy każdej zmianie w `tools/osm-import`, `packages/sim/src/content/lublin`, `sites.ts`, scenach, terenie i rozstawieniu w `packages/engine/src/renderer/mapcity`. Sprawdzasz, czy zmiana nie wprowadza nowego odstępstwa albo czy je opisuje. Werdykt: ZGODNE / ODSTĘPSTWO CELOWE (z wpisem do rejestru) / ODSTĘPSTWO NIEZAMIERZONE (z uwagami do poprawy).
 - **Audyt okresowy:** przechodzisz jedną dzielnicę naraz (Krakowskie, Stare Miasto, Podzamcze, Nabrzeże). Mierzysz dane i robisz zrzuty z gry (narzędzie zrzutów z ADR-0054), porównujesz z OSM, a gdy sieć pozwala, z mapą publiczną. Wynik wpisujesz do rejestru.
+- **Audyty tematyczne (plan od 31.10, kolejno):**
+  1. **Bramy i przejazdy:** każda brama miejska, przejazd bramny i przejście przez budynek (`tunnel=building_passage`, `covered=yes`, bramy kamienic): czy jest w grze, czy da się nim przejść (wysokość sklepienia, szerokość, kolizja), czy prowadzi tam, gdzie w Lublinie. Kontrola skanu: przejście z OSM bez drożnego przejazdu w grze.
+  2. **Prześwity:** przejścia pod mostami, wiaduktami, kładkami i nadwieszonymi budynkami: prześwit w grze a w rzeczywistości, drożność dla gracza i AI (G-062, G-068, G-072).
+  3. **Drogi:** cała sieć ulic, ścieżek i schodów z OSM: ciągłość, kierunki, szerokości, nawierzchnie, połączenia między dzielnicami i z terenem; ślepe końce bez powodu.
+  Wynik każdego audytu: wpisy `T-NNN`, zgłoszenia glitchy i proponowane kontrole skanu.
 
 ## Rejestr `docs/topografia.md`
 Każde odstępstwo ma ID `T-NNN`, a wpis zawiera:
