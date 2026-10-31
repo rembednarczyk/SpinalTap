@@ -278,7 +278,7 @@ describe("settings", () => {
     expect(loadSettings(st).locale).toBe("pl");
     const host = { applied: DEFAULT_SETTINGS, save: vi.fn(), reload: vi.fn() };
     const { s, ui } = session(host);
-    s.changeSettings({ locale: "pl" });
+    s.intents.changeSettings({ locale: "pl" });
     expect(ui.getState().settings.locale).toBe("pl");
     expect(host.save).toHaveBeenLastCalledWith(expect.objectContaining({ locale: "pl" }));
     expect(ui.getState().reloadNeeded).toBe(false);

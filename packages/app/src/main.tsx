@@ -226,7 +226,7 @@ document.addEventListener("pointerlockchange", () => {
   if (!input.locked && session.inControl && !reference) session.pause();
 });
 
-createRoot(uiRoot).render(<GameUi store={ui} intents={session} touch={touchDevice ? input.virtualPad : undefined} />);
+createRoot(uiRoot).render(<GameUi store={ui} intents={session.intents} touch={touchDevice ? input.virtualPad : undefined} />);
 
 const debug = createDebugApi(session, ui, loop, () => probe.sample(), (position, target) => renderer.rig.setReferenceView(position, target),
   () => renderer.dressedCount,

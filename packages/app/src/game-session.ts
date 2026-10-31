@@ -15,18 +15,11 @@ import { type Controllers, createControllers } from "./controllers/compose";
 import { isCalm } from "./controllers/hud-sync";
 import { pushToastTimed } from "./controllers/shared";
 import { buildCityMap } from "./city-map";
-import { type ControllerIntents, composeIntents, controllerIntents } from "./intents";
+import { composeIntents, controllerIntents } from "./intents";
 import type { GameSessionDeps } from "./session-deps";
 
 export { RECALL_CALM_TICKS } from "./controllers/hud-sync";
 export type { GameSessionDeps, HintsHost, SettingsHost } from "./session-deps";
-
-/**
- * The controllers' intents are also own properties of the session (copied in the constructor),
- * so `main.tsx` can still hand the session itself to `GameUi`. New code passes `intents`.
- */
-// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging, @typescript-eslint/no-empty-object-type
-export interface GameSession extends ControllerIntents {}
 
 /**
  * Application service: owns the running simulation and the loop (step, render, screen) and the
@@ -34,7 +27,6 @@ export interface GameSession extends ControllerIntents {}
  * composed in `intents.ts` (ADR-0031). Contains no browser or Babylon code, so the whole M0
  * loop runs headless.
  */
-// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class GameSession implements SessionIntents {
   readonly bus = new EventBus<DomainEvents>();
   /** Everything the UI can ask: the session's own intents and each controller's part. */
@@ -63,7 +55,6 @@ export class GameSession implements SessionIntents {
     });
     const parts = controllerIntents(this.c, () => this.simulation);
     this.intents = composeIntents(this, parts);
-    Object.assign(this, parts);
     void this.refreshSlots();
   }
 

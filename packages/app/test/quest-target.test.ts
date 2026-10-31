@@ -81,9 +81,9 @@ describe("G-035: the quest step's target on the map", () => {
     for (let guard = 0; guard < 10 && !ui.getState().dialogue?.ended; guard++) {
       const choices = ui.getState().dialogue?.choices ?? [];
       const i = choices.findIndex((c) => c.text.startsWith("Gdzie znajdę"));
-      session.choose(i < 0 ? 0 : i);
+      session.intents.choose(i < 0 ? 0 : i);
     }
-    session.closeDialogue();
+    session.intents.closeDialogue();
     steps(session, 2);
     expect(objective(ui)).toBe("Wejdź schodami pożarowymi na dach nad targiem i znajdź Rena");
     const marks = questMarkers(ui);
