@@ -49,7 +49,7 @@ describe("M3 acceptance: act I from a new game to each ending", () => {
     expect(allText(ui)).toContain(ending === "aya" ? "Babcia Ume wie" : "Mori sprzedał fiolkę");
     finishDialogue(session, ui);
     expect(session.sim.domain.quests[QUEST_MIRROR.id]).toEqual({ status: "active", stepIndex: 0 });
-    expect(objective(ui)).toBe(ending === "aya" ? "Ktoś woła cię przez moduł. Zapytaj babcię Ume o Rena Odagiri (deptak przy klinice)" : "Mori sprzedał twój moduł. Zapytaj go, kto go kupił (klinika Mori)");
+    expect(objective(ui)).toBe(ending === "aya" ? "Someone is calling you through the module. Ask Grandma Ume about Ren Odagiri (the promenade by the clinic)" : "Mori sold your module. Ask him who bought it (Mori's clinic)");
 
     // The ending survives a save/load round trip, ink state included.
     expect(await session.saveAsync("act1")).toBe(true);
@@ -90,7 +90,7 @@ describe("M3 acceptance: act I from a new game to each ending", () => {
     const c = setup(store);
     expect(await c.session.loadAsync("mid")).toBe(true);
     expect(c.session.sim.domain.story).toEqual({ choices: { case: "opened" }, ending: null, act2Ending: null });
-    expect(objective(c.ui)).toBe("Porozmawiaj z doktorem Mori o tym, co widziałaś (klinika Mori)");
+    expect(objective(c.ui)).toBe("Talk to Doctor Mori about what you saw (Mori's clinic)");
     playMoriFragment(c.session, c.ui, c.render, 1);
     playImplantFragment(c.session, c.ui, c.render, 1);
     playFinale(c.session, c.ui);

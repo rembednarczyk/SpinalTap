@@ -1,20 +1,24 @@
 import type { DomainState, Locale, PhonePriority } from "@seki/core";
 import { NarrativeRuntime, type StorySources } from "@seki/narrative";
 import { narrativeText } from "./content-text";
-import { type PhoneLineVm, type PhoneMessageVm, type PhoneNoticeVm, type PhoneThreadVm, type PhoneVm, translate } from "@seki/ui";
+import { type PhoneLineVm, type PhoneMessageVm, type PhoneNoticeVm, type PhoneThreadVm, type PhoneVm, isMessageKey, translate } from "@seki/ui";
 
-/** Display names of the phone contacts; an unknown id is shown capitalised. */
+/** Display names of the phone contacts, or catalog keys for the ones with a role (ADR-0056); an unknown id is shown capitalised. */
 export const CONTACT_NAMES: Readonly<Record<string, string>> = {
   kaito: "Kaito",
   hana: "Hana",
   genzo: "Genzō",
-  mori: "Doktor Mori",
+  mori: "speaker.mori",
   oyaji: "Oyaji",
   mika: "Mika",
   fumiko: "Fumiko",
 };
 
-export const contactName = (from: string): string => CONTACT_NAMES[from] ?? (from ? from[0]!.toUpperCase() + from.slice(1) : "Nieznany");
+export const contactName = (from: string, locale: Locale = "en"): string => {
+  const name = CONTACT_NAMES[from];
+  if (name) return isMessageKey(name) ? translate(locale, name) : name;
+  return from ? from[0]!.toUpperCase() + from.slice(1) : translate(locale, "phone.unknown");
+};
 
 /** Seconds a banner stays up: a text 5 s, a holocall about as long as it takes to read. */
 export const noticeSeconds = (m: Pick<PhoneMessageVm, "kind" | "priority" | "lines">): number => {
@@ -125,7 +129,8 @@ export class PhoneInbox {
   private build(): PhoneVm {
     const threads: PhoneThreadVm[] = this.order.map((from) => {
       const t = this.threads.get(from)!;
-      return { from, contact: contactName(from), messages: t.messages, unread: t.messages.length - t.read };
+      // The name the latest message came under, in the language it was rendered in, like its lines.
+      return { from, contact: t.messages[t.messages.length - 1]?.contact ?? contactName(from), messages: t.messages, unread: t.messages.length - t.read };
     });
     this.vm = { threads, unread: threads.reduce((n, t) => n + t.unread, 0) };
     return this.vm;

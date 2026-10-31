@@ -119,8 +119,8 @@ describe("M4 acceptance: the docks", () => {
     const hack = session.sim.domain.contracts.active!;
     expect(hack.kind).toBe("hack");
     expect(ui.getState().questTitle).toBe("Contract 2 · Genzō");
-    expect(ui.getState().objective).toContain("Włam się do terminala");
-    expect(toasts(ui).some((t) => t.startsWith("New contract: Włamanie do terminala"))).toBe(true);
+    expect(ui.getState().objective).toContain("Break into the terminal");
+    expect(toasts(ui).some((t) => t.startsWith("New contract: Terminal hack"))).toBe(true);
     // The terminal is on the minimap.
     expect(ui.getState().mapMarkers.some((m) => m.id === `${hack.id}-terminal` && m.kind === "target")).toBe(true);
 
@@ -130,7 +130,7 @@ describe("M4 acceptance: the docks", () => {
     expect(toasts(ui)).toContain("Alarm on Nabrzeże: Hold the terminal, security is on its way");
     downTheWave(session);
     steps(session, 10 * SIM_HZ);
-    expect(ui.getState().objective).toMatch(/Utrzymaj połączenie z terminalem \(zostało 0:\d\d\)/);
+    expect(ui.getState().objective).toMatch(/Hold the connection to the terminal \(0:\d\d left\)/);
 
     expect(await session.saveAsync("quick")).toBe(true);
     const progress = session.sim.domain.contracts.active!.progress!;
@@ -139,7 +139,7 @@ describe("M4 acceptance: the docks", () => {
     expect(session.sim.domain.contracts.active!.progress).toBe(progress);
     teleport(session, t.x, t.z - 1.4, 0);
     steps(session, HACK_SECONDS * SIM_HZ - progress + 2);
-    expect(ui.getState().objective).toBe("Terminal złamany. Wróć do Genzō po zapłatę");
+    expect(ui.getState().objective).toBe("Terminal cracked. Go back to Genzō for your pay");
 
     const before = eddies();
     const extra = extraPay(session);
@@ -157,12 +157,12 @@ describe("M4 acceptance: the docks", () => {
     const desk = DOKI_ITEM_SPOTS.tessen_office!;
     teleport(session, desk.x + 1.1, desk.z, -Math.PI / 2);
     steps(session, 1, frame({ interact: true, crouch: true }));
-    expect(ui.getState().objective).toBe("Dane zgrane. Wróć do Genzō po zapłatę");
+    expect(ui.getState().objective).toBe("Data copied. Go back to Genzō for your pay");
     talkToGenzo(session);
     expect(text(ui)).toContain("Czyste dane");
     close(session);
     expect(session.sim.domain.contracts.completed).toBe(3);
-    expect(ui.getState().objective).toBe("More contracts from Kaito, and from Genzō on Nabrzeże too. Mori sells cyberware.");
+    expect(ui.getState().objective).toBe("More contracts from Kaito, and from Genzō on the Nabrzeże too. Mori sells cyberware.");
   });
 
   it("the sniper's laser reaches the renderer as an effect", async () => {

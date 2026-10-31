@@ -150,7 +150,7 @@ export const playFirstContract = (s: GameSession, ui: Ui) => {
   talkToKaito(s);
   finishDialogue(s, ui);
   expect(s.sim.domain.quests[QUEST_ECHO.id]).toEqual({ status: "active", stepIndex: 0 });
-  expect(objective(ui)).toBe("Weź od Kaito kontrakt i doprowadź go do końca (bar Neon Koi)");
+  expect(objective(ui)).toBe("Take a contract from Kaito and see it through (Neon Koi bar)");
 };
 
 /** Fragment 1, unlocked by a finished fixer contract. */
@@ -160,7 +160,7 @@ export const playContractFragment = (s: GameSession, ui: Ui, render: FakeRender,
   s.intents.closeDialogue();
   steps(s, 1);
   const contract = s.sim.domain.contracts.active!;
-  expect(objective(ui)).toContain("Zneutralizuj gangerów Hebi");
+  expect(objective(ui)).toContain("Take out the Hebi gangers");
   for (const e of [...s.sim.world].filter((x) => x.tag === contractTag(contract.id))) shootDown(s, e.key!);
   steps(s, 1);
 
@@ -178,7 +178,7 @@ export const playContractFragment = (s: GameSession, ui: Ui, render: FakeRender,
   // The flashback opens on its own once Kaito is done talking.
   expect(allText(ui)).toContain("Kagami Biotech");
   finishDialogue(s, ui, pick);
-  expect(objective(ui)).toBe("Porozmawiaj z doktorem Mori o tym, co widziałaś (klinika Mori)");
+  expect(objective(ui)).toBe("Talk to Doctor Mori about what you saw (Mori's clinic)");
 };
 
 /** Fragment 2, unlocked by talking to the ripperdoc. */
@@ -191,7 +191,7 @@ export const playMoriFragment = (s: GameSession, ui: Ui, render: FakeRender, pic
   expect(render.effects).toContain("memory-glitch");
   expect(allText(ui)).toContain("Jak się nazywasz?");
   finishDialogue(s, ui, pick);
-  expect(objective(ui)).toContain("Wszczep u Mori nowy implant");
+  expect(objective(ui)).toContain("Get a new implant fitted at Mori");
 };
 
 /** Fragment 3, unlocked by buying an implant. */
@@ -209,7 +209,7 @@ export const playImplantFragment = (s: GameSession, ui: Ui, render: FakeRender, 
   steps(s, 1);
   expect(allText(ui)).toContain("mokra obwodnica");
   finishDialogue(s, ui, pick);
-  expect(objective(ui)).toBe("Wróć do Mori i zdecyduj, co zrobić z modułem (klinika Mori)");
+  expect(objective(ui)).toBe("Go back to Mori and decide what to do with the module (Mori's clinic)");
 };
 
 /** The act-I finale at Mori's. Returns what was said; the act-II opening is then on screen. */

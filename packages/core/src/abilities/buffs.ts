@@ -9,6 +9,7 @@ import type { BuffId } from "../world/wave2";
  */
 export interface BuffDefinition {
   readonly id: BuffId;
+  /** Catalog key of the name (`buff.<id>.name`, ADR-0056). */
   readonly name: string;
   /** Seconds a fresh dose lasts. Eating again refreshes it, it never stacks. */
   readonly duration: number;
@@ -20,9 +21,9 @@ export interface BuffDefinition {
 }
 
 export const BUFF_CATALOG: Readonly<Record<BuffId, BuffDefinition>> = {
-  regen: { id: "regen", name: "Regeneracja", duration: 120, regen: 0.5 },
-  quick_cooldown: { id: "quick_cooldown", name: "Szybsze odnowienie", duration: 90, cooldownRate: 1.5 },
-  steady: { id: "steady", name: "Pewna ręka", duration: 60, modifiers: { aimStability: 0.2 } },
+  regen: { id: "regen", name: "buff.regen.name", duration: 120, regen: 0.5 },
+  quick_cooldown: { id: "quick_cooldown", name: "buff.quick_cooldown.name", duration: 90, cooldownRate: 1.5 },
+  steady: { id: "steady", name: "buff.steady.name", duration: 60, modifiers: { aimStability: 0.2 } },
 };
 
 /** Stable order of the buffs (state, events, HUD). */

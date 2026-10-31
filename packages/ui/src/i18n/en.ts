@@ -1,6 +1,7 @@
 import { enWorld } from "./en/world";
 import type { Message } from "./message";
 import { enTrade } from "./en/trade";
+import { enDomain } from "./en/domain";
 import { enContent } from "./en/content";
 
 /**
@@ -150,6 +151,7 @@ export const en = {
   "settings.reload.now": "Reload now",
   ...enTrade,
   ...enWorld,
+  ...enDomain,
   ...enContent,
 } as const satisfies Readonly<Record<string, Message>>;
 

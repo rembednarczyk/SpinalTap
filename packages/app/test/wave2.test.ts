@@ -254,7 +254,7 @@ describe("Wave2Hud presenters", () => {
     bus.emit("Dashed", { entityId: 1, air: false, at: zero });
     const first = hud.sync(undefined, false, true);
     expect(first.capacity?.max).toBeGreaterThan(0);
-    expect(first.buffs).toEqual([{ id: "regen", name: "Regeneracja", left: 30, total: 120 }]);
+    expect(first.buffs).toEqual([{ id: "regen", name: "buff.regen.name", left: 30, total: 120 }]);
     expect(first.dash).toEqual({ cooldown: DASH_COOLDOWN, total: DASH_COOLDOWN });
     expect(hud.dashing).toBe(true);
     at(100);

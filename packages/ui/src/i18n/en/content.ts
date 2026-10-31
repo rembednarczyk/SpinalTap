@@ -2,7 +2,7 @@
  * English texts of the game content (ADR-0056, stage 4): the interaction prompts the simulation
  * names by key, the observation hooks of contracts, the scanner's names, the speakers of the
  * dialogue who are a role rather than a name, the fixers' lines about a contract's variation,
- * the HUD's own objective lines and the map preview's overlay. Names of people and of Lublin's
+ * and the map preview's overlay (the HUD's objective lines are in `domain.ts`). Names of people and of Lublin's
  * places stay as they are in both languages.
  */
 export const enContent = {
@@ -92,15 +92,6 @@ export const enContent = {
   "brief.trait.drinker": "The target likes a drink; in the evening look for them at the bar.",
   "brief.trait.creature_of_habit": "The target runs like clockwork, always the same route.",
   "brief.trait.armored": "The target wears armour; ordinary bullets will bounce off.",
-  // The HUD's objective when no quest step names one.
-  "objective.contractTitle": "Contract {n} · {giver}",
-  "objective.freeHand": "Free hand",
-  "objective.freeHand.text": "{work} Mori sells cyberware.",
-  "objective.work": "Kaito has more contracts.",
-  "objective.workAlso": "More contracts from Kaito, and from {givers} too.",
-  "objective.giversBoth": "{a} and {b}",
-  "objective.giver.hana": "Hana at the Podzamcze market",
-  "objective.giver.genzo": "Genzō on Nabrzeże",
   // The map preview's overlay (ADR-0044).
   "preview.stats":
     "Lublin 2077, map preview · {hour}:00 · {fps} fps · {drawCalls} draw calls · {meshes} meshes · buildings {buildings} (near {near} / far {far} cells) · props {pieces} ({groups} meshes) · {vertices}k vertices",
