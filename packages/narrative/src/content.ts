@@ -19,6 +19,10 @@ import radioPl from "../ink/pl/radio.ink?raw";
 import m0En from "../ink/en/m0.ink?raw";
 import m3EchoEn from "../ink/en/m3-echo.ink?raw";
 import m3LustroEn from "../ink/en/m3-lustro.ink?raw";
+import m4TargEn from "../ink/en/m4-targ.ink?raw";
+import m4OyajiEn from "../ink/en/m4-oyaji.ink?raw";
+import m4DokiEn from "../ink/en/m4-doki.ink?raw";
+import dayCycleEn from "../ink/en/day-cycle.ink?raw";
 
 /**
  * The ink files of the build in story order, one per dialogue group (knots are the dialogue ids).
@@ -72,6 +76,10 @@ export const INK_EN: Readonly<Partial<Record<InkFile, string>>> = {
   m0: m0En,
   "m3-echo": m3EchoEn,
   "m3-lustro": m3LustroEn,
+  "m4-targ": m4TargEn,
+  "m4-oyaji": m4OyajiEn,
+  "m4-doki": m4DokiEn,
+  "day-cycle": dayCycleEn,
 };
 
 /** The whole story in `language`, file by file, Polish where a translation is missing. */
