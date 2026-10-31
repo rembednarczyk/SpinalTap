@@ -172,7 +172,7 @@ describe("minimap data", () => {
     const st = ui.getState();
     // On the chair in the clinic (ADR-0038), on Krakowskie Przedmieście (ADR-0045).
     expect(st.mapPlayer).toMatchObject({ x: 319.5, z: -64.75 });
-    // Kaito by the chair is the first step's target: his fixer dot gets the quest ring too.
+    // Kaito at the Neon Koi counter is the first step's target: his fixer dot gets the quest ring too.
     expect(st.mapMarkers.map((m) => m.kind).sort()).toEqual(["fixer", "quest", "target"]);
     expect(st.journal.quests[0]?.title).toBe("Pierwsze zlecenie");
     const before = ui.getState().mapPlayer;
@@ -278,7 +278,7 @@ describe("settings", () => {
     expect(loadSettings(st).locale).toBe("pl");
     const host = { applied: DEFAULT_SETTINGS, save: vi.fn(), reload: vi.fn() };
     const { s, ui } = session(host);
-    s.changeSettings({ locale: "pl" });
+    s.intents.changeSettings({ locale: "pl" });
     expect(ui.getState().settings.locale).toBe("pl");
     expect(host.save).toHaveBeenLastCalledWith(expect.objectContaining({ locale: "pl" }));
     expect(ui.getState().reloadNeeded).toBe(false);

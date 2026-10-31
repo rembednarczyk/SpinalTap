@@ -21,7 +21,9 @@ const record = (scene: string, sample: unknown) => {
 /** The draw calls and meshes of the frame just drawn, after the test stepped the game and the city settled. */
 const sampleNow = async (page: Page) => {
   await page.waitForFunction(() => window.__seki!.citySettled(), null, { timeout: 60_000 });
-  await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+  // Two frames drawn after it: an animation frame may skip the draw while the GPU catches up (G-029).
+  const drawn = await page.evaluate(() => window.__seki!.frames!());
+  await page.waitForFunction((n) => window.__seki!.frames!() >= n + 2, drawn, { timeout: 30_000 });
   return perf(page);
 };
 

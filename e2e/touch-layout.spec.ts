@@ -58,7 +58,7 @@ for (const [w, h] of [
       await waitForGame(page);
       await page.getByRole("button", { name: "New Game" }).tap();
       await freeze(page);
-      // A new game wakes next to Kaito (ADR-0038); the bare layout is checked out on the deptak
+      // A new game wakes in the clinic (ADR-0038); the bare layout is checked out on the deptak
       // in front of the clinic (ADR-0045).
       await teleport(page, 321.4, -80);
       await step(page, 1);

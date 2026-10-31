@@ -5,7 +5,6 @@ import {
   CLINIC_WAKE_SPOT,
   DOOR_CLOSE_DELAY,
   DOOR_MOVE_TIME,
-  FIXER_CLINIC_SPAWN,
   FIXER_SPAWN,
   KOI_DOOR,
   MORI_SPAWN,
@@ -202,25 +201,29 @@ describe("navigation through doors (ADR-0038, ADR-0025)", () => {
 });
 
 describe("the opening in the clinic (ADR-0038)", () => {
-  it("a new game wakes Seki on the chair, with Kaito in reach and Mori at his monitors", () => {
+  it("a new game wakes Seki on the chair, with Mori at his monitors and Kaito at the Neon Koi counter (G-034)", () => {
     const sim = Simulation.create({ seed: 1 });
     const focus = collect<{ prompt: string | null }>(sim, "InteractionFocusChanged");
     expect(sim.player()!.position).toEqual(PLAYER_SPAWN.position);
     expect(PLAYER_SPAWN.position).toEqual(CLINIC_WAKE_SPOT);
     sim.step();
     expect(sim.player()!.position.y).toBeCloseTo(CLINIC_WAKE_SPOT.y, 5);
-    expect(byKey(sim, "fixer")!.position).toEqual(FIXER_CLINIC_SPAWN.position);
+    expect(byKey(sim, "fixer")!.position).toEqual(FIXER_SPAWN.position);
     expect(byKey(sim, "mori")!.position).toEqual(MORI_SPAWN.position);
-    expect(focus.at(-1)?.prompt).toBe("Rozmawiaj z Kaito");
+    // Kaito is across the deptak, out of reach of the chair.
+    expect(focus.at(-1)?.prompt ?? null).not.toBe("Rozmawiaj z Kaito");
     for (const key of ["koi-barman", "koi-regular-1", "koi-regular-2"]) expect(byKey(sim, key), key).toBeDefined();
   });
 
-  it("after the first talk Kaito waits at the bar, under the same key", () => {
+  it("the first talk leaves Kaito where he stands, one of him, also after a load", () => {
     const sim = Simulation.create({ seed: 1 });
+    run(sim, 1);
+    const before = byKey(sim, "fixer")!;
     sim.enqueue({ type: "set-flag", flag: "met_fixer" });
     run(sim, 2);
     const kaito = [...sim.world].filter((e) => e.key === "fixer");
     expect(kaito).toHaveLength(1);
+    expect(kaito[0]!.id).toBe(before.id);
     expect(kaito[0]!.position).toEqual(FIXER_SPAWN.position);
     const loaded = Simulation.fromSnapshot(roundTrip(sim.snapshot(null, "t", "")));
     expect([...loaded.world].filter((e) => e.key === "fixer").map((e) => e.position)).toEqual([FIXER_SPAWN.position]);

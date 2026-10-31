@@ -12,6 +12,7 @@ import {
   playMoriFragment,
   setup,
   steps,
+  talkToKaito,
   talkToMori,
 } from "./story-helpers";
 
@@ -99,6 +100,9 @@ describe("M3 acceptance: act I from a new game to each ending", () => {
   it("lets the ripperdoc chat outside the main thread and does not replay a flashback", () => {
     const { session, ui } = setup();
     session.newGame();
+    // Before the first talk with Kaito, Mori sends Seki to the bar (G-034); afterwards he chats.
+    talkToKaito(session);
+    finishDialogue(session, ui);
     talkToMori(session, ui);
     expect(allText(ui)).toContain("Coś boli?");
     finishDialogue(session, ui);

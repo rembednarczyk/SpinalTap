@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { type MapMarkerVm } from "@seki/ui";
 import { type DomainState, QUEST_MIRROR, createDomainState, endingFlag, hm, minuteOfDay } from "@seki/core";
 import { MemorySaveStore } from "@seki/persistence";
-import { CIVILIAN_SPAWN, FIXER_CLINIC_SPAWN, FIXER_SPAWN, UME_HOME, market } from "@seki/sim";
+import { CIVILIAN_SPAWN, FIXER_SPAWN, UME_HOME, market } from "@seki/sim";
 import { type Ui, allText, objective, playActOne, setup, steps, talkTo, teleport } from "./story-helpers";
 import type { GameSession } from "../src/game-session";
 import { expectedSpot, shownQuestTarget } from "../src/quest-target";
@@ -81,9 +81,9 @@ describe("G-035: the quest step's target on the map", () => {
     for (let guard = 0; guard < 10 && !ui.getState().dialogue?.ended; guard++) {
       const choices = ui.getState().dialogue?.choices ?? [];
       const i = choices.findIndex((c) => c.text.startsWith("Gdzie znajdę"));
-      session.choose(i < 0 ? 0 : i);
+      session.intents.choose(i < 0 ? 0 : i);
     }
-    session.closeDialogue();
+    session.intents.closeDialogue();
     steps(session, 2);
     expect(objective(ui)).toBe("Wejdź schodami pożarowymi na dach nad targiem i znajdź Rena");
     const marks = questMarkers(ui);
@@ -107,9 +107,9 @@ describe("G-035: which step's target the map marks", () => {
     expect(shownQuestTarget(at(echo, { contracts }))).toBeNull();
   });
 
-  it("puts an absent character where the content has it: Kaito by the chair, then at the bar", () => {
+  it("puts an absent character where the content has it: Kaito at the bar, before and after the first talk (G-034)", () => {
     const clock = createDomainState().clock;
-    expect(expectedSpot("fixer", [], clock)).toEqual(FIXER_CLINIC_SPAWN.position);
+    expect(expectedSpot("fixer", [], clock)).toEqual(FIXER_SPAWN.position);
     expect(expectedSpot("fixer", ["met_fixer"], clock)).toEqual(FIXER_SPAWN.position);
     expect(expectedSpot("nobody", [], clock)).toBeNull();
   });

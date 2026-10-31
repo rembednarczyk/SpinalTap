@@ -32,14 +32,12 @@ EXTERNAL complete_contract()
 - else: -> after
 }
 
-// The opening (ADR-0038): Seki comes round on the chair in Mori's clinic, Kaito waits by it.
+// The opening (ADR-0038, G-034): Seki comes round in Mori's clinic and finds Kaito at the Neon Koi counter.
 = first_meeting
 KAITO: No proszę. Chodzący trup z wraku na Krakowskim.
-Biała lampa nad fotelem świeci ci prosto w oczy. Pachnie spirytusem i przypalonym chromem. Ktoś odpina ci pas z nadgarstka.
-MORI: Chodzący to za dużo powiedziane. Siadaj powoli, szwy na karku jeszcze się nie zdecydowały.
-MORI: Wyciągnąłem z ciebie trzy odłamki szyby, kawałek pasa bezpieczeństwa i pół metra cudzego kabla. Szkło było twoje. Kabel nie.
+Różowy neon nad ladą brzęczy jak mucha. Pachnie piwem ryżowym i przypalonym chromem. Kaito nogą odsuwa dla ciebie stołek.
 KAITO: Ripperdoc mówił, że nie przeżyjesz nocy. Pomylił się. Zdarza mu się.
-MORI: Mówiłem, że nie przeżyjesz jej za darmo. On zapłacił.
+KAITO: Wyciągnął z ciebie pół metra cudzego kabla. Ciekawe, czyjego.
 * [Kim jesteś? #tone:main]
     SEKI: Kim ty jesteś?
     KAITO: Kaito. Załatwiam sprawy. A ty, jak słyszę, nie pamiętasz nawet, jak się nazywasz.
@@ -59,8 +57,7 @@ KAITO: Ratownicy mówili, że w tym wraku walczyłaś z pasami jak z wrogiem. Se
     KAITO: Jasne. Do tego czasu jesteś Seki.
 - KAITO: Zapłaciłem za twoje łatanie, więc masz dług. U mnie. I zero perspektyw. Ja mam robotę.
 KAITO: Kurier gangu Hebi siedzi w podwórku za myjnią, za Placem Łokietka, od strony Przystankowej. Nosi coś, co należy do moich klientów.
-KAITO: Zdejmij go. Ma ochronę, więc nie idź tam na spacer. Potem znajdziesz mnie w Neon Koi, po drugiej stronie deptaka.
-MORI: Drzwi otwierają się same. Nie kop ich, są droższe od ciebie.
+KAITO: Zdejmij go. Ma ochronę, więc nie idź tam na spacer. Potem wróć tutaj, do Neon Koi. Będę przy ladzie.
 ~ set_flag("met_fixer")
 -> END
 
@@ -241,7 +238,7 @@ KAITO: Słyszałem, że robisz coś dla Hany. Skończ u niej, potem pogadamy.
 }
 UME: Widziałam, jak cię wyciągali z tego auta. Myślałam, że już po tobie.
 { quest_step == "find_fixer":
-    UME: Kaito przesiedział całą noc u doktora Mori, przy twoim fotelu. Klinika jest po lewej stronie deptaka, bliżej Placu Litewskiego.
+    UME: Kaito przesiedział całą noc u doktora Mori, przy twoim fotelu. Teraz czeka na ciebie w Neon Koi, po drugiej stronie deptaka.
 }
 * [Znałaś mnie wcześniej? #tone:main]
     SEKI: Znałaś mnie wcześniej?
@@ -296,7 +293,7 @@ UME: Potem przyszli ludzie w czystych butach i też o ciebie pytali. Od tamtej p
 // Neon Koi (ADR-0038): the barman behind the counter and the regulars at the tables.
 === koi_barman ===
 { quest_step == "find_fixer":
-    BARMAN: Kaito? Nie było go całą noc. Siedział u Moriego, przy jakiejś dziewczynie z wraku.
+    BARMAN: Kaito? Siedzi przy ladzie. Całą noc go nie było, czekał u Moriego na jakąś dziewczynę z wraku. Chyba na ciebie.
     -> END
 }
 BARMAN: Neon Koi. Pijesz albo słuchasz, oba się liczą.

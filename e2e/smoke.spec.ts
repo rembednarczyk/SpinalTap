@@ -26,8 +26,8 @@ test.describe("M0 smoke", () => {
     expect(Math.hypot(moved.x - start.x, moved.z - start.z)).toBeGreaterThan(2.5);
 
     // Talk to Kaito through the real dialogue UI.
-    // Kaito waits by the chair in the clinic (ADR-0038), a tenement's room since ADR-0045.
-    await teleportTo(page, await place(page, "clinic", -13.3, 4.7), Math.PI * 1.5);
+    // Kaito waits at the Neon Koi counter from the start (G-034): stand 1.5 m in front of him.
+    await teleportTo(page, await place(page, "koi", 11.25, 3.5), Math.PI);
     await step(page, 1);
     await expect(page.getByTestId("prompt")).toContainText("Kaito");
     await step(page, 1, { interact: true });
@@ -108,7 +108,8 @@ test("ripperdoc clinic sells a medkit through the UI", async ({ page }) => {
   await shop.getByRole("button", { name: "Talk to Mori" }).click();
   await expect(shop).toBeHidden();
   const dialogue = page.getByTestId("dialogue");
-  await expect(dialogue).toContainText("Coś boli?");
+  // Before the first talk with Kaito, Mori sends Seki to him at Neon Koi (G-034).
+  await expect(dialogue).toContainText("Czeka na ciebie w Neon Koi");
   await dialogue.getByRole("button", { name: /Zakończ rozmowę/ }).click();
   await expect(dialogue).toBeHidden();
   await step(page, 1);

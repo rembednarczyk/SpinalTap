@@ -45,6 +45,46 @@ describe("fixer conversation", () => {
     ]);
   });
 
+  it("first meeting happens at the Neon Koi counter and sends her back there (G-034)", () => {
+    const { runtime } = setup();
+    const lines: string[] = [];
+    let view = runtime.start("fixer", atStep(0));
+    for (let guard = 0; guard < 10; guard++) {
+      lines.push(...view.lines.map((l) => `${l.speaker ?? ""}: ${l.text}`));
+      if (view.ended) break;
+      view = runtime.choose(0);
+    }
+    const all = lines.join("\n");
+    expect(all).toContain("nad ladą");
+    expect(all).toContain("wróć tutaj, do Neon Koi");
+    expect(all).not.toContain("fotel");
+    expect(lines.some((l) => l.startsWith("Doktor Mori:"))).toBe(false);
+  });
+
+  it("before the first meeting Mori sends her from the clinic to Kaito at Neon Koi (G-034)", () => {
+    const { runtime, commands } = setup();
+    const view = runtime.start("mori", atStep(0));
+    const all = view.lines.map((l) => l.text).join("\n");
+    expect(all).toContain("Biała lampa nad fotelem");
+    expect(all).toContain("Czeka na ciebie w Neon Koi");
+    expect(view.ended).toBe(true);
+    expect(commands).toEqual([]);
+  });
+
+  it.each([
+    ["ume", "Neon Koi"],
+    ["koi_barman", "przy ladzie"],
+  ])("before the first meeting %s points to Kaito at the bar, not in the clinic (G-034)", (knot, where) => {
+    const { runtime } = setup();
+    const all = runtime
+      .start(knot, atStep(0))
+      .lines.map((l) => l.text)
+      .join("\n");
+    expect(all).toContain(where);
+    expect(all).not.toContain("Klinika jest");
+    expect(all).not.toContain("Nie było go całą noc. Siedział u Moriego");
+  });
+
   it("refusing the name still sets the alias but skips the reputation bonus", () => {
     const { runtime, commands } = setup();
     runtime.start("fixer", createDomainState());

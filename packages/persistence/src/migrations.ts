@@ -260,6 +260,15 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
       },
     };
   },
+  // v15 -> v16 (G-034): Kaito waits at the Neon Koi counter from the start. Before the first
+  // conversation he stood by the chair in the clinic; that spot is dropped, so he stands where
+  // the content puts him now. Afterwards he was at the bar already and stays as saved.
+  15: (old) => {
+    const domain = isObject(old.domain) ? old.domain : {};
+    const met = Array.isArray(domain.flags) && domain.flags.includes("met_fixer");
+    const entities = Array.isArray(old.entities) ? old.entities : [];
+    return { ...old, version: 16, entities: met ? entities : entities.filter((e: unknown) => !(isObject(e) && e.key === "fixer")) };
+  },
 };
 
 export class MigrationError extends Error {}

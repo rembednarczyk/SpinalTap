@@ -1,7 +1,9 @@
 import { Color4, Engine, GlowLayer, Scene } from "../babylon";
 import type { RenderQuality } from "../npr/quality";
+import { GpuPacer } from "./gpu-pacer";
 
 export type { RenderQuality } from "../npr/quality";
+export { GpuPacer, type FenceGl } from "./gpu-pacer";
 
 export interface StageOptions {
   /** Reference mode: deterministic frame for snapshot tests (no rain, no grain, fixed camera). */
@@ -28,6 +30,8 @@ export class Stage {
   readonly engine: Engine;
   readonly scene: Scene;
   readonly glow: GlowLayer;
+  /** Draw a frame only when `pacer.canDraw`, then call `pacer.drawn()` (G-029). */
+  readonly pacer: GpuPacer;
 
   constructor(
     readonly canvas: HTMLCanvasElement,
@@ -42,6 +46,9 @@ export class Stage {
     this.scene.skipPointerMovePicking = true;
     this.glow = new GlowLayer("glow", this.scene, { mainTextureSamples: 2, blurKernelSize: 40 });
     this.glow.intensity = 0.85;
+    this.pacer = new GpuPacer(this.engine.webGLVersion >= 2 ? this.engine._gl : null);
+    this.engine.onContextLostObservable.add(() => this.pacer.reset());
+    this.engine.onContextRestoredObservable.add(() => this.pacer.reset());
     window.addEventListener("resize", () => this.engine.resize());
   }
 
