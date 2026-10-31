@@ -97,18 +97,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Dowód: naprawiacz i weryfikator G-030: `e2e/__snapshots__/npr-perf.spec.ts/reference-m0.png` różni się od deterministycznej klatki main (b5507ce) o 39 806 px poza Seki (bbox 0,0–1280,533); m.in. brak białej smugi odblasku na lewym oknie Neon Koi (y ok. 290). Test przechodzi tylko dzięki `maxDiffPixelRatio: 0.02`. Ustalić, który commit zmienił klatkę: regresja czy niezaktualizowana migawka.
 - Pakiet właściciela: packages/engine / e2e (QA)
 
-### G-046 Smoke M0: kierunek ruchu po `freeze` zależy od chwili zamrożenia
-- Status: w weryfikacji. Przyczyna w grze: Chromium po wejściu w pointer lock wysyła jeden `mousemove` z ruchem równym minus pozycja kursora (−640 px), `BrowserInput` brał go za obrót (yaw π/2 → 0,16); pierwszy ruch po zmianie stanu blokady nie obraca już widoku
-- Ważność: S2 (proponowana: niestabilne e2e) · Koszt: mały
-- Dowód: weryfikator i18n 2b, sonda: New Game, `freeze`, 6×10 kroków `moveZ`; `tick0` wypada 10, 15 albo 20 i każdy daje inny kierunek; przy `tick0=15` gracz idzie na ścianę z=−62,88 i staje po 2,09 m, więc `smoke.spec.ts:26` (ruch > 2,5) pada. Na czystym main (b5507ce) 3/4 przebiegów sondy trafia na ścianę. Test zakłada kierunek, który zależy od liczby ticków przed `freeze`.
-- Pakiet właściciela: e2e (QA) / packages/app
-
-### G-048 Prawdziwy tap tuż po przycisku pada ginie jako „ghost click”
-- Status: weryfikacja PRZYJĘTE, w PR #48 (`packages/ui/src/touch/ghost-click.ts`)
-- Ważność: S2 (niestabilne e2e `touch.spec`, a na telefonie zgubiony pierwszy wybór w dialogu) · Koszt: mały
-- Dowód: `pointerdown` na przycisku pada uzbraja `swallowNextClick` na 700 ms, a ten sam przycisk w `touchend` robi `preventDefault`, więc klik zgodności nie przychodzi i nasłuch zjada pierwszy prawdziwy tap w wybór dialogu. Pomiar: padły 3 z 5 przebiegów (odstępy 432–679 ms), przeszły przy 1,6–1,8 s; bez G-006 też 2 z 5. Poprawka: nasłuch wygasa przy następnym `pointerdown`.
-- Pakiet właściciela: packages/ui (touch)
-
 ### G-007 Strzałki na pasach i napis BUS
 - Status: później (ADR-0052 „Na później”)
 
@@ -154,6 +142,8 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | G-045 | Test `far-city.test.ts` przekracza 5 s pod obciążeniem | #47 |
 | G-047 | Karta skanu hackowania nie zmienia języka do zmiany celu | #47 |
 | G-006 | Skręty aut na skrzyżowaniach | #47 |
+| G-046 | Smoke M0: kierunek ruchu po `freeze` zależy od chwili zamrożenia | #49 |
+| G-048 | Prawdziwy tap tuż po przycisku pada ginie jako „ghost click” | #48 |
 
 ## Odrzucone
 - G-005 Wiata przystanku wchodzi w ścianę przy Alei Tysiąclecia: duplikat (G-011)

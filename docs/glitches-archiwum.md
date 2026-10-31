@@ -262,3 +262,15 @@ Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [r
 - Status: naprawione (#47). w PR. `lane-dead-end` 61 → 44; zator Ruska/Lwowska usunięty; nowa kontrola `turn-off-road` 6 (zawrotki targu, G-025). CPU sceny targu 3,8 → 4,3 s na 3000 kroków
 - Ważność: S3 · Zasięg: szeroki (33 ślepe końce pasów na skrzyżowaniach i 6 z G-024) · Koszt: duży
 - Test przyjęcia: `lane-dead-end` spada; łuki skrętu na nawierzchni drogi i poza budynkami.
+
+### G-046 Smoke M0: kierunek ruchu po `freeze` zależy od chwili zamrożenia
+- Status: naprawione (#49). Przyczyna w grze: Chromium po wejściu w pointer lock wysyła jeden `mousemove` z ruchem równym minus pozycja kursora (−640 px), `BrowserInput` brał go za obrót (yaw π/2 → 0,16); pierwszy ruch po zmianie stanu blokady nie obraca już widoku
+- Ważność: S2 (proponowana: niestabilne e2e) · Koszt: mały
+- Dowód: weryfikator i18n 2b, sonda: New Game, `freeze`, 6×10 kroków `moveZ`; `tick0` wypada 10, 15 albo 20 i każdy daje inny kierunek; przy `tick0=15` gracz idzie na ścianę z=−62,88 i staje po 2,09 m, więc `smoke.spec.ts:26` (ruch > 2,5) pada. Na czystym main (b5507ce) 3/4 przebiegów sondy trafia na ścianę. Test zakłada kierunek, który zależy od liczby ticków przed `freeze`.
+- Pakiet właściciela: e2e (QA) / packages/app
+
+### G-048 Prawdziwy tap tuż po przycisku pada ginie jako „ghost click”
+- Status: naprawione (#48). (`packages/ui/src/touch/ghost-click.ts`)
+- Ważność: S2 (niestabilne e2e `touch.spec`, a na telefonie zgubiony pierwszy wybór w dialogu) · Koszt: mały
+- Dowód: `pointerdown` na przycisku pada uzbraja `swallowNextClick` na 700 ms, a ten sam przycisk w `touchend` robi `preventDefault`, więc klik zgodności nie przychodzi i nasłuch zjada pierwszy prawdziwy tap w wybór dialogu. Pomiar: padły 3 z 5 przebiegów (odstępy 432–679 ms), przeszły przy 1,6–1,8 s; bez G-006 też 2 z 5. Poprawka: nasłuch wygasa przy następnym `pointerdown`.
+- Pakiet właściciela: packages/ui (touch)

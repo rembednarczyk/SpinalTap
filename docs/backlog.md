@@ -69,7 +69,7 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
     
     Źródła CC0 (Kenney, Freesound CC0, OpenGameArt), z tą samą zasadą licencji.
 - **[w toku] Języki gry (ADR-0056).** Angielski domyślny, polski w opcjach. Etap 1 (menu, opcje, zapadka) i paczka 2a (ekwipunek, sklepy) są gotowe, 2b (panele świata) jest w PR #47. Zostaje:
-  - HUD i dotyk (2c): część w PR #50, dalsza część na gałęzi `i18n2c2` (ekran śmierci, zegar, pościg, wykrycie, minimapa, skaner); zostaje karta kontraktu, pasek broni („Boczna: …”), plakietka „Spalona przykrywka” w `hud.tsx`, nazwy buffów z `core` (etap 3) i rzutowanie `key as MessageKey` w `hint-sync.ts` do zastąpienia typem;
+  - HUD i dotyk (2c): część zmergowana (#50), dalsza część na gałęzi `i18n2c2` (ekran śmierci, zegar, pościg, wykrycie, minimapa, skaner); zostaje karta kontraktu, pasek broni („Boczna: …”), plakietka „Spalona przykrywka” w `hud.tsx`, nazwy buffów z `core` (etap 3) i rzutowanie `key as MessageKey` w `hint-sync.ts` do zastąpienia typem;
   - teksty domeny w `core` jako klucze (etap 3);
   - treść `sim` (etap 4);
   - narracja `ink/en` (etap 5, ok. 1900 linii).
