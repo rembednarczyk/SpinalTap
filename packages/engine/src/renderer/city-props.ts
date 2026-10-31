@@ -58,6 +58,14 @@ export const pickProp = (props: CityProps, style: string, seed: number, lite = f
 };
 
 /**
+ * An air conditioner for a wall that may hold dozens: only `detailed` (0..1) of them are the
+ * Quaternius units (about 900 triangles), the rest Kenney's (under a hundred). The share keeps
+ * the cells' triangles in check (ADR-0058); phones get the cheap ones only.
+ */
+export const pickUnit = (props: CityProps, style: string, seed: number, lite: boolean, detailed: number): KitModel | null =>
+  pickProp(props, style, seed, lite || (propHash(seed, 3) % 1000) / 1000 >= detailed);
+
+/**
  * Where a model goes: the world point of its origin (the middle of its foot) and the world
  * vectors its x, y and z axes map to, scale included. Built by `facing`, so it is always a
  * proper rotation (no mirror: the winding of the faces stays).

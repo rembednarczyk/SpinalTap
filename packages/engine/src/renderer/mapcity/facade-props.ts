@@ -1,5 +1,5 @@
 import { prng } from "../city-kit-data";
-import { type CityProps, type PropXform, addPropToSink, facing, onWall, pickProp, pointSeed, propHash } from "../city-props";
+import { type CityProps, type PropXform, addPropToSink, facing, onWall, pickProp, pickUnit, pointSeed, propHash } from "../city-props";
 import type { MeshSink, Vec } from "../mesh-sink";
 import { type FacadeFrame, type Wall, hiddenWall } from "./facade-frame";
 
@@ -33,6 +33,12 @@ export const wallPoint = (w: Wall, u: number, y: number): Vec => ({ x: w.a.x + (
 
 export const wallOut = (w: Wall): Vec => ({ x: w.nx, y: 0, z: w.nz });
 
+/** Share of detailed air conditioners on the map's walls, which hold many (ADR-0058). */
+const WALL_DETAILED = 0.25;
+
+/** Roof gear without a procedural stand-in goes on every other roof spot. */
+const onRoof = (seed: number): boolean => propHash(seed, 4) % 2 === 0;
+
 /** Heights of the awnings: a sloping cloth, a flat canopy. */
 const AWNING_HEIGHT = { awning: 0.5, "awning-flat": 0.28 } as const;
 
@@ -42,24 +48,27 @@ const uniform = (s: number) => ({ x: s, y: s, z: s });
 /** The models and their places for one slot (a pipe run is several segments). */
 export const placeSlot = (props: CityProps, slot: PropSlot, lite: boolean): { model: NonNullable<ReturnType<typeof pickProp>>; xf: PropXform }[] => {
   const seed = pointSeed(slot.at);
-  const one = (style: string, xf: (m: NonNullable<ReturnType<typeof pickProp>>) => PropXform) => {
-    const m = pickProp(props, style, seed, lite);
+  const one = (style: string, xf: (m: NonNullable<ReturnType<typeof pickProp>>) => PropXform, detailed = 1) => {
+    const m = pickUnit(props, style, seed, lite, detailed);
     return m ? [{ model: m, xf: xf(m) }] : [];
   };
   switch (slot.kind) {
     case "ac-wall":
-      return one("ac-wall", (m) => onWall(m, slot.at, slot.out, uniform(clamp(0.85 / m.size.x, 0.7, 1.3))));
+      return one("ac-wall", (m) => onWall(m, slot.at, slot.out, uniform(clamp(0.85 / m.size.x, 0.7, 1.3))), WALL_DETAILED);
     case "ac-firewall":
-      return one(propHash(seed, 1) % 2 === 0 && !lite ? "ac-firewall" : "ac-wall", (m) => onWall(m, slot.at, slot.out, uniform(clamp(0.9 / m.size.x, 0.7, 1.4))));
+      return one(propHash(seed, 1) % 2 === 0 && !lite ? "ac-firewall" : "ac-wall", (m) => onWall(m, slot.at, slot.out, uniform(clamp(0.9 / m.size.x, 0.7, 1.4))), WALL_DETAILED);
     case "ac-roof":
-      return one("ac-roof", (m) => facing(slot.at, slot.out, uniform(clamp(1.5 / m.size.x, 0.8, 2))));
+      return one("ac-roof", (m) => facing(slot.at, slot.out, uniform(clamp(1.5 / m.size.x, 0.8, 2))), 0.5);
     case "dish":
       return one("dish", (m) => onWall(m, slot.at, slot.out, uniform(1)));
     case "dish-roof":
+      if (!onRoof(seed)) return [];
       return one("dish", () => facing(slot.at, slot.out, uniform(1.2)));
     case "antenna":
+      if (!onRoof(seed)) return [];
       return one("antenna", () => facing(slot.at, slot.out, uniform(0.9 + 0.4 * ((propHash(seed, 2) % 100) / 100))));
     case "pipe-corner":
+      if (!onRoof(seed)) return [];
       return one("pipe-corner", () => facing(slot.at, slot.out, uniform(1)));
     case "awning":
     case "awning-flat": {

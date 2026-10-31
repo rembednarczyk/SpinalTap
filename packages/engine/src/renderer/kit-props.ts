@@ -1,7 +1,7 @@
 import type { BlockSkin, Vec3 } from "@seki/core";
 import type { KitModel } from "./city-kit-data";
 import { type DecorBox, type DecorCable, type SkinPlan, seedOf, toWorld, turnXZ } from "./city-kit-data";
-import { type CityProps, type PropXform, facing, onWall, pickProp, propHash } from "./city-props";
+import { type CityProps, type PropXform, facing, onWall, pickProp, pickUnit, propHash } from "./city-props";
 
 /**
  * Facade props on the city kit's blocks (ADR-0058): the procedural AC boxes of `planSkin` give
@@ -21,6 +21,9 @@ export interface KitPropsOptions {
   /** People walk on this roof (ADR-0027, C8): nothing stands on it. */
   readonly walkedRoof?: boolean;
 }
+
+/** Share of detailed air conditioners on the kit's facades (a few per block). */
+const KIT_DETAILED = 0.5;
 
 const BUILDINGS: ReadonlySet<string> = new Set(["shop", "bar", "tenement", "tower"]);
 
@@ -52,7 +55,7 @@ export const planKitProps = (props: CityProps, plan: SkinPlan, skin: BlockSkin, 
       continue;
     }
     const seed = seedOf(toWorld(plan, d));
-    const m = pickProp(props, "ac-wall", seed, lite);
+    const m = pickUnit(props, "ac-wall", seed, lite, KIT_DETAILED);
     if (!m) {
       decor.push(d);
       continue;
