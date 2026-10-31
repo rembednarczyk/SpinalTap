@@ -194,7 +194,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `heritage-overbuilt` (budynek z `historic`/`heritage` poza Starym Miastem z rise > 0) daje 0 po G-050 i tej poprawce
 
 ### G-067 Klasztor Dominikanów dostaje proceduralne wieże kościoła
-- Status: zgłoszone (z naprawy G-057)
+- Status: w PR #72 (szkic, czeka na weryfikację)
 - Ważność: S4 (proponowana) · Zasięg: 1 znany · Koszt: mały
 - Gdzie: r2366732 (748.5, −104.4), Stare Miasto
 - Dowód: budynek klasztoru ma `use: church`, więc `addTowers` stawia na nim wieże kościoła, choć to klasztor; widać z ujęcia „Dominikanie od wschodu” (810, −56)
