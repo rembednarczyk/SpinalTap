@@ -46,7 +46,8 @@ const buildingAreas = (areas: readonly Area[], data: OsmData): Area[] => {
     if (r.tags?.building === undefined) continue;
     for (const m of r.members) if (m.type === "way" && m.role !== "inner") inRelation.add(`w${m.ref}`);
   }
-  return areas.filter((a) => a.tags.building !== undefined && !SKIP_BUILDING.has(a.tags.building) && !inRelation.has(a.id));
+  // A building under ground (a cellar, a shelter, G-077) has nothing over the street above it.
+  return areas.filter((a) => a.tags.building !== undefined && !SKIP_BUILDING.has(a.tags.building) && a.tags.location !== "underground" && !inRelation.has(a.id));
 };
 
 /** A coarse spatial hash of points along mapped sidewalks (`footway=sidewalk`). */

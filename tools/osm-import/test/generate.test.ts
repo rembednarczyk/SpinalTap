@@ -99,6 +99,13 @@ describe("generator", () => {
     expect(c.ground.filter((g) => g.surface === "road")).toHaveLength(3);
   });
 
+  it("builds nothing of a building the map puts under ground (G-077)", () => {
+    const map = tinyMap();
+    const house = map.ways.get(100)!;
+    const cellar = { ...map, ways: new Map([...map.ways, [100, { ...house, tags: { ...house.tags, location: "underground", layer: "-1" } }]]) };
+    expect(generate(cellar, slope, tinyChunk).chunks[0]!.buildings).toEqual([]);
+  });
+
   it("gives the same result twice", () => {
     const a = generate(tinyMap(), slope, tinyChunk);
     const b = generate(tinyMap(), slope, tinyChunk);

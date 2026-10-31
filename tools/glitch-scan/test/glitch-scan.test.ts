@@ -646,6 +646,17 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       return walkable(a, past(pts[pts.length - 1]!, pts[pts.length - 2]!), 4) === "cut" ? [{ at: near(a.x, a.z), what: `w${w.id} ${t.name ?? t.highway} tunnel=${t.tunnel ?? "-"}` }] : [];
     });
   },
+  /**
+   * A building the map puts under ground (`location=underground`: a cellar, a shelter, G-077)
+   * standing as a solid on the street over it.
+   */
+  "building-underground-solid": () => {
+    const under = new Set([
+      ...[...SOURCE_OSM.ways.values()].filter((w) => w.tags?.building !== undefined && w.tags.location === "underground").map((w) => `w${w.id}`),
+      ...[...SOURCE_OSM.relations.values()].filter((r) => r.tags?.building !== undefined && r.tags.location === "underground").map((r) => `r${r.id}`),
+    ]);
+    return MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b) && under.has(b.id.split("/")[0]!))).map((b) => ({ at: near(b.x, b.z), what: `${b.id} under ground, ${b.height} m over the street` }));
+  },
   /** A passage through a building with an end off every chunk, where there is no ground to come out on. */
   "passage-off-map": () =>
     PASSAGES.filter((p) => [p.from, p.to].some(({ x, z }) => !MAP_CHUNKS.some(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ))).map((p) => ({

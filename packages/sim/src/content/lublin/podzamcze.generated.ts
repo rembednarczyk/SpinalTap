@@ -282,7 +282,6 @@ export const PODZAMCZE_CHUNKS: readonly LublinChunkData[] = [
       {"id":"w458298772","x":860.3,"z":367.5,"y":-20.6,"outline":[-2.5,-2.3,1.8,-2.8,2.4,2.4,-1.9,2.9],"parts":[[-1.9,2.9,-2.5,-2.3,1.8,-2.8,2.4,2.4]],"height":3.7,"plinth":0.5,"levels":1,"use":"commercial","name":"Piekarnia Gruzińska","look":1129320750,"source":"default"},
       {"id":"w672635872","x":781,"z":365.1,"y":-20.5,"outline":[-6.7,1.8,-7,-0.1,6.7,-1.7,6.9,0.1],"parts":[[6.9,0.1,-6.7,1.8,-7,-0.1,6.7,-1.7]],"height":3.3,"plinth":0.1,"levels":1,"use":"garage","look":1269636514,"source":"default"},
       {"id":"w672635873","x":797,"z":363.1,"y":-20.5,"outline":[-2.5,1.4,-2.8,-0.5,2.6,-1.3,2.9,0.6],"parts":[[2.9,0.6,-2.5,1.4,-2.8,-0.5,2.6,-1.3]],"height":3.3,"plinth":0.1,"levels":1,"use":"garage","look":1286414133,"source":"default"},
-      {"id":"w980143457","x":771.1,"z":190.5,"y":-16.2,"outline":[2.8,-5.1,2.2,-4.2,7.7,-0.6,1.7,7.6,-7.5,1.4,-1.2,-8],"parts":[[-1.2,-8,2.8,-5.1,2.2,-4.2],[2.2,-4.2,7.7,-0.6,1.7,7.6],[-1.2,-8,2.2,-4.2,1.7,7.6,-7.5,1.4]],"height":6.9,"plinth":3.7,"levels":1,"use":"residential","look":1331738787,"source":"levels"},
       {"id":"w1308022849","x":872.4,"z":224.3,"y":-7.2,"outline":[2.4,1.6,-2,2.1,-2.4,-1.5,2,-2],"parts":[[2,-2,2.4,1.6,-2,2.1,-2.4,-1.5]],"height":3.3,"plinth":0.1,"levels":1,"use":"residential","name":"Wystawy okresowe","look":3465216325,"source":"default"},
     ],
     ground: [
