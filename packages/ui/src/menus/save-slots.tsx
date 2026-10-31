@@ -26,17 +26,19 @@ export const SaveSlots = ({ mode }: { mode: "save" | "load" }) => {
       {names.map((slot) => {
         const info = slots.find((s) => s.slot === slot);
         const disabled = busy || (mode === "load" && !info);
+        const exportable = mode === "load" && info !== undefined && info.objective !== CORRUPT_SLOT;
         return (
-          <button
-            key={slot}
-            type="button"
-            className="slots__slot"
-            disabled={disabled}
-            onClick={() => (mode === "save" ? intents.save(slot) : intents.load(slot))}
-          >
-            <span className="slots__name">{slotName(slot, t)}</span>
-            <span className="slots__meta">{info ? `${info.savedAtLabel} · ${info.objective === CORRUPT_SLOT ? t(CORRUPT_SLOT) : info.objective}` : t("slots.empty")}</span>
-          </button>
+          <div key={slot} className="slots__row">
+            <button type="button" className="slots__slot" disabled={disabled} onClick={() => (mode === "save" ? intents.save(slot) : intents.load(slot))}>
+              <span className="slots__name">{slotName(slot, t)}</span>
+              <span className="slots__meta">{info ? `${info.savedAtLabel} · ${info.objective === CORRUPT_SLOT ? t(CORRUPT_SLOT) : info.objective}` : t("slots.empty")}</span>
+            </button>
+            {exportable && (
+              <button type="button" className="slots__export" disabled={busy} aria-label={`${t("slots.export")}: ${slotName(slot, t)}`} onClick={() => intents.exportSave(slot)}>
+                {t("slots.export")}
+              </button>
+            )}
+          </div>
         );
       })}
     </div>

@@ -41,6 +41,7 @@ export const pl = {
   "slots.auto": "Autozapis",
   "slots.slot": "Slot {n}",
   "slots.empty": "pusty",
+  "slots.export": "Eksportuj",
   // Controls help.
   "help.move": "ruch",
   "help.sprint": "sprint",
