@@ -11,6 +11,7 @@ const intents = (): UiIntents => ({
   save: vi.fn(),
   load: vi.fn(),
   exportSave: vi.fn(),
+  importSave: vi.fn(),
   choose: vi.fn(),
   closeDialogue: vi.fn(),
   quitToTitle: vi.fn(),
@@ -93,6 +94,16 @@ describe("title screen", () => {
     fireEvent.click(exports[0]!);
     expect(i.exportSave).toHaveBeenCalledWith("slot-2");
     expect(i.load).not.toHaveBeenCalled();
+  });
+
+  it("hands the text of a picked save file to the import, under its own name in the list", async () => {
+    const { i } = mount({ hasSaves: true, slots: [{ slot: "import", savedAtLabel: "x", objective: "y" }] });
+    fireEvent.click(screen.getByText("Load Game"));
+    expect(screen.getByText("Imported")).toBeTruthy();
+    const input = screen.getByTestId("save-import") as HTMLInputElement;
+    const file = new File(['{"format":"seki-save"}'], "seki.json", { type: "application/json" });
+    fireEvent.change(input, { target: { files: [file] } });
+    await vi.waitFor(() => expect(i.importSave).toHaveBeenCalledWith('{"format":"seki-save"}'));
   });
 });
 

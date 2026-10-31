@@ -12,6 +12,7 @@ export const AUTOSAVE_SLOT = "auto";
 const slotName = (slot: string, t: ReturnType<typeof useT>): string => {
   if (slot === AUTOSAVE_SLOT) return t("slots.auto");
   if (slot === "quick") return t("slots.quick");
+  if (slot === "import") return t("slots.imported");
   return t("slots.slot", { n: slot.replace("slot-", "") });
 };
 
@@ -41,6 +42,22 @@ export const SaveSlots = ({ mode }: { mode: "save" | "load" }) => {
           </div>
         );
       })}
+      {mode === "load" && <ImportButton busy={busy} onText={(text) => intents.importSave(text)} />}
     </div>
+  );
+};
+
+/** Picks a save file (an export) and hands its text over; the app checks it like any save. */
+const ImportButton = ({ busy, onText }: { busy: boolean; onText: (text: string) => void }) => {
+  const t = useT();
+  const read = (file: File | undefined) => {
+    if (!file) return;
+    void file.text().then(onText);
+  };
+  return (
+    <label className={`slots__import${busy ? " slots__import--busy" : ""}`}>
+      <input type="file" accept=".json,application/json" disabled={busy} data-testid="save-import" onChange={(e) => read(e.currentTarget.files?.[0])} />
+      {t("slots.import")}
+    </label>
   );
 };
