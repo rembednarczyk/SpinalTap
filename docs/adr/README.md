@@ -61,5 +61,6 @@
 | [0057](0057-ekran-ladowania.md) | Ekran ładowania z paskiem postępu przy nowej grze i wczytaniu: `RenderPort.prepare` (modele, city kit, chunki startowe, shadery), reszta miasta strumieniowo w tle | Zaakceptowana |
 | [0058](0058-zywe-miasto-assety-cc0.md) | Żywe miasto z paczek CC0: osobny `city-props.glb` z `tools/city_kit.py`, wspólna paleta, rekwizyty pieczone do istniejących siatek (bez nowych wywołań poza dronami), rozstawienie w rendererze, osiem etapów | Zaakceptowana |
 | [0059](0059-rozwoj-postaci-i-skalowanie.md) | Rozwój postaci: poziomy 1–30 z XP, pięć atrybutów (Krzepa, Refleks, Technika, Sieć, Cień) z drzewkami perków; poziom przedmiotu, rzadkości epicka i legendarna z cechami, pasma dzielnic, poziom wrogów i kontraktów, łup dopasowany do stylu z ochroną przed pechem | Zaakceptowana |
+| [0060](0060-glosy-i-dzwiek.md) | Głosy i dźwięk: odzywki z otwartego TTS (licencja komercyjna sprawdzana per głos), kluczowe linie od aktorów jeśli się znajdą (TTS jako zastępstwo pod tym samym kluczem), VO po angielsku z napisami en/pl, tagi `#voice` w ink, szyny i suwaki audio, kroki według nawierzchni, otoczenie dzielnic | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.
