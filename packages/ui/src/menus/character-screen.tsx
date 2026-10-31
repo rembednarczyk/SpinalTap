@@ -4,7 +4,7 @@ import { CityMapPanel } from "../citymap/city-map-panel";
 import { InventoryTab } from "../inventory/inventory-tab";
 import { JournalPanel } from "../journal/journal-panel";
 import { formatNumber, useLocale } from "../i18n/number";
-import { useT } from "../i18n/use-t";
+import { useT, useText } from "../i18n/use-t";
 import type { CharacterTab } from "../store/ui-store";
 import { useCharacterIntents, useUi } from "../use-ui";
 import { CharacterPanel } from "./character-panel";
@@ -23,13 +23,14 @@ const AMMO_ORDER = Object.keys(AMMO_CATALOG) as AmmoId[];
 /** Rounds in the pouch, for the top bar: the types she has, or 9 mm when she has none. */
 const AmmoSummary = () => {
   const t = useT();
+  const tx = useText();
   const ammo = useUi((s) => s.ammo);
   const kinds = AMMO_ORDER.filter((id) => (ammo[id] ?? 0) > 0);
   return (
     <div className="cscreen__ammo" data-testid="ammo-pouch" aria-label={t("character.ammo")}>
       {(kinds.length > 0 ? kinds : (["9mm"] as AmmoId[])).map((id) => (
         <span key={id} className="cscreen__round">
-          {AMMO_CATALOG[id].name} <b>{ammo[id] ?? 0}</b>
+          {tx(AMMO_CATALOG[id].name)} <b>{ammo[id] ?? 0}</b>
         </span>
       ))}
     </div>

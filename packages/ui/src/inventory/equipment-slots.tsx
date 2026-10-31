@@ -1,5 +1,5 @@
 import { type EquipSlot, type Equipment, GARMENT_SLOTS, type InventoryState, WEAPON_SLOTS, findItem } from "@seki/core";
-import { useT } from "../i18n/use-t";
+import { useT, useText } from "../i18n/use-t";
 import { itemName, rarityLabel, slotLabel } from "./item-text";
 
 const KEY: Readonly<Partial<Record<EquipSlot, number>>> = { primary: 1, secondary: 2, melee: 3 };
@@ -19,6 +19,7 @@ export const EquipmentSlots = ({
   onSelect: (uid: string) => void;
 }) => {
   const t = useT();
+  const tx = useText();
   const slots = kind === "weapons" ? WEAPON_SLOTS : GARMENT_SLOTS;
   return (
     <div className={`inv__slots inv__slots--${kind}`} data-testid={`slots-${kind}`}>
@@ -26,7 +27,7 @@ export const EquipmentSlots = ({
         const uid = equipment[slot];
         const item = uid === null ? undefined : findItem(inventory, uid);
         const active = kind === "weapons" && equipment.active === slot;
-        const name = item ? itemName(item.def) : null;
+        const name = item ? itemName(tx, item.def) : null;
         return (
           <button
             key={slot}

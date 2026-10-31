@@ -88,7 +88,7 @@ describe("character screen", () => {
     expect(screen.getByTestId("menu-eddies").textContent).toBe("€$ 1,240");
     const pouch = screen.getByTestId("ammo-pouch").textContent;
     expect(pouch).toContain("9 mm 72");
-    expect(pouch).toContain("Śrut 12 6");
+    expect(pouch).toContain("12 gauge 6");
     expect(pouch).not.toContain(".44");
   });
 
@@ -110,7 +110,7 @@ describe("inventory tab", () => {
     expect(screen.getByTestId("inventory-count").textContent).toBe("5 / 24");
     // Worn pieces sit in their slots, not in the grid.
     expect(screen.getByTestId("slot-secondary").textContent).toContain("Unity-9");
-    expect(screen.getByTestId("slot-torso").textContent).toContain("Kurtka Seki");
+    expect(screen.getByTestId("slot-torso").textContent).toContain("Seki's jacket");
     expect(screen.getByTestId("slot-primary").textContent).toContain("empty");
     expect(screen.getByTestId("stats-panel").textContent).toContain("86/100");
   });
@@ -125,7 +125,8 @@ describe("inventory tab", () => {
     fireEvent.click(screen.getByRole("button", { name: /Sort: category/ }));
     expect(screen.getAllByTestId("item-cell")[0]!.getAttribute("data-def")).toBe("oni44");
     fireEvent.click(screen.getByRole("button", { name: /Sort: rarity/ }));
-    expect(screen.getAllByTestId("item-cell").map((c) => c.getAttribute("data-def"))[0]).toBe("medkit");
+    // By the English names: "Electronic scrap" before "Hebi SMG" and "Medkit".
+    expect(screen.getAllByTestId("item-cell").map((c) => c.getAttribute("data-def"))[0]).toBe("scrap");
   });
 
   it("selects on a tap and compares with the slot: the revolver beats the pistol on damage", () => {
@@ -244,7 +245,7 @@ describe("inventory tab", () => {
     mount({ characterTab: "inventory", inventory: modded.inventory });
     fireEvent.click(cell("hebi_smg"), { timeStamp: 1 });
     expect((screen.getByRole("button", { name: /Drop/ }) as HTMLButtonElement).disabled).toBe(true);
-    expect(screen.getByTestId("item-detail").textContent).toContain("Celownik holo");
+    expect(screen.getByTestId("item-detail").textContent).toContain("Holo sight");
   });
 
   it("mounts and takes off mods in the overlay", () => {
@@ -253,7 +254,7 @@ describe("inventory tab", () => {
     fireEvent.click(screen.getByRole("button", { name: "Mods" }));
     const overlay = screen.getByTestId("mod-overlay");
     expect(within(screen.getByTestId("mod-slot-muzzle")).getByText("No matching mods in the bag")).toBeTruthy();
-    fireEvent.click(within(overlay).getByRole("button", { name: "Mount: Celownik holo" }));
+    fireEvent.click(within(overlay).getByRole("button", { name: "Mount: Holo sight" }));
     expect(i.installMod).toHaveBeenCalledWith("i4", "i6");
     const s = store.getState();
     const r = installMod(s.inventory, s.equipment, "i4", "i6");
@@ -268,7 +269,7 @@ describe("inventory tab", () => {
   it("drops the selection when the piece is gone, e.g. the last medkit used", () => {
     const { store } = mount({ characterTab: "inventory" });
     fireEvent.click(cell("medkit"), { timeStamp: 1 });
-    expect(screen.getByTestId("item-detail").textContent).toContain("Apteczka");
+    expect(screen.getByTestId("item-detail").textContent).toContain("Medkit");
     const s = store.getState();
     act(() => patchUi(store, { inventory: { ...s.inventory, stacks: { scrap: 3 } } }));
     expect(screen.getByTestId("item-detail").textContent).toContain("Pick an item");

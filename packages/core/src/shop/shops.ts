@@ -1,3 +1,4 @@
+import { type DomainText, textRef } from "../i18n/text";
 import { AMMO_CATALOG, GARMENT_CATALOG, MOD_CATALOG, STACKABLE_CATALOG, WEAPON_CATALOG, isAmmoId, isGarmentId, isStackableId, isWeaponId, itemSummary } from "../items/catalog";
 import { RARITY } from "../items/rarity";
 import type { AmmoId, GarmentId, ItemCategory, ModId, Rarity, StackableId, WeaponId } from "../items/types";
@@ -42,7 +43,7 @@ export interface ShopDefinition {
 export const SHOPS: Readonly<Record<ShopId, ShopDefinition>> = {
   clinic: {
     id: "clinic",
-    name: "Klinika doktora Mori",
+    name: "shop.clinic.label",
     owner: "clinic",
     stock: [
       { kind: "stack", item: "medkit" },
@@ -58,7 +59,7 @@ export const SHOPS: Readonly<Record<ShopId, ShopDefinition>> = {
   },
   oyaji: {
     id: "oyaji",
-    name: "Stragan Oyajiego",
+    name: "shop.oyaji.label",
     owner: "civilians",
     stock: [
       { kind: "ammo", item: "9mm", qty: 24 },
@@ -87,7 +88,7 @@ export const SHOPS: Readonly<Record<ShopId, ShopDefinition>> = {
   // Street food (ADR-0026): sells, buys nothing back.
   yatai: {
     id: "yatai",
-    name: "Ramen u Fumiko",
+    name: "shop.yatai.label",
     owner: "civilians",
     stock: [
       { kind: "stack", item: "ramen" },
@@ -103,16 +104,16 @@ export const SHOPS: Readonly<Record<ShopId, ShopDefinition>> = {
 
 export const stockEntry = (shop: ShopId, item: ShopItemId): StockEntry | undefined => SHOPS[shop].stock.find((e) => e.item === item);
 
-/** Name of what a stock id stands for (the ammo type for a box of rounds). */
+/** Catalog key of the name of what a stock id stands for (the ammo type for a box of rounds). */
 export const shopItemName = (item: ShopItemId): string => (isAmmoId(item) ? AMMO_CATALOG[item].name : itemSummary(item).name);
 
-/** Display name of a stock entry (a box of rounds says how many). */
-export const stockName = (entry: StockEntry): string =>
-  entry.kind === "ammo" ? `${AMMO_CATALOG[entry.item].name} × ${entry.qty}` : shopItemName(entry.item);
+/** Display name of a stock entry (a box of rounds says how many), as a text for app and ui (ADR-0056). */
+export const stockName = (entry: StockEntry): DomainText =>
+  entry.kind === "ammo" ? textRef("shop.stock.ammo", { ammo: textRef(AMMO_CATALOG[entry.item].name), qty: entry.qty }) : shopItemName(entry.item);
 
 /** Counter text for a stock id. */
-export const shopItemDescription = (item: ShopItemId): string => {
-  if (isAmmoId(item)) return `Pudełko nabojów ${AMMO_CATALOG[item].name}, prosto do ładownicy.`;
+export const shopItemDescription = (item: ShopItemId): DomainText => {
+  if (isAmmoId(item)) return textRef("shop.stock.ammoBox", { ammo: textRef(AMMO_CATALOG[item].name) });
   if (isStackableId(item)) return STACKABLE_CATALOG[item].description;
   return entryDef(item).description;
 };

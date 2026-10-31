@@ -79,8 +79,8 @@ describe("weapon, loot and trade cues (E12)", () => {
     again.bus.emit("CapacityUpgraded", { capacity: 30, price: 600 });
     again.bus.emit("ItemBought", { itemId: "9mm", price: 24, shopId: "oyaji", qty: 24 });
     expect(again.ui.getState().toasts.map((t) => `${t.title} | ${t.text}`)).toEqual([
-      "Sold: Złom elektroniczny × 2 | +24 €$",
-      "Repaired: Kurtka Seki | -20 €$, parts: 1",
+      "Sold: Electronic scrap × 2 | +24 €$",
+      "Repaired: Seki's jacket | -20 €$, parts: 1",
       "Bigger backpack | Slots: 30",
       "Bought: 9 mm × 24 | -24 €$",
     ]);
