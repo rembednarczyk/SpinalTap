@@ -5,6 +5,7 @@
 import { LUBLIN_ANCHOR } from "../../../packages/core/src/world/city-geo.ts";
 import { isPart, partsByBuilding } from "./building-parts.ts";
 import { makeBuilding } from "./buildings.ts";
+import { corrected } from "./corrections.ts";
 import { ALL_CHUNKS, type ChunkSpec } from "./config.ts";
 import { type HeightSource } from "./dtm.ts";
 import { type Area, type Line, extractFeatures } from "./features.ts";
@@ -167,7 +168,10 @@ const segmentDistance = (p: Pt, a: Pt, b: Pt): number => {
 };
 
 export const generate = (data: OsmData, src: HeightSource, chunks: readonly ChunkSpec[] = ALL_CHUNKS): Generated => {
-  const { areas, lines } = extractFeatures(data);
+  const features = extractFeatures(data);
+  // The explicit corrections of estimated tags (corrections.ts), before anything reads them.
+  const areas = features.areas.map((a) => corrected(a));
+  const lines = features.lines;
   const buildings = buildingAreas(areas, data);
   const mapped = sidewalkIndex(lines);
   const near = (pts: readonly Pt[]) => chunks.some((c) => rectsOverlap(ringBounds(pts), grow(c.rect, 1)));

@@ -47,9 +47,9 @@ export const withLandmark = (f: FacadeFrame, landmark: LandmarkPart | null): Fac
 
 export const isLandmarkFrame = (f: FacadeFrame): f is LandmarkFrame => "landmark" in f;
 
-/** The widest of the shown walls facing a direction (within ~45°), else the one facing it most squarely, or null. */
+/** The widest of the shown walls facing a direction (within ~30°), else the one facing it most squarely, or null. */
 export const mostFacing = (f: FacadeFrame, dir: { x: number; z: number }): Wall | null => {
-  const score = (w: Wall) => (facing(w, dir) > 0.7 ? 10 + w.length : facing(w, dir));
+  const score = (w: Wall) => (facing(w, dir) > 0.85 ? 10 + w.length : facing(w, dir));
   let best: Wall | null = null;
   for (const w of shownWalls(f)) if (!best || score(w) > score(best)) best = w;
   return best;

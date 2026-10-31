@@ -213,7 +213,7 @@ describe("Brama Krakowska from the landmark kit (ADR-0062)", () => {
     // Battlements: merlons up to the data's top over the free walls, with crenels down to a metre under it.
     const pts = points(near3(annex));
     const d = data("r7224409");
-    expect(annex.top - d.y).toBeCloseTo(7.1, 6);
+    expect(annex.top - d.y).toBeCloseTo(10, 6);
     const front = mouthWall(annex, "new")!.w;
     const onFront = (y: number) => pts.filter((p) => Math.abs(p.y - y) < 0.05 && Math.abs((p.x - front.a.x) * front.nx + (p.z - front.a.z) * front.nz) < 0.02);
     expect(onFront(annex.top).length).toBeGreaterThanOrEqual(8);
@@ -296,6 +296,11 @@ describe("Brama Krakowska from the landmark kit (ADR-0062)", () => {
     expect(f.top - d.y).toBeCloseTo(22.5, 6);
     expect(roof).toBeCloseTo(7, 6);
     expect(f.top + roof).toBeCloseTo(d.y + d.height + d.roof!, 6);
+    // About 7.5 m across (the importer's correction of the mapped 6.6 m, T-032), round the same centre.
+    const across = Math.max(...f.b.ring.flatMap((p) => f.b.ring.map((q) => Math.hypot(p.x - q.x, p.z - q.z))));
+    expect(across).toBeGreaterThan(7);
+    expect(across).toBeLessThan(8);
+    expect(centroid(f.b.ring).x).toBeCloseTo(d.x, 0);
     // The lower zone with the clocks over the gallery's door, up to 20 m; the round-headed windows over it.
     const split = f.b.foot + f.landmark.part.tier.split!;
     expect(split - d.y).toBeCloseTo(20, 6);
