@@ -24,6 +24,8 @@ export class BrowserInput implements InputPort {
   private readonly pressed = new Set<string>();
   private yaw = 0;
   private pitch = 0;
+  /** Whether the pointer was locked at the last mouse move. */
+  private movedLocked = false;
   private padPrev: boolean[] = [];
   /** B tapped twice dashes (ADR-0036). */
   private readonly padDash = new DoubleTap();
@@ -79,7 +81,12 @@ export class BrowserInput implements InputPort {
     window.addEventListener("wheel", onWheel, { passive: false });
     this.disposers.push(() => window.removeEventListener("wheel", onWheel));
     on("mousemove", (e) => {
-      if (!this.mouseActive || this.touchEmulated()) return;
+      // Chromium reports the move into pointer lock as one jump by minus the cursor's position
+      // (half the screen from a centred button): not a turn of the view (G-046). It can come before pointerlockchange, so the lock is compared move to move.
+      const locked = this.locked;
+      const lockChanged = locked !== this.movedLocked;
+      this.movedLocked = locked;
+      if (lockChanged || !this.mouseActive || this.touchEmulated()) return;
       this.yaw += e.movementX * MOUSE_SENSITIVITY;
       this.pitch += e.movementY * MOUSE_SENSITIVITY;
     });

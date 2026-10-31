@@ -1,9 +1,10 @@
-import { ENEMY_TYPES, LOOT_TABLES, contractKind, killedFlag, rollLoot } from "@seki/core";
+import { ENEMY_TYPES, LOOT_TABLES, contractKind, killXp, killedFlag, rollLoot } from "@seki/core";
 import { deriveRandom } from "../rng/derive-random";
 import type { Entity } from "../world/components";
 import type { System } from "../world/context";
 import { applyReputationCause, clearContract, dropLoot, raiseFlag } from "../world/domain-ops";
 import { inCreationOrder } from "../world/ordering";
+import { grantXp } from "../world/progression-ops";
 import { disturb, isContractTarget, noteTally, offend } from "../world/street";
 
 /** A body is noticed this far (ADR-0029). */
@@ -63,6 +64,8 @@ export const deathSystem: System = {
       // A death the player did not cause (Hebi shooting Oyaji) is not held against them.
       if (e.faction && (e.lastHitBy === undefined || e.lastHitBy === playerId)) applyReputationCause(ctx, { type: "member-killed", faction: e.faction });
       dropEnemyLoot(ctx, e);
+      // An enemy the player took down (ADR-0059); its level against the player's comes in stage 5.
+      if (byPlayer && e.enemy) grantXp(ctx, killXp(e.enemy.type), "kill");
       ctx.bus.emit("EntityKilled", { entityId: e.id, tag: e.tag ?? null, ...(e.lastHitBy === undefined ? {} : { killerId: e.lastHitBy }) });
       ctx.world.remove(e);
     }

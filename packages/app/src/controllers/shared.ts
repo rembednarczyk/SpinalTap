@@ -24,7 +24,7 @@ export const focusOf = (onFocusChange: ((wantsPointer: boolean) => void) | undef
 });
 
 /** A system toast that goes away on its own. */
-export const pushToastTimed = (ui: UiStore, kind: Toast["kind"], title: string, text = ""): void => {
-  const id = pushToast(ui, { kind, title, text });
+export const pushToastTimed = (ui: UiStore, kind: Toast["kind"], title: string, text = "", keep = false): void => {
+  const id = pushToast(ui, { kind, title, text, ...(keep ? { keep } : {}) });
   setTimeout(() => dismissToast(ui, id), TOAST_MS);
 };
