@@ -55,3 +55,6 @@ Kontrolę pisze naprawiacz albo budowniczy. Ty podajesz definicję i liczbę baz
 
 ## Raport (do ok. 30 linii, szczegóły w `topo-<zadanie>-raport.md` w scratchpadzie)
 Werdykt albo wynik audytu, nowe wpisy `T-NNN` (jedna linia każdy), zgłoszone glitche i proponowane kontrole skanu.
+
+## Prywatność
+- W zapytaniach do zewnętrznych serwisów (Wikimedia, OSM, geoportal) nie podajesz adresu e-mail ani innych danych użytkownika, także w nagłówku User-Agent. Używasz ogólnego identyfikatora narzędzia, np. `SekiSenshi-topo/1.0`.
