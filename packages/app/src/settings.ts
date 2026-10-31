@@ -7,6 +7,7 @@ import {
   type GraphicsQuality,
   HORIZONTAL_FOV_RANGE,
   HUD_SCALE_RANGE,
+  SUBTITLE_SCALE_RANGE,
   type SettingsVm,
   isRadioStationId,
 } from "@seki/ui";
@@ -78,6 +79,8 @@ export const sanitizeSettings = (raw: unknown, defaults: SettingsVm = DEFAULT_SE
     hudAlwaysShow: bool(r.hudAlwaysShow, defaults.hudAlwaysShow),
     damageNumbers: isDamageMode(r.damageNumbers) ? r.damageNumbers : defaults.damageNumbers,
     hudScale: Math.round(clamp(r.hudScale, HUD_SCALE_RANGE[0], HUD_SCALE_RANGE[1], defaults.hudScale) * 20) / 20,
+    subtitleScale: Math.round(clamp(r.subtitleScale, SUBTITLE_SCALE_RANGE[0], SUBTITLE_SCALE_RANGE[1], defaults.subtitleScale) * 10) / 10,
+    subtitleBackground: bool(r.subtitleBackground, defaults.subtitleBackground),
     legibleFont: bool(r.legibleFont, defaults.legibleFont),
     reduceFlashes: bool(r.reduceFlashes, defaults.reduceFlashes),
     cameraMotion: bool(r.cameraMotion, defaults.cameraMotion),

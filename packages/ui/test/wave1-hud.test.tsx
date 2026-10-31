@@ -325,4 +325,15 @@ describe("accessibility", () => {
     expect(root.classList.contains("legible-font")).toBe(false);
     expect(root.dataset.palette).toBeUndefined();
   });
+
+  it("sizes the subtitles on their own and gives them a solid box (gap audit, accessibility)", () => {
+    const { store } = mount({ settings: { ...DEFAULT_SETTINGS, subtitleScale: 1.4, subtitleBackground: true } });
+    const root = document.documentElement;
+    expect(root.style.getPropertyValue("--subs-scale")).toBe("1.4");
+    expect(root.style.getPropertyValue("--hud-scale")).toBe("1");
+    expect(root.classList.contains("subs-solid")).toBe(true);
+    act(() => patchUi(store, { settings: DEFAULT_SETTINGS }));
+    expect(root.style.getPropertyValue("--subs-scale")).toBe("1");
+    expect(root.classList.contains("subs-solid")).toBe(false);
+  });
 });

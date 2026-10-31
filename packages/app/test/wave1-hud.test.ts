@@ -179,6 +179,12 @@ describe("settings of wave 1", () => {
     expect(sanitizeSettings({}, { ...DEFAULT_SETTINGS, reduceFlashes: true }).reduceFlashes).toBe(true);
   });
 
+  it("clamps the subtitle size and keeps old entries at the defaults", () => {
+    expect(sanitizeSettings({ quality: "low" })).toMatchObject({ subtitleScale: 1, subtitleBackground: false });
+    expect(sanitizeSettings({ subtitleScale: 9, subtitleBackground: true })).toMatchObject({ subtitleScale: 1.6, subtitleBackground: true });
+    expect(sanitizeSettings({ subtitleScale: 1.23, subtitleBackground: "yes" })).toMatchObject({ subtitleScale: 1.2, subtitleBackground: false });
+  });
+
   it("keeps camera motion on for entries saved before the setting, off where the device asks for reduced motion", () => {
     expect(sanitizeSettings({ quality: "low" }).cameraMotion).toBe(true);
     expect(sanitizeSettings({ cameraMotion: false }).cameraMotion).toBe(false);
