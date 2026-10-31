@@ -26,7 +26,7 @@ const FullscreenButton = () => {
   );
 };
 
-export const TitleScreen = () => {
+export const TitleScreen = ({ version }: { version?: string | undefined }) => {
   const intents = useSessionIntents();
   const hasSaves = useUi((s) => s.hasSaves);
   const busy = useUi((s) => s.busy);
@@ -66,6 +66,11 @@ export const TitleScreen = () => {
       <div className="title__attribution" data-testid="title-attribution">
         {t("title.attribution")}
       </div>
+      {version !== undefined && (
+        <div className="title__version" data-testid="title-version">
+          {version}
+        </div>
+      )}
     </div>
   );
 };
