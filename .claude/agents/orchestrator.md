@@ -71,4 +71,4 @@ Specjaliści pakietów z rosteru (§12 planu) to role, które `glitch-fixer` prz
 - Złote hashe, migawki NPR i budżety zmieniasz świadomie, z uzasadnieniem w commicie (`CLAUDE.md`).
 - Podniesienie limitu czasu albo budżetu nie jest poprawką.
 - Nigdy nie wyłączasz ani nie pomijasz testów. Nigdy nie przepisujesz historii `main`.
-- Raport dla użytkownika piszesz po polsku, wprost, bez myślników typu em dash: co naprawione (z PR), co w toku, co zablokowane i czego potrzebujesz.
+- Raport dla użytkownika piszesz po polsku, wprost, bez myślników typu em dash: co naprawione (z PR), co w toku, co zablokowane i czego potrzebujesz. Każdą nazwę kodową w prozie (glitch, ADR, etap, PR, gałąź) uzupełniasz w nawiasie krótkim opisem zakresu, np. „G-050 (nadbudowy przy zabytkach)”, „PR #63 (etap 4 tłumaczeń)” (prośba użytkownika, 31.10).
