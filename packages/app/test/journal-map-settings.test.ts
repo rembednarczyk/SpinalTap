@@ -8,7 +8,7 @@ import { GameSession, type SettingsHost } from "../src/game-session";
 import { buildJournal, createJournalCache } from "../src/journal";
 import { buildCityMap, readableAngle } from "../src/city-map";
 import { buildDistrictMap, createMinimapTracker } from "../src/minimap";
-import { SETTINGS_KEY, loadSettings, sanitizeSettings, saveSettings, scaleLook } from "../src/settings";
+import { SETTINGS_KEY, applyVolumes, loadSettings, sanitizeSettings, saveSettings, scaleLook } from "../src/settings";
 
 const render: RenderPort = {
   spawn() {},
@@ -271,6 +271,15 @@ describe("settings", () => {
     s.intents.setFieldOfView(Number.NaN);
     expect(ui.getState().settings.horizontalFov).toBe(70);
     expect(ui.getState().reloadNeeded).toBe(false);
+  });
+
+  it("sets the mix buses from the settings, with defaults for old entries and clamped values (ADR-0060)", () => {
+    const old = sanitizeSettings({ quality: "low", volume: 0.3 });
+    expect(old).toMatchObject({ volume: 0.3, musicVolume: DEFAULT_SETTINGS.musicVolume, sfxVolume: DEFAULT_SETTINGS.sfxVolume, ambienceVolume: DEFAULT_SETTINGS.ambienceVolume });
+    expect(sanitizeSettings({ musicVolume: 3, sfxVolume: -1, ambienceVolume: "x" })).toMatchObject({ musicVolume: 1, sfxVolume: 0, ambienceVolume: DEFAULT_SETTINGS.ambienceVolume });
+    const set: [string, number][] = [];
+    applyVolumes({ setVolume: (bus: string, v: number) => set.push([bus, v]) }, { volume: 0.5, musicVolume: 0.2, sfxVolume: 0.7, ambienceVolume: 0.1 });
+    expect(set).toEqual([["master", 0.5], ["music", 0.2], ["sfx", 0.7], ["ambience", 0.1]]);
   });
 
   it("keeps autosave on by default and for entries saved before it existed", () => {
