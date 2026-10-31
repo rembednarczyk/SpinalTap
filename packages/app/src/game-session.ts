@@ -38,12 +38,12 @@ export class GameSession implements SessionIntents {
   private readonly c: Controllers;
 
   constructor(private readonly deps: GameSessionDeps) {
-    // The narrative's own words (speakers' roles, a contract's variation) in the player's language (ADR-0056).
-    this.narrative = new NarrativeRuntime(
-      deps.story,
-      (cmd) => this.simulation.enqueue(cmd),
-      narrativeText(() => deps.ui.getState().settings.locale),
-    );
+    // The ink in the player's language from the start, the narrative's own words (speakers' roles,
+    // a contract's variation) in the language of the moment (ADR-0056).
+    this.narrative = new NarrativeRuntime(deps.story, (cmd) => this.simulation.enqueue(cmd), {
+      locale: deps.ui.getState().settings.locale,
+      text: narrativeText(() => deps.ui.getState().settings.locale),
+    });
     // Lublin's terrain, surfaces and buildings are drawn for good, streamed in or not (ADR-0045).
     this.renderSync = new RenderSync(deps.render, deps.scenery === false ? [] : WORLD_SCENERY);
     this.simulation = Simulation.create({ seed: deps.seed(), bus: this.bus, crowd: deps.crowd ?? "off", traffic: deps.traffic ?? deps.crowd ?? "off" });
