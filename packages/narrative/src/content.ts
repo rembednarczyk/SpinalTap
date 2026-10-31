@@ -27,6 +27,8 @@ import m4UlicaEn from "../ink/en/m4-ulica.ink?raw";
 import phoneEn from "../ink/en/phone.ink?raw";
 import encShinsekaiEn from "../ink/en/enc-shinsekai.ink?raw";
 import encKanalEn from "../ink/en/enc-kanal.ink?raw";
+import encTargEn from "../ink/en/enc-targ.ink?raw";
+import encDokiEn from "../ink/en/enc-doki.ink?raw";
 
 /**
  * The ink files of the build in story order, one per dialogue group (knots are the dialogue ids).
@@ -88,6 +90,8 @@ export const INK_EN: Readonly<Partial<Record<InkFile, string>>> = {
   phone: phoneEn,
   "enc-shinsekai": encShinsekaiEn,
   "enc-kanal": encKanalEn,
+  "enc-targ": encTargEn,
+  "enc-doki": encDokiEn,
 };
 
 /** The whole story in `language`, file by file, Polish where a translation is missing. */

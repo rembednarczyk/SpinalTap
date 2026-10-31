@@ -14,8 +14,6 @@ import { INK_EN, INK_FILES, INK_PL, type InkFile, STORY_SOURCES, compileInk } fr
 
 /** Files with no English version yet: they play in Polish. Only ever shrinks, to empty. */
 const UNTRANSLATED: readonly InkFile[] = [
-  "enc-targ",
-  "enc-doki",
   "hooks",
   "metro",
   "radio",
