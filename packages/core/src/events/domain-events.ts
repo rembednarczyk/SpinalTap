@@ -14,6 +14,7 @@ import type { CrimeKind, CrowdState, DisturbanceKind, HeatLevel, WitnessChannel 
 import type { BonusCondition, ContractBadge, ContractRank } from "../contracts/debrief";
 import type { BuffId, ContractVariation, DisguiseRole, MetroStationId } from "../world/wave2";
 import type { MetroRefusal } from "../world/metro";
+import type { XpSource } from "../progression/xp-sources";
 
 export interface DomainEvents {
   ShotFired: { shooterId: EntityId; from: Vec3; to: Vec3; hitEntity: EntityId | null };
@@ -202,6 +203,11 @@ export interface DomainEvents {
   MetroRefused: { reason: MetroRefusal; to: MetroStationId };
   /** A guard said something the player overheard (an observation hook); the app renders `knot`. */
   GuardBark: { entityId: EntityId; knot: string };
+  // Character progression (ADR-0059).
+  /** Experience earned, already added to the domain's progression. */
+  ExperienceGained: { amount: number; source: XpSource };
+  /** The character reached `level`; one per level gained, after its ExperienceGained. */
+  LevelUp: { level: number };
 }
 
 /** Awareness of the player, from not noticing to fighting. */
