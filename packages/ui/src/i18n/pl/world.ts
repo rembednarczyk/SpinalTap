@@ -104,12 +104,16 @@ export const plWorld = {
   // Saving and loading.
   "save.unavailable": "Nie można teraz zapisać",
   "save.saved": "Zapisano grę",
+  "save.autosaved": "Zapisano automatycznie",
   "save.failed": "Zapis nieudany",
   "save.emptySlot": "Pusty slot",
   "save.loaded": "Wczytano grę",
   "save.loadFailed": "Nie udało się wczytać",
   "save.corruptFile": "Plik zapisu jest uszkodzony.",
   "save.corrupt": "Uszkodzony zapis",
+  // Character progression (ADR-0059).
+  "progress.levelUp": "Awans: poziom {level}",
+  "progress.levelUpPoints": "Punkt atrybutu i punkt perku do rozdania",
   // Quest and contract toasts.
   "quest.updated": "Zadanie zaktualizowane",
   "quest.completed": "Zlecenie wykonane",

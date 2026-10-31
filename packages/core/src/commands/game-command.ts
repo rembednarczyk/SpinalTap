@@ -7,6 +7,7 @@ import type { StoryChoiceId, StoryOption } from "../story/story";
 import type { EquipSlot, ItemRef, ModSlot } from "../items/types";
 import type { BreachDaemonId } from "../hacking/quickhacks";
 import type { MetroStationId } from "../world/wave2";
+import type { AttributeId } from "../progression/attributes";
 
 /**
  * Requests from outside the simulation (narrative, UI). They are queued and applied at
@@ -70,4 +71,7 @@ export type GameCommand =
   /** Buys a ticket at the platform the player stands on and rides to `to`. */
   | { readonly type: "travel-metro"; readonly to: MetroStationId }
   /** Follow this journal entry on the HUD (a quest id or `contract-<id>`); null lets the game pick. */
-  | { readonly type: "track-quest"; readonly questId: string | null };
+  | { readonly type: "track-quest"; readonly questId: string | null }
+  // Character progression (ADR-0059).
+  /** Puts one unspent attribute point into `attribute`; refused without a point or at the cap. */
+  | { readonly type: "spend-attribute-point"; readonly attribute: AttributeId };

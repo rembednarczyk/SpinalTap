@@ -11,6 +11,7 @@ import {
   wornGarments,
   buffModifiers,
   BUFF_CATALOG,
+  levelModifiers,
 } from "@seki/core";
 import type { Entity } from "../world/components";
 import { knockbackVelocity } from "../world/knockback";
@@ -37,7 +38,7 @@ export const statsFor = (c: CharacterState): DerivedStats => {
   return cachedStats;
 };
 
-let cachedFor: { character: CharacterState; equipment: DomainState["equipment"]; buffs: string } | null = null;
+let cachedFor: { character: CharacterState; equipment: DomainState["equipment"]; buffs: string; level: number } | null = null;
 let cachedPlayer: DerivedStats | null = null;
 
 /** The buffs that change stats, as a key: their seconds left tick every step, the stats do not. */
@@ -45,15 +46,19 @@ const statBuffKey = (domain: DomainState): string =>
   domain.buffs.length === 0 ? "" : domain.buffs.filter((b) => BUFF_CATALOG[b.id].modifiers).map((b) => b.id).join(",");
 
 /**
- * The player's stats with worn garments (a ballistic vest slows her down) and running buffs (the
- * stim steadies the aim, ADR-0033). Memoised on the character, the equipment and the stat buffs,
- * which only change on install, memory, equip or a buff starting or ending.
+ * The player's stats with worn garments (a ballistic vest slows her down), running buffs (the
+ * stim steadies the aim, ADR-0033) and the character's level (health, ADR-0059). Memoised on the
+ * character, the equipment, the stat buffs and the level, which only change on install, memory,
+ * equip, a buff starting or ending, or a level up.
  */
 export const playerStatsOf = (domain: DomainState): DerivedStats => {
   const buffs = statBuffKey(domain);
-  if (!cachedPlayer || cachedFor?.character !== domain.character || cachedFor.equipment !== domain.equipment || cachedFor.buffs !== buffs) {
-    cachedFor = { character: domain.character, equipment: domain.equipment, buffs };
-    cachedPlayer = deriveStats(domain.character, [...garmentModifiers(wornGarments(domain.inventory, domain.equipment)), ...buffModifiers(domain.buffs)]);
+  const level = domain.progression.level;
+  const stale = cachedFor?.character !== domain.character || cachedFor.equipment !== domain.equipment || cachedFor.buffs !== buffs || cachedFor.level !== level;
+  if (!cachedPlayer || stale) {
+    cachedFor = { character: domain.character, equipment: domain.equipment, buffs, level };
+    const worn = garmentModifiers(wornGarments(domain.inventory, domain.equipment));
+    cachedPlayer = deriveStats(domain.character, [...worn, ...buffModifiers(domain.buffs), levelModifiers(domain.progression)]);
   }
   return cachedPlayer;
 };

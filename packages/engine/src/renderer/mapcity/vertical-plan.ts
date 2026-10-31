@@ -1,6 +1,7 @@
 import { prng } from "../city-kit-data";
 import { DRESS_FLAG, type MeshSink, type Rgba, type Vec, hexColor } from "../mesh-sink";
 import { type FacadeFrame, trimMeta, wallMeta } from "./facade-frame";
+import type { PropPlacer } from "./facade-props";
 import { band, slab, wallQuad } from "./facade-parts";
 import { WINDOW_STYLE } from "./facade-style";
 import { type P2, pointInRing } from "./polygon";
@@ -212,9 +213,11 @@ const panels = (sink: MeshSink, p: Vec, yaw: number, rand: () => number): void =
   }
 };
 
-/** Rooftop gear on the top of the last tier. */
-const rooftop = (sink: MeshSink, f: FacadeFrame, t: StackTier, rand: () => number): void => {
+/** Rooftop gear on the top of the last tier; `place` takes the props' slots (ADR-0058). */
+const rooftop = (sink: MeshSink, f: FacadeFrame, t: StackTier, rand: () => number, place?: PropPlacer): void => {
   const yaw = Math.atan2(-f.box.uz, f.box.ux);
+  // The roof's front, square to the building's long side.
+  const front = { x: -f.box.uz, y: 0, z: f.box.ux };
   const at = (a: number, b: number): Vec => {
     const p = toWorld(f, t.u0 + (t.u1 - t.u0) * a, t.v0 + (t.v1 - t.v0) * b);
     return { x: p.x, y: t.y1, z: p.z };
@@ -224,14 +227,20 @@ const rooftop = (sink: MeshSink, f: FacadeFrame, t: StackTier, rand: () => numbe
     const p = at(0.2 + rand() * 0.6, 0.2 + rand() * 0.6);
     const r = rand();
     if (r < 0.3) tank(sink, p, rand);
-    else if (r < 0.6) fan(sink, p, yaw);
+    else if (r < 0.6) {
+      if (!place?.({ kind: "ac-roof", at: p, out: front })) fan(sink, p, yaw);
+    }
     else panels(sink, p, yaw, rand);
   }
   if (rand() < 0.7) mast(sink, at(rand() < 0.5 ? 0.12 : 0.88, 0.2 + rand() * 0.6), 3 + rand() * 6);
+  // Props without a procedural stand-in, at fixed spots of the roof: no random draws.
+  place?.({ kind: "dish-roof", at: at(0.5, 0.85), out: front });
+  place?.({ kind: "antenna", at: at(0.3, 0.15), out: front });
+  place?.({ kind: "pipe-corner", at: at(0.75, 0.5), out: front });
 };
 
 /** The detailed superstructure: tiers, a neon line under some tier tops, gear on the roof. */
-export const planNearVertical = (sink: MeshSink, f: FacadeFrame): void => {
+export const planNearVertical = (sink: MeshSink, f: FacadeFrame, place?: PropPlacer): void => {
   const tiers = stackTiers(f);
   if (tiers.length === 0) return;
   const rand = prng((f.b.look ^ 0x7e1) >>> 0);
@@ -240,7 +249,7 @@ export const planNearVertical = (sink: MeshSink, f: FacadeFrame): void => {
     // A lit band round the tier's top: the edge of a capsule floor or a glass box.
     if (rand() < 0.45) band(sink, t.ring, 0.06, t.y1 - 0.32, t.y1 - 0.18, lit(pick(rand, NEON)), trimMeta(f.style.seed), t.y0);
   }
-  rooftop(sink, f, tiers[tiers.length - 1] as StackTier, rand);
+  rooftop(sink, f, tiers[tiers.length - 1] as StackTier, rand, place);
 };
 
 /** The far superstructure: the tiers as boxes, nothing on them. */

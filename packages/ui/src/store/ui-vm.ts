@@ -44,6 +44,8 @@ export interface Toast {
   readonly kind: "quest" | "memory" | "money" | "reputation" | "system" | "cyberware" | "heat" | "radio";
   readonly title: string;
   readonly text: string;
+  /** Outlives ordinary toasts when too many come at once (a level up, a failed load). */
+  readonly keep?: boolean;
 }
 
 export interface JournalStepVm {
@@ -255,6 +257,8 @@ export interface SettingsVm {
   readonly bindings: Readonly<Record<string, readonly string[]>>;
   /** First-run hints (controls, interactions) shown while playing. */
   readonly hints: boolean;
+  /** Autosave to its own slot after quest steps, contracts, every few minutes and when the page hides. */
+  readonly autosave: boolean;
   /** Health and ammo stay on screen outside combat too. */
   readonly hudAlwaysShow: boolean;
   /** Damage numbers over the crosshair: none, one per hit, or a running total per target. */
@@ -303,6 +307,7 @@ export const DEFAULT_SETTINGS: SettingsVm = {
   volume: 0.6,
   bindings: {},
   hints: true,
+  autosave: true,
   hudAlwaysShow: false,
   damageNumbers: "off",
   hudScale: 1,
