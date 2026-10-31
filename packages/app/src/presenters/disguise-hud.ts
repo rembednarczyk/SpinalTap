@@ -1,4 +1,4 @@
-import type { DisguiseRole, EntityId } from "@seki/core";
+import type { EntityId } from "@seki/core";
 import { type DisguiseVm, translate } from "@seki/ui";
 import type { HudPart, HudPartContext, HudPatch } from "./hud-part";
 

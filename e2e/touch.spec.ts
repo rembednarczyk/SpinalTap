@@ -49,8 +49,8 @@ test("phone: on-screen pad moves, looks and talks", async ({ page }) => {
   // E lights up near Kaito and opens the dialogue; the pad hides during it.
   // Kaito waits at the Neon Koi counter from the start (G-034): stand 1.5 m in front of him.
   await teleportTo(page, await place(page, "koi", 11.25, 3.5), Math.PI);
-  await expect(page.getByRole("button", { name: "Interakcja" })).toHaveClass(/touch__btn--hot/);
-  await page.getByRole("button", { name: "Interakcja" }).tap();
+  await expect(page.getByRole("button", { name: /^Interact/ })).toHaveClass(/touch__btn--hot/);
+  await page.getByRole("button", { name: /^Interact/ }).tap();
   await expect(page.getByTestId("dialogue")).toBeVisible();
   await expect(page.getByTestId("touch-controls")).toBeHidden();
   await page.getByTestId("dialogue").getByRole("button").first().tap();
