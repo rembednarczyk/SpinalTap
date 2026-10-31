@@ -82,3 +82,6 @@ Dokładne prostokąty ustala importer. Każdy dystrykt dzieli się na chunki str
   1. kontrakty;
   2. równolegle importer, sim (pryzmaty, teren) i engine (budynki, teren, nawierzchnie);
   3. przeniesienie treści dystrykt po dystrykcie.
+
+## Uzupełnienie (31.10): jawne korekty danych OSM
+Gdy tag OSM jest szacunkiem sprzecznym z pomiarem (zdjęcie, NMPT), import stosuje korektę z listy `tools/osm-import/src/corrections.ts`: id elementu OSM, zmieniony tag, powód i odnośnik do wpisu `T-NNN` w `docs/topografia.md`. Surowe `data/osm` zostają bez zmian, a korekta działa przed odczytem tagów, więc wygląd i bryła kolizji się zgadzają. Pierwsze korekty: przedbramie i ośmiobok Bramy Krakowskiej (T-032, T-033, ADR-0062). Każdą nową korektę przegląda kurator topografii; poprawka w samym OSM jest lepsza, gdy da się ją zrobić.
