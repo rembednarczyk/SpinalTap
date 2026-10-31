@@ -34,11 +34,13 @@ FABRICS = ('fabric-teal', 'fabric-magenta', 'fabric-amber')
 # key, source, file, styles, yaw (deg about glTF Y, front to +Z), scale (to metres), options
 #   fabric: an awning: the whole model takes this cloth swatch
 #   roles: material name (Quaternius) -> swatch, over the defaults
+#   unlit: emissive materials are painted (saturated -> fabric-amber, else trim-light), not neon
 PROPS = [
     # Air conditioners: Quaternius on the walls and roofs, Kenney's as the cheap phone version.
     ('pr-ac-box', 'quaternius', 'Platforms/AC', ['ac-wall', 'ac-roof'], 0, 0.85, {}),
     ('pr-ac-side', 'quaternius', 'Platforms/AC_Side', ['ac-wall'], 0, 0.6, {}),
-    ('pr-ac-stack', 'quaternius', 'Platforms/AC_Stacked', ['ac-roof', 'ac-firewall'], 0, 1.0, {}),
+    # Its emissive "sign" strip is a painted warning label on an air conditioner: not a neon.
+    ('pr-ac-stack', 'quaternius', 'Platforms/AC_Stacked', ['ac-roof', 'ac-firewall'], 0, 1.0, {'unlit': True}),
     ('pr-ac-lite-a', 'modular', 'detail-ac-a', ['ac-roof', 'lite'], 0, 3.5, {}),
     ('pr-ac-lite-b', 'modular', 'detail-ac-b', ['ac-wall', 'lite'], 0, 3.0, {}),
     # Antennas and dishes.
@@ -132,7 +134,7 @@ def kenney_roles(P, mat, uv, j, blob, folder, fabric):
     return roles
 
 
-def quaternius_roles(mat, uv, j, blob, folder, overrides):
+def quaternius_roles(mat, uv, j, blob, folder, overrides, unlit=False):
     mats = j.get('materials', [])
     table = {**QUATERNIUS_ROLES, **overrides}
     roles = []
@@ -143,7 +145,10 @@ def quaternius_roles(mat, uv, j, blob, folder, overrides):
         if emissive:
             img = material_image(j, blob, m, folder, 'emissive')
             rgb = texel_mean(img, uv[t]) if img is not None and not np.isnan(uv[t]).any() else np.array(m.get('emissiveFactor', [1, 1, 1]))
-            roles.append(nearest_neon(rgb))
+            if unlit:
+                roles.append('fabric-amber' if hsv(tuple(rgb))[1] > 0.15 else 'trim-light')
+            else:
+                roles.append(nearest_neon(rgb))
             continue
         name = m.get('name', '')
         if name in table:
@@ -157,7 +162,7 @@ def quaternius_roles(mat, uv, j, blob, folder, overrides):
 def bake_prop(key, path, folder, kind, yaw, scale, opts):
     P, N, mat, uv, j, blob = scene_triangles(path)
     if kind == 'quaternius':
-        roles = quaternius_roles(mat, uv, j, blob, folder, opts.get('roles', {}))
+        roles = quaternius_roles(mat, uv, j, blob, folder, opts.get('roles', {}), opts.get('unlit', False))
     else:
         roles = kenney_roles(P, mat, uv, j, blob, folder, opts.get('fabric'))
     a = np.radians(yaw)
