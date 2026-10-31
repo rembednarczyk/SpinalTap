@@ -1,4 +1,5 @@
 import type { EntityId, Vec3 } from "@seki/core";
+import { DECK_DEPTH, DECK_HEADROOM, deckDepth } from "@seki/sim";
 import { DRESS_FLAG, type MeshSink, hexColor } from "../mesh-sink";
 import { type HeightAt, SURFACE_CODE, drapeTriangles } from "./ground-plan";
 import { type Box2, type P2, boundsOf, pointInRing } from "./polygon";
@@ -14,8 +15,8 @@ export interface DeckAxis {
   readonly b: Vec3;
 }
 
-/** How deep the deck's fascia hangs below its surface (m). */
-const DECK_DEPTH = 0.9;
+/** Length of the fascia's quads over a way under the bridge, where its depth follows the terrain (m). */
+const FASCIA_STEP = 2;
 const FASCIA = hexColor("#6f6b66", DRESS_FLAG.solid);
 
 /** The deck's height over (x, z): straight from `a` to `b` along the axis, level across it. */
@@ -38,21 +39,28 @@ export class Decks {
     this.pieces.delete(id);
   }
 
-  /** The highest deck over (x, z), or null off every bridge. */
-  readonly heightAt = (x: number, z: number): number | null => {
+  /**
+   * The highest deck over (x, z), or null off every bridge. For a way on the terrain at `under`,
+   * only the decks within DECK_HEADROOM of it: under a higher one it stays on the terrain (G-062).
+   */
+  readonly heightAt = (x: number, z: number, under?: number): number | null => {
     let best: number | null = null;
     for (const p of this.pieces.values()) {
       const b = p.bounds;
       if (x < b.minX || x > b.maxX || z < b.minZ || z > b.maxZ || !pointInRing({ x, z }, p.ring)) continue;
       const y = deckHeight(p.deck, x, z);
+      if (under !== undefined && y - under > DECK_HEADROOM) continue;
       if (best === null || y > best) best = y;
     }
     return best;
   };
 }
 
-/** The fascia along the edges of a deck piece that look out over the valley (no other deck beyond them). */
-export const planDeckEdges = (sink: MeshSink, ring: readonly P2[], h: HeightAt, lift: number, onDeck: (x: number, z: number) => boolean): void => {
+/**
+ * The fascia along the edges of a deck piece that look out over the valley (no other deck beyond
+ * them). With the `terrain`, it is thinner over a way under the bridge.
+ */
+export const planDeckEdges = (sink: MeshSink, ring: readonly P2[], h: HeightAt, lift: number, onDeck: (x: number, z: number) => boolean, terrain?: HeightAt): void => {
   const meta = [SURFACE_CODE.kerb, 0] as const;
   for (let i = 0; i < ring.length; i++) {
     const a = ring[i] as P2;
@@ -63,35 +71,50 @@ export const planDeckEdges = (sink: MeshSink, ring: readonly P2[], h: HeightAt, 
     const nx = (b.z - a.z) / len;
     const nz = -(b.x - a.x) / len;
     if (onDeck((a.x + b.x) / 2 + nx * 0.3, (a.z + b.z) / 2 + nz * 0.3)) continue;
-    const ya = h(a.x, a.z) + lift;
-    const yb = h(b.x, b.z) + lift;
-    quadUv(
-      sink,
-      [
-        { x: a.x, y: ya - DECK_DEPTH, z: a.z },
-        { x: b.x, y: yb - DECK_DEPTH, z: b.z },
-        { x: b.x, y: yb, z: b.z },
-        { x: a.x, y: ya, z: a.z },
-      ],
-      { x: nx, y: 0, z: nz },
-      FASCIA,
-      [
-        [0, 0],
-        [len, 0],
-        [len, 1],
-        [0, 1],
-      ],
-      meta,
-    );
+    const n = terrain ? Math.ceil(len / FASCIA_STEP) : 1;
+    const at = (k: number) => {
+      const x = a.x + ((b.x - a.x) * k) / n;
+      const z = a.z + ((b.z - a.z) * k) / n;
+      const y = h(x, z);
+      return { x, z, y: y + lift, depth: terrain ? deckDepth(y, terrain(x, z)) : DECK_DEPTH, u: (len * k) / n };
+    };
+    for (let k = 0; k < n; k++) {
+      const [p, q] = [at(k), at(k + 1)];
+      quadUv(
+        sink,
+        [
+          { x: p.x, y: p.y - p.depth, z: p.z },
+          { x: q.x, y: q.y - q.depth, z: q.z },
+          { x: q.x, y: q.y, z: q.z },
+          { x: p.x, y: p.y, z: p.z },
+        ],
+        { x: nx, y: 0, z: nz },
+        FASCIA,
+        [
+          [p.u, 0],
+          [q.u, 0],
+          [q.u, 1],
+          [p.u, 1],
+        ],
+        meta,
+      );
+    }
   }
 };
 
-/** The deck's underside under a piece: its outline `DECK_DEPTH` below the deck, facing down, for the view from the river bank. */
-export const planDeckUnderside = (sink: MeshSink, ring: readonly P2[], h: HeightAt, lift: number): void => {
+/**
+ * The deck's underside under a piece: its outline `DECK_DEPTH` below the deck, facing down, for
+ * the view from the river bank. With the `terrain`, it is higher over a way under the bridge.
+ */
+export const planDeckUnderside = (sink: MeshSink, ring: readonly P2[], h: HeightAt, lift: number, terrain?: HeightAt): void => {
   const down = { x: 0, y: -1, z: 0 };
   const meta = [SURFACE_CODE.kerb, 0] as const;
+  const under = (p: P2) => {
+    const y = h(p.x, p.z);
+    return y + lift - (terrain ? deckDepth(y, terrain(p.x, p.z)) : DECK_DEPTH);
+  };
   for (const tri of drapeTriangles(ring)) {
-    const [a, b, c] = tri.map((p) => vertex(sink, { x: p.x, y: h(p.x, p.z) + lift - DECK_DEPTH, z: p.z }, down, FASCIA, [p.x, p.z], meta)) as [number, number, number];
+    const [a, b, c] = tri.map((p) => vertex(sink, { x: p.x, y: under(p), z: p.z }, down, FASCIA, [p.x, p.z], meta)) as [number, number, number];
     face(sink, a, b, c, down);
   }
 };
