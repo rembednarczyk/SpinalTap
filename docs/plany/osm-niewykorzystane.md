@@ -33,3 +33,18 @@ Przegląd `data/osm/*.json` (cztery dzielnice) i `tools/osm-import`. Liczby to o
 
 ## Rekomendacja
 Na początek 1 (lokale i szyldy), 15 (wejścia), 4 (oświetlenie ulic), 3 (dachy, razem z G-056) i 19 (LOD2), bo dają najwięcej wiarygodności Lublina i wspierają plan wnętrz zabytków oraz skradanie.
+
+## C. Geoportal (GUGiK) i źródła miejskie poza OSM (31.10, do decyzji)
+Dziś z geoportalu bierzemy tylko NMT 1 m (teren). Dostępność dla centrum Lublina i licencję każdego zbioru trzeba potwierdzić rozpoznaniem przed decyzją o etapie.
+| # | Zbiór | Co da w grze |
+|---|---|---|
+| 20 | NMPT (model pokrycia terenu: teren + budynki + drzewa) | Wysokość każdego budynku i korony drzewa w metrach, bez zgadywania z `building:levels`; różnica NMPT − NMT to gotowa mapa wysokości. |
+| 21 | Chmura punktów LiDAR (sklasyfikowana: grunt, budynki, roślinność) | Kształty dachów, attyk i kominów, drzewa z koroną i wysokością, mury i skarpy z dokładnością do decymetrów. |
+| 22 | Budynki 3D LOD1/LOD2 | Gotowe bryły z dachami (już w ADR-0064 jako poz. 19). |
+| 23 | Ortofotomapa (w miastach 5–10 cm) | Kolory dachów i nawierzchni, przebieg pasów i przejść, zieleń, place, rozpoznanie bram i prześwitów; materiał referencyjny dla kuratora. |
+| 24 | BDOT10k (baza obiektów topograficznych) | Funkcja i liczba kondygnacji budynków, nawierzchnie i szerokości dróg, ogrodzenia, mury, zieleń: drugie źródło do porównania z OSM. |
+| 25 | Rejestr zabytków (NID, warstwa w geoportalu) | Oficjalna lista zabytków z obrysami: rozstrzyga, co jest zabytkiem (G-050, G-066, ADR-0062 etap 7). |
+| 26 | Punkty adresowe (PRG) | Adresy wszystkich budynków: tabliczki z numerami, cele kontraktów „ul. Grodzka 12”, poprawne przypisanie nazw (G-051, G-065). |
+| 27 | GESUT (sieć uzbrojenia terenu: kanalizacja, ciepłociągi) | Przebieg prawdziwych kanałów pod miastem dla poziomu podziemnego (kanał, Trasa Podziemna). Dostęp zwykle ograniczony, do sprawdzenia. |
+| 28 | Mapy archiwalne i archiwalne ortofoto (od lat 50.) | Jak wyglądało miasto przed przebudowami: tło fabularne, wspomnienia, warstwa historyczna. |
+| 29 | Geoportal miejski Lublina (np. inwentaryzacja drzew, oświetlenie, przystanki, strefy parkowania) | Drzewa z gatunkiem, latarnie w prawdziwych miejscach, przystanki MPK; dostępność i licencja do sprawdzenia. |
