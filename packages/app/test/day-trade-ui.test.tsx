@@ -75,7 +75,7 @@ describe("Oyaji's stall in the game", () => {
     fireEvent.click(within(medkit()[0]!).getByRole("button", { name: /Sell · 22 €\$/ }));
     g.step(1);
     expect(g.seki.state().eddies).toBe(before + 22);
-    expect(screen.getByTestId("gear").textContent).not.toContain("Apteczki × 1");
+    expect(screen.getByTestId("gear").textContent).not.toContain("Medkits × 1");
     expect(medkit()).toHaveLength(0);
 
     fireEvent.click(within(shop).getByRole("button", { name: /Step away from the stall/ }));
