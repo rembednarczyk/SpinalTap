@@ -245,7 +245,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: auto po resynchronizacji w łuku nie przekracza `TURN_SPEED`; test zawrotki bez złagodzenia przechodzi z G-020.
 
 ### G-029 Kliknięcie „Nowa gra” w `models.spec.ts` wisi ponad 60 s na CI
-- Status: w naprawie, 2. runda (weryfikacja NIE PRZYJĘTE: po utracie kontekstu WebGL pacer blokuje rysowanie na stałe; naprawa: `GpuPacer` w engine, najwyżej 2 klatki w kolejce GPU; ekran tytułowy 20 → 2 klatki przed płotem, `models.spec` 15–33 s; kryterium < 10 s do potwierdzenia na CI)
+- Status: weryfikacja PRZYJĘTE (2. runda), w PR #46. Kliknięcie „New Game” 12,7 s → 4,9 s przy podobnym load; po utracie kontekstu WebGL rysowanie wraca ( naprawa: `GpuPacer` w engine, najwyżej 2 klatki w kolejce GPU; ekran tytułowy 20 → 2 klatki przed płotem, `models.spec` 15–33 s; kryterium < 10 s do potwierdzenia na CI)
 - Ważność: S1 (proponowana: czerwone CI, niestabilne) · Zasięg: każdy PR · Koszt: nieznany
 - Gdzie: `e2e/models.spec.ts:16`, shard E2E 1/3
 - Dowód: PR #37 (CI 41089511069) pada w obu próbach, PR #33 (CI 41069178665) przeszedł przy drugiej. Playwright: element widoczny i stabilny, „performing click action” bez końca, więc wątek strony zablokowany.
