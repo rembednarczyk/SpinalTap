@@ -9,6 +9,8 @@ import { type BuildingSource, mapBuilding } from "../../../packages/engine/src/r
 import { centroid, cleanRing, pointInRing } from "../../../packages/engine/src/renderer/mapcity/polygon";
 import { stackTiers } from "../../../packages/engine/src/renderer/mapcity/vertical-plan";
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
+import { extractFeatures } from "../../osm-import/src/features.ts";
+import { roadWidth } from "../../osm-import/src/ground.ts";
 import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
 import { geoToWorld } from "../../osm-import/src/project.ts";
 import { CROWD_LANES } from "../../../packages/sim/src/content/crowd";
@@ -777,7 +779,57 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       const want = (b.roof ?? 0) <= 0.3 ? "flat" : ROOF_KIND[b.roofShape!];
       return drawn === want ? [] : [{ at: near(b.x, b.z), what: `${b.id} ${b.name ?? ""} roof:shape=${b.roofShape} drawn as ${drawn}` }];
     }),
+  /**
+   * A metre of a sidewalk mapped on its own (`footway=sidewalk`, off bridges and tunnels, 3 m and
+   * more inside the chunks, off zebras) gone under the asphalt of the street it runs along (G-082):
+   * the nearest carriageway within 15 m runs parallel to it (|cos| > 0.9), its axis is closer than
+   * half the street's width from the map's tags, and the game's ground there is road with no
+   * sidewalk or footway on it. One finding per metre.
+   */
+  "sidewalk-under-carriageway": () => {
+    const lines = extractFeatures(SOURCE_OSM).lines;
+    const roads = lines.filter((l) => CARRIAGEWAYS.has(l.tags.highway ?? "") && l.tags.area !== "yes" && l.tags.tunnel === undefined && Number(l.tags.layer ?? 0) >= 0);
+    const segs = roads.flatMap((l) => l.line.slice(1).map((b, i) => ({ l, a: l.line[i]!, b })));
+    const deep = (x: number, z: number) => MAP_CHUNKS.some(({ bounds: b }) => x > b.minX + 3 && x < b.maxX - 3 && z > b.minZ + 3 && z < b.maxZ - 3);
+    const nearest = (x: number, z: number) => {
+      let best: { d: number; road: (typeof roads)[number]; tx: number; tz: number } | null = null;
+      for (const { l, a, b } of segs) {
+        if (Math.min(a.x, b.x) > x + 15 || Math.max(a.x, b.x) < x - 15 || Math.min(a.z, b.z) > z + 15 || Math.max(a.z, b.z) < z - 15) continue;
+        const dx = b.x - a.x;
+        const dz = b.z - a.z;
+        const len = Math.hypot(dx, dz);
+        if (len < 1e-3) continue;
+        const k = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / (len * len)));
+        const d = Math.hypot(a.x + dx * k - x, a.z + dz * k - z);
+        if (d <= 15 && (!best || d < best.d)) best = { d, road: l, tx: dx / len, tz: dz / len };
+      }
+      return best;
+    };
+    return lines.flatMap((l) => {
+      const t = l.tags;
+      if (t.footway !== "sidewalk" || t.tunnel !== undefined || Number(t.layer ?? 0) < 0 || (t.bridge !== undefined && t.bridge !== "no")) return [];
+      return l.line.slice(1).flatMap((b, i) => {
+        const a = l.line[i]!;
+        const len = Math.hypot(b.x - a.x, b.z - a.z);
+        const out: Finding[] = [];
+        for (let s = 0.5; s < len; s += 1) {
+          const x = a.x + ((b.x - a.x) * s) / len;
+          const z = a.z + ((b.z - a.z) * s) / len;
+          if (!deep(x, z)) continue;
+          const surfaces = surfacesAt(x, z);
+          if (surfaces.includes("crossing") || !surfaces.includes("road") || surfaces.includes("sidewalk") || surfaces.includes("footway")) continue;
+          const n = nearest(x, z);
+          if (!n || Math.abs(((b.x - a.x) * n.tx + (b.z - a.z) * n.tz) / len) < 0.9 || n.d >= roadWidth(n.road.tags) / 2) continue;
+          out.push({ at: near(x, z), what: `${l.id} under ${n.road.id} ${n.road.tags.name ?? ""}` });
+        }
+        return out;
+      });
+    });
+  },
 };
+
+/** The carriageways of the map's lines, by `highway` (the importer's `ROAD_WIDTH`). */
+const CARRIAGEWAYS = new Set(["motorway", "trunk", "primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link", "unclassified", "residential", "living_street", "service", "busway", "road"]);
 
 /** The renderer's roof for each `roof:shape` (ADR-0064). */
 const ROOF_KIND: Readonly<Record<string, string>> = { gabled: "gable", "half-hipped": "half-hip", mansard: "mansard", hipped: "hip", pyramidal: "pyramid", skillion: "skillion", dome: "dome", onion: "onion", flat: "flat" };

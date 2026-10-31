@@ -112,6 +112,54 @@ describe("generator", () => {
     expect(JSON.stringify(b)).toBe(JSON.stringify(a));
   });
 
+  it("narrows a street of default width to its mapped sidewalks instead of laying asphalt over them (G-082)", () => {
+    const node = (id: number, x: number, z: number) => {
+      const g = worldToGeo({ x, z });
+      return ` <node id="${id}" lat="${g.lat}" lon="${g.lon}"/>`;
+    };
+    const way = (id: number, a: number, b: number, tags: Record<string, string>) =>
+      ` <way id="${id}"><nd ref="${a}"/><nd ref="${b}"/>${Object.entries(tags).map(([k, v]) => `<tag k="${k}" v="${v}"/>`).join("")}</way>`;
+    // Podwale: sidewalks 2.4 m off the axis of a residential street the map gives no width.
+    const map = (street: Record<string, string>) =>
+      parseOsmXml(
+        ["<osm>", node(1, 0, 0), node(2, 100, 0), node(3, 0, 2.4), node(4, 100, 2.4), node(5, 0, -2.4), node(6, 100, -2.4),
+          way(10, 1, 2, { highway: "residential", ...street }),
+          way(11, 3, 4, { highway: "footway", footway: "sidewalk" }),
+          way(12, 5, 6, { highway: "footway", footway: "sidewalk" }),
+          "</osm>"].join("\n"),
+      );
+    const area = (flat: readonly number[]) => {
+      let a = 0;
+      for (let i = 0, j = flat.length - 2; i < flat.length; j = i, i += 2) a += flat[j]! * flat[i + 1]! - flat[i]! * flat[j + 1]!;
+      return Math.abs(a) / 2;
+    };
+    const ground = (street: Record<string, string>) => generate(map(street), slope, tinyChunk).chunks[0]!.ground;
+    const surface = (g: ReturnType<typeof ground>, s: string) => g.filter((x) => x.surface === s).reduce((n, x) => n + area(x.outline), 0);
+    const fitted = ground({});
+    // Both sidewalks whole, 100 m × 2.5 m each; the asphalt ends half a metre short of their axes: 3.8 m, not 6.5 m.
+    expect(surface(fitted, "sidewalk")).toBeCloseTo(500, -1);
+    expect(surface(fitted, "road")).toBeCloseTo(380, -1);
+    // A width or lanes from the map stay as they are, whatever they cover.
+    expect(surface(ground({ width: "6" }), "road")).toBeCloseTo(600, -1);
+    expect(surface(ground({ lanes: "2" }), "road")).toBeCloseTo(650, -1);
+  });
+
+  it("keeps a street's default width where its mapped sidewalks lie beyond it (G-082)", () => {
+    const node = (id: number, x: number, z: number) => {
+      const g = worldToGeo({ x, z });
+      return ` <node id="${id}" lat="${g.lat}" lon="${g.lon}"/>`;
+    };
+    const map = parseOsmXml(
+      ["<osm>", node(1, 0, 0), node(2, 100, 0), node(3, 0, 5), node(4, 100, 5),
+        ' <way id="10"><nd ref="1"/><nd ref="2"/><tag k="highway" v="residential"/></way>',
+        ' <way id="11"><nd ref="3"/><nd ref="4"/><tag k="highway" v="footway"/><tag k="footway" v="sidewalk"/></way>',
+        "</osm>"].join("\n"),
+    );
+    const road = generate(map, slope, tinyChunk).chunks[0]!.ground.find((g) => g.surface === "road")!;
+    const zs = road.outline.filter((_, i) => i % 2 === 1);
+    expect(Math.max(...zs) - Math.min(...zs)).toBeCloseTo(6.5, 1);
+  });
+
   it("reproduces the committed tables from the committed raw data, twice", () => {
     const inputs = loadInputs();
     const d = DISTRICTS.find((x) => x.slug === "stare-miasto")!;
