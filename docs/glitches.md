@@ -283,7 +283,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `passage-maxheight` 3 → 0 (np. sklepienie 3,6 m dla `below_default`)
 
 ### G-090 Przesunięcie pasa ruchu z mediany szerokości całego łańcucha ulicy
-- Status: zgłoszone (z naprawy G-082; blokuje G-082)
+- Status: w weryfikacji (commit eefd653, gałąź `worktree-agent-adc4f84e10bde1520`: `laneLine`, przesunięcie zwężane lokalnie; z łatką G-082 `furniture-in-car-lane` 2 → 0)
 - Ważność: S3 (proponowana; na łańcuchach o różnej szerokości pas wychodzi poza wąski odcinek, latarnie w pasie) · Zasięg: łańcuchy ulic z odcinkami różnej szerokości · Koszt: mały–średni
 - Gdzie: Staszica (dopasowany w1150131461, połowa asfaltu ok. 2,0–2,5 m, i odcinek 3,25 m); latarnie `lamp-road` (217, 145) i (205, 118) 1,03 m od pasa
 - Przyczyna: `packages/sim/src/content/traffic.ts` `lanesOf` bierze `laneOffset(roadHalfWidth(...))` z mediany całego łańcucha (2,75 → pas 1,375 m od osi) zamiast lokalnej szerokości odcinka (1,2 m)
@@ -297,6 +297,22 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Dowód: sonda e2e (`scratchpad/g058-probe.spec.ts`): przytrzymanie „Use” ok. 1,0–1,3 s, aż dialog się otworzy, potem `pointerup` i `click` na `BUTTON.wheel__opt`; dialog idzie dalej. `touchend` trafia w odpięty przycisk pada, więc nie jest anulowany, a osłona z G-048 już wygasła (700 ms). Niepewne, czy prawdziwy telefon wysyła kliknięcie po długim przytrzymaniu (CDP może się różnić)
 - Pakiet właściciela: packages/ui (`touch/ghost-click.ts`)
 - Test przyjęcia: test komponentu: kliknięcie z dotyku, który zaczął się przed otwarciem koła, nie wybiera kwestii
+
+### G-092 Ulice ok. 3–4 m z dwoma pasami: auto zachodzi na chodnik
+- Status: zgłoszone (z naprawy G-082 i G-090)
+- Ważność: S3 (proponowana) · Zasięg: wąskie ulice dwukierunkowe (po G-082 m.in. Staszica miejscami, Łęczyńska#120) · Koszt: średni
+- Dowód: po stronie pasa mniej niż 2,1 m asfaltu; przy dolnym progu `laneOffset` (1,2 m) pół auta (0,9 m) wychodzi poza jezdnię; test G-090 celowo pomija takie odcinki
+- Przyczyna (przypuszczalna): `lanesOf` w `packages/sim/src/content/traffic.ts` zawsze daje dwa pasy ulicy dwukierunkowej, bez względu na szerokość
+- Pakiet właściciela: packages/sim (content/traffic)
+- Test przyjęcia: kontrola skanu „auto poza jezdnią” (pół szerokości auta od pasa poza `surfacesAt` jezdni) z bazą; ulica węższa niż 2 × 2,1 m dostaje jeden pas albo mijankę
+
+### G-093 Dziura w nawierzchni jezdni Narutowicza
+- Status: zgłoszone (z naprawy G-090)
+- Ważność: S4 (proponowana) · Zasięg: lokalny · Koszt: mały
+- Gdzie: Narutowicza, ok. 62 m wzdłuż łańcucha, 1,75 m od osi: `surfacesAt` pusty
+- Dowód: sonda G-090 (`scratchpad/g090-scan.sh`); pas zwęża się przed dziurą
+- Pakiet właściciela: tools/osm-import (ground)
+- Test przyjęcia: kontrola `car-road-hole` (albo nowa) wykrywa i spada do 0
 
 ## Naprawione
 | ID | Glitch | PR |
