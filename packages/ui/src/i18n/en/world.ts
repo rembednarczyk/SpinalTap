@@ -106,6 +106,7 @@ export const enWorld = {
   // Saving and loading.
   "save.unavailable": "Can't save right now",
   "save.saved": "Game saved",
+  "save.autosaved": "Autosaved",
   "save.failed": "Save failed",
   "save.emptySlot": "Empty slot",
   "save.loaded": "Game loaded",

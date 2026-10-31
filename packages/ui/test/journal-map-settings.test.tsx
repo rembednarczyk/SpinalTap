@@ -266,6 +266,11 @@ describe("settings", () => {
     expect(i.changeSettings).toHaveBeenCalledWith({ touchSensitivity: 1.2 });
     fireEvent.change(screen.getByLabelText(/Volume/), { target: { value: "0.25" } });
     expect(i.changeSettings).toHaveBeenCalledWith({ volume: 0.25 });
+    // Autosave: on by default, off through the same intent.
+    const autosave = screen.getByRole("radiogroup", { name: "Autosave" });
+    expect(within(autosave).getByRole("radio", { name: "On" }).getAttribute("aria-checked")).toBe("true");
+    fireEvent.click(within(autosave).getByRole("radio", { name: "Off" }));
+    expect(i.changeSettings).toHaveBeenCalledWith({ autosave: false });
     // Mouse and camera.
     fireEvent.click(screen.getByRole("tab", { name: "Mouse & Camera" }));
     expect(screen.getByLabelText(/Mouse sensitivity/)).toHaveProperty("value", "1.5");
