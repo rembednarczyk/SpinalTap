@@ -6,6 +6,11 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
 
 - **Kolejność uzgodniona z użytkownikiem (31.10):** najpierw G-031 (niestabilne e2e), dokończenie języków, ekran ładowania i podział renderera; drobne glitche równolegle, po jednym w przerwach.
 - **[w toku: etap 1 ADR-0058] Żywe, kolorowe miasto: znacznie więcej assetów CC0 z internetu.** Rozpoznanie: 33 paczki CC0 (Kenney, Quaternius, OpenGameArt, ambientCG). Rekwizyty ulicy (automaty, stragany, rośliny, skutery, ekrany), więcej pojazdów i elementów fasad, postacie tłumu, decale. Wpięcie przez `tools/city_kit.py` (wspólna paleta, jedna siatka na komórkę), z ADR-em i pomiarem budżetów (`tools/perf-budgets.json`).
+- **[plan, 31.10] Celowanie na telefonie: wspomaganie i celowanie ze strzałem jednym kciukiem.** Dziś nie da się jednocześnie trzymać celowania i strzelać jednym palcem. Do ADR-u:
+  - lekkie wspomaganie celowania tylko na dotyku: spowolnienie obrotu nad celem i delikatne przyciąganie przy wejściu w celowanie, wyłączalne w ustawieniach, bez wpływu na symulację (to warstwa wejścia: `engine/input`, pad dotykowy);
+  - strzał z celowaniem bez drugiego palca, do wyboru po prototypie: przycisk strzału wchodzi w celowanie, gdy jest trzymany (fire = ADS + ogień), celowanie przełączane jednym tapnięciem (już w ustawieniach) z widocznym stanem, albo przeciągnięcie z przycisku strzału obraca widok (jak dziś `lookToo`);
+  - testy: sesja bez renderera dla logiki wspomagania (deterministyczny cel, wejście z pada), e2e dotyku na telefonie.
+- **[plan, 31.10] Assety ubrań i ekwipunku.** Odzież jest dziś proceduralna (hełm, wizjer, płyty kamizelki na kościach, ADR-0015 E7), a ekwipunek nie ma ikon. Do dodania jako etap ADR-0058 albo osobny ADR: modele CC0 ubrań i pancerza (kurtki, kamizelki, hełmy, maski) dopasowane do rigu VRoid i rigu proceduralnego, ikony przedmiotów w ekwipunku i sklepach (render modelu do atlasu ikon albo pakiet CC0), z tą samą zasadą licencji i budżetów.
 - **[w toku] Języki gry (ADR-0056).** Angielski domyślny, polski w opcjach. Etap 1 (menu, opcje, zapadka) i paczka 2a (ekwipunek, sklepy) są gotowe, 2b (panele świata) jest w PR #47. Zostaje:
   - HUD i dotyk (2c, po G-035);
   - teksty domeny w `core` jako klucze (etap 3);
