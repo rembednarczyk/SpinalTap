@@ -355,13 +355,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (mapcity/skyline)
 - Test przyjęcia: podstawa wieży poniżej linii terenu panoramy z każdego punktu Nabrzeża
 
-### G-125 Ekranu opcji nie da się przewijać na telefonie
-- Status: w PR #94 (zgłoszenie użytkownika 31.10)
-- Ważność: S2 (proponowana; na telefonie część opcji, m.in. dostępność, nieosiągalna) · Zasięg: każde menu pełnoekranowe wyższe niż ekran (pauza z opcjami, sloty, autorzy) · Koszt: mały
-- Przyczyna: `.screen` z `justify-content: center` bez `overflow-y`, a `html, body` z `overflow: hidden`
-- Pakiet właściciela: packages/ui
-- Test przyjęcia: `e2e/touch-layout.spec.ts` „phone: the settings in the pause menu scroll to their last control” (844×390)
-
 ## Naprawione
 | ID | Glitch | PR |
 |---|---|---|
@@ -428,6 +421,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | G-090 | Przesunięcie pasa ruchu z mediany szerokości całego łańcucha ulicy | #88 |
 | G-052 | Teatr Osterwy i Kościół Bernardynów poza danymi miasta (brzeg Krakowskiego na z = −200) | #87 |
 | G-094 | Przedsionek Trasy Podziemnej: pierwsze 4,5 m poza obszarem wnętrza | #90 |
+| G-125 | Ekranu opcji nie da się przewijać na telefonie | #94 |
 
 ## Odrzucone
 - G-005 Wiata przystanku wchodzi w ścianę przy Alei Tysiąclecia: duplikat (G-011)
