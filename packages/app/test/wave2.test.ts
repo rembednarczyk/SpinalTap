@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { type AudioCue, type DomainEvents, type DomainState, EventBus, type GameCommand, createDomainState } from "@seki/core";
 import { STORY_SOURCE } from "@seki/narrative";
 import { CONTRACT_HOOKS, DASH_COOLDOWN, type Entity, type Simulation } from "@seki/sim";
-import { type UiState, createUiStore } from "@seki/ui";
+import { type UiState, createUiStore, patchUi } from "@seki/ui";
 import { mapFocus } from "../src/controllers/hud-sync";
 import { MetroController } from "../src/controllers/metro-controller";
 import { RadioController } from "../src/controllers/radio-controller";
@@ -271,18 +271,25 @@ describe("Wave2Hud presenters", () => {
     bus.emit("ProjectileReflected", { defenderId: 2, attackerId: 1, at: zero, to: zero, hitEntity: null });
     expect(ui.getState().toasts).toEqual([]);
     bus.emit("ProjectileReflected", { defenderId: 1, attackerId: 3, at: zero, to: zero, hitEntity: 3 });
-    expect(ui.getState().toasts.at(-1)?.title).toBe("Pocisk odbity");
+    expect(ui.getState().toasts.at(-1)).toMatchObject({ title: "Bullet deflected", text: "The blade sent the bullet back to the shooter" });
+    patchUi(ui, { settings: { ...ui.getState().settings, locale: "pl" } });
+    bus.emit("ProjectileReflected", { defenderId: 1, attackerId: 3, at: zero, to: zero, hitEntity: 3 });
+    expect(ui.getState().toasts.at(-1)).toMatchObject({ title: "Pocisk odbity", text: "Ostrze odesłało kulę do strzelca" });
     vi.useRealTimers();
   });
 
   it("shows the disguise from the domain, marks who saw through it and warns when it is blown", () => {
     const { bus, ui, hud, set } = setup();
     set({ disguise: { role: "tessen_guard", blown: false } });
-    expect(hud.sync(undefined, false, true).disguise).toEqual({ role: "tessen_guard", label: "Przebranie: ochrona Tessen", blown: false });
+    expect(hud.sync(undefined, false, true).disguise).toEqual({ role: "tessen_guard", label: "Disguise: Tessen security", blown: false });
     set({ disguise: { role: "tessen_guard", blown: true } });
     bus.emit("DisguiseBlown", { observerId: 9, role: "tessen_guard" });
     expect(hud.sync(undefined, false, true).disguise?.blown).toBe(true);
-    expect(ui.getState().toasts.at(-1)?.title).toBe("Przykrywka spalona");
+    expect(ui.getState().toasts.at(-1)).toMatchObject({ title: "Cover blown", text: "Disguise: Tessen security: someone recognized you" });
+    patchUi(ui, { settings: { ...ui.getState().settings, locale: "pl" } });
+    expect(hud.sync(undefined, false, true).disguise?.label).toBe("Przebranie: ochrona Tessen");
+    bus.emit("DisguiseBlown", { observerId: 9, role: "tessen_guard" });
+    expect(ui.getState().toasts.at(-1)).toMatchObject({ title: "Przykrywka spalona", text: "Przebranie: ochrona Tessen: ktoś cię rozpoznał" });
     expect([...hud.enforcers]).toEqual([9]);
     set({ disguise: { role: null, blown: false } });
     bus.emit("DisguiseChanged", { role: null });

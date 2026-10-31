@@ -1,6 +1,6 @@
 import type { DomainEvents, EventBus } from "@seki/core";
 import { SIM_HZ } from "@seki/sim";
-import { type HintVm, type SettingsVm, type UiStore, patchUi } from "@seki/ui";
+import { type HintVm, type MessageKey, type SettingsVm, type UiStore, patchUi, translate } from "@seki/ui";
 import { keymapFor } from "../controls";
 import { type HintDef, HintTracker } from "../hints";
 import type { SimRef } from "./shared";
@@ -28,6 +28,8 @@ export class HintSync {
   private readonly hints: HintTracker;
   /** Hint shown last, so the store changes only when it does. */
   private hintShown: HintDef | null = null;
+  /** The language it was shown in: a change redraws it (ADR-0056). */
+  private hintLocale: SettingsVm["locale"] | null = null;
   private lastPlayerPos: { x: number; z: number } | null = null;
 
   constructor(private readonly deps: HintSyncDeps) {
@@ -49,16 +51,18 @@ export class HintSync {
     this.hints.tick({ dt: 1 / SIM_HZ, inControl, moved: moved < 2 ? moved : 0, sprinting: player?.posture?.sprinting ?? false, characterOpen });
     const settings = this.deps.ui.getState().settings;
     const hint = settings.hints && inControl ? this.hints.active : null;
-    if (hint === this.hintShown) return;
+    if (hint === this.hintShown && settings.locale === this.hintLocale) return;
     this.hintShown = hint;
-    patchUi(this.deps.ui, { hint: hint ? this.hintVm(hint, settings.bindings) : null });
+    this.hintLocale = settings.locale;
+    patchUi(this.deps.ui, { hint: hint ? this.hintVm(hint, settings) : null });
   }
 
   /** Keys of a hint through the player's bindings (first key of each control). */
-  private hintVm(h: HintDef, bindings: SettingsVm["bindings"]): HintVm {
-    if (this.deps.touch) return { id: h.id, keys: [], text: h.touchText ?? h.text };
-    const map = keymapFor(bindings);
+  private hintVm(h: HintDef, settings: SettingsVm): HintVm {
+    const text = (key: string): string => translate(settings.locale, key as MessageKey);
+    if (this.deps.touch) return { id: h.id, keys: [], text: text(h.touch ? `hint.${h.id}.touch` : `hint.${h.id}`) };
+    const map = keymapFor(settings.bindings);
     const keys = h.keys.map((k) => (k.startsWith("code:") ? k.slice(5) : (map[k as keyof typeof map]?.[0] ?? ""))).filter(Boolean);
-    return { id: h.id, keys, text: h.text };
+    return { id: h.id, keys, text: text(`hint.${h.id}`) };
   }
 }

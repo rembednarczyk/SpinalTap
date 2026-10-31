@@ -371,12 +371,12 @@ describe("touch controls", () => {
 
   it("presses and releases action buttons", () => {
     const { pad } = mountTouch({ ability: { name: "X", activeTime: 0, cooldown: 0, cooldownTotal: 16 } });
-    const fire = screen.getByRole("button", { name: "Strzał" });
+    const fire = screen.getByRole("button", { name: "Fire" });
     fireEvent.pointerDown(fire, { pointerId: 1 });
     expect(pad.press).toHaveBeenCalledWith("fire");
     fireEvent.pointerUp(fire, { pointerId: 1 });
     expect(pad.release).toHaveBeenCalledWith("fire");
-    fireEvent.pointerDown(screen.getByRole("button", { name: "Zdolność" }), { pointerId: 2 });
+    fireEvent.pointerDown(screen.getByRole("button", { name: "Ability" }), { pointerId: 2 });
     expect(pad.press).toHaveBeenCalledWith("ability");
   });
 
@@ -414,14 +414,14 @@ describe("touch controls", () => {
 
   it("hides the ability button without the implant and pauses from the top bar", () => {
     const { i } = mountTouch();
-    expect(screen.queryByRole("button", { name: "Zdolność" })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Pauza" }));
+    expect(screen.queryByRole("button", { name: "Ability" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Pause" }));
     expect(i.pause).toHaveBeenCalled();
   });
 
   it("opens the character screen from the top bar, sheet one tab away", () => {
     mountTouch();
-    fireEvent.click(screen.getByRole("button", { name: "Postać" }));
+    fireEvent.click(screen.getByRole("button", { name: "Character" }));
     expect(screen.getByTestId("inventory-tab")).toBeTruthy();
     expect(screen.queryByTestId("touch-controls")).toBeNull();
     fireEvent.click(screen.getByRole("tab", { name: /Sheet/ }));
