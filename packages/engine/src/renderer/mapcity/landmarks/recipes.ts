@@ -71,12 +71,12 @@ export interface Tier {
   readonly diaper?: boolean;
   /** Small windows per wall, at most (fewer on a short wall). */
   readonly windows?: number;
-  /** A row of small white panels under the battlements. */
-  readonly plaques?: boolean;
+  /** Rows of small white panels, metres over the foot (off the openings and the buttresses). */
+  readonly plaques?: readonly number[];
   /** Battered stone buttresses this high (metres over the foot) on the corner blocks of the new town's side. */
   readonly buttress?: number;
-  /** A niche with a painting over the passage's mouth on the new town's side. */
-  readonly niche?: boolean;
+  /** A niche with a painting over the passage's mouth on the new town's side: bottom and top over the foot, width, metres. */
+  readonly niche?: { readonly from: number; readonly to: number; readonly width: number };
   /** Lublin 2077's screen hangs on this tier's wall facing the new town (off the niche, T-034). */
   readonly screen?: boolean;
   /** OSM ids of the neighbouring tenements Lublin 2077's cables run to from this tier's wall facing the new town. */
@@ -132,8 +132,9 @@ const BRAMA_KRAKOWSKA: LandmarkRecipe = {
     {
       osm: "r7224409",
       // The annex (T-033): brick with zendrówki, battlements over a row of white panels, the
-      // stone buttresses on its west corner blocks and the painting's niche over the arch.
-      tier: { material: "brick", plinth: 0, blinds: NO_BLINDS, pilasters: false, cornice: false, base: false, openings: false, clock: false, diaper: true, plaques: true, buttress: 4, niche: true },
+      // stone buttresses on its west corner blocks (0.6 of its 10 m) and the painting's niche over
+      // the arch, 1.1 x 2.1 m at 6.0-8.1 m (T-033).
+      tier: { material: "brick", plinth: 0, blinds: NO_BLINDS, pilasters: false, cornice: false, base: false, openings: false, clock: false, diaper: true, plaques: [8.5, 5], buttress: 6, niche: { from: 6, to: 8.1, width: 1.1 } },
       crown: { kind: "crenel", merlon: 1, pitch: 1.6 },
     },
     {

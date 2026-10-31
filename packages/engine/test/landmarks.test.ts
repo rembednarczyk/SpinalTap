@@ -218,10 +218,11 @@ describe("Brama Krakowska from the landmark kit (ADR-0062)", () => {
     const onFront = (y: number) => pts.filter((p) => Math.abs(p.y - y) < 0.05 && Math.abs((p.x - front.a.x) * front.nx + (p.z - front.a.z) * front.nz) < 0.02);
     expect(onFront(annex.top).length).toBeGreaterThanOrEqual(8);
     expect(onFront(annex.top - 1).length).toBeGreaterThanOrEqual(8);
-    const white = colored(near3(annex), SWATCH.plasterTrim).filter((p) => p.y > annex.top - 1.8 && p.y < annex.top - 1);
-    expect(white.length / 4).toBeGreaterThanOrEqual(4);
-    // Stone buttresses: battered on the west corner blocks, 4 m tall, within the cornice's depth.
-    const stone = colored(near3(annex), SWATCH.stone).filter((p) => p.y > annex.b.foot + 3.9 && p.y < annex.b.foot + 4.1);
+    // Two rows of white panels: about 8.5 m under the battlements and half way up (T-033).
+    const white = colored(near3(annex), SWATCH.plasterTrim);
+    for (const y of [8.5, 5]) expect(white.filter((p) => Math.abs(p.y - annex.b.foot - y) < 0.2).length / 4).toBeGreaterThanOrEqual(2);
+    // Stone buttresses: battered on the west corner blocks, about 6 m (0.6 of the annex), within the cornice's depth.
+    const stone = colored(near3(annex), SWATCH.stone).filter((p) => p.y > annex.b.foot + 5.9 && p.y < annex.b.foot + 6.1);
     expect(stone.length).toBeGreaterThanOrEqual(4);
     for (const p of colored(near3(annex), SWATCH.stone).filter((q) => q.y < annex.top - 1.1)) expect(outside(annex.b.ring, p)).toBeLessThan(0.46);
   });
@@ -279,11 +280,16 @@ describe("Brama Krakowska from the landmark kit (ADR-0062)", () => {
       expect(p.y).toBeGreaterThan(mouth.top);
       expect(p.y).toBeLessThan(annex.top - 1);
     }
+    // The niche's frame about 1.1 x 2.1 m at 6.0-8.1 m over the foot (T-033).
+    const frame = colored(near3(annex), SWATCH.stone).filter((p) => p.y > mouth.top + 0.3 && p.y < annex.top - 1.05 && along(p) > mouth.u0 && along(p) < mouth.u1);
+    expect(Math.min(...frame.map((p) => p.y)) - annex.b.foot).toBeCloseTo(6, 1);
+    expect(Math.max(...frame.map((p) => p.y)) - annex.b.foot).toBeCloseTo(8.1, 1);
+    expect(Math.max(...frame.map(along)) - Math.min(...frame.map(along))).toBeCloseTo(1.1, 1);
     const tower = frameOf("w617597407") as LandmarkFrame;
     expect(screenOn(annex)).toBeNull();
     const s = screenOn(tower)!;
     // Seen from the plaza over the merlons 8 m in front of it.
-    expect(s.y0).toBeGreaterThan(annex.top + 3);
+    expect(s.y0).toBeGreaterThan(annex.top + 3.8);
     expect(s.y0).toBeGreaterThan(Math.max(...picture.map((p) => p.y)) + 1);
     expect(facing(s.w, annex.landmark.recipe.layer.newTown)).toBeGreaterThan(0.9);
   });

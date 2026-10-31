@@ -79,25 +79,46 @@ export const battlements = (sink: MeshSink, f: LandmarkFrame, merlon: number, pi
   slabRing(sink, f.b.ring, y0, floor, meta);
 };
 
+/** Spacing of the zendrówki's diagonal bands along the wall and the length of their pieces up it, metres. */
+const DIAPER_STEP = 1.05;
+const DIAPER_PIECE = 0.85;
+
+/** A stable number in [0, 1) for a wall's band piece. */
+const jitter = (seed: number, line: number, piece: number): number => {
+  let h = (seed ^ Math.imul(line, 0x9e3779b1) ^ Math.imul(piece, 0x85ebca6b)) >>> 0;
+  h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d) >>> 0;
+  h = Math.imul(h ^ (h >>> 12), 0x297a2d39) >>> 0;
+  return ((h ^ (h >>> 15)) >>> 0) / 4294967296;
+};
+
 /** Diagonal bands of dark headers (zendrówki) across the brick of a wall between y0 and y1, round its openings. */
 export const diaper = (sink: MeshSink, f: FacadeFrame, w: Wall, y0: number, y1: number, color: Rgba): void => {
   const meta = trimMeta(f.style.seed);
   const rects: [number, number, number, number][] = clearOf(f, w, 0).map(([u0, u1]) => [u0, u1, y0, y1]);
   for (const o of f.b.doorways?.length ? doorwaysOn(w, f.b.doorways) : []) if (o.top + 0.15 < y1) rects.push([o.u0, o.u1, o.top + 0.15, y1]);
-  const step = 1.5;
-  const half = 0.09;
   const n = { x: w.nx, y: 0, z: w.nz };
+  // The wall's own seed: the same bands from every cell, different on every wall.
+  const seed = Math.round(w.a.x * 10) * 7919 + Math.round(w.a.z * 10) * 104729;
   for (const [u0, u1, ya, yb] of rects) {
     if (u1 - u0 < 0.3 || yb - ya < 0.3) continue;
     for (const k of [1, -1]) {
-      // Lines u = c + k (y - foot), c on a 1.5 m grid anchored at the wall's start and the foot.
+      // Lines u = c + k (y - foot), c on a DIAPER_STEP grid anchored at the wall's start and the foot.
       const cs = [u0 - k * (yb - f.b.foot), u0 - k * (ya - f.b.foot), u1 - k * (yb - f.b.foot), u1 - k * (ya - f.b.foot)];
-      for (let c = Math.ceil(Math.min(...cs) / step) * step; c <= Math.max(...cs); c += step) {
+      for (let j = Math.ceil(Math.min(...cs) / DIAPER_STEP); j * DIAPER_STEP <= Math.max(...cs); j++) {
+        const c = j * DIAPER_STEP;
         const lo = Math.max(ya, k > 0 ? f.b.foot + u0 - c : f.b.foot + c - u1);
         const hi = Math.min(yb, k > 0 ? f.b.foot + u1 - c : f.b.foot + c - u0);
-        if (hi - lo < 0.2) continue;
-        const at = (y: number, s: number) => onWall(w, Math.min(u1, Math.max(u0, c + k * (y - f.b.foot) + s)), y, 0.012);
-        quadUv(sink, [at(lo, -half), at(lo, half), at(hi, half), at(hi, -half)], n, color, UNIT, meta);
+        // In pieces, some left out and each of its own width: headers laid by hand, not a lattice.
+        for (let i = Math.floor((lo - f.b.foot) / DIAPER_PIECE); f.b.foot + i * DIAPER_PIECE < hi; i++) {
+          const r = jitter(seed, j * 2 + (k > 0 ? 0 : 1), i);
+          if (r < 0.3) continue;
+          const pa = Math.max(lo, f.b.foot + i * DIAPER_PIECE);
+          const pb = Math.min(hi, f.b.foot + (i + 1) * DIAPER_PIECE);
+          if (pb - pa < 0.15) continue;
+          const half = 0.05 + 0.05 * r;
+          const at = (y: number, s: number) => onWall(w, Math.min(u1, Math.max(u0, c + k * (y - f.b.foot) + s)), y, 0.012);
+          quadUv(sink, [at(pa, -half), at(pa, half), at(pb, half), at(pb, -half)], n, color, UNIT, meta);
+        }
       }
     }
   }
@@ -196,10 +217,10 @@ export const buttress = (sink: MeshSink, f: FacadeFrame, w: Wall, u0: number, u1
   }
 };
 
-/** A niche with a painting (the Virgin's, T-033) centred at u from y0 to y1: a stone frame, the blue picture and the figure on it. */
-export const paintingNiche = (sink: MeshSink, f: FacadeFrame, w: Wall, u: number, y0: number, y1: number, frame: Rgba, picture: Rgba, figure: Rgba): void => {
+/** A niche with a painting (the Virgin's, T-033) centred at u from y0 to y1, `wide` metres at most: a stone frame, the blue picture and the figure on it. */
+export const paintingNiche = (sink: MeshSink, f: FacadeFrame, w: Wall, u: number, y0: number, y1: number, wide: number, frame: Rgba, picture: Rgba, figure: Rgba): void => {
   const meta = trimMeta(f.style.seed);
-  const width = Math.min(0.95, (y1 - y0) * 0.7);
+  const width = Math.min(wide, (y1 - y0) * 0.7);
   archPanel(sink, w, u, width, y0, y1, 0.03, frame, meta, false);
   archPanel(sink, w, u, width - 0.22, y0 + 0.11, y1 - 0.11, 0.045, picture, meta, false);
   archPanel(sink, w, u, (width - 0.22) * 0.34, y0 + 0.2, y0 + (y1 - y0) * 0.72, 0.055, figure, meta, false);

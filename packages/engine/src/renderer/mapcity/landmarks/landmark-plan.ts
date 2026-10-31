@@ -161,9 +161,9 @@ const layerOn = (sink: MeshSink, f: LandmarkFrame, part: PartRecipe): void => {
 
 /**
  * How high over the tier's foot the screen starts: seen from the plaza over the merlons standing
- * 8 m in front of the tower (an eye 25 m from them sees the tower's wall from 2.1 m up).
+ * 8 m in front of the tower (over the 10 m annex an eye 18 m from them sees the wall from 4 m up).
  */
-const SCREEN_OVER = 3.2;
+const SCREEN_OVER = 4;
 
 /** The screen's place and size: on the wall of a `screen` tier facing the new town, centred, over the battlements in front of it (T-034). */
 export const screenOn = (f: LandmarkFrame): (WallRect & { u: number; y: number; width: number; height: number }) | null => {
@@ -202,10 +202,13 @@ const brickwork = (sink: MeshSink, f: LandmarkFrame, t: Tier): void => {
   if (t.diaper) for (const w of shownWalls(f)) diaper(sink, f, w, from, top, solid(SWATCH.header));
   if (t.windows) smallWindows(sink, f, t.windows, f.b.foot + 0.6, top, screenOn(f), solid(SWATCH.stone), solid(SWATCH.opening));
   const layer = f.landmark.recipe.layer;
-  if (t.plaques) plaqueRow(sink, f, wallTop(f) - 0.5, (w) => sideOf(w, layer) !== "old", solid(SWATCH.plasterTrim));
-  if (t.buttress) for (const w of buttressWalls(f)) for (const [u0, u1] of clearOfPassages(f, w, 0.45)) buttress(sink, f, w, u0, u1, t.buttress, 0.45, solid(SWATCH.stone));
-  const m = t.niche ? mouthWall(f, "new") : null;
-  if (m && wallTop(f) - 0.3 - m.top > 0.8) paintingNiche(sink, f, m.w, (m.u0 + m.u1) / 2, m.top + 0.2, Math.min(m.top + 1.8, wallTop(f) - 0.2), solid(SWATCH.stone), solid(SWATCH.picture), solid(SWATCH.figure));
+  const stone = t.buttress ? buttressWalls(f) : [];
+  // Over the buttresses' tops only: under them the battered stone would bury the panels.
+  for (const y of t.plaques ?? []) plaqueRow(sink, f, f.b.foot + y, (w) => sideOf(w, layer) !== "old" && (y > (t.buttress ?? 0) + 0.3 || !stone.includes(w)), solid(SWATCH.plasterTrim));
+  for (const w of stone) for (const [u0, u1] of clearOfPassages(f, w, 0.45)) buttress(sink, f, w, u0, u1, t.buttress ?? 0, 0.45, solid(SWATCH.stone));
+  const n = t.niche;
+  const m = n ? mouthWall(f, "new") : null;
+  if (n && m) paintingNiche(sink, f, m.w, (m.u0 + m.u1) / 2, f.b.foot + n.from, Math.min(f.b.foot + n.to, wallTop(f) - 0.2), n.width, solid(SWATCH.stone), solid(SWATCH.picture), solid(SWATCH.figure));
 };
 
 /** The detailed landmark part for the near cells. */
