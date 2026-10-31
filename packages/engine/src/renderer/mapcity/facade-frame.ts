@@ -1,4 +1,4 @@
-import type { BuildingUse } from "@seki/core";
+import type { BuildingUse, RoofShape } from "@seki/core";
 import { type FacadeStyle, ROOF_STYLE, SHOPFRONT_BIT, WINDOW_STYLE, facadeStyle } from "./facade-style";
 import { type Obb, type P2, orientedBox, signedArea } from "./polygon";
 import type { Rgba } from "../mesh-sink";
@@ -21,6 +21,9 @@ export interface MapBuilding {
   readonly levels: number;
   readonly use: BuildingUse;
   readonly roof?: number;
+  /** The roof's shape from the map (ADR-0064) and its ridge across the long side. */
+  readonly roofShape?: RoofShape;
+  readonly roofAcross?: boolean;
   readonly name?: string;
   readonly look: number;
   /** Shop windows on the ground floor (from the map); absent: chosen from the look. */
@@ -121,7 +124,7 @@ const classify = (b: MapBuilding, a: P2, c: P2, neighbour: NeighbourAt): { blind
 export const facadeFrame = (b: MapBuilding, neighbour: NeighbourAt): FacadeFrame => {
   const box = orientedBox(b.ring);
   const area = Math.abs(signedArea(b.ring));
-  const style = facadeStyle({ use: b.use, levels: b.levels, height: b.height, ...(b.roof !== undefined ? { roof: b.roof } : {}), look: b.look, area, width: box.halfShort * 2, ...(b.shopfront !== undefined ? { shopfront: b.shopfront } : {}), ...(b.lifted ? { lifted: true } : {}) });
+  const style = facadeStyle({ use: b.use, levels: b.levels, height: b.height, ...(b.roof !== undefined ? { roof: b.roof } : {}), look: b.look, area, width: box.halfShort * 2, ...(b.shopfront !== undefined ? { shopfront: b.shopfront } : {}), ...(b.lifted ? { lifted: true } : {}), ...(b.roofShape ? { shape: b.roofShape } : {}) });
   const top = b.base + b.height;
   const eave = top - style.atticHeight;
   const levels = Math.max(1, Math.round(b.levels));

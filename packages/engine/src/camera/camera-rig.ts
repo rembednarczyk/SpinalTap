@@ -101,6 +101,8 @@ export class CameraRig {
    * it into a vertical angle for the screen's proportions; aiming and sprint work from that.
    */
   horizontalFov = DEFAULT_HORIZONTAL_FOV;
+  /** Walking bob, hit shake and the sprint widening; off for players prone to motion sickness. */
+  cameraMotion = true;
   /** Eased 0..1 guard of the FPP melee viewmodel. */
   private guard = 0;
   private swing: { strike: number; windup: number; recovery: number; elapsed: number } | null = null;
@@ -326,12 +328,13 @@ export class CameraRig {
     const moving = Math.min(1, target.speed / 4.2);
     this.bobPhase += dt * (6 + target.speed * 1.6) * (moving > 0.05 ? 1 : 0);
     // Aimed in, the walk barely moves the view.
-    const bob = (1 - this.blend) * moving * (1 - 0.8 * aim);
-    const sprinting = target.speed > 5.2 ? 1 : 0;
+    const motion = this.cameraMotion ? 1 : 0;
+    const bob = (1 - this.blend) * moving * (1 - 0.8 * aim) * motion;
+    const sprinting = target.speed > 5.2 ? motion : 0;
     this.sprintFov += (SPRINT_WIDEN * sprinting - this.sprintFov) * Math.min(1, dt * 6);
     this.camera.fov = adsFov * (1 + this.sprintFov);
     this.shakeAmount = Math.max(0, this.shakeAmount - dt * 3);
-    const sh = this.shakeAmount * this.shakeAmount;
+    const sh = this.shakeAmount * this.shakeAmount * motion;
     const t = this.bobPhase;
 
     const pos = shoulder.add(back.scale(this.currentDistance));

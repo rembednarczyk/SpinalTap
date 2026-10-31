@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 import { type StreetPropItem, VEHICLE_SIZE, terrainHeightAt } from "../../../packages/core/src";
 import { planSteps } from "../../../packages/engine/src/renderer/mapcity/steps-plan";
 import { facadeFrame } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
@@ -12,6 +12,7 @@ import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
 import { geoToWorld } from "../../osm-import/src/project.ts";
 import { CROWD_LANES } from "../../../packages/sim/src/content/crowd";
+import { INTERIORS } from "../../../packages/sim/src/content/interior-areas";
 import { furnitureClearance } from "../../../packages/sim/src/content/furniture-index";
 import { BOLLARD, alongSegment, anchors, chainSegments, chainThrough, distanceToPiece, furniturePrisms, furnitureRadius } from "../../../packages/sim/src/content/lublin/furniture";
 import { buildingView, isLandmark } from "../../../packages/sim/src/content/lublin";
@@ -24,6 +25,7 @@ import { BRIDGE_DECKS } from "../../../packages/sim/src/content/lublin/decks";
 import { WORLD_CHUNKS } from "../../../packages/sim/src/content/world-map";
 import { type GroundDeck, deckAt } from "../../../packages/sim/src/world/deck";
 import { GroundField } from "../../../packages/sim/src/world/ground";
+import { type Prism, circleTouchesPrism, makePrism, prismsAt } from "../../../packages/sim/src/world/prism";
 import { groundAt } from "../../../packages/sim/src/systems/movement-system";
 import { PARKED_CARS } from "../../../packages/sim/src/content/parked-cars";
 import { GAME_PROPS, WORLD_STREET_PROPS } from "../../../packages/sim/src/content/street-props";
@@ -239,7 +241,74 @@ const wayPoints = (nodes: readonly number[]) => {
   });
 };
 
-const laneChains = new Set(TRAFFIC_ROUTES.filter((r) => r.use === "cars").flatMap((r) => [...r.id.matchAll(/#(\d+):/g)].map((m) => Number(m[1]))));
+/** The game's solids standing in the city (its buildings, walls and street furniture), as prisms. */
+const SOLIDS: readonly Prism[] = WORLD_CHUNKS.flatMap((c) =>
+  [...c.props, ...(c.street ?? [])].flatMap((p) => {
+    if (!p.solid) return [];
+    if (p.prisms) return prismsAt(p.prisms, p.center);
+    if (p.view.kind !== "block") return [];
+    const { x, y, z } = p.view.size;
+    const o = p.center;
+    return [makePrism([{ x: o.x - x / 2, z: o.z - z / 2 }, { x: o.x + x / 2, z: o.z - z / 2 }, { x: o.x + x / 2, z: o.z + z / 2 }, { x: o.x - x / 2, z: o.z + z / 2 }], o.y - y / 2, o.y + y / 2)];
+  }),
+);
+/** A walker's body: radius, the step it climbs and its height (m). */
+const BODY = { r: 0.38, step: 0.45, height: 1.8 };
+
+/**
+ * Can a walker get on the game's ground from a to b, keeping within `grow` metres of the box of
+ * the two? A flood fill on a 0.25 m grid of the places its body fits; "closed" when a or b has
+ * no such place within 2 m (they stand in a solid), else whether b is reached.
+ */
+const walkable = (a: Pt, b: Pt, grow: number): "ok" | "cut" | "closed" => {
+  const cell = 0.25;
+  const minX = Math.min(a.x, b.x) - grow;
+  const minZ = Math.min(a.z, b.z) - grow;
+  const nx = Math.ceil((Math.abs(a.x - b.x) + 2 * grow) / cell);
+  const nz = Math.ceil((Math.abs(a.z - b.z) + 2 * grow) / cell);
+  const near = SOLIDS.filter((p) => p.box.max.x > minX - 1 && p.box.min.x < minX + nx * cell + 1 && p.box.max.z > minZ - 1 && p.box.min.z < minZ + nz * cell + 1);
+  const free = new Uint8Array(nx * nz);
+  for (let i = 0; i < nx; i++)
+    for (let k = 0; k < nz; k++) {
+      const x = minX + i * cell;
+      const z = minZ + k * cell;
+      const y = FIELD.heightAt(x, z);
+      free[k * nx + i] = near.some((p) => p.top > y + BODY.step && p.bottom < y + BODY.height && circleTouchesPrism(p, x, z, BODY.r)) ? 0 : 1;
+    }
+  const start = (p: Pt) => {
+    let best = -1;
+    let d = 2;
+    for (let v = 0; v < free.length; v++) {
+      const e = Math.hypot(minX + (v % nx) * cell - p.x, minZ + Math.floor(v / nx) * cell - p.z);
+      if (free[v] && e <= d) [best, d] = [v, e];
+    }
+    return best;
+  };
+  const s = start(a);
+  const t = start(b);
+  if (s < 0 || t < 0) return "closed";
+  const seen = new Uint8Array(nx * nz);
+  const queue = [s];
+  seen[s] = 1;
+  while (queue.length > 0) {
+    const v = queue.pop()!;
+    if (v === t) return "ok";
+    const i = v % nx;
+    const k = Math.floor(v / nx);
+    for (const [di, dk] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+      const u = (k + dk) * nx + i + di;
+      if (i + di < 0 || i + di >= nx || k + dk < 0 || k + dk >= nz || !free[u] || seen[u]) continue;
+      seen[u] = 1;
+      queue.push(u);
+    }
+  }
+  return "cut";
+};
+
+/** A way of the map under ground or under a roof: a tunnel, a cellar's corridor, a covered lane. */
+const tunnelled = (t: Readonly<Record<string, string>>) => t.tunnel === "yes" || t.covered === "yes" || Number(t.layer ?? 0) < 0;
+
+const laneChains =new Set(TRAFFIC_ROUTES.filter((r) => r.use === "cars").flatMap((r) => [...r.id.matchAll(/#(\d+):/g)].map((m) => Number(m[1]))));
 
 const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /**
@@ -580,6 +649,45 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     });
     return [...buildings, ...statues];
   },
+  /**
+   * A way of the map through a gateway, a tunnel or a covered lane under a building
+   * (`tunnel=building_passage`, `tunnel=yes`, `covered=yes`, G-076) a walker cannot get through:
+   * from 1.5 m before its first point to 1.5 m past its last, within 4 m of them (`walkable`).
+   * Not one joined to another tunnel (the Underground Route lies under the streets, with no ground
+   * to walk), nor one with an end in a solid (a filled courtyard is a glitch of its own, G-079).
+   */
+  "passage-blocked": () => {
+    const ways = [...SOURCE_OSM.ways.values()];
+    const under = new Map<number, number[]>();
+    for (const w of ways) if (w.tags?.highway && tunnelled(w.tags)) for (const n of w.nodes) under.set(n, [...(under.get(n) ?? []), w.id]);
+    return ways.flatMap((w) => {
+      const t = w.tags ?? {};
+      if (!t.highway || !(t.tunnel === "building_passage" || t.tunnel === "yes" || t.covered === "yes")) return [];
+      if (w.nodes.some((n) => (under.get(n) ?? []).some((id) => id !== w.id))) return [];
+      const pts = w.nodes.flatMap((id) => {
+        const n = SOURCE_OSM.nodes.get(id);
+        return n ? [geoToWorld(n.lat, n.lon)] : [];
+      });
+      if (pts.length < 2 || !pts.every((p) => onChunk(p.x, p.z))) return [];
+      const past = (p: Pt, q: Pt) => {
+        const d = Math.hypot(p.x - q.x, p.z - q.z) || 1;
+        return { x: p.x + ((p.x - q.x) / d) * 1.5, z: p.z + ((p.z - q.z) / d) * 1.5 };
+      };
+      const a = past(pts[0]!, pts[1]!);
+      return walkable(a, past(pts[pts.length - 1]!, pts[pts.length - 2]!), 4) === "cut" ? [{ at: near(a.x, a.z), what: `w${w.id} ${t.name ?? t.highway} tunnel=${t.tunnel ?? "-"}` }] : [];
+    });
+  },
+  /**
+   * A building the map puts under ground (`location=underground`: a cellar, a shelter, G-077)
+   * standing as a solid on the street over it.
+   */
+  "building-underground-solid": () => {
+    const under = new Set([
+      ...[...SOURCE_OSM.ways.values()].filter((w) => w.tags?.building !== undefined && w.tags.location === "underground").map((w) => `w${w.id}`),
+      ...[...SOURCE_OSM.relations.values()].filter((r) => r.tags?.building !== undefined && r.tags.location === "underground").map((r) => `r${r.id}`),
+    ]);
+    return MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b) && under.has(b.id.split("/")[0]!))).map((b) => ({ at: near(b.x, b.z), what: `${b.id} under ground, ${b.height} m over the street` }));
+  },
   /** A passage through a building with an end off every chunk, where there is no ground to come out on. */
   "passage-off-map": () =>
     PASSAGES.filter((p) => [p.from, p.to].some(({ x, z }) => !MAP_CHUNKS.some(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ))).map((p) => ({
@@ -606,6 +714,22 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       if (pts.length === 0 || over.length === 0) return [];
       const top = Math.max(...over.map((b) => b.y + b.height)) - Math.min(...over.map((b) => b.y + b.plinth));
       return top < eaves - 3.2 ? [{ at: near(c.x, c.z), what: `w${w.id} walls to ${eaves.toFixed(1)} m, the game's to ${top.toFixed(1)} m` }] : [];
+    });
+  },
+  /** A `building:part` of the map on the map's ground with no building of the game round it: dropped (G-061). */
+  "building-part-orphan": () => {
+    const all = MAP_CHUNKS.flatMap((c) => c.buildings);
+    return [...SOURCE_OSM.ways.values()].flatMap((w) => {
+      const t = w.tags ?? {};
+      if (!t["building:part"] || t["building:part"] === "no" || t.building) return [];
+      const pts = w.nodes.slice(1).flatMap((id) => {
+        const n = SOURCE_OSM.nodes.get(id);
+        return n ? [geoToWorld(n.lat, n.lon)] : [];
+      });
+      if (pts.length === 0) return [];
+      const c = { x: pts.reduce((s, p) => s + p.x, 0) / pts.length, z: pts.reduce((s, p) => s + p.z, 0) / pts.length };
+      if (!inMap(c.x, c.z) || all.some((b) => inOutline(c.x, c.z, b.outline, b.x, b.z))) return [];
+      return [{ at: near(c.x, c.z), what: `w${w.id} ${t.name ?? t["building:part"]}` }];
     });
   },
   /**
@@ -651,7 +775,42 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       return top > 0.5 ? [{ at: near(s.at.x, s.at.z), what: `${s.view.name ?? "church"}: ${top.toFixed(1)} m over its roof` }] : [];
     });
   },
+  /**
+   * An interior (ADR-0061) of a map building reaching out of its outline by more than 0.3 m
+   * anywhere along a room's walls (sampled every 0.5 m), or over its eaves.
+   */
+  "interior-outside-building": () =>
+    INTERIORS.flatMap((i) => {
+      if (i.building === null) return [];
+      const b = MAP_CHUNKS.flatMap((c) => c.buildings).find((m) => m.id === i.building);
+      if (!b) return [{ at: i.id, what: `${i.building} not on the map` }];
+      const ring = worldOutline(b);
+      return i.rooms.flatMap((r) => {
+        const edge: Pt[] = [{ x: r.maxX, z: r.maxZ }];
+        for (let x = r.minX; x <= r.maxX; x += 0.5) edge.push({ x, z: r.minZ }, { x, z: r.maxZ });
+        for (let z = r.minZ; z <= r.maxZ; z += 0.5) edge.push({ x: r.minX, z }, { x: r.maxX, z });
+        const out = edge.filter((p) => !inOutline(p.x, p.z, b.outline, b.x, b.z) && outlineGap([p], ring) > 0.3);
+        const eaves = b.y + b.height;
+        if (out.length === 0 && r.top <= eaves) return [];
+        return [{ at: near(r.minX, r.minZ), what: out.length > 0 ? `${i.id} ${out.length} wall points out of ${b.id}` : `${i.id} up to ${r.top.toFixed(1)}, eaves ${eaves.toFixed(1)}` }];
+      });
+    }),
+  /**
+   * A building whose map data gives its roof a shape (`roof:shape`: a gable, a mansard, a dome, an
+   * onion helmet, ADR-0064) that the renderer draws as another, a hipped roof most of all (G-056).
+   */
+  "roof-shape-ignored": () =>
+    MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b) && b.roofShape !== undefined)).flatMap((b, i) => {
+      const view = buildingView(b) as BuildingSource["view"];
+      const source: BuildingSource = { ring: cleanRing(view.outline.map((p) => ({ x: p.x + b.x, z: p.z + b.z }))), view, at: { x: b.x, y: b.y, z: b.z } };
+      const drawn = facadeFrame(mapBuilding(i + 1, source, () => null), () => null).style.roof;
+      const want = (b.roof ?? 0) <= 0.3 ? "flat" : ROOF_KIND[b.roofShape!];
+      return drawn === want ? [] : [{ at: near(b.x, b.z), what: `${b.id} ${b.name ?? ""} roof:shape=${b.roofShape} drawn as ${drawn}` }];
+    }),
 };
+
+/** The renderer's roof for each `roof:shape` (ADR-0064). */
+const ROOF_KIND: Readonly<Record<string, string>> = { gabled: "gable", "half-hipped": "half-hip", mansard: "mansard", hipped: "hip", pyramidal: "pyramid", skillion: "skillion", dome: "dome", onion: "onion", flat: "flat" };
 
 describe("the glitch scan (ADR-0054)", () => {
   it("stacks Grodzka 36a 5 m back from the Grodzka Gate instead of over it (G-050)", () => {
@@ -665,14 +824,27 @@ describe("the glitch scan (ADR-0054)", () => {
     const gateTop = gate.y + gate.height + (gate.roof ?? 0);
     for (const t of tiers) if (t.y1 > gateTop) expect(ringGap(t.ring, worldOutline(gate))).toBeGreaterThanOrEqual(5);
   });
+});
 
-  it("finds no more glitches of any known kind than its baseline", () => {
-    const found = Object.fromEntries(Object.entries(CHECKS).map(([k, check]) => [k, check()]));
+/**
+ * The ratchet: one test per kind, so each stays far under the time limit on a loaded CI runner,
+ * where the whole scan in a single test went over 20 s under coverage (PR #80, 7.5 s alone).
+ * The report and an updated baseline are written once all kinds have run.
+ */
+describe("the glitch scan against its baseline (ADR-0054)", () => {
+  const update = process.env.GLITCH_BASELINE === "update" || !existsSync(BASELINE);
+  const baseline = update ? {} : (JSON.parse(readFileSync(BASELINE, "utf8")) as Record<string, number>);
+  const found: Record<string, Finding[]> = {};
+  afterAll(() => {
     const counts = Object.fromEntries(Object.entries(found).map(([k, f]) => [k, f.length]));
     mkdirSync("reports", { recursive: true });
     writeFileSync("reports/glitch-scan.json", JSON.stringify({ counts, found }, null, 2));
-    if (process.env.GLITCH_BASELINE === "update" || !existsSync(BASELINE)) writeFileSync(BASELINE, `${JSON.stringify(counts, null, 2)}\n`);
-    const baseline = JSON.parse(readFileSync(BASELINE, "utf8")) as Record<string, number>;
-    for (const [k, n] of Object.entries(counts)) expect(n, `${k}: ${n} found, baseline ${baseline[k] ?? 0} (see reports/glitch-scan.json)`).toBeLessThanOrEqual(baseline[k] ?? 0);
+    if (update && Object.keys(found).length === Object.keys(CHECKS).length) writeFileSync(BASELINE, `${JSON.stringify(counts, null, 2)}\n`);
   });
+  for (const [k, check] of Object.entries(CHECKS)) {
+    it(`finds no more ${k} than its baseline`, () => {
+      found[k] = check();
+      if (!update) expect(found[k].length, `${k}: ${found[k].length} found, baseline ${baseline[k] ?? 0} (see reports/glitch-scan.json)`).toBeLessThanOrEqual(baseline[k] ?? 0);
+    });
+  }
 });

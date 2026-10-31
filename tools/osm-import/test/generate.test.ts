@@ -67,6 +67,45 @@ describe("generator", () => {
     expect(stats[0]!.terrainError.max).toBeLessThan(0.1);
   });
 
+  it("cuts a gateway the map tags as a tunnel at street level, but not a network of tunnels under the streets (G-076)", () => {
+    const node = (id: number, x: number, z: number) => {
+      const g = worldToGeo({ x, z });
+      return ` <node id="${id}" lat="${g.lat}" lon="${g.lon}"/>`;
+    };
+    const way = (id: number, refs: number[], tags: Record<string, string>) =>
+      ` <way id="${id}">${refs.map((r) => `<nd ref="${r}"/>`).join("")}${Object.entries(tags).map(([k, v]) => `<tag k="${k}" v="${v}"/>`).join("")}</way>`;
+    const tunnel = { highway: "footway", tunnel: "yes", layer: "-1" };
+    const map = parseOsmXml(
+      [
+        "<osm>",
+        ...[node(1, 10, 10), node(2, 30, 10), node(3, 30, 25), node(4, 10, 25)],
+        // The gateway from facade to facade, a street on beyond both.
+        ...[node(10, 20, 0), node(11, 20, 10), node(12, 20, 25), node(13, 20, 40)],
+        // Two tunnels joined under ground, the first through the house.
+        ...[node(20, 5, 17), node(21, 35, 17), node(22, 45, 17)],
+        way(100, [1, 2, 3, 4, 1], { building: "apartments", "building:levels": "3" }),
+        way(101, [10, 11], { highway: "service" }),
+        way(102, [11, 12], { highway: "service", tunnel: "yes", layer: "-1" }),
+        way(103, [12, 13], { highway: "service" }),
+        way(104, [20, 21], tunnel),
+        way(105, [21, 22], tunnel),
+        "</osm>",
+      ].join("\n"),
+    );
+    const c = generate(map, slope, tinyChunk).chunks[0]!;
+    // One passage only, along the gateway: the tunnel across the house makes none.
+    expect(c.passages).toEqual([expect.objectContaining({ building: "w100", from: { x: 20, z: 9.4 }, width: 3.2, height: 4 })]);
+    // Paved under the house, as the streets on either side.
+    expect(c.ground.filter((g) => g.surface === "road")).toHaveLength(3);
+  });
+
+  it("builds nothing of a building the map puts under ground (G-077)", () => {
+    const map = tinyMap();
+    const house = map.ways.get(100)!;
+    const cellar = { ...map, ways: new Map([...map.ways, [100, { ...house, tags: { ...house.tags, location: "underground", layer: "-1" } }]]) };
+    expect(generate(cellar, slope, tinyChunk).chunks[0]!.buildings).toEqual([]);
+  });
+
   it("gives the same result twice", () => {
     const a = generate(tinyMap(), slope, tinyChunk);
     const b = generate(tinyMap(), slope, tinyChunk);

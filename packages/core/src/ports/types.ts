@@ -96,6 +96,16 @@ export type ViewDescriptor =
       readonly use: BuildingUse;
       /** A pitched or domed roof on top of `height`, in metres; absent means flat. */
       readonly roof?: number;
+      /**
+       * The roof's shape from the map (OSM `roof:shape`, ADR-0064); absent, the renderer picks
+       * one as before (a hipped roof, now and then a dome on a compact landmark).
+       */
+      readonly roofShape?: RoofShape;
+      /**
+       * The ridge runs across the outline's long side (OSM `roof:orientation=across`), not along
+       * it: a tenement's deep plot with its ridge parallel to the street. Absent: along.
+       */
+      readonly roofAcross?: true;
       readonly name?: string;
       /** Seed of the facade's variation (colours, signs, lit windows). */
       readonly look: number;
@@ -245,6 +255,14 @@ export interface BuildingVertical {
    */
   readonly landmarks?: readonly { readonly outline: readonly GroundPoint[]; readonly top: number }[];
 }
+
+/**
+ * A roof's shape (OSM `roof:shape`, ADR-0064): `gabled` two slopes and gable walls,
+ * `half-hipped` gables with their tops hipped, `mansard` a steep lower and a shallow upper slope
+ * on every side, `hipped` four slopes, `pyramidal` slopes to one apex, `skillion` one slope,
+ * `dome` and `onion` a dome or an onion helmet, `flat` no pitch.
+ */
+export type RoofShape = "gabled" | "half-hipped" | "mansard" | "hipped" | "pyramidal" | "skillion" | "dome" | "onion" | "flat";
 
 /** What a skinned block stands for (ADR-0022). */
 export type BlockStyle =

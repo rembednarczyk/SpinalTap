@@ -11,7 +11,8 @@ Sources (tools/assets/sources.json, fetched by tools/assets/fetch.mjs):
 
 Models are turned so their front faces +Z (glTF), scaled to metres, centred on X/Z and stand on
 y = 0, like the kit. Node `extras`: {"size": [x, y, z], "styles": [kinds the engine places it as]}.
-Called from tools/city_kit.py (`--props DIR --quaternius DIR`).
+Called from tools/city_kit.py (`--props DIR --quaternius DIR --ccby DIR`); the CC-BY models of
+tools/city_ccby.py (ADR-0063) go into the same file.
 """
 import io, json, os, zlib
 import numpy as np
@@ -200,7 +201,7 @@ def source_path(props_dir, quaternius_dir, source, name):
     return folder, os.path.join(folder, name + '.glb')
 
 
-def build_props(props_dir, quaternius_dir, out_dir):
+def build_props(props_dir, quaternius_dir, ccby_dir, out_dir):
     out, extras = [], {}
     for key, source, name, styles, yaw, scale, opts in PROPS:
         folder, path = source_path(props_dir, quaternius_dir, source, name)
@@ -209,6 +210,13 @@ def build_props(props_dir, quaternius_dir, out_dir):
         out.append(m)
         extras[key] = {'size': m['size'], 'styles': styles}
         print(f"{key:24s} verts {len(m['pos']):5d} tris {len(m['ind']) // 3:5d} size {m['size']} roles {','.join(m['roles'])}")
+    # The CC-BY models after the CC0 ones (ADR-0063): the CC0 meshes keep their bytes.
+    from city_ccby import build_ccby  # it uses this module's colour helpers
+    ccby, ccby_extras = build_ccby(ccby_dir, swatch_uv)
+    for m in ccby:
+        print(f"{m['key']:24s} verts {len(m['pos']):5d} tris {len(m['ind']) // 3:5d} size {m['size']} roles {','.join(m['roles'])} credit {ccby_extras[m['key']]['credit']}")
+    out += ccby
+    extras.update(ccby_extras)
     albedo, glow = palette_images()
     dst = os.path.join(out_dir, 'city-props.glb')
     write_glb(out, png_bytes(albedo), png_bytes(glow), dst, extras, SWATCHES, GRID)

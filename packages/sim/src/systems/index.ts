@@ -7,6 +7,7 @@ import { deathSystem } from "./death-system";
 import { elevatorSystem } from "./elevator-system";
 import { doorSystem } from "./door-system";
 import { interactionSystem } from "./interaction-system";
+import { interiorSystem } from "./interior-system";
 import { interpolationSystem } from "./interpolation-system";
 import { ladderSystem } from "./ladder-system";
 import { itemSystem } from "./item-system";
@@ -107,6 +108,8 @@ export { doorForcedFlag, doorSnapshots, doorSystem, forceDoor, restoreDoors } fr
  * ADR-0041: the residents right after the passers-by, for the same reason.
  * ADR-0050: the traffic right after the movement (it drives itself, sees where everyone ended up
  * and pushes the player out of a vehicle), before the activities.
+ * ADR-0061: the interiors last, after everything that moves the player (movement, traffic,
+ * knockback), so an event follows where the step left her.
  */
 export const createSystems = (): readonly System[] => [
   clockSystem,
@@ -145,4 +148,5 @@ export const createSystems = (): readonly System[] => [
   contractLayerSystem,
   streetSceneSystem,
   questSystem,
+  interiorSystem,
 ];

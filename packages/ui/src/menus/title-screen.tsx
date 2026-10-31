@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CreditsScreen } from "../credits/credits-screen";
 import { useT } from "../i18n/use-t";
 import { useSessionIntents, useUi } from "../use-ui";
 import { ControlsHelp } from "./controls-help";
@@ -25,24 +26,7 @@ const FullscreenButton = () => {
   );
 };
 
-/** Who made what the game is drawn from (ADR-0045): the map of Lublin and its terrain. */
-const Credits = ({ back }: { back: () => void }) => {
-  const t = useT();
-  return (
-    <div className="menu credits" data-testid="credits">
-      <h2 className="credits__title">{t("credits.heading")}</h2>
-      <p className="credits__line">{t("credits.game")}</p>
-      <p className="credits__line">{t("credits.osm")}</p>
-      <p className="credits__line">{t("credits.terrain")}</p>
-      <p className="credits__line">{t("credits.fiction")}</p>
-      <button type="button" className="menu__item menu__item--ghost" onClick={back}>
-        {t("menu.back")}
-      </button>
-    </div>
-  );
-};
-
-export const TitleScreen = () => {
+export const TitleScreen = ({ version }: { version?: string | undefined }) => {
   const intents = useSessionIntents();
   const hasSaves = useUi((s) => s.hasSaves);
   const busy = useUi((s) => s.busy);
@@ -70,7 +54,7 @@ export const TitleScreen = () => {
           </button>
         </div>
       ) : view === "credits" ? (
-        <Credits back={() => setView("main")} />
+        <CreditsScreen intents={{ closeCredits: () => setView("main") }} />
       ) : (
         <div className="menu">
           <SaveSlots mode="load" />
@@ -82,6 +66,11 @@ export const TitleScreen = () => {
       <div className="title__attribution" data-testid="title-attribution">
         {t("title.attribution")}
       </div>
+      {version !== undefined && (
+        <div className="title__version" data-testid="title-version">
+          {version}
+        </div>
+      )}
     </div>
   );
 };

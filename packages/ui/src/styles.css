@@ -312,9 +312,16 @@ kbd {
 .title__tag { font-family: var(--font-mono); color: var(--ink-dim); letter-spacing: 0.2em; }
 /* Map credit (ADR-0045): small, at the foot of the title screen. */
 .title__attribution { position: absolute; left: 0; right: 0; bottom: max(8px, env(safe-area-inset-bottom, 0px)); text-align: center; font-family: var(--font-mono); font-size: 10px; color: var(--ink-dim); opacity: 0.75; pointer-events: none; }
+.title__version { position: absolute; right: max(10px, env(safe-area-inset-right, 0px)); top: max(8px, env(safe-area-inset-top, 0px)); font-family: var(--font-mono); font-size: 10px; color: var(--ink-dim); opacity: 0.6; pointer-events: none; user-select: text; }
 .credits { max-width: 560px; }
 .credits__title { font-family: var(--font-mono); letter-spacing: 0.14em; font-size: 18px; margin: 0 0 6px; color: var(--cyan); }
 .credits__line { margin: 0 0 8px; color: var(--ink); font-size: 14px; line-height: 1.45; }
+.credits__body { max-height: 62vh; overflow-y: auto; padding-right: 6px; }
+.credits__section { font-family: var(--font-mono); letter-spacing: 0.1em; font-size: 14px; margin: 14px 0 4px; color: var(--cyan); }
+.credits__group { font-size: 13px; margin: 10px 0 4px; color: var(--ink); opacity: 0.8; }
+.credits__list { list-style: none; margin: 0 0 6px; padding: 0; }
+.credits__row { margin: 0 0 6px; color: var(--ink); font-size: 13px; line-height: 1.4; }
+.credits__link { color: inherit; text-decoration: underline dotted; }
 
 .menu { display: flex; flex-direction: column; gap: 10px; width: min(420px, 100%); }
 .menu__item {

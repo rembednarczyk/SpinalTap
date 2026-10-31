@@ -147,6 +147,7 @@ const Accessibility = ({ settings, set }: SectionProps) => {
       <Slider id="hudScale" label={t("settings.hudScale")} value={settings.hudScale} min={HUD_SCALE_RANGE[0]} max={HUD_SCALE_RANGE[1]} step={0.05} format={percent} onChange={(v) => set({ hudScale: v })} />
       <Toggle label="settings.legibleFont" on={settings.legibleFont} onChange={(legibleFont) => set({ legibleFont })} />
       <Toggle label="settings.reduceFlashes" on={settings.reduceFlashes} onChange={(reduceFlashes) => set({ reduceFlashes })} />
+      <Toggle label="settings.cameraMotion" on={settings.cameraMotion} onChange={(cameraMotion) => set({ cameraMotion })} />
       <Toggle label="settings.untimedBreach" on={settings.untimedBreach} onChange={(untimedBreach) => set({ untimedBreach })} />
       <Choice label="settings.colorblind" value={settings.colorblind} options={COLORBLIND} onChange={(colorblind) => set({ colorblind })} />
       <TokenLegend />
