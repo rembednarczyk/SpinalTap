@@ -156,7 +156,7 @@ export const createControllers = (deps: GameSessionDeps, s: SessionHooks): Contr
       trade: () => shop.tradeFrame(),
     },
   });
-  const canSave = () => !dialogue.isOpen && !shop.isOpen && !loot.isOpen && !travel.metro.isOpen && !travel.metro.riding && s.screen() !== "dead" && s.screen() !== "title";
+  const canSave = () => !dialogue.isOpen && !shop.isOpen && !loot.isOpen && !travel.metro.isOpen && !travel.metro.riding && s.screen() !== "dead" && s.screen() !== "title" && s.screen() !== "loading";
   const saves = new SaveController({ persistence: deps.persistence, ui, audio, narrative: s.narrative, sim, now: deps.now, canSave, restore: s.restore });
   const autosave = new AutosaveController({
     bus,
