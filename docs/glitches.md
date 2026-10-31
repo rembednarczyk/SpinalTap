@@ -83,7 +83,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: później (ADR-0052 „Na później”)
 
 ### G-052 Teatr Osterwy i Kościół Bernardynów poza danymi miasta (brzeg Krakowskiego na z = −200)
-- Status: przyjęte przez weryfikatora (gałąź `g074-075` w worktree agent-a0e34d7b5d8f460e1: baza `lane-dead-end` 45, budżet reference 194/81 z długiem w ADR-0046); przegląd kuratora w toku, potem PR (konflikt tabel z main rozwiązać regeneracją)
+- Status: przyjęte przez weryfikatora i kuratora (uwagi bez blokady: G-096…G-099, T-057…T-061); gałąź `g074-075`, integracja z main i PR w toku
 - Ważność: S3 (proponowana) · Zasięg: lokalny (Narutowicza, Bernardyńska) · Koszt: duży (prostokąt w config.ts, ADR-0042, regeneracja, budżety)
 - Gdzie: (118.0, −205.7), (364.7, −239.8); ile w mieście: 2 zabytki z listy kuratora
 - Dowód: brak w66330578 i w67508958 w `*.generated.ts`, `DISTRICTS[0].rect.minZ = −200`; T-014
@@ -268,7 +268,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `road-dip-over-tunnel` 1 → 0 (droga z OSM przecina tunel bez wspólnego węzła, a grunt w ±8 m od przecięcia leży > 1 m pod cięciwą; w mieście 34 przecięcia, następne 0,35 m); pod pomostem przejście w66258159 drożne (G-062)
 
 ### G-089 Bramy z maxheight=below_default ze sklepieniem 4 m
-- Status: w weryfikacji (commit d697da8, gałąź `worktree-agent-a71a2e63a0c9844bb`: `vaultOf`, `maxheight` → sklepienie, `below_default` 3,6 m; skan `passage-maxheight` 3 → 0; przegląd kuratora w toku) · Ważność: S4 · Zasięg: 3 miejsca · Koszt: mały
+- Status: przyjęte przez kuratora (3,6 m to szacunek dla `below_default`, wymiar do potwierdzenia zdjęciem przy audycie prześwitów); weryfikacja w toku; commit d697da8
 - Gdzie: Królewska w755152552/555/560; T-054
 - Przyczyna: `buildingPassages` (wysokość w `out.push`, przy `widthOf`) nie czyta `maxheight`
 - Pakiet właściciela: tools/osm-import
@@ -323,6 +323,34 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Do ustalenia: czy to kabel z `renderer/mapcity/canyon-plan.ts` albo `landmarks/cables.ts` przechodzący przez bryłę; ile takich w mieście
 - Pakiet właściciela: packages/engine (jeśli się potwierdzi)
 - Test przyjęcia: kontrola `cable-through-interior` (odcinek kabla wchodzi w bryłę wnętrza `interior: true`) z bazą → 0
+
+### G-096 Narożnik Starego Miasta za brzegiem z = −240 (Pałac Ordynacki, Kuria)
+- Status: zgłoszone (z przeglądu kuratora G-052)
+- Ważność: S3 (proponowana) · Zasięg: lokalny, 7 budynków, 2 zabytki · Koszt: średni (prostokąt, ADR-0042, regeneracja)
+- Gdzie: x od 460 do 760, z od −240 do −270; T-058
+- Przyczyna: `stare-miasto` minZ = −240, a G-052 przesuwa Krakowskie do −270 (uskok gruntu na x = 460)
+- Pakiet właściciela: tools/osm-import (decyzja o prostokątach: Architekt, ADR-0042)
+- Test przyjęcia: w66335239 i w66293168 w `MAP_CHUNKS`, bez uskoku gruntu na x = 460; propozycja: `stare-miasto` minZ −270 z `zEdges` [−270, −40, 160] (rząd 230 m, identyfikatory chunków bez zmian); kontrola `historic-cut-by-edge` (budynek zabytkowy z obrysem w prostokącie dzielnicy i środkiem poza wszystkimi) 4 → 1 (Pałac Tarłów zostaje, T-057)
+
+### G-097 Teatr Osterwy jako kamienica mieszkalna
+- Status: zgłoszone (z przeglądu kuratora G-052) · Ważność: S4 · Zasięg: 1 · Koszt: mały
+- Gdzie: w67508958 (118.0, −205.7); T-059
+- Przyczyna: `buildingUse` czyta tylko tagi obrysu (`building=yes`); punkt `amenity=theatre` w obrysie daje nazwę, nie przeznaczenie
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: punkt `amenity=theatre`/`arts_centre` w obrysie `building=yes` daje `use=civic`; kontrola `theatre-not-civic` 1 → 0; wysokość według zdjęcia lub LOD2 (ADR-0062 etap 7)
+
+### G-098 Wieże zmapowane jako `man_made=tower` bez `building` pominięte
+- Status: zgłoszone (z przeglądu kuratora G-052) · Ważność: S4 · Zasięg: 3 obrysy w Krakowskim · Koszt: mały–średni
+- Gdzie: w1090997970 (wieża Brygidek, 161, −229), w1002739983 (84, 99), w1002739984 (40, 103); T-060
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: kontrola `tower-area-missing` 3 → 0
+
+### G-099 Pas poszerzenia Krakowskiego bez mebli z planu (latarnie, obeliski)
+- Status: zgłoszone (z przeglądu kuratora G-052) · Ważność: S3 (proponowana; ciemne ulice nocą) · Zasięg: pas 660 × 70 m · Koszt: mały–średni
+- Gdzie: T-061 (Narutowicza, Peowiaków, Zesłańców Sybiru, Bernardyńska; obeliski na Placu Kochanowskiego)
+- Przyczyna: plan `docs/world/lublin-props.todo.json` (29.10) ma pozycje tylko w starych prostokątach; reguła `lamps.krakowskie-side` nie obejmuje pasa poniżej −200
+- Pakiet właściciela: tools/osm-import (plan mebli)
+- Test przyjęcia: kontrola `lit-street-dark` (odcinki nazwanych dróg z `lit=yes` dalej niż 30 m od latarni, w metrach) w pasie 0; obeliski w promieniu 1 m od węzłów OSM. Ostrożnie z ADR-0064 etap 3 (oświetlenie z `lit`), który robi to samo w całym mieście
 
 ## Naprawione
 | ID | Glitch | PR |
