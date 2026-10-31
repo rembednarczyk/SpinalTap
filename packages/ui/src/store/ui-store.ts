@@ -382,9 +382,10 @@ let toastSeq = 0;
 
 /**
  * Toasts that outlive the rest when too many come at once: the story (quests, endings,
- * memories) and the system's (a level up, a failed load).
+ * memories) and those marked `keep` (a level up, a failed save or load). Ordinary system
+ * toasts (a purchase, a refusal at the counter) come and go in order like the rest.
  */
-const isKeptToast = (t: Toast): boolean => t.kind === "quest" || t.kind === "memory" || t.kind === "system";
+const isKeptToast = (t: Toast): boolean => t.kind === "quest" || t.kind === "memory" || t.keep === true;
 
 /**
  * Shows a toast; over TOAST_LIMIT the oldest toast goes, but one that is not kept first, so a

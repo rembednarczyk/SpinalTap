@@ -13,7 +13,7 @@ export const presentProgression: Presenter = ({ bus, audio, toast, dismiss, ui }
     bus.on("LevelUp", (e) => {
       const t = uiText(ui);
       if (shown !== null) dismiss(shown);
-      shown = toast("system", t("progress.levelUp", { level: e.level }), t("progress.levelUpPoints"));
+      shown = toast("system", t("progress.levelUp", { level: e.level }), t("progress.levelUpPoints"), true);
       audio.play("quest-update");
     }),
   ];

@@ -26,8 +26,11 @@ export interface PresenterContext {
   readonly audio: AudioPort;
   readonly ui: UiStore;
   readonly hooks: PresenterHooks;
-  /** A toast that goes away on its own; its id lets the presenter take it down earlier. */
-  toast(kind: Toast["kind"], title: string, text?: string): number;
+  /**
+   * A toast that goes away on its own; its id lets the presenter take it down earlier. `keep`:
+   * it outlives ordinary toasts when too many come at once.
+   */
+  toast(kind: Toast["kind"], title: string, text?: string, keep?: boolean): number;
   /** Takes a toast down before its time. */
   dismiss(id: number): void;
   isPlayer(id: EntityId): boolean;
@@ -42,8 +45,8 @@ export const presenterContext = (bus: EventBus<DomainEvents>, render: RenderPort
   audio,
   ui,
   hooks,
-  toast(kind, title, text = "") {
-    const id = pushToast(ui, { kind, title, text });
+  toast(kind, title, text = "", keep = false) {
+    const id = pushToast(ui, { kind, title, text, ...(keep ? { keep } : {}) });
     setTimeout(() => dismissToast(ui, id), TOAST_MS);
     return id;
   },
