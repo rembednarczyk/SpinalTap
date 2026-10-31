@@ -29,6 +29,7 @@ Jesteś kuratorem topografii. Gra dzieje się w Lublinie 2077 i miasto ma być r
   1. **Bramy i przejazdy:** każda brama miejska, przejazd bramny i przejście przez budynek (`tunnel=building_passage`, `covered=yes`, bramy kamienic): czy jest w grze, czy da się nim przejść (wysokość sklepienia, szerokość, kolizja), czy prowadzi tam, gdzie w Lublinie. Kontrola skanu: przejście z OSM bez drożnego przejazdu w grze.
   2. **Prześwity:** przejścia pod mostami, wiaduktami, kładkami i nadwieszonymi budynkami: prześwit w grze a w rzeczywistości, drożność dla gracza i AI (G-062, G-068, G-072).
   3. **Drogi:** cała sieć ulic, ścieżek i schodów z OSM: ciągłość, kierunki, szerokości, nawierzchnie, połączenia między dzielnicami i z terenem; ślepe końce bez powodu.
+  4. **Wnętrza:** obszar wnętrza w obrysie budynku i okna wnętrza zgodne z oknami elewacji (ADR-0061, uzupełnienie: okna wnętrz).
   Wynik każdego audytu: wpisy `T-NNN`, zgłoszenia glitchy i proponowane kontrole skanu.
 
 ## Rejestr `docs/topografia.md`

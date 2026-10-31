@@ -30,3 +30,12 @@ Wnętrza (ADR-0038) to bryły treści: klinika i Neon Koi w `sim/src/content/int
   - wejście i wyjście przez drzwi, z kolejnością zdarzeń;
   - brak zdarzenia po wczytaniu gry wewnątrz lokalu;
   - autozapis po wejściu, odłożony do bezpiecznej chwili.
+
+## Uzupełnienie (31.10): okna wnętrz
+Wymóg użytkownika: wnętrze ma okna tam, gdzie ma je budynek.
+- Każde okno elewacji, za którym leży wnętrze z `INTERIORS`, jest prawdziwym otworem z szybą, a nie tylko oknem namalowanym przez shader fasady (ADR-0022). Z ulicy widać przez nie wnętrze (w nocy podświetlone), ze środka ulicę i miasto.
+- Siatka okien wnętrza bierze się z tej samej ramy co fasada (`facade-frame`: kondygnacje, przęsła, styl okien), więc otwory w ścianie wnętrza i na elewacji pokrywają się co do przęsła i kondygnacji. Ściana wnętrza nie dostaje okna tam, gdzie elewacja ma ślepą ścianę, witrynę zastąpioną drzwiami albo ścianę wspólną z sąsiednim budynkiem.
+- Zabytki z przepisem (ADR-0062) dają oknom wnętrza swoje kształty: ostrołuki, okna półkoliste, okna kościelne z witrażem.
+- Szyba nie przepuszcza gracza ani pocisków (kolizja ściany w `sim` bez zmian); linia widzenia przez okno dla AI i świadków jest osobną decyzją przy etapie, który ją potrzebuje.
+- Kontrola w skanie: okno elewacji przy wnętrzu bez otworu we wnętrzu i otwór we wnętrzu bez okna na elewacji, baza 0. Weryfikator i kurator sprawdzają to przy każdym nowym wnętrzu.
+- Dotyczy też istniejących wnętrz (klinika, Neon Koi, biuro Tessen): do sprawdzenia i dorobienia jako osobny etap.
