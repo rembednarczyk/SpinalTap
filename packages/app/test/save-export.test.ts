@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence, decodeSave } from "@seki/persistence";
 import { createUiStore } from "@seki/ui";
-import { exportFileName } from "../src/controllers/save-controller";
+import { IMPORT_SLOT, exportFileName } from "../src/controllers/save-controller";
 import { GameSession } from "../src/game-session";
 import { FakeRender } from "./story-helpers";
 
@@ -51,5 +51,33 @@ describe("save export", () => {
 
   it("names the file by the slot and the day", () => {
     expect(exportFileName("auto", new Date(2026, 0, 5))).toBe("seki-senshi-auto-2026-01-05.json");
+  });
+});
+
+describe("save import", () => {
+  it("reads an exported file into its own slot, which then loads", async () => {
+    const a = setup();
+    a.session.newGame();
+    await a.session.saveAsync("slot-1");
+    await a.session.exportAsync("slot-1");
+    const b = setup();
+    b.session.newGame();
+    expect(await b.session.importAsync(a.files[0]!.text)).toBe(true);
+    expect(b.store.data.has(IMPORT_SLOT)).toBe(true);
+    expect(b.ui.getState().slots.some((s) => s.slot === IMPORT_SLOT)).toBe(true);
+    expect(await b.session.loadAsync(IMPORT_SLOT)).toBe(true);
+  });
+
+  it("refuses a damaged or foreign file and changes nothing", async () => {
+    const a = setup();
+    a.session.newGame();
+    await a.session.saveAsync("slot-1");
+    await a.session.exportAsync("slot-1");
+    const tampered = a.files[0]!.text.replace(/"checksum":"[^"]+"/, '"checksum":"0"');
+    const b = setup();
+    b.session.newGame();
+    for (const text of [tampered, "not json", JSON.stringify({ hello: 1 })]) expect(await b.session.importAsync(text)).toBe(false);
+    expect(b.store.data.has(IMPORT_SLOT)).toBe(false);
+    expect(b.ui.getState().toasts.at(-1)?.title).toBe("Could not import the file");
   });
 });

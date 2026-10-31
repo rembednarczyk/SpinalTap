@@ -109,6 +109,8 @@ export const plWorld = {
   "save.failed": "Zapis nieudany",
   "save.exported": "Zapis wyeksportowany",
   "save.exportFailed": "Nie udało się wyeksportować zapisu",
+  "save.imported": "Zapis zaimportowany",
+  "save.importFailed": "Nie udało się zaimportować pliku",
   "crash.error": "Coś poszło nie tak",
   "crash.errorText": "{message} · {version}. Gra działa dalej; jeśli zachowuje się dziwnie, odśwież stronę.",
   "crash.contextLost": "Urządzenie zresetowało grafikę",
