@@ -4,6 +4,8 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
 
 ## Następne
 
+- **Stan prac (31.10 wieczór, dla nowej sesji).** Otwarte PR-y: #72 (G-067, klasztor), #74 (G-061, pawilon Bona), #76 (G-064, stragany): przyjęte albo w weryfikacji, czekają na przegląd kuratora; #75 (ADR-0062 etap 1, Brama Krakowska): przyjęty, CI. W toku u agentów (praca w worktree ginie z kontenerem, więc przy nowej sesji sprawdź gałęzie `ccr-ec2c4269-ilh8k8-*` i zacznij od nowa to, czego nie ma w PR): G-052 (poszerzenie Krakowskiego, decyzja użytkownika: pas ok. 60 m), ADR-0064 etap 1 (dachy z OSM, zamyka G-056), ADR-0063 etap 1 (słupy, robopsy, ekran „Autorzy”: poprawki po weryfikacji). Następne w kolejce: ADR-0064 etapy 2–15, ADR-0063 etapy 2–4, ADR-0061 (`INTERIORS`) i plan wnętrz zabytków (`docs/plany/wnetrza-zabytkow.md`, czeka na akceptację użytkownika), G-073 po #76, audyty kuratora: bramy i przejazdy, prześwity, drogi. Decyzja użytkownika do zebrania: reguła 45° dla nadbudów przy zabytkach (T-011).
+
 - **Plan z audytu luk (31.10, `docs/audyt-luk.md`).** Priorytety: P0 blokuje grę albo inne prace, P1 standard gatunku o dużym wpływie, P2 ważne później, P3 opcjonalne. Kolejność P0 i P1 według zależności:
   - **P0, teraz:**
     1. [gotowe, #56] Autozapis (po kroku zadania, kontrakcie, zmianie dzielnicy, co 5 minut) i zapis przy `visibilitychange`/`pagehide` na telefonie; wejście do lokalu z ADR-0061.
@@ -11,7 +13,7 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
     3. Języki: etapy 3–5 (ADR-0056). 3, 4 i 5 w main (#66, #63, #64); zostały resztki z listy niżej.
     4. Obezwładnienie bez zabijania, ogłuszenie, przenoszenie ciał (ADR do napisania). Koszt M. Musi być przed etapem 3 ADR-0059, bo drzewko Cień i XP za skradanie je zakładają.
     5. Poziom trudności z presetami wspomagania (ADR do napisania). Koszt M. Przed etapem 8 ADR-0059 (balans liczony dla „normalnego”).
-    6. Rozwój postaci i skalowanie (ADR-0059), etap 1 w toku.
+    6. Rozwój postaci i skalowanie (ADR-0059): etap 1 w main (#53), etapy 2–8 do zrobienia.
     7. Celowanie na telefonie i padzie (wspomaganie, celowanie ze strzałem jednym kciukiem), z padem w tym samym ADR-ze.
   - **P1, potem:**
     1. Raportowanie błędów (`window.onerror`, `unhandledrejection`, utrata kontekstu WebGL) i widoczna wersja gry. Koszt S–M.
