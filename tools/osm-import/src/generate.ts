@@ -9,9 +9,9 @@ import { corrected } from "./corrections.ts";
 import { ALL_CHUNKS, type ChunkSpec } from "./config.ts";
 import { type HeightSource } from "./dtm.ts";
 import { type Area, type Line, extractFeatures } from "./features.ts";
-import { type Band, areaBand, chunkGround, crossingBand, crossingWay, cutSidewalk, lineBands, markedCrossing, roadWidth } from "./ground.ts";
+import { type Band, areaBand, chunkGround, crossingBand, crossingWay, cutSidewalk, fitToKerb, lineBands, markedCrossing, roadWidth } from "./ground.ts";
 import { geoToWorld } from "./project.ts";
-import { type Marking, chunkMarkings, cutLine, roadMarkings, stopLines } from "./markings.ts";
+import { type Marking, chunkMarkings, cutLine, oneway, roadMarkings, stopLines } from "./markings.ts";
 import { type Pt, type Rect, centroid, inRect, pointInRing, rectsOverlap, ringBounds } from "./geometry.ts";
 import { allPois, chunkPois, chunkStreets } from "./labels.ts";
 import { type PassageOut, buildingPassages, streetLevelTunnels } from "./passages.ts";
@@ -50,45 +50,87 @@ const buildingAreas = (areas: readonly Area[], data: OsmData): Area[] => {
   return areas.filter((a) => a.tags.building !== undefined && !SKIP_BUILDING.has(a.tags.building) && a.tags.location !== "underground" && !inRelation.has(a.id));
 };
 
-/** A coarse spatial hash of points along mapped sidewalks (`footway=sidewalk`). */
+type SidewalkPoint = Pt & { readonly tx: number; readonly tz: number };
+
+/** Samples along a line every `step` metres, with the line's direction there. */
+const samplesAlong = (line: readonly Pt[], step: number): (Pt & { tx: number; tz: number })[] => {
+  const out: (Pt & { tx: number; tz: number })[] = [];
+  for (let i = 0; i + 1 < line.length; i++) {
+    const a = line[i]!;
+    const b = line[i + 1]!;
+    const len = Math.hypot(b.x - a.x, b.z - a.z);
+    const n = Math.max(1, Math.ceil(len / step));
+    for (let k = 0; k < n; k++) out.push({ x: a.x + ((b.x - a.x) * k) / n, z: a.z + ((b.z - a.z) * k) / n, tx: (b.x - a.x) / (len || 1), tz: (b.z - a.z) / (len || 1) });
+  }
+  return out;
+};
+
+/**
+ * How far short of a mapped sidewalk's axis a fitted carriageway ends, metres: its middle stays off
+ * the asphalt where it wiggles a little nearer than the median. Not at the sidewalk's inner edge
+ * (2 x (axis - half the sidewalk)): the asphalt under the sidewalk's inner half is what keeps the
+ * two-way lanes (1.2 m and more off the axis, ADR-0055) and their cars on the road.
+ */
+const KERB_MARGIN = 0.5;
+/** A street side's mapped sidewalk counts as running along it over this many samples (2 m apart) and more. */
+const MIN_KERB_SAMPLES = 5;
+
+/** A coarse spatial hash of points along mapped sidewalks (`footway=sidewalk`), with their direction. */
 const sidewalkIndex = (lines: readonly Line[]) => {
   const cell = 10;
-  const grid = new Map<string, Pt[]>();
+  const grid = new Map<string, SidewalkPoint[]>();
   const key = (x: number, z: number) => `${Math.floor(x / cell)},${Math.floor(z / cell)}`;
   for (const l of lines) {
     if (l.tags.footway !== "sidewalk") continue;
-    for (let i = 0; i + 1 < l.line.length; i++) {
-      const a = l.line[i]!;
-      const b = l.line[i + 1]!;
-      const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 3));
-      for (let k = 0; k <= n; k++) {
-        const p = { x: a.x + ((b.x - a.x) * k) / n, z: a.z + ((b.z - a.z) * k) / n };
-        const list = grid.get(key(p.x, p.z)) ?? [];
-        list.push(p);
-        grid.set(key(p.x, p.z), list);
-      }
+    const pts = samplesAlong(l.line, 3);
+    const end = pts[pts.length - 1];
+    if (end) pts.push({ ...l.line[l.line.length - 1]!, tx: end.tx, tz: end.tz });
+    for (const p of pts) {
+      const list = grid.get(key(p.x, p.z)) ?? [];
+      list.push(p);
+      grid.set(key(p.x, p.z), list);
     }
   }
-  /** True when separate sidewalks run along at least a third of the road. */
-  return (road: Line): boolean => {
-    const reach = roadWidth(road.tags) / 2 + 7;
-    let near = 0;
-    let total = 0;
-    for (let i = 0; i + 1 < road.line.length; i++) {
-      const a = road.line[i]!;
-      const b = road.line[i + 1]!;
-      const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 8));
-      for (let k = 0; k < n; k++) {
-        const p = { x: a.x + ((b.x - a.x) * k) / n, z: a.z + ((b.z - a.z) * k) / n };
-        total++;
-        let hit = false;
-        for (let dx = -1; dx <= 1 && !hit; dx++)
-          for (let dz = -1; dz <= 1 && !hit; dz++)
-            hit = (grid.get(`${Math.floor(p.x / cell) + dx},${Math.floor(p.z / cell) + dz}`) ?? []).some((q) => Math.hypot(q.x - p.x, q.z - p.z) <= reach);
-        if (hit) near++;
+  const around = (p: Pt): SidewalkPoint[] => {
+    const out: SidewalkPoint[] = [];
+    for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) out.push(...(grid.get(`${Math.floor(p.x / cell) + dx},${Math.floor(p.z / cell) + dz}`) ?? []));
+    return out;
+  };
+  return {
+    /** True when separate sidewalks run along at least a third of the road. */
+    along: (road: Line): boolean => {
+      const reach = roadWidth(road.tags) / 2 + 7;
+      const samples = samplesAlong(road.line, 8);
+      const near = samples.filter((p) => around(p).some((q) => Math.hypot(q.x - p.x, q.z - p.z) <= reach)).length;
+      return samples.length > 0 && near / samples.length >= 1 / 3;
+    },
+    /**
+     * How far from the road's axis its carriageway may reach, `KERB_MARGIN` short of its mapped
+     * sidewalks where they run along it (parallel, beside it) with their axis on its carriageway
+     * by type: the median on each side, the nearer side's. Only a side whose sidewalk runs along
+     * half the road and more counts (`MIN_KERB_SAMPLES` at least): a sidewalk turning in to a
+     * crossing at a junction says nothing of the rest of the street (T-062). Null without one.
+     */
+    kerb: (road: Line): number | null => {
+      const reach = roadWidth(road.tags) / 2;
+      const sides: [number[], number[]] = [[], []];
+      const samples = samplesAlong(road.line, 2);
+      for (const p of samples) {
+        const best = [Infinity, Infinity];
+        for (const q of around(p)) {
+          const along = (q.x - p.x) * p.tx + (q.z - p.z) * p.tz;
+          const across = (q.z - p.z) * p.tx - (q.x - p.x) * p.tz;
+          if (Math.abs(along) > 2 || Math.abs(across) >= reach || Math.abs(q.tx * p.tx + q.tz * p.tz) < 0.9) continue;
+          const side = across >= 0 ? 0 : 1;
+          best[side] = Math.min(best[side]!, Math.abs(across) - KERB_MARGIN);
+        }
+        best.forEach((b, side) => {
+          if (Number.isFinite(b)) sides[side]!.push(b);
+        });
       }
-    }
-    return total > 0 && near / total >= 1 / 3;
+      const medians = sides.filter((s) => s.length >= MIN_KERB_SAMPLES && s.length * 2 >= samples.length).map((s) => [...s].sort((a, b) => a - b)[Math.floor(s.length / 2)]!);
+      return medians.length > 0 ? Math.min(...medians) : null;
+    },
   };
 };
 
@@ -172,12 +214,13 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   const features = extractFeatures(data);
   // The explicit corrections of estimated tags (corrections.ts), before anything reads them.
   const areas = features.areas.map((a) => corrected(a));
-  const lines = features.lines;
+  // A street of default width ends where the sidewalks mapped along it begin (T-046).
+  const sidewalks = sidewalkIndex(features.lines);
+  const lines = features.lines.map((l) => (l.tags.highway ? { ...l, tags: fitToKerb(l.tags, sidewalks.kerb(l), oneway(l.tags)) } : l));
   const outlines = buildingAreas(areas, data);
   const partAreas = areas.filter(isPart);
   const orphans = new Set(orphanParts(outlines, partAreas));
   const buildings = [...outlines, ...[...orphans].map(asBuilding)];
-  const mapped = sidewalkIndex(lines);
   const near = (pts: readonly Pt[]) => chunks.some((c) => rectsOverlap(ringBounds(pts), grow(c.rect, 1)));
   const bands: (Band & { box: Rect })[] = [];
   for (const a of areas) {
@@ -189,9 +232,10 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   const tunnels = streetLevelTunnels(data);
   // Paved only where it runs through a building: elsewhere it may pass under a street of its own.
   const atStreet = new Set([...tunnels].filter((id) => lines.some((l) => l.osmId === id && buildingPassages([l], buildings, rects, tunnels).length > 0)));
-  for (const l of lines) {
+  for (const [k, l] of lines.entries()) {
     if (!near(l.line)) continue;
-    for (const b of lineBands(l, l.tags.highway ? mapped(l) : false, water, atStreet.has(l.osmId))) bands.push({ ...b, box: ringBounds(b.ring) });
+    // Whether sidewalks are mapped along it: read off the street's width by type, as before it was fitted.
+    for (const b of lineBands(l, l.tags.highway ? sidewalks.along(features.lines[k]!) : false, water, atStreet.has(l.osmId))) bands.push({ ...b, box: ringBounds(b.ring) });
   }
   // Zebras at the crossing nodes of the carriageways, in node order.
   const roads = lines.filter((l) => l.tags.highway !== undefined && near(l.line));
