@@ -59,5 +59,6 @@
 | [0055](0055-skrety-pasow.md) | Skręty pasów na skrzyżowaniach: koniec pasa łączy się łukiem z początkiem pasa innej ulicy w trasę złożoną; pierwszeństwo i sygnalizacja dalej na później | Zaakceptowana |
 | [0056](0056-jezyki-gry.md) | Języki gry: angielski domyślny, polski w opcjach; katalogi `i18n/{en,pl}`, symulacja bez języka (klucze), ink w `ink/{pl,en}` o tej samej strukturze, skan-zapadka polskich literałów | Zaakceptowana |
 | [0057](0057-ekran-ladowania.md) | Ekran ładowania z paskiem postępu przy nowej grze i wczytaniu: `RenderPort.prepare` (modele, city kit, chunki startowe, shadery), reszta miasta strumieniowo w tle | Zaakceptowana |
+| [0058](0058-zywe-miasto-assety-cc0.md) | Żywe miasto z paczek CC0: osobny `city-props.glb` z `tools/city_kit.py`, wspólna paleta, rekwizyty pieczone do istniejących siatek (bez nowych wywołań poza dronami), rozstawienie w rendererze, osiem etapów | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.
