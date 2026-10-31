@@ -8,7 +8,7 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
   - **P0, teraz:**
     1. [gotowe, #56] Autozapis (po kroku zadania, kontrakcie, zmianie dzielnicy, co 5 minut) i zapis przy `visibilitychange`/`pagehide` na telefonie; wejście do lokalu z ADR-0061.
     2. Stabilne e2e (G-031, G-043) i ekran ładowania (ADR-0057). W toku.
-    3. Języki: etapy 3–5 (ADR-0056). 4 w main (#63), 5 w integracji, 3 w weryfikacji.
+    3. Języki: etapy 3–5 (ADR-0056). 4 i 5 w main (#63, #64), 3 w integracji.
     4. Obezwładnienie bez zabijania, ogłuszenie, przenoszenie ciał (ADR do napisania). Koszt M. Musi być przed etapem 3 ADR-0059, bo drzewko Cień i XP za skradanie je zakładają.
     5. Poziom trudności z presetami wspomagania (ADR do napisania). Koszt M. Przed etapem 8 ADR-0059 (balans liczony dla „normalnego”).
     6. Rozwój postaci i skalowanie (ADR-0059), etap 1 w toku.
@@ -73,7 +73,7 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
 - **[w toku] Języki gry (ADR-0056).** Angielski domyślny, polski w opcjach. Gotowe: etap 1 (menu, opcje, zapadka), 2a (ekwipunek, sklepy), 2b (panele świata), 2c (HUD i dotyk, #50 i #59). Stan pozostałych:
   - etap 4 (treść `sim` i narracja TS na kluczach) z tagami wariantu kontraktu: w main (#63);
   - etap 3 (teksty domeny w `core`: przedmioty, wszczepy, zadania, kontrakty): zbudowany, w weryfikacji;
-  - etap 5 (narracja `ink/en`, 16 plików, zmiana języka w trakcie rozmowy): przyjęty, w integracji z etapem 4 (jedno źródło nazw mówiących: katalogi UI);
+  - etap 5 (narracja `ink/en`, 16 plików, zmiana języka w trakcie rozmowy): w main (#64);
   - resztki po etapach: `CONTACT_NAMES` „Doktor Mori” w `app/src/phone.ts`; nazwy miejsc kontraktów po polsku w liniach ink (`core/src/i18n/ink-sites-pl.ts` do usunięcia po etapie 5); „gotowe” i „Apteczki × N” w `ui/src/hud/ability-widget.tsx` (skan ich nie łapie); nazwy urządzeń i „Wróg” w `sim/src/systems/scanner-system.ts`; 3 linie w `app` (`lublin-preview/preview-overlay.ts`, `metro.ts`); komentarz `ContractHookDef.text` w core nieaktualny; nieczytane pole `ScanFocusChanged.name`;
   - zachowanie do decyzji: etykieta slotu zapisu, karta podsumowania i toast nowego tropu zostają w języku z chwili zdarzenia.
 - **[następne] Ekran ładowania z paskiem postępu (ADR-0057).** Nowa gra i wczytanie doładowują modele, city kit, chunki startowe i shadery, a reszta miasta strumieniuje się w tle. Start po G-029 (`main.tsx`, `GpuPacer`).
