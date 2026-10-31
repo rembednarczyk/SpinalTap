@@ -34,6 +34,11 @@ export const plContent = {
   "prompt.help": "Pomóż",
   "prompt.door.force": "Wyłam zamek (podniesie alarm)",
   "prompt.door.locked": "Drzwi na kod: zamknięte",
+  // Wnętrza (sim `INTERIORS`, ADR-0061).
+  "interior.clinic": "Klinika doktora Mori",
+  "interior.neon-koi": "Neon Koi",
+  "interior.tessen-office": "Biuro Tessen",
+  "interior.trasa-podziemna": "Trasa Podziemna",
   "prompt.loot": "Przeszukaj",
   // Observation hooks of contracts (ADR-0032): the tracker line once found.
   "hook.eliminate_1": "Szef ekipy co godzinę odchodzi sam na bok",

@@ -3,7 +3,7 @@ import { LOCALES, type Locale } from "@seki/core";
 import type { MessageKey } from "../i18n/en";
 import { type Translate, isMessageKey } from "../i18n/t";
 import { useT } from "../i18n/use-t";
-import { type ColorblindMode, type DamageNumbersMode, HUD_SCALE_RANGE } from "../store/hud-vm";
+import { type ColorblindMode, type DamageNumbersMode, HUD_SCALE_RANGE, SUBTITLE_SCALE_RANGE } from "../store/hud-vm";
 import type { AimMode, ControlBindingVm, GraphicsQuality, SettingsVm } from "../store/ui-store";
 import { TOKENS } from "../hud/tokens";
 import { useSettingsIntents, useUi } from "../use-ui";
@@ -145,8 +145,11 @@ const Accessibility = ({ settings, set }: SectionProps) => {
   return (
     <>
       <Slider id="hudScale" label={t("settings.hudScale")} value={settings.hudScale} min={HUD_SCALE_RANGE[0]} max={HUD_SCALE_RANGE[1]} step={0.05} format={percent} onChange={(v) => set({ hudScale: v })} />
+      <Slider id="subtitleScale" label={t("settings.subtitleScale")} value={settings.subtitleScale} min={SUBTITLE_SCALE_RANGE[0]} max={SUBTITLE_SCALE_RANGE[1]} step={0.1} format={percent} onChange={(v) => set({ subtitleScale: v })} />
+      <Toggle label="settings.subtitleBackground" on={settings.subtitleBackground} onChange={(subtitleBackground) => set({ subtitleBackground })} />
       <Toggle label="settings.legibleFont" on={settings.legibleFont} onChange={(legibleFont) => set({ legibleFont })} />
       <Toggle label="settings.reduceFlashes" on={settings.reduceFlashes} onChange={(reduceFlashes) => set({ reduceFlashes })} />
+      <Toggle label="settings.cameraMotion" on={settings.cameraMotion} onChange={(cameraMotion) => set({ cameraMotion })} />
       <Toggle label="settings.untimedBreach" on={settings.untimedBreach} onChange={(untimedBreach) => set({ untimedBreach })} />
       <Choice label="settings.colorblind" value={settings.colorblind} options={COLORBLIND} onChange={(colorblind) => set({ colorblind })} />
       <TokenLegend />

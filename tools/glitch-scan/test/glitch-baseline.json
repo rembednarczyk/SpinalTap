@@ -25,9 +25,14 @@
   "bridge-without-deck": 0,
   "under-deck-blocked": 0,
   "landmark-overbuilt": 0,
+  "passage-blocked": 0,
+  "building-underground-solid": 0,
+  "passage-maxheight": 0,
   "passage-off-map": 0,
   "building-part-ignored": 0,
-  "church-towers-over-parts": 0,
   "building-part-orphan": 0,
-  "marketplace-empty": 0
+  "marketplace-empty": 0,
+  "church-towers-over-parts": 0,
+  "interior-outside-building": 0,
+  "roof-shape-ignored": 0
 }

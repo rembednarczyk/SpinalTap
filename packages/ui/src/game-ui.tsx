@@ -20,7 +20,8 @@ import { MetroMap, MetroRide } from "./metro/metro-panel";
 import { RadioKey } from "./radio/radio";
 
 /**
- * Accessibility settings on the document root (ADR-0028): HUD scale as `--hud-scale`, the
+ * Accessibility settings on the document root (ADR-0028): HUD scale as `--hud-scale`, subtitle size
+ * as `--subs-scale` and an opaque subtitle box as `subs-solid`, the
  * legible font, reduced flashes and the colour-blind palette as attributes the styles read.
  */
 const Accessibility = () => {
@@ -28,18 +29,22 @@ const Accessibility = () => {
   const legible = useUi((s) => s.settings.legibleFont);
   const reduce = useUi((s) => s.settings.reduceFlashes);
   const palette = useUi((s) => s.settings.colorblind);
+  const subs = useUi((s) => s.settings.subtitleScale);
+  const subsBox = useUi((s) => s.settings.subtitleBackground);
   useEffect(() => {
     const root = document.documentElement;
     root.style.setProperty("--hud-scale", String(scale));
+    root.style.setProperty("--subs-scale", String(subs));
+    root.classList.toggle("subs-solid", subsBox);
     root.classList.toggle("legible-font", legible);
     root.classList.toggle("reduce-flashes", reduce);
     if (palette === "off") delete root.dataset.palette;
     else root.dataset.palette = palette;
-  }, [scale, legible, reduce, palette]);
+  }, [scale, legible, reduce, palette, subs, subsBox]);
   return null;
 };
 
-const Screens = ({ touch }: { touch: TouchPadSink | undefined }) => {
+const Screens = ({ touch, version }: { touch: TouchPadSink | undefined; version: string | undefined }) => {
   const screen = useUi((s) => s.screen);
   const modal = useUi((s) => s.dialogue !== null || s.shopOpen || s.loot !== null || s.phoneOpen || s.breach !== null || s.metroMap !== null || s.metroRide !== null);
   // The character screen covers the whole game; the HUD under it would only show through.
@@ -60,15 +65,18 @@ const Screens = ({ touch }: { touch: TouchPadSink | undefined }) => {
       {screen === "playing" && <MetroMap />}
       {screen === "playing" && <MetroRide />}
       {screen === "playing" && <RadioKey />}
-      {screen === "title" && <TitleScreen />}
+      {screen === "title" && <TitleScreen version={version} />}
       {screen === "paused" && <PauseMenu />}
       {screen === "dead" && <DeathScreen />}
     </>
   );
 };
 
-/** Root of the React overlay. Reads only the store; acts only through intents. */
-export const GameUi = ({ store, intents, touch }: { store: UiStore; intents: UiIntents; touch?: TouchPadSink }) => {
+/**
+ * Root of the React overlay. Reads only the store; acts only through intents. `version` is the build
+ * shown on the title screen, so a bug report can name it.
+ */
+export const GameUi = ({ store, intents, touch, version }: { store: UiStore; intents: UiIntents; touch?: TouchPadSink; version?: string }) => {
   const value = useMemo(() => ({ store, intents }), [store, intents]);
   useEffect(() => {
     document.documentElement.classList.toggle("touch-mode", !!touch);
@@ -76,7 +84,7 @@ export const GameUi = ({ store, intents, touch }: { store: UiStore; intents: UiI
   return (
     <UiContext.Provider value={value}>
       <Accessibility />
-      <Screens touch={touch} />
+      <Screens touch={touch} version={version} />
     </UiContext.Provider>
   );
 };

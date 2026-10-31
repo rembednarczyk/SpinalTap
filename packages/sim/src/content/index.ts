@@ -10,6 +10,7 @@ export * from "./schedules";
 export * from "./devices";
 export * from "./doors";
 export * from "./interiors";
+export * from "./interior-areas";
 export * from "./metro";
 export * from "./encounters";
 export * from "./contract-hooks";

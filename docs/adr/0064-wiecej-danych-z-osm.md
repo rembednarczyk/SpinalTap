@@ -35,3 +35,8 @@ Użytkownik dołożył pozycje 20, 23, 25 i 26 z sekcji C przeglądu. Każdy eta
 - Miasto zbliża się do prawdziwego Lublina w miejscach, które gracz widzi najczęściej: dachy, wejścia, szyldy, oświetlenie, drzewa.
 - Etapy 2, 3 i 9 dotykają `sim` (wejścia, widoczność, kolizja płotów); złote hashe zmieniają się tylko tam, świadomie.
 - Etap 11 może zmienić wysokości wielu budynków naraz; wtedy kurator robi przegląd całych dzielnic, a migawka NPR zmienia się świadomie.
+
+## Uzupełnienie (etap 1)
+- Widok `building` (`core/ports/types.ts`) dostaje dwa pola opcjonalne i wsteczne: `roofShape` (`RoofShape`: `gabled`, `half-hipped`, `mansard`, `hipped`, `pyramidal`, `skillion`, `dome`, `onion`, `flat`) z OSM `roof:shape` oraz `roofAcross` z `roof:orientation=across` (kalenica w poprzek dłuższego boku obrysu; bez pola wzdłuż). Import mapuje pokrewne wartości: `lean_to` na `skillion`, `gambrel` na `mansard`, `cone` na `pyramidal`, `side_hipped` i `saltbox` na `gabled`; inne wartości zostają bez pola.
+- Bez pola renderer rysuje dach jak dotąd (czterospadowy, czasem kopuła na zwartym zabytku), z tymi samymi losowaniami wyglądu. Z polem kształt idzie z danych, także w częściach `building:part` (G-049).
+- Wysokość dachu (`roof`) i bryły kolizji się nie zmieniają: kształt to sam wygląd, złote hashe zostają.

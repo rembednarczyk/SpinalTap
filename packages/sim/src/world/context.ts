@@ -22,6 +22,11 @@ export interface SessionState {
   passenger: Entity | null;
   /** Street encounters and micro-events of this session (ADR-0034). */
   street2: StreetScenes;
+  /**
+   * The interior the player is in (ADR-0061): its id, null outside, undefined until the first
+   * step of a new game or a load has read it from the position. Transient, not saved.
+   */
+  interior: string | null | undefined;
 }
 
 /** A street encounter whose dialogue is open, and the micro-event under way (ADR-0034). */
@@ -90,6 +95,7 @@ export const freshSession = (): SessionState => ({
   watch: { district: null, playerHp: null, focus: null, ram: null, reinforce: 0 },
   passenger: null,
   street2: { encounter: null, npcs: {}, micro: null, district: null },
+  interior: undefined,
 });
 
 /** Mutable holder for the immutable domain state, plus a dirty marker for quest evaluation. */

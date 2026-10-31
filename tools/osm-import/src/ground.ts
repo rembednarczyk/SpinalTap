@@ -95,11 +95,12 @@ export const coveredByWater = (line: readonly Pt[], water: readonly (readonly Pt
 /**
  * Bands from one line; `mappedSidewalkNear` tells whether separate sidewalks run along it.
  * A river whose bed is mapped as a water area gets no band of its own: the buffered centre
- * line would lay a second, wider strip over the real banks.
+ * line would lay a second, wider strip over the real banks. A tunnel `atStreet` (a gateway the
+ * map tags `tunnel=yes`, G-076) is paved like the street it joins.
  */
-export const lineBands = (l: Line, mappedSidewalkNear: boolean, water: readonly (readonly Pt[])[] = []): Band[] => {
+export const lineBands = (l: Line, mappedSidewalkNear: boolean, water: readonly (readonly Pt[])[] = [], atStreet = false): Band[] => {
   const t = l.tags;
-  if (underground(t) || l.line.length < 2) return [];
+  if ((underground(t) && !atStreet) || l.line.length < 2) return [];
   const bridge = t.bridge !== undefined && t.bridge !== "no";
   const deck = bridge ? ([l.line[0]!, l.line[l.line.length - 1]!] as const) : undefined;
   const out: Band[] = [];

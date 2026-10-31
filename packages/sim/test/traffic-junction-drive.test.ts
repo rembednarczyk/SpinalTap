@@ -101,4 +101,12 @@ describe("the traffic through the junctions (ADR-0055, G-006)", () => {
     expect(after.collisions).toBeLessThanOrEqual(collisions);
     expect(after.stood).toBeLessThanOrEqual(stood);
   }, 120_000);
+
+  // 3 Maja's left lane shifts across into the lane its right one turns out of into Żołnierzy
+  // Niepodległej: vehicles appeared beside one on its way there and drove into it (G-075; measured
+  // before the fix: 3 collisions in these seeds, 8 with Krakowskie reaching z = -270).
+  it("by 3 Maja at Żołnierzy Niepodległej, a dozen seeds: no two vehicles meet (G-075)", () => {
+    const collisions = Array.from({ length: 12 }, (_, k) => drive(k + 1, -105, 90).collisions);
+    expect(collisions).toEqual(Array.from({ length: 12 }, () => 0));
+  }, 240_000);
 });

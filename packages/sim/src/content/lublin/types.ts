@@ -1,4 +1,4 @@
-import type { BuildingUse, GroundSurface, RoadMarkingKind, StreetPropKind, TerrainGrid } from "@seki/core";
+import type { BuildingUse, GroundSurface, RoadMarkingKind, RoofShape, StreetPropKind, TerrainGrid } from "@seki/core";
 
 /**
  * Lublin's centre from map data (ADR-0042), as `tools/osm-import` writes it into
@@ -32,6 +32,10 @@ export interface LublinBuildingData {
   readonly use: BuildingUse;
   /** Pitched or domed roof above `height`, metres; absent means flat. */
   readonly roof?: number;
+  /** The roof's shape from OSM `roof:shape` (ADR-0064); absent, the renderer picks one. */
+  readonly roofShape?: RoofShape;
+  /** OSM `roof:orientation=across`: the ridge across the outline's long side. */
+  readonly roofAcross?: true;
   /** Landmark name (named OSM building, or a named hotel or sight mapped as a point inside it). */
   readonly name?: string;
   /** Seed of the facade's variation: FNV-1a of `id`. */
