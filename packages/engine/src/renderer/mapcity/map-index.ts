@@ -62,4 +62,16 @@ export class BinIndex {
       if (b && x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ) yield id;
     }
   }
+
+  /** Ids whose box meets `box`, each once. */
+  within(box: Box2): Set<number> {
+    const out = new Set<number>();
+    for (const k of cellsOf(box, BIN)) {
+      for (const id of this.bins.get(k) ?? []) {
+        const b = this.boxes.get(id);
+        if (b && b.minX <= box.maxX && b.maxX >= box.minX && b.minZ <= box.maxZ && b.maxZ >= box.minZ) out.add(id);
+      }
+    }
+    return out;
+  }
 }

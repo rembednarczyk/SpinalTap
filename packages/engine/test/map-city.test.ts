@@ -207,6 +207,26 @@ describe("map city batches (ADR-0044)", () => {
     // Everything resident at once stays under a million vertices.
     expect(s.vertices).toBeLessThan(1_000_000);
   });
+
+  it("takes a church's towers away while a part from the map stands on it, in whatever cell (G-057)", () => {
+    const city = makeCity();
+    // A long church: its cell (by its centre, x 140) lies beyond the cells the part at its west end touches.
+    const church: MapView = { kind: "building", outline: [{ x: -10, z: 0 }, { x: 290, z: 0 }, { x: 290, z: 20 }, { x: -10, z: 20 }], height: 14, levels: 3, use: "church", look: 77, roof: 4 };
+    const turret: MapView = { kind: "building", outline: [{ x: -5, z: 8 }, { x: -1, z: 8 }, { x: -1, z: 12 }, { x: -5, z: 12 }], height: 20, levels: 5, use: "church", look: 78, roof: 2, soffit: 14 };
+    const farTop = (): number => {
+      city.flush();
+      city.update(0.016, { x: 140, y: 2, z: 500 }, false);
+      expect(city.lodAt(140, 10)).toBe("far");
+      const far = city.meshes.find((m) => m.name === "map-far-1:0")!;
+      return Math.max(...far.getVerticesData("position")!.filter((_, i) => i % 3 === 1));
+    };
+    city.spawn(1, church, { x: 0, y: 0, z: 0 });
+    expect(farTop()).toBeGreaterThan(14 + 4 + 5);
+    city.spawn(2, turret, { x: 0, y: 0, z: 0 });
+    expect(farTop()).toBeLessThanOrEqual(14 + 4 + 0.5);
+    city.despawn(2);
+    expect(farTop()).toBeGreaterThan(14 + 4 + 5);
+  });
 });
 
 describe("roofs over the street (rain stops under them)", () => {

@@ -3,12 +3,17 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { type StreetPropItem, VEHICLE_SIZE } from "../../../packages/core/src";
 import { planSteps } from "../../../packages/engine/src/renderer/mapcity/steps-plan";
+import { facadeFrame } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
+import { planFarBuilding } from "../../../packages/engine/src/renderer/mapcity/facade-plan";
+import { type BuildingSource, mapBuilding } from "../../../packages/engine/src/renderer/mapcity/map-building";
+import { centroid, cleanRing, pointInRing } from "../../../packages/engine/src/renderer/mapcity/polygon";
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
 import { geoToWorld } from "../../osm-import/src/project.ts";
 import { CROWD_LANES } from "../../../packages/sim/src/content/crowd";
 import { furnitureClearance } from "../../../packages/sim/src/content/furniture-index";
 import { BOLLARD, alongSegment, anchors, chainSegments, chainThrough, distanceToPiece, furniturePrisms, furnitureRadius } from "../../../packages/sim/src/content/lublin/furniture";
+import { buildingView } from "../../../packages/sim/src/content/lublin";
 import { inBuilding, nearestWall } from "../../../packages/sim/src/content/lublin/places";
 import { ROAD_CHAINS, type RoadChain, polylineLength, surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
 import { clearedBuilding } from "../../../packages/sim/src/content/cleared-buildings";
@@ -461,6 +466,24 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       if (pts.length === 0 || over.length === 0) return [];
       const top = Math.max(...over.map((b) => b.y + b.height)) - Math.min(...over.map((b) => b.y + b.plinth));
       return top < eaves - 3.2 ? [{ at: near(c.x, c.z), what: `w${w.id} walls to ${eaves.toFixed(1)} m, the game's to ${top.toFixed(1)} m` }] : [];
+    });
+  },
+  /**
+   * A church with parts from the map lifted onto it (its nave, turrets, chapels, G-049) whose block
+   * the renderer still crowns with bell towers of its own, matching nothing in the data (G-057).
+   */
+  "church-towers-over-parts": () => {
+    const sources = MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b))).map((b): BuildingSource => {
+      const view = buildingView(b) as BuildingSource["view"];
+      return { ring: cleanRing(view.outline.map((p) => ({ x: p.x + b.x, z: p.z + b.z }))), view, at: { x: b.x, y: b.y, z: b.z } };
+    });
+    const lifted = sources.filter((s) => s.view.soffit !== undefined);
+    return sources.flatMap((s, i) => {
+      if (s.view.use !== "church" || s.view.soffit !== undefined || !lifted.some((p) => pointInRing(centroid(p.ring), s.ring))) return [];
+      const sink = new MeshSink();
+      planFarBuilding(sink, facadeFrame(mapBuilding(i + 1, s, () => null, lifted), () => null));
+      const top = Math.max(...sink.positions.filter((_, k) => k % 3 === 1)) - (s.at.y + s.view.height + (s.view.roof ?? 0));
+      return top > 0.5 ? [{ at: near(s.at.x, s.at.z), what: `${s.view.name ?? "church"}: ${top.toFixed(1)} m over its roof` }] : [];
     });
   },
 };
