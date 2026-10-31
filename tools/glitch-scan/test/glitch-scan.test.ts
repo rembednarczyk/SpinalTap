@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 import { type StreetPropItem, VEHICLE_SIZE, terrainHeightAt } from "../../../packages/core/src";
 import { planSteps } from "../../../packages/engine/src/renderer/mapcity/steps-plan";
 import { facadeFrame } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
@@ -687,14 +687,27 @@ describe("the glitch scan (ADR-0054)", () => {
     const gateTop = gate.y + gate.height + (gate.roof ?? 0);
     for (const t of tiers) if (t.y1 > gateTop) expect(ringGap(t.ring, worldOutline(gate))).toBeGreaterThanOrEqual(5);
   });
+});
 
-  it("finds no more glitches of any known kind than its baseline", () => {
-    const found = Object.fromEntries(Object.entries(CHECKS).map(([k, check]) => [k, check()]));
+/**
+ * The ratchet: one test per kind, so each stays far under the time limit on a loaded CI runner,
+ * where the whole scan in a single test went over 20 s under coverage (PR #80, 7.5 s alone).
+ * The report and an updated baseline are written once all kinds have run.
+ */
+describe("the glitch scan against its baseline (ADR-0054)", () => {
+  const update = process.env.GLITCH_BASELINE === "update" || !existsSync(BASELINE);
+  const baseline = update ? {} : (JSON.parse(readFileSync(BASELINE, "utf8")) as Record<string, number>);
+  const found: Record<string, Finding[]> = {};
+  afterAll(() => {
     const counts = Object.fromEntries(Object.entries(found).map(([k, f]) => [k, f.length]));
     mkdirSync("reports", { recursive: true });
     writeFileSync("reports/glitch-scan.json", JSON.stringify({ counts, found }, null, 2));
-    if (process.env.GLITCH_BASELINE === "update" || !existsSync(BASELINE)) writeFileSync(BASELINE, `${JSON.stringify(counts, null, 2)}\n`);
-    const baseline = JSON.parse(readFileSync(BASELINE, "utf8")) as Record<string, number>;
-    for (const [k, n] of Object.entries(counts)) expect(n, `${k}: ${n} found, baseline ${baseline[k] ?? 0} (see reports/glitch-scan.json)`).toBeLessThanOrEqual(baseline[k] ?? 0);
+    if (update && Object.keys(found).length === Object.keys(CHECKS).length) writeFileSync(BASELINE, `${JSON.stringify(counts, null, 2)}\n`);
   });
+  for (const [k, check] of Object.entries(CHECKS)) {
+    it(`finds no more ${k} than its baseline`, () => {
+      found[k] = check();
+      if (!update) expect(found[k].length, `${k}: ${found[k].length} found, baseline ${baseline[k] ?? 0} (see reports/glitch-scan.json)`).toBeLessThanOrEqual(baseline[k] ?? 0);
+    });
+  }
 });
