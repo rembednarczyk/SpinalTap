@@ -411,3 +411,19 @@ Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [r
 - Dowód: `traffic-junction-drive` na gałęzi G-052: Peowiaków ziarna 3 i 7 po 2 kolizje (próg 0), 3 Maja ziarno 7: 3 (próg 2)
 - Pakiet właściciela: packages/sim (traffic-junctions)
 - Test przyjęcia: `traffic-junction-drive` w progach na gałęzi G-052 i na main
+
+### G-089 Bramy z maxheight=below_default ze sklepieniem 4 m
+- Status: naprawione (#89). `vaultOf`: `maxheight` → sklepienie, `below_default` 3,6 m (szacunek, do potwierdzenia zdjęciem); skan `passage-maxheight` 3 → 0
+- Gdzie: Królewska w755152552/555/560; T-054
+- Przyczyna: `buildingPassages` (wysokość w `out.push`, przy `widthOf`) nie czyta `maxheight`
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: kontrola `passage-maxheight` 3 → 0 (np. sklepienie 3,6 m dla `below_default`)
+
+### G-090 Przesunięcie pasa ruchu z mediany szerokości całego łańcucha ulicy
+- Status: naprawione (#88). `laneLine`: przesunięcie pasa zwężane lokalnie (okno ±10 m, ≤ 0,1 m/m); 6 ze 149 pasów na main
+- Ważność: S3 (proponowana; na łańcuchach o różnej szerokości pas wychodzi poza wąski odcinek, latarnie w pasie) · Zasięg: łańcuchy ulic z odcinkami różnej szerokości · Koszt: mały–średni
+- Gdzie: Staszica (dopasowany w1150131461, połowa asfaltu ok. 2,0–2,5 m, i odcinek 3,25 m); latarnie `lamp-road` (217, 145) i (205, 118) 1,03 m od pasa
+- Przyczyna: `packages/sim/src/content/traffic.ts` `lanesOf` bierze `laneOffset(roadHalfWidth(...))` z mediany całego łańcucha (2,75 → pas 1,375 m od osi) zamiast lokalnej szerokości odcinka (1,2 m)
+- Pakiet właściciela: packages/sim (content/traffic)
+- Test przyjęcia: z łatką G-082 (`scratchpad/g082-wip.patch`) `furniture-in-car-lane` 2 → 0 bez wzrostu `car-lane-off-road`, `lane-dead-end`, `turn-off-road`; świadoma zmiana złotego hasha, jeśli ruch się zmienia
+- Uwaga z naprawy G-082: ulice ok. 3–4 m mają w sim dwa pasy, a auta (pół szerokości 0,9 m) zachodzą na chodnik; żadna kontrola tego nie liczy
