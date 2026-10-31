@@ -60,7 +60,7 @@ describe("journal view model", () => {
     expect(main?.steps.every((s) => s.done)).toBe(true);
     expect(main?.steps).toHaveLength(3);
     const contract = j.quests.find((q) => q.id === "contract-c3");
-    expect(contract?.title).toBe("Kontrakt 3 · Kaito");
+    expect(contract?.title).toBe("Contract 3 · Kaito");
     expect(contract?.steps.map((s) => s.done)).toEqual([true, false]);
     expect(contract?.steps[1]?.objective).toBe("Go back to Kaito for your pay");
     expect(buildJournal(domain, "pl").quests.find((q) => q.id === "contract-c3")?.steps[1]?.objective).toBe("Wróć do Kaito po zapłatę");

@@ -32,7 +32,7 @@ describe("fixer conversation", () => {
     expect(view.choices.map((c) => c.text)).toEqual(["Kim jesteś?", "Co mi się stało?"]);
 
     view = runtime.choose(0);
-    expect(view.lines[0]?.speaker).toBe("Ty");
+    expect(view.lines[0]?.speaker).toBe("speaker.you");
     expect(view.choices).toHaveLength(2);
 
     view = runtime.choose(0);
@@ -144,7 +144,7 @@ describe("Ume conversation", () => {
     const { runtime, commands } = setup();
     const d = createDomainState();
     const view = runtime.start("ume", { ...d, reputation: { ...d.reputation, civilians: -30 } });
-    expect(view.lines).toEqual([{ speaker: "Babcia Ume", text: "Nie podchodź do mnie. Widziałam, co robisz na tej ulicy." }]);
+    expect(view.lines).toEqual([{ speaker: "speaker.ume", text: "Nie podchodź do mnie. Widziałam, co robisz na tej ulicy." }]);
     expect(view.ended).toBe(true);
     expect(commands).toEqual([]);
   });
@@ -329,13 +329,13 @@ describe("act I: Echo (M3)", () => {
   it("names the people inside the memories", () => {
     const { runtime } = setup();
     expect(runtime.start("recall_courier_case", echo(0)).lines.find((l) => l.speaker)?.speaker).toBe("Ren");
-    expect(runtime.start("recall_operating_table", echo(0)).lines.find((l) => l.speaker)?.speaker).toBe("Technik Kagami");
+    expect(runtime.start("recall_operating_table", echo(0)).lines.find((l) => l.speaker)?.speaker).toBe("speaker.tech");
   });
 
   it("Mori explains the module once the first flashback was played", () => {
     const { runtime, commands } = setup();
     let view = runtime.start("mori", echo(1, { flags: ["recalled:courier_case"] }));
-    expect(view.lines[0]?.speaker).toBe("Doktor Mori");
+    expect(view.lines[0]?.speaker).toBe("speaker.mori");
     expect(text(view)).toContain("Moduł pamięci Kagami");
     view = runtime.choose(1);
     expect(view.ended).toBe(true);

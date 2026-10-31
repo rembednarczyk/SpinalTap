@@ -57,7 +57,7 @@ describe("levels in the game (ADR-0020, ADR-0021)", () => {
     // Along the deck to the lift gate, then call the platform up with the button.
     standAt(g, { x: O.x + 108, y: O.y + 9.9, z: O.z + 89 }, Math.PI);
     g.step(1);
-    expect(prompt()).toContain("Winda");
+    expect(prompt()).toContain("Elevator");
     g.step(1, { interact: true });
     g.step(300);
     // Onto the platform and down.
@@ -106,7 +106,7 @@ describe("levels in the game (ADR-0020, ADR-0021)", () => {
     // From the balcony, the interact key on the second ladder, then up onto the roof.
     standAt(g, { x: O.x + 69.2, y: O.y + 4.5, z: O.z + 64.6 }, Math.PI);
     g.step(1);
-    expect(prompt()).toContain("Wspinaj się");
+    expect(prompt()).toContain("Climb");
     g.step(1, { interact: true });
     expect(g.seki.state().climbing).toBe("targ-escape-2");
     const roof = walkUntil(g, (p) => p.z < O.z + 64 && (p.y - O.y > 9 || p.y - O.y < 0.1), 12);

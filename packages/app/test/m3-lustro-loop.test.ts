@@ -149,7 +149,7 @@ describe("M3 acceptance: act II from the end of act I to each of its endings", (
     if (act2 === "kagami") expect([delta("kagami"), delta("fixers")]).toEqual([20, 10]);
     else expect(d.reputation.kagami).toBeLessThanOrEqual(-20);
     expect(ui.getState().dialogue).toBeNull();
-    expect(objective(ui)).toContain("Kaito ma kolejne kontrakty");
+    expect(objective(ui)).toContain("Kaito has more contracts");
 
     // The ending survives a save and a load, and the people of the act remember it.
     expect(await session.saveAsync("act2")).toBe(true);

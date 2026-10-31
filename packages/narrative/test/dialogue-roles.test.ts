@@ -104,10 +104,10 @@ interface Scenario {
 const KAITO = ["Kaito"];
 const SCENARIOS: readonly Scenario[] = [
   // The opening in the clinic (ADR-0038): Mori has his say by the chair.
-  { name: "Kaito, first meeting", knot: "fixer", domain: m0(0), npcs: ["Kaito", "Doktor Mori"] },
-  { name: "Neon Koi barman, before Kaito", knot: "koi_barman", domain: m0(0), npcs: ["Barman"] },
-  { name: "Neon Koi barman", knot: "koi_barman", domain: afterM0(), npcs: ["Barman"] },
-  { name: "Neon Koi regular", knot: "koi_regular", domain: afterM0(), npcs: ["Bywalec"] },
+  { name: "Kaito, first meeting", knot: "fixer", domain: m0(0), npcs: ["Kaito", "speaker.mori"] },
+  { name: "Neon Koi barman, before Kaito", knot: "koi_barman", domain: m0(0), npcs: ["speaker.barman"] },
+  { name: "Neon Koi barman", knot: "koi_barman", domain: afterM0(), npcs: ["speaker.barman"] },
+  { name: "Neon Koi regular", knot: "koi_regular", domain: afterM0(), npcs: ["speaker.bywalec"] },
   { name: "Kaito, courier still alive", knot: "fixer", domain: m0(1), npcs: KAITO },
   { name: "Kaito, report back", knot: "fixer", domain: m0(2), npcs: KAITO },
   { name: "Kaito, contract offer", knot: "fixer", domain: afterM0({}, null, 0), npcs: KAITO },
@@ -115,23 +115,23 @@ const SCENARIOS: readonly Scenario[] = [
   { name: "Kaito, payday", knot: "fixer", domain: afterM0({}, hit("cleared"), 2), npcs: KAITO },
   { name: "Kaito, delivery running", knot: "fixer", domain: afterM0({}, delivery("active")), npcs: KAITO },
   { name: "Kaito, busy for Hana", knot: "fixer", domain: afterM0({}, retrieve("active")), npcs: KAITO },
-  { name: "Ume, first talk", knot: "ume", domain: m0(0), npcs: ["Babcia Ume"] },
-  { name: "Ume, Ren unlocked", knot: "ume", domain: echo(1, memories("courier_case")), npcs: ["Babcia Ume"] },
-  { name: "Ume, Ren after her memory", knot: "ume", domain: echo(1, { ...memories("courier_case"), flags: ["ume_memory"] }), npcs: ["Babcia Ume"] },
-  { name: "Ume, at night", knot: "ume", domain: { ...m0(0), clock: { seconds: 23 * 3600 + 600 } }, npcs: ["Babcia Ume"] },
-  { name: "Mori, small talk", knot: "mori", domain: echo(2), npcs: ["Doktor Mori"] },
-  { name: "Mori, module", knot: "mori", domain: echo(1, { flags: ["recalled:courier_case"] }), npcs: ["Doktor Mori"] },
+  { name: "Ume, first talk", knot: "ume", domain: m0(0), npcs: ["speaker.ume"] },
+  { name: "Ume, Ren unlocked", knot: "ume", domain: echo(1, memories("courier_case")), npcs: ["speaker.ume"] },
+  { name: "Ume, Ren after her memory", knot: "ume", domain: echo(1, { ...memories("courier_case"), flags: ["ume_memory"] }), npcs: ["speaker.ume"] },
+  { name: "Ume, at night", knot: "ume", domain: { ...m0(0), clock: { seconds: 23 * 3600 + 600 } }, npcs: ["speaker.ume"] },
+  { name: "Mori, small talk", knot: "mori", domain: echo(2), npcs: ["speaker.mori"] },
+  { name: "Mori, module", knot: "mori", domain: echo(1, { flags: ["recalled:courier_case"] }), npcs: ["speaker.mori"] },
   {
     name: "Mori, finale aya",
     knot: "mori",
     domain: echo(3, { flags: ["recalled:crash_night"], story: { choices: { case: "opened", name: "spoken", crash: "wheel" }, ending: null, act2Ending: null } }),
-    npcs: ["Doktor Mori"],
+    npcs: ["speaker.mori"],
   },
   {
     name: "Mori, finale seki",
     knot: "mori",
     domain: echo(3, { flags: ["recalled:crash_night"], story: { choices: { case: "sealed", name: "silent", crash: "ren" }, ending: null, act2Ending: null } }),
-    npcs: ["Doktor Mori"],
+    npcs: ["speaker.mori"],
   },
   { name: "Hana, first offer", knot: "hana", domain: afterM0(), npcs: ["Hana"] },
   { name: "Hana, payday", knot: "hana", domain: afterM0({ flags: ["met_hana"] }, retrieve("cleared")), npcs: ["Hana"] },
@@ -158,15 +158,15 @@ const SCENARIOS: readonly Scenario[] = [
   { name: "Fumiko, regular, friendly street", knot: "fumiko", domain: afterM0({ flags: ["met_fumiko"], reputation: { ...createDomainState().reputation, civilians: 40 } }), npcs: ["Fumiko"] },
   { name: "Fumiko, closed", knot: "fumiko_closed", domain: { ...afterM0(), clock: { seconds: 6 * 3600 } }, npcs: ["Fumiko"] },
   { name: "flashback: case", knot: "recall_courier_case", domain: echo(0), npcs: ["Ren"], actions: true },
-  { name: "flashback: table", knot: "recall_operating_table", domain: echo(0), npcs: ["Technik Kagami", "Doktor Mori"], actions: true },
+  { name: "flashback: table", knot: "recall_operating_table", domain: echo(0), npcs: ["speaker.tech", "speaker.mori"], actions: true },
   { name: "flashback: crash", knot: "recall_crash_night", domain: echo(0), npcs: ["Ren"], actions: true },
   // Act II, "Lustro" (m3-lustro.ink), after each act-I ending and with different act-I choices.
   { name: "act II opening, aya", knot: "act2_opening", domain: lustro(0, "aya", { crash: "ren" }), npcs: ["Ren"] },
   { name: "act II opening, seki", knot: "act2_opening", domain: lustro(0, "seki", { crash: "ren" }), npcs: KAITO },
-  { name: "Ume, where Ren is (aya)", knot: "ume", domain: lustro(0, "aya", {}, { flags: ["ume_memory", "ume_ren"] }), npcs: ["Babcia Ume"] },
-  { name: "Ume, where Ren is (seki)", knot: "ume", domain: lustro(0, "seki"), npcs: ["Babcia Ume"] },
-  { name: "Mori, the module talks (aya)", knot: "mori", domain: lustro(0, "aya"), npcs: ["Doktor Mori"] },
-  { name: "Mori, who bought the module (seki)", knot: "mori", domain: lustro(0, "seki"), npcs: ["Doktor Mori"] },
+  { name: "Ume, where Ren is (aya)", knot: "ume", domain: lustro(0, "aya", {}, { flags: ["ume_memory", "ume_ren"] }), npcs: ["speaker.ume"] },
+  { name: "Ume, where Ren is (seki)", knot: "ume", domain: lustro(0, "seki"), npcs: ["speaker.ume"] },
+  { name: "Mori, the module talks (aya)", knot: "mori", domain: lustro(0, "aya"), npcs: ["speaker.mori"] },
+  { name: "Mori, who bought the module (seki)", knot: "mori", domain: lustro(0, "seki"), npcs: ["speaker.mori"] },
   { name: "Ren, first meeting (aya)", knot: "ren_odagiri", domain: lustro(1, "aya", { case: "opened", crash: "ren" }), npcs: ["Ren"] },
   { name: "Ren, first meeting (seki)", knot: "ren_odagiri", domain: lustro(1, "seki", { case: "sealed", crash: "wheel" }), npcs: ["Ren"] },
   { name: "Ren, waiting for Kaito's news", knot: "ren_odagiri", domain: lustro(2, "aya"), npcs: ["Ren"] },
@@ -192,10 +192,10 @@ const SCENARIOS: readonly Scenario[] = [
   { name: "Kurosawa, waiting", knot: "kurosawa", domain: lustro(2, "aya"), npcs: ["Kurosawa"] },
   { name: "Kurosawa, the deal (aya)", knot: "kurosawa", domain: lustro(3, "aya", { job: "taken", voice: "listened", rooftop: "together" }), npcs: ["Kurosawa"] },
   { name: "Kurosawa, the deal (seki)", knot: "kurosawa", domain: lustro(3, "seki", { job: "refused", voice: "torn" }), npcs: ["Kurosawa"] },
-  { name: "Ume, after the street ending", knot: "ume", domain: afterLustro("street", { flags: ["ume_memory"] }), npcs: ["Babcia Ume"] },
+  { name: "Ume, after the street ending", knot: "ume", domain: afterLustro("street", { flags: ["ume_memory"] }), npcs: ["speaker.ume"] },
   { name: "flashback: rooftop", knot: "recall_rooftop", domain: lustro(1, "aya"), npcs: ["Ren"], actions: true },
-  { name: "flashback: last call", knot: "recall_last_call", domain: lustro(2, "aya"), npcs: ["Ren", "Technik Kagami"], actions: true },
-  { name: "flashback: mirror", knot: "recall_mirror", domain: afterLustro("kagami"), npcs: ["Technik Kagami"], actions: true },
+  { name: "flashback: last call", knot: "recall_last_call", domain: lustro(2, "aya"), npcs: ["Ren", "speaker.tech"], actions: true },
+  { name: "flashback: mirror", knot: "recall_mirror", domain: afterLustro("kagami"), npcs: ["speaker.tech"], actions: true },
   // Wave 2 (ADR-0032): the fixers mention the rolled variation of a running job.
   { name: "Kaito, hit running with a variation", knot: "fixer", domain: afterM0({}, hit("active")), npcs: KAITO, variation: VARIATION },
   { name: "Kaito, delivery with a variation", knot: "fixer", domain: afterM0({}, delivery("active")), npcs: KAITO, variation: VARIATION },
@@ -203,22 +203,22 @@ const SCENARIOS: readonly Scenario[] = [
   { name: "Genzō, hack with a variation", knot: "genzo", domain: afterM0({}, hack("active", 600)), npcs: ["Genzō"], variation: VARIATION },
   // Street encounters, one scenario per scene (and per branch the street's mood opens).
   { name: "encounter: pachinko", knot: "enc_s7_pachinko", domain: afterM0(), npcs: ["Nobu"] },
-  { name: "encounter: salaryman", knot: "enc_s7_salaryman", domain: afterM0(), npcs: ["Sarariman"] },
+  { name: "encounter: salaryman", knot: "enc_s7_salaryman", domain: afterM0(), npcs: ["speaker.sarariman"] },
   { name: "encounter: robot cat", knot: "enc_s7_neko", domain: afterM0(), npcs: ["Hina"] },
   { name: "encounter: poet", knot: "enc_s7_poet", domain: afterM0(), npcs: ["Shiro"] },
   { name: "encounter: poet, after the table", knot: "enc_s7_poet", domain: echo(2, memories("operating_table")), npcs: ["Shiro"] },
   { name: "encounter: flowers for Mei", knot: "enc_kanal_flowers", domain: afterM0(), npcs: ["Takumi"] },
-  { name: "encounter: fisherman", knot: "enc_kanal_fisherman", domain: afterM0(), npcs: ["Dziadek Sabu"] },
-  { name: "encounter: vending machine", knot: "enc_kanal_vending", domain: afterM0(), npcs: ["Automat"] },
+  { name: "encounter: fisherman", knot: "enc_kanal_fisherman", domain: afterM0(), npcs: ["speaker.sabu"] },
+  { name: "encounter: vending machine", knot: "enc_kanal_vending", domain: afterM0(), npcs: ["speaker.automat"] },
   { name: "encounter: Hebi recruit", knot: "enc_kanal_recruit", domain: afterM0(), npcs: ["Koji"] },
-  { name: "encounter: fortune teller", knot: "enc_targ_fortune", domain: afterM0(), npcs: ["Wróżka Kiku"] },
+  { name: "encounter: fortune teller", knot: "enc_targ_fortune", domain: afterM0(), npcs: ["speaker.kiku"] },
   { name: "encounter: chicken", knot: "enc_targ_chicken", domain: afterM0(), npcs: ["Daigo"] },
-  { name: "encounter: debt", knot: "enc_targ_debt", domain: afterM0(), npcs: ["Akane", "Poborca Hebi"] },
-  { name: "encounter: debt, Hebi friendly", knot: "enc_targ_debt", domain: afterM0({ reputation: { ...createDomainState().reputation, hebi: 40 } }), npcs: ["Akane", "Poborca Hebi"] },
+  { name: "encounter: debt", knot: "enc_targ_debt", domain: afterM0(), npcs: ["Akane", "speaker.poborca"] },
+  { name: "encounter: debt, Hebi friendly", knot: "enc_targ_debt", domain: afterM0({ reputation: { ...createDomainState().reputation, hebi: 40 } }), npcs: ["Akane", "speaker.poborca"] },
   { name: "encounter: idol", knot: "enc_targ_idol", domain: afterM0(), npcs: ["Riko"] },
   { name: "encounter: laid off", knot: "enc_doki_laidoff", domain: afterM0(), npcs: ["Tomo"] },
-  { name: "encounter: gull", knot: "enc_doki_gull", domain: afterM0(), npcs: ["Strażnik Tessen"] },
-  { name: "encounter: container", knot: "enc_doki_container", domain: afterM0(), npcs: ["Głos z kontenera"] },
+  { name: "encounter: gull", knot: "enc_doki_gull", domain: afterM0(), npcs: ["speaker.straznik"] },
+  { name: "encounter: container", knot: "enc_doki_container", domain: afterM0(), npcs: ["speaker.glos"] },
 ];
 
 const firstWord = (s: string): string => (s.toLocaleLowerCase("pl").match(/\p{L}+/u) ?? [""])[0];
@@ -230,7 +230,7 @@ const freshState = runtime.saveState();
 const explore = (scenario: Scenario): { choices: number; problems: string[] } => {
   runtime.loadState(freshState);
   // set_alias() renames Seki during a conversation, so her line may carry any of her names.
-  const sekiNames = new Set([scenario.domain.character.alias ?? "Ty", "Seki Senshi", "Aya"]);
+  const sekiNames = new Set([scenario.domain.character.alias ?? "speaker.you", "Seki Senshi", "Aya"]);
   const isSeki = (speaker: string | null): boolean => speaker !== null && sekiNames.has(speaker);
   const problems: string[] = [];
   let choices = 0;

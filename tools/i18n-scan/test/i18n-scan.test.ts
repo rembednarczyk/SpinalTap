@@ -91,6 +91,11 @@ describe("i18n scan (ADR-0056)", () => {
     expect([...panels, ...inventory]).toEqual([]);
   });
 
+  it("finds no Polish in the simulation, the narrative's code and the app after stage 4", () => {
+    const found = scanPackages(ROOT);
+    expect([...(found.sim ?? []), ...(found.narrative ?? []), ...(found.app ?? [])]).toEqual([]);
+  });
+
   it("would turn red on Polish JSX text next to an expression in a stage 1 menu", () => {
     const file = "packages/ui/src/menus/pause-menu.tsx";
     const src = readFileSync(join(ROOT, file), "utf8");
