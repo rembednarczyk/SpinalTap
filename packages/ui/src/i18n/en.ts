@@ -1,6 +1,8 @@
 import { enWorld } from "./en/world";
 import type { Message } from "./message";
 import { enTrade } from "./en/trade";
+import { enDomain } from "./en/domain";
+import { enContent } from "./en/content";
 
 /**
  * English, the default language and the source of every key (ADR-0056). The Polish catalog must
@@ -149,6 +151,8 @@ export const en = {
   "settings.reload.now": "Reload now",
   ...enTrade,
   ...enWorld,
+  ...enDomain,
+  ...enContent,
 } as const satisfies Readonly<Record<string, Message>>;
 
 export type MessageKey = keyof typeof en;

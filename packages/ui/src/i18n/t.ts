@@ -1,4 +1,4 @@
-import type { Locale } from "@seki/core";
+import type { DomainText, Locale } from "@seki/core";
 import { type MessageKey, en } from "./en";
 import type { Message, MessageParams } from "./message";
 import { pl } from "./pl";
@@ -38,3 +38,22 @@ export const translator = (locale: Locale): Translate => (key, params) => transl
 
 /** Is `key` in the catalogs? For keys built from ids (a control's action, a colour token). */
 export const isMessageKey = (key: string): key is MessageKey => Object.hasOwn(en, key);
+
+export type TranslateText = (text: DomainText) => string;
+
+/**
+ * A domain text from core (ADR-0056, stage 3) in `locale`: its key translated, the `TextRef`
+ * parameters translated in turn. A string that is no key (a name, a sentence from before the
+ * catalogs) is shown as it is.
+ */
+export const translateText = (locale: Locale, text: DomainText): string => {
+  if (typeof text === "string") return isMessageKey(text) ? translate(locale, text) : text;
+  if (!isMessageKey(text.key)) return text.key;
+  const params = text.params
+    ? Object.fromEntries(Object.entries(text.params).map(([name, v]) => [name, typeof v === "object" ? translateText(locale, v) : v]))
+    : undefined;
+  return translate(locale, text.key, params);
+};
+
+/** `translateText` bound to one language, as `useText()` hands it to components. */
+export const textTranslator = (locale: Locale): TranslateText => (text) => translateText(locale, text);

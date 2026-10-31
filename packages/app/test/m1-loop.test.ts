@@ -107,7 +107,7 @@ const shootDown = (s: GameSession, key: string): number[] => {
 describe("M1 acceptance: contract → eddies → cyberware → stronger in combat", () => {
   it("runs the whole loop", async () => {
     const { session, ui } = await setup();
-    expect(ui.getState().objective).toContain("Kaito ma kolejne kontrakty");
+    expect(ui.getState().objective).toContain("Kaito has more contracts");
 
     // Kaito offers a contract; accept it through ink.
     talkToKaito(session);
@@ -116,7 +116,7 @@ describe("M1 acceptance: contract → eddies → cyberware → stronger in comba
     steps(session, 1);
     const contract = session.sim.domain.contracts.active!;
     expect(contract.status).toBe("active");
-    expect(ui.getState().objective).toContain("Zneutralizuj gangerów Hebi");
+    expect(ui.getState().objective).toContain("Take out the Hebi gangers");
 
     // Clear the targets with the stock pistol and record the damage per body hit.
     const targets = [...session.sim.world].filter((e) => e.tag === contractTag(contract.id)).map((e) => e.key!);

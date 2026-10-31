@@ -69,7 +69,7 @@ const panelOffer = (ctx: SimContext, panel: Entity & { doorPanel: string }, lock
   return {
     kind: "door",
     dialogueId: panel.doorPanel,
-    prompt: forcing ? "Wyłam zamek (podniesie alarm)" : "Drzwi na kod: zamknięte",
+    prompt: forcing ? "prompt.door.force" : "prompt.door.locked",
     radius: 1.4,
   };
 };

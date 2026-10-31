@@ -2,6 +2,8 @@ import type { MessageKey } from "./en";
 import type { Message } from "./message";
 import { plTrade } from "./pl/trade";
 import { plWorld } from "./pl/world";
+import { plDomain } from "./pl/domain";
+import { plContent } from "./pl/content";
 
 /** Polish: exactly the English keys (ADR-0056); a missing or extra key does not compile. */
 export const pl = {
@@ -146,4 +148,6 @@ export const pl = {
   "settings.reload.now": "Przeładuj teraz",
   ...plTrade,
   ...plWorld,
+  ...plDomain,
+  ...plContent,
 } as const satisfies Readonly<Record<MessageKey, Message>>;

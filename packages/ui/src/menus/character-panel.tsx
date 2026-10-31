@@ -7,7 +7,7 @@ import {
   reputationTier,
   stanceOf,
 } from "@seki/core";
-import { useT } from "../i18n/use-t";
+import { useT, useText } from "../i18n/use-t";
 import { useUi } from "../use-ui";
 
 const SLOTS = ["optics", "nervous", "skeleton", "arms"] as const;
@@ -15,6 +15,7 @@ const SLOTS = ["optics", "nervous", "skeleton", "arms"] as const;
 /** Sheet tab of the character screen (Tab): implants, recovered memories, standing with factions. */
 export const CharacterPanel = () => {
   const t = useT();
+  const tx = useText();
   const alias = useUi((s) => s.alias);
   const loadout = useUi((s) => s.cyberware);
   const memories = useUi((s) => s.memories);
@@ -33,7 +34,7 @@ export const CharacterPanel = () => {
             return (
               <div key={slot} className="sheet__row">
                 <dt>{t(`character.slot.${slot}`)}</dt>
-                <dd>{id ? CYBERWARE_CATALOG[id].name : t("character.emptySlot")}</dd>
+                <dd>{id ? tx(CYBERWARE_CATALOG[id].name) : t("character.emptySlot")}</dd>
               </div>
             );
           })}
@@ -46,7 +47,7 @@ export const CharacterPanel = () => {
         ) : (
           <ul className="sheet__memories">
             {memories.map((id) => (
-              <li key={id}>{MEMORY_CATALOG[id as MemoryId]?.title ?? id}</li>
+              <li key={id}>{tx(MEMORY_CATALOG[id as MemoryId]?.title ?? id)}</li>
             ))}
           </ul>
         )}
@@ -56,7 +57,7 @@ export const CharacterPanel = () => {
         <dl className="sheet__list">
           {FACTION_IDS.map((f) => (
             <div key={f} className="sheet__row" data-testid={`rep-${f}`}>
-              <dt>{FACTIONS[f]}</dt>
+              <dt>{t(FACTIONS[f])}</dt>
               <dd>
                 {reputation[f] > 0 ? "+" : ""}
                 {reputation[f]} · {t(`character.tier.${reputationTier(reputation[f])}`)}

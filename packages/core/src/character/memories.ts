@@ -6,6 +6,7 @@ import type { StatModifiers } from "./stats";
  */
 export interface MemoryFragment {
   readonly id: string;
+  /** Catalog key of the title (`memory.<id>.title`, ADR-0056); `description` likewise. */
   readonly title: string;
   readonly description: string;
   readonly modifiers: StatModifiers;
@@ -14,58 +15,52 @@ export interface MemoryFragment {
 export const MEMORY_CATALOG = {
   combat_reflex: {
     id: "combat_reflex",
-    title: "Wspomnienie: odruch",
-    description:
-      "Strzał w zaułku obudził coś znajomego. Ręce wiedzą, gdzie celować, zanim zdążysz pomyśleć. Szansa na krytyk +12%.",
+    title: "memory.combat_reflex.title",
+    description: "memory.combat_reflex.desc",
     modifiers: { critChance: 0.12, damageBonus: 3 },
   },
   street_runner: {
     id: "street_runner",
-    title: "Wspomnienie: ucieczka",
-    description: "Pamiętasz dachy i deszcz. Biegłaś wtedy przed kimś. Szybkość ruchu +0,6 m/s.",
+    title: "memory.street_runner.title",
+    description: "memory.street_runner.desc",
     modifiers: { moveSpeed: 0.6 },
   },
   // Main thread, act I ("Echo"): fragments that surface through the Kagami module in Seki's skull.
   courier_case: {
     id: "courier_case",
-    title: "Wspomnienie: walizka",
-    description:
-      "Rampa za magazynem, deszcz, walizka przykuta do nadgarstka. Ciało pamięta, jak przyjąć cios na ramię i iść dalej. Pancerz +2.",
+    title: "memory.courier_case.title",
+    description: "memory.courier_case.desc",
     modifiers: { armor: 2 },
   },
   operating_table: {
     id: "operating_table",
-    title: "Wspomnienie: stół",
-    description:
-      "Białe światło i głos, który liczy zapisy. Leżałaś tam tak długo, że znasz każde słabe miejsce w ciele. Obrażenia krytyczne +0,25.",
+    title: "memory.operating_table.title",
+    description: "memory.operating_table.desc",
     modifiers: { critMultiplier: 0.25 },
   },
   crash_night: {
     id: "crash_night",
-    title: "Wspomnienie: wrak",
-    description: "Dron nad maską, mokry asfalt, kierownica w dłoniach. Wiesz już, jak wyszłaś z tego żywa. Szybkość ruchu +0,4 m/s.",
+    title: "memory.crash_night.title",
+    description: "memory.crash_night.desc",
     modifiers: { moveSpeed: 0.4 },
   },
   // Main thread, act II ("Lustro", ADR-0023): Ren's chip, the voice behind his, Kagami's copy.
   rooftop: {
     id: "rooftop",
-    title: "Wspomnienie: dach",
-    description:
-      "Dach nad targiem, deszcz i Ren, który liczy pieniądze, których jeszcze nie macie. Ciało pamięta każdy skok z krawędzi na krawędź i to, jak się wstaje po upadku. Zdrowie +15.",
+    title: "memory.rooftop.title",
+    description: "memory.rooftop.desc",
     modifiers: { maxHp: 15 },
   },
   last_call: {
     id: "last_call",
-    title: "Wspomnienie: głos",
-    description:
-      "Wrak, dym i słuchawka w uchu. Głos Rena mówi dalej, a za nim siedzi ktoś inny. Wiesz już, jak brzmi podłożony głos, i ręka nie drży, kiedy ktoś krzyczy ci do ucha. Stabilność celowania +10%.",
+    title: "memory.last_call.title",
+    description: "memory.last_call.desc",
     modifiers: { aimStability: 0.1 },
   },
   mirror: {
     id: "mirror",
-    title: "Wspomnienie: lustro",
-    description:
-      "Pełny zapis od Kagami: kuchnia z oknem na port, szkoła, pierwszy kurs. Wszystko się zgadza i niczego przy tym nie czujesz. Szansa na krytyk +5%, obrażenia +2.",
+    title: "memory.mirror.title",
+    description: "memory.mirror.desc",
     modifiers: { critChance: 0.05, damageBonus: 2 },
   },
 } as const satisfies Record<string, MemoryFragment>;

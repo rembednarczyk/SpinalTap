@@ -48,7 +48,7 @@ const findTrail = (s: GameSession, ui: Ui, ending: EndingId) => {
     expect(allText(ui)).toContain("Fiolki już nie ma.");
     finishDialogue(s, ui, "Komu sprzedałeś");
   }
-  expect(objective(ui)).toBe("Wejdź schodami pożarowymi na dach nad targiem i znajdź Rena");
+  expect(objective(ui)).toBe("Climb the fire escape to the roof over the market and find Ren");
 };
 
 /** Step 2: Ren on the roof hands over the chip; the "dach" flashback follows. */
@@ -61,7 +61,7 @@ const meetRen = (s: GameSession, ui: Ui, ending: EndingId, pick: number) => {
   expect(s.sim.domain.character.memories).toContain("rooftop");
   expect(allText(ui)).toContain("Ten sam dach, dwa lata wcześniej.");
   finishDialogue(s, ui, pick);
-  expect(objective(ui)).toBe("Kaito ma zlecenie na Rena. Dowiedz się, kto za nie płaci (bar Neon Koi)");
+  expect(objective(ui)).toBe("Kaito has a job out on Ren. Find out who is paying for it (Neon Koi bar)");
 };
 
 /** Step 3: Kaito's job on Ren, the hook into the overpass; the "głos" flashback follows. */
@@ -72,7 +72,7 @@ const kaitoJob = (s: GameSession, ui: Ui, jobPick: number, voicePick: number) =>
   expect(s.sim.domain.character.memories).toContain("last_call");
   expect(allText(ui)).toContain("Wyłączam filtr Odagiri.");
   finishDialogue(s, ui, voicePick);
-  expect(objective(ui)).toBe("Kurosawa z Kagami czeka na wiadukcie nad aleją Tysiąclecia. Zdecyduj, co stanie się z archiwum");
+  expect(objective(ui)).toBe("Kurosawa from Kagami is waiting on the viaduct over aleja Tysiąclecia. Decide what happens to the archive");
 };
 
 /** Step 4 up to the decision: Kurosawa's offer on the overpass deck. */
@@ -104,7 +104,7 @@ describe("M3 acceptance: act II from the end of act I to each of its endings", (
     const { session, ui } = setup(store);
     expect(await session.loadAsync("act2-mid")).toBe(true);
     expect(session.sim.domain.story.choices.rooftop).toBe(rooftop === 0 ? "together" : "alone");
-    expect(objective(ui)).toBe("Kaito ma zlecenie na Rena. Dowiedz się, kto za nie płaci (bar Neon Koi)");
+    expect(objective(ui)).toBe("Kaito has a job out on Ren. Find out who is paying for it (Neon Koi bar)");
 
     kaitoJob(session, ui, job, voice);
     const before = session.sim.domain.reputation;
@@ -120,10 +120,10 @@ describe("M3 acceptance: act II from the end of act I to each of its endings", (
     } else {
       // The deal is off: Kurosawa leaves and his cleaners attack on the deck.
       expect(present(session, "kurosawa")).toBe(false);
-      expect(objective(ui)).toBe("Czyściciele Kagami atakują na wiadukcie. Odeprzyj ich");
+      expect(objective(ui)).toBe("Kagami's cleaners are attacking on the viaduct. Fight them off");
       for (const key of KAGAMI_CLEANER_KEYS) shootDown(session, key);
       steps(session, 1);
-      expect(objective(ui)).toBe("Czyściciele Kagami leżą. Wróć do Rena na dach nad targiem");
+      expect(objective(ui)).toBe("Kagami's cleaners are down. Go back to Ren on the roof over the market");
       expect(session.sim.domain.story.act2Ending).toBeNull();
       goTo(session, REN_ROOF);
       talkTo(session, "ren");
@@ -149,7 +149,7 @@ describe("M3 acceptance: act II from the end of act I to each of its endings", (
     if (act2 === "kagami") expect([delta("kagami"), delta("fixers")]).toEqual([20, 10]);
     else expect(d.reputation.kagami).toBeLessThanOrEqual(-20);
     expect(ui.getState().dialogue).toBeNull();
-    expect(objective(ui)).toContain("Kaito ma kolejne kontrakty");
+    expect(objective(ui)).toContain("Kaito has more contracts");
 
     // The ending survives a save and a load, and the people of the act remember it.
     expect(await session.saveAsync("act2")).toBe(true);

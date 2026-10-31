@@ -62,7 +62,7 @@ describe("simulation: interaction and narrative commands", () => {
     // Kaito waits at the Neon Koi counter from the start (G-034): 1 m in front of him, facing him.
     teleportPlayer(sim, koiPoint(11.75, 0, 3.5), Math.PI);
     sim.step();
-    expect(focus.at(-1)?.prompt).toBe("Rozmawiaj z Kaito");
+    expect(focus.at(-1)?.prompt).toBe("prompt.talk.kaito");
     sim.step(input({ interact: true }));
     expect(started).toEqual([expect.objectContaining({ dialogueId: "fixer" })]);
     expect(sim.session.dialogueActive).toBe(true);

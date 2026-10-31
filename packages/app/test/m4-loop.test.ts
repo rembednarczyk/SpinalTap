@@ -127,16 +127,16 @@ describe("M4 acceptance: market contracts → eddies → cyberware", () => {
     close(session);
     const delivery = session.sim.domain.contracts.active!;
     expect(delivery.kind).toBe("delivery");
-    expect(ui.getState().questTitle).toBe("Kontrakt 2 · Kaito");
-    expect(ui.getState().objective).toMatch(/Zanieś paczkę od Kaito Hanie: .* \(zostało \d:\d\d\)/);
+    expect(ui.getState().questTitle).toBe("Contract 2 · Kaito");
+    expect(ui.getState().objective).toMatch(/Carry Kaito's package to Hana: .* \(\d:\d\d left\)/);
     steps(session, 120);
-    expect(ui.getState().objective).toMatch(/zostało \d:\d\d/);
+    expect(ui.getState().objective).toMatch(/\(\d:\d\d left\)/);
 
     talkToHana(session);
     expect(text(ui)).toContain("Od Kaito?");
     close(session);
     expect(session.sim.domain.contracts.active?.status).toBe("cleared");
-    expect(ui.getState().objective).toBe("Paczka oddana. Wróć do Kaito po zapłatę");
+    expect(ui.getState().objective).toBe("Package delivered. Go back to Kaito for your pay");
 
     let before = eddies();
     let extra = extraPay(session);
@@ -154,15 +154,15 @@ describe("M4 acceptance: market contracts → eddies → cyberware", () => {
     close(session);
     const retrieval = session.sim.domain.contracts.active!;
     expect(retrieval.kind).toBe("retrieve");
-    expect(ui.getState().questTitle).toBe("Kontrakt 3 · Hana");
+    expect(ui.getState().questTitle).toBe("Contract 3 · Hana");
     expect(ui.getState().mapMarkers.some((m) => m.kind === "target" && m.id === `${retrieval.id}-item`)).toBe(true);
     const crate = CONTRACT_ITEM_SPOTS.hebi_stash!;
     teleport(session, crate.x - 1, crate.z, Math.PI / 2);
     steps(session, 1, frame({ interact: true }));
     expect(session.sim.domain.contracts.active?.status).toBe("cleared");
-    expect(ui.getState().objective).toBe("Skrzynka zabrana. Wróć do Hany po zapłatę");
+    expect(ui.getState().objective).toBe("Crate taken. Go back to Hana for your pay");
     const entry = ui.getState().journal.quests.find((q) => q.id === `contract-${retrieval.id}`);
-    expect(entry).toMatchObject({ title: "Kontrakt 3 · Hana", steps: [{ done: true }, { objective: "Go back to Hana for your pay", done: false }] });
+    expect(entry).toMatchObject({ title: "Contract 3 · Hana", steps: [{ done: true }, { objective: "Go back to Hana for your pay", done: false }] });
 
     before = eddies();
     extra = extraPay(session);
@@ -175,7 +175,7 @@ describe("M4 acceptance: market contracts → eddies → cyberware", () => {
     // Hana: the next job is already running. Hebi come for Oyaji; take the wave down.
     const protection = session.sim.domain.contracts.active!;
     expect(protection.kind).toBe("protect");
-    expect(ui.getState().objective).toContain("Obroń Oyaji");
+    expect(ui.getState().objective).toContain("Defend Oyaji");
     const wave = [...session.sim.world].filter((e) => e.tag === contractTag(protection.id)).map((e) => e.key!);
     expect(wave).toHaveLength(protection.targets);
     for (const key of wave) shootDown(session, key);
@@ -191,7 +191,7 @@ describe("M4 acceptance: market contracts → eddies → cyberware", () => {
     close(session);
     expect(eddies()).toBe(before + protection.reward + extra());
     expect(session.sim.domain.contracts).toEqual({ active: null, completed: 4 });
-    expect(ui.getState().objective).toBe("Kaito ma kolejne kontrakty, Hana z targu na Podzamczu też. Mori sprzedaje cyberware.");
+    expect(ui.getState().objective).toBe("More contracts from Kaito, and from Hana at the Podzamcze market too. Mori sells cyberware.");
 
     // Three market jobs pay for an implant at Mori's.
     expect(eddies()).toBeGreaterThanOrEqual(400 + 250 + 470 + 550 - 1);
@@ -219,7 +219,7 @@ describe("M4 acceptance: market contracts → eddies → cyberware", () => {
     const c = session.sim.domain.contracts.active!;
     steps(session, c.deadlineTick! - session.sim.tick + 1);
     expect(session.sim.domain.contracts.active).toBeNull();
-    expect(toasts(ui)).toContain("Contract lost: Paczka nie dotarła na czas. Kaito nie będzie zadowolony");
+    expect(toasts(ui)).toContain("Contract lost: The package didn't make it in time. Kaito won't be pleased");
     expect(session.sim.domain.reputation.fixers).toBe(-4);
     talkToHana(session);
     expect(text(ui)).not.toContain("Od Kaito?");

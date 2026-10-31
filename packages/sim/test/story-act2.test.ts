@@ -47,7 +47,7 @@ describe("act II in the simulation (ADR-0023)", () => {
     sim.enqueue({ type: "resolve-ending", act: 2 });
     sim.step();
     expect(sim.domain.story.act2Ending).toBe("kagami");
-    expect(endings).toEqual([{ act: 2, endingId: "kagami", title: "Kopia" }]);
+    expect(endings).toEqual([{ act: 2, endingId: "kagami", title: "ending.kagami.title" }]);
     expect(sim.domain.flags).toEqual(expect.arrayContaining([ACT_TWO_ENDING_FLAG, endingFlag("kagami")]));
     expect(sim.domain.reputation.kagami - before.kagami).toBe(20);
     expect(sim.domain.reputation.fixers - before.fixers).toBe(10);

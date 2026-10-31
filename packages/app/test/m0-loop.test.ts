@@ -94,13 +94,13 @@ describe("M0 vertical slice: input → sim → narrative → domain → save →
     // 1. Talk to Kaito.
     teleport(session, ...nearKaito(session));
     steps(session, 1);
-    expect(ui.getState().prompt).toBe("Rozmawiaj z Kaito");
+    expect(ui.getState().prompt).toBe("Talk to Kaito");
     steps(session, 1, frame({ interact: true }));
     expect(ui.getState().dialogue?.lines[0]?.speaker).toBe("Kaito");
     talkThrough(session, ui);
     steps(session, 1);
     expect(session.sim.domain.character.alias).toBe("Seki Senshi");
-    expect(ui.getState().objective).toContain("kuriera Hebi");
+    expect(ui.getState().objective).toContain("Hebi courier");
 
     // 2. Fight in the alley until the courier is down.
     const courier = () => [...session.sim.world].find((e) => e.key === "courier");
@@ -134,7 +134,7 @@ describe("M0 vertical slice: input → sim → narrative → domain → save →
     expect(await session.saveAsync("slot-1")).toBe(true);
     const saved = session.snapshot();
     // The autosave lists first (`auto`); the manual slot keeps its own objective.
-    expect(ui.getState().slots.find((s) => s.slot === "slot-1")).toMatchObject({ objective: expect.stringContaining("Weź od Kaito kontrakt") });
+    expect(ui.getState().slots.find((s) => s.slot === "slot-1")).toMatchObject({ objective: expect.stringContaining("Take a contract from Kaito") });
     steps(session, 120, frame({ moveZ: -1 }));
     expect(await session.loadAsync("slot-1")).toBe(true);
     expect(session.snapshot().domain).toEqual(saved.domain);

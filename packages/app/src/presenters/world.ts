@@ -1,5 +1,5 @@
 import { FACTIONS, type FactionId, formatClock } from "@seki/core";
-import { type MessageKey, type Translate, patchUi, translate } from "@seki/ui";
+import { type MessageKey, type Translate, translate } from "@seki/ui";
 import type { Presenter } from "./context";
 
 /** Landings from lower than this (a kerb, a stair) make no sound of their own; footsteps cover them. */
@@ -29,7 +29,6 @@ export const presentWorld: Presenter = ({ bus, render, audio, ui, hooks, toast, 
       hooks.onDialogueInterrupted(e.reason);
       toast("system", t("world.interrupted"), e.reason === "damage" ? t("world.underFire") : t("world.shotsNearby"));
     }),
-    bus.on("InteractionFocusChanged", (e) => patchUi(ui, { prompt: e.prompt })),
     bus.on("InteractionStarted", (e) => {
       if (e.kind === "shop") hooks.onShop(e.shopId ?? "clinic", e.dialogueId);
       else if (e.kind === "loot") hooks.onLoot(e.dialogueId);
@@ -38,12 +37,12 @@ export const presentWorld: Presenter = ({ bus, render, audio, ui, hooks, toast, 
     }),
     bus.on("InteractionRefused", (e) => {
       const own = REFUSAL[e.faction];
-      toast("reputation", own ? t(own) : t("world.refusal", { faction: FACTIONS[e.faction] }), t("world.reputation"));
+      toast("reputation", own ? t(own) : t("world.refusal", { faction: t(FACTIONS[e.faction]) }), t("world.reputation"));
       audio.play("denied");
     }),
     bus.on("NpcReacted", (e) => {
       if (e.reaction === "warn") toast("reputation", t("world.hebiWarn"), t("world.hebiLetPass"));
-      else toast("reputation", t("world.fleeing"), t("world.afraid", { faction: FACTIONS[e.faction] }));
+      else toast("reputation", t("world.fleeing"), t("world.afraid", { faction: t(FACTIONS[e.faction]) }));
     }),
     bus.on("CameraModeChanged", (e) => render.setCameraMode(e.mode)),
     // A car held up by the player sounds its horn (ADR-0050).

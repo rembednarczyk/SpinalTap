@@ -49,6 +49,7 @@ export class DialogueController implements DialogueIntents {
   open(dialogueId: string): void {
     const sim = this.deps.sim();
     this.dialogueOpen = true;
+    this.followLanguage();
     const view = this.deps.narrative.start(dialogueId, sim.domain, { tick: sim.tick, ticksPerSecond: SIM_HZ });
     this.history = [];
     this.lastLines = view.lines;
@@ -59,6 +60,7 @@ export class DialogueController implements DialogueIntents {
   choose(index: number): void {
     if (!this.dialogueOpen) return;
     this.deps.audio.play("ui-select");
+    this.followLanguage();
     const view = this.speak(this.deps.narrative.choose(index));
     this.history = [...this.history, ...this.lastLines].slice(-HISTORY_LINES);
     this.lastLines = view.lines;
@@ -78,6 +80,11 @@ export class DialogueController implements DialogueIntents {
     this.closeSilently();
     this.deps.sim().enqueue({ type: "end-dialogue" });
     this.deps.focus.settle();
+  }
+
+  /** The language set in the options, from the next line on (ADR-0056): mid-conversation too. */
+  private followLanguage(): void {
+    this.deps.narrative.setLanguage(this.deps.ui.getState().settings.locale);
   }
 
   /** Violence cut the talk short: ink drops the half-finished knot so it can start over. */

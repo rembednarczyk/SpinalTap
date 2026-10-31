@@ -56,9 +56,10 @@ Parametry URL:
   - ekwipunek z porównaniem;
   - odzież i pancerz według stref ciała;
   - klinika z wszczepami i pojemnością cyberware;
+  - doświadczenie, poziomy 1–30 i punkty atrybutów (model z etapu 1 [ADR-0059](docs/adr/0059-rozwoj-postaci-i-skalowanie.md));
   - sklepy, łupy, karta postaci, dziennik, mapa miasta.
 - **Wnętrza.** Klinika, bar Neon Koi i biuro Tessen, z drzwiami automatycznymi.
-- **Zapis.** Trzy sloty w IndexedDB, szybki zapis, suma kontrolna i migracje schematu.
+- **Zapis.** Trzy sloty w IndexedDB, szybki zapis, autozapis (po kroku questu, kontrakcie, zmianie dzielnicy, co 5 minut, przy schowaniu i zamknięciu karty), suma kontrolna i migracje schematu.
 - **Telefon.** Dotykowa gałka i łuk akcji, układ HUD dla 667×375 i 800×370, jakość `low`.
 - **NPR.**
   - toon shading z pasmami światła i rim light;
@@ -67,7 +68,7 @@ Parametry URL:
   - deszcz i mokry asfalt;
   - grading.
 
-W toku i w planie: autozapis, rozwój postaci z poziomami i atrybutami ([ADR-0059](docs/adr/0059-rozwoj-postaci-i-skalowanie.md)), żywe miasto z assetów CC0 ([ADR-0058](docs/adr/0058-zywe-miasto-assety-cc0.md)), głosy z TTS i zaczepki NPC ([ADR-0060](docs/adr/0060-glosy-i-dzwiek.md)), ekran ładowania ([ADR-0057](docs/adr/0057-ekran-ladowania.md)). Kolejność i priorytety opisują [`docs/backlog.md`](docs/backlog.md) i [`docs/audyt-luk.md`](docs/audyt-luk.md).
+W toku i w planie: drzewka atrybutów i skalowanie łupów ([ADR-0059](docs/adr/0059-rozwoj-postaci-i-skalowanie.md)), autozapis przy wejściu do lokalu ([ADR-0061](docs/adr/0061-wejscie-do-lokalu.md)), żywe miasto z assetów CC0 ([ADR-0058](docs/adr/0058-zywe-miasto-assety-cc0.md)), głosy z TTS i zaczepki NPC ([ADR-0060](docs/adr/0060-glosy-i-dzwiek.md)), ekran ładowania ([ADR-0057](docs/adr/0057-ekran-ladowania.md)). Kolejność i priorytety opisują [`docs/backlog.md`](docs/backlog.md) i [`docs/audyt-luk.md`](docs/audyt-luk.md).
 
 ## Sterowanie
 

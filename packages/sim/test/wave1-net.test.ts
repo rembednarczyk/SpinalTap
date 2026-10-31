@@ -18,6 +18,7 @@ import {
   BREACH_DATAMINE_EDDIES,
   BREACH_ICEPICK_SECONDS,
   DOCKS_PLACE,
+  type Entity,
   DOKI_TERMINAL_SPOTS,
   GENZO_SPOT,
   SIM_HZ,
@@ -32,6 +33,7 @@ import {
   worldTimeScale,
 } from "../src";
 import { byKey, collect, input, run, teleportPlayer, streetSim } from "./helpers";
+import { scanName } from "../src/systems/scanner-system";
 
 /** A point of the docks in their own coordinates, moved to Nabrzeże Bystrzycy by ADR-0045. */
 const at = (x: number, z: number, y = 0): Vec3 => docks(x, y, z);
@@ -89,11 +91,17 @@ describe("the scanner (ADR-0029)", () => {
     const focus = collect<DomainEvents["ScanFocusChanged"]>(sim, "ScanFocusChanged");
     lookAt(sim, chest(g));
     sim.step(input({ scan: true }));
-    expect(focus).toEqual([{ targetId: g.id, kind: "person", name: "Ochrona Tessen", faction: "tessen" }]);
+    expect(focus).toEqual([{ targetId: g.id, kind: "person", name: "faction.tessen", faction: "tessen" }]);
     const ctx = { input: input({ scan: true }), session: sim.session, state: { domain: sim.domain } } as never;
     expect(worldTimeScale(ctx)).toBeCloseTo(0.6);
     sim.step();
     expect(focus.at(-1)).toEqual({ targetId: null });
+  });
+
+  it("names devices and passers-by by catalog key, a fighter by the side's name (ADR-0056)", () => {
+    for (const kind of ["camera", "vending", "speaker", "neon"] as const) expect(scanName({ device: { kind } } as Entity)).toBe(`scan.name.${kind}`);
+    expect(scanName({ ai: {} } as Entity)).toBe("scan.name.enemy");
+    expect(scanName({} as Entity)).toBe("scan.name.passerBy");
   });
 });
 

@@ -20,7 +20,7 @@ describe("act II on the overpass in the game", () => {
         flags: ["act1_ending", "ending:aya", "kagami_job", "met_fixer", "met_ren", "recalled:last_call", "recalled:rooftop", "ren_trail", "reported_back", "seen:act2_opening"],
       }),
     );
-    expect(g.seki.state().objective).toContain("Kurosawa z Kagami czeka na wiadukcie");
+    expect(g.seki.state().objective).toContain("Kurosawa from Kagami is waiting on the viaduct");
 
     // On the viaduct's deck over aleja Tysiąclecia, next to him; a step streams the market in.
     run(() => {
@@ -29,8 +29,8 @@ describe("act II on the overpass in the game", () => {
     });
     g.step(2);
     const prompt = () => screen.queryByTestId("prompt")?.textContent ?? "";
-    for (let i = 0; i < 120 && !prompt().includes("Kurosawą"); i++) g.step(1);
-    expect(prompt()).toContain("Kurosawą");
+    for (let i = 0; i < 120 && !prompt().includes("Talk to Kurosawa"); i++) g.step(1);
+    expect(prompt()).toContain("Talk to Kurosawa");
     g.step(1, { interact: true });
 
     const dialogue = () => screen.getByTestId("dialogue");

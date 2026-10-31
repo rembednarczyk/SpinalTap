@@ -24,7 +24,7 @@ import {
 } from "@seki/core";
 import { formatNumber, useLocale } from "../i18n/number";
 import type { Translate } from "../i18n/t";
-import { useT } from "../i18n/use-t";
+import { useT, useText } from "../i18n/use-t";
 import { rarityLabel } from "../inventory/item-text";
 import type { TradeItemVm } from "../store/ui-store";
 import { useShopIntents, useUi } from "../use-ui";
@@ -70,6 +70,7 @@ const ImplantOffers = ({ terms }: { readonly terms: ShopTerms }) => (
 /** One implant on offer, with its capacity cost; one over the limit cannot be bought (ADR-0032). */
 const ImplantOffer = ({ id, terms }: { readonly id: CyberwareId; readonly terms: ShopTerms }) => {
   const t = useT();
+  const tx = useText();
   const locale = useLocale();
   const eddies = useUi((s) => s.eddies);
   const loadout = useUi((s) => s.cyberware);
@@ -83,10 +84,10 @@ const ImplantOffer = ({ id, terms }: { readonly id: CyberwareId; readonly terms:
   return (
     <article className={`shop__item${installed ? " shop__item--installed" : ""}`} data-testid={`implant-${id}`}>
       <div className="shop__slot">{slotLabel(t, def.slot)}</div>
-      <h3 className="shop__name">{def.name}</h3>
-      <p className="shop__desc">{def.description}</p>
+      <h3 className="shop__name">{tx(def.name)}</h3>
+      <p className="shop__desc">{tx(def.description)}</p>
       <CapacityCost fit={fit} />
-      {replaces && <p className="shop__warn">{t("shop.replaces", { name: CYBERWARE_CATALOG[replaces].name })}</p>}
+      {replaces && <p className="shop__warn">{t("shop.replaces", { name: tx(CYBERWARE_CATALOG[replaces].name) })}</p>}
       {replaces && freeCells < 1 && <p className="shop__warn">{t("shop.noRoomImplant")}</p>}
       <button type="button" className="shop__buy" disabled={installed || eddies < price || fit.over} onClick={() => intents.buyCyberware(id)}>
         {installed ? t("shop.installed") : fit.over ? t("shop.overLimit") : t("shop.implant", { price: eur(locale, price) })}
@@ -97,6 +98,7 @@ const ImplantOffer = ({ id, terms }: { readonly id: CyberwareId; readonly terms:
 
 const StockOffer = ({ entry, terms }: { readonly entry: StockEntry; readonly terms: ShopTerms }) => {
   const t = useT();
+  const tx = useText();
   const locale = useLocale();
   const eddies = useUi((s) => s.eddies);
   const medkits = useUi((s) => s.medkits);
@@ -116,11 +118,11 @@ const StockOffer = ({ entry, terms }: { readonly entry: StockEntry; readonly ter
   } else {
     slot = `${categoryLabel(t, itemSummary(entry.item).category)} · ${rarityLabel(t, entry.rarity)}`;
   }
-  const description = entry.kind === "stack" && entry.item === "medkit" ? `${shopItemDescription(entry.item)} ${t("shop.medkitUse")}` : shopItemDescription(entry.item);
+  const description = entry.kind === "stack" && entry.item === "medkit" ? `${tx(shopItemDescription(entry.item))} ${t("shop.medkitUse")}` : tx(shopItemDescription(entry.item));
   return (
     <article className={`shop__item${entry.kind === "item" ? rarityClass(entry) : ""}`}>
       <div className="shop__slot">{slot}</div>
-      <h3 className="shop__name">{stockName(entry)}</h3>
+      <h3 className="shop__name">{tx(stockName(entry))}</h3>
       <p className="shop__desc">{description}</p>
       <button type="button" className="shop__buy" disabled={eddies < price || !room} onClick={() => intents.buyItem(entry.item)}>
         {t("shop.buy", { price: eur(locale, price) })}
@@ -151,6 +153,7 @@ const BackpackOffer = () => {
 /** What Seki carries that this trader buys, with the price per piece (and for a whole stack). */
 export const SellTab = ({ shopId, terms }: { readonly shopId: ShopId; readonly terms: ShopTerms }) => {
   const t = useT();
+  const tx = useText();
   const locale = useLocale();
   const items = useUi((s) => s.trade.items).filter((i) => shopBuys(shopId, i.defId));
   const intents = useShopIntents();
@@ -163,7 +166,7 @@ export const SellTab = ({ shopId, terms }: { readonly shopId: ShopId; readonly t
         return (
           <li key={item.key} className={`shop__line${rarityClass(item)}`} data-testid="shop-sell-line">
             <span className="shop__line-name">
-              {item.name}
+              {tx(item.name)}
               {item.qty > 1 && ` × ${item.qty}`}
             </span>
             <span className="shop__line-meta">
@@ -188,6 +191,7 @@ export const SellTab = ({ shopId, terms }: { readonly shopId: ShopId; readonly t
 /** Damaged clothes, worn or in the bag; weapon parts can go into the repair. */
 export const RepairTab = () => {
   const t = useT();
+  const tx = useText();
   const locale = useLocale();
   const eddies = useUi((s) => s.eddies);
   const trade = useUi((s) => s.trade);
@@ -207,7 +211,7 @@ export const RepairTab = () => {
           const quote = repairQuote({ def: item.defId, rarity: item.rarity ?? "common", condition: item.condition ?? 100 }, parts, parts);
           return (
             <li key={item.key} className={`shop__line${rarityClass(item)}`} data-testid="shop-repair-line">
-              <span className="shop__line-name">{item.name}</span>
+              <span className="shop__line-name">{tx(item.name)}</span>
               <span className="shop__line-meta">
                 {t("shop.condition", { pct: item.condition ?? 100 })}
                 {quote.parts > 0 && ` · ${t("shop.repair.partsUsed", { count: quote.parts })}`}
@@ -227,6 +231,7 @@ export const RepairTab = () => {
 /** An implant in the bag, fitted for a fee unless it would go over the capacity (ADR-0032). */
 const BagImplant = ({ item, terms }: { readonly item: TradeItemVm & { defId: CyberwareId }; readonly terms: ShopTerms }) => {
   const t = useT();
+  const tx = useText();
   const locale = useLocale();
   const eddies = useUi((s) => s.eddies);
   const loadout = useUi((s) => s.cyberware);
@@ -238,10 +243,10 @@ const BagImplant = ({ item, terms }: { readonly item: TradeItemVm & { defId: Cyb
   const replaces = installed ? undefined : loadout[def.slot];
   return (
     <li className={`shop__line${rarityClass(item)}`} data-testid="shop-bag-implant">
-      <span className="shop__line-name">{def.name}</span>
+      <span className="shop__line-name">{tx(def.name)}</span>
       <span className="shop__line-meta">
         {slotLabel(t, def.slot)}
-        {replaces && ` · ${t("shop.replacesStowed", { name: CYBERWARE_CATALOG[replaces].name })}`}
+        {replaces && ` · ${t("shop.replacesStowed", { name: tx(CYBERWARE_CATALOG[replaces].name) })}`}
       </span>
       <CapacityCost fit={fit} />
       <button type="button" className="shop__buy" disabled={installed || eddies < fee || fit.over} onClick={() => intents.installCyberwareItem(item.key)}>
@@ -253,6 +258,7 @@ const BagImplant = ({ item, terms }: { readonly item: TradeItemVm & { defId: Cyb
 
 export const ImplantsTab = ({ terms }: { readonly terms: ShopTerms }) => {
   const t = useT();
+  const tx = useText();
   const loadout = useUi((s) => s.cyberware);
   const trade = useUi((s) => s.trade);
   const intents = useShopIntents();
@@ -276,7 +282,7 @@ export const ImplantsTab = ({ terms }: { readonly terms: ShopTerms }) => {
           const id = loadout[slot];
           return (
             <li key={slot} className="shop__line">
-              <span className="shop__line-name">{id ? CYBERWARE_CATALOG[id].name : t("shop.empty")}</span>
+              <span className="shop__line-name">{id ? tx(CYBERWARE_CATALOG[id].name) : t("shop.empty")}</span>
               <span className="shop__line-meta">{slotLabel(t, slot)}</span>
               {id && (
                 <button type="button" className="shop__buy" disabled={trade.freeCells < 1} onClick={() => intents.removeCyberware(slot)}>

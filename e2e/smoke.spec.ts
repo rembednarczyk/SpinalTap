@@ -32,13 +32,13 @@ test.describe("M0 smoke", () => {
     await expect(page.getByTestId("prompt")).toContainText("Kaito");
     await step(page, 1, { interact: true });
     const dialogue = page.getByTestId("dialogue");
-    await expect(dialogue).toContainText("Chodzący trup");
-    await dialogue.getByRole("button", { name: /Kim jesteś/ }).click();
-    await dialogue.getByRole("button", { name: /Niech będzie/ }).click();
+    await expect(dialogue).toContainText("walking corpse");
+    await dialogue.getByRole("button", { name: /Who are you/ }).click();
+    await dialogue.getByRole("button", { name: /Fine\. Seki Senshi/ }).click();
     await dialogue.getByRole("button", { name: /End conversation/ }).click();
     await expect(dialogue).toBeHidden();
     await step(page, 2);
-    await expect(page.getByTestId("objective")).toContainText("kuriera Hebi");
+    await expect(page.getByTestId("objective")).toContainText("Hebi courier");
     expect((await gameState(page)).alias).toBe("Seki Senshi");
 
     // Quicksave, move away, quickload: position and quest state come back.
@@ -99,7 +99,7 @@ test("ripperdoc clinic sells a medkit through the UI", async ({ page }) => {
   await expect(shop.getByRole("button", { name: /Implant · 650/ })).toBeDisabled();
   await shop.getByRole("button", { name: /Buy · 90/ }).click();
   await step(page, 1);
-  await expect(page.getByTestId("gear")).toContainText("Apteczki × 2");
+  await expect(page.getByTestId("gear")).toContainText("Medkits × 2");
   expect((await gameState(page)).eddies).toBe(30);
   await shop.getByRole("button", { name: /Leave the clinic/ }).click();
   await expect(shop).toBeHidden();
@@ -111,7 +111,7 @@ test("ripperdoc clinic sells a medkit through the UI", async ({ page }) => {
   await expect(shop).toBeHidden();
   const dialogue = page.getByTestId("dialogue");
   // Before the first talk with Kaito, Mori sends Seki to him at Neon Koi (G-034).
-  await expect(dialogue).toContainText("Czeka na ciebie w Neon Koi");
+  await expect(dialogue).toContainText("He's waiting for you at the Neon Koi");
   await dialogue.getByRole("button", { name: /End conversation/ }).click();
   await expect(dialogue).toBeHidden();
   await step(page, 1);
@@ -134,8 +134,8 @@ test("journal, minimap and settings", async ({ page }) => {
   await page.keyboard.press("KeyJ");
   const journal = page.getByTestId("journal");
   await expect(journal).toBeVisible();
-  await expect(journal).toContainText("Pierwsze zlecenie");
-  await expect(journal).toContainText("Porozmawiaj z Kaito");
+  await expect(journal).toContainText("First job");
+  await expect(journal).toContainText("Talk to Kaito");
   await page.keyboard.press("KeyJ");
   await expect(journal).toBeHidden();
 

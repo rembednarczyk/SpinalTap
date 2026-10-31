@@ -152,7 +152,7 @@ describe("daily plans in a loaded chunk", () => {
 
     teleportPlayer(sim, byDoor());
     sim.step();
-    expect(prompts.at(-1)?.prompt).toMatch(/zamknięte/);
+    expect(prompts.at(-1)?.prompt).toBe("prompt.closed.oyaji");
     sim.step(input({ interact: true }));
     expect(started.at(-1)?.dialogueId).toBe("oyaji_closed");
   });
@@ -164,11 +164,11 @@ describe("daily plans in a loaded chunk", () => {
     const prompts = collect<{ targetId: number | null; prompt: string | null }>(sim, "InteractionFocusChanged");
     expect(byKey(sim, "oyaji")!.position).toEqual(OYAJI_DOOR);
     run(sim, 2);
-    expect(sim.session.focusPrompt).toMatch(/zamknięte/);
+    expect(sim.session.focusPrompt).toBe("prompt.closed.oyaji");
     run(sim, 60);
     // 8:00: he opens and sets off for the stall; the closed sign goes away while he is still in reach.
-    expect(sim.session.focusPrompt ?? "").not.toMatch(/zamknięte/);
-    expect(prompts.some((p) => p.prompt === null || !/zamknięte/.test(p.prompt))).toBe(true);
+    expect(sim.session.focusPrompt ?? "").not.toMatch(/^prompt\.closed\./);
+    expect(prompts.some((p) => p.prompt === null || !/^prompt\.closed\./.test(p.prompt))).toBe(true);
   });
 
   it("the Hebi lookout patrols the loop round the pillars at night and returns to his post by day", () => {

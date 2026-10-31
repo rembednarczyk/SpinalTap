@@ -69,7 +69,7 @@ export const scanKind = (e: Entity): HackTargetKind => {
 export const scanTargetVm = (e: Entity, locale: Locale): ScanTargetVm => {
   const kind = scanKind(e);
   const hostile = e.ai !== undefined || e.enemy !== undefined || e.sniper !== undefined;
-  const faction = e.faction ? FACTIONS[e.faction] : null;
+  const faction = e.faction ? translate(locale, FACTIONS[e.faction]) : null;
   if (kind === "camera") return { id: e.id, kind, name: translate(locale, "scan.camera"), faction, profile: null, hostile: false };
   if (kind === "device") return { id: e.id, kind, name: translate(locale, e.interactable?.kind === "terminal" ? "scan.terminal" : "scan.device"), faction, profile: null, hostile: false };
   const named = e.interactable ? NAMED[e.interactable.dialogueId] : undefined;

@@ -41,7 +41,7 @@ describe("day clock in the game", () => {
     expect(g.seki.state().clock).toMatch(/^22:3\d$/);
     toMarket(g, 74.5, 65.4);
     g.step(1);
-    expect(screen.getByTestId("prompt").textContent).toContain("zamknięte");
+    expect(screen.getByTestId("prompt").textContent).toContain("closed");
 
     // A morning later the closed sign is gone and the clock reads day.
     wait(g, 10 * 60);
@@ -63,19 +63,19 @@ describe("Oyaji's stall in the game", () => {
     const oyaji = [...g.session.sim.world].find((x) => x.key === "oyaji")!;
     run(() => g.seki.teleport(oyaji.position.x, oyaji.position.z - 1.4));
     g.step(1);
-    expect(screen.getByTestId("prompt").textContent).toContain("Stragan Oyajiego");
+    expect(screen.getByTestId("prompt").textContent).toContain("Oyaji's stall");
     g.step(1, { interact: true });
 
     const shop = screen.getByTestId("shop");
     expect(shop.textContent).toContain("Oyaji");
     const before = g.seki.state().eddies;
     fireEvent.click(within(shop).getByRole("tab", { name: "Sell" }));
-    const medkit = () => within(shop).queryAllByTestId("shop-sell-line").filter((l) => l.textContent?.includes("Apteczka"));
+    const medkit = () => within(shop).queryAllByTestId("shop-sell-line").filter((l) => l.textContent?.includes("Medkit"));
     expect(medkit()).toHaveLength(1);
     fireEvent.click(within(medkit()[0]!).getByRole("button", { name: /Sell · 22 €\$/ }));
     g.step(1);
     expect(g.seki.state().eddies).toBe(before + 22);
-    expect(screen.getByTestId("gear").textContent).not.toContain("Apteczki × 1");
+    expect(screen.getByTestId("gear").textContent).not.toContain("Medkits × 1");
     expect(medkit()).toHaveLength(0);
 
     fireEvent.click(within(shop).getByRole("button", { name: /Step away from the stall/ }));

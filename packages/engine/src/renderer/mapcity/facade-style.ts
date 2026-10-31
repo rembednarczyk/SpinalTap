@@ -100,6 +100,8 @@ export interface StyleInput {
   readonly width: number;
   /** Shops on the ground floor, from the map; absent: chosen from `look` by the use. */
   readonly shopfront?: boolean;
+  /** Lifted onto another building (a footbridge, a part of a landmark). */
+  readonly lifted?: boolean;
 }
 
 const windowFor = (use: BuildingUse, levels: number, rand: () => number): number => {
@@ -141,6 +143,9 @@ const plasterFor = (use: BuildingUse, rand: () => number): string => {
 
 const roofKindFor = (s: StyleInput, rand: () => number): RoofKind => {
   if (!s.roof || s.roof <= 0.3) return "flat";
+  // The map's parts carry no roof shape the view could tell (G-049): a hipped roof is a pyramid on a
+  // tower and a ridge on a nave, where a dome drawn by chance would crown a gabled nave.
+  if (s.lifted) return "hip";
   const compact = s.area < 900 && s.width > 9;
   if ((s.use === "civic" || s.use === "historic" || s.use === "church") && compact && rand() < 0.45) return "dome";
   return "hip";

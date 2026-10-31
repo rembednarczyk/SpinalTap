@@ -38,13 +38,13 @@ export const freshTally = (startTick: number): ContractTally => ({
 
 /** The one optional condition of each template and what meeting it pays. */
 export const CONTRACT_BONUS: Readonly<Record<ContractKind, BonusCondition>> = {
-  eliminate: { badge: "clean", label: "Tylko cele, nikt więcej", bonus: 90 },
-  delivery: { badge: "no_alarm", label: "Bez alarmu i bez heat", bonus: 60 },
-  retrieve: { badge: "ghost", label: "Nie daj się zauważyć", bonus: 100 },
-  protect: { badge: "untouched", label: "Wyjdź bez draśnięcia", bonus: 100 },
-  escort: { badge: "clean", label: "Tylko zasadzka, nikt więcej", bonus: 110 },
-  infiltrate: { badge: "netrunner", label: "Użyj quickhacka", bonus: 110 },
-  hack: { badge: "no_alarm", label: "Bez heat i bez kamer", bonus: 120 },
+  eliminate: { badge: "clean", label: "contract.bonus.eliminate", bonus: 90 },
+  delivery: { badge: "no_alarm", label: "contract.bonus.delivery", bonus: 60 },
+  retrieve: { badge: "ghost", label: "contract.bonus.retrieve", bonus: 100 },
+  protect: { badge: "untouched", label: "contract.bonus.protect", bonus: 100 },
+  escort: { badge: "clean", label: "contract.bonus.escort", bonus: 110 },
+  infiltrate: { badge: "netrunner", label: "contract.bonus.infiltrate", bonus: 110 },
+  hack: { badge: "no_alarm", label: "contract.bonus.hack", bonus: 120 },
 };
 
 /** Par time of each template, in seconds from acceptance to the job being done (`swift`). */

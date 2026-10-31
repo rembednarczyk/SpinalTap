@@ -1,9 +1,10 @@
-import type { EntityId, Vec3, ViewDescriptor } from "@seki/core";
+import type { EntityId, Locale, Vec3, ViewDescriptor } from "@seki/core";
 import { BabylonRenderer, PerfProbe, type PerfSample, Stage } from "@seki/engine";
 import { LUBLIN_CHUNKS, buildingView, groundView, streetPropsView, terrainView } from "@seki/sim/lublin";
 import { OrbitCamera, bindOrbitInput } from "./orbit-camera";
 import { type PreviewOverlay, createOverlay } from "./preview-overlay";
 import { galleryShots, galleryViews } from "./props-gallery";
+import { loadSettings } from "../settings";
 
 /**
  * `?lublin-preview` (ADR-0044): the city from map data on its own, to judge the renderer
@@ -12,6 +13,15 @@ import { galleryShots, galleryViews } from "./props-gallery";
  * flies an orbit camera. The game never starts. With `props-gallery` it shows every street prop
  * kind in rows instead (ADR-0047); `props=0` leaves the street furniture out.
  */
+
+/** The player's saved language (ADR-0056); English when storage is out of reach. */
+const savedLocale = (): Locale => {
+  try {
+    return loadSettings(window.localStorage).locale;
+  } catch {
+    return "en";
+  }
+};
 
 interface Placed {
   readonly position: Vec3;
@@ -106,7 +116,7 @@ const start = async (): Promise<void> => {
   const first = shots[params.get("view") ?? home] ?? shots[home];
   const cam = new OrbitCamera({ position: { x: 0, y: 20, z: -60 }, target: { x: 0, y: 0, z: 0 } });
   const keys = bindOrbitInput(canvas, cam);
-  const overlay: PreviewOverlay = createOverlay(document.getElementById("ui-root") as HTMLElement, params.has("clean"));
+  const overlay: PreviewOverlay = createOverlay(document.getElementById("ui-root") as HTMLElement, params.has("clean"), savedLocale());
   let hour = first?.hour ?? 23;
   const setHour = (h: number) => {
     hour = h;

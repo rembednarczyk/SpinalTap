@@ -24,5 +24,6 @@
   "steps-micro-riser": 0,
   "bridge-without-deck": 0,
   "landmark-overbuilt": 0,
-  "passage-off-map": 0
+  "passage-off-map": 0,
+  "building-part-ignored": 0
 }

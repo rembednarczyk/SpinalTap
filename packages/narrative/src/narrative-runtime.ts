@@ -3,7 +3,9 @@ import {
   type ContractVariation,
   type DomainState,
   type GameCommand,
+  type Locale,
   CONTRACT_KINDS,
+  DEFAULT_LOCALE,
   CONTRACT_SITES,
   FACTION_IDS,
   QUEST_DEFINITIONS,
@@ -26,57 +28,18 @@ import {
 } from "@seki/core";
 import { describeVariation, variationOf } from "./contract-variation";
 import { type DialogueLine, type DialogueView, toneOf } from "./dialogue-view";
+import type { StorySources } from "./language";
+import { type NarrativeText, YOU, keyText, speakerName } from "./narrative-text";
 
-const SPEAKERS: Readonly<Record<string, string>> = {
-  KAITO: "Kaito",
-  UME: "Babcia Ume",
-  MORI: "Doktor Mori",
-  REN: "Ren",
-  TECH: "Technik Kagami",
-  KUROSAWA: "Kurosawa",
-  HANA: "Hana",
-  OYAJI: "Oyaji",
-  GENZO: "Genzō",
-  // Stare Miasto (ex Ulica Kanałowa) and the market stalls on Podzamcze (ADR-0026, ADR-0042).
-  HIDEO: "Hideo",
-  TETSU: "Tetsu",
-  MEI: "Mei",
-  SACHIKO: "Sachiko",
-  GORO: "Goro",
-  KENTA: "Kenta",
-  FUMIKO: "Fumiko",
-  // Neon Koi (ADR-0038).
-  BARMAN: "Barman",
-  BYWALEC: "Bywalec",
-  // Street encounters (ADR-0032).
-  NOBU: "Nobu",
-  SARARIMAN: "Sarariman",
-  HINA: "Hina",
-  SHIRO: "Shiro",
-  TAKUMI: "Takumi",
-  SABU: "Dziadek Sabu",
-  AUTOMAT: "Automat",
-  KOJI: "Koji",
-  KIKU: "Wróżka Kiku",
-  DAIGO: "Daigo",
-  POBORCA: "Poborca Hebi",
-  AKANE: "Akane",
-  RIKO: "Riko",
-  TOMO: "Tomo",
-  STRAZNIK: "Strażnik Tessen",
-  GLOS: "Głos z kontenera",
-  // Observation hooks, the metro car and the radio (ADR-0032).
-  HEBI: "Hebi",
-  GLOSNIK: "Głośnik",
-  PASAZER: "Pasażer",
-  PASAZERKA: "Pasażerka",
-  DZIECKO: "Dziecko",
-  REKLAMA: "Reklama",
-  KASS: "DJ Kass",
-  YUKI: "Mama Yuki",
-  LEKTORKA: "Tessen Info",
-};
 const SPEAKER_RE = /^([A-Z]+):\s*(.*)$/;
+
+/** How a runtime speaks (ADR-0056). */
+export interface NarrativeOptions {
+  /** The language of the ink lines at the start; `setLanguage()` changes it later. English by default. */
+  readonly locale?: Locale;
+  /** Writes the narrative's own keys (speakers' roles, the variation lines) in the player's language. */
+  readonly text?: NarrativeText;
+}
 
 export class InkCompileError extends Error {}
 
@@ -104,9 +67,18 @@ const mainStepId = (domain: DomainState): string => activeMainStep(domain.quests
 /**
  * Runs ink conversations. Domain state flows in through synced ink variables and has_flag();
  * effects flow out as GameCommands, which the app queues into the simulation.
+ *
+ * The story comes in one source per language (ADR-0056), all with the same structure, so the ink
+ * state (visit counts, variables, the pending choices) moves from one to the other as it is.
+ * A plain string is the story in Polish; a language without a source plays the Polish one.
  */
 export class NarrativeRuntime {
-  private readonly story: Story;
+  private readonly sources: StorySources;
+  private readonly text: NarrativeText;
+  /** Compiled stories by the language of their source, each with the externals bound. */
+  private readonly stories = new Map<Locale, Story>();
+  private story: Story;
+  private storyLanguage: Locale;
   private domain: DomainState | null = null;
   private dialogueId = "";
   /** Flags raised during the current conversation, visible to has_flag() before the sim applies them. */
@@ -117,11 +89,48 @@ export class NarrativeRuntime {
   private effects = 0;
 
   constructor(
-    source: string,
+    source: string | StorySources,
     private readonly sink: (command: GameCommand) => void,
+    { locale = DEFAULT_LOCALE, text = keyText }: NarrativeOptions = {},
   ) {
-    this.story = compileInk(source);
-    this.bindExternals();
+    this.text = text;
+    this.sources = typeof source === "string" ? { pl: source } : source;
+    this.storyLanguage = this.sourceLanguage(locale);
+    this.story = this.storyIn(this.storyLanguage);
+  }
+
+  /** The language the lines come in: the one asked for, or Polish when it has no source. */
+  get language(): Locale {
+    return this.storyLanguage;
+  }
+
+  /**
+   * Speak `language` from the next line on (ADR-0056). The ink state goes over as it is, a
+   * conversation in progress included: the choices on screen keep their text, what follows them
+   * comes in the new language. The other story is compiled on first use.
+   */
+  setLanguage(language: Locale): void {
+    const next = this.sourceLanguage(language);
+    if (next === this.storyLanguage) return;
+    const state = this.story.state.toJson();
+    const story = this.storyIn(next);
+    story.state.LoadJson(state);
+    this.story = story;
+    this.storyLanguage = next;
+  }
+
+  private sourceLanguage(language: Locale): Locale {
+    return this.sources[language] === undefined ? "pl" : language;
+  }
+
+  private storyIn(language: Locale): Story {
+    let story = this.stories.get(language);
+    if (!story) {
+      story = compileInk(this.sources[language] ?? this.sources.pl);
+      this.bindExternals(story);
+      this.stories.set(language, story);
+    }
+    return story;
   }
 
   private emit(command: GameCommand): void {
@@ -145,7 +154,7 @@ export class NarrativeRuntime {
     this.story.variablesState.$("alias", domain.character.alias ?? "");
     const contract = domain.contracts.active;
     this.story.variablesState.$("contract_state", contract?.status ?? "");
-    this.story.variablesState.$("contract_site", contract ? CONTRACT_SITES[contract.siteId].label : "");
+    this.story.variablesState.$("contract_site", contract ? this.text(CONTRACT_SITES[contract.siteId].text) : "");
     this.story.variablesState.$("contracts_done", domain.contracts.completed);
     const kind = contract ? contractKind(contract) : null;
     this.story.variablesState.$("contract_kind", kind ?? "");
@@ -153,7 +162,7 @@ export class NarrativeRuntime {
     this.story.variablesState.$("contract_reward", contract?.reward ?? 0);
     const left = contract && clock ? contractSecondsLeft(contract, clock.tick, clock.ticksPerSecond) : null;
     this.story.variablesState.$("contract_time_left", left ?? 0);
-    this.story.variablesState.$("contract_variation", contract ? describeVariation(variation ?? variationOf(contract)) : "");
+    this.story.variablesState.$("contract_variation", contract ? describeVariation(variation ?? variationOf(contract), this.text) : "");
     for (const f of FACTION_IDS) this.story.variablesState.$(`${f}_stance`, stanceOf(domain.reputation[f]));
     // The domain owns the main-thread choices; ink sees them as plain string variables.
     for (const choice of Object.keys(STORY_CHOICES) as StoryChoiceId[]) {
@@ -226,40 +235,40 @@ export class NarrativeRuntime {
     const m = SPEAKER_RE.exec(text);
     if (!m) return { speaker: null, text };
     const [, code = "", body = ""] = m;
-    const speaker = code === "SEKI" ? (this.domain?.character.alias ?? "Ty") : (SPEAKERS[code] ?? code);
+    const speaker = code === "SEKI" ? (this.domain?.character.alias ?? this.text(YOU)) : speakerName(code, this.text);
     return { speaker, text: body };
   }
 
-  private bindExternals(): void {
-    this.story.BindExternalFunction("set_flag", (name: string) => {
+  private bindExternals(story: Story): void {
+    story.BindExternalFunction("set_flag", (name: string) => {
       this.pendingFlags.add(name);
       this.emit({ type: "set-flag", flag: name });
     });
-    this.story.BindExternalFunction(
+    story.BindExternalFunction(
       "has_flag",
       (name: string) => this.pendingFlags.has(name) || (!!this.domain && hasFlag(this.domain.flags, name)),
       true,
     );
-    this.story.BindExternalFunction("change_rep", (faction: string, delta: number) => {
+    story.BindExternalFunction("change_rep", (faction: string, delta: number) => {
       if (!isFactionId(faction)) throw new Error(`ink: unknown faction "${faction}"`);
       this.emit({ type: "change-reputation", faction, delta });
     });
-    this.story.BindExternalFunction("set_alias", (alias: string) => {
+    story.BindExternalFunction("set_alias", (alias: string) => {
       if (this.domain) this.domain = { ...this.domain, character: { ...this.domain.character, alias } };
       this.emit({ type: "set-alias", alias });
     });
-    this.story.BindExternalFunction("accept_contract", () => this.emit({ type: "accept-contract" }));
-    this.story.BindExternalFunction("complete_contract", () => this.emit({ type: "complete-contract" }));
-    this.story.BindExternalFunction("offer_contract", (kind: string) => {
+    story.BindExternalFunction("accept_contract", () => this.emit({ type: "accept-contract" }));
+    story.BindExternalFunction("complete_contract", () => this.emit({ type: "complete-contract" }));
+    story.BindExternalFunction("offer_contract", (kind: string) => {
       if (!isContractKind(kind)) throw new Error(`ink: unknown contract kind "${kind}"`);
       this.emit({ type: "accept-contract", kind });
     });
-    this.story.BindExternalFunction("deliver_contract", () => this.emit({ type: "deliver-contract" }));
-    this.story.BindExternalFunction("unlock_memory", (id: string) => {
+    story.BindExternalFunction("deliver_contract", () => this.emit({ type: "deliver-contract" }));
+    story.BindExternalFunction("unlock_memory", (id: string) => {
       if (!isMemoryId(id)) throw new Error(`ink: unknown memory "${id}"`);
       this.emit({ type: "unlock-memory", memoryId: id });
     });
-    this.story.BindExternalFunction(
+    story.BindExternalFunction(
       "has_memory",
       (id: string) => {
         if (!isMemoryId(id)) throw new Error(`ink: unknown memory "${id}"`);
@@ -267,11 +276,11 @@ export class NarrativeRuntime {
       },
       true,
     );
-    this.story.BindExternalFunction("story_choice", (choice: string, option: string) => {
+    story.BindExternalFunction("story_choice", (choice: string, option: string) => {
       if (!isStoryChoiceId(choice) || !isStoryOption(choice, option)) throw new Error(`ink: unknown story choice "${choice}=${option}"`);
       this.emit({ type: "story-choice", choice, option });
     });
-    this.story.BindExternalFunction("end_act", () => this.emit({ type: "resolve-ending" }));
-    this.story.BindExternalFunction("end_act2", () => this.emit({ type: "resolve-ending", act: 2 }));
+    story.BindExternalFunction("end_act", () => this.emit({ type: "resolve-ending" }));
+    story.BindExternalFunction("end_act2", () => this.emit({ type: "resolve-ending", act: 2 }));
   }
 }

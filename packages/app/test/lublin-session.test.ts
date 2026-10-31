@@ -74,7 +74,7 @@ describe("Lublin in the session (ADR-0045)", () => {
     teleport(session, from.kiosk.x + Math.sin(from.yaw), from.kiosk.z + Math.cos(from.yaw), from.yaw + Math.PI);
     steps(session, 1);
     expect(session.sim.district).toBe("targ");
-    expect(ui.getState().prompt).toContain("Bilet");
+    expect(ui.getState().prompt).toContain("Ticket");
     steps(session, 1, frame({ interact: true }));
     expect(ui.getState().metroMap?.from).toBe("targ");
     const eddies = session.sim.domain.wallet.eddies;
@@ -105,7 +105,7 @@ describe("Lublin in the session (ADR-0045)", () => {
     session.intents.closeDialogue();
     steps(session, 2);
     expect(session.sim.domain.flags).toContain("met_genzo");
-    expect(ui.getState().toasts.map((t) => `${t.title}`)).toContain("New contract: Eskorta");
+    expect(ui.getState().toasts.map((t) => `${t.title}`)).toContain("New contract: Escort");
   });
 
   it("Hana on the market under the viaduct hands out a job through the dialogue", () => {
@@ -116,7 +116,7 @@ describe("Lublin in the session (ADR-0045)", () => {
     teleport(session, cart.x, cart.z, Math.PI / 2);
     steps(session, 1);
     expect(session.sim.district).toBe("targ");
-    expect(ui.getState().prompt).toContain("Haną");
+    expect(ui.getState().prompt).toContain("Talk to Hana");
     steps(session, 1, frame({ interact: true }));
     const text = () => (ui.getState().dialogue?.lines ?? []).map((l) => l.text).join("\n");
     expect(text()).toContain("Jestem Hana");
@@ -125,6 +125,6 @@ describe("Lublin in the session (ADR-0045)", () => {
     session.intents.closeDialogue();
     steps(session, 2);
     expect(session.sim.domain.flags).toContain("met_hana");
-    expect(ui.getState().toasts.map((t) => t.title)).toContain("New contract: Odzyskanie");
+    expect(ui.getState().toasts.map((t) => t.title)).toContain("New contract: Retrieval");
   });
 });

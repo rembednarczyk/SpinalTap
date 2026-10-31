@@ -102,7 +102,7 @@ describe("trade loop: loot, Oyaji's stall, a mod, the clinic (E10, E11)", () => 
     expect(oyaji()).toBeDefined();
     teleport(session, oyaji()!.position.x, oyaji()!.position.z - 1.4);
     steps(session, 1);
-    expect(ui.getState().prompt).toBe("Stragan Oyajiego");
+    expect(ui.getState().prompt).toBe("Oyaji's stall");
     steps(session, 1, frame({ interact: true }));
     expect(ui.getState()).toMatchObject({ shopOpen: true, shopId: "oyaji" });
     expect(ui.getState().trade.items.map((i) => i.defId)).toEqual(expect.arrayContaining(["scrap", "hebi_smg", "steady_grip"]));
@@ -149,7 +149,7 @@ describe("trade loop: loot, Oyaji's stall, a mod, the clinic (E10, E11)", () => 
     expect(session.sim.domain.wallet.eddies).toBe(afterStall - 125);
     expect(session.sim.domain.inventory.items.some((i) => i.def === "steady_grip")).toBe(false);
     expect(ui.getState().toasts.some((t) => t.title === "Mori shakes his head")).toBe(true);
-    expect(ui.getState().toasts.some((t) => t.title === "Implanted: Stabilizator chwytu")).toBe(true);
+    expect(ui.getState().toasts.some((t) => t.title === "Implanted: Grip stabiliser")).toBe(true);
     session.intents.closeShop();
     steps(session, 1);
     expect(session.inControl).toBe(true);
@@ -163,7 +163,7 @@ describe("trade loop: loot, Oyaji's stall, a mod, the clinic (E10, E11)", () => 
     const oyaji = [...session.sim.world].find((e) => e.key === "oyaji")!;
     teleport(session, oyaji.position.x + 1.5, oyaji.position.z + 0.8);
     steps(session, 2);
-    expect(ui.getState().prompt).toMatch(/zamknięte/);
+    expect(ui.getState().prompt).toMatch(/closed/);
     steps(session, 1, frame({ interact: true }));
     expect(ui.getState().shopOpen).toBe(false);
     expect(ui.getState().dialogue?.lines.map((l) => l.text).join(" ")).toContain("Zamknięte");

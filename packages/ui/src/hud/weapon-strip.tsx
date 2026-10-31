@@ -1,4 +1,4 @@
-import { useT } from "../i18n/use-t";
+import { useT, useText } from "../i18n/use-t";
 import type { Translate } from "../i18n/t";
 import type { WeaponStripVm } from "../store/ui-store";
 import type { TouchPadSink } from "../touch/touch-pad-sink";
@@ -28,6 +28,7 @@ export const WeaponStrip = ({ pad }: { pad?: TouchPadSink | undefined }) => {
   const w = useUi((s) => s.weapons);
   const shown = useUi((s) => s.combat || s.settings.hudAlwaysShow);
   const t = useT();
+  const tx = useText();
   if (!w) return null;
   const note = status(w, t);
   // Out of combat the rounds step aside, unless something about them needs saying.
@@ -39,7 +40,7 @@ export const WeaponStrip = ({ pad }: { pad?: TouchPadSink | undefined }) => {
         data-testid="weapon-ammo"
       >
         <span className="weapon-strip__count">{ammoText(w, t)}</span>
-        {w.ammoName && <span className="weapon-strip__type">{w.ammoName}</span>}
+        {w.ammoName && <span className="weapon-strip__type">{tx(w.ammoName)}</span>}
         {note && <span className="weapon-strip__note">{note}</span>}
       </div>
       <div className="weapon-strip__slots">
@@ -51,7 +52,7 @@ export const WeaponStrip = ({ pad }: { pad?: TouchPadSink | undefined }) => {
             <>
               <span className="weapon-strip__key">{s.key}</span>
               <span className="weapon-strip__name">
-                {s.name ?? t(`weapon.slot.${s.slot}`)}
+                {s.name ? tx(s.name) : t(`weapon.slot.${s.slot}`)}
               </span>
             </>
           );
@@ -62,7 +63,7 @@ export const WeaponStrip = ({ pad }: { pad?: TouchPadSink | undefined }) => {
               className={cls}
               aria-label={t("weapon.slotLabel", {
                 slot: t(`weapon.slot.${s.slot}`),
-                name: s.name ?? t("weapon.empty"),
+                name: s.name ? tx(s.name) : t("weapon.empty"),
               })}
               aria-pressed={s.slot === w.active}
               onPointerDown={() => pad.selectWeaponSlot(s.key)}

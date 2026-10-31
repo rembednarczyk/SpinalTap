@@ -60,14 +60,15 @@ describe("journal view model", () => {
     expect(main?.steps.every((s) => s.done)).toBe(true);
     expect(main?.steps).toHaveLength(3);
     const contract = j.quests.find((q) => q.id === "contract-c3");
-    expect(contract?.title).toBe("Kontrakt 3 · Kaito");
+    expect(contract?.title).toBe("Contract 3 · Kaito");
     expect(contract?.steps.map((s) => s.done)).toEqual([true, false]);
     expect(contract?.steps[1]?.objective).toBe("Go back to Kaito for your pay");
     expect(buildJournal(domain, "pl").quests.find((q) => q.id === "contract-c3")?.steps[1]?.objective).toBe("Wróć do Kaito po zapłatę");
-    expect(contract?.steps[0]?.objective).toContain("podwórko za myjnią");
+    expect(contract?.steps[0]?.objective).toContain("the yard behind the car wash");
     expect(j.quests.find((q) => q.id === "contracts-done")).toMatchObject({ title: "Completed contracts", steps: [{ objective: "Done and paid: 2", done: true }] });
     expect(buildJournal(domain, "pl").quests.find((q) => q.id === "contracts-done")).toMatchObject({ title: "Wykonane kontrakty", steps: [{ objective: "Wykonane i opłacone: 2", done: true }] });
-    expect(j.memories).toEqual([expect.objectContaining({ id: "combat_reflex", title: "Wspomnienie: odruch" })]);
+    expect(j.memories).toEqual([expect.objectContaining({ id: "combat_reflex", title: "Memory: reflex" })]);
+    expect(buildJournal(domain, "pl").memories).toEqual([expect.objectContaining({ id: "combat_reflex", title: "Wspomnienie: odruch" })]);
   });
 
   it("reuses the last view model while the domain parts it reads are unchanged", () => {
@@ -179,7 +180,7 @@ describe("minimap data", () => {
     expect(st.mapPlayer).toMatchObject({ x: 319.5, z: -64.75 });
     // Kaito at the Neon Koi counter is the first step's target: his fixer dot gets the quest ring too.
     expect(st.mapMarkers.map((m) => m.kind).sort()).toEqual(["fixer", "quest", "target"]);
-    expect(st.journal.quests[0]?.title).toBe("Pierwsze zlecenie");
+    expect(st.journal.quests[0]?.title).toBe("First job");
     const before = ui.getState().mapPlayer;
     s.step(EMPTY_INPUT);
     s.render(0);

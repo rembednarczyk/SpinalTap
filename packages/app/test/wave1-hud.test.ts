@@ -115,13 +115,14 @@ describe("contract view models", () => {
   it("builds the debrief with the fixer's style badges", () => {
     const e: DomainEvents["ContractDebrief"] = { contractId: "c4", badges: ["ghost", "netrunner"], rank: "B", reward: 1200, bonus: 0, styleBonus: 150, seconds: 90 };
     const vm = debriefVm(e, contract);
-    expect(vm.title).toBe("Infiltracja");
+    expect(vm.title).toBe("Infiltration");
     expect(vm.fixer).toBe("Genzō");
     expect(vm.badges).toHaveLength(6);
     expect(vm.badges.find((b) => b.id === "ghost")).toEqual({ id: "ghost", earned: true, style: true });
     expect(vm.badges.find((b) => b.id === "clean")).toEqual({ id: "clean", earned: false, style: true });
     expect(vm.badges.find((b) => b.id === "swift")).toEqual({ id: "swift", earned: false, style: false });
-    expect(debriefVm(e, null)).toMatchObject({ title: "Zlecenie", fixer: null });
+    expect(debriefVm(e, null)).toMatchObject({ title: "Job", fixer: null });
+    expect(debriefVm(e, null, "pl")).toMatchObject({ title: "Zlecenie" });
     expect(bonusVm({ contractId: "c4", condition: { badge: "no_alarm", label: "Bez alarmu", bonus: 300 }, kept: false })).toEqual({ label: "Bez alarmu", badge: "no_alarm", bonus: 300, kept: false });
   });
 });
@@ -142,7 +143,8 @@ describe("scanner view models", () => {
   it("tells people, devices and cameras apart", () => {
     const civ = { ...base, id: 31, health: { current: 50, max: 50 }, civilian: {}, faction: "civilians" } as unknown as Entity;
     expect(scanKind(civ)).toBe("person");
-    expect(scanTargetVm(civ, "en")).toMatchObject({ kind: "person", name: passerBy(31, "en").name, faction: "Mieszkańcy Lublina", hostile: false });
+    expect(scanTargetVm(civ, "en")).toMatchObject({ kind: "person", name: passerBy(31, "en").name, faction: "People of Lublin", hostile: false });
+    expect(scanTargetVm(civ, "pl").faction).toBe("Mieszkańcy Lublina");
     const enemy = { ...base, id: 32, health: { current: 80, max: 80 }, ai: {}, enemy: { type: "tessen_guard" }, faction: "tessen" } as unknown as Entity;
     expect(scanTargetVm(enemy, "en")).toMatchObject({ name: "Tessen guard", hostile: true });
     expect(scanTargetVm(enemy, "pl")).toMatchObject({ name: "Strażnik Tessen" });
@@ -225,7 +227,7 @@ describe("game session: wave 1 events on the HUD", () => {
     emit(session, "ContractCompleted", { contract, reward: 1200 });
     expect(ui.getState().contractBonus).toBeNull();
     emit(session, "ContractDebrief", { contractId: "c4", badges: ["ghost"], rank: "B", reward: 1200, bonus: 300, styleBonus: 150, seconds: 80 });
-    expect(ui.getState().debrief).toMatchObject({ title: "Infiltracja", fixer: "Genzō", rank: "B" });
+    expect(ui.getState().debrief).toMatchObject({ title: "Infiltration", fixer: "Genzō", rank: "B" });
     session.intents.dismissDebrief();
     expect(ui.getState().debrief).toBeNull();
   });
