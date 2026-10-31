@@ -9,6 +9,7 @@ import { TouchControls } from "./touch/touch-controls";
 import type { TouchPadSink } from "./touch/touch-pad-sink";
 import type { UiIntents } from "./intents";
 import { DeathScreen } from "./menus/death-screen";
+import { LoadingScreen } from "./menus/loading-screen";
 import { PauseMenu } from "./menus/pause-menu";
 import { TitleScreen } from "./menus/title-screen";
 import type { UiStore } from "./store/ui-store";
@@ -49,7 +50,7 @@ const Screens = ({ touch, version }: { touch: TouchPadSink | undefined; version:
     <>
       {touch && screen === "playing" && !modal && !menu && <TouchControls pad={touch} />}
       {touch && <div className="rotate-hint">{t("touch.rotate")}</div>}
-      {screen !== "title" && !menu && <Hud touch={touch} />}
+      {screen !== "title" && screen !== "loading" && !menu && <Hud touch={touch} />}
       {screen === "playing" && <DialoguePanel />}
       {screen === "playing" && <ShopPanel />}
       {screen === "playing" && <LootPanel />}
@@ -61,6 +62,7 @@ const Screens = ({ touch, version }: { touch: TouchPadSink | undefined; version:
       {screen === "playing" && <MetroRide />}
       {screen === "playing" && <RadioKey />}
       {screen === "title" && <TitleScreen version={version} />}
+      {screen === "loading" && <LoadingScreen />}
       {screen === "paused" && <PauseMenu />}
       {screen === "dead" && <DeathScreen />}
     </>

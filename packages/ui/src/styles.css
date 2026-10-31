@@ -296,6 +296,17 @@ kbd {
 }
 .screen--pause { background: rgba(4, 7, 12, 0.7); backdrop-filter: blur(3px); }
 .screen--dead { background: radial-gradient(ellipse at center, rgba(80, 0, 10, 0.5), rgba(0, 0, 0, 0.88)); }
+/* Loading screen (ADR-0057): opaque, the scene under it is not drawn until the game starts.
+   The bar is as wide as a phone in landscape allows, never wider than on a desktop. */
+.screen--loading {
+  background:
+    radial-gradient(ellipse at 30% 30%, rgba(255, 61, 139, 0.14), transparent 60%),
+    radial-gradient(ellipse at 70% 80%, rgba(95, 242, 255, 0.1), transparent 60%),
+    rgb(4, 7, 12);
+}
+.loading__bar { width: min(520px, 80vw); height: 6px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
+.loading__fill { height: 100%; background: var(--magenta); box-shadow: 0 0 12px rgba(255, 61, 139, 0.6); transition: width 0.2s linear; }
+.loading__stage { min-height: 1.4em; font-size: 15px; letter-spacing: 0.08em; }
 .screen__heading { margin: 0; font-size: 44px; letter-spacing: 0.3em; text-transform: uppercase; }
 .screen__heading--flatline { color: var(--danger); text-shadow: 0 0 22px rgba(255, 77, 94, 0.7); }
 .screen__sub { margin: 0; color: var(--ink-dim); text-align: center; }

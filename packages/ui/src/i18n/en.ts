@@ -39,6 +39,12 @@ export const en = {
   "pause.settings": "Settings",
   "pause.mainMenu": "Main Menu",
   "pause.credits": "Credits",
+  // Loading screen (ADR-0057).
+  "loading.heading": "Loading",
+  "loading.stage.models": "Characters and weapons",
+  "loading.stage.cityKit": "City kit",
+  "loading.stage.city": "Streets round you",
+  "loading.stage.shaders": "Shaders",
   // Save slots.
   "slots.quick": "Quicksave",
   "slots.auto": "Autosave",
