@@ -10,6 +10,7 @@ import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/t
 import { crossingBands } from "../../../packages/sim/src/content/lublin/crossing-bands.ts";
 import { type Pt, centroid } from "./geometry.ts";
 import { MAPPED, propOf, withShape } from "./props-kinds.ts";
+import { marketStalls } from "./props-market.ts";
 import { type SideMode, type Station, evenStations, fnv, offRoad, offWall, openFacing, scatter, sideOffset, stations, towardsStreet, unit, yawOf } from "./props-place.ts";
 import { type BollardRef, stringBollards } from "./props-rows.ts";
 import { Site } from "./props-site.ts";
@@ -211,6 +212,8 @@ const placeItem = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: 
     const ring = flat(item.polygon);
     // A kiosk or a shelter whose outline the importer already raised as a building would stand inside its own double.
     if (SINGLE_OUTLINE.has(prop)) return site.surfaceAt(centroid(ring)) === "building" ? [] : [onOutline(site, item, prop, ring)];
+    // A marketplace's count is the place, not its stalls: they fill it in rows.
+    if (item.kind === "market") return marketStalls(site, ring).map((s, k) => ({ prop, p: s.p, yaw: s.yaw, key: `${item.id}~${k}` }));
     const count = JETS[item.kind] ?? item.count ?? 1;
     // Off the lanes of the streets crossing the area (the car park of Plac Zamkowy under its flea market).
     const clear = { surfaceAt: (p: Pt) => site.surfaceAt(p), standable: (p: Pt) => site.standable(p) && !nearTraffic(site, p, TRAFFIC_REACH) } as Site;
