@@ -1,11 +1,13 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import type { Locale } from "@seki/core";
+import type { ContractModifier, ContractVariation, Locale, TargetTrait } from "@seki/core";
+import { describeVariation, variationKeys } from "@seki/narrative";
 import { CONTRACT_HOOKS, METRO_STATIONS } from "@seki/sim";
 import { isMessageKey, patchUi, translate } from "@seki/ui";
+import { narrativeText } from "../src/content-text";
 import { metroMapVm } from "../src/metro";
-import { type Ui, nearKaito, setup, steps, teleport } from "./story-helpers";
+import { type Ui, nearKaito, setup, steps, talkTo, teleport } from "./story-helpers";
 
 /**
  * Game content in both languages (ADR-0056, stage 4): the simulation and the narrative hold keys,
@@ -94,5 +96,34 @@ describe("the scanner's names", () => {
   it("are written in both languages for each key the simulation names a thing by", () => {
     for (const key of ["camera", "vending", "speaker", "neon", "enemy", "passerBy"]) expectWritten(`scan.name.${key}`);
     expect(translate("pl", "scan.name.vending")).toBe("Automat z napojami");
+  });
+});
+
+describe("the narrative's own words", () => {
+  it("call a speaker who is a role by the player's language, and names as they are", () => {
+    const { session, ui } = setup();
+    session.newGame();
+    talkTo(session, "ume");
+    expect(ui.getState().dialogue?.lines.find((l) => l.speaker)?.speaker).toBe("Grandma Ume");
+    session.intents.closeDialogue();
+    speak(ui, "pl");
+    talkTo(session, "ume");
+    expect(ui.getState().dialogue?.lines.find((l) => l.speaker)?.speaker).toBe("Babcia Ume");
+    session.intents.closeDialogue();
+    talkTo(session, "fixer");
+    expect(ui.getState().dialogue?.lines.find((l) => l.speaker && l.speaker !== "Ty")?.speaker).toBe("Kaito");
+  });
+
+  it("say a contract's variation in either language, Polish as the fixers always said it", () => {
+    const v: ContractVariation = { modifiers: ["time_limit", "twin"], security: "light", trait: "armored" };
+    expect(describeVariation(v, narrativeText(() => "pl"))).toBe(
+      "Klient liczy czas, więc nie zwlekaj. Mówią, że jest ich dwóch i wyglądają tak samo. Ochrona jest cienka. Cel nosi pancerz, zwykłe kule się od niego odbiją.",
+    );
+    expect(describeVariation(v, narrativeText(() => "en"))).toBe(
+      "The client is counting the hours, so don't drag your feet. They say there are two of them and they look the same. Security is thin. The target wears armour; ordinary bullets will bounce off.",
+    );
+    const modifiers: ContractModifier[] = ["night_only", "time_limit", "bodyguards", "ambush", "twin"];
+    const traits: TargetTrait[] = ["paranoid", "drinker", "creature_of_habit", "armored"];
+    for (const trait of traits) for (const security of ["light", "lockdown"] as const) for (const key of variationKeys({ modifiers, security, trait })) expectWritten(key);
   });
 });

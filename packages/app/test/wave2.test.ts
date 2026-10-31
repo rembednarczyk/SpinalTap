@@ -28,7 +28,7 @@ const fakeFocus = () => {
 
 const fakeAudio = (cues: AudioCue[]) => ({ play: (c: AudioCue) => cues.push(c), stopAll() {} });
 
-const lines = createKnotLines(STORY_SOURCE);
+const lines = createKnotLines(STORY_SOURCE, () => "en");
 const domain = () => createDomainState();
 
 /** What the kiosk says while the platform is watched, in the default English. */

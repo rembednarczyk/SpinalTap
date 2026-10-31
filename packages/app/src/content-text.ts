@@ -1,4 +1,5 @@
 import type { Locale } from "@seki/core";
+import type { NarrativeText } from "@seki/narrative";
 import { type MessageParams, isMessageKey, translate } from "@seki/ui";
 
 /**
@@ -7,3 +8,8 @@ import { type MessageParams, isMessageKey, translate } from "@seki/ui";
  */
 export const contentText = (locale: Locale, text: string, params?: MessageParams): string => (isMessageKey(text) ? translate(locale, text, params) : text);
 
+/** How the narrative writes its keys: in the language `locale` gives at that moment (from the next line on). */
+export const narrativeText =
+  (locale: () => Locale): NarrativeText =>
+  (key, params) =>
+    contentText(locale(), key, params);
