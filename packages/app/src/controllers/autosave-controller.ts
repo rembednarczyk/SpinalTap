@@ -9,7 +9,7 @@ export { AUTOSAVE_SLOT };
 export const AUTOSAVE_INTERVAL_TICKS = 5 * 60 * SIM_HZ;
 
 /** What asked for an autosave; the toast names none of them, one save covers them all. */
-export type AutosaveTrigger = "quest-step" | "quest" | "contract" | "district" | "interval";
+export type AutosaveTrigger = "quest-step" | "quest" | "contract" | "district" | "interior" | "interval";
 
 /** Shows that an autosave went through or failed: a toast, once per save. */
 export interface AutosaveView {
@@ -39,7 +39,7 @@ export interface AutosaveControllerDeps {
 
 /**
  * Autosave to its own slot (P0 of the gap audit): after a quest step, a quest, a contract, a new
- * district and every few minutes of play, and when the browser hides the page. Triggers set one
+ * district, stepping into an interior (ADR-0061) and every few minutes of play, and when the browser hides the page. Triggers set one
  * pending save, written at the first safe moment the step loop reaches; the page going away is
  * written at once, or not at all when the moment is not safe.
  */
@@ -57,6 +57,7 @@ export class AutosaveController {
     deps.bus.on("QuestAdvanced", ask("quest-step"));
     deps.bus.on("QuestCompleted", ask("quest"));
     deps.bus.on("ContractCompleted", ask("contract"));
+    deps.bus.on("InteriorEntered", ask("interior"));
   }
 
   /** The trigger waiting for a safe moment, if any. */
