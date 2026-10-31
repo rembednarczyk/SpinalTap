@@ -41,8 +41,9 @@ export const lathe = (sink: MeshSink, c: Vec, profile: readonly (readonly [numbe
 /**
  * Hipped roof from the eaves at the top of the walls up `rise` metres, with a small overhang;
  * `underside` closes the overhang from below (the far cells leave it open: no one sees it).
+ * `pyramid` (OSM `roof:shape=pyramidal`, ADR-0064) brings every slope to the apex over the middle.
  */
-export const addHipRoof = (sink: MeshSink, f: FacadeFrame, rise: number, roofColor: Rgba, trim: Rgba, underside = true): void => {
+export const addHipRoof = (sink: MeshSink, f: FacadeFrame, rise: number, roofColor: Rgba, trim: Rgba, underside = true, pyramid = false): void => {
   const ring = f.b.ring;
   const y0 = f.top - 0.08;
   const eaves = offsetRing(ring, 0.35) ?? [...ring];
@@ -51,7 +52,7 @@ export const addHipRoof = (sink: MeshSink, f: FacadeFrame, rise: number, roofCol
   let ridge: P2[] | null = null;
   // An inset of an odd outline can fold out past it (a spike): only one that stays inside will do.
   const within = (r: readonly P2[] | null): r is P2[] => r !== null && r.every((p) => pointInRing(p, ring));
-  for (let k = 0; k < 5 && !ridge && d - 0.35 > 0.2; k++) {
+  for (let k = 0; k < 5 && !pyramid && !ridge && d - 0.35 > 0.2; k++) {
     const inset = offsetRing(ring, -(d - 0.35));
     ridge = within(inset) ? inset : null;
     d *= 0.7;

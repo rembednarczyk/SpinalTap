@@ -12,6 +12,7 @@ import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
 import { geoToWorld } from "../../osm-import/src/project.ts";
 import { CROWD_LANES } from "../../../packages/sim/src/content/crowd";
+import { INTERIORS } from "../../../packages/sim/src/content/interior-areas";
 import { furnitureClearance } from "../../../packages/sim/src/content/furniture-index";
 import { BOLLARD, alongSegment, anchors, chainSegments, chainThrough, distanceToPiece, furniturePrisms, furnitureRadius } from "../../../packages/sim/src/content/lublin/furniture";
 import { buildingView, isLandmark } from "../../../packages/sim/src/content/lublin";
@@ -685,6 +686,22 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       return top < eaves - 3.2 ? [{ at: near(c.x, c.z), what: `w${w.id} walls to ${eaves.toFixed(1)} m, the game's to ${top.toFixed(1)} m` }] : [];
     });
   },
+  /** A `building:part` of the map on the map's ground with no building of the game round it: dropped (G-061). */
+  "building-part-orphan": () => {
+    const all = MAP_CHUNKS.flatMap((c) => c.buildings);
+    return [...SOURCE_OSM.ways.values()].flatMap((w) => {
+      const t = w.tags ?? {};
+      if (!t["building:part"] || t["building:part"] === "no" || t.building) return [];
+      const pts = w.nodes.slice(1).flatMap((id) => {
+        const n = SOURCE_OSM.nodes.get(id);
+        return n ? [geoToWorld(n.lat, n.lon)] : [];
+      });
+      if (pts.length === 0) return [];
+      const c = { x: pts.reduce((s, p) => s + p.x, 0) / pts.length, z: pts.reduce((s, p) => s + p.z, 0) / pts.length };
+      if (!inMap(c.x, c.z) || all.some((b) => inOutline(c.x, c.z, b.outline, b.x, b.z))) return [];
+      return [{ at: near(c.x, c.z), what: `w${w.id} ${t.name ?? t["building:part"]}` }];
+    });
+  },
   /**
    * A marketplace of the map data (`amenity=marketplace`, G-064) with fewer than one stall per
    * 150 m² of its open ground (sampled every metre, the chunks' rectangles in, its buildings out):
@@ -728,7 +745,42 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       return top > 0.5 ? [{ at: near(s.at.x, s.at.z), what: `${s.view.name ?? "church"}: ${top.toFixed(1)} m over its roof` }] : [];
     });
   },
+  /**
+   * An interior (ADR-0061) of a map building reaching out of its outline by more than 0.3 m
+   * anywhere along a room's walls (sampled every 0.5 m), or over its eaves.
+   */
+  "interior-outside-building": () =>
+    INTERIORS.flatMap((i) => {
+      if (i.building === null) return [];
+      const b = MAP_CHUNKS.flatMap((c) => c.buildings).find((m) => m.id === i.building);
+      if (!b) return [{ at: i.id, what: `${i.building} not on the map` }];
+      const ring = worldOutline(b);
+      return i.rooms.flatMap((r) => {
+        const edge: Pt[] = [{ x: r.maxX, z: r.maxZ }];
+        for (let x = r.minX; x <= r.maxX; x += 0.5) edge.push({ x, z: r.minZ }, { x, z: r.maxZ });
+        for (let z = r.minZ; z <= r.maxZ; z += 0.5) edge.push({ x: r.minX, z }, { x: r.maxX, z });
+        const out = edge.filter((p) => !inOutline(p.x, p.z, b.outline, b.x, b.z) && outlineGap([p], ring) > 0.3);
+        const eaves = b.y + b.height;
+        if (out.length === 0 && r.top <= eaves) return [];
+        return [{ at: near(r.minX, r.minZ), what: out.length > 0 ? `${i.id} ${out.length} wall points out of ${b.id}` : `${i.id} up to ${r.top.toFixed(1)}, eaves ${eaves.toFixed(1)}` }];
+      });
+    }),
+  /**
+   * A building whose map data gives its roof a shape (`roof:shape`: a gable, a mansard, a dome, an
+   * onion helmet, ADR-0064) that the renderer draws as another, a hipped roof most of all (G-056).
+   */
+  "roof-shape-ignored": () =>
+    MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b) && b.roofShape !== undefined)).flatMap((b, i) => {
+      const view = buildingView(b) as BuildingSource["view"];
+      const source: BuildingSource = { ring: cleanRing(view.outline.map((p) => ({ x: p.x + b.x, z: p.z + b.z }))), view, at: { x: b.x, y: b.y, z: b.z } };
+      const drawn = facadeFrame(mapBuilding(i + 1, source, () => null), () => null).style.roof;
+      const want = (b.roof ?? 0) <= 0.3 ? "flat" : ROOF_KIND[b.roofShape!];
+      return drawn === want ? [] : [{ at: near(b.x, b.z), what: `${b.id} ${b.name ?? ""} roof:shape=${b.roofShape} drawn as ${drawn}` }];
+    }),
 };
+
+/** The renderer's roof for each `roof:shape` (ADR-0064). */
+const ROOF_KIND: Readonly<Record<string, string>> = { gabled: "gable", "half-hipped": "half-hip", mansard: "mansard", hipped: "hip", pyramidal: "pyramid", skillion: "skillion", dome: "dome", onion: "onion", flat: "flat" };
 
 describe("the glitch scan (ADR-0054)", () => {
   it("stacks Grodzka 36a 5 m back from the Grodzka Gate instead of over it (G-050)", () => {

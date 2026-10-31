@@ -19,8 +19,9 @@ import { CLINIC_SITE, KOI_SITE, ROOM_STOREY, type RoomSite } from "./lublin/site
  * building, the floor at the ground outside the door.
  */
 
-/** Underside of the ceiling slab inside. */
-const CEILING = 3.9;
+/** Underside of the ceiling slab inside, over the room's floor. */
+export const ROOM_CEILING = 3.9;
+const CEILING = ROOM_CEILING;
 /** Top of every door opening. */
 export const DOOR_TOP = 2.6;
 /** The facade is this far in front of the room's front wall (no z-fighting with the shell). */

@@ -49,6 +49,8 @@ export const mapBuilding = (id: EntityId, e: BuildingSource, heightAt: (x: numbe
     use: v.use,
     look: v.look,
     ...(v.roof !== undefined ? { roof: v.roof } : {}),
+    ...(v.roofShape ? { roofShape: v.roofShape } : {}),
+    ...(v.roofAcross ? { roofAcross: true } : {}),
     ...(v.name ? { name: v.name } : {}),
     shopfront: v.shopfront === true,
     ...(v.doorways?.length ? { doorways: v.doorways.map((d) => ({ x: d.at.x + e.at.x, z: d.at.z + e.at.z, width: d.width, bottom: d.bottom + e.at.y, top: d.top + e.at.y })) } : {}),

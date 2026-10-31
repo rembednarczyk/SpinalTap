@@ -365,6 +365,7 @@ export class MapCity {
   setProps(props: CityProps): void {
     this.facadeProps = props;
     for (const c of this.cells.values()) c.nearDirty = true;
+    this.streetProps?.setProps(props);
   }
 
   /** Night 0 .. day 1 (ADR-0017): lit windows and shop fronts follow, the neon dims. */
@@ -414,6 +415,7 @@ export class MapCity {
     if (!this.streetProps) {
       this.streetProps = new StreetProps({ scene: this.deps.scene, materials: this.deps.materials, quality: this.deps.quality });
       this.streetProps.setDaylight(this.daylight);
+      if (this.facadeProps) this.streetProps.setProps(this.facadeProps);
     }
     return this.streetProps;
   }

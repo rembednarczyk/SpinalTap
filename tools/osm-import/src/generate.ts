@@ -3,7 +3,7 @@
  * input gives the same chunks, byte for byte, whatever order the files were read in.
  */
 import { LUBLIN_ANCHOR } from "../../../packages/core/src/world/city-geo.ts";
-import { isPart, partsByBuilding } from "./building-parts.ts";
+import { asBuilding, isPart, orphanParts, partsByBuilding } from "./building-parts.ts";
 import { makeBuilding } from "./buildings.ts";
 import { corrected } from "./corrections.ts";
 import { ALL_CHUNKS, type ChunkSpec } from "./config.ts";
@@ -173,7 +173,10 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   // The explicit corrections of estimated tags (corrections.ts), before anything reads them.
   const areas = features.areas.map((a) => corrected(a));
   const lines = features.lines;
-  const buildings = buildingAreas(areas, data);
+  const outlines = buildingAreas(areas, data);
+  const partAreas = areas.filter(isPart);
+  const orphans = new Set(orphanParts(outlines, partAreas));
+  const buildings = [...outlines, ...[...orphans].map(asBuilding)];
   const mapped = sidewalkIndex(lines);
   const near = (pts: readonly Pt[]) => chunks.some((c) => rectsOverlap(ringBounds(pts), grow(c.rect, 1)));
   const bands: (Band & { box: Rect })[] = [];
@@ -223,7 +226,7 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   }
   const pois = allPois(data);
   const passages = buildingPassages(lines.filter((l) => near(l.line)), buildings, rects, atStreet);
-  const parts = partsByBuilding(buildings, areas.filter(isPart));
+  const parts = partsByBuilding(buildings, partAreas.filter((p) => !orphans.has(p)));
   const results = chunks.map((c) => generateChunk(c, src, buildings, bands, lines, pois, markings, passages, parts));
   return { chunks: results.map((r) => r.chunk), stats: results.map((r) => r.stats) };
 };
