@@ -196,6 +196,8 @@ export const plWorld = {
   "hack.fail.lost-target": "Utracono cel, wraca połowa RAM",
   "hack.fail.wrong-target": "Ten hack nie działa na ten cel",
   "hack.fail.busy": "Trwa inny upload",
+  "newGame.place": "Krakowskie Przedmieście",
+  "newGame.intro": "Budzisz się na fotelu w klinice doktora Mori, przy deptaku. Nie pamiętasz swojego imienia. Kaito czeka w Neon Koi, po drugiej stronie deptaka.",
   "hack.traced": "Namierzono cię! Sieć zna twoją pozycję",
   "badge.ghost": "Duch",
   "badge.ghost.hint": "Nikt cię nie wykrył",

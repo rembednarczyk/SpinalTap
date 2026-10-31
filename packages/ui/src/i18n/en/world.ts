@@ -198,6 +198,8 @@ export const enWorld = {
   "hack.fail.lost-target": "Target lost, half the RAM comes back",
   "hack.fail.wrong-target": "This hack doesn't work on this target",
   "hack.fail.busy": "Another upload in progress",
+  "newGame.place": "Krakowskie Przedmieście",
+  "newGame.intro": "You wake up in the chair at Doctor Mori's clinic, by the promenade. You don't remember your name. Kaito is waiting at Neon Koi, across the promenade.",
   "hack.traced": "You've been traced! The net knows where you are",
   "badge.ghost": "Ghost",
   "badge.ghost.hint": "Nobody spotted you",
