@@ -227,3 +227,62 @@ Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [r
 ### G-040 Śmierć babci Ume blokuje krok ren_trail
 - Status: odrzucone (Ume nie ma `health` w `district-m0.ts`, a NPC bez niego nie da się zranić ani zabić, `builders.ts:77`; krok nie może się zablokować)
 - Ważność: S2 (proponowana: blokada wątku) · Dowód: krok `ren_trail` (po zakończeniu „aya”) kończy tylko rozmowa z Ume; po `dead:ume` znacznik znika i nie ma innej drogi.
+
+### G-018 Pionowy pas czarnych kresek na bruku Placu Litewskiego
+- Status: naprawione (#47). Bieg o średnim podstopniu < 4,5 cm rysowany jako bruk; skan `steps-micro-riser` 42 → 0. Uwaga weryfikatora: reguła zmienia 60 ze 101 pasów schodów, w tym zbocza Podzamcza (np. (798, 272), spadek 12%), które teraz są rampą w kolorze stopni
+- Ważność: S3 (proponowana) · Zasięg: lokalny
+- Gdzie: Plac Litewski (20, 10), kadr z yaw 3,14
+- Dowód: zrzut naprawiacza G-013 (pionowy pas czarnych poziomych kresek na środku bruku; może decal albo odpływ).
+
+### G-030 Poza Seki w klatce referencyjnej zależy od czasu zegarowego
+- Status: naprawione (#47). Zegary bezczynności postaci stoją w trybie `?reference`; dwa przebiegi migawki: 1106 px różnicy → 0
+- Ważność: S4 (proponowana: migawka różni się między przebiegami w prostokącie postaci) · Koszt: mały
+- Dowód: naprawiacz G-001: animacja bezczynności dostaje prawdziwe `dt`; dwa przebiegi starego kodu różnią się w x 703–797, y 273–532.
+- Pakiet właściciela: packages/engine (animacja postaci) / packages/app (`?reference`)
+
+### G-044 Tłum i pozy czynności animują się zegarem ściennym także w klatce referencyjnej
+- Status: naprawione (#47). (cykle chodu, kołysania i czynności idą z `clock`, w `?reference` 0)
+- Ważność: S4 (proponowana; dziś poza kadrem referencyjnym) · Koszt: mały
+- Dowód: naprawiacz G-030: `crowd-pose.ts` (`stepPuppet`, `s.time`) i `activity-poses.ts` (`b.time`) idą z `dt`; jeśli wejdą w kadr `?reference`, wróci niedeterminizm migawki.
+- Pakiet właściciela: packages/engine (renderer)
+
+### G-045 Test `far-city.test.ts` przekracza 5 s pod obciążeniem
+- Status: naprawione (#47). Przyczyna: `expect` na każdą parę wierzchołek × chunk; teraz jedna asercja na liście naruszeń, 3773 ms → 12 ms, kontrola ta sama (odwrócony warunek pada)
+- Ważność: S3 (proponowana: niestabilny test jednostkowy) · Koszt: mały
+- Dowód: „keeps rings and fillers off every chunk's ground” 5182 ms przy load 16 i padł przy load ok. 8; sam przechodzi 5/5. Ustalić, co jest drogie (podniesienie limitu nie jest poprawką).
+- Pakiet właściciela: packages/engine
+
+### G-047 Karta skanu hackowania nie zmienia języka do zmiany celu
+- Status: naprawione (#47). (presenter pamięta język karty)
+- Ważność: S4 (proponowana) · Koszt: mały
+- Dowód: `hacking-hud.ts:62` przelicza kartę tylko przy zmianie celu; po zmianie języka w pauzie karta tego samego celu zostaje w starym języku.
+- Pakiet właściciela: packages/app (HUD), etap 2c ADR-0056
+
+### G-006 Skręty aut na skrzyżowaniach
+- Status: naprawione (#47). w PR. `lane-dead-end` 61 → 44; zator Ruska/Lwowska usunięty; nowa kontrola `turn-off-road` 6 (zawrotki targu, G-025). CPU sceny targu 3,8 → 4,3 s na 3000 kroków
+- Ważność: S3 · Zasięg: szeroki (33 ślepe końce pasów na skrzyżowaniach i 6 z G-024) · Koszt: duży
+- Test przyjęcia: `lane-dead-end` spada; łuki skrętu na nawierzchni drogi i poza budynkami.
+
+### G-046 Smoke M0: kierunek ruchu po `freeze` zależy od chwili zamrożenia
+- Status: naprawione (#49). Przyczyna w grze: Chromium po wejściu w pointer lock wysyła jeden `mousemove` z ruchem równym minus pozycja kursora (−640 px), `BrowserInput` brał go za obrót (yaw π/2 → 0,16); pierwszy ruch po zmianie stanu blokady nie obraca już widoku
+- Ważność: S2 (proponowana: niestabilne e2e) · Koszt: mały
+- Dowód: weryfikator i18n 2b, sonda: New Game, `freeze`, 6×10 kroków `moveZ`; `tick0` wypada 10, 15 albo 20 i każdy daje inny kierunek; przy `tick0=15` gracz idzie na ścianę z=−62,88 i staje po 2,09 m, więc `smoke.spec.ts:26` (ruch > 2,5) pada. Na czystym main (b5507ce) 3/4 przebiegów sondy trafia na ścianę. Test zakłada kierunek, który zależy od liczby ticków przed `freeze`.
+- Pakiet właściciela: e2e (QA) / packages/app
+
+### G-048 Prawdziwy tap tuż po przycisku pada ginie jako „ghost click”
+- Status: naprawione (#48). (`packages/ui/src/touch/ghost-click.ts`)
+- Ważność: S2 (niestabilne e2e `touch.spec`, a na telefonie zgubiony pierwszy wybór w dialogu) · Koszt: mały
+- Dowód: `pointerdown` na przycisku pada uzbraja `swallowNextClick` na 700 ms, a ten sam przycisk w `touchend` robi `preventDefault`, więc klik zgodności nie przychodzi i nasłuch zjada pierwszy prawdziwy tap w wybór dialogu. Pomiar: padły 3 z 5 przebiegów (odstępy 432–679 ms), przeszły przy 1,6–1,8 s; bez G-006 też 2 z 5. Poprawka: nasłuch wygasa przy następnym `pointerdown`.
+- Pakiet właściciela: packages/ui (touch)
+
+### G-004 Kandelabr na krawędzi pasa aut na Placu Zamkowym
+- Status: naprawione (#51). Jak na prawdziwej mapie: OSM wpuszcza auta na plac, lampy poza pasem, kosze idą z lampami; skan `furniture-in-car-lane` 1 → 0, nowa kontrola `hanging-basket-orphan`.
+- Ważność: S4 · Zasięg: lokalny · Koszt: mały
+- Gdzie: (738, 282)
+- Dowód: skan `furniture-in-car-lane` = 1 (0,9 m od linii pasa).
+- Pomiar (orkiestrator, 31.10, po G-006): `lamp-candelabra` z chunku podzamcze-1-0 (737,7; 282,3) stoi 0,04 m od osi jezdni „Plac Zamkowy” (`residential`, `cars`) i 1,34 m od linii pasa `Plac Zamkowy#84:f` (promień 0,45 + pół auta 0,9). Mebel z OSM leży na jezdni, więc poprawka należy do importu mebli (odsunięcie na krawędź albo pominięcie), a nie do tras. Nawierzchnia w tym miejscu to `cobble` (bruk placu, nie `road`), więc `props-place.ts` (`surfaceAt(p) === "road"`) nie widzi jezdni, choć `sim` puszcza tamtędy pas aut. Do wyboru przy naprawie: import mebli traktuje oś ulicy z pasem aut jak jezdnię (lampy na krawędź), albo bruk placu nie dostaje pasa aut.
+- Pakiet: `tools/osm-import` (meble) albo `packages/sim` (trasy przez parking)
+
+### G-038 `lane-dead-end` nie sprawdza użycia początku, który „spotyka” koniec
+- Status: naprawione (#51). Kontrola wymaga tego samego `use`; licznik 44 bez zmian (po G-006 koniec już liczony).
+- Ważność: S4 (skan) · Gdzie: koniec trolejbusu na Mełgiewskiej ok. (2456, 245) ukryty przez początek pasa aut.

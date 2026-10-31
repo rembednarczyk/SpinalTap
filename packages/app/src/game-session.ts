@@ -100,6 +100,7 @@ export class GameSession implements SessionIntents {
     patchUi(this.deps.ui, { scanning: this.inControl && this.c.hack.scanning(input) });
     this.playPendingRecall();
     this.c.hints.step(this.inControl, this.c.character.isOpen);
+    this.c.autosave.step();
   }
 
   /**
@@ -156,6 +157,8 @@ export class GameSession implements SessionIntents {
   saveAsync(slot: string): Promise<boolean> { return this.c.saves.saveAsync(slot); }
   loadAsync(slot: string): Promise<boolean> { return this.c.saves.loadAsync(slot); }
   refreshSlots(): Promise<void> { return this.c.saves.refreshSlots(); }
+  /** The browser hid the page or is leaving it (main.tsx, `page-lifecycle.ts`): autosave now if it is safe. */
+  pageHidden(): void { this.c.autosave.hidden(); }
 
   /** Replaces the running game with `snapshot`, ink state included: a load without the slot. */
   restore(snapshot: SaveSnapshot): void {
@@ -206,6 +209,7 @@ export class GameSession implements SessionIntents {
     this.c.hud.reset(next);
     this.c.hack.reset();
     this.c.metro.reset();
+    this.c.autosave.reset();
     this.deps.render.setCameraMode(next.domain.preferences.cameraMode);
     patchUi(this.deps.ui, { prompt: null, toasts: [] });
     this.render(0);

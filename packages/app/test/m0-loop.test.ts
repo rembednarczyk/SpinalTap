@@ -133,7 +133,8 @@ describe("M0 vertical slice: input → sim → narrative → domain → save →
     // 4. Save, keep playing, load: state matches the save point, narrative included.
     expect(await session.saveAsync("slot-1")).toBe(true);
     const saved = session.snapshot();
-    expect(ui.getState().slots[0]).toMatchObject({ slot: "slot-1", objective: expect.stringContaining("Weź od Kaito kontrakt") });
+    // The autosave lists first (`auto`); the manual slot keeps its own objective.
+    expect(ui.getState().slots.find((s) => s.slot === "slot-1")).toMatchObject({ objective: expect.stringContaining("Weź od Kaito kontrakt") });
     steps(session, 120, frame({ moveZ: -1 }));
     expect(await session.loadAsync("slot-1")).toBe(true);
     expect(session.snapshot().domain).toEqual(saved.domain);

@@ -31,6 +31,7 @@ export const en = {
   "pause.mainMenu": "Main Menu",
   // Save slots.
   "slots.quick": "Quicksave",
+  "slots.auto": "Autosave",
   "slots.slot": "Slot {n}",
   "slots.empty": "empty",
   // Controls help.
@@ -101,7 +102,11 @@ export const en = {
   "settings.quality.medium": "Medium",
   "settings.quality.low": "Low",
   "settings.volume": "Volume",
+  "settings.musicVolume": "Music and radio",
+  "settings.sfxVolume": "Effects",
+  "settings.ambienceVolume": "City ambience",
   "settings.hints": "Hints",
+  "settings.autosave": "Autosave",
   "settings.touchSensitivity": "Touch sensitivity",
   "settings.hudAlwaysShow": "Always show health and ammo",
   "settings.damageNumbers": "Damage numbers",

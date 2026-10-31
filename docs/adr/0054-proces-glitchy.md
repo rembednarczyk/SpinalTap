@@ -19,6 +19,7 @@ Plan (§11–13) przewiduje orkiestratora i specjalistów, ale nie opisuje proce
 | `glitch-fixer` | jedna poprawka jednego glitcha, test najpierw, osobny worktree | kod pakietu właściciela |
 | `change-verifier` | niezależna kontrola poprawki albo etapu funkcji (dawniej `fix-verifier`), werdykt PRZYJĘTE / NIE PRZYJĘTE | nic |
 | `feature-builder` | jeden etap funkcji z ADR-u w osobnym worktree, z samoweryfikacją (dodany 31.10) | swój pakiet |
+| `topography-curator` | wierność topografii Lublina: przegląd zmian mapy, audyty dzielnic, rejestr `docs/topografia.md` (dodany 31.10) | rejestr odstępstw, zgłoszenia |
 
 Specjaliści pakietów z rosteru (plan §12) to role, które przyjmuje naprawiacz według własności z `CLAUDE.md`.
 

@@ -195,6 +195,28 @@ describe("HUD", () => {
     expect(store.getState().toasts.map((t) => t.title)).toEqual(["t2", "t3", "t4", "t5"]);
   });
 
+  it("over the limit drops the oldest toast that is not quest, memory or kept first (ADR-0059: a level up beside an ending)", () => {
+    const store = createUiStore();
+    pushToast(store, { kind: "quest", title: "ending", text: "" });
+    pushToast(store, { kind: "reputation", title: "rep", text: "" });
+    pushToast(store, { kind: "system", title: "level", text: "", keep: true });
+    pushToast(store, { kind: "quest", title: "done", text: "" });
+    pushToast(store, { kind: "quest", title: "next", text: "" });
+    expect(store.getState().toasts.map((t) => t.title)).toEqual(["ending", "level", "done", "next"]);
+    pushToast(store, { kind: "memory", title: "memory", text: "" });
+    // All four kept: the oldest goes.
+    expect(store.getState().toasts.map((t) => t.title)).toEqual(["level", "done", "next", "memory"]);
+    pushToast(store, { kind: "money", title: "pay", text: "" });
+    expect(store.getState().toasts.map((t) => t.title)).toEqual(["done", "next", "memory", "pay"]);
+    // A failed load (system) outlives the payment that came before it.
+    pushToast(store, { kind: "system", title: "Couldn't load the game", text: "", keep: true });
+    expect(store.getState().toasts.map((t) => t.title)).toEqual(["done", "next", "memory", "Couldn't load the game"]);
+    // Ordinary system toasts (purchases) come and go in order; the failed load stays.
+    pushToast(store, { kind: "system", title: "bought 1", text: "" });
+    pushToast(store, { kind: "system", title: "bought 2", text: "" });
+    expect(store.getState().toasts.map((t) => t.title)).toEqual(["next", "memory", "Couldn't load the game", "bought 2"]);
+  });
+
   it("shows the game clock with the day and the phase of the day", () => {
     mount({ screen: "playing" });
     expect(screen.queryByTestId("clock")).toBeNull();
