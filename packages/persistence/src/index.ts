@@ -3,6 +3,7 @@ export * from "./migrations";
 export * from "./validate";
 export * from "./validate-items";
 export * from "./validate-wave2";
+export * from "./validate-progression";
 export * from "./save-codec";
 export * from "./storage";
 export * from "./indexed-db-store";
