@@ -32,9 +32,9 @@ test.describe("M0 smoke", () => {
     await expect(page.getByTestId("prompt")).toContainText("Kaito");
     await step(page, 1, { interact: true });
     const dialogue = page.getByTestId("dialogue");
-    await expect(dialogue).toContainText("Chodzący trup");
-    await dialogue.getByRole("button", { name: /Kim jesteś/ }).click();
-    await dialogue.getByRole("button", { name: /Niech będzie/ }).click();
+    await expect(dialogue).toContainText("walking corpse");
+    await dialogue.getByRole("button", { name: /Who are you/ }).click();
+    await dialogue.getByRole("button", { name: /Fine\. Seki Senshi/ }).click();
     await dialogue.getByRole("button", { name: /End conversation/ }).click();
     await expect(dialogue).toBeHidden();
     await step(page, 2);

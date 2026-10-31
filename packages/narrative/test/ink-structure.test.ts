@@ -14,7 +14,6 @@ import { INK_EN, INK_FILES, INK_PL, type InkFile, STORY_SOURCES, compileInk } fr
 
 /** Files with no English version yet: they play in Polish. Only ever shrinks, to empty. */
 const UNTRANSLATED: readonly InkFile[] = [
-  "m0",
   "m3-echo",
   "m3-lustro",
   "m4-targ",
@@ -36,7 +35,10 @@ const UNTRANSLATED: readonly InkFile[] = [
  * Words with Polish letters the English text may keep: Lublin's proper names (streets, squares,
  * districts, the river), which stay Polish in every language (ADR-0056), and characters' names.
  */
-const POLISH_NAMES: ReadonlySet<string> = new Set<string>([]);
+const POLISH_NAMES: ReadonlySet<string> = new Set<string>([
+  "Łokietka",
+  "Tysiąclecia",
+]);
 
 const POLISH_LETTER = /[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/;
 

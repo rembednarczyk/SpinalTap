@@ -16,6 +16,7 @@ import encDokiPl from "../ink/pl/enc-doki.ink?raw";
 import hooksPl from "../ink/pl/hooks.ink?raw";
 import metroPl from "../ink/pl/metro.ink?raw";
 import radioPl from "../ink/pl/radio.ink?raw";
+import m0En from "../ink/en/m0.ink?raw";
 
 /**
  * The ink files of the build in story order, one per dialogue group (knots are the dialogue ids).
@@ -65,7 +66,9 @@ export const INK_PL: Readonly<Record<InkFile, string>> = {
  * The English files (`ink/en`), same knots, choices, variables and tags as the Polish ones, other
  * text (ADR-0056). A file not translated yet is missing here and plays in Polish.
  */
-export const INK_EN: Readonly<Partial<Record<InkFile, string>>> = {};
+export const INK_EN: Readonly<Partial<Record<InkFile, string>>> = {
+  m0: m0En,
+};
 
 /** The whole story in `language`, file by file, Polish where a translation is missing. */
 export const storySource = (language: Locale): string =>
