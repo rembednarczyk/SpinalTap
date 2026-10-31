@@ -30,6 +30,16 @@ describe("heights from tags", () => {
     expect(shops.walls).toBeCloseTo(4 + 2 * 3.2, 9);
   });
 
+  it("builds half a storey as half, with the whole storeys' rows of windows (G-116)", () => {
+    const townHall = massing({ building: "public", "building:levels": "4.5" }, opts);
+    expect(townHall.walls).toBeCloseTo(14.4, 9);
+    expect(townHall.levels).toBe(4);
+    const shop = massing({ building: "retail", "building:levels": "3.5" }, { ...opts, shops: true });
+    expect(shop.walls).toBeCloseTo(4 + 2.5 * 3.2, 9);
+    expect(shop.levels).toBe(3);
+    expect(massing({ building: "yes", "building:levels": "0.5" }, opts)).toMatchObject({ walls: 3.2, levels: 1 });
+  });
+
   it("falls back on the district's floors, picked by the look", () => {
     expect(massing({ building: "yes" }, { ...opts, look: 0 }).levels).toBe(3);
     expect(massing({ building: "yes" }, { ...opts, look: 1 }).levels).toBe(4);

@@ -135,6 +135,12 @@ const defaultLevels = (tags: Tags, use: BuildingUse, area: number, range: readon
   return range[0] + (look % (range[1] - range[0] + 1));
 };
 
+/**
+ * The rows of windows of `building:levels`: a half storey (4.5) is a mezzanine or an attic
+ * within the walls, not a row of its own (G-116). The walls keep the exact `levels × 3.2 m`.
+ */
+export const wholeStoreys = (levels: number): number => Math.max(1, Math.floor(levels));
+
 export const massing = (tags: Tags, opts: { area: number; shops: boolean; range: readonly [number, number]; look: number }): Massing => ({ ...heights(tags, opts), ...roofShapeOf(tags) });
 
 const heights = (tags: Tags, opts: { area: number; shops: boolean; range: readonly [number, number]; look: number }): Massing => {
@@ -151,8 +157,8 @@ const heights = (tags: Tags, opts: { area: number; shops: boolean; range: readon
     return { walls, roof: r, levels: tagLevels ?? Math.max(1, Math.round(walls / STOREY)), source: "height" };
   }
   if (tagLevels !== null) {
-    const levels = Math.max(1, Math.round(tagLevels));
-    return { walls: floors(levels), roof, levels, source: "levels" };
+    const levels = Math.max(1, tagLevels);
+    return { walls: floors(levels), roof, levels: wholeStoreys(levels), source: "levels" };
   }
   if (use === "church") {
     const tower = tags["building"] === "bell_tower" || tags["tower:type"] !== undefined;

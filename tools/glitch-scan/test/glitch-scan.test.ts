@@ -882,6 +882,21 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       return p ? [{ at: near(b.x, b.z), what: `B ${b.id} amenity=${p.tags.amenity} ${p.tags.name ?? ""} ${b.use}` }] : [];
     });
   },
+  /**
+   * A building or a lifted part with fractional `building:levels` and no height whose walls over
+   * its plinth (a part's from the building's base, as the map counts its storeys) top the storeys'
+   * `levels × 3.2 m` (a shop floor 0.8 m more) by more than 0.5 m: the half storey rounded up to a
+   * whole one (G-116).
+   */
+  "fractional-levels-rounded": () =>
+    MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b))).flatMap((b) => {
+      const t = osmTags(b.id);
+      const levels = Number((t["building:levels"] ?? "").replace(",", "."));
+      if (t.height !== undefined || t["building:height"] !== undefined || !Number.isFinite(levels) || Number.isInteger(levels)) return [];
+      const walls = b.height - b.plinth;
+      const shop = b.use === "commercial" || b.shopfront === true ? 0.8 : 0;
+      return walls > levels * 3.2 + shop + 0.5 ? [{ at: near(b.x, b.z), what: `${b.id} building:levels=${t["building:levels"]}: walls ${walls.toFixed(1)} m` }] : [];
+    }),
 };
 
 /** A building's own tags in the map data, by the game's id (`w…`, `r…`, a split's `/n` dropped). */
