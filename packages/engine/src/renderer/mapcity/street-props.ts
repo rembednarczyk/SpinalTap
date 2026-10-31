@@ -11,6 +11,9 @@ import { PropHaloMaterial } from "./prop-halo";
 import { chainModel, farModel, propModel } from "./prop-models";
 import { type BlockBand, PROP_BLOCK, PROP_LOD, type PropLod, blockBand } from "./prop-shapes";
 import { type Box2, distanceToBox } from "./polygon";
+import type { CityProps } from "../city-props";
+import { bakeDogs, clearOf, dogModel, gateDogs, stallDog } from "./robodogs";
+import { bakePoles, isPoleLamp, poleLights, poleModel } from "./utility-poles";
 
 /**
  * A 256 m block of the map city's street furniture: its pieces, the detailed mesh baked when it
@@ -99,6 +102,8 @@ export class StreetProps {
   private night = 1;
   private fog = -1;
   private waitingBlocks = 0;
+  /** The CC-BY street props (ADR-0063): poles and robot dogs, once `city-props.glb` has loaded. */
+  private cityProps: CityProps | null = null;
 
   constructor(private readonly deps: StreetPropsDeps) {
     this.halo = new PropHaloMaterial(deps.scene);
@@ -121,7 +126,8 @@ export class StreetProps {
     this.despawn(id);
     const keys = new Set<string>();
     const byBlock = new Map<string, WorldProp[]>();
-    for (const p of toWorld(items, at)) {
+    for (const w of toWorld(items, at)) {
+      const p = isPoleLamp(w) ? { ...w, pole: true } : w;
       const k = cellKey(p.x, p.z, PROP_BLOCK);
       const list = byBlock.get(k);
       if (list) list.push(p);
@@ -134,6 +140,17 @@ export class StreetProps {
       keys.add(k);
     }
     this.entities.set(id, keys);
+  }
+
+  /** The props file has loaded (ADR-0063): the detailed blocks and the halos are made again with its poles and dogs. */
+  setProps(props: CityProps): void {
+    this.cityProps = props;
+    for (const b of this.blocks.values()) {
+      b.near?.dispose(false, false);
+      b.near = null;
+      b.baked = false;
+    }
+    this.buildHalos();
   }
 
   /** Furniture standing up within `r` of (x, z), for the awnings of the facades (ADR-0058). */
@@ -278,15 +295,40 @@ export class StreetProps {
     block.far = this.mesh(`props-far-${block.key}`, far);
   }
 
+  /** The pole of the props file where road lamps become poles (not on phones, ADR-0063), or null. */
+  private get pole() {
+    return this.deps.quality === "low" ? null : poleModel(this.cityProps);
+  }
+
   /** Bakes a block's detailed pieces into one mesh on the street props' material (ADR-0050). */
   private bakeNear(block: PropBlock): void {
     block.baked = true;
     const sink = new MeshSink();
-    for (const p of this.sorted(block)) {
+    const pole = this.pole;
+    const pieces = this.sorted(block);
+    for (const p of pieces) {
+      if (pole && p.pole) continue;
       bake(sink, propModel(p.prop, p.shape).sink, p);
       for (const c of p.chains ?? []) bake(sink, chainModel(c.end), { ...p, yaw: c.yaw });
     }
+    if (pole && this.cityProps) bakePoles(sink, this.cityProps, pole, pieces.filter((p) => p.pole));
+    this.bakeBlockDogs(sink, block, pieces);
     block.near = this.mesh(`props-${block.key}`, sink);
+  }
+
+  /** The robot dogs of a block (ADR-0063): by its stalls and by the gateways in it; none on phones. */
+  private bakeBlockDogs(sink: MeshSink, block: PropBlock, pieces: readonly WorldProp[]): void {
+    const dog = this.deps.quality === "low" ? null : dogModel(this.cityProps);
+    if (!dog || !this.cityProps) return;
+    const b = block.bounds;
+    const spots = [
+      ...pieces.flatMap((p) => {
+        const s = stallDog(p);
+        return s && clearOf(s, pieces, p) ? [s] : [];
+      }),
+      ...gateDogs().filter((s) => s.at.x >= b.minX && s.at.x < b.maxX && s.at.z >= b.minZ && s.at.z < b.maxZ && clearOf(s, pieces)),
+    ];
+    bakeDogs(sink, this.cityProps, dog, spots);
   }
 
   /** The halos of every lamp of the city in one additive mesh, outside the G-buffer, shadow and glow. */
@@ -294,7 +336,11 @@ export class StreetProps {
     this.haloMesh?.dispose(false, false);
     this.haloMesh = null;
     const sink = new MeshSink();
-    for (const key of [...this.blocks.keys()].sort()) for (const p of this.sorted(this.blocks.get(key)!)) if (LIT(p.prop)) planHalos(sink, p, propModel(p.prop, p.shape).lights);
+    const pole = this.pole;
+    const poleLit = pole ? poleLights(pole) : [];
+    for (const key of [...this.blocks.keys()].sort()) {
+      for (const p of this.sorted(this.blocks.get(key)!)) if (LIT(p.prop)) planHalos(sink, p, pole && p.pole ? poleLit : propModel(p.prop, p.shape).lights);
+    }
     if (sink.empty) return;
     this.haloMesh = sinkToMesh(this.deps.scene, "props-halo", sink, true);
     this.haloMesh.material = this.halo.material;

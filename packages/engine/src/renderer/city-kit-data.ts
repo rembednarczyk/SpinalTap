@@ -20,6 +20,8 @@ export interface KitModel {
   /** Height of the main roof (parapets and roof housings stand above it). */
   readonly roof: number;
   readonly styles: readonly string[];
+  /** Its self-lit lamps, for the halos (CC-BY street props, ADR-0063); Babylon space. */
+  readonly lights?: readonly Vec3[];
   /** Babylon space (left-handed): glTF Z negated. */
   readonly positions: Float32Array;
   readonly normals: Float32Array;
@@ -118,11 +120,13 @@ export const parseCityKit = (bytes: ArrayBuffer): CityKitData => {
     const ex = obj(node.extras);
     const size = arr(ex.size).map((x) => num(x));
     const key = String(node.name);
+    const lights = arr(ex.lights).map((l) => arr(l).map((x) => num(x)));
     models.set(key, {
       key,
       size: { x: size[0] ?? 1, y: size[1] ?? 1, z: size[2] ?? 1 },
       roof: num(ex.roof, size[1] ?? 1),
       styles: arr(ex.styles).map(String),
+      ...(lights.length > 0 ? { lights: lights.map(([x, y, z]) => ({ x: x ?? 0, y: y ?? 0, z: -(z ?? 0) })) } : {}),
       positions,
       normals,
       uvs,
