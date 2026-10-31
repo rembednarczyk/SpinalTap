@@ -227,3 +227,38 @@ Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [r
 ### G-040 Śmierć babci Ume blokuje krok ren_trail
 - Status: odrzucone (Ume nie ma `health` w `district-m0.ts`, a NPC bez niego nie da się zranić ani zabić, `builders.ts:77`; krok nie może się zablokować)
 - Ważność: S2 (proponowana: blokada wątku) · Dowód: krok `ren_trail` (po zakończeniu „aya”) kończy tylko rozmowa z Ume; po `dead:ume` znacznik znika i nie ma innej drogi.
+
+### G-018 Pionowy pas czarnych kresek na bruku Placu Litewskiego
+- Status: naprawione (#47).
+- Ważność: S3 (proponowana) · Zasięg: lokalny
+- Gdzie: Plac Litewski (20, 10), kadr z yaw 3,14
+- Dowód: zrzut naprawiacza G-013 (pionowy pas czarnych poziomych kresek na środku bruku; może decal albo odpływ).
+
+### G-030 Poza Seki w klatce referencyjnej zależy od czasu zegarowego
+- Status: naprawione (#47).
+- Ważność: S4 (proponowana: migawka różni się między przebiegami w prostokącie postaci) · Koszt: mały
+- Dowód: naprawiacz G-001: animacja bezczynności dostaje prawdziwe `dt`; dwa przebiegi starego kodu różnią się w x 703–797, y 273–532.
+- Pakiet właściciela: packages/engine (animacja postaci) / packages/app (`?reference`)
+
+### G-044 Tłum i pozy czynności animują się zegarem ściennym także w klatce referencyjnej
+- Status: naprawione (#47).
+- Ważność: S4 (proponowana; dziś poza kadrem referencyjnym) · Koszt: mały
+- Dowód: naprawiacz G-030: `crowd-pose.ts` (`stepPuppet`, `s.time`) i `activity-poses.ts` (`b.time`) idą z `dt`; jeśli wejdą w kadr `?reference`, wróci niedeterminizm migawki.
+- Pakiet właściciela: packages/engine (renderer)
+
+### G-045 Test `far-city.test.ts` przekracza 5 s pod obciążeniem
+- Status: naprawione (#47).
+- Ważność: S3 (proponowana: niestabilny test jednostkowy) · Koszt: mały
+- Dowód: „keeps rings and fillers off every chunk's ground” 5182 ms przy load 16 i padł przy load ok. 8; sam przechodzi 5/5. Ustalić, co jest drogie (podniesienie limitu nie jest poprawką).
+- Pakiet właściciela: packages/engine
+
+### G-047 Karta skanu hackowania nie zmienia języka do zmiany celu
+- Status: naprawione (#47).
+- Ważność: S4 (proponowana) · Koszt: mały
+- Dowód: `hacking-hud.ts:62` przelicza kartę tylko przy zmianie celu; po zmianie języka w pauzie karta tego samego celu zostaje w starym języku.
+- Pakiet właściciela: packages/app (HUD), etap 2c ADR-0056
+
+### G-006 Skręty aut na skrzyżowaniach
+- Status: naprawione (#47).
+- Ważność: S3 · Zasięg: szeroki (33 ślepe końce pasów na skrzyżowaniach i 6 z G-024) · Koszt: duży
+- Test przyjęcia: `lane-dead-end` spada; łuki skrętu na nawierzchni drogi i poza budynkami.
