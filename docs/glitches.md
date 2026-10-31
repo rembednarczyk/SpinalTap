@@ -34,7 +34,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet: `packages/sim` (`traffic.ts`, `uTurn`)
 
 ### G-004 Kandelabr na krawędzi pasa aut na Placu Zamkowym
-- Status: zgłoszone
+- Status: w naprawie (decyzja użytkownika: jak na prawdziwej mapie, czyli według tagów OSM: bez pasa aut, jeśli OSM zakazuje ruchu, inaczej lampy na krawędzi)
 - Ważność: S4 · Zasięg: lokalny · Koszt: mały
 - Gdzie: (738, 282)
 - Dowód: skan `furniture-in-car-lane` = 1 (0,9 m od linii pasa).
