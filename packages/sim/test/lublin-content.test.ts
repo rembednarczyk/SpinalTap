@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { terrainHeightAt, type GroundPoint } from "@seki/core";
 import { LUBLIN_CHUNKS, LUBLIN_DISTRICT_NAMES, buildingView, groundView, terrainView, toPoints } from "../src/content/lublin";
+import { buildingProp } from "../src/content/lublin/city";
 
 /** Signed area, positive counter-clockwise (x east, z north). */
 const area = (pts: readonly GroundPoint[]): number => {
@@ -113,6 +114,20 @@ describe("Lublin from map data (ADR-0042)", () => {
     if (v.kind === "building") expect(v.outline).toHaveLength(b.outline.length / 2);
     expect(groundView(c.ground[0]!).kind).toBe("ground");
     expect(terrainView(c).kind).toBe("terrain");
+  });
+
+  it("lifts the parts of the landmarks onto them: the view and the solid start at the soffit (G-049)", () => {
+    const helmet = buildings.find(({ b }) => b.id === "w617763432")?.b;
+    expect(helmet?.soffit).toBeDefined();
+    const v = buildingView(helmet!, "kanal");
+    expect(v.kind === "building" && v.soffit).toBe(helmet!.soffit);
+    // A landmark's part carries no superstructure of vertical Lublin (ADR-0051).
+    expect(v.kind === "building" && v.vertical).toBeFalsy();
+    const prop = buildingProp(helmet!, undefined, "kanal");
+    for (const p of prop.prisms ?? []) expect(p).toMatchObject({ bottom: helmet!.soffit, top: helmet!.height });
+    // The ground under it stays the tower's, not the helmet's: the outline's prisms start on the ground.
+    const tower = buildings.find(({ b }) => b.id === "w66286371")!.b;
+    expect(buildingProp(tower).prisms?.every((p) => p.bottom === 0)).toBe(true);
   });
 });
 

@@ -3,6 +3,7 @@
  * input gives the same chunks, byte for byte, whatever order the files were read in.
  */
 import { LUBLIN_ANCHOR } from "../../../packages/core/src/world/city-geo.ts";
+import { isPart, partsByBuilding } from "./building-parts.ts";
 import { makeBuilding } from "./buildings.ts";
 import { ALL_CHUNKS, type ChunkSpec } from "./config.ts";
 import { type HeightSource } from "./dtm.ts";
@@ -100,6 +101,7 @@ const generateChunk = (
   pois: ReturnType<typeof allPois>,
   markings: readonly Marking[],
   passages: readonly PassageOut[],
+  parts: ReadonlyMap<string, readonly Area[]>,
 ) => {
   const altitude = LUBLIN_ANCHOR.altitude;
   const t = chunkTerrain(sampleField(src, spec.rect, 12), spec.rect, altitude);
@@ -112,13 +114,14 @@ const generateChunk = (
   let withHoles = 0;
   for (const a of buildings) {
     if (!inRect(centroid(a.ring), spec.rect)) continue;
-    const r = makeBuilding(a, { src, grid: t.grid, altitude, range: spec.district.defaultLevels, shopPoints, namedPoints });
+    const r = makeBuilding(a, { src, grid: t.grid, altitude, range: spec.district.defaultLevels, shopPoints, namedPoints }, parts.get(a.id));
     if ("skipped" in r) {
       skipped++;
       continue;
     }
     if (a.holes > 0) withHoles++;
-    out.push(r.ok);
+    // A building's parts follow it, in its chunk, wherever their own centroids fall.
+    out.push(r.ok, ...r.lifted);
   }
   const ground = chunkGround(
     bands.filter((b) => rectsOverlap(b.box, spec.rect)),
@@ -211,6 +214,7 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   }
   const pois = allPois(data);
   const passages = buildingPassages(lines.filter((l) => near(l.line)), buildings, chunks.map((c) => c.rect));
-  const results = chunks.map((c) => generateChunk(c, src, buildings, bands, lines, pois, markings, passages));
+  const parts = partsByBuilding(buildings, areas.filter(isPart));
+  const results = chunks.map((c) => generateChunk(c, src, buildings, bands, lines, pois, markings, passages, parts));
   return { chunks: results.map((r) => r.chunk), stats: results.map((r) => r.stats) };
 };

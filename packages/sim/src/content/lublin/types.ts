@@ -21,6 +21,11 @@ export interface LublinBuildingData {
   readonly parts: readonly FlatPoints[];
   /** From `y` to the eaves, metres, plinth included. */
   readonly height: number;
+  /**
+   * A part of a landmark lifted onto the building under it (OSM `building:part`, G-049): a tower,
+   * a helmet, a nave over the aisles. Its walls and its solid start this many metres over `y`.
+   */
+  readonly soffit?: number;
   /** Ground difference under the outline: on a slope the bottom `plinth` metres are a plinth (podmurówka). */
   readonly plinth: number;
   readonly levels: number;
