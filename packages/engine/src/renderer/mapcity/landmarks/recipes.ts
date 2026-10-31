@@ -79,6 +79,8 @@ export interface Tier {
   readonly niche?: boolean;
   /** Lublin 2077's screen hangs on this tier's wall facing the new town (off the niche, T-034). */
   readonly screen?: boolean;
+  /** OSM ids of the neighbouring tenements Lublin 2077's cables run to from this tier's wall facing the new town. */
+  readonly cables?: readonly string[];
 }
 
 /** One OSM building or `building:part` of a landmark with its tier and crown. */
@@ -136,8 +138,10 @@ const BRAMA_KRAKOWSKA: LandmarkRecipe = {
     },
     {
       osm: "w617597407",
-      // No white blind niches (T-033): zendrówki, a few small windows and the screen over the battlements.
-      tier: { material: "brick", plinth: 0, blinds: NO_BLINDS, pilasters: false, cornice: true, base: false, openings: false, clock: false, diaper: true, windows: 3, screen: true },
+      // No white blind niches (T-033): zendrówki, a few small windows and the screen over the
+      // battlements. Cables to the tenement north of the annex (T-034): the only one on the west
+      // side within reach (Plac Łokietka is open, Jezuicka 3 lies south-east, under the annex).
+      tier: { material: "brick", plinth: 0, blinds: NO_BLINDS, pilasters: false, cornice: true, base: false, openings: false, clock: false, diaper: true, windows: 3, screen: true, cables: ["w66286400"] },
       // The OSM roof (a 4.2 m dome) would bury the octagon (T-017): a low skirt round its foot instead.
       crown: { kind: "skirt", rise: 0.9, inset: 1.2 },
     },
@@ -172,12 +176,20 @@ const BRAMA_KRAKOWSKA: LandmarkRecipe = {
 
 export const LANDMARK_RECIPES: readonly LandmarkRecipe[] = [BRAMA_KRAKOWSKA];
 
+/** A neighbour a landmark's cables run to: its world outline and the world y of its top. */
+export interface CableAnchor {
+  readonly ring: readonly { readonly x: number; readonly z: number }[];
+  readonly top: number;
+}
+
 /** A part of a landmark with the recipe it belongs to. */
 export interface LandmarkPart {
   readonly recipe: LandmarkRecipe;
   readonly part: PartRecipe;
   /** World outlines of the recipe's parts lifted onto this one (from the map data): its walls go on up under them. */
   readonly above?: readonly (readonly { readonly x: number; readonly z: number }[])[];
+  /** The tenements its cables run to (from the map data): world outline and top. */
+  readonly cableTo?: readonly CableAnchor[];
 }
 
 /** Recipes by the OSM id of each of their buildings and parts. */

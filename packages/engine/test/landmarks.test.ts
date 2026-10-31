@@ -9,6 +9,7 @@ import { type FacadeFrame, facadeFrame } from "../src/renderer/mapcity/facade-fr
 import { planNearBuilding } from "../src/renderer/mapcity/facade-plan";
 import { ROOF_STYLE } from "../src/renderer/mapcity/facade-style";
 import { type LandmarkFrame, landmarkAt, planFarLandmark, planLandmarkSigns, planNearLandmark, withLandmark } from "../src/renderer/mapcity/landmarks";
+import { cableRuns, planLandmarkCables } from "../src/renderer/mapcity/landmarks/cables";
 import { GALLERY } from "../src/renderer/mapcity/landmarks/elevation";
 import { SWATCH, helmBase, helmProfile } from "../src/renderer/mapcity/landmarks/kit";
 import { clockSpot, clockWalls, mouthWall, screenOn } from "../src/renderer/mapcity/landmarks/landmark-plan";
@@ -224,6 +225,35 @@ describe("Brama Krakowska from the landmark kit (ADR-0062)", () => {
     for (const p of colored(near3(annex), SWATCH.stone).filter((q) => q.y < annex.top - 1.1)) expect(outside(annex.b.ring, p)).toBeLessThan(0.46);
   });
 
+  it("keeps Lublin 2077's fittings within a cornice's depth and runs cables from the west front to the tenement next door (T-034)", () => {
+    // The uplights, the camera and the screen's frame stand out of the walls no more than a cornice (0.3 m).
+    for (const id of GATE) {
+      const f = frameOf(id) as LandmarkFrame;
+      for (const p of [...colored(near3(f), SWATCH.metal), ...colored(near3(f), "#3a3f47")]) expect(outside(f.b.ring, p)).toBeLessThanOrEqual(0.31);
+    }
+    const tower = frameOf("w617597407") as LandmarkFrame;
+    const runs = cableRuns(tower);
+    expect(runs.length).toBe(2);
+    const next = data("w66286400");
+    const ring = ringOf(scenery(next));
+    const west = tower.landmark.recipe.layer.newTown;
+    const front = clockWalls(tower).neon!;
+    for (const r of runs) {
+      // From the tower's west wall, sagging down to the tenement's front corner under its eaves.
+      expect(facing(front, west)).toBeGreaterThan(0.9);
+      expect(Math.abs((r.a.x - front.a.x) * front.nx + (r.a.z - front.a.z) * front.nz)).toBeLessThan(0.1);
+      expect(outside(ring, r.b)).toBeLessThan(0.3);
+      expect(r.b.y).toBeLessThan(next.y + next.height);
+      expect(r.a.y).toBeGreaterThan(r.b.y);
+      expect(Math.hypot(r.b.x - r.a.x, r.b.z - r.a.z)).toBeGreaterThan(5);
+    }
+    // Drawn near only, apart from the gate's solid; the Old Town's side has none.
+    const sink = new MeshSink();
+    planLandmarkCables(sink, tower);
+    expect(sink.vertexCount).toBeGreaterThan(0);
+    for (const id of ["r7224409", "w617878341"]) expect(cableRuns(frameOf(id) as LandmarkFrame)).toEqual([]);
+  });
+
   it("hangs the screen on the tower over the battlements, clear of the painting's niche over the arch (T-033, T-034)", () => {
     const annex = frameOf("r7224409") as LandmarkFrame;
     const mouth = mouthWall(annex, "new")!;
@@ -240,7 +270,8 @@ describe("Brama Krakowska from the landmark kit (ADR-0062)", () => {
     const tower = frameOf("w617597407") as LandmarkFrame;
     expect(screenOn(annex)).toBeNull();
     const s = screenOn(tower)!;
-    expect(s.y0).toBeGreaterThan(annex.top);
+    // Seen from the plaza over the merlons 8 m in front of it.
+    expect(s.y0).toBeGreaterThan(annex.top + 3);
     expect(s.y0).toBeGreaterThan(Math.max(...picture.map((p) => p.y)) + 1);
     expect(facing(s.w, annex.landmark.recipe.layer.newTown)).toBeGreaterThan(0.9);
   });

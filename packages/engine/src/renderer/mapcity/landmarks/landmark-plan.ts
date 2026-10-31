@@ -161,15 +161,21 @@ const layerOn = (sink: MeshSink, f: LandmarkFrame, part: PartRecipe): void => {
   if (layer.checkpoint) for (const p of f.b.passages ?? []) scanner(sink, f, p, "#5ce1ff");
 };
 
+/**
+ * How high over the tier's foot the screen starts: seen from the plaza over the merlons standing
+ * 8 m in front of the tower (an eye 25 m from them sees the tower's wall from 2.1 m up).
+ */
+const SCREEN_OVER = 3.2;
+
 /** The screen's place and size: on the wall of a `screen` tier facing the new town, centred, over the battlements in front of it (T-034). */
 export const screenOn = (f: LandmarkFrame): (WallRect & { u: number; y: number; width: number; height: number }) | null => {
   const layer = f.landmark.recipe.layer;
   const w = f.landmark.part.tier.screen && layer.screen ? mostFacing(f, layer.newTown) : null;
   if (!w) return null;
-  const height = Math.min(1.4, f.top - f.b.foot - 2.4);
+  const height = Math.min(1.4, f.top - f.b.foot - SCREEN_OVER - 1.2);
   const width = Math.min(height * 2.6, w.length - 0.8);
   if (height < 0.6 || width < 1.2) return null;
-  const y = f.b.foot + 1 + height / 2;
+  const y = f.b.foot + SCREEN_OVER + height / 2;
   const u = w.length / 2;
   return { w, u, y, width, height, u0: u - width / 2 - 0.12, u1: u + width / 2 + 0.12, y0: y - height / 2 - 0.12, y1: y + height / 2 + 0.12 };
 };

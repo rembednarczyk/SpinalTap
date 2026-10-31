@@ -90,9 +90,10 @@ export const camera = (sink: MeshSink, w: Wall, u: number, y: number): void => {
   const dz = (w.b.z - w.a.z) / w.length;
   const rotY = Math.atan2(w.nx, w.nz);
   const at = (out: number, yy: number) => onWall(w, u, yy, out);
-  sink.box(at(0.15, y + 0.16), 0.06, 0.06, 0.3, solid(SWATCH.metal), { rotY });
-  sink.box(at(0.32, y), 0.2, 0.18, 0.3, solid("#3a3f47"), { rotY });
-  const lens = at(0.48, y);
+  // Within a cornice's depth of the wall (0.3 m, T-034): bracket, body and lens.
+  sink.box(at(0.07, y + 0.15), 0.06, 0.06, 0.14, solid(SWATCH.metal), { rotY });
+  sink.box(at(0.16, y), 0.18, 0.16, 0.2, solid("#3a3f47"), { rotY });
+  const lens = at(0.27, y);
   sink.box({ x: lens.x + dx * 0.05, y: y + 0.03, z: lens.z + dz * 0.05 }, 0.04, 0.04, 0.04, lit("#ff3030"));
 };
 
@@ -100,8 +101,9 @@ export const camera = (sink: MeshSink, w: Wall, u: number, y: number): void => {
 export const uplightFittings = (sink: MeshSink, f: FacadeFrame, w: Wall, us: readonly number[], color: string): void => {
   const meta = trimMeta(f.style.seed);
   for (const u of us) {
-    sink.box(onWall(w, u, f.b.foot + 0.08, 0.35), 0.34, 0.16, 0.22, solid(SWATCH.metal), { rotY: Math.atan2(-(w.b.z - w.a.z), w.b.x - w.a.x) });
-    quadUv(sink, [onWall(w, u - 0.13, f.b.foot + 0.165, 0.26), onWall(w, u + 0.13, f.b.foot + 0.165, 0.26), onWall(w, u + 0.13, f.b.foot + 0.165, 0.44), onWall(w, u - 0.13, f.b.foot + 0.165, 0.44)], { x: 0, y: 1, z: 0 }, lit(color), UNIT, meta);
+    // Against the wall, within a cornice's depth of it (0.3 m, T-034).
+    sink.box(onWall(w, u, f.b.foot + 0.08, 0.16), 0.34, 0.16, 0.22, solid(SWATCH.metal), { rotY: Math.atan2(-(w.b.z - w.a.z), w.b.x - w.a.x) });
+    quadUv(sink, [onWall(w, u - 0.13, f.b.foot + 0.165, 0.07), onWall(w, u + 0.13, f.b.foot + 0.165, 0.07), onWall(w, u + 0.13, f.b.foot + 0.165, 0.25), onWall(w, u - 0.13, f.b.foot + 0.165, 0.25)], { x: 0, y: 1, z: 0 }, lit(color), UNIT, meta);
   }
 };
 
