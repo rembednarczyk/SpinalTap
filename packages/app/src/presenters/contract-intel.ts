@@ -1,6 +1,6 @@
 import type { DomainState } from "@seki/core";
 import { CONTRACT_HOOKS } from "@seki/sim";
-import { type ContractHookVm, patchUi } from "@seki/ui";
+import { type ContractHookVm, patchUi, translate } from "@seki/ui";
 import type { HudPart, HudPartContext, HudPatch } from "./hud-part";
 
 /** The hooks a saved contract had found, back as tracker lines after a load (ADR-0034). */
@@ -38,7 +38,7 @@ export class ContractIntel implements HudPart {
         if (this.hooks.some((h) => h.id === e.hookId)) return;
         this.hooks = [...this.hooks, { id: e.hookId, text: e.text }];
         patchUi(ui, { contractHooks: this.hooks });
-        ctx.toast("system", "Nowy trop", e.text);
+        ctx.toast("system", translate(ui.getState().settings.locale, "contract.newLead"), e.text);
       }),
       bus.on("GuardBark", (e) => this.bark(e.knot)),
     ];
@@ -53,9 +53,12 @@ export class ContractIntel implements HudPart {
 
   /** What a guard says within earshot, as a subtitle toast (the phone renderer's fallback is never shown). */
   private bark(knot: string): void {
+    const locale = this.ctx.ui.getState().settings.locale;
     const lines = this.ctx.hooks.renderKnot(knot, this.ctx.hooks.domain());
-    const said = lines.filter((l) => l.text && l.text !== "Nowa wiadomość.");
+    // The phone renderer's stand-in line, in either language, is not something a guard says.
+    const filler = new Set([translate("en", "phone.newMessage"), translate("pl", "phone.newMessage")]);
+    const said = lines.filter((l) => l.text && !filler.has(l.text));
     if (said.length === 0) return;
-    this.ctx.toast("system", said[0]?.speaker ?? "Strażnik", said.map((l) => l.text).join(" "));
+    this.ctx.toast("system", said[0]?.speaker ?? translate(locale, "contract.guard"), said.map((l) => l.text).join(" "));
   }
 }

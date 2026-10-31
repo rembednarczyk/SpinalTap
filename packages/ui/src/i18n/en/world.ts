@@ -200,6 +200,8 @@ export const enWorld = {
   "hack.fail.busy": "Another upload in progress",
   "newGame.place": "Krakowskie Przedmieście",
   "newGame.intro": "You wake up in the chair at Doctor Mori's clinic, by the promenade. You don't remember your name. Kaito is waiting at Neon Koi, across the promenade.",
+  "contract.newLead": "New lead",
+  "contract.guard": "Guard",
   "hack.traced": "You've been traced! The net knows where you are",
   "badge.ghost": "Ghost",
   "badge.ghost.hint": "Nobody spotted you",
