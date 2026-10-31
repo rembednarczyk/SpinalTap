@@ -83,7 +83,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: później (ADR-0052 „Na później”)
 
 ### G-052 Teatr Osterwy i Kościół Bernardynów poza danymi miasta (brzeg Krakowskiego na z = −200)
-- Status: zgłoszone
+- Status: w naprawie (9f42423: oba zabytki w grze; czeka na G-074, G-075 i decyzję o budżecie sceny referencyjnej 181/76 → 191/81)
 - Ważność: S3 (proponowana) · Zasięg: lokalny (Narutowicza, Bernardyńska) · Koszt: duży (prostokąt w config.ts, ADR-0042, regeneracja, budżety)
 - Gdzie: (118.0, −205.7), (364.7, −239.8); ile w mieście: 2 zabytki z listy kuratora
 - Dowód: brak w66330578 i w67508958 w `*.generated.ts`, `DISTRICTS[0].rect.minZ = −200`; T-014
@@ -159,14 +159,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, packages/engine (mapcity)
 - Test przyjęcia: każde z 8 zadaszeń jest daszkiem na słupach, przez który da się przejść; kontrola `osm-roof-skipped` 8 → 0
 
-### G-064 Targowiska bez straganów (Targ na Ruskiej, Bazar, Giełda na Kresowej)
-- Status: w PR #76 (szkic, przyjęte przez weryfikatora, czeka na kuratora)
-- Ważność: S4 (proponowana) · Zasięg: 3 · Koszt: mały
-- Gdzie: w182461192 (787, 561), w67502759 (681, 413), w231445090 (x 2300..2383); T-026
-- Dowód: `props.generated` nie ma `market-stall` w podzamcze-1-1 i 0-1
-- Pakiet właściciela: tools/osm-import (props-gen)
-- Test przyjęcia: każdy obrys `amenity=marketplace` w dzielnicach ma ≥ 1 stragan na 150 m²; kontrola `marketplace-empty` 3 → 0
-
 ### G-065 Budynki podpisane nazwą muralu lub tablicy pamiątkowej
 - Status: zgłoszone (audyt topografii 2; ta sama przyczyna co G-051, naprawiać razem)
 - Ważność: S4 (proponowana) · Zasięg: 13 w mieście · Koszt: mały
@@ -219,6 +211,22 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Dowód: sonda weryfikatora G-064 na `WORLD_STREET_PROPS`; problem sprzed G-064 (nowe stragany z G-064 nie nachodzą na nic)
 - Pakiet właściciela: tools/osm-import (props-gen)
 - Test przyjęcia: kontrola skanu „stragan na innym rekwizycie” (odstęp < 0,9 m od drzewa, stojaka, automatu, słupa), baza 8 → 0
+
+### G-074 Ślepe końce pasów po poszerzeniu Krakowskiego (Peowiaków, Kapucyńska, Dolna Panny Marii)
+- Status: zgłoszone (z naprawy G-052)
+- Ważność: S3 (proponowana: auta znikają albo stają) · Zasięg: 3 skrzyżowania · Koszt: mały–średni
+- Gdzie: Peowiaków (−91, −167): skrzyżowanie trzech ulic, oba wyjazdy zajęte jazdą prosto, jednokierunkowa Peowiaków nie ma skrętu; Kapucyńska (159, −207) i Dolna Panny Marii (336, −185): skrzyżowania T w połowie pasa (znana klasa)
+- Dowód: skan `lane-dead-end` na gałęzi G-052: 44 → 45 (dwa stare końce znikają, trzy nowe)
+- Pakiet właściciela: packages/sim (traffic-junctions)
+- Test przyjęcia: `lane-dead-end` na gałęzi G-052 nie wyższy niż 44
+
+### G-075 Kolizje aut na przecięciu pasów 3 Maja przy Zesłańców Sybiru
+- Status: zgłoszone (z naprawy G-052; błąd istnieje już na main: 1 kolizja przy ziarnie 7)
+- Ważność: S3 (proponowana) · Zasięg: jedno skrzyżowanie · Koszt: mały–średni
+- Gdzie: (−110, 56), przecięcie pasów 3 Maja#31:0 i #31:1
+- Dowód: `traffic-junction-drive` na gałęzi G-052: Peowiaków ziarna 3 i 7 po 2 kolizje (próg 0), 3 Maja ziarno 7: 3 (próg 2)
+- Pakiet właściciela: packages/sim (traffic-junctions)
+- Test przyjęcia: `traffic-junction-drive` w progach na gałęzi G-052 i na main
 
 ## Naprawione
 | ID | Glitch | PR |
@@ -273,6 +281,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | G-050 | Nadbudowa przy Bramie Grodzkiej góruje nad bramą (piętra odsunięte ≥ 5 m) | #60 |
 | G-062 | Przejścia pod mostami zablokowane (Podwale, bulwar Bystrzycy) | #70 |
 | G-068 | AI nie widziało przejścia pod mostem | #71 |
+| G-064 | Targowiska bez straganów | #76 |
 | G-051 | Podpis muzeum na kamienicy Jezuicka 3 zamiast na Bramie Krakowskiej | #75 |
 | G-067 | Klasztor Dominikanów z proceduralnymi wieżami kościoła | #72 |
 

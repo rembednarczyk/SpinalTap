@@ -360,3 +360,11 @@ Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [r
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: po regeneracji w66286384 nie ma nazwy muzeum, a r7224409 nosi nazwę Bramy Krakowskiej (nazwa budynku ma pierwszeństwo przed punktem)
 - Źródło: audyt topografii 1 (kurator, 31.10).
+
+### G-064 Targowiska bez straganów (Targ na Ruskiej, Bazar, Giełda na Kresowej)
+- Status: naprawione (#76). 420 straganów w rzędach; skan `marketplace-empty` 3 → 0
+- Ważność: S4 (proponowana) · Zasięg: 3 · Koszt: mały
+- Gdzie: w182461192 (787, 561), w67502759 (681, 413), w231445090 (x 2300..2383); T-026
+- Dowód: `props.generated` nie ma `market-stall` w podzamcze-1-1 i 0-1
+- Pakiet właściciela: tools/osm-import (props-gen)
+- Test przyjęcia: każdy obrys `amenity=marketplace` w dzielnicach ma ≥ 1 stragan na 150 m²; kontrola `marketplace-empty` 3 → 0
