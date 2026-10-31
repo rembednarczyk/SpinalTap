@@ -19,6 +19,8 @@ export interface BuildingOut {
   readonly parts: readonly (readonly number[])[];
   /** From `y` to the eaves, plinth included. */
   readonly height: number;
+  /** A part lifted onto its building (`building:part`, G-049): its walls start this far over `y`. */
+  readonly soffit?: number;
   /** Ground difference under the outline: the bottom `plinth` metres are a plinth on a slope. */
   readonly plinth: number;
   readonly levels: number;
