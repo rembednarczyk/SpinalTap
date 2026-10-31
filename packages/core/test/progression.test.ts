@@ -3,7 +3,10 @@ import {
   ATTRIBUTE_IDS,
   ATTRIBUTE_MAX,
   ATTRIBUTE_START,
+  HACKED_MEMORY,
   INITIAL_PROGRESSION,
+  isConsistentProgression,
+  rememberHack,
   LEVEL_THRESHOLDS,
   MAX_LEVEL,
   QUEST_DEFINITIONS,
@@ -80,6 +83,9 @@ describe("level ups and points (ADR-0059)", () => {
   it("ignores nothing and negative XP, and never goes past level 30", () => {
     expect(gainXp(INITIAL_PROGRESSION, 0).state).toBe(INITIAL_PROGRESSION);
     expect(gainXp(INITIAL_PROGRESSION, -50).state).toBe(INITIAL_PROGRESSION);
+    for (const bad of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+      expect(gainXp(INITIAL_PROGRESSION, bad)).toEqual({ state: INITIAL_PROGRESSION, levelsGained: 0 });
+    }
     const top = gainXp(INITIAL_PROGRESSION, 1_000_000);
     expect(top.levelsGained).toBe(MAX_LEVEL - 1);
     expect(top.state.unspent).toEqual({ attribute: 29, perk: 29 });
@@ -102,6 +108,29 @@ describe("level ups and points (ADR-0059)", () => {
     expect(s.attributes.shadow).toBe(ATTRIBUTE_MAX);
     expect(spendAttributePoint(s, "shadow")).toEqual({ ok: false, reason: "at-max" });
     expect(s.unspent.attribute).toBe(19 - (ATTRIBUTE_MAX - ATTRIBUTE_START));
+  });
+
+  it("remembers each hacked target once, and only the most recent HACKED_MEMORY of them", () => {
+    const first = rememberHack(INITIAL_PROGRESSION, "dev:doki-speaker");
+    expect(first?.hacked).toEqual(["dev:doki-speaker"]);
+    expect(first && rememberHack(first, "dev:doki-speaker")).toBeNull();
+    expect(first && rememberHack(first, "dev:doki-yard-cam")?.hacked).toEqual(["dev:doki-speaker", "dev:doki-yard-cam"]);
+    let s: ProgressionState = INITIAL_PROGRESSION;
+    for (let i = 0; i <= HACKED_MEMORY; i++) s = rememberHack(s, `k${i}`) ?? s;
+    expect(s.hacked).toHaveLength(HACKED_MEMORY);
+    expect(s.hacked?.[0]).toBe("k1");
+  });
+
+  it("a state is consistent only when its level and points follow from its XP", () => {
+    expect(isConsistentProgression(INITIAL_PROGRESSION)).toBe(true);
+    const ten = progressionFromXp(xpForLevel(10));
+    expect(isConsistentProgression(ten)).toBe(true);
+    const spent = spendAttributePoint(ten, "might");
+    expect(spent.ok && isConsistentProgression(spent.state)).toBe(true);
+    expect(isConsistentProgression({ ...INITIAL_PROGRESSION, level: 30 })).toBe(false);
+    expect(isConsistentProgression({ ...ten, unspent: { attribute: 20, perk: 9 } })).toBe(false);
+    expect(isConsistentProgression({ ...ten, perks: { any: 1 } })).toBe(false);
+    expect(isConsistentProgression({ ...ten, attributes: { ...ten.attributes, net: 15 } })).toBe(false);
   });
 
   it("an old character's XP gives its level and every point still to spend", () => {

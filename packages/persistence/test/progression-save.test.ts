@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { INITIAL_PROGRESSION, QUEST_DEFINITIONS, type QuestLog, SAVE_SCHEMA_VERSION, type SaveSnapshot, levelForXp, questLogXp, xpForLevel } from "@seki/core";
-import { MIGRATIONS, V17_CONTRACT_XP, checksum, decodeSave, findSchemaError, retroactiveXp } from "../src";
+import { INITIAL_PROGRESSION, QUEST_DEFINITIONS, type QuestLog, SAVE_SCHEMA_VERSION, type SaveSnapshot, capacityMax, levelForXp, progressionFromXp, questLogXp, xpForLevel } from "@seki/core";
+import { MIGRATIONS, V17_CONTRACT_XP, checksum, compensatingShards, decodeSave, findSchemaError, retroactiveXp } from "../src";
 import { snapshot } from "./fixtures";
 
 const wrap = (payload: unknown) => {
@@ -25,6 +25,23 @@ describe("character progression in the save (v16 to v17, ADR-0059)", () => {
     const level = levelForXp(xp);
     expect(level).toBe(10);
     expect(loaded.domain.progression).toEqual({ ...INITIAL_PROGRESSION, xp, level, unspent: { attribute: level - 1, perk: level - 1 } });
+  });
+
+  it("keeps the old cyberware pool: capacity shards make up what the level does not give yet", () => {
+    // 10 contracts and 1 shard was a pool of 12 + 9 + 2 = 23; 8 500 XP is level 8, 12 + 4 + 2 = 18.
+    const loaded = decodeSave("v16", wrap(v16({ quests: {}, contracts: { active: null, completed: 10 }, capacityShards: 1 })));
+    expect(loaded.domain.progression.level).toBe(8);
+    expect(loaded.domain.capacityShards).toBe(1 + 3);
+    expect(capacityMax(loaded.domain.progression.level, loaded.domain.capacityShards)).toBeGreaterThanOrEqual(23);
+    // Below three contracts the pool was the base: nothing to make up.
+    expect(compensatingShards(2, 0, 1)).toBe(0);
+    // A high level already gives more than the old pool.
+    expect(compensatingShards(10, 0, 30)).toBe(0);
+    for (let completed = 0; completed <= 40; completed++) {
+      const level = levelForXp(completed * V17_CONTRACT_XP);
+      const old = 12 + [3, 6, 10].filter((n) => completed >= n).length * 3;
+      expect(capacityMax(level, compensatingShards(completed, 0, level)), `${completed} contracts`).toBeGreaterThanOrEqual(old);
+    }
   });
 
   it("the migration's quest table is the XP the quests pay today", () => {
@@ -53,7 +70,13 @@ describe("character progression in the save (v16 to v17, ADR-0059)", () => {
     const s = snapshot();
     const bad = (progression: unknown) => findSchemaError({ ...s, domain: { ...s.domain, progression } } as unknown as Record<string, unknown>);
     expect(bad(s.domain.progression)).toBeNull();
-    expect(bad({ ...INITIAL_PROGRESSION, xp: xpForLevel(31) })).toBeNull();
+    expect(bad(progressionFromXp(xpForLevel(30) + 5000))).toBeNull();
+    // Level 30 at 0 XP, a level behind its XP, more points than the levels gave: edited saves.
+    expect(bad({ ...INITIAL_PROGRESSION, level: 30 })).toBe("progression level");
+    expect(bad({ ...INITIAL_PROGRESSION, xp: xpForLevel(5) })).toBe("progression level");
+    expect(bad({ ...INITIAL_PROGRESSION, unspent: { attribute: 29, perk: 29 } })).toBe("progression level");
+    expect(bad({ ...INITIAL_PROGRESSION, hacked: ["dev:a", 3] })).toBe("progression hacked");
+    expect(bad({ ...INITIAL_PROGRESSION, hacked: ["dev:a"] })).toBeNull();
     expect(bad(undefined)).toBe("progression");
     expect(bad({ ...INITIAL_PROGRESSION, level: 31 })).toBe("progression level");
     expect(bad({ ...INITIAL_PROGRESSION, attributes: { ...INITIAL_PROGRESSION.attributes, net: 16 } })).toBe("progression attributes");

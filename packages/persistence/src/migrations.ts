@@ -1,4 +1,4 @@
-import { SAVE_SCHEMA_VERSION, progressionFromXp } from "@seki/core";
+import { SAVE_SCHEMA_VERSION, SHARD_CYBER_CAPACITY, capacityMax, progressionFromXp } from "@seki/core";
 
 type Json = Record<string, unknown>;
 
@@ -20,6 +20,19 @@ const V17_QUEST_XP: Readonly<Record<string, { readonly steps: readonly number[];
  * three is 1000).
  */
 export const V17_CONTRACT_XP = 850;
+
+/** The v16 cyberware pool: 12, +3 at 3, 6 and 10 finished contracts, +2 per shard (ADR-0033). */
+const v16CapacityMax = (completed: number, shards: number): number =>
+  12 + [3, 6, 10].filter((n) => completed >= n).length * 3 + shards * 2;
+
+/**
+ * Capacity shards that keep an old save's cyberware pool at least as big as it was: the pool
+ * of v17 grows with the level, which a save with many contracts may not have reached yet.
+ */
+export const compensatingShards = (completed: number, shards: number, level: number): number => {
+  const missing = v16CapacityMax(completed, shards) - capacityMax(level, shards);
+  return missing > 0 ? Math.ceil(missing / SHARD_CYBER_CAPACITY) : 0;
+};
 
 /** XP an old save earned with the quests and contracts it finished (kills and hacks left no record). */
 export const retroactiveXp = (domain: Json): number => {
@@ -303,10 +316,17 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
   },
   // v16 -> v17 (ADR-0059): character progression. The XP is counted back from the quests and
   // contracts the save finished; the level follows the curve, every point it gave is still to
-  // spend and the attributes start at 3. The cyberware pool now grows with the level.
+  // spend and the attributes start at 3. The cyberware pool now grows with the level; where
+  // that is smaller than the old pool from finished contracts, capacity shards make up the
+  // difference, so no implant worn or kept in the bag stops fitting.
   16: (old) => {
     const domain = isObject(old.domain) ? old.domain : {};
-    return { ...old, version: 17, domain: { ...domain, progression: progressionFromXp(retroactiveXp(domain)) } };
+    const progression = progressionFromXp(retroactiveXp(domain));
+    const contracts = isObject(domain.contracts) ? domain.contracts : {};
+    const completed = Number.isInteger(contracts.completed) ? Math.max(0, contracts.completed as number) : 0;
+    const shards = Number.isInteger(domain.capacityShards) ? Math.max(0, domain.capacityShards as number) : 0;
+    const capacityShards = shards + compensatingShards(completed, shards, progression.level);
+    return { ...old, version: 17, domain: { ...domain, progression, ...(isObject(old.domain) ? { capacityShards } : {}) } };
   },
 };
 

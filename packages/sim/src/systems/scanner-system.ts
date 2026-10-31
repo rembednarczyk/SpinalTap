@@ -7,7 +7,6 @@ import {
   type HackTargetKind,
   PING_RADIUS,
   QUICKHACKS,
-  QUICKHACK_XP,
   type QuickhackId,
   SCAN_CONE,
   SCAN_RANGE,
@@ -26,7 +25,7 @@ import type { DeviceKind, Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { chestOf, eyeOf, lineOfSight } from "../world/hitscan";
 import { inCreationOrder } from "../world/ordering";
-import { grantXp } from "../world/progression-ops";
+import { grantQuickhackXp } from "../world/progression-ops";
 import { disturb, hackFxOf, isEngaged, noteDetected, noteHacked, noteViolence } from "../world/street";
 import { scanning, worldTimeScale } from "./ability-system";
 import { SEARCH_SECONDS, TRACK_GRACE, effectiveAggroRange, giveLead, guardSees } from "./ai/ganger-perception";
@@ -262,7 +261,7 @@ const apply = (ctx: SimContext, player: Entity, hackId: QuickhackId, target: Ent
   }
   noteHacked(ctx);
   ctx.bus.emit("QuickhackApplied", { hackId, targetId: target.id, duration: def.duration });
-  grantXp(ctx, QUICKHACK_XP, "hack");
+  grantQuickhackXp(ctx, target.key);
 };
 
 /** Starts the n-th hack of the focused target's list (ADR-0028: RAM is paid at the start). */

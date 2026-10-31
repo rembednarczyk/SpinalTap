@@ -1,5 +1,5 @@
 import type { StatModifiers } from "../character/stats";
-import { type AttributeId, ATTRIBUTE_MAX, type Attributes, START_ATTRIBUTES } from "./attributes";
+import { type AttributeId, ATTRIBUTE_MAX, ATTRIBUTE_START, type Attributes, START_ATTRIBUTES } from "./attributes";
 import { MAX_LEVEL, MIN_LEVEL, levelForXp } from "./curve";
 
 /**
@@ -16,6 +16,11 @@ export interface ProgressionState {
   readonly perks: Readonly<Record<string, number>>;
   /** Points earned and not yet spent. */
   readonly unspent: { readonly attribute: number; readonly perk: number };
+  /**
+   * Keys of the targets whose first quickhack already paid XP, oldest first, at most
+   * HACKED_MEMORY of them. Absent until the first one: hacking the same camera again pays nothing.
+   */
+  readonly hacked?: readonly string[];
 }
 
 export const INITIAL_PROGRESSION: ProgressionState = {
@@ -36,9 +41,9 @@ export interface XpGain {
   readonly levelsGained: number;
 }
 
-/** Adds `amount` XP (negative and fractional parts are dropped); every level gained adds its points. */
+/** Adds `amount` XP (negative, infinite, NaN and fractional parts are dropped); every level gained adds its points. */
 export const gainXp = (state: ProgressionState, amount: number): XpGain => {
-  const add = Math.max(0, Math.floor(amount));
+  const add = Number.isFinite(amount) ? Math.max(0, Math.floor(amount)) : 0;
   if (add === 0) return { state, levelsGained: 0 };
   const xp = state.xp + add;
   const level = Math.max(state.level, levelForXp(xp));
@@ -73,6 +78,35 @@ export const spendAttributePoint = (state: ProgressionState, attribute: Attribut
       unspent: { ...state.unspent, attribute: state.unspent.attribute - 1 },
     },
   };
+};
+
+/**
+ * How many hacked targets are remembered. Far above the keyed devices and guards of the whole
+ * city; contract crews get new keys per job, so the oldest are forgotten instead of the list growing.
+ */
+export const HACKED_MEMORY = 256;
+
+/**
+ * The first successful quickhack on target `key` pays XP (ADR-0059: a successful hack, not every
+ * upload): returns the state that remembers it, or null when that target already paid.
+ */
+export const rememberHack = (state: ProgressionState, key: string): ProgressionState | null => {
+  const hacked = state.hacked ?? [];
+  if (hacked.includes(key)) return null;
+  return { ...state, hacked: [...hacked, key].slice(-HACKED_MEMORY) };
+};
+
+/**
+ * Is the state what its XP gives? The level follows the curve, and the points spent on
+ * attributes and perks plus those left are exactly the levels gained. A save that fails this
+ * was edited or broken.
+ */
+export const isConsistentProgression = (state: ProgressionState): boolean => {
+  if (state.level !== levelForXp(state.xp)) return false;
+  const gained = state.level - MIN_LEVEL;
+  const spentAttributes = Object.values(state.attributes).reduce((sum, v) => sum + v - ATTRIBUTE_START, 0);
+  const spentPerks = Object.values(state.perks).reduce((sum, v) => sum + v, 0);
+  return spentAttributes + state.unspent.attribute === gained * ATTRIBUTE_POINTS_PER_LEVEL && spentPerks + state.unspent.perk === gained * PERK_POINTS_PER_LEVEL;
 };
 
 /** A fresh character that earned `xp`: the level from the curve and every point still to spend (old saves). */

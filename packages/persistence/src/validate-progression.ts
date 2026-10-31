@@ -1,4 +1,4 @@
-import { ATTRIBUTE_IDS, ATTRIBUTE_MAX, ATTRIBUTE_START, MAX_LEVEL, MIN_LEVEL } from "@seki/core";
+import { ATTRIBUTE_IDS, ATTRIBUTE_MAX, ATTRIBUTE_START, HACKED_MEMORY, MAX_LEVEL, MIN_LEVEL, type ProgressionState, isConsistentProgression } from "@seki/core";
 
 type Json = Record<string, unknown>;
 
@@ -18,5 +18,9 @@ export const findProgressionError = (p: unknown): string | null => {
   if (!isObject(p.perks) || !Object.values(p.perks).every(isCount)) return "progression perks";
   const u = p.unspent;
   if (!isObject(u) || !isCount(u.attribute) || !isCount(u.perk)) return "progression points";
+  const h = p.hacked;
+  if (h !== undefined && (!Array.isArray(h) || h.length > HACKED_MEMORY || !h.every((k) => typeof k === "string"))) return "progression hacked";
+  // Level 30 at 0 XP, or more points than the levels gave, is an edited save.
+  if (!isConsistentProgression(p as unknown as ProgressionState)) return "progression level";
   return null;
 };
