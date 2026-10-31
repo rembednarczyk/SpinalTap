@@ -1,7 +1,10 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import {
+  ABILITY_CATALOG,
   AMMO_CATALOG,
+  BUFF_CATALOG,
+  CYBERWARE_CATALOG,
   GARMENT_CATALOG,
   MOD_CATALOG,
   RARITY,
@@ -36,6 +39,9 @@ const coreKeys = (): string[] => [
   ...Object.values(WEAPON_CATALOG).flatMap((d) => [d.name, d.description]),
   ...Object.values(RARITY).map((r) => r.label),
   ...Object.values(SHOPS).map((s) => s.name),
+  ...Object.values(CYBERWARE_CATALOG).flatMap((d) => [d.name, d.description]),
+  ...Object.values(ABILITY_CATALOG).map((d) => d.name),
+  ...Object.values(BUFF_CATALOG).map((d) => d.name),
 ];
 
 afterEach(cleanup);
@@ -75,5 +81,31 @@ describe("domain texts (ADR-0056, stage 3)", () => {
     cleanup();
     mount("pl");
     expect(screen.getByTestId("slot-torso").textContent).toContain("Kurtka Seki");
+  });
+
+  it("names implants and buffs on the character sheet and the HUD in the chosen language", () => {
+    const mount = (locale: "en" | "pl", sheet: boolean) => {
+      const store = createUiStore({
+        screen: "playing",
+        ...(sheet ? { characterTab: "sheet" as const } : {}),
+        cyberware: { optics: "hitomi_optics_mk1" },
+        buffs: [{ id: "steady", name: BUFF_CATALOG.steady.name, left: 20, total: 60 }],
+        settings: { ...DEFAULT_SETTINGS, locale },
+      });
+      render(<GameUi store={store} intents={intents()} />);
+    };
+    const shown = (locale: "en" | "pl") => {
+      mount(locale, true);
+      const sheet = screen.getByTestId("character-panel").textContent;
+      cleanup();
+      mount(locale, false);
+      const buff = screen.getByTestId("buff-steady").textContent;
+      cleanup();
+      return { sheet, buff };
+    };
+    expect(shown("en").sheet).toContain("Hitomi Mk1 optics");
+    expect(shown("en").buff).toContain("Steady hand");
+    expect(shown("pl").sheet).toContain("Optyka Hitomi Mk1");
+    expect(shown("pl").buff).toContain("Pewna ręka");
   });
 });

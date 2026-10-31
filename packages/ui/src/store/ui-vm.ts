@@ -32,6 +32,7 @@ export interface DialogueVm {
 }
 
 export interface AbilityVm {
+  /** Catalog key of the ability's name (ADR-0056). */
   readonly name: string;
   /** Seconds left while active, 0 otherwise. */
   readonly activeTime: number;

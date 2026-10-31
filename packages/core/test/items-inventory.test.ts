@@ -89,7 +89,7 @@ describe("catalog guards", () => {
     expect(itemSummary("hebi_smg")).toMatchObject({ category: "weapon", value: 700 });
     expect(itemSummary("kevlar_pants")).toMatchObject({ category: "garment", value: 500 });
     expect(itemSummary("holo_sight")).toMatchObject({ category: "mod", value: 300 });
-    expect(itemSummary("steady_grip")).toEqual({ name: "Stabilizator chwytu", category: "cyberware", value: 500 });
+    expect(itemSummary("steady_grip")).toEqual({ name: "cyberware.steady_grip.name", category: "cyberware", value: 500 });
   });
 
   it("uses the plan's stack and pouch limits", () => {
