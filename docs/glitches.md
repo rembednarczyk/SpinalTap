@@ -228,7 +228,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `pedestrian-bare` 59 → ≤ 10
 
 ### G-082 Domyślna szerokość jezdni wycina zmapowane chodniki
-- Status: przyjęte przez weryfikatora (921e44d); poprawki po przeglądzie kuratora (G-112, G-113) w toku, potem ponowna weryfikacja i PR
+- Status: w weryfikacji po poprawkach kuratora (36a3634: pokrycie ≥ 1/2, minimum 4,5 m dla dwukierunkowych; 262 → 122 m)
 - Gdzie: Podwale w40052391/w305027452, Staszica w1150131461, w232805965, Zielona w173533827, Łęczyńska w85717509
 - Przyczyna: `roadWidth` bez `width`/`lanes` = 6,5/5 m, a `cutSidewalk` usuwa chodnik, którego środek leży na cudzej jezdni
 - Propozycja: zwęzić domyślną jezdnię do 2 × (odległość osi od chodnika − pół chodnika), min. 3 m
@@ -374,6 +374,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Gdzie: panorama (ADR-0051), wieża Tatary (1900, 1500) widziana z Nabrzeża; T-056
 - Pakiet właściciela: packages/engine (mapcity/skyline)
 - Test przyjęcia: podstawa wieży poniżej linii terenu panoramy z każdego punktu Nabrzeża
+
+### G-125 Ekranu opcji nie da się przewijać na telefonie
+- Status: w PR #94 (zgłoszenie użytkownika 31.10)
+- Ważność: S2 (proponowana; na telefonie część opcji, m.in. dostępność, nieosiągalna) · Zasięg: każde menu pełnoekranowe wyższe niż ekran (pauza z opcjami, sloty, autorzy) · Koszt: mały
+- Przyczyna: `.screen` z `justify-content: center` bez `overflow-y`, a `html, body` z `overflow: hidden`
+- Pakiet właściciela: packages/ui
+- Test przyjęcia: `e2e/touch-layout.spec.ts` „phone: the settings in the pause menu scroll to their last control” (844×390)
 
 ## Naprawione
 | ID | Glitch | PR |
