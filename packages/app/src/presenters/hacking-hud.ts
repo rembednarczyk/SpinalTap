@@ -1,4 +1,4 @@
-import { type EntityId, QUICKHACKS, type QuickhackFailure } from "@seki/core";
+import { type EntityId, type Locale, QUICKHACKS, type QuickhackFailure } from "@seki/core";
 import { type ScanNoteVm, patchUi, translate } from "@seki/ui";
 import { scanTargetVm } from "../scan-view";
 import type { HudPart, HudPartContext, HudPartFrame, HudPatch } from "./hud-part";
@@ -17,6 +17,8 @@ export const FAILURE_TEXT: Readonly<Record<QuickhackFailure, string>> = {
 export class HackingHud implements HudPart {
   readonly offs: readonly (() => void)[];
   private focusId: EntityId | null = null;
+  /** The language the card was drawn in: a change redraws it for the same target (G-047). */
+  private cardLocale: Locale | null = null;
   private noteTick = 0;
   private noteSeq = 0;
   private uploadSeq = 0;
@@ -58,8 +60,12 @@ export class HackingHud implements HudPart {
     if (this.focusId !== null) {
       const target = f.found.get(this.focusId);
       const prev = ui.getState().scanTarget;
+      const locale = ui.getState().settings.locale;
       if (!target) out.scanTarget = null;
-      else if (prev?.id !== target.id) out.scanTarget = scanTargetVm(target, ui.getState().settings.locale);
+      else if (prev?.id !== target.id || this.cardLocale !== locale) {
+        out.scanTarget = scanTargetVm(target, locale);
+        this.cardLocale = locale;
+      }
     }
     if (ui.getState().scanNote && f.tick - this.noteTick >= NOTE_SECONDS * this.ctx.hooks.ticksPerSecond) out.scanNote = null;
     return out;

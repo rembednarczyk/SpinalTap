@@ -308,6 +308,16 @@ describe("game session: wave 1 events on the HUD", () => {
     expect(ui.getState().toasts.at(-1)).toMatchObject({ title: "Włamanie zakończone", text: "Nic nie wgrano" });
   });
 
+  it("redraws the scanner card in the new language without a change of target (G-047)", () => {
+    const { session, ui, npc } = start();
+    emit(session, "ScanFocusChanged", { targetId: npc.id });
+    expect(ui.getState().scanTarget).toEqual(scanTargetVm(npc, "en"));
+    patchUi(ui, { settings: { ...ui.getState().settings, locale: "pl" } });
+    session.syncHud();
+    expect(ui.getState().scanTarget).toEqual(scanTargetVm(npc, "pl"));
+    expect(ui.getState().scanTarget).not.toEqual(scanTargetVm(npc, "en"));
+  });
+
   it("marks crits and kills by the player, counts damage numbers and keeps the HUD in combat", () => {
     const { session, ui, player, npc } = start();
     expect(ui.getState().combat).toBe(false);
