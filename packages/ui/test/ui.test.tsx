@@ -195,6 +195,20 @@ describe("HUD", () => {
     expect(store.getState().toasts.map((t) => t.title)).toEqual(["t2", "t3", "t4", "t5"]);
   });
 
+  it("over the limit drops the oldest toast that is not story first (ADR-0059: a level up beside an ending)", () => {
+    const store = createUiStore();
+    pushToast(store, { kind: "quest", title: "ending", text: "" });
+    pushToast(store, { kind: "reputation", title: "rep", text: "" });
+    pushToast(store, { kind: "system", title: "level", text: "" });
+    pushToast(store, { kind: "quest", title: "done", text: "" });
+    pushToast(store, { kind: "quest", title: "next", text: "" });
+    expect(store.getState().toasts.map((t) => t.title)).toEqual(["ending", "level", "done", "next"]);
+    pushToast(store, { kind: "memory", title: "memory", text: "" });
+    expect(store.getState().toasts.map((t) => t.title)).toEqual(["ending", "done", "next", "memory"]);
+    pushToast(store, { kind: "quest", title: "last", text: "" });
+    expect(store.getState().toasts.map((t) => t.title)).toEqual(["done", "next", "memory", "last"]);
+  });
+
   it("shows the game clock with the day and the phase of the day", () => {
     mount({ screen: "playing" });
     expect(screen.queryByTestId("clock")).toBeNull();
