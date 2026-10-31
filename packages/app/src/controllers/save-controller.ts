@@ -47,7 +47,7 @@ export class SaveController {
 
   snapshot(): SaveSnapshot {
     const sim = this.deps.sim();
-    const { objective } = describeObjective(sim.domain);
+    const { objective } = describeObjective(sim.domain, this.locale);
     return sim.snapshot(this.deps.narrative.saveState(), slotDateLabel(this.deps.now(), this.locale), objective ?? "");
   }
 

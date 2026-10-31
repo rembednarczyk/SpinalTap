@@ -89,4 +89,17 @@ export const plContent = {
   "brief.trait.drinker": "Cel lubi wypić, wieczorem szukaj go przy barze.",
   "brief.trait.creature_of_habit": "Cel chodzi jak w zegarku, zawsze tą samą trasą.",
   "brief.trait.armored": "Cel nosi pancerz, zwykłe kule się od niego odbiją.",
+  // The HUD's objective when no quest step names one.
+  "objective.contractTitle": "Kontrakt {n} · {giver}",
+  "objective.freeHand": "Wolna ręka",
+  "objective.freeHand.text": "{work} Mori sprzedaje cyberware.",
+  "objective.work": "Kaito ma kolejne kontrakty.",
+  "objective.workAlso": "Kaito ma kolejne kontrakty, {givers} też.",
+  "objective.giversBoth": "{a} i {b}",
+  "objective.giver.hana": "Hana z targu na Podzamczu",
+  "objective.giver.genzo": "Genzō na Nabrzeżu",
+  // The map preview's overlay (ADR-0044).
+  "preview.stats":
+    "Lublin 2077, podgląd mapy · {hour}:00 · {fps} fps · {drawCalls} wywołań · {meshes} siatek · budynki {buildings} (blisko {near} / daleko {far} komórek) · meble {pieces} ({groups} siatek) · {vertices}k wierzchołków",
+  "preview.help": "przeciągnij: obrót · kółko: zoom · WASD/strzałki: przesuń · Q/E: w dół/w górę · Shift: szybciej · N: noc/dzień · 1-5: ujęcia",
 } as const satisfies Readonly<Record<keyof typeof en, Message>>;

@@ -1,12 +1,13 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import type { ContractModifier, ContractVariation, Locale, TargetTrait } from "@seki/core";
+import { type ContractModifier, type ContractVariation, type DomainState, type Locale, type TargetTrait, createDomainState } from "@seki/core";
 import { describeVariation, variationKeys } from "@seki/narrative";
 import { CONTRACT_HOOKS, METRO_STATIONS } from "@seki/sim";
 import { isMessageKey, patchUi, translate } from "@seki/ui";
 import { narrativeText } from "../src/content-text";
 import { metroMapVm } from "../src/metro";
+import { describeObjective } from "../src/objective";
 import { type Ui, nearKaito, setup, steps, talkTo, teleport } from "./story-helpers";
 
 /**
@@ -125,5 +126,24 @@ describe("the narrative's own words", () => {
     const modifiers: ContractModifier[] = ["night_only", "time_limit", "bodyguards", "ambush", "twin"];
     const traits: TargetTrait[] = ["paranoid", "drinker", "creature_of_habit", "armored"];
     for (const trait of traits) for (const security of ["light", "lockdown"] as const) for (const key of variationKeys({ modifiers, security, trait })) expectWritten(key);
+  });
+});
+
+describe("the HUD's own objective", () => {
+  const between = (flags: string[]): DomainState => ({ ...createDomainState(), quests: { m0_first_contract: { status: "completed" } }, flags });
+
+  it("says who has work between jobs, in Polish word for word as before", () => {
+    expect(describeObjective(between([]), "pl")).toEqual({ title: "Wolna ręka", objective: "Kaito ma kolejne kontrakty. Mori sprzedaje cyberware." });
+    expect(describeObjective(between(["met_hana", "met_genzo"]), "pl").objective).toBe(
+      "Kaito ma kolejne kontrakty, Hana z targu na Podzamczu i Genzō na Nabrzeżu też. Mori sprzedaje cyberware.",
+    );
+    expect(describeObjective(between(["met_genzo"]), "pl").objective).toBe("Kaito ma kolejne kontrakty, Genzō na Nabrzeżu też. Mori sprzedaje cyberware.");
+  });
+
+  it("and in English", () => {
+    expect(describeObjective(between([]), "en")).toEqual({ title: "Free hand", objective: "Kaito has more contracts. Mori sells cyberware." });
+    expect(describeObjective(between(["met_hana", "met_genzo"]), "en").objective).toBe(
+      "More contracts from Kaito, and from Hana at the Podzamcze market and Genzō on Nabrzeże too. Mori sells cyberware.",
+    );
   });
 });
