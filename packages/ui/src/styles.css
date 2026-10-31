@@ -287,7 +287,13 @@ kbd {
   gap: 24px;
   pointer-events: auto;
   padding: 16px;
+  /* Taller than a phone held sideways (settings, slots, credits): scroll, centred only while it fits. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  justify-content: safe center;
+  touch-action: pan-y;
 }
+.screen > * { flex-shrink: 0; }
 .screen--title {
   background:
     radial-gradient(ellipse at 30% 30%, rgba(255, 61, 139, 0.18), transparent 60%),
