@@ -92,19 +92,30 @@ export const poiKind = (t: Tags): { kind: PoiKind; tag: string } | null => {
   return null;
 };
 
+/**
+ * A street address `street number` from OSM tags, or undefined without one; lower case, with
+ * `9/11` and `9-11` alike (OSM spells one number both ways).
+ */
+export const addressOf = (t: Tags): string | undefined =>
+  t["addr:street"] && t["addr:housenumber"] ? `${t["addr:street"]} ${t["addr:housenumber"].replace(/\s+/g, "").replace("/", "-")}`.toLowerCase() : undefined;
+
+/** A point of interest of the whole data set: where it lies and its street address, if it has one. */
+export type WorldPoi = PoiOut & { readonly at: Pt; readonly addr?: string };
+
 /** Named points of interest of the whole data set, stops merged by name within 40 m. */
-export const allPois = (data: OsmData): (PoiOut & { readonly at: Pt })[] => {
-  const out: (PoiOut & { at: Pt })[] = [];
+export const allPois = (data: OsmData): WorldPoi[] => {
+  const out: WorldPoi[] = [];
   const nodes = [...data.nodes.values()].filter((n) => n.tags?.name).sort((a, b) => a.id - b.id);
   for (const n of nodes) {
     const k = poiKind(n.tags!);
     if (!k) continue;
     const at = geoToWorld(n.lat, n.lon);
     if (k.kind === "stop" && out.some((p) => p.kind === "stop" && p.name === n.tags!.name && Math.hypot(p.at.x - at.x, p.at.z - at.z) < 40)) continue;
-    out.push({ x: r1(at.x), z: r1(at.z), kind: k.kind, tag: k.tag, name: n.tags!.name!, at });
+    const addr = addressOf(n.tags!);
+    out.push({ x: r1(at.x), z: r1(at.z), kind: k.kind, tag: k.tag, name: n.tags!.name!, at, ...(addr ? { addr } : {}) });
   }
   return out;
 };
 
-export const chunkPois = (pois: readonly (PoiOut & { readonly at: Pt })[], rect: Rect): PoiOut[] =>
+export const chunkPois = (pois: readonly WorldPoi[], rect: Rect): PoiOut[] =>
   pois.filter((p) => inRect(p.at, rect)).map(({ x, z, kind, tag, name }) => ({ x, z, kind, tag, name }));
