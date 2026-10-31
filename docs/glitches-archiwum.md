@@ -403,3 +403,11 @@ Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [r
 - Ważność: S3 (proponowana: flake w CI i możliwy błąd dotyku na telefonie) · Koszt: mały
 - Dowód: `e2e/touch.spec.ts:56-57` „on-screen pad”: 1/4 czerwony na bazie c07dea9 i 2/5 na etapie 5 przy load 6–9; dotknięcie wyboru zaraz po otwarciu koła kwestii nie wybiera kwestii. Sprawdzić, czy koło przyjmuje dotyk przed pierwszym renderem albo czy działa osłona przed „ghost click” (G-048)
 - Pakiet właściciela: packages/ui / e2e (QA)
+
+### G-075 Kolizje aut na przecięciu pasów 3 Maja przy Zesłańców Sybiru
+- Status: naprawione (#85). `crowded` sprawdza obrócone ciało i następne 12 m obu pojazdów, `onItsWay` następne 6 m pojazdu w tę samą stronę; 3 Maja ziarna 1–30 bez kolizji
+- Ważność: S3 (proponowana) · Zasięg: jedno skrzyżowanie · Koszt: mały–średni
+- Gdzie: (−110, 56), przecięcie pasów 3 Maja#31:0 i #31:1
+- Dowód: `traffic-junction-drive` na gałęzi G-052: Peowiaków ziarna 3 i 7 po 2 kolizje (próg 0), 3 Maja ziarno 7: 3 (próg 2)
+- Pakiet właściciela: packages/sim (traffic-junctions)
+- Test przyjęcia: `traffic-junction-drive` w progach na gałęzi G-052 i na main

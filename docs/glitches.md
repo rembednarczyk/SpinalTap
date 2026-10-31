@@ -201,14 +201,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (traffic-junctions)
 - Test przyjęcia: `lane-dead-end` na gałęzi G-052 nie wyższy niż 44
 
-### G-075 Kolizje aut na przecięciu pasów 3 Maja przy Zesłańców Sybiru
-- Status: w PR #85 (przyjęte przez weryfikatora)
-- Ważność: S3 (proponowana) · Zasięg: jedno skrzyżowanie · Koszt: mały–średni
-- Gdzie: (−110, 56), przecięcie pasów 3 Maja#31:0 i #31:1
-- Dowód: `traffic-junction-drive` na gałęzi G-052: Peowiaków ziarna 3 i 7 po 2 kolizje (próg 0), 3 Maja ziarno 7: 3 (próg 2)
-- Pakiet właściciela: packages/sim (traffic-junctions)
-- Test przyjęcia: `traffic-junction-drive` w progach na gałęzi G-052 i na main
-
 ### G-078 Brama Zamku z domyślnymi wymiarami przejazdu
 - Status: zgłoszone (audyt bram i przejazdów) · Ważność: S4 · Koszt: mały
 - Gdzie: brama wjazdowa Zamku, 2,4 × 3,4 m domyślnie; T-040
@@ -375,6 +367,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | G-076 | Przejazdy bramne z `tunnel=yes` zamknięte bryłą (Gruella pod Trynitarską, Królewska, Sąd Okręgowy, Rynek 5) | #80 |
 | G-077 | Budynek podziemny zbudowany na powierzchni ul. Zamkowej | #80 |
 | G-058 | Dotknięcie pierwszego wyboru tuż po otwarciu dialogu czasem ginie (e2e touch) | #50 |
+| G-075 | Kolizje aut na przecięciu pasów 3 Maja przy Zesłańców Sybiru | #85 |
 
 ## Odrzucone
 - G-005 Wiata przystanku wchodzi w ścianę przy Alei Tysiąclecia: duplikat (G-011)
