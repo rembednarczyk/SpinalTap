@@ -33,13 +33,16 @@ Parametry URL:
 ## Co jest w grze
 
 - **Miasto.** Krakowskie Przedmieście, Stare Miasto, Podzamcze z targiem pod wiaduktem i Nabrzeże Bystrzycy z danych mapowych:
-  - ulice, budynki, zabytki, teren, meble uliczne i oznakowanie poziome;
+  - ulice, budynki, teren, meble uliczne i oznakowanie poziome;
+  - zabytki z prawdziwą bryłą z części budynków w OSM (wieże, ośmiobok Bramy Krakowskiej, latarnia i hełm Trynitarskiej); nadbudowy Lublina 2077 odsunięte od zabytków;
+  - przejścia pod wiaduktem Zamkowej i mostami Mełgiewskiej, dostępne także dla przeciwników;
+  - targowiska ze straganami (Targ na Ruskiej, Bazar, Giełda na Kresowej);
   - mieszkańcy na chodnikach;
   - ruch aut i trolejbusów ze skrętami na skrzyżowaniach;
   - zegar doby z harmonogramami;
   - metro między dzielnicami;
   - radio.
-- **Fabuła.** Wątek główny w dwóch aktach z zakończeniami, napisany w ink. Do tego wspomnienia jako progresja diegetyczna, spotkania uliczne i 6 frakcji z reputacją.
+- **Fabuła.** Wątek główny w dwóch aktach z zakończeniami, napisany w ink po angielsku i po polsku (język można zmienić w trakcie rozmowy). Do tego wspomnienia jako progresja diegetyczna, spotkania uliczne i 6 frakcji z reputacją.
 - **Kontrakty.** 7 rodzajów zleceń proceduralnych od fixerów, z wariantami, hakami, odznakami stylu i rangą na karcie podsumowania.
 - **Walka.**
   - 8 broni w 7 klasach, z modami;
@@ -68,7 +71,7 @@ Parametry URL:
   - deszcz i mokry asfalt;
   - grading.
 
-W toku i w planie: drzewka atrybutów i skalowanie łupów ([ADR-0059](docs/adr/0059-rozwoj-postaci-i-skalowanie.md)), autozapis przy wejściu do lokalu ([ADR-0061](docs/adr/0061-wejscie-do-lokalu.md)), żywe miasto z assetów CC0 ([ADR-0058](docs/adr/0058-zywe-miasto-assety-cc0.md)), głosy z TTS i zaczepki NPC ([ADR-0060](docs/adr/0060-glosy-i-dzwiek.md)), ekran ładowania ([ADR-0057](docs/adr/0057-ekran-ladowania.md)). Kolejność i priorytety opisują [`docs/backlog.md`](docs/backlog.md) i [`docs/audyt-luk.md`](docs/audyt-luk.md).
+W toku i w planie: zabytki z własnej geometrii w wersji 2077, od Bramy Krakowskiej ([ADR-0062](docs/adr/0062-zabytki-z-zestawu.md)), assety CC-BY od użytkownika z ekranem autorów ([ADR-0063](docs/adr/0063-assety-cc-by.md)), więcej danych z OSM i geoportalu: dachy, wejścia, oświetlenie, szyldy, rejestr zabytków, adresy ([ADR-0064](docs/adr/0064-wiecej-danych-z-osm.md)), wnętrza zabytków z questami ([plan](docs/plany/wnetrza-zabytkow.md)), drzewka atrybutów i skalowanie łupów ([ADR-0059](docs/adr/0059-rozwoj-postaci-i-skalowanie.md)), autozapis przy wejściu do lokalu ([ADR-0061](docs/adr/0061-wejscie-do-lokalu.md)), żywe miasto z assetów CC0 ([ADR-0058](docs/adr/0058-zywe-miasto-assety-cc0.md)), głosy z TTS i zaczepki NPC ([ADR-0060](docs/adr/0060-glosy-i-dzwiek.md)), ekran ładowania ([ADR-0057](docs/adr/0057-ekran-ladowania.md)). Kolejność i priorytety opisują [`docs/backlog.md`](docs/backlog.md) i [`docs/audyt-luk.md`](docs/audyt-luk.md).
 
 ## Sterowanie
 

@@ -52,12 +52,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Gdzie: Zielona#21:d, z (271,6, −18) do (238,6, 4,7) w jednym kroku
 - Dowód: sonda weryfikatora G-023 (seed 3, 8:00, 60 s); może być resynchronizacją auta poza wzrokiem.
 
-### G-031 Testy TPP w `npr-perf` i smoke save/load przekraczają limit przy obciążeniu
-- Status: zgłoszone (po G-029 testy TPP i quicksave przeszły przy obciążeniu 25→6, bez porównania A/B; `captureFrame` i podgląd postaci dalej rysują poza pacerem)
-- Ważność: S2 (proponowana: niestabilne e2e) · Koszt: nieznany
-- Dowód: naprawiacz G-001: przy obciążeniu 5–11 za każdym razem pada inny test (Krakowskie, Rynek, targ, Nabrzeże, quicksave/quickload); przypuszczalnie ten sam mechanizm co G-001 w zwykłym trybie (pełne klatki w trakcie ładowania i kroków budują kolejkę GPU SwiftShadera). `captureFrame` rysuje dodatkową klatkę mimo `preserveDrawingBuffer` (1,3–5,8 s na przechwycenie).
-- Pakiet właściciela: packages/app / e2e
-
 ### G-036 Sąsiednie zawrotki na Alei Tysiąclecia przy targu stykają się w wierzchołku
 - Status: zgłoszone (z G-006)
 - Ważność: S3 · Gdzie: ok. (756, 345) · Dowód: naprawiacz G-006: półokręgi o różnym promieniu sięgają tego samego wierzchołka; 24 zdarzenia kolizji na seedach 1–2 już na starej bazie (rodzina G-025/G-026, `turnRound`/`uTurn`).
@@ -88,28 +82,8 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-007 Strzałki na pasach i napis BUS
 - Status: później (ADR-0052 „Na później”)
 
-### G-049 Zabytki tracą wieże, hełmy i wysokość: import pomija `building:part` (Trynitarska 42 zamiast 60 m)
-- Status: zgłoszone
-- Ważność: S3 (proponowana) · Zasięg: szeroki (panorama Starego Miasta, Plac Łokietka, Rynek) · Koszt: średni (fetch, osm.ts, massing, buildings w tools/osm-import; regeneracja danych)
-- Gdzie: Trynitarska (591.3, −147.3), Brama Krakowska (472.6, −91.2), Ratusz (415, −79), Archikatedra (634, −184), Dominikanie (731, −55); ile w mieście: co najmniej 5 w próbce, pełna liczba po ponownym pobraniu
-- Dowód: OSM w617763432 `height=60 min_height=55 roof:shape=pyramidal` w obrysie w66286371; w617878341 `building:levels=6 roof:shape=onion` w r7224409; w619138854 `building:part=tower building:levels=7.5`; T-006 do T-010
-- Przyczyna (przypuszczalna): `filterOsm` nie zachowuje `building:part`, a `massing` liczy jedną bryłę z tagów obrysu zewnętrznego
-- Pakiet właściciela: tools/osm-import (dane: packages/sim/src/content/lublin/*.generated.ts)
-- Test przyjęcia: test w tools/osm-import na wycinku z Trynitarską: najwyższy punkt bryły ≥ 59 m nad stopą, a przybudówka Bramy Krakowskiej ≤ 2 kondygnacje. Dziś pada (42 m, 5 kondygnacji)
-- Źródło: audyt topografii 1 (kurator, 31.10).
-
-### G-050 Nadbudowa Podzamcza przy Bramie Grodzkiej góruje 16 m nad bramą
-- Status: zgłoszone
-- Ważność: S3 (proponowana) · Zasięg: lokalny (widok z Zamku i Placu Zamkowego na bramę) · Koszt: mały (vertical.ts)
-- Gdzie: Grodzka 36a w66293355 (717.5, 162), Podzamcze; ile w mieście: 2 (z kontrolą `landmark-overbuilt` niżej; druga to w66324576 przy Kościele Ewangelicznym r6476361)
-- Dowód: `verticalOf` daje `rise=15`, szczyt na y 17,5, a brama ma szczyt na y 1,7; T-011
-- Przyczyna (przypuszczalna): reguła `targ` nie bierze pod uwagę sąsiadującego landmarku
-- Pakiet właściciela: packages/sim (content/lublin/vertical.ts)
-- Test przyjęcia: w lublin-vertical.test.ts żaden budynek z nadbudową w promieniu 30 m od landmarku nie przewyższa jego szczytu. Dziś pada na w66293355
-- Źródło: audyt topografii 1 (kurator, 31.10).
-
 ### G-051 Podpis „Muzeum Historii Miasta Lublina” na kamienicy Jezuicka 3 zamiast na Bramie Krakowskiej
-- Status: zgłoszone
+- Status: w weryfikacji razem z etapem 1 ADR-0062 (d65e7f2)
 - Ważność: S4 (proponowana) · Zasięg: lokalny · Koszt: mały (labels/buildings w tools/osm-import)
 - Gdzie: w66286384 (478.7, −114.4); ile w mieście: 1 znane
 - Dowód: węzeł n993790419 `addr:street=Plac Władysława Łokietka addr:housenumber=3` leży w obrysie Jezuickiej 3, 6 m od r7224409; T-013
@@ -149,6 +123,112 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | `building-cleared-unregistered` | Budynek usuwany przez `clearedBuilding` spoza listy z rejestru topografii | 0 (lista: w672635872, w672635873, w458298766, w1354195809) |
 | `building-part-ignored` | Test importu: budynek z `building:part` wyższym od własnej bryły o ponad 3 m. Wymaga zachowania części w ekstrakcie | ≥ 5 w próbce, do ustalenia po ponownym pobraniu |
 - Źródło: audyt topografii 1 (kurator, 31.10).
+
+### G-055 Liczba wywołań rysowania skacze między klatkami w ustalonym mieście
+- Status: zgłoszone (z weryfikacji G-031)
+- Ważność: S4 (proponowana) · Koszt: nieznany
+- Dowód: w tym samym punkcie (300, −60) przy ustalonym mieście kolejne klatki dają 223 i 163 wywołania. Sprawdzić, skąd różnica (komórki przebudowywane leniwie, glow, cienie), i czy nie zaszumia budżetów w `npr-perf`.
+- Pakiet właściciela: packages/engine
+
+### G-056 Kształt dachu z OSM (`roof:shape`) ignorowany: hełmy, kopuły i dachy dwuspadowe jako czterospadowe
+- Status: zgłoszone (z naprawy G-049)
+- Ważność: S3 (proponowana) · Zasięg: zabytki Starego Miasta i Krakowskiego · Koszt: średni (pole w widoku `building`, czyli kontrakt w core/ports i ADR)
+- Dowód: hełm wieży Bramy Krakowskiej rysuje się jako dach czterospadowy i zasłania 3,2 m ścian ośmioboku; to samo przy cebulach i kopułach
+- Pakiet właściciela: tools/osm-import, packages/engine (mapcity), kontrakt: architekt
+
+### G-058 Dotknięcie pierwszego wyboru tuż po otwarciu dialogu czasem ginie (e2e touch)
+- Status: zgłoszone (z weryfikacji etapu 5 ADR-0056)
+- Ważność: S3 (proponowana: flake w CI i możliwy błąd dotyku na telefonie) · Koszt: mały
+- Dowód: `e2e/touch.spec.ts:56-57` „on-screen pad”: 1/4 czerwony na bazie c07dea9 i 2/5 na etapie 5 przy load 6–9; dotknięcie wyboru zaraz po otwarciu koła kwestii nie wybiera kwestii. Sprawdzić, czy koło przyjmuje dotyk przed pierwszym renderem albo czy działa osłona przed „ghost click” (G-048)
+- Pakiet właściciela: packages/ui / e2e (QA)
+
+### G-059 Testy sesji `m2-schedules` i `m3-loop` trwają ok. 5 s i przekraczają limit vitest pod obciążeniem
+- Status: odrzucone (pomiar, 31.10)
+- Ustalenie orkiestratora: główny `vitest.config.ts` daje `testTimeout: 20_000` właśnie dla testów całych aktów. Limit 5 s działa tylko przy vitest puszczonym z katalogu pakietu, bez głównej konfiguracji. Z roota przy load 30: najdłuższy test 7,6 s (zegar HUD, 3600 klatek), wszystkie 10 zielonych. Testy uruchamiamy z roota repo
+
+### G-060 Części `building:part` niższe od obrysu pomijane przy pokryciu < 75% (Podzamcze)
+- Status: zgłoszone (z przeglądu topografii G-049)
+- Ważność: S4 (proponowana) · Zasięg: 2 budynki · Koszt: mały
+- Gdzie: w1306000298 (650.3, 479.5), w1306000299 (658.8, 503); T-019
+- Dowód: części OSM w73833861/65 i w587306232 mają 4 kondygnacje, w73833864 ma 2, a obrysy w grze mają 16 m (pokrycie 43% i 32%). Tagowanie OSM niespójne; możliwe rozwiązanie: rysować części, resztę obrysu zostawić
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: nowa kontrola skanu `building-part-lower-ignored` (okap części > 1 kondygnację niżej od ścian obrysu w jej środku), baza 2 → 0
+
+### G-061 Część `building:part` bez obrysu `building` nie trafia do gry (pawilon Bona)
+- Status: w PR #74 (szkic, czeka na weryfikację i kuratora)
+- Ważność: S4 (proponowana) · Zasięg: 1 · Koszt: mały
+- Gdzie: w1236054202 (708.4, 166.8), Podzamcze; T-020
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: kontrola skanu `building-part-orphan` (część bez obrysu i bez bryły w grze), baza 1 → 0
+
+### G-063 Zadaszenia `building=roof` pominięte (perony dworca, daszki Targu na Ruskiej, studnia)
+- Status: zgłoszone (audyt topografii 2)
+- Ważność: S3 (proponowana) · Zasięg: 8 w mieście · Koszt: średni
+- Gdzie: w458862470 (837, 386), w1547216433/35/36/37 (747..813, 529..577), w828763988 (859, 226), w175886790 (2619, 207), w1382568876 (340, −16); T-025
+- Dowód: `SKIP_BUILDING` w `tools/osm-import/src/generate.ts`
+- Pakiet właściciela: tools/osm-import, packages/engine (mapcity)
+- Test przyjęcia: każde z 8 zadaszeń jest daszkiem na słupach, przez który da się przejść; kontrola `osm-roof-skipped` 8 → 0
+
+### G-064 Targowiska bez straganów (Targ na Ruskiej, Bazar, Giełda na Kresowej)
+- Status: zgłoszone (audyt topografii 2)
+- Ważność: S4 (proponowana) · Zasięg: 3 · Koszt: mały
+- Gdzie: w182461192 (787, 561), w67502759 (681, 413), w231445090 (x 2300..2383); T-026
+- Dowód: `props.generated` nie ma `market-stall` w podzamcze-1-1 i 0-1
+- Pakiet właściciela: tools/osm-import (props-gen)
+- Test przyjęcia: każdy obrys `amenity=marketplace` w dzielnicach ma ≥ 1 stragan na 150 m²; kontrola `marketplace-empty` 3 → 0
+
+### G-065 Budynki podpisane nazwą muralu lub tablicy pamiątkowej
+- Status: zgłoszone (audyt topografii 2; ta sama przyczyna co G-051, naprawiać razem)
+- Ważność: S4 (proponowana) · Zasięg: 13 w mieście · Koszt: mały
+- Gdzie (Podzamcze): w73833875 (682.4, 512.6), w1306000299 (658.8, 503), w73833890 (727.5, 532.9), w444375213 (596.4, 445.6); T-027
+- Dowód: nazwa z węzłów n9059454201, n8175404403, n13252131249; `labels.ts` traktuje `tourism=artwork` i `historic=memorial` jako „sight”
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: kontrola `building-named-by-artwork` 13 → 0
+
+### G-066 Nadbudowa na zabytkowej Karczmie „Budzyń”
+- Status: zgłoszone (audyt topografii 2)
+- Ważność: S4 (proponowana) · Zasięg: 1 · Koszt: mały
+- Gdzie: w294483985 (2620.7, 368.2), Nabrzeże; T-029
+- Dowód: `verticalOf` daje rise 3, bo `building=house` z `historic=yes` dostaje `use=residential`
+- Pakiet właściciela: tools/osm-import (building-tags) albo packages/sim (vertical.ts)
+- Test przyjęcia: kontrola `heritage-overbuilt` (budynek z `historic`/`heritage` poza Starym Miastem z rise > 0) daje 0 po G-050 i tej poprawce
+
+### G-067 Klasztor Dominikanów dostaje proceduralne wieże kościoła
+- Status: w PR #72 (szkic, czeka na weryfikację)
+- Ważność: S4 (proponowana) · Zasięg: 1 znany · Koszt: mały
+- Gdzie: r2366732 (748.5, −104.4), Stare Miasto
+- Dowód: budynek klasztoru ma `use: church`, więc `addTowers` stawia na nim wieże kościoła, choć to klasztor; widać z ujęcia „Dominikanie od wschodu” (810, −56)
+- Pakiet właściciela: tools/osm-import (building-tags) / packages/engine (mapcity)
+- Test przyjęcia: klasztor bez wież proceduralnych; kościół obok zachowuje swoje
+
+### G-069 Postać zespawnowana pod mostem trafia na pomost
+- Status: zgłoszone (z weryfikacji G-062)
+- Ważność: S4 (proponowana) · Zasięg: pod pomostami · Koszt: mały
+- Dowód: `settle`/`clearSpot` (`placement.ts:17`), teleport w `app/debug-api.ts` (l.145), `street-scenes`, `micro-events` i spawn tłumu biorą najwyższy pomost; rekwizyty ulicy też (artwork (745, 166.4), stragan (750.1, 177.7) na pomoście Zamkowej)
+- Pakiet właściciela: packages/sim (content, world)
+- Test przyjęcia: spawn w punkcie pod pomostem z prześwitem > 2 m stoi na terenie
+
+### G-070 Drzewo i stragan pod wiaduktem Zamkowej wchodzą w pomost
+- Status: zgłoszone (z weryfikacji G-062)
+- Ważność: S4 (proponowana; widoczne z Podwala po G-062) · Zasięg: lokalny · Koszt: mały
+- Gdzie: drzewo pod wiaduktem Zamkowej (koroną przebija pomost), stragan (750.1, 177.7) przy 2,66 m prześwitu
+- Pakiet właściciela: tools/osm-import (props) / packages/engine
+- Test przyjęcia: żaden rekwizyt pod pomostem nie sięga wyżej niż spód pomostu
+
+### G-071 Kule przelatują przez pomost
+- Status: zgłoszone (z weryfikacji G-062)
+- Ważność: S3 (proponowana; po G-062 da się stanąć pod mostem i strzelać przez pomost w obie strony) · Koszt: średni
+- Dowód: ADR-0053 traktuje pomost jako podłogę dla ruchu, nie jako przesłonę dla strzałów i widoczności
+- Pakiet właściciela: packages/sim (walka, linia widzenia)
+- Test przyjęcia: strzał z pomostu do celu pod nim (i odwrotnie) trafia w pomost; świadek pod mostem nie widzi gracza na pomoście
+
+### G-072 Walczący na pomoście nie schodzi pod most do gracza stojącego pod nim
+- Status: zgłoszone (z naprawy G-068)
+- Ważność: S4 (proponowana) · Zasięg: pomosty z przejściem pod spodem · Koszt: średni (nawigacja między poziomami)
+- Dowód: po G-062 `heightApart` daje 0 dla gracza pod mostem i walczącego na pomoście nad nim; walczący idzie do punktu nad graczem i stoi tam na pomoście, nie szuka zejścia
+- Dodatkowo (weryfikacja G-068): pod wiaduktem Zamkowej zaalarmowany walczący idący Podwalem z lewej strony osi (chunk `stare-miasto-1-1`, 12–20 m od osi) utyka w (749.5–750.6, 180.4–181.4), także przed G-068
+- Pakiet właściciela: packages/sim/src/systems/ai
+- Test przyjęcia: zaalarmowany walczący na pomoście Mełgiewskiej dociera do gracza pod mostem przez zejście w < 20 s
 
 ## Naprawione
 | ID | Glitch | PR |
@@ -196,6 +276,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | G-048 | Prawdziwy tap tuż po przycisku pada ginie jako „ghost click” | #48 |
 | G-004 | Kandelabr na krawędzi pasa aut na Placu Zamkowym | #51 |
 | G-038 | `lane-dead-end` nie sprawdza użycia początku, który „spotyka” koniec | #51 |
+| G-031 | Testy TPP w `npr-perf` i smoke save/load przekraczają limit przy obciążeniu | #57 |
+| G-049 | Zabytki bez wież i hełmów: import pomijał `building:part` | #65 |
+| G-054 | `glitch-shots` mógł zapisać klatkę sprzed ułożenia miasta | #62 |
+| G-057 | Proceduralne wieże obok wieżyczek z OSM (Archikatedra, Dominikanie) | #69 |
+| G-050 | Nadbudowa przy Bramie Grodzkiej góruje nad bramą (piętra odsunięte ≥ 5 m) | #60 |
+| G-062 | Przejścia pod mostami zablokowane (Podwale, bulwar Bystrzycy) | #70 |
+| G-068 | AI nie widziało przejścia pod mostem | #71 |
 
 ## Odrzucone
 - G-005 Wiata przystanku wchodzi w ścianę przy Alei Tysiąclecia: duplikat (G-011)

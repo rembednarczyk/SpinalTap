@@ -19,7 +19,7 @@ Modele są low-poly i mają kolory w palecie albo w płaskich materiałach, czyl
 - determinizm symulacji (ADR-0008).
 
 ## Decyzja
-- **Tylko CC0.**
+- **Tylko CC0.** (Od 31.10 także CC-BY 4.0 z podpisem autora: ADR-0063.)
   - Każde źródło ma w `packages/app/public/city/README.md` wiersz z URL-em pobrania, autorem i cytatem licencji z paczki albo strony.
   - Paczki na innych licencjach (CC-BY, płatne) i modele z cudzym brandingiem odpadają. Wyjątek: napis da się wyciąć, a bierzemy samą geometrię.
   - Zipy źródłowe nie trafiają do repo. `tools/assets/sources.json` trzyma URL i sha256 każdej paczki, a skrypt `tools/assets/fetch.mjs` je pobiera, dzięki czemu wynik da się odtworzyć.
