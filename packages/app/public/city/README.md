@@ -67,7 +67,7 @@ python3 -I -B tools/city_kit.py --props /tmp/city-assets \
 
 Dwa modele w `city-props.glb` są na licencji **CC-BY 4.0**: wolno je używać, zmieniać i
 rozpowszechniać, także komercyjnie, pod warunkiem podania autora, źródła i licencji oraz zaznaczenia
-zmian. Ten sam podpis jest na ekranie „Twórcy” w menu gry (`packages/ui/src/credits/credits.ts`);
+zmian. Ten sam podpis jest na ekranie „Autorzy” w menu gry (`packages/ui/src/credits/credits.ts`);
 węzeł modelu w pliku ma `extras.credit` z identyfikatorem źródła z `tools/assets/sources.json`.
 
 | Klucz w pliku | Tytuł | Autor | Źródło | Licencja | Zmiany |
@@ -89,7 +89,7 @@ przejść bramnych). Bez nowych brył w symulacji i bez nowych wywołań rysowan
 ## Megawieże panoramy na licencji CC-BY 4.0 (ADR-0063, etap 2)
 
 Cztery megawieże w `city-props.glb` (`mc-tower-a` … `mc-tower-d`, `extras.styles` `megatower`) są
-z modelu na licencji **CC-BY 4.0**, z tym samym podpisem na ekranie „Twórcy” i `extras.credit` w węźle.
+z modelu na licencji **CC-BY 4.0**, z tym samym podpisem na ekranie „Autorzy” i `extras.credit` w węźle.
 
 | Klucz w pliku | Tytuł | Autor | Źródło | Licencja | Zmiany |
 |---|---|---|---|---|---|
