@@ -218,7 +218,7 @@ describe("scanner", () => {
 
   it("says when nothing is in focus, and hides without the scanner", () => {
     const { store } = mount({ scanning: true });
-    expect(screen.getByText("Brak celu w polu skanu")).toBeTruthy();
+    expect(screen.getByText("No target in scan range")).toBeTruthy();
     act(() => patchUi(store, { scanning: false }));
     expect(screen.queryByTestId("scanner")).toBeNull();
     expect(screen.queryByTestId("ram")).toBeNull();
@@ -226,9 +226,13 @@ describe("scanner", () => {
 
   it("keeps the upload bar and the notes after the scanner is let go", () => {
     mount({ scanning: false, upload: { seq: 1, hackId: "reboot_optics", seconds: 1 }, scanNote: { seq: 1, tone: "traced", text: "Namierzono cię!" } });
-    expect(screen.getByTestId("upload").textContent).toContain("Restart optyki");
+    expect(screen.getByTestId("upload").textContent).toContain("Reboot Optics");
     expect(screen.getByTestId("ram")).toBeTruthy();
     expect(screen.getByTestId("scan-note").className).toContain("scan-note--traced");
+    // The scanner in Polish, word for word as before (ADR-0056).
+    cleanup();
+    mount({ scanning: false, upload: { seq: 1, hackId: "reboot_optics", seconds: 1 }, settings: { ...DEFAULT_SETTINGS, locale: "pl" } });
+    expect(screen.getByTestId("upload").textContent).toContain("Upload: Restart optyki");
   });
 
   it("on touch: the scanner button toggles it and a tap on a hack uploads it", () => {
@@ -236,7 +240,7 @@ describe("scanner", () => {
     fireEvent.pointerDown(screen.getByTestId("touch-scan"));
     expect(i.setScan).toHaveBeenCalledWith(true);
     act(() => patchUi(store, { scanning: true }));
-    fireEvent.click(screen.getByRole("button", { name: "Paraliż ruchu, 4 RAM" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cripple Movement, 4 RAM" }));
     expect(i.pickQuickhack).toHaveBeenCalledWith(3);
     fireEvent.click(screen.getByTestId("touch-phone"));
     expect(i.openPhone).toHaveBeenCalled();

@@ -164,7 +164,7 @@ describe("minimap of wave 2", () => {
     });
     const ring = screen.getByTestId("minimap-marker-quest");
     expect(ring.getAttribute("class")).toContain("minimap__marker--quest");
-    expect(ring.querySelector("title")?.textContent).toBe("Cel zadania");
+    expect(ring.querySelector("title")?.textContent).toBe("Quest target");
     expect(ring.querySelector("circle")?.getAttribute("r")).toBe("3.4");
     expect(screen.getByTestId("minimap-marker-fixer")).toBeTruthy();
     act(() => patchUi(store, { mapMarkers: [{ id: "quest:ume", kind: "quest", x: 900, z: 0 }] }));

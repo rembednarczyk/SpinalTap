@@ -1,22 +1,27 @@
 import { type CSSProperties } from "react";
-import { type HackTargetKind, QUICKHACKS, type QuickhackCategory, type QuickhackSlotInput, quickhacksFor } from "@seki/core";
+import { QUICKHACKS, type QuickhackSlotInput, quickhacksFor } from "@seki/core";
+import { useT } from "../i18n/use-t";
 import type { RamVm } from "../store/hud-vm";
 import { useHackIntents, useUi } from "../use-ui";
 
 /** The quickhacks a target kind takes, in the order of the number keys (shared with the sim). */
 export { quickhacksFor };
 
-const KIND_LABEL: Readonly<Record<HackTargetKind, string>> = { camera: "Kamera", device: "Urządzenie", person: "Osoba" };
-const CATEGORY_LABEL: Readonly<Record<QuickhackCategory, string>> = { covert: "ukryty", control: "kontrola", combat: "bojowy" };
-
 const RamBar = ({ ram }: { ram: RamVm }) => {
   const cells = Math.max(1, Math.round(ram.max));
   return (
-    <div className="ram" data-testid="ram" aria-label={`RAM ${Math.floor(ram.current)} z ${ram.max}`}>
+    <div
+      className="ram"
+      data-testid="ram"
+      aria-label={`RAM ${Math.floor(ram.current)} z ${ram.max}`}
+    >
       <span className="ram__label">RAM</span>
       <span className="ram__cells">
         {Array.from({ length: cells }, (_, i) => (
-          <span key={i} className={`ram__cell${i < Math.floor(ram.current) ? " ram__cell--on" : ""}`} />
+          <span
+            key={i}
+            className={`ram__cell${i < Math.floor(ram.current) ? " ram__cell--on" : ""}`}
+          />
         ))}
       </span>
       <span className="ram__value">
@@ -29,11 +34,14 @@ const RamBar = ({ ram }: { ram: RamVm }) => {
 /** Upload of the running quickhack: a bar that fills over its upload time. */
 const UploadBar = () => {
   const upload = useUi((s) => s.upload);
+  const t = useT();
   if (!upload) return null;
   const style = { "--upload": `${upload.seconds}s` } as CSSProperties;
   return (
     <div className="upload" data-testid="upload" style={style}>
-      <span className="upload__label">Upload: {QUICKHACKS[upload.hackId].title}</span>
+      <span className="upload__label">
+        {t("scan.upload", { hack: t(`quickhack.${upload.hackId}`) })}
+      </span>
       <span className="upload__bar">
         <span key={upload.seq} className="upload__fill" />
       </span>
@@ -46,7 +54,12 @@ const ScanNote = () => {
   if (!note) return null;
   const icon = note.tone === "traced" ? "⚠" : note.tone === "fail" ? "✗" : "✓";
   return (
-    <div key={note.seq} className={`scan-note scan-note--${note.tone}`} data-testid="scan-note" role="status">
+    <div
+      key={note.seq}
+      className={`scan-note scan-note--${note.tone}`}
+      data-testid="scan-note"
+      role="status"
+    >
       <span aria-hidden="true">{icon}</span> {note.text}
     </div>
   );
@@ -57,15 +70,25 @@ const ScanTarget = ({ touch }: { touch: boolean }) => {
   const target = useUi((s) => s.scanTarget);
   const ram = useUi((s) => s.ram);
   const intents = useHackIntents();
-  if (!target) return <div className="scan-card scan-card--empty">Brak celu w polu skanu</div>;
+  const t = useT();
+  if (!target)
+    return (
+      <div className="scan-card scan-card--empty">{t("scan.noTarget")}</div>
+    );
   const hacks = quickhacksFor(target.kind);
   return (
-    <div className={`scan-card${target.hostile ? " scan-card--hostile" : ""}`} data-testid="scan-card">
+    <div
+      className={`scan-card${target.hostile ? " scan-card--hostile" : ""}`}
+      data-testid="scan-card"
+    >
       <div className="scan-card__kind">
-        <span aria-hidden="true">{target.hostile ? "▲" : "●"}</span> {KIND_LABEL[target.kind]}
+        <span aria-hidden="true">{target.hostile ? "▲" : "●"}</span>{" "}
+        {t(`scan.kind.${target.kind}`)}
       </div>
       <div className="scan-card__name">{target.name}</div>
-      {target.faction && <div className="scan-card__faction">{target.faction}</div>}
+      {target.faction && (
+        <div className="scan-card__faction">{target.faction}</div>
+      )}
       {target.profile && (
         <ul className="scan-card__profile">
           {target.profile.map((p) => (
@@ -81,15 +104,30 @@ const ScanTarget = ({ touch }: { touch: boolean }) => {
           const body = (
             <>
               <kbd className="hacks__key">{slot}</kbd>
-              <span className="hacks__title">{def.title}</span>
-              <span className="hacks__cat">{CATEGORY_LABEL[def.category]}</span>
+              <span className="hacks__title">{t(`quickhack.${def.id}`)}</span>
+              <span className="hacks__cat">
+                {t(`scan.cat.${def.category}`)}
+              </span>
               <span className="hacks__ram">{def.ram} RAM</span>
             </>
           );
           return (
-            <li key={id} className={`hacks__row hacks__row--${def.category}${short ? " hacks__row--short" : ""}`} data-testid={`hack-${id}`}>
+            <li
+              key={id}
+              className={`hacks__row hacks__row--${def.category}${short ? " hacks__row--short" : ""}`}
+              data-testid={`hack-${id}`}
+            >
               {touch ? (
-                <button type="button" className="hacks__btn" disabled={short} aria-label={`${def.title}, ${def.ram} RAM`} onClick={() => intents.pickQuickhack(slot)}>
+                <button
+                  type="button"
+                  className="hacks__btn"
+                  disabled={short}
+                  aria-label={t("scan.hackRam", {
+                    hack: t(`quickhack.${def.id}`),
+                    ram: def.ram,
+                  })}
+                  onClick={() => intents.pickQuickhack(slot)}
+                >
                   {body}
                 </button>
               ) : (

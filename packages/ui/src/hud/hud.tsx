@@ -1,5 +1,4 @@
 import { type CSSProperties, useEffect, useState } from "react";
-import type { DayPhase } from "@seki/core";
 import { keyLabel } from "../menus/key-label";
 import { type ControlBindingVm, DEFAULT_HORIZONTAL_FOV, hipVerticalFov } from "../store/ui-store";
 import { useT } from "../i18n/use-t";
