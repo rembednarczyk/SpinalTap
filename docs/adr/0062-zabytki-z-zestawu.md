@@ -6,7 +6,7 @@ Po G-049 (PR #65) zabytki mają prawdziwe bryły z części `building:part` z OS
 - przy innych kościołach generowane wieże dublują wieże z OSM (G-057, T-018);
 - gracz nie rozpoznaje z daleka miejsc, które w Lublinie służą za punkty orientacyjne.
 
-Użytkownik zdecydował (31.10): zabytki dostają własną geometrię w wersji cyberpunkowej, zaczynając od Bramy Krakowskiej.
+Użytkownik zdecydował (31.10): wszystkie zabytki dostają realistyczną geometrię w stylu cyberpunk, zaczynając od Bramy Krakowskiej.
 
 Gotowych modeli tych zabytków na licencji CC0 nie ma; modele ze Sketchfaba są zwykle na CC-BY, a ADR-0058 dopuszcza tylko CC0.
 
@@ -15,12 +15,15 @@ Gotowych modeli tych zabytków na licencji CC0 nie ma; modele ze Sketchfaba są 
   - Elementy zestawu: cokół z kamienia, mur ceglany ze ślepymi blendami ostrołukowymi, tynk z pilastrami i gzymsami, ośmiobok, hełm z profilu obrotowego (cebula, dzwon, iglica z latarnią), blanki, łuk przejazdu z głębokością muru, tarcza zegara, okna i otwory dzwonnicy.
   - Każdy zabytek to przepis w tablicy danych: identyfikatory OSM obrysu i części, z których bierze kształt, oraz elementy na kolejnych wysokościach. Obrys, wysokości kondygnacji i położenie zawsze idą z danych OSM. Przepis dodaje detal, nie zmienia bryły.
   - Budynki z przepisem nie przechodzą przez zwykły plan fasad, dachów, nadbudów i proceduralnych wież (ADR-0051), więc G-056 i G-057 przestają ich dotyczyć.
+- **Wszystkie zabytki, w dwóch poziomach szczegółu:**
+  - najbardziej rozpoznawalne (lista etapów niżej) dostają własny przepis z detalem konkretnego budynku;
+  - pozostałe budynki z `isLandmark` (kościoły, cerkwie, synagogi, gmachy publiczne, kamienice z `historic`) dostają przepis ogólny według rodzaju i tagów OSM: materiał (`building:material`, cegła albo tynk), kształt dachu (`roof:shape`, co zamyka G-056 dla zabytków), wieże z części OSM, gzymsy i okna w stylu epoki zamiast okien kamienic. Rodzaje: kościół, cerkiew, gmach publiczny, kamienica zabytkowa, mur i baszta.
 - **Symulacja bez zmian.** Kolizja, przejście bramy i pokoje zostają z danych (`sim`). Detal mieści się w bryle z dokładnością do grubości gzymsu. Złote hashe się nie zmieniają.
 - **Bez nowych wywołań rysowania.** Geometria trafia do siatek komórek mapcity (bliskiej i dalekiej), jak fasady. Daleka wersja jest uproszczona: bryła, hełm i świecące elementy. Kolory z palety kitu (ADR-0022), cegła i tynk jako nowe próbki palety.
 - **Warstwa Lublin 2077** na zabytku:
   - Zabytek zostaje czytelny jako zabytek. Warstwa cyberpunkowa jest dodatkiem: światło, ekrany i kable, a nie nadbudowa. Nadbudów z ADR-0051 na zabytkach dalej nie ma (G-050).
   - Strona od nowego miasta jest neonowa. Na Bramie Krakowskiej to zachodnia elewacja od Krakowskiego Przedmieścia: neonowe obrysy gzymsów ośmioboku, holograficzna tarcza zegara, pasy LED na krawędziach hełmu, maszt z antenami i światłem ostrzegawczym na iglicy, kable do sąsiednich kamienic i ekran z napisem nad łukiem.
-  - Strona od Starego Miasta zostaje historyczna, zgodnie z zasadą ADR-0058 „Rynek i Stare Miasto oszczędnie”. Na Bramie Krakowskiej to wschodnia elewacja od Bramowej: ciepłe podświetlenie od dołu i jedna dyskretna kamera.
+  - Każdy zabytek ma warstwę 2077, ale jej natężenie zależy od otoczenia. Na Starym Mieście i przy Rynku warstwa jest stonowana, zgodnie z zasadą ADR-0058 „Rynek i Stare Miasto oszczędnie”: podświetlenie od dołu, pojedyncze hologramy i kamery, cienkie linie światła na gzymsach, bez dużych ekranów i wiązek kabli. Na Bramie Krakowskiej to wschodnia elewacja od Bramowej.
   - Przejazd pod bramą jest punktem kontrolnym gangu Hebi (ADR-0048, posterunek `hebi-bramowa`): skaner w łuku, migające paski na ościeżach. Same rekwizyty renderera, bez nowej logiki.
   - Napisy generyczne, bez prawdziwych marek. Teksty dla gracza idą przez katalogi i18n (ADR-0056).
 - **Wierność.** Przepis każdego zabytku przechodzi przegląd kuratora topografii: proporcje, liczba kondygnacji, materiały i kształt hełmu sprawdzone z OSM i fotografiami. Odstępstwa celowe (warstwa 2077) trafiają do `docs/topografia.md` z powodem.
@@ -31,6 +34,7 @@ Gotowych modeli tych zabytków na licencji CC0 nie ma; modele ze Sketchfaba są 
   4. Ratusz i Trybunał Koronny.
   5. Zamek z Donżonem i Kaplicą Trójcy.
   6. Kościoły Dominikanów i Bernardynów (Bernardyni po decyzji G-052 o granicy danych).
+  7. Przepisy ogólne dla pozostałych zabytków według rodzaju (kościół, cerkiew, gmach publiczny, kamienica zabytkowa, mur i baszta) z kształtem dachu z OSM; nowa kontrola skanu: zabytek bez przepisu.
 
 ## Konsekwencje
 - Kilka najważniejszych punktów orientacyjnych Lublina będzie rozpoznawalnych z daleka, a warstwa 2077 zostanie na nich bez przykrywania zabytku.
