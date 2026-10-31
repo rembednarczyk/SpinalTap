@@ -249,7 +249,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (audyt dróg) (T-052) · Ważność: S4 · Koszt: średni (kontrakt `GroundSurface` w core, ADR)
 
 ### G-087 `stepRamps` tylko dla nazwanych schodów
-- Status: zgłoszone (audyt dróg) (z audytu dróg, bez T: teren = NMT) · Ważność: S4 · Koszt: mały
+- Status: w PR #97 (rozstrzygnięte opisem: rampy tylko dla nazwanych schodów, reszta biegów na terenie zgodnym z NMT; bez zmiany zachowania)
 - Gdzie: `packages/sim/src/content/lublin/shape.ts` `stepRamps` czyta `c.streets` (tylko nazwy) → 3 rampy z 69 biegów
 - Decyzja: albo rampy dla wszystkich biegów (wtedy sprawdzić `terrain-off-pads`, `steps-micro-riser`), albo poprawić komentarz
 
