@@ -143,6 +143,11 @@ const applyControls = (s: typeof settings) => {
 let framesDrawn = 0;
 /** False while the reference frame waits for its start: the frames update the scene but draw nothing. */
 let drawScene = !reference;
+/**
+ * The first frame of a start skips the scene (ADR-0057): the browser paints the loading screen
+ * before that frame's update builds the new game's city, which took 1.7 s under SwiftShader.
+ */
+let loadingPainted = false;
 const loop = new FixedStepLoop(browserClock, {
   update: () => {
     const s = ui.getState().settings;
@@ -153,6 +158,10 @@ const loop = new FixedStepLoop(browserClock, {
     session.step(scaleLook(input.poll(), (touchDevice ? s.touchSensitivity : s.mouseSensitivity) * zoom * ads, s.invertY));
   },
   render: (alpha) => {
+    if (session.preparing !== loadingPainted) {
+      loadingPainted = session.preparing;
+      if (loadingPainted) return;
+    }
     session.render(alpha);
     // The menu covers the game, which stays frozen: draw only the preview (and the menu colour).
     if (session.characterScreenOpen) {
