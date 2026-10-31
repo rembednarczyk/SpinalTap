@@ -5,7 +5,7 @@ import { pointInRing } from "../polygon";
 import { type Uv, quadUv } from "../sink-ops";
 import { archPanel, clearOf, onWall, panel, shownWalls, slabRing } from "./kit";
 import { passageAxis } from "./layer2077";
-import type { LandmarkFrame } from "./landmark-plan";
+import type { LandmarkFrame } from "./landmark-frame";
 
 /**
  * The kit's elements of an elevation drawn after the photograph (ADR-0062, T-032, T-033): the

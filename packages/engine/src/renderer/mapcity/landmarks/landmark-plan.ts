@@ -7,6 +7,7 @@ import { planPassages } from "../passage-plan";
 import { SWATCH, archPanel, blindNiches, clockFace, cornice, helmet, lit, pilasters, shownWalls, skirtRoof, slabRing, solid, stonePlinth } from "./kit";
 import { GALLERY, type WallRect, battlements, buttress, clearOfPassages, diaper, gallery, paintingNiche, plaqueRow, smallWindows } from "./elevation";
 import { camera, corniceLights, facing, helmLeds, mast, scanner, screenFrame, sideOf, uplightFittings } from "./layer2077";
+import type { LandmarkFrame } from "./landmark-frame";
 import type { LandmarkPart, Material, PartRecipe, Tier } from "./recipes";
 
 /**
@@ -16,10 +17,7 @@ import type { LandmarkPart, Material, PartRecipe, Tier } from "./recipes";
  * (ADR-0051) nor the procedural church towers touch it.
  */
 
-/** A facade frame of a landmark: its recipe part, and a style with no windows, shops or roof of its own. */
-export interface LandmarkFrame extends FacadeFrame {
-  readonly landmark: LandmarkPart;
-}
+export type { LandmarkFrame };
 
 const WALL: Readonly<Record<Material, string>> = { brick: SWATCH.brick, plaster: SWATCH.plaster, stone: SWATCH.stone };
 const TRIM: Readonly<Record<Material, string>> = { brick: SWATCH.brickDark, plaster: SWATCH.plasterTrim, stone: SWATCH.stone };
