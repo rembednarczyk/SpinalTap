@@ -154,7 +154,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, packages/engine (mapcity), kontrakt: architekt
 
 ### G-057 Kościoły z wieżyczkami z OSM dostają dodatkowo proceduralne wieże renderera
-- Status: zgłoszone (z naprawy G-049)
+- Status: w weryfikacji (9ea7d04)
 - Ważność: S3 (proponowana) · Zasięg: Archikatedra i inne kościoły z `building:part` · Koszt: mały
 - Dowód: po G-049 Archikatedra ma wieżyczki z części OSM i proceduralne wieże z `roof-plan`
 - Pakiet właściciela: packages/engine (mapcity)
@@ -224,6 +224,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Dowód: `verticalOf` daje rise 3, bo `building=house` z `historic=yes` dostaje `use=residential`
 - Pakiet właściciela: tools/osm-import (building-tags) albo packages/sim (vertical.ts)
 - Test przyjęcia: kontrola `heritage-overbuilt` (budynek z `historic`/`heritage` poza Starym Miastem z rise > 0) daje 0 po G-050 i tej poprawce
+
+### G-067 Klasztor Dominikanów dostaje proceduralne wieże kościoła
+- Status: zgłoszone (z naprawy G-057)
+- Ważność: S4 (proponowana) · Zasięg: 1 znany · Koszt: mały
+- Gdzie: r2366732 (748.5, −104.4), Stare Miasto
+- Dowód: budynek klasztoru ma `use: church`, więc `addTowers` stawia na nim wieże kościoła, choć to klasztor; widać z ujęcia „Dominikanie od wschodu” (810, −56)
+- Pakiet właściciela: tools/osm-import (building-tags) / packages/engine (mapcity)
+- Test przyjęcia: klasztor bez wież proceduralnych; kościół obok zachowuje swoje
 
 ## Naprawione
 | ID | Glitch | PR |
