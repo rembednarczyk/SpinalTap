@@ -5,6 +5,8 @@ import { type StreetPropItem, VEHICLE_SIZE, terrainHeightAt } from "../../../pac
 import { planSteps } from "../../../packages/engine/src/renderer/mapcity/steps-plan";
 import { facadeFrame } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
 import { planFarBuilding } from "../../../packages/engine/src/renderer/mapcity/facade-plan";
+import { landmarkAt } from "../../../packages/engine/src/renderer/mapcity/landmarks";
+import { LANDMARK_RECIPES } from "../../../packages/engine/src/renderer/mapcity/landmarks/recipes";
 import { type BuildingSource, mapBuilding } from "../../../packages/engine/src/renderer/mapcity/map-building";
 import { centroid, cleanRing, pointInRing } from "../../../packages/engine/src/renderer/mapcity/polygon";
 import { stackTiers } from "../../../packages/engine/src/renderer/mapcity/vertical-plan";
@@ -803,6 +805,21 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       const want = (b.roof ?? 0) <= 0.3 ? "flat" : ROOF_KIND[b.roofShape!];
       return drawn === want ? [] : [{ at: near(b.x, b.z), what: `${b.id} ${b.name ?? ""} roof:shape=${b.roofShape} drawn as ${drawn}` }];
     }),
+  /**
+   * A building or part of a landmark recipe (ADR-0062) the map city does not draw from it: missing
+   * from the map, or not matched by its position, so it gets the tenements' facade instead.
+   */
+  "landmark-recipe-unmatched": () => {
+    const byId = new Map(MAP_CHUNKS.flatMap((c) => c.buildings.map((b) => [b.id, b] as const)));
+    return LANDMARK_RECIPES.flatMap((r) =>
+      r.parts.flatMap((p) => {
+        const b = byId.get(p.osm);
+        const view = b ? buildingView(b) : null;
+        if (b && view?.kind === "building" && landmarkAt(b.x, b.z, view.outline.length)?.part.osm === p.osm) return [];
+        return [{ at: b ? near(b.x, b.z) : "-", what: `${r.key} ${p.osm} ${b ? "drawn as a tenement" : "not in the map"}` }];
+      }),
+    );
+  },
 };
 
 /** The renderer's roof for each `roof:shape` (ADR-0064). */
