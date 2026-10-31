@@ -54,6 +54,19 @@ describe("superstructures (ADR-0051)", () => {
     }
   });
 
+  it("stand 5 m back from a landmark they rise over, and drop what no longer fits (G-050)", () => {
+    const gate = { ring: rect(0, -6, 24, 0), top: 5 };
+    const tiers = stackTiers(facadeFrame(tenement({ landmarks: [gate] }), none));
+    expect(tiers.length).toBeGreaterThan(0);
+    expect(tiers[tiers.length - 1]!.y1).toBeCloseTo(13 + 15, 6);
+    for (const t of tiers) for (const p of t.ring) expect(p.z).toBeGreaterThanOrEqual(5 - 1e-9);
+    // A landmark higher than the whole stack changes nothing.
+    expect(stackTiers(facadeFrame(tenement({ landmarks: [{ ...gate, top: 40 }] }), none))).toEqual(stackTiers(facadeFrame(tenement(), none)));
+    // Between two landmarks, 8 m apart, no tier stands 5 m off both.
+    const narrow = tenement({ ring: rect(0, 0, 24, 8), landmarks: [gate, { ring: rect(0, 8, 24, 14), top: 5 }] });
+    expect(stackTiers(facadeFrame(narrow, none))).toEqual([]);
+  });
+
   it("leave buildings without a rise as they are, and add nothing far but boxes", () => {
     const flat = facadeFrame(tenement({ rise: 0 }), none);
     const s = new MeshSink();

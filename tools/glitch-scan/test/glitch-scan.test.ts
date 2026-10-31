@@ -3,6 +3,10 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { type StreetPropItem, VEHICLE_SIZE } from "../../../packages/core/src";
 import { planSteps } from "../../../packages/engine/src/renderer/mapcity/steps-plan";
+import { facadeFrame } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
+import { mapBuilding } from "../../../packages/engine/src/renderer/mapcity/map-building";
+import { cleanRing, pointInRing } from "../../../packages/engine/src/renderer/mapcity/polygon";
+import { stackTiers } from "../../../packages/engine/src/renderer/mapcity/vertical-plan";
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 import { CROWD_LANES } from "../../../packages/sim/src/content/crowd";
 import { furnitureClearance } from "../../../packages/sim/src/content/furniture-index";
@@ -151,6 +155,13 @@ const outlineGap = (a: Poly, b: Poly) => {
       }
   return d;
 };
+
+/** The gap between two outlines (m), 0 where one reaches into the other. */
+const ringGap = (a: Poly, b: Poly) => (a.some((p) => pointInRing(p, b)) || b.some((p) => pointInRing(p, a)) ? 0 : outlineGap(a, b));
+
+/** The tiers of a building's superstructure as the renderer stacks them (ADR-0051). */
+const tiersOf = (view: Extract<ReturnType<typeof buildingView>, { kind: "building" }>, b: { readonly x: number; readonly y: number; readonly z: number }, outline: Poly, id: number) =>
+  stackTiers(facadeFrame(mapBuilding(id, { ring: cleanRing(outline), view, at: { x: b.x, y: b.y, z: b.z } }, () => null), () => null));
 
 const overlaps = (a: Rect, b: Rect) => a.minX < b.maxX && b.minX < a.maxX && a.minZ < b.maxZ && b.minZ < a.maxZ;
 
@@ -451,18 +462,22 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /** A piece of road or path on a bridge laid on the valley instead of a deck. */
   "bridge-without-deck": () => MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.bridge && !g.deck).map((g) => ({ at: near(g.outline[0]!, g.outline[1]!), what: g.surface }))),
   /**
-   * A building whose superstructure (ADR-0051) lifts its top over a landmark it stands against,
-   * under 4 m from its outline (no street between them): the house over the gate (G-050).
+   * A tier of a superstructure (ADR-0051) rising over the top of a landmark less than 5 m from
+   * its outline: the house towering over the gate it adjoins (G-050). The tiers as the renderer
+   * stacks them, the landmarks from the map.
    */
   "landmark-overbuilt": () => {
-    const buildings = MAP_CHUNKS.flatMap((c) => c.buildings.map((b) => ({ b, district: c.district, outline: worldOutline(b), top: b.y + b.height + (b.roof ?? 0) })));
-    const landmarks = buildings.filter(({ b }) => isLandmark(b));
-    return buildings.flatMap(({ b, district, outline, top }) => {
+    const buildings = MAP_CHUNKS.flatMap((c) => c.buildings.map((b) => ({ b, district: c.district, outline: worldOutline(b) })));
+    const landmarks = buildings.filter(({ b }) => isLandmark(b)).map((l) => ({ ...l, top: l.b.y + l.b.height + (l.b.roof ?? 0) }));
+    return buildings.flatMap(({ b, district, outline }, i) => {
       const view = buildingView(b, district);
-      const rise = view.kind === "building" ? (view.vertical?.rise ?? 0) : 0;
-      if (rise === 0) return [];
-      const over = landmarks.find((l) => top + rise > l.top + 0.01 && Math.hypot(l.b.x - b.x, l.b.z - b.z) < 200 && outlineGap(outline, l.outline) < 4);
-      return over ? [{ at: near(b.x, b.z), what: `${b.id} top ${(top + rise).toFixed(1)} over ${over.b.name ?? over.b.id} ${over.top.toFixed(1)}` }] : [];
+      if (view.kind !== "building" || !view.vertical?.rise) return [];
+      const near5 = landmarks.filter((l) => Math.hypot(l.b.x - b.x, l.b.z - b.z) < 200 && ringGap(outline, l.outline) < 5);
+      if (near5.length === 0) return [];
+      return tiersOf(view, b, outline, i).flatMap((t, k) => {
+        const over = near5.find((l) => t.y1 > l.top + 0.01 && ringGap(t.ring, l.outline) < 5);
+        return over ? [{ at: near(b.x, b.z), what: `${b.id} tier ${k} up to ${t.y1.toFixed(1)}, ${ringGap(t.ring, over.outline).toFixed(1)} m off ${over.b.name ?? over.b.id} (top ${over.top.toFixed(1)})` }] : [];
+      });
     });
   },
   /** A passage through a building with an end off every chunk, where there is no ground to come out on. */
@@ -474,6 +489,18 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
 };
 
 describe("the glitch scan (ADR-0054)", () => {
+  it("stacks Grodzka 36a 5 m back from the Grodzka Gate instead of over it (G-050)", () => {
+    const house = MAP_CHUNKS.flatMap((c) => c.buildings.map((b) => ({ b, district: c.district }))).find(({ b }) => b.id === "w66293355")!;
+    const gate = MAP_CHUNKS.flatMap((c) => c.buildings).find((b) => b.name === "Brama Grodzka")!;
+    const view = buildingView(house.b, house.district);
+    if (view.kind !== "building") throw new Error("not a building");
+    expect(view.vertical?.rise).toBeGreaterThan(0);
+    const tiers = tiersOf(view, house.b, worldOutline(house.b), 1);
+    expect(tiers.length).toBeGreaterThan(0);
+    const gateTop = gate.y + gate.height + (gate.roof ?? 0);
+    for (const t of tiers) if (t.y1 > gateTop) expect(ringGap(t.ring, worldOutline(gate))).toBeGreaterThanOrEqual(5);
+  });
+
   it("finds no more glitches of any known kind than its baseline", () => {
     const found = Object.fromEntries(Object.entries(CHECKS).map(([k, check]) => [k, check()]));
     const counts = Object.fromEntries(Object.entries(found).map(([k, f]) => [k, f.length]));

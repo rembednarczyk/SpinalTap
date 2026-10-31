@@ -11,7 +11,7 @@ import type { LublinBuildingData, LublinChunkData } from "./types";
  * - the Old Town stays recognisable: nothing round the Rynek, a storey of rooftop gear on a
  *   few houses further out, little over the lanes;
  * - landmarks (gates, the Trybunał, towers, churches, the castle, palaces, public buildings)
- *   carry nothing, and a building standing against one rises no higher than its top (G-050).
+ *   carry nothing, and the superstructure of a building next to one stands back from it (G-050).
  */
 
 /** Height of one storey of the superstructure, metres. */
@@ -72,13 +72,11 @@ const footprint = (outline: readonly number[]): { area: number; short: number } 
 };
 
 /**
- * Gap between outlines, metres, under which a building stands against a landmark: narrower than
- * any street, so nothing but a wall or a passage lies between them.
+ * How far (metres) the tiers of a superstructure keep off the outline of a landmark they rise
+ * over (`BuildingVertical.landmarks`, G-050): a street's width, so the gate or church next door
+ * keeps its silhouette against the sky while the house still rises.
  */
-const AGAINST = 4;
-
-/** World y of a building's top without a superstructure: foot, walls and roof. */
-const bareTop = (b: LublinBuildingData): number => b.y + b.height + (b.roof ?? 0);
+export const LANDMARK_CLEAR = 5;
 
 type Ring = { readonly pts: readonly (readonly [number, number])[]; readonly minX: number; readonly maxX: number; readonly minZ: number; readonly maxZ: number };
 
@@ -106,27 +104,37 @@ const cornersTo = (a: Ring, b: Ring): number => {
   return d;
 };
 
-const against = (a: Ring, b: Ring): boolean =>
-  a.minX - AGAINST < b.maxX && b.minX - AGAINST < a.maxX && a.minZ - AGAINST < b.maxZ && b.minZ - AGAINST < a.maxZ && Math.min(cornersTo(a, b), cornersTo(b, a)) < AGAINST;
+/** Outlines under `LANDMARK_CLEAR` apart: a tier inside one could come too close to the other. */
+const within = (a: Ring, b: Ring): boolean =>
+  a.minX - LANDMARK_CLEAR < b.maxX && b.minX - LANDMARK_CLEAR < a.maxX && a.minZ - LANDMARK_CLEAR < b.maxZ && b.minZ - LANDMARK_CLEAR < a.maxZ && Math.min(cornersTo(a, b), cornersTo(b, a)) < LANDMARK_CLEAR;
+
+/** A landmark near a building: its world outline (flat x, z pairs) and top (world y: walls and roof). */
+export interface NearLandmark {
+  readonly outline: readonly number[];
+  readonly top: number;
+}
 
 /**
- * The world y each building standing against a landmark keeps its superstructure under: the
- * lowest top of those landmarks, by building id. The district alone would let a house on its
- * edge tower over the gate or church it adjoins (G-050), whatever district the landmark is in.
+ * The landmarks under `LANDMARK_CLEAR` from each building's outline, by building id. The district
+ * alone would stack a house on its edge over the gate or church it adjoins (G-050), whatever
+ * district the landmark is in; the renderer keeps the tiers off them instead.
  */
-export const landmarkCeilings = (buildings: readonly LublinBuildingData[]): ReadonlyMap<string, number> => {
-  const landmarks = buildings.filter(isLandmark).map((b) => ({ ring: ringOf(b), top: bareTop(b) }));
-  const out = new Map<string, number>();
+export const nearLandmarks = (buildings: readonly LublinBuildingData[]): ReadonlyMap<string, readonly NearLandmark[]> => {
+  const landmarks = buildings.filter(isLandmark).map((b) => {
+    const ring = ringOf(b);
+    return { ring, near: { outline: ring.pts.flat(), top: b.y + b.height + (b.roof ?? 0) } };
+  });
+  const out = new Map<string, NearLandmark[]>();
   for (const b of buildings) {
     if (isLandmark(b)) continue;
     const ring = ringOf(b);
-    for (const l of landmarks) if (against(ring, l.ring)) out.set(b.id, Math.min(out.get(b.id) ?? Infinity, l.top));
+    for (const l of landmarks) if (within(ring, l.ring)) out.set(b.id, [...(out.get(b.id) ?? []), l.near]);
   }
   return out;
 };
 
 /** Storeys of superstructure of a building (0 for none). */
-const storeys = (b: LublinBuildingData, district: District, ceiling: number): number => {
+const storeys = (b: LublinBuildingData, district: District): number => {
   if (isLandmark(b) || b.use === "garage") return 0;
   if (district === "kanal" && Math.hypot(b.x - RYNEK.x, b.z - RYNEK.z) < RYNEK.radius) return 0;
   const rule = RULES[district];
@@ -135,20 +143,23 @@ const storeys = (b: LublinBuildingData, district: District, ceiling: number): nu
   // Skewed to the low end: most add a few storeys, a few tower over the street.
   const n = rule.min + Math.floor(unit(b.look, 2) ** 1.6 * (rule.max - rule.min + 1));
   const cap = b.use === "industrial" || b.use === "other" ? 2 : short < 7 || area < 120 ? 3 : rule.max;
-  const under = Math.max(0, Math.floor((ceiling - bareTop(b)) / RISE_STOREY));
-  return Math.min(n, cap, rule.max, under);
+  return Math.min(n, cap, rule.max);
 };
 
 /**
- * The vertical layer of a building of the map in its district, or undefined for none; its top
- * stays under `ceiling` (world y, from `landmarkCeilings`).
+ * The vertical layer of a building of the map in its district, or undefined for none; with the
+ * landmarks near it (from `nearLandmarks`) its superstructure would rise over.
  */
-export const verticalOf = (b: LublinBuildingData, district: District, ceiling = Infinity): BuildingVertical | undefined => {
+export const verticalOf = (b: LublinBuildingData, district: District, near: readonly NearLandmark[] = []): BuildingVertical | undefined => {
   if (isLandmark(b)) return undefined;
-  const rise = storeys(b, district, ceiling) * RISE_STOREY;
+  const rise = storeys(b, district) * RISE_STOREY;
   const nearRynek = district === "kanal" && Math.hypot(b.x - RYNEK.x, b.z - RYNEK.z) < RYNEK.radius;
   const base = nearRynek ? RYNEK.clutter : RULES[district].clutter;
   // Each building hangs a little more or less than its district.
   const clutter = Math.round(Math.min(1, Math.max(0, base * (0.7 + 0.6 * unit(b.look, 3)))) * 100) / 100;
-  return rise === 0 && clutter === 0 ? undefined : { rise, clutter };
+  if (rise === 0 && clutter === 0) return undefined;
+  const under = near.filter((l) => l.top < b.y + b.height + rise);
+  if (rise === 0 || under.length === 0) return { rise, clutter };
+  const landmarks = under.map((l) => ({ outline: Array.from({ length: l.outline.length / 2 }, (_, i) => ({ x: (l.outline[i * 2] ?? 0) - b.x, z: (l.outline[i * 2 + 1] ?? 0) - b.z })), top: l.top - b.y }));
+  return { rise, clutter, landmarks };
 };
