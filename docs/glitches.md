@@ -83,7 +83,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: później (ADR-0052 „Na później”)
 
 ### G-052 Teatr Osterwy i Kościół Bernardynów poza danymi miasta (brzeg Krakowskiego na z = −200)
-- Status: w naprawie (9f42423: oba zabytki w grze; czeka na G-074, G-075 i decyzję o budżecie sceny referencyjnej 181/76 → 191/81)
+- Status: przyjęte przez weryfikatora (gałąź `g074-075` w worktree agent-a0e34d7b5d8f460e1: baza `lane-dead-end` 45, budżet reference 194/81 z długiem w ADR-0046); przegląd kuratora w toku, potem PR (konflikt tabel z main rozwiązać regeneracją)
 - Ważność: S3 (proponowana) · Zasięg: lokalny (Narutowicza, Bernardyńska) · Koszt: duży (prostokąt w config.ts, ADR-0042, regeneracja, budżety)
 - Gdzie: (118.0, −205.7), (364.7, −239.8); ile w mieście: 2 zabytki z listy kuratora
 - Dowód: brak w66330578 i w67508958 w `*.generated.ts`, `DISTRICTS[0].rect.minZ = −200`; T-014
@@ -202,7 +202,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: `lane-dead-end` na gałęzi G-052 nie wyższy niż 44
 
 ### G-075 Kolizje aut na przecięciu pasów 3 Maja przy Zesłańców Sybiru
-- Status: w naprawie (gałąź `g075` od main, poprawka `crowded`/`onItsWay` w traffic-system; z naprawy G-052, błąd jest też na main)
+- Status: w PR #85 (przyjęte przez weryfikatora)
 - Ważność: S3 (proponowana) · Zasięg: jedno skrzyżowanie · Koszt: mały–średni
 - Gdzie: (−110, 56), przecięcie pasów 3 Maja#31:0 i #31:1
 - Dowód: `traffic-junction-drive` na gałęzi G-052: Peowiaków ziarna 3 i 7 po 2 kolizje (próg 0), 3 Maja ziarno 7: 3 (próg 2)
@@ -276,7 +276,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `road-dip-over-tunnel` 1 → 0 (droga z OSM przecina tunel bez wspólnego węzła, a grunt w ±8 m od przecięcia leży > 1 m pod cięciwą; w mieście 34 przecięcia, następne 0,35 m); pod pomostem przejście w66258159 drożne (G-062)
 
 ### G-089 Bramy z maxheight=below_default ze sklepieniem 4 m
-- Status: zgłoszone (z przeglądu kuratora G-076) · Ważność: S4 · Zasięg: 3 miejsca · Koszt: mały
+- Status: w weryfikacji (commit d697da8, gałąź `worktree-agent-a71a2e63a0c9844bb`: `vaultOf`, `maxheight` → sklepienie, `below_default` 3,6 m; skan `passage-maxheight` 3 → 0; przegląd kuratora w toku) · Ważność: S4 · Zasięg: 3 miejsca · Koszt: mały
 - Gdzie: Królewska w755152552/555/560; T-054
 - Przyczyna: `buildingPassages` (wysokość w `out.push`, przy `widthOf`) nie czyta `maxheight`
 - Pakiet właściciela: tools/osm-import
