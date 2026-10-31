@@ -40,7 +40,7 @@ describe("wave 1 HUD in the game", () => {
       seki.emit("ContractCompleted", { contract: { id: "c9", kind: "infiltrate", siteId: "car_wash", targets: 2, reward: 1200, status: "cleared" }, reward: 1200 } as never);
       seki.emit("ContractDebrief", { contractId: "c9", badges: ["ghost", "no_alarm", "untouched", "netrunner"], rank: "S", reward: 1200, bonus: 300, styleBonus: 150, seconds: 254 });
     });
-    expect(screen.getByTestId("debrief").textContent).toContain("Infiltracja");
+    expect(screen.getByTestId("debrief").textContent).toContain("Infiltration");
     expect(screen.getByTestId("debrief-rank").textContent).toContain("S");
     expect(screen.getByTestId("debrief-total").textContent).toContain("1,650");
     key("Enter");

@@ -1,6 +1,6 @@
 import type { BuffId } from "@seki/core";
 import { keyLabel } from "../menus/key-label";
-import { useT } from "../i18n/use-t";
+import { useT, useText } from "../i18n/use-t";
 import { useUi } from "../use-ui";
 
 const BUFF_ICON: Readonly<Record<BuffId, string>> = {
@@ -12,16 +12,17 @@ const BUFF_ICON: Readonly<Record<BuffId, string>> = {
 /** Timed buffs from food and drinks (ADR-0032): an icon, the name and the seconds left. */
 export const BuffIcons = () => {
   const t = useT();
+  const tx = useText();
   const buffs = useUi((s) => s.buffs);
   if (buffs.length === 0) return null;
   return (
     <ul className="buffs" aria-label={t("buffs.label")} data-testid="buffs">
       {buffs.map((b) => (
-        <li key={b.id} className={`buff buff--${b.id}${b.left <= 5 ? " buff--ending" : ""}`} data-testid={`buff-${b.id}`} title={b.name}>
+        <li key={b.id} className={`buff buff--${b.id}${b.left <= 5 ? " buff--ending" : ""}`} data-testid={`buff-${b.id}`} title={tx(b.name)}>
           <span className="buff__icon" aria-hidden="true">
             {BUFF_ICON[b.id]}
           </span>
-          <span className="buff__name">{b.name}</span>
+          <span className="buff__name">{tx(b.name)}</span>
           <span className="buff__left">{b.left} s</span>
           <span
             className="buff__bar"

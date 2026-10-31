@@ -106,17 +106,17 @@ describe("contract kinds (M4)", () => {
   it("describes every stage of every kind", () => {
     const kinds = CONTRACT_KIND_IDS.map((k) => generateContractOfKind(k, ctx(), sequenceRng(0, 0)));
     const [eliminate, delivery, retrieve, protect] = kinds;
-    expect(contractObjective(eliminate!)).toContain("Zneutralizuj gangerów Hebi (2)");
-    expect(contractObjective(delivery!, 75)).toBe(`Zanieś paczkę od Kaito Hanie: ${CONTRACT_SITES.hana_stall.label} (zostało 1:15)`);
-    expect(contractObjective(delivery!)).not.toContain("zostało");
-    expect(contractObjective(retrieve!)).toContain("skrytki Hebi");
-    expect(contractObjective(protect!)).toContain("Obroń Oyaji");
-    expect(contractObjective({ ...delivery!, status: "cleared" })).toBe("Paczka oddana. Wróć do Kaito po zapłatę");
-    expect(contractObjective({ ...retrieve!, status: "cleared" })).toBe("Skrzynka zabrana. Wróć do Hany po zapłatę");
+    // Keys with parameters (ADR-0056); the sentences are checked in both languages in ui.
+    expect(contractObjective(eliminate!)).toEqual({ key: "contract.objective.eliminate", params: { targets: 2, site: { key: "contract.site.east_lot" } } });
+    expect(contractObjective(delivery!, 75)).toEqual({ key: "contract.objective.deliveryTimed", params: { site: { key: CONTRACT_SITES.hana_stall.text }, time: "1:15" } });
+    expect(contractObjective(delivery!)).toEqual({ key: "contract.objective.delivery", params: { site: { key: CONTRACT_SITES.hana_stall.text } } });
+    expect(contractObjective(retrieve!).key).toBe("contract.objective.retrieve");
+    expect(contractObjective(protect!).key).toBe("contract.objective.protect");
+    expect(contractObjective({ ...retrieve!, status: "cleared" }).params).toEqual({ note: { key: "contract.cleared.retrieve" }, giver: { key: "contract.giver.hana" } });
     expect(new Set(kinds.map(contractClearedNote)).size).toBe(CONTRACT_KIND_IDS.length);
-    expect(contractClearedNote(protect!)).toContain("Oyaji");
-    expect(contractFailureNote("timeout")).toContain("na czas");
-    expect(contractFailureNote("protectee-killed")).toContain("Oyaji");
+    expect(contractClearedNote(protect!)).toBe("contract.cleared.protect");
+    expect(contractFailureNote("timeout")).toBe("contract.failure.timeout");
+    expect(contractFailureNote("protectee-killed")).toBe("contract.failure.protectee-killed");
   });
 });
 

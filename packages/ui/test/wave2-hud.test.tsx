@@ -85,11 +85,12 @@ describe("radio", () => {
 describe("body HUD", () => {
   it("shows buffs, the dash cooldown and the disguise by the health bar", () => {
     const { store } = mount({
-      buffs: [{ id: "regen", name: "Regeneracja", left: 12, total: 30 }],
+      buffs: [{ id: "regen", name: "buff.regen.name", left: 12, total: 30 }],
       dash: { cooldown: 0.6, total: 1.2 },
       disguise: { role: "hebi", label: "Przebranie: Hebi", blown: false },
     });
     expect(screen.getByTestId("buff-regen").textContent).toContain("12 s");
+    expect(screen.getByTestId("buff-regen").textContent).toContain("Regeneration");
     expect(screen.getByTestId("dash").getAttribute("aria-label")).toBe("Dash in 0.6 s");
     // A disguise keeps the identity block on screen.
     expect(screen.getByTestId("identity").classList.contains("hud__identity--calm")).toBe(false);

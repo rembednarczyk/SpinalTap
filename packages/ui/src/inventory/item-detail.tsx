@@ -15,7 +15,7 @@ import {
   weaponStatsOf,
 } from "@seki/core";
 import { useLocale } from "../i18n/number";
-import { useT } from "../i18n/use-t";
+import { useT, useText } from "../i18n/use-t";
 import { ActionBar, type ActionId, type ItemAction } from "./actions";
 import { description, formatDelta, formatStat, itemName, kindLabel, modSlotLabel, rarityLabel, slotNoun, statLabel } from "./item-text";
 
@@ -47,6 +47,7 @@ export const ItemDetail = ({
   onAction: (id: ActionId) => void;
 }) => {
   const t = useT();
+  const tx = useText();
   const locale = useLocale();
   const compare = selected ? compareItems(inventory, equipment, selected) : null;
   if (!selected || !compare) {
@@ -66,16 +67,16 @@ export const ItemDetail = ({
   return (
     <div className={`inv__detail${item ? ` rarity-text--${item.rarity}` : ""}`} data-testid="item-detail">
       <header className="inv__detail-head">
-        <h3 className="inv__detail-name">{itemName(def)}</h3>
+        <h3 className="inv__detail-name">{itemName(tx, def)}</h3>
         {tier && <span className={`inv__tier inv__tier--${item!.rarity}`}>{tier}</span>}
       </header>
       <div className="inv__kind">
         {kindLabel(t, def)}
         {"stack" in selected && ` · ${t("inventory.detail.have", { count: stackCount(inventory, selected.stack) })}`}
       </div>
-      <p className="inv__desc">{description(def)}</p>
+      <p className="inv__desc">{description(tx, def)}</p>
       {stats?.ammo && (
-        <div className="inv__meta">{t("inventory.detail.loaded", { loaded: item?.loaded ?? 0, magazine: stats.magazine, ammo: AMMO_CATALOG[stats.ammo].name })}</div>
+        <div className="inv__meta">{t("inventory.detail.loaded", { loaded: item?.loaded ?? 0, magazine: stats.magazine, ammo: tx(AMMO_CATALOG[stats.ammo].name) })}</div>
       )}
       {item && isGarmentId(item.def) && <div className="inv__meta">{t("inventory.detail.condition", { pct: Math.round(item.condition ?? 100) })}</div>}
       {mods.length > 0 && (
@@ -84,7 +85,7 @@ export const ItemDetail = ({
             mods: mods
               .map(([slot, uid]) => {
                 const m = findItem(inventory, uid);
-                return m && isModId(m.def) ? `${MOD_CATALOG[m.def].name} (${modSlotLabel(t, slot as ModSlot).toLowerCase()})` : null;
+                return m && isModId(m.def) ? `${tx(MOD_CATALOG[m.def].name)} (${modSlotLabel(t, slot as ModSlot).toLowerCase()})` : null;
               })
               .filter(Boolean)
               .join(", "),
@@ -98,7 +99,7 @@ export const ItemDetail = ({
               <tr>
                 <th />
                 <th>{t("inventory.detail.this")}</th>
-                <th>{against ? itemName(against.def) : t("inventory.detail.worn")}</th>
+                <th>{against ? itemName(tx, against.def) : t("inventory.detail.worn")}</th>
                 <th />
               </tr>
             </thead>

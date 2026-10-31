@@ -340,15 +340,16 @@ describe("ripperdoc clinic", () => {
 
   it("warns which implant a purchase replaces", () => {
     mount({ screen: "playing", shopOpen: true, eddies: 5000, cyberware: { nervous: "synapse_booster" } });
-    expect(screen.getByText("Replaces: Wzmacniacz synaps")).toBeTruthy();
+    expect(screen.getByText("Replaces: Synapse booster")).toBeTruthy();
   });
 });
 
 describe("gear and character sheet", () => {
   it("shows ability cooldown and medkits", () => {
-    mount({ screen: "playing", medkits: 3, ability: { name: "Przeciążenie odruchów", activeTime: 0, cooldown: 6.2, cooldownTotal: 16 } });
-    expect(screen.getByTestId("gear").textContent).toContain("Apteczki × 3");
+    mount({ screen: "playing", medkits: 3, ability: { name: "ability.reflex_overdrive.name", activeTime: 0, cooldown: 6.2, cooldownTotal: 16 } });
+    expect(screen.getByTestId("gear").textContent).toContain("Medkits × 3");
     expect(screen.getByTestId("gear").textContent).toContain("7 s");
+    expect(screen.getByTestId("gear").textContent).toContain("Reflex overdrive");
   });
 
   it("toggles the character sheet with Tab", () => {
@@ -356,12 +357,12 @@ describe("gear and character sheet", () => {
     expect(screen.queryByTestId("character-panel")).toBeNull();
     fireEvent.keyDown(window, { code: "Tab" });
     const panel = screen.getByTestId("character-panel");
-    expect(panel.textContent).toContain("Optyka Hitomi Mk1");
-    expect(panel.textContent).toContain("Wspomnienie: odruch");
+    expect(panel.textContent).toContain("Hitomi Mk1 optics");
+    expect(panel.textContent).toContain("Memory: reflex");
     expect(panel.textContent).toContain("-60 · hostility");
     expect(screen.getByTestId("rep-hebi").textContent).toContain("They hunt you");
     expect(screen.getByTestId("rep-fixers").textContent).toContain("Kaito pays more");
-    expect(screen.getByTestId("rep-clinic").textContent).toContain("Klinika Mori");
+    expect(screen.getByTestId("rep-clinic").textContent).toContain("Mori's clinic");
     expect(screen.getByTestId("rep-clinic").textContent).toContain("List prices");
     fireEvent.keyDown(window, { code: "Tab" });
     expect(screen.queryByTestId("character-panel")).toBeNull();

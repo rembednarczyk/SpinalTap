@@ -1,8 +1,8 @@
 import { type BagCell, type ItemRef, type Locale, RARITIES, type Rarity } from "@seki/core";
 import { type KeyboardEvent, type PointerEvent, useRef } from "react";
 import { compareText } from "../i18n/number";
-import type { Translate } from "../i18n/t";
-import { useT } from "../i18n/use-t";
+import { type Translate, type TranslateText, textTranslator } from "../i18n/t";
+import { useT, useText } from "../i18n/use-t";
 import { CATEGORY_ORDER, FILTERS, type GridFilter, categoryOf, itemName, matchesFilter, rarityLabel, shortName } from "./item-text";
 
 export type GridSort = "category" | "rarity" | "name";
@@ -25,7 +25,8 @@ const rarityOf = (cell: BagCell): Rarity => (cell.kind === "item" ? cell.item.ra
 /** The bag filtered and sorted for the grid. Order within equal keys stays pick-up order. */
 export const arrangeCells = (cells: readonly BagCell[], filter: GridFilter, sort: GridSort, locale: Locale): BagCell[] => {
   const shown = cells.filter((c) => matchesFilter(defOf(c), filter));
-  const byName = (a: BagCell, b: BagCell) => compareText(locale, itemName(defOf(a)), itemName(defOf(b)));
+  const tx = textTranslator(locale);
+  const byName = (a: BagCell, b: BagCell) => compareText(locale, itemName(tx, defOf(a)), itemName(tx, defOf(b)));
   const byCategory = (a: BagCell, b: BagCell) => CATEGORY_ORDER.indexOf(categoryOf(defOf(a))) - CATEGORY_ORDER.indexOf(categoryOf(defOf(b)));
   const byRarity = (a: BagCell, b: BagCell) => RARITIES.indexOf(rarityOf(b)) - RARITIES.indexOf(rarityOf(a));
   const order = sort === "category" ? [byCategory] : sort === "rarity" ? [byRarity, byCategory] : [byName];
@@ -63,8 +64,8 @@ export interface CellHandlers {
 /** Rarity label short enough for a cell corner; the full one is in the details and the cell's name. */
 const tierShort = (t: Translate, rarity: Exclude<Rarity, "common">): string => t(`inventory.rarityShort.${rarity}`);
 
-const label = (t: Translate, cell: BagCell): string => {
-  const name = itemName(defOf(cell));
+const label = (t: Translate, tx: TranslateText, cell: BagCell): string => {
+  const name = itemName(tx, defOf(cell));
   const qty = cell.kind === "stack" ? ` × ${cell.qty}` : "";
   const tier = cell.kind === "item" && cell.item.rarity !== "common" ? `, ${rarityLabel(t, cell.item.rarity)}` : "";
   return `${name}${qty}${tier}`;
@@ -76,6 +77,7 @@ const label = (t: Translate, cell: BagCell): string => {
  */
 export const ItemCell = ({ cell, index, selected, handlers }: { cell: BagCell; index: number; selected: boolean; handlers: CellHandlers }) => {
   const t = useT();
+  const tx = useText();
   const press = useRef<{ timer: ReturnType<typeof setTimeout> | null; type: string; long: boolean }>({ timer: null, type: "mouse", long: false });
   const lastTap = useRef(-Infinity);
   const ref = refOf(cell);
@@ -91,7 +93,7 @@ export const ItemCell = ({ cell, index, selected, handlers }: { cell: BagCell; i
       data-testid="item-cell"
       data-def={defOf(cell)}
       aria-pressed={selected}
-      aria-label={label(t, cell)}
+      aria-label={label(t, tx, cell)}
       onPointerDown={(e: PointerEvent) => {
         stop();
         press.current = { type: e.pointerType, long: false, timer: null };
@@ -123,7 +125,7 @@ export const ItemCell = ({ cell, index, selected, handlers }: { cell: BagCell; i
         handlers.onDefault(ref);
       }}
     >
-      <span className="inv__cell-name">{shortName(defOf(cell))}</span>
+      <span className="inv__cell-name">{shortName(tx, defOf(cell))}</span>
       {cell.kind === "stack" && <span className="inv__cell-qty">{cell.qty}</span>}
       {rarity && rarity !== "common" && <span className="inv__cell-tier">{tierShort(t, rarity)}</span>}
     </button>

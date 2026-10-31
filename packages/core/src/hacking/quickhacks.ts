@@ -11,6 +11,7 @@ export type HackTargetKind = "camera" | "device" | "person";
 
 export interface QuickhackDef {
   readonly id: string;
+  /** Catalog key of the title (`quickhack.<id>`, ADR-0056). */
   readonly title: string;
   readonly category: QuickhackCategory;
   readonly targets: readonly HackTargetKind[];
@@ -24,15 +25,15 @@ export interface QuickhackDef {
 
 export const QUICKHACKS = {
   /** Shows every enemy and camera wired to the same network as the target for a while. */
-  ping: { id: "ping", title: "Ping", category: "covert", targets: ["camera", "device", "person"], ram: 2, upload: 0.6, duration: 12 },
+  ping: { id: "ping", title: "quickhack.ping", category: "covert", targets: ["camera", "device", "person"], ram: 2, upload: 0.6, duration: 12 },
   /** A camera stops seeing; a guard's optics go dark and he loses track of the player. */
-  reboot_optics: { id: "reboot_optics", title: "Restart optyki", category: "covert", targets: ["camera", "person"], ram: 3, upload: 1, duration: 10 },
+  reboot_optics: { id: "reboot_optics", title: "quickhack.reboot_optics", category: "covert", targets: ["camera", "person"], ram: 3, upload: 1, duration: 10 },
   /** A device (a vending machine, a radio, a sign) makes noise: guards nearby go to look. */
-  distract: { id: "distract", title: "Odwrócenie uwagi", category: "covert", targets: ["device"], ram: 2, upload: 0.8, duration: 8 },
+  distract: { id: "distract", title: "quickhack.distract", category: "covert", targets: ["device"], ram: 2, upload: 0.8, duration: 8 },
   /** The target cannot walk for a while. */
-  cripple_movement: { id: "cripple_movement", title: "Paraliż ruchu", category: "control", targets: ["person"], ram: 4, upload: 1.2, duration: 6 },
+  cripple_movement: { id: "cripple_movement", title: "quickhack.cripple_movement", category: "control", targets: ["person"], ram: 4, upload: 1.2, duration: 6 },
   /** Damage through the implants; shocks a device into a short circuit. */
-  short_circuit: { id: "short_circuit", title: "Zwarcie", category: "combat", targets: ["person", "device"], ram: 5, upload: 1.5, duration: 0 },
+  short_circuit: { id: "short_circuit", title: "quickhack.short_circuit", category: "combat", targets: ["person", "device"], ram: 5, upload: 1.5, duration: 0 },
 } as const satisfies Record<string, QuickhackDef>;
 
 export type QuickhackId = keyof typeof QUICKHACKS;

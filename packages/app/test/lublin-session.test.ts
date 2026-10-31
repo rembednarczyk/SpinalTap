@@ -105,7 +105,7 @@ describe("Lublin in the session (ADR-0045)", () => {
     session.intents.closeDialogue();
     steps(session, 2);
     expect(session.sim.domain.flags).toContain("met_genzo");
-    expect(ui.getState().toasts.map((t) => `${t.title}`)).toContain("New contract: Eskorta");
+    expect(ui.getState().toasts.map((t) => `${t.title}`)).toContain("New contract: Escort");
   });
 
   it("Hana on the market under the viaduct hands out a job through the dialogue", () => {
@@ -125,6 +125,6 @@ describe("Lublin in the session (ADR-0045)", () => {
     session.intents.closeDialogue();
     steps(session, 2);
     expect(session.sim.domain.flags).toContain("met_hana");
-    expect(ui.getState().toasts.map((t) => t.title)).toContain("New contract: Odzyskanie");
+    expect(ui.getState().toasts.map((t) => t.title)).toContain("New contract: Retrieval");
   });
 });

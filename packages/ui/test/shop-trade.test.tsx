@@ -72,8 +72,8 @@ const BAG: TradeVm = {
     piece("i1", "unity9", "Unity-9", { inUse: true }),
     piece("i2", "seki_jacket", "Kurtka Seki", { category: "garment", condition: 40, inUse: true }),
     piece("i4", "hebi_smg", "Hebi SMG", { rarity: "uncommon" }),
-    piece("i5", "steady_grip", "Stabilizator chwytu", { category: "cyberware" }),
-    piece("i6", "hitomi_optics_mk1", "Optyka Hitomi Mk1", { category: "cyberware" }),
+    piece("i5", "steady_grip", "cyberware.steady_grip.name", { category: "cyberware" }),
+    piece("i6", "hitomi_optics_mk1", "cyberware.hitomi_optics_mk1.name", { category: "cyberware" }),
     { ...piece("scrap", "scrap", "Złom elektroniczny", { category: "junk", rarity: null, qty: 3 }), ref: { stack: "scrap" } },
     { ...piece("weapon_parts", "weapon_parts", "Części broni", { category: "junk", rarity: null, qty: 1 }), ref: { stack: "weapon_parts" } },
   ],
@@ -113,7 +113,7 @@ describe("Oyaji's stall", () => {
     const text = lines.map((l) => l.textContent);
     // Worn pieces cannot go; the uncommon SMG fetches 280, scrap its full 12 a piece.
     expect(text.find((t) => t?.includes("Unity-9"))).toContain("In use");
-    expect(text.find((t) => t?.includes("Optyka"))).toContain("Worthless");
+    expect(text.find((t) => t?.includes("Hitomi Mk1 optics"))).toContain("Worthless");
     const smg = lines.find((l) => l.textContent?.includes("Hebi SMG"))!;
     expect(smg.textContent).toContain("uncommon");
     fireEvent.click(within(smg).getByRole("button", { name: /Sell · 280 €\$/ }));
@@ -162,7 +162,7 @@ describe("clinic with implants from the bag (E11)", () => {
     const { i } = mount({ shopId: "clinic", cyberware: { optics: "hitomi_optics_mk1" } });
     fireEvent.click(screen.getByTestId("shop-tab-implants"));
     const bag = screen.getAllByTestId("shop-bag-implant");
-    expect(bag.map((b) => b.textContent)).toEqual([expect.stringContaining("Stabilizator chwytu"), expect.stringContaining("Optyka Hitomi Mk1")]);
+    expect(bag.map((b) => b.textContent)).toEqual([expect.stringContaining("Grip stabiliser"), expect.stringContaining("Hitomi Mk1 optics")]);
     fireEvent.click(within(bag[0]!).getByRole("button", { name: /Fit · 125 €\$/ }));
     expect(i.installCyberwareItem).toHaveBeenCalledWith("i5");
     expect(within(bag[1]!).getByRole("button", { name: "Already implanted" }).hasAttribute("disabled")).toBe(true);
@@ -171,13 +171,13 @@ describe("clinic with implants from the bag (E11)", () => {
   });
 
   it("names the implant a fitting replaces, and that it comes back", () => {
-    mount({ shopId: "clinic", cyberware: { arms: "steady_grip" }, trade: { ...BAG, items: [piece("i9", "steady_grip", "Stabilizator chwytu", { category: "cyberware" })] } });
+    mount({ shopId: "clinic", cyberware: { arms: "steady_grip" }, trade: { ...BAG, items: [piece("i9", "steady_grip", "cyberware.steady_grip.name", { category: "cyberware" })] } });
     fireEvent.click(screen.getByTestId("shop-tab-implants"));
     expect(screen.getByTestId("shop-bag-implant").textContent).toContain("Already implanted");
     cleanup();
-    mount({ shopId: "clinic", cyberware: { nervous: "synapse_booster" }, trade: { ...BAG, items: [piece("i9", "kairos_overclock", "Akcelerator Kairos", { category: "cyberware" })] } });
+    mount({ shopId: "clinic", cyberware: { nervous: "synapse_booster" }, trade: { ...BAG, items: [piece("i9", "kairos_overclock", "cyberware.kairos_overclock.name", { category: "cyberware" })] } });
     fireEvent.click(screen.getByTestId("shop-tab-implants"));
-    expect(screen.getByTestId("shop-bag-implant").textContent).toContain("replaces: Wzmacniacz synaps (back to the backpack)");
+    expect(screen.getByTestId("shop-bag-implant").textContent).toContain("replaces: Synapse booster (back to the backpack)");
   });
 
   it("warns before a purchase when the old implant has nowhere to go; a full bag cannot take one out", () => {
@@ -192,7 +192,7 @@ describe("clinic with implants from the bag (E11)", () => {
     const { i } = mount({ shopId: "clinic" });
     fireEvent.click(screen.getByTestId("shop-tab-sell"));
     const lines = screen.getAllByTestId("shop-sell-line");
-    expect(lines.map((l) => l.textContent)).toEqual([expect.stringContaining("Stabilizator"), expect.stringContaining("Optyka")]);
+    expect(lines.map((l) => l.textContent)).toEqual([expect.stringContaining("Grip stabiliser"), expect.stringContaining("Hitomi Mk1 optics")]);
     fireEvent.click(within(lines[0]!).getByRole("button", { name: /Sell · 125 €\$/ }));
     expect(i.sellItem).toHaveBeenCalledWith({ uid: "i5" }, 1);
   });

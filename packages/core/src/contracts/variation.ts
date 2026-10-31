@@ -118,22 +118,3 @@ export const applyVariation = (c: Contract, v: ContractVariation, tick: number, 
   const deadline = v.modifiers.includes("time_limit") && c.deadlineTick === undefined ? { deadlineTick: tick + TIME_LIMIT_SECONDS * ticksPerSecond } : {};
   return { ...c, targets, reward: Math.round(c.reward * variationPayFactor(v)), variation: v, ...deadline };
 };
-
-const MODIFIER_LABEL: Readonly<Record<ContractModifier, string>> = {
-  night_only: "cel tylko nocą",
-  time_limit: "termin",
-  bodyguards: "obstawa przy celu",
-  ambush: "zasadzka przy wyjściu",
-  twin: "sobowtór",
-};
-const SECURITY_LABEL: Readonly<Record<SecurityProfile, string>> = { light: "ochrona słaba", standard: "ochrona zwykła", lockdown: "ochrona wzmocniona" };
-const TRAIT_LABEL: Readonly<Record<TargetTrait, string>> = {
-  paranoid: "cel: paranoik",
-  drinker: "cel: pije nocą",
-  creature_of_habit: "cel: rutyniarz",
-  armored: "cel: w pancerzu",
-};
-
-/** One line for the briefing and the card; the twist stays a secret until it happens. */
-export const variationNote = (v: ContractVariation): string =>
-  [...v.modifiers.map((m) => MODIFIER_LABEL[m]), SECURITY_LABEL[v.security], ...(v.trait ? [TRAIT_LABEL[v.trait]] : [])].join(", ");
