@@ -99,7 +99,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Dowód: `verticalOf` daje `rise=15`, szczyt na y 17,5, a brama ma szczyt na y 1,7; T-011
 - Przyczyna (przypuszczalna): reguła `targ` nie bierze pod uwagę sąsiadującego landmarku
 - Pakiet właściciela: packages/sim (content/lublin/vertical.ts)
-- Test przyjęcia: w lublin-vertical.test.ts żaden budynek z nadbudową w promieniu 30 m od landmarku nie przewyższa jego szczytu. Dziś pada na w66293355
+- Test przyjęcia (zmieniony przez orkiestratora po weryfikacji, 31.10): żaden budynek z nadbudową PRZYLEGAJĄCY do landmarku (odstęp obrysów < 4 m) nie przewyższa jego szczytu. Promień 30 m odrzucony: przy Bramie Grodzkiej (szczyt y 1,7) domy wyżej na stoku przewyższają ją już bez nadbudowy, a 30 m wyłączyłoby nadbudowy wokół każdego budynku publicznego. Poprawka e783f82: kod przyjęty przez weryfikatora, merge czeka na decyzję użytkownika, czy budynki `civic` bez nazwy liczą się jako landmark (dziś tak: 7 z 24 obciętych nadbudów)
 - Źródło: audyt topografii 1 (kurator, 31.10).
 
 ### G-051 Podpis „Muzeum Historii Miasta Lublina” na kamienicy Jezuicka 3 zamiast na Bramie Krakowskiej
