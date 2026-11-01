@@ -25,19 +25,29 @@ const outline = [
   { x: -11.5, z: 6 },
 ];
 const house = { kind: "building", outline, height: 15, levels: 4, use: "historic", look: 3 } as ViewDescriptor;
-const views = [{ view: house, at: { x: AT.x, y: ground, z: AT.z } }];
-const frame = cityFrames(views)[0]!.frame;
-// The wall facing -z (the outline's first edge, counter-clockwise from the corner at -11.5, -6).
-const wall = frame.walls.find((w) => w.nz < -0.9)!;
-const slots = doorSlots(frame, wall);
+// A shop front's building (shop windows over its ground floor), 100 m east of the tenement.
+const shopHouse = { kind: "building", outline, height: 15, levels: 4, use: "commercial", shopfront: true, look: 5 } as ViewDescriptor;
+const views = [
+  { view: house, at: { x: AT.x, y: ground, z: AT.z } },
+  { view: shopHouse, at: { x: AT.x + 100, y: surfaceY(AT.x + 100, AT.z), z: AT.z } },
+];
 
-const doorAt = (u: number, width: number, top: number, out = 0, lift = 0): StreetPropItem => {
-  const x = wall.a.x + ((wall.b.x - wall.a.x) * u) / wall.length + wall.nx * out;
-  const z = wall.a.z + ((wall.b.z - wall.a.z) * u) / wall.length + wall.nz * out;
-  const y = surfaceY(x + wall.nx * 0.1, z + wall.nz * 0.1) + lift;
-  return { prop: "door", x, y, z, yaw: Math.atan2(wall.nx, wall.nz), variant: doorVariant({ model: "tall", width, height: frame.b.base + top - y }) };
+/** A building's wall facing -z (the outline's first edge, counter-clockwise from the corner at -11.5, -6), its slots and doors on it. */
+const facing = (n: number) => {
+  const frame = cityFrames(views)[n]!.frame;
+  const wall = frame.walls.find((w) => w.nz < -0.9)!;
+  const slots = doorSlots(frame, wall);
+  const doorAt = (u: number, width: number, top: number, out = 0, lift = 0): StreetPropItem => {
+    const x = wall.a.x + ((wall.b.x - wall.a.x) * u) / wall.length + wall.nx * out;
+    const z = wall.a.z + ((wall.b.z - wall.a.z) * u) / wall.length + wall.nz * out;
+    const y = surfaceY(x + wall.nx * 0.1, z + wall.nz * 0.1) + lift;
+    return { prop: "door", x, y, z, yaw: Math.atan2(wall.nx, wall.nz), variant: doorVariant({ model: "tall", width, height: frame.b.base + top - y }) };
+  };
+  const fromSlot = (s: (typeof slots)[number], shift = 0, out = 0, lift = 0) => doorAt(s.u + shift, s.width, s.top, out, lift);
+  return { wall, slots, doorAt, fromSlot };
 };
-const fromSlot = (s: (typeof slots)[number], shift = 0, out = 0, lift = 0) => doorAt(s.u + shift, s.width, s.top, out, lift);
+const shop = facing(1);
+const { wall, slots, doorAt, fromSlot } = facing(0);
 
 const found = (doors: StreetPropItem[], boards: BoardSpan[] = []) => {
   const checks = doorChecks(views, doors, boards);
@@ -49,9 +59,10 @@ describe("the glitch scan's checks of the facade doors (ADR-0058 stage 9)", () =
   const cover = slots.find((s) => s.cover)!;
   const pier = slots.find((s) => !s.cover && s.u > 8)!;
 
-  it("finds nothing in the wall's slots", () => {
+  it("finds nothing in the walls' slots, the tenement's and the shop's", () => {
     expect(slots.length).toBeGreaterThan(4);
-    expect(found(slots.map((s) => fromSlot(s)))).toEqual(none);
+    expect(shop.slots.filter((s) => s.cover).length).toBeGreaterThan(2);
+    expect(found([...slots.map((s) => fromSlot(s)), ...shop.slots.map((s) => shop.fromSlot(s))])).toEqual(none);
   });
 
   it("door-off-wall: a door 0.3 m out from the wall's face, or past its end", () => {
@@ -79,6 +90,12 @@ describe("the glitch scan's checks of the facade doors (ADR-0058 stage 9)", () =
   it("door-in-window: a door half over a window, or under the top of one it covers", () => {
     expect(found([fromSlot(cover, cover.width / 2)])["door-in-window"]).toBe(1);
     expect(found([doorAt(cover.u, cover.width, cover.top - 0.3)])["door-in-window"]).toBe(1);
+  });
+
+  it("door-in-window: a door half over a shop window, or under the top of one it covers", () => {
+    const pane = shop.slots.find((s) => s.cover)!;
+    expect(found([shop.fromSlot(pane, pane.width / 2)])["door-in-window"]).toBe(1);
+    expect(found([shop.doorAt(pane.u, pane.width, pane.top - 0.3)])["door-in-window"]).toBe(1);
   });
 
   it("door-in-board: a door reaching into a board over it", () => {
