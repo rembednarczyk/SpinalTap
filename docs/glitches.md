@@ -512,7 +512,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (canyon-signs.ts, sign-plan.ts)
 
 ### G-158 Latarnie ścienne zasłaniają tablice lokali
-- Status: w PR #137, w weryfikacji (1.11; skan 17 → 0); po scaleniu #138 latarnie odtworzyć (`pnpm osm:props`)
+- Status: w PR #137, w poprawkach (1.11; weryfikacja 1: NIE PRZYJĘTE, kontrola skanu była tautologią i pomijała ramię latarni 0,72 m z ukośnym `yaw`, 2 przypadki: NIEZWYKŁA KUCHNIA, KUCHNIA SĘDZIEGO); po scaleniu #138 odtworzyć latarnie
 - Ważność: S3 · Zasięg: 17 z 169 latarni ściennych, np. WIEJSKI RAJ (564,0; −88,9), KORZEŃ CZAROWNICY (611,4; −74,9), PUB ZA KURTYNĄ (599,6; −2,6); zrzuty g148-r2-rynek-e, g148-r4-rynek-s
 - Przyczyna: rozstaw `lamp-wall-lantern` (ADR-0047) nie zna tablic lokali (ADR-0064 etap 4); markiza je zna (`venueBoardOn`)
 - Test przyjęcia: `wall-lantern-over-venue-board` 17 → 0
