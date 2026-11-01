@@ -37,13 +37,14 @@ const facing = (n: number) => {
   const frame = cityFrames(views)[n]!.frame;
   const wall = frame.walls.find((w) => w.nz < -0.9)!;
   const slots = doorSlots(frame, wall);
-  const doorAt = (u: number, width: number, top: number, out = 0, lift = 0): StreetPropItem => {
+  /** A door `u` along the wall, `out` in front of it, lifted `lift` off the paving and turned `turn` off the wall's normal (rad). */
+  const doorAt = (u: number, width: number, top: number, out = 0, lift = 0, turn = 0): StreetPropItem => {
     const x = wall.a.x + ((wall.b.x - wall.a.x) * u) / wall.length + wall.nx * out;
     const z = wall.a.z + ((wall.b.z - wall.a.z) * u) / wall.length + wall.nz * out;
     const y = surfaceY(x + wall.nx * 0.1, z + wall.nz * 0.1) + lift;
-    return { prop: "door", x, y, z, yaw: Math.atan2(wall.nx, wall.nz), variant: doorVariant({ model: "tall", width, height: frame.b.base + top - y }) };
+    return { prop: "door", x, y, z, yaw: Math.atan2(wall.nx, wall.nz) + turn, variant: doorVariant({ model: "tall", width, height: frame.b.base + top - y }) };
   };
-  const fromSlot = (s: (typeof slots)[number], shift = 0, out = 0, lift = 0) => doorAt(s.u + shift, s.width, s.top, out, lift);
+  const fromSlot = (s: (typeof slots)[number], shift = 0, out = 0, lift = 0, turn = 0) => doorAt(s.u + shift, s.width, s.top, out, lift, turn);
   return { wall, slots, doorAt, fromSlot };
 };
 const shop = facing(1);
@@ -65,9 +66,11 @@ describe("the glitch scan's checks of the facade doors (ADR-0058 stage 9)", () =
     expect(found([...slots.map((s) => fromSlot(s)), ...shop.slots.map((s) => shop.fromSlot(s))])).toEqual(none);
   });
 
-  it("door-off-wall: a door 0.3 m out from the wall's face, or past its end", () => {
+  it("door-off-wall: a door 0.3 m out from the wall's face, past its end, or turned 0.3 rad off its normal", () => {
     expect(found([fromSlot(pier, 0, 0.3)])["door-off-wall"]).toBe(1);
     expect(found([doorAt(0.2, 1.2, 2.3)])["door-off-wall"]).toBe(1);
+    expect(found([fromSlot(pier, 0, 0, 0, 0.3)])["door-off-wall"]).toBe(1);
+    expect(found([fromSlot(pier, 0, 0, 0, -0.3)])["door-off-wall"]).toBe(1);
   });
 
   it("door-floating: a door 0.1 m over the paving, or sunk 0.1 m into it", () => {
