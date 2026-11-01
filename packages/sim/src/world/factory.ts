@@ -340,8 +340,10 @@ export const entitySnapshotOf = (e: Entity & { key: string }): EntitySnapshot =>
     cooldown: e.combatant?.cooldown ?? 0,
     alerted: e.ai?.alerted ?? false,
   };
+  // A guard making the player out (G-174): the suspicion it has built up so far.
+  const sure = e.ai?.suspicion ? { ...s, suspicion: e.ai.suspicion } : s;
   // A body (ADR-0065): knocked out or dead, where the player left it.
-  const body = e.downed ? { ...s, downed: bodySnapshotOf(e.downed) } : s;
+  const body = e.downed ? { ...sure, downed: bodySnapshotOf(e.downed) } : sure;
   // Looking for the player (ADR-0029): where, for how long, and how long out of sight.
   const ai = e.ai;
   if (!ai?.lastKnown) return body;
@@ -366,5 +368,6 @@ export const applyEntitySnapshot = (e: Entity, s: EntitySnapshot): void => {
     e.ai.lastKnown = s.lastKnown ? { ...s.lastKnown } : null;
     e.ai.search = s.search ?? 0;
     e.ai.lost = s.lost ?? 0;
+    if (s.suspicion !== undefined) e.ai.suspicion = s.suspicion;
   }
 };

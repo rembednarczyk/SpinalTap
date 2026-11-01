@@ -53,6 +53,27 @@ const v17HashOf = (sim: Simulation) => {
   return stateHash({ ...snap, version: 17, domain } as unknown as SaveSnapshot);
 };
 
+/**
+ * The hash of a run as schema v19 had it, before a waiting difficulty was saved (G-171): with no
+ * profile waiting the snapshot differs in the version only, so it hashes to the goldens of v19.
+ */
+const v19HashOf = (sim: Simulation) => {
+  const snap = sim.snapshot(null, "test", "");
+  expect(snap.pendingDifficulty).toBeUndefined();
+  return stateHash({ ...snap, version: 19 } as unknown as SaveSnapshot);
+};
+
+/**
+ * The hash of a run as schema v20 had it, before a guard's suspicion was saved (G-174): with no
+ * guard half sure at the end the snapshot differs in the version only, so it hashes to the
+ * goldens of v20.
+ */
+const v20HashOf = (sim: Simulation) => {
+  const snap = sim.snapshot(null, "test", "");
+  expect(snap.entities.filter((e) => e.suspicion !== undefined)).toEqual([]);
+  return stateHash({ ...snap, version: 20 } as unknown as SaveSnapshot);
+};
+
 /** The scripted run on "hard" (ADR-0066): the profile set by command in its first frame. */
 const hardScript = (): ReplayFrame[] => {
   const [first, ...rest] = script();
@@ -74,19 +95,24 @@ describe("determinism", () => {
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
     const sim = runReplay(1234, script());
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"ef63b731"`);
-    // Re-recorded for the v18 field (ADR-0066) and the v19 version (ADR-0065, no new rule); without
-    // the field, as v17, it is the golden of before.
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"6fbce3e8"`);
+    // Re-recorded for the v18 field (ADR-0066), the v19 version (ADR-0065, no new rule), the v20
+    // version (G-171, no new rule) and the v21 version (G-174, no new rule); without the field, as
+    // v17, it is the golden of before, and as v19 and v20 the goldens of those.
     expect(v17HashOf(sim)).toBe("c52fd247");
+    expect(v19HashOf(sim)).toBe("ef63b731");
+    expect(v20HashOf(sim)).toBe("9957ac6d");
   });
 
   it("the same run on 'hard' has a golden hash of its own (ADR-0066)", () => {
     const sim = runReplay(1234, hardScript());
     expect(sim.domain.difficulty).toEqual(DIFFICULTY_PRESETS.hard);
     expect(hashOf(sim)).toBe(hashOf(runReplay(1234, hardScript())));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"e296d440"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"f97f907b"`);
     // Not just the field: without it the run still ends elsewhere than on "normal".
     expect(v17HashOf(sim)).not.toBe("c52fd247");
+    expect(v19HashOf(sim)).toBe("e296d440");
+    expect(v20HashOf(sim)).toBe("92bfb504");
   });
 
   it("the crowd of residents (ADR-0041) and the traffic (ADR-0050) leave the golden run as it was, at every density", () => {
@@ -153,8 +179,10 @@ describe("determinism", () => {
     // Swings both ways, a blocked blow and staggers: the duel exercises the whole package.
     for (const t of ["MeleeSwing", "AttackBlocked", "Staggered", "DamageDealt"]) expect(seen).toContain(t);
     expect(hashOf(sim)).toBe(hashOf(duel().sim));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"36a75c45"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"8c13a3a0"`);
     expect(v17HashOf(sim)).toBe("62992d7b");
+    expect(v19HashOf(sim)).toBe("36a75c45");
+    expect(v20HashOf(sim)).toBe("1d2880c1");
   });
 
   it("restores killed NPCs as absent", () => {
