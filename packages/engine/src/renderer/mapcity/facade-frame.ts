@@ -102,6 +102,8 @@ export interface FacadeFrame {
   readonly storey: number;
   /** Height of the ground floor (1.25 storeys; the whole wall for a church). */
   readonly ground: number;
+  /** The lookup of the buildings round it the walls were classified with: the signs keep out of them (`sign-room`). */
+  readonly neighbour: NeighbourAt;
 }
 
 /** Top (world y) of another building whose outline contains (x, z), or null. */
@@ -161,7 +163,7 @@ export const facadeFrame = (b: MapBuilding, neighbour: NeighbourAt): FacadeFrame
       bay: blind || length < 1.4 || style.window === WINDOW_STYLE.none ? 0 : length / n,
     });
   }
-  return { b, style, box, walls, eave, top, storey, ground: storey * 1.25 };
+  return { b, style, box, walls, eave, top, storey, ground: storey * 1.25, neighbour };
 };
 
 /** uv2 of the walls of this frame (the window style with the shop bit). */

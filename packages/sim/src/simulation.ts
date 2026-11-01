@@ -1,4 +1,5 @@
 import {
+  type DifficultyProfile,
   type DomainEvents,
   type DomainState,
   EMPTY_INPUT,
@@ -10,6 +11,8 @@ import {
   type SaveSnapshot,
   SAVE_SCHEMA_VERSION,
   createDomainState,
+  difficultyProfile,
+  isDifficultyProfile,
 } from "@seki/core";
 import { World } from "miniplex";
 import { SeededRandom } from "./rng/seeded-random";
@@ -47,6 +50,11 @@ export interface SimulationOptions {
    * small world of their own here (ADR-0043: a chunk with terrain and prisms).
    */
   readonly chunks?: readonly ChunkDef[];
+  /**
+   * The difficulty a new game starts on (ADR-0066); "normal" without. In the domain before the
+   * world is built, so the enemies round the start already appear with its health.
+   */
+  readonly difficulty?: DifficultyProfile;
 }
 
 /**
@@ -91,7 +99,10 @@ export class Simulation {
   }
 
   static create(options: SimulationOptions): Simulation {
-    const sim = new Simulation(options.seed, createDomainState(), options.bus ?? new EventBus<DomainEvents>(), undefined, options.chunks);
+    const fresh = createDomainState();
+    // A profile out of range is refused, as the `set-difficulty` command refuses it.
+    const domain = options.difficulty && isDifficultyProfile(options.difficulty) ? { ...fresh, difficulty: difficultyProfile(options.difficulty) } : fresh;
+    const sim = new Simulation(options.seed, domain, options.bus ?? new EventBus<DomainEvents>(), undefined, options.chunks);
     sim.setCrowd(options.crowd ?? "off");
     sim.setTraffic(options.traffic ?? options.crowd ?? "off");
     return sim;

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { freeze, gameState, place, step, teleport, teleportTo, waitForGame, waitForPlay } from "./helpers";
+import { freeze, gameState, place, step, teleport, teleportTo, newGame, waitForGame, waitForPlay } from "./helpers";
 
 test.describe("M0 smoke", () => {
   test("title → new game → dialogue → quicksave/quickload → reload and load from IndexedDB", async ({ page }) => {
@@ -23,7 +23,7 @@ test.describe("M0 smoke", () => {
         if (document.querySelector("[data-testid=loading-screen]")) w.__loadingSeen = true;
       }).observe(document.body, { childList: true, subtree: true });
     });
-    await page.getByRole("button", { name: "New Game" }).click();
+    await newGame(page);
     const startMs = await waitForPlay(page);
     test.info().annotations.push({ type: "start", description: `new game on screen ${startMs} ms after the click` });
     expect(await page.evaluate(() => (window as unknown as { __loadingSeen: boolean }).__loadingSeen)).toBe(true);
@@ -87,7 +87,7 @@ test.describe("M0 smoke", () => {
   test("camera toggles between FPP and TPP", async ({ page }) => {
     await page.goto("/?seed=7&models=off");
     await waitForGame(page);
-    await page.getByRole("button", { name: "New Game" }).click();
+    await newGame(page);
     await waitForPlay(page);
     await freeze(page);
     await step(page, 1, { toggleCamera: true });
@@ -101,7 +101,7 @@ test.describe("M0 smoke", () => {
 test("ripperdoc clinic sells a medkit through the UI", async ({ page }) => {
   await page.goto("/?seed=7&models=off");
   await waitForGame(page);
-  await page.getByRole("button", { name: "New Game" }).click();
+  await newGame(page);
   await waitForPlay(page);
   await freeze(page);
   // Mori at his monitors behind the chair (ADR-0038).
@@ -138,7 +138,7 @@ test("journal, minimap and settings", async ({ page }) => {
   test.slow();
   await page.goto("/?seed=7&models=off");
   await waitForGame(page);
-  await page.getByRole("button", { name: "New Game" }).click();
+  await newGame(page);
   await waitForPlay(page);
   await freeze(page);
   await step(page, 1);
@@ -185,7 +185,7 @@ test("real input: the right mouse button aims and Space jumps in the running loo
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/?seed=7&models=off");
   await waitForGame(page);
-  await page.getByRole("button", { name: "New Game" }).click();
+  await newGame(page);
   await waitForPlay(page);
   await expect(page.getByTestId("hud")).toBeVisible();
   // On the deptak in front of the clinic (ADR-0045): the light scene keeps the real loop
@@ -230,7 +230,7 @@ test("touch layout keeps the minimap off the pad", async ({ page }) => {
   await page.setViewportSize({ width: 844, height: 390 });
   await page.goto("/?seed=7&touch&models=off");
   await waitForGame(page);
-  await page.getByRole("button", { name: "New Game" }).click();
+  await newGame(page);
   await waitForPlay(page);
   await freeze(page);
   await step(page, 1);
@@ -252,7 +252,7 @@ test("touch layout keeps the weapon strip off the pad and the minimap", async ({
   await page.setViewportSize({ width: 844, height: 390 });
   await page.goto("/?seed=7&touch&models=off");
   await waitForGame(page);
-  await page.getByRole("button", { name: "New Game" }).click();
+  await newGame(page);
   await waitForPlay(page);
   await freeze(page);
   await step(page, 1);
