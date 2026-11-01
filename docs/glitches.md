@@ -607,7 +607,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (streaming, dormant-restore)
 
 ### G-189 Radziwiłłowska: jedno auto na sześć miejsc postojowych
-- Status: zgłoszone (1.11, autor G-187)
+- Status: w PR #162 (1.11; Radziwiłłowska 1 → 3 auta, skan `bay-strip-sparse` 1 → 0, mebel w bryle auta prostokątem zamiast kapsuły); w weryfikacji, potem kurator
 - Ważność: S4 · Zasięg: w883991779 ma 1 auto na 6 stanowisk; bay s=36 odrzuca `furnitureClearance` 0,75 m przy nosie (mebel w obrysie pasa), s=39 `clearOfKeptWays` (ścieżka w obrysie), s=30 i 33 pomija hash zajętości 0,8
 - Poprawka: sprawdzić mebel i ścieżkę w obrysie postoju (czy to błąd danych gry, czy OSM); ewentualnie meble poza obrysem pasa postojowego
 - Uwagi: kontrola `bay-car-orientation` bierze kierunek pasa z najdłuższej krawędzi obrysu, w Ciasnej w227679486 ta krawędź biegnie w poprzek ulicy (kontrola słaba); dla pasa bez tagu łapie tylko auta > 75°
