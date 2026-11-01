@@ -87,8 +87,8 @@ Postęp (1.11, każdy podział osobnym PR-em, zachowanie potwierdzone sondą por
 
 | Klasa | Przed | Po | PR | Części |
 |---|---|---|---|---|
-| `MapCity` | 33 | 19 | #140 | `MapEntries` (dane i zapytania), komórki i budowa za fasadą |
-| `WorldStreamer` | 21 | 13 | #141 | strumień chunków, katalog i uśpione encje osobno |
+| `MapCity` | 33 | 19 | #140 | `MapEntries` (wpisy i zapytania), `MapCells`, `CellBuilder`, `streamCells`, `MapLook`, `map-city-stats` |
+| `WorldStreamer` | 21 | 13 | #141 | `StreamCatalog`, `contract-templates`, `ActorSpawner`, `chunk-unload`, `presence-sync`, `dormant-restore` |
 | `BabylonRenderer` | 42 | 17 | #146 | `MapCitySlot`, `WetAsphalt`, `RendererLoading`, `RendererStats`, typ `ScreenEffects` |
 
 Zostają w bazie: `GameSession` 33 (podział w toku), `CharacterViews` 24, `ToonMaterials` 23, `StreetProps` 22, `GangerAgent` 22, `SynthAudio` 21.
