@@ -2,6 +2,7 @@ import { prng } from "../city-kit-data";
 import type { MeshSink, Rgba, Vec } from "../mesh-sink";
 import { SIGN_OUT, SIGN_RADIUS, bracketSpots } from "./bracket-plan";
 import { type FacadeFrame, type Wall, hiddenWall } from "./facade-frame";
+import { clearSpotFrom, fitFlatSign } from "./sign-room";
 import { type Uv, quadUv } from "./sink-ops";
 
 /**
@@ -71,13 +72,18 @@ export const signReflection = (sink: MeshSink, w: Wall, u: number, ground: SignG
   quadUv(sink, [lay(u - width / 2, 0.15), lay(u + width / 2, 0.15), lay(u + width / 2, reach), lay(u - width / 2, reach)], { x: 0, y: 1, z: 0 }, color, UV, [seed, MAP_SIGN_KIND.reflection]);
 };
 
+const BLADE_HEIGHT = 2.4;
+/** How far the blade sign reaches out from the wall, from and to (metres). */
+const BLADE_OUT = [0.25, 1.0] as const;
+
 /** A blade sign sticking out of the wall at `u`: two faces back to back, both readable. */
 const blade = (sink: MeshSink, w: Wall, u: number, y: number, cell: number, color: Rgba): void => {
   const dx = (w.b.x - w.a.x) / w.length;
   const dz = (w.b.z - w.a.z) / w.length;
   const p = (out: number, yy: number, side: number): Vec => ({ x: w.a.x + dx * (u + side * 0.02) + w.nx * out, y: yy, z: w.a.z + dz * (u + side * 0.02) + w.nz * out });
-  const h = 2.4;
-  const corners = (side: number) => [p(0.25, y - h / 2, side), p(1.0, y - h / 2, side), p(1.0, y + h / 2, side), p(0.25, y + h / 2, side)] as const;
+  const h = BLADE_HEIGHT;
+  const [o0, o1] = BLADE_OUT;
+  const corners = (side: number) => [p(o0, y - h / 2, side), p(o1, y - h / 2, side), p(o1, y + h / 2, side), p(o0, y + h / 2, side)] as const;
   quadUv(sink, corners(1), { x: dx, y: 0, z: dz }, color, UV_MIRROR, [cell, MAP_SIGN_KIND.blade]);
   quadUv(sink, corners(-1), { x: -dx, y: 0, z: -dz }, color, UV, [cell, MAP_SIGN_KIND.blade]);
 };
@@ -108,6 +114,9 @@ const namePlaque = (sink: MeshSink, f: FacadeFrame, slot: number): void => {
   flatOnWall(sink, w, w.length / 2, y, 0.12, width, h, signTint("#fff1d6", 1), [slot, MAP_SIGN_KIND.name]);
 };
 
+/** Narrowest a holo-ad gets where a neighbour leaves less of the wall clear (G-157), metres. */
+const HOLO_MIN = 3;
+
 /** Holo-ads: on firewalls that rise over lower neighbours, and high on tall buildings. */
 const holos = (sink: MeshSink, f: FacadeFrame, rand: () => number): void => {
   for (const w of f.walls) {
@@ -115,17 +124,30 @@ const holos = (sink: MeshSink, f: FacadeFrame, rand: () => number): void => {
     const from = Math.max(w.coveredTo, f.b.base);
     const exposed = f.top - from;
     if (exposed < 7 || rand() > 0.7) continue;
+    const color = signTint(NEON[Math.floor(rand() * NEON.length)] ?? "#00e5ff", 1);
+    const seed = rand();
+    // A neighbour taller than the one against the wall may stand out in front of its end (G-157).
+    const bottom = from + exposed * 0.125;
     const width = Math.min(w.length * 0.7, 14);
-    const height = Math.min(exposed * 0.75, width * 1.6);
-    flatOnWall(sink, w, w.length / 2, from + exposed / 2, 0.45, width, height, signTint(NEON[Math.floor(rand() * NEON.length)] ?? "#00e5ff", 1), [rand(), MAP_SIGN_KIND.holo]);
+    // A narrow wall's whole ad is narrower than HOLO_MIN: only a neighbour may leave it out (G-157).
+    const fit = fitFlatSign(f, w, w.length / 2, width, Math.min(HOLO_MIN, width), 0.45, bottom);
+    if (!fit) continue;
+    const height = Math.min(exposed * 0.75, fit.width * 1.6);
+    flatOnWall(sink, w, fit.u, from + exposed / 2, 0.45, fit.width, height, color, [seed, MAP_SIGN_KIND.holo]);
   }
   const w = streetWalls(f)[0];
   // A lifted part (G-049) has only its own walls to hang an ad on, not the building's under it.
   const tall = f.b.lifted ? f.top - f.b.foot : f.b.height;
   if (w && tall > 22 && rand() < 0.5) {
+    const want = w.length * (0.3 + rand() * 0.4);
+    const color = signTint(NEON[Math.floor(rand() * NEON.length)] ?? "#ff2e88", 1);
+    const seed = rand();
     const width = Math.min(w.length * 0.5, 10);
-    const height = Math.min(width * 1.4, tall * 0.4);
-    flatOnWall(sink, w, w.length * (0.3 + rand() * 0.4), f.top - height / 2 - 2, 0.8, width, height, signTint(NEON[Math.floor(rand() * NEON.length)] ?? "#ff2e88", 1), [rand(), MAP_SIGN_KIND.holo]);
+    const bottom = f.top - 2 - Math.min(width * 1.4, tall * 0.4);
+    const fit = fitFlatSign(f, w, want, width, Math.min(HOLO_MIN, width), 0.8, bottom);
+    if (!fit) return;
+    const height = Math.min(fit.width * 1.4, tall * 0.4);
+    flatOnWall(sink, w, fit.u, f.top - height / 2 - 2, 0.8, fit.width, height, color, [seed, MAP_SIGN_KIND.holo]);
   }
 };
 
@@ -152,8 +174,14 @@ const shopSigns = (sink: MeshSink, f: FacadeFrame, rand: () => number, ground: S
     if (rand() < 0.6) {
       const end = rand() < 0.5 ? 0.9 : w.length - 0.9;
       const bc = signTint(NEON[Math.floor(rand() * NEON.length)] ?? "#00e5ff", 1);
-      blade(sink, w, end, f.b.base + f.ground + 1.7, Math.floor(rand() * MAP_SIGN_BLADES.length), bc);
-      signReflection(sink, w, end, ground, groundY, 1.4, 5, [bc[0], bc[1], bc[2], 0.6], rand());
+      const cell = Math.floor(rand() * MAP_SIGN_BLADES.length);
+      const seed = rand();
+      const y = f.b.base + f.ground + 1.7;
+      // Off the end where a neighbour stands out in front of the wall (G-157), or none.
+      const u = clearSpotFrom(f, w, end, w.length - end, BLADE_OUT[0], BLADE_OUT[1], y - BLADE_HEIGHT / 2);
+      if (u === null) continue;
+      blade(sink, w, u, y, cell, bc);
+      signReflection(sink, w, u, ground, groundY, 1.4, 5, [bc[0], bc[1], bc[2], 0.6], seed);
     }
   }
 };
