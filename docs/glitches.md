@@ -454,7 +454,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola skanu dla punktów pasów bez nawierzchni, baza 56 → 0 albo uzasadnione wyjątki
 
 ### G-141 Obezwładnienie: telefon świadka kończy się w trakcie chwytu; wyjątek pomocnika bez testu
-- Status: zgłoszone (1.11, weryfikator ADR-0065 etap 2; etap w main, #108)
+- Status: w PR #114 (6f77e10: świadek w chwycie wstrzymuje telefon, po ogłuszeniu urwany, po wyrwaniu wraca; test wyjątku `helper`; weryfikacja orkiestratora)
 - Ważność: S4 · Koszt: mały
 - Gdzie: `runCalls` sprawdza `c.unconscious`, nie `incapacitated`: telefon, któremu zostało mniej niż `TAKEDOWN_TIME` (1,2 s), dochodzi, gdy gracz trzyma świadka w chwycie (sonda: 0,38 s pozostałych, 1 zgłoszenie); wyjątek `helper` w `react` (`crime-system.ts` ok. l. 155) bez testu (świeże, niezauważone ciało, pomocnik znajduje je pierwszy)
 - Pakiet właściciela: packages/sim
