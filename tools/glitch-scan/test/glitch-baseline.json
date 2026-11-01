@@ -74,5 +74,14 @@
   "market-piece-in-crossing": 0,
   "market-piece-on-crowd-lane": 0,
   "market-piece-in-neighbour": 0,
-  "market-booth-near-road": 0
+  "market-booth-near-road": 0,
+  "decal-off-wall": 0,
+  "decal-in-window": 0,
+  "decal-on-landmark": 0,
+  "decal-in-neighbour": 0,
+  "decal-on-sign": 0,
+  "decal-in-passage": 0,
+  "decal-floating": 0,
+  "decal-off-kerb": 0,
+  "decal-on-crossing": 0
 }
