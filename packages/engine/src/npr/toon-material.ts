@@ -1,11 +1,13 @@
-import { type BaseTexture, Matrix, type Scene, type ShaderMaterial, type Texture } from "../babylon";
+import type { BaseTexture, Matrix, Scene, ShaderMaterial, Texture } from "../babylon";
 import { NIGHT_RIG, type LightingRig, type PointLightDef } from "./lighting";
 import { PRESETS, type PresetName } from "./presets";
 import { ToonEnvironment } from "./toon-environment";
-import { createToonMaterial, hex } from "./toon-material-factory";
+import { createToonMaterial } from "./toon-material-factory";
 import { ToonPointLights } from "./toon-point-lights";
+import { type ShadowBinding, ToonSceneUniforms } from "./toon-scene-uniforms";
 
 export { LIGHT_SLOT_DISTANCE } from "./toon-point-lights";
+export type { ShadowBinding } from "./toon-scene-uniforms";
 
 export interface ImportedMaterialOptions {
   /** Discard texels with alpha below 0.5 (glTF MASK and BLEND materials). */
@@ -22,16 +24,6 @@ export interface ImportedMaterialOptions {
   readonly tint?: boolean;
 }
 
-export interface ShadowBinding {
-  readonly texture: BaseTexture;
-  readonly matrix: Matrix;
-  readonly texelSize: number;
-  /** Depth bias in [0, 1] depth units. */
-  readonly bias: number;
-  /** 0..1, 0 disables shadow lookups. */
-  readonly strength: number;
-}
-
 /**
  * Owns all toon materials (one per preset, shared between meshes) and pushes the shared
  * light rig into them. Point lights are registered by key so they can be removed again.
@@ -39,17 +31,19 @@ export interface ShadowBinding {
 export class ToonMaterials {
   private readonly materials = new Map<string, ShaderMaterial>();
   private readonly lights = new ToonPointLights();
-  private shadow: ShadowBinding | null = null;
   private readonly env = new ToonEnvironment();
+  private readonly look: ToonSceneUniforms;
 
   constructor(
     private readonly scene: Scene,
-    private rig: LightingRig = NIGHT_RIG,
-  ) {}
+    rig: LightingRig = NIGHT_RIG,
+  ) {
+    this.look = new ToonSceneUniforms(rig);
+  }
 
   /** The light rig pushed into every material now (fog and colours of the look on screen). */
   get currentRig(): LightingRig {
-    return this.rig;
+    return this.look.rig;
   }
 
   get(preset: PresetName): ShaderMaterial {
@@ -111,24 +105,20 @@ export class ToonMaterials {
   }
 
   setShadow(shadow: ShadowBinding | null): void {
-    this.shadow = shadow;
-    for (const m of this.materials.values()) this.applyShadow(m);
+    this.look.setShadow(shadow);
+    for (const m of this.materials.values()) this.look.applyShadow(m);
   }
-
-  private flash = { x: 0, y: 0, z: 0, w: 0 };
 
   /** Muzzle flash light, pushed to every material while it is lit. */
   setFlash(x: number, y: number, z: number, intensity: number): void {
-    if (intensity <= 0 && this.flash.w <= 0) return;
-    this.flash = { x, y, z, w: Math.max(0, intensity) };
-    for (const m of this.materials.values()) m.setVector4("flashLight", this.flash);
+    if (!this.look.setFlash(x, y, z, intensity)) return;
+    for (const m of this.materials.values()) this.look.applyFlash(m);
   }
 
   /** The light matrix moves with the player; only the matrix uniform changes. */
   setShadowMatrix(matrix: Matrix): void {
-    if (!this.shadow) return;
-    this.shadow = { ...this.shadow, matrix };
-    for (const m of this.materials.values()) m.setMatrix("shadowMatrix", matrix);
+    if (!this.look.setShadowMatrix(matrix)) return;
+    for (const m of this.materials.values()) this.look.applyShadowMatrix(m);
   }
 
   get materialCount(): number {
@@ -140,25 +130,19 @@ export class ToonMaterials {
     if (!m) {
       m = make();
       this.materials.set(key, m);
-      this.applyRig(m);
+      this.look.applyRig(m);
       this.lights.apply(m);
-      this.applyShadow(m);
-      m.setVector4("flashLight", this.flash);
-      m.setVector4("rimTint", this.rimTint);
+      this.look.applyShadow(m);
+      this.look.applyFlash(m);
+      this.look.applyRimTint(m);
     }
     return m;
   }
 
-  private rimTint = { x: 1, y: 1, z: 1, w: 0 };
-
   /** District rim colour (ADR-0030), mixed over every preset's own rim by `weight`. */
   setRimTint(color: string, weight: number): void {
-    const c = hex(color);
-    const next = { x: c.r, y: c.g, z: c.b, w: Math.max(0, Math.min(1, weight)) };
-    const r = this.rimTint;
-    if (r.x === next.x && r.y === next.y && r.z === next.z && r.w === next.w) return;
-    this.rimTint = next;
-    for (const m of this.materials.values()) m.setVector4("rimTint", next);
+    if (!this.look.setRimTint(color, weight)) return;
+    for (const m of this.materials.values()) this.look.applyRimTint(m);
   }
 
   /**
@@ -190,31 +174,8 @@ export class ToonMaterials {
   }
 
   setRig(rig: LightingRig): void {
-    this.rig = rig;
-    for (const m of this.materials.values()) this.applyRig(m);
-  }
-
-  private applyRig(m: ShaderMaterial): void {
-    const r = this.rig;
-    m.setVector3("sunDir", { x: r.sunDir.x, y: r.sunDir.y, z: r.sunDir.z });
-    m.setColor3("sunColor", hex(r.sunColor));
-    m.setColor3("ambientColor", hex(r.ambient));
-    m.setColor3("fogColor", hex(r.fogColor));
-    m.setColor3("shadeColor", hex(r.shadeTint));
-    m.setColor3("fillColor", hex(r.fillColor));
-    m.setFloat("fogDensity", r.fogDensity);
-  }
-
-  private applyShadow(m: ShaderMaterial): void {
-    const s = this.shadow;
-    if (!s) {
-      m.setMatrix("shadowMatrix", Matrix.Identity());
-      m.setVector3("shadowParams", { x: 0, y: 0, z: 0 });
-      return;
-    }
-    m.setTexture("shadowSampler", s.texture);
-    m.setMatrix("shadowMatrix", s.matrix);
-    m.setVector3("shadowParams", { x: s.bias, y: s.texelSize, z: s.strength });
+    this.look.setRig(rig);
+    for (const m of this.materials.values()) this.look.applyRig(m);
   }
 }
 
