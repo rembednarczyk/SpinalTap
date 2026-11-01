@@ -9,6 +9,8 @@ import type { StreetPropItem, StreetPropKind } from "../../../packages/core/src/
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
 import { crossingBands } from "../../../packages/sim/src/content/lublin/crossing-bands.ts";
 import { type Pt, centroid } from "./geometry.ts";
+import type { Tags } from "./osm.ts";
+import { ART_SHAPE, artShape } from "./props-art.ts";
 import { MAPPED, propOf, withShape } from "./props-kinds.ts";
 import { bulkyPieces } from "./props-bulky.ts";
 import { marketStalls } from "./props-market.ts";
@@ -55,7 +57,7 @@ export interface PropsStats {
   /** Pieces per kind and per district. */
   readonly perKind: Record<string, number>;
   readonly perDistrict: Record<string, number>;
-  /** Pieces the plan asked for in groups that were left out, per plan kind. */
+  /** Pieces the plan asked for in groups that were left out, per plan kind, and monuments left out by their tags, per `SKIPPED_ART` key. */
   readonly skipped: Record<string, number>;
   /** Plan kinds drawn as another kind. */
   readonly mapped: Record<string, string>;
@@ -71,6 +73,9 @@ export interface PropsStats {
   /** Per group of the plan: pieces asked for and pieces placed. */
   readonly perItem: Record<string, [number, number]>;
 }
+
+/** OSM tags of the plan's nodes by id (`n123`), for the shapes of monuments (`loadNodeTags`). */
+export type NodeTags = ReadonlyMap<string, Tags>;
 
 export interface PropsOut {
   readonly byChunk: ReadonlyMap<string, StreetPropItem[]>;
@@ -262,16 +267,17 @@ const fillPlace = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: 
 /** What a lamp beside a line keeps clear of, and how far (m): trees by their crowns. */
 const OBSTACLE: Partial<Record<StreetPropKind, number>> = { tree: 3.4, bench: 1.8, "advertising-column": 1.8, kiosk: 2.5, "bus-shelter": 2.5, monument: 2.5, artwork: 1.8, "cafe-garden": 3, "fountain-jets": 1.8 };
 
-/** Shapes the plan pins down: the Union obelisk, Koziołki, shrines, the tall mast. */
-const shapeOf = (item: PlanItem, prop: StreetPropKind, key: string): number | undefined => {
-  const text = `${item.id} ${item.look ?? ""}`.toLowerCase();
+/**
+ * Shapes pinned down: the tall mast, the yellow column, and every monument and artwork by its
+ * OSM tags or the table of known ones (`artShape`, G-149); a monument left out gives the reason's
+ * key in `SKIPPED_ART`.
+ */
+const shapeOf = (item: PlanItem, prop: StreetPropKind, key: string, tags: NodeTags): number | string | undefined => {
   if (prop === "flagpole") return item.kind === "flagpole-tall" ? 1 : 0;
-  if (prop === "advertising-column") return text.includes("żółty") ? 1 : 0;
+  if (prop === "advertising-column") return `${item.id} ${item.look ?? ""}`.toLowerCase().includes("żółty") ? 1 : 0;
   if (prop !== "monument" && prop !== "artwork") return undefined;
-  if (text.includes("obelisk") || item.id.endsWith("pomnik-unii")) return 0;
-  if (text.includes("koziołek") || text.includes("koziolek")) return item.points ? [2, 3, 1][fnv(key) % 3] : 2;
-  if (item.kind === "shrine" || prop === "monument") return 1;
-  return [1, 3][fnv(key) % 2];
+  const pick = artShape(key, tags.get(key), item.kind);
+  return "shape" in pick ? ART_SHAPE[pick.shape] : pick.skip;
 };
 
 /** Who stands where it can be approached and faces open pavement (benches, machines, bins). */
@@ -330,7 +336,7 @@ const ON_ROAD: ReadonlySet<StreetPropKind> = new Set(["manhole", "bollard"]);
 const minGap = (prop: StreetPropKind, fromLine: boolean): number => (prop.startsWith("lamp-") && fromLine ? 7 : prop === "trolley-pole" ? 10 : 0.3);
 
 /** The plan's groups placed (before the chunks): every piece with its prop, point, yaw and key. */
-const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>): { placed: Placed[]; fromLine: Set<Placed> } => {
+const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, tags: NodeTags): { placed: Placed[]; fromLine: Set<Placed> } => {
   const placed: Placed[] = [];
   const fromLine = new Set<Placed>();
   const deferred: PlanItem[] = [];
@@ -347,7 +353,11 @@ const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>):
     }
     const obstacles = placed.flatMap((x) => (OBSTACLE[x.prop] ? [{ x: x.p.x, z: x.p.z, r: OBSTACLE[x.prop]! }] : []));
     for (const x of placeItem(site, item, prop, obstacles, placed)) {
-      const shape = shapeOf(item, prop, x.key);
+      const shape = shapeOf(item, prop, x.key, tags);
+      if (typeof shape === "string") {
+        skipped[shape] = (skipped[shape] ?? 0) + 1;
+        continue;
+      }
       const p = shape === undefined ? { ...x, from: item.id } : { ...x, shape, from: item.id };
       placed.push(p);
       if (item.line || item.lines) fromLine.add(p);
@@ -359,10 +369,10 @@ const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>):
 };
 
 /** Every group of the plan as street furniture per chunk, with the control numbers. */
-export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[]): PropsOut => {
+export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[], tags: NodeTags = new Map()): PropsOut => {
   const site = new Site(chunks);
   const skipped: Record<string, number> = {};
-  const { placed, fromLine } = placeAll(site, plan, skipped);
+  const { placed, fromLine } = placeAll(site, plan, skipped, tags);
   const byChunk = new Map<string, StreetPropItem[]>(chunks.map((c) => [c.id, []]));
   const perKind: Record<string, number> = {};
   const perDistrict: Record<string, number> = {};

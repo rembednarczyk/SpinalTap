@@ -99,8 +99,9 @@ export class GameSession implements SessionIntents {
   step(input: InputFrame): void {
     if (!this.running) return;
     const frame = this.inControl ? this.c.hack.withTouchScan(input) : EMPTY_INPUT;
-    // The interact key on a takedown's target is a command for this very step (ADR-0065).
+    // The interact key on a takedown's target or a body is a command for this very step (ADR-0065).
     this.c.takedown.input(frame);
+    this.c.carry.input(frame);
     this.simulation.step(frame);
     this.c.metro.tick(1 / SIM_HZ);
     this.c.radio.tick(1 / SIM_HZ);

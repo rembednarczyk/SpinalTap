@@ -15,6 +15,7 @@ import {
 } from "@seki/core";
 import type { Entity } from "../world/components";
 import { playerHeld } from "../world/takedown";
+import { CARRY_SPEED } from "./carry-system";
 import { knockbackVelocity } from "../world/knockback";
 import type { SimContext, System } from "../world/context";
 import { overFootprint } from "../world/collision";
@@ -169,10 +170,10 @@ const tickLanding = (p: Entity, dt: number): boolean => {
 
 /**
  * The velocity the stick asks for on the ground, along the player's facing: walk, crouch, aim,
- * guard or sprint speed, slowed by a stagger or a hard landing, plus any knockback. Sets the
- * sprint flag of the posture.
+ * guard or sprint speed, slowed by a stagger, a hard landing or a body on the shoulder
+ * (`CARRY_SPEED`, ADR-0065), plus any knockback. Sets the sprint flag of the posture.
  */
-const wantedVelocity = (p: Entity, input: InputFrame, stats: DerivedStats, landingSlow: boolean): { x: number; z: number } => {
+const wantedVelocity = (p: Entity, input: InputFrame, stats: DerivedStats, landingSlow: boolean, carrying: boolean): { x: number; z: number } => {
   const posture = p.posture;
   const len = Math.hypot(input.moveX, input.moveZ);
   const nx = len > 1 ? input.moveX / len : input.moveX;
@@ -189,7 +190,11 @@ const wantedVelocity = (p: Entity, input: InputFrame, stats: DerivedStats, landi
   const aimSlow = 1 + ((weapon?.ads?.move ?? 1) - 1) * (posture?.aim ?? 0);
   const guardSlow = guarding && weapon?.melee ? weapon.melee.block.move : 1;
   const speed =
-    stats.moveSpeed * (sprinting ? SPRINT_MULTIPLIER : crouchSlow * aimSlow * guardSlow) * (staggered ? STAGGER_MOVE : 1) * (landingSlow ? LANDING_SLOW_MULTIPLIER : 1);
+    stats.moveSpeed *
+    (sprinting ? SPRINT_MULTIPLIER : crouchSlow * aimSlow * guardSlow) *
+    (staggered ? STAGGER_MOVE : 1) *
+    (landingSlow ? LANDING_SLOW_MULTIPLIER : 1) *
+    (carrying ? CARRY_SPEED : 1);
   const sin = Math.sin(p.yaw);
   const cos = Math.cos(p.yaw);
   // Forward = (sin, cos); right = (cos, -sin).
@@ -230,7 +235,7 @@ export const playerControlSystem: System = {
       }
       p.yaw += input.lookYaw;
       p.pitch = clamp(p.pitch + input.lookPitch, -PITCH_LIMIT, PITCH_LIMIT);
-      steer(p, wantedVelocity(p, input, stats, landingSlow), ctx.dt);
+      steer(p, wantedVelocity(p, input, stats, landingSlow, ctx.session.carrying !== null), ctx.dt);
     }
   },
 };

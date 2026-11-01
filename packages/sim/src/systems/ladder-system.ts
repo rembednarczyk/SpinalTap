@@ -69,7 +69,8 @@ export const ladderSystem: System = {
     const frozen = playerHeld(ctx);
     for (const p of ctx.world.with("player", "velocity")) {
       if (!p.climb) {
-        if (frozen || p.fall !== undefined) continue;
+        // No ladder with a body on her shoulder (ADR-0065): both hands are full.
+        if (frozen || p.fall !== undefined || ctx.session.carrying !== null) continue;
         // A game saved on a ladder: back on it, where it was.
         const held = all.find((l) => onLadderLine(p, l.ladder));
         if (held) {

@@ -12,14 +12,15 @@ import { STARE_MIASTO_CHUNKS } from "../../../packages/sim/src/content/lublin/st
 import { REPO } from "./paths.ts";
 import { emitProps } from "./props-emit.ts";
 import { type PropsPlan, generateProps } from "./props-gen.ts";
-import { MAPPED, SKIPPED } from "./props-kinds.ts";
+import { loadNodeTags } from "./props-art.ts";
+import { MAPPED, SKIPPED, SKIPPED_ART } from "./props-kinds.ts";
 
 const PLAN = join(REPO, "docs/world/lublin-props.todo.json");
 const OUT = join(REPO, "packages/sim/src/content/lublin/props.generated.ts");
 
 const plan = JSON.parse(readFileSync(PLAN, "utf8")) as PropsPlan;
 const chunks = [...KRAKOWSKIE_CHUNKS, ...STARE_MIASTO_CHUNKS, ...PODZAMCZE_CHUNKS, ...NABRZEZE_CHUNKS];
-const { byChunk, stats } = generateProps(plan, chunks);
+const { byChunk, stats } = generateProps(plan, chunks, loadNodeTags());
 writeFileSync(OUT, emitProps(byChunk));
 const total = Object.values(stats.perKind).reduce((a, b) => a + b, 0);
 console.log(`props.generated.ts: ${(statSync(OUT).size / 1024).toFixed(0)} KiB, ${total} pieces in ${byChunk.size} chunks`);
@@ -28,7 +29,7 @@ console.log("per district:", Object.entries(stats.perDistrict).map(([k, n]) => `
 console.log(`dropped: ${stats.outside} outside the chunks, ${stats.inBuilding} inside building outlines, ${stats.onRoad} on a road with no pavement near, ${stats.merged} too close to the same kind, ${stats.crowded} with no room beside a solid placed before`);
 console.log(`moved off the road onto the pavement or away from a wall: ${stats.offRoad}`);
 console.log("mapped:", Object.entries(stats.mapped).map(([k, v]) => `${k} -> ${v} (${MAPPED[k]?.why ?? ""})`).join("; "));
-console.log("skipped:", Object.entries(stats.skipped).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n} (${SKIPPED[k] ?? "unknown kind"})`).join("; "));
+console.log("skipped:", Object.entries(stats.skipped).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n} (${SKIPPED[k] ?? (SKIPPED_ART as Record<string, string>)[k] ?? "unknown kind"})`).join("; "));
 if (process.argv.includes("--items")) {
   for (const [id, [asked, got]] of Object.entries(stats.perItem)) if (asked !== got) console.log(`${id}: ${asked} asked, ${got} placed`);
 }

@@ -76,8 +76,8 @@ export const DISTRICT_M0_PROPS: readonly StaticProp[] = [
   // The van of the east lot.
   ...onPaving(placeProps(EAST_LOT, [crate(12, -12, 2.4, 2.2, 5, skin("van", "z+"))])),
   ...CAR_WASH_PROPS,
-  // Behind Neon Koi, the bar's bins.
-  ...standing(KOI_BACK, [crate(6.5, 19.2, 1.2, 1.3, 2.2, skin("dumpster", "x-"))]),
+  // Behind Neon Koi, the bar's bins; a body fits in (ADR-0065).
+  ...standing(KOI_BACK, [{ ...crate(6.5, 19.2, 1.2, 1.3, 2.2, skin("dumpster", "x-")), hide: "dumpster" }]),
   ...deptak(),
   // ADR-0038: the clinic, the bar and their doors.
   ...S7_INTERIORS,

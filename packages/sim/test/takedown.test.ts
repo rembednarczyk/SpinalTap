@@ -319,7 +319,7 @@ describe("takedown in the simulation (ADR-0065)", () => {
     expect(guard.health!.current).toBe(80);
   });
 
-  it("is not saved yet: a load brings the knocked-out ganger round (stage 3 saves it)", () => {
+  it("is saved (stage 3): a load keeps the knocked-out ganger down (more in takedown-save.test.ts)", () => {
     const sim = streetSim({ seed: 7 });
     const ganger = inCreationOrder([...sim.world.with("ai")].filter((g) => g.key))[0];
     for (const g of [...sim.world.with("ai")]) if (g !== ganger) sim.world.remove(g);
@@ -335,6 +335,6 @@ describe("takedown in the simulation (ADR-0065)", () => {
     const loaded = Simulation.fromSnapshot(sim.snapshot(null, "t", ""));
     const back = byKey(loaded, ganger!.key!);
     expect(back).toBeDefined();
-    expect(back!.unconscious).toBeUndefined();
+    expect(back!.unconscious).toBe(true);
   });
 });

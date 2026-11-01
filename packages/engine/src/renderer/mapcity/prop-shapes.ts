@@ -7,8 +7,8 @@ import type { RenderQuality } from "../../npr/quality";
  * pins down); the next ones scale trees and shrubs.
  */
 export const PROP_SHAPES: Readonly<Partial<Record<StreetPropKind, number>>> = {
-  monument: 4,
-  artwork: 4,
+  monument: 6,
+  artwork: 6,
   flagpole: 2,
   tree: 3,
   bench: 2,
@@ -24,7 +24,7 @@ export const PROP_SHAPES: Readonly<Partial<Record<StreetPropKind, number>>> = {
 };
 
 /** Monument and artwork shapes. */
-export const MONUMENT_SHAPE = { obelisk: 0, figure: 1, koziolek: 2, abstract: 3 } as const;
+export const MONUMENT_SHAPE = { obelisk: 0, figure: 1, koziolek: 2, abstract: 3, stele: 4, shrine: 5 } as const;
 
 /** Tree species. */
 export const TREE_SHAPE = { lime: 0, maple: 1, chestnut: 2 } as const;
