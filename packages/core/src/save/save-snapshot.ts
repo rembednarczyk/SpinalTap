@@ -2,8 +2,11 @@ import type { Vec3 } from "../math/vec3";
 import type { DifficultyProfile } from "../difficulty/difficulty";
 import type { DomainState } from "../state/domain-state";
 import type { Contract } from "../contracts/contracts";
+import type { EnemyTypeId } from "../items/enemies";
 
 /**
+ * v23: the heat's reinforcements (G-179), who are in no content table, with how many came in and
+ * the wait for the next one; an older save has none, its reinforcements gone on loading as before.
  * v22: the contract whose people are still in the world after it ended (G-178), failed or paid,
  * until the next is taken, and the jobs replaced by a newer one while some of their people are
  * still about; an older save has none, their guards gone on loading as before.
@@ -27,7 +30,7 @@ import type { Contract } from "../contracts/contracts";
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 22;
+export const SAVE_SCHEMA_VERSION = 23;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {
@@ -101,6 +104,27 @@ export interface ContractOnSite {
   readonly completed: number;
 }
 
+/** One of the heat's reinforcements (G-179): sent in at run time, so made again from this. */
+export interface ReinforcementSnapshot {
+  /** Which of the heat's it is, from 1: what spreads the searchers and picks the enforcers. */
+  readonly n: number;
+  readonly type: EnemyTypeId;
+  /** The entry it came in by. */
+  readonly home: Vec3;
+  /** Its state, keyed `security:<n>`. */
+  readonly state: EntitySnapshot;
+}
+
+/**
+ * The heat's reinforcements (G-179): those in the world, how many came in since the heat came up
+ * (the next is one more) and the seconds until the next may come.
+ */
+export interface ReinforcementsSnapshot {
+  readonly sent: number;
+  readonly wait: number;
+  readonly people: readonly ReinforcementSnapshot[];
+}
+
 export interface SaveSnapshot {
   readonly version: typeof SAVE_SCHEMA_VERSION;
   readonly seed: number;
@@ -130,6 +154,8 @@ export interface SaveSnapshot {
    * asleep with a chunk is gone for good, and the job with him once nobody is left. Absent when none.
    */
   readonly formerContracts?: readonly ContractOnSite[];
+  /** The heat's reinforcements (G-179). Absent with none about and none due. */
+  readonly reinforcements?: ReinforcementsSnapshot;
   /** Serialized ink story state (inkjs JSON). */
   readonly narrative: string | null;
   readonly meta: { readonly label: string; readonly objective: string };
