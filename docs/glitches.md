@@ -623,6 +623,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: odległość od gracza zamiast samej przynależności do chunku albo brak dostępnego terenu poza chunkami; pokrewne: spokojny nieprzypięty strażnik w innym wczytanym chunku znika przy uśpieniu własnego (`standing` w `unloadChunks` tylko dla planów dnia i ciał); `ai.victim` z szablonu nie trafia do zapisu; `goAway()` w `contract-site-cleared.test.ts` stawia gracza poza mapą (testy G-195 z martwym graczem); `keepFormer` bez testu integracyjnego
 - Pakiet właściciela: packages/sim (streaming)
 
+### G-202 Posiłki ochrony nie dają XP za quickhack
+- Status: zgłoszone (1.11, decyzja użytkownika: „zgodnie ze standardem”, z sondy G-199); czeka na #179 (G-194)
+- Ważność: S4 · Zasięg: `grantQuickhackXp` (`packages/sim/src/world/progression-ops.ts`) zaczyna się od `if (!key) return;`, więc posiłek ochrony (bez klucza) nigdy nie daje XP, a strażnik z kluczem daje raz
+- Oczekiwane (standard gatunku, bez farmienia): każdy posiłek daje XP za quickhack raz, także po zapisie i wczytaniu; ten sam posiłek drugi raz nic
+- Poprawka: klucz XP posiłku z trwałego numeru (`security:<n>` z G-194) z rozróżnieniem kolejnych heatów, jeśli `n` może się powtórzyć po resecie `sent` (np. numer heatu w kluczu); test jednej sesji i zapisu; złoty hash świadomie, jeśli się zmieni
+- Pakiet właściciela: packages/sim
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
