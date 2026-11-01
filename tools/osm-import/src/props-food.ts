@@ -7,18 +7,20 @@
  *   `amenity=fast_food|food_court`, a venue of its building), beside its board, never in front of
  *   a venue's board (where its door is).
  * Both keep clear of the carriageway and the car streets' lanes, footpaths, zebra crossings,
- * passages, service ways, bus stops and the marketplace's entrances, and leave a walkway round
- * them to every solid set before. The old town (district `kanal`) gets neither: ADR-0058 keeps
+ * passages, service ways, bus stops, the marketplace's entrances and the game's own doors, and
+ * leave a walkway round them to every solid set before; a booth leaves 2 m of pavement between
+ * the front of its stools and the edge of the carriageway as the map data has it. The old town (district `kanal`) gets neither: ADR-0058 keeps
  * the Rynek sparse. No randomness: which stalls get stock, and on which side, is a hash of their key.
  */
 import type { StreetPropItem, StreetPropKind } from "../../../packages/core/src/world/city-geo.ts";
 import { type CrossingBand, crossingBands, inCrossingBand } from "../../../packages/sim/src/content/lublin/crossing-bands.ts";
 import { FOOD_STALL, distanceToPiece } from "../../../packages/sim/src/content/lublin/furniture.ts";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
-import { type Pt, pointInRing } from "./geometry.ts";
+import { type Pt, type Rect, pointInRing, ringBounds } from "./geometry.ts";
 import type { BoardSpan } from "./props-boards.ts";
 import type { Placed } from "./props-gen.ts";
 import { fnv, yawOf } from "./props-place.ts";
+import type { Carriageway, DoorSpan } from "./props-roads.ts";
 import type { Site } from "./props-site.ts";
 import { nearTraffic } from "./props-streets.ts";
 
@@ -37,8 +39,11 @@ const WALKWAY = 1.5;
 const SOLID_WALKWAY = 1;
 /** How far the pieces keep from a car street's axis (m): its lanes and a car's half. */
 const TRAFFIC_REACH = 4.5;
-/** How far they keep from a marketplace's entrance, a zebra's band, a passage's mouth, a service way's edge and a bus stop's post (m). */
-const ROOM = { entrance: 6, crossing: 3, passage: 4, service: 1.5, busStop: 10 } as const;
+/**
+ * How far they keep from a marketplace's entrance, a zebra's band, a passage's mouth, a service
+ * way's edge, a bus stop's post and a door of the game (m).
+ */
+const ROOM = { entrance: 6, crossing: 3, passage: 4, service: 1.5, busStop: 10, door: 3 } as const;
 /** The step of the footprints' samples (m). */
 const STEP = 0.25;
 
@@ -51,26 +56,50 @@ const BOARD_ROOM = 0.6;
 /** Slides along the facade from the board's end, in steps (m), at most. */
 const SLIDE = { step: 0.5, reach: 8 } as const;
 
-/** What the rules keep clear of, gathered once from the chunks. */
+/** What beyond the chunks the rules keep clear of: the map data's carriageways and the game's doors. */
+export interface MarketContext {
+  readonly roads?: readonly Carriageway[];
+  readonly doors?: readonly DoorSpan[];
+}
+
+/** What the rules keep clear of, gathered once from the chunks and the context. */
 export class Clearances {
   readonly bands: readonly CrossingBand[];
   private readonly mouths: readonly Pt[];
-  private readonly service: readonly { readonly line: readonly Pt[]; readonly half: number }[];
+  private readonly service: readonly { readonly line: readonly Pt[]; readonly half: number; readonly box: Rect }[];
   private readonly stops: readonly Pt[];
+  private readonly roads: readonly Carriageway[];
+  private readonly doors: readonly DoorSpan[];
 
-  constructor(chunks: readonly LublinChunkData[]) {
+  constructor(chunks: readonly LublinChunkData[], ctx: MarketContext = {}) {
     this.bands = crossingBands(chunks);
     this.mouths = chunks.flatMap((c) => (c.passages ?? []).flatMap((p) => [p.from, p.to]));
-    this.service = chunks.flatMap((c) => (c.serviceWays ?? []).map((w) => ({ line: flat(w.line), half: w.width / 2 })));
+    this.service = chunks.flatMap((c) => (c.serviceWays ?? []).map((w) => ({ line: flat(w.line), half: w.width / 2, box: ringBounds(flat(w.line)) })));
     this.stops = chunks.flatMap((c) => flat(c.busStops ?? []));
+    this.roads = ctx.roads ?? [];
+    this.doors = ctx.doors ?? [];
   }
 
-  /** Is q clear of the zebras, the passages' mouths, the service ways and the bus stops? */
+  /** Is q clear of the zebras, the passages' mouths, the service ways, the bus stops and the game's doors? */
   clear(q: Pt): boolean {
     if (this.bands.some((b) => inCrossingBand(b, q, ROOM.crossing))) return false;
     if (this.mouths.some((m) => Math.hypot(m.x - q.x, m.z - q.z) < ROOM.passage)) return false;
     if (this.stops.some((s) => Math.hypot(s.x - q.x, s.z - q.z) < ROOM.busStop)) return false;
-    return !this.service.some((w) => distToLine(q, w.line) < w.half + ROOM.service);
+    if (this.doors.some((d) => distToLine(q, [d.a, d.b]) < ROOM.door)) return false;
+    // A way's box first: the city has hundreds of them.
+    const reach = (w: { half: number; box: Rect }) => w.half + ROOM.service;
+    const nearBox = (w: { half: number; box: Rect }) => q.x > w.box.minX - reach(w) && q.x < w.box.maxX + reach(w) && q.z > w.box.minZ - reach(w) && q.z < w.box.maxZ + reach(w);
+    return !this.service.some((w) => nearBox(w) && distToLine(q, w.line) < reach(w));
+  }
+
+  /** How far q is from the nearest carriageway's edge (m), negative on it; Infinity without any. */
+  kerbGap(q: Pt): number {
+    let best = Infinity;
+    for (const r of this.roads) {
+      if (!r.line.some((a) => Math.abs(a.x - q.x) < 300 && Math.abs(a.z - q.z) < 300)) continue;
+      best = Math.min(best, distToLine(q, r.line) - r.half);
+    }
+    return best;
   }
 }
 
@@ -132,18 +161,64 @@ const underCanvas = (s: Placed, q: Pt, pad: number): boolean => {
   return Math.abs(x) <= STALL.hw + pad && Math.abs(z) <= STALL.hd + pad;
 };
 
+/** A piece placed before, with its item for its solid. */
+interface Near {
+  readonly placed: Placed;
+  readonly item: StreetPropItem;
+}
+
+const CELL = 16;
+
+/** The pieces placed so far in a grid of `CELL` m cells: the walkway asks only the cells round a footprint. */
+class Nearby {
+  private readonly cells = new Map<string, Near[]>();
+
+  constructor(placed: readonly Placed[]) {
+    for (const x of placed) this.add(x);
+  }
+
+  add(placed: Placed, item: StreetPropItem = asItems([placed])[0]!): void {
+    const k = `${Math.floor(placed.p.x / CELL)}:${Math.floor(placed.p.z / CELL)}`;
+    const list = this.cells.get(k);
+    if (list) list.push({ placed, item });
+    else this.cells.set(k, [{ placed, item }]);
+  }
+
+  /** The pieces within about `CELL` m of p. */
+  around(p: Pt): Near[] {
+    const out: Near[] = [];
+    const i = Math.floor(p.x / CELL);
+    const j = Math.floor(p.z / CELL);
+    for (let a = i - 1; a <= i + 1; a++) for (let b = j - 1; b <= j + 1; b++) out.push(...(this.cells.get(`${a}:${b}`) ?? []));
+    return out;
+  }
+}
+
 /**
  * Is the footprint `foot` clear of every stall's canvas by `canvasPad` and of every solid placed
  * before by `solidPad`, `host` aside?
  */
-const walkwayClear = (foot: readonly Pt[], placed: readonly Placed[], items: readonly StreetPropItem[], host: Placed | null, canvasPad: number, solidPad: number): boolean => {
+const walkwayClear = (foot: readonly Pt[], near: Nearby, host: Placed | null, canvasPad: number, solidPad: number): boolean => {
   const c = foot[Math.floor(foot.length / 2)]!;
-  for (let k = 0; k < placed.length; k++) {
-    const o = placed[k]!;
+  for (const { placed: o, item } of near.around(c)) {
     if (o === host || Math.abs(o.p.x - c.x) > 12 || Math.abs(o.p.z - c.z) > 12) continue;
-    if (o.prop === "market-stall" ? foot.some((q) => underCanvas(o, q, canvasPad)) : foot.some((q) => distanceToPiece(items[k]!, q.x, q.z) < solidPad)) return false;
+    if (o.prop === "market-stall" ? foot.some((q) => underCanvas(o, q, canvasPad)) : foot.some((q) => distanceToPiece(item, q.x, q.z) < solidPad)) return false;
   }
   return true;
+};
+
+/**
+ * The site with only the streets near `box` (grown by `reach`), for `nearTraffic` over many samples
+ * of one place: the city's streets are a thousand polylines.
+ */
+const streetsNear = (site: Site, box: Rect, reach: number): Site => {
+  const near = (q: Pt) => q.x > box.minX - reach && q.x < box.maxX + reach && q.z > box.minZ - reach && q.z < box.maxZ + reach;
+  const crosses = (line: readonly Pt[]) => {
+    const b = ringBounds(line);
+    return b.maxX > box.minX - reach && b.minX < box.maxX + reach && b.maxZ > box.minZ - reach && b.minZ < box.maxZ + reach;
+  };
+  // `nearTraffic` reads only the streets.
+  return { streets: site.streets.filter((st) => st.line.some(near) || crosses(st.line)) } as unknown as Site;
 };
 
 /** The district of the chunk at p, or null outside them. */
@@ -155,8 +230,8 @@ const districtAt = (site: Site, p: Pt): string | null => site.chunkAt(p)?.distri
  */
 export const stallGoods = (site: Site, clear: Clearances, stalls: readonly Placed[], ring: readonly Pt[] | null, gates: readonly Pt[], placed: readonly Placed[]): Placed[] => {
   const out: Placed[] = [];
-  const all = [...placed, ...stalls];
-  const items = asItems(all);
+  const near = new Nearby([...placed, ...stalls]);
+  const traffic = streetsNear(site, ringBounds(ring ?? stalls.map((s) => s.p)), TRAFFIC_REACH + 10);
   for (const s of stalls) {
     // The high bits: FNV's lowest follow the parity of the key's letters, as the stock's shape (`variant`) does.
     const h = fnv(`${s.key}#stock`);
@@ -167,15 +242,15 @@ export const stallGoods = (site: Site, clear: Clearances, stalls: readonly Place
     for (const side of (h >>> 17) & 1 ? [1, -1] : [-1, 1]) {
       const at = local(s.p, yaw, side * (STALL.hw + GOODS.gap + GOODS.hx), GOODS.z);
       const foot = rect(at, yaw, -GOODS.hx, GOODS.hx, -GOODS.hz, GOODS.hz);
-      const fits = foot.every((q) => paved(site, q) && (!ring || pointInRing(q, ring)) && !nearTraffic(site, q, TRAFFIC_REACH) && clear.clear(q));
+      const fits = foot.every((q) => paved(site, q) && (!ring || pointInRing(q, ring)) && !nearTraffic(traffic, q, TRAFFIC_REACH) && clear.clear(q));
       if (!fits || gates.some((g) => Math.hypot(g.x - at.x, g.z - at.z) < ROOM.entrance)) continue;
       // The passage past it along the row stays a walkway: open paving, no canvas over it.
       const passage = rect(at, yaw, side > 0 ? GOODS.hx : -GOODS.hx - WALKWAY, side > 0 ? GOODS.hx + WALKWAY : -GOODS.hx, -GOODS.hz, GOODS.hz);
       if (!passage.every((q) => paved(site, q))) continue;
-      const done = [...all, ...out];
-      const doneItems = [...items, ...asItems(out)];
-      if (!walkwayClear(foot, done, doneItems, s, 0.1, SOLID_WALKWAY) || !walkwayClear(passage, done, doneItems, null, 0, SOLID_WALKWAY)) continue;
-      out.push({ prop: "market-goods" satisfies StreetPropKind, p: at, yaw, key: `${s.key}${GOODS_KEY}` });
+      if (!walkwayClear(foot, near, s, 0.1, SOLID_WALKWAY) || !walkwayClear(passage, near, null, 0, SOLID_WALKWAY)) continue;
+      const stock: Placed = { prop: "market-goods" satisfies StreetPropKind, p: at, yaw, key: `${s.key}${GOODS_KEY}` };
+      out.push(stock);
+      near.add(stock);
       break;
     }
   }
@@ -211,13 +286,14 @@ const offBoards = (wall: BoardSpan, boards: readonly BoardSpan[], u0: number, u1
   });
 
 /** A booth for one board, or null: slid along its wall from either end of the board, nearest first. */
-const boothAt = (site: Site, clear: Clearances, board: BoardSpan, boards: readonly BoardSpan[], placed: readonly Placed[], items: readonly StreetPropItem[]): Placed | null => {
+const boothAt = (site: Site, clear: Clearances, board: BoardSpan, boards: readonly BoardSpan[], near: Nearby): Placed | null => {
   const len = Math.hypot(board.b.x - board.a.x, board.b.z - board.a.z) || 1;
   const dir = { x: (board.b.x - board.a.x) / len, z: (board.b.z - board.a.z) / len };
   // The booth's front away from the wall: its back to the facade, the stools towards the street.
   const yaw = yawOf(board.nx, board.nz);
   const shifts: number[] = [];
   for (let t = BOARD_ROOM + BOOTH.hx; t <= SLIDE.reach; t += SLIDE.step) shifts.push(-t, len + t);
+  const traffic = streetsNear(site, ringBounds([board.a, board.b]), SLIDE.reach + TRAFFIC_REACH + 5);
   for (const u of shifts) {
     if (!offBoards(board, boards, u - BOOTH.hx, u + BOOTH.hx)) continue;
     // A facade behind its whole length: this building's wall or the next one's in the row.
@@ -228,10 +304,12 @@ const boothAt = (site: Site, clear: Clearances, board: BoardSpan, boards: readon
     if (d === null || SPARSE_DISTRICTS.has(d)) return null;
     const foot = rect(p, yaw, -BOOTH.hx, BOOTH.hx, BOOTH.back, BOOTH.front);
     const ahead = rect(p, yaw, -BOOTH.hx, BOOTH.hx, BOOTH.front, BOOTH.front + BOOTH_WALKWAY);
-    if (!foot.every((q) => forecourt(site, q) && clear.clear(q) && !nearTraffic(site, q, TRAFFIC_REACH))) continue;
-    // The pavement in front of its stools stays open for the walkers, up to the kerb.
+    if (!foot.every((q) => forecourt(site, q) && clear.clear(q) && !nearTraffic(traffic, q, TRAFFIC_REACH))) continue;
+    // The pavement in front of its stools stays open for the walkers, up to the kerb: drawn
+    // ground, and 2 m to the carriageway's edge as the map data has it.
     if (!ahead.every((q) => open(site, q))) continue;
-    if (!walkwayClear(foot, placed, items, null, SOLID_WALKWAY, SOLID_WALKWAY) || !walkwayClear(ahead, placed, items, null, 0.2, 0.2)) continue;
+    if (!rect(p, yaw, -BOOTH.hx, BOOTH.hx, BOOTH.front, BOOTH.front).every((q) => clear.kerbGap(q) >= BOOTH_WALKWAY)) continue;
+    if (!walkwayClear(foot, near, null, SOLID_WALKWAY, SOLID_WALKWAY) || !walkwayClear(ahead, near, null, 0.2, 0.2)) continue;
     return { prop: "food-stall", p, yaw, key: `food-stall:${board.text}` };
   }
   return null;
@@ -240,10 +318,12 @@ const boothAt = (site: Site, clear: Clearances, board: BoardSpan, boards: readon
 /** A booth in front of every fast-food venue's facade that has room for one, in the boards' order. */
 export const foodStalls = (site: Site, clear: Clearances, boards: readonly BoardSpan[], placed: readonly Placed[]): Placed[] => {
   const out: Placed[] = [];
+  const near = new Nearby(placed);
   for (const board of foodBoards(site.chunks, boards)) {
-    const all = [...placed, ...out];
-    const booth = boothAt(site, clear, board, boards, all, asItems(all));
-    if (booth) out.push(booth);
+    const booth = boothAt(site, clear, board, boards, near);
+    if (!booth) continue;
+    out.push(booth);
+    near.add(booth);
   }
   return out;
 };

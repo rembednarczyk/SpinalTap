@@ -13,7 +13,7 @@ import type { Tags } from "./osm.ts";
 import { ART_SHAPE, artShape } from "./props-art.ts";
 import { KERB_SHY, MAPPED, MAX_MOVE, ON_BUILDINGS, WALL_REACH, WALL_ROOM, propOf, withShape } from "./props-kinds.ts";
 import { bulkyPieces } from "./props-bulky.ts";
-import { Clearances, GOODS_KEY, foodStalls, stallGoods } from "./props-food.ts";
+import { Clearances, GOODS_KEY, type MarketContext, foodStalls, stallGoods } from "./props-food.ts";
 import { marketEntrances, marketStalls } from "./props-market.ts";
 import { type SideMode, type Station, evenStations, fnv, offRoad, offWall, openFacing, scatter, sideOffset, stations, towardsStreet, unit, yawOf } from "./props-place.ts";
 import { type BoardSpan, boardBehind, offBoards } from "./props-boards.ts";
@@ -319,9 +319,9 @@ const ON_ROAD: ReadonlySet<StreetPropKind> = new Set(["manhole", "bollard"]);
 const minGap = (prop: StreetPropKind, fromLine: boolean): number => (prop.startsWith("lamp-") && fromLine ? 7 : prop === "trolley-pole" ? 10 : 0.3);
 
 /** The plan's groups placed (before the chunks): every piece with its prop, point, yaw and key. */
-const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, tags: NodeTags, boards: readonly BoardSpan[]): { placed: Placed[]; fromLine: Set<Placed> } => {
+const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, tags: NodeTags, boards: readonly BoardSpan[], market: MarketContext): { placed: Placed[]; fromLine: Set<Placed> } => {
   const placed: Placed[] = [];
-  const clear = new Clearances(site.chunks);
+  const clear = new Clearances(site.chunks, market);
   const fromLine = new Set<Placed>();
   const deferred: PlanItem[] = [];
   for (const item of plan.items) {
@@ -364,11 +364,14 @@ const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, 
   return { placed, fromLine };
 };
 
-/** Every group of the plan as street furniture per chunk, with the control numbers; the wall lanterns keep off the venues' `boards`. */
-export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[], tags: NodeTags = new Map(), boards: readonly BoardSpan[] = []): PropsOut => {
+/**
+ * Every group of the plan as street furniture per chunk, with the control numbers; the wall lanterns
+ * keep off the venues' `boards`, the market's furniture off the carriageways and the game's doors (`market`).
+ */
+export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[], tags: NodeTags = new Map(), boards: readonly BoardSpan[] = [], market: MarketContext = {}): PropsOut => {
   const site = new Site(chunks);
   const skipped: Record<string, number> = {};
-  const { placed, fromLine } = placeAll(site, plan, skipped, tags, boards);
+  const { placed, fromLine } = placeAll(site, plan, skipped, tags, boards, market);
   const byChunk = new Map<string, StreetPropItem[]>(chunks.map((c) => [c.id, []]));
   const perKind: Record<string, number> = {};
   const perDistrict: Record<string, number> = {};

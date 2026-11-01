@@ -13,6 +13,8 @@ import { REPO } from "../src/paths.ts";
 import { Clearances, SPARSE_DISTRICTS, foodStalls } from "../src/props-food.ts";
 import { FOOD_STALLS, type PropsPlan, generateProps } from "../src/props-gen.ts";
 import { Site } from "../src/props-site.ts";
+import { gameDoors } from "../src/game-doors.ts";
+import { loadCarriageways } from "../src/props-roads.ts";
 import { lublinVenueBoards } from "../src/venue-boards.ts";
 
 /** The market's stock and the food booths of ADR-0058 stage 3, as the generator places them by its rules. */
@@ -20,7 +22,8 @@ import { lublinVenueBoards } from "../src/venue-boards.ts";
 const CHUNKS = [...KRAKOWSKIE_CHUNKS, ...STARE_MIASTO_CHUNKS, ...PODZAMCZE_CHUNKS, ...NABRZEZE_CHUNKS];
 const PLAN = JSON.parse(readFileSync(join(REPO, "docs/world/lublin-props.todo.json"), "utf8")) as PropsPlan;
 const BOARDS = lublinVenueBoards();
-const { byChunk, stats } = generateProps(PLAN, CHUNKS, new Map(), BOARDS);
+const MARKET = { roads: loadCarriageways(), doors: gameDoors() };
+const { byChunk, stats } = generateProps(PLAN, CHUNKS, new Map(), BOARDS, MARKET);
 const site = new Site(CHUNKS);
 const pieces = [...byChunk.values()].flat();
 const of = (prop: string) => pieces.filter((i) => i.prop === prop);
@@ -101,8 +104,8 @@ describe("the food booths (ADR-0058 stage 3, generator)", () => {
   const booths = of("food-stall");
 
   it("stand by the fast-food venues' boards, one a venue, none in the old town", () => {
-    expect(booths.length).toBe(12);
-    expect(stats.perItem[FOOD_STALLS]).toEqual([0, 12]);
+    expect(booths.length).toBe(10);
+    expect(stats.perItem[FOOD_STALLS]).toEqual([0, 10]);
     for (const b of booths) expect(SPARSE_DISTRICTS.has(site.chunkAt(b)!.district)).toBe(false);
     // In front of a wall, within the slide of a fast-food venue's board.
     const food = new Set(CHUNKS.flatMap((c) => c.buildings.flatMap((h) => (h.venues ?? []).filter((v) => v.kind === "fast-food").map((v) => v.name))));
@@ -135,6 +138,19 @@ describe("the food booths (ADR-0058 stage 3, generator)", () => {
         expect(u < -1.2 || u > len + 1.2, `${b.x},${b.z} in front of ${s.text}`).toBe(true);
       }
     }
+  });
+
+  it("keep 3 m from the game's doors: none by the clinic's door, where the game starts", () => {
+    const doors = gameDoors();
+    expect(doors.length).toBeGreaterThanOrEqual(2);
+    const gap = (q: { x: number; z: number }, d: (typeof doors)[number]) => {
+      const dx = d.b.x - d.a.x;
+      const dz = d.b.z - d.a.z;
+      const t = Math.max(0, Math.min(1, ((q.x - d.a.x) * dx + (q.z - d.a.z) * dz) / (dx * dx + dz * dz)));
+      return Math.hypot(d.a.x + dx * t - q.x, d.a.z + dz * t - q.z);
+    };
+    for (const piece of [...booths, ...of("market-goods")]) for (const q of footprint(piece)) for (const d of doors) expect(gap(q, d), `${piece.x},${piece.z}`).toBeGreaterThanOrEqual(3);
+    expect(booths.some((b) => b.x === 318.9 && b.z === -73.9)).toBe(false);
   });
 
   it("follow the venues of the data, not a list: without the boards there are none, with one board one at most", () => {
