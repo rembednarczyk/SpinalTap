@@ -459,3 +459,9 @@ Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [r
 - Status: rozstrzygnięte (#97): rampy tylko dla nazwanych schodów, poprawny opis w `shape.ts`; reszta biegów na terenie zgodnym z NMT
 - Gdzie: `packages/sim/src/content/lublin/shape.ts` `stepRamps` czyta `c.streets` (tylko nazwy) → 3 rampy z 69 biegów
 - Decyzja: albo rampy dla wszystkich biegów (wtedy sprawdzić `terrain-off-pads`, `steps-micro-riser`), albo poprawić komentarz
+
+### G-131 Etap 1 obezwładnienia: trzy błędy z weryfikacji
+- Status: naprawione (#100, ADR-0065 etap 1): poprawki przed PR, sondy weryfikatora jako testy
+- Błędy: klawisz interakcji obezwładnia mimo podpowiedzi bliższego celu (rozmowa, łup, drzwi); ogłuszony po parowaniu zostaje „w walce” (`ai.alerted`, RAM i aktywności); przytrzymany atak jako „zabij” strzela po obezwładnieniu
+- Pakiet właściciela: packages/sim, packages/app
+- Test przyjęcia: sondy weryfikatora (`scratchpad/v-a-probes/`) jako testy, padające przed poprawką

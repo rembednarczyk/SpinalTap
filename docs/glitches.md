@@ -462,12 +462,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (`content/parked-cars.ts`, `content/district-m0.ts` przez `standing`, `systems/traffic-system.ts`), a wysokości nawierzchni z `packages/engine/src/renderer/mapcity/ground-plan.ts` (`SURFACE_LIFT`) przenieść do kontraktu w `core`, żeby sim je znał
 - Test przyjęcia: kontrola `vehicle-below-surface` 38 → 0; dla wraku najwyższy narożnik nawierzchni ≤ spód + 0,05 m; złoty hash symulacji zmieniony świadomie, jeśli zmieni się y aut
 
-### G-131 Etap 1 obezwładnienia: trzy błędy z weryfikacji (w naprawie przed PR)
-- Status: przyjęte po poprawkach; w PR #100 (ADR-0065 etap 1)
-- Błędy: klawisz interakcji obezwładnia mimo podpowiedzi bliższego celu (rozmowa, łup, drzwi); ogłuszony po parowaniu zostaje „w walce” (`ai.alerted`, RAM i aktywności); przytrzymany atak jako „zabij” strzela po obezwładnieniu
-- Pakiet właściciela: packages/sim, packages/app
-- Test przyjęcia: sondy weryfikatora (`scratchpad/v-a-probes/`) jako testy, padające przed poprawką
-
 ## Naprawione
 | ID | Glitch | PR |
 |---|---|---|
@@ -536,6 +530,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | G-094 | Przedsionek Trasy Podziemnej: pierwsze 4,5 m poza obszarem wnętrza | #90 |
 | G-125 | Ekranu opcji nie da się przewijać na telefonie | #94 |
 | G-087 | `stepRamps` tylko dla nazwanych schodów | #97 |
+| G-131 | Etap 1 obezwładnienia: klawisz interakcji, ogłuszony „w walce”, strzał po zabiciu | #100 |
 
 ## Odrzucone
 - G-005 Wiata przystanku wchodzi w ścianę przy Alei Tysiąclecia: duplikat (G-011)
