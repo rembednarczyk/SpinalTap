@@ -18,10 +18,11 @@ export const parseLength = (v: string | undefined): number | null => {
   return Number.isFinite(n) && n > 0 ? n : null;
 };
 
-/** Parses `building:levels` (`3`, `3.5`, `3;4` takes the largest). */
+/** Parses `building:levels` (`3`, `3.5`, `4,5` with a decimal comma, `3;4` takes the largest). */
 export const parseLevels = (v: string | undefined): number | null => {
   if (v === undefined) return null;
   const parts = v
+    .replace(/(\d),(\d)/g, "$1.$2")
     .split(/[;,-]/)
     .map((s) => Number(s.trim()))
     .filter((n) => Number.isFinite(n) && n >= 0);
@@ -59,7 +60,8 @@ export const buildingUse = (tags: Tags): BuildingUse => {
   const b = tags.building ?? "yes";
   if (CHURCH.has(b) || tags.amenity === "place_of_worship") return "church";
   if (HISTORIC.has(b) || HISTORIC.has(tags.historic ?? "") || tags["tower:type"] !== undefined) return "historic";
-  if (CIVIC.has(b) || CIVIC_AMENITY.has(tags.amenity ?? "")) return "civic";
+  // An office of government in a plain `building=yes` is a public building, not a block of flats (G-120).
+  if (CIVIC.has(b) || CIVIC_AMENITY.has(tags.amenity ?? "") || tags.office === "government" || tags.government !== undefined) return "civic";
   if (COMMERCIAL.has(b) || tags.shop !== undefined || tags.tourism === "hotel") return "commercial";
   if (INDUSTRIAL.has(b)) return "industrial";
   // A shelter is often only `building=yes`; as a plain building it would become a block of flats.
@@ -124,9 +126,10 @@ export interface Massing {
 }
 
 /** Default floors when tags are silent: by use and size, otherwise the district's range picked by `look`. */
-const defaultLevels = (tags: Tags, use: BuildingUse, area: number, range: readonly [number, number], look: number): number => {
+const defaultLevels = (tags: Tags, use: BuildingUse, area: number, range: readonly [number, number], look: number, alone = false): number => {
   const b = tags.building ?? "yes";
-  if (area < 25 || use === "garage" || b === "kiosk") return 1;
+  // A pavilion, a kiosk or a shed on its own: one storey, not the district's houses (G-127).
+  if (area < 25 || use === "garage" || b === "kiosk" || alone) return 1;
   if (use === "industrial") return 2;
   if (b === "house" || b === "detached") return 2;
   if (use === "commercial") return 3;
@@ -134,9 +137,15 @@ const defaultLevels = (tags: Tags, use: BuildingUse, area: number, range: readon
   return range[0] + (look % (range[1] - range[0] + 1));
 };
 
-export const massing = (tags: Tags, opts: { area: number; shops: boolean; range: readonly [number, number]; look: number }): Massing => ({ ...heights(tags, opts), ...roofShapeOf(tags) });
+/**
+ * The rows of windows of `building:levels`: a half storey (4.5) is a mezzanine or an attic
+ * within the walls, not a row of its own (G-116). The walls keep the exact `levels × 3.2 m`.
+ */
+export const wholeStoreys = (levels: number): number => Math.max(1, Math.floor(levels));
 
-const heights = (tags: Tags, opts: { area: number; shops: boolean; range: readonly [number, number]; look: number }): Massing => {
+export const massing = (tags: Tags, opts: { area: number; shops: boolean; range: readonly [number, number]; look: number; alone?: boolean }): Massing => ({ ...heights(tags, opts), ...roofShapeOf(tags) });
+
+const heights = (tags: Tags, opts: { area: number; shops: boolean; range: readonly [number, number]; look: number; alone?: boolean }): Massing => {
   const use = buildingUse(tags);
   const size = Math.sqrt(opts.area);
   const roof = roofHeight(tags, use, size);
@@ -147,18 +156,18 @@ const heights = (tags: Tags, opts: { area: number; shops: boolean; range: readon
   if (height !== null) {
     const r = Math.min(roof, height * 0.5);
     const walls = Math.max(height - minHeight - r, 2.5);
-    return { walls, roof: r, levels: tagLevels ?? Math.max(1, Math.round(walls / STOREY)), source: "height" };
+    return { walls, roof: r, levels: tagLevels !== null ? wholeStoreys(tagLevels) : Math.max(1, Math.round(walls / STOREY)), source: "height" };
   }
   if (tagLevels !== null) {
-    const levels = Math.max(1, Math.round(tagLevels));
-    return { walls: floors(levels), roof, levels, source: "levels" };
+    const levels = Math.max(1, tagLevels);
+    return { walls: floors(levels), roof, levels: wholeStoreys(levels), source: "levels" };
   }
   if (use === "church") {
     const tower = tags["building"] === "bell_tower" || tags["tower:type"] !== undefined;
     return { walls: tower ? 30 : 16, roof, levels: tower ? 8 : 4, source: "default" };
   }
   if (tags.historic === "city_gate" || tags.building === "tower") return { walls: 4 * STOREY, roof, levels: 4, source: "default" };
-  const levels = defaultLevels(tags, use, opts.area, opts.range, opts.look);
+  const levels = defaultLevels(tags, use, opts.area, opts.range, opts.look, opts.alone && use !== "civic");
   return { walls: floors(levels), roof, levels, source: "default" };
 };
 

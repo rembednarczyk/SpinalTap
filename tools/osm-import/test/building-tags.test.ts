@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildingUse, landmarkName, lookOf, massing, parseLength, parseLevels, roofHeight, roofShapeOf } from "../src/building-tags.ts";
+import { partTier } from "../src/building-parts.ts";
+import { type Area } from "../src/features.ts";
 
 const opts = { area: 200, shops: false, range: [3, 4] as const, look: 0 };
 
@@ -15,6 +17,14 @@ describe("heights from tags", () => {
     expect(parseLevels("x")).toBeNull();
   });
 
+  it("reads a decimal comma in storeys and rounds half storeys down on every path (G-134)", () => {
+    expect(parseLevels("4,5")).toBe(4.5);
+    expect(parseLevels("4,5;5")).toBe(5);
+    expect(massing({ building: "yes", "building:levels": "4,5" }, opts)).toMatchObject({ levels: 4, source: "levels" });
+    // With a height the walls come from it, the rows of windows from the storeys: 4.5 is 4 rows, as without one.
+    expect(massing({ building: "yes", height: "17", "building:levels": "4.5" }, opts)).toMatchObject({ levels: 4, source: "height" });
+  });
+
   it("takes `height` first, including the roof", () => {
     const m = massing({ building: "yes", height: "40", historic: "city_gate" }, opts);
     expect(m).toMatchObject({ walls: 40, roof: 0, source: "height" });
@@ -28,6 +38,16 @@ describe("heights from tags", () => {
     expect(flats.walls).toBeCloseTo(9.6, 9);
     const shops = massing({ building: "apartments", "building:levels": "3" }, { ...opts, shops: true });
     expect(shops.walls).toBeCloseTo(4 + 2 * 3.2, 9);
+  });
+
+  it("builds half a storey as half, with the whole storeys' rows of windows (G-116)", () => {
+    const townHall = massing({ building: "public", "building:levels": "4.5" }, opts);
+    expect(townHall.walls).toBeCloseTo(14.4, 9);
+    expect(townHall.levels).toBe(4);
+    const shop = massing({ building: "retail", "building:levels": "3.5" }, { ...opts, shops: true });
+    expect(shop.walls).toBeCloseTo(4 + 2.5 * 3.2, 9);
+    expect(shop.levels).toBe(3);
+    expect(massing({ building: "yes", "building:levels": "0.5" }, opts)).toMatchObject({ walls: 3.2, levels: 1 });
   });
 
   it("falls back on the district's floors, picked by the look", () => {
@@ -113,6 +133,14 @@ describe("use, names and looks", () => {
     expect(buildingUse({ building: "bunker" })).toBe("other");
   });
 
+  it("makes an office of government a public building with its name, not a block of flats (G-120)", () => {
+    const townHall = { building: "yes", office: "government", name: "Urząd Miasta Lublin" };
+    expect(buildingUse(townHall)).toBe("civic");
+    expect(landmarkName(townHall, buildingUse(townHall))).toBe("Urząd Miasta Lublin");
+    expect(buildingUse({ building: "yes", government: "education", name: "Kuratorium Oświaty" })).toBe("civic");
+    expect(buildingUse({ building: "yes", office: "company" })).toBe("residential");
+  });
+
   it("names landmarks, not blocks of flats", () => {
     expect(landmarkName({ name: "Trybunał Koronny" }, "civic")).toBe("Trybunał Koronny");
     expect(landmarkName({ name: "Kamienica X" }, "residential")).toBeUndefined();
@@ -123,5 +151,12 @@ describe("use, names and looks", () => {
     expect(lookOf("w66286371")).toBe(lookOf("w66286371"));
     expect(lookOf("w66286371")).not.toBe(lookOf("w66286372"));
     expect(lookOf("")).toBe(0x811c9dc5);
+  });
+});
+
+describe("a part's storeys (G-134)", () => {
+  it("rounds half storeys down with a height too, as the building itself does", () => {
+    const part: Area = { id: "w1", osmId: 1, tags: { "building:part": "yes", height: "15", "building:levels": "4.5" }, ring: [{ x: 0, z: 0 }, { x: 10, z: 0 }, { x: 10, z: 10 }, { x: 0, z: 10 }], holes: 0 };
+    expect(partTier(part, "residential")!.levels).toBe(4);
   });
 });
