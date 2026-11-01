@@ -339,7 +339,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `two-way-fit-narrow` (droga bez `oneway` z dopasowaną szerokością < 4,5 m) 4 → 0 (Podwale 3,6, Montażowa 3,6, Łęczyńska 4,1, Staszica 4,4) bez wzrostu `sidewalk-under-carriageway` i `car-lane-off-road`
 
 ### G-114 npr-perf Nabrzeże: czasem +98 wywołań rysowania przy tych samych siatkach
-- Status: w weryfikacji (c6c9ee2: `citySettled` czeka na zaległy render sondy `WetProbe`, `sampleNow` na klatkę po kroku; stary kod z nową kontrolą 4/4 czerwone, poprawka 7/7 zielone); kolizja portów e2e w PR #111 · Ważność: S3 (proponowana; fałszywie czerwony budżet w CI) · Koszt: mały–średni
+- Status: w PR #113 (weryfikator przyjął 1.11: skuteczność daje czekanie w `sampleNow`, zmiana `citySettled` to zabezpieczenie; c6c9ee2: `citySettled` czeka na zaległy render sondy `WetProbe`, `sampleNow` na klatkę po kroku; stary kod z nową kontrolą 4/4 czerwone, poprawka 7/7 zielone); kolizja portów e2e w PR #111 · Ważność: S3 (proponowana; fałszywie czerwony budżet w CI) · Koszt: mały–średni
 - Dowód: 334/102 albo 338/102 zamiast 236/102 w ok. 2 z 7 pełnych przebiegów przy obciążeniu, przy identycznym `byName` siatek i +431 tys. trójkątów; na bazie 0 z 3 próbek (za mało, by wykluczyć)
 - Dowód 2 (1.11, weryfikacje Grodzkiej i G-130): 338/102 w 1 z 3 pełnych przebiegów, sama scena 0 z 10 (gałąź i main po 5); ta sama sygnatura (+102 wywołania, +482 tys. trójkątów, identyczne `byName`). Wskazuje na zależność od wcześniejszych testów w przebiegu albo od czasu sondy `WetProbe`; trafia też w weryfikacje innych zmian, więc priorytet rośnie
 - Przyczyna (przypuszczalna): w próbkowanej klatce renderuje się sonda odbicia `WetProbe` (6 ścian × ok. 16 siatek + cień); `ProbeSchedule` dławi rendery do 1 s czasu rzeczywistego, a `citySettled`/`sampleNow` na to nie czeka (por. G-001)
@@ -437,12 +437,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-135 Pointer lock bez gestu: panel otwarty i zamknięty Esc przed pierwszym kliknięciem po ekranie ładowania
 - Status: do sprawdzenia ręcznie (1.11, weryfikator ADR-0057, #102)
 - Ważność: S4 (proponowana) · Zasięg: desktop, tylko gdy gracz otworzy panel przed pierwszym kliknięciem po ładowaniu
-- Gdzie: `packages/app/src/pointer-focus.ts`: zamknięcie panelu Esc woła blokadę od razu; strona bez wcześniejszej blokady i bez gestu może dostać odmowę, a odmowa ustawia na stałe `lockUnavailable` (`browser-input.ts:149`)
+- Gdzie: `packages/app/src/pointer-focus.ts`: zamknięcie panelu Esc woła blokadę od razu; strona bez wcześniejszej blokady i bez gestu może dostać odmowę, a odmowa ustawia na stałe `lockUnavailable` (`browser-input.ts:154` po G-139: odrzucona obietnica ponowionego żądania)
 - Pakiet właściciela: packages/app, packages/engine/src/input
 - Test przyjęcia: prawdziwy Chrome (e2e) z tym przebiegiem; po odmowie kolejne kliknięcie nadal blokuje
 
 ### G-136 Przejazd Bramy Grodzkiej poza osią frontów
-- Status: zgłoszone (1.11, kurator przy ADR-0062 etap 2; T-082)
+- Status: w weryfikacji (0dc9de2: przejazd w osi obu frontów, 3 osie okien co 2 m, `gate-mouth-off-axis` baza 3; prześwit T-086 osobno, wymaga sklepienia ze spadkiem)
 - Ważność: S3 · Zasięg: lokalny (Brama Grodzka) · Koszt: niski
 - Gdzie: `GATE_PASSAGES` w `packages/sim/src/content/lublin/sites.ts` biegnie za węzłem drogi OSM w293488528, ok. 1,4 m na południe od osi bramy; łuk przesunięty o 1,64 m (od Grodzkiej) i 1,36 m (od Zamku) od środka widocznego frontu, przez co przepis ma 2 osie okien zamiast 3
 - Poprawka: przejazd przesunięty prostopadle o ok. 1,4 m na północ, (701,0, 129,4)→(727,0, 153,6); potem przepis z 3 osiami co 2,1 m; prześwit łuku (T-086) przy okazji
@@ -462,7 +462,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola skanu dla punktów pasów bez nawierzchni, baza 56 → 0 albo uzasadnione wyjątki
 
 ### G-139 Smoke „title → new game”: gracz przechodzi 2,09 m zamiast ponad 2,5 m przy szybkim starcie
-- Status: w weryfikacji (181cca8: przyczyna w `BrowserInput`: `pointerlockerror` od odrzuconej opcji `unadjustedMovement` w Chromium na Linuksie ustawiał `lockUnavailable` na stałe, a skok kursora przy wejściu w blokadę liczył się jako obrót; sonda 3/14 → 0/8, smoke 1/10 → 0/10)
+- Status: w PR #112 (weryfikator przyjął 1.11; 181cca8: przyczyna w `BrowserInput`: `pointerlockerror` od odrzuconej opcji `unadjustedMovement` w Chromium na Linuksie ustawiał `lockUnavailable` na stałe, a skok kursora przy wejściu w blokadę liczył się jako obrót; sonda 3/14 → 0/8, smoke 1/10 → 0/10)
 - Ważność: S3 (fałszywie czerwony smoke w CI)
 - Gdzie: `e2e/smoke.spec.ts`, test „title → new game → … IndexedDB”: przy starcie ok. 14 s ruch w pierwszych 60 krokach daje 2,09 m; bez renderera zawsze 4,20 m, więc to wyścig startu w aplikacji (może z ekranem ładowania #102: kroki liczone przed końcem `prepare` albo wejście przed pointer lockiem)
 - Pakiet właściciela: packages/app, e2e (QA)
