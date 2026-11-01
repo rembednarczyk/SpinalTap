@@ -100,6 +100,26 @@ describe("signs in front of a wall a neighbour stands out in front of (G-157, G-
     expect(tubes).toBe(open);
   });
 
+  it("keep the tube of a short wall no neighbour cuts (G-170)", () => {
+    // A corner cut off 0.3 x 0.3 m: the samples end that wall a hair (1 ulp) short of its length.
+    const ring = cleanRing([{ x: 0.3, z: 0 }, { x: 18, z: 0 }, { x: 18, z: 12 }, { x: 0, z: 12 }, { x: 0, z: 0.3 }]);
+    let short = 0;
+    let lit = 0;
+    for (let look = 1; look <= 80; look++) {
+      const sink = new MeshSink();
+      const f = facadeFrame(house(look, { ring }), () => null);
+      planBuildingSigns(sink, f, () => null);
+      if (count(sink, MAP_SIGN_KIND.tube) === 0) continue;
+      lit++;
+      for (let v = 0; v < sink.vertexCount; v += 4) {
+        const p = (k: number, j: number) => sink.positions[(v + k) * 3 + j]!;
+        if (sink.uvs2[v * 2 + 1] === MAP_SIGN_KIND.tube && Math.abs(Math.hypot(p(1, 0) - p(0, 0), p(1, 2) - p(0, 2)) - Math.hypot(0.3, 0.3)) < 1e-9) short++;
+      }
+    }
+    expect(lit).toBeGreaterThan(0);
+    expect(short).toBe(lit);
+  });
+
   it("lay the same tubes when the frame knows the neighbours' bounds (G-170)", () => {
     const quads = (boxes: readonly Box[], near?: NeighboursNear): number[] => {
       const all: number[] = [];
