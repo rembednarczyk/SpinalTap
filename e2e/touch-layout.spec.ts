@@ -1,5 +1,5 @@
 import { type Page, expect, test } from "@playwright/test";
-import { freeze, step, teleport, waitForGame, waitForPlay } from "./helpers";
+import { freeze, step, teleport, newGame, waitForGame, waitForPlay } from "./helpers";
 
 /**
  * A phone in landscape (ADR-0035): at 800x370 and 667x375 CSS px no key element of the HUD or
@@ -72,7 +72,7 @@ for (const [w, h] of [
         });
         seen.observe(document.body, { childList: true, subtree: true });
       });
-      await page.getByRole("button", { name: "New Game" }).tap();
+      await newGame(page, "tap");
       await waitForPlay(page);
       const loading = await page.evaluate(() => (window as unknown as { __loadingBoxes: Box[] | null }).__loadingBoxes);
       expect(loading).not.toBeNull();
@@ -113,7 +113,7 @@ test("phone: the settings in the pause menu scroll to their last control", async
   test.setTimeout(180_000);
   await page.goto("/?seed=7&models=off");
   await waitForGame(page);
-  await page.getByRole("button", { name: "New Game" }).tap();
+  await newGame(page, "tap");
   await expect(page.getByTestId("hud")).toBeVisible();
   await page.evaluate(() => window.__seki!.session.pause());
   await expect(page.getByTestId("pause-menu")).toBeVisible();

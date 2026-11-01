@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { type Page, expect, test } from "@playwright/test";
-import { type Frame, freeze, gameState, perf, place, step, teleport, teleportTo, waitForGame, waitForPlay } from "./helpers";
+import { type Frame, freeze, gameState, perf, place, step, teleport, teleportTo, newGame, waitForGame, waitForPlay } from "./helpers";
 
 const budgets = JSON.parse(readFileSync("tools/perf-budgets.json", "utf8")) as {
   scenes: Record<string, { drawCalls: number; activeMeshes: number }>;
@@ -70,7 +70,7 @@ function within(scene: string, sample: Awaited<ReturnType<typeof perf>>) {
 const tppAt = async (page: Page, at: { frame?: Frame; x: number; z: number; yaw: number; walk: number }, query = "/?seed=3&models=off") => {
   await page.goto(query);
   await waitForGame(page);
-  await page.getByRole("button", { name: "New Game" }).click();
+  await newGame(page);
   await waitForPlay(page);
   await freeze(page);
   await step(page, 1, { toggleCamera: true });

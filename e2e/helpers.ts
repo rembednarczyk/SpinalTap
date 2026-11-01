@@ -5,6 +5,17 @@ export const waitForGame = async (page: Page) => {
 };
 
 /**
+ * New Game from the title screen, through its setup (ADR-0066): the difficulty stays on Normal,
+ * so the run is the one the specs always had. A tap on a touch page, a click elsewhere.
+ */
+export const newGame = async (page: Page, how: "click" | "tap" = "click", timeout?: number) => {
+  for (const name of ["New Game", "Start"]) {
+    const button = page.getByRole("button", { name, exact: true });
+    await (how === "tap" ? button.tap(timeout === undefined ? {} : { timeout }) : button.click(timeout === undefined ? {} : { timeout }));
+  }
+};
+
+/**
  * Waits for the game on screen after New Game or a load: the loading screen (ADR-0057) ends once
  * the renderer has prepared the start. Waits for the game's state, not a clock; returns how long
  * the start took in ms, for the report.
