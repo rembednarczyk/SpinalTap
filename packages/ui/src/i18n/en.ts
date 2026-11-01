@@ -44,6 +44,9 @@ export const en = {
   "slots.auto": "Autosave",
   "slots.slot": "Slot {n}",
   "slots.empty": "empty",
+  "slots.export": "Export",
+  "slots.import": "Import a save file",
+  "slots.imported": "Imported",
   // Controls help.
   "help.move": "move",
   "help.sprint": "sprint",

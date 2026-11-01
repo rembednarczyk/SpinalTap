@@ -127,8 +127,10 @@ export const mapHeight = (chunks: readonly LublinChunkData[], x: number, z: numb
 };
 
 /**
- * Ramps along every flight of steps of the map (`highway=steps`): one per segment, from the
- * terrain at its ends, so a path down a scarp walks at an even grade.
+ * Ramps along the named flights of steps of the map (`highway=steps` with a name: only those
+ * are in a chunk's `streets`, 3 of 69 flights): one per segment, from the terrain at its ends,
+ * so a path down a scarp walks at an even grade. The unnamed flights are left to the terrain,
+ * which follows the NMT along them (roads audit 31.10, G-087).
  */
 export const stepRamps = (chunks: readonly LublinChunkData[], width = 3, blend = 1.5): Ramp[] => {
   const out: Ramp[] = [];

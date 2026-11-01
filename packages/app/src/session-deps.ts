@@ -24,6 +24,8 @@ export interface GameSessionDeps {
   readonly onFocusChange?: (wantsPointer: boolean) => void;
   /** Where settings live (localStorage in the browser). Without it changes last for the session only. */
   readonly settings?: SettingsHost;
+  /** Hands a file to the player (a download in the browser): exported saves. */
+  readonly download?: (fileName: string, text: string) => void;
   /** 3D preview of the character menu (the engine's PreviewStage in the browser). */
   readonly preview?: PreviewHost;
   /** First-run hints already seen, and where to keep them (localStorage in the browser). */
