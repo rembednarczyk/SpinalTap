@@ -5,6 +5,8 @@ import { type StreetPropItem, VEHICLE_SIZE, terrainHeightAt } from "../../../pac
 import { planSteps } from "../../../packages/engine/src/renderer/mapcity/steps-plan";
 import { facadeFrame } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
 import { planFarBuilding } from "../../../packages/engine/src/renderer/mapcity/facade-plan";
+import { landmarkAt } from "../../../packages/engine/src/renderer/mapcity/landmarks";
+import { LANDMARK_RECIPES } from "../../../packages/engine/src/renderer/mapcity/landmarks/recipes";
 import { type BuildingSource, mapBuilding } from "../../../packages/engine/src/renderer/mapcity/map-building";
 import { centroid, cleanRing, pointInRing } from "../../../packages/engine/src/renderer/mapcity/polygon";
 import { stackTiers } from "../../../packages/engine/src/renderer/mapcity/vertical-plan";
@@ -92,6 +94,13 @@ const LANDMARK_MONUMENTS = ["n481952877", "n481952879", "n481952880"];
 const near = (x: number, z: number) => `${x.toFixed(0)},${z.toFixed(0)}`;
 const inMap = (x: number, z: number) => MAP_CHUNKS.some((c) => x > c.bounds.minX + 1 && x < c.bounds.maxX - 1 && z > c.bounds.minZ + 1 && z < c.bounds.maxZ - 1);
 const onChunk = (x: number, z: number) => MAP_CHUNKS.some(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ);
+/** Distance from (x, z) to the segment a-b. */
+const segmentGap = (x: number, z: number, a: { x: number; z: number }, b: { x: number; z: number }) => {
+  const dx = b.x - a.x;
+  const dz = b.z - a.z;
+  const k = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+  return Math.hypot(a.x + dx * k - x, a.z + dz * k - z);
+};
 /** Is (x, z) more than `m` from the map's edge (the chunks' seams inside it aside)? */
 const deepInMap = (x: number, z: number, m: number) => [-m, 0, m].every((a) => [-m, 0, m].every((b) => onChunk(x + a, z + b)));
 
@@ -578,6 +587,23 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
         return q.d < roadHalfWidth(r.points, q.side >= 0 ? 1 : -1) + 0.5 ? [{ at: near(c.x, c.z), what: `${c.model} by ${by.name} ${q.d.toFixed(1)} m from ${r.name}` }] : [];
       });
     }),
+  /**
+   * A parked car whose body (sampled every eighth of its length and width) comes nearer than
+   * 1.5 m to the axis of a service road of the map data (a driveway, a yard's lane; not a car
+   * park's aisle): it stands across the road's mouth (G-140).
+   */
+  "parked-car-on-service-road": () => {
+    const ways = extractFeatures(SOURCE_OSM).lines.filter((l) => l.tags.highway === "service" && l.tags.service !== "parking_aisle" && l.tags.area !== "yes" && Number(l.tags.layer ?? 0) >= 0);
+    const segs = ways.flatMap((l) => l.line.slice(1).map((b, i) => ({ id: l.id, a: l.line[i]!, b })));
+    return PARKED_CARS.flatMap((c) => {
+      const { width, length } = VEHICLE_SIZE[c.model];
+      const fx = Math.sin(c.yaw);
+      const fz = Math.cos(c.yaw);
+      const body = [0, 1, 2, 3, 4, 5, 6, 7, 8].flatMap((i) => [0, 1, 2, 3, 4, 5, 6, 7, 8].map((k) => ({ x: c.x + fz * width * (i / 8 - 0.5) + fx * length * (k / 8 - 0.5), z: c.z - fx * width * (i / 8 - 0.5) + fz * length * (k / 8 - 0.5) })));
+      const hit = segs.find(({ a, b }) => Math.max(a.x, b.x) > c.x - 8 && Math.min(a.x, b.x) < c.x + 8 && Math.max(a.z, b.z) > c.z - 8 && Math.min(a.z, b.z) < c.z + 8 && body.some((p) => segmentGap(p.x, p.z, a, b) < 1.5));
+      return hit ? [{ at: near(c.x, c.z), what: `${c.model} on ${hit.id}` }] : [];
+    });
+  },
   /** A game block standing on the ground (not an awning or a deck) that floats or sinks. */
   "prop-off-ground": () =>
     GAME_PROPS.flatMap((p) => {
@@ -929,6 +955,21 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       const want = (b.roof ?? 0) <= 0.3 ? "flat" : ROOF_KIND[b.roofShape!];
       return drawn === want ? [] : [{ at: near(b.x, b.z), what: `${b.id} ${b.name ?? ""} roof:shape=${b.roofShape} drawn as ${drawn}` }];
     }),
+  /**
+   * A building or part of a landmark recipe (ADR-0062) the map city does not draw from it: missing
+   * from the map, or not matched by its position, so it gets the tenements' facade instead.
+   */
+  "landmark-recipe-unmatched": () => {
+    const byId = new Map(MAP_CHUNKS.flatMap((c) => c.buildings.map((b) => [b.id, b] as const)));
+    return LANDMARK_RECIPES.flatMap((r) =>
+      r.parts.flatMap((p) => {
+        const b = byId.get(p.osm);
+        const view = b ? buildingView(b) : null;
+        if (b && view?.kind === "building" && landmarkAt(b.x, b.z, view.outline.length)?.part.osm === p.osm) return [];
+        return [{ at: b ? near(b.x, b.z) : "-", what: `${r.key} ${p.osm} ${b ? "drawn as a tenement" : "not in the map"}` }];
+      }),
+    );
+  },
   /**
    * A public building drawn as a house (G-097, G-120): its own tags say an office of government, a
    * town hall, a court, a library, a theatre, a post office or an arts centre (A), or a point of a

@@ -3,8 +3,10 @@ import type { Entity } from "../world/components";
 import type { SimContext, System, TakedownRun } from "../world/context";
 import { chestOf, eyeOf, lineOfSight } from "../world/hitscan";
 import { inCreationOrder } from "../world/ordering";
+import { isEngaged, noteViolence } from "../world/street";
 import { playerHeld } from "../world/takedown";
 import { awarenessOf } from "./ai/ganger-perception";
+import { seenCommitting } from "./crime-system";
 
 /** How close the player has to be, metres between the centres on the ground (ADR-0065). */
 export const TAKEDOWN_REACH = 1.6;
@@ -17,7 +19,7 @@ const TAKEDOWN_REACH_Y = 0.8;
 /** A phase that ends within float noise of the step counts as over. */
 const TIME_EPSILON = 1e-6;
 
-type Target = Entity & { health: NonNullable<Entity["health"]>; combatant: NonNullable<Entity["combatant"]> };
+type Target = Entity & { health: NonNullable<Entity["health"]> };
 
 const ZERO = { x: 0, y: 0, z: 0 } as const;
 
@@ -37,11 +39,13 @@ const behind = (target: Entity, player: Entity): boolean =>
 
 /**
  * Distance from the player to `e` when the rules let her take it down from where she stands
- * (reach, height, from behind or a target stunned or unaware of her), else null. Pure: the
- * line of sight is the caller's.
+ * (reach, height, from behind or a target stunned or unaware of her), else null. A target is
+ * someone with health and a weapon slot, or a civilian with health (stage 2: an assault once
+ * seen), but nobody with a talk, a shop or a job to offer (`interactable`): those are left out
+ * in this stage. Pure: the line of sight is the caller's.
  */
 export const takedownDistance = (player: Entity, e: Target): number | null => {
-  if (e.player || e.unconscious || e.passerby || e.vehicle || e.health.current <= 0) return null;
+  if (e.player || e.unconscious || e.passerby || e.vehicle || e.interactable || e.health.current <= 0 || !(e.combatant || e.civilian)) return null;
   const distance = Math.hypot(e.position.x - player.position.x, e.position.z - player.position.z);
   if (distance > TAKEDOWN_REACH || Math.abs(e.position.y - player.position.y) > TAKEDOWN_REACH_Y) return null;
   return behind(e, player) || stunned(e) || unaware(e) ? distance : null;
@@ -54,14 +58,14 @@ const reachOf = (ctx: SimContext, player: Entity, e: Target): number | null => {
 };
 
 /**
- * Whom the player could take down now: the nearest NPC with a weapon and health in reach, from
- * behind, or from any side when it is stunned or unaware of her. Ties go to the older entity.
- * Nobody while she cannot act, hangs on a ladder or a ledge, or is in the air.
+ * Whom the player could take down now: the nearest NPC with a weapon (or a civilian) and health
+ * in reach, from behind, or from any side when it is stunned or unaware of her. Ties go to the
+ * older entity. Nobody while she cannot act, hangs on a ladder or a ledge, or is in the air.
  */
 export const takedownCandidate = (ctx: SimContext, player: Entity): { target: Target; distance: number } | null => {
   if (playerHeld(ctx) || player.climb || player.mantle || player.fall !== undefined) return null;
   let best: { target: Target; distance: number } | null = null;
-  for (const e of inCreationOrder(ctx.world.with("combatant", "health"))) {
+  for (const e of inCreationOrder(ctx.world.with("health"))) {
     const distance = reachOf(ctx, player, e);
     if (distance !== null && (!best || distance < best.distance)) best = { target: e, distance };
   }
@@ -71,7 +75,7 @@ export const takedownCandidate = (ctx: SimContext, player: Entity): { target: Ta
 /** Holds the target still: no steps, no swing, weapon down. */
 const hold = (target: Target): void => {
   if (target.velocity) target.velocity = { ...ZERO };
-  target.combatant.engaged = false;
+  if (target.combatant) target.combatant.engaged = false;
   const m = target.melee;
   if (m) {
     m.phase = "idle";
@@ -103,11 +107,13 @@ const breakFree = (target: Target, player: Entity): void => {
 };
 
 /**
- * Knocked out: down for good until stage 2 of the ADR brings the waking. Its mind is wiped: it
- * no longer counts as fighting (the RAM, the activities, the contract's alarm read `alerted`).
+ * Knocked out: down until an NPC finds it and wakes it (the body watch), knowing where the player
+ * stood. Its mind is wiped: it no longer counts as fighting (the RAM, the activities, the
+ * contract's alarm read `alerted`). `fought`: it was fighting her, so its body is no crime.
  */
-const knockOut = (ctx: SimContext, target: Target): void => {
+const knockOut = (ctx: SimContext, target: Target, player: Entity, fought: boolean): void => {
   ctx.world.addComponent(target, "unconscious", true);
+  ctx.world.addComponent(target, "downed", { playerAt: { ...player.position }, fought, found: false, reported: false, finder: null, wake: 0 });
   hold(target);
   if (target.ai) {
     target.ai.alerted = false;
@@ -130,7 +136,7 @@ const kill = (ctx: SimContext, target: Target, player: Entity): void => {
 };
 
 const advance = (ctx: SimContext, run: TakedownRun, player: Entity | null): void => {
-  const target = [...ctx.world.with("combatant", "health")].find((e) => e.id === run.target);
+  const target = [...ctx.world.with("health")].find((e) => e.id === run.target);
   if (!player || ctx.session.gameOver || !target || target.health.current <= 0) {
     ctx.session.takedown = null;
     ctx.bus.emit("TakedownBroken", { target: run.target, reason: "gone" });
@@ -152,9 +158,14 @@ const advance = (ctx: SimContext, run: TakedownRun, player: Entity | null): void
   // Holding the attack button through most of it turns it into a kill; still held, it fires nothing.
   const lethal = run.lethal || run.held * 2 > run.steps;
   ctx.session.attackLock = ctx.input.fire;
+  const engaged = isEngaged(target);
   if (lethal) kill(ctx, target, player);
-  else knockOut(ctx, target);
-  ctx.bus.emit("TakedownDone", { target: target.id, lethal, witnessed: false });
+  else knockOut(ctx, target, player, engaged);
+  // On someone not fighting her it is an assault (ADR-0029), a crime once a witness sees it; a
+  // kill's death is then a murder. The crime system finds the witnesses at the end of the step
+  // and marks the body reported once the report is made (a civilian's call can be cut off).
+  noteViolence(ctx, target, engaged, target.position, lethal ? undefined : target.id);
+  ctx.bus.emit("TakedownDone", { target: target.id, lethal, witnessed: seenCommitting(ctx, player, target.position) });
 };
 
 /**
