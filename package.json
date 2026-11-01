@@ -24,6 +24,7 @@
     "osm:preview": "node tools/osm-import/src/preview.ts",
     "osm:props": "node tools/osm-import/src/props.ts",
     "osm:hydrants": "node tools/osm-import/src/fetch-hydrants.ts",
+    "osm:entrances": "node tools/osm-import/src/fetch-entrances.ts",
     "changelog": "node tools/changelog/changelog.mjs"
   },
   "devDependencies": {
