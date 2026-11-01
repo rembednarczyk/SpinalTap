@@ -216,6 +216,9 @@ describe("npcHealth: hostile NPCs as they appear (ADR-0066)", () => {
     expect(byKey(normal, full!.key!)?.health).toEqual({ current: base, max: base });
     expect(byKey(normal, hurt!.key!)?.health).toEqual({ current: Math.round((base * 90) / max), max: base });
     expect(byKey(normal, low!.key!)?.health).toEqual({ current: 1, max: base });
+    // A much weaker profile rounds 1/max down to 0: the enemy still loads alive.
+    const weak = reloadOn(sim, { npcHealth: 0.25 });
+    expect(byKey(weak, low!.key!)?.health).toEqual({ current: 1, max: Math.round(base * 0.25) });
     // A save without the maximum (made on "normal") is taken at the content's own.
     const plain = eliminate({});
     const one = plain.crew.find((e) => e.health?.max === base)!;
