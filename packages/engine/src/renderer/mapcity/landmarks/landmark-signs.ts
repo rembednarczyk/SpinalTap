@@ -4,7 +4,7 @@ import { spanAt } from "../passage-plan";
 import { MAP_SIGN_KIND } from "../sign-plan";
 import { type Uv, quadUv } from "../sink-ops";
 import { onWall } from "./kit";
-import { type LandmarkFrame, clockSpot, clockWalls, litMouths, mouthWall, screenOn, uplights } from "./landmark-plan";
+import { type LandmarkFrame, clockSpot, clockWalls, litMouths, mouthWall, screenOn, tabletOn, uplights } from "./landmark-plan";
 import { passageAxis } from "./layer2077";
 
 /**
@@ -68,6 +68,10 @@ export const planLandmarkSigns = (sink: MeshSink, f: LandmarkFrame, nameSlot: (n
   const s = screenOn(f);
   const slot = s && layer.screen ? nameSlot(layer.screen) : null;
   if (s && slot !== null) flat(sink, s.w, s.u, s.y, 0.16, s.width, s.height, tint("#5ce1ff", 1), [slot, MAP_SIGN_KIND.name]);
+  // The year on the tablet under the cartouche, in gilt letters on its dark stone.
+  const date = tabletOn(f);
+  const dateSlot = date ? nameSlot(date.text) : null;
+  if (date && dateSlot !== null) flat(sink, date.w, date.u, date.y, 0.08, date.width - 0.16, date.height - 0.08, tint("#f0d49a", 0.85), [dateSlot, MAP_SIGN_KIND.name]);
   const fresh = mouthWall(f, "new");
   if (fresh && layer.plaque) {
     // Beside the mouth, on the side with more room, at eye level.

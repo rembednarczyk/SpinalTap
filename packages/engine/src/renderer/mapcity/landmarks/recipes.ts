@@ -90,9 +90,24 @@ export interface Tier {
    * A classicist front (Merlini's Brama Grodzka, 1785): the walls rusticated up to a string course
    * over the passage's arch with a keystone in it, `rows` rows of up to `windows` framed windows
    * over it, the pilasters from the string course up, and on a gabled roof a raking cornice with
-   * a round window in the gable.
+   * the front's face in the gable.
    */
-  readonly front?: { readonly rows: number; readonly windows: number };
+  readonly front?: ClassicFront;
+}
+
+/**
+ * What stands in a classicist front's gable: a round window, a cartouche over a tablet with the
+ * front's `inscription`, or a round-headed window between two blind round-headed niches.
+ */
+export type GableFace = "oculus" | "cartouche" | "lunette";
+
+/** A classicist front's storeys of windows over the arch and the faces of its gables, by side (absent: round windows). */
+export interface ClassicFront {
+  readonly rows: number;
+  readonly windows: number;
+  readonly gables?: { readonly old: GableFace; readonly new: GableFace };
+  /** The tablet's text under a cartouche (an in-world inscription, ADR-0056: a date in Roman numerals needs no translation). */
+  readonly inscription?: string;
 }
 
 /** One OSM building or `building:part` of a landmark with its tier and crown. */
@@ -199,14 +214,18 @@ const BRAMA_KRAKOWSKA: LandmarkRecipe = {
  * 19 x 8 m along Grodzka, the passage through its length, three storeys (`building:levels`) with
  * the walls to y -2.0 and the ridge 3.7 m over them. Its two fronts are the passage's ends, the
  * long walls stand against the tenements next door. The whole gate is in the Old Town: the
- * subdued layer on both fronts, the camera on the Old Town's (Grodzka's) front.
+ * subdued layer on both fronts, the camera on the Old Town's (Grodzka's) front. After the
+ * photographs (Commons): one storey of large windows (about 1 x 1.6 m) over the arch on both
+ * fronts; in the gable over Grodzka a cartouche over a tablet with the year of the rebuilding
+ * (MDCCLXXXV), in the gable towards the castle a round-headed window between two blind niches.
+ * Two window axes on each front for now (the passage lies off the fronts' axis in the data, G-136).
  */
 const BRAMA_GRODZKA: LandmarkRecipe = {
   key: "brama-grodzka",
   parts: [
     {
       osm: "w232362876",
-      tier: { material: "plaster", colour: "beige", plinth: 0, blinds: NO_BLINDS, pilasters: true, cornice: true, base: false, openings: false, clock: false, front: { rows: 2, windows: 3 } },
+      tier: { material: "plaster", colour: "beige", plinth: 0, blinds: NO_BLINDS, pilasters: true, cornice: true, base: false, openings: false, clock: false, front: { rows: 1, windows: 3, gables: { old: "cartouche", new: "lunette" }, inscription: "MDCCLXXXV" } },
       crown: { kind: "roof" },
     },
   ],

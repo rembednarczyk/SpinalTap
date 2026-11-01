@@ -9,9 +9,9 @@ import { pointInRing } from "../polygon";
 import { SWATCH, archPanel, blindNiches, clockFace, cornice, helmet, lit, onWall, pilasters, shownWalls, skirtRoof, slabRing, solid, stonePlinth } from "./kit";
 import { GALLERY, type WallRect, battlements, buttress, clearOfPassages, diaper, gallery, paintingNiche, plaqueRow, smallWindows } from "./elevation";
 import { camera, corniceLights, facing, helmLeds, mast, scanner, screenFrame, sideOf, uplightFittings } from "./layer2077";
-import { courseAndKeystones, dataRoof, gableTrim, rustication, stringCourse, windowRows } from "./classicist";
+import { TABLET, courseAndKeystones, dataRoof, gableOver, gableTrim, rustication, stringCourse, windowRows } from "./classicist";
 import type { LandmarkFrame } from "./landmark-frame";
-import type { LandmarkPart, Material, PartRecipe, Tier } from "./recipes";
+import type { GableFace, LandmarkPart, Material, PartRecipe, Tier } from "./recipes";
 
 /**
  * A landmark's building or part from its recipe (ADR-0062), in place of the facade plan: the
@@ -265,7 +265,25 @@ const classicFront = (sink: MeshSink, f: LandmarkFrame, front: NonNullable<Tier[
   courseAndKeystones(sink, f, course, trim);
   // No window behind a neighbour standing out in front of the front (Teatr NN by Brama Grodzka).
   windowRows(sink, f, front.rows, front.windows, course + 0.35, f.top - 0.7, trim, solid(SWATCH.opening), (w, u0, u1) => !intoNeighbour(f, w, u0, u1, 0.35));
-  if (f.landmark.part.crown.kind === "roof") gableTrim(sink, f, trim, solid(SWATCH.opening));
+  if (f.landmark.part.crown.kind === "roof") gableTrim(sink, f, trim, solid(SWATCH.opening), (w) => gableFace(f, w));
+};
+
+/** What stands in the gable over a wall: the recipe's face for the wall's side, else a round window. */
+export const gableFace = (f: LandmarkFrame, w: Wall): GableFace => {
+  const g = f.landmark.part.tier.front?.gables;
+  const side = sideOf(w, f.landmark.recipe.layer);
+  return g && side !== "edge" ? g[side] : "oculus";
+};
+
+/** The dated tablet under a cartouche: its wall, middle along it, world y, size and text; null without one. */
+export const tabletOn = (f: LandmarkFrame): { w: Wall; u: number; y: number; width: number; height: number; text: string } | null => {
+  const text = f.landmark.part.tier.front?.inscription;
+  if (!text || f.landmark.part.crown.kind !== "roof") return null;
+  for (const w of shownWalls(f)) {
+    const g = gableFace(f, w) === "cartouche" ? gableOver(f, w) : null;
+    if (g) return { w, u: g.u, y: g.y0 + TABLET.at, width: TABLET.width, height: TABLET.height, text };
+  }
+  return null;
 };
 
 /** The detailed landmark part for the near cells. */

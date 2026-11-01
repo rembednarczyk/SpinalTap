@@ -3,9 +3,10 @@ import { DRESS_FLAG, MeshSink, hexColor } from "../src/renderer/mesh-sink";
 import { planNearBuilding } from "../src/renderer/mapcity/facade-plan";
 import { ROOF_STYLE } from "../src/renderer/mapcity/facade-style";
 import { type LandmarkFrame, landmarkAt, planFarLandmark, planLandmarkCables, planLandmarkSigns } from "../src/renderer/mapcity/landmarks";
-import { stringCourse } from "../src/renderer/mapcity/landmarks/classicist";
+import type { Wall } from "../src/renderer/mapcity/facade-frame";
+import { gableOver, stringCourse } from "../src/renderer/mapcity/landmarks/classicist";
 import { SWATCH, onWall } from "../src/renderer/mapcity/landmarks/kit";
-import { cameraAlong, litMouths, mouthWall, uplights } from "../src/renderer/mapcity/landmarks/landmark-plan";
+import { cameraAlong, gableFace, litMouths, mouthWall, tabletOn, uplights } from "../src/renderer/mapcity/landmarks/landmark-plan";
 import { sideOf } from "../src/renderer/mapcity/landmarks/layer2077";
 import { pointInRing } from "../src/renderer/mapcity/polygon";
 import { MAP_SIGN_KIND } from "../src/renderer/mapcity/sign-plan";
@@ -75,7 +76,7 @@ describe("Brama Grodzka from the landmark kit (ADR-0062)", () => {
     expect(passageOpen(near3(f), f)).toEqual([]);
   });
 
-  it("builds the classicist fronts: rustication to a string course over the arch, a keystone, two rows of framed windows (two per front, the third axis would run into the neighbours), a round gable window", () => {
+  it("builds the classicist fronts: rustication to a string course over the arch, a keystone, one storey of large framed windows (two per front, the third axis would run into the neighbours)", () => {
     const f = gate();
     const sink = near3(f);
     const course = stringCourse(f);
@@ -87,20 +88,70 @@ describe("Brama Grodzka from the landmark kit (ADR-0062)", () => {
     for (const side of ["old", "new"] as const) {
       const m = mouthWall(f, side)!;
       const on = (hex: string, out: number) => colored(sink, hex).filter((p) => Math.abs(before(m.w, p) - out) < 1e-3);
-      // The glass of the windows (0.06 m out) over the string course, the round window over the eaves.
+      // The glass of the windows (0.06 m out) over the string course.
       const glass = on(SWATCH.opening, 0.06);
       const windows = glass.filter((p) => p.y < f.top);
-      // Two rows on the axes a neighbour leaves in sight: of three, the one behind Teatr NN (Grodzka's
-      // front) and the one inside w66293322 (the castle's) are left out.
-      expect(windows.length / 4, side).toBe(4);
+      // One storey on the axes a neighbour leaves in sight: of three, the one behind Teatr NN (Grodzka's
+      // front) and the one inside w66293322 (the castle's) are left out. Large windows, about 1 x 1.6 m.
+      expect(windows.length / 4, side).toBe(2);
       for (const p of windows) expect(p.y).toBeGreaterThan(course + 0.3);
+      expect(Math.max(...windows.map((p) => p.y)) - Math.min(...windows.map((p) => p.y)), side).toBeCloseTo(1.6, 2);
+      const across = windows.map((p) => along(m.w, p)).sort((a, b) => a - b);
+      expect(across[3]! - across[0]!, side).toBeGreaterThan(0.95);
       // The cornices over the windows (0.12 m out, under the main cornice), none behind a neighbour.
       for (const p of on(SWATCH.plasterTrim, 0.12).filter((q) => q.y < f.top - 0.6)) for (const r of nearby) expect(pointInRing(onWall(m.w, along(m.w, p), 0, 0.35), r), side).toBe(false);
-      expect(glass.filter((p) => p.y > f.top).length, side).toBeGreaterThanOrEqual(12);
       // The keystone stands proud of the arch's trim over the middle of the mouth.
       const key = on(SWATCH.plasterTrim, 0.08).filter((p) => p.y < course + 0.01 && p.y > m.top - 0.3);
       expect(key.length, side).toBe(4);
     }
+  });
+
+  it("takes one storey and the gables' faces from the recipe: a cartouche over the dated tablet over Grodzka, a lunette between blind niches towards the castle", () => {
+    const f = gate();
+    const front = f.landmark.part.tier.front!;
+    expect(front.rows).toBe(1);
+    expect(front.gables).toEqual({ old: "cartouche", new: "lunette" });
+    expect(front.inscription).toBe("MDCCLXXXV");
+    const sink = near3(f);
+    const old = mouthWall(f, "old")!.w;
+    const fresh = mouthWall(f, "new")!.w;
+    expect(gableFace(f, old)).toBe("cartouche");
+    expect(gableFace(f, fresh)).toBe("lunette");
+    const inGable = (w: Wall, hex: string) => colored(sink, hex).filter((p) => p.y > f.top && Math.abs(before(w, p)) < 0.2);
+    // Grodzka's gable: the cartouche's field and the tablet, no glass (no round window).
+    expect(inGable(old, SWATCH.cartouche).length).toBeGreaterThan(10);
+    expect(inGable(old, SWATCH.tablet).length).toBe(4);
+    expect(inGable(old, SWATCH.opening).length).toBe(0);
+    const t = tabletOn(f)!;
+    expect(t.w).toBe(old);
+    expect(t.text).toBe("MDCCLXXXV");
+    // The castle's gable: a round-headed window (a head of more than one quad) between two blind niches.
+    expect(inGable(fresh, SWATCH.cartouche).length).toBe(0);
+    const glass = inGable(fresh, SWATCH.opening);
+    expect(glass.length).toBeGreaterThan(4);
+    const g = gableOver(f, fresh)!;
+    for (const p of glass) expect(Math.abs(along(fresh, p) - g.u)).toBeLessThan(0.5);
+    const niches = inGable(fresh, SWATCH.beigeNiche);
+    expect(niches.filter((p) => along(fresh, p) < g.u - 1).length).toBeGreaterThan(4);
+    expect(niches.filter((p) => along(fresh, p) > g.u + 1).length).toBeGreaterThan(4);
+    // All of it within the gable: under the roof's line over each point, in front of the wall.
+    for (const w of [old, fresh]) {
+      const over = gableOver(f, w)!;
+      const roofAt = (u: number) => {
+        const s0 = u / w.length;
+        for (let k = 0; k + 1 < over.line.length; k++) {
+          const [a, ha] = over.line[k]!;
+          const [b, hb] = over.line[k + 1]!;
+          if (s0 >= a && s0 <= b) return over.y0 + ha + ((hb - ha) * (s0 - a)) / Math.max(b - a, 1e-9);
+        }
+        return over.y0;
+      };
+      for (const hex of [SWATCH.cartouche, SWATCH.tablet, SWATCH.opening, SWATCH.beigeNiche]) for (const p of inGable(w, hex)) expect(p.y).toBeLessThan(roofAt(along(w, p)) - 0.3);
+    }
+    // The year as an in-world sign on the tablet.
+    const slots: string[] = [];
+    planLandmarkSigns(new MeshSink(), f, (name) => slots.push(name) - 1);
+    expect(slots).toEqual(["MDCCLXXXV"]);
   });
 
   it("lays the Old Town's subdued layer on both fronts: thin warm lines, uplights at both mouths, one camera, no neon or screens", () => {
@@ -141,10 +192,11 @@ describe("Brama Grodzka from the landmark kit (ADR-0062)", () => {
     const slots: string[] = [];
     const signs = new MeshSink();
     planLandmarkSigns(signs, f, (name) => slots.push(name) - 1);
-    expect(slots).toEqual([]);
+    // The year on the tablet is the only text; the rest are the uplights' beams.
+    expect(slots).toEqual(["MDCCLXXXV"]);
     const kinds = points(signs).map((p) => Math.round(p.v2));
-    expect(new Set(kinds)).toEqual(new Set([MAP_SIGN_KIND.beam]));
-    expect(kinds.length / 4).toBe(2);
+    expect(new Set(kinds)).toEqual(new Set([MAP_SIGN_KIND.beam, MAP_SIGN_KIND.name]));
+    expect(kinds.filter((k) => k === MAP_SIGN_KIND.beam).length / 4).toBe(2);
     for (const p of points(signs)) for (const r of nearby) expect(pointInRing(p, r)).toBe(false);
   });
 
