@@ -8,8 +8,8 @@ import { planVenueSigns, venueBoards } from "../src/renderer/mapcity/venue-plan"
 
 /**
  * Signs keep out of a neighbour that stands out in front of their wall (G-157, G-159): the wall
- * stays a street wall (two of its three samples are clear), but the banners, blades, holo-ads and
- * venue boards near its ends move off the neighbour, get narrower or are left out.
+ * stays a street wall (two of its three samples are clear), but the banners, blades, holo-ads,
+ * venue boards and neon tubes near its ends move off the neighbour, get narrower or are left out.
  */
 
 const rect = (x0: number, z0: number, x1: number, z1: number) => cleanRing([{ x: x0, z: z0 }, { x: x1, z: z0 }, { x: x1, z: z1 }, { x: x0, z: z1 }]);
@@ -81,6 +81,23 @@ describe("signs in front of a wall a neighbour stands out in front of (G-157, G-
     }
     expect(banners).toBeGreaterThan(0);
     expect(blades).toBeGreaterThan(0);
+  });
+
+  it("end the neon tube under the cornice short of a neighbour in front of its wall (G-170)", () => {
+    let tubes = 0;
+    let open = 0;
+    for (let look = 1; look <= 80; look++) {
+      const sink = new MeshSink();
+      planBuildingSigns(sink, facadeFrame(house(look), lookup(OUT_FRONT)), () => null);
+      expect(intruders(sink, [MAP_SIGN_KIND.tube], OUT_FRONT)).toBe(0);
+      tubes += count(sink, MAP_SIGN_KIND.tube);
+      const free = new MeshSink();
+      planBuildingSigns(free, facadeFrame(house(look), () => null), () => null);
+      open += count(free, MAP_SIGN_KIND.tube);
+    }
+    // The south wall keeps its tube between the neighbours, the other walls theirs whole.
+    expect(open).toBeGreaterThan(0);
+    expect(tubes).toBe(open);
   });
 
   it("narrow a holo-ad on a firewall to the stretch a taller neighbour leaves clear", () => {

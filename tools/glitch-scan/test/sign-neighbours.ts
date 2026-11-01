@@ -14,7 +14,7 @@ import { groundY } from "../../../packages/sim/src/content/lublin/terrain";
 
 /**
  * The map buildings' signs (ADR-0044, ADR-0051, ADR-0064 stage 4) that reach into the solid of
- * another building (G-157, G-159): every building's signs planned as the map city plans them, each
+ * another building (G-157, G-159, G-170): every building's signs planned as the map city plans them, each
  * sign's quad walked along its edges every 0.2 m, a point counting where it lies in another
  * building's outline between that one's foot and its top.
  */
@@ -43,7 +43,7 @@ const edgePoints = (c: readonly (readonly [number, number, number])[]): [number,
   return out;
 };
 
-const KINDS: ReadonlySet<number> = new Set([MAP_SIGN_KIND.ad, MAP_SIGN_KIND.holo, MAP_SIGN_KIND.blade, MAP_SIGN_KIND.venue]);
+const KINDS: ReadonlySet<number> = new Set([MAP_SIGN_KIND.ad, MAP_SIGN_KIND.holo, MAP_SIGN_KIND.blade, MAP_SIGN_KIND.venue, MAP_SIGN_KIND.tube]);
 
 let memo: SignInNeighbour[] | null = null;
 

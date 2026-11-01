@@ -1243,6 +1243,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "banner-in-neighbour": () => signsIn([MAP_SIGN_KIND.ad]),
   /** A holo-ad or a blade sign (ADR-0044) sticking into the building next door (G-157). */
   "holo-or-blade-in-neighbour": () => signsIn([MAP_SIGN_KIND.holo, MAP_SIGN_KIND.blade]),
+  /** A neon tube under the cornice (ADR-0044) running on into the building next door (G-170). */
+  "tube-in-neighbour": () => signsIn([MAP_SIGN_KIND.tube]),
 };
 
 /** A building's own tags in the map data, by the game's id (`w…`, `r…`, a split's `/n` dropped). */
