@@ -437,7 +437,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/core (kontrakt), packages/sim, packages/engine
 
 ### G-134 Budynek z sąsiadem spoza chunków stoi w grze samotnie, a ścieżki kondygnacji zaokrąglają różnie
-- Status: częściowo w PR #105 (przecinek dziesiętny i zaokrąglenie w ścieżce z wysokością); przybudówki bez głównego budynku otwarte
+- Status: częściowo naprawione (#105: przecinek dziesiętny i zaokrąglenie w ścieżce z wysokością); przybudówki bez głównego budynku otwarte
 - Ważność: S4 · Zasięg: w231832052 (Podwale 3, 14,8 m) i w231372264 (DPS „Kalina”, 13 m) jako samotne wysokie bloki; ułamkowe kondygnacje w ścieżce `heights`/`partTier`
 - Gdzie: `tools/osm-import/src/generate.ts` (budynek trafia do chunka po środku obrysu, sąsiad ze środkiem poza chunkami nie trafia wcale); `parseLevels` dzieli po przecinku („4,5” daje 5, dziś brak w danych); ścieżka z wysokością przepuszcza ułamkowe `levels`, które renderer zaokrągla w górę, a ścieżka kondygnacji po G-116 w dół
 - Pakiet właściciela: tools/osm-import
