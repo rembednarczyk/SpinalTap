@@ -2,6 +2,7 @@ import { type BaseTexture, Constants, DynamicTexture, type Scene, ShaderMaterial
 import { prng } from "../city-kit-data";
 import { drawGlyph } from "../signage";
 import { AD_BANNERS, AD_LANDSCAPE } from "./canyon-signs";
+import { LANDMARK_TEXTS } from "./landmarks/recipes";
 import { MAP_SIGN_BLADES, MAP_SIGN_BOARDS } from "./sign-plan";
 
 const VERTEX = /* glsl */ `
@@ -326,6 +327,9 @@ export class MapSignMaterial {
     m.setFloat("reduce", 0);
     m.setFloat("fogDensity", 0.02);
     this.material = m;
+    // The landmarks' texts first (ADR-0062): the building names streamed in before a gate's cell
+    // would otherwise fill the atlas and leave its plaque or date blank.
+    for (const text of LANDMARK_TEXTS) this.slotFor(text);
   }
 
   /** Row of a landmark's name in the names atlas, drawn on first use; null when full. */

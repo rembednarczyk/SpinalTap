@@ -41,10 +41,11 @@ export interface RendererOptions {
    */
   readonly cityKit?: string | null;
   /**
-   * URL of the facade props (ADR-0058), loaded after the kit and baked into its cells and the
-   * map city's; without it the procedural decor stays.
+   * URL of the facade props (ADR-0058), or the URLs of several props files merged (the street
+   * furniture, ADR-0063), loaded after the kit and baked into its cells and the map city's;
+   * without them the procedural decor stays.
    */
-  readonly cityProps?: string | null;
+  readonly cityProps?: string | readonly string[] | null;
   /**
    * The game's chunk table for the dressing, the far city and the street signage (default
    * `WORLD_CHUNKS`); the map preview passes none, so only the city from map data is drawn.

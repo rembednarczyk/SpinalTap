@@ -13,6 +13,7 @@ import { type BlockBand, PROP_BLOCK, PROP_LOD, type PropLod, blockBand } from ".
 import { type Box2, distanceToBox } from "./polygon";
 import type { CityProps } from "../city-props";
 import { bakeDogs, clearOf, dogModel, gateDogs, stallDog } from "./robodogs";
+import { bakeStreetModel } from "./street-models";
 import { POLE_REACH, bakePoles, farPole, isPoleLamp, poleFits, poleLights, poleModel } from "./utility-poles";
 
 /**
@@ -102,7 +103,7 @@ export class StreetProps {
   private night = 1;
   private fog = -1;
   private waitingBlocks = 0;
-  /** The CC-BY street props (ADR-0063): poles and robot dogs, once `city-props.glb` has loaded. */
+  /** The CC-BY street props (ADR-0063): poles, robot dogs and the street furniture, once the props files have loaded. */
   private cityProps: CityProps | null = null;
   /** Lamps whose pole fits clear of the buildings (`poleFits`), worked out once each. */
   private readonly fits = new WeakMap<WorldProp, boolean>();
@@ -328,8 +329,11 @@ export class StreetProps {
     const sink = new MeshSink();
     const pole = this.pole;
     const pieces = this.sorted(block);
+    // The CC-BY street furniture (ADR-0063) where it has loaded; not on phones, like the poles.
+    const models = this.deps.quality === "low" ? null : this.cityProps;
     for (const p of pieces) {
       if (this.isPole(p)) continue;
+      if (models && bakeStreetModel(sink, models, p)) continue;
       bake(sink, propModel(p.prop, p.shape).sink, p);
       for (const c of p.chains ?? []) bake(sink, chainModel(c.end), { ...p, yaw: c.yaw });
     }

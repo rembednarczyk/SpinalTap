@@ -1,5 +1,6 @@
 import { type StaticProp, building, crate, lamp, neon, placeProps, skin, slab, v } from "./builders";
 import { CAR_WASH_PLACE } from "./lublin/sites";
+import { onPaving } from "./lublin/terrain";
 
 /**
  * MYJNIA 24H (ADR-0026) in a yard behind Plac Łokietka: the machine room, a canopy on two posts over the
@@ -30,4 +31,4 @@ const carWash = (): StaticProp[] => [
  * The car wash in the world. Apart from the rest of Krakowskie Przedmieście, which finds its
  * places by the map's buildings: the buildings cleared for the car wash depend on these.
  */
-export const CAR_WASH_PROPS: readonly StaticProp[] = placeProps(CAR_WASH_PLACE, carWash());
+export const CAR_WASH_PROPS: readonly StaticProp[] = onPaving(placeProps(CAR_WASH_PLACE, carWash()));

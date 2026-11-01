@@ -98,6 +98,14 @@ export interface LublinPassageData {
   readonly rise: number;
 }
 
+/** An unnamed service road (a driveway, a yard's lane): no lane of the game, only room kept clear of parked cars (G-140). */
+export interface LublinServiceWayData {
+  /** World polyline, clipped to the chunk. */
+  readonly line: FlatPoints;
+  /** Its carriageway's width (m). */
+  readonly width: number;
+}
+
 export interface LublinChunkData {
   readonly id: string;
   readonly district: "shinsekai-7" | "kanal" | "targ" | "doki";
@@ -113,6 +121,8 @@ export interface LublinChunkData {
   readonly pois: readonly LublinPoiData[];
   /** Passages through its buildings, when it has any. */
   readonly passages?: readonly LublinPassageData[];
+  /** Unnamed service roads, when it has any (named ones are among `streets`). */
+  readonly serviceWays?: readonly LublinServiceWayData[];
 }
 
 /**

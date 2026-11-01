@@ -24,6 +24,13 @@ export const SWATCH = {
   plaster: "#ebe5d6",
   plasterTrim: "#f7f3ea",
   niche: "#ddd3bd",
+  // Brama Grodzka's beige plaster (`building:colour=beige`) and the joints of its rustication.
+  beige: "#e0cba3",
+  beigeJoint: "#a8916c",
+  // Its gables: the blind niches' shade, the cartouche's field and the dark stone of the dated tablet.
+  beigeNiche: "#c9b088",
+  cartouche: "#f1e6c8",
+  tablet: "#5a5246",
   opening: "#151a22",
   // The painting in the niche over the gate's arch: blue ground, a light figure.
   picture: "#2f5c8f",

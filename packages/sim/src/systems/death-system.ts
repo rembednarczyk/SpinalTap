@@ -8,7 +8,7 @@ import { grantXp } from "../world/progression-ops";
 import { disturb, isContractTarget, noteTally, offend } from "../world/street";
 
 /** A body is noticed this far (ADR-0029). */
-const BODY_NOISE = 12;
+export const BODY_NOISE = 12;
 
 export const deadFlag = (key: string): string => `dead:${key}`;
 
