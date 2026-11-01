@@ -1,0 +1,1 @@
+Powalony, ale żywy posiłek ochrony nie znika po końcu heatu: leży (albo zostaje schowany) tam, gdzie był, także po zapisie i wczytaniu, i nie zajmuje miejsca następnego posiłku; do domu wracają tylko ci na nogach (G-196).
