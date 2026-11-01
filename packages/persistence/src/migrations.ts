@@ -328,6 +328,10 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
     const capacityShards = shards + compensatingShards(completed, shards, progression.level);
     return { ...old, version: 17, domain: { ...domain, progression, ...(isObject(old.domain) ? { capacityShards } : {}) } };
   },
+  // v17 -> v18 (ADR-0065, stage 3): bodies are saved (`downed` of an entity, optional). An older
+  // save has none: whoever was knocked out in it was saved as awake and wakes up so, and the
+  // dead of a takedown had vanished. Nothing to change but the version.
+  17: (old) => ({ ...old, version: 18 }),
 };
 
 export class MigrationError extends Error {}

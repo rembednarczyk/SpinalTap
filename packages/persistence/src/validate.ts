@@ -25,6 +25,11 @@ const isObject = (v: unknown): v is Json => typeof v === "object" && v !== null 
 const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
 const isVec = (v: unknown): boolean => isObject(v) && isNum(v.x) && isNum(v.y) && isNum(v.z);
 
+const BODY_FLAGS = ["fought", "found", "reported", "dead", "carried", "hidden"] as const;
+
+/** A body of ADR-0065: where the player stood, and its flags. */
+const isBody = (v: unknown): boolean => isObject(v) && isVec(v.playerAt) && BODY_FLAGS.every((k) => typeof v[k] === "boolean");
+
 /** Returns a description of the first problem found, or null when the payload is a valid current-version snapshot. */
 export const findSchemaError = (s: Json): string | null => {
   if (s.version !== SAVE_SCHEMA_VERSION) return "wrong version";
@@ -37,6 +42,7 @@ export const findSchemaError = (s: Json): string | null => {
     if ((e.lastKnown !== undefined && !isVec(e.lastKnown)) || (e.search !== undefined && !isNum(e.search)) || (e.lost !== undefined && !isNum(e.lost))) {
       return `entity ${e.key} search`;
     }
+    if (e.downed !== undefined && !isBody(e.downed)) return `entity ${e.key} downed`;
   }
   const st = s.streaming;
   if (!isObject(st) || !Array.isArray(st.loadedChunks) || !st.loadedChunks.every((c) => typeof c === "string")) return "streaming";
