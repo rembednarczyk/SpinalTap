@@ -1,8 +1,11 @@
 import type { Vec3 } from "../math/vec3";
 import type { DifficultyProfile } from "../difficulty/difficulty";
 import type { DomainState } from "../state/domain-state";
+import type { Contract } from "../contracts/contracts";
 
 /**
+ * v22: the contract whose people are still in the world after it ended (G-178), failed or paid,
+ * until the next is taken; an older save has none, its guards gone on loading as before.
  * v21: how sure a guard is that it saw someone (G-174), while it is not sure yet; an older save
  * has every guard calm.
  * v20: a difficulty profile asked for in a fight, waiting for its end (G-171); an older save has
@@ -23,7 +26,7 @@ import type { DomainState } from "../state/domain-state";
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 21;
+export const SAVE_SCHEMA_VERSION = 22;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {
@@ -105,6 +108,12 @@ export interface SaveSnapshot {
    * loading too. Absent when none is waiting.
    */
   readonly pendingDifficulty?: DifficultyProfile;
+  /**
+   * The contract that ended (failed, or paid) while no other was taken since (G-178): its targets
+   * are rebuilt from it on loading, so the guards of an alarm fight on. Absent while a contract
+   * is in the log, running or cleared (its targets come from there), and before the first is taken.
+   */
+  readonly endedContract?: Contract;
   /** Serialized ink story state (inkjs JSON). */
   readonly narrative: string | null;
   readonly meta: { readonly label: string; readonly objective: string };

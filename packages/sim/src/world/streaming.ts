@@ -55,6 +55,11 @@ export class WorldStreamer {
   private readonly spawner: ActorSpawner;
   /** Flags the presence of conditional actors was last checked against (compared by reference). */
   private presenceFlags: readonly string[] | null = null;
+  /**
+   * The contract whose targets the catalog holds: the last one registered. They stay after the
+   * job ends (failed, cleared or paid) until the next is taken, alarmed guards fighting on (G-178).
+   */
+  private contract: Contract | null = null;
   /** Ids of entities currently asleep in an unloaded chunk (lets the renderer skip exit animations). */
   readonly streamedOut: Set<EntityId>;
   /** Ids reserved for each chunk's background passers-by (ADR-0040); the passer-by system spawns them. */
@@ -125,9 +130,15 @@ export class WorldStreamer {
    * site is resident. Ids are reserved for every target, in index order.
    */
   registerContract(world: World<Entity>, flags: readonly string[], completed: number, contract: Contract): void {
+    this.contract = contract;
     this.catalog.setContract(contractTemplates(this.ids, this.chunks, completed, contract));
     // Variation extras may stand in a neighbouring chunk (ADR-0034): each spawns with its own.
     this.spawner.spawnActors(world, flags, this.catalog.contractIn((c) => this.state.resident.has(c)), null);
+  }
+
+  /** The contract whose targets are in the world, from its registration on (G-178). */
+  get registeredContract(): Contract | null {
+    return this.contract;
   }
 
   /** Spawns the contract's characters that were waiting for a flag that is now up (ADR-0024). */

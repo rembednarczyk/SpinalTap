@@ -345,6 +345,9 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
   // v20 -> v21 (G-174): a guard's suspicion is saved while it builds up (optional). An older save
   // has every guard calm, as it loaded before.
   20: (old) => ({ ...old, version: 21 }),
+  // v21 -> v22 (G-178): the contract ended with its people still in the world is saved (optional).
+  // An older save has none: its guards were gone on loading, as they are now.
+  21: (old) => ({ ...old, version: 22 }),
 };
 
 export class MigrationError extends Error {}

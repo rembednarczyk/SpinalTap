@@ -1,0 +1,1 @@
+Strażnicy zleceń zakończonych porażką albo wykonanych zostają w świecie po wczytaniu: zaalarmowani po nieudanej infiltracji walczą dalej, więc zapis nie pozwala już uciec z walki, a zabici nie wracają (G-178, zapis v22).
