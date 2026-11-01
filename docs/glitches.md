@@ -564,13 +564,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: wyrównać zbiory dróg i parkingów między skanem a generatorem; test generatora dla przystanku niezależny od G-155
 - Pakiet właściciela: tools/glitch-scan, tools/osm-import
 
-### G-178 Strażnicy nieudanej infiltracji znikają po wczytaniu
-- Status: w PR #150, runda 3 (1.11): `formerContracts` czyszczone (12 zleceń: 0 wpisów, zapis 4,8 kB), unikalność id w walidacji; w weryfikacji. Do decyzji projektowej: szablony zakończonego zlecenia respawnują nietkniętych strażników przy ponownym wejściu, aż do następnego zlecenia (tak było przed poprawką)
-- Ważność: S2 (zapis pozwala uciec z walki) · Zasięg: kontrakt infiltrate zakończony alarmem (`contracts.active` null), strażnicy `c3-*` (5 encji) dalej walczą; po wczytaniu ich nie ma
-- Dane: seed 77, `completed: 2`, gracz w `docks(6,0,110)`, 30 kroków, `accept-contract infiltrate`, teleport 6 m przed `c3-g1`, kroki do alarmu i 60 dalej, zapis; w 1. kroku oryginał: gracz ginie (hp 0), wczytana gra: hp 84
-- Przyczyna: konstruktor `Simulation` rejestruje kontrakt tylko przy `status==="active" || hasAmbush`
-- Pakiet właściciela: packages/sim, packages/persistence
-
 ### G-179 Posiłki ochrony przy heacie poza zapisem
 - Status: zgłoszone (1.11, weryfikator #145); było przed #145
 - Ważność: S3 · Zasięg: encje `security` bez klucza i `session.watch.reinforce` nie wchodzą do zapisu; `stateHash` nie widzi encji bez klucza

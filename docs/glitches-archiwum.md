@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-178 Strażnicy nieudanej infiltracji znikają po wczytaniu
+- Status: naprawione (1.11, #150: `endedContract` i `formerContracts` w zapisie v22, `completed` z chwili rejestracji, czyszczenie zastąpionych zleceń, unikalność id; trzy rundy weryfikacji). Otwarta decyzja projektowa użytkownika: szablony zakończonego zlecenia respawnują nietkniętych strażników przy ponownym wejściu na teren, aż do następnego zlecenia (tak było przed poprawką)
+- Ważność: S2 (zapis pozwala uciec z walki) · Zasięg: kontrakt infiltrate zakończony alarmem (`contracts.active` null), strażnicy `c3-*` (5 encji) dalej walczą; po wczytaniu ich nie ma
+- Dane: seed 77, `completed: 2`, gracz w `docks(6,0,110)`, 30 kroków, `accept-contract infiltrate`, teleport 6 m przed `c3-g1`, kroki do alarmu i 60 dalej, zapis; w 1. kroku oryginał: gracz ginie (hp 0), wczytana gra: hp 84
+- Przyczyna: konstruktor `Simulation` rejestruje kontrakt tylko przy `status==="active" || hasAmbush`
+- Pakiet właściciela: packages/sim, packages/persistence
+
 ### G-182 `MapEntries.neighboursNear` bez własnego testu
 - Status: naprawione (1.11, #155: test na prawdziwym `MapEntries`, pada przy zawężonym zapytaniu indeksu)
 - Ważność: S4 (test) · Zasięg: skan i test jednostkowy G-170 używają kopii logiki odsiania, więc ścieżki gry (`map-entries.ts`) nic nie pilnuje; dziś poprawna (sonda: 7298 czworokątów identycznych z `near` i bez)
