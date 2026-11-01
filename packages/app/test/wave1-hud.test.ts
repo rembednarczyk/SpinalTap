@@ -166,9 +166,9 @@ describe("scanner view models", () => {
 describe("settings of wave 1", () => {
   it("fills the new fields of an old entry with the defaults and repairs bad values", () => {
     const old = sanitizeSettings({ quality: "low", volume: 0.3 });
-    expect(old).toMatchObject({ hudAlwaysShow: false, damageNumbers: "off", hudScale: 1, legibleFont: false, reduceFlashes: false, untimedBreach: false, colorblind: "off" });
+    expect(old).toMatchObject({ hudAlwaysShow: false, damageNumbers: "hit", hudScale: 1, legibleFont: false, reduceFlashes: false, untimedBreach: false, colorblind: "off" });
     const bad = sanitizeSettings({ hudScale: 9, damageNumbers: "loud", colorblind: "red", legibleFont: "yes", reduceFlashes: 1 });
-    expect(bad).toMatchObject({ hudScale: 1.4, damageNumbers: "off", colorblind: "off", legibleFont: false, reduceFlashes: false });
+    expect(bad).toMatchObject({ hudScale: 1.4, damageNumbers: "hit", colorblind: "off", legibleFont: false, reduceFlashes: false });
     expect(sanitizeSettings({ hudScale: 1.234, damageNumbers: "total", colorblind: "deutan", untimedBreach: true, hudAlwaysShow: true })).toMatchObject({
       hudScale: 1.25,
       damageNumbers: "total",

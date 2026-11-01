@@ -334,7 +334,7 @@ export const DEFAULT_SETTINGS: SettingsVm = {
   hints: true,
   autosave: true,
   hudAlwaysShow: false,
-  damageNumbers: "off",
+  damageNumbers: "hit",
   hudScale: 1,
   subtitleScale: 1,
   subtitleBackground: false,

@@ -14,6 +14,25 @@ import {
 
 export const SETTINGS_KEY = "seki.settings.v1";
 
+/**
+ * Revision of the defaults an entry was saved under. Revision 2 (1.11) made High quality and
+ * damage numbers per hit the defaults; an older entry takes them once, as if never chosen,
+ * because the old defaults (Low on phones, no numbers) were saved with every change.
+ */
+export const SETTINGS_REV = 2;
+
+/** Fields whose default changed in each revision; older entries drop them on load. */
+const CHANGED_DEFAULTS: readonly (readonly [number, readonly string[]])[] = [[2, ["quality", "damageNumbers"]]];
+
+const withNewDefaults = (raw: unknown): unknown => {
+  if (typeof raw !== "object" || raw === null) return raw;
+  const r = raw as Record<string, unknown>;
+  const rev = typeof r.rev === "number" ? r.rev : 1;
+  const out = { ...r };
+  for (const [since, fields] of CHANGED_DEFAULTS) if (rev < since) for (const f of fields) delete out[f];
+  return out;
+};
+
 /** The subset of Web Storage the settings need; lets tests pass a fake. */
 export type SettingsStorage = Pick<Storage, "getItem" | "setItem">;
 
@@ -99,7 +118,7 @@ export const sanitizeSettings = (raw: unknown, defaults: SettingsVm = DEFAULT_SE
 export const loadSettings = (storage: SettingsStorage | null, defaults: SettingsVm = DEFAULT_SETTINGS): SettingsVm => {
   try {
     const raw = storage?.getItem(SETTINGS_KEY);
-    return raw ? sanitizeSettings(JSON.parse(raw), defaults) : defaults;
+    return raw ? sanitizeSettings(withNewDefaults(JSON.parse(raw)), defaults) : defaults;
   } catch {
     return defaults;
   }
@@ -109,7 +128,7 @@ export const loadSettings = (storage: SettingsStorage | null, defaults: Settings
 export const saveSettings = (storage: SettingsStorage | null, settings: SettingsVm): boolean => {
   try {
     if (!storage) return false;
-    storage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    storage.setItem(SETTINGS_KEY, JSON.stringify({ ...settings, rev: SETTINGS_REV }));
     return true;
   } catch {
     return false;
