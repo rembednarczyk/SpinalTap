@@ -22,23 +22,44 @@ export const inRing = (x: number, z: number, ring: readonly Pt[]): boolean => {
 export type BayLayout = "parallel" | "perpendicular" | "diagonal";
 
 /**
- * Depth across the street from which a strip mapped without `orientation` holds its cars across
+ * Depth across the street from which a strip mapped without `orientation` holds its cars aslant
  * the kerb (m): a car along it takes 2 m, so a deeper strip is the bays' length, not a lane's
- * width (T-102: Radziwiłłowska, Ciasna, 5–8 m deep).
+ * width (T-102: Radziwiłłowska, Ciasna, 5–8 m deep). Lublin's deep strips mapped without the tag
+ * are aslant, not across (G-187: Krakowskie Przedmieście ~60°, Radziwiłłowska 65–70°, orthophoto).
  */
 const ACROSS_DEPTH = 4.5;
 
-/** The way a strip's cars stand: as the map's `orientation` says, else across the kerb when it is deep enough. */
+/** The way a strip's cars stand: as the map's `orientation` says, else aslant the kerb when it is deep enough. */
 export const bayLayout = (orientation: string | undefined, depth: number): BayLayout => {
   if (orientation === "perpendicular" || orientation === "diagonal" || orientation === "parallel") return orientation;
-  return depth >= ACROSS_DEPTH ? "perpendicular" : "parallel";
+  return depth >= ACROSS_DEPTH ? "diagonal" : "parallel";
 };
 
-/** Bays this far apart along the kerb (m): a car's length and the room to get out, or a bay's 2.5 m width, along the kerb for a diagonal one. */
-export const BAY_STEP: Readonly<Record<BayLayout, number>> = { parallel: 6.2, perpendicular: 2.6, diagonal: 3.6 };
+/**
+ * The layouts tried for a strip, in turn, until a car fits: the map's own only; for a deep strip
+ * without the tag, aslant, then across (a car aslant reaches deeper), then along the kerb (where
+ * none fits, one reaching over the lane cars drive).
+ */
+export const bayLayouts = (orientation: string | undefined, depth: number): readonly BayLayout[] => {
+  const layout = bayLayout(orientation, depth);
+  return orientation === undefined && layout === "diagonal" ? ["diagonal", "perpendicular", "parallel"] : [layout];
+};
 
-/** A diagonal bay's car turned this far from the kerb, nose first in the traffic's way. */
-const DIAGONAL = Math.PI / 4;
+/**
+ * A diagonal bay's car turned this far from the street's way, nose first towards the kerb in the
+ * traffic's way: Lublin's painted diagonal bays stand at 60–70° (G-187), not 45°.
+ */
+const DIAGONAL = Math.PI / 3;
+
+/** A bay across the kerb this wide (m): the widest parked car's 2.05 m and the room to open a door. */
+const BAY_WIDTH = 2.6;
+
+/** Bays this far apart along the kerb (m): a car's length and the room to get out, or a bay's width, stretched along the kerb by a diagonal one's slant. */
+export const BAY_STEP: Readonly<Record<BayLayout, number>> = {
+  parallel: 6.2,
+  perpendicular: BAY_WIDTH,
+  diagonal: Math.round((BAY_WIDTH / Math.sin(DIAGONAL)) * 100) / 100,
+};
 
 /** Room a parked car's side (or its nose) leaves the kerb at the strip's outer edge (m). */
 const KERB_GAP = 0.25;
