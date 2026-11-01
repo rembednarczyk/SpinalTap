@@ -40,13 +40,19 @@ const patchUpProtectee = (ctx: SimContext): void => {
   for (const e of ctx.world.with("health")) if (e.key === PROTECTEE_KEY) e.health = { ...e.health, current: e.health.max };
 };
 
+/** Oyaji lies knocked out (ADR-0065): there is nobody standing to protect. */
+const protecteeDown = (ctx: SimContext): boolean => {
+  for (const e of ctx.world.with("unconscious")) if (e.key === PROTECTEE_KEY) return true;
+  return false;
+};
+
 /** A new job from the fixer; refused while one runs, and a raid only on a living Oyaji's open stall. */
 export const acceptContract = (ctx: SimContext, cmd: Command<"accept-contract">): void => {
   const domain = ctx.state.domain;
   const kind = cmd.kind ?? "eliminate";
   if (domain.contracts.active) return;
-  // Nobody to protect once Oyaji is dead, and Hebi raid his stall only while it is open.
-  if (kind === "protect" && (hasFlag(domain.flags, deadFlag(PROTECTEE_KEY)) || !oyajiStallOpen(domain.clock))) return;
+  // Nobody to protect once Oyaji is dead or knocked out (ADR-0065), and Hebi raid his stall only while it is open.
+  if (kind === "protect" && (hasFlag(domain.flags, deadFlag(PROTECTEE_KEY)) || protecteeDown(ctx) || !oyajiStallOpen(domain.clock))) return;
   const plain = generateContractOfKind(
     kind,
     { log: domain.contracts, reputation: domain.reputation, flags: domain.flags, tick: ctx.tick, ticksPerSecond: SIM_HZ },

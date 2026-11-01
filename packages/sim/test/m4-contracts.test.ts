@@ -279,6 +279,20 @@ describe("protection (Hebi come for Oyaji)", () => {
     expect(morning.domain.contracts.active?.kind).toBe("protect");
   });
 
+  it("is refused while Oyaji lies knocked out (ADR-0065)", () => {
+    const sim = Simulation.create({ seed: 5 });
+    toMarket(sim);
+    const oyaji = byKey(sim, "oyaji")!;
+    sim.world.addComponent(oyaji, "unconscious", true);
+    sim.enqueue({ type: "accept-contract", kind: "protect" });
+    sim.step();
+    expect(sim.domain.contracts.active).toBeNull();
+    sim.world.removeComponent(oyaji, "unconscious");
+    sim.enqueue({ type: "accept-contract", kind: "protect" });
+    sim.step();
+    expect(sim.domain.contracts.active?.kind).toBe("protect");
+  });
+
   it("Seki killing Oyaji is a civilian murder and fails the job too", () => {
     const sim = Simulation.create({ seed: 5 });
     toMarket(sim);

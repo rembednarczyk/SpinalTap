@@ -4,7 +4,7 @@ import { furnitureClearance } from "./furniture-index";
 import { inBuilding, nearestWall } from "./lublin/places";
 import { type Pt, ROAD_CHAINS, type RoadChain, polylineLength, surfacesAt } from "./lublin/roads";
 import { MAP_CHUNKS } from "./lublin/sites";
-import { groundY } from "./lublin/terrain";
+import { groundY, restingY, surfaceY } from "./lublin/terrain";
 import { clearOfGame } from "./street-props";
 import { KERB_ROOM, TRAFFIC_ROUTES, laneOffset, offsetLine, pointAt, projectOn, roadHalfWidth } from "./traffic";
 
@@ -42,6 +42,12 @@ const JUNCTION_CLEAR = 12;
 const LANE_CLEAR = 1.4;
 /** Sideways shifts tried for a kerb bay, the kerb line's own first (m, negative towards the axis). */
 const KERB_NUDGE = [0, -0.4, -0.8, -1.2, 0.4] as const;
+/**
+ * Shifts along the kerb tried for a bay none of whose nudges fits (on a slope, a bend, by a
+ * driveway's mouth): to a flatter, straighter, free spot nearby (m). A mouth with its room is
+ * some 5 m wide, so a bay at its middle has to move past ±2.5 m (G-140).
+ */
+const KERB_SLIDE = [0, -1.5, 1.5, -2.5, 2.5, -3.5, 3.5] as const;
 /** Share of the bays taken. */
 const KERB_TAKEN = 0.62;
 const SQUARE_TAKEN = 0.8;
@@ -62,6 +68,25 @@ const footprint = (x: number, z: number, yaw: number, model: VehicleModel, pad: 
     [x + fx * hl + fz * hw, z + fz * hl - fx * hw],
     [x - fx * hl + fz * hw, z - fz * hl - fx * hw],
   ];
+};
+
+/** Points under a car's body at (x, z), facing yaw: its corners, the middles of its sides and its centre. */
+const underBody = (x: number, z: number, yaw: number, model: VehicleModel): { x: number; z: number }[] => {
+  const { width, length } = VEHICLE_SIZE[model];
+  const fx = Math.sin(yaw);
+  const fz = Math.cos(yaw);
+  return [-0.5, 0, 0.5].flatMap((a) => [-0.5, 0, 0.5].map((b) => ({ x: x + fz * width * a + fx * length * b, z: z - fx * width * a + fz * length * b })));
+};
+
+/**
+ * Most the paving drawn under a car's body may fall from its high side to its low one (m). A
+ * parked car is drawn level (turned only by its yaw) and rests on its high side, so on a steeper
+ * bay its low side would lift off the paving by more than a kerb (G-130).
+ */
+const LEVEL_DROP = 0.15;
+const level = (x: number, z: number, yaw: number, model: VehicleModel): boolean => {
+  const ys = underBody(x, z, yaw, model).map((p) => surfaceY(p.x, p.z));
+  return Math.max(...ys) - Math.min(...ys) <= LEVEL_DROP;
 };
 
 /** Surfaces a car may stand on: the carriageway and the cobbled squares (never a zebra, see `clearOfZebras`). */
@@ -133,14 +158,45 @@ const offOtherRoads = (x: number, z: number, hw: number, own: RoadChain): boolea
   });
 
 /**
+ * Room a parked car's body leaves the axis of an unnamed service road (a driveway, a yard's lane,
+ * G-140): its half width and this gap (m). No lane of the game runs there, so nothing else keeps
+ * the car off its mouth at the kerb.
+ */
+const SERVICE_GAP = 0.5;
+const SERVICE_WAYS = MAP_CHUNKS.flatMap((c) => c.serviceWays ?? []).map((w) => {
+  const pts = Array.from({ length: w.line.length / 2 }, (_, i): Pt => [w.line[2 * i]!, w.line[2 * i + 1]!]);
+  const xs = pts.map((p) => p[0]);
+  const zs = pts.map((p) => p[1]);
+  const reach = w.width / 2 + SERVICE_GAP;
+  return { pts, reach, minX: Math.min(...xs) - reach, maxX: Math.max(...xs) + reach, minZ: Math.min(...zs) - reach, maxZ: Math.max(...zs) + reach };
+});
+
+const inside = (p: Pt, poly: readonly Pt[]): boolean => poly.every((a, i) => cross(a, poly[(i + 1) % poly.length]!, p) <= 0) || poly.every((a, i) => cross(a, poly[(i + 1) % poly.length]!, p) >= 0);
+
+/** Does a car's footprint at (x, z), facing yaw, keep its room off every service road's axis? */
+const clearOfServiceWays = (x: number, z: number, yaw: number, model: VehicleModel): boolean => {
+  const body = footprint(x, z, yaw, model, 0);
+  const r = Math.hypot(VEHICLE_SIZE[model].width, VEHICLE_SIZE[model].length) / 2;
+  return SERVICE_WAYS.every(
+    (w) =>
+      x + r < w.minX ||
+      x - r > w.maxX ||
+      z + r < w.minZ ||
+      z - r > w.maxZ ||
+      (!w.pts.some((p) => inside(p, body)) && w.pts.every((p, i) => i === 0 || body.every((a, k) => segmentsGap(w.pts[i - 1]!, p, a, body[(k + 1) % 4]!) >= w.reach))),
+  );
+};
+
+/**
  * Is a car's footprint at (x, z), facing yaw, wholly on a carriageway or a square and free of
- * walls, furniture, the game's places and other streets' axes (and carriageways, by the kerb of
+ * walls, furniture, the game's places, service roads and other streets' axes (and carriageways, by the kerb of
  * `own`)? A street's kerb line is set from its median width, so where the carriageway narrows
  * (a bend, a pinch by a pavement) the bay falls on the grass or the pavement unless each corner
- * is checked.
+ * is checked. A bay on a slope too steep for a level car (`LEVEL_DROP`) stays empty.
  */
 const fits = (x: number, z: number, yaw: number, model: VehicleModel, own?: RoadChain): boolean => {
   if (!parkable(x, z) || !footprint(x, z, yaw, model, 0).every(([px, pz]) => parkable(px, pz)) || !clearOfZebras(x, z, yaw, model)) return false;
+  if (!level(x, z, yaw, model) || !clearOfServiceWays(x, z, yaw, model)) return false;
   const { width, length } = VEHICLE_SIZE[model];
   const fx = Math.sin(yaw);
   const fz = Math.cos(yaw);
@@ -179,10 +235,10 @@ const kerbCars = (): ParkedCar[] => {
         const yaw = turned ? Math.atan2(-p.tx, -p.tz) : Math.atan2(p.tx, p.tz);
         const model = modelAt(p.x, p.z);
         // The kerb line is the street's median one; where the carriageway is locally narrower the car edges in.
-        const shift = KERB_NUDGE.find((d) => fits(p.x + p.tz * d, p.z - p.tx * d, yaw, model, c));
-        if (shift === undefined) continue;
-        const x = p.x + p.tz * shift;
-        const z = p.z - p.tx * shift;
+        const at = (a: number, d: number) => ({ x: p.x + p.tx * a + p.tz * d, z: p.z + p.tz * a - p.tx * d });
+        const spot = KERB_SLIDE.flatMap((a) => KERB_NUDGE.map((d) => at(a, d))).find((q) => fits(q.x, q.z, yaw, model, c));
+        if (spot === undefined) continue;
+        const { x, z } = spot;
         out.push({ chunk: chunkOf(x, z), x: Math.round(x * 100) / 100, y: 0, z: Math.round(z * 100) / 100, yaw: Math.round(yaw * 1000) / 1000, model, tint: hash(p.x, p.z, 2) });
       }
     }
@@ -247,25 +303,32 @@ const overlap = (a: ParkedCar, b: ParkedCar): boolean => {
   return true;
 };
 
-/** Every parked car of the city, on the game's terrain, in a stable order; the square's bays first, no two overlapping. */
+/**
+ * Every parked car of the city, on the paving drawn under its body (G-130), in a stable order;
+ * the square's bays first, no two overlapping.
+ */
 export const PARKED_CARS: readonly ParkedCar[] = [...squareCars(), ...kerbCars()]
   .reduce<ParkedCar[]>((kept, c) => (kept.some((k) => Math.hypot(k.x - c.x, k.z - c.z) < 8 && overlap(k, c)) ? kept : [...kept, c]), [])
-  .map((c) => ({ ...c, y: Math.round(groundY(c.x, c.z) * 100) / 100 }));
+  .map((c) => ({ ...c, y: Math.round(restingY(underBody(c.x, c.z, c.yaw, c.model)) * 100) / 100 }));
 
 /** The view of a parked car: drawn by the scenery. */
 export const parkedView = (c: ParkedCar): ViewDescriptor => ({ kind: "vehicle", model: c.model, tint: c.tint, parked: true });
 
-/** A parked car as a static solid of the simulation: its footprint turned by its yaw, as tall as the car. */
+/**
+ * A parked car as a static solid of the simulation: its footprint turned by its yaw, as tall as
+ * the car, reaching down into the terrain under its lowest point so nobody slips under its low side.
+ */
 export const parkedProp = (c: ParkedCar): StaticProp => {
   const { width, length, height } = VEHICLE_SIZE[c.model];
   const fx = Math.sin(c.yaw);
   const fz = Math.cos(c.yaw);
   const corner = (a: number, b: number) => ({ x: fx * length * b + fz * width * a, z: fz * length * b - fx * width * a });
+  const low = Math.min(...underBody(c.x, c.z, c.yaw, c.model).map((p) => groundY(p.x, p.z)));
   return {
     center: { x: c.x, y: c.y, z: c.z },
     view: parkedView(c),
     solid: true,
-    prisms: [{ points: [corner(-0.5, -0.5), corner(0.5, -0.5), corner(0.5, 0.5), corner(-0.5, 0.5)], bottom: -0.3, top: height }],
+    prisms: [{ points: [corner(-0.5, -0.5), corner(0.5, -0.5), corner(0.5, 0.5), corner(-0.5, 0.5)], bottom: Math.min(-0.3, low - c.y - 0.1), top: height }],
     scenery: true,
   };
 };

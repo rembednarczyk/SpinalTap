@@ -62,6 +62,12 @@ export interface StreetOut {
   readonly noVehicles?: true;
 }
 
+/** An unnamed service road's axis (world polyline, clipped to the chunk) and its carriageway's width (m). */
+export interface ServiceWayOut {
+  readonly line: readonly number[];
+  readonly width: number;
+}
+
 export type PoiKind = "shop" | "food" | "bar" | "stop" | "hotel" | "sight" | "culture" | "church" | "service" | "office";
 
 export interface PoiOut {
@@ -86,4 +92,6 @@ export interface ChunkOut {
   readonly pois: readonly PoiOut[];
   /** Passages through the chunk's buildings (ADR-0048), when it has any. */
   readonly passages?: readonly PassageOut[];
+  /** Unnamed service roads (G-140), when it has any. */
+  readonly serviceWays?: readonly ServiceWayOut[];
 }

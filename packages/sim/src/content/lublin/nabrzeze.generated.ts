@@ -337,6 +337,21 @@ export const NABRZEZE_CHUNKS: readonly LublinChunkData[] = [
       {"kind":"stop","line":[2500.3,212.1,2504.2,209.7]},
     ],
     pois: [],
+    serviceWays: [
+      {"line":[2644.7,258.1,2634.7,250.5],"width":4},
+      {"line":[2661.6,191.5,2679.3,194],"width":4},
+      {"line":[2606.5,270,2603.9,267.8,2584.9,260.7,2595.7,249.2,2603.9,267.8],"width":4},
+      {"line":[2582.6,208.9,2593.9,218.7],"width":4},
+      {"line":[2700,260,2692.1,258.9,2685.1,260.6,2678.2,270],"width":4},
+      {"line":[2644.7,258.1,2661.3,270],"width":4},
+      {"line":[2640.6,242.6,2642.5,246.7,2644.7,258.1],"width":4},
+      {"line":[2661.6,191.5,2666.6,198.7,2669.3,206.6],"width":4},
+      {"line":[2634.7,250.5,2626.7,238.2],"width":4},
+      {"line":[2640.6,242.6,2631.9,241.3,2626.7,238.2],"width":4},
+      {"line":[2593.9,218.7,2612.7,215.7],"width":4},
+      {"line":[2612.7,215.7,2626.9,201.9,2636.3,201.3,2648.7,190.2,2657,188.1,2661.6,191.5],"width":4},
+      {"line":[2626.7,238.2,2612.5,224,2612.7,215.7],"width":4},
+    ],
   },
   {
     id: "nabrzeze-0-1",
@@ -582,6 +597,9 @@ export const NABRZEZE_CHUNKS: readonly LublinChunkData[] = [
       {"kind":"stop","line":[2383.4,281.5,2383,278.7]},
     ],
     pois: [],
+    serviceWays: [
+      {"line":[2308.1,422.8,2300,440],"width":4},
+    ],
   },
   {
     id: "nabrzeze-1-1",
@@ -716,6 +734,14 @@ export const NABRZEZE_CHUNKS: readonly LublinChunkData[] = [
       {"x":2664.8,"z":346.4,"kind":"stop","tag":"public_transport=platform","name":"Turystyczna - Leclerc 01"},
       {"x":2609.8,"z":308.8,"kind":"sight","tag":"historic=wayside_shrine","name":"Kapliczka Matki Bożej Niepokalanie Poczętej"},
       {"x":2691,"z":313.3,"kind":"food","tag":"amenity=fast_food","name":"McDonald's"},
+    ],
+    serviceWays: [
+      {"line":[2615,277,2606.5,270],"width":4},
+      {"line":[2672.4,277.7,2700,294.4],"width":4},
+      {"line":[2678.2,270,2672.4,277.7],"width":4},
+      {"line":[2661.3,270,2672.4,277.7],"width":4},
+      {"line":[2700,420.8,2692.5,430.9],"width":4},
+      {"line":[2670,285.4,2672.4,277.7],"width":4},
     ],
   },
 ];
