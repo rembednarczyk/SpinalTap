@@ -8,7 +8,7 @@ import { MeshSink } from "../src/renderer/mesh-sink";
 import { type MapBuilding, type MapVenue, facadeFrame } from "../src/renderer/mapcity/facade-frame";
 import { MapCity, type MapView } from "../src/renderer/mapcity/map-city";
 import { mapBuilding } from "../src/renderer/mapcity/map-building";
-import { drawGlyphAtlas } from "../src/renderer/mapcity/map-signs";
+import { drawGlyphAtlas, oneChannel } from "../src/renderer/mapcity/map-signs";
 import { cleanRing } from "../src/renderer/mapcity/polygon";
 import { MAP_SIGN_KIND, planBuildingSigns } from "../src/renderer/mapcity/sign-plan";
 import { glyphCell, planVenueSigns, venueBoards } from "../src/renderer/mapcity/venue-plan";
@@ -96,6 +96,25 @@ describe("venue signs (ADR-0064 stage 4)", () => {
     drawGlyphAtlas(ctx);
     expect(drawn.join("")).toBe(SIGN_GLYPHS);
     expect(SIGN_GLYPHS.length).toBeLessThanOrEqual(64);
+  });
+
+  it("keep one byte a pixel of the glyph atlas, rows bottom up as a canvas texture lies", () => {
+    // A 2 x 2 image: top row red 10, 20; bottom row 30, 40.
+    const rgba = [10, 1, 1, 255, 20, 1, 1, 255, 30, 1, 1, 255, 40, 1, 1, 255];
+    expect(Array.from(oneChannel(rgba, 2))).toEqual([30, 40, 10, 20]);
+  });
+
+  it("draw the glyph atlas at the size asked, 512 on the phone, letters scaled to the cells", () => {
+    const fonts: string[] = [];
+    const ctx = {
+      fillRect: () => {},
+      fillText: () => {},
+      set font(f: string) {
+        fonts.push(f);
+      },
+    } as unknown as CanvasRenderingContext2D;
+    drawGlyphAtlas(ctx, 512);
+    expect(fonts[0]).toMatch(/^bold 46px/);
   });
 });
 

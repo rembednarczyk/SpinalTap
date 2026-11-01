@@ -154,7 +154,7 @@ export class MapCity {
   private facadeProps: CityProps | null = null;
 
   constructor(private readonly deps: MapCityDeps) {
-    this.signs = new MapSignMaterial(deps.scene, deps.signAtlas);
+    this.signs = new MapSignMaterial(deps.scene, deps.signAtlas, deps.quality === "low" ? 512 : 1024);
     this.water = new MapWaterMaterial(deps.scene);
     this.skyline = new MapSkyline(deps.scene, deps.quality !== "low");
     this.lod = MAP_LOD[deps.quality];
