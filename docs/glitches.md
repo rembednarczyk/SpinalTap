@@ -605,7 +605,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (streaming, contracts), packages/persistence
 
 ### G-196 Powalony żywy posiłek ochrony znika po końcu heatu
-- Status: zgłoszone (1.11, naprawiacz G-193)
+- Status: w PR #174 (1.11, w weryfikacji): limit, szukanie i odsyłanie tylko dla stojących posiłków; część o ciałach bez chunku i rosnącym `sent` zostaje otwarta
 - Ważność: S4 · Zasięg: powalony, ale żywy posiłek ma AI; po końcu heatu, gdy jest daleko i poza wzrokiem, `runReinforcements` (`packages/sim/src/systems/crime-system.ts`) usuwa go jak żywego, więc ciało znika ze świata bez zapisu; do tego ciała posiłków nie mają chunku i zostają do końca sesji, a `sent` rośnie w kolejnych heatach (wpływ na wybór enforcerów od `n`)
 - Poprawka: odsyłanie tylko posiłków na nogach; powaleni zostają jak ciała; ciała posiłków sprzątane razem z chunkiem, w którym leżą; test jednej sesji
 - Pakiet właściciela: packages/sim
