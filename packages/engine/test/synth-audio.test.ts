@@ -58,6 +58,29 @@ describe("audio cues", () => {
   });
 });
 
+describe("SynthAudio injected functions", () => {
+  it("calls createContext, setInterval and clearInterval unbound, like window.setInterval needs", () => {
+    const ctx = new FakeAudioContext();
+    // Native window.setInterval throws "Illegal invocation" when called on another object.
+    const unbound = <A extends unknown[], R>(name: string, fn: (...a: A) => R) =>
+      function (this: unknown, ...a: A): R {
+        if (this !== undefined) throw new TypeError(`${name}: Illegal invocation`);
+        return fn(...a);
+      };
+    const timer = new ManualTimer();
+    const audio = new SynthAudio({
+      createContext: unbound("createContext", () => ctx.asContext()),
+      setInterval: unbound("setInterval", timer.setInterval),
+      clearInterval: unbound("clearInterval", timer.clearInterval),
+    });
+    expect(() => audio.unlock()).not.toThrow();
+    expect(audio.ready).toBe(true);
+    expect(timer.fn).not.toBeNull();
+    expect(() => audio.stopAll()).not.toThrow();
+    expect(timer.cleared).toBe(1);
+  });
+});
+
 describe("SynthAudio without WebAudio", () => {
   it("is a silent no-op when AudioContext does not exist", () => {
     vi.stubGlobal("AudioContext", undefined);
