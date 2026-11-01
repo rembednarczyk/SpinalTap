@@ -18,6 +18,7 @@ import { findItemsError } from "./validate-items";
 import { findContractError, findContractOnSiteError, findFormerContractsError } from "./validate-contract";
 import { findContractWave2Error, findEncountersError, findMetroError } from "./validate-wave2";
 import { findProgressionError } from "./validate-progression";
+import { findEntityError, findReinforcementsError } from "./validate-entities";
 
 type Json = Record<string, unknown>;
 
@@ -25,28 +26,17 @@ const isObject = (v: unknown): v is Json => typeof v === "object" && v !== null 
 const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
 const isVec = (v: unknown): boolean => isObject(v) && isNum(v.x) && isNum(v.y) && isNum(v.z);
 
-const BODY_FLAGS = ["fought", "found", "reported", "dead", "carried", "hidden"] as const;
-
-/** A body of ADR-0065: where the player stood, and its flags. */
-const isBody = (v: unknown): boolean => isObject(v) && isVec(v.playerAt) && BODY_FLAGS.every((k) => typeof v[k] === "boolean");
-
 /** Returns a description of the first problem found, or null when the payload is a valid current-version snapshot. */
 export const findSchemaError = (s: Json): string | null => {
   if (s.version !== SAVE_SCHEMA_VERSION) return "wrong version";
   if (!isNum(s.seed) || !isNum(s.rngState) || !isNum(s.tick)) return "seed/rngState/tick";
   if (!Array.isArray(s.entities)) return "entities";
   for (const e of s.entities) {
-    if (!isObject(e) || typeof e.key !== "string" || !isVec(e.position)) return "entity shape";
-    if (!isNum(e.yaw) || !isNum(e.pitch) || !isNum(e.cooldown) || typeof e.alerted !== "boolean") return `entity ${e.key}`;
-    if (e.hp !== null && !isNum(e.hp)) return `entity ${e.key} hp`;
-    if (e.maxHp !== undefined && !(isNum(e.maxHp) && e.maxHp > 0)) return `entity ${e.key} hp`;
-    if ((e.lastKnown !== undefined && !isVec(e.lastKnown)) || (e.search !== undefined && !isNum(e.search)) || (e.lost !== undefined && !isNum(e.lost))) {
-      return `entity ${e.key} search`;
-    }
-    if (e.downed !== undefined && !isBody(e.downed)) return `entity ${e.key} downed`;
-    // G-174: a guard not sure yet, between nothing seen (not saved) and sure.
-    if (e.suspicion !== undefined && !(isNum(e.suspicion) && e.suspicion > 0 && e.suspicion <= 1)) return `entity ${e.key} suspicion`;
+    const error = findEntityError(e);
+    if (error) return error;
   }
+  const reinforcementsError = findReinforcementsError(s.reinforcements);
+  if (reinforcementsError) return reinforcementsError;
   const st = s.streaming;
   if (!isObject(st) || !Array.isArray(st.loadedChunks) || !st.loadedChunks.every((c) => typeof c === "string")) return "streaming";
   // ADR-0038: leaves of resident doors that are moving or about to close.
