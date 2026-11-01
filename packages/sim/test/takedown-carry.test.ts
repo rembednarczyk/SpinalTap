@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { DomainEvents, Vec3 } from "@seki/core";
 import { CARRY_PROMPT, CARRY_SPEED, DROP_PROMPT, HIDE_PROMPT, type Entity, type Simulation, gangerEntity, playerStatsOf } from "../src";
 import { collect, input, run } from "./helpers";
-import { CROUCH, offset, patrol, quietStreet, takeDown, ticks, victim, walkAway } from "./takedown-scenes";
+import { CROUCH, camera, offset, patrol, quietStreet, takeDown, ticks, victim, walkAway } from "./takedown-scenes";
 
 /** Stage 3 of ADR-0065: carrying a body, dropping it, hiding it; the dead left lying. */
 
@@ -172,6 +172,23 @@ describe("hiding a body (ADR-0065, stage 3)", () => {
     expect(reports).toEqual([]);
     expect(sim.domain.heat.level).toBe(0);
     expect(guard.unconscious).toBe(true);
+  });
+
+  it("on her shoulder nobody sees it lie: a camera looking right at her reports nothing", () => {
+    const { sim, guard } = knockedOut();
+    pickUp(sim);
+    expect(sim.session.carrying).toBe(guard.id);
+    const found = collect(sim, "BodyFound");
+    const reports = collect(sim, "CrimeReported");
+    // A Hebi camera 7 m south of her, looking north at her.
+    camera(sim, 4200, offset(sim, 0, -7), 0);
+    run(sim, ticks(3), STAND);
+    expect(found).toEqual([]);
+    expect(reports).toEqual([]);
+    // Put down in its view, it is seen at once.
+    sim.enqueue({ type: "drop-body" });
+    sim.step(STAND);
+    expect(found).toHaveLength(1);
   });
 
   it("left out in the open, the same guard finds it", () => {
