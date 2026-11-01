@@ -382,7 +382,8 @@ export const applyEntitySnapshot = (e: Entity, s: EntitySnapshot): void => {
   }
   if (e.combatant) e.combatant.cooldown = s.cooldown;
   if (e.combatant && s.gun) {
-    e.combatant.loaded = s.gun.loaded;
+    // No more than its own weapon holds: the weapon is the content's, not the save's.
+    e.combatant.loaded = Math.min(s.gun.loaded, e.combatant.stats?.magazine ?? s.gun.loaded);
     e.combatant.reloading = s.gun.reloading;
     e.combatant.drawing = s.gun.drawing;
     e.combatant.bloom = s.gun.bloom;

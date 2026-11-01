@@ -233,6 +233,14 @@ describe("NPC magazines", () => {
     const restored = Simulation.fromSnapshot(sim.snapshot(null, "x", ""));
     expect(byKey(restored, "guard")!.combatant!.loaded).toBe(3);
   });
+
+  it("a saved magazine fuller than the NPC's own weapon holds loads as a full one (G-185)", () => {
+    const sim = Simulation.create({ seed: 5 });
+    const snap = sim.snapshot(null, "x", "");
+    const entities = snap.entities.map((e) => (e.key === "guard" ? { ...e, gun: { loaded: 99, reloading: 0, drawing: 0, bloom: 0 } } : e));
+    const restored = Simulation.fromSnapshot({ ...snap, entities });
+    expect(byKey(restored, "guard")!.combatant!.loaded).toBe(30);
+  });
 });
 
 describe("inventory commands", () => {
