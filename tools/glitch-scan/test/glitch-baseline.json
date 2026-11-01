@@ -1,5 +1,6 @@
 {
   "car-lane-off-road": 1,
+  "lane-off-ground": 9,
   "lane-dead-end": 45,
   "car-road-hole": 0,
   "street-seam-gap": 0,
@@ -41,10 +42,10 @@
   "interior-outside-building": 0,
   "interior-entrance-gap": 0,
   "roof-shape-ignored": 0,
+  "landmark-recipe-unmatched": 0,
   "civic-as-residential": 0,
   "fractional-levels-rounded": 0,
   "sidewalk-under-carriageway": 131,
   "kerb-fit-sparse": 0,
-  "two-way-fit-narrow": 0,
-  "landmark-recipe-unmatched": 0
+  "two-way-fit-narrow": 0
 }

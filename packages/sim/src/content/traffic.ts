@@ -369,6 +369,29 @@ const clearOfBlocks = (lanes: readonly TrafficRoute[], dead: DeadEnds): Piece[] 
   });
 };
 
+/** A lane keeps this far inside the map's edge (m): the paving is clipped to the chunks, and a point on the edge itself is on neither side of it. */
+const EDGE_REACH = 0.1;
+/** The step a lane's end is cut back by (m). */
+const EDGE_STEP = 0.05;
+
+const inMap = (p: { x: number; z: number }): boolean => [-EDGE_REACH, EDGE_REACH].every((a) => [-EDGE_REACH, EDGE_REACH].every((b) => onMap(p.x + a, p.z + b)));
+
+/**
+ * A lane's ends cut back onto the map (G-138). The import clips a street's axis at the map's
+ * edge; its lane, moved aside from the axis, runs on past the edge where the street meets it
+ * aslant (up to 1.5 m), over no paving, where the simulation's ground is the nearest chunk's and
+ * the map's is 0. Inside the map (its seams too) nothing is cut.
+ */
+const onTheMap = (p: Piece): Piece => {
+  const r = p.route;
+  let a = 0;
+  while (a < r.length && !inMap(pointAt(r.points, a))) a += EDGE_STEP;
+  let b = r.length;
+  while (b > a && !inMap(pointAt(r.points, b))) b -= EDGE_STEP;
+  if (a === 0 && b === r.length) return p;
+  return { ...p, route: routeOf(r.id, r.street, r.use, slice(r.points, a, b), r.speed, r.vehicles) };
+};
+
 /** A lane cut short by a block or a dead end turns round onto a lane the other way starting this close to its end (m). */
 const TURN_REACH = 16;
 
@@ -429,8 +452,8 @@ const turnRound = (pieces: readonly Piece[]): TrafficRoute[] => {
   });
 };
 
-/** Every lane of the city's traffic, in a stable order (the chains' order, then lane by lane), clear of the game's blocks. */
-export const TRAFFIC_LANES: readonly TrafficRoute[] = turnRound(ROAD_CHAINS.flatMap((c, k) => clearOfBlocks(lanesOf(c, k, ROAD_CHAINS), deadEndsOf(c, k))));
+/** Every lane of the city's traffic, in a stable order (the chains' order, then lane by lane), clear of the game's blocks, on the map. */
+export const TRAFFIC_LANES: readonly TrafficRoute[] = turnRound(ROAD_CHAINS.flatMap((c, k) => clearOfBlocks(lanesOf(c, k, ROAD_CHAINS), deadEndsOf(c, k)).map(onTheMap)));
 
 /** The routes the vehicles drive: the lanes joined at the junctions (ADR-0055). */
 export const TRAFFIC_ROUTES: readonly TrafficRoute[] = joinAtJunctions(TRAFFIC_LANES);
