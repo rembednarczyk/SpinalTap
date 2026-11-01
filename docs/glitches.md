@@ -591,6 +591,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: kontrola skanu „model latarni ściennej w bryle budynku” (baza 5) i ustawianie latarni od właściwej ściany
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
+### G-174 Zapis i wczytanie nie odtwarzają stanu przy kontrakcie infiltrate z limitem czasu
+- Status: zgłoszone (1.11, weryfikator #141); było przed podziałem `WorldStreamer` (stary i nowy kod dają ten sam ślad)
+- Ważność: S3 do potwierdzenia · Zasięg: aktywny kontrakt infiltrate/tessen_office z modyfikatorem time_limit
+- Dane: ziarno 4242, `npcHealth` 1,7, od kontraktu profil hard, zapis po przejeździe po chunkach; `stateHash` po `fromSnapshot` caa677e1 zamiast 96b4a9f3 (ślady `scratchpad/v-ws-out/`)
+- Poprawka: najpierw ustalić, które pole stanu nie wraca z zapisu (różnica snapshotów), potem test zapis–wczytanie dla tego kontraktu
+- Pakiet właściciela: packages/sim, packages/persistence
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
