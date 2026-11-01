@@ -1,6 +1,6 @@
 import { Matrix } from "../babylon";
-import type { ActivityId, AppearanceDescriptor, CameraMode, DespawnReason, EffectDescriptor, EntityId, HackTargetKind, PrepareStage, RenderPort, Transform, Vec3, ViewDescriptor } from "@seki/core";
-import type { ChunkDef, DistrictId } from "@seki/sim";
+import type { ActivityId, AppearanceDescriptor, CameraMode, DespawnReason, EffectDescriptor, EntityId, PrepareStage, RenderPort, Transform, Vec3, ViewDescriptor } from "@seki/core";
+import type { ChunkDef } from "@seki/sim";
 import { WORLD_CHUNKS } from "@seki/sim";
 import { CameraRig } from "../camera/camera-rig";
 import type { Grading } from "../npr/grading";
@@ -18,11 +18,12 @@ import { CrowdViews } from "./crowd-views";
 import { WorldDressing } from "./dressing";
 import { FarCity } from "./far-city";
 import { MapCitySlot } from "./map-city-slot";
-import { type MapCityStats, isMapView } from "./mapcity/map-city";
+import { isMapView } from "./mapcity/map-city";
 import { MetroRide, type MetroRideView, type RideCast } from "./metro-ride";
 import { VehicleViews } from "./vehicle-views";
 import { PropViews } from "./prop-views";
-import { type GameplayFxEvent, ScreenFx } from "./screen-fx";
+import { RendererStats } from "./renderer-stats";
+import { ScreenFx } from "./screen-fx";
 import { Signage } from "./signage";
 import { RendererLoading } from "./renderer-loading";
 import { warmUpMaterials } from "./start-prep";
@@ -58,6 +59,9 @@ export interface RendererOptions {
   readonly farCity?: boolean;
 }
 
+/** The effects over the whole frame the game sets (ADR-0030): hits, quickhacks, heat, the scanner; the fog for the map preview. */
+export type ScreenEffects = Pick<ScreenFx, "gameplayFx" | "setScanning" | "setScanFocus" | "setFogScale">;
+
 /** How far the crowd is drawn per quality (m): phones see the nearest residents only. */
 const CROWD_DRAW_DISTANCE = { high: 90, medium: 70, low: 40 } as const;
 
@@ -76,8 +80,9 @@ const rideCast = (characters: CharacterViews, activities: CharacterActivities): 
 
 /**
  * RenderPort over Babylon.js (ADR-0031): a facade that owns the camera and the frame, and hands
- * characters to `CharacterViews`, props to `PropViews`, effects and the look to `ScreenFx`, and
- * the city kit to `CityKitLoader`.
+ * characters to `CharacterViews`, props to `PropViews`, effects and the look to `ScreenFx`, the
+ * city kit to `CityKitLoader`, the map city to `MapCitySlot`, the wet asphalt to `WetAsphalt`,
+ * the start of a game to `RendererLoading` and the debug counters to `RendererStats`.
  */
 export class BabylonRenderer implements RenderPort {
   readonly materials: ToonMaterials;
@@ -113,6 +118,10 @@ export class BabylonRenderer implements RenderPort {
   private resetting = false;
   /** The model manifests and the loading screen's work that waits for them (ADR-0057). */
   readonly loading: RendererLoading;
+  /** What the renderer holds and draws (debug and tests). */
+  readonly stats: RendererStats;
+  /** Gameplay effects over the whole frame (ADR-0030) and the fog scale. */
+  readonly effects: ScreenEffects;
 
   /** Builds the scene pieces in a fixed order: post-processes and meshes render in creation order. */
   constructor(
@@ -201,6 +210,7 @@ export class BabylonRenderer implements RenderPort {
       },
     });
     this.grading = this.fx.grading;
+    this.effects = this.fx;
     this.metro = new MetroRide({ scene, materials: this.materials, shadow: this.shadow, camera: this.rig, cast: rideCast(this.characters, this.activities) });
     if (options.cityKit) this.cityKit.load(options.cityKit, options.cityProps ?? null);
     this.loading = new RendererLoading({
@@ -211,6 +221,8 @@ export class BabylonRenderer implements RenderPort {
       cityKit: () => this.cityKit.ready,
       cityWaiting: () => this.map.current?.waiting ?? 0,
     });
+    const { characters, activities, props, crowd, vehicles, cityKit, map, metro, fx, wet } = this;
+    this.stats = new RendererStats({ characters, activities, props, crowd, vehicles, cityKit, map, metro, fx, wet });
   }
 
   /** The start of a game behind the loading screen (ADR-0057); the moon shadow goes on `at` first. */
@@ -222,29 +234,9 @@ export class BabylonRenderer implements RenderPort {
     this.loading.cancel();
   }
 
-  /** Renders of the wet-asphalt probe so far, null without one (debug and tests). */
-  get wetProbeRenders(): number | null {
-    return this.wet?.renderCount ?? null;
-  }
-
-  /** Kit meshes built for skinned blocks (debug and tests). */
-  get cityMeshes(): number {
-    return this.cityKit.meshCount;
-  }
-
-  /** Multiplies the fog density (1 in the game; the map preview sees further, ADR-0044). */
-  setFogScale(scale: number): void {
-    this.fx.setFogScale(scale);
-  }
-
   /** Terrain height of the map city at (x, z), null outside its terrain (preview camera, tests). */
   mapHeightAt(x: number, z: number): number | null {
     return this.map.heightAt(x, z);
-  }
-
-  /** What the map city holds and draws (debug and tests); null before the first map view. */
-  get mapStats(): MapCityStats | null {
-    return this.map.current?.stats ?? null;
   }
 
   spawn(id: EntityId, view: ViewDescriptor, t: Transform): void {
@@ -293,11 +285,6 @@ export class BabylonRenderer implements RenderPort {
     }
   }
 
-  /** District whose colours are on screen (debug and tests). */
-  get paletteDistrict(): DistrictId | null {
-    return this.fx.paletteDistrict;
-  }
-
   /** Accessibility (ADR-0028): no aberration, glitch or flicker anywhere; slow fades only. */
   setReduceFlashes(on: boolean): void {
     this.fx.setReduceFlashes(on);
@@ -313,26 +300,6 @@ export class BabylonRenderer implements RenderPort {
   setMetroRide(ride: MetroRideView | null): void {
     this.metro.set(ride);
     this.fx.setIndoor(ride !== null);
-  }
-
-  /** True while the metro car is on screen (debug, tests). */
-  get metroRiding(): boolean {
-    return this.metro.active;
-  }
-
-  /** A gameplay moment over the whole frame (ADR-0030): a hit, a quickhack, heat. */
-  gameplayFx(e: GameplayFxEvent): void {
-    this.fx.gameplayFx(e);
-  }
-
-  /** The scanner is held: scanlines and drained colour, targets outlined by kind. */
-  setScanning(on: boolean): void {
-    this.fx.setScanning(on);
-  }
-
-  /** What the scanner focuses (ScanFocusChanged): filled and outlined; cameras and devices in yellow. */
-  setScanFocus(id: EntityId | null, kind?: HackTargetKind): void {
-    this.fx.setScanFocus(id, kind);
   }
 
   /** Per-frame presentation update: animation, camera, VFX, rain. Call before scene.render(). */
@@ -385,33 +352,9 @@ export class BabylonRenderer implements RenderPort {
     else this.crowd.setActivity(id, activity);
   }
 
-  /** Activity a character plays now (debug and tests). */
-  activityOf(id: EntityId): ActivityId | null {
-    return this.activities.activityOf(id);
-  }
-
   /** What a character wears and carries (ADR-0015): weapons in hand, holster and on the back, garment add-ons. */
   setAppearance(id: EntityId, appearance: AppearanceDescriptor): void {
     this.characters.setAppearance(id, appearance);
-  }
-
-  /** Residents in the world and how many of them were drawn last frame (debug and tests). */
-  get crowdStats(): { readonly residents: number; readonly drawn: number } {
-    return { residents: this.crowd.size, drawn: this.crowd.drawn };
-  }
-
-  /** The street's vehicles: driving, drawn near and far, parked, and their meshes (debug and tests). */
-  get vehicleStats(): VehicleViews["stats"] {
-    return this.vehicles.stats;
-  }
-
-  get dressedCount(): number {
-    return this.characters.dressedCount;
-  }
-
-  /** Every cell near the camera is drawn in detail and the wet probe has caught up (G-114); tests wait for it before a sample. */
-  get citySettled(): boolean {
-    return (this.map.current?.settled ?? true) && !(this.wet?.pending && !this.metro.active);
   }
 
   /**
@@ -426,17 +369,8 @@ export class BabylonRenderer implements RenderPort {
     return this.stage.engine.getRenderingCanvas()?.toDataURL("image/png") ?? "";
   }
 
-  /** Character models still loading. */
-  get modelsLoading(): number {
-    return this.characters.loadingCount;
-  }
-
   /** Interpolated transform of the entity the camera follows (the player), if any. */
   get cameraTargetTransform(): Transform | null {
     return this.cameraTarget === null ? null : this.characters.transformOf(this.cameraTarget);
-  }
-
-  get entityCount(): number {
-    return this.characters.size + this.props.size + this.crowd.size + this.vehicles.size + (this.map.current?.size ?? 0);
   }
 }

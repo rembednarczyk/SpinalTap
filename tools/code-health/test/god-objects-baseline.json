@@ -1,6 +1,5 @@
 {
   "packages/app/src/game-session.ts#GameSession": 33,
-  "packages/engine/src/renderer/babylon-renderer.ts#BabylonRenderer": 33,
   "packages/engine/src/renderer/character-views.ts#CharacterViews": 24,
   "packages/engine/src/npr/toon-material.ts#ToonMaterials": 23,
   "packages/engine/src/renderer/mapcity/street-props.ts#StreetProps": 22,
