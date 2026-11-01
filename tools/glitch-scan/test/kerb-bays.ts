@@ -4,6 +4,7 @@ import { type Area, extractFeatures } from "../../osm-import/src/features.ts";
 import { type OsmData } from "../../osm-import/src/osm.ts";
 import { type CrowdLane } from "../../../packages/sim/src/content/crowd";
 import { type ParkedCar } from "../../../packages/sim/src/content/parked-cars";
+import { pointAt, projectOn } from "../../../packages/sim/src/content/traffic";
 import { LANE_HALF_GAP } from "../../../packages/sim/src/world/crowd";
 
 /**
@@ -45,6 +46,31 @@ export const bayCarsOutOfPark = (parks: readonly Area[], cars: readonly ParkedCa
     return worst > 0.3 ? [{ at: near(c.x, c.z), what: `${c.model} in ${park.id}: a corner ${worst.toFixed(2)} m out` }] : [];
   });
 
+type Street = readonly (readonly [number, number])[];
+
+/**
+ * A strip's street (the car road whose axis runs nearest its outline), its length along that
+ * street and its median depth across it (m), from chords across the street every half metre
+ * (each sampled every 10 cm out to 25 m on the strip's side).
+ */
+const stripOf = (ring: readonly P[], streets: readonly Street[]) => {
+  const gap = (s: Street) => Math.min(...ring.map((p) => projectOn(s, p.x, p.z).d));
+  const street = streets.reduce((m, s) => (gap(s) < gap(m) ? s : m));
+  const along = ring.map((p) => projectOn(street, p.x, p.z));
+  const side = Math.sign(along.reduce((m, q) => m + q.side, 0));
+  const chords: number[] = [];
+  for (let s = Math.min(...along.map((q) => q.s)); s <= Math.max(...along.map((q) => q.s)); s += 0.5) {
+    const p = pointAt(street, s);
+    let n = 0;
+    for (let d = 0; d <= 25; d += 0.1) if (pointInRing({ x: p.x + p.tz * side * d, z: p.z - p.tx * side * d }, ring)) n++;
+    if (n > 5) chords.push(n / 10);
+  }
+  return { street, length: chords.length / 2, depth: chords.sort((a, b) => a - b)[Math.floor(chords.length / 2)] ?? 0 };
+};
+
+/** A strip's layout as its tag says, else aslant from 4.5 m deep (G-187), else along the kerb. */
+const layoutOf = (park: Area, depth: number): string => park.tags.orientation ?? (depth >= 4.5 ? "untagged deep" : "parallel");
+
 /** The way of a strip's street: its outline's longest edge. */
 const stripWay = (ring: readonly P[]): { tx: number; tz: number } => {
   const edges = ring.map((a, i) => ({ a, b: ring[(i + 1) % ring.length]! }));
@@ -59,11 +85,15 @@ const stripDepthOf = (ring: readonly P[]): number => {
   return area / Math.max(...ring.map((a, i) => Math.hypot(ring[(i + 1) % ring.length]!.x - a.x, ring[(i + 1) % ring.length]!.z - a.z)));
 };
 
+/** A car's angle to a strip's way (°): 0 along it, 90 across. */
+const angleTo = (way: { tx: number; tz: number }, c: ParkedCar) => (Math.acos(Math.min(1, Math.abs(way.tx * Math.sin(c.yaw) + way.tz * Math.cos(c.yaw)))) * 180) / Math.PI;
+
 /**
  * A car in a kerb car park turned against the way the map and Lublin's streets draw its bays:
  * within 20° of the strip's way (along the kerb) where it is mapped `orientation=perpendicular`
  * or `diagonal`; more than 15° off 60° where it is mapped `diagonal`; within 15° of across in a
- * strip 4.5 m deep or more mapped without the tag, whose bays in Lublin are aslant (G-187).
+ * strip 4.5 m deep or more mapped without the tag, whose bays in Lublin are aslant (G-187), or
+ * within 20° of along there beside a car aslant (a strip's cars stand in one layout, G-189).
  */
 export const bayCarsMisturned = (parks: readonly Area[], cars: readonly ParkedCar[]): Finding[] =>
   cars.flatMap((c) => {
@@ -71,10 +101,64 @@ export const bayCarsMisturned = (parks: readonly Area[], cars: readonly ParkedCa
     const orientation = park?.tags.orientation ?? (park && stripDepthOf(park.ring) >= 4.5 ? "untagged deep" : undefined);
     if (!park || orientation === undefined || orientation === "parallel") return [];
     const way = stripWay(park.ring);
-    const angle = (Math.acos(Math.min(1, Math.abs(way.tx * Math.sin(c.yaw) + way.tz * Math.cos(c.yaw)))) * 180) / Math.PI;
+    const angle = angleTo(way, c);
+    const besideAslant = () => cars.some((o) => o !== c && pointInRing(o, park.ring) && Math.abs(angleTo(way, o) - 60) <= 15);
     const wrong =
-      orientation === "untagged deep" ? angle > 75 && "across the kerb, not aslant" : angle < 20 ? "along the kerb" : orientation === "diagonal" && Math.abs(angle - 60) > 15 && `${angle.toFixed(0)}° off the kerb, not 60°`;
+      orientation === "untagged deep"
+        ? (angle > 75 && "across the kerb, not aslant") || (angle < 20 && besideAslant() && "along the kerb beside a car aslant")
+        : angle < 20
+          ? "along the kerb"
+          : orientation === "diagonal" && Math.abs(angle - 60) > 15 && `${angle.toFixed(0)}° off the kerb, not 60°`;
     return wrong ? [{ at: near(c.x, c.z), what: `${c.model} in ${park.id} (${orientation}) ${wrong}` }] : [];
+  });
+
+/**
+ * Bays along a kerb, this far apart (m), as the scan's own reading of a painted Lublin strip: a car
+ * and the room to get out along it; a 2.6 m bay across it; that bay slanted at 60° aslant.
+ */
+const BAY_STEP: Readonly<Record<"parallel" | "perpendicular" | "diagonal", number>> = { parallel: 6.2, perpendicular: 2.6, diagonal: 3 };
+/** Share of a kerb car park's bays taken (`parked-cars`' occupancy, as Plac Zamkowy's). */
+const TAKEN = 0.8;
+/** Furniture or a footway this near a strip's outline, outside it, stands at its kerb (m). */
+const AT_KERB = 1.5;
+
+/** Things outside a kerb car park's outline that its cars must keep clear of: solid furniture (its round footprint) and footways' axes. */
+export interface KerbNeighbours {
+  readonly furniture: readonly { readonly x: number; readonly z: number; readonly r: number }[];
+  readonly footways: readonly (readonly P[])[];
+}
+
+/** The furniture and footway segments outside a strip's outline and within `AT_KERB` of it. */
+const atKerb = (ring: readonly P[], by: KerbNeighbours): number => {
+  const xs = ring.map((p) => p.x);
+  const zs = ring.map((p) => p.z);
+  const close = (p: P) => p.x > Math.min(...xs) - 10 && p.x < Math.max(...xs) + 10 && p.z > Math.min(...zs) - 10 && p.z < Math.max(...zs) + 10;
+  const pieces = by.furniture.filter((f) => close(f) && !pointInRing(f, ring) && ringGap(f, ring) - f.r < AT_KERB && ringGap(f, ring) > f.r);
+  const ways = by.footways.flatMap((w) => w.slice(1).map((b, i) => [w[i]!, b] as const)).filter(([a, b]) => {
+    if (!close(a) && !close(b)) return false;
+    const n = Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 0.25);
+    const pts = Array.from({ length: n + 1 }, (_, k) => ({ x: a.x + ((b.x - a.x) * k) / (n || 1), z: a.z + ((b.z - a.z) * k) / (n || 1) }));
+    return pts.every((p) => !pointInRing(p, ring)) && Math.min(...pts.map((p) => ringGap(p, ring))) < AT_KERB;
+  });
+  return pieces.length + ways.length;
+};
+
+/**
+ * A kerb car park 15 m long or more along its street, with furniture or a footway just past its
+ * outline (`AT_KERB`), holding fewer than half the cars its bays would: one every `BAY_STEP` of
+ * its layout (aslant in a deep strip without the tag), `TAKEN` of them taken. The room a car
+ * keeps from a meter or a footway, measured from its body and not from the kerb between them,
+ * leaves the bays by them empty (G-189, Radziwiłłowska).
+ */
+export const bayStripsSparse = (parks: readonly Area[], cars: readonly ParkedCar[], streets: readonly Street[], by: KerbNeighbours): Finding[] =>
+  parks.flatMap((park) => {
+    const { length, depth } = stripOf(park.ring, streets);
+    const got = cars.filter((c) => pointInRing(c, park.ring)).length;
+    if (length < 15 || got === 0 || atKerb(park.ring, by) === 0) return [];
+    const layout = layoutOf(park, depth);
+    const step = BAY_STEP[layout === "untagged deep" ? "diagonal" : layout === "perpendicular" || layout === "diagonal" ? layout : "parallel"];
+    const expected = Math.floor(length / step) * TAKEN;
+    return got < expected / 2 ? [{ at: near(park.ring[0]!.x, park.ring[0]!.z), what: `${park.id} (${layout}, ${length.toFixed(1)} m): ${got} cars of ${expected.toFixed(1)}` }] : [];
   });
 
 /**
