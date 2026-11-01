@@ -7,13 +7,14 @@ import type { Entity } from "./components";
 import type { IdAllocator } from "./factory";
 import { GroundField } from "./ground";
 import { ActorSpawner, type StreamState } from "./actor-spawner";
-import { unloadChunks } from "./chunk-unload";
+import { sleepPinned, unloadChunks } from "./chunk-unload";
 import { contractTemplates } from "./contract-templates";
 import { restoreEntities } from "./dormant-restore";
 import { syncPresence } from "./presence-sync";
 import { StreamCatalog, type Template } from "./stream-catalog";
 
 export { STREET_ID_BASE, STREET_IDS_PER_CHUNK } from "./stream-catalog";
+export { PINNED_AWAY_SECONDS } from "./chunk-unload";
 
 /**
  * Hysteresis: a chunk loads once the player is within `loadRadius` of its bounds and unloads
@@ -39,7 +40,7 @@ const NO_CHANGE: StreamingChange = { loaded: [], unloaded: [] };
  * leave their state behind as a dormant snapshot that is applied again when the chunk returns
  * and is written to saves. Two exceptions keep the rules honest: dead entities (`dead:<key>`)
  * never come back, and an alerted AI is pinned: it keeps chasing instead of vanishing with
- * its chunk. Deterministic: chunks are visited in table order and nothing here is random.
+ * its chunk, until it gives up outside every loaded chunk (G-188, `sleepPinned`). Deterministic: chunks are visited in table order and nothing here is random.
  *
  * Characters with a daily plan do not freeze while asleep: whenever one is spawned (a chunk
  * loading, a new game) it is put where its plan says for the current time, so Oyaji left at
@@ -188,6 +189,7 @@ export class WorldStreamer {
     this.former = [...this.former, job].filter((f) => f.keys.some((k) => live.has(k)));
     this.formerKeys.clear();
     for (const f of this.former) for (const k of f.keys) this.formerKeys.add(k);
+    this.catalog.keepFormer(this.formerKeys);
     for (const k of job.keys) this.state.dormant.delete(k);
   }
 
@@ -235,8 +237,17 @@ export class WorldStreamer {
     restoreEntities(world, flags, saved, { state: this.state, catalog: this.catalog, spawner: this.spawner, chunkIdAt: (p) => this.chunkIdAt(p), cleared });
   }
 
-  /** Loads and unloads chunks around `focus`. Unloads first, so ids never collide. */
-  update(world: World<Entity>, flags: readonly string[], focus: Vec3, clock: GameClock): StreamingChange {
+  /**
+   * Loads and unloads chunks around `focus`, `dt` seconds after the last time. Unloads first, so
+   * ids never collide; then the AIs pinned outside the loaded chunks may fall asleep (G-188).
+   */
+  update(world: World<Entity>, flags: readonly string[], focus: Vec3, clock: GameClock, dt: number): StreamingChange {
+    const change = this.stream(world, flags, focus, clock);
+    sleepPinned(world, this.state, (p) => this.chunkIdAt(p), this.formerKeys, dt);
+    return change;
+  }
+
+  private stream(world: World<Entity>, flags: readonly string[], focus: Vec3, clock: GameClock): StreamingChange {
     if (flags !== this.presenceFlags) {
       this.presenceFlags = flags;
       syncPresence(world, flags, clock, { state: this.state, catalog: this.catalog, spawner: this.spawner, chunks: this.chunks });
