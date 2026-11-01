@@ -70,6 +70,10 @@ Specjaliści pakietów z rosteru (§12 planu) to role, które `glitch-fixer` prz
 - **Kontrole skanu w jednym miejscu:** równoległe poprawki dopisują nowe kontrole na końcu `glitch-scan.test.ts` i `glitch-baseline.json`, więc merge daje konflikt. Rozwiązanie: zostaw obie kontrole i oba klucze bazy, potem puść skan.
 - **Agent wznowiony po odrzuceniu (31.10):** naprawiacz i budowniczy dostają uwagi weryfikatora albo kuratora przez SendMessage w tym samym worktree; nowy commit, bez amend. Dwie rundy przy G-068 i Bramie Krakowskiej poszły szybciej niż nowy agent.
 - **Dane użytkownika poza repo:** agenci nie wysyłają e-maila ani innych danych użytkownika do zewnętrznych serwisów (31.10 kurator podał e-mail w User-Agent zapytania do Wikimedia). Przypominaj o tym w briefie, gdy agent korzysta z sieci.
+- **Regresja wprowadzona przez sam PR (1.11, G-178):** gdy weryfikator przyjmuje poprawkę, ale znajduje wadę, którą ten PR wprowadza (np. lista w zapisie, która rośnie bez końca), nie scalaj: odeślij autorowi do następnej rundy w tym samym PR. Wady sprzed PR-a idą do rejestru jako osobne glitche.
+- **Dwa PR-y zmieniające złote hashe** (np. zmiana schematu zapisu i nowa bryła na trasie przebiegu wzorcowego) dają konflikt w `determinism.test.ts`: scal najpierw jeden, a autor drugiego przelicza hashe po scaleniu main i pokazuje, że różnica wobec main wynika tylko z jego zmiany (1.11, #150 i #153).
+- **Gałąź po scalonym PR:** force-push na starą gałąź (nawet z `--force-with-lease`) blokują uprawnienia; dla nowej zmiany bierz nową nazwę gałęzi, np. z przyrostkiem `2` (1.11).
+- **Kurator z ortofoto (1.11):** przy rozstawieniu aut i mebli kurator porównuje z ortofotomapą Geoportalu (PZGiK, WMS, tylko do oglądania, User-Agent `SekiSenshi-topo/1.0`); to rozstrzyga kąty i liczbę miejsc, których OSM nie opisuje (G-187, T-103).
 ## Zasady twarde
 - Kod funkcji piszą agenci. Sam możesz zrobić poprawkę do ok. 30 linii (z testem, który pada bez niej), ale też idzie ona przez `change-verifier` przed pushem na gałąź PR. Poza tym edytujesz rejestr, ADR-y, kontrakty i bazę skanu.
 - Jedna poprawka to jeden glitch i jeden commit. Bez „przy okazji”.
