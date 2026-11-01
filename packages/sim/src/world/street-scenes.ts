@@ -81,7 +81,8 @@ export const streetOpen = (ctx: SimContext): boolean => {
 
 /** One step of the street encounters of the player's district. */
 export const runEncounters = (ctx: SimContext, player: Entity, district: string, defs: readonly EncounterDef[] = ENCOUNTERS): void => {
-  if (ctx.session.street2.encounter !== null || ctx.session.dialogueActive || !streetOpen(ctx)) return;
+  // Nobody stops her for a chat with a body on her shoulder (ADR-0065).
+  if (ctx.session.street2.encounter !== null || ctx.session.dialogueActive || ctx.session.carrying !== null || !streetOpen(ctx)) return;
   const { clock, encounters } = ctx.state.domain;
   for (const def of defs) {
     if (def.district !== district || !encounterAvailable(def, clock, encounters)) continue;

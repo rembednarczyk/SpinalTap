@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { LUBLIN_CHUNKS } from "../../../packages/sim/src/content/lublin";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
 import { REPO } from "../src/paths.ts";
+import { loadNodeTags } from "../src/props-art.ts";
 import { type BoardSpan, LANTERN, boardBehind, offBoards } from "../src/props-boards.ts";
 import { type PropsPlan, generateProps } from "../src/props-gen.ts";
 import { Site } from "../src/props-site.ts";
@@ -78,7 +79,7 @@ describe("wall lanterns off the venues' boards (G-158)", () => {
     const boards = [board(23, 30)];
     const without = generateProps(plan, [street()]).byChunk.get("test-0-0")!.filter((i) => i.prop === "lamp-wall-lantern" && i.z > 30);
     expect(without.some((i) => boardBehind(boards, i, i.y))).toBe(true);
-    const out = generateProps(plan, [street()], boards);
+    const out = generateProps(plan, [street()], new Map(), boards);
     const lanterns = out.byChunk.get("test-0-0")!.filter((i) => i.prop === "lamp-wall-lantern" && i.z > 30);
     expect(lanterns.length).toBe(without.length);
     expect(lanterns.filter((i) => boardBehind(boards, i, i.y))).toEqual([]);
@@ -89,7 +90,7 @@ describe("wall lanterns off the venues' boards (G-158)", () => {
     const plan = JSON.parse(readFileSync(join(REPO, "docs/world/lublin-props.todo.json"), "utf8")) as PropsPlan;
     const boards = lublinVenueBoards();
     expect(boards.length).toBeGreaterThan(250);
-    const { byChunk, stats } = generateProps(plan, LUBLIN_CHUNKS, boards);
+    const { byChunk, stats } = generateProps(plan, LUBLIN_CHUNKS, loadNodeTags(), boards);
     const lanterns = [...byChunk.values()].flat().filter((i) => i.prop === "lamp-wall-lantern");
     expect(lanterns.filter((i) => boardBehind(boards, i, i.y)).map((i) => `${i.x},${i.z}`)).toEqual([]);
     expect(stats.offBoard).toBeGreaterThan(10);

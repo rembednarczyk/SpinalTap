@@ -103,7 +103,8 @@ export const KANAL_PROPS: readonly StaticProp[] = [
   // Tetsu's table of gadgets in front of DENKI, and crates under the footbridge where Hebi meet
   // (Kaito's site `kanal_bridge`).
   { ...crate(0, 0, 1.4, 0.9, 0.7), center: { ...ground(KANAL_SPOTS.tetsu.x + 0.8, KANAL_SPOTS.tetsu.z - 1), y: groundY(KANAL_SPOTS.tetsu.x + 0.8, KANAL_SPOTS.tetsu.z - 1) + 0.45 } },
-  { ...crate(0, 0, 1.2, 0.9, 1.0), center: { ...ground(655.5, 76.5), y: groundY(655.5, 76.5) + 0.45 } },
+  // By the Hebi post on Grodzka: a body fits in (ADR-0065).
+  { ...crate(0, 0, 1.2, 0.9, 1.0), center: { ...ground(655.5, 76.5), y: groundY(655.5, 76.5) + 0.45 }, hide: "container" },
   { ...crate(0, 0, 0.9, 0.8, 0.9), center: { ...ground(663, 71.5), y: groundY(663, 71.5) + 0.4 } },
 ];
 

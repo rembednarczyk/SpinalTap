@@ -335,6 +335,10 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
     const normal = { damageTaken: 1, npcAccuracy: 1, awareness: 1, reinforce: 1, npcHealth: 1, snipeTell: 1 };
     return { ...old, version: 18, domain: { ...domain, difficulty: normal } };
   },
+  // v18 -> v19 (ADR-0065, stage 3): bodies are saved (`downed` of an entity, optional). An older
+  // save has none: whoever was knocked out in it was saved as awake and wakes up so, and the
+  // dead of a takedown had vanished. Nothing to change but the version.
+  18: (old) => ({ ...old, version: 19 }),
 };
 
 export class MigrationError extends Error {}

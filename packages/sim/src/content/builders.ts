@@ -1,5 +1,5 @@
 import type { BlockSkin, BlockStyle, EnemyTypeId, FactionId, BlockFront, Vec3, ViewDescriptor } from "@seki/core";
-import type { DoorLock, Interactable, LadderDef } from "../world/components";
+import type { DoorLock, HideKind, Interactable, LadderDef } from "../world/components";
 import type { PrismDef } from "../world/prism";
 
 /** Shared vocabulary of the content tables. Coordinates: Y up, +Z north, yaw 0 faces +Z. */
@@ -27,6 +27,8 @@ export interface StaticProp {
   readonly scenery?: true;
   /** Street furniture (ADR-0050): the TPP camera's rays pass it. */
   readonly seeThrough?: true;
+  /** A hiding place for one body (ADR-0065): a container, a dumpster, a locker. */
+  readonly hide?: HideKind;
 }
 
 /** Parts of a lift: the platform (a solid), the gates at upper levels and the call buttons. */

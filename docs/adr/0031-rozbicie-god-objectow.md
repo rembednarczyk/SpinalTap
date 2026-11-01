@@ -79,3 +79,6 @@ Docelowy podział, w kolejności:
 | `Simulation.apply` | 110 linii, `switch` | tabela handlerów z typem wymuszającym komplet, `simulation.ts` 175 linii |
 
 Złote hashe, migawka NPR i zapis bez zmian. ESLint pilnuje limitów (`max-lines` 500, `max-lines-per-function` 120); wyjątek `max-lines` mają tabele treści dystryktów, katalog przedmiotów i dane city kitu.
+
+## Zapadka klas (1.11)
+Limit „ok. 20 metod na klasę” nie miał strażnika i dziewięć klas go przekroczyło. Od 1.11 pilnuje go test `tools/code-health/test/god-objects.test.ts`: liczy metody, akcesory i właściwości z funkcją (parser TypeScript), a klasy ponad 20 trzyma w `god-objects-baseline.json`. Baza tylko spada; nowa klasa ponad limit albo wzrost klasy z listy to czerwony test. Stan na wejściu: `BabylonRenderer` 42, `GameSession` 33, `MapCity` 33, `CharacterViews` 24, `ToonMaterials` 23, `StreetProps` 22, `GangerAgent` 22, `SynthAudio` 21, `WorldStreamer` 21. Podział każdej z nich to osobny PR bez zmiany zachowania (złote hashe, migawka NPR, budżety bez zmian).

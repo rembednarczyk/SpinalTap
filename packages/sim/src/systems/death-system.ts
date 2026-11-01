@@ -3,6 +3,7 @@ import { deriveRandom } from "../rng/derive-random";
 import type { Entity } from "../world/components";
 import type { System } from "../world/context";
 import { applyReputationCause, clearContract, dropLoot, raiseFlag } from "../world/domain-ops";
+import { corpseOf } from "../world/bodies";
 import { inCreationOrder } from "../world/ordering";
 import { grantXp } from "../world/progression-ops";
 import { disturb, isContractTarget, noteTally, offend } from "../world/street";
@@ -39,6 +40,8 @@ const checkContractCleared = (ctx: Parameters<System["run"]>[0]): void => {
 /**
  * Removes killed NPCs (recording it in flags and, when the player did it, in their faction's
  * standing; an enemy leaves its bag whoever killed it) and ends the run when the player flatlines.
+ * A body (`downed`: killed in a takedown, or while knocked out) is left lying as a corpse with
+ * the same id (ADR-0065).
  */
 export const deathSystem: System = {
   name: "death",
@@ -68,6 +71,8 @@ export const deathSystem: System = {
       if (byPlayer && e.enemy) grantXp(ctx, killXp(e.enemy.type), "kill");
       ctx.bus.emit("EntityKilled", { entityId: e.id, tag: e.tag ?? null, ...(e.lastHitBy === undefined ? {} : { killerId: e.lastHitBy }) });
       ctx.world.remove(e);
+      // Killed in a takedown, or while knocked out (ADR-0065): its body stays to be found, carried, hidden.
+      if (e.downed) ctx.world.add(corpseOf(e, e.downed));
     }
     if (dead.length > 0) checkContractCleared(ctx);
   },

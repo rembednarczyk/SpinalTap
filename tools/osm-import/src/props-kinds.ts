@@ -41,6 +41,10 @@ const SAME: readonly StreetPropKind[] = [
   "monument",
   "artwork",
   "cctv",
+  "atm",
+  "hydrant",
+  "food-cart",
+  "container",
 ];
 
 /** Kinds of the plan drawn as the nearest street prop, and why that one. */
@@ -54,7 +58,7 @@ export const MAPPED: Readonly<Record<string, { readonly prop: StreetPropKind; re
   fountain: { prop: "fountain-jets", why: "jets in the basin; the water itself is a ground surface" },
   "fountain-multimedia": { prop: "fountain-jets", why: "jets in the leaf-shaped basin; the water itself is a ground surface" },
   "drinking-fountain": { prop: "bollard", why: "a cast-iron post with a tap" },
-  shrine: { prop: "monument", why: "a roadside shrine: a figure on a plinth" },
+  shrine: { prop: "monument", why: "a roadside shrine: the shrine shape of the monuments" },
   "memorial-stone": { prop: "granite-block", why: "a boulder (Głaz Katowski)" },
   millstone: { prop: "granite-block", why: "a stone on the ground" },
   "neon-art": { prop: "artwork", why: "an installation" },
@@ -104,7 +108,7 @@ export const SKIPPED: Readonly<Record<string, string>> = {
   "vehicle-trolleybus": "a moving vehicle, not static furniture",
   "shop-sign-bracket": "shop signs belong to the facades' neon (ADR-0044)",
   plaque: "plaques sit on facades",
-  atm: "cash machines sit in facades",
+  "atm-indoor": "a cash machine inside a building (OSM indoor=yes)",
   cafe: "a point of interest inside a building",
   "food-outlet": "a point of interest inside a building",
   toilet: "a small building",
@@ -113,6 +117,21 @@ export const SKIPPED: Readonly<Record<string, string>> = {
   billboard: "billboards belong to the facades' neon",
   note: "a note, no object",
 };
+
+/**
+ * Monuments and artworks of the drawn kinds left out by their OSM tags (`props-art.ts`, G-149):
+ * what is not free-standing, and why.
+ */
+export const SKIPPED_ART = {
+  plaque: "a plaque sits flat on a facade, not on the pavement",
+  stolperstein: "a stumbling stone lies flush in the pavement",
+  mural: "a mural is painted on a facade",
+  graffiti: "graffiti is painted on a facade",
+  mosaic: "a mosaic is laid in a wall or in the paving",
+  relief: "a relief is carved into a facade",
+  neon: "a neon hangs on a facade, with the facades' signs (ADR-0044)",
+  rope: "the figure hangs on a wire high over the street; it needs its own model",
+} as const;
 
 /** The street prop a plan kind becomes, or null when it is left out. */
 export const propOf = (kind: string): StreetPropKind | null => {
@@ -125,11 +144,12 @@ export const knownKind = (kind: string): boolean => propOf(kind) !== null || kin
 
 /**
  * Shapes chosen by the low bits of `variant` (ADR-0047), the same table as the renderer's
- * `PROP_SHAPES`: monument and artwork 0 obelisk, 1 figure on a plinth, 2 Koziołek, 3 abstract;
+ * `PROP_SHAPES`: monument and artwork 0 obelisk, 1 figure on a plinth, 2 Koziołek, 3 abstract,
+ * 4 stele with a tablet, 5 wayside shrine (all picked from the tags, `props-art.ts`);
  * flagpole 0 ordinary, 1 tall mast; tree 0 lime, 1 maple, 2 horse chestnut; bench 0 slatted
  * bench without a back, 1 with a back; advertising column 0 graphite, 1 the yellow one with a dome.
  */
-export const SHAPES: Readonly<Partial<Record<StreetPropKind, number>>> = { monument: 4, artwork: 4, flagpole: 2, tree: 3, bench: 2, "advertising-column": 2 };
+export const SHAPES: Readonly<Partial<Record<StreetPropKind, number>>> = { monument: 6, artwork: 6, flagpole: 2, tree: 3, bench: 2, "advertising-column": 2 };
 
 /** `hash` with its shape forced to `shape` (kept within 16 bits). */
 export const withShape = (hash: number, kind: StreetPropKind, shape: number): number => {

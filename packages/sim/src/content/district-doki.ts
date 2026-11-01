@@ -233,10 +233,11 @@ const QUAY_PROPS: readonly StaticProp[] = [
   // Cover around the terminal under the crane, and two containers on the west quay.
   crate(5.5, 132.5, 2.4, 1.2, 1.2),
   crate(11, 130, 1.4, 1.1, 1.4),
-  // A skip by the office and Tessen's van by the east fence: cover on the way in.
-  crate(-14, 127, 2.4, 1.4, 1.4, skin("dumpster", "z-")),
+  // A skip by the office and Tessen's van by the east fence: cover on the way in. The skip, and
+  // the first container on the west quay, take a body each (ADR-0065: the office guards' posts).
+  { ...crate(-14, 127, 2.4, 1.4, 1.4, skin("dumpster", "z-")), hide: "dumpster" },
   crate(28.5, 140, 2.4, 2.2, 5, skin("van", "z+")),
-  ...container(-10, 145.2, false),
+  ...container(-10, 145.2, false).map((p): StaticProp => ({ ...p, hide: "container" })),
   // Single, not stacked: nothing on the quay is high enough to jump the fence from.
   ...container(-16, 145.2, false, "glass"),
   lamp(-8, 147.5, SODIUM),
