@@ -270,6 +270,7 @@ export const STARE_MIASTO_CHUNKS: readonly LublinChunkData[] = [
     carParks: [
       {"id":"w179262652","kind":"surface","outline":[598.7,-198.3,597.4,-188,589,-188.9,587.1,-171.7,513.1,-179.5,508.8,-185.3,510.8,-186.1,512.9,-187,531.2,-194.5,538.2,-196.1,554.9,-195.3,555.3,-199.6,589.8,-197.2,589.9,-198.5,590,-199]},
     ],
+    busStops: [484.8,-192.8,513.2,-208.1,514.2,-193.1],
   },
   {
     id: "stare-miasto-1-0",
@@ -721,6 +722,7 @@ export const STARE_MIASTO_CHUNKS: readonly LublinChunkData[] = [
       {"id":"w522499471","kind":"surface","outline":[475,81.4,462.2,48.3,465.1,47.1,477.9,80.2]},
       {"id":"w895572841","kind":"lane","outline":[557.4,71.8,553.8,72.4,558,97.3,561.6,96.7]},
     ],
+    busStops: [454.1,16.2],
   },
   {
     id: "stare-miasto-1-1",

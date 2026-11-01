@@ -158,6 +158,8 @@ export interface LublinChunkData {
   readonly footWays?: readonly LublinFootWayData[];
   /** Car parks reaching into it, when it has any. */
   readonly carParks?: readonly LublinCarParkData[];
+  /** Bus stops' posts by it (and up to 25 m past its edge), when it has any: no car parks 15 m either side of one (G-156). */
+  readonly busStops?: FlatPoints;
 }
 
 /**

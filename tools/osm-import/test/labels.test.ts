@@ -42,8 +42,8 @@ describe("chunk footways (G-143)", () => {
     expect(chunkFootWays([way({ width: "1.5" })], rect)).toEqual([{ line: [40, 50, 52, 50], width: 1.5 }]);
   });
 
-  it("leave out a sidewalk along a kerb, a crossing, an area, a footbridge, a tunnel and a cycleway", () => {
-    for (const tags of [{ footway: "sidewalk" }, { footway: "crossing" }, { highway: "path", path: "crossing" }, { area: "yes" }, { bridge: "yes", layer: "1" }, { tunnel: "yes" }, { layer: "-1" }, { highway: "cycleway" }] as Record<string, string>[])
+  it("leave out a sidewalk along a kerb (a footway or a path, G-156), a crossing, an area, a footbridge, a tunnel and a cycleway", () => {
+    for (const tags of [{ footway: "sidewalk" }, { highway: "path", path: "sidewalk" }, { footway: "crossing" }, { highway: "path", path: "crossing" }, { area: "yes" }, { bridge: "yes", layer: "1" }, { tunnel: "yes" }, { layer: "-1" }, { highway: "cycleway" }] as Record<string, string>[])
       expect(chunkFootWays([way(tags)], rect)).toEqual([]);
   });
 });

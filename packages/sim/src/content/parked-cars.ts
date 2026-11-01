@@ -198,15 +198,46 @@ const clearOfKeptWays = (x: number, z: number, yaw: number, model: VehicleModel)
 };
 
 /**
+ * Room a parked car leaves a bus stop (m). The Polish code (art. 49 ust. 1 pkt 9 PoRD) bans
+ * stopping less than 15 m from the stop's post, before or after it, on the post's side of its
+ * street: within `STOP_ACROSS` of the post across the street (as far as that kerb's cars stand)
+ * the car's body keeps that far along it (G-156).
+ */
+const STOP_CLEAR = 15;
+const STOP_ACROSS = 7;
+/** A post is by the nearest car road within this (m); one farther off stands by none of them. */
+const STOP_STREET = 20;
+const BUS_STOPS = MAP_CHUNKS.flatMap((c) => Array.from({ length: (c.busStops ?? []).length / 2 }, (_, i): Pt => [c.busStops![2 * i]!, c.busStops![2 * i + 1]!]))
+  .filter((p, i, all) => all.findIndex((q) => q[0] === p[0] && q[1] === p[1]) === i)
+  .flatMap(([x, z]) => {
+    const by = CAR_STREETS.map((c) => ({ c, q: projectOn(c.points, x, z) })).sort((a, b) => a.q.d - b.q.d)[0];
+    if (!by || by.q.d >= STOP_STREET) return [];
+    const t = pointAt(by.c.points, by.q.s);
+    return [{ x, z, street: by.c, side: Math.sign(by.q.side), tx: t.tx, tz: t.tz }];
+  });
+
+/** Does a car at (x, z) keep out of every bus stop's banned stretch (`STOP_CLEAR`)? */
+const clearOfStops = (x: number, z: number, model: VehicleModel): boolean => {
+  const reach = STOP_CLEAR + VEHICLE_SIZE[model].length / 2;
+  return BUS_STOPS.every(
+    (p) =>
+      Math.hypot(x - p.x, z - p.z) > reach + STOP_ACROSS ||
+      Math.abs((x - p.x) * p.tx + (z - p.z) * p.tz) >= reach ||
+      Math.abs((x - p.x) * p.tz - (z - p.z) * p.tx) >= STOP_ACROSS ||
+      Math.sign(projectOn(p.street.points, x, z).side) !== p.side,
+  );
+};
+
+/**
  * Is a car's footprint at (x, z), facing yaw, wholly on a carriageway or a square and free of
- * walls, furniture, the game's places, service roads, footways and other streets' axes (and carriageways, by the kerb of
+ * walls, furniture, the game's places, service roads, footways, bus stops and other streets' axes (and carriageways, by the kerb of
  * `own`)? A street's kerb line is set from its median width, so where the carriageway narrows
  * (a bend, a pinch by a pavement) the bay falls on the grass or the pavement unless each corner
  * is checked. A bay on a slope too steep for a level car (`LEVEL_DROP`) stays empty.
  */
 const fits = (x: number, z: number, yaw: number, model: VehicleModel, own?: RoadChain): boolean => {
   if (!parkable(x, z) || !footprint(x, z, yaw, model, 0).every(([px, pz]) => parkable(px, pz)) || !clearOfZebras(x, z, yaw, model)) return false;
-  if (!level(x, z, yaw, model) || !clearOfKeptWays(x, z, yaw, model)) return false;
+  if (!level(x, z, yaw, model) || !clearOfKeptWays(x, z, yaw, model) || !clearOfStops(x, z, model)) return false;
   const { width, length } = VEHICLE_SIZE[model];
   const fx = Math.sin(yaw);
   const fz = Math.cos(yaw);

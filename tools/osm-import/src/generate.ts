@@ -14,7 +14,7 @@ import { type Band, areaBand, chunkGround, crossingBand, crossingWay, cutSidewal
 import { geoToWorld } from "./project.ts";
 import { type Marking, chunkMarkings, cutLine, oneway, roadMarkings, stopLines } from "./markings.ts";
 import { type Pt, type Rect, centroid, inRect, pointInRing, rectsOverlap, ringBounds } from "./geometry.ts";
-import { chunkCarParks } from "./kerbside.ts";
+import { busStopPosts, chunkBusStops, chunkCarParks } from "./kerbside.ts";
 import { allPois, chunkFootWays, chunkPois, chunkServiceWays, chunkStreets } from "./labels.ts";
 import { type PassageOut, buildingPassages, streetLevelTunnels } from "./passages.ts";
 import { type ChunkOut } from "./model.ts";
@@ -172,7 +172,7 @@ const generateChunk = (
   parts: ReadonlyMap<string, readonly Area[]>,
   alone: ReadonlySet<string>,
   venues: ReadonlyMap<string, readonly WorldVenue[]>,
-  areas: readonly Area[],
+  kerb: { readonly carParks: readonly Area[]; readonly busStops: readonly Pt[] },
 ) => {
   const altitude = LUBLIN_ANCHOR.altitude;
   const t = chunkTerrain(sampleField(src, spec.rect, 12), spec.rect, altitude);
@@ -206,7 +206,8 @@ const generateChunk = (
   const through = passages.filter((p) => own.has(p.building));
   const service = chunkServiceWays(lines, spec.rect);
   const foot = chunkFootWays(lines, spec.rect);
-  const parks = chunkCarParks(areas, spec.rect);
+  const parks = chunkCarParks(kerb.carParks, spec.rect);
+  const stops = chunkBusStops(kerb.busStops, spec.rect);
   const chunk: ChunkOut = {
     id: spec.id,
     district: spec.district.id,
@@ -221,6 +222,7 @@ const generateChunk = (
     ...(service.length > 0 ? { serviceWays: service } : {}),
     ...(foot.length > 0 ? { footWays: foot } : {}),
     ...(parks.length > 0 ? { carParks: parks } : {}),
+    ...(stops.length > 0 ? { busStops: stops } : {}),
   };
   const stats: ChunkStats = {
     id: spec.id,
@@ -314,7 +316,8 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   // All of them, so a building at a chunk's edge gets the same venues whichever chunks are built.
   const venues = assignVenues(allVenues(data, areas), buildings.map((b) => ({ id: b.id, ring: b.ring })));
   const mapped = allVenues(data, areas).filter((v) => chunks.some((c) => inRect(v.at, c.rect)));
-  const results = chunks.map((c) => generateChunk(c, src, buildings, bands, lines, pois, markings, passages, parts, alone, venues, areas));
+  const kerb = { carParks: areas, busStops: busStopPosts(data, features.lines, areas) };
+  const results = chunks.map((c) => generateChunk(c, src, buildings, bands, lines, pois, markings, passages, parts, alone, venues, kerb));
   const count = (f: (v: WorldVenue) => boolean) => mapped.filter(f).length;
   const venueStats: VenueStats = {
     total: mapped.length,

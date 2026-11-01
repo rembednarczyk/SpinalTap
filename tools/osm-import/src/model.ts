@@ -111,4 +111,6 @@ export interface ChunkOut {
   readonly footWays?: readonly FootWayOut[];
   /** Car parks reaching into it, when it has any. */
   readonly carParks?: readonly CarParkOut[];
+  /** Bus stops' posts by it, flat x, z (G-156), when it has any. */
+  readonly busStops?: readonly number[];
 }
