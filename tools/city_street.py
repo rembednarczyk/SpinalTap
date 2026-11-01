@@ -45,7 +45,7 @@ STREET = [
     # The camera on its mast (no solid: the kind is drawn only); the procedural one is 4.3 m.
     ('st-cctv', 'sketchfab-cctv-camera', 'cctv_camera.glb', ['cctv'], 0, (0.2, 0.4, 0.6), 700, {'mast': (3.75, 0.12), 'remap': {'fabric-amber': 'dark'}}),
     # A paper lantern hung under a market stall's canopy; lit at night.
-    ('st-lantern', 'sketchfab-paper-lantern-chochin', 'chinese__japanese_paper_lantern_chochin.glb', ['lantern'], 0, (0.3, 0.46, 0.3), 300,
+    ('st-lantern', 'sketchfab-paper-lantern-chochin', 'chinese__japanese_paper_lantern_chochin.glb', ['lantern'], 0, (0.3, 0.46, 0.3), 120,
      {'remap': {'brick': 'neon-red', 'fabric-amber': 'fabric-amber'}}),
 ]
 

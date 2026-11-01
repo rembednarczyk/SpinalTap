@@ -58,14 +58,14 @@ Brief mówił o 26 plikach, a lista ID ma 27. Żadnego pliku nie odrzucamy z pow
 
 ## Co weszło w kod (etap 1 paczki: rekwizyty ulicy)
 
-`packages/app/public/city/street-props.glb` (245 KiB, osobny plik, bo `city-props.glb` ma 465 z 512 KiB),
+`packages/app/public/city/street-props.glb` (241 KiB, osobny plik, bo `city-props.glb` ma 465 z 512 KiB),
 pieczony przez `python3 -I tools/city_kit.py --street DIR` (`tools/city_street.py`). Gra ładuje go za
 fasadą `BabylonRenderer` razem z `city-props.glb` (loader kitu scala oba pliki, `mergeCityProps`).
 Bloki mebli (`mapcity/street-models.ts`) rysują:
 - automaty z napojami (rodzaj `vending-machine`) jako `st-vending` / `st-vending-ramen`, model według kształtu;
 - biletomaty (`ticket-machine`) jako `st-ticket-terminal` / `st-ticket-kiosk`, model według pozycji;
 - kamery na masztach (`cctv`) jako `st-cctv`;
-- po dwa lampiony `st-lantern` pod daszkiem każdego straganu (`market-stall`).
+- po dwa lampiony `st-lantern` pod daszkiem co trzeciego straganu (`market-stall`; na wszystkich ok. 400 straganach Podzamcza dodałyby jedną trzecią trójkątów bloków).
 
 Każdy model jest wpasowany w pudło bryły swojego rodzaju z symulacji, więc pozycje, kolizje i złote
 hashe się nie zmieniają. Wszystko trafia do siatki bloku mebli, więc wywołań rysowania i siatek nie

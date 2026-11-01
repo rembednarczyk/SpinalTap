@@ -3,7 +3,7 @@ import type { EntityId, ViewDescriptor } from "@seki/core";
 import type { MoonShadow } from "../npr/moon-shadow";
 import type { ToonMaterials } from "../npr/toon-material";
 import { CityKit } from "./city-kit";
-import { type CityProps, parseCityProps } from "./city-props";
+import { type CityProps, mergeCityProps, parseCityProps } from "./city-props";
 import { type DressBlock, isWalkedRoof } from "./dressing-plan";
 import type { WorldDressing } from "./dressing";
 import type { Stage } from "./stage";
@@ -54,10 +54,11 @@ export class CityKitLoader {
   }
 
   /**
-   * Loads the kit in the background, then the facade props (ADR-0058) if there is a URL for
-   * them; the scene is not ready (reference frames wait) until both are in.
+   * Loads the kit in the background, then the props files (the facade props of ADR-0058, the
+   * street furniture of ADR-0063) if there are URLs for them; the scene is not ready (reference
+   * frames wait) until all are in.
    */
-  load(url: string, propsUrl: string | null = null): void {
+  load(url: string, propsUrl: string | readonly string[] | null = null): void {
     const { scene } = this.deps.stage;
     const token = {};
     scene.addPendingData(token);
@@ -73,7 +74,8 @@ export class CityKitLoader {
         for (const [id, p] of this.pendingSkins) this.city.add(id, p.view.skin, p.view.size, p.center, p.box);
         this.pendingSkins.clear();
         this.deps.dressing.setKit("kit");
-        if (propsUrl) this.loadProps(propsUrl);
+        const props = propsUrl === null ? [] : typeof propsUrl === "string" ? [propsUrl] : propsUrl;
+        if (props.length > 0) this.loadProps(props);
       })
       .catch((err: unknown) => {
         console.warn(`[city] ${url} failed to load, keeping plain blocks`, err);
@@ -84,23 +86,34 @@ export class CityKitLoader {
       .finally(() => scene.removePendingData(token));
   }
 
-  /** The props come after the kit: without them the procedural decor stays. */
-  private loadProps(url: string): void {
+  /**
+   * The props come after the kit, all files at once and merged: a file that fails leaves the
+   * others; without any the procedural decor stays.
+   */
+  private loadProps(urls: readonly string[]): void {
     const { scene } = this.deps.stage;
     const token = {};
     scene.addPendingData(token);
-    fetch(url)
-      .then(async (res) => {
+    const one = async (url: string): Promise<CityProps | null> => {
+      try {
+        const res = await fetch(url);
         if (!res.ok) throw new Error(`city props ${url}: ${res.status}`);
         return parseCityProps(await res.arrayBuffer());
-      })
-      .then((props) => {
-        if (scene.isDisposed) return;
+      } catch (err: unknown) {
+        console.warn(`[city] ${url} failed to load, keeping the procedural decor`, err);
+        return null;
+      }
+    };
+    Promise.all(urls.map(one))
+      .then((files) => {
+        const loaded = files.filter((f): f is CityProps => f !== null);
+        if (scene.isDisposed || loaded.length === 0) return;
+        const props = loaded.reduce(mergeCityProps);
         this.cityProps = props;
         this.city?.setProps(props);
         this.deps.onProps?.(props);
       })
-      .catch((err: unknown) => console.warn(`[city] ${url} failed to load, keeping the procedural decor`, err))
+      .catch((err: unknown) => console.warn("[city] the props files do not fit together, keeping the procedural decor", err))
       .finally(() => scene.removePendingData(token));
   }
 

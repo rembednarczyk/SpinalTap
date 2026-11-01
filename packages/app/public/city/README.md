@@ -127,7 +127,7 @@ licencji **CC-BY 4.0**, w osobnym pliku na tej samej palecie, bo `city-props.glb
 | `st-ticket-terminal` (biletomat) | Reston B2 Terminal | [Iteration Unlimited](https://sketchfab.com/iterationunlimited) | [Sketchfab](https://sketchfab.com/3d-models/reston-b2-terminal-91b08809f18244628385193e396dd3da) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | żółty z dwóch terminali w pliku (3,3 tys. trójkątów) uproszczony do 0,9 tys., kolory sprowadzone do palety, postawiony na dodanym ciemnym słupku 0,8 m, razem 0,5 × 1,64 × 0,3 m |
 | `st-ticket-kiosk` (biletomat) | Scifi Kiosk | [Martin Ibbett](https://sketchfab.com/unyxium) | [Sketchfab](https://sketchfab.com/3d-models/scifi-kiosk-835aac31a9114203b5cb04952f9a273b) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | uproszczony z 2,1 do 0,9 tys. trójkątów, kolory sprowadzone do palety, ekran świeci (`win-teal`), 0,5 × 1,67 × 0,38 m |
 | `st-cctv` (kamera na maszcie) | CCTV Camera | [Smoggybeard](https://sketchfab.com/Smoggybeard) | [Sketchfab](https://sketchfab.com/3d-models/cctv-camera-e69d5eb37ffb4f188e4d3c84a5d79cdc) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | uproszczony z 3,2 do 0,7 tys. trójkątów, kolory sprowadzone do palety, długość 0,6 m, zawieszony na dodanym maszcie 4,2 m |
-| `st-lantern` (lampiony chochin pod daszkiem straganu) | Chinese \ Japanese paper lantern chochin | [DeepDown](https://sketchfab.com/deepdown) | [Sketchfab](https://sketchfab.com/3d-models/chinese-japanese-paper-lantern-chochin-20bcc5d20f2847f88aef3a267275d16c) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | uproszczony z 2,8 do 0,3 tys. trójkątów, kolory sprowadzone do palety, czerwony papier świeci (`neon-red`), 0,43 m |
+| `st-lantern` (lampiony chochin pod daszkiem straganu) | Chinese \ Japanese paper lantern chochin | [DeepDown](https://sketchfab.com/deepdown) | [Sketchfab](https://sketchfab.com/3d-models/chinese-japanese-paper-lantern-chochin-20bcc5d20f2847f88aef3a267275d16c) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | uproszczony z 2,8 tys. do 201 trójkątów, kolory sprowadzone do palety, czerwony papier świeci (`neon-red`), 0,44 m |
 
 Zmiany względem oryginałów (`tools/city_street.py`, funkcje pomocnicze z `tools/city_ccby.py`): kolor
 trójkąta uśredniony z tekstury i przypisany do roli palety, emisja jako neon, siatka uproszczona przez
@@ -138,7 +138,7 @@ Front na +Z, `extras.size`, `extras.styles` (rodzaj mebla: `vending-machine`, `t
 
 Renderer (`packages/engine/src/renderer/mapcity/street-models.ts`) rysuje automaty z napojami,
 biletomaty i kamery na masztach jako te modele (model wybrany z pozycji), w miejscu i obrocie
-proceduralnego mebla, a pod daszkiem każdego straganu wiesza dwa lampiony. Wszystko trafia do siatki
+proceduralnego mebla, a pod daszkiem co trzeciego straganu wiesza dwa lampiony. Wszystko trafia do siatki
 bloku mebli, więc nie ma nowych wywołań rysowania ani zmian w symulacji. Na telefonie (`low`) zostają
 meble proceduralne.
 
