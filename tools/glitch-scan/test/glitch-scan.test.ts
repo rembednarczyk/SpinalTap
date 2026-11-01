@@ -792,8 +792,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   },
   /** A car in a kerb car park of the map data (`parking=lane|street_side`) with a corner over 0.3 m out of its outline (G-177). */
   "bay-car-out-of-park": () => bayCarsOutOfPark(kerbParksOf(SOURCE_OSM), PARKED_CARS),
-  /** A car in a kerb car park turned against its bays, to its nearest car road: along one mapped `perpendicular|diagonal` (G-177), off 60° in a `diagonal` one, out of line with the cars aslant in an untagged deep one (G-187, G-189). */
-  "bay-car-orientation": () => bayCarsMisturned(kerbParksOf(SOURCE_OSM), PARKED_CARS, carStreets.map((c) => c.points)),
+  /** A car in a kerb car park turned against its bays: along one mapped `perpendicular|diagonal` (G-177), off 60° in a `diagonal` one, across an untagged deep one (G-187) or along it beside a car aslant (G-189). */
+  "bay-car-orientation": () => bayCarsMisturned(kerbParksOf(SOURCE_OSM), PARKED_CARS),
   /** A kerb car park 15 m long or more, a meter or a footway just past its kerb, with under half the cars of its bays (G-189). */
   "bay-strip-sparse": () =>
     bayStripsSparse(
@@ -1510,15 +1510,11 @@ describe("the glitch scan (ADR-0054)", () => {
     const deep = park(undefined, [[10, 4], [30, 4], [30, 10], [10, 10]]);
     const [along, aslant, across] = [Math.PI / 2, Math.PI / 6, 0];
 
-    it("takes a deep strip's cars across the kerb as the generator's fallback, but not beside cars aslant", () => {
-      expect(bayCarsMisturned([deep], [car(15, 7, across), car(20, 7, across)], [street])).toEqual([]);
-      expect(bayCarsMisturned([deep], [car(15, 7, across), car(22, 7, aslant)], [street]).map((f) => f.at)).toEqual(["15,7"]);
-    });
-
-    it("measures a car's turn to its street, not to the strip's longest edge (Ciasna, by a bend)", () => {
-      const across18 = park("perpendicular", [[10, 2], [16, 2], [16, 20], [10, 20]]);
-      expect(bayCarsMisturned([across18], [car(13, 6, across)], [street])).toEqual([]);
-      expect(bayCarsMisturned([across18], [car(13, 6, along)], [street]).map((f) => f.what)).toEqual(["sedan in w1 (perpendicular) along the kerb"]);
+    it("finds a deep untagged strip's car across the kerb, and one along it beside a car aslant", () => {
+      expect(bayCarsMisturned([deep], [car(15, 7, across)]).map((f) => f.what)).toEqual(["sedan in w1 (untagged deep) across the kerb, not aslant"]);
+      expect(bayCarsMisturned([deep], [car(15, 7, along), car(22, 7, aslant)]).map((f) => f.what)).toEqual(["sedan in w1 (untagged deep) along the kerb beside a car aslant"]);
+      expect(bayCarsMisturned([deep], [car(15, 7, along)])).toEqual([]);
+      expect(bayCarsMisturned([deep], [car(15, 7, aslant), car(22, 7, aslant)])).toEqual([]);
     });
 
     it("finds a strip by a meter past its kerb holding under half its bays' cars, and only that", () => {

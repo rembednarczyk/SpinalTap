@@ -72,40 +72,46 @@ const stripOf = (ring: readonly P[], streets: readonly Street[]) => {
 /** A strip's layout as its tag says, else aslant from 4.5 m deep (G-187), else along the kerb. */
 const layoutOf = (park: Area, depth: number): string => park.tags.orientation ?? (depth >= 4.5 ? "untagged deep" : "parallel");
 
-/** A car's angle to the way of the car road nearest it (°): 0 along it, 90 across. */
-const angleToStreet = (c: ParkedCar, streets: readonly Street[]) => {
-  const street = streets.reduce((m, s) => (projectOn(s, c.x, c.z).d < projectOn(m, c.x, c.z).d ? s : m));
-  const t = pointAt(street, projectOn(street, c.x, c.z).s);
-  return (Math.acos(Math.min(1, Math.abs(t.tx * Math.sin(c.yaw) + t.tz * Math.cos(c.yaw)))) * 180) / Math.PI;
+/** The way of a strip's street: its outline's longest edge. */
+const stripWay = (ring: readonly P[]): { tx: number; tz: number } => {
+  const edges = ring.map((a, i) => ({ a, b: ring[(i + 1) % ring.length]! }));
+  const { a, b } = edges.reduce((m, e) => (Math.hypot(e.b.x - e.a.x, e.b.z - e.a.z) > Math.hypot(m.b.x - m.a.x, m.b.z - m.a.z) ? e : m));
+  const len = Math.hypot(b.x - a.x, b.z - a.z) || 1;
+  return { tx: (b.x - a.x) / len, tz: (b.z - a.z) / len };
 };
 
+/** A strip's mean depth across its way: its area over its longest edge (m). */
+const stripDepthOf = (ring: readonly P[]): number => {
+  const area = Math.abs(ring.reduce((s, a, i) => s + a.x * ring[(i + 1) % ring.length]!.z - ring[(i + 1) % ring.length]!.x * a.z, 0)) / 2;
+  return area / Math.max(...ring.map((a, i) => Math.hypot(ring[(i + 1) % ring.length]!.x - a.x, ring[(i + 1) % ring.length]!.z - a.z)));
+};
+
+/** A car's angle to a strip's way (°): 0 along it, 90 across. */
+const angleTo = (way: { tx: number; tz: number }, c: ParkedCar) => (Math.acos(Math.min(1, Math.abs(way.tx * Math.sin(c.yaw) + way.tz * Math.cos(c.yaw)))) * 180) / Math.PI;
+
 /**
- * A car in a kerb car park turned against the way the map and Lublin's streets draw its bays,
- * measured to the car road nearest it (a strip's longest edge may run across its street at a
- * bend, G-189): within 20° of along the kerb where it is mapped `orientation=perpendicular` or
- * `diagonal`; more than 15° off 60° where it is mapped `diagonal`. A strip 4.5 m deep or more
- * mapped without the tag holds its cars aslant in Lublin (G-187), or in one layout across or
- * along the kerb where none aslant fits (on a slope, by a bend): one there that stands across or
- * along beside one aslant is turned wrong.
+ * A car in a kerb car park turned against the way the map and Lublin's streets draw its bays:
+ * within 20° of the strip's way (along the kerb) where it is mapped `orientation=perpendicular`
+ * or `diagonal`; more than 15° off 60° where it is mapped `diagonal`; within 15° of across in a
+ * strip 4.5 m deep or more mapped without the tag, whose bays in Lublin are aslant (G-187), or
+ * within 20° of along there beside a car aslant (a strip's cars stand in one layout, G-189).
  */
-export const bayCarsMisturned = (parks: readonly Area[], cars: readonly ParkedCar[], streets: readonly Street[]): Finding[] => {
-  const angles = new Map(cars.map((c) => [c, angleToStreet(c, streets)]));
-  const aslant = (a: number) => a >= 45 && a <= 75;
-  return cars.flatMap((c) => {
+export const bayCarsMisturned = (parks: readonly Area[], cars: readonly ParkedCar[]): Finding[] =>
+  cars.flatMap((c) => {
     const park = parks.find((p) => pointInRing(c, p.ring));
-    const orientation = park && layoutOf(park, stripOf(park.ring, streets).depth);
-    if (!park || orientation === "parallel") return [];
-    const angle = angles.get(c)!;
-    const mixed = orientation === "untagged deep" && !aslant(angle) && cars.some((o) => pointInRing(o, park.ring) && aslant(angles.get(o)!));
+    const orientation = park?.tags.orientation ?? (park && stripDepthOf(park.ring) >= 4.5 ? "untagged deep" : undefined);
+    if (!park || orientation === undefined || orientation === "parallel") return [];
+    const way = stripWay(park.ring);
+    const angle = angleTo(way, c);
+    const besideAslant = () => cars.some((o) => o !== c && pointInRing(o, park.ring) && Math.abs(angleTo(way, o) - 60) <= 15);
     const wrong =
       orientation === "untagged deep"
-        ? mixed && `${angle.toFixed(0)}° off the kerb beside a car aslant`
+        ? (angle > 75 && "across the kerb, not aslant") || (angle < 20 && besideAslant() && "along the kerb beside a car aslant")
         : angle < 20
           ? "along the kerb"
           : orientation === "diagonal" && Math.abs(angle - 60) > 15 && `${angle.toFixed(0)}° off the kerb, not 60°`;
     return wrong ? [{ at: near(c.x, c.z), what: `${c.model} in ${park.id} (${orientation}) ${wrong}` }] : [];
   });
-};
 
 /** Share of a kerb car park's bays taken (`parked-cars`' occupancy, as Plac Zamkowy's). */
 const TAKEN = 0.8;
