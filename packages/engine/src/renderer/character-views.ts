@@ -3,23 +3,13 @@ import type { AppearanceDescriptor, EntityId, Transform, ViewDescriptor, WeaponL
 import type { CameraRig } from "../camera/camera-rig";
 import type { MoonShadow } from "../npr/moon-shadow";
 import type { ToonMaterials } from "../npr/toon-material";
-import {
-  type CharacterRig,
-  animateRig,
-  buildCivilian,
-  buildCorpo,
-  buildFixer,
-  buildGanger,
-  buildHeroine,
-  buildRipperdoc,
-  deathFinished,
-  startDeath,
-} from "./characters";
-import { markEnforcer } from "./enforcer-mark";
-import { withinDrawDistance } from "./character-lod";
-import { easeLift, groundLift } from "./ground-lift";
+import { CharacterDeaths } from "./character-deaths";
 import { CharacterKit } from "./character-kit";
+import { withinDrawDistance } from "./character-lod";
 import { CharacterModels } from "./character-models";
+import { type CharacterRig, animateRig, buildCivilian, buildCorpo, buildFixer, buildGanger, buildHeroine, buildRipperdoc } from "./characters";
+import { markEnforcer } from "./enforcer-mark";
+import { easeLift, groundLift } from "./ground-lift";
 import { type CharacterModelKey, type CharacterModelManifest, ModelLibrary } from "./model-library";
 import type { HumanoidRetarget } from "./model-rig";
 import { type ScanClass, scanClassOfView } from "./scan-highlight";
@@ -89,17 +79,19 @@ export interface CharacterViewsDeps {
 }
 
 /**
- * Views of the characters: procedural rigs, imported models dressed over them (pooled for
- * reuse), weapons and garment add-ons, and the death fall after the simulation removed one.
+ * Views of the characters: procedural rigs, their transforms, draw distance and animation. A
+ * facade (ADR-0031) over `CharacterModels` (imported models dressed over the rigs, pooled for
+ * reuse), `CharacterKit` (weapons and garment add-ons) and `CharacterDeaths` (the death fall
+ * after the simulation removed one).
  */
 export class CharacterViews implements FxActors {
   private readonly views = new Map<EntityId, CharacterView>();
-  /** Characters playing their death fall after the simulation removed them. */
-  private readonly dying: CharacterRig[] = [];
   /** Weapons, loadouts and the weapon in hand per character. */
   private readonly kit: CharacterKit;
   /** Imported models dressed over the rigs, and their pool. */
   private readonly models: CharacterModels;
+  /** Characters playing their death fall after the simulation removed them. */
+  private readonly deaths = new CharacterDeaths((rig) => disposeRig(rig, this.kit, this.models));
 
   constructor(private readonly deps: CharacterViewsDeps) {
     const library = new ModelLibrary(deps.scene, deps.materials);
@@ -176,8 +168,7 @@ export class CharacterViews implements FxActors {
     this.views.delete(id);
     this.kit.forget(id);
     if (fall) {
-      startDeath(v.rig);
-      this.dying.push(v.rig);
+      this.deaths.fall(v.rig);
     } else {
       disposeRig(v.rig, this.kit, this.models);
     }
@@ -186,7 +177,7 @@ export class CharacterViews implements FxActors {
   /** Removes every character at once, the falling ones too. */
   clear(): void {
     for (const id of this.ids()) this.despawn(id, false);
-    for (const rig of this.dying.splice(0)) disposeRig(rig, this.kit, this.models);
+    this.deaths.clear();
   }
 
   /**
@@ -216,18 +207,10 @@ export class CharacterViews implements FxActors {
       animateRig(v.rig, t.speed, dt, t.crouch, { aim: t.aim ?? 0, guard: t.guard ?? 0 }, motion);
       this.deps.pose?.(id, v.rig, t.speed, dt, this.models.of(v.rig)?.retarget ?? null, clock);
     }
-    for (let i = this.dying.length - 1; i >= 0; i--) {
-      const rig = this.dying[i];
-      if (!rig) continue;
-      animateRig(rig, 0, dt);
-      if (deathFinished(rig)) {
-        disposeRig(rig, this.kit, this.models);
-        this.dying.splice(i, 1);
-      }
-    }
+    this.deaths.update(dt);
     this.models.update(dt, clock);
     for (const v of this.views.values()) if (v.rig.root.isEnabled(false)) this.kit.loadouts.update(v.rig);
-    for (const rig of this.dying) this.kit.loadouts.update(rig);
+    for (const rig of this.deaths.rigs) this.kit.loadouts.update(rig);
   }
 
   /** Hides the player's body in first person. */
