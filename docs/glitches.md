@@ -446,13 +446,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Koszt: średni (nowy element zestawu poza bryłą)
 - Pakiet właściciela: packages/engine (renderer, przepisy zabytków)
 
-### G-138 Pasy ruchu na szwach chunków i krawędziach mapy bez nawierzchni
-- Status: w PR #115 (weryfikator przyjął 1.11; 4ad3687: pasy przycięte 0,1 m od krawędzi mapy, `lane-off-ground` 56 → 9; reszta to zawracanie na Alei Tysiąclecia i szczelina z G-144)
-- Ważność: S4 · Zasięg: 56 z 23 374 punktów pasów (co 1 m), na szwach chunków (z ≈ 160) i krawędziach mapy
-- Gdzie: `surfacesAt` nie zwraca tam żadnej nawierzchni, a `GroundField.heightAt` różni się od `groundY` (np. (−96.3, −270.5): −1,80 zamiast 0,00); sprawa sprzed G-130
-- Pakiet właściciela: packages/sim (content/lublin, ground)
-- Test przyjęcia: kontrola skanu dla punktów pasów bez nawierzchni, baza 56 → 0 albo uzasadnione wyjątki
-
 ### G-142 Atlas nazw budynków: 32 wiersze na 118 nazw, część tabliczek pusta
 - Status: zgłoszone (1.11, weryfikator ADR-0062 etap 2; etap w main, #109)
 - Ważność: S3 · Zasięg: 121 nazwanych budynków (118 różnych nazw), 32 wiersze `NAME_SLOTS` bez zwalniania (29 po rezerwacji napisów zabytków); które tabliczki wyjdą puste, zależy od kolejności wczytywania komórek
@@ -570,6 +563,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | G-114 | npr-perf Nabrzeże: czasem +98 wywołań rysowania przy tych samych siatkach | #113 |
 | G-139 | Smoke „title → new game”: gracz przechodzi 2,09 m przy szybkim starcie (skok kursora jako obrót) | #112 |
 | G-141 | Obezwładnienie: telefon świadka kończy się w trakcie chwytu; wyjątek pomocnika bez testu | #114 |
+| G-138 | Pasy ruchu na krawędziach mapy bez nawierzchni | #115 |
 | G-131 | Etap 1 obezwładnienia: klawisz interakcji, ogłuszony „w walce”, strzał po zabiciu | #100 |
 
 ## Odrzucone

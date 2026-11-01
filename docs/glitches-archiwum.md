@@ -538,3 +538,10 @@ Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [r
 - Gdzie: `runCalls` sprawdza `c.unconscious`, nie `incapacitated`: telefon, któremu zostało mniej niż `TAKEDOWN_TIME` (1,2 s), dochodzi, gdy gracz trzyma świadka w chwycie (sonda: 0,38 s pozostałych, 1 zgłoszenie); wyjątek `helper` w `react` (`crime-system.ts` ok. l. 155) bez testu (świeże, niezauważone ciało, pomocnik znajduje je pierwszy)
 - Pakiet właściciela: packages/sim
 - Test przyjęcia: oba przypadki jako testy symulacji, padające bez poprawki
+
+### G-138 Pasy ruchu na szwach chunków i krawędziach mapy bez nawierzchni
+- Status: naprawione (#115): końce pasów 0,1 m przed krawędzią mapy (`onTheMap`), `lane-off-ground` 56 → 9 (reszta: zawracanie na Alei Tysiąclecia i G-144)
+- Ważność: S4 · Zasięg: 56 z 23 374 punktów pasów (co 1 m), na szwach chunków (z ≈ 160) i krawędziach mapy
+- Gdzie: `surfacesAt` nie zwraca tam żadnej nawierzchni, a `GroundField.heightAt` różni się od `groundY` (np. (−96.3, −270.5): −1,80 zamiast 0,00); sprawa sprzed G-130
+- Pakiet właściciela: packages/sim (content/lublin, ground)
+- Test przyjęcia: kontrola skanu dla punktów pasów bez nawierzchni, baza 56 → 0 albo uzasadnione wyjątki
