@@ -36,7 +36,7 @@ Metoda: tylko odczyt (grep/sed/wc) dokumentów (`CLAUDE.md`, `docs/seki-senshi-p
 | Świat | Gracz nie prowadzi pojazdów (auta tylko jako ruch i dekoracja) | `core/src/ports/types.ts` l. 53–57 (vehicle w widoku), brak sterowania | średni (miasto pieszo) | XL | nie | P3: przy skali 20 chunków i metrze to świadome cięcie, nie luka krytyczna |
 | Świat | Brak szybkiej podróży poza metrem i brak trasy GPS / własnego znacznika gracza na mapie | `app/src/quest-target.ts` (tylko cel kroku), grep `waypoint|gps`: nie znaleziono; G-035 | wysoki | M | częściowo (G-035) | P1: na telefonie nawigacja bez trasy męczy |
 | Świat | Brak mieszkania gracza (schowek, łóżko/odpoczynek do godziny, garderoba) | grep `apartment|safehouse`: nie znaleziono | średni | M | nie | P2 |
-| UI/UX | Brak samouczka w misji (są tylko podpowiedzi klawiszy) i brak podpowiedzi systemowych (heat, Breach, przebrania) | `app/src/hints.ts` (7 podpowiedzi) | średni | S–M | nie | P1: dużo systemów, mało objaśnień |
+| UI/UX | Brak samouczka w misji (są tylko podpowiedzi klawiszy) i brak podpowiedzi systemowych (heat, Breach, przebrania; 1.11: podpowiedzi heatu, przebrania i zasady Breach w main, #130; samouczka w misji nadal brak) | `app/src/hints.ts` (7 podpowiedzi) | średni | S–M | nie | P1: dużo systemów, mało objaśnień |
 | UI/UX | Brak ikon przedmiotów | backlog „Assety ubrań i ekwipunku” | średni | M | tak (backlog) | P1 |
 | UI/UX | Brak kodeksu/bazy wiedzy (frakcje, postacie, słownik) i brak historii komunikatów | grep `codex|kodeks` w ui: nie znaleziono | niski | S | nie | P3 |
 | UI/UX | Pad nie steruje menu i dialogiem (propozycja w ADR-0039, w UI brak obsługi) | ADR-0039 l. 22; grep `gamepad` w `ui/src`: tylko komentarz | wysoki dla pada | M | propozycja w ADR | P1 |
