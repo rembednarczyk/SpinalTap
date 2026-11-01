@@ -476,6 +476,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: spójne zaokrąglenie w obu ścieżkach z testem; dla urwanego sąsiada decyzja kuratora (dociąć albo dołączyć sąsiada)
 
+### G-135 Pointer lock bez gestu: panel otwarty i zamknięty Esc przed pierwszym kliknięciem po ekranie ładowania
+- Status: do sprawdzenia ręcznie (1.11, weryfikator ADR-0057, #102)
+- Ważność: S4 (proponowana) · Zasięg: desktop, tylko gdy gracz otworzy panel przed pierwszym kliknięciem po ładowaniu
+- Gdzie: `packages/app/src/pointer-focus.ts`: zamknięcie panelu Esc woła blokadę od razu; strona bez wcześniejszej blokady i bez gestu może dostać odmowę, a odmowa ustawia na stałe `lockUnavailable` (`browser-input.ts:149`)
+- Pakiet właściciela: packages/app, packages/engine/src/input
+- Test przyjęcia: prawdziwy Chrome (e2e) z tym przebiegiem; po odmowie kolejne kliknięcie nadal blokuje
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
