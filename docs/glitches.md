@@ -607,7 +607,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/glitch-scan, tools/osm-import
 
 ### G-184 Szkielety modeli przybywają przy każdym cyklu nowa gra / clear
-- Status: zgłoszone (1.11, weryfikator #146); tak samo na main przed podziałem
+- Status: w PR #151 (1.11; potwierdzony wyciek szkieletów postaci proceduralnych, pula VRM zamierzona); w weryfikacji
 - Ważność: S3 do potwierdzenia (możliwy wyciek pamięci) · Zasięg: liczba szkieletów w scenie rośnie o 12 na cykl newGame/clear (67 → 79) na NullEngine z modelami VRM; sprawdzić, czy to zamierzona pula
 - Poprawka: dispose szkieletów postaci przy clear (`CharacterViews`) albo udokumentowana pula; test sesji: dwa cykle, ta sama liczba szkieletów
 - Pakiet właściciela: packages/engine (renderer)
