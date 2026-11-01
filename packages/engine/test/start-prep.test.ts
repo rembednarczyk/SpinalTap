@@ -1,6 +1,6 @@
 import type { PrepareStage } from "@seki/core";
 import { describe, expect, it } from "vitest";
-import { STAGE_WEIGHT, StartPrep, type StartPrepDeps } from "../src/renderer/start-prep";
+import { MAX_FILE_FRAMES, STAGE_WEIGHT, StartPrep, type StartPrepDeps } from "../src/renderer/start-prep";
 
 /** Preparing the start of a game (ADR-0057), with a fake scene the test drives frame by frame. */
 
@@ -170,5 +170,37 @@ describe("StartPrep", () => {
     const frames = await drive(prep, () => over, 5000);
     expect(over).toBe(true);
     expect(frames).toBeLessThan(1000);
+  });
+  it("a model download that never answers ends the stage after its frames, like a failed one", async () => {
+    const hang = new Promise<never>(() => {});
+    const { deps } = fakeDeps({ modelFiles: () => hang });
+    const prep = new StartPrep(deps);
+    const { seen, onProgress } = record();
+    let over = false;
+    void prep.run(onProgress).then(() => (over = true));
+    const frames = await drive(prep, () => over, 5000);
+    expect(over).toBe(true);
+    expect(frames).toBeLessThan(MAX_FILE_FRAMES + 20);
+    expect(seen.at(-1)!.done).toBeCloseTo(1, 9);
+  });
+
+  it("a model file and a city kit that never answer do not hold the start, nor move the bar back", async () => {
+    let ok!: () => void;
+    const late = new Promise<void>((resolve) => (ok = resolve));
+    const { deps } = fakeDeps({ modelFiles: async () => [late, new Promise(() => {})], cityKit: () => new Promise(() => {}) });
+    const prep = new StartPrep(deps);
+    const { seen, onProgress } = record();
+    let over = false;
+    void prep.run(onProgress).then(() => (over = true));
+    const frames = await drive(prep, () => over, 5000);
+    expect(over).toBe(true);
+    expect(frames).toBeLessThan(2 * MAX_FILE_FRAMES + 20);
+    const count = seen.length;
+    // A file that answers after its stage gave up reports nothing more.
+    ok();
+    await flush();
+    expect(seen.length).toBe(count);
+    for (let i = 1; i < seen.length; i++) expect(seen[i]!.done).toBeGreaterThanOrEqual(seen[i - 1]!.done);
+    expect(seen.at(-1)!.done).toBeCloseTo(1, 9);
   });
 });

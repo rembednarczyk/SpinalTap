@@ -1,4 +1,4 @@
-import type { PrepareStage } from "@seki/core";
+import { PREPARE_STAGES, type PrepareStage } from "@seki/core";
 import { MeshBuilder, type Scene } from "../babylon";
 import type { ToonMaterials } from "../npr/toon-material";
 import type { Signage } from "./signage";
@@ -31,6 +31,12 @@ const SETTLED_FRAMES = 2;
 const WARM_FRAMES = 3;
 /** A stage that waits on frames gives up after this many, so a stuck one never holds the start. */
 const MAX_STAGE_FRAMES = 900;
+/**
+ * A stage waiting on downloads (models, the city kit) gives up after this many frames, as if they
+ * had failed: a request that never answers must not hold the start (ADR-0057). Counted in frames,
+ * not wall time, like the other stages; the files keep loading and show up once they arrive.
+ */
+export const MAX_FILE_FRAMES = 1800;
 
 const ignore = (): void => {};
 
@@ -61,23 +67,28 @@ export class StartPrep {
     this.running = true;
     let base = 0;
     let shown = 0;
+    let current: PrepareStage = "models";
     const report = (stage: PrepareStage, share: number): void => {
-      if (!live()) return;
+      // A file that answers after its stage gave up reports nothing.
+      if (!live() || stage !== current) return;
       shown = Math.max(shown, base + STAGE_WEIGHT[stage] * Math.max(0, Math.min(1, share)));
       onProgress(shown, stage);
     };
     const next = (stage: PrepareStage): void => {
       report(stage, 1);
       base += STAGE_WEIGHT[stage];
+      current = PREPARE_STAGES[PREPARE_STAGES.indexOf(stage) + 1] ?? stage;
     };
     try {
       report("models", 0);
-      const files = await this.deps.modelFiles().catch(() => []);
-      let loaded = 0;
-      await Promise.all(files.map((f) => f.then(ignore, ignore).then(() => report("models", ++loaded / files.length))));
+      await this.files(live, async () => {
+        const files = await this.deps.modelFiles();
+        let loaded = 0;
+        await Promise.all(files.map((f) => f.then(ignore, ignore).then(() => report("models", ++loaded / files.length))));
+      });
       next("models");
       if (!live()) return;
-      await this.deps.cityKit().catch(ignore);
+      await this.files(live, () => this.deps.cityKit());
       next("cityKit");
       if (!live()) return;
       await this.cityStage(report, live);
@@ -92,6 +103,11 @@ export class StartPrep {
     } finally {
       if (live()) this.running = false;
     }
+  }
+
+  /** Waits for downloads, failed or not, for `MAX_FILE_FRAMES` frames at most. */
+  private files(live: () => boolean, load: () => Promise<unknown>): Promise<void> {
+    return Promise.race([load().then(ignore, ignore), this.frames(live, () => false, MAX_FILE_FRAMES)]);
   }
 
   /** The city settles round the camera, built a few cells per frame; the bar follows the cells left. */
@@ -120,13 +136,13 @@ export class StartPrep {
     });
   }
 
-  /** Resolves once `done` holds in a tick, after `MAX_STAGE_FRAMES` ticks, or when a newer run took over. */
-  private frames(live: () => boolean, done: () => boolean): Promise<void> {
+  /** Resolves once `done` holds in a tick, after `max` ticks, or when a newer run took over. */
+  private frames(live: () => boolean, done: () => boolean, max = MAX_STAGE_FRAMES): Promise<void> {
     return new Promise((resolve) => {
       let count = 0;
       this.waiter = () => {
         count++;
-        if (live() && !done() && count < MAX_STAGE_FRAMES) return false;
+        if (live() && !done() && count < max) return false;
         resolve();
         return true;
       };
