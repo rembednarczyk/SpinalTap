@@ -104,7 +104,7 @@ Statusy: `celowe`, `do poprawy` (z G-NNN), `poprawione (#PR)`.
 | T-085 | Brama Grodzka, warstwa 2077 | ciepłe linie na gzymsach, kamera od Grodzkiej, oprawy przy obu wylotach, bez neonów, ekranów i kabli | brama bez instalacji | zabytek (warstwa 2077) | celowe (ADR-0062, ADR-0058 „Stare Miasto oszczędnie”, jak T-034) |
 | T-086 | Brama Grodzka, przejazd (pomiar orientacyjny ±0,5 m) | sklepienie poziome nad posadzką opadającą o 2,4 m: łuk 4,2 m od Grodzkiej i 6,6 m od Zamku | ok. 4–4,5 m i ok. 5,1 m | geometria (prześwit) | do poprawy razem z G-136 albo w audycie bram i przejazdów |
 | T-087 | Stare Miasto, Plac Zamkowy (712–762, 188–300); parkingi przy Lubartowskiej w522482244 i Kowalskiej w232362991; Nadstawna w227698440 | bez aut tam, gdzie spadek pod obrysem przekracza 0,15 m (ok. 3,3 %): Plac Zamkowy 26 z 38 zatok, Lubartowska i Kowalska puste | auta parkują na tych spadkach | meble | celowe (techniczne: auto rysowane poziomo, na większym spadku dolny bok wisi nad brukiem, G-130); wróci z pochyleniem aut (G-133) |
-| T-088 | Podzamcze, Cerkiewna: (908.8, 440.5), (912.2, 416.4), (910.8, 422.5); (911.8, 387.0) na granicy | zaparkowane auta na wjeździe `driveway` albo przy wylocie drogi `service` | wolny wjazd | meble | do poprawy (G-140) |
+| T-088 | Podzamcze, Cerkiewna: (908.8, 440.5), (912.2, 416.4), (910.8, 422.5); (911.8, 387.0) na granicy | zaparkowane auta na wjeździe `driveway` albo przy wylocie drogi `service` | wolny wjazd | meble | poprawione (G-140, #110) |
 
 Audyt 1 (31.10): Krakowskie Przedmieście i Stare Miasto. Położenie zabytków (odchyłka do 0,06 m), skala (9 odcinków co do 0,02 m), nazwy i kierunki ulic oraz teren (mediana 0,02 m, p95 0,18 m względem NMT) zgodne. Następne: Podzamcze i Nabrzeże.
 

@@ -508,3 +508,11 @@ Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [r
 - Przyczyna: wysokość pojazdu liczona od gołego terenu w jednym punkcie, bez podniesienia nawierzchni i bez pochylenia na spadku
 - Pakiet właściciela: packages/sim (`content/parked-cars.ts`, `content/district-m0.ts` przez `standing`, `systems/traffic-system.ts`), a wysokości nawierzchni z `packages/engine/src/renderer/mapcity/ground-plan.ts` (`SURFACE_LIFT`) przenieść do kontraktu w `core`, żeby sim je znał
 - Test przyjęcia: kontrola `vehicle-below-surface` 38 → 0; dla wraku najwyższy narożnik nawierzchni ≤ spód + 0,05 m; złoty hash symulacji zmieniony świadomie, jeśli zmieni się y aut
+
+### G-140 Zaparkowane auta na wjazdach i wylotach dróg serwisowych (Cerkiewna)
+- Status: naprawione (#110): `serviceWays` w chunkach, auta co najmniej półszerokość + 0,5 m od osi dróg serwisowych; `parked-car-on-service-road` 3 → 0; aut 63 → 61 (próg testu ruchu > 60)
+- Ważność: S4 · Zasięg: 3 auta (Cerkiewna (908.8, 440.5) na `driveway` w1381877866, (912.2, 416.4) i (910.8, 422.5) przy wylocie `service` w739432848)
+- Przyczyna: `offOtherRoads` w `parked-cars.ts` pilnuje tylko ulic z `CAR_KINDS`, bez `highway=service`
+- Poprawka: w `fits()` odstęp od osi `highway=service` (poza `parking_aisle`) co najmniej półszerokość + 0,5 m. Uwaga (1.11): dane chunków sim mają tylko nazwane ulice, a `service` i `driveway` przy Cerkiewnej są bez nazwy, więc najpierw import musi przenosić osie nienazwanych dróg serwisowych (osobne pole, nie `streets`); koszt mały–średni, nie drobna poprawka
+- Pakiet właściciela: packages/sim (content)
+- Test przyjęcia: kontrola skanu „auto bliżej niż 1,5 m od osi `service`”, baza 3 → 0
