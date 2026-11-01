@@ -4,7 +4,7 @@ Cyberpunkowa gra akcji RPG w przeglądarce i na telefonie, z widokiem FPP i TPP 
 
 Domyślnym językiem gry jest angielski, a polski można włączyć w opcjach ([ADR-0056](docs/adr/0056-jezyki-gry.md)).
 
-![Kadr referencyjny NPR](e2e/__snapshots__/npr-perf.spec.ts/reference-m0.png)
+![Seki Senshi w TPP nocą na deptaku Krakowskiego Przedmieścia: neony lokali, lampiony nad deptakiem i megawieże na horyzoncie](docs/img/tpp-krakowskie-noc.jpg)
 
 ## Uruchomienie
 
