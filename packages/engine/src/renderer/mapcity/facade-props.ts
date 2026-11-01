@@ -3,6 +3,7 @@ import { type CityProps, type PropXform, addPropToSink, facing, onWall, pickProp
 import type { MeshSink, Vec } from "../mesh-sink";
 import { type FacadeFrame, type Wall, hiddenWall } from "./facade-frame";
 import { shopBoardOn } from "./sign-plan";
+import { venueBoardOn } from "./venue-plan";
 
 /**
  * Facade props of the map city (ADR-0058): the near facade plans (wall clutter, rooftop gear of
@@ -164,7 +165,7 @@ export const planFacadeExtras = (f: FacadeFrame, place: PropPlacer, obstacles: O
     const kind = f.style.tower ? "awning-flat" : "awning";
     // The top under the bottom of the wall's shop board (ADR-0044), or just under the ground floor's
     // top on a wall without one; the cloth slopes out over the shop window.
-    const board = shopBoardOn(f, w);
+    const board = f.b.venues?.length ? venueBoardOn(f, w) : shopBoardOn(f, w);
     const top = f.b.base + f.ground - (board === null ? AWNING_UNDER_TOP : 0.45 + board / 2 + AWNING_GAP);
     const y = top - AWNING_HEIGHT[kind];
     if (y < f.b.base + AWNING_HEADROOM) continue;

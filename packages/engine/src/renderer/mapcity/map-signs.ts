@@ -1,3 +1,4 @@
+import { SIGN_GLYPHS } from "@seki/core";
 import { type BaseTexture, Constants, DynamicTexture, type Scene, ShaderMaterial, Texture } from "../../babylon";
 import { prng } from "../city-kit-data";
 import { drawGlyph } from "../signage";
@@ -30,7 +31,7 @@ void main(void) {
 
 /**
  * The map city's neon (ADR-0044), additive like the street signage (ADR-0030): atlas boards
- * and blades with a hum, holo-ads with glyph rain, a ring logo or a figure (fresnel edges,
+ * and blades with a hum, the venues' boards and their names in neon letters (ADR-0064), holo-ads with glyph rain, a ring logo or a figure (fresnel edges,
  * scanlines, rare dropouts and slice glitches unless flashes are reduced), lit name plaques
  * from the names atlas, neon tubes and their streaks on the wet ground.
  */
@@ -44,6 +45,7 @@ varying float vFacing;
 uniform sampler2D atlas;
 uniform sampler2D names;
 uniform sampler2D ads;
+uniform sampler2D glyphs;
 uniform vec3 cameraPosition;
 uniform float time;
 uniform float intensity;
@@ -63,7 +65,22 @@ void main(void) {
   vec3 col = vColor.rgb;
   float a = 0.0;
   float hum = 0.92 + 0.08 * sin(time * 2.3 + seed * 5.0 + vWorld.x) * (1.0 - reduce);
-  if (kind > 9.5) {
+  if (kind > 11.5) {
+    // A letter of a venue's name (ADR-0064): the middle of its cell in the glyph atlas, as wide as the letter.
+    float cell = floor(seed);
+    float adv = fract(seed);
+    vec2 c = clamp(uv, 0.004, 0.996);
+    vec2 guv = vec2((mod(cell, 8.0) + 0.5 + (c.x - 0.5) * adv) / 8.0, 1.0 - (floor(cell / 8.0) + 1.0 - c.y) / 8.0);
+    float m = texture2D(glyphs, guv).r;
+    a = m * 1.3 * hum;
+    col = mix(col, vec3(1.0), m * 0.45);
+  } else if (kind > 10.5) {
+    // A venue's board (ADR-0064): a neon rim round a faint glow; seed is the board's width over its height.
+    vec2 d = min(uv, 1.0 - uv) * vec2(max(seed, 1.0), 1.0);
+    float edge = min(d.x, d.y);
+    float rim = 1.0 - smoothstep(0.035, 0.07, edge);
+    a = (rim * 1.1 + 0.09) * hum;
+  } else if (kind > 9.5) {
     // A checkpoint's strip (ADR-0062): blinking in pairs, steady at half with flashes reduced.
     float on = step(0.5, fract(time * 1.6 + seed));
     a = mix(0.45 + 0.8 * on, 0.7, reduce);
@@ -263,6 +280,21 @@ export const drawAdAtlas = (ctx: CanvasRenderingContext2D, japanese: boolean, si
   });
 };
 
+/**
+ * The glyph atlas of the venues' signs (ADR-0064, 1024²): `SIGN_GLYPHS` in 8 x 8 cells of 128,
+ * each letter centred in its cell; the sign plan lays them out one quad per letter.
+ */
+export const drawGlyphAtlas = (ctx: CanvasRenderingContext2D, size = 1024): void => {
+  const cell = size / 8;
+  ctx.fillStyle = "#000000";
+  ctx.fillRect(0, 0, size, size);
+  ctx.fillStyle = "#ffffff";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = `bold ${Math.round(cell * 0.72)}px ${FONT}`;
+  [...SIGN_GLYPHS].forEach((ch, i) => ctx.fillText(ch, (i % 8) * cell + cell / 2, Math.floor(i / 8) * cell + cell * 0.56, cell * 0.84));
+};
+
 /** Rows of the names atlas: 2 columns x 16 rows of 512 x 64. */
 export const NAME_SLOTS = 32;
 
@@ -293,13 +325,14 @@ export class MapSignMaterial {
     const m = new ShaderMaterial("map-signs", scene, { vertexSource: VERTEX, fragmentSource: FRAGMENT }, {
       attributes: ["position", "normal", "color", "uv", "uv2"],
       uniforms: ["viewProjection", "cameraPosition", "time", "intensity", "fogDensity", "reduce"],
-      samplers: ["atlas", "names", "ads"],
+      samplers: ["atlas", "names", "ads", "glyphs"],
       needAlphaBlending: true,
     });
     if (atlas) {
       m.setTexture("atlas", atlas);
       m.setTexture("names", atlas);
       m.setTexture("ads", atlas);
+      m.setTexture("glyphs", atlas);
       this.names = null;
     } else {
       const tex = new DynamicTexture("map-sign-atlas", { width: 1024, height: 1024 }, scene, true, Texture.TRILINEAR_SAMPLINGMODE);
@@ -312,6 +345,10 @@ export class MapSignMaterial {
       drawAdAtlas(ads.getContext() as unknown as CanvasRenderingContext2D, japanese);
       ads.update();
       m.setTexture("ads", ads);
+      const glyphs = new DynamicTexture("map-glyph-atlas", { width: 1024, height: 1024 }, scene, true, Texture.TRILINEAR_SAMPLINGMODE);
+      drawGlyphAtlas(glyphs.getContext() as unknown as CanvasRenderingContext2D);
+      glyphs.update();
+      m.setTexture("glyphs", glyphs);
       this.names = new DynamicTexture("map-names", { width: 1024, height: 1024 }, scene, true, Texture.TRILINEAR_SAMPLINGMODE);
       const nctx = this.names.getContext() as unknown as CanvasRenderingContext2D;
       nctx.fillStyle = "#000000";

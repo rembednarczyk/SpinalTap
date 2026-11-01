@@ -520,7 +520,7 @@ export class MapCity {
     cell.spans = cell.frames.flatMap((f) => findSpans(f, this.acrossAt));
     const far = new MeshSink();
     const signs = new MeshSink();
-    planFarFrames(far, signs, cell.frames, (name) => this.signs.slotFor(name), this.drawnGround);
+    planFarFrames(far, signs, cell.frames, (name) => this.signs.slotFor(name), this.drawnGround, this.deps.quality === "low");
     planFarCanyon(far, cell.spans);
     planCanyonSigns(signs, cell.frames, cell.spans, this.deps.quality === "low");
     cell.far = far.empty ? null : this.mesh(`map-far-${cell.key}`, far, "facade");
