@@ -11,6 +11,8 @@ Per model, as tools/city_ccby.py does it (its helpers): colours per triangle fro
 emissive textures, sorted into palette roles; simplified by vertex clustering to `target` triangles; front
 to +Z, foot on y = 0, centred on X/Z. On top of that:
 - `crop`: (f0, f1) keeps the triangles whose centre lies in that share of the model's X range (after `yaw`);
+- `below`: keeps the triangles whose centre lies under that share of the model's height (cuts off a
+  sign of neon letters on top, which the simplification would turn into a shapeless blot);
 - `remap`: role -> role after the colours are read (a lit paper lantern's red becomes neon, a big lit
   window a dimmer shop swatch so it does not bloom over the whole front);
 - `materials`: material name -> role, over the colours (the goods behind a machine's glass are lit);
@@ -36,7 +38,7 @@ STREET = [
     ('st-vending', 'sketchfab-vending-machine', 'vending_machine.glb', ['vending-machine'], 0, (0.98, 1.9, 0.74), 1400,
      {'materials': {'Stuff': 'win-white'}}),
     ('st-vending-ramen', 'sketchfab-ramen-vending-machine', 'ramen_vending_machine.glb', ['vending-machine'], 0, (0.98, 1.9, 0.54), 1400,
-     {'remap': {'neon-cyan': 'shop-teal', 'neon-blue': 'shop-teal'}}),
+     {'below': 0.8, 'remap': {'neon-cyan': 'shop-teal', 'neon-blue': 'shop-teal'}}),
     # Ticket machines: the solid is 0.56 x 1.75 x 0.4 m. The yellow one of the two Reston terminals on a post.
     ('st-ticket-terminal', 'sketchfab-reston-b2-terminal', 'reston_b2_terminal.glb', ['ticket-machine'], 0, (0.5, 0.84, 0.3), 900,
      {'crop': (0.5, 1.0), 'post': (0.26, 0.8, 0.2)}),
@@ -119,6 +121,10 @@ def bake_street(path, yaw, fit, target, opts):
         cx = P[:, :, 0].mean(1)
         x0, x1 = P[:, :, 0].min(), P[:, :, 0].max()
         sel = (cx >= x0 + f0 * (x1 - x0)) & (cx <= x0 + f1 * (x1 - x0))
+        P, mat, uv = P[sel], mat[sel], uv[sel]
+    if 'below' in opts:
+        y0, y1 = P[:, :, 1].min(), P[:, :, 1].max()
+        sel = P[:, :, 1].mean(1) <= y0 + opts['below'] * (y1 - y0)
         P, mat, uv = P[sel], mat[sel], uv[sel]
     roles = planar_vote(P, mat, roles_of(mat, uv, j, blob, os.path.dirname(path), None))
     remap = opts.get('remap', {})

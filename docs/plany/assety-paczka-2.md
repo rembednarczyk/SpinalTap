@@ -16,7 +16,7 @@ bryła i duże płaszczyzny koloru, a nie detal namalowany w teksturze.
 | Plik | Autor | Rozmiar | Trójkąty | Tekstury | Wymiary (jedn.) | Przeznaczenie | Styl po palecie | Etap |
 |---|---|---|---|---|---|---|---|---|
 | `vending_machine` | A9908244 | 0,7 MB | 434 | 2 | 1,23 × 2 × 1,19 | rekwizyt ulicy: automat z napojami | dobry: prosta bryła, szyba z towarem świeci | **w kodzie** (`st-vending`) |
-| `ramen_vending_machine` | JustFaith | 16,6 MB | 53,2 tys. | 4 | 1,34 × 2,09 × 0,54 | rekwizyt ulicy: automat z ramenem | dobry: neonowy szyld z liter z bryły (WOKMASTER RAMEN, zmyślona marka), po uproszczeniu litery tracą czytelność | **w kodzie** (`st-vending-ramen`) |
+| `ramen_vending_machine` | JustFaith | 16,6 MB | 53,2 tys. | 4 | 1,34 × 2,09 × 0,54 | rekwizyt ulicy: automat z ramenem | dobry: neonowy szyld z liter z bryły (WOKMASTER RAMEN, zmyślona marka), po uproszczeniu litery robiły się kleksem, więc szyld jest odcięty przy wypieku (`below`) | **w kodzie** (`st-vending-ramen`) |
 | `reston_b2_terminal` | Iteration Unlimited | 16,4 MB | 6,5 tys. | 10 | 0,73 × 0,6 × 0,2 (dwa terminale) | rekwizyt ulicy: biletomat (żółty terminal na słupku) | dobry, żółty jak biletomaty ZTM | **w kodzie** (`st-ticket-terminal`) |
 | `scifi_kiosk` | Martin Ibbett | 1,8 MB | 2,1 tys. | 3 | 0,37 × 1,21 × 0,31 | rekwizyt ulicy: słupek informacyjny/biletomat (to nie kiosk-budka) | dobry: ciemny słupek, ekran świeci | **w kodzie** (`st-ticket-kiosk`) |
 | `cctv_camera` | Smoggybeard | 3,2 MB | 3,2 tys. | 7 | 0,66 × 1,33 × 2 | rekwizyt ulicy: kamera na maszcie (rodzaj `cctv`) | dobry | **w kodzie** (`st-cctv`) |
@@ -58,7 +58,7 @@ Brief mówił o 26 plikach, a lista ID ma 27. Żadnego pliku nie odrzucamy z pow
 
 ## Co weszło w kod (etap 1 paczki: rekwizyty ulicy)
 
-`packages/app/public/city/street-props.glb` (241 KiB, osobny plik, bo `city-props.glb` ma 465 z 512 KiB),
+`packages/app/public/city/street-props.glb` (236 KiB, osobny plik, bo `city-props.glb` ma 465 z 512 KiB),
 pieczony przez `python3 -I tools/city_kit.py --street DIR` (`tools/city_street.py`). Gra ładuje go za
 fasadą `BabylonRenderer` razem z `city-props.glb` (loader kitu scala oba pliki, `mergeCityProps`).
 Bloki mebli (`mapcity/street-models.ts`) rysują:
