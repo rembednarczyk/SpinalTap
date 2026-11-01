@@ -15,7 +15,7 @@ import { MAPPED, propOf, withShape } from "./props-kinds.ts";
 import { bulkyPieces } from "./props-bulky.ts";
 import { marketStalls } from "./props-market.ts";
 import { type SideMode, type Station, evenStations, fnv, offRoad, offWall, openFacing, scatter, sideOffset, stations, towardsStreet, unit, yawOf } from "./props-place.ts";
-import { type BoardSpan, offBoards } from "./props-boards.ts";
+import { type BoardSpan, boardBehind, offBoards } from "./props-boards.ts";
 import { type BollardRef, stringBollards } from "./props-rows.ts";
 import { Site } from "./props-site.ts";
 import { SolidIndex, clearSpot } from "./props-solid.ts";
@@ -290,6 +290,9 @@ const FACES_STREET: ReadonlySet<StreetPropKind> = new Set(["bus-stop", "bus-shel
 
 /** The yaw of a piece the plan gives no direction for. */
 export const facingOf = (site: Site, x: Placed): number => {
+  // A wall lantern's arm stands out square from its wall, not along it over a board (G-158).
+  const wall = x.prop === "lamp-wall-lantern" ? site.awayFromWall(x.p) : null;
+  if (wall) return yawOf(wall.x, wall.z);
   if (x.yaw !== null) return x.yaw;
   const open = FACES_OPEN.has(x.prop) ? openFacing(site, x.p) : null;
   const street = FACES_OPEN.has(x.prop) || FACES_STREET.has(x.prop) ? towardsStreet(site, x.p) : null;
@@ -427,7 +430,8 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
     if (free !== at) moved++;
     const freed = free === at ? placedAt : { ...placedAt, p: { x: r1(free.x), z: r1(free.z) } };
     // A lantern in front of a venue's board (G-158) slides along the wall past its end, or goes.
-    const lit = freed.prop === "lamp-wall-lantern" ? offBoards(boards, freed.p, site.heightAt(freed.p), (q) => site.surfaceAt(q) === "building") : freed.p;
+    const lantern = freed.prop === "lamp-wall-lantern";
+    const lit = lantern ? offBoards(boards, freed.p, site.heightAt(freed.p), (q) => site.awayFromWall(q), (q) => site.surfaceAt(q) === "building") : freed.p;
     if (!lit) {
       onBoard++;
       continue;
@@ -454,7 +458,9 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
     const variant = x.prop === "bollard" ? 0 : x.shape === undefined ? hash : withShape(hash, x.prop, x.shape);
     // Earlier groups win: a bin beside a bench steps aside from a tree's trunk, on the same ground.
     const surface = site.surfaceAt(x.p);
-    const fits = (q: Pt) => site.surfaceAt(q) === surface && site.chunkAt(q) === chunk && (room === undefined || offWall(site, q, room) === q);
+    // A lantern stepped aside from a solid keeps off the boards too.
+    const clearOfBoards = (q: Pt) => !lantern || !boardBehind(boards, q, site.heightAt(q), site.awayFromWall(q));
+    const fits = (q: Pt) => site.surfaceAt(q) === surface && site.chunkAt(q) === chunk && (room === undefined || offWall(site, q, room) === q) && clearOfBoards(q);
     const item = clearSpot(solids, { prop: x.prop, x: r1(x.p.x), y: 0, z: r1(x.p.z), yaw: r2(facingOf(site, x)), variant }, fits);
     // A piece from an OSM node that may not wander off it (a hydrant on its water main).
     const reach = MAX_MOVE[x.prop];
