@@ -69,5 +69,6 @@
 | [0065](0065-obezwladnienie.md) | Obezwładnienie bez zabijania: ogłuszenie albo zabicie od tyłu, stan `unconscious` budzony przez NPC, świadkowie i przestępstwo „napaść”, przenoszenie i ukrywanie ciał; 4 etapy, etap 1 w main (#100) | Zaakceptowana |
 | [0066](0066-poziom-trudnosci.md) | Poziom trudności: presety Opowieść, Normalny, Trudny i Własny jako tabela mnożników w `core` (obrażenia, celność i czujność NPC, wsparcie, zdrowie wrogów, ostrzeżenie snajpera), profil w stanie gry i zapisie, wspomaganie celowania jako ustawienie; Normalny bez zmian hashy; 3 etapy | Zaakceptowana |
 | [0067](0067-megabloki-wokol-miasta.md) | Megabloki osaczające Lublin, wariant B (wybór użytkownika 1.11): bliski rząd wież 300–520 m z kładkami i reklamami ok. 270 m za danymi miasta i pierścień megabloków za nim; układ jako dane, LOD pierścienia, bez nowych wywołań rysowania, telefon przy dzisiejszej panoramie; odstępstwo w topografii i przegląd kuratora | Zaakceptowana |
+| [0068](0068-zespol-zamkowy.md) | Zespół zamkowy wg przepisu (rozszerzenie ADR-0062 etap 5): Zamek z pełnym detalem fasady zachodniej i północnej, Donżon i Kaplica, schody w pełnej szerokości, Lew „Symbol Lwowa”, obelisk, alejki pod wzgórzem; w 2077 siedziba korporacji pod ochroną dronów; wejścia pod akt III; etapy Z0–Z6 | Zaakceptowana |
 
 Nowy ADR: kolejny numer, krótko: kontekst, decyzja, konsekwencje.
