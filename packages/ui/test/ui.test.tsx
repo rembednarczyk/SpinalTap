@@ -2,6 +2,7 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_HORIZONTAL_FOV, GameUi, createUiStore, dismissToast, hipVerticalFov, patchUi, pushToast, type UiIntents, type UiState } from "../src";
+import { NORMAL_DIFFICULTY } from "@seki/core";
 import { HUD_CAMERA_FOV, spreadToScreen } from "../src/hud/hud";
 
 const intents = (): UiIntents => ({
@@ -25,6 +26,7 @@ const intents = (): UiIntents => ({
   installCyberwareItem: vi.fn(),
   removeCyberware: vi.fn(),
   changeSettings: vi.fn(),
+  setDifficulty: vi.fn(),
   setFieldOfView: vi.fn(),
   bindKey: vi.fn(),
   resetControls: vi.fn(),
@@ -69,10 +71,12 @@ afterEach(cleanup);
 const screenFov = (degrees = DEFAULT_HORIZONTAL_FOV) => hipVerticalFov(degrees, window.innerWidth / window.innerHeight);
 
 describe("title screen", () => {
-  it("starts a new game", () => {
+  it("starts a new game through its setup, on Normal by default", () => {
     const { i } = mount();
     fireEvent.click(screen.getByText("New Game"));
-    expect(i.newGame).toHaveBeenCalled();
+    expect(i.newGame).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Start" }));
+    expect(i.newGame).toHaveBeenCalledWith(NORMAL_DIFFICULTY);
   });
 
   it("disables loading without saves and lists slots with saves", () => {
@@ -320,7 +324,7 @@ describe("pause and death screens", () => {
     const { i } = mount({ screen: "dead" });
     expect(screen.getByText("FLATLINE")).toBeTruthy();
     fireEvent.click(screen.getByText("Start over"));
-    expect(i.newGame).toHaveBeenCalled();
+    expect(i.newGame).toHaveBeenCalledWith(NORMAL_DIFFICULTY);
   });
 });
 

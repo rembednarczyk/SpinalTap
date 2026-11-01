@@ -1,0 +1,21 @@
+/* Difficulty (ADR-0066): the presets, a sentence about the chosen one, the sliders of "Custom".
+   Sized for a phone held sideways (800 x 370) first: the screen scrolls when the sliders are out. */
+.difficulty { display: flex; flex-direction: column; gap: 10px; }
+.difficulty__heading { margin: 0; font-size: 22px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--cyan); }
+.difficulty__desc { margin: 0; min-height: 2.6em; font-size: 14px; line-height: 1.35; color: var(--ink-dim); }
+.difficulty__custom { display: flex; flex-direction: column; gap: 8px; padding-top: 4px; border-top: 1px solid var(--panel-edge); }
+.difficulty__row { font-size: 15px; }
+/* Touch: a thumb needs the whole height of a row to catch a slider. */
+.touch-mode .difficulty__row .settings__slider { min-height: 28px; }
+.touch-mode .difficulty .settings__option { min-height: 36px; padding: 6px 14px; }
+.slots__difficulty { margin-left: 8px; padding: 0 6px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cyan); border: 1px solid rgba(95, 242, 255, 0.35); vertical-align: middle; }
+
+@media (max-height: 500px), (max-width: 760px) {
+  /* The new game's setup needs the height of a phone held sideways more than the logo does. */
+  .screen--setup .title { display: none; }
+  .difficulty { gap: 6px; }
+  .difficulty__row .settings__label { flex-basis: 11em; font-size: 13px; }
+  .difficulty__heading { font-size: 18px; }
+  .difficulty__desc { font-size: 13px; min-height: 0; }
+  .difficulty__custom { gap: 4px; }
+}

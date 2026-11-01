@@ -2,6 +2,7 @@ import { SIGN_GLYPHS } from "@seki/core";
 import type { MeshSink } from "../mesh-sink";
 import { type FacadeFrame, type Wall, hiddenWall } from "./facade-frame";
 import { MAP_SIGN_KIND, type SignGround, flatOnWall, signReflection, signTint } from "./sign-plan";
+import { blockedStretches, clearStretches } from "./sign-room";
 
 /**
  * Signs of the real venues on the ground floors (ADR-0064 stage 4): a neon board over the window
@@ -20,6 +21,9 @@ const GAP = 0.3;
 const MAX_WIDTH = 7.5;
 /** A wall shorter than this takes no board. */
 const MIN_WALL = 2.4;
+/** How far the board and its letters stand off the wall, metres. */
+const BOARD_OUT = 0.1;
+const GLYPH_OUT = 0.13;
 /** Narrowest squeeze of the letters before they get smaller too. */
 const MIN_SQUEEZE = 0.6;
 
@@ -61,7 +65,8 @@ const distance = (w: Wall, x: number, z: number): number => {
   return Math.hypot(k - u, off);
 };
 
-const overlaps = (taken: readonly (readonly [number, number])[], lo: number, hi: number): boolean => taken.some(([a, b]) => lo < b + GAP && hi > a - GAP);
+/** With a hair of slack: a spot set exactly `GAP` off a taken stretch must not fail on the float sum. */
+const overlaps = (taken: readonly (readonly [number, number])[], lo: number, hi: number): boolean => taken.some(([a, b]) => lo < b + GAP - 1e-6 && hi > a - GAP + 1e-6);
 
 /** The width of a name in letters of `GLYPH_HEIGHT`, unsqueezed. */
 const textWidth = (text: string): number => [...text].reduce((s, c) => s + glyphAdvance(c), 0) * GLYPH_HEIGHT;
@@ -69,8 +74,8 @@ const textWidth = (text: string): number => [...text].reduce((s, c) => s + glyph
 /**
  * Where the boards of a building's venues go: each on the street wall nearest it (a party wall
  * or a wall a neighbour hides takes none), as near its point as the wall's ends, the doorways the
- * game cut and the boards already there allow; a venue with no room left gets none. Landmarks
- * keep their own signs (ADR-0062): none there.
+ * game cut, a neighbour standing out in front of the wall and the boards already there allow; a
+ * venue with no room left gets none. Landmarks keep their own signs (ADR-0062): none there.
  */
 export const venueBoards = (f: FacadeFrame): VenueBoard[] => {
   const venues = f.b.venues ?? [];
@@ -85,15 +90,31 @@ export const venueBoards = (f: FacadeFrame): VenueBoard[] => {
     taken.set(w, doors);
   }
   const y = Math.max(f.b.base + f.ground - 0.45, f.b.base + 2.3 + VENUE_BOARD_HEIGHT / 2);
+  // A neighbour standing out in front of the wall takes its stretch as a doorway does (G-159).
+  const clear = new Map<Wall, number>();
+  const room = (w: Wall): number => {
+    let r = clear.get(w);
+    if (r === undefined) {
+      const stretches = clearStretches(f, w, BOARD_OUT, GLYPH_OUT, y - VENUE_BOARD_HEIGHT / 2);
+      taken.get(w)!.push(...blockedStretches(stretches, w.length));
+      r = Math.max(0, ...stretches.map(([a, b]) => b - a));
+      clear.set(w, r);
+    }
+    return r;
+  };
   const out: VenueBoard[] = [];
   for (const v of venues) {
-    const w = walls.slice().sort((a, b) => distance(a, v.x, v.z) - distance(b, v.x, v.z))[0];
+    // The nearest wall with a clear stretch as long as the shortest wall that takes a board.
+    const w = walls
+      .slice()
+      .sort((a, b) => distance(a, v.x, v.z) - distance(b, v.x, v.z))
+      .find((x) => room(x) >= MIN_WALL);
     if (!w) continue;
     const text = [...v.name.toUpperCase()].filter((c) => glyphCell(c) !== null).join("").trim();
     if (!text) continue;
-    const room = Math.min(w.length - 2 * GAP, MAX_WIDTH);
+    const space = Math.min(room(w) - 2 * GAP, MAX_WIDTH);
     const natural = textWidth(text);
-    const fit = Math.min(1, (room - 2 * PAD_X) / natural);
+    const fit = Math.min(1, (space - 2 * PAD_X) / natural);
     const squeeze = Math.max(fit, MIN_SQUEEZE);
     const glyph = GLYPH_HEIGHT * Math.min(1, fit / MIN_SQUEEZE);
     const width = (natural * squeeze * glyph) / GLYPH_HEIGHT + 2 * PAD_X;
@@ -116,13 +137,13 @@ export const planVenueSigns = (sink: MeshSink, f: FacadeFrame, ground: SignGroun
   const boards = venueBoards(f);
   for (const b of boards) {
     const color = signTint(b.color, 1);
-    flatOnWall(sink, b.wall, b.u, b.y, 0.1, b.width, b.height, color, [b.width / b.height, MAP_SIGN_KIND.venue]);
+    flatOnWall(sink, b.wall, b.u, b.y, BOARD_OUT, b.width, b.height, color, [b.width / b.height, MAP_SIGN_KIND.venue]);
     let x = b.u - b.width / 2 + PAD_X;
     for (const ch of b.text) {
       const adv = glyphAdvance(ch);
       const w = adv * b.glyph * b.squeeze;
       const cell = glyphCell(ch);
-      if (cell !== null && ch !== " ") flatOnWall(sink, b.wall, x + w / 2, b.y, 0.13, w, b.glyph, color, [cell + Math.min(adv, 0.98), MAP_SIGN_KIND.glyph]);
+      if (cell !== null && ch !== " ") flatOnWall(sink, b.wall, x + w / 2, b.y, GLYPH_OUT, w, b.glyph, color, [cell + Math.min(adv, 0.98), MAP_SIGN_KIND.glyph]);
       x += w;
     }
     if (!lite) signReflection(sink, b.wall, b.u, ground, f.b.foot + 0.16, b.width * 0.9, 6, signTint(b.color, 0.8), (b.u * 7.31) % 1);
