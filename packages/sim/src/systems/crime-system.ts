@@ -26,13 +26,14 @@ import {
 import { SECURITY_ENTRIES } from "../content/devices";
 import type { Entity } from "../world/components";
 import type { Offence, SimContext, StreetDisturbance, System } from "../world/context";
-import { gangerEntity } from "../world/factory";
+import { gangerEntity, toughen } from "../world/factory";
 import { chestOf, eyeOf, lineOfSight } from "../world/hitscan";
 import { inCreationOrder } from "../world/ordering";
 import { codeKnown } from "../world/hook-tracker";
 import { disturb, noteAlarm, noteDetected } from "../world/street";
 import { incapacitated } from "../world/takedown";
 import { coveredFrom } from "../world/disguise";
+import { difficultyOf } from "../world/difficulty";
 import { worldTimeScale } from "./ability-system";
 import { COWER_RADIUS, scare } from "./ai/civilian-ai-system";
 import { effectiveAggroRange, giveLead, guardSees } from "./ai/ganger-perception";
@@ -281,7 +282,8 @@ const runCameras = (ctx: SimContext, player: Entity | null, dt: number, aware: M
       player.position.z >= zone.minZ &&
       player.position.z <= zone.maxZ;
     const sees = inside && !!player && cameraSees(ctx, cam, player);
-    d.spot = Math.max(0, Math.min(1, d.spot + (sees ? dt / CAMERA_SPOT_SECONDS : -dt * 0.5)));
+    // The spot meter fills at the difficulty's pace (`awareness`, ADR-0066); it drains as ever.
+    d.spot = Math.max(0, Math.min(1, d.spot + (sees ? (dt / CAMERA_SPOT_SECONDS) * difficultyOf(ctx).awareness : -dt * 0.5)));
     if (player && sees && d.spot >= 1 && d.cooldown === 0) {
       d.cooldown = CAMERA_REPORT_COOLDOWN;
       noteDetected(ctx);
@@ -365,12 +367,13 @@ const runReinforcements = (ctx: SimContext, player: Entity | null, dt: number): 
     watch.reinforce = ENTRY_RETRY;
     return;
   }
-  watch.reinforce = REINFORCE_INTERVAL;
+  // The difficulty brings them in more or less often (`reinforce`, ADR-0066).
+  watch.reinforce = REINFORCE_INTERVAL / difficultyOf(ctx).reinforce;
   const g = gangerEntity(ctx.streamer.takeId(), { key: "", position: at, yaw: 0 }, null, ENEMY_TYPES[type].hp, "", undefined, type);
   delete g.key;
   g.security = true;
   if (g.ai) g.ai.lastKnown = heat.lastKnown ? { ...heat.lastKnown } : { ...player.position };
-  ctx.world.add(g);
+  ctx.world.add(toughen(g, difficultyOf(ctx).npcHealth));
 };
 
 /**

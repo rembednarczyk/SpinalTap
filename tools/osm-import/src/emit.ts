@@ -19,6 +19,7 @@ const chunkText = (c: ChunkOut): string =>
     `    pois: ${list(c.pois)},`,
     ...(c.passages ? [`    passages: ${list(c.passages)},`] : []),
     ...(c.serviceWays ? [`    serviceWays: ${list(c.serviceWays)},`] : []),
+    ...(c.footWays ? [`    footWays: ${list(c.footWays)},`] : []),
     "  },",
   ].join("\n");
 

@@ -2,6 +2,7 @@ import { disguiseSuspicionRate } from "@seki/core";
 import type { Entity } from "../../world/components";
 import type { SimContext } from "../../world/context";
 import { blowDisguise, forbiddenAct } from "../../world/disguise";
+import { difficultyOf } from "../../world/difficulty";
 
 /** The AI fields the disguise sight reads and keeps. */
 type Watcher = Entity & { ai: NonNullable<Entity["ai"]> };
@@ -19,7 +20,9 @@ export const disguisedSight = (ctx: SimContext, g: Watcher, player: Entity, sees
     return sees;
   }
   const forbidden = sees && forbiddenAct(ctx, player, g.faction ?? "hebi");
-  const rate = disguiseSuspicionRate(sees, !!g.ai.enforcer, forbidden, distance, sight);
+  const base = disguiseSuspicionRate(sees, !!g.ai.enforcer, forbidden, distance, sight);
+  // It grows at the difficulty's pace (`awareness`, ADR-0066) and drains as ever.
+  const rate = base > 0 ? base * difficultyOf(ctx).awareness : base;
   g.ai.suspicion = Math.max(0, Math.min(1, (g.ai.suspicion ?? 0) + rate * ctx.dt * timeScale));
   if (g.ai.suspicion < 1) return false;
   blowDisguise(ctx, g.id);

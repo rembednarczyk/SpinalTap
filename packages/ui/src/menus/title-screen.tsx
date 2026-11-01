@@ -4,6 +4,7 @@ import { useT } from "../i18n/use-t";
 import { useSessionIntents, useUi } from "../use-ui";
 import { ControlsHelp } from "./controls-help";
 import { SaveSlots } from "./save-slots";
+import { SettingsPanel } from "./settings-panel";
 
 /** Phones: more room and landscape lock where the browser allows it. Optional everywhere. */
 const FullscreenButton = () => {
@@ -31,7 +32,7 @@ export const TitleScreen = ({ version }: { version?: string | undefined }) => {
   const hasSaves = useUi((s) => s.hasSaves);
   const busy = useUi((s) => s.busy);
   const t = useT();
-  const [view, setView] = useState<"main" | "load" | "credits">("main");
+  const [view, setView] = useState<"main" | "load" | "settings" | "credits">("main");
   return (
     <div className="screen screen--title" data-testid="title-screen">
       <div className="title">
@@ -47,6 +48,9 @@ export const TitleScreen = ({ version }: { version?: string | undefined }) => {
           <button type="button" className="menu__item" disabled={!hasSaves || busy} onClick={() => setView("load")}>
             {t("title.load")}
           </button>
+          <button type="button" className="menu__item" onClick={() => setView("settings")}>
+            {t("title.settings")}
+          </button>
           <FullscreenButton />
           <ControlsHelp />
           <button type="button" className="menu__item menu__item--ghost" onClick={() => setView("credits")}>
@@ -57,7 +61,7 @@ export const TitleScreen = ({ version }: { version?: string | undefined }) => {
         <CreditsScreen intents={{ closeCredits: () => setView("main") }} />
       ) : (
         <div className="menu">
-          <SaveSlots mode="load" />
+          {view === "settings" ? <SettingsPanel /> : <SaveSlots mode="load" />}
           <button type="button" className="menu__item menu__item--ghost" onClick={() => setView("main")}>
             {t("menu.back")}
           </button>

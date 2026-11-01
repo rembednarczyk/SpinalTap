@@ -6,6 +6,7 @@ import { LEVEL_GAP } from "../../world/nav";
 import { noteDetected } from "../../world/street";
 import { coveredFrom } from "../../world/disguise";
 import { disguisedSight } from "./disguise-sight";
+import { difficultyOf } from "../../world/difficulty";
 
 /*
  * What a ganger knows (ADR-0024, ADR-0029): sight of the player and of a victim, a guard's
@@ -183,7 +184,8 @@ export const perceivePlayer = (
     // A corporate guard needs a moment of looking before it believes its eyes.
     const sees = guardSees(g, player, distance, visible, aggro);
     const before = g.ai.suspicion ?? 0;
-    const rate = sees ? SUSPICION_RATE * (1.5 - Math.min(1, distance / aggro)) : -SUSPICION_DECAY;
+    // It fills at the difficulty's pace (`awareness`, ADR-0066) and drains as ever.
+    const rate = sees ? SUSPICION_RATE * difficultyOf(ctx).awareness * (1.5 - Math.min(1, distance / aggro)) : -SUSPICION_DECAY;
     g.ai.suspicion = Math.max(0, Math.min(1, before + rate * ctx.dt * timeScale));
     visible = g.ai.suspicion >= 1;
   }

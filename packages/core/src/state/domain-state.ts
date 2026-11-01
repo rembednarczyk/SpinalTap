@@ -18,6 +18,7 @@ import { type DisguiseState, NO_DISGUISE } from "../crime/disguise";
 import { type MetroState, NO_METRO } from "../world/metro";
 import { type EncounterLog, NO_ENCOUNTERS } from "../world/encounters";
 import { INITIAL_PROGRESSION, type ProgressionState } from "../progression/progression";
+import { type DifficultyProfile, NORMAL_DIFFICULTY } from "../difficulty/difficulty";
 
 export interface Preferences {
   readonly cameraMode: CameraMode;
@@ -64,6 +65,8 @@ export interface DomainState {
   readonly encounters: EncounterLog;
   /** Experience, level, attributes and the points to spend (ADR-0059). */
   readonly progression: ProgressionState;
+  /** The difficulty's multipliers (ADR-0066): an input of the simulation, like the seed. */
+  readonly difficulty: DifficultyProfile;
 }
 
 export const createDomainState = (): DomainState => ({
@@ -87,4 +90,5 @@ export const createDomainState = (): DomainState => ({
   metro: NO_METRO,
   encounters: NO_ENCOUNTERS,
   progression: INITIAL_PROGRESSION,
+  difficulty: NORMAL_DIFFICULTY,
 });

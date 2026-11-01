@@ -68,6 +68,12 @@ export interface ServiceWayOut {
   readonly width: number;
 }
 
+/** A footway's or a path's axis mapped on its own (world polyline, clipped to the chunk) and its width (m). */
+export interface FootWayOut {
+  readonly line: readonly number[];
+  readonly width: number;
+}
+
 export type PoiKind = "shop" | "food" | "bar" | "stop" | "hotel" | "sight" | "culture" | "church" | "service" | "office";
 
 export interface PoiOut {
@@ -94,4 +100,6 @@ export interface ChunkOut {
   readonly passages?: readonly PassageOut[];
   /** Unnamed service roads (G-140), when it has any. */
   readonly serviceWays?: readonly ServiceWayOut[];
+  /** Footways and paths mapped on their own (G-143), when it has any. */
+  readonly footWays?: readonly FootWayOut[];
 }

@@ -12,6 +12,7 @@ export const pl = {
   "title.newGame": "Nowa gra",
   "title.load": "Wczytaj",
   "title.fullscreen": "Pełny ekran",
+  "title.settings": "Ustawienia",
   "title.credits": "Autorzy",
   "title.attribution": "Dane mapy © OpenStreetMap contributors (ODbL) · teren: GUGiK NMT",
   "credits.heading": "Autorzy i źródła",

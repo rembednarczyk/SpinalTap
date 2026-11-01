@@ -43,4 +43,4 @@ ID, przyczyna w jednym zdaniu, zmienione pliki, test (nazwa, pada przed, przecho
 
 ## Dziennik zmian i e2e (decyzja użytkownika 1.11)
 - Zmiana widoczna dla gracza dostaje jedną linię w nowym pliku `changelog.d/<data>-<opis>.md` (zasady w `changelog.d/README.md`). `CHANGELOG.md` nie edytujesz.
-- Lokalnie puszczasz szybkie bramki i najwyżej jeden spec e2e swojej zmiany (przy zmianie wyglądu migawkę oglądasz). Pełny zestaw e2e puszcza CI na szkicu PR.
+- Lokalnie puszczasz szybkie bramki i najwyżej jeden spec e2e swojej zmiany (przy zmianie wyglądu migawkę oglądasz). Pełny zestaw e2e puszcza CI na PR, który orkiestrator otwiera po oddaniu pracy.

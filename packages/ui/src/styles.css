@@ -1481,6 +1481,7 @@ kbd {
 .breach__timer { font-family: var(--font-mono); font-size: 16px; color: var(--amber); }
 .breach__timer--low { color: var(--danger); }
 .breach__timer--off { color: var(--ink-dim); font-size: 13px; }
+.breach__rules { margin: 6px 0 0; font-size: 13px; color: var(--ink-dim); }
 .breach__body { display: flex; gap: 18px; margin-top: 10px; }
 .breach__matrix { display: grid; gap: 4px; flex: 0 0 auto; }
 .breach__cell {
