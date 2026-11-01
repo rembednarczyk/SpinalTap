@@ -618,6 +618,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Uwagi z weryfikacji #152: test pasa bez tagu nie sprawdza, że pas płytszy niż 4,5 m trzyma auta wzdłuż; układ `diagonal` nie ma auta na danych (tylko test `bayYaw`); kierunek auta na Ruskiej (963,8; 473,0) ze stycznej osi zamiast krawędzi obrysu (4–7°); `offKerbParks` zagęszcza punkty trasy przy przesunięciach kilku cm (18 → 604); `clearRun` odrzuca odsunięty odcinek krakowskie-2-1-square-1, przyczyna nieustalona
 - Pakiet właściciela: packages/sim (kerb-bays.ts, crowd-kerb-parks.ts)
 
+### G-188 Zaalarmowani strażnicy zlecenia przypięci w świecie daleko od gracza
+- Status: zgłoszone (1.11, weryfikator #150, runda 3); tak samo na main
+- Ważność: S4 · Zasięg: zaalarmowani strażnicy zleceń (np. c1-g2, c3-g3) zostają przypięci w świecie ponad 4000 ticków, gdy gracz jest 2 km dalej; przez to zastąpione zlecenia trwale siedzą w `formerContracts` zapisu
+- Poprawka: zaalarmowany strażnik daleko od gracza (poza zasięgiem chunków przez N s) uspokaja się i zasypia; test jednej sesji i zapisu
+- Pakiet właściciela: packages/sim (streaming, dormant-restore)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
