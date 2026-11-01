@@ -1,5 +1,4 @@
 {
   "packages/engine/src/renderer/mapcity/street-props.ts#StreetProps": 22,
-  "packages/sim/src/systems/ai/ganger-ai-system.ts#GangerAgent": 22,
   "packages/engine/src/audio/synth-audio.ts#SynthAudio": 21
 }
