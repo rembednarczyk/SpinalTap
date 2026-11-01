@@ -70,9 +70,12 @@ export interface GangerAi {
   lastKnown?: Vec3 | null;
   /** Seconds it still looks around `lastKnown` before going back to its post. Saved. */
   search?: number;
-  /** Seconds the player has been out of its sight while alerted. Transient. */
+  /** Seconds the player has been out of its sight while alerted. Saved (`EntitySnapshot.lost`, since v11). */
   lost?: number;
-  /** It saw the player this step (read by the heat after the AI ran). Transient. */
+  /**
+   * It saw the player this step (read by the heat after the AI ran). Transient: perception sets it
+   * every step before it is read, so it is not saved.
+   */
   sees?: boolean;
   /**
    * Sees through disguises (ADR-0033): a Tessen shift boss, every third Hebi. Fixed at spawn
