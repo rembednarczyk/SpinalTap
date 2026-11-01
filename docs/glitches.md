@@ -453,13 +453,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (content/lublin, ground)
 - Test przyjęcia: kontrola skanu dla punktów pasów bez nawierzchni, baza 56 → 0 albo uzasadnione wyjątki
 
-### G-141 Obezwładnienie: telefon świadka kończy się w trakcie chwytu; wyjątek pomocnika bez testu
-- Status: w PR #114 (6f77e10: świadek w chwycie wstrzymuje telefon, po ogłuszeniu urwany, po wyrwaniu wraca; test wyjątku `helper`; weryfikacja orkiestratora)
-- Ważność: S4 · Koszt: mały
-- Gdzie: `runCalls` sprawdza `c.unconscious`, nie `incapacitated`: telefon, któremu zostało mniej niż `TAKEDOWN_TIME` (1,2 s), dochodzi, gdy gracz trzyma świadka w chwycie (sonda: 0,38 s pozostałych, 1 zgłoszenie); wyjątek `helper` w `react` (`crime-system.ts` ok. l. 155) bez testu (świeże, niezauważone ciało, pomocnik znajduje je pierwszy)
-- Pakiet właściciela: packages/sim
-- Test przyjęcia: oba przypadki jako testy symulacji, padające bez poprawki
-
 ### G-142 Atlas nazw budynków: 32 wiersze na 118 nazw, część tabliczek pusta
 - Status: zgłoszone (1.11, weryfikator ADR-0062 etap 2; etap w main, #109)
 - Ważność: S3 · Zasięg: 121 nazwanych budynków (118 różnych nazw), 32 wiersze `NAME_SLOTS` bez zwalniania (29 po rezerwacji napisów zabytków); które tabliczki wyjdą puste, zależy od kolejności wczytywania komórek
@@ -568,6 +561,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | G-140 | Zaparkowane auta na wjazdach i wylotach dróg serwisowych (Cerkiewna) | #110 |
 | G-114 | npr-perf Nabrzeże: czasem +98 wywołań rysowania przy tych samych siatkach | #113 |
 | G-139 | Smoke „title → new game”: gracz przechodzi 2,09 m przy szybkim starcie (skok kursora jako obrót) | #112 |
+| G-141 | Obezwładnienie: telefon świadka kończy się w trakcie chwytu; wyjątek pomocnika bez testu | #114 |
 | G-131 | Etap 1 obezwładnienia: klawisz interakcji, ogłuszony „w walce”, strzał po zabiciu | #100 |
 
 ## Odrzucone

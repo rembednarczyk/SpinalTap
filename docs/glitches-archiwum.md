@@ -531,3 +531,10 @@ Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [r
 - Gdzie: `e2e/smoke.spec.ts`, test „title → new game → … IndexedDB”: przy starcie ok. 14 s ruch w pierwszych 60 krokach daje 2,09 m; bez renderera zawsze 4,20 m, więc to wyścig startu w aplikacji (może z ekranem ładowania #102: kroki liczone przed końcem `prepare` albo wejście przed pointer lockiem)
 - Pakiet właściciela: packages/app, e2e (QA)
 - Test przyjęcia: przyczyna ustalona śladem; test czeka na stan gry, nie na zegar (ADR-0046); 10 przebiegów bez błędu
+
+### G-141 Obezwładnienie: telefon świadka kończy się w trakcie chwytu; wyjątek pomocnika bez testu
+- Status: naprawione (#114): świadek w chwycie wstrzymuje telefon (po ogłuszeniu urwany, po wyrwaniu wraca); test wyjątku `helper`; zapis w ADR-0065
+- Ważność: S4 · Koszt: mały
+- Gdzie: `runCalls` sprawdza `c.unconscious`, nie `incapacitated`: telefon, któremu zostało mniej niż `TAKEDOWN_TIME` (1,2 s), dochodzi, gdy gracz trzyma świadka w chwycie (sonda: 0,38 s pozostałych, 1 zgłoszenie); wyjątek `helper` w `react` (`crime-system.ts` ok. l. 155) bez testu (świeże, niezauważone ciało, pomocnik znajduje je pierwszy)
+- Pakiet właściciela: packages/sim
+- Test przyjęcia: oba przypadki jako testy symulacji, padające bez poprawki
