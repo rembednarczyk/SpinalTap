@@ -565,6 +565,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Przyczyna: stały `EAVES = 0.35` bez sprawdzenia ściany wspólnej
 - Pakiet właściciela: packages/engine (roof-plan.ts, roof-shapes.ts); „później” dopuszczalne po ocenie kuratora
 
+### G-163 Hydrant magentowy zamiast czerwonego (brak czerwieni w palecie)
+- Status: zgłoszone (1.11, weryfikator #124)
+- Ważność: S4 · Zasięg: 6 hydrantów nadziemnych (`st-hydrant`)
+- Przyczyna: paleta modeli ulicznych nie ma czerwieni; najbliższa próbka `fabric-magenta` #8e2457 w dzień wygląda różowo
+- Poprawka: próbka czerwieni w palecie i przepieczenie plików modeli ulicznych (osobny PR, budżet rozmiaru GLB)
+- Pakiet właściciela: packages/engine (paleta), tools (wypiek)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
