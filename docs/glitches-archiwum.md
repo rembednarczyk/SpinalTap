@@ -552,3 +552,11 @@ Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [r
 - Gdzie: `packages/app/src/pointer-focus.ts`: zamknięcie panelu Esc woła blokadę od razu; strona bez wcześniejszej blokady i bez gestu może dostać odmowę, a odmowa ustawia na stałe `lockUnavailable` (`browser-input.ts:154` po G-139: odrzucona obietnica ponowionego żądania)
 - Pakiet właściciela: packages/app, packages/engine/src/input
 - Test przyjęcia: prawdziwy Chrome (e2e) z tym przebiegiem; po odmowie kolejne kliknięcie nadal blokuje
+
+### G-136 Przejazd Bramy Grodzkiej poza osią frontów
+- Status: naprawione (#117): przejazd w osi obu frontów, 3 osie okien co 2 m, trasa dostaw na osi, latarnie spod sklepienia; prześwit (T-086) osobno
+- Ważność: S3 · Zasięg: lokalny (Brama Grodzka) · Koszt: niski
+- Gdzie: `GATE_PASSAGES` w `packages/sim/src/content/lublin/sites.ts` biegnie za węzłem drogi OSM w293488528, ok. 1,4 m na południe od osi bramy; łuk przesunięty o 1,64 m (od Grodzkiej) i 1,36 m (od Zamku) od środka widocznego frontu, przez co przepis ma 2 osie okien zamiast 3
+- Poprawka: przejazd przesunięty prostopadle o ok. 1,4 m na północ, (701,0, 129,4)→(727,0, 153,6); potem przepis z 3 osiami co 2,1 m; prześwit łuku (T-086) przy okazji
+- Pakiet właściciela: packages/sim (złoty hash zmieniony świadomie), packages/engine (przepis)
+- Test przyjęcia: proponowana kontrola skanu `gate-mouth-off-axis` (środek wylotu dalej niż 0,5 m od środka czystej części frontu), baza 2 → 0; Krakowska do zmierzenia przed ustaleniem bazy

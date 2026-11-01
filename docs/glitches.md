@@ -426,14 +426,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: spójne zaokrąglenie w obu ścieżkach z testem; budynki główne w66293125 (Podwale 3) i w171014956 (DPS „Kalina”) w grze albo przybudówki wycięte (T-080); proponowana kontrola `building-neighbour-missing` (obrys dzieli węzeł OSM z budynkiem nieobecnym w grze), baza ≥ 2
 
-### G-136 Przejazd Bramy Grodzkiej poza osią frontów
-- Status: w PR #117 (dwie rundy weryfikacji: przejazd w osi, 3 osie okien, trasa dostaw na osi, latarnie spod sklepienia; prześwit T-086 osobno)
-- Ważność: S3 · Zasięg: lokalny (Brama Grodzka) · Koszt: niski
-- Gdzie: `GATE_PASSAGES` w `packages/sim/src/content/lublin/sites.ts` biegnie za węzłem drogi OSM w293488528, ok. 1,4 m na południe od osi bramy; łuk przesunięty o 1,64 m (od Grodzkiej) i 1,36 m (od Zamku) od środka widocznego frontu, przez co przepis ma 2 osie okien zamiast 3
-- Poprawka: przejazd przesunięty prostopadle o ok. 1,4 m na północ, (701,0, 129,4)→(727,0, 153,6); potem przepis z 3 osiami co 2,1 m; prześwit łuku (T-086) przy okazji
-- Pakiet właściciela: packages/sim (złoty hash zmieniony świadomie), packages/engine (przepis)
-- Test przyjęcia: proponowana kontrola skanu `gate-mouth-off-axis` (środek wylotu dalej niż 0,5 m od środka czystej części frontu), baza 2 → 0; Krakowska do zmierzenia przed ustaleniem bazy
-
 ### G-137 Brama Grodzka bez attyki z wazami od strony Grodzkiej
 - Status: odłożone (1.11, decyzja orkiestratora: sylwetka poza dachem z OSM wymaga wyjątku od ADR-0062; T-083)
 - Ważność: S4 · Koszt: średni (nowy element zestawu poza bryłą)
@@ -565,6 +557,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | G-141 | Obezwładnienie: telefon świadka kończy się w trakcie chwytu; wyjątek pomocnika bez testu | #114 |
 | G-138 | Pasy ruchu na krawędziach mapy bez nawierzchni | #115 |
 | G-135 | Pointer lock wyłączony na stałe po odmowie bez gestu (Esc przed pierwszym kliknięciem) | #116 |
+| G-136 | Przejazd Bramy Grodzkiej poza osią frontów | #117 |
 | G-131 | Etap 1 obezwładnienia: klawisz interakcji, ogłuszony „w walce”, strzał po zabiciu | #100 |
 
 ## Odrzucone
