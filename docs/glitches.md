@@ -547,7 +547,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (props-bulky)
 
 ### G-170 Neonowe rurki pod gzymsem wchodzą w sąsiednie budynki
-- Status: zgłoszone (1.11, łowca G-148 i autor G-157)
+- Status: w PR #148 (1.11; skan `tube-in-neighbour` 65 → 0, planowanie znaków ok. 17 ms); w weryfikacji
 - Ważność: S4 · Zasięg: 58 rurek w 49 budynkach (`tubes` w `sign-plan.ts`), w większości ukryte w bryle sąsiada
 - Poprawka: rurka kończy się przed sąsiadem wystającym przed ścianę (to samo `sign-room` co banery z G-157); kontrola skanu z bazą
 - Pakiet właściciela: packages/engine (sign-plan.ts)
