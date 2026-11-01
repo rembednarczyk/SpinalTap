@@ -93,6 +93,8 @@ export class Simulation {
     // The people of a job stay in the world after it ends, done or lost, until the next is taken
     // (G-178): the guards of an alarm fight on, an ambush waits by the way out (ADR-0034).
     // An ended one is made with the jobs done when it was taken: its pay counts one more since.
+    // Replaced jobs first, as they were taken: their saved people come back with them.
+    for (const f of saved?.formerContracts ?? []) this.streamer.restoreFormer(f);
     const active = domain.contracts.active;
     const site = active ? { contract: active, completed: domain.contracts.completed } : saved?.endedContract;
     if (site) this.streamer.registerContract(this.world, domain.flags, site.completed, site.contract);
@@ -224,6 +226,7 @@ export class Simulation {
     // Sorted by key: world iteration order is not stable across removals.
     entities.sort((a, b) => a.key.localeCompare(b.key));
     const ended = this.holder.domain.contracts.active ? null : this.streamer.registeredContract;
+    const former = this.streamer.formerSnapshots(this.world);
     return {
       version: SAVE_SCHEMA_VERSION,
       seed: this.seed,
@@ -235,6 +238,7 @@ export class Simulation {
       domain: this.holder.domain,
       ...(this.session.pendingDifficulty ? { pendingDifficulty: this.session.pendingDifficulty } : {}),
       ...(ended ? { endedContract: ended } : {}),
+      ...(former.length > 0 ? { formerContracts: former } : {}),
       narrative,
       meta: { label, objective },
     };

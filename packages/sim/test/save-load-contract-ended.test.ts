@@ -1,67 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { type Contract, DIFFICULTY_PRESETS, type DifficultyProfile, HACK_GRACE_SECONDS, type SaveSnapshot, contractFailedFlag } from "@seki/core";
-import { DOKI_ITEM_SPOTS, DOKI_TERMINAL_SPOTS, GENZO_SPOT, SIM_HZ, Simulation, docks, ground, stateHash } from "../src";
+import { type Contract, DIFFICULTY_PRESETS, HACK_GRACE_SECONDS, contractFailedFlag } from "@seki/core";
+import { DOKI_ITEM_SPOTS, DOKI_TERMINAL_SPOTS, GENZO_SPOT, SIM_HZ, Simulation, docks, ground } from "../src";
 import { byKey, input, run, teleportPlayer } from "./helpers";
+import { alarmed, expectSameAfterLoad, hash, peopleOf, reload, roundTrip, taken } from "./contract-save-helpers";
 
 /** Saving and loading after a contract has ended while its people still stand in the world (G-178). */
-
-const roundTrip = (s: SaveSnapshot): SaveSnapshot => JSON.parse(JSON.stringify(s)) as SaveSnapshot;
-const hash = (sim: Simulation) => stateHash(sim.snapshot(null, "t", ""));
-const reload = (sim: Simulation): Simulation => Simulation.fromSnapshot(roundTrip(sim.snapshot(null, "t", "")));
-const peopleOf = (sim: Simulation, id: string): string[] =>
-  [...sim.world]
-    .map((e) => e.key ?? "")
-    .filter((k) => k.startsWith(`${id}-`))
-    .sort();
-
-/** With `completed` jobs done, standing at `at` for half a second, the job of `kind` taken one step ago. */
-const taken = (
-  seed: number,
-  completed: number,
-  at: ReturnType<typeof docks>,
-  kind: "infiltrate" | "hack",
-  difficulty?: DifficultyProfile,
-): { sim: Simulation; c: Contract } => {
-  const fresh = Simulation.create({ seed, ...(difficulty ? { difficulty } : {}) }).snapshot(null, "t", "");
-  const sim = Simulation.fromSnapshot(roundTrip({ ...fresh, domain: { ...fresh.domain, contracts: { active: null, completed } } }));
-  teleportPlayer(sim, at);
-  run(sim, 30);
-  sim.enqueue({ type: "accept-contract", kind });
-  sim.step();
-  const c = sim.domain.contracts.active;
-  expect(c?.kind).toBe(kind);
-  return { sim, c: c! };
-};
-
-/** Seed 77, two jobs done: six metres in front of the door guard until the alarm fails the job, and `after` steps more. */
-const alarmed = (after: number): { sim: Simulation; id: string } => {
-  const { sim, c } = taken(77, 2, docks(6, 0, 110), "infiltrate");
-  const door = byKey(sim, `${c.id}-g1`)!;
-  teleportPlayer(sim, { x: door.position.x + 6, y: door.position.y, z: door.position.z }, -Math.PI / 2);
-  for (let i = 0; i < 600 && sim.domain.contracts.active; i++) sim.step();
-  expect(sim.domain.contracts.active).toBeNull();
-  expect(sim.domain.flags).toContain(contractFailedFlag(c.id));
-  run(sim, after);
-  return { sim, id: c.id };
-};
-
-/** Both runs stepped together: the first step (1-based) where they part, null when they never do. */
-const firstDivergence = (a: Simulation, b: Simulation, steps: number, id: string): number | null => {
-  for (let i = 1; i <= steps; i++) {
-    a.step();
-    b.step();
-    if (hash(a) !== hash(b) || peopleOf(a, id).join() !== peopleOf(b, id).join()) return i;
-  }
-  return null;
-};
-
-/** Saved and loaded, the job's people are the same and both games go on as one. */
-const expectSameAfterLoad = (sim: Simulation, id: string): void => {
-  const loaded = reload(sim);
-  expect(peopleOf(loaded, id)).toEqual(peopleOf(sim, id));
-  expect(hash(loaded)).toBe(hash(sim));
-  expect(firstDivergence(sim, loaded, 10 * 60, id)).toBeNull();
-};
 
 describe("save and load after a contract has ended (G-178)", () => {
   it("the guards of an infiltration lost to the alarm are still there after loading, and still fighting", () => {

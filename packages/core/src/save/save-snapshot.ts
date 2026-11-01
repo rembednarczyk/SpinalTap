@@ -5,7 +5,8 @@ import type { Contract } from "../contracts/contracts";
 
 /**
  * v22: the contract whose people are still in the world after it ended (G-178), failed or paid,
- * until the next is taken; an older save has none, its guards gone on loading as before.
+ * until the next is taken, and the jobs replaced by a newer one while some of their people are
+ * still about; an older save has none, their guards gone on loading as before.
  * v21: how sure a guard is that it saw someone (G-174), while it is not sure yet; an older save
  * has every guard calm.
  * v20: a difficulty profile asked for in a fight, waiting for its end (G-171); an older save has
@@ -100,6 +101,15 @@ export interface ContractOnSite {
   readonly completed: number;
 }
 
+/**
+ * A job replaced by a newer one while some of its people are still about (G-178): no chunk
+ * brings them back any more, so only those saved return. `awake` are the keys in the world, the
+ * rest sleep in their chunks for good.
+ */
+export interface FormerContract extends ContractOnSite {
+  readonly awake: readonly string[];
+}
+
 export interface SaveSnapshot {
   readonly version: typeof SAVE_SCHEMA_VERSION;
   readonly seed: number;
@@ -123,6 +133,8 @@ export interface SaveSnapshot {
    * is in the log, running or cleared (its targets come from there), and before the first is taken.
    */
   readonly endedContract?: ContractOnSite;
+  /** Jobs replaced while some of their people are still about (G-178), in the order taken. Absent when none. */
+  readonly formerContracts?: readonly FormerContract[];
   /** Serialized ink story state (inkjs JSON). */
   readonly narrative: string | null;
   readonly meta: { readonly label: string; readonly objective: string };

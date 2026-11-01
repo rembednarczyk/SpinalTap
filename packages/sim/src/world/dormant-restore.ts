@@ -5,14 +5,31 @@ import type { Entity } from "./components";
 import { applyEntitySnapshot, isDead } from "./factory";
 import { restoreDowned } from "./bodies";
 import { type ActorSpawner, type StreamState, revived } from "./actor-spawner";
-import type { StreamCatalog } from "./stream-catalog";
+import type { StreamCatalog, Template } from "./stream-catalog";
 
 export interface RestoreParts {
   readonly state: StreamState;
   readonly catalog: StreamCatalog;
   readonly spawner: ActorSpawner;
   readonly chunkIdAt: (p: Vec3) => string;
+  /** Keys of replaced jobs' people who were in the world when the game was saved (G-178). */
+  readonly formerAwake: ReadonlySet<string>;
 }
+
+/**
+ * A replaced job's person (G-178): in the world if he was when saved, else asleep for good, as
+ * in the saved game, where no chunk brings him back.
+ */
+const restoreFormer = (world: World<Entity>, flags: readonly string[], s: EntitySnapshot, t: Template, parts: RestoreParts): void => {
+  if (isDead(flags, s.key) && !s.downed?.dead) return;
+  if (!parts.formerAwake.has(s.key)) {
+    parts.state.dormant.set(s.key, s);
+    parts.state.streamedOut.add(t.id);
+    return;
+  }
+  const e = world.add(revived(parts.spawner.build(t), s));
+  if (s.downed) restoreDowned(world, e, s.downed);
+};
 
 /** A saved body that is in the world at once (ADR-0065): carried, or lying in a resident chunk. */
 const bodyHere = (s: EntitySnapshot, parts: RestoreParts): boolean =>
@@ -28,6 +45,11 @@ export const restoreEntities = (world: World<Entity>, flags: readonly string[], 
     if (e) {
       applyEntitySnapshot(e, s);
       if (s.downed) restoreDowned(world, e, s.downed);
+      continue;
+    }
+    const former = catalog.formerOf(s.key);
+    if (former) {
+      restoreFormer(world, flags, s, former, parts);
       continue;
     }
     const t = catalog.placeOf(s.key, flags);

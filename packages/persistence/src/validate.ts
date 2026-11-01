@@ -15,7 +15,7 @@ import {
   isDifficultyProfile,
 } from "@seki/core";
 import { findItemsError } from "./validate-items";
-import { findContractError, findContractOnSiteError } from "./validate-contract";
+import { findContractError, findContractOnSiteError, findFormerContractsError } from "./validate-contract";
 import { findContractWave2Error, findEncountersError, findMetroError } from "./validate-wave2";
 import { findProgressionError } from "./validate-progression";
 
@@ -55,6 +55,7 @@ export const findSchemaError = (s: Json): string | null => {
   if (s.pendingDifficulty !== undefined && !isDifficultyProfile(s.pendingDifficulty)) return "pending difficulty";
   // G-178: a job over whose people are still in the world is a whole contract, as a running one.
   if (s.endedContract !== undefined && findContractOnSiteError(s.endedContract)) return "ended contract";
+  if (s.formerContracts !== undefined && findFormerContractsError(s.formerContracts)) return "former contracts";
   const d = s.domain;
   if (!isObject(d)) return "domain";
   const c = d.character;

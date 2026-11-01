@@ -45,3 +45,22 @@ describe("a contract ended with its people about in the save (v21 to v22, G-178)
     expect(() => decodeSave("slot", encodeSave(snapshot({ endedContract: on({ ...LOST, targets: 1.5 }) as never })))).toThrow();
   });
 });
+
+describe("jobs replaced with their people still about in the save (v22, G-178)", () => {
+  const former = (over: Record<string, unknown> = {}) => ({ contract: LOST, completed: 2, awake: ["c3-g0"], ...over });
+
+  it("keeps them through the codec, in order", () => {
+    const list = [former(), former({ contract: { ...LOST, id: "c5" }, awake: [] })];
+    expect(decodeSave("slot", encodeSave(snapshot({ formerContracts: list as never }))).formerContracts).toEqual(list);
+  });
+
+  it("refuses a list that is not one of whole contracts with their keys in the world", () => {
+    const bad = (formerContracts: unknown) => findSchemaError({ ...snapshot(), formerContracts } as unknown as Record<string, unknown>);
+    expect(bad(undefined)).toBeNull();
+    expect(bad([])).toBeNull();
+    expect(bad([former()])).toBeNull();
+    const broken = [null, former(), [null], [former({ awake: "c3-g0" })], [former({ awake: [1] })], [former({ completed: -1 })], [former({ contract: { ...LOST, siteId: "moon" } })]];
+    for (const v of broken) expect(bad(v)).toBe("former contracts");
+    expect(() => decodeSave("slot", encodeSave(snapshot({ formerContracts: [former({ awake: [1] })] as never })))).toThrow();
+  });
+});

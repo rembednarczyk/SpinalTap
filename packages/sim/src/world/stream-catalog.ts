@@ -38,6 +38,8 @@ export class StreamCatalog {
   /** Every place of a keyed actor of the content; one key can have one per condition (ADR-0038). */
   private readonly places = new Map<string, Template[]>();
   private contract: readonly Template[] = [];
+  /** Templates of replaced jobs, known by key only to bring their saved people back (G-178). */
+  private readonly former = new Map<string, Template>();
   /** Ids reserved for each chunk's background passers-by (ADR-0040); the passer-by system spawns them. */
   readonly passerbyIds = new Map<string, readonly EntityId[]>();
 
@@ -91,6 +93,16 @@ export class StreamCatalog {
     for (const old of this.contract) this.byKey.delete(old.key ?? "");
     this.contract = templates;
     for (const t of templates) if (t.key) this.byKey.set(t.key, t);
+  }
+
+  /** Templates of a replaced job (G-178): never spawned with a chunk, only found for a saved key. */
+  addFormer(templates: readonly Template[]): void {
+    for (const t of templates) if (t.key) this.former.set(t.key, t);
+  }
+
+  /** The template of a replaced job's person, by key. */
+  formerOf(key: string): Template | undefined {
+    return this.former.get(key);
   }
 
   /** The contract's targets that stand in a chunk accepted by `inChunk`. */
