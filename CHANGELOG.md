@@ -5,6 +5,7 @@ Zmiany widoczne dla gracza, od najnowszych. Wersja gry i commit są na ekranie t
 ## Nieopublikowane (0.1.0)
 
 ### 1 listopada 2026
+- Meble deptaka: wolnostojące bankomaty z OSM, hydranty przy ulicach, donice z krzakami i kwiatami, rowery i skutery przy stojakach, wózki z jedzeniem przy Targu na Ruskiej i na Giełdzie Kresowej, kontenery na Nabrzeżu; wszystkie z bryłą, z modeli CC0 i CC-BY na ekranie „Autorzy” (ADR-0058 etap 2).
 - Świadek trzymany w chwycie obezwładnienia nie kończy telefonu do ochrony; gdy się wyrwie, dzwoni dalej (G-141).
 - Widok nie obraca się sam przy wejściu do gry, gdy przeglądarka odmawia surowego wejścia myszy (Chromium na Linuksie) (G-139).
 - Zaparkowane auta nie zastawiają wjazdów i wylotów dróg serwisowych, np. przy Cerkiewnej (G-140).
