@@ -9,6 +9,7 @@ import type { Vec3, ViewDescriptor } from "../../../packages/core/src";
 import { type FacadeFrame, type Wall, facadeFrame } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
 import { landmarkAt } from "../../../packages/engine/src/renderer/mapcity/landmarks";
 import { mapBuilding } from "../../../packages/engine/src/renderer/mapcity/map-building";
+import { BinIndex } from "../../../packages/engine/src/renderer/mapcity/map-index";
 import { boundsOf, cleanRing, pointInRing } from "../../../packages/engine/src/renderer/mapcity/polygon";
 import { venueBoards } from "../../../packages/engine/src/renderer/mapcity/venue-plan";
 import { WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
@@ -37,13 +38,16 @@ export const cityFrames = (views: readonly DrawnView[]): FramedBuilding[] => {
     const ring = cleanRing(view.outline.map((p) => ({ x: p.x + at.x, z: p.z + at.z })));
     return ring.length < 3 ? [] : [{ ring, view, at, bounds: boundsOf(ring) }];
   });
-  // The map city's `neighbourAt`: the top of another building over the point.
+  // The map city's `neighbourAt`: the top of another building over the point. The signs sample
+  // it every 10 cm along the walls, so it looks up the bins of the map city, not every building (G-200).
+  const index = new BinIndex();
+  buildings.forEach((b, i) => index.add(i + 1, b.bounds));
   const neighbour = (x: number, z: number, self: number): number | null => {
     let top: number | null = null;
-    buildings.forEach((b, i) => {
-      if (i + 1 === self || x < b.bounds.minX || x > b.bounds.maxX || z < b.bounds.minZ || z > b.bounds.maxZ) return;
-      if (pointInRing({ x, z }, b.ring)) top = Math.max(top ?? -Infinity, b.at.y + b.view.height);
-    });
+    for (const id of index.at(x, z)) {
+      const b = buildings[id - 1]!;
+      if (id !== self && pointInRing({ x, z }, b.ring)) top = Math.max(top ?? -Infinity, b.at.y + b.view.height);
+    }
     return top;
   };
   return buildings.map((b, i) => ({ frame: facadeFrame(mapBuilding(i + 1, b, () => null), neighbour), view: b.view, at: b.at, landmark: landmarkAt(b.at.x, b.at.z, b.view.outline.length) !== null }));
