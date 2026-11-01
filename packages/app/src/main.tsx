@@ -67,7 +67,7 @@ const cityOn = params.get("city") !== "off";
 const renderer = new BabylonRenderer(stage, {
   cityKit: cityOn ? new URL("city/city-kit.glb", document.baseURI).href : null,
   // Facade props (ADR-0058) and the CC-BY street furniture (ADR-0063), after the kit; ?city=off leaves them out too.
-  cityProps: cityOn ? ["city/city-props.glb", "city/street-props.glb"].map((f) => new URL(f, document.baseURI).href) : null,
+  cityProps: cityOn ? ["city/city-props.glb", "city/street-props.glb", "city/market-props.glb"].map((f) => new URL(f, document.baseURI).href) : null,
   farCity: false,
 });
 // The character menu's 3D preview: a second scene on the same engine and canvas (ADR-0015).

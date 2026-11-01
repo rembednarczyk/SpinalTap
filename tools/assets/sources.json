@@ -1,5 +1,5 @@
 {
-  "about": "Packs and models baked into packages/app/public/city/city-props.glb and street-props.glb: CC0 (ADR-0058) and CC-BY 4.0, credited in packages/ui/src/credits/credits.ts (ADR-0063). tools/assets/fetch.mjs downloads them and checks sha256; the zips, unpacked packs and source models are not committed.",
+  "about": "Packs and models baked into packages/app/public/city/city-props.glb, street-props.glb and market-props.glb: CC0 (ADR-0058) and CC-BY 4.0, credited in packages/ui/src/credits/credits.ts (ADR-0063). tools/assets/fetch.mjs downloads them and checks sha256; the zips, unpacked packs and source models are not committed.",
   "sources": [
     {
       "id": "kenney-modular-buildings",
@@ -83,6 +83,58 @@
       "sha256": "fa7974a0d342bfe63c38664ba9f8ec1a4aab8ea25f099bdc56870e33588c4d9d",
       "unzip": "x",
       "used": ["st-planter"]
+    },
+    {
+      "id": "kenney-food-kit",
+      "title": "Food Kit 2.0",
+      "author": "Kenney (www.kenney.nl)",
+      "page": "https://opengameart.org/content/food-kit",
+      "license": "CC0",
+      "licenseQuote": "License: (Creative Commons Zero, CC0) http://creativecommons.org/publicdomain/zero/1.0/ You can use this content for personal, educational, and commercial purposes.",
+      "url": "https://opengameart.org/sites/default/files/kenney_food-kit.zip",
+      "file": "food.zip",
+      "sha256": "cdad90853682499b94c9fda2f87678b24bfd8f3264e0ed323f6b6a27fd7c6f6f",
+      "unzip": "x",
+      "used": ["mk-yatai", "mk-counter-ramen", "mk-counter-produce", "mk-counter-fish"]
+    },
+    {
+      "id": "kenney-mini-market",
+      "title": "Mini Market 1.0",
+      "author": "Kenney (www.kenney.nl), with Fleur Keijsers and Guus Vermeulen",
+      "page": "https://opengameart.org/content/mini-market",
+      "license": "CC0",
+      "licenseQuote": "License: (Creative Commons Zero, CC0) http://creativecommons.org/publicdomain/zero/1.0/ You can use this content for personal, educational, and commercial purposes.",
+      "url": "https://opengameart.org/sites/default/files/kenney_mini-market.zip",
+      "file": "mini-market.zip",
+      "sha256": "6f2e69090e359204ace43e4c98dc3fb8639b75e423109672b5c890d194c45203",
+      "unzip": "x",
+      "used": ["mk-crates", "mk-counter-produce"]
+    },
+    {
+      "id": "kenney-survival-kit",
+      "title": "Survival Kit 2.0",
+      "author": "Kenney (www.kenney.nl)",
+      "page": "https://opengameart.org/content/survival-kit",
+      "license": "CC0",
+      "licenseQuote": "License: (Creative Commons Zero, CC0) http://creativecommons.org/publicdomain/zero/1.0/ You can use this content for personal, educational, and commercial purposes.",
+      "url": "https://opengameart.org/sites/default/files/kenney_survival-kit.zip",
+      "file": "survival.zip",
+      "sha256": "c3586341b5932c87eb43d75d915434f47daed168b17ed36a03e8ca9977c7443e",
+      "unzip": "x",
+      "used": ["mk-cartons", "mk-barrels", "mk-canvas", "mk-crates"]
+    },
+    {
+      "id": "kenney-furniture-kit",
+      "title": "Furniture Pack 1.0",
+      "author": "Kenney (www.kenney.nl)",
+      "page": "https://opengameart.org/content/furniture-kit",
+      "license": "CC0",
+      "licenseQuote": "License: (Creative Commons Zero, CC0) http://creativecommons.org/publicdomain/zero/1.0/ This content is free to use in personal, educational and commercial projects.",
+      "url": "https://opengameart.org/sites/default/files/kenney_furniturePack.zip",
+      "file": "furniture.zip",
+      "sha256": "68afa4e6dc8a53942379fb47f1e84ec735d46b77bb1c1ceb968e245693dde067",
+      "unzip": "x",
+      "used": ["mk-yatai"]
     },
     {
       "id": "quaternius-public-transport",

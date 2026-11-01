@@ -171,4 +171,35 @@ python3 -I -B tools/city_kit.py --street /tmp/city-assets --out packages/app/pub
 Pozostałe modele drugiej paczki są w `sources.json` z `"used": []` (kolejne etapy, plan w
 `docs/plany/assety-paczka-2.md`); dostaną wiersz tutaj, gdy trafią do pliku.
 
-Wyłączenie w grze: `?city=off` (zostają gołe bryły, bez kitu i bez rekwizytów obu plików).
+## Targ i budki z jedzeniem: `market-props.glb` (ADR-0058 etap 3)
+
+Osiem modeli złożonych z części paczek **CC0** Kenneya (`tools/city_market.py`), w trzecim pliku na tej
+samej palecie, bo `city-props.glb` i `street-props.glb` są blisko limitu 512 KiB. Gra wczytuje go po
+kicie razem z dwoma pozostałymi i łączy je w jeden zestaw rekwizytów (ekran ładowania czeka na wszystkie).
+Bez `extras.credit`: źródła są CC0.
+
+| Klucze w pliku | Źródło (pobranie) | Autor | Licencja (cytat) |
+|---|---|---|---|
+| `mk-cartons` (kartony na palecie), `mk-barrels` (beczki), `mk-canvas` (towar pod płótnem na słupkach), część `mk-crates` i daszek `mk-yatai` | [Survival Kit 2.0](https://opengameart.org/content/survival-kit), `resource-planks`, `box-large`, `box`, `barrel`, `structure-canvas`; `https://opengameart.org/sites/default/files/kenney_survival-kit.zip` | Kenney | CC0: „License: (Creative Commons Zero, CC0) http://creativecommons.org/publicdomain/zero/1.0/ You can use this content for personal, educational, and commercial purposes.” |
+| `mk-crates` (skrzynki z owocami) | [Mini Market 1.0](https://opengameart.org/content/mini-market), `display-fruit`; `https://opengameart.org/sites/default/files/kenney_mini-market.zip` | Kenney, Fleur Keijsers, Guus Vermeulen | CC0: jak wyżej (`License.txt` paczki) |
+| `mk-counter-ramen`, `mk-counter-produce`, `mk-counter-drinks` (drobiazgi na ladach), jedzenie na ladzie `mk-yatai` | [Food Kit 2.0](https://opengameart.org/content/food-kit), `pot-stew`, `steamer`, `bowl-broth`, `skewer`, `cabbage`, `watermelon`, `pineapple`, `apple`, `tomato`, `carrot`, `soda-can`, `carton`, `soda`, `cup-coffee`; `https://opengameart.org/sites/default/files/kenney_food-kit.zip` | Kenney | CC0: jak wyżej (`License.txt` paczki) |
+| lada i stołki `mk-yatai` (budka z jedzeniem) | [Furniture Kit](https://opengameart.org/content/furniture-kit) (Furniture Pack 1.0), `kitchenBar.obj`, `stoolBar.obj`; `https://opengameart.org/sites/default/files/kenney_furniturePack.zip` | Kenney | CC0: „License: (Creative Commons Zero, CC0) http://creativecommons.org/publicdomain/zero/1.0/ This content is free to use in personal, educational and commercial projects.” |
+
+Zmiany względem oryginałów: części złożone w jeden model w metrach, kolor trójkąta uśredniony z mapy
+kolorów (MTL dla mebli) i przypisany do roli palety (karton jako `fabric-amber`), siatka uproszczona przez
+grupowanie wierzchołków (0,3–1,4 tys. trójkątów na model), bez luźnych drobin, normalne płaskie, bez
+tekstur. Zapas targu (`extras.styles`: `market-goods`, w kolejności kształtów) jest wpasowany w bryłę
+swojego kształtu z symulacji (`MARKET_GOODS` w `furniture.ts`); budka (`food-stall`) stoi w układzie
+`FOOD_STALL`: lada w bryle lady, słupki daszku na słupkach bryły, stołki na stołkach. Noren (cztery pasy
+płótna w kolorach `fabric-*`) to dorysowane prostopadłościany. Drobiazgi na ladach (`counter-goods`) renderer
+stawia tylko w bliskiej siatce bloku i nigdy na telefonie (`low`); lampiony pod daszkiem budki to
+`st-lantern` z `street-props.glb`.
+
+Odtworzenie pliku:
+
+```
+NODE_USE_ENV_PROXY=1 node tools/assets/fetch.mjs /tmp/city-assets --only kenney-food-kit,kenney-mini-market,kenney-survival-kit,kenney-furniture-kit
+python3 -I -B tools/city_kit.py --market /tmp/city-assets --out packages/app/public/city
+```
+
+Wyłączenie w grze: `?city=off` (zostają gołe bryły, bez kitu i bez rekwizytów wszystkich plików).
