@@ -300,14 +300,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (decyzja o prostokątach: Architekt, ADR-0042)
 - Test przyjęcia: w66335239 i w66293168 w `MAP_CHUNKS`, bez uskoku gruntu na x = 460; propozycja: `stare-miasto` minZ −270 z `zEdges` [−270, −40, 160] (rząd 230 m, identyfikatory chunków bez zmian); kontrola `historic-cut-by-edge` (budynek zabytkowy z obrysem w prostokącie dzielnicy i środkiem poza wszystkimi) 4 → 1 (Pałac Tarłów zostaje, T-057)
 
-### G-097 Teatr Osterwy jako kamienica mieszkalna
-- Status: przyjęte przez weryfikatora i kuratora 1.11; w PR #104 (gałąź `ccr-ec2c4269-ilh8k8-gmachy`, przed PR scalenie z main: d75f335 G-120, 6083980 G-097, 9c45df3 G-116)
-- Gdzie: w67508958 (118.0, −205.7); T-059
-- Przyczyna: `buildingUse` czyta tylko tagi obrysu (`building=yes`); punkt `amenity=theatre` w obrysie daje nazwę, nie przeznaczenie
-- Pakiet właściciela: tools/osm-import
-- Test przyjęcia: punkt `amenity=theatre`/`arts_centre` w obrysie `building=yes` daje `use=civic`; kontrola `theatre-not-civic` 1 → 0; wysokość według zdjęcia lub LOD2 (ADR-0062 etap 7)
-- Uzupełnienie (audyt gmachów publicznych, 31.10): ten sam mechanizm dotyczy punktów `amenity=townhall|courthouse|library` (Pedagogiczna Biblioteka Wojewódzka n10568650059 w w55897083, T-069: `residential` z nadbudową +21 m). Reguła tylko przy zgodnym adresie (jak G-051) i dla `building=yes|public|government|civic`. Punktów `office=government` reguła nie obejmuje, bo bywają lokalem w kamienicy (Biuro Rozwoju Turystyki UM n9529164485 w w66293242). Kontrola `civic-as-residential` (część B) 2 → 0
-
 ### G-098 Wieże zmapowane jako `man_made=tower` bez `building` pominięte
 - Status: zgłoszone (z przeglądu kuratora G-052) · Ważność: S4 · Zasięg: 3 obrysy w Krakowskim · Koszt: mały–średni
 - Gdzie: w1090997970 (wieża Brygidek, 161, −229), w1002739983 (84, 99), w1002739984 (40, 103); T-060
@@ -359,15 +351,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (mapcity/skyline)
 - Test przyjęcia: podstawa wieży poniżej linii terenu panoramy z każdego punktu Nabrzeża
 
-### G-116 Ułamkowe `building:levels` zaokrąglane w górę (Ratusz o 1,6 m za wysoki)
-- Status: przyjęte przez weryfikatora i kuratora 1.11; w PR #104 (gałąź `ccr-ec2c4269-ilh8k8-gmachy`, przed PR scalenie z main: d75f335 G-120, 6083980 G-097, 9c45df3 G-116)
-- Ważność: S4 (proponowana) · Zasięg: 6 obrysów i części (Ratusz w66264120 z wieżą w619138854, kościół Dominikanów w66286338 z w618270604 i w618270605, w55897040) · Koszt: mały
-- Gdzie: Ratusz (416.1, −69.6); T-064
-- Dowód: `heights` w `tools/osm-import/src/building-tags.ts`: `levels = Math.round(4.5) = 5` i `walls = floors(levels)`, czyli 16 m zamiast 14,4 m. Wieża Ratusza 7,5 → 8 kondygnacji
-- Przyczyna: ściany liczone z zaokrąglonej liczby kondygnacji
-- Pakiet właściciela: tools/osm-import
-- Test przyjęcia: `building:levels=4.5` daje ściany 14,4 m nad cokołem, a w siatce okien 4 kondygnacje (wyższe, po 3,6 m); kontrola `fractional-levels-rounded` 6 → 0
-
 ### G-117 Dach całego obrysu przykrywa wyższą część z OSM (ryzalit Ratusza)
 - Status: zgłoszone (audyt gmachów publicznych, kurator 31.10)
 - Ważność: S3 (proponowana; Ratusz z Placu Łokietka) · Zasięg: 1 w mieście (Ratusz); części kościoła Dominikanów przykryte ścianami, ale ich dachy wychodzą ponad połać · Koszt: średni
@@ -393,14 +376,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Przyczyna: brak przepisu w `landmarks/recipes.ts`; plan fasad dla `civic` (ADR-0051)
 - Pakiet właściciela: packages/engine (mapcity/landmarks)
 - Test przyjęcia: przepis Ratusza: ryzalit w osi fasady południowej z wejściem głównym, wieża z OSM z tarczą zegara (do potwierdzenia zdjęciem), kondygnacje w rytmie fasady klasycystycznej, kolory z T-066, warstwa 2077 bez nadbudowy (podpis, światło na gzymsach). Przepis Trybunału: wieżyczka zegarowa na kalenicy, jeśli potwierdzi ją zdjęcie. Przegląd kuratora ze zdjęciem; migawka NPR obejrzana
-
-### G-120 Urzędy z `office=government` w tagach obrysu jako kamienice z nadbudową
-- Status: przyjęte przez weryfikatora i kuratora 1.11; w PR #104 (gałąź `ccr-ec2c4269-ilh8k8-gmachy`, przed PR scalenie z main: d75f335 G-120, 6083980 G-097, 9c45df3 G-116)
-- Ważność: S3 (proponowana; nadbudowa 2,4–3,4 raza wyższa od gmachu) · Zasięg: 2 (Kuratorium Oświaty w55897069, Urząd Miasta przy Placu Litewskim 1 w67498728) · Koszt: mały
-- Gdzie: (−132.0, 74.5) i (118.7, 35.9); T-068
-- Dowód: `buildingUse` nie czyta `office` ani `government`, więc z `building=yes` wychodzi `residential`. `landmarkName` gubi wtedy nazwę, a `verticalOf` daje +24 m i +21 m
-- Pakiet właściciela: tools/osm-import (`building-tags.ts`)
-- Test przyjęcia: obrys z `office=government` albo `government=*` daje `use=civic` z nazwą; kontrola `civic-as-residential` (część A) 2 → 0; baza `landmark-overbuilt` bez wzrostu
 
 ### G-121 Poczta Główna jako sklep z nadbudową
 - Status: zgłoszone (audyt gmachów publicznych, kurator 31.10); przed poprawką trzeba potwierdzić budynek zdjęciem albo w rejestrze NID
@@ -551,6 +526,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | G-125 | Ekranu opcji nie da się przewijać na telefonie | #94 |
 | G-087 | `stepRamps` tylko dla nazwanych schodów | #97 |
 | G-127 | Parterowy pawilon jako czterokondygnacyjna wieża (Bar Centralny przed Pedetem) | #103 |
+| G-097 | Teatr Osterwy jako kamienica mieszkalna | #104 |
+| G-116 | Ułamkowe `building:levels` zaokrąglane w górę (Ratusz o 1,6 m za wysoki) | #104 |
+| G-120 | Urzędy z `office=government` w tagach obrysu jako kamienice z nadbudową | #104 |
 | G-131 | Etap 1 obezwładnienia: klawisz interakcji, ogłuszony „w walce”, strzał po zabiciu | #100 |
 
 ## Odrzucone

@@ -474,3 +474,28 @@ Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [r
 - Przyczyna: `defaultLevels` daje 1 kondygnację tylko pod 25 m²; większy wolnostojący pawilon dostaje piętra dzielnicy jak kamienica
 - Pakiet właściciela: tools/osm-import (`building-tags.ts`)
 - Test przyjęcia: nowa kontrola `small-freestanding-tall` (niżej) 24 → co najwyżej przypadki potwierdzone przez kuratora; w665959137 ma 1 kondygnację
+
+### G-097 Teatr Osterwy jako kamienica mieszkalna
+- Status: naprawione (#104)
+- Gdzie: w67508958 (118.0, −205.7); T-059
+- Przyczyna: `buildingUse` czyta tylko tagi obrysu (`building=yes`); punkt `amenity=theatre` w obrysie daje nazwę, nie przeznaczenie
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: punkt `amenity=theatre`/`arts_centre` w obrysie `building=yes` daje `use=civic`; kontrola `theatre-not-civic` 1 → 0; wysokość według zdjęcia lub LOD2 (ADR-0062 etap 7)
+- Uzupełnienie (audyt gmachów publicznych, 31.10): ten sam mechanizm dotyczy punktów `amenity=townhall|courthouse|library` (Pedagogiczna Biblioteka Wojewódzka n10568650059 w w55897083, T-069: `residential` z nadbudową +21 m). Reguła tylko przy zgodnym adresie (jak G-051) i dla `building=yes|public|government|civic`. Punktów `office=government` reguła nie obejmuje, bo bywają lokalem w kamienicy (Biuro Rozwoju Turystyki UM n9529164485 w w66293242). Kontrola `civic-as-residential` (część B) 2 → 0
+
+### G-116 Ułamkowe `building:levels` zaokrąglane w górę (Ratusz o 1,6 m za wysoki)
+- Status: naprawione (#104)
+- Ważność: S4 (proponowana) · Zasięg: 6 obrysów i części (Ratusz w66264120 z wieżą w619138854, kościół Dominikanów w66286338 z w618270604 i w618270605, w55897040) · Koszt: mały
+- Gdzie: Ratusz (416.1, −69.6); T-064
+- Dowód: `heights` w `tools/osm-import/src/building-tags.ts`: `levels = Math.round(4.5) = 5` i `walls = floors(levels)`, czyli 16 m zamiast 14,4 m. Wieża Ratusza 7,5 → 8 kondygnacji
+- Przyczyna: ściany liczone z zaokrąglonej liczby kondygnacji
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: `building:levels=4.5` daje ściany 14,4 m nad cokołem, a w siatce okien 4 kondygnacje (wyższe, po 3,6 m); kontrola `fractional-levels-rounded` 6 → 0
+
+### G-120 Urzędy z `office=government` w tagach obrysu jako kamienice z nadbudową
+- Status: naprawione (#104)
+- Ważność: S3 (proponowana; nadbudowa 2,4–3,4 raza wyższa od gmachu) · Zasięg: 2 (Kuratorium Oświaty w55897069, Urząd Miasta przy Placu Litewskim 1 w67498728) · Koszt: mały
+- Gdzie: (−132.0, 74.5) i (118.7, 35.9); T-068
+- Dowód: `buildingUse` nie czyta `office` ani `government`, więc z `building=yes` wychodzi `residential`. `landmarkName` gubi wtedy nazwę, a `verticalOf` daje +24 m i +21 m
+- Pakiet właściciela: tools/osm-import (`building-tags.ts`)
+- Test przyjęcia: obrys z `office=government` albo `government=*` daje `use=civic` z nazwą; kontrola `civic-as-residential` (część A) 2 → 0; baza `landmark-overbuilt` bez wzrostu
