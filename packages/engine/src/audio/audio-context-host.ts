@@ -21,7 +21,9 @@ export class AudioContextHost {
   open(mix: MixState): boolean {
     if (this.failed || this.g) return false;
     try {
-      const ctx = this.createContext();
+      // Unbound, as before the split: the factory gets no `this`.
+      const create = this.createContext;
+      const ctx = create();
       if (!ctx) {
         this.failed = true;
         return false;

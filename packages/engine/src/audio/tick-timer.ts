@@ -10,12 +10,15 @@ export class TickTimer {
   /** Starts calling `fn` every `ms` milliseconds; a running timer is left alone. */
   start(fn: () => void, ms: number): void {
     if (this.id !== null) return;
-    this.id = this.set(fn, ms);
+    // Unbound, as before the split: native window.setInterval rejects any other `this`.
+    const set = this.set;
+    this.id = set(fn, ms);
   }
 
   stop(): void {
     if (this.id === null) return;
-    this.clear(this.id);
+    const clear = this.clear;
+    clear(this.id);
     this.id = null;
   }
 }
