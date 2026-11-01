@@ -20,8 +20,9 @@ const TWO: ReinforcementSnapshot = { ...ONE, n: 3, type: "hebi_brawler", state: 
 const SENT: ReinforcementsSnapshot = { sent: 3, wait: 3.5, people: [ONE, TWO] };
 
 describe("the heat's reinforcements in the save (v22 to v23, G-179)", () => {
-  it("is schema v23", () => {
-    expect(SAVE_SCHEMA_VERSION).toBe(23);
+  it("is schema v23 or later", () => {
+    // v24 (G-188, the pinned AIs marked) walks on from here with no change to the reinforcements.
+    expect(SAVE_SCHEMA_VERSION).toBeGreaterThanOrEqual(23);
   });
 
   it("a v22 save loads as it was, with none sent in", () => {

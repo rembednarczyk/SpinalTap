@@ -6,7 +6,10 @@ import { BASE_RAM, type HackTargetKind, QUICKHACKS, type QuickhackId, RAM_REGEN_
  */
 export interface Upload {
   readonly hackId: QuickhackId;
-  /** The target: an entity key, or `#<id>` for an unkeyed one (lost on load: the upload then fails). */
+  /**
+   * The target: an entity key, a reinforcement's `security:<n>`, or `#<id>` for another unkeyed one,
+   * good only in the session that started it (a loaded game cuts it off, G-194).
+   */
   readonly target: string;
   /** Seconds left to the effect. */
   readonly left: number;

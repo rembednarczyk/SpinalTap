@@ -101,6 +101,8 @@ export const poleLampAt = (p: { readonly x: number; readonly z: number }): boole
 
 /** The venues' boards of Lublin (`venue-boards.ts`), for `props.ts` to load through one module runner with the walls. */
 export { lublinVenueBoards } from "./venue-boards.ts";
+/** The doors' walls of Lublin (ADR-0058 stage 9), through the same runner: one framing of the city. */
+export { lublinDoorWalls } from "./door-walls.ts";
 
 /** The decal walls of Lublin as the game draws it. */
 export const lublinDecalWalls = (): DecalWall[] => cityDecalWalls(WORLD_SCENERY);

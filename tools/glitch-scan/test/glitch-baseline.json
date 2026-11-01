@@ -50,6 +50,7 @@
   "vehicle-outside-passage": 0,
   "wall-lantern-in-passage": 0,
   "wall-lantern-in-building": 0,
+  "wall-lantern-by-passage": 0,
   "wall-lantern-over-venue-board": 0,
   "passage-off-map": 0,
   "building-part-ignored": 0,
@@ -85,5 +86,11 @@
   "decal-off-kerb": 0,
   "decal-on-crossing": 0,
   "decal-alone-in-block": 0,
-  "decal-on-decal": 0
+  "decal-on-decal": 0,
+  "door-off-wall": 0,
+  "door-floating": 0,
+  "door-in-window": 0,
+  "door-in-board": 0,
+  "door-in-passage": 0,
+  "door-on-game-door": 0
 }

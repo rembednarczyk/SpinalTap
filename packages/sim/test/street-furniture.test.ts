@@ -22,7 +22,8 @@ describe("street furniture in the game (ADR-0050)", () => {
     for (const v of views) {
       if (v.view.kind !== "street-props") continue;
       total += v.view.items.length;
-      for (const i of v.view.items) expect(i.y).toBeCloseTo(groundY(i.x, i.z), 1);
+      // A door on a facade (ADR-0058 stage 9) keeps its foot on the paving the import measured (the glitch scan's `door-floating`).
+      for (const i of v.view.items) if (i.prop !== "door") expect(i.y).toBeCloseTo(groundY(i.x, i.z), 1);
     }
     expect(total).toBeGreaterThan(3000);
     // Nothing in the market under the viaduct (its own stalls and kiosk stand there).

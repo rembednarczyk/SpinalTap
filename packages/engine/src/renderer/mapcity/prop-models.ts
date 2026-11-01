@@ -4,6 +4,7 @@ import { decalModel } from "./decal-models";
 import { busShelter, busStop, cafeGarden, farMonument, fountainJets, kiosk, marketStall, monument, ticketMachine, vendingMachine } from "./prop-civic";
 import { atm, bikeRackWithBikes, container, foodCart, hydrant } from "./prop-e2";
 import { farTree, hangingBasket, planter, shrubs, tree } from "./prop-green";
+import { doorOfShape } from "./prop-door";
 import { foodStall, marketGoods } from "./prop-market";
 import { glow, paint, v3 } from "./prop-kit";
 import { type PropLight, type PropModel, floodlight, lampCandelabra, lampModernPole, lampPark, lampPastoral, lampRoad, lampWallLantern } from "./prop-lamps";
@@ -63,6 +64,8 @@ const MODELS: Readonly<Record<StreetPropKind, (shape: number) => PropModel>> = {
   "house-plate": () => plain(decalModel("house-plate", plateVariant({ number: 12, letter: 1, lift: 2.2 }))!),
   sticker: () => plain(decalModel("sticker", stickerVariant({ design: 0, host: 0, face: 0, lift: 1.5 }))!),
   "drain-grate": () => plain(decalModel("drain-grate", grateVariant({ casting: 0, slopeX: 0, slopeZ: 0 }))!),
+  // A 1.2 x 2.3 m door of the model; the city bakes each door at its own size (`door-models.ts`).
+  door: (s) => plain(doorOfShape(s)),
 };
 
 /** Every kind of the contract, in the order of `StreetPropKind` (the gallery's row). */

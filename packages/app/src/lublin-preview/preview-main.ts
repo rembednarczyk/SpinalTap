@@ -109,7 +109,7 @@ const start = async (): Promise<void> => {
   const asset = (f: string) => new URL(`city/${f}`, document.baseURI).href;
   const renderer = new BabylonRenderer(stage, {
     cityKit: kit ? asset("city-kit.glb") : null,
-    cityProps: kit ? [asset("city-props.glb"), asset("street-props.glb"), asset("market-props.glb")] : null,
+    cityProps: kit ? [asset("city-props.glb"), asset("street-props.glb"), asset("market-props.glb"), asset("door-props.glb")] : null,
     world: [],
     fogScale: fog,
   });

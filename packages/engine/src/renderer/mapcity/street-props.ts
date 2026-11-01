@@ -5,6 +5,7 @@ import type { ToonMaterials } from "../../npr/toon-material";
 import { sinkToMesh } from "../dressing";
 import { MeshSink } from "../mesh-sink";
 import { FINE_DECALS, bakeDecal } from "./decal-models";
+import { bakeDoor } from "./door-models";
 import { cellBounds, cellKey } from "./map-index";
 import { type WorldProp, bake, placePoint, planHalos, toWorld } from "./prop-batch";
 import type { Obstacle } from "./facade-props";
@@ -340,6 +341,11 @@ export class StreetProps {
       // The decals (ADR-0058 stage 6) by their layouts; the phones go without the small ones.
       if (DECAL_KINDS.has(p.prop)) {
         if (this.deps.quality !== "low" || !FINE_DECALS.has(p.prop)) bakeDecal(sink, p);
+        continue;
+      }
+      // A door on a facade (ADR-0058 stage 9) at its own size, its leaf a model where they have loaded.
+      if (p.prop === "door") {
+        bakeDoor(sink, models, p);
         continue;
       }
       if (models && bakeStreetModel(sink, models, p)) continue;

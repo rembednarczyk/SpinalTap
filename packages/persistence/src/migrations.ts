@@ -351,6 +351,10 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
   // v22 -> v23 (G-179): the heat's reinforcements are saved (optional). An older save has none:
   // its reinforcements were gone on loading, and still are.
   22: (old) => ({ ...old, version: 23 }),
+  // v23 -> v24 (G-188): an AI pinned in the world while its chunk sleeps is marked with its time
+  // outside every loaded chunk (`away`, optional). An older save has none marked: its pinned AIs
+  // load by their alert, as before.
+  23: (old) => ({ ...old, version: 24 }),
 };
 
 export class MigrationError extends Error {}

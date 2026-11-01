@@ -21,6 +21,7 @@ import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.t
 import { MAPPED, SKIPPED, SKIPPED_ART } from "./props-kinds.ts";
 import type * as GameDoors from "./game-doors.ts";
 import { loadCarriageways } from "./props-roads.ts";
+import { addDoors, loadEntrances } from "./props-doors.ts";
 
 const PLAN = join(REPO, "docs/world/lublin-props.todo.json");
 const OUT = join(REPO, "packages/sim/src/content/lublin/props.generated.ts");
@@ -33,7 +34,12 @@ const { module: decalWalls } = await runnerImport<typeof DecalWalls>(join(REPO, 
 // The game's doors (ADR-0038) the same way: the market's furniture keeps clear of them (ADR-0058 stage 3).
 const { module: doors } = await runnerImport<typeof GameDoors>(join(REPO, "tools/osm-import/src/game-doors.ts"), { root: REPO, configFile: false, logLevel: "warn" });
 const { byChunk, stats } = generateProps(plan, chunks, loadNodeTags(), decalWalls.lublinVenueBoards(), { roads: loadCarriageways(), doors: doors.gameDoors() });
-// The decals (ADR-0058 stage 6) after the furniture: the stickers go on its poles, the grates keep off its manholes.
+// The doors on the facades (ADR-0058 stage 9), after the furniture, whose solids keep their fronts clear.
+const doorWalls = decalWalls.lublinDoorWalls();
+const entrances = loadEntrances();
+const { per: doorsPer, rejected } = addDoors(byChunk as Map<string, StreetPropItem[]>, new Site(chunks), doorWalls, entrances, { surfaceY: (p) => decalWalls.surfaceY(p.x, p.z), gameDoors: doors.gameDoors() });
+// The decals (ADR-0058 stage 6) after the furniture and the doors: the stickers go on its poles, the
+// grates keep off its manholes, the wall decals off the doors.
 const decals = addDecals(byChunk as Map<string, StreetPropItem[]>, new Site(chunks), decalWalls.lublinDecalWalls(), {
   groundY: (p) => decalWalls.groundY(p.x, p.z),
   surfaceY: (p) => decalWalls.surfaceY(p.x, p.z),
@@ -50,6 +56,8 @@ console.log(`dropped: ${stats.outside} outside the chunks, ${stats.inBuilding} i
 console.log(`moved off the road onto the pavement or away from a wall: ${stats.offRoad}`);
 console.log("decals (ADR-0058 stage 6):", Object.entries(decals.per).map(([k, by]) => `${k} ${Object.entries(by).map(([d, n]) => `${d} ${n}`).join(" ")}`).join("; "));
 console.log("  spots turned down:", Object.entries(decals.rejected).sort().map(([k, n]) => `${k} ${n}`).join(", "));
+console.log("doors (ADR-0058 stage 9):", Object.entries(doorsPer).sort().map(([k, n]) => `${k} ${n}`).join(", "));
+console.log(`  from ${entrances.length} entrances and ${doorWalls.reduce((n, w) => n + w.boards.length, 0)} boards on ${doorWalls.length} walls with slots; slots turned down:`, Object.entries(rejected).map(([k, n]) => `${k} ${n}`).join(", "));
 console.log(`wall lanterns slid off a venue's board: ${stats.offBoard}, dropped with no wall beside it: ${stats.onBoard}`);
 console.log("mapped:", Object.entries(stats.mapped).map(([k, v]) => `${k} -> ${v} (${MAPPED[k]?.why ?? ""})`).join("; "));
 console.log("skipped:", Object.entries(stats.skipped).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n} (${SKIPPED[k] ?? (SKIPPED_ART as Record<string, string>)[k] ?? "unknown kind"})`).join("; "));

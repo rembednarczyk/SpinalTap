@@ -129,6 +129,11 @@ export interface SessionWatch {
   reinforce: number;
   /** Reinforcements sent in since the heat came up (G-179): the last one's `n`; 0 once all have gone. */
   sent: number;
+  /**
+   * The entity the upload in progress went into in this session (G-194). Not saved: a loaded game
+   * gives other ids, so an upload saved by `#<id>` is cut off instead of going into another one.
+   */
+  uploadId: EntityId | null;
 }
 
 export const freshSession = (): SessionState => ({
@@ -138,7 +143,7 @@ export const freshSession = (): SessionState => ({
   focusPrompt: null,
   lastThreat: null,
   street: { disturbances: [], offences: [], incidents: 0 },
-  watch: { district: null, playerHp: null, focus: null, ram: null, reinforce: 0, sent: 0 },
+  watch: { district: null, playerHp: null, focus: null, ram: null, reinforce: 0, sent: 0, uploadId: null },
   passenger: null,
   street2: { encounter: null, npcs: {}, micro: null, district: null },
   interior: undefined,

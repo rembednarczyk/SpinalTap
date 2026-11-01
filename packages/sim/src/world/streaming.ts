@@ -7,13 +7,14 @@ import type { Entity } from "./components";
 import type { IdAllocator } from "./factory";
 import { GroundField } from "./ground";
 import { ActorSpawner, type StreamState } from "./actor-spawner";
-import { unloadChunks } from "./chunk-unload";
+import { sleepPinned, unloadChunks } from "./chunk-unload";
 import { contractTemplates } from "./contract-templates";
 import { restoreEntities } from "./dormant-restore";
 import { syncPresence } from "./presence-sync";
 import { StreamCatalog, type Template } from "./stream-catalog";
 
 export { STREET_ID_BASE, STREET_IDS_PER_CHUNK } from "./stream-catalog";
+export { PINNED_AWAY_SECONDS } from "./chunk-unload";
 
 /**
  * Hysteresis: a chunk loads once the player is within `loadRadius` of its bounds and unloads
@@ -39,7 +40,7 @@ const NO_CHANGE: StreamingChange = { loaded: [], unloaded: [] };
  * leave their state behind as a dormant snapshot that is applied again when the chunk returns
  * and is written to saves. Two exceptions keep the rules honest: dead entities (`dead:<key>`)
  * never come back, and an alerted AI is pinned: it keeps chasing instead of vanishing with
- * its chunk. Deterministic: chunks are visited in table order and nothing here is random.
+ * its chunk, until it gives up outside every loaded chunk (G-188, `sleepPinned`). Deterministic: chunks are visited in table order and nothing here is random.
  *
  * Characters with a daily plan do not freeze while asleep: whenever one is spawned (a chunk
  * loading, a new game) it is put where its plan says for the current time, so Oyaji left at
@@ -65,10 +66,13 @@ export class WorldStreamer {
   private presenceFlags: readonly string[] | null = null;
   /**
    * The contract whose targets the catalog holds: the last one registered. They stay after the
-   * job ends (failed, cleared or paid) until the next is taken, alarmed guards fighting on (G-178).
+   * job ends (failed, cleared or paid) until the next is taken, alarmed guards fighting on (G-178);
+   * once it is paid no chunk brings them back (G-195, `clearSite`).
    */
   private contract: ContractOnSite | null = null;
   private contractKeys: readonly string[] = [];
+  /** The registered contract was paid (G-195): its site is cleared, its people known by key only. */
+  private siteCleared = false;
   /**
    * Jobs replaced by a newer one while some of their people are still in the world (G-178), with
    * their keys: those people (alerted guards fighting on) are saved with them. No chunk brings
@@ -148,6 +152,7 @@ export class WorldStreamer {
   registerContract(world: World<Entity>, flags: readonly string[], completed: number, contract: Contract): void {
     if (this.contract) this.retire(world, { site: this.contract, keys: this.contractKeys });
     this.contract = { contract, completed };
+    this.siteCleared = false;
     const templates = contractTemplates(this.ids, this.chunks, completed, contract);
     this.contractKeys = keysOf(templates);
     this.catalog.setContract(templates);
@@ -161,6 +166,21 @@ export class WorldStreamer {
   }
 
   /**
+   * The registered job is paid (G-195): its site is cleared, as gigs and outposts are. Its
+   * sleepers are forgotten at once and those still about when their chunk falls asleep, so
+   * nobody of it comes back; new people come only with the next job taken there.
+   */
+  clearSite(): void {
+    if (!this.contract || this.siteCleared) return;
+    this.siteCleared = true;
+    this.catalog.closeContract();
+    for (const k of this.contractKeys) {
+      this.formerKeys.add(k);
+      this.state.dormant.delete(k);
+    }
+  }
+
+  /**
    * A job replaced (G-178): its sleepers are forgotten, as no chunk wakes them any more, and so
    * are the replaced jobs with nobody left in the world.
    */
@@ -169,6 +189,7 @@ export class WorldStreamer {
     this.former = [...this.former, job].filter((f) => f.keys.some((k) => live.has(k)));
     this.formerKeys.clear();
     for (const f of this.former) for (const k of f.keys) this.formerKeys.add(k);
+    this.catalog.keepFormer(this.formerKeys);
     for (const k of job.keys) this.state.dormant.delete(k);
   }
 
@@ -212,11 +233,21 @@ export class WorldStreamer {
 
   /** Re-applies saved entity state: live entities directly, the rest as pinned or dormant. */
   restoreEntities(world: World<Entity>, flags: readonly string[], saved: readonly EntitySnapshot[]): void {
-    restoreEntities(world, flags, saved, { state: this.state, catalog: this.catalog, spawner: this.spawner, chunkIdAt: (p) => this.chunkIdAt(p) });
+    const cleared = new Set(this.siteCleared ? this.contractKeys : []);
+    restoreEntities(world, flags, saved, { state: this.state, catalog: this.catalog, spawner: this.spawner, chunkIdAt: (p) => this.chunkIdAt(p), cleared });
   }
 
-  /** Loads and unloads chunks around `focus`. Unloads first, so ids never collide. */
-  update(world: World<Entity>, flags: readonly string[], focus: Vec3, clock: GameClock): StreamingChange {
+  /**
+   * Loads and unloads chunks around `focus`, `dt` seconds after the last time. Unloads first, so
+   * ids never collide; then the AIs pinned outside the loaded chunks may fall asleep (G-188).
+   */
+  update(world: World<Entity>, flags: readonly string[], focus: Vec3, clock: GameClock, dt: number): StreamingChange {
+    const change = this.stream(world, flags, focus, clock);
+    sleepPinned(world, this.state, (p) => this.chunkIdAt(p), this.formerKeys, dt);
+    return change;
+  }
+
+  private stream(world: World<Entity>, flags: readonly string[], focus: Vec3, clock: GameClock): StreamingChange {
     if (flags !== this.presenceFlags) {
       this.presenceFlags = flags;
       syncPresence(world, flags, clock, { state: this.state, catalog: this.catalog, spawner: this.spawner, chunks: this.chunks });
