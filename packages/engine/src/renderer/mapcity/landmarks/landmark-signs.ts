@@ -81,7 +81,7 @@ export const planLandmarkSigns = (sink: MeshSink, f: LandmarkFrame, nameSlot: (n
     const slot = width > 1.5 ? nameSlot(layer.plaque) : null;
     if (slot !== null) flat(sink, fresh.w, u, f.b.base + 2.3, 0.08, width, width / 8, tint("#fff1d6", 1), [slot, MAP_SIGN_KIND.name]);
   }
-  for (const m of litMouths(f)) for (const l of uplights(f, m)) flat(sink, m.w, l.u, l.y + 2.6, 0.06, 1.5, 5, tint(layer.warm, 0.9), [l.u, MAP_SIGN_KIND.beam], UV_UP);
+  for (const m of litMouths(f)) for (const l of uplights(f, m)) flat(sink, m.w, l.u, l.y + 2.6, 0.06, l.beam, 5, tint(layer.warm, 0.9), [l.u, MAP_SIGN_KIND.beam], UV_UP);
   if (f.landmark.part.tier.clock) {
     const best = clockWalls(f).neon;
     if (best) {

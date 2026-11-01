@@ -31,3 +31,7 @@ Budujesz dokładnie jeden etap funkcji opisany w briefie orkiestratora i w ADR-z
 
 ## Raport (najwyżej ok. 30 linii; szczegóły do pliku `<zadanie>-raport.md` w scratchpadzie)
 Etap, lista commitów z hashami, gałąź i ścieżka worktree, wynik samoweryfikacji (dowód, sondy, bramki, e2e z load), pomiary przed i po, ryzyka, znaleziska poboczne.
+
+## Dziennik zmian i e2e (decyzja użytkownika 1.11)
+- Zmiana widoczna dla gracza dostaje jedną linię w nowym pliku `changelog.d/<data>-<opis>.md` (zasady w `changelog.d/README.md`). `CHANGELOG.md` nie edytujesz.
+- Lokalnie puszczasz szybkie bramki i najwyżej jeden spec e2e swojej zmiany (przy zmianie wyglądu migawkę oglądasz). Pełny zestaw e2e puszcza CI na szkicu PR.

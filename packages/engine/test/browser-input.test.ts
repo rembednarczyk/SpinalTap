@@ -144,6 +144,23 @@ describe("BrowserInput entering pointer lock (G-046)", () => {
     expect(input.poll()).toMatchObject({ lookYaw: 0, lookPitch: 0 });
   });
 
+  it("keeps the lock available when it is refused only for want of a gesture (G-135)", async () => {
+    const canvas = document.createElement("canvas");
+    // A panel closed with Esc before the first click: Chromium refuses both requests as NotAllowedError.
+    const noGesture = () => Promise.reject(new DOMException("no user activation", "NotAllowedError"));
+    canvas.requestPointerLock = noGesture as HTMLCanvasElement["requestPointerLock"];
+    input = new BrowserInput(canvas);
+    input.requestPointerLock();
+    await new Promise((r) => setTimeout(r, 0));
+    document.dispatchEvent(new Event("pointerlockerror"));
+    expect(input.mouseActive).toBe(false);
+    // The next click asks again and takes the lock.
+    let asked = 0;
+    canvas.requestPointerLock = (() => (asked++, Promise.resolve())) as HTMLCanvasElement["requestPointerLock"];
+    input.requestPointerLock();
+    expect(asked).toBe(1);
+  });
+
   it("falls back to plain mouse look when the plain request is refused as well", async () => {
     const canvas = document.createElement("canvas");
     canvas.requestPointerLock = (() => Promise.reject(new Error("SecurityError"))) as HTMLCanvasElement["requestPointerLock"];

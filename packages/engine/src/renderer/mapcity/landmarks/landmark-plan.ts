@@ -87,23 +87,35 @@ export const litMouths = (f: LandmarkFrame): Mouth[] => (f.landmark.recipe.layer
 export const intoNeighbour = (f: LandmarkFrame, w: Wall, u0: number, u1: number, out: number): boolean =>
   (f.landmark.nearby ?? []).some((r) => [u0, (u0 + u1) / 2, u1].some((u) => [0.05, out].some((o) => pointInRing(onWall(w, u, 0, o), r))));
 
-/** An uplight at a mouth: along the wall and the terrain's height under it (world y). */
+/** An uplight at a mouth: along the wall, the terrain's height under it (world y) and the width of its beam on the wall. */
 export interface Uplight {
   readonly u: number;
   readonly y: number;
+  readonly beam: number;
 }
+
+/** Metres of wall from u in direction `dir` with no neighbouring building in front of it (sampled every 5 cm), up to `max`. */
+const freeAlong = (f: LandmarkFrame, w: Wall, u: number, dir: number, max: number): number => {
+  for (let d = 0; d < max; d += 0.05) if (intoNeighbour(f, w, u + dir * d, u + dir * d, 0.3)) return Math.max(d - 0.05, 0);
+  return max;
+};
 
 /**
  * The uplights at a mouth: either side of it, moved in off the corners, on the terrain under each
- * (the street slopes along a gate's front); none where a neighbouring building stands.
+ * (the street slopes along a gate's front), the beam over each 1.5 m wide from 0.35 m off the
+ * mouth. Where a neighbouring building stands nearer, the light goes to the middle of the wall
+ * left and its beam narrows to it (the castle's front of Brama Grodzka, G-136); none under 0.5 m.
  */
 export const uplights = (f: LandmarkFrame, m: Mouth): Uplight[] =>
-  uplightsOn(m)
-    .filter((u) => !intoNeighbour(f, m.w, u - 0.2, u + 0.2, 0.3))
-    .map((u) => {
-      const p = onWall(m.w, u, 0, 0.16);
-      return { u, y: groundY(p.x, p.z) };
-    });
+  uplightsOn(m).flatMap((at) => {
+    const out = at < m.u0 ? -1 : 1;
+    const from = (out < 0 ? m.u0 : m.u1) + out * 0.35;
+    const free = freeAlong(f, m.w, from, out, 1.5);
+    if (free < 0.5) return [];
+    const u = free < 1.5 ? from + (out * free) / 2 : at;
+    const p = onWall(m.w, u, 0, 0.16);
+    return [{ u, y: groundY(p.x, p.z), beam: free }];
+  });
 
 /** Where the clocks are: the walls facing the new town and the Old Town. */
 export const clockWalls = (f: LandmarkFrame): { neon: Wall | null; old: Wall | null } => {
@@ -264,7 +276,7 @@ const classicFront = (sink: MeshSink, f: LandmarkFrame, front: NonNullable<Tier[
   rustication(sink, f, course, solid(f.landmark.part.tier.colour ? SWATCH.beigeJoint : SWATCH.niche));
   courseAndKeystones(sink, f, course, trim);
   // No window behind a neighbour standing out in front of the front (Teatr NN by Brama Grodzka).
-  windowRows(sink, f, front.rows, front.windows, course + 0.35, f.top - 0.7, trim, solid(SWATCH.opening), (w, u0, u1) => !intoNeighbour(f, w, u0, u1, 0.35));
+  windowRows(sink, f, front.rows, front.windows, course + 0.35, f.top - 0.7, trim, solid(SWATCH.opening), (w, u0, u1) => !intoNeighbour(f, w, u0, u1, 0.35), front.pitch);
   if (f.landmark.part.crown.kind === "roof") gableTrim(sink, f, trim, solid(SWATCH.opening), (w) => gableFace(f, w));
 };
 

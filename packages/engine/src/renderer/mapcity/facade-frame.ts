@@ -44,6 +44,16 @@ export interface MapBuilding {
   readonly clutter?: number;
   /** Landmarks next to it the superstructure keeps off (G-050): world outlines and tops (world y). */
   readonly landmarks?: readonly { readonly ring: readonly P2[]; readonly top: number }[];
+  /** The map's venues in or at it (ADR-0064 stage 4): world points, 2077 names, neon colours. */
+  readonly venues?: readonly MapVenue[];
+}
+
+/** A venue of the map on a building, its point in world metres (ADR-0064 stage 4). */
+export interface MapVenue {
+  readonly x: number;
+  readonly z: number;
+  readonly name: string;
+  readonly color: string;
 }
 
 /** A doorway in world metres: the middle of the opening on a wall, its width, bottom and top (world y). */

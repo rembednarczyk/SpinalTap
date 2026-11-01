@@ -1,0 +1,1 @@
+Meble deptaka: wolnostojące bankomaty z OSM, hydranty przy ulicach, donice z krzakami i kwiatami, rowery i skutery przy stojakach, wózki z jedzeniem przy Targu na Ruskiej i na Giełdzie Kresowej, kontenery na Nabrzeżu; wszystkie z bryłą, z modeli CC0 i CC-BY na ekranie „Autorzy” (ADR-0058 etap 2).

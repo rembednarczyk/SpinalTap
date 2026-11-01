@@ -56,6 +56,7 @@ export const buildingView = (b: LublinBuildingData, district?: LublinChunkData["
     look: b.look,
     ...(b.plinth > 0 ? { plinth: b.plinth } : {}),
     ...(b.shopfront ? { shopfront: true as const } : {}),
+    ...(b.venues?.length ? { venues: b.venues.map((v) => ({ at: { x: v.x, z: v.z }, kind: v.kind, name: v.name, color: v.color })) } : {}),
     ...(b.soffit === undefined ? {} : { soffit: b.soffit }),
     ...(vertical ? { vertical } : {}),
   };
