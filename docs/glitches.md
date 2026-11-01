@@ -608,13 +608,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: budynek z wejściem OSM przy rysowanej ścianie dostaje drzwi w najbliższym gnieździe tej ściany albo żadnych zastępczych; kontrola `entrance-door-elsewhere` (baza dziś 1) → 0. Przy okazji do rozważenia: wybór ściany drzwi klatki wg `addr:street` (40 ze 179 drzwi patrzy na inną ulicę niż adres, np. Pałac Lubomirskich (60,4; 99,3) od Radziwiłłowskiej) i kontrola `door-on-osm-passage` (drzwi do 3 m od osi `tunnel=building_passage`/`covered=yes`, baza 1: Niecała 4, T-109)
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
-### G-200 Test tabeli rekwizytów blisko limitu 20 s w CI po drzwiach
-- Status: w PR #183 (1.11, w weryfikacji; pilne: main czerwony od #167): przyczyna z profilu: `neighbour` w `cityFrames` przeglądał wszystkie 3662 budynki na próbkę co 10 cm, #167 dodał drugie ramkowanie; poprawka przez `BinIndex` i wczesne odrzucenie w `fits`, tabela bajt w bajt, 9,3 → 3,0 s pod `--coverage`. Poboczne: `determinism.test.ts` „golden run… at every density” 27 s pod load 24–27; `DoorRules.fit` filtruje wszystkie rekwizyty na slot; `cityFrames` liczy szczyt sąsiada z `at.y + height`, renderer z `base + height`: sprawdzone przez orkiestratora, to to samo (`MapCity` wpisuje `base: at.y`, `map-city.ts:125`); różni się za to `heightAt` w `mapBuilding`: `cityFrames` podaje `() => null`, więc `foot` = `base`, a renderer bierze najniższy teren pod obrysem; do sprawdzenia przy G-197/G-198, czy `facadeFrame` zależy od `foot` w miejscach drzwi i szyldów na spadku
-- Ważność: S3 (test, czerwony CI kosztuje cykl) · Zasięg: `tools/osm-import/test/props.test.ts` „matches the committed table” przekroczył 20 s w `test:coverage` na CI (przebieg 714 s zamiast ok. 550 s); lokalnie 3,1–3,2 s przy load 17
-- Przyczyna do ustalenia: generator rekwizytów urósł o reguły drzwi (#167) i targu (#153); test przelicza całą tabelę pod pokryciem
-- Poprawka: pomiar czasu generacji przed i po #167 (profil), przyspieszenie generatora albo wspólne wyliczenie tabeli dla testów; bez podnoszenia limitu (ADR-0046)
-- Pakiet właściciela: tools/osm-import (QA)
-
 ### G-201 Teren poza chunkami dostępny: reguła „poza wczytanym chunkiem” usypia strażnika obok gracza
 - Status: zgłoszone (1.11, weryfikator #181)
 - Ważność: S4 · Zasięg: obszary bez chunków, a z terenem, np. (2440; 545) na północ od Nabrzeża albo pas x 460–520, z > 160 między Starym Miastem a Podzamczem; żywy gracz stoi tam (hp 96), spokojny przypięty strażnik 6 m od niego znika w 1. s, zaalarmowany po 30 s (`sleepPinned`, G-188)

@@ -2,6 +2,14 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-200 Test tabeli rekwizytów blisko limitu 20 s w CI po drzwiach
+- Status: naprawione w #183 (1.11, PRZYJĘTE; main czerwony od #167 do #183): przyczyna z profilu: `neighbour` w `cityFrames` przeglądał wszystkie 3662 budynki na próbkę co 10 cm, #167 dodał drugie ramkowanie; poprawka przez `BinIndex` i wczesne odrzucenie w `fits`, tabela bajt w bajt, 9,3 → 3,0 s pod `--coverage`. Poboczne: `determinism.test.ts` „golden run… at every density” 27 s pod load 24–27; `DoorRules.fit` filtruje wszystkie rekwizyty na slot; `cityFrames` liczy szczyt sąsiada z `at.y + height`, renderer z `base + height`: sprawdzone przez orkiestratora, to to samo (`MapCity` wpisuje `base: at.y`, `map-city.ts:125`); różni się za to `heightAt` w `mapBuilding`: `cityFrames` podaje `() => null`, więc `foot` = `base`, a renderer bierze najniższy teren pod obrysem; do sprawdzenia przy G-197/G-198, czy `facadeFrame` zależy od `foot` w miejscach drzwi i szyldów na spadku
+- Weryfikator #183: na tym samym hoście 2,7–4,5 s zamiast 9,2–13,5 s; w pełnym `test:coverage` 6,7 s; do obserwacji: `traffic-junction-drive.test.ts` „by Ruska and Lwowska (seed 3)” 17,5 s pod coverage przy load 18 (domyślny limit 20 s?) i „is deterministic…” w props.test.ts 10,3 s
+- Ważność: S3 (test, czerwony CI kosztuje cykl) · Zasięg: `tools/osm-import/test/props.test.ts` „matches the committed table” przekroczył 20 s w `test:coverage` na CI (przebieg 714 s zamiast ok. 550 s); lokalnie 3,1–3,2 s przy load 17
+- Przyczyna do ustalenia: generator rekwizytów urósł o reguły drzwi (#167) i targu (#153); test przelicza całą tabelę pod pokryciem
+- Poprawka: pomiar czasu generacji przed i po #167 (profil), przyspieszenie generatora albo wspólne wyliczenie tabeli dla testów; bez podnoszenia limitu (ADR-0046)
+- Pakiet właściciela: tools/osm-import (QA)
+
 ### G-194 Quickhack w toku na encji bez klucza trafia po wczytaniu w inną encję
 - Status: naprawione w #179 (1.11, PRZYJĘTE): posiłek jako `security:<n>`, inne encje bez klucza przerwane po wczytaniu (`SessionWatch.uploadId`), schemat bez zmian
 - Ważność: S4 · Zasięg: `packages/sim/src/systems/scanner-system.ts:94` zapisuje cel jako `#<id>` w `domain.netrun.upload`; po wczytaniu id są przydzielane od nowa (worki z łupem biorą nowe), więc upload trafia w inną encję albo w nic
