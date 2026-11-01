@@ -74,6 +74,7 @@ export const enWorld = {
   "breach.untimed": "no time limit",
   "breach.waiting": "{seconds} s · starts on the first pick",
   "breach.matrix": "Code matrix",
+  "breach.rules": "Pick codes in turn: the lit row, then that code's column, then its row. A sequence spelled out in the buffer uploads its daemon.",
   "breach.cell": "{code}, row {row}, column {col}",
   "breach.cellUsed": "{code}, row {row}, column {col}, used",
   "breach.buffer": "Buffer",
@@ -371,4 +372,6 @@ export const enWorld = {
   "hint.inventory.touch": "The Character button opens the inventory.",
   "hint.journal": "quest journal",
   "hint.journal.touch": "The journal is in the character menu.",
+  "hint.heat": "Heat: a witness called it in. Break the line of sight and lie low until the search ends.",
+  "hint.disguise": "Disguise: guards let you pass. Running, fighting or lingering close to them gives you away.",
 } as const;

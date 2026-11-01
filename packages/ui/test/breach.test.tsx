@@ -100,11 +100,14 @@ describe("breach panel", () => {
   it("plays the solution path into the buffer and sends every daemon won", () => {
     const { i, puzzle } = mount({});
     expect(screen.getAllByRole("gridcell")).toHaveLength(25);
+    // The rules are on the panel until the first pick (gap audit: no system hints for Breach).
+    expect(screen.getByTestId("breach-rules").textContent).toContain("lit row");
     // Only the top row is open at first.
     expect((screen.getByTestId("breach-cell-1-0") as HTMLButtonElement).disabled).toBe(true);
     for (const c of puzzle.solution) {
       if (screen.queryByTestId("breach-result")) break;
       fireEvent.click(screen.getByTestId(`breach-cell-${c.row}-${c.col}`));
+      expect(screen.queryByTestId("breach-rules")).toBeNull();
     }
     expect(screen.getByTestId("breach-result").textContent).toContain("ICEpick");
     expect(screen.getByTestId("breach-daemon-datamine").className).toContain("breach__daemon--won");

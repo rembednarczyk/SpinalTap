@@ -71,6 +71,7 @@ export const plWorld = {
   "breach.label": "Włamanie do terminala",
   "breach.untimed": "bez limitu czasu",
   "breach.waiting": "{seconds} s · start po 1. wyborze",
+  "breach.rules": "Wybieraj kody na zmianę: podświetlony wiersz, potem kolumna tego kodu, potem jego wiersz. Sekwencja ułożona w buforze wgrywa swojego demona.",
   "breach.matrix": "Macierz kodów",
   "breach.cell": "{code}, wiersz {row}, kolumna {col}",
   "breach.cellUsed": "{code}, wiersz {row}, kolumna {col}, użyty",
@@ -369,4 +370,6 @@ export const plWorld = {
   "hint.inventory.touch": "Przycisk „Postać” otwiera ekwipunek.",
   "hint.journal": "dziennik zadań",
   "hint.journal.touch": "Dziennik jest w menu postaci.",
+  "hint.heat": "Heat: świadek cię zgłosił. Zerwij kontakt wzrokowy i przeczekaj, aż skończą szukać.",
+  "hint.disguise": "Przebranie: strażnicy cię przepuszczą. Bieg, walka albo kręcenie się tuż obok nich cię zdradzą.",
 } as const satisfies Readonly<Record<keyof typeof en, Message>>;

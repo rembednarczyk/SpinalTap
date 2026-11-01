@@ -111,4 +111,35 @@ describe("first-run hints", () => {
     tick();
     expect(seen.has("inventory")).toBe(true);
   });
+
+  it("explains heat when it first rises and disguises when one is put on, with no keys", () => {
+    const seen = new Set<string>(["move", "sprint"]);
+    const t = new HintTracker(seen, () => {}, () => 1);
+    const tick = () => t.tick({ dt: 1 / 60, inControl: true, moved: 0, sprinting: false, characterOpen: false });
+    t.start();
+    const heat = (level: 0 | 1 | 2, previous: 0 | 1 | 2) => t.onEvent("HeatChanged", { level, previous, searching: level > 0, lastKnown: null, searchLeft: 0 });
+    heat(1, 0);
+    tick();
+    expect(t.active).toEqual(HINTS.heat);
+    expect(t.active?.keys).toEqual([]);
+    // Lying low until the heat is gone is the lesson: seen, and a later rise does not repeat it.
+    heat(0, 1);
+    tick();
+    expect(t.active).toBeNull();
+    expect(seen.has("heat")).toBe(true);
+    heat(1, 0);
+    t.onEvent("DisguiseChanged", { role: null });
+    tick();
+    expect(t.active).toBeNull();
+    t.onEvent("DisguiseChanged", { role: "hebi" });
+    tick();
+    expect(t.active?.id).toBe("disguise");
+  });
+
+  it("words the system hints in both languages", () => {
+    for (const id of ["heat", "disguise"]) {
+      expect(isMessageKey(`hint.${id}`)).toBe(true);
+      expect(translate("pl", `hint.${id}` as never)).not.toBe(translate("en", `hint.${id}` as never));
+    }
+  });
 });
