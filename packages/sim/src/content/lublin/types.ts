@@ -127,6 +127,16 @@ export interface LublinFootWayData {
   readonly width: number;
 }
 
+/** A car park mapped as an area (on the ground): the kerbs and yards where the map says cars park. */
+export interface LublinCarParkData {
+  /** Its map id; one reaching over a chunk's edge is in both chunks. */
+  readonly id: string;
+  /** Its `parking` kind: `street_side`, `lane`, `half_on_kerb`, `surface`… */
+  readonly kind: string;
+  /** World outline. */
+  readonly outline: FlatPoints;
+}
+
 export interface LublinChunkData {
   readonly id: string;
   readonly district: "shinsekai-7" | "kanal" | "targ" | "doki";
@@ -146,6 +156,8 @@ export interface LublinChunkData {
   readonly serviceWays?: readonly LublinServiceWayData[];
   /** Footways and paths mapped on their own, when it has any. */
   readonly footWays?: readonly LublinFootWayData[];
+  /** Car parks reaching into it, when it has any. */
+  readonly carParks?: readonly LublinCarParkData[];
 }
 
 /**
