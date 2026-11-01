@@ -484,7 +484,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: oba przypadki jako testy symulacji, padające bez poprawki
 
 ### G-142 Atlas nazw budynków: 32 wiersze na 118 nazw, część tabliczek pusta
-- Status: zgłoszone (1.11, weryfikator ADR-0062 etap 2, #109)
+- Status: zgłoszone (1.11, weryfikator ADR-0062 etap 2; etap w main, #109)
 - Ważność: S3 · Zasięg: 121 nazwanych budynków (118 różnych nazw), 32 wiersze `NAME_SLOTS` bez zwalniania (29 po rezerwacji napisów zabytków); które tabliczki wyjdą puste, zależy od kolejności wczytywania komórek
 - Gdzie: `packages/engine/src/renderer/mapcity/map-signs.ts` (`planBuildingSigns`, `slotFor`)
 - Pakiet właściciela: packages/engine (renderer)
