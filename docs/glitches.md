@@ -624,6 +624,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Uwaga: po wczytaniu trwający upload jest przerwany w 1. kroku, gdy gracz nie trzyma skanu (zachowanie sprzed G-194)
 - Pakiet właściciela: packages/sim
 
+### G-200 Test tabeli rekwizytów blisko limitu 20 s w CI po drzwiach
+- Status: zgłoszone (1.11, orkiestrator, CI #177)
+- Ważność: S3 (test, czerwony CI kosztuje cykl) · Zasięg: `tools/osm-import/test/props.test.ts` „matches the committed table” przekroczył 20 s w `test:coverage` na CI (przebieg 714 s zamiast ok. 550 s); lokalnie 3,1–3,2 s przy load 17
+- Przyczyna do ustalenia: generator rekwizytów urósł o reguły drzwi (#167) i targu (#153); test przelicza całą tabelę pod pokryciem
+- Poprawka: pomiar czasu generacji przed i po #167 (profil), przyspieszenie generatora albo wspólne wyliczenie tabeli dla testów; bez podnoszenia limitu (ADR-0046)
+- Pakiet właściciela: tools/osm-import (QA)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
