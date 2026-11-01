@@ -493,13 +493,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (parked-cars), tools/osm-import
 
 ### G-155 Auta przy krawężniku na ulicach wielopasowych bez parkowania
-- Status: zgłoszone (1.11, kurator przy G-143)
+- Status: w PR #143; weryfikacja PRZYJĘTE (1.11), czeka na przegląd kuratora
 - Ważność: S4 · Zasięg: 3 Maja w40050974/w757848901 (x −116..−103, z −33..32): 13 aut 4,1–5,4 m od osi, na skrajnych pasach (`lanes=4`, brak `parking:*`)
 - Poprawka: bez parkowania przy krawężniku dróg z `lanes>=4` albo `lanes:forward|backward>=2` poza `amenity=parking`; kontrola skanu `parked-car-multilane-kerb`, baza 13 → 0
 - Pakiet właściciela: packages/sim (parked-cars), tools/glitch-scan
 
 ### G-156 Auta na przystankach
-- Status: zgłoszone (1.11, kurator przy G-143)
+- Status: w PR #143; weryfikacja PRZYJĘTE (1.11), czeka na przegląd kuratora
 - Ważność: S4 · Zasięg: przystanek „Plac Litewski 02” (słupek n836158674 (−100.3, 3.6)): van 0,7 m, van 11,7 m, hatchback 13,1 m od słupka po stronie przystanku
 - Poprawka: zakaz postoju do 15 m od słupka (art. 49 PoRD); kontrola skanu `parked-car-at-bus-stop`, baza 3 → 0; przy okazji `path=sidewalk` poza `footWays` i `pedestrian`/`cycleway` w `parked-car-on-footway`
 - Pakiet właściciela: packages/sim (parked-cars), tools/osm-import, tools/glitch-scan
@@ -584,6 +584,18 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Przyczyna: `ai.suspicion` (np. c6-g3 = 0,0229) i `ai.sees` nie wchodzą do zapisu, po wczytaniu podejrzliwość startuje od 0; różnią się też pola sesji `watch`, `street2`, `interior`
 - Poprawka: podejrzliwość i widzenie strażników (oraz brakujące pola sesji) w zapisie albo świadoma decyzja, że wczytanie zeruje czujność; zmiana schematu z migracją; test zapis–wczytanie z tym scenariuszem
 - Pakiet właściciela: packages/sim, packages/persistence
+
+### G-175 Odstęp zaparkowanego auta od pasa ruchu liczony od środka, nie od narożnika
+- Status: zgłoszone (1.11, weryfikator #143); było przed #143
+- Ważność: S4 · Zasięg: `fits` (`tools/osm-import/src/parked-cars.ts`) mierzy `LANE_CLEAR` 1,4 m od środka auta; narożnik auta przy Placu Zamkowym (739; 233,2) 0,92 m od osi pasa, auto na pasie postojowym Ruskiej (963,5; 472,1) 1,30 m; jadące auto ma 0,27–0,43 m luzu
+- Poprawka: odstęp od narożników prostokąta auta; kontrola skanu z bazą
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+### G-176 Skan aut przy krawężniku luźniejszy niż generator
+- Status: zgłoszone (1.11, weryfikator #143)
+- Ważność: S4 (narzędzie) · Zasięg: `parked-car-multilane-kerb` zwalnia auto w każdym `amenity=parking`, także podziemnym i dachowym, a generator tylko w naziemnych; `parked-car-on-footway` liczy `pedestrian` i `cycleway`, których generator (`footWays`, `clearOfKeptWays`) nie pomija; po #143 `clearOfStops` nie zmienia tabeli (te same auta zdejmuje G-155), więc G-156 pilnuje tylko skan
+- Poprawka: wyrównać zbiory dróg i parkingów między skanem a generatorem; test generatora dla przystanku niezależny od G-155
+- Pakiet właściciela: tools/glitch-scan, tools/osm-import
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
