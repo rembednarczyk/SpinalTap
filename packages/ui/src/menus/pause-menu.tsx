@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { CreditsScreen } from "../credits/credits-screen";
+import { PauseDifficulty } from "../difficulty/difficulty-screens";
 import { useT } from "../i18n/use-t";
 import { useSessionIntents } from "../use-ui";
 import { ControlsHelp } from "./controls-help";
@@ -9,7 +10,7 @@ import { SettingsPanel } from "./settings-panel";
 export const PauseMenu = () => {
   const intents = useSessionIntents();
   const t = useT();
-  const [tab, setTab] = useState<"main" | "save" | "load" | "settings" | "credits">("main");
+  const [tab, setTab] = useState<"main" | "save" | "load" | "settings" | "difficulty" | "credits">("main");
   return (
     <div className="screen screen--pause" data-testid="pause-menu">
       <h2 className="screen__heading">{t("pause.heading")}</h2>
@@ -27,6 +28,9 @@ export const PauseMenu = () => {
           <button type="button" className="menu__item" onClick={() => setTab("settings")}>
             {t("pause.settings")}
           </button>
+          <button type="button" className="menu__item" onClick={() => setTab("difficulty")}>
+            {t("pause.difficulty")}
+          </button>
           <button type="button" className="menu__item menu__item--ghost" onClick={() => intents.quitToTitle()}>
             {t("pause.mainMenu")}
           </button>
@@ -39,7 +43,7 @@ export const PauseMenu = () => {
       {tab === "credits" && <CreditsScreen intents={{ closeCredits: () => setTab("main") }} />}
       {tab !== "main" && tab !== "credits" && (
         <div className="menu">
-          {tab === "settings" ? <SettingsPanel /> : <SaveSlots mode={tab} />}
+          {tab === "settings" ? <SettingsPanel /> : tab === "difficulty" ? <PauseDifficulty /> : <SaveSlots mode={tab} />}
           <button type="button" className="menu__item menu__item--ghost" onClick={() => setTab("main")}>
             {t("menu.back")}
           </button>

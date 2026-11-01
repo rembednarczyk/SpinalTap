@@ -10,7 +10,6 @@ import {
   type DayPhase,
   type HitZone,
   type ReputationState,
-  type SaveSlotInfo,
   type ShopId,
   createReputation,
 } from "@seki/core";
@@ -57,11 +56,13 @@ import {
   type WeaponStripVm,
 } from "./ui-vm";
 import type { BuffVm, CapacityVm, ContractHookVm, DashVm, DisguiseVm, MetroMapVm, MetroRideVm } from "./wave2-vm";
+import { type DifficultyVm, NO_DIFFICULTY_CHANGE, type SlotVm } from "./difficulty-vm";
 
 export * from "./hud-vm";
 export * from "./ui-vm";
 export * from "./map-vm";
 export * from "./wave2-vm";
+export * from "./difficulty-vm";
 
 // ---- Areas of the UI state (ADR-0031) ----
 // One flat Zustand store; each area below is its own type, and the comment says who writes it.
@@ -78,11 +79,13 @@ export interface SessionUiState {
    */
   readonly promptHold: string | null;
   readonly toasts: readonly Toast[];
-  readonly slots: readonly SaveSlotInfo[];
+  readonly slots: readonly SlotVm[];
   readonly hasSaves: boolean;
   readonly busy: boolean;
   /** First-run hint on screen: keys to press and what they do (null when none). */
   readonly hint: HintVm | null;
+  /** The difficulty of the running game (ADR-0066), for the pause menu. */
+  readonly difficulty: DifficultyVm;
 }
 
 /** The player's HUD outside combat: health, money, implants, standing, clock. Written by the app's HUD sync. */
@@ -291,6 +294,7 @@ export const initialUiState: UiState = {
   crouched: false,
   hurtFlash: 0,
   slots: [],
+  difficulty: NO_DIFFICULTY_CHANGE,
   memories: [],
   hasSaves: false,
   busy: false,

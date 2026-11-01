@@ -42,6 +42,7 @@
   "gate-mouth-off-axis": 3,
   "vehicle-outside-passage": 0,
   "wall-lantern-in-passage": 0,
+  "wall-lantern-over-venue-board": 0,
   "passage-off-map": 0,
   "building-part-ignored": 0,
   "building-part-orphan": 0,
@@ -55,5 +56,8 @@
   "fractional-levels-rounded": 0,
   "sidewalk-under-carriageway": 131,
   "kerb-fit-sparse": 0,
-  "two-way-fit-narrow": 0
+  "two-way-fit-narrow": 0,
+  "venue-board-in-neighbour": 0,
+  "banner-in-neighbour": 0,
+  "holo-or-blade-in-neighbour": 0
 }

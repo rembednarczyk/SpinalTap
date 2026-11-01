@@ -1,5 +1,6 @@
 import {
   type BreachDaemonId,
+  type DifficultyProfile,
   type DomainEvents,
   EMPTY_INPUT,
   EventBus,
@@ -136,8 +137,10 @@ export class GameSession implements SessionIntents {
 
   // ---- SessionIntents ----
 
-  newGame(): void {
-    this.replaceSimulation(Simulation.create({ seed: this.deps.seed(), bus: this.bus, crowd: this.deps.crowd ?? "off", traffic: this.deps.traffic ?? this.deps.crowd ?? "off" }));
+  /** A new game on `difficulty` (ADR-0066), chosen before the loading screen; "normal" without. */
+  newGame(difficulty?: DifficultyProfile): void {
+    const { seed, crowd, traffic } = this.deps;
+    this.replaceSimulation(Simulation.create({ seed: seed(), bus: this.bus, crowd: crowd ?? "off", traffic: traffic ?? crowd ?? "off", ...(difficulty ? { difficulty } : {}) }));
     this.narrative.resetState();
     this.c.hints.start();
     this.startPlaying(() => {
@@ -162,7 +165,10 @@ export class GameSession implements SessionIntents {
   }
 
   pause(): void {
-    if (this.inControl) this.setScreen("paused");
+    if (!this.inControl) return;
+    // A difficulty that waited for the end of a fight may be in force by now (ADR-0066).
+    this.c.difficulty.sync();
+    this.setScreen("paused");
   }
 
   quitToTitle(): void {
@@ -242,6 +248,7 @@ export class GameSession implements SessionIntents {
     this.c.hack.reset();
     this.c.metro.reset();
     this.c.autosave.reset();
+    this.c.difficulty.sync();
     this.deps.render.setCameraMode(next.domain.preferences.cameraMode);
     patchUi(this.deps.ui, { prompt: null, toasts: [] });
     this.render(0);

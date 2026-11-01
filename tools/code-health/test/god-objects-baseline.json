@@ -1,11 +1,9 @@
 {
   "packages/engine/src/renderer/babylon-renderer.ts#BabylonRenderer": 42,
   "packages/app/src/game-session.ts#GameSession": 33,
-  "packages/engine/src/renderer/mapcity/map-city.ts#MapCity": 33,
   "packages/engine/src/renderer/character-views.ts#CharacterViews": 24,
   "packages/engine/src/npr/toon-material.ts#ToonMaterials": 23,
   "packages/engine/src/renderer/mapcity/street-props.ts#StreetProps": 22,
   "packages/sim/src/systems/ai/ganger-ai-system.ts#GangerAgent": 22,
-  "packages/engine/src/audio/synth-audio.ts#SynthAudio": 21,
-  "packages/sim/src/world/streaming.ts#WorldStreamer": 21
+  "packages/engine/src/audio/synth-audio.ts#SynthAudio": 21
 }
