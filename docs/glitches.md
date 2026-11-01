@@ -472,7 +472,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (1.11, kurator przy G-130; T-088); było już na main
 - Ważność: S4 · Zasięg: 3 auta (Cerkiewna (908.8, 440.5) na `driveway` w1381877866, (912.2, 416.4) i (910.8, 422.5) przy wylocie `service` w739432848)
 - Przyczyna: `offOtherRoads` w `parked-cars.ts` pilnuje tylko ulic z `CAR_KINDS`, bez `highway=service`
-- Poprawka: w `fits()` odstęp od osi `highway=service` (poza `parking_aisle`) co najmniej półszerokość + 0,5 m
+- Poprawka: w `fits()` odstęp od osi `highway=service` (poza `parking_aisle`) co najmniej półszerokość + 0,5 m. Uwaga (1.11): dane chunków sim mają tylko nazwane ulice, a `service` i `driveway` przy Cerkiewnej są bez nazwy, więc najpierw import musi przenosić osie nienazwanych dróg serwisowych (osobne pole, nie `streets`); koszt mały–średni, nie drobna poprawka
 - Pakiet właściciela: packages/sim (content)
 - Test przyjęcia: kontrola skanu „auto bliżej niż 1,5 m od osi `service`”, baza 3 → 0
 
