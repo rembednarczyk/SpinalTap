@@ -34,7 +34,7 @@ import { LUBLIN_STREET_PROPS, buildingView, isLandmark } from "../../../packages
 import { inBuilding, nearestWall } from "../../../packages/sim/src/content/lublin/places";
 import { ROAD_CHAINS, type RoadChain, polylineLength, surfaceLiftAt, surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
 import { clearedBuilding } from "../../../packages/sim/src/content/cleared-buildings";
-import { CLEARED_BUILDINGS, MAP_CHUNKS, PASSAGES, ROOM_SITES } from "../../../packages/sim/src/content/lublin/sites";
+import { CLEARED_BUILDINGS, MAP_CHUNKS, PASSAGES, ROOM_SITES, ROOM_STOREY } from "../../../packages/sim/src/content/lublin/sites";
 import { groundY } from "../../../packages/sim/src/content/lublin/terrain";
 import { BRIDGE_DECKS, bridgeDeckAt } from "../../../packages/sim/src/content/lublin/decks";
 import { WORLD_CHUNKS, WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
@@ -792,6 +792,27 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       if (p.view.kind !== "block" || !p.solid || p.view.size.y < 0.8) return [];
       const gap = p.center.y - p.view.size.y / 2 - groundY(p.center.x, p.center.z);
       return (gap > 0.15 && gap < 1) || gap < -0.3 ? [{ at: near(p.center.x, p.center.z), what: `${p.view.skin?.style ?? p.view.material} ${gap.toFixed(2)} m` }] : [];
+    }),
+  /**
+   * A game neon set against a wall (its centre within 0.2 m of one) whose plate, square to an
+   * axis, leaves the slanting wall (G-160): an end of its long side over 0.4 m out in the air
+   * (measured to that end's nearest wall), or over 15% of its width in a building, sampled along
+   * the plate's middle, where the renderer draws the sign (the wall cuts the letters there).
+   * Not a sign on a room's cut storey: there the room's front, square to an axis, stands for the
+   * building's wall (`ROOM_STOREY`).
+   */
+  "neon-off-wall": () =>
+    GAME_PROPS.flatMap(({ center: c, view }) => {
+      if (view.kind !== "neon" || nearestWall(c.x, c.z).d > 0.2) return [];
+      if (ROOM_SITES.some((r) => c.x >= r.rect.minX && c.x <= r.rect.maxX && Math.abs(c.z - r.front) < 1 && c.y < r.floor + ROOM_STOREY)) return [];
+      const along = view.size.x >= view.size.z;
+      const width = along ? view.size.x : view.size.z;
+      const at = (t: number) => (along ? { x: c.x + t * width, z: c.z } : { x: c.x, z: c.z + t * width });
+      const air = [-0.5, 0.5].map(at).filter((e) => !inBuilding(e.x, e.z) && nearestWall(e.x, e.z).d > 0.4);
+      const samples = Array.from({ length: 40 }, (_, i) => at((i + 0.5) / 40 - 0.5));
+      const inside = samples.filter((q) => inBuilding(q.x, q.z)).length / samples.length;
+      if (air.length === 0 && inside <= 0.15) return [];
+      return [{ at: near(c.x, c.z), what: `${view.label ?? "neon"} ${(inside * 100).toFixed(0)}% in, ${air.length} end(s) off` }];
     }),
   /**
    * A vehicle (a parked car, a set piece's car, van or wreck) whose bottom lies more than 0.1 m

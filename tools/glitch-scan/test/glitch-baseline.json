@@ -29,6 +29,7 @@
   "bay-car-orientation": 0,
   "crowd-lane-on-parking": 0,
   "prop-off-ground": 0,
+  "neon-off-wall": 0,
   "vehicle-below-surface": 0,
   "vehicle-off-surface": 0,
   "building-in-set-piece": 0,
