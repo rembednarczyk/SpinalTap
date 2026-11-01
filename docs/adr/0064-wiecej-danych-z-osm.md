@@ -9,12 +9,12 @@ Przegląd z 31.10 (`docs/plany/osm-niewykorzystane.md`) znalazł dane OSM, któr
   - zmiany filtra pobierania (`filterOsm`) wymagają ponownego `pnpm osm:fetch` i dopisania tylko nowych elementów, bez zmiany istniejących (sprawdza to weryfikator, jak przy G-049);
   - nowe pola widoku i treści przechodzą przez kontrakt w `core/ports` z dopiskiem w tym ADR-ze;
   - każdy etap przechodzi przegląd kuratora topografii i dostaje kontrolę w skanie, gdy rodzaj jest policzalny;
-  - marki i prawdziwe nazwy firm nie trafiają na szyldy (ADR-0058): nazwa lokalu z OSM służy tylko do wyboru rodzaju i do generycznej nazwy 2077.
+  - marki i prawdziwe nazwy firm nie trafiają na szyldy (ADR-0058): nazwa lokalu z OSM wybiera rodzaj i nazwę 2077 z tabeli `venue-names` (parodia sieci albo nowa nazwa lokalu, decyzje z 31.10 i 1.11 niżej), a sama na szyld nie trafia.
 - **Etapy (osobne PR-y, w tej kolejności):**
   1. **Dachy z `roof:shape` i `roof:orientation`** (poz. 3): dwuspadowe, naczółkowe, mansardowe, kopuły, cebule, piramidy; pole kształtu dachu w widoku `building`. Zamyka G-056 (hełmy i kopuły jako dachy czterospadowe).
   2. **Wejścia `entrance=*`** (poz. 15): drzwi w prawdziwych miejscach elewacji, punkty wejść dla wnętrz (ADR-0061, plan wnętrz zabytków) i dla NPC wychodzących z bram.
   3. **Oświetlenie ulic `lit`** (poz. 4): latarnie tylko tam, gdzie ulica jest oświetlona; nieoświetlone zaułki ciemne. Później źródło dla skradania (widoczność w ciemności, osobna zmiana w `sim`).
-  4. **Lokale w parterach** (poz. 1): sklepy, restauracje, bary, kawiarnie, banki, apteki, kluby z węzłów OSM jako szyldy i neony na właściwej elewacji, z generyczną nazwą 2077 według rodzaju (teksty dla gracza przez i18n).
+  4. **Lokale w parterach** (poz. 1): sklepy, restauracje, bary, kawiarnie, banki, apteki, kluby z węzłów OSM jako szyldy i neony na właściwej elewacji, z nazwą 2077 z tabeli danych `venue-names` (generyczną według rodzaju, gdy lokal nie ma nazwy); słowa rodzajów dla gracza przez i18n.
   5. **Drzewa `natural=tree`** (poz. 17): pojedyncze drzewa z OSM (gatunek liściasty albo iglasty, wysokość, jeśli jest) zamiast losowych tam, gdzie OSM je ma.
   6. **Przystanki i linie** (poz. 7): numery linii autobusów i trolejbusów na przystankach, tablice odjazdów jako ekrany 2077.
   7. **Sztuka i pamięć** (poz. 8): rodzaj dzieła (`artwork_type`: mural, rzeźba, instalacja), tablice pamiątkowe z prawdziwym napisem (`inscription`) do przeczytania przez gracza; napis w oryginale, opis przez i18n.
@@ -41,9 +41,25 @@ Użytkownik dołożył pozycje 20, 23, 25 i 26 z sekcji C przeglądu. Każdy eta
 - Bez pola renderer rysuje dach jak dotąd (czterospadowy, czasem kopuła na zwartym zabytku), z tymi samymi losowaniami wyglądu. Z polem kształt idzie z danych, także w częściach `building:part` (G-049).
 - Wysokość dachu (`roof`) i bryły kolizji się nie zmieniają: kształt to sam wygląd, złote hashe zostają.
 
+## Uzupełnienie (31.10): szyldy lokali, decyzja użytkownika
+Użytkownik uznał zestaw lokali w grze za ubogi i wybrał (31.10) wariant „parodie + kolory” dla etapu 4 (lokale w parterach):
+- każdy prawdziwy lokal z OSM (ok. 380: sklepy, restauracje, bary, kawiarnie, banki, apteki, kluby) dostaje szyld w swoim miejscu na właściwej elewacji;
+- nazwa jest przerobiona na wersję Lublina 2077 (gra słów, skrót, futurystyczny wariant), rozpoznawalna dla mieszkańca, bez logo i bez dosłownej nazwy sieci; zasada ADR-0058 „bez prawdziwych marek” zostaje, bo chroni przed ryzykiem znaków towarowych;
+- kolorystyka szyldu nawiązuje do prawdziwej (`brand:colour`, `colour` z OSM albo przypisana ręcznie w tabeli danych), w palecie kitu (ADR-0022) jako neon;
+- szyldy i neony z paczki Sketchfab (ADR-0063, paczka 2) zostają z napisami jak dostarczone (fikcyjne), w kolorach paczki sprowadzonych do palety;
+- nazwy dla gracza przez katalogi i18n tam, gdzie są słowami (rodzaj lokalu), a nazwy własne 2077 jako dane (jak nazwy autorów w „Autorach”), w jednej tabeli `venue-names` z testem, że żadna nie jest dosłowną nazwą z OSM.
+Etap 4 przesuwa się w kolejności przed etapy 2 i 3, zaraz po pracach w toku.
+
+## Uzupełnienie (1.11): dalsze parodie, doprecyzowanie użytkownika
+Pierwsza tabela (warianty z doklejką i nazwy o literę od marki) nie przeszła weryfikacji. Użytkownik zdecydował (1.11) „dalsze parodie”:
+- **sieci:** gra słów rozpoznawalna dla mieszkańca, ale bez różnicy jednej litery, bez fonetycznie identycznego brzmienia i bez dosłownego słowa z marki (np. BURGER KONG → KRÓL KOTLETA, Pekao → BANK POD ŻUBREM);
+- **lokale lokalne:** nowa nazwa 2077 od rodzaju albo miejsca, nie prawdziwa nazwa z doklejką („-BOT”, „-77”, „2077”);
+- kolor zbliżony do prawdziwego zostaje;
+- test tabeli porównuje nazwy fonetycznie (ph→f, qu→k, v→w, x→ks, c→k poza cz/ch, y→i, bez podwojeń i diakrytyków): sklejona nazwa 2077 nie zawiera sklejonej prawdziwej, a jej słowo nie zawiera słowa prawdziwego i nie różni się od niego o 1 literę (słowa od 4 liter) ani o 2 (od 7 liter). Słowa ogólne rodzaju (bank, apteka, kantor, kawiarnia, pub, kebab…) wolno powtórzyć. Zakaz obejmuje własną nazwę z OSM każdego wiersza, listę sieci, marki z tagów `brand` i ręcznie dopisane brzmienia, których reguły nie łapią (np. Yves Rocher → „Iw Rosze”). Drugi test zakazuje doklejek.
+
 ## Uzupełnienie (etap 4)
 - Widok `building` (`core/ports/types.ts`) dostaje pole opcjonalne i wsteczne `venues` (`BuildingVenue`: `at` względem pozycji budynku jak obrys, `kind` z `VENUE_KINDS`, `name` 2077, `color` z neonów kitu). `core/world/venues.ts` trzyma rodzaje, klucze `venue.kind.*` (słowa w katalogach UI en/pl) i `SIGN_GLYPHS`, litery atlasu szyldów.
 - Import (`tools/osm-import/src/venues.ts`) bierze węzły i obrysy z `shop=*` (poza `vacant`) oraz `amenity` restauracji, barów, pubów, kawiarni, lodziarni, klubów, banków, kantorów i aptek. Lokal idzie na własny obrys, na najmniejszy obrys wokół punktu albo na budynek z najbliższą ścianą w promieniu 8 m; jedna nazwa na budynek. `shopPoints` i `namedPoints` zostają bez zmian: lokal nie zmienia kondygnacji, nazwy budynku ani brył, więc złote hashe zostają.
-- Nazwy 2077 są w tabeli danych `tools/osm-import/src/venue-names.ts` (nazwa z mapy, nazwa 2077, kolor prawdziwego szyldu), nie w katalogach i18n: szyldy zostają po polsku w obu językach (ADR-0056). Lokal bez nazwy dostaje nazwę generyczną według rodzaju. Test pilnuje, że żadna nazwa 2077 nie jest nazwą z OSM i nie zawiera sieci z listy zakazanej ani marki z tagów `brand`.
+- Nazwy 2077 są w tabeli danych `tools/osm-import/src/venue-names.ts` (nazwa z mapy, nazwa 2077, kolor prawdziwego szyldu), nie w katalogach i18n: szyldy zostają po polsku w obu językach (ADR-0056). Lokal bez nazwy dostaje nazwę generyczną według rodzaju. Test pilnuje zasad z 1.11 (wyżej).
 - Kolor: `brand:colour`, potem `colour`, potem tabela, potem rodzaj; zawsze najbliższy odcieniem neon kitu (szarości jako zimna biel `#c9dcf2`).
-- Renderer: tablica nad witryną na ścianie od ulicy najbliższej punktu lokalu, litery z atlasu glifów (jeden quad na literę) w siatce szyldów komórki, bez nowych wywołań rysowania. Budynek z lokalami nie dostaje losowych tablic z atlasu. Zabytki (ADR-0062) zostają przy swoich szyldach; na niskiej jakości bez smugi na chodniku.
+- Renderer: tablica nad witryną na ścianie od ulicy najbliższej punktu lokalu, litery z atlasu glifów (jeden quad na literę) w siatce szyldów komórki, bez nowych wywołań rysowania. Budynek z lokalami nie dostaje losowych tablic z atlasu. Zabytki (ADR-0062) zostają przy swoich szyldach; na niskiej jakości bez smugi na chodniku, a atlas liter ma 512² zamiast 1024² (jeden kanał na każdej jakości).
