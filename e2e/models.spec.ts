@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { freeze, step, waitForGame, waitForPlay } from "./helpers";
+import { freeze, step, newGame, waitForGame, waitForPlay } from "./helpers";
 
 /**
  * Draw calls with the whole cast dressed (ADR-0046): measured 480 and 483 with all 12 characters
@@ -13,7 +13,7 @@ test("placeholder VRoid cast dresses the characters", async ({ page }) => {
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/?seed=11");
   await waitForGame(page);
-  await page.getByRole("button", { name: "New Game" }).click({ timeout: 60_000 });
+  await newGame(page, "click", 60_000);
   await waitForPlay(page);
   await freeze(page);
   await step(page, 1, { toggleCamera: true });

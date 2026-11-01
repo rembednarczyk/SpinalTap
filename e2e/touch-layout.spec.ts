@@ -1,5 +1,5 @@
 import { type Page, expect, test } from "@playwright/test";
-import { freeze, step, teleport, waitForGame, waitForPlay } from "./helpers";
+import { freeze, step, teleport, newGame, waitForGame, waitForPlay } from "./helpers";
 
 /**
  * A phone in landscape (ADR-0035): at 800x370 and 667x375 CSS px no key element of the HUD or
@@ -72,7 +72,7 @@ for (const [w, h] of [
         });
         seen.observe(document.body, { childList: true, subtree: true });
       });
-      await page.getByRole("button", { name: "New Game" }).tap();
+      await newGame(page, "tap");
       await waitForPlay(page);
       const loading = await page.evaluate(() => (window as unknown as { __loadingBoxes: Box[] | null }).__loadingBoxes);
       expect(loading).not.toBeNull();
@@ -113,7 +113,7 @@ test("phone: the settings in the pause menu scroll to their last control", async
   test.setTimeout(180_000);
   await page.goto("/?seed=7&models=off");
   await waitForGame(page);
-  await page.getByRole("button", { name: "New Game" }).tap();
+  await newGame(page, "tap");
   await expect(page.getByTestId("hud")).toBeVisible();
   await page.evaluate(() => window.__seki!.session.pause());
   await expect(page.getByTestId("pause-menu")).toBeVisible();
@@ -131,4 +131,42 @@ test("phone: the settings in the pause menu scroll to their last control", async
   expect(head && head.y >= -1).toBe(true);
   expect(await menu.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
 });
+});
+
+/**
+ * The map credit (ODbL) stays legible and over nothing: on the title's screens taller than a
+ * phone held sideways (the new game's Custom sliders, Settings) it ends the content instead of
+ * riding over the buttons when the screen scrolls.
+ */
+test.describe("phone 800x370 title credit", () => {
+  test.use({ viewport: { width: 800, height: 370 }, isMobile: true, hasTouch: true });
+
+  test("phone: the map credit covers no control of the title's screens, scrolled to the bottom", async ({ page }) => {
+    test.setTimeout(180_000);
+    await page.goto("/?seed=7&models=off&touch");
+    await waitForGame(page);
+    const credit = page.getByTestId("title-attribution");
+    const title = page.getByTestId("title-screen");
+    const clear = async (view: string) => {
+      await title.evaluate((el) => el.scrollTo(0, el.scrollHeight));
+      const c = await credit.boundingBox();
+      expect(c, `${view}: credit shown`).not.toBeNull();
+      expect(c!.y >= -0.5 && c!.y + c!.height <= 370 + 0.5, `${view}: credit on screen`).toBe(true);
+      const controls = title.locator("button, input");
+      for (let i = 0; i < (await controls.count()); i++) {
+        const el = controls.nth(i);
+        const b = await el.boundingBox();
+        if (!b || b.width === 0) continue;
+        const name = (await el.getAttribute("aria-label")) ?? (await el.textContent())?.trim() ?? `#${i}`;
+        expect(overlap({ name: "credit", ...c! }, { name, ...b }), `${view}: credit over "${name}"`).toBe(false);
+      }
+    };
+    await page.getByRole("button", { name: "New Game", exact: true }).tap();
+    await page.getByRole("radio", { name: "Custom" }).tap();
+    await clear("custom");
+    await page.getByRole("button", { name: "Back", exact: true }).tap();
+    await page.getByRole("button", { name: "Settings", exact: true }).tap();
+    await page.getByRole("tab", { name: "Accessibility" }).tap();
+    await clear("settings");
+  });
 });

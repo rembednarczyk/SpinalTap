@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { freeze, step, waitForGame, waitForPlay } from "./helpers";
+import { freeze, step, newGame, waitForGame, waitForPlay } from "./helpers";
 
 /**
  * Frames the game may draw while the GPU works off what it was handed before (G-029): the two
@@ -38,7 +38,7 @@ test("the character menu's preview draws no further ahead of the GPU than the pa
   test.setTimeout(150_000);
   await page.goto("/?seed=7&models=off");
   await waitForGame(page);
-  await page.getByRole("button", { name: "New Game" }).click();
+  await newGame(page);
   await waitForPlay(page);
   await freeze(page);
   await step(page, 1);

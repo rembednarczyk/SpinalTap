@@ -16,6 +16,7 @@ type Point = { x: number; y: number; z: number };
 const start = () => {
   const game = mountGame({ seed: 11 });
   fireEvent.click(screen.getByRole("button", { name: "New Game" }));
+  fireEvent.click(screen.getByRole("button", { name: "Start" }));
   expect(screen.getByTestId("hud")).toBeTruthy();
   return game;
 };
