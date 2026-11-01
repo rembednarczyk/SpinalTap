@@ -3,6 +3,8 @@ import type { DifficultyProfile } from "../difficulty/difficulty";
 import type { DomainState } from "../state/domain-state";
 
 /**
+ * v21: how sure a guard is that it saw someone (G-174), while it is not sure yet; an older save
+ * has every guard calm.
  * v20: a difficulty profile asked for in a fight, waiting for its end (G-171); an older save has
  * none waiting.
  * v19: bodies (ADR-0065): the knocked out and the dead of a takedown lie where they were left,
@@ -21,7 +23,7 @@ import type { DomainState } from "../state/domain-state";
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 20;
+export const SAVE_SCHEMA_VERSION = 21;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {
@@ -46,6 +48,11 @@ export interface EntitySnapshot {
   readonly search?: number;
   /** Seconds out of its sight while alerted. */
   readonly lost?: number;
+  /**
+   * How sure a guard is that it saw the player (or saw through her disguise), 0..1 (G-174): it
+   * fills over several steps, so a load must not start it from 0. Absent when 0.
+   */
+  readonly suspicion?: number;
   /** Knocked out, or killed in a takedown and left lying (ADR-0065). Absent for everyone else. */
   readonly downed?: BodySnapshot;
 }

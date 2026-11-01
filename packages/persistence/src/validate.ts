@@ -45,6 +45,8 @@ export const findSchemaError = (s: Json): string | null => {
       return `entity ${e.key} search`;
     }
     if (e.downed !== undefined && !isBody(e.downed)) return `entity ${e.key} downed`;
+    // G-174: a guard not sure yet, between nothing seen (not saved) and sure.
+    if (e.suspicion !== undefined && !(isNum(e.suspicion) && e.suspicion > 0 && e.suspicion <= 1)) return `entity ${e.key} suspicion`;
   }
   const st = s.streaming;
   if (!isObject(st) || !Array.isArray(st.loadedChunks) || !st.loadedChunks.every((c) => typeof c === "string")) return "streaming";

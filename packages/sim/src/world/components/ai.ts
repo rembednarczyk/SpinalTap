@@ -58,7 +58,7 @@ export interface GangerAi {
    * and decides at once, as before.
    */
   readonly cone?: true;
-  /** How sure the guard is that it saw someone, 0..1; at 1 it is alerted. Transient, not saved. */
+  /** How sure the guard is that it saw someone, 0..1; at 1 it is alerted. Saved while above 0 (G-174). */
   suspicion?: number;
   /** A guard on a post looks around: its facing sweeps around `yaw` (ADR-0024). */
   readonly watch?: { readonly yaw: number; readonly phase: number; readonly period?: number };

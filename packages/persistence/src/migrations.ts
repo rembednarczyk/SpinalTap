@@ -342,6 +342,9 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
   // v19 -> v20 (G-171): a difficulty profile asked for in a fight is saved while it waits for the
   // fight's end (optional). An older save has none waiting: what was asked was lost already.
   19: (old) => ({ ...old, version: 20 }),
+  // v20 -> v21 (G-174): a guard's suspicion is saved while it builds up (optional). An older save
+  // has every guard calm, as it loaded before.
+  20: (old) => ({ ...old, version: 21 }),
 };
 
 export class MigrationError extends Error {}

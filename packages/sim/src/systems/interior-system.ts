@@ -6,9 +6,9 @@ export const INTERIOR_KEEP = 0.25;
 
 /**
  * Interiors (ADR-0061): which of `INTERIORS` the player is in, compared with the last step, and
- * `InteriorLeft` then `InteriorEntered` when it changes. The first step of a new game or a load
- * only reads it from the position, without an event; a rider of the metro (out of the world)
- * and a dead player keep the last one.
+ * `InteriorLeft` then `InteriorEntered` when it changes. The first step of a new game only reads
+ * it from the position, without an event (a load reads it from the saved position, G-174); a
+ * rider of the metro (out of the world) and a dead player keep the last one.
  */
 export const interiorSystem: System = {
   name: "interior",
