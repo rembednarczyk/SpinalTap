@@ -1,20 +1,16 @@
 import { BehaviourTree, State } from "mistreevous";
 
 type Agent = ConstructorParameters<typeof BehaviourTree>[1];
-import { angleTo, normalize, strikeAt, sub, type EntityId } from "@seki/core";
-import type { Entity } from "../../world/components";
+import type { EntityId } from "@seki/core";
 import type { SimContext, System } from "../../world/context";
-import { chestOf, eyeOf } from "../../world/hitscan";
 import { inCreationOrder } from "../../world/ordering";
 import { incapacitated } from "../../world/takedown";
 import { followSchedule } from "../../world/schedule";
 import { worldTimeScale } from "../ability-system";
-import { NPC_CRIT, fireShot, npcSpreadOf } from "../combat-system";
-import { startSwing } from "../melee-system";
 import { knockbackVelocity } from "../../world/knockback";
-import { readyToFire } from "../../world/player-weapon";
 import { GANGER_TREE } from "./ganger-tree";
 import { GANGER_SPEED, GangerWalk } from "./ganger-walk";
+import { attack, faceTowards } from "./ganger-fight";
 import { type AwarenessState } from "@seki/core";
 import {
   AWARENESS_STEP,
@@ -31,11 +27,8 @@ import {
 } from "./ganger-perception";
 
 export { GANGER_SPEED, MELEE_CHASE_SPEED, STUCK_TIME } from "./ganger-walk";
+export { MELEE_REST } from "./ganger-fight";
 
-/** Pause after a melee swing's recovery before the next one, plus up to `MELEE_REST_JITTER`. */
-export const MELEE_REST = 0.45;
-const MELEE_REST_JITTER = 0.4;
-const TURN_RATE = 6;
 /** A melee fighter reaches no higher or lower than this (a brawler under the footbridge cannot hit it). */
 const MELEE_REACH_Y = 1.2;
 /** A guard on watch sweeps this far either side of its post's facing, once per `WATCH_PERIOD` seconds. */
@@ -92,47 +85,17 @@ class GangerAgent {
   HasVictim = (): boolean => this.target.victim !== null;
   VictimInAttackRange = (): boolean => !!this.self && this.target.visible && this.target.distance <= this.self.ai.attackRange;
 
-  ShootAtPlayer = (): State => (this.seen.player ? this.shootAt(this.seen.player) : State.FAILED);
+  ShootAtPlayer = (): State => (this.seen.player ? attack(this, this.seen.player) : State.FAILED);
 
-  ShootAtVictim = (): State => (this.target.victim ? this.shootAt(this.target.victim) : State.FAILED);
+  ShootAtVictim = (): State => (this.target.victim ? attack(this, this.target.victim) : State.FAILED);
 
   ChaseVictim = (): State => {
     const { self, target } = this;
     if (!self || !target.victim) return State.FAILED;
     this.walk.walkTo(target.victim.position);
-    this.face(target.victim);
+    faceTowards(this, target.victim);
     return State.SUCCEEDED;
   };
-
-  private shootAt(target: Entity): State {
-    const { ctx, self } = this;
-    if (!ctx || !self) return State.FAILED;
-    self.velocity = { x: 0, y: 0, z: 0 };
-    this.face(target);
-    const combatant = self.combatant;
-    if (combatant) combatant.engaged = true;
-    const melee = combatant?.stats?.melee;
-    if (melee && combatant && self.melee) {
-      // Swing once it faces the target well inside the arc; the windup telegraphs the blow.
-      const m = self.melee;
-      const facing = Math.abs(angleTo({ x: self.position.x, z: self.position.z, yaw: self.yaw }, target.position.x, target.position.z));
-      if (m.phase === "idle" && m.stagger === 0 && facing <= melee.arc * 0.5 && readyToFire(combatant, combatant.loaded)) {
-        // Alternate the first two swings of the combo, so the blows read differently.
-        const strike = (m.strike + 1) % Math.min(2, melee.combo.length);
-        startSwing(ctx, self.id, m, melee, strike, melee.npcWindup);
-        combatant.cooldown = melee.npcWindup + strikeAt(melee, strike).recovery + MELEE_REST + ctx.rng.next() * MELEE_REST_JITTER;
-      }
-      return State.SUCCEEDED;
-    }
-    if (combatant && readyToFire(combatant, combatant.loaded)) {
-      const origin = eyeOf(self);
-      const dir = normalize(sub(chestOf(target), origin));
-      fireShot(ctx, { shooter: self, origin, dir, spread: npcSpreadOf(ctx, self), ...NPC_CRIT }, ctx.rng);
-      // Stagger the next burst so the two gangers do not fire in lockstep.
-      combatant.cooldown += ctx.rng.next() * 0.5;
-    }
-    return State.SUCCEEDED;
-  }
 
   /**
    * Goes after the player while it sees them (or just lost them), after the last known position
@@ -144,7 +107,7 @@ class GangerAgent {
     const tracking = seen.visible || (self.ai.lost ?? 0) <= TRACK_GRACE || !self.ai.lastKnown;
     const goal = tracking ? seen.player.position : (self.ai.lastKnown ?? seen.player.position);
     this.walk.pursueTo(goal);
-    if (tracking) this.face(seen.player);
+    if (tracking) faceTowards(this, seen.player);
     return State.SUCCEEDED;
   };
 
@@ -153,7 +116,7 @@ class GangerAgent {
     const { ctx, self, seen } = this;
     if (!ctx || !self || !seen.player) return State.FAILED;
     self.velocity = { x: 0, y: 0, z: 0 };
-    this.face(seen.player);
+    faceTowards(this, seen.player);
     if (!this.warned) {
       this.warned = true;
       ctx.bus.emit("NpcReacted", { entityId: self.id, faction: self.faction ?? "hebi", reaction: "warn" });
@@ -177,21 +140,10 @@ class GangerAgent {
     if (d > 0.3) this.walk.walkTo(self.ai.home);
     else self.velocity = { x: 0, y: 0, z: 0 };
     const watch = self.ai.watch;
-    if ((self.ai.suspicion ?? 0) > 0 && this.seen.player) this.face(this.seen.player);
+    if ((self.ai.suspicion ?? 0) > 0 && this.seen.player) faceTowards(this, this.seen.player);
     else if (watch && ctx && d <= 0.3) self.yaw = watch.yaw + WATCH_SWEEP * Math.sin((2 * Math.PI * ctx.tick * ctx.dt) / (watch.period ?? WATCH_PERIOD) + watch.phase);
     return State.SUCCEEDED;
   };
-
-  private face(target: Entity): void {
-    const { self, ctx } = this;
-    if (!self || !ctx) return;
-    const desired = Math.atan2(target.position.x - self.position.x, target.position.z - self.position.z);
-    let delta = (desired - self.yaw) % (Math.PI * 2);
-    if (delta > Math.PI) delta -= Math.PI * 2;
-    if (delta < -Math.PI) delta += Math.PI * 2;
-    const maxTurn = TURN_RATE * ctx.dt * this.timeScale;
-    self.yaw += Math.max(-maxTurn, Math.min(maxTurn, delta));
-  }
 }
 
 /** AwarenessChanged when the state changes or the level moves by `AWARENESS_STEP` (no spam every tick). */
