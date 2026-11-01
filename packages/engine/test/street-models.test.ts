@@ -169,4 +169,44 @@ describe("street-props.glb (ADR-0063)", () => {
     const count = (ms: ReturnType<typeof make>) => ms.reduce((n, m) => n + m.getTotalVertices(), 0);
     expect(count(make("low", props))).toBe(count(make("low", null)));
   });
+
+  it("bakes no loose scraps: every part of a model is whole (wheels, handlebars), a cart stands on its wheels", () => {
+    for (const m of street.models.values()) {
+      const sizes = parts(m);
+      // A post or a mast added as a box is 10 triangles; anything less is a scrap the clustering left.
+      expect(Math.min(...sizes), `${m.key}: ${sizes.join(",")}`).toBeGreaterThanOrEqual(10);
+    }
+    expect(parts(street.models.get("st-bike")!).length).toBeLessThanOrEqual(3);
+    const cart = street.models.get("st-food-cart")!;
+    const at = (k: number) => [...cart.positions].filter((_, i) => i % 3 === k);
+    const xs = at(0);
+    const ys = at(1);
+    // Wheels on the ground at both ends of the 3.9 m cart, and posts holding up its roof.
+    const ground = xs.filter((_, i) => ys[i]! < 0.05);
+    expect(Math.max(...ground) - Math.min(...ground)).toBeGreaterThan(2.5);
+    const spans = Array.from({ length: cart.indices.length / 3 }, (_, t) => [0, 1, 2].map((k) => ys[cart.indices[t * 3 + k]!]!));
+    expect(spans.filter((y) => Math.min(...y) < 1.2 && Math.max(...y) > 2.2).length).toBeGreaterThanOrEqual(8);
+  });
 });
+
+/** Triangle counts of a model's connected parts (vertices joined by position). */
+const parts = (m: { positions: Float32Array; indices: Uint32Array }): number[] => {
+  const key = (i: number) => `${m.positions[i * 3]!.toFixed(4)},${m.positions[i * 3 + 1]!.toFixed(4)},${m.positions[i * 3 + 2]!.toFixed(4)}`;
+  const ids = new Map<string, number>();
+  const id = (i: number) => {
+    const k = key(i);
+    let v = ids.get(k);
+    if (v === undefined) ids.set(k, (v = ids.size));
+    return v;
+  };
+  const tri = Array.from({ length: m.indices.length / 3 }, (_, t) => [id(m.indices[t * 3]!), id(m.indices[t * 3 + 1]!), id(m.indices[t * 3 + 2]!)] as const);
+  const parent = Array.from({ length: ids.size }, (_, i) => i);
+  const find = (a: number): number => (parent[a] === a ? a : (parent[a] = find(parent[a]!)));
+  for (const [a, b, c] of tri) {
+    parent[find(a)] = find(b);
+    parent[find(b)] = find(c);
+  }
+  const count = new Map<number, number>();
+  for (const [a] of tri) count.set(find(a), (count.get(find(a)) ?? 0) + 1);
+  return [...count.values()];
+};

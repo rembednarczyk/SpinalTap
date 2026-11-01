@@ -31,6 +31,7 @@ Usage: python3 -I tools/city_kit.py --street DIR --out DIR (DIR as filled by too
 import os, zlib
 import numpy as np
 from city_ccby import flat_normals, roles_of, simplify, weld
+from city_street_e2 import drop_specks
 from city_kit_gltf import png_bytes, scene_triangles, write_glb
 from city_kit_palette import GRID, SWATCHES, palette_images, swatch_uv
 
@@ -140,6 +141,7 @@ def bake_street(path, yaw, fit, target, opts):
     lo, hi = flat.min(0), flat.max(0)
     P = (P - np.array([(lo[0] + hi[0]) / 2, lo[1], (lo[2] + hi[2]) / 2])) * (np.array(fit) / (hi - lo))
     P, roles = simplify(P, roles, target)
+    P, roles = drop_specks(P, roles)
     if 'screen' in opts:
         roles = screen_roles(P, roles, *opts['screen'])
     if 'post' in opts:

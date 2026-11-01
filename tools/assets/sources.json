@@ -103,9 +103,8 @@
       "author": "Quaternius (quaternius.com)",
       "page": "https://quaternius.com/packs/zombieapocalypsekit.html",
       "license": "CC0",
-      "licenseQuote": "License: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication https://creativecommons.org/publicdomain/zero/1.0/",
+      "licenseQuote": "CC0 (strona paczki i https://quaternius.com/license.html); License.txt w folderze paczki ma nagłówek innej paczki (Ultimate Platformer Pack), więc nie jest tu cytowany",
       "files": [
-        { "path": "License.txt", "url": "https://drive.usercontent.google.com/download?id=1580uoubj39h6sNRFo394PvNU4ozIwehi&export=download&confirm=t", "sha256": "de990ef6fc68cffd7fd1ae342c4d0c823b541b8848d8f76bca5d3339f4de6f6e" },
         { "path": "Environment/glTF/FireHydrant.gltf", "url": "https://drive.usercontent.google.com/download?id=12eTSrvHAa4D5Sr-_oFnMEHWYY65jwDGo&export=download&confirm=t", "sha256": "505de841fda684aee3dd9dd9c594dcc5bfa328bb492e82c7a9cc28979c9fe257" }
       ],
       "used": ["st-hydrant"]
