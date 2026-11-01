@@ -94,5 +94,6 @@ Postęp (1.11, każdy podział osobnym PR-em, zachowanie potwierdzone sondą por
 | `CharacterViews` | 24 | 20 | #163 | `CharacterModels`, `CharacterKit`, `CharacterDeaths`, funkcja `disposeRig` |
 | `ToonMaterials` | 23 | 19 | #171 | `createToonMaterial` (fabryka), `ToonPointLights`, `ToonSceneUniforms`, `ToonEnvironment` (sonda mokrego asfaltu); zrzut 67 materiałów identyczny bajt w bajt |
 | `GangerAgent` | 22 | 14 | #177 | `GangerWalk` (pościg przez poziomy, obchodzenie, utknięcie), `ganger-fight` (`attack`, `faceTowards`) nad wąskim `GangerBinding`; agent to sam blackboard drzewa |
+| `SynthAudio` | 21 | 18 | #180 | `AudioContextHost` (kontekst i wznowienie), `SoundscapeClock` (krok harmonogramu, poza słuchacza, kroki), `TickTimer`; `sampleBank` jako pole; ślad fałszywego kontekstu Web Audio (węzły, połączenia, automatyka, timer, getery) identyczny w 5 scenariuszach |
 
-Zostają w bazie: `StreetProps` 22, `SynthAudio` 21.
+Zostaje w bazie: `StreetProps` 22.
