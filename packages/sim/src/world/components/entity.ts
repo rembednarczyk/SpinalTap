@@ -91,8 +91,11 @@ export interface Entity {
   device?: Device;
   /** Quickhack effects (ADR-0029). */
   hackFx?: HackEffects;
-  /** Sent in by the district's security because of the heat (ADR-0029); unkeyed, not saved. */
-  security?: true;
+  /**
+   * Sent in by the district's security because of the heat (ADR-0029); unkeyed, saved on its own
+   * (G-179). `n`: which of the heat's it is, from 1; its id is another after a load.
+   */
+  security?: { readonly n: number };
   /** The player hurt it while it was not fighting them: its death is a crime (ADR-0029). Transient. */
   wronged?: true;
   /**
