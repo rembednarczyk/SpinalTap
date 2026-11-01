@@ -309,20 +309,32 @@ export const contractGangerHp = (completed: number): number => GANGER_MAX_HP + M
  */
 export const toughen = (e: Entity, npcHealth: number): Entity => {
   if (e.view?.kind !== "enemy" || !e.health) return e;
+  e.baseHp = e.health.max;
   // Whole points, as the content gives them (110 × 1.2 is not quite 132 in floating point).
   const max = Math.max(1, Math.round(e.health.max * npcHealth));
   e.health = { current: max, max };
   return e;
 };
 
+/**
+ * Health of an enemy loaded from a save whose maximum then was `savedMax` (ADR-0066): the same
+ * share of its maximum now, in whole points within 1..max, so a profile changed in between
+ * applies to it too. Without a different maximum the saved health stays as it was.
+ */
+const restoredHealth = (health: NonNullable<Entity["health"]>, hp: number, savedMax: number): number =>
+  savedMax === health.max || hp <= 0 ? hp : Math.min(health.max, Math.max(1, Math.round((health.max * hp) / savedMax)));
+
 /** The saveable state of a keyed entity. */
 export const entitySnapshotOf = (e: Entity & { key: string }): EntitySnapshot => {
+  // A toughened enemy (ADR-0066) keeps the maximum it had, for the share of it on load.
+  const max = e.health && e.baseHp !== undefined && e.health.max !== e.baseHp ? e.health.max : null;
   const s: EntitySnapshot = {
     key: e.key,
     position: e.position,
     yaw: e.yaw,
     pitch: e.pitch,
     hp: e.health?.current ?? null,
+    ...(max !== null ? { maxHp: max } : {}),
     cooldown: e.combatant?.cooldown ?? 0,
     alerted: e.ai?.alerted ?? false,
   };
@@ -339,7 +351,11 @@ export const applyEntitySnapshot = (e: Entity, s: EntitySnapshot): void => {
   e.yaw = s.yaw;
   e.prevYaw = s.yaw;
   e.pitch = s.pitch;
-  if (e.health && s.hp !== null) e.health = { ...e.health, current: s.hp };
+  if (e.health && s.hp !== null) {
+    // An enemy saved at another maximum (another `npcHealth`, ADR-0066): the base one unless saved.
+    const savedMax = e.view?.kind === "enemy" ? (s.maxHp ?? e.baseHp ?? e.health.max) : e.health.max;
+    e.health = { ...e.health, current: restoredHealth(e.health, s.hp, savedMax) };
+  }
   if (e.combatant) e.combatant.cooldown = s.cooldown;
   if (e.ai) {
     e.ai.alerted = s.alerted;

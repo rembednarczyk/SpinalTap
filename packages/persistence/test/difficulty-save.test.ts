@@ -43,4 +43,12 @@ describe("the difficulty in the save (v17 to v18, ADR-0066)", () => {
     const { snipeTell: _s, ...partial } = NORMAL_DIFFICULTY;
     expect(bad(partial)).toBe("difficulty");
   });
+
+  it("an enemy's saved maximum health, when there is one, is a positive number", () => {
+    const s = snapshot();
+    const guard = (maxHp: unknown) => findSchemaError({ ...s, entities: [s.entities[0], { ...s.entities[1], maxHp }] } as unknown as Record<string, unknown>);
+    expect(guard(120)).toBeNull();
+    expect(guard(0)).toBe("entity guard hp");
+    expect(guard("120")).toBe("entity guard hp");
+  });
 });

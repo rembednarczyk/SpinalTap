@@ -25,6 +25,11 @@ export interface EntitySnapshot {
   readonly yaw: number;
   readonly pitch: number;
   readonly hp: number | null;
+  /**
+   * The maximum health of an enemy toughened by the difficulty (ADR-0066), when it differs from
+   * the content's own; loaded, the enemy keeps the same share of its maximum then.
+   */
+  readonly maxHp?: number;
   readonly cooldown: number;
   /** AI alert state; false for non-AI entities. */
   readonly alerted: boolean;

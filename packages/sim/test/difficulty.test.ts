@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { type Contract, type DifficultyProfile, type DomainEvents, type DomainState, ENEMY_TYPES, MICRO_EVENT_CHANCE, SECONDS_PER_HOUR, contractTag } from "@seki/core";
+import { type Contract, type DifficultyProfile, type DomainEvents, type DomainState, type Vec3, ENEMY_TYPES, MICRO_EVENT_CHANCE, SECONDS_PER_HOUR, contractTag } from "@seki/core";
 import {
   DOKI_TERMINAL_SPOTS,
   GANGER_MAX_HP,
@@ -9,6 +9,7 @@ import {
   SNIPER_AIM_TIME,
   SNIPER_PERCHES,
   Simulation,
+  chestOf,
   contractGangerHp,
   deriveRandom,
   gangerEntity,
@@ -180,6 +181,65 @@ describe("npcHealth: hostile NPCs as they appear (ADR-0066)", () => {
     expect(civilians(tougher.sim)).toEqual(civilians(normal.sim));
   });
 
+  /** A profile asked for after the save: outside a fight it takes effect at once. */
+  const reloadOn = (sim: Simulation, patch: Partial<DifficultyProfile>): Simulation => {
+    const snap = roundTrip(sim.snapshot(null, "d", ""));
+    return Simulation.fromSnapshot({ ...snap, domain: { ...snap.domain, difficulty: profile(patch) } });
+  };
+
+  it("an alerted enemy, pinned outside its chunk by the save, comes back with its tougher health", () => {
+    const { sim, crew } = eliminate({ npcHealth: 1.5 });
+    const max = Math.round(contractGangerHp(0) * 1.5);
+    const target = crew.find((e) => e.health?.max === max)!;
+    target.ai!.alerted = true;
+    // Far away in the Old Town: the crew's chunk unloads, the alerted one stays (pinned).
+    teleportPlayer(sim, ground(600, 0), 0);
+    run(sim, 2);
+    expect(sim.streamer.isLoaded(target.chunk!)).toBe(false);
+    expect(byKey(sim, target.key!)?.ai?.alerted).toBe(true);
+    target.health = { current: 60, max };
+    const snap = roundTrip(sim.snapshot(null, "d", ""));
+    expect(snap.entities.find((e) => e.key === target.key)).toMatchObject({ alerted: true, hp: 60, maxHp: max });
+    const loaded = Simulation.fromSnapshot(snap);
+    expect(loaded.streamer.isLoaded(target.chunk!)).toBe(false);
+    expect(byKey(loaded, target.key!)?.health).toEqual({ current: 60, max });
+  });
+
+  it("a profile changed since the save keeps an enemy's share of its health, within 1..max", () => {
+    const { sim, crew } = eliminate({ npcHealth: 1.5 });
+    const max = Math.round(contractGangerHp(0) * 1.5);
+    const [full, hurt, low] = crew.filter((e) => e.health?.max === max);
+    hurt!.health = { current: 90, max };
+    low!.health = { current: 1, max };
+    const normal = reloadOn(sim, {});
+    const base = contractGangerHp(0);
+    expect(byKey(normal, full!.key!)?.health).toEqual({ current: base, max: base });
+    expect(byKey(normal, hurt!.key!)?.health).toEqual({ current: Math.round((base * 90) / max), max: base });
+    expect(byKey(normal, low!.key!)?.health).toEqual({ current: 1, max: base });
+    // A save without the maximum (made on "normal") is taken at the content's own.
+    const plain = eliminate({});
+    const one = plain.crew.find((e) => e.health?.max === base)!;
+    one.health = { current: 50, max: base };
+    expect(byKey(reloadOn(plain.sim, { npcHealth: 2 }), one.key!)?.health).toEqual({ current: 100, max: 2 * base });
+  });
+
+  it("so does an enemy asleep in an unloaded chunk when the player comes back", () => {
+    const { sim, crew } = eliminate({ npcHealth: 1.5 });
+    const max = Math.round(contractGangerHp(0) * 1.5);
+    const target = crew.find((e) => e.health?.max === max)!;
+    const key = target.key!;
+    target.health = { current: 90, max };
+    const back = { ...sim.player()!.position };
+    teleportPlayer(sim, ground(600, 0), 0);
+    run(sim, 2);
+    expect(byKey(sim, key)).toBeUndefined();
+    setProfile(sim, {});
+    teleportPlayer(sim, back, 0);
+    run(sim, 2);
+    const base = contractGangerHp(0);
+    expect(byKey(sim, key)?.health).toEqual({ current: Math.round((base * 90) / max), max: base });
+  });
+
   it("a hurt enemy keeps its saved health across a save, and its tougher maximum", () => {
     const { sim, crew } = eliminate({ npcHealth: 1.5 });
     const max = Math.round(contractGangerHp(0) * 1.5);
@@ -192,7 +252,13 @@ describe("npcHealth: hostile NPCs as they appear (ADR-0066)", () => {
   });
 });
 
-describe("snipeTell: how long a sniper's laser warns (ADR-0066)", () => {
+const sub = (a: Vec3, b: Vec3): Vec3 => ({ x: a.x - b.x, y: a.y - b.y, z: a.z - b.z });
+const angleBetween = (a: Vec3, b: Vec3): number => {
+  const dot = a.x * b.x + a.y * b.y + a.z * b.z;
+  return Math.acos(Math.min(1, dot / (Math.hypot(a.x, a.y, a.z) * Math.hypot(b.x, b.y, b.z))));
+};
+
+describe("snipeTell and npcAccuracy of a sniper (ADR-0066)", () => {
   /** A Tessen sniper on its perch, the player in its line by the quay terminal, after `patch`. */
   const sniper = (patch: Partial<DifficultyProfile>) => {
     const sim = Simulation.create({ seed: 12 });
@@ -213,7 +279,11 @@ describe("snipeTell: how long a sniper's laser warns (ADR-0066)", () => {
       sim.step(input());
       steps++;
     }
-    return { duration: aims[0]?.duration, steps };
+    // How far off the line to the player's chest the first shot left (radians).
+    const shot = shots.find((x) => x.shooterId === s.id);
+    const chest = chestOf(sim.player()!);
+    const off = shot ? angleBetween(sub(shot.to, shot.from), sub(chest, shot.from)) : Number.NaN;
+    return { duration: aims[0]?.duration, steps, off };
   };
 
   it("on 1.6 the laser warns 1.6 times as long before the shot, on 0.8 shorter", () => {
@@ -225,6 +295,12 @@ describe("snipeTell: how long a sniper's laser warns (ADR-0066)", () => {
     expect(long.steps - normal.steps).toBe(Math.ceil(SNIPER_AIM_TIME * 0.6 * SIM_HZ));
     const short = sniper({ snipeTell: 0.8 });
     expect(short.steps).toBeLessThan(normal.steps);
+  });
+
+  it("on 2 its first shot leaves half as far off the line (same draws, half the cone)", () => {
+    const normal = sniper({});
+    expect(normal.off).toBeGreaterThan(0);
+    expect(sniper({ npcAccuracy: 2 }).off / normal.off).toBeCloseTo(0.5, 2);
   });
 });
 

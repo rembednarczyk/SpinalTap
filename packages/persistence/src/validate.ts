@@ -35,6 +35,7 @@ export const findSchemaError = (s: Json): string | null => {
     if (!isObject(e) || typeof e.key !== "string" || !isVec(e.position)) return "entity shape";
     if (!isNum(e.yaw) || !isNum(e.pitch) || !isNum(e.cooldown) || typeof e.alerted !== "boolean") return `entity ${e.key}`;
     if (e.hp !== null && !isNum(e.hp)) return `entity ${e.key} hp`;
+    if (e.maxHp !== undefined && !(isNum(e.maxHp) && e.maxHp > 0)) return `entity ${e.key} hp`;
     if ((e.lastKnown !== undefined && !isVec(e.lastKnown)) || (e.search !== undefined && !isNum(e.search)) || (e.lost !== undefined && !isNum(e.lost))) {
       return `entity ${e.key} search`;
     }
