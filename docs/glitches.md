@@ -568,7 +568,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim
 
 ### G-183 Skan latarni ściennych nie widzi przejść spoza `building_passage`
-- Status: w PR #168 (1.11; kontrola `wall-lantern-by-passage` z `GATE_PASSAGES` na starej tabeli 2: latarnie 1,35–1,68 m od osi bram; sprzeczne z pomiarem weryfikatora #147, wg którego wiszą 4–7 m za fasadą bramy — weryfikator rozstrzyga)
+- Status: w PR #168, runda 2 (1.11): weryfikacja NIE PRZYJĘTE — „trafienia” były fałszywym alarmem: oś `GATE_PASSAGES` sięga 4,6–8,7 m poza fasady bram (przedłużenie ulicy, nie sklepienie), latarnie wisiały poprawnie; kontrola i `nearPassage` mają przycinać oś do odcinka pod budynkiem bramy, tabela bez zmian; u autora
 - Ważność: S4 (narzędzie) · Zasięg: `wall-lantern-in-building` bierze osie tylko z `tunnel=building_passage`; przejście Gruella pod Wieżą Trynitarską (w298307007, `tunnel=yes`, `layer=-1`) i ręczne bramy `GATE_PASSAGES` pilnuje tylko generator (`Site.nearPassage` zna przejazdy chunków, nie zna `GATE_PASSAGES`); dziś 0 trafień
 - Poprawka: kontrola „latarnia ścienna bliżej niż 2 m od osi przejścia z danych gry” (`PASSAGES` i `GATE_PASSAGES`, odcinek przycięty do końców), baza 0; `nearPassage` także dla `GATE_PASSAGES`. Uwaga: pas wokół `tunnel=yes|covered=yes` z OSM łapie Trasę Podziemną (w293370650), więc nie z OSM
 - Pakiet właściciela: tools/glitch-scan, tools/osm-import
