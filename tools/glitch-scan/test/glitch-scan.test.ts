@@ -14,6 +14,7 @@ import { stackTiers } from "../../../packages/engine/src/renderer/mapcity/vertic
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 import { MAP_SIGN_KIND } from "../../../packages/engine/src/renderer/mapcity/sign-plan";
 import { signsInNeighbours } from "./sign-neighbours";
+import { bayCarsMisturned, bayCarsOutOfPark, kerbParksOf } from "./kerb-bays";
 import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alone.ts";
 import { extractFeatures } from "../../osm-import/src/features.ts";
 import { roadWidth } from "../../osm-import/src/ground.ts";
@@ -632,19 +633,24 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     }),
   /**
    * A parked car on a one-way street (or a roundabout) facing against its traffic: its street is
-   * the car road whose axis runs nearest alongside it. Plac Zamkowy's car park aside.
+   * the car road whose axis runs nearest alongside it. Plac Zamkowy's car park aside, and a car
+   * standing across the kerb of the car road nearest it (within 12 m, within 20° of square to it,
+   * a bay across the kerb, G-177): it faces no traffic's way.
    */
   "parked-car-against-traffic": () =>
     PARKED_CARS.filter((c) => !(c.x > 712 && c.x < 762 && c.z > 188 && c.z < 300)).flatMap((c) => {
       const fx = Math.sin(c.yaw);
       const fz = Math.cos(c.yaw);
       let street: { name: string; d: number; dot: number; directed: boolean } | undefined;
+      let nearest: { d: number; dot: number } | undefined;
       for (const r of carStreets) {
         const q = projectOn(r.points, c.x, c.z);
         const t = pointAt(r.points, q.s);
         const dot = t.tx * fx + t.tz * fz;
+        if (!nearest || q.d < nearest.d) nearest = { d: q.d, dot };
         if (Math.abs(dot) >= 0.7 && (!street || q.d < street.d)) street = { name: r.name, d: q.d, dot, directed: r.oneway || r.name.startsWith("Rondo") };
       }
+      if (nearest && nearest.d < 12 && Math.abs(nearest.dot) < Math.sin((20 * Math.PI) / 180)) return [];
       return street?.directed && street.dot < 0 ? [{ at: near(c.x, c.z), what: `${c.model} against ${street.name}` }] : [];
     }),
   /**
@@ -773,6 +779,10 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       return [{ at: near(c.x, c.z), what: `${c.model} ${by.d.toFixed(1)} m from ${by.s.way.id} (lanes ${by.s.way.tags.lanes ?? "?"})` }];
     });
   },
+  /** A car in a kerb car park of the map data (`parking=lane|street_side`) with a corner over 0.3 m out of its outline (G-177). */
+  "bay-car-out-of-park": () => bayCarsOutOfPark(kerbParksOf(SOURCE_OSM), PARKED_CARS),
+  /** A car in a kerb car park mapped `orientation=perpendicular|diagonal` parked along the kerb (G-177). */
+  "bay-car-orientation": () => bayCarsMisturned(kerbParksOf(SOURCE_OSM), PARKED_CARS),
   /** A game block standing on the ground (not an awning or a deck) that floats or sinks. */
   "prop-off-ground": () =>
     GAME_PROPS.flatMap((p) => {

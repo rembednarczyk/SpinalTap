@@ -25,6 +25,8 @@
   "parked-car-on-footway": 0,
   "parked-car-at-bus-stop": 0,
   "parked-car-multilane-kerb": 0,
+  "bay-car-out-of-park": 0,
+  "bay-car-orientation": 0,
   "prop-off-ground": 0,
   "vehicle-below-surface": 0,
   "vehicle-off-surface": 0,
