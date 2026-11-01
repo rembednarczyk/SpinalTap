@@ -14,7 +14,7 @@ import { Site } from "../src/props-site.ts";
  * booth or the stock off what it keeps clear of, or leaves none.
  */
 
-type Extra = Partial<Pick<LublinChunkData, "streets" | "ground" | "passages" | "busStops">>;
+type Extra = Partial<Pick<LublinChunkData, "streets" | "ground" | "passages" | "busStops" | "serviceWays">>;
 
 const PAVEMENT = { surface: "sidewalk", outline: [-30, 10, 50, 10, 50, 70, -30, 70] } as const;
 
@@ -86,6 +86,14 @@ describe("the food booth's rules (ADR-0058 stage 3)", () => {
     expect(least(viaPassage, mouth)).toBeGreaterThanOrEqual(4);
     const byDoor = booth({}, { doors: [{ a: { x: 5, z: 10 }, b: { x: 7, z: 10 } }] })!;
     expect(least(byDoor, { x: 7, z: 10 })).toBeGreaterThanOrEqual(3);
+  });
+
+  it("keeps 1.5 m from a service way's carriageway: a lane 3 m wide by its west end moves it east", () => {
+    // The way's axis at x 2.5, half 1.5 m: its edge at x 4, 0.5 m from the booth's west side (x 4.5)
+    // where it stands without the way, so it must slide until its footprint keeps x ≥ 5.5.
+    const b = booth({ serviceWays: [{ line: [2.5, 10, 2.5, 30], width: 3 }] })!;
+    expect(b).not.toBeNull();
+    expect(Math.min(...footprint(b).map((q) => q.x))).toBeGreaterThanOrEqual(5.5 - 1e-6);
   });
 });
 
