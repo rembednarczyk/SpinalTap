@@ -14,6 +14,7 @@ import {
   isActTwoEndingId,
   isStoryChoiceId,
   isStoryOption,
+  isDifficultyProfile,
 } from "@seki/core";
 import { findItemsError } from "./validate-items";
 import { findContractWave2Error, findEncountersError, findMetroError } from "./validate-wave2";
@@ -88,6 +89,8 @@ export const findSchemaError = (s: Json): string | null => {
   if (!isObject(d.ability) || !isNum(d.ability.activeTime) || !isNum(d.ability.cooldown)) return "ability";
   const bodyError = findBodyError(d) ?? findProgressionError(d.progression);
   if (bodyError) return bodyError;
+  // ADR-0066: every multiplier of the difficulty, in range.
+  if (!isDifficultyProfile(d.difficulty)) return "difficulty";
   const story = d.story;
   if (!isObject(story) || !isObject(story.choices)) return "story";
   for (const [choice, option] of Object.entries(story.choices)) {

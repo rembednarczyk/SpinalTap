@@ -7,6 +7,7 @@ import { applyTradeCommand } from "./trade-commands";
 import { travelMetro } from "./metro-ride";
 import { spendAttribute } from "./progression-ops";
 import { startTakedown } from "../systems/takedown-system";
+import { setDifficulty } from "./difficulty";
 
 type CommandType = GameCommand["type"];
 
@@ -58,6 +59,8 @@ export const COMMAND_HANDLERS: CommandHandlers = {
   "travel-metro": travelMetro,
   // Takedowns (ADR-0065).
   takedown: startTakedown,
+  // Difficulty (ADR-0066).
+  "set-difficulty": setDifficulty,
 };
 
 /** Dispatches a command to its handler; an unknown type (a corrupt replay) changes nothing. */
