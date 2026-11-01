@@ -5,6 +5,7 @@ Zmiany widoczne dla gracza, od najnowszych. Wersja gry i commit są na ekranie t
 ## Nieopublikowane (0.1.0)
 
 ### 1 listopada 2026
+- Automaty z napojami, biletomaty, kamery na masztach i lampiony nad straganami z modeli CC-BY, na ekranie „Autorzy” (ADR-0063, druga paczka).
 - Ekran ładowania z postępem przy nowej grze i wczytaniu (ADR-0057).
 - Obezwładnienie od tyłu: ogłuszenie albo zabicie, z podpowiedzią w HUD (ADR-0065 etap 1, #100).
 - Import zapisu z pliku do osobnego slotu „Zaimportowany” (#99).
