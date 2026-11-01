@@ -1,4 +1,5 @@
 import type { Vec3 } from "@seki/core";
+import type { RenderQuality } from "../../npr/quality";
 import { Color3, Constants, type Mesh, type Scene, ShaderMaterial, Vector3, VertexData } from "../../babylon";
 import type { LightingRig } from "../../npr/lighting";
 import { mixHex } from "../../npr/lighting";
@@ -7,10 +8,12 @@ import { sinkToMesh } from "../dressing";
 import { LIGHTS_FRAGMENT } from "../far-city";
 import { MeshSink, type Rgba, type Vec } from "../mesh-sink";
 import { BODY_GLOW, type MegaBody, addBody, bodyScale } from "./skyline-bodies";
+import { type BridgeSpec, NO_LAYOUT, type SkylineLayout, type TowerSpec, layoutOf } from "./skyline-layout";
+import { LAYOUT_TABLES } from "./skyline-layout-data";
 
 /**
  * The megabuildings of Lublin 2077 (ADR-0051): corporate towers outside the playable centre,
- * on Czechów, by the Zalew, along al. Kraśnicka and over Tatary, standing over the roofs at the
+ * on Czechów, in Zemborzyce, along al. Kraśnicka and over Tatary, standing over the roofs at the
  * ends of the streets. They replace the old map's `FarCity` horizon (ADR-0027, off in the game
  * since ADR-0045) with real places.
  *
@@ -21,9 +24,12 @@ import { BODY_GLOW, type MegaBody, addBody, bodyScale } from "./skyline-bodies";
  * pixels as the real one would, just in front of the far plane. Haze is reckoned from the true
  * distance.
  *
- * Towers: uv = the tower's centre (x, z), uv2.x = seed, colour = tint. Lights: as in
- * `FarCity` (uv on the quad, uv2 = seed and kind, colour = tint); the normal carries the
- * tower's centre (x, z) instead of a direction.
+ * Towers: uv = the tower's centre (x, z), uv2 = seed and the tower's height, colour = tint.
+ * Lights: as in `FarCity` (uv on the quad, uv2 = seed and kind, colour = tint); the normal carries
+ * the tower's centre (x, z) and its height instead of a direction.
+ *
+ * On medium and high the megablocks of ADR-0067 (`MEGA_LAYOUT`) hem the city in as well, in the
+ * same two meshes; the phone keeps the twelve towers of `MEGA_SITES`.
  */
 
 export interface MegaSite {
@@ -38,7 +44,9 @@ export interface MegaSite {
 export const MEGA_SITES: readonly MegaSite[] = [
   { name: "Czechów", x: -1300, z: 1900, towers: [760, 560, 430, 330] },
   { name: "al. Kraśnicka", x: -2700, z: -1300, towers: [880, 620, 420] },
-  { name: "Zalew Zemborzycki", x: -1200, z: -3700, towers: [980, 540, 400] },
+  // Majdan Wrotkowski in Zemborzyce, some 500 m west of the Bystrzyca north of the Zalew (until ADR-0067
+  // "Zalew Zemborzycki" at -1200, -3700, in Wrotków 31 m from the river).
+  { name: "Zemborzyce", x: -1750, z: -3700, towers: [980, 540, 400] },
   { name: "Tatary", x: 1900, z: 1500, towers: [640, 420] },
 ];
 
@@ -55,16 +63,26 @@ export interface SkylinePlan {
   readonly lights: MeshSink;
 }
 
-/** Writes every vertex added since `from` with the tower centre in uv (towers) or the normal (lights). */
-const stamp = (sink: MeshSink, from: number, c: { x: number; z: number }, intoNormal: boolean): void => {
-  for (let i = from; i < sink.vertexCount; i++) {
+/** The megablocks of the game (ADR-0067), from the table in the repo. */
+export const MEGA_LAYOUT: SkylineLayout = layoutOf(LAYOUT_TABLES);
+
+/** The phone keeps today's skyline (ADR-0067). */
+export const skylineLayoutFor = (quality: RenderQuality): SkylineLayout => (quality === "low" ? NO_LAYOUT : MEGA_LAYOUT);
+
+/**
+ * Writes the vertices `from`..`to` with the tower centre and height: into uv and uv2.y (towers) or
+ * the normal (lights).
+ */
+const stamp = (sink: MeshSink, from: number, c: { x: number; z: number; h: number }, intoNormal: boolean, to = sink.vertexCount): void => {
+  for (let i = from; i < to; i++) {
     if (intoNormal) {
       sink.normals[i * 3] = c.x;
-      sink.normals[i * 3 + 1] = 0;
+      sink.normals[i * 3 + 1] = c.h;
       sink.normals[i * 3 + 2] = c.z;
     } else {
       sink.uvs[i * 2] = c.x;
       sink.uvs[i * 2 + 1] = c.z;
+      sink.uvs2[i * 2 + 1] = c.h;
     }
   }
 };
@@ -112,57 +130,110 @@ const tiers = (plan: SkylinePlan, x: number, z: number, h: number, seed: number,
 /**
  * One tower facing the city centre: procedural tiers with a crown and a spire, neon up its corners;
  * or a megatower body (ADR-0063), whose own bands of light stand for the neon. Both get an ad and a
- * beacon on top.
+ * beacon on top; a body hangs `ads` more up its front (ADR-0067), wide and tall-narrow ones in turn.
  */
-const tower = (plan: SkylinePlan, x: number, z: number, h: number, rand: () => number, body: MegaBody | null): void => {
+const tower = (plan: SkylinePlan, spec: TowerSpec, rand: () => number, body: MegaBody | null): void => {
+  const { x, z, h, front: n } = spec;
   const t0 = plan.towers.vertexCount;
   const l0 = plan.lights.vertexCount;
   const seed = rand();
-  const n = Math.abs(x) > Math.abs(z) ? { x: -Math.sign(x), z: 0 } : { x: 0, z: -Math.sign(z) };
   const color = (): Rgba => hex(NEON[Math.floor(rand() * NEON.length)] ?? "#00e5ff", 1);
   if (body) {
     const reach = addBody(plan.towers, body, { x, z, h, front: n }, seed);
-    stamp(plan.towers, t0, { x, z }, false);
+    stamp(plan.towers, t0, { x, z, h }, false);
     const half = bodyScale(body, h).across * Math.min(body.model.size.x, body.model.size.z) * 0.4;
     light(plan.lights, { x: x + n.x * (reach + 2), y: h * (0.5 + rand() * 0.15), z: z + n.z * (reach + 2) }, n, half * 1.5, half * 1.1, color(), [rand(), 0]);
+    for (let k = 0; k < spec.ads; k++) {
+      const y = Math.min(h * (0.22 + 0.2 * k + rand() * 0.05) + (k > 0 ? h * 0.25 : 0), h * 0.92);
+      const tall = k % 2 === 1;
+      light(plan.lights, { x: x + n.x * (reach + 3), y, z: z + n.z * (reach + 3) }, n, half * (tall ? 0.7 : 1.8), half * (tall ? 2.4 : 0.8), color(), [rand(), 0]);
+    }
     light(plan.lights, { x, y: h * 1.01, z }, { x: n.x || 1, z: n.z }, 6, 6, hex("#ff3030", 1), [rand(), 2]);
-    stamp(plan.lights, l0, { x, z }, true);
+    stamp(plan.lights, l0, { x, z, h }, true);
     return;
   }
   tiers(plan, x, z, h, seed, rand);
-  stamp(plan.towers, t0, { x, z }, false);
+  stamp(plan.towers, t0, { x, z, h }, false);
   // Lights on the face looking towards the city centre.
   const half = (n.x !== 0 ? h * 0.15 : h * 0.15 * 0.85) / 2 + 1;
   const face = { x: x + n.x * half * 1.6, z: z + n.z * half * 1.6 };
   for (const side of [-1, 1]) light(plan.lights, { x: face.x - n.z * side * half, y: h * 0.32, z: face.z + n.x * side * half }, n, 2.5, h * 0.6, color(), [rand(), 1]);
   light(plan.lights, { x: face.x + n.x * 2, y: h * (0.5 + rand() * 0.15), z: face.z + n.z * 2 }, n, half * 1.5, half * 1.1, color(), [rand(), 0]);
   light(plan.lights, { x, y: h * 1.13, z }, { x: n.x || 1, z: n.z }, 6, 6, hex("#ff3030", 1), [rand(), 2]);
-  stamp(plan.lights, l0, { x, z }, true);
+  stamp(plan.lights, l0, { x, z, h }, true);
 };
 
 /**
- * The skyline: deterministic, from `MEGA_SITES` only. With megatower bodies (ADR-0063) the towers
- * take them in turn, so every variant stands in more than one place.
+ * A skybridge with a lit underside (ADR-0067); each vertex is stamped with the tower at its end,
+ * so the bridge meets both in the picture.
  */
-export const planSkyline = (sites: readonly MegaSite[] = MEGA_SITES, bodies: readonly MegaBody[] = []): SkylinePlan => {
-  const plan: SkylinePlan = { towers: new MeshSink(), lights: new MeshSink() };
+const bridge = (plan: SkylinePlan, a: TowerSpec, b: TowerSpec, spec: BridgeSpec, rand: () => number): void => {
+  const t0 = plan.towers.vertexCount;
+  const len = Math.hypot(b.x - a.x, b.z - a.z);
+  const c = { x: (a.x + b.x) / 2, y: spec.y, z: (a.z + b.z) / 2 };
+  const rotY = Math.atan2(b.x - a.x, b.z - a.z);
+  plan.towers.box(c, spec.width, 5, len, hex("#6d7486", 1), { rotY, uv2: [2.5, 0] });
+  plan.towers.box({ ...c, y: spec.y - 3.2 }, spec.width * 0.35, 1.4, len, hex(NEON[Math.floor(rand() * NEON.length)] ?? "#00e5ff", 1), { rotY, uv2: [BODY_GLOW, 0] });
+  for (let i = t0; i < plan.towers.vertexCount; i++) {
+    const px = plan.towers.positions[i * 3] ?? 0;
+    const pz = plan.towers.positions[i * 3 + 2] ?? 0;
+    stamp(plan.towers, i, (px - a.x) ** 2 + (pz - a.z) ** 2 < (px - b.x) ** 2 + (pz - b.z) ** 2 ? a : b, false, i + 1);
+  }
+};
+
+/** Today's sites as towers facing the centre on an axis, each site with its own seeded dice. */
+const planSites = (plan: SkylinePlan, sites: readonly MegaSite[], bodies: readonly MegaBody[]): TowerSpec[] => {
+  const placed: TowerSpec[] = [];
+  // A body throws the dice another number of times than the tiers: the feet stay where the tiers
+  // put them (the phone, and what the layout keeps clear of), whatever the body.
+  const feet = bodies.length > 0 ? siteTowers(sites) : null;
   let index = 0;
   for (const s of sites) {
     const rand = prng(Math.floor(Math.abs(s.x * 31 + s.z * 17)) ^ 0x5ca1e);
     s.towers.forEach((h, k) => {
       const a = k * 2.4 + rand();
       const r = k === 0 ? 0 : 120 + rand() * 160;
-      tower(plan, s.x + Math.sin(a) * r, s.z + Math.cos(a) * r, h, rand, bodies[index++ % Math.max(bodies.length, 1)] ?? null);
+      const x = feet?.[index]?.x ?? s.x + Math.sin(a) * r;
+      const z = feet?.[index]?.z ?? s.z + Math.cos(a) * r;
+      const front = Math.abs(x) > Math.abs(z) ? { x: -Math.sign(x), z: 0 } : { x: 0, z: -Math.sign(z) };
+      const spec = { x, z, h, front, ads: 0 };
+      placed.push(spec);
+      tower(plan, spec, rand, bodies[index++ % Math.max(bodies.length, 1)] ?? null);
     });
   }
+  return placed;
+};
+
+/** Where the towers of the sites stand, with or without bodies (the megablock layout keeps clear of them). */
+export function siteTowers(sites: readonly MegaSite[] = MEGA_SITES): TowerSpec[] {
+  return planSites({ towers: new MeshSink(), lights: new MeshSink() }, sites, []);
+}
+
+/**
+ * The skyline: deterministic, from `MEGA_SITES` and the megablock layout (ADR-0067). With megatower
+ * bodies (ADR-0063) the towers take them in turn, so every variant stands in more than one place;
+ * the far ring keeps its tiers (the LOD).
+ */
+export const planSkyline = (sites: readonly MegaSite[] = MEGA_SITES, bodies: readonly MegaBody[] = [], layout: SkylineLayout = NO_LAYOUT): SkylinePlan => {
+  const plan: SkylinePlan = { towers: new MeshSink(), lights: new MeshSink() };
+  planSites(plan, sites, bodies);
+  layout.rows.forEach((row, r) => {
+    const rand = prng(0x5ca1e + r * 7919);
+    const kit = row.lod === "body" ? bodies : [];
+    row.towers.forEach((t, i) => tower(plan, t, rand, kit[i % Math.max(kit.length, 1)] ?? null));
+    for (const b of row.bridges) bridge(plan, row.towers[b.a]!, row.towers[b.b]!, b, rand);
+  });
   return plan;
 };
 
-/** Pulls a vertex towards the eye so its tower's centre lies `shell` metres away (same pixels). */
+/**
+ * Pulls a vertex towards the eye so its tower's top lies `shell` metres away (same pixels): with
+ * the height, a near and tall tower keeps its top inside the far plane too (ADR-0067).
+ */
 const IMPOSTOR = /* glsl */ `
-vec3 impostor(vec3 p, vec2 centre, out float trueDist) {
+vec3 impostor(vec3 p, vec2 centre, float h, out float trueDist) {
   trueDist = length(centre - eye.xz);
-  float s = min(1.0, shell / max(trueDist, 1.0));
+  float s = min(1.0, shell / max(length(vec2(trueDist, h - eye.y)), 1.0));
   return eye + (p - eye) * s;
 }
 `;
@@ -188,7 +259,7 @@ void main(void) {
   vNormal = normal;
   vColor = color;
   vSeed = uv2.x;
-  gl_Position = viewProjection * vec4(impostor(position, uv, vDist), 1.0);
+  gl_Position = viewProjection * vec4(impostor(position, uv, uv2.y, vDist), 1.0);
 }
 `;
 
@@ -258,7 +329,7 @@ void main(void) {
   vColor = color.rgb;
   vMeta = uv2;
   float d;
-  vec3 p = impostor(position, normal.xz, d);
+  vec3 p = impostor(position, normal.xz, normal.y, d);
   // The lights' haze is a third of the street's: scale the distance so it reads like the towers'.
   vDist = d * 0.15;
   gl_Position = viewProjection * vec4(p, 1.0);
@@ -276,8 +347,12 @@ export class MapSkyline {
   private time = 0;
   private readonly eye = new Vector3();
 
-  constructor(scene: Scene, withLights: boolean) {
-    const plan = planSkyline();
+  constructor(
+    scene: Scene,
+    withLights: boolean,
+    private readonly layout: SkylineLayout = NO_LAYOUT,
+  ) {
+    const plan = planSkyline(MEGA_SITES, [], layout);
     const towers = new ShaderMaterial("map-skyline", scene, { vertexSource: TOWER_VERTEX, fragmentSource: TOWER_FRAGMENT }, {
       attributes: ["position", "normal", "color", "uv", "uv2"],
       uniforms: ["viewProjection", "eye", "shell", "silhouette", "fogColor", "fogDensity", "lit"],
@@ -315,7 +390,7 @@ export class MapSkyline {
    */
   setBodies(bodies: readonly MegaBody[]): void {
     if (bodies.length === 0) return;
-    const plan = planSkyline(MEGA_SITES, bodies);
+    const plan = planSkyline(MEGA_SITES, bodies, this.layout);
     [plan.towers, plan.lights].forEach((sink, i) => {
       const mesh = this.meshes[i];
       if (!mesh) return;

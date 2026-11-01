@@ -15,6 +15,7 @@ export const en = {
   "title.newGame": "New Game",
   "title.load": "Load Game",
   "title.fullscreen": "Fullscreen",
+  "title.settings": "Settings",
   "title.credits": "Credits",
   "title.attribution": "Map data © OpenStreetMap contributors (ODbL) · terrain: GUGiK NMT",
   "credits.heading": "Credits & Sources",

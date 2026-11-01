@@ -8,6 +8,7 @@ import type { EquipSlot, ItemRef, ModSlot } from "../items/types";
 import type { BreachDaemonId } from "../hacking/quickhacks";
 import type { MetroStationId } from "../world/wave2";
 import type { AttributeId } from "../progression/attributes";
+import type { DifficultyProfile } from "../difficulty/difficulty";
 
 /**
  * Requests from outside the simulation (narrative, UI). They are queued and applied at
@@ -88,4 +89,11 @@ export type GameCommand =
    */
   | { readonly type: "carry-body" }
   /** Puts the carried body down at the player's feet, or into the free hiding place in reach. */
-  | { readonly type: "drop-body" };
+  | { readonly type: "drop-body" }
+  // Difficulty (ADR-0066).
+  /**
+   * Sets the whole difficulty profile (a preset's or a custom one). Taken at once outside a fight;
+   * with an alerted NPC near the player it waits until the fight is over. A profile with a
+   * multiplier out of range is refused.
+   */
+  | { readonly type: "set-difficulty"; readonly profile: DifficultyProfile };

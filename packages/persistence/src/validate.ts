@@ -14,6 +14,7 @@ import {
   isActTwoEndingId,
   isStoryChoiceId,
   isStoryOption,
+  isDifficultyProfile,
 } from "@seki/core";
 import { findItemsError } from "./validate-items";
 import { findContractWave2Error, findEncountersError, findMetroError } from "./validate-wave2";
@@ -39,6 +40,7 @@ export const findSchemaError = (s: Json): string | null => {
     if (!isObject(e) || typeof e.key !== "string" || !isVec(e.position)) return "entity shape";
     if (!isNum(e.yaw) || !isNum(e.pitch) || !isNum(e.cooldown) || typeof e.alerted !== "boolean") return `entity ${e.key}`;
     if (e.hp !== null && !isNum(e.hp)) return `entity ${e.key} hp`;
+    if (e.maxHp !== undefined && !(isNum(e.maxHp) && e.maxHp > 0)) return `entity ${e.key} hp`;
     if ((e.lastKnown !== undefined && !isVec(e.lastKnown)) || (e.search !== undefined && !isNum(e.search)) || (e.lost !== undefined && !isNum(e.lost))) {
       return `entity ${e.key} search`;
     }
@@ -94,6 +96,8 @@ export const findSchemaError = (s: Json): string | null => {
   if (!isObject(d.ability) || !isNum(d.ability.activeTime) || !isNum(d.ability.cooldown)) return "ability";
   const bodyError = findBodyError(d) ?? findProgressionError(d.progression);
   if (bodyError) return bodyError;
+  // ADR-0066: every multiplier of the difficulty, in range.
+  if (!isDifficultyProfile(d.difficulty)) return "difficulty";
   const story = d.story;
   if (!isObject(story) || !isObject(story.choices)) return "story";
   for (const [choice, option] of Object.entries(story.choices)) {

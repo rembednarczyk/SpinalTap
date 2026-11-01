@@ -3,7 +3,7 @@ import { type BodySnapshot, SAVE_SCHEMA_VERSION } from "@seki/core";
 import { MIGRATIONS, checksum, decodeSave, encodeSave, findSchemaError } from "../src";
 import { snapshot } from "./fixtures";
 
-/** Bodies in the save (ADR-0065, stage 3): schema v18 and the v17 -> v18 migration. */
+/** Bodies in the save (ADR-0065, stage 3): schema v19 and the v18 -> v19 migration. */
 
 const wrap = (payload: unknown) => {
   const text = JSON.stringify(payload);
@@ -12,18 +12,18 @@ const wrap = (payload: unknown) => {
 
 const BODY: BodySnapshot = { playerAt: { x: -2, y: 0, z: 38.8 }, fought: false, found: true, reported: false, dead: false, carried: true, hidden: false };
 
-describe("bodies in the save (v17 to v18, ADR-0065)", () => {
-  it("is schema v18", () => {
-    expect(SAVE_SCHEMA_VERSION).toBe(18);
+describe("bodies in the save (v18 to v19, ADR-0065)", () => {
+  it("is schema v19", () => {
+    expect(SAVE_SCHEMA_VERSION).toBe(19);
   });
 
-  it("a v17 save loads as it was: nobody in it lies knocked out", () => {
+  it("a v18 save loads as it was: nobody in it lies knocked out", () => {
     const today = snapshot();
-    const loaded = decodeSave("v17", wrap({ ...today, version: 17 }));
+    const loaded = decodeSave("v18", wrap({ ...today, version: 18 }));
     expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
     expect(loaded.entities).toEqual(today.entities);
     expect(loaded.entities.some((e) => e.downed)).toBe(false);
-    expect(MIGRATIONS[17]!({ version: 17, entities: [] })).toEqual({ version: 18, entities: [] });
+    expect(MIGRATIONS[18]!({ version: 18, entities: [] })).toEqual({ version: 19, entities: [] });
   });
 
   it("keeps a carried, a hidden and a dead body through the codec", () => {

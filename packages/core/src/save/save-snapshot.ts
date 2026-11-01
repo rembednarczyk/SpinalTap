@@ -2,8 +2,9 @@ import type { Vec3 } from "../math/vec3";
 import type { DomainState } from "../state/domain-state";
 
 /**
- * v18: bodies (ADR-0065): the knocked out and the dead of a takedown lie where they were left,
+ * v19: bodies (ADR-0065): the knocked out and the dead of a takedown lie where they were left,
  * carried by the player or hidden; an older save has none.
+ * v18: the difficulty profile (ADR-0066); older saves play on "normal".
  * v17: character progression (ADR-0059): XP, level, attributes, perks and the points to spend.
  * v16: Kaito is at the Neon Koi counter from the start (G-034): no new fields, but a save from
  * before the first conversation remembered him by the chair in the clinic.
@@ -17,7 +18,7 @@ import type { DomainState } from "../state/domain-state";
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 18;
+export const SAVE_SCHEMA_VERSION = 19;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {
@@ -26,6 +27,11 @@ export interface EntitySnapshot {
   readonly yaw: number;
   readonly pitch: number;
   readonly hp: number | null;
+  /**
+   * The maximum health of an enemy toughened by the difficulty (ADR-0066), when it differs from
+   * the content's own; loaded, the enemy keeps the same share of its maximum then.
+   */
+  readonly maxHp?: number;
   readonly cooldown: number;
   /** AI alert state; false for non-AI entities. */
   readonly alerted: boolean;

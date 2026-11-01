@@ -328,10 +328,17 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
     const capacityShards = shards + compensatingShards(completed, shards, progression.level);
     return { ...old, version: 17, domain: { ...domain, progression, ...(isObject(old.domain) ? { capacityShards } : {}) } };
   },
-  // v17 -> v18 (ADR-0065, stage 3): bodies are saved (`downed` of an entity, optional). An older
+  // v17 -> v18 (ADR-0066): the difficulty profile. A save from before it was played on what is
+  // now "normal" (all ones), spelled out like every migration's content.
+  17: (old) => {
+    const domain = isObject(old.domain) ? old.domain : {};
+    const normal = { damageTaken: 1, npcAccuracy: 1, awareness: 1, reinforce: 1, npcHealth: 1, snipeTell: 1 };
+    return { ...old, version: 18, domain: { ...domain, difficulty: normal } };
+  },
+  // v18 -> v19 (ADR-0065, stage 3): bodies are saved (`downed` of an entity, optional). An older
   // save has none: whoever was knocked out in it was saved as awake and wakes up so, and the
   // dead of a takedown had vanished. Nothing to change but the version.
-  17: (old) => ({ ...old, version: 18 }),
+  18: (old) => ({ ...old, version: 19 }),
 };
 
 export class MigrationError extends Error {}

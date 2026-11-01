@@ -10,7 +10,7 @@ import { inCreationOrder } from "../../world/ordering";
 import { incapacitated } from "../../world/takedown";
 import { followSchedule } from "../../world/schedule";
 import { worldTimeScale } from "../ability-system";
-import { NPC_CRIT, aimSpreadOf, fireShot } from "../combat-system";
+import { NPC_CRIT, fireShot, npcSpreadOf } from "../combat-system";
 import { startSwing } from "../melee-system";
 import { knockbackVelocity } from "../../world/knockback";
 import { readyToFire } from "../../world/player-weapon";
@@ -164,7 +164,7 @@ class GangerAgent {
     if (combatant && readyToFire(combatant, combatant.loaded)) {
       const origin = eyeOf(self);
       const dir = normalize(sub(chestOf(target), origin));
-      fireShot(ctx, { shooter: self, origin, dir, spread: aimSpreadOf(self, null), ...NPC_CRIT }, ctx.rng);
+      fireShot(ctx, { shooter: self, origin, dir, spread: npcSpreadOf(ctx, self), ...NPC_CRIT }, ctx.rng);
       // Stagger the next burst so the two gangers do not fire in lockstep.
       combatant.cooldown += ctx.rng.next() * 0.5;
     }

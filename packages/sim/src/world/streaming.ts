@@ -38,6 +38,7 @@ import {
   gangerEntity,
   isDead,
   pickupEntity,
+  toughen,
   propEntity,
   sniperEntity,
   terminalEntity,
@@ -126,6 +127,8 @@ export class WorldStreamer {
   readonly passerbyIds = new Map<string, readonly EntityId[]>();
   /** The ground of these chunks (ADR-0043): their terrain, or the street plane. */
   readonly ground: GroundField;
+  /** The difficulty's `npcHealth` (ADR-0066), read when a character appears; the simulation sets it. */
+  enemyHealth: () => number = () => 1;
 
   constructor(
     private readonly ids: IdAllocator,
@@ -346,7 +349,7 @@ export class WorldStreamer {
       if (s.alerted || s.lastKnown || this.bodyHere(s)) {
         // It was chasing (or looking for) the player when the save was made: pinned, alive outside
         // its chunk. A body on her shoulder, or lying in a resident chunk, is there too.
-        const pinned = world.add(revived(t.make(), s));
+        const pinned = world.add(revived(this.build(t), s));
         if (s.downed) restoreDowned(world, pinned, s.downed);
       } else {
         this.dormant.set(s.key, s);
@@ -412,6 +415,11 @@ export class WorldStreamer {
     }
   }
 
+  /** A character as it appears: hostile ones with the difficulty's health (ADR-0066), before any saved state. */
+  private build(t: Template): Entity {
+    return toughen(t.make(), this.enemyHealth());
+  }
+
   private actorsOf(chunkId: string): Template[] {
     const own = (this.content.get(chunkId) ?? []).filter((t) => t.key !== null);
     return [...own, ...this.contract.filter((t) => t.chunk === chunkId)];
@@ -435,7 +443,7 @@ export class WorldStreamer {
       const saved = this.dormant.get(t.key);
       // The dead do not come back, but for a body left lying (ADR-0065).
       if (isDead(flags, t.key) && !saved?.downed?.dead) continue;
-      const e = saved ? revived(t.make(), saved) : t.make();
+      const e = saved ? revived(this.build(t), saved) : this.build(t);
       if (saved) this.dormant.delete(t.key);
       if (clock && e.schedule && !saved?.downed) placeOnSchedule(e, e.schedule.def, clock);
       settle(world, this.ground, e);

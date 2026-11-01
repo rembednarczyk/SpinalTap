@@ -67,6 +67,11 @@ export interface Entity {
   posture?: Posture;
   player?: true;
   health?: Health;
+  /**
+   * The content's own maximum health of a hostile NPC before the difficulty's `npcHealth`
+   * (ADR-0066). Transient: rebuilt by `toughen` whenever the entity is made again.
+   */
+  baseHp?: number;
   /** Who dealt the last damage. Transient (never saved): death is resolved in the same step. */
   lastHitBy?: EntityId;
   faction?: FactionId;

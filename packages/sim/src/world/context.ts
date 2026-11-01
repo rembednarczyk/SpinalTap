@@ -1,5 +1,5 @@
 import type { TrafficDensity } from "../content/traffic";
-import type { CrimeKind, DisturbanceKind, DomainEvents, DomainState, EntityId, EventBus, InputFrame, Vec3 } from "@seki/core";
+import type { CrimeKind, DifficultyProfile, DisturbanceKind, DomainEvents, DomainState, EntityId, EventBus, InputFrame, Vec3 } from "@seki/core";
 import type { World } from "miniplex";
 import type { SeededRandom } from "../rng/seeded-random";
 import type { Entity } from "./components";
@@ -49,6 +49,11 @@ export interface SessionState {
   bodyTarget: { readonly id: EntityId; readonly distance: number } | null;
   /** The free hiding place in reach of the carried body, null when none: the key hides it there. */
   hideSpot: EntityId | null;
+  /**
+   * A difficulty asked for during a fight (ADR-0066): it takes effect when the fight is over.
+   * Transient, not saved.
+   */
+  pendingDifficulty: DifficultyProfile | null;
 }
 
 /** A takedown in progress (ADR-0065): the player and `target` stand still until `left` runs out. */
@@ -140,6 +145,7 @@ export const freshSession = (): SessionState => ({
   carrying: null,
   bodyTarget: null,
   hideSpot: null,
+  pendingDifficulty: null,
 });
 
 /** Mutable holder for the immutable domain state, plus a dirty marker for quest evaluation. */
