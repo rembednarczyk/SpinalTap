@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-165 `BodyFound` emitowane przy każdym nowym oglądającym zwłoki
+- Status: zamknięte jako zamierzone (1.11, orkiestrator): `BodyFound { body, finder }` to „ten NPC znalazł ciało”; każdy NPC ogląda ciało raz (`lookedBy`), więc para ciało–znalazca się nie powtarza, a kolejne znalezienia są potrzebne (patrol zgłasza zwłoki po przechodniu; 8 testów stage 2–3 na tym stoi). UI, które zechce jednego zdarzenia na ciało, filtruje po `body`
+- Ważność: S4 · Zasięg: każde zwłoki oglądane przez kilku NPC (np. przechodzień, potem patrol)
+- Poprawka: jedno `BodyFound` na ciało albo jawne pole „pierwszy znalazca”, zanim UI zacznie z niego korzystać
+- Pakiet właściciela: packages/sim (body-watch)
+
 ### G-152 Kontenery w ogrodzonym parku na Nabrzeżu
 - Status: naprawione (1.11, #124: 6 kontenerów na Giełdzie na Kresowej, park pusty; dalej G-169)
 - Ważność: S3 · Zasięg: 5 z 8 kontenerów w parku w154191322 (`leisure=park`, `natural=scrub`, `barrier=fence`), jeden w poprzek płotu

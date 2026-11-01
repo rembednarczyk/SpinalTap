@@ -559,12 +559,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: odrzucić `equip-item`/`unequip-item` broni przy niesieniu (albo zablokować przycisk w menu), test sesji
 - Pakiet właściciela: packages/sim, packages/ui
 
-### G-165 `BodyFound` emitowane przy każdym nowym oglądającym zwłoki
-- Status: zgłoszone (1.11, weryfikator ADR-0065 etap 3); dziś nikt nie słucha zdarzenia
-- Ważność: S4 · Zasięg: każde zwłoki oglądane przez kilku NPC (np. przechodzień, potem patrol)
-- Poprawka: jedno `BodyFound` na ciało albo jawne pole „pierwszy znalazca”, zanim UI zacznie z niego korzystać
-- Pakiet właściciela: packages/sim (body-watch)
-
 ### G-166 Sztukmistrz na linie nad Grodzką
 - Status: zgłoszone (1.11, kurator przy G-149)
 - Ważność: S3 · Zasięg: Grodzka (617.1, 25.8), n7168903380; plan ulic P1 („model do zrobienia + lina”)
