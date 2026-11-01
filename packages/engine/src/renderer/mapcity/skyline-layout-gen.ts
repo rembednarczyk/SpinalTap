@@ -1,4 +1,6 @@
 import { prng } from "../city-kit-data";
+import { siteTowers } from "./skyline";
+import { BODY_REACH, type Disc, TIERS_REACH, areaHit, bridgeViewHit, overlaps, riverHit, viewHit } from "./skyline-guard";
 import type { BridgeRow, LayoutTables, TowerRow } from "./skyline-layout";
 
 /**
@@ -11,6 +13,11 @@ import type { BridgeRow, LayoutTables, TowerRow } from "./skyline-layout";
  *   (Krakowskie, Stare Miasto, Podzamcze), with skybridges between neighbours and ads up the front;
  * - docks: the same round the Nabrzeże on its north, east and south (the west looks at the city);
  * - ring: two rows of megablocks 360 and 600 m out, 150–350 m, simpler bodies (the far LOD).
+ *
+ * Every tower keeps to `skyline-guard.ts` (the topography curator's review): off the Jewish
+ * cemeteries, the Ogród Saski and the Bystrzyca, out of the kept view axes, and clear of the
+ * bodies of the other rows and of `MEGA_SITES`. One that cannot is moved further out along its
+ * line to the box, and dropped if that does not help within `MAX_PUSH`.
  */
 
 interface Box {
@@ -26,10 +33,8 @@ export const DOCKS_BLOCK: Box = { minX: 2300, maxX: 2700, minZ: 60, maxZ: 480 };
 
 /** Metres between a tower's foot and any chunk, beyond the reach of its body. */
 const CLEAR = 200;
-/** How far a megatower body reaches out from its foot, per metre of its height (`mc-tower-d`, the widest, 0.196). */
-const BODY_REACH = 0.2;
-/** The same for the far ring's tiers (0.18 h wide at most, its half diagonal). */
-const TIERS_REACH = 0.13;
+/** How far out a tower may be moved to keep the rules, metres. */
+const MAX_PUSH = 500;
 
 const toBox = (b: Box, x: number, z: number): number => Math.hypot(Math.max(b.minX - x, 0, x - b.maxX), Math.max(b.minZ - z, 0, z - b.maxZ));
 const toData = (x: number, z: number): number => Math.min(toBox(MAIN_BLOCK, x, z), toBox(DOCKS_BLOCK, x, z));
@@ -82,11 +87,16 @@ interface RowPlan {
 
 const r1 = (v: number): number => Math.round(v * 10) / 10;
 
+/** Whether a tower may stand there: clear of the data, the protected places, the views and `taken`. */
+const fits = (t: Disc, taken: readonly Disc[]): boolean =>
+  toData(t.x, t.z) - t.r >= CLEAR && !areaHit(t) && !riverHit(t) && !viewHit(t) && !taken.some((o) => overlaps(t, o));
+
 /**
  * Towers round a box `offset` metres out every `spacing` metres, jittered, each pushed out until
- * its body clears every chunk by `CLEAR`; the front looks at the box.
+ * it fits (clear of the data by `CLEAR`, of the guard's places and of the `taken` bodies); the front
+ * looks at the box.
  */
-const towersOf = (p: RowPlan): TowerRow[] => {
+const towersOf = (p: RowPlan, taken: readonly Disc[]): TowerRow[] => {
   const rand = prng(p.seed);
   const heights = prng(p.seed ^ 0x77);
   const w = p.box.maxX - p.box.minX;
@@ -103,11 +113,12 @@ const towersOf = (p: RowPlan): TowerRow[] => {
     z += -t.z * radial - t.x * lateral;
     const h = Math.round(p.lo + heights() * (p.hi - p.lo));
     if (p.keep && !p.keep(x, z)) continue;
-    // Out along the line to the box until the body clears the data.
-    for (let k = 0; k < 40 && toData(x, z) - p.reach * h < CLEAR; k++) {
-      x -= t.x * 10;
-      z -= t.z * 10;
-    }
+    // Out along the line to the box until the tower fits.
+    let push = 0;
+    while (push <= MAX_PUSH && !fits({ x: x - t.x * push, z: z - t.z * push, r: p.reach * h }, taken)) push += 10;
+    if (push > MAX_PUSH) continue;
+    x -= t.x * push;
+    z -= t.z * push;
     const f = towards(p.box, x, z);
     out.push([r1(x), r1(z), h, r1((Math.atan2(f.x, f.z) * 180) / Math.PI), p.ads]);
   }
@@ -126,7 +137,11 @@ const bridgesOf = (towers: readonly TowerRow[], seed: number, closed: boolean): 
     if (Math.hypot(ax - bx, az - bz) > 260) continue;
     const top = Math.min(ah, bh);
     for (const f of [0.28, 0.52, 0.74]) {
-      if (rand() < 0.75) out.push([a, b, r1(top * (f + (rand() - 0.5) * 0.06)), r1(8 + rand() * 8)]);
+      if (rand() >= 0.75) continue;
+      const y = r1(top * (f + (rand() - 0.5) * 0.06));
+      const width = r1(8 + rand() * 8);
+      // Across a kept view only high up (the dice are thrown all the same, so the rest stay put).
+      if (!bridgeViewHit({ x: ax, z: az }, { x: bx, z: bz }, y)) out.push([a, b, y, width]);
     }
   }
   return out;
@@ -153,13 +168,16 @@ const RING: readonly RowPlan[] = [
 
 /** The whole layout, the same on every run. */
 export const generateLayout = (): LayoutTables => {
-  const near = towersOf(NEAR);
+  const sites = siteTowers().map((t) => ({ x: t.x, z: t.z, r: BODY_REACH * t.h }));
+  const discs = (rows: readonly TowerRow[], reach: number): Disc[] => rows.map(([x, z, h]) => ({ x, z, r: reach * h }));
+  const near = towersOf(NEAR, sites);
   // The docks row starts at its south-west corner: it is open there, so no bridge closes it.
-  const docks = towersOf(DOCKS);
+  const docks = towersOf(DOCKS, [...sites, ...discs(near, BODY_REACH)]);
+  const bodies = [...sites, ...discs(near, BODY_REACH), ...discs(docks, BODY_REACH)];
   return {
     near: { towers: near, bridges: bridgesOf(near, 404, true) },
     docks: { towers: docks, bridges: bridgesOf(docks, 606, false) },
-    ring: { towers: RING.flatMap(towersOf), bridges: [] },
+    ring: { towers: RING.flatMap((r) => towersOf(r, bodies)), bridges: [] },
   };
 };
 

@@ -73,9 +73,10 @@ describe("megablocks round Lublin (ADR-0067)", () => {
     const near = row("near");
     const docks = row("docks");
     const ring = row("ring");
-    expect(near.towers.length).toBeGreaterThanOrEqual(45);
-    expect(near.bridges.length).toBeGreaterThanOrEqual(90);
-    expect(ring.towers.length).toBeGreaterThanOrEqual(80);
+    // Fewer than the 50, 112 and 85 of the prototype: the topography guard drops what cannot move.
+    expect(near.towers.length).toBeGreaterThanOrEqual(40);
+    expect(near.bridges.length).toBeGreaterThanOrEqual(70);
+    expect(ring.towers.length).toBeGreaterThanOrEqual(70);
     expect([near.lod, docks.lod, ring.lod]).toEqual(["body", "body", "tiers"]);
     for (const r of MEGA_LAYOUT.rows) {
       for (const t of r.towers) expect(Math.hypot(t.front.x, t.front.z)).toBeCloseTo(1, 6);
@@ -119,8 +120,12 @@ describe("megablocks round Lublin (ADR-0067)", () => {
     expect(skylineLayoutFor("medium")).toBe(MEGA_LAYOUT);
     expect(skylineLayoutFor("high")).toBe(MEGA_LAYOUT);
     const phone = planSkyline(MEGA_SITES, [], skylineLayoutFor("low"));
-    // Today's twelve procedural towers, vertex for vertex (hash taken before ADR-0067).
-    expect(shape(phone.towers)).toBe("ffbdf51f-68fc33dd-8665419b-862f0c87-f7835a3b-8d2913b");
-    expect(shape(phone.lights, true)).toBe("9ce54fe9-6b6f0549-eb34110b-d0e5086b-c7991943-432d18ab");
+    expect(phone.towers.positions).toEqual(planSkyline().towers.positions);
+    // The twelve procedural towers: the nine of Czechów, al. Kraśnicka and Tatary vertex for vertex
+    // as before ADR-0067 (hash taken then); the three by the Zalew moved off the Bystrzyca to Wrotków.
+    const kept = planSkyline(MEGA_SITES.filter((s) => s.name !== "Wrotków"));
+    expect(shape(kept.towers)).toBe("51f9c573-6d2ab30-11278eb-14039997-c9949e8b-96ce0aa3");
+    expect(shape(kept.lights, true)).toBe("6926a933-d2624c06-94b36cb3-b3d07ceb-d93fcca3-6efa0a0b");
+    expect(shape(phone.towers)).toBe("5fafc119-c80da0b8-6c366853-9fb122b7-6c43e1db-2026afd3");
   });
 });
