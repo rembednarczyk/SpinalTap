@@ -7,19 +7,18 @@ import { CROUCH, camera, offset, patrol, quietStreet, stallholder, takeDown, tic
 /** Stage 2 of ADR-0065: who sees a takedown (an assault, heat as for an attack on a civilian). */
 
 describe("witnesses of a takedown (ADR-0065)", () => {
-  it("unseen it is no crime: no report, no heat", () => {
-    const sim = quietStreet();
-    const guard = victim(sim);
-    const done = collect<DomainEvents["TakedownDone"]>(sim, "TakedownDone");
-    const reports = collect(sim, "CrimeReported");
-    takeDown(sim);
-    run(sim, ticks(2), CROUCH);
-    expect(done).toEqual([{ target: guard.id, lethal: false, witnessed: false }]);
-    expect(reports).toEqual([]);
-    expect(sim.domain.heat.level).toBe(0);
-  });
-
-  it("seen by a patrol it is an assault, a level below a murder", () => {
+  it("unseen it is no crime; seen by a patrol it is an assault, a level below a murder", () => {
+    for (const lethal of [false, true]) {
+      const sim = quietStreet();
+      const guard = victim(sim);
+      const done = collect<DomainEvents["TakedownDone"]>(sim, "TakedownDone");
+      const reports = collect(sim, "CrimeReported");
+      takeDown(sim, lethal);
+      run(sim, ticks(2), CROUCH);
+      expect(done).toEqual([{ target: guard.id, lethal, witnessed: false }]);
+      expect(reports).toEqual([]);
+      expect(sim.domain.heat.level).toBe(0);
+    }
     for (const lethal of [false, true]) {
       const sim = quietStreet();
       const guard = victim(sim);
