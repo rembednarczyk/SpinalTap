@@ -493,7 +493,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (parked-cars), tools/osm-import
 
 ### G-160 Neon DENKI (i KARAOKE, SAKE) osiowy na ukośnej ścianie: koniec w murze, koniec w powietrzu
-- Status: w PR #161, runda 2 (1.11): DENKI i KARAOKE przyjęte; SAKE na wklęsłym narożniku 41% w murze (ucięte litery), kontrola `neon-off-wall` do zaostrzenia (część szerokości w bryle); u autora. Opcja B (`yaw` w widoku `neon`, ADR) jako docelowa
+- Status: w PR #161, runda 2 w weryfikacji (1.11): SAKE przeniesiony na płaski odcinek, płyty 0,55 m, 0,16 m od ściany; kontrola liczy część płyty w bryle (≤ 15%)
 - Ważność: S3 · Zasięg: lokalny (Rynek/Grodzka, trasa kanału Tetsu, widoczne z deptaka) · Koszt: mały
 - Gdzie: DENKI (567,3; −24,9) y 4,1, odsunięcie końca od ściany 1,95 m; KARAOKE (554,0; −33,8) 2,41 m; SAKE (545,0; −74,0) 0,45 m; w mieście 3 z 8 neonów przy ścianach
 - Dowód: kąt osi płyty do stycznej ściany 51°/53°/46°; zrzuty `scratchpad/g160-shots/g160-h.png`, `g160-i.png`
@@ -620,6 +620,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: w232362980 (Kowalska, lane, 2,2 m: spadek, nawierzchnia, wyjście poza obrys), w232362991 (Kowalska, diagonal, 3,4–3,9 m: za płytki na skos z tagu, 8 z 12 zatok bez modelu), w356947938 (najbliższa droga z ruchem 75 m dalej), w1159135271 (Łęczyńska, perpendicular, 3,4 m: za płytki na układ prostopadły), w1514058885 (Świętoduska, parallel, 2,45 m: 18 zatok na spadku, G-133)
 - Poprawka: płytki pas z tagiem `diagonal`/`perpendicular` → mniejszy kąt albo krótszy model; spadek przez G-133 (pochylenie aut); `bay-strip-sparse` dziś pomija pasy bez auta
 - Pakiet właściciela: packages/sim (kerb-bays), tools/glitch-scan
+
+### G-191 Gzymsy wystają poza obrys OSM i przycinają płaskie płyty znaków
+- Status: zgłoszone (1.11, autor G-160)
+- Ważność: S4 · Zasięg: gzymsy w mapcity sięgają poza obrys budynku z OSM; płaska płyta (neon, szyld) na ich wysokości wchodzi w gzyms (tak był ucięty róg SAKE przed runda 2 G-160); kontrole oparte na `inBuilding` i obrysie tego nie widzą, a przy lokalach (`ROOM_SITES`, wycięta kondygnacja) dają fałszywe trafienia
+- Poprawka: kontrola skanu „płyta znaku w bryle gzymsu” (geometria gzymsu z planu fasady); kontrole na obrysie uwzględniają fronty lokali
+- Pakiet właściciela: tools/glitch-scan, packages/engine (mapcity)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
