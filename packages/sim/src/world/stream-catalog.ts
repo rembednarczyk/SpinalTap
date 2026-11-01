@@ -100,6 +100,11 @@ export class StreamCatalog {
     for (const t of templates) if (t.key) this.former.set(t.key, t);
   }
 
+  /** Forgets the replaced jobs' templates but those of `keys` (G-188): nobody else of them is about. */
+  keepFormer(keys: ReadonlySet<string>): void {
+    for (const k of [...this.former.keys()]) if (!keys.has(k)) this.former.delete(k);
+  }
+
   /**
    * The contract's site cleared (G-195): its people are known by key only from now on, as a
    * replaced job's, so no chunk brings them back and only those saved in the world return.

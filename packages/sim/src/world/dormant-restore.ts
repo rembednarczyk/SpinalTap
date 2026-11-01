@@ -27,6 +27,12 @@ const restoreFormer = (world: World<Entity>, flags: readonly string[], s: Entity
 const bodyHere = (s: EntitySnapshot, parts: RestoreParts): boolean =>
   !!s.downed && (s.downed.carried || parts.state.resident.has(parts.chunkIdAt(s.position)));
 
+/**
+ * An AI saved in the world while its chunk slept: marked so (G-188), or, in a save from before
+ * the mark, after the player.
+ */
+const pinnedIn = (s: EntitySnapshot): boolean => s.away !== undefined || s.alerted || !!s.lastKnown;
+
 /** Re-applies saved entity state: live entities directly, the rest as pinned or dormant. */
 export const restoreEntities = (world: World<Entity>, flags: readonly string[], saved: readonly EntitySnapshot[], parts: RestoreParts): void => {
   const { state, catalog, spawner } = parts;
@@ -41,7 +47,8 @@ export const restoreEntities = (world: World<Entity>, flags: readonly string[], 
     }
     const former = catalog.formerOf(s.key);
     // A cleared site's sleeper (G-195) in a save from before sites were cleared: gone with his chunk.
-    if (former && parts.cleared.has(s.key) && !s.alerted && !s.lastKnown && !bodyHere(s, parts) && !state.resident.has(former.chunk)) continue;
+    // One marked pinned (G-188) was in the world, wherever he stands: he comes back to it.
+    if (former && parts.cleared.has(s.key) && !pinnedIn(s) && !bodyHere(s, parts) && !state.resident.has(former.chunk)) continue;
     if (former) {
       restoreFormer(world, flags, s, former, spawner);
       continue;
@@ -49,9 +56,10 @@ export const restoreEntities = (world: World<Entity>, flags: readonly string[], 
     const t = catalog.placeOf(s.key, flags);
     // The dead do not come back, but for a body left lying (ADR-0065).
     if (!t || (isDead(flags, s.key) && !s.downed?.dead) || flags.includes(takenFlag(s.key)) || !isPresent(t.when, flags)) continue;
-    if (s.alerted || s.lastKnown || bodyHere(s, parts)) {
-      // It was chasing (or looking for) the player when the save was made: pinned, alive outside
-      // its chunk. A body on her shoulder, or lying in a resident chunk, is there too.
+    if (pinnedIn(s) || bodyHere(s, parts)) {
+      // It was chasing (or looking for) the player when the save was made, or was in the world
+      // still while its chunk slept: pinned, alive outside its chunk. A body on her shoulder, or
+      // lying in a resident chunk, is there too.
       const pinned = world.add(revived(spawner.build(t), s));
       if (s.downed) restoreDowned(world, pinned, s.downed);
     } else {

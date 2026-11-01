@@ -24,6 +24,8 @@ export const findEntityError = (e: unknown): string | null => {
   if (e.downed !== undefined && !isBody(e.downed)) return `entity ${e.key} downed`;
   // G-174: a guard not sure yet, between nothing seen (not saved) and sure.
   if (e.suspicion !== undefined && !(isNum(e.suspicion) && e.suspicion > 0 && e.suspicion <= 1)) return `entity ${e.key} suspicion`;
+  // G-188: seconds outside every loaded chunk of an AI pinned in the world.
+  if (e.away !== undefined && !(isNum(e.away) && e.away >= 0)) return `entity ${e.key} away`;
   return null;
 };
 
