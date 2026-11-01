@@ -447,7 +447,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer, przepisy zabytków)
 
 ### G-138 Pasy ruchu na szwach chunków i krawędziach mapy bez nawierzchni
-- Status: w weryfikacji (4ad3687: pasy przycięte 0,1 m od krawędzi mapy, `lane-off-ground` 56 → 9; reszta to zawracanie na Alei Tysiąclecia i szczelina z G-144)
+- Status: w PR #115 (weryfikator przyjął 1.11; 4ad3687: pasy przycięte 0,1 m od krawędzi mapy, `lane-off-ground` 56 → 9; reszta to zawracanie na Alei Tysiąclecia i szczelina z G-144)
 - Ważność: S4 · Zasięg: 56 z 23 374 punktów pasów (co 1 m), na szwach chunków (z ≈ 160) i krawędziach mapy
 - Gdzie: `surfacesAt` nie zwraca tam żadnej nawierzchni, a `GroundField.heightAt` różni się od `groundY` (np. (−96.3, −270.5): −1,80 zamiast 0,00); sprawa sprzed G-130
 - Pakiet właściciela: packages/sim (content/lublin, ground)
@@ -475,6 +475,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: zaokrąglone albo zachodzące końce buforów na styku dróg; tabele przez `osm:build`
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: punkty pasów co 0,1 m bez nawierzchni → 0 poza zawracaniem na Alei Tysiąclecia; `lane-off-ground` 9 → 8
+- Uwaga weryfikatora G-138: `lane-off-ground` próbkuje co 1 m, więc wynik zależy od przesunięcia próbek (7–12 przy tej samej geometrii); Mełgiewska 2370,285 i Turystyczna 2606,332 wypadły z bazy tylko przez przesunięcie. Przy poprawce próbkować co 0,1 m i liczyć skupiska; co 0,1 m jest 29 skupisk, ok. 21 poza Aleją Tysiąclecia
 - Poboczne: `groundY` daje 0 poza mapą, a `GroundField` grunt najbliższego chunka; pasy już tam nie wychodzą, inni użytkownicy obu funkcji mogą trafić na rozbieżność
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
