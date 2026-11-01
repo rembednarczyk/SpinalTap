@@ -440,7 +440,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: wszystkie nazwy z wczytanych komórek mają wiersz; test ładowania w różnej kolejności
 
 ### G-143 Taksówki na osi chodnika przy Podzamczu
-- Status: w PR #125, w weryfikacji (1.11; 3ab42ad, skan `parked-car-on-footway` 3 → 0); część o postoju taxi odpada, bo gra nie stawia taksówek na postojach
+- Status: w PR #125; weryfikator PRZYJĘTE (1.11), czeka na przegląd kuratora (zmiana importu); 3ab42ad, skan `parked-car-on-footway` 3 → 0; część o postoju taxi odpada, bo gra nie stawia taksówek na postojach
 - Ważność: S4 · Zasięg: taxi (928.6, 452.2) 0,01 m od osi `highway=footway` w809962786, taxi (922.9, 430.6) 0,80 m od niej
 - Ustalone (1.11, orkiestrator, dane `data/osm/podzamcze.json`): w809962786 to samodzielna ścieżka piesza 52 m (`highway=footway`, bez `footway=sidewalk`/`crossing`, oświetlona, asfalt), co najmniej 7,8 m od osi Cerkiewnej i dróg serwisowych; łączy się z postojem taxi w471549002 (`amenity=taxi`, obszar), placem w66323033 (`area:highway`), chodnikiem w1517184174 i przejściem w1054556913. Taksówka 0,01 m od jej osi stoi więc na ścieżce pieszych obok postoju, nie na jezdni: glitch prawdziwy
 - Poprawka: zaparkowane auta trzymają odstęp od osi samodzielnych ścieżek `footway`/`path` (poza `sidewalk` wzdłuż krawężnika), a taksówki z postoju `amenity=taxi` stoją wewnątrz jego obszaru; kontrola skanu „auto bliżej niż 1 m od osi ścieżki pieszej”
@@ -491,6 +491,31 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: do ustalenia
 - Objawy z opisu gracza: dachy przesunięte albo nachodzące na sąsiednie budynki, gzymsy wystające poza fasadę
 - Poprawka: najpierw łowca (przegląd dachów Starego Miasta zrzutami i skanem), potem osobne wpisy
+
+### G-151 Hydranty stawiane regułą zamiast z OSM
+- Status: w poprawkach PR #124 (1.11, kurator)
+- Ważność: S3 · Zasięg: 33 hydranty w grze, żaden w prawdziwym miejscu (mediana 143 m od najbliższego nadziemnego)
+- Przyczyna: `filterOsm` (`tools/osm-import/src/osm.ts:151`) zostawia tylko węzły z `name`, a hydranty nazwy nie mają; żywe OSM ma w chunkach 77 (6 `pillar`, 71 podziemnych, import z 2015 z `ref`)
+- Poprawka: hydranty nadziemne z OSM (do 3 m od węzła), podziemne świadomie pominięte albo jako pokrywa; kontrola skanu „hydrant dalej niż 3 m od `pillar` z OSM”
+- Pakiet właściciela: tools/osm-import
+
+### G-152 Kontenery w ogrodzonym parku na Nabrzeżu
+- Status: w poprawkach PR #124 (1.11, kurator)
+- Ważność: S3 · Zasięg: 5 z 8 kontenerów w parku w154191322 (`leisure=park`, `natural=scrub`, `barrier=fence`), jeden w poprzek płotu
+- Poprawka: kontenery poza parkiem, najlepiej na Giełdzie na Kresowej (plan ulic: „kontenery Tessen”); kontrola skanu „mebel w obrysie `leisure=park`/`natural=*` albo na `barrier=fence`”
+- Pakiet właściciela: tools/osm-import (props-bulky)
+
+### G-153 Skan `furniture-overlap` pomija słupki
+- Status: zgłoszone (1.11, weryfikator #124)
+- Ważność: S4 · Zasięg: np. stojak (-137.1, -52.2) z bryłą na słupku (-137.9, -53.1)
+- Poprawka: słupki w kontroli nakładania brył mebli; bryła stojaka dopasowana do rowerów (dziś hx 1,0 przy rowerach do 0,47 m)
+- Pakiet właściciela: tools/glitch-scan, tools/osm-import
+
+### G-154 Nieoznakowane przejścia nie chronią przed parkowaniem
+- Status: zgłoszone (1.11, weryfikator G-143); dziś bez auta przy takim przejściu
+- Ważność: S4 · Zasięg: 88 `footway=crossing` i 17 `path=crossing` bez zebry
+- Poprawka: odstęp zaparkowanych aut od przejść bez zebry jak od zebr; kontrola skanu
+- Pakiet właściciela: packages/sim (parked-cars), tools/osm-import
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
