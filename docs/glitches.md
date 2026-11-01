@@ -472,13 +472,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Proponowane kontrole skanu (baza dziś): `venue-board-in-neighbour` 7, `banner-in-neighbour` 31, `holo-or-blade-in-neighbour` 4, `wall-lantern-over-venue-board` 17
 - Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import
 
-### G-149 Pomniki i rzeźby z OSM mają przypadkowy kształt
-- Status: w PR #132, w weryfikacji i przeglądzie kuratora (1.11; skan `monument-shape-off-tags` 48 → 0); do kuratora: pominięty Sztukmistrz nad Grodzką, stele zamiast 3 Maja, Lwa Lwowskiego i Czechowicza; poboczne: wolnostojące pomniki w grupach `plaque` (Ofiary Getta, Popiełuszko, kamienie) pominięte, kilka węzłów brak w `data/osm`
-- Ważność: S3 · Zasięg: 27 pomników i rzeźb z planu (`docs/world/lublin-props.todo.json`) i wszystkie `memorial`/`artwork` z OSM
-- Przyczyna: ADR-0047 bierze pozycję z OSM, ale kształt z hasha id (`variant`, `SHAPES.monument = 4`): obelisk, postać na cokole, Koziołek albo abstrakcja; poza kilkoma wymuszonymi w planie prawdziwy pomnik dostaje losową bryłę (np. stos sześcianów albo postać na czarnym bloku w wąskiej uliczce)
-- Poprawka: kształt z tagów OSM (`memorial=plaque|statue|bust|stone`, `artwork_type`, `historic`) i z ręcznej tabeli znanych pomników Lublina; tablica pamiątkowa na fasadzie zamiast wolnostojącej bryły; bez dopasowania: neutralna tablica albo kapliczka, nie abstrakcja; przegląd kuratora
-- Pakiet właściciela: tools/osm-import (props-kinds, props-gen), packages/engine (prop-civic)
-
 ### G-150 Źle położone dachy (zgłoszenie gracza niepotwierdzone)
 - Status: zgłoszone, niepotwierdzone (1.11, łowca): z kadru gracza 922af477 nie da się wskazać usterki; potrzebne miejsce albo nowy zrzut
 - Ważność: S4 dla znalezionych kandydatów · Zasięg: rzadki
@@ -584,6 +577,27 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: każde zwłoki oglądane przez kilku NPC (np. przechodzień, potem patrol)
 - Poprawka: jedno `BodyFound` na ciało albo jawne pole „pierwszy znalazca”, zanim UI zacznie z niego korzystać
 - Pakiet właściciela: packages/sim (body-watch)
+
+### G-166 Sztukmistrz na linie nad Grodzką
+- Status: zgłoszone (1.11, kurator przy G-149)
+- Ważność: S3 · Zasięg: Grodzka (617.1, 25.8), n7168903380; plan ulic P1 („model do zrobienia + lina”)
+- Stan: od #132 pominięty (`SKIPPED_ART.rope`), wcześniej postać na cokole w uliczce
+- Poprawka: figura linoskoczka na linie ok. 6–8 m nad ulicą między w66293391/w66293395 a Warsztatami Kultury r3119721, bez kolizji z graczem; T-096
+- Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import
+
+### G-167 Wolnostojące pomniki z grup `plaque` pominięte
+- Status: zgłoszone (1.11, kurator przy G-149)
+- Ważność: S3 · Zasięg: Pomnik Ofiar Getta (66.7, 129.6), stela Popiełuszki (475.3, −195.4), kamienie Maharszal (870.5, 298.8), Hołodomor (1044.8, 423.9), Glatsztejn (996.6, 283.0)
+- Przyczyna: grupa `plaque` pomijana w całości (`SKIPPED.plaque`), choć `artShape` daje im stelę, a tablice odrzuca
+- Poprawka: `kind=plaque` przez `artShape`; kontrola skanu `memorial-freestanding-missing` (baza ok. 12, w tym 5 w pasie z < −200 z G-099, św. Józef n10803415137, wodopój n4348652375); T-100
+- Pakiet właściciela: tools/osm-import
+
+### G-168 Neon „Przypadek? Nie sądzę!” niewidoczny
+- Status: zgłoszone (1.11, kurator przy G-149)
+- Ważność: S4 · Zasięg: Stare Miasto (485.6, 11.4), n9382021599
+- Przyczyna: `SKIPPED_ART.neon` podaje, że wisi z szyldami fasad (ADR-0044), ale wśród szyldów go nie ma; jest tylko etykieta `sight`
+- Poprawka: dodać do szyldów fasad albo poprawić powód; T-099
+- Pakiet właściciela: tools/osm-import, packages/engine
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
