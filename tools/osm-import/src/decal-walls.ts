@@ -11,11 +11,10 @@ import { cellKey } from "../../../packages/engine/src/renderer/mapcity/map-index
 import { PROP_BLOCK } from "../../../packages/engine/src/renderer/mapcity/prop-shapes";
 import { isPoleLamp } from "../../../packages/engine/src/renderer/mapcity/utility-poles";
 import { holoMayHang } from "../../../packages/engine/src/renderer/mapcity/sign-plan";
-import { venueBoards } from "../../../packages/engine/src/renderer/mapcity/venue-plan";
 import { MAP_CHUNKS } from "../../../packages/sim/src/content/lublin/sites";
 import { WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
 import type { DecalWall } from "./props-decals.ts";
-import { type DrawnView, cityFrames } from "./venue-boards.ts";
+import { type DrawnView, cityFrames, framedBoards } from "./venue-boards.ts";
 
 /**
  * Does the facade shader paint no glass anywhere on the wall? `facadeGlass` returns nothing for a
@@ -44,7 +43,7 @@ export const cityDecalWalls = (views: readonly DrawnView[]): DecalWall[] => {
     if (b.view.soffit !== undefined) return [];
     const f = b.frame;
     const own = ids.get(`${b.at.x.toFixed(2)},${b.at.z.toFixed(2)}`);
-    const boards = b.landmark ? [] : venueBoards(f);
+    const boards = b.landmark ? [] : framedBoards(b);
     const building = `${b.at.x.toFixed(1)},${b.at.z.toFixed(1)}`;
     return f.walls.flatMap((w): DecalWall[] => {
       if (hiddenWall(f, w)) return [];
@@ -99,6 +98,9 @@ export const poleLampAt = (p: { readonly x: number; readonly z: number }): boole
     shape: 0,
     scale: 1,
   });
+
+/** The venues' boards of Lublin (`venue-boards.ts`), for `props.ts` to load through one module runner with the walls. */
+export { lublinVenueBoards } from "./venue-boards.ts";
 
 /** The decal walls of Lublin as the game draws it. */
 export const lublinDecalWalls = (): DecalWall[] => cityDecalWalls(WORLD_SCENERY);

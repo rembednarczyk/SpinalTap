@@ -184,11 +184,12 @@ export const sidewalkSite = (site: Site): Site =>
 /** The stickers and grates of the chunks' furniture, by district. */
 export const addStreetDecals = (byChunk: ReadonlyMap<string, readonly StreetPropItem[]>, site: Site, ctx: DecalContext, rejected: Record<string, number> = {}): StreetDecal[] => {
   const out: StreetDecal[] = [];
+  // What a grate keeps off: the manholes and bollards on the road, and the grates placed before.
   const all: StreetPropItem[] = [];
   for (const [id, items] of byChunk) {
     const district = site.chunks.find((c) => c.id === id)?.district ?? "";
     for (const p of items) {
-      all.push(p);
+      if (ON_ROAD.has(p.prop)) all.push(p);
       if (p.prop === "lamp-road" && ctx.poleLamp?.(p)) continue;
       for (const s of stickersOn(p, district)) out.push({ item: s, district });
     }

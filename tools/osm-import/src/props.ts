@@ -21,20 +21,19 @@ import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.t
 import { MAPPED, SKIPPED, SKIPPED_ART } from "./props-kinds.ts";
 import type * as GameDoors from "./game-doors.ts";
 import { loadCarriageways } from "./props-roads.ts";
-import type * as VenueBoards from "./venue-boards.ts";
 
 const PLAN = join(REPO, "docs/world/lublin-props.todo.json");
 const OUT = join(REPO, "packages/sim/src/content/lublin/props.generated.ts");
 
 const plan = JSON.parse(readFileSync(PLAN, "utf8")) as PropsPlan;
 const chunks = [...KRAKOWSKIE_CHUNKS, ...STARE_MIASTO_CHUNKS, ...PODZAMCZE_CHUNKS, ...NABRZEZE_CHUNKS];
-// The venues' boards from the renderer's plan, whose modules Node does not load by itself.
-const { module: venues } = await runnerImport<typeof VenueBoards>(join(REPO, "tools/osm-import/src/venue-boards.ts"), { root: REPO, configFile: false, logLevel: "warn" });
+// The venues' boards from the renderer's plan, whose modules Node does not load by itself, with the
+// decals' walls (ADR-0058 stage 6) from the same module runner: the city is framed once for both.
+const { module: decalWalls } = await runnerImport<typeof DecalWalls>(join(REPO, "tools/osm-import/src/decal-walls.ts"), { root: REPO, configFile: false, logLevel: "warn" });
 // The game's doors (ADR-0038) the same way: the market's furniture keeps clear of them (ADR-0058 stage 3).
 const { module: doors } = await runnerImport<typeof GameDoors>(join(REPO, "tools/osm-import/src/game-doors.ts"), { root: REPO, configFile: false, logLevel: "warn" });
-const { byChunk, stats } = generateProps(plan, chunks, loadNodeTags(), venues.lublinVenueBoards(), { roads: loadCarriageways(), doors: doors.gameDoors() });
+const { byChunk, stats } = generateProps(plan, chunks, loadNodeTags(), decalWalls.lublinVenueBoards(), { roads: loadCarriageways(), doors: doors.gameDoors() });
 // The decals (ADR-0058 stage 6) after the furniture: the stickers go on its poles, the grates keep off its manholes.
-const { module: decalWalls } = await runnerImport<typeof DecalWalls>(join(REPO, "tools/osm-import/src/decal-walls.ts"), { root: REPO, configFile: false, logLevel: "warn" });
 const decals = addDecals(byChunk as Map<string, StreetPropItem[]>, new Site(chunks), decalWalls.lublinDecalWalls(), {
   groundY: (p) => decalWalls.groundY(p.x, p.z),
   surfaceY: (p) => decalWalls.surfaceY(p.x, p.z),
