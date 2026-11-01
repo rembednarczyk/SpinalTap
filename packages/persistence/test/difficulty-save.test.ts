@@ -26,9 +26,11 @@ describe("the difficulty in the save (v17 to v18, ADR-0066)", () => {
     expect(MIGRATIONS[17]!({ version: 17 })).toEqual({ version: 18, domain: { difficulty: NORMAL_DIFFICULTY } });
   });
 
-  it("keeps the profile of a save through encoding", () => {
+  it("keeps the profile of a save through encoding; an edited one does not load", () => {
     const s: SaveSnapshot = snapshot({ domain: { ...snapshot().domain, difficulty: DIFFICULTY_PRESETS.hard } });
     expect(decodeSave("slot", encodeSave(s)).domain.difficulty).toEqual(DIFFICULTY_PRESETS.hard);
+    const edited: SaveSnapshot = snapshot({ domain: { ...snapshot().domain, difficulty: { ...DIFFICULTY_PRESETS.hard, damageTaken: 0.01 } } });
+    expect(() => decodeSave("slot", encodeSave(edited))).toThrow();
   });
 
   it("refuses a profile with a multiplier missing or out of range", () => {
