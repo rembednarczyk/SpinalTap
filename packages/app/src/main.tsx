@@ -14,6 +14,7 @@ import { keymapFor } from "./controls";
 import { pushToastTimed } from "./controllers/shared";
 import { bindCrashWatch } from "./crash-watch";
 import { bindPageHidden } from "./page-lifecycle";
+import { pointerFocus } from "./pointer-focus";
 import { type SettingsStorage, applyEffects, applyVolumes, loadHintsSeen, loadSettings, saveHintsSeen, saveSettings, scaleLook } from "./settings";
 
 declare global {
@@ -119,15 +120,14 @@ const session = new GameSession({
     save: (next) => saveSettings(storage, next),
     reload: () => location.reload(),
   },
-  onFocusChange: (wantsPointer) => {
-    input.enabled = wantsPointer;
-    if (touchDevice) return;
-    // The game can start after the loading screen, long after the click (ADR-0057): a lock asked
-    // for without a gesture is refused for good, so the next click on the game takes it instead.
-    if (wantsPointer && navigator.userActivation?.isActive === false) return;
-    if (wantsPointer) input.requestPointerLock();
-    else input.releasePointerLock();
-  },
+  onFocusChange: pointerFocus({
+    screen: () => ui.getState().screen,
+    setEnabled: (on) => (input.enabled = on),
+    lock: () => input.requestPointerLock(),
+    release: () => input.releasePointerLock(),
+    touch: touchDevice,
+    gesture: () => navigator.userActivation?.isActive,
+  }),
 });
 // The TPP camera stops at the map's buildings and the terrain too (ADR-0045): the simulation's
 // own ray through its solids, handed to the camera through the app.
