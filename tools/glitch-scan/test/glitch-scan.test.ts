@@ -17,7 +17,7 @@ import { signsInNeighbours } from "./sign-neighbours";
 import { bayCarsMisturned, bayCarsOutOfPark, bayStripsSparse, crowdLanesOnParking, kerbParksOf } from "./kerb-bays";
 import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alone.ts";
 import { extractFeatures } from "../../osm-import/src/features.ts";
-import { roadWidth } from "../../osm-import/src/ground.ts";
+import { pathWidth, roadWidth } from "../../osm-import/src/ground.ts";
 import { oneway } from "../../osm-import/src/markings.ts";
 import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
 import { SHAPES } from "../../osm-import/src/props-kinds.ts";
@@ -127,6 +127,8 @@ const LANTERN_MODEL = (() => {
 const LANTERN_HEAD = LANTERN_MODEL.filter((v) => v.z > 0.5);
 const inMap = (x: number, z: number) => MAP_CHUNKS.some((c) => x > c.bounds.minX + 1 && x < c.bounds.maxX - 1 && z > c.bounds.minZ + 1 && z < c.bounds.maxZ - 1);
 const onChunk = (x: number, z: number) => MAP_CHUNKS.some(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ);
+/** How far the import's simplified axis of a footway (`simplifyLine`, 0.5 m) lies off the mapped one in the city (m): 0.09 m at most by the parked cars. */
+const AXIS_SLACK = 0.1;
 /** Distance from (x, z) to the segment a-b. */
 const segmentGap = (x: number, z: number, a: { x: number; z: number }, b: { x: number; z: number }) => {
   const dx = b.x - a.x;
@@ -706,10 +708,12 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     });
   },
   /**
-   * A parked car whose body (sampled every eighth of its length and width) comes nearer than 1 m
-   * to the axis of a footway, path, pedestrian street or cycleway of the map data mapped on its
-   * own (not a sidewalk along a kerb, not a crossing; on the ground, off bridges and tunnels): it
-   * stands on the walkers' or the riders' way (G-143, G-156).
+   * A parked car whose body (sampled every eighth of its length and width) comes nearer than half
+   * the mapped width (`width`, else 2.5 m for a footway, 2 m for a path) or 1 m to the axis of a
+   * footway, path, pedestrian street or cycleway of the map data mapped on its own (not a sidewalk
+   * along a kerb, not a crossing; on the ground, off bridges and tunnels): it stands on the
+   * walkers' or the riders' way (G-143, G-156, G-189). The game keeps cars that far off the axis
+   * as the import simplifies it, which may lie `AXIS_SLACK` off the mapped one.
    */
   "parked-car-on-footway": () => {
     const ways = extractFeatures(SOURCE_OSM).lines.filter(
@@ -726,13 +730,13 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
         (t.bridge === undefined || t.bridge === "no") &&
         Number(t.layer ?? 0) === 0,
     );
-    const segs = ways.flatMap((l) => l.line.slice(1).map((b, i) => ({ id: l.id, a: l.line[i]!, b })));
+    const segs = ways.flatMap((l) => l.line.slice(1).map((b, i) => ({ id: l.id, a: l.line[i]!, b, reach: Math.max(1, pathWidth(l.tags) / 2 - AXIS_SLACK) })));
     return PARKED_CARS.flatMap((c) => {
       const { width, length } = VEHICLE_SIZE[c.model];
       const fx = Math.sin(c.yaw);
       const fz = Math.cos(c.yaw);
       const body = [0, 1, 2, 3, 4, 5, 6, 7, 8].flatMap((i) => [0, 1, 2, 3, 4, 5, 6, 7, 8].map((k) => ({ x: c.x + fz * width * (i / 8 - 0.5) + fx * length * (k / 8 - 0.5), z: c.z - fx * width * (i / 8 - 0.5) + fz * length * (k / 8 - 0.5) })));
-      const hit = segs.find(({ a, b }) => Math.max(a.x, b.x) > c.x - 8 && Math.min(a.x, b.x) < c.x + 8 && Math.max(a.z, b.z) > c.z - 8 && Math.min(a.z, b.z) < c.z + 8 && body.some((p) => segmentGap(p.x, p.z, a, b) < 1));
+      const hit = segs.find(({ a, b, reach }) => Math.max(a.x, b.x) > c.x - 8 && Math.min(a.x, b.x) < c.x + 8 && Math.max(a.z, b.z) > c.z - 8 && Math.min(a.z, b.z) < c.z + 8 && body.some((p) => segmentGap(p.x, p.z, a, b) < reach));
       return hit ? [{ at: near(c.x, c.z), what: `${c.model} on ${hit.id}` }] : [];
     });
   },

@@ -1,6 +1,6 @@
 import { type GroundSurface, VEHICLE_SIZE, type VehicleModel, type ViewDescriptor } from "@seki/core";
 import type { StaticProp } from "./builders";
-import { BAY_STEP, type BayLayout, bayDepth, bayLayouts, bayYaw, inRing, stripCut, stripDepth } from "./kerb-bays";
+import { BAY_STEP, type BayLayout, bayDepth, bayLayouts, bayReach, bayYaw, inRing, stripCut, stripDepth } from "./kerb-bays";
 import { inBuilding, nearestWall } from "./lublin/places";
 import { type Pt, ROAD_CHAINS, type RoadChain, polylineLength, surfacesAt } from "./lublin/roads";
 import { MAP_CHUNKS } from "./lublin/sites";
@@ -207,11 +207,11 @@ const offMultiLaneKerbs = (x: number, z: number, yaw: number): boolean =>
  * `own`)? A street's kerb line is set from its median width, so where the carriageway narrows
  * (a bend, a pinch by a pavement) the bay falls on the grass or the pavement unless each corner
  * is checked. A bay on a slope too steep for a level car (`LEVEL_DROP`) stays empty. A car in a
- * kerb car park's `strip` keeps from what stands outside it the room `parked-room` gives (G-189).
+ * kerb car park's `strip` keeps from furniture past its kerb the room `parked-room` gives (G-189).
  */
 const fits = (x: number, z: number, yaw: number, model: VehicleModel, own?: RoadChain, strip?: KerbStrip): boolean => {
   if (!parkable(x, z) || !footprint(x, z, yaw, model, 0).every(([px, pz]) => parkable(px, pz)) || !clearOfZebras(x, z, yaw, model)) return false;
-  if (!level(x, z, yaw, model) || !clearOfKeptWays(x, z, yaw, model, strip) || !clearOfStops(x, z, model) || !offMultiLaneKerbs(x, z, yaw)) return false;
+  if (!level(x, z, yaw, model) || !clearOfKeptWays(x, z, yaw, model) || !clearOfStops(x, z, model) || !offMultiLaneKerbs(x, z, yaw)) return false;
   if (!clearOfFurniture(x, z, yaw, model, strip)) return false;
   const { width, length } = VEHICLE_SIZE[model];
   const fx = Math.sin(yaw);
@@ -286,7 +286,8 @@ const endsOffLanes = (x: number, z: number, yaw: number, model: VehicleModel): b
 /**
  * The cars of one side of a street in one kerb car park, in a layout: a bay every `BAY_STEP`,
  * its car at the kerb (the strip's outer edge, G-177) turned as the layout says, with its whole
- * body in the car park. A model longer than the strip is deep gives way to a shorter one.
+ * body in the car park. A model longer than the strip is deep gives way to a shorter one, and so
+ * does one that fits nowhere in its bay (by a footway past the kerb, G-189).
  */
 const stripCars = (park: KerbPark, c: RoadChain, side: 1 | -1, layout: BayLayout, taken: readonly ParkedCar[]): ParkedCar[] => {
   const out: ParkedCar[] = [];
@@ -300,25 +301,29 @@ const stripCars = (park: KerbPark, c: RoadChain, side: 1 | -1, layout: BayLayout
     const at = across((cut.from + cut.to) / 2);
     if (hash(at.x, at.z, 1) / 0x100000000 >= SQUARE_TAKEN) continue;
     const models = PARKED_MODELS.filter((m) => bayDepth(layout, m, cut) !== null);
-    const model = models.includes(modelAt(at.x, at.z)) ? modelAt(at.x, at.z) : models[hash(at.x, at.z, 3) % models.length];
-    if (!model) continue;
-    const depth = bayDepth(layout, model, cut)!;
+    const first = models.includes(modelAt(at.x, at.z)) ? modelAt(at.x, at.z) : models[hash(at.x, at.z, 3) % models.length];
+    if (!first) continue;
     const yaw = bayYaw(layout, p, side, turned);
-    const car = (a: number, d: number): ParkedCar => {
-      const q = across(depth + d);
-      const x = Math.round((q.x + p.tx * a) * 100) / 100;
-      const z = Math.round((q.z + p.tz * a) * 100) / 100;
-      return { chunk: chunkOf(x, z), x, y: 0, z, yaw, model, tint: hash(at.x, at.z, 2) };
+    const tried = [first, ...[...new Set(models)].filter((m) => bayReach(layout, m) < bayReach(layout, first)).sort((a, b) => bayReach(layout, b) - bayReach(layout, a))];
+    const spotOf = (model: VehicleModel): ParkedCar | undefined => {
+      const depth = bayDepth(layout, model, cut)!;
+      const car = (a: number, d: number): ParkedCar => {
+        const q = across(depth + d);
+        const x = Math.round((q.x + p.tx * a) * 100) / 100;
+        const z = Math.round((q.z + p.tz * a) * 100) / 100;
+        return { chunk: chunkOf(x, z), x, y: 0, z, yaw, model, tint: hash(at.x, at.z, 2) };
+      };
+      return (layout === "parallel" ? KERB_SLIDE : ACROSS_SLIDE)
+        .flatMap((a) => BAY_NUDGE.map((d) => car(a, d)))
+        .find(
+          (k) =>
+            footprint(k.x, k.z, yaw, model, -0.1).every(([x, z]) => inRing(x, z, park.ring)) &&
+            fits(k.x, k.z, yaw, model, undefined, { ring: park.ring, axis: c.points, side }) &&
+            (layout === "parallel" || endsOffLanes(k.x, k.z, yaw, model)) &&
+            ![...taken, ...out].some((o) => Math.hypot(o.x - k.x, o.z - k.z) < 8 && overlap(o, k)),
+        );
     };
-    const spot = (layout === "parallel" ? KERB_SLIDE : ACROSS_SLIDE)
-      .flatMap((a) => BAY_NUDGE.map((d) => car(a, d)))
-      .find(
-        (k) =>
-          footprint(k.x, k.z, yaw, model, -0.1).every(([x, z]) => inRing(x, z, park.ring)) &&
-          fits(k.x, k.z, yaw, model, undefined, { ring: park.ring, axis: c.points, side }) &&
-          (layout === "parallel" || endsOffLanes(k.x, k.z, yaw, model)) &&
-          ![...taken, ...out].some((o) => Math.hypot(o.x - k.x, o.z - k.z) < 8 && overlap(o, k)),
-      );
+    const spot = tried.reduce<ParkedCar | undefined>((got, m) => got ?? spotOf(m), undefined);
     if (spot) out.push(spot);
   }
   return out;

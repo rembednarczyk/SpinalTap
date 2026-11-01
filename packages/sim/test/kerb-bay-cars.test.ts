@@ -93,18 +93,18 @@ const segmentGap = (p: P, a: P, b: P) => {
 
 describe("cars of a kerb car park by the furniture and the footway past its kerb (G-189)", () => {
   // Radziwiłłowska w883991779: six bays, all taken in Lublin; parking meter n9596788047 and the pavement's footway just past the kerb (T-104).
-  it("fill Radziwiłłowska's bays the occupancy leaves, wholly in the strip, off the meter and the footway", () => {
+  it("fill Radziwiłłowska's bays the occupancy leaves, wholly in the strip, off the meter and the footway's mapped width", () => {
     const ring = ringOf("w883991779");
     const cars = carsIn(ring);
     expect(cars.length).toBeGreaterThanOrEqual(3);
-    const footways = MAP_CHUNKS.flatMap((c) => c.footWays ?? []).map((w) => Array.from({ length: w.line.length / 2 }, (_, i) => ({ x: w.line[2 * i]!, z: w.line[2 * i + 1]! })));
+    const footways = MAP_CHUNKS.flatMap((c) => c.footWays ?? []).map((w) => ({ half: w.width / 2, pts: Array.from({ length: w.line.length / 2 }, (_, i) => ({ x: w.line[2 * i]!, z: w.line[2 * i + 1]! })) }));
     expect(furnitureNear(153.5, 82.7).some((f) => Math.hypot(f.x - 153.5, f.z - 82.7) < 0.2), "the meter").toBe(true);
     for (const c of cars) {
       const at = `${c.model} ${c.x},${c.z}`;
       for (const q of corners(c, 0)) expect(inRing(q, ring), `${at} corner ${q.x.toFixed(2)},${q.z.toFixed(2)}`).toBe(true);
       const body = bodyGrid(c);
       for (const f of furnitureNear(c.x, c.z)) expect(Math.min(...body.map((p) => distanceToPiece(f.item, p.x, p.z))), `${at} by ${f.item.prop} ${f.x},${f.z}`).toBeGreaterThan(0);
-      for (const w of footways) for (let i = 1; i < w.length; i++) expect(Math.min(...body.map((p) => segmentGap(p, w[i - 1]!, w[i]!))), `${at} by a footway`).toBeGreaterThanOrEqual(1);
+      for (const { half, pts } of footways) for (let i = 1; i < pts.length; i++) expect(Math.min(...body.map((p) => segmentGap(p, pts[i - 1]!, pts[i]!))), `${at} on a footway`).toBeGreaterThanOrEqual(half);
     }
   });
 
