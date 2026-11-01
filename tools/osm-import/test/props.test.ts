@@ -90,6 +90,22 @@ describe("street furniture generator (ADR-0047)", () => {
     for (const l of lanterns) expect(l.z).toBeCloseTo(37.7, 1);
   });
 
+  it("hangs no wall lantern in a gate's passage or in its mouth, on the facades beside it as before (G-173)", () => {
+    // A gate house over the street, x 40..52, with the street's passage through it (Brama Grodzka, Ku Farze).
+    const gate = { ...street().buildings[0]!, id: "w2", x: 46, z: 30, outline: [-6, -8, 6, -8, 6, 8, -6, 8] };
+    const passage = { building: "w2", from: { x: 38.5, z: 30 }, to: { x: 53.5, z: 30 }, width: 3.4, height: 4, rise: 1.1 };
+    const plan: PropsPlan = { items: [{ id: "wall", kind: "lamp-wall-lantern", lines: [[0, 30, 100, 30]], spacing: 5 }] };
+    // Brama Krakowska's passage is the game's own, not the chunk's: the gate's solid alone keeps the lanterns out.
+    for (const passages of [[passage], undefined]) {
+      const chunk: LublinChunkData = { ...street(), buildings: [...street().buildings, gate], ...(passages ? { passages } : {}) };
+      const site = new Site([chunk]);
+      const lanterns = generateProps(plan, [chunk]).byChunk.get("test-0-0")!.filter((i) => i.prop === "lamp-wall-lantern");
+      expect(lanterns.filter((l) => site.surfaceAt(l) === "building" || (passages && l.x > 36.5 && l.x < 55.5 && Math.abs(l.z - 30) < 2))).toEqual([]);
+      // The houses' facade either side of the gate keeps its lanterns.
+      expect(lanterns.filter((l) => Math.abs(l.z - 37.7) < 0.1 && (l.x < 38 || l.x > 54)).length).toBeGreaterThanOrEqual(7);
+    }
+  });
+
   it("keeps a lamp of a paved square off the axis of the car street beside it (G-004)", () => {
     // Plac Zamkowy: a car street on the square's cobbles, no carriageway drawn, and a second one 4 m off for its first 20 m.
     const square: LublinChunkData = {

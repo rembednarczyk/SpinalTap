@@ -28,7 +28,7 @@ import { INTERIORS, interiorAt } from "../../../packages/sim/src/content/interio
 import { CLINIC_DOOR, KOI_DOOR } from "../../../packages/sim/src/content/interiors";
 import { furnitureClearance } from "../../../packages/sim/src/content/furniture-index";
 import { BOLLARD, alongSegment, anchors, chainSegments, chainThrough, distanceToPiece, furniturePrisms, furnitureRadius, turnLocal } from "../../../packages/sim/src/content/lublin/furniture";
-import { buildingView, isLandmark } from "../../../packages/sim/src/content/lublin";
+import { LUBLIN_STREET_PROPS, buildingView, isLandmark } from "../../../packages/sim/src/content/lublin";
 import { inBuilding, nearestWall } from "../../../packages/sim/src/content/lublin/places";
 import { ROAD_CHAINS, type RoadChain, polylineLength, surfaceLiftAt, surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
 import { clearedBuilding } from "../../../packages/sim/src/content/cleared-buildings";
@@ -115,13 +115,15 @@ const LANDMARK_MONUMENTS = ["n481952877", "n481952879", "n481952880"];
 
 const near = (x: number, z: number) => `${x.toFixed(0)},${z.toFixed(0)}`;
 
-/** The lantern of the wall lantern's model (its points over 0.5 m out from the wall plate), in the piece's frame. */
-const LANTERN_HEAD = (() => {
+/** The wall lantern's model, plate and arm and lantern, in the piece's frame. */
+const LANTERN_MODEL = (() => {
   const p = lampWallLantern(0).sink.positions;
   const out: { x: number; y: number; z: number }[] = [];
-  for (let k = 0; k < p.length; k += 3) if (p[k + 2]! > 0.5) out.push({ x: p[k]!, y: p[k + 1]!, z: p[k + 2]! });
+  for (let k = 0; k < p.length; k += 3) out.push({ x: p[k]!, y: p[k + 1]!, z: p[k + 2]! });
   return out;
 })();
+/** The lantern of the wall lantern's model (its points over 0.5 m out from the wall plate). */
+const LANTERN_HEAD = LANTERN_MODEL.filter((v) => v.z > 0.5);
 const inMap = (x: number, z: number) => MAP_CHUNKS.some((c) => x > c.bounds.minX + 1 && x < c.bounds.maxX - 1 && z > c.bounds.minZ + 1 && z < c.bounds.maxZ - 1);
 const onChunk = (x: number, z: number) => MAP_CHUNKS.some(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ);
 /** Distance from (x, z) to the segment a-b. */
@@ -1054,6 +1056,35 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       .flat()
       .filter((i) => i.prop === "lamp-wall-lantern")
       .flatMap((i) => PASSAGES.filter((p) => Math.abs(underVault(p, i.x, i.z)?.off ?? Infinity) < p.width / 2 + 0.5).map((p) => ({ at: near(i.x, i.z), what: `lamp-wall-lantern in ${p.building}` }))),
+  /**
+   * A wall lantern of the map's furniture (the generator's table, which the preview draws whole;
+   * the game hides some by its own rules) with its drawn model (`prop-lamps.ts`, turned by the
+   * piece's yaw) in a building's outline, or hung within 2 m of the axis of a way the map has
+   * under a building (`tunnel=building_passage`): in a gate's vault or a gap between houses (G-173).
+   */
+  "wall-lantern-in-building": () => {
+    const rings = MAP_CHUNKS.flatMap((c) => c.buildings).map((b) => {
+      const r = worldOutline(b);
+      return { r, x0: Math.min(...r.map((p) => p.x)), x1: Math.max(...r.map((p) => p.x)), z0: Math.min(...r.map((p) => p.z)), z1: Math.max(...r.map((p) => p.z)) };
+    });
+    const vaults = [...SOURCE_OSM.ways.values()].flatMap((w) => {
+      if (w.tags?.tunnel !== "building_passage") return [];
+      const pts = w.nodes.flatMap((id) => {
+        const n = SOURCE_OSM.nodes.get(id);
+        return n ? [geoToWorld(n.lat, n.lon)] : [];
+      });
+      return pts.slice(1).map((b, k) => ({ a: pts[k]!, b, id: w.id }));
+    });
+    return Object.values(LUBLIN_STREET_PROPS)
+      .flat()
+      .filter((i) => i.prop === "lamp-wall-lantern")
+      .flatMap((i) => {
+        const model = LANTERN_MODEL.map((v) => ({ x: i.x + v.x * Math.cos(i.yaw) + v.z * Math.sin(i.yaw), z: i.z - v.x * Math.sin(i.yaw) + v.z * Math.cos(i.yaw) }));
+        const inside = rings.some((g) => model.some((p) => p.x > g.x0 && p.x < g.x1 && p.z > g.z0 && p.z < g.z1 && pointInRing(p, g.r)));
+        const vault = vaults.find((s) => segmentGap(i.x, i.z, s.a, s.b) < 2);
+        return inside || vault ? [{ at: near(i.x, i.z), what: `lamp-wall-lantern ${inside ? "in a building" : ""}${vault ? ` by w${vault.id}` : ""}`.trim() }] : [];
+      });
+  },
   /**
    * A wall lantern hung in front of a venue's board (G-158): the lantern of the drawn model
    * (`prop-lamps.ts`, turned by the piece's yaw) out in front of the board's face and over it,
