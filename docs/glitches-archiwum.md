@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-193 Zwłoki posiłku ochrony znikają po wczytaniu
+- Status: naprawione w #172 (1.11, PRZYJĘTE): `corpseOf` zachowuje `security`, zapis obejmuje ciała posiłków, `crime-system` liczy tylko żywych; schemat v23 bez zmian
+- Ważność: S3 · Zasięg: posiłek zabity po powaleniu albo w trakcie obalenia zostawia ciało bez klucza i bez `security` (`corpseOf`, `packages/sim/src/world/bodies.ts:64`); ciało nie trafia ani do `entities`, ani do `reinforcements`, więc po wczytaniu nie ma go do znalezienia ani zgłoszenia
+- Poprawka: zwłoki posiłków w zapisie (z `n`) albo `corpseOf` przenosi klucz `security:<n>`; test zapis–wczytanie
+- Pakiet właściciela: packages/sim, packages/persistence
+
 ### G-148 Szyldy i neony wcięte w fasady (parasol)
 - Status: zamknięte (1.11, orkiestrator): G-157, G-158, G-159 i G-160 naprawione (w archiwum), a kontrole `venue-board-in-neighbour`, `banner-in-neighbour`, `holo-or-blade-in-neighbour` i `wall-lantern-over-venue-board` mają w main bazę 0 (wcześniej 7, 31, 4, 17); zostaje osobno G-161 (markiza nad literami)
 - Ważność: S3 · Zasięg: całe miasto, najgęściej Stare Miasto

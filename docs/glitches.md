@@ -561,7 +561,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-185 Stan strażników kontraktu po wczytaniu (hack w toku, uśpieni)
 - Status: zgłoszone (1.11, weryfikator #150); było przed #150
-- Ważność: S3 · Zasięg: (a) hack w toku: seed 9, zlecenie `hack` przy Genzo, połączenie z `quay_terminal`, zapis 565 kroków po połączeniu: w 1. kroku `c1-g1.cooldown` 2,583 w oryginale i 0 po wczytaniu, gracz hp 6 vs 37, inny `rngState`; zapis po 660 krokach: `c1-g2` po wczytaniu stoi na posterunku (2576; −28,6; 421), w oryginale się rusza; (b) `lost` zaalarmowanego strażnika zapisanego poza chunkiem o 1/60 wyżej (`dormant-restore`; seed 77, 10 kroków po alarmie, teleport Genzo+2000, 120 kroków, zapis); (c) `suspicion` uśpionego strażnika: seed 8, aktywny `infiltrate`, wyjście z doków, zapis, powrót na `docks(0,0,120)` i 5 kroków: `c1-g0.suspicion` 0,0266 vs 0,0183 (d) z weryfikacji #165: zapis w trakcie wymiany ognia rozjeżdża się po ok. 150–210 krokach, z posiłkami i z kluczowanym NPC (courier, seed 21: krok 33 na main i HEAD); zapis gubi m.in. `combatant.loaded`, `bloom`, `velocity`, `session.lastThreat` i przechodniów tłumu
+- Ważność: S3 · Zasięg: (a) hack w toku: seed 9, zlecenie `hack` przy Genzo, połączenie z `quay_terminal`, zapis 565 kroków po połączeniu: w 1. kroku `c1-g1.cooldown` 2,583 w oryginale i 0 po wczytaniu, gracz hp 6 vs 37, inny `rngState`; zapis po 660 krokach: `c1-g2` po wczytaniu stoi na posterunku (2576; −28,6; 421), w oryginale się rusza; (b) `lost` zaalarmowanego strażnika zapisanego poza chunkiem o 1/60 wyżej (`dormant-restore`; seed 77, 10 kroków po alarmie, teleport Genzo+2000, 120 kroków, zapis); (c) `suspicion` uśpionego strażnika: seed 8, aktywny `infiltrate`, wyjście z doków, zapis, powrót na `docks(0,0,120)` i 5 kroków: `c1-g0.suspicion` 0,0266 vs 0,0183 (d) z weryfikacji #165: zapis w trakcie wymiany ognia rozjeżdża się po ok. 150–210 krokach, z posiłkami i z kluczowanym NPC (courier, seed 21: krok 33 na main i HEAD); zapis gubi m.in. `combatant.loaded`, `bloom`, `velocity`, `session.lastThreat` i przechodniów tłumu; (e) z weryfikacji #172: zapis z żywymi, walczącymi posiłkami w trwającym heacie rozjeżdża się w 9. kroku po wczytaniu, także bez ciał (`rngState`, `hp`, `cooldown` broni; stany w `scratchpad/v-g193-c.json`, `v-g193-d.json`)
 - Poprawka: cooldown/stan walki strażników w zapisie albo odtwarzane; `dormant-restore` bez dodatkowego kroku; test zapis–wczytanie dla każdego wariantu
 - Pakiet właściciela: packages/sim, packages/persistence
 
@@ -595,12 +595,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `simplifyLine` 0,5 m w imporcie przesuwa oś chodnika do ok. 0,09 m; auta z main (np. taxi (922,53; 430,5) i dwa na Kalinowszczyźnie) wchodzą o kilka cm w szerokość chodnika z OSM; skan ma margines `AXIS_SLACK` 0,1 m
 - Poprawka: dokładniejsza oś dla chodników przy pasach postojowych albo odstęp liczony od osi z OSM
 - Pakiet właściciela: tools/osm-import, packages/sim
-
-### G-193 Zwłoki posiłku ochrony znikają po wczytaniu
-- Status: w PR #172 (1.11, w weryfikacji): `corpseOf` zachowuje `security`, zapis obejmuje ciała posiłków, `crime-system` liczy tylko żywych; schemat v23 bez zmian
-- Ważność: S3 · Zasięg: posiłek zabity po powaleniu albo w trakcie obalenia zostawia ciało bez klucza i bez `security` (`corpseOf`, `packages/sim/src/world/bodies.ts:64`); ciało nie trafia ani do `entities`, ani do `reinforcements`, więc po wczytaniu nie ma go do znalezienia ani zgłoszenia
-- Poprawka: zwłoki posiłków w zapisie (z `n`) albo `corpseOf` przenosi klucz `security:<n>`; test zapis–wczytanie
-- Pakiet właściciela: packages/sim, packages/persistence
 
 ### G-194 Quickhack w toku na encji bez klucza trafia po wczytaniu w inną encję
 - Status: zgłoszone (1.11, weryfikator #165), do potwierdzenia sondą z workiem łupu
