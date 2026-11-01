@@ -124,4 +124,32 @@ describe("BrowserInput entering pointer lock (G-046)", () => {
     move(10);
     expect(input.poll().lookYaw).toBeCloseTo(0.022);
   });
+
+  it("keeps the lock available when only the raw-input option is refused (G-139)", async () => {
+    const canvas = document.createElement("canvas");
+    // Chromium on Linux refuses `unadjustedMovement` and sends pointerlockerror for it; the
+    // plain request that follows takes the lock.
+    canvas.requestPointerLock = ((options?: { unadjustedMovement?: boolean }) =>
+      options?.unadjustedMovement ? Promise.reject(new Error("NotSupportedError")) : Promise.resolve()) as HTMLCanvasElement["requestPointerLock"];
+    input = new BrowserInput(canvas);
+    input.enabled = true;
+    move(640, 274);
+    input.requestPointerLock();
+    await Promise.resolve();
+    document.dispatchEvent(new Event("pointerlockerror"));
+    expect(input.mouseActive).toBe(false);
+    // The jump into the lock before pointerLockElement is set is no turn of the view.
+    move(-640, -274);
+    lockTo(canvas);
+    expect(input.poll()).toMatchObject({ lookYaw: 0, lookPitch: 0 });
+  });
+
+  it("falls back to plain mouse look when the plain request is refused as well", async () => {
+    const canvas = document.createElement("canvas");
+    canvas.requestPointerLock = (() => Promise.reject(new Error("SecurityError"))) as HTMLCanvasElement["requestPointerLock"];
+    input = new BrowserInput(canvas);
+    input.requestPointerLock();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(input.mouseActive).toBe(true);
+  });
 });

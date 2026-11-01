@@ -27,6 +27,11 @@ export class ProbeSchedule {
     this.dirty = true;
   }
 
+  /** A render is due, possibly held back by the interval. */
+  get pending(): boolean {
+    return this.dirty;
+  }
+
   /** True on the frame the probe should render. */
   update(dt: number): boolean {
     this.since += Math.max(0, dt);
@@ -69,6 +74,14 @@ export class WetProbe {
   /** Renders so far (debug, tests). */
   get renderCount(): number {
     return this.renders;
+  }
+
+  /**
+   * The probe still owes a render (G-114): it lands up to `PROBE_MIN_INTERVAL` of real time after
+   * the city changed, and its six faces add some hundred draw calls to that one frame.
+   */
+  get pending(): boolean {
+    return this.schedule.pending;
   }
 
   /** Re-renders from under `camera` when the schedule says so. */

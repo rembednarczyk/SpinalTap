@@ -4,7 +4,7 @@ import { type BaseTexture, Scene } from "../src/babylon";
 import { QUALITY_TIERS, WET_PRESETS, qualityTier } from "../src/npr/quality";
 import { ToonMaterials } from "../src/npr/toon-material";
 import { TOON_FRAGMENT } from "../src/npr/toon-shader";
-import { PROBE_MIN_INTERVAL, ProbeSchedule } from "../src/renderer/wet-probe";
+import { PROBE_MIN_INTERVAL, ProbeSchedule, WetProbe } from "../src/renderer/wet-probe";
 
 describe("wet asphalt tiers (ADR-0036)", () => {
   it("keep only strips on low, a probe on medium, a bigger probe on high and no SSR anywhere", () => {
@@ -52,5 +52,28 @@ describe("probe schedule", () => {
     expect(s.update(5)).toBe(false);
     s.setDistrict(null);
     expect(s.update(5)).toBe(false);
+  });
+});
+
+describe("wet probe settling (G-114)", () => {
+  it("stays pending while the schedule holds back a render, so a perf sample waits it out", () => {
+    const probe = new WetProbe(new Scene(new NullEngine()), 16, () => []);
+    const eye = { x: 0, z: 0 };
+    expect(probe.pending).toBe(true);
+    probe.update(0.016, eye);
+    expect(probe.pending).toBe(false);
+    // The city changed 0.3 s after the last render: the next one waits out the interval.
+    probe.update(0.3, eye);
+    probe.schedule.invalidate();
+    for (let i = 0; i < 6; i++) {
+      expect(probe.pending).toBe(true);
+      probe.update(0.1, eye);
+    }
+    const renders = probe.renderCount;
+    probe.update(0.2, eye);
+    expect(probe.renderCount).toBe(renders + 1);
+    expect(probe.pending).toBe(false);
+    probe.update(5, eye);
+    expect(probe.renderCount).toBe(renders + 1);
   });
 });
