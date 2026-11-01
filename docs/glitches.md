@@ -492,16 +492,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: odstęp zaparkowanych aut od przejść bez zebry jak od zebr; kontrola skanu
 - Pakiet właściciela: packages/sim (parked-cars), tools/osm-import
 
-### G-160 Neon DENKI (i KARAOKE, SAKE) osiowy na ukośnej ścianie: koniec w murze, koniec w powietrzu
-- Status: w PR #161, runda 2 w weryfikacji (1.11): SAKE przeniesiony na płaski odcinek, płyty 0,55 m, 0,16 m od ściany; kontrola liczy część płyty w bryle (≤ 15%)
-- Ważność: S3 · Zasięg: lokalny (Rynek/Grodzka, trasa kanału Tetsu, widoczne z deptaka) · Koszt: mały
-- Gdzie: DENKI (567,3; −24,9) y 4,1, odsunięcie końca od ściany 1,95 m; KARAOKE (554,0; −33,8) 2,41 m; SAKE (545,0; −74,0) 0,45 m; w mieście 3 z 8 neonów przy ścianach
-- Dowód: kąt osi płyty do stycznej ściany 51°/53°/46°; zrzuty `scratchpad/g160-shots/g160-h.png`, `g160-i.png`
-- Przyczyna: `facadeNeon()` (`packages/sim/src/content/district-kanal.ts`) zamienia `againstWall().yaw` na `facing` o jednej z czterech osi; widok `neon` (`packages/core/src/ports/types.ts:195`) nie ma obrotu, a ściana jest ukośna
-- Poprawka: A (teraz) dane: przestawić albo skrócić trzy neony na płaski odcinek ściany; B (później, ADR) opcjonalny `yaw` w widoku `neon`
-- Test przyjęcia: kontrola skanu `neon-off-wall` (baza 3 → 0)
-- Pakiet właściciela: packages/sim (district-kanal.ts), tools/glitch-scan
-
 ### G-161 Markiza zasłania dolny rząd liter tablicy lokalu
 - Status: zgłoszone (1.11, łowca G-148)
 - Ważność: S4 · Zasięg: zależny od kadru; np. STAJNIA SMAKU (489,2; −76,3), zrzut g148-k-stajnia
@@ -567,7 +557,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/glitch-scan, tools/osm-import
 
 ### G-179 Posiłki ochrony przy heacie poza zapisem
-- Status: zgłoszone (1.11, weryfikator #145); było przed #145
+- Status: w PR #165 (1.11; zapis v23 z `reinforcements`, rozrzut i enforcer z `n` zamiast id); w weryfikacji
 - Ważność: S3 · Zasięg: encje `security` bez klucza i `session.watch.reinforce` nie wchodzą do zapisu; `stateHash` nie widzi encji bez klucza
 - Dane: alleySim seed 21, `heat {level 2, faction hebi, lastKnown ALLEY_START}`, krok do pojawienia się posiłków i 30 dalej, zapis: oryginał 1 posiłek, `reinforce=3.5`; wczytana gra 0 i od razu nowy gdzie indziej; rozjazd w 130. kroku
 - Pakiet właściciela: packages/sim, packages/persistence

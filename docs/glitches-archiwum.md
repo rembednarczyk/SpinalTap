@@ -2,6 +2,16 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-160 Neon DENKI (i KARAOKE, SAKE) osiowy na ukośnej ścianie: koniec w murze, koniec w powietrzu
+- Status: naprawione (1.11, #161: oś bliższa ścianie, płyty 0,55 m pionowo 0,16 m od ściany, SAKE z narożnika na płaski odcinek; `neon-off-wall` z częścią płyty w bryle ≤ 15%, 3 → 0; dwie rundy weryfikacji). Opcja B (`yaw` w widoku `neon`, ADR) dla szerszych płyt na skośnych ścianach zostaje do decyzji
+- Ważność: S3 · Zasięg: lokalny (Rynek/Grodzka, trasa kanału Tetsu, widoczne z deptaka) · Koszt: mały
+- Gdzie: DENKI (567,3; −24,9) y 4,1, odsunięcie końca od ściany 1,95 m; KARAOKE (554,0; −33,8) 2,41 m; SAKE (545,0; −74,0) 0,45 m; w mieście 3 z 8 neonów przy ścianach
+- Dowód: kąt osi płyty do stycznej ściany 51°/53°/46°; zrzuty `scratchpad/g160-shots/g160-h.png`, `g160-i.png`
+- Przyczyna: `facadeNeon()` (`packages/sim/src/content/district-kanal.ts`) zamienia `againstWall().yaw` na `facing` o jednej z czterech osi; widok `neon` (`packages/core/src/ports/types.ts:195`) nie ma obrotu, a ściana jest ukośna
+- Poprawka: A (teraz) dane: przestawić albo skrócić trzy neony na płaski odcinek ściany; B (później, ADR) opcjonalny `yaw` w widoku `neon`
+- Test przyjęcia: kontrola skanu `neon-off-wall` (baza 3 → 0)
+- Pakiet właściciela: packages/sim (district-kanal.ts), tools/glitch-scan
+
 ### G-187 Auta w głębokich pasach postojowych bez `orientation` w poprzek zamiast skośnie
 - Status: naprawione (1.11, #158: pod 60°, rozstaw 3,0 m, nosem do chodnika; `PARKED_CARS` 75 → 72; weryfikacja PRZYJĘTE, kurator ZGODNE Z UWAGAMI, T-103 poprawione, T-104)
 - Ważność: S4 · Zasięg: 2 pasy: Krakowskie Przedmieście w55897048 (15 aut, w rzeczywistości ok. 60°), Radziwiłłowska w883991779 (1 auto, w rzeczywistości 6 miejsc ok. 65–70°), nosem do chodnika (ortofoto PZGiK)
