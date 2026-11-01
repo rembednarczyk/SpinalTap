@@ -18,7 +18,7 @@ Dostajesz ID glitcha albo etap funkcji (np. ADR-0058 etap 1), ścieżkę worktre
    - złote hashe w `packages/sim/test/determinism.test.ts` bez zmian albo zmiana uzasadniona w commicie.
 5. **Bramki:**
    - `pnpm typecheck`, `pnpm lint`, `pnpm depcheck`;
-   - przy zmianie renderera albo speca `pnpm build && pnpm e2e e2e/<spec>.spec.ts`, z load average przy wyniku. To Ty puszczasz e2e za autora: naprawiacze i budowniczowie robią to tylko przy zmianie renderera albo speca.
+   - e2e: pełny zestaw puszcza CI na szkicu PR, który orkiestrator otwiera, gdy autor odda pracę; wynik czytasz z CI (orkiestrator poda numer PR). Lokalnie (`pnpm e2e e2e/<spec>.spec.ts`, jawny wolny `E2E_PORT`, z load average) puszczasz tylko to, czego CI nie pokaże: sondy w przeglądarce, zrzuty do oceny, powtórkę podejrzanego wyniku. Nie powtarzasz bramek i speców, które autor już puścił, chyba że podejrzewasz ich wynik.
    - Migawkę NPR i zrzuty przy zmianie wyglądu obejrzyj sam.
 6. **Granice i reguły z `CLAUDE.md`:**
    - własność pakietów i kierunek importów;

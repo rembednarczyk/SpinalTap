@@ -1,6 +1,6 @@
 # Dziennik zmian
 
-Zmiany widoczne dla gracza, od najnowszych. Wersja gry i commit są na ekranie tytułowym (#81); przy zgłoszeniu błędu podaj je razem z datą. Każdy PR z funkcją albo poprawką widoczną w grze dopisuje tu jedną linię w sekcji „Nieopublikowane”.
+Zmiany widoczne dla gracza, od najnowszych. Wersja gry i commit są na ekranie tytułowym (#81); przy zgłoszeniu błędu podaj je razem z datą. Każdy PR z funkcją albo poprawką widoczną w grze dodaje własny plik w `changelog.d/` (zasady w `changelog.d/README.md`); `pnpm changelog` przenosi wpisy tutaj, do sekcji „Nieopublikowane”.
 
 ## Nieopublikowane (0.1.0)
 

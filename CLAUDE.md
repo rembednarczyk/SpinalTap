@@ -59,4 +59,4 @@ Zmiana w cudzym obszarze idzie przez zmianę kontraktu (port, typ zdarzenia, kom
 - Poprawka glitcha: test pada bez niej i przechodzi z nią, jeden glitch na commit.
 
 ## Definition of Done
-Zielone: `pnpm typecheck`, `pnpm lint`, `pnpm depcheck`, `pnpm test:coverage`, `pnpm build`, e2e dotkniętych speców przez `pnpm e2e`, a pełne `pnpm test:e2e` w CI. Conventional Commits, małe zmiany.
+Zielone: `pnpm typecheck`, `pnpm lint`, `pnpm depcheck`, `pnpm test:coverage`, `pnpm build` lokalnie u autora; e2e najwyżej jeden spec zmiany lokalnie, pełne `pnpm test:e2e` w CI (szkic PR otwierany od razu po oddaniu pracy; weryfikator czyta wynik z CI). Zmiana widoczna dla gracza: plik w `changelog.d/`, nie edycja `CHANGELOG.md`. PR tylko z dokumentacją (`docs/**`, `changelog.d/**`, `*.md`) przechodzi CI bez e2e. Conventional Commits, małe zmiany.
