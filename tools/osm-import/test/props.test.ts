@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { terrainHeightAt } from "../../../packages/core/src/world/city-geo.ts";
+import { type StreetPropItem, terrainHeightAt } from "../../../packages/core/src/world/city-geo.ts";
 import { KRAKOWSKIE_CHUNKS } from "../../../packages/sim/src/content/lublin/krakowskie.generated.ts";
 import { NABRZEZE_CHUNKS } from "../../../packages/sim/src/content/lublin/nabrzeze.generated.ts";
 import { PODZAMCZE_CHUNKS } from "../../../packages/sim/src/content/lublin/podzamcze.generated.ts";
@@ -18,6 +18,9 @@ import { SolidIndex, clearSpot } from "../src/props-solid.ts";
 import { gameDoors } from "../src/game-doors.ts";
 import { loadCarriageways } from "../src/props-roads.ts";
 import { lublinVenueBoards } from "../src/venue-boards.ts";
+import { lublinDoorWalls } from "../src/door-walls.ts";
+import { addDoors, loadEntrances } from "../src/props-doors.ts";
+import { surfaceY } from "../../../packages/sim/src/content/lublin/terrain";
 
 const CHUNKS = [...KRAKOWSKIE_CHUNKS, ...STARE_MIASTO_CHUNKS, ...PODZAMCZE_CHUNKS, ...NABRZEZE_CHUNKS];
 const PLAN = JSON.parse(readFileSync(join(REPO, "docs/world/lublin-props.todo.json"), "utf8")) as PropsPlan;
@@ -67,7 +70,10 @@ describe("street furniture generator (ADR-0047)", () => {
   it("matches the committed table (run `pnpm osm:props` after changing the plan or the rules)", () => {
     const committed = readFileSync(join(REPO, "packages/sim/src/content/lublin/props.generated.ts"), "utf8");
     const market = { roads: loadCarriageways(), doors: gameDoors() };
-    expect(emitProps(generateProps(PLAN, CHUNKS, loadNodeTags(), lublinVenueBoards(), market).byChunk)).toBe(committed);
+    const table = generateProps(PLAN, CHUNKS, loadNodeTags(), lublinVenueBoards(), market).byChunk as Map<string, StreetPropItem[]>;
+    // The doors on the facades (ADR-0058 stage 9) after the furniture, as `pnpm osm:props` adds them.
+    addDoors(table, new Site(CHUNKS), lublinDoorWalls(), loadEntrances(), { surfaceY: (p) => surfaceY(p.x, p.z), gameDoors: gameDoors() });
+    expect(emitProps(table)).toBe(committed);
   });
 
   it("stands lamps on the pavement beside the road on both sides, their arms towards it, and lanterns on the facades", () => {
