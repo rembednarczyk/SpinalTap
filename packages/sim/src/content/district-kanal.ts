@@ -18,10 +18,11 @@ import { ground, groundY } from "./lublin/terrain";
 /**
  * A neon sign on the facade nearest to (x, z), facing out of it. The plate runs along the axis
  * nearest the wall, as the neon view has no turn (G-160): on the Rynek's slanting walls only a
- * narrow plate close to the wall, upright for a long label, keeps both its ends on the wall.
+ * narrow plate, upright for a long label, keeps both its ends on the wall. Its middle stands
+ * 0.16 m out, so that the wall hides little of the letters drawn there.
  */
 const facadeNeon = (x: number, z: number, y: number, width: number, height: number, color: string, label: string): StaticProp => {
-  const w = againstWall(x, z, 0.05);
+  const w = againstWall(x, z, 0.16);
   const alongX = Math.abs(Math.sin(w.yaw)) < Math.SQRT1_2;
   const facing = alongX ? (Math.cos(w.yaw) > 0 ? "z+" : "z-") : Math.sin(w.yaw) > 0 ? "x+" : "x-";
   return {
@@ -96,9 +97,10 @@ export const GRODZKA_WALK: readonly Vec3[] = [
 ].map(([x, z]) => ground(x as number, z as number));
 
 export const KANAL_PROPS: readonly StaticProp[] = [
-  facadeNeon(546, -73, 3.2, 0.8, 3.6, "#ffb000", "SAKE"),
-  facadeNeon(556, -36.5, 6.4, 0.8, 4.2, "#ff2e88", "KARAOKE"),
-  facadeNeon(571, -29.5, 5.7, 0.8, 3.2, "#00e5ff", "DENKI"),
+  // SAKE a metre south of the inner corner by PUB PERON, where the next house would cut it.
+  facadeNeon(546.56, -74.23, 2.8, 0.55, 2.8, "#ffb000", "SAKE"),
+  facadeNeon(556, -36.5, 6.4, 0.55, 4.2, "#ff2e88", "KARAOKE"),
+  facadeNeon(571, -29.5, 5.7, 0.55, 3.2, "#00e5ff", "DENKI"),
   // Over the Trybunał's door into Trasa Podziemna (ADR-0048), clear of the slanting facade.
   { center: v(566.8, TRASA_PODZIEMNA.door + 4.35, -57), view: { kind: "neon", size: v(0.15, 0.5, 1.8), color: "#ffcf8a", label: "TRASA PODZIEMNA", facing: "x-" }, solid: false },
   streetLamp(552, -48, "#9ad7ff", "x+"),
