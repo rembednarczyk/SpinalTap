@@ -20,3 +20,9 @@ export const findContractError = (c: unknown): string | null => {
   if (c.breach !== undefined && (!Array.isArray(c.breach) || !c.breach.every((x) => typeof x === "string"))) return "contract breach";
   return findVariationError(c);
 };
+
+/** A contract with the count of jobs done when its targets were made (G-178). */
+export const findContractOnSiteError = (v: unknown): string | null => {
+  if (!isObject(v) || !Number.isInteger(v.completed) || (v.completed as number) < 0) return "contracts";
+  return findContractError(v.contract);
+};

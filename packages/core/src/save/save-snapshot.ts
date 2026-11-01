@@ -91,6 +91,15 @@ export interface StreamingSnapshot {
   readonly loadedChunks: readonly string[];
 }
 
+/**
+ * A contract as its targets were made (G-178): with the count of jobs done at the time, which
+ * toughens them, so a job paid since (one more done) rebuilds them as they were.
+ */
+export interface ContractOnSite {
+  readonly contract: Contract;
+  readonly completed: number;
+}
+
 export interface SaveSnapshot {
   readonly version: typeof SAVE_SCHEMA_VERSION;
   readonly seed: number;
@@ -113,7 +122,7 @@ export interface SaveSnapshot {
    * are rebuilt from it on loading, so the guards of an alarm fight on. Absent while a contract
    * is in the log, running or cleared (its targets come from there), and before the first is taken.
    */
-  readonly endedContract?: Contract;
+  readonly endedContract?: ContractOnSite;
   /** Serialized ink story state (inkjs JSON). */
   readonly narrative: string | null;
   readonly meta: { readonly label: string; readonly objective: string };

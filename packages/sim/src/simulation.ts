@@ -92,8 +92,10 @@ export class Simulation {
     this.streamer.enemyHealth = () => this.holder.domain.difficulty.npcHealth;
     // The people of a job stay in the world after it ends, done or lost, until the next is taken
     // (G-178): the guards of an alarm fight on, an ambush waits by the way out (ADR-0034).
-    const contract = domain.contracts.active ?? saved?.endedContract;
-    if (contract) this.streamer.registerContract(this.world, domain.flags, domain.contracts.completed, contract);
+    // An ended one is made with the jobs done when it was taken: its pay counts one more since.
+    const active = domain.contracts.active;
+    const site = active ? { contract: active, completed: domain.contracts.completed } : saved?.endedContract;
+    if (site) this.streamer.registerContract(this.world, domain.flags, site.completed, site.contract);
     const focus = saved?.entities.find((e) => e.key === "player")?.position ?? PLAYER_SPAWN.position;
     this.streamer.loadInitial(this.world, domain.flags, focus, saved?.streaming.loadedChunks ?? [], domain.clock, () => this.world.add(player));
     if (player.combatant) syncPlayerWeapon(domain, player.combatant);

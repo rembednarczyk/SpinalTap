@@ -1,4 +1,4 @@
-import type { Contract, EntityId, EntitySnapshot, GameClock, Vec3 } from "@seki/core";
+import type { Contract, ContractOnSite, EntityId, EntitySnapshot, GameClock, Vec3 } from "@seki/core";
 import type { World } from "miniplex";
 import { type ChunkDef, type DistrictId, WORLD_CHUNKS, WORLD_DEVICES, WORLD_METRO, chunkAt, distanceToRect } from "../content/world-map";
 import type { DeviceDef } from "../content/devices";
@@ -59,7 +59,7 @@ export class WorldStreamer {
    * The contract whose targets the catalog holds: the last one registered. They stay after the
    * job ends (failed, cleared or paid) until the next is taken, alarmed guards fighting on (G-178).
    */
-  private contract: Contract | null = null;
+  private contract: ContractOnSite | null = null;
   /** Ids of entities currently asleep in an unloaded chunk (lets the renderer skip exit animations). */
   readonly streamedOut: Set<EntityId>;
   /** Ids reserved for each chunk's background passers-by (ADR-0040); the passer-by system spawns them. */
@@ -130,14 +130,14 @@ export class WorldStreamer {
    * site is resident. Ids are reserved for every target, in index order.
    */
   registerContract(world: World<Entity>, flags: readonly string[], completed: number, contract: Contract): void {
-    this.contract = contract;
+    this.contract = { contract, completed };
     this.catalog.setContract(contractTemplates(this.ids, this.chunks, completed, contract));
     // Variation extras may stand in a neighbouring chunk (ADR-0034): each spawns with its own.
     this.spawner.spawnActors(world, flags, this.catalog.contractIn((c) => this.state.resident.has(c)), null);
   }
 
   /** The contract whose targets are in the world, from its registration on (G-178). */
-  get registeredContract(): Contract | null {
+  get registeredContract(): ContractOnSite | null {
     return this.contract;
   }
 

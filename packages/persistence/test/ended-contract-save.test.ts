@@ -25,20 +25,23 @@ describe("a contract ended with its people about in the save (v21 to v22, G-178)
     expect(MIGRATIONS[21]!({ version: 21, entities: [] })).toEqual({ version: 22, entities: [] });
   });
 
-  it("keeps the ended contract through the codec, its variation too", () => {
-    const varied: Contract = { ...LOST, variation: { modifiers: ["ambush"], security: "lockdown" } };
+  it("keeps the ended contract and the jobs done when it was made through the codec, its variation too", () => {
+    const varied = { contract: { ...LOST, variation: { modifiers: ["ambush"], security: "lockdown" } }, completed: 2 } as const;
     expect(decodeSave("slot", encodeSave(snapshot({ endedContract: varied }))).endedContract).toEqual(varied);
-    const paid: Contract = { ...LOST, status: "cleared" };
+    const paid = { contract: { ...LOST, status: "cleared" }, completed: 0 } as const;
     expect(decodeSave("slot", encodeSave(snapshot({ endedContract: paid }))).endedContract).toEqual(paid);
   });
 
-  it("refuses an ended contract that is not a whole contract", () => {
+  it("refuses an ended contract that is not a whole contract with a count of jobs done", () => {
     const bad = (endedContract: unknown) => findSchemaError({ ...snapshot(), endedContract } as unknown as Record<string, unknown>);
+    const on = (contract: unknown, completed: unknown = 1) => ({ contract, completed });
     expect(bad(undefined)).toBeNull();
-    expect(bad(LOST)).toBeNull();
-    for (const v of [null, "c3", { ...LOST, siteId: "moon" }, { ...LOST, status: "failed" }, { ...LOST, kind: "heist" }, { ...LOST, variation: { modifiers: ["laser"], security: "light" } }]) {
+    expect(bad(on(LOST))).toBeNull();
+    expect(bad(on(LOST, 0))).toBeNull();
+    const broken = [{ ...LOST, siteId: "moon" }, { ...LOST, status: "failed" }, { ...LOST, kind: "heist" }, { ...LOST, variation: { modifiers: ["laser"], security: "light" } }];
+    for (const v of [null, "c3", LOST, on(null), on("c3"), on(LOST, -1), on(LOST, 1.5), on(LOST, "2"), ...broken.map((c) => on(c))]) {
       expect(bad(v)).toBe("ended contract");
     }
-    expect(() => decodeSave("slot", encodeSave(snapshot({ endedContract: { ...LOST, targets: 1.5 } })))).toThrow();
+    expect(() => decodeSave("slot", encodeSave(snapshot({ endedContract: on({ ...LOST, targets: 1.5 }) as never })))).toThrow();
   });
 });

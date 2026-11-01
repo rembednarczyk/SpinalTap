@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type Contract, HACK_GRACE_SECONDS, type SaveSnapshot, contractFailedFlag } from "@seki/core";
+import { type Contract, DIFFICULTY_PRESETS, type DifficultyProfile, HACK_GRACE_SECONDS, type SaveSnapshot, contractFailedFlag } from "@seki/core";
 import { DOKI_ITEM_SPOTS, DOKI_TERMINAL_SPOTS, GENZO_SPOT, SIM_HZ, Simulation, docks, ground, stateHash } from "../src";
 import { byKey, input, run, teleportPlayer } from "./helpers";
 
@@ -15,8 +15,14 @@ const peopleOf = (sim: Simulation, id: string): string[] =>
     .sort();
 
 /** With `completed` jobs done, standing at `at` for half a second, the job of `kind` taken one step ago. */
-const taken = (seed: number, completed: number, at: ReturnType<typeof docks>, kind: "infiltrate" | "hack"): { sim: Simulation; c: Contract } => {
-  const fresh = Simulation.create({ seed }).snapshot(null, "t", "");
+const taken = (
+  seed: number,
+  completed: number,
+  at: ReturnType<typeof docks>,
+  kind: "infiltrate" | "hack",
+  difficulty?: DifficultyProfile,
+): { sim: Simulation; c: Contract } => {
+  const fresh = Simulation.create({ seed, ...(difficulty ? { difficulty } : {}) }).snapshot(null, "t", "");
   const sim = Simulation.fromSnapshot(roundTrip({ ...fresh, domain: { ...fresh.domain, contracts: { active: null, completed } } }));
   teleportPlayer(sim, at);
   run(sim, 30);
@@ -111,9 +117,33 @@ describe("save and load after a contract has ended (G-178)", () => {
     paid.sim.step();
     expect(paid.sim.domain.contracts.active).toBeNull();
     expect(paid.sim.domain.contracts.completed).toBe(1);
-    expect(paid.sim.snapshot(null, "t", "").endedContract?.id).toBe(paid.c.id);
+    expect(paid.sim.snapshot(null, "t", "").endedContract?.contract.id).toBe(paid.c.id);
     expectSameAfterLoad(paid.sim, paid.c.id);
   });
+
+  for (const [label, completed, difficulty] of [
+    ["normal", 0, undefined],
+    ["normal", 3, undefined],
+    ["hard", 0, DIFFICULTY_PRESETS.hard],
+  ] as const) {
+    it(`the guards of a paid job are as tough after loading as before, not toughened by its own pay (${label}, ${completed} done)`, () => {
+      const { sim, c } = taken(8, completed, docks(0, 0, 120), "infiltrate", difficulty);
+      const spot = DOKI_ITEM_SPOTS.tessen_office!;
+      teleportPlayer(sim, ground(spot.x + 1.1, spot.z), -Math.PI / 2);
+      sim.step(input({ interact: true, crouch: true }));
+      sim.enqueue({ type: "complete-contract" });
+      sim.step();
+      expect(sim.domain.contracts.completed).toBe(completed + 1);
+      const loaded = reload(sim);
+      const health = (x: Simulation) =>
+        peopleOf(x, c.id)
+          .filter((k) => k.includes("-g"))
+          .map((k) => byKey(x, k)?.health);
+      expect(health(sim)).toHaveLength(c.targets);
+      expect(health(loaded)).toEqual(health(sim));
+      expectSameAfterLoad(sim, c.id);
+    });
+  }
 
   it("a hack lost by walking off the terminal keeps its wave after loading (another seed, another job)", () => {
     const { sim, c } = taken(9, 0, ground(GENZO_SPOT.x + 0.4, GENZO_SPOT.z - 2), "hack");
@@ -157,7 +187,7 @@ describe("save and load after a contract has ended (G-178)", () => {
 
   it("saves the ended job only once no other is in the log", () => {
     const { sim, id } = alarmed(0);
-    expect(sim.snapshot(null, "t", "").endedContract?.id).toBe(id);
+    expect(sim.snapshot(null, "t", "").endedContract?.contract.id).toBe(id);
     sim.enqueue({ type: "accept-contract", kind: "infiltrate" });
     sim.step();
     expect(sim.domain.contracts.active?.id).not.toBe(id);
