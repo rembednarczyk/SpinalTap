@@ -9,7 +9,11 @@ import { STARE_MIASTO_CHUNKS } from "../../../packages/sim/src/content/lublin/st
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
 import { REPO } from "../src/paths.ts";
 import { emitProps } from "../src/props-emit.ts";
-import { loadNodeTags } from "../src/props-art.ts";
+import { loadBuildingTags, loadNodeTags } from "../src/props-art.ts";
+import { groundY, lublinDecalWalls, poleLampAt, surfaceY } from "../src/decal-walls.ts";
+import { addDecals } from "../src/props-decals.ts";
+import type { Pt } from "../src/geometry.ts";
+import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
 import { type PropsPlan, generateProps } from "../src/props-gen.ts";
 import { SHAPES, knownKind, propOf, withShape } from "../src/props-kinds.ts";
 import { evenStations, offRoad, offWall, scatter, stations } from "../src/props-place.ts";
@@ -67,7 +71,11 @@ describe("street furniture generator (ADR-0047)", () => {
   it("matches the committed table (run `pnpm osm:props` after changing the plan or the rules)", () => {
     const committed = readFileSync(join(REPO, "packages/sim/src/content/lublin/props.generated.ts"), "utf8");
     const market = { roads: loadCarriageways(), doors: gameDoors() };
-    expect(emitProps(generateProps(PLAN, CHUNKS, loadNodeTags(), lublinVenueBoards(), market).byChunk)).toBe(committed);
+    const { byChunk } = generateProps(PLAN, CHUNKS, loadNodeTags(), lublinVenueBoards(), market);
+    // The decals after the furniture (ADR-0058 stage 6), as `props.ts` adds them.
+    const ctx = { groundY: (p: Pt) => groundY(p.x, p.z), surfaceY: (p: Pt) => surfaceY(p.x, p.z), buildingTags: loadBuildingTags(), poleLamp: poleLampAt };
+    addDecals(byChunk as Map<string, StreetPropItem[]>, new Site(CHUNKS), lublinDecalWalls(), ctx);
+    expect(emitProps(byChunk)).toBe(committed);
   });
 
   it("stands lamps on the pavement beside the road on both sides, their arms towards it, and lanterns on the facades", () => {
