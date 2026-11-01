@@ -1,11 +1,12 @@
 import type { StreetPropKind } from "@seki/core";
 import { MeshSink } from "../mesh-sink";
 import { busShelter, busStop, cafeGarden, farMonument, fountainJets, kiosk, marketStall, monument, ticketMachine, vendingMachine } from "./prop-civic";
+import { atm, bikeRackWithBikes, container, foodCart, hydrant } from "./prop-e2";
 import { farTree, hangingBasket, planter, shrubs, tree } from "./prop-green";
 import { glow, paint, v3 } from "./prop-kit";
 import { type PropLight, type PropModel, floodlight, lampCandelabra, lampModernPole, lampPark, lampPastoral, lampRoad, lampWallLantern } from "./prop-lamps";
 import { PROP_SHAPES } from "./prop-shapes";
-import { aFrameSign, advertisingColumn, bench, bikeRack, bikeStation, bollard, bollardChain, cctv, flagpole, graniteBlock, manhole, streetCabinet, streetPlate, trafficSignal, trolleyPole, wasteBin } from "./prop-street";
+import { aFrameSign, advertisingColumn, bench, bikeStation, bollard, bollardChain, cctv, flagpole, graniteBlock, manhole, streetCabinet, streetPlate, trafficSignal, trolleyPole, wasteBin } from "./prop-street";
 
 export type { PropLight, PropModel };
 
@@ -27,7 +28,7 @@ const MODELS: Readonly<Record<StreetPropKind, (shape: number) => PropModel>> = {
   planter: () => plain(planter()),
   "hanging-basket": () => plain(hangingBasket()),
   "waste-bin": (s) => plain(wasteBin(s)),
-  "bike-rack": () => plain(bikeRack()),
+  "bike-rack": (s) => plain(bikeRackWithBikes(s)),
   "bike-station": () => plain(bikeStation()),
   "advertising-column": (s) => plain(advertisingColumn(s)),
   "a-frame-sign": () => plain(aFrameSign()),
@@ -49,6 +50,10 @@ const MODELS: Readonly<Record<StreetPropKind, (shape: number) => PropModel>> = {
   monument: (s) => plain(monument(s)),
   artwork: (s) => plain(monument(s)),
   cctv: () => plain(cctv()),
+  atm: () => plain(atm()),
+  hydrant: () => plain(hydrant()),
+  "food-cart": () => plain(foodCart()),
+  container: (s) => plain(container(s)),
 };
 
 /** Every kind of the contract, in the order of `StreetPropKind` (the gallery's row). */

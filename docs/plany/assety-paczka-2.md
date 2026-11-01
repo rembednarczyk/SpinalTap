@@ -22,8 +22,8 @@ bryła i duże płaszczyzny koloru, a nie detal namalowany w teksturze.
 | `cctv_camera` | Smoggybeard | 3,2 MB | 3,2 tys. | 7 | 0,66 × 1,33 × 2 | rekwizyt ulicy: kamera na maszcie (rodzaj `cctv`) | dobry | **w kodzie** (`st-cctv`) |
 | `chinese__japanese_paper_lantern_chochin` | DeepDown | 2,8 MB | 2,8 tys. | 3 | 0,38 × 0,58 × 0,38 | rekwizyt ulicy: lampiony pod daszkami straganów | dobry: czerwony papier jako neon | **w kodzie** (`st-lantern`) |
 | `simple_mini-atm` | Blender3D | 19,4 MB | 3 tys. | 4 | szkielet, wymiary w pozie wiązania | rekwizyt fasady: bankomat w ścianie przy bankach i sklepach | średni: ciemna płyta z jedną szczeliną; ma szkielet i animację (do pominięcia) | E2 (fasady) |
-| `avika_street_food_cart` | AVIKA | 9,1 MB | 36,2 tys. | 10 | 3,91 × 2,65 × 1,48 | rekwizyt ulicy: wózek z jedzeniem na targu | dobry, ale 3,9 m długości nie mieści się w bryle straganu (2,1 × 0,5 m lady); potrzebuje własnych miejsc i bryły w symulacji | E2 (z bryłą w sim) |
-| `classic_shipping_container_freegameready` | Sebastian Webster | 4,3 MB | 17,1 tys. | 3 | 5,85 × 2,34 × 2,95 (otwarte drzwi) | rekwizyt: kontenery na Nabrzeżu i w nadbudówkach (`vertical-plan`, rodzaj `container`) | dobry: żebrowana bryła, kolor z puli kontenerów | E2 (bez rodzaju mebla dziś) |
+| `avika_street_food_cart` | AVIKA | 9,1 MB | 36,2 tys. | 10 | 3,91 × 2,65 × 1,48 | rekwizyt ulicy: wózek z jedzeniem na targu | dobry, ale 3,9 m długości nie mieści się w bryle straganu (2,1 × 0,5 m lady); potrzebuje własnych miejsc i bryły w symulacji | **w kodzie** (`st-food-cart`, rodzaj `food-cart`) |
+| `classic_shipping_container_freegameready` | Sebastian Webster | 4,3 MB | 17,1 tys. | 3 | 5,85 × 2,34 × 2,95 (otwarte drzwi) | rekwizyt: kontenery na Nabrzeżu i w nadbudówkach (`vertical-plan`, rodzaj `container`) | dobry: żebrowana bryła, kolor z puli kontenerów | **w kodzie** (`st-container-rust`, `-dumpster`, rodzaj `container`) |
 | `street_asset_pack` | vmatthew | 55,9 MB | 37,8 tys. | 138 | 12,8 × 6,1 × 6,8 (paczka) | rekwizyty ulicy: barierki, pachołki, znaki, worki, hydrant, skrzynki | dobry dla barierek i pachołków; znaki drogowe to tekstury (zostają płaskie tarcze) | E2 (wycinki) |
 | `satellite_comms` | Duane's Mind | 2,3 MB | 8,7 tys. | 2 | 11,6 × 17,2 × 13 | dach: duża antena satelitarna (Tessen, wieże) | dobry | E2 (dachy) |
 | `taiwan_style_signboard_lowpoly` | Solarliu | 16,5 MB | 3,5 tys. | 7 | 54 × 37 × 20 (zestaw) | szyldy na elewacji (zestaw ramek i wysięgników) | dobry jako bryły tablic; atlas tekstur ma **prawdziwe marki** (Coca-Cola, McDonald's, Panasonic, Carrefour), ale tekstury nie przechodzą do gry: tablice dostają jednolity kolor palety, napisy rysuje gra | E3 (szyldy) |
@@ -79,6 +79,27 @@ Do kodu nie weszły z pierwszej partii, choć brief je wymieniał:
 
 Kamery urządzeń z ADR-0029 (bloki `device` w symulacji) mają widok `block` z kontraktu `ViewDescriptor`.
 Podmiana na model wymaga zmiany kontraktu (nowy rodzaj widoku), więc zostaje na osobny ADR.
+
+## Co weszło w kod (E2, razem z ADR-0058 etap 2)
+
+Nowe rodzaje mebli z bryłą w symulacji i miejscami z importu (`furniture.ts`, `docs/world/lublin-props.todo.json`,
+`tools/osm-import/src/props-bulky.ts`), modele w `street-props.glb` (`tools/city_street_e2.py`):
+- wózek AVIKA (`food-cart`, bryła 3,9 × 1,5 m): 3 przy Targu na Ruskiej i 2 na Giełdzie na Kresowej, w miejscach,
+  gdzie cały obrys z przejściem 1 m leży na wolnym chodniku obok straganów; 0,9 tys. trójkątów;
+- kontener (`container`, 20 ft): 6 na Giełdzie na Kresowej („kontenery Tessen”, stawiane przed straganami), w dwóch
+  kolorach palety (`rust`, `dumpster`, kolor z kształtu), 0,67 tys. trójkątów; w nadbudówkach (`vertical-plan`) zostają proceduralne;
+- z paczek CC0 w tym samym etapie: bankomat wolnostojący (pixelmannen), hydrant (Quaternius; 6 nadziemnych z OSM,
+  `data/osm/points/hydrants.json`), donica (Kenney Nature Kit), rower (Quaternius) i skuter (lyricsz) przy stojakach.
+
+Wypiek (`tools/city_street_e2.py`): luźne części poniżej 12 trójkątów odpadają (`drop_specks`, także w modelach
+etapu 1), koła wózka upraszczane osobno (`bands`), słupki od ziemi do daszku dorysowane, obręcze roweru
+jako dwa całe pierścienie (`wheels`), a rama 0,5 tys. trójkątów, żeby kierownica została cała.
+
+Odłożone: **mini-ATM w ścianach** (`simple_mini-atm`). Potrzebuje przypisania do elewacji banku (fasada,
+wysokość, odsunięcie od okien i drzwi), czyli rekwizytu fasady w `wall-clutter`/`facade-props` z rolą
+`atm` i listą banków z OSM (`amenity=bank`, 12 na Krakowskim), a model ma szkielet w pozie wiązania. Bankomaty
+z OSM, które stoją w ścianach, są dziś wolnostojącymi terminalami 0,5 m od ściany (T-089). `street_asset_pack`
+(barierki, pachołki) też czeka: jego hydrant okazał się wysmukłym słupkiem, więc hydrant jest z Quaterniusa.
 
 ## Plan kolejnych etapów (osobne PR-y)
 

@@ -1,0 +1,1 @@
+Meble deptaka: wolnostojące bankomaty z OSM, hydranty nadziemne z OSM, donice z krzakami i kwiatami, rowery i skutery przy stojakach, wózki z jedzeniem przy Targu na Ruskiej i na Giełdzie na Kresowej, kontenery Tessen na Giełdzie; wszystkie z bryłą, z modeli CC0 i CC-BY na ekranie „Autorzy” (ADR-0058 etap 2).
