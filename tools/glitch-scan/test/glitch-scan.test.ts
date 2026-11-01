@@ -683,10 +683,6 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     });
   },
   /**
-   * A building the map puts under ground (`location=underground`: a cellar, a shelter, G-077)
-   * standing as a solid on the street over it.
-   */
-  /**
    * A small building standing on its own (under `SMALL_ALONE_AREA`, no other outline within 1 m:
    * a pavilion, a kiosk, a shed) raised to the district's default houses when the map gives it no
    * height (G-127: Bar Centralny by Pedet, 4 storeys for a round one-storey pavilion).
@@ -697,6 +693,10 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     const alone = smallAlone(areas);
     return all.filter((b) => alone.has(b.id) && b.source === "default" && b.levels > 1).map((b) => ({ at: near(b.x, b.z), what: `${b.id} ${b.levels} storeys on ${SMALL_ALONE_AREA} m² or less` }));
   },
+  /**
+   * A building the map puts under ground (`location=underground`: a cellar, a shelter, G-077)
+   * standing as a solid on the street over it.
+   */
   "building-underground-solid": () => {
     const under = new Set([
       ...[...SOURCE_OSM.ways.values()].filter((w) => w.tags?.building !== undefined && w.tags.location === "underground").map((w) => `w${w.id}`),
