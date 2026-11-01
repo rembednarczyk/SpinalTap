@@ -75,6 +75,16 @@ Kolejność: Z0 od razu, bo to małe poprawki, które nie czekają na nic. Potem
 7. **Obelisk z planem dzielnicy żydowskiej (1986)** po prawej stronie schodów nie ma go w OSM. Dodać po potwierdzeniu położenia zdjęciem?
 8. **Wejścia pod akt III.** Czy etap bryły ma od razu przygotować otwory wejść do Kaplicy i Donżonu (dziś Donżon ma tylko metalowe schody w66258166), czy zostawić to ADR-owi wnętrz?
 
+### Odpowiedzi użytkownika (1.11)
+1. Lew: tak, „Symbol Lwowa” z 1995 r. przy rogu placu i al. Tysiąclecia (jeden model, w miejscu z OSM).
+2. Warstwa 2077: siedziba korporacji pod ochroną dronów (od placu i Starego Miasta stonowanie, od dworca neony; drony patrolowe nad wzgórzem, etap ADR-0058 etap 7).
+3. Nadbudowy na łuku kamienic placu (T-028): zostają.
+4. Pchli targ: na stałe.
+5. Pełny detal także od al. Tysiąclecia (etap Z2 obejmuje obie fasady).
+6. Ścieżki pod wzgórzem (T-050): przywrócić jako alejki.
+7. Obelisk z planem dzielnicy żydowskiej: dodać (położenie potwierdzić zdjęciem).
+8. Etap bryły przygotowuje od razu otwory wejść do Kaplicy i Donżonu pod akt III.
+
 ## 6. Wpisy w rejestrze
 
 Nowe: T-112 (fasady Zamku), T-113 (szerokość schodów, G-203), T-114 (wysokości Kaplicy i Donżonu, G-204), T-115 (kandelabry u dołu schodów, G-205), T-116 (reflektory na dziedzińcu, G-206), T-117 (zieleń skarpy, G-207), T-118 (pawilon na dziedzińcu). Uzupełnione: T-040 (pomiar bramy), T-097 (Lew w etapie Z4).
