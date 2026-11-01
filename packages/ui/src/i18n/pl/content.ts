@@ -37,6 +37,10 @@ export const plContent = {
   // Obezwładnienia (ADR-0065): klawisz interakcji i przytrzymanie ataku do końca.
   "prompt.takedown": "Obezwładnij",
   "prompt.takedown.kill": "przytrzymaj atak, by zabić",
+  // Ciała (ADR-0065, etap 3): ten sam klawisz podnosi, upuszcza albo ukrywa.
+  "prompt.body.carry": "Podnieś",
+  "prompt.body.drop": "Upuść",
+  "prompt.body.hide": "Ukryj",
   // Wnętrza (sim `INTERIORS`, ADR-0061).
   "interior.clinic": "Klinika doktora Mori",
   "interior.neon-koi": "Neon Koi",

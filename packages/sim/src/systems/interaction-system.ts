@@ -1,4 +1,4 @@
-import { contractItemKey, contractKind, contractTerminalKey, shopTerms, takenFlag } from "@seki/core";
+import { type EntityId, contractItemKey, contractKind, contractTerminalKey, shopTerms, takenFlag } from "@seki/core";
 import { BREACH_DAEMONS } from "../world/street";
 import type { Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
@@ -10,6 +10,7 @@ import { grabLadder } from "./ladder-system";
 import { readHookTerminal } from "../world/hook-tracker";
 import { helpPasserBy } from "../world/micro-events";
 import { TAKEDOWN_PROMPT } from "../world/takedown";
+import { CARRY_PROMPT, DROP_PROMPT, HIDE_PROMPT } from "../world/bodies";
 
 /**
  * Picking up the crate of the running retrieval job, or the data of an infiltration (ADR-0024):
@@ -40,6 +41,30 @@ const startHack = (ctx: SimContext, terminal: Entity): void => {
   raiseAlarm(ctx, started);
 };
 
+/**
+ * What the interact key does with a body (ADR-0065), if that holds the prompt: with a body on
+ * her shoulder always (hide it in reach of a hiding place, else drop it: hands full, nothing
+ * else), else a takedown or a body to pick up nearer than anything else, the nearer of the two
+ * (a tie goes to the takedown). The key takes down and picks up only what the prompt names, so
+ * the loser's target is cleared.
+ */
+const bodyAction = (session: SimContext["session"], bestDist: number): { id: EntityId; prompt: string } | null => {
+  if (session.carrying !== null) {
+    session.takedownTarget = null;
+    session.bodyTarget = null;
+    return session.hideSpot !== null ? { id: session.hideSpot, prompt: HIDE_PROMPT } : { id: session.carrying, prompt: DROP_PROMPT };
+  }
+  const takedown = session.takedown ? { id: session.takedown.target, distance: 0 } : session.takedownTarget;
+  const body = session.bodyTarget;
+  const takingDown = takedown !== null && takedown.distance < bestDist && (body === null || takedown.distance <= body.distance);
+  // A tie with the bag a dead body dropped goes to the body: the bag is still there under it.
+  const pickingUp = !takingDown && body !== null && body.distance <= bestDist;
+  if (!takingDown) session.takedownTarget = null;
+  if (!pickingUp) session.bodyTarget = null;
+  if (takingDown) return { id: takedown.id, prompt: TAKEDOWN_PROMPT };
+  return pickingUp ? { id: body.id, prompt: CARRY_PROMPT } : null;
+};
+
 /** Vertical reach of the interact key, metres between feet (or the button's base). */
 const INTERACT_REACH_Y = 1.6;
 
@@ -47,8 +72,9 @@ const INTERACT_REACH_Y = 1.6;
  * Tracks the nearest interactable in reach and starts a dialogue on the interact edge; a
  * pickup is taken on the spot instead. A shop whose owner's faction is hostile to the player
  * refuses instead of opening. What an NPC on a daily plan offers can change with the hour
- * (see the schedule system). A takedown (ADR-0065) nearer than anything else takes the prompt;
- * the app answers its interact key with the `takedown` command, so the key does nothing here.
+ * (see the schedule system). A takedown or a body (ADR-0065) nearer than anything else takes the
+ * prompt, and a carried body always does; the app answers its interact key with the `takedown`,
+ * `carry-body` or `drop-body` command, so the key does nothing here.
  */
 export const interactionSystem: System = {
   name: "interaction",
@@ -70,18 +96,15 @@ export const interactionSystem: System = {
         bestDist = d;
       }
     }
-    const takedown = session.takedown ? { id: session.takedown.target, distance: 0 } : session.takedownTarget;
-    const takingDown = takedown !== null && takedown.distance < bestDist;
-    // The interact key takes down only what the prompt names (ADR-0065).
-    if (!takingDown) session.takedownTarget = null;
-    const focusId = takingDown ? takedown.id : (best?.id ?? null);
-    const prompt = takingDown ? TAKEDOWN_PROMPT : (best?.interactable.prompt ?? null);
+    const action = bodyAction(session, bestDist);
+    const focusId = action ? action.id : (best?.id ?? null);
+    const prompt = action ? action.prompt : (best?.interactable.prompt ?? null);
     if (focusId !== session.focusId || prompt !== session.focusPrompt) {
       session.focusId = focusId;
       session.focusPrompt = prompt;
       ctx.bus.emit("InteractionFocusChanged", { targetId: focusId, prompt });
     }
-    if (best && !takingDown && ctx.input.interact) {
+    if (best && !action && ctx.input.interact) {
       const { interactable, faction } = best;
       if (interactable.kind === "elevator") {
         callElevator(ctx, interactable, player);

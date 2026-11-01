@@ -34,6 +34,7 @@ import { createCrowdSystem } from "./crowd-system";
 import { activitySystem } from "./activity-system";
 import { createTrafficSystem } from "./traffic-system";
 import { takedownSystem } from "./takedown-system";
+import { carrySystem } from "./carry-system";
 import { difficultySystem } from "../world/difficulty";
 
 export { aimSpreadOf, fireShot, GUNFIRE_INTERRUPT_RADIUS, NPC_CRIT } from "./combat-system";
@@ -90,6 +91,7 @@ export {
 } from "./perk-system";
 export { createBodySystem, cyberCapacityOf } from "./body-system";
 export { doorForcedFlag, doorSnapshots, doorSystem, forceDoor, restoreDoors } from "./door-system";
+export { CARRY_REACH, CARRY_SPEED, HIDE_REACH, bodyCandidate, carriedBody, carrySystem, hideSpotNear } from "./carry-system";
 export { TAKEDOWN_BACK_CONE, TAKEDOWN_REACH, TAKEDOWN_TIME, takedownCandidate, takedownDistance, takedownSystem } from "./takedown-system";
 
 /**
@@ -147,6 +149,7 @@ export const createSystems = (): readonly System[] => [
   meleeSystem,
   combatSystem,
   takedownSystem,
+  carrySystem,
   interactionSystem,
   deathSystem,
   createCrimeSystem(),

@@ -23,11 +23,15 @@ to +Z, foot on y = 0, centred on X/Z. On top of that:
 
 Node `extras`: {"size", "styles", "credit": source id}.
 
+The street furniture of ADR-0058 stage 2 follows (tools/city_street_e2.py): cash machines, hydrants,
+planters, parked bikes and scooters, food carts and containers, CC0 and CC-BY.
+
 Usage: python3 -I tools/city_kit.py --street DIR --out DIR (DIR as filled by tools/assets/fetch.mjs).
 """
 import os, zlib
 import numpy as np
 from city_ccby import flat_normals, roles_of, simplify, weld
+from city_street_e2 import drop_specks
 from city_kit_gltf import png_bytes, scene_triangles, write_glb
 from city_kit_palette import GRID, SWATCHES, palette_images, swatch_uv
 
@@ -137,6 +141,7 @@ def bake_street(path, yaw, fit, target, opts):
     lo, hi = flat.min(0), flat.max(0)
     P = (P - np.array([(lo[0] + hi[0]) / 2, lo[1], (lo[2] + hi[2]) / 2])) * (np.array(fit) / (hi - lo))
     P, roles = simplify(P, roles, target)
+    P, roles = drop_specks(P, roles)
     if 'screen' in opts:
         roles = screen_roles(P, roles, *opts['screen'])
     if 'post' in opts:
@@ -164,6 +169,15 @@ def build_street(ccby_dir, out_dir):
         m = weld(key, P, N, roles, swatch_uv, MAX_TRIS)
         out.append(m)
         extras[key] = {'size': size, 'styles': styles, 'credit': source}
+        print(f"{key:20s} verts {len(m['pos']):5d} tris {len(m['ind']) // 3:5d} size {size} roles {','.join(sorted(set(roles)))}")
+    # ADR-0058 stage 2 after these: the models above keep their bytes.
+    from city_street_e2 import E2, bake_e2, is_ccby
+    for key, source, name, styles, yaw, fit, target, opts in E2:
+        P, N, roles, size = bake_e2(os.path.join(ccby_dir, source), name, yaw, fit, target, opts)
+        m = weld(key, P, N, roles, swatch_uv, MAX_TRIS)
+        out.append(m)
+        # The node's credit ties a CC-BY model to its entry on the "Credits" screen (CC0 ones need none).
+        extras[key] = {'size': size, 'styles': styles, **({'credit': source} if is_ccby(source) else {})}
         print(f"{key:20s} verts {len(m['pos']):5d} tris {len(m['ind']) // 3:5d} size {size} roles {','.join(sorted(set(roles)))}")
     albedo, glow = palette_images()
     dst = os.path.join(out_dir, 'street-props.glb')
