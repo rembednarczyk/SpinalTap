@@ -33,6 +33,8 @@ import {
   stockName,
   shopItemDescription,
   textRef,
+  VENUE_KINDS,
+  venueKindKey,
 } from "@seki/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_SETTINGS, GameUi, type UiIntents, createUiStore, isMessageKey, translateText } from "../src";
@@ -74,6 +76,7 @@ const coreKeys = (): string[] => [
   ...CONTRACT_KIND_IDS.map((kind) => contractClearedNote({ ...job, kind })),
   ...FAILURES.map((r) => contractFailureNote(r)),
   contractFailureNote("timeout", "eliminate"),
+  ...VENUE_KINDS.map(venueKindKey),
   ...QUEST_DEFINITIONS.flatMap((q) => [q.title, ...q.steps.flatMap((s) => [s.objective, ...(s.variants ?? []).map((v) => v.objective)])]),
 ];
 
