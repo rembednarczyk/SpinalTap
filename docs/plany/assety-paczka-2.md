@@ -92,8 +92,8 @@ Nowe rodzaje mebli z bryłą w symulacji i miejscami z importu (`furniture.ts`, 
   `data/osm/points/hydrants.json`), donica (Kenney Nature Kit), rower (Quaternius) i skuter (lyricsz) przy stojakach.
 
 Wypiek (`tools/city_street_e2.py`): luźne części poniżej 12 trójkątów odpadają (`drop_specks`, także w modelach
-etapu 1), koła wózka upraszczane osobno (`bands`), słupki daszku dorysowane, rower 0,7 tys. trójkątów, żeby
-kierownica i obręcze zostały całe.
+etapu 1), koła wózka upraszczane osobno (`bands`), słupki od ziemi do daszku dorysowane, obręcze roweru
+jako dwa całe pierścienie (`wheels`), a rama 0,5 tys. trójkątów, żeby kierownica została cała.
 
 Odłożone: **mini-ATM w ścianach** (`simple_mini-atm`). Potrzebuje przypisania do elewacji banku (fasada,
 wysokość, odsunięcie od okien i drzwi), czyli rekwizytu fasady w `wall-clutter`/`facade-props` z rolą

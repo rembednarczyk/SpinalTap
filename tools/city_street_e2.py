@@ -13,6 +13,8 @@ content/lublin/furniture.ts) like those of tools/city_street.py, on the same pal
   flower in a pot), before the fit;
 - `roles`: flat material name -> role for a glTF of plain colours (Kenney's nature kit);
 - `posts`: ((x, z)..., y0, y1, side) thin dark posts from y0 to y1 added after the simplification;
+- `wheels`: (role, tube) the triangles of that role (thin tyres) left out of the simplification and
+  drawn as two whole rings, one at each end;
 - `bands`: [(y0, y1, target)] heights (m, after the fit) simplified apart with their own target, so
   small parts there (a cart's wheels) keep their shape;
 - `paint`: role -> role after the colours are read, for a colour variant (the cell mesh has no tint
@@ -44,13 +46,13 @@ E2 = [
       'roles': {'wood': 'rust', 'woodBarkDark': 'dark', 'grass': 'plant', 'colorRed': 'fabric-magenta', 'colorPurple': 'neon-violet'}}),
     # Parked at the racks, across the hoops: a city bike (Quaternius) and a scooter (lyricsz), 1.66 m long
     # (the rack's solid is 1.66 m deep); the bike's thin tubes need more triangles than its size suggests.
-    ('st-bike', 'quaternius-public-transport', 'OBJ/Bicycle.obj', ['parked-bike'], 0, (0.5, 1.0, 1.66), 700,
-     {'obj': {'Bike': 'fabric-teal', 'Handle': 'dark', 'Wheel': 'tyre', 'Material.003': 'trim'}}),
+    ('st-bike', 'quaternius-public-transport', 'OBJ/Bicycle.obj', ['parked-bike'], 0, (0.5, 1.0, 1.66), 500,
+     {'obj': {'Bike': 'fabric-teal', 'Handle': 'dark', 'Wheel': 'tyre', 'Material.003': 'trim'}, 'wheels': ('tyre', 0.03)}),
     ('st-scooter', 'oga-lyricsz-bike', 'x/bike.obj', ['parked-scooter'], 90, (0.7, 1.1, 1.66), 280,
      {'obj': {'Material.001': 'fabric-magenta', 'Material.002': 'tyre'}}),
     # The food cart (AVIKA) on the markets: the solid is 3.9 x 2.65 x 1.5 m; its wheels (under 0.45 m) apart.
     ('st-food-cart', 'sketchfab-avika-street-food-cart', 'avika_street_food_cart.glb', ['food-cart'], 0, (3.88, 2.64, 1.48), 650,
-     {'bands': [(0, 0.45, 300)], 'posts': (((-1.5, -0.5), (1.25, -0.5), (-1.5, 0.25), (1.25, 0.25)), 1.0, 2.35, 0.05)}),
+     {'bands': [(0, 0.45, 300)], 'posts': (((-1.5, -0.5), (1.25, -0.5), (-1.5, 0.25), (1.25, 0.25)), 0.0, 2.35, 0.05)}),
 ] + [
     # The shipping container at the Giełda na Kresowej, one model per colour: the solid is 6.06 x 2.6 x 2.44 m.
     (f'st-container-{c}', 'sketchfab-shipping-container', 'classic_shipping_container_freegameready.glb', ['container'], 0, (6.04, 2.58, 2.42), 800,
@@ -149,6 +151,20 @@ def simplify_bands(P, roles, target, bands):
     return np.concatenate(outP + [Q]), outR + R
 
 
+def torus_tris(c, radius, tube, n=16, m=4):
+    """A ring in the y-z plane (a wheel, axle along x) round `c`, outward winding."""
+    def pt(i, k):
+        a, b = 2 * np.pi * i / n, 2 * np.pi * k / m
+        rr = radius + tube * np.cos(b)
+        return [c[0] + tube * np.sin(b), c[1] + rr * np.cos(a), c[2] + rr * np.sin(a)]
+    out = []
+    for i in range(n):
+        for k in range(m):
+            p00, p10, p11, p01 = pt(i, k), pt(i + 1, k), pt(i + 1, k + 1), pt(i, k + 1)
+            out += [[p00, p10, p11], [p00, p11, p01]]
+    return np.array(out, np.float64)
+
+
 def bake_e2(folder, name, yaw, fit, target, opts):
     P, roles = source_triangles(folder, name, opts)
     paint = opts.get('paint', {})
@@ -160,8 +176,24 @@ def bake_e2(folder, name, yaw, fit, target, opts):
     flat = P.reshape(-1, 3)
     lo, hi = flat.min(0), flat.max(0)
     P = (P - np.array([(lo[0] + hi[0]) / 2, lo[1], (lo[2] + hi[2]) / 2])) * (np.array(fit) / (hi - lo))
+    rings = []
+    if 'wheels' in opts:
+        # Thin tyres break into arcs under the clustering: each becomes a ring drawn whole.
+        role, tube = opts['wheels']
+        tyre = np.array([r == role for r in roles])
+        T = P[tyre]
+        mid = (T[:, :, 2].min() + T[:, :, 2].max()) / 2
+        for side in (T[:, :, 2].mean(1) < mid, T[:, :, 2].mean(1) >= mid):
+            w = T[side].reshape(-1, 3)
+            lo_w, hi_w = w.min(0), w.max(0)
+            # The radius from its length, so the ring stays within the fitted length.
+            rings.append(torus_tris((lo_w + hi_w) / 2, (hi_w[2] - lo_w[2]) / 2 - tube, tube))
+        P, roles = P[~tyre], [r for r, t in zip(roles, tyre) if not t]
     P, roles = simplify_bands(P, roles, target, opts.get('bands', []))
     P, roles = drop_specks(P, roles)
+    for ring in rings:
+        P = np.concatenate([P, ring])
+        roles = roles + [opts['wheels'][0]] * len(ring)
     if 'posts' in opts:
         # Thin posts the clustering cannot keep, drawn as boxes (the roof of a cart on its corners).
         from city_street import box_tris
