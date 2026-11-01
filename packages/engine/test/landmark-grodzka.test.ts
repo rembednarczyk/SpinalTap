@@ -75,7 +75,7 @@ describe("Brama Grodzka from the landmark kit (ADR-0062)", () => {
     expect(passageOpen(near3(f), f)).toEqual([]);
   });
 
-  it("builds the classicist fronts: rustication to a string course over the arch, a keystone, two rows of three framed windows, a round gable window", () => {
+  it("builds the classicist fronts: rustication to a string course over the arch, a keystone, two rows of framed windows (two per front, the third axis would run into the neighbours), a round gable window", () => {
     const f = gate();
     const sink = near3(f);
     const course = stringCourse(f);

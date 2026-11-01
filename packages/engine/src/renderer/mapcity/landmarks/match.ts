@@ -13,7 +13,7 @@ import { type CableAnchor, type LandmarkPart, RECIPE_BY_OSM } from "./recipes";
 /** How far from a part's position another building's position may lie to count as its neighbour, metres. */
 const NEARBY = 30;
 
-const keyOf =(x: number, z: number, corners: number): string => `${Math.round(x * 10)},${Math.round(z * 10)},${corners}`;
+const keyOf = (x: number, z: number, corners: number): string => `${Math.round(x * 10)},${Math.round(z * 10)},${corners}`;
 
 /** The world outline of a building of the data. */
 const ringOf = (b: LublinBuildingData): P2[] => Array.from({ length: b.outline.length / 2 }, (_, i) => ({ x: b.x + (b.outline[i * 2] as number), z: b.z + (b.outline[i * 2 + 1] as number) }));
