@@ -4,17 +4,21 @@ on:
   push:
     branches: [main]
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  # Docs-only pull requests (docs/**, changelog.d/**, *.md) skip the e2e shards: the checks
-  # below still run. Pushes to main always run everything (the combined state of several PRs).
+  # Minutes (user decision 1.11, no loss of coverage): draft pull requests run nothing (mark the
+  # PR ready for CI); a change of docs alone (docs/**, changelog.d/**, *.md) runs nothing either,
+  # on a pull request and on main; every job has a time limit, so a hung run cannot burn hours.
   changes:
     name: What changed
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       code: ${{ steps.diff.outputs.code }}
     steps:
@@ -23,14 +27,22 @@ jobs:
           fetch-depth: 0
       - id: diff
         run: |
-          if [ "${{ github.event_name }}" != "pull_request" ]; then echo "code=true" >> "$GITHUB_OUTPUT"; exit 0; fi
-          files=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            files=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")
+          elif [ -n "${{ github.event.before }}" ] && git cat-file -e "${{ github.event.before }}" 2>/dev/null; then
+            files=$(git diff --name-only "${{ github.event.before }}" HEAD)
+          else
+            echo "code=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
           echo "$files"
           if echo "$files" | grep -qvE '^(docs/|changelog\.d/)|\.md$'; then echo "code=true" >> "$GITHUB_OUTPUT"; else echo "code=false" >> "$GITHUB_OUTPUT"; fi
 
   checks:
     name: Typecheck, lint, architecture, unit tests
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -49,17 +61,19 @@ jobs:
           name: coverage
           path: reports/coverage
 
-  # ADR-0046: three shards in parallel with the checks; each builds once and runs a third
-  # of the specs (a single job took 40 min, most of it cold boots under SwiftShader).
+  # ADR-0046: two shards in parallel with the checks; each builds once and runs half of the
+  # specs (a single job took 40 min, most of it cold boots under SwiftShader). Setup is about
+  # 40 s a shard, so two shards cost about the same minutes as three with less rounding.
   e2e:
-    name: E2E ${{ matrix.shard }}/3 (build, smoke, NPR snapshot, perf budget)
+    name: E2E ${{ matrix.shard }}/2 (build, smoke, NPR snapshot, perf budget)
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3]
+        shard: [1, 2]
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -70,7 +84,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm test:e2e --shard=${{ matrix.shard }}/3
+      - run: pnpm test:e2e --shard=${{ matrix.shard }}/2
         env:
           CI: "true"
       - uses: actions/upload-artifact@v4

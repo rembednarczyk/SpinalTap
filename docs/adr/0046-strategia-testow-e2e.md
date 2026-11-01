@@ -57,7 +57,7 @@ Po falach 2 i 3 oraz przy przenosinach do Lublina e2e blokowały pracę i niewie
 6. **Modele VRoid tylko tam, gdzie są przedmiotem testu.**
    - Pod SwiftShaderem skinowanie pełnej obsady liczy się na procesorze. W Lublinie start w klinice zajmował 45 s na CI, a klatki blokowały wątek główny tak długo, że `page.evaluate` nie zdążało w 90 s (`inventory`, `smoke`, ślady z CI).
    - Spece startują z `models=off`, z wyjątkiem `models`: ubranie postaci i budżet rysowania. Spec `character-menu` z podglądem na jednym modelu przeszedł do testów sesji (zob. „Wynik przeniesienia”).
-7. **CI.** e2e w trzech shardach równolegle ze sprawdzeniami (wcześniej: jeden job po sprawdzeniach).
+7. **CI.** e2e w dwóch shardach równolegle ze sprawdzeniami (wcześniej: trzy shardy, a jeszcze wcześniej jeden job po sprawdzeniach). Szkice PR i zmiany samej dokumentacji nie uruchamiają testów, każdy job ma limit czasu (decyzja użytkownika 1.11: oszczędność minut bez utraty pokrycia).
 
 ## Dług: limity podniesione przed tym ADR
 Zostają do czasu przeniesienia lub przyspieszenia, potem do usunięcia:
