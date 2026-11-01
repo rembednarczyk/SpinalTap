@@ -9,6 +9,7 @@ import { STARE_MIASTO_CHUNKS } from "../../../packages/sim/src/content/lublin/st
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
 import { REPO } from "../src/paths.ts";
 import { emitProps } from "../src/props-emit.ts";
+import { loadNodeTags } from "../src/props-art.ts";
 import { type PropsPlan, generateProps } from "../src/props-gen.ts";
 import { SHAPES, knownKind, propOf, withShape } from "../src/props-kinds.ts";
 import { evenStations, offRoad, offWall, scatter, stations } from "../src/props-place.ts";
@@ -62,7 +63,7 @@ describe("street furniture generator (ADR-0047)", () => {
 
   it("matches the committed table (run `pnpm osm:props` after changing the plan or the rules)", () => {
     const committed = readFileSync(join(REPO, "packages/sim/src/content/lublin/props.generated.ts"), "utf8");
-    expect(emitProps(generateProps(PLAN, CHUNKS).byChunk)).toBe(committed);
+    expect(emitProps(generateProps(PLAN, CHUNKS, loadNodeTags()).byChunk)).toBe(committed);
   });
 
   it("stands lamps on the pavement beside the road on both sides, their arms towards it, and lanterns on the facades", () => {
@@ -176,7 +177,7 @@ describe("street furniture generator (ADR-0047)", () => {
     }
     const out = generateProps(PLAN, CHUNKS);
     const unia = [...out.byChunk.values()].flat().find((i) => i.prop === "monument" && Math.abs(i.x - 47.8) < 0.2 && Math.abs(i.z + 25.7) < 0.2);
-    expect(unia && unia.variant % 4).toBe(0);
+    expect(unia && unia.variant % (SHAPES.monument ?? 1)).toBe(0);
   });
 
   it("steps a piece placed later out of the solids placed before it, or drops it with no room (G-012)", () => {

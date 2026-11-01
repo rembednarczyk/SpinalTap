@@ -1,0 +1,1 @@
+Pomniki i rzeźby z OSM mają kształt z tagów i z tabeli znanych pomników Lublina zamiast losowego z hasha: Koziołki jako Koziołki, figury jako postacie, pomniki wojenne i instalacje jako stela z tablicą, kapliczki jako kapliczki; murale, mozaiki, neon na fasadzie i Sztukmistrz na linie nie stoją już jako wolnostojące bryły (G-149).
