@@ -339,6 +339,9 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
   // save has none: whoever was knocked out in it was saved as awake and wakes up so, and the
   // dead of a takedown had vanished. Nothing to change but the version.
   18: (old) => ({ ...old, version: 19 }),
+  // v19 -> v20 (G-171): a difficulty profile asked for in a fight is saved while it waits for the
+  // fight's end (optional). An older save has none waiting: what was asked was lost already.
+  19: (old) => ({ ...old, version: 20 }),
 };
 
 export class MigrationError extends Error {}

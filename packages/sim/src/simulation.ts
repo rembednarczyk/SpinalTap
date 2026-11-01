@@ -118,6 +118,8 @@ export class Simulation {
     restoreDoors(sim, snapshot.doors ?? []);
     // The body on her shoulder (ADR-0065) is saved on the body.
     sim.session.carrying = sim.world.with("downed").entities.find((b) => b.downed.carried)?.id ?? null;
+    // A profile asked for in the fight still waits for its end (G-171).
+    sim.session.pendingDifficulty = snapshot.pendingDifficulty ?? null;
     return sim;
   }
 
@@ -226,6 +228,7 @@ export class Simulation {
       streaming: { loadedChunks: this.streamer.loadedChunks },
       doors: doorSnapshots(this),
       domain: this.holder.domain,
+      ...(this.session.pendingDifficulty ? { pendingDifficulty: this.session.pendingDifficulty } : {}),
       narrative,
       meta: { label, objective },
     };
