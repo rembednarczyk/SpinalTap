@@ -136,6 +136,11 @@ describe("the doors on the facades (ADR-0058 stage 9)", () => {
     expect(d!.item.x).toBe(6);
   });
 
+  it("no door under 2 m: paving 0.5 m over the ground floor leaves a pier's door 1.8 m", () => {
+    expect(doors([wall()], [entrance(14)], { surfaceY: () => 0.5 })).toEqual([]);
+    expect(doors([wall()], [entrance(14)], { surfaceY: () => 0.25 })).toHaveLength(1);
+  });
+
   it("stands on the paving: its foot at the surface's height, its top where the slot puts it", () => {
     const [d] = doors([wall()], [entrance(14)], { surfaceY: () => -0.3 });
     expect(d!.item.y).toBe(-0.3);

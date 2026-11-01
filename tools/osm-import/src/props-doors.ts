@@ -25,7 +25,7 @@
  * door with a fanlight over a window.
  */
 import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
-import { DOOR_MAX, type DoorModel, doorLayout, doorVariant } from "../../../packages/core/src/world/doors.ts";
+import { type DoorModel, doorLayout, doorVariant } from "../../../packages/core/src/world/doors.ts";
 import { distanceToPiece, furniturePrisms } from "../../../packages/sim/src/content/lublin/furniture.ts";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -166,9 +166,8 @@ class DoorRules {
     const near = (this.ctx.furniture ?? []).filter((i) => Math.hypot(i.x - at.x, i.z - at.z) < 6 && furniturePrisms(i).length > 0);
     if (near.some((i) => reach.some((q) => distanceToPiece(i, q.x, q.z) < 0.05))) return this.no("furniture");
     const height = w.base + s.top - r2(y);
-    if (height > DOOR_MAX.height || height < 2) return this.no("height");
     const variant = doorVariant({ model, width: s.width, height });
-    // Its height rounded up to what the variant keeps must stay under a board or the first floor.
+    // Its height rounded up to what the variant keeps (2 m at least) must stay under a board or the first floor.
     if (r2(y) + doorLayout(variant).height > w.base + s.max + 1e-6) return this.no("rounding");
     this.spans.push({ p: at, w: doorLayout(variant).width });
     return { prop: "door", x: r2(at.x), y: r2(y), z: r2(at.z), yaw: Math.round(Math.atan2(w.nx, w.nz) * 10000) / 10000, variant };
