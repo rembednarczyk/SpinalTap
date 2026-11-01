@@ -19,6 +19,8 @@ import {
   unequip,
   useConsumable,
   weaponStatsOf,
+  WEAPON_SLOTS,
+  type EquipSlot,
 } from "@seki/core";
 import type { SimContext } from "./context";
 import { dropLoot } from "./domain-ops";
@@ -32,10 +34,13 @@ type Command<K extends ItemCommandType> = Extract<GameCommand, { type: K }>;
 
 type Domain = SimContext["state"]["domain"];
 
+/** With a body on the shoulder the weapons stay as they are (ADR-0065: no weapon in hand, G-164). */
+const weaponLocked = (ctx: SimContext, slot: EquipSlot): boolean => ctx.session.carrying !== null && (WEAPON_SLOTS as readonly EquipSlot[]).includes(slot);
+
 const equipItem = (ctx: SimContext, cmd: Command<"equip-item">): void => {
   const domain = ctx.state.domain;
   const r = equip(domain.inventory, domain.equipment, cmd.uid, cmd.slot);
-  if (!r.ok) return;
+  if (!r.ok || weaponLocked(ctx, r.slot)) return;
   ctx.state.domain = { ...domain, equipment: r.equipment };
   ctx.bus.emit("ItemEquipped", { uid: cmd.uid, slot: r.slot, replaced: r.replaced });
 };
@@ -43,6 +48,7 @@ const equipItem = (ctx: SimContext, cmd: Command<"equip-item">): void => {
 const unequipItem = (ctx: SimContext, cmd: Command<"unequip-item">): void => {
   const domain = ctx.state.domain;
   const { inventory, equipment } = domain;
+  if (weaponLocked(ctx, cmd.slot)) return;
   const r = unequip(inventory, equipment, cmd.slot);
   if (!r.ok) {
     const uid = equipment[cmd.slot];
