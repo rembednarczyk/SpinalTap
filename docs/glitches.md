@@ -611,7 +611,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-200 Test tabeli rekwizytów blisko limitu 20 s w CI po drzwiach
-- Status: w naprawie (1.11, pilne: main czerwony od #167; pomiar pod --coverage: 5,9 s przed #167, 9,3 s po)
+- Status: w PR #183 (1.11, w weryfikacji; pilne: main czerwony od #167): przyczyna z profilu: `neighbour` w `cityFrames` przeglądał wszystkie 3662 budynki na próbkę co 10 cm, #167 dodał drugie ramkowanie; poprawka przez `BinIndex` i wczesne odrzucenie w `fits`, tabela bajt w bajt, 9,3 → 3,0 s pod `--coverage`. Poboczne: `determinism.test.ts` „golden run… at every density” 27 s pod load 24–27; `DoorRules.fit` filtruje wszystkie rekwizyty na slot; `cityFrames` liczy szczyt sąsiada z `at.y + height`, renderer z `base + height` (do sprawdzenia)
 - Ważność: S3 (test, czerwony CI kosztuje cykl) · Zasięg: `tools/osm-import/test/props.test.ts` „matches the committed table” przekroczył 20 s w `test:coverage` na CI (przebieg 714 s zamiast ok. 550 s); lokalnie 3,1–3,2 s przy load 17
 - Przyczyna do ustalenia: generator rekwizytów urósł o reguły drzwi (#167) i targu (#153); test przelicza całą tabelę pod pokryciem
 - Poprawka: pomiar czasu generacji przed i po #167 (profil), przyspieszenie generatora albo wspólne wyliczenie tabeli dla testów; bez podnoszenia limitu (ADR-0046)
