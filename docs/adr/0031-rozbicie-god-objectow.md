@@ -82,3 +82,13 @@ Złote hashe, migawka NPR i zapis bez zmian. ESLint pilnuje limitów (`max-lines
 
 ## Zapadka klas (1.11)
 Limit „ok. 20 metod na klasę” nie miał strażnika i dziewięć klas go przekroczyło. Od 1.11 pilnuje go test `tools/code-health/test/god-objects.test.ts`: liczy metody, akcesory i właściwości z funkcją (parser TypeScript), a klasy ponad 20 trzyma w `god-objects-baseline.json`. Baza tylko spada; nowa klasa ponad limit albo wzrost klasy z listy to czerwony test. Stan na wejściu: `BabylonRenderer` 42, `GameSession` 33, `MapCity` 33, `CharacterViews` 24, `ToonMaterials` 23, `StreetProps` 22, `GangerAgent` 22, `SynthAudio` 21, `WorldStreamer` 21. Podział każdej z nich to osobny PR bez zmiany zachowania (złote hashe, migawka NPR, budżety bez zmian).
+
+Postęp (1.11, każdy podział osobnym PR-em, zachowanie potwierdzone sondą porównującą stary i nowy kod):
+
+| Klasa | Przed | Po | PR | Części |
+|---|---|---|---|---|
+| `MapCity` | 33 | 19 | #140 | `MapEntries` (dane i zapytania), komórki i budowa za fasadą |
+| `WorldStreamer` | 21 | 13 | #141 | strumień chunków, katalog i uśpione encje osobno |
+| `BabylonRenderer` | 42 | 17 | #146 | `MapCitySlot`, `WetAsphalt`, `RendererLoading`, `RendererStats`, typ `ScreenEffects` |
+
+Zostają w bazie: `GameSession` 33 (podział w toku), `CharacterViews` 24, `ToonMaterials` 23, `StreetProps` 22, `GangerAgent` 22, `SynthAudio` 21.
