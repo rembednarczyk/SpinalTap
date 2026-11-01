@@ -148,18 +148,36 @@ const atKerb = (ring: readonly P[], by: KerbNeighbours): number => {
  * outline (`AT_KERB`), holding fewer than half the cars its bays would: one every `BAY_STEP` of
  * its layout (aslant in a deep strip without the tag), `TAKEN` of them taken. The room a car
  * keeps from a meter or a footway, measured from its body and not from the kerb between them,
- * leaves the bays by them empty (G-189, Radziwiłłowska).
+ * leaves the bays by them empty (G-189, Radziwiłłowska). A strip with no car at all counts too
+ * (G-190), but one of `known` goes to `bayStripsEmptyKnown`.
  */
-export const bayStripsSparse = (parks: readonly Area[], cars: readonly ParkedCar[], streets: readonly Street[], by: KerbNeighbours): Finding[] =>
+export const bayStripsSparse = (parks: readonly Area[], cars: readonly ParkedCar[], streets: readonly Street[], by: KerbNeighbours, known: Readonly<Record<string, string>> = {}): Finding[] =>
   parks.flatMap((park) => {
     const { length, depth } = stripOf(park.ring, streets);
     const got = cars.filter((c) => pointInRing(c, park.ring)).length;
-    if (length < 15 || got === 0 || atKerb(park.ring, by) === 0) return [];
+    if (length < 15 || (got === 0 && park.id in known) || atKerb(park.ring, by) === 0) return [];
     const layout = layoutOf(park, depth);
     const step = BAY_STEP[layout === "untagged deep" ? "diagonal" : layout === "perpendicular" || layout === "diagonal" ? layout : "parallel"];
     const expected = Math.floor(length / step) * TAKEN;
     return got < expected / 2 ? [{ at: near(park.ring[0]!.x, park.ring[0]!.z), what: `${park.id} (${layout}, ${length.toFixed(1)} m): ${got} cars of ${expected.toFixed(1)}` }] : [];
   });
+
+/**
+ * The kerb car parks the game leaves empty for a reason measured and filed elsewhere (G-190),
+ * kept out of `bayStripsSparse` while empty and counted apart.
+ */
+export const EMPTY_STRIPS_KNOWN: Readonly<Record<string, string>> = {
+  w232362991: "Kowalska, diagonal 3.4–3.9 m deep: too shallow for most cars aslant at 60° (G-190)",
+  w1159135271: "Łęczyńska, perpendicular 3.4 m deep: too shallow for a car across (G-190)",
+  w1514058885: "Świętoduska: every bay on a slope over LEVEL_DROP (G-133)",
+  w1517184173: "Ruska, north kerb: every bay on a slope over LEVEL_DROP (G-133)",
+};
+
+/** A kerb car park of `known` still without a single car, with the reason it is. */
+export const bayStripsEmptyKnown = (parks: readonly Area[], cars: readonly ParkedCar[], known: Readonly<Record<string, string>>): Finding[] =>
+  parks.flatMap((park) =>
+    park.id in known && !cars.some((c) => pointInRing(c, park.ring)) ? [{ at: near(park.ring[0]!.x, park.ring[0]!.z), what: `${park.id}: ${known[park.id]}` }] : [],
+  );
 
 /** A street of the game: its axis and whether cars drive it (`use: cars`, not a street for deliveries). */
 export interface GameStreet {
