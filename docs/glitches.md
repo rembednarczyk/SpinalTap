@@ -480,19 +480,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Kontrola skanu: `roof-out-of-outline` (bez kościołów), baza 10
 - Pakiet właściciela: packages/engine (renderer/mapcity)
 
-### G-151 Hydranty stawiane regułą zamiast z OSM
-- Status: w poprawkach PR #124 (1.11, kurator)
-- Ważność: S3 · Zasięg: 33 hydranty w grze, żaden w prawdziwym miejscu (mediana 143 m od najbliższego nadziemnego)
-- Przyczyna: `filterOsm` (`tools/osm-import/src/osm.ts:151`) zostawia tylko węzły z `name`, a hydranty nazwy nie mają; żywe OSM ma w chunkach 77 (6 `pillar`, 71 podziemnych, import z 2015 z `ref`)
-- Poprawka: hydranty nadziemne z OSM (do 3 m od węzła), podziemne świadomie pominięte albo jako pokrywa; kontrola skanu „hydrant dalej niż 3 m od `pillar` z OSM”
-- Pakiet właściciela: tools/osm-import
-
-### G-152 Kontenery w ogrodzonym parku na Nabrzeżu
-- Status: w poprawkach PR #124 (1.11, kurator)
-- Ważność: S3 · Zasięg: 5 z 8 kontenerów w parku w154191322 (`leisure=park`, `natural=scrub`, `barrier=fence`), jeden w poprzek płotu
-- Poprawka: kontenery poza parkiem, najlepiej na Giełdzie na Kresowej (plan ulic: „kontenery Tessen”); kontrola skanu „mebel w obrysie `leisure=park`/`natural=*` albo na `barrier=fence`”
-- Pakiet właściciela: tools/osm-import (props-bulky)
-
 ### G-153 Skan `furniture-overlap` pomija słupki
 - Status: zgłoszone (1.11, weryfikator #124)
 - Ważność: S4 · Zasięg: np. stojak (-137.1, -52.2) z bryłą na słupku (-137.9, -53.1)

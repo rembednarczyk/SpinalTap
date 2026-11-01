@@ -2,6 +2,19 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-152 Kontenery w ogrodzonym parku na Nabrzeżu
+- Status: naprawione (1.11, #124: 6 kontenerów na Giełdzie na Kresowej, park pusty; dalej G-169)
+- Ważność: S3 · Zasięg: 5 z 8 kontenerów w parku w154191322 (`leisure=park`, `natural=scrub`, `barrier=fence`), jeden w poprzek płotu
+- Poprawka: kontenery poza parkiem, najlepiej na Giełdzie na Kresowej (plan ulic: „kontenery Tessen”); kontrola skanu „mebel w obrysie `leisure=park`/`natural=*` albo na `barrier=fence`”
+- Pakiet właściciela: tools/osm-import (props-bulky)
+
+### G-151 Hydranty stawiane regułą zamiast z OSM
+- Status: naprawione (1.11, #124: 6 hydrantów nadziemnych z OSM na węzłach, reguła usunięta)
+- Ważność: S3 · Zasięg: 33 hydranty w grze, żaden w prawdziwym miejscu (mediana 143 m od najbliższego nadziemnego)
+- Przyczyna: `filterOsm` (`tools/osm-import/src/osm.ts:151`) zostawia tylko węzły z `name`, a hydranty nazwy nie mają; żywe OSM ma w chunkach 77 (6 `pillar`, 71 podziemnych, import z 2015 z `ref`)
+- Poprawka: hydranty nadziemne z OSM (do 3 m od węzła), podziemne świadomie pominięte albo jako pokrywa; kontrola skanu „hydrant dalej niż 3 m od `pillar` z OSM”
+- Pakiet właściciela: tools/osm-import
+
 ### G-149 Pomniki i rzeźby z OSM mają przypadkowy kształt
 - Status: naprawione (1.11, #132, 67fc8a1; weryfikator PRZYJĘTE, kurator zgodne z trzema nieblokującymi uwagami → G-166…G-168, T-096…T-100); skan `monument-shape-off-tags` 48 → 0; uwaga weryfikatora: kontrola przepuszcza każdą stelę
 - Ważność: S3 · Zasięg: 27 pomników i rzeźb z planu (`docs/world/lublin-props.todo.json`) i wszystkie `memorial`/`artwork` z OSM
