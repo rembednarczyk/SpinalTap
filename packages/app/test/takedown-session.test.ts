@@ -59,7 +59,8 @@ describe("takedown in the session (ADR-0065)", () => {
     steps(session, 1, frame({ crouch: true, interact: true }));
     expect(started).toEqual([{ target: guard.id, duration: TAKEDOWN_TIME }]);
     steps(session, Math.ceil(TAKEDOWN_TIME / SIM_DT), CROUCH);
-    expect(done).toEqual([{ target: guard.id, lethal: false, witnessed: false }]);
+    // Ume at her stall on the deptak sees it (the witnesses: takedown-witness-session.test.ts).
+    expect(done).toEqual([{ target: guard.id, lethal: false, witnessed: true }]);
     expect(guard.unconscious).toBe(true);
   });
 

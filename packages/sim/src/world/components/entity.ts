@@ -2,7 +2,7 @@ import type { ActivityId, EnemyTypeId, EntityId, FactionId, Health, Slope, Vec3,
 import type { Passerby } from "../activity-types";
 import type { Aabb } from "../collision";
 import type { Prism } from "../prism";
-import type { CivilianAi, EscortAi, GangerAi, SniperState } from "./ai";
+import type { CivilianAi, DownedBody, EscortAi, GangerAi, SniperState } from "./ai";
 import type { CharacterBody, Combatant, MeleeState, Posture } from "./body";
 import type { Device, HackEffects } from "./devices";
 import type { DoorLeaf, Elevator, ElevatorGate, Interactable, LadderDef } from "./interaction";
@@ -96,6 +96,8 @@ export interface Entity {
    * brings it round.
    */
   unconscious?: true;
+  /** The finding and the waking of the knocked out (ADR-0065). Transient, with `unconscious`. */
+  downed?: DownedBody;
   /**
    * What the character does where it stands (ADR-0040), set by the activity system from its
    * plan, its spot or its role. Derived from the clock and the content every step: not saved.
