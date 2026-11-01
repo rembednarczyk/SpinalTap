@@ -115,9 +115,13 @@ const keptStalls = Object.values(clear)
 /** The stock whose stall gave way to the game goes with it: no pallet of a stall that is not there. */
 const withStall = (i: StreetPropItem): boolean => i.prop !== "market-goods" || keptStalls.some((s) => Math.hypot(s.x - i.x, s.z - i.z) <= STOCK_REACH);
 
-/** The map's pieces clear of the game, on the shaped terrain. */
+/**
+ * The map's pieces clear of the game, on the shaped terrain. A door on a facade (ADR-0058 stage 9)
+ * keeps the foot the import measured on the paving drawn under it: its top was fitted to the
+ * facade's windows from there.
+ */
 const kept: Readonly<Record<string, readonly StreetPropItem[]>> = Object.fromEntries(
-  Object.entries(clear).map(([id, items]) => [id, items.filter(withStall).map((i) => ({ ...i, y: Math.round(groundY(i.x, i.z) * 100) / 100 }))]),
+  Object.entries(clear).map(([id, items]) => [id, items.filter(withStall).map((i) => (i.prop === "door" ? i : { ...i, y: Math.round(groundY(i.x, i.z) * 100) / 100 }))]),
 );
 
 const keptPieces = Object.values(kept).flat();

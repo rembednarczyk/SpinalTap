@@ -65,10 +65,13 @@ export class WorldStreamer {
   private presenceFlags: readonly string[] | null = null;
   /**
    * The contract whose targets the catalog holds: the last one registered. They stay after the
-   * job ends (failed, cleared or paid) until the next is taken, alarmed guards fighting on (G-178).
+   * job ends (failed, cleared or paid) until the next is taken, alarmed guards fighting on (G-178);
+   * once it is paid no chunk brings them back (G-195, `clearSite`).
    */
   private contract: ContractOnSite | null = null;
   private contractKeys: readonly string[] = [];
+  /** The registered contract was paid (G-195): its site is cleared, its people known by key only. */
+  private siteCleared = false;
   /**
    * Jobs replaced by a newer one while some of their people are still in the world (G-178), with
    * their keys: those people (alerted guards fighting on) are saved with them. No chunk brings
@@ -148,6 +151,7 @@ export class WorldStreamer {
   registerContract(world: World<Entity>, flags: readonly string[], completed: number, contract: Contract): void {
     if (this.contract) this.retire(world, { site: this.contract, keys: this.contractKeys });
     this.contract = { contract, completed };
+    this.siteCleared = false;
     const templates = contractTemplates(this.ids, this.chunks, completed, contract);
     this.contractKeys = keysOf(templates);
     this.catalog.setContract(templates);
@@ -158,6 +162,21 @@ export class WorldStreamer {
   /** The contract whose targets are in the world, from its registration on (G-178). */
   get registeredContract(): ContractOnSite | null {
     return this.contract;
+  }
+
+  /**
+   * The registered job is paid (G-195): its site is cleared, as gigs and outposts are. Its
+   * sleepers are forgotten at once and those still about when their chunk falls asleep, so
+   * nobody of it comes back; new people come only with the next job taken there.
+   */
+  clearSite(): void {
+    if (!this.contract || this.siteCleared) return;
+    this.siteCleared = true;
+    this.catalog.closeContract();
+    for (const k of this.contractKeys) {
+      this.formerKeys.add(k);
+      this.state.dormant.delete(k);
+    }
   }
 
   /**
@@ -212,7 +231,8 @@ export class WorldStreamer {
 
   /** Re-applies saved entity state: live entities directly, the rest as pinned or dormant. */
   restoreEntities(world: World<Entity>, flags: readonly string[], saved: readonly EntitySnapshot[]): void {
-    restoreEntities(world, flags, saved, { state: this.state, catalog: this.catalog, spawner: this.spawner, chunkIdAt: (p) => this.chunkIdAt(p) });
+    const cleared = new Set(this.siteCleared ? this.contractKeys : []);
+    restoreEntities(world, flags, saved, { state: this.state, catalog: this.catalog, spawner: this.spawner, chunkIdAt: (p) => this.chunkIdAt(p), cleared });
   }
 
   /** Loads and unloads chunks around `focus`. Unloads first, so ids never collide. */

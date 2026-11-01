@@ -171,6 +171,31 @@ python3 -I -B tools/city_kit.py --street /tmp/city-assets --out packages/app/pub
 Pozostałe modele drugiej paczki są w `sources.json` z `"used": []` (kolejne etapy, plan w
 `docs/plany/assety-paczka-2.md`); dostaną wiersz tutaj, gdy trafią do pliku.
 
+## Drzwi na fasadach na licencji CC-BY 4.0: `door-props.glb` (ADR-0058 etap 9)
+
+Skrzydła drzwi z czterech modeli E7 drugiej paczki ze Sketchfaba (`docs/plany/assety-paczka-2.md`) na
+licencji **CC-BY 4.0** (`tools/city_doors.py`), w czwartym pliku na tej samej palecie. Gra wczytuje go po
+kicie razem z pozostałymi i łączy je w jeden zestaw rekwizytów. Węzeł modelu ma `extras.credit`, podpis
+jest na ekranie „Autorzy”. Ościeżnicę, nadproże, próg i naświetle nad niższym skrzydłem rysuje renderer
+(`prop-door.ts`); skrzydło z pliku rozciąga do otworu każdych drzwi. Bez pliku (telefon, `low`, przed
+wczytaniem) skrzydła są proceduralne.
+
+| Klucz w pliku | Tytuł | Autor | Źródło | Licencja | Zmiany |
+|---|---|---|---|---|---|
+| `dr-steel`, `dr-steel-double` (stalowe drzwi klatek i wejścia główne) | Cyberpunk City Assets Pack 3# Doors and Windows | [carlcapu9](https://sketchfab.com/carlcapu9) | [Sketchfab](https://sketchfab.com/3d-models/cyberpunk-city-assets-pack-3-doors-and-windows-c6cdc4f6715e4d8eae61eeb81fe636c8) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | dwa z 24 elementów zestawu (węzły `Asset_Buildings.002` i `.005`, 330 i 660 trójkątów bez upraszczania), obrócone frontem do +Z, wpasowane w skrzydło 1,04 × 2,2 × 0,08 m i 1,84 × 2,2 × 0,08 m, kolory z tekstury sprowadzone do palety, bez tekstur |
+| `dr-shop`, `dr-tall`, `dr-shutter` (drzwi sklepów, drzwi kamienic z oknem, rolety wejść gospodarczych) | Low-Poly PSX Style Garage Doors Pack | [vanillao03](https://sketchfab.com/vanillao03) | [Sketchfab](https://sketchfab.com/3d-models/low-poly-psx-style-garage-doors-pack-6cd3bb88d27e44ac96f080e533d7015a) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | trzy z dziesięciu elementów zestawu (węzły `Garage Door_010` dwa razy i `_001`, 202 i 128 trójkątów), wpasowane w skrzydło 1,84 × 2,2 m, 1,04 × 2,2 m i 2,4 × 2,4 m; szyba drzwi sklepu jako przygaszona witryna (`shop-teal`), w drzwiach kamienicy skrzydło jako drewno (`rust`) i ciepłe okno (`win-warm`); bez tekstur |
+| `dr-code` (drzwi pancerne na kod przy bankach) | Cyberpunk Sci-fi Door 3 - Free | [Jesus Fernandez Garcia](https://sketchfab.com/jamyzgenius) | [Sketchfab](https://sketchfab.com/3d-models/cyberpunk-sci-fi-door-3-free-df980eee6f0f42aaa52d70b668001b4d) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | 766 trójkątów bez upraszczania, obrócony frontem do +Z, wpasowany w skrzydło 1,04 × 2,2 × 0,08 m (z 0,8 × 4,4 × 3,3 jednostki), kolory z tekstury sprowadzone do palety, pasek neonu `neon-cyan`, bez tekstur |
+
+Fasadowy model okien z zestawu carlcapu9 (okna, balkon) i drzwi ewakuacyjne `fire_escape__exit_doors`
+czekają w `sources.json` z `"used": []`.
+
+Odtworzenie pliku:
+
+```
+NODE_USE_ENV_PROXY=1 node tools/assets/fetch.mjs /tmp/city-assets --only sketchfab-cyberpunk-doors-and-windows,sketchfab-psx-garage-doors,sketchfab-cyberpunk-scifi-door-3
+python3 -I -B tools/city_kit.py --doors /tmp/city-assets --out packages/app/public/city
+```
+
 ## Targ i budki z jedzeniem: `market-props.glb` (ADR-0058 etap 3)
 
 Osiem modeli złożonych z części paczek **CC0** Kenneya (`tools/city_market.py`), w trzecim pliku na tej

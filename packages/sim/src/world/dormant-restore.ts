@@ -12,6 +12,8 @@ export interface RestoreParts {
   readonly catalog: StreamCatalog;
   readonly spawner: ActorSpawner;
   readonly chunkIdAt: (p: Vec3) => string;
+  /** Keys of the people of a cleared site (G-195). */
+  readonly cleared: ReadonlySet<string>;
 }
 
 /** A replaced job's person (G-178): saved only while in the world, so back in it. */
@@ -38,6 +40,8 @@ export const restoreEntities = (world: World<Entity>, flags: readonly string[], 
       continue;
     }
     const former = catalog.formerOf(s.key);
+    // A cleared site's sleeper (G-195) in a save from before sites were cleared: gone with his chunk.
+    if (former && parts.cleared.has(s.key) && !s.alerted && !s.lastKnown && !bodyHere(s, parts) && !state.resident.has(former.chunk)) continue;
     if (former) {
       restoreFormer(world, flags, s, former, spawner);
       continue;

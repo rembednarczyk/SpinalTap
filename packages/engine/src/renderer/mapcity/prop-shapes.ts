@@ -23,6 +23,8 @@ export const PROP_SHAPES: Readonly<Partial<Record<StreetPropKind, number>>> = {
   container: 2,
   // ADR-0058 stage 3: the market's stock (cartons, barrels, crates, goods under a canvas).
   "market-goods": 4,
+  // ADR-0058 stage 9: a door's model (`DOOR_MODELS`); its size is in the bits above.
+  door: 8,
 };
 
 /** Monument and artwork shapes. */
