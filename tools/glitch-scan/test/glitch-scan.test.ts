@@ -15,7 +15,7 @@ import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 import { MAP_SIGN_KIND } from "../../../packages/engine/src/renderer/mapcity/sign-plan";
 import { marketChecks } from "./market-pieces";
 import { signsInNeighbours } from "./sign-neighbours";
-import { bayCarsMisturned, bayCarsOutOfPark, bayStripsSparse, crowdLanesOnParking, kerbParksOf } from "./kerb-bays";
+import { bayCarsMisturned, bayCarsOutOfPark, bayStripsSparse, crowdLanesOnParking, kerbParksOf, kerbStripsOffCarStreets } from "./kerb-bays";
 import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alone.ts";
 import { extractFeatures } from "../../osm-import/src/features.ts";
 import { pathWidth, roadWidth } from "../../osm-import/src/ground.ts";
@@ -815,6 +815,13 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
           .map((l) => l.line),
       },
     ),
+  /** A kerb car park with over 10 m by a street for deliveries (no car traffic in the game) and no parked car there (G-190). */
+  "kerb-strip-no-car-street": () =>
+    kerbStripsOffCarStreets(
+      kerbParksOf(SOURCE_OSM),
+      ROAD_CHAINS.map((c) => ({ points: c.points, cars: c.use === "cars" })),
+      PARKED_CARS,
+    ),
   /** A crowd lane walked a metre or more inside a kerb car park, on its cars' strip (G-177). */
   "crowd-lane-on-parking": () => crowdLanesOnParking(kerbParksOf(SOURCE_OSM), CROWD_LANES),
   /** A game block standing on the ground (not an awning or a deck) that floats or sinks. */
@@ -1555,6 +1562,17 @@ describe("the glitch scan (ADR-0054)", () => {
       expect(bayStripsSparse([deep], one, [street], none)).toEqual([]);
       expect(bayStripsSparse([deep], [], [street], meter)).toEqual([]);
       expect(bayStripsSparse([deep], one, [street], { furniture: [], footways: [[{ x: 5, z: 11 }, { x: 35, z: 11 }]] })).toHaveLength(1);
+    });
+
+    it("finds a strip's stretch over 10 m by a street for deliveries with no car parked in it (G-190)", () => {
+      const lane = park(undefined, [[0, 4], [30, 4], [30, 6.5], [0, 6.5]]);
+      const deliveries = { points: street, cars: false };
+      const parallel = (x: number) => car(x, 5.2, Math.PI / 2);
+      expect(kerbStripsOffCarStreets([lane], [deliveries], []).map((f) => f.what)).toEqual(["w1: 30.0 m by a street for deliveries without a car"]);
+      expect(kerbStripsOffCarStreets([lane], [deliveries], [3, 10, 17, 24].map(parallel))).toEqual([]);
+      expect(kerbStripsOffCarStreets([lane], [deliveries], [3, 10].map(parallel))).toHaveLength(1);
+      expect(kerbStripsOffCarStreets([lane], [{ points: street, cars: true }], [])).toEqual([]);
+      expect(kerbStripsOffCarStreets([lane], [deliveries, { points: [[0, 5.5] as const, [40, 5.5] as const], cars: true }], [])).toEqual([]);
     });
   });
 });

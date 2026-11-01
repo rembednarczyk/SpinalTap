@@ -161,6 +161,47 @@ export const bayStripsSparse = (parks: readonly Area[], cars: readonly ParkedCar
     return got < expected / 2 ? [{ at: near(park.ring[0]!.x, park.ring[0]!.z), what: `${park.id} (${layout}, ${length.toFixed(1)} m): ${got} cars of ${expected.toFixed(1)}` }] : [];
   });
 
+/** A street of the game: its axis and whether cars drive it (`use: cars`, not a street for deliveries). */
+export interface GameStreet {
+  readonly points: Street;
+  readonly cars: boolean;
+}
+
+/** A car parks in a strip's part when its middle is this near the part's middle across the street (m): half a car's length and a gap. */
+const SERVED = 3.5;
+
+/**
+ * A kerb car park with over 10 m of its strip (chords across the street every half metre) by a
+ * street without the game's car traffic, its nearest one being for deliveries, and no parked car
+ * there: nobody parks in it (G-190, Kowalska T-107, where Lublin parks some 4 cars along it).
+ */
+export const kerbStripsOffCarStreets = (parks: readonly Area[], streets: readonly GameStreet[], cars: readonly ParkedCar[]): Finding[] =>
+  parks.flatMap((park) => {
+    const nearest = (q: P) => streets.reduce((m, s) => (projectOn(s.points, q.x, q.z).d < projectOn(m.points, q.x, q.z).d ? s : m));
+    const by = streets.filter((s) => !s.cars && park.ring.some((p) => projectOn(s.points, p.x, p.z).d < 25));
+    const parked = cars.filter((c) => pointInRing(c, park.ring));
+    let empty = 0;
+    let at: P | undefined;
+    for (const street of by) {
+      const along = park.ring.map((p) => projectOn(street.points, p.x, p.z).s);
+      for (let s = Math.min(...along); s <= Math.max(...along); s += 0.5) {
+        const p = pointAt(street.points, s);
+        for (const side of [1, -1]) {
+          const ins: P[] = [];
+          for (let d = 0; d <= 25; d += 0.1) {
+            const q = { x: p.x + p.tz * side * d, z: p.z - p.tx * side * d };
+            if (pointInRing(q, park.ring)) ins.push(q);
+          }
+          const mid = ins[Math.floor(ins.length / 2)];
+          if (ins.length <= 5 || !mid || nearest(mid) !== street || parked.some((c) => Math.hypot(c.x - mid.x, c.z - mid.z) < SERVED)) continue;
+          empty += 0.5;
+          at ??= mid;
+        }
+      }
+    }
+    return empty > 10 && at ? [{ at: near(at.x, at.z), what: `${park.id}: ${empty.toFixed(1)} m by a street for deliveries without a car` }] : [];
+  });
+
 /**
  * A crowd lane whose walkers (each way on its own side of the line, `LANE_HALF_GAP`), sampled
  * every half metre, walk a metre or more inside a kerb car park: on its cars' strip, not the pavement.
