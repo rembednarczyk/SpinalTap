@@ -42,6 +42,7 @@ const cell = (def: string) => screen.getAllByTestId("item-cell").find((c) => c.g
 const scenario = async (phone: boolean) => {
   const g = mountGame({ seed: SEED, touch: phone });
   fireEvent.click(screen.getByRole("button", { name: "New Game" }));
+  fireEvent.click(screen.getByRole("button", { name: "Start" }));
   g.step(1);
   const smg = lootTheGuard(g);
   const { preview, session } = g;
@@ -123,6 +124,7 @@ describe("character menu in the game", () => {
   it("a helmet and a ballistic vest go on Seki's look in the preview, tinting her top", () => {
     const g = mountGame({ seed: SEED });
     fireEvent.click(screen.getByRole("button", { name: "New Game" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start" }));
     // Into the bag, not worn yet, as a load would bring them (quicker than buying them at the market).
     run(() => {
       const d = g.session.sim.domain;

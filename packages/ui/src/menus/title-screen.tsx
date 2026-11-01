@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { CreditsScreen } from "../credits/credits-screen";
+import { NewGameSetup } from "../difficulty/difficulty-screens";
 import { useT } from "../i18n/use-t";
-import { useSessionIntents, useUi } from "../use-ui";
+import { useUi } from "../use-ui";
 import { ControlsHelp } from "./controls-help";
 import { SaveSlots } from "./save-slots";
 import { SettingsPanel } from "./settings-panel";
@@ -28,11 +29,10 @@ const FullscreenButton = () => {
 };
 
 export const TitleScreen = ({ version }: { version?: string | undefined }) => {
-  const intents = useSessionIntents();
   const hasSaves = useUi((s) => s.hasSaves);
   const busy = useUi((s) => s.busy);
   const t = useT();
-  const [view, setView] = useState<"main" | "load" | "settings" | "credits">("main");
+  const [view, setView] = useState<"main" | "new" | "load" | "settings" | "credits">("main");
   return (
     <div className="screen screen--title" data-testid="title-screen">
       <div className="title">
@@ -42,7 +42,7 @@ export const TitleScreen = ({ version }: { version?: string | undefined }) => {
       </div>
       {view === "main" ? (
         <div className="menu">
-          <button type="button" className="menu__item" disabled={busy} onClick={() => intents.newGame()}>
+          <button type="button" className="menu__item" disabled={busy} onClick={() => setView("new")}>
             {t("title.newGame")}
           </button>
           <button type="button" className="menu__item" disabled={!hasSaves || busy} onClick={() => setView("load")}>
@@ -57,6 +57,8 @@ export const TitleScreen = ({ version }: { version?: string | undefined }) => {
             {t("title.credits")}
           </button>
         </div>
+      ) : view === "new" ? (
+        <NewGameSetup onBack={() => setView("main")} />
       ) : view === "credits" ? (
         <CreditsScreen intents={{ closeCredits: () => setView("main") }} />
       ) : (
