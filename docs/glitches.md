@@ -565,14 +565,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: linia planu nie stawia latarni ściennej w obrysie budynku ani w pasie 2 m wokół osi `building_passage`; kontrola skanu `wall-lantern-in-building` (baza 5 → 0); przy okazji latarnia KUCHNI POD KOPYTEM może przejść na sąsiednią ścianę Grodzkiej 20
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
-### G-174 Zapis i wczytanie nie odtwarzają stanu przy kontrakcie infiltrate
-- Status: w PR #145 (1.11, czujność strażników w zapisie v21, pola sesji odtwarzane przy wczytaniu); w weryfikacji
-- Ważność: S3 · Zasięg: każdy aktywny kontrakt infiltrate przy strażnikach z widzeniem stożkowym, nie tylko `time_limit`; bez kontraktu rozjazdu nie ma
-- Dane: `Simulation.create({ seed: 4242 })`, `fromSnapshot` z `contracts: { active: null, completed: 5 }` (albo 0), `teleportPlayer(sim, docks(0, 0, 120))`, 30 kroków, `accept-contract infiltrate`, 1 krok, zapis i `fromSnapshot`, oba przebiegi krokowane razem: hash równy zaraz po wczytaniu, rozjazd w 42. kroku (`rngState`, strażnicy c6-g* zaalarmowani tylko w oryginale)
-- Przyczyna: `ai.suspicion` (np. c6-g3 = 0,0229) i `ai.sees` nie wchodzą do zapisu, po wczytaniu podejrzliwość startuje od 0; różnią się też pola sesji `watch`, `street2`, `interior`
-- Poprawka: podejrzliwość i widzenie strażników (oraz brakujące pola sesji) w zapisie albo świadoma decyzja, że wczytanie zeruje czujność; zmiana schematu z migracją; test zapis–wczytanie z tym scenariuszem
-- Pakiet właściciela: packages/sim, packages/persistence
-
 ### G-175 Odstęp zaparkowanego auta od pasa ruchu liczony od środka, nie od narożnika
 - Status: zgłoszone (1.11, weryfikator #143); było przed #143
 - Ważność: S4 · Zasięg: `fits` (`tools/osm-import/src/parked-cars.ts`) mierzy `LANE_CLEAR` 1,4 m od środka auta; narożnik auta przy Placu Zamkowym (739; 233,2) 0,92 m od osi pasa, auto na pasie postojowym Ruskiej (963,5; 472,1) 1,30 m; jadące auto ma 0,27–0,43 m luzu
@@ -591,6 +583,29 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: auto przy zewnętrznej krawędzi obrysu (krawężnik), w obrysie ≥4,5 m albo z `orientation=perpendicular|diagonal` w poprzek (tag `orientation` do `CarParkOut`); trasa tłumu na osi chodnika w173566577; kontrole skanu `bay-car-out-of-park` (baza 1), `bay-car-orientation` (baza 1), `crowd-lane-on-parking`
 - Uwaga: `offMultiLaneKerbs` nie patrzy na stronę ulicy; na drogach 1+2 (Krakowskie w154962958, Lubartowska, Radziwiłłowska w331453920) wyklucza też krawężnik od strony jednego pasa; dziś bez skutku
 - Pakiet właściciela: tools/osm-import, packages/sim (crowd), tools/glitch-scan
+
+### G-178 Strażnicy nieudanej infiltracji znikają po wczytaniu
+- Status: zgłoszone (1.11, weryfikator #145); było przed #145
+- Ważność: S2 (zapis pozwala uciec z walki) · Zasięg: kontrakt infiltrate zakończony alarmem (`contracts.active` null), strażnicy `c3-*` (5 encji) dalej walczą; po wczytaniu ich nie ma
+- Dane: seed 77, `completed: 2`, gracz w `docks(6,0,110)`, 30 kroków, `accept-contract infiltrate`, teleport 6 m przed `c3-g1`, kroki do alarmu i 60 dalej, zapis; w 1. kroku oryginał: gracz ginie (hp 0), wczytana gra: hp 84
+- Przyczyna: konstruktor `Simulation` rejestruje kontrakt tylko przy `status==="active" || hasAmbush`
+- Pakiet właściciela: packages/sim, packages/persistence
+
+### G-179 Posiłki ochrony przy heacie poza zapisem
+- Status: zgłoszone (1.11, weryfikator #145); było przed #145
+- Ważność: S3 · Zasięg: encje `security` bez klucza i `session.watch.reinforce` nie wchodzą do zapisu; `stateHash` nie widzi encji bez klucza
+- Dane: alleySim seed 21, `heat {level 2, faction hebi, lastKnown ALLEY_START}`, krok do pojawienia się posiłków i 30 dalej, zapis: oryginał 1 posiłek, `reinforce=3.5`; wczytana gra 0 i od razu nowy gdzie indziej; rozjazd w 130. kroku
+- Pakiet właściciela: packages/sim, packages/persistence
+
+### G-180 Zapis po śmierci gracza wczytuje się bez game over
+- Status: zgłoszone (1.11, weryfikator #145), do potwierdzenia w app (czy zapis lub autozapis po śmierci jest możliwy)
+- Ważność: S3 do potwierdzenia · Zasięg: zapis przy hp 0 wczytuje się z `gameOver=false` i drugi raz emituje `PlayerDied`
+- Pakiet właściciela: packages/sim, packages/app
+
+### G-181 Drobne pola sesji po wczytaniu
+- Status: zgłoszone (1.11, weryfikator #145)
+- Ważność: S4 · Zasięg: (a) wczytanie w metrze gubi ofertę fixera po przyjeździe (seed 2, `met_genzo`, jazda shinsekai → doki, zapis w trakcie; oryginał dostaje `phone_genzo_offer` w kroku 658, wczytana gra nie, `watch.district` null); (b) histereza wnętrza w progu (`INTERIOR_KEEP`) nie jest odtwarzana, `interiorAt` w `session-resume.ts:23` liczy bez poprzedniego wnętrza, więc wczytanie 0,1 m za ścianą kliniki daje fałszywe `InteriorEntered`; (c) `session.lastThreat` poza zapisem (regeneracja RAM w walce), rozjazdu nie zmierzono
+- Pakiet właściciela: packages/sim
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)

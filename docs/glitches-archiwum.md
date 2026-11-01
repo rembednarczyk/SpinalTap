@@ -2,6 +2,14 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-174 Zapis i wczytanie nie odtwarzają stanu przy kontrakcie infiltrate
+- Status: naprawione (1.11, #145: `ai.suspicion` w zapisie v21, pola pochodne sesji odtwarzane przez `resumeSession`; weryfikacja PRZYJĘTE)
+- Ważność: S3 · Zasięg: każdy aktywny kontrakt infiltrate przy strażnikach z widzeniem stożkowym, nie tylko `time_limit`; bez kontraktu rozjazdu nie ma
+- Dane: `Simulation.create({ seed: 4242 })`, `fromSnapshot` z `contracts: { active: null, completed: 5 }` (albo 0), `teleportPlayer(sim, docks(0, 0, 120))`, 30 kroków, `accept-contract infiltrate`, 1 krok, zapis i `fromSnapshot`, oba przebiegi krokowane razem: hash równy zaraz po wczytaniu, rozjazd w 42. kroku (`rngState`, strażnicy c6-g* zaalarmowani tylko w oryginale)
+- Przyczyna: `ai.suspicion` (np. c6-g3 = 0,0229) i `ai.sees` nie wchodzą do zapisu, po wczytaniu podejrzliwość startuje od 0; różnią się też pola sesji `watch`, `street2`, `interior`
+- Poprawka: podejrzliwość i widzenie strażników (oraz brakujące pola sesji) w zapisie albo świadoma decyzja, że wczytanie zeruje czujność; zmiana schematu z migracją; test zapis–wczytanie z tym scenariuszem
+- Pakiet właściciela: packages/sim, packages/persistence
+
 ### G-155 Auta przy krawężniku na ulicach wielopasowych bez parkowania
 - Status: naprawione (1.11, #143: kontrola skanu do 0; weryfikacja PRZYJĘTE, kurator ZGODNE Z UWAGAMI, T-102 i G-177)
 - Ważność: S4 · Zasięg: 3 Maja w40050974/w757848901 (x −116..−103, z −33..32): 13 aut 4,1–5,4 m od osi, na skrajnych pasach (`lanes=4`, brak `parking:*`)
