@@ -28,6 +28,8 @@
   "bay-car-out-of-park": 0,
   "bay-car-orientation": 0,
   "bay-strip-sparse": 0,
+  "bay-strip-empty-known": 4,
+  "kerb-strip-no-car-street": 3,
   "crowd-lane-on-parking": 0,
   "prop-off-ground": 0,
   "neon-off-wall": 0,
