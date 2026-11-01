@@ -62,7 +62,7 @@ const openGround = (site: Site, ring: readonly Pt[]): Pt[] => {
 };
 
 /** The longer axis of the ground (its principal direction), as a unit vector with x ≥ 0. */
-const longAxis = (pts: readonly Pt[]): Pt => {
+export const longAxis = (pts: readonly Pt[]): Pt => {
   const mx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
   const mz = pts.reduce((s, p) => s + p.z, 0) / pts.length;
   let xx = 0;

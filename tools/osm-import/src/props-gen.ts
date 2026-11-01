@@ -10,6 +10,7 @@ import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/t
 import { crossingBands } from "../../../packages/sim/src/content/lublin/crossing-bands.ts";
 import { type Pt, centroid } from "./geometry.ts";
 import { MAPPED, propOf, withShape } from "./props-kinds.ts";
+import { bulkyPieces } from "./props-bulky.ts";
 import { marketStalls } from "./props-market.ts";
 import { type SideMode, type Station, evenStations, fnv, offRoad, offWall, openFacing, scatter, sideOffset, stations, towardsStreet, unit, yawOf } from "./props-place.ts";
 import { type BollardRef, stringBollards } from "./props-rows.ts";
@@ -93,7 +94,7 @@ const FALLBACK: Partial<Record<StreetPropKind, number>> = { "lamp-pastoral": 5, 
 const ROW_SPACING: Partial<Record<StreetPropKind, number>> = { tree: 9, shrubs: 6 };
 
 /** Least distance between two pieces of the same kind placed from lines or areas. */
-const AREA_GAP: Partial<Record<StreetPropKind, number>> = { "market-stall": 3.6, "cafe-garden": 4.5, "fountain-jets": 2.2 };
+const AREA_GAP: Partial<Record<StreetPropKind, number>> = { "market-stall": 3.6, "cafe-garden": 4.5, "fountain-jets": 2.2, "food-cart": 6, container: 7 };
 
 /** Jets a fountain basin gets (the plan counts the fountain, not its jets). */
 const JETS: Readonly<Record<string, number>> = { "fountain-multimedia": 16, fountain: 6 };
@@ -205,7 +206,10 @@ const SINGLE_OUTLINE: ReadonlySet<StreetPropKind> = new Set(["kiosk", "bus-shelt
 /** How far scattered pieces keep from a car street's axis (m): its two lanes, a car's half and the piece's own. */
 const TRAFFIC_REACH = 4.5;
 
-const placeItem = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: readonly Obstacle[]): Placed[] => {
+/** Long pieces set on an outline by their whole footprint (ADR-0058 stage 2), not scattered. */
+const BULKY: ReadonlySet<StreetPropKind> = new Set(["food-cart", "container"]);
+
+const placeItem = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: readonly Obstacle[], placed: readonly Placed[]): Placed[] => {
   if (item.position) return [{ prop, p: item.position, yaw: item.yaw === undefined ? null : (item.yaw * Math.PI) / 180, key: typeof item.osm === "string" ? item.osm : item.id }];
   if (item.points) return item.points.map((q, i) => ({ prop, p: { x: q[0], z: q[1] }, yaw: null, key: osmAt(item, i) }));
   if (item.polygon) {
@@ -214,6 +218,7 @@ const placeItem = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: 
     if (SINGLE_OUTLINE.has(prop)) return site.surfaceAt(centroid(ring)) === "building" ? [] : [onOutline(site, item, prop, ring)];
     // A marketplace's count is the place, not its stalls: they fill it in rows.
     if (item.kind === "market") return marketStalls(site, ring).map((s, k) => ({ prop, p: s.p, yaw: s.yaw, key: `${item.id}~${k}` }));
+    if (BULKY.has(prop)) return bulkyPieces(site, ring, prop, item.count ?? 1, item.id, placed);
     const count = JETS[item.kind] ?? item.count ?? 1;
     // Off the lanes of the streets crossing the area (the car park of Plac Zamkowy under its flea market).
     const clear = { surfaceAt: (p: Pt) => site.surfaceAt(p), standable: (p: Pt) => site.standable(p) && !nearTraffic(site, p, TRAFFIC_REACH) } as Site;
@@ -266,7 +271,7 @@ const shapeOf = (item: PlanItem, prop: StreetPropKind, key: string): number | un
 };
 
 /** Who stands where it can be approached and faces open pavement (benches, machines, bins). */
-const FACES_OPEN: ReadonlySet<StreetPropKind> = new Set(["bench", "vending-machine", "ticket-machine", "bike-rack", "bike-station", "waste-bin", "a-frame-sign", "advertising-column", "street-cabinet", "street-plate", "planter"]);
+const FACES_OPEN: ReadonlySet<StreetPropKind> = new Set(["bench", "vending-machine", "ticket-machine", "bike-rack", "bike-station", "waste-bin", "a-frame-sign", "advertising-column", "street-cabinet", "street-plate", "planter", "atm", "food-cart"]);
 const FACES_STREET: ReadonlySet<StreetPropKind> = new Set(["bus-stop", "bus-shelter", "traffic-signal", "monument", "kiosk", "cctv", "floodlight"]);
 
 /** The yaw of a piece the plan gives no direction for. */
@@ -285,13 +290,31 @@ const r1 = (v: number): number => Math.round(v * 10) / 10 + 0;
 const ON_BUILDINGS: ReadonlySet<StreetPropKind> = new Set(["lamp-wall-lantern", "cctv"]);
 
 /** How far the bulky free-standing pieces keep from the walls (m): about their footprint's radius. */
-const WALL_ROOM: Partial<Record<StreetPropKind, number>> = { artwork: 1.5, monument: 1.5, kiosk: 1.7, "bus-shelter": 2, bench: 1.2, "vending-machine": 0.7, "advertising-column": 0.8, floodlight: 0.4 };
+const WALL_ROOM: Partial<Record<StreetPropKind, number>> = {
+  artwork: 1.5,
+  monument: 1.5,
+  kiosk: 1.7,
+  "bus-shelter": 2,
+  bench: 1.2,
+  "vending-machine": 0.7,
+  "advertising-column": 0.8,
+  floodlight: 0.4,
+  // ADR-0058 stage 2: a cash machine's back by the wall, a rack with its bikes, the long pieces
+  // by the radius of their solid less the glitch scan's 0.3 m.
+  atm: 0.5,
+  "bike-rack": 1.1,
+  "food-cart": 1.9,
+  container: 3,
+};
 
 /**
  * How far a piece may be moved out from a wall (m), beyond the default 4: the plan sketches the
  * floodlights on the lit building's outline, up to 8 m inside the Trinitarian Tower.
  */
 const WALL_REACH: Partial<Record<StreetPropKind, number>> = { floodlight: 10 };
+
+/** Kinds of ADR-0058 stage 2 that never stand in the carriageway, even moved out of a wall. */
+const KERB_SHY: ReadonlySet<StreetPropKind> = new Set(["atm", "hydrant", "food-cart", "container"]);
 
 /** Kinds that belong on the carriageway: covers in it, bollards closing it. */
 const ON_ROAD: ReadonlySet<StreetPropKind> = new Set(["manhole", "bollard"]);
@@ -316,7 +339,7 @@ const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>):
       continue;
     }
     const obstacles = placed.flatMap((x) => (OBSTACLE[x.prop] ? [{ x: x.p.x, z: x.p.z, r: OBSTACLE[x.prop]! }] : []));
-    for (const x of placeItem(site, item, prop, obstacles)) {
+    for (const x of placeItem(site, item, prop, obstacles, placed)) {
       const shape = shapeOf(item, prop, x.key);
       const p = shape === undefined ? { ...x, from: item.id } : { ...x, shape, from: item.id };
       placed.push(p);
@@ -371,6 +394,11 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
     const free = room === undefined ? off : offWall(site, off, room, WALL_REACH[placedAt.prop]);
     if (!free) {
       inBuilding++;
+      continue;
+    }
+    // Out of a wall into the carriageway (a cash machine in a facade by the kerb): left out.
+    if (KERB_SHY.has(placedAt.prop) && site.surfaceAt(free) === "road") {
+      onRoad++;
       continue;
     }
     if (free !== at) moved++;

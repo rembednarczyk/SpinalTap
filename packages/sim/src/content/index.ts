@@ -24,7 +24,7 @@ export { TRAFFIC_ROUTES, type TrafficDensity, type TrafficRoute } from "./traffi
 export { PARKED_CARS } from "./parked-cars";
 export * from "./lublin/sites";
 export * from "./lublin/terrain";
-export { BOLLARD, type BollardChain, bollardChains, chainDir, chainVariant } from "./lublin/furniture";
+export { BOLLARD, type BollardChain, bollardChains, chainDir, chainVariant, furniturePrisms } from "./lublin/furniture";
 export { againstWall, inBuilding, nearestWall, spotNear } from "./lublin/places";
 export { clearedBuilding } from "./cleared-buildings";
 export type { RoomCut, SceneryItem } from "./lublin/city";

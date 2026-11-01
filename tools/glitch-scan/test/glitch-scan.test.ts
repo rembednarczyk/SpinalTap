@@ -454,7 +454,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "furniture-in-wall": () =>
     Object.values(WORLD_STREET_PROPS)
       .flat()
-      .filter((i) => ["artwork", "monument", "kiosk", "bus-shelter", "bench", "vending-machine", "advertising-column"].includes(i.prop))
+      .filter((i) => ["artwork", "monument", "kiosk", "bus-shelter", "bench", "vending-machine", "advertising-column", "atm", "bike-rack", "food-cart", "container"].includes(i.prop))
       .flatMap((i) => (nearestWall(i.x, i.z).d < furnitureRadius(i) - 0.3 ? [{ at: near(i.x, i.z), what: i.prop }] : [])),
   /**
    * Two solid pieces (bollards aside, they stand in rows) whose footprints run more than 5 cm into

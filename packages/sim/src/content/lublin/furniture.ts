@@ -7,8 +7,9 @@ import type { StaticProp } from "../builders";
  * `LUBLIN_STREET_PROPS` as scenery (ADR-0047); here the pieces a body really stumbles on get
  * cheap convex prisms in the piece's own frame (front +z, foot at the origin, turned by its
  * yaw like the renderer's models): benches, bollards, bins, lamp posts, tree trunks, kiosks,
- * bus shelters, machines, columns and monuments. Small things (manholes, plates, signs,
- * planters, shrubs, wall lanterns on facades) have none.
+ * bus shelters, machines, columns and monuments, bike racks with their bikes, hydrants, food
+ * carts and containers. Small things (manholes, plates, signs, planters, shrubs, wall lanterns
+ * on facades) have none.
  */
 
 /** A box in the piece's frame: centre (x, z), half extents, height. */
@@ -34,7 +35,7 @@ const box = (x: number, z: number, hx: number, hz: number, top: number): Box => 
 const post = (r: number, top: number, x = 0, z = 0): Post => ({ x, z, r, top });
 
 /** Shape counts per kind, as the renderer's `PROP_SHAPES` (the low bits of `variant`). */
-const SHAPES: Partial<Record<StreetPropKind, number>> = { bench: 2, tree: 3, monument: 4, artwork: 4, flagpole: 2 };
+const SHAPES: Partial<Record<StreetPropKind, number>> = { bench: 2, tree: 3, monument: 4, artwork: 4, flagpole: 2, "bike-rack": 4, container: 2 };
 const shapeOf = (kind: StreetPropKind, variant: number): number => variant % (SHAPES[kind] ?? 1);
 /** Trees grow 0.8 to 1.25 (bits 4 to 7), like the renderer's `scaleOf`. */
 const treeScale = (variant: number): number => 0.8 + 0.45 * (((variant >> 4) % 16) / 15);
@@ -74,6 +75,14 @@ const PARTS: Partial<Record<StreetPropKind, (shape: number, variant: number) => 
   // Obelisk, figure on a plinth, Koziołek, abstract.
   monument: (s) => [s === 0 ? box(0, 0, 1.4, 1.4, 11) : s === 1 ? box(0, 0, 0.9, 0.9, 3.5) : s === 2 ? box(0, 0, 0.45, 0.3, 1.2) : box(0, 0, 0.5, 0.5, 2.6)],
   artwork: (s) => [s === 0 ? box(0, 0, 1.4, 1.4, 11) : s === 1 ? box(0, 0, 0.9, 0.9, 3.5) : s === 2 ? box(0, 0, 0.45, 0.3, 1.2) : box(0, 0, 0.5, 0.5, 2.6)],
+  // ADR-0058 stage 2. The rack's three hoops with the bikes and scooters parked across them
+  // (1.75 m long), a free-standing cash machine, a fire hydrant, a food cart 3.9 x 1.5 m under
+  // its roof and a 20 ft shipping container.
+  "bike-rack": () => [box(0, 0, 1.0, 0.88, 1.1)],
+  atm: () => [box(0, 0, 0.35, 0.3, 1.75)],
+  hydrant: () => [post(0.17, 0.9)],
+  "food-cart": () => [box(0, 0, 1.95, 0.75, 2.65)],
+  container: () => [box(0, 0, 3.03, 1.22, 2.6)],
 };
 
 /** Kinds that are solids. */

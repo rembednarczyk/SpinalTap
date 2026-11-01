@@ -41,6 +41,10 @@ const SAME: readonly StreetPropKind[] = [
   "monument",
   "artwork",
   "cctv",
+  "atm",
+  "hydrant",
+  "food-cart",
+  "container",
 ];
 
 /** Kinds of the plan drawn as the nearest street prop, and why that one. */
@@ -104,7 +108,6 @@ export const SKIPPED: Readonly<Record<string, string>> = {
   "vehicle-trolleybus": "a moving vehicle, not static furniture",
   "shop-sign-bracket": "shop signs belong to the facades' neon (ADR-0044)",
   plaque: "plaques sit on facades",
-  atm: "cash machines sit in facades",
   cafe: "a point of interest inside a building",
   "food-outlet": "a point of interest inside a building",
   toilet: "a small building",
