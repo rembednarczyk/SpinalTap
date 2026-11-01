@@ -465,3 +465,12 @@ Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [r
 - Błędy: klawisz interakcji obezwładnia mimo podpowiedzi bliższego celu (rozmowa, łup, drzwi); ogłuszony po parowaniu zostaje „w walce” (`ai.alerted`, RAM i aktywności); przytrzymany atak jako „zabij” strzela po obezwładnieniu
 - Pakiet właściciela: packages/sim, packages/app
 - Test przyjęcia: sondy weryfikatora (`scratchpad/v-a-probes/`) jako testy, padające przed poprawką
+
+### G-127 Parterowy pawilon na skwerze jako czterokondygnacyjna wieża (Bar Centralny przed Pedetem)
+- Status: naprawione (#103): `smallAlone`, 15 pawilonów z 2–4 kondygnacji na 1, `small-freestanding-tall` 16 → 2 (reszta w G-134)
+- Ważność: S3 (proponowana; stoi na osi widoku z deptaku na Pedet i zasłania go) · Zasięg: 24 wolnostojące obrysy < 60 m² w mieście · Koszt: mały
+- Gdzie: w665959137 (112.5, −84.6), skwer Witkowskiego; T-074. Inne: w631242940 (−86, 19.8) na Placu Litewskim, w67499328 (130.8, 17.5), w458298770 „VapeTube” (851.5, 369.7), w458298766 „Hunek” (817.1, 373.5) i 19 dalszych (lista w `topo-pedet-raport.md`)
+- Dowód: okrągły obrys o średnicy 6,7 m (pole 33 m²), `building=yes` bez kondygnacji; w grze `levels: 4`, 13,7 m, `residential` z witryną; zrzut `pedet-north.png`: czerwona kamienica z roletami po prawej, przed Pedetem
+- Przyczyna: `defaultLevels` daje 1 kondygnację tylko pod 25 m²; większy wolnostojący pawilon dostaje piętra dzielnicy jak kamienica
+- Pakiet właściciela: tools/osm-import (`building-tags.ts`)
+- Test przyjęcia: nowa kontrola `small-freestanding-tall` (niżej) 24 → co najwyżej przypadki potwierdzone przez kuratora; w665959137 ma 1 kondygnację
