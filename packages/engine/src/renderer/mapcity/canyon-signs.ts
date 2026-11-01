@@ -3,6 +3,7 @@ import type { MeshSink, Rgba, Vec } from "../mesh-sink";
 import { type Span, spanBillboard } from "./canyon-plan";
 import { type FacadeFrame, type Wall } from "./facade-frame";
 import { MAP_SIGN_KIND } from "./sign-plan";
+import { clearSpotFrom } from "./sign-room";
 import { type Uv, quadUv } from "./sink-ops";
 import { stackTiers } from "./vertical-plan";
 
@@ -106,12 +107,17 @@ const banners = (sink: MeshSink, f: FacadeFrame, rand: () => number): void => {
     if (rand() > c * 0.7) continue;
     const dx = (w.b.x - w.a.x) / w.length;
     const dz = (w.b.z - w.a.z) / w.length;
-    const u = rand() < 0.5 ? 1.2 : w.length - 1.2;
+    const end = rand() < 0.5 ? 1.2 : w.length - 1.2;
     const h = Math.min(4.2, zone - f.ground - 1.5);
     if (h < 2) continue;
     const y = f.eave - 0.8 - h / 2;
+    const color = tint(NEON[Math.floor(rand() * NEON.length)] ?? "#ff2e88", 1);
+    const cell = 4 + Math.floor(rand() * 8);
+    // Off the end where a neighbour stands out in front of the wall (G-157), or none.
+    const u = clearSpotFrom(f, w, end, w.length - end, 1.0 - h / 8, 1.0 + h / 8, y - h / 2);
+    if (u === null) continue;
     const centre = { x: w.a.x + dx * u + w.nx * 1.0, y, z: w.a.z + dz * u + w.nz * 1.0 };
-    twoFaced(sink, centre, { x: w.nx, z: w.nz }, h / 4, h, tint(NEON[Math.floor(rand() * NEON.length)] ?? "#ff2e88", 1), [4 + Math.floor(rand() * 8), MAP_SIGN_KIND.ad]);
+    twoFaced(sink, centre, { x: w.nx, z: w.nz }, h / 4, h, color, [cell, MAP_SIGN_KIND.ad]);
   }
 };
 
