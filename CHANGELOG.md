@@ -5,6 +5,9 @@ Zmiany widoczne dla gracza, od najnowszych. Wersja gry i commit są na ekranie t
 ## Nieopublikowane (0.1.0)
 
 ### 1 listopada 2026
+- Neony DENKI, KARAOKE i SAKE na skośnych ścianach Rynku i Grodzkiej są wąskie i pionowe, przylegają do muru zamiast jednym końcem tkwić w ścianie, a drugim wisieć w powietrzu (G-160).
+- Posiłki ochrony wezwane przy heacie zostają w świecie po wczytaniu, tam gdzie były, z tym samym zdrowiem i tym, co wiedzą o graczce, a następne przychodzą wtedy, kiedy przyszłyby bez zapisu: wczytanie nie usuwa już pościgu ani nie sprowadza od razu nowego posiłku w innym miejscu (G-179, zapis v23).
+- Na Radziwiłłowskiej stoją trzy auta zamiast jednego: parkometr za krawężnikiem pasa postojowego nie wypycha już aut z zatok, a zatoka, w której wylosowane auto się nie mieści, dostaje krótszy model; w kilku innych pasach przybyło przez to po kilka aut (G-189).
 - Auta w głębokich pasach postojowych bez oznaczenia stoją skośnie pod 60°, nosem do chodnika w stronę ruchu, jak na Krakowskim Przedmieściu i Radziwiłłowskiej (G-187).
 - Strażnicy zleceń zakończonych porażką albo wykonanych zostają w świecie po wczytaniu, także gdy w trakcie walki przyjęto nowe zlecenie: zaalarmowani po nieudanej infiltracji walczą dalej, więc zapis nie pozwala już uciec z walki, a zabici nie wracają (G-178, zapis v22).
 - Targ i budki z jedzeniem: przy straganach Targu na Ruskiej, Bazaru, Giełdy na Kresowej i pchlego targu na Placu Zamkowym stoją kartony na paletach, beczki, skrzynki z owocami i towar pod płótnem, na ladach leżą ramen, warzywa i napoje, a pod płachtami wiszą noreny; przed barami z fast foodem na Krakowskim i Podzamczu stoją budki yatai z ladą, stołkami, norenem i lampionami. Wszystko ma bryłę, a rozstawiają to reguły z danych mapy. Modele CC0 Kenneya są na ekranie „Autorzy” (ADR-0058 etap 3).

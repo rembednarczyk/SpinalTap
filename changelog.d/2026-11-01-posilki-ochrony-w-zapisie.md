@@ -1,1 +1,0 @@
-Posiłki ochrony wezwane przy heacie zostają w świecie po wczytaniu, tam gdzie były, z tym samym zdrowiem i tym, co wiedzą o graczce, a następne przychodzą wtedy, kiedy przyszłyby bez zapisu: wczytanie nie usuwa już pościgu ani nie sprowadza od razu nowego posiłku w innym miejscu (G-179, zapis v23).
