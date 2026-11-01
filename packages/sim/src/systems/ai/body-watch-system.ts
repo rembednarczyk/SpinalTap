@@ -96,8 +96,9 @@ const finderOf = (ctx: SimContext, b: Body, ais: readonly Entity[], civilians: r
  * With none, a calm civilian that comes by within `WAKE_REACH` stops to help.
  */
 const lookForFinder = (ctx: SimContext, b: Body, ais: readonly Entity[], civilians: readonly Entity[]): Entity | null => {
-  const g = ais.find((e) => e !== b && freeToLook(ctx, e) && aiSeesBody(ctx, e, b));
-  const c = g ? undefined : civilians.find((e) => e !== b && calmCivilian(ctx, e) && near(e, b) && civilianSeesBody(ctx, e, b));
+  const fresh = (e: Entity): boolean => e !== b && !b.downed.lookedBy.includes(e.id);
+  const g = ais.find((e) => fresh(e) && freeToLook(ctx, e) && aiSeesBody(ctx, e, b));
+  const c = g ? undefined : civilians.find((e) => fresh(e) && calmCivilian(ctx, e) && near(e, b) && civilianSeesBody(ctx, e, b));
   const finder = g ?? c;
   if (!finder) return null;
   b.downed.finder = finder.id;
@@ -145,12 +146,13 @@ const wake = (ctx: SimContext, b: Body, finder: Entity): void => {
 
 /**
  * At the side of a dead body (stage 3): nothing to wake. The finder starts the search from the
- * player's last known position and leaves the body to the next one; a civilian walks on.
+ * player's last known position and leaves the body to the next one, who has not looked at it
+ * yet (a patrol of the security still reports it after a passer-by); a civilian walks on.
  */
 const lookedAt = (ctx: SimContext, b: Body, finder: Entity): void => {
   b.downed.finder = null;
   b.downed.wake = 0;
-  b.downed.checked = true;
+  b.downed.lookedBy = [...b.downed.lookedBy, finder.id];
   giveLead(finder, searchFrom(ctx, b));
 };
 
@@ -192,7 +194,7 @@ export const bodyWatchSystem: System = {
       if (!finder) {
         b.downed.finder = null;
         b.downed.wake = 0;
-        finder = b.downed.checked ? null : lookForFinder(ctx, b, ais, civilians);
+        finder = lookForFinder(ctx, b, ais, civilians);
       }
       watchFromAfar(ctx, b);
       if (finder) tend(ctx, b, finder, dt);

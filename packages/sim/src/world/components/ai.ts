@@ -21,8 +21,11 @@ export interface DownedBody {
   wake: number;
   /** Killed, not knocked out: nobody wakes it, the finder only looks and starts the search. */
   dead: boolean;
-  /** Dead and looked at by a finder already: nobody else walks over. Not saved. */
-  checked: boolean;
+  /**
+   * Who has looked at it dead already (an NPC walks over only once): the others still may, so a
+   * passer-by does not keep the security from finding it. Not saved.
+   */
+  lookedBy: readonly EntityId[];
   /** On the player's shoulder (stage 3): it follows her and nobody sees it lie. */
   carried: boolean;
   /** In a hiding place: out of everybody's sight for good. */

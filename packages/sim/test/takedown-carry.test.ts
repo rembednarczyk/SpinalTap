@@ -247,7 +247,7 @@ describe("the dead of a takedown (ADR-0065, stage 3)", () => {
     run(sim, ticks(WAKE_SECONDS), CROUCH);
     expect(found).toEqual([{ body: body.id, finder: g.id }]);
     expect(reports.map((r) => [r.crime, r.channel])).toEqual([["murder", "patrol"]]);
-    expect(body.downed.checked).toBe(true);
+    expect(body.downed.lookedBy).toEqual([g.id]);
     expect([...sim.world].includes(body)).toBe(true);
   });
 

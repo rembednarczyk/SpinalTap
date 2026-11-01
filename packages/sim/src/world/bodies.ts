@@ -23,7 +23,7 @@ export const freshDowned = (playerAt: DownedBody["playerAt"], fought: boolean, d
   finder: null,
   wake: 0,
   dead,
-  checked: false,
+  lookedBy: [],
   carried: false,
   hidden: false,
   frame: null,
@@ -71,7 +71,7 @@ export const corpseOf = (e: Entity, downed: DownedBody): Body => {
     pitch: 0,
     velocity: { x: 0, y: 0, z: 0 },
     unconscious: true,
-    downed: { ...downed, dead: true, checked: false, finder: null, wake: 0 },
+    downed: { ...downed, dead: true, lookedBy: [], finder: null, wake: 0 },
   };
   if (e.key) c.key = e.key;
   if (e.chunk) c.chunk = e.chunk;
@@ -103,10 +103,24 @@ export const restoreDowned = (world: World<Entity>, e: Entity, s: BodySnapshot):
 
 /**
  * The step's input while the player carries a body (ADR-0065): both hands are full, so no
- * weapon (no shot, no swing, no aim), no sprint and no jump. Applied before every system.
+ * weapon (no shot, no swing, no aim, no reload, no change of weapon), no ability and no
+ * quickhack of the scanner, no sprint, jump or dash. A medkit and the other consumables stay.
+ * Applied before every system.
  */
 export const withCarry = (carrying: EntityId | null, input: InputFrame): InputFrame => {
   if (carrying === null) return input;
-  if (!input.fire && !input.aim && !input.sprint && !input.jump && !input.dash) return input;
-  return { ...input, fire: false, aim: false, sprint: false, jump: false, dash: false };
+  return {
+    ...input,
+    fire: false,
+    aim: false,
+    reload: false,
+    toggleWeapon: false,
+    weaponSlot: 0,
+    weaponCycle: 0,
+    ability: false,
+    quickhack: 0,
+    sprint: false,
+    jump: false,
+    dash: false,
+  };
 };
