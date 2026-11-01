@@ -1,4 +1,4 @@
-import { DRAIN_GRATE, HOUSE_PLATE, STICKER_HOSTS, type StreetPropItem, WALL_DECALS, grateLayout, graffitiLayout, hostFaces, plateLayout, stickerLayout } from "../../../packages/core/src";
+import { DECAL_KINDS, DRAIN_GRATE, HOUSE_PLATE, STICKER_HOSTS, type StreetPropItem, WALL_DECALS, grateLayout, graffitiLayout, hostFaces, plateLayout, stickerLayout } from "../../../packages/core/src";
 import { type FacadeFrame, type Wall, frameWallMeta, hiddenWall } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
 import { holoMayHang, shopBoardHeight, shopBoardOn } from "../../../packages/engine/src/renderer/mapcity/sign-plan";
 import { type CrossingBand, inCrossingBand } from "../../../packages/sim/src/content/lublin/crossing-bands";
@@ -50,6 +50,8 @@ export interface DecalWorld {
   readonly districtAt: (p: Pt) => string;
   readonly tagsAt: (at: Pt) => Readonly<Record<string, string>>;
   readonly poleLamp: (p: Pt) => boolean;
+  /** The renderer's block of the street furniture a point is in (one mesh each). */
+  readonly blockOf: (p: Pt) => string;
 }
 
 const inRing = (p: Pt, ring: readonly Pt[]): boolean => {
@@ -298,5 +300,10 @@ export const decalChecks = (all: readonly StreetPropItem[], world: DecalWorld): 
       }),
     /** A grate on a zebra crossing or its band. */
     "decal-on-crossing": () => grates().flatMap((i) => (corners(i).some((q) => world.crossings.some((b) => inCrossingBand(b, q))) ? [{ at: near(i), what: "drain-grate on a crossing" }] : [])),
+    /** A decal in a block of the renderer's furniture no other piece is in: its mesh a mesh more for decals alone. */
+    "decal-alone-in-block": () => {
+      const filled = new Set(all.filter((i) => !DECAL_KINDS.has(i.prop)).map(world.blockOf));
+      return all.filter((i) => DECAL_KINDS.has(i.prop) && !filled.has(world.blockOf(i))).map((i) => ({ at: near(i), what: `${i.prop} alone in block ${world.blockOf(i)}` }));
+    },
   };
 };

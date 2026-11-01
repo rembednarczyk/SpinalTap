@@ -7,6 +7,8 @@
  * renderer's modules: Node loads it through Vite's module runner (`props.ts`), the tests directly.
  */
 import { type FacadeFrame, type Wall, frameWallMeta, hiddenWall } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
+import { cellKey } from "../../../packages/engine/src/renderer/mapcity/map-index";
+import { PROP_BLOCK } from "../../../packages/engine/src/renderer/mapcity/prop-shapes";
 import { isPoleLamp } from "../../../packages/engine/src/renderer/mapcity/utility-poles";
 import { holoMayHang } from "../../../packages/engine/src/renderer/mapcity/sign-plan";
 import { venueBoards } from "../../../packages/engine/src/renderer/mapcity/venue-plan";
@@ -82,6 +84,9 @@ export const cityDecalWalls = (views: readonly DrawnView[]): DecalWall[] => {
 
 /** The height of the paving the renderer draws (ADR-0045) and of the shaped terrain the game puts the furniture on. */
 export { groundY, surfaceY } from "../../../packages/sim/src/content/lublin/terrain";
+
+/** The renderer's 256 m block of the street furniture a point is in (`StreetProps`: one mesh each). */
+export const furnitureBlock = (p: { readonly x: number; readonly z: number }): string => cellKey(p.x, p.z, PROP_BLOCK);
 
 /** Is a road lamp at p drawn as a utility pole's model (ADR-0063)? No stickers on it. */
 export const poleLampAt = (p: { readonly x: number; readonly z: number }): boolean =>

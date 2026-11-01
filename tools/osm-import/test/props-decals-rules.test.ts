@@ -192,6 +192,19 @@ describe("graffiti (ADR-0058 stage 6)", () => {
   });
 });
 
+describe("decals in the renderer's furniture blocks", () => {
+  it("go only into a block the furniture already fills: a block of decals alone would be a mesh more", () => {
+    // Blocks of 100 m along x: a bench in the first only.
+    const blockOf = (p: Pt) => String(Math.floor(p.x / 100));
+    const bench: StreetPropItem = { prop: "bench", x: 50, y: 0, z: 24, yaw: 0, variant: 0 };
+    const { items, out } = decals(row(), { blockOf }, "targ", [bench]);
+    expect(items.length).toBeGreaterThan(10);
+    for (const i of items) expect(blockOf(i), `${i.prop} at ${i.x}`).toBe("0");
+    expect(out.rejected["graffiti block"]).toBeGreaterThan(0);
+    expect(out.rejected["drain-grate block"]).toBeGreaterThan(0);
+  });
+});
+
 describe("house number plates", () => {
   it("puts the map's number on the building's street wall without glass, the plate over the pavement", () => {
     const walls = [wall(0)];

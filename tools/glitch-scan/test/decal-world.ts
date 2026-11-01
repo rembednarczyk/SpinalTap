@@ -1,3 +1,5 @@
+import { cellKey } from "../../../packages/engine/src/renderer/mapcity/map-index";
+import { PROP_BLOCK } from "../../../packages/engine/src/renderer/mapcity/prop-shapes";
 import { isPoleLamp } from "../../../packages/engine/src/renderer/mapcity/utility-poles";
 import { crossingBands } from "../../../packages/sim/src/content/lublin/crossing-bands";
 import { MAP_CHUNKS, PASSAGES } from "../../../packages/sim/src/content/lublin/sites";
@@ -34,6 +36,7 @@ export const lublinDecalWorld = (): DecalWorld => {
     surfaceY,
     districtAt: (p) => MAP_CHUNKS.find((c) => p.x >= c.bounds.minX && p.x < c.bounds.maxX && p.z >= c.bounds.minZ && p.z < c.bounds.maxZ)?.district ?? "",
     tagsAt: (at) => tags.get((ids.get(`${at.x.toFixed(2)},${at.z.toFixed(2)}`) ?? "").split("/")[0]!) ?? {},
+    blockOf: (p) => cellKey(p.x, p.z, PROP_BLOCK),
     poleLamp: (p) =>
       isPoleLamp({
         prop: "lamp-road",

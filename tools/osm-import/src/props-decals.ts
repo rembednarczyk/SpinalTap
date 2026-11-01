@@ -21,7 +21,8 @@
  * than it, its span off the venues' boards on the wall (`BOARD_ROOM`), its middle `PASSAGE_ROOM`
  * from a passage's axis and off a building with the game's doorways or passages, and an open
  * ground in front of it at street level (`FRONT`); its bottom stays over the paving under both its
- * ends. The rest (stickers, gully grates) is in `props-decals-street.ts`.
+ * ends. The rest (stickers, gully grates) is in `props-decals-street.ts`. No decal goes into a
+ * block of the renderer's furniture (`blockOf`) the furniture leaves empty: it would be a mesh more.
  */
 import type { StreetPropItem, StreetPropKind } from "../../../packages/core/src/world/city-geo.ts";
 import { GRAFFITI_DESIGNS, HOUSE_PLATE, graffitiVariant, parseHouseNumber, plateVariant } from "../../../packages/core/src/world/decals.ts";
@@ -77,6 +78,11 @@ export interface DecalContext {
   readonly buildingTags?: ReadonlyMap<string, Tags>;
   /** Is a road lamp drawn as a utility pole there (`isPoleLamp`)? No stickers on its model. */
   readonly poleLamp?: (p: Pt) => boolean;
+  /**
+   * The renderer's furniture block a point is in (`PROP_BLOCK`): each block with pieces is a mesh of
+   * its own, so a decal goes only into a block the furniture fills (no mesh more, ADR-0058).
+   */
+  readonly blockOf?: (p: Pt) => string;
 }
 
 export type DecalZone = "street" | "mural" | "plinth";
@@ -283,9 +289,16 @@ export interface DecalsOut {
 export const addDecals = (byChunk: Map<string, StreetPropItem[]>, site: Site, walls: readonly DecalWall[], ctx: DecalContext): DecalsOut => {
   const per: Record<string, Record<string, number>> = {};
   const rejected: Record<string, number> = {};
+  // The blocks of the renderer's furniture meshes the furniture fills: a decal adds to one, never makes its own.
+  const blockOf = ctx.blockOf;
+  const blocks = new Set(blockOf ? [...byChunk.values()].flat().map(blockOf) : []);
   const put = (item: StreetPropItem): void => {
     const chunk = site.chunkAt(item);
     if (!chunk) return;
+    if (blockOf && !blocks.has(blockOf(item))) {
+      rejected[`${item.prop} block`] = (rejected[`${item.prop} block`] ?? 0) + 1;
+      return;
+    }
     const list = byChunk.get(chunk.id) ?? [];
     list.push(item);
     byChunk.set(chunk.id, list);

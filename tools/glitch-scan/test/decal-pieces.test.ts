@@ -131,11 +131,15 @@ const world = (patch: Partial<DecalWorld> = {}): DecalWorld => ({
   districtAt: () => "targ",
   tagsAt: () => ({}),
   poleLamp: () => false,
+  // One block: the furniture and the decals all in it.
+  blockOf: () => "0",
   ...patch,
 });
 
+/** A bench of the furniture: the block the decals go into is the furniture's. */
+const BENCH: StreetPropItem = { prop: "bench", x: 50, y: 0, z: -30, yaw: 0, variant: 0 };
 const run = (items: readonly StreetPropItem[], patch: Partial<DecalWorld> = {}): Record<string, number> =>
-  Object.fromEntries(Object.entries(decalChecks(items, world(patch))).map(([k, f]) => [k, f().length]));
+  Object.fromEntries(Object.entries(decalChecks([...items, BENCH], world(patch))).map(([k, f]) => [k, f().length]));
 /** Only `check` finds the items, each once. */
 const only = (check: string, items: readonly StreetPropItem[], patch: Partial<DecalWorld> = {}) => {
   const counts = run(items, patch);
@@ -302,5 +306,12 @@ describe("the glitch scan's decal checks (ADR-0058 stage 6)", () => {
     only("decal-off-kerb", [grate(20, -16, 0)]);
     only("decal-off-kerb", [grate(-0.1, -16, Math.PI / 2)]);
     only("decal-on-crossing", [atKerb(51)]);
+  });
+
+  it("finds a decal in a furniture block no other piece is in", () => {
+    // Two blocks either side of x = 40, the bench (x 50) in the east one.
+    const blockOf = (p: Pt) => (p.x < 40 ? "west" : "east");
+    only("decal-alone-in-block", [atKerb(20)], { blockOf });
+    none([atKerb(60)], { blockOf });
   });
 });

@@ -40,6 +40,7 @@ const decals = addDecals(byChunk as Map<string, StreetPropItem[]>, new Site(chun
   surfaceY: (p) => decalWalls.surfaceY(p.x, p.z),
   buildingTags: loadBuildingTags(),
   poleLamp: decalWalls.poleLampAt,
+  blockOf: decalWalls.furnitureBlock,
 });
 writeFileSync(OUT, emitProps(byChunk));
 const total = Object.values(stats.perKind).reduce((a, b) => a + b, 0);

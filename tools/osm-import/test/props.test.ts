@@ -10,7 +10,7 @@ import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/t
 import { REPO } from "../src/paths.ts";
 import { emitProps } from "../src/props-emit.ts";
 import { loadBuildingTags, loadNodeTags } from "../src/props-art.ts";
-import { groundY, lublinDecalWalls, poleLampAt, surfaceY } from "../src/decal-walls.ts";
+import { furnitureBlock, groundY, lublinDecalWalls, poleLampAt, surfaceY } from "../src/decal-walls.ts";
 import { addDecals } from "../src/props-decals.ts";
 import type { Pt } from "../src/geometry.ts";
 import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
@@ -73,7 +73,7 @@ describe("street furniture generator (ADR-0047)", () => {
     const market = { roads: loadCarriageways(), doors: gameDoors() };
     const { byChunk } = generateProps(PLAN, CHUNKS, loadNodeTags(), lublinVenueBoards(), market);
     // The decals after the furniture (ADR-0058 stage 6), as `props.ts` adds them.
-    const ctx = { groundY: (p: Pt) => groundY(p.x, p.z), surfaceY: (p: Pt) => surfaceY(p.x, p.z), buildingTags: loadBuildingTags(), poleLamp: poleLampAt };
+    const ctx = { groundY: (p: Pt) => groundY(p.x, p.z), surfaceY: (p: Pt) => surfaceY(p.x, p.z), buildingTags: loadBuildingTags(), poleLamp: poleLampAt, blockOf: furnitureBlock };
     addDecals(byChunk as Map<string, StreetPropItem[]>, new Site(CHUNKS), lublinDecalWalls(), ctx);
     expect(emitProps(byChunk)).toBe(committed);
   });
