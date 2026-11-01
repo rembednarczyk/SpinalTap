@@ -5,6 +5,7 @@
  */
 import { type MarkingOut } from "./markings.ts";
 import { type PassageOut } from "./passages.ts";
+import { type VenueOut } from "./venues.ts";
 import type { RoofShape } from "../../../packages/core/src/ports/types.ts";
 import { type BuildingUse, type GroundSurface, type TerrainGrid } from "../../../packages/core/src/world/city-geo.ts";
 
@@ -37,6 +38,8 @@ export interface BuildingOut {
   readonly shopfront?: true;
   /** Where the height came from. */
   readonly source: "height" | "levels" | "default";
+  /** Venues in or at it (ADR-0064 stage 4), relative to (x, z), with their 2077 names. */
+  readonly venues?: readonly VenueOut[];
 }
 
 export interface GroundOut {

@@ -13,7 +13,7 @@ import { REPO } from "./paths.ts";
 const OUT = join(REPO, "packages/sim/src/content/lublin");
 
 const inputs = loadInputs();
-const { chunks, stats } = generate(inputs.osm, inputs.src);
+const { chunks, stats, venues } = generate(inputs.osm, inputs.src);
 mkdirSync(OUT, { recursive: true });
 let total = 0;
 for (const d of DISTRICTS) {
@@ -30,6 +30,9 @@ for (const s of stats) {
     [s.id, s.buildings, s.fromHeight, s.fromLevels, s.skipped, s.withHoles, s.ground, s.cell, s.terrainError.max.toFixed(2), s.terrainError.p99.toFixed(2), s.minY, s.maxY].join(" | "),
   );
 }
+console.log(
+  `venues ${venues.total}: ${venues.signed} signed, ${venues.named} named from the table, ${venues.total - venues.named} generic; colour from osm ${venues.colourOsm}, table ${venues.colourTable}, kind ${venues.colourKind}`,
+);
 if (process.argv.includes("--landmarks")) {
   for (const c of chunks) {
     for (const b of c.buildings) {

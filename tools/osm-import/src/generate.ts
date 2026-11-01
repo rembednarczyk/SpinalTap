@@ -19,6 +19,7 @@ import { type PassageOut, buildingPassages, streetLevelTunnels } from "./passage
 import { type ChunkOut } from "./model.ts";
 import { type OsmData } from "./osm.ts";
 import { chunkTerrain, sampleField } from "./terrain.ts";
+import { type WorldVenue, allVenues, assignVenues, venueOut } from "./venues.ts";
 
 export interface ChunkStats {
   readonly id: string;
@@ -32,11 +33,26 @@ export interface ChunkStats {
   readonly terrainError: { readonly max: number; readonly p99: number };
   readonly minY: number;
   readonly maxY: number;
+  /** Venues signed on the chunk's buildings (ADR-0064 stage 4). */
+  readonly venues: number;
+}
+
+/** What became of the map's venues (ADR-0064 stage 4): the importer's control numbers. */
+export interface VenueStats {
+  readonly total: number;
+  /** On a building of a chunk. */
+  readonly signed: number;
+  /** With a 2077 name from the table; the rest are generic by kind. */
+  readonly named: number;
+  readonly colourOsm: number;
+  readonly colourTable: number;
+  readonly colourKind: number;
 }
 
 export interface Generated {
   readonly chunks: readonly ChunkOut[];
   readonly stats: readonly ChunkStats[];
+  readonly venues: VenueStats;
 }
 
 const SKIP_BUILDING = new Set(["no", "construction", "roof", "ruins", "demolished", "proposed"]);
@@ -154,6 +170,7 @@ const generateChunk = (
   passages: readonly PassageOut[],
   parts: ReadonlyMap<string, readonly Area[]>,
   alone: ReadonlySet<string>,
+  venues: ReadonlyMap<string, readonly WorldVenue[]>,
 ) => {
   const altitude = LUBLIN_ANCHOR.altitude;
   const t = chunkTerrain(sampleField(src, spec.rect, 12), spec.rect, altitude);
@@ -173,8 +190,10 @@ const generateChunk = (
       continue;
     }
     if (a.holes > 0) withHoles++;
+    const signs = venues.get(a.id);
+    const ok = signs ? { ...r.ok, venues: signs.map((v) => venueOut(v, r.ok)) } : r.ok;
     // A building's parts follow it, in its chunk, wherever their own centroids fall.
-    out.push(r.ok, ...r.lifted);
+    out.push(ok, ...r.lifted);
   }
   const ground = chunkGround(
     bands.filter((b) => rectsOverlap(b.box, spec.rect)),
@@ -207,6 +226,7 @@ const generateChunk = (
     terrainError: { max: t.maxError, p99: t.p99Error },
     minY: Math.min(...t.grid.heights),
     maxY: Math.max(...t.grid.heights),
+    venues: out.reduce((n, b) => n + (b.venues?.length ?? 0), 0),
   };
   return { chunk, stats };
 };
@@ -282,6 +302,19 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   const parts = partsByBuilding(buildings, partAreas.filter((p) => !orphans.has(p)));
   // Standing alone is a property of the whole map, not of a chunk: one pass for all of them.
   const alone = smallAlone(buildings);
-  const results = chunks.map((c) => generateChunk(c, src, buildings, bands, lines, pois, markings, passages, parts, alone));
-  return { chunks: results.map((r) => r.chunk), stats: results.map((r) => r.stats) };
+  // Shops, cafés, bars and the rest on the buildings they are in or at (ADR-0064 stage 4).
+  // All of them, so a building at a chunk's edge gets the same venues whichever chunks are built.
+  const venues = assignVenues(allVenues(data, areas), buildings.map((b) => ({ id: b.id, ring: b.ring })));
+  const mapped = allVenues(data, areas).filter((v) => chunks.some((c) => inRect(v.at, c.rect)));
+  const results = chunks.map((c) => generateChunk(c, src, buildings, bands, lines, pois, markings, passages, parts, alone, venues));
+  const count = (f: (v: WorldVenue) => boolean) => mapped.filter(f).length;
+  const venueStats: VenueStats = {
+    total: mapped.length,
+    signed: results.reduce((n, r) => n + r.stats.venues, 0),
+    named: count((v) => v.named),
+    colourOsm: count((v) => v.colourFrom === "osm"),
+    colourTable: count((v) => v.colourFrom === "table"),
+    colourKind: count((v) => v.colourFrom === "kind"),
+  };
+  return { chunks: results.map((r) => r.chunk), stats: results.map((r) => r.stats), venues: venueStats };
 };
