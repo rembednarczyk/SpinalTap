@@ -18,6 +18,8 @@ import { oneway } from "../../osm-import/src/markings.ts";
 import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
 import { addressOf } from "../../osm-import/src/labels.ts";
 import { geoToWorld } from "../../osm-import/src/project.ts";
+import { boardBehind } from "../../osm-import/src/props-boards.ts";
+import { cityVenueBoards } from "../../osm-import/src/venue-boards.ts";
 import { CROWD_LANES } from "../../../packages/sim/src/content/crowd";
 import { INTERIORS, interiorAt } from "../../../packages/sim/src/content/interior-areas";
 import { CLINIC_DOOR, KOI_DOOR } from "../../../packages/sim/src/content/interiors";
@@ -30,7 +32,7 @@ import { clearedBuilding } from "../../../packages/sim/src/content/cleared-build
 import { CLEARED_BUILDINGS, MAP_CHUNKS, PASSAGES, ROOM_SITES } from "../../../packages/sim/src/content/lublin/sites";
 import { groundY } from "../../../packages/sim/src/content/lublin/terrain";
 import { BRIDGE_DECKS, bridgeDeckAt } from "../../../packages/sim/src/content/lublin/decks";
-import { WORLD_CHUNKS } from "../../../packages/sim/src/content/world-map";
+import { WORLD_CHUNKS, WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
 import { type GroundDeck, deckAt } from "../../../packages/sim/src/world/deck";
 import { GroundField } from "../../../packages/sim/src/world/ground";
 import { type Prism, circleTouchesPrism, makePrism, prismsAt } from "../../../packages/sim/src/world/prism";
@@ -921,6 +923,17 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       .flat()
       .filter((i) => i.prop === "lamp-wall-lantern")
       .flatMap((i) => PASSAGES.filter((p) => Math.abs(underVault(p, i.x, i.z)?.off ?? Infinity) < p.width / 2 + 0.5).map((p) => ({ at: near(i.x, i.z), what: `lamp-wall-lantern in ${p.building}` }))),
+  /** A wall lantern hung in front of a venue's board (G-158): within the lantern's half width of the board along its wall, at its height. */
+  "wall-lantern-over-venue-board": () => {
+    const boards = cityVenueBoards(WORLD_SCENERY);
+    return Object.values(WORLD_STREET_PROPS)
+      .flat()
+      .filter((i) => i.prop === "lamp-wall-lantern")
+      .flatMap((i) => {
+        const b = boardBehind(boards, i, i.y);
+        return b ? [{ at: near(i.x, i.z), what: `lamp-wall-lantern over ${b.text}` }] : [];
+      });
+  },
   /** A passage through a building with an end off every chunk, where there is no ground to come out on. */
   "passage-off-map": () =>
     PASSAGES.filter((p) => [p.from, p.to].some(({ x, z }) => !MAP_CHUNKS.some(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ))).map((p) => ({
