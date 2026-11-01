@@ -29,6 +29,7 @@ export const PauseDifficulty = () => {
   const difficulty = useRunDifficulty();
   return (
     <div className="settings" data-testid="pause-difficulty">
+      <h3 className="difficulty__heading">{t("difficulty.heading")}</h3>
       <DifficultyPicker value={difficulty.value} onChange={difficulty.set} />
       {difficulty.pending && (
         <p className="settings__note" role="status" data-testid="difficulty-pending">

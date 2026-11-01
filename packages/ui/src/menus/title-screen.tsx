@@ -34,7 +34,7 @@ export const TitleScreen = ({ version }: { version?: string | undefined }) => {
   const t = useT();
   const [view, setView] = useState<"main" | "new" | "load" | "settings" | "credits">("main");
   return (
-    <div className="screen screen--title" data-testid="title-screen">
+    <div className={`screen screen--title${view === "new" ? " screen--setup" : ""}`} data-testid="title-screen">
       <div className="title">
         <div className="title__kanji">関 戦士</div>
         <h1 className="title__name">SEKI SENSHI</h1>

@@ -11,7 +11,12 @@
 .slots__difficulty { margin-left: 8px; padding: 0 6px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cyan); border: 1px solid rgba(95, 242, 255, 0.35); vertical-align: middle; }
 
 @media (max-height: 500px), (max-width: 760px) {
+  /* The new game's setup needs the height of a phone held sideways more than the logo does. */
+  .screen--setup .title { display: none; }
+  /* Room under Start for the map credit at the foot of the screen. */
+  .screen--setup { padding-bottom: 32px; }
   .difficulty { gap: 6px; }
+  .difficulty__row .settings__label { flex-basis: 11em; font-size: 13px; }
   .difficulty__heading { font-size: 18px; }
   .difficulty__desc { font-size: 13px; min-height: 0; }
   .difficulty__custom { gap: 4px; }
