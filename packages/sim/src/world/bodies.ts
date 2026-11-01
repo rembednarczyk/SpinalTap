@@ -59,7 +59,8 @@ export const bodySnapshotOf = (d: DownedBody): BodySnapshot => ({
  * What is left of someone killed in a takedown, or shot dead while knocked out: the same id,
  * key, chunk, look and place, with nothing alive about it (no health, no mind, no weapon), so no
  * system takes it for a character. It keeps a still velocity: the presentation follows it when
- * it is carried.
+ * it is carried. One of the heat's reinforcements stays which of them it was: unkeyed, it is saved
+ * by that (G-193).
  */
 export const corpseOf = (e: Entity, downed: DownedBody): Body => {
   const c: Body = {
@@ -78,6 +79,7 @@ export const corpseOf = (e: Entity, downed: DownedBody): Body => {
   if (e.view) c.view = e.view;
   if (e.body) c.body = e.body;
   if (e.faction) c.faction = e.faction;
+  if (e.security) c.security = e.security;
   // Its look comes from its type (the presentation); nothing else reads it without health.
   if (e.enemy) c.enemy = e.enemy;
   return c;

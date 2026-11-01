@@ -4,6 +4,7 @@
  * `props-place.ts`. Built from `LublinChunkData`, the same tables the game and renderer read.
  */
 import { type GroundSurface, terrainHeightAt } from "../../../packages/core/src/world/city-geo.ts";
+import { GATE_PASSAGES } from "../../../packages/sim/src/content/lublin/gate-passages.ts";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
 import { type Pt, type Rect, inRect, pointInRing, ringBounds } from "./geometry.ts";
 
@@ -13,6 +14,9 @@ export type SiteSurface = "building" | "road" | "walk" | "green" | "water" | "ra
 const WALK: ReadonlySet<GroundSurface> = new Set(["sidewalk", "square", "cobble", "footway"]);
 
 const BIN = 32;
+
+/** How far past the building's fronts a hand-cut gate's mouth reaches along its axis (m). */
+const GATE_MOUTH = 0.5;
 
 /** Which surface wins where several overlap: a road over its sidewalk, a sidewalk over grass. */
 const RANK: Readonly<Record<string, number>> = { none: 0, water: 1, green: 2, rail: 3, walk: 4, road: 5, building: 6 };
@@ -48,6 +52,8 @@ export class Site {
   private readonly bins = new Map<string, Shape[]>();
   /** The passages through the chunks' buildings (ADR-0048), along their axes. */
   private readonly passages: readonly (readonly [Pt, Pt])[];
+  /** The gates the game cuts by hand, along their axes under their buildings and the mouths. */
+  private readonly gates: readonly (readonly [Pt, Pt])[];
 
   constructor(chunks: readonly LublinChunkData[]) {
     this.chunks = chunks;
@@ -59,6 +65,16 @@ export class Site {
     }
     this.streets = streets;
     this.passages = chunks.flatMap((c) => (c.passages ?? []).map((p) => [p.from, p.to] as const));
+    // The gates are solid in the map, with no passage in their chunk (Brama Krakowska), or one off the arch the game cuts
+    // (Brama Grodzka, G-183). Their axes run on along the street 4.6 to 8.7 m past the fronts, where the next houses' walls are.
+    this.gates = GATE_PASSAGES.flatMap((g) => {
+      const rings = chunks.flatMap((c) => c.buildings.filter((b) => b.id === g.building).map((b) => flat(b.outline, b.x, b.z)));
+      const len = Math.hypot(g.to.x - g.from.x, g.to.z - g.from.z);
+      const at = (s: number): Pt => ({ x: g.from.x + ((g.to.x - g.from.x) * s) / len, z: g.from.z + ((g.to.z - g.from.z) * s) / len });
+      const under: number[] = [];
+      for (let s = 0; s <= len; s += 0.25) if (rings.some((r) => pointInRing(at(s), r))) under.push(s);
+      return under.length > 0 ? [[at(under[0]! - GATE_MOUTH), at(under[under.length - 1]! + GATE_MOUTH)] as const] : [];
+    });
   }
 
   private add(s: Shape): void {
@@ -135,14 +151,20 @@ export class Site {
     return best;
   }
 
-  /** Whether p lies within `reach` metres of a passage's axis, beyond the facades as far as the passage runs. */
+  /**
+   * Whether p lies within `reach` metres of a passage's axis, beyond the facades as far as the
+   * passage runs; of a gate's, only across its vault and mouths (the band ends square there).
+   */
   nearPassage(p: Pt, reach: number): boolean {
-    return this.passages.some(([a, b]) => {
+    const near = (a: Pt, b: Pt, square: boolean) => {
       const dx = b.x - a.x;
       const dz = b.z - a.z;
-      const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+      const k = ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1);
+      if (square && (k < 0 || k > 1)) return false;
+      const t = Math.max(0, Math.min(1, k));
       return Math.hypot(p.x - a.x - dx * t, p.z - a.z - dz * t) < reach;
-    });
+    };
+    return this.passages.some(([a, b]) => near(a, b, false)) || this.gates.some(([a, b]) => near(a, b, true));
   }
 
   /** Whether p is open ground a thing can stand on: not a building, water or rails. */
