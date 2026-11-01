@@ -160,6 +160,12 @@ importers:
         specifier: ^19.3.0
         version: 19.3.0(@types/react@19.3.0)
 
+  tools/code-health:
+    devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
   tools/glitch-scan: {}
 
   tools/i18n-scan:

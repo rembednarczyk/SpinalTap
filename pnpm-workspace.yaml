@@ -3,3 +3,4 @@ packages:
   - "tools/osm-import"
   - "tools/glitch-scan"
   - "tools/i18n-scan"
+  - "tools/code-health"

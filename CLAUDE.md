@@ -35,7 +35,7 @@ Zmiana w cudzym obszarze idzie przez zmianę kontraktu (port, typ zdarzenia, kom
 - Babylon importuje wyłącznie `packages/engine/src/babylon.ts`.
 - W `core` i `sim`: bez `any`, bez `Math.random`, `Date.now`, `performance.now`. Losowość przez `RandomPort`, czas przez `ClockPort`.
 - Kolejność systemów ECS tylko w `createSystems()`.
-- Bez god objectów (ADR-0031): plik źródłowy do 500 linii, funkcja i komponent do 120 (ESLint pilnuje; wyjątki tylko dla tabel z danymi). Klasa powyżej ok. 20 metod to sygnał do podziału. Nowa funkcja w app dostaje własny kontroler i prezenter, w UI wąski interfejs intencji i hook, w engine własną część za fasadą `BabylonRenderer`.
+- Bez god objectów (ADR-0031): plik źródłowy do 500 linii, funkcja i komponent do 120 (ESLint pilnuje; wyjątki tylko dla tabel z danymi). Klasa powyżej 20 metod to god object: zapadka `tools/code-health` trzyma listę z bazą, która tylko spada (`GOD_BASELINE=update` w commicie podziału), a nowa klasa ponad limit to czerwony test. Nowa funkcja w app dostaje własny kontroler i prezenter, w UI wąski interfejs intencji i hook, w engine własną część za fasadą `BabylonRenderer`.
 - Zmiana schematu zapisu: podbij `SAVE_SCHEMA_VERSION` i dodaj migrację w `packages/persistence/src/migrations.ts` z testem.
 - Zmiana reguł symulacji zmienia złoty hash w `packages/sim/test/determinism.test.ts`; aktualizuj go świadomie (`vitest -u`) i napisz w commicie dlaczego.
 - Zmiana wyglądu NPR: `pnpm build && pnpm exec playwright test e2e/npr-perf.spec.ts --update-snapshots=all`, a nową migawkę obejrzyj przed commitem.
