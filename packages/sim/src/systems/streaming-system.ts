@@ -10,6 +10,6 @@ export const streamingSystem: System = {
   run(ctx) {
     // A rider is already on the destination platform: that district streams in during the ride.
     const player = playerOrPassenger(ctx);
-    if (player) ctx.streamer.update(ctx.world, ctx.state.domain.flags, player.position, ctx.state.domain.clock);
+    if (player) ctx.streamer.update(ctx.world, ctx.state.domain.flags, player.position, ctx.state.domain.clock, ctx.dt);
   },
 };
