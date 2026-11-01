@@ -156,7 +156,8 @@ describe("terrain and prisms in the simulation (ADR-0043)", () => {
   });
 
   it("puts content spawned under the terrain or inside a prism where it can stand", () => {
-    const sim = terrainSim({ x: -60, z: 10 });
+    // Near the seam, so his chunk is loaded: one put in a sleeping chunk falls asleep at once (G-188).
+    const sim = terrainSim({ x: -10, z: 10 });
     const g = gangerEntity(5001, { key: "buried", position: { x: 30, y: 0, z: 60 }, yaw: 0 }, null, 80, "test-east");
     const ground = new GroundField(testChunks());
     const before = g.position;
