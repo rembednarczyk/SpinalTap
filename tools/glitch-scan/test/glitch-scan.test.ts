@@ -14,7 +14,7 @@ import { stackTiers } from "../../../packages/engine/src/renderer/mapcity/vertic
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 import { MAP_SIGN_KIND } from "../../../packages/engine/src/renderer/mapcity/sign-plan";
 import { signsInNeighbours } from "./sign-neighbours";
-import { bayCarsMisturned, bayCarsOutOfPark, kerbParksOf } from "./kerb-bays";
+import { bayCarsMisturned, bayCarsOutOfPark, crowdLanesOnParking, kerbParksOf } from "./kerb-bays";
 import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alone.ts";
 import { extractFeatures } from "../../osm-import/src/features.ts";
 import { roadWidth } from "../../osm-import/src/ground.ts";
@@ -783,6 +783,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "bay-car-out-of-park": () => bayCarsOutOfPark(kerbParksOf(SOURCE_OSM), PARKED_CARS),
   /** A car in a kerb car park mapped `orientation=perpendicular|diagonal` parked along the kerb (G-177). */
   "bay-car-orientation": () => bayCarsMisturned(kerbParksOf(SOURCE_OSM), PARKED_CARS),
+  /** A crowd lane walked a metre or more inside a kerb car park, on its cars' strip (G-177). */
+  "crowd-lane-on-parking": () => crowdLanesOnParking(kerbParksOf(SOURCE_OSM), CROWD_LANES),
   /** A game block standing on the ground (not an awning or a deck) that floats or sinks. */
   "prop-off-ground": () =>
     GAME_PROPS.flatMap((p) => {
