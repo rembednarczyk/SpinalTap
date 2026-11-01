@@ -133,6 +133,8 @@ export interface LublinCarParkData {
   readonly id: string;
   /** Its `parking` kind: `street_side`, `lane`, `half_on_kerb`, `surface`… */
   readonly kind: string;
+  /** Its bays' `orientation` when mapped: `parallel`, `perpendicular` or `diagonal` (G-177). */
+  readonly orientation?: string;
   /** World outline. */
   readonly outline: FlatPoints;
 }

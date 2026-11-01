@@ -11,12 +11,18 @@ const groundCarPark = (t: Tags): boolean =>
 
 /**
  * The car parks reaching into the chunk, by map id (one reaching over a chunk's edge is in both),
- * with their `parking` kind and outline: the kerbs where the map says cars park.
+ * with their `parking` kind, the `orientation` of their bays when mapped and outline: the kerbs
+ * where the map says cars park, and how (along the kerb or across it, G-177).
  */
 export const chunkCarParks = (areas: readonly Area[], rect: Rect): CarParkOut[] =>
   areas
     .filter((a) => groundCarPark(a.tags) && rectsOverlap(ringBounds(a.ring), rect))
-    .map((a) => ({ id: a.id, kind: a.tags.parking ?? "surface", outline: a.ring.flatMap((p) => [r1(p.x), r1(p.z)]) }));
+    .map((a) => ({
+      id: a.id,
+      kind: a.tags.parking ?? "surface",
+      ...(a.tags.orientation !== undefined ? { orientation: a.tags.orientation } : {}),
+      outline: a.ring.flatMap((p) => [r1(p.x), r1(p.z)]),
+    }));
 
 /** A bus stop's post or platform (not the stop position on the carriageway). */
 const stopPost = (t: Tags): boolean => t.highway === "bus_stop" || t.public_transport === "platform" || t.highway === "platform";

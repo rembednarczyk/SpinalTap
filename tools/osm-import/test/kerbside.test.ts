@@ -18,6 +18,12 @@ describe("chunk car parks", () => {
     expect(chunkCarParks([park({}, 90)], rect)).toEqual([{ id: "w7", kind: "surface", outline: [90, 50, 110, 50, 110, 52.5, 90, 52.5] }]);
   });
 
+  it("keep the orientation of its bays when the map has it (G-177)", () => {
+    expect(chunkCarParks([park({ parking: "street_side", orientation: "perpendicular" })], rect)).toEqual([
+      { id: "w7", kind: "street_side", orientation: "perpendicular", outline: [40, 50, 60, 50, 60, 52.5, 40, 52.5] },
+    ]);
+  });
+
   it("leave out one under the ground, a deck, a building and one outside the chunk", () => {
     for (const tags of [{ parking: "underground" }, { parking: "multi-storey" }, { parking: "rooftop" }, { layer: "-1" }, { building: "yes" }] as Record<string, string>[]) expect(chunkCarParks([park(tags)], rect)).toEqual([]);
     expect(chunkCarParks([park({}, 120)], rect)).toEqual([]);
