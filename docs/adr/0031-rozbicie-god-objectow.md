@@ -92,5 +92,6 @@ Postęp (1.11, każdy podział osobnym PR-em, zachowanie potwierdzone sondą por
 | `BabylonRenderer` | 42 | 17 | #146 | `MapCitySlot`, `WetAsphalt`, `RendererLoading`, `RendererStats`, typ `ScreenEffects` |
 | `GameSession` | 33 | 14 | #157 | `SessionFlow`, `SessionLoop`, `SessionScreen`, `composeIntents`; zapis pod `session.saves`, debug pod `session.debug` |
 | `CharacterViews` | 24 | 20 | #163 | `CharacterModels`, `CharacterKit`, `CharacterDeaths`, funkcja `disposeRig` |
+| `GangerAgent` | 22 | 14 | — | `GangerWalk` (pościg przez poziomy, obchodzenie, utknięcie), `ganger-fight` (`attack`, `faceTowards`) nad wąskim `GangerBinding`; agent to sam blackboard drzewa |
 
-Zostają w bazie: `ToonMaterials` 23, `StreetProps` 22, `GangerAgent` 22, `SynthAudio` 21.
+Zostają w bazie: `ToonMaterials` 23, `StreetProps` 22, `SynthAudio` 21.
