@@ -26,6 +26,7 @@ import { surfaceLiftAt } from "./surface-lift";
 import { StreetProps, type StreetPropsStats } from "./street-props";
 import { MapSkyline } from "./skyline";
 import { megaBodies } from "./skyline-bodies";
+import { skylineLayout, skylineVariant } from "./skyline-variants";
 import { type LandmarkPart, landmarkAt, withLandmark } from "./landmarks";
 
 /** Views drawn by the map city (ADR-0042, ADR-0044). */
@@ -156,7 +157,8 @@ export class MapCity {
   constructor(private readonly deps: MapCityDeps) {
     this.signs = new MapSignMaterial(deps.scene, deps.signAtlas);
     this.water = new MapWaterMaterial(deps.scene);
-    this.skyline = new MapSkyline(deps.scene, deps.quality !== "low");
+    // PROTOTYP (megabloki): ?skyline=A|B|C; the phone keeps today's skyline.
+    this.skyline = new MapSkyline(deps.scene, deps.quality !== "low", deps.quality === "low" ? null : skylineLayout(skylineVariant()));
     this.lod = MAP_LOD[deps.quality];
     const terrain = deps.materials.get("mapTerrain");
     // Terrain gives way in depth to the surfaces laid on it, at any distance.
