@@ -15,6 +15,8 @@ import { SHAPES, knownKind, propOf, withShape } from "../src/props-kinds.ts";
 import { evenStations, offRoad, offWall, scatter, stations } from "../src/props-place.ts";
 import { Site } from "../src/props-site.ts";
 import { SolidIndex, clearSpot } from "../src/props-solid.ts";
+import { gameDoors } from "../src/game-doors.ts";
+import { loadCarriageways } from "../src/props-roads.ts";
 import { lublinVenueBoards } from "../src/venue-boards.ts";
 
 const CHUNKS = [...KRAKOWSKIE_CHUNKS, ...STARE_MIASTO_CHUNKS, ...PODZAMCZE_CHUNKS, ...NABRZEZE_CHUNKS];
@@ -64,7 +66,8 @@ describe("street furniture generator (ADR-0047)", () => {
 
   it("matches the committed table (run `pnpm osm:props` after changing the plan or the rules)", () => {
     const committed = readFileSync(join(REPO, "packages/sim/src/content/lublin/props.generated.ts"), "utf8");
-    expect(emitProps(generateProps(PLAN, CHUNKS, loadNodeTags(), lublinVenueBoards()).byChunk)).toBe(committed);
+    const market = { roads: loadCarriageways(), doors: gameDoors() };
+    expect(emitProps(generateProps(PLAN, CHUNKS, loadNodeTags(), lublinVenueBoards(), market).byChunk)).toBe(committed);
   });
 
   it("stands lamps on the pavement beside the road on both sides, their arms towards it, and lanterns on the facades", () => {

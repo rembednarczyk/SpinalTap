@@ -15,6 +15,8 @@ import { emitProps } from "./props-emit.ts";
 import { type PropsPlan, generateProps } from "./props-gen.ts";
 import { loadNodeTags } from "./props-art.ts";
 import { MAPPED, SKIPPED, SKIPPED_ART } from "./props-kinds.ts";
+import type * as GameDoors from "./game-doors.ts";
+import { loadCarriageways } from "./props-roads.ts";
 import type * as VenueBoards from "./venue-boards.ts";
 
 const PLAN = join(REPO, "docs/world/lublin-props.todo.json");
@@ -24,7 +26,9 @@ const plan = JSON.parse(readFileSync(PLAN, "utf8")) as PropsPlan;
 const chunks = [...KRAKOWSKIE_CHUNKS, ...STARE_MIASTO_CHUNKS, ...PODZAMCZE_CHUNKS, ...NABRZEZE_CHUNKS];
 // The venues' boards from the renderer's plan, whose modules Node does not load by itself.
 const { module: venues } = await runnerImport<typeof VenueBoards>(join(REPO, "tools/osm-import/src/venue-boards.ts"), { root: REPO, configFile: false, logLevel: "warn" });
-const { byChunk, stats } = generateProps(plan, chunks, loadNodeTags(), venues.lublinVenueBoards());
+// The game's doors (ADR-0038) the same way: the market's furniture keeps clear of them (ADR-0058 stage 3).
+const { module: doors } = await runnerImport<typeof GameDoors>(join(REPO, "tools/osm-import/src/game-doors.ts"), { root: REPO, configFile: false, logLevel: "warn" });
+const { byChunk, stats } = generateProps(plan, chunks, loadNodeTags(), venues.lublinVenueBoards(), { roads: loadCarriageways(), doors: doors.gameDoors() });
 writeFileSync(OUT, emitProps(byChunk));
 const total = Object.values(stats.perKind).reduce((a, b) => a + b, 0);
 console.log(`props.generated.ts: ${(statSync(OUT).size / 1024).toFixed(0)} KiB, ${total} pieces in ${byChunk.size} chunks`);

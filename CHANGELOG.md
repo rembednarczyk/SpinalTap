@@ -5,6 +5,9 @@ Zmiany widoczne dla gracza, od najnowszych. Wersja gry i commit są na ekranie t
 ## Nieopublikowane (0.1.0)
 
 ### 1 listopada 2026
+- Auta w głębokich pasach postojowych bez oznaczenia stoją skośnie pod 60°, nosem do chodnika w stronę ruchu, jak na Krakowskim Przedmieściu i Radziwiłłowskiej (G-187).
+- Strażnicy zleceń zakończonych porażką albo wykonanych zostają w świecie po wczytaniu, także gdy w trakcie walki przyjęto nowe zlecenie: zaalarmowani po nieudanej infiltracji walczą dalej, więc zapis nie pozwala już uciec z walki, a zabici nie wracają (G-178, zapis v22).
+- Targ i budki z jedzeniem: przy straganach Targu na Ruskiej, Bazaru, Giełdy na Kresowej i pchlego targu na Placu Zamkowym stoją kartony na paletach, beczki, skrzynki z owocami i towar pod płótnem, na ladach leżą ramen, warzywa i napoje, a pod płachtami wiszą noreny; przed barami z fast foodem na Krakowskim i Podzamczu stoją budki yatai z ladą, stołkami, norenem i lampionami. Wszystko ma bryłę, a rozstawiają to reguły z danych mapy. Modele CC0 Kenneya są na ekranie „Autorzy” (ADR-0058 etap 3).
 - Auta na pasach postojowych z mapy stoją przy krawężniku całą bryłą w obrysie, a na pasach z `orientation=perpendicular` i głębokich bez tagu w poprzek ulicy (G-177).
 - Zapis i wczytanie w trakcie infiltracji nie zerują czujności strażników: kto zaczął dostrzegać Seki, po wczytaniu dalej ją dostrzega, a gra toczy się dalej tak samo jak bez wczytania (G-174, zapis v21).
 - Latarnie ścienne Starego Miasta nie wiszą już w przejazdach Bramy Krakowskiej, Bramy Grodzkiej i Ku Farze, a latarnia z wylotu przejścia pod Wieżą Trynitarską przeszła na ścianę obok (G-173).
