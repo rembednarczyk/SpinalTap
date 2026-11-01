@@ -1,7 +1,7 @@
 import { type GroundSurface, VEHICLE_SIZE, type VehicleModel, type ViewDescriptor } from "@seki/core";
 import type { StaticProp } from "./builders";
 import { furnitureClearance } from "./furniture-index";
-import { BAY_STEP, type BayLayout, bayDepth, bayLayout, bayYaw, inRing, stripCut, stripDepth } from "./kerb-bays";
+import { BAY_STEP, type BayLayout, bayDepth, bayLayouts, bayYaw, inRing, stripCut, stripDepth } from "./kerb-bays";
 import { inBuilding, nearestWall } from "./lublin/places";
 import { type Pt, ROAD_CHAINS, type RoadChain, polylineLength, surfacesAt } from "./lublin/roads";
 import { MAP_CHUNKS } from "./lublin/sites";
@@ -385,9 +385,8 @@ const stripCars = (park: KerbPark, c: RoadChain, side: 1 | -1, layout: BayLayout
 /**
  * Cars in the car parks the map draws along a street's kerb (`parking=street_side`, `lane`,
  * `half_on_kerb`), walked along the street's axis on each side the area covers: by the kerb, as
- * full as Plac Zamkowy's, along it or across it as `bayLayout` reads the area's `orientation` and
- * depth. A strip deep enough for cars across, but not mapped so, holds them along the kerb where
- * none fits across (one reaching over the lane cars drive). The kerb line of `kerbCars` is the
+ * full as Plac Zamkowy's, along it, aslant or across it as `bayLayouts` reads the area's
+ * `orientation` and depth, the first layout any car fits in. The kerb line of `kerbCars` is the
  * street's median one and misses a strip that only widens the carriageway in places.
  */
 const bayCars = (): ParkedCar[] => {
@@ -398,9 +397,7 @@ const bayCars = (): ParkedCar[] => {
       for (const side of [1, -1] as const) {
         const depth = stripDepth(park.ring, c.points, side, BAY_REACH);
         if (depth === 0) continue;
-        const layout = bayLayout(park.orientation, depth);
-        const cars = stripCars(park, c, side, layout, out);
-        out.push(...(cars.length === 0 && park.orientation === undefined && layout !== "parallel" ? stripCars(park, c, side, "parallel", out) : cars));
+        out.push(...bayLayouts(park.orientation, depth).reduce<ParkedCar[]>((got, l) => (got.length > 0 ? got : stripCars(park, c, side, l, out)), []));
       }
     }
   }

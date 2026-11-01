@@ -163,7 +163,7 @@ describe("the lanes of the traffic (ADR-0050)", () => {
     }
   });
 
-  it("parked cars fill the car parks the map draws along a kerb, along their street or across it as the strip says (G-177)", () => {
+  it("parked cars fill the car parks the map draws along a kerb, along their street, aslant or across it as the strip says (G-177, G-187)", () => {
     const inside = (x: number, z: number, o: readonly number[]) => {
       let on = false;
       for (let i = 0, j = o.length - 2; i < o.length; j = i, i += 2)
@@ -178,18 +178,21 @@ describe("the lanes of the traffic (ADR-0050)", () => {
     }
     const inBays = PARKED_CARS.flatMap((c) => kerbParks.filter((p) => inside(c.x, c.z, p.outline)).map((park) => ({ c, park })));
     expect(inBays.length).toBeGreaterThan(20);
-    let across = 0;
+    let turned = 0;
     for (const { c, park } of inBays) {
       const street = ROAD_CHAINS.filter((r) => r.use === "cars").map((r) => ({ r, q: projectOn(r.points, c.x, c.z) })).sort((a, b) => a.q.d - b.q.d)[0]!;
       const t = pointAt(street.r.points, street.q.s);
       const along = Math.abs(t.tx * Math.sin(c.yaw) + t.tz * Math.cos(c.yaw));
-      // Along the kerb or across it, never askew; across only where the strip is mapped so or has no `orientation`.
+      // Along the kerb, aslant at 60° (cos 0.5) or across it, never askew otherwise; aslant or across
+      // only where the strip is mapped so or has no `orientation` (G-187: aslant first, across where it does not fit).
+      const aslant = Math.abs(along - 0.5) < 0.05;
       if (park.orientation === "perpendicular") expect(along, `${c.x},${c.z} in ${park.id}`).toBeLessThan(0.1);
+      else if (park.orientation === "diagonal") expect(aslant, `${c.x},${c.z} in ${park.id}: ${along.toFixed(2)}`).toBe(true);
       else if (park.orientation === "parallel") expect(along, `${c.x},${c.z} in ${park.id}`).toBeGreaterThan(0.9);
-      else expect(along > 0.9 || along < 0.1, `${c.x},${c.z} in ${park.id}: ${along.toFixed(2)}`).toBe(true);
-      if (along < 0.1) across++;
+      else expect(along > 0.9 || along < 0.1 || aslant, `${c.x},${c.z} in ${park.id}: ${along.toFixed(2)}`).toBe(true);
+      if (along < 0.9) turned++;
     }
-    expect(across).toBeGreaterThan(10);
+    expect(turned).toBeGreaterThan(10);
   });
 
   it("parked cars of a kerb car park stand with their whole body in it, by its kerb (G-177)", () => {
