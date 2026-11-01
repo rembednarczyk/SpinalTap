@@ -4,6 +4,7 @@ import type { CrowdMind, Entity } from "../../world/components";
 import type { SimContext, System } from "../../world/context";
 import { inCreationOrder } from "../../world/ordering";
 import { followSchedule } from "../../world/schedule";
+import { incapacitated } from "../../world/takedown";
 import { worldTimeScale } from "../ability-system";
 import { CIVILIAN_TREE } from "./civilian-tree";
 import { walkRoutine } from "./passerby-walk";
@@ -200,6 +201,11 @@ export const createCivilianAiSystem = (): System => {
       const dt = ctx.dt * worldTimeScale(ctx);
       for (const c of inCreationOrder(ctx.world.with("civilian", "velocity"))) {
         alive.add(c.id);
+        // Knocked out or held in a takedown (ADR-0065): it lies still and takes no fright.
+        if (incapacitated(ctx, c)) {
+          c.velocity = { x: 0, y: 0, z: 0 };
+          continue;
+        }
         let brain = brains.get(c.id);
         if (!brain) {
           const agent = new CivilianAgent();

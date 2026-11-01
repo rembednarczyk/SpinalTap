@@ -68,15 +68,17 @@ const SEARCH_SPREAD = 4;
 /** Whose security a place belongs to: Tessen's in the docks, Hebi's elsewhere (ADR-0028). */
 export const securityAt = (ctx: SimContext, at: Vec3): FactionId => (ctx.streamer.districtAt(at) === "doki" ? "tessen" : "hebi");
 
-/** Does this camera see the player right now (working, in its cone and range, nothing in between)? */
-export const cameraSees = (ctx: SimContext, cam: Entity, player: Entity): boolean => {
+/** Does this camera see the point right now (working, in its cone and range, nothing in between)? */
+export const cameraSeesPoint = (ctx: SimContext, cam: Entity, p: Vec3): boolean => {
   const d = cam.device;
   if (!d || d.kind !== "camera" || d.broken > 0 || (cam.hackFx?.blind ?? 0) > 0) return false;
-  const chest = chestOf(player);
-  if (Math.hypot(chest.x - cam.position.x, chest.y - cam.position.y, chest.z - cam.position.z) > CAMERA_RANGE) return false;
-  if (Math.abs(angleTo({ x: cam.position.x, z: cam.position.z, yaw: cam.yaw }, chest.x, chest.z)) > CAMERA_CONE) return false;
-  return lineOfSight(ctx.world, cam.position, chest);
+  if (Math.hypot(p.x - cam.position.x, p.y - cam.position.y, p.z - cam.position.z) > CAMERA_RANGE) return false;
+  if (Math.abs(angleTo({ x: cam.position.x, z: cam.position.z, yaw: cam.yaw }, p.x, p.z)) > CAMERA_CONE) return false;
+  return lineOfSight(ctx.world, cam.position, p);
 };
+
+/** Does this camera see the player right now? */
+export const cameraSees = (ctx: SimContext, cam: Entity, player: Entity): boolean => cameraSeesPoint(ctx, cam, chestOf(player));
 
 /** Is the point in front of the player and in plain sight (where the camera of the game looks)? */
 export const inPlayerView = (ctx: SimContext, player: Entity, p: Vec3): boolean => {
@@ -115,7 +117,7 @@ const setHeat = (ctx: SimContext, heat: HeatState, force = false): void => {
 };
 
 /** A crime reached the security: CrimeReported, the heat, and its people nearby go to look. */
-const report = (ctx: SimContext, crime: CrimeKind, channel: WitnessChannel, witnessId: EntityId, offenderId: EntityId, at: Vec3): void => {
+export const report = (ctx: SimContext, crime: CrimeKind, channel: WitnessChannel, witnessId: EntityId, offenderId: EntityId, at: Vec3): void => {
   ctx.bus.emit("CrimeReported", { crime, channel, witnessId, offenderId, at: { ...at } });
   const faction = securityAt(ctx, at);
   setHeat(ctx, reportCrime(ctx.state.domain.heat, crime, faction, at), true);
@@ -147,6 +149,31 @@ const react = (ctx: SimContext, d: StreetDisturbance): void => {
  * Who saw the player commit it: a camera or a patrol reports at once; otherwise every civilian
  * who saw it starts a call (the first through makes the report).
  */
+/** A patrol of the security of the crime's place that saw the player commit it and phones it in. */
+const patrolWitness = (ctx: SimContext, g: Entity, player: Entity, security: FactionId): boolean =>
+  // Someone already fighting the player does not phone it in: it fights. Nor does one knocked out or dead.
+  g.faction === security && !!g.ai && !g.ai.alerted && !g.unconscious && (g.health?.current ?? 1) > 0 && patrolSees(ctx, g, player);
+
+/** A civilian that saw the player commit it and starts a call. */
+const civilianWitness = (ctx: SimContext, c: Entity, player: Entity): boolean => {
+  const mind = c.civilian?.crowd;
+  // Background passers-by (ADR-0040) run like anyone but never phone it in: they are not saved.
+  return !c.passerby && !c.unconscious && (c.health?.current ?? 1) > 0 && !mind?.call && (mind?.scared ?? 0) <= 0 && civilianSees(ctx, c, player);
+};
+
+/**
+ * Would a crime the player commits now at `at` have a witness (ADR-0029): a camera, a patrol of
+ * the place's security or a civilian who would phone it in. The rule `witness` applies at the
+ * end of the step, for the takedown's `witnessed` (ADR-0065).
+ */
+export const seenCommitting = (ctx: SimContext, player: Entity, at: Vec3): boolean => {
+  for (const cam of ctx.world.with("device")) if (cameraSees(ctx, cam, player)) return true;
+  const security = securityAt(ctx, at);
+  for (const g of ctx.world.with("ai")) if (patrolWitness(ctx, g, player, security)) return true;
+  for (const c of ctx.world.with("civilian")) if (civilianWitness(ctx, c, player)) return true;
+  return false;
+};
+
 const witness = (ctx: SimContext, o: Offence, player: Entity): void => {
   for (const cam of inCreationOrder(ctx.world.with("device"))) {
     if (!cameraSees(ctx, cam, player)) continue;
@@ -156,15 +183,12 @@ const witness = (ctx: SimContext, o: Offence, player: Entity): void => {
   }
   const security = securityAt(ctx, o.at);
   for (const g of inCreationOrder(ctx.world.with("ai"))) {
-    // Someone already fighting the player does not phone it in: it fights. Nor does one knocked out.
-    if (g.faction !== security || g.ai.alerted || g.unconscious || !patrolSees(ctx, g, player)) continue;
+    if (!patrolWitness(ctx, g, player, security)) continue;
     report(ctx, o.crime, "patrol", g.id, player.id, o.at);
     return;
   }
   for (const c of inCreationOrder(ctx.world.with("civilian"))) {
-    const mind = c.civilian.crowd;
-    // Background passers-by (ADR-0040) run like anyone but never phone it in: they are not saved.
-    if (c.passerby || c.unconscious || (c.health?.current ?? 1) <= 0 || mind?.call || (mind?.scared ?? 0) > 0 || !civilianSees(ctx, c, player)) continue;
+    if (!civilianWitness(ctx, c, player)) continue;
     scare(ctx, c, "fleeing", player.position);
     const m = c.civilian.crowd;
     if (!m) continue;
