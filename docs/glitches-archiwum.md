@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-177 Auta na pasach postojowych OSM równolegle na środku głębokości obrysu
+- Status: naprawione (1.11, #152: auta przy krawężniku i w poprzek, tłum 1 m od pasów; kontrole `bay-car-out-of-park` 1 → 0, `bay-car-orientation` 1 → 0, `crowd-lane-on-parking` 3 → 0; weryfikacja PRZYJĘTE, kurator ZGODNE Z UWAGAMI, T-102, T-103)
+- Ważność: S4 · Zasięg: auta z `bayCars` (`tools/osm-import/src/parked-cars.ts`): Kowalska w232362980 (683,7; 161,0) odsunięta 0,8 m ku jezdni (narożniki 0,31 i 0,56 m poza obrysem), bo trasa tłumu `stare-miasto-1-1-square-2` biegnie po krawężniku pasa; obrysy 4,7–8 m głębokości (Ruska w1024029951, Radziwiłłowska w883991779, Ciasna w227679486) i Kalinowszczyzna w1000912163 (`orientation=perpendicular`, 4–5 miejsc) mają po jednym aucie równolegle
+- Poprawka: auto przy zewnętrznej krawędzi obrysu (krawężnik), w obrysie ≥4,5 m albo z `orientation=perpendicular|diagonal` w poprzek (tag `orientation` do `CarParkOut`); trasa tłumu na osi chodnika w173566577; kontrole skanu `bay-car-out-of-park` (baza 1), `bay-car-orientation` (baza 1), `crowd-lane-on-parking`
+- Uwaga: `offMultiLaneKerbs` nie patrzy na stronę ulicy; na drogach 1+2 (Krakowskie w154962958, Lubartowska, Radziwiłłowska w331453920) wyklucza też krawężnik od strony jednego pasa; dziś bez skutku
+- Pakiet właściciela: tools/osm-import, packages/sim (crowd), tools/glitch-scan
+
 ### G-184 Szkielety modeli przybywają przy każdym cyklu nowa gra / clear
 - Status: naprawione (1.11, #151: szkielet postaci proceduralnej zwalniany z rigiem; szkielety po clear 34/43/52/61 → 25 stale; pula VRM zamierzona, ograniczona szczytem jednoczesnych postaci; weryfikacja PRZYJĘTE)
 - Ważność: S3 do potwierdzenia (możliwy wyciek pamięci) · Zasięg: liczba szkieletów w scenie rośnie o 12 na cykl newGame/clear (67 → 79) na NullEngine z modelami VRM; sprawdzić, czy to zamierzona pula

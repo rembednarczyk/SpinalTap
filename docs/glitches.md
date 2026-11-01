@@ -564,13 +564,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: wyrównać zbiory dróg i parkingów między skanem a generatorem; test generatora dla przystanku niezależny od G-155
 - Pakiet właściciela: tools/glitch-scan, tools/osm-import
 
-### G-177 Auta na pasach postojowych OSM równolegle na środku głębokości obrysu
-- Status: w PR #152 (1.11; auta przy krawężniku i w poprzek wg `orientation` i głębokości, tłum 1 m od pasów; 66 → 75 aut); w weryfikacji, potem kurator
-- Ważność: S4 · Zasięg: auta z `bayCars` (`tools/osm-import/src/parked-cars.ts`): Kowalska w232362980 (683,7; 161,0) odsunięta 0,8 m ku jezdni (narożniki 0,31 i 0,56 m poza obrysem), bo trasa tłumu `stare-miasto-1-1-square-2` biegnie po krawężniku pasa; obrysy 4,7–8 m głębokości (Ruska w1024029951, Radziwiłłowska w883991779, Ciasna w227679486) i Kalinowszczyzna w1000912163 (`orientation=perpendicular`, 4–5 miejsc) mają po jednym aucie równolegle
-- Poprawka: auto przy zewnętrznej krawędzi obrysu (krawężnik), w obrysie ≥4,5 m albo z `orientation=perpendicular|diagonal` w poprzek (tag `orientation` do `CarParkOut`); trasa tłumu na osi chodnika w173566577; kontrole skanu `bay-car-out-of-park` (baza 1), `bay-car-orientation` (baza 1), `crowd-lane-on-parking`
-- Uwaga: `offMultiLaneKerbs` nie patrzy na stronę ulicy; na drogach 1+2 (Krakowskie w154962958, Lubartowska, Radziwiłłowska w331453920) wyklucza też krawężnik od strony jednego pasa; dziś bez skutku
-- Pakiet właściciela: tools/osm-import, packages/sim (crowd), tools/glitch-scan
-
 ### G-178 Strażnicy nieudanej infiltracji znikają po wczytaniu
 - Status: w PR #150, runda 3 (1.11): `formerContracts` czyszczone (12 zleceń: 0 wpisów, zapis 4,8 kB), unikalność id w walidacji; w weryfikacji. Do decyzji projektowej: szablony zakończonego zlecenia respawnują nietkniętych strażników przy ponownym wejściu, aż do następnego zlecenia (tak było przed poprawką)
 - Ważność: S2 (zapis pozwala uciec z walki) · Zasięg: kontrakt infiltrate zakończony alarmem (`contracts.active` null), strażnicy `c3-*` (5 encji) dalej walczą; po wczytaniu ich nie ma
@@ -617,6 +610,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: na NullEngine `scene.onReadyObservable` rośnie o 1 na każde newGame (9 → 13 w 5 cyklach); źródło prawdopodobnie `scene.whenReadyAsync(true)` w `packages/engine/src/renderer/start-prep.ts:181`, które na NullEngine się nie rozwiązuje
 - Poprawka: sprawdzić w przeglądarce (nowa gra przed gotowością sceny); jeśli rośnie, anulowanie oczekiwania przy `cancelPrepare`/clear
 - Pakiet właściciela: packages/engine (renderer)
+
+### G-187 Auta w głębokich pasach postojowych bez `orientation` w poprzek zamiast skośnie
+- Status: zgłoszone (1.11, kurator #152); T-103
+- Ważność: S4 · Zasięg: 2 pasy: Krakowskie Przedmieście w55897048 (15 aut, w rzeczywistości ok. 60°), Radziwiłłowska w883991779 (1 auto, w rzeczywistości 6 miejsc ok. 65–70°), nosem do chodnika (ortofoto PZGiK)
+- Poprawka (do wyboru): (a) domyślny układ dla obrysu ≥ 4,5 m bez tagu `diagonal`; (b) kąt `diagonal` parametrem (60° zamiast 45°); (c) tabela `KERB_ORIENTATION` w `sites.ts` ze źródłem albo `orientation=diagonal` w OSM i ponowny import; z (c) kontrola „auto poza ±20° od kąta z tabeli”, baza 0
+- Uwagi z weryfikacji #152: test pasa bez tagu nie sprawdza, że pas płytszy niż 4,5 m trzyma auta wzdłuż; układ `diagonal` nie ma auta na danych (tylko test `bayYaw`); kierunek auta na Ruskiej (963,8; 473,0) ze stycznej osi zamiast krawędzi obrysu (4–7°); `offKerbParks` zagęszcza punkty trasy przy przesunięciach kilku cm (18 → 604); `clearRun` odrzuca odsunięty odcinek krakowskie-2-1-square-1, przyczyna nieustalona
+- Pakiet właściciela: packages/sim (kerb-bays.ts, crowd-kerb-parks.ts)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
