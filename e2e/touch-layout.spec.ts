@@ -132,3 +132,41 @@ test("phone: the settings in the pause menu scroll to their last control", async
   expect(await menu.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
 });
 });
+
+/**
+ * The map credit (ODbL) stays legible and over nothing: on the title's screens taller than a
+ * phone held sideways (the new game's Custom sliders, Settings) it ends the content instead of
+ * riding over the buttons when the screen scrolls.
+ */
+test.describe("phone 800x370 title credit", () => {
+  test.use({ viewport: { width: 800, height: 370 }, isMobile: true, hasTouch: true });
+
+  test("phone: the map credit covers no control of the title's screens, scrolled to the bottom", async ({ page }) => {
+    test.setTimeout(180_000);
+    await page.goto("/?seed=7&models=off&touch");
+    await waitForGame(page);
+    const credit = page.getByTestId("title-attribution");
+    const title = page.getByTestId("title-screen");
+    const clear = async (view: string) => {
+      await title.evaluate((el) => el.scrollTo(0, el.scrollHeight));
+      const c = await credit.boundingBox();
+      expect(c, `${view}: credit shown`).not.toBeNull();
+      expect(c!.y >= -0.5 && c!.y + c!.height <= 370 + 0.5, `${view}: credit on screen`).toBe(true);
+      const controls = title.locator("button, input");
+      for (let i = 0; i < (await controls.count()); i++) {
+        const el = controls.nth(i);
+        const b = await el.boundingBox();
+        if (!b || b.width === 0) continue;
+        const name = (await el.getAttribute("aria-label")) ?? (await el.textContent())?.trim() ?? `#${i}`;
+        expect(overlap({ name: "credit", ...c! }, { name, ...b }), `${view}: credit over "${name}"`).toBe(false);
+      }
+    };
+    await page.getByRole("button", { name: "New Game", exact: true }).tap();
+    await page.getByRole("radio", { name: "Custom" }).tap();
+    await clear("custom");
+    await page.getByRole("button", { name: "Back", exact: true }).tap();
+    await page.getByRole("button", { name: "Settings", exact: true }).tap();
+    await page.getByRole("tab", { name: "Accessibility" }).tap();
+    await clear("settings");
+  });
+});

@@ -13,8 +13,6 @@
 @media (max-height: 500px), (max-width: 760px) {
   /* The new game's setup needs the height of a phone held sideways more than the logo does. */
   .screen--setup .title { display: none; }
-  /* Room under Start for the map credit at the foot of the screen. */
-  .screen--setup { padding-bottom: 32px; }
   .difficulty { gap: 6px; }
   .difficulty__row .settings__label { flex-basis: 11em; font-size: 13px; }
   .difficulty__heading { font-size: 18px; }
