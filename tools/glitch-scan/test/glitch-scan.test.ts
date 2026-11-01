@@ -22,7 +22,7 @@ import { CROWD_LANES } from "../../../packages/sim/src/content/crowd";
 import { INTERIORS, interiorAt } from "../../../packages/sim/src/content/interior-areas";
 import { CLINIC_DOOR, KOI_DOOR } from "../../../packages/sim/src/content/interiors";
 import { furnitureClearance } from "../../../packages/sim/src/content/furniture-index";
-import { BOLLARD, alongSegment, anchors, chainSegments, chainThrough, distanceToPiece, furniturePrisms, furnitureRadius } from "../../../packages/sim/src/content/lublin/furniture";
+import { BOLLARD, alongSegment, anchors, chainSegments, chainThrough, distanceToPiece, furniturePrisms, furnitureRadius, turnLocal } from "../../../packages/sim/src/content/lublin/furniture";
 import { buildingView, isLandmark } from "../../../packages/sim/src/content/lublin";
 import { inBuilding, nearestWall } from "../../../packages/sim/src/content/lublin/places";
 import { ROAD_CHAINS, type RoadChain, polylineLength, surfaceLiftAt, surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
@@ -473,6 +473,26 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       .flat()
       .filter((i) => ["artwork", "monument", "kiosk", "bus-shelter", "bench", "vending-machine", "advertising-column", "atm", "bike-rack", "food-cart", "container"].includes(i.prop))
       .flatMap((i) => (nearestWall(i.x, i.z).d < furnitureRadius(i) - 0.3 ? [{ at: near(i.x, i.z), what: i.prop }] : [])),
+  /**
+   * A market stall whose canvas (2.4 x 1.8 m at 2.35 m) reaches over a container or a food cart
+   * (ADR-0058 stage 2): the cart's roof and the container's wall stand higher than the canvas.
+   */
+  "stall-canvas-over-piece": () => {
+    const all = Object.values(WORLD_STREET_PROPS).flat();
+    const pieces = all.filter((i) => i.prop === "container" || i.prop === "food-cart");
+    return all
+      .filter((s) => s.prop === "market-stall")
+      .flatMap((s) => {
+        const close = pieces.filter((o) => Math.hypot(o.x - s.x, o.z - s.z) < 8);
+        for (let a = -1.2; a <= 1.2 + 1e-9; a += 0.1)
+          for (let b = -0.9; b <= 0.9 + 1e-9; b += 0.1) {
+            const q = turnLocal(s.yaw, a, b);
+            const hit = close.find((o) => distanceToPiece(o, s.x + q.x, s.z + q.z) === 0);
+            if (hit) return [{ at: near(s.x, s.z), what: hit.prop }];
+          }
+        return [];
+      });
+  },
   /**
    * Two solid pieces (bollards aside, they stand in rows) whose footprints run more than 5 cm into
    * each other. Judged on the real prisms, not their radii, which reach far past a long bench's

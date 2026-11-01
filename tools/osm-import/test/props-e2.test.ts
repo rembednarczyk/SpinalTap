@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
-import { distanceToPiece, furniturePrisms } from "../../../packages/sim/src/content/lublin/furniture.ts";
+import { distanceToPiece, furniturePrisms, turnLocal } from "../../../packages/sim/src/content/lublin/furniture.ts";
 import { KRAKOWSKIE_CHUNKS } from "../../../packages/sim/src/content/lublin/krakowskie.generated.ts";
 import { NABRZEZE_CHUNKS } from "../../../packages/sim/src/content/lublin/nabrzeze.generated.ts";
 import { PODZAMCZE_CHUNKS } from "../../../packages/sim/src/content/lublin/podzamcze.generated.ts";
@@ -75,6 +75,23 @@ describe("street furniture of ADR-0058 stage 2 (generator)", () => {
       expect(Math.max(...hs) - Math.min(...hs), piece.prop).toBeLessThan(0.5);
       const near = solids.filter((o) => o !== piece && Math.hypot(o.x - piece.x, o.z - piece.z) < 9);
       for (const o of near) expect(footprint(o).some((q) => distanceToPiece(piece, q.x, q.z) === 0), `${piece.prop} at ${piece.x},${piece.z} and ${o.prop}`).toBe(false);
+    }
+  });
+
+  it("keeps every stall's canvas (2.4 x 1.8 m at 2.35 m) off the containers and carts, the Giełda's a walkway clear of them", () => {
+    const bulky = [...of("container"), ...of("food-cart")];
+    const gielda = (s: StreetPropItem) => s.x > 2290 && s.x < 2400 && s.z > 200 && s.z < 270;
+    for (const s of of("market-stall")) {
+      const close = bulky.filter((o) => Math.hypot(o.x - s.x, o.z - s.z) < 8);
+      let least = Infinity;
+      for (let a = -1.2; a <= 1.2 + 1e-9; a += 0.1)
+        for (let b = -0.9; b <= 0.9 + 1e-9; b += 0.1) {
+          const q = turnLocal(s.yaw, a, b);
+          for (const o of close) least = Math.min(least, distanceToPiece(o, s.x + q.x, s.z + q.z));
+        }
+      expect(least, `stall at ${s.x},${s.z}`).toBeGreaterThan(0);
+      // The containers stand first on the Giełda: its rows of stalls keep a 1 m walkway from them.
+      if (gielda(s)) expect(least, `stall at ${s.x},${s.z}`).toBeGreaterThan(0.95);
     }
   });
 });

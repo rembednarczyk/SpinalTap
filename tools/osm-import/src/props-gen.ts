@@ -206,6 +206,10 @@ const SINGLE_OUTLINE: ReadonlySet<StreetPropKind> = new Set(["kiosk", "bus-shelt
 /** How far scattered pieces keep from a car street's axis (m): its two lanes, a car's half and the piece's own. */
 const TRAFFIC_REACH = 4.5;
 
+/** The long pieces placed so far as items with their solids, for the stalls to keep clear of. */
+const bulkyItems = (placed: readonly Placed[]): StreetPropItem[] =>
+  placed.filter((x) => BULKY.has(x.prop)).map((x) => ({ prop: x.prop, x: x.p.x, y: 0, z: x.p.z, yaw: x.yaw ?? 0, variant: 0 }));
+
 /** Long pieces set on an outline by their whole footprint (ADR-0058 stage 2), not scattered. */
 const BULKY: ReadonlySet<StreetPropKind> = new Set(["food-cart", "container"]);
 
@@ -217,7 +221,7 @@ const placeItem = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: 
     // A kiosk or a shelter whose outline the importer already raised as a building would stand inside its own double.
     if (SINGLE_OUTLINE.has(prop)) return site.surfaceAt(centroid(ring)) === "building" ? [] : [onOutline(site, item, prop, ring)];
     // A marketplace's count is the place, not its stalls: they fill it in rows.
-    if (item.kind === "market") return marketStalls(site, ring).map((s, k) => ({ prop, p: s.p, yaw: s.yaw, key: `${item.id}~${k}` }));
+    if (item.kind === "market") return marketStalls(site, ring, bulkyItems(placed)).map((s, k) => ({ prop, p: s.p, yaw: s.yaw, key: `${item.id}~${k}` }));
     if (BULKY.has(prop)) return bulkyPieces(site, ring, prop, item.count ?? 1, item.id, placed);
     const count = JETS[item.kind] ?? item.count ?? 1;
     // Off the lanes of the streets crossing the area (the car park of Plac Zamkowy under its flea market).
