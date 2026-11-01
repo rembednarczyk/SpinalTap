@@ -42,7 +42,7 @@ const THREAT_SECONDS = 3;
 const ENGAGE_RADIUS = 30;
 
 /** Is this one fighting the player (or someone) right now? Hurting it then is no crime. */
-export const isEngaged = (e: Entity): boolean => !!e.ai && (e.ai.alerted || !!e.ai.victim) || e.sniper?.phase === "aim";
+export const isEngaged = (e: Entity): boolean => !e.unconscious && (!!e.ai && (e.ai.alerted || !!e.ai.victim) || e.sniper?.phase === "aim");
 
 /** Is the player in a fight: shot at lately, or an enemy close by fighting? */
 export const playerEngaged = (ctx: SimContext, player: Entity): boolean => {

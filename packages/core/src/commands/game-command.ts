@@ -74,4 +74,11 @@ export type GameCommand =
   | { readonly type: "track-quest"; readonly questId: string | null }
   // Character progression (ADR-0059).
   /** Puts one unspent attribute point into `attribute`; refused without a point or at the cap. */
-  | { readonly type: "spend-attribute-point"; readonly attribute: AttributeId };
+  | { readonly type: "spend-attribute-point"; readonly attribute: AttributeId }
+  // Takedowns (ADR-0065).
+  /**
+   * Takes down the NPC the HUD offers (the interact key with the takedown prompt): it knocks the
+   * target out, or kills it with `lethal`. Holding the attack button to the end of the takedown
+   * kills as well. Refused without a valid target in reach.
+   */
+  | { readonly type: "takedown"; readonly lethal: boolean };

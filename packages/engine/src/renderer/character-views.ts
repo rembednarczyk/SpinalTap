@@ -292,6 +292,11 @@ export class CharacterViews implements FxActors {
     for (const v of this.views.values()) if (!this.dressed.has(v.rig)) this.dress(v.rig, v.model, v.name);
   }
 
+  /** Starts loading every model of the manifest and every weapon, one promise per file (ADR-0057). */
+  preloadModels(): Promise<unknown>[] {
+    return [...Object.values(this.models).map((spec) => this.library.preload(spec)), ...this.weapons.preload()];
+  }
+
   /** Loads the model in the background and swaps it in once ready, if the rig still exists. */
   private dress(rig: CharacterRig, key: CharacterModelKey | null, name: string): void {
     const spec = key ? this.models[key] : undefined;

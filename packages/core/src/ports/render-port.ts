@@ -1,5 +1,13 @@
+import type { Vec3 } from "../math/vec3";
 import type { ActivityId, MetroRideView } from "../world/wave2";
 import type { AppearanceDescriptor, CameraMode, DespawnReason, EffectDescriptor, EntityId, Transform, ViewDescriptor } from "./types";
+
+/**
+ * Stages of `RenderPort.prepare` in their order (ADR-0057): the character models and weapons,
+ * the city kit, the city round the start, the shaders. The UI names them through its catalogs.
+ */
+export const PREPARE_STAGES = ["models", "cityKit", "city", "shaders"] as const;
+export type PrepareStage = (typeof PREPARE_STAGES)[number];
 
 export interface RenderPort {
   spawn(entityId: EntityId, view: ViewDescriptor, transform: Transform): void;
@@ -26,4 +34,17 @@ export interface RenderPort {
   setActivity?(entityId: EntityId, activity: ActivityId | null): void;
   /** The metro car on screen while the player rides (ADR-0036); null back to the city. */
   setMetroRide?(ride: MetroRideView | null): void;
+  /**
+   * Loads what the start of a game needs before it is shown (ADR-0057): models, the city kit,
+   * the city round `at` (where the player starts) and the shaders. `onProgress` reports the
+   * share done so far, 0..1 and never going back, with the stage under way. Resolves once every
+   * stage is over; a file that fails to load does not reject it (the procedural look stays).
+   * A renderer without it starts the game at once.
+   */
+  prepare?(at: Vec3, onProgress: (done: number, stage: PrepareStage) => void): Promise<void>;
+  /**
+   * The start under way leads nowhere any more (back to the title): `prepare` stops drawing its
+   * warm-up frames and resolves. Optional, like `prepare`.
+   */
+  cancelPrepare?(): void;
 }

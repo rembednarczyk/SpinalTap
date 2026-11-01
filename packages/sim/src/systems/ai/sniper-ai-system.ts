@@ -4,6 +4,7 @@ import type { Entity } from "../../world/components";
 import type { SimContext, System } from "../../world/context";
 import { chestOf, eyeOf, lineOfSight } from "../../world/hitscan";
 import { inCreationOrder } from "../../world/ordering";
+import { incapacitated } from "../../world/takedown";
 import { readyToFire } from "../../world/player-weapon";
 import { LEVEL_GAP, routeAcrossLevels } from "../../world/nav";
 import { WORLD_NAV } from "../../content/world-map";
@@ -179,7 +180,8 @@ export const sniperAiSystem: System = {
       if (self.combatant) self.combatant.engaged = false;
       self.velocity = { x: 0, y: 0, z: 0 };
       const perch = s.perches[s.perch];
-      if (!player || !perch) {
+      // Knocked out or held in a takedown (ADR-0065): the laser goes off and it stays put.
+      if (!player || !perch || incapacitated(ctx, self)) {
         stopAiming(ctx, self, null);
         s.phase = "idle";
         continue;

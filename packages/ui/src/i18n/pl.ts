@@ -36,12 +36,20 @@ export const pl = {
   "pause.settings": "Ustawienia",
   "pause.mainMenu": "Menu główne",
   "pause.credits": "Autorzy",
+  // Loading screen (ADR-0057).
+  "loading.heading": "Wczytywanie",
+  "loading.stage.models": "Postacie i broń",
+  "loading.stage.cityKit": "Zestaw miasta",
+  "loading.stage.city": "Ulice wokół ciebie",
+  "loading.stage.shaders": "Shadery",
   // Save slots.
   "slots.quick": "Szybki zapis",
   "slots.auto": "Autozapis",
   "slots.slot": "Slot {n}",
   "slots.empty": "pusty",
   "slots.export": "Eksportuj",
+  "slots.import": "Importuj zapis z pliku",
+  "slots.imported": "Zaimportowany",
   // Controls help.
   "help.move": "ruch",
   "help.sprint": "sprint",

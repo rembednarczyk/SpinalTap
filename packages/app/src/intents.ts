@@ -33,7 +33,7 @@ const part = <I extends object>(impl: I, keys: Keys<I>): I => {
   return out as I;
 };
 
-const SESSION: Keys<SessionIntents> = { newGame: true, resume: true, pause: true, save: true, load: true, exportSave: true, quitToTitle: true };
+const SESSION: Keys<SessionIntents> = { newGame: true, resume: true, pause: true, save: true, load: true, exportSave: true, importSave: true, quitToTitle: true };
 const DIALOGUE: Keys<DialogueIntents> = { choose: true, closeDialogue: true };
 const SHOP: Keys<ShopIntents> = {
   buyCyberware: true,

@@ -34,6 +34,9 @@ export const plContent = {
   "prompt.help": "Pomóż",
   "prompt.door.force": "Wyłam zamek (podniesie alarm)",
   "prompt.door.locked": "Drzwi na kod: zamknięte",
+  // Obezwładnienia (ADR-0065): klawisz interakcji i przytrzymanie ataku do końca.
+  "prompt.takedown": "Obezwładnij",
+  "prompt.takedown.kill": "przytrzymaj atak, by zabić",
   // Wnętrza (sim `INTERIORS`, ADR-0061).
   "interior.clinic": "Klinika doktora Mori",
   "interior.neon-koi": "Neon Koi",

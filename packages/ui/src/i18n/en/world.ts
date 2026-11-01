@@ -111,6 +111,8 @@ export const enWorld = {
   "save.failed": "Save failed",
   "save.exported": "Save exported",
   "save.exportFailed": "Could not export the save",
+  "save.imported": "Save imported",
+  "save.importFailed": "Could not import the file",
   "crash.error": "Something went wrong",
   "crash.errorText": "{message} · {version}. The game keeps running; if it acts strangely, reload the page.",
   "crash.contextLost": "Graphics reset by the device",

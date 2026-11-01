@@ -1,5 +1,6 @@
 import { holsterTime, recoverBloom, reloadPlan } from "@seki/core";
 import type { Entity } from "../world/components";
+import { playerHeld } from "../world/takedown";
 import type { SimContext, System } from "../world/context";
 import { inCreationOrder } from "../world/ordering";
 import { SLOT_BY_INPUT, activeWeaponItem, loadedOf, reserveOf, setRounds, syncPlayerWeapon } from "../world/player-weapon";
@@ -103,9 +104,9 @@ const cycledSlot = (ctx: SimContext, step: 1 | -1): 0 | 1 | 2 | 3 => {
 
 const handlePlayer = (ctx: SimContext, p: Armed): void => {
   const c = p.combatant;
-  const { input, session } = ctx;
-  if (session.dialogueActive || session.gameOver) {
-    // Opening a conversation, the shop or a bag interrupts a reload.
+  const { input } = ctx;
+  if (playerHeld(ctx)) {
+    // Opening a conversation, the shop or a bag, or a takedown interrupts a reload.
     cancelReload(p);
     return;
   }

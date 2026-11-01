@@ -125,9 +125,10 @@ export interface Massing {
 }
 
 /** Default floors when tags are silent: by use and size, otherwise the district's range picked by `look`. */
-const defaultLevels = (tags: Tags, use: BuildingUse, area: number, range: readonly [number, number], look: number): number => {
+const defaultLevels = (tags: Tags, use: BuildingUse, area: number, range: readonly [number, number], look: number, alone = false): number => {
   const b = tags.building ?? "yes";
-  if (area < 25 || use === "garage" || b === "kiosk") return 1;
+  // A pavilion, a kiosk or a shed on its own: one storey, not the district's houses (G-127).
+  if (area < 25 || use === "garage" || b === "kiosk" || alone) return 1;
   if (use === "industrial") return 2;
   if (b === "house" || b === "detached") return 2;
   if (use === "commercial") return 3;
@@ -141,9 +142,9 @@ const defaultLevels = (tags: Tags, use: BuildingUse, area: number, range: readon
  */
 export const wholeStoreys = (levels: number): number => Math.max(1, Math.floor(levels));
 
-export const massing = (tags: Tags, opts: { area: number; shops: boolean; range: readonly [number, number]; look: number }): Massing => ({ ...heights(tags, opts), ...roofShapeOf(tags) });
+export const massing = (tags: Tags, opts: { area: number; shops: boolean; range: readonly [number, number]; look: number; alone?: boolean }): Massing => ({ ...heights(tags, opts), ...roofShapeOf(tags) });
 
-const heights = (tags: Tags, opts: { area: number; shops: boolean; range: readonly [number, number]; look: number }): Massing => {
+const heights = (tags: Tags, opts: { area: number; shops: boolean; range: readonly [number, number]; look: number; alone?: boolean }): Massing => {
   const use = buildingUse(tags);
   const size = Math.sqrt(opts.area);
   const roof = roofHeight(tags, use, size);
@@ -165,7 +166,7 @@ const heights = (tags: Tags, opts: { area: number; shops: boolean; range: readon
     return { walls: tower ? 30 : 16, roof, levels: tower ? 8 : 4, source: "default" };
   }
   if (tags.historic === "city_gate" || tags.building === "tower") return { walls: 4 * STOREY, roof, levels: 4, source: "default" };
-  const levels = defaultLevels(tags, use, opts.area, opts.range, opts.look);
+  const levels = defaultLevels(tags, use, opts.area, opts.range, opts.look, opts.alone && use !== "civic");
   return { walls: floors(levels), roof, levels, source: "default" };
 };
 

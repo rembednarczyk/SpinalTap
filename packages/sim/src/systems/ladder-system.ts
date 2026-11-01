@@ -1,6 +1,7 @@
 import type { Entity, LadderDef } from "../world/components";
 import type { SimContext, System } from "../world/context";
 import { inCreationOrder } from "../world/ordering";
+import { playerHeld } from "../world/takedown";
 
 /** Climbing speed on a ladder, m/s. */
 export const CLIMB_SPEED = 2.2;
@@ -64,8 +65,8 @@ export const ladderSystem: System = {
   run(ctx) {
     const all = ladders(ctx);
     if (all.length === 0) return;
-    const { input, session } = ctx;
-    const frozen = session.dialogueActive || session.gameOver;
+    const { input } = ctx;
+    const frozen = playerHeld(ctx);
     for (const p of ctx.world.with("player", "velocity")) {
       if (!p.climb) {
         if (frozen || p.fall !== undefined) continue;

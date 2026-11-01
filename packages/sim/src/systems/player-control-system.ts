@@ -14,6 +14,7 @@ import {
   levelModifiers,
 } from "@seki/core";
 import type { Entity } from "../world/components";
+import { playerHeld } from "../world/takedown";
 import { knockbackVelocity } from "../world/knockback";
 import type { SimContext, System } from "../world/context";
 import { overFootprint } from "../world/collision";
@@ -213,12 +214,12 @@ const steer = (p: Entity & { velocity: NonNullable<Entity["velocity"]> }, want: 
 export const playerControlSystem: System = {
   name: "player-control",
   run(ctx) {
-    const { input, session } = ctx;
+    const { input } = ctx;
     if (input.toggleCamera) toggleCameraMode(ctx);
     const stats = playerStatsOf(ctx.state.domain);
     for (const p of ctx.world.with("player", "velocity")) {
       if (p.health) p.health = { current: Math.min(p.health.current, stats.maxHp), max: stats.maxHp };
-      const frozen = session.dialogueActive || session.gameOver;
+      const frozen = playerHeld(ctx);
       if (p.posture) updateCrouch(p.posture, input.crouch, frozen, ctx.dt);
       updateAimAndGuard(p, input.aim, frozen, ctx.dt);
       updateJump(ctx, p, frozen);

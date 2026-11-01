@@ -44,10 +44,12 @@ import {
   EMPTY_TRADE,
   type HintVm,
   type JournalVm,
+  type LoadingVm,
   type LootVm,
   type MapMarkerVm,
   type MapPlayerVm,
   type MapVm,
+  NO_LOADING,
   type Screen,
   type SettingsVm,
   type Toast,
@@ -67,7 +69,14 @@ export * from "./wave2-vm";
 /** Session and screen: which screen, saves, toasts and the interaction prompt. Written by the app's session and save controller. */
 export interface SessionUiState {
   readonly screen: Screen;
+  /** The loading screen's bar (ADR-0057), written by the app's loading controller. */
+  readonly loading: LoadingVm;
   readonly prompt: string | null;
+  /**
+   * What holding the attack button does with the prompt's target (a takedown's kill, ADR-0065),
+   * shown with the prompt; null for nothing.
+   */
+  readonly promptHold: string | null;
   readonly toasts: readonly Toast[];
   readonly slots: readonly SaveSlotInfo[];
   readonly hasSaves: boolean;
@@ -258,6 +267,7 @@ export type UiState = SessionUiState &
 
 export const initialUiState: UiState = {
   screen: "title",
+  loading: NO_LOADING,
   hp: 100,
   maxHp: 100,
   eddies: 0,
@@ -266,6 +276,7 @@ export const initialUiState: UiState = {
   objective: null,
   cameraMode: "FPP",
   prompt: null,
+  promptHold: null,
   dialogue: null,
   toasts: [],
   hitMarker: 0,
