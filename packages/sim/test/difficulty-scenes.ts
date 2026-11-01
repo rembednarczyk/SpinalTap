@@ -1,5 +1,5 @@
 import { type DifficultyProfile, NORMAL_DIFFICULTY, type SaveSnapshot, type Vec3 } from "@seki/core";
-import { type Simulation, docks, gangerEntity } from "../src";
+import { Simulation, docks, gangerEntity } from "../src";
 import { streetSim, teleportPlayer } from "./helpers";
 
 /* Scenes of the difficulty tests (ADR-0066): a profile that differs from "normal" in a field or two. */
@@ -22,9 +22,14 @@ export const tough = (sim: Simulation) => {
 export const DOCKS_CHUNK = "nabrzeze-1-1";
 const atDocks = (x: number, z: number): Vec3 => docks(x, 0, z);
 
-/** In the docks yard with a Tessen guard (or `type`) `distance` m west of the player, alerted, after `patch`. */
-export const yardFight = (patch: Partial<DifficultyProfile>, opts: { type?: "tessen_guard" | "hebi_brawler"; distance?: number } = {}) => {
-  const sim = streetSim({ seed: 21 });
+/**
+ * In the docks yard with a Tessen guard (or `type`) `distance` m west of the player, alerted, after
+ * `patch`; with `ram`, the cyberdeck starts that low.
+ */
+export const yardFight = (patch: Partial<DifficultyProfile>, opts: { type?: "tessen_guard" | "hebi_brawler"; distance?: number; ram?: number } = {}) => {
+  const base = streetSim({ seed: 21 });
+  const snap = base.snapshot(null, "t", "");
+  const sim = opts.ram === undefined ? base : Simulation.fromSnapshot({ ...snap, domain: { ...snap.domain, netrun: { ...snap.domain.netrun, ram: opts.ram } } });
   teleportPlayer(sim, atDocks(16, 97), -Math.PI / 2);
   sim.step();
   setProfile(sim, patch);

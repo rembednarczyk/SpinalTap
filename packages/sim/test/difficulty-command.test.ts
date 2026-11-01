@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { type DifficultyProfile, NORMAL_DIFFICULTY } from "@seki/core";
-import { SIM_HZ, Simulation } from "../src";
+import { BASE_RAM, type DifficultyProfile, NORMAL_DIFFICULTY } from "@seki/core";
+import { SIM_HZ, Simulation, createSystems } from "../src";
 import { run, streetSim } from "./helpers";
 import { profile, roundTrip, setProfile, yardFight } from "./difficulty-scenes";
 
@@ -45,5 +45,18 @@ describe("the set-difficulty command (ADR-0066)", () => {
     setProfile(sim, { snipeTell: 1.6, npcAccuracy: 0.6 });
     const restored = Simulation.fromSnapshot(roundTrip(sim.snapshot(null, "d", "")));
     expect(restored.domain.difficulty).toEqual(profile({ snipeTell: 1.6, npcAccuracy: 0.6 }));
+  });
+
+  it("someone knocked out is no fight: neither the profile nor the RAM waits for it", () => {
+    const { sim, g } = yardFight({}, { distance: 5, ram: BASE_RAM - 2 });
+    sim.world.addComponent(g, "unconscious", true);
+    setProfile(sim, { awareness: 2 });
+    expect(sim.domain.difficulty.awareness).toBe(2);
+    run(sim, SIM_HZ);
+    expect(sim.domain.netrun.ram).toBeGreaterThan(BASE_RAM - 2);
+  });
+
+  it("runs first of all systems, so a profile that waited is in force for the whole next step", () => {
+    expect(createSystems()[0]?.name).toBe("difficulty");
   });
 });

@@ -44,6 +44,17 @@ const ENGAGE_RADIUS = 30;
 /** Is this one fighting the player (or someone) right now? Hurting it then is no crime. */
 export const isEngaged = (e: Entity): boolean => !e.unconscious && (!!e.ai && (e.ai.alerted || !!e.ai.victim) || e.sniper?.phase === "aim");
 
+/**
+ * Is an awake, alerted NPC within `radius` of the player? The RAM's regeneration (ADR-0029) and
+ * a difficulty asked for in a fight (ADR-0066) wait on it; someone knocked out fights nobody.
+ */
+export const alertedNear = (ctx: SimContext, player: Entity, radius: number): boolean => {
+  for (const g of ctx.world.with("ai")) {
+    if (g.ai.alerted && !g.unconscious && Math.hypot(g.position.x - player.position.x, g.position.z - player.position.z) <= radius) return true;
+  }
+  return false;
+};
+
 /** Is the player in a fight: shot at lately, or an enemy close by fighting? */
 export const playerEngaged = (ctx: SimContext, player: Entity): boolean => {
   const threat = ctx.session.lastThreat;

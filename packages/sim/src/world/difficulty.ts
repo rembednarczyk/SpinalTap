@@ -1,5 +1,6 @@
 import { COMBAT_RADIUS, type DifficultyProfile, type GameCommand, difficultyProfile, isDifficultyProfile } from "@seki/core";
 import type { SimContext, System } from "./context";
+import { alertedNear } from "./street";
 
 /*
  * The difficulty of the run (ADR-0066). The profile lives in the domain state (it is saved and it
@@ -10,14 +11,10 @@ import type { SimContext, System } from "./context";
 /** The world's difficulty resource: the profile every system scales its constants by. */
 export const difficultyOf = (ctx: SimContext): DifficultyProfile => ctx.state.domain.difficulty;
 
-/** Is an alerted NPC (awake) within COMBAT_RADIUS of the player, so a fight is on? */
+/** Is a fight on: an awake, alerted NPC within COMBAT_RADIUS of the player? */
 export const fightNearby = (ctx: SimContext): boolean => {
   const player = ctx.world.with("player").first;
-  if (!player) return false;
-  for (const g of ctx.world.with("ai")) {
-    if (g.ai.alerted && !g.unconscious && Math.hypot(g.position.x - player.position.x, g.position.z - player.position.z) <= COMBAT_RADIUS) return true;
-  }
-  return false;
+  return !!player && alertedNear(ctx, player, COMBAT_RADIUS);
 };
 
 const apply = (ctx: SimContext, profile: DifficultyProfile): void => {
