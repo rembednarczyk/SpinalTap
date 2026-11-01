@@ -6,7 +6,7 @@ import { loadInputs } from "../src/load.ts";
 import { parseOsmXml } from "../src/osm.ts";
 import { worldToGeo } from "../src/project.ts";
 import { GENERIC_NAMES, VENUE_NAMES, venueEntry } from "../src/venue-names.ts";
-import { likeness } from "./name-likeness.ts";
+import { likeness, motifOf } from "./name-likeness.ts";
 import { KIT_NEON, type WorldVenue, assignVenues, parseColour, toKitNeon, venueKind } from "../src/venues.ts";
 
 /** Lower case, no diacritics, punctuation as spaces: how a name reads to the eye. */
@@ -27,6 +27,14 @@ const FORBIDDEN = [
   // The verifier's list of 1.11: chains of Lublin and registered marks.
   "Oskroba", "Świat Książki", "VIVO!", "Esens", "Manekin", "Bosko", "Nova", "Plus", "Ruch", "Dbam o Zdrowie", "Mennica Polska", "Wschodni Bank Spółdzielczy",
   "Bank Pocztowy", "Pijalnia Wódki i Piwa", "Pijalnia Czekolady", "Rosomak", "BOŚ", "SKOK", "Loombard", "Chmielewski", "Grela", "Pijana Wiśnia", "Gemini", "Tendur",
+  "Żubr",
+];
+
+/** Rows of one chain: they share their one 2077 name. */
+const ONE_CHAIN: readonly (readonly string[])[] = [
+  ["Bank Pekao", "Pekao"],
+  ["Millennium Bank", "Millennium Przedsiębiorstwa"],
+  ["Społem", 'LSS Społem "Bazar"'],
 ];
 
 /** Parodies that sound like a mark without a phonetic rule catching them, written by hand. */
@@ -59,6 +67,10 @@ describe("the venue-names table (ADR-0064 stage 4)", () => {
     expect(names2077.flatMap((n) => chains.flatMap((c) => likeness(n, c) ?? []))).toEqual([]);
   });
 
+  it("recalls no mark by the motif of its logo, its slogan or a translation of it", () => {
+    expect(names2077.flatMap((n) => (motifOf(n) ? [`${n}: ${motifOf(n)}`] : []))).toEqual([]);
+  });
+
   it("is a new name, not the real one with a tag stuck on", () => {
     expect(names2077.filter((n) => STUCK_ON.test(n))).toEqual([]);
   });
@@ -70,8 +82,27 @@ describe("the venue-names table (ADR-0064 stage 4)", () => {
     expect(likeness("WIWO-WIWO!", "VIVO!")).not.toBeNull();
     expect(likeness("DE-FAKTO", "DeFacto")).not.toBeNull();
     expect(likeness("SUPERNOVA", "Nova")).not.toBeNull();
-    expect(likeness("KRÓL KOTLETA", "Burger King")).toBeNull();
-    expect(likeness("BANK POD ŻUBREM", "Bank Pekao")).toBeNull();
+  });
+
+  it("closes the holes the verifier found on 1.11", () => {
+    // A chain of common words only is compared whole.
+    expect(likeness("PIJALNIA WÓDKI I PIWA", "Pijalnia Wódki i Piwa")).not.toBeNull();
+    expect(likeness("PIJALNIA CZEKOLADY", "Pijalnia Czekolady")).not.toBeNull();
+    expect(likeness("PIJALNIA WUDKI I PIWA", "Pijalnia Wódki i Piwa")).not.toBeNull();
+    // Two letters off a word of six and more, in the phonetic spelling.
+    expect(likeness("SUBWEJ", "Subway")).not.toBeNull();
+    // Diminutives and words grown from the mark's root.
+    expect(likeness("BIEDRONECZKA", "Biedronka")).not.toBeNull();
+    expect(likeness("DONALDO", "McDonald's")).not.toBeNull();
+    // Marks of three letters: a letter off, or the same consonants.
+    expect(likeness("KFS", "KFC")).not.toBeNull();
+    expect(likeness("KEFCE", "KFC")).not.toBeNull();
+    // Motifs of logos, slogans and translations of marks.
+    for (const n of ["ZŁOTE ŁUKI", "SYRENIA KAWA", "BANK POD ŻUBREM", "SKARBONKA NARODOWA", "RZEKOTKA", "ŻABKA NOCNA", "BANK LWA", "BANK TYSIĄCLECIA", "APTEKA BLIŹNIĘTA", "PŁOMYK URODY", "ROŚLINNE PIĘKNO", "KRÓL KOTLETA"]) {
+      expect(motifOf(n), n).not.toBeNull();
+    }
+    expect(motifOf("LEWY TATA SPOŻYWCZY")).toBeNull();
+    expect(motifOf("KRÓLEWSKIE ŁAKOCIE")).toBeNull();
   });
 
   it("never writes a map name as it is, whatever the case and the diacritics", () => {
@@ -80,8 +111,11 @@ describe("the venue-names table (ADR-0064 stage 4)", () => {
 
   it("spells every name in the sign glyphs and gives no two venues the same one", () => {
     expect(names2077.filter((n) => !isSignText(n))).toEqual([]);
-    const own = VENUE_NAMES.map(([, n]) => n);
-    expect(own.filter((n, i) => own.indexOf(n) !== i)).toEqual([]);
+    const chainOf = (osm: string) => ONE_CHAIN.findIndex((c) => c.includes(osm));
+    const twins = VENUE_NAMES.filter(([o, n]) => VENUE_NAMES.some(([p, m]) => p !== o && m === n && (chainOf(o) < 0 || chainOf(o) !== chainOf(p))));
+    expect(twins.map(([o, n]) => `${o}: ${n}`)).toEqual([]);
+    // One chain, one name.
+    for (const c of ONE_CHAIN) expect(new Set(c.map((o) => VENUE_NAMES.find(([p]) => p === o)?.[1])).size, c.join(", ")).toBe(1);
     expect(new Set(VENUE_NAMES.map(([o]) => o)).size).toBe(VENUE_NAMES.length);
   });
 
@@ -174,8 +208,8 @@ describe("venues on the facades", () => {
     const g = generate(osm, () => 190, [{ id: "t-0-0", district: DISTRICTS[0]!, rect: { minX: -50, minZ: -50, maxX: 150, maxZ: 150 } }]);
     const b = g.chunks[0]!.buildings[0]!;
     expect(b.venues).toEqual([
-      { x: 0, z: -5.5, kind: "grocery", name: "RZEKOTKA", color: "#39ff8a" },
-      { x: 0, z: 11.5, kind: "bank", name: "SKARBONKA NARODOWA", color: "#b46cff" },
+      { x: 0, z: -5.5, kind: "grocery", name: "ZIELONY RÓG 24H", color: "#39ff8a" },
+      { x: 0, z: 11.5, kind: "bank", name: "BANK POWSZEDNI", color: "#b46cff" },
     ]);
     expect(g.venues).toMatchObject({ total: 2, signed: 2, named: 2, colourOsm: 1, colourTable: 1, colourKind: 0 });
   });
