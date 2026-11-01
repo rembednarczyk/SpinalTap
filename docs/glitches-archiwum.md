@@ -2,6 +2,18 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-155 Auta przy krawężniku na ulicach wielopasowych bez parkowania
+- Status: naprawione (1.11, #143: kontrola skanu do 0; weryfikacja PRZYJĘTE, kurator ZGODNE Z UWAGAMI, T-102 i G-177)
+- Ważność: S4 · Zasięg: 3 Maja w40050974/w757848901 (x −116..−103, z −33..32): 13 aut 4,1–5,4 m od osi, na skrajnych pasach (`lanes=4`, brak `parking:*`)
+- Poprawka: bez parkowania przy krawężniku dróg z `lanes>=4` albo `lanes:forward|backward>=2` poza `amenity=parking`; kontrola skanu `parked-car-multilane-kerb`, baza 13 → 0
+- Pakiet właściciela: packages/sim (parked-cars), tools/glitch-scan
+
+### G-156 Auta na przystankach
+- Status: naprawione (1.11, #143: kontrola skanu do 0; weryfikacja PRZYJĘTE, kurator ZGODNE Z UWAGAMI, T-102 i G-177)
+- Ważność: S4 · Zasięg: przystanek „Plac Litewski 02” (słupek n836158674 (−100.3, 3.6)): van 0,7 m, van 11,7 m, hatchback 13,1 m od słupka po stronie przystanku
+- Poprawka: zakaz postoju do 15 m od słupka (art. 49 PoRD); kontrola skanu `parked-car-at-bus-stop`, baza 3 → 0; przy okazji `path=sidewalk` poza `footWays` i `pedestrian`/`cycleway` w `parked-car-on-footway`
+- Pakiet właściciela: packages/sim (parked-cars), tools/osm-import, tools/glitch-scan
+
 ### G-171 Odroczona zmiana poziomu trudności ginie przy zapisie
 - Status: naprawione (1.11, #142: czekający profil w zapisie, schemat v20 z migracją; weryfikacja PRZYJĘTE)
 - Ważność: S3 · Zasięg: zmiana poziomu w walce („Zmieni się po walce”), potem zapis i wczytanie przed końcem walki

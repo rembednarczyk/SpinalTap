@@ -492,18 +492,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: odstęp zaparkowanych aut od przejść bez zebry jak od zebr; kontrola skanu
 - Pakiet właściciela: packages/sim (parked-cars), tools/osm-import
 
-### G-155 Auta przy krawężniku na ulicach wielopasowych bez parkowania
-- Status: w PR #143; weryfikacja PRZYJĘTE (1.11), czeka na przegląd kuratora
-- Ważność: S4 · Zasięg: 3 Maja w40050974/w757848901 (x −116..−103, z −33..32): 13 aut 4,1–5,4 m od osi, na skrajnych pasach (`lanes=4`, brak `parking:*`)
-- Poprawka: bez parkowania przy krawężniku dróg z `lanes>=4` albo `lanes:forward|backward>=2` poza `amenity=parking`; kontrola skanu `parked-car-multilane-kerb`, baza 13 → 0
-- Pakiet właściciela: packages/sim (parked-cars), tools/glitch-scan
-
-### G-156 Auta na przystankach
-- Status: w PR #143; weryfikacja PRZYJĘTE (1.11), czeka na przegląd kuratora
-- Ważność: S4 · Zasięg: przystanek „Plac Litewski 02” (słupek n836158674 (−100.3, 3.6)): van 0,7 m, van 11,7 m, hatchback 13,1 m od słupka po stronie przystanku
-- Poprawka: zakaz postoju do 15 m od słupka (art. 49 PoRD); kontrola skanu `parked-car-at-bus-stop`, baza 3 → 0; przy okazji `path=sidewalk` poza `footWays` i `pedestrian`/`cycleway` w `parked-car-on-footway`
-- Pakiet właściciela: packages/sim (parked-cars), tools/osm-import, tools/glitch-scan
-
 ### G-160 Płyta „DEN…” w powietrzu przy narożniku na Grodzkiej (źródło nieustalone)
 - Status: zgłoszone (1.11, łowca G-148; zrzut gracza a92148c1)
 - Ważność: S3 · Zasięg: (568,0; −22), y 6,5–8,5, narożnik budynku z szyldem OKRUSZEK; w mieście nieustalone
@@ -596,6 +584,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 (narzędzie) · Zasięg: `parked-car-multilane-kerb` zwalnia auto w każdym `amenity=parking`, także podziemnym i dachowym, a generator tylko w naziemnych; `parked-car-on-footway` liczy `pedestrian` i `cycleway`, których generator (`footWays`, `clearOfKeptWays`) nie pomija; po #143 `clearOfStops` nie zmienia tabeli (te same auta zdejmuje G-155), więc G-156 pilnuje tylko skan
 - Poprawka: wyrównać zbiory dróg i parkingów między skanem a generatorem; test generatora dla przystanku niezależny od G-155
 - Pakiet właściciela: tools/glitch-scan, tools/osm-import
+
+### G-177 Auta na pasach postojowych OSM równolegle na środku głębokości obrysu
+- Status: zgłoszone (1.11, kurator #143); T-102
+- Ważność: S4 · Zasięg: auta z `bayCars` (`tools/osm-import/src/parked-cars.ts`): Kowalska w232362980 (683,7; 161,0) odsunięta 0,8 m ku jezdni (narożniki 0,31 i 0,56 m poza obrysem), bo trasa tłumu `stare-miasto-1-1-square-2` biegnie po krawężniku pasa; obrysy 4,7–8 m głębokości (Ruska w1024029951, Radziwiłłowska w883991779, Ciasna w227679486) i Kalinowszczyzna w1000912163 (`orientation=perpendicular`, 4–5 miejsc) mają po jednym aucie równolegle
+- Poprawka: auto przy zewnętrznej krawędzi obrysu (krawężnik), w obrysie ≥4,5 m albo z `orientation=perpendicular|diagonal` w poprzek (tag `orientation` do `CarParkOut`); trasa tłumu na osi chodnika w173566577; kontrole skanu `bay-car-out-of-park` (baza 1), `bay-car-orientation` (baza 1), `crowd-lane-on-parking`
+- Uwaga: `offMultiLaneKerbs` nie patrzy na stronę ulicy; na drogach 1+2 (Krakowskie w154962958, Lubartowska, Radziwiłłowska w331453920) wyklucza też krawężnik od strony jednego pasa; dziś bez skutku
+- Pakiet właściciela: tools/osm-import, packages/sim (crowd), tools/glitch-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
