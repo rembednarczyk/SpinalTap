@@ -192,6 +192,35 @@ describe("graffiti (ADR-0058 stage 6)", () => {
   });
 });
 
+describe("decals on one wall", () => {
+  it("keep apart: the plate first, the graffiti of the street and of the plinth round it", () => {
+    // Walls without glass on a 1.6 m plinth: both zones offer graffiti; the first wall also a plate.
+    const walls = row({ base: 1.6, top: 6 });
+    const { items } = decals(walls, { buildingTags: new Map(walls.map((w): [string, Tags] => [w.osm, { "addr:housenumber": "3" }])) });
+    expect(items.filter((i) => i.prop === "house-plate").length).toBeGreaterThan(20);
+    const rect = (i: StreetPropItem) => {
+      if (i.prop === "house-plate") {
+        const p = plateLayout(i.variant);
+        return { u0: i.x - HOUSE_PLATE.width / 2, u1: i.x + HOUSE_PLATE.width / 2, bottom: i.y + p.lift, top: i.y + p.lift + HOUSE_PLATE.height };
+      }
+      const g = graffitiLayout(i.variant);
+      return { u0: i.x - g.width / 2, u1: i.x + g.width / 2, bottom: i.y + g.lift, top: i.y + g.lift + g.height };
+    };
+    let pairs = 0;
+    for (const w of walls) {
+      const on = items.filter((i) => i.prop !== "drain-grate" && i.prop !== "sticker" && Math.abs(i.z - 40) < 0.01 && i.x >= w.a.x && i.x <= w.b.x).map(rect);
+      for (const a of on) {
+        for (const b of on) {
+          if (a === b) continue;
+          pairs++;
+          expect(a.u0 >= b.u1 || a.u1 <= b.u0 || a.bottom >= b.top || a.top <= b.bottom, `${w.building}`).toBe(true);
+        }
+      }
+    }
+    expect(pairs).toBeGreaterThan(10);
+  });
+});
+
 describe("decals in the renderer's furniture blocks", () => {
   it("go only into a block the furniture already fills: a block of decals alone would be a mesh more", () => {
     // Blocks of 100 m along x: a bench in the first only.

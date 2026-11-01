@@ -84,5 +84,6 @@
   "decal-floating": 0,
   "decal-off-kerb": 0,
   "decal-on-crossing": 0,
-  "decal-alone-in-block": 0
+  "decal-alone-in-block": 0,
+  "decal-on-decal": 0
 }

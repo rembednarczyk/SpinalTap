@@ -141,10 +141,10 @@ const BENCH: StreetPropItem = { prop: "bench", x: 50, y: 0, z: -30, yaw: 0, vari
 const run = (items: readonly StreetPropItem[], patch: Partial<DecalWorld> = {}): Record<string, number> =>
   Object.fromEntries(Object.entries(decalChecks([...items, BENCH], world(patch))).map(([k, f]) => [k, f().length]));
 /** Only `check` finds the items, each once. */
-const only = (check: string, items: readonly StreetPropItem[], patch: Partial<DecalWorld> = {}) => {
+const only = (check: string, items: readonly StreetPropItem[], patch: Partial<DecalWorld> = {}, count = items.length) => {
   const counts = run(items, patch);
   expect(Object.keys(counts)).toContain(check);
-  for (const [k, n] of Object.entries(counts)) expect(n, `${k} for ${check}`).toBe(k === check ? items.length : 0);
+  for (const [k, n] of Object.entries(counts)) expect(n, `${k} for ${check}`).toBe(k === check ? count : 0);
 };
 const none = (items: readonly StreetPropItem[], patch: Partial<DecalWorld> = {}) => {
   for (const [k, n] of Object.entries(run(items, patch))) expect(n, k).toBe(0);
@@ -306,6 +306,17 @@ describe("the glitch scan's decal checks (ADR-0058 stage 6)", () => {
     only("decal-off-kerb", [grate(20, -16, 0)]);
     only("decal-off-kerb", [grate(-0.1, -16, Math.PI / 2)]);
     only("decal-on-crossing", [atKerb(51)]);
+  });
+
+  it("finds a wall decal over another on the same wall, and none side by side, one over the other or on two walls", () => {
+    only("decal-on-decal", [on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.3)), on(GARAGE_S, "house-plate", 3.5, plate(0.8))], {}, 1);
+    only("decal-on-decal", [on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.3)), on(GARAGE_S, "graffiti", 4.5, graffiti(2, 0.6, 1.0))], {}, 1);
+    none([on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.3)), on(GARAGE_S, "graffiti", 5.2, graffiti(2, 1, 0.3))]);
+    none([on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.3)), on(GARAGE_S, "house-plate", 3, plate(1.4))]);
+    const west = wallOf(5, 3, -1, 0);
+    none([on(GARAGE_S, "graffiti", 1, graffiti(1.2, 1, 0.3)), on(west, "graffiti", 0.8, graffiti(1.2, 1, 0.3))]);
+    // Two garages' walls alike along them, the pieces at the same place on each and at heights that meet.
+    none([on(GARAGE_S, "graffiti", 3, graffiti(2, 1.5, 0.3)), on(RAISED_S, "graffiti", 3, graffiti(2, 1, 0.3), { y: 1 })]);
   });
 
   it("finds a decal in a furniture block no other piece is in", () => {

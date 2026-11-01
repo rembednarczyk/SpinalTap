@@ -300,6 +300,14 @@ export const decalChecks = (all: readonly StreetPropItem[], world: DecalWorld): 
       }),
     /** A grate on a zebra crossing or its band. */
     "decal-on-crossing": () => grates().flatMap((i) => (corners(i).some((q) => world.crossings.some((b) => inCrossingBand(b, q))) ? [{ at: near(i), what: "drain-grate on a crossing" }] : [])),
+    /** A wall decal over another one on the same wall (a plate under graffiti, two pieces of graffiti in one another). */
+    "decal-on-decal": () => {
+      const placed = onWalls().flatMap(({ i, on }) => (on ? [{ i, on }] : []));
+      return placed.flatMap(({ i, on }, k) => {
+        const other = placed.slice(0, k).find((o) => o.on.wall === on.wall && o.on.u - o.on.half < on.u + on.half && o.on.u + o.on.half > on.u - on.half && o.on.bottom < on.top && o.on.top > on.bottom);
+        return other ? [{ at: near(i), what: `${i.prop} over a ${other.i.prop} on its wall` }] : [];
+      });
+    },
     /** A decal in a block of the renderer's furniture no other piece is in: its mesh a mesh more for decals alone. */
     "decal-alone-in-block": () => {
       const filled = new Set(all.filter((i) => !DECAL_KINDS.has(i.prop)).map(world.blockOf));

@@ -144,7 +144,13 @@ interface WallSpot {
 }
 
 /** Why a spot was turned down, for the importer's report. */
-export type Reject = "neighbour" | "board" | "passage" | "front" | "top" | "district";
+export type Reject = "neighbour" | "board" | "decal" | "passage" | "front" | "top" | "district";
+
+/** A wall decal's stretch along its wall and its bottom and top (world y). */
+type Rect = { readonly u0: number; readonly u1: number; readonly bottom: number; readonly top: number };
+
+/** Between two decals on one wall (m): a plate and graffiti, two zones' graffiti. */
+export const DECAL_ROOM = 0.1;
 
 /** The least height a piece is painted (m). */
 const MIN_HEIGHT = 0.2;
@@ -158,7 +164,7 @@ const pavingUnder = (ctx: DecalContext, w: DecalWall, u0: number, u1: number): n
  * The checks every wall decal passes; the piece, or why not. The spots come inside the wall's ends
  * and over the paving (`graffitiSpots`, `plateSpot`); the bottom is rounded up to its 0.1 m step.
  */
-const settle = (site: Site, w: DecalWall, s: WallSpot, ctx: DecalContext, street: boolean): StreetPropItem | Reject => {
+const settle = (site: Site, w: DecalWall, s: WallSpot, ctx: DecalContext, street: boolean, taken: Rect[]): StreetPropItem | Reject => {
   const u0 = s.u - s.width / 2;
   const u1 = s.u + s.width / 2;
   const at = pointOn(w, s.u);
@@ -176,8 +182,10 @@ const settle = (site: Site, w: DecalWall, s: WallSpot, ctx: DecalContext, street
     }
   }
   if (w.boards.some((b) => b.u0 < u1 + BOARD_ROOM && b.u1 > u0 - BOARD_ROOM && b.bottom < top + BOARD_ROOM && b.top > bottom - BOARD_ROOM)) return "board";
+  if (taken.some((b) => b.u0 < u1 + DECAL_ROOM && b.u1 > u0 - DECAL_ROOM && b.bottom < top + DECAL_ROOM && b.top > bottom - DECAL_ROOM)) return "decal";
   if (w.passages || site.nearPassage(at, PASSAGE_ROOM)) return "passage";
   if (street && !site.standable(pointOn(w, s.u, FRONT))) return "front";
+  taken.push({ u0, u1, bottom, top });
   return {
     prop: s.kind,
     x: r2(at.x),
@@ -309,25 +317,25 @@ export const addDecals = (byChunk: Map<string, StreetPropItem[]>, site: Site, wa
   for (const w of walls) byBuilding.set(w.building, [...(byBuilding.get(w.building) ?? []), w]);
   for (const [building, list] of byBuilding) {
     const tags = ctx.buildingTags?.get(list[0]!.osm);
-    if (!isProtected(list[0]!, tags)) {
-      list.forEach((w, k) => {
-        for (const zone of zonesOf(w)) {
-          for (const s of graffitiSpots(w, zone, ctx, `${building}:${k}`)) {
-            const settled = settle(site, w, s, ctx, zone !== "mural");
-            // A building over a district's edge: the piece goes by the district it is in.
-            const got = typeof settled !== "string" && (PAINT[site.chunkAt(settled)?.district ?? ""] ?? 0) <= 0 ? "district" : settled;
-            if (typeof got === "string") rejected[`graffiti ${got}`] = (rejected[`graffiti ${got}`] ?? 0) + 1;
-            else put(got);
-          }
-        }
-      });
-    }
+    // What each wall already carries: the plate first, the graffiti round it.
+    const taken = list.map((): Rect[] => []);
     const plate = tags ? plateSpot(site, list, tags, ctx) : null;
     if (plate) {
-      const got = settle(site, plate.w, plate.s, ctx, true);
+      const got = settle(site, plate.w, plate.s, ctx, true, taken[list.indexOf(plate.w)]!);
       if (typeof got === "string") rejected[`house-plate ${got}`] = (rejected[`house-plate ${got}`] ?? 0) + 1;
       else put(got);
     }
+    if (isProtected(list[0]!, tags)) continue;
+    list.forEach((w, k) => {
+      for (const zone of zonesOf(w)) {
+        for (const s of graffitiSpots(w, zone, ctx, `${building}:${k}`)) {
+          // A building over a district's edge: the piece goes by the district it is in.
+          const got = (PAINT[site.chunkAt(pointOn(w, s.u))?.district ?? ""] ?? 0) <= 0 ? "district" : settle(site, w, s, ctx, zone !== "mural", taken[k]!);
+          if (typeof got === "string") rejected[`graffiti ${got}`] = (rejected[`graffiti ${got}`] ?? 0) + 1;
+          else put(got);
+        }
+      }
+    });
   }
   for (const s of street) put(s.item);
   return { per, rejected };
