@@ -141,6 +141,9 @@ const SLIDES = [0, 2.5, -2.5, 5, -5];
 /** How far a lamp set off an axis with no carriageway drawn keeps from a car street's axis (m): the widest lane's offset, a car's half and the lamp's own. */
 const LAMP_TRAFFIC_REACH = 3.6;
 
+/** How far a wall lantern keeps from a passage's axis (m): past half the widest passage. */
+const PASSAGE_REACH = 2;
+
 const besideLine = (site: Site, item: PlanItem, prop: StreetPropKind, slots: readonly Slot[], obstacles: readonly Obstacle[]): Placed[] => {
   const { mode } = lineMode(item, prop);
   const out: Placed[] = [];
@@ -148,8 +151,10 @@ const besideLine = (site: Site, item: PlanItem, prop: StreetPropKind, slots: rea
   // Off a road the offset is a guess, not a measured kerb: on a paved square cars still drive the
   // axes of its streets (Plac Zamkowy's cobbles, G-004), so the guess keeps clear of their lanes.
   const lamp = prop.startsWith("lamp-") && mode !== "facade";
+  // From an axis under a building (a gate, Ku Farze) a wall lantern finds the vault's wall or none
+  // and would hang in the solid or the vault (G-173): it slides along the line or goes.
   const clear = (at: Pt, p: Pt) =>
-    mode === "facade" || (!blocked(obstacles, p) && (!lamp || site.surfaceAt(at) === "road" || !nearTraffic(site, p, LAMP_TRAFFIC_REACH)));
+    mode === "facade" ? site.surfaceAt(p) !== "building" && !site.nearPassage(p, PASSAGE_REACH) : !blocked(obstacles, p) && (!lamp || site.surfaceAt(at) === "road" || !nearTraffic(site, p, LAMP_TRAFFIC_REACH));
   for (const { st, side, key } of slots) {
     if (mode === "axis") {
       out.push({ prop, p: st.p, yaw: null, key });

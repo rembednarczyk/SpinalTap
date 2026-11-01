@@ -46,6 +46,8 @@ export class Site {
   readonly chunks: readonly LublinChunkData[];
   readonly streets: readonly SiteStreet[];
   private readonly bins = new Map<string, Shape[]>();
+  /** The passages through the chunks' buildings (ADR-0048), along their axes. */
+  private readonly passages: readonly (readonly [Pt, Pt])[];
 
   constructor(chunks: readonly LublinChunkData[]) {
     this.chunks = chunks;
@@ -56,6 +58,7 @@ export class Site {
       for (const s of c.streets) streets.push({ name: s.name, kind: s.kind, line: flat(s.line), chunk: c.id });
     }
     this.streets = streets;
+    this.passages = chunks.flatMap((c) => (c.passages ?? []).map((p) => [p.from, p.to] as const));
   }
 
   private add(s: Shape): void {
@@ -130,6 +133,16 @@ export class Site {
       }
     }
     return best;
+  }
+
+  /** Whether p lies within `reach` metres of a passage's axis, beyond the facades as far as the passage runs. */
+  nearPassage(p: Pt, reach: number): boolean {
+    return this.passages.some(([a, b]) => {
+      const dx = b.x - a.x;
+      const dz = b.z - a.z;
+      const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+      return Math.hypot(p.x - a.x - dx * t, p.z - a.z - dz * t) < reach;
+    });
   }
 
   /** Whether p is open ground a thing can stand on: not a building, water or rails. */
