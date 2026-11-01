@@ -15,9 +15,9 @@ export interface PointerFocusDeps {
 /**
  * `SessionDeps.onFocusChange` for the browser: the pointer locks while the player is in control
  * and is let go for panels and menus. Leaving the loading screen (ADR-0057) is the one case
- * without the click: the game can start long after it, and a lock asked for without a gesture is
- * refused for good (`BrowserInput.lockUnavailable`), so the next click on the game takes it
- * instead. A panel closed with Esc locks again at once, as before.
+ * without the click: the game can start long after it and a lock asked for without a gesture is
+ * refused, so the next click on the game takes it instead (a refusal for want of a gesture no
+ * longer turns the lock off for good, G-135). A panel closed with Esc locks again at once, as before.
  */
 export const pointerFocus = (deps: PointerFocusDeps): ((wantsPointer: boolean) => void) => {
   let last = deps.screen();
