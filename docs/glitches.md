@@ -456,13 +456,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Uwaga weryfikatora G-138: `lane-off-ground` próbkuje co 1 m, więc wynik zależy od przesunięcia próbek (7–12 przy tej samej geometrii); Mełgiewska 2370,285 i Turystyczna 2606,332 wypadły z bazy tylko przez przesunięcie. Przy poprawce próbkować co 0,1 m i liczyć skupiska; co 0,1 m jest 29 skupisk, ok. 21 poza Aleją Tysiąclecia
 - Poboczne: `groundY` daje 0 poza mapą, a `GroundField` grunt najbliższego chunka; pasy już tam nie wychodzą, inni użytkownicy obu funkcji mogą trafić na rozbieżność
 
-### G-145 Megabloki na zabytkach, w parku, nad Bystrzycą i na osiach widokowych
-- Status: w PR #123 (1.11; weryfikator: technicznie bez zastrzeżeń, T-056 i konflikt CHANGELOG poprawione w 7d3b9db)
-- Ważność: S3 · Zasięg: wiele miejsc poza danymi miasta
-- Gdzie: Stary cmentarz żydowski w40049437 (`near[19–21]`, `ring[15]`), Nowy cmentarz żydowski w792467989 (`ring[61]`), Ogród Saski w174005440 (`ring[77]`, `ring[78]`, `ring[34]`, `near[44–45]`), oś Bystrzycy r7577565 (`docks[9–11]`, `docks[15]`, `ring[10]`, `ring[42]` i bryły bliżej niż 50 m od osi); okno Placu Litewskiego na Wieżę Trynitarską i katedrę (azymut 101–109°: `near[13–14]`, `ring[10–11]`, `ring[51]`); panorama z Nabrzeża na Stare Miasto i Zamek (`near[17–18]`, `ring[14]`, `ring[54–55]`); 8 par wież nachodzących na siebie; dawna wieża „Zalew Zemborzycki” (−1200, −3700) 31 m od Bystrzycy w Wrotkowie
-- Poprawka: obszary zakazane i okna widokowe w generatorze układu, testy `megablock-protected`, `megablock-overlap`, `megablock-viewaxis` z bazą 0
-- Pakiet właściciela: packages/engine (renderer, mapcity)
-
 ### G-146 `onPassageAxes` i skan przejazdów: słabe przy trasie równoległej do osi
 - Status: zgłoszone (1.11, weryfikator G-136); dziś żadna trasa tego nie wyzwala
 - Ważność: S4

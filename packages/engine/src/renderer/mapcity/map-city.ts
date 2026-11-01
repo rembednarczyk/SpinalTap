@@ -24,7 +24,7 @@ import type { CityProps } from "../city-props";
 import { planSteps } from "./steps-plan";
 import { surfaceLiftAt } from "./surface-lift";
 import { StreetProps, type StreetPropsStats } from "./street-props";
-import { MapSkyline } from "./skyline";
+import { MapSkyline, skylineLayoutFor } from "./skyline";
 import { megaBodies } from "./skyline-bodies";
 import { type LandmarkPart, landmarkAt, withLandmark } from "./landmarks";
 
@@ -156,7 +156,7 @@ export class MapCity {
   constructor(private readonly deps: MapCityDeps) {
     this.signs = new MapSignMaterial(deps.scene, deps.signAtlas, deps.quality === "low" ? 512 : 1024);
     this.water = new MapWaterMaterial(deps.scene);
-    this.skyline = new MapSkyline(deps.scene, deps.quality !== "low");
+    this.skyline = new MapSkyline(deps.scene, deps.quality !== "low", skylineLayoutFor(deps.quality));
     this.lod = MAP_LOD[deps.quality];
     const terrain = deps.materials.get("mapTerrain");
     // Terrain gives way in depth to the surfaces laid on it, at any distance.

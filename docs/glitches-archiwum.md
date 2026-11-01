@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-145 Megabloki na zabytkach, w parku, nad Bystrzycą i na osiach widokowych
+- Status: naprawione (1.11, #123, a56b621; weryfikator i dwa przeglądy kuratora)
+- Ważność: S3 · Zasięg: wiele miejsc poza danymi miasta
+- Gdzie: Stary cmentarz żydowski w40049437 (`near[19–21]`, `ring[15]`), Nowy cmentarz żydowski w792467989 (`ring[61]`), Ogród Saski w174005440 (`ring[77]`, `ring[78]`, `ring[34]`, `near[44–45]`), oś Bystrzycy r7577565 (`docks[9–11]`, `docks[15]`, `ring[10]`, `ring[42]` i bryły bliżej niż 50 m od osi); okno Placu Litewskiego na Wieżę Trynitarską i katedrę (azymut 101–109°: `near[13–14]`, `ring[10–11]`, `ring[51]`); panorama z Nabrzeża na Stare Miasto i Zamek (`near[17–18]`, `ring[14]`, `ring[54–55]`); 8 par wież nachodzących na siebie; dawna wieża „Zalew Zemborzycki” (−1200, −3700) 31 m od Bystrzycy w Wrotkowie
+- Poprawka: obszary zakazane i okna widokowe w generatorze układu, testy `megablock-protected`, `megablock-overlap`, `megablock-viewaxis` z bazą 0
+- Pakiet właściciela: packages/engine (renderer, mapcity)
+
 ### G-001 Test migawki NPR przekracza 90 s na wolnym runnerze CI
 - Status: naprawione (#39). Tryb `?reference` rysuje dopiero przy gotowej scenie; migawka 18–42 s zamiast 72 s. Ryzyko szczątkowe: `still` nie czeka na `ProbeSchedule` (inwalidacja sondy < 1 s przed gotowością); zapas w pomiarach > 2,6 s.
 - Ważność: S1 (czerwone CI) · Zasięg: każdy PR · Koszt: średni
