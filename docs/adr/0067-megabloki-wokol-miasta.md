@@ -37,4 +37,4 @@ Użytkownik chciał, żeby megabloki 2077 nadbudowały i osaczyły dzisiejsze t�
   - telefon (`low`): `skylineLayoutFor("low")` to pusty układ; 9 wież Czechowa, al. Kraśnickiej i Tatarów co do wierzchołka jak przed zmianą (hash w teście), 3 wieże przeniesione znad Bystrzycy do Zemborzyc;
   - impostor: skala do szczytu wieży (wysokość w `uv2.y` wież i `normal.y` świateł), więc szczyt bliskiej wysokiej wieży nie wypada za płaszczyznę daleką;
   - e2e (`npr-perf`, SwiftShader): wywołania rysowania i aktywne siatki bez zmian we wszystkich scenach (reference 191 / 81, krakowskie-tpp 370 / 162, rynek-tpp 230 / 90, podzamcze-tpp 282 / 113, nabrzeze 236 / 102, phone-low 227 / 149), migawka NPR bez zmian; aktywne trójkąty ok. +130 tys. na scenach desktopowych;
-  - zostaje: wpis w `docs/topografia.md` (T-056).
+  - wpis w `docs/topografia.md`: T-056 opisuje rzędy, pierścień i warunki strażnika.

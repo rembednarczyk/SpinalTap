@@ -154,7 +154,7 @@ export class MapCity {
   private facadeProps: CityProps | null = null;
 
   constructor(private readonly deps: MapCityDeps) {
-    this.signs = new MapSignMaterial(deps.scene, deps.signAtlas);
+    this.signs = new MapSignMaterial(deps.scene, deps.signAtlas, deps.quality === "low" ? 512 : 1024);
     this.water = new MapWaterMaterial(deps.scene);
     this.skyline = new MapSkyline(deps.scene, deps.quality !== "low", skylineLayoutFor(deps.quality));
     this.lod = MAP_LOD[deps.quality];
@@ -520,7 +520,7 @@ export class MapCity {
     cell.spans = cell.frames.flatMap((f) => findSpans(f, this.acrossAt));
     const far = new MeshSink();
     const signs = new MeshSink();
-    planFarFrames(far, signs, cell.frames, (name) => this.signs.slotFor(name), this.drawnGround);
+    planFarFrames(far, signs, cell.frames, (name) => this.signs.slotFor(name), this.drawnGround, this.deps.quality === "low");
     planFarCanyon(far, cell.spans);
     planCanyonSigns(signs, cell.frames, cell.spans, this.deps.quality === "low");
     cell.far = far.empty ? null : this.mesh(`map-far-${cell.key}`, far, "facade");

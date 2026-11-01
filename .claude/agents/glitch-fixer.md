@@ -40,3 +40,7 @@ Naprawiasz dokładnie jeden glitch o ID podanym przez orkiestratora. Działasz j
 
 ## Raport (najwyżej ok. 30 linii; szczegóły, tabele i logi do pliku `<zadanie>-raport.md` w scratchpadzie)
 ID, przyczyna w jednym zdaniu, zmienione pliki, test (nazwa, pada przed, przechodzi po), wynik samoweryfikacji i DoD, hash commita, gałąź i ścieżka worktree, znaleziska poboczne (jedna linia każde).
+
+## Dziennik zmian i e2e (decyzja użytkownika 1.11)
+- Zmiana widoczna dla gracza dostaje jedną linię w nowym pliku `changelog.d/<data>-<opis>.md` (zasady w `changelog.d/README.md`). `CHANGELOG.md` nie edytujesz.
+- Lokalnie puszczasz szybkie bramki i najwyżej jeden spec e2e swojej zmiany (przy zmianie wyglądu migawkę oglądasz). Pełny zestaw e2e puszcza CI na szkicu PR.

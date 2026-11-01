@@ -59,6 +59,7 @@ export const mapBuilding = (id: EntityId, e: BuildingSource, heightAt: (x: numbe
     ...(carriesPart(e, around) ? { carriesParts: true } : {}),
     ...(v.signs === "bracket" ? { bracketSigns: true } : {}),
     ...(v.vertical ? { rise: Math.max(0, v.vertical.rise), clutter: Math.min(1, Math.max(0, v.vertical.clutter)) } : {}),
+    ...(v.venues?.length ? { venues: v.venues.map((u) => ({ x: u.at.x + e.at.x, z: u.at.z + e.at.z, name: u.name, color: u.color })) } : {}),
     ...(v.vertical?.landmarks?.length ? { landmarks: v.vertical.landmarks.map((l) => ({ ring: l.outline.map((p) => ({ x: p.x + e.at.x, z: p.z + e.at.z })), top: l.top + e.at.y })) } : {}),
   };
 };

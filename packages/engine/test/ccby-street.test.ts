@@ -135,7 +135,7 @@ describe("robot dogs (ADR-0063)", () => {
     }
     // Brama Krakowska and Brama Grodzka (ADR-0063): one each.
     expect(spots.filter((s) => Math.hypot(s.at.x - 487, s.at.z + 87.2) < 8 || Math.hypot(s.at.x - 457, s.at.z + 95.6) < 8)).toHaveLength(1);
-    expect(spots.filter((s) => Math.hypot(s.at.x - 702, s.at.z - 128.4) < 8 || Math.hypot(s.at.x - 728, s.at.z - 152.6) < 8)).toHaveLength(1);
+    expect(spots.filter((s) => Math.hypot(s.at.x - 700.8, s.at.z - 129.7) < 8 || Math.hypot(s.at.x - 727.3, s.at.z - 153.7) < 8)).toHaveLength(1);
   });
 
   it("keep clear of other furniture", () => {
