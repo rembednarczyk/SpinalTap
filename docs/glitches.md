@@ -450,6 +450,19 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/app, packages/engine/src/input
 - Test przyjęcia: prawdziwy Chrome (e2e) z tym przebiegiem; po odmowie kolejne kliknięcie nadal blokuje
 
+### G-136 Przejazd Bramy Grodzkiej poza osią frontów
+- Status: zgłoszone (1.11, kurator przy ADR-0062 etap 2; T-082)
+- Ważność: S3 · Zasięg: lokalny (Brama Grodzka) · Koszt: niski
+- Gdzie: `GATE_PASSAGES` w `packages/sim/src/content/lublin/sites.ts` biegnie za węzłem drogi OSM w293488528, ok. 1,4 m na południe od osi bramy; łuk przesunięty o 1,64 m (od Grodzkiej) i 1,36 m (od Zamku) od środka widocznego frontu, przez co przepis ma 2 osie okien zamiast 3
+- Poprawka: przejazd przesunięty prostopadle o ok. 1,4 m na północ, (701,0, 129,4)→(727,0, 153,6); potem przepis z 3 osiami co 2,1 m; prześwit łuku (T-086) przy okazji
+- Pakiet właściciela: packages/sim (złoty hash zmieniony świadomie), packages/engine (przepis)
+- Test przyjęcia: proponowana kontrola skanu `gate-mouth-off-axis` (środek wylotu dalej niż 0,5 m od środka czystej części frontu), baza 2 → 0; Krakowska do zmierzenia przed ustaleniem bazy
+
+### G-137 Brama Grodzka bez attyki z wazami od strony Grodzkiej
+- Status: odłożone (1.11, decyzja orkiestratora: sylwetka poza dachem z OSM wymaga wyjątku od ADR-0062; T-083)
+- Ważność: S4 · Koszt: średni (nowy element zestawu poza bryłą)
+- Pakiet właściciela: packages/engine (renderer, przepisy zabytków)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
