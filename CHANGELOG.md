@@ -5,6 +5,8 @@ Zmiany widoczne dla gracza, od najnowszych. Wersja gry i commit są na ekranie t
 ## Nieopublikowane (0.1.0)
 
 ### 1 listopada 2026
+- Domyślnie grafika High na każdym urządzeniu i liczby obrażeń przy każdym trafieniu (także dla starszych ustawień, jednorazowo); przycisk Ustawienia na ekranie tytułowym.
+- Megabloki osaczają Lublin: rząd 41 megawież 309–520 m z kładkami i reklamami tuż za miastem, odcinek wokół Nabrzeża i pierścień prostszych megabloków za nimi, z dala od cmentarzy żydowskich, Ogrodu Saskiego i Bystrzycy, z otwartym widokiem z Placu Litewskiego na Wieżę Trynitarską i katedrę; na telefonie panorama jak dotąd, tylko wieże znad Zalewu stoją w Zemborzycach, z dala od rzeki (ADR-0067 etap 1).
 - Prawdziwe lokale z OSM (332: sklepy, kawiarnie, bary, banki, apteki, kluby) mają szyld z neonową nazwą Lublina 2077 na swojej elewacji, w kolorze zbliżonym do prawdziwego (ADR-0064 etap 4).
 - Przejazd Bramy Grodzkiej w osi obu frontów, nad łukiem trzy osie okien co 2 m i podświetlenie po obu stronach łuku (G-136).
 - Blokada kursora nie wyłącza się na stałe, gdy panel zamknięty Esc przed pierwszym kliknięciem po ładowaniu poprosi o nią bez gestu (G-135).
