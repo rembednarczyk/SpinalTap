@@ -5,6 +5,7 @@ Zmiany widoczne dla gracza, od najnowszych. Wersja gry i commit są na ekranie t
 ## Nieopublikowane (0.1.0)
 
 ### 1 listopada 2026
+- Automaty z napojami, biletomaty, kamery na masztach i lampiony nad straganami z modeli CC-BY, na ekranie „Autorzy” (ADR-0063, druga paczka).
 - Gmachy publiczne z fasadą urzędu zamiast kamienicy (Urząd Miasta na Placu Litewskim, Kuratorium, Teatr Osterwy, Grodzka 5a); Ratusz bez zawyżonej połowy piętra (G-120, G-097, G-116).
 - Małe wolnostojące pawilony bez wysokości w danych mają jedną kondygnację: Bar Centralny przy Pedecie (G-127, #103).
 - Ekran ładowania z postępem przy nowej grze i wczytaniu (ADR-0057, #102).
