@@ -1,4 +1,4 @@
-import type { BuildingUse, GroundSurface, RoadMarkingKind, RoofShape, StreetPropKind, TerrainGrid } from "@seki/core";
+import type { BuildingUse, GroundSurface, RoadMarkingKind, RoofShape, StreetPropKind, TerrainGrid, VenueKind } from "@seki/core";
 
 /**
  * Lublin's centre from map data (ADR-0042), as `tools/osm-import` writes it into
@@ -44,6 +44,19 @@ export interface LublinBuildingData {
   readonly shopfront?: true;
   /** Where the height came from: the `height` tag, `building:levels`, or the district's defaults. */
   readonly source: "height" | "levels" | "default";
+  /** Venues in or at it (ADR-0064 stage 4): a point relative to (x, z), the kind, the 2077 name and the neon. */
+  readonly venues?: readonly LublinVenueData[];
+}
+
+/** A shop, café, bar, bank, pharmacy or club of the map on a building (ADR-0064 stage 4). */
+export interface LublinVenueData {
+  readonly x: number;
+  readonly z: number;
+  readonly kind: VenueKind;
+  /** Lublin 2077's name from the importer's `venue-names` table, never the real one (ADR-0058). */
+  readonly name: string;
+  /** `#rrggbb` from the kit's neon palette (ADR-0022). */
+  readonly color: string;
 }
 
 export interface LublinGroundData {
