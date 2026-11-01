@@ -226,11 +226,12 @@ describe("NPC magazines", () => {
     expect(guard.combatant!.loaded).toBe(30);
   });
 
-  it("NPC magazines are not saved: a loaded game gives them a full one", () => {
+  it("NPC magazines are saved (G-185): a loaded game gives them the rounds they had, a full one saves nothing", () => {
     const sim = Simulation.create({ seed: 5 });
+    expect(sim.snapshot(null, "x", "").entities.find((e) => e.key === "guard")).not.toHaveProperty("gun");
     byKey(sim, "guard")!.combatant!.loaded = 3;
     const restored = Simulation.fromSnapshot(sim.snapshot(null, "x", ""));
-    expect(byKey(restored, "guard")!.combatant!.loaded).toBe(30);
+    expect(byKey(restored, "guard")!.combatant!.loaded).toBe(3);
   });
 });
 

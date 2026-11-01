@@ -1,4 +1,4 @@
-import { ENEMY_TYPES, type EnemyTypeId, type EntityId, type EntitySnapshot, type Vec3, type WeaponId, npcWeapon } from "@seki/core";
+import { ENEMY_TYPES, type EnemyTypeId, type EntityId, type EntitySnapshot, type GunSnapshot, type Vec3, type WeaponId, npcWeapon } from "@seki/core";
 import { PLAYER_SPAWN } from "../content/district-m0";
 import { SNIPER_PERCHES } from "../content/district-doki";
 import type { ActorDef, ActorSpawn, StaticProp } from "../content/builders";
@@ -326,6 +326,20 @@ export const toughen = (e: Entity, npcHealth: number): Entity => {
 const restoredHealth = (health: NonNullable<Entity["health"]>, hp: number, savedMax: number): number =>
   savedMax === health.max || hp <= 0 ? hp : Math.min(health.max, Math.max(1, Math.round((health.max * hp) / savedMax)));
 
+/** An NPC's gun not at rest with a full magazine (G-185), else null; the player's is in the domain. */
+const gunOf = (e: Entity): GunSnapshot | null => {
+  const c = e.combatant;
+  if (!c || e.player || (c.loaded === c.stats?.magazine && c.reloading === 0 && c.drawing === 0 && c.bloom === 0)) return null;
+  return { loaded: c.loaded, reloading: c.reloading, drawing: c.drawing, bloom: c.bloom };
+};
+
+/** The fight state of the saved entity `s` of `e` (G-185): its gun and, for a sniper, its aim. */
+const withFight = (e: Entity, s: EntitySnapshot): EntitySnapshot => {
+  const gun = gunOf(e);
+  const armed = gun ? { ...s, gun } : s;
+  return e.sniper ? { ...armed, sniper: { phase: e.sniper.phase, timer: e.sniper.timer, perch: e.sniper.perch } } : armed;
+};
+
 /** The saveable state of a keyed entity. */
 export const entitySnapshotOf = (e: Entity & { key: string }): EntitySnapshot => {
   // A toughened enemy (ADR-0066) keeps the maximum it had, for the share of it on load.
@@ -345,7 +359,9 @@ export const entitySnapshotOf = (e: Entity & { key: string }): EntitySnapshot =>
   // Pinned in the world while its chunk sleeps (G-188): marked, with its time away.
   const pinned = e.ai?.away !== undefined ? { ...sure, away: e.ai.away } : sure;
   // A body (ADR-0065): knocked out or dead, where the player left it.
-  const body = e.downed ? { ...pinned, downed: bodySnapshotOf(e.downed) } : pinned;
+  const lying = e.downed ? { ...pinned, downed: bodySnapshotOf(e.downed) } : pinned;
+  // Mid-fight (G-185): an NPC's gun and a sniper's aim go on as they were.
+  const body = withFight(e, lying);
   // Looking for the player (ADR-0029): where, for how long, and how long out of sight.
   const ai = e.ai;
   if (!ai?.lastKnown) return body;
@@ -365,6 +381,14 @@ export const applyEntitySnapshot = (e: Entity, s: EntitySnapshot): void => {
     e.health = { ...e.health, current: restoredHealth(e.health, s.hp, savedMax) };
   }
   if (e.combatant) e.combatant.cooldown = s.cooldown;
+  if (e.combatant && s.gun) {
+    e.combatant.loaded = s.gun.loaded;
+    e.combatant.reloading = s.gun.reloading;
+    e.combatant.drawing = s.gun.drawing;
+    e.combatant.bloom = s.gun.bloom;
+  }
+  // A perch the content no longer has: the sniper starts on the one it was built at.
+  if (e.sniper && s.sniper && s.sniper.perch < e.sniper.perches.length) e.sniper = { ...e.sniper, ...s.sniper };
   if (e.ai) {
     e.ai.alerted = s.alerted;
     e.ai.lastKnown = s.lastKnown ? { ...s.lastKnown } : null;
