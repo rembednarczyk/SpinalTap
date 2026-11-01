@@ -631,7 +631,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: pas `steps` każdego biegu ma ≥ 9,5 m, a podesty łączą się z biegami bez trawy pomiędzy; kontrola `steps-narrower-than-walls` (baza 1) → 0
 
 ### G-204 Wysokości Kaplicy Trójcy (domyślna) i Donżonu niezgodne z NMPT
-- Status: zgłoszone (1.11, audyt zespołu zamkowego, T-114)
+- Status: w PR #188 (1.11, w weryfikacji, potem kurator): korekty `height`/`roof:height` w `TAG_CORRECTIONS`, kontrola `landmark-default-height` baza 2
 - Ważność: S3 (proponowana) · Zasięg: lokalny (sylwetka Zamku) · Koszt: mały
 - Gdzie: Kaplica w66258167 (941; 214,6), Donżon w450180469 (893,1; 214,6)
 - Dowód: NMPT GUGiK 0,5 m. Kaplica: okap ok. y 7 wobec 9,7 w grze, kalenica y 15,3 wobec 14,1; prezbiterium niższe (kalenica ok. y 11). Donżon: korona ok. y 16,4–16,9 wobec 18,6
