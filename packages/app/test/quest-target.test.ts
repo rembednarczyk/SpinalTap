@@ -19,12 +19,12 @@ beforeAll(async () => {
   const { session, ui, render } = setup(store);
   playActOne(session, ui, render, [0, 0, 0]);
   expect(session.sim.domain.quests[QUEST_MIRROR.id]).toEqual({ status: "active", stepIndex: 0 });
-  expect(await session.saveAsync("act2")).toBe(true);
+  expect(await session.saves.saveAsync("act2")).toBe(true);
 }, 120_000);
 
 const loaded = async () => {
   const { session, ui } = setup(store);
-  expect(await session.loadAsync("act2")).toBe(true);
+  expect(await session.saves.loadAsync("act2")).toBe(true);
   return { session, ui };
 };
 

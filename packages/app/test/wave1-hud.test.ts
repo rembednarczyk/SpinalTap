@@ -382,7 +382,7 @@ describe("game session: wave 1 events on the HUD", () => {
   it("plays a breach and sends its result as a command", () => {
     const { session, ui } = start();
     const enqueue = vi.spyOn(session.sim, "enqueue");
-    session.openBreach("crane", ["icepick", "datamine"]);
+    session.debug.openBreach("crane", ["icepick", "datamine"]);
     expect(ui.getState().breach).toEqual({ terminalKey: "crane", daemons: ["icepick", "datamine"] });
     expect(session.inControl).toBe(false);
     session.intents.submitBreach(["icepick"]);

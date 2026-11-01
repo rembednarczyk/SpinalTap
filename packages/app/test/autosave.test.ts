@@ -70,10 +70,10 @@ const start = () => {
 /** Starts from a save with a cleared contract waiting to be paid. */
 const withClearedContract = async () => {
   const game = start();
-  const snap = game.session.snapshot();
+  const snap = game.session.saves.snapshot();
   const contract = { id: "c7", siteId: "car_wash", targets: 2, reward: 500, status: "cleared" } as Contract;
   await new SavePersistence(game.store).save("t", { ...snap, domain: { ...snap.domain, contracts: { active: contract, completed: 0 } } });
-  expect(await game.session.loadAsync("t")).toBe(true);
+  expect(await game.session.saves.loadAsync("t")).toBe(true);
   return game;
 };
 
@@ -134,7 +134,7 @@ describe("autosave (P0 of the gap audit)", () => {
     await flush();
     expect(session.sim.district).toBe("targ");
     expect(autos(store)).toBe(1);
-    expect(await session.loadAsync(AUTOSAVE_SLOT)).toBe(true);
+    expect(await session.saves.loadAsync(AUTOSAVE_SLOT)).toBe(true);
     session.newGame();
     steps(session, 2);
     await flush();
@@ -193,7 +193,7 @@ describe("autosave (P0 of the gap audit)", () => {
     session.pageHidden();
     await flush();
     expect(autos(store)).toBe(1);
-    expect(await session.loadAsync(AUTOSAVE_SLOT)).toBe(true);
+    expect(await session.saves.loadAsync(AUTOSAVE_SLOT)).toBe(true);
     expect(session.screen).toBe("playing");
   });
 
@@ -209,12 +209,12 @@ describe("autosave (P0 of the gap audit)", () => {
     const { session, store } = start();
     session.pageHidden();
     await flush();
-    const saved = session.snapshot();
+    const saved = session.saves.snapshot();
     steps(session, 120);
-    expect(session.snapshot().tick).not.toBe(saved.tick);
-    expect(await session.loadAsync(AUTOSAVE_SLOT)).toBe(true);
-    expect(session.snapshot().domain).toEqual(saved.domain);
-    expect(session.snapshot().tick).toBe(saved.tick);
+    expect(session.saves.snapshot().tick).not.toBe(saved.tick);
+    expect(await session.saves.loadAsync(AUTOSAVE_SLOT)).toBe(true);
+    expect(session.saves.snapshot().domain).toEqual(saved.domain);
+    expect(session.saves.snapshot().tick).toBe(saved.tick);
     expect(autos(store)).toBe(1);
   });
 

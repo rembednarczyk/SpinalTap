@@ -83,10 +83,10 @@ describe("story language in a session (ADR-0056)", () => {
     pl.session.intents.choose(1);
     pl.session.intents.closeDialogue();
     steps(pl.session, 1);
-    expect(await pl.session.saveAsync("slot-1")).toBe(true);
+    expect(await pl.session.saves.saveAsync("slot-1")).toBe(true);
 
     const en = setup(store);
-    expect(await en.session.loadAsync("slot-1")).toBe(true);
+    expect(await en.session.saves.loadAsync("slot-1")).toBe(true);
     talkToKaito(en.session);
     expect(said(en.ui)).toEqual(["The courier's still breathing, Seki. The yard behind the car wash, past Plac Łokietka."]);
     // Asked already, in Polish: ink remembers it in English.

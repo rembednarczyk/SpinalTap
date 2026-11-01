@@ -92,10 +92,10 @@ const scenario = async (phone: boolean) => {
   expect(g.seki.state().tick).toBe(tick + 1);
 
   // Save, start over, load: the SMG is still in the primary slot and in the preview.
-  expect(await session.saveAsync("slot-3")).toBe(true);
+  expect(await session.saves.saveAsync("slot-3")).toBe(true);
   run(() => session.newGame());
   expect(session.sim.domain.equipment.primary).toBeNull();
-  expect(await session.loadAsync("slot-3")).toBe(true);
+  expect(await session.saves.loadAsync("slot-3")).toBe(true);
   expect(session.sim.domain.equipment.primary).toBe(smg);
   openMenu(phone);
   expect(screen.getByTestId("slot-primary").textContent).toContain("Hebi SMG");

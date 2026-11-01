@@ -9,9 +9,10 @@ import {
 } from "@seki/core";
 import { NarrativeRuntime } from "@seki/narrative";
 import { RenderSync, Simulation, WORLD_SCENERY } from "@seki/sim";
-import { type Screen, type SessionIntents, type UiIntents, patchUi } from "@seki/ui";
+import { type Screen, type UiIntents, patchUi } from "@seki/ui";
 import { type Controllers, createControllers } from "./controllers/compose";
 import { LoadingController } from "./controllers/loading-controller";
+import type { SaveController } from "./controllers/save-controller";
 import { buildCityMap } from "./city-map";
 import { narrativeText } from "./content-text";
 import { composeIntents, controllerIntents } from "./intents";
@@ -23,18 +24,35 @@ import { SessionScreen } from "./session-screen";
 export { RECALL_CALM_TICKS } from "./controllers/hud-sync";
 export type { GameSessionDeps, HintsHost, SettingsHost } from "./session-deps";
 
+/** The saves of a session (`SaveController`): slots, files and the snapshot of the running game. */
+export type SessionSaves = Pick<
+  SaveController,
+  "save" | "load" | "exportSave" | "exportAsync" | "importSave" | "importAsync" | "snapshot" | "saveAsync" | "loadAsync" | "refreshSlots"
+>;
+
+/** What only the debug API opens by hand (`debug-api.ts`); the simulation opens them by interaction. */
+export interface SessionDebug {
+  /** Shows the breach minigame for a terminal. */
+  openBreach(terminalKey: string, daemons?: readonly BreachDaemonId[]): void;
+  /** Shows the line map of a kiosk. */
+  openMetro(from: MetroStationId): void;
+}
+
 /**
  * Application service: the facade of a running game for `main.tsx`, the debug API and the UI
  * (ADR-0031). Its parts: `SessionFlow` (the simulation, new game, pause, load), `SessionLoop`
- * (step and frame), `SessionScreen` (the screen and the panels); the saves go to
- * `SaveController`, the other intents come from the controllers, composed in `intents.ts`. Contains no browser
+ * (step and frame), `SessionScreen` (the screen and the panels), the saves (`SaveController`);
+ * the other intents come from the controllers, composed in `intents.ts`. Contains no browser
  * or Babylon code, so the whole M0 loop runs headless.
  */
-export class GameSession implements SessionIntents {
+export class GameSession {
   readonly bus = new EventBus<DomainEvents>();
   /** Everything the UI can ask: the session's own intents and each controller's part. */
   readonly intents: UiIntents;
   readonly narrative: NarrativeRuntime;
+  /** Saving and loading slots, save files, the snapshot. */
+  readonly saves: SessionSaves;
+  readonly debug: SessionDebug;
   private readonly flow: SessionFlow;
   private readonly loop: SessionLoop;
   private readonly view: SessionScreen;
@@ -69,8 +87,11 @@ export class GameSession implements SessionIntents {
       interrupt: () => view.interruptDialogue(),
       restore: (snapshot) => this.flow.restore(snapshot),
     });
-    this.intents = composeIntents(this, controllerIntents(this.c, () => this.flow.sim));
-    void this.refreshSlots();
+    const c = this.c;
+    this.saves = c.saves;
+    this.debug = { openBreach: (key, daemons) => c.hack.openBreach(key, daemons), openMetro: (from) => c.metro.open(from, false) };
+    this.intents = composeIntents(this.flow, c.saves, controllerIntents(c, () => this.flow.sim));
+    void c.saves.refreshSlots();
   }
 
   get sim(): Simulation {
@@ -130,26 +151,8 @@ export class GameSession implements SessionIntents {
     this.flow.restore(snapshot, prepare);
   }
 
-  save(slot: string): void { this.c.saves.save(slot); }
-  load(slot: string): void { this.c.saves.load(slot); }
-  exportSave(slot: string): void { this.c.saves.exportSave(slot); }
-  exportAsync(slot: string): Promise<boolean> { return this.c.saves.exportAsync(slot); }
-  importSave(text: string): void { this.c.saves.importSave(text); }
-  importAsync(text: string): Promise<boolean> { return this.c.saves.importAsync(text); }
-  snapshot(): SaveSnapshot { return this.c.saves.snapshot(); }
-  saveAsync(slot: string): Promise<boolean> { return this.c.saves.saveAsync(slot); }
-  loadAsync(slot: string): Promise<boolean> { return this.c.saves.loadAsync(slot); }
-  refreshSlots(): Promise<void> { return this.c.saves.refreshSlots(); }
-
   /** The browser hid the page or is leaving it (main.tsx, `page-lifecycle.ts`): autosave now if it is safe. */
   pageHidden(): void {
     this.c.autosave.hidden();
   }
-
-  // ---- debug API (main.tsx and debug-api.ts) ----
-
-  /** Shows the breach minigame for a terminal (debug API for now; the terminals of the simulation will open it). */
-  openBreach(terminalKey: string, daemons?: readonly BreachDaemonId[]): void { this.c.hack.openBreach(terminalKey, daemons); }
-  /** Shows the line map of a kiosk (debug API; the kiosks of the simulation open it by interaction). */
-  openMetro(from: MetroStationId): void { this.c.metro.open(from, false); }
 }
