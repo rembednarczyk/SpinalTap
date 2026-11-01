@@ -90,5 +90,6 @@ Postęp (1.11, każdy podział osobnym PR-em, zachowanie potwierdzone sondą por
 | `MapCity` | 33 | 19 | #140 | `MapEntries` (wpisy i zapytania), `MapCells`, `CellBuilder`, `streamCells`, `MapLook`, `map-city-stats` |
 | `WorldStreamer` | 21 | 13 | #141 | `StreamCatalog`, `contract-templates`, `ActorSpawner`, `chunk-unload`, `presence-sync`, `dormant-restore` |
 | `BabylonRenderer` | 42 | 17 | #146 | `MapCitySlot`, `WetAsphalt`, `RendererLoading`, `RendererStats`, typ `ScreenEffects` |
+| `GameSession` | 33 | 14 | #157 | `SessionFlow`, `SessionLoop`, `SessionScreen`, `composeIntents`; zapis pod `session.saves`, debug pod `session.debug` |
 
-Zostają w bazie: `GameSession` 33 (podział w toku), `CharacterViews` 24, `ToonMaterials` 23, `StreetProps` 22, `GangerAgent` 22, `SynthAudio` 21.
+Zostają w bazie: `CharacterViews` 24 (podział w toku), `ToonMaterials` 23, `StreetProps` 22, `GangerAgent` 22, `SynthAudio` 21.
