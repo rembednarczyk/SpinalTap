@@ -94,6 +94,7 @@ export const completeContract = (ctx: SimContext): void => {
     wallet: paid.ok ? paid.wallet : domain.wallet,
     contracts: { active: null, completed: domain.contracts.completed + 1 },
   };
+  ctx.streamer.clearSite();
   if (paid.ok) ctx.bus.emit("EddiesChanged", { balance: paid.wallet.eddies, delta: total });
   applyReputationCause(ctx, { type: "contract-completed", kind });
   ctx.bus.emit("ContractCompleted", { contract, reward: contract.reward });

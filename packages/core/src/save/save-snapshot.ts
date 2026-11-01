@@ -146,6 +146,8 @@ export interface SaveSnapshot {
    * The contract that ended (failed, or paid) while no other was taken since (G-178): its targets
    * are rebuilt from it on loading, so the guards of an alarm fight on. Absent while a contract
    * is in the log, running or cleared (its targets come from there), and before the first is taken.
+   * A paid one (no failed flag) has its site cleared (G-195): only its people saved return, and
+   * those of them asleep in an older save are left out.
    */
   readonly endedContract?: ContractOnSite;
   /**
