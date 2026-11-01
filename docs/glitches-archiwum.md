@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-164 Menu postaci zmienia broń przy niesieniu ciała
+- Status: naprawione (1.11, #134, 7b27ff1: przy niesieniu ciała `equip-item`/`unequip-item` nie ruszają slotów broni; test w `takedown-carry-limits.test.ts`)
+- Ważność: S4 · Zasięg: komendy `equip-item` i `unequip-item` z menu postaci przy `carrying`
+- Objaw: z ciałem na ramieniu menu dobywa albo chowa broń (sonda S7), choć ADR-0065 mówi „bez zmiany broni”; broń nie strzela, więc skutek mały
+- Poprawka: odrzucić `equip-item`/`unequip-item` broni przy niesieniu (albo zablokować przycisk w menu), test sesji
+- Pakiet właściciela: packages/sim, packages/ui
+
 ### G-165 `BodyFound` emitowane przy każdym nowym oglądającym zwłoki
 - Status: zamknięte jako zamierzone (1.11, orkiestrator): `BodyFound { body, finder }` to „ten NPC znalazł ciało”; każdy NPC ogląda ciało raz (`lookedBy`), więc para ciało–znalazca się nie powtarza, a kolejne znalezienia są potrzebne (patrol zgłasza zwłoki po przechodniu; 8 testów stage 2–3 na tym stoi). UI, które zechce jednego zdarzenia na ciało, filtruje po `body`
 - Ważność: S4 · Zasięg: każde zwłoki oglądane przez kilku NPC (np. przechodzień, potem patrol)

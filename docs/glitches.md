@@ -552,13 +552,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: próbka czerwieni w palecie i przepieczenie plików modeli ulicznych (osobny PR, budżet rozmiaru GLB)
 - Pakiet właściciela: packages/engine (paleta), tools (wypiek)
 
-### G-164 Menu postaci zmienia broń przy niesieniu ciała
-- Status: zgłoszone (1.11, weryfikator ADR-0065 etap 3)
-- Ważność: S4 · Zasięg: komendy `equip-item` i `unequip-item` z menu postaci przy `carrying`
-- Objaw: z ciałem na ramieniu menu dobywa albo chowa broń (sonda S7), choć ADR-0065 mówi „bez zmiany broni”; broń nie strzela, więc skutek mały
-- Poprawka: odrzucić `equip-item`/`unequip-item` broni przy niesieniu (albo zablokować przycisk w menu), test sesji
-- Pakiet właściciela: packages/sim, packages/ui
-
 ### G-166 Sztukmistrz na linie nad Grodzką
 - Status: zgłoszone (1.11, kurator przy G-149)
 - Ważność: S3 · Zasięg: Grodzka (617.1, 25.8), n7168903380; plan ulic P1 („model do zrobienia + lina”)
