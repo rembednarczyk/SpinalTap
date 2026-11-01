@@ -1,6 +1,6 @@
 import type { BuildingUse, RoofShape } from "@seki/core";
 import { type FacadeStyle, ROOF_STYLE, SHOPFRONT_BIT, WINDOW_STYLE, facadeStyle } from "./facade-style";
-import { type Obb, type P2, orientedBox, signedArea } from "./polygon";
+import { type Box2, type Obb, type P2, orientedBox, signedArea } from "./polygon";
 import type { Rgba } from "../mesh-sink";
 import type { Uv } from "./sink-ops";
 
@@ -104,10 +104,15 @@ export interface FacadeFrame {
   readonly ground: number;
   /** The lookup of the buildings round it the walls were classified with: the signs keep out of them (`sign-room`). */
   readonly neighbour: NeighbourAt;
+  /** The bounds of the buildings round it, so the signs sample `neighbour` only where one may stand. */
+  readonly near: NeighboursNear;
 }
 
 /** Top (world y) of another building whose outline contains (x, z), or null. */
 export type NeighbourAt = (x: number, z: number, self: number) => number | null;
+
+/** The bounds of the other buildings that meet the box, or null where they are not known. */
+export type NeighboursNear = (box: Box2, self: number) => readonly Box2[] | null;
 
 /** The seed in the middle of one of 256 bins: the shader reads it back exactly. */
 export const seedBin = (seed: number): number => (Math.min(Math.floor(Math.max(seed, 0) * 256), 255) + 0.5) / 256;
@@ -133,7 +138,7 @@ const classify = (b: MapBuilding, a: P2, c: P2, neighbour: NeighbourAt): { blind
   return { blind: true, coveredTo: covered };
 };
 
-export const facadeFrame = (b: MapBuilding, neighbour: NeighbourAt): FacadeFrame => {
+export const facadeFrame = (b: MapBuilding, neighbour: NeighbourAt, near: NeighboursNear = () => null): FacadeFrame => {
   const box = orientedBox(b.ring);
   const area = Math.abs(signedArea(b.ring));
   const style = facadeStyle({ use: b.use, levels: b.levels, height: b.height, ...(b.roof !== undefined ? { roof: b.roof } : {}), look: b.look, area, width: box.halfShort * 2, ...(b.shopfront !== undefined ? { shopfront: b.shopfront } : {}), ...(b.lifted ? { lifted: true } : {}), ...(b.roofShape ? { shape: b.roofShape } : {}) });
@@ -163,7 +168,7 @@ export const facadeFrame = (b: MapBuilding, neighbour: NeighbourAt): FacadeFrame
       bay: blind || length < 1.4 || style.window === WINDOW_STYLE.none ? 0 : length / n,
     });
   }
-  return { b, style, box, walls, eave, top, storey, ground: storey * 1.25, neighbour };
+  return { b, style, box, walls, eave, top, storey, ground: storey * 1.25, neighbour, near };
 };
 
 /** uv2 of the walls of this frame (the window style with the shop bit). */

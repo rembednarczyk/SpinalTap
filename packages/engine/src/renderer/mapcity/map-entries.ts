@@ -117,6 +117,16 @@ export class MapEntries {
     return top;
   };
 
+  /** The bounds of the other buildings that meet the box: `neighbourAt` finds none outside them. */
+  readonly neighboursNear = (box: Box2, self: number): Box2[] => {
+    const out: Box2[] = [];
+    for (const id of this.buildingIndex.within(box)) {
+      const b = this.buildings.get(id);
+      if (id !== self && b) out.push(b.bounds);
+    }
+    return out;
+  };
+
   /** The building across the street at (x, z), for the spans over it (ADR-0051). */
   readonly acrossAt: AcrossAt = (x, z, self) => {
     for (const id of this.buildingIndex.at(x, z)) {
