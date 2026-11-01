@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-183 Skan latarni ściennych nie widzi przejść spoza `building_passage`
+- Status: naprawione w #168 (1.11, PRZYJĘTE w rundzie 2): kontrola `wall-lantern-by-passage` (baza 0) i `Site.nearPassage` przycinają oś `GATE_PASSAGES` do sklepienia; tabela rozstawienia bez zmian (runda 1 była fałszywym alarmem). Poboczne: skan pomija przejścia bez obrysu `p.building`
+- Ważność: S4 (narzędzie) · Zasięg: `wall-lantern-in-building` bierze osie tylko z `tunnel=building_passage`; przejście Gruella pod Wieżą Trynitarską (w298307007, `tunnel=yes`, `layer=-1`) i ręczne bramy `GATE_PASSAGES` pilnuje tylko generator (`Site.nearPassage` zna przejazdy chunków, nie zna `GATE_PASSAGES`); dziś 0 trafień
+- Poprawka: kontrola „latarnia ścienna bliżej niż 2 m od osi przejścia z danych gry” (`PASSAGES` i `GATE_PASSAGES`, odcinek przycięty do końców), baza 0; `nearPassage` także dla `GATE_PASSAGES`. Uwaga: pas wokół `tunnel=yes|covered=yes` z OSM łapie Trasę Podziemną (w293370650), więc nie z OSM
+- Pakiet właściciela: tools/glitch-scan, tools/osm-import
+
 ### G-193 Zwłoki posiłku ochrony znikają po wczytaniu
 - Status: naprawione w #172 (1.11, PRZYJĘTE): `corpseOf` zachowuje `security`, zapis obejmuje ciała posiłków, `crime-system` liczy tylko żywych; schemat v23 bez zmian
 - Ważność: S3 · Zasięg: posiłek zabity po powaleniu albo w trakcie obalenia zostawia ciało bez klucza i bez `security` (`corpseOf`, `packages/sim/src/world/bodies.ts:64`); ciało nie trafia ani do `entities`, ani do `reinforcements`, więc po wczytaniu nie ma go do znalezienia ani zgłoszenia
