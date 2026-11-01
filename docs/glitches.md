@@ -572,7 +572,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, packages/sim (crowd), tools/glitch-scan
 
 ### G-178 Strażnicy nieudanej infiltracji znikają po wczytaniu
-- Status: w PR #150 (1.11; `endedContract` w zapisie v22, rejestracja kontraktu w każdym statusie); w weryfikacji. Do decyzji projektowej: szablony zakończonego zlecenia respawnują nietkniętych strażników przy ponownym wejściu, aż do następnego zlecenia (tak było przed poprawką)
+- Status: w PR #150, runda 2 (1.11): weryfikacja NIE PRZYJĘTE (wypłacone zlecenie odtwarza strażników z HP liczonym od podbitego `completed`; wariant: przyjęcie nowego zlecenia w walce gubi strażników starego); u autora
 - Ważność: S2 (zapis pozwala uciec z walki) · Zasięg: kontrakt infiltrate zakończony alarmem (`contracts.active` null), strażnicy `c3-*` (5 encji) dalej walczą; po wczytaniu ich nie ma
 - Dane: seed 77, `completed: 2`, gracz w `docks(6,0,110)`, 30 kroków, `accept-contract infiltrate`, teleport 6 m przed `c3-g1`, kroki do alarmu i 60 dalej, zapis; w 1. kroku oryginał: gracz ginie (hp 0), wczytana gra: hp 84
 - Przyczyna: konstruktor `Simulation` rejestruje kontrakt tylko przy `status==="active" || hasAmbush`
@@ -611,6 +611,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 do potwierdzenia (możliwy wyciek pamięci) · Zasięg: liczba szkieletów w scenie rośnie o 12 na cykl newGame/clear (67 → 79) na NullEngine z modelami VRM; sprawdzić, czy to zamierzona pula
 - Poprawka: dispose szkieletów postaci przy clear (`CharacterViews`) albo udokumentowana pula; test sesji: dwa cykle, ta sama liczba szkieletów
 - Pakiet właściciela: packages/engine (renderer)
+
+### G-185 Stan strażników kontraktu po wczytaniu (hack w toku, uśpieni)
+- Status: zgłoszone (1.11, weryfikator #150); było przed #150
+- Ważność: S3 · Zasięg: (a) hack w toku: seed 9, zlecenie `hack` przy Genzo, połączenie z `quay_terminal`, zapis 565 kroków po połączeniu: w 1. kroku `c1-g1.cooldown` 2,583 w oryginale i 0 po wczytaniu, gracz hp 6 vs 37, inny `rngState`; zapis po 660 krokach: `c1-g2` po wczytaniu stoi na posterunku (2576; −28,6; 421), w oryginale się rusza; (b) `lost` zaalarmowanego strażnika zapisanego poza chunkiem o 1/60 wyżej (`dormant-restore`; seed 77, 10 kroków po alarmie, teleport Genzo+2000, 120 kroków, zapis); (c) `suspicion` uśpionego strażnika: seed 8, aktywny `infiltrate`, wyjście z doków, zapis, powrót na `docks(0,0,120)` i 5 kroków: `c1-g0.suspicion` 0,0266 vs 0,0183
+- Poprawka: cooldown/stan walki strażników w zapisie albo odtwarzane; `dormant-restore` bez dodatkowego kroku; test zapis–wczytanie dla każdego wariantu
+- Pakiet właściciela: packages/sim, packages/persistence
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
