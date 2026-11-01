@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { VEHICLE_SIZE } from "@seki/core";
-import { bayDepth, bayLayout, bayReach, bayYaw, stripCut, stripDepth } from "../src/content/kerb-bays";
+import { BAY_STEP, bayDepth, bayLayout, bayLayouts, bayReach, bayYaw, stripCut, stripDepth } from "../src/content/kerb-bays";
 
 /** A strip along the x axis, 4 to 6.2 m off it towards -z: side 1 of a way heading +x. */
 const STRIP: (readonly [number, number])[] = [
@@ -39,15 +39,24 @@ describe("kerb car park bays (G-177)", () => {
     expect(bayDepth("perpendicular", "sedan", cut)).toBeNull();
   });
 
-  it("turn cars across a strip mapped so, or a deep one without the tag", () => {
+  it("turn cars across a strip mapped so, or aslant in a deep one without the tag (G-187)", () => {
     expect(bayLayout("perpendicular", 2)).toBe("perpendicular");
     expect(bayLayout("diagonal", 2)).toBe("diagonal");
     expect(bayLayout("parallel", 8)).toBe("parallel");
     expect(bayLayout(undefined, 4.4)).toBe("parallel");
-    expect(bayLayout(undefined, 5)).toBe("perpendicular");
+    expect(bayLayout(undefined, 5)).toBe("diagonal");
+    // Without the tag a deep strip falls back across, then along; the map's own layout is the only one.
+    expect(bayLayouts(undefined, 5)).toEqual(["diagonal", "perpendicular", "parallel"]);
+    expect(bayLayouts(undefined, 4.4)).toEqual(["parallel"]);
+    expect(bayLayouts("diagonal", 8)).toEqual(["diagonal"]);
+    expect(bayLayouts("perpendicular", 8)).toEqual(["perpendicular"]);
+    // A diagonal bay at 60° is a 2.6 m bay stretched along the kerb: wider than an across one, no wider than its cars need.
+    expect(BAY_STEP.diagonal).toBeCloseTo(2.6 / Math.sin(Math.PI / 3), 2);
+    expect(BAY_STEP.diagonal * Math.sin(Math.PI / 3)).toBeGreaterThan(VEHICLE_SIZE.delivery.width + 0.3);
     expect(bayReach("perpendicular", "sedan")).toBe(VEHICLE_SIZE.sedan.length);
     expect(bayReach("diagonal", "sedan")).toBeGreaterThan(VEHICLE_SIZE.sedan.width);
-    expect(bayReach("diagonal", "sedan")).toBeLessThan(VEHICLE_SIZE.sedan.length);
+    // At 60° a car's nose corner reaches deeper than one across: a strip too shallow for it holds cars across.
+    expect(bayReach("diagonal", "sedan")).toBeCloseTo(VEHICLE_SIZE.sedan.length * Math.sin(Math.PI / 3) + VEHICLE_SIZE.sedan.width / 2, 3);
   });
 
   it("face the traffic's way along the kerb, the kerb across it, and between the two on a diagonal", () => {
@@ -57,6 +66,9 @@ describe("kerb car park bays (G-177)", () => {
     // Side 1 lies towards −z: nose to the kerb faces −z (yaw π).
     expect(Math.abs(bayYaw("perpendicular", t, 1, false))).toBeCloseTo(Math.PI, 3);
     expect(bayYaw("perpendicular", t, -1, false)).toBeCloseTo(0, 3);
-    expect(bayYaw("diagonal", t, -1, false)).toBeCloseTo(Math.PI / 4, 3);
+    // 60° off the way, nose first to the kerb in the traffic's way (G-187): side −1 lies towards +z.
+    expect(bayYaw("diagonal", t, -1, false)).toBeCloseTo(Math.PI / 6, 3);
+    expect(bayYaw("diagonal", t, 1, false)).toBeCloseTo(Math.PI - Math.PI / 6, 3);
+    expect(bayYaw("diagonal", t, -1, true)).toBeCloseTo(-Math.PI / 6, 3);
   });
 });

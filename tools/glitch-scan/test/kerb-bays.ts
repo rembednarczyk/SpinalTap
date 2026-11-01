@@ -53,14 +53,28 @@ const stripWay = (ring: readonly P[]): { tx: number; tz: number } => {
   return { tx: (b.x - a.x) / len, tz: (b.z - a.z) / len };
 };
 
-/** A car in a kerb car park mapped with `orientation=perpendicular` or `diagonal`, parked within 20° of the strip's way (along the kerb). */
+/** A strip's mean depth across its way: its area over its longest edge (m). */
+const stripDepthOf = (ring: readonly P[]): number => {
+  const area = Math.abs(ring.reduce((s, a, i) => s + a.x * ring[(i + 1) % ring.length]!.z - ring[(i + 1) % ring.length]!.x * a.z, 0)) / 2;
+  return area / Math.max(...ring.map((a, i) => Math.hypot(ring[(i + 1) % ring.length]!.x - a.x, ring[(i + 1) % ring.length]!.z - a.z)));
+};
+
+/**
+ * A car in a kerb car park turned against the way the map and Lublin's streets draw its bays:
+ * within 20° of the strip's way (along the kerb) where it is mapped `orientation=perpendicular`
+ * or `diagonal`; more than 15° off 60° where it is mapped `diagonal`; within 15° of across in a
+ * strip 4.5 m deep or more mapped without the tag, whose bays in Lublin are aslant (G-187).
+ */
 export const bayCarsMisturned = (parks: readonly Area[], cars: readonly ParkedCar[]): Finding[] =>
   cars.flatMap((c) => {
-    const park = parks.find((p) => (p.tags.orientation === "perpendicular" || p.tags.orientation === "diagonal") && pointInRing(c, p.ring));
-    if (!park) return [];
+    const park = parks.find((p) => pointInRing(c, p.ring));
+    const orientation = park?.tags.orientation ?? (park && stripDepthOf(park.ring) >= 4.5 ? "untagged deep" : undefined);
+    if (!park || orientation === undefined || orientation === "parallel") return [];
     const way = stripWay(park.ring);
-    const along = Math.abs(way.tx * Math.sin(c.yaw) + way.tz * Math.cos(c.yaw));
-    return along >= Math.cos((20 * Math.PI) / 180) ? [{ at: near(c.x, c.z), what: `${c.model} in ${park.id} (${park.tags.orientation}) along the kerb` }] : [];
+    const angle = (Math.acos(Math.min(1, Math.abs(way.tx * Math.sin(c.yaw) + way.tz * Math.cos(c.yaw)))) * 180) / Math.PI;
+    const wrong =
+      orientation === "untagged deep" ? angle > 75 && "across the kerb, not aslant" : angle < 20 ? "along the kerb" : orientation === "diagonal" && Math.abs(angle - 60) > 15 && `${angle.toFixed(0)}° off the kerb, not 60°`;
+    return wrong ? [{ at: near(c.x, c.z), what: `${c.model} in ${park.id} (${orientation}) ${wrong}` }] : [];
   });
 
 /**
