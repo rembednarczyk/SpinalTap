@@ -82,9 +82,9 @@ if (modelsParam !== "off" && (modelsParam || !reference)) {
   const weaponModels = { pistol: new URL("pistol.glb", weapons).href, smg: new URL("smg.glb", weapons).href };
   // The loading screen waits for the manifest and loads its files (ADR-0057).
   const manifest = loadModelManifest(modelsParam ?? "./models/manifest.json");
-  renderer.loadCharacterModels(manifest);
+  renderer.loading.loadCharacterModels(manifest);
   void manifest.then((m) => preview.setModels(m, weaponModels));
-  renderer.setWeaponModels(weaponModels);
+  renderer.loading.setWeaponModels(weaponModels);
   preview.setModels({}, weaponModels);
 }
 const input = new BrowserInput(canvas);

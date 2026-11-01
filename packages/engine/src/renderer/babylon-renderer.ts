@@ -21,14 +21,13 @@ import { MapCitySlot } from "./map-city-slot";
 import { type MapCityStats, isMapView } from "./mapcity/map-city";
 import { MetroRide, type MetroRideView, type RideCast } from "./metro-ride";
 import { VehicleViews } from "./vehicle-views";
-import type { CharacterModelManifest } from "./model-library";
 import { PropViews } from "./prop-views";
 import { type GameplayFxEvent, ScreenFx } from "./screen-fx";
 import { Signage } from "./signage";
-import { type StartPrep, sceneStartPrep, warmUpMaterials } from "./start-prep";
+import { RendererLoading } from "./renderer-loading";
+import { warmUpMaterials } from "./start-prep";
 import { WetAsphalt } from "./wet-asphalt";
 import type { Stage } from "./stage";
-import type { WeaponManifest } from "./weapon-mount";
 
 export type { GameplayFxEvent } from "./screen-fx";
 export type { MetroRideView } from "./metro-ride";
@@ -112,9 +111,8 @@ export class BabylonRenderer implements RenderPort {
   private readonly map: MapCitySlot;
   private cameraTarget: EntityId | null = null;
   private resetting = false;
-  /** The loading screen's work (ADR-0057) and the model manifest it waits for. */
-  private readonly prep: StartPrep;
-  private modelManifest: Promise<unknown> = Promise.resolve();
+  /** The model manifests and the loading screen's work that waits for them (ADR-0057). */
+  readonly loading: RendererLoading;
 
   /** Builds the scene pieces in a fixed order: post-processes and meshes render in creation order. */
   constructor(
@@ -205,19 +203,23 @@ export class BabylonRenderer implements RenderPort {
     this.grading = this.fx.grading;
     this.metro = new MetroRide({ scene, materials: this.materials, shadow: this.shadow, camera: this.rig, cast: rideCast(this.characters, this.activities) });
     if (options.cityKit) this.cityKit.load(options.cityKit, options.cityProps ?? null);
-    const modelFiles = () => this.modelManifest.then(() => this.characters.preloadModels());
-    this.prep = sceneStartPrep({ stage, modelFiles, cityKit: () => this.cityKit.ready, cityWaiting: () => this.map.current?.waiting ?? 0 });
+    this.loading = new RendererLoading({
+      stage,
+      materials: this.materials,
+      shadow: this.shadow,
+      characters: this.characters,
+      cityKit: () => this.cityKit.ready,
+      cityWaiting: () => this.map.current?.waiting ?? 0,
+    });
   }
 
   /** The start of a game behind the loading screen (ADR-0057); the moon shadow goes on `at` first. */
   prepare(at: Vec3, onProgress: (done: number, stage: PrepareStage) => void): Promise<void> {
-    const moved = this.shadow.update(at);
-    if (moved) this.materials.setShadowMatrix(moved);
-    return this.prep.run(onProgress);
+    return this.loading.prepare(at, onProgress);
   }
 
   cancelPrepare(): void {
-    this.prep.cancel();
+    this.loading.cancel();
   }
 
   /** Renders of the wet-asphalt probe so far, null without one (debug and tests). */
@@ -361,7 +363,7 @@ export class BabylonRenderer implements RenderPort {
     this.fx.update(dt);
     // The probe never re-renders in the metro.
     if (!this.metro.active) this.wet?.update(dt, this.cityKit.meshCount, this.fx.paletteDistrict, this.rig.camera.position);
-    this.prep.tick();
+    this.loading.tick();
   }
 
   clear(): void {
@@ -375,14 +377,6 @@ export class BabylonRenderer implements RenderPort {
     this.crowd.clear();
     this.vehicles.clear();
     this.resetting = false;
-  }
-
-  /**
-   * Weapon models (glTF) that replace the placeholder box pistols in hands, holsters, the FPP
-   * viewmodel and the hands of imported characters. Characters on screen are re-armed.
-   */
-  setWeaponModels(manifest: WeaponManifest): void {
-    this.characters.setWeaponModels(manifest);
   }
 
   /** What the character does where it stands (ADR-0040); null returns it to walking and idling. */
@@ -399,16 +393,6 @@ export class BabylonRenderer implements RenderPort {
   /** What a character wears and carries (ADR-0015): weapons in hand, holster and on the back, garment add-ons. */
   setAppearance(id: EntityId, appearance: AppearanceDescriptor): void {
     this.characters.setAppearance(id, appearance);
-  }
-
-  /** Imported character models (models/manifest.json); characters on screen are dressed too. */
-  setCharacterModels(manifest: CharacterModelManifest): void {
-    this.characters.setCharacterModels(manifest);
-  }
-
-  /** The manifest once it arrives (ADR-0057): the loading screen waits for it, then for its files. */
-  loadCharacterModels(manifest: Promise<CharacterModelManifest>): void {
-    this.modelManifest = manifest.then((m) => Object.keys(m).length > 0 && this.setCharacterModels(m), () => {});
   }
 
   /** Residents in the world and how many of them were drawn last frame (debug and tests). */
