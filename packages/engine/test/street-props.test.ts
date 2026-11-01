@@ -19,7 +19,7 @@ const valid = (s: MeshSink): boolean =>
 
 describe("street furniture models (ADR-0047)", () => {
   it("has a valid model for every kind and shape, and the same variant always gives the same geometry", () => {
-    expect(PROP_KINDS).toHaveLength(42);
+    expect(PROP_KINDS).toHaveLength(43);
     for (const kind of PROP_KINDS) {
       for (let s = 0; s < (PROP_SHAPES[kind] ?? 1); s++) {
         const a = buildPropModel(kind, s);
