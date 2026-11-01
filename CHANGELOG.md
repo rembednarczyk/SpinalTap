@@ -5,7 +5,7 @@ Zmiany widoczne dla gracza, od najnowszych. Wersja gry i commit są na ekranie t
 ## Nieopublikowane (0.1.0)
 
 ### 1 listopada 2026
-- Megabloki osaczają Lublin: rząd 41 megawież 309–520 m z kładkami i reklamami tuż za miastem, odcinek wokół Nabrzeża i pierścień prostszych megabloków za nimi, z dala od cmentarzy żydowskich, Ogrodu Saskiego i Bystrzycy, z otwartym widokiem z Placu Litewskiego na Wieżę Trynitarską i katedrę; na telefonie panorama jak dotąd, tylko wieże znad Zalewu stoją we Wrotkowie, z dala od rzeki (ADR-0067 etap 1).
+- Megabloki osaczają Lublin: rząd 41 megawież 309–520 m z kładkami i reklamami tuż za miastem, odcinek wokół Nabrzeża i pierścień prostszych megabloków za nimi, z dala od cmentarzy żydowskich, Ogrodu Saskiego i Bystrzycy, z otwartym widokiem z Placu Litewskiego na Wieżę Trynitarską i katedrę; na telefonie panorama jak dotąd, tylko wieże znad Zalewu stoją w Zemborzycach, z dala od rzeki (ADR-0067 etap 1).
 - Blokada kursora nie wyłącza się na stałe, gdy panel zamknięty Esc przed pierwszym kliknięciem po ładowaniu poprosi o nią bez gestu (G-135).
 - Świadek trzymany w chwycie obezwładnienia nie kończy telefonu do ochrony; gdy się wyrwie, dzwoni dalej (G-141).
 - Widok nie obraca się sam przy wejściu do gry, gdy przeglądarka odmawia surowego wejścia myszy (Chromium na Linuksie) (G-139).
