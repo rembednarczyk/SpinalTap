@@ -585,12 +585,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: dokładniejsza oś dla chodników przy pasach postojowych albo odstęp liczony od osi z OSM
 - Pakiet właściciela: tools/osm-import, packages/sim
 
-### G-194 Quickhack w toku na encji bez klucza trafia po wczytaniu w inną encję
-- Status: w PR #179 (1.11, w weryfikacji; potwierdzone sondą): posiłek jako `security:<n>`, inne encje bez klucza przerwane po wczytaniu
-- Ważność: S4 · Zasięg: `packages/sim/src/systems/scanner-system.ts:94` zapisuje cel jako `#<id>` w `domain.netrun.upload`; po wczytaniu id są przydzielane od nowa (worki z łupem biorą nowe), więc upload trafia w inną encję albo w nic
-- Poprawka: cel uploadu przez klucz (np. `security:<n>`) albo odrzucenie uploadu na encji bez klucza przy zapisie
-- Pakiet właściciela: packages/sim
-
 ### G-196 Ciała i powaleni posiłkowie ochrony zostają do końca sesji
 - Status: częściowo naprawione w #174 (1.11, PRZYJĘTE): powalony żywy posiłek nie znika już po końcu heatu i nie zajmuje limitu; zostaje otwarte: ciała i powaleni posiłkowie nie mają chunku, leżą do końca sesji, a `sent` rośnie w kolejnych heatach
 - Ważność: S4 · Zasięg: powalony, ale żywy posiłek ma AI; po końcu heatu, gdy jest daleko i poza wzrokiem, `runReinforcements` (`packages/sim/src/systems/crime-system.ts`) usuwa go jak żywego, więc ciało znika ze świata bez zapisu; do tego ciała posiłków nie mają chunku i zostają do końca sesji, a `sent` rośnie w kolejnych heatach (wpływ na wybór enforcerów od `n`)
@@ -624,7 +618,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (streaming)
 
 ### G-202 Posiłki ochrony nie dają XP za quickhack
-- Status: zgłoszone (1.11, decyzja użytkownika: „zgodnie ze standardem”, z sondy G-199); czeka na #179 (G-194)
+- Status: zgłoszone (1.11, decyzja użytkownika: „zgodnie ze standardem”, z sondy G-199); #179 w main, gotowe do przydziału
 - Ważność: S4 · Zasięg: `grantQuickhackXp` (`packages/sim/src/world/progression-ops.ts`) zaczyna się od `if (!key) return;`, więc posiłek ochrony (bez klucza) nigdy nie daje XP, a strażnik z kluczem daje raz
 - Oczekiwane (standard gatunku, bez farmienia): każdy posiłek daje XP za quickhack raz, także po zapisie i wczytaniu; ten sam posiłek drugi raz nic
 - Poprawka: klucz XP posiłku z trwałego numeru (`security:<n>` z G-194) z rozróżnieniem kolejnych heatów, jeśli `n` może się powtórzyć po resecie `sent` (np. numer heatu w kluczu); test jednej sesji i zapisu; złoty hash świadomie, jeśli się zmieni

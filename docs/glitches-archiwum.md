@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-194 Quickhack w toku na encji bez klucza trafia po wczytaniu w inną encję
+- Status: naprawione w #179 (1.11, PRZYJĘTE): posiłek jako `security:<n>`, inne encje bez klucza przerwane po wczytaniu (`SessionWatch.uploadId`), schemat bez zmian
+- Ważność: S4 · Zasięg: `packages/sim/src/systems/scanner-system.ts:94` zapisuje cel jako `#<id>` w `domain.netrun.upload`; po wczytaniu id są przydzielane od nowa (worki z łupem biorą nowe), więc upload trafia w inną encję albo w nic
+- Poprawka: cel uploadu przez klucz (np. `security:<n>`) albo odrzucenie uploadu na encji bez klucza przy zapisie
+- Pakiet właściciela: packages/sim
+
 ### G-188 Zaalarmowani strażnicy zlecenia przypięci w świecie daleko od gracza
 - Status: naprawione w #181 (1.11, PRZYJĘTE; zapis v24): `sleepPinned` usypia przypiętych poza wczytanymi chunkami (zaalarmowanych po 30 s), znacznik `away` w zapisie, `dormant-restore` po znaczniku, `keepFormer` przycina szablony
 - Ważność: S4 · Zasięg: zaalarmowani strażnicy zleceń (np. c1-g2, c3-g3) zostają przypięci w świecie ponad 4000 ticków, gdy gracz jest 2 km dalej; przez to zastąpione zlecenia trwale siedzą w `formerContracts` zapisu
