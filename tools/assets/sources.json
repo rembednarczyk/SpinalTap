@@ -411,7 +411,7 @@
       "files": [
         { "path": "cyberpunk_city_assets_pack_3_doors_and_windows.glb", "url": "https://drive.usercontent.google.com/download?id=1PWF2e3O522u415z1or9OK3jQomv8PvAN&export=download&confirm=t", "sha256": "ae5a0e9f7c8eec7aae5be1365cc243168bd532520098d642ecd4135583ddcd96" }
       ],
-      "used": []
+      "used": ["dr-steel", "dr-steel-double"]
     },
     {
       "id": "sketchfab-cyberpunk-drone",
@@ -467,7 +467,7 @@
       "files": [
         { "path": "cyberpunk_sci-fi_door_3_-_free.glb", "url": "https://drive.usercontent.google.com/download?id=1aJyyT5VHvme0kWGNZ9YuqLgVtx9Bz4yT&export=download&confirm=t", "sha256": "714c6a3df6d1fe6f1ec2e3905cce84bb46ef051582c1072b0ec7dc7df09b100d" }
       ],
-      "used": []
+      "used": ["dr-code"]
     },
     {
       "id": "sketchfab-dirty-car",
@@ -565,7 +565,7 @@
       "files": [
         { "path": "low-poly_psx_style_garage_doors_pack.glb", "url": "https://drive.usercontent.google.com/download?id=1yRycCWlT-D68NOriTHOPYeCeDMgGP5uj&export=download&confirm=t", "sha256": "fdb0690fdecb4bb54c0da6576b61280f189b6e37796257060a4710cd688a9f3a" }
       ],
-      "used": []
+      "used": ["dr-shop", "dr-tall", "dr-shutter"]
     },
     {
       "id": "sketchfab-satellite-comms",

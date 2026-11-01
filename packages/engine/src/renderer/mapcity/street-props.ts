@@ -4,6 +4,7 @@ import type { RenderQuality } from "../../npr/quality";
 import type { ToonMaterials } from "../../npr/toon-material";
 import { sinkToMesh } from "../dressing";
 import { MeshSink } from "../mesh-sink";
+import { bakeDoor } from "./door-models";
 import { cellBounds, cellKey } from "./map-index";
 import { type WorldProp, bake, placePoint, planHalos, toWorld } from "./prop-batch";
 import type { Obstacle } from "./facade-props";
@@ -336,6 +337,11 @@ export class StreetProps {
     const models = this.deps.quality === "low" ? null : this.cityProps;
     for (const p of pieces) {
       if (this.isPole(p)) continue;
+      // A door on a facade (ADR-0058 stage 9) at its own size, its leaf a model where they have loaded.
+      if (p.prop === "door") {
+        bakeDoor(sink, models, p);
+        continue;
+      }
       if (models && bakeStreetModel(sink, models, p)) continue;
       bake(sink, propModel(p.prop, p.shape).sink, p);
       for (const c of p.chains ?? []) bake(sink, chainModel(c.end), { ...p, yaw: c.yaw });

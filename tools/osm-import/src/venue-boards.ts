@@ -6,7 +6,7 @@
  * Vite's module runner (`props.ts`), the tests directly.
  */
 import type { Vec3, ViewDescriptor } from "../../../packages/core/src";
-import { type Wall, facadeFrame } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
+import { type FacadeFrame, type Wall, facadeFrame } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
 import { landmarkAt } from "../../../packages/engine/src/renderer/mapcity/landmarks";
 import { mapBuilding } from "../../../packages/engine/src/renderer/mapcity/map-building";
 import { boundsOf, cleanRing, pointInRing } from "../../../packages/engine/src/renderer/mapcity/polygon";
@@ -22,8 +22,16 @@ export interface DrawnView {
 
 const point = (w: Wall, u: number) => ({ x: w.a.x + ((w.b.x - w.a.x) * u) / w.length, z: w.a.z + ((w.b.z - w.a.z) * u) / w.length });
 
-/** Every venue board of the city's buildings among `views`. */
-export const cityVenueBoards = (views: readonly DrawnView[]): BoardSpan[] => {
+/** A building of the map city as the renderer frames it, with its view and whether it is a landmark (its own model and signs). */
+export interface FramedBuilding {
+  readonly frame: FacadeFrame;
+  readonly view: Extract<ViewDescriptor, { kind: "building" }>;
+  readonly at: Vec3;
+  readonly landmark: boolean;
+}
+
+/** Every building view among `views` framed as the map city frames it. */
+export const cityFrames = (views: readonly DrawnView[]): FramedBuilding[] => {
   const buildings = views.flatMap(({ view, at }) => {
     if (view.kind !== "building") return [];
     const ring = cleanRing(view.outline.map((p) => ({ x: p.x + at.x, z: p.z + at.z })));
@@ -38,9 +46,14 @@ export const cityVenueBoards = (views: readonly DrawnView[]): BoardSpan[] => {
     });
     return top;
   };
-  return buildings.flatMap((b, i) => {
-    if (!b.view.venues?.length || landmarkAt(b.at.x, b.at.z, b.view.outline.length)) return [];
-    return venueBoards(facadeFrame(mapBuilding(i + 1, b, () => null), neighbour)).map((v) => ({
+  return buildings.map((b, i) => ({ frame: facadeFrame(mapBuilding(i + 1, b, () => null), neighbour), view: b.view, at: b.at, landmark: landmarkAt(b.at.x, b.at.z, b.view.outline.length) !== null }));
+};
+
+/** Every venue board of the city's buildings among `views`. */
+export const cityVenueBoards = (views: readonly DrawnView[]): BoardSpan[] =>
+  cityFrames(views).flatMap((b) => {
+    if (!b.view.venues?.length || b.landmark) return [];
+    return venueBoards(b.frame).map((v) => ({
       a: point(v.wall, v.u - v.width / 2),
       b: point(v.wall, v.u + v.width / 2),
       nx: v.wall.nx,
@@ -52,7 +65,6 @@ export const cityVenueBoards = (views: readonly DrawnView[]): BoardSpan[] => {
       text: v.text,
     }));
   });
-};
 
 /** The boards of Lublin as the game draws it. */
 export const lublinVenueBoards = (): BoardSpan[] => cityVenueBoards(WORLD_SCENERY);
