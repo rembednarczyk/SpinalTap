@@ -13,7 +13,7 @@ import { LAYOUT_TABLES } from "./skyline-layout-data";
 
 /**
  * The megabuildings of Lublin 2077 (ADR-0051): corporate towers outside the playable centre,
- * on Czechów, in Wrotków, along al. Kraśnicka and over Tatary, standing over the roofs at the
+ * on Czechów, in Zemborzyce, along al. Kraśnicka and over Tatary, standing over the roofs at the
  * ends of the streets. They replace the old map's `FarCity` horizon (ADR-0027, off in the game
  * since ADR-0045) with real places.
  *
@@ -44,8 +44,9 @@ export interface MegaSite {
 export const MEGA_SITES: readonly MegaSite[] = [
   { name: "Czechów", x: -1300, z: 1900, towers: [760, 560, 430, 330] },
   { name: "al. Kraśnicka", x: -2700, z: -1300, towers: [880, 620, 420] },
-  // Wrotków, west of the Bystrzyca on its way from the Zalew (until ADR-0067 at -1200, -3700, 31 m from the river).
-  { name: "Wrotków", x: -1750, z: -3700, towers: [980, 540, 400] },
+  // Majdan Wrotkowski in Zemborzyce, some 500 m west of the Bystrzyca north of the Zalew (until ADR-0067
+  // "Zalew Zemborzycki" at -1200, -3700, in Wrotków 31 m from the river).
+  { name: "Zemborzyce", x: -1750, z: -3700, towers: [980, 540, 400] },
   { name: "Tatary", x: 1900, z: 1500, towers: [640, 420] },
 ];
 
@@ -183,14 +184,17 @@ const bridge = (plan: SkylinePlan, a: TowerSpec, b: TowerSpec, spec: BridgeSpec,
 /** Today's sites as towers facing the centre on an axis, each site with its own seeded dice. */
 const planSites = (plan: SkylinePlan, sites: readonly MegaSite[], bodies: readonly MegaBody[]): TowerSpec[] => {
   const placed: TowerSpec[] = [];
+  // A body throws the dice another number of times than the tiers: the feet stay where the tiers
+  // put them (the phone, and what the layout keeps clear of), whatever the body.
+  const feet = bodies.length > 0 ? siteTowers(sites) : null;
   let index = 0;
   for (const s of sites) {
     const rand = prng(Math.floor(Math.abs(s.x * 31 + s.z * 17)) ^ 0x5ca1e);
     s.towers.forEach((h, k) => {
       const a = k * 2.4 + rand();
       const r = k === 0 ? 0 : 120 + rand() * 160;
-      const x = s.x + Math.sin(a) * r;
-      const z = s.z + Math.cos(a) * r;
+      const x = feet?.[index]?.x ?? s.x + Math.sin(a) * r;
+      const z = feet?.[index]?.z ?? s.z + Math.cos(a) * r;
       const front = Math.abs(x) > Math.abs(z) ? { x: -Math.sign(x), z: 0 } : { x: 0, z: -Math.sign(z) };
       const spec = { x, z, h, front, ads: 0 };
       placed.push(spec);
@@ -200,8 +204,10 @@ const planSites = (plan: SkylinePlan, sites: readonly MegaSite[], bodies: readon
   return placed;
 };
 
-/** Where the towers of the sites stand (the megablock layout keeps clear of them). */
-export const siteTowers = (sites: readonly MegaSite[] = MEGA_SITES): TowerSpec[] => planSites({ towers: new MeshSink(), lights: new MeshSink() }, sites, []);
+/** Where the towers of the sites stand, with or without bodies (the megablock layout keeps clear of them). */
+export function siteTowers(sites: readonly MegaSite[] = MEGA_SITES): TowerSpec[] {
+  return planSites({ towers: new MeshSink(), lights: new MeshSink() }, sites, []);
+}
 
 /**
  * The skyline: deterministic, from `MEGA_SITES` and the megablock layout (ADR-0067). With megatower

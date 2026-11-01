@@ -94,9 +94,11 @@ const fits = (t: Disc, taken: readonly Disc[]): boolean =>
 /**
  * Towers round a box `offset` metres out every `spacing` metres, jittered, each pushed out until
  * it fits (clear of the data by `CLEAR`, of the guard's places and of the `taken` bodies); the front
- * looks at the box.
+ * looks at the box. With `self` the row's own towers are kept clear of each other too (the far
+ * ring; the near rows stand close on purpose, joined by their bridges).
  */
-const towersOf = (p: RowPlan, taken: readonly Disc[]): TowerRow[] => {
+const towersOf = (p: RowPlan, taken: readonly Disc[], self = false): TowerRow[] => {
+  const blocked = [...taken];
   const rand = prng(p.seed);
   const heights = prng(p.seed ^ 0x77);
   const w = p.box.maxX - p.box.minX;
@@ -115,12 +117,13 @@ const towersOf = (p: RowPlan, taken: readonly Disc[]): TowerRow[] => {
     if (p.keep && !p.keep(x, z)) continue;
     // Out along the line to the box until the tower fits.
     let push = 0;
-    while (push <= MAX_PUSH && !fits({ x: x - t.x * push, z: z - t.z * push, r: p.reach * h }, taken)) push += 10;
+    while (push <= MAX_PUSH && !fits({ x: x - t.x * push, z: z - t.z * push, r: p.reach * h }, blocked)) push += 10;
     if (push > MAX_PUSH) continue;
     x -= t.x * push;
     z -= t.z * push;
     const f = towards(p.box, x, z);
     out.push([r1(x), r1(z), h, r1((Math.atan2(f.x, f.z) * 180) / Math.PI), p.ads]);
+    if (self) blocked.push({ x: r1(x), z: r1(z), r: p.reach * h });
   }
   return out;
 };
@@ -177,7 +180,7 @@ export const generateLayout = (): LayoutTables => {
   return {
     near: { towers: near, bridges: bridgesOf(near, 404, true) },
     docks: { towers: docks, bridges: bridgesOf(docks, 606, false) },
-    ring: { towers: RING.flatMap((r) => towersOf(r, bodies)), bridges: [] },
+    ring: { towers: RING.reduce<TowerRow[]>((ring, r) => [...ring, ...towersOf(r, [...bodies, ...discs(ring, TIERS_REACH)], true)], []), bridges: [] },
   };
 };
 

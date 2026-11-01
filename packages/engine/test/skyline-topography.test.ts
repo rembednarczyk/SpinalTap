@@ -1,5 +1,9 @@
+// @ts-expect-error The engine is typed for the browser; the test reads the props file off disk.
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { MEGA_LAYOUT, MEGA_SITES, siteTowers } from "../src/renderer/mapcity/skyline";
+import { parseCityProps } from "../src/renderer/city-props";
+import { MEGA_LAYOUT, MEGA_SITES, planSkyline, siteTowers } from "../src/renderer/mapcity/skyline";
+import { megaBodies } from "../src/renderer/mapcity/skyline-bodies";
 import { BODY_REACH, type Disc, TIERS_REACH, areaHit, bridgeViewHit, overlaps, riverHit, viewHit } from "../src/renderer/mapcity/skyline-guard";
 
 /**
@@ -30,10 +34,11 @@ describe("megablocks and Lublin's topography (ADR-0067)", () => {
     expect(hits).toEqual([]);
   });
 
-  it("megablock-overlap: no two bodies of different rows run into each other", () => {
+  it("megablock-overlap: no two bodies of different rows, nor of the far ring's two bands, run into each other", () => {
+    // The near rows stand close on purpose, joined by their bridges (ADR-0067); the ring does not.
     const hits: string[] = [];
     placed.forEach((a, i) => {
-      for (const b of placed.slice(i + 1)) if (a.row !== b.row && overlaps(a, b)) hits.push(`${a.id} ${b.id}`);
+      for (const b of placed.slice(i + 1)) if ((a.row !== b.row || a.row === "ring") && overlaps(a, b)) hits.push(`${a.id} ${b.id}`);
     });
     expect(hits).toEqual([]);
   });
@@ -47,6 +52,25 @@ describe("megablocks and Lublin's topography (ADR-0067)", () => {
   });
 
   it("moves the old Zalew Zemborzycki site off the Bystrzyca and names where it stands", () => {
-    expect(MEGA_SITES.map((s) => s.name)).not.toContain("Zalew Zemborzycki");
+    const names = MEGA_SITES.map((s) => s.name);
+    expect(names).not.toContain("Zalew Zemborzycki");
+    expect(names).toContain("Zemborzyce");
+  });
+
+  it("stands the sites' towers where the guard checked them, with the megatower bodies too", () => {
+    const f = (readFileSync as (url: URL) => Uint8Array)(new URL("../../app/public/city/city-props.glb", import.meta.url));
+    const bodies = megaBodies(parseCityProps(f.buffer.slice(f.byteOffset, f.byteOffset + f.byteLength) as ArrayBuffer));
+    expect(bodies.length).toBeGreaterThan(0);
+    const feet = siteTowers().map((t) => `${t.x.toFixed(1)},${t.z.toFixed(1)}`);
+    for (const kit of [[], bodies]) {
+      // Every vertex of a tower carries its foot in uv: the distinct feet, in order.
+      const uvs = planSkyline(MEGA_SITES, kit).towers.uvs;
+      const drawn: string[] = [];
+      for (let i = 0; i < uvs.length; i += 2) {
+        const at = `${uvs[i]!.toFixed(1)},${uvs[i + 1]!.toFixed(1)}`;
+        if (drawn[drawn.length - 1] !== at) drawn.push(at);
+      }
+      expect(drawn).toEqual(feet);
+    }
   });
 });

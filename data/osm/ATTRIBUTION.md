@@ -15,7 +15,7 @@ Surowe dane, z których `tools/osm-import` generuje Lublin 2077 (ADR-0042). Pobi
 ### Obszary chronione panoramy megabloków (ADR-0067)
 
 - **Plik:** `packages/engine/src/renderer/mapcity/skyline-protected.ts`.
-  - Obrysy dróg w40049437 (Stary cmentarz żydowski), w792467989 (Nowy cmentarz żydowski) i w174005440 (Ogród Saski) oraz oś relacji r7577565 (Bystrzyca, ok. 5 km wokół centrum, uproszczona do ok. 4 m).
+  - Obrysy dróg w40049437 (Stary cmentarz żydowski), w792467989 i w180729831 (Nowy cmentarz żydowski, z zatrawioną częścią) i w174005440 (Ogród Saski) oraz oś relacji r7577565 (Bystrzyca, ok. 5 km wokół centrum, uproszczona do ok. 4 m).
   - Pobrane z Nominatim (`nominatim.openstreetmap.org`, `polygon_geojson`) 1 listopada 2026 i rzutowane jak w `tools/osm-import` (od `LUBLIN_ANCHOR`).
   - Generator układu megabloków (`skyline-layout-gen.ts`) trzyma wieże z dala od tych miejsc.
 - **Licencja:** jak wyżej, © OpenStreetMap contributors, ODbL 1.0; plik jest bazą pochodną.

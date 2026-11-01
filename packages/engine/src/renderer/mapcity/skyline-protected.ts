@@ -2,7 +2,8 @@
  * Places the megablocks keep clear of (ADR-0067), in world metres (x east, z north, from
  * `LUBLIN_ANCHOR`), as flat [x, z, x, z, ...] lists.
  *
- * Source: OpenStreetMap, outlines of ways w40049437, w792467989 and w174005440 and the axis of
+ * Source: OpenStreetMap, outlines of ways w40049437, w792467989, w180729831 (the cemetery's
+ * grassed part) and w174005440 and the axis of
  * relation r7577565 (Bystrzyca, within some 5 km of the centre, simplified to about 4 m), as
  * served by Nominatim on 1 November 2026 and projected like `tools/osm-import`.
  * Map data © OpenStreetMap contributors, ODbL 1.0 (a derived database; see data/osm/ATTRIBUTION.md).
@@ -19,6 +20,7 @@ export interface ProtectedArea {
 export const PROTECTED_AREAS: readonly ProtectedArea[] = [
   { name: "Old Jewish Cemetery", osm: "w40049437", ring: [1235.3, 393.7, 1268.6, 338.8, 1319.0, 375.2, 1423.2, 331.8, 1449.7, 334.2, 1469.9, 349.1, 1471.0, 361.0, 1462.7, 402.8, 1442.2, 458.0, 1440.4, 480.2, 1425.1, 475.0, 1418.4, 506.6, 1379.8, 540.1, 1356.0, 549.3, 1343.9, 551.0, 1366.7, 489.3, 1363.8, 473.6, 1300.9, 409.6, 1277.5, 398.0] },
   { name: "New Jewish Cemetery", osm: "w792467989", ring: [1213.7, 989.0, 1256.9, 962.3, 1284.5, 999.3, 1310.6, 983.1, 1330.8, 1019.8, 1416.9, 972.0, 1511.3, 1159.9, 1372.8, 1200.5, 1359.6, 1196.2, 1327.0, 1138.0] },
+  { name: "New Jewish Cemetery (grass)", osm: "w180729831", ring: [1402.6, 1262.1, 1411.4, 1252.0, 1531.9, 1209.5, 1553.7, 1266.6, 1553.2, 1341.3, 1582.1, 1348.4, 1613.1, 1442.8, 1585.1, 1464.9, 1576.5, 1448.4, 1454.5, 1474.4, 1427.1, 1317.5] },
   { name: "Saxon Garden", osm: "w174005440", ring: [-1211.4, 67.1, -810.2, -38.0, -793.0, 26.3, -775.1, 52.2, -707.6, 30.2, -693.9, 15.2, -703.8, -25.5, -692.9, -28.0, -698.5, -50.4, -706.7, -48.3, -711.0, -63.9, -603.3, -69.5, -581.4, -64.8, -579.2, -42.5, -575.0, -41.9, -577.2, -12.0, -581.6, -12.3, -595.6, 161.9, -698.9, 181.9, -818.6, 218.8, -1051.9, 227.1, -1171.8, 241.4] },
 ];
 

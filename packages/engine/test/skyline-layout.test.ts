@@ -122,8 +122,8 @@ describe("megablocks round Lublin (ADR-0067)", () => {
     const phone = planSkyline(MEGA_SITES, [], skylineLayoutFor("low"));
     expect(phone.towers.positions).toEqual(planSkyline().towers.positions);
     // The twelve procedural towers: the nine of Czechów, al. Kraśnicka and Tatary vertex for vertex
-    // as before ADR-0067 (hash taken then); the three by the Zalew moved off the Bystrzyca to Wrotków.
-    const kept = planSkyline(MEGA_SITES.filter((s) => s.name !== "Wrotków"));
+    // as before ADR-0067 (hash taken then); the three by the Zalew moved off the Bystrzyca to Zemborzyce.
+    const kept = planSkyline(MEGA_SITES.filter((s) => s.name !== "Zemborzyce"));
     expect(shape(kept.towers)).toBe("51f9c573-6d2ab30-11278eb-14039997-c9949e8b-96ce0aa3");
     expect(shape(kept.lights, true)).toBe("6926a933-d2624c06-94b36cb3-b3d07ceb-d93fcca3-6efa0a0b");
     expect(shape(phone.towers)).toBe("5fafc119-c80da0b8-6c366853-9fb122b7-6c43e1db-2026afd3");
