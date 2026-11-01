@@ -52,10 +52,10 @@ const setup = async () => {
   const persistence = new SavePersistence(new MemorySaveStore());
   const session = new GameSession({ render: noRender, audio: noAudio, persistence, ui, preview, story: STORY_SOURCE, seed: () => 71, now: () => new Date(2026, 9, 27, 22, 0) });
   session.newGame();
-  const snap = session.snapshot();
+  const snap = session.saves.snapshot();
   const d = snap.domain;
   await persistence.save("t", { ...snap, domain: { ...d, inventory: { ...d.inventory, items: [...d.inventory.items, newInstance("i4", "hebi_smg", "uncommon")], nextUid: 5 } } });
-  await session.loadAsync("t");
+  await session.saves.loadAsync("t");
   session.render(0);
   return { session, ui, preview };
 };
@@ -138,7 +138,7 @@ describe("character menu in the app (plan §8.5 contract)", () => {
     session.intents.openCharacterScreen("journal");
     expect(ui.getState()).toMatchObject({ characterTab: "journal", journalOpen: true });
     session.intents.setPreviewViewport(RECT);
-    await session.loadAsync("t");
+    await session.saves.loadAsync("t");
     expect(session.characterScreenOpen).toBe(false);
     expect(preview.rect).toBeNull();
 
@@ -146,7 +146,7 @@ describe("character menu in the app (plan §8.5 contract)", () => {
     session.sim.player()!.health = { current: 0, max: 100 };
     session.intents.closeCharacterScreen();
     session.intents.openCharacterScreen("inventory");
-    (session as unknown as { setScreen(s: string): void }).setScreen("dead");
+    (session as unknown as { view: { set(s: string): void } }).view.set("dead");
     expect(ui.getState().characterTab).toBeNull();
     expect(session.characterScreenOpen).toBe(false);
   });

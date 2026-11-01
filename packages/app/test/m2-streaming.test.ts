@@ -97,12 +97,12 @@ describe("M2: districts without a reload", () => {
     goTo(session, 717.5, 296);
     const stalls = market(92, 0, 70);
     goTo(session, stalls.x, stalls.z);
-    expect(await session.saveAsync("slot-1")).toBe(true);
+    expect(await session.saves.saveAsync("slot-1")).toBe(true);
     const saved = session.sim.player()!.position;
 
     session.newGame();
     expect(session.sim.district).toBe("shinsekai-7");
-    expect(await session.loadAsync("slot-1")).toBe(true);
+    expect(await session.saves.loadAsync("slot-1")).toBe(true);
     expect(session.sim.player()!.position).toEqual(saved);
     expect(session.sim.district).toBe("targ");
     expect(session.sim.streamer.loadedChunks).toEqual(["podzamcze-1-0"]);

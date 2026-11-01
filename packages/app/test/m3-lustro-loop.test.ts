@@ -33,7 +33,7 @@ beforeAll(async () => {
     const { session, ui, render } = setup(store);
     playActOne(session, ui, render, ACT_ONE[ending]);
     expect(session.sim.domain.story.ending).toBe(ending);
-    expect(await session.saveAsync(`act1-${ending}`)).toBe(true);
+    expect(await session.saves.saveAsync(`act1-${ending}`)).toBe(true);
   }
 }, 120_000);
 
@@ -94,15 +94,15 @@ const CASES: readonly [string, EndingId, readonly [number, number, number], stri
 describe("M3 acceptance: act II from the end of act I to each of its endings", () => {
   it.each(CASES)("%s", async (_name, ending, [rooftop, job, voice], archive, act2) => {
     const a = setup(store);
-    expect(await a.session.loadAsync(`act1-${ending}`)).toBe(true);
+    expect(await a.session.saves.loadAsync(`act1-${ending}`)).toBe(true);
     expect(a.session.sim.domain.quests[QUEST_MIRROR.id]).toEqual({ status: "active", stepIndex: 0 });
     findTrail(a.session, a.ui, ending);
     meetRen(a.session, a.ui, ending, rooftop);
 
     // Save in the middle of the act; a fresh session goes on from there.
-    expect(await a.session.saveAsync("act2-mid")).toBe(true);
+    expect(await a.session.saves.saveAsync("act2-mid")).toBe(true);
     const { session, ui } = setup(store);
-    expect(await session.loadAsync("act2-mid")).toBe(true);
+    expect(await session.saves.loadAsync("act2-mid")).toBe(true);
     expect(session.sim.domain.story.choices.rooftop).toBe(rooftop === 0 ? "together" : "alone");
     expect(objective(ui)).toBe("Kaito has a job out on Ren. Find out who is paying for it (Neon Koi bar)");
 
@@ -152,11 +152,11 @@ describe("M3 acceptance: act II from the end of act I to each of its endings", (
     expect(objective(ui)).toContain("Kaito has more contracts");
 
     // The ending survives a save and a load, and the people of the act remember it.
-    expect(await session.saveAsync("act2")).toBe(true);
-    const saved = session.snapshot();
+    expect(await session.saves.saveAsync("act2")).toBe(true);
+    const saved = session.saves.snapshot();
     const after = setup(store);
-    expect(await after.session.loadAsync("act2")).toBe(true);
-    const loaded: SaveSnapshot = after.session.snapshot();
+    expect(await after.session.saves.loadAsync("act2")).toBe(true);
+    const loaded: SaveSnapshot = after.session.saves.snapshot();
     expect(loaded.domain).toEqual(saved.domain);
     if (act2 === "kagami") {
       goTo(after.session, REN_ROOF);
@@ -172,7 +172,7 @@ describe("M3 acceptance: act II from the end of act I to each of its endings", (
 
   it("does not let Ren close the act while the cleaners still stand", async () => {
     const { session, ui } = setup(store);
-    expect(await session.loadAsync("act1-aya")).toBe(true);
+    expect(await session.saves.loadAsync("act1-aya")).toBe(true);
     findTrail(session, ui, "aya");
     meetRen(session, ui, "aya", 0);
     kaitoJob(session, ui, 1, 0);

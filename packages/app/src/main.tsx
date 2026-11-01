@@ -234,10 +234,10 @@ window.addEventListener("keydown", (e) => {
   audio.unlock();
   if (e.code === "F5") {
     e.preventDefault();
-    void session.saveAsync("quick");
+    void session.saves.saveAsync("quick");
   } else if (e.code === "F9") {
     e.preventDefault();
-    void session.loadAsync("quick");
+    void session.saves.loadAsync("quick");
   } else if (e.code === "Escape") {
     // With pointer lock the browser consumes Esc and pointerlockchange pauses instead.
     if (session.screen === "paused") session.resume();

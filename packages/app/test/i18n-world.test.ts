@@ -25,12 +25,12 @@ describe("saving and loading in the session", () => {
     const store = new MemorySaveStore();
     const { session, ui } = setup(store);
     session.newGame();
-    expect(await session.saveAsync("quick")).toBe(true);
+    expect(await session.saves.saveAsync("quick")).toBe(true);
     expect(ui.getState().toasts.at(-1)).toMatchObject({ title: "Game saved", text: "Quicksave" });
     expect(ui.getState().slots.find((s) => s.slot === "quick")?.savedAtLabel).toBe("27/10, 00:00");
-    expect(await session.loadAsync("slot-2")).toBe(false);
+    expect(await session.saves.loadAsync("slot-2")).toBe(false);
     expect(ui.getState().toasts.at(-1)).toMatchObject({ title: "Empty slot", text: "slot-2" });
-    expect(await session.loadAsync("quick")).toBe(true);
+    expect(await session.saves.loadAsync("quick")).toBe(true);
     expect(titles(ui)).toContain("Game loaded");
   });
 
@@ -39,14 +39,14 @@ describe("saving and loading in the session", () => {
     const { session, ui } = setup(store);
     session.newGame();
     speak(ui, "pl");
-    expect(await session.saveAsync("quick")).toBe(true);
+    expect(await session.saves.saveAsync("quick")).toBe(true);
     expect(ui.getState().toasts.at(-1)).toMatchObject({ title: "Zapisano grę", text: "Szybki zapis" });
     expect(ui.getState().slots.find((s) => s.slot === "quick")?.savedAtLabel).toBe("27.10, 00:00");
     await store.put("slot-3", "{corrupt");
-    expect(await session.loadAsync("slot-3")).toBe(false);
+    expect(await session.saves.loadAsync("slot-3")).toBe(false);
     expect(ui.getState().toasts.at(-1)).toMatchObject({ title: "Nie udało się wczytać", text: "Plik zapisu jest uszkodzony." });
     // The corrupt slot is a code the slot list says in the player's language.
-    await session.saveAsync("slot-1");
+    await session.saves.saveAsync("slot-1");
     expect(ui.getState().slots.find((s) => s.slot === "slot-3")).toEqual({ slot: "slot-3", savedAtLabel: "—", objective: "save.corrupt" });
   });
 });

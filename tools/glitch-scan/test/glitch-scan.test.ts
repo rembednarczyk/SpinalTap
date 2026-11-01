@@ -782,7 +782,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   },
   /** A car in a kerb car park of the map data (`parking=lane|street_side`) with a corner over 0.3 m out of its outline (G-177). */
   "bay-car-out-of-park": () => bayCarsOutOfPark(kerbParksOf(SOURCE_OSM), PARKED_CARS),
-  /** A car in a kerb car park mapped `orientation=perpendicular|diagonal` parked along the kerb (G-177). */
+  /** A car in a kerb car park turned against its bays: along one mapped `perpendicular|diagonal` (G-177), off 60° in a `diagonal` one, across an untagged deep one (G-187). */
   "bay-car-orientation": () => bayCarsMisturned(kerbParksOf(SOURCE_OSM), PARKED_CARS),
   /** A crowd lane walked a metre or more inside a kerb car park, on its cars' strip (G-177). */
   "crowd-lane-on-parking": () => crowdLanesOnParking(kerbParksOf(SOURCE_OSM), CROWD_LANES),
