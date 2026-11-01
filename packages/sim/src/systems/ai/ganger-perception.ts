@@ -59,7 +59,8 @@ export const awarenessOf = (ai: Ganger["ai"]): { state: AwarenessState; level: n
 
 /** Where the AI is sent to look (a distraction, a camera, a trace, the heat): it walks there unless it is fighting. */
 export const giveLead = (g: Entity, at: Vec3): void => {
-  if (!g.ai || g.ai.alerted) return;
+  // Someone knocked out is told nothing (ADR-0065).
+  if (!g.ai || g.ai.alerted || g.unconscious) return;
   g.ai.lastKnown = { x: at.x, y: at.y, z: at.z };
   g.ai.search = 0;
 };
@@ -134,7 +135,8 @@ export const victimsOf = (ctx: SimContext): Map<string, Entity> => {
   for (const g of ctx.world.with("ai")) if (g.ai.victim) wanted.add(g.ai.victim);
   const out = new Map<string, Entity>();
   if (wanted.size === 0) return out;
-  for (const e of ctx.world.with("health")) if (e.key && wanted.has(e.key) && e.health.current > 0) out.set(e.key, e);
+  // Someone knocked out is nobody's target (ADR-0065).
+  for (const e of ctx.world.with("health")) if (e.key && wanted.has(e.key) && e.health.current > 0 && !e.unconscious) out.set(e.key, e);
   return out;
 };
 

@@ -139,6 +139,7 @@ export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
   const objective = useUi((s) => s.objective);
   const cameraMode = useUi((s) => s.cameraMode);
   const prompt = useUi((s) => s.prompt);
+  const promptHold = useUi((s) => s.promptHold);
   const controls = useUi((s) => s.controls);
   const combat = useUi((s) => s.combat);
   const always = useUi((s) => s.settings.hudAlwaysShow);
@@ -188,6 +189,13 @@ export const Hud = ({ touch }: { touch?: TouchPadSink | undefined } = {}) => {
       {prompt && (
         <div className="hud__prompt" data-testid="prompt">
           {!touch && <kbd>{keyOf(controls, "interact", "E")}</kbd>} {prompt}
+          {promptHold && (
+            // A second action on the same target (ADR-0065): the attack button held, on touch too.
+            <span className="hud__prompt-hold" data-testid="prompt-hold">
+              {" · "}
+              {!touch && <kbd>{keyOf(controls, "fire", "LMB")}</kbd>} {promptHold}
+            </span>
+          )}
         </div>
       )}
       <Hint />
