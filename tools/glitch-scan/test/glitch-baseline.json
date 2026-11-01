@@ -27,6 +27,7 @@
   "parked-car-multilane-kerb": 0,
   "bay-car-out-of-park": 0,
   "bay-car-orientation": 0,
+  "bay-strip-sparse": 0,
   "crowd-lane-on-parking": 0,
   "prop-off-ground": 0,
   "vehicle-below-surface": 0,

@@ -14,7 +14,7 @@ import { stackTiers } from "../../../packages/engine/src/renderer/mapcity/vertic
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 import { MAP_SIGN_KIND } from "../../../packages/engine/src/renderer/mapcity/sign-plan";
 import { signsInNeighbours } from "./sign-neighbours";
-import { bayCarsMisturned, bayCarsOutOfPark, crowdLanesOnParking, kerbParksOf } from "./kerb-bays";
+import { bayCarsMisturned, bayCarsOutOfPark, bayStripsSparse, crowdLanesOnParking, kerbParksOf } from "./kerb-bays";
 import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alone.ts";
 import { extractFeatures } from "../../osm-import/src/features.ts";
 import { roadWidth } from "../../osm-import/src/ground.ts";
@@ -27,7 +27,7 @@ import { cityVenueBoards } from "../../osm-import/src/venue-boards.ts";
 import { CROWD_LANES } from "../../../packages/sim/src/content/crowd";
 import { INTERIORS, interiorAt } from "../../../packages/sim/src/content/interior-areas";
 import { CLINIC_DOOR, KOI_DOOR } from "../../../packages/sim/src/content/interiors";
-import { furnitureClearance } from "../../../packages/sim/src/content/furniture-index";
+import { furnitureNear } from "../../../packages/sim/src/content/furniture-index";
 import { BOLLARD, alongSegment, anchors, chainSegments, chainThrough, distanceToPiece, furniturePrisms, furnitureRadius, turnLocal } from "../../../packages/sim/src/content/lublin/furniture";
 import { LUBLIN_STREET_PROPS, buildingView, isLandmark } from "../../../packages/sim/src/content/lublin";
 import { inBuilding, nearestWall } from "../../../packages/sim/src/content/lublin/places";
@@ -601,12 +601,23 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       .flat()
       .filter((i) => i.prop !== "lamp-wall-lantern" && inBuilding(i.x, i.z) && nearestWall(i.x, i.z).d > 0.5)
       .map((i) => ({ at: near(i.x, i.z), what: `${i.prop} ${nearestWall(i.x, i.z).d.toFixed(1)} m` })),
-  /** A parked car with a piece of furniture inside its body. */
+  /**
+   * A parked car with a piece of furniture inside its body: a point of its footprint (sampled 9
+   * by 9) in the piece's solid, or a corner of the solid in the footprint. The body is its
+   * rectangle, not its axis grown by half its width: that would reach half a car's width past its
+   * nose, over the kerb onto a meter on the pavement (G-189).
+   */
   "parked-car-in-furniture": () =>
     PARKED_CARS.flatMap((c) => {
       const { width, length } = VEHICLE_SIZE[c.model];
-      const hit = [-0.5, 0, 0.5].some((t) => furnitureClearance(c.x + Math.sin(c.yaw) * length * t, c.z + Math.cos(c.yaw) * length * t) < width / 2);
-      return hit ? [{ at: near(c.x, c.z), what: c.model }] : [];
+      const [fx, fz] = [Math.sin(c.yaw), Math.cos(c.yaw)];
+      const k = [0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => i / 8 - 0.5);
+      const body = k.flatMap((a) => k.map((b) => ({ x: c.x + fz * width * a + fx * length * b, z: c.z - fx * width * a + fz * length * b })));
+      const inBody = (x: number, z: number) => Math.abs((x - c.x) * fz - (z - c.z) * fx) <= width / 2 && Math.abs((x - c.x) * fx + (z - c.z) * fz) <= length / 2;
+      const hit = furnitureNear(c.x, c.z).find(
+        (f) => body.some((p) => distanceToPiece(f.item, p.x, p.z) === 0) || furniturePrisms(f.item).some((pr) => pr.points.some((q) => inBody(f.item.x + q.x, f.item.z + q.z))),
+      );
+      return hit ? [{ at: near(c.x, c.z), what: `${c.model} on ${hit.item.prop}` }] : [];
     }),
   /** A parked car with a corner or its middle off the carriageway and the squares (on grass, a pavement). */
   "parked-car-off-road": () =>
@@ -781,8 +792,24 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   },
   /** A car in a kerb car park of the map data (`parking=lane|street_side`) with a corner over 0.3 m out of its outline (G-177). */
   "bay-car-out-of-park": () => bayCarsOutOfPark(kerbParksOf(SOURCE_OSM), PARKED_CARS),
-  /** A car in a kerb car park turned against its bays: along one mapped `perpendicular|diagonal` (G-177), off 60° in a `diagonal` one, across an untagged deep one (G-187). */
-  "bay-car-orientation": () => bayCarsMisturned(kerbParksOf(SOURCE_OSM), PARKED_CARS),
+  /** A car in a kerb car park turned against its bays, to its nearest car road: along one mapped `perpendicular|diagonal` (G-177), off 60° in a `diagonal` one, out of line with the cars aslant in an untagged deep one (G-187, G-189). */
+  "bay-car-orientation": () => bayCarsMisturned(kerbParksOf(SOURCE_OSM), PARKED_CARS, carStreets.map((c) => c.points)),
+  /** A kerb car park 15 m long or more, a meter or a footway just past its kerb, with under half the cars of its bays (G-189). */
+  "bay-strip-sparse": () =>
+    bayStripsSparse(
+      kerbParksOf(SOURCE_OSM),
+      PARKED_CARS,
+      carStreets.map((c) => c.points),
+      {
+        furniture: Object.values(WORLD_STREET_PROPS)
+          .flat()
+          .map((i) => ({ x: i.x, z: i.z, r: furnitureRadius(i) }))
+          .filter((f) => f.r > 0),
+        footways: extractFeatures(SOURCE_OSM)
+          .lines.filter(({ tags: t }) => (t.highway === "footway" || t.highway === "path" || t.highway === "pedestrian") && t.area !== "yes" && t.tunnel === undefined && t.covered === undefined && (t.bridge === undefined || t.bridge === "no"))
+          .map((l) => l.line),
+      },
+    ),
   /** A crowd lane walked a metre or more inside a kerb car park, on its cars' strip (G-177). */
   "crowd-lane-on-parking": () => crowdLanesOnParking(kerbParksOf(SOURCE_OSM), CROWD_LANES),
   /** A game block standing on the ground (not an awning or a deck) that floats or sinks. */
@@ -1468,6 +1495,43 @@ describe("the glitch scan (ADR-0054)", () => {
     expect(tiers.length).toBeGreaterThan(0);
     const gateTop = gate.y + gate.height + (gate.roof ?? 0);
     for (const t of tiers) if (t.y1 > gateTop) expect(ringGap(t.ring, worldOutline(gate))).toBeGreaterThanOrEqual(5);
+  });
+
+  describe("kerb car parks (G-189)", () => {
+    const street = [[0, 0] as const, [40, 0] as const];
+    const park = (orientation: string | undefined, ring: readonly [number, number][]) => ({
+      id: "w1",
+      osmId: 1,
+      tags: { amenity: "parking", parking: "street_side", ...(orientation ? { orientation } : {}) },
+      ring: ring.map(([x, z]) => ({ x, z })),
+      holes: 0,
+    });
+    const car = (x: number, z: number, yaw: number) => ({ chunk: "c", x, y: 0, z, yaw, model: "sedan" as const, tint: 0 });
+    const deep = park(undefined, [[10, 4], [30, 4], [30, 10], [10, 10]]);
+    const [along, aslant, across] = [Math.PI / 2, Math.PI / 6, 0];
+
+    it("takes a deep strip's cars across the kerb as the generator's fallback, but not beside cars aslant", () => {
+      expect(bayCarsMisturned([deep], [car(15, 7, across), car(20, 7, across)], [street])).toEqual([]);
+      expect(bayCarsMisturned([deep], [car(15, 7, across), car(22, 7, aslant)], [street]).map((f) => f.at)).toEqual(["15,7"]);
+    });
+
+    it("measures a car's turn to its street, not to the strip's longest edge (Ciasna, by a bend)", () => {
+      const across18 = park("perpendicular", [[10, 2], [16, 2], [16, 20], [10, 20]]);
+      expect(bayCarsMisturned([across18], [car(13, 6, across)], [street])).toEqual([]);
+      expect(bayCarsMisturned([across18], [car(13, 6, along)], [street]).map((f) => f.what)).toEqual(["sedan in w1 (perpendicular) along the kerb"]);
+    });
+
+    it("finds a strip by a meter past its kerb holding under half its bays' cars, and only that", () => {
+      const meter = { furniture: [{ x: 20, z: 10.5, r: 0.3 }], footways: [] };
+      const none = { furniture: [], footways: [] };
+      const one = [car(15, 7, aslant)];
+      const three = [car(15, 7, aslant), car(20, 7, aslant), car(25, 7, aslant)];
+      expect(bayStripsSparse([deep], one, [street], meter)).toHaveLength(1);
+      expect(bayStripsSparse([deep], three, [street], meter)).toEqual([]);
+      expect(bayStripsSparse([deep], one, [street], none)).toEqual([]);
+      expect(bayStripsSparse([deep], [], [street], meter)).toEqual([]);
+      expect(bayStripsSparse([deep], one, [street], { furniture: [], footways: [[{ x: 5, z: 11 }, { x: 35, z: 11 }]] })).toHaveLength(1);
+    });
   });
 });
 

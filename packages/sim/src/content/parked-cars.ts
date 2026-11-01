@@ -1,10 +1,11 @@
 import { type GroundSurface, VEHICLE_SIZE, type VehicleModel, type ViewDescriptor } from "@seki/core";
 import type { StaticProp } from "./builders";
-import { furnitureClearance } from "./furniture-index";
 import { BAY_STEP, type BayLayout, bayDepth, bayLayouts, bayYaw, inRing, stripCut, stripDepth } from "./kerb-bays";
 import { inBuilding, nearestWall } from "./lublin/places";
 import { type Pt, ROAD_CHAINS, type RoadChain, polylineLength, surfacesAt } from "./lublin/roads";
 import { MAP_CHUNKS } from "./lublin/sites";
+import { footprint, segmentDistance, segmentsGap } from "./parked-geometry";
+import { type KerbStrip, clearOfFurniture, clearOfKeptWays } from "./parked-room";
 import { groundY, restingY, surfaceY } from "./lublin/terrain";
 import { clearOfGame } from "./street-props";
 import { KERB_ROOM, TRAFFIC_ROUTES, laneOffset, offsetLine, pointAt, projectOn, roadHalfWidth } from "./traffic";
@@ -56,21 +57,6 @@ const SQUARE_TAKEN = 0.8;
 const chunkOf = (x: number, z: number): string =>
   MAP_CHUNKS.find((c) => x >= c.bounds.minX && x <= c.bounds.maxX && z >= c.bounds.minZ && z <= c.bounds.maxZ)?.id ?? "";
 
-/** The corners of a car's footprint at (x, z), facing yaw, grown by `pad`. */
-const footprint = (x: number, z: number, yaw: number, model: VehicleModel, pad: number): Pt[] => {
-  const { width, length } = VEHICLE_SIZE[model];
-  const fx = Math.sin(yaw);
-  const fz = Math.cos(yaw);
-  const hw = width / 2 + pad;
-  const hl = length / 2 + pad;
-  return [
-    [x - fx * hl - fz * hw, z - fz * hl + fx * hw],
-    [x + fx * hl - fz * hw, z + fz * hl + fx * hw],
-    [x + fx * hl + fz * hw, z + fz * hl - fx * hw],
-    [x - fx * hl + fz * hw, z - fz * hl - fx * hw],
-  ];
-};
-
 /** Points under a car's body at (x, z), facing yaw: its corners, the middles of its sides and its centre. */
 const underBody = (x: number, z: number, yaw: number, model: VehicleModel): { x: number; z: number }[] => {
   const { width, length } = VEHICLE_SIZE[model];
@@ -112,12 +98,6 @@ const ZEBRAS = MAP_CHUNKS.flatMap((c) =>
     }),
 );
 
-const cross = (o: Pt, a: Pt, b: Pt): number => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
-const segmentsGap = (a: Pt, b: Pt, c: Pt, d: Pt): number => {
-  if (cross(a, b, c) * cross(a, b, d) < 0 && cross(c, d, a) * cross(c, d, b) < 0) return 0;
-  return Math.min(segmentDistance(a[0], a[1], c, d), segmentDistance(b[0], b[1], c, d), segmentDistance(c[0], c[1], a, b), segmentDistance(d[0], d[1], a, b));
-};
-
 /**
  * Does a car at (x, z), facing yaw, keep off every zebra and out of the 10 m before one? Its body
  * is taken as its axis grown by half its width and the gap (a capsule round the footprint, so no
@@ -157,46 +137,6 @@ const offOtherRoads = (x: number, z: number, hw: number, own: RoadChain): boolea
     const [right, left] = CARRIAGEWAY.get(c)!;
     return q.d >= (q.side >= 0 ? right : left) + hw;
   });
-
-/**
- * Room a parked car's body leaves the axis of an unnamed service road (a driveway, a yard's lane,
- * G-140): its half width and this gap (m). No lane of the game runs there, so nothing else keeps
- * the car off its mouth at the kerb.
- */
-const SERVICE_GAP = 0.5;
-/**
- * Least room a parked car's body leaves the axis of a footway or a path mapped on its own (m), or
- * its half width when wider (G-143). It is drawn over the asphalt where it meets a street, and the
- * paving check takes it for the carriageway.
- */
-const FOOT_CLEAR = 1.25;
-
-const wayRoom = (w: { readonly line: readonly number[] }, reach: number) => {
-  const pts = Array.from({ length: w.line.length / 2 }, (_, i): Pt => [w.line[2 * i]!, w.line[2 * i + 1]!]);
-  const xs = pts.map((p) => p[0]);
-  const zs = pts.map((p) => p[1]);
-  return { pts, reach, minX: Math.min(...xs) - reach, maxX: Math.max(...xs) + reach, minZ: Math.min(...zs) - reach, maxZ: Math.max(...zs) + reach };
-};
-const KEPT_WAYS = [
-  ...MAP_CHUNKS.flatMap((c) => c.serviceWays ?? []).map((w) => wayRoom(w, w.width / 2 + SERVICE_GAP)),
-  ...MAP_CHUNKS.flatMap((c) => c.footWays ?? []).map((w) => wayRoom(w, Math.max(FOOT_CLEAR, w.width / 2))),
-];
-
-const inside = (p: Pt, poly: readonly Pt[]): boolean => poly.every((a, i) => cross(a, poly[(i + 1) % poly.length]!, p) <= 0) || poly.every((a, i) => cross(a, poly[(i + 1) % poly.length]!, p) >= 0);
-
-/** Does a car's footprint at (x, z), facing yaw, keep its room off every service road's and footway's axis? */
-const clearOfKeptWays = (x: number, z: number, yaw: number, model: VehicleModel): boolean => {
-  const body = footprint(x, z, yaw, model, 0);
-  const r = Math.hypot(VEHICLE_SIZE[model].width, VEHICLE_SIZE[model].length) / 2;
-  return KEPT_WAYS.every(
-    (w) =>
-      x + r < w.minX ||
-      x - r > w.maxX ||
-      z + r < w.minZ ||
-      z - r > w.maxZ ||
-      (!w.pts.some((p) => inside(p, body)) && w.pts.every((p, i) => i === 0 || body.every((a, k) => segmentsGap(w.pts[i - 1]!, p, a, body[(k + 1) % 4]!) >= w.reach))),
-  );
-};
 
 /**
  * Room a parked car leaves a bus stop (m). The Polish code (art. 49 ust. 1 pkt 9 PoRD) bans
@@ -266,18 +206,20 @@ const offMultiLaneKerbs = (x: number, z: number, yaw: number): boolean =>
  * walls, furniture, the game's places, service roads, footways, bus stops, multi-lane kerbs and other streets' axes (and carriageways, by the kerb of
  * `own`)? A street's kerb line is set from its median width, so where the carriageway narrows
  * (a bend, a pinch by a pavement) the bay falls on the grass or the pavement unless each corner
- * is checked. A bay on a slope too steep for a level car (`LEVEL_DROP`) stays empty.
+ * is checked. A bay on a slope too steep for a level car (`LEVEL_DROP`) stays empty. A car in a
+ * kerb car park's `strip` keeps from what stands outside it the room `parked-room` gives (G-189).
  */
-const fits = (x: number, z: number, yaw: number, model: VehicleModel, own?: RoadChain): boolean => {
+const fits = (x: number, z: number, yaw: number, model: VehicleModel, own?: RoadChain, strip?: KerbStrip): boolean => {
   if (!parkable(x, z) || !footprint(x, z, yaw, model, 0).every(([px, pz]) => parkable(px, pz)) || !clearOfZebras(x, z, yaw, model)) return false;
-  if (!level(x, z, yaw, model) || !clearOfKeptWays(x, z, yaw, model) || !clearOfStops(x, z, model) || !offMultiLaneKerbs(x, z, yaw)) return false;
+  if (!level(x, z, yaw, model) || !clearOfKeptWays(x, z, yaw, model, strip) || !clearOfStops(x, z, model) || !offMultiLaneKerbs(x, z, yaw)) return false;
+  if (!clearOfFurniture(x, z, yaw, model, strip)) return false;
   const { width, length } = VEHICLE_SIZE[model];
   const fx = Math.sin(yaw);
   const fz = Math.cos(yaw);
   for (const t of [-0.5, 0, 0.5]) {
     const px = x + fx * length * t;
     const pz = z + fz * length * t;
-    if (inBuilding(px, pz) || nearestWall(px, pz).d < width / 2 + 0.4 || furnitureClearance(px, pz) < width / 2 + 0.3) return false;
+    if (inBuilding(px, pz) || nearestWall(px, pz).d < width / 2 + 0.4) return false;
   }
   // Off every lane cars drive (a junction, a bend of a crossing street).
   for (const r of TRAFFIC_ROUTES) if (r.use !== "deliveries" && projectOn(r.points, x, z).d < LANE_CLEAR + width / 2) return false;
@@ -373,7 +315,7 @@ const stripCars = (park: KerbPark, c: RoadChain, side: 1 | -1, layout: BayLayout
       .find(
         (k) =>
           footprint(k.x, k.z, yaw, model, -0.1).every(([x, z]) => inRing(x, z, park.ring)) &&
-          fits(k.x, k.z, yaw, model) &&
+          fits(k.x, k.z, yaw, model, undefined, { ring: park.ring, axis: c.points, side }) &&
           (layout === "parallel" || endsOffLanes(k.x, k.z, yaw, model)) &&
           ![...taken, ...out].some((o) => Math.hypot(o.x - k.x, o.z - k.z) < 8 && overlap(o, k)),
       );
@@ -414,14 +356,6 @@ const ROW_STEP = [6, 12] as const;
 const RING = ROAD_CHAINS.filter((c) => c.name === "Plac Zamkowy");
 const nearRing = (x: number, z: number): boolean =>
   RING.some((c) => c.points.some((p, i) => i > 0 && segmentDistance(x, z, c.points[i - 1]!, p) < 4.5));
-
-const segmentDistance = (x: number, z: number, a: Pt, b: Pt): number => {
-  const dx = b[0] - a[0];
-  const dz = b[1] - a[1];
-  const len2 = dx * dx + dz * dz || 1;
-  const t = Math.max(0, Math.min(1, ((x - a[0]) * dx + (z - a[1]) * dz) / len2));
-  return Math.hypot(x - (a[0] + dx * t), z - (a[1] + dz * t));
-};
 
 const squareCars = (): ParkedCar[] => {
   const out: ParkedCar[] = [];
