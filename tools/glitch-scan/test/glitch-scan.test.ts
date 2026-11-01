@@ -15,10 +15,10 @@ import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 import { MAP_SIGN_KIND } from "../../../packages/engine/src/renderer/mapcity/sign-plan";
 import { marketChecks } from "./market-pieces";
 import { signsInNeighbours } from "./sign-neighbours";
-import { bayCarsMisturned, bayCarsOutOfPark, crowdLanesOnParking, kerbParksOf } from "./kerb-bays";
+import { bayCarsMisturned, bayCarsOutOfPark, bayStripsSparse, crowdLanesOnParking, kerbParksOf } from "./kerb-bays";
 import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alone.ts";
 import { extractFeatures } from "../../osm-import/src/features.ts";
-import { roadWidth } from "../../osm-import/src/ground.ts";
+import { pathWidth, roadWidth } from "../../osm-import/src/ground.ts";
 import { oneway } from "../../osm-import/src/markings.ts";
 import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
 import { SHAPES } from "../../osm-import/src/props-kinds.ts";
@@ -28,13 +28,13 @@ import { cityVenueBoards } from "../../osm-import/src/venue-boards.ts";
 import { CROWD_LANES } from "../../../packages/sim/src/content/crowd";
 import { INTERIORS, interiorAt } from "../../../packages/sim/src/content/interior-areas";
 import { CLINIC_DOOR, KOI_DOOR } from "../../../packages/sim/src/content/interiors";
-import { furnitureClearance } from "../../../packages/sim/src/content/furniture-index";
+import { furnitureNear } from "../../../packages/sim/src/content/furniture-index";
 import { BOLLARD, alongSegment, anchors, chainSegments, chainThrough, distanceToPiece, furniturePrisms, furnitureRadius, turnLocal } from "../../../packages/sim/src/content/lublin/furniture";
 import { LUBLIN_STREET_PROPS, buildingView, isLandmark } from "../../../packages/sim/src/content/lublin";
 import { inBuilding, nearestWall } from "../../../packages/sim/src/content/lublin/places";
 import { ROAD_CHAINS, type RoadChain, polylineLength, surfaceLiftAt, surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
 import { clearedBuilding } from "../../../packages/sim/src/content/cleared-buildings";
-import { CLEARED_BUILDINGS, MAP_CHUNKS, PASSAGES, ROOM_SITES } from "../../../packages/sim/src/content/lublin/sites";
+import { CLEARED_BUILDINGS, MAP_CHUNKS, PASSAGES, ROOM_SITES, ROOM_STOREY } from "../../../packages/sim/src/content/lublin/sites";
 import { groundY } from "../../../packages/sim/src/content/lublin/terrain";
 import { BRIDGE_DECKS, bridgeDeckAt } from "../../../packages/sim/src/content/lublin/decks";
 import { WORLD_CHUNKS, WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
@@ -128,6 +128,8 @@ const LANTERN_MODEL = (() => {
 const LANTERN_HEAD = LANTERN_MODEL.filter((v) => v.z > 0.5);
 const inMap = (x: number, z: number) => MAP_CHUNKS.some((c) => x > c.bounds.minX + 1 && x < c.bounds.maxX - 1 && z > c.bounds.minZ + 1 && z < c.bounds.maxZ - 1);
 const onChunk = (x: number, z: number) => MAP_CHUNKS.some(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ);
+/** How far the import's simplified axis of a footway (`simplifyLine`, 0.5 m) lies off the mapped one in the city (m): 0.09 m at most by the parked cars. */
+const AXIS_SLACK = 0.1;
 /** Distance from (x, z) to the segment a-b. */
 const segmentGap = (x: number, z: number, a: { x: number; z: number }, b: { x: number; z: number }) => {
   const dx = b.x - a.x;
@@ -602,12 +604,23 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       .flat()
       .filter((i) => i.prop !== "lamp-wall-lantern" && inBuilding(i.x, i.z) && nearestWall(i.x, i.z).d > 0.5)
       .map((i) => ({ at: near(i.x, i.z), what: `${i.prop} ${nearestWall(i.x, i.z).d.toFixed(1)} m` })),
-  /** A parked car with a piece of furniture inside its body. */
+  /**
+   * A parked car with a piece of furniture inside its body: a point of its footprint (sampled 9
+   * by 9) in the piece's solid, or a corner of the solid in the footprint. The body is its
+   * rectangle, not its axis grown by half its width: that would reach half a car's width past its
+   * nose, over the kerb onto a meter on the pavement (G-189).
+   */
   "parked-car-in-furniture": () =>
     PARKED_CARS.flatMap((c) => {
       const { width, length } = VEHICLE_SIZE[c.model];
-      const hit = [-0.5, 0, 0.5].some((t) => furnitureClearance(c.x + Math.sin(c.yaw) * length * t, c.z + Math.cos(c.yaw) * length * t) < width / 2);
-      return hit ? [{ at: near(c.x, c.z), what: c.model }] : [];
+      const [fx, fz] = [Math.sin(c.yaw), Math.cos(c.yaw)];
+      const k = [0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => i / 8 - 0.5);
+      const body = k.flatMap((a) => k.map((b) => ({ x: c.x + fz * width * a + fx * length * b, z: c.z - fx * width * a + fz * length * b })));
+      const inBody = (x: number, z: number) => Math.abs((x - c.x) * fz - (z - c.z) * fx) <= width / 2 && Math.abs((x - c.x) * fx + (z - c.z) * fz) <= length / 2;
+      const hit = furnitureNear(c.x, c.z).find(
+        (f) => body.some((p) => distanceToPiece(f.item, p.x, p.z) === 0) || furniturePrisms(f.item).some((pr) => pr.points.some((q) => inBody(f.item.x + q.x, f.item.z + q.z))),
+      );
+      return hit ? [{ at: near(c.x, c.z), what: `${c.model} on ${hit.item.prop}` }] : [];
     }),
   /** A parked car with a corner or its middle off the carriageway and the squares (on grass, a pavement). */
   "parked-car-off-road": () =>
@@ -696,10 +709,12 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     });
   },
   /**
-   * A parked car whose body (sampled every eighth of its length and width) comes nearer than 1 m
-   * to the axis of a footway, path, pedestrian street or cycleway of the map data mapped on its
-   * own (not a sidewalk along a kerb, not a crossing; on the ground, off bridges and tunnels): it
-   * stands on the walkers' or the riders' way (G-143, G-156).
+   * A parked car whose body (sampled every eighth of its length and width) comes nearer than half
+   * the mapped width (`width`, else 2.5 m for a footway, 2 m for a path) or 1 m to the axis of a
+   * footway, path, pedestrian street or cycleway of the map data mapped on its own (not a sidewalk
+   * along a kerb, not a crossing; on the ground, off bridges and tunnels): it stands on the
+   * walkers' or the riders' way (G-143, G-156, G-189). The game keeps cars that far off the axis
+   * as the import simplifies it, which may lie `AXIS_SLACK` off the mapped one.
    */
   "parked-car-on-footway": () => {
     const ways = extractFeatures(SOURCE_OSM).lines.filter(
@@ -716,13 +731,13 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
         (t.bridge === undefined || t.bridge === "no") &&
         Number(t.layer ?? 0) === 0,
     );
-    const segs = ways.flatMap((l) => l.line.slice(1).map((b, i) => ({ id: l.id, a: l.line[i]!, b })));
+    const segs = ways.flatMap((l) => l.line.slice(1).map((b, i) => ({ id: l.id, a: l.line[i]!, b, reach: Math.max(1, pathWidth(l.tags) / 2 - AXIS_SLACK) })));
     return PARKED_CARS.flatMap((c) => {
       const { width, length } = VEHICLE_SIZE[c.model];
       const fx = Math.sin(c.yaw);
       const fz = Math.cos(c.yaw);
       const body = [0, 1, 2, 3, 4, 5, 6, 7, 8].flatMap((i) => [0, 1, 2, 3, 4, 5, 6, 7, 8].map((k) => ({ x: c.x + fz * width * (i / 8 - 0.5) + fx * length * (k / 8 - 0.5), z: c.z - fx * width * (i / 8 - 0.5) + fz * length * (k / 8 - 0.5) })));
-      const hit = segs.find(({ a, b }) => Math.max(a.x, b.x) > c.x - 8 && Math.min(a.x, b.x) < c.x + 8 && Math.max(a.z, b.z) > c.z - 8 && Math.min(a.z, b.z) < c.z + 8 && body.some((p) => segmentGap(p.x, p.z, a, b) < 1));
+      const hit = segs.find(({ a, b, reach }) => Math.max(a.x, b.x) > c.x - 8 && Math.min(a.x, b.x) < c.x + 8 && Math.max(a.z, b.z) > c.z - 8 && Math.min(a.z, b.z) < c.z + 8 && body.some((p) => segmentGap(p.x, p.z, a, b) < reach));
       return hit ? [{ at: near(c.x, c.z), what: `${c.model} on ${hit.id}` }] : [];
     });
   },
@@ -782,8 +797,24 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   },
   /** A car in a kerb car park of the map data (`parking=lane|street_side`) with a corner over 0.3 m out of its outline (G-177). */
   "bay-car-out-of-park": () => bayCarsOutOfPark(kerbParksOf(SOURCE_OSM), PARKED_CARS),
-  /** A car in a kerb car park turned against its bays: along one mapped `perpendicular|diagonal` (G-177), off 60° in a `diagonal` one, across an untagged deep one (G-187). */
+  /** A car in a kerb car park turned against its bays: along one mapped `perpendicular|diagonal` (G-177), off 60° in a `diagonal` one, across an untagged deep one (G-187) or along it beside a car aslant (G-189). */
   "bay-car-orientation": () => bayCarsMisturned(kerbParksOf(SOURCE_OSM), PARKED_CARS),
+  /** A kerb car park 15 m long or more, a meter or a footway just past its kerb, with under half the cars of its bays (G-189). */
+  "bay-strip-sparse": () =>
+    bayStripsSparse(
+      kerbParksOf(SOURCE_OSM),
+      PARKED_CARS,
+      carStreets.map((c) => c.points),
+      {
+        furniture: Object.values(WORLD_STREET_PROPS)
+          .flat()
+          .map((i) => ({ x: i.x, z: i.z, r: furnitureRadius(i) }))
+          .filter((f) => f.r > 0),
+        footways: extractFeatures(SOURCE_OSM)
+          .lines.filter(({ tags: t }) => (t.highway === "footway" || t.highway === "path" || t.highway === "pedestrian") && t.area !== "yes" && t.tunnel === undefined && t.covered === undefined && (t.bridge === undefined || t.bridge === "no"))
+          .map((l) => l.line),
+      },
+    ),
   /** A crowd lane walked a metre or more inside a kerb car park, on its cars' strip (G-177). */
   "crowd-lane-on-parking": () => crowdLanesOnParking(kerbParksOf(SOURCE_OSM), CROWD_LANES),
   /** A game block standing on the ground (not an awning or a deck) that floats or sinks. */
@@ -792,6 +823,27 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       if (p.view.kind !== "block" || !p.solid || p.view.size.y < 0.8) return [];
       const gap = p.center.y - p.view.size.y / 2 - groundY(p.center.x, p.center.z);
       return (gap > 0.15 && gap < 1) || gap < -0.3 ? [{ at: near(p.center.x, p.center.z), what: `${p.view.skin?.style ?? p.view.material} ${gap.toFixed(2)} m` }] : [];
+    }),
+  /**
+   * A game neon set against a wall (its centre within 0.2 m of one) whose plate, square to an
+   * axis, leaves the slanting wall (G-160): an end of its long side over 0.4 m out in the air
+   * (measured to that end's nearest wall), or over 15% of its width in a building, sampled along
+   * the plate's middle, where the renderer draws the sign (the wall cuts the letters there).
+   * Not a sign on a room's cut storey: there the room's front, square to an axis, stands for the
+   * building's wall (`ROOM_STOREY`).
+   */
+  "neon-off-wall": () =>
+    GAME_PROPS.flatMap(({ center: c, view }) => {
+      if (view.kind !== "neon" || nearestWall(c.x, c.z).d > 0.2) return [];
+      if (ROOM_SITES.some((r) => c.x >= r.rect.minX && c.x <= r.rect.maxX && Math.abs(c.z - r.front) < 1 && c.y < r.floor + ROOM_STOREY)) return [];
+      const along = view.size.x >= view.size.z;
+      const width = along ? view.size.x : view.size.z;
+      const at = (t: number) => (along ? { x: c.x + t * width, z: c.z } : { x: c.x, z: c.z + t * width });
+      const air = [-0.5, 0.5].map(at).filter((e) => !inBuilding(e.x, e.z) && nearestWall(e.x, e.z).d > 0.4);
+      const samples = Array.from({ length: 40 }, (_, i) => at((i + 0.5) / 40 - 0.5));
+      const inside = samples.filter((q) => inBuilding(q.x, q.z)).length / samples.length;
+      if (air.length === 0 && inside <= 0.15) return [];
+      return [{ at: near(c.x, c.z), what: `${view.label ?? "neon"} ${(inside * 100).toFixed(0)}% in, ${air.length} end(s) off` }];
     }),
   /**
    * A vehicle (a parked car, a set piece's car, van or wreck) whose bottom lies more than 0.1 m
@@ -1471,6 +1523,39 @@ describe("the glitch scan (ADR-0054)", () => {
     expect(tiers.length).toBeGreaterThan(0);
     const gateTop = gate.y + gate.height + (gate.roof ?? 0);
     for (const t of tiers) if (t.y1 > gateTop) expect(ringGap(t.ring, worldOutline(gate))).toBeGreaterThanOrEqual(5);
+  });
+
+  describe("kerb car parks (G-189)", () => {
+    const street = [[0, 0] as const, [40, 0] as const];
+    const park = (orientation: string | undefined, ring: readonly [number, number][]) => ({
+      id: "w1",
+      osmId: 1,
+      tags: { amenity: "parking", parking: "street_side", ...(orientation ? { orientation } : {}) },
+      ring: ring.map(([x, z]) => ({ x, z })),
+      holes: 0,
+    });
+    const car = (x: number, z: number, yaw: number) => ({ chunk: "c", x, y: 0, z, yaw, model: "sedan" as const, tint: 0 });
+    const deep = park(undefined, [[10, 4], [30, 4], [30, 10], [10, 10]]);
+    const [along, aslant, across] = [Math.PI / 2, Math.PI / 6, 0];
+
+    it("finds a deep untagged strip's car across the kerb, and one along it beside a car aslant", () => {
+      expect(bayCarsMisturned([deep], [car(15, 7, across)]).map((f) => f.what)).toEqual(["sedan in w1 (untagged deep) across the kerb, not aslant"]);
+      expect(bayCarsMisturned([deep], [car(15, 7, along), car(22, 7, aslant)]).map((f) => f.what)).toEqual(["sedan in w1 (untagged deep) along the kerb beside a car aslant"]);
+      expect(bayCarsMisturned([deep], [car(15, 7, along)])).toEqual([]);
+      expect(bayCarsMisturned([deep], [car(15, 7, aslant), car(22, 7, aslant)])).toEqual([]);
+    });
+
+    it("finds a strip by a meter past its kerb holding under half its bays' cars, and only that", () => {
+      const meter = { furniture: [{ x: 20, z: 10.5, r: 0.3 }], footways: [] };
+      const none = { furniture: [], footways: [] };
+      const one = [car(15, 7, aslant)];
+      const three = [car(15, 7, aslant), car(20, 7, aslant), car(25, 7, aslant)];
+      expect(bayStripsSparse([deep], one, [street], meter)).toHaveLength(1);
+      expect(bayStripsSparse([deep], three, [street], meter)).toEqual([]);
+      expect(bayStripsSparse([deep], one, [street], none)).toEqual([]);
+      expect(bayStripsSparse([deep], [], [street], meter)).toEqual([]);
+      expect(bayStripsSparse([deep], one, [street], { furniture: [], footways: [[{ x: 5, z: 11 }, { x: 35, z: 11 }]] })).toHaveLength(1);
+    });
   });
 });
 
