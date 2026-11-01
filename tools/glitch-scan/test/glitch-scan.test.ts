@@ -13,6 +13,7 @@ import { centroid, cleanRing, pointInRing } from "../../../packages/engine/src/r
 import { stackTiers } from "../../../packages/engine/src/renderer/mapcity/vertical-plan";
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 import { MAP_SIGN_KIND } from "../../../packages/engine/src/renderer/mapcity/sign-plan";
+import { marketChecks } from "./market-pieces";
 import { signsInNeighbours } from "./sign-neighbours";
 import { bayCarsMisturned, bayCarsOutOfPark, crowdLanesOnParking, kerbParksOf } from "./kerb-bays";
 import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alone.ts";
@@ -1377,6 +1378,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "holo-or-blade-in-neighbour": () => signsIn([MAP_SIGN_KIND.holo, MAP_SIGN_KIND.blade]),
   /** A neon tube under the cornice (ADR-0044) running on into the building next door (G-170). */
   "tube-in-neighbour": () => signsIn([MAP_SIGN_KIND.tube]),
+  // The market's furniture of ADR-0058 stage 3 against the map data (`market-pieces.ts`).
+  ...marketChecks(SOURCE_OSM, Object.values(WORLD_STREET_PROPS).flat(), CROWD_LANES),
 };
 
 /** A building's own tags in the map data, by the game's id (`w…`, `r…`, a split's `/n` dropped). */

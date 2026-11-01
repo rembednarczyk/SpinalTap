@@ -11,9 +11,10 @@ import { crossingBands } from "../../../packages/sim/src/content/lublin/crossing
 import { type Pt, centroid } from "./geometry.ts";
 import type { Tags } from "./osm.ts";
 import { ART_SHAPE, artShape } from "./props-art.ts";
-import { MAPPED, propOf, withShape } from "./props-kinds.ts";
+import { KERB_SHY, MAPPED, MAX_MOVE, ON_BUILDINGS, WALL_REACH, WALL_ROOM, propOf, withShape } from "./props-kinds.ts";
 import { bulkyPieces } from "./props-bulky.ts";
-import { marketStalls } from "./props-market.ts";
+import { Clearances, GOODS_KEY, type MarketContext, foodStalls, stallGoods } from "./props-food.ts";
+import { marketEntrances, marketStalls } from "./props-market.ts";
 import { type SideMode, type Station, evenStations, fnv, offRoad, offWall, openFacing, scatter, sideOffset, stations, towardsStreet, unit, yawOf } from "./props-place.ts";
 import { type BoardSpan, boardBehind, offBoards } from "./props-boards.ts";
 import { type BollardRef, stringBollards } from "./props-rows.ts";
@@ -308,38 +309,8 @@ export const facingOf = (site: Site, x: Placed): number => {
 const r2 = (v: number): number => Math.round(v * 100) / 100 + 0;
 const r1 = (v: number): number => Math.round(v * 10) / 10 + 0;
 
-/** Kinds that may stand on a building outline: the wall-mounted ones. */
-const ON_BUILDINGS: ReadonlySet<StreetPropKind> = new Set(["lamp-wall-lantern", "cctv"]);
-
-/** How far the bulky free-standing pieces keep from the walls (m): about their footprint's radius. */
-const WALL_ROOM: Partial<Record<StreetPropKind, number>> = {
-  artwork: 1.5,
-  monument: 1.5,
-  kiosk: 1.7,
-  "bus-shelter": 2,
-  bench: 1.2,
-  "vending-machine": 0.7,
-  "advertising-column": 0.8,
-  floodlight: 0.4,
-  // ADR-0058 stage 2: a cash machine's back by the wall, a rack with its bikes, the long pieces
-  // by the radius of their solid less the glitch scan's 0.3 m.
-  atm: 0.5,
-  "bike-rack": 1.1,
-  "food-cart": 1.9,
-  container: 3,
-};
-
-/**
- * How far a piece may be moved out from a wall (m), beyond the default 4: the plan sketches the
- * floodlights on the lit building's outline, up to 8 m inside the Trinitarian Tower.
- */
-const WALL_REACH: Partial<Record<StreetPropKind, number>> = { floodlight: 10 };
-
-/** How far a piece may end up from its point in the plan (m), at most. */
-const MAX_MOVE: Partial<Record<StreetPropKind, number>> = { hydrant: 3 };
-
-/** Kinds of ADR-0058 stage 2 that never stand in the carriageway, even moved out of a wall. */
-const KERB_SHY: ReadonlySet<StreetPropKind> = new Set(["atm", "hydrant", "food-cart", "container"]);
+/** The rule's name in `perItem` for the food booths, which no group of the plan asks for. */
+export const FOOD_STALLS = "rule.food-stalls";
 
 /** Kinds that belong on the carriageway: covers in it, bollards closing it. */
 const ON_ROAD: ReadonlySet<StreetPropKind> = new Set(["manhole", "bollard"]);
@@ -348,8 +319,9 @@ const ON_ROAD: ReadonlySet<StreetPropKind> = new Set(["manhole", "bollard"]);
 const minGap = (prop: StreetPropKind, fromLine: boolean): number => (prop.startsWith("lamp-") && fromLine ? 7 : prop === "trolley-pole" ? 10 : 0.3);
 
 /** The plan's groups placed (before the chunks): every piece with its prop, point, yaw and key. */
-const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, tags: NodeTags): { placed: Placed[]; fromLine: Set<Placed> } => {
+const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, tags: NodeTags, boards: readonly BoardSpan[], market: MarketContext): { placed: Placed[]; fromLine: Set<Placed> } => {
   const placed: Placed[] = [];
+  const clear = new Clearances(site.chunks, market);
   const fromLine = new Set<Placed>();
   const deferred: PlanItem[] = [];
   for (const item of plan.items) {
@@ -374,17 +346,32 @@ const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, 
       placed.push(p);
       if (item.line || item.lines) fromLine.add(p);
     }
+    // The stock beside a market's stalls (ADR-0058 stage 3), within its outline.
+    if (prop === "market-stall" && item.polygon) {
+      const ring = flat(item.polygon);
+      // A flea market's scattered stalls take their facing now, so their stock stands by their side.
+      placed.forEach((x, k) => {
+        if (x.from === item.id && x.yaw === null) placed[k] = { ...x, yaw: facingOf(site, x) };
+      });
+      const stalls = placed.filter((x) => x.from === item.id);
+      for (const g of stallGoods(site, clear, stalls, ring, marketEntrances(site, ring), placed)) placed.push({ ...g, from: item.id });
+    }
   }
   // Baskets hang on the lamps, the street groups follow the streets and the benches.
   for (const item of deferred) for (const x of placeStreetGroup(site, item, placed, (q) => facingOf(site, q))) placed.push({ ...x, from: item.id });
+  // The food booths by the fast-food venues' boards (ADR-0058 stage 3), after everything the plan places.
+  for (const x of foodStalls(site, clear, boards, placed)) placed.push({ ...x, from: FOOD_STALLS });
   return { placed, fromLine };
 };
 
-/** Every group of the plan as street furniture per chunk, with the control numbers; the wall lanterns keep off the venues' `boards`. */
-export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[], tags: NodeTags = new Map(), boards: readonly BoardSpan[] = []): PropsOut => {
+/**
+ * Every group of the plan as street furniture per chunk, with the control numbers; the wall lanterns
+ * keep off the venues' `boards`, the market's furniture off the carriageways and the game's doors (`market`).
+ */
+export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[], tags: NodeTags = new Map(), boards: readonly BoardSpan[] = [], market: MarketContext = {}): PropsOut => {
   const site = new Site(chunks);
   const skipped: Record<string, number> = {};
-  const { placed, fromLine } = placeAll(site, plan, skipped, tags);
+  const { placed, fromLine } = placeAll(site, plan, skipped, tags, boards, market);
   const byChunk = new Map<string, StreetPropItem[]>(chunks.map((c) => [c.id, []]));
   const perKind: Record<string, number> = {};
   const perDistrict: Record<string, number> = {};
@@ -405,13 +392,17 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
   let onBoard = 0;
   // Where each lamp ended up: its basket was picked before the lamps were merged or moved.
   const lampAt = new Map<string, Pt>();
+  // How far each stall moved from where it was placed: its stock moves with it (ADR-0058 stage 3).
+  const stallShift = new Map<string, Pt>();
   for (const piece of placed) {
     const lamp = piece.prop === "hanging-basket" ? lampAt.get(piece.key.slice(0, -BASKET.length)) : undefined;
-    if (piece.prop === "hanging-basket" && !lamp) {
+    const shift = piece.prop === "market-goods" ? stallShift.get(piece.key.slice(0, -GOODS_KEY.length)) : undefined;
+    // A basket whose lamp, or stock whose stall, was left out goes with it.
+    if ((piece.prop === "hanging-basket" && !lamp) || (piece.prop === "market-goods" && !shift)) {
       merged++;
       continue;
     }
-    const placedAt = lamp ? { ...piece, p: lamp } : piece;
+    const placedAt = lamp ? { ...piece, p: lamp } : shift ? { ...piece, p: { x: piece.p.x + shift.x, z: piece.p.z + shift.z } } : piece;
     // A light, a machine or a tree from a node in the road stands on the nearest pavement.
     // Judged where it ends up, at the 0.1 m the chunks keep.
     const at = { x: r1(placedAt.p.x), z: r1(placedAt.p.z) };
@@ -474,6 +465,7 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
       continue;
     }
     if (BASKET_LAMPS.has(x.prop)) lampAt.set(x.key, { x: item.x, z: item.z });
+    if (x.prop === "market-stall") stallShift.set(x.key, { x: item.x - piece.p.x, z: item.z - piece.p.z });
     same.push({ x: item.x, z: item.z });
     kept.set(x.prop, same);
     solids.add(item);

@@ -112,7 +112,10 @@ export type RoadMarkingKind = "centre-dash" | "centre-double" | "lane-dash" | "e
  * Street furniture of the map city (ADR-0047), from `docs/world/lublin-props.todo.json`: the
  * five Lublin lamp types, benches, bollards, trees, bins and the rest. Drawn in bulk per chunk.
  * The last four came with the street furniture of ADR-0058 stage 2: free-standing cash machines,
- * fire hydrants, food carts on the markets and shipping containers on the riverside.
+ * fire hydrants, food carts on the markets and shipping containers on the riverside. ADR-0058
+ * stage 3 adds the market's stock beside the stalls (`market-goods`: cartons on a pallet, barrels,
+ * crates, goods under a canvas) and the food booths in front of the fast-food venues (`food-stall`:
+ * a yatai with its counter, stools, noren and lanterns).
  */
 export type StreetPropKind =
   | "lamp-pastoral"
@@ -154,7 +157,9 @@ export type StreetPropKind =
   | "atm"
   | "hydrant"
   | "food-cart"
-  | "container";
+  | "container"
+  | "market-goods"
+  | "food-stall";
 
 /** One piece of street furniture, in world metres relative to its chunk entity's position. */
 export interface StreetPropItem {

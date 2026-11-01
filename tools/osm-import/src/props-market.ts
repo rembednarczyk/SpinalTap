@@ -86,7 +86,7 @@ export const longAxis = (pts: readonly Pt[]): Pt => {
 };
 
 /** Where paths and streets cross the outline's edge, every metre along it. */
-const entrances = (site: Site, ring: readonly Pt[]): Pt[] => {
+export const marketEntrances = (site: Site, ring: readonly Pt[]): Pt[] => {
   const out: Pt[] = [];
   for (let i = 0; i < ring.length; i++) {
     const a = ring[i]!;
@@ -166,7 +166,7 @@ export const marketStalls = (site: Site, ring: readonly Pt[], pieces: readonly S
   const us = ground.map((p) => p.x * u.x + p.z * u.z);
   const vs = ground.map((p) => -p.x * u.z + p.z * u.x);
   const span = { u0: Math.min(...us) - PERIOD_U, u1: Math.max(...us), v0: Math.min(...vs) - PERIOD_V, v1: Math.max(...vs) };
-  const gates = entrances(site, ring);
+  const gates = marketEntrances(site, ring);
   let best: MarketStall[] = [];
   for (let i = 0; i < PHASES; i++)
     for (let k = 0; k < PHASES; k++) {

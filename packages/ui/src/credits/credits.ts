@@ -41,6 +41,7 @@ export const CREDIT_SECTIONS: readonly CreditSection[] = ["street", "city", "cha
 const CITY = ["city/city-kit.glb"] as const;
 const PROPS = ["city/city-props.glb"] as const;
 const STREET = ["city/street-props.glb"] as const;
+const MARKET = ["city/market-props.glb"] as const;
 /** `audio/<name>-000.ogg` ... for the numbers given. */
 const ogg = (name: string, ...n: number[]): string[] => n.map((i) => `audio/${name}-${String(i).padStart(3, "0")}.ogg`);
 
@@ -74,6 +75,11 @@ export const CREDITS: readonly Credit[] = [
   { id: "kenney-nature-kit", section: "street", title: "Nature Kit 2.1", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://opengameart.org/content/nature-kit", license: "CC0-1.0", files: STREET, changed: true },
   { id: "quaternius-public-transport", section: "street", title: "Public Transport Pack", author: "Quaternius", authorUrl: "https://quaternius.com", url: "https://quaternius.com/packs/publictransport.html", license: "CC0-1.0", files: STREET, changed: true },
   { id: "oga-lyricsz-bike", section: "street", title: "bike", author: "lyricsz", url: "https://opengameart.org/content/bike-0", license: "CC0-1.0", files: STREET, changed: true },
+  // CC0 (ADR-0058 stage 3): the market's stock, the food booths and the goods on the counters of market-props.glb.
+  { id: "kenney-food-kit", section: "street", title: "Food Kit 2.0", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://opengameart.org/content/food-kit", license: "CC0-1.0", files: MARKET, changed: true },
+  { id: "kenney-mini-market", section: "street", title: "Mini Market 1.0", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://opengameart.org/content/mini-market", license: "CC0-1.0", files: MARKET, changed: true },
+  { id: "kenney-survival-kit", section: "street", title: "Survival Kit 2.0", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://opengameart.org/content/survival-kit", license: "CC0-1.0", files: MARKET, changed: true },
+  { id: "kenney-furniture-kit", section: "street", title: "Furniture Pack 1.0", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://opengameart.org/content/furniture-kit", license: "CC0-1.0", files: MARKET, changed: true },
   // The cast (VRoid Project samples) and the weapons.
   { id: "vroid-samples", section: "characters", title: "VRoid Studio sample models (AvatarSample_D, AvatarSample_F, Sakurada Fumiriya, Sendagaya Shino, Base_Male)", author: "pixiv / VRoid Project", url: "https://opengameart.org/content/vroid-studio-cc0-models", license: "VRoid-Hub-1.0", files: ["models/seki.vrm", "models/kaito.vrm", "models/ganger.vrm", "models/civilian.vrm", "models/mori.vrm"], changed: true },
   { id: "quaternius-ultimate-gun-pack", section: "weapons", title: "Ultimate Gun Pack", author: "Quaternius", authorUrl: "https://quaternius.com", url: "https://opengameart.org/content/ultimate-gun-pack", license: "CC0-1.0", files: ["weapons/pistol.glb", "weapons/smg.glb"], changed: true },
