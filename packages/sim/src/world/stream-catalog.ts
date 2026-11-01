@@ -100,6 +100,15 @@ export class StreamCatalog {
     for (const t of templates) if (t.key) this.former.set(t.key, t);
   }
 
+  /**
+   * The contract's site cleared (G-195): its people are known by key only from now on, as a
+   * replaced job's, so no chunk brings them back and only those saved in the world return.
+   */
+  closeContract(): void {
+    this.addFormer(this.contract);
+    this.setContract([]);
+  }
+
   /** The template of a replaced job's person, by key. */
   formerOf(key: string): Template | undefined {
     return this.former.get(key);
