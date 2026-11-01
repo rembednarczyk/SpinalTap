@@ -1,46 +1,15 @@
-import { type BaseTexture, Color3, Matrix, type Scene, ShaderMaterial, type Texture } from "../babylon";
+import { type BaseTexture, Matrix, type Scene, type ShaderMaterial, type Texture } from "../babylon";
 import { NIGHT_RIG, type LightingRig, type PointLightDef } from "./lighting";
-import { PRESETS, type PresetName, type ToonPreset } from "./presets";
-import { MAX_POINT_LIGHTS, TOON_FRAGMENT, TOON_VERTEX } from "./toon-shader";
-
-const UNIFORMS = [
-  "world",
-  "viewProjection",
-  "shadowMatrix",
-  "shadowParams",
-  "shadeColor",
-  "fill",
-  "fillColor",
-  "flashLight",
-  "cameraPosition",
-  "baseColor",
-  "emissiveColor",
-  "sunDir",
-  "sunColor",
-  "ambientColor",
-  "rimColor",
-  "rimStrength",
-  "rimTint",
-  "gloss",
-  "windows",
-  "fogColor",
-  "fogDensity",
-  "pointPos",
-  "pointColor",
-  "pointCount",
-  "selfLit",
-  "envStrength",
-];
-
-const hex = (h: string): Color3 => Color3.FromHexString(h);
+import { PRESETS, type PresetName } from "./presets";
+import { ToonEnvironment } from "./toon-environment";
+import { createToonMaterial, hex } from "./toon-material-factory";
+import { MAX_POINT_LIGHTS } from "./toon-shader";
 
 /**
  * Lights farther than this from the camera only get a shader slot when nearer ones leave one
  * free. Wide enough that within one district the selection is the plain registration order.
  */
 export const LIGHT_SLOT_DISTANCE = 50;
-
-const SAMPLERS = ["shadowSampler", "baseSampler"];
 
 export interface ImportedMaterialOptions {
   /** Discard texels with alpha below 0.5 (glTF MASK and BLEND materials). */
@@ -78,8 +47,7 @@ export class ToonMaterials {
   private active: PointLightDef[] = [];
   private focus: { x: number; z: number } | null = null;
   private shadow: ShadowBinding | null = null;
-  /** Wet-asphalt probe (ADR-0036) and the presets that sample it; fixed before they are created. */
-  private env: { texture: BaseTexture; presets: ReadonlySet<string>; strength: number } | null = null;
+  private readonly env = new ToonEnvironment();
 
   constructor(
     private readonly scene: Scene,
@@ -92,7 +60,7 @@ export class ToonMaterials {
   }
 
   get(preset: PresetName): ShaderMaterial {
-    return this.cached(preset, () => this.create(preset, PRESETS[preset]));
+    return this.cached(preset, () => createToonMaterial(this.scene, preset, PRESETS[preset], { env: this.env.bindingFor(preset) }));
   }
 
   /**
@@ -105,7 +73,8 @@ export class ToonMaterials {
     const tint = options.tint === true && texture !== null;
     const key = `imp:${preset}:${base}:${texture?.uniqueId ?? "-"}${cut ? ":cut" : ""}${blend ? ":blend" : ""}${options.doubleSided ? ":2s" : ""}${options.layer ? `:L${options.layer}` : ""}${tint ? ":tint" : ""}`;
     return this.cached(key, () => {
-      const m = this.create(key, { ...PRESETS[preset], base }, texture, cut ? "ALPHATEST" : blend ? "ALPHABLEND" : null, tint);
+      const alpha = cut ? "ALPHATEST" : blend ? "ALPHABLEND" : null;
+      const m = createToonMaterial(this.scene, key, { ...PRESETS[preset], base }, { texture, alpha, tint, env: this.env.bindingFor(key) });
       if (options.doubleSided) m.backFaceCulling = false;
       if (options.layer) {
         // Polygon offset, so the nearer layer wins the depth test whatever the draw order.
@@ -122,7 +91,7 @@ export class ToonMaterials {
    */
   forCityKit(palette: BaseTexture): ShaderMaterial {
     return this.cached(`city:${palette.uniqueId}`, () => {
-      const m = this.create("cityKit", PRESETS.cityKit, palette as Texture, null, false, ["CITYKIT"]);
+      const m = createToonMaterial(this.scene, "cityKit", PRESETS.cityKit, { texture: palette as Texture, extra: ["CITYKIT"], env: this.env.bindingFor("cityKit") });
       m.setFloat("selfLit", 1);
       return m;
     });
@@ -133,21 +102,19 @@ export class ToonMaterials {
    * material of those presets is created: the reflection is compiled in, not toggled.
    */
   setEnvironment(texture: BaseTexture, presets: ReadonlySet<string>, strength = 1.6): void {
-    this.env = { texture, presets, strength };
+    this.env.set(texture, presets, strength);
     for (const [name, m] of this.materials) if (presets.has(name)) m.setTexture("envSampler", texture);
   }
 
   /** Brightness of the probe on wet surfaces, 0 while it holds nothing yet. */
   setEnvironmentStrength(strength: number): void {
-    if (!this.env) return;
-    this.env = { ...this.env, strength };
-    for (const [name, m] of this.materials) if (this.env.presets.has(name)) m.setFloat("envStrength", strength);
+    if (!this.env.setStrength(strength)) return;
+    for (const [name, m] of this.materials) if (this.env.samples(name)) m.setFloat("envStrength", strength);
   }
 
   /** Materials compiled with the probe (debug, tests). */
   get reflectiveCount(): number {
-    const env = this.env;
-    return env ? [...this.materials.keys()].filter((k) => env.presets.has(k)).length : 0;
+    return [...this.materials.keys()].filter((k) => this.env.samples(k)).length;
   }
 
   setShadow(shadow: ShadowBinding | null): void {
@@ -244,43 +211,6 @@ export class ToonMaterials {
   setRig(rig: LightingRig): void {
     this.rig = rig;
     for (const m of this.materials.values()) this.applyRig(m);
-  }
-
-  private create(name: string, p: ToonPreset, texture: Texture | null = null, alpha: "ALPHATEST" | "ALPHABLEND" | null = null, tint = false, extra: readonly string[] = []): ShaderMaterial {
-    const env = this.env && this.env.presets.has(name) ? this.env : null;
-    const m = new ShaderMaterial(
-      `toon-${name}`,
-      this.scene,
-      { vertexSource: TOON_VERTEX, fragmentSource: TOON_FRAGMENT },
-      {
-        attributes: texture ? ["position", "normal", "uv"] : p.city ? ["position", "normal", "uv", "uv2"] : ["position", "normal"],
-        uniforms: [...UNIFORMS],
-        samplers: env ? [...SAMPLERS, "envSampler"] : [...SAMPLERS],
-        defines: [
-          ...(texture ? ["UV1", "TEXTURE", ...(alpha ? [alpha] : []), ...(tint ? ["TINT"] : [])] : []),
-          ...(p.surface === "concrete" ? ["CONCRETE_PANELS"] : p.surface === "metal" ? ["METAL_PANELS"] : []),
-          ...(p.vertexFlags ? ["DRESS_FLAGS"] : []),
-          ...(p.city === "facade" ? ["UV1", "UV2", "FACADE"] : p.city === "ground" ? ["UV1", "UV2", "MAP_GROUND"] : []),
-          ...extra,
-          ...(env ? ["ENV_REFLECT"] : []),
-        ],
-        needAlphaBlending: alpha === "ALPHABLEND",
-      },
-    );
-    if (texture) m.setTexture("baseSampler", texture);
-    m.setColor3("baseColor", hex(p.base));
-    m.setColor3("emissiveColor", hex(p.emissive ?? "#000000"));
-    m.setColor3("rimColor", hex(p.rim ?? "#ffffff"));
-    m.setFloat("rimStrength", p.rimStrength ?? 0.2);
-    m.setFloat("gloss", p.gloss ?? 0);
-    m.setFloat("windows", p.windows ? 1 : 0);
-    m.setFloat("fill", p.fill ?? 0);
-    m.setFloat("selfLit", 1);
-    if (env) {
-      m.setTexture("envSampler", env.texture);
-      m.setFloat("envStrength", env.strength);
-    }
-    return m;
   }
 
   private applyRig(m: ShaderMaterial): void {
