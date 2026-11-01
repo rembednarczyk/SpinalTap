@@ -1,14 +1,17 @@
-import type { MeshSink } from "../../mesh-sink";
+import { groundY } from "@seki/sim";
+import type { MeshSink, Rgba } from "../../mesh-sink";
 import { type FacadeFrame, type Wall, trimMeta } from "../facade-frame";
 import { band } from "../facade-parts";
 import { doorwaysOn, walls } from "../facade-plan";
 import { WINDOW_STYLE } from "../facade-style";
 import { planPassages } from "../passage-plan";
-import { SWATCH, archPanel, blindNiches, clockFace, cornice, helmet, lit, pilasters, shownWalls, skirtRoof, slabRing, solid, stonePlinth } from "./kit";
+import { pointInRing } from "../polygon";
+import { SWATCH, archPanel, blindNiches, clockFace, cornice, helmet, lit, onWall, pilasters, shownWalls, skirtRoof, slabRing, solid, stonePlinth } from "./kit";
 import { GALLERY, type WallRect, battlements, buttress, clearOfPassages, diaper, gallery, paintingNiche, plaqueRow, smallWindows } from "./elevation";
 import { camera, corniceLights, facing, helmLeds, mast, scanner, screenFrame, sideOf, uplightFittings } from "./layer2077";
+import { TABLET, courseAndKeystones, dataRoof, gableOver, gableTrim, rustication, stringCourse, windowRows } from "./classicist";
 import type { LandmarkFrame } from "./landmark-frame";
-import type { LandmarkPart, Material, PartRecipe, Tier } from "./recipes";
+import type { GableFace, LandmarkPart, Material, PartRecipe, Tier } from "./recipes";
 
 /**
  * A landmark's building or part from its recipe (ADR-0062), in place of the facade plan: the
@@ -22,12 +25,15 @@ export type { LandmarkFrame };
 const WALL: Readonly<Record<Material, string>> = { brick: SWATCH.brick, plaster: SWATCH.plaster, stone: SWATCH.stone };
 const TRIM: Readonly<Record<Material, string>> = { brick: SWATCH.brickDark, plaster: SWATCH.plasterTrim, stone: SWATCH.stone };
 
+/** A tier's wall colour: its plaster's colour when the data gives one, else its material's. */
+const wallOf = (t: Tier): string => (t.colour ? SWATCH[t.colour] : WALL[t.material]);
+
 /**
  * The frame of a map building turned into a landmark's: plain walls (no window bays) up to the
  * top, which a helmet shorter than the data's roof raises: the peak stays the data's.
  */
 export const landmarkFrame = (f: FacadeFrame, landmark: LandmarkPart): LandmarkFrame => {
-  const m = landmark.part.tier.material;
+  const t = landmark.part.tier;
   const c = landmark.part.crown;
   const roof = f.b.roof ?? 0;
   const lift = c.kind === "helm" && roof > c.height ? roof - c.height : 0;
@@ -35,7 +41,7 @@ export const landmarkFrame = (f: FacadeFrame, landmark: LandmarkPart): LandmarkF
     ...f,
     b: lift > 0 ? { ...f.b, roof: roof - lift } : f.b,
     landmark,
-    style: { ...f.style, plaster: WALL[m], trim: TRIM[m], plinth: SWATCH.stone, window: WINDOW_STYLE.none, shopfront: false, attic: "none", atticHeight: 0, cornice: false, stringCourse: false, roof: "flat", tower: false, freeTower: false, neonTrim: null, signs: 0 },
+    style: { ...f.style, plaster: wallOf(t), trim: TRIM[t.material], plinth: SWATCH.stone, window: WINDOW_STYLE.none, shopfront: false, attic: "none", atticHeight: 0, cornice: false, stringCourse: false, roof: c.kind === "roof" ? f.style.roof : "flat", tower: false, freeTower: false, neonTrim: null, signs: 0 },
     walls: f.walls.map((w) => ({ ...w, bay: 0 })),
     top: f.top + lift,
     eave: f.top + lift,
@@ -55,8 +61,16 @@ export const mostFacing = (f: FacadeFrame, dir: { x: number; z: number }): Wall 
   return best;
 };
 
+/** A passage's mouth on a wall: the wall, the mouth along it and its top (world y). */
+export interface Mouth {
+  readonly w: Wall;
+  readonly u0: number;
+  readonly u1: number;
+  readonly top: number;
+}
+
 /** The first shown wall on a side with a passage's mouth in it, with the mouth along it. */
-export const mouthWall = (f: LandmarkFrame, side: "new" | "old"): { w: Wall; u0: number; u1: number; top: number } | null => {
+export const mouthWall = (f: LandmarkFrame, side: "new" | "old"): Mouth | null => {
   const layer = f.landmark.recipe.layer;
   for (const w of shownWalls(f)) {
     if (sideOf(w, layer) !== side) continue;
@@ -65,6 +79,31 @@ export const mouthWall = (f: LandmarkFrame, side: "new" | "old"): { w: Wall; u0:
   }
   return null;
 };
+
+/** The mouths with uplights: the Old Town's, and the new town's too where the whole layer is subdued. */
+export const litMouths = (f: LandmarkFrame): Mouth[] => (f.landmark.recipe.layer.subdued ? (["old", "new"] as const) : (["old"] as const)).flatMap((s) => mouthWall(f, s) ?? []);
+
+/** Whether the strip of the wall from u0 to u1, up to `out` metres in front of it, reaches into a neighbouring building of the data. */
+export const intoNeighbour = (f: LandmarkFrame, w: Wall, u0: number, u1: number, out: number): boolean =>
+  (f.landmark.nearby ?? []).some((r) => [u0, (u0 + u1) / 2, u1].some((u) => [0.05, out].some((o) => pointInRing(onWall(w, u, 0, o), r))));
+
+/** An uplight at a mouth: along the wall and the terrain's height under it (world y). */
+export interface Uplight {
+  readonly u: number;
+  readonly y: number;
+}
+
+/**
+ * The uplights at a mouth: either side of it, moved in off the corners, on the terrain under each
+ * (the street slopes along a gate's front); none where a neighbouring building stands.
+ */
+export const uplights = (f: LandmarkFrame, m: Mouth): Uplight[] =>
+  uplightsOn(m)
+    .filter((u) => !intoNeighbour(f, m.w, u - 0.2, u + 0.2, 0.3))
+    .map((u) => {
+      const p = onWall(m.w, u, 0, 0.16);
+      return { u, y: groundY(p.x, p.z) };
+    });
 
 /** Where the clocks are: the walls facing the new town and the Old Town. */
 export const clockWalls = (f: LandmarkFrame): { neon: Wall | null; old: Wall | null } => {
@@ -113,7 +152,7 @@ const crown = (sink: MeshSink, f: LandmarkFrame, part: PartRecipe, near: boolean
   const roof = f.b.roof ?? 0;
   const meta = trimMeta(f.style.seed);
   if (c.kind === "crenel" && near) {
-    battlements(sink, f, c.merlon, c.pitch, solid(WALL[part.tier.material]), solid(SWATCH.stone));
+    battlements(sink, f, c.merlon, c.pitch, solid(wallOf(part.tier)), solid(SWATCH.stone));
     return;
   }
   if (c.kind === "flat" || c.kind === "crenel") {
@@ -123,6 +162,10 @@ const crown = (sink: MeshSink, f: LandmarkFrame, part: PartRecipe, near: boolean
   }
   if (c.kind === "skirt") {
     skirtRoof(sink, f, Math.min(c.rise, roof || c.rise), c.inset, solid(SWATCH.tile));
+    return;
+  }
+  if (c.kind === "roof") {
+    dataRoof(sink, f, solid(wallOf(part.tier)), solid(TRIM[part.tier.material]), near);
     return;
   }
   if (roof <= 0.5) {
@@ -148,14 +191,14 @@ const layerOn = (sink: MeshSink, f: LandmarkFrame, part: PartRecipe): void => {
   else if (part.crown.kind === "crenel") corniceLights(sink, f, wallTop(f) - 0.12, 0.03, layer);
   // On the string course between two zones, else on the base moulding.
   if (t.split) corniceLights(sink, f, f.b.foot + t.split - 0.01, 0.13, layer);
+  else if (t.front) corniceLights(sink, f, stringCourse(f) + 0.2, 0.15, layer);
   else if (t.base) corniceLights(sink, f, f.b.foot + 0.42, 0.2, layer);
   const s = screenOn(f);
   if (s) screenFrame(sink, s.w, s.u, s.y, s.width, s.height, meta);
   const old = mouthWall(f, "old");
-  if (old) {
-    camera(sink, old.w, Math.min(old.u1 + 0.9, old.w.length - 0.4), old.top + 1.1);
-    uplightFittings(sink, f, old.w, uplightsOn(old), layer.warm);
-  }
+  // Beside the arch's head on a classicist front, off its windows over the string course.
+  if (old) camera(sink, old.w, cameraAlong(old), old.top + (t.front ? -0.6 : 1.1));
+  for (const m of litMouths(f)) uplightFittings(sink, m.w, uplights(f, m), layer.warm, meta);
   if (layer.checkpoint) for (const p of f.b.passages ?? []) scanner(sink, f, p, "#5ce1ff");
 };
 
@@ -178,8 +221,12 @@ export const screenOn = (f: LandmarkFrame): (WallRect & { u: number; y: number; 
   return { w, u, y, width, height, u0: u - width / 2 - 0.12, u1: u + width / 2 + 0.12, y0: y - height / 2 - 0.12, y1: y + height / 2 + 0.12 };
 };
 
-/** Where the uplights stand along the Old Town's mouth wall: either side of the mouth. */
-export const uplightsOn = (m: { w: Wall; u0: number; u1: number }): number[] => [m.u0 - 1.1, m.u1 + 1.1].filter((u) => u > 0.4 && u < m.w.length - 0.4);
+/** Where the camera hangs along the Old Town's mouth wall: past the mouth's end, before its start when the corner is too near. */
+export const cameraAlong = (m: Mouth): number => (m.u1 + 0.9 <= m.w.length - 0.8 ? m.u1 + 0.9 : Math.max(m.u0 - 0.9, 0.4));
+
+/** Where the uplights stand along a mouth's wall: either side of the mouth, moved in off the corners, where there is room. */
+export const uplightsOn = (m: { w: Wall; u0: number; u1: number }): number[] =>
+  [m.u0 - 1.1, m.u1 + 1.1].map((u) => Math.min(Math.max(u, 0.5), m.w.length - 0.5)).filter((u) => u < m.u0 - 0.4 || u > m.u1 + 0.4);
 
 /** The battered buttresses' walls: the new town's side walls with no mouth (the corner blocks) and the short walls by them. */
 export const buttressWalls = (f: LandmarkFrame): Wall[] => {
@@ -211,21 +258,51 @@ const brickwork = (sink: MeshSink, f: LandmarkFrame, t: Tier): void => {
   if (n && m) paintingNiche(sink, f, m.w, (m.u0 + m.u1) / 2, f.b.foot + n.from, Math.min(f.b.foot + n.to, wallTop(f) - 0.2), n.width, solid(SWATCH.stone), solid(SWATCH.picture), solid(SWATCH.figure));
 };
 
+/** A classicist front: rustication up to the string course with the keystones, the windows over it, the gable's trim. */
+const classicFront = (sink: MeshSink, f: LandmarkFrame, front: NonNullable<Tier["front"]>, trim: Rgba): void => {
+  const course = stringCourse(f);
+  rustication(sink, f, course, solid(f.landmark.part.tier.colour ? SWATCH.beigeJoint : SWATCH.niche));
+  courseAndKeystones(sink, f, course, trim);
+  // No window behind a neighbour standing out in front of the front (Teatr NN by Brama Grodzka).
+  windowRows(sink, f, front.rows, front.windows, course + 0.35, f.top - 0.7, trim, solid(SWATCH.opening), (w, u0, u1) => !intoNeighbour(f, w, u0, u1, 0.35));
+  if (f.landmark.part.crown.kind === "roof") gableTrim(sink, f, trim, solid(SWATCH.opening), (w) => gableFace(f, w));
+};
+
+/** What stands in the gable over a wall: the recipe's face for the wall's side, else a round window. */
+export const gableFace = (f: LandmarkFrame, w: Wall): GableFace => {
+  const g = f.landmark.part.tier.front?.gables;
+  const side = sideOf(w, f.landmark.recipe.layer);
+  return g && side !== "edge" ? g[side] : "oculus";
+};
+
+/** The dated tablet under a cartouche: its wall, middle along it, world y, size and text; null without one. */
+export const tabletOn = (f: LandmarkFrame): { w: Wall; u: number; y: number; width: number; height: number; text: string } | null => {
+  const text = f.landmark.part.tier.front?.inscription;
+  if (!text || f.landmark.part.crown.kind !== "roof") return null;
+  for (const w of shownWalls(f)) {
+    const g = gableFace(f, w) === "cartouche" ? gableOver(f, w) : null;
+    if (g) return { w, u: g.u, y: g.y0 + TABLET.at, width: TABLET.width, height: TABLET.height, text };
+  }
+  return null;
+};
+
 /** The detailed landmark part for the near cells. */
 export const planNearLandmark = (sink: MeshSink, f: LandmarkFrame): void => {
   const part = f.landmark.part;
   const t = part.tier;
-  const wall = solid(WALL[t.material]);
+  const wall = solid(wallOf(t));
   const trim = solid(TRIM[t.material]);
   walls(sink, f, wallTop(f), wall);
   const y0 = f.b.lifted ? f.b.foot : f.b.base;
   const y1 = t.cornice ? f.top - 0.6 : f.top;
   if (t.plinth > 0 && !f.b.lifted) stonePlinth(sink, f, f.b.base + t.plinth, solid(SWATCH.stone));
   if (t.blinds.length > 0) blindNiches(sink, f, t.blinds, y0 + (t.plinth > 0 ? t.plinth + 0.3 : 0.2), y1, solid(SWATCH.niche));
-  if (t.pilasters) pilasters(sink, f, f.b.foot + (t.base ? 0.35 : 0), f.top - 0.55, solid(SWATCH.plasterTrim));
+  // On a classicist front from the string course up, over the rustication.
+  if (t.pilasters) pilasters(sink, f, t.front ? stringCourse(f) + 0.24 : f.b.foot + (t.base ? 0.35 : 0), f.top - 0.55, solid(SWATCH.plasterTrim));
   if (t.base) band(sink, f.b.ring, 0.16, f.b.foot - 0.02, f.b.foot + 0.35, trim, trimMeta(f.style.seed), f.b.base);
   if (t.cornice) cornice(sink, f, f.b.ring, f.top, trim);
   if (t.material === "brick") brickwork(sink, f, t);
+  if (t.front) classicFront(sink, f, t.front, trim);
   faces(sink, f, part);
   crown(sink, f, part, true);
   layerOn(sink, f, part);
@@ -235,7 +312,7 @@ export const planNearLandmark = (sink: MeshSink, f: LandmarkFrame): void => {
 /** The landmark part for the far cells: the solid in its material, its crown and the lit elements. */
 export const planFarLandmark = (sink: MeshSink, f: LandmarkFrame): void => {
   const part = f.landmark.part;
-  walls(sink, f, f.top, solid(WALL[part.tier.material]));
+  walls(sink, f, f.top, solid(wallOf(part.tier)));
   crown(sink, f, part, false);
   if (part.tier.cornice && part.tier.material === "plaster") corniceLights(sink, f, f.top - 0.44, 0.05, f.landmark.recipe.layer);
   planPassages(sink, f);
