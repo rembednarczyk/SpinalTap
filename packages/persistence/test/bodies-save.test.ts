@@ -13,8 +13,9 @@ const wrap = (payload: unknown) => {
 const BODY: BodySnapshot = { playerAt: { x: -2, y: 0, z: 38.8 }, fought: false, found: true, reported: false, dead: false, carried: true, hidden: false };
 
 describe("bodies in the save (v18 to v19, ADR-0065)", () => {
-  it("is schema v19", () => {
-    expect(SAVE_SCHEMA_VERSION).toBe(19);
+  it("is schema v19 or later", () => {
+    // v20 (G-171, a waiting difficulty) walks on from here with no change to the bodies.
+    expect(SAVE_SCHEMA_VERSION).toBeGreaterThanOrEqual(19);
   });
 
   it("a v18 save loads as it was: nobody in it lies knocked out", () => {

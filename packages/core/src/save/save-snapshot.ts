@@ -1,7 +1,10 @@
 import type { Vec3 } from "../math/vec3";
+import type { DifficultyProfile } from "../difficulty/difficulty";
 import type { DomainState } from "../state/domain-state";
 
 /**
+ * v20: a difficulty profile asked for in a fight, waiting for its end (G-171); an older save has
+ * none waiting.
  * v19: bodies (ADR-0065): the knocked out and the dead of a takedown lie where they were left,
  * carried by the player or hidden; an older save has none.
  * v18: the difficulty profile (ADR-0066); older saves play on "normal".
@@ -18,7 +21,7 @@ import type { DomainState } from "../state/domain-state";
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 19;
+export const SAVE_SCHEMA_VERSION = 20;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {
@@ -90,6 +93,11 @@ export interface SaveSnapshot {
   /** Leaves of resident doors that are moving or about to close; every other door is shut. */
   readonly doors: readonly DoorSnapshot[];
   readonly domain: DomainState;
+  /**
+   * A profile asked for in a fight (ADR-0066): it takes effect when the fight is over, after
+   * loading too. Absent when none is waiting.
+   */
+  readonly pendingDifficulty?: DifficultyProfile;
   /** Serialized ink story state (inkjs JSON). */
   readonly narrative: string | null;
   readonly meta: { readonly label: string; readonly objective: string };

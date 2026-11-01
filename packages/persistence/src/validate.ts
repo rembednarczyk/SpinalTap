@@ -50,6 +50,8 @@ export const findSchemaError = (s: Json): string | null => {
   if (!isObject(st) || !Array.isArray(st.loadedChunks) || !st.loadedChunks.every((c) => typeof c === "string")) return "streaming";
   // ADR-0038: leaves of resident doors that are moving or about to close.
   if (!Array.isArray(s.doors) || !s.doors.every((x) => isObject(x) && typeof x.key === "string" && isNum(x.open) && isNum(x.idle))) return "doors";
+  // G-171: a profile waiting for the end of a fight, when there is one, is a valid one.
+  if (s.pendingDifficulty !== undefined && !isDifficultyProfile(s.pendingDifficulty)) return "pending difficulty";
   const d = s.domain;
   if (!isObject(d)) return "domain";
   const c = d.character;
