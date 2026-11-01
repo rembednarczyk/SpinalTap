@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import { type StreetPropItem, VEHICLE_SIZE, terrainHeightAt } from "../../../packages/core/src";
 import { planSteps } from "../../../packages/engine/src/renderer/mapcity/steps-plan";
+import { lampWallLantern } from "../../../packages/engine/src/renderer/mapcity/prop-lamps";
 import { facadeFrame } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
 import { planFarBuilding } from "../../../packages/engine/src/renderer/mapcity/facade-plan";
 import { landmarkAt } from "../../../packages/engine/src/renderer/mapcity/landmarks";
@@ -21,6 +22,7 @@ import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
 import { SHAPES } from "../../osm-import/src/props-kinds.ts";
 import { addressOf } from "../../osm-import/src/labels.ts";
 import { geoToWorld } from "../../osm-import/src/project.ts";
+import { cityVenueBoards } from "../../osm-import/src/venue-boards.ts";
 import { CROWD_LANES } from "../../../packages/sim/src/content/crowd";
 import { INTERIORS, interiorAt } from "../../../packages/sim/src/content/interior-areas";
 import { CLINIC_DOOR, KOI_DOOR } from "../../../packages/sim/src/content/interiors";
@@ -33,7 +35,7 @@ import { clearedBuilding } from "../../../packages/sim/src/content/cleared-build
 import { CLEARED_BUILDINGS, MAP_CHUNKS, PASSAGES, ROOM_SITES } from "../../../packages/sim/src/content/lublin/sites";
 import { groundY } from "../../../packages/sim/src/content/lublin/terrain";
 import { BRIDGE_DECKS, bridgeDeckAt } from "../../../packages/sim/src/content/lublin/decks";
-import { WORLD_CHUNKS } from "../../../packages/sim/src/content/world-map";
+import { WORLD_CHUNKS, WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
 import { type GroundDeck, deckAt } from "../../../packages/sim/src/world/deck";
 import { GroundField } from "../../../packages/sim/src/world/ground";
 import { type Prism, circleTouchesPrism, makePrism, prismsAt } from "../../../packages/sim/src/world/prism";
@@ -112,6 +114,14 @@ const LANDMARK_BUILDINGS = [
 const LANDMARK_MONUMENTS = ["n481952877", "n481952879", "n481952880"];
 
 const near = (x: number, z: number) => `${x.toFixed(0)},${z.toFixed(0)}`;
+
+/** The lantern of the wall lantern's model (its points over 0.5 m out from the wall plate), in the piece's frame. */
+const LANTERN_HEAD = (() => {
+  const p = lampWallLantern(0).sink.positions;
+  const out: { x: number; y: number; z: number }[] = [];
+  for (let k = 0; k < p.length; k += 3) if (p[k + 2]! > 0.5) out.push({ x: p[k]!, y: p[k + 1]!, z: p[k + 2]! });
+  return out;
+})();
 const inMap = (x: number, z: number) => MAP_CHUNKS.some((c) => x > c.bounds.minX + 1 && x < c.bounds.maxX - 1 && z > c.bounds.minZ + 1 && z < c.bounds.maxZ - 1);
 const onChunk = (x: number, z: number) => MAP_CHUNKS.some(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ);
 /** Distance from (x, z) to the segment a-b. */
@@ -987,6 +997,28 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       .flat()
       .filter((i) => i.prop === "lamp-wall-lantern")
       .flatMap((i) => PASSAGES.filter((p) => Math.abs(underVault(p, i.x, i.z)?.off ?? Infinity) < p.width / 2 + 0.5).map((p) => ({ at: near(i.x, i.z), what: `lamp-wall-lantern in ${p.building}` }))),
+  /**
+   * A wall lantern hung in front of a venue's board (G-158): the lantern of the drawn model
+   * (`prop-lamps.ts`, turned by the piece's yaw) out in front of the board's face and over it,
+   * along the wall and in height.
+   */
+  "wall-lantern-over-venue-board": () => {
+    const boards = cityVenueBoards(WORLD_SCENERY);
+    return Object.values(WORLD_STREET_PROPS)
+      .flat()
+      .filter((i) => i.prop === "lamp-wall-lantern")
+      .flatMap((i) => {
+        const head = LANTERN_HEAD.map((v) => ({ x: i.x + v.x * Math.cos(i.yaw) + v.z * Math.sin(i.yaw), y: i.y + v.y, z: i.z - v.x * Math.sin(i.yaw) + v.z * Math.cos(i.yaw) }));
+        const b = boards.find((s) => {
+          const len = Math.hypot(s.b.x - s.a.x, s.b.z - s.a.z);
+          const along = head.map((v) => ((v.x - s.a.x) * (s.b.x - s.a.x) + (v.z - s.a.z) * (s.b.z - s.a.z)) / len);
+          const off = head.map((v) => (v.x - s.a.x) * s.nx + (v.z - s.a.z) * s.nz);
+          const ys = head.map((v) => v.y);
+          return Math.max(...off) > 0.13 && Math.min(...off) < 3 && Math.max(...along) > 0 && Math.min(...along) < len && Math.max(...ys) > s.bottom && Math.min(...ys) < s.top;
+        });
+        return b ? [{ at: near(i.x, i.z), what: `lamp-wall-lantern over ${b.text}` }] : [];
+      });
+  },
   /** A passage through a building with an end off every chunk, where there is no ground to come out on. */
   "passage-off-map": () =>
     PASSAGES.filter((p) => [p.from, p.to].some(({ x, z }) => !MAP_CHUNKS.some(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ))).map((p) => ({
