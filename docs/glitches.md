@@ -505,7 +505,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (parked-cars), tools/osm-import, tools/glitch-scan
 
 ### G-158 Latarnie ścienne zasłaniają tablice lokali
-- Status: w PR #137, w poprawkach (1.11; weryfikacja 1: NIE PRZYJĘTE, kontrola skanu była tautologią i pomijała ramię latarni 0,72 m z ukośnym `yaw`, 2 przypadki: NIEZWYKŁA KUCHNIA, KUCHNIA SĘDZIEGO); po scaleniu #138 odtworzyć latarnie
+- Status: w PR #137; weryfikacja 2 PRZYJĘTE (1.11; niezależna kontrola 14 → 0, latarnie prostopadle do ściany); czeka na przegląd kuratora
 - Ważność: S3 · Zasięg: 17 z 169 latarni ściennych, np. WIEJSKI RAJ (564,0; −88,9), KORZEŃ CZAROWNICY (611,4; −74,9), PUB ZA KURTYNĄ (599,6; −2,6); zrzuty g148-r2-rynek-e, g148-r4-rynek-s
 - Przyczyna: rozstaw `lamp-wall-lantern` (ADR-0047) nie zna tablic lokali (ADR-0064 etap 4); markiza je zna (`venueBoardOn`)
 - Test przyjęcia: `wall-lantern-over-venue-board` 17 → 0
@@ -583,6 +583,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `SlotDifficulties` (`packages/app/src/presenters/difficulty.ts:41`) rozpoznaje slot po dacie z dokładnością do minuty; `refreshSlots` dekoduje nieznane sloty dwa razy
 - Poprawka: profil w `SaveSlotInfo` (zmiana portu `core/src/ports`, zgoda architekta) zamiast drugiego odczytu
 - Pakiet właściciela: packages/core (ports), packages/app
+
+### G-173 Latarnie ścienne z modelem w bryle budynku
+- Status: zgłoszone (1.11, weryfikator G-158)
+- Ważność: S4 · Zasięg: 5 latarni: (475,2; −90,1), (713,5; 138,9), (718,6; 144,5), (653,4; 80,8) i (621,8; 40,4); 4 były tak już przed G-158, ostatnia obraca się w głąb sąsiada (chunki widzą tylko ścianę b1779, nie b1778)
+- Przyczyna: `furniture-in-building` pomija `lamp-wall-lantern`; generator nie zna brył budynków spoza chunka
+- Poprawka: kontrola skanu „model latarni ściennej w bryle budynku” (baza 5) i ustawianie latarni od właściwej ściany
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
