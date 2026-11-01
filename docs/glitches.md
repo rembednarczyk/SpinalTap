@@ -588,7 +588,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim
 
 ### G-182 `MapEntries.neighboursNear` bez własnego testu
-- Status: zgłoszone (1.11, weryfikator #148)
+- Status: w PR #155 (1.11, test na prawdziwym `MapEntries`; pada przy zawężonym zapytaniu indeksu)
 - Ważność: S4 (test) · Zasięg: skan i test jednostkowy G-170 używają kopii logiki odsiania, więc ścieżki gry (`map-entries.ts`) nic nie pilnuje; dziś poprawna (sonda: 7298 czworokątów identycznych z `near` i bez)
 - Poprawka: test `neighboursNear` na prawdziwym `MapEntries` (sąsiad na granicy komórek, ściana skośna, sąsiad wyższą częścią)
 - Pakiet właściciela: packages/engine (mapcity)
