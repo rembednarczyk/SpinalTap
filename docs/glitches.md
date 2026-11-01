@@ -604,8 +604,8 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: strażnicy wykonanego kontraktu nie trafiają do `formerContracts` przy uśpieniu (albo wpis oznaczony jako oczyszczony); test jednej sesji (wyjście i powrót) i zapisu; złoty hash zmieni się świadomie; razem z G-188 (ten sam mechanizm uśpienia)
 - Pakiet właściciela: packages/sim (streaming, contracts), packages/persistence
 
-### G-196 Powalony żywy posiłek ochrony znika po końcu heatu
-- Status: w PR #174 (1.11, w weryfikacji): limit, szukanie i odsyłanie tylko dla stojących posiłków; część o ciałach bez chunku i rosnącym `sent` zostaje otwarta
+### G-196 Ciała i powaleni posiłkowie ochrony zostają do końca sesji
+- Status: częściowo naprawione w #174 (1.11, PRZYJĘTE): powalony żywy posiłek nie znika już po końcu heatu i nie zajmuje limitu; zostaje otwarte: ciała i powaleni posiłkowie nie mają chunku, leżą do końca sesji, a `sent` rośnie w kolejnych heatach
 - Ważność: S4 · Zasięg: powalony, ale żywy posiłek ma AI; po końcu heatu, gdy jest daleko i poza wzrokiem, `runReinforcements` (`packages/sim/src/systems/crime-system.ts`) usuwa go jak żywego, więc ciało znika ze świata bez zapisu; do tego ciała posiłków nie mają chunku i zostają do końca sesji, a `sent` rośnie w kolejnych heatach (wpływ na wybór enforcerów od `n`)
 - Poprawka: odsyłanie tylko posiłków na nogach; powaleni zostają jak ciała; ciała posiłków sprzątane razem z chunkiem, w którym leżą; test jednej sesji
 - Pakiet właściciela: packages/sim
