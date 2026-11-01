@@ -95,7 +95,7 @@
       "file": "food.zip",
       "sha256": "cdad90853682499b94c9fda2f87678b24bfd8f3264e0ed323f6b6a27fd7c6f6f",
       "unzip": "x",
-      "used": ["mk-yatai", "mk-counter-ramen", "mk-counter-produce", "mk-counter-fish"]
+      "used": ["mk-yatai", "mk-counter-ramen", "mk-counter-produce", "mk-counter-drinks"]
     },
     {
       "id": "kenney-mini-market",
@@ -108,7 +108,7 @@
       "file": "mini-market.zip",
       "sha256": "6f2e69090e359204ace43e4c98dc3fb8639b75e423109672b5c890d194c45203",
       "unzip": "x",
-      "used": ["mk-crates", "mk-counter-produce"]
+      "used": ["mk-crates"]
     },
     {
       "id": "kenney-survival-kit",
@@ -121,7 +121,7 @@
       "file": "survival.zip",
       "sha256": "c3586341b5932c87eb43d75d915434f47daed168b17ed36a03e8ca9977c7443e",
       "unzip": "x",
-      "used": ["mk-cartons", "mk-barrels", "mk-canvas", "mk-crates"]
+      "used": ["mk-cartons", "mk-barrels", "mk-canvas", "mk-yatai"]
     },
     {
       "id": "kenney-furniture-kit",

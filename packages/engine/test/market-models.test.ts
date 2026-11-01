@@ -68,6 +68,20 @@ describe("procedural market furniture of ADR-0058 stage 3", () => {
 });
 
 describe("market-props.glb (ADR-0058 stage 3)", () => {
+  it("names in `sources.json` only models the file has, and every model under some source", () => {
+    const sources = (JSON.parse((readFileSync as (url: URL, enc: string) => string)(new URL("../../../tools/assets/sources.json", import.meta.url), "utf8")) as {
+      sources: { id: string; used?: string[] }[];
+    }).sources;
+    const used = sources.flatMap((s) => (s.used ?? []).filter((k) => k.startsWith("mk-")).map((k) => ({ id: s.id, k })));
+    for (const { id, k } of used) expect(market.models.has(k), `${id}: ${k}`).toBe(true);
+    for (const k of market.models.keys()) expect(used.some((u) => u.k === k), k).toBe(true);
+    // The parts of `tools/city_market.py`: the booth from three packs, the crates from the Mini Market alone.
+    const by = (k: string) => used.filter((u) => u.k === k).map((u) => u.id).sort();
+    expect(by("mk-yatai")).toEqual(["kenney-food-kit", "kenney-furniture-kit", "kenney-survival-kit"]);
+    expect(by("mk-crates")).toEqual(["kenney-mini-market"]);
+    expect(by("mk-counter-drinks")).toEqual(["kenney-food-kit"]);
+  });
+
   it("is small, on the city kit's palette, CC0 (no credits), every model light", () => {
     expect(marketBytes.byteLength).toBeLessThan(256 * 1024);
     expect(market.swatches).toEqual(props.swatches);
