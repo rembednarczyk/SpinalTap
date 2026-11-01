@@ -71,7 +71,7 @@ export const chunkStreets = (lines: readonly Line[], rect: Rect): StreetOut[] =>
 const FOOD = new Set(["cafe", "restaurant", "fast_food", "ice_cream", "food_court"]);
 const BAR = new Set(["bar", "pub", "biergarten", "nightclub"]);
 const CULTURE = new Set(["theatre", "cinema", "arts_centre", "library", "community_centre"]);
-const SERVICE = new Set(["pharmacy", "bank", "post_office", "clinic", "doctors", "dentist", "police", "townhall", "hospital"]);
+const SERVICE = new Set(["pharmacy", "bank", "post_office", "clinic", "doctors", "dentist", "police", "townhall", "courthouse", "hospital"]);
 
 /** What a named point is for the game, or null when it is street furniture or noise. */
 export const poiKind = (t: Tags): { kind: PoiKind; tag: string } | null => {

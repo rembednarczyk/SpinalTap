@@ -9,10 +9,12 @@ import { type BuildingSource, mapBuilding } from "../../../packages/engine/src/r
 import { centroid, cleanRing, pointInRing } from "../../../packages/engine/src/renderer/mapcity/polygon";
 import { stackTiers } from "../../../packages/engine/src/renderer/mapcity/vertical-plan";
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
+import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alone.ts";
 import { extractFeatures } from "../../osm-import/src/features.ts";
 import { roadWidth } from "../../osm-import/src/ground.ts";
 import { oneway } from "../../osm-import/src/markings.ts";
 import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
+import { addressOf } from "../../osm-import/src/labels.ts";
 import { geoToWorld } from "../../osm-import/src/project.ts";
 import { CROWD_LANES } from "../../../packages/sim/src/content/crowd";
 import { INTERIORS, interiorAt } from "../../../packages/sim/src/content/interior-areas";
@@ -732,6 +734,17 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     });
   },
   /**
+   * A small building standing on its own (under `SMALL_ALONE_AREA`, no other outline within 1 m:
+   * a pavilion, a kiosk, a shed) raised to the district's default houses when the map gives it no
+   * height (G-127: Bar Centralny by Pedet, 4 storeys for a round one-storey pavilion).
+   */
+  "small-freestanding-tall": () => {
+    const all = MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)));
+    const areas = all.map((b) => ({ id: b.id, tags: {}, ring: worldOutline(b), holes: 0 }) as unknown as Parameters<typeof smallAlone>[0][number]);
+    const alone = smallAlone(areas);
+    return all.filter((b) => alone.has(b.id) && b.source === "default" && b.levels > 1).map((b) => ({ at: near(b.x, b.z), what: `${b.id} ${b.levels} storeys on ${SMALL_ALONE_AREA} m² or less` }));
+  },
+  /**
    * A building the map puts under ground (`location=underground`: a cellar, a shelter, G-077)
    * standing as a solid on the street over it.
    */
@@ -917,6 +930,39 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       return drawn === want ? [] : [{ at: near(b.x, b.z), what: `${b.id} ${b.name ?? ""} roof:shape=${b.roofShape} drawn as ${drawn}` }];
     }),
   /**
+   * A public building drawn as a house (G-097, G-120): its own tags say an office of government, a
+   * town hall, a court, a library, a theatre, a post office or an arts centre (A), or a point of a
+   * town hall, a court, a theatre, a library or an arts centre lies in its plain outline at the
+   * same street address or with none on either (B, as G-051); its use is neither civic, historic
+   * nor church.
+   */
+  "civic-as-residential": () => {
+    const points = [...SOURCE_OSM.nodes.values()].filter((n) => CIVIC_POINT.has(n.tags?.amenity ?? "")).map((n) => ({ at: geoToWorld(n.lat, n.lon), tags: n.tags! }));
+    return MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b) && b.soffit === undefined && !PUBLIC_USE.has(b.use))).flatMap((b) => {
+      const t = osmTags(b.id);
+      if (t.office === "government" || t.government !== undefined || CIVIC_OWN.has(t.amenity ?? "")) return [{ at: near(b.x, b.z), what: `A ${b.id} ${t.name ?? ""} ${b.use}` }];
+      if (!PLAIN_BUILDING.has(t.building ?? "")) return [];
+      const own = addressOf(t);
+      const p = points.find((q) => inOutline(q.at.x, q.at.z, b.outline, b.x, b.z) && (own === undefined || addressOf(q.tags) === undefined || addressOf(q.tags) === own));
+      return p ? [{ at: near(b.x, b.z), what: `B ${b.id} amenity=${p.tags.amenity} ${p.tags.name ?? ""} ${b.use}` }] : [];
+    });
+  },
+  /**
+   * A building or a lifted part with fractional `building:levels` and no height whose walls over
+   * its plinth (a part's from the building's base, as the map counts its storeys) top the storeys'
+   * `levels × 3.2 m` (a shop floor 0.8 m more) by more than 0.5 m: the half storey rounded up to a
+   * whole one (G-116).
+   */
+  "fractional-levels-rounded": () =>
+    MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b))).flatMap((b) => {
+      const t = osmTags(b.id);
+      const levels = Number((t["building:levels"] ?? "").replace(",", "."));
+      if (t.height !== undefined || t["building:height"] !== undefined || !Number.isFinite(levels) || Number.isInteger(levels)) return [];
+      const walls = b.height - b.plinth;
+      const shop = b.use === "commercial" || b.shopfront === true ? 0.8 : 0;
+      return walls > levels * 3.2 + shop + 0.5 ? [{ at: near(b.x, b.z), what: `${b.id} building:levels=${t["building:levels"]}: walls ${walls.toFixed(1)} m` }] : [];
+    }),
+  /**
    * A metre of a sidewalk mapped on its own (`footway=sidewalk`, off bridges and tunnels, 3 m and
    * more inside the chunks, off zebras) gone under the asphalt of the street it runs along (G-082):
    * the nearest carriageway within 15 m runs parallel to it (|cos| > 0.9), its axis is closer than
@@ -971,6 +1017,17 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /** A two-way street (no `oneway`) narrowed to its mapped sidewalks below two 2.25 m lanes (G-113). */
   "two-way-fit-narrow": () => FITTED().flatMap((r) => (!r.oneway && r.width < 4.4 ? [{ at: r.at, what: `${r.id} ${r.name}: ${r.width.toFixed(1)} m` }] : [])),
 };
+
+/** A building's own tags in the map data, by the game's id (`w…`, `r…`, a split's `/n` dropped). */
+const osmTags = (id: string): Readonly<Record<string, string>> => {
+  const key = id.split("/")[0]!;
+  const n = Number(key.slice(1));
+  return (key.startsWith("r") ? SOURCE_OSM.relations.get(n)?.tags : SOURCE_OSM.ways.get(n)?.tags) ?? {};
+};
+const PUBLIC_USE = new Set(["civic", "historic", "church"]);
+const CIVIC_OWN = new Set(["townhall", "courthouse", "library", "theatre", "post_office", "arts_centre"]);
+const CIVIC_POINT = new Set(["townhall", "courthouse", "theatre", "library", "arts_centre"]);
+const PLAIN_BUILDING = new Set(["yes", "public", "government", "civic"]);
 
 /** The carriageways of the map's lines, by `highway` (the importer's `ROAD_WIDTH`). */
 const CARRIAGEWAYS = new Set(["motorway", "trunk", "primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link", "unclassified", "residential", "living_street", "service", "busway", "road"]);

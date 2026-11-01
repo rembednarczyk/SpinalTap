@@ -113,4 +113,43 @@ Pozostałe trzy modele z paczki CC-BY (`cyberpunk_building`, `futuristic_compact
 `hw_4_cyberpunk_sci-fi_building`) są w `sources.json`, ale jeszcze nie w grze (etapy 3–4 ADR-0063);
 dostaną wiersz tutaj, gdy trafią do pliku.
 
-Wyłączenie w grze: `?city=off` (zostają gołe bryły, bez kitu i bez rekwizytów).
+## Meble ulicy na licencji CC-BY 4.0: `street-props.glb` (ADR-0063, druga paczka)
+
+Sześć modeli z drugiej paczki ze Sketchfaba (inwentaryzacja: `docs/plany/assety-paczka-2.md`) na
+licencji **CC-BY 4.0**, w osobnym pliku na tej samej palecie, bo `city-props.glb` jest blisko limitu
+512 KiB. Gra wczytuje oba pliki po kicie i łączy je w jeden zestaw rekwizytów. Węzeł modelu ma
+`extras.credit`, podpis jest na ekranie „Autorzy”.
+
+| Klucz w pliku | Tytuł | Autor | Źródło | Licencja | Zmiany |
+|---|---|---|---|---|---|
+| `st-vending` (automat z napojami) | Vending Machine | [A9908244](https://sketchfab.com/A9908244) | [Sketchfab](https://sketchfab.com/3d-models/vending-machine-85faa612692e4ec48d6bd9d21484c239) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | 434 trójkąty bez upraszczania, kolory sprowadzone do palety, towar za szybą świeci (`win-white`), wpasowany w bryłę automatu (0,98 × 1,9 × 0,74 m) |
+| `st-vending-ramen` (automat z ramenem) | Ramen Vending Machine | [JustFaith](https://sketchfab.com/charljustine) | [Sketchfab](https://sketchfab.com/3d-models/ramen-vending-machine-3d3c8affeaa44620b7a04fa4a987ff99) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | bez neonowego szyldu z literami na górze (po uproszczeniu robił się z niego bezkształtny kleks), uproszczony z 53,2 do 1,4 tys. trójkątów, kolory i neony sprowadzone do palety (duże szyby przyciemnione do `shop-teal`), wpasowany w bryłę automatu (0,96 × 1,89 × 0,54 m) |
+| `st-ticket-terminal` (biletomat) | Reston B2 Terminal | [Iteration Unlimited](https://sketchfab.com/iterationunlimited) | [Sketchfab](https://sketchfab.com/3d-models/reston-b2-terminal-91b08809f18244628385193e396dd3da) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | żółty z dwóch terminali w pliku (3,3 tys. trójkątów) uproszczony do 0,9 tys., kolory sprowadzone do palety, postawiony na dodanym ciemnym słupku 0,8 m, razem 0,5 × 1,64 × 0,3 m |
+| `st-ticket-kiosk` (biletomat) | Scifi Kiosk | [Martin Ibbett](https://sketchfab.com/unyxium) | [Sketchfab](https://sketchfab.com/3d-models/scifi-kiosk-835aac31a9114203b5cb04952f9a273b) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | uproszczony z 2,1 do 0,9 tys. trójkątów, kolory sprowadzone do palety, ekran świeci (`win-teal`), 0,5 × 1,67 × 0,38 m |
+| `st-cctv` (kamera na maszcie) | CCTV Camera | [Smoggybeard](https://sketchfab.com/Smoggybeard) | [Sketchfab](https://sketchfab.com/3d-models/cctv-camera-e69d5eb37ffb4f188e4d3c84a5d79cdc) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | uproszczony z 3,2 do 0,7 tys. trójkątów, kolory sprowadzone do palety, długość 0,6 m, zawieszony na dodanym maszcie 4,2 m |
+| `st-lantern` (lampiony chochin pod daszkiem straganu) | Chinese \ Japanese paper lantern chochin | [DeepDown](https://sketchfab.com/deepdown) | [Sketchfab](https://sketchfab.com/3d-models/chinese-japanese-paper-lantern-chochin-20bcc5d20f2847f88aef3a267275d16c) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | uproszczony z 2,8 tys. do 201 trójkątów, kolory sprowadzone do palety, czerwony papier świeci (`neon-red`), 0,44 m |
+
+Zmiany względem oryginałów (`tools/city_street.py`, funkcje pomocnicze z `tools/city_ccby.py`): kolor
+trójkąta uśredniony z tekstury i przypisany do roli palety, emisja jako neon, siatka uproszczona przez
+grupowanie wierzchołków, normalne płaskie, bez tekstur. Każdy model jest wpasowany (osobno w każdej
+osi) w pudło bryły swojego rodzaju mebla z symulacji (`packages/sim/src/content/lublin/furniture.ts`).
+Front na +Z, `extras.size`, `extras.styles` (rodzaj mebla: `vending-machine`, `ticket-machine`, `cctv`,
+`lantern`).
+
+Renderer (`packages/engine/src/renderer/mapcity/street-models.ts`) rysuje automaty z napojami,
+biletomaty i kamery na masztach jako te modele (model wybrany z pozycji), w miejscu i obrocie
+proceduralnego mebla, a pod daszkiem co trzeciego straganu wiesza dwa lampiony. Wszystko trafia do siatki
+bloku mebli, więc nie ma nowych wywołań rysowania ani zmian w symulacji. Na telefonie (`low`) zostają
+meble proceduralne.
+
+Odtworzenie pliku:
+
+```
+NODE_USE_ENV_PROXY=1 node tools/assets/fetch.mjs /tmp/city-assets --only sketchfab-vending-machine,sketchfab-ramen-vending-machine,sketchfab-reston-b2-terminal,sketchfab-scifi-kiosk,sketchfab-cctv-camera,sketchfab-paper-lantern-chochin
+python3 -I -B tools/city_kit.py --street /tmp/city-assets --out packages/app/public/city
+```
+
+Pozostałe modele drugiej paczki są w `sources.json` z `"used": []` (kolejne etapy, plan w
+`docs/plany/assety-paczka-2.md`); dostaną wiersz tutaj, gdy trafią do pliku.
+
+Wyłączenie w grze: `?city=off` (zostają gołe bryły, bez kitu i bez rekwizytów obu plików).

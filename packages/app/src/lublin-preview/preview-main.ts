@@ -104,7 +104,15 @@ const start = async (): Promise<void> => {
   const stage = new Stage(canvas, { reference: false, quality });
   const fog = Number(params.get("fog") ?? 0.35);
   // No game districts: no street dressing, signage or far stand-ins of the old map. Thinner fog to see the whole extract.
-  const renderer = new BabylonRenderer(stage, { cityKit: null, world: [], fogScale: fog });
+  // `&kit`: the city kit and the props files as in the game (the CC-BY street furniture, ADR-0063); without it the procedural pieces.
+  const kit = params.has("kit");
+  const asset = (f: string) => new URL(`city/${f}`, document.baseURI).href;
+  const renderer = new BabylonRenderer(stage, {
+    cityKit: kit ? asset("city-kit.glb") : null,
+    cityProps: kit ? [asset("city-props.glb"), asset("street-props.glb")] : null,
+    world: [],
+    fogScale: fog,
+  });
   renderer.rig.camera.minZ = 0.3;
   renderer.rig.camera.maxZ = 1500;
   const probe = new PerfProbe(stage.engine, stage.scene);
