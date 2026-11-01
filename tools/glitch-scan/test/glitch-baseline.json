@@ -70,5 +70,11 @@
   "market-piece-in-crossing": 0,
   "market-piece-on-crowd-lane": 0,
   "market-piece-in-neighbour": 0,
-  "market-booth-near-road": 0
+  "market-booth-near-road": 0,
+  "door-off-wall": 0,
+  "door-floating": 0,
+  "door-in-window": 0,
+  "door-in-board": 0,
+  "door-in-passage": 0,
+  "door-on-game-door": 0
 }

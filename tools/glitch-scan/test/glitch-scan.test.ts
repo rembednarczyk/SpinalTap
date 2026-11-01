@@ -13,6 +13,7 @@ import { centroid, cleanRing, pointInRing } from "../../../packages/engine/src/r
 import { stackTiers } from "../../../packages/engine/src/renderer/mapcity/vertical-plan";
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 import { MAP_SIGN_KIND } from "../../../packages/engine/src/renderer/mapcity/sign-plan";
+import { doorChecks } from "./door-pieces";
 import { marketChecks } from "./market-pieces";
 import { signsInNeighbours } from "./sign-neighbours";
 import { bayCarsMisturned, bayCarsOutOfPark, crowdLanesOnParking, kerbParksOf } from "./kerb-bays";
@@ -1380,6 +1381,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "tube-in-neighbour": () => signsIn([MAP_SIGN_KIND.tube]),
   // The market's furniture of ADR-0058 stage 3 against the map data (`market-pieces.ts`).
   ...marketChecks(SOURCE_OSM, Object.values(WORLD_STREET_PROPS).flat(), CROWD_LANES),
+  // The doors on the facades of ADR-0058 stage 9 against the drawn walls, panes, boards and passages (`door-pieces.ts`).
+  ...doorChecks(WORLD_SCENERY, Object.values(WORLD_STREET_PROPS).flat(), cityVenueBoards(WORLD_SCENERY)),
 };
 
 /** A building's own tags in the map data, by the game's id (`w…`, `r…`, a split's `/n` dropped). */
