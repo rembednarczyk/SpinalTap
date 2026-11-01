@@ -21,6 +21,8 @@ export const PROP_SHAPES: Readonly<Partial<Record<StreetPropKind, number>>> = {
   // ADR-0058 stage 2: what a rack's two slots hold (`RACK_SHAPES`), a container's colour.
   "bike-rack": 4,
   container: 2,
+  // ADR-0058 stage 3: the market's stock (cartons, barrels, crates, goods under a canvas).
+  "market-goods": 4,
 };
 
 /** Monument and artwork shapes. */

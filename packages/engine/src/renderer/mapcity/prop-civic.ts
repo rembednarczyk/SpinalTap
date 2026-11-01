@@ -103,8 +103,11 @@ export const cafeGarden = (shape: number): MeshSink => {
 
 const CANVAS = ["#c8452f", "#2c6d8a", "#d9a12e"];
 
-/** A wooden market stall with a canvas roof, a counter and a string of lights. */
-export const marketStall = (shape: number): MeshSink => {
+/**
+ * A wooden market stall with a canvas roof, a counter and a string of lights; `goods` the boxes on
+ * its counter (none where the goods of `market-props.glb` stand on it, ADR-0058 stage 3).
+ */
+export const marketStall = (shape: number, goods = true): MeshSink => {
   const sink = new MeshSink();
   const wood = paint("#7b5537");
   for (const x of [-1.0, 1.0]) for (const z of [-0.7, 0.7]) block(sink, x, -0.1, z, 0.08, 2.3, 0.08, wood);
@@ -113,7 +116,7 @@ export const marketStall = (shape: number): MeshSink => {
   sink.box(v3(0, 2.35, 0), 2.4, 0.06, 1.8, paint(CANVAS[shape] ?? CANVAS[0]!), { tilt: 0 });
   pyramid(sink, v3(0, 2.38, 0), 2.4, 1.8, 0.45, paint(CANVAS[shape] ?? CANVAS[0]!));
   for (let i = 0; i < 6; i++) blob(sink, v3(-1.0 + i * 0.4, 2.2 - Math.sin((i / 5) * Math.PI) * 0.12, 0.92), 0.05, 0.05, 0.05, glow("#ffd27a"), 4, 2);
-  for (let i = 0; i < 4; i++) block(sink, -0.6 + i * 0.4, 1.03, 0.55, 0.3, 0.18, 0.3, paint(["#d9a33a", "#a8c94a", "#c84a3a", "#e8e0c8"][i]!));
+  if (goods) for (let i = 0; i < 4; i++) block(sink, -0.6 + i * 0.4, 1.03, 0.55, 0.3, 0.18, 0.3, paint(["#d9a33a", "#a8c94a", "#c84a3a", "#e8e0c8"][i]!));
   return sink;
 };
 

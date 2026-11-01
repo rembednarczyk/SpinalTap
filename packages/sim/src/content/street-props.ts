@@ -99,9 +99,25 @@ export const clearOfGame = (x: number, z: number, r: number, pad = 0): boolean =
   !KEEP_CLEAR.some(([a, b]) => segmentDistance(x, z, a, b) < r + 0.7) &&
   !inPassage(x, z, r);
 
+/** How far a stall's stock stands from it (ADR-0058 stage 3, `props-food.ts`: beside its canvas), at most. */
+const STOCK_REACH = 2.6;
+
+/** The map's pieces clear of the game, before their stock is matched to the stalls kept. */
+const clear: Readonly<Record<string, readonly StreetPropItem[]>> = Object.fromEntries(
+  MAP_CHUNKS.map((c) => [c.id, (LUBLIN_STREET_PROPS[c.id] ?? []).filter((i) => clearOfGame(i.x, i.z, furnitureRadius(i)))]),
+);
+
+/** Every stall the game kept, of all chunks: a stall and its stock may lie on two sides of a chunk's edge. */
+const keptStalls = Object.values(clear)
+  .flat()
+  .filter((i) => i.prop === "market-stall");
+
+/** The stock whose stall gave way to the game goes with it: no pallet of a stall that is not there. */
+const withStall = (i: StreetPropItem): boolean => i.prop !== "market-goods" || keptStalls.some((s) => Math.hypot(s.x - i.x, s.z - i.z) <= STOCK_REACH);
+
 /** The map's pieces clear of the game, on the shaped terrain. */
 const kept: Readonly<Record<string, readonly StreetPropItem[]>> = Object.fromEntries(
-  MAP_CHUNKS.map((c) => [c.id, (LUBLIN_STREET_PROPS[c.id] ?? []).filter((i) => clearOfGame(i.x, i.z, furnitureRadius(i))).map((i) => ({ ...i, y: Math.round(groundY(i.x, i.z) * 100) / 100 }))]),
+  Object.entries(clear).map(([id, items]) => [id, items.filter(withStall).map((i) => ({ ...i, y: Math.round(groundY(i.x, i.z) * 100) / 100 }))]),
 );
 
 const keptPieces = Object.values(kept).flat();
