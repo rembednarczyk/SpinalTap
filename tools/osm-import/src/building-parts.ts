@@ -7,7 +7,7 @@
  * simulation's prisms follow them.
  */
 import { type BuildingUse } from "../../../packages/core/src/world/city-geo.ts";
-import { STOREY, type Massing, parseLength, parseLevels, roofHeight, roofShapeOf } from "./building-tags.ts";
+import { STOREY, type Massing, parseLength, parseLevels, roofHeight, roofShapeOf, wholeStoreys } from "./building-tags.ts";
 import { type Area } from "./features.ts";
 import { type Pt, centroid, pointInRing, ringBounds, signedArea } from "./geometry.ts";
 
@@ -81,8 +81,8 @@ export const partTier = (p: Area, use: BuildingUse): Tier | null => {
     const r = Math.min(roof, height * 0.5, Math.max(height - bottom - 1, 0));
     return { area: p, bottom, eaves: height - r, roof: r, levels: levels ?? Math.max(1, Math.round((height - r - bottom) / STOREY)), source: "height", ...roofShapeOf(t) };
   }
-  const n = Math.max(1, Math.round(levels!));
-  return { area: p, bottom, eaves: Math.max(n * STOREY, bottom + 1), roof, levels: n, source: "levels", ...roofShapeOf(t) };
+  const n = Math.max(1, levels!);
+  return { area: p, bottom, eaves: Math.max(n * STOREY, bottom + 1), roof, levels: wholeStoreys(n), source: "levels", ...roofShapeOf(t) };
 };
 
 /** Share of the outline (1 m samples) under parts that stand on the ground. */
