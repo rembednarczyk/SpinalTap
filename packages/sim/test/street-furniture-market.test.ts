@@ -40,11 +40,18 @@ describe("the market's furniture of ADR-0058 stage 3", () => {
     for (const i of [...ofKind("market-goods"), ...ofKind("food-stall")]) expect(i.y, i.prop).toBeCloseTo(groundY(i.x, i.z), 1);
   });
 
-  it("keeps no stock whose stall gave way to the game's set pieces", () => {
+  it("keeps the stock exactly where its stall stays in the game, whichever chunk the stall is in", () => {
+    // A stall and its stock (within 2.6 m) may lie on two sides of a chunk's edge.
     const stalls = ofKind("market-stall");
-    for (const g of ofKind("market-goods")) expect(stalls.some((s) => Math.hypot(s.x - g.x, s.z - g.z) <= 2.6), `${g.x},${g.z}`).toBe(true);
-    // The map has more: the flea market's stall by Plac Zamkowy's way to the castle went with its stock.
-    const map = Object.values(LUBLIN_STREET_PROPS).flat().filter((i) => i.prop === "market-goods").length;
-    expect(map).toBeGreaterThan(ofKind("market-goods").length);
+    const withStall = (g: { x: number; z: number }) => stalls.some((s) => Math.hypot(s.x - g.x, s.z - g.z) <= 2.6);
+    for (const g of ofKind("market-goods")) expect(withStall(g), `${g.x},${g.z}`).toBe(true);
+    // Every piece of the map's stock whose stall the game kept is in the game too: the stock by
+    // Targ na Ruskiej (721.6, 564.2) in podzamcze-1-1 beside its stall (719.6, 565.1) in podzamcze-0-1.
+    const map = Object.values(LUBLIN_STREET_PROPS)
+      .flat()
+      .filter((i) => i.prop === "market-goods");
+    const kept = (g: { x: number; z: number }) => ofKind("market-goods").some((o) => Math.abs(o.x - g.x) < 1e-6 && Math.abs(o.z - g.z) < 1e-6);
+    for (const g of map.filter(withStall)) expect(kept(g), `${g.x},${g.z}`).toBe(true);
+    expect(map.some((g) => g.x === 721.6 && g.z === 564.2 && kept(g))).toBe(true);
   });
 });
