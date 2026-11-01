@@ -1,5 +1,5 @@
 import type { System } from "../world/context";
-import { createCivilianAiSystem, createGangerAiSystem, escortAiSystem, sniperAiSystem } from "./ai";
+import { bodyWatchSystem, createCivilianAiSystem, createGangerAiSystem, escortAiSystem, sniperAiSystem } from "./ai";
 import { abilitySystem } from "./ability-system";
 import { combatSystem } from "./combat-system";
 import { contractSystem } from "./contract-system";
@@ -145,6 +145,7 @@ export const createSystems = (): readonly System[] => [
   takedownSystem,
   interactionSystem,
   deathSystem,
+  bodyWatchSystem,
   createCrimeSystem(),
   lootSystem,
   contractSystem,
