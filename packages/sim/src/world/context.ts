@@ -90,6 +90,8 @@ export interface Offence {
   readonly crime: CrimeKind;
   readonly at: Vec3;
   readonly incident: number;
+  /** Someone knocked out by it (ADR-0065): once reported, its body brings no second call. */
+  readonly body?: EntityId;
 }
 
 export interface StreetLog {

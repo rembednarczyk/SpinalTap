@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { DomainEvents } from "@seki/core";
-import { escortEntity } from "../src";
-import { collect, run } from "./helpers";
+import { type DomainEvents, WITNESS_CALL_SECONDS } from "@seki/core";
+import { escortEntity, takedownDistance } from "../src";
+import { collect, run, teleportPlayer } from "./helpers";
 import { CROUCH, camera, offset, patrol, quietStreet, stallholder, takeDown, ticks, victim } from "./takedown-scenes";
 
 /** Stage 2 of ADR-0065: who sees a takedown (an assault, heat as for an attack on a civilian). */
@@ -73,5 +73,38 @@ describe("witnesses of a takedown (ADR-0065)", () => {
     sim.world.add(escortEntity(4001, "mika", [offset(sim, 0, 1.2)], sim.player()!.chunk ?? ""));
     sim.step(CROUCH);
     expect(sim.session.takedownTarget).toBeNull();
+  });
+
+  it("leaves out anyone with a talk, a shop or a job to offer, even with nobody nearer to talk to", () => {
+    for (const interactable of [
+      { kind: "dialogue", dialogueId: "hana", prompt: "prompt.talk.hana", radius: 0.5 },
+      { kind: "shop", shopId: "oyaji", dialogueId: "oyaji", prompt: "prompt.shop.oyaji", radius: 0.5 },
+    ] as const) {
+      const sim = quietStreet();
+      const c = stallholder(sim);
+      // Its talk reaches less far than she stands: no interaction prompt competes.
+      sim.world.addComponent(c, "interactable", interactable);
+      sim.step(CROUCH);
+      expect(sim.session.takedownTarget).toBeNull();
+      expect(takedownDistance(sim.player()!, c as Parameters<typeof takedownDistance>[1])).toBeNull();
+    }
+  });
+
+  it("knocking out a witness on the phone cuts the call off: no report", () => {
+    const sim = quietStreet();
+    victim(sim);
+    // A bystander with health two metres west of her, seeing it all.
+    const w = stallholder(sim, 4300, offset(sim, -2, 0));
+    const calls = collect(sim, "WitnessCalling");
+    const reports = collect(sim, "CrimeReported");
+    takeDown(sim);
+    expect(calls).toHaveLength(1);
+    // Straight after it, before the call goes through.
+    teleportPlayer(sim, { ...w.position, x: w.position.x + 0.8 }, -Math.PI / 2);
+    takeDown(sim);
+    expect(w.unconscious).toBe(true);
+    run(sim, ticks(WITNESS_CALL_SECONDS + 2), CROUCH);
+    expect(reports).toEqual([]);
+    expect(w.civilian!.crowd?.call ?? null).toBeNull();
   });
 });

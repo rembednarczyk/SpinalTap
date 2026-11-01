@@ -199,10 +199,12 @@ export const createCivilianAiSystem = (): System => {
       const player = ctx.session.gameOver ? null : (ctx.world.with("player").first ?? null);
       const alive = new Set<EntityId>();
       const dt = ctx.dt * worldTimeScale(ctx);
+      const helpers = new Set<EntityId | null>(ctx.world.with("downed").entities.map((b) => b.downed.finder));
       for (const c of inCreationOrder(ctx.world.with("civilian", "velocity"))) {
         alive.add(c.id);
-        // Knocked out or held in a takedown (ADR-0065): it lies still and takes no fright.
-        if (incapacitated(ctx, c)) {
+        // Knocked out or held in a takedown (ADR-0065): it lies still and takes no fright. Stopped
+        // by someone knocked out to wake it: it stands by it.
+        if (incapacitated(ctx, c) || helpers.has(c.id)) {
           c.velocity = { x: 0, y: 0, z: 0 };
           continue;
         }

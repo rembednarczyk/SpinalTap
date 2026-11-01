@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { DomainEvents } from "@seki/core";
+import { type DomainEvents, WITNESS_CALL_SECONDS } from "@seki/core";
 import { WAKE_REACH, WAKE_TIME } from "../src";
 import { collect, run } from "./helpers";
-import { CROUCH, camera, patrol, quietStreet, stallholder, takeDown, ticks, victim, walkAway } from "./takedown-scenes";
+import { CROUCH, camera, offset, patrol, quietStreet, stallholder, takeDown, ticks, victim, walkAway } from "./takedown-scenes";
 
 /** Stage 2 of ADR-0065: who finds the body (BodyFound, the security's call, the search) and who wakes it. */
 
@@ -128,5 +128,73 @@ describe("a body found (ADR-0065)", () => {
     expect(c.unconscious).toBe(true);
     expect(c.position.x).toBeCloseTo(spot.x, 6);
     expect(c.position.z).toBeCloseTo(spot.z, 6);
+  });
+
+  it("a takedown seen by a civilian whose call never went through: the body found by the security is reported", () => {
+    const sim = quietStreet();
+    const guard = victim(sim);
+    const w = stallholder(sim, 4300, offset(sim, -2, 0));
+    const calls = collect(sim, "WitnessCalling");
+    const reports = collect<DomainEvents["CrimeReported"]>(sim, "CrimeReported");
+    takeDown(sim);
+    expect(calls).toHaveLength(1);
+    // The witness is gone before the call lands (it walked off, its chunk went to sleep).
+    sim.world.remove(w);
+    walkAway(sim);
+    run(sim, ticks(WITNESS_CALL_SECONDS + 1), CROUCH);
+    expect(reports).toEqual([]);
+    const finder = patrol(sim, 4100, { ...guard.position, x: guard.position.x + 12 }, -Math.PI / 2);
+    sim.step(CROUCH);
+    expect(reports.map((r) => [r.crime, r.channel, r.witnessId])).toEqual([["assault", "patrol", finder.id]]);
+    expect(sim.domain.heat.level).toBe(1);
+  });
+
+  it("the body of a guard taken down mid-fight sends the security looking, with no crime and no heat", () => {
+    const sim = quietStreet();
+    const guard = victim(sim);
+    guard.ai!.alerted = true;
+    guard.melee!.stagger = 2;
+    guard.melee!.stunned = true;
+    takeDown(sim);
+    const stood = { ...sim.player()!.position };
+    walkAway(sim);
+    run(sim, 5, CROUCH);
+    const found = collect<DomainEvents["BodyFound"]>(sim, "BodyFound");
+    const reports = collect(sim, "CrimeReported");
+    // One right by the body, one 30 m north of it with its back to it (it sees nothing).
+    const finder = patrol(sim, 4100, { ...guard.position, x: guard.position.x + 6 }, -Math.PI / 2);
+    const other = patrol(sim, 4101, { ...guard.position, z: guard.position.z + 30 }, 0);
+    sim.step(CROUCH);
+    expect(found).toEqual([{ body: guard.id, finder: finder.id }]);
+    expect(reports).toEqual([]);
+    expect(sim.domain.heat.level).toBe(0);
+    expect(other.ai!.lastKnown?.x).toBeCloseTo(stood.x, 6);
+    expect(other.ai!.lastKnown?.z).toBeCloseTo(stood.z, 6);
+    expect(finder.ai!.lastKnown?.z).toBeCloseTo(guard.position.z, 6);
+  });
+});
+
+describe("waking on a quiet street (ADR-0065)", () => {
+  it("a passer-by that comes by stops and wakes the knocked out after 6 s", () => {
+    const sim = quietStreet();
+    const guard = victim(sim);
+    takeDown(sim);
+    walkAway(sim);
+    run(sim, 5, CROUCH);
+    expect(sim.world.with("ai").entities.filter((g) => g !== guard)).toEqual([]);
+    const walker = sim.world.with("passerby").entities.find((e) => !e.vehicle && e.civilian);
+    expect(walker).toBeDefined();
+    const at = { ...guard.position, x: guard.position.x + 1 };
+    walker!.position = at;
+    walker!.prevPosition = at;
+    sim.step(CROUCH);
+    expect(guard.downed?.finder).toBe(walker!.id);
+    run(sim, ticks(WAKE_TIME) - 2, CROUCH);
+    expect(guard.unconscious).toBe(true);
+    // It stands by the body all the while, unafraid of it.
+    expect(Math.hypot(walker!.position.x - at.x, walker!.position.z - at.z)).toBeLessThan(0.1);
+    sim.step(CROUCH);
+    expect(guard.unconscious).toBeUndefined();
+    expect(guard.ai!.alerted).toBe(true);
   });
 });

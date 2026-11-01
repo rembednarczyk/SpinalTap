@@ -41,10 +41,11 @@ const behind = (target: Entity, player: Entity): boolean =>
  * Distance from the player to `e` when the rules let her take it down from where she stands
  * (reach, height, from behind or a target stunned or unaware of her), else null. A target is
  * someone with health and a weapon slot, or a civilian with health (stage 2: an assault once
- * seen). Pure: the line of sight is the caller's.
+ * seen), but nobody with a talk, a shop or a job to offer (`interactable`): those are left out
+ * in this stage. Pure: the line of sight is the caller's.
  */
 export const takedownDistance = (player: Entity, e: Target): number | null => {
-  if (e.player || e.unconscious || e.passerby || e.vehicle || e.health.current <= 0 || !(e.combatant || e.civilian)) return null;
+  if (e.player || e.unconscious || e.passerby || e.vehicle || e.interactable || e.health.current <= 0 || !(e.combatant || e.civilian)) return null;
   const distance = Math.hypot(e.position.x - player.position.x, e.position.z - player.position.z);
   if (distance > TAKEDOWN_REACH || Math.abs(e.position.y - player.position.y) > TAKEDOWN_REACH_Y) return null;
   return behind(e, player) || stunned(e) || unaware(e) ? distance : null;
@@ -108,11 +109,11 @@ const breakFree = (target: Target, player: Entity): void => {
 /**
  * Knocked out: down until an NPC finds it and wakes it (the body watch), knowing where the player
  * stood. Its mind is wiped: it no longer counts as fighting (the RAM, the activities, the
- * contract's alarm read `alerted`).
+ * contract's alarm read `alerted`). `fought`: it was fighting her, so its body is no crime.
  */
-const knockOut = (ctx: SimContext, target: Target, player: Entity): void => {
+const knockOut = (ctx: SimContext, target: Target, player: Entity, fought: boolean): void => {
   ctx.world.addComponent(target, "unconscious", true);
-  ctx.world.addComponent(target, "downed", { playerAt: { ...player.position }, found: false, reported: false, finder: null, wake: 0 });
+  ctx.world.addComponent(target, "downed", { playerAt: { ...player.position }, fought, found: false, reported: false, finder: null, wake: 0 });
   hold(target);
   if (target.ai) {
     target.ai.alerted = false;
@@ -159,14 +160,12 @@ const advance = (ctx: SimContext, run: TakedownRun, player: Entity | null): void
   ctx.session.attackLock = ctx.input.fire;
   const engaged = isEngaged(target);
   if (lethal) kill(ctx, target, player);
-  else knockOut(ctx, target, player);
+  else knockOut(ctx, target, player, engaged);
   // On someone not fighting her it is an assault (ADR-0029), a crime once a witness sees it; a
-  // kill's death is then a murder. The crime system finds the witnesses at the end of the step.
-  noteViolence(ctx, target, engaged, target.position);
-  const witnessed = seenCommitting(ctx, player, target.position);
-  // Seen, the security hears of it from the witness: the body brings no second call.
-  if (target.downed) target.downed.reported = witnessed;
-  ctx.bus.emit("TakedownDone", { target: target.id, lethal, witnessed });
+  // kill's death is then a murder. The crime system finds the witnesses at the end of the step
+  // and marks the body reported once the report is made (a civilian's call can be cut off).
+  noteViolence(ctx, target, engaged, target.position, lethal ? undefined : target.id);
+  ctx.bus.emit("TakedownDone", { target: target.id, lethal, witnessed: seenCommitting(ctx, player, target.position) });
 };
 
 /**

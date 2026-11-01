@@ -123,9 +123,25 @@ export const report = (ctx: SimContext, crime: CrimeKind, channel: WitnessChanne
   setHeat(ctx, reportCrime(ctx.state.domain.heat, crime, faction, at), true);
   noteAlarm(ctx);
   const hunting = ctx.state.domain.heat.faction;
+  if (hunting) sendSecurity(ctx, hunting, at);
+};
+
+/** The security of `faction` within `REPORT_LEAD_RADIUS` of `at` goes to look there. */
+export const sendSecurity = (ctx: SimContext, faction: FactionId, at: Vec3): void => {
   for (const g of inCreationOrder(ctx.world.with("ai"))) {
-    if (g.faction === hunting && Math.hypot(g.position.x - at.x, g.position.z - at.z) <= REPORT_LEAD_RADIUS) giveLead(g, at);
+    if (g.faction === faction && Math.hypot(g.position.x - at.x, g.position.z - at.z) <= REPORT_LEAD_RADIUS) giveLead(g, at);
   }
+};
+
+/** The takedown of someone knocked out has reached the security (ADR-0065): its body brings no second call. */
+const bodyReported = (ctx: SimContext, body: EntityId | undefined): void => {
+  if (body === undefined) return;
+  for (const b of ctx.world.with("downed")) if (b.id === body) b.downed.reported = true;
+};
+
+/** The body was reported by whoever found it (ADR-0065): the calls about its takedown are not needed. */
+export const dropBodyCalls = (ctx: SimContext, body: EntityId): void => {
+  for (const c of ctx.world.with("civilian")) if (c.civilian.crowd?.call?.body === body) c.civilian.crowd.call = null;
 };
 
 /** Cancels the other calls about an incident that has just been reported. */
@@ -135,8 +151,10 @@ const dropCalls = (ctx: SimContext, incident: number): void => {
 
 /** How a bystander takes a disturbance: a close shot floors it, the rest makes it run or look. */
 const react = (ctx: SimContext, d: StreetDisturbance): void => {
+  // Someone stopped by a body to wake it (ADR-0065) is not scared off by the sight of it.
+  const helper = d.kind === "body" ? ctx.world.with("downed").entities.find((b) => b.id === d.sourceId)?.downed.finder : undefined;
   for (const c of inCreationOrder(ctx.world.with("civilian"))) {
-    if (c.id === d.sourceId || (c.health?.current ?? 1) <= 0) continue;
+    if (c.id === d.sourceId || c.id === helper || (c.health?.current ?? 1) <= 0) continue;
     const distance = Math.hypot(c.position.x - d.at.x, c.position.z - d.at.z);
     if (distance > d.radius) continue;
     if (d.kind === "gunshot") scare(ctx, c, distance <= COWER_RADIUS ? "cowering" : "fleeing", d.at);
@@ -145,10 +163,6 @@ const react = (ctx: SimContext, d: StreetDisturbance): void => {
   }
 };
 
-/**
- * Who saw the player commit it: a camera or a patrol reports at once; otherwise every civilian
- * who saw it starts a call (the first through makes the report).
- */
 /** A patrol of the security of the crime's place that saw the player commit it and phones it in. */
 const patrolWitness = (ctx: SimContext, g: Entity, player: Entity, security: FactionId): boolean =>
   // Someone already fighting the player does not phone it in: it fights. Nor does one knocked out or dead.
@@ -174,17 +188,23 @@ export const seenCommitting = (ctx: SimContext, player: Entity, at: Vec3): boole
   return false;
 };
 
+/**
+ * Who saw the player commit it: a camera or a patrol reports at once; otherwise every civilian
+ * who saw it starts a call (the first through makes the report).
+ */
 const witness = (ctx: SimContext, o: Offence, player: Entity): void => {
   for (const cam of inCreationOrder(ctx.world.with("device"))) {
     if (!cameraSees(ctx, cam, player)) continue;
     noteDetected(ctx);
     report(ctx, o.crime, "camera", cam.id, player.id, o.at);
+    bodyReported(ctx, o.body);
     return;
   }
   const security = securityAt(ctx, o.at);
   for (const g of inCreationOrder(ctx.world.with("ai"))) {
     if (!patrolWitness(ctx, g, player, security)) continue;
     report(ctx, o.crime, "patrol", g.id, player.id, o.at);
+    bodyReported(ctx, o.body);
     return;
   }
   for (const c of inCreationOrder(ctx.world.with("civilian"))) {
@@ -192,7 +212,7 @@ const witness = (ctx: SimContext, o: Offence, player: Entity): void => {
     scare(ctx, c, "fleeing", player.position);
     const m = c.civilian.crowd;
     if (!m) continue;
-    m.call = { crime: o.crime, at: { ...o.at }, incident: o.incident, left: WITNESS_CALL_SECONDS };
+    m.call = { crime: o.crime, at: { ...o.at }, incident: o.incident, left: WITNESS_CALL_SECONDS, ...(o.body === undefined ? {} : { body: o.body }) };
     ctx.bus.emit("WitnessCalling", { witnessId: c.id, crime: o.crime, duration: WITNESS_CALL_SECONDS });
   }
 };
@@ -205,10 +225,15 @@ const aimedAt = (player: Entity, c: Entity): boolean => {
   return Math.abs(angleTo({ x: player.position.x, z: player.position.z, yaw: player.yaw }, c.position.x, c.position.z)) <= INTIMIDATE_CONE;
 };
 
-/** Calls in progress: cut off by the player's aim, through after WITNESS_CALL_SECONDS. */
+/** Calls in progress: cut off by the player's aim or a knock-out, through after WITNESS_CALL_SECONDS. */
 const runCalls = (ctx: SimContext, player: Entity | null, dt: number): void => {
   for (const c of inCreationOrder(ctx.world.with("civilian"))) {
     const mind = c.civilian.crowd;
+    // Knocked out mid-call (ADR-0065): the phone goes quiet.
+    if (c.unconscious) {
+      if (mind?.call) mind.call = null;
+      continue;
+    }
     // Only someone already shaken (a call, a scare) is scared off the phone: a calm passer-by walks on.
     if (player && mind && (mind.call || mind.state !== "calm") && aimedAt(player, c)) {
       scare(ctx, c, "cowering", player.position);
@@ -225,6 +250,7 @@ const runCalls = (ctx: SimContext, player: Entity | null, dt: number): void => {
     if (call.left > 0) continue;
     dropCalls(ctx, call.incident);
     report(ctx, call.crime, "civilian", c.id, player?.id ?? 0, call.at);
+    bodyReported(ctx, call.body);
   }
 };
 

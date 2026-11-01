@@ -6,7 +6,7 @@ import { inCreationOrder } from "../../world/ordering";
 import { disturb } from "../../world/street";
 import { incapacitated } from "../../world/takedown";
 import { worldTimeScale } from "../ability-system";
-import { cameraSeesPoint, report, securityAt } from "../crime-system";
+import { cameraSeesPoint, dropBodyCalls, report, securityAt, sendSecurity } from "../crime-system";
 import { BODY_NOISE } from "../death-system";
 import { scare } from "./civilian-ai-system";
 import { GUARD_CONE, GUARD_NEAR, TRACK_GRACE, giveLead } from "./ganger-perception";
@@ -59,28 +59,51 @@ const found = (ctx: SimContext, b: Body, finder: Entity, channel: "patrol" | "ca
   }
   if (!channel || b.downed.reported || civilianBody(b)) return;
   b.downed.reported = true;
+  const at = searchFrom(ctx, b);
+  // Taken down in a fight it was no crime (ADR-0029): the security comes to look, no report, no heat.
+  if (b.downed.fought) {
+    sendSecurity(ctx, securityAt(ctx, b.position), at);
+    return;
+  }
   const player = ctx.world.with("player").first;
-  report(ctx, "assault", channel, finder.id, player?.id ?? 0, searchFrom(ctx, b));
+  report(ctx, "assault", channel, finder.id, player?.id ?? 0, at);
+  dropBodyCalls(ctx, b.id);
 };
 
-/** The finder still on its way or at the side: awake, free and in the world. */
-const finderOf = (ctx: SimContext, b: Body, ais: readonly Entity[]): Entity | null => {
+/** A civilian of the street (a passer-by, one on its daily plan) calm enough to stop and help. */
+const calmCivilian = (ctx: SimContext, c: Entity): boolean =>
+  !!c.civilian && !c.downed && !incapacitated(ctx, c) && (c.health?.current ?? 1) > 0 && (c.civilian.crowd?.state ?? "calm") === "calm";
+
+const near = (a: Entity, b: Entity): boolean => Math.hypot(a.position.x - b.position.x, a.position.z - b.position.z) <= WAKE_REACH;
+
+/**
+ * The finder still on its way or at the side: awake, free and in the world; a civilian also still
+ * calm by the body (the civilian AI holds it still while it is a body's finder).
+ */
+const finderOf = (ctx: SimContext, b: Body, ais: readonly Entity[], civilians: readonly Entity[]): Entity | null => {
   const id = b.downed.finder;
   if (id === null) return null;
   const g = ais.find((e) => e.id === id);
-  return g && freeToLook(ctx, g) ? g : null;
+  if (g) return freeToLook(ctx, g) ? g : null;
+  const c = civilians.find((e) => e.id === id);
+  return c && calmCivilian(ctx, c) && near(c, b) ? c : null;
 };
 
-/** The first free AI that sees the body walks over to it; the district's security calls it in. */
-const lookForFinder = (ctx: SimContext, b: Body, ais: readonly Entity[]): Entity | null => {
+/**
+ * The first free AI that sees the body walks over to it; the district's security calls it in.
+ * With none, a calm civilian that comes by within `WAKE_REACH` stops to help.
+ */
+const lookForFinder = (ctx: SimContext, b: Body, ais: readonly Entity[], civilians: readonly Entity[]): Entity | null => {
   const g = ais.find((e) => e !== b && freeToLook(ctx, e) && aiSeesBody(ctx, e, b));
-  if (!g) return null;
-  b.downed.finder = g.id;
+  const c = g ? undefined : civilians.find((e) => e !== b && calmCivilian(ctx, e) && near(e, b) && civilianSeesBody(ctx, e, b));
+  const finder = g ?? c;
+  if (!finder) return null;
+  b.downed.finder = finder.id;
   b.downed.wake = 0;
-  found(ctx, b, g, g.faction === securityAt(ctx, b.position) ? "patrol" : null);
+  found(ctx, b, finder, g && g.faction === securityAt(ctx, b.position) ? "patrol" : null);
   // Its own lead is the body, whatever the call sent the others to.
-  giveLead(g, b.position);
-  return g;
+  if (g) giveLead(g, b.position);
+  return finder;
 };
 
 /** A camera seeing the body is a witness; a civilian seeing it first runs and makes the street look. */
@@ -114,24 +137,26 @@ const wake = (ctx: SimContext, b: Body, finder: Entity): void => {
     b.ai.search = 0;
   }
   scare(ctx, b, "fleeing", playerAt);
-  // The finder starts the search from the player's last known position.
+  // The finder starts the search from the player's last known position; a civilian walks on.
   giveLead(finder, lead);
 };
 
 /** The finder walks to the body (back to it after any other lead) and wakes it after `WAKE_TIME`. */
 const tend = (ctx: SimContext, b: Body, finder: Entity, dt: number): void => {
-  if (!finder.ai?.lastKnown) giveLead(finder, b.position);
-  if (Math.hypot(finder.position.x - b.position.x, finder.position.z - b.position.z) > WAKE_REACH) return;
+  if (finder.ai && !finder.ai.lastKnown) giveLead(finder, b.position);
+  if (!near(finder, b)) return;
   b.downed.wake += dt;
   if (b.downed.wake >= WAKE_TIME - 1e-6) wake(ctx, b, finder);
 };
 
 /**
  * The knocked out (ADR-0065): an AI that sees one walks over (BodyFound), calls the security in
- * when it is the district's own, and wakes it after `WAKE_TIME` at its side; a camera that sees
- * one reports it; a civilian that sees one runs and the street around takes fright, as at a
- * death. A civilian's body brings no heat. After the death system, before the crime system (the
- * street's reaction and the heat of the same step). No randomness: everything in creation order.
+ * when it is the district's own, and wakes it after `WAKE_TIME` at its side; with no AI about, a
+ * calm civilian that comes within `WAKE_REACH` stops and wakes it the same way. A camera that
+ * sees one reports it; a civilian that sees one runs and the street around takes fright (next
+ * step), as at a death. A civilian's body brings no heat, nor does one taken down in a fight
+ * (the security only comes to look). After the crime system, so a witness's report of the
+ * takedown comes first. No randomness: everything in creation order.
  */
 export const bodyWatchSystem: System = {
   name: "body-watch",
@@ -139,13 +164,14 @@ export const bodyWatchSystem: System = {
     const bodies = inCreationOrder(ctx.world.with("downed"));
     if (bodies.length === 0) return;
     const ais = inCreationOrder(ctx.world.with("ai"));
+    const civilians = inCreationOrder(ctx.world.with("civilian"));
     const dt = ctx.dt * worldTimeScale(ctx);
     for (const b of bodies) {
-      let finder = finderOf(ctx, b, ais);
+      let finder = finderOf(ctx, b, ais, civilians);
       if (!finder) {
         b.downed.finder = null;
         b.downed.wake = 0;
-        finder = lookForFinder(ctx, b, ais);
+        finder = lookForFinder(ctx, b, ais, civilians);
       }
       watchFromAfar(ctx, b);
       if (finder) tend(ctx, b, finder, dt);

@@ -27,12 +27,11 @@ export const offset = (sim: Simulation, dx: number, dz: number): Vec3 => {
 export const victim = (sim: Simulation): Entity =>
   sim.world.add(gangerEntity(4000, { key: "victim", position: offset(sim, 0, 1.2), yaw: 0 }, null, 80, sim.player()!.chunk ?? "", undefined, "tessen_guard"));
 
-/** A bystander with health (as Oyaji at his stall) 1.2 m north of the player, its back to her: no weapon, no AI. */
-export const stallholder = (sim: Simulation): Entity => {
-  const spot = offset(sim, 0, 1.2);
+/** A bystander with health (as Oyaji at his stall, without the shop) 1.2 m north of the player, its back to her: no weapon, no AI. */
+export const stallholder = (sim: Simulation, id = 4000, spot = offset(sim, 0, 1.2)): Entity => {
   return sim.world.add({
-    id: 4000,
-    key: "stallholder",
+    id,
+    key: `stallholder-${id}`,
     position: spot,
     prevPosition: spot,
     yaw: 0,
