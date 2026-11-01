@@ -2,7 +2,7 @@ import { prng } from "../city-kit-data";
 import type { MeshSink, Rgba, Vec } from "../mesh-sink";
 import { SIGN_OUT, SIGN_RADIUS, bracketSpots } from "./bracket-plan";
 import { type FacadeFrame, type Wall, hiddenWall } from "./facade-frame";
-import { clearSpotFrom, clearStretches, fitFlatSign } from "./sign-room";
+import { clearSpotFrom, clearStretches, fitFlatSign, wallNear } from "./sign-room";
 import { type Uv, quadUv } from "./sink-ops";
 
 /**
@@ -217,7 +217,8 @@ const tubes = (sink: MeshSink, f: FacadeFrame, color: string): void => {
   const y = f.eave - TUBE_UNDER_EAVE;
   for (const w of f.walls) {
     if (hiddenWall(f, w) || w.blind) continue;
-    for (const [a, b] of clearStretches(f, w, TUBE_OUT, TUBE_OUT, y - TUBE_HEIGHT / 2)) {
+    // Looking every 0.1 m of every wall up took most of the signs' time: only near the neighbours now.
+    for (const [a, b] of clearStretches(f, w, TUBE_OUT, TUBE_OUT, y - TUBE_HEIGHT / 2, wallNear(f, w, TUBE_OUT))) {
       if (b - a >= Math.min(TUBE_MIN, w.length)) flatOnWall(sink, w, (a + b) / 2, y, TUBE_OUT, b - a, TUBE_HEIGHT, signTint(color, 1), [0, MAP_SIGN_KIND.tube]);
     }
   }

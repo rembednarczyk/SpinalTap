@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { MeshSink } from "../src/renderer/mesh-sink";
 import { planCanyonSigns } from "../src/renderer/mapcity/canyon-signs";
-import { type MapBuilding, type NeighbourAt, facadeFrame } from "../src/renderer/mapcity/facade-frame";
-import { cleanRing } from "../src/renderer/mapcity/polygon";
+import { type MapBuilding, type NeighbourAt, type NeighboursNear, facadeFrame } from "../src/renderer/mapcity/facade-frame";
+import { type Box2, cleanRing } from "../src/renderer/mapcity/polygon";
 import { MAP_SIGN_KIND, planBuildingSigns } from "../src/renderer/mapcity/sign-plan";
 import { planVenueSigns, venueBoards } from "../src/renderer/mapcity/venue-plan";
 
@@ -98,6 +98,22 @@ describe("signs in front of a wall a neighbour stands out in front of (G-157, G-
     // The south wall keeps its tube between the neighbours, the other walls theirs whole.
     expect(open).toBeGreaterThan(0);
     expect(tubes).toBe(open);
+  });
+
+  it("lay the same tubes when the frame knows the neighbours' bounds (G-170)", () => {
+    const quads = (boxes: readonly Box[], near?: NeighboursNear): number[] => {
+      const all: number[] = [];
+      for (let look = 1; look <= 80; look++) {
+        const sink = new MeshSink();
+        planBuildingSigns(sink, facadeFrame(house(look), lookup(boxes), near), () => null);
+        all.push(...sink.positions);
+      }
+      return all;
+    };
+    const bounds = OUT_FRONT.map((b) => ({ minX: b.x0, maxX: b.x1, minZ: b.z0, maxZ: b.z1 }));
+    const meets = (box: Box2) => bounds.filter((b) => b.minX <= box.maxX && b.maxX >= box.minX && b.minZ <= box.maxZ && b.maxZ >= box.minZ);
+    expect(quads(OUT_FRONT, meets)).toEqual(quads(OUT_FRONT));
+    expect(quads([], () => [])).toEqual(quads([]));
   });
 
   it("narrow a holo-ad on a firewall to the stretch a taller neighbour leaves clear", () => {
