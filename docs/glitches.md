@@ -579,7 +579,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, packages/sim (crowd), tools/glitch-scan
 
 ### G-178 Strażnicy nieudanej infiltracji znikają po wczytaniu
-- Status: zgłoszone (1.11, weryfikator #145); było przed #145
+- Status: w PR #150 (1.11; `endedContract` w zapisie v22, rejestracja kontraktu w każdym statusie); w weryfikacji. Do decyzji projektowej: szablony zakończonego zlecenia respawnują nietkniętych strażników przy ponownym wejściu, aż do następnego zlecenia (tak było przed poprawką)
 - Ważność: S2 (zapis pozwala uciec z walki) · Zasięg: kontrakt infiltrate zakończony alarmem (`contracts.active` null), strażnicy `c3-*` (5 encji) dalej walczą; po wczytaniu ich nie ma
 - Dane: seed 77, `completed: 2`, gracz w `docks(6,0,110)`, 30 kroków, `accept-contract infiltrate`, teleport 6 m przed `c3-g1`, kroki do alarmu i 60 dalej, zapis; w 1. kroku oryginał: gracz ginie (hp 0), wczytana gra: hp 84
 - Przyczyna: konstruktor `Simulation` rejestruje kontrakt tylko przy `status==="active" || hasAmbush`
