@@ -617,13 +617,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: budynek z wejściem OSM przy rysowanej ścianie dostaje drzwi w najbliższym gnieździe tej ściany albo żadnych zastępczych; kontrola `entrance-door-elsewhere` (baza dziś 1) → 0. Przy okazji do rozważenia: wybór ściany drzwi klatki wg `addr:street` (40 ze 179 drzwi patrzy na inną ulicę niż adres, np. Pałac Lubomirskich (60,4; 99,3) od Radziwiłłowskiej) i kontrola `door-on-osm-passage` (drzwi do 3 m od osi `tunnel=building_passage`/`covered=yes`, baza 1: Niecała 4, T-109)
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
-### G-199 XP za quickhack na celu bez klucza: możliwe wielokrotne zbieranie
-- Status: do sprawdzenia (1.11, weryfikator #179)
-- Ważność: S4 (proponowana) · Zasięg: `grantQuickhackXp(ctx, target.key)` w `packages/sim/src/systems/scanner-system.ts`; posiłki ochrony i inne cele bez klucza nie mają klucza, więc gra nie zapamiętuje, że cel już dał XP
-- Do zrobienia: sonda (ten sam posiłek hackowany kilka razy, także po zapisie i wczytaniu); jeśli XP rośnie za każdym razem, pamięć po `security:<n>` jak w G-194
-- Uwaga: po wczytaniu trwający upload jest przerwany w 1. kroku, gdy gracz nie trzyma skanu (zachowanie sprzed G-194)
-- Pakiet właściciela: packages/sim
-
 ### G-200 Test tabeli rekwizytów blisko limitu 20 s w CI po drzwiach
 - Status: w naprawie (1.11, pilne: main czerwony od #167; pomiar pod --coverage: 5,9 s przed #167, 9,3 s po)
 - Ważność: S3 (test, czerwony CI kosztuje cykl) · Zasięg: `tools/osm-import/test/props.test.ts` „matches the committed table” przekroczył 20 s w `test:coverage` na CI (przebieg 714 s zamiast ok. 550 s); lokalnie 3,1–3,2 s przy load 17

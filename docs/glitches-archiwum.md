@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-199 XP za quickhack na celu bez klucza: możliwe wielokrotne zbieranie
+- Status: niepotwierdzone (1.11, sonda naprawiacza): `grantQuickhackXp` zaczyna się od `if (!key) return;`, więc cel bez klucza nigdy nie daje XP (posiłek n=1 hackowany 3 razy i 2 razy po wczytaniu: 0 XP); cele z kluczem płacą raz (`progression.hacked` w zapisie). Do decyzji użytkownika (poza rejestrem): czy posiłki ochrony mają płacić raz, pamięć po `security:<n>`
+- Ważność: S4 (proponowana) · Zasięg: `grantQuickhackXp(ctx, target.key)` w `packages/sim/src/systems/scanner-system.ts`; posiłki ochrony i inne cele bez klucza nie mają klucza, więc gra nie zapamiętuje, że cel już dał XP
+- Do zrobienia: sonda (ten sam posiłek hackowany kilka razy, także po zapisie i wczytaniu); jeśli XP rośnie za każdym razem, pamięć po `security:<n>` jak w G-194
+- Uwaga: po wczytaniu trwający upload jest przerwany w 1. kroku, gdy gracz nie trzyma skanu (zachowanie sprzed G-194)
+- Pakiet właściciela: packages/sim
+
 ### G-195 Strażnicy wykonanego kontraktu wracają po ponownym wejściu
 - Status: naprawione w #175 (1.11, PRZYJĘTE; decyzja użytkownika: „jak w innych grach tego typu”): `clearSite()` przy wypłacie i przy wczytaniu; przegrane jak dotąd; schemat v23 bez migracji
 - Ważność: S3 · Zasięg: po wykonaniu kontraktu jego strażnicy odradzają się przy ponownym wejściu w chunk, dopóki miejsce nie dostanie następnego kontraktu (zastąpione zlecenia żyją w `formerContracts`, `packages/sim/src/simulation.ts:98`, `:245`)
