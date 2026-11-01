@@ -1153,11 +1153,12 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   },
   /**
    * A wall lantern of the generator's table hung within 2 m of the axis of a passage of the game's
-   * own data (G-183): the chunks' passages and the gates cut by hand (`GATE_PASSAGES`), which
+   * own data (G-183), across its stretch under the passage's building and half a metre of each
+   * mouth: the chunks' passages and the gates cut by hand (`GATE_PASSAGES`), which
    * `wall-lantern-in-building` misses with its `tunnel=building_passage` ways.
    */
   "wall-lantern-by-passage": () => {
-    const passages = [...GATE_PASSAGES, ...MAP_CHUNKS.flatMap((c) => c.passages ?? [])];
+    const passages = [...GATE_PASSAGES, ...MAP_CHUNKS.flatMap((c) => c.passages ?? [])].map((p) => ({ ...p, rings: passageRings(p.building) }));
     const lanterns = Object.values(LUBLIN_STREET_PROPS)
       .flat()
       .filter((i) => i.prop === "lamp-wall-lantern");
@@ -1538,20 +1539,21 @@ describe("the glitch scan (ADR-0054)", () => {
     for (const t of tiers) if (t.y1 > gateTop) expect(ringGap(t.ring, worldOutline(gate))).toBeGreaterThanOrEqual(5);
   });
 
-  it("finds a wall lantern within 2 m of a gate's axis cut by hand, in its vault or its mouth, and none past its ends (G-183)", () => {
-    const gate = GATE_PASSAGES.find((p) => p.building === "r7224409")!;
-    const along = (t: number, off: number) => {
-      const len = Math.hypot(gate.to.x - gate.from.x, gate.to.z - gate.from.z);
-      const [ux, uz] = [(gate.to.x - gate.from.x) / len, (gate.to.z - gate.from.z) / len];
-      return { x: gate.from.x + ux * len * t - uz * off, z: gate.from.z + uz * len * t + ux * off };
-    };
-    const inMouth = along(0.97, 1.6);
-    const found = lanternsByPassages([inMouth, along(0.5, -1.2), along(0.5, 2.5), along(1.1, 0.5), along(-0.1, 0)], [gate]);
+  it("finds a wall lantern within 2 m of a gate's axis cut by hand, in its vault or its mouth, and none on the street past its fronts (G-183)", () => {
+    // Brama Krakowska's axis from GATE_PASSAGES, under a gate house whose fronts cross it 6.45 and 26.55 m along, as the map's.
+    const { from, to } = GATE_PASSAGES.find((p) => p.building === "r7224409")!;
+    const len = Math.hypot(to.x - from.x, to.z - from.z);
+    const [ux, uz] = [(to.x - from.x) / len, (to.z - from.z) / len];
+    const at = (s: number, off: number) => ({ x: from.x + ux * s - uz * off, z: from.z + uz * s + ux * off });
+    const gate = { building: "r7224409", from, to, rings: [[at(6.45, -8), at(26.55, -8), at(26.55, 8), at(6.45, 8)]] };
+    const [mouth, vault, aside, pastFront, onStreet] = [at(26.8, 1.6), at(16, -1.2), at(16, 2.5), at(27.55, 1), at(30.2, 1.6)];
+    const found = lanternsByPassages([mouth, vault, aside, pastFront, onStreet], [gate]);
     expect(found.map((f) => [f.x, f.z, f.building])).toEqual([
-      [inMouth.x, inMouth.z, "r7224409"],
-      [along(0.5, -1.2).x, along(0.5, -1.2).z, "r7224409"],
+      [mouth.x, mouth.z, "r7224409"],
+      [vault.x, vault.z, "r7224409"],
     ]);
-    expect(lanternsByPassages([inMouth], [])).toEqual([]);
+    expect(lanternsByPassages([vault], [{ ...gate, rings: [] }])).toEqual([]);
+    expect(lanternsByPassages([vault], [])).toEqual([]);
   });
 
   describe("kerb car parks (G-189)", () => {
