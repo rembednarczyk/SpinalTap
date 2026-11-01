@@ -348,8 +348,8 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
   // v21 -> v22 (G-178): the contract ended with its people still in the world is saved (optional).
   // An older save has none: its guards were gone on loading, as they are now.
   21: (old) => ({ ...old, version: 22 }),
-  // v22 -> v23 (G-179): the heat's reinforcements and the next entity id are saved (optional). An
-  // older save has neither: its reinforcements were gone on loading, and still are.
+  // v22 -> v23 (G-179): the heat's reinforcements are saved (optional). An older save has none:
+  // its reinforcements were gone on loading, and still are.
   22: (old) => ({ ...old, version: 23 }),
 };
 
