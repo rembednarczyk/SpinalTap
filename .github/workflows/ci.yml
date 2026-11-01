@@ -28,9 +28,9 @@ jobs:
       - id: diff
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            files=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")
+            files=$(git -c core.quotePath=false diff --name-only "origin/${{ github.base_ref }}...HEAD")
           elif [ -n "${{ github.event.before }}" ] && git cat-file -e "${{ github.event.before }}" 2>/dev/null; then
-            files=$(git diff --name-only "${{ github.event.before }}" HEAD)
+            files=$(git -c core.quotePath=false diff --name-only "${{ github.event.before }}" HEAD)
           else
             echo "code=true" >> "$GITHUB_OUTPUT"; exit 0
           fi
