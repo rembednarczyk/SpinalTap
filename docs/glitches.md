@@ -504,26 +504,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: zakaz postoju do 15 m od słupka (art. 49 PoRD); kontrola skanu `parked-car-at-bus-stop`, baza 3 → 0; przy okazji `path=sidewalk` poza `footWays` i `pedestrian`/`cycleway` w `parked-car-on-footway`
 - Pakiet właściciela: packages/sim (parked-cars), tools/osm-import, tools/glitch-scan
 
-### G-157 Banery, holo-reklamy i wysięgniki wchodzą w sąsiednie budynki
-- Status: w PR #138, w weryfikacji (1.11; skan do 0)
-- Ważność: S3 · Zasięg: 31 banerów w 29 budynkach, 3 holo, 1 `blade`; np. (−190,6; −3,3), (195,5; −98,8), (228,3; −39,9), (309,8; −70,8); holo (577,3; 540,8), (494,9; −140,2); `blade` (578; 161,6)
-- Przyczyna: `banners` w `canyon-signs.ts` (1,2 m od końca ściany, 1 m od niej) i `holos` (0,45 m) nie sprawdzają, czy sąsiad wystaje przed płaszczyznę ściany
-- Test przyjęcia: `banner-in-neighbour` 31 → 0, `holo-or-blade-in-neighbour` 4 → 0
-- Pakiet właściciela: packages/engine (canyon-signs.ts, sign-plan.ts)
-
 ### G-158 Latarnie ścienne zasłaniają tablice lokali
 - Status: w PR #137, w poprawkach (1.11; weryfikacja 1: NIE PRZYJĘTE, kontrola skanu była tautologią i pomijała ramię latarni 0,72 m z ukośnym `yaw`, 2 przypadki: NIEZWYKŁA KUCHNIA, KUCHNIA SĘDZIEGO); po scaleniu #138 odtworzyć latarnie
 - Ważność: S3 · Zasięg: 17 z 169 latarni ściennych, np. WIEJSKI RAJ (564,0; −88,9), KORZEŃ CZAROWNICY (611,4; −74,9), PUB ZA KURTYNĄ (599,6; −2,6); zrzuty g148-r2-rynek-e, g148-r4-rynek-s
 - Przyczyna: rozstaw `lamp-wall-lantern` (ADR-0047) nie zna tablic lokali (ADR-0064 etap 4); markiza je zna (`venueBoardOn`)
 - Test przyjęcia: `wall-lantern-over-venue-board` 17 → 0
 - Pakiet właściciela: tools/osm-import (props-gen), packages/engine
-
-### G-159 Tablica lokalu wchodzi w sąsiedni budynek
-- Status: w PR #138, w weryfikacji (1.11; skan do 0)
-- Ważność: S3 · Zasięg: 7: KUCHNIA SPOD ARARATU (600,8; −21,8), ZIELONY CZAROWNIK (168,0; −99,2), SZAFA PÓŁWIECZE (112,5; −111,8), ZJEDZ I ZNIKAJ (622,2; −6,8), WULKANIZACJA PIASTA (580,9; 552,6), KAMBUZ (828,6; 496,4), KLUB ZEBRANIE (205,8; −105,3)
-- Przyczyna: `venueBoards` (`venue-plan.ts`) mieści tablicę w ścianie z marginesem 0,3 m, bez sprawdzenia sąsiada przed płaszczyzną ściany
-- Test przyjęcia: `venue-board-in-neighbour` 7 → 0
-- Pakiet właściciela: packages/engine (venue-plan.ts)
 
 ### G-160 Płyta „DEN…” w powietrzu przy narożniku na Grodzkiej (źródło nieustalone)
 - Status: zgłoszone (1.11, łowca G-148; zrzut gracza a92148c1)

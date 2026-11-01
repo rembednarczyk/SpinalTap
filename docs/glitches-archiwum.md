@@ -2,6 +2,20 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-159 Tablica lokalu wchodzi w sąsiedni budynek
+- Status: naprawione (1.11, #138: tablica w wolnym odcinku ściany, skan 7 → 0)
+- Ważność: S3 · Zasięg: 7: KUCHNIA SPOD ARARATU (600,8; −21,8), ZIELONY CZAROWNIK (168,0; −99,2), SZAFA PÓŁWIECZE (112,5; −111,8), ZJEDZ I ZNIKAJ (622,2; −6,8), WULKANIZACJA PIASTA (580,9; 552,6), KAMBUZ (828,6; 496,4), KLUB ZEBRANIE (205,8; −105,3)
+- Przyczyna: `venueBoards` (`venue-plan.ts`) mieści tablicę w ścianie z marginesem 0,3 m, bez sprawdzenia sąsiada przed płaszczyzną ściany
+- Test przyjęcia: `venue-board-in-neighbour` 7 → 0
+- Pakiet właściciela: packages/engine (venue-plan.ts)
+
+### G-157 Banery, holo-reklamy i wysięgniki wchodzą w sąsiednie budynki
+- Status: naprawione (1.11, #138: banery, holo i wysięgniki poza sąsiadem, skan 33 i 4 → 0; wąskie wieże zachowują holo)
+- Ważność: S3 · Zasięg: 31 banerów w 29 budynkach, 3 holo, 1 `blade`; np. (−190,6; −3,3), (195,5; −98,8), (228,3; −39,9), (309,8; −70,8); holo (577,3; 540,8), (494,9; −140,2); `blade` (578; 161,6)
+- Przyczyna: `banners` w `canyon-signs.ts` (1,2 m od końca ściany, 1 m od niej) i `holos` (0,45 m) nie sprawdzają, czy sąsiad wystaje przed płaszczyznę ściany
+- Test przyjęcia: `banner-in-neighbour` 31 → 0, `holo-or-blade-in-neighbour` 4 → 0
+- Pakiet właściciela: packages/engine (canyon-signs.ts, sign-plan.ts)
+
 ### G-164 Menu postaci zmienia broń przy niesieniu ciała
 - Status: naprawione (1.11, #134, 7b27ff1: przy niesieniu ciała `equip-item`/`unequip-item` nie ruszają slotów broni; test w `takedown-carry-limits.test.ts`)
 - Ważność: S4 · Zasięg: komendy `equip-item` i `unequip-item` z menu postaci przy `carrying`
