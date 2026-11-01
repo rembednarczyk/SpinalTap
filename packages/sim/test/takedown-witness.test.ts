@@ -99,8 +99,9 @@ describe("witnesses of a takedown (ADR-0065)", () => {
     const reports = collect(sim, "CrimeReported");
     takeDown(sim);
     expect(calls).toHaveLength(1);
-    // Straight after it, before the call goes through.
-    teleportPlayer(sim, { ...w.position, x: w.position.x + 0.8 }, -Math.PI / 2);
+    // Straight after it, before the call goes through; looking away, so no aimed gun cuts the call off.
+    teleportPlayer(sim, { ...w.position, x: w.position.x + 0.8 }, Math.PI / 2);
+    expect(w.civilian!.crowd?.call).toBeTruthy();
     takeDown(sim);
     expect(w.unconscious).toBe(true);
     run(sim, ticks(WITNESS_CALL_SECONDS + 2), CROUCH);
