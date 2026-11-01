@@ -30,10 +30,14 @@
   "under-deck-blocked": 0,
   "landmark-overbuilt": 0,
   "landmark-missing": 0,
+  "monument-shape-off-tags": 0,
   "passage-blocked": 0,
   "small-freestanding-tall": 2,
   "building-underground-solid": 0,
   "passage-maxheight": 0,
+  "gate-mouth-off-axis": 3,
+  "vehicle-outside-passage": 0,
+  "wall-lantern-in-passage": 0,
   "passage-off-map": 0,
   "building-part-ignored": 0,
   "building-part-orphan": 0,
@@ -47,9 +51,5 @@
   "fractional-levels-rounded": 0,
   "sidewalk-under-carriageway": 131,
   "kerb-fit-sparse": 0,
-  "two-way-fit-narrow": 0,
-  "landmark-recipe-unmatched": 0,
-  "gate-mouth-off-axis": 3,
-  "vehicle-outside-passage": 0,
-  "wall-lantern-in-passage": 0
+  "two-way-fit-narrow": 0
 }

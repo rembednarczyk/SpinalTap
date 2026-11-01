@@ -16,6 +16,7 @@ import { extractFeatures } from "../../osm-import/src/features.ts";
 import { roadWidth } from "../../osm-import/src/ground.ts";
 import { oneway } from "../../osm-import/src/markings.ts";
 import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
+import { SHAPES } from "../../osm-import/src/props-kinds.ts";
 import { addressOf } from "../../osm-import/src/labels.ts";
 import { geoToWorld } from "../../osm-import/src/project.ts";
 import { CROWD_LANES } from "../../../packages/sim/src/content/crowd";
@@ -371,6 +372,20 @@ const standingVehicles = (() => {
     return memo;
   };
 })();
+
+/** Tag values of things on a facade or in the paving, not free-standing (G-149). */
+const FLAT_ART = new Set(["plaque", "stolperstein", "mural", "mosaic", "graffiti", "relief"]);
+
+/** Do a monument's tags bear out its shape (`monument-shape-off-tags`)? */
+const tagsBearOut = (shape: string, t: Readonly<Record<string, string>>): boolean => {
+  if (FLAT_ART.has(t.memorial ?? "") || FLAT_ART.has(t.artwork_type ?? "")) return false;
+  const kozio = /kozio/i.test(t.name ?? "");
+  if (shape === "obelisk") return t.memorial === "obelisk" || /obelisk|unii/i.test(t.name ?? "");
+  if (shape === "figure") return !kozio && (["statue", "bust"].includes(t.memorial ?? "") || ["statue", "bust", "sculpture"].includes(t.artwork_type ?? ""));
+  if (shape === "koziolek") return kozio;
+  if (shape === "abstract") return !kozio && t.artwork_type === "sculpture";
+  return true;
+};
 
 const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /**
@@ -759,6 +774,29 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       return [{ at: at ? near(at.x, at.z) : "?", what: `${id} ${n?.tags?.name ?? ""}`.trim() }];
     });
     return [...buildings, ...statues];
+  },
+  /**
+   * A monument or an artwork whose shape its OSM tags do not bear out (G-149), judged by the
+   * tagged node nearest within 3 m: anything standing for a plaque, a stumbling stone, a mural or
+   * a mosaic; an obelisk not named one (or the Union); a figure not tagged statue, bust or
+   * sculpture, or a Koziołek as a figure; a Koziołek not named one; an abstract sculpture not
+   * tagged `artwork_type=sculpture` (with no node near either). Other shapes are neutral.
+   */
+  "monument-shape-off-tags": () => {
+    const nodes = [...SOURCE_OSM.nodes.values()].flatMap((n) => {
+      const t = n.tags ?? {};
+      return t.tourism === "artwork" || t.historic === "memorial" || t.historic === "monument" || t.historic === "wayside_shrine" || t.historic === "wayside_cross" ? [{ t, ...geoToWorld(n.lat, n.lon) }] : [];
+    });
+    return Object.values(WORLD_STREET_PROPS)
+      .flat()
+      .filter((i) => i.prop === "monument" || i.prop === "artwork")
+      .flatMap((i) => {
+        const shape = ["obelisk", "figure", "koziolek", "abstract"][i.variant % (SHAPES[i.prop] ?? 1)] ?? "neutral";
+        const by = nodes.map((n) => ({ n, d: Math.hypot(n.x - i.x, n.z - i.z) })).filter((q) => q.d < 3).sort((a, b) => a.d - b.d)[0]?.n;
+        const ok = by ? tagsBearOut(shape, by.t) : shape !== "abstract";
+        const t = by?.t ?? {};
+        return ok ? [] : [{ at: near(i.x, i.z), what: `${i.prop} ${shape}: ${t.name ?? "no tagged node"} ${t.memorial ?? t.artwork_type ?? ""}`.trim() }];
+      });
   },
   /**
    * A way of the map through a gateway, a tunnel or a covered lane under a building

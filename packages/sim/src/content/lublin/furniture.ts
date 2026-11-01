@@ -34,7 +34,7 @@ const box = (x: number, z: number, hx: number, hz: number, top: number): Box => 
 const post = (r: number, top: number, x = 0, z = 0): Post => ({ x, z, r, top });
 
 /** Shape counts per kind, as the renderer's `PROP_SHAPES` (the low bits of `variant`). */
-const SHAPES: Partial<Record<StreetPropKind, number>> = { bench: 2, tree: 3, monument: 4, artwork: 4, flagpole: 2 };
+const SHAPES: Partial<Record<StreetPropKind, number>> = { bench: 2, tree: 3, monument: 6, artwork: 6, flagpole: 2 };
 const shapeOf = (kind: StreetPropKind, variant: number): number => variant % (SHAPES[kind] ?? 1);
 /** Trees grow 0.8 to 1.25 (bits 4 to 7), like the renderer's `scaleOf`. */
 const treeScale = (variant: number): number => 0.8 + 0.45 * (((variant >> 4) % 16) / 15);
@@ -45,6 +45,9 @@ const treeScale = (variant: number): number => 0.8 + 0.45 * (((variant >> 4) % 1
  * (`bollardChains` in `bollards.ts`).
  */
 export const BOLLARD = { side: 0.34, height: 1.05, chain: 0.018 } as const;
+
+/** Monument and artwork solids by shape: obelisk, figure on a plinth, Koziołek, abstract, stele, wayside shrine. */
+const MONUMENT_PARTS: readonly Box[] = [box(0, 0, 1.4, 1.4, 11), box(0, 0, 0.9, 0.9, 3.5), box(0, 0, 0.45, 0.3, 1.2), box(0, 0, 0.5, 0.5, 2.6), box(0, 0, 0.65, 0.35, 1.65), box(0, 0, 0.45, 0.45, 3.1)];
 
 /** The parts of each solid kind, by shape. Heights are above the foot. */
 const PARTS: Partial<Record<StreetPropKind, (shape: number, variant: number) => readonly Part[]>> = {
@@ -71,9 +74,8 @@ const PARTS: Partial<Record<StreetPropKind, (shape: number, variant: number) => 
   "traffic-signal": () => [post(0.09, 3.3)],
   "trolley-pole": () => [post(0.15, 8)],
   flagpole: (s) => [post(s === 1 ? 0.36 : 0.11, s === 1 ? 35 : 8.5)],
-  // Obelisk, figure on a plinth, Koziołek, abstract.
-  monument: (s) => [s === 0 ? box(0, 0, 1.4, 1.4, 11) : s === 1 ? box(0, 0, 0.9, 0.9, 3.5) : s === 2 ? box(0, 0, 0.45, 0.3, 1.2) : box(0, 0, 0.5, 0.5, 2.6)],
-  artwork: (s) => [s === 0 ? box(0, 0, 1.4, 1.4, 11) : s === 1 ? box(0, 0, 0.9, 0.9, 3.5) : s === 2 ? box(0, 0, 0.45, 0.3, 1.2) : box(0, 0, 0.5, 0.5, 2.6)],
+  monument: (s) => [MONUMENT_PARTS[s] ?? MONUMENT_PARTS[3]!],
+  artwork: (s) => [MONUMENT_PARTS[s] ?? MONUMENT_PARTS[3]!],
 };
 
 /** Kinds that are solids. */
