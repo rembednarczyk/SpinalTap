@@ -585,6 +585,19 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: rurka kończy się przed sąsiadem wystającym przed ścianę (to samo `sign-room` co banery z G-157); kontrola skanu z bazą
 - Pakiet właściciela: packages/engine (sign-plan.ts)
 
+### G-171 Odroczona zmiana poziomu trudności ginie przy zapisie
+- Status: zgłoszone (1.11, weryfikator ADR-0066 etap 2)
+- Ważność: S3 · Zasięg: zmiana poziomu w walce („Zmieni się po walce”), potem zapis i wczytanie przed końcem walki
+- Przyczyna: `pendingDifficulty` nie wchodzi do zapisu (etap 1); po wczytaniu gracz jest na starym poziomie bez informacji, a slot ma etykietę starego
+- Poprawka: odroczony profil w zapisie (zmiana schematu: `SAVE_SCHEMA_VERSION` + migracja + test) albo zastosowanie go przy zapisie; test sesji
+- Pakiet właściciela: packages/sim, packages/persistence
+
+### G-172 Etykieta poziomu na slocie może być nieaktualna po zapisie z innej karty
+- Status: zgłoszone (1.11, weryfikator ADR-0066 etap 2)
+- Ważność: S4 · Zasięg: `SlotDifficulties` (`packages/app/src/presenters/difficulty.ts:41`) rozpoznaje slot po dacie z dokładnością do minuty; `refreshSlots` dekoduje nieznane sloty dwa razy
+- Poprawka: profil w `SaveSlotInfo` (zmiana portu `core/src/ports`, zgoda architekta) zamiast drugiego odczytu
+- Pakiet właściciela: packages/core (ports), packages/app
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
