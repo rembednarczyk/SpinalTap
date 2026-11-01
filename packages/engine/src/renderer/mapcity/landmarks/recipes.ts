@@ -235,6 +235,11 @@ const BRAMA_GRODZKA: LandmarkRecipe = {
 
 export const LANDMARK_RECIPES: readonly LandmarkRecipe[] = [BRAMA_KRAKOWSKA, BRAMA_GRODZKA];
 
+/** Every text the landmarks write in the names atlas: screens, plaques and dated tablets. */
+export const LANDMARK_TEXTS: readonly string[] = [
+  ...new Set(LANDMARK_RECIPES.flatMap((r) => [r.layer.screen, r.layer.plaque, ...r.parts.map((p) => p.tier.front?.inscription)].flatMap((t) => (t ? [t] : [])))),
+];
+
 /** A neighbour a landmark's cables run to: its world outline and the world y of its top. */
 export interface CableAnchor {
   readonly ring: readonly { readonly x: number; readonly z: number }[];

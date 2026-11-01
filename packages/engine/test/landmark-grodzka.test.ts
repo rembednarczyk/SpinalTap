@@ -1,4 +1,8 @@
+import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import { describe, expect, it } from "vitest";
+import { RawTexture, Scene } from "../src/babylon";
+import { MapSignMaterial, NAME_SLOTS } from "../src/renderer/mapcity/map-signs";
+import { LANDMARK_TEXTS } from "../src/renderer/mapcity/landmarks/recipes";
 import { DRESS_FLAG, MeshSink, hexColor } from "../src/renderer/mesh-sink";
 import { planNearBuilding } from "../src/renderer/mapcity/facade-plan";
 import { ROOF_STYLE } from "../src/renderer/mapcity/facade-style";
@@ -209,5 +213,13 @@ describe("Brama Grodzka from the landmark kit (ADR-0062)", () => {
     const pts = points(far);
     expect(pts.some((p) => p.v2 >= ROOF_STYLE && p.y > f.top + 3)).toBe(true);
     expect(pts.some((p) => p.a === DRESS_FLAG.lit)).toBe(true);
+  });
+
+  it("keeps a row of the names atlas for the date however many names stream in before the gate's cell", () => {
+    const scene = new Scene(new NullEngine());
+    const signs = new MapSignMaterial(scene, RawTexture.CreateRGBATexture(new Uint8Array(4), 1, 1, scene));
+    for (let k = 0; k < NAME_SLOTS * 2; k++) signs.slotFor(`Kamienica ${k}`);
+    expect(signs.slotFor("MDCCLXXXV")).not.toBeNull();
+    expect(LANDMARK_TEXTS).toContain("MDCCLXXXV");
   });
 });
