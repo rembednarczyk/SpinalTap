@@ -593,7 +593,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, packages/sim
 
 ### G-194 Quickhack w toku na encji bez klucza trafia po wczytaniu w inną encję
-- Status: zgłoszone (1.11, weryfikator #165), do potwierdzenia sondą z workiem łupu
+- Status: w PR #179 (1.11, w weryfikacji; potwierdzone sondą): posiłek jako `security:<n>`, inne encje bez klucza przerwane po wczytaniu
 - Ważność: S4 · Zasięg: `packages/sim/src/systems/scanner-system.ts:94` zapisuje cel jako `#<id>` w `domain.netrun.upload`; po wczytaniu id są przydzielane od nowa (worki z łupem biorą nowe), więc upload trafia w inną encję albo w nic
 - Poprawka: cel uploadu przez klucz (np. `security:<n>`) albo odrzucenie uploadu na encji bez klucza przy zapisie
 - Pakiet właściciela: packages/sim
