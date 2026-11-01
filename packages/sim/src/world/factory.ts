@@ -388,7 +388,9 @@ export const applyEntitySnapshot = (e: Entity, s: EntitySnapshot): void => {
     e.combatant.bloom = s.gun.bloom;
   }
   // A perch the content no longer has: the sniper starts on the one it was built at.
-  if (e.sniper && s.sniper && s.sniper.perch < e.sniper.perches.length) e.sniper = { ...e.sniper, ...s.sniper };
+  if (e.sniper && s.sniper && s.sniper.perch < e.sniper.perches.length) {
+    e.sniper = { ...e.sniper, ...s.sniper, ...(s.sniper.phase === "aim" ? { relight: true as const } : {}) };
+  }
   if (e.ai) {
     e.ai.alerted = s.alerted;
     e.ai.lastKnown = s.lastKnown ? { ...s.lastKnown } : null;
