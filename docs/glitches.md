@@ -421,7 +421,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: test planu: fontanna multimedialna ma ≥ 96 strumieni i czaszę w środku obrysu; `npr-perf` krakowskie-tpp bez wzrostu wywołań rysowania i aktywnych siatek (dziś 386 / 164); zrzut nocny z pokazem obejrzany przez kuratora
 
 ### G-130 Pojazdy zapadnięte pod nawierzchnię (wrak na deptaku przy Pedecie)
-- Status: w naprawie (e4b732e NIE PRZYJĘTE 1.11: zatapianie 77 → 0 działa, ale auta na stoku odstają do 0,44 m bez kontroli, a auta jadące dalej siedzą 0,10 m w jezdni; poprawka: bez parkowania na spadku > 0,15 m, kontrola `vehicle-off-surface`, podniesienie jezdni w `traffic-system`)
+- Status: przyjęte przez weryfikatora 1.11 (druga runda: postój tylko na spadku ≤ 0,15 m, `vehicle-off-surface` 15 → 0, auta jadące na rysowanej jezdni); przegląd kuratora w toku
 - Ważność: S3 (proponowana; widoczne na głównym ciągu pieszym) · Zasięg: 38 z 87 pojazdów w mieście zapadniętych ponad 0,15 m pod rysowaną nawierzchnię, 8 ponad 0,25 m · Koszt: mały
 - Gdzie: wrak (152.6, −51.0) na deptaku Krakowskiego Przedmieścia przy wylocie Kapucyńskiej, ok. 50 m od Pedetu; T-077. Najgłębiej: dostawczak (544.7, 167.7) 0,36 m, furgonetki na Placu Zamkowym (757, 249.4) 0,30 m, taxi (810.3, 481.3) 0,29 m
 - Dowód: pojazd ze zgłoszenia to blok sceny `wreck` z `DISTRICT_M0_PROPS` (`district-m0.ts`, grupa `WRECK` (150, −20), skrzynia (2.6, −31)), nie auto zaparkowane: w promieniu 80 m od Pedetu nie ma żadnego z 80 `PARKED_CARS`. Stoi na nawierzchni `square` (4/5 narożników). Jego spód leży na terenie w środku (y 0,54), teren pod narożnikami ma 0,50–0,61, a renderer kładzie `square` 0,08 m nad terenem (`SURFACE_LIFT`). Koła są więc do 0,15 m pod płytami. To samo dotyczy aut zaparkowanych i jadących: `PARKED_CARS` i `vehicleEntity` biorą `groundY` ze środka, z `pitch: 0`, a jezdnia jest rysowana +0,10 m, chodnik +0,16 m. Zrzuty `wreck.png`, `pedet-wide.png` i `wreck-side.png` (z boku: dolna ćwiartka kół schowana pod płytami)
@@ -462,6 +462,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: odłożone (1.11, decyzja orkiestratora: sylwetka poza dachem z OSM wymaga wyjątku od ADR-0062; T-083)
 - Ważność: S4 · Koszt: średni (nowy element zestawu poza bryłą)
 - Pakiet właściciela: packages/engine (renderer, przepisy zabytków)
+
+### G-138 Pasy ruchu na szwach chunków i krawędziach mapy bez nawierzchni
+- Status: zgłoszone (1.11, weryfikator G-130)
+- Ważność: S4 · Zasięg: 56 z 23 374 punktów pasów (co 1 m), na szwach chunków (z ≈ 160) i krawędziach mapy
+- Gdzie: `surfacesAt` nie zwraca tam żadnej nawierzchni, a `GroundField.heightAt` różni się od `groundY` (np. (−96.3, −270.5): −1,80 zamiast 0,00); sprawa sprzed G-130
+- Pakiet właściciela: packages/sim (content/lublin, ground)
+- Test przyjęcia: kontrola skanu dla punktów pasów bez nawierzchni, baza 56 → 0 albo uzasadnione wyjątki
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
