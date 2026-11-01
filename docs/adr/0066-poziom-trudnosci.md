@@ -35,6 +35,7 @@ Zaakceptowana przez użytkownika 1.11 w całości (presety z Własnym, wspomagan
 - **Gdzie żyje stan:**
   - profil trudności jest częścią stanu gry (`sim`), bo zmienia wynik symulacji; zmienia go komenda `set-difficulty` (`core/src/commands`) z pełnym profilem, przyjmowana w dowolnej chwili poza walką (NPC zaalarmowany w pobliżu: komenda czeka do końca walki);
   - zapis gry przechowuje profil (zmiana schematu: `SAVE_SCHEMA_VERSION` + migracja w `packages/persistence/src/migrations.ts`; stare zapisy dostają „Normalny”);
+  - zapis przechowuje też profil czekający na koniec walki (opcjonalne `pendingDifficulty` migawki, v20, G-171); po wczytaniu nadal czeka, a starsze zapisy nie mają czekającego;
   - wspomaganie celowania jest ustawieniem (jak `cameraMotion`), nie stanem gry.
 - **Odczyt w systemach:** systemy `sim` czytają profil z jednego zasobu świata (`world.difficulty`), mnożąc stałe w jednym miejscu na system; żadnych rozgałęzień `if (preset === …)`. Gracz z modyfikatorami (`StatModifiers`) liczy się jak dziś, a `damageTaken` działa po pancerzu. Obrażenia od upadku nie są mnożone: to otoczenie, nie wróg.
 - **UI:**

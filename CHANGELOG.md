@@ -5,6 +5,14 @@ Zmiany widoczne dla gracza, od najnowszych. Wersja gry i commit są na ekranie t
 ## Nieopublikowane (0.1.0)
 
 ### 1 listopada 2026
+- Zaparkowane auta na pasach postojowych zmapowanych w OSM wzdłuż krawężnika (`parking=street_side`, `lane`), 17 aut więcej.
+- Zaparkowane auta nie stoją na przystankach autobusowych ani 15 m przed i za słupkiem, jak każe art. 49 PoRD (G-156).
+- Zaparkowane auta nie stoją przy krawężniku ulic o dwóch pasach i więcej w każdą stronę poza zmapowanymi parkingami, jak 3 Maja (G-155).
+- Latarnie ścienne nie zasłaniają już tablic lokali: wiszą prostopadle do ściany i przesuwają się poza tablicę, a jedna bez miejsca wypada (G-158).
+- Poziom trudności do wyboru przy nowej grze i w pauzie: Opowieść, Normalny, Trudny albo Własny z suwakami, zmiana w walce czeka do jej końca, a slot zapisu pokazuje poziom (ADR-0066 etap 2).
+- Tablice lokali nie wchodzą już w sąsiedni budynek, który wystaje przed ścianę: przesuwają się, ściskają albo idą na inną ścianę (G-159).
+- Poziom trudności zmieniony w walce („Zmieni się po walce”) przetrwa zapis i wczytanie gry i wejdzie po końcu walki (G-171, zapis v20).
+- Banery, holo-reklamy i wysięgniki nie wchodzą już w sąsiednie budynki, które wystają przed ścianę: przesuwają się po niej, zwężają albo znikają (G-157).
 - Zaparkowane auta nie stoją na samodzielnych ścieżkach pieszych, np. taksówki przy postoju na Podzamczu (G-143).
 - Z ciałem na ramieniu menu postaci nie dobywa ani nie chowa broni (G-164).
 - Grę można zainstalować na telefonie: ikona na ekranie głównym i start na pełnym ekranie w poziomie (bez trybu offline).

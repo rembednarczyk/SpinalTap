@@ -3,6 +3,7 @@ import type {
   CharacterIntents,
   ContractIntents,
   DialogueIntents,
+  DifficultyIntents,
   HackIntents,
   JournalIntents,
   LootIntents,
@@ -61,6 +62,7 @@ const CHARACTER: Keys<CharacterIntents> = {
   removeMod: true,
 };
 const SETTINGS: Keys<SettingsIntents> = { changeSettings: true, bindKey: true, resetControls: true, reload: true };
+const DIFFICULTY: Keys<DifficultyIntents> = { setDifficulty: true };
 const CAMERA: Keys<CameraIntents> = { setFieldOfView: true };
 const PHONE: Keys<PhoneIntents> = { openPhone: true, closePhone: true, readThread: true };
 const CONTRACT: Keys<ContractIntents> = { dismissDebrief: true };
@@ -81,6 +83,7 @@ export const controllerIntents = (c: Controllers, sim: SimRef): ControllerIntent
   ...part<CharacterIntents>(c.character, CHARACTER),
   ...part<SettingsIntents>(c.settings, SETTINGS),
   ...part<CameraIntents>(c.settings, CAMERA),
+  ...part<DifficultyIntents>(c.difficulty, DIFFICULTY),
   ...part<PhoneIntents>(c.phone, PHONE),
   ...part<ContractIntents>(c.hud, CONTRACT),
   ...journalIntents(sim),

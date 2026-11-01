@@ -10,6 +10,7 @@ import { type Game, mountGame, run, unmountGame } from "./game-ui";
 const start = () => {
   const game = mountGame({ seed: 5 });
   fireEvent.click(screen.getByRole("button", { name: "New Game" }));
+  fireEvent.click(screen.getByRole("button", { name: "Start" }));
   return game;
 };
 

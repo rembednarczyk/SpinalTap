@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import { type StreetPropItem, VEHICLE_SIZE, terrainHeightAt } from "../../../packages/core/src";
 import { planSteps } from "../../../packages/engine/src/renderer/mapcity/steps-plan";
+import { lampWallLantern } from "../../../packages/engine/src/renderer/mapcity/prop-lamps";
 import { facadeFrame } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
 import { planFarBuilding } from "../../../packages/engine/src/renderer/mapcity/facade-plan";
 import { landmarkAt } from "../../../packages/engine/src/renderer/mapcity/landmarks";
@@ -11,6 +12,8 @@ import { type BuildingSource, mapBuilding } from "../../../packages/engine/src/r
 import { centroid, cleanRing, pointInRing } from "../../../packages/engine/src/renderer/mapcity/polygon";
 import { stackTiers } from "../../../packages/engine/src/renderer/mapcity/vertical-plan";
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
+import { MAP_SIGN_KIND } from "../../../packages/engine/src/renderer/mapcity/sign-plan";
+import { signsInNeighbours } from "./sign-neighbours";
 import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alone.ts";
 import { extractFeatures } from "../../osm-import/src/features.ts";
 import { roadWidth } from "../../osm-import/src/ground.ts";
@@ -19,6 +22,7 @@ import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
 import { SHAPES } from "../../osm-import/src/props-kinds.ts";
 import { addressOf } from "../../osm-import/src/labels.ts";
 import { geoToWorld } from "../../osm-import/src/project.ts";
+import { cityVenueBoards } from "../../osm-import/src/venue-boards.ts";
 import { CROWD_LANES } from "../../../packages/sim/src/content/crowd";
 import { INTERIORS, interiorAt } from "../../../packages/sim/src/content/interior-areas";
 import { CLINIC_DOOR, KOI_DOOR } from "../../../packages/sim/src/content/interiors";
@@ -31,7 +35,7 @@ import { clearedBuilding } from "../../../packages/sim/src/content/cleared-build
 import { CLEARED_BUILDINGS, MAP_CHUNKS, PASSAGES, ROOM_SITES } from "../../../packages/sim/src/content/lublin/sites";
 import { groundY } from "../../../packages/sim/src/content/lublin/terrain";
 import { BRIDGE_DECKS, bridgeDeckAt } from "../../../packages/sim/src/content/lublin/decks";
-import { WORLD_CHUNKS } from "../../../packages/sim/src/content/world-map";
+import { WORLD_CHUNKS, WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
 import { type GroundDeck, deckAt } from "../../../packages/sim/src/world/deck";
 import { GroundField } from "../../../packages/sim/src/world/ground";
 import { type Prism, circleTouchesPrism, makePrism, prismsAt } from "../../../packages/sim/src/world/prism";
@@ -110,6 +114,14 @@ const LANDMARK_BUILDINGS = [
 const LANDMARK_MONUMENTS = ["n481952877", "n481952879", "n481952880"];
 
 const near = (x: number, z: number) => `${x.toFixed(0)},${z.toFixed(0)}`;
+
+/** The lantern of the wall lantern's model (its points over 0.5 m out from the wall plate), in the piece's frame. */
+const LANTERN_HEAD = (() => {
+  const p = lampWallLantern(0).sink.positions;
+  const out: { x: number; y: number; z: number }[] = [];
+  for (let k = 0; k < p.length; k += 3) if (p[k + 2]! > 0.5) out.push({ x: p[k]!, y: p[k + 1]!, z: p[k + 2]! });
+  return out;
+})();
 const inMap = (x: number, z: number) => MAP_CHUNKS.some((c) => x > c.bounds.minX + 1 && x < c.bounds.maxX - 1 && z > c.bounds.minZ + 1 && z < c.bounds.maxZ - 1);
 const onChunk = (x: number, z: number) => MAP_CHUNKS.some(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ);
 /** Distance from (x, z) to the segment a-b. */
@@ -372,6 +384,12 @@ const standingVehicles = (() => {
     return memo;
   };
 })();
+
+/** The map buildings' signs of these kinds in another building (G-157, G-159). */
+const signsIn = (kinds: readonly number[]): Finding[] =>
+  signsInNeighbours()
+    .filter((s) => kinds.includes(s.kind))
+    .map((s) => ({ at: near(s.x, s.z), what: `${s.building} kind ${s.kind} at y ${s.y.toFixed(1)} in ${s.neighbour} (${s.points} points)` }));
 
 /** Tag values of things on a facade or in the paving, not free-standing (G-149). */
 const FLAT_ART = new Set(["plaque", "stolperstein", "mural", "mosaic", "graffiti", "relief"]);
@@ -670,16 +688,19 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   },
   /**
    * A parked car whose body (sampled every eighth of its length and width) comes nearer than 1 m
-   * to the axis of a footway or path of the map data mapped on its own (not a sidewalk along a
-   * kerb, not a crossing; on the ground, off bridges and tunnels): it stands on the walkers' way (G-143).
+   * to the axis of a footway, path, pedestrian street or cycleway of the map data mapped on its
+   * own (not a sidewalk along a kerb, not a crossing; on the ground, off bridges and tunnels): it
+   * stands on the walkers' or the riders' way (G-143, G-156).
    */
   "parked-car-on-footway": () => {
     const ways = extractFeatures(SOURCE_OSM).lines.filter(
       ({ tags: t }) =>
-        (t.highway === "footway" || t.highway === "path") &&
+        (t.highway === "footway" || t.highway === "path" || t.highway === "pedestrian" || t.highway === "cycleway") &&
         t.footway !== "sidewalk" &&
+        t.path !== "sidewalk" &&
         t.footway !== "crossing" &&
         t.path !== "crossing" &&
+        t.cycleway !== "crossing" &&
         t.area !== "yes" &&
         t.tunnel === undefined &&
         t.covered === undefined &&
@@ -694,6 +715,60 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       const body = [0, 1, 2, 3, 4, 5, 6, 7, 8].flatMap((i) => [0, 1, 2, 3, 4, 5, 6, 7, 8].map((k) => ({ x: c.x + fz * width * (i / 8 - 0.5) + fx * length * (k / 8 - 0.5), z: c.z - fx * width * (i / 8 - 0.5) + fz * length * (k / 8 - 0.5) })));
       const hit = segs.find(({ a, b }) => Math.max(a.x, b.x) > c.x - 8 && Math.min(a.x, b.x) < c.x + 8 && Math.max(a.z, b.z) > c.z - 8 && Math.min(a.z, b.z) < c.z + 8 && body.some((p) => segmentGap(p.x, p.z, a, b) < 1));
       return hit ? [{ at: near(c.x, c.z), what: `${c.model} on ${hit.id}` }] : [];
+    });
+  },
+  /**
+   * A parked car at a bus stop of the map data (a `highway=bus_stop` or `public_transport=platform`
+   * node, or a platform way's vertex): its middle nearer the stop's post than 15 m and half its
+   * length along the street the post stands by (its nearest car road, within 20 m), less than 7 m
+   * across, on the post's side of that street. The Polish code (art. 49 ust. 1 pkt 9 PoRD) bans
+   * stopping there (G-156).
+   */
+  "parked-car-at-bus-stop": () => {
+    const { lines, areas } = extractFeatures(SOURCE_OSM);
+    const platform = (t: Readonly<Record<string, string>>) => t.highway === "bus_stop" || t.public_transport === "platform" || t.highway === "platform";
+    const posts = [
+      ...[...SOURCE_OSM.nodes.values()].filter((n) => n.tags && platform(n.tags)).map((n) => ({ id: `n${n.id}`, ...geoToWorld(n.lat, n.lon) })),
+      ...[...lines.map((l) => ({ id: l.id, tags: l.tags, pts: l.line })), ...areas.map((a) => ({ id: a.id, tags: a.tags, pts: a.ring }))].filter((w) => platform(w.tags)).flatMap((w) => w.pts.map((p) => ({ id: w.id, ...p }))),
+    ];
+    const roadKinds = new Set(["primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link", "residential", "unclassified", "living_street"]);
+    const segs = lines.filter((l) => roadKinds.has(l.tags.highway ?? "")).flatMap((l) => l.line.slice(1).map((b, i) => ({ a: l.line[i]!, b })));
+    return PARKED_CARS.flatMap((c) => {
+      const hit = posts.find((p) => {
+        if (Math.hypot(p.x - c.x, p.z - c.z) > 30) return false;
+        const by = segs.map((s) => ({ s, d: segmentGap(p.x, p.z, s.a, s.b) })).filter((q) => q.d < 20).sort((x, y) => x.d - y.d)[0]?.s;
+        if (!by) return false;
+        const len = Math.hypot(by.b.x - by.a.x, by.b.z - by.a.z);
+        const [tx, tz] = [(by.b.x - by.a.x) / len, (by.b.z - by.a.z) / len];
+        const sideOf = (x: number, z: number) => Math.sign((x - by.a.x) * tz - (z - by.a.z) * tx);
+        const along = Math.abs((c.x - p.x) * tx + (c.z - p.z) * tz);
+        const across = Math.abs((c.x - p.x) * tz - (c.z - p.z) * tx);
+        return sideOf(c.x, c.z) === sideOf(p.x, p.z) && along < 15 + VEHICLE_SIZE[c.model].length / 2 && across < 7;
+      });
+      return hit ? [{ at: near(c.x, c.z), what: `${c.model} ${Math.hypot(hit.x - c.x, hit.z - c.z).toFixed(1)} m from ${hit.id}` }] : [];
+    });
+  },
+  /**
+   * A parked car by the kerb of a street with two lanes or more a way (`lanes` 4 or more, or
+   * `lanes:forward` or `lanes:backward` 2 or more) and outside every car park (`amenity=parking`)
+   * of the map data: it stands on the outer lane (G-155). Its street is the car road of the map
+   * data whose axis runs nearest within 12 m and within 20° of the car.
+   */
+  "parked-car-multilane-kerb": () => {
+    const { lines, areas } = extractFeatures(SOURCE_OSM);
+    const roadKinds = new Set(["primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link", "residential", "unclassified", "living_street"]);
+    const segs = lines.filter((l) => roadKinds.has(l.tags.highway ?? "")).flatMap((l) => l.line.slice(1).map((b, i) => ({ way: l, a: l.line[i]!, b })));
+    const parks = areas.filter((a) => a.tags.amenity === "parking");
+    const multiLane = (t: Readonly<Record<string, string>>) => Number(t.lanes ?? 0) >= 4 || Number(t["lanes:forward"] ?? 0) >= 2 || Number(t["lanes:backward"] ?? 0) >= 2;
+    return PARKED_CARS.flatMap((c) => {
+      const fx = Math.sin(c.yaw);
+      const fz = Math.cos(c.yaw);
+      const by = segs
+        .map((s) => ({ s, d: segmentGap(c.x, c.z, s.a, s.b), len: Math.hypot(s.b.x - s.a.x, s.b.z - s.a.z) }))
+        .filter((q) => q.d < 12 && q.len > 0 && Math.abs(((q.s.b.x - q.s.a.x) * fx + (q.s.b.z - q.s.a.z) * fz) / q.len) >= Math.cos((20 * Math.PI) / 180))
+        .sort((x, y) => x.d - y.d)[0];
+      if (!by || !multiLane(by.s.way.tags) || parks.some((p) => pointInRing({ x: c.x, z: c.z }, p.ring))) return [];
+      return [{ at: near(c.x, c.z), what: `${c.model} ${by.d.toFixed(1)} m from ${by.s.way.id} (lanes ${by.s.way.tags.lanes ?? "?"})` }];
     });
   },
   /** A game block standing on the ground (not an awning or a deck) that floats or sinks. */
@@ -979,6 +1054,28 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       .flat()
       .filter((i) => i.prop === "lamp-wall-lantern")
       .flatMap((i) => PASSAGES.filter((p) => Math.abs(underVault(p, i.x, i.z)?.off ?? Infinity) < p.width / 2 + 0.5).map((p) => ({ at: near(i.x, i.z), what: `lamp-wall-lantern in ${p.building}` }))),
+  /**
+   * A wall lantern hung in front of a venue's board (G-158): the lantern of the drawn model
+   * (`prop-lamps.ts`, turned by the piece's yaw) out in front of the board's face and over it,
+   * along the wall and in height.
+   */
+  "wall-lantern-over-venue-board": () => {
+    const boards = cityVenueBoards(WORLD_SCENERY);
+    return Object.values(WORLD_STREET_PROPS)
+      .flat()
+      .filter((i) => i.prop === "lamp-wall-lantern")
+      .flatMap((i) => {
+        const head = LANTERN_HEAD.map((v) => ({ x: i.x + v.x * Math.cos(i.yaw) + v.z * Math.sin(i.yaw), y: i.y + v.y, z: i.z - v.x * Math.sin(i.yaw) + v.z * Math.cos(i.yaw) }));
+        const b = boards.find((s) => {
+          const len = Math.hypot(s.b.x - s.a.x, s.b.z - s.a.z);
+          const along = head.map((v) => ((v.x - s.a.x) * (s.b.x - s.a.x) + (v.z - s.a.z) * (s.b.z - s.a.z)) / len);
+          const off = head.map((v) => (v.x - s.a.x) * s.nx + (v.z - s.a.z) * s.nz);
+          const ys = head.map((v) => v.y);
+          return Math.max(...off) > 0.13 && Math.min(...off) < 3 && Math.max(...along) > 0 && Math.min(...along) < len && Math.max(...ys) > s.bottom && Math.min(...ys) < s.top;
+        });
+        return b ? [{ at: near(i.x, i.z), what: `lamp-wall-lantern over ${b.text}` }] : [];
+      });
+  },
   /** A passage through a building with an end off every chunk, where there is no ground to come out on. */
   "passage-off-map": () =>
     PASSAGES.filter((p) => [p.from, p.to].some(({ x, z }) => !MAP_CHUNKS.some(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ))).map((p) => ({
@@ -1229,6 +1326,12 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "kerb-fit-sparse": () => FITTED().flatMap((r) => (r.cover * 2 < 1 ? [{ at: r.at, what: `${r.id} ${r.name}: ${r.width.toFixed(1)} m, sidewalks along ${(r.cover * 100).toFixed(0)} %` }] : [])),
   /** A two-way street (no `oneway`) narrowed to its mapped sidewalks below two 2.25 m lanes (G-113). */
   "two-way-fit-narrow": () => FITTED().flatMap((r) => (!r.oneway && r.width < 4.4 ? [{ at: r.at, what: `${r.id} ${r.name}: ${r.width.toFixed(1)} m` }] : [])),
+  /** A venue's board (ADR-0064 stage 4) reaching into the building next door, which stands out in front of its wall (G-159). */
+  "venue-board-in-neighbour": () => signsIn([MAP_SIGN_KIND.venue]),
+  /** A banner or a superstructure's ad (ADR-0051) sticking into the building next door (G-157). */
+  "banner-in-neighbour": () => signsIn([MAP_SIGN_KIND.ad]),
+  /** A holo-ad or a blade sign (ADR-0044) sticking into the building next door (G-157). */
+  "holo-or-blade-in-neighbour": () => signsIn([MAP_SIGN_KIND.holo, MAP_SIGN_KIND.blade]),
 };
 
 /** A building's own tags in the map data, by the game's id (`w…`, `r…`, a split's `/n` dropped). */

@@ -198,15 +198,85 @@ const clearOfKeptWays = (x: number, z: number, yaw: number, model: VehicleModel)
 };
 
 /**
+ * Room a parked car leaves a bus stop (m). The Polish code (art. 49 ust. 1 pkt 9 PoRD) bans
+ * stopping less than 15 m from the stop's post, before or after it, on the post's side of its
+ * street: within `STOP_ACROSS` of the post across the street (as far as that kerb's cars stand)
+ * the car's body keeps that far along it (G-156).
+ */
+const STOP_CLEAR = 15;
+const STOP_ACROSS = 7;
+/** A post is by the nearest car road within this (m); one farther off stands by none of them. */
+const STOP_STREET = 20;
+const BUS_STOPS = MAP_CHUNKS.flatMap((c) => Array.from({ length: (c.busStops ?? []).length / 2 }, (_, i): Pt => [c.busStops![2 * i]!, c.busStops![2 * i + 1]!]))
+  .filter((p, i, all) => all.findIndex((q) => q[0] === p[0] && q[1] === p[1]) === i)
+  .flatMap(([x, z]) => {
+    const by = CAR_STREETS.map((c) => ({ c, q: projectOn(c.points, x, z) })).sort((a, b) => a.q.d - b.q.d)[0];
+    if (!by || by.q.d >= STOP_STREET) return [];
+    const t = pointAt(by.c.points, by.q.s);
+    return [{ x, z, street: by.c, side: Math.sign(by.q.side), tx: t.tx, tz: t.tz }];
+  });
+
+/** Does a car at (x, z) keep out of every bus stop's banned stretch (`STOP_CLEAR`)? */
+const clearOfStops = (x: number, z: number, model: VehicleModel): boolean => {
+  const reach = STOP_CLEAR + VEHICLE_SIZE[model].length / 2;
+  return BUS_STOPS.every(
+    (p) =>
+      Math.hypot(x - p.x, z - p.z) > reach + STOP_ACROSS ||
+      Math.abs((x - p.x) * p.tx + (z - p.z) * p.tz) >= reach ||
+      Math.abs((x - p.x) * p.tz - (z - p.z) * p.tx) >= STOP_ACROSS ||
+      Math.sign(projectOn(p.street.points, x, z).side) !== p.side,
+  );
+};
+
+/** The car parks of the map data, each once (one reaching over a chunk's edge is in both chunks). */
+const CAR_PARKS = [...new Map(MAP_CHUNKS.flatMap((c) => c.carParks ?? []).map((p) => [p.id, p])).values()].map((p) => ({
+  kind: p.kind,
+  ring: Array.from({ length: p.outline.length / 2 }, (_, i): Pt => [p.outline[2 * i]!, p.outline[2 * i + 1]!]),
+}));
+/** Car parks along a street's kerb: a strip beside the carriageway, a parking lane, half on the pavement. */
+const KERB_PARKS = CAR_PARKS.filter((p) => p.kind === "street_side" || p.kind === "lane" || p.kind === "half_on_kerb");
+
+const inRing = (x: number, z: number, ring: readonly Pt[]): boolean => {
+  let on = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [ax, az] = ring[i]!;
+    const [bx, bz] = ring[j]!;
+    if (az > z !== bz > z && x < ((bx - ax) * (z - az)) / (bz - az) + ax) on = !on;
+  }
+  return on;
+};
+
+/**
+ * A street of two lanes or more a way has no room at its kerb: a car parked there stands on the
+ * outer lane (G-155). The game drives one lane a way, so nothing else keeps a car off it. A car
+ * is by such a kerb when an axis of one runs within this of it (m) and within 20° of its facing.
+ */
+const MULTI_LANE_REACH = 12;
+const MULTI_LANE_SEGMENTS = MAP_CHUNKS.flatMap((c) => c.multiLaneWays ?? []).flatMap((w) =>
+  Array.from({ length: w.line.length / 2 - 1 }, (_, i) => {
+    const a: Pt = [w.line[2 * i]!, w.line[2 * i + 1]!];
+    const b: Pt = [w.line[2 * i + 2]!, w.line[2 * i + 3]!];
+    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    return { a, b, tx: (b[0] - a[0]) / (len || 1), tz: (b[1] - a[1]) / (len || 1) };
+  }),
+);
+
+/** Is a car at (x, z), facing yaw, off every multi-lane street's kerb, or in a car park the map draws there? */
+const offMultiLaneKerbs = (x: number, z: number, yaw: number): boolean =>
+  MULTI_LANE_SEGMENTS.every(
+    (s) => Math.abs(s.tx * Math.sin(yaw) + s.tz * Math.cos(yaw)) < Math.cos((20 * Math.PI) / 180) || segmentDistance(x, z, s.a, s.b) >= MULTI_LANE_REACH,
+  ) || CAR_PARKS.some((p) => inRing(x, z, p.ring));
+
+/**
  * Is a car's footprint at (x, z), facing yaw, wholly on a carriageway or a square and free of
- * walls, furniture, the game's places, service roads, footways and other streets' axes (and carriageways, by the kerb of
+ * walls, furniture, the game's places, service roads, footways, bus stops, multi-lane kerbs and other streets' axes (and carriageways, by the kerb of
  * `own`)? A street's kerb line is set from its median width, so where the carriageway narrows
  * (a bend, a pinch by a pavement) the bay falls on the grass or the pavement unless each corner
  * is checked. A bay on a slope too steep for a level car (`LEVEL_DROP`) stays empty.
  */
 const fits = (x: number, z: number, yaw: number, model: VehicleModel, own?: RoadChain): boolean => {
   if (!parkable(x, z) || !footprint(x, z, yaw, model, 0).every(([px, pz]) => parkable(px, pz)) || !clearOfZebras(x, z, yaw, model)) return false;
-  if (!level(x, z, yaw, model) || !clearOfKeptWays(x, z, yaw, model)) return false;
+  if (!level(x, z, yaw, model) || !clearOfKeptWays(x, z, yaw, model) || !clearOfStops(x, z, model) || !offMultiLaneKerbs(x, z, yaw)) return false;
   const { width, length } = VEHICLE_SIZE[model];
   const fx = Math.sin(yaw);
   const fz = Math.cos(yaw);
@@ -250,6 +320,60 @@ const kerbCars = (): ParkedCar[] => {
         // A bay slid off a footway's mouth (G-143) may reach the last one's: it slides on past it instead.
         const spot = KERB_SLIDE.flatMap((a) => KERB_NUDGE.map((d) => at(a, d))).find((q) => fits(q.x, q.z, yaw, model, c) && !out.some((k) => Math.hypot(k.x - q.x, k.z - q.z) < 8 && overlap(k, car(q))));
         if (spot !== undefined) out.push(car(spot));
+      }
+    }
+  }
+  return out;
+};
+
+/** The farthest from a street's axis a kerb car park's cars are sought (m). */
+const BAY_REACH = 16;
+/** The narrowest strip across its street a kerb car park holds a car in (m): a car's width, give or take a nudge. */
+const BAY_STRIP = 1.5;
+
+/**
+ * Cars in the car parks the map draws along a street's kerb (`parking=street_side`, `lane`,
+ * `half_on_kerb`): walked along the street's axis, a bay every `KERB_BAY` in the middle of the
+ * strip the area covers across it, along the kerb and facing the traffic's way on its side. A
+ * mapped car park is as full as Plac Zamkowy's. The kerb line of `kerbCars` is the street's
+ * median one and misses a strip that only widens the carriageway in places.
+ */
+const bayCars = (): ParkedCar[] => {
+  const out: ParkedCar[] = [];
+  for (const park of KERB_PARKS) {
+    for (const c of CAR_STREETS) {
+      if (!park.ring.some(([x, z]) => projectOn(c.points, x, z).d < BAY_REACH)) continue;
+      const len = polylineLength(c.points);
+      for (const side of [1, -1] as const) {
+        const turned = !c.oneway && side < 0;
+        for (let s = 0; s < len; s += KERB_BAY) {
+          const p = pointAt(c.points, s);
+          const across = (d: number) => ({ x: p.x + p.tz * side * d, z: p.z - p.tx * side * d });
+          let from = -1;
+          let to = -1;
+          for (let d = 1; d <= BAY_REACH && (to < 0 || to === d - 0.25); d += 0.25) {
+            const q = across(d);
+            if (!inRing(q.x, q.z, park.ring)) continue;
+            if (from < 0) from = d;
+            to = d;
+          }
+          if (from < 0 || to - from < BAY_STRIP) continue;
+          const at = across((from + to) / 2);
+          if (hash(at.x, at.z, 1) / 0x100000000 >= SQUARE_TAKEN) continue;
+          const yaw = Math.round((turned ? Math.atan2(-p.tx, -p.tz) : Math.atan2(p.tx, p.tz)) * 1000) / 1000;
+          const model = modelAt(at.x, at.z);
+          const car = (a: number, d: number): ParkedCar => {
+            const q = across((from + to) / 2 + d);
+            const x = Math.round((q.x + p.tx * a) * 100) / 100;
+            const z = Math.round((q.z + p.tz * a) * 100) / 100;
+            return { chunk: chunkOf(x, z), x, y: 0, z, yaw, model, tint: hash(at.x, at.z, 2) };
+          };
+          // Slid and nudged as a kerb bay is, but kept with its middle in the car park.
+          const spot = KERB_SLIDE.flatMap((a) => KERB_NUDGE.map((d) => car(a, d))).find(
+            (k) => inRing(k.x, k.z, park.ring) && fits(k.x, k.z, yaw, model) && !out.some((o) => Math.hypot(o.x - k.x, o.z - k.z) < 8 && overlap(o, k)),
+          );
+          if (spot) out.push(spot);
+        }
       }
     }
   }
@@ -315,9 +439,9 @@ const overlap = (a: ParkedCar, b: ParkedCar): boolean => {
 
 /**
  * Every parked car of the city, on the paving drawn under its body (G-130), in a stable order;
- * the square's bays first, no two overlapping.
+ * the square's bays first, then the kerbs' and the mapped kerb car parks', no two overlapping.
  */
-export const PARKED_CARS: readonly ParkedCar[] = [...squareCars(), ...kerbCars()]
+export const PARKED_CARS: readonly ParkedCar[] = [...squareCars(), ...kerbCars(), ...bayCars()]
   .reduce<ParkedCar[]>((kept, c) => (kept.some((k) => Math.hypot(k.x - c.x, k.z - c.z) < 8 && overlap(k, c)) ? kept : [...kept, c]), [])
   .map((c) => ({ ...c, y: Math.round(restingY(underBody(c.x, c.z, c.yaw, c.model)) * 100) / 100 }));
 

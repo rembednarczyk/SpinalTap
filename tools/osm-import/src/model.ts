@@ -74,6 +74,18 @@ export interface FootWayOut {
   readonly width: number;
 }
 
+/** A street's axis of two lanes or more a way (world polyline, clipped to the chunk). */
+export interface MultiLaneWayOut {
+  readonly line: readonly number[];
+}
+
+/** A car park mapped as an area: its map id, `parking` kind (`street_side`, `lane`, `surface`…) and world outline. */
+export interface CarParkOut {
+  readonly id: string;
+  readonly kind: string;
+  readonly outline: readonly number[];
+}
+
 export type PoiKind = "shop" | "food" | "bar" | "stop" | "hotel" | "sight" | "culture" | "church" | "service" | "office";
 
 export interface PoiOut {
@@ -102,4 +114,10 @@ export interface ChunkOut {
   readonly serviceWays?: readonly ServiceWayOut[];
   /** Footways and paths mapped on their own (G-143), when it has any. */
   readonly footWays?: readonly FootWayOut[];
+  /** Car parks reaching into it, when it has any. */
+  readonly carParks?: readonly CarParkOut[];
+  /** Bus stops' posts by it, flat x, z (G-156), when it has any. */
+  readonly busStops?: readonly number[];
+  /** Streets of two lanes or more a way (G-155), when it has any. */
+  readonly multiLaneWays?: readonly MultiLaneWayOut[];
 }

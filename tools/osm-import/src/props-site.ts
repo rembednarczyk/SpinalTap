@@ -105,6 +105,33 @@ export class Site {
     return list.some((s) => s.path === true && p.x >= s.box.minX && p.x <= s.box.maxX && p.z >= s.box.minZ && p.z <= s.box.maxZ && pointInRing(p, s.ring));
   }
 
+  /** Unit vector from the nearest building wall within `reach` metres out to p (a wall lantern's arm), or null. */
+  awayFromWall(p: Pt, reach = 2): Pt | null {
+    let best: Pt | null = null;
+    let bestD = reach;
+    const seen = new Set<Shape>();
+    for (let i = Math.floor((p.x - reach) / BIN); i <= Math.floor((p.x + reach) / BIN); i++) {
+      for (let j = Math.floor((p.z - reach) / BIN); j <= Math.floor((p.z + reach) / BIN); j++) {
+        for (const s of this.bins.get(`${i}:${j}`) ?? []) {
+          if (s.surface !== "building" || seen.has(s)) continue;
+          seen.add(s);
+          s.ring.forEach((a, k) => {
+            const b = s.ring[(k + 1) % s.ring.length]!;
+            const dx = b.x - a.x;
+            const dz = b.z - a.z;
+            const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+            const d = Math.hypot(p.x - a.x - dx * t, p.z - a.z - dz * t);
+            if (d < bestD && d > 1e-6) {
+              bestD = d;
+              best = { x: (p.x - a.x - dx * t) / d, z: (p.z - a.z - dz * t) / d };
+            }
+          });
+        }
+      }
+    }
+    return best;
+  }
+
   /** Whether p is open ground a thing can stand on: not a building, water or rails. */
   standable(p: Pt): boolean {
     const s = this.surfaceAt(p);
