@@ -11,9 +11,10 @@ import { cityFrames } from "../../osm-import/src/venue-boards.ts";
 import { doorChecks } from "./door-pieces";
 
 /**
- * The glitch scan's checks of the doors on the facades (ADR-0058 stage 9): a tenement of its own far
- * from the map's districts, a door in each kind of slot its wall has, then each door moved where it
- * must not be. Each check finds that door and nothing in the slots.
+ * The glitch scan's checks of the doors on the facades (ADR-0058 stage 9): a tenement and a shop front
+ * of their own far from the map's districts, a door in each kind of slot their walls have, then each
+ * door moved (along, out, up, turned) where it must not be. Each check finds that door and nothing in
+ * the slots.
  */
 
 const AT = { x: 5000, z: 5000 };
