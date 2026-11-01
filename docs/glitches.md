@@ -505,21 +505,21 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (parked-cars), tools/osm-import, tools/glitch-scan
 
 ### G-157 Banery, holo-reklamy i wysięgniki wchodzą w sąsiednie budynki
-- Status: zgłoszone (1.11, łowca G-148)
+- Status: w PR #138, w weryfikacji (1.11; skan do 0)
 - Ważność: S3 · Zasięg: 31 banerów w 29 budynkach, 3 holo, 1 `blade`; np. (−190,6; −3,3), (195,5; −98,8), (228,3; −39,9), (309,8; −70,8); holo (577,3; 540,8), (494,9; −140,2); `blade` (578; 161,6)
 - Przyczyna: `banners` w `canyon-signs.ts` (1,2 m od końca ściany, 1 m od niej) i `holos` (0,45 m) nie sprawdzają, czy sąsiad wystaje przed płaszczyznę ściany
 - Test przyjęcia: `banner-in-neighbour` 31 → 0, `holo-or-blade-in-neighbour` 4 → 0
 - Pakiet właściciela: packages/engine (canyon-signs.ts, sign-plan.ts)
 
 ### G-158 Latarnie ścienne zasłaniają tablice lokali
-- Status: zgłoszone (1.11, łowca G-148)
+- Status: w PR #137, w weryfikacji (1.11; skan 17 → 0); po scaleniu #138 latarnie odtworzyć (`pnpm osm:props`)
 - Ważność: S3 · Zasięg: 17 z 169 latarni ściennych, np. WIEJSKI RAJ (564,0; −88,9), KORZEŃ CZAROWNICY (611,4; −74,9), PUB ZA KURTYNĄ (599,6; −2,6); zrzuty g148-r2-rynek-e, g148-r4-rynek-s
 - Przyczyna: rozstaw `lamp-wall-lantern` (ADR-0047) nie zna tablic lokali (ADR-0064 etap 4); markiza je zna (`venueBoardOn`)
 - Test przyjęcia: `wall-lantern-over-venue-board` 17 → 0
 - Pakiet właściciela: tools/osm-import (props-gen), packages/engine
 
 ### G-159 Tablica lokalu wchodzi w sąsiedni budynek
-- Status: zgłoszone (1.11, łowca G-148)
+- Status: w PR #138, w weryfikacji (1.11; skan do 0)
 - Ważność: S3 · Zasięg: 7: KUCHNIA SPOD ARARATU (600,8; −21,8), ZIELONY CZAROWNIK (168,0; −99,2), SZAFA PÓŁWIECZE (112,5; −111,8), ZJEDZ I ZNIKAJ (622,2; −6,8), WULKANIZACJA PIASTA (580,9; 552,6), KAMBUZ (828,6; 496,4), KLUB ZEBRANIE (205,8; −105,3)
 - Przyczyna: `venueBoards` (`venue-plan.ts`) mieści tablicę w ścianie z marginesem 0,3 m, bez sprawdzenia sąsiada przed płaszczyzną ściany
 - Test przyjęcia: `venue-board-in-neighbour` 7 → 0
@@ -578,6 +578,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: 3 z 6 kontenerów w środku placu, 9,5–14,8 m od krawędzi: (2331.5, 228.5), (2320.5, 240.5), (2332.5, 245.5); zachodnia część placu w odłamkach po 1–3 stragany; straganów 158 zamiast 180
 - Poprawka: kontenery przy skraju obrysu, przed straganami; wolne miejsca kuratora: (2302.5, 248.5), (2313.5, 255.5), (2340.5, 211.5), (2357.5, 255.5), (2319.5, 252.5), (2327.5, 252.5); wtedy 178 straganów (sonda `scratchpad/topo-r3/topo-alt.ts`)
 - Pakiet właściciela: tools/osm-import (props-bulky)
+
+### G-170 Neonowe rurki pod gzymsem wchodzą w sąsiednie budynki
+- Status: zgłoszone (1.11, łowca G-148 i autor G-157)
+- Ważność: S4 · Zasięg: 58 rurek w 49 budynkach (`tubes` w `sign-plan.ts`), w większości ukryte w bryle sąsiada
+- Poprawka: rurka kończy się przed sąsiadem wystającym przed ścianę (to samo `sign-room` co banery z G-157); kontrola skanu z bazą
+- Pakiet właściciela: packages/engine (sign-plan.ts)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
