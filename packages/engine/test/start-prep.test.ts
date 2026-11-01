@@ -203,4 +203,26 @@ describe("StartPrep", () => {
     for (let i = 1; i < seen.length; i++) expect(seen[i]!.done).toBeGreaterThanOrEqual(seen[i - 1]!.done);
     expect(seen.at(-1)!.done).toBeCloseTo(1, 9);
   });
+
+  it("cancel ends the run under way: no warm-up frame is drawn after it", async () => {
+    const { deps, log } = fakeDeps();
+    log.ready = false;
+    const prep = new StartPrep(deps);
+    const { seen, onProgress } = record();
+    let over = false;
+    void prep.run(onProgress).then(() => (over = true));
+    await drive(prep, () => log.drawn > 0);
+    expect(log.drawn).toBeGreaterThan(0);
+    const drawn = log.drawn;
+    const count = seen.length;
+    prep.cancel();
+    expect(prep.active).toBe(false);
+    for (let i = 0; i < 20; i++) {
+      prep.tick();
+      await flush();
+    }
+    expect(over).toBe(true);
+    expect(log.drawn).toBe(drawn);
+    expect(seen.length).toBe(count);
+  });
 });

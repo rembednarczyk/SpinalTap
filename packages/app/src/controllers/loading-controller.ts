@@ -55,6 +55,7 @@ export class LoadingController {
 
   /** The start under way leads nowhere any more (back to the title). */
   cancel(): void {
+    if (this.active) this.deps.render.cancelPrepare?.();
     this.run++;
     this.active = false;
     patchUi(this.deps.ui, { loading: NO_LOADING });

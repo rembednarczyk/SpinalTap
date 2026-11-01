@@ -42,4 +42,9 @@ export interface RenderPort {
    * A renderer without it starts the game at once.
    */
   prepare?(at: Vec3, onProgress: (done: number, stage: PrepareStage) => void): Promise<void>;
+  /**
+   * The start under way leads nowhere any more (back to the title): `prepare` stops drawing its
+   * warm-up frames and resolves. Optional, like `prepare`.
+   */
+  cancelPrepare?(): void;
 }

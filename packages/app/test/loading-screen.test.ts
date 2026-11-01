@@ -35,6 +35,8 @@ interface PrepareCall {
 
 class PreparingRender extends BareRender {
   readonly calls: PrepareCall[] = [];
+  cancelled = 0;
+  cancelPrepare() { this.cancelled++; }
   prepare(at: Vec3, progress: (done: number, stage: PrepareStage) => void): Promise<void> {
     return new Promise((resolve, reject) => this.calls.push({ at, progress, resolve, reject }));
   }
@@ -145,8 +147,11 @@ describe("loading screen (ADR-0057)", () => {
     expect(session.screen).toBe("playing");
     expect(intro(ui)).toBe(1);
 
+    expect(render.cancelled).toBe(0);
     session.newGame();
     session.quitToTitle();
+    // The renderer stops its warm-up frames under the title.
+    expect(render.cancelled).toBe(1);
     render.calls[2]!.resolve();
     await settle();
     expect(session.screen).toBe("title");

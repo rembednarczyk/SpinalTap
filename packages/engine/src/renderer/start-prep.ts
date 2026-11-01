@@ -149,6 +149,13 @@ export class StartPrep {
     });
   }
 
+  /** Ends the run under way, which draws and reports nothing more (back to the title). */
+  cancel(): void {
+    this.generation++;
+    this.running = false;
+    this.tick();
+  }
+
   /** Call once per renderer frame, after the scene was updated: drives the stage waiting on frames. */
   tick(): void {
     const waiter = this.waiter;

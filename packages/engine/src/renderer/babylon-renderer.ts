@@ -208,6 +208,9 @@ export class BabylonRenderer implements RenderPort {
     return this.prep.run(onProgress);
   }
 
+  cancelPrepare(): void {
+    this.prep.cancel();
+  }
 
   /** The metro's riders are characters like any other, with their activities (ADR-0040). */
   private rideCast(): RideCast {
