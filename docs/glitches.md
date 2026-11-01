@@ -464,13 +464,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: test, że żaden fragment wieży nie wypada bliżej niż skorupa przy danych miasta w kierunku kamery, albo osobna skala dla stopy; przy okazji kontrole `megablock-*` przenieść do `tools/glitch-scan` z bazą w `glitch-baseline.json` (dziś w teście engine)
 - Pakiet właściciela: packages/engine (renderer), tools/glitch-scan
 
-### G-148 Szyldy i neony wcięte w fasady i narożniki
-- Status: zgłoszone (1.11, gracz, telefon, zrzuty `scratchpad/gracz-1-11/`)
-- Ważność: S3 · Zasięg: Stare Miasto (Grodzka, okolice Bramy Krakowskiej: Bramowa, Jezuicka, Szambelańska), prawdopodobnie całe miasto
-- Objawy: świecąca rama szyldu „DEN…” przechodzi przez narożnik budynku (Grodzka); ciemna płyta wystaje ze ściany obok szyldu „…AJNIA SMAKU” (Bramowa); pionowe neony nachodzą na sąsiednie elewacje
-- Do ustalenia: które to szyldy (lokale ADR-0064 etap 4, #118, czy starsze neony dressingu) i czy szyld wychodzi poza odcinek elewacji przy narożniku
-- Poprawka: szyld mieści się w swoim odcinku elewacji z marginesem od narożnika, a wysięgnik nie wchodzi w sąsiedni budynek; kontrola skanu „szyld poza swoją elewacją”
-- Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import (venues)
+### G-148 Szyldy i neony wcięte w fasady (parasol)
+- Status: przyjęte (1.11, łowca); objawy rozbite na G-157…G-161
+- Ważność: S3 · Zasięg: całe miasto, najgęściej Stare Miasto
+- Pomiar w całym mieście (660 budynków, 319 tablic lokali): 7 tablic lokali w sąsiedzie (G-159), 31 banerów `canyon-signs`, 3 holo i 1 `blade` w sąsiedzie (G-157), 17 latarni ściennych na tablicach (G-158), płyta „DEN…” o nieznanym źródle (G-160), markiza zasłaniająca dolny rząd liter z oczu gracza (G-161)
+- Dowód: zrzuty `scratchpad/g148-shots/` (g148-e/f/h/j przy OKRUSZEK, g148-k przy STAJNIA SMAKU, g148-r2/r4 na Rynku), pomiary `scratchpad/g148-measure.json`, `g148-venue.json`
+- Proponowane kontrole skanu (baza dziś): `venue-board-in-neighbour` 7, `banner-in-neighbour` 31, `holo-or-blade-in-neighbour` 4, `wall-lantern-over-venue-board` 17
+- Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import
 
 ### G-149 Pomniki i rzeźby z OSM mają przypadkowy kształt
 - Status: zgłoszone (1.11, gracz: „strategia stawiania assetów wydaje się randomowa”)
@@ -479,11 +479,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: kształt z tagów OSM (`memorial=plaque|statue|bust|stone`, `artwork_type`, `historic`) i z ręcznej tabeli znanych pomników Lublina; tablica pamiątkowa na fasadzie zamiast wolnostojącej bryły; bez dopasowania: neutralna tablica albo kapliczka, nie abstrakcja; przegląd kuratora
 - Pakiet właściciela: tools/osm-import (props-kinds, props-gen), packages/engine (prop-civic)
 
-### G-150 Źle położone dachy na Starym Mieście
-- Status: zgłoszone (1.11, gracz, bez dokładnych miejsc); do łowcy
-- Ważność: S3 · Zasięg: do ustalenia
-- Objawy z opisu gracza: dachy przesunięte albo nachodzące na sąsiednie budynki, gzymsy wystające poza fasadę
-- Poprawka: najpierw łowca (przegląd dachów Starego Miasta zrzutami i skanem), potem osobne wpisy
+### G-150 Źle położone dachy (zgłoszenie gracza niepotwierdzone)
+- Status: zgłoszone, niepotwierdzone (1.11, łowca): z kadru gracza 922af477 nie da się wskazać usterki; potrzebne miejsce albo nowy zrzut
+- Ważność: S4 dla znalezionych kandydatów · Zasięg: rzadki
+- Kandydaci: 10 dachów niekościelnych ponad 0,7 m poza obrysem (Hotel Hostel Królewska (517,0; −144,8) 1,05 m, nr 487 mansarda (720,6; 300,8) 0,91 m, (451,3; −20,6) 0,84 m, Teatr NN (724,1; 145,2) i inne); okapy w bryle wyższego sąsiada: G-162
+- Przyczyna (przypuszczalna): `offsetRing(ring, 0.35)` w `roof-plan.ts` i `roof-shapes.ts` daje mitrę bez ograniczenia przy ostrych kątach
+- Kontrola skanu: `roof-out-of-outline` (bez kościołów), baza 10
+- Pakiet właściciela: packages/engine (renderer/mapcity)
 
 ### G-151 Hydranty stawiane regułą zamiast z OSM
 - Status: w poprawkach PR #124 (1.11, kurator)
@@ -521,6 +523,47 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: przystanek „Plac Litewski 02” (słupek n836158674 (−100.3, 3.6)): van 0,7 m, van 11,7 m, hatchback 13,1 m od słupka po stronie przystanku
 - Poprawka: zakaz postoju do 15 m od słupka (art. 49 PoRD); kontrola skanu `parked-car-at-bus-stop`, baza 3 → 0; przy okazji `path=sidewalk` poza `footWays` i `pedestrian`/`cycleway` w `parked-car-on-footway`
 - Pakiet właściciela: packages/sim (parked-cars), tools/osm-import, tools/glitch-scan
+
+### G-157 Banery, holo-reklamy i wysięgniki wchodzą w sąsiednie budynki
+- Status: zgłoszone (1.11, łowca G-148)
+- Ważność: S3 · Zasięg: 31 banerów w 29 budynkach, 3 holo, 1 `blade`; np. (−190,6; −3,3), (195,5; −98,8), (228,3; −39,9), (309,8; −70,8); holo (577,3; 540,8), (494,9; −140,2); `blade` (578; 161,6)
+- Przyczyna: `banners` w `canyon-signs.ts` (1,2 m od końca ściany, 1 m od niej) i `holos` (0,45 m) nie sprawdzają, czy sąsiad wystaje przed płaszczyznę ściany
+- Test przyjęcia: `banner-in-neighbour` 31 → 0, `holo-or-blade-in-neighbour` 4 → 0
+- Pakiet właściciela: packages/engine (canyon-signs.ts, sign-plan.ts)
+
+### G-158 Latarnie ścienne zasłaniają tablice lokali
+- Status: zgłoszone (1.11, łowca G-148)
+- Ważność: S3 · Zasięg: 17 z 169 latarni ściennych, np. WIEJSKI RAJ (564,0; −88,9), KORZEŃ CZAROWNICY (611,4; −74,9), PUB ZA KURTYNĄ (599,6; −2,6); zrzuty g148-r2-rynek-e, g148-r4-rynek-s
+- Przyczyna: rozstaw `lamp-wall-lantern` (ADR-0047) nie zna tablic lokali (ADR-0064 etap 4); markiza je zna (`venueBoardOn`)
+- Test przyjęcia: `wall-lantern-over-venue-board` 17 → 0
+- Pakiet właściciela: tools/osm-import (props-gen), packages/engine
+
+### G-159 Tablica lokalu wchodzi w sąsiedni budynek
+- Status: zgłoszone (1.11, łowca G-148)
+- Ważność: S3 · Zasięg: 7: KUCHNIA SPOD ARARATU (600,8; −21,8), ZIELONY CZAROWNIK (168,0; −99,2), SZAFA PÓŁWIECZE (112,5; −111,8), ZJEDZ I ZNIKAJ (622,2; −6,8), WULKANIZACJA PIASTA (580,9; 552,6), KAMBUZ (828,6; 496,4), KLUB ZEBRANIE (205,8; −105,3)
+- Przyczyna: `venueBoards` (`venue-plan.ts`) mieści tablicę w ścianie z marginesem 0,3 m, bez sprawdzenia sąsiada przed płaszczyzną ściany
+- Test przyjęcia: `venue-board-in-neighbour` 7 → 0
+- Pakiet właściciela: packages/engine (venue-plan.ts)
+
+### G-160 Płyta „DEN…” w powietrzu przy narożniku na Grodzkiej (źródło nieustalone)
+- Status: zgłoszone (1.11, łowca G-148; zrzut gracza a92148c1)
+- Ważność: S3 · Zasięg: (568,0; −22), y 6,5–8,5, narożnik budynku z szyldem OKRUSZEK; w mieście nieustalone
+- Objaw: wolnostojąca płyta ok. 4 × 1,3 m prostopadła do ściany, ciemna z cyjanową ramą, napis lustrzany z tyłu
+- Wykluczone: tablice lokali, plakietki nazw, banery i billboardy `canyon-plan` (brak w 20 m), `stackAd`, holo, wysięgniki, neon pod gzymsem, tarcze landmarków, megabloki
+- Poprawka: najpierw ustalić źródło (nazwy siatek w scenie albo instrumentacja w `__seki`), potem kontrola skanu
+- Pakiet właściciela: packages/engine (do ustalenia)
+
+### G-161 Markiza zasłania dolny rząd liter tablicy lokalu
+- Status: zgłoszone (1.11, łowca G-148)
+- Ważność: S4 · Zasięg: zależny od kadru; np. STAJNIA SMAKU (489,2; −76,3), zrzut g148-k-stajnia
+- Przyczyna: góra markizy 0,08 m (`AWNING_GAP`) pod tablicą przy wysięgu 1,0 m; z oczu gracza bliżej niż ok. 10 m zasłania litery
+- Pakiet właściciela: packages/engine (facade-props.ts)
+
+### G-162 Okapy dachów w bryłach wyższych sąsiadów
+- Status: zgłoszone (1.11, łowca G-150)
+- Ważność: S4 · Zasięg: 50 z 112 dachów niepłaskich, np. Zamek (945,9; 209,6), Brama Rybna (569,5; −12,6), Hotel Avatary Miasta (551,2; −36,8); w większości ukryte w murze
+- Przyczyna: stały `EAVES = 0.35` bez sprawdzenia ściany wspólnej
+- Pakiet właściciela: packages/engine (roof-plan.ts, roof-shapes.ts); „później” dopuszczalne po ocenie kuratora
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
