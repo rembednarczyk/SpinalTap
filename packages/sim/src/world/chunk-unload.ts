@@ -9,7 +9,13 @@ import type { StreamState } from "./actor-spawner";
  * Puts chunks to sleep: their entities leave the ECS world, keyed ones leaving their state
  * behind as a dormant snapshot. An alerted AI and a carried body stay (pinned).
  */
-export const unloadChunks = (world: World<Entity>, state: StreamState, chunkIds: ReadonlySet<string>, chunkIdAt: (p: Vec3) => string): void => {
+export const unloadChunks = (
+  world: World<Entity>,
+  state: StreamState,
+  chunkIds: ReadonlySet<string>,
+  chunkIdAt: (p: Vec3) => string,
+  forgotten: ReadonlySet<string> = new Set(),
+): void => {
   const staying = (id: string | undefined): boolean => id !== undefined && state.resident.has(id) && !chunkIds.has(id);
   // A character on a daily plan walks out of its chunk (300 m down Grodzka in Lublin, ADR-0045):
   // it sleeps only once neither its own chunk nor the one it stands in stays loaded.
@@ -21,7 +27,8 @@ export const unloadChunks = (world: World<Entity>, state: StreamState, chunkIds:
   for (const e of leaving) {
     // Chasing or looking for the player (ADR-0029), or on her shoulder (ADR-0065): it stays.
     if (e.ai?.alerted || e.ai?.lastKnown || e.downed?.carried) continue;
-    if (e.key) state.dormant.set(e.key, entitySnapshotOf({ ...e, key: e.key }));
+    // A replaced job's person (G-178) never wakes again: he leaves no state behind.
+    if (e.key && !forgotten.has(e.key)) state.dormant.set(e.key, entitySnapshotOf({ ...e, key: e.key }));
     world.remove(e);
     state.streamedOut.add(e.id);
   }

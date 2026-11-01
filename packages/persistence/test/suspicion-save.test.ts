@@ -13,8 +13,9 @@ const wrap = (payload: unknown) => {
 const GUARD: EntitySnapshot = { key: "c6-g3", position: { x: 2551, y: -28.6, z: 422.6 }, yaw: 1.67, pitch: 0, hp: 80, cooldown: 0, alerted: false };
 
 describe("a guard's suspicion in the save (v20 to v21, G-174)", () => {
-  it("is schema v21", () => {
-    expect(SAVE_SCHEMA_VERSION).toBe(21);
+  it("is schema v21 or later", () => {
+    // v22 (G-178, a contract ended with its people about) walks on from here with no change to suspicion.
+    expect(SAVE_SCHEMA_VERSION).toBeGreaterThanOrEqual(21);
   });
 
   it("a v20 save loads as it was, with every guard calm", () => {

@@ -1,8 +1,12 @@
 import type { Vec3 } from "../math/vec3";
 import type { DifficultyProfile } from "../difficulty/difficulty";
 import type { DomainState } from "../state/domain-state";
+import type { Contract } from "../contracts/contracts";
 
 /**
+ * v22: the contract whose people are still in the world after it ended (G-178), failed or paid,
+ * until the next is taken, and the jobs replaced by a newer one while some of their people are
+ * still about; an older save has none, their guards gone on loading as before.
  * v21: how sure a guard is that it saw someone (G-174), while it is not sure yet; an older save
  * has every guard calm.
  * v20: a difficulty profile asked for in a fight, waiting for its end (G-171); an older save has
@@ -23,7 +27,7 @@ import type { DomainState } from "../state/domain-state";
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 21;
+export const SAVE_SCHEMA_VERSION = 22;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {
@@ -88,6 +92,15 @@ export interface StreamingSnapshot {
   readonly loadedChunks: readonly string[];
 }
 
+/**
+ * A contract as its targets were made (G-178): with the count of jobs done at the time, which
+ * toughens them, so a job paid since (one more done) rebuilds them as they were.
+ */
+export interface ContractOnSite {
+  readonly contract: Contract;
+  readonly completed: number;
+}
+
 export interface SaveSnapshot {
   readonly version: typeof SAVE_SCHEMA_VERSION;
   readonly seed: number;
@@ -105,6 +118,18 @@ export interface SaveSnapshot {
    * loading too. Absent when none is waiting.
    */
   readonly pendingDifficulty?: DifficultyProfile;
+  /**
+   * The contract that ended (failed, or paid) while no other was taken since (G-178): its targets
+   * are rebuilt from it on loading, so the guards of an alarm fight on. Absent while a contract
+   * is in the log, running or cleared (its targets come from there), and before the first is taken.
+   */
+  readonly endedContract?: ContractOnSite;
+  /**
+   * Jobs replaced by a newer one while some of their people are still in the world (G-178), in
+   * the order taken: no chunk brings them back, so only those saved return. Who of them falls
+   * asleep with a chunk is gone for good, and the job with him once nobody is left. Absent when none.
+   */
+  readonly formerContracts?: readonly ContractOnSite[];
   /** Serialized ink story state (inkjs JSON). */
   readonly narrative: string | null;
   readonly meta: { readonly label: string; readonly objective: string };
