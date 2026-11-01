@@ -46,5 +46,7 @@
   "kerb-fit-sparse": 0,
   "two-way-fit-narrow": 0,
   "landmark-recipe-unmatched": 0,
-  "gate-mouth-off-axis": 3
+  "gate-mouth-off-axis": 3,
+  "vehicle-outside-passage": 0,
+  "wall-lantern-in-passage": 0
 }

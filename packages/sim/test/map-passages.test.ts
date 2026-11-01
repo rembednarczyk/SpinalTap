@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { VEHICLE_SIZE } from "@seki/core";
 import { Simulation, gangerEntity, ground } from "../src";
-import { MAP_CHUNKS, PASSAGES } from "../src/content/lublin/sites";
+import { inBuilding } from "../src/content/lublin/places";
+import { GATE_PASSAGES, MAP_CHUNKS, PASSAGES } from "../src/content/lublin/sites";
+import { TRAFFIC_ROUTES, pointAt } from "../src/content/traffic";
 import { input, run, teleportPlayer } from "./helpers";
 
 /** The covered lanes of the Old Town the map draws under its houses (ADR-0048). */
@@ -99,5 +102,31 @@ describe("through Brama Grodzka on the axis of its fronts (G-136)", () => {
     const grodzka = onLine(GRODZKA_FRONT, CASTLE_FRONT, -6);
     expect(chase(castle, grodzka)).not.toBeNull();
     expect(chase(grodzka, castle)).not.toBeNull();
+  });
+
+  it("a delivery van, the widest there is, fits the passage all the way through: every corner under the gate within its walls", () => {
+    const gate = GATE_PASSAGES.find((p) => p.building === "w232362876")!;
+    const len = Math.hypot(gate.to.x - gate.from.x, gate.to.z - gate.from.z);
+    const [ux, uz] = [(gate.to.x - gate.from.x) / len, (gate.to.z - gate.from.z) / len];
+    const { width, length } = [VEHICLE_SIZE.van, VEHICLE_SIZE.delivery].reduce((a, b) => (b.width > a.width ? b : a));
+    const through = TRAFFIC_ROUTES.filter((r) => r.use === "deliveries" && r.street === "Grodzka");
+    let under = 0;
+    let worst = 0;
+    for (const r of through) {
+      for (let s = 0; s <= r.length; s += 0.25) {
+        const c = pointAt(r.points, s);
+        for (const [a, b] of [[-0.5, -0.5], [-0.5, 0.5], [0.5, -0.5], [0.5, 0.5]] as const) {
+          const x = c.x + c.tx * length * a - c.tz * width * b;
+          const z = c.z + c.tz * length * a + c.tx * width * b;
+          const along = (x - gate.from.x) * ux + (z - gate.from.z) * uz;
+          // Under the gate: the passage's axis there inside a building.
+          if (along < 0 || along > len || !inBuilding(gate.from.x + ux * along, gate.from.z + uz * along)) continue;
+          under++;
+          worst = Math.max(worst, Math.abs((x - gate.from.x) * uz - (z - gate.from.z) * ux));
+        }
+      }
+    }
+    expect(under).toBeGreaterThan(100);
+    expect(worst).toBeLessThan(gate.width / 2);
   });
 });

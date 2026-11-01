@@ -6,6 +6,7 @@ import { TARG_NORTH_ACTORS, TARG_NORTH_PROPS, TARG_SOUTH_ACTORS, TARG_SOUTH_PROP
 import { DOKI_QUAY_ACTORS, DOKI_QUAY_PROPS, DOKI_YARD_ACTORS, DOKI_YARD_PROPS } from "./district-doki";
 import { METRO_STATIONS } from "./metro";
 import { CLEARED_BUILDINGS, MAP_CHUNKS, PASSAGES } from "./lublin/sites";
+import { inBuilding } from "./lublin/places";
 import { groundY } from "./lublin/terrain";
 import { LUBLIN_STREET_PROPS } from "./lublin";
 import { anchors, bollardChains, chainSegments, distanceToPiece, dropChains, furnitureRadius } from "./lublin/furniture";
@@ -73,6 +74,21 @@ const KEEP_CLEAR: readonly (readonly [Pt, Pt])[] = [
 ];
 
 /**
+ * Does a thing of radius `r` at (x, z), under a building, reach into a passage through it: within
+ * half the passage's width (and 0.3 m) of its axis? The OSM way through a gate need not be the
+ * passage's axis (Brama Grodzka, G-136), so the wall lanterns under the vault go by the passage.
+ */
+const inPassage = (x: number, z: number, r: number): boolean =>
+  inBuilding(x, z) &&
+  PASSAGES.some((p) => {
+    const len = Math.hypot(p.to.x - p.from.x, p.to.z - p.from.z);
+    const [ux, uz] = [(p.to.x - p.from.x) / len, (p.to.z - p.from.z) / len];
+    const s = (x - p.from.x) * ux + (z - p.from.z) * uz;
+    const off = (x - p.from.x) * uz - (z - p.from.z) * ux;
+    return s >= 0 && s <= len && Math.abs(off) < p.width / 2 + r + 0.3;
+  });
+
+/**
  * Does a thing of radius `r` at (x, z) stand clear of the ways the content walks straight, and
  * `pad` metres more than the furniture does of the game's set pieces, blocks and characters?
  */
@@ -80,7 +96,8 @@ export const clearOfGame = (x: number, z: number, r: number, pad = 0): boolean =
   !CLEARED_BUILDINGS.some((c) => distanceToRect(x, z, c) < 2 + pad) &&
   !gameBlocks.some((b) => distanceToRect(x, z, b) < FURNITURE_CLEARANCE + pad) &&
   !GAME_ACTORS.some((a) => Math.hypot(a.spawn.position.x - x, a.spawn.position.z - z) < FURNITURE_CLEARANCE + pad) &&
-  !KEEP_CLEAR.some(([a, b]) => segmentDistance(x, z, a, b) < r + 0.7);
+  !KEEP_CLEAR.some(([a, b]) => segmentDistance(x, z, a, b) < r + 0.7) &&
+  !inPassage(x, z, r);
 
 /** The map's pieces clear of the game, on the shaped terrain. */
 const kept: Readonly<Record<string, readonly StreetPropItem[]>> = Object.fromEntries(
