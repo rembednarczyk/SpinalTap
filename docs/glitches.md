@@ -462,14 +462,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola skanu dla punktów pasów bez nawierzchni, baza 56 → 0 albo uzasadnione wyjątki
 
 ### G-139 Smoke „title → new game”: gracz przechodzi 2,09 m zamiast ponad 2,5 m przy szybkim starcie
-- Status: zgłoszone (1.11, budowniczy ADR-0065 etap 2); pada też na czystym main (1 z 4 powtórzeń, ta sama wartość 2,0937 m)
+- Status: w weryfikacji (181cca8: przyczyna w `BrowserInput`: `pointerlockerror` od odrzuconej opcji `unadjustedMovement` w Chromium na Linuksie ustawiał `lockUnavailable` na stałe, a skok kursora przy wejściu w blokadę liczył się jako obrót; sonda 3/14 → 0/8, smoke 1/10 → 0/10)
 - Ważność: S3 (fałszywie czerwony smoke w CI)
 - Gdzie: `e2e/smoke.spec.ts`, test „title → new game → … IndexedDB”: przy starcie ok. 14 s ruch w pierwszych 60 krokach daje 2,09 m; bez renderera zawsze 4,20 m, więc to wyścig startu w aplikacji (może z ekranem ładowania #102: kroki liczone przed końcem `prepare` albo wejście przed pointer lockiem)
 - Pakiet właściciela: packages/app, e2e (QA)
 - Test przyjęcia: przyczyna ustalona śladem; test czeka na stan gry, nie na zegar (ADR-0046); 10 przebiegów bez błędu
 
 ### G-140 Zaparkowane auta na wjazdach i wylotach dróg serwisowych (Cerkiewna)
-- Status: zgłoszone (1.11, kurator przy G-130; T-088); było już na main
+- Status: w weryfikacji (885bbd5: `serviceWays` w chunkach, odstęp aut od osi; aut 63 → 61)
 - Ważność: S4 · Zasięg: 3 auta (Cerkiewna (908.8, 440.5) na `driveway` w1381877866, (912.2, 416.4) i (910.8, 422.5) przy wylocie `service` w739432848)
 - Przyczyna: `offOtherRoads` w `parked-cars.ts` pilnuje tylko ulic z `CAR_KINDS`, bez `highway=service`
 - Poprawka: w `fits()` odstęp od osi `highway=service` (poza `parking_aisle`) co najmniej półszerokość + 0,5 m. Uwaga (1.11): dane chunków sim mają tylko nazwane ulice, a `service` i `driveway` przy Cerkiewnej są bez nazwy, więc najpierw import musi przenosić osie nienazwanych dróg serwisowych (osobne pole, nie `streets`); koszt mały–średni, nie drobna poprawka
