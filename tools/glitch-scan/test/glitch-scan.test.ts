@@ -15,6 +15,7 @@ import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 import { MAP_SIGN_KIND } from "../../../packages/engine/src/renderer/mapcity/sign-plan";
 import { marketChecks } from "./market-pieces";
 import { signsInNeighbours } from "./sign-neighbours";
+import { lanternsByPassages } from "./passage-lanterns";
 import { bayCarsMisturned, bayCarsOutOfPark, bayStripsSparse, crowdLanesOnParking, kerbParksOf } from "./kerb-bays";
 import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alone.ts";
 import { extractFeatures } from "../../osm-import/src/features.ts";
@@ -34,7 +35,7 @@ import { LUBLIN_STREET_PROPS, buildingView, isLandmark } from "../../../packages
 import { inBuilding, nearestWall } from "../../../packages/sim/src/content/lublin/places";
 import { ROAD_CHAINS, type RoadChain, polylineLength, surfaceLiftAt, surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
 import { clearedBuilding } from "../../../packages/sim/src/content/cleared-buildings";
-import { CLEARED_BUILDINGS, MAP_CHUNKS, PASSAGES, ROOM_SITES, ROOM_STOREY } from "../../../packages/sim/src/content/lublin/sites";
+import { CLEARED_BUILDINGS, GATE_PASSAGES, MAP_CHUNKS, PASSAGES, ROOM_SITES, ROOM_STOREY } from "../../../packages/sim/src/content/lublin/sites";
 import { groundY } from "../../../packages/sim/src/content/lublin/terrain";
 import { BRIDGE_DECKS, bridgeDeckAt } from "../../../packages/sim/src/content/lublin/decks";
 import { WORLD_CHUNKS, WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
@@ -1151,6 +1152,18 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       });
   },
   /**
+   * A wall lantern of the generator's table hung within 2 m of the axis of a passage of the game's
+   * own data (G-183): the chunks' passages and the gates cut by hand (`GATE_PASSAGES`), which
+   * `wall-lantern-in-building` misses with its `tunnel=building_passage` ways.
+   */
+  "wall-lantern-by-passage": () => {
+    const passages = [...GATE_PASSAGES, ...MAP_CHUNKS.flatMap((c) => c.passages ?? [])];
+    const lanterns = Object.values(LUBLIN_STREET_PROPS)
+      .flat()
+      .filter((i) => i.prop === "lamp-wall-lantern");
+    return lanternsByPassages(lanterns, passages).map((l) => ({ at: near(l.x, l.z), what: `lamp-wall-lantern ${l.gap.toFixed(2)} m off the axis through ${l.building}` }));
+  },
+  /**
    * A wall lantern hung in front of a venue's board (G-158): the lantern of the drawn model
    * (`prop-lamps.ts`, turned by the piece's yaw) out in front of the board's face and over it,
    * along the wall and in height.
@@ -1523,6 +1536,22 @@ describe("the glitch scan (ADR-0054)", () => {
     expect(tiers.length).toBeGreaterThan(0);
     const gateTop = gate.y + gate.height + (gate.roof ?? 0);
     for (const t of tiers) if (t.y1 > gateTop) expect(ringGap(t.ring, worldOutline(gate))).toBeGreaterThanOrEqual(5);
+  });
+
+  it("finds a wall lantern within 2 m of a gate's axis cut by hand, in its vault or its mouth, and none past its ends (G-183)", () => {
+    const gate = GATE_PASSAGES.find((p) => p.building === "r7224409")!;
+    const along = (t: number, off: number) => {
+      const len = Math.hypot(gate.to.x - gate.from.x, gate.to.z - gate.from.z);
+      const [ux, uz] = [(gate.to.x - gate.from.x) / len, (gate.to.z - gate.from.z) / len];
+      return { x: gate.from.x + ux * len * t - uz * off, z: gate.from.z + uz * len * t + ux * off };
+    };
+    const inMouth = along(0.97, 1.6);
+    const found = lanternsByPassages([inMouth, along(0.5, -1.2), along(0.5, 2.5), along(1.1, 0.5), along(-0.1, 0)], [gate]);
+    expect(found.map((f) => [f.x, f.z, f.building])).toEqual([
+      [inMouth.x, inMouth.z, "r7224409"],
+      [along(0.5, -1.2).x, along(0.5, -1.2).z, "r7224409"],
+    ]);
+    expect(lanternsByPassages([inMouth], [])).toEqual([]);
   });
 
   describe("kerb car parks (G-189)", () => {

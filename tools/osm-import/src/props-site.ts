@@ -4,6 +4,7 @@
  * `props-place.ts`. Built from `LublinChunkData`, the same tables the game and renderer read.
  */
 import { type GroundSurface, terrainHeightAt } from "../../../packages/core/src/world/city-geo.ts";
+import { GATE_PASSAGES } from "../../../packages/sim/src/content/lublin/gate-passages.ts";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
 import { type Pt, type Rect, inRect, pointInRing, ringBounds } from "./geometry.ts";
 
@@ -46,7 +47,7 @@ export class Site {
   readonly chunks: readonly LublinChunkData[];
   readonly streets: readonly SiteStreet[];
   private readonly bins = new Map<string, Shape[]>();
-  /** The passages through the chunks' buildings (ADR-0048), along their axes. */
+  /** The passages through the chunks' buildings (ADR-0048) and the gates the game cuts by hand, along their axes. */
   private readonly passages: readonly (readonly [Pt, Pt])[];
 
   constructor(chunks: readonly LublinChunkData[]) {
@@ -58,7 +59,8 @@ export class Site {
       for (const s of c.streets) streets.push({ name: s.name, kind: s.kind, line: flat(s.line), chunk: c.id });
     }
     this.streets = streets;
-    this.passages = chunks.flatMap((c) => (c.passages ?? []).map((p) => [p.from, p.to] as const));
+    // The gates are solid in the map, with no passage in their chunk (Brama Krakowska), or one off the arch the game cuts (Brama Grodzka, G-183).
+    this.passages = [...GATE_PASSAGES, ...chunks.flatMap((c) => c.passages ?? [])].map((p) => [p.from, p.to] as const);
   }
 
   private add(s: Shape): void {
