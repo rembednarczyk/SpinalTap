@@ -30,7 +30,6 @@ import { SIM_DT } from "./step-rate";
 import { CROWD_CAP, type CrowdDensity } from "./content/crowd";
 import type { TrafficDensity } from "./content/traffic";
 import { isMicroKey } from "./world/micro-events";
-import { hasAmbush } from "./world/contract-plan";
 import { doorSnapshots, restoreDoors } from "./systems/door-system";
 import { withAttackLock } from "./world/takedown";
 import { withCarry } from "./world/bodies";
@@ -91,9 +90,14 @@ export class Simulation {
     this.streamer = chunks ? new WorldStreamer(ids, chunks) : new WorldStreamer(ids);
     bindGround(this.world, this.streamer.ground);
     this.streamer.enemyHealth = () => this.holder.domain.difficulty.npcHealth;
-    const contract = domain.contracts.active;
-    // A done job with an ambush by the way out (ADR-0034) still has people in the world.
-    if (contract && (contract.status === "active" || hasAmbush(contract))) this.streamer.registerContract(this.world, domain.flags, domain.contracts.completed, contract);
+    // The people of a job stay in the world after it ends, done or lost, until the next is taken
+    // (G-178): the guards of an alarm fight on, an ambush waits by the way out (ADR-0034).
+    // An ended one is made with the jobs done when it was taken: its pay counts one more since.
+    // Replaced jobs first, as they were taken: their saved people come back with them.
+    for (const f of saved?.formerContracts ?? []) this.streamer.restoreFormer(f);
+    const active = domain.contracts.active;
+    const site = active ? { contract: active, completed: domain.contracts.completed } : saved?.endedContract;
+    if (site) this.streamer.registerContract(this.world, domain.flags, site.completed, site.contract);
     const focus = saved?.entities.find((e) => e.key === "player")?.position ?? PLAYER_SPAWN.position;
     this.streamer.loadInitial(this.world, domain.flags, focus, saved?.streaming.loadedChunks ?? [], domain.clock, () => this.world.add(player));
     if (player.combatant) syncPlayerWeapon(domain, player.combatant);
@@ -221,6 +225,8 @@ export class Simulation {
     if (rider?.key) entities.push(entitySnapshotOf({ ...rider, key: rider.key }));
     // Sorted by key: world iteration order is not stable across removals.
     entities.sort((a, b) => a.key.localeCompare(b.key));
+    const ended = this.holder.domain.contracts.active ? null : this.streamer.registeredContract;
+    const former = this.streamer.formerSnapshots(this.world);
     return {
       version: SAVE_SCHEMA_VERSION,
       seed: this.seed,
@@ -231,6 +237,8 @@ export class Simulation {
       doors: doorSnapshots(this),
       domain: this.holder.domain,
       ...(this.session.pendingDifficulty ? { pendingDifficulty: this.session.pendingDifficulty } : {}),
+      ...(ended ? { endedContract: ended } : {}),
+      ...(former.length > 0 ? { formerContracts: former } : {}),
       narrative,
       meta: { label, objective },
     };

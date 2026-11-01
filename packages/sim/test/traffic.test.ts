@@ -163,7 +163,7 @@ describe("the lanes of the traffic (ADR-0050)", () => {
     }
   });
 
-  it("parked cars fill the car parks the map draws along a kerb, parallel to their street", () => {
+  it("parked cars fill the car parks the map draws along a kerb, along their street or across it as the strip says (G-177)", () => {
     const inside = (x: number, z: number, o: readonly number[]) => {
       let on = false;
       for (let i = 0, j = o.length - 2; i < o.length; j = i, i += 2)
@@ -176,13 +176,48 @@ describe("the lanes of the traffic (ADR-0050)", () => {
       const park = kerbParks.find((p) => p.id === id)!;
       expect(PARKED_CARS.some((c) => inside(c.x, c.z, park.outline)), id).toBe(true);
     }
-    const inBays = PARKED_CARS.filter((c) => kerbParks.some((p) => inside(c.x, c.z, p.outline)));
+    const inBays = PARKED_CARS.flatMap((c) => kerbParks.filter((p) => inside(c.x, c.z, p.outline)).map((park) => ({ c, park })));
     expect(inBays.length).toBeGreaterThan(20);
-    for (const c of inBays) {
+    let across = 0;
+    for (const { c, park } of inBays) {
       const street = ROAD_CHAINS.filter((r) => r.use === "cars").map((r) => ({ r, q: projectOn(r.points, c.x, c.z) })).sort((a, b) => a.q.d - b.q.d)[0]!;
       const t = pointAt(street.r.points, street.q.s);
-      expect(Math.abs(t.tx * Math.sin(c.yaw) + t.tz * Math.cos(c.yaw)), `${c.x},${c.z}`).toBeGreaterThan(0.9);
+      const along = Math.abs(t.tx * Math.sin(c.yaw) + t.tz * Math.cos(c.yaw));
+      // Along the kerb or across it, never askew; across only where the strip is mapped so or has no `orientation`.
+      if (park.orientation === "perpendicular") expect(along, `${c.x},${c.z} in ${park.id}`).toBeLessThan(0.1);
+      else if (park.orientation === "parallel") expect(along, `${c.x},${c.z} in ${park.id}`).toBeGreaterThan(0.9);
+      else expect(along > 0.9 || along < 0.1, `${c.x},${c.z} in ${park.id}: ${along.toFixed(2)}`).toBe(true);
+      if (along < 0.1) across++;
     }
+    expect(across).toBeGreaterThan(10);
+  });
+
+  it("parked cars of a kerb car park stand with their whole body in it, by its kerb (G-177)", () => {
+    const ring = (o: readonly number[]) => Array.from({ length: o.length / 2 }, (_, i): readonly [number, number] => [o[2 * i]!, o[2 * i + 1]!]);
+    const inRing = (x: number, z: number, r: readonly (readonly [number, number])[]) => {
+      let on = false;
+      for (let i = 0, j = r.length - 1; i < r.length; j = i++) if (r[i]![1] > z !== r[j]![1] > z && x < ((r[j]![0] - r[i]![0]) * (z - r[i]![1])) / (r[j]![1] - r[i]![1]) + r[i]![0]) on = !on;
+      return on;
+    };
+    const parks = MAP_CHUNKS.flatMap((c) => c.carParks ?? []).filter((p) => p.kind === "street_side" || p.kind === "lane").map((p) => ({ id: p.id, ring: ring(p.outline) }));
+    let checked = 0;
+    for (const c of PARKED_CARS) {
+      const park = parks.find((p) => inRing(c.x, c.z, p.ring));
+      if (!park) continue;
+      checked++;
+      const { width, length } = VEHICLE_SIZE[c.model];
+      const [fx, fz] = [Math.sin(c.yaw), Math.cos(c.yaw)];
+      for (const [a, b] of [[-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5]] as const) {
+        // A corner pulled 0.15 m in: the bay is the strip's to its edge, with a hand's breadth of slack.
+        const [px, pz] = [c.x + fz * (width * a - 0.15 * Math.sign(a)) + fx * (length * b - 0.15 * Math.sign(b)), c.z - fx * (width * a - 0.15 * Math.sign(a)) + fz * (length * b - 0.15 * Math.sign(b))];
+        expect(inRing(px, pz, park.ring), `${c.model} ${c.x},${c.z} in ${park.id}`).toBe(true);
+      }
+    }
+    expect(checked).toBeGreaterThan(20);
+    // Kalinowszczyzna's strip by the river is mapped `orientation=perpendicular`: its cars stand across the kerb.
+    const kalinowszczyzna = parks.find((p) => p.id === "w1000912163")!;
+    const there = PARKED_CARS.filter((c) => inRing(c.x, c.z, kalinowszczyzna.ring));
+    expect(there.length).toBeGreaterThan(0);
   });
 
   it("parked cars leave the mouths of driveways and service lanes free: half their width and 0.5 m off the axis (G-140)", () => {

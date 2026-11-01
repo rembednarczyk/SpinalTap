@@ -1,0 +1,91 @@
+import { VEHICLE_SIZE } from "../../../packages/core/src";
+import { pointInRing } from "../../../packages/engine/src/renderer/mapcity/polygon";
+import { type Area, extractFeatures } from "../../osm-import/src/features.ts";
+import { type OsmData } from "../../osm-import/src/osm.ts";
+import { type CrowdLane } from "../../../packages/sim/src/content/crowd";
+import { type ParkedCar } from "../../../packages/sim/src/content/parked-cars";
+import { LANE_HALF_GAP } from "../../../packages/sim/src/world/crowd";
+
+/**
+ * The cars and walkers of the kerb car parks the map data draws (`amenity=parking`, `parking=lane`
+ * or `street_side`, G-177), worked out from the data's outlines and tags alone: a strip along a
+ * street, its cars at the kerb, turned as its `orientation` says, and no walkers' route in it.
+ */
+
+type P = { readonly x: number; readonly z: number };
+type Finding = { readonly at: string; readonly what: string };
+
+const near = (x: number, z: number) => `${x.toFixed(0)},${z.toFixed(0)}`;
+
+const segmentGap = (p: P, a: P, b: P) => {
+  const dx = b.x - a.x;
+  const dz = b.z - a.z;
+  const k = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+  return Math.hypot(a.x + dx * k - p.x, a.z + dz * k - p.z);
+};
+const ringGap = (p: P, ring: readonly P[]) => Math.min(...ring.map((a, i) => segmentGap(p, a, ring[(i + 1) % ring.length]!)));
+
+export const kerbParksOf = (osm: OsmData): Area[] =>
+  extractFeatures(osm).areas.filter((a) => a.tags.amenity === "parking" && (a.tags.parking === "lane" || a.tags.parking === "street_side"));
+
+const corners = (c: ParkedCar): P[] => {
+  const { width, length } = VEHICLE_SIZE[c.model];
+  const fx = Math.sin(c.yaw);
+  const fz = Math.cos(c.yaw);
+  return [-0.5, 0.5].flatMap((a) => [-0.5, 0.5].map((b) => ({ x: c.x + fz * width * a + fx * length * b, z: c.z - fx * width * a + fz * length * b })));
+};
+
+/** A car with its middle in a kerb car park and a corner of its body more than 0.3 m out of the outline (on the carriageway or the pavement). */
+export const bayCarsOutOfPark = (parks: readonly Area[], cars: readonly ParkedCar[]): Finding[] =>
+  cars.flatMap((c) => {
+    const park = parks.find((p) => pointInRing(c, p.ring));
+    if (!park) return [];
+    const out = corners(c).map((q) => (pointInRing(q, park.ring) ? 0 : ringGap(q, park.ring)));
+    const worst = Math.max(...out);
+    return worst > 0.3 ? [{ at: near(c.x, c.z), what: `${c.model} in ${park.id}: a corner ${worst.toFixed(2)} m out` }] : [];
+  });
+
+/** The way of a strip's street: its outline's longest edge. */
+const stripWay = (ring: readonly P[]): { tx: number; tz: number } => {
+  const edges = ring.map((a, i) => ({ a, b: ring[(i + 1) % ring.length]! }));
+  const { a, b } = edges.reduce((m, e) => (Math.hypot(e.b.x - e.a.x, e.b.z - e.a.z) > Math.hypot(m.b.x - m.a.x, m.b.z - m.a.z) ? e : m));
+  const len = Math.hypot(b.x - a.x, b.z - a.z) || 1;
+  return { tx: (b.x - a.x) / len, tz: (b.z - a.z) / len };
+};
+
+/** A car in a kerb car park mapped with `orientation=perpendicular` or `diagonal`, parked within 20° of the strip's way (along the kerb). */
+export const bayCarsMisturned = (parks: readonly Area[], cars: readonly ParkedCar[]): Finding[] =>
+  cars.flatMap((c) => {
+    const park = parks.find((p) => (p.tags.orientation === "perpendicular" || p.tags.orientation === "diagonal") && pointInRing(c, p.ring));
+    if (!park) return [];
+    const way = stripWay(park.ring);
+    const along = Math.abs(way.tx * Math.sin(c.yaw) + way.tz * Math.cos(c.yaw));
+    return along >= Math.cos((20 * Math.PI) / 180) ? [{ at: near(c.x, c.z), what: `${c.model} in ${park.id} (${park.tags.orientation}) along the kerb` }] : [];
+  });
+
+/**
+ * A crowd lane whose walkers (each way on its own side of the line, `LANE_HALF_GAP`), sampled
+ * every half metre, walk a metre or more inside a kerb car park: on its cars' strip, not the pavement.
+ */
+export const crowdLanesOnParking = (parks: readonly Area[], lanes: readonly CrowdLane[]): Finding[] =>
+  lanes.flatMap((l) => {
+    const pts = l.points.map(([x, z]) => ({ x, z }));
+    const xs = pts.map((p) => p.x);
+    const zs = pts.map((p) => p.z);
+    const close = parks.filter((p) => p.ring.some((q) => q.x > Math.min(...xs) - 20 && q.x < Math.max(...xs) + 20 && q.z > Math.min(...zs) - 20 && q.z < Math.max(...zs) + 20));
+    if (close.length === 0) return [];
+    const inside = new Map<string, { n: number; at: P }>();
+    pts.forEach((a, i) => {
+      const b = pts[(i + 1) % pts.length]!;
+      const len = Math.hypot(b.x - a.x, b.z - a.z);
+      if (len < 1e-6) return;
+      const [tx, tz] = [(b.x - a.x) / len, (b.z - a.z) / len];
+      for (let s = 0; s < len; s += 0.5)
+        for (const side of [1, -1]) {
+          const q = { x: a.x + tx * s - tz * LANE_HALF_GAP * side, z: a.z + tz * s + tx * LANE_HALF_GAP * side };
+          const park = close.find((p) => pointInRing(q, p.ring));
+          if (park) inside.set(park.id, { n: (inside.get(park.id)?.n ?? 0) + 1, at: inside.get(park.id)?.at ?? q });
+        }
+    });
+    return [...inside].filter(([, v]) => v.n >= 2).map(([id, v]) => ({ at: near(v.at.x, v.at.z), what: `${l.id} in ${id}: ${(v.n / 2).toFixed(1)} m` }));
+  });

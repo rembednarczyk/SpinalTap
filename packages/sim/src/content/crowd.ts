@@ -8,6 +8,7 @@ import { againstWall, inBuilding, nearestWall } from "./lublin/places";
 import { DOCKS_PLACE, MAP_CHUNKS, MARKET_PLACE } from "./lublin/sites";
 import { furnitureClearance, furnitureNear } from "./furniture-index";
 import { SEAT_SPOTS } from "./crowd-seats";
+import { offKerbParks, onKerbPark } from "./crowd-kerb-parks";
 import type { CrowdSpot } from "./crowd-spot";
 import { TRAFFIC_ROUTES } from "./traffic";
 
@@ -170,8 +171,8 @@ const onCarLane = (x: number, z: number): boolean =>
     return Math.hypot(ax + dx * t - x, az + dz * t - z) < CAR_LANE_REACH;
   });
 
-/** A square's or an alley's walker stays off the walls, the blocks and the carriageways. */
-const clearAt = (x: number, z: number): boolean => !inBuilding(x, z) && nearestWall(x, z).d >= LANE_CLEARANCE && !nearBlock(x, z) && !onCarLane(x, z);
+/** A square's or an alley's walker stays off the walls, the blocks, the carriageways and the kerbs' parking strips. */
+const clearAt = (x: number, z: number): boolean => !inBuilding(x, z) && nearestWall(x, z).d >= LANE_CLEARANCE && !nearBlock(x, z) && !onCarLane(x, z) && !onKerbPark(x, z);
 
 /**
  * The loop itself when it is clear of walls, blocks and carriageways all round; else its longest
@@ -311,7 +312,7 @@ const squareLanes = (): CrowdLane[] =>
     const out: CrowdLane[] = [];
     for (const ring of alleys) {
       if (out.length >= SQUARE_LANES_PER_CHUNK) break;
-      const loop = weave(ring);
+      const loop = offKerbParks(weave(ring));
       // An alley that touches a wall, a block or the road somewhere is still walked where it is clear.
       const walk = clearRun(loop);
       if (walk && dry(walk)) out.push({ id: `${c.id}-square-${out.length}`, chunk: c.id, points: walk });
@@ -321,7 +322,7 @@ const squareLanes = (): CrowdLane[] =>
       const cz = ring.reduce((s, p) => s + p[1], 0) / ring.length;
       for (const k of SQUARE_INSETS) {
         if (out.length >= SQUARE_LANES_PER_CHUNK) break;
-        const loop = weave(ring.map(([x, z]) => [cx + (x - cx) * k, cz + (z - cz) * k] as const));
+        const loop = offKerbParks(weave(ring.map(([x, z]) => [cx + (x - cx) * k, cz + (z - cz) * k] as const)));
         const walk = clearRun(loop);
         if (walk && dry(walk)) out.push({ id: `${c.id}-square-${out.length}`, chunk: c.id, points: walk });
       }
