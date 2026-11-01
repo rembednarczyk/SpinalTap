@@ -6,6 +6,7 @@ import { loadInputs } from "../src/load.ts";
 import { parseOsmXml } from "../src/osm.ts";
 import { worldToGeo } from "../src/project.ts";
 import { GENERIC_NAMES, VENUE_NAMES, venueEntry } from "../src/venue-names.ts";
+import { likeness } from "./name-likeness.ts";
 import { KIT_NEON, type WorldVenue, assignVenues, parseColour, toKitNeon, venueKind } from "../src/venues.ts";
 
 /** Lower case, no diacritics, punctuation as spaces: how a name reads to the eye. */
@@ -20,10 +21,19 @@ const plain = (s: string): string =>
 
 /** Chains and brands that never go on a sign (ADR-0058); the map's `brand` tags join them below. */
 const FORBIDDEN = [
-  "Żabka", "Biedronka", "Lidl", "McDonald's", "KFC", "Rossmann", "Orlen", "PKO", "Pekao", "Starbucks", "Costa", "Burger King", "Millennium", "mBank", "Alior",
+  "Żabka", "Biedronka", "Lidl", "McDonald's", "KFC", "Rossmann", "Orlen", "PKO", "PKO BP", "Pekao", "Starbucks", "Costa", "Burger King", "Millennium", "mBank", "Alior",
   "Stokrotka", "Lewiatan", "Społem", "Ziko", "Dr Max", "Grycan", "Wedel", "Oriflame", "Yves Rocher", "Itaka", "Empik", "Tavex", "STS", "Lotto", "Pasibus", "Erste",
   "DeFacto", "Bookland", "Hebe", "Carrefour", "Netto", "Dino", "Kaufland", "Subway", "Pizza Hut", "Costa Coffee", "Vistula", "Reserved", "Apart", "W. Kruk",
+  // The verifier's list of 1.11: chains of Lublin and registered marks.
+  "Oskroba", "Świat Książki", "VIVO!", "Esens", "Manekin", "Bosko", "Nova", "Plus", "Ruch", "Dbam o Zdrowie", "Mennica Polska", "Wschodni Bank Spółdzielczy",
+  "Bank Pocztowy", "Pijalnia Wódki i Piwa", "Pijalnia Czekolady", "Rosomak", "BOŚ", "SKOK", "Loombard", "Chmielewski", "Grela", "Pijana Wiśnia", "Gemini", "Tendur",
 ];
+
+/** Parodies that sound like a mark without a phonetic rule catching them, written by hand. */
+const SOUNDS_LIKE = ["Iw Rosze", "Iwroszer", "Makdonalds", "Makdron", "Rossman", "Starbaks", "Pekało"];
+
+/** A tag stuck on a real name to make it "2077" (1.11: not a parody). */
+const STUCK_ON = /(^|[\s-])(BOT|NET|AI|EXE|NEO|X|ONLINE|\d*77|2\.0)($|[\s-])/;
 
 const inputs = loadInputs();
 const mapped = [...inputs.osm.nodes.values()].map((n) => n.tags).concat([...inputs.osm.ways.values()].map((w) => w.tags));
@@ -40,19 +50,32 @@ describe("the venue-names table (ADR-0064 stage 4)", () => {
     expect(VENUE_NAMES.length).toBeGreaterThanOrEqual(300);
   });
 
-  it("never writes a map name as it is, whatever the case and the diacritics", () => {
-    expect(names2077.filter((n) => osmNames.has(plain(n)))).toEqual([]);
+  it("never plays on a venue's own map name by a letter, a sound or a word of it", () => {
+    expect(VENUE_NAMES.flatMap(([osm, name]) => likeness(name, osm) ?? [])).toEqual([]);
   });
 
-  it("never names a chain or a brand, the map's own brands included", () => {
-    expect(brands.length).toBeGreaterThan(10);
-    const banned = [...new Set([...FORBIDDEN, ...brands].map(plain))];
-    const hits = names2077.flatMap((n) => {
-      const words = ` ${plain(n)} `;
-      const glued = plain(n).replace(/ /g, "");
-      return banned.filter((b) => words.includes(` ${b} `) || (b.length >= 5 && glued.includes(b.replace(/ /g, "")))).map((b) => `${n}: ${b}`);
-    });
-    expect(hits).toEqual([]);
+  it("never plays on a chain by a letter, a sound or a word of it, the map's brands and the verifier's list included", () => {
+    const chains = [...new Set([...FORBIDDEN, ...SOUNDS_LIKE, ...brands])];
+    expect(names2077.flatMap((n) => chains.flatMap((c) => likeness(n, c) ?? []))).toEqual([]);
+  });
+
+  it("is a new name, not the real one with a tag stuck on", () => {
+    expect(names2077.filter((n) => STUCK_ON.test(n))).toEqual([]);
+  });
+
+  it("tells a parody from its source by sound, not by the letters alone", () => {
+    expect(likeness("BURGER KONG", "Burger King")).not.toBeNull();
+    expect(likeness("GRYZAN", "Grycan")).not.toBeNull();
+    expect(likeness("BANK PEKAŁO", "Bank Pekao")).not.toBeNull();
+    expect(likeness("WIWO-WIWO!", "VIVO!")).not.toBeNull();
+    expect(likeness("DE-FAKTO", "DeFacto")).not.toBeNull();
+    expect(likeness("SUPERNOVA", "Nova")).not.toBeNull();
+    expect(likeness("KRÓL KOTLETA", "Burger King")).toBeNull();
+    expect(likeness("BANK POD ŻUBREM", "Bank Pekao")).toBeNull();
+  });
+
+  it("never writes a map name as it is, whatever the case and the diacritics", () => {
+    expect(names2077.filter((n) => osmNames.has(plain(n)))).toEqual([]);
   });
 
   it("spells every name in the sign glyphs and gives no two venues the same one", () => {
@@ -151,8 +174,8 @@ describe("venues on the facades", () => {
     const g = generate(osm, () => 190, [{ id: "t-0-0", district: DISTRICTS[0]!, rect: { minX: -50, minZ: -50, maxX: 150, maxZ: 150 } }]);
     const b = g.chunks[0]!.buildings[0]!;
     expect(b.venues).toEqual([
-      { x: 0, z: -5.5, kind: "grocery", name: "RZEKOTKA 24/7", color: "#39ff8a" },
-      { x: 0, z: 11.5, kind: "bank", name: "PKB BANK POLSKI", color: "#b46cff" },
+      { x: 0, z: -5.5, kind: "grocery", name: "RZEKOTKA", color: "#39ff8a" },
+      { x: 0, z: 11.5, kind: "bank", name: "SKARBONKA NARODOWA", color: "#b46cff" },
     ]);
     expect(g.venues).toMatchObject({ total: 2, signed: 2, named: 2, colourOsm: 1, colourTable: 1, colourKind: 0 });
   });
