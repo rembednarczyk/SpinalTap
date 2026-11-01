@@ -228,16 +228,55 @@ const clearOfStops = (x: number, z: number, model: VehicleModel): boolean => {
   );
 };
 
+/** The car parks of the map data, each once (one reaching over a chunk's edge is in both chunks). */
+const CAR_PARKS = [...new Map(MAP_CHUNKS.flatMap((c) => c.carParks ?? []).map((p) => [p.id, p])).values()].map((p) => ({
+  kind: p.kind,
+  ring: Array.from({ length: p.outline.length / 2 }, (_, i): Pt => [p.outline[2 * i]!, p.outline[2 * i + 1]!]),
+}));
+/** Car parks along a street's kerb: a strip beside the carriageway, a parking lane, half on the pavement. */
+const KERB_PARKS = CAR_PARKS.filter((p) => p.kind === "street_side" || p.kind === "lane" || p.kind === "half_on_kerb");
+
+const inRing = (x: number, z: number, ring: readonly Pt[]): boolean => {
+  let on = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [ax, az] = ring[i]!;
+    const [bx, bz] = ring[j]!;
+    if (az > z !== bz > z && x < ((bx - ax) * (z - az)) / (bz - az) + ax) on = !on;
+  }
+  return on;
+};
+
+/**
+ * A street of two lanes or more a way has no room at its kerb: a car parked there stands on the
+ * outer lane (G-155). The game drives one lane a way, so nothing else keeps a car off it. A car
+ * is by such a kerb when an axis of one runs within this of it (m) and within 20° of its facing.
+ */
+const MULTI_LANE_REACH = 12;
+const MULTI_LANE_SEGMENTS = MAP_CHUNKS.flatMap((c) => c.multiLaneWays ?? []).flatMap((w) =>
+  Array.from({ length: w.line.length / 2 - 1 }, (_, i) => {
+    const a: Pt = [w.line[2 * i]!, w.line[2 * i + 1]!];
+    const b: Pt = [w.line[2 * i + 2]!, w.line[2 * i + 3]!];
+    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    return { a, b, tx: (b[0] - a[0]) / (len || 1), tz: (b[1] - a[1]) / (len || 1) };
+  }),
+);
+
+/** Is a car at (x, z), facing yaw, off every multi-lane street's kerb, or in a car park the map draws there? */
+const offMultiLaneKerbs = (x: number, z: number, yaw: number): boolean =>
+  MULTI_LANE_SEGMENTS.every(
+    (s) => Math.abs(s.tx * Math.sin(yaw) + s.tz * Math.cos(yaw)) < Math.cos((20 * Math.PI) / 180) || segmentDistance(x, z, s.a, s.b) >= MULTI_LANE_REACH,
+  ) || CAR_PARKS.some((p) => inRing(x, z, p.ring));
+
 /**
  * Is a car's footprint at (x, z), facing yaw, wholly on a carriageway or a square and free of
- * walls, furniture, the game's places, service roads, footways, bus stops and other streets' axes (and carriageways, by the kerb of
+ * walls, furniture, the game's places, service roads, footways, bus stops, multi-lane kerbs and other streets' axes (and carriageways, by the kerb of
  * `own`)? A street's kerb line is set from its median width, so where the carriageway narrows
  * (a bend, a pinch by a pavement) the bay falls on the grass or the pavement unless each corner
  * is checked. A bay on a slope too steep for a level car (`LEVEL_DROP`) stays empty.
  */
 const fits = (x: number, z: number, yaw: number, model: VehicleModel, own?: RoadChain): boolean => {
   if (!parkable(x, z) || !footprint(x, z, yaw, model, 0).every(([px, pz]) => parkable(px, pz)) || !clearOfZebras(x, z, yaw, model)) return false;
-  if (!level(x, z, yaw, model) || !clearOfKeptWays(x, z, yaw, model) || !clearOfStops(x, z, model)) return false;
+  if (!level(x, z, yaw, model) || !clearOfKeptWays(x, z, yaw, model) || !clearOfStops(x, z, model) || !offMultiLaneKerbs(x, z, yaw)) return false;
   const { width, length } = VEHICLE_SIZE[model];
   const fx = Math.sin(yaw);
   const fz = Math.cos(yaw);
@@ -285,24 +324,6 @@ const kerbCars = (): ParkedCar[] => {
     }
   }
   return out;
-};
-
-/** The car parks of the map data, each once (one reaching over a chunk's edge is in both chunks). */
-const CAR_PARKS = [...new Map(MAP_CHUNKS.flatMap((c) => c.carParks ?? []).map((p) => [p.id, p])).values()].map((p) => ({
-  kind: p.kind,
-  ring: Array.from({ length: p.outline.length / 2 }, (_, i): Pt => [p.outline[2 * i]!, p.outline[2 * i + 1]!]),
-}));
-/** Car parks along a street's kerb: a strip beside the carriageway, a parking lane, half on the pavement. */
-const KERB_PARKS = CAR_PARKS.filter((p) => p.kind === "street_side" || p.kind === "lane" || p.kind === "half_on_kerb");
-
-const inRing = (x: number, z: number, ring: readonly Pt[]): boolean => {
-  let on = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const [ax, az] = ring[i]!;
-    const [bx, bz] = ring[j]!;
-    if (az > z !== bz > z && x < ((bx - ax) * (z - az)) / (bz - az) + ax) on = !on;
-  }
-  return on;
 };
 
 /** The farthest from a street's axis a kerb car park's cars are sought (m). */

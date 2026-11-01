@@ -1,7 +1,7 @@
-/** What the kerbs of the map allow a parked car: the car parks mapped as areas and the bus stops. */
+/** What the kerbs of the map allow a parked car: the car parks mapped as areas, the bus stops and the streets of many lanes. */
 import { type Area, type Line } from "./features.ts";
-import { type Pt, type Rect, inRect, r1, rectsOverlap, ringBounds } from "./geometry.ts";
-import { type CarParkOut } from "./model.ts";
+import { type Pt, type Rect, clipLineToRect, inRect, lineLength, r1, rectsOverlap, ringBounds, simplifyLine } from "./geometry.ts";
+import { type CarParkOut, type MultiLaneWayOut } from "./model.ts";
 import { type OsmData, type Tags } from "./osm.ts";
 import { geoToWorld } from "./project.ts";
 
@@ -38,3 +38,17 @@ export const chunkBusStops = (posts: readonly Pt[], rect: Rect): number[] => {
   const near: Rect = { minX: rect.minX - STOP_MARGIN, minZ: rect.minZ - STOP_MARGIN, maxX: rect.maxX + STOP_MARGIN, maxZ: rect.maxZ + STOP_MARGIN };
   return posts.filter((p) => inRect(p, near)).flatMap((p) => [r1(p.x), r1(p.z)]);
 };
+
+/** A street of two lanes or more a way: `lanes` 4 or more, or `lanes:forward` or `lanes:backward` 2 or more. */
+const multiLane = (t: Tags): boolean => Number(t.lanes ?? 0) >= 4 || Number(t["lanes:forward"] ?? 0) >= 2 || Number(t["lanes:backward"] ?? 0) >= 2;
+
+/**
+ * The axes of the streets of two lanes or more a way, clipped to the chunk: a car parked by such
+ * a kerb stands on the outer lane, so none parks there outside a mapped car park (G-155).
+ */
+export const chunkMultiLaneWays = (lines: readonly Line[], rect: Rect): MultiLaneWayOut[] =>
+  lines
+    .filter((l) => l.tags.highway !== undefined && l.tags.area !== "yes" && multiLane(l.tags))
+    .flatMap((l) => clipLineToRect(l.line, rect))
+    .filter((piece) => lineLength(piece) >= 0.1)
+    .map((piece) => ({ line: simplifyLine(piece, 0.5).flatMap((q) => [r1(q.x), r1(q.z)]) }));

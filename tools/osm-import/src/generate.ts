@@ -14,7 +14,7 @@ import { type Band, areaBand, chunkGround, crossingBand, crossingWay, cutSidewal
 import { geoToWorld } from "./project.ts";
 import { type Marking, chunkMarkings, cutLine, oneway, roadMarkings, stopLines } from "./markings.ts";
 import { type Pt, type Rect, centroid, inRect, pointInRing, rectsOverlap, ringBounds } from "./geometry.ts";
-import { busStopPosts, chunkBusStops, chunkCarParks } from "./kerbside.ts";
+import { busStopPosts, chunkBusStops, chunkCarParks, chunkMultiLaneWays } from "./kerbside.ts";
 import { allPois, chunkFootWays, chunkPois, chunkServiceWays, chunkStreets } from "./labels.ts";
 import { type PassageOut, buildingPassages, streetLevelTunnels } from "./passages.ts";
 import { type ChunkOut } from "./model.ts";
@@ -208,6 +208,7 @@ const generateChunk = (
   const foot = chunkFootWays(lines, spec.rect);
   const parks = chunkCarParks(kerb.carParks, spec.rect);
   const stops = chunkBusStops(kerb.busStops, spec.rect);
+  const wide = chunkMultiLaneWays(lines, spec.rect);
   const chunk: ChunkOut = {
     id: spec.id,
     district: spec.district.id,
@@ -223,6 +224,7 @@ const generateChunk = (
     ...(foot.length > 0 ? { footWays: foot } : {}),
     ...(parks.length > 0 ? { carParks: parks } : {}),
     ...(stops.length > 0 ? { busStops: stops } : {}),
+    ...(wide.length > 0 ? { multiLaneWays: wide } : {}),
   };
   const stats: ChunkStats = {
     id: spec.id,

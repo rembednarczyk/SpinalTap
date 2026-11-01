@@ -373,6 +373,10 @@ export const KRAKOWSKIE_CHUNKS: readonly LublinChunkData[] = [
       {"id":"w551959618","kind":"surface","outline":[-76.4,-172,-81.2,-175.4,-67.7,-178,-64.7,-174.5]},
     ],
     busStops: [-100.3,3.6],
+    multiLaneWays: [
+      {"line":[-103.9,-57.7,-106.7,-44.9,-110,-20]},
+      {"line":[-103.9,-57.7,-200,-63.9]},
+    ],
   },
   {
     id: "krakowskie-1-0",
@@ -1598,6 +1602,14 @@ export const KRAKOWSKIE_CHUNKS: readonly LublinChunkData[] = [
       {"id":"w1283047033","kind":"surface","outline":[-54.2,154.3,-61.5,155,-61,160.2,-53.7,159.5]},
     ],
     busStops: [-100.3,3.6,-117.9,91.4],
+    multiLaneWays: [
+      {"line":[-110,-20,-110.7,-13.2]},
+      {"line":[-18.6,113.8,-44.6,114.3]},
+      {"line":[-87.5,114.9,-102,115.4]},
+      {"line":[-102,115.4,-109.8,115.7]},
+      {"line":[-110.7,-13.2,-111,18.1,-109.2,49.7]},
+      {"line":[-44.6,114.3,-87.5,114.9]},
+    ],
   },
   {
     id: "krakowskie-1-1",
@@ -2136,5 +2148,10 @@ export const KRAKOWSKIE_CHUNKS: readonly LublinChunkData[] = [
       {"id":"w1514058891","kind":"street_side","outline":[416.7,129.4,418.3,128.6,432.7,154.4,429.9,153.5,424.3,143.2]},
     ],
     busStops: [454.1,16.2],
+    multiLaneWays: [
+      {"line":[442.3,-15.8,442.9,-9.9]},
+      {"line":[442.9,-9.9,447.2,16.4,454.9,42.8]},
+      {"line":[454.9,42.8,460,56.3]},
+    ],
   },
 ];

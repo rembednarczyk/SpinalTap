@@ -160,6 +160,8 @@ export interface LublinChunkData {
   readonly carParks?: readonly LublinCarParkData[];
   /** Bus stops' posts by it (and up to 25 m past its edge), when it has any: no car parks 15 m either side of one (G-156). */
   readonly busStops?: FlatPoints;
+  /** Axes of the streets of two lanes or more a way, clipped to the chunk, when it has any: no car parks by their kerbs outside a car park (G-155). */
+  readonly multiLaneWays?: readonly { readonly line: FlatPoints }[];
 }
 
 /**

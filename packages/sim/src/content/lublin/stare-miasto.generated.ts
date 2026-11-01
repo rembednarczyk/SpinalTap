@@ -723,6 +723,10 @@ export const STARE_MIASTO_CHUNKS: readonly LublinChunkData[] = [
       {"id":"w895572841","kind":"lane","outline":[557.4,71.8,553.8,72.4,558,97.3,561.6,96.7]},
     ],
     busStops: [454.1,16.2],
+    multiLaneWays: [
+      {"line":[473,87.8,501.6,160]},
+      {"line":[460,56.3,473,87.8]},
+    ],
   },
   {
     id: "stare-miasto-1-1",

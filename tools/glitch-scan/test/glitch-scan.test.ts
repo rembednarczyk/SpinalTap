@@ -730,6 +730,29 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       return hit ? [{ at: near(c.x, c.z), what: `${c.model} ${Math.hypot(hit.x - c.x, hit.z - c.z).toFixed(1)} m from ${hit.id}` }] : [];
     });
   },
+  /**
+   * A parked car by the kerb of a street with two lanes or more a way (`lanes` 4 or more, or
+   * `lanes:forward` or `lanes:backward` 2 or more) and outside every car park (`amenity=parking`)
+   * of the map data: it stands on the outer lane (G-155). Its street is the car road of the map
+   * data whose axis runs nearest within 12 m and within 20° of the car.
+   */
+  "parked-car-multilane-kerb": () => {
+    const { lines, areas } = extractFeatures(SOURCE_OSM);
+    const roadKinds = new Set(["primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link", "residential", "unclassified", "living_street"]);
+    const segs = lines.filter((l) => roadKinds.has(l.tags.highway ?? "")).flatMap((l) => l.line.slice(1).map((b, i) => ({ way: l, a: l.line[i]!, b })));
+    const parks = areas.filter((a) => a.tags.amenity === "parking");
+    const multiLane = (t: Readonly<Record<string, string>>) => Number(t.lanes ?? 0) >= 4 || Number(t["lanes:forward"] ?? 0) >= 2 || Number(t["lanes:backward"] ?? 0) >= 2;
+    return PARKED_CARS.flatMap((c) => {
+      const fx = Math.sin(c.yaw);
+      const fz = Math.cos(c.yaw);
+      const by = segs
+        .map((s) => ({ s, d: segmentGap(c.x, c.z, s.a, s.b), len: Math.hypot(s.b.x - s.a.x, s.b.z - s.a.z) }))
+        .filter((q) => q.d < 12 && q.len > 0 && Math.abs(((q.s.b.x - q.s.a.x) * fx + (q.s.b.z - q.s.a.z) * fz) / q.len) >= Math.cos((20 * Math.PI) / 180))
+        .sort((x, y) => x.d - y.d)[0];
+      if (!by || !multiLane(by.s.way.tags) || parks.some((p) => pointInRing({ x: c.x, z: c.z }, p.ring))) return [];
+      return [{ at: near(c.x, c.z), what: `${c.model} ${by.d.toFixed(1)} m from ${by.s.way.id} (lanes ${by.s.way.tags.lanes ?? "?"})` }];
+    });
+  },
   /** A game block standing on the ground (not an awning or a deck) that floats or sinks. */
   "prop-off-ground": () =>
     GAME_PROPS.flatMap((p) => {
