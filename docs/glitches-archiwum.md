@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-170 Neonowe rurki pod gzymsem wchodzą w sąsiednie budynki
+- Status: naprawione (1.11, #148: rurki tylko na wolnych odcinkach ściany, odsianie sąsiadów; skan `tube-in-neighbour` 65 → 0; weryfikacja PRZYJĘTE)
+- Ważność: S4 · Zasięg: 58 rurek w 49 budynkach (`tubes` w `sign-plan.ts`), w większości ukryte w bryle sąsiada
+- Poprawka: rurka kończy się przed sąsiadem wystającym przed ścianę (to samo `sign-room` co banery z G-157); kontrola skanu z bazą
+- Pakiet właściciela: packages/engine (sign-plan.ts)
+
 ### G-174 Zapis i wczytanie nie odtwarzają stanu przy kontrakcie infiltrate
 - Status: naprawione (1.11, #145: `ai.suspicion` w zapisie v21, pola pochodne sesji odtwarzane przez `resumeSession`; weryfikacja PRZYJĘTE)
 - Ważność: S3 · Zasięg: każdy aktywny kontrakt infiltrate przy strażnikach z widzeniem stożkowym, nie tylko `time_limit`; bez kontraktu rozjazdu nie ma
