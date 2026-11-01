@@ -1,4 +1,4 @@
-import { type AbstractMesh, Matrix, type Vector3 } from "../babylon";
+import { Matrix } from "../babylon";
 import type { ActivityId, AppearanceDescriptor, CameraMode, DespawnReason, EffectDescriptor, EntityId, HackTargetKind, PrepareStage, RenderPort, Transform, Vec3, ViewDescriptor } from "@seki/core";
 import type { ChunkDef, DistrictId } from "@seki/sim";
 import { WORLD_CHUNKS } from "@seki/sim";
@@ -17,8 +17,8 @@ import { CityKitLoader } from "./city-kit-loader";
 import { CrowdViews } from "./crowd-views";
 import { WorldDressing } from "./dressing";
 import { FarCity } from "./far-city";
-import { MapCity, type MapCityStats, isMapView } from "./mapcity/map-city";
-import { sightBlocked } from "./mapcity/sight";
+import { MapCitySlot } from "./map-city-slot";
+import { type MapCityStats, isMapView } from "./mapcity/map-city";
 import { MetroRide, type MetroRideView, type RideCast } from "./metro-ride";
 import { VehicleViews } from "./vehicle-views";
 import type { CharacterModelManifest } from "./model-library";
@@ -26,8 +26,7 @@ import { PropViews } from "./prop-views";
 import { type GameplayFxEvent, ScreenFx } from "./screen-fx";
 import { Signage } from "./signage";
 import { type StartPrep, sceneStartPrep, warmUpMaterials } from "./start-prep";
-import { WetProbe } from "./wet-probe";
-import { groundLift } from "./ground-lift";
+import { WetAsphalt } from "./wet-asphalt";
 import type { Stage } from "./stage";
 import type { WeaponManifest } from "./weapon-mount";
 
@@ -65,6 +64,17 @@ const CROWD_DRAW_DISTANCE = { high: 90, medium: 70, low: 40 } as const;
 
 const isCharacter = (view: ViewDescriptor): view is CharacterDescriptor => view.kind === "heroine" || view.kind === "npc" || view.kind === "enemy";
 
+/** The metro's riders are characters like any other, with their activities (ADR-0040). */
+const rideCast = (characters: CharacterViews, activities: CharacterActivities): RideCast => ({
+  spawn: (id, view, t) => characters.spawn(id, view, t),
+  setAppearance: (id, look) => characters.setAppearance(id, look),
+  setActivity: (id, activity) => activities.set(id, activity, { seat: "scene" }),
+  despawn: (id, fall) => {
+    activities.forget(id);
+    characters.despawn(id, fall);
+  },
+});
+
 /**
  * RenderPort over Babylon.js (ADR-0031): a facade that owns the camera and the frame, and hands
  * characters to `CharacterViews`, props to `PropViews`, effects and the look to `ScreenFx`, and
@@ -97,14 +107,9 @@ export class BabylonRenderer implements RenderPort {
   /** The metro car between districts (ADR-0036). */
   private readonly metro: MetroRide;
   /** Static reflection probe of the wet asphalt on medium and high quality (ADR-0036). */
-  private readonly wet: WetProbe | null;
+  private readonly wet: WetAsphalt | null;
   /** Buildings, terrain and ground from map data (ADR-0044), created with the first of them. */
-  private mapCity: MapCity | null = null;
-  /** Feet lift on the map's surfaces (ADR-0045), or on the old street's sidewalks without map data. */
-  private readonly liftAt = (x: number, y: number, z: number): number => (this.mapCity ? this.mapCity.surfaceLift(x, y, z) : groundLift(x, y, z));
-  private daylight = 0;
-  private reduceFlashes = false;
-  private kitMeshes = 0;
+  private readonly map: MapCitySlot;
   private cameraTarget: EntityId | null = null;
   private resetting = false;
   /** The loading screen's work (ADR-0057) and the model manifest it waits for. */
@@ -121,7 +126,8 @@ export class BabylonRenderer implements RenderPort {
     const tier = qualityTier(stage.options.quality);
     const high = tier.shadowMap > 1024;
     // Before any material: the wet presets compile with the probe in them.
-    this.wet = tier.wetProbe ? new WetProbe(scene, tier.wetProbe, () => this.reflectedMeshes()) : null;
+    const fixed = () => [this.atmosphere.skyMesh, this.signage.mesh, ...this.farCity.meshes];
+    this.wet = tier.wetProbe ? new WetAsphalt({ stage, size: tier.wetProbe, fixed }) : null;
     if (this.wet) this.materials.setEnvironment(this.wet.texture, WET_PRESETS);
     this.shadow = new MoonShadow(scene, NIGHT_RIG, 28, tier.shadowMap);
     this.materials.setShadow({
@@ -131,6 +137,7 @@ export class BabylonRenderer implements RenderPort {
       bias: high ? 0.0012 : 0.002,
       strength: 0.9,
     });
+    this.map = new MapCitySlot({ scene, materials: this.materials, shadow: this.shadow, quality: stage.options.quality ?? "high", props: () => this.cityKit.props });
     this.rig = new CameraRig(scene, this.materials, (m) => this.props.isBlocker(m));
     this.rig.onBodyVisibility = (visible) => {
       if (this.cameraTarget !== null) this.characters.setBodyVisible(this.cameraTarget, visible);
@@ -143,10 +150,10 @@ export class BabylonRenderer implements RenderPort {
       camera: this.rig,
       cameraTarget: () => this.cameraTarget,
       pose: (id, rig, speed, dt, retarget, clock) => this.activities.apply(id, rig, speed, dt, retarget, clock),
-      lift: this.liftAt,
+      lift: this.map.liftAt,
     });
     const eye = this.rig.camera.position;
-    this.crowd = new CrowdViews({ scene, materials: this.materials, eye: () => eye, drawDistance: CROWD_DRAW_DISTANCE[stage.options.quality ?? "high"], lift: this.liftAt });
+    this.crowd = new CrowdViews({ scene, materials: this.materials, eye: () => eye, drawDistance: CROWD_DRAW_DISTANCE[stage.options.quality ?? "high"], lift: this.map.liftAt });
     // Line art must be attached before the grading pipeline so the ink gets graded too.
     this.lineArt = tier.lineArt ? new LineArt(scene, this.rig.camera) : null;
     if (this.lineArt) this.lineArt.geometryBuffer.renderTransparentMeshes = false;
@@ -165,7 +172,7 @@ export class BabylonRenderer implements RenderPort {
       dressing: this.dressing,
       blocks: () => this.props.blockViews(),
       lite: stage.options.quality === "low",
-      onProps: (props) => this.mapCity?.setProps(props),
+      onProps: (props) => this.map.current?.setProps(props),
     });
     this.props = new PropViews({
       stage,
@@ -174,7 +181,7 @@ export class BabylonRenderer implements RenderPort {
       atmosphere: this.atmosphere,
       dressing: this.dressing,
       cityKit: this.cityKit,
-      groundAt: (x, z) => this.mapCity?.heightAt(x, z) ?? null,
+      groundAt: (x, z) => this.map.current?.heightAt(x, z) ?? null,
     });
     this.vehicles = new VehicleViews({ scene, kit: () => this.cityKit.kit, glow: stage.glow, eye: () => eye, quality: stage.options.quality ?? "high" });
     warmUpMaterials(scene, this.materials, this.signage);
@@ -187,7 +194,7 @@ export class BabylonRenderer implements RenderPort {
       signage: this.signage,
       speedLines: this.speedLines,
       fogScale: options.fogScale ?? 1,
-      roofOver: (x, y, z) => this.mapCity?.roofOver(x, y, z) ?? false,
+      roofOver: (x, y, z) => this.map.current?.roofOver(x, y, z) ?? false,
       actors: this.characters,
       cameraTarget: () => this.cameraTarget,
       scanTargets: (visit) => {
@@ -196,10 +203,10 @@ export class BabylonRenderer implements RenderPort {
       },
     });
     this.grading = this.fx.grading;
-    this.metro = new MetroRide({ scene, materials: this.materials, shadow: this.shadow, camera: this.rig, cast: this.rideCast() });
+    this.metro = new MetroRide({ scene, materials: this.materials, shadow: this.shadow, camera: this.rig, cast: rideCast(this.characters, this.activities) });
     if (options.cityKit) this.cityKit.load(options.cityKit, options.cityProps ?? null);
     const modelFiles = () => this.modelManifest.then(() => this.characters.preloadModels());
-    this.prep = sceneStartPrep({ stage, modelFiles, cityKit: () => this.cityKit.ready, cityWaiting: () => this.mapCity?.waiting ?? 0 });
+    this.prep = sceneStartPrep({ stage, modelFiles, cityKit: () => this.cityKit.ready, cityWaiting: () => this.map.current?.waiting ?? 0 });
   }
 
   /** The start of a game behind the loading screen (ADR-0057); the moon shadow goes on `at` first. */
@@ -213,27 +220,6 @@ export class BabylonRenderer implements RenderPort {
     this.prep.cancel();
   }
 
-  /** The metro's riders are characters like any other, with their activities (ADR-0040). */
-  private rideCast(): RideCast {
-    const { characters, activities } = this;
-    return {
-      spawn: (id, view, t) => characters.spawn(id, view, t),
-      setAppearance: (id, look) => characters.setAppearance(id, look),
-      setActivity: (id, activity) => activities.set(id, activity, { seat: "scene" }),
-      despawn: (id, fall) => {
-        activities.forget(id);
-        characters.despawn(id, fall);
-      },
-    };
-  }
-
-  /** What the wet-asphalt probe mirrors: the sky, the far city, the signs and everything that glows. */
-  private reflectedMeshes(): AbstractMesh[] {
-    const glowing = this.stage.scene.meshes.filter((m) => m.isEnabled() && m.isVisible && this.stage.glow.hasMesh(m) && !m.name.startsWith("metro-"));
-    const fixed = [this.atmosphere.skyMesh, this.signage.mesh, ...this.farCity.meshes].filter((m): m is NonNullable<typeof m> => m !== null);
-    return [...new Set<AbstractMesh>([...fixed, ...glowing])];
-  }
-
   /** Renders of the wet-asphalt probe so far, null without one (debug and tests). */
   get wetProbeRenders(): number | null {
     return this.wet?.renderCount ?? null;
@@ -244,23 +230,6 @@ export class BabylonRenderer implements RenderPort {
     return this.cityKit.meshCount;
   }
 
-  /** Line of sight through the map city: its buildings and its terrain hide what is behind. */
-  private readonly mapSight = (from: Vector3, to: Vector3): boolean => {
-    const city = this.mapCity;
-    return city !== null && sightBlocked((x, y, z) => city.roofOver(x, y, z) || y < (city.heightAt(x, z) ?? -Infinity) - 0.3, from, to);
-  };
-
-  /** The map city, made on first use so scenes without map data stay exactly as they were. */
-  private city(): MapCity {
-    if (!this.mapCity) {
-      this.mapCity = new MapCity({ scene: this.stage.scene, materials: this.materials, shadow: this.shadow, quality: this.stage.options.quality ?? "high" });
-      this.mapCity.setDaylight(this.daylight);
-      this.mapCity.setReduceFlashes(this.reduceFlashes);
-      if (this.cityKit.props) this.mapCity.setProps(this.cityKit.props);
-    }
-    return this.mapCity;
-  }
-
   /** Multiplies the fog density (1 in the game; the map preview sees further, ADR-0044). */
   setFogScale(scale: number): void {
     this.fx.setFogScale(scale);
@@ -268,18 +237,18 @@ export class BabylonRenderer implements RenderPort {
 
   /** Terrain height of the map city at (x, z), null outside its terrain (preview camera, tests). */
   mapHeightAt(x: number, z: number): number | null {
-    return this.mapCity?.heightAt(x, z) ?? null;
+    return this.map.heightAt(x, z);
   }
 
   /** What the map city holds and draws (debug and tests); null before the first map view. */
   get mapStats(): MapCityStats | null {
-    return this.mapCity?.stats ?? null;
+    return this.map.current?.stats ?? null;
   }
 
   spawn(id: EntityId, view: ViewDescriptor, t: Transform): void {
-    if (this.characters.has(id) || this.props.has(id) || this.crowd.has(id) || this.vehicles.has(id) || this.mapCity?.has(id)) this.despawn(id);
+    if (this.characters.has(id) || this.props.has(id) || this.crowd.has(id) || this.vehicles.has(id) || this.map.current?.has(id)) this.despawn(id);
     if (isMapView(view)) {
-      this.city().spawn(id, view, t.position);
+      this.map.get().spawn(id, view, t.position);
       if (view.kind === "terrain") this.props.settleGround();
     } else if (isCharacter(view)) this.characters.spawn(id, view, t);
     else if (view.kind === "crowd") this.crowd.spawn(id, view, t);
@@ -296,7 +265,8 @@ export class BabylonRenderer implements RenderPort {
     // out clears them at once.
     // Held things leave first: they may sit in the hand of a model that goes back to its pool.
     this.activities.forget(id);
-    if (this.mapCity?.has(id)) this.mapCity.despawn(id);
+    const city = this.map.current;
+    if (city?.has(id)) city.despawn(id);
     else if (this.characters.has(id)) this.characters.despawn(id, !this.resetting && reason === "removed" && id !== this.cameraTarget);
     else if (this.crowd.has(id)) this.crowd.despawn(id);
     else if (this.vehicles.has(id)) this.vehicles.despawn(id);
@@ -315,10 +285,9 @@ export class BabylonRenderer implements RenderPort {
   playEffect(effect: EffectDescriptor): void {
     this.fx.play(effect);
     if (effect.kind === "time-of-day") {
-      this.daylight = effect.daylight;
-      this.mapCity?.setDaylight(effect.daylight);
+      this.map.setDaylight(effect.daylight);
       this.cityKit.setDaylight(effect.daylight);
-      this.wet?.schedule.invalidate();
+      this.wet?.invalidate();
     }
   }
 
@@ -331,8 +300,7 @@ export class BabylonRenderer implements RenderPort {
   setReduceFlashes(on: boolean): void {
     this.fx.setReduceFlashes(on);
     this.metro.setCalm(on);
-    this.reduceFlashes = on;
-    this.mapCity?.setReduceFlashes(on);
+    this.map.setReduceFlashes(on);
   }
 
   /**
@@ -372,9 +340,10 @@ export class BabylonRenderer implements RenderPort {
     this.props.flush();
     if (this.dressing.flush()) {
       this.farCity.setResident(this.dressing.residentChunks());
-      this.wet?.schedule.invalidate();
+      this.wet?.invalidate();
     }
-    if (this.mapCity?.flush()) this.wet?.schedule.invalidate();
+    const city = this.map.current;
+    if (city?.flush()) this.wet?.invalidate();
     this.metro.update(dt);
     this.characters.update(dt, this.stage.options.reference);
     this.crowd.update(dt, this.stage.options.reference);
@@ -382,28 +351,17 @@ export class BabylonRenderer implements RenderPort {
     const target = this.cameraTargetTransform;
     this.rig.update(target, dt);
     this.metro.afterCamera();
-    this.mapCity?.update(dt, this.rig.camera.position, this.stage.options.reference);
-    if (this.mapCity) this.props.updateGlow(this.rig.camera.position, this.mapSight);
+    city?.update(dt, this.rig.camera.position, this.stage.options.reference);
+    if (city) this.props.updateGlow(this.rig.camera.position, this.map.sight);
     // Shadow follows what the camera looks at: the player, the metro car or the fixed reference view.
     const focus = target && !this.metro.active ? target.position : this.rig.camera.position;
     const moved = this.shadow.update(focus);
     this.materials.setLightFocus(this.rig.camera.position.x, this.rig.camera.position.z);
     if (moved) this.materials.setShadowMatrix(moved);
     this.fx.update(dt);
-    this.updateWetProbe(dt);
+    // The probe never re-renders in the metro.
+    if (!this.metro.active) this.wet?.update(dt, this.cityKit.meshCount, this.fx.paletteDistrict, this.rig.camera.position);
     this.prep.tick();
-  }
-
-  /** Re-renders the probe on a new district or when what it mirrors changed; never in the metro. */
-  private updateWetProbe(dt: number): void {
-    const wet = this.wet;
-    if (!wet || this.metro.active) return;
-    if (this.cityKit.meshCount !== this.kitMeshes) {
-      this.kitMeshes = this.cityKit.meshCount;
-      wet.schedule.invalidate();
-    }
-    wet.schedule.setDistrict(this.fx.paletteDistrict);
-    wet.update(dt, this.rig.camera.position);
   }
 
   clear(): void {
@@ -411,7 +369,7 @@ export class BabylonRenderer implements RenderPort {
     this.fx.clear();
     this.resetting = true;
     for (const id of this.props.ids()) this.despawn(id);
-    for (const id of this.mapCity?.ids() ?? []) this.despawn(id);
+    for (const id of this.map.current?.ids() ?? []) this.despawn(id);
     this.activities.clear();
     this.characters.clear();
     this.crowd.clear();
@@ -469,7 +427,7 @@ export class BabylonRenderer implements RenderPort {
 
   /** Every cell near the camera is drawn in detail and the wet probe has caught up (G-114); tests wait for it before a sample. */
   get citySettled(): boolean {
-    return (this.mapCity?.settled ?? true) && !(this.wet?.pending && !this.metro.active);
+    return (this.map.current?.settled ?? true) && !(this.wet?.pending && !this.metro.active);
   }
 
   /**
@@ -495,6 +453,6 @@ export class BabylonRenderer implements RenderPort {
   }
 
   get entityCount(): number {
-    return this.characters.size + this.props.size + this.crowd.size + this.vehicles.size + (this.mapCity?.size ?? 0);
+    return this.characters.size + this.props.size + this.crowd.size + this.vehicles.size + (this.map.current?.size ?? 0);
   }
 }
