@@ -73,7 +73,11 @@ const slotsAgainstShader = (f: FacadeFrame): { slots: number; bad: string[] } =>
       for (let y = 0.05; y < s.max - 0.01; y += 0.05) {
         for (const x of [s.u - s.width / 2 - 0.02, s.u + s.width / 2 + 0.02]) if (shaderMask({ x, y }, meta) > 0) bad.push(`pane beside the door at u ${x.toFixed(2)}, y ${y.toFixed(2)} (${s.cover ? "cover" : "pier"})`);
       }
-      for (let x = s.u - s.width / 2; x <= s.u + s.width / 2; x += 0.05) if (shaderMask({ x, y: s.top + 0.03 }, meta) > 0) bad.push(`pane above the door at u ${x.toFixed(2)}`);
+      for (let x = s.u - s.width / 2; x <= s.u + s.width / 2; x += 0.05) {
+        if (shaderMask({ x, y: s.top + 0.03 }, meta) > 0) bad.push(`pane above the door at u ${x.toFixed(2)}`);
+        // Nothing painted inside the door between its lowest and highest top (the first floor's windows).
+        for (let y = s.top + 0.03; y < s.max; y += 0.05) if (shaderMask({ x, y }, meta) > 0) bad.push(`pane in the door at u ${x.toFixed(2)}, y ${y.toFixed(2)}`);
+      }
     }
   }
   return { slots, bad };
@@ -140,8 +144,17 @@ describe("door slots on the facades (ADR-0058 stage 9)", () => {
     expect(party.walls.flatMap((w) => doorSlots(party, w))).toEqual([]);
     const doorway = facadeFrame(building({ look: 3, doorways: [{ x: 5, z: 0, width: 1.4, bottom: 0, top: 2.4 }] }), () => null);
     expect(doorway.walls.flatMap((w) => doorSlots(doorway, w))).toEqual([]);
+    const shed = facadeFrame(building({ use: "garage", look: 2 }), () => 30);
+    expect(shed.walls.flatMap((w) => doorSlots(shed, w))).toEqual([]);
     const church = facadeFrame(building({ use: "church", look: 3 }), () => null);
     expect(church.walls.flatMap((w) => doorSlots(church, w))).toEqual([]);
+  });
+
+  it("an industrial wall's windows high over the doors leave room for one every metre", () => {
+    const f = facadeFrame(building({ use: "industrial", levels: 1, height: 7, look: 4 }), () => null);
+    const w = f.walls[0]!;
+    expect(groundGlass(f, w)[0]!.y0).toBeGreaterThan(2.5);
+    expect(doorSlots(f, w).filter((s) => !s.cover).length).toBeGreaterThanOrEqual(Math.floor(w.length - 2));
   });
 
   it("a wall without windows takes a door every metre", () => {

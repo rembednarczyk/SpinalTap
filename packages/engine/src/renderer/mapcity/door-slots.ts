@@ -76,7 +76,7 @@ export const groundGlass = (f: FacadeFrame, w: Wall): GlassRect[] => {
 /** Clearance of a door's edge from a pane beside it, and how far it reaches past one it covers (m). */
 export const GLASS_GAP = 0.05;
 const COVER_MARGIN = 0.04;
-/** How far a door that covers a pane reaches over its top (m). */
+/** How far a door that covers a pane reaches over its top (m). The panes of one wall stand further apart than its margins. */
 const COVER_TOP = 0.01;
 /** A door between panes: its width at most, at least, and its top over the ground floor (m). */
 const PIER = { width: 1.2, min: 0.9, top: 2.3 } as const;
@@ -90,14 +90,6 @@ const BOARD_ROOM = 0.005;
 const PIER_SLACK = 0.1;
 /** Spacing of the slots along a stretch of wall without panes at door height (m). */
 const PLAIN_STEP = 1;
-
-/** Does a door from u0 to u1, up to `top`, keep off every pane or cover it whole? */
-export const clearOfGlass = (glass: readonly GlassRect[], u0: number, u1: number, top: number): boolean =>
-  glass.every((g) => {
-    const apart = g.u1 <= u0 - GLASS_GAP + 1e-6 || g.u0 >= u1 + GLASS_GAP - 1e-6 || g.y0 >= top + GLASS_GAP - 1e-6;
-    const covered = !g.gate && g.u0 >= u0 + COVER_MARGIN / 2 - 1e-6 && g.u1 <= u1 - COVER_MARGIN / 2 + 1e-6 && g.y1 <= top - COVER_TOP / 2 + 1e-6;
-    return apart || covered;
-  });
 
 /** The stretches of a wall clear of panes up to `top`, inside its ends. */
 const clearStretches = (glass: readonly GlassRect[], length: number, top: number): [number, number][] => {
@@ -142,9 +134,10 @@ export const doorSlots = (f: FacadeFrame, w: Wall, boards: readonly VenueBoard[]
     const max = Math.min(cover ? first : top + PIER_SLACK, underBoards(spans, u - width / 2, u + width / 2));
     const low = Math.min(top, max);
     if (cover ? max < top : low < PIER.top - 0.2) return;
-    if (clearOfGlass(glass, u - width / 2, u + width / 2, Math.max(low, max))) out.push({ u, width, top: low, max, cover });
+    out.push({ u, width, top: low, max, cover });
   };
-  for (const [a, b] of clearStretches(glass, w.length, PIER.top)) {
+  // Between the panes up to the highest a door there may be drawn.
+  for (const [a, b] of clearStretches(glass, w.length, PIER.top + PIER_SLACK)) {
     const room = b - a;
     if (room < PIER.min) continue;
     if (room < 2 * PIER.width + PLAIN_STEP) add((a + b) / 2, Math.min(PIER.width, room), PIER.top, false);

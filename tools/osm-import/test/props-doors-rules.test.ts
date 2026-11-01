@@ -86,6 +86,10 @@ describe("the doors on the facades (ADR-0058 stage 9)", () => {
     expect(doorLayout(bank!.item.variant).model).toBe("code");
   });
 
+  it("only in a slot under the board's span: none under a board between two slots", () => {
+    expect(doors([wall({ boards: [{ u0: 4.5, u1: 5.5, kind: "shop" }] })])).toEqual([]);
+  });
+
   it("a board over an entrance's door takes no second door", () => {
     const list = doors([wall({ boards: [{ u0: 5, u1: 9.5, kind: "shop" }] })], [entrance(13.9)]);
     expect(list.map((d) => d.rule)).toEqual(["entrance"]);

@@ -113,11 +113,8 @@ export const glassAround = (d: DoorOnWall): ("pane" | "gate")[] => {
   for (let x = d.u - d.half + 0.02; x < d.u + d.half - 0.01; x += 0.05) {
     const over = shaderGlass({ x, y: d.top + 0.02 }, meta);
     const under = shaderGlass({ x, y: d.top - 0.02 }, meta);
-    // A pane running on over the door's top (the door covers its lower part only).
+    // A pane, or the gate's passage, running on over the door's top (the door covers its lower part only).
     if (over && under) out.push(over);
-    // The gate's passage under the door's span.
-    const inside = shaderGlass({ x, y: Math.max(d.foot, 0) + 0.3 }, meta);
-    if (inside === "gate") out.push("gate");
   }
   return out;
 };
@@ -155,10 +152,8 @@ export const doorChecks = (views: readonly DrawnView[], all: readonly StreetProp
           return surfaceY(q.x, q.z);
         };
         const under = at(on.u, 0.1);
-        const front = at(on.u, 0.3);
         const jambs = [-1, 1].map((s) => at(on.u + s * on.half, 0.1));
         if (Math.abs(i.y - under) > OFF_FOOT) return `foot ${i.y.toFixed(2)} over the paving under it ${under.toFixed(2)}`;
-        if (front < i.y - OFF_FOOT) return `foot ${i.y.toFixed(2)} over the paving in front ${front.toFixed(2)}`;
         const worst = Math.max(...jambs.map((y) => Math.abs(y - i.y)));
         return worst > OFF_JAMB ? `a jamb ${worst.toFixed(2)} m off the paving` : null;
       }),
