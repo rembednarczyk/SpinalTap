@@ -596,19 +596,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: zaalarmowany strażnik daleko od gracza (poza zasięgiem chunków przez N s) uspokaja się i zasypia; test jednej sesji i zapisu
 - Pakiet właściciela: packages/sim (streaming, dormant-restore)
 
-### G-189 Radziwiłłowska: jedno auto na sześć miejsc postojowych
-- Status: w PR #162, runda 2 w weryfikacji (1.11; orientacja jak na main + nowe trafienie, pełny odstęp od chodnika, krótszy model w zatoce: `PARKED_CARS` 72 → 80), potem kurator
-- Ważność: S4 · Zasięg: w883991779 ma 1 auto na 6 stanowisk; bay s=36 odrzuca `furnitureClearance` 0,75 m przy nosie (mebel w obrysie pasa), s=39 `clearOfKeptWays` (ścieżka w obrysie), s=30 i 33 pomija hash zajętości 0,8
-- Poprawka: sprawdzić mebel i ścieżkę w obrysie postoju (czy to błąd danych gry, czy OSM); ewentualnie meble poza obrysem pasa postojowego
-- Uwagi: kontrola `bay-car-orientation` bierze kierunek pasa z najdłuższej krawędzi obrysu, w Ciasnej w227679486 ta krawędź biegnie w poprzek ulicy (kontrola słaba); dla pasa bez tagu łapie tylko auta > 75°
-- Z weryfikacji #158: skan i generator mają różne reguły dla pasa ≥ 4,5 m bez tagu (skan liczy auto w poprzek jako znalezisko, generator cofa się do układu w poprzek, gdy skośny się nie mieści); auto Ciasnej (628,96; 551,62) stoi pod 2,4° do najbliższej ulicy z ruchem aut; fallback `perpendicular` chroni tylko test jednostkowy `bayLayouts`
-- Kurator #158: mebel (parkometr n9596788047) i chodnik o szerokości 2,5 m są prawdziwe i stoją za krawędzią pasa; w Lublinie zajęte są wszystkie 6 zatok; poprawka przez marginesy (np. przy nosie jak `KERB_GAP` dla mebla i chodnika poza obrysem), bez usuwania danych (T-104). Proponowana kontrola: pas OSM ≥ 15 m, mniej niż 50% zatok możliwych przy `BAY_STEP` po odjęciu hasha zajętości, odrzucenia tylko przez mebel lub chodnik spoza obrysu (baza ok. 1)
-- Pakiet właściciela: packages/sim (parked-cars, kerb-bays), tools/glitch-scan
-
 ### G-190 Puste pasy postojowe OSM
 - Status: zgłoszone (1.11, weryfikator #162)
 - Ważność: S4 · Zasięg: w232362980 (Kowalska, lane, 2,2 m: spadek, nawierzchnia, wyjście poza obrys), w232362991 (Kowalska, diagonal, 3,4–3,9 m: za płytki na skos z tagu, 8 z 12 zatok bez modelu), w356947938 (najbliższa droga z ruchem 75 m dalej), w1159135271 (Łęczyńska, perpendicular, 3,4 m: za płytki na układ prostopadły), w1514058885 (Świętoduska, parallel, 2,45 m: 18 zatok na spadku, G-133)
 - Poprawka: płytki pas z tagiem `diagonal`/`perpendicular` → mniejszy kąt albo krótszy model; spadek przez G-133 (pochylenie aut); `bay-strip-sparse` dziś pomija pasy bez auta
+- Kurator #162: także odcinek Kowalskiej w232362980 x 644..668 bez zatok, bo ulica ma `use: deliveries`, a `bayCars` bierze tylko `CAR_STREETS` (T-107); zatoka w1544340690 s=24,8 (689,2; 171,8) odrzucona przez odstęp od chodnika w173566578, a na ortofoto stoi tam auto. Proponowane kontrole: `kerb-strip-no-car-street` (baza ≥ 1) i `bay-strip-sparse` także dla pasów bez aut (baza ≥ 5)
 - Pakiet właściciela: packages/sim (kerb-bays), tools/glitch-scan
 
 ### G-191 Gzymsy wystają poza obrys OSM i przycinają płaskie płyty znaków

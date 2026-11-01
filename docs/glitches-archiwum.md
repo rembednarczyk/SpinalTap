@@ -2,6 +2,15 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-189 Radziwiłłowska: jedno auto na sześć miejsc postojowych
+- Status: naprawione (1.11, #162: ulga za krawężnikiem tylko dla mebli, pełny odstęp od chodnika, krótszy model w zatoce; `bay-strip-sparse` 1 → 0; `PARKED_CARS` 72 → 80; dwie rundy weryfikacji, kurator ZGODNE Z UWAGAMI, T-102..T-104, T-107, T-108)
+- Ważność: S4 · Zasięg: w883991779 ma 1 auto na 6 stanowisk; bay s=36 odrzuca `furnitureClearance` 0,75 m przy nosie (mebel w obrysie pasa), s=39 `clearOfKeptWays` (ścieżka w obrysie), s=30 i 33 pomija hash zajętości 0,8
+- Poprawka: sprawdzić mebel i ścieżkę w obrysie postoju (czy to błąd danych gry, czy OSM); ewentualnie meble poza obrysem pasa postojowego
+- Uwagi: kontrola `bay-car-orientation` bierze kierunek pasa z najdłuższej krawędzi obrysu, w Ciasnej w227679486 ta krawędź biegnie w poprzek ulicy (kontrola słaba); dla pasa bez tagu łapie tylko auta > 75°
+- Z weryfikacji #158: skan i generator mają różne reguły dla pasa ≥ 4,5 m bez tagu (skan liczy auto w poprzek jako znalezisko, generator cofa się do układu w poprzek, gdy skośny się nie mieści); auto Ciasnej (628,96; 551,62) stoi pod 2,4° do najbliższej ulicy z ruchem aut; fallback `perpendicular` chroni tylko test jednostkowy `bayLayouts`
+- Kurator #158: mebel (parkometr n9596788047) i chodnik o szerokości 2,5 m są prawdziwe i stoją za krawędzią pasa; w Lublinie zajęte są wszystkie 6 zatok; poprawka przez marginesy (np. przy nosie jak `KERB_GAP` dla mebla i chodnika poza obrysem), bez usuwania danych (T-104). Proponowana kontrola: pas OSM ≥ 15 m, mniej niż 50% zatok możliwych przy `BAY_STEP` po odjęciu hasha zajętości, odrzucenia tylko przez mebel lub chodnik spoza obrysu (baza ok. 1)
+- Pakiet właściciela: packages/sim (parked-cars, kerb-bays), tools/glitch-scan
+
 ### G-160 Neon DENKI (i KARAOKE, SAKE) osiowy na ukośnej ścianie: koniec w murze, koniec w powietrzu
 - Status: naprawione (1.11, #161: oś bliższa ścianie, płyty 0,55 m pionowo 0,16 m od ściany, SAKE z narożnika na płaski odcinek; `neon-off-wall` z częścią płyty w bryle ≤ 15%, 3 → 0; dwie rundy weryfikacji). Opcja B (`yaw` w widoku `neon`, ADR) dla szerszych płyt na skośnych ścianach zostaje do decyzji
 - Ważność: S3 · Zasięg: lokalny (Rynek/Grodzka, trasa kanału Tetsu, widoczne z deptaka) · Koszt: mały
