@@ -343,9 +343,10 @@ const searchPoint = (heat: HeatState, n: number): Vec3 | null => {
 /** The heat's reinforcements: brought in out of sight while the heat is up, sent home after. */
 const runReinforcements = (ctx: SimContext, player: Entity | null, dt: number): void => {
   const heat = ctx.state.domain.heat;
-  // The bodies of theirs (G-193) neither count, nor search, nor go home.
+  // The bodies of theirs (G-193), and those knocked out alive with their mind still on (G-196),
+  // neither count, nor search, nor go home: only the ones on their feet do.
   const all = inCreationOrder(ctx.world.with("security"));
-  const live = all.filter((e) => !!e.ai);
+  const live = all.filter((e) => !!e.ai && !e.downed);
   const watch = ctx.session.watch;
   watch.reinforce = Math.max(0, watch.reinforce - dt);
   if (heat.level === 0 || !heat.faction) {
@@ -355,7 +356,7 @@ const runReinforcements = (ctx: SimContext, player: Entity | null, dt: number): 
     }
     // All gone home: the next heat counts its own from 1 (G-179), after those of the bodies left lying.
     const left = ctx.world.with("security").entities;
-    if (left.every((e) => !e.ai)) watch.sent = Math.max(0, ...left.map((e) => e.security.n));
+    if (left.every((e) => !e.ai || e.downed)) watch.sent = Math.max(0, ...left.map((e) => e.security.n));
     return;
   }
   // The searchers keep combing the area around the last known position.
