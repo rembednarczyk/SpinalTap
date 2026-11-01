@@ -3,6 +3,7 @@ import type { NarrativeRuntime } from "@seki/narrative";
 import { decodeSave, encodeSave } from "@seki/persistence";
 import { type MessageKey, type MessageParams, type UiStore, patchUi, translate } from "@seki/ui";
 import { describeObjective } from "../objective";
+import { SlotDifficulties } from "../presenters/difficulty";
 import { type SimRef, pushToastTimed } from "./shared";
 
 export interface SaveControllerDeps {
@@ -36,6 +37,9 @@ export const slotDateLabel = (date: Date, locale: Locale): string =>
 
 /** Saves, loads and the slot list (asynchronous persistence around the running game). */
 export class SaveController {
+  /** The preset of each slot, for its label (ADR-0066). */
+  private readonly difficulties = new SlotDifficulties();
+
   constructor(private readonly deps: SaveControllerDeps) {}
 
   private get locale(): Locale {
@@ -73,6 +77,7 @@ export class SaveController {
     try {
       const snapshot = decodeSave(IMPORT_SLOT, text);
       await this.deps.persistence.save(IMPORT_SLOT, snapshot);
+      this.difficulties.remember(IMPORT_SLOT, snapshot);
       pushToastTimed(ui, "system", this.t("save.imported"), snapshot.meta.label);
       return true;
     } catch (e) {
@@ -121,7 +126,7 @@ export class SaveController {
    * snapshot is taken and encoded synchronously, before the store's first await.
    */
   async write(slot: string): Promise<void> {
-    await this.deps.persistence.save(slot, this.snapshot());
+    await this.put(slot, this.snapshot());
     await this.refreshSlots();
   }
 
@@ -133,7 +138,7 @@ export class SaveController {
     }
     patchUi(ui, { busy: true });
     try {
-      await this.deps.persistence.save(slot, this.snapshot());
+      await this.put(slot, this.snapshot());
       this.deps.audio.play("save");
       pushToastTimed(ui, "system", this.t("save.saved"), slot === "quick" ? this.t("slots.quick") : slot);
       return true;
@@ -167,9 +172,16 @@ export class SaveController {
     }
   }
 
+  /** Stores a slot and remembers the preset it was played on. */
+  private async put(slot: string, snapshot: SaveSnapshot): Promise<void> {
+    await this.deps.persistence.save(slot, snapshot);
+    this.difficulties.remember(slot, snapshot);
+  }
+
   async refreshSlots(): Promise<void> {
     try {
-      const slots = await this.deps.persistence.list();
+      const { persistence } = this.deps;
+      const slots = await this.difficulties.label(await persistence.list(), (slot) => persistence.load(slot));
       patchUi(this.deps.ui, { slots, hasSaves: slots.length > 0 });
     } catch {
       patchUi(this.deps.ui, { slots: [], hasSaves: false });

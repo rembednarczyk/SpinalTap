@@ -11,6 +11,8 @@ import { type BuildingSource, mapBuilding } from "../../../packages/engine/src/r
 import { centroid, cleanRing, pointInRing } from "../../../packages/engine/src/renderer/mapcity/polygon";
 import { stackTiers } from "../../../packages/engine/src/renderer/mapcity/vertical-plan";
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
+import { MAP_SIGN_KIND } from "../../../packages/engine/src/renderer/mapcity/sign-plan";
+import { signsInNeighbours } from "./sign-neighbours";
 import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alone.ts";
 import { extractFeatures } from "../../osm-import/src/features.ts";
 import { roadWidth } from "../../osm-import/src/ground.ts";
@@ -372,6 +374,12 @@ const standingVehicles = (() => {
     return memo;
   };
 })();
+
+/** The map buildings' signs of these kinds in another building (G-157, G-159). */
+const signsIn = (kinds: readonly number[]): Finding[] =>
+  signsInNeighbours()
+    .filter((s) => kinds.includes(s.kind))
+    .map((s) => ({ at: near(s.x, s.z), what: `${s.building} kind ${s.kind} at y ${s.y.toFixed(1)} in ${s.neighbour} (${s.points} points)` }));
 
 /** Tag values of things on a facade or in the paving, not free-standing (G-149). */
 const FLAT_ART = new Set(["plaque", "stolperstein", "mural", "mosaic", "graffiti", "relief"]);
@@ -1229,6 +1237,12 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "kerb-fit-sparse": () => FITTED().flatMap((r) => (r.cover * 2 < 1 ? [{ at: r.at, what: `${r.id} ${r.name}: ${r.width.toFixed(1)} m, sidewalks along ${(r.cover * 100).toFixed(0)} %` }] : [])),
   /** A two-way street (no `oneway`) narrowed to its mapped sidewalks below two 2.25 m lanes (G-113). */
   "two-way-fit-narrow": () => FITTED().flatMap((r) => (!r.oneway && r.width < 4.4 ? [{ at: r.at, what: `${r.id} ${r.name}: ${r.width.toFixed(1)} m` }] : [])),
+  /** A venue's board (ADR-0064 stage 4) reaching into the building next door, which stands out in front of its wall (G-159). */
+  "venue-board-in-neighbour": () => signsIn([MAP_SIGN_KIND.venue]),
+  /** A banner or a superstructure's ad (ADR-0051) sticking into the building next door (G-157). */
+  "banner-in-neighbour": () => signsIn([MAP_SIGN_KIND.ad]),
+  /** A holo-ad or a blade sign (ADR-0044) sticking into the building next door (G-157). */
+  "holo-or-blade-in-neighbour": () => signsIn([MAP_SIGN_KIND.holo, MAP_SIGN_KIND.blade]),
 };
 
 /** A building's own tags in the map data, by the game's id (`w…`, `r…`, a split's `/n` dropped). */

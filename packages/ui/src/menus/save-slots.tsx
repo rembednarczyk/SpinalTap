@@ -31,7 +31,14 @@ export const SaveSlots = ({ mode }: { mode: "save" | "load" }) => {
         return (
           <div key={slot} className="slots__row">
             <button type="button" className="slots__slot" disabled={disabled} onClick={() => (mode === "save" ? intents.save(slot) : intents.load(slot))}>
-              <span className="slots__name">{slotName(slot, t)}</span>
+              <span className="slots__name">
+                {slotName(slot, t)}
+                {info?.difficulty && (
+                  <span className="slots__difficulty" data-testid="slot-difficulty" aria-label={t("difficulty.slot", { preset: t(`difficulty.preset.${info.difficulty}`) })}>
+                    {t(`difficulty.preset.${info.difficulty}`)}
+                  </span>
+                )}
+              </span>
               <span className="slots__meta">{info ? `${info.savedAtLabel} · ${info.objective === CORRUPT_SLOT ? t(CORRUPT_SLOT) : info.objective}` : t("slots.empty")}</span>
             </button>
             {exportable && (

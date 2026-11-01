@@ -1,5 +1,5 @@
 import { type Page, expect, test } from "@playwright/test";
-import { gameState, place, teleportTo, waitForGame, waitForPlay } from "./helpers";
+import { gameState, place, teleportTo, newGame, waitForGame, waitForPlay } from "./helpers";
 
 // Landscape phone: coarse pointer, touch events, notch insets ignored.
 test.use({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
@@ -25,7 +25,7 @@ test("phone: on-screen pad moves, looks and talks", async ({ page }) => {
   test.setTimeout(180_000);
   await page.goto("/?seed=7&models=off");
   await waitForGame(page);
-  await page.getByRole("button", { name: "New Game" }).tap();
+  await newGame(page, "tap");
   await waitForPlay(page);
   await expect(page.getByTestId("touch-controls")).toBeVisible();
   const fingers = await touch(page);
