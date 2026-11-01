@@ -29,6 +29,7 @@ import { playerStatsOf } from "./player-control-system";
 import { disturb, isEngaged, noteViolence, offend, playerEngaged } from "../world/street";
 import { deflectShot, deflects } from "../world/deflect";
 import { playerHeld } from "../world/takedown";
+import { difficultyOf } from "../world/difficulty";
 
 /** Crit chances of NPC attacks (shots and swings). */
 export const NPC_CRIT = { critChance: 0.05, critMultiplier: 1.5, damageBonus: 0 } as const;
@@ -68,6 +69,19 @@ export const defenderOf = (ctx: SimContext, target: Entity): DefenderProfile => 
   }
   return target.enemy ? enemyDefense(target.enemy.type) : { armor: 0 };
 };
+
+/**
+ * Damage that lands on `target` after its armour: the player takes the difficulty's share of it
+ * (`damageTaken`, ADR-0066), in whole points like the attack itself.
+ */
+export const landedDamage = (ctx: SimContext, target: Entity, amount: number): number =>
+  target.player ? Math.round(amount * difficultyOf(ctx).damageTaken) : amount;
+
+/**
+ * Half-angle of an NPC's aim cone: its weapon's (`aimSpreadOf`) narrowed by the difficulty's
+ * `npcAccuracy` (ADR-0066).
+ */
+export const npcSpreadOf = (ctx: SimContext, e: Entity): number => aimSpreadOf(e, null) / difficultyOf(ctx).npcAccuracy;
 
 /** A hit on the player wears the clothes covering that zone. */
 export const wearPlayerClothes = (ctx: SimContext, zone: HitZone): void => {
@@ -170,12 +184,13 @@ const hitWithPellet = (
     deflectShot(ctx, { shooter: shot.shooter, defender: target, at: point, weapon }, (e) => defenderOf(ctx, e), rng);
     return false;
   }
-  const outcome = resolveAttack(
+  const resolved = resolveAttack(
     { damage: weapon.damage * guard.multiplier, zones: weapon.zones, critChance: shot.critChance, critMultiplier: shot.critMultiplier, damageBonus: shot.damageBonus * guard.multiplier },
     defenderOf(ctx, target),
     rng,
     zone,
   );
+  const outcome = { ...resolved, damage: landedDamage(ctx, target, resolved.damage) };
   if (guard.blocked) ctx.bus.emit("AttackBlocked", { attackerId: shot.shooter.id, defenderId: target.id, parried: false, kind: "projectile", at: point });
   if (shot.shooter.player) noteViolence(ctx, target, isEngaged(target), point);
   target.health = applyDamage(health, outcome.damage);

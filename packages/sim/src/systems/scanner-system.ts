@@ -26,7 +26,7 @@ import type { SimContext, System } from "../world/context";
 import { chestOf, eyeOf, lineOfSight } from "../world/hitscan";
 import { inCreationOrder } from "../world/ordering";
 import { grantQuickhackXp } from "../world/progression-ops";
-import { disturb, hackFxOf, isEngaged, noteDetected, noteHacked, noteViolence } from "../world/street";
+import { alertedNear, disturb, hackFxOf, isEngaged, noteDetected, noteHacked, noteViolence } from "../world/street";
 import { scanning, worldTimeScale } from "./ability-system";
 import { SEARCH_SECONDS, TRACK_GRACE, effectiveAggroRange, giveLead, guardSees } from "./ai/ganger-perception";
 import { cameraSees } from "./crime-system";
@@ -126,11 +126,7 @@ const icepick = (ctx: SimContext): boolean => {
 /** Is the player fighting (RAM does not come back)? */
 const inCombat = (ctx: SimContext, player: Entity): boolean => {
   const t = ctx.session.lastThreat;
-  if (t && (ctx.tick - t.tick) * ctx.dt <= COMBAT_THREAT_SECONDS) return true;
-  for (const g of ctx.world.with("ai")) {
-    if (g.ai.alerted && Math.hypot(g.position.x - player.position.x, g.position.z - player.position.z) <= COMBAT_RADIUS) return true;
-  }
-  return false;
+  return (!!t && (ctx.tick - t.tick) * ctx.dt <= COMBAT_THREAT_SECONDS) || alertedNear(ctx, player, COMBAT_RADIUS);
 };
 
 /** Effects and device timers run down in world time (the overdrive and the scanner slow them too). */

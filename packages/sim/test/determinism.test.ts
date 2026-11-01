@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { DomainState, SaveSnapshot } from "@seki/core";
+import { DIFFICULTY_PRESETS, type DomainState, type SaveSnapshot } from "@seki/core";
 import { Simulation, gangerEntity, runReplay, stateHash, type ReplayFrame } from "../src";
 import { input, run, streetSim } from "./helpers";
 
@@ -43,6 +43,23 @@ const script = (): ReplayFrame[] => {
 
 const hashOf = (sim: Simulation) => stateHash(sim.snapshot(null, "test", ""));
 
+/**
+ * The hash of a run as schema v17 had it, before the difficulty (ADR-0066): without the profile.
+ * "normal" changes no rule, so its runs hash to the goldens recorded before v18.
+ */
+const v17HashOf = (sim: Simulation) => {
+  const snap = sim.snapshot(null, "test", "");
+  const { difficulty: _d, ...domain } = snap.domain;
+  return stateHash({ ...snap, version: 17, domain } as unknown as SaveSnapshot);
+};
+
+/** The scripted run on "hard" (ADR-0066): the profile set by command in its first frame. */
+const hardScript = (): ReplayFrame[] => {
+  const [first, ...rest] = script();
+  if (!first) return rest;
+  return [{ ...first, commands: [{ type: "set-difficulty", profile: DIFFICULTY_PRESETS.hard }, ...(first.commands ?? [])] }, ...rest];
+};
+
 describe("determinism", () => {
   it("same seed + same input stream = same end state", () => {
     const a = runReplay(1234, script());
@@ -56,7 +73,19 @@ describe("determinism", () => {
   });
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
-    expect(hashOf(runReplay(1234, script()))).toMatchInlineSnapshot(`"c52fd247"`);
+    const sim = runReplay(1234, script());
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"e87d9e7c"`);
+    // Re-recorded for the v18 field (ADR-0066); without it, as v17, it is the golden of before.
+    expect(v17HashOf(sim)).toBe("c52fd247");
+  });
+
+  it("the same run on 'hard' has a golden hash of its own (ADR-0066)", () => {
+    const sim = runReplay(1234, hardScript());
+    expect(sim.domain.difficulty).toEqual(DIFFICULTY_PRESETS.hard);
+    expect(hashOf(sim)).toBe(hashOf(runReplay(1234, hardScript())));
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"38acbc37"`);
+    // Not just the field: without it the run still ends elsewhere than on "normal".
+    expect(v17HashOf(sim)).not.toBe("c52fd247");
   });
 
   it("the crowd of residents (ADR-0041) and the traffic (ADR-0050) leave the golden run as it was, at every density", () => {
@@ -70,10 +99,11 @@ describe("determinism", () => {
     }
   });
 
-  it("without the v13 fields of ADR-0033 and the v17 progression the replay hashes as with sim B of wave 2 (fields, not rules)", () => {
+  it("without the v13 fields of ADR-0033, the v17 progression and the v18 difficulty the replay hashes as with sim B of wave 2 (fields, not rules)", () => {
     const snap = runReplay(1234, script()).snapshot(null, "test", "");
     // The v17 progression (ADR-0059) is left out as well: the run's XP changes no rule it hashes.
-    const { buffs: _b, capacityShards: _c, disguise: _d, progression: _p, ...domain } = snap.domain;
+    // So is the v18 difficulty (ADR-0066): "normal" changes no rule either.
+    const { buffs: _b, capacityShards: _c, disguise: _d, progression: _p, difficulty: _f, ...domain } = snap.domain;
     const { doors: _doors, ...rest } = snap;
     // Re-recorded for ADR-0038 (the run starts in the clinic) and ADR-0045 (the clinic is on
     // Krakowskie Przedmieście), and for the car wash moved off Plac Łokietka into the yard behind
@@ -122,7 +152,8 @@ describe("determinism", () => {
     // Swings both ways, a blocked blow and staggers: the duel exercises the whole package.
     for (const t of ["MeleeSwing", "AttackBlocked", "Staggered", "DamageDealt"]) expect(seen).toContain(t);
     expect(hashOf(sim)).toBe(hashOf(duel().sim));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"62992d7b"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"41068cd4"`);
+    expect(v17HashOf(sim)).toBe("62992d7b");
   });
 
   it("restores killed NPCs as absent", () => {

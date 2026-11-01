@@ -328,6 +328,13 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
     const capacityShards = shards + compensatingShards(completed, shards, progression.level);
     return { ...old, version: 17, domain: { ...domain, progression, ...(isObject(old.domain) ? { capacityShards } : {}) } };
   },
+  // v17 -> v18 (ADR-0066): the difficulty profile. A save from before it was played on what is
+  // now "normal" (all ones), spelled out like every migration's content.
+  17: (old) => {
+    const domain = isObject(old.domain) ? old.domain : {};
+    const normal = { damageTaken: 1, npcAccuracy: 1, awareness: 1, reinforce: 1, npcHealth: 1, snipeTell: 1 };
+    return { ...old, version: 18, domain: { ...domain, difficulty: normal } };
+  },
 };
 
 export class MigrationError extends Error {}

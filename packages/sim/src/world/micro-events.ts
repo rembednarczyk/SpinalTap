@@ -6,7 +6,8 @@ import { deadFlag } from "../systems/death-system";
 import type { Entity } from "./components";
 import type { MicroEventRun, SimContext } from "./context";
 import { lowerFlag } from "./domain-ops";
-import { GANGER_MAX_HP, gangerEntity } from "./factory";
+import { GANGER_MAX_HP, gangerEntity, toughen } from "./factory";
+import { difficultyOf } from "./difficulty";
 import { passerBy, streetOpen, thankedByStreet } from "./street-scenes";
 
 /**
@@ -51,7 +52,7 @@ const spawn = (ctx: SimContext, kind: MicroEventKind, at: Vec3): MicroEventRun =
       const px = at.x + (i === 0 ? 1.4 : -1.4);
       const position = { x: px, y: ctx.streamer.ground.heightAt(px, at.z + 1.2), z: at.z + 1.2 };
       const g = gangerEntity(ctx.streamer.takeId(), { key: `${id}:m${i}`, position, yaw: Math.PI }, null, GANGER_MAX_HP, victim.chunk ?? "", victimKey);
-      ctx.world.add(g);
+      ctx.world.add(toughen(g, difficultyOf(ctx).npcHealth));
       attackers.push(g.id);
     }
   } else {

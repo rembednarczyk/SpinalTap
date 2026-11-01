@@ -80,6 +80,7 @@ export class Simulation {
     const player = playerEntity(ids.take());
     this.streamer = chunks ? new WorldStreamer(ids, chunks) : new WorldStreamer(ids);
     bindGround(this.world, this.streamer.ground);
+    this.streamer.enemyHealth = () => this.holder.domain.difficulty.npcHealth;
     const contract = domain.contracts.active;
     // A done job with an ambush by the way out (ADR-0034) still has people in the world.
     if (contract && (contract.status === "active" || hasAmbush(contract))) this.streamer.registerContract(this.world, domain.flags, domain.contracts.completed, contract);
