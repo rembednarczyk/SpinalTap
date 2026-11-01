@@ -504,13 +504,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: zakaz postoju do 15 m od słupka (art. 49 PoRD); kontrola skanu `parked-car-at-bus-stop`, baza 3 → 0; przy okazji `path=sidewalk` poza `footWays` i `pedestrian`/`cycleway` w `parked-car-on-footway`
 - Pakiet właściciela: packages/sim (parked-cars), tools/osm-import, tools/glitch-scan
 
-### G-158 Latarnie ścienne zasłaniają tablice lokali
-- Status: w PR #137; weryfikacja 2 PRZYJĘTE (1.11; niezależna kontrola 14 → 0, latarnie prostopadle do ściany); czeka na przegląd kuratora
-- Ważność: S3 · Zasięg: 17 z 169 latarni ściennych, np. WIEJSKI RAJ (564,0; −88,9), KORZEŃ CZAROWNICY (611,4; −74,9), PUB ZA KURTYNĄ (599,6; −2,6); zrzuty g148-r2-rynek-e, g148-r4-rynek-s
-- Przyczyna: rozstaw `lamp-wall-lantern` (ADR-0047) nie zna tablic lokali (ADR-0064 etap 4); markiza je zna (`venueBoardOn`)
-- Test przyjęcia: `wall-lantern-over-venue-board` 17 → 0
-- Pakiet właściciela: tools/osm-import (props-gen), packages/engine
-
 ### G-160 Płyta „DEN…” w powietrzu przy narożniku na Grodzkiej (źródło nieustalone)
 - Status: zgłoszone (1.11, łowca G-148; zrzut gracza a92148c1)
 - Ważność: S3 · Zasięg: (568,0; −22), y 6,5–8,5, narożnik budynku z szyldem OKRUSZEK; w mieście nieustalone
@@ -584,11 +577,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: profil w `SaveSlotInfo` (zmiana portu `core/src/ports`, zgoda architekta) zamiast drugiego odczytu
 - Pakiet właściciela: packages/core (ports), packages/app
 
-### G-173 Latarnie ścienne z modelem w bryle budynku
-- Status: zgłoszone (1.11, weryfikator G-158)
-- Ważność: S4 · Zasięg: 5 latarni: (475,2; −90,1), (713,5; 138,9), (718,6; 144,5), (653,4; 80,8) i (621,8; 40,4); 4 były tak już przed G-158, ostatnia obraca się w głąb sąsiada (chunki widzą tylko ścianę b1779, nie b1778)
-- Przyczyna: `furniture-in-building` pomija `lamp-wall-lantern`; generator nie zna brył budynków spoza chunka
-- Poprawka: kontrola skanu „model latarni ściennej w bryle budynku” (baza 5) i ustawianie latarni od właściwej ściany
+### G-173 Latarnie ścienne w przejazdach bramnych i szczelinach
+- Status: zgłoszone (1.11, weryfikator i kurator G-158); T-101
+- Ważność: S4 · Zasięg: 5 latarni: przejazd Bramy Krakowskiej (475,2; −90,1), Bramy Grodzkiej (713,5; 138,9), (718,6; 144,5), Ku Farze pod Grodzką 14 (621,8; 40,4), szczelina Grodzka 18/20 (653,4; 80,8); 4 były przed #137, (621,8; 40,4) wróciła w #137 przez odstęp od przesuniętej sąsiadki
+- Przyczyna: linia planu `lamps.stare-miasto-wall` (rozstaw 15 m) stawia latarnie na osi dróg `tunnel=building_passage`; głowica 3,1–4,5 m wchodzi w sklepienie (4–4,2 m); `furniture-in-building` pomija `lamp-wall-lantern`
+- Poprawka: linia planu nie stawia latarni ściennej w obrysie budynku ani w pasie 2 m wokół osi `building_passage`; kontrola skanu `wall-lantern-in-building` (baza 5 → 0); przy okazji latarnia KUCHNI POD KOPYTEM może przejść na sąsiednią ścianę Grodzkiej 20
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-174 Zapis i wczytanie nie odtwarzają stanu przy kontrakcie infiltrate z limitem czasu

@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-158 Latarnie ścienne zasłaniają tablice lokali
+- Status: naprawione (1.11, #137: niezależna kontrola 14 → 0, latarnie ścienne prostopadle do ściany; weryfikacja w 2 rundach, kurator zgodne)
+- Ważność: S3 · Zasięg: 17 z 169 latarni ściennych, np. WIEJSKI RAJ (564,0; −88,9), KORZEŃ CZAROWNICY (611,4; −74,9), PUB ZA KURTYNĄ (599,6; −2,6); zrzuty g148-r2-rynek-e, g148-r4-rynek-s
+- Przyczyna: rozstaw `lamp-wall-lantern` (ADR-0047) nie zna tablic lokali (ADR-0064 etap 4); markiza je zna (`venueBoardOn`)
+- Test przyjęcia: `wall-lantern-over-venue-board` 17 → 0
+- Pakiet właściciela: tools/osm-import (props-gen), packages/engine
+
 ### G-159 Tablica lokalu wchodzi w sąsiedni budynek
 - Status: naprawione (1.11, #138: tablica w wolnym odcinku ściany, skan 7 → 0)
 - Ważność: S3 · Zasięg: 7: KUCHNIA SPOD ARARATU (600,8; −21,8), ZIELONY CZAROWNIK (168,0; −99,2), SZAFA PÓŁWIECZE (112,5; −111,8), ZJEDZ I ZNIKAJ (622,2; −6,8), WULKANIZACJA PIASTA (580,9; 552,6), KAMBUZ (828,6; 496,4), KLUB ZEBRANIE (205,8; −105,3)

@@ -114,6 +114,7 @@ Statusy: `celowe`, `do poprawy` (z G-NNN), `poprawione (#PR)`.
 | T-098 | całe miasto: 9 murali, 5 mozaik i graffiti n11340871032 (`SKIPPED_ART`) | brak w grze, tylko etykiety `sight` | malowidła i mozaiki na fasadach lub w nawierzchni | meble | celowe (nie są wolnostojące, brak warstwy grafiki na fasadach); do rozważenia przy ADR-0044/0051 |
 | T-099 | Stare Miasto (485.6, 11.4), n9382021599 | neon „Przypadek? Nie sądzę!” niewidoczny | neon na fasadzie | meble | do poprawy (G-168) |
 | T-100 | wolnostojące pomniki z grup `plaque`: Getto (66.7, 129.6), Popiełuszko (475.3, −195.4), Maharszal (870.5, 298.8), Hołodomor (1044.8, 423.9), Glatsztejn (996.6, 283.0) | brak | pomnik, stela, kamienie | zabytek | do poprawy (G-167) |
+| T-101 | Stare Miasto: przejazdy Bramy Krakowskiej (475,2; −90,1), Bramy Grodzkiej (713,5; 138,9), (718,6; 144,5), Ku Farze (621,8; 40,4); szczelina Grodzka 18/20 (653,4; 80,8) | latarnia ścienna z linii planu (3,1–4,5 m) na osi drogi `tunnel=building_passage` albo w szczelinie; model w bryle i w sklepieniu (4–4,2 m) | w przejazdach bram nie ma kinkietów na wysięgniku z fasady (niesprawdzone na mapie publicznej) | meble | do poprawy (G-173); 4 były przed #137, (621,8; 40,4) doszła w #137 |
 
 Audyt 1 (31.10): Krakowskie Przedmieście i Stare Miasto. Położenie zabytków (odchyłka do 0,06 m), skala (9 odcinków co do 0,02 m), nazwy i kierunki ulic oraz teren (mediana 0,02 m, p95 0,18 m względem NMT) zgodne. Następne: Podzamcze i Nabrzeże.
 
