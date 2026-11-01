@@ -3,6 +3,7 @@ import { MeshSink } from "../mesh-sink";
 import { busShelter, busStop, cafeGarden, farMonument, fountainJets, kiosk, marketStall, monument, ticketMachine, vendingMachine } from "./prop-civic";
 import { atm, bikeRackWithBikes, container, foodCart, hydrant } from "./prop-e2";
 import { farTree, hangingBasket, planter, shrubs, tree } from "./prop-green";
+import { doorOfShape } from "./prop-door";
 import { foodStall, marketGoods } from "./prop-market";
 import { glow, paint, v3 } from "./prop-kit";
 import { type PropLight, type PropModel, floodlight, lampCandelabra, lampModernPole, lampPark, lampPastoral, lampRoad, lampWallLantern } from "./prop-lamps";
@@ -57,6 +58,8 @@ const MODELS: Readonly<Record<StreetPropKind, (shape: number) => PropModel>> = {
   container: (s) => plain(container(s)),
   "market-goods": (s) => plain(marketGoods(s)),
   "food-stall": () => plain(foodStall()),
+  // A 1.2 x 2.3 m door of the model; the city bakes each door at its own size (`door-models.ts`).
+  door: (s) => plain(doorOfShape(s)),
 };
 
 /** Every kind of the contract, in the order of `StreetPropKind` (the gallery's row). */
