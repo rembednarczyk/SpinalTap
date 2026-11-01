@@ -562,7 +562,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim
 
 ### G-183 Skan latarni ściennych nie widzi przejść spoza `building_passage`
-- Status: w PR #168, runda 2 (1.11): weryfikacja NIE PRZYJĘTE — „trafienia” były fałszywym alarmem: oś `GATE_PASSAGES` sięga 4,6–8,7 m poza fasady bram (przedłużenie ulicy, nie sklepienie), latarnie wisiały poprawnie; kontrola i `nearPassage` mają przycinać oś do odcinka pod budynkiem bramy, tabela bez zmian; u autora
+- Status: w PR #168, runda 2 oddana (2168541, ponowna weryfikacja w toku; kontrola i `nearPassage` przycięte do sklepienia, tabela jak na main); wcześniej: weryfikacja NIE PRZYJĘTE — „trafienia” były fałszywym alarmem: oś `GATE_PASSAGES` sięga 4,6–8,7 m poza fasady bram (przedłużenie ulicy, nie sklepienie), latarnie wisiały poprawnie; kontrola i `nearPassage` mają przycinać oś do odcinka pod budynkiem bramy, tabela bez zmian; u autora
 - Ważność: S4 (narzędzie) · Zasięg: `wall-lantern-in-building` bierze osie tylko z `tunnel=building_passage`; przejście Gruella pod Wieżą Trynitarską (w298307007, `tunnel=yes`, `layer=-1`) i ręczne bramy `GATE_PASSAGES` pilnuje tylko generator (`Site.nearPassage` zna przejazdy chunków, nie zna `GATE_PASSAGES`); dziś 0 trafień
 - Poprawka: kontrola „latarnia ścienna bliżej niż 2 m od osi przejścia z danych gry” (`PASSAGES` i `GATE_PASSAGES`, odcinek przycięty do końców), baza 0; `nearPassage` także dla `GATE_PASSAGES`. Uwaga: pas wokół `tunnel=yes|covered=yes` z OSM łapie Trasę Podziemną (w293370650), więc nie z OSM
 - Pakiet właściciela: tools/glitch-scan, tools/osm-import
@@ -605,7 +605,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, packages/sim
 
 ### G-193 Zwłoki posiłku ochrony znikają po wczytaniu
-- Status: zgłoszone (1.11, weryfikator #165)
+- Status: w PR #172 (1.11, w weryfikacji): `corpseOf` zachowuje `security`, zapis obejmuje ciała posiłków, `crime-system` liczy tylko żywych; schemat v23 bez zmian
 - Ważność: S3 · Zasięg: posiłek zabity po powaleniu albo w trakcie obalenia zostawia ciało bez klucza i bez `security` (`corpseOf`, `packages/sim/src/world/bodies.ts:64`); ciało nie trafia ani do `entities`, ani do `reinforcements`, więc po wczytaniu nie ma go do znalezienia ani zgłoszenia
 - Poprawka: zwłoki posiłków w zapisie (z `n`) albo `corpseOf` przenosi klucz `security:<n>`; test zapis–wczytanie
 - Pakiet właściciela: packages/sim, packages/persistence
@@ -622,6 +622,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Oczekiwane (wzór gier z gigami i posterunkami): miejsce wykonanego kontraktu zostaje oczyszczone; zabici i obezwładnieni nie wracają, ocaleni odchodzą przy wyjściu gracza z zasięgu; nowi strażnicy pojawiają się tylko z następnym kontraktem w tym miejscu; ciała znikają po wyjściu z zasięgu chunków
 - Poprawka: strażnicy wykonanego kontraktu nie trafiają do `formerContracts` przy uśpieniu (albo wpis oznaczony jako oczyszczony); test jednej sesji (wyjście i powrót) i zapisu; złoty hash zmieni się świadomie; razem z G-188 (ten sam mechanizm uśpienia)
 - Pakiet właściciela: packages/sim (streaming, contracts), packages/persistence
+
+### G-196 Powalony żywy posiłek ochrony znika po końcu heatu
+- Status: zgłoszone (1.11, naprawiacz G-193)
+- Ważność: S4 · Zasięg: powalony, ale żywy posiłek ma AI; po końcu heatu, gdy jest daleko i poza wzrokiem, `runReinforcements` (`packages/sim/src/systems/crime-system.ts`) usuwa go jak żywego, więc ciało znika ze świata bez zapisu; do tego ciała posiłków nie mają chunku i zostają do końca sesji, a `sent` rośnie w kolejnych heatach (wpływ na wybór enforcerów od `n`)
+- Poprawka: odsyłanie tylko posiłków na nogach; powaleni zostają jak ciała; ciała posiłków sprzątane razem z chunkiem, w którym leżą; test jednej sesji
+- Pakiet właściciela: packages/sim
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
