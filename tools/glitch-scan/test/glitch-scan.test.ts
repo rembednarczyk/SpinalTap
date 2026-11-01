@@ -38,7 +38,7 @@ import { groundAt } from "../../../packages/sim/src/systems/movement-system";
 import { PARKED_CARS } from "../../../packages/sim/src/content/parked-cars";
 import { GAME_PROPS, WORLD_STREET_PROPS } from "../../../packages/sim/src/content/street-props";
 import { crossingBands, inCrossingBand } from "../../../packages/sim/src/content/lublin/crossing-bands";
-import { MIN_ROUTE, TRAFFIC_LANES, TRAFFIC_ROUTES, type TrafficRoute, pointAt, projectOn, roadHalfWidth } from "../../../packages/sim/src/content/traffic";
+import { CAR_MODELS, MIN_ROUTE, TRAFFIC_LANES, TRAFFIC_ROUTES, type TrafficRoute, pointAt, projectOn, roadHalfWidth } from "../../../packages/sim/src/content/traffic";
 
 /**
  * The glitch scan (ADR-0054): the map's known kinds of glitch counted over the whole city, each
@@ -83,6 +83,23 @@ const inPassage = (x: number, z: number) =>
     const t = Math.max(0, Math.min(1, ((x - p.from.x) * dx + (z - p.from.z) * dz) / (dx * dx + dz * dz || 1)));
     return Math.hypot(p.from.x + dx * t - x, p.from.z + dz * t - z) < p.width / 2;
   });
+
+/** The outlines of a passage's building (worked out on first use: `worldOutline` comes later in the file). */
+const passageRings = (() => {
+  const memo = new Map<string, Pt[][]>();
+  return (id: string) => memo.get(id) ?? memo.set(id, MAP_CHUNKS.flatMap((c) => c.buildings).filter((b) => b.id === id).map((b) => worldOutline(b))).get(id)!;
+})();
+
+/** Where (x, z) is along a passage and how far off its axis, when the axis there runs under the passage's building; else null. */
+const underVault = (p: (typeof PASSAGES)[number], x: number, z: number): { s: number; off: number } | null => {
+  const len = Math.hypot(p.to.x - p.from.x, p.to.z - p.from.z);
+  const [ux, uz] = [(p.to.x - p.from.x) / len, (p.to.z - p.from.z) / len];
+  const s = (x - p.from.x) * ux + (z - p.from.z) * uz;
+  const off = (x - p.from.x) * uz - (z - p.from.z) * ux;
+  if (s < 0 || s > len || Math.abs(off) > p.width / 2 + 3) return null;
+  const axis = { x: p.from.x + ux * s, z: p.from.z + uz * s };
+  return passageRings(p.building).some((r) => pointInRing(axis, r)) ? { s, off } : null;
+};
 
 /** The landmarks of the curator's audits (docs/topografia.md): buildings by map id, and the statues of Plac Litewski. */
 const LANDMARK_BUILDINGS = [
@@ -819,6 +836,63 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       const tooHigh = (h: number) => (t.maxheight === "below_default" ? h >= max : h > max + 0.01);
       return PASSAGES.filter((p) => off({ x: (p.from.x + p.to.x) / 2, z: (p.from.z + p.to.z) / 2 }) < 1.5 && tooHigh(p.height)).map((p) => ({ at: near(p.from.x, p.from.z), what: `w${w.id} maxheight=${t.maxheight}, vault ${p.height} m in ${p.building}` }));
     }),
+  /**
+   * A city gate's passage (`historic=city_gate`, G-136) with a mouth more than 0.5 m off the middle
+   * of the front's clean part: the wall it opens in, less the stretches a neighbouring building
+   * stands in front of (within 0.35 m), sampled every centimetre.
+   */
+  "gate-mouth-off-axis": () => {
+    const kept = MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)));
+    return PASSAGES.flatMap((p) => {
+      const b = kept.find((q) => q.id === p.building);
+      if (!b || osmTags(b.id).historic !== "city_gate") return [];
+      const ring = cleanRing(worldOutline(b));
+      const others = kept.filter((q) => q !== b && Math.hypot(q.x - b.x, q.z - b.z) < 60).map(worldOutline);
+      const [dx, dz] = [p.to.x - p.from.x, p.to.z - p.from.z];
+      return ring.flatMap((a, i) => {
+        const c = ring[(i + 1) % ring.length]!;
+        const [ex, ez] = [c.x - a.x, c.z - a.z];
+        const len = Math.hypot(ex, ez);
+        const den = dx * ez - dz * ex;
+        const t = ((a.x - p.from.x) * ez - (a.z - p.from.z) * ex) / den;
+        const s = ((a.x - p.from.x) * dz - (a.z - p.from.z) * dx) / den;
+        if (Math.abs(den) < 1e-9 || t < 0 || t > 1 || s < 0 || s > 1) return [];
+        const out = pointInRing({ x: a.x + ex / 2 + (ez / len) * 0.1, z: a.z + ez / 2 - (ex / len) * 0.1 }, ring) ? -1 : 1;
+        const at = (u: number, o: number) => ({ x: a.x + (ex / len) * u + (ez / len) * o * out, z: a.z + (ez / len) * u - (ex / len) * o * out });
+        const clean = (k: number) => ![0.05, 0.15, 0.25, 0.35].some((o) => others.some((r) => pointInRing(at(k / 100, o), r)));
+        const mouth = Math.round(s * len * 100);
+        let [k0, k1] = [mouth, mouth];
+        while (k0 > 0 && clean(k0 - 1)) k0--;
+        while (k1 < Math.floor(len * 100) && clean(k1 + 1)) k1++;
+        const off = s * len - (k0 + k1) / 200;
+        const m = at(s * len, 0);
+        return Math.abs(off) > 0.5 ? [{ at: near(m.x, m.z), what: `${b.id} ${b.name ?? ""}: mouth ${off.toFixed(2)} m off the middle of ${((k1 - k0) / 100).toFixed(2)} m of clean front` }] : [];
+      });
+    });
+  },
+  /**
+   * A route's vehicle reaching out of a passage under a building (G-136): a point of the route
+   * every quarter metre under the building (the passage's axis there inside the outline) where
+   * half the widest vehicle of the route's kind, from its line, is past half the passage's width.
+   */
+  "vehicle-outside-passage": () => {
+    const widest = (r: TrafficRoute) => (r.use === "trolley" ? VEHICLE_SIZE.trolleybus.width : r.use === "deliveries" ? Math.max(VEHICLE_SIZE.van.width, VEHICLE_SIZE.delivery.width) : Math.max(...CAR_MODELS.map(([m]) => VEHICLE_SIZE[m].width)));
+    return TRAFFIC_ROUTES.flatMap((r) =>
+      PASSAGES.flatMap((p) => {
+        const out = along(r, 0.25).flatMap((q) => {
+          const v = underVault(p, q.x, q.z);
+          return v && Math.abs(v.off) + widest(r) / 2 > p.width / 2 ? [Math.abs(v.off)] : [];
+        });
+        return out.length > 0 ? [{ at: near(p.from.x, p.from.z), what: `${r.id} through ${p.building}: ${Math.max(...out).toFixed(2)} m off the axis` }] : [];
+      }),
+    );
+  },
+  /** A wall lantern under a passage's vault (G-136; `furniture-in-building` passes wall lanterns over): within half the passage's width and 0.5 m of its axis, under the building. */
+  "wall-lantern-in-passage": () =>
+    Object.values(WORLD_STREET_PROPS)
+      .flat()
+      .filter((i) => i.prop === "lamp-wall-lantern")
+      .flatMap((i) => PASSAGES.filter((p) => Math.abs(underVault(p, i.x, i.z)?.off ?? Infinity) < p.width / 2 + 0.5).map((p) => ({ at: near(i.x, i.z), what: `lamp-wall-lantern in ${p.building}` }))),
   /** A passage through a building with an end off every chunk, where there is no ground to come out on. */
   "passage-off-map": () =>
     PASSAGES.filter((p) => [p.from, p.to].some(({ x, z }) => !MAP_CHUNKS.some(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ))).map((p) => ({

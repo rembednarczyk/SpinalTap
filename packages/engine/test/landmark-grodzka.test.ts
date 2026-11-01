@@ -80,7 +80,7 @@ describe("Brama Grodzka from the landmark kit (ADR-0062)", () => {
     expect(passageOpen(near3(f), f)).toEqual([]);
   });
 
-  it("builds the classicist fronts: rustication to a string course over the arch, a keystone, one storey of large framed windows (two per front, the third axis would run into the neighbours)", () => {
+  it("builds the classicist fronts: rustication to a string course over the arch, a keystone, one storey of three large framed windows 2 m apart over the arch on each front (G-136)", () => {
     const f = gate();
     const sink = near3(f);
     const course = stringCourse(f);
@@ -95,13 +95,17 @@ describe("Brama Grodzka from the landmark kit (ADR-0062)", () => {
       // The glass of the windows (0.06 m out) over the string course.
       const glass = on(SWATCH.opening, 0.06);
       const windows = glass.filter((p) => p.y < f.top);
-      // One storey on the axes a neighbour leaves in sight: of three, the one behind Teatr NN (Grodzka's
-      // front) and the one inside w66293322 (the castle's) are left out. Large windows, about 1 x 1.6 m.
-      expect(windows.length / 4, side).toBe(2);
+      // One storey of three axes over the arch, clear of Teatr NN (Grodzka's front) and w66293322
+      // (the castle's). Large windows, about 1 x 1.6 m, 2 m apart as on the photographs.
+      expect(windows.length / 4, side).toBe(3);
       for (const p of windows) expect(p.y).toBeGreaterThan(course + 0.3);
       expect(Math.max(...windows.map((p) => p.y)) - Math.min(...windows.map((p) => p.y)), side).toBeCloseTo(1.6, 2);
       const across = windows.map((p) => along(m.w, p)).sort((a, b) => a - b);
       expect(across[3]! - across[0]!, side).toBeGreaterThan(0.95);
+      const axes = [0, 4, 8].map((k) => (across[k]! + across[k + 3]!) / 2);
+      expect(axes[1]! - axes[0]!, side).toBeCloseTo(2, 6);
+      expect(axes[2]! - axes[1]!, side).toBeCloseTo(2, 6);
+      expect(axes[1]!, side).toBeCloseTo((m.u0 + m.u1) / 2, 6);
       // The cornices over the windows (0.12 m out, under the main cornice), none behind a neighbour.
       for (const p of on(SWATCH.plasterTrim, 0.12).filter((q) => q.y < f.top - 0.6)) for (const r of nearby) expect(pointInRing(onWall(m.w, along(m.w, p), 0, 0.35), r), side).toBe(false);
       // The keystone stands proud of the arch's trim over the middle of the mouth.
@@ -188,11 +192,14 @@ describe("Brama Grodzka from the landmark kit (ADR-0062)", () => {
     const cables = new MeshSink();
     planLandmarkCables(cables, f);
     expect(cables.vertexCount).toBe(0);
-    // One uplight at each mouth: the other's place lies in a neighbour (Teatr NN, w66293322).
-    const lights = litMouths(f).map((m) => uplights(f, m).length);
-    expect(lights).toEqual([1, 1]);
-    expect(onTheStreet(f, sink, nearby)).toBe(2);
-    // Signs: the uplights' beams only, one at each mouth, none in a neighbour; no screen, plaque, holo or strobe.
+    // An uplight either side of each mouth (G-136); at the castle's the neighbours stand within 1.5 m of
+    // the mouth, so both go to the middle of the wall left, with narrower beams.
+    const lights = litMouths(f).map((m) => uplights(f, m));
+    expect(lights.map((l) => l.length)).toEqual([2, 2]);
+    for (const [k, m] of litMouths(f).entries()) for (const l of lights[k]!) expect(Math.min(Math.abs(l.u - m.u0), Math.abs(l.u - m.u1))).toBeGreaterThanOrEqual(0.45 - 1e-9);
+    expect(lights[1]!.every((l) => l.beam < 1.5)).toBe(true);
+    expect(onTheStreet(f, sink, nearby)).toBe(4);
+    // Signs: the uplights' beams only, two at each mouth, none in a neighbour; no screen, plaque, holo or strobe.
     const slots: string[] = [];
     const signs = new MeshSink();
     planLandmarkSigns(signs, f, (name) => slots.push(name) - 1);
@@ -200,7 +207,7 @@ describe("Brama Grodzka from the landmark kit (ADR-0062)", () => {
     expect(slots).toEqual(["MDCCLXXXV"]);
     const kinds = points(signs).map((p) => Math.round(p.v2));
     expect(new Set(kinds)).toEqual(new Set([MAP_SIGN_KIND.beam, MAP_SIGN_KIND.name]));
-    expect(kinds.filter((k) => k === MAP_SIGN_KIND.beam).length / 4).toBe(2);
+    expect(kinds.filter((k) => k === MAP_SIGN_KIND.beam).length / 4).toBe(4);
     for (const p of points(signs)) for (const r of nearby) expect(pointInRing(p, r)).toBe(false);
   });
 

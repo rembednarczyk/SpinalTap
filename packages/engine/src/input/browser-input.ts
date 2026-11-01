@@ -151,7 +151,9 @@ export class BrowserInput implements InputPort {
           // Refused with the option (older Chromium, Linux without raw input): try without it.
           try {
             const plain = this.target.requestPointerLock() as unknown;
-            if (plain instanceof Promise) plain.catch(() => (this.lockUnavailable = true));
+            // Refused for want of a user gesture (a panel closed with Esc before the first click,
+            // G-135): the next click asks again, so the lock stays available.
+            if (plain instanceof Promise) plain.catch((e: unknown) => (this.lockUnavailable = !isNoGesture(e)));
           } catch {
             this.lockUnavailable = true;
           }
@@ -214,3 +216,6 @@ export class BrowserInput implements InputPort {
     return mapGamepad({ axes: pad.axes, buttons, pressed, dash }, dt);
   }
 }
+
+/** A pointer lock refused only because no user gesture was under way: worth asking again. */
+const isNoGesture = (e: unknown): boolean => typeof e === "object" && e !== null && (e as { name?: unknown }).name === "NotAllowedError";
