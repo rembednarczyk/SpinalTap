@@ -42,6 +42,7 @@ import type { Entity } from "../src";
 import { asideFor } from "../src/systems/ai/crowd-walk";
 import { furnitureClearance } from "../src/content/crowd";
 import { TRAFFIC_ROUTES } from "../src/content/traffic";
+import { MAP_CHUNKS } from "../src/content/lublin/sites";
 import { byKey, input, run, teleportPlayer } from "./helpers";
 
 vi.setConfig({ testTimeout: 30_000 });
@@ -131,6 +132,29 @@ describe("routes and spots of the crowd", () => {
     const west = CROWD_LANES.filter((l) => l.chunk === "krakowskie-0-1");
     expect(west.length).toBeGreaterThan(0);
     for (const lane of west) expect(laneGeom(lane).length, lane.id).toBeGreaterThan(40);
+  });
+
+  it("walk the squares and the alleys on the pavement, off the kerbs' parking strips (G-177)", () => {
+    const strips = [...new Map(MAP_CHUNKS.flatMap((c) => c.carParks ?? []).map((p) => [p.id, p])).values()]
+      .filter((p) => p.kind === "lane" || p.kind === "street_side")
+      .map((p) => ({ id: p.id, ring: Array.from({ length: p.outline.length / 2 }, (_, i) => ({ x: p.outline[2 * i]!, z: p.outline[2 * i + 1]! })) }));
+    const inRing = (x: number, z: number, r: readonly { x: number; z: number }[]) => {
+      let on = false;
+      for (let i = 0, j = r.length - 1; i < r.length; j = i++) if (r[i]!.z > z !== r[j]!.z > z && x < ((r[j]!.x - r[i]!.x) * (z - r[i]!.z)) / (r[j]!.z - r[i]!.z) + r[i]!.x) on = !on;
+      return on;
+    };
+    for (const lane of CROWD_LANES.filter((l) => l.id.includes("-square-"))) {
+      const g = laneGeom(lane);
+      for (let s = 0; s < g.length; s += 0.5) {
+        for (const dir of [1, -1] as const) {
+          const t = laneTarget(lane, { phase: s, speed: 0, dir, shift: 0 }, { seconds: 0 });
+          expect(strips.find((p) => inRing(t.x, t.z, p.ring))?.id, `${lane.id} at ${t.x.toFixed(1)},${t.z.toFixed(1)}`).toBeUndefined();
+        }
+      }
+    }
+    // Kowalska's pavement by its parking lane w232362980 is still walked its whole length, some 85 m there and back.
+    const kowalska = CROWD_LANES.find((l) => l.id === "stare-miasto-1-1-square-2")!;
+    expect(laneGeom(kowalska).length).toBeGreaterThan(170);
   });
 
   it("keep the deptak's, the squares' and the alleys' walkers off the carriageways the traffic drives", () => {

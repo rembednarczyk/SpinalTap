@@ -83,6 +83,8 @@ export interface MultiLaneWayOut {
 export interface CarParkOut {
   readonly id: string;
   readonly kind: string;
+  /** Its bays' `orientation` when mapped: `parallel`, `perpendicular` or `diagonal` (G-177). */
+  readonly orientation?: string;
   readonly outline: readonly number[];
 }
 
