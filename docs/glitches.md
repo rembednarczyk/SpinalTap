@@ -473,7 +473,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import
 
 ### G-149 Pomniki i rzeźby z OSM mają przypadkowy kształt
-- Status: zgłoszone (1.11, gracz: „strategia stawiania assetów wydaje się randomowa”)
+- Status: w PR #132, w weryfikacji i przeglądzie kuratora (1.11; skan `monument-shape-off-tags` 48 → 0); do kuratora: pominięty Sztukmistrz nad Grodzką, stele zamiast 3 Maja, Lwa Lwowskiego i Czechowicza; poboczne: wolnostojące pomniki w grupach `plaque` (Ofiary Getta, Popiełuszko, kamienie) pominięte, kilka węzłów brak w `data/osm`
 - Ważność: S3 · Zasięg: 27 pomników i rzeźb z planu (`docs/world/lublin-props.todo.json`) i wszystkie `memorial`/`artwork` z OSM
 - Przyczyna: ADR-0047 bierze pozycję z OSM, ale kształt z hasha id (`variant`, `SHAPES.monument = 4`): obelisk, postać na cokole, Koziołek albo abstrakcja; poza kilkoma wymuszonymi w planie prawdziwy pomnik dostaje losową bryłę (np. stos sześcianów albo postać na czarnym bloku w wąskiej uliczce)
 - Poprawka: kształt z tagów OSM (`memorial=plaque|statue|bust|stone`, `artwork_type`, `historic`) i z ręcznej tabeli znanych pomników Lublina; tablica pamiątkowa na fasadzie zamiast wolnostojącej bryły; bez dopasowania: neutralna tablica albo kapliczka, nie abstrakcja; przegląd kuratora
