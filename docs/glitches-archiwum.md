@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-182 `MapEntries.neighboursNear` bez własnego testu
+- Status: naprawione (1.11, #155: test na prawdziwym `MapEntries`, pada przy zawężonym zapytaniu indeksu)
+- Ważność: S4 (test) · Zasięg: skan i test jednostkowy G-170 używają kopii logiki odsiania, więc ścieżki gry (`map-entries.ts`) nic nie pilnuje; dziś poprawna (sonda: 7298 czworokątów identycznych z `near` i bez)
+- Poprawka: test `neighboursNear` na prawdziwym `MapEntries` (sąsiad na granicy komórek, ściana skośna, sąsiad wyższą częścią)
+- Pakiet właściciela: packages/engine (mapcity)
+
 ### G-177 Auta na pasach postojowych OSM równolegle na środku głębokości obrysu
 - Status: naprawione (1.11, #152: auta przy krawężniku i w poprzek, tłum 1 m od pasów; kontrole `bay-car-out-of-park` 1 → 0, `bay-car-orientation` 1 → 0, `crowd-lane-on-parking` 3 → 0; weryfikacja PRZYJĘTE, kurator ZGODNE Z UWAGAMI, T-102, T-103)
 - Ważność: S4 · Zasięg: auta z `bayCars` (`tools/osm-import/src/parked-cars.ts`): Kowalska w232362980 (683,7; 161,0) odsunięta 0,8 m ku jezdni (narożniki 0,31 i 0,56 m poza obrysem), bo trasa tłumu `stare-miasto-1-1-square-2` biegnie po krawężniku pasa; obrysy 4,7–8 m głębokości (Ruska w1024029951, Radziwiłłowska w883991779, Ciasna w227679486) i Kalinowszczyzna w1000912163 (`orientation=perpendicular`, 4–5 miejsc) mają po jednym aucie równolegle
