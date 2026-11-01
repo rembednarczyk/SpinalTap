@@ -28,8 +28,8 @@ describe("save export", () => {
   it("writes a saved slot to a file that decodes back to the same save", async () => {
     const { session, store, files } = setup();
     session.newGame();
-    expect(await session.saveAsync("slot-1")).toBe(true);
-    expect(await session.exportAsync("slot-1")).toBe(true);
+    expect(await session.saves.saveAsync("slot-1")).toBe(true);
+    expect(await session.saves.exportAsync("slot-1")).toBe(true);
     expect(files).toHaveLength(1);
     expect(files[0]!.name).toBe("seki-senshi-slot-1-2026-10-31.json");
     expect(files[0]!.text).toBe(store.data.get("slot-1"));
@@ -39,13 +39,13 @@ describe("save export", () => {
   it("writes nothing for an empty slot, or where the host cannot hand out files, and says so", async () => {
     const empty = setup();
     empty.session.newGame();
-    expect(await empty.session.exportAsync("slot-2")).toBe(false);
+    expect(await empty.session.saves.exportAsync("slot-2")).toBe(false);
     expect(empty.files).toHaveLength(0);
     expect(empty.ui.getState().toasts.at(-1)?.title).toBe("Empty slot");
     const none = setup(false);
     none.session.newGame();
-    await none.session.saveAsync("slot-1");
-    expect(await none.session.exportAsync("slot-1")).toBe(false);
+    await none.session.saves.saveAsync("slot-1");
+    expect(await none.session.saves.exportAsync("slot-1")).toBe(false);
     expect(none.ui.getState().toasts.at(-1)?.title).toBe("Could not export the save");
   });
 
@@ -58,25 +58,25 @@ describe("save import", () => {
   it("reads an exported file into its own slot, which then loads", async () => {
     const a = setup();
     a.session.newGame();
-    await a.session.saveAsync("slot-1");
-    await a.session.exportAsync("slot-1");
+    await a.session.saves.saveAsync("slot-1");
+    await a.session.saves.exportAsync("slot-1");
     const b = setup();
     b.session.newGame();
-    expect(await b.session.importAsync(a.files[0]!.text)).toBe(true);
+    expect(await b.session.saves.importAsync(a.files[0]!.text)).toBe(true);
     expect(b.store.data.has(IMPORT_SLOT)).toBe(true);
     expect(b.ui.getState().slots.some((s) => s.slot === IMPORT_SLOT)).toBe(true);
-    expect(await b.session.loadAsync(IMPORT_SLOT)).toBe(true);
+    expect(await b.session.saves.loadAsync(IMPORT_SLOT)).toBe(true);
   });
 
   it("refuses a damaged or foreign file and changes nothing", async () => {
     const a = setup();
     a.session.newGame();
-    await a.session.saveAsync("slot-1");
-    await a.session.exportAsync("slot-1");
+    await a.session.saves.saveAsync("slot-1");
+    await a.session.saves.exportAsync("slot-1");
     const tampered = a.files[0]!.text.replace(/"checksum":"[^"]+"/, '"checksum":"0"');
     const b = setup();
     b.session.newGame();
-    for (const text of [tampered, "not json", JSON.stringify({ hello: 1 })]) expect(await b.session.importAsync(text)).toBe(false);
+    for (const text of [tampered, "not json", JSON.stringify({ hello: 1 })]) expect(await b.session.saves.importAsync(text)).toBe(false);
     expect(b.store.data.has(IMPORT_SLOT)).toBe(false);
     expect(b.ui.getState().toasts.at(-1)?.title).toBe("Could not import the file");
   });

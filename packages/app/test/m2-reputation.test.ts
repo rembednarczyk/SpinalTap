@@ -27,9 +27,9 @@ const sessionWith = async (reputation: Partial<ReputationState>) => {
   const persistence = new SavePersistence(new MemorySaveStore());
   const session = new GameSession({ render, audio, persistence, ui, story: STORY_SOURCE, seed: () => 5, now: () => new Date(2026, 9, 27) });
   session.newGame();
-  const snap = session.snapshot();
+  const snap = session.saves.snapshot();
   await persistence.save("rep", { ...snap, domain: { ...snap.domain, reputation: { ...snap.domain.reputation, ...reputation } } });
-  await session.loadAsync("rep");
+  await session.saves.loadAsync("rep");
   return { session, ui };
 };
 

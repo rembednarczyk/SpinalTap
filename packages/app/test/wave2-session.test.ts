@@ -28,7 +28,7 @@ describe("wave 2 in the session", () => {
     session.newGame();
     const from = METRO_STATIONS.find((s) => s.id === "shinsekai")!;
     teleport(session, from.kiosk.x + Math.sin(from.yaw) * 1.2, from.kiosk.z + Math.cos(from.yaw) * 1.2, from.yaw + Math.PI);
-    session.openMetro("shinsekai");
+    session.debug.openMetro("shinsekai");
     session.intents.travelMetro("kanal");
     let rode = false;
     for (let i = 0; i < 60 * 12 && !rode; i++) {

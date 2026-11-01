@@ -123,8 +123,8 @@ describe("autosave on entering an interior (ADR-0061)", () => {
 
   it("does not save on a load that lands inside a room", async () => {
     const { session, store, seen } = start();
-    expect(await session.saveAsync("t")).toBe(true);
-    expect(await session.loadAsync("t")).toBe(true);
+    expect(await session.saves.saveAsync("t")).toBe(true);
+    expect(await session.saves.loadAsync("t")).toBe(true);
     steps(session, 3);
     await flush();
     expect(seen).toEqual([]);

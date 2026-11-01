@@ -95,18 +95,18 @@ describe("difficulty in the session (ADR-0066)", () => {
   it("a saved slot carries the label of its preset, also for a session that did not write it", async () => {
     const { session, ui, store } = setup();
     session.newGame(hard);
-    expect(await session.saveAsync("slot-1")).toBe(true);
+    expect(await session.saves.saveAsync("slot-1")).toBe(true);
     session.pause();
     session.intents.setDifficulty({ ...story, npcHealth: 1.1 });
-    expect(await session.saveAsync("slot-2")).toBe(true);
+    expect(await session.saves.saveAsync("slot-2")).toBe(true);
     const label = (u: typeof ui) => Object.fromEntries(u.getState().slots.map((s) => [s.slot, s.difficulty]));
     expect(label(ui)).toEqual({ "slot-1": "hard", "slot-2": "custom" });
     // A fresh page over the same store reads the slots it has not written.
     const other = setup(store);
-    await other.session.refreshSlots();
+    await other.session.saves.refreshSlots();
     expect(label(other.ui)).toEqual({ "slot-1": "hard", "slot-2": "custom" });
     // A load restores the profile and the pause menu shows it.
-    expect(await other.session.loadAsync("slot-1")).toBe(true);
+    expect(await other.session.saves.loadAsync("slot-1")).toBe(true);
     expect(other.session.sim.domain.difficulty).toEqual(hard);
     expect(other.ui.getState().difficulty.profile).toEqual(hard);
   });
@@ -114,7 +114,7 @@ describe("difficulty in the session (ADR-0066)", () => {
   it("an unreadable slot has no label", async () => {
     const { session, ui, store } = setup();
     store.data.set("slot-3", "{broken");
-    await session.refreshSlots();
+    await session.saves.refreshSlots();
     expect(ui.getState().slots).toEqual([{ slot: "slot-3", savedAtLabel: "—", objective: "save.corrupt" }]);
   });
 });

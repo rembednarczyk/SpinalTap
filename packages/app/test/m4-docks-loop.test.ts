@@ -49,7 +49,7 @@ const setup = async () => {
   const persistence = new SavePersistence(new MemorySaveStore());
   const session = new GameSession({ render, audio, persistence, ui, story: STORY_SOURCE, seed: () => 43, now: () => new Date(2026, 9, 27) });
   session.newGame();
-  const snap = session.snapshot();
+  const snap = session.saves.snapshot();
   await persistence.save("start", {
     ...snap,
     domain: {
@@ -61,7 +61,7 @@ const setup = async () => {
       wallet: { eddies: 400 },
     },
   });
-  await session.loadAsync("start");
+  await session.saves.loadAsync("start");
   return { session, ui };
 };
 
@@ -132,10 +132,10 @@ describe("M4 acceptance: the docks", () => {
     steps(session, 10 * SIM_HZ);
     expect(ui.getState().objective).toMatch(/Hold the connection to the terminal \(0:\d\d left\)/);
 
-    expect(await session.saveAsync("quick")).toBe(true);
+    expect(await session.saves.saveAsync("quick")).toBe(true);
     const progress = session.sim.domain.contracts.active!.progress!;
     steps(session, 5 * SIM_HZ);
-    expect(await session.loadAsync("quick")).toBe(true);
+    expect(await session.saves.loadAsync("quick")).toBe(true);
     expect(session.sim.domain.contracts.active!.progress).toBe(progress);
     teleport(session, t.x, t.z - 1.4, 0);
     steps(session, HACK_SECONDS * SIM_HZ - progress + 2);

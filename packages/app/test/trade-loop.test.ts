@@ -78,10 +78,10 @@ describe("trade loop: loot, Oyaji's stall, a mod, the clinic (E10, E11)", () => 
     shootGuard(session);
     steps(session, 1);
     // The bag's contents are random; this run gives it known ones through a save, as a load would.
-    const snap = session.snapshot();
+    const snap = session.saves.snapshot();
     const containers = snap.domain.loot.containers.map((c) => (c.key === "loot:guard" ? { ...c, lines: BAG } : c));
     await persistence.save("slot-1", { ...snap, domain: { ...snap.domain, loot: { ...snap.domain.loot, containers } } });
-    expect(await session.loadAsync("slot-1")).toBe(true);
+    expect(await session.saves.loadAsync("slot-1")).toBe(true);
 
     const bag = session.sim.domain.loot.containers.find((c) => c.key === "loot:guard")!;
     teleport(session, bag.position.x, bag.position.z - 1);

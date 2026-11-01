@@ -52,11 +52,11 @@ describe("M3 acceptance: act I from a new game to each ending", () => {
     expect(objective(ui)).toBe(ending === "aya" ? "Someone is calling you through the module. Ask Grandma Ume about Ren Odagiri (the promenade by the clinic)" : "Mori sold your module. Ask him who bought it (Mori's clinic)");
 
     // The ending survives a save/load round trip, ink state included.
-    expect(await session.saveAsync("act1")).toBe(true);
-    const saved = session.snapshot();
+    expect(await session.saves.saveAsync("act1")).toBe(true);
+    const saved = session.saves.snapshot();
     const { session: other, ui: otherUi } = setup(store);
-    expect(await other.loadAsync("act1")).toBe(true);
-    expect(other.snapshot().domain).toEqual(saved.domain);
+    expect(await other.saves.loadAsync("act1")).toBe(true);
+    expect(other.saves.snapshot().domain).toEqual(saved.domain);
     expect(other.narrative.saveState()).toBe(saved.narrative);
     talkToMori(other, otherUi);
     expect(allText(otherUi)).toContain(ending === "aya" ? "Aya. Jak głowa?" : "Fiolki już nie ma.");
@@ -67,17 +67,17 @@ describe("M3 acceptance: act I from a new game to each ending", () => {
     const { session, ui, render } = setup(store);
     playFirstContract(session, ui);
     playContractFragment(session, ui, render, 0);
-    expect(await session.saveAsync("mid")).toBe(true);
+    expect(await session.saves.saveAsync("mid")).toBe(true);
 
     // Unlock fragment 2 and write the snapshot while its flashback is still waiting (the UI would refuse to save here).
     talkToMori(session, ui);
     finishDialogue(session, ui);
     expect(allText(ui)).toContain("Jak się nazywasz?");
-    await new SavePersistence(store).save("pending", session.snapshot());
+    await new SavePersistence(store).save("pending", session.saves.snapshot());
 
     // A fresh session picks the flashback up right after loading.
     const b = setup(store);
-    expect(await b.session.loadAsync("pending")).toBe(true);
+    expect(await b.session.saves.loadAsync("pending")).toBe(true);
     expect(b.ui.getState().dialogue).toBeNull();
     steps(b.session, 1);
     expect(allText(b.ui)).toContain("Jak się nazywasz?");
@@ -88,7 +88,7 @@ describe("M3 acceptance: act I from a new game to each ending", () => {
 
     // The earlier save still holds only the first choice, and continues from there.
     const c = setup(store);
-    expect(await c.session.loadAsync("mid")).toBe(true);
+    expect(await c.session.saves.loadAsync("mid")).toBe(true);
     expect(c.session.sim.domain.story).toEqual({ choices: { case: "opened" }, ending: null, act2Ending: null });
     expect(objective(c.ui)).toBe("Talk to Doctor Mori about what you saw (Mori's clinic)");
     playMoriFragment(c.session, c.ui, c.render, 1);

@@ -54,7 +54,7 @@ describe("the prologue (G-034)", () => {
     const fresh = setup();
     fresh.session.newGame();
     steps(fresh.session, 1);
-    const now = fresh.session.snapshot();
+    const now = fresh.session.saves.snapshot();
     // v15 remembered Kaito by the chair, where he stood until met_fixer (ADR-0038).
     const oldKaito = { key: "fixer", position: clinicPoint(-13.3, 0, 3.2), yaw: 0, pitch: 0, hp: null, cooldown: 0, alerted: false };
     const payload = { ...now, version: 15, entities: [...now.entities.filter((e) => e.key !== "fixer"), oldKaito] };
@@ -62,7 +62,7 @@ describe("the prologue (G-034)", () => {
     await store.put("old", JSON.stringify({ format: "seki-save", checksum: checksum(text), payload: text }));
 
     const { session } = setup(store);
-    expect(await session.loadAsync("old")).toBe(true);
+    expect(await session.saves.loadAsync("old")).toBe(true);
     steps(session, 1);
     expect(session.sim.domain.flags).not.toContain("met_fixer");
     const found = [...session.sim.world].filter((e) => e.key === "fixer");

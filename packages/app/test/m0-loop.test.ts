@@ -131,14 +131,14 @@ describe("M0 vertical slice: input → sim → narrative → domain → save →
     expect(session.sim.domain.reputation.hebi).toBe(-19);
 
     // 4. Save, keep playing, load: state matches the save point, narrative included.
-    expect(await session.saveAsync("slot-1")).toBe(true);
-    const saved = session.snapshot();
+    expect(await session.saves.saveAsync("slot-1")).toBe(true);
+    const saved = session.saves.snapshot();
     // The autosave lists first (`auto`); the manual slot keeps its own objective.
     expect(ui.getState().slots.find((s) => s.slot === "slot-1")).toMatchObject({ objective: expect.stringContaining("Take a contract from Kaito") });
     steps(session, 120, frame({ moveZ: -1 }));
-    expect(await session.loadAsync("slot-1")).toBe(true);
-    expect(session.snapshot().domain).toEqual(saved.domain);
-    expect(session.snapshot().entities).toEqual(saved.entities);
+    expect(await session.saves.loadAsync("slot-1")).toBe(true);
+    expect(session.saves.snapshot().domain).toEqual(saved.domain);
+    expect(session.saves.snapshot().entities).toEqual(saved.entities);
     expect(session.narrative.saveState()).toBe(saved.narrative);
     expect(render.mode).toBe("TPP");
     expect(courier()).toBeUndefined();
@@ -154,11 +154,11 @@ describe("M0 vertical slice: input → sim → narrative → domain → save →
     session.newGame();
     teleport(session, ...nearKaito(session));
     steps(session, 1, frame({ interact: true }));
-    expect(await session.saveAsync("slot-1")).toBe(false);
+    expect(await session.saves.saveAsync("slot-1")).toBe(false);
     session.intents.closeDialogue();
-    expect(await session.loadAsync("slot-2")).toBe(false);
+    expect(await session.saves.loadAsync("slot-2")).toBe(false);
     await store.put("slot-3", "{corrupt");
-    expect(await session.loadAsync("slot-3")).toBe(false);
+    expect(await session.saves.loadAsync("slot-3")).toBe(false);
     expect(ui.getState().toasts.at(-1)?.text).toBe("The save file is corrupted.");
   });
 
