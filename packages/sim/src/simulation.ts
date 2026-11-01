@@ -34,6 +34,7 @@ import { hasAmbush } from "./world/contract-plan";
 import { doorSnapshots, restoreDoors } from "./systems/door-system";
 import { withAttackLock } from "./world/takedown";
 import { withCarry } from "./world/bodies";
+import { resumeSession } from "./world/session-resume";
 
 export { BREACH_DATAMINE_EDDIES, BREACH_ICEPICK_SECONDS, BREACH_MARK_SECONDS } from "./world/contract-commands";
 export { SIM_DT, SIM_HZ } from "./step-rate";
@@ -120,6 +121,7 @@ export class Simulation {
     sim.session.carrying = sim.world.with("downed").entities.find((b) => b.downed.carried)?.id ?? null;
     // A profile asked for in the fight still waits for its end (G-171).
     sim.session.pendingDifficulty = snapshot.pendingDifficulty ?? null;
+    resumeSession(sim.session, sim.domain, sim.player(), sim.streamer);
     return sim;
   }
 

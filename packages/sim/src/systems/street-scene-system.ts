@@ -6,7 +6,8 @@ import { runEncounters } from "../world/street-scenes";
  * Street encounters and micro-events (ADR-0034), near the end of the step: the micro-event
  * under way is judged first (its fight was fought this step), then entering a district may
  * start one, then the district's encounters are checked. Nothing happens to a rider, in a
- * dialogue or after death; the first step after a start or a load only notes the district.
+ * dialogue or after death; the first step of a new game only notes the district (a load reads
+ * it from the saved position, G-174).
  */
 export const streetSceneSystem: System = {
   name: "street-scenes",

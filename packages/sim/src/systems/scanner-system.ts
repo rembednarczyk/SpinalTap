@@ -2,6 +2,7 @@ import {
   BASE_RAM,
   COMBAT_RADIUS,
   DISTRACT_RADIUS,
+  type DomainState,
   type EntityId,
   FACTIONS,
   type HackTargetKind,
@@ -108,9 +109,12 @@ const setRam = (ctx: SimContext, ram: number): void => {
   ctx.state.domain = { ...ctx.state.domain, netrun: { ...netrun, ram } };
 };
 
+/** The whole number of RAM the HUD shows. */
+export const wholeRam = (domain: DomainState): number => Math.floor(domain.netrun.ram + 1e-9);
+
 /** RamChanged whenever the whole number of RAM changes (spending, refunds, regeneration). */
 const reportRam = (ctx: SimContext): void => {
-  const current = Math.floor(ctx.state.domain.netrun.ram + 1e-9);
+  const current = wholeRam(ctx.state.domain);
   if (ctx.session.watch.ram === current) return;
   const first = ctx.session.watch.ram === null;
   ctx.session.watch.ram = current;
