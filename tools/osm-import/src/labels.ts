@@ -92,6 +92,7 @@ export const chunkServiceWays = (lines: readonly Line[], rect: Rect): ServiceWay
 const ownFootWay = (t: Tags): boolean =>
   (t.highway === "footway" || t.highway === "path") &&
   t.footway !== "sidewalk" &&
+  t.path !== "sidewalk" &&
   t.footway !== "crossing" &&
   t.path !== "crossing" &&
   t.area !== "yes" &&

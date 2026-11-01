@@ -688,16 +688,19 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   },
   /**
    * A parked car whose body (sampled every eighth of its length and width) comes nearer than 1 m
-   * to the axis of a footway or path of the map data mapped on its own (not a sidewalk along a
-   * kerb, not a crossing; on the ground, off bridges and tunnels): it stands on the walkers' way (G-143).
+   * to the axis of a footway, path, pedestrian street or cycleway of the map data mapped on its
+   * own (not a sidewalk along a kerb, not a crossing; on the ground, off bridges and tunnels): it
+   * stands on the walkers' or the riders' way (G-143, G-156).
    */
   "parked-car-on-footway": () => {
     const ways = extractFeatures(SOURCE_OSM).lines.filter(
       ({ tags: t }) =>
-        (t.highway === "footway" || t.highway === "path") &&
+        (t.highway === "footway" || t.highway === "path" || t.highway === "pedestrian" || t.highway === "cycleway") &&
         t.footway !== "sidewalk" &&
+        t.path !== "sidewalk" &&
         t.footway !== "crossing" &&
         t.path !== "crossing" &&
+        t.cycleway !== "crossing" &&
         t.area !== "yes" &&
         t.tunnel === undefined &&
         t.covered === undefined &&
@@ -712,6 +715,60 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       const body = [0, 1, 2, 3, 4, 5, 6, 7, 8].flatMap((i) => [0, 1, 2, 3, 4, 5, 6, 7, 8].map((k) => ({ x: c.x + fz * width * (i / 8 - 0.5) + fx * length * (k / 8 - 0.5), z: c.z - fx * width * (i / 8 - 0.5) + fz * length * (k / 8 - 0.5) })));
       const hit = segs.find(({ a, b }) => Math.max(a.x, b.x) > c.x - 8 && Math.min(a.x, b.x) < c.x + 8 && Math.max(a.z, b.z) > c.z - 8 && Math.min(a.z, b.z) < c.z + 8 && body.some((p) => segmentGap(p.x, p.z, a, b) < 1));
       return hit ? [{ at: near(c.x, c.z), what: `${c.model} on ${hit.id}` }] : [];
+    });
+  },
+  /**
+   * A parked car at a bus stop of the map data (a `highway=bus_stop` or `public_transport=platform`
+   * node, or a platform way's vertex): its middle nearer the stop's post than 15 m and half its
+   * length along the street the post stands by (its nearest car road, within 20 m), less than 7 m
+   * across, on the post's side of that street. The Polish code (art. 49 ust. 1 pkt 9 PoRD) bans
+   * stopping there (G-156).
+   */
+  "parked-car-at-bus-stop": () => {
+    const { lines, areas } = extractFeatures(SOURCE_OSM);
+    const platform = (t: Readonly<Record<string, string>>) => t.highway === "bus_stop" || t.public_transport === "platform" || t.highway === "platform";
+    const posts = [
+      ...[...SOURCE_OSM.nodes.values()].filter((n) => n.tags && platform(n.tags)).map((n) => ({ id: `n${n.id}`, ...geoToWorld(n.lat, n.lon) })),
+      ...[...lines.map((l) => ({ id: l.id, tags: l.tags, pts: l.line })), ...areas.map((a) => ({ id: a.id, tags: a.tags, pts: a.ring }))].filter((w) => platform(w.tags)).flatMap((w) => w.pts.map((p) => ({ id: w.id, ...p }))),
+    ];
+    const roadKinds = new Set(["primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link", "residential", "unclassified", "living_street"]);
+    const segs = lines.filter((l) => roadKinds.has(l.tags.highway ?? "")).flatMap((l) => l.line.slice(1).map((b, i) => ({ a: l.line[i]!, b })));
+    return PARKED_CARS.flatMap((c) => {
+      const hit = posts.find((p) => {
+        if (Math.hypot(p.x - c.x, p.z - c.z) > 30) return false;
+        const by = segs.map((s) => ({ s, d: segmentGap(p.x, p.z, s.a, s.b) })).filter((q) => q.d < 20).sort((x, y) => x.d - y.d)[0]?.s;
+        if (!by) return false;
+        const len = Math.hypot(by.b.x - by.a.x, by.b.z - by.a.z);
+        const [tx, tz] = [(by.b.x - by.a.x) / len, (by.b.z - by.a.z) / len];
+        const sideOf = (x: number, z: number) => Math.sign((x - by.a.x) * tz - (z - by.a.z) * tx);
+        const along = Math.abs((c.x - p.x) * tx + (c.z - p.z) * tz);
+        const across = Math.abs((c.x - p.x) * tz - (c.z - p.z) * tx);
+        return sideOf(c.x, c.z) === sideOf(p.x, p.z) && along < 15 + VEHICLE_SIZE[c.model].length / 2 && across < 7;
+      });
+      return hit ? [{ at: near(c.x, c.z), what: `${c.model} ${Math.hypot(hit.x - c.x, hit.z - c.z).toFixed(1)} m from ${hit.id}` }] : [];
+    });
+  },
+  /**
+   * A parked car by the kerb of a street with two lanes or more a way (`lanes` 4 or more, or
+   * `lanes:forward` or `lanes:backward` 2 or more) and outside every car park (`amenity=parking`)
+   * of the map data: it stands on the outer lane (G-155). Its street is the car road of the map
+   * data whose axis runs nearest within 12 m and within 20° of the car.
+   */
+  "parked-car-multilane-kerb": () => {
+    const { lines, areas } = extractFeatures(SOURCE_OSM);
+    const roadKinds = new Set(["primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link", "residential", "unclassified", "living_street"]);
+    const segs = lines.filter((l) => roadKinds.has(l.tags.highway ?? "")).flatMap((l) => l.line.slice(1).map((b, i) => ({ way: l, a: l.line[i]!, b })));
+    const parks = areas.filter((a) => a.tags.amenity === "parking");
+    const multiLane = (t: Readonly<Record<string, string>>) => Number(t.lanes ?? 0) >= 4 || Number(t["lanes:forward"] ?? 0) >= 2 || Number(t["lanes:backward"] ?? 0) >= 2;
+    return PARKED_CARS.flatMap((c) => {
+      const fx = Math.sin(c.yaw);
+      const fz = Math.cos(c.yaw);
+      const by = segs
+        .map((s) => ({ s, d: segmentGap(c.x, c.z, s.a, s.b), len: Math.hypot(s.b.x - s.a.x, s.b.z - s.a.z) }))
+        .filter((q) => q.d < 12 && q.len > 0 && Math.abs(((q.s.b.x - q.s.a.x) * fx + (q.s.b.z - q.s.a.z) * fz) / q.len) >= Math.cos((20 * Math.PI) / 180))
+        .sort((x, y) => x.d - y.d)[0];
+      if (!by || !multiLane(by.s.way.tags) || parks.some((p) => pointInRing({ x: c.x, z: c.z }, p.ring))) return [];
+      return [{ at: near(c.x, c.z), what: `${c.model} ${by.d.toFixed(1)} m from ${by.s.way.id} (lanes ${by.s.way.tags.lanes ?? "?"})` }];
     });
   },
   /** A game block standing on the ground (not an awning or a deck) that floats or sinks. */

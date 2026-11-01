@@ -163,6 +163,28 @@ describe("the lanes of the traffic (ADR-0050)", () => {
     }
   });
 
+  it("parked cars fill the car parks the map draws along a kerb, parallel to their street", () => {
+    const inside = (x: number, z: number, o: readonly number[]) => {
+      let on = false;
+      for (let i = 0, j = o.length - 2; i < o.length; j = i, i += 2)
+        if (o[i + 1]! > z !== o[j + 1]! > z && x < ((o[j]! - o[i]!) * (z - o[i + 1]!)) / (o[j + 1]! - o[i + 1]!) + o[i]!) on = !on;
+      return on;
+    };
+    const kerbParks = MAP_CHUNKS.flatMap((c) => c.carParks ?? []).filter((p) => p.kind === "street_side" || p.kind === "lane");
+    // Peowiaków's strip, Radziwiłłowska's, Kalinowszczyzna's by the river and Ruska's parking lane.
+    for (const id of ["w471191535", "w883991779", "w1000912202", "w1024029951"]) {
+      const park = kerbParks.find((p) => p.id === id)!;
+      expect(PARKED_CARS.some((c) => inside(c.x, c.z, park.outline)), id).toBe(true);
+    }
+    const inBays = PARKED_CARS.filter((c) => kerbParks.some((p) => inside(c.x, c.z, p.outline)));
+    expect(inBays.length).toBeGreaterThan(20);
+    for (const c of inBays) {
+      const street = ROAD_CHAINS.filter((r) => r.use === "cars").map((r) => ({ r, q: projectOn(r.points, c.x, c.z) })).sort((a, b) => a.q.d - b.q.d)[0]!;
+      const t = pointAt(street.r.points, street.q.s);
+      expect(Math.abs(t.tx * Math.sin(c.yaw) + t.tz * Math.cos(c.yaw)), `${c.x},${c.z}`).toBeGreaterThan(0.9);
+    }
+  });
+
   it("parked cars leave the mouths of driveways and service lanes free: half their width and 0.5 m off the axis (G-140)", () => {
     const ways = MAP_CHUNKS.flatMap((c) => c.serviceWays ?? []);
     // Cerkiewna's driveway and the yard lane by it, where three cars stood across the mouths.
