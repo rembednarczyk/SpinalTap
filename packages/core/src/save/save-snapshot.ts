@@ -5,6 +5,8 @@ import type { Contract } from "../contracts/contracts";
 import type { EnemyTypeId } from "../items/enemies";
 
 /**
+ * v24: an AI pinned in the world while its chunk sleeps (G-188) is marked with its time outside
+ * every loaded chunk; an older save has none marked, its pinned AIs loaded by their alert as before.
  * v23: the heat's reinforcements (G-179), who are in no content table, with how many came in and
  * the wait for the next one; an older save has none, its reinforcements gone on loading as before.
  * v22: the contract whose people are still in the world after it ended (G-178), failed or paid,
@@ -30,7 +32,7 @@ import type { EnemyTypeId } from "../items/enemies";
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 23;
+export const SAVE_SCHEMA_VERSION = 24;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {
@@ -60,6 +62,11 @@ export interface EntitySnapshot {
    * fills over several steps, so a load must not start it from 0. Absent when 0.
    */
   readonly suspicion?: number;
+  /**
+   * An AI in the world while its chunk sleeps (G-188): seconds it has spent outside every loaded
+   * chunk, 0 in a loaded one. Absent for everyone else, so a loaded game tells it from a sleeper.
+   */
+  readonly away?: number;
   /** Knocked out, or killed in a takedown and left lying (ADR-0065). Absent for everyone else. */
   readonly downed?: BodySnapshot;
 }

@@ -73,6 +73,11 @@ export interface GangerAi {
   /** Seconds the player has been out of its sight while alerted. Saved (`EntitySnapshot.lost`, since v11). */
   lost?: number;
   /**
+   * Pinned in the world while its chunk sleeps (G-188): seconds it has spent outside every loaded
+   * chunk, 0 in a loaded one. Absent while its chunk is loaded. Saved (`EntitySnapshot.away`).
+   */
+  away?: number;
+  /**
    * It saw the player this step (read by the heat after the AI ran). Transient: perception sets it
    * every step before it is read, so it is not saved.
    */
