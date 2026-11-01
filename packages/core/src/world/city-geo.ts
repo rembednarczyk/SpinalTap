@@ -115,7 +115,9 @@ export type RoadMarkingKind = "centre-dash" | "centre-double" | "lane-dash" | "e
  * fire hydrants, food carts on the markets and shipping containers on the riverside. ADR-0058
  * stage 3 adds the market's stock beside the stalls (`market-goods`: cartons on a pallet, barrels,
  * crates, goods under a canvas) and the food booths in front of the fast-food venues (`food-stall`:
- * a yatai with its counter, stools, noren and lanterns).
+ * a yatai with its counter, stools, noren and lanterns). ADR-0058 stage 6 adds the decals, drawn
+ * only (`decals.ts`): `graffiti` on walls without glass, `house-plate` with the map's house number,
+ * `sticker` on a pole or a cabinet, `drain-grate` at the kerb.
  */
 export type StreetPropKind =
   | "lamp-pastoral"
@@ -159,7 +161,11 @@ export type StreetPropKind =
   | "food-cart"
   | "container"
   | "market-goods"
-  | "food-stall";
+  | "food-stall"
+  | "graffiti"
+  | "house-plate"
+  | "sticker"
+  | "drain-grate";
 
 /** One piece of street furniture, in world metres relative to its chunk entity's position. */
 export interface StreetPropItem {
