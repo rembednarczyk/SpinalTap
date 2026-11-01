@@ -28,9 +28,9 @@ jobs:
       - id: diff
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            files=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")
+            files=$(git -c core.quotePath=false diff --name-only "origin/${{ github.base_ref }}...HEAD")
           elif [ -n "${{ github.event.before }}" ] && git cat-file -e "${{ github.event.before }}" 2>/dev/null; then
-            files=$(git diff --name-only "${{ github.event.before }}" HEAD)
+            files=$(git -c core.quotePath=false diff --name-only "${{ github.event.before }}" HEAD)
           else
             echo "code=true" >> "$GITHUB_OUTPUT"; exit 0
           fi
@@ -65,7 +65,9 @@ jobs:
   # specs (a single job took 40 min, most of it cold boots under SwiftShader). Setup is about
   # 40 s a shard, so two shards cost about the same minutes as three with less rounding.
   e2e:
-    name: E2E ${{ matrix.shard }}/2 (build, smoke, NPR snapshot, perf budget)
+    # No matrix value in the name: GitHub appends "(1)", "(2)" itself, and a skipped job (docs-only
+    # change) then reads plainly instead of showing the unexpanded expression.
+    name: E2E (build, smoke, NPR snapshot, perf budget)
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
