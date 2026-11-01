@@ -1,4 +1,4 @@
-import { DECAL_KINDS, DRAIN_GRATE, HOUSE_PLATE, STICKER_HOSTS, type StreetPropItem, WALL_DECALS, grateLayout, graffitiLayout, hostFaces, plateLayout, stickerLayout } from "../../../packages/core/src";
+import { DECAL_KINDS, DRAIN_GRATE, HOUSE_PLATE, doorLayout, STICKER_HOSTS, type StreetPropItem, WALL_DECALS, grateLayout, graffitiLayout, hostFaces, plateLayout, stickerLayout } from "../../../packages/core/src";
 import { type FacadeFrame, type Wall, frameWallMeta, hiddenWall } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
 import { holoMayHang, shopBoardHeight, shopBoardOn } from "../../../packages/engine/src/renderer/mapcity/sign-plan";
 import { type CrossingBand, inCrossingBand } from "../../../packages/sim/src/content/lublin/crossing-bands";
@@ -300,12 +300,21 @@ export const decalChecks = (all: readonly StreetPropItem[], world: DecalWorld): 
       }),
     /** A grate on a zebra crossing or its band. */
     "decal-on-crossing": () => grates().flatMap((i) => (corners(i).some((q) => world.crossings.some((b) => inCrossingBand(b, q))) ? [{ at: near(i), what: "drain-grate on a crossing" }] : [])),
-    /** A wall decal over another one on the same wall (a plate under graffiti, two pieces of graffiti in one another). */
+    /** A wall decal over another one on the same wall (a plate under graffiti, two pieces of graffiti in one another) or over a door of the facade (ADR-0058 stage 9). */
     "decal-on-decal": () => {
       const placed = onWalls().flatMap(({ i, on }) => (on ? [{ i, on }] : []));
+      const doors = all.filter((d) => d.prop === "door");
       return placed.flatMap(({ i, on }, k) => {
         const other = placed.slice(0, k).find((o) => o.on.wall === on.wall && o.on.u - o.on.half < on.u + on.half && o.on.u + o.on.half > on.u - on.half && o.on.bottom < on.top && o.on.top > on.bottom);
-        return other ? [{ at: near(i), what: `${i.prop} over a ${other.i.prop} on its wall` }] : [];
+        if (other) return [{ at: near(i), what: `${i.prop} over a ${other.i.prop} on its wall` }];
+        const w = on.wall;
+        const door = doors.find((d) => {
+          const u = ((d.x - w.a.x) * (w.b.x - w.a.x) + (d.z - w.a.z) * (w.b.z - w.a.z)) / w.length;
+          const off = (d.x - w.a.x) * w.nx + (d.z - w.a.z) * w.nz;
+          const l = doorLayout(d.variant);
+          return Math.abs(off) <= OFF_FACE * 2 && Math.abs(u - on.u) < l.width / 2 + on.half && d.y < on.top && d.y + l.height > on.bottom;
+        });
+        return door ? [{ at: near(i), what: `${i.prop} over a door of its wall` }] : [];
       });
     },
     /** A decal in a block of the renderer's furniture no other piece is in: its mesh a mesh more for decals alone. */

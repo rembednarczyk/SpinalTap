@@ -26,6 +26,7 @@
  */
 import type { StreetPropItem, StreetPropKind } from "../../../packages/core/src/world/city-geo.ts";
 import { GRAFFITI_DESIGNS, HOUSE_PLATE, graffitiVariant, parseHouseNumber, plateVariant } from "../../../packages/core/src/world/decals.ts";
+import { doorLayout } from "../../../packages/core/src/world/doors.ts";
 import type { Pt } from "./geometry.ts";
 import type { Tags } from "./osm.ts";
 import { addStreetDecals } from "./props-decals-street.ts";
@@ -151,6 +152,21 @@ type Rect = { readonly u0: number; readonly u1: number; readonly bottom: number;
 
 /** Between two decals on one wall (m): a plate and graffiti, two zones' graffiti. */
 export const DECAL_ROOM = 0.1;
+/** Round a door's leaf: its frame and the lamp or panel over it (m). */
+export const DOOR_FRAME = 0.15;
+
+/** The doors on a wall (their feet on its face, facing out with it) as stretches of it, frames included. */
+export const doorsOn = (w: DecalWall, doors: readonly StreetPropItem[]): Rect[] => {
+  const dx = (w.b.x - w.a.x) / w.length;
+  const dz = (w.b.z - w.a.z) / w.length;
+  return doors.flatMap((d) => {
+    const u = (d.x - w.a.x) * dx + (d.z - w.a.z) * dz;
+    const off = (d.x - w.a.x) * w.nx + (d.z - w.a.z) * w.nz;
+    if (Math.abs(off) > 0.1 || u < -0.5 || u > w.length + 0.5 || Math.cos(d.yaw - yawOf(w.nx, w.nz)) < 0.99) return [];
+    const l = doorLayout(d.variant);
+    return [{ u0: u - l.width / 2 - DOOR_FRAME, u1: u + l.width / 2 + DOOR_FRAME, bottom: d.y - DOOR_FRAME, top: d.y + l.height + DOOR_FRAME }];
+  });
+};
 
 /** The least height a piece is painted (m). */
 const MIN_HEIGHT = 0.2;
@@ -313,12 +329,13 @@ export const addDecals = (byChunk: Map<string, StreetPropItem[]>, site: Site, wa
     (per[item.prop] ??= {})[chunk.district] = (per[item.prop]?.[chunk.district] ?? 0) + 1;
   };
   const street = addStreetDecals(byChunk, site, ctx, rejected);
+  const doors = [...byChunk.values()].flat().filter((i) => i.prop === "door");
   const byBuilding = new Map<string, DecalWall[]>();
   for (const w of walls) byBuilding.set(w.building, [...(byBuilding.get(w.building) ?? []), w]);
   for (const [building, list] of byBuilding) {
     const tags = ctx.buildingTags?.get(list[0]!.osm);
-    // What each wall already carries: the plate first, the graffiti round it.
-    const taken = list.map((): Rect[] => []);
+    // What each wall already carries: its doors (ADR-0058 stage 9), then the plate, the graffiti round them.
+    const taken = list.map((w): Rect[] => doorsOn(w, doors));
     const plate = tags ? plateSpot(site, list, tags, ctx) : null;
     if (plate) {
       const got = settle(site, plate.w, plate.s, ctx, true, taken[list.indexOf(plate.w)]!);

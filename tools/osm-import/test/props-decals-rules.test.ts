@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { DRAIN_GRATE, HOUSE_PLATE, STICKER_HOSTS, grateLayout, graffitiLayout, hostFaces, plateLayout, stickerLayout } from "../../../packages/core/src/world/decals.ts";
+import { doorVariant } from "../../../packages/core/src/world/doors.ts";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
 import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
-import { type DecalContext, type DecalWall, END_ROOM, MURAL_LIFT, PLATE_LIFT, STREET_LIFT, addDecals } from "../src/props-decals.ts";
+import { DOOR_FRAME, type DecalContext, type DecalWall, END_ROOM, MURAL_LIFT, PLATE_LIFT, STREET_LIFT, addDecals } from "../src/props-decals.ts";
 import { GRATE_SPACING, KERB_GAP, STICKER_GAP, grateCorners } from "../src/props-decals-street.ts";
 import { Site } from "../src/props-site.ts";
 import type { Tags } from "../src/osm.ts";
@@ -218,6 +219,20 @@ describe("decals on one wall", () => {
       }
     }
     expect(pairs).toBeGreaterThan(10);
+  });
+});
+
+describe("decals and the doors of the facades (ADR-0058 stage 9)", () => {
+  it("keep off a door of their wall, its frame included", () => {
+    // A roller shutter 2.4 m wide in the middle of every wall, its foot on the pavement.
+    const doors = row().map((w): StreetPropItem => ({ prop: "door", x: w.a.x + 4, y: 0, z: 40, yaw: Math.PI, variant: doorVariant({ model: "shutter", width: 2.4, height: 2.6 }) }));
+    const g = decals(row(), {}, "targ", doors).of("graffiti");
+    expect(g.length).toBeGreaterThan(5);
+    for (const i of g) {
+      const l = graffitiLayout(i.variant);
+      const d = doors.find((x) => Math.abs(x.x - i.x) < 4)!;
+      expect(i.x + l.width / 2 <= d.x - 1.2 - DOOR_FRAME + 1e-6 || i.x - l.width / 2 >= d.x + 1.2 + DOOR_FRAME - 1e-6, `${i.x}`).toBe(true);
+    }
   });
 });
 

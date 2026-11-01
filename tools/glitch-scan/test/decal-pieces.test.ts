@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type BuildingUse, type StreetPropItem, type ViewDescriptor, grateVariant, graffitiVariant, plateVariant, stickerVariant } from "../../../packages/core/src";
+import { type BuildingUse, type StreetPropItem, type ViewDescriptor, doorVariant, grateVariant, graffitiVariant, plateVariant, stickerVariant } from "../../../packages/core/src";
 import type { Wall } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
 import { RECIPE_BY_OSM } from "../../../packages/engine/src/renderer/mapcity/landmarks/recipes";
 import { shopBoardHeight, shopBoardOn } from "../../../packages/engine/src/renderer/mapcity/sign-plan";
@@ -317,6 +317,14 @@ describe("the glitch scan's decal checks (ADR-0058 stage 6)", () => {
     none([on(GARAGE_S, "graffiti", 1, graffiti(1.2, 1, 0.3)), on(west, "graffiti", 0.8, graffiti(1.2, 1, 0.3))]);
     // Two garages' walls alike along them, the pieces at the same place on each and at heights that meet.
     none([on(GARAGE_S, "graffiti", 3, graffiti(2, 1.5, 0.3)), on(RAISED_S, "graffiti", 3, graffiti(2, 1, 0.3), { y: 1 })]);
+  });
+
+  it("finds a wall decal over a door of its wall, and none beside it", () => {
+    const door = (s: number): StreetPropItem => ({ ...on(GARAGE_S, "door", s, doorVariant({ model: "shutter", width: 1.2, height: 2.3 })), prop: "door" });
+    only("decal-on-decal", [on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.3)), door(3.5)], {}, 1);
+    none([on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.3)), door(5.5)]);
+    // A door on another wall at the same place along it.
+    none([on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.3)), { ...door(3.5), z: door(3.5).z + 30 }]);
   });
 
   it("finds a decal in a furniture block no other piece is in", () => {
