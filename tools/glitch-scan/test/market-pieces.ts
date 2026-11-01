@@ -1,5 +1,5 @@
 import type { StreetPropItem, StreetPropKind } from "../../../packages/core/src";
-import { distanceToPiece, furniturePrisms, turnLocal } from "../../../packages/sim/src/content/lublin/furniture";
+import { FOOD_STALL, distanceToPiece, furniturePrisms, turnLocal } from "../../../packages/sim/src/content/lublin/furniture";
 import { extractFeatures } from "../../osm-import/src/features.ts";
 import { roadWidth } from "../../osm-import/src/ground.ts";
 import type { OsmData, Tags } from "../../osm-import/src/osm.ts";
@@ -30,6 +30,8 @@ const WALKER = 0.6;
 /** How far a food booth may stand from the fast-food place it serves (m), and the stock from a marketplace's outline or a stall. */
 const BOOTH_REACH = 20;
 const STOCK_REACH = 3;
+/** The pavement a food booth leaves between its stools and the carriageway (m). */
+const BOOTH_PAVEMENT = 2;
 
 const near = (p: Pt): string => `${p.x.toFixed(0)},${p.z.toFixed(0)}`;
 
@@ -122,6 +124,20 @@ export const marketChecks = (osm: OsmData, all: readonly StreetPropItem[], lanes
         const pts = solidPoints(i);
         const hit = d.roads.find((r) => pts.some((q) => lineGap(q, r.line) < r.half - ROAD_SLACK));
         return hit ? `on ${hit.id}` : null;
+      }),
+    /**
+     * A food booth whose stools' front (sim `FOOD_STALL`) is less than `BOOTH_PAVEMENT` from the
+     * edge of a car road's carriageway (its mapped width about its axis): no room left to walk past.
+     */
+    "market-booth-near-road": () =>
+      each((i, d) => {
+        if (i.prop !== "food-stall") return null;
+        const front = [-1.05, -0.5, 0, 0.5, 1.05].map((x) => {
+          const q = turnLocal(i.yaw, x, FOOD_STALL.stoolZ + 0.18);
+          return { x: i.x + q.x, z: i.z + q.z };
+        });
+        const hit = d.roads.find((r) => front.some((q) => lineGap(q, r.line) - r.half < BOOTH_PAVEMENT));
+        return hit ? `${Math.min(...front.map((q) => lineGap(q, hit.line) - hit.half)).toFixed(2)} m from ${hit.id}` : null;
       }),
     /** A market piece's solid within `CROSSING_ROOM` of a zebra, or of a passage through a building or a covered way past its half width. */
     "market-piece-in-crossing": () =>

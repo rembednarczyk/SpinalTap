@@ -69,5 +69,6 @@
   "market-piece-on-road": 0,
   "market-piece-in-crossing": 0,
   "market-piece-on-crowd-lane": 0,
-  "market-piece-in-neighbour": 0
+  "market-piece-in-neighbour": 0,
+  "market-booth-near-road": 0
 }

@@ -87,6 +87,14 @@ describe("the market's furniture in the glitch scan (ADR-0058 stage 3)", () => {
     expect(f["market-piece-on-crowd-lane"]).toEqual(["food-stall on lane"]);
   });
 
+  it("finds a booth whose stools come within 2 m of a carriageway's edge, and not one 2.5 m off", () => {
+    // The street's carriageway (residential, 6.5 m) has its edge at z -16.75; the booth faces it (-z),
+    // its stools' front 1.03 m before its middle.
+    const at = (gap: number) => piece("food-stall", 60, -16.75 + gap + 1.03, Math.PI);
+    expect(found([at(1.5)])["market-booth-near-road"]).toEqual([expect.stringMatching(/^food-stall 1\.50 m from w/)]);
+    expect(found([at(2.5)])["market-booth-near-road"]).toEqual([]);
+  });
+
   it("finds a piece in its neighbour: under another stall's canvas, or away from its own place", () => {
     const f = found([piece("market-stall", 120, 20), piece("market-goods", 120.5, 20.5), piece("market-goods", 60, -60), piece("food-stall", 160, 160)]);
     // The stall and its neighbour both: each stands in the other.
