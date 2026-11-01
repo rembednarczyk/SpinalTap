@@ -102,6 +102,8 @@ export {
   awarenessOf,
   giveLead,
   scare,
+  WAKE_REACH,
+  WAKE_TIME,
 } from "./systems/ai";
 export {
   contractGangerHp,

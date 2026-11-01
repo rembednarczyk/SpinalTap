@@ -1,4 +1,23 @@
-import type { CrimeKind, CrowdState, Vec3 } from "@seki/core";
+import type { CrimeKind, CrowdState, EntityId, Vec3 } from "@seki/core";
+
+/**
+ * What the street knows about someone knocked out (ADR-0065), next to its `unconscious`. Transient
+ * like the knock-out itself (stage 3 of the ADR saves both).
+ */
+export interface DownedBody {
+  /** Where the player stood when she took it down: what it knows once woken. */
+  readonly playerAt: Vec3;
+  /** It was fighting her (ADR-0029: no crime): its body sends the security looking, with no report and no heat. */
+  readonly fought: boolean;
+  /** Somebody (an NPC, a camera) has noticed it: the street around it took fright once. */
+  found: boolean;
+  /** The district's security has been told (a guard of its or a camera saw it). */
+  reported: boolean;
+  /** The NPC walking over to wake it, null when nobody is. */
+  finder: EntityId | null;
+  /** Seconds the finder has spent at its side; at `WAKE_TIME` it wakes. */
+  wake: number;
+}
 
 export interface GangerAi {
   readonly home: Vec3;
@@ -98,5 +117,7 @@ export interface WitnessCall {
   readonly at: Vec3;
   /** The incident it saw; several witnesses of one incident make one report. */
   readonly incident: number;
+  /** Someone knocked out in it (ADR-0065), marked reported when the call goes through. */
+  readonly body?: EntityId;
   left: number;
 }
