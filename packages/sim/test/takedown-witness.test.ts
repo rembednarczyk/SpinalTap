@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type DomainEvents, WITNESS_CALL_SECONDS } from "@seki/core";
-import { escortEntity, takedownDistance } from "../src";
+import { TAKEDOWN_TIME, escortEntity, takedownDistance } from "../src";
 import { collect, run, teleportPlayer } from "./helpers";
 import { CROUCH, camera, offset, patrol, quietStreet, stallholder, takeDown, ticks, victim } from "./takedown-scenes";
 
@@ -107,5 +107,49 @@ describe("witnesses of a takedown (ADR-0065)", () => {
     run(sim, ticks(WITNESS_CALL_SECONDS + 2), CROUCH);
     expect(reports).toEqual([]);
     expect(w.civilian!.crowd?.call ?? null).toBeNull();
+  });
+
+  it("a witness held in the takedown does not finish its call: it waits, and goes quiet once knocked out (G-141)", () => {
+    const sim = quietStreet();
+    victim(sim);
+    const w = stallholder(sim, 4300, offset(sim, -2, 0));
+    const reports = collect(sim, "CrimeReported");
+    takeDown(sim);
+    teleportPlayer(sim, { ...w.position, x: w.position.x + 0.8 }, Math.PI / 2);
+    // Less of the call is left than the hold takes.
+    const left = 0.38;
+    w.civilian!.crowd!.call!.left = left;
+    sim.step(CROUCH);
+    const held = w.civilian!.crowd!.call!.left;
+    sim.enqueue({ type: "takedown", lethal: false });
+    run(sim, ticks(TAKEDOWN_TIME / 2), CROUCH);
+    expect(sim.session.takedown?.target).toBe(w.id);
+    expect(w.civilian!.crowd?.call?.left).toBe(held);
+    run(sim, ticks(TAKEDOWN_TIME), CROUCH);
+    expect(w.unconscious).toBe(true);
+    run(sim, ticks(WITNESS_CALL_SECONDS + 2), CROUCH);
+    expect(reports).toEqual([]);
+  });
+
+  it("a witness that breaks free of the hold picks its call up where it left it (G-141)", () => {
+    const sim = quietStreet();
+    victim(sim);
+    const w = stallholder(sim, 4300, offset(sim, -2, 0));
+    const reports = collect<DomainEvents["CrimeReported"]>(sim, "CrimeReported");
+    takeDown(sim);
+    teleportPlayer(sim, { ...w.position, x: w.position.x + 0.8 }, Math.PI / 2);
+    const left = 0.38;
+    w.civilian!.crowd!.call!.left = left;
+    sim.step(CROUCH);
+    sim.enqueue({ type: "takedown", lethal: false });
+    run(sim, ticks(TAKEDOWN_TIME / 2), CROUCH);
+    const p = sim.player()!;
+    p.health = { ...p.health!, current: p.health!.current - 5 };
+    sim.step(CROUCH);
+    expect(sim.session.takedown).toBeNull();
+    expect(w.unconscious).toBeUndefined();
+    expect(reports).toEqual([]);
+    run(sim, ticks(left) + 1, CROUCH);
+    expect(reports.map((r) => [r.crime, r.channel, r.witnessId])).toEqual([["assault", "civilian", w.id]]);
   });
 });
