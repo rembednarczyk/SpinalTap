@@ -24,7 +24,8 @@ export interface SessionState {
   street2: StreetScenes;
   /**
    * The interior the player is in (ADR-0061): its id, null outside, undefined until the first
-   * step of a new game or a load has read it from the position. Transient, not saved.
+   * step of a new game has read it from the position; a load reads it from the saved one (G-174).
+   * Not saved.
    */
   interior: string | null | undefined;
   /** The takedown under way (ADR-0065), null when none. Transient, not saved. */

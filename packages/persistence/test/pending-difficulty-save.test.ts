@@ -11,8 +11,9 @@ const wrap = (payload: unknown) => {
 };
 
 describe("a waiting difficulty in the save (v19 to v20, G-171)", () => {
-  it("is schema v20", () => {
-    expect(SAVE_SCHEMA_VERSION).toBe(20);
+  it("is schema v20 or later", () => {
+    // v21 (G-174, a guard's suspicion) walks on from here with no change to the waiting profile.
+    expect(SAVE_SCHEMA_VERSION).toBeGreaterThanOrEqual(20);
   });
 
   it("a v19 save loads as it was, with no profile waiting", () => {

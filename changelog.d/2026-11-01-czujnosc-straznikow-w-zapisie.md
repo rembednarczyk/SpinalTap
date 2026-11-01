@@ -1,0 +1,1 @@
+Zapis i wczytanie w trakcie infiltracji nie zerują czujności strażników: kto zaczął dostrzegać Seki, po wczytaniu dalej ją dostrzega, a gra toczy się dalej tak samo jak bez wczytania (G-174, zapis v21).
