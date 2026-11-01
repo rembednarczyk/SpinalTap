@@ -478,6 +478,27 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: test, że żaden fragment wieży nie wypada bliżej niż skorupa przy danych miasta w kierunku kamery, albo osobna skala dla stopy; przy okazji kontrole `megablock-*` przenieść do `tools/glitch-scan` z bazą w `glitch-baseline.json` (dziś w teście engine)
 - Pakiet właściciela: packages/engine (renderer), tools/glitch-scan
 
+### G-148 Szyldy i neony wcięte w fasady i narożniki
+- Status: zgłoszone (1.11, gracz, telefon, zrzuty `scratchpad/gracz-1-11/`)
+- Ważność: S3 · Zasięg: Stare Miasto (Grodzka, okolice Bramy Krakowskiej: Bramowa, Jezuicka, Szambelańska), prawdopodobnie całe miasto
+- Objawy: świecąca rama szyldu „DEN…” przechodzi przez narożnik budynku (Grodzka); ciemna płyta wystaje ze ściany obok szyldu „…AJNIA SMAKU” (Bramowa); pionowe neony nachodzą na sąsiednie elewacje
+- Do ustalenia: które to szyldy (lokale ADR-0064 etap 4, #118, czy starsze neony dressingu) i czy szyld wychodzi poza odcinek elewacji przy narożniku
+- Poprawka: szyld mieści się w swoim odcinku elewacji z marginesem od narożnika, a wysięgnik nie wchodzi w sąsiedni budynek; kontrola skanu „szyld poza swoją elewacją”
+- Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import (venues)
+
+### G-149 Pomniki i rzeźby z OSM mają przypadkowy kształt
+- Status: zgłoszone (1.11, gracz: „strategia stawiania assetów wydaje się randomowa”)
+- Ważność: S3 · Zasięg: 27 pomników i rzeźb z planu (`docs/world/lublin-props.todo.json`) i wszystkie `memorial`/`artwork` z OSM
+- Przyczyna: ADR-0047 bierze pozycję z OSM, ale kształt z hasha id (`variant`, `SHAPES.monument = 4`): obelisk, postać na cokole, Koziołek albo abstrakcja; poza kilkoma wymuszonymi w planie prawdziwy pomnik dostaje losową bryłę (np. stos sześcianów albo postać na czarnym bloku w wąskiej uliczce)
+- Poprawka: kształt z tagów OSM (`memorial=plaque|statue|bust|stone`, `artwork_type`, `historic`) i z ręcznej tabeli znanych pomników Lublina; tablica pamiątkowa na fasadzie zamiast wolnostojącej bryły; bez dopasowania: neutralna tablica albo kapliczka, nie abstrakcja; przegląd kuratora
+- Pakiet właściciela: tools/osm-import (props-kinds, props-gen), packages/engine (prop-civic)
+
+### G-150 Źle położone dachy na Starym Mieście
+- Status: zgłoszone (1.11, gracz, bez dokładnych miejsc); do łowcy
+- Ważność: S3 · Zasięg: do ustalenia
+- Objawy z opisu gracza: dachy przesunięte albo nachodzące na sąsiednie budynki, gzymsy wystające poza fasadę
+- Poprawka: najpierw łowca (przegląd dachów Starego Miasta zrzutami i skanem), potem osobne wpisy
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
