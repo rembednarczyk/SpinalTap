@@ -91,13 +91,25 @@ export const scanFocus = (ctx: SimContext, player: Entity): Entity | null => {
 };
 
 
-const targetRef = (e: Entity): string => e.key ?? `#${e.id}`;
+/**
+ * How the upload names its target in the save: the entity's key, a reinforcement's place in the
+ * heat (`security:<n>`, G-194: unkeyed, its id changes on loading), else `#<id>`, good only for this session.
+ */
+const targetRef = (e: Entity): string => e.key ?? (e.security ? `security:${e.security.n}` : `#${e.id}`);
+
+const SECURITY_REF = /^security:(\d+)$/;
 
 const findTarget = (ctx: SimContext, ref: string): Entity | null => {
   if (ref.startsWith("#")) {
     const id = Number(ref.slice(1));
+    if (id !== ctx.session.watch.uploadId) return null;
     for (const e of ctx.world) if (e.id === id) return e;
     return null;
+  }
+  const security = SECURITY_REF.exec(ref);
+  if (security) {
+    const n = Number(security[1]);
+    return ctx.world.with("security").entities.find((e) => e.security.n === n) ?? null;
   }
   for (const e of ctx.world) if (e.key === ref) return e;
   return null;
@@ -280,6 +292,7 @@ const start = (ctx: SimContext, focus: Entity, slot: number): void => {
   if (netrun.ram + 1e-9 < ram) return fail("no-ram");
   const upload = QUICKHACKS[hackId].upload;
   ctx.state.domain = { ...ctx.state.domain, netrun: { ram: netrun.ram - ram, upload: { hackId, target: targetRef(focus), left: upload, ram } } };
+  ctx.session.watch.uploadId = focus.id;
   ctx.bus.emit("QuickhackStarted", { hackId, targetId: focus.id, upload, ram });
 };
 
