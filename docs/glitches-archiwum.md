@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-184 Szkielety modeli przybywają przy każdym cyklu nowa gra / clear
+- Status: naprawione (1.11, #151: szkielet postaci proceduralnej zwalniany z rigiem; szkielety po clear 34/43/52/61 → 25 stale; pula VRM zamierzona, ograniczona szczytem jednoczesnych postaci; weryfikacja PRZYJĘTE)
+- Ważność: S3 do potwierdzenia (możliwy wyciek pamięci) · Zasięg: liczba szkieletów w scenie rośnie o 12 na cykl newGame/clear (67 → 79) na NullEngine z modelami VRM; sprawdzić, czy to zamierzona pula
+- Poprawka: dispose szkieletów postaci przy clear (`CharacterViews`) albo udokumentowana pula; test sesji: dwa cykle, ta sama liczba szkieletów
+- Pakiet właściciela: packages/engine (renderer)
+
 ### G-173 Latarnie ścienne w przejazdach bramnych i szczelinach
 - Status: naprawione (1.11, #147: kontrola `wall-lantern-in-building` 4 → 0, rozstawienie 3774 → 3770, 1 latarnia przesunięta przy Wieży Trynitarskiej; piąta zgłoszona (Grodzka 20, (653,4; 80,8)) wisi przed fasadą, szczeliny w danych nie ma; weryfikacja PRZYJĘTE, kurator ZGODNE Z UWAGAMI)
 - Ważność: S4 · Zasięg: 5 latarni: przejazd Bramy Krakowskiej (475,2; −90,1), Bramy Grodzkiej (713,5; 138,9), (718,6; 144,5), Ku Farze pod Grodzką 14 (621,8; 40,4), szczelina Grodzka 18/20 (653,4; 80,8); 4 były przed #137, (621,8; 40,4) wróciła w #137 przez odstęp od przesuniętej sąsiadki

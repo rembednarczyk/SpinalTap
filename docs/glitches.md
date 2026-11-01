@@ -565,7 +565,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/glitch-scan, tools/osm-import
 
 ### G-177 Auta na pasach postojowych OSM równolegle na środku głębokości obrysu
-- Status: zgłoszone (1.11, kurator #143); T-102
+- Status: w PR #152 (1.11; auta przy krawężniku i w poprzek wg `orientation` i głębokości, tłum 1 m od pasów; 66 → 75 aut); w weryfikacji, potem kurator
 - Ważność: S4 · Zasięg: auta z `bayCars` (`tools/osm-import/src/parked-cars.ts`): Kowalska w232362980 (683,7; 161,0) odsunięta 0,8 m ku jezdni (narożniki 0,31 i 0,56 m poza obrysem), bo trasa tłumu `stare-miasto-1-1-square-2` biegnie po krawężniku pasa; obrysy 4,7–8 m głębokości (Ruska w1024029951, Radziwiłłowska w883991779, Ciasna w227679486) i Kalinowszczyzna w1000912163 (`orientation=perpendicular`, 4–5 miejsc) mają po jednym aucie równolegle
 - Poprawka: auto przy zewnętrznej krawędzi obrysu (krawężnik), w obrysie ≥4,5 m albo z `orientation=perpendicular|diagonal` w poprzek (tag `orientation` do `CarParkOut`); trasa tłumu na osi chodnika w173566577; kontrole skanu `bay-car-out-of-park` (baza 1), `bay-car-orientation` (baza 1), `crowd-lane-on-parking`
 - Uwaga: `offMultiLaneKerbs` nie patrzy na stronę ulicy; na drogach 1+2 (Krakowskie w154962958, Lubartowska, Radziwiłłowska w331453920) wyklucza też krawężnik od strony jednego pasa; dziś bez skutku
@@ -606,17 +606,17 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: kontrola „latarnia ścienna bliżej niż 2 m od osi przejścia z danych gry” (`PASSAGES` i `GATE_PASSAGES`, odcinek przycięty do końców), baza 0; `nearPassage` także dla `GATE_PASSAGES`. Uwaga: pas wokół `tunnel=yes|covered=yes` z OSM łapie Trasę Podziemną (w293370650), więc nie z OSM
 - Pakiet właściciela: tools/glitch-scan, tools/osm-import
 
-### G-184 Szkielety modeli przybywają przy każdym cyklu nowa gra / clear
-- Status: w PR #151 (1.11; potwierdzony wyciek szkieletów postaci proceduralnych, pula VRM zamierzona); w weryfikacji
-- Ważność: S3 do potwierdzenia (możliwy wyciek pamięci) · Zasięg: liczba szkieletów w scenie rośnie o 12 na cykl newGame/clear (67 → 79) na NullEngine z modelami VRM; sprawdzić, czy to zamierzona pula
-- Poprawka: dispose szkieletów postaci przy clear (`CharacterViews`) albo udokumentowana pula; test sesji: dwa cykle, ta sama liczba szkieletów
-- Pakiet właściciela: packages/engine (renderer)
-
 ### G-185 Stan strażników kontraktu po wczytaniu (hack w toku, uśpieni)
 - Status: zgłoszone (1.11, weryfikator #150); było przed #150
 - Ważność: S3 · Zasięg: (a) hack w toku: seed 9, zlecenie `hack` przy Genzo, połączenie z `quay_terminal`, zapis 565 kroków po połączeniu: w 1. kroku `c1-g1.cooldown` 2,583 w oryginale i 0 po wczytaniu, gracz hp 6 vs 37, inny `rngState`; zapis po 660 krokach: `c1-g2` po wczytaniu stoi na posterunku (2576; −28,6; 421), w oryginale się rusza; (b) `lost` zaalarmowanego strażnika zapisanego poza chunkiem o 1/60 wyżej (`dormant-restore`; seed 77, 10 kroków po alarmie, teleport Genzo+2000, 120 kroków, zapis); (c) `suspicion` uśpionego strażnika: seed 8, aktywny `infiltrate`, wyjście z doków, zapis, powrót na `docks(0,0,120)` i 5 kroków: `c1-g0.suspicion` 0,0266 vs 0,0183
 - Poprawka: cooldown/stan walki strażników w zapisie albo odtwarzane; `dormant-restore` bez dodatkowego kroku; test zapis–wczytanie dla każdego wariantu
 - Pakiet właściciela: packages/sim, packages/persistence
+
+### G-186 Obserwator `onReadyObservable` przybywa przy każdej nowej grze (do sprawdzenia w przeglądarce)
+- Status: zgłoszone (1.11, autor i weryfikator #151); możliwy artefakt NullEngine
+- Ważność: S4 · Zasięg: na NullEngine `scene.onReadyObservable` rośnie o 1 na każde newGame (9 → 13 w 5 cyklach); źródło prawdopodobnie `scene.whenReadyAsync(true)` w `packages/engine/src/renderer/start-prep.ts:181`, które na NullEngine się nie rozwiązuje
+- Poprawka: sprawdzić w przeglądarce (nowa gra przed gotowością sceny); jeśli rośnie, anulowanie oczekiwania przy `cancelPrepare`/clear
+- Pakiet właściciela: packages/engine (renderer)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
