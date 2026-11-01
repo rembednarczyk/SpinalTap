@@ -4,53 +4,14 @@ import { WINDOW_STYLE } from "../src/renderer/mapcity/facade-style";
 import { doorSlots, groundGlass } from "../src/renderer/mapcity/door-slots";
 import { type VenueBoard, venueBoards } from "../src/renderer/mapcity/venue-plan";
 import { type P2, cleanRing } from "../src/renderer/mapcity/polygon";
+import { shaderGlass } from "./facade-glass-mask";
 
 /**
  * Where a door may stand on a facade (ADR-0058 stage 9), against the facade shader itself: the
- * glass mask of `facadeGlass` (`npr/toon-city.ts`) ported line by line, sampled round each slot.
- * A door beside a pane at its height, or a pane running on past a door that covers it, would be a
- * door in a window.
+ * glass mask of `facadeGlass` (`npr/toon-city.ts`) as `facade-glass-mask.ts` ports it, sampled round
+ * each slot. A door beside a pane at its height, or a pane running on past a door that covers it,
+ * would be a door in a window.
  */
-
-const fract = (v: number) => v - Math.floor(v);
-const step = (e: number, x: number) => (x < e ? 0 : 1);
-
-/** `facadeGlass`'s mask (alpha) on the ground floor, near (detail 1), as the GLSL computes it. */
-const shaderMask = (q: { x: number; y: number }, meta: readonly [number, number]): number => {
-  const storey = Math.floor(meta[0] + 0.0005) / 10;
-  const bay = Math.floor(fract(meta[0]) * 1000 + 0.5) / 100;
-  const code = Math.floor(meta[1] + 0.0005);
-  const seed = (Math.floor(fract(meta[1]) * 256) + 0.5) / 256;
-  const shop = step(7.5, code) * (1 - step(15.5, code));
-  const style = code - 8 * shop;
-  if (storey < 0.05 || style > 15.5) return 0;
-  const ground = storey * 1.25;
-  const church = step(3.5, style) * step(style, 4.5);
-  if (q.y < ground && shop > 0.5 && church < 0.5) {
-    const sb = bay * (fract(seed * 3.1) > 0.5 ? 1 : 2);
-    const u = fract(q.x / sb);
-    return step(0.05, u) * step(u, 0.95) * step(0.45, q.y) * step(q.y, ground - 0.85);
-  }
-  const row = Math.floor((q.y - ground) / storey) + 1;
-  const fy = q.y < ground ? q.y / ground : fract((q.y - ground) / storey);
-  const c = Math.floor(q.x / bay);
-  const u = fract(q.x / bay);
-  const win = (s: number): number => {
-    if (s < 1.5) return step(0.3, u) * step(u, 0.7) * step(0.24, fy) * step(fy, 0.8);
-    if (s < 2.5) return step(0.1, u) * step(u, 0.9) * step(0.25, fy) * step(fy, 0.84);
-    if (s < 3.5) return step(0.28, u) * step(u, 0.72) * step(0.2, fy) * step(fy, 0.86);
-    if (s < 4.5) return 1;
-    if (s < 5.5) return step(0.04, u) * step(u, 0.96) * step(0.56, fy) * step(fy, 0.8);
-    return step(0.2, u) * step(u, 0.8) * step(0.3, fy) * step(fy, 0.76);
-  };
-  let rect = win(style);
-  // The gate may be painted in the second bay of a tenement (by a hash of the seed): taken as painted.
-  if (row < 0.5 && style < 1.5) {
-    const gate = step(Math.abs(c - 1), 0.5);
-    rect = Math.max(rect * (1 - gate), gate * step(0.16, u) * step(u, 0.84) * step(q.y, ground * 0.8) * step(0, q.y));
-  }
-  return rect;
-};
 
 const rect = (w: number, d: number): P2[] =>
   cleanRing([
@@ -71,12 +32,12 @@ const slotsAgainstShader = (f: FacadeFrame): { slots: number; bad: string[] } =>
     for (const s of doorSlots(f, w)) {
       slots++;
       for (let y = 0.05; y < s.max - 0.01; y += 0.05) {
-        for (const x of [s.u - s.width / 2 - 0.02, s.u + s.width / 2 + 0.02]) if (shaderMask({ x, y }, meta) > 0) bad.push(`pane beside the door at u ${x.toFixed(2)}, y ${y.toFixed(2)} (${s.cover ? "cover" : "pier"})`);
+        for (const x of [s.u - s.width / 2 - 0.02, s.u + s.width / 2 + 0.02]) if (shaderGlass({ x, y }, meta)) bad.push(`pane beside the door at u ${x.toFixed(2)}, y ${y.toFixed(2)} (${s.cover ? "cover" : "pier"})`);
       }
       for (let x = s.u - s.width / 2; x <= s.u + s.width / 2; x += 0.05) {
-        if (shaderMask({ x, y: s.top + 0.03 }, meta) > 0) bad.push(`pane above the door at u ${x.toFixed(2)}`);
+        if (shaderGlass({ x, y: s.top + 0.03 }, meta)) bad.push(`pane above the door at u ${x.toFixed(2)}`);
         // Nothing painted inside the door between its lowest and highest top (the first floor's windows).
-        for (let y = s.top + 0.03; y < s.max; y += 0.05) if (shaderMask({ x, y }, meta) > 0) bad.push(`pane in the door at u ${x.toFixed(2)}, y ${y.toFixed(2)}`);
+        for (let y = s.top + 0.03; y < s.max; y += 0.05) if (shaderGlass({ x, y }, meta)) bad.push(`pane in the door at u ${x.toFixed(2)}, y ${y.toFixed(2)}`);
       }
     }
   }
