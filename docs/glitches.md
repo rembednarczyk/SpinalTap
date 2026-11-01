@@ -469,7 +469,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: przyczyna ustalona śladem; test czeka na stan gry, nie na zegar (ADR-0046); 10 przebiegów bez błędu
 
 ### G-140 Zaparkowane auta na wjazdach i wylotach dróg serwisowych (Cerkiewna)
-- Status: w weryfikacji (885bbd5: `serviceWays` w chunkach, odstęp aut od osi; aut 63 → 61)
+- Status: w PR #110 (weryfikator przyjął 1.11; `serviceWays` w chunkach, odstęp aut od osi; aut 63 → 61; próg testu ruchu > 60 ma zapas 1 auta; skan liczy od 1,5 m, reguła od 2,5 m)
 - Ważność: S4 · Zasięg: 3 auta (Cerkiewna (908.8, 440.5) na `driveway` w1381877866, (912.2, 416.4) i (910.8, 422.5) przy wylocie `service` w739432848)
 - Przyczyna: `offOtherRoads` w `parked-cars.ts` pilnuje tylko ulic z `CAR_KINDS`, bez `highway=service`
 - Poprawka: w `fits()` odstęp od osi `highway=service` (poza `parking_aisle`) co najmniej półszerokość + 0,5 m. Uwaga (1.11): dane chunków sim mają tylko nazwane ulice, a `service` i `driveway` przy Cerkiewnej są bez nazwy, więc najpierw import musi przenosić osie nienazwanych dróg serwisowych (osobne pole, nie `streets`); koszt mały–średni, nie drobna poprawka
@@ -490,6 +490,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer)
 - Poprawka do wyboru: większy atlas, zwalnianie wierszy przy wyładowaniu komórki albo atlas na chunk; budżet tekstur na telefonie
 - Test przyjęcia: wszystkie nazwy z wczytanych komórek mają wiersz; test ładowania w różnej kolejności
+
+### G-143 Taksówki na osi chodnika przy Podzamczu
+- Status: zgłoszone (1.11, weryfikator G-140); było przed G-140
+- Ważność: S4 · Zasięg: taxi (928.6, 452.2) 0,01 m od osi `highway=footway` w809962786, taxi (922.9, 430.6) 0,80 m od niej
+- Do ustalenia: chodnik wzdłuż krawężnika (wtedy w porządku) czy przejście przez jezdnię (wtedy auto zastawia przejście)
+- Pakiet właściciela: packages/sim (content), przegląd kuratora
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
