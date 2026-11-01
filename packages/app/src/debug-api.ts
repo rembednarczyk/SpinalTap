@@ -18,6 +18,8 @@ export interface DebugApi {
    * only in the next one, so a shot waits for this to grow past its value after the step.
    */
   frames?: () => number;
+  /** Renders of the wet-asphalt probe so far, null on low quality without one (G-114). */
+  probeRenders?: () => number | null;
   state(): {
     screen: string;
     hp: number;
@@ -60,7 +62,7 @@ export interface DebugApi {
   dressed(): number;
   /** Character models still loading (ADR-0046: measure once none is). */
   modelsLoading(): number;
-  /** Lublin's city is drawn in detail round the camera (ADR-0045): no near cell is still waiting. */
+  /** Lublin's city is drawn in detail round the camera (ADR-0045): no near cell is still waiting, no wet-probe render due (G-114). */
   citySettled(): boolean;
   /** Height of the game camera in metres (crouch checks). */
   cameraY(): number;

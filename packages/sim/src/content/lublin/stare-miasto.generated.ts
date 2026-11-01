@@ -246,6 +246,10 @@ export const STARE_MIASTO_CHUNKS: readonly LublinChunkData[] = [
       {"building":"w66286388","from":{"x":488.2,"z":-168.6},"to":{"x":498.3,"z":-156.9},"width":3.2,"height":4,"rise":1.1},
       {"building":"w364550283","from":{"x":481.6,"z":-137.5},"to":{"x":468.6,"z":-146.8},"width":3.2,"height":3.6,"rise":0.99},
     ],
+    serviceWays: [
+      {"line":[527.7,-204.5,523.7,-212.2],"width":4},
+      {"line":[523.7,-212.2,512.9,-233.3],"width":4},
+    ],
   },
   {
     id: "stare-miasto-1-0",
@@ -426,6 +430,13 @@ export const STARE_MIASTO_CHUNKS: readonly LublinChunkData[] = [
     passages: [
       {"building":"w66286347","from":{"x":691.1,"z":-124.4},"to":{"x":700.8,"z":-122.2},"width":2.4,"height":3.4,"rise":0.9},
       {"building":"w364550282","from":{"x":708,"z":-81.9},"to":{"x":715.7,"z":-84},"width":2.4,"height":3.4,"rise":0.9},
+    ],
+    serviceWays: [
+      {"line":[760,-216.3,753.6,-209.2,735.3,-184.8],"width":4},
+      {"line":[630.1,-110.8,632,-128.5],"width":4},
+      {"line":[640.9,-228.4,642.7,-223.5,647,-220,661.5,-215.9,668.7,-214.7,671.4,-215.1,675.5,-218.2,677.4,-223.7,677,-232.3,674.8,-234.8,671.5,-236.6,652.1,-239.2,640.9,-228.4,633.6,-223.2,620.3,-216.8],"width":4},
+      {"line":[753.6,-209.2,737.3,-223.2,730.5,-240],"width":4},
+      {"line":[632,-128.5,632.7,-132.9],"width":4},
     ],
   },
   {
@@ -637,6 +648,9 @@ export const STARE_MIASTO_CHUNKS: readonly LublinChunkData[] = [
     passages: [
       {"building":"w66293430","from":{"x":566.4,"z":-14.9},"to":{"x":570.9,"z":-21.4},"width":3.4,"height":4,"rise":1.1},
       {"building":"w66293437","from":{"x":562.3,"z":-29.4},"to":{"x":547.7,"z":-9.7},"width":2.4,"height":3.4,"rise":0.9},
+    ],
+    serviceWays: [
+      {"line":[599.3,54.4,575.8,13.8],"width":4},
     ],
   },
   {
@@ -880,6 +894,9 @@ export const STARE_MIASTO_CHUNKS: readonly LublinChunkData[] = [
     passages: [
       {"building":"w232362876","from":{"x":707.5,"z":133.6},"to":{"x":722,"z":147.3},"width":3.4,"height":4,"rise":1.1},
       {"building":"w66293395","from":{"x":615.3,"z":45.3},"to":{"x":625.1,"z":38.4},"width":3.4,"height":4,"rise":1.1},
+    ],
+    serviceWays: [
+      {"line":[736,36.7,760,50.1],"width":4},
     ],
   },
 ];

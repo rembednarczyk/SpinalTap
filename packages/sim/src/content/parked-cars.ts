@@ -42,8 +42,12 @@ const JUNCTION_CLEAR = 12;
 const LANE_CLEAR = 1.4;
 /** Sideways shifts tried for a kerb bay, the kerb line's own first (m, negative towards the axis). */
 const KERB_NUDGE = [0, -0.4, -0.8, -1.2, 0.4] as const;
-/** Shifts along the kerb tried for a bay none of whose nudges fits (on a slope, a bend): to a flatter, straighter spot nearby (m). */
-const KERB_SLIDE = [0, -1.5, 1.5, -2.5, 2.5] as const;
+/**
+ * Shifts along the kerb tried for a bay none of whose nudges fits (on a slope, a bend, by a
+ * driveway's mouth): to a flatter, straighter, free spot nearby (m). A mouth with its room is
+ * some 5 m wide, so a bay at its middle has to move past ±2.5 m (G-140).
+ */
+const KERB_SLIDE = [0, -1.5, 1.5, -2.5, 2.5, -3.5, 3.5] as const;
 /** Share of the bays taken. */
 const KERB_TAKEN = 0.62;
 const SQUARE_TAKEN = 0.8;
@@ -154,15 +158,45 @@ const offOtherRoads = (x: number, z: number, hw: number, own: RoadChain): boolea
   });
 
 /**
+ * Room a parked car's body leaves the axis of an unnamed service road (a driveway, a yard's lane,
+ * G-140): its half width and this gap (m). No lane of the game runs there, so nothing else keeps
+ * the car off its mouth at the kerb.
+ */
+const SERVICE_GAP = 0.5;
+const SERVICE_WAYS = MAP_CHUNKS.flatMap((c) => c.serviceWays ?? []).map((w) => {
+  const pts = Array.from({ length: w.line.length / 2 }, (_, i): Pt => [w.line[2 * i]!, w.line[2 * i + 1]!]);
+  const xs = pts.map((p) => p[0]);
+  const zs = pts.map((p) => p[1]);
+  const reach = w.width / 2 + SERVICE_GAP;
+  return { pts, reach, minX: Math.min(...xs) - reach, maxX: Math.max(...xs) + reach, minZ: Math.min(...zs) - reach, maxZ: Math.max(...zs) + reach };
+});
+
+const inside = (p: Pt, poly: readonly Pt[]): boolean => poly.every((a, i) => cross(a, poly[(i + 1) % poly.length]!, p) <= 0) || poly.every((a, i) => cross(a, poly[(i + 1) % poly.length]!, p) >= 0);
+
+/** Does a car's footprint at (x, z), facing yaw, keep its room off every service road's axis? */
+const clearOfServiceWays = (x: number, z: number, yaw: number, model: VehicleModel): boolean => {
+  const body = footprint(x, z, yaw, model, 0);
+  const r = Math.hypot(VEHICLE_SIZE[model].width, VEHICLE_SIZE[model].length) / 2;
+  return SERVICE_WAYS.every(
+    (w) =>
+      x + r < w.minX ||
+      x - r > w.maxX ||
+      z + r < w.minZ ||
+      z - r > w.maxZ ||
+      (!w.pts.some((p) => inside(p, body)) && w.pts.every((p, i) => i === 0 || body.every((a, k) => segmentsGap(w.pts[i - 1]!, p, a, body[(k + 1) % 4]!) >= w.reach))),
+  );
+};
+
+/**
  * Is a car's footprint at (x, z), facing yaw, wholly on a carriageway or a square and free of
- * walls, furniture, the game's places and other streets' axes (and carriageways, by the kerb of
+ * walls, furniture, the game's places, service roads and other streets' axes (and carriageways, by the kerb of
  * `own`)? A street's kerb line is set from its median width, so where the carriageway narrows
  * (a bend, a pinch by a pavement) the bay falls on the grass or the pavement unless each corner
  * is checked. A bay on a slope too steep for a level car (`LEVEL_DROP`) stays empty.
  */
 const fits = (x: number, z: number, yaw: number, model: VehicleModel, own?: RoadChain): boolean => {
   if (!parkable(x, z) || !footprint(x, z, yaw, model, 0).every(([px, pz]) => parkable(px, pz)) || !clearOfZebras(x, z, yaw, model)) return false;
-  if (!level(x, z, yaw, model)) return false;
+  if (!level(x, z, yaw, model) || !clearOfServiceWays(x, z, yaw, model)) return false;
   const { width, length } = VEHICLE_SIZE[model];
   const fx = Math.sin(yaw);
   const fz = Math.cos(yaw);
