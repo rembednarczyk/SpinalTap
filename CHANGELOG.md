@@ -5,6 +5,7 @@ Zmiany widoczne dla gracza, od najnowszych. Wersja gry i commit są na ekranie t
 ## Nieopublikowane (0.1.0)
 
 ### 1 listopada 2026
+- Przejazd Bramy Grodzkiej w osi obu frontów, nad łukiem trzy osie okien co 2 m i podświetlenie po obu stronach łuku (G-136).
 - Brama Grodzka z własnej geometrii według zdjęć: beżowy tynk, boniowanie, jedna kondygnacja dużych okien, od Grodzkiej kartusz z datą MDCCLXXXV, od Zamku okno półkoliste między blendami, stonowane podświetlenie od dołu (ADR-0062 etap 2).
 - Obezwładnienie przy świadku to napaść z heatem; ogłuszonego znajduje i po 6 s budzi NPC, a ochrona i kamery wzywają wsparcie (ADR-0065 etap 2).
 - Auta zaparkowane i jadące stoją na rysowanej nawierzchni, bez zapadania w bruk i bez odstawania na stoku; wrak przy Pedecie na deptaku (G-130).

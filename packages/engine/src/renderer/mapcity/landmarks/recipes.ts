@@ -105,6 +105,8 @@ export type GableFace = "oculus" | "cartouche" | "lunette";
 export interface ClassicFront {
   readonly rows: number;
   readonly windows: number;
+  /** Metres between the window axes, at most (absent: 2.3). */
+  readonly pitch?: number;
   readonly gables?: { readonly old: GableFace; readonly new: GableFace };
   /** The tablet's text under a cartouche (an in-world inscription, ADR-0056: a date in Roman numerals needs no translation). */
   readonly inscription?: string;
@@ -218,14 +220,15 @@ const BRAMA_KRAKOWSKA: LandmarkRecipe = {
  * photographs (Commons): one storey of large windows (about 1 x 1.6 m) over the arch on both
  * fronts; in the gable over Grodzka a cartouche over a tablet with the year of the rebuilding
  * (MDCCLXXXV), in the gable towards the castle a round-headed window between two blind niches.
- * Two window axes on each front for now (the passage lies off the fronts' axis in the data, G-136).
+ * Three window axes about 2 m apart over the arch on each front (G-136: 1.9-2.0 m on the photographs,
+ * and the castle's front shows only 5.65 m between its neighbours).
  */
 const BRAMA_GRODZKA: LandmarkRecipe = {
   key: "brama-grodzka",
   parts: [
     {
       osm: "w232362876",
-      tier: { material: "plaster", colour: "beige", plinth: 0, blinds: NO_BLINDS, pilasters: true, cornice: true, base: false, openings: false, clock: false, front: { rows: 1, windows: 3, gables: { old: "cartouche", new: "lunette" }, inscription: "MDCCLXXXV" } },
+      tier: { material: "plaster", colour: "beige", plinth: 0, blinds: NO_BLINDS, pilasters: true, cornice: true, base: false, openings: false, clock: false, front: { rows: 1, windows: 3, pitch: 2, gables: { old: "cartouche", new: "lunette" }, inscription: "MDCCLXXXV" } },
       crown: { kind: "roof" },
     },
   ],

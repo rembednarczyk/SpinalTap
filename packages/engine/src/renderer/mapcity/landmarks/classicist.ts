@@ -71,8 +71,8 @@ export const windowAxes = (f: FacadeFrame, w: Wall, n: number, pitch: number): n
   return Array.from({ length: n }, (_, k) => c - half + pitch * k);
 };
 
-/** Rows of up to `per` framed windows on every shown wall between y0 and y1 (one per 2.2 m of wall at most), over the mouth's axis; none on an axis `clear` refuses (a neighbour in front of it). */
-export const windowRows = (sink: MeshSink, f: FacadeFrame, rows: number, per: number, y0: number, y1: number, trim: Rgba, dark: Rgba, clear: (w: Wall, u0: number, u1: number) => boolean = () => true): void => {
+/** Rows of up to `per` framed windows `pitch` apart at most on every shown wall between y0 and y1 (one per 2.2 m of wall at most), over the mouth's axis; none on an axis `clear` refuses (a neighbour in front of it). */
+export const windowRows = (sink: MeshSink, f: FacadeFrame, rows: number, per: number, y0: number, y1: number, trim: Rgba, dark: Rgba, clear: (w: Wall, u0: number, u1: number) => boolean = () => true, pitch = 2.3): void => {
   const meta = trimMeta(f.style.seed);
   const row = (y1 - y0) / rows;
   const height = Math.min(1.6, row * 0.6);
@@ -82,7 +82,7 @@ export const windowRows = (sink: MeshSink, f: FacadeFrame, rows: number, per: nu
   for (const w of shownWalls(f)) {
     const n = Math.min(per, Math.floor(w.length / 2.2));
     if (n < 1) continue;
-    const axes = windowAxes(f, w, n, Math.min(2.3, (w.length - 1.6) / Math.max(n - 1, 1))).filter((u) => clear(w, u - width / 2 - 0.26, u + width / 2 + 0.26));
+    const axes = windowAxes(f, w, n, Math.min(pitch, (w.length - 1.6) / Math.max(n - 1, 1))).filter((u) => clear(w, u - width / 2 - 0.26, u + width / 2 + 0.26));
     for (let r = 0; r < rows; r++) for (const u of axes) framedWindow(sink, w, u, y0 + row * (r + 0.5), width, height, trim, dark, meta);
   }
 };

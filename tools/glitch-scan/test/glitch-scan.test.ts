@@ -783,6 +783,40 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       const tooHigh = (h: number) => (t.maxheight === "below_default" ? h >= max : h > max + 0.01);
       return PASSAGES.filter((p) => off({ x: (p.from.x + p.to.x) / 2, z: (p.from.z + p.to.z) / 2 }) < 1.5 && tooHigh(p.height)).map((p) => ({ at: near(p.from.x, p.from.z), what: `w${w.id} maxheight=${t.maxheight}, vault ${p.height} m in ${p.building}` }));
     }),
+  /**
+   * A city gate's passage (`historic=city_gate`, G-136) with a mouth more than 0.5 m off the middle
+   * of the front's clean part: the wall it opens in, less the stretches a neighbouring building
+   * stands in front of (within 0.35 m), sampled every centimetre.
+   */
+  "gate-mouth-off-axis": () => {
+    const kept = MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)));
+    return PASSAGES.flatMap((p) => {
+      const b = kept.find((q) => q.id === p.building);
+      if (!b || osmTags(b.id).historic !== "city_gate") return [];
+      const ring = cleanRing(worldOutline(b));
+      const others = kept.filter((q) => q !== b && Math.hypot(q.x - b.x, q.z - b.z) < 60).map(worldOutline);
+      const [dx, dz] = [p.to.x - p.from.x, p.to.z - p.from.z];
+      return ring.flatMap((a, i) => {
+        const c = ring[(i + 1) % ring.length]!;
+        const [ex, ez] = [c.x - a.x, c.z - a.z];
+        const len = Math.hypot(ex, ez);
+        const den = dx * ez - dz * ex;
+        const t = ((a.x - p.from.x) * ez - (a.z - p.from.z) * ex) / den;
+        const s = ((a.x - p.from.x) * dz - (a.z - p.from.z) * dx) / den;
+        if (Math.abs(den) < 1e-9 || t < 0 || t > 1 || s < 0 || s > 1) return [];
+        const out = pointInRing({ x: a.x + ex / 2 + (ez / len) * 0.1, z: a.z + ez / 2 - (ex / len) * 0.1 }, ring) ? -1 : 1;
+        const at = (u: number, o: number) => ({ x: a.x + (ex / len) * u + (ez / len) * o * out, z: a.z + (ez / len) * u - (ex / len) * o * out });
+        const clean = (k: number) => ![0.05, 0.15, 0.25, 0.35].some((o) => others.some((r) => pointInRing(at(k / 100, o), r)));
+        const mouth = Math.round(s * len * 100);
+        let [k0, k1] = [mouth, mouth];
+        while (k0 > 0 && clean(k0 - 1)) k0--;
+        while (k1 < Math.floor(len * 100) && clean(k1 + 1)) k1++;
+        const off = s * len - (k0 + k1) / 200;
+        const m = at(s * len, 0);
+        return Math.abs(off) > 0.5 ? [{ at: near(m.x, m.z), what: `${b.id} ${b.name ?? ""}: mouth ${off.toFixed(2)} m off the middle of ${((k1 - k0) / 100).toFixed(2)} m of clean front` }] : [];
+      });
+    });
+  },
   /** A passage through a building with an end off every chunk, where there is no ground to come out on. */
   "passage-off-map": () =>
     PASSAGES.filter((p) => [p.from, p.to].some(({ x, z }) => !MAP_CHUNKS.some(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ))).map((p) => ({
