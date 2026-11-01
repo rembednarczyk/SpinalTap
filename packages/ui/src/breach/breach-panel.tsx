@@ -75,6 +75,11 @@ const BreachGame = ({ daemons, rng }: { daemons: readonly BreachDaemonId[]; rng:
           </span>
         )}
       </div>
+      {!started && (
+        <p className="breach__rules" data-testid="breach-rules">
+          {t("breach.rules")}
+        </p>
+      )}
       <div className="breach__body">
         <div className="breach__matrix" role="grid" aria-label={t("breach.matrix")} style={{ gridTemplateColumns: `repeat(${puzzle.size}, 1fr)` }}>
           {puzzle.matrix.map((row, r) =>

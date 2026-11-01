@@ -74,6 +74,7 @@ export const enWorld = {
   "breach.untimed": "no time limit",
   "breach.waiting": "{seconds} s · starts on the first pick",
   "breach.matrix": "Code matrix",
+  "breach.rules": "Pick codes in turn: the lit row, then that code's column, then its row. A sequence spelled out in the buffer uploads its daemon.",
   "breach.cell": "{code}, row {row}, column {col}",
   "breach.cellUsed": "{code}, row {row}, column {col}, used",
   "breach.buffer": "Buffer",

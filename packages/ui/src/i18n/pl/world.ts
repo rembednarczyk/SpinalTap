@@ -71,6 +71,7 @@ export const plWorld = {
   "breach.label": "Włamanie do terminala",
   "breach.untimed": "bez limitu czasu",
   "breach.waiting": "{seconds} s · start po 1. wyborze",
+  "breach.rules": "Wybieraj kody na zmianę: podświetlony wiersz, potem kolumna tego kodu, potem jego wiersz. Sekwencja ułożona w buforze wgrywa swojego demona.",
   "breach.matrix": "Macierz kodów",
   "breach.cell": "{code}, wiersz {row}, kolumna {col}",
   "breach.cellUsed": "{code}, wiersz {row}, kolumna {col}, użyty",
