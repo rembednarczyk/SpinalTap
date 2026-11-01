@@ -439,13 +439,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka do wyboru: większy atlas, zwalnianie wierszy przy wyładowaniu komórki albo atlas na chunk; budżet tekstur na telefonie
 - Test przyjęcia: wszystkie nazwy z wczytanych komórek mają wiersz; test ładowania w różnej kolejności
 
-### G-143 Taksówki na osi chodnika przy Podzamczu
-- Status: w PR #125; weryfikator PRZYJĘTE (1.11), czeka na przegląd kuratora (zmiana importu); 3ab42ad, skan `parked-car-on-footway` 3 → 0; część o postoju taxi odpada, bo gra nie stawia taksówek na postojach
-- Ważność: S4 · Zasięg: taxi (928.6, 452.2) 0,01 m od osi `highway=footway` w809962786, taxi (922.9, 430.6) 0,80 m od niej
-- Ustalone (1.11, orkiestrator, dane `data/osm/podzamcze.json`): w809962786 to samodzielna ścieżka piesza 52 m (`highway=footway`, bez `footway=sidewalk`/`crossing`, oświetlona, asfalt), co najmniej 7,8 m od osi Cerkiewnej i dróg serwisowych; łączy się z postojem taxi w471549002 (`amenity=taxi`, obszar), placem w66323033 (`area:highway`), chodnikiem w1517184174 i przejściem w1054556913. Taksówka 0,01 m od jej osi stoi więc na ścieżce pieszych obok postoju, nie na jezdni: glitch prawdziwy
-- Poprawka: zaparkowane auta trzymają odstęp od osi samodzielnych ścieżek `footway`/`path` (poza `sidewalk` wzdłuż krawężnika), a taksówki z postoju `amenity=taxi` stoją wewnątrz jego obszaru; kontrola skanu „auto bliżej niż 1 m od osi ścieżki pieszej”
-- Pakiet właściciela: packages/sim (content), przegląd kuratora
-
 ### G-144 Szczeliny w asfalcie na styku dróg OSM na załamaniu
 - Status: zgłoszone (1.11, naprawiacz G-138)
 - Ważność: S4 · Zasięg: ok. 20 miejsc pod pasami ruchu poza Aleją Tysiąclecia, szczeliny 0,1–0,25 m (np. Mełgiewska 2370,285; Turystyczna 2526,357 i 2606,332)
@@ -516,6 +509,18 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: 88 `footway=crossing` i 17 `path=crossing` bez zebry
 - Poprawka: odstęp zaparkowanych aut od przejść bez zebry jak od zebr; kontrola skanu
 - Pakiet właściciela: packages/sim (parked-cars), tools/osm-import
+
+### G-155 Auta przy krawężniku na ulicach wielopasowych bez parkowania
+- Status: zgłoszone (1.11, kurator przy G-143)
+- Ważność: S4 · Zasięg: 3 Maja w40050974/w757848901 (x −116..−103, z −33..32): 13 aut 4,1–5,4 m od osi, na skrajnych pasach (`lanes=4`, brak `parking:*`)
+- Poprawka: bez parkowania przy krawężniku dróg z `lanes>=4` albo `lanes:forward|backward>=2` poza `amenity=parking`; kontrola skanu `parked-car-multilane-kerb`, baza 13 → 0
+- Pakiet właściciela: packages/sim (parked-cars), tools/glitch-scan
+
+### G-156 Auta na przystankach
+- Status: zgłoszone (1.11, kurator przy G-143)
+- Ważność: S4 · Zasięg: przystanek „Plac Litewski 02” (słupek n836158674 (−100.3, 3.6)): van 0,7 m, van 11,7 m, hatchback 13,1 m od słupka po stronie przystanku
+- Poprawka: zakaz postoju do 15 m od słupka (art. 49 PoRD); kontrola skanu `parked-car-at-bus-stop`, baza 3 → 0; przy okazji `path=sidewalk` poza `footWays` i `pedestrian`/`cycleway` w `parked-car-on-footway`
+- Pakiet właściciela: packages/sim (parked-cars), tools/osm-import, tools/glitch-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
