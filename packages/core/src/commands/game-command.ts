@@ -81,4 +81,11 @@ export type GameCommand =
    * target out, or kills it with `lethal`. Holding the attack button to the end of the takedown
    * kills as well. Refused without a valid target in reach.
    */
-  | { readonly type: "takedown"; readonly lethal: boolean };
+  | { readonly type: "takedown"; readonly lethal: boolean }
+  /**
+   * Picks up the body the HUD offers (the interact key with the pick-up prompt): someone knocked
+   * out or killed, in reach. Refused while carrying one already or without a body in reach.
+   */
+  | { readonly type: "carry-body" }
+  /** Puts the carried body down at the player's feet, or into the free hiding place in reach. */
+  | { readonly type: "drop-body" };

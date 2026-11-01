@@ -35,6 +35,25 @@ export interface EntitySnapshot {
   readonly search?: number;
   /** Seconds out of its sight while alerted. */
   readonly lost?: number;
+  /** Knocked out, or killed in a takedown and left lying (ADR-0065). Absent for everyone else. */
+  readonly downed?: BodySnapshot;
+}
+
+/** A body (ADR-0065): what the street knows of it and where the player put it. */
+export interface BodySnapshot {
+  /** Where the player stood when she took it down. */
+  readonly playerAt: Vec3;
+  /** It was fighting her: its body sends the security looking, no report. */
+  readonly fought: boolean;
+  /** Somebody noticed it already; the security was told. */
+  readonly found: boolean;
+  readonly reported: boolean;
+  /** Dead, not knocked out: nobody wakes it. */
+  readonly dead: boolean;
+  /** On the player's shoulder. */
+  readonly carried: boolean;
+  /** In a hiding place: out of everybody's sight. */
+  readonly hidden: boolean;
 }
 
 /** An automatic door's leaf (ADR-0038): how far open (0..1) and seconds its sensor has been empty. */
