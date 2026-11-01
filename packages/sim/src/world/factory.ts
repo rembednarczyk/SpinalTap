@@ -9,6 +9,7 @@ import { aabbFromCenter } from "./collision";
 import { type PrismDef, boundsOfPrisms, isConvex, prismsAt } from "./prism";
 import type { Combatant, Entity, MeleeState } from "./components";
 import { isEnforcer } from "./enforcer";
+import { bodySnapshotOf } from "./bodies";
 
 export const BODY = { radius: 0.38, height: 1.8 } as const;
 
@@ -81,6 +82,7 @@ export const propEntity = (id: EntityId, prop: StaticProp, chunk: string): Entit
   // A building of the map is drawn as scenery (ADR-0045): the entity is its solid alone.
   if (prop.scenery) delete e.view;
   if (prop.seeThrough) e.seeThrough = true;
+  if (prop.hide) e.hide = prop.hide;
   const parts = prop.solid ? prismDefsOf(prop) : null;
   if (parts) {
     e.prisms = prismsAt(parts, prop.center);
@@ -314,10 +316,12 @@ export const entitySnapshotOf = (e: Entity & { key: string }): EntitySnapshot =>
     cooldown: e.combatant?.cooldown ?? 0,
     alerted: e.ai?.alerted ?? false,
   };
+  // A body (ADR-0065): knocked out or dead, where the player left it.
+  const body = e.downed ? { ...s, downed: bodySnapshotOf(e.downed) } : s;
   // Looking for the player (ADR-0029): where, for how long, and how long out of sight.
   const ai = e.ai;
-  if (!ai?.lastKnown) return s;
-  return { ...s, lastKnown: { ...ai.lastKnown }, search: ai.search ?? 0, lost: ai.lost ?? 0 };
+  if (!ai?.lastKnown) return body;
+  return { ...body, lastKnown: { ...ai.lastKnown }, search: ai.search ?? 0, lost: ai.lost ?? 0 };
 };
 
 /** Puts saved state back onto a freshly built entity. */

@@ -5,6 +5,7 @@ import { eyeOf, lineOfSight } from "../../world/hitscan";
 import { inCreationOrder } from "../../world/ordering";
 import { disturb } from "../../world/street";
 import { incapacitated } from "../../world/takedown";
+import { stowed } from "../../world/bodies";
 import { worldTimeScale } from "../ability-system";
 import { cameraSeesPoint, dropBodyCalls, report, securityAt, sendSecurity } from "../crime-system";
 import { BODY_NOISE } from "../death-system";
@@ -66,7 +67,8 @@ const found = (ctx: SimContext, b: Body, finder: Entity, channel: "patrol" | "ca
     return;
   }
   const player = ctx.world.with("player").first;
-  report(ctx, "assault", channel, finder.id, player?.id ?? 0, at);
+  // A dead body is a murder (ADR-0029), someone knocked out an assault.
+  report(ctx, b.downed.dead ? "murder" : "assault", channel, finder.id, player?.id ?? 0, at);
   dropBodyCalls(ctx, b.id);
 };
 
@@ -141,10 +143,25 @@ const wake = (ctx: SimContext, b: Body, finder: Entity): void => {
   giveLead(finder, lead);
 };
 
+/**
+ * At the side of a dead body (stage 3): nothing to wake. The finder starts the search from the
+ * player's last known position and leaves the body to the next one; a civilian walks on.
+ */
+const lookedAt = (ctx: SimContext, b: Body, finder: Entity): void => {
+  b.downed.finder = null;
+  b.downed.wake = 0;
+  b.downed.checked = true;
+  giveLead(finder, searchFrom(ctx, b));
+};
+
 /** The finder walks to the body (back to it after any other lead) and wakes it after `WAKE_TIME`. */
 const tend = (ctx: SimContext, b: Body, finder: Entity, dt: number): void => {
   if (finder.ai && !finder.ai.lastKnown) giveLead(finder, b.position);
   if (!near(finder, b)) return;
+  if (b.downed.dead) {
+    lookedAt(ctx, b, finder);
+    return;
+  }
   b.downed.wake += dt;
   if (b.downed.wake >= WAKE_TIME - 1e-6) wake(ctx, b, finder);
 };
@@ -155,8 +172,10 @@ const tend = (ctx: SimContext, b: Body, finder: Entity, dt: number): void => {
  * calm civilian that comes within `WAKE_REACH` stops and wakes it the same way. A camera that
  * sees one reports it; a civilian that sees one runs and the street around takes fright (next
  * step), as at a death. A civilian's body brings no heat, nor does one taken down in a fight
- * (the security only comes to look). After the crime system, so a witness's report of the
- * takedown comes first. No randomness: everything in creation order.
+ * (the security only comes to look). A dead body (stage 3) is reported as a murder and woken by
+ * nobody: its finder looks at it and starts the search. A body carried or hidden is seen by
+ * nobody. After the crime system, so a witness's report of the takedown comes first. No
+ * randomness: everything in creation order.
  */
 export const bodyWatchSystem: System = {
   name: "body-watch",
@@ -167,11 +186,13 @@ export const bodyWatchSystem: System = {
     const civilians = inCreationOrder(ctx.world.with("civilian"));
     const dt = ctx.dt * worldTimeScale(ctx);
     for (const b of bodies) {
+      // On the player's shoulder or in a hiding place nobody sees it (stage 3).
+      if (stowed(b)) continue;
       let finder = finderOf(ctx, b, ais, civilians);
       if (!finder) {
         b.downed.finder = null;
         b.downed.wake = 0;
-        finder = lookForFinder(ctx, b, ais, civilians);
+        finder = b.downed.checked ? null : lookForFinder(ctx, b, ais, civilians);
       }
       watchFromAfar(ctx, b);
       if (finder) tend(ctx, b, finder, dt);

@@ -1,8 +1,10 @@
 import type { CrimeKind, CrowdState, EntityId, Vec3 } from "@seki/core";
+import type { CharacterBody } from "./body";
 
 /**
- * What the street knows about someone knocked out (ADR-0065), next to its `unconscious`. Transient
- * like the knock-out itself (stage 3 of the ADR saves both).
+ * What the street knows about a body (ADR-0065), next to its `unconscious`: someone knocked out,
+ * or killed in a takedown and left lying. Saved with the entity (`BodySnapshot`) but for the
+ * finder and the waking, which start again after a load.
  */
 export interface DownedBody {
   /** Where the player stood when she took it down: what it knows once woken. */
@@ -17,7 +19,20 @@ export interface DownedBody {
   finder: EntityId | null;
   /** Seconds the finder has spent at its side; at `WAKE_TIME` it wakes. */
   wake: number;
+  /** Killed, not knocked out: nobody wakes it, the finder only looks and starts the search. */
+  dead: boolean;
+  /** Dead and looked at by a finder already: nobody else walks over. Not saved. */
+  checked: boolean;
+  /** On the player's shoulder (stage 3): it follows her and nobody sees it lie. */
+  carried: boolean;
+  /** In a hiding place: out of everybody's sight for good. */
+  hidden: boolean;
+  /** Its own body while carried or hidden (it pushes nobody then), put back when it is dropped. */
+  frame: CharacterBody | null;
 }
+
+/** What a hiding place for bodies is (ADR-0065); one body fits in each. */
+export type HideKind = "container" | "dumpster" | "locker";
 
 export interface GangerAi {
   readonly home: Vec3;

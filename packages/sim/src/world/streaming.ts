@@ -43,6 +43,7 @@ import {
   terminalEntity,
 } from "./factory";
 import { inCreationOrder } from "./ordering";
+import { corpseOf, freshDowned, restoreDowned } from "./bodies";
 import { placeOnSchedule } from "./schedule";
 import { GroundField } from "./ground";
 import { settle } from "./placement";
@@ -100,6 +101,15 @@ const NO_CHANGE: StreamingChange = { loaded: [], unloaded: [] };
  * loading, a new game) it is put where its plan says for the current time, so Oyaji left at
  * his stall in the evening is found at home after midnight (ADR-0017).
  */
+/**
+ * A freshly built entity with its saved state; what is left of a body killed in a takedown
+ * (ADR-0065) when the save says so. `restoreDowned` adds the rest once it is in the world.
+ */
+const revived = (e: Entity, s: EntitySnapshot): Entity => {
+  applyEntitySnapshot(e, s);
+  return s.downed?.dead ? corpseOf(e, freshDowned(s.downed.playerAt, s.downed.fought, true)) : e;
+};
+
 export class WorldStreamer {
   private readonly content = new Map<string, Template[]>();
   private readonly byKey = new Map<string, Template>();
@@ -327,20 +337,27 @@ export class WorldStreamer {
       const e = live.get(s.key);
       if (e) {
         applyEntitySnapshot(e, s);
+        if (s.downed) restoreDowned(world, e, s.downed);
         continue;
       }
       const t = (this.places.get(s.key) ?? []).find((x) => isPresent(x.when, flags)) ?? this.byKey.get(s.key);
-      if (!t || isDead(flags, s.key) || flags.includes(takenFlag(s.key)) || !isPresent(t.when, flags)) continue;
-      if (s.alerted || s.lastKnown) {
-        // It was chasing (or looking for) the player when the save was made: pinned, alive outside its chunk.
-        const pinned = t.make();
-        applyEntitySnapshot(pinned, s);
-        world.add(pinned);
+      // The dead do not come back, but for a body left lying (ADR-0065).
+      if (!t || (isDead(flags, s.key) && !s.downed?.dead) || flags.includes(takenFlag(s.key)) || !isPresent(t.when, flags)) continue;
+      if (s.alerted || s.lastKnown || this.bodyHere(s)) {
+        // It was chasing (or looking for) the player when the save was made: pinned, alive outside
+        // its chunk. A body on her shoulder, or lying in a resident chunk, is there too.
+        const pinned = world.add(revived(t.make(), s));
+        if (s.downed) restoreDowned(world, pinned, s.downed);
       } else {
         this.dormant.set(s.key, s);
         this.streamedOut.add(t.id);
       }
     }
+  }
+
+  /** A saved body that is in the world at once (ADR-0065): carried, or lying in a resident chunk. */
+  private bodyHere(s: EntitySnapshot): boolean {
+    return !!s.downed && (s.downed.carried || this.resident.has(this.chunkIdAt(s.position)));
   }
 
   /** Loads and unloads chunks around `focus`. Unloads first, so ids never collide. */
@@ -414,16 +431,16 @@ export class WorldStreamer {
     const alive = new Set<string>();
     for (const e of world) if (e.key) alive.add(e.key);
     for (const t of templates) {
-      if (t.key === null || isDead(flags, t.key) || flags.includes(takenFlag(t.key)) || alive.has(t.key) || !isPresent(t.when, flags)) continue;
-      const e = t.make();
+      if (t.key === null || flags.includes(takenFlag(t.key)) || alive.has(t.key) || !isPresent(t.when, flags)) continue;
       const saved = this.dormant.get(t.key);
-      if (saved) {
-        applyEntitySnapshot(e, saved);
-        this.dormant.delete(t.key);
-      }
-      if (clock && e.schedule) placeOnSchedule(e, e.schedule.def, clock);
+      // The dead do not come back, but for a body left lying (ADR-0065).
+      if (isDead(flags, t.key) && !saved?.downed?.dead) continue;
+      const e = saved ? revived(t.make(), saved) : t.make();
+      if (saved) this.dormant.delete(t.key);
+      if (clock && e.schedule && !saved?.downed) placeOnSchedule(e, e.schedule.def, clock);
       settle(world, this.ground, e);
       world.add(e);
+      if (saved?.downed) restoreDowned(world, e, saved.downed);
       this.streamedOut.delete(t.id);
     }
   }
@@ -432,13 +449,14 @@ export class WorldStreamer {
     const staying = (id: string | undefined): boolean => id !== undefined && this.resident.has(id) && !chunkIds.has(id);
     // A character on a daily plan walks out of its chunk (300 m down Grodzka in Lublin, ADR-0045):
     // it sleeps only once neither its own chunk nor the one it stands in stays loaded.
-    const standing = (e: Entity): string | undefined => (e.schedule ? this.chunkIdAt(e.position) : undefined);
+    // A body (ADR-0065) lies where the player left it: it sleeps by the same rule.
+    const standing = (e: Entity): string | undefined => (e.schedule || e.downed ? this.chunkIdAt(e.position) : undefined);
     const leaving = inCreationOrder(
       [...world].filter((e) => e.chunk !== undefined && (chunkIds.has(e.chunk) || chunkIds.has(standing(e) ?? "")) && !staying(e.chunk) && !staying(standing(e))),
     );
     for (const e of leaving) {
-      // Chasing or looking for the player (ADR-0029): it stays.
-      if (e.ai?.alerted || e.ai?.lastKnown) continue;
+      // Chasing or looking for the player (ADR-0029), or on her shoulder (ADR-0065): it stays.
+      if (e.ai?.alerted || e.ai?.lastKnown || e.downed?.carried) continue;
       if (e.key) this.dormant.set(e.key, entitySnapshotOf({ ...e, key: e.key }));
       world.remove(e);
       this.streamedOut.add(e.id);

@@ -30,6 +30,7 @@ import { isMicroKey } from "./world/micro-events";
 import { hasAmbush } from "./world/contract-plan";
 import { doorSnapshots, restoreDoors } from "./systems/door-system";
 import { withAttackLock } from "./world/takedown";
+import { withCarry } from "./world/bodies";
 
 export { BREACH_DATAMINE_EDDIES, BREACH_ICEPICK_SECONDS, BREACH_MARK_SECONDS } from "./world/contract-commands";
 export { SIM_DT, SIM_HZ } from "./step-rate";
@@ -103,6 +104,8 @@ export class Simulation {
     sim.tickCount = snapshot.tick;
     sim.streamer.restoreEntities(sim.world, snapshot.domain.flags, snapshot.entities);
     restoreDoors(sim, snapshot.doors ?? []);
+    // The body on her shoulder (ADR-0065) is saved on the body.
+    sim.session.carrying = sim.world.with("downed").entities.find((b) => b.downed.carried)?.id ?? null;
     return sim;
   }
 
@@ -155,7 +158,7 @@ export class Simulation {
 
   /** Advances the simulation by one fixed step of SIM_DT seconds. */
   step(input: InputFrame = EMPTY_INPUT): void {
-    const ctx = this.context(withAttackLock(this.session, input));
+    const ctx = this.context(withCarry(this.session.carrying, withAttackLock(this.session, input)));
     this.applyCommands(ctx);
     for (const system of this.systems) system.run(ctx);
     this.tickCount += 1;
