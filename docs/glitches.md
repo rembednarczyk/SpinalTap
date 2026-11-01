@@ -339,7 +339,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `two-way-fit-narrow` (droga bez `oneway` z dopasowaną szerokością < 4,5 m) 4 → 0 (Podwale 3,6, Montażowa 3,6, Łęczyńska 4,1, Staszica 4,4) bez wzrostu `sidewalk-under-carriageway` i `car-lane-off-road`
 
 ### G-114 npr-perf Nabrzeże: czasem +98 wywołań rysowania przy tych samych siatkach
-- Status: w naprawie (1.11; powtórzone w dwóch weryfikacjach) · Ważność: S3 (proponowana; fałszywie czerwony budżet w CI) · Koszt: mały–średni
+- Status: w weryfikacji (c6c9ee2: `citySettled` czeka na zaległy render sondy `WetProbe`, `sampleNow` na klatkę po kroku; stary kod z nową kontrolą 4/4 czerwone, poprawka 7/7 zielone); kolizja portów e2e w PR #111 · Ważność: S3 (proponowana; fałszywie czerwony budżet w CI) · Koszt: mały–średni
 - Dowód: 334/102 albo 338/102 zamiast 236/102 w ok. 2 z 7 pełnych przebiegów przy obciążeniu, przy identycznym `byName` siatek i +431 tys. trójkątów; na bazie 0 z 3 próbek (za mało, by wykluczyć)
 - Dowód 2 (1.11, weryfikacje Grodzkiej i G-130): 338/102 w 1 z 3 pełnych przebiegów, sama scena 0 z 10 (gałąź i main po 5); ta sama sygnatura (+102 wywołania, +482 tys. trójkątów, identyczne `byName`). Wskazuje na zależność od wcześniejszych testów w przebiegu albo od czasu sondy `WetProbe`; trafia też w weryfikacje innych zmian, więc priorytet rośnie
 - Przyczyna (przypuszczalna): w próbkowanej klatce renderuje się sonda odbicia `WetProbe` (6 ścian × ok. 16 siatek + cień); `ProbeSchedule` dławi rendery do 1 s czasu rzeczywistego, a `citySettled`/`sampleNow` na to nie czeka (por. G-001)
