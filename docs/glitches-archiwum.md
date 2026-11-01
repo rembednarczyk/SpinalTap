@@ -2,6 +2,14 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-148 Szyldy i neony wcięte w fasady (parasol)
+- Status: zamknięte (1.11, orkiestrator): G-157, G-158, G-159 i G-160 naprawione (w archiwum), a kontrole `venue-board-in-neighbour`, `banner-in-neighbour`, `holo-or-blade-in-neighbour` i `wall-lantern-over-venue-board` mają w main bazę 0 (wcześniej 7, 31, 4, 17); zostaje osobno G-161 (markiza nad literami)
+- Ważność: S3 · Zasięg: całe miasto, najgęściej Stare Miasto
+- Pomiar w całym mieście (660 budynków, 319 tablic lokali): 7 tablic lokali w sąsiedzie (G-159), 31 banerów `canyon-signs`, 3 holo i 1 `blade` w sąsiedzie (G-157), 17 latarni ściennych na tablicach (G-158), płyta „DEN…” o nieznanym źródle (G-160), markiza zasłaniająca dolny rząd liter z oczu gracza (G-161)
+- Dowód: zrzuty `scratchpad/g148-shots/` (g148-e/f/h/j przy OKRUSZEK, g148-k przy STAJNIA SMAKU, g148-r2/r4 na Rynku), pomiary `scratchpad/g148-measure.json`, `g148-venue.json`
+- Proponowane kontrole skanu (baza dziś): `venue-board-in-neighbour` 7, `banner-in-neighbour` 31, `holo-or-blade-in-neighbour` 4, `wall-lantern-over-venue-board` 17
+- Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import
+
 ### G-043 Zatwierdzona migawka NPR nie zgadza się z tym, co rysuje main
 - Status: zamknięte (1.11, orkiestrator): migawka przepisana od zgłoszenia co najmniej 5 razy (ostatnio #153); na main 1592dab `npr-perf` „reference” z `maxDiffPixelRatio: 0` (próg piksela 0,2) przechodzi 2/2, więc klatka main zgadza się z migawką; tolerancja 0,02 zostaje jako zapas na SwiftShader
 - Ważność: S3 (proponowana: migawka przestaje pilnować wyglądu) · Koszt: mały

@@ -459,14 +459,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: test, że żaden fragment wieży nie wypada bliżej niż skorupa przy danych miasta w kierunku kamery, albo osobna skala dla stopy; przy okazji kontrole `megablock-*` przenieść do `tools/glitch-scan` z bazą w `glitch-baseline.json` (dziś w teście engine)
 - Pakiet właściciela: packages/engine (renderer), tools/glitch-scan
 
-### G-148 Szyldy i neony wcięte w fasady (parasol)
-- Status: przyjęte (1.11, łowca); objawy rozbite na G-157…G-161
-- Ważność: S3 · Zasięg: całe miasto, najgęściej Stare Miasto
-- Pomiar w całym mieście (660 budynków, 319 tablic lokali): 7 tablic lokali w sąsiedzie (G-159), 31 banerów `canyon-signs`, 3 holo i 1 `blade` w sąsiedzie (G-157), 17 latarni ściennych na tablicach (G-158), płyta „DEN…” o nieznanym źródle (G-160), markiza zasłaniająca dolny rząd liter z oczu gracza (G-161)
-- Dowód: zrzuty `scratchpad/g148-shots/` (g148-e/f/h/j przy OKRUSZEK, g148-k przy STAJNIA SMAKU, g148-r2/r4 na Rynku), pomiary `scratchpad/g148-measure.json`, `g148-venue.json`
-- Proponowane kontrole skanu (baza dziś): `venue-board-in-neighbour` 7, `banner-in-neighbour` 31, `holo-or-blade-in-neighbour` 4, `wall-lantern-over-venue-board` 17
-- Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import
-
 ### G-150 Źle położone dachy (zgłoszenie gracza niepotwierdzone)
 - Status: zgłoszone, niepotwierdzone (1.11, łowca): z kadru gracza 922af477 nie da się wskazać usterki; potrzebne miejsce albo nowy zrzut
 - Ważność: S4 dla znalezionych kandydatów · Zasięg: rzadki
