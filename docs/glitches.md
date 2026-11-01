@@ -566,13 +566,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: sprawdzić w przeglądarce (nowa gra przed gotowością sceny); jeśli rośnie, anulowanie oczekiwania przy `cancelPrepare`/clear
 - Pakiet właściciela: packages/engine (renderer)
 
-### G-188 Zaalarmowani strażnicy zlecenia przypięci w świecie daleko od gracza
-- Status: w PR #181 (1.11, w weryfikacji; zapis v24): przypięci poza wczytanymi chunkami zasypiają (zaalarmowani po 30 s), znacznik `away` w zapisie
-- Ważność: S4 · Zasięg: zaalarmowani strażnicy zleceń (np. c1-g2, c3-g3) zostają przypięci w świecie ponad 4000 ticków, gdy gracz jest 2 km dalej; przez to zastąpione zlecenia trwale siedzą w `formerContracts` zapisu
-- Z weryfikacji #175 (G-195): uspokojony przypięty strażnik, którego chunk już śpi, zostaje w świecie do końca sesji, a po wczytaniu znika (sesja i zapis się rozchodzą); `dormant-restore.ts` sprawdza chunk szablonu (`former.chunk`), a nie chunk, w którym strażnik stoi, więc uspokojony strażnik oczyszczonego miejsca w innym, załadowanym chunku znika po wczytaniu na oczach gracza; `StreamCatalog.former` nie jest przycinana i rośnie z każdym wypłaconym zleceniem
-- Poprawka: zaalarmowany strażnik daleko od gracza (poza zasięgiem chunków przez N s) uspokaja się i zasypia; test jednej sesji i zapisu
-- Pakiet właściciela: packages/sim (streaming, dormant-restore)
-
 ### G-190 Puste pasy postojowe OSM
 - Status: skan w main (1.11, #169: `kerb-strip-no-car-street` baza 3, `bay-strip-empty-known` baza 4, `bay-strip-sparse` 0); zostaje poprawka generatora: łatka zatok przy ulicach dostaw (`docs/plany/g190-zatoki-przy-ulicach-dostaw.patch`) razem z G-133; Łęczyńska w1159135271 (OSM `capacity=23`, w grze 0: obrys płytszy niż auto w poprzek) do decyzji, np. nadwozie nad krawężnikiem
 - Ważność: S4 · Zasięg: w232362980 (Kowalska, lane, 2,2 m: spadek, nawierzchnia, wyjście poza obrys), w232362991 (Kowalska, diagonal, 3,4–3,9 m: za płytki na skos z tagu, 8 z 12 zatok bez modelu), w356947938 (najbliższa droga z ruchem 75 m dalej), w1159135271 (Łęczyńska, perpendicular, 3,4 m: za płytki na układ prostopadły), w1514058885 (Świętoduska, parallel, 2,45 m: 18 zatok na spadku, G-133)
@@ -623,6 +616,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Przyczyna do ustalenia: generator rekwizytów urósł o reguły drzwi (#167) i targu (#153); test przelicza całą tabelę pod pokryciem
 - Poprawka: pomiar czasu generacji przed i po #167 (profil), przyspieszenie generatora albo wspólne wyliczenie tabeli dla testów; bez podnoszenia limitu (ADR-0046)
 - Pakiet właściciela: tools/osm-import (QA)
+
+### G-201 Teren poza chunkami dostępny: reguła „poza wczytanym chunkiem” usypia strażnika obok gracza
+- Status: zgłoszone (1.11, weryfikator #181)
+- Ważność: S4 · Zasięg: obszary bez chunków, a z terenem, np. (2440; 545) na północ od Nabrzeża albo pas x 460–520, z > 160 między Starym Miastem a Podzamczem; żywy gracz stoi tam (hp 96), spokojny przypięty strażnik 6 m od niego znika w 1. s, zaalarmowany po 30 s (`sleepPinned`, G-188)
+- Poprawka: odległość od gracza zamiast samej przynależności do chunku albo brak dostępnego terenu poza chunkami; pokrewne: spokojny nieprzypięty strażnik w innym wczytanym chunku znika przy uśpieniu własnego (`standing` w `unloadChunks` tylko dla planów dnia i ciał); `ai.victim` z szablonu nie trafia do zapisu; `goAway()` w `contract-site-cleared.test.ts` stawia gracza poza mapą (testy G-195 z martwym graczem); `keepFormer` bez testu integracyjnego
+- Pakiet właściciela: packages/sim (streaming)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
