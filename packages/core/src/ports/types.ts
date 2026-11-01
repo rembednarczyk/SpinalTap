@@ -268,12 +268,6 @@ export interface BuildingVertical {
 }
 
 /**
- * A roof's shape (OSM `roof:shape`, ADR-0064): `gabled` two slopes and gable walls,
- * `half-hipped` gables with their tops hipped, `mansard` a steep lower and a shallow upper slope
- * on every side, `hipped` four slopes, `pyramidal` slopes to one apex, `skillion` one slope,
- * `dome` and `onion` a dome or an onion helmet, `flat` no pitch.
- */
-/**
  * A venue on a building's ground floor (ADR-0064 stage 4). `at` is where the map has it,
  * relative to the building's position like the outline (inside it or a few metres off a wall).
  * `name` is Lublin 2077's name for the sign, data from the importer's `venue-names` table and
@@ -287,6 +281,12 @@ export interface BuildingVenue {
   readonly color: string;
 }
 
+/**
+ * A roof's shape (OSM `roof:shape`, ADR-0064): `gabled` two slopes and gable walls,
+ * `half-hipped` gables with their tops hipped, `mansard` a steep lower and a shallow upper slope
+ * on every side, `hipped` four slopes, `pyramidal` slopes to one apex, `skillion` one slope,
+ * `dome` and `onion` a dome or an onion helmet, `flat` no pitch.
+ */
 export type RoofShape = "gabled" | "half-hipped" | "mansard" | "hipped" | "pyramidal" | "skillion" | "dome" | "onion" | "flat";
 
 /** What a skinned block stands for (ADR-0022). */
