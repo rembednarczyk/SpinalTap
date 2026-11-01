@@ -1,5 +1,5 @@
 import { type Page, expect, test } from "@playwright/test";
-import { freeze, step, teleport, waitForGame } from "./helpers";
+import { freeze, step, teleport, waitForGame, waitForPlay } from "./helpers";
 
 /**
  * A phone in landscape (ADR-0035): at 800x370 and 667x375 CSS px no key element of the HUD or
@@ -56,7 +56,28 @@ for (const [w, h] of [
       test.setTimeout(180_000);
       await page.goto("/?seed=7&models=off&audio=off&touch");
       await waitForGame(page);
+      // The loading screen (ADR-0057) is measured by the page the moment it shows: its heading,
+      // bar and stage on screen and apart, whatever time the loading takes.
+      await page.evaluate(() => {
+        const w = window as unknown as { __loadingBoxes: { name: string; x: number; y: number; width: number; height: number }[] | null };
+        w.__loadingBoxes = null;
+        const seen = new MutationObserver(() => {
+          const screen = document.querySelector("[data-testid=loading-screen]");
+          if (!screen) return;
+          seen.disconnect();
+          w.__loadingBoxes = [".screen__heading", ".loading__bar", ".loading__stage"].map((sel) => {
+            const r = screen.querySelector(sel)!.getBoundingClientRect();
+            return { name: `loading:${sel}`, x: r.x, y: r.y, width: r.width, height: r.height };
+          });
+        });
+        seen.observe(document.body, { childList: true, subtree: true });
+      });
       await page.getByRole("button", { name: "New Game" }).tap();
+      await waitForPlay(page);
+      const loading = await page.evaluate(() => (window as unknown as { __loadingBoxes: Box[] | null }).__loadingBoxes);
+      expect(loading).not.toBeNull();
+      for (const b of loading!) expect(b.x >= 0 && b.y >= 0 && b.x + b.width <= w + 0.5 && b.y + b.height <= h + 0.5 && b.width > 0, `${b.name} on screen`).toBe(true);
+      for (let i = 1; i < loading!.length; i++) expect(overlap(loading![i - 1]!, loading![i]!), `${loading![i]!.name} apart`).toBe(false);
       await freeze(page);
       // A new game wakes in the clinic (ADR-0038); the bare layout is checked out on the deptak
       // in front of the clinic (ADR-0045).

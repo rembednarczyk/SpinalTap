@@ -1,7 +1,7 @@
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
-import { freeze, step, teleport, waitForGame } from "./helpers";
+import { freeze, step, teleport, waitForGame, waitForPlay } from "./helpers";
 
 /**
  * Shots of places for the glitch hunters (ADR-0054): `SHOTS` is the directory the PNGs go to,
@@ -25,6 +25,7 @@ test("shots of the hunters' places", async ({ page }) => {
   await page.goto("/?seed=7&models=off");
   await waitForGame(page);
   await page.getByRole("button", { name: "New Game" }).click();
+  await waitForPlay(page);
   await freeze(page);
   for (const [name, x, z, yaw, pitch] of spots) {
     await teleport(page, x, z, yaw, pitch);

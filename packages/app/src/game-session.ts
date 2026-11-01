@@ -13,6 +13,7 @@ import { RenderSync, SIM_HZ, Simulation, WORLD_SCENERY } from "@seki/sim";
 import { type Screen, type SessionIntents, type UiIntents, patchUi, translate } from "@seki/ui";
 import { type Controllers, createControllers } from "./controllers/compose";
 import { isCalm } from "./controllers/hud-sync";
+import { LoadingController } from "./controllers/loading-controller";
 import { pushToastTimed } from "./controllers/shared";
 import { buildCityMap } from "./city-map";
 import { narrativeText } from "./content-text";
@@ -36,6 +37,8 @@ export class GameSession implements SessionIntents {
   private readonly renderSync: RenderSync;
   private simulation: Simulation;
   private readonly c: Controllers;
+  /** The loading screen in front of a new game and a load (ADR-0057). */
+  private readonly loading: LoadingController;
 
   constructor(private readonly deps: GameSessionDeps) {
     // The ink in the player's language from the start, the narrative's own words (speakers' roles,
@@ -59,6 +62,7 @@ export class GameSession implements SessionIntents {
       interrupt: () => this.interruptDialogue(),
       restore: (snapshot) => this.restore(snapshot),
     });
+    this.loading = new LoadingController({ render: deps.render, ui: deps.ui, setScreen: (screen) => this.setScreen(screen) });
     const parts = controllerIntents(this.c, () => this.simulation);
     this.intents = composeIntents(this, parts);
     void this.refreshSlots();
@@ -135,9 +139,21 @@ export class GameSession implements SessionIntents {
     this.replaceSimulation(Simulation.create({ seed: this.deps.seed(), bus: this.bus, crowd: this.deps.crowd ?? "off", traffic: this.deps.traffic ?? this.deps.crowd ?? "off" }));
     this.narrative.resetState();
     this.c.hints.start();
-    this.setScreen("playing");
-    const locale = this.deps.ui.getState().settings.locale;
-    pushToastTimed(this.deps.ui, "system", translate(locale, "newGame.place"), translate(locale, "newGame.intro"));
+    this.startPlaying(() => {
+      const locale = this.deps.ui.getState().settings.locale;
+      pushToastTimed(this.deps.ui, "system", translate(locale, "newGame.place"), translate(locale, "newGame.intro"));
+    });
+  }
+
+  /** True while a new game or a load waits behind the loading screen (ADR-0057). */
+  get preparing(): boolean {
+    return this.loading.loading;
+  }
+
+  /** Into the game through the loading screen, where the renderer prepares the start (ADR-0057). */
+  private startPlaying(play: () => void = () => {}): void {
+    const at = this.simulation.player()?.position ?? { x: 0, y: 0, z: 0 };
+    this.loading.start(at, play);
   }
 
   resume(): void {
@@ -149,6 +165,7 @@ export class GameSession implements SessionIntents {
   }
 
   quitToTitle(): void {
+    this.loading.cancel();
     this.closePanels();
     this.setScreen("title");
     void this.refreshSlots();
@@ -167,14 +184,21 @@ export class GameSession implements SessionIntents {
   /** The browser hid the page or is leaving it (main.tsx, `page-lifecycle.ts`): autosave now if it is safe. */
   pageHidden(): void { this.c.autosave.hidden(); }
 
-  /** Replaces the running game with `snapshot`, ink state included: a load without the slot. */
-  restore(snapshot: SaveSnapshot): void {
+  /**
+   * Replaces the running game with `snapshot`, ink state included: a load without the slot.
+   * It plays behind the loading screen (ADR-0057) unless `prepare` is false (the debug jump).
+   */
+  restore(snapshot: SaveSnapshot, prepare = true): void {
     this.closePanels();
     this.replaceSimulation(Simulation.fromSnapshot(snapshot, this.bus, this.deps.crowd ?? "off", this.deps.traffic ?? this.deps.crowd ?? "off"));
     this.c.wave1.inbox.clear();
     if (snapshot.narrative) this.narrative.loadState(snapshot.narrative);
     else this.narrative.resetState();
-    this.setScreen("playing");
+    if (prepare) this.startPlaying();
+    else {
+      this.loading.cancel();
+      this.setScreen("playing");
+    }
   }
 
   // ---- debug API (main.tsx and debug-api.ts) ----
