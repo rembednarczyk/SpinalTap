@@ -1,4 +1,4 @@
-import { type GroundSurface, type TerrainGrid, type TerrainOpenSides, terrainHeightAt } from "@seki/core";
+import { type GroundSurface, SURFACE_LIFT, type TerrainGrid, type TerrainOpenSides, terrainHeightAt } from "@seki/core";
 import { DRESS_FLAG, type MeshSink, type Rgba, type Vec, hexColor } from "../mesh-sink";
 import { type P2, obbLocal, orientedBox, pointInRing, signedArea, triangulate } from "./polygon";
 import { face, quadUv, vertex } from "./sink-ops";
@@ -17,25 +17,8 @@ import { face, quadUv, vertex } from "./sink-ops";
 
 export const SURFACE_CODE = { terrain: 0, road: 1, sidewalk: 2, square: 3, cobble: 4, footway: 5, grass: 6, rail: 7, kerb: 8 } as const;
 
-/**
- * Lift above the terrain per surface (m): order of drawing where they overlap. The carriageway
- * and what is painted on it (a few centimetres up: the drapes of the two differ that much on a
- * slope) lie over the squares' paving and the paths it crosses (a street
- * through Plac Łokietka, a park path meeting a road), under the raised sidewalks only.
- */
-export const SURFACE_LIFT: Readonly<Record<GroundSurface, number>> = {
-  water: 0.03,
-  grass: 0.04,
-  steps: 0.05,
-  square: 0.08,
-  cobble: 0.08,
-  footway: 0.09,
-  road: 0.1,
-  rail: 0.105,
-  crossing: 0.13,
-  sidewalk: 0.16,
-  basin: 0.32,
-};
+/** Lift above the terrain per surface (m), shared with the simulation (G-130). */
+export { SURFACE_LIFT };
 
 const SURFACE_COLOR: Readonly<Record<Exclude<GroundSurface, "water" | "basin" | "steps" | "crossing">, Rgba>> = {
   road: hexColor("#3a3d45", DRESS_FLAG.wet),

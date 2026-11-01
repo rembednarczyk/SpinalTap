@@ -34,6 +34,24 @@ export const parseCityProps = (bytes: ArrayBuffer): CityProps => {
   return { models: data.models, swatches: data.swatches, grid: data.grid, byStyle };
 };
 
+/**
+ * Two props files as one (`city-props.glb` and the street furniture of `street-props.glb`, ADR-0063):
+ * both are baked on the same palette, so the models keep their UVs. A file on another palette, or
+ * with a model of the same key, is refused.
+ */
+export const mergeCityProps = (a: CityProps, b: CityProps): CityProps => {
+  const names = (p: CityProps) => p.swatches.map((s) => `${s.name}:${s.color}:${s.kind}`).join(",");
+  if (a.grid !== b.grid || names(a) !== names(b)) throw new Error("city props: the files are on different palettes");
+  const models = new Map(a.models);
+  for (const [k, m] of b.models) {
+    if (models.has(k)) throw new Error(`city props: ${k} is in both files`);
+    models.set(k, m);
+  }
+  const byStyle = new Map<string, KitModel[]>();
+  for (const m of models.values()) for (const s of m.styles) byStyle.set(s, [...(byStyle.get(s) ?? []), m]);
+  return { models, swatches: a.swatches, grid: a.grid, byStyle };
+};
+
 /** A well-mixed hash of a seed and a salt (the same position always picks the same model). */
 export const propHash = (seed: number, salt = 0): number => {
   let h = Math.imul((seed ^ Math.imul(salt + 1, 0x9e3779b1)) >>> 0, 0x85ebca6b) >>> 0;

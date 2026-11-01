@@ -41,7 +41,17 @@ describe("credits (ADR-0063)", () => {
   it("gives every CC-BY model in public its credit and a row in its folder's README", () => {
     const glbs = ASSETS.filter((f) => f.endsWith(".glb"));
     const found = glbs.flatMap((f) => creditsIn(f).map((id) => ({ f, id })));
-    expect([...new Set(found.map((x) => x.id))].sort()).toEqual(["sketchfab-electric-pole", "sketchfab-megacity-cluster", "sketchfab-robotic-animal"]);
+    expect([...new Set(found.map((x) => x.id))].sort()).toEqual([
+      "sketchfab-cctv-camera",
+      "sketchfab-electric-pole",
+      "sketchfab-megacity-cluster",
+      "sketchfab-paper-lantern-chochin",
+      "sketchfab-ramen-vending-machine",
+      "sketchfab-reston-b2-terminal",
+      "sketchfab-robotic-animal",
+      "sketchfab-scifi-kiosk",
+      "sketchfab-vending-machine",
+    ]);
     for (const { f, id } of found) {
       const c = CREDITS.find((x) => x.id === id);
       expect(c, `${f}: ${id} not in credits.ts`).toBeDefined();

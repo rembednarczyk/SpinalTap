@@ -1,4 +1,4 @@
-import type { GroundSurface } from "@seki/core";
+import { type GroundSurface, SURFACE_LIFT } from "@seki/core";
 import { MAP_CHUNKS } from "./sites";
 import type { LublinChunkData } from "./types";
 
@@ -122,6 +122,8 @@ export const polylineLength = (pts: readonly Pt[]): number => {
 
 interface Area {
   readonly surface: GroundSurface;
+  /** Laid on a bridge's deck (ADR-0053). */
+  readonly deck: boolean;
   readonly pts: readonly Pt[];
   readonly minX: number;
   readonly maxX: number;
@@ -135,7 +137,7 @@ const AREAS: readonly Area[] = MAP_CHUNKS.flatMap((c) =>
     for (let i = 0; i + 1 < g.outline.length; i += 2) pts.push([g.outline[i] as number, g.outline[i + 1] as number]);
     const xs = pts.map((p) => p[0]);
     const zs = pts.map((p) => p[1]);
-    return { surface: g.surface, pts, minX: Math.min(...xs), maxX: Math.max(...xs), minZ: Math.min(...zs), maxZ: Math.max(...zs) };
+    return { surface: g.surface, deck: g.deck !== undefined, pts, minX: Math.min(...xs), maxX: Math.max(...xs), minZ: Math.min(...zs), maxZ: Math.max(...zs) };
   }),
 );
 
@@ -162,9 +164,18 @@ const inside = (x: number, z: number, pts: readonly Pt[]): boolean => {
   return r;
 };
 
+const areasAt = (x: number, z: number): Area[] =>
+  (areaCells.get(`${Math.floor(x / CELL)}:${Math.floor(z / CELL)}`) ?? []).filter((a) => x >= a.minX && x <= a.maxX && z >= a.minZ && z <= a.maxZ && inside(x, z, a.pts));
+
 /** The surfaces of the map under (x, z), in draw order. */
-export const surfacesAt = (x: number, z: number): GroundSurface[] =>
-  (areaCells.get(`${Math.floor(x / CELL)}:${Math.floor(z / CELL)}`) ?? []).filter((a) => x >= a.minX && x <= a.maxX && z >= a.minZ && z <= a.maxZ && inside(x, z, a.pts)).map((a) => a.surface);
+export const surfacesAt = (x: number, z: number): GroundSurface[] => areasAt(x, z).map((a) => a.surface);
+
+/**
+ * How far the renderer lifts the surface drawn at (x, z) above the ground there: the highest
+ * `SURFACE_LIFT` of the pieces under it, those on a bridge's deck when the ground is the deck.
+ */
+export const surfaceLiftAt = (x: number, z: number, onDeck: boolean): number =>
+  areasAt(x, z).reduce((lift, a) => (a.deck === onDeck ? Math.max(lift, SURFACE_LIFT[a.surface]) : lift), 0);
 
 /** Is (x, z) on a carriageway of the map? */
 export const onRoad = (x: number, z: number): boolean => surfacesAt(x, z).includes("road");

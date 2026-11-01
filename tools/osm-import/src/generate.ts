@@ -4,6 +4,7 @@
  */
 import { LUBLIN_ANCHOR } from "../../../packages/core/src/world/city-geo.ts";
 import { asBuilding, isPart, orphanParts, partsByBuilding } from "./building-parts.ts";
+import { smallAlone } from "./building-alone.ts";
 import { makeBuilding } from "./buildings.ts";
 import { corrected } from "./corrections.ts";
 import { ALL_CHUNKS, type ChunkSpec } from "./config.ts";
@@ -134,6 +135,12 @@ const sidewalkIndex = (lines: readonly Line[]) => {
   };
 };
 
+/**
+ * Points that make a plain building round them public (G-097). An office of government is left
+ * out: it is as often a bureau rented in a tenement as an office building of its own.
+ */
+const CIVIC_POINTS = new Set(["amenity=townhall", "amenity=courthouse", "amenity=library", "amenity=theatre", "amenity=arts_centre"]);
+
 const grow = (r: Rect, m: number): Rect => ({ minX: r.minX - m, minZ: r.minZ - m, maxX: r.maxX + m, maxZ: r.maxZ + m });
 
 const generateChunk = (
@@ -146,6 +153,7 @@ const generateChunk = (
   markings: readonly Marking[],
   passages: readonly PassageOut[],
   parts: ReadonlyMap<string, readonly Area[]>,
+  alone: ReadonlySet<string>,
 ) => {
   const altitude = LUBLIN_ANCHOR.altitude;
   const t = chunkTerrain(sampleField(src, spec.rect, 12), spec.rect, altitude);
@@ -153,12 +161,13 @@ const generateChunk = (
   const namedPoints = pois
     .filter((p) => p.kind === "hotel" || p.kind === "sight" || p.kind === "culture" || p.kind === "church")
     .map((p) => ({ at: p.at, name: p.kind === "hotel" && !/hotel/i.test(p.name) ? `Hotel ${p.name}` : p.name, ...(p.addr ? { addr: p.addr } : {}) }));
+  const civicPoints = pois.flatMap((p) => (CIVIC_POINTS.has(p.tag) ? [{ at: p.at, name: p.name, amenity: p.tag.replace("amenity=", ""), ...(p.addr ? { addr: p.addr } : {}) }] : []));
   const out = [];
   let skipped = 0;
   let withHoles = 0;
   for (const a of buildings) {
     if (!inRect(centroid(a.ring), spec.rect)) continue;
-    const r = makeBuilding(a, { src, grid: t.grid, altitude, range: spec.district.defaultLevels, shopPoints, namedPoints }, parts.get(a.id));
+    const r = makeBuilding(a, { src, grid: t.grid, altitude, range: spec.district.defaultLevels, shopPoints, namedPoints, civicPoints, alone }, parts.get(a.id));
     if ("skipped" in r) {
       skipped++;
       continue;
@@ -271,6 +280,8 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   const pois = allPois(data);
   const passages = buildingPassages(lines.filter((l) => near(l.line)), buildings, rects, atStreet);
   const parts = partsByBuilding(buildings, partAreas.filter((p) => !orphans.has(p)));
-  const results = chunks.map((c) => generateChunk(c, src, buildings, bands, lines, pois, markings, passages, parts));
+  // Standing alone is a property of the whole map, not of a chunk: one pass for all of them.
+  const alone = smallAlone(buildings);
+  const results = chunks.map((c) => generateChunk(c, src, buildings, bands, lines, pois, markings, passages, parts, alone));
   return { chunks: results.map((r) => r.chunk), stats: results.map((r) => r.stats) };
 };

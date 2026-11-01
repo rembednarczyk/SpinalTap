@@ -5,8 +5,12 @@ Zmiany widoczne dla gracza, od najnowszych. Wersja gry i commit są na ekranie t
 ## Nieopublikowane (0.1.0)
 
 ### 1 listopada 2026
-- Ekran ładowania z postępem przy nowej grze i wczytaniu (ADR-0057).
 - Obezwładnienie przy świadku to napaść z heatem; ogłuszonego znajduje i po 6 s budzi NPC, a ochrona i kamery wzywają wsparcie (ADR-0065 etap 2).
+- Auta zaparkowane i jadące stoją na rysowanej nawierzchni, bez zapadania w bruk i bez odstawania na stoku; wrak przy Pedecie na deptaku (G-130).
+- Automaty z napojami, biletomaty, kamery na masztach i lampiony nad straganami z modeli CC-BY, na ekranie „Autorzy” (ADR-0063, druga paczka).
+- Gmachy publiczne z fasadą urzędu zamiast kamienicy (Urząd Miasta na Placu Litewskim, Kuratorium, Teatr Osterwy, Grodzka 5a); Ratusz bez zawyżonej połowy piętra (G-120, G-097, G-116).
+- Małe wolnostojące pawilony bez wysokości w danych mają jedną kondygnację: Bar Centralny przy Pedecie (G-127, #103).
+- Ekran ładowania z postępem przy nowej grze i wczytaniu (ADR-0057, #102).
 - Obezwładnienie od tyłu: ogłuszenie albo zabicie, z podpowiedzią w HUD (ADR-0065 etap 1, #100).
 - Import zapisu z pliku do osobnego slotu „Zaimportowany” (#99).
 - Chodniki nie chowają się pod domyślnie szeroką jezdnią: 262 → 131 m (G-082, #98).

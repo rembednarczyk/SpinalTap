@@ -1,4 +1,5 @@
-import type { EntityId, EventBus, DomainEvents, Vec3 } from "@seki/core";
+import { type EntityId, type EventBus, type DomainEvents, type Vec3, terrainHeightAt } from "@seki/core";
+import { surfaceLiftAt } from "../content/lublin/roads";
 import { TRAFFIC_RANGE, TRAFFIC_ROUTES, TURN_SPEED, type TrafficRoute } from "../content/traffic";
 import { pointsAlong } from "../content/traffic-lane";
 import type { Entity, VehicleState } from "../world/components";
@@ -63,12 +64,23 @@ const coin = (id: EntityId, tick: number): boolean => ((Math.imul(id, 2654435761
 
 const flat = (a: { x: number; z: number }, b: { x: number; z: number }): number => Math.hypot(a.x - b.x, a.z - b.z);
 
+/**
+ * Height a vehicle drives at over (x, z): the ground and the lift of the carriageway the renderer
+ * draws there (`SURFACE_LIFT`, G-130), on a bridge that of its deck's paving.
+ */
+const roadY = (ctx: SimContext, x: number, z: number): number => {
+  const g = ctx.streamer.ground;
+  const y = g.heightAt(x, z);
+  const grid = g.gridAt(x, z);
+  return y + surfaceLiftAt(x, z, grid !== null && y !== terrainHeightAt(grid, x, z));
+};
+
 /** A vehicle on its lane at arc length `s`, at the clock's time: unkeyed, unsaved, bodiless (it drives itself). */
 const vehicleEntity = (ctx: SimContext, route: number, index: number, s: number): Vehicle => {
   const plan = vehiclePlan(ctx.seed, route, index);
   const lane = TRAFFIC_ROUTES[route]!;
   const pose = lanePose(lane, s);
-  const at = { x: pose.x, y: ctx.streamer.ground.heightAt(pose.x, pose.z), z: pose.z };
+  const at = { x: pose.x, y: roadY(ctx, pose.x, pose.z), z: pose.z };
   return {
     id: vehicleId(route, index),
     position: at,
@@ -453,7 +465,7 @@ const drive = (ctx: SimContext, live: Map<EntityId, Vehicle>, v: Vehicle, player
     st.v = 0;
   }
   const next = lanePose(lane, st.s, st.aside);
-  const y = ctx.streamer.ground.heightAt(next.x, next.z);
+  const y = roadY(ctx, next.x, next.z);
   v.velocity = { x: (next.x - v.position.x) / dt, y: 0, z: (next.z - v.position.z) / dt };
   v.position = { x: next.x, y, z: next.z };
   v.yaw = next.yaw;

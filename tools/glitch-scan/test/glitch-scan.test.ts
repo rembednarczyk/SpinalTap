@@ -9,10 +9,12 @@ import { type BuildingSource, mapBuilding } from "../../../packages/engine/src/r
 import { centroid, cleanRing, pointInRing } from "../../../packages/engine/src/renderer/mapcity/polygon";
 import { stackTiers } from "../../../packages/engine/src/renderer/mapcity/vertical-plan";
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
+import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alone.ts";
 import { extractFeatures } from "../../osm-import/src/features.ts";
 import { roadWidth } from "../../osm-import/src/ground.ts";
 import { oneway } from "../../osm-import/src/markings.ts";
 import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
+import { addressOf } from "../../osm-import/src/labels.ts";
 import { geoToWorld } from "../../osm-import/src/project.ts";
 import { CROWD_LANES } from "../../../packages/sim/src/content/crowd";
 import { INTERIORS, interiorAt } from "../../../packages/sim/src/content/interior-areas";
@@ -21,11 +23,11 @@ import { furnitureClearance } from "../../../packages/sim/src/content/furniture-
 import { BOLLARD, alongSegment, anchors, chainSegments, chainThrough, distanceToPiece, furniturePrisms, furnitureRadius } from "../../../packages/sim/src/content/lublin/furniture";
 import { buildingView, isLandmark } from "../../../packages/sim/src/content/lublin";
 import { inBuilding, nearestWall } from "../../../packages/sim/src/content/lublin/places";
-import { ROAD_CHAINS, type RoadChain, polylineLength, surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
+import { ROAD_CHAINS, type RoadChain, polylineLength, surfaceLiftAt, surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
 import { clearedBuilding } from "../../../packages/sim/src/content/cleared-buildings";
 import { CLEARED_BUILDINGS, MAP_CHUNKS, PASSAGES, ROOM_SITES } from "../../../packages/sim/src/content/lublin/sites";
 import { groundY } from "../../../packages/sim/src/content/lublin/terrain";
-import { BRIDGE_DECKS } from "../../../packages/sim/src/content/lublin/decks";
+import { BRIDGE_DECKS, bridgeDeckAt } from "../../../packages/sim/src/content/lublin/decks";
 import { WORLD_CHUNKS } from "../../../packages/sim/src/content/world-map";
 import { type GroundDeck, deckAt } from "../../../packages/sim/src/world/deck";
 import { GroundField } from "../../../packages/sim/src/world/ground";
@@ -314,6 +316,36 @@ const tunnelled = (t: Readonly<Record<string, string>>) => t.tunnel === "yes" ||
 
 const laneChains =new Set(TRAFFIC_ROUTES.filter((r) => r.use === "cars").flatMap((r) => [...r.id.matchAll(/#(\d+):/g)].map((m) => Number(m[1]))));
 
+/** Top of what the renderer draws at (x, z): the ground and the highest paving of its level there (a bridge's deck or the terrain). */
+const drawnAt = (x: number, z: number) => {
+  const y = groundY(x, z);
+  return y + surfaceLiftAt(x, z, bridgeDeckAt(x, z) === y);
+};
+
+/** Every vehicle standing still: parked cars and set pieces' car, van and wreck blocks, with the drawn surface under a 3 x 3 grid of the footprint. */
+const standingVehicles = (() => {
+  let memo: { at: string; what: string; bottom: number; under: number[] }[] | null = null;
+  const grid = (x: number, z: number, ax: number, az: number, bx: number, bz: number) =>
+    [-0.5, 0, 0.5].flatMap((a) => [-0.5, 0, 0.5].map((b) => drawnAt(x + ax * a + bx * b, z + az * a + bz * b)));
+  return () => {
+    memo ??= [
+      ...PARKED_CARS.map((c) => {
+        const { width, length } = VEHICLE_SIZE[c.model];
+        const fx = Math.sin(c.yaw);
+        const fz = Math.cos(c.yaw);
+        return { at: near(c.x, c.z), what: c.model, bottom: c.y, under: grid(c.x, c.z, fz * width, -fx * width, fx * length, fz * length) };
+      }),
+      ...GAME_PROPS.flatMap((p) => {
+        const style = p.view.kind === "block" ? p.view.skin?.style : undefined;
+        if (p.view.kind !== "block" || (style !== "car" && style !== "van" && style !== "wreck")) return [];
+        const { x, y, z } = p.view.size;
+        return [{ at: near(p.center.x, p.center.z), what: style, bottom: p.center.y - y / 2, under: grid(p.center.x, p.center.z, x, 0, 0, z) }];
+      }),
+    ];
+    return memo;
+  };
+})();
+
 const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /**
    * A car lane off every road surface (on grass, a square, a pavement), away from the map's edges.
@@ -553,6 +585,26 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       const gap = p.center.y - p.view.size.y / 2 - groundY(p.center.x, p.center.z);
       return (gap > 0.15 && gap < 1) || gap < -0.3 ? [{ at: near(p.center.x, p.center.z), what: `${p.view.skin?.style ?? p.view.material} ${gap.toFixed(2)} m` }] : [];
     }),
+  /**
+   * A vehicle (a parked car, a set piece's car, van or wreck) whose bottom lies more than 0.1 m
+   * under the surface drawn beneath it (G-130): the renderer drapes each surface its own lift over
+   * the terrain (`SURFACE_LIFT`), so wheels set on the bare terrain sink into the paving.
+   */
+  "vehicle-below-surface": () =>
+    standingVehicles().flatMap((v) => {
+      const worst = Math.max(...v.under) - v.bottom;
+      return worst > 0.1 ? [{ at: v.at, what: `${v.what} ${worst.toFixed(2)} m` }] : [];
+    }),
+  /**
+   * A vehicle whose bottom lies more than 0.15 m over the surface drawn under its lower side
+   * (G-130): a level body on a slope lifts off the paving downhill. Set pieces' vehicles standing
+   * on something else than the map's paving (the market's overpass) aside.
+   */
+  "vehicle-off-surface": () =>
+    standingVehicles().flatMap((v) => {
+      const gap = v.bottom - Math.min(...v.under);
+      return gap > 0.15 && v.bottom - Math.max(...v.under) < 1 ? [{ at: v.at, what: `${v.what} ${gap.toFixed(2)} m` }] : [];
+    }),
   /** A map building that stays in the game through a set piece's block, or over a quarter of it on a set piece. */
   "building-in-set-piece": () =>
     MAP_CHUNKS.flatMap((c) =>
@@ -680,6 +732,17 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       const a = past(pts[0]!, pts[1]!);
       return walkable(a, past(pts[pts.length - 1]!, pts[pts.length - 2]!), 4) === "cut" ? [{ at: near(a.x, a.z), what: `w${w.id} ${t.name ?? t.highway} tunnel=${t.tunnel ?? "-"}` }] : [];
     });
+  },
+  /**
+   * A small building standing on its own (under `SMALL_ALONE_AREA`, no other outline within 1 m:
+   * a pavilion, a kiosk, a shed) raised to the district's default houses when the map gives it no
+   * height (G-127: Bar Centralny by Pedet, 4 storeys for a round one-storey pavilion).
+   */
+  "small-freestanding-tall": () => {
+    const all = MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)));
+    const areas = all.map((b) => ({ id: b.id, tags: {}, ring: worldOutline(b), holes: 0 }) as unknown as Parameters<typeof smallAlone>[0][number]);
+    const alone = smallAlone(areas);
+    return all.filter((b) => alone.has(b.id) && b.source === "default" && b.levels > 1).map((b) => ({ at: near(b.x, b.z), what: `${b.id} ${b.levels} storeys on ${SMALL_ALONE_AREA} m² or less` }));
   },
   /**
    * A building the map puts under ground (`location=underground`: a cellar, a shelter, G-077)
@@ -867,6 +930,39 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       return drawn === want ? [] : [{ at: near(b.x, b.z), what: `${b.id} ${b.name ?? ""} roof:shape=${b.roofShape} drawn as ${drawn}` }];
     }),
   /**
+   * A public building drawn as a house (G-097, G-120): its own tags say an office of government, a
+   * town hall, a court, a library, a theatre, a post office or an arts centre (A), or a point of a
+   * town hall, a court, a theatre, a library or an arts centre lies in its plain outline at the
+   * same street address or with none on either (B, as G-051); its use is neither civic, historic
+   * nor church.
+   */
+  "civic-as-residential": () => {
+    const points = [...SOURCE_OSM.nodes.values()].filter((n) => CIVIC_POINT.has(n.tags?.amenity ?? "")).map((n) => ({ at: geoToWorld(n.lat, n.lon), tags: n.tags! }));
+    return MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b) && b.soffit === undefined && !PUBLIC_USE.has(b.use))).flatMap((b) => {
+      const t = osmTags(b.id);
+      if (t.office === "government" || t.government !== undefined || CIVIC_OWN.has(t.amenity ?? "")) return [{ at: near(b.x, b.z), what: `A ${b.id} ${t.name ?? ""} ${b.use}` }];
+      if (!PLAIN_BUILDING.has(t.building ?? "")) return [];
+      const own = addressOf(t);
+      const p = points.find((q) => inOutline(q.at.x, q.at.z, b.outline, b.x, b.z) && (own === undefined || addressOf(q.tags) === undefined || addressOf(q.tags) === own));
+      return p ? [{ at: near(b.x, b.z), what: `B ${b.id} amenity=${p.tags.amenity} ${p.tags.name ?? ""} ${b.use}` }] : [];
+    });
+  },
+  /**
+   * A building or a lifted part with fractional `building:levels` and no height whose walls over
+   * its plinth (a part's from the building's base, as the map counts its storeys) top the storeys'
+   * `levels × 3.2 m` (a shop floor 0.8 m more) by more than 0.5 m: the half storey rounded up to a
+   * whole one (G-116).
+   */
+  "fractional-levels-rounded": () =>
+    MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b))).flatMap((b) => {
+      const t = osmTags(b.id);
+      const levels = Number((t["building:levels"] ?? "").replace(",", "."));
+      if (t.height !== undefined || t["building:height"] !== undefined || !Number.isFinite(levels) || Number.isInteger(levels)) return [];
+      const walls = b.height - b.plinth;
+      const shop = b.use === "commercial" || b.shopfront === true ? 0.8 : 0;
+      return walls > levels * 3.2 + shop + 0.5 ? [{ at: near(b.x, b.z), what: `${b.id} building:levels=${t["building:levels"]}: walls ${walls.toFixed(1)} m` }] : [];
+    }),
+  /**
    * A metre of a sidewalk mapped on its own (`footway=sidewalk`, off bridges and tunnels, 3 m and
    * more inside the chunks, off zebras) gone under the asphalt of the street it runs along (G-082):
    * the nearest carriageway within 15 m runs parallel to it (|cos| > 0.9), its axis is closer than
@@ -921,6 +1017,17 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /** A two-way street (no `oneway`) narrowed to its mapped sidewalks below two 2.25 m lanes (G-113). */
   "two-way-fit-narrow": () => FITTED().flatMap((r) => (!r.oneway && r.width < 4.4 ? [{ at: r.at, what: `${r.id} ${r.name}: ${r.width.toFixed(1)} m` }] : [])),
 };
+
+/** A building's own tags in the map data, by the game's id (`w…`, `r…`, a split's `/n` dropped). */
+const osmTags = (id: string): Readonly<Record<string, string>> => {
+  const key = id.split("/")[0]!;
+  const n = Number(key.slice(1));
+  return (key.startsWith("r") ? SOURCE_OSM.relations.get(n)?.tags : SOURCE_OSM.ways.get(n)?.tags) ?? {};
+};
+const PUBLIC_USE = new Set(["civic", "historic", "church"]);
+const CIVIC_OWN = new Set(["townhall", "courthouse", "library", "theatre", "post_office", "arts_centre"]);
+const CIVIC_POINT = new Set(["townhall", "courthouse", "theatre", "library", "arts_centre"]);
+const PLAIN_BUILDING = new Set(["yes", "public", "government", "civic"]);
 
 /** The carriageways of the map's lines, by `highway` (the importer's `ROAD_WIDTH`). */
 const CARRIAGEWAYS = new Set(["motorway", "trunk", "primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link", "unclassified", "residential", "living_street", "service", "busway", "road"]);
