@@ -44,6 +44,13 @@ export class WeaponMounts {
     this.manifest = manifest;
   }
 
+  /** Loads every weapon file of the manifest without mounting it (the loading screen, ADR-0057). */
+  preload(): Promise<unknown>[] {
+    return Object.values(this.manifest)
+      .filter((url): url is string => typeof url === "string")
+      .map((url) => this.library.preload({ url, preset: "importedProp", outline: true }));
+  }
+
   has(kind: WeaponKind): boolean {
     return !!this.manifest[kind];
   }

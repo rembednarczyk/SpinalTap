@@ -150,7 +150,8 @@ export const createDebugApi = (
   },
   jump(domain) {
     const snapshot = session.snapshot();
-    session.restore({ ...snapshot, domain: { ...snapshot.domain, ...domain } });
+    // Straight into play: a test jumping mid-story steps at once, no loading screen (ADR-0057).
+    session.restore({ ...snapshot, domain: { ...snapshot.domain, ...domain } }, false);
   },
   view: setView,
   dressed,
