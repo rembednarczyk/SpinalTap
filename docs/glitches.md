@@ -564,13 +564,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: rurka kończy się przed sąsiadem wystającym przed ścianę (to samo `sign-room` co banery z G-157); kontrola skanu z bazą
 - Pakiet właściciela: packages/engine (sign-plan.ts)
 
-### G-171 Odroczona zmiana poziomu trudności ginie przy zapisie
-- Status: zgłoszone (1.11, weryfikator ADR-0066 etap 2)
-- Ważność: S3 · Zasięg: zmiana poziomu w walce („Zmieni się po walce”), potem zapis i wczytanie przed końcem walki
-- Przyczyna: `pendingDifficulty` nie wchodzi do zapisu (etap 1); po wczytaniu gracz jest na starym poziomie bez informacji, a slot ma etykietę starego
-- Poprawka: odroczony profil w zapisie (zmiana schematu: `SAVE_SCHEMA_VERSION` + migracja + test) albo zastosowanie go przy zapisie; test sesji
-- Pakiet właściciela: packages/sim, packages/persistence
-
 ### G-172 Etykieta poziomu na slocie może być nieaktualna po zapisie z innej karty
 - Status: zgłoszone (1.11, weryfikator ADR-0066 etap 2)
 - Ważność: S4 · Zasięg: `SlotDifficulties` (`packages/app/src/presenters/difficulty.ts:41`) rozpoznaje slot po dacie z dokładnością do minuty; `refreshSlots` dekoduje nieznane sloty dwa razy
@@ -584,11 +577,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: linia planu nie stawia latarni ściennej w obrysie budynku ani w pasie 2 m wokół osi `building_passage`; kontrola skanu `wall-lantern-in-building` (baza 5 → 0); przy okazji latarnia KUCHNI POD KOPYTEM może przejść na sąsiednią ścianę Grodzkiej 20
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
-### G-174 Zapis i wczytanie nie odtwarzają stanu przy kontrakcie infiltrate z limitem czasu
-- Status: zgłoszone (1.11, weryfikator #141); było przed podziałem `WorldStreamer` (stary i nowy kod dają ten sam ślad)
-- Ważność: S3 do potwierdzenia · Zasięg: aktywny kontrakt infiltrate/tessen_office z modyfikatorem time_limit
-- Dane: ziarno 4242, `npcHealth` 1,7, od kontraktu profil hard, zapis po przejeździe po chunkach; `stateHash` po `fromSnapshot` caa677e1 zamiast 96b4a9f3 (ślady `scratchpad/v-ws-out/`)
-- Poprawka: najpierw ustalić, które pole stanu nie wraca z zapisu (różnica snapshotów), potem test zapis–wczytanie dla tego kontraktu
+### G-174 Zapis i wczytanie nie odtwarzają stanu przy kontrakcie infiltrate
+- Status: potwierdzone (1.11, weryfikator #141, przyczyna ustalona przez weryfikatora #142); było przed podziałem `WorldStreamer`
+- Ważność: S3 · Zasięg: każdy aktywny kontrakt infiltrate przy strażnikach z widzeniem stożkowym, nie tylko `time_limit`; bez kontraktu rozjazdu nie ma
+- Dane: `Simulation.create({ seed: 4242 })`, `fromSnapshot` z `contracts: { active: null, completed: 5 }` (albo 0), `teleportPlayer(sim, docks(0, 0, 120))`, 30 kroków, `accept-contract infiltrate`, 1 krok, zapis i `fromSnapshot`, oba przebiegi krokowane razem: hash równy zaraz po wczytaniu, rozjazd w 42. kroku (`rngState`, strażnicy c6-g* zaalarmowani tylko w oryginale)
+- Przyczyna: `ai.suspicion` (np. c6-g3 = 0,0229) i `ai.sees` nie wchodzą do zapisu, po wczytaniu podejrzliwość startuje od 0; różnią się też pola sesji `watch`, `street2`, `interior`
+- Poprawka: podejrzliwość i widzenie strażników (oraz brakujące pola sesji) w zapisie albo świadoma decyzja, że wczytanie zeruje czujność; zmiana schematu z migracją; test zapis–wczytanie z tym scenariuszem
 - Pakiet właściciela: packages/sim, packages/persistence
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)

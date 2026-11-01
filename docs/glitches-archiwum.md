@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-171 Odroczona zmiana poziomu trudności ginie przy zapisie
+- Status: naprawione (1.11, #142: czekający profil w zapisie, schemat v20 z migracją; weryfikacja PRZYJĘTE)
+- Ważność: S3 · Zasięg: zmiana poziomu w walce („Zmieni się po walce”), potem zapis i wczytanie przed końcem walki
+- Przyczyna: `pendingDifficulty` nie wchodzi do zapisu (etap 1); po wczytaniu gracz jest na starym poziomie bez informacji, a slot ma etykietę starego
+- Poprawka: odroczony profil w zapisie (zmiana schematu: `SAVE_SCHEMA_VERSION` + migracja + test) albo zastosowanie go przy zapisie; test sesji
+- Pakiet właściciela: packages/sim, packages/persistence
+
 ### G-158 Latarnie ścienne zasłaniają tablice lokali
 - Status: naprawione (1.11, #137: niezależna kontrola 14 → 0, latarnie ścienne prostopadle do ściany; weryfikacja w 2 rundach, kurator zgodne)
 - Ważność: S3 · Zasięg: 17 z 169 latarni ściennych, np. WIEJSKI RAJ (564,0; −88,9), KORZEŃ CZAROWNICY (611,4; −74,9), PUB ZA KURTYNĄ (599,6; −2,6); zrzuty g148-r2-rynek-e, g148-r4-rynek-s
