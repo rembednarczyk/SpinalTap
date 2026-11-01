@@ -5,6 +5,10 @@ Zmiany widoczne dla gracza, od najnowszych. Wersja gry i commit są na ekranie t
 ## Nieopublikowane (0.1.0)
 
 ### 1 listopada 2026
+- Drzwi na fasadach: budynki Lublina mają wejścia. Tam, gdzie mapa zna wejście, drzwi stoją w jego miejscu; pod szyldem każdego lokalu są drzwi sklepu (przy bankach pancerne, na kod), a kamienice od ulicy mają drzwi klatki. Drzwi stoją między oknami albo w miejscu całego okna czy witryny, nigdy w połowie okna, pod szyldem ani w bramie przejazdu. Skrzydła to modele z drugiej paczki użytkownika (CC-BY, na ekranie „Autorzy”); na telefonie są prostsze (ADR-0058 etap 9).
+- Miejsce wykonanego i opłaconego zlecenia zostaje oczyszczone: ciała i ocaleni strażnicy znikają, gdy gracz odejdzie, i nie wracają aż do następnego zlecenia (G-195).
+- Powalony, ale żywy posiłek ochrony nie znika po końcu heatu: leży (albo zostaje schowany) tam, gdzie był, także po zapisie i wczytaniu, i nie zajmuje miejsca następnego posiłku; do domu wracają tylko ci na nogach (G-196).
+- Ciało zabitego posiłku ochrony (po powaleniu albo w trakcie obalenia) leży po wczytaniu tam, gdzie było, także niesione i schowane, i ochrona je znajduje jak przed zapisem (G-193).
 - Neony DENKI, KARAOKE i SAKE na skośnych ścianach Rynku i Grodzkiej są wąskie i pionowe, przylegają do muru zamiast jednym końcem tkwić w ścianie, a drugim wisieć w powietrzu (G-160).
 - Posiłki ochrony wezwane przy heacie zostają w świecie po wczytaniu, tam gdzie były, z tym samym zdrowiem i tym, co wiedzą o graczce, a następne przychodzą wtedy, kiedy przyszłyby bez zapisu: wczytanie nie usuwa już pościgu ani nie sprowadza od razu nowego posiłku w innym miejscu (G-179, zapis v23).
 - Na Radziwiłłowskiej stoją trzy auta zamiast jednego: parkometr za krawężnikiem pasa postojowego nie wypycha już aut z zatok, a zatoka, w której wylosowane auto się nie mieści, dostaje krótszy model; w kilku innych pasach przybyło przez to po kilka aut (G-189).
