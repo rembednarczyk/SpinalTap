@@ -598,13 +598,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: cel uploadu przez klucz (np. `security:<n>`) albo odrzucenie uploadu na encji bez klucza przy zapisie
 - Pakiet właściciela: packages/sim
 
-### G-195 Strażnicy wykonanego kontraktu wracają po ponownym wejściu
-- Status: w PR #175 (1.11, w weryfikacji; decyzja użytkownika: „jak w innych grach tego typu”): `clearSite()` przy wypłacie i przy wczytaniu; przegrane i zastąpione bez wypłaty jak dotąd
-- Ważność: S3 · Zasięg: po wykonaniu kontraktu jego strażnicy odradzają się przy ponownym wejściu w chunk, dopóki miejsce nie dostanie następnego kontraktu (zastąpione zlecenia żyją w `formerContracts`, `packages/sim/src/simulation.ts:98`, `:245`)
-- Oczekiwane (wzór gier z gigami i posterunkami): miejsce wykonanego kontraktu zostaje oczyszczone; zabici i obezwładnieni nie wracają, ocaleni odchodzą przy wyjściu gracza z zasięgu; nowi strażnicy pojawiają się tylko z następnym kontraktem w tym miejscu; ciała znikają po wyjściu z zasięgu chunków
-- Poprawka: strażnicy wykonanego kontraktu nie trafiają do `formerContracts` przy uśpieniu (albo wpis oznaczony jako oczyszczony); test jednej sesji (wyjście i powrót) i zapisu; złoty hash zmieni się świadomie; razem z G-188 (ten sam mechanizm uśpienia)
-- Pakiet właściciela: packages/sim (streaming, contracts), packages/persistence
-
 ### G-196 Ciała i powaleni posiłkowie ochrony zostają do końca sesji
 - Status: częściowo naprawione w #174 (1.11, PRZYJĘTE): powalony żywy posiłek nie znika już po końcu heatu i nie zajmuje limitu; zostaje otwarte: ciała i powaleni posiłkowie nie mają chunku, leżą do końca sesji, a `sent` rośnie w kolejnych heatach
 - Ważność: S4 · Zasięg: powalony, ale żywy posiłek ma AI; po końcu heatu, gdy jest daleko i poza wzrokiem, `runReinforcements` (`packages/sim/src/systems/crime-system.ts`) usuwa go jak żywego, więc ciało znika ze świata bez zapisu; do tego ciała posiłków nie mają chunku i zostają do końca sesji, a `sent` rośnie w kolejnych heatach (wpływ na wybór enforcerów od `n`)

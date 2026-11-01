@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-195 Strażnicy wykonanego kontraktu wracają po ponownym wejściu
+- Status: naprawione w #175 (1.11, PRZYJĘTE; decyzja użytkownika: „jak w innych grach tego typu”): `clearSite()` przy wypłacie i przy wczytaniu; przegrane jak dotąd; schemat v23 bez migracji
+- Ważność: S3 · Zasięg: po wykonaniu kontraktu jego strażnicy odradzają się przy ponownym wejściu w chunk, dopóki miejsce nie dostanie następnego kontraktu (zastąpione zlecenia żyją w `formerContracts`, `packages/sim/src/simulation.ts:98`, `:245`)
+- Oczekiwane (wzór gier z gigami i posterunkami): miejsce wykonanego kontraktu zostaje oczyszczone; zabici i obezwładnieni nie wracają, ocaleni odchodzą przy wyjściu gracza z zasięgu; nowi strażnicy pojawiają się tylko z następnym kontraktem w tym miejscu; ciała znikają po wyjściu z zasięgu chunków
+- Poprawka: strażnicy wykonanego kontraktu nie trafiają do `formerContracts` przy uśpieniu (albo wpis oznaczony jako oczyszczony); test jednej sesji (wyjście i powrót) i zapisu; złoty hash zmieni się świadomie; razem z G-188 (ten sam mechanizm uśpienia)
+- Pakiet właściciela: packages/sim (streaming, contracts), packages/persistence
+
 ### G-183 Skan latarni ściennych nie widzi przejść spoza `building_passage`
 - Status: naprawione w #168 (1.11, PRZYJĘTE w rundzie 2): kontrola `wall-lantern-by-passage` (baza 0) i `Site.nearPassage` przycinają oś `GATE_PASSAGES` do sklepienia; tabela rozstawienia bez zmian (runda 1 była fałszywym alarmem). Poboczne: skan pomija przejścia bez obrysu `p.building`
 - Ważność: S4 (narzędzie) · Zasięg: `wall-lantern-in-building` bierze osie tylko z `tunnel=building_passage`; przejście Gruella pod Wieżą Trynitarską (w298307007, `tunnel=yes`, `layer=-1`) i ręczne bramy `GATE_PASSAGES` pilnuje tylko generator (`Site.nearPassage` zna przejazdy chunków, nie zna `GATE_PASSAGES`); dziś 0 trafień
