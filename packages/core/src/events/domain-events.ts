@@ -221,7 +221,8 @@ export interface DomainEvents {
   TakedownStarted: { target: EntityId; duration: number };
   /**
    * The takedown ended: `target` is unconscious, or dead with `lethal` (its EntityKilled follows).
-   * `witnessed`: someone saw it (ADR-0065 stage 2; false until then).
+   * `witnessed`: a camera, a patrol of the district's security or a civilian saw it, by the rules
+   * of witnesses of ADR-0029; on someone not fighting the player it is then an assault.
    */
   TakedownDone: { target: EntityId; lethal: boolean; witnessed: boolean };
   /**
@@ -229,6 +230,11 @@ export interface DomainEvents {
    * the target is gone (killed by someone else, streamed out).
    */
   TakedownBroken: { target: EntityId; reason: TakedownBreak };
+  /**
+   * `finder` (an NPC or a camera) noticed `body`, someone knocked out (ADR-0065): an NPC walks
+   * over to wake it, the security or a camera reports it, the street around it takes fright.
+   */
+  BodyFound: { body: EntityId; finder: EntityId };
 }
 
 /** Why a takedown did not finish (ADR-0065). */
