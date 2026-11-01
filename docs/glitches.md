@@ -492,13 +492,15 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: odstęp zaparkowanych aut od przejść bez zebry jak od zebr; kontrola skanu
 - Pakiet właściciela: packages/sim (parked-cars), tools/osm-import
 
-### G-160 Płyta „DEN…” w powietrzu przy narożniku na Grodzkiej (źródło nieustalone)
-- Status: zgłoszone (1.11, łowca G-148; zrzut gracza a92148c1)
-- Ważność: S3 · Zasięg: (568,0; −22), y 6,5–8,5, narożnik budynku z szyldem OKRUSZEK; w mieście nieustalone
-- Objaw: wolnostojąca płyta ok. 4 × 1,3 m prostopadła do ściany, ciemna z cyjanową ramą, napis lustrzany z tyłu
-- Wykluczone: tablice lokali, plakietki nazw, banery i billboardy `canyon-plan` (brak w 20 m), `stackAd`, holo, wysięgniki, neon pod gzymsem, tarcze landmarków, megabloki
-- Poprawka: najpierw ustalić źródło (nazwy siatek w scenie albo instrumentacja w `__seki`), potem kontrola skanu
-- Pakiet właściciela: packages/engine (do ustalenia)
+### G-160 Neon DENKI (i KARAOKE, SAKE) osiowy na ukośnej ścianie: koniec w murze, koniec w powietrzu
+- Status: potwierdzone, źródło ustalone (1.11, łowca); w naprawie
+- Ważność: S3 · Zasięg: lokalny (Rynek/Grodzka, trasa kanału Tetsu, widoczne z deptaka) · Koszt: mały
+- Gdzie: DENKI (567,3; −24,9) y 4,1, odsunięcie końca od ściany 1,95 m; KARAOKE (554,0; −33,8) 2,41 m; SAKE (545,0; −74,0) 0,45 m; w mieście 3 z 8 neonów przy ścianach
+- Dowód: kąt osi płyty do stycznej ściany 51°/53°/46°; zrzuty `scratchpad/g160-shots/g160-h.png`, `g160-i.png`
+- Przyczyna: `facadeNeon()` (`packages/sim/src/content/district-kanal.ts`) zamienia `againstWall().yaw` na `facing` o jednej z czterech osi; widok `neon` (`packages/core/src/ports/types.ts:195`) nie ma obrotu, a ściana jest ukośna
+- Poprawka: A (teraz) dane: przestawić albo skrócić trzy neony na płaski odcinek ściany; B (później, ADR) opcjonalny `yaw` w widoku `neon`
+- Test przyjęcia: kontrola skanu `neon-off-wall` (baza 3 → 0)
+- Pakiet właściciela: packages/sim (district-kanal.ts), tools/glitch-scan
 
 ### G-161 Markiza zasłania dolny rząd liter tablicy lokalu
 - Status: zgłoszone (1.11, łowca G-148)
