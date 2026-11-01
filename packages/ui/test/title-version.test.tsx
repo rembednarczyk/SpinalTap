@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { GameUi, type UiIntents, createUiStore } from "../src";
 
@@ -18,5 +18,18 @@ describe("title screen version", () => {
   it("shows nothing when the app gives no version", () => {
     render(<GameUi store={createUiStore({ screen: "title" })} intents={intents()} />);
     expect(screen.queryByTestId("title-version")).toBeNull();
+  });
+});
+
+describe("title screen settings", () => {
+  it("opens the settings panel from the main menu and goes back", () => {
+    const fns = new Map<PropertyKey, ReturnType<typeof vi.fn>>();
+    const i = new Proxy({}, { get: (_, k) => fns.get(k) ?? fns.set(k, vi.fn()).get(k) }) as UiIntents;
+    render(<GameUi store={createUiStore({ screen: "title" })} intents={i} />);
+    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Low" }));
+    expect(i.changeSettings).toHaveBeenCalledWith({ quality: "low" });
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(screen.getByRole("button", { name: "New Game" })).toBeTruthy();
   });
 });

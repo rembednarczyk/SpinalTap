@@ -265,9 +265,10 @@ describe("combat feedback and the contextual HUD", () => {
 
   it("shows damage numbers only when the setting asks for them", () => {
     const { store } = mount({ damageNumbers: [{ id: 1, amount: 24.4, critical: true, rev: 0 }] });
-    expect(screen.queryByTestId("damage-numbers")).toBeNull();
-    act(() => patchUi(store, { settings: { ...DEFAULT_SETTINGS, damageNumbers: "hit" } }));
+    // On by default (one per hit, user decision 1.11).
     expect(screen.getByTestId("damage-numbers").textContent).toBe("24");
+    act(() => patchUi(store, { settings: { ...DEFAULT_SETTINGS, damageNumbers: "off" } }));
+    expect(screen.queryByTestId("damage-numbers")).toBeNull();
   });
 
   it("hides health and ammo at full health out of combat, unless always shown", () => {

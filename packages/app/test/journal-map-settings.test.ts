@@ -283,6 +283,18 @@ describe("settings", () => {
     expect(set).toEqual([["master", 0.5], ["music", 0.2], ["sfx", 0.7], ["ambience", 0.1]]);
   });
 
+  it("defaults to High quality and damage numbers per hit, also for entries saved under the old defaults", () => {
+    expect(DEFAULT_SETTINGS).toMatchObject({ quality: "high", damageNumbers: "hit" });
+    const st = memoryStorage();
+    // Saved before revision 2: Low on a phone and no numbers were written with every change.
+    st.setItem(SETTINGS_KEY, JSON.stringify({ ...DEFAULT_SETTINGS, quality: "low", damageNumbers: "off", volume: 0.3 }));
+    expect(loadSettings(st)).toMatchObject({ quality: "high", damageNumbers: "hit", volume: 0.3 });
+    // Chosen after it: kept.
+    saveSettings(st, { ...DEFAULT_SETTINGS, quality: "low", damageNumbers: "off" });
+    expect(JSON.parse(st.data.get(SETTINGS_KEY)!)).toMatchObject({ rev: 2 });
+    expect(loadSettings(st)).toMatchObject({ quality: "low", damageNumbers: "off" });
+  });
+
   it("keeps autosave on by default and for entries saved before it existed", () => {
     expect(DEFAULT_SETTINGS.autosave).toBe(true);
     expect(sanitizeSettings({ quality: "low" }).autosave).toBe(true);
