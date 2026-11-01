@@ -64,7 +64,22 @@ describe("street-props.glb (ADR-0063)", () => {
   it("is small, on the city kit's palette, every model light and credited", () => {
     expect(streetBytes.byteLength).toBeLessThan(512 * 1024);
     expect(street.swatches).toEqual(props.swatches);
-    expect([...street.models.keys()].sort()).toEqual(["st-cctv", "st-lantern", "st-ticket-kiosk", "st-ticket-terminal", "st-vending", "st-vending-ramen"]);
+    expect([...street.models.keys()].sort()).toEqual([
+      "st-atm",
+      "st-bike",
+      "st-cctv",
+      "st-container-dumpster",
+      "st-container-rust",
+      "st-food-cart",
+      "st-hydrant",
+      "st-lantern",
+      "st-planter",
+      "st-scooter",
+      "st-ticket-kiosk",
+      "st-ticket-terminal",
+      "st-vending",
+      "st-vending-ramen",
+    ]);
     for (const m of street.models.values()) expect(triangleCount(m), m.key).toBeLessThanOrEqual(1500);
   });
 

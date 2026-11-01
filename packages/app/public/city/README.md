@@ -115,7 +115,7 @@ dostaną wiersz tutaj, gdy trafią do pliku.
 
 ## Meble ulicy na licencji CC-BY 4.0: `street-props.glb` (ADR-0063, druga paczka)
 
-Sześć modeli z drugiej paczki ze Sketchfaba (inwentaryzacja: `docs/plany/assety-paczka-2.md`) na
+Osiem modeli z drugiej paczki ze Sketchfaba (inwentaryzacja: `docs/plany/assety-paczka-2.md`) na
 licencji **CC-BY 4.0**, w osobnym pliku na tej samej palecie, bo `city-props.glb` jest blisko limitu
 512 KiB. Gra wczytuje oba pliki po kicie i łączy je w jeden zestaw rekwizytów. Węzeł modelu ma
 `extras.credit`, podpis jest na ekranie „Autorzy”.
@@ -127,25 +127,44 @@ licencji **CC-BY 4.0**, w osobnym pliku na tej samej palecie, bo `city-props.glb
 | `st-ticket-terminal` (biletomat) | Reston B2 Terminal | [Iteration Unlimited](https://sketchfab.com/iterationunlimited) | [Sketchfab](https://sketchfab.com/3d-models/reston-b2-terminal-91b08809f18244628385193e396dd3da) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | żółty z dwóch terminali w pliku (3,3 tys. trójkątów) uproszczony do 0,9 tys., kolory sprowadzone do palety, postawiony na dodanym ciemnym słupku 0,8 m, razem 0,5 × 1,64 × 0,3 m |
 | `st-ticket-kiosk` (biletomat) | Scifi Kiosk | [Martin Ibbett](https://sketchfab.com/unyxium) | [Sketchfab](https://sketchfab.com/3d-models/scifi-kiosk-835aac31a9114203b5cb04952f9a273b) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | uproszczony z 2,1 do 0,9 tys. trójkątów, kolory sprowadzone do palety, ekran świeci (`win-teal`), 0,5 × 1,67 × 0,38 m |
 | `st-cctv` (kamera na maszcie) | CCTV Camera | [Smoggybeard](https://sketchfab.com/Smoggybeard) | [Sketchfab](https://sketchfab.com/3d-models/cctv-camera-e69d5eb37ffb4f188e4d3c84a5d79cdc) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | uproszczony z 3,2 do 0,7 tys. trójkątów, kolory sprowadzone do palety, długość 0,6 m, zawieszony na dodanym maszcie 4,2 m |
+| `st-food-cart` (wózek z jedzeniem przy targach) | Avika Street Food Cart | [AVIKA](https://sketchfab.com/a-v-i-k-a) | [Sketchfab](https://sketchfab.com/3d-models/avika-street-food-cart-d54005c378fa45c3a06090d65a53fb23) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | uproszczony z 36,2 do 0,9 tys. trójkątów, kolory z tekstur sprowadzone do palety, bez tekstur, wpasowany w bryłę wózka (3,73 × 2,55 × 1,48 m) |
+| `st-container-rust`, `st-container-dumpster` (kontenery na Nabrzeżu) | Classic Shipping Container (Free/Gameready) | [Sebastian Webster](https://sketchfab.com/Sebastian.Hamish.Webster) | [Sketchfab](https://sketchfab.com/3d-models/classic-shipping-container-freegameready-772f4be391a245f699c54e6cf157c58d) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | uproszczony z 17,1 do 0,9 tys. trójkątów, blacha w dwóch kolorach palety (`rust`, `dumpster`), bez tekstur, wpasowany w bryłę kontenera (5,96 × 2,53 × 2,42 m) |
 | `st-lantern` (lampiony chochin pod daszkiem straganu) | Chinese \ Japanese paper lantern chochin | [DeepDown](https://sketchfab.com/deepdown) | [Sketchfab](https://sketchfab.com/3d-models/chinese-japanese-paper-lantern-chochin-20bcc5d20f2847f88aef3a267275d16c) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | uproszczony z 2,8 tys. do 201 trójkątów, kolory sprowadzone do palety, czerwony papier świeci (`neon-red`), 0,44 m |
+
+Meble deptaka ADR-0058 etap 2 (`tools/city_street_e2.py`) z paczek CC0 w tym samym pliku:
+
+| Klucze w pliku | Źródło (pobranie) | Autor | Licencja (cytat) |
+|---|---|---|---|
+| `st-atm` (bankomat wolnostojący) | [Low poly ATMs](https://opengameart.org/content/low-poly-atms), `ATM_NORMAL.obj`; `https://opengameart.org/sites/default/files/ATMs.zip` | pixelmannen | CC0: „License(s): CC0” (strona; paczka bez pliku licencji) |
+| `st-hydrant` (hydrant) | [Zombie Apocalypse Kit](https://quaternius.com/packs/zombieapocalypsekit.html), `Environment/glTF/FireHydrant.gltf` (plik z `drive.usercontent.google.com`, id w `sources.json`) | Quaternius | CC0: „License: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication” |
+| `st-planter` (donica z krzakiem i kwiatami) | [Nature Kit 2.1](https://opengameart.org/content/nature-kit), `pot_large`, `plant_bushDetailed`, `flower_redA`, `flower_purpleB`; `https://opengameart.org/sites/default/files/Nature%20Kit%20%282.1%29.zip` | Kenney | CC0: „License: (Creative Commons Zero, CC0) http://creativecommons.org/publicdomain/zero/1.0/” |
+| `st-bike` (rower przy stojaku) | [Public Transport Pack](https://quaternius.com/packs/publictransport.html), `OBJ/Bicycle.obj` (plik z `drive.usercontent.google.com`) | Quaternius | CC0 (strona paczki i https://quaternius.com/license.html) |
+| `st-scooter` (skuter przy stojaku) | [bike](https://opengameart.org/content/bike-0), `bike.obj`; `https://opengameart.org/sites/default/files/bike.zip` | lyricsz | CC0: „License(s): CC0” (strona; paczka bez pliku licencji) |
+
+Każdy jest uproszczony do 0,25–0,35 tys. trójkątów, kolory z MTL, materiałów albo tekstur sprowadzone
+do palety (ekran bankomatu `win-teal`, fioletowe kwiaty donicy `neon-violet`) i wpasowany w bryłę swojego
+rodzaju mebla; rower (0,47 × 0,97 × 1,67 m) i skuter (0,61 × 1,0 × 1,62 m) stoją w poprzek obręczy stojaka,
+w jego bryle (2 × 1,76 m). Na telefonie (`low`) zostają proceduralne wersje (`prop-e2.ts`).
 
 Zmiany względem oryginałów (`tools/city_street.py`, funkcje pomocnicze z `tools/city_ccby.py`): kolor
 trójkąta uśredniony z tekstury i przypisany do roli palety, emisja jako neon, siatka uproszczona przez
 grupowanie wierzchołków, normalne płaskie, bez tekstur. Każdy model jest wpasowany (osobno w każdej
 osi) w pudło bryły swojego rodzaju mebla z symulacji (`packages/sim/src/content/lublin/furniture.ts`).
 Front na +Z, `extras.size`, `extras.styles` (rodzaj mebla: `vending-machine`, `ticket-machine`, `cctv`,
-`lantern`).
+`lantern`, `atm`, `hydrant`, `planter`, `food-cart`, `container`, `parked-bike`, `parked-scooter`).
 
 Renderer (`packages/engine/src/renderer/mapcity/street-models.ts`) rysuje automaty z napojami,
 biletomaty i kamery na masztach jako te modele (model wybrany z pozycji), w miejscu i obrocie
 proceduralnego mebla, a pod daszkiem co trzeciego straganu wiesza dwa lampiony. Wszystko trafia do siatki
 bloku mebli, więc nie ma nowych wywołań rysowania ani zmian w symulacji. Na telefonie (`low`) zostają
-meble proceduralne.
+meble proceduralne. Od ADR-0058 etapu 2 tak samo bankomaty, hydranty, donice, wózki z jedzeniem, kontenery
+(kolor z kształtu) oraz rowery i skuter przy stojakach (obręcze zostają proceduralne); bryły i miejsca tych
+rodzajów weszły do symulacji w tym samym etapie (`furniture.ts`, `docs/world/lublin-props.todo.json`).
 
 Odtworzenie pliku:
 
 ```
-NODE_USE_ENV_PROXY=1 node tools/assets/fetch.mjs /tmp/city-assets --only sketchfab-vending-machine,sketchfab-ramen-vending-machine,sketchfab-reston-b2-terminal,sketchfab-scifi-kiosk,sketchfab-cctv-camera,sketchfab-paper-lantern-chochin
+NODE_USE_ENV_PROXY=1 node tools/assets/fetch.mjs /tmp/city-assets --only sketchfab-vending-machine,sketchfab-ramen-vending-machine,sketchfab-reston-b2-terminal,sketchfab-scifi-kiosk,sketchfab-cctv-camera,sketchfab-paper-lantern-chochin,sketchfab-avika-street-food-cart,sketchfab-shipping-container,oga-pixelmannen-atms,quaternius-zombie-kit,kenney-nature-kit,quaternius-public-transport,oga-lyricsz-bike
 python3 -I -B tools/city_kit.py --street /tmp/city-assets --out packages/app/public/city
 ```
 
