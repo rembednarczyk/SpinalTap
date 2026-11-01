@@ -61,5 +61,10 @@
   "venue-board-in-neighbour": 0,
   "banner-in-neighbour": 0,
   "holo-or-blade-in-neighbour": 0,
-  "tube-in-neighbour": 0
+  "tube-in-neighbour": 0,
+  "market-piece-in-building": 0,
+  "market-piece-on-road": 0,
+  "market-piece-in-crossing": 0,
+  "market-piece-on-crowd-lane": 0,
+  "market-piece-in-neighbour": 0
 }
