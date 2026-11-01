@@ -793,6 +793,20 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       return (gap > 0.15 && gap < 1) || gap < -0.3 ? [{ at: near(p.center.x, p.center.z), what: `${p.view.skin?.style ?? p.view.material} ${gap.toFixed(2)} m` }] : [];
     }),
   /**
+   * A game neon set against a wall (its centre within 0.2 m of one) whose plate, square to an
+   * axis, leaves the slanting wall (G-160): an end over 0.4 m out in the air, or over 0.3 m deep
+   * in the building. Each end of the plate's long side is measured to its own nearest wall.
+   */
+  "neon-off-wall": () =>
+    GAME_PROPS.flatMap(({ center: c, view }) => {
+      if (view.kind !== "neon" || nearestWall(c.x, c.z).d > 0.2) return [];
+      const { x: sx, z: sz } = view.size;
+      const half = Math.max(sx, sz) / 2;
+      const ends = [-1, 1].map((k) => (sx >= sz ? { x: c.x + k * half, z: c.z } : { x: c.x, z: c.z + k * half }));
+      const off = ends.map((e) => ({ inside: inBuilding(e.x, e.z), d: nearestWall(e.x, e.z).d })).filter((e) => e.d > (e.inside ? 0.3 : 0.4));
+      return off.length > 0 ? [{ at: near(c.x, c.z), what: `${view.label ?? "neon"} ${off.map((e) => `${e.inside ? "in" : "off"} ${e.d.toFixed(2)} m`).join(", ")}` }] : [];
+    }),
+  /**
    * A vehicle (a parked car, a set piece's car, van or wreck) whose bottom lies more than 0.1 m
    * under the surface drawn beneath it (G-130): the renderer drapes each surface its own lift over
    * the terrain (`SURFACE_LIFT`), so wheels set on the bare terrain sink into the paving.
