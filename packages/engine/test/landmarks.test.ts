@@ -16,7 +16,7 @@ import { facing } from "../src/renderer/mapcity/landmarks/layer2077";
 import { MapCity } from "../src/renderer/mapcity/map-city";
 import { type P2, centroid, pointInRing } from "../src/renderer/mapcity/polygon";
 import { MAP_SIGN_KIND } from "../src/renderer/mapcity/sign-plan";
-import { cityAround, colored, data, near3, outside, passageOpen, points, ringOf, scenery } from "./landmark-fixture";
+import { cityAround, colored, data, near3, onTheStreet, outside, passageOpen, points, ringOf, ringsAround, scenery } from "./landmark-fixture";
 
 /**
  * Brama Krakowska from the landmark kit (ADR-0062, stage 1): the recipe's detail stays in the
@@ -146,6 +146,9 @@ describe("Brama Krakowska from the landmark kit (ADR-0062)", () => {
       const f = frameOf(id) as LandmarkFrame;
       for (const p of [...colored(near3(f), SWATCH.metal), ...colored(near3(f), "#3a3f47")]) expect(outside(f.b.ring, p)).toBeLessThanOrEqual(0.31);
     }
+    // The two uplights by the passage on Bramowa stand on the cobbles, not under or over them, and in no neighbour.
+    const annex = frameOf("r7224409") as LandmarkFrame;
+    expect(onTheStreet(annex, near3(annex), ringsAround(472.6, -91.2, GATE))).toBe(2);
     const tower = frameOf("w617597407") as LandmarkFrame;
     const runs = cableRuns(tower);
     expect(runs.length).toBe(2);

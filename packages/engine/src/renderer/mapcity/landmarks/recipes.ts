@@ -230,6 +230,8 @@ export interface LandmarkPart {
   readonly above?: readonly (readonly { readonly x: number; readonly z: number }[])[];
   /** The tenements its cables run to (from the map data): world outline and top. */
   readonly cableTo?: readonly CableAnchor[];
+  /** World outlines of the other buildings of the data next to it (not of its recipe): its fittings and windows keep out of them. */
+  readonly nearby?: readonly (readonly { readonly x: number; readonly z: number }[])[];
 }
 
 /** Recipes by the OSM id of each of their buildings and parts. */

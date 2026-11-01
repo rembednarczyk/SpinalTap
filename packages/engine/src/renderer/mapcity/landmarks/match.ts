@@ -10,7 +10,10 @@ import { type CableAnchor, type LandmarkPart, RECIPE_BY_OSM } from "./recipes";
  * to come from the same data.
  */
 
-const keyOf = (x: number, z: number, corners: number): string => `${Math.round(x * 10)},${Math.round(z * 10)},${corners}`;
+/** How far from a part's position another building's position may lie to count as its neighbour, metres. */
+const NEARBY = 30;
+
+const keyOf =(x: number, z: number, corners: number): string => `${Math.round(x * 10)},${Math.round(z * 10)},${corners}`;
 
 /** The world outline of a building of the data. */
 const ringOf = (b: LublinBuildingData): P2[] => Array.from({ length: b.outline.length / 2 }, (_, i) => ({ x: b.x + (b.outline[i * 2] as number), z: b.z + (b.outline[i * 2 + 1] as number) }));
@@ -27,7 +30,9 @@ export const landmarkIndex = (chunks: readonly LublinChunkData[]): ReadonlyMap<s
     // Standing on its top, from the data: the tower on the annex, not the octagon on the tower.
     const above = found.filter((o) => o !== b && o.soffit !== undefined && Math.abs(o.y + o.soffit - b.y - b.height) < 0.3 && RECIPE_BY_OSM.get(o.id)?.recipe === part.recipe && pointInRing(centroid(ringOf(o)), ring)).map(ringOf);
     const cableTo = (part.part.tier.cables ?? []).flatMap((id) => anchors.get(id) ?? []);
-    out.set(keyOf(b.x, b.z, b.outline.length / 2), { ...part, ...(above.length > 0 ? { above } : {}), ...(cableTo.length > 0 ? { cableTo } : {}) });
+    // Standing against it or overlapping its fronts in the data (Teatr NN by Brama Grodzka).
+    const nearby = chunks.flatMap((c) => c.buildings.flatMap((o) => (RECIPE_BY_OSM.get(o.id)?.recipe !== part.recipe && Math.hypot(o.x - b.x, o.z - b.z) < NEARBY ? [ringOf(o)] : [])));
+    out.set(keyOf(b.x, b.z, b.outline.length / 2), { ...part, ...(above.length > 0 ? { above } : {}), ...(cableTo.length > 0 ? { cableTo } : {}), ...(nearby.length > 0 ? { nearby } : {}) });
   }
   return out;
 };

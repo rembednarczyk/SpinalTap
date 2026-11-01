@@ -1,8 +1,10 @@
 import { type SceneryItem, WORLD_SCENERY, groundY } from "@seki/sim";
 import { LUBLIN_CHUNKS, type LublinBuildingData } from "@seki/sim/lublin";
 import { MeshSink, hexColor } from "../src/renderer/mesh-sink";
-import { type FacadeFrame, facadeFrame } from "../src/renderer/mapcity/facade-frame";
+import { type FacadeFrame, type Wall, facadeFrame } from "../src/renderer/mapcity/facade-frame";
 import { type LandmarkFrame, landmarkAt, planNearLandmark, withLandmark } from "../src/renderer/mapcity/landmarks";
+import { SWATCH, onWall } from "../src/renderer/mapcity/landmarks/kit";
+import { litMouths } from "../src/renderer/mapcity/landmarks/landmark-plan";
 import { mapBuilding } from "../src/renderer/mapcity/map-building";
 import type { MapView } from "../src/renderer/mapcity/map-city";
 import { type P2, cleanRing, pointInRing } from "../src/renderer/mapcity/polygon";
@@ -65,6 +67,43 @@ export const outside = (r: readonly P2[], p: P2): number => {
   }
   return best;
 };
+
+/** Metres along a wall of a point's foot on it. */
+export const along = (w: Wall, p: P2): number => ((p.x - w.a.x) * (w.b.x - w.a.x) + (p.z - w.a.z) * (w.b.z - w.a.z)) / w.length;
+
+/** World outlines of the data's buildings within 40 m of (x, z) but `self`. */
+export const ringsAround = (x: number, z: number, self: readonly string[]): P2[][] =>
+  LUBLIN_CHUNKS.flatMap((c) => c.buildings)
+    .filter((b) => !self.includes(b.id) && Math.hypot(b.x - x, b.z - z) < 40)
+    .map((b) => Array.from({ length: b.outline.length / 2 }, (_, i) => ({ x: b.x + b.outline[i * 2]!, z: b.z + b.outline[i * 2 + 1]! })));
+
+/**
+ * The uplight fittings at the lit mouths, found in the near sink (metal low by the mouth's wall,
+ * grouped by 0.6 m along it): how many stand with their foot on the terrain under them (to 3 cm)
+ * outside every ring of `rings`; -1 when one does not.
+ */
+export const onTheStreet = (f: LandmarkFrame, sink: MeshSink, rings: readonly (readonly P2[])[] = []): number => {
+  let n = 0;
+  for (const m of litMouths(f)) {
+    const low = colored(sink, SWATCH.metal).filter((p) => p.y < m.top - 1 && Math.abs(before(m.w, p) - 0.16) < 0.15 && along(m.w, p) > -0.1 && along(m.w, p) < m.w.length + 0.1);
+    const groups: (typeof low)[] = [];
+    for (const p of [...low].sort((a, b) => along(m.w, a) - along(m.w, b))) {
+      const g = groups[groups.length - 1];
+      if (g && along(m.w, p) - along(m.w, g[g.length - 1]!) < 0.6) g.push(p);
+      else groups.push([p]);
+    }
+    for (const g of groups) {
+      const u = g.reduce((s, p) => s + along(m.w, p), 0) / g.length;
+      const at = onWall(m.w, u, 0, 0.16);
+      if (Math.abs(Math.min(...g.map((p) => p.y)) - groundY(at.x, at.z)) > 0.03 || rings.some((r) => pointInRing(at, r))) return -1;
+      n++;
+    }
+  }
+  return n;
+};
+
+/** Signed distance of a point in front of a wall's plane. */
+export const before = (w: Wall, p: P2): number => (p.x - w.a.x) * w.nx + (p.z - w.a.z) * w.nz;
 
 type V3 = { x: number; y: number; z: number };
 

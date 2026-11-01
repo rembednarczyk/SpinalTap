@@ -1,10 +1,12 @@
+import { groundY } from "@seki/sim";
 import type { MeshSink, Rgba } from "../../mesh-sink";
 import { type FacadeFrame, type Wall, trimMeta } from "../facade-frame";
 import { band } from "../facade-parts";
 import { doorwaysOn, walls } from "../facade-plan";
 import { WINDOW_STYLE } from "../facade-style";
 import { planPassages } from "../passage-plan";
-import { SWATCH, archPanel, blindNiches, clockFace, cornice, helmet, lit, pilasters, shownWalls, skirtRoof, slabRing, solid, stonePlinth } from "./kit";
+import { pointInRing } from "../polygon";
+import { SWATCH, archPanel, blindNiches, clockFace, cornice, helmet, lit, onWall, pilasters, shownWalls, skirtRoof, slabRing, solid, stonePlinth } from "./kit";
 import { GALLERY, type WallRect, battlements, buttress, clearOfPassages, diaper, gallery, paintingNiche, plaqueRow, smallWindows } from "./elevation";
 import { camera, corniceLights, facing, helmLeds, mast, scanner, screenFrame, sideOf, uplightFittings } from "./layer2077";
 import { courseAndKeystones, dataRoof, gableTrim, rustication, stringCourse, windowRows } from "./classicist";
@@ -59,29 +61,13 @@ export const mostFacing = (f: FacadeFrame, dir: { x: number; z: number }): Wall 
   return best;
 };
 
-/** A passage's mouth on a wall: the wall, the mouth along it, its top and the street's floor at it (world y). */
+/** A passage's mouth on a wall: the wall, the mouth along it and its top (world y). */
 export interface Mouth {
   readonly w: Wall;
   readonly u0: number;
   readonly u1: number;
   readonly top: number;
-  readonly ground: number;
 }
-
-/** The floor of the passage's end nearest (x, z), else the lowest ground under the building. */
-const floorAt = (f: LandmarkFrame, x: number, z: number): number => {
-  let best = { d: Infinity, y: f.b.foot };
-  for (const p of f.b.passages ?? []) {
-    for (const [q, y] of [
-      [p.from, p.floor[0]],
-      [p.to, p.floor[1]],
-    ] as const) {
-      const d = Math.hypot(q.x - x, q.z - z);
-      if (d < best.d) best = { d, y };
-    }
-  }
-  return best.y;
-};
 
 /** The first shown wall on a side with a passage's mouth in it, with the mouth along it. */
 export const mouthWall = (f: LandmarkFrame, side: "new" | "old"): Mouth | null => {
@@ -89,15 +75,35 @@ export const mouthWall = (f: LandmarkFrame, side: "new" | "old"): Mouth | null =
   for (const w of shownWalls(f)) {
     if (sideOf(w, layer) !== side) continue;
     const o = doorwaysOn(w, f.b.doorways ?? [])[0];
-    if (!o) continue;
-    const t = (o.u0 + o.u1) / 2 / w.length;
-    return { w, u0: o.u0, u1: o.u1, top: o.top, ground: floorAt(f, w.a.x + (w.b.x - w.a.x) * t, w.a.z + (w.b.z - w.a.z) * t) };
+    if (o) return { w, u0: o.u0, u1: o.u1, top: o.top };
   }
   return null;
 };
 
 /** The mouths with uplights: the Old Town's, and the new town's too where the whole layer is subdued. */
 export const litMouths = (f: LandmarkFrame): Mouth[] => (f.landmark.recipe.layer.subdued ? (["old", "new"] as const) : (["old"] as const)).flatMap((s) => mouthWall(f, s) ?? []);
+
+/** Whether the strip of the wall from u0 to u1, up to `out` metres in front of it, reaches into a neighbouring building of the data. */
+export const intoNeighbour = (f: LandmarkFrame, w: Wall, u0: number, u1: number, out: number): boolean =>
+  (f.landmark.nearby ?? []).some((r) => [u0, (u0 + u1) / 2, u1].some((u) => [0.05, out].some((o) => pointInRing(onWall(w, u, 0, o), r))));
+
+/** An uplight at a mouth: along the wall and the terrain's height under it (world y). */
+export interface Uplight {
+  readonly u: number;
+  readonly y: number;
+}
+
+/**
+ * The uplights at a mouth: either side of it, moved in off the corners, on the terrain under each
+ * (the street slopes along a gate's front); none where a neighbouring building stands.
+ */
+export const uplights = (f: LandmarkFrame, m: Mouth): Uplight[] =>
+  uplightsOn(m)
+    .filter((u) => !intoNeighbour(f, m.w, u - 0.2, u + 0.2, 0.3))
+    .map((u) => {
+      const p = onWall(m.w, u, 0, 0.16);
+      return { u, y: groundY(p.x, p.z) };
+    });
 
 /** Where the clocks are: the walls facing the new town and the Old Town. */
 export const clockWalls = (f: LandmarkFrame): { neon: Wall | null; old: Wall | null } => {
@@ -192,7 +198,7 @@ const layerOn = (sink: MeshSink, f: LandmarkFrame, part: PartRecipe): void => {
   const old = mouthWall(f, "old");
   // Beside the arch's head on a classicist front, off its windows over the string course.
   if (old) camera(sink, old.w, cameraAlong(old), old.top + (t.front ? -0.6 : 1.1));
-  for (const m of litMouths(f)) uplightFittings(sink, m.w, m.ground, uplightsOn(m), layer.warm, meta);
+  for (const m of litMouths(f)) uplightFittings(sink, m.w, uplights(f, m), layer.warm, meta);
   if (layer.checkpoint) for (const p of f.b.passages ?? []) scanner(sink, f, p, "#5ce1ff");
 };
 
@@ -257,7 +263,8 @@ const classicFront = (sink: MeshSink, f: LandmarkFrame, front: NonNullable<Tier[
   const course = stringCourse(f);
   rustication(sink, f, course, solid(f.landmark.part.tier.colour ? SWATCH.beigeJoint : SWATCH.niche));
   courseAndKeystones(sink, f, course, trim);
-  windowRows(sink, f, front.rows, front.windows, course + 0.35, f.top - 0.7, trim, solid(SWATCH.opening));
+  // No window behind a neighbour standing out in front of the front (Teatr NN by Brama Grodzka).
+  windowRows(sink, f, front.rows, front.windows, course + 0.35, f.top - 0.7, trim, solid(SWATCH.opening), (w, u0, u1) => !intoNeighbour(f, w, u0, u1, 0.35));
   if (f.landmark.part.crown.kind === "roof") gableTrim(sink, f, trim, solid(SWATCH.opening));
 };
 

@@ -4,12 +4,12 @@ import { planNearBuilding } from "../src/renderer/mapcity/facade-plan";
 import { ROOF_STYLE } from "../src/renderer/mapcity/facade-style";
 import { type LandmarkFrame, landmarkAt, planFarLandmark, planLandmarkCables, planLandmarkSigns } from "../src/renderer/mapcity/landmarks";
 import { stringCourse } from "../src/renderer/mapcity/landmarks/classicist";
-import { SWATCH } from "../src/renderer/mapcity/landmarks/kit";
-import { cameraAlong, mouthWall } from "../src/renderer/mapcity/landmarks/landmark-plan";
+import { SWATCH, onWall } from "../src/renderer/mapcity/landmarks/kit";
+import { cameraAlong, litMouths, mouthWall, uplights } from "../src/renderer/mapcity/landmarks/landmark-plan";
 import { sideOf } from "../src/renderer/mapcity/landmarks/layer2077";
-import type { Wall } from "../src/renderer/mapcity/facade-frame";
+import { pointInRing } from "../src/renderer/mapcity/polygon";
 import { MAP_SIGN_KIND } from "../src/renderer/mapcity/sign-plan";
-import { cityAround, colored, data, near3, outside, passageOpen, points } from "./landmark-fixture";
+import { along, before, cityAround, colored, data, near3, onTheStreet, outside, passageOpen, points, ringsAround } from "./landmark-fixture";
 
 /**
  * Brama Grodzka from the landmark kit (ADR-0062, stage 2): a plastered classicist gate house on
@@ -20,9 +20,8 @@ import { cityAround, colored, data, near3, outside, passageOpen, points } from "
 const GATE = "w232362876";
 const { near, frameOf } = cityAround(714.2, 141.3);
 const gate = () => frameOf(GATE) as LandmarkFrame;
-
-/** Signed distance of a point in front of a wall's plane. */
-const before = (w: Wall, p: { x: number; z: number }): number => (p.x - w.a.x) * w.nx + (p.z - w.a.z) * w.nz;
+/** The outlines of the buildings round the gate in the data (Teatr NN, w66293322 and the rest). */
+const nearby = ringsAround(714.2, 141.3, [GATE]);
 
 describe("Brama Grodzka from the landmark kit (ADR-0062)", () => {
   it("finds its recipe by the data's position for the gate and for no other building, Teatr NN next door included", () => {
@@ -91,12 +90,13 @@ describe("Brama Grodzka from the landmark kit (ADR-0062)", () => {
       // The glass of the windows (0.06 m out) over the string course, the round window over the eaves.
       const glass = on(SWATCH.opening, 0.06);
       const windows = glass.filter((p) => p.y < f.top);
-      expect(windows.length / 4, side).toBe(6);
+      // Two rows on the axes a neighbour leaves in sight: of three, the one behind Teatr NN (Grodzka's
+      // front) and the one inside w66293322 (the castle's) are left out.
+      expect(windows.length / 4, side).toBe(4);
       for (const p of windows) expect(p.y).toBeGreaterThan(course + 0.3);
+      // The cornices over the windows (0.12 m out, under the main cornice), none behind a neighbour.
+      for (const p of on(SWATCH.plasterTrim, 0.12).filter((q) => q.y < f.top - 0.6)) for (const r of nearby) expect(pointInRing(onWall(m.w, along(m.w, p), 0, 0.35), r), side).toBe(false);
       expect(glass.filter((p) => p.y > f.top).length, side).toBeGreaterThanOrEqual(12);
-      // The windows' middle axis over the arch, as near as the wall's ends let it.
-      const along = (p: { x: number; z: number }) => ((p.x - m.w.a.x) * (m.w.b.x - m.w.a.x) + (p.z - m.w.a.z) * (m.w.b.z - m.w.a.z)) / m.w.length;
-      expect(Math.abs(windows.reduce((s, p) => s + along(p), 0) / windows.length - (m.u0 + m.u1) / 2), side).toBeLessThan(0.5);
       // The keystone stands proud of the arch's trim over the middle of the mouth.
       const key = on(SWATCH.plasterTrim, 0.08).filter((p) => p.y < course + 0.01 && p.y > m.top - 0.3);
       expect(key.length, side).toBe(4);
@@ -133,22 +133,19 @@ describe("Brama Grodzka from the landmark kit (ADR-0062)", () => {
     const cables = new MeshSink();
     planLandmarkCables(cables, f);
     expect(cables.vertexCount).toBe(0);
-    const metal = colored(sink, SWATCH.metal);
-    for (const side of ["old", "new"] as const) {
-      const m = mouthWall(f, side)!;
-      const at = metal.filter((p) => before(m.w, p) > 0.05);
-      expect(at.length, side).toBeGreaterThan(0);
-      expect(Math.min(...at.map((p) => p.y)), side).toBeCloseTo(m.ground, 1);
-    }
-    expect(mouthWall(f, "old")!.ground - mouthWall(f, "new")!.ground).toBeGreaterThan(2);
-    // Signs: the uplights' beams only, two at each mouth; no screen, plaque, holo or strobe.
+    // One uplight at each mouth: the other's place lies in a neighbour (Teatr NN, w66293322).
+    const lights = litMouths(f).map((m) => uplights(f, m).length);
+    expect(lights).toEqual([1, 1]);
+    expect(onTheStreet(f, sink, nearby)).toBe(2);
+    // Signs: the uplights' beams only, one at each mouth, none in a neighbour; no screen, plaque, holo or strobe.
     const slots: string[] = [];
     const signs = new MeshSink();
     planLandmarkSigns(signs, f, (name) => slots.push(name) - 1);
     expect(slots).toEqual([]);
     const kinds = points(signs).map((p) => Math.round(p.v2));
     expect(new Set(kinds)).toEqual(new Set([MAP_SIGN_KIND.beam]));
-    expect(kinds.length / 4).toBe(4);
+    expect(kinds.length / 4).toBe(2);
+    for (const p of points(signs)) for (const r of nearby) expect(pointInRing(p, r)).toBe(false);
   });
 
   it("has a smaller far version with the solid, the gabled roof and the warm cornice lines", () => {

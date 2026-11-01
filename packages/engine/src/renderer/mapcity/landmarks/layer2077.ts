@@ -97,9 +97,9 @@ export const camera = (sink: MeshSink, w: Wall, u: number, y: number): void => {
   sink.box({ x: lens.x + dx * 0.05, y: y + 0.03, z: lens.z + dz * 0.05 }, 0.04, 0.04, 0.04, lit("#ff3030"));
 };
 
-/** Uplights on the ground (world y) at the foot of a wall: warm lit fittings (their beams are signs). */
-export const uplightFittings = (sink: MeshSink, w: Wall, ground: number, us: readonly number[], color: string, meta: Uv): void => {
-  for (const u of us) {
+/** Uplights on the ground at the foot of a wall, each at `u` along it on ground `y` (world): warm lit fittings (their beams are signs). */
+export const uplightFittings = (sink: MeshSink, w: Wall, lights: readonly { readonly u: number; readonly y: number }[], color: string, meta: Uv): void => {
+  for (const { u, y: ground } of lights) {
     // Against the wall, within a cornice's depth of it (0.3 m, T-034).
     sink.box(onWall(w, u, ground + 0.08, 0.16), 0.34, 0.16, 0.22, solid(SWATCH.metal), { rotY: Math.atan2(-(w.b.z - w.a.z), w.b.x - w.a.x) });
     quadUv(sink, [onWall(w, u - 0.13, ground + 0.165, 0.07), onWall(w, u + 0.13, ground + 0.165, 0.07), onWall(w, u + 0.13, ground + 0.165, 0.25), onWall(w, u - 0.13, ground + 0.165, 0.25)], { x: 0, y: 1, z: 0 }, lit(color), UNIT, meta);
