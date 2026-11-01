@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-173 Latarnie ścienne w przejazdach bramnych i szczelinach
+- Status: naprawione (1.11, #147: kontrola `wall-lantern-in-building` 4 → 0, rozstawienie 3774 → 3770, 1 latarnia przesunięta przy Wieży Trynitarskiej; piąta zgłoszona (Grodzka 20, (653,4; 80,8)) wisi przed fasadą, szczeliny w danych nie ma; weryfikacja PRZYJĘTE, kurator ZGODNE Z UWAGAMI)
+- Ważność: S4 · Zasięg: 5 latarni: przejazd Bramy Krakowskiej (475,2; −90,1), Bramy Grodzkiej (713,5; 138,9), (718,6; 144,5), Ku Farze pod Grodzką 14 (621,8; 40,4), szczelina Grodzka 18/20 (653,4; 80,8); 4 były przed #137, (621,8; 40,4) wróciła w #137 przez odstęp od przesuniętej sąsiadki
+- Przyczyna: linia planu `lamps.stare-miasto-wall` (rozstaw 15 m) stawia latarnie na osi dróg `tunnel=building_passage`; głowica 3,1–4,5 m wchodzi w sklepienie (4–4,2 m); `furniture-in-building` pomija `lamp-wall-lantern`
+- Poprawka: linia planu nie stawia latarni ściennej w obrysie budynku ani w pasie 2 m wokół osi `building_passage`; kontrola skanu `wall-lantern-in-building` (baza 4 → 0); przy okazji latarnia KUCHNI POD KOPYTEM może przejść na sąsiednią ścianę Grodzkiej 20
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
 ### G-170 Neonowe rurki pod gzymsem wchodzą w sąsiednie budynki
 - Status: naprawione (1.11, #148: rurki tylko na wolnych odcinkach ściany, odsianie sąsiadów; skan `tube-in-neighbour` 65 → 0; weryfikacja PRZYJĘTE)
 - Ważność: S4 · Zasięg: 58 rurek w 49 budynkach (`tubes` w `sign-plan.ts`), w większości ukryte w bryle sąsiada
