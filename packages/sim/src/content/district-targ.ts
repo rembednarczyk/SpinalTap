@@ -294,9 +294,10 @@ const NORTH_PROPS: readonly StaticProp[] = [
   ...[78, 96, 114].flatMap((x) => [building(x, 88.5, 1.4, 8.5, 1.4), building(x, 95.5, 1.4, 8.5, 1.4)]),
   neon(96, 7.4, 86.9, v(8, 1.4, 0.15), "#ffb000", "TARG"),
   ...northStalls(),
-  // Hebi stash in the east corner under the highway: cover in front of the crate.
+  // Hebi stash in the east corner under the highway: cover in front of the crate. The big crate
+  // by the stash takes a body (ADR-0065).
   crate(119.8, 92, 1.0, 1.1, 2.4),
-  crate(122.5, 96.6, 1.6, 1.4, 1.4),
+  { ...crate(122.5, 96.6, 1.6, 1.4, 1.4), hide: "container" },
   lamp(116, 99, "#ffcf8a"),
   // ADR-0026, hand-placed after the generated rows: no random number moves. A car left on the
   // highway deck since the night of the blockade, cover on the west end of the walkway.

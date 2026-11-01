@@ -236,7 +236,8 @@ const moveAcross = (
     z += e.velocity.z * dt;
     if (field.hasTerrain) ({ x, z } = offTheBank(field, e.position, x, z, feet));
     // In the air, pressing into a ledge within reach: pull up onto it instead of sliding down.
-    if (e.player && e.fall !== undefined) {
+    // Not with a body on her shoulder (ADR-0065): both hands are full.
+    if (e.player && e.fall !== undefined && ctx.session.carrying === null) {
       const to = ledgeAhead(solids, field, e, x, z, e.velocity.x, e.velocity.z);
       if (to && !leavesWorld(ctx, e.position, to)) {
         e.mantle = { from: e.position, to, duration: MANTLE_TIME, t: 0 };

@@ -40,6 +40,15 @@ export interface SessionState {
    * let go. Transient, not saved.
    */
   attackLock: boolean;
+  /** The body on the player's shoulder (ADR-0065), null when none. Saved on the body (`downed.carried`). */
+  carrying: EntityId | null;
+  /**
+   * The body the interact key would pick up now, null when none: named by the carry system, kept
+   * by the interaction system only when it holds the prompt, like `takedownTarget`.
+   */
+  bodyTarget: { readonly id: EntityId; readonly distance: number } | null;
+  /** The free hiding place in reach of the carried body, null when none: the key hides it there. */
+  hideSpot: EntityId | null;
   /**
    * A difficulty asked for during a fight (ADR-0066): it takes effect when the fight is over.
    * Transient, not saved.
@@ -133,6 +142,9 @@ export const freshSession = (): SessionState => ({
   takedown: null,
   takedownTarget: null,
   attackLock: false,
+  carrying: null,
+  bodyTarget: null,
+  hideSpot: null,
   pendingDifficulty: null,
 });
 

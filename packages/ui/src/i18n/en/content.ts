@@ -40,6 +40,10 @@ export const enContent = {
   // Takedowns (ADR-0065): the interact key, and holding the attack button to the end.
   "prompt.takedown": "Take down",
   "prompt.takedown.kill": "hold attack to kill",
+  // Bodies (ADR-0065, stage 3): the same key picks one up, drops it, or hides it.
+  "prompt.body.carry": "Pick up",
+  "prompt.body.drop": "Drop",
+  "prompt.body.hide": "Hide",
   // Interiors (sim `INTERIORS`, ADR-0061); Lublin's own places keep their names.
   "interior.clinic": "Doctor Mori's clinic",
   "interior.neon-koi": "Neon Koi",

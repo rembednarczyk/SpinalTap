@@ -22,7 +22,8 @@ const carWash = (): StaticProp[] => [
   // The yard: crates, two dumpsters and a parked car, a lamp.
   crate(-3, 36, 1.6, 1.2, 1.2),
   crate(4, 38.5, 1.2, 1.2, 2.4, skin("dumpster", "x-")),
-  crate(-5, 44, 2.4, 1.4, 1.4, skin("dumpster", "z-")),
+  // The big one takes a body (ADR-0065).
+  { ...crate(-5, 44, 2.4, 1.4, 1.4, skin("dumpster", "z-")), hide: "dumpster" },
   crate(5.5, 45.5, 2, 1.5, 4.2, skin("car", "z+")),
   lamp(-1, 40, "#ff6a6a"),
 ];
