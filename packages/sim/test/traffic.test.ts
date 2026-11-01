@@ -7,6 +7,7 @@ import { PARKED_CARS } from "../src/content/parked-cars";
 import { furnitureClearance } from "../src/content/furniture-index";
 import { furnitureRadius } from "../src/content/lublin/furniture";
 import { inBuilding } from "../src/content/lublin/places";
+import { MAP_CHUNKS } from "../src/content/lublin/sites";
 import { lanePose, timetable, vehicleCount, vehiclePlan } from "../src/world/traffic";
 import { STREET_ID_BASE } from "../src/world/streaming";
 import { input, run, teleportPlayer } from "./helpers";
@@ -159,6 +160,33 @@ describe("the lanes of the traffic (ADR-0050)", () => {
       // No stall, cabinet or lamp inside its body.
       const { width, length } = VEHICLE_SIZE[c.model];
       for (const t of [-0.5, 0, 0.5]) expect(furnitureClearance(c.x + Math.sin(c.yaw) * length * t, c.z + Math.cos(c.yaw) * length * t), `${c.x},${c.z}`).toBeGreaterThan(width / 2);
+    }
+  });
+
+  it("parked cars leave the mouths of driveways and service lanes free: half their width and 0.5 m off the axis (G-140)", () => {
+    const ways = MAP_CHUNKS.flatMap((c) => c.serviceWays ?? []);
+    // Cerkiewna's driveway and the yard lane by it, where three cars stood across the mouths.
+    const near = (x: number, z: number) => ways.some((w) => w.line.some((v, i) => i % 2 === 0 && Math.hypot(v - x, w.line[i + 1]! - z) < 15));
+    expect(near(908.8, 440.5) && near(912.2, 416.4)).toBe(true);
+    const gap = (x: number, z: number, line: readonly number[]) => {
+      let d = Infinity;
+      for (let i = 2; i < line.length; i += 2) {
+        const [ax, az, bx, bz] = [line[i - 2]!, line[i - 1]!, line[i]!, line[i + 1]!];
+        const k = Math.max(0, Math.min(1, ((x - ax) * (bx - ax) + (z - az) * (bz - az)) / ((bx - ax) ** 2 + (bz - az) ** 2 || 1)));
+        d = Math.min(d, Math.hypot(ax + (bx - ax) * k - x, az + (bz - az) * k - z));
+      }
+      return d;
+    };
+    for (const c of PARKED_CARS) {
+      const { width, length } = VEHICLE_SIZE[c.model];
+      const fx = Math.sin(c.yaw);
+      const fz = Math.cos(c.yaw);
+      for (let a = -0.5; a <= 0.5; a += 0.125)
+        for (let b = -0.5; b <= 0.5; b += 0.125) {
+          const x = c.x + fz * width * a + fx * length * b;
+          const z = c.z - fx * width * a + fz * length * b;
+          for (const w of ways) expect(gap(x, z, w.line), `${c.model} at ${c.x},${c.z}`).toBeGreaterThanOrEqual(w.width / 2 + 0.5 - 0.05);
+        }
     }
   });
 });

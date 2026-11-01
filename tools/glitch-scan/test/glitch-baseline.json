@@ -19,6 +19,7 @@
   "parked-car-on-crossing": 0,
   "parked-car-against-traffic": 0,
   "parked-car-on-other-road": 0,
+  "parked-car-on-service-road": 0,
   "prop-off-ground": 0,
   "vehicle-below-surface": 0,
   "vehicle-off-surface": 0,
