@@ -76,6 +76,28 @@ export interface TerrainOpenSides {
 export type GroundSurface = "road" | "sidewalk" | "square" | "cobble" | "footway" | "steps" | "crossing" | "grass" | "water" | "basin" | "rail";
 
 /**
+ * Lift above the terrain per surface (m): order of drawing where they overlap. The carriageway
+ * and what is painted on it (a few centimetres up: the drapes of the two differ that much on a
+ * slope) lie over the squares' paving and the paths it crosses (a street
+ * through Plac Łokietka, a park path meeting a road), under the raised sidewalks only. The
+ * renderer drapes each surface this high; the simulation sets what stands on the paving (a
+ * parked car, G-130) on the same height.
+ */
+export const SURFACE_LIFT: Readonly<Record<GroundSurface, number>> = {
+  water: 0.03,
+  grass: 0.04,
+  steps: 0.05,
+  square: 0.08,
+  cobble: 0.08,
+  footway: 0.09,
+  road: 0.1,
+  rail: 0.105,
+  crossing: 0.13,
+  sidewalk: 0.16,
+  basin: 0.32,
+};
+
+/**
  * Road markings of the map city (ADR-0052), from the carriageways' lanes, direction and tags:
  * - `centre-dash`: the broken line between the two directions (P-1);
  * - `centre-double`: the double solid line between them on four lanes and more (P-4);

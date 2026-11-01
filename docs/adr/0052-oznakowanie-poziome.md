@@ -25,6 +25,8 @@ Kolejność nawierzchni (wysokość nad terenem w `SURFACE_LIFT`):
 
 Jezdnia i to, co na niej namalowane, leżą więc nad placami i ścieżkami, a pod podniesionymi chodnikami. Odstępy mają kilka centymetrów, bo dwie siatki kładzione na teren różnie gęsto rozjeżdżają się na zboczu o tyle.
 
+Tabela `SURFACE_LIFT` mieszka w `core` (`world/city-geo.ts`), nie w rendererze (G-130): renderer kładzie według niej nawierzchnie, a symulacja stawia na tej samej wysokości to, co stoi na bruku. Zaparkowane auta i pojazdy scen (auto, furgonetka, wrak) stoją poziomo na najwyższym punkcie nawierzchni rysowanej pod ich obrysem (narożniki, środki boków, środek; `restingY` w `sim/content/lublin/terrain.ts`), zapadnięte w nią najwyżej 5 cm. Renderer obraca pojazd tylko o kąt kursu, więc na stoku dolne koła odstają od bruku; pochylenie wymagałoby zmiany kontraktu (`Transform`).
+
 Chodnik (dokładany przez importer albo zmapowany osobno, `footway=sidewalk`) jest przycinany tam, gdzie jego środek wchodzi na inną jezdnię. Kończy się więc na krawężniku ulicy, którą spotyka.
 
 ### Przejścia dla pieszych

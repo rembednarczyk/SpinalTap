@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import { type StreetPropItem, VEHICLE_SIZE, terrainHeightAt } from "../../../packages/core/src";
 import { planSteps } from "../../../packages/engine/src/renderer/mapcity/steps-plan";
+import { SURFACE_LIFT } from "../../../packages/engine/src/renderer/mapcity/ground-plan";
 import { facadeFrame } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
 import { planFarBuilding } from "../../../packages/engine/src/renderer/mapcity/facade-plan";
 import { type BuildingSource, mapBuilding } from "../../../packages/engine/src/renderer/mapcity/map-building";
@@ -553,6 +554,32 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       const gap = p.center.y - p.view.size.y / 2 - groundY(p.center.x, p.center.z);
       return (gap > 0.15 && gap < 1) || gap < -0.3 ? [{ at: near(p.center.x, p.center.z), what: `${p.view.skin?.style ?? p.view.material} ${gap.toFixed(2)} m` }] : [];
     }),
+  /**
+   * A vehicle (a parked car, a set piece's car, van or wreck) whose bottom lies more than 0.1 m
+   * under the surface drawn beneath it (G-130): the renderer drapes each surface its own lift over
+   * the terrain (`SURFACE_LIFT`), so wheels set on the bare terrain sink into the paving.
+   */
+  "vehicle-below-surface": () => {
+    const drawn = (x: number, z: number) => groundY(x, z) + Math.max(0, ...surfacesAt(x, z).map((s) => SURFACE_LIFT[s]));
+    const sunk = (at: string, what: string, bottom: number, x: number, z: number, ax: number, az: number, bx: number, bz: number): Finding[] => {
+      let worst = 0;
+      for (const a of [-0.5, 0, 0.5]) for (const b of [-0.5, 0, 0.5]) worst = Math.max(worst, drawn(x + ax * a + bx * b, z + az * a + bz * b) - bottom);
+      return worst > 0.1 ? [{ at, what: `${what} ${worst.toFixed(2)} m` }] : [];
+    };
+    const parked = PARKED_CARS.flatMap((c) => {
+      const { width, length } = VEHICLE_SIZE[c.model];
+      const fx = Math.sin(c.yaw);
+      const fz = Math.cos(c.yaw);
+      return sunk(near(c.x, c.z), c.model, c.y, c.x, c.z, fz * width, -fx * width, fx * length, fz * length);
+    });
+    const blocks = GAME_PROPS.flatMap((p) => {
+      const style = p.view.kind === "block" ? p.view.skin?.style : undefined;
+      if (p.view.kind !== "block" || (style !== "car" && style !== "van" && style !== "wreck")) return [];
+      const { x, y, z } = p.view.size;
+      return sunk(near(p.center.x, p.center.z), style, p.center.y - y / 2, p.center.x, p.center.z, x, 0, 0, z);
+    });
+    return [...parked, ...blocks];
+  },
   /** A map building that stays in the game through a set piece's block, or over a quarter of it on a set piece. */
   "building-in-set-piece": () =>
     MAP_CHUNKS.flatMap((c) =>

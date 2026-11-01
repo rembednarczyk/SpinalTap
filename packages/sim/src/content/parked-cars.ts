@@ -4,7 +4,7 @@ import { furnitureClearance } from "./furniture-index";
 import { inBuilding, nearestWall } from "./lublin/places";
 import { type Pt, ROAD_CHAINS, type RoadChain, polylineLength, surfacesAt } from "./lublin/roads";
 import { MAP_CHUNKS } from "./lublin/sites";
-import { groundY } from "./lublin/terrain";
+import { restingY } from "./lublin/terrain";
 import { clearOfGame } from "./street-props";
 import { KERB_ROOM, TRAFFIC_ROUTES, laneOffset, offsetLine, pointAt, projectOn, roadHalfWidth } from "./traffic";
 
@@ -62,6 +62,14 @@ const footprint = (x: number, z: number, yaw: number, model: VehicleModel, pad: 
     [x + fx * hl + fz * hw, z + fz * hl - fx * hw],
     [x - fx * hl + fz * hw, z - fz * hl - fx * hw],
   ];
+};
+
+/** Points under a car's body at (x, z), facing yaw: its corners, the middles of its sides and its centre. */
+const underBody = (x: number, z: number, yaw: number, model: VehicleModel): { x: number; z: number }[] => {
+  const { width, length } = VEHICLE_SIZE[model];
+  const fx = Math.sin(yaw);
+  const fz = Math.cos(yaw);
+  return [-0.5, 0, 0.5].flatMap((a) => [-0.5, 0, 0.5].map((b) => ({ x: x + fz * width * a + fx * length * b, z: z - fx * width * a + fz * length * b })));
 };
 
 /** Surfaces a car may stand on: the carriageway and the cobbled squares (never a zebra, see `clearOfZebras`). */
@@ -247,10 +255,13 @@ const overlap = (a: ParkedCar, b: ParkedCar): boolean => {
   return true;
 };
 
-/** Every parked car of the city, on the game's terrain, in a stable order; the square's bays first, no two overlapping. */
+/**
+ * Every parked car of the city, on the paving drawn under its body (G-130), in a stable order;
+ * the square's bays first, no two overlapping.
+ */
 export const PARKED_CARS: readonly ParkedCar[] = [...squareCars(), ...kerbCars()]
   .reduce<ParkedCar[]>((kept, c) => (kept.some((k) => Math.hypot(k.x - c.x, k.z - c.z) < 8 && overlap(k, c)) ? kept : [...kept, c]), [])
-  .map((c) => ({ ...c, y: Math.round(groundY(c.x, c.z) * 100) / 100 }));
+  .map((c) => ({ ...c, y: Math.round(restingY(underBody(c.x, c.z, c.yaw, c.model)) * 100) / 100 }));
 
 /** The view of a parked car: drawn by the scenery. */
 export const parkedView = (c: ParkedCar): ViewDescriptor => ({ kind: "vehicle", model: c.model, tint: c.tint, parked: true });
