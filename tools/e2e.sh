@@ -18,9 +18,29 @@ if [[ "${args[0]}" == "--all" ]]; then
   args=("${args[@]:1}")
 fi
 
-# A stable port per checkout, 4200-4799.
-sum=$(printf '%s' "$PWD" | cksum | cut -d' ' -f1)
-export E2E_PORT="${E2E_PORT:-$((4200 + sum % 600))}"
+# A stable port per checkout, 4200-4799. Playwright reuses whatever already listens there
+# (`reuseExistingServer`), so a preview left by another checkout would be measured instead
+# of this one: a port held by someone else's server moves on to the next one.
+own_app="$PWD/packages/app"
+listener_dir() {
+  local pid
+  pid=$(lsof -t -iTCP:"$1" -sTCP:LISTEN 2>/dev/null | head -n1 || true)
+  [[ -z "$pid" ]] && return 1
+  readlink "/proc/$pid/cwd" 2>/dev/null || echo "?"
+}
+if [[ -z "${E2E_PORT:-}" ]]; then
+  sum=$(printf '%s' "$PWD" | cksum | cut -d' ' -f1)
+  port=$((4200 + sum % 600))
+  for _ in $(seq 1 50); do
+    if ! dir=$(listener_dir "$port") || [[ "$dir" == "$own_app" ]]; then break; fi
+    echo "e2e: port $port is held by $dir, trying the next one" >&2
+    port=$((port + 1))
+  done
+  export E2E_PORT="$port"
+elif dir=$(listener_dir "$E2E_PORT") && [[ "$dir" != "$own_app" ]]; then
+  echo "e2e: E2E_PORT=$E2E_PORT is held by a server of $dir, not of this checkout" >&2
+  exit 3
+fi
 
 lock="${TMPDIR:-/tmp}/seki-e2e.lock"
 exec 9>"$lock"

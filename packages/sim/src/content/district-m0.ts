@@ -20,7 +20,7 @@ import {
 } from "./builders";
 import { BARMAN_SPAWN, CLINIC_WAKE_SPOT, CLINIC_WAKE_YAW, FIXER_BAR_SPAWN, KOI_REGULAR_SPAWNS, MORI_SPAWN, S7_INTERIORS } from "./interiors";
 import { CAR_WASH_PLACE } from "./lublin/sites";
-import { ground, groundY } from "./lublin/terrain";
+import { ground, groundY, onPaving } from "./lublin/terrain";
 
 /**
  * Krakowskie Przedmieście (district `shinsekai-7`, ADR-0045): the deptak from Plac Litewski to
@@ -72,9 +72,9 @@ const standing = (g: Placement, props: readonly StaticProp[]): StaticProp[] =>
  */
 export const DISTRICT_M0_PROPS: readonly StaticProp[] = [
   // The wreck Seki was pulled out of; she comes round in Mori's clinic (ADR-0038).
-  ...standing(WRECK, [crate(2.6, -31, 2, 1.4, 4.4, skin("wreck", "z-"))]),
+  ...onPaving(placeProps(WRECK, [crate(2.6, -31, 2, 1.4, 4.4, skin("wreck", "z-"))])),
   // The van of the east lot.
-  ...standing(EAST_LOT, [crate(12, -12, 2.4, 2.2, 5, skin("van", "z+"))]),
+  ...onPaving(placeProps(EAST_LOT, [crate(12, -12, 2.4, 2.2, 5, skin("van", "z+"))])),
   ...CAR_WASH_PROPS,
   // Behind Neon Koi, the bar's bins.
   ...standing(KOI_BACK, [crate(6.5, 19.2, 1.2, 1.3, 2.2, skin("dumpster", "x-"))]),

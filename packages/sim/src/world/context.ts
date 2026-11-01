@@ -1,5 +1,5 @@
 import type { TrafficDensity } from "../content/traffic";
-import type { CrimeKind, DisturbanceKind, DomainEvents, DomainState, EntityId, EventBus, InputFrame, Vec3 } from "@seki/core";
+import type { CrimeKind, DifficultyProfile, DisturbanceKind, DomainEvents, DomainState, EntityId, EventBus, InputFrame, Vec3 } from "@seki/core";
 import type { World } from "miniplex";
 import type { SeededRandom } from "../rng/seeded-random";
 import type { Entity } from "./components";
@@ -22,6 +22,43 @@ export interface SessionState {
   passenger: Entity | null;
   /** Street encounters and micro-events of this session (ADR-0034). */
   street2: StreetScenes;
+  /**
+   * The interior the player is in (ADR-0061): its id, null outside, undefined until the first
+   * step of a new game or a load has read it from the position. Transient, not saved.
+   */
+  interior: string | null | undefined;
+  /** The takedown under way (ADR-0065), null when none. Transient, not saved. */
+  takedown: TakedownRun | null;
+  /**
+   * Whom the interact key would take down now, null when nobody. The takedown system names the
+   * candidate; the interaction system keeps it only when the takedown holds the prompt (nothing
+   * nearer to talk to, open or climb), so the HUD and the key agree.
+   */
+  takedownTarget: { readonly id: EntityId; readonly distance: number } | null;
+  /**
+   * The attack button held through the end of a takedown (ADR-0065): it fires nothing until it is
+   * let go. Transient, not saved.
+   */
+  attackLock: boolean;
+  /**
+   * A difficulty asked for during a fight (ADR-0066): it takes effect when the fight is over.
+   * Transient, not saved.
+   */
+  pendingDifficulty: DifficultyProfile | null;
+}
+
+/** A takedown in progress (ADR-0065): the player and `target` stand still until `left` runs out. */
+export interface TakedownRun {
+  readonly target: EntityId;
+  /** Seconds left. */
+  left: number;
+  /** Asked for by the command; holding the attack button through most of it kills as well. */
+  readonly lethal: boolean;
+  /** Steps of the takedown so far, and how many of them with the attack button held. */
+  steps: number;
+  held: number;
+  /** The player's health when it began: any damage below it breaks the hold. */
+  readonly health: number;
 }
 
 /** A street encounter whose dialogue is open, and the micro-event under way (ADR-0034). */
@@ -58,6 +95,8 @@ export interface Offence {
   readonly crime: CrimeKind;
   readonly at: Vec3;
   readonly incident: number;
+  /** Someone knocked out by it (ADR-0065): once reported, its body brings no second call. */
+  readonly body?: EntityId;
 }
 
 export interface StreetLog {
@@ -90,6 +129,11 @@ export const freshSession = (): SessionState => ({
   watch: { district: null, playerHp: null, focus: null, ram: null, reinforce: 0 },
   passenger: null,
   street2: { encounter: null, npcs: {}, micro: null, district: null },
+  interior: undefined,
+  takedown: null,
+  takedownTarget: null,
+  attackLock: false,
+  pendingDifficulty: null,
 });
 
 /** Mutable holder for the immutable domain state, plus a dirty marker for quest evaluation. */

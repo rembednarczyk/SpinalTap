@@ -30,10 +30,10 @@ export const disturb = (ctx: SimContext, kind: DisturbanceKind, at: Vec3, radius
 };
 
 /** The player did something that is a crime if a civilian, a camera or a patrol sees it. */
-export const offend = (ctx: SimContext, crime: CrimeKind, at: Vec3): void => {
+export const offend = (ctx: SimContext, crime: CrimeKind, at: Vec3, body?: EntityId): void => {
   const street = ctx.session.street;
   street.incidents += 1;
-  street.offences.push({ crime, at: { x: at.x, y: at.y, z: at.z }, incident: street.incidents });
+  street.offences.push({ crime, at: { x: at.x, y: at.y, z: at.z }, incident: street.incidents, ...(body === undefined ? {} : { body }) });
 };
 
 /** Seconds after an enemy's shot near the player during which the player's fire is self-defence. */
@@ -42,7 +42,18 @@ const THREAT_SECONDS = 3;
 const ENGAGE_RADIUS = 30;
 
 /** Is this one fighting the player (or someone) right now? Hurting it then is no crime. */
-export const isEngaged = (e: Entity): boolean => !!e.ai && (e.ai.alerted || !!e.ai.victim) || e.sniper?.phase === "aim";
+export const isEngaged = (e: Entity): boolean => !e.unconscious && (!!e.ai && (e.ai.alerted || !!e.ai.victim) || e.sniper?.phase === "aim");
+
+/**
+ * Is an awake, alerted NPC within `radius` of the player? The RAM's regeneration (ADR-0029) and
+ * a difficulty asked for in a fight (ADR-0066) wait on it; someone knocked out fights nobody.
+ */
+export const alertedNear = (ctx: SimContext, player: Entity, radius: number): boolean => {
+  for (const g of ctx.world.with("ai")) {
+    if (g.ai.alerted && !g.unconscious && Math.hypot(g.position.x - player.position.x, g.position.z - player.position.z) <= radius) return true;
+  }
+  return false;
+};
 
 /** Is the player in a fight: shot at lately, or an enemy close by fighting? */
 export const playerEngaged = (ctx: SimContext, player: Entity): boolean => {
@@ -56,12 +67,13 @@ export const playerEngaged = (ctx: SimContext, player: Entity): boolean => {
 
 /**
  * The player hurt `target`. A civilian (anyone not fighting: no AI, or an AI that was not
- * engaged before the blow) makes it an assault; its death later is a murder.
+ * engaged before the blow) makes it an assault; its death later is a murder. `body`: the target
+ * lies knocked out (ADR-0065), so the report of it covers its body too.
  */
-export const noteViolence = (ctx: SimContext, target: Entity, engagedBefore: boolean, at: Vec3): void => {
+export const noteViolence = (ctx: SimContext, target: Entity, engagedBefore: boolean, at: Vec3, body?: EntityId): void => {
   if (engagedBefore || target.player) return;
   target.wronged = true;
-  offend(ctx, "assault", at);
+  offend(ctx, "assault", at, body);
 };
 
 /** Updates the running contract's debrief counters (no-op without an active contract). */

@@ -208,7 +208,37 @@ export interface DomainEvents {
   ExperienceGained: { amount: number; source: XpSource };
   /** The character reached `level`; one per level gained, after its ExperienceGained. */
   LevelUp: { level: number };
+  // Interiors (ADR-0061).
+  /**
+   * The player stepped into an interior (`interiorId` of the sim's `INTERIORS`). Not sent when a
+   * new game or a load starts inside one: the state is read from the position then.
+   */
+  InteriorEntered: { interiorId: string };
+  /** The player stepped out of the interior `interiorId`. */
+  InteriorLeft: { interiorId: string };
+  // Takedowns (ADR-0065).
+  /** The player got hold of `target`; both stand still for `duration` seconds. */
+  TakedownStarted: { target: EntityId; duration: number };
+  /**
+   * The takedown ended: `target` is unconscious, or dead with `lethal` (its EntityKilled follows).
+   * `witnessed`: a camera, a patrol of the district's security or a civilian saw it, by the rules
+   * of witnesses of ADR-0029; on someone not fighting the player it is then an assault.
+   */
+  TakedownDone: { target: EntityId; lethal: boolean; witnessed: boolean };
+  /**
+   * The takedown was cut short: the player was hurt (the target broke free and is alerted), or
+   * the target is gone (killed by someone else, streamed out).
+   */
+  TakedownBroken: { target: EntityId; reason: TakedownBreak };
+  /**
+   * `finder` (an NPC or a camera) noticed `body`, someone knocked out (ADR-0065): an NPC walks
+   * over to wake it, the security or a camera reports it, the street around it takes fright.
+   */
+  BodyFound: { body: EntityId; finder: EntityId };
 }
+
+/** Why a takedown did not finish (ADR-0065). */
+export type TakedownBreak = "damage" | "gone";
 
 /** Awareness of the player, from not noticing to fighting. */
 export type AwarenessState = "unaware" | "suspicious" | "searching" | "alerted";

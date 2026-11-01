@@ -7,11 +7,31 @@ import {
   type GraphicsQuality,
   HORIZONTAL_FOV_RANGE,
   HUD_SCALE_RANGE,
+  SUBTITLE_SCALE_RANGE,
   type SettingsVm,
   isRadioStationId,
 } from "@seki/ui";
 
 export const SETTINGS_KEY = "seki.settings.v1";
+
+/**
+ * Revision of the defaults an entry was saved under. Revision 2 (1.11) made High quality and
+ * damage numbers per hit the defaults; an older entry takes them once, as if never chosen,
+ * because the old defaults (Low on phones, no numbers) were saved with every change.
+ */
+export const SETTINGS_REV = 2;
+
+/** Fields whose default changed in each revision; older entries drop them on load. */
+const CHANGED_DEFAULTS: readonly (readonly [number, readonly string[]])[] = [[2, ["quality", "damageNumbers"]]];
+
+const withNewDefaults = (raw: unknown): unknown => {
+  if (typeof raw !== "object" || raw === null) return raw;
+  const r = raw as Record<string, unknown>;
+  const rev = typeof r.rev === "number" ? r.rev : 1;
+  const out = { ...r };
+  for (const [since, fields] of CHANGED_DEFAULTS) if (rev < since) for (const f of fields) delete out[f];
+  return out;
+};
 
 /** The subset of Web Storage the settings need; lets tests pass a fake. */
 export type SettingsStorage = Pick<Storage, "getItem" | "setItem">;
@@ -78,8 +98,11 @@ export const sanitizeSettings = (raw: unknown, defaults: SettingsVm = DEFAULT_SE
     hudAlwaysShow: bool(r.hudAlwaysShow, defaults.hudAlwaysShow),
     damageNumbers: isDamageMode(r.damageNumbers) ? r.damageNumbers : defaults.damageNumbers,
     hudScale: Math.round(clamp(r.hudScale, HUD_SCALE_RANGE[0], HUD_SCALE_RANGE[1], defaults.hudScale) * 20) / 20,
+    subtitleScale: Math.round(clamp(r.subtitleScale, SUBTITLE_SCALE_RANGE[0], SUBTITLE_SCALE_RANGE[1], defaults.subtitleScale) * 10) / 10,
+    subtitleBackground: bool(r.subtitleBackground, defaults.subtitleBackground),
     legibleFont: bool(r.legibleFont, defaults.legibleFont),
     reduceFlashes: bool(r.reduceFlashes, defaults.reduceFlashes),
+    cameraMotion: bool(r.cameraMotion, defaults.cameraMotion),
     untimedBreach: bool(r.untimedBreach, defaults.untimedBreach),
     colorblind: isColorblind(r.colorblind) ? r.colorblind : defaults.colorblind,
     // Wave 2 (ADR-0035).
@@ -95,7 +118,7 @@ export const sanitizeSettings = (raw: unknown, defaults: SettingsVm = DEFAULT_SE
 export const loadSettings = (storage: SettingsStorage | null, defaults: SettingsVm = DEFAULT_SETTINGS): SettingsVm => {
   try {
     const raw = storage?.getItem(SETTINGS_KEY);
-    return raw ? sanitizeSettings(JSON.parse(raw), defaults) : defaults;
+    return raw ? sanitizeSettings(withNewDefaults(JSON.parse(raw)), defaults) : defaults;
   } catch {
     return defaults;
   }
@@ -105,7 +128,7 @@ export const loadSettings = (storage: SettingsStorage | null, defaults: Settings
 export const saveSettings = (storage: SettingsStorage | null, settings: SettingsVm): boolean => {
   try {
     if (!storage) return false;
-    storage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    storage.setItem(SETTINGS_KEY, JSON.stringify({ ...settings, rev: SETTINGS_REV }));
     return true;
   } catch {
     return false;

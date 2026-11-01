@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { type DomainEvents, VEHICLE_SIZE, hm } from "@seki/core";
 import { Simulation, ground, runReplay, stateHash, type Entity } from "../src";
-import { TRAFFIC_ROUTES, TURN_SPEED, type TrafficRoute, pointAt, projectOn } from "../src/content/traffic";
+import { TRAFFIC_LANES, TRAFFIC_ROUTES, TURN_SPEED, type TrafficRoute, pointAt, projectOn } from "../src/content/traffic";
 import { ROAD_CHAINS, onRoad, polylineLength } from "../src/content/lublin/roads";
 import { PARKED_CARS } from "../src/content/parked-cars";
 import { furnitureClearance } from "../src/content/furniture-index";
 import { furnitureRadius } from "../src/content/lublin/furniture";
 import { inBuilding } from "../src/content/lublin/places";
+import { MAP_CHUNKS } from "../src/content/lublin/sites";
 import { lanePose, timetable, vehicleCount, vehiclePlan } from "../src/world/traffic";
 import { STREET_ID_BASE } from "../src/world/streaming";
 import { input, run, teleportPlayer } from "./helpers";
@@ -75,6 +76,32 @@ describe("the lanes of the traffic (ADR-0050)", () => {
     expect(new Set(ways(-111, 90))).toEqual(new Set([-1]));
   });
 
+  it("a two-way street's lane leaves its car on the asphalt of each stretch wide enough for it (G-090)", () => {
+    // Plac Wolności narrows by a bend, Radziwiłłowska and Staszica by a pinch: a lane kept the whole street's offset over them.
+    const lanes = TRAFFIC_LANES.filter((r) => r.use === "cars" && /:[fb](\/\d+)?(\+|$)/.test(r.id));
+    expect(lanes.length).toBeGreaterThan(40);
+    // Half a car's width, and the room a lane takes beside the axis at the least: the lane 1.2 m out and its car's half.
+    const [half, room] = [0.9, 2.1];
+    const over: string[] = [];
+    for (const r of lanes) {
+      const axes = [...r.id.matchAll(/#(\d+):/g)].map((m) => ROAD_CHAINS[Number(m[1])]!.points);
+      for (let s = 10; s < r.length - 10; s += 2) {
+        // A turn round at a dead end sweeps across the street to its other lane.
+        if (r.turns?.some(([a, b]) => s > a - 10 && s < b + 10)) continue;
+        const p = pointAt(r.points, s);
+        if (!onRoad(p.x, p.z)) continue;
+        // Asphalt to the lane's right, in tenths of a metre up to the car's half.
+        let tenths = 0;
+        while (tenths < half * 10 && onRoad(p.x + (p.tz * (tenths + 1)) / 10, p.z - (p.tx * (tenths + 1)) / 10)) tenths++;
+        const reach = tenths / 10;
+        // A street too narrow for two lanes at all is not this check's (its cars overhang the pavement).
+        const out = Math.min(...axes.map((a) => projectOn(a, p.x, p.z).d));
+        if (reach < half && out + reach >= room) over.push(`${r.id} at ${s}: ${reach.toFixed(1)} m to the kerb`);
+      }
+    }
+    expect(over).toEqual([]);
+  });
+
   it("the west carriageway of Aleja Tysiąclecia is one street with a lane all the way and a trolleybus (G-020)", () => {
     const west = ROAD_CHAINS.filter((c) => c.name === "Aleja Tysiąclecia" && projectOn(c.points, 912, 333).d < 3);
     expect(west).toHaveLength(1);
@@ -133,6 +160,33 @@ describe("the lanes of the traffic (ADR-0050)", () => {
       // No stall, cabinet or lamp inside its body.
       const { width, length } = VEHICLE_SIZE[c.model];
       for (const t of [-0.5, 0, 0.5]) expect(furnitureClearance(c.x + Math.sin(c.yaw) * length * t, c.z + Math.cos(c.yaw) * length * t), `${c.x},${c.z}`).toBeGreaterThan(width / 2);
+    }
+  });
+
+  it("parked cars leave the mouths of driveways and service lanes free: half their width and 0.5 m off the axis (G-140)", () => {
+    const ways = MAP_CHUNKS.flatMap((c) => c.serviceWays ?? []);
+    // Cerkiewna's driveway and the yard lane by it, where three cars stood across the mouths.
+    const near = (x: number, z: number) => ways.some((w) => w.line.some((v, i) => i % 2 === 0 && Math.hypot(v - x, w.line[i + 1]! - z) < 15));
+    expect(near(908.8, 440.5) && near(912.2, 416.4)).toBe(true);
+    const gap = (x: number, z: number, line: readonly number[]) => {
+      let d = Infinity;
+      for (let i = 2; i < line.length; i += 2) {
+        const [ax, az, bx, bz] = [line[i - 2]!, line[i - 1]!, line[i]!, line[i + 1]!];
+        const k = Math.max(0, Math.min(1, ((x - ax) * (bx - ax) + (z - az) * (bz - az)) / ((bx - ax) ** 2 + (bz - az) ** 2 || 1)));
+        d = Math.min(d, Math.hypot(ax + (bx - ax) * k - x, az + (bz - az) * k - z));
+      }
+      return d;
+    };
+    for (const c of PARKED_CARS) {
+      const { width, length } = VEHICLE_SIZE[c.model];
+      const fx = Math.sin(c.yaw);
+      const fz = Math.cos(c.yaw);
+      for (let a = -0.5; a <= 0.5; a += 0.125)
+        for (let b = -0.5; b <= 0.5; b += 0.125) {
+          const x = c.x + fz * width * a + fx * length * b;
+          const z = c.z - fx * width * a + fz * length * b;
+          for (const w of ways) expect(gap(x, z, w.line), `${c.model} at ${c.x},${c.z}`).toBeGreaterThanOrEqual(w.width / 2 + 0.5 - 0.05);
+        }
     }
   });
 });
@@ -279,22 +333,28 @@ describe("the traffic in the simulation (ADR-0050)", () => {
     const turning = TRAFFIC_ROUTES.filter((r) => r.use === "cars" && r.id.split(">").some((lane) => lane.startsWith("Aleja Tysiąclecia#") && lane.includes("+")));
     expect(turning.length).toBe(4);
     const sim = busySim(3, ground(745, 350));
-    let through = 0;
+    const through = new Set<number>();
     let fastest = 0;
     // Only the ones seen driving up to the turn: one can appear in it, out of sight, at its timetable's speed.
     const coming = new Set<number>();
-    for (let t = 0; t < 50 * 60; t++) {
+    // Each route's turn worked out once, not for every car on every step.
+    const turns = new Map<number, readonly [number, number] | undefined>();
+    const turnOf = (route: number) => (turns.has(route) ? turns.get(route) : turns.set(route, marketTurn(TRAFFIC_ROUTES[route]!)).get(route));
+    // 25 s of traffic: ten cars drive the turn (23 in 50 s), so the speed is checked on as many
+    // as before at half the cost; the 50 s went over the 20 s limit on a loaded CI runner.
+    for (let t = 0; t < 25 * 60; t++) {
       sim.step();
-      for (const v of vehicles(sim)) {
-        const turn = marketTurn(TRAFFIC_ROUTES[v.vehicle.route]!);
+      for (const v of sim.world) {
+        if (!v.vehicle) continue;
+        const turn = turnOf(v.vehicle.route);
         if (!turn) continue;
         if (v.vehicle.s < turn[0] - 15) coming.add(v.id);
         if (!coming.has(v.id) || v.vehicle.s < turn[0] + 2 || v.vehicle.s > turn[1]) continue;
         fastest = Math.max(fastest, v.vehicle.v);
-        if (v.vehicle.s > turn[1] - 1) through++;
+        if (v.vehicle.s > turn[1] - 1) through.add(v.id);
       }
     }
-    expect(through).toBeGreaterThan(0);
+    expect(through.size).toBeGreaterThanOrEqual(5);
     expect(fastest).toBeLessThanOrEqual(TURN_SPEED + 0.01);
   });
 

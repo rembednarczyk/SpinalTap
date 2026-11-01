@@ -75,6 +75,8 @@ export class RenderSync {
         ...(e.climb ? { climb: e.climb.speed } : {}),
         // A pull-up onto a ledge borrows the ladder pose: arms up, the body rising.
         ...(e.mantle ? { climb: 1.5 } : {}),
+        // Knocked out by a takedown (ADR-0065); the renderer draws the pose in stage 4.
+        ...(e.unconscious ? { unconscious: true } : {}),
       };
       if (!this.spawned.has(e.id)) {
         this.spawned.add(e.id);

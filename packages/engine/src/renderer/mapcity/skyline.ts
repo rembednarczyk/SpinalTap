@@ -1,11 +1,12 @@
 import type { Vec3 } from "@seki/core";
-import { Color3, Constants, type Mesh, type Scene, ShaderMaterial, Vector3 } from "../../babylon";
+import { Color3, Constants, type Mesh, type Scene, ShaderMaterial, Vector3, VertexData } from "../../babylon";
 import type { LightingRig } from "../../npr/lighting";
 import { mixHex } from "../../npr/lighting";
 import { prng } from "../city-kit-data";
 import { sinkToMesh } from "../dressing";
 import { LIGHTS_FRAGMENT } from "../far-city";
 import { MeshSink, type Rgba, type Vec } from "../mesh-sink";
+import { BODY_GLOW, type MegaBody, addBody, bodyScale } from "./skyline-bodies";
 
 /**
  * The megabuildings of Lublin 2077 (ADR-0051): corporate towers outside the playable centre,
@@ -91,45 +92,67 @@ const light = (sink: MeshSink, c: Vec, n: { x: number; z: number }, w: number, h
   );
 };
 
-/** One tower: tiers with setbacks, a crown and a spire; neon up its corners, an ad and beacons facing the centre. */
-const tower = (plan: SkylinePlan, x: number, z: number, h: number, rand: () => number): void => {
-  const t0 = plan.towers.vertexCount;
-  const l0 = plan.lights.vertexCount;
-  const seed = rand();
+/** The tiers of a procedural tower (the phone, and until the megatower bodies are in). */
+const tiers = (plan: SkylinePlan, x: number, z: number, h: number, seed: number, rand: () => number): void => {
   const tint = hex(TINTS[Math.floor(rand() * TINTS.length)] ?? "#8a93a8", 1);
   let w = h * (0.12 + rand() * 0.06);
   let d = w * (0.7 + rand() * 0.4);
   let y = 0;
-  const tiers = 3 + Math.floor(rand() * 2);
-  for (let k = 0; k < tiers; k++) {
-    const part = k === tiers - 1 ? h - y : (h - y) * (0.45 + rand() * 0.2);
+  const count = 3 + Math.floor(rand() * 2);
+  for (let k = 0; k < count; k++) {
+    const part = k === count - 1 ? h - y : (h - y) * (0.45 + rand() * 0.2);
     plan.towers.box({ x, y: y + part / 2, z }, w, part, d, tint, { uv2: [seed, 0], bottom: false });
     y += part;
     w *= 0.68 + rand() * 0.15;
     d *= 0.68 + rand() * 0.15;
   }
   plan.towers.box({ x, y: h + h * 0.06, z }, Math.max(w * 0.15, 3), h * 0.12, Math.max(d * 0.15, 3), tint, { uv2: [2.5, 0], bottom: false });
+};
+
+/**
+ * One tower facing the city centre: procedural tiers with a crown and a spire, neon up its corners;
+ * or a megatower body (ADR-0063), whose own bands of light stand for the neon. Both get an ad and a
+ * beacon on top.
+ */
+const tower = (plan: SkylinePlan, x: number, z: number, h: number, rand: () => number, body: MegaBody | null): void => {
+  const t0 = plan.towers.vertexCount;
+  const l0 = plan.lights.vertexCount;
+  const seed = rand();
+  const n = Math.abs(x) > Math.abs(z) ? { x: -Math.sign(x), z: 0 } : { x: 0, z: -Math.sign(z) };
+  const color = (): Rgba => hex(NEON[Math.floor(rand() * NEON.length)] ?? "#00e5ff", 1);
+  if (body) {
+    const reach = addBody(plan.towers, body, { x, z, h, front: n }, seed);
+    stamp(plan.towers, t0, { x, z }, false);
+    const half = bodyScale(body, h).across * Math.min(body.model.size.x, body.model.size.z) * 0.4;
+    light(plan.lights, { x: x + n.x * (reach + 2), y: h * (0.5 + rand() * 0.15), z: z + n.z * (reach + 2) }, n, half * 1.5, half * 1.1, color(), [rand(), 0]);
+    light(plan.lights, { x, y: h * 1.01, z }, { x: n.x || 1, z: n.z }, 6, 6, hex("#ff3030", 1), [rand(), 2]);
+    stamp(plan.lights, l0, { x, z }, true);
+    return;
+  }
+  tiers(plan, x, z, h, seed, rand);
   stamp(plan.towers, t0, { x, z }, false);
   // Lights on the face looking towards the city centre.
-  const n = Math.abs(x) > Math.abs(z) ? { x: -Math.sign(x), z: 0 } : { x: 0, z: -Math.sign(z) };
   const half = (n.x !== 0 ? h * 0.15 : h * 0.15 * 0.85) / 2 + 1;
   const face = { x: x + n.x * half * 1.6, z: z + n.z * half * 1.6 };
-  const color = (): Rgba => hex(NEON[Math.floor(rand() * NEON.length)] ?? "#00e5ff", 1);
   for (const side of [-1, 1]) light(plan.lights, { x: face.x - n.z * side * half, y: h * 0.32, z: face.z + n.x * side * half }, n, 2.5, h * 0.6, color(), [rand(), 1]);
   light(plan.lights, { x: face.x + n.x * 2, y: h * (0.5 + rand() * 0.15), z: face.z + n.z * 2 }, n, half * 1.5, half * 1.1, color(), [rand(), 0]);
   light(plan.lights, { x, y: h * 1.13, z }, { x: n.x || 1, z: n.z }, 6, 6, hex("#ff3030", 1), [rand(), 2]);
   stamp(plan.lights, l0, { x, z }, true);
 };
 
-/** The skyline: deterministic, from `MEGA_SITES` only. */
-export const planSkyline = (sites: readonly MegaSite[] = MEGA_SITES): SkylinePlan => {
+/**
+ * The skyline: deterministic, from `MEGA_SITES` only. With megatower bodies (ADR-0063) the towers
+ * take them in turn, so every variant stands in more than one place.
+ */
+export const planSkyline = (sites: readonly MegaSite[] = MEGA_SITES, bodies: readonly MegaBody[] = []): SkylinePlan => {
   const plan: SkylinePlan = { towers: new MeshSink(), lights: new MeshSink() };
+  let index = 0;
   for (const s of sites) {
     const rand = prng(Math.floor(Math.abs(s.x * 31 + s.z * 17)) ^ 0x5ca1e);
     s.towers.forEach((h, k) => {
       const a = k * 2.4 + rand();
       const r = k === 0 ? 0 : 120 + rand() * 160;
-      tower(plan, s.x + Math.sin(a) * r, s.z + Math.cos(a) * r, h, rand);
+      tower(plan, s.x + Math.sin(a) * r, s.z + Math.cos(a) * r, h, rand, bodies[index++ % Math.max(bodies.length, 1)] ?? null);
     });
   }
   return plan;
@@ -181,6 +204,7 @@ uniform vec3 silhouette;
 uniform vec3 fogColor;
 uniform float fogDensity;
 uniform float lit;
+#define BODY_GLOW ${BODY_GLOW.toFixed(1)}
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 void main(void) {
   vec3 n = normalize(vNormal);
@@ -188,7 +212,11 @@ void main(void) {
   vec3 col = silhouette * vColor.rgb * (abs(n.x) > 0.5 ? 1.5 : 1.15);
   if (n.y > 0.5) col *= 0.7;
   vec3 glow = vec3(0.0);
-  if (vSeed < 1.5 && abs(n.y) < 0.5) {
+  if (vSeed > BODY_GLOW - 0.5) {
+    // A megatower's band of light (ADR-0063): its own colour, dim by day.
+    col = vColor.rgb * 0.3;
+    glow = lit * vColor.rgb * 0.85;
+  } else if (vSeed < 1.5 && abs(n.y) < 0.5) {
     float u = abs(n.x) > 0.5 ? vLocal.z : vLocal.x;
     vec2 g = vec2(u / 4.0, vLocal.y / 4.2);
     vec2 cell = floor(g);
@@ -279,6 +307,27 @@ export class MapSkyline {
     mesh.material = material;
     this.materials.push(material);
     this.meshes.push(mesh);
+  }
+
+  /**
+   * The megatower bodies have loaded (ADR-0063): the towers and their lights are rebuilt in the
+   * same two meshes, so the skyline costs no more draw calls than before.
+   */
+  setBodies(bodies: readonly MegaBody[]): void {
+    if (bodies.length === 0) return;
+    const plan = planSkyline(MEGA_SITES, bodies);
+    [plan.towers, plan.lights].forEach((sink, i) => {
+      const mesh = this.meshes[i];
+      if (!mesh) return;
+      const data = new VertexData();
+      data.positions = sink.positions;
+      data.normals = sink.normals;
+      data.colors = sink.colors;
+      data.uvs = sink.uvs;
+      data.uvs2 = sink.uvs2;
+      data.indices = sink.indices;
+      data.applyToMesh(mesh, false);
+    });
   }
 
   /** Night 0 .. day 1: silhouettes pale, windows and ads dim; haze from the rig. */

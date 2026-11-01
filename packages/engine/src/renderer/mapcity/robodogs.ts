@@ -1,5 +1,5 @@
 import type { Vec3 } from "@seki/core";
-import { GATE_PASSAGES, PASSAGES, againstWall, chunkAt, nearestWall } from "@seki/sim";
+import { GATE_PASSAGES, PASSAGES, againstWall, chunkAt, inBuilding, nearestWall } from "@seki/sim";
 import type { KitModel } from "../city-kit-data";
 import { type CityProps, addPropToSink, facing, pointSeed, propHash } from "../city-props";
 import type { MeshSink } from "../mesh-sink";
@@ -52,26 +52,37 @@ export const stallDog = (stall: WorldProp): DogSpot | null => {
   return { at, front: { x: ahead.x - at.x, y: 0, z: ahead.z - at.z } };
 };
 
-/**
- * The dog by a gateway, or null: against the facade beside one mouth of the passage, a metre past
- * its edge, its head to the opening. Every city gate gets one, half of the other gateways of
- * Podzamcze and Nabrzeże; a spot whose wall is not the facade of the mouth (a corner) stays empty.
- */
-export const gateDog = (p: (typeof PASSAGES)[number], gate: boolean): DogSpot | null => {
-  const seed = pointSeed({ x: p.from.x, y: 0, z: p.from.z });
-  if (!gate && propHash(seed, 65) % GATEWAY_SHARE !== 0) return null;
-  const mouth = propHash(seed, 66) % 2 === 0 ? p.from : p.to;
+/** The dog against the facade at a mouth, on one side of it, or null where that wall is not the mouth's facade (a corner) or the spot is in a building. */
+const dogBeside = (p: (typeof PASSAGES)[number], mouth: { x: number; z: number }, side: number): DogSpot | null => {
   const wall = againstWall(mouth.x, mouth.z, 0);
   const n = { x: Math.sin(wall.yaw), z: Math.cos(wall.yaw) };
-  const side = propHash(seed, 67) % 2 === 0 ? -1 : 1;
   const along = { x: n.z * side, z: -n.x * side };
   const off = p.width / 2 + 1 + 0.3;
   const spot = againstWall(wall.at.x + along.x * off, wall.at.z + along.z * off, HALF);
   const back = nearestWall(spot.at.x, spot.at.z, true);
   // The same facade (its normal within some 10°) and the spot about where it was asked for.
   if (Math.abs(Math.sin(spot.yaw - wall.yaw)) > 0.18 || Math.cos(spot.yaw - wall.yaw) < 0 || back.d > HALF + 0.1) return null;
-  if (Math.hypot(spot.at.x - (wall.at.x + along.x * off), spot.at.z - (wall.at.z + along.z * off)) > 1) return null;
+  if (Math.hypot(spot.at.x - (wall.at.x + along.x * off), spot.at.z - (wall.at.z + along.z * off)) > 1 || inBuilding(spot.at.x, spot.at.z)) return null;
   return { at: spot.at, front: { x: -along.x, y: 0, z: -along.z } };
+};
+
+/**
+ * The dog by a gateway, or null: against the facade beside one mouth of the passage, a metre past
+ * its edge, its head to the opening. Every city gate gets one, half of the other gateways of
+ * Podzamcze and Nabrzeże; a spot whose wall is not the facade of the mouth (a corner) stays empty,
+ * but a city gate's dog moves to the mouth's other side, then to the other mouth.
+ */
+export const gateDog = (p: (typeof PASSAGES)[number], gate: boolean): DogSpot | null => {
+  const seed = pointSeed({ x: p.from.x, y: 0, z: p.from.z });
+  if (!gate && propHash(seed, 65) % GATEWAY_SHARE !== 0) return null;
+  const mouths = propHash(seed, 66) % 2 === 0 ? [p.from, p.to] : [p.to, p.from];
+  const sides = propHash(seed, 67) % 2 === 0 ? [-1, 1] : [1, -1];
+  const tries = gate ? mouths.flatMap((m) => sides.map((s) => [m, s] as const)) : [[mouths[0]!, sides[0]!] as const];
+  for (const [m, s] of tries) {
+    const spot = dogBeside(p, m, s);
+    if (spot) return spot;
+  }
+  return null;
 };
 
 let gates: readonly DogSpot[] | null = null;

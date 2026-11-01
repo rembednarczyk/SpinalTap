@@ -4,6 +4,7 @@ import { type ObstacleQuery, type PropPlacer, planFacadeExtras } from "./facade-
 import { planFarBuilding, planNearBuilding } from "./facade-plan";
 import { isLandmarkFrame, planFarLandmark, planLandmarkCables, planLandmarkSigns, planNearLandmark } from "./landmarks";
 import { type SignGround, planBuildingSigns } from "./sign-plan";
+import { planVenueSigns } from "./venue-plan";
 import { planFarVertical, planNearVertical } from "./vertical-plan";
 import { planWallClutter } from "./wall-clutter";
 
@@ -13,8 +14,11 @@ import { planWallClutter } from "./wall-clutter";
  * clutter and signs.
  */
 
-/** The far solids and the signs of a cell's buildings; `nameSlot` gives a name's row in the atlas. */
-export const planFarFrames = (far: MeshSink, signs: MeshSink, frames: readonly FacadeFrame[], nameSlot: (name: string) => number | null, ground: SignGround): void => {
+/**
+ * The far solids and the signs of a cell's buildings; `nameSlot` gives a name's row in the atlas,
+ * `lite` (the low quality) draws the venues' signs without their streaks.
+ */
+export const planFarFrames = (far: MeshSink, signs: MeshSink, frames: readonly FacadeFrame[], nameSlot: (name: string) => number | null, ground: SignGround, lite = false): void => {
   for (const f of frames) {
     if (isLandmarkFrame(f)) {
       planFarLandmark(far, f);
@@ -24,6 +28,7 @@ export const planFarFrames = (far: MeshSink, signs: MeshSink, frames: readonly F
     planFarBuilding(far, f);
     planFarVertical(far, f);
     planBuildingSigns(signs, f, nameSlot, ground);
+    planVenueSigns(signs, f, ground, lite);
   }
 };
 

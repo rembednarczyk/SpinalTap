@@ -162,7 +162,7 @@ const stacked = (f: FacadeFrame): boolean => (f.b.rise ?? 0) > 0 && stackTiers(f
 
 /** The roofs of planes over the outline (ADR-0064): gables, half-hips, mansards, skillions. */
 const PLANES: ReadonlySet<string> = new Set<PlanesKind>(["gable", "half-hip", "mansard", "skillion"]);
-const planesKind = (f: FacadeFrame): PlanesKind | null => (PLANES.has(f.style.roof) && (f.b.roof ?? 0) > 0.3 ? (f.style.roof as PlanesKind) : null);
+export const planesKind = (f: FacadeFrame): PlanesKind | null => (PLANES.has(f.style.roof) && (f.b.roof ?? 0) > 0.3 ? (f.style.roof as PlanesKind) : null);
 /** A roof sloping from the eaves: hipped, a pyramid or one of planes. */
 const pitched = (f: FacadeFrame): boolean => (f.b.roof ?? 0) > 0.3 && (f.style.roof === "hip" || f.style.roof === "pyramid" || planesKind(f) !== null);
 

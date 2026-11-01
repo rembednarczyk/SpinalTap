@@ -37,6 +37,14 @@ export const enContent = {
   "prompt.help": "Help",
   "prompt.door.force": "Force the lock (raises the alarm)",
   "prompt.door.locked": "Keypad door: locked",
+  // Takedowns (ADR-0065): the interact key, and holding the attack button to the end.
+  "prompt.takedown": "Take down",
+  "prompt.takedown.kill": "hold attack to kill",
+  // Interiors (sim `INTERIORS`, ADR-0061); Lublin's own places keep their names.
+  "interior.clinic": "Doctor Mori's clinic",
+  "interior.neon-koi": "Neon Koi",
+  "interior.tessen-office": "Tessen office",
+  "interior.trasa-podziemna": "Trasa Podziemna",
   "prompt.loot": "Search",
   // Observation hooks of contracts (ADR-0032): the tracker line once found.
   "hook.eliminate_1": "Every hour the crew boss steps aside on his own",
@@ -96,4 +104,26 @@ export const enContent = {
   "preview.stats":
     "Lublin 2077, map preview · {hour}:00 · {fps} fps · {drawCalls} draw calls · {meshes} meshes · buildings {buildings} (near {near} / far {far} cells) · props {pieces} ({groups} meshes) · {vertices}k vertices",
   "preview.help": "drag: orbit · wheel: zoom · WASD/arrows: pan · Q/E: down/up · Shift: faster · N: night/day · 1-5: shots",
+  // Kinds of the venues on the ground floors (ADR-0064 stage 4); their 2077 names are data.
+  "venue.kind.restaurant": "Restaurant",
+  "venue.kind.fast-food": "Fast food",
+  "venue.kind.cafe": "Café",
+  "venue.kind.ice-cream": "Ice cream parlour",
+  "venue.kind.bar": "Bar",
+  "venue.kind.pub": "Pub",
+  "venue.kind.club": "Club",
+  "venue.kind.bank": "Bank",
+  "venue.kind.exchange": "Currency exchange",
+  "venue.kind.pharmacy": "Pharmacy",
+  "venue.kind.bakery": "Bakery",
+  "venue.kind.grocery": "Grocery",
+  "venue.kind.books": "Bookshop",
+  "venue.kind.jewelry": "Jeweller",
+  "venue.kind.optician": "Optician",
+  "venue.kind.hairdresser": "Hairdresser",
+  "venue.kind.beauty": "Beauty salon",
+  "venue.kind.clothes": "Clothes shop",
+  "venue.kind.art": "Gallery",
+  "venue.kind.mall": "Shopping centre",
+  "venue.kind.shop": "Shop",
 } as const;

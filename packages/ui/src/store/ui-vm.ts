@@ -1,11 +1,20 @@
-import { DEFAULT_LOCALE, type ItemCategory, type ItemDefId, type ItemRef, type Locale, type Rarity, type WeaponSlot, degToRad, verticalFov } from "@seki/core";
+import { DEFAULT_LOCALE, type ItemCategory, type PrepareStage, type ItemDefId, type ItemRef, type Locale, type Rarity, type WeaponSlot, degToRad, verticalFov } from "@seki/core";
 import type { ColorblindMode, DamageNumbersMode } from "./hud-vm";
 import type { MapAreaVm, MapLabelVm, MapPlaceVm, MapPolygon } from "./map-vm";
 import type { RadioStationId } from "./wave2-vm";
 
 // View models of the UI store: what the areas of `UiState` hold (ADR-0031).
 
-export type Screen = "title" | "playing" | "paused" | "dead";
+/** `loading`: the start of a game, while the renderer prepares it (ADR-0057). */
+export type Screen = "title" | "loading" | "playing" | "paused" | "dead";
+
+/** The loading screen's bar (ADR-0057): the share done, 0..1, and the stage under way. */
+export interface LoadingVm {
+  readonly progress: number;
+  readonly stage: PrepareStage | null;
+}
+
+export const NO_LOADING: LoadingVm = { progress: 0, stage: null };
 
 export interface DialogueLineVm {
   readonly speaker: string | null;
@@ -273,10 +282,16 @@ export interface SettingsVm {
   // Accessibility (ADR-0028).
   /** HUD size multiplier, 1 = default. */
   readonly hudScale: number;
+  /** Subtitle size on its own, on top of the HUD scale (`SUBTITLE_SCALE_RANGE`). */
+  readonly subtitleScale: number;
+  /** An opaque box behind subtitles instead of the translucent one. */
+  readonly subtitleBackground: boolean;
   /** A legible font (Atkinson Hyperlegible) instead of the narrow display one. */
   readonly legibleFont: boolean;
   /** No aberration, glitch or blinking; the engine reads it too. */
   readonly reduceFlashes: boolean;
+  /** Walking bob, hit shake and sprint widening of the camera; the engine reads it. */
+  readonly cameraMotion: boolean;
   /** The breach minigame has no timer. */
   readonly untimedBreach: boolean;
   /** Colour tokens for colour vision deficiencies (each token has an icon as well). */
@@ -319,10 +334,13 @@ export const DEFAULT_SETTINGS: SettingsVm = {
   hints: true,
   autosave: true,
   hudAlwaysShow: false,
-  damageNumbers: "off",
+  damageNumbers: "hit",
   hudScale: 1,
+  subtitleScale: 1,
+  subtitleBackground: false,
   legibleFont: false,
   reduceFlashes: false,
+  cameraMotion: true,
   untimedBreach: false,
   colorblind: "off",
   radioStation: null,

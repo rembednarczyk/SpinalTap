@@ -1,6 +1,7 @@
-import type { VehicleModel } from "@seki/core";
+import { VEHICLE_SIZE, type VehicleModel } from "@seki/core";
 import { type Pt, ROAD_CHAINS, type RoadChain, onRoad, polylineLength } from "./lublin/roads";
-import { MAP_CHUNKS } from "./lublin/sites";
+import { inBuilding } from "./lublin/places";
+import { MAP_CHUNKS, PASSAGES } from "./lublin/sites";
 import { GAME_PROPS, WORLD_STREET_PROPS } from "./street-props";
 import { METRO_STATIONS } from "./metro";
 import { groundY } from "./lublin/terrain";
@@ -53,6 +54,8 @@ const TROLLEY_STREETS: ReadonlySet<string> = new Set([
 const TROLLEY_SPEED = 8.5;
 const TROLLEY_SPACING = 420;
 const DELIVERY_SPEED = 3.5;
+/** Half the widest delivery vehicle, and a hand of room. */
+const VAN_HALF = Math.max(VEHICLE_SIZE.van.width, VEHICLE_SIZE.delivery.width) / 2 + 0.1;
 
 /** A two-way street whose carriageway reaches this far right of its axis has a parking strip by the kerb (m). */
 export const KERB_ROOM = 4.6;
@@ -82,19 +85,95 @@ export const offsetLine = (pts: readonly Pt[], off: number): Pt[] =>
     return [Math.round((p[0] + tz * off) * 100) / 100, Math.round((p[1] - tx * off) * 100) / 100] as const;
   });
 
+/** How far the carriageway reaches to the right of the polyline at arc length `s`, to 9 m (m; 0 off the road). */
+const reachAt = (pts: readonly Pt[], s: number, side: 1 | -1): number => {
+  const { x, z, tx, tz } = pointAt(pts, s);
+  let w = 0;
+  while (w < 9 && onRoad(x + tz * side * (w + 0.25), z - tx * side * (w + 0.25))) w += 0.25;
+  return w;
+};
+
 /** How far the carriageway reaches to the right of a street's axis: the median (or quantile `q`) over samples every 10 m (m). */
 export const roadHalfWidth = (pts: readonly Pt[], side: 1 | -1 = 1, q = 0.5): number => {
   const out: number[] = [];
   const len = polylineLength(pts);
   for (let s = 5; s < len; s += 10) {
-    const { x, z, tx, tz } = pointAt(pts, s);
-    let w = 0;
-    while (w < 9 && onRoad(x + tz * side * (w + 0.25), z - tx * side * (w + 0.25))) w += 0.25;
+    const w = reachAt(pts, s, side);
     if (w > 0) out.push(w);
   }
   if (out.length === 0) return 0;
   out.sort((a, b) => a - b);
   return out[Math.floor((out.length - 1) * q + 0.5)]!;
+};
+
+/** The local width of a street is sampled this often along it (m), and its narrowest taken over this many samples. */
+const WIDTH_STEP = 5;
+const WIDTH_WINDOW = 5;
+/** Less asphalt than this beside the axis is a chunk's seam or an island, not a lane's room (m). */
+const MIN_REACH = 1;
+/** A lane's car keeps this far inside the kerb: half the widest car and a hand's breadth (m). */
+const LANE_REACH = 1;
+/** How fast a lane edges towards the axis where the carriageway narrows (m aside per m along). */
+const LANE_EDGE = 0.1;
+
+/**
+ * The right-hand lane of a two-way street walked along `pts`: the whole street's lane, `whole` m
+ * from its axis, brought in towards the axis where the carriageway right there is too narrow for
+ * its car. A street of wide and narrow stretches (Staszica) kept the lane of its median and ran
+ * over the narrow stretch's kerb (G-090). The width is the narrowest of a few samples, so a side
+ * street's mouth does not move the lane out, and the lane comes in gently, ahead of the narrowing.
+ */
+const laneLine = (pts: readonly Pt[], whole: number): Pt[] => {
+  const len = polylineLength(pts);
+  const at: number[] = [];
+  for (let s = WIDTH_STEP / 2; s < len; s += WIDTH_STEP) at.push(s);
+  const widths = at.map((s) => reachAt(pts, s, 1));
+  const off = widths.map((_, i) => {
+    const near = widths.slice(Math.max(0, i - (WIDTH_WINDOW >> 1)), i + (WIDTH_WINDOW >> 1) + 1).filter((w) => w >= MIN_REACH);
+    if (near.length === 0) return whole;
+    const half = Math.min(...near);
+    return Math.min(whole, Math.max(laneOffset(half), half - LANE_REACH));
+  });
+  for (let i = 1; i < off.length; i++) off[i] = Math.min(off[i]!, off[i - 1]! + LANE_EDGE * WIDTH_STEP);
+  for (let i = off.length - 2; i >= 0; i--) off[i] = Math.min(off[i]!, off[i + 1]! + LANE_EDGE * WIDTH_STEP);
+  if (off.every((o) => o === whole)) return offsetLine(pts, whole);
+  return offsetAlong(pts, at, off);
+};
+
+/**
+ * The polyline moved to its right by `off[j]` at arc length `at[j]`, linearly between and level
+ * past the ends: its own points keep their way across a corner (as `offsetLine`), and a point is
+ * put in where the offset bends along a straight piece.
+ */
+const offsetAlong = (pts: readonly Pt[], at: readonly number[], off: readonly number[]): Pt[] => {
+  const offAt = (s: number): number => {
+    if (s <= at[0]!) return off[0]!;
+    const j = at.findIndex((a) => a >= s);
+    if (j < 0) return off[off.length - 1]!;
+    return off[j - 1]! + ((off[j]! - off[j - 1]!) * (s - at[j - 1]!)) / (at[j]! - at[j - 1]!);
+  };
+  const round = (v: number) => Math.round(v * 100) / 100;
+  const out: Pt[] = [];
+  let acc = 0;
+  pts.forEach((p, i) => {
+    if (i > 0) {
+      const a = pts[i - 1]!;
+      const seg = Math.hypot(p[0] - a[0], p[1] - a[1]);
+      const [tx, tz] = seg > 1e-9 ? [(p[0] - a[0]) / seg, (p[1] - a[1]) / seg] : [0, 0];
+      at.forEach((s, j) => {
+        const bends = off[j] !== (off[j - 1] ?? off[j]) || off[j] !== (off[j + 1] ?? off[j]);
+        if (!bends || s <= acc + 0.5 || s >= acc + seg - 0.5) return;
+        const x = a[0] + tx * (s - acc);
+        const z = a[1] + tz * (s - acc);
+        out.push([round(x + tz * off[j]!), round(z - tx * off[j]!)]);
+      });
+      acc += seg;
+    }
+    const [tx, tz] = dirAt(pts, i);
+    const o = offAt(acc);
+    out.push([round(p[0] + tz * o), round(p[1] - tx * o)]);
+  });
+  return out;
 };
 
 /** Arc length of the polyline's point nearest to (x, z), and how far from the line it is (+ right). */
@@ -171,6 +250,37 @@ const routeOf = (id: string, street: string, use: RouteUse, points: Pt[], speed:
   stops: use === "trolley" ? stopsAlong(points) : [],
 });
 
+/** The stretch of a passage's axis under a building, as arc lengths from its `from` end (sampled every 0.25 m), or null. */
+const underBuilding = (p: (typeof PASSAGES)[number]): readonly [number, number] | null => {
+  const len = Math.hypot(p.to.x - p.from.x, p.to.z - p.from.z);
+  const under: number[] = [];
+  for (let s = 0; s <= len; s += 0.25) if (inBuilding(p.from.x + ((p.to.x - p.from.x) * s) / len, p.from.z + ((p.to.z - p.from.z) * s) / len)) under.push(s);
+  return under.length > 0 ? [under[0]!, under[under.length - 1]!] : null;
+};
+
+const VAULTS = PASSAGES.flatMap((p) => {
+  const span = underBuilding(p);
+  return span ? [{ p, span }] : [];
+});
+
+/**
+ * A van's line through the passages under buildings: its points from a metre before a passage's
+ * mouth to a metre past the other, off the axis by more than the van leaves free, moved onto the
+ * axis. The OSM way through a gate need not be the passage's axis (Brama Grodzka, 1.4 m off it,
+ * G-136), and a van on it would scrape the wall.
+ */
+const onPassageAxes = (pts: readonly Pt[]): Pt[] =>
+  pts.map(([x, z]) => {
+    for (const { p, span } of VAULTS) {
+      const len = Math.hypot(p.to.x - p.from.x, p.to.z - p.from.z);
+      const [ux, uz] = [(p.to.x - p.from.x) / len, (p.to.z - p.from.z) / len];
+      const s = (x - p.from.x) * ux + (z - p.from.z) * uz;
+      const off = Math.abs((x - p.from.x) * uz - (z - p.from.z) * ux);
+      if (s >= span[0] - 1 && s <= span[1] + 1 && off > p.width / 2 - VAN_HALF && off < p.width / 2 + 2) return [p.from.x + ux * s, p.from.z + uz * s];
+    }
+    return [x, z];
+  });
+
 /** The lanes of one street: one or two per carriageway, both ways on a two-way street. */
 const lanesOf = (c: RoadChain, k: number, all: readonly RoadChain[]): TrafficRoute[] => {
   const len = polylineLength(c.points);
@@ -178,7 +288,7 @@ const lanesOf = (c: RoadChain, k: number, all: readonly RoadChain[]): TrafficRou
   const id = `${c.name}#${k}`;
   if (c.use === "deliveries") {
     // One van now and then on a long enough pedestrian street, down its middle.
-    return len >= 80 ? [routeOf(`${id}:d`, c.name, "deliveries", [...c.points], DELIVERY_SPEED, 1)] : [];
+    return len >= 80 ? [routeOf(`${id}:d`, c.name, "deliveries", onPassageAxes(c.points), DELIVERY_SPEED, 1)] : [];
   }
   const road = ROAD_KINDS[c.kind] ?? ROAD_KINDS.residential!;
   const cars = (l: number) => Math.max(1, Math.floor(l / road.spacing));
@@ -196,8 +306,8 @@ const lanesOf = (c: RoadChain, k: number, all: readonly RoadChain[]): TrafficRou
   const back = [...c.points].reverse();
   const off = laneOffset(roadHalfWidth(c.points, 1));
   const ways: [string, Pt[]][] = [
-    ["f", offsetLine(c.points, off)],
-    ["b", offsetLine(back, off)],
+    ["f", laneLine(c.points, off)],
+    ["b", laneLine(back, off)],
   ];
   for (const [w, pts] of ways) {
     out.push(routeOf(`${id}:${w}`, c.name, "cars", pts, road.speed, cars(len)));
@@ -293,6 +403,29 @@ const clearOfBlocks = (lanes: readonly TrafficRoute[], dead: DeadEnds): Piece[] 
   });
 };
 
+/** A lane keeps this far inside the map's edge (m): the paving is clipped to the chunks, and a point on the edge itself is on neither side of it. */
+const EDGE_REACH = 0.1;
+/** The step a lane's end is cut back by (m). */
+const EDGE_STEP = 0.05;
+
+const inMap = (p: { x: number; z: number }): boolean => [-EDGE_REACH, EDGE_REACH].every((a) => [-EDGE_REACH, EDGE_REACH].every((b) => onMap(p.x + a, p.z + b)));
+
+/**
+ * A lane's ends cut back onto the map (G-138). The import clips a street's axis at the map's
+ * edge; its lane, moved aside from the axis, runs on past the edge where the street meets it
+ * aslant (up to 1.5 m), over no paving, where the simulation's ground is the nearest chunk's and
+ * the map's is 0. Inside the map (its seams too) nothing is cut.
+ */
+const onTheMap = (p: Piece): Piece => {
+  const r = p.route;
+  let a = 0;
+  while (a < r.length && !inMap(pointAt(r.points, a))) a += EDGE_STEP;
+  let b = r.length;
+  while (b > a && !inMap(pointAt(r.points, b))) b -= EDGE_STEP;
+  if (a === 0 && b === r.length) return p;
+  return { ...p, route: routeOf(r.id, r.street, r.use, slice(r.points, a, b), r.speed, r.vehicles) };
+};
+
 /** A lane cut short by a block or a dead end turns round onto a lane the other way starting this close to its end (m). */
 const TURN_REACH = 16;
 
@@ -353,8 +486,8 @@ const turnRound = (pieces: readonly Piece[]): TrafficRoute[] => {
   });
 };
 
-/** Every lane of the city's traffic, in a stable order (the chains' order, then lane by lane), clear of the game's blocks. */
-export const TRAFFIC_LANES: readonly TrafficRoute[] = turnRound(ROAD_CHAINS.flatMap((c, k) => clearOfBlocks(lanesOf(c, k, ROAD_CHAINS), deadEndsOf(c, k))));
+/** Every lane of the city's traffic, in a stable order (the chains' order, then lane by lane), clear of the game's blocks, on the map. */
+export const TRAFFIC_LANES: readonly TrafficRoute[] = turnRound(ROAD_CHAINS.flatMap((c, k) => clearOfBlocks(lanesOf(c, k, ROAD_CHAINS), deadEndsOf(c, k)).map(onTheMap)));
 
 /** The routes the vehicles drive: the lanes joined at the junctions (ADR-0055). */
 export const TRAFFIC_ROUTES: readonly TrafficRoute[] = joinAtJunctions(TRAFFIC_LANES);

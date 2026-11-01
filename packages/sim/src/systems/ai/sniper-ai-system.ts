@@ -4,6 +4,7 @@ import type { Entity } from "../../world/components";
 import type { SimContext, System } from "../../world/context";
 import { chestOf, eyeOf, lineOfSight } from "../../world/hitscan";
 import { inCreationOrder } from "../../world/ordering";
+import { incapacitated } from "../../world/takedown";
 import { readyToFire } from "../../world/player-weapon";
 import { LEVEL_GAP, routeAcrossLevels } from "../../world/nav";
 import { WORLD_NAV } from "../../content/world-map";
@@ -11,7 +12,8 @@ import { worldTimeScale } from "../ability-system";
 import { noteDetected } from "../../world/street";
 import { coveredFrom } from "../../world/disguise";
 import { detourStep, steerPoint, straightWalk } from "./steering";
-import { NPC_CRIT, aimSpreadOf, fireShot } from "../combat-system";
+import { NPC_CRIT, fireShot, npcSpreadOf } from "../combat-system";
+import { difficultyOf } from "../../world/difficulty";
 
 /** Seconds the laser is on before the shot: the telegraph (ADR-0024). */
 export const SNIPER_AIM_TIME = 1.4;
@@ -138,9 +140,10 @@ const shoot = (ctx: SimContext, self: Sniper, player: Entity, inLine: boolean, d
   if (s.phase === "idle") {
     if (!inLine || !self.combatant || !readyToFire(self.combatant, self.combatant.loaded)) return;
     s.phase = "aim";
-    s.timer = SNIPER_AIM_TIME;
+    // The laser's warning lasts the difficulty's share of the aim time (`snipeTell`, ADR-0066).
+    s.timer = SNIPER_AIM_TIME * difficultyOf(ctx).snipeTell;
     noteDetected(ctx);
-    ctx.bus.emit("SniperAimed", { entityId: self.id, targetId: player.id, duration: SNIPER_AIM_TIME });
+    ctx.bus.emit("SniperAimed", { entityId: self.id, targetId: player.id, duration: s.timer });
   }
   // Aiming: track the target; a broken line switches the laser off.
   if (!inLine) {
@@ -154,7 +157,7 @@ const shoot = (ctx: SimContext, self: Sniper, player: Entity, inLine: boolean, d
   s.timer = Math.max(0, s.timer - dt);
   if (s.timer > 0 || !self.combatant || !readyToFire(self.combatant, self.combatant.loaded)) return;
   const origin = eyeOf(self);
-  fireShot(ctx, { shooter: self, origin, dir: normalize(sub(chestOf(player), origin)), spread: aimSpreadOf(self, null), ...NPC_CRIT }, ctx.rng);
+  fireShot(ctx, { shooter: self, origin, dir: normalize(sub(chestOf(player), origin)), spread: npcSpreadOf(ctx, self), ...NPC_CRIT }, ctx.rng);
   ctx.bus.emit("SniperAimed", { entityId: self.id, targetId: player.id, duration: 0 });
   s.phase = "rest";
   s.timer = self.combatant.stats?.interval ?? SNIPER_AIM_TIME;
@@ -179,7 +182,8 @@ export const sniperAiSystem: System = {
       if (self.combatant) self.combatant.engaged = false;
       self.velocity = { x: 0, y: 0, z: 0 };
       const perch = s.perches[s.perch];
-      if (!player || !perch) {
+      // Knocked out or held in a takedown (ADR-0065): the laser goes off and it stays put.
+      if (!player || !perch || incapacitated(ctx, self)) {
         stopAiming(ctx, self, null);
         s.phase = "idle";
         continue;

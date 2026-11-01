@@ -5,6 +5,7 @@
  */
 import { type MarkingOut } from "./markings.ts";
 import { type PassageOut } from "./passages.ts";
+import { type VenueOut } from "./venues.ts";
 import type { RoofShape } from "../../../packages/core/src/ports/types.ts";
 import { type BuildingUse, type GroundSurface, type TerrainGrid } from "../../../packages/core/src/world/city-geo.ts";
 
@@ -37,6 +38,8 @@ export interface BuildingOut {
   readonly shopfront?: true;
   /** Where the height came from. */
   readonly source: "height" | "levels" | "default";
+  /** Venues in or at it (ADR-0064 stage 4), relative to (x, z), with their 2077 names. */
+  readonly venues?: readonly VenueOut[];
 }
 
 export interface GroundOut {
@@ -57,6 +60,12 @@ export interface StreetOut {
   readonly oneway?: true;
   /** A passage under a building closed to motor vehicles: no lane, not even for deliveries (G-002). */
   readonly noVehicles?: true;
+}
+
+/** An unnamed service road's axis (world polyline, clipped to the chunk) and its carriageway's width (m). */
+export interface ServiceWayOut {
+  readonly line: readonly number[];
+  readonly width: number;
 }
 
 export type PoiKind = "shop" | "food" | "bar" | "stop" | "hotel" | "sight" | "culture" | "church" | "service" | "office";
@@ -83,4 +92,6 @@ export interface ChunkOut {
   readonly pois: readonly PoiOut[];
   /** Passages through the chunk's buildings (ADR-0048), when it has any. */
   readonly passages?: readonly PassageOut[];
+  /** Unnamed service roads (G-140), when it has any. */
+  readonly serviceWays?: readonly ServiceWayOut[];
 }

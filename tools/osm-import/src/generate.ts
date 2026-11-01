@@ -4,20 +4,22 @@
  */
 import { LUBLIN_ANCHOR } from "../../../packages/core/src/world/city-geo.ts";
 import { asBuilding, isPart, orphanParts, partsByBuilding } from "./building-parts.ts";
+import { smallAlone } from "./building-alone.ts";
 import { makeBuilding } from "./buildings.ts";
 import { corrected } from "./corrections.ts";
 import { ALL_CHUNKS, type ChunkSpec } from "./config.ts";
 import { type HeightSource } from "./dtm.ts";
 import { type Area, type Line, extractFeatures } from "./features.ts";
-import { type Band, areaBand, chunkGround, crossingBand, crossingWay, cutSidewalk, lineBands, markedCrossing, roadWidth } from "./ground.ts";
+import { type Band, areaBand, chunkGround, crossingBand, crossingWay, cutSidewalk, fitToKerb, lineBands, markedCrossing, roadWidth } from "./ground.ts";
 import { geoToWorld } from "./project.ts";
-import { type Marking, chunkMarkings, cutLine, roadMarkings, stopLines } from "./markings.ts";
+import { type Marking, chunkMarkings, cutLine, oneway, roadMarkings, stopLines } from "./markings.ts";
 import { type Pt, type Rect, centroid, inRect, pointInRing, rectsOverlap, ringBounds } from "./geometry.ts";
-import { allPois, chunkPois, chunkStreets } from "./labels.ts";
-import { type PassageOut, buildingPassages } from "./passages.ts";
+import { allPois, chunkPois, chunkServiceWays, chunkStreets } from "./labels.ts";
+import { type PassageOut, buildingPassages, streetLevelTunnels } from "./passages.ts";
 import { type ChunkOut } from "./model.ts";
 import { type OsmData } from "./osm.ts";
 import { chunkTerrain, sampleField } from "./terrain.ts";
+import { type WorldVenue, allVenues, assignVenues, venueOut } from "./venues.ts";
 
 export interface ChunkStats {
   readonly id: string;
@@ -31,11 +33,26 @@ export interface ChunkStats {
   readonly terrainError: { readonly max: number; readonly p99: number };
   readonly minY: number;
   readonly maxY: number;
+  /** Venues signed on the chunk's buildings (ADR-0064 stage 4). */
+  readonly venues: number;
+}
+
+/** What became of the map's venues (ADR-0064 stage 4): the importer's control numbers. */
+export interface VenueStats {
+  readonly total: number;
+  /** On a building of a chunk. */
+  readonly signed: number;
+  /** With a 2077 name from the table; the rest are generic by kind. */
+  readonly named: number;
+  readonly colourOsm: number;
+  readonly colourTable: number;
+  readonly colourKind: number;
 }
 
 export interface Generated {
   readonly chunks: readonly ChunkOut[];
   readonly stats: readonly ChunkStats[];
+  readonly venues: VenueStats;
 }
 
 const SKIP_BUILDING = new Set(["no", "construction", "roof", "ruins", "demolished", "proposed"]);
@@ -46,50 +63,99 @@ const buildingAreas = (areas: readonly Area[], data: OsmData): Area[] => {
     if (r.tags?.building === undefined) continue;
     for (const m of r.members) if (m.type === "way" && m.role !== "inner") inRelation.add(`w${m.ref}`);
   }
-  return areas.filter((a) => a.tags.building !== undefined && !SKIP_BUILDING.has(a.tags.building) && !inRelation.has(a.id));
+  // A building under ground (a cellar, a shelter, G-077) has nothing over the street above it.
+  return areas.filter((a) => a.tags.building !== undefined && !SKIP_BUILDING.has(a.tags.building) && a.tags.location !== "underground" && !inRelation.has(a.id));
 };
 
-/** A coarse spatial hash of points along mapped sidewalks (`footway=sidewalk`). */
+type SidewalkPoint = Pt & { readonly tx: number; readonly tz: number };
+
+/** Samples along a line every `step` metres, with the line's direction there. */
+const samplesAlong = (line: readonly Pt[], step: number): (Pt & { tx: number; tz: number })[] => {
+  const out: (Pt & { tx: number; tz: number })[] = [];
+  for (let i = 0; i + 1 < line.length; i++) {
+    const a = line[i]!;
+    const b = line[i + 1]!;
+    const len = Math.hypot(b.x - a.x, b.z - a.z);
+    const n = Math.max(1, Math.ceil(len / step));
+    for (let k = 0; k < n; k++) out.push({ x: a.x + ((b.x - a.x) * k) / n, z: a.z + ((b.z - a.z) * k) / n, tx: (b.x - a.x) / (len || 1), tz: (b.z - a.z) / (len || 1) });
+  }
+  return out;
+};
+
+/**
+ * How far short of a mapped sidewalk's axis a fitted carriageway ends, metres: its middle stays off
+ * the asphalt where it wiggles a little nearer than the median. Not at the sidewalk's inner edge
+ * (2 x (axis - half the sidewalk)): the asphalt under the sidewalk's inner half is what keeps the
+ * two-way lanes (1.2 m and more off the axis, ADR-0055) and their cars on the road.
+ */
+const KERB_MARGIN = 0.5;
+/** A street side's mapped sidewalk counts as running along it over this many samples (2 m apart) and more. */
+const MIN_KERB_SAMPLES = 5;
+
+/** A coarse spatial hash of points along mapped sidewalks (`footway=sidewalk`), with their direction. */
 const sidewalkIndex = (lines: readonly Line[]) => {
   const cell = 10;
-  const grid = new Map<string, Pt[]>();
+  const grid = new Map<string, SidewalkPoint[]>();
   const key = (x: number, z: number) => `${Math.floor(x / cell)},${Math.floor(z / cell)}`;
   for (const l of lines) {
     if (l.tags.footway !== "sidewalk") continue;
-    for (let i = 0; i + 1 < l.line.length; i++) {
-      const a = l.line[i]!;
-      const b = l.line[i + 1]!;
-      const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 3));
-      for (let k = 0; k <= n; k++) {
-        const p = { x: a.x + ((b.x - a.x) * k) / n, z: a.z + ((b.z - a.z) * k) / n };
-        const list = grid.get(key(p.x, p.z)) ?? [];
-        list.push(p);
-        grid.set(key(p.x, p.z), list);
-      }
+    const pts = samplesAlong(l.line, 3);
+    const end = pts[pts.length - 1];
+    if (end) pts.push({ ...l.line[l.line.length - 1]!, tx: end.tx, tz: end.tz });
+    for (const p of pts) {
+      const list = grid.get(key(p.x, p.z)) ?? [];
+      list.push(p);
+      grid.set(key(p.x, p.z), list);
     }
   }
-  /** True when separate sidewalks run along at least a third of the road. */
-  return (road: Line): boolean => {
-    const reach = roadWidth(road.tags) / 2 + 7;
-    let near = 0;
-    let total = 0;
-    for (let i = 0; i + 1 < road.line.length; i++) {
-      const a = road.line[i]!;
-      const b = road.line[i + 1]!;
-      const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 8));
-      for (let k = 0; k < n; k++) {
-        const p = { x: a.x + ((b.x - a.x) * k) / n, z: a.z + ((b.z - a.z) * k) / n };
-        total++;
-        let hit = false;
-        for (let dx = -1; dx <= 1 && !hit; dx++)
-          for (let dz = -1; dz <= 1 && !hit; dz++)
-            hit = (grid.get(`${Math.floor(p.x / cell) + dx},${Math.floor(p.z / cell) + dz}`) ?? []).some((q) => Math.hypot(q.x - p.x, q.z - p.z) <= reach);
-        if (hit) near++;
+  const around = (p: Pt): SidewalkPoint[] => {
+    const out: SidewalkPoint[] = [];
+    for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) out.push(...(grid.get(`${Math.floor(p.x / cell) + dx},${Math.floor(p.z / cell) + dz}`) ?? []));
+    return out;
+  };
+  return {
+    /** True when separate sidewalks run along at least a third of the road. */
+    along: (road: Line): boolean => {
+      const reach = roadWidth(road.tags) / 2 + 7;
+      const samples = samplesAlong(road.line, 8);
+      const near = samples.filter((p) => around(p).some((q) => Math.hypot(q.x - p.x, q.z - p.z) <= reach)).length;
+      return samples.length > 0 && near / samples.length >= 1 / 3;
+    },
+    /**
+     * How far from the road's axis its carriageway may reach, `KERB_MARGIN` short of its mapped
+     * sidewalks where they run along it (parallel, beside it) with their axis on its carriageway
+     * by type: the median on each side, the nearer side's. Only a side whose sidewalk runs along
+     * half the road and more counts (`MIN_KERB_SAMPLES` at least): a sidewalk turning in to a
+     * crossing at a junction says nothing of the rest of the street (T-062). Null without one.
+     */
+    kerb: (road: Line): number | null => {
+      const reach = roadWidth(road.tags) / 2;
+      const sides: [number[], number[]] = [[], []];
+      const samples = samplesAlong(road.line, 2);
+      for (const p of samples) {
+        const best = [Infinity, Infinity];
+        for (const q of around(p)) {
+          const along = (q.x - p.x) * p.tx + (q.z - p.z) * p.tz;
+          const across = (q.z - p.z) * p.tx - (q.x - p.x) * p.tz;
+          if (Math.abs(along) > 2 || Math.abs(across) >= reach || Math.abs(q.tx * p.tx + q.tz * p.tz) < 0.9) continue;
+          const side = across >= 0 ? 0 : 1;
+          best[side] = Math.min(best[side]!, Math.abs(across) - KERB_MARGIN);
+        }
+        best.forEach((b, side) => {
+          if (Number.isFinite(b)) sides[side]!.push(b);
+        });
       }
-    }
-    return total > 0 && near / total >= 1 / 3;
+      const medians = sides.filter((s) => s.length >= MIN_KERB_SAMPLES && s.length * 2 >= samples.length).map((s) => [...s].sort((a, b) => a - b)[Math.floor(s.length / 2)]!);
+      return medians.length > 0 ? Math.min(...medians) : null;
+    },
   };
 };
+
+/**
+ * Points that make a plain building round them public (G-097). An office of government is left
+ * out: it is as often a bureau rented in a tenement as an office building of its own.
+ */
+const CIVIC_POINTS = new Set(["amenity=townhall", "amenity=courthouse", "amenity=library", "amenity=theatre", "amenity=arts_centre"]);
 
 const grow = (r: Rect, m: number): Rect => ({ minX: r.minX - m, minZ: r.minZ - m, maxX: r.maxX + m, maxZ: r.maxZ + m });
 
@@ -103,6 +169,8 @@ const generateChunk = (
   markings: readonly Marking[],
   passages: readonly PassageOut[],
   parts: ReadonlyMap<string, readonly Area[]>,
+  alone: ReadonlySet<string>,
+  venues: ReadonlyMap<string, readonly WorldVenue[]>,
 ) => {
   const altitude = LUBLIN_ANCHOR.altitude;
   const t = chunkTerrain(sampleField(src, spec.rect, 12), spec.rect, altitude);
@@ -110,19 +178,22 @@ const generateChunk = (
   const namedPoints = pois
     .filter((p) => p.kind === "hotel" || p.kind === "sight" || p.kind === "culture" || p.kind === "church")
     .map((p) => ({ at: p.at, name: p.kind === "hotel" && !/hotel/i.test(p.name) ? `Hotel ${p.name}` : p.name, ...(p.addr ? { addr: p.addr } : {}) }));
+  const civicPoints = pois.flatMap((p) => (CIVIC_POINTS.has(p.tag) ? [{ at: p.at, name: p.name, amenity: p.tag.replace("amenity=", ""), ...(p.addr ? { addr: p.addr } : {}) }] : []));
   const out = [];
   let skipped = 0;
   let withHoles = 0;
   for (const a of buildings) {
     if (!inRect(centroid(a.ring), spec.rect)) continue;
-    const r = makeBuilding(a, { src, grid: t.grid, altitude, range: spec.district.defaultLevels, shopPoints, namedPoints }, parts.get(a.id));
+    const r = makeBuilding(a, { src, grid: t.grid, altitude, range: spec.district.defaultLevels, shopPoints, namedPoints, civicPoints, alone }, parts.get(a.id));
     if ("skipped" in r) {
       skipped++;
       continue;
     }
     if (a.holes > 0) withHoles++;
+    const signs = venues.get(a.id);
+    const ok = signs ? { ...r.ok, venues: signs.map((v) => venueOut(v, r.ok)) } : r.ok;
     // A building's parts follow it, in its chunk, wherever their own centroids fall.
-    out.push(r.ok, ...r.lifted);
+    out.push(ok, ...r.lifted);
   }
   const ground = chunkGround(
     bands.filter((b) => rectsOverlap(b.box, spec.rect)),
@@ -131,6 +202,7 @@ const generateChunk = (
   const r = spec.rect;
   const own = new Set(out.map((b) => b.id));
   const through = passages.filter((p) => own.has(p.building));
+  const service = chunkServiceWays(lines, spec.rect);
   const chunk: ChunkOut = {
     id: spec.id,
     district: spec.district.id,
@@ -142,6 +214,7 @@ const generateChunk = (
     markings: chunkMarkings(markings, spec.rect),
     pois: chunkPois(pois, spec.rect),
     ...(through.length > 0 ? { passages: through } : {}),
+    ...(service.length > 0 ? { serviceWays: service } : {}),
   };
   const stats: ChunkStats = {
     id: spec.id,
@@ -155,6 +228,7 @@ const generateChunk = (
     terrainError: { max: t.maxError, p99: t.p99Error },
     minY: Math.min(...t.grid.heights),
     maxY: Math.max(...t.grid.heights),
+    venues: out.reduce((n, b) => n + (b.venues?.length ?? 0), 0),
   };
   return { chunk, stats };
 };
@@ -171,12 +245,13 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   const features = extractFeatures(data);
   // The explicit corrections of estimated tags (corrections.ts), before anything reads them.
   const areas = features.areas.map((a) => corrected(a));
-  const lines = features.lines;
+  // A street of default width ends where the sidewalks mapped along it begin (T-046).
+  const sidewalks = sidewalkIndex(features.lines);
+  const lines = features.lines.map((l) => (l.tags.highway ? { ...l, tags: fitToKerb(l.tags, sidewalks.kerb(l), oneway(l.tags)) } : l));
   const outlines = buildingAreas(areas, data);
   const partAreas = areas.filter(isPart);
   const orphans = new Set(orphanParts(outlines, partAreas));
   const buildings = [...outlines, ...[...orphans].map(asBuilding)];
-  const mapped = sidewalkIndex(lines);
   const near = (pts: readonly Pt[]) => chunks.some((c) => rectsOverlap(ringBounds(pts), grow(c.rect, 1)));
   const bands: (Band & { box: Rect })[] = [];
   for (const a of areas) {
@@ -184,9 +259,14 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
     if (b && near(b.ring)) bands.push({ ...b, box: ringBounds(b.ring) });
   }
   const water = bands.filter((b) => b.surface === "water").map((b) => b.ring);
-  for (const l of lines) {
+  const rects = chunks.map((c) => c.rect);
+  const tunnels = streetLevelTunnels(data);
+  // Paved only where it runs through a building: elsewhere it may pass under a street of its own.
+  const atStreet = new Set([...tunnels].filter((id) => lines.some((l) => l.osmId === id && buildingPassages([l], buildings, rects, tunnels).length > 0)));
+  for (const [k, l] of lines.entries()) {
     if (!near(l.line)) continue;
-    for (const b of lineBands(l, l.tags.highway ? mapped(l) : false, water)) bands.push({ ...b, box: ringBounds(b.ring) });
+    // Whether sidewalks are mapped along it: read off the street's width by type, as before it was fitted.
+    for (const b of lineBands(l, l.tags.highway ? sidewalks.along(features.lines[k]!) : false, water, atStreet.has(l.osmId))) bands.push({ ...b, box: ringBounds(b.ring) });
   }
   // Zebras at the crossing nodes of the carriageways, in node order.
   const roads = lines.filter((l) => l.tags.highway !== undefined && near(l.line));
@@ -220,8 +300,23 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
     if (near([at])) markings.push(...stopLines(`n${n.id}`, at, roads, onOther));
   }
   const pois = allPois(data);
-  const passages = buildingPassages(lines.filter((l) => near(l.line)), buildings, chunks.map((c) => c.rect));
+  const passages = buildingPassages(lines.filter((l) => near(l.line)), buildings, rects, atStreet);
   const parts = partsByBuilding(buildings, partAreas.filter((p) => !orphans.has(p)));
-  const results = chunks.map((c) => generateChunk(c, src, buildings, bands, lines, pois, markings, passages, parts));
-  return { chunks: results.map((r) => r.chunk), stats: results.map((r) => r.stats) };
+  // Standing alone is a property of the whole map, not of a chunk: one pass for all of them.
+  const alone = smallAlone(buildings);
+  // Shops, cafés, bars and the rest on the buildings they are in or at (ADR-0064 stage 4).
+  // All of them, so a building at a chunk's edge gets the same venues whichever chunks are built.
+  const venues = assignVenues(allVenues(data, areas), buildings.map((b) => ({ id: b.id, ring: b.ring })));
+  const mapped = allVenues(data, areas).filter((v) => chunks.some((c) => inRect(v.at, c.rect)));
+  const results = chunks.map((c) => generateChunk(c, src, buildings, bands, lines, pois, markings, passages, parts, alone, venues));
+  const count = (f: (v: WorldVenue) => boolean) => mapped.filter(f).length;
+  const venueStats: VenueStats = {
+    total: mapped.length,
+    signed: results.reduce((n, r) => n + r.stats.venues, 0),
+    named: count((v) => v.named),
+    colourOsm: count((v) => v.colourFrom === "osm"),
+    colourTable: count((v) => v.colourFrom === "table"),
+    colourKind: count((v) => v.colourFrom === "kind"),
+  };
+  return { chunks: results.map((r) => r.chunk), stats: results.map((r) => r.stats), venues: venueStats };
 };

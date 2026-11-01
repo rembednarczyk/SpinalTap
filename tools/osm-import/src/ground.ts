@@ -59,6 +59,21 @@ export const roadWidth = (t: Tags): number => {
   return ROAD_WIDTH[t.highway ?? ""] ?? 6;
 };
 
+/** The narrowest carriageway a street's mapped sidewalks narrow it to, metres: one-way, and two-way (two 2.25 m lanes, T-063). */
+const MIN_FITTED = { oneway: 3, twoWay: 4.5 };
+
+/**
+ * A street the map gives no width (no `width`, no `lanes`) narrowed to `kerb` metres each side of
+ * its axis, short of its separately mapped sidewalks (T-046): the width by type would lay the
+ * asphalt over their middle and `cutSidewalk` would drop them. The fitted width goes to
+ * `width:carriageway`, so the bands, markings and zebras all read the same one.
+ */
+export const fitToKerb = (t: Tags, kerb: number | null, oneway: boolean): Tags => {
+  if (kerb === null || ROAD_WIDTH[t.highway ?? ""] === undefined || parseLength(t.width ?? t["width:carriageway"]) !== null || Number(t.lanes) > 0) return t;
+  const w = Math.max(oneway ? MIN_FITTED.oneway : MIN_FITTED.twoWay, Math.round(2 * kerb * 10) / 10);
+  return w < roadWidth(t) ? { ...t, "width:carriageway": String(w) } : t;
+};
+
 export interface Band {
   readonly surface: GroundSurface;
   readonly ring: readonly Pt[];
@@ -95,11 +110,12 @@ export const coveredByWater = (line: readonly Pt[], water: readonly (readonly Pt
 /**
  * Bands from one line; `mappedSidewalkNear` tells whether separate sidewalks run along it.
  * A river whose bed is mapped as a water area gets no band of its own: the buffered centre
- * line would lay a second, wider strip over the real banks.
+ * line would lay a second, wider strip over the real banks. A tunnel `atStreet` (a gateway the
+ * map tags `tunnel=yes`, G-076) is paved like the street it joins.
  */
-export const lineBands = (l: Line, mappedSidewalkNear: boolean, water: readonly (readonly Pt[])[] = []): Band[] => {
+export const lineBands = (l: Line, mappedSidewalkNear: boolean, water: readonly (readonly Pt[])[] = [], atStreet = false): Band[] => {
   const t = l.tags;
-  if (underground(t) || l.line.length < 2) return [];
+  if ((underground(t) && !atStreet) || l.line.length < 2) return [];
   const bridge = t.bridge !== undefined && t.bridge !== "no";
   const deck = bridge ? ([l.line[0]!, l.line[l.line.length - 1]!] as const) : undefined;
   const out: Band[] = [];

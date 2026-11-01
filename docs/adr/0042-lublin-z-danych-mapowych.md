@@ -49,6 +49,8 @@ Obecne identyfikatory dystryktów zostają w kodzie, zmieniają się nazwy, tre�
 
 Dokładne prostokąty ustala importer. Każdy dystrykt dzieli się na chunki streamingu po około 150-250 m.
 
+**Zasięg Krakowskiego (decyzja użytkownika 31.10, G-052, T-014).** Prostokąt `krakowskie` sięga na południe do z = −270 zamiast −200: pas około 70 m z Teatrem im. Osterwy (w67508958, obrys do z = −225) i Kościołem Bernardynów (w66330578, obrys do z = −254), Narutowiczą, Bernardyńską i Dolną Panny Marii. Pas bierze południowy rząd chunków (`zEdges` w `tools/osm-import/src/config.ts`): ma 220 × 250 m, a szew rzędów zostaje na z = −20. Dzięki temu identyfikatory chunków i to, co gra wczytuje wokół startu na deptaku, się nie zmieniają. Przy równych rzędach (215 m) szew przesunąłby się na z = −55, 12 m od startu w klinice. Dane OSM i NMT pobrano na nowo dla Krakowskiego. Diff tylko dopisuje elementy: wspólne węzły, drogi, relacje i komórki NMT są bez zmian.
+
 ### Kontrakty
 - **Core (ten commit):** `GroundPoint`, `GeoAnchor`, `BuildingUse`, `TerrainGrid`, `terrainHeightAt` (interpolacja dwuliniowa, wspólna dla symulacji i renderera) i `GroundSurface`. Nowe rodzaje widoku:
   - `building` (obrys, wysokość, piętra, przeznaczenie, dach, nazwa, ziarno wyglądu);

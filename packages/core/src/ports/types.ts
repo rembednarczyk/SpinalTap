@@ -1,5 +1,6 @@
 import type { Vec3 } from "../math/vec3";
 import type { BuildingUse, GroundPoint, GroundSurface, RoadMarkingKind, StreetPropItem, TerrainGrid, TerrainOpenSides } from "../world/city-geo";
+import type { VenueKind } from "../world/venues";
 import type { GarmentLook, GarmentSlot, Rarity, WeaponLook, WeaponSlot } from "../items/types";
 
 export type EntityId = number;
@@ -36,6 +37,11 @@ export interface Transform {
   readonly air?: number;
   /** Climbing speed in m/s (positive up) while on a ladder (ADR-0021); absent otherwise. */
   readonly climb?: number;
+  /**
+   * Knocked out by a takedown (ADR-0065): the body lies still. The renderer draws the pose in
+   * stage 4 of the ADR; until then it is only data. Absent means conscious.
+   */
+  readonly unconscious?: boolean;
 }
 
 /** What the presentation layer should build for an entity. Pure data, engine-agnostic. */
@@ -116,6 +122,11 @@ export type ViewDescriptor =
       readonly plinth?: number;
       /** Shop windows and signs on the ground floor (a shop, a café, a bar inside). */
       readonly shopfront?: true;
+      /**
+       * The real shops, cafés, bars, banks and the rest mapped in or at the building (OSM,
+       * ADR-0064 stage 4): each gets a sign over its window on the street wall nearest it.
+       */
+      readonly venues?: readonly BuildingVenue[];
       /**
        * Openings through the facade into an interior on the ground floor (ADR-0045): `at` is the
        * middle of the opening on a wall of the outline (relative to the position like the
@@ -254,6 +265,20 @@ export interface BuildingVertical {
    * tiers that no longer fit.
    */
   readonly landmarks?: readonly { readonly outline: readonly GroundPoint[]; readonly top: number }[];
+}
+
+/**
+ * A venue on a building's ground floor (ADR-0064 stage 4). `at` is where the map has it,
+ * relative to the building's position like the outline (inside it or a few metres off a wall).
+ * `name` is Lublin 2077's name for the sign, data from the importer's `venue-names` table and
+ * never the real one (ADR-0058), in `SIGN_GLYPHS`; `color` is the sign's neon, `#rrggbb` from the
+ * kit's neon palette (ADR-0022).
+ */
+export interface BuildingVenue {
+  readonly at: GroundPoint;
+  readonly kind: VenueKind;
+  readonly name: string;
+  readonly color: string;
 }
 
 /**

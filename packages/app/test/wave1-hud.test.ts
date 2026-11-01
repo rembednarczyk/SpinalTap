@@ -166,9 +166,9 @@ describe("scanner view models", () => {
 describe("settings of wave 1", () => {
   it("fills the new fields of an old entry with the defaults and repairs bad values", () => {
     const old = sanitizeSettings({ quality: "low", volume: 0.3 });
-    expect(old).toMatchObject({ hudAlwaysShow: false, damageNumbers: "off", hudScale: 1, legibleFont: false, reduceFlashes: false, untimedBreach: false, colorblind: "off" });
+    expect(old).toMatchObject({ hudAlwaysShow: false, damageNumbers: "hit", hudScale: 1, legibleFont: false, reduceFlashes: false, untimedBreach: false, colorblind: "off" });
     const bad = sanitizeSettings({ hudScale: 9, damageNumbers: "loud", colorblind: "red", legibleFont: "yes", reduceFlashes: 1 });
-    expect(bad).toMatchObject({ hudScale: 1.4, damageNumbers: "off", colorblind: "off", legibleFont: false, reduceFlashes: false });
+    expect(bad).toMatchObject({ hudScale: 1.4, damageNumbers: "hit", colorblind: "off", legibleFont: false, reduceFlashes: false });
     expect(sanitizeSettings({ hudScale: 1.234, damageNumbers: "total", colorblind: "deutan", untimedBreach: true, hudAlwaysShow: true })).toMatchObject({
       hudScale: 1.25,
       damageNumbers: "total",
@@ -177,6 +177,19 @@ describe("settings of wave 1", () => {
       hudAlwaysShow: true,
     });
     expect(sanitizeSettings({}, { ...DEFAULT_SETTINGS, reduceFlashes: true }).reduceFlashes).toBe(true);
+  });
+
+  it("clamps the subtitle size and keeps old entries at the defaults", () => {
+    expect(sanitizeSettings({ quality: "low" })).toMatchObject({ subtitleScale: 1, subtitleBackground: false });
+    expect(sanitizeSettings({ subtitleScale: 9, subtitleBackground: true })).toMatchObject({ subtitleScale: 1.6, subtitleBackground: true });
+    expect(sanitizeSettings({ subtitleScale: 1.23, subtitleBackground: "yes" })).toMatchObject({ subtitleScale: 1.2, subtitleBackground: false });
+  });
+
+  it("keeps camera motion on for entries saved before the setting, off where the device asks for reduced motion", () => {
+    expect(sanitizeSettings({ quality: "low" }).cameraMotion).toBe(true);
+    expect(sanitizeSettings({ cameraMotion: false }).cameraMotion).toBe(false);
+    expect(sanitizeSettings({ cameraMotion: "no" }).cameraMotion).toBe(true);
+    expect(sanitizeSettings({}, { ...DEFAULT_SETTINGS, cameraMotion: false }).cameraMotion).toBe(false);
   });
 
   it("hands the flash flag to a renderer that takes it", () => {

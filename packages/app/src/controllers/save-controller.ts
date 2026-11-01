@@ -1,5 +1,6 @@
 import { type AudioPort, CorruptSaveError, type Locale, type PersistencePort, type SaveSnapshot } from "@seki/core";
 import type { NarrativeRuntime } from "@seki/narrative";
+import { decodeSave, encodeSave } from "@seki/persistence";
 import { type MessageKey, type MessageParams, type UiStore, patchUi, translate } from "@seki/ui";
 import { describeObjective } from "../objective";
 import { type SimRef, pushToastTimed } from "./shared";
@@ -15,7 +16,16 @@ export interface SaveControllerDeps {
   readonly canSave: () => boolean;
   /** Replaces the running game with a loaded snapshot. */
   readonly restore: (snapshot: SaveSnapshot) => void;
+  /** Hands a file to the player (a download in the browser); without it a slot cannot be exported. */
+  readonly download?: (fileName: string, text: string) => void;
 }
+
+/** The slot an imported file goes to; the list names it apart from the player's own slots. */
+export const IMPORT_SLOT = "import";
+
+/** The file name of an exported slot: the game, the slot and the day, e.g. `seki-senshi-slot-1-2026-10-31.json`. */
+export const exportFileName = (slot: string, date: Date): string =>
+  `seki-senshi-${slot}-${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}.json`;
 
 /**
  * When a slot was saved, as its label shows it: day, month and time, written as the language
@@ -43,6 +53,61 @@ export class SaveController {
 
   load(slot: string): void {
     void this.loadAsync(slot);
+  }
+
+  exportSave(slot: string): void {
+    void this.exportAsync(slot);
+  }
+
+  importSave(text: string): void {
+    void this.importAsync(text);
+  }
+
+  /**
+   * Reads a save file the player picked (an export from `exportAsync`, gap audit Platformy) into
+   * its own slot, after the same checksum, migration and validation as a load; the player then
+   * loads it from the list. A bad file changes nothing.
+   */
+  async importAsync(text: string): Promise<boolean> {
+    const { ui } = this.deps;
+    try {
+      const snapshot = decodeSave(IMPORT_SLOT, text);
+      await this.deps.persistence.save(IMPORT_SLOT, snapshot);
+      pushToastTimed(ui, "system", this.t("save.imported"), snapshot.meta.label);
+      return true;
+    } catch (e) {
+      const why = e instanceof CorruptSaveError ? this.t("save.corruptFile") : String(e);
+      pushToastTimed(ui, "system", this.t("save.importFailed"), why, true);
+      return false;
+    } finally {
+      await this.refreshSlots();
+    }
+  }
+
+  /**
+   * Writes a slot to a file the player keeps (gap audit, Platformy): the same encoded form as in
+   * the store, with its checksum and schema version, so a later import reads it as a save.
+   */
+  async exportAsync(slot: string): Promise<boolean> {
+    const { ui, download } = this.deps;
+    if (!download) {
+      pushToastTimed(ui, "system", this.t("save.exportFailed"));
+      return false;
+    }
+    try {
+      const snapshot = await this.deps.persistence.load(slot);
+      if (!snapshot) {
+        pushToastTimed(ui, "system", this.t("save.emptySlot"), slot);
+        return false;
+      }
+      download(exportFileName(slot, this.deps.now()), encodeSave(snapshot));
+      pushToastTimed(ui, "system", this.t("save.exported"), snapshot.meta.label);
+      return true;
+    } catch (e) {
+      const text = e instanceof CorruptSaveError ? this.t("save.corruptFile") : String(e);
+      pushToastTimed(ui, "system", this.t("save.exportFailed"), text, true);
+      return false;
+    }
   }
 
   snapshot(): SaveSnapshot {

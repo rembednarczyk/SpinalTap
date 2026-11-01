@@ -127,6 +127,384 @@
       "files": [
         { "path": "sci-fi_megacity_cluster.glb", "url": "https://drive.usercontent.google.com/download?id=1r1ZoCodVTDDmQre5_j7yhH28bY7T3-ol&export=download&confirm=t", "sha256": "2f554a39458b7b52d5b8cab740204fc976dbab32b815a6ea7cf014e3b01d5e5e" }
       ],
+      "used": ["mc-tower-a", "mc-tower-b", "mc-tower-c", "mc-tower-d"]
+    },
+    {
+      "id": "sketchfab-vending-machine",
+      "title": "Vending Machine",
+      "author": "A9908244",
+      "authorUrl": "https://sketchfab.com/A9908244",
+      "page": "https://sketchfab.com/3d-models/vending-machine-85faa612692e4ec48d6bd9d21484c239",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "vending_machine.glb", "url": "https://drive.usercontent.google.com/download?id=1QDFFkqeicnBbqzUgoMeaXQb6yk4dR9vn&export=download&confirm=t", "sha256": "fd600a3f9e1bbafe3e3280c666462d0a4b3016ebe882ce4effd06f4966a6cc2e" }
+      ],
+      "used": ["st-vending"]
+    },
+    {
+      "id": "sketchfab-ramen-vending-machine",
+      "title": "Ramen Vending Machine",
+      "author": "JustFaith",
+      "authorUrl": "https://sketchfab.com/charljustine",
+      "page": "https://sketchfab.com/3d-models/ramen-vending-machine-3d3c8affeaa44620b7a04fa4a987ff99",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "ramen_vending_machine.glb", "url": "https://drive.usercontent.google.com/download?id=1Lfp80jCxAIbwtnGmE2CpSaxjm8INXcxe&export=download&confirm=t", "sha256": "38eb5b57af3fbf31c18e2e9648cd51de9df81e29e61523fe3566f3866e1aea43" }
+      ],
+      "used": ["st-vending-ramen"]
+    },
+    {
+      "id": "sketchfab-reston-b2-terminal",
+      "title": "Reston B2 Terminal",
+      "author": "Iteration Unlimited",
+      "authorUrl": "https://sketchfab.com/iterationunlimited",
+      "page": "https://sketchfab.com/3d-models/reston-b2-terminal-91b08809f18244628385193e396dd3da",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "reston_b2_terminal.glb", "url": "https://drive.usercontent.google.com/download?id=1OfmzCLgIKQgb2di5POcP_ohO3GuiE2q4&export=download&confirm=t", "sha256": "917dc1ab0cd7aeb9f63bac4fefda8ee070278d089346c515832fead219c0b381" }
+      ],
+      "used": ["st-ticket-terminal"]
+    },
+    {
+      "id": "sketchfab-scifi-kiosk",
+      "title": "Scifi Kiosk",
+      "author": "Martin Ibbett",
+      "authorUrl": "https://sketchfab.com/unyxium",
+      "page": "https://sketchfab.com/3d-models/scifi-kiosk-835aac31a9114203b5cb04952f9a273b",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "scifi_kiosk.glb", "url": "https://drive.usercontent.google.com/download?id=1_3bl4a3yuXZWJn9ok9_17mYPE1BVtRqq&export=download&confirm=t", "sha256": "f28e32c0553df36d85f887e1bd03e028afa4fd370981e88283e1b09b3233545e" }
+      ],
+      "used": ["st-ticket-kiosk"]
+    },
+    {
+      "id": "sketchfab-cctv-camera",
+      "title": "CCTV Camera",
+      "author": "Smoggybeard",
+      "authorUrl": "https://sketchfab.com/Smoggybeard",
+      "page": "https://sketchfab.com/3d-models/cctv-camera-e69d5eb37ffb4f188e4d3c84a5d79cdc",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "cctv_camera.glb", "url": "https://drive.usercontent.google.com/download?id=1DcOlDcRgB7s3V3hUG71E24pL4bMKeljM&export=download&confirm=t", "sha256": "c9301ae58d933f8b10a9e5400e8f129e6fdd8a63ebdb6a4ab20363c4ef3aeefd" }
+      ],
+      "used": ["st-cctv"]
+    },
+    {
+      "id": "sketchfab-paper-lantern-chochin",
+      "title": "Chinese \\ Japanese paper lantern chochin",
+      "author": "DeepDown",
+      "authorUrl": "https://sketchfab.com/deepdown",
+      "page": "https://sketchfab.com/3d-models/chinese-japanese-paper-lantern-chochin-20bcc5d20f2847f88aef3a267275d16c",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "chinese__japanese_paper_lantern_chochin.glb", "url": "https://drive.usercontent.google.com/download?id=1JgVW3LRVVtB59Us5VoovZT4_Zq-5j44T&export=download&confirm=t", "sha256": "368ea74e074d5a29ba0809a0d3d8e5a61ed1066993529569b8d2f1e22833b8e1" }
+      ],
+      "used": ["st-lantern"]
+    },
+    {
+      "id": "sketchfab-asian-shop-pack",
+      "title": "Asian Shop Pack Free Gameready",
+      "author": "abhayexe",
+      "authorUrl": "https://sketchfab.com/abhayexe",
+      "page": "https://sketchfab.com/3d-models/asian-shop-pack-free-gameready-2f603ad8d5c640f7b9794f6916f9fbdd",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "asian_shop_pack_free_gameready.glb", "url": "https://drive.usercontent.google.com/download?id=1Xml9dt5pbk4d-bKp4GKflYeGLbcfbSGa&export=download&confirm=t", "sha256": "d112556ddf8b02e7743d910ad1ca282a4bceebb890ca307051ab0fbe97e1f0e5" }
+      ],
+      "used": []
+    },
+    {
+      "id": "sketchfab-avika-street-food-cart",
+      "title": "Avika Street Food Cart",
+      "author": "AVIKA",
+      "authorUrl": "https://sketchfab.com/a-v-i-k-a",
+      "page": "https://sketchfab.com/3d-models/avika-street-food-cart-d54005c378fa45c3a06090d65a53fb23",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "avika_street_food_cart.glb", "url": "https://drive.usercontent.google.com/download?id=1Spjv86iIJZEZxN_00nsCky-1gHwSbiKf&export=download&confirm=t", "sha256": "1c758906f63f34b3e9eb9ebf5f2cea871423bb94efb75d64eebb86802d6b85c2" }
+      ],
+      "used": []
+    },
+    {
+      "id": "sketchfab-cyberpunk-apartment",
+      "title": "Cyberpunk Apartment",
+      "author": "Jiaxing",
+      "authorUrl": "https://sketchfab.com/saitoyang",
+      "page": "https://sketchfab.com/3d-models/cyberpunk-apartment-0783068ec51d403da4cff77e9ab76084",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "cyberpunk_apartment.glb", "url": "https://drive.usercontent.google.com/download?id=1abFitsNJjl2_WE7hETX9SlD-hwDG6igR&export=download&confirm=t", "sha256": "45f6eeb995f8f966a2f78d98301a05d3cad7ba0f89dcc832825571a0e3c14232" }
+      ],
+      "used": []
+    },
+    {
+      "id": "sketchfab-cyberpunk-car",
+      "title": "Cyberpunk car",
+      "author": "4d_Bob",
+      "authorUrl": "https://sketchfab.com/3d_Bob",
+      "page": "https://sketchfab.com/3d-models/cyberpunk-car-b4301ff99d214d16a7a43708a5866bf0",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "cyberpunk_car.glb", "url": "https://drive.usercontent.google.com/download?id=1Tyhvx7WSYQqNvuq6MAYbf1aPhMlmuJo-&export=download&confirm=t", "sha256": "16dec5200c2f5f882e3ce90ee59bdf6b2e467c863fb57aa32e861facfe7a4101" }
+      ],
+      "used": []
+    },
+    {
+      "id": "sketchfab-cyberpunk-diner-sign-japanese",
+      "title": "Cyberpunk Diner Sign (Japanese)",
+      "author": "LukeMarsh201",
+      "authorUrl": "https://sketchfab.com/LukeMarsh201",
+      "page": "https://sketchfab.com/3d-models/cyberpunk-diner-sign-japanese-6ffce0f168534501bdd9199847d57831",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "cyberpunk_diner_sign_japanese.glb", "url": "https://drive.usercontent.google.com/download?id=1iB9hbMmwm5ji03KQCY50sz83MIysGvyr&export=download&confirm=t", "sha256": "6c3329bee925eed01f442e9a5b31ba7fdef2ac5e64a4d6f8dbf6dd7830522e39" }
+      ],
+      "used": []
+    },
+    {
+      "id": "sketchfab-cyberpunk-doors-and-windows",
+      "title": "Cyberpunk City Assets Pack 3# Doors and Windows",
+      "author": "carlcapu9",
+      "authorUrl": "https://sketchfab.com/carlcapu9",
+      "page": "https://sketchfab.com/3d-models/cyberpunk-city-assets-pack-3-doors-and-windows-c6cdc4f6715e4d8eae61eeb81fe636c8",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "cyberpunk_city_assets_pack_3_doors_and_windows.glb", "url": "https://drive.usercontent.google.com/download?id=1PWF2e3O522u415z1or9OK3jQomv8PvAN&export=download&confirm=t", "sha256": "ae5a0e9f7c8eec7aae5be1365cc243168bd532520098d642ecd4135583ddcd96" }
+      ],
+      "used": []
+    },
+    {
+      "id": "sketchfab-cyberpunk-drone",
+      "title": "Cyberpunk Drone Concept Design",
+      "author": "Berk Gedik",
+      "authorUrl": "https://sketchfab.com/berkgedik",
+      "page": "https://sketchfab.com/3d-models/cyberpunk-drone-concept-design-09e7406fc76248a2866209025588dad0",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "cyberpunk_drone_concept_design.glb", "url": "https://drive.usercontent.google.com/download?id=1hX_FBNpVGBQDJXV6Muh4N5gLIbnf3fP4&export=download&confirm=t", "sha256": "882d9a0406f5e8412e0aa259cd4dd959d61af9d5e159eacdacedf9105bbfa737" }
+      ],
+      "used": []
+    },
+    {
+      "id": "sketchfab-cyberpunk-led-neon-sign",
+      "title": "Cyberpunk animated japanese LED neon sign",
+      "author": "YD Visual",
+      "authorUrl": "https://sketchfab.com/ydvisual",
+      "page": "https://sketchfab.com/3d-models/cyberpunk-animated-japanese-led-neon-sign-fab087c62fc3459a8b7664757d980c28",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "cyberpunk_animated_japanese_led_neon_sign.glb", "url": "https://drive.usercontent.google.com/download?id=1SaE5hegjUeuH3hOkWHZRIaKNFoiOXDWX&export=download&confirm=t", "sha256": "2751017216b673934e43bfc94032c0612f696c0741e00122b789f5ba0e727845" }
+      ],
+      "used": []
+    },
+    {
+      "id": "sketchfab-cyberpunk-robot",
+      "title": "Cyberpunk Robot",
+      "author": "Doink",
+      "authorUrl": "https://sketchfab.com/Doinkoloink",
+      "page": "https://sketchfab.com/3d-models/cyberpunk-robot-7f49cfa1aeb043aba44bb96b72cd9160",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "cyberpunk_robot.glb", "url": "https://drive.usercontent.google.com/download?id=1pzOKNbAA2uukicnfyK-wfsuOya5CeFul&export=download&confirm=t", "sha256": "49f74223224e02cfc6dd623fe0a60c1b074b541a785409296f267a4e381779ab" }
+      ],
+      "used": []
+    },
+    {
+      "id": "sketchfab-cyberpunk-scifi-door-3",
+      "title": "Cyberpunk Sci-fi Door 3 - Free",
+      "author": "Jesus Fernandez Garcia",
+      "authorUrl": "https://sketchfab.com/jamyzgenius",
+      "page": "https://sketchfab.com/3d-models/cyberpunk-sci-fi-door-3-free-df980eee6f0f42aaa52d70b668001b4d",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "cyberpunk_sci-fi_door_3_-_free.glb", "url": "https://drive.usercontent.google.com/download?id=1aJyyT5VHvme0kWGNZ9YuqLgVtx9Bz4yT&export=download&confirm=t", "sha256": "714c6a3df6d1fe6f1ec2e3905cce84bb46ef051582c1072b0ec7dc7df09b100d" }
+      ],
+      "used": []
+    },
+    {
+      "id": "sketchfab-dirty-car",
+      "title": "Dirty car",
+      "author": "3D Error 404",
+      "authorUrl": "https://sketchfab.com/3DError404",
+      "page": "https://sketchfab.com/3d-models/dirty-car-da77a8c75ddd4d7a8391912ba35735b8",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "dirty_car.glb", "url": "https://drive.usercontent.google.com/download?id=1Mfx7AfpvwbaRTv8Cws4LHMMQA_3QsnbG&export=download&confirm=t", "sha256": "781dadeb7df4da96fd4e75609147a5ff7740cf93522afb544576f1baf66577fc" }
+      ],
+      "used": []
+    },
+    {
+      "id": "sketchfab-fire-escape-doors",
+      "title": "Fire Escape / Exit Doors",
+      "author": "blue man group",
+      "authorUrl": "https://sketchfab.com/bloobloo",
+      "page": "https://sketchfab.com/3d-models/fire-escape-exit-doors-4ad9f395571a4dfaadce33dfeccc7a53",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "fire_escape__exit_doors.glb", "url": "https://drive.usercontent.google.com/download?id=1LJDh3Km2s_RRqUxtBUI6bBL1BbYzcmY6&export=download&confirm=t", "sha256": "dff2d7db487098ed74d1dd70266548b86c5b9dd0e0efb44a747a69467d4120e8" }
+      ],
+      "used": []
+    },
+    {
+      "id": "sketchfab-japanese-neon-sign-set",
+      "title": "Japanese neon sign set (low poly for background)",
+      "author": "YD Visual",
+      "authorUrl": "https://sketchfab.com/ydvisual",
+      "page": "https://sketchfab.com/3d-models/japanese-neon-sign-set-low-poly-for-background-188e5d8dd2cb4f098871b5dd5f6fa990",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "japanese_neon_sign_set_low_poly_for_background.glb", "url": "https://drive.usercontent.google.com/download?id=1vua_4l4sb1ghSVp1Vn6dh_4toTgQHt_8&export=download&confirm=t", "sha256": "5de6da405b61f4a54545b8cda0154b97160f6c99075cd8aad553acd01dadf21c" }
+      ],
+      "used": []
+    },
+    {
+      "id": "sketchfab-japanese-vertical-neon-sign",
+      "title": "Game Ready Japanese Small Vertical Neon Sign",
+      "author": "Alex Bes",
+      "authorUrl": "https://sketchfab.com/alexbescg",
+      "page": "https://sketchfab.com/3d-models/game-ready-japanese-small-vertical-neon-sign-5849c107ecb7472bb1eef028f5b97f0d",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "game_ready_japanese_small_vertical_neon_sign.glb", "url": "https://drive.usercontent.google.com/download?id=1nuFcgphBLS8yL74HE3fJC_TVUbdzWz6L&export=download&confirm=t", "sha256": "dd7781c0e60569d14a3a6d8ccf5cba82fc16940ed1ef7308ef0a111ac3c59c9f" }
+      ],
+      "used": []
+    },
+    {
+      "id": "sketchfab-mini-atm",
+      "title": "Simple Mini-ATM",
+      "author": "Blender3D",
+      "authorUrl": "https://sketchfab.com/Blender3D",
+      "page": "https://sketchfab.com/3d-models/simple-mini-atm-297bb83c296b49cf93bfbf157f9ca431",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "simple_mini-atm.glb", "url": "https://drive.usercontent.google.com/download?id=1THKh1oaGPmCmz2LX59BndHBZFe1CX4Fy&export=download&confirm=t", "sha256": "c90ad813d4f04397c055411e7fdd3484a39ba1dcc94dd53ee72c1e99e590e052" }
+      ],
+      "used": []
+    },
+    {
+      "id": "sketchfab-neon-bedroom",
+      "title": "Neon Bedroom",
+      "author": "dylanheyes",
+      "authorUrl": "https://sketchfab.com/dylanheyes",
+      "page": "https://sketchfab.com/3d-models/neon-bedroom-cece4d1882994721811afdd500d8bcf3",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "neon_bedroom.glb", "url": "https://drive.usercontent.google.com/download?id=1FxwAOo1bHeR7Pmyj1pWl9yRaW6BtFkEk&export=download&confirm=t", "sha256": "b135a7f5ced2c8c0f4d9f03cb4601e1ad4b5ce9e3ae032a776efef7c40e00b7b" }
+      ],
+      "used": []
+    },
+    {
+      "id": "sketchfab-psx-garage-doors",
+      "title": "Low-Poly PSX Style Garage Doors Pack",
+      "author": "vanillao03",
+      "authorUrl": "https://sketchfab.com/vanillao03",
+      "page": "https://sketchfab.com/3d-models/low-poly-psx-style-garage-doors-pack-6cd3bb88d27e44ac96f080e533d7015a",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "low-poly_psx_style_garage_doors_pack.glb", "url": "https://drive.usercontent.google.com/download?id=1yRycCWlT-D68NOriTHOPYeCeDMgGP5uj&export=download&confirm=t", "sha256": "fdb0690fdecb4bb54c0da6576b61280f189b6e37796257060a4710cd688a9f3a" }
+      ],
+      "used": []
+    },
+    {
+      "id": "sketchfab-satellite-comms",
+      "title": "Satellite Comms",
+      "author": "Duane's Mind",
+      "authorUrl": "https://sketchfab.com/duanesmind",
+      "page": "https://sketchfab.com/3d-models/satellite-comms-4be56951da39429a963ee12140bbff57",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "satellite_comms.glb", "url": "https://drive.usercontent.google.com/download?id=1ND3LpM-eRoTakUZaMsGpts0NArRZjiz0&export=download&confirm=t", "sha256": "80b8d0d0a16b842025b9e976e3c62a0795cc76844848af1af31c7cd053473697" }
+      ],
+      "used": []
+    },
+    {
+      "id": "sketchfab-shipping-container",
+      "title": "Classic Shipping Container (Free/Gameready)",
+      "author": "Sebastian Webster",
+      "authorUrl": "https://sketchfab.com/Sebastian.Hamish.Webster",
+      "page": "https://sketchfab.com/3d-models/classic-shipping-container-freegameready-772f4be391a245f699c54e6cf157c58d",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "classic_shipping_container_freegameready.glb", "url": "https://drive.usercontent.google.com/download?id=1CdTDTAn7TnF8Fz5BfEIjGkpr9WuXvbhS&export=download&confirm=t", "sha256": "0abaf6cb53f31e9cba40ca3a84ce537101cbcc7ea8d8f3c0ccb9e2efc7136134" }
+      ],
+      "used": []
+    },
+    {
+      "id": "sketchfab-street-asset-pack",
+      "title": "Street Asset Pack",
+      "author": "vmatthew",
+      "authorUrl": "https://sketchfab.com/vmatthew",
+      "page": "https://sketchfab.com/3d-models/street-asset-pack-f3eb47d02e2e4ab290e66752fa354b48",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "street_asset_pack.glb", "url": "https://drive.usercontent.google.com/download?id=1l4rQWRlRdP6W0h5e_Z28rFs3DM2lUvLt&export=download&confirm=t", "sha256": "ec45a543bcdda0c64fd95629fe9e94c788d5e84c76e418b7e904c5474ae0f1c8" }
+      ],
+      "used": []
+    },
+    {
+      "id": "sketchfab-taiwan-signboard",
+      "title": "Taiwan style Signboard (lowpoly)",
+      "author": "Solarliu",
+      "authorUrl": "https://sketchfab.com/jacky15621419",
+      "page": "https://sketchfab.com/3d-models/taiwan-style-signboard-lowpoly-7eeac0582f7746ffafcdf1091f882a5d",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "licenseQuote": "asset.extras.license: CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "files": [
+        { "path": "taiwan_style_signboard_lowpoly.glb", "url": "https://drive.usercontent.google.com/download?id=12dcgUO6vGXmSkNyfUVz-HiDD6WPYoij3&export=download&confirm=t", "sha256": "6461e2a746dcecc7ed4ddfd2fcce7e3e712c9ab9d82ec76af70d9129fc10d4ae" }
+      ],
       "used": []
     }
   ]

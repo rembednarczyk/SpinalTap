@@ -6,6 +6,7 @@ import { LEVEL_GAP } from "../../world/nav";
 import { noteDetected } from "../../world/street";
 import { coveredFrom } from "../../world/disguise";
 import { disguisedSight } from "./disguise-sight";
+import { difficultyOf } from "../../world/difficulty";
 
 /*
  * What a ganger knows (ADR-0024, ADR-0029): sight of the player and of a victim, a guard's
@@ -59,7 +60,8 @@ export const awarenessOf = (ai: Ganger["ai"]): { state: AwarenessState; level: n
 
 /** Where the AI is sent to look (a distraction, a camera, a trace, the heat): it walks there unless it is fighting. */
 export const giveLead = (g: Entity, at: Vec3): void => {
-  if (!g.ai || g.ai.alerted) return;
+  // Someone knocked out is told nothing (ADR-0065).
+  if (!g.ai || g.ai.alerted || g.unconscious) return;
   g.ai.lastKnown = { x: at.x, y: at.y, z: at.z };
   g.ai.search = 0;
 };
@@ -134,7 +136,8 @@ export const victimsOf = (ctx: SimContext): Map<string, Entity> => {
   for (const g of ctx.world.with("ai")) if (g.ai.victim) wanted.add(g.ai.victim);
   const out = new Map<string, Entity>();
   if (wanted.size === 0) return out;
-  for (const e of ctx.world.with("health")) if (e.key && wanted.has(e.key) && e.health.current > 0) out.set(e.key, e);
+  // Someone knocked out is nobody's target (ADR-0065).
+  for (const e of ctx.world.with("health")) if (e.key && wanted.has(e.key) && e.health.current > 0 && !e.unconscious) out.set(e.key, e);
   return out;
 };
 
@@ -181,7 +184,8 @@ export const perceivePlayer = (
     // A corporate guard needs a moment of looking before it believes its eyes.
     const sees = guardSees(g, player, distance, visible, aggro);
     const before = g.ai.suspicion ?? 0;
-    const rate = sees ? SUSPICION_RATE * (1.5 - Math.min(1, distance / aggro)) : -SUSPICION_DECAY;
+    // It fills at the difficulty's pace (`awareness`, ADR-0066) and drains as ever.
+    const rate = sees ? SUSPICION_RATE * difficultyOf(ctx).awareness * (1.5 - Math.min(1, distance / aggro)) : -SUSPICION_DECAY;
     g.ai.suspicion = Math.max(0, Math.min(1, before + rate * ctx.dt * timeScale));
     visible = g.ai.suspicion >= 1;
   }

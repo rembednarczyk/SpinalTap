@@ -34,6 +34,14 @@ export const plContent = {
   "prompt.help": "Pomóż",
   "prompt.door.force": "Wyłam zamek (podniesie alarm)",
   "prompt.door.locked": "Drzwi na kod: zamknięte",
+  // Obezwładnienia (ADR-0065): klawisz interakcji i przytrzymanie ataku do końca.
+  "prompt.takedown": "Obezwładnij",
+  "prompt.takedown.kill": "przytrzymaj atak, by zabić",
+  // Wnętrza (sim `INTERIORS`, ADR-0061).
+  "interior.clinic": "Klinika doktora Mori",
+  "interior.neon-koi": "Neon Koi",
+  "interior.tessen-office": "Biuro Tessen",
+  "interior.trasa-podziemna": "Trasa Podziemna",
   "prompt.loot": "Przeszukaj",
   // Observation hooks of contracts (ADR-0032): the tracker line once found.
   "hook.eliminate_1": "Szef ekipy co godzinę odchodzi sam na bok",
@@ -93,4 +101,26 @@ export const plContent = {
   "preview.stats":
     "Lublin 2077, podgląd mapy · {hour}:00 · {fps} fps · {drawCalls} wywołań · {meshes} siatek · budynki {buildings} (blisko {near} / daleko {far} komórek) · meble {pieces} ({groups} siatek) · {vertices}k wierzchołków",
   "preview.help": "przeciągnij: obrót · kółko: zoom · WASD/strzałki: przesuń · Q/E: w dół/w górę · Shift: szybciej · N: noc/dzień · 1-5: ujęcia",
+  // Kinds of the venues on the ground floors (ADR-0064 stage 4); their 2077 names are data.
+  "venue.kind.restaurant": "Restauracja",
+  "venue.kind.fast-food": "Szybkie jedzenie",
+  "venue.kind.cafe": "Kawiarnia",
+  "venue.kind.ice-cream": "Lodziarnia",
+  "venue.kind.bar": "Bar",
+  "venue.kind.pub": "Pub",
+  "venue.kind.club": "Klub",
+  "venue.kind.bank": "Bank",
+  "venue.kind.exchange": "Kantor",
+  "venue.kind.pharmacy": "Apteka",
+  "venue.kind.bakery": "Piekarnia",
+  "venue.kind.grocery": "Sklep spożywczy",
+  "venue.kind.books": "Księgarnia",
+  "venue.kind.jewelry": "Jubiler",
+  "venue.kind.optician": "Optyk",
+  "venue.kind.hairdresser": "Fryzjer",
+  "venue.kind.beauty": "Salon kosmetyczny",
+  "venue.kind.clothes": "Sklep odzieżowy",
+  "venue.kind.art": "Galeria",
+  "venue.kind.mall": "Centrum handlowe",
+  "venue.kind.shop": "Sklep",
 } as const satisfies Readonly<Record<keyof typeof en, Message>>;

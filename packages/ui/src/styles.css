@@ -170,6 +170,12 @@ kbd {
   font-size: 18px;
 }
 
+/* A takedown's kill (ADR-0065): the second action on the same target, a step quieter. */
+.hud__prompt-hold {
+  font-size: 15px;
+  opacity: 0.8;
+}
+
 .hud__hint {
   position: absolute;
   left: 50%;
@@ -287,7 +293,13 @@ kbd {
   gap: 24px;
   pointer-events: auto;
   padding: 16px;
+  /* Taller than a phone held sideways (settings, slots, credits): scroll, centred only while it fits. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  justify-content: safe center;
+  touch-action: pan-y;
 }
+.screen > * { flex-shrink: 0; }
 .screen--title {
   background:
     radial-gradient(ellipse at 30% 30%, rgba(255, 61, 139, 0.18), transparent 60%),
@@ -296,6 +308,17 @@ kbd {
 }
 .screen--pause { background: rgba(4, 7, 12, 0.7); backdrop-filter: blur(3px); }
 .screen--dead { background: radial-gradient(ellipse at center, rgba(80, 0, 10, 0.5), rgba(0, 0, 0, 0.88)); }
+/* Loading screen (ADR-0057): opaque, the scene under it is not drawn until the game starts.
+   The bar is as wide as a phone in landscape allows, never wider than on a desktop. */
+.screen--loading {
+  background:
+    radial-gradient(ellipse at 30% 30%, rgba(255, 61, 139, 0.14), transparent 60%),
+    radial-gradient(ellipse at 70% 80%, rgba(95, 242, 255, 0.1), transparent 60%),
+    rgb(4, 7, 12);
+}
+.loading__bar { width: min(520px, 80vw); height: 6px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
+.loading__fill { height: 100%; background: var(--magenta); box-shadow: 0 0 12px rgba(255, 61, 139, 0.6); transition: width 0.2s linear; }
+.loading__stage { min-height: 1.4em; font-size: 15px; letter-spacing: 0.08em; }
 .screen__heading { margin: 0; font-size: 44px; letter-spacing: 0.3em; text-transform: uppercase; }
 .screen__heading--flatline { color: var(--danger); text-shadow: 0 0 22px rgba(255, 77, 94, 0.7); }
 .screen__sub { margin: 0; color: var(--ink-dim); text-align: center; }
@@ -312,6 +335,7 @@ kbd {
 .title__tag { font-family: var(--font-mono); color: var(--ink-dim); letter-spacing: 0.2em; }
 /* Map credit (ADR-0045): small, at the foot of the title screen. */
 .title__attribution { position: absolute; left: 0; right: 0; bottom: max(8px, env(safe-area-inset-bottom, 0px)); text-align: center; font-family: var(--font-mono); font-size: 10px; color: var(--ink-dim); opacity: 0.75; pointer-events: none; }
+.title__version { position: absolute; right: max(10px, env(safe-area-inset-right, 0px)); top: max(8px, env(safe-area-inset-top, 0px)); font-family: var(--font-mono); font-size: 10px; color: var(--ink-dim); opacity: 0.6; pointer-events: none; user-select: text; }
 .credits { max-width: 560px; }
 .credits__title { font-family: var(--font-mono); letter-spacing: 0.14em; font-size: 18px; margin: 0 0 6px; color: var(--cyan); }
 .credits__line { margin: 0 0 8px; color: var(--ink); font-size: 14px; line-height: 1.45; }
@@ -351,6 +375,13 @@ kbd {
   text-align: left;
 }
 .slots__slot:disabled { opacity: 0.4; cursor: default; }
+.slots__row { display: flex; gap: 6px; align-items: stretch; }
+.slots__row .slots__slot { flex: 1; min-width: 0; }
+.slots__export { flex: none; padding: 0 12px; color: var(--ink-dim); background: transparent; border: 1px solid rgba(255, 191, 74, 0.3); font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; cursor: pointer; }
+.slots__export:disabled { opacity: 0.4; cursor: default; }
+.slots__import { align-self: flex-start; padding: 6px 12px; color: var(--ink-dim); border: 1px dashed rgba(255, 191, 74, 0.3); font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; cursor: pointer; }
+.slots__import input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.slots__import--busy { opacity: 0.4; cursor: default; }
 .slots__name { font-weight: 700; letter-spacing: 0.12em; }
 .slots__meta { font-size: 13px; color: var(--ink-dim); font-family: var(--font-mono); }
 

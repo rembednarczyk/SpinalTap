@@ -1,6 +1,7 @@
 import { cooldownRateOf, hasPerk } from "@seki/core";
 import type { Entity, PerkState } from "../world/components";
 import type { SimContext, System } from "../world/context";
+import { playerHeld } from "../world/takedown";
 
 /** Speed of the dash burst, m/s (ADR-0033): with DASH_TIME about 2.5 m. */
 export const DASH_SPEED = 14;
@@ -48,7 +49,7 @@ const carryDash = (p: Mover, s: PerkState, dt: number): void => {
 
 /** Can a dash start now? Legs implant, cooldown, not on a ladder or a ledge, not off balance, one in the air. */
 const canDash = (ctx: SimContext, p: Entity, s: PerkState, grounded: boolean): boolean => {
-  if (!ctx.input.dash || ctx.session.dialogueActive || ctx.session.gameOver) return false;
+  if (!ctx.input.dash || playerHeld(ctx)) return false;
   if (!hasPerk(ctx.state.domain.character.cyberware, "dash") || s.dashCooldown > 0) return false;
   if (p.climb || p.mantle || (p.melee?.stagger ?? 0) > 0) return false;
   return grounded || !s.airDash;

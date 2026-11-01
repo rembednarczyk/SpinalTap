@@ -1,8 +1,9 @@
 /** Street names for the minimap and texts, and named points of interest for placing content later. */
 import { type Line } from "./features.ts";
 import { type Pt, type Rect, clipLineToRect, inRect, lineLength, r1, simplifyLine } from "./geometry.ts";
+import { roadWidth } from "./ground.ts";
 import { oneway } from "./markings.ts";
-import { type PoiKind, type PoiOut, type StreetOut } from "./model.ts";
+import { type PoiKind, type PoiOut, type ServiceWayOut, type StreetOut } from "./model.ts";
 import { type OsmData, type Tags } from "./osm.ts";
 import { geoToWorld } from "./project.ts";
 
@@ -68,10 +69,29 @@ export const chunkStreets = (lines: readonly Line[], rect: Rect): StreetOut[] =>
   return out;
 };
 
+/**
+ * The axes of the unnamed service roads (driveways, yards' lanes; not a car park's aisles) with
+ * their carriageway's width, which `chunkStreets` leaves out: no lane runs on them, yet no car
+ * parks across their mouths (G-140). Every piece is kept, a driveway's short stub to the kerb too.
+ */
+export const chunkServiceWays = (lines: readonly Line[], rect: Rect): ServiceWayOut[] => {
+  const out: ServiceWayOut[] = [];
+  for (const l of lines) {
+    const t = l.tags;
+    if (t.highway !== "service" || t.name || t.service === "parking_aisle" || t.area === "yes" || Number(t.layer ?? 0) < 0) continue;
+    const width = r1(roadWidth(t));
+    for (const piece of clipLineToRect(l.line, rect)) {
+      if (lineLength(piece) < 0.1) continue;
+      out.push({ line: simplifyLine(piece, 0.5).flatMap((p) => [r1(p.x), r1(p.z)]), width });
+    }
+  }
+  return out;
+};
+
 const FOOD = new Set(["cafe", "restaurant", "fast_food", "ice_cream", "food_court"]);
 const BAR = new Set(["bar", "pub", "biergarten", "nightclub"]);
 const CULTURE = new Set(["theatre", "cinema", "arts_centre", "library", "community_centre"]);
-const SERVICE = new Set(["pharmacy", "bank", "post_office", "clinic", "doctors", "dentist", "police", "townhall", "hospital"]);
+const SERVICE = new Set(["pharmacy", "bank", "post_office", "clinic", "doctors", "dentist", "police", "townhall", "courthouse", "hospital"]);
 
 /** What a named point is for the game, or null when it is street furniture or noise. */
 export const poiKind = (t: Tags): { kind: PoiKind; tag: string } | null => {

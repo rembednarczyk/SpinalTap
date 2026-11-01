@@ -25,6 +25,7 @@ import { planSteps } from "./steps-plan";
 import { surfaceLiftAt } from "./surface-lift";
 import { StreetProps, type StreetPropsStats } from "./street-props";
 import { MapSkyline } from "./skyline";
+import { megaBodies } from "./skyline-bodies";
 import { type LandmarkPart, landmarkAt, withLandmark } from "./landmarks";
 
 /** Views drawn by the map city (ADR-0042, ADR-0044). */
@@ -153,7 +154,7 @@ export class MapCity {
   private facadeProps: CityProps | null = null;
 
   constructor(private readonly deps: MapCityDeps) {
-    this.signs = new MapSignMaterial(deps.scene, deps.signAtlas);
+    this.signs = new MapSignMaterial(deps.scene, deps.signAtlas, deps.quality === "low" ? 512 : 1024);
     this.water = new MapWaterMaterial(deps.scene);
     this.skyline = new MapSkyline(deps.scene, deps.quality !== "low");
     this.lod = MAP_LOD[deps.quality];
@@ -358,12 +359,19 @@ export class MapCity {
 
   /** Every cell near the eye has its detailed buildings (they are built a few per frame). */
   get settled(): boolean {
-    return this.waitingNear === 0 && (this.streetProps?.waiting ?? 0) === 0;
+    return this.waiting === 0;
+  }
+
+  /** Near cells and street props still to build after the last update (the loading bar, ADR-0057). */
+  get waiting(): number {
+    return this.waitingNear + (this.streetProps?.waiting ?? 0);
   }
 
   /** The facade props have loaded (ADR-0058): the near meshes are rebuilt with them. */
   setProps(props: CityProps): void {
     this.facadeProps = props;
+    // The skyline's megatowers (ADR-0063); the phone keeps the procedural tiers.
+    if (this.deps.quality !== "low") this.skyline.setBodies(megaBodies(props));
     for (const c of this.cells.values()) c.nearDirty = true;
     this.streetProps?.setProps(props);
   }
@@ -512,7 +520,7 @@ export class MapCity {
     cell.spans = cell.frames.flatMap((f) => findSpans(f, this.acrossAt));
     const far = new MeshSink();
     const signs = new MeshSink();
-    planFarFrames(far, signs, cell.frames, (name) => this.signs.slotFor(name), this.drawnGround);
+    planFarFrames(far, signs, cell.frames, (name) => this.signs.slotFor(name), this.drawnGround, this.deps.quality === "low");
     planFarCanyon(far, cell.spans);
     planCanyonSigns(signs, cell.frames, cell.spans, this.deps.quality === "low");
     cell.far = far.empty ? null : this.mesh(`map-far-${cell.key}`, far, "facade");

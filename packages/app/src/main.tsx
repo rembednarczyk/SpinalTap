@@ -5,13 +5,16 @@ import { loadModelManifest } from "./model-manifest";
 import { STORY_SOURCES } from "@seki/narrative";
 import { IndexedDbSaveStore, SavePersistence } from "@seki/persistence";
 import { FixedStepLoop, ground, koiPoint, rayGeometry } from "@seki/sim";
-import { DEFAULT_SETTINGS, GameUi, createUiStore } from "@seki/ui";
+import { DEFAULT_SETTINGS, GameUi, createUiStore, translate } from "@seki/ui";
 import { createRoot } from "react-dom/client";
 import { browserClock } from "./browser-clock";
 import { type DebugApi, createDebugApi } from "./debug-api";
 import { GameSession } from "./game-session";
 import { keymapFor } from "./controls";
+import { pushToastTimed } from "./controllers/shared";
+import { bindCrashWatch } from "./crash-watch";
 import { bindPageHidden } from "./page-lifecycle";
+import { pointerFocus } from "./pointer-focus";
 import { type SettingsStorage, applyEffects, applyVolumes, loadHintsSeen, loadSettings, saveHintsSeen, saveSettings, scaleLook } from "./settings";
 
 declare global {
@@ -46,7 +49,8 @@ const storage = ((): SettingsStorage | null => {
 // The reference frame never shows hints (the NPR snapshot is of the scene alone).
 // A system-wide "reduce motion" turns the flashes and the glitch down from the start (ADR-0028).
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-const deviceDefaults = { ...DEFAULT_SETTINGS, quality: touchDevice ? "low" : "high", hints: !reference, reduceFlashes: reducedMotion } as const;
+// High quality everywhere by default (user decision 1.11); a phone that struggles goes to Low in the settings.
+const deviceDefaults = { ...DEFAULT_SETTINGS, hints: !reference, reduceFlashes: reducedMotion, cameraMotion: !reducedMotion } as const;
 // The reference frame ignores saved settings so the NPR snapshot never depends on the profile.
 const settings = reference ? deviceDefaults : loadSettings(storage, deviceDefaults);
 const qualityParam = params.get("quality");
@@ -62,8 +66,8 @@ const stage = new Stage(canvas, { reference, quality: renderQuality });
 const cityOn = params.get("city") !== "off";
 const renderer = new BabylonRenderer(stage, {
   cityKit: cityOn ? new URL("city/city-kit.glb", document.baseURI).href : null,
-  // Facade props (ADR-0058), after the kit; ?city=off leaves them out too.
-  cityProps: cityOn ? new URL("city/city-props.glb", document.baseURI).href : null,
+  // Facade props (ADR-0058) and the CC-BY street furniture (ADR-0063), after the kit; ?city=off leaves them out too.
+  cityProps: cityOn ? ["city/city-props.glb", "city/street-props.glb"].map((f) => new URL(f, document.baseURI).href) : null,
   farCity: false,
 });
 // The character menu's 3D preview: a second scene on the same engine and canvas (ADR-0015).
@@ -76,10 +80,10 @@ if (modelsParam !== "off" && (modelsParam || !reference)) {
   // CC0 weapon models replace the box pistols (see public/weapons/README.md).
   const weapons = new URL("weapons/", document.baseURI);
   const weaponModels = { pistol: new URL("pistol.glb", weapons).href, smg: new URL("smg.glb", weapons).href };
-  void loadModelManifest(modelsParam ?? "./models/manifest.json").then((m) => {
-    if (Object.keys(m).length > 0) renderer.setCharacterModels(m);
-    preview.setModels(m, weaponModels);
-  });
+  // The loading screen waits for the manifest and loads its files (ADR-0057).
+  const manifest = loadModelManifest(modelsParam ?? "./models/manifest.json");
+  renderer.loadCharacterModels(manifest);
+  void manifest.then((m) => preview.setModels(m, weaponModels));
   renderer.setWeaponModels(weaponModels);
   preview.setModels({}, weaponModels);
 }
@@ -95,6 +99,12 @@ const session = new GameSession({
   render: renderer,
   audio,
   persistence: new SavePersistence(new IndexedDbSaveStore()),
+  download: (fileName, text) => {
+    const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+    const a = Object.assign(document.createElement("a"), { href: url, download: fileName });
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  },
   ui,
   preview,
   story: STORY_SOURCES,
@@ -111,12 +121,14 @@ const session = new GameSession({
     save: (next) => saveSettings(storage, next),
     reload: () => location.reload(),
   },
-  onFocusChange: (wantsPointer) => {
-    input.enabled = wantsPointer;
-    if (touchDevice) return;
-    if (wantsPointer) input.requestPointerLock();
-    else input.releasePointerLock();
-  },
+  onFocusChange: pointerFocus({
+    screen: () => ui.getState().screen,
+    setEnabled: (on) => (input.enabled = on),
+    lock: () => input.requestPointerLock(),
+    release: () => input.releasePointerLock(),
+    touch: touchDevice,
+    gesture: () => navigator.userActivation?.isActive,
+  }),
 });
 // The TPP camera stops at the map's buildings and the terrain too (ADR-0045): the simulation's
 // own ray through its solids, handed to the camera through the app.
@@ -130,13 +142,19 @@ const applyControls = (s: typeof settings) => {
   input.keymap = keymapFor(s.bindings);
   input.setButtonModes({ aim: s.aimMode, crouch: s.crouchMode, sprint: s.sprintMode });
   renderer.rig.horizontalFov = degToRad(s.horizontalFov);
+  renderer.rig.cameraMotion = s.cameraMotion;
   applyEffects(renderer, s);
 };
 
 /** Frames drawn after the renderer updated its camera and city in them (debug `frames()`, G-013). */
 let framesDrawn = 0;
-/** False while the reference frame waits for its city: the frames update it but draw nothing. */
+/** False while the reference frame waits for its start: the frames update the scene but draw nothing. */
 let drawScene = !reference;
+/**
+ * The first frame of a start skips the scene (ADR-0057): the browser paints the loading screen
+ * before that frame's update builds the new game's city, which took 1.7 s under SwiftShader.
+ */
+let loadingPainted = false;
 const loop = new FixedStepLoop(browserClock, {
   update: () => {
     const s = ui.getState().settings;
@@ -147,6 +165,10 @@ const loop = new FixedStepLoop(browserClock, {
     session.step(scaleLook(input.poll(), (touchDevice ? s.touchSensitivity : s.mouseSensitivity) * zoom * ads, s.invertY));
   },
   render: (alpha) => {
+    if (session.preparing !== loadingPainted) {
+      loadingPainted = session.preparing;
+      if (loadingPainted) return;
+    }
     session.render(alpha);
     // The menu covers the game, which stays frozen: draw only the preview (and the menu colour).
     if (session.characterScreenOpen) {
@@ -161,7 +183,8 @@ const loop = new FixedStepLoop(browserClock, {
     const player = renderer.cameraTargetTransform;
     if (player) audio.setListener({ position: player.position, yaw: player.yaw, speed: player.speed });
     // A frame waits for the GPU to catch up (G-029); the reference still is drawn as it comes.
-    if (!drawScene || (!reference && !stage.pacer.canDraw)) return;
+    // Behind the loading screen the preparation draws its own warm-up frames (ADR-0057).
+    if (!drawScene || session.preparing || (!reference && !stage.pacer.canDraw)) return;
     stage.scene.render();
     if (!reference) stage.pacer.drawn();
     framesDrawn++;
@@ -238,8 +261,15 @@ document.addEventListener("pointerlockchange", () => {
 });
 // A phone kills a tab in the background without warning: autosave the moment it hides.
 if (!reference) bindPageHidden(document, window, () => session.pageHidden());
+// A broken frame or a lost GPU context gets a notice instead of a silent black screen (gap audit).
+bindCrashWatch(window, canvas, () => performance.now(), (r) => {
+  const locale = ui.getState().settings.locale;
+  if (r.kind === "error") pushToastTimed(ui, "system", translate(locale, "crash.error"), translate(locale, "crash.errorText", { message: r.message, version: __APP_VERSION__ }), true);
+  else if (r.kind === "context-lost") pushToastTimed(ui, "system", translate(locale, "crash.contextLost"), translate(locale, "crash.contextLostText"), true);
+  else pushToastTimed(ui, "system", translate(locale, "crash.contextRestored"));
+});
 
-createRoot(uiRoot).render(<GameUi store={ui} intents={session.intents} touch={touchDevice ? input.virtualPad : undefined} />);
+createRoot(uiRoot).render(<GameUi store={ui} intents={session.intents} touch={touchDevice ? input.virtualPad : undefined} version={__APP_VERSION__} />);
 
 const debug = createDebugApi(session, ui, loop, () => probe.sample(), (position, target) => renderer.rig.setReferenceView(position, target),
   () => renderer.dressedCount,
@@ -254,6 +284,7 @@ debug.camera = () => {
   return { x: p.x, y: p.y, z: p.z, yaw: r.y, pitch: r.x };
 };
 debug.frames = () => framesDrawn;
+debug.probeRenders = () => renderer.wetProbeRenders;
 window.__seki = debug;
 
 // Wave 1 effects over the whole frame (ADR-0030): hits on the player, quickhack uploads, heat
@@ -286,14 +317,14 @@ if (reference) {
  * The reference frame is a still: rendering stops once it is drawn complete. Under SwiftShader a
  * frame of Lublin takes about 600 ms, and a canvas redrawn that slowly never gives the snapshot
  * two equal captures within its timeout (ADR-0046: the cause, not a longer timeout).
- * Its frames build the city but draw only once it is in and every shader round it compiled
- * (G-001): SwiftShader rasterizes behind the page, so each frame drawn while Lublin streamed in
- * or shaders compiled queued seconds of GPU work that the snapshot's first readback waited out.
- * A drawn frame can ask for more shaders (shadows, the probe); the still is the first after which
- * the scene stays ready.
+ * Its frames build the city but draw only once the loading screen's preparation is over (G-001,
+ * ADR-0057): the city in, every shader compiled and warmed up. SwiftShader rasterizes behind the
+ * page, so each frame drawn while Lublin streamed in or shaders compiled queued seconds of GPU
+ * work that the snapshot's first readback waited out. A drawn frame can ask for more shaders
+ * (shadows, the probe); the still is the first after which the scene stays ready.
  */
 stage.engine.runRenderLoop(() => {
-  if (reference) drawScene = debug.ready && renderer.citySettled && stage.scene.isReady(true);
+  if (reference) drawScene = session.screen === "playing";
   loop.frame();
   if (!reference || !drawScene || !stage.scene.isReady(true)) return;
   stage.engine.stopRenderLoop();

@@ -12,6 +12,7 @@ export const AUTOSAVE_SLOT = "auto";
 const slotName = (slot: string, t: ReturnType<typeof useT>): string => {
   if (slot === AUTOSAVE_SLOT) return t("slots.auto");
   if (slot === "quick") return t("slots.quick");
+  if (slot === "import") return t("slots.imported");
   return t("slots.slot", { n: slot.replace("slot-", "") });
 };
 
@@ -26,19 +27,37 @@ export const SaveSlots = ({ mode }: { mode: "save" | "load" }) => {
       {names.map((slot) => {
         const info = slots.find((s) => s.slot === slot);
         const disabled = busy || (mode === "load" && !info);
+        const exportable = mode === "load" && info !== undefined && info.objective !== CORRUPT_SLOT;
         return (
-          <button
-            key={slot}
-            type="button"
-            className="slots__slot"
-            disabled={disabled}
-            onClick={() => (mode === "save" ? intents.save(slot) : intents.load(slot))}
-          >
-            <span className="slots__name">{slotName(slot, t)}</span>
-            <span className="slots__meta">{info ? `${info.savedAtLabel} · ${info.objective === CORRUPT_SLOT ? t(CORRUPT_SLOT) : info.objective}` : t("slots.empty")}</span>
-          </button>
+          <div key={slot} className="slots__row">
+            <button type="button" className="slots__slot" disabled={disabled} onClick={() => (mode === "save" ? intents.save(slot) : intents.load(slot))}>
+              <span className="slots__name">{slotName(slot, t)}</span>
+              <span className="slots__meta">{info ? `${info.savedAtLabel} · ${info.objective === CORRUPT_SLOT ? t(CORRUPT_SLOT) : info.objective}` : t("slots.empty")}</span>
+            </button>
+            {exportable && (
+              <button type="button" className="slots__export" disabled={busy} aria-label={`${t("slots.export")}: ${slotName(slot, t)}`} onClick={() => intents.exportSave(slot)}>
+                {t("slots.export")}
+              </button>
+            )}
+          </div>
         );
       })}
+      {mode === "load" && <ImportButton busy={busy} onText={(text) => intents.importSave(text)} />}
     </div>
+  );
+};
+
+/** Picks a save file (an export) and hands its text over; the app checks it like any save. */
+const ImportButton = ({ busy, onText }: { busy: boolean; onText: (text: string) => void }) => {
+  const t = useT();
+  const read = (file: File | undefined) => {
+    if (!file) return;
+    void file.text().then(onText);
+  };
+  return (
+    <label className={`slots__import${busy ? " slots__import--busy" : ""}`}>
+      <input type="file" accept=".json,application/json" disabled={busy} data-testid="save-import" onChange={(e) => read(e.currentTarget.files?.[0])} />
+      {t("slots.import")}
+    </label>
   );
 };

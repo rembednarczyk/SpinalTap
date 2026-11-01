@@ -10,6 +10,8 @@ const intents = (): UiIntents => ({
   pause: vi.fn(),
   save: vi.fn(),
   load: vi.fn(),
+  exportSave: vi.fn(),
+  importSave: vi.fn(),
   choose: vi.fn(),
   closeDialogue: vi.fn(),
   quitToTitle: vi.fn(),

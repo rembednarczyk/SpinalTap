@@ -63,7 +63,12 @@ export {
   cyberCapacityOf,
   freshPerks,
   perksOf,
+  TAKEDOWN_BACK_CONE,
+  TAKEDOWN_REACH,
+  TAKEDOWN_TIME,
+  takedownDistance,
 } from "./systems";
+export { TAKEDOWN_PROMPT } from "./world/takedown";
 export {
   CIVILIAN_FLEE_SPEED,
   CIVILIAN_TREE,
@@ -97,6 +102,8 @@ export {
   awarenessOf,
   giveLead,
   scare,
+  WAKE_REACH,
+  WAKE_TIME,
 } from "./systems/ai";
 export {
   contractGangerHp,
@@ -119,5 +126,5 @@ export { activeWeaponItem, loadedOf, readyToFire, reserveOf } from "./world/play
 export { deviceEntity } from "./world/factory";
 export { phoneKnot } from "./world/street";
 export { BREACH_DATAMINE_EDDIES, BREACH_ICEPICK_SECONDS, BREACH_MARK_SECONDS } from "./simulation";
-export type { SessionState, SimContext, System } from "./world/context";
+export type { SessionState, SimContext, System, TakedownRun } from "./world/context";
 export { shopOpen } from "./world/trade-commands";

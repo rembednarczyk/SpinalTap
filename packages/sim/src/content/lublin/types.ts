@@ -1,4 +1,4 @@
-import type { BuildingUse, GroundSurface, RoadMarkingKind, RoofShape, StreetPropKind, TerrainGrid } from "@seki/core";
+import type { BuildingUse, GroundSurface, RoadMarkingKind, RoofShape, StreetPropKind, TerrainGrid, VenueKind } from "@seki/core";
 
 /**
  * Lublin's centre from map data (ADR-0042), as `tools/osm-import` writes it into
@@ -44,6 +44,19 @@ export interface LublinBuildingData {
   readonly shopfront?: true;
   /** Where the height came from: the `height` tag, `building:levels`, or the district's defaults. */
   readonly source: "height" | "levels" | "default";
+  /** Venues in or at it (ADR-0064 stage 4): a point relative to (x, z), the kind, the 2077 name and the neon. */
+  readonly venues?: readonly LublinVenueData[];
+}
+
+/** A shop, café, bar, bank, pharmacy or club of the map on a building (ADR-0064 stage 4). */
+export interface LublinVenueData {
+  readonly x: number;
+  readonly z: number;
+  readonly kind: VenueKind;
+  /** Lublin 2077's name from the importer's `venue-names` table, never the real one (ADR-0058). */
+  readonly name: string;
+  /** `#rrggbb` from the kit's neon palette (ADR-0022). */
+  readonly color: string;
 }
 
 export interface LublinGroundData {
@@ -98,6 +111,14 @@ export interface LublinPassageData {
   readonly rise: number;
 }
 
+/** An unnamed service road (a driveway, a yard's lane): no lane of the game, only room kept clear of parked cars (G-140). */
+export interface LublinServiceWayData {
+  /** World polyline, clipped to the chunk. */
+  readonly line: FlatPoints;
+  /** Its carriageway's width (m). */
+  readonly width: number;
+}
+
 export interface LublinChunkData {
   readonly id: string;
   readonly district: "shinsekai-7" | "kanal" | "targ" | "doki";
@@ -113,6 +134,8 @@ export interface LublinChunkData {
   readonly pois: readonly LublinPoiData[];
   /** Passages through its buildings, when it has any. */
   readonly passages?: readonly LublinPassageData[];
+  /** Unnamed service roads, when it has any (named ones are among `streets`). */
+  readonly serviceWays?: readonly LublinServiceWayData[];
 }
 
 /**

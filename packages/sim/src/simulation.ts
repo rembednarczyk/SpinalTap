@@ -29,6 +29,7 @@ import type { TrafficDensity } from "./content/traffic";
 import { isMicroKey } from "./world/micro-events";
 import { hasAmbush } from "./world/contract-plan";
 import { doorSnapshots, restoreDoors } from "./systems/door-system";
+import { withAttackLock } from "./world/takedown";
 
 export { BREACH_DATAMINE_EDDIES, BREACH_ICEPICK_SECONDS, BREACH_MARK_SECONDS } from "./world/contract-commands";
 export { SIM_DT, SIM_HZ } from "./step-rate";
@@ -79,6 +80,7 @@ export class Simulation {
     const player = playerEntity(ids.take());
     this.streamer = chunks ? new WorldStreamer(ids, chunks) : new WorldStreamer(ids);
     bindGround(this.world, this.streamer.ground);
+    this.streamer.enemyHealth = () => this.holder.domain.difficulty.npcHealth;
     const contract = domain.contracts.active;
     // A done job with an ambush by the way out (ADR-0034) still has people in the world.
     if (contract && (contract.status === "active" || hasAmbush(contract))) this.streamer.registerContract(this.world, domain.flags, domain.contracts.completed, contract);
@@ -154,7 +156,7 @@ export class Simulation {
 
   /** Advances the simulation by one fixed step of SIM_DT seconds. */
   step(input: InputFrame = EMPTY_INPUT): void {
-    const ctx = this.context(input);
+    const ctx = this.context(withAttackLock(this.session, input));
     this.applyCommands(ctx);
     for (const system of this.systems) system.run(ctx);
     this.tickCount += 1;

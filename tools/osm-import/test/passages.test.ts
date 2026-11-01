@@ -34,4 +34,17 @@ describe("passages through buildings from the map (ADR-0048)", () => {
     expect(buildingPassages([gate], [house], [{ minX: -50, maxX: 50, minZ: -50, maxZ: 12 }])).toEqual([]);
     expect(buildingPassages([gate], [house], [{ minX: -50, maxX: 50, minZ: -50, maxZ: 12 }, { minX: -50, maxX: 50, minZ: 12, maxZ: 50 }])).toHaveLength(1);
   });
+
+  it("lower the vault to the map's maxheight, under 4 m for below_default, the walls springing as high in share (G-089)", () => {
+    const gate = (maxheight: string) => buildingPassages([way(7, { highway: "service", tunnel: "yes", maxheight }, [[10, 0], [10, 12]])], [house], undefined, new Set([7]))[0]!;
+    expect(gate("below_default")).toMatchObject({ height: 3.6, rise: 0.99 });
+    expect(gate("3.2 m")).toMatchObject({ height: 3.2, rise: 0.88 });
+    expect(gate("3,5")).toMatchObject({ height: 3.5 });
+    expect(gate("none")).toMatchObject({ height: 4, rise: 1.1 });
+    // A typo in the map neither seals the passage nor lifts the crown out of the house front.
+    expect(gate("1.8")).toMatchObject({ height: 2.2, rise: 0.61 });
+    expect(gate("50")).toMatchObject({ height: 5, rise: 1.38 });
+    const lane = buildingPassages([way(8, { highway: "footway", tunnel: "building_passage", maxheight: "below_default" }, [[5, -3], [5, 15]])], [house])[0]!;
+    expect(lane).toMatchObject({ height: 3.4, rise: 0.9 });
+  });
 });

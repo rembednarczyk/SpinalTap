@@ -243,6 +243,11 @@ export class ModelLibrary {
     };
   }
 
+  /** Downloads and parses the file without making an instance (the loading screen, ADR-0057). */
+  preload(spec: CharacterModelSpec): Promise<unknown> {
+    return this.load(spec);
+  }
+
   private load(spec: CharacterModelSpec): Promise<Loaded> {
     let pending = this.containers.get(spec.url);
     if (!pending) {

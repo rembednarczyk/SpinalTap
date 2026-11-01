@@ -20,6 +20,12 @@ export class BrowserInput implements InputPort {
   private active = false;
   /** Set when pointer lock is refused (some embedded frames): mouse look then works on plain movement. */
   private lockUnavailable = false;
+  /**
+   * The browser answers a lock request with a promise, so the outcome comes from it and not from
+   * pointerlockerror: Chromium also sends that for the refused raw-input option, before the plain
+   * retry takes the lock (G-139).
+   */
+  private lockByPromise = false;
   private readonly held = new Set<string>();
   private readonly pressed = new Set<string>();
   private yaw = 0;
@@ -52,7 +58,7 @@ export class BrowserInput implements InputPort {
     on("keyup", (e) => this.held.delete(e.code));
     on("blur", () => this.held.clear());
     const onLockError = () => {
-      this.lockUnavailable = true;
+      if (!this.lockByPromise) this.lockUnavailable = true;
     };
     document.addEventListener("pointerlockerror", onLockError);
     this.disposers.push(() => document.removeEventListener("pointerlockerror", onLockError));
@@ -139,16 +145,20 @@ export class BrowserInput implements InputPort {
       // Some browsers return a promise that rejects when the request is refused.
       // Raw mouse input (no OS acceleration) where the browser offers it, like PC games read it.
       const r = (this.target.requestPointerLock as (o?: { unadjustedMovement?: boolean }) => unknown).call(this.target, { unadjustedMovement: true });
-      if (r instanceof Promise)
+      if (r instanceof Promise) {
+        this.lockByPromise = true;
         r.catch(() => {
           // Refused with the option (older Chromium, Linux without raw input): try without it.
           try {
             const plain = this.target.requestPointerLock() as unknown;
-            if (plain instanceof Promise) plain.catch(() => (this.lockUnavailable = true));
+            // Refused for want of a user gesture (a panel closed with Esc before the first click,
+            // G-135): the next click asks again, so the lock stays available.
+            if (plain instanceof Promise) plain.catch((e: unknown) => (this.lockUnavailable = !isNoGesture(e)));
           } catch {
             this.lockUnavailable = true;
           }
         });
+      }
     } catch {
       this.lockUnavailable = true;
     }
@@ -206,3 +216,6 @@ export class BrowserInput implements InputPort {
     return mapGamepad({ axes: pad.axes, buttons, pressed, dash }, dt);
   }
 }
+
+/** A pointer lock refused only because no user gesture was under way: worth asking again. */
+const isNoGesture = (e: unknown): boolean => typeof e === "object" && e !== null && (e as { name?: unknown }).name === "NotAllowedError";
