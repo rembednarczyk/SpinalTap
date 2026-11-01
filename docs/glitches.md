@@ -434,7 +434,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: prawdziwy Chrome (e2e) z tym przebiegiem; po odmowie kolejne kliknięcie nadal blokuje
 
 ### G-136 Przejazd Bramy Grodzkiej poza osią frontów
-- Status: w weryfikacji (0dc9de2: przejazd w osi obu frontów, 3 osie okien co 2 m, `gate-mouth-off-axis` baza 3; prześwit T-086 osobno, wymaga sklepienia ze spadkiem)
+- Status: w naprawie po weryfikacji (0dc9de2 NIE PRZYJĘTE: trasa dostaw i dwie latarnie ścienne zostały przy drodze OSM, van wchodzi 0,85 m w mur; poprzednio: przejazd w osi obu frontów, 3 osie okien co 2 m, `gate-mouth-off-axis` baza 3; prześwit T-086 osobno, wymaga sklepienia ze spadkiem)
 - Ważność: S3 · Zasięg: lokalny (Brama Grodzka) · Koszt: niski
 - Gdzie: `GATE_PASSAGES` w `packages/sim/src/content/lublin/sites.ts` biegnie za węzłem drogi OSM w293488528, ok. 1,4 m na południe od osi bramy; łuk przesunięty o 1,64 m (od Grodzkiej) i 1,36 m (od Zamku) od środka widocznego frontu, przez co przepis ma 2 osie okien zamiast 3
 - Poprawka: przejazd przesunięty prostopadle o ok. 1,4 m na północ, (701,0, 129,4)→(727,0, 153,6); potem przepis z 3 osiami co 2,1 m; prześwit łuku (T-086) przy okazji
