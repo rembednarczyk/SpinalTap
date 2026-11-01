@@ -120,4 +120,16 @@ describe("signs in front of a wall a neighbour stands out in front of (G-157, G-
     planVenueSigns(sink, f);
     expect(intruders(sink, [MAP_SIGN_KIND.venue, MAP_SIGN_KIND.glyph], boxes)).toBe(0);
   });
+
+  it("keep the holo-ads of a narrow tower with no neighbours, as before the fit (G-157)", () => {
+    // Walls of 5 m: an ad of half the wall, 2.5 m, is under the 3 m a cut-down ad keeps at least.
+    let holos = 0;
+    for (let look = 1; look <= 200; look++) {
+      const sink = new MeshSink();
+      planBuildingSigns(sink, facadeFrame(house(look, { ring: rect(0, 0, 5, 5), shopfront: false }), () => null), () => null);
+      holos += count(sink, MAP_SIGN_KIND.holo);
+    }
+    expect(holos).toBeGreaterThan(0);
+  });
 });
+

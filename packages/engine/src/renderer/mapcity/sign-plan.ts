@@ -128,7 +128,9 @@ const holos = (sink: MeshSink, f: FacadeFrame, rand: () => number): void => {
     const seed = rand();
     // A neighbour taller than the one against the wall may stand out in front of its end (G-157).
     const bottom = from + exposed * 0.125;
-    const fit = fitFlatSign(f, w, w.length / 2, Math.min(w.length * 0.7, 14), HOLO_MIN, 0.45, bottom);
+    const width = Math.min(w.length * 0.7, 14);
+    // A narrow wall's whole ad is narrower than HOLO_MIN: only a neighbour may leave it out (G-157).
+    const fit = fitFlatSign(f, w, w.length / 2, width, Math.min(HOLO_MIN, width), 0.45, bottom);
     if (!fit) continue;
     const height = Math.min(exposed * 0.75, fit.width * 1.6);
     flatOnWall(sink, w, fit.u, from + exposed / 2, 0.45, fit.width, height, color, [seed, MAP_SIGN_KIND.holo]);
@@ -142,7 +144,7 @@ const holos = (sink: MeshSink, f: FacadeFrame, rand: () => number): void => {
     const seed = rand();
     const width = Math.min(w.length * 0.5, 10);
     const bottom = f.top - 2 - Math.min(width * 1.4, tall * 0.4);
-    const fit = fitFlatSign(f, w, want, width, HOLO_MIN, 0.8, bottom);
+    const fit = fitFlatSign(f, w, want, width, Math.min(HOLO_MIN, width), 0.8, bottom);
     if (!fit) return;
     const height = Math.min(fit.width * 1.4, tall * 0.4);
     flatOnWall(sink, w, fit.u, f.top - height / 2 - 2, 0.8, fit.width, height, color, [seed, MAP_SIGN_KIND.holo]);
