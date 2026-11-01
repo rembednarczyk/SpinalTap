@@ -5,6 +5,7 @@ Zmiany widoczne dla gracza, od najnowszych. Wersja gry i commit są na ekranie t
 ## Nieopublikowane (0.1.0)
 
 ### 1 listopada 2026
+- Świadek trzymany w chwycie obezwładnienia nie kończy telefonu do ochrony; gdy się wyrwie, dzwoni dalej (G-141).
 - Widok nie obraca się sam przy wejściu do gry, gdy przeglądarka odmawia surowego wejścia myszy (Chromium na Linuksie) (G-139).
 - Zaparkowane auta nie zastawiają wjazdów i wylotów dróg serwisowych, np. przy Cerkiewnej (G-140).
 - Brama Grodzka z własnej geometrii według zdjęć: beżowy tynk, boniowanie, jedna kondygnacja dużych okien, od Grodzkiej kartusz z datą MDCCLXXXV, od Zamku okno półkoliste między blendami, stonowane podświetlenie od dołu (ADR-0062 etap 2).

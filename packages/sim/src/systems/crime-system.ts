@@ -31,6 +31,7 @@ import { chestOf, eyeOf, lineOfSight } from "../world/hitscan";
 import { inCreationOrder } from "../world/ordering";
 import { codeKnown } from "../world/hook-tracker";
 import { disturb, noteAlarm, noteDetected } from "../world/street";
+import { incapacitated } from "../world/takedown";
 import { coveredFrom } from "../world/disguise";
 import { difficultyOf } from "../world/difficulty";
 import { worldTimeScale } from "./ability-system";
@@ -230,9 +231,10 @@ const aimedAt = (player: Entity, c: Entity): boolean => {
 const runCalls = (ctx: SimContext, player: Entity | null, dt: number): void => {
   for (const c of inCreationOrder(ctx.world.with("civilian"))) {
     const mind = c.civilian.crowd;
-    // Knocked out mid-call (ADR-0065): the phone goes quiet.
-    if (c.unconscious) {
-      if (mind?.call) mind.call = null;
+    // Knocked out mid-call (ADR-0065): the phone goes quiet. Held in a takedown it waits on how
+    // the hold ends: out cold it is cut off, broken free it carries on (G-141).
+    if (incapacitated(ctx, c)) {
+      if (c.unconscious && mind?.call) mind.call = null;
       continue;
     }
     // Only someone already shaken (a call, a scare) is scared off the phone: a calm passer-by walks on.

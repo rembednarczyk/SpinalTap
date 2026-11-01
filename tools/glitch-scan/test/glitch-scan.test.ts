@@ -364,6 +364,18 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "car-lane-off-road": () =>
     carLanes.flatMap((r) => along(r, 3).filter((p) => inMap(p.x, p.z) && !surfacesAt(p.x, p.z).some((s) => s === "road" || s === "crossing" || s === "cobble")).map((p) => ({ at: near(p.x, p.z), what: r.id }))),
   /**
+   * A point of a lane (every use, every metre) with no paving under it at all, or where the
+   * ground the simulation walks (`GroundField`) and the map's `groundY` part by over 0.2 m: off
+   * the map, where the one takes the nearest chunk and the other 0 (G-138). The edges too, unlike
+   * `car-lane-off-road`.
+   */
+  "lane-off-ground": () =>
+    TRAFFIC_LANES.flatMap((r) =>
+      along(r, 1)
+        .filter((p) => surfacesAt(p.x, p.z).length === 0 || Math.abs(FIELD.heightAt(p.x, p.z) - groundY(p.x, p.z)) > 0.2)
+        .map((p) => ({ at: near(p.x, p.z), what: `${r.id} at ${p.s.toFixed(0)}` })),
+    ),
+  /**
    * A car lane (trolleybuses too) that ends inside the map, more than 6 m from its edge, with no
    * lane starting within 3 m of its end the same way: its vehicles stop there and wait while the
    * player watches. What is left: the junctions where no other street's lane starts by the end
