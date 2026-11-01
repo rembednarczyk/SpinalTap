@@ -1,6 +1,7 @@
-import type { VehicleModel } from "@seki/core";
+import { VEHICLE_SIZE, type VehicleModel } from "@seki/core";
 import { type Pt, ROAD_CHAINS, type RoadChain, onRoad, polylineLength } from "./lublin/roads";
-import { MAP_CHUNKS } from "./lublin/sites";
+import { inBuilding } from "./lublin/places";
+import { MAP_CHUNKS, PASSAGES } from "./lublin/sites";
 import { GAME_PROPS, WORLD_STREET_PROPS } from "./street-props";
 import { METRO_STATIONS } from "./metro";
 import { groundY } from "./lublin/terrain";
@@ -53,6 +54,8 @@ const TROLLEY_STREETS: ReadonlySet<string> = new Set([
 const TROLLEY_SPEED = 8.5;
 const TROLLEY_SPACING = 420;
 const DELIVERY_SPEED = 3.5;
+/** Half the widest delivery vehicle, and a hand of room. */
+const VAN_HALF = Math.max(VEHICLE_SIZE.van.width, VEHICLE_SIZE.delivery.width) / 2 + 0.1;
 
 /** A two-way street whose carriageway reaches this far right of its axis has a parking strip by the kerb (m). */
 export const KERB_ROOM = 4.6;
@@ -247,6 +250,37 @@ const routeOf = (id: string, street: string, use: RouteUse, points: Pt[], speed:
   stops: use === "trolley" ? stopsAlong(points) : [],
 });
 
+/** The stretch of a passage's axis under a building, as arc lengths from its `from` end (sampled every 0.25 m), or null. */
+const underBuilding = (p: (typeof PASSAGES)[number]): readonly [number, number] | null => {
+  const len = Math.hypot(p.to.x - p.from.x, p.to.z - p.from.z);
+  const under: number[] = [];
+  for (let s = 0; s <= len; s += 0.25) if (inBuilding(p.from.x + ((p.to.x - p.from.x) * s) / len, p.from.z + ((p.to.z - p.from.z) * s) / len)) under.push(s);
+  return under.length > 0 ? [under[0]!, under[under.length - 1]!] : null;
+};
+
+const VAULTS = PASSAGES.flatMap((p) => {
+  const span = underBuilding(p);
+  return span ? [{ p, span }] : [];
+});
+
+/**
+ * A van's line through the passages under buildings: its points from a metre before a passage's
+ * mouth to a metre past the other, off the axis by more than the van leaves free, moved onto the
+ * axis. The OSM way through a gate need not be the passage's axis (Brama Grodzka, 1.4 m off it,
+ * G-136), and a van on it would scrape the wall.
+ */
+const onPassageAxes = (pts: readonly Pt[]): Pt[] =>
+  pts.map(([x, z]) => {
+    for (const { p, span } of VAULTS) {
+      const len = Math.hypot(p.to.x - p.from.x, p.to.z - p.from.z);
+      const [ux, uz] = [(p.to.x - p.from.x) / len, (p.to.z - p.from.z) / len];
+      const s = (x - p.from.x) * ux + (z - p.from.z) * uz;
+      const off = Math.abs((x - p.from.x) * uz - (z - p.from.z) * ux);
+      if (s >= span[0] - 1 && s <= span[1] + 1 && off > p.width / 2 - VAN_HALF && off < p.width / 2 + 2) return [p.from.x + ux * s, p.from.z + uz * s];
+    }
+    return [x, z];
+  });
+
 /** The lanes of one street: one or two per carriageway, both ways on a two-way street. */
 const lanesOf = (c: RoadChain, k: number, all: readonly RoadChain[]): TrafficRoute[] => {
   const len = polylineLength(c.points);
@@ -254,7 +288,7 @@ const lanesOf = (c: RoadChain, k: number, all: readonly RoadChain[]): TrafficRou
   const id = `${c.name}#${k}`;
   if (c.use === "deliveries") {
     // One van now and then on a long enough pedestrian street, down its middle.
-    return len >= 80 ? [routeOf(`${id}:d`, c.name, "deliveries", [...c.points], DELIVERY_SPEED, 1)] : [];
+    return len >= 80 ? [routeOf(`${id}:d`, c.name, "deliveries", onPassageAxes(c.points), DELIVERY_SPEED, 1)] : [];
   }
   const road = ROAD_KINDS[c.kind] ?? ROAD_KINDS.residential!;
   const cars = (l: number) => Math.max(1, Math.floor(l / road.spacing));
@@ -369,6 +403,29 @@ const clearOfBlocks = (lanes: readonly TrafficRoute[], dead: DeadEnds): Piece[] 
   });
 };
 
+/** A lane keeps this far inside the map's edge (m): the paving is clipped to the chunks, and a point on the edge itself is on neither side of it. */
+const EDGE_REACH = 0.1;
+/** The step a lane's end is cut back by (m). */
+const EDGE_STEP = 0.05;
+
+const inMap = (p: { x: number; z: number }): boolean => [-EDGE_REACH, EDGE_REACH].every((a) => [-EDGE_REACH, EDGE_REACH].every((b) => onMap(p.x + a, p.z + b)));
+
+/**
+ * A lane's ends cut back onto the map (G-138). The import clips a street's axis at the map's
+ * edge; its lane, moved aside from the axis, runs on past the edge where the street meets it
+ * aslant (up to 1.5 m), over no paving, where the simulation's ground is the nearest chunk's and
+ * the map's is 0. Inside the map (its seams too) nothing is cut.
+ */
+const onTheMap = (p: Piece): Piece => {
+  const r = p.route;
+  let a = 0;
+  while (a < r.length && !inMap(pointAt(r.points, a))) a += EDGE_STEP;
+  let b = r.length;
+  while (b > a && !inMap(pointAt(r.points, b))) b -= EDGE_STEP;
+  if (a === 0 && b === r.length) return p;
+  return { ...p, route: routeOf(r.id, r.street, r.use, slice(r.points, a, b), r.speed, r.vehicles) };
+};
+
 /** A lane cut short by a block or a dead end turns round onto a lane the other way starting this close to its end (m). */
 const TURN_REACH = 16;
 
@@ -429,8 +486,8 @@ const turnRound = (pieces: readonly Piece[]): TrafficRoute[] => {
   });
 };
 
-/** Every lane of the city's traffic, in a stable order (the chains' order, then lane by lane), clear of the game's blocks. */
-export const TRAFFIC_LANES: readonly TrafficRoute[] = turnRound(ROAD_CHAINS.flatMap((c, k) => clearOfBlocks(lanesOf(c, k, ROAD_CHAINS), deadEndsOf(c, k))));
+/** Every lane of the city's traffic, in a stable order (the chains' order, then lane by lane), clear of the game's blocks, on the map. */
+export const TRAFFIC_LANES: readonly TrafficRoute[] = turnRound(ROAD_CHAINS.flatMap((c, k) => clearOfBlocks(lanesOf(c, k, ROAD_CHAINS), deadEndsOf(c, k)).map(onTheMap)));
 
 /** The routes the vehicles drive: the lanes joined at the junctions (ADR-0055). */
 export const TRAFFIC_ROUTES: readonly TrafficRoute[] = joinAtJunctions(TRAFFIC_LANES);

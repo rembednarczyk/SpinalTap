@@ -6,6 +6,8 @@ Zmiany widoczne dla gracza, od najnowszych. Wersja gry i commit są na ekranie t
 
 ### 1 listopada 2026
 - Prawdziwe lokale z OSM (332: sklepy, kawiarnie, bary, banki, apteki, kluby) mają szyld z neonową nazwą Lublina 2077 na swojej elewacji, w kolorze zbliżonym do prawdziwego (ADR-0064 etap 4).
+- Przejazd Bramy Grodzkiej w osi obu frontów, nad łukiem trzy osie okien co 2 m i podświetlenie po obu stronach łuku (G-136).
+- Blokada kursora nie wyłącza się na stałe, gdy panel zamknięty Esc przed pierwszym kliknięciem po ładowaniu poprosi o nią bez gestu (G-135).
 - Świadek trzymany w chwycie obezwładnienia nie kończy telefonu do ochrony; gdy się wyrwie, dzwoni dalej (G-141).
 - Widok nie obraca się sam przy wejściu do gry, gdy przeglądarka odmawia surowego wejścia myszy (Chromium na Linuksie) (G-139).
 - Zaparkowane auta nie zastawiają wjazdów i wylotów dróg serwisowych, np. przy Cerkiewnej (G-140).
