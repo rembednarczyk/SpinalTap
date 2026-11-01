@@ -462,6 +462,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (`content/parked-cars.ts`, `content/district-m0.ts` przez `standing`, `systems/traffic-system.ts`), a wysokości nawierzchni z `packages/engine/src/renderer/mapcity/ground-plan.ts` (`SURFACE_LIFT`) przenieść do kontraktu w `core`, żeby sim je znał
 - Test przyjęcia: kontrola `vehicle-below-surface` 38 → 0; dla wraku najwyższy narożnik nawierzchni ≤ spód + 0,05 m; złoty hash symulacji zmieniony świadomie, jeśli zmieni się y aut
 
+### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
+- Status: nowe (weryfikator ADR-0057, 1.11)
+- Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
+- Gdzie: `e2e/smoke.spec.ts`, test quicksave/quickload; przy load ponad 15 F5 albo F9 trafia na stronę zablokowaną długim zadaniem (Press F5 8,8 s, poll 30 s na „Game saved”)
+- Pomiar: na `feat/loading-screen` 2/5 czerwone przy load 20–26, 4/4 zielone przy 7–15; na origin/main 1/4 czerwone (F9)
+- Pakiet właściciela: e2e (QA), możliwa przyczyna w app (synchroniczne zadania po klawiszu)
+- Test przyjęcia: ślad z długimi zadaniami przed i po; bez podnoszenia limitu czasu (ADR-0046)
+
 ## Naprawione
 | ID | Glitch | PR |
 |---|---|---|
