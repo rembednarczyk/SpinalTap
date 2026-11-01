@@ -197,4 +197,31 @@ describe("waking on a quiet street (ADR-0065)", () => {
     expect(guard.unconscious).toBeUndefined();
     expect(guard.ai!.alerted).toBe(true);
   });
+
+  it("a civilian that finds a fresh body first stays by it unafraid, and wakes it after 6 s (G-141)", () => {
+    const sim = quietStreet();
+    // Nobody on the square sees it go down: the body is still unnoticed when the helper comes.
+    sim.streamer.passerbyIds.clear();
+    for (const c of [...sim.world.with("civilian")]) sim.world.remove(c);
+    const guard = victim(sim);
+    takeDown(sim);
+    walkAway(sim);
+    expect(guard.downed?.found).toBe(false);
+    const found = collect<DomainEvents["BodyFound"]>(sim, "BodyFound");
+    const noise = collect<DomainEvents["Disturbance"]>(sim, "Disturbance");
+    // A townsman on its daily plan (no passer-by of the square), right by the body.
+    const at = { ...guard.position, x: guard.position.x + 1 };
+    const helper = sim.world.add({ id: 4300, position: at, prevPosition: at, yaw: 0, prevYaw: 0, pitch: 0, faction: "civilians", velocity: { x: 0, y: 0, z: 0 }, civilian: { home: at } });
+    sim.step(CROUCH);
+    expect(found).toEqual([{ body: guard.id, finder: helper.id }]);
+    run(sim, ticks(WAKE_TIME) - 2, CROUCH);
+    // The street's fright at the body leaves the one helping alone.
+    expect(noise.filter((d) => d.kind === "body").map((d) => d.sourceId)).toEqual([guard.id]);
+    expect(helper.civilian!.crowd?.state ?? "calm").toBe("calm");
+    expect(Math.hypot(helper.position.x - at.x, helper.position.z - at.z)).toBeLessThan(0.1);
+    expect(guard.unconscious).toBe(true);
+    sim.step(CROUCH);
+    expect(guard.unconscious).toBeUndefined();
+    expect(guard.ai!.alerted).toBe(true);
+  });
 });
