@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { DomainState, SaveSnapshot } from "@seki/core";
+import { DIFFICULTY_PRESETS, type DomainState, type SaveSnapshot } from "@seki/core";
 import { Simulation, gangerEntity, runReplay, stateHash, type ReplayFrame } from "../src";
 import { input, run, streetSim } from "./helpers";
 
@@ -53,6 +53,13 @@ const v17HashOf = (sim: Simulation) => {
   return stateHash({ ...snap, version: 17, domain } as unknown as SaveSnapshot);
 };
 
+/** The scripted run on "hard" (ADR-0066): the profile set by command in its first frame. */
+const hardScript = (): ReplayFrame[] => {
+  const [first, ...rest] = script();
+  if (!first) return rest;
+  return [{ ...first, commands: [{ type: "set-difficulty", profile: DIFFICULTY_PRESETS.hard }, ...(first.commands ?? [])] }, ...rest];
+};
+
 describe("determinism", () => {
   it("same seed + same input stream = same end state", () => {
     const a = runReplay(1234, script());
@@ -70,6 +77,15 @@ describe("determinism", () => {
     expect(hashOf(sim)).toMatchInlineSnapshot(`"e87d9e7c"`);
     // Re-recorded for the v18 field (ADR-0066); without it, as v17, it is the golden of before.
     expect(v17HashOf(sim)).toBe("c52fd247");
+  });
+
+  it("the same run on 'hard' has a golden hash of its own (ADR-0066)", () => {
+    const sim = runReplay(1234, hardScript());
+    expect(sim.domain.difficulty).toEqual(DIFFICULTY_PRESETS.hard);
+    expect(hashOf(sim)).toBe(hashOf(runReplay(1234, hardScript())));
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"38acbc37"`);
+    // Not just the field: without it the run still ends elsewhere than on "normal".
+    expect(v17HashOf(sim)).not.toBe("c52fd247");
   });
 
   it("the crowd of residents (ADR-0041) and the traffic (ADR-0050) leave the golden run as it was, at every density", () => {

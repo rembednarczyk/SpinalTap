@@ -12,7 +12,8 @@ import { worldTimeScale } from "../ability-system";
 import { noteDetected } from "../../world/street";
 import { coveredFrom } from "../../world/disguise";
 import { detourStep, steerPoint, straightWalk } from "./steering";
-import { NPC_CRIT, aimSpreadOf, fireShot } from "../combat-system";
+import { NPC_CRIT, fireShot, npcSpreadOf } from "../combat-system";
+import { difficultyOf } from "../../world/difficulty";
 
 /** Seconds the laser is on before the shot: the telegraph (ADR-0024). */
 export const SNIPER_AIM_TIME = 1.4;
@@ -139,9 +140,10 @@ const shoot = (ctx: SimContext, self: Sniper, player: Entity, inLine: boolean, d
   if (s.phase === "idle") {
     if (!inLine || !self.combatant || !readyToFire(self.combatant, self.combatant.loaded)) return;
     s.phase = "aim";
-    s.timer = SNIPER_AIM_TIME;
+    // The laser's warning lasts the difficulty's share of the aim time (`snipeTell`, ADR-0066).
+    s.timer = SNIPER_AIM_TIME * difficultyOf(ctx).snipeTell;
     noteDetected(ctx);
-    ctx.bus.emit("SniperAimed", { entityId: self.id, targetId: player.id, duration: SNIPER_AIM_TIME });
+    ctx.bus.emit("SniperAimed", { entityId: self.id, targetId: player.id, duration: s.timer });
   }
   // Aiming: track the target; a broken line switches the laser off.
   if (!inLine) {
@@ -155,7 +157,7 @@ const shoot = (ctx: SimContext, self: Sniper, player: Entity, inLine: boolean, d
   s.timer = Math.max(0, s.timer - dt);
   if (s.timer > 0 || !self.combatant || !readyToFire(self.combatant, self.combatant.loaded)) return;
   const origin = eyeOf(self);
-  fireShot(ctx, { shooter: self, origin, dir: normalize(sub(chestOf(player), origin)), spread: aimSpreadOf(self, null), ...NPC_CRIT }, ctx.rng);
+  fireShot(ctx, { shooter: self, origin, dir: normalize(sub(chestOf(player), origin)), spread: npcSpreadOf(ctx, self), ...NPC_CRIT }, ctx.rng);
   ctx.bus.emit("SniperAimed", { entityId: self.id, targetId: player.id, duration: 0 });
   s.phase = "rest";
   s.timer = self.combatant.stats?.interval ?? SNIPER_AIM_TIME;

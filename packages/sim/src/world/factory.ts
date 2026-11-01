@@ -303,6 +303,18 @@ export const pickupEntity = (id: EntityId, key: string, position: Vec3, chunk: s
 /** Contract targets get tougher as Seki completes more jobs. */
 export const contractGangerHp = (completed: number): number => GANGER_MAX_HP + Math.min(60, completed * 10);
 
+/**
+ * A hostile NPC as it appears in the world (`npcHealth`): its health, full, scaled. Called on a
+ * freshly built entity, before any saved state goes back onto it (that keeps its saved health).
+ */
+export const toughen = (e: Entity, npcHealth: number): Entity => {
+  if (e.view?.kind !== "enemy" || !e.health) return e;
+  // Whole points, as the content gives them (110 × 1.2 is not quite 132 in floating point).
+  const max = Math.max(1, Math.round(e.health.max * npcHealth));
+  e.health = { current: max, max };
+  return e;
+};
+
 /** The saveable state of a keyed entity. */
 export const entitySnapshotOf = (e: Entity & { key: string }): EntitySnapshot => {
   const s: EntitySnapshot = {

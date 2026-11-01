@@ -11,7 +11,7 @@ import { disturb, isEngaged, noteViolence } from "../world/street";
 
 /** A blow that lands is heard and seen this far (ADR-0029). */
 const FIGHT_NOISE = 10;
-import { NPC_CRIT, alertNearbyGangers, defenderOf, guardAgainst, threaten, wearPlayerClothes } from "./combat-system";
+import { NPC_CRIT, alertNearbyGangers, defenderOf, guardAgainst, landedDamage, threaten, wearPlayerClothes } from "./combat-system";
 import { playerStatsOf } from "./player-control-system";
 
 /** A phase that ends within float noise of the step counts as over (0.3 s = 18 steps). */
@@ -105,7 +105,7 @@ const land = (ctx: SimContext, f: Fighter, profile: MeleeProfile): boolean => {
       break;
     }
     const zone = strikeZone(strikeHeight(f, t, reach.distance), reach.angle / profile.arc);
-    const outcome = resolveAttack(
+    const resolved = resolveAttack(
       {
         damage: weapon.damage * strike.damage * guard.multiplier,
         zones: weapon.zones,
@@ -117,6 +117,7 @@ const land = (ctx: SimContext, f: Fighter, profile: MeleeProfile): boolean => {
       ctx.rng,
       zone,
     );
+    const outcome = { ...resolved, damage: landedDamage(ctx, t, resolved.damage) };
     if (f.player) noteViolence(ctx, t, isEngaged(t), chest);
     t.health = applyDamage(t.health, outcome.damage);
     t.lastHitBy = f.id;

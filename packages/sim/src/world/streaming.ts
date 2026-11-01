@@ -38,6 +38,7 @@ import {
   gangerEntity,
   isDead,
   pickupEntity,
+  toughen,
   propEntity,
   sniperEntity,
   terminalEntity,
@@ -116,6 +117,8 @@ export class WorldStreamer {
   readonly passerbyIds = new Map<string, readonly EntityId[]>();
   /** The ground of these chunks (ADR-0043): their terrain, or the street plane. */
   readonly ground: GroundField;
+  /** The difficulty's `npcHealth` (ADR-0066), read when a character appears; the simulation sets it. */
+  enemyHealth: () => number = () => 1;
 
   constructor(
     private readonly ids: IdAllocator,
@@ -333,7 +336,7 @@ export class WorldStreamer {
       if (!t || isDead(flags, s.key) || flags.includes(takenFlag(s.key)) || !isPresent(t.when, flags)) continue;
       if (s.alerted || s.lastKnown) {
         // It was chasing (or looking for) the player when the save was made: pinned, alive outside its chunk.
-        const pinned = t.make();
+        const pinned = this.build(t);
         applyEntitySnapshot(pinned, s);
         world.add(pinned);
       } else {
@@ -395,6 +398,11 @@ export class WorldStreamer {
     }
   }
 
+  /** A character as it appears: hostile ones with the difficulty's health (ADR-0066), before any saved state. */
+  private build(t: Template): Entity {
+    return toughen(t.make(), this.enemyHealth());
+  }
+
   private actorsOf(chunkId: string): Template[] {
     const own = (this.content.get(chunkId) ?? []).filter((t) => t.key !== null);
     return [...own, ...this.contract.filter((t) => t.chunk === chunkId)];
@@ -415,7 +423,7 @@ export class WorldStreamer {
     for (const e of world) if (e.key) alive.add(e.key);
     for (const t of templates) {
       if (t.key === null || isDead(flags, t.key) || flags.includes(takenFlag(t.key)) || alive.has(t.key) || !isPresent(t.when, flags)) continue;
-      const e = t.make();
+      const e = this.build(t);
       const saved = this.dormant.get(t.key);
       if (saved) {
         applyEntitySnapshot(e, saved);
