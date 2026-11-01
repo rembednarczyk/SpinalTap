@@ -63,4 +63,18 @@ describe("jobs replaced with their people still about in the save (v22, G-178)",
     for (const v of broken) expect(bad(v)).toBe("former contracts");
     expect(() => decodeSave("slot", encodeSave(snapshot({ formerContracts: [former({ completed: -1 })] as never })))).toThrow();
   });
+
+  it("refuses a job twice, or one that is also the job in the log or the ended one", () => {
+    const c4 = { ...LOST, id: "c4" };
+    const base = snapshot();
+    const check = (over: Partial<typeof base>) => findSchemaError({ ...base, ...over } as unknown as Record<string, unknown>);
+    expect(check({ formerContracts: [former(), former({ contract: c4 })] })).toBeNull();
+    expect(check({ formerContracts: [former(), former({ completed: 5 })] })).toBe("former contracts");
+    expect(check({ formerContracts: [former()], endedContract: { contract: LOST, completed: 2 } })).toBe("former contracts");
+    expect(check({ formerContracts: [former()], endedContract: { contract: c4, completed: 2 } })).toBeNull();
+    const running = (active: typeof LOST) => ({ domain: { ...base.domain, contracts: { ...base.domain.contracts, active } } });
+    expect(check({ formerContracts: [former()], ...running(LOST) })).toBe("former contracts");
+    expect(check({ formerContracts: [former()], ...running(c4) })).toBeNull();
+    expect(() => decodeSave("slot", encodeSave(snapshot({ formerContracts: [former(), former()] })))).toThrow();
+  });
 });

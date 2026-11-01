@@ -55,7 +55,9 @@ export const findSchemaError = (s: Json): string | null => {
   if (s.pendingDifficulty !== undefined && !isDifficultyProfile(s.pendingDifficulty)) return "pending difficulty";
   // G-178: a job over whose people are still in the world is a whole contract, as a running one.
   if (s.endedContract !== undefined && findContractOnSiteError(s.endedContract)) return "ended contract";
-  if (s.formerContracts !== undefined && findFormerContractsError(s.formerContracts)) return "former contracts";
+  // None twice, and none the job in the log or the ended one.
+  const taken = [isObject(s.domain) && isObject(s.domain.contracts) ? s.domain.contracts.active : null, isObject(s.endedContract) ? s.endedContract.contract : null];
+  if (s.formerContracts !== undefined && findFormerContractsError(s.formerContracts, taken)) return "former contracts";
   const d = s.domain;
   if (!isObject(d)) return "domain";
   const c = d.character;

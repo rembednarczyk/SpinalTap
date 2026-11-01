@@ -27,12 +27,19 @@ export const findContractOnSiteError = (v: unknown): string | null => {
   return findContractError(v.contract);
 };
 
-/** Jobs replaced with some of their people still about (G-178): whole contracts with the jobs done when taken. */
-export const findFormerContractsError = (v: unknown): string | null => {
+/**
+ * Jobs replaced with some of their people still about (G-178): whole contracts with the jobs done
+ * when they were taken, none twice and none the one in the log or the ended one.
+ */
+export const findFormerContractsError = (v: unknown, taken: readonly unknown[]): string | null => {
   if (!Array.isArray(v)) return "contracts";
+  const ids = new Set(taken.flatMap((c) => (isObject(c) && typeof c.id === "string" ? [c.id] : [])));
   for (const f of v) {
     const error = findContractOnSiteError(f);
     if (error) return error;
+    const id = ((f as Json).contract as Json).id as string;
+    if (ids.has(id)) return "contracts";
+    ids.add(id);
   }
   return null;
 };
