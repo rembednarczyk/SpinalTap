@@ -568,6 +568,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-186 Obserwator `onReadyObservable` przybywa przy każdej nowej grze (do sprawdzenia w przeglądarce)
 - Status: zgłoszone (1.11, autor i weryfikator #151); możliwy artefakt NullEngine
 - Ważność: S4 · Zasięg: na NullEngine `scene.onReadyObservable` rośnie o 1 na każde newGame (9 → 13 w 5 cyklach); źródło prawdopodobnie `scene.whenReadyAsync(true)` w `packages/engine/src/renderer/start-prep.ts:181`, które na NullEngine się nie rozwiązuje
+- Weryfikator #171: liczba obserwatorów waha się między przebiegami tego samego kodu (0 albo 1 w fazach `city` i `prepared`), więc sondy sesji powinny ją pomijać albo czekać na `isReady`
 - Poprawka: sprawdzić w przeglądarce (nowa gra przed gotowością sceny); jeśli rośnie, anulowanie oczekiwania przy `cancelPrepare`/clear
 - Pakiet właściciela: packages/engine (renderer)
 
