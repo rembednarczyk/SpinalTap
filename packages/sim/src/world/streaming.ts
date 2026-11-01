@@ -358,6 +358,20 @@ export class WorldStreamer {
     }
   }
 
+  /**
+   * Bodies asleep that lie in a chunk just loaded (ADR-0065): carried away from their own chunk,
+   * they come back where they lie, as after a load (`bodyHere`), not only with their own chunk.
+   */
+  private wakeBodies(world: World<Entity>, flags: readonly string[], loaded: ReadonlySet<string>, clock: GameClock): void {
+    const lying: Template[] = [];
+    for (const [key, s] of this.dormant) {
+      if (!s.downed || !loaded.has(this.chunkIdAt(s.position))) continue;
+      const t = (this.places.get(key) ?? []).find((x) => isPresent(x.when, flags)) ?? this.byKey.get(key);
+      if (t) lying.push(t);
+    }
+    this.spawnActors(world, flags, lying, clock);
+  }
+
   /** A saved body that is in the world at once (ADR-0065): carried, or lying in a resident chunk. */
   private bodyHere(s: EntitySnapshot): boolean {
     return !!s.downed && (s.downed.carried || this.resident.has(this.chunkIdAt(s.position)));
@@ -380,6 +394,7 @@ export class WorldStreamer {
       this.spawnProps(world, id);
     }
     for (const id of loaded ?? []) this.spawnActors(world, flags, this.actorsOf(id), clock);
+    if (loaded) this.wakeBodies(world, flags, new Set(loaded), clock);
     return { loaded: loaded ?? [], unloaded: unloaded ?? [] };
   }
 

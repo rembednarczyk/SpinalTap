@@ -137,4 +137,44 @@ describe("bodies in the save (ADR-0065, stage 3)", () => {
     expect(byKey(sim, key)?.downed?.carried).toBe(true);
     expect(flat(byKey(sim, key)!.position, far)).toBeLessThan(1e-9);
   });
+
+  it("a body carried into another chunk and left there comes back with the chunk it lies in", () => {
+    const { sim, key } = contentBody();
+    const body = byKey(sim, key)!;
+    const own = body.chunk!;
+    const at = { ...body.position };
+    const st = sim.streamer;
+    // The first point due east, west, north or south in another chunk, far enough that `own` sleeps there.
+    let drop: Vec3 | null = null;
+    for (let r = 60; r <= 400 && !drop; r += 20) {
+      for (const [dx, dz] of [[r, 0], [-r, 0], [0, r], [0, -r]] as const) {
+        const q = { x: at.x + dx, y: at.y, z: at.z + dz };
+        if (st.chunkIdAt(q) !== own) {
+          drop = q;
+          break;
+        }
+      }
+    }
+    pickUp(sim);
+    teleportPlayer(sim, drop!);
+    run(sim, 5, STAND);
+    sim.enqueue({ type: "drop-body" });
+    run(sim, 4, STAND);
+    const lies = { ...byKey(sim, key)!.position };
+    const there = st.chunkIdAt(lies);
+    expect(there).not.toBe(own);
+    // Far off: both chunks sleep.
+    teleportPlayer(sim, { x: at.x + 5000, y: at.y, z: at.z + 5000 });
+    run(sim, 5, STAND);
+    expect(byKey(sim, key)).toBeUndefined();
+    // Back by the body: the chunk it lies in is loaded, its own is not.
+    teleportPlayer(sim, { ...lies, x: lies.x + 2 });
+    run(sim, 5, STAND);
+    expect(st.loadedChunks).toContain(there);
+    expect(st.loadedChunks).not.toContain(own);
+    const back = byKey(sim, key)!;
+    expect(back).toBeDefined();
+    expect(back.unconscious).toBe(true);
+    expect(flat(back.position, lies)).toBeLessThan(1e-6);
+  });
 });
