@@ -9,6 +9,7 @@ import { type BuildingSource, mapBuilding } from "../../../packages/engine/src/r
 import { centroid, cleanRing, pointInRing } from "../../../packages/engine/src/renderer/mapcity/polygon";
 import { stackTiers } from "../../../packages/engine/src/renderer/mapcity/vertical-plan";
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
+import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alone.ts";
 import { extractFeatures } from "../../osm-import/src/features.ts";
 import { roadWidth } from "../../osm-import/src/ground.ts";
 import { oneway } from "../../osm-import/src/markings.ts";
@@ -680,6 +681,17 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       const a = past(pts[0]!, pts[1]!);
       return walkable(a, past(pts[pts.length - 1]!, pts[pts.length - 2]!), 4) === "cut" ? [{ at: near(a.x, a.z), what: `w${w.id} ${t.name ?? t.highway} tunnel=${t.tunnel ?? "-"}` }] : [];
     });
+  },
+  /**
+   * A small building standing on its own (under `SMALL_ALONE_AREA`, no other outline within 1 m:
+   * a pavilion, a kiosk, a shed) raised to the district's default houses when the map gives it no
+   * height (G-127: Bar Centralny by Pedet, 4 storeys for a round one-storey pavilion).
+   */
+  "small-freestanding-tall": () => {
+    const all = MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)));
+    const areas = all.map((b) => ({ id: b.id, tags: {}, ring: worldOutline(b), holes: 0 }) as unknown as Parameters<typeof smallAlone>[0][number]);
+    const alone = smallAlone(areas);
+    return all.filter((b) => alone.has(b.id) && b.source === "default" && b.levels > 1).map((b) => ({ at: near(b.x, b.z), what: `${b.id} ${b.levels} storeys on ${SMALL_ALONE_AREA} m² or less` }));
   },
   /**
    * A building the map puts under ground (`location=underground`: a cellar, a shelter, G-077)

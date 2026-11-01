@@ -4,6 +4,7 @@
  */
 import { LUBLIN_ANCHOR } from "../../../packages/core/src/world/city-geo.ts";
 import { asBuilding, isPart, orphanParts, partsByBuilding } from "./building-parts.ts";
+import { smallAlone } from "./building-alone.ts";
 import { makeBuilding } from "./buildings.ts";
 import { corrected } from "./corrections.ts";
 import { ALL_CHUNKS, type ChunkSpec } from "./config.ts";
@@ -146,6 +147,7 @@ const generateChunk = (
   markings: readonly Marking[],
   passages: readonly PassageOut[],
   parts: ReadonlyMap<string, readonly Area[]>,
+  alone: ReadonlySet<string>,
 ) => {
   const altitude = LUBLIN_ANCHOR.altitude;
   const t = chunkTerrain(sampleField(src, spec.rect, 12), spec.rect, altitude);
@@ -158,7 +160,7 @@ const generateChunk = (
   let withHoles = 0;
   for (const a of buildings) {
     if (!inRect(centroid(a.ring), spec.rect)) continue;
-    const r = makeBuilding(a, { src, grid: t.grid, altitude, range: spec.district.defaultLevels, shopPoints, namedPoints }, parts.get(a.id));
+    const r = makeBuilding(a, { src, grid: t.grid, altitude, range: spec.district.defaultLevels, shopPoints, namedPoints, alone }, parts.get(a.id));
     if ("skipped" in r) {
       skipped++;
       continue;
@@ -271,6 +273,8 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   const pois = allPois(data);
   const passages = buildingPassages(lines.filter((l) => near(l.line)), buildings, rects, atStreet);
   const parts = partsByBuilding(buildings, partAreas.filter((p) => !orphans.has(p)));
-  const results = chunks.map((c) => generateChunk(c, src, buildings, bands, lines, pois, markings, passages, parts));
+  // Standing alone is a property of the whole map, not of a chunk: one pass for all of them.
+  const alone = smallAlone(buildings);
+  const results = chunks.map((c) => generateChunk(c, src, buildings, bands, lines, pois, markings, passages, parts, alone));
   return { chunks: results.map((r) => r.chunk), stats: results.map((r) => r.stats) };
 };
