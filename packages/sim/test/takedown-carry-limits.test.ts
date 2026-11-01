@@ -192,4 +192,23 @@ describe("hidden and found, whatever the geometry and whoever came first (ADR-00
     run(sim, ticks(12), CROUCH);
     expect(reports.map((r) => [r.crime, r.channel, r.witnessId])).toEqual([["murder", "patrol", g.id]]);
   });
+
+  it("the weapon slots in the character menu: no drawing or holstering through the equipment (G-164)", () => {
+    const sim = Simulation.create({ seed: 1 });
+    teleportPlayer(sim, STREET_START, 0);
+    run(sim, 2);
+    for (const g of [...sim.world.with("ai")]) sim.world.remove(g);
+    const before = { ...sim.domain.equipment };
+    expect(before.secondary).not.toBeNull();
+    shoulder(sim);
+    sim.enqueue({ type: "unequip-item", slot: "secondary" });
+    sim.step(STAND);
+    expect(sim.domain.equipment).toEqual(before);
+    // Down with the body, the menu works again.
+    sim.enqueue({ type: "drop-body" });
+    sim.step(STAND);
+    sim.enqueue({ type: "unequip-item", slot: "secondary" });
+    sim.step(STAND);
+    expect(sim.domain.equipment.secondary).toBeNull();
+  });
 });
