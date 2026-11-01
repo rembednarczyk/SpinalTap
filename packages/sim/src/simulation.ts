@@ -10,6 +10,7 @@ import {
   type InputFrame,
   type SaveSnapshot,
   SAVE_SCHEMA_VERSION,
+  contractFailedFlag,
   createDomainState,
   difficultyProfile,
   isDifficultyProfile,
@@ -99,6 +100,8 @@ export class Simulation {
     const active = domain.contracts.active;
     const site = active ? { contract: active, completed: domain.contracts.completed } : saved?.endedContract;
     if (site) this.streamer.registerContract(this.world, domain.flags, site.completed, site.contract);
+    // An ended job not failed was paid: its site is cleared (G-195), before any chunk wakes.
+    if (!active && site && !domain.flags.includes(contractFailedFlag(site.contract.id))) this.streamer.clearSite();
     const focus = saved?.entities.find((e) => e.key === "player")?.position ?? PLAYER_SPAWN.position;
     this.streamer.loadInitial(this.world, domain.flags, focus, saved?.streaming.loadedChunks ?? [], domain.clock, () => this.world.add(player));
     if (player.combatant) syncPlayerWeapon(domain, player.combatant);
