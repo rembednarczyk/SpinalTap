@@ -3,7 +3,6 @@ import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import { type StreetPropItem, VEHICLE_SIZE, terrainHeightAt } from "../../../packages/core/src";
 import { planSteps } from "../../../packages/engine/src/renderer/mapcity/steps-plan";
-import { SURFACE_LIFT } from "../../../packages/engine/src/renderer/mapcity/ground-plan";
 import { facadeFrame } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
 import { planFarBuilding } from "../../../packages/engine/src/renderer/mapcity/facade-plan";
 import { type BuildingSource, mapBuilding } from "../../../packages/engine/src/renderer/mapcity/map-building";
@@ -22,11 +21,11 @@ import { furnitureClearance } from "../../../packages/sim/src/content/furniture-
 import { BOLLARD, alongSegment, anchors, chainSegments, chainThrough, distanceToPiece, furniturePrisms, furnitureRadius } from "../../../packages/sim/src/content/lublin/furniture";
 import { buildingView, isLandmark } from "../../../packages/sim/src/content/lublin";
 import { inBuilding, nearestWall } from "../../../packages/sim/src/content/lublin/places";
-import { ROAD_CHAINS, type RoadChain, polylineLength, surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
+import { ROAD_CHAINS, type RoadChain, polylineLength, surfaceLiftAt, surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
 import { clearedBuilding } from "../../../packages/sim/src/content/cleared-buildings";
 import { CLEARED_BUILDINGS, MAP_CHUNKS, PASSAGES, ROOM_SITES } from "../../../packages/sim/src/content/lublin/sites";
 import { groundY } from "../../../packages/sim/src/content/lublin/terrain";
-import { BRIDGE_DECKS } from "../../../packages/sim/src/content/lublin/decks";
+import { BRIDGE_DECKS, bridgeDeckAt } from "../../../packages/sim/src/content/lublin/decks";
 import { WORLD_CHUNKS } from "../../../packages/sim/src/content/world-map";
 import { type GroundDeck, deckAt } from "../../../packages/sim/src/world/deck";
 import { GroundField } from "../../../packages/sim/src/world/ground";
@@ -315,6 +314,36 @@ const tunnelled = (t: Readonly<Record<string, string>>) => t.tunnel === "yes" ||
 
 const laneChains =new Set(TRAFFIC_ROUTES.filter((r) => r.use === "cars").flatMap((r) => [...r.id.matchAll(/#(\d+):/g)].map((m) => Number(m[1]))));
 
+/** Top of what the renderer draws at (x, z): the ground and the highest paving of its level there (a bridge's deck or the terrain). */
+const drawnAt = (x: number, z: number) => {
+  const y = groundY(x, z);
+  return y + surfaceLiftAt(x, z, bridgeDeckAt(x, z) === y);
+};
+
+/** Every vehicle standing still: parked cars and set pieces' car, van and wreck blocks, with the drawn surface under a 3 x 3 grid of the footprint. */
+const standingVehicles = (() => {
+  let memo: { at: string; what: string; bottom: number; under: number[] }[] | null = null;
+  const grid = (x: number, z: number, ax: number, az: number, bx: number, bz: number) =>
+    [-0.5, 0, 0.5].flatMap((a) => [-0.5, 0, 0.5].map((b) => drawnAt(x + ax * a + bx * b, z + az * a + bz * b)));
+  return () => {
+    memo ??= [
+      ...PARKED_CARS.map((c) => {
+        const { width, length } = VEHICLE_SIZE[c.model];
+        const fx = Math.sin(c.yaw);
+        const fz = Math.cos(c.yaw);
+        return { at: near(c.x, c.z), what: c.model, bottom: c.y, under: grid(c.x, c.z, fz * width, -fx * width, fx * length, fz * length) };
+      }),
+      ...GAME_PROPS.flatMap((p) => {
+        const style = p.view.kind === "block" ? p.view.skin?.style : undefined;
+        if (p.view.kind !== "block" || (style !== "car" && style !== "van" && style !== "wreck")) return [];
+        const { x, y, z } = p.view.size;
+        return [{ at: near(p.center.x, p.center.z), what: style, bottom: p.center.y - y / 2, under: grid(p.center.x, p.center.z, x, 0, 0, z) }];
+      }),
+    ];
+    return memo;
+  };
+})();
+
 const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /**
    * A car lane off every road surface (on grass, a square, a pavement), away from the map's edges.
@@ -559,27 +588,21 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * under the surface drawn beneath it (G-130): the renderer drapes each surface its own lift over
    * the terrain (`SURFACE_LIFT`), so wheels set on the bare terrain sink into the paving.
    */
-  "vehicle-below-surface": () => {
-    const drawn = (x: number, z: number) => groundY(x, z) + Math.max(0, ...surfacesAt(x, z).map((s) => SURFACE_LIFT[s]));
-    const sunk = (at: string, what: string, bottom: number, x: number, z: number, ax: number, az: number, bx: number, bz: number): Finding[] => {
-      let worst = 0;
-      for (const a of [-0.5, 0, 0.5]) for (const b of [-0.5, 0, 0.5]) worst = Math.max(worst, drawn(x + ax * a + bx * b, z + az * a + bz * b) - bottom);
-      return worst > 0.1 ? [{ at, what: `${what} ${worst.toFixed(2)} m` }] : [];
-    };
-    const parked = PARKED_CARS.flatMap((c) => {
-      const { width, length } = VEHICLE_SIZE[c.model];
-      const fx = Math.sin(c.yaw);
-      const fz = Math.cos(c.yaw);
-      return sunk(near(c.x, c.z), c.model, c.y, c.x, c.z, fz * width, -fx * width, fx * length, fz * length);
-    });
-    const blocks = GAME_PROPS.flatMap((p) => {
-      const style = p.view.kind === "block" ? p.view.skin?.style : undefined;
-      if (p.view.kind !== "block" || (style !== "car" && style !== "van" && style !== "wreck")) return [];
-      const { x, y, z } = p.view.size;
-      return sunk(near(p.center.x, p.center.z), style, p.center.y - y / 2, p.center.x, p.center.z, x, 0, 0, z);
-    });
-    return [...parked, ...blocks];
-  },
+  "vehicle-below-surface": () =>
+    standingVehicles().flatMap((v) => {
+      const worst = Math.max(...v.under) - v.bottom;
+      return worst > 0.1 ? [{ at: v.at, what: `${v.what} ${worst.toFixed(2)} m` }] : [];
+    }),
+  /**
+   * A vehicle whose bottom lies more than 0.15 m over the surface drawn under its lower side
+   * (G-130): a level body on a slope lifts off the paving downhill. Set pieces' vehicles standing
+   * on something else than the map's paving (the market's overpass) aside.
+   */
+  "vehicle-off-surface": () =>
+    standingVehicles().flatMap((v) => {
+      const gap = v.bottom - Math.min(...v.under);
+      return gap > 0.15 && v.bottom - Math.max(...v.under) < 1 ? [{ at: v.at, what: `${v.what} ${gap.toFixed(2)} m` }] : [];
+    }),
   /** A map building that stays in the game through a set piece's block, or over a quarter of it on a set piece. */
   "building-in-set-piece": () =>
     MAP_CHUNKS.flatMap((c) =>

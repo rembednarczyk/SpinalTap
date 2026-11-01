@@ -21,6 +21,7 @@
   "parked-car-on-other-road": 0,
   "prop-off-ground": 0,
   "vehicle-below-surface": 0,
+  "vehicle-off-surface": 0,
   "building-in-set-piece": 0,
   "steps-micro-riser": 0,
   "bridge-without-deck": 0,
