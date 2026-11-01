@@ -27,11 +27,10 @@ export const findContractOnSiteError = (v: unknown): string | null => {
   return findContractError(v.contract);
 };
 
-/** Jobs replaced with some of their people still about (G-178): each with the keys in the world. */
+/** Jobs replaced with some of their people still about (G-178): whole contracts with the jobs done when taken. */
 export const findFormerContractsError = (v: unknown): string | null => {
   if (!Array.isArray(v)) return "contracts";
   for (const f of v) {
-    if (!isObject(f) || !Array.isArray(f.awake) || !f.awake.every((k) => typeof k === "string")) return "contracts";
     const error = findContractOnSiteError(f);
     if (error) return error;
   }

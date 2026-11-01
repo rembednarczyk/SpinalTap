@@ -1,4 +1,4 @@
-import type { Contract, ContractOnSite, EntityId, EntitySnapshot, FormerContract, GameClock, Vec3 } from "@seki/core";
+import type { Contract, ContractOnSite, EntityId, EntitySnapshot, GameClock, Vec3 } from "@seki/core";
 import type { World } from "miniplex";
 import { type ChunkDef, type DistrictId, WORLD_CHUNKS, WORLD_DEVICES, WORLD_METRO, chunkAt, distanceToRect } from "../content/world-map";
 import type { DeviceDef } from "../content/devices";
@@ -51,6 +51,12 @@ const NO_CHANGE: StreamingChange = { loaded: [], unloaded: [] };
  */
 const keysOf = (templates: readonly Template[]): string[] => templates.flatMap((t) => (t.key ? [t.key] : []));
 
+const liveKeys = (world: World<Entity>): Set<string> => {
+  const live = new Set<string>();
+  for (const e of world) if (e.key) live.add(e.key);
+  return live;
+};
+
 export class WorldStreamer {
   private readonly catalog: StreamCatalog;
   private readonly state: StreamState = { resident: new Set(), dormant: new Map(), streamedOut: new Set() };
@@ -64,12 +70,12 @@ export class WorldStreamer {
   private contract: ContractOnSite | null = null;
   private contractKeys: readonly string[] = [];
   /**
-   * Jobs replaced by a newer one, with their people's keys: those still about (alerted guards
-   * fighting on) are saved with them (G-178). Keys only, so the list costs next to nothing.
+   * Jobs replaced by a newer one while some of their people are still in the world (G-178), with
+   * their keys: those people (alerted guards fighting on) are saved with them. No chunk brings
+   * them back, so one who falls asleep with his chunk is forgotten, not kept dormant.
    */
-  private readonly former: { readonly site: ContractOnSite; readonly keys: readonly string[] }[] = [];
-  /** Keys of replaced jobs' people who were in the world when the game being loaded was saved. */
-  private readonly formerAwake = new Set<string>();
+  private former: { readonly site: ContractOnSite; readonly keys: readonly string[] }[] = [];
+  private readonly formerKeys = new Set<string>();
   /** Ids of entities currently asleep in an unloaded chunk (lets the renderer skip exit animations). */
   readonly streamedOut: Set<EntityId>;
   /** Ids reserved for each chunk's background passers-by (ADR-0040); the passer-by system spawns them. */
@@ -140,7 +146,7 @@ export class WorldStreamer {
    * site is resident. Ids are reserved for every target, in index order.
    */
   registerContract(world: World<Entity>, flags: readonly string[], completed: number, contract: Contract): void {
-    if (this.contract) this.former.push({ site: this.contract, keys: this.contractKeys });
+    if (this.contract) this.retire(world, { site: this.contract, keys: this.contractKeys });
     this.contract = { contract, completed };
     const templates = contractTemplates(this.ids, this.chunks, completed, contract);
     this.contractKeys = keysOf(templates);
@@ -154,24 +160,31 @@ export class WorldStreamer {
     return this.contract;
   }
 
-  /** A replaced job of the save being loaded (G-178): its templates, so its saved people come back. */
-  restoreFormer(f: FormerContract): void {
-    const templates = contractTemplates(this.ids, this.chunks, f.completed, f.contract);
-    this.catalog.addFormer(templates);
-    this.former.push({ site: { contract: f.contract, completed: f.completed }, keys: keysOf(templates) });
-    for (const key of f.awake) this.formerAwake.add(key);
+  /**
+   * A job replaced (G-178): its sleepers are forgotten, as no chunk wakes them any more, and so
+   * are the replaced jobs with nobody left in the world.
+   */
+  private retire(world: World<Entity>, job: { readonly site: ContractOnSite; readonly keys: readonly string[] }): void {
+    const live = liveKeys(world);
+    this.former = [...this.former, job].filter((f) => f.keys.some((k) => live.has(k)));
+    this.formerKeys.clear();
+    for (const f of this.former) for (const k of f.keys) this.formerKeys.add(k);
+    for (const k of job.keys) this.state.dormant.delete(k);
   }
 
-  /** The replaced jobs with some of their people still in the world or asleep in a chunk (G-178). */
-  formerSnapshots(world: World<Entity>): FormerContract[] {
-    const live = new Set<string>();
-    for (const e of world) if (e.key) live.add(e.key);
-    const out: FormerContract[] = [];
-    for (const { site, keys } of this.former) {
-      if (!keys.some((k) => live.has(k) || this.state.dormant.has(k))) continue;
-      out.push({ ...site, awake: keys.filter((k) => live.has(k)) });
-    }
-    return out;
+  /** A replaced job of the save being loaded (G-178): its templates, so its saved people come back. */
+  restoreFormer(site: ContractOnSite): void {
+    const templates = contractTemplates(this.ids, this.chunks, site.completed, site.contract);
+    this.catalog.addFormer(templates);
+    const keys = keysOf(templates);
+    this.former.push({ site, keys });
+    for (const k of keys) this.formerKeys.add(k);
+  }
+
+  /** The replaced jobs with some of their people still in the world (G-178). */
+  formerSnapshots(world: World<Entity>): ContractOnSite[] {
+    const live = liveKeys(world);
+    return this.former.filter((f) => f.keys.some((k) => live.has(k))).map((f) => f.site);
   }
 
   /** Spawns the contract's characters that were waiting for a flag that is now up (ADR-0024). */
@@ -199,9 +212,7 @@ export class WorldStreamer {
 
   /** Re-applies saved entity state: live entities directly, the rest as pinned or dormant. */
   restoreEntities(world: World<Entity>, flags: readonly string[], saved: readonly EntitySnapshot[]): void {
-    const parts = { state: this.state, catalog: this.catalog, spawner: this.spawner, chunkIdAt: (p: Vec3) => this.chunkIdAt(p), formerAwake: this.formerAwake };
-    restoreEntities(world, flags, saved, parts);
-    this.formerAwake.clear();
+    restoreEntities(world, flags, saved, { state: this.state, catalog: this.catalog, spawner: this.spawner, chunkIdAt: (p) => this.chunkIdAt(p) });
   }
 
   /** Loads and unloads chunks around `focus`. Unloads first, so ids never collide. */
@@ -219,7 +230,7 @@ export class WorldStreamer {
       else if (!resident.has(c.id) && d <= this.radii.loadRadius) (loaded ??= []).push(c.id);
     }
     if (!unloaded && !loaded) return NO_CHANGE;
-    if (unloaded) unloadChunks(world, this.state, new Set(unloaded), (p) => this.chunkIdAt(p));
+    if (unloaded) unloadChunks(world, this.state, new Set(unloaded), (p) => this.chunkIdAt(p), this.formerKeys);
     for (const id of loaded ?? []) {
       resident.add(id);
       this.spawner.spawnProps(world, id);

@@ -101,15 +101,6 @@ export interface ContractOnSite {
   readonly completed: number;
 }
 
-/**
- * A job replaced by a newer one while some of its people are still about (G-178): no chunk
- * brings them back any more, so only those saved return. `awake` are the keys in the world, the
- * rest sleep in their chunks for good.
- */
-export interface FormerContract extends ContractOnSite {
-  readonly awake: readonly string[];
-}
-
 export interface SaveSnapshot {
   readonly version: typeof SAVE_SCHEMA_VERSION;
   readonly seed: number;
@@ -133,8 +124,12 @@ export interface SaveSnapshot {
    * is in the log, running or cleared (its targets come from there), and before the first is taken.
    */
   readonly endedContract?: ContractOnSite;
-  /** Jobs replaced while some of their people are still about (G-178), in the order taken. Absent when none. */
-  readonly formerContracts?: readonly FormerContract[];
+  /**
+   * Jobs replaced by a newer one while some of their people are still in the world (G-178), in
+   * the order taken: no chunk brings them back, so only those saved return. Who of them falls
+   * asleep with a chunk is gone for good, and the job with him once nobody is left. Absent when none.
+   */
+  readonly formerContracts?: readonly ContractOnSite[];
   /** Serialized ink story state (inkjs JSON). */
   readonly narrative: string | null;
   readonly meta: { readonly label: string; readonly objective: string };

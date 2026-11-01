@@ -12,22 +12,12 @@ export interface RestoreParts {
   readonly catalog: StreamCatalog;
   readonly spawner: ActorSpawner;
   readonly chunkIdAt: (p: Vec3) => string;
-  /** Keys of replaced jobs' people who were in the world when the game was saved (G-178). */
-  readonly formerAwake: ReadonlySet<string>;
 }
 
-/**
- * A replaced job's person (G-178): in the world if he was when saved, else asleep for good, as
- * in the saved game, where no chunk brings him back.
- */
-const restoreFormer = (world: World<Entity>, flags: readonly string[], s: EntitySnapshot, t: Template, parts: RestoreParts): void => {
+/** A replaced job's person (G-178): saved only while in the world, so back in it. */
+const restoreFormer = (world: World<Entity>, flags: readonly string[], s: EntitySnapshot, t: Template, spawner: ActorSpawner): void => {
   if (isDead(flags, s.key) && !s.downed?.dead) return;
-  if (!parts.formerAwake.has(s.key)) {
-    parts.state.dormant.set(s.key, s);
-    parts.state.streamedOut.add(t.id);
-    return;
-  }
-  const e = world.add(revived(parts.spawner.build(t), s));
+  const e = world.add(revived(spawner.build(t), s));
   if (s.downed) restoreDowned(world, e, s.downed);
 };
 
@@ -49,7 +39,7 @@ export const restoreEntities = (world: World<Entity>, flags: readonly string[], 
     }
     const former = catalog.formerOf(s.key);
     if (former) {
-      restoreFormer(world, flags, s, former, parts);
+      restoreFormer(world, flags, s, former, spawner);
       continue;
     }
     const t = catalog.placeOf(s.key, flags);
