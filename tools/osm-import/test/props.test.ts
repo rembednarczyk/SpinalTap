@@ -6,6 +6,7 @@ import { KRAKOWSKIE_CHUNKS } from "../../../packages/sim/src/content/lublin/krak
 import { NABRZEZE_CHUNKS } from "../../../packages/sim/src/content/lublin/nabrzeze.generated.ts";
 import { PODZAMCZE_CHUNKS } from "../../../packages/sim/src/content/lublin/podzamcze.generated.ts";
 import { STARE_MIASTO_CHUNKS } from "../../../packages/sim/src/content/lublin/stare-miasto.generated.ts";
+import { GATE_PASSAGES } from "../../../packages/sim/src/content/lublin/gate-passages.ts";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
 import { REPO } from "../src/paths.ts";
 import { emitProps } from "../src/props-emit.ts";
@@ -107,6 +108,40 @@ describe("street furniture generator (ADR-0047)", () => {
       // The houses' facade either side of the gate keeps its lanterns.
       expect(lanterns.filter((l) => Math.abs(l.z - 37.7) < 0.1 && (l.x < 38 || l.x > 54)).length).toBeGreaterThanOrEqual(7);
     }
+  });
+
+  it("hangs no wall lantern under a gate the game cuts by hand, with no passage in its chunk, and keeps the next house's past its front (G-183)", () => {
+    // Brama Krakowska's own axis and a street along it, a row of houses beside it, the gate's house
+    // over it from 6.45 to 26.55 m along (as the map's), open south of the axis between its two
+    // blocks, and a house 1.7 m off the axis from 1 m past the gate's east front on.
+    const { building, from, to } = GATE_PASSAGES[0]!;
+    const len = Math.hypot(to.x - from.x, to.z - from.z);
+    const [ux, uz] = [(to.x - from.x) / len, (to.z - from.z) / len];
+    const at = (u: number, v: number) => [from.x + ux * u - uz * v, from.z + uz * u + ux * v] as const;
+    const house = (id: string, uv: readonly (readonly [number, number])[]) => {
+      const [x, z] = at(uv.reduce((m, [u]) => m + u, 0) / uv.length, uv.reduce((m, [, v]) => m + v, 0) / uv.length);
+      return { ...street().buildings[0]!, id, x, z, outline: uv.flatMap(([u, v]) => at(u, v)).map((c, k) => c - (k % 2 === 0 ? x : z)) };
+    };
+    const box = (u0: number, u1: number, v0: number, v1: number) => [[u0, v0], [u1, v0], [u1, v1], [u0, v1]] as const;
+    const gate = house(building, [[6.45, -8], [12, -8], [12, 1.7], [20, 1.7], [20, -8], [26.55, -8], [26.55, 8], [6.45, 8]]);
+    const chunk: LublinChunkData = {
+      ...street(),
+      bounds: { minX: 400, maxX: 550, minZ: -160, maxZ: -20 },
+      terrain: { originX: 400, originZ: -160, cell: 50, cols: 4, rows: 4, heights: Array<number>(16).fill(0) },
+      buildings: [house("w1", box(-40, len + 40, 8, 22)), gate, house("w3", box(27.55, len + 20, -12, -1.7))],
+      ground: [{ surface: "sidewalk", outline: box(-40, len + 40, -8, 8).flatMap(([u, v]) => at(u, v)) }],
+      streets: [{ name: "Bramowa", kind: "pedestrian", line: [...at(-40, 0), ...at(len + 40, 0)] }],
+    };
+    const plan: PropsPlan = { items: [{ id: "wall", kind: "lamp-wall-lantern", lines: [[...at(-40, 0), ...at(len + 40, 0)]], spacing: 5 }] };
+    const lanterns = generateProps(plan, [chunk])
+      .byChunk.get("test-0-0")!
+      .filter((i) => i.prop === "lamp-wall-lantern")
+      .map((l) => ({ s: (l.x - from.x) * ux + (l.z - from.z) * uz, v: (l.x - from.x) * -uz + (l.z - from.z) * ux }));
+    const show = (l: { s: number; v: number }) => `${l.s.toFixed(1)},${l.v.toFixed(1)}`;
+    expect(lanterns.filter((l) => l.s > 5.95 && l.s < 27.05 && Math.abs(l.v) < 2).map(show)).toEqual([]);
+    // The house past the gate's mouth keeps its lanterns by the axis, and so does the row beside the street.
+    expect(lanterns.filter((l) => l.s > 27.05 && l.s < len && Math.abs(l.v) < 2).length).toBeGreaterThan(0);
+    expect(lanterns.filter((l) => l.v > 7).length).toBeGreaterThanOrEqual(7);
   });
 
   it("keeps a lamp of a paved square off the axis of the car street beside it (G-004)", () => {
