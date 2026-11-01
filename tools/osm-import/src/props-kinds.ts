@@ -108,6 +108,7 @@ export const SKIPPED: Readonly<Record<string, string>> = {
   "vehicle-trolleybus": "a moving vehicle, not static furniture",
   "shop-sign-bracket": "shop signs belong to the facades' neon (ADR-0044)",
   plaque: "plaques sit on facades",
+  "atm-indoor": "a cash machine inside a building (OSM indoor=yes)",
   cafe: "a point of interest inside a building",
   "food-outlet": "a point of interest inside a building",
   toilet: "a small building",

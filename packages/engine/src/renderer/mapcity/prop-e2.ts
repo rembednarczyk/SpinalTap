@@ -48,13 +48,13 @@ export const RACK_SHAPES: readonly (readonly [RackSlot, RackSlot])[] = [
   ["bike", "scooter"],
 ];
 
-/** A bike across the hoops at x: two wheels, the frame and the handlebar (1.7 m long). */
+/** A bike across the hoops at x: two wheels, the frame and the handlebar (1.65 m long). */
 const bike = (sink: MeshSink, x: number): void => {
   const frame = paint("#167a80");
-  for (const z of [-0.55, 0.55]) path(sink, arc(v3(x, 0.33, z), v3(0, 0, 1), v3(0, 1, 0), 0.33, 0, Math.PI * 2, 10), 0.025, TYRE, 4);
-  path(sink, [v3(x, 0.33, -0.55), v3(x, 0.75, -0.1), v3(x, 0.8, 0.45), v3(x, 0.33, 0.55)], 0.025, frame, 4);
-  tube(sink, v3(x, 0.33, -0.55), v3(x, 0.33, 0.05), 0.02, frame, 4);
-  tube(sink, v3(x, 0.33, 0.05), v3(x, 0.75, -0.1), 0.02, frame, 4);
+  for (const z of [-0.5, 0.5]) path(sink, arc(v3(x, 0.3, z), v3(0, 0, 1), v3(0, 1, 0), 0.3, 0, Math.PI * 2, 10), 0.025, TYRE, 4);
+  path(sink, [v3(x, 0.3, -0.5), v3(x, 0.75, -0.1), v3(x, 0.8, 0.45), v3(x, 0.3, 0.5)], 0.025, frame, 4);
+  tube(sink, v3(x, 0.3, -0.5), v3(x, 0.3, 0.05), 0.02, frame, 4);
+  tube(sink, v3(x, 0.3, 0.05), v3(x, 0.75, -0.1), 0.02, frame, 4);
   tube(sink, v3(x - 0.25, 0.98, 0.45), v3(x + 0.25, 0.98, 0.45), 0.02, DARK, 4);
   tube(sink, v3(x, 0.8, 0.45), v3(x, 0.98, 0.45), 0.02, DARK, 4);
 };

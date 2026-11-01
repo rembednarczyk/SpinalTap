@@ -4,7 +4,7 @@ Surowe dane, z których `tools/osm-import` generuje Lublin 2077 (ADR-0042). Pobi
 
 ## OpenStreetMap
 
-- **Pliki:** `data/osm/<dystrykt>.json`.
+- **Pliki:** `data/osm/<dystrykt>.json` i `data/osm/points/hydrants.json` (hydranty `emergency=fire_hydrant` z tych samych prostokątów, `pnpm osm:hydrants`, bo wyciągi dystryktów trzymają tylko nazwane punkty).
   - Wyciąg z `api.openstreetmap.org/api/0.6/map` dla prostokątów dystryktów z marginesem 40 m.
   - Bez metadanych edycji (wersja, autor, zestaw zmian, czas) i bez elementów, których generator nie czyta (trasy, granice, zakazy skrętu).
   - Bez części tagów (notatki, źródła, adresy WWW, telefony, godziny otwarcia).

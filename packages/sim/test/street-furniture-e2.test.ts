@@ -26,26 +26,30 @@ describe("street furniture of ADR-0058 stage 2", () => {
     expect(extent("container").d).toBeCloseTo(2.44);
     expect(extent("atm")).toEqual({ w: 0.7, d: 0.6, top: 1.75 });
     expect(extent("hydrant").top).toBe(0.9);
-    // The bikes stand across the rack's hoops: 1.76 m deep, the hoops' 1.6 m row and a handlebar wide.
-    expect(extent("bike-rack").d).toBeCloseTo(1.76);
-    expect(extent("bike-rack").w).toBeCloseTo(2);
+    // The bikes stand across the rack's hoops: 1.66 m deep, the hoops' 1.6 m row wide; no wider, so
+    // a rack behind a row of bollards leaves their chains whole (kp-zachod, -137, -52).
+    expect(extent("bike-rack").d).toBeCloseTo(1.66);
+    expect(extent("bike-rack").w).toBeCloseTo(1.7);
     // Turned a quarter, the long cart runs along z.
     const turned = furniturePrisms(piece("food-cart", Math.PI / 2))[0]!.points;
     expect(Math.max(...turned.map((q) => q.z)) - Math.min(...turned.map((q) => q.z))).toBeCloseTo(3.9);
   });
 
   it("Lublin has them where the data and the rules put them, on the game's ground", () => {
-    // Of OSM's eleven cash machines one in a facade by the kerb has no pavement in front and two
-    // stand where the game's own set pieces are.
-    expect(ofKind("atm").length).toBeGreaterThanOrEqual(8);
-    expect(ofKind("hydrant").length).toBeGreaterThanOrEqual(30);
+    // OSM's eleven cash machines less one indoors and one whose wall gives onto the carriageway of
+    // Kozia; two more stand where the game's own set pieces are.
+    expect(ofKind("atm").length).toBeGreaterThanOrEqual(7);
+    // The six pillar hydrants of OSM in the chunks (data/osm/points/hydrants.json).
+    expect(ofKind("hydrant").length).toBe(6);
     expect(ofKind("food-cart").length).toBeGreaterThanOrEqual(5);
-    expect(ofKind("container").length).toBe(8);
-    // Three food carts by the market on Ruska, the containers in the riverside's yard.
+    expect(ofKind("container").length).toBe(6);
+    // Three food carts by the market on Ruska; the containers on the Giełda na Kresowej (its part in the chunks).
     expect(ofKind("food-cart").filter((i) => i.x > 700 && i.x < 860 && i.z > 500 && i.z < 600).length).toBeGreaterThanOrEqual(3);
     for (const c of ofKind("container")) {
-      expect(c.x).toBeGreaterThan(2440);
-      expect(c.x).toBeLessThan(2560);
+      expect(c.x).toBeGreaterThan(2300);
+      expect(c.x).toBeLessThan(2380);
+      expect(c.z).toBeGreaterThan(215);
+      expect(c.z).toBeLessThan(262);
     }
     for (const i of [...ofKind("atm"), ...ofKind("hydrant"), ...ofKind("food-cart"), ...ofKind("container")]) expect(i.y, i.prop).toBeCloseTo(groundY(i.x, i.z), 1);
   });

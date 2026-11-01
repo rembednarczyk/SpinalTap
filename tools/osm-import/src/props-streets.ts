@@ -1,7 +1,7 @@
 /**
  * Groups of the street furniture plan without positions (ADR-0047): flower baskets hang on
- * every second pastoral lamp and candelabrum near their lines, manholes, cabinets and fire
- * hydrants follow the streets, name plates stand at junctions, bins go beside bus stops and benches.
+ * every second pastoral lamp and candelabrum near their lines, manholes and cabinets follow the
+ * streets, name plates stand at junctions, bins go beside bus stops and benches.
  */
 import type { StreetPropKind } from "../../../packages/core/src/world/city-geo.ts";
 import { type Pt } from "./geometry.ts";
@@ -91,7 +91,7 @@ const manholes = (site: Site, item: PlanItem): Placed[] =>
     return site.surfaceAt(q) === "road" ? [{ prop: "manhole" as const, p: q, yaw: yawOf(n.z, -n.x), key }] : [];
   });
 
-/** Things at the kerb along the roads, facing the road (cabinets, hydrants). */
+/** Things at the kerb along the roads, facing the road (cabinets). */
 const atKerb = (site: Site, item: PlanItem, prop: StreetPropKind): Placed[] =>
   roadStations(site, item.count ?? 0, item.id).flatMap(({ p, n, key }) => {
     const d = sideOffset(site, p, n, "kerb", 3);
@@ -159,8 +159,6 @@ export const placeStreetGroup = (site: Site, item: PlanItem, placed: readonly Pl
       return manholes(site, item);
     case "street-cabinet":
       return atKerb(site, item, "street-cabinet");
-    case "hydrant":
-      return atKerb(site, item, "hydrant");
     case "street-plate":
       return namePlates(site, item);
     case "waste-bin":

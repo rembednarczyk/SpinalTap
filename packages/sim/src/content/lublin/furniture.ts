@@ -76,9 +76,9 @@ const PARTS: Partial<Record<StreetPropKind, (shape: number, variant: number) => 
   monument: (s) => [s === 0 ? box(0, 0, 1.4, 1.4, 11) : s === 1 ? box(0, 0, 0.9, 0.9, 3.5) : s === 2 ? box(0, 0, 0.45, 0.3, 1.2) : box(0, 0, 0.5, 0.5, 2.6)],
   artwork: (s) => [s === 0 ? box(0, 0, 1.4, 1.4, 11) : s === 1 ? box(0, 0, 0.9, 0.9, 3.5) : s === 2 ? box(0, 0, 0.45, 0.3, 1.2) : box(0, 0, 0.5, 0.5, 2.6)],
   // ADR-0058 stage 2. The rack's three hoops with the bikes and scooters parked across them
-  // (1.75 m long), a free-standing cash machine, a fire hydrant, a food cart 3.9 x 1.5 m under
+  // (1.66 m long), a free-standing cash machine, a fire hydrant, a food cart 3.9 x 1.5 m under
   // its roof and a 20 ft shipping container.
-  "bike-rack": () => [box(0, 0, 1.0, 0.88, 1.1)],
+  "bike-rack": () => [box(0, 0, 0.85, 0.83, 1.1)],
   atm: () => [box(0, 0, 0.35, 0.3, 1.75)],
   hydrant: () => [post(0.17, 0.9)],
   "food-cart": () => [box(0, 0, 1.95, 0.75, 2.65)],

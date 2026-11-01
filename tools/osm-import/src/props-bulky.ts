@@ -1,6 +1,6 @@
 /**
  * Long pieces on and by a marketplace's outline (ADR-0058 stage 2): food carts and shipping
- * containers, set where their whole footprint and a walkway round it lie on open paved ground of the map,
+ * containers, set where their whole footprint and a walkway round it lie on open, level paved ground of the map,
  * off paths and car lanes and clear of the stalls and furniture placed before. The long side
  * runs along the outline's longer axis or across it, the front towards the more open side. No
  * randomness: candidates every metre, tried in the order of a hash of their position.
@@ -79,22 +79,20 @@ const samples = (p: Pt, u: Pt, a: number, b: number): Pt[] => {
   return out;
 };
 
-/** Kinds that may also stand on bare ground with no surface of the map (a yard, a vacant lot). */
-const ON_BARE: ReadonlySet<StreetPropKind> = new Set(["container"]);
+/** Open paved ground of the map: in a chunk, a pavement or square, not a footpath. */
+const open = (site: Site, q: Pt): boolean => site.chunkAt(q) !== null && site.surfaceAt(q) === "walk" && !site.onPath(q);
 
-const openFor = (prop: StreetPropKind) => {
-  const bare = ON_BARE.has(prop);
-  return (site: Site, q: Pt): boolean => {
-    if (site.chunkAt(q) === null || site.onPath(q)) return false;
-    const s = site.surfaceAt(q);
-    return s === "walk" || (bare && s === null);
-  };
+/** How much the ground may fall under a piece's footprint (m): a container or a cart stands level. */
+const MAX_FALL = 0.5;
+
+const level = (site: Site, foot: readonly Pt[]): boolean => {
+  const hs = foot.map((q) => site.heightAt(q));
+  return Math.max(...hs) - Math.min(...hs) < MAX_FALL;
 };
 
 /** Up to `count` pieces of `prop` with their centres on the outline, clear of `placed`. */
 export const bulkyPieces = (site: Site, ring: readonly Pt[], prop: StreetPropKind, count: number, seed: string, placed: readonly Placed[]): Placed[] => {
   const { hx, hz } = halfExtents(prop);
-  const open = openFor(prop);
   const b = ringBounds(ring);
   const candidates: Pt[] = [];
   for (let x = Math.floor(b.minX - REACH) + 0.5; x < b.maxX + REACH; x++)
@@ -112,6 +110,7 @@ export const bulkyPieces = (site: Site, ring: readonly Pt[], prop: StreetPropKin
     for (const u of [long, { x: -long.z, z: long.x }]) {
       const foot = samples(p, u, hx + WALKWAY, hz + WALKWAY);
       if (!foot.every((q) => open(site, q) && !near(grid, q) && !nearTraffic(site, q, TRAFFIC_REACH))) continue;
+      if (!level(site, samples(p, u, hx, hz))) continue;
       // The front (v) towards the side with more open ground a few metres out.
       const v = { x: -u.z, z: u.x };
       const ahead = (sign: number) => samples({ x: p.x + v.x * sign * (hz + 3), z: p.z + v.z * sign * (hz + 3) }, u, hx, 1).filter((q) => open(site, q)).length;

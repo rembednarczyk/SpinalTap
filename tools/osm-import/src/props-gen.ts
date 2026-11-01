@@ -313,6 +313,9 @@ const WALL_ROOM: Partial<Record<StreetPropKind, number>> = {
  */
 const WALL_REACH: Partial<Record<StreetPropKind, number>> = { floodlight: 10 };
 
+/** How far a piece may end up from its point in the plan (m), at most. */
+const MAX_MOVE: Partial<Record<StreetPropKind, number>> = { hydrant: 3 };
+
 /** Kinds of ADR-0058 stage 2 that never stand in the carriageway, even moved out of a wall. */
 const KERB_SHY: ReadonlySet<StreetPropKind> = new Set(["atm", "hydrant", "food-cart", "container"]);
 
@@ -425,7 +428,9 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
     const surface = site.surfaceAt(x.p);
     const fits = (q: Pt) => site.surfaceAt(q) === surface && site.chunkAt(q) === chunk && (room === undefined || offWall(site, q, room) === q);
     const item = clearSpot(solids, { prop: x.prop, x: r1(x.p.x), y: 0, z: r1(x.p.z), yaw: r2(facingOf(site, x)), variant }, fits);
-    if (!item) {
+    // A piece from an OSM node that may not wander off it (a hydrant on its water main).
+    const reach = MAX_MOVE[x.prop];
+    if (!item || (reach !== undefined && Math.hypot(item.x - placedAt.p.x, item.z - placedAt.p.z) > reach)) {
       crowded++;
       continue;
     }
