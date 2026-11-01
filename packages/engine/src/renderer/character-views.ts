@@ -18,13 +18,13 @@ import {
 import { markEnforcer } from "./enforcer-mark";
 import { withinDrawDistance } from "./character-lod";
 import { easeLift, groundLift } from "./ground-lift";
-import { Loadouts } from "./loadout";
+import { CharacterKit } from "./character-kit";
 import { CharacterModels } from "./character-models";
 import { type CharacterModelKey, type CharacterModelManifest, ModelLibrary } from "./model-library";
 import type { HumanoidRetarget } from "./model-rig";
 import { type ScanClass, scanClassOfView } from "./scan-highlight";
 import type { FxActors, ScanVisitor } from "./screen-fx";
-import { type WeaponManifest, WeaponMounts } from "./weapon-mount";
+import type { WeaponManifest } from "./weapon-mount";
 
 /** The player, NPCs and enemies. */
 export type CharacterDescriptor = Extract<ViewDescriptor, { kind: "heroine" | "npc" | "enemy" }>;
@@ -68,6 +68,13 @@ const applyTransform = (rig: CharacterRig, t: Transform, lift: number): void => 
   rig.root.rotation.y = t.yaw;
 };
 
+/** First off the model's bones (gun, add-ons) and its own colours back, then into the pool. */
+const disposeRig = (rig: CharacterRig, kit: CharacterKit, models: CharacterModels): void => {
+  kit.loadouts.dispose(rig);
+  models.release(rig);
+  rig.root.dispose(false, false);
+};
+
 export interface CharacterViewsDeps {
   /** How far the picture lifts feet standing at (x, y, z) (sidewalks, ADR-0041/0045); default the old street's. */
   readonly lift?: (x: number, y: number, z: number) => number;
@@ -89,22 +96,15 @@ export class CharacterViews implements FxActors {
   private readonly views = new Map<EntityId, CharacterView>();
   /** Characters playing their death fall after the simulation removed them. */
   private readonly dying: CharacterRig[] = [];
-  private readonly library: ModelLibrary;
-  private readonly weapons: WeaponMounts;
-  /** Weapons and garment add-ons per character, from `setAppearance`. */
-  private readonly loadouts: Loadouts;
+  /** Weapons, loadouts and the weapon in hand per character. */
+  private readonly kit: CharacterKit;
   /** Imported models dressed over the rigs, and their pool. */
   private readonly models: CharacterModels;
-  /** Weapon in hand per character, so the FPP viewmodel can follow whoever the camera takes. */
-  private readonly held = new Map<EntityId, WeaponLook | null>();
 
   constructor(private readonly deps: CharacterViewsDeps) {
-    this.library = new ModelLibrary(deps.scene, deps.materials);
-    this.weapons = new WeaponMounts(this.library);
-    this.loadouts = new Loadouts(deps.scene, deps.materials, this.weapons, (meshes) => {
-      for (const m of meshes) deps.shadow.addCaster(m);
-    });
-    this.models = new CharacterModels({ library: this.library, loadouts: this.loadouts, addCaster: (m) => deps.shadow.addCaster(m) });
+    const library = new ModelLibrary(deps.scene, deps.materials);
+    this.kit = new CharacterKit({ ...deps, library });
+    this.models = new CharacterModels({ library, loadouts: this.kit.loadouts, addCaster: (m) => deps.shadow.addCaster(m) });
   }
 
   has(id: EntityId): boolean {
@@ -137,7 +137,7 @@ export class CharacterViews implements FxActors {
   }
 
   heldOf(id: EntityId): WeaponLook | null {
-    return this.held.get(id) ?? null;
+    return this.kit.heldOf(id);
   }
 
   talk(id: EntityId, seconds: number): void {
@@ -174,19 +174,19 @@ export class CharacterViews implements FxActors {
     const v = this.views.get(id);
     if (!v) return;
     this.views.delete(id);
-    this.held.delete(id);
+    this.kit.forget(id);
     if (fall) {
       startDeath(v.rig);
       this.dying.push(v.rig);
     } else {
-      this.disposeRig(v.rig);
+      disposeRig(v.rig, this.kit, this.models);
     }
   }
 
   /** Removes every character at once, the falling ones too. */
   clear(): void {
     for (const id of this.ids()) this.despawn(id, false);
-    for (const rig of this.dying.splice(0)) this.disposeRig(rig);
+    for (const rig of this.dying.splice(0)) disposeRig(rig, this.kit, this.models);
   }
 
   /**
@@ -221,13 +221,13 @@ export class CharacterViews implements FxActors {
       if (!rig) continue;
       animateRig(rig, 0, dt);
       if (deathFinished(rig)) {
-        this.disposeRig(rig);
+        disposeRig(rig, this.kit, this.models);
         this.dying.splice(i, 1);
       }
     }
     this.models.update(dt, clock);
-    for (const v of this.views.values()) if (v.rig.root.isEnabled(false)) this.loadouts.update(v.rig);
-    for (const rig of this.dying) this.loadouts.update(rig);
+    for (const v of this.views.values()) if (v.rig.root.isEnabled(false)) this.kit.loadouts.update(v.rig);
+    for (const rig of this.dying) this.kit.loadouts.update(rig);
   }
 
   /** Hides the player's body in first person. */
@@ -247,26 +247,14 @@ export class CharacterViews implements FxActors {
    * viewmodel and the hands of imported characters. Characters on screen are re-armed.
    */
   setWeaponModels(manifest: WeaponManifest): void {
-    const camera = this.deps.camera;
-    this.weapons.setManifest(manifest);
-    this.loadouts.remountAll();
-    if (this.weapons.has("pistol")) {
-      void this.weapons.mount(camera.weaponMount, "pistol", "vm-weapon", "view").then((pivot) => {
-        if (pivot) camera.hidePlaceholderGun();
-      });
-    }
+    this.kit.setWeaponModels(manifest);
   }
 
   /** What a character wears and carries (ADR-0015): weapons in hand, holster and on the back, garment add-ons. */
   setAppearance(id: EntityId, appearance: AppearanceDescriptor): void {
     const v = this.views.get(id);
     if (!v || !v.rig.aiming) return;
-    const w = appearance.weapons;
-    // A baton or blade in hand swings and guards instead of aiming (ADR-0019).
-    v.rig.melee = w.active === "melee" && w.melee !== null;
-    this.held.set(id, w[w.active]);
-    if (id === this.deps.cameraTarget()) this.deps.camera.setHeldWeapon(w[w.active]);
-    this.loadouts.set(v.rig, appearance, v.name);
+    this.kit.arm(id, v.rig, v.name, appearance);
   }
 
   /** Imported character models (models/manifest.json); characters on screen are dressed too. */
@@ -277,13 +265,6 @@ export class CharacterViews implements FxActors {
 
   /** Starts loading every model of the manifest and every weapon, one promise per file (ADR-0057). */
   preloadModels(): Promise<unknown>[] {
-    return [...this.models.preload(), ...this.weapons.preload()];
-  }
-
-  private disposeRig(rig: CharacterRig): void {
-    // First off the model's bones (gun, add-ons) and its own colours back, then into the pool.
-    this.loadouts.dispose(rig);
-    this.models.release(rig);
-    rig.root.dispose(false, false);
+    return [...this.models.preload(), ...this.kit.preload()];
   }
 }
