@@ -5,6 +5,12 @@ Zmiany widoczne dla gracza, od najnowszych. Wersja gry i commit są na ekranie t
 ## Nieopublikowane (0.1.0)
 
 ### 1 listopada 2026
+- Auta na pasach postojowych z mapy stoją przy krawężniku całą bryłą w obrysie, a na pasach z `orientation=perpendicular` i głębokich bez tagu w poprzek ulicy (G-177).
+- Zapis i wczytanie w trakcie infiltracji nie zerują czujności strażników: kto zaczął dostrzegać Seki, po wczytaniu dalej ją dostrzega, a gra toczy się dalej tak samo jak bez wczytania (G-174, zapis v21).
+- Latarnie ścienne Starego Miasta nie wiszą już w przejazdach Bramy Krakowskiej, Bramy Grodzkiej i Ku Farze, a latarnia z wylotu przejścia pod Wieżą Trynitarską przeszła na ścianę obok (G-173).
+- Neonowe rurki pod gzymsem kończą się przed sąsiednim budynkiem, który wystaje przed ścianę, zamiast wchodzić w jego mur (G-170).
+- Szkielety postaci znikają razem z nimi: każda nowa gra i każda postać spoza zasięgu nie zostawia już szkieletu w pamięci (G-184).
+- Przechodnie z placów i alejek chodzą chodnikiem obok pasów postojowych, nie po nich (Kowalska, Świętoduska; G-177).
 - Zaparkowane auta na pasach postojowych zmapowanych w OSM wzdłuż krawężnika (`parking=street_side`, `lane`), 17 aut więcej.
 - Zaparkowane auta nie stoją na przystankach autobusowych ani 15 m przed i za słupkiem, jak każe art. 49 PoRD (G-156).
 - Zaparkowane auta nie stoją przy krawężniku ulic o dwóch pasach i więcej w każdą stronę poza zmapowanymi parkingami, jak 3 Maja (G-155).
