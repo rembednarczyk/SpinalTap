@@ -18,6 +18,9 @@ export const PROP_SHAPES: Readonly<Partial<Record<StreetPropKind, number>>> = {
   "cafe-garden": 3,
   "advertising-column": 2,
   "vending-machine": 3,
+  // ADR-0058 stage 2: what a rack's two slots hold (`RACK_SHAPES`), a container's colour.
+  "bike-rack": 4,
+  container: 2,
 };
 
 /** Monument and artwork shapes. */
@@ -71,6 +74,7 @@ const SMALL: ReadonlySet<StreetPropKind> = new Set([
   "street-cabinet",
   "shrubs",
   "floodlight",
+  "hydrant",
 ]);
 
 export const bandOf = (kind: StreetPropKind): PropBand => (TALL.has(kind) ? "tall" : SMALL.has(kind) ? "small" : "medium");

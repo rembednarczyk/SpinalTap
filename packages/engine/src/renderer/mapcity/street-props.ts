@@ -61,6 +61,8 @@ const STANDING: Partial<Record<StreetPropKind, { readonly r: number; readonly z?
   "bus-shelter": { r: 2.3 },
   kiosk: { r: 1.8 },
   "market-stall": { r: 1.7 },
+  "food-cart": { r: 2.1 },
+  container: { r: 3.3 },
   tree: { r: 2.6 },
   "advertising-column": { r: 0.8 },
   monument: { r: 1.5 },
