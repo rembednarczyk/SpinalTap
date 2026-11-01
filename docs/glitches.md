@@ -469,9 +469,10 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: wszystkie nazwy z wczytanych komórek mają wiersz; test ładowania w różnej kolejności
 
 ### G-143 Taksówki na osi chodnika przy Podzamczu
-- Status: zgłoszone (1.11, weryfikator G-140); było przed G-140
+- Status: zgłoszone, przyczyna ustalona (1.11, weryfikator G-140); było przed G-140
 - Ważność: S4 · Zasięg: taxi (928.6, 452.2) 0,01 m od osi `highway=footway` w809962786, taxi (922.9, 430.6) 0,80 m od niej
-- Do ustalenia: chodnik wzdłuż krawężnika (wtedy w porządku) czy przejście przez jezdnię (wtedy auto zastawia przejście)
+- Ustalone (1.11, orkiestrator, dane `data/osm/podzamcze.json`): w809962786 to samodzielna ścieżka piesza 52 m (`highway=footway`, bez `footway=sidewalk`/`crossing`, oświetlona, asfalt), co najmniej 7,8 m od osi Cerkiewnej i dróg serwisowych; łączy się z postojem taxi w471549002 (`amenity=taxi`, obszar), placem w66323033 (`area:highway`), chodnikiem w1517184174 i przejściem w1054556913. Taksówka 0,01 m od jej osi stoi więc na ścieżce pieszych obok postoju, nie na jezdni: glitch prawdziwy
+- Poprawka: zaparkowane auta trzymają odstęp od osi samodzielnych ścieżek `footway`/`path` (poza `sidewalk` wzdłuż krawężnika), a taksówki z postoju `amenity=taxi` stoją wewnątrz jego obszaru; kontrola skanu „auto bliżej niż 1 m od osi ścieżki pieszej”
 - Pakiet właściciela: packages/sim (content), przegląd kuratora
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
