@@ -33,6 +33,7 @@ import { createPasserbySystem } from "./passerby-system";
 import { createCrowdSystem } from "./crowd-system";
 import { activitySystem } from "./activity-system";
 import { createTrafficSystem } from "./traffic-system";
+import { takedownSystem } from "./takedown-system";
 
 export { aimSpreadOf, fireShot, GUNFIRE_INTERRUPT_RADIUS, NPC_CRIT } from "./combat-system";
 export { meleeSystem, stagger, startSwing } from "./melee-system";
@@ -88,6 +89,7 @@ export {
 } from "./perk-system";
 export { createBodySystem, cyberCapacityOf } from "./body-system";
 export { doorForcedFlag, doorSnapshots, doorSystem, forceDoor, restoreDoors } from "./door-system";
+export { TAKEDOWN_BACK_CONE, TAKEDOWN_REACH, TAKEDOWN_TIME, takedownCandidate, takedownDistance, takedownSystem } from "./takedown-system";
 
 /**
  * Explicit, fixed system order (determinism: never derived from map iteration).
@@ -110,6 +112,8 @@ export { doorForcedFlag, doorSnapshots, doorSystem, forceDoor, restoreDoors } fr
  * and pushes the player out of a vehicle), before the activities.
  * ADR-0061: the interiors last, after everything that moves the player (movement, traffic,
  * knockback), so an event follows where the step left her.
+ * ADR-0065: the takedowns after combat (a hit on the player this step breaks the hold), before
+ * interaction (the prompt) and death (a lethal takedown dies in the same step).
  */
 export const createSystems = (): readonly System[] => [
   clockSystem,
@@ -138,6 +142,7 @@ export const createSystems = (): readonly System[] => [
   weaponSystem,
   meleeSystem,
   combatSystem,
+  takedownSystem,
   interactionSystem,
   deathSystem,
   createCrimeSystem(),

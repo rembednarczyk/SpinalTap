@@ -22,7 +22,8 @@ const runBuffs = (ctx: SimContext): void => {
   const r = tickBuffs(domain.buffs, ctx.dt);
   ctx.state.domain = { ...domain, buffs: r.buffs };
   const player = ctx.world.with("player", "health").first;
-  if (r.heal > 0 && player && player.health.current > 0 && player.health.current < player.health.max) {
+  // Not during a takedown (ADR-0065): any damage below its starting health breaks the hold.
+  if (r.heal > 0 && player && !ctx.session.takedown && player.health.current > 0 && player.health.current < player.health.max) {
     player.health = { ...player.health, current: Math.min(player.health.max, player.health.current + r.heal) };
   }
   for (const id of r.ended) ctx.bus.emit("BuffEnded", { buffId: id });

@@ -51,6 +51,8 @@ export interface MeleeState {
   queued: boolean;
   /** Seconds left staggered: no swing, no guard, no shot, slow feet. */
   stagger: number;
+  /** The stagger is a parry's stun (ADR-0065: open to a takedown from any side while it lasts). */
+  stunned?: boolean;
   /** Guard up (the aim button with a melee weapon). */
   guard: boolean;
   /** Seconds left of the parry window opened by raising the guard. */

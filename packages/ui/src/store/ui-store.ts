@@ -68,6 +68,11 @@ export * from "./wave2-vm";
 export interface SessionUiState {
   readonly screen: Screen;
   readonly prompt: string | null;
+  /**
+   * What holding the attack button does with the prompt's target (a takedown's kill, ADR-0065),
+   * shown with the prompt; null for nothing.
+   */
+  readonly promptHold: string | null;
   readonly toasts: readonly Toast[];
   readonly slots: readonly SaveSlotInfo[];
   readonly hasSaves: boolean;
@@ -266,6 +271,7 @@ export const initialUiState: UiState = {
   objective: null,
   cameraMode: "FPP",
   prompt: null,
+  promptHold: null,
   dialogue: null,
   toasts: [],
   hitMarker: 0,

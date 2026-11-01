@@ -7,6 +7,7 @@ import type { Entity } from "../../world/components";
 import type { SimContext, System } from "../../world/context";
 import { chestOf, eyeOf } from "../../world/hitscan";
 import { inCreationOrder } from "../../world/ordering";
+import { incapacitated } from "../../world/takedown";
 import { followSchedule } from "../../world/schedule";
 import { worldTimeScale } from "../ability-system";
 import { NPC_CRIT, aimSpreadOf, fireShot } from "../combat-system";
@@ -423,6 +424,12 @@ export const createGangerAiSystem = (): System => {
       const victims = victimsOf(ctx);
       for (const g of inCreationOrder(ctx.world.with("ai", "velocity"))) {
         alive.add(g.id);
+        // Knocked out or held in a takedown (ADR-0065): it sees, hears and does nothing.
+        if (incapacitated(ctx, g)) {
+          g.velocity = { x: 0, y: 0, z: 0 };
+          g.ai.sees = false;
+          continue;
+        }
         const brain = brainOf(trees, g.id);
         const seen = perceivePlayer(ctx, g, player, { reputation, heat }, timeScale);
         track(ctx, g, player, seen.visible, ctx.dt * timeScale);
