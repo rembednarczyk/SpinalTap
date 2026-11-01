@@ -47,6 +47,9 @@ export const pl = {
   "slots.auto": "Autozapis",
   "slots.slot": "Slot {n}",
   "slots.empty": "pusty",
+  "slots.export": "Eksportuj",
+  "slots.import": "Importuj zapis z pliku",
+  "slots.imported": "Zaimportowany",
   // Controls help.
   "help.move": "ruch",
   "help.sprint": "sprint",
@@ -138,6 +141,8 @@ export const pl = {
   "settings.mode.hold": "Przytrzymaj",
   "settings.mode.toggle": "Przełącz",
   "settings.hudScale": "Skala HUD",
+  "settings.subtitleScale": "Rozmiar napisów",
+  "settings.subtitleBackground": "Pełne tło napisów",
   "settings.legibleFont": "Czytelna czcionka",
   "settings.reduceFlashes": "Ogranicz błyski i glitch",
   "settings.cameraMotion": "Kołysanie i wstrząsy kamery",

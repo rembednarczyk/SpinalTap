@@ -282,6 +282,10 @@ export interface SettingsVm {
   // Accessibility (ADR-0028).
   /** HUD size multiplier, 1 = default. */
   readonly hudScale: number;
+  /** Subtitle size on its own, on top of the HUD scale (`SUBTITLE_SCALE_RANGE`). */
+  readonly subtitleScale: number;
+  /** An opaque box behind subtitles instead of the translucent one. */
+  readonly subtitleBackground: boolean;
   /** A legible font (Atkinson Hyperlegible) instead of the narrow display one. */
   readonly legibleFont: boolean;
   /** No aberration, glitch or blinking; the engine reads it too. */
@@ -332,6 +336,8 @@ export const DEFAULT_SETTINGS: SettingsVm = {
   hudAlwaysShow: false,
   damageNumbers: "off",
   hudScale: 1,
+  subtitleScale: 1,
+  subtitleBackground: false,
   legibleFont: false,
   reduceFlashes: false,
   cameraMotion: true,

@@ -50,6 +50,6 @@ export const deflectShot = (ctx: SimContext, shot: DeflectedShot, defenderOf: (e
   noteViolence(ctx, target, isEngaged(target), result.point);
   target.health = applyDamage(target.health, outcome.damage);
   target.lastHitBy = defender.id;
-  if (target.ai) target.ai.alerted = true;
+  if (target.ai && !target.unconscious) target.ai.alerted = true;
   ctx.bus.emit("DamageDealt", { sourceId: defender.id, targetId: target.id, amount: outcome.damage, critical: false, zone: outcome.zone, at: result.point });
 };

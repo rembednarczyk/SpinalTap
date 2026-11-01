@@ -98,7 +98,10 @@ export class GameSession implements SessionIntents {
 
   step(input: InputFrame): void {
     if (!this.running) return;
-    this.simulation.step(this.inControl ? this.c.hack.withTouchScan(input) : EMPTY_INPUT);
+    const frame = this.inControl ? this.c.hack.withTouchScan(input) : EMPTY_INPUT;
+    // The interact key on a takedown's target is a command for this very step (ADR-0065).
+    this.c.takedown.input(frame);
+    this.simulation.step(frame);
     this.c.metro.tick(1 / SIM_HZ);
     this.c.radio.tick(1 / SIM_HZ);
     patchUi(this.deps.ui, { scanning: this.inControl && this.c.hack.scanning(input) });
@@ -170,6 +173,10 @@ export class GameSession implements SessionIntents {
 
   save(slot: string): void { this.c.saves.save(slot); }
   load(slot: string): void { this.c.saves.load(slot); }
+  exportSave(slot: string): void { this.c.saves.exportSave(slot); }
+  exportAsync(slot: string): Promise<boolean> { return this.c.saves.exportAsync(slot); }
+  importSave(text: string): void { this.c.saves.importSave(text); }
+  importAsync(text: string): Promise<boolean> { return this.c.saves.importAsync(text); }
   snapshot(): SaveSnapshot { return this.c.saves.snapshot(); }
   saveAsync(slot: string): Promise<boolean> { return this.c.saves.saveAsync(slot); }
   loadAsync(slot: string): Promise<boolean> { return this.c.saves.loadAsync(slot); }

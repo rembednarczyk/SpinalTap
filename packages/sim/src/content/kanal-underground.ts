@@ -1,6 +1,7 @@
 import type { Vec3 } from "@seki/core";
 import { type BlockMaterial, type StaticProp, neon, stairs, v } from "./builders";
 import type { RoofStash } from "./district-targ";
+import { inBuilding } from "./lublin/places";
 import { TRASA_PODZIEMNA as T } from "./lublin/sites";
 
 /**
@@ -97,13 +98,28 @@ export const TRASA_PODZIEMNA_PROPS: readonly StaticProp[] = [...hall(), ...cella
 export const TRASA_PODZIEMNA_CHUNK = "stare-miasto-trasa-podziemna";
 export const TRASA_PODZIEMNA_BOUNDS = { minX: 570, maxX: HX1 + WALL, minZ: WEST_Z0 - WALL, maxZ: HZ1 + WALL } as const;
 
+/** Where a line along the vestibule at `z` enters the Trybunał: its facade, from the map's outline. */
+const facadeAt = (z: number): number => {
+  let x = T.vestibule.from.x;
+  while (!inBuilding(x, z) && x < HX0) x += 0.01;
+  return x;
+};
+/**
+ * The facade runs aslant across the vestibule (G-094): its doorway on the axis, the vestibule's
+ * full width behind the facade further in. A box from the doorway as wide as the vestibule would
+ * stick out onto the Rynek, so a narrow one holds the doorway, as wide as a body walking in.
+ */
+const DOORWAY = 0.5;
+const VESTIBULE_X0 = Math.max(...[VZ0, VZ1].map(facadeAt));
+
 /**
  * The rooms of the cellars as an interior (ADR-0061), inside the shell's walls: the vestibule
- * from where the shell starts (inside the Trybunał's facade) to the head of the stairs, the stair
- * hall down to the landing, and the low cellars under it.
+ * from the Trybunał's facade to the head of the stairs, the stair hall down to the landing, and
+ * the low cellars under it.
  */
 export const TRASA_PODZIEMNA_ROOMS = [
-  { minX: 570, maxX: HX0, minZ: VZ0, maxZ: VZ1, bottom: D, top: H },
+  { minX: facadeAt(T.vestibule.from.z), maxX: HX0, minZ: T.vestibule.from.z - DOORWAY, maxZ: T.vestibule.from.z + DOORWAY, bottom: D, top: H },
+  { minX: VESTIBULE_X0, maxX: HX0, minZ: VZ0, maxZ: VZ1, bottom: D, top: H },
   { minX: HX0, maxX: HX1, minZ: HZ0, maxZ: HZ1, bottom: F, top: H },
   // Up to the hall's south wall, so the way down from the landing never leaves the interior.
   { minX: LOCH_X0, maxX: HX1, minZ: WEST_Z0, maxZ: HZ0, bottom: F, top: C },

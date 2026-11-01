@@ -91,6 +91,12 @@ export interface Entity {
   /** The player hurt it while it was not fighting them: its death is a crime (ADR-0029). Transient. */
   wronged?: true;
   /**
+   * Knocked out by a takedown (ADR-0065): lies still, sees and hears nothing, does not fight and
+   * is nobody's target. Not saved yet (stage 3 of the ADR): a load or a chunk streamed back in
+   * brings it round.
+   */
+  unconscious?: true;
+  /**
    * What the character does where it stands (ADR-0040), set by the activity system from its
    * plan, its spot or its role. Derived from the clock and the content every step: not saved.
    */

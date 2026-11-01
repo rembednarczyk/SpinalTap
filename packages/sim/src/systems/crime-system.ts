@@ -156,15 +156,15 @@ const witness = (ctx: SimContext, o: Offence, player: Entity): void => {
   }
   const security = securityAt(ctx, o.at);
   for (const g of inCreationOrder(ctx.world.with("ai"))) {
-    // Someone already fighting the player does not phone it in: it fights.
-    if (g.faction !== security || g.ai.alerted || !patrolSees(ctx, g, player)) continue;
+    // Someone already fighting the player does not phone it in: it fights. Nor does one knocked out.
+    if (g.faction !== security || g.ai.alerted || g.unconscious || !patrolSees(ctx, g, player)) continue;
     report(ctx, o.crime, "patrol", g.id, player.id, o.at);
     return;
   }
   for (const c of inCreationOrder(ctx.world.with("civilian"))) {
     const mind = c.civilian.crowd;
     // Background passers-by (ADR-0040) run like anyone but never phone it in: they are not saved.
-    if (c.passerby || (c.health?.current ?? 1) <= 0 || mind?.call || (mind?.scared ?? 0) > 0 || !civilianSees(ctx, c, player)) continue;
+    if (c.passerby || c.unconscious || (c.health?.current ?? 1) <= 0 || mind?.call || (mind?.scared ?? 0) > 0 || !civilianSees(ctx, c, player)) continue;
     scare(ctx, c, "fleeing", player.position);
     const m = c.civilian.crowd;
     if (!m) continue;

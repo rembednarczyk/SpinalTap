@@ -25,6 +25,7 @@ import { planSteps } from "./steps-plan";
 import { surfaceLiftAt } from "./surface-lift";
 import { StreetProps, type StreetPropsStats } from "./street-props";
 import { MapSkyline } from "./skyline";
+import { megaBodies } from "./skyline-bodies";
 import { type LandmarkPart, landmarkAt, withLandmark } from "./landmarks";
 
 /** Views drawn by the map city (ADR-0042, ADR-0044). */
@@ -369,6 +370,8 @@ export class MapCity {
   /** The facade props have loaded (ADR-0058): the near meshes are rebuilt with them. */
   setProps(props: CityProps): void {
     this.facadeProps = props;
+    // The skyline's megatowers (ADR-0063); the phone keeps the procedural tiers.
+    if (this.deps.quality !== "low") this.skyline.setBodies(megaBodies(props));
     for (const c of this.cells.values()) c.nearDirty = true;
     this.streetProps?.setProps(props);
   }

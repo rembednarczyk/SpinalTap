@@ -5,6 +5,7 @@ import { bodyHeightOf } from "../world/hitboxes";
 import { chestOf, eyeOf, lineOfSight } from "../world/hitscan";
 import { KNOCKBACK_SPEED, KNOCKBACK_TIME } from "../world/knockback";
 import { inCreationOrder } from "../world/ordering";
+import { incapacitated, playerHeld } from "../world/takedown";
 import { worldTimeScale } from "./ability-system";
 import { disturb, isEngaged, noteViolence } from "../world/street";
 
@@ -50,6 +51,9 @@ export const stagger = (ctx: SimContext, target: Entity, duration: number, cause
   const m = target.melee;
   if (!m || duration <= 0) return;
   m.stagger = Math.max(m.stagger, duration);
+  // A parry's stun opens the fighter to a takedown from any side while it lasts (ADR-0065).
+  // A plain hit's stagger replaces the stun: the window does not outlast it.
+  m.stunned = cause === "parry";
   m.phase = "idle";
   m.timer = 0;
   m.queued = false;
@@ -117,7 +121,7 @@ const land = (ctx: SimContext, f: Fighter, profile: MeleeProfile): boolean => {
     t.health = applyDamage(t.health, outcome.damage);
     t.lastHitBy = f.id;
     if (t.player) wearPlayerClothes(ctx, outcome.zone);
-    if (t.ai) t.ai.alerted = true;
+    if (t.ai && !t.unconscious) t.ai.alerted = true;
     ctx.bus.emit("DamageDealt", { sourceId: f.id, targetId: t.id, amount: outcome.damage, critical: outcome.critical, zone: outcome.zone, at: chest });
     if (guard.blocked) ctx.bus.emit("AttackBlocked", { attackerId: f.id, defenderId: t.id, parried: false, kind: "melee", at: chest });
     else {
@@ -155,17 +159,18 @@ export const meleeSystem: System = {
   name: "melee",
   run(ctx) {
     const enemyDt = ctx.dt * worldTimeScale(ctx);
-    const frozen = ctx.session.dialogueActive || ctx.session.gameOver;
+    const frozen = playerHeld(ctx);
     for (const f of inCreationOrder(ctx.world.with("melee", "combatant"))) {
       const m = f.melee;
       const dt = f.player ? ctx.dt : enemyDt;
       m.stagger = Math.max(0, m.stagger - dt);
+      if (m.stagger === 0) m.stunned = false;
       m.parry = Math.max(0, m.parry - dt);
       m.parryCooldown = Math.max(0, m.parryCooldown - dt);
       m.knock.time = Math.max(0, m.knock.time - dt);
       const profile = f.combatant.stats?.melee;
-      // Switching to a gun, holstering, a conversation, death or both hands on a ladder end any swing.
-      if (!profile || f.combatant.holstered || (f.health?.current ?? 1) <= 0 || (f.player && frozen) || f.climb || f.mantle) {
+      // Switching to a gun, holstering, a conversation, death, both hands on a ladder or a takedown end any swing.
+      if (!profile || f.combatant.holstered || (f.health?.current ?? 1) <= 0 || (f.player && frozen) || f.climb || f.mantle || incapacitated(ctx, f)) {
         toIdle(f);
         m.combo = 0;
         continue;

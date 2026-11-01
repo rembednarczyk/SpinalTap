@@ -105,3 +105,30 @@ for (const [w, h] of [
     });
   });
 }
+
+test.describe("phone 844x390 settings", () => {
+  test.use({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true });
+
+test("phone: the settings in the pause menu scroll to their last control", async ({ page }) => {
+  test.setTimeout(180_000);
+  await page.goto("/?seed=7&models=off");
+  await waitForGame(page);
+  await page.getByRole("button", { name: "New Game" }).tap();
+  await expect(page.getByTestId("hud")).toBeVisible();
+  await page.evaluate(() => window.__seki!.session.pause());
+  await expect(page.getByTestId("pause-menu")).toBeVisible();
+  await page.getByTestId("pause-menu").getByRole("button", { name: "Settings" }).tap();
+  await page.getByRole("tab", { name: "Accessibility" }).tap({ timeout: 10_000 });
+  // The menu is taller than a phone held sideways: its top and its bottom must both be reachable.
+  const menu = page.getByTestId("pause-menu");
+  const top = page.getByRole("tab", { name: "General" });
+  const last = page.getByTestId("token-legend");
+  await last.scrollIntoViewIfNeeded();
+  const box = await last.boundingBox();
+  expect(box && box.y + box.height <= 390 + 1).toBe(true);
+  await top.scrollIntoViewIfNeeded();
+  const head = await top.boundingBox();
+  expect(head && head.y >= -1).toBe(true);
+  expect(await menu.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
+});
+});

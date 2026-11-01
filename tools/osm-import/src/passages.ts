@@ -33,6 +33,28 @@ const STEP = 0.25;
 /** Width when the map gives none, by the way's kind (m): a gateway for carts, a lane, a footpath. */
 const widthOf = (l: Line): number => parseLength(l.tags.width) ?? (l.tags.highway === "service" ? 3.2 : l.tags.highway === "pedestrian" ? 3.4 : 2.4);
 
+/** Clear height under the crown when the map gives a `maxheight` only as under the default (m): a lorry's 4 m will not pass. */
+const BELOW_DEFAULT = 3.6;
+/**
+ * The range a mapped `maxheight` may set the crown to (m): above a walker's head with the
+ * springing above a door, and no higher than a gate in a house front. A typo in the map
+ * ("1.8" for a car park barrier, "50") would otherwise seal or swallow the passage.
+ */
+const VAULT_RANGE: readonly [number, number] = [2.2, 5];
+
+/**
+ * Crown and rise of the vault (m): the default by width, or lower to the map's `maxheight` (G-089),
+ * the vault scaled with it so the walls still spring at the same share of the height.
+ */
+const vaultOf = (l: Line, width: number): { height: number; rise: number } => {
+  const height = width >= 3 ? 4 : 3.4;
+  const rise = width >= 3 ? 1.1 : 0.9;
+  const max = l.tags.maxheight === "below_default" ? Math.min(height, BELOW_DEFAULT) : parseLength(l.tags.maxheight);
+  if (max === null) return { height, rise };
+  const crown = Math.min(VAULT_RANGE[1], Math.max(VAULT_RANGE[0], max));
+  return { height: Math.round(crown * 100) / 100, rise: Math.round(((rise * crown) / height) * 100) / 100 };
+};
+
 /** The runs of `line` inside `ring`, as arc lengths [enter, leave] that both lie strictly within the line. */
 const runsInside = (line: readonly Pt[], ring: readonly Pt[]): [number, number][] => {
   const total = lineLength(line);
@@ -112,7 +134,7 @@ export const buildingPassages = (lines: readonly Line[], buildings: readonly Are
         if (seen.has(key)) continue;
         seen.add(key);
         const width = widthOf(l);
-        out.push({ building: b.id, from: { x: r1(from.x), z: r1(from.z) }, to: { x: r1(to.x), z: r1(to.z) }, width, height: width >= 3 ? 4 : 3.4, rise: width >= 3 ? 1.1 : 0.9 });
+        out.push({ building: b.id, from: { x: r1(from.x), z: r1(from.z) }, to: { x: r1(to.x), z: r1(to.z) }, width, ...vaultOf(l, width) });
       }
     }
   }
