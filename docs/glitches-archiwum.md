@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-043 Zatwierdzona migawka NPR nie zgadza się z tym, co rysuje main
+- Status: zamknięte (1.11, orkiestrator): migawka przepisana od zgłoszenia co najmniej 5 razy (ostatnio #153); na main 1592dab `npr-perf` „reference” z `maxDiffPixelRatio: 0` (próg piksela 0,2) przechodzi 2/2, więc klatka main zgadza się z migawką; tolerancja 0,02 zostaje jako zapas na SwiftShader
+- Ważność: S3 (proponowana: migawka przestaje pilnować wyglądu) · Koszt: mały
+- Dowód: naprawiacz i weryfikator G-030: `e2e/__snapshots__/npr-perf.spec.ts/reference-m0.png` różni się od deterministycznej klatki main (b5507ce) o 39 806 px poza Seki (bbox 0,0–1280,533); m.in. brak białej smugi odblasku na lewym oknie Neon Koi (y ok. 290). Test przechodzi tylko dzięki `maxDiffPixelRatio: 0.02`. Ustalić, który commit zmienił klatkę: regresja czy niezaktualizowana migawka.
+- Pakiet właściciela: packages/engine / e2e (QA)
+
 ### G-179 Posiłki ochrony przy heacie poza zapisem
 - Status: naprawione (1.11, #165: zapis v23 z `reinforcements`, `watch.sent`, rozrzut i enforcer z `n` zamiast id; złote hashe tylko przez posiłki w zapisie; weryfikacja PRZYJĘTE)
 - Ważność: S3 · Zasięg: encje `security` bez klucza i `session.watch.reinforce` nie wchodzą do zapisu; `stateHash` nie widzi encji bez klucza
