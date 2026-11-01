@@ -65,6 +65,15 @@ describe("building parts (G-049)", () => {
     for (const chapel of ["w617763428", "w617763429"]) expect(byId(chapel)?.levels).toBe(6);
   });
 
+  it("builds the Town Hall's 4.5 storeys and its tower's 7.5 as mapped, not rounded up (G-116)", () => {
+    const townHall = byId("w66264120")!;
+    expect(townHall.height - townHall.plinth).toBeCloseTo(4.5 * STOREY, 1);
+    expect(townHall.levels).toBe(4);
+    const tower = byId("w619138854")!;
+    expect(tower.height - tower.plinth).toBeCloseTo(7.5 * STOREY, 1);
+    expect(tower.levels).toBe(7);
+  });
+
   it("starts every part on what stands under it, never under the ground", () => {
     const parts = all.filter((b) => b.soffit !== undefined);
     expect(parts.length).toBeGreaterThanOrEqual(10);

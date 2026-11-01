@@ -1,11 +1,20 @@
-import { DEFAULT_LOCALE, type ItemCategory, type ItemDefId, type ItemRef, type Locale, type Rarity, type WeaponSlot, degToRad, verticalFov } from "@seki/core";
+import { DEFAULT_LOCALE, type ItemCategory, type PrepareStage, type ItemDefId, type ItemRef, type Locale, type Rarity, type WeaponSlot, degToRad, verticalFov } from "@seki/core";
 import type { ColorblindMode, DamageNumbersMode } from "./hud-vm";
 import type { MapAreaVm, MapLabelVm, MapPlaceVm, MapPolygon } from "./map-vm";
 import type { RadioStationId } from "./wave2-vm";
 
 // View models of the UI store: what the areas of `UiState` hold (ADR-0031).
 
-export type Screen = "title" | "playing" | "paused" | "dead";
+/** `loading`: the start of a game, while the renderer prepares it (ADR-0057). */
+export type Screen = "title" | "loading" | "playing" | "paused" | "dead";
+
+/** The loading screen's bar (ADR-0057): the share done, 0..1, and the stage under way. */
+export interface LoadingVm {
+  readonly progress: number;
+  readonly stage: PrepareStage | null;
+}
+
+export const NO_LOADING: LoadingVm = { progress: 0, stage: null };
 
 export interface DialogueLineVm {
   readonly speaker: string | null;

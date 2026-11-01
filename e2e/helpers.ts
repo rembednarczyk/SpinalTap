@@ -4,6 +4,17 @@ export const waitForGame = async (page: Page) => {
   await page.waitForFunction(() => window.__seki?.ready === true, null, { timeout: 60_000 });
 };
 
+/**
+ * Waits for the game on screen after New Game or a load: the loading screen (ADR-0057) ends once
+ * the renderer has prepared the start. Waits for the game's state, not a clock; returns how long
+ * the start took in ms, for the report.
+ */
+export const waitForPlay = async (page: Page) => {
+  const from = Date.now();
+  await page.waitForFunction(() => window.__seki?.state().screen === "playing", null, { timeout: 90_000 });
+  return Date.now() - from;
+};
+
 export const gameState = (page: Page) => page.evaluate(() => window.__seki!.state());
 
 export const perf = (page: Page) => page.evaluate(() => window.__seki!.perf());
