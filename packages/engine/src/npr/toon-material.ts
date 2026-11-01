@@ -3,13 +3,9 @@ import { NIGHT_RIG, type LightingRig, type PointLightDef } from "./lighting";
 import { PRESETS, type PresetName } from "./presets";
 import { ToonEnvironment } from "./toon-environment";
 import { createToonMaterial, hex } from "./toon-material-factory";
-import { MAX_POINT_LIGHTS } from "./toon-shader";
+import { ToonPointLights } from "./toon-point-lights";
 
-/**
- * Lights farther than this from the camera only get a shader slot when nearer ones leave one
- * free. Wide enough that within one district the selection is the plain registration order.
- */
-export const LIGHT_SLOT_DISTANCE = 50;
+export { LIGHT_SLOT_DISTANCE } from "./toon-point-lights";
 
 export interface ImportedMaterialOptions {
   /** Discard texels with alpha below 0.5 (glTF MASK and BLEND materials). */
@@ -42,10 +38,7 @@ export interface ShadowBinding {
  */
 export class ToonMaterials {
   private readonly materials = new Map<string, ShaderMaterial>();
-  private readonly lights = new Map<string, PointLightDef>();
-  /** Lights bound to the shader's point slots, in slot order. */
-  private active: PointLightDef[] = [];
-  private focus: { x: number; z: number } | null = null;
+  private readonly lights = new ToonPointLights();
   private shadow: ShadowBinding | null = null;
   private readonly env = new ToonEnvironment();
 
@@ -148,7 +141,7 @@ export class ToonMaterials {
       m = make();
       this.materials.set(key, m);
       this.applyRig(m);
-      this.applyLights(m);
+      this.lights.apply(m);
       this.applyShadow(m);
       m.setVector4("flashLight", this.flash);
       m.setVector4("rimTint", this.rimTint);
@@ -175,37 +168,25 @@ export class ToonMaterials {
    * district they shadowed streams out.
    */
   addLight(key: string, light: PointLightDef): void {
-    this.lights.set(key, light);
-    this.refreshLights();
+    if (this.lights.add(key, light)) this.pushLights();
   }
 
   removeLight(key: string): void {
-    if (!this.lights.delete(key)) return;
-    this.refreshLights();
+    if (this.lights.remove(key)) this.pushLights();
   }
 
   /** Moves the point slot selection to a new viewpoint. Cheap when nothing changes. */
   setLightFocus(x: number, z: number): void {
-    this.focus = { x, z };
-    this.refreshLights();
+    if (this.lights.setFocus(x, z)) this.pushLights();
   }
 
   /** Lights currently bound to shader slots. */
   get lightCount(): number {
-    return this.active.length;
+    return this.lights.count;
   }
 
-  private refreshLights(): void {
-    const near: PointLightDef[] = [];
-    const far: PointLightDef[] = [];
-    const f = this.focus;
-    for (const l of this.lights.values()) {
-      (f === null || Math.hypot(l.position.x - f.x, l.position.z - f.z) <= LIGHT_SLOT_DISTANCE ? near : far).push(l);
-    }
-    const next = [...near, ...far].slice(0, MAX_POINT_LIGHTS);
-    if (next.length === this.active.length && next.every((l, i) => l === this.active[i])) return;
-    this.active = next;
-    for (const m of this.materials.values()) this.applyLights(m);
+  private pushLights(): void {
+    for (const m of this.materials.values()) this.lights.apply(m);
   }
 
   setRig(rig: LightingRig): void {
@@ -234,24 +215,6 @@ export class ToonMaterials {
     m.setTexture("shadowSampler", s.texture);
     m.setMatrix("shadowMatrix", s.matrix);
     m.setVector3("shadowParams", { x: s.bias, y: s.texelSize, z: s.strength });
-  }
-
-  private applyLights(m: ShaderMaterial): void {
-    const pos: number[] = [];
-    const col: number[] = [];
-    for (const l of this.active) {
-      const c = hex(l.color);
-      pos.push(l.position.x, l.position.y, l.position.z, l.range);
-      col.push(c.r, c.g, c.b, l.intensity);
-    }
-    // Uniform arrays must be fully sized.
-    while (pos.length < MAX_POINT_LIGHTS * 4) {
-      pos.push(0, -1000, 0, 1);
-      col.push(0, 0, 0, 0);
-    }
-    m.setArray4("pointPos", pos);
-    m.setArray4("pointColor", col);
-    m.setFloat("pointCount", this.active.length);
   }
 }
 
