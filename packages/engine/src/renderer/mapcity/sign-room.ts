@@ -1,4 +1,5 @@
 import type { FacadeFrame, Wall } from "./facade-frame";
+import type { Box2 } from "./polygon";
 
 /**
  * Room for a sign in front of a wall (G-157, G-159). A wall counts as a street wall unless all
@@ -10,10 +11,14 @@ import type { FacadeFrame, Wall } from "./facade-frame";
 /** Step of the samples along the wall and out from it, metres. */
 const STEP = 0.1;
 
-/** Whether another building stands at `u` along the wall, `out` metres off it, higher than `y`. */
-const blocked = (f: FacadeFrame, w: Wall, u: number, out: number, y: number): boolean => {
+/**
+ * Whether another building stands at `u` along the wall, `out` metres off it, higher than `y`.
+ * Outside all of `near` (the bounds from `wallNear`) no building stands, so the lookup is skipped.
+ */
+const blocked = (f: FacadeFrame, w: Wall, u: number, out: number, y: number, near: readonly Box2[] | null): boolean => {
   const x = w.a.x + ((w.b.x - w.a.x) / w.length) * u + w.nx * out;
   const z = w.a.z + ((w.b.z - w.a.z) / w.length) * u + w.nz * out;
+  if (near && !near.some((b) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ)) return false;
   const top = f.neighbour(x, z, f.b.id);
   return top !== null && top > y;
 };
@@ -24,22 +29,35 @@ const steps = (lo: number, hi: number): number[] => {
 };
 
 /** Whether the box in front of the wall, `u0`..`u1` along it, `out0`..`out1` off it and from `y` up, is clear of other buildings. */
-export const signClear = (f: FacadeFrame, w: Wall, u0: number, u1: number, out0: number, out1: number, y: number): boolean => {
+export const signClear = (f: FacadeFrame, w: Wall, u0: number, u1: number, out0: number, out1: number, y: number, near: readonly Box2[] | null = null): boolean => {
   const outs = out1 > out0 ? steps(out0, out1) : [out0];
-  return steps(u0, u1).every((u) => outs.every((o) => !blocked(f, w, u, o, y)));
+  return steps(u0, u1).every((u) => outs.every((o) => !blocked(f, w, u, o, y, near)));
 };
 
 /** The clear stretches `[from, to]` along the wall for a flat sign `out0`..`out1` off it, from `y` up, in order. */
-export const clearStretches = (f: FacadeFrame, w: Wall, out0: number, out1: number, y: number): [number, number][] => {
+export const clearStretches = (f: FacadeFrame, w: Wall, out0: number, out1: number, y: number, near: readonly Box2[] | null = null): [number, number][] => {
   const out: [number, number][] = [];
   let run: [number, number] | null = null;
-  for (const u of steps(0, w.length)) {
-    if (signClear(f, w, u, u, out0, out1, y)) {
+  const all = steps(0, w.length);
+  // No building near: every sample is clear, the wall one stretch (as the samples would make it).
+  if (near?.length === 0) return [[all[0] as number, all[all.length - 1] as number]];
+  for (const u of all) {
+    if (near && out1 <= out0 ? !blocked(f, w, u, out0, y, near) : signClear(f, w, u, u, out0, out1, y, near)) {
       if (run) run[1] = u;
       else out.push((run = [u, u]));
     } else run = null;
   }
   return out;
+};
+
+/**
+ * The bounds of the other buildings that may stand in front of the wall up to `out` metres off
+ * it (the wall's box grown by that and a step more), for `clearStretches` to sample only in them;
+ * null when the frame does not know them.
+ */
+export const wallNear = (f: FacadeFrame, w: Wall, out: number): readonly Box2[] | null => {
+  const d = out + STEP;
+  return f.near({ minX: Math.min(w.a.x, w.b.x) - d, maxX: Math.max(w.a.x, w.b.x) + d, minZ: Math.min(w.a.z, w.b.z) - d, maxZ: Math.max(w.a.z, w.b.z) + d }, f.b.id);
 };
 
 /** The stretches of a wall `length` long between its `clear` ones (from `clearStretches`), where a sign keeps off. */

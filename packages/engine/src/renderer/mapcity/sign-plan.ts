@@ -2,7 +2,7 @@ import { prng } from "../city-kit-data";
 import type { MeshSink, Rgba, Vec } from "../mesh-sink";
 import { SIGN_OUT, SIGN_RADIUS, bracketSpots } from "./bracket-plan";
 import { type FacadeFrame, type Wall, hiddenWall } from "./facade-frame";
-import { clearSpotFrom, fitFlatSign } from "./sign-room";
+import { clearSpotFrom, clearStretches, fitFlatSign, wallNear } from "./sign-room";
 import { type Uv, quadUv } from "./sink-ops";
 
 /**
@@ -202,11 +202,26 @@ const bracketSigns = (sink: MeshSink, f: FacadeFrame, ground: SignGround): void 
   }
 };
 
-/** Neon tube under the main cornice along every street wall. */
+/** The cornice tube: how far under the eave, how far off the wall and how thick, metres. */
+const TUBE_UNDER_EAVE = 0.66;
+const TUBE_OUT = 0.22;
+const TUBE_HEIGHT = 0.09;
+/** Shortest piece of tube a neighbour leaves on a wall (G-170), metres; a short wall left whole keeps its own. */
+const TUBE_MIN = 1;
+
+/**
+ * Neon tube under the main cornice along every street wall, on the stretches of it a neighbour
+ * standing out in front of the wall leaves clear (G-170); a cut piece shorter than TUBE_MIN is left out.
+ */
 const tubes = (sink: MeshSink, f: FacadeFrame, color: string): void => {
+  const y = f.eave - TUBE_UNDER_EAVE;
   for (const w of f.walls) {
     if (hiddenWall(f, w) || w.blind) continue;
-    flatOnWall(sink, w, w.length / 2, f.eave - 0.66, 0.22, w.length, 0.09, signTint(color, 1), [0, MAP_SIGN_KIND.tube]);
+    // Looking every 0.1 m of every wall up took most of the signs' time: only near the neighbours now.
+    for (const [a, b] of clearStretches(f, w, TUBE_OUT, TUBE_OUT, y - TUBE_HEIGHT / 2, wallNear(f, w, TUBE_OUT))) {
+      // The samples may end a whole wall a hair short of its length, so a short wall keeps its tube.
+      if (b - a >= Math.min(TUBE_MIN, w.length) - 1e-6) flatOnWall(sink, w, (a + b) / 2, y, TUBE_OUT, b - a, TUBE_HEIGHT, signTint(color, 1), [0, MAP_SIGN_KIND.tube]);
+    }
   }
 };
 

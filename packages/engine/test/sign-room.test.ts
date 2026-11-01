@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { MeshSink } from "../src/renderer/mesh-sink";
 import { planCanyonSigns } from "../src/renderer/mapcity/canyon-signs";
-import { type MapBuilding, type NeighbourAt, facadeFrame } from "../src/renderer/mapcity/facade-frame";
-import { cleanRing } from "../src/renderer/mapcity/polygon";
+import { type MapBuilding, type NeighbourAt, type NeighboursNear, facadeFrame } from "../src/renderer/mapcity/facade-frame";
+import { type Box2, cleanRing } from "../src/renderer/mapcity/polygon";
 import { MAP_SIGN_KIND, planBuildingSigns } from "../src/renderer/mapcity/sign-plan";
 import { planVenueSigns, venueBoards } from "../src/renderer/mapcity/venue-plan";
 
 /**
  * Signs keep out of a neighbour that stands out in front of their wall (G-157, G-159): the wall
- * stays a street wall (two of its three samples are clear), but the banners, blades, holo-ads and
- * venue boards near its ends move off the neighbour, get narrower or are left out.
+ * stays a street wall (two of its three samples are clear), but the banners, blades, holo-ads,
+ * venue boards and neon tubes near its ends move off the neighbour, get narrower or are left out.
  */
 
 const rect = (x0: number, z0: number, x1: number, z1: number) => cleanRing([{ x: x0, z: z0 }, { x: x1, z: z0 }, { x: x1, z: z1 }, { x: x0, z: z1 }]);
@@ -81,6 +81,59 @@ describe("signs in front of a wall a neighbour stands out in front of (G-157, G-
     }
     expect(banners).toBeGreaterThan(0);
     expect(blades).toBeGreaterThan(0);
+  });
+
+  it("end the neon tube under the cornice short of a neighbour in front of its wall (G-170)", () => {
+    let tubes = 0;
+    let open = 0;
+    for (let look = 1; look <= 80; look++) {
+      const sink = new MeshSink();
+      planBuildingSigns(sink, facadeFrame(house(look), lookup(OUT_FRONT)), () => null);
+      expect(intruders(sink, [MAP_SIGN_KIND.tube], OUT_FRONT)).toBe(0);
+      tubes += count(sink, MAP_SIGN_KIND.tube);
+      const free = new MeshSink();
+      planBuildingSigns(free, facadeFrame(house(look), () => null), () => null);
+      open += count(free, MAP_SIGN_KIND.tube);
+    }
+    // The south wall keeps its tube between the neighbours, the other walls theirs whole.
+    expect(open).toBeGreaterThan(0);
+    expect(tubes).toBe(open);
+  });
+
+  it("keep the tube of a short wall no neighbour cuts (G-170)", () => {
+    // A corner cut off 0.3 x 0.3 m: the samples end that wall a hair (1 ulp) short of its length.
+    const ring = cleanRing([{ x: 0.3, z: 0 }, { x: 18, z: 0 }, { x: 18, z: 12 }, { x: 0, z: 12 }, { x: 0, z: 0.3 }]);
+    let short = 0;
+    let lit = 0;
+    for (let look = 1; look <= 80; look++) {
+      const sink = new MeshSink();
+      const f = facadeFrame(house(look, { ring }), () => null);
+      planBuildingSigns(sink, f, () => null);
+      if (count(sink, MAP_SIGN_KIND.tube) === 0) continue;
+      lit++;
+      for (let v = 0; v < sink.vertexCount; v += 4) {
+        const p = (k: number, j: number) => sink.positions[(v + k) * 3 + j]!;
+        if (sink.uvs2[v * 2 + 1] === MAP_SIGN_KIND.tube && Math.abs(Math.hypot(p(1, 0) - p(0, 0), p(1, 2) - p(0, 2)) - Math.hypot(0.3, 0.3)) < 1e-9) short++;
+      }
+    }
+    expect(lit).toBeGreaterThan(0);
+    expect(short).toBe(lit);
+  });
+
+  it("lay the same tubes when the frame knows the neighbours' bounds (G-170)", () => {
+    const quads = (boxes: readonly Box[], near?: NeighboursNear): number[] => {
+      const all: number[] = [];
+      for (let look = 1; look <= 80; look++) {
+        const sink = new MeshSink();
+        planBuildingSigns(sink, facadeFrame(house(look), lookup(boxes), near), () => null);
+        all.push(...sink.positions);
+      }
+      return all;
+    };
+    const bounds = OUT_FRONT.map((b) => ({ minX: b.x0, maxX: b.x1, minZ: b.z0, maxZ: b.z1 }));
+    const meets = (box: Box2) => bounds.filter((b) => b.minX <= box.maxX && b.maxX >= box.minX && b.minZ <= box.maxZ && b.maxZ >= box.minZ);
+    expect(quads(OUT_FRONT, meets)).toEqual(quads(OUT_FRONT));
+    expect(quads([], () => [])).toEqual(quads([]));
   });
 
   it("narrow a holo-ad on a firewall to the stretch a taller neighbour leaves clear", () => {
