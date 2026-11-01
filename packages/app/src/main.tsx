@@ -82,9 +82,9 @@ if (modelsParam !== "off" && (modelsParam || !reference)) {
   const weaponModels = { pistol: new URL("pistol.glb", weapons).href, smg: new URL("smg.glb", weapons).href };
   // The loading screen waits for the manifest and loads its files (ADR-0057).
   const manifest = loadModelManifest(modelsParam ?? "./models/manifest.json");
-  renderer.loadCharacterModels(manifest);
+  renderer.loading.loadCharacterModels(manifest);
   void manifest.then((m) => preview.setModels(m, weaponModels));
-  renderer.setWeaponModels(weaponModels);
+  renderer.loading.setWeaponModels(weaponModels);
   preview.setModels({}, weaponModels);
 }
 const input = new BrowserInput(canvas);
@@ -178,7 +178,7 @@ const loop = new FixedStepLoop(browserClock, {
       stage.pacer.drawn();
       return;
     }
-    renderer.setScanning(ui.getState().scanning);
+    renderer.effects.setScanning(ui.getState().scanning);
     renderer.frame(stage.engine.getDeltaTime() / 1000);
     const player = renderer.cameraTargetTransform;
     if (player) audio.setListener({ position: player.position, yaw: player.yaw, speed: player.speed });
@@ -272,11 +272,11 @@ bindCrashWatch(window, canvas, () => performance.now(), (r) => {
 createRoot(uiRoot).render(<GameUi store={ui} intents={session.intents} touch={touchDevice ? input.virtualPad : undefined} version={__APP_VERSION__} />);
 
 const debug = createDebugApi(session, ui, loop, () => probe.sample(), (position, target) => renderer.rig.setReferenceView(position, target),
-  () => renderer.dressedCount,
+  () => renderer.stats.dressedCount,
   () => renderer.rig.camera.position.y,
   () => preview.state,
-  () => renderer.modelsLoading,
-  () => renderer.citySettled,
+  () => renderer.stats.modelsLoading,
+  () => renderer.stats.citySettled,
 );
 debug.capture = () => renderer.captureFrame();
 debug.camera = () => {
@@ -284,21 +284,21 @@ debug.camera = () => {
   return { x: p.x, y: p.y, z: p.z, yaw: r.y, pitch: r.x };
 };
 debug.frames = () => framesDrawn;
-debug.probeRenders = () => renderer.wetProbeRenders;
+debug.probeRenders = () => renderer.stats.wetProbeRenders;
 window.__seki = debug;
 
 // Wave 1 effects over the whole frame (ADR-0030): hits on the player, quickhack uploads, heat
 // and the scanner's focus. The scanner itself follows the store in the render loop.
 session.bus.on("DamageDealt", (e) => {
-  if (e.targetId === session.sim.player()?.id) renderer.gameplayFx({ kind: "player-hurt", amount: e.amount });
+  if (e.targetId === session.sim.player()?.id) renderer.effects.gameplayFx({ kind: "player-hurt", amount: e.amount });
 });
-session.bus.on("QuickhackStarted", () => renderer.gameplayFx({ kind: "quickhack", phase: "started" }));
-session.bus.on("QuickhackApplied", () => renderer.gameplayFx({ kind: "quickhack", phase: "applied" }));
-session.bus.on("HeatChanged", (e) => renderer.gameplayFx({ kind: "heat", level: e.level, searching: e.searching }));
-session.bus.on("ScanFocusChanged", (e) => renderer.setScanFocus(e.targetId, e.kind));
+session.bus.on("QuickhackStarted", () => renderer.effects.gameplayFx({ kind: "quickhack", phase: "started" }));
+session.bus.on("QuickhackApplied", () => renderer.effects.gameplayFx({ kind: "quickhack", phase: "applied" }));
+session.bus.on("HeatChanged", (e) => renderer.effects.gameplayFx({ kind: "heat", level: e.level, searching: e.searching }));
+session.bus.on("ScanFocusChanged", (e) => renderer.effects.setScanFocus(e.targetId, e.kind));
 // Wave 2 (ADR-0036): dash and reflection effects, the metro car while the destination streams in.
-session.bus.on("Dashed", (e) => renderer.gameplayFx({ kind: "dash", entityId: e.entityId, at: e.at, air: e.air }));
-session.bus.on("ProjectileReflected", (e) => renderer.gameplayFx({ kind: "reflect", defenderId: e.defenderId, at: e.at, to: e.to }));
+session.bus.on("Dashed", (e) => renderer.effects.gameplayFx({ kind: "dash", entityId: e.entityId, at: e.at, air: e.air }));
+session.bus.on("ProjectileReflected", (e) => renderer.effects.gameplayFx({ kind: "reflect", defenderId: e.defenderId, at: e.at, to: e.to }));
 session.bus.on("MetroDeparted", (e) => renderer.setMetroRide({ from: e.from, to: e.to, seconds: e.seconds }));
 session.bus.on("MetroArrived", () => renderer.setMetroRide(null));
 
