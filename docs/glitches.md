@@ -457,7 +457,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poboczne: `groundY` daje 0 poza mapą, a `GroundField` grunt najbliższego chunka; pasy już tam nie wychodzą, inni użytkownicy obu funkcji mogą trafić na rozbieżność
 
 ### G-145 Megabloki na zabytkach, w parku, nad Bystrzycą i na osiach widokowych
-- Status: poprawione w gałęzi (524d40d, oba przeglądy kuratora uwzględnione); w weryfikacji; T-056 zaktualizowane
+- Status: w PR #123 (1.11; weryfikator: technicznie bez zastrzeżeń, T-056 i konflikt CHANGELOG poprawione w 7d3b9db)
 - Ważność: S3 · Zasięg: wiele miejsc poza danymi miasta
 - Gdzie: Stary cmentarz żydowski w40049437 (`near[19–21]`, `ring[15]`), Nowy cmentarz żydowski w792467989 (`ring[61]`), Ogród Saski w174005440 (`ring[77]`, `ring[78]`, `ring[34]`, `near[44–45]`), oś Bystrzycy r7577565 (`docks[9–11]`, `docks[15]`, `ring[10]`, `ring[42]` i bryły bliżej niż 50 m od osi); okno Placu Litewskiego na Wieżę Trynitarską i katedrę (azymut 101–109°: `near[13–14]`, `ring[10–11]`, `ring[51]`); panorama z Nabrzeża na Stare Miasto i Zamek (`near[17–18]`, `ring[14]`, `ring[54–55]`); 8 par wież nachodzących na siebie; dawna wieża „Zalew Zemborzycki” (−1200, −3700) 31 m od Bystrzycy w Wrotkowie
 - Poprawka: obszary zakazane i okna widokowe w generatorze układu, testy `megablock-protected`, `megablock-overlap`, `megablock-viewaxis` z bazą 0
@@ -469,6 +469,14 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Gdzie: `packages/sim/src/content/traffic.ts` `onPassageAxes` przesuwa tylko wierzchołki od 1 m przed wylotem do 1 m za drugim; trasa równoległa do osi, odsunięta o 1–3,5 m z gęstymi wierzchołkami, przeskakuje na oś tuż przed wylotem (narożniki dostawczaka 2,0–4,5 m od osi przy połowie przejazdu 1,7–1,8 m); bez wierzchołka pod sklepieniem nic nie przesuwa. `vehicle-outside-passage` liczy środek plus połowę szerokości, nie narożniki
 - Poprawka: dociąć trasę do osi na całej długości przejazdu z płynnym wejściem (wstawić wierzchołki na wylotach); skan liczy narożniki prostokąta pojazdu
 - Pakiet właściciela: packages/sim, tools/glitch-scan
+
+### G-147 Stopy bliskich megawież po impostorze bliżej niż płaszczyzna panoramy
+- Status: zgłoszone (1.11, weryfikator ADR-0067); dziś niewidoczne
+- Ważność: S4 · Zasięg: wieże `near` w ok. 31% par „kamera w chunku – wieża”, np. z Krakowskiego (90, −200) ku wieży (−513, −204)
+- Przyczyna: skala impostora do szczytu wieży (ADR-0067) przesuwa stopy bliskich wysokich wież z 288 m na 217–260 m od kamery, w pas, w którym stoją jeszcze budynki miasta (do `maxZ` 320 m); możliwa odwrócona głębia wobec zabudowy
+- Dowód: sonda weryfikatora (`scratchpad/v-mega-sonda2.json`), zrzuty A/B stara/nowa formuła bez widocznej różnicy poza światłami i deszczem
+- Poprawka: test, że żaden fragment wieży nie wypada bliżej niż skorupa przy danych miasta w kierunku kamery, albo osobna skala dla stopy; przy okazji kontrole `megablock-*` przenieść do `tools/glitch-scan` z bazą w `glitch-baseline.json` (dziś w teście engine)
+- Pakiet właściciela: packages/engine (renderer), tools/glitch-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
