@@ -1,24 +1,22 @@
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
-import { type SceneryItem, WORLD_SCENERY, groundY } from "@seki/sim";
-import { LUBLIN_CHUNKS, type LublinBuildingData } from "@seki/sim/lublin";
+import { LUBLIN_CHUNKS } from "@seki/sim/lublin";
 import { describe, expect, it } from "vitest";
 import { RawTexture, Scene } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
-import { DRESS_FLAG, MeshSink, hexColor } from "../src/renderer/mesh-sink";
-import { type FacadeFrame, facadeFrame } from "../src/renderer/mapcity/facade-frame";
+import { DRESS_FLAG, MeshSink } from "../src/renderer/mesh-sink";
 import { planNearBuilding } from "../src/renderer/mapcity/facade-plan";
 import { ROOF_STYLE } from "../src/renderer/mapcity/facade-style";
-import { type LandmarkFrame, landmarkAt, planFarLandmark, planLandmarkSigns, planNearLandmark, withLandmark } from "../src/renderer/mapcity/landmarks";
+import { type LandmarkFrame, landmarkAt, planFarLandmark, planLandmarkSigns } from "../src/renderer/mapcity/landmarks";
 import { cableRuns, planLandmarkCables } from "../src/renderer/mapcity/landmarks/cables";
 import { GALLERY } from "../src/renderer/mapcity/landmarks/elevation";
 import { landmarkIndex } from "../src/renderer/mapcity/landmarks/match";
 import { SWATCH, helmBase, helmProfile } from "../src/renderer/mapcity/landmarks/kit";
 import { clockSpot, clockWalls, mouthWall, screenOn } from "../src/renderer/mapcity/landmarks/landmark-plan";
 import { facing } from "../src/renderer/mapcity/landmarks/layer2077";
-import { mapBuilding } from "../src/renderer/mapcity/map-building";
-import { MapCity, type MapView } from "../src/renderer/mapcity/map-city";
-import { type P2, centroid, cleanRing, pointInRing } from "../src/renderer/mapcity/polygon";
+import { MapCity } from "../src/renderer/mapcity/map-city";
+import { type P2, centroid, pointInRing } from "../src/renderer/mapcity/polygon";
 import { MAP_SIGN_KIND } from "../src/renderer/mapcity/sign-plan";
+import { cityAround, colored, data, near3, onTheStreet, outside, passageOpen, points, ringOf, ringsAround, scenery } from "./landmark-fixture";
 
 /**
  * Brama Krakowska from the landmark kit (ADR-0062, stage 1): the recipe's detail stays in the
@@ -26,84 +24,10 @@ import { MAP_SIGN_KIND } from "../src/renderer/mapcity/sign-plan";
  * leaves the gate's passage open under its vault and has a smaller far version.
  */
 
-const data = (id: string): LublinBuildingData => LUBLIN_CHUNKS.flatMap((c) => c.buildings).find((b) => b.id === id)!;
 const GATE = ["r7224409", "w617597407", "w617878341"] as const;
 
-/** The views the simulation hands the renderer: the scenery of the map buildings, passages included. */
-const scenery = (b: LublinBuildingData): SceneryItem & { view: MapView } => {
-  const s = WORLD_SCENERY.find((i) => i.view.kind === "building" && Math.abs(i.at.x - b.x) < 1e-6 && Math.abs(i.at.z - b.z) < 1e-6 && i.view.outline.length === b.outline.length / 2);
-  return s as SceneryItem & { view: MapView };
-};
-
-const ringOf = (s: SceneryItem): P2[] => (s.view.kind === "building" ? cleanRing(s.view.outline.map((p) => ({ x: p.x + s.at.x, z: p.z + s.at.z }))) : []);
-
 /** Every building of the data within 40 m of the gate, for the walls' neighbours. */
-const near = LUBLIN_CHUNKS.flatMap((c) => c.buildings).filter((b) => Math.hypot(b.x - 472.6, b.z + 91.2) < 40);
-const items = near.map((b, i) => ({ id: i + 1, b, s: scenery(b) })).filter((e) => e.s);
-const neighbour = (x: number, z: number, self: number): number | null => {
-  let top: number | null = null;
-  for (const e of items) if (e.id !== self && pointInRing({ x, z }, ringOf(e.s))) top = Math.max(top ?? -Infinity, e.s.at.y + (e.s.view.kind === "building" ? e.s.view.height : 0));
-  return top;
-};
-
-/** The facade frame of a building of the gate, plain or as the landmark's. */
-const frameOf = (id: string, recipe = true): FacadeFrame => {
-  const e = items.find((i) => i.b.id === id)!;
-  const view = e.s.view as Extract<MapView, { kind: "building" }>;
-  const f = facadeFrame(mapBuilding(e.id, { ring: ringOf(e.s), view, at: e.s.at }, groundY), neighbour);
-  return recipe ? withLandmark(f, landmarkAt(e.s.at.x, e.s.at.z, view.outline.length)) : f;
-};
-
-const near3 = (f: FacadeFrame): MeshSink => {
-  const sink = new MeshSink();
-  planNearLandmark(sink, f as LandmarkFrame);
-  return sink;
-};
-
-const points = (sink: MeshSink) => Array.from({ length: sink.vertexCount }, (_, i) => ({ x: sink.positions[i * 3]!, y: sink.positions[i * 3 + 1]!, z: sink.positions[i * 3 + 2]!, u2: sink.uvs2[i * 2]!, v2: sink.uvs2[i * 2 + 1]!, a: sink.colors[i * 4 + 3]! }));
-
-/** The points of the sink in a swatch's colour. */
-const colored = (sink: MeshSink, hex: string) => {
-  const [r, g, b] = hexColor(hex);
-  return points(sink).filter((_, i) => Math.abs(sink.colors[i * 4]! - r) < 1e-4 && Math.abs(sink.colors[i * 4 + 1]! - g) < 1e-4 && Math.abs(sink.colors[i * 4 + 2]! - b) < 1e-4);
-};
-
-/** Distance from a point outside the ring to its nearest edge (0 inside). */
-const outside = (r: readonly P2[], p: P2): number => {
-  if (pointInRing(p, r)) return 0;
-  let best = Infinity;
-  for (let i = 0; i < r.length; i++) {
-    const a = r[i]!;
-    const b = r[(i + 1) % r.length]!;
-    const dx = b.x - a.x;
-    const dz = b.z - a.z;
-    const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz)));
-    best = Math.min(best, Math.hypot(p.x - a.x - dx * t, p.z - a.z - dz * t));
-  }
-  return best;
-};
-
-/** Whether the segment p..q crosses any triangle of the sink (Möller–Trumbore). */
-const crosses = (sink: MeshSink, p: { x: number; y: number; z: number }, q: { x: number; y: number; z: number }): boolean => {
-  const P = sink.positions;
-  const d = { x: q.x - p.x, y: q.y - p.y, z: q.z - p.z };
-  for (let t = 0; t < sink.indices.length; t += 3) {
-    const v = [0, 1, 2].map((k) => sink.indices[t + k]! * 3).map((i) => ({ x: P[i]!, y: P[i + 1]!, z: P[i + 2]! }));
-    const [a, b, c] = v as [typeof p, typeof p, typeof p];
-    const e1 = { x: b.x - a.x, y: b.y - a.y, z: b.z - a.z };
-    const e2 = { x: c.x - a.x, y: c.y - a.y, z: c.z - a.z };
-    const h = { x: d.y * e2.z - d.z * e2.y, y: d.z * e2.x - d.x * e2.z, z: d.x * e2.y - d.y * e2.x };
-    const det = e1.x * h.x + e1.y * h.y + e1.z * h.z;
-    if (Math.abs(det) < 1e-12) continue;
-    const s = { x: p.x - a.x, y: p.y - a.y, z: p.z - a.z };
-    const u = (s.x * h.x + s.y * h.y + s.z * h.z) / det;
-    const qv = { x: s.y * e1.z - s.z * e1.y, y: s.z * e1.x - s.x * e1.z, z: s.x * e1.y - s.y * e1.x };
-    const w = (d.x * qv.x + d.y * qv.y + d.z * qv.z) / det;
-    const k = (e2.x * qv.x + e2.y * qv.y + e2.z * qv.z) / det;
-    if (u >= 0 && w >= 0 && u + w <= 1 && k > 0 && k < 1) return true;
-  }
-  return false;
-};
+const { near, items, frameOf } = cityAround(472.6, -91.2);
 
 describe("Brama Krakowska from the landmark kit (ADR-0062)", () => {
   it("finds its recipe by the data's position for the gate, its tower and octagon, and for no other building", () => {
@@ -150,19 +74,8 @@ describe("Brama Krakowska from the landmark kit (ADR-0062)", () => {
   it("leaves the passage open from mouth to mouth under the vault's springing and up to its crown on the axis", () => {
     const f = frameOf("r7224409");
     const p = f.b.passages![0]!;
-    const sink = near3(f);
-    const dx = p.to.x - p.from.x;
-    const dz = p.to.z - p.from.z;
-    const len = Math.hypot(dx, dz);
-    const across = { x: -dz / len, z: dx / len };
     const floor = Math.max(p.floor[0], p.floor[1]);
-    for (const s of [-0.8, 0, 0.8].map((k) => (k * p.width) / 2)) {
-      for (const y of [floor + 0.3, (floor + p.spring) / 2, p.spring - 0.1, ...(s === 0 ? [p.crown - 0.15] : [])]) {
-        const a = { x: p.from.x + across.x * s, y, z: p.from.z + across.z * s };
-        const b = { x: p.to.x + across.x * s, y, z: p.to.z + across.z * s };
-        expect(crosses(sink, a, b), `blocked at s ${s.toFixed(2)}, y ${y.toFixed(2)}`).toBe(false);
-      }
-    }
+    expect(passageOpen(near3(f), f)).toEqual([]);
     // The crown is the one from `sites.ts`: 4.2 m over the higher floor.
     expect(p.crown - floor).toBeCloseTo(4.2, 6);
   });
@@ -233,6 +146,9 @@ describe("Brama Krakowska from the landmark kit (ADR-0062)", () => {
       const f = frameOf(id) as LandmarkFrame;
       for (const p of [...colored(near3(f), SWATCH.metal), ...colored(near3(f), "#3a3f47")]) expect(outside(f.b.ring, p)).toBeLessThanOrEqual(0.31);
     }
+    // The two uplights by the passage on Bramowa stand on the cobbles, not under or over them, and in no neighbour.
+    const annex = frameOf("r7224409") as LandmarkFrame;
+    expect(onTheStreet(annex, near3(annex), ringsAround(472.6, -91.2, GATE))).toBe(2);
     const tower = frameOf("w617597407") as LandmarkFrame;
     const runs = cableRuns(tower);
     expect(runs.length).toBe(2);
