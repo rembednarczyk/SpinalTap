@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-179 Posiłki ochrony przy heacie poza zapisem
+- Status: naprawione (1.11, #165: zapis v23 z `reinforcements`, `watch.sent`, rozrzut i enforcer z `n` zamiast id; złote hashe tylko przez posiłki w zapisie; weryfikacja PRZYJĘTE)
+- Ważność: S3 · Zasięg: encje `security` bez klucza i `session.watch.reinforce` nie wchodzą do zapisu; `stateHash` nie widzi encji bez klucza
+- Dane: alleySim seed 21, `heat {level 2, faction hebi, lastKnown ALLEY_START}`, krok do pojawienia się posiłków i 30 dalej, zapis: oryginał 1 posiłek, `reinforce=3.5`; wczytana gra 0 i od razu nowy gdzie indziej; rozjazd w 130. kroku
+- Pakiet właściciela: packages/sim, packages/persistence
+
 ### G-189 Radziwiłłowska: jedno auto na sześć miejsc postojowych
 - Status: naprawione (1.11, #162: ulga za krawężnikiem tylko dla mebli, pełny odstęp od chodnika, krótszy model w zatoce; `bay-strip-sparse` 1 → 0; `PARKED_CARS` 72 → 80; dwie rundy weryfikacji, kurator ZGODNE Z UWAGAMI, T-102..T-104, T-107, T-108)
 - Ważność: S4 · Zasięg: w883991779 ma 1 auto na 6 stanowisk; bay s=36 odrzuca `furnitureClearance` 0,75 m przy nosie (mebel w obrysie pasa), s=39 `clearOfKeptWays` (ścieżka w obrysie), s=30 i 33 pomija hash zajętości 0,8

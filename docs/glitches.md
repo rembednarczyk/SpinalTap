@@ -556,12 +556,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: wyrównać zbiory dróg i parkingów między skanem a generatorem; test generatora dla przystanku niezależny od G-155
 - Pakiet właściciela: tools/glitch-scan, tools/osm-import
 
-### G-179 Posiłki ochrony przy heacie poza zapisem
-- Status: w PR #165; weryfikacja PRZYJĘTE (1.11; rozrzut z `n` zamiast id: te same czasy i punkty wejścia, wzorzec enforcerów jak na main), czeka na CI po poprawce komentarza
-- Ważność: S3 · Zasięg: encje `security` bez klucza i `session.watch.reinforce` nie wchodzą do zapisu; `stateHash` nie widzi encji bez klucza
-- Dane: alleySim seed 21, `heat {level 2, faction hebi, lastKnown ALLEY_START}`, krok do pojawienia się posiłków i 30 dalej, zapis: oryginał 1 posiłek, `reinforce=3.5`; wczytana gra 0 i od razu nowy gdzie indziej; rozjazd w 130. kroku
-- Pakiet właściciela: packages/sim, packages/persistence
-
 ### G-180 Zapis po śmierci gracza wczytuje się bez game over
 - Status: zgłoszone (1.11, weryfikator #145), do potwierdzenia w app (czy zapis lub autozapis po śmierci jest możliwy)
 - Ważność: S3 do potwierdzenia · Zasięg: zapis przy hp 0 wczytuje się z `gameOver=false` i drugi raz emituje `PlayerDied`
