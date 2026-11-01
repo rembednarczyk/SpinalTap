@@ -1,5 +1,5 @@
-import { type AbstractMesh, Matrix, MeshBuilder, type Vector3 } from "../babylon";
-import type { ActivityId, AppearanceDescriptor, CameraMode, DespawnReason, EffectDescriptor, EntityId, HackTargetKind, RenderPort, Transform, ViewDescriptor } from "@seki/core";
+import { type AbstractMesh, Matrix, type Vector3 } from "../babylon";
+import type { ActivityId, AppearanceDescriptor, CameraMode, DespawnReason, EffectDescriptor, EntityId, HackTargetKind, PrepareStage, RenderPort, Transform, Vec3, ViewDescriptor } from "@seki/core";
 import type { ChunkDef, DistrictId } from "@seki/sim";
 import { WORLD_CHUNKS } from "@seki/sim";
 import { CameraRig } from "../camera/camera-rig";
@@ -25,6 +25,7 @@ import type { CharacterModelManifest } from "./model-library";
 import { PropViews } from "./prop-views";
 import { type GameplayFxEvent, ScreenFx } from "./screen-fx";
 import { Signage } from "./signage";
+import { type StartPrep, sceneStartPrep, warmUpMaterials } from "./start-prep";
 import { WetProbe } from "./wet-probe";
 import { groundLift } from "./ground-lift";
 import type { Stage } from "./stage";
@@ -106,6 +107,9 @@ export class BabylonRenderer implements RenderPort {
   private kitMeshes = 0;
   private cameraTarget: EntityId | null = null;
   private resetting = false;
+  /** The loading screen's work (ADR-0057) and the model manifest it waits for. */
+  private readonly prep: StartPrep;
+  private modelManifest: Promise<unknown> = Promise.resolve();
 
   /** Builds the scene pieces in a fixed order: post-processes and meshes render in creation order. */
   constructor(
@@ -173,7 +177,7 @@ export class BabylonRenderer implements RenderPort {
       groundAt: (x, z) => this.mapCity?.heightAt(x, z) ?? null,
     });
     this.vehicles = new VehicleViews({ scene, kit: () => this.cityKit.kit, glow: stage.glow, eye: () => eye, quality: stage.options.quality ?? "high" });
-    this.warmUpMaterials();
+    warmUpMaterials(scene, this.materials, this.signage);
     this.fx = new ScreenFx({
       stage,
       materials: this.materials,
@@ -194,6 +198,19 @@ export class BabylonRenderer implements RenderPort {
     this.grading = this.fx.grading;
     this.metro = new MetroRide({ scene, materials: this.materials, shadow: this.shadow, camera: this.rig, cast: this.rideCast() });
     if (options.cityKit) this.cityKit.load(options.cityKit, options.cityProps ?? null);
+    const modelFiles = () => this.modelManifest.then(() => this.characters.preloadModels());
+    this.prep = sceneStartPrep({ stage, modelFiles, cityKit: () => this.cityKit.ready, cityWaiting: () => this.mapCity?.waiting ?? 0 });
+  }
+
+  /** The start of a game behind the loading screen (ADR-0057); the moon shadow goes on `at` first. */
+  prepare(at: Vec3, onProgress: (done: number, stage: PrepareStage) => void): Promise<void> {
+    const moved = this.shadow.update(at);
+    if (moved) this.materials.setShadowMatrix(moved);
+    return this.prep.run(onProgress);
+  }
+
+  cancelPrepare(): void {
+    this.prep.cancel();
   }
 
   /** The metro's riders are characters like any other, with their activities (ADR-0040). */
@@ -208,25 +225,6 @@ export class BabylonRenderer implements RenderPort {
         characters.despawn(id, fall);
       },
     };
-  }
-
-  /**
-   * Compiles the bare-structure skins (ADR-0027) up front, so the first pillar or wall that
-   * streams in does not stall a frame on a shader compile.
-   */
-  private warmUpMaterials(): void {
-    const probe = MeshBuilder.CreateBox("material-warmup", { size: 0.01 }, this.stage.scene);
-    probe.isVisible = false;
-    probe.isPickable = false;
-    let left = 2;
-    for (const preset of ["concreteBare", "metalPanel"] as const) {
-      this.materials.get(preset).forceCompilation(probe, () => {
-        left -= 1;
-        if (left === 0) probe.dispose();
-      });
-    }
-    // The holo shader too (ADR-0030); the gameplay post-process compiles when it is created.
-    this.signage.warmUp();
   }
 
   /** What the wet-asphalt probe mirrors: the sky, the far city, the signs and everything that glows. */
@@ -393,6 +391,7 @@ export class BabylonRenderer implements RenderPort {
     if (moved) this.materials.setShadowMatrix(moved);
     this.fx.update(dt);
     this.updateWetProbe(dt);
+    this.prep.tick();
   }
 
   /** Re-renders the probe on a new district or when what it mirrors changed; never in the metro. */
@@ -447,6 +446,11 @@ export class BabylonRenderer implements RenderPort {
   /** Imported character models (models/manifest.json); characters on screen are dressed too. */
   setCharacterModels(manifest: CharacterModelManifest): void {
     this.characters.setCharacterModels(manifest);
+  }
+
+  /** The manifest once it arrives (ADR-0057): the loading screen waits for it, then for its files. */
+  loadCharacterModels(manifest: Promise<CharacterModelManifest>): void {
+    this.modelManifest = manifest.then((m) => Object.keys(m).length > 0 && this.setCharacterModels(m), () => {});
   }
 
   /** Residents in the world and how many of them were drawn last frame (debug and tests). */

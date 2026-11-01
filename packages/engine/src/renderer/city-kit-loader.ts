@@ -40,12 +40,18 @@ export class CityKitLoader {
   private readonly pendingSkins = new Map<EntityId, PendingSkin>();
   private daylight = 0;
   private cityProps: CityProps | null = null;
+  private settled: Promise<unknown> = Promise.resolve();
 
   constructor(private readonly deps: CityKitLoaderDeps) {}
 
   /** The kit once it has loaded (its models and material also draw the street's vehicles, ADR-0050). */
   get kit(): CityKit | null {
     return this.city;
+  }
+
+  /** Settles once the kit and its props have loaded or failed; at once without a kit (ADR-0057). */
+  get ready(): Promise<unknown> {
+    return this.settled;
   }
 
   /** The facade props once they have loaded (ADR-0058). */
@@ -62,9 +68,9 @@ export class CityKitLoader {
     const { scene } = this.deps.stage;
     const token = {};
     scene.addPendingData(token);
-    CityKit.load(url)
+    const kit = CityKit.load(url)
       .then((data) => {
-        if (scene.isDisposed) return;
+        if (scene.isDisposed) return false;
         this.city = new CityKit(scene, this.deps.materials, this.deps.stage.glow, data, {
           onCovered: (box) => this.stepBack(box),
           walkedRoof: (center, size) => isWalkedRoof({ center, size }, this.deps.blocks()),
@@ -74,23 +80,26 @@ export class CityKitLoader {
         for (const [id, p] of this.pendingSkins) this.city.add(id, p.view.skin, p.view.size, p.center, p.box);
         this.pendingSkins.clear();
         this.deps.dressing.setKit("kit");
-        const props = propsUrl === null ? [] : typeof propsUrl === "string" ? [propsUrl] : propsUrl;
-        if (props.length > 0) this.loadProps(props);
+        return true;
       })
       .catch((err: unknown) => {
         console.warn(`[city] ${url} failed to load, keeping plain blocks`, err);
         this.pendingSkins.clear();
         // The plain blocks get the procedural facades of every chunk (W9).
         this.deps.dressing.setKit("bare");
+        return false;
       })
       .finally(() => scene.removePendingData(token));
+    const props = propsUrl === null ? [] : typeof propsUrl === "string" ? [propsUrl] : propsUrl;
+    // Ready once every props file has loaded or failed, not just the first (the loading screen waits on it).
+    this.settled = kit.then((loaded) => (loaded && props.length > 0 ? this.loadProps(props) : undefined));
   }
 
   /**
    * The props come after the kit, all files at once and merged: a file that fails leaves the
-   * others; without any the procedural decor stays.
+   * others; without any the procedural decor stays. Settles when all of them have.
    */
-  private loadProps(urls: readonly string[]): void {
+  private loadProps(urls: readonly string[]): Promise<void> {
     const { scene } = this.deps.stage;
     const token = {};
     scene.addPendingData(token);
@@ -104,7 +113,7 @@ export class CityKitLoader {
         return null;
       }
     };
-    Promise.all(urls.map(one))
+    return Promise.all(urls.map(one))
       .then((files) => {
         const loaded = files.filter((f): f is CityProps => f !== null);
         if (scene.isDisposed || loaded.length === 0) return;

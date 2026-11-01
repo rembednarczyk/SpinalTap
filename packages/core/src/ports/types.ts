@@ -36,6 +36,11 @@ export interface Transform {
   readonly air?: number;
   /** Climbing speed in m/s (positive up) while on a ladder (ADR-0021); absent otherwise. */
   readonly climb?: number;
+  /**
+   * Knocked out by a takedown (ADR-0065): the body lies still. The renderer draws the pose in
+   * stage 4 of the ADR; until then it is only data. Absent means conscious.
+   */
+  readonly unconscious?: boolean;
 }
 
 /** What the presentation layer should build for an entity. Pure data, engine-agnostic. */

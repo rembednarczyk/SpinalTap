@@ -37,6 +37,9 @@ export const enContent = {
   "prompt.help": "Help",
   "prompt.door.force": "Force the lock (raises the alarm)",
   "prompt.door.locked": "Keypad door: locked",
+  // Takedowns (ADR-0065): the interact key, and holding the attack button to the end.
+  "prompt.takedown": "Take down",
+  "prompt.takedown.kill": "hold attack to kill",
   // Interiors (sim `INTERIORS`, ADR-0061); Lublin's own places keep their names.
   "interior.clinic": "Doctor Mori's clinic",
   "interior.neon-koi": "Neon Koi",

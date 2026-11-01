@@ -9,6 +9,7 @@ import { forceDoor } from "./door-system";
 import { grabLadder } from "./ladder-system";
 import { readHookTerminal } from "../world/hook-tracker";
 import { helpPasserBy } from "../world/micro-events";
+import { TAKEDOWN_PROMPT } from "../world/takedown";
 
 /**
  * Picking up the crate of the running retrieval job, or the data of an infiltration (ADR-0024):
@@ -46,7 +47,8 @@ const INTERACT_REACH_Y = 1.6;
  * Tracks the nearest interactable in reach and starts a dialogue on the interact edge; a
  * pickup is taken on the spot instead. A shop whose owner's faction is hostile to the player
  * refuses instead of opening. What an NPC on a daily plan offers can change with the hour
- * (see the schedule system).
+ * (see the schedule system). A takedown (ADR-0065) nearer than anything else takes the prompt;
+ * the app answers its interact key with the `takedown` command, so the key does nothing here.
  */
 export const interactionSystem: System = {
   name: "interaction",
@@ -58,8 +60,8 @@ export const interactionSystem: System = {
     let best: (Entity & { interactable: NonNullable<Entity["interactable"]> }) | null = null;
     let bestDist = Infinity;
     for (const e of world.with("interactable")) {
-      // On a ladder the only way off is up, down or a jump.
-      if (e.interactable.kind === "ladder" && player.climb) continue;
+      // On a ladder the only way off is up, down or a jump. Nobody talks to someone knocked out.
+      if ((e.interactable.kind === "ladder" && player.climb) || e.unconscious) continue;
       const d = Math.hypot(e.position.x - player.position.x, e.position.z - player.position.z);
       // Not through a floor: from the overpass nobody below is in reach (ADR-0020).
       if (Math.abs(e.position.y - player.position.y) > INTERACT_REACH_Y) continue;
@@ -68,14 +70,18 @@ export const interactionSystem: System = {
         bestDist = d;
       }
     }
-    const focusId = best?.id ?? null;
-    const prompt = best?.interactable.prompt ?? null;
+    const takedown = session.takedown ? { id: session.takedown.target, distance: 0 } : session.takedownTarget;
+    const takingDown = takedown !== null && takedown.distance < bestDist;
+    // The interact key takes down only what the prompt names (ADR-0065).
+    if (!takingDown) session.takedownTarget = null;
+    const focusId = takingDown ? takedown.id : (best?.id ?? null);
+    const prompt = takingDown ? TAKEDOWN_PROMPT : (best?.interactable.prompt ?? null);
     if (focusId !== session.focusId || prompt !== session.focusPrompt) {
       session.focusId = focusId;
       session.focusPrompt = prompt;
       ctx.bus.emit("InteractionFocusChanged", { targetId: focusId, prompt });
     }
-    if (best && ctx.input.interact) {
+    if (best && !takingDown && ctx.input.interact) {
       const { interactable, faction } = best;
       if (interactable.kind === "elevator") {
         callElevator(ctx, interactable, player);

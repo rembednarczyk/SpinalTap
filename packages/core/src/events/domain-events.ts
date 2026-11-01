@@ -216,7 +216,23 @@ export interface DomainEvents {
   InteriorEntered: { interiorId: string };
   /** The player stepped out of the interior `interiorId`. */
   InteriorLeft: { interiorId: string };
+  // Takedowns (ADR-0065).
+  /** The player got hold of `target`; both stand still for `duration` seconds. */
+  TakedownStarted: { target: EntityId; duration: number };
+  /**
+   * The takedown ended: `target` is unconscious, or dead with `lethal` (its EntityKilled follows).
+   * `witnessed`: someone saw it (ADR-0065 stage 2; false until then).
+   */
+  TakedownDone: { target: EntityId; lethal: boolean; witnessed: boolean };
+  /**
+   * The takedown was cut short: the player was hurt (the target broke free and is alerted), or
+   * the target is gone (killed by someone else, streamed out).
+   */
+  TakedownBroken: { target: EntityId; reason: TakedownBreak };
 }
+
+/** Why a takedown did not finish (ADR-0065). */
+export type TakedownBreak = "damage" | "gone";
 
 /** Awareness of the player, from not noticing to fighting. */
 export type AwarenessState = "unaware" | "suspicious" | "searching" | "alerted";

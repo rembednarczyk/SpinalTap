@@ -1,5 +1,6 @@
 import { type ConsumableId, stackCount, useConsumable } from "@seki/core";
 import type { System } from "../world/context";
+import { playerHeld } from "../world/takedown";
 
 /** Quick use takes the strongest consumable first. */
 const QUICK_USE: readonly ConsumableId[] = ["medkit", "bandage"];
@@ -8,7 +9,7 @@ const QUICK_USE: readonly ConsumableId[] = ["medkit", "bandage"];
 export const itemSystem: System = {
   name: "item",
   run(ctx) {
-    if (!ctx.input.useItem || ctx.session.dialogueActive || ctx.session.gameOver) return;
+    if (!ctx.input.useItem || playerHeld(ctx)) return;
     const player = ctx.world.with("player", "health").first;
     if (!player) return;
     const inventory = ctx.state.domain.inventory;
