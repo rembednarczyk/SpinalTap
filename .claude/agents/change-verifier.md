@@ -18,7 +18,7 @@ Dostajesz ID glitcha albo etap funkcji (np. ADR-0058 etap 1), ścieżkę worktre
    - złote hashe w `packages/sim/test/determinism.test.ts` bez zmian albo zmiana uzasadniona w commicie.
 5. **Bramki:**
    - `pnpm typecheck`, `pnpm lint`, `pnpm depcheck`;
-   - e2e: pełny zestaw puszcza CI na szkicu PR, który orkiestrator otwiera, gdy autor odda pracę; wynik czytasz z CI (orkiestrator poda numer PR). Lokalnie (`pnpm e2e e2e/<spec>.spec.ts`, jawny wolny `E2E_PORT`, z load average) puszczasz tylko to, czego CI nie pokaże: sondy w przeglądarce, zrzuty do oceny, powtórkę podejrzanego wyniku. Nie powtarzasz bramek i speców, które autor już puścił, chyba że podejrzewasz ich wynik.
+   - e2e: pełny zestaw puszcza CI na PR, który orkiestrator otwiera (jako gotowy, nie szkic: szkice nie uruchamiają CI), gdy autor odda pracę; wynik czytasz z CI (orkiestrator poda numer PR). Lokalnie (`pnpm e2e e2e/<spec>.spec.ts`, jawny wolny `E2E_PORT`, z load average) puszczasz tylko to, czego CI nie pokaże: sondy w przeglądarce, zrzuty do oceny, powtórkę podejrzanego wyniku. Nie powtarzasz bramek i speców, które autor już puścił, chyba że podejrzewasz ich wynik.
    - Migawkę NPR i zrzuty przy zmianie wyglądu obejrzyj sam.
 6. **Granice i reguły z `CLAUDE.md`:**
    - własność pakietów i kierunek importów;
