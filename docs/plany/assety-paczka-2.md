@@ -84,12 +84,16 @@ Podmiana na model wymaga zmiany kontraktu (nowy rodzaj widoku), więc zostaje na
 
 Nowe rodzaje mebli z bryłą w symulacji i miejscami z importu (`furniture.ts`, `docs/world/lublin-props.todo.json`,
 `tools/osm-import/src/props-bulky.ts`), modele w `street-props.glb` (`tools/city_street_e2.py`):
-- wózek AVIKA (`food-cart`, bryła 3,9 × 1,5 m): 3 przy Targu na Ruskiej i 2 na Giełdzie Kresowej, w miejscach,
+- wózek AVIKA (`food-cart`, bryła 3,9 × 1,5 m): 3 przy Targu na Ruskiej i 2 na Giełdzie na Kresowej, w miejscach,
   gdzie cały obrys z przejściem 1 m leży na wolnym chodniku obok straganów; 0,9 tys. trójkątów;
-- kontener (`container`, 20 ft): 8 na pustym placu Nabrzeża przy Grafa, w dwóch kolorach palety (`rust`,
-  `dumpster`, kolor z kształtu), 0,9 tys. trójkątów; w nadbudówkach (`vertical-plan`) zostają proceduralne;
-- z paczek CC0 w tym samym etapie: bankomat wolnostojący (pixelmannen), hydrant (Quaternius), donica (Kenney
-  Nature Kit), rower (Quaternius) i skuter (lyricsz) przy stojakach.
+- kontener (`container`, 20 ft): 6 na Giełdzie na Kresowej („kontenery Tessen”, stawiane przed straganami), w dwóch
+  kolorach palety (`rust`, `dumpster`, kolor z kształtu), 0,67 tys. trójkątów; w nadbudówkach (`vertical-plan`) zostają proceduralne;
+- z paczek CC0 w tym samym etapie: bankomat wolnostojący (pixelmannen), hydrant (Quaternius; 6 nadziemnych z OSM,
+  `data/osm/points/hydrants.json`), donica (Kenney Nature Kit), rower (Quaternius) i skuter (lyricsz) przy stojakach.
+
+Wypiek (`tools/city_street_e2.py`): luźne części poniżej 12 trójkątów odpadają (`drop_specks`, także w modelach
+etapu 1), koła wózka upraszczane osobno (`bands`), słupki daszku dorysowane, rower 0,7 tys. trójkątów, żeby
+kierownica i obręcze zostały całe.
 
 Odłożone: **mini-ATM w ścianach** (`simple_mini-atm`). Potrzebuje przypisania do elewacji banku (fasada,
 wysokość, odsunięcie od okien i drzwi), czyli rekwizytu fasady w `wall-clutter`/`facade-props` z rolą
