@@ -146,7 +146,7 @@ describe("character menu in the app (plan §8.5 contract)", () => {
     session.sim.player()!.health = { current: 0, max: 100 };
     session.intents.closeCharacterScreen();
     session.intents.openCharacterScreen("inventory");
-    (session as unknown as { setScreen(s: string): void }).setScreen("dead");
+    (session as unknown as { view: { set(s: string): void } }).view.set("dead");
     expect(ui.getState().characterTab).toBeNull();
     expect(session.characterScreenOpen).toBe(false);
   });

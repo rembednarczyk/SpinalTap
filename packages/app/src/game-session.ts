@@ -2,24 +2,23 @@ import {
   type BreachDaemonId,
   type DifficultyProfile,
   type DomainEvents,
-  EMPTY_INPUT,
   EventBus,
   type InputFrame,
   type MetroStationId,
   type SaveSnapshot,
-  pendingScene,
 } from "@seki/core";
 import { NarrativeRuntime } from "@seki/narrative";
-import { RenderSync, SIM_HZ, Simulation, WORLD_SCENERY } from "@seki/sim";
+import { RenderSync, Simulation, WORLD_SCENERY } from "@seki/sim";
 import { type Screen, type SessionIntents, type UiIntents, patchUi, translate } from "@seki/ui";
 import { type Controllers, createControllers } from "./controllers/compose";
-import { isCalm } from "./controllers/hud-sync";
 import { LoadingController } from "./controllers/loading-controller";
 import { pushToastTimed } from "./controllers/shared";
 import { buildCityMap } from "./city-map";
 import { narrativeText } from "./content-text";
 import { composeIntents, controllerIntents } from "./intents";
 import type { GameSessionDeps } from "./session-deps";
+import { SessionLoop } from "./session-loop";
+import { SessionScreen } from "./session-screen";
 
 export { RECALL_CALM_TICKS } from "./controllers/hud-sync";
 export type { GameSessionDeps, HintsHost, SettingsHost } from "./session-deps";
@@ -27,8 +26,9 @@ export type { GameSessionDeps, HintsHost, SettingsHost } from "./session-deps";
 /**
  * Application service: owns the running simulation and the loop (step, render, screen) and the
  * session's own intents (new game, pause, saves). The other intents come from the controllers,
- * composed in `intents.ts` (ADR-0031). Contains no browser or Babylon code, so the whole M0
- * loop runs headless.
+ * composed in `intents.ts` (ADR-0031). The screen and the panels are `SessionScreen`, the step
+ * and the frame `SessionLoop`. Contains no browser or Babylon code, so the whole M0 loop runs
+ * headless.
  */
 export class GameSession implements SessionIntents {
   readonly bus = new EventBus<DomainEvents>();
@@ -40,6 +40,10 @@ export class GameSession implements SessionIntents {
   private readonly c: Controllers;
   /** The loading screen in front of a new game and a load (ADR-0057). */
   private readonly loading: LoadingController;
+  /** The screen and the panels over it. */
+  private readonly view: SessionScreen;
+  /** One step and one frame. */
+  private readonly loop: SessionLoop;
 
   constructor(private readonly deps: GameSessionDeps) {
     // The ink in the player's language from the start, the narrative's own words (speakers' roles,
@@ -50,6 +54,9 @@ export class GameSession implements SessionIntents {
     });
     // Lublin's terrain, surfaces and buildings are drawn for good, streamed in or not (ADR-0045).
     this.renderSync = new RenderSync(deps.render, deps.scenery === false ? [] : WORLD_SCENERY);
+    const controllers = () => this.c;
+    this.view = new SessionScreen({ ui: deps.ui, controllers });
+    this.loop = new SessionLoop({ ui: deps.ui, renderSync: this.renderSync, sim: () => this.simulation, controllers, screen: this.view });
     this.simulation = Simulation.create({ seed: deps.seed(), bus: this.bus, crowd: deps.crowd ?? "off", traffic: deps.traffic ?? deps.crowd ?? "off" });
     // The whole city (ADR-0045): Lublin's streets, buildings and names under the game's decks and links (ADR-0021).
     patchUi(deps.ui, { map: buildCityMap() });
@@ -59,11 +66,11 @@ export class GameSession implements SessionIntents {
       sim: () => this.simulation,
       screen: () => this.screen,
       inControl: () => this.inControl,
-      setScreen: (screen) => this.setScreen(screen),
-      interrupt: () => this.interruptDialogue(),
+      setScreen: (screen) => this.view.set(screen),
+      interrupt: () => this.view.interruptDialogue(),
       restore: (snapshot) => this.restore(snapshot),
     });
-    this.loading = new LoadingController({ render: deps.render, ui: deps.ui, setScreen: (screen) => this.setScreen(screen) });
+    this.loading = new LoadingController({ render: deps.render, ui: deps.ui, setScreen: (screen) => this.view.set(screen) });
     const parts = controllerIntents(this.c, () => this.simulation);
     this.intents = composeIntents(this, parts);
     void this.refreshSlots();
@@ -74,65 +81,29 @@ export class GameSession implements SessionIntents {
   }
 
   get screen(): Screen {
-    return this.deps.ui.getState().screen;
+    return this.view.screen;
   }
 
   /** True while the player is in control (playing, no dialogue, no menu). */
   get inControl(): boolean {
-    const { dialogue, shop, loot, character, phone, hack, metro } = this.c;
-    const panel = dialogue.isOpen || shop.isOpen || loot.isOpen || character.isOpen || phone.isOpen || hack.breachOpen || metro.isOpen || metro.riding;
-    return this.screen === "playing" && !panel;
-  }
-
-  /**
-   * The simulation only advances while playing; dialogue freezes the player but not the world,
-   * the character menu stops the clock.
-   */
-  get running(): boolean {
-    return this.screen === "playing" && !this.c.character.isOpen;
+    return this.view.inControl;
   }
 
   /** The character menu is open; the app draws the preview instead of the game. */
   get characterScreenOpen(): boolean {
-    return this.c.character.isOpen;
+    return this.view.characterScreenOpen;
   }
 
   step(input: InputFrame): void {
-    if (!this.running) return;
-    const frame = this.inControl ? this.c.hack.withTouchScan(input) : EMPTY_INPUT;
-    // The interact key on a takedown's target or a body is a command for this very step (ADR-0065).
-    this.c.takedown.input(frame);
-    this.c.carry.input(frame);
-    this.simulation.step(frame);
-    this.c.metro.tick(1 / SIM_HZ);
-    this.c.radio.tick(1 / SIM_HZ);
-    patchUi(this.deps.ui, { scanning: this.inControl && this.c.hack.scanning(input) });
-    this.playPendingRecall();
-    this.c.hints.step(this.inControl, this.c.character.isOpen);
-    this.c.autosave.step();
-  }
-
-  /**
-   * A recovered memory plays as a flashback as soon as the player is free again (after the
-   * conversation or the clinic that triggered it), and so does the opening of act II. Driven
-   * by domain state, so it survives a save.
-   */
-  private playPendingRecall(): void {
-    if (!this.inControl || this.simulation.session.gameOver) return;
-    const scene = pendingScene(this.simulation.domain);
-    if (!scene || !isCalm(this.simulation)) return;
-    this.simulation.session.dialogueActive = true;
-    this.c.dialogue.open(scene);
+    this.loop.step(input);
   }
 
   render(alpha: number): void {
-    this.c.character.renderPreview();
-    this.renderSync.sync(this.simulation.world, alpha, this.simulation.streamer.streamedOut, this.simulation.domain);
-    this.c.hud.frame();
+    this.loop.render(alpha);
   }
 
   syncHud(): void {
-    this.c.hud.sync();
+    this.loop.syncHud();
   }
 
   // ---- SessionIntents ----
@@ -161,20 +132,20 @@ export class GameSession implements SessionIntents {
   }
 
   resume(): void {
-    if (this.screen === "paused") this.setScreen("playing");
+    if (this.screen === "paused") this.view.set("playing");
   }
 
   pause(): void {
     if (!this.inControl) return;
     // A difficulty that waited for the end of a fight may be in force by now (ADR-0066).
     this.c.difficulty.sync();
-    this.setScreen("paused");
+    this.view.set("paused");
   }
 
   quitToTitle(): void {
     this.loading.cancel();
-    this.closePanels();
-    this.setScreen("title");
+    this.view.closePanels();
+    this.view.set("title");
     void this.refreshSlots();
   }
 
@@ -196,7 +167,7 @@ export class GameSession implements SessionIntents {
    * It plays behind the loading screen (ADR-0057) unless `prepare` is false (the debug jump).
    */
   restore(snapshot: SaveSnapshot, prepare = true): void {
-    this.closePanels();
+    this.view.closePanels();
     this.replaceSimulation(Simulation.fromSnapshot(snapshot, this.bus, this.deps.crowd ?? "off", this.deps.traffic ?? this.deps.crowd ?? "off"));
     this.c.wave1.inbox.clear();
     if (snapshot.narrative) this.narrative.loadState(snapshot.narrative);
@@ -204,7 +175,7 @@ export class GameSession implements SessionIntents {
     if (prepare) this.startPlaying();
     else {
       this.loading.cancel();
-      this.setScreen("playing");
+      this.view.set("playing");
     }
   }
 
@@ -217,30 +188,6 @@ export class GameSession implements SessionIntents {
 
   // ---- composition ----
 
-  /**
-   * The sim ended the conversation or the shop because the player came under fire (ADR-0016):
-   * close the panel, give the controls back, and let ink drop the half-finished talk so it
-   * can start over. No end-dialogue command: the sim has already cleared the flag.
-   */
-  private interruptDialogue(): void {
-    if (!this.c.dialogue.isOpen && !this.c.shop.isOpen && !this.c.loot.isOpen) return;
-    this.c.dialogue.interrupt();
-    this.closePanels();
-    this.c.focus.settle();
-  }
-
-  /** Every panel and the menu close without telling the simulation. */
-  private closePanels(): void {
-    const { dialogue, character, shop, loot, phone, hack, metro } = this.c;
-    metro.closeSilently();
-    dialogue.closeSilently();
-    character.closeSilently();
-    shop.closeSilently();
-    loot.closeSilently();
-    phone.closeSilently();
-    hack.closeSilently();
-  }
-
   private replaceSimulation(next: Simulation): void {
     this.renderSync.reset();
     this.simulation = next;
@@ -252,11 +199,5 @@ export class GameSession implements SessionIntents {
     this.deps.render.setCameraMode(next.domain.preferences.cameraMode);
     patchUi(this.deps.ui, { prompt: null, toasts: [] });
     this.render(0);
-  }
-
-  private setScreen(screen: Screen): void {
-    if (screen !== "playing") this.c.character.closeSilently();
-    patchUi(this.deps.ui, { screen });
-    this.c.focus.settle();
   }
 }
