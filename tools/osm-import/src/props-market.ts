@@ -115,6 +115,9 @@ const clearOf = (pieces: readonly StreetPropItem[], p: Pt, u: Pt): boolean => {
 
 /** Is a stall at p (its counter along u) clear: its canvas with a margin on the outline's open ground, off paths, streets, entrances and the pieces set before? */
 const fits = (site: Site, ring: readonly Pt[], gates: readonly Pt[], p: Pt, u: Pt, pieces: readonly StreetPropItem[]): boolean => {
+  // The canvas's middle sample is p itself: most rows' stalls fall off the outline, so it goes
+  // before the checks against every street of the city (G-200).
+  if (!pointInRing(p, ring)) return false;
   if (gates.some((g) => Math.hypot(g.x - p.x, g.z - p.z) < ENTRANCE_ROOM) || nearTraffic(site, p, TRAFFIC_REACH)) return false;
   if (!clearOf(pieces, p, u)) return false;
   const hw = STALL_W / 2 + EDGE;
