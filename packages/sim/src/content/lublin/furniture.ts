@@ -8,7 +8,7 @@ import type { StaticProp } from "../builders";
  * cheap convex prisms in the piece's own frame (front +z, foot at the origin, turned by its
  * yaw like the renderer's models): benches, bollards, bins, lamp posts, tree trunks, kiosks,
  * bus shelters, machines, columns and monuments, bike racks with their bikes, hydrants, food
- * carts and containers. Small things (manholes, plates, signs, planters, shrubs, wall lanterns
+ * carts and containers, the market's stock and the food booths. Small things (manholes, plates, signs, planters, shrubs, wall lanterns
  * on facades) have none.
  */
 
@@ -35,7 +35,7 @@ const box = (x: number, z: number, hx: number, hz: number, top: number): Box => 
 const post = (r: number, top: number, x = 0, z = 0): Post => ({ x, z, r, top });
 
 /** Shape counts per kind, as the renderer's `PROP_SHAPES` (the low bits of `variant`). */
-const SHAPES: Partial<Record<StreetPropKind, number>> = { bench: 2, tree: 3, monument: 6, artwork: 6, flagpole: 2, "bike-rack": 4, container: 2 };
+const SHAPES: Partial<Record<StreetPropKind, number>> = { bench: 2, tree: 3, monument: 6, artwork: 6, flagpole: 2, "bike-rack": 4, container: 2, "market-goods": 4 };
 const shapeOf = (kind: StreetPropKind, variant: number): number => variant % (SHAPES[kind] ?? 1);
 /** Trees grow 0.8 to 1.25 (bits 4 to 7), like the renderer's `scaleOf`. */
 const treeScale = (variant: number): number => 0.8 + 0.45 * (((variant >> 4) % 16) / 15);
@@ -49,6 +49,29 @@ export const BOLLARD = { side: 0.34, height: 1.05, chain: 0.018 } as const;
 
 /** Monument and artwork solids by shape: obelisk, figure on a plinth, Koziołek, abstract, stele, wayside shrine. */
 const MONUMENT_PARTS: readonly Box[] = [box(0, 0, 1.4, 1.4, 11), box(0, 0, 0.9, 0.9, 3.5), box(0, 0, 0.45, 0.3, 1.2), box(0, 0, 0.5, 0.5, 2.6), box(0, 0, 0.65, 0.35, 1.65), box(0, 0, 0.45, 0.45, 3.1)];
+
+/**
+ * The market's stock beside a stall (ADR-0058 stage 3), by shape: cartons on a pallet, barrels,
+ * crates of produce, goods under a canvas on posts.
+ */
+const MARKET_GOODS: readonly Box[] = [box(0, 0, 0.6, 0.4, 1.0), box(0, 0, 0.62, 0.32, 0.95), box(0, 0, 0.55, 0.4, 0.9), box(0, 0, 0.7, 0.5, 1.4)];
+
+/**
+ * A food booth (yatai, ADR-0058 stage 3) in its frame, front +z where the customers sit: the counter
+ * 2.1 x 0.6 m, the roof on four posts 2.4 m tall over it and the cook behind it, three stools.
+ */
+export const FOOD_STALL = {
+  counter: { x: 0, z: 0.1, hx: 1.05, hz: 0.3, top: 1.05 },
+  posts: [
+    [-1.05, -0.7],
+    [1.05, -0.7],
+    [-1.05, 0.4],
+    [1.05, 0.4],
+  ] as const,
+  roof: 2.4,
+  stools: [-0.65, 0, 0.65] as const,
+  stoolZ: 0.85,
+} as const;
 
 /** The parts of each solid kind, by shape. Heights are above the foot. */
 const PARTS: Partial<Record<StreetPropKind, (shape: number, variant: number) => readonly Part[]>> = {
@@ -85,6 +108,14 @@ const PARTS: Partial<Record<StreetPropKind, (shape: number, variant: number) => 
   hydrant: () => [post(0.17, 0.9)],
   "food-cart": () => [box(0, 0, 1.95, 0.75, 2.65)],
   container: () => [box(0, 0, 3.03, 1.22, 2.6)],
+  // ADR-0058 stage 3. The market's stock by shape (`MARKET_GOODS`), and a food booth: its counter,
+  // the four posts of its roof and three stools in front.
+  "market-goods": (s) => [MARKET_GOODS[s] ?? MARKET_GOODS[0]!],
+  "food-stall": () => [
+    box(FOOD_STALL.counter.x, FOOD_STALL.counter.z, FOOD_STALL.counter.hx, FOOD_STALL.counter.hz, FOOD_STALL.counter.top),
+    ...FOOD_STALL.posts.map(([x, z]) => post(0.06, FOOD_STALL.roof, x, z)),
+    ...FOOD_STALL.stools.map((x) => post(0.18, 0.75, x, FOOD_STALL.stoolZ)),
+  ],
 };
 
 /** Kinds that are solids. */
