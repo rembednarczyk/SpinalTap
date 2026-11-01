@@ -34,6 +34,9 @@ const part = <I extends object>(impl: I, keys: Keys<I>): I => {
   return out as I;
 };
 
+/** The session's intents in two parts: the course of the game (`SessionFlow`) and the saves (`SaveController`). */
+export type SaveIntents = Pick<SessionIntents, "save" | "load" | "exportSave" | "importSave">;
+export type FlowIntents = Omit<SessionIntents, keyof SaveIntents>;
 const SESSION: Keys<SessionIntents> = { newGame: true, resume: true, pause: true, save: true, load: true, exportSave: true, importSave: true, quitToTitle: true };
 const DIALOGUE: Keys<DialogueIntents> = { choose: true, closeDialogue: true };
 const SHOP: Keys<ShopIntents> = {
