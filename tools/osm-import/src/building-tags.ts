@@ -18,10 +18,11 @@ export const parseLength = (v: string | undefined): number | null => {
   return Number.isFinite(n) && n > 0 ? n : null;
 };
 
-/** Parses `building:levels` (`3`, `3.5`, `3;4` takes the largest). */
+/** Parses `building:levels` (`3`, `3.5`, `4,5` with a decimal comma, `3;4` takes the largest). */
 export const parseLevels = (v: string | undefined): number | null => {
   if (v === undefined) return null;
   const parts = v
+    .replace(/(\d),(\d)/g, "$1.$2")
     .split(/[;,-]/)
     .map((s) => Number(s.trim()))
     .filter((n) => Number.isFinite(n) && n >= 0);
@@ -155,7 +156,7 @@ const heights = (tags: Tags, opts: { area: number; shops: boolean; range: readon
   if (height !== null) {
     const r = Math.min(roof, height * 0.5);
     const walls = Math.max(height - minHeight - r, 2.5);
-    return { walls, roof: r, levels: tagLevels ?? Math.max(1, Math.round(walls / STOREY)), source: "height" };
+    return { walls, roof: r, levels: tagLevels !== null ? wholeStoreys(tagLevels) : Math.max(1, Math.round(walls / STOREY)), source: "height" };
   }
   if (tagLevels !== null) {
     const levels = Math.max(1, tagLevels);

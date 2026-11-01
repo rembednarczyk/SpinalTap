@@ -79,7 +79,7 @@ export const partTier = (p: Area, use: BuildingUse): Tier | null => {
     if (height <= bottom) return null;
     // A helmet mapped as a part of its own is nearly all roof: a metre of walls carries it.
     const r = Math.min(roof, height * 0.5, Math.max(height - bottom - 1, 0));
-    return { area: p, bottom, eaves: height - r, roof: r, levels: levels ?? Math.max(1, Math.round((height - r - bottom) / STOREY)), source: "height", ...roofShapeOf(t) };
+    return { area: p, bottom, eaves: height - r, roof: r, levels: levels !== null ? wholeStoreys(levels) : Math.max(1, Math.round((height - r - bottom) / STOREY)), source: "height", ...roofShapeOf(t) };
   }
   const n = Math.max(1, levels!);
   return { area: p, bottom, eaves: Math.max(n * STOREY, bottom + 1), roof, levels: wholeStoreys(n), source: "levels", ...roofShapeOf(t) };
