@@ -1,46 +1,13 @@
-import { type BaseTexture, Color3, Matrix, type Scene, ShaderMaterial, type Texture } from "../babylon";
+import type { BaseTexture, Matrix, Scene, ShaderMaterial, Texture } from "../babylon";
 import { NIGHT_RIG, type LightingRig, type PointLightDef } from "./lighting";
-import { PRESETS, type PresetName, type ToonPreset } from "./presets";
-import { MAX_POINT_LIGHTS, TOON_FRAGMENT, TOON_VERTEX } from "./toon-shader";
+import { PRESETS, type PresetName } from "./presets";
+import { ToonEnvironment } from "./toon-environment";
+import { createToonMaterial } from "./toon-material-factory";
+import { ToonPointLights } from "./toon-point-lights";
+import { type ShadowBinding, ToonSceneUniforms } from "./toon-scene-uniforms";
 
-const UNIFORMS = [
-  "world",
-  "viewProjection",
-  "shadowMatrix",
-  "shadowParams",
-  "shadeColor",
-  "fill",
-  "fillColor",
-  "flashLight",
-  "cameraPosition",
-  "baseColor",
-  "emissiveColor",
-  "sunDir",
-  "sunColor",
-  "ambientColor",
-  "rimColor",
-  "rimStrength",
-  "rimTint",
-  "gloss",
-  "windows",
-  "fogColor",
-  "fogDensity",
-  "pointPos",
-  "pointColor",
-  "pointCount",
-  "selfLit",
-  "envStrength",
-];
-
-const hex = (h: string): Color3 => Color3.FromHexString(h);
-
-/**
- * Lights farther than this from the camera only get a shader slot when nearer ones leave one
- * free. Wide enough that within one district the selection is the plain registration order.
- */
-export const LIGHT_SLOT_DISTANCE = 50;
-
-const SAMPLERS = ["shadowSampler", "baseSampler"];
+export { LIGHT_SLOT_DISTANCE } from "./toon-point-lights";
+export type { ShadowBinding } from "./toon-scene-uniforms";
 
 export interface ImportedMaterialOptions {
   /** Discard texels with alpha below 0.5 (glTF MASK and BLEND materials). */
@@ -57,42 +24,30 @@ export interface ImportedMaterialOptions {
   readonly tint?: boolean;
 }
 
-export interface ShadowBinding {
-  readonly texture: BaseTexture;
-  readonly matrix: Matrix;
-  readonly texelSize: number;
-  /** Depth bias in [0, 1] depth units. */
-  readonly bias: number;
-  /** 0..1, 0 disables shadow lookups. */
-  readonly strength: number;
-}
-
 /**
  * Owns all toon materials (one per preset, shared between meshes) and pushes the shared
  * light rig into them. Point lights are registered by key so they can be removed again.
  */
 export class ToonMaterials {
   private readonly materials = new Map<string, ShaderMaterial>();
-  private readonly lights = new Map<string, PointLightDef>();
-  /** Lights bound to the shader's point slots, in slot order. */
-  private active: PointLightDef[] = [];
-  private focus: { x: number; z: number } | null = null;
-  private shadow: ShadowBinding | null = null;
-  /** Wet-asphalt probe (ADR-0036) and the presets that sample it; fixed before they are created. */
-  private env: { texture: BaseTexture; presets: ReadonlySet<string>; strength: number } | null = null;
+  private readonly lights = new ToonPointLights();
+  private readonly env = new ToonEnvironment();
+  private readonly look: ToonSceneUniforms;
 
   constructor(
     private readonly scene: Scene,
-    private rig: LightingRig = NIGHT_RIG,
-  ) {}
+    rig: LightingRig = NIGHT_RIG,
+  ) {
+    this.look = new ToonSceneUniforms(rig);
+  }
 
   /** The light rig pushed into every material now (fog and colours of the look on screen). */
   get currentRig(): LightingRig {
-    return this.rig;
+    return this.look.rig;
   }
 
   get(preset: PresetName): ShaderMaterial {
-    return this.cached(preset, () => this.create(preset, PRESETS[preset]));
+    return this.cached(preset, () => createToonMaterial(this.scene, preset, PRESETS[preset], { env: this.env.bindingFor(preset) }));
   }
 
   /**
@@ -105,7 +60,8 @@ export class ToonMaterials {
     const tint = options.tint === true && texture !== null;
     const key = `imp:${preset}:${base}:${texture?.uniqueId ?? "-"}${cut ? ":cut" : ""}${blend ? ":blend" : ""}${options.doubleSided ? ":2s" : ""}${options.layer ? `:L${options.layer}` : ""}${tint ? ":tint" : ""}`;
     return this.cached(key, () => {
-      const m = this.create(key, { ...PRESETS[preset], base }, texture, cut ? "ALPHATEST" : blend ? "ALPHABLEND" : null, tint);
+      const alpha = cut ? "ALPHATEST" : blend ? "ALPHABLEND" : null;
+      const m = createToonMaterial(this.scene, key, { ...PRESETS[preset], base }, { texture, alpha, tint, env: this.env.bindingFor(key) });
       if (options.doubleSided) m.backFaceCulling = false;
       if (options.layer) {
         // Polygon offset, so the nearer layer wins the depth test whatever the draw order.
@@ -122,7 +78,7 @@ export class ToonMaterials {
    */
   forCityKit(palette: BaseTexture): ShaderMaterial {
     return this.cached(`city:${palette.uniqueId}`, () => {
-      const m = this.create("cityKit", PRESETS.cityKit, palette as Texture, null, false, ["CITYKIT"]);
+      const m = createToonMaterial(this.scene, "cityKit", PRESETS.cityKit, { texture: palette as Texture, extra: ["CITYKIT"], env: this.env.bindingFor("cityKit") });
       m.setFloat("selfLit", 1);
       return m;
     });
@@ -133,42 +89,36 @@ export class ToonMaterials {
    * material of those presets is created: the reflection is compiled in, not toggled.
    */
   setEnvironment(texture: BaseTexture, presets: ReadonlySet<string>, strength = 1.6): void {
-    this.env = { texture, presets, strength };
+    this.env.set(texture, presets, strength);
     for (const [name, m] of this.materials) if (presets.has(name)) m.setTexture("envSampler", texture);
   }
 
   /** Brightness of the probe on wet surfaces, 0 while it holds nothing yet. */
   setEnvironmentStrength(strength: number): void {
-    if (!this.env) return;
-    this.env = { ...this.env, strength };
-    for (const [name, m] of this.materials) if (this.env.presets.has(name)) m.setFloat("envStrength", strength);
+    if (!this.env.setStrength(strength)) return;
+    for (const [name, m] of this.materials) if (this.env.samples(name)) m.setFloat("envStrength", strength);
   }
 
   /** Materials compiled with the probe (debug, tests). */
   get reflectiveCount(): number {
-    const env = this.env;
-    return env ? [...this.materials.keys()].filter((k) => env.presets.has(k)).length : 0;
+    return [...this.materials.keys()].filter((k) => this.env.samples(k)).length;
   }
 
   setShadow(shadow: ShadowBinding | null): void {
-    this.shadow = shadow;
-    for (const m of this.materials.values()) this.applyShadow(m);
+    this.look.setShadow(shadow);
+    for (const m of this.materials.values()) this.look.applyShadow(m);
   }
-
-  private flash = { x: 0, y: 0, z: 0, w: 0 };
 
   /** Muzzle flash light, pushed to every material while it is lit. */
   setFlash(x: number, y: number, z: number, intensity: number): void {
-    if (intensity <= 0 && this.flash.w <= 0) return;
-    this.flash = { x, y, z, w: Math.max(0, intensity) };
-    for (const m of this.materials.values()) m.setVector4("flashLight", this.flash);
+    if (!this.look.setFlash(x, y, z, intensity)) return;
+    for (const m of this.materials.values()) this.look.applyFlash(m);
   }
 
   /** The light matrix moves with the player; only the matrix uniform changes. */
   setShadowMatrix(matrix: Matrix): void {
-    if (!this.shadow) return;
-    this.shadow = { ...this.shadow, matrix };
-    for (const m of this.materials.values()) m.setMatrix("shadowMatrix", matrix);
+    if (!this.look.setShadowMatrix(matrix)) return;
+    for (const m of this.materials.values()) this.look.applyShadowMatrix(m);
   }
 
   get materialCount(): number {
@@ -180,25 +130,19 @@ export class ToonMaterials {
     if (!m) {
       m = make();
       this.materials.set(key, m);
-      this.applyRig(m);
-      this.applyLights(m);
-      this.applyShadow(m);
-      m.setVector4("flashLight", this.flash);
-      m.setVector4("rimTint", this.rimTint);
+      this.look.applyRig(m);
+      this.lights.apply(m);
+      this.look.applyShadow(m);
+      this.look.applyFlash(m);
+      this.look.applyRimTint(m);
     }
     return m;
   }
 
-  private rimTint = { x: 1, y: 1, z: 1, w: 0 };
-
   /** District rim colour (ADR-0030), mixed over every preset's own rim by `weight`. */
   setRimTint(color: string, weight: number): void {
-    const c = hex(color);
-    const next = { x: c.r, y: c.g, z: c.b, w: Math.max(0, Math.min(1, weight)) };
-    const r = this.rimTint;
-    if (r.x === next.x && r.y === next.y && r.z === next.z && r.w === next.w) return;
-    this.rimTint = next;
-    for (const m of this.materials.values()) m.setVector4("rimTint", next);
+    if (!this.look.setRimTint(color, weight)) return;
+    for (const m of this.materials.values()) this.look.applyRimTint(m);
   }
 
   /**
@@ -208,120 +152,30 @@ export class ToonMaterials {
    * district they shadowed streams out.
    */
   addLight(key: string, light: PointLightDef): void {
-    this.lights.set(key, light);
-    this.refreshLights();
+    if (this.lights.add(key, light)) this.pushLights();
   }
 
   removeLight(key: string): void {
-    if (!this.lights.delete(key)) return;
-    this.refreshLights();
+    if (this.lights.remove(key)) this.pushLights();
   }
 
   /** Moves the point slot selection to a new viewpoint. Cheap when nothing changes. */
   setLightFocus(x: number, z: number): void {
-    this.focus = { x, z };
-    this.refreshLights();
+    if (this.lights.setFocus(x, z)) this.pushLights();
   }
 
   /** Lights currently bound to shader slots. */
   get lightCount(): number {
-    return this.active.length;
+    return this.lights.count;
   }
 
-  private refreshLights(): void {
-    const near: PointLightDef[] = [];
-    const far: PointLightDef[] = [];
-    const f = this.focus;
-    for (const l of this.lights.values()) {
-      (f === null || Math.hypot(l.position.x - f.x, l.position.z - f.z) <= LIGHT_SLOT_DISTANCE ? near : far).push(l);
-    }
-    const next = [...near, ...far].slice(0, MAX_POINT_LIGHTS);
-    if (next.length === this.active.length && next.every((l, i) => l === this.active[i])) return;
-    this.active = next;
-    for (const m of this.materials.values()) this.applyLights(m);
+  private pushLights(): void {
+    for (const m of this.materials.values()) this.lights.apply(m);
   }
 
   setRig(rig: LightingRig): void {
-    this.rig = rig;
-    for (const m of this.materials.values()) this.applyRig(m);
-  }
-
-  private create(name: string, p: ToonPreset, texture: Texture | null = null, alpha: "ALPHATEST" | "ALPHABLEND" | null = null, tint = false, extra: readonly string[] = []): ShaderMaterial {
-    const env = this.env && this.env.presets.has(name) ? this.env : null;
-    const m = new ShaderMaterial(
-      `toon-${name}`,
-      this.scene,
-      { vertexSource: TOON_VERTEX, fragmentSource: TOON_FRAGMENT },
-      {
-        attributes: texture ? ["position", "normal", "uv"] : p.city ? ["position", "normal", "uv", "uv2"] : ["position", "normal"],
-        uniforms: [...UNIFORMS],
-        samplers: env ? [...SAMPLERS, "envSampler"] : [...SAMPLERS],
-        defines: [
-          ...(texture ? ["UV1", "TEXTURE", ...(alpha ? [alpha] : []), ...(tint ? ["TINT"] : [])] : []),
-          ...(p.surface === "concrete" ? ["CONCRETE_PANELS"] : p.surface === "metal" ? ["METAL_PANELS"] : []),
-          ...(p.vertexFlags ? ["DRESS_FLAGS"] : []),
-          ...(p.city === "facade" ? ["UV1", "UV2", "FACADE"] : p.city === "ground" ? ["UV1", "UV2", "MAP_GROUND"] : []),
-          ...extra,
-          ...(env ? ["ENV_REFLECT"] : []),
-        ],
-        needAlphaBlending: alpha === "ALPHABLEND",
-      },
-    );
-    if (texture) m.setTexture("baseSampler", texture);
-    m.setColor3("baseColor", hex(p.base));
-    m.setColor3("emissiveColor", hex(p.emissive ?? "#000000"));
-    m.setColor3("rimColor", hex(p.rim ?? "#ffffff"));
-    m.setFloat("rimStrength", p.rimStrength ?? 0.2);
-    m.setFloat("gloss", p.gloss ?? 0);
-    m.setFloat("windows", p.windows ? 1 : 0);
-    m.setFloat("fill", p.fill ?? 0);
-    m.setFloat("selfLit", 1);
-    if (env) {
-      m.setTexture("envSampler", env.texture);
-      m.setFloat("envStrength", env.strength);
-    }
-    return m;
-  }
-
-  private applyRig(m: ShaderMaterial): void {
-    const r = this.rig;
-    m.setVector3("sunDir", { x: r.sunDir.x, y: r.sunDir.y, z: r.sunDir.z });
-    m.setColor3("sunColor", hex(r.sunColor));
-    m.setColor3("ambientColor", hex(r.ambient));
-    m.setColor3("fogColor", hex(r.fogColor));
-    m.setColor3("shadeColor", hex(r.shadeTint));
-    m.setColor3("fillColor", hex(r.fillColor));
-    m.setFloat("fogDensity", r.fogDensity);
-  }
-
-  private applyShadow(m: ShaderMaterial): void {
-    const s = this.shadow;
-    if (!s) {
-      m.setMatrix("shadowMatrix", Matrix.Identity());
-      m.setVector3("shadowParams", { x: 0, y: 0, z: 0 });
-      return;
-    }
-    m.setTexture("shadowSampler", s.texture);
-    m.setMatrix("shadowMatrix", s.matrix);
-    m.setVector3("shadowParams", { x: s.bias, y: s.texelSize, z: s.strength });
-  }
-
-  private applyLights(m: ShaderMaterial): void {
-    const pos: number[] = [];
-    const col: number[] = [];
-    for (const l of this.active) {
-      const c = hex(l.color);
-      pos.push(l.position.x, l.position.y, l.position.z, l.range);
-      col.push(c.r, c.g, c.b, l.intensity);
-    }
-    // Uniform arrays must be fully sized.
-    while (pos.length < MAX_POINT_LIGHTS * 4) {
-      pos.push(0, -1000, 0, 1);
-      col.push(0, 0, 0, 0);
-    }
-    m.setArray4("pointPos", pos);
-    m.setArray4("pointColor", col);
-    m.setFloat("pointCount", this.active.length);
+    this.look.setRig(rig);
+    for (const m of this.materials.values()) this.look.applyRig(m);
   }
 }
 
