@@ -615,7 +615,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (streaming)
 
 ### G-202 Posiłki ochrony nie dają XP za quickhack
-- Status: zgłoszone (1.11, decyzja użytkownika: „zgodnie ze standardem”, z sondy G-199); #179 w main, gotowe do przydziału
+- Status: w PR #187 (1.11, szkic na #185, w weryfikacji; zapis v26): klucz XP `security:<n>@<since>`
 - Ważność: S4 · Zasięg: `grantQuickhackXp` (`packages/sim/src/world/progression-ops.ts`) zaczyna się od `if (!key) return;`, więc posiłek ochrony (bez klucza) nigdy nie daje XP, a strażnik z kluczem daje raz
 - Oczekiwane (standard gatunku, bez farmienia): każdy posiłek daje XP za quickhack raz, także po zapisie i wczytaniu; ten sam posiłek drugi raz nic
 - Poprawka: klucz XP posiłku z trwałego numeru (`security:<n>` z G-194) z rozróżnieniem kolejnych heatów, jeśli `n` może się powtórzyć po resecie `sent` (np. numer heatu w kluczu); test jednej sesji i zapisu; złoty hash świadomie, jeśli się zmieni
