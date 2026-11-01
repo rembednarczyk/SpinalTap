@@ -39,6 +39,14 @@ describe("the heat's reinforcements in the save (v22 to v23, G-179)", () => {
     expect(decodeSave("slot", encodeSave(snapshot({ reinforcements: due }))).reinforcements).toEqual(due);
   });
 
+  it("keeps the body of one of them, dead where it lies, through the codec (G-193)", () => {
+    const { lastKnown: _l, search: _s, lost: _o, ...still } = ONE.state;
+    const downed = { playerAt: { x: 420, y: 0.07, z: -98 }, fought: false, found: true, reported: false, dead: true, carried: false, hidden: true };
+    const body: ReinforcementSnapshot = { ...ONE, home: ONE.state.position, state: { ...still, hp: null, downed } };
+    const withBody = { ...SENT, people: [body, TWO] };
+    expect(decodeSave("slot", encodeSave(snapshot({ reinforcements: withBody }))).reinforcements).toEqual(withBody);
+  });
+
   it("refuses reinforcements that are not whole, twice the same, or past the count sent", () => {
     const bad = (reinforcements: unknown) => findSchemaError({ ...snapshot(), reinforcements } as unknown as Record<string, unknown>);
     expect(bad(undefined)).toBeNull();

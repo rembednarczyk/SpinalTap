@@ -17,13 +17,15 @@ export const reinforcementEntity = (id: EntityId, n: number, type: EnemyTypeId, 
   return toughen(g, npcHealth);
 };
 
-/** The reinforcements in the world, the count sent and the wait for the next (G-179); null with none of them. */
+/** The reinforcements in the world, alive or dead, the count sent and the wait for the next (G-179); null with none of them. */
 export const reinforcementsSnapshot = (world: World<Entity>, watch: SessionWatch): ReinforcementsSnapshot | null => {
   const people = [...world.with("security")]
     .sort((a, b) => a.security.n - b.security.n)
     .flatMap((e) => {
       const n = e.security.n;
-      return e.enemy && e.ai ? [{ n, type: e.enemy.type, home: { ...e.ai.home }, state: entitySnapshotOf({ ...e, key: `security:${n}` }) }] : [];
+      // A body of theirs has no mind and so no entry; it is made again where it lies (G-193).
+      const home = e.ai?.home ?? e.position;
+      return e.enemy ? [{ n, type: e.enemy.type, home: { ...home }, state: entitySnapshotOf({ ...e, key: `security:${n}` }) }] : [];
     });
   return people.length > 0 || watch.sent > 0 || watch.reinforce > 0 ? { sent: watch.sent, wait: watch.reinforce, people } : null;
 };
