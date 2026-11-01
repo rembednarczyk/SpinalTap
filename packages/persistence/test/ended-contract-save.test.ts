@@ -13,8 +13,9 @@ const wrap = (payload: unknown) => {
 const LOST: Contract = { id: "c3", kind: "infiltrate", siteId: "east_lot", targets: 3, reward: 900, status: "active" };
 
 describe("a contract ended with its people about in the save (v21 to v22, G-178)", () => {
-  it("is schema v22", () => {
-    expect(SAVE_SCHEMA_VERSION).toBe(22);
+  it("is schema v22 or later", () => {
+    // v23 (G-179, the heat's reinforcements) walks on from here with no change to the contracts.
+    expect(SAVE_SCHEMA_VERSION).toBeGreaterThanOrEqual(22);
   });
 
   it("a v21 save loads as it was, with no contract ended", () => {
