@@ -371,4 +371,6 @@ export const enWorld = {
   "hint.inventory.touch": "The Character button opens the inventory.",
   "hint.journal": "quest journal",
   "hint.journal.touch": "The journal is in the character menu.",
+  "hint.heat": "Heat: a witness called it in. Break the line of sight and lie low until the search ends.",
+  "hint.disguise": "Disguise: guards let you pass. Running, fighting or lingering close to them gives you away.",
 } as const;

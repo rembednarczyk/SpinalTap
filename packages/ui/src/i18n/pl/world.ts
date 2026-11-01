@@ -369,4 +369,6 @@ export const plWorld = {
   "hint.inventory.touch": "Przycisk „Postać” otwiera ekwipunek.",
   "hint.journal": "dziennik zadań",
   "hint.journal.touch": "Dziennik jest w menu postaci.",
+  "hint.heat": "Heat: świadek cię zgłosił. Zerwij kontakt wzrokowy i przeczekaj, aż skończą szukać.",
+  "hint.disguise": "Przebranie: strażnicy cię przepuszczą. Bieg, walka albo kręcenie się tuż obok nich cię zdradzą.",
 } as const satisfies Readonly<Record<keyof typeof en, Message>>;
