@@ -4,11 +4,12 @@ import { planCanyonSigns } from "../src/renderer/mapcity/canyon-signs";
 import { type MapBuilding, type NeighbourAt, facadeFrame } from "../src/renderer/mapcity/facade-frame";
 import { cleanRing } from "../src/renderer/mapcity/polygon";
 import { MAP_SIGN_KIND, planBuildingSigns } from "../src/renderer/mapcity/sign-plan";
+import { planVenueSigns, venueBoards } from "../src/renderer/mapcity/venue-plan";
 
 /**
- * Signs keep out of a neighbour that stands out in front of their wall (G-157): the wall
- * stays a street wall (two of its three samples are clear), but the banners, blades and holo-ads
- * near its ends move off the neighbour, get narrower or are left out.
+ * Signs keep out of a neighbour that stands out in front of their wall (G-157, G-159): the wall
+ * stays a street wall (two of its three samples are clear), but the banners, blades, holo-ads and
+ * venue boards near its ends move off the neighbour, get narrower or are left out.
  */
 
 const rect = (x0: number, z0: number, x1: number, z1: number) => cleanRing([{ x: x0, z: z0 }, { x: x1, z: z0 }, { x: x1, z: z1 }, { x: x0, z: z1 }]);
@@ -59,7 +60,7 @@ const OUT_FRONT: readonly Box[] = [
   { x0: 15, x1: 24, z0: -3, z1: 0, top: 40 },
 ];
 
-describe("signs in front of a wall a neighbour stands out in front of (G-157)", () => {
+describe("signs in front of a wall a neighbour stands out in front of (G-157, G-159)", () => {
   it("hang the banners and blades off the neighbours, every one still hung", () => {
     let banners = 0;
     let blades = 0;
@@ -96,5 +97,27 @@ describe("signs in front of a wall a neighbour stands out in front of (G-157)", 
       holos += count(sink, MAP_SIGN_KIND.holo);
     }
     expect(holos).toBeGreaterThan(0);
+  });
+
+  it("move a venue's board along the wall off the neighbour by its point", () => {
+    const f = facadeFrame(house(7, { venues: [{ x: 16.5, z: 0.5, name: "KUCHNIA SPOD ARARATU", color: "#ffb000" }] }), lookup(OUT_FRONT));
+    const sink = new MeshSink();
+    expect(planVenueSigns(sink, f)).toBe(1);
+    expect(intruders(sink, [MAP_SIGN_KIND.venue, MAP_SIGN_KIND.glyph], OUT_FRONT)).toBe(0);
+  });
+
+  it("take a venue's board to the next wall when the neighbours leave its own too little of it", () => {
+    // Only 2 m of the south wall stay clear, less than the shortest wall that takes a board.
+    const boxes: readonly Box[] = [
+      { x0: -6, x1: 8, z0: -3, z1: 0, top: 40 },
+      { x0: 10, x1: 24, z0: -3, z1: 0, top: 40 },
+    ];
+    const f = facadeFrame(house(7, { venues: [{ x: 9, z: 0.5, name: "ZIELONY CZAROWNIK", color: "#39ff8a" }] }), lookup(boxes));
+    const [b] = venueBoards(f);
+    expect(b).toBeDefined();
+    expect(b!.wall.nz).toBeGreaterThan(-0.5);
+    const sink = new MeshSink();
+    planVenueSigns(sink, f);
+    expect(intruders(sink, [MAP_SIGN_KIND.venue, MAP_SIGN_KIND.glyph], boxes)).toBe(0);
   });
 });
