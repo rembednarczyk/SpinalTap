@@ -136,7 +136,7 @@ Meble deptaka ADR-0058 etap 2 (`tools/city_street_e2.py`) z paczek CC0 w tym sam
 | Klucze w pliku | Źródło (pobranie) | Autor | Licencja (cytat) |
 |---|---|---|---|
 | `st-atm` (bankomat wolnostojący) | [Low poly ATMs](https://opengameart.org/content/low-poly-atms), `ATM_NORMAL.obj`; `https://opengameart.org/sites/default/files/ATMs.zip` | pixelmannen | CC0: „License(s): CC0” (strona; paczka bez pliku licencji) |
-| `st-hydrant` (hydrant nadziemny, czerwony) | [Zombie Apocalypse Kit](https://quaternius.com/packs/zombieapocalypsekit.html), `Environment/glTF/FireHydrant.gltf` (plik z `drive.usercontent.google.com`, id w `sources.json`) | Quaternius | CC0 (strona paczki i https://quaternius.com/license.html; `License.txt` w folderze paczki ma nagłówek innej paczki) |
+| `st-hydrant` (hydrant nadziemny) | [Zombie Apocalypse Kit](https://quaternius.com/packs/zombieapocalypsekit.html), `Environment/glTF/FireHydrant.gltf` (plik z `drive.usercontent.google.com`, id w `sources.json`) | Quaternius | CC0 (strona paczki i https://quaternius.com/license.html; `License.txt` w folderze paczki ma nagłówek innej paczki) |
 | `st-planter` (donica z krzakiem i kwiatami) | [Nature Kit 2.1](https://opengameart.org/content/nature-kit), `pot_large`, `plant_bushDetailed`, `flower_redA`, `flower_purpleB`; `https://opengameart.org/sites/default/files/Nature%20Kit%20%282.1%29.zip` | Kenney | CC0: „License: (Creative Commons Zero, CC0) http://creativecommons.org/publicdomain/zero/1.0/” |
 | `st-bike` (rower przy stojaku) | [Public Transport Pack](https://quaternius.com/packs/publictransport.html), `OBJ/Bicycle.obj` (plik z `drive.usercontent.google.com`) | Quaternius | CC0 (strona paczki i https://quaternius.com/license.html) |
 | `st-scooter` (skuter przy stojaku) | [bike](https://opengameart.org/content/bike-0), `bike.obj`; `https://opengameart.org/sites/default/files/bike.zip` | lyricsz | CC0: „License(s): CC0” (strona; paczka bez pliku licencji) |
@@ -144,7 +144,7 @@ Meble deptaka ADR-0058 etap 2 (`tools/city_street_e2.py`) z paczek CC0 w tym sam
 Każdy jest uproszczony do 0,3–0,35 tys. trójkątów (rower 0,76 tys.: rama 0,5 tys. z całą kierownicą, obręcze dorysowane jako dwa pierścienie), bez luźnych drobin, kolory z MTL, materiałów albo tekstur sprowadzone
 do palety (ekran bankomatu `win-teal`, fioletowe kwiaty donicy `neon-violet`) i wpasowany w bryłę swojego
 rodzaju mebla; rower (0,48 × 0,97 × 1,66 m) i skuter (0,56 × 1,0 × 1,57 m) stoją w poprzek obręczy stojaka,
-w jego bryle (1,7 × 1,66 m). Hydrant ma czerwony kolor palety (`fabric-magenta`). Na telefonie (`low`) zostają proceduralne wersje (`prop-e2.ts`).
+w jego bryle (1,7 × 1,66 m). Hydrant ma kolor `fabric-magenta`, najbliższy czerwieni w palecie, ale w grze wygląda magentowo; prawdziwa czerwień wymaga nowej próbki palety i przepieczenia plików (zgłoszenie do rejestru glitchy). Na telefonie (`low`) zostają proceduralne wersje (`prop-e2.ts`).
 
 Zmiany względem oryginałów (`tools/city_street.py`, funkcje pomocnicze z `tools/city_ccby.py`): kolor
 trójkąta uśredniony z tekstury i przypisany do roli palety, emisja jako neon, siatka uproszczona przez

@@ -55,7 +55,7 @@ for (const d of DISTRICTS) {
     }
 }
 const sorted = [...rows.values()].sort((a, b) => a[0] - b[0]);
-const header = { source: "api.openstreetmap.org/api/0.6/map", license: "ODbL 1.0, © OpenStreetMap contributors", fetched: new Date().toISOString().slice(0, 10), filter: "emergency=fire_hydrant" };
+const header = { source: "api.openstreetmap.org/api/0.6/map", license: "ODbL 1.0, © OpenStreetMap contributors", filter: "emergency=fire_hydrant" };
 mkdirSync(join(OSM_DIR, "points"), { recursive: true });
 writeFileSync(join(OSM_DIR, "points", "hydrants.json"), `{"header":${JSON.stringify(header)},\n"hydrants":[\n${sorted.map((r) => JSON.stringify(r)).join(",\n")}\n]}\n`);
 console.log(`hydrants.json: ${sorted.length} hydrants, ${sorted.filter((r) => r[3] === "pillar").length} pillar`);

@@ -1,4 +1,4 @@
-{"header":{"source":"api.openstreetmap.org/api/0.6/map","license":"ODbL 1.0, © OpenStreetMap contributors","fetched":"2026-11-01","filter":"emergency=fire_hydrant"},
+{"header":{"source":"api.openstreetmap.org/api/0.6/map","license":"ODbL 1.0, © OpenStreetMap contributors","filter":"emergency=fire_hydrant"},
 "hydrants":[
 [875329611,51.2527759,22.5710858,"underground",""],
 [3512190354,51.2537061,22.5689025,"underground","sidewalk"],

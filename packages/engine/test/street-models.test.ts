@@ -170,7 +170,7 @@ describe("street-props.glb (ADR-0063)", () => {
     expect(count(make("low", props))).toBe(count(make("low", null)));
   });
 
-  it("bakes no loose scraps: every part of a model is whole (wheels, handlebars), a cart stands on its wheels", () => {
+  it("bakes no loose scraps: every part of a model is whole (wheels, handlebars), a cart stands on the ground along its length", () => {
     for (const m of street.models.values()) {
       const sizes = parts(m);
       // A post or a mast added as a box is 10 triangles; anything less is a scrap the clustering left.
@@ -181,7 +181,8 @@ describe("street-props.glb (ADR-0063)", () => {
     const at = (k: number) => [...cart.positions].filter((_, i) => i % 3 === k);
     const xs = at(0);
     const ys = at(1);
-    // Wheels on the ground at both ends of the 3.9 m cart, and posts holding up its roof.
+    // Something on the ground at both ends of the 3.9 m cart (its wheels and its corner posts, which
+    // stand on y = 0 too), and posts from the counter's height up to its roof.
     const ground = xs.filter((_, i) => ys[i]! < 0.05);
     expect(Math.max(...ground) - Math.min(...ground)).toBeGreaterThan(2.5);
     const spans = Array.from({ length: cart.indices.length / 3 }, (_, t) => [0, 1, 2].map((k) => ys[cart.indices[t * 3 + k]!]!));

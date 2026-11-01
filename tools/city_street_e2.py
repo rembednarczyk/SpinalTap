@@ -37,7 +37,8 @@ E2 = [
     ('st-atm', 'oga-pixelmannen-atms', 'x/ATM_NORMAL.obj', ['atm'], -90, (0.68, 1.75, 0.58), 400,
      {'obj': {'ATM_CUBE_BODY': 'trim', 'ATM_CUBE_BLACK': 'dark', 'ATM_CUBE_SCREEN': 'win-teal', 'ATM_CUBE_BUTTONS': 'metal',
               'ATM_CUBE_ACCEPT': 'neon-green', 'ATM_CUBE_DECLINE': 'neon-red', 'ATM_CUBE_CARDSLOT': 'neon-cyan', 'ATM_CUBE_CASHSLOT': 'dark'}}),
-    # Quaternius' fire hydrant, red (the palette's crimson cloth): the solid is a post 0.17 m round, 0.9 m tall.
+    # Quaternius' fire hydrant in the palette's crimson cloth, the nearest to red (it reads magenta; a red
+    # swatch needs the palette rebaked): the solid is a post 0.17 m round, 0.9 m tall.
     ('st-hydrant', 'quaternius-zombie-kit', 'Environment/glTF/FireHydrant.gltf', ['hydrant'], 0, (0.31, 0.9, 0.24), 300, {'paint': {'brick': 'fabric-magenta'}}),
     # A planter: Kenney's large wooden pot with a bush and red flowers (no solid; the procedural one is 1.2 m).
     ('st-planter', 'kenney-nature-kit', 'x/Models/GLTF format/pot_large.glb', ['planter'], 0, (1.2, 1.15, 1.05), 400,

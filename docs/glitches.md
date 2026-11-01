@@ -517,6 +517,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: odstęp zaparkowanych aut od przejść bez zebry jak od zebr; kontrola skanu
 - Pakiet właściciela: packages/sim (parked-cars), tools/osm-import
 
+### G-??? Hydrant nadziemny magentowy zamiast czerwonego (numer nada orkiestrator)
+- Status: zgłoszone (1.11, kurator przy PR #124, ADR-0058 etap 2)
+- Ważność: S4 · Zasięg: 6 hydrantów z OSM (`st-hydrant`); na telefonie proceduralny jest czerwony
+- Gdzie: `tools/city_street_e2.py`, kolor `fabric-magenta` (#8e2457), najbliższy czerwieni w palecie; zrzut `r2-hydrant-osm` w dzień
+- Poprawka: czerwień w palecie (`tools/city_kit_palette.py`) wymaga nowej próbki i przepieczenia wszystkich plików na palecie (`city-kit.glb`, `city-props.glb`, `street-props.glb`); osobny PR
+- Pakiet właściciela: packages/engine (rekwizyty), tools
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
