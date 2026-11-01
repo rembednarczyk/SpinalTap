@@ -9,6 +9,8 @@ Audyt luk (31.10, `docs/audyt-luk.md`, Walka, P0) pokazał, że gra nie ma osi t
 Liczby walki i wykrywania są dziś stałymi w `sim`: `NPC_CRIT` i rozrzut strzału NPC (`combat-system.ts`, `aimSpreadOf`), tempo czujności (`AWARENESS_STEP`, `GUARD_CONE`, `ganger-perception.ts`), czas celowania snajpera (`SNIPER_AIM_TIME`), wsparcie przy heacie (`REINFORCE_INTERVAL`, `crime-system.ts`), a statystyki gracza z `StatModifiers` (`core/character/stats.ts`).
 
 ## Decyzja
+Zaakceptowana przez użytkownika 1.11 w całości (presety z Własnym, wspomaganie z pominięciem walki).
+
 - **Trzy presety i własne ustawienia:**
   - **Opowieść** (story): dla gracza, który chce fabuły;
   - **Normalny**: domyślny i jedyny, dla którego liczy się balans ADR-0059;
