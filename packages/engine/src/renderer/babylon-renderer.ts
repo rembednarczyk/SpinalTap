@@ -466,9 +466,9 @@ export class BabylonRenderer implements RenderPort {
     return this.characters.dressedCount;
   }
 
-  /** The map city has drawn every cell near the camera in detail (tests wait for it before a snapshot). */
+  /** Every cell near the camera is drawn in detail and the wet probe has caught up (G-114); tests wait for it before a sample. */
   get citySettled(): boolean {
-    return this.mapCity?.settled ?? true;
+    return (this.mapCity?.settled ?? true) && !(this.wet?.pending && !this.metro.active);
   }
 
   /**

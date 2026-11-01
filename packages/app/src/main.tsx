@@ -283,6 +283,7 @@ debug.camera = () => {
   return { x: p.x, y: p.y, z: p.z, yaw: r.y, pitch: r.x };
 };
 debug.frames = () => framesDrawn;
+debug.probeRenders = () => renderer.wetProbeRenders;
 window.__seki = debug;
 
 // Wave 1 effects over the whole frame (ADR-0030): hits on the player, quickhack uploads, heat
