@@ -3,7 +3,7 @@ import { facadeFrame } from "../../../packages/engine/src/renderer/mapcity/facad
 import { isLandmarkFrame, landmarkAt, withLandmark } from "../../../packages/engine/src/renderer/mapcity/landmarks";
 import { type BuildingSource, mapBuilding } from "../../../packages/engine/src/renderer/mapcity/map-building";
 import { BinIndex } from "../../../packages/engine/src/renderer/mapcity/map-index";
-import { type P2, boundsOf, cleanRing, pointInRing } from "../../../packages/engine/src/renderer/mapcity/polygon";
+import { type Box2, type P2, boundsOf, cleanRing, pointInRing } from "../../../packages/engine/src/renderer/mapcity/polygon";
 import { MAP_SIGN_KIND, planBuildingSigns } from "../../../packages/engine/src/renderer/mapcity/sign-plan";
 import { planVenueSigns } from "../../../packages/engine/src/renderer/mapcity/venue-plan";
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
@@ -14,7 +14,7 @@ import { groundY } from "../../../packages/sim/src/content/lublin/terrain";
 
 /**
  * The map buildings' signs (ADR-0044, ADR-0051, ADR-0064 stage 4) that reach into the solid of
- * another building (G-157, G-159): every building's signs planned as the map city plans them, each
+ * another building (G-157, G-159, G-170): every building's signs planned as the map city plans them, each
  * sign's quad walked along its edges every 0.2 m, a point counting where it lies in another
  * building's outline between that one's foot and its top.
  */
@@ -43,7 +43,7 @@ const edgePoints = (c: readonly (readonly [number, number, number])[]): [number,
   return out;
 };
 
-const KINDS: ReadonlySet<number> = new Set([MAP_SIGN_KIND.ad, MAP_SIGN_KIND.holo, MAP_SIGN_KIND.blade, MAP_SIGN_KIND.venue]);
+const KINDS: ReadonlySet<number> = new Set([MAP_SIGN_KIND.ad, MAP_SIGN_KIND.holo, MAP_SIGN_KIND.blade, MAP_SIGN_KIND.venue, MAP_SIGN_KIND.tube]);
 
 let memo: SignInNeighbour[] | null = null;
 
@@ -64,9 +64,11 @@ export const signsInNeighbours = (): SignInNeighbour[] => {
     const tops = inside(x, z, self).map((o) => sources[o]!.at.y + sources[o]!.view.height);
     return tops.length ? Math.max(...tops) : null;
   };
+  // As the map city frames them (`MapEntries.neighboursNear`); the count below still walks the outlines.
+  const near = (box: Box2, self: number): Box2[] => [...index.within(box)].filter((o) => o !== self).map((o) => boundsOf(sources[o]!.ring));
   const out: SignInNeighbour[] = [];
   sources.forEach((s, i) => {
-    const f = withLandmark(facadeFrame(built[i]!, neighbour), landmarkAt(s.at.x, s.at.z, s.view.outline.length));
+    const f = withLandmark(facadeFrame(built[i]!, neighbour, near), landmarkAt(s.at.x, s.at.z, s.view.outline.length));
     if (isLandmarkFrame(f)) return;
     const sink = new MeshSink();
     planBuildingSigns(sink, f, () => null);
