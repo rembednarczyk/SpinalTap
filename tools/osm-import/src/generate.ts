@@ -14,7 +14,7 @@ import { type Band, areaBand, chunkGround, crossingBand, crossingWay, cutSidewal
 import { geoToWorld } from "./project.ts";
 import { type Marking, chunkMarkings, cutLine, oneway, roadMarkings, stopLines } from "./markings.ts";
 import { type Pt, type Rect, centroid, inRect, pointInRing, rectsOverlap, ringBounds } from "./geometry.ts";
-import { allPois, chunkPois, chunkServiceWays, chunkStreets } from "./labels.ts";
+import { allPois, chunkFootWays, chunkPois, chunkServiceWays, chunkStreets } from "./labels.ts";
 import { type PassageOut, buildingPassages, streetLevelTunnels } from "./passages.ts";
 import { type ChunkOut } from "./model.ts";
 import { type OsmData } from "./osm.ts";
@@ -203,6 +203,7 @@ const generateChunk = (
   const own = new Set(out.map((b) => b.id));
   const through = passages.filter((p) => own.has(p.building));
   const service = chunkServiceWays(lines, spec.rect);
+  const foot = chunkFootWays(lines, spec.rect);
   const chunk: ChunkOut = {
     id: spec.id,
     district: spec.district.id,
@@ -215,6 +216,7 @@ const generateChunk = (
     pois: chunkPois(pois, spec.rect),
     ...(through.length > 0 ? { passages: through } : {}),
     ...(service.length > 0 ? { serviceWays: service } : {}),
+    ...(foot.length > 0 ? { footWays: foot } : {}),
   };
   const stats: ChunkStats = {
     id: spec.id,

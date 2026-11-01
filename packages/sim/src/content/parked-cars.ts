@@ -163,21 +163,31 @@ const offOtherRoads = (x: number, z: number, hw: number, own: RoadChain): boolea
  * the car off its mouth at the kerb.
  */
 const SERVICE_GAP = 0.5;
-const SERVICE_WAYS = MAP_CHUNKS.flatMap((c) => c.serviceWays ?? []).map((w) => {
+/**
+ * Least room a parked car's body leaves the axis of a footway or a path mapped on its own (m), or
+ * its half width when wider (G-143). It is drawn over the asphalt where it meets a street, and the
+ * paving check takes it for the carriageway.
+ */
+const FOOT_CLEAR = 1.25;
+
+const wayRoom = (w: { readonly line: readonly number[] }, reach: number) => {
   const pts = Array.from({ length: w.line.length / 2 }, (_, i): Pt => [w.line[2 * i]!, w.line[2 * i + 1]!]);
   const xs = pts.map((p) => p[0]);
   const zs = pts.map((p) => p[1]);
-  const reach = w.width / 2 + SERVICE_GAP;
   return { pts, reach, minX: Math.min(...xs) - reach, maxX: Math.max(...xs) + reach, minZ: Math.min(...zs) - reach, maxZ: Math.max(...zs) + reach };
-});
+};
+const KEPT_WAYS = [
+  ...MAP_CHUNKS.flatMap((c) => c.serviceWays ?? []).map((w) => wayRoom(w, w.width / 2 + SERVICE_GAP)),
+  ...MAP_CHUNKS.flatMap((c) => c.footWays ?? []).map((w) => wayRoom(w, Math.max(FOOT_CLEAR, w.width / 2))),
+];
 
 const inside = (p: Pt, poly: readonly Pt[]): boolean => poly.every((a, i) => cross(a, poly[(i + 1) % poly.length]!, p) <= 0) || poly.every((a, i) => cross(a, poly[(i + 1) % poly.length]!, p) >= 0);
 
-/** Does a car's footprint at (x, z), facing yaw, keep its room off every service road's axis? */
-const clearOfServiceWays = (x: number, z: number, yaw: number, model: VehicleModel): boolean => {
+/** Does a car's footprint at (x, z), facing yaw, keep its room off every service road's and footway's axis? */
+const clearOfKeptWays = (x: number, z: number, yaw: number, model: VehicleModel): boolean => {
   const body = footprint(x, z, yaw, model, 0);
   const r = Math.hypot(VEHICLE_SIZE[model].width, VEHICLE_SIZE[model].length) / 2;
-  return SERVICE_WAYS.every(
+  return KEPT_WAYS.every(
     (w) =>
       x + r < w.minX ||
       x - r > w.maxX ||
@@ -189,14 +199,14 @@ const clearOfServiceWays = (x: number, z: number, yaw: number, model: VehicleMod
 
 /**
  * Is a car's footprint at (x, z), facing yaw, wholly on a carriageway or a square and free of
- * walls, furniture, the game's places, service roads and other streets' axes (and carriageways, by the kerb of
+ * walls, furniture, the game's places, service roads, footways and other streets' axes (and carriageways, by the kerb of
  * `own`)? A street's kerb line is set from its median width, so where the carriageway narrows
  * (a bend, a pinch by a pavement) the bay falls on the grass or the pavement unless each corner
  * is checked. A bay on a slope too steep for a level car (`LEVEL_DROP`) stays empty.
  */
 const fits = (x: number, z: number, yaw: number, model: VehicleModel, own?: RoadChain): boolean => {
   if (!parkable(x, z) || !footprint(x, z, yaw, model, 0).every(([px, pz]) => parkable(px, pz)) || !clearOfZebras(x, z, yaw, model)) return false;
-  if (!level(x, z, yaw, model) || !clearOfServiceWays(x, z, yaw, model)) return false;
+  if (!level(x, z, yaw, model) || !clearOfKeptWays(x, z, yaw, model)) return false;
   const { width, length } = VEHICLE_SIZE[model];
   const fx = Math.sin(yaw);
   const fz = Math.cos(yaw);
@@ -236,10 +246,10 @@ const kerbCars = (): ParkedCar[] => {
         const model = modelAt(p.x, p.z);
         // The kerb line is the street's median one; where the carriageway is locally narrower the car edges in.
         const at = (a: number, d: number) => ({ x: p.x + p.tx * a + p.tz * d, z: p.z + p.tz * a - p.tx * d });
-        const spot = KERB_SLIDE.flatMap((a) => KERB_NUDGE.map((d) => at(a, d))).find((q) => fits(q.x, q.z, yaw, model, c));
-        if (spot === undefined) continue;
-        const { x, z } = spot;
-        out.push({ chunk: chunkOf(x, z), x: Math.round(x * 100) / 100, y: 0, z: Math.round(z * 100) / 100, yaw: Math.round(yaw * 1000) / 1000, model, tint: hash(p.x, p.z, 2) });
+        const car = (q: { x: number; z: number }): ParkedCar => ({ chunk: chunkOf(q.x, q.z), x: Math.round(q.x * 100) / 100, y: 0, z: Math.round(q.z * 100) / 100, yaw: Math.round(yaw * 1000) / 1000, model, tint: hash(p.x, p.z, 2) });
+        // A bay slid off a footway's mouth (G-143) may reach the last one's: it slides on past it instead.
+        const spot = KERB_SLIDE.flatMap((a) => KERB_NUDGE.map((d) => at(a, d))).find((q) => fits(q.x, q.z, yaw, model, c) && !out.some((k) => Math.hypot(k.x - q.x, k.z - q.z) < 8 && overlap(k, car(q))));
+        if (spot !== undefined) out.push(car(spot));
       }
     }
   }

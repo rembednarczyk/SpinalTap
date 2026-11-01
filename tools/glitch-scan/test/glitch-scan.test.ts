@@ -648,6 +648,34 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       return hit ? [{ at: near(c.x, c.z), what: `${c.model} on ${hit.id}` }] : [];
     });
   },
+  /**
+   * A parked car whose body (sampled every eighth of its length and width) comes nearer than 1 m
+   * to the axis of a footway or path of the map data mapped on its own (not a sidewalk along a
+   * kerb, not a crossing; on the ground, off bridges and tunnels): it stands on the walkers' way (G-143).
+   */
+  "parked-car-on-footway": () => {
+    const ways = extractFeatures(SOURCE_OSM).lines.filter(
+      ({ tags: t }) =>
+        (t.highway === "footway" || t.highway === "path") &&
+        t.footway !== "sidewalk" &&
+        t.footway !== "crossing" &&
+        t.path !== "crossing" &&
+        t.area !== "yes" &&
+        t.tunnel === undefined &&
+        t.covered === undefined &&
+        (t.bridge === undefined || t.bridge === "no") &&
+        Number(t.layer ?? 0) === 0,
+    );
+    const segs = ways.flatMap((l) => l.line.slice(1).map((b, i) => ({ id: l.id, a: l.line[i]!, b })));
+    return PARKED_CARS.flatMap((c) => {
+      const { width, length } = VEHICLE_SIZE[c.model];
+      const fx = Math.sin(c.yaw);
+      const fz = Math.cos(c.yaw);
+      const body = [0, 1, 2, 3, 4, 5, 6, 7, 8].flatMap((i) => [0, 1, 2, 3, 4, 5, 6, 7, 8].map((k) => ({ x: c.x + fz * width * (i / 8 - 0.5) + fx * length * (k / 8 - 0.5), z: c.z - fx * width * (i / 8 - 0.5) + fz * length * (k / 8 - 0.5) })));
+      const hit = segs.find(({ a, b }) => Math.max(a.x, b.x) > c.x - 8 && Math.min(a.x, b.x) < c.x + 8 && Math.max(a.z, b.z) > c.z - 8 && Math.min(a.z, b.z) < c.z + 8 && body.some((p) => segmentGap(p.x, p.z, a, b) < 1));
+      return hit ? [{ at: near(c.x, c.z), what: `${c.model} on ${hit.id}` }] : [];
+    });
+  },
   /** A game block standing on the ground (not an awning or a deck) that floats or sinks. */
   "prop-off-ground": () =>
     GAME_PROPS.flatMap((p) => {

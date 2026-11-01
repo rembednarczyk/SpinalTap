@@ -19,6 +19,9 @@ export const HINTS = {
   loot: { id: "loot", keys: ["interact"], touch: true, seconds: 20 },
   inventory: { id: "inventory", keys: ["code:KeyI", "nextWeapon"], touch: true, seconds: 10 },
   journal: { id: "journal", keys: ["code:KeyJ"], touch: true, seconds: 8 },
+  // System hints (gap audit, UI/UX): no keys, what the system does and how to get out of it.
+  heat: { id: "heat", keys: [], seconds: 12 },
+  disguise: { id: "disguise", keys: [], seconds: 12 },
 } as const satisfies Record<string, HintDef>;
 
 type HintId = keyof typeof HINTS;
@@ -96,6 +99,16 @@ export class HintTracker {
         return;
       case "QuestAdvanced":
         this.want("journal");
+        return;
+      case "HeatChanged": {
+        const heat = e as DomainEvents["HeatChanged"];
+        if (heat.previous === 0 && heat.level > 0) this.want("heat");
+        // Lying low until the search ended is the lesson learnt.
+        else if (heat.level === 0) this.done("heat");
+        return;
+      }
+      case "DisguiseChanged":
+        if ((e as DomainEvents["DisguiseChanged"]).role !== null) this.want("disguise");
         return;
       default:
     }
