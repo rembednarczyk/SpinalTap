@@ -93,9 +93,10 @@ export interface Entity {
   hackFx?: HackEffects;
   /**
    * Sent in by the district's security because of the heat (ADR-0029); unkeyed, saved on its own
-   * (G-179). `n`: which of the heat's it is, from 1; its id is another after a load.
+   * (G-179). `n`: which of the heat's it is, from 1; its id is another after a load. `since`: the
+   * tick it came in at, saved: `n` counts again from 1 in the next heat, the pair never (G-202).
    */
-  security?: { readonly n: number };
+  security?: { readonly n: number; readonly since: number };
   /** The player hurt it while it was not fighting them: its death is a crime (ADR-0029). Transient. */
   wronged?: true;
   /**
