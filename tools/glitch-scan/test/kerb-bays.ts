@@ -3,7 +3,6 @@ import { pointInRing } from "../../../packages/engine/src/renderer/mapcity/polyg
 import { type Area, extractFeatures } from "../../osm-import/src/features.ts";
 import { type OsmData } from "../../osm-import/src/osm.ts";
 import { type CrowdLane } from "../../../packages/sim/src/content/crowd";
-import { BAY_STEP } from "../../../packages/sim/src/content/kerb-bays";
 import { type ParkedCar } from "../../../packages/sim/src/content/parked-cars";
 import { pointAt, projectOn } from "../../../packages/sim/src/content/traffic";
 import { LANE_HALF_GAP } from "../../../packages/sim/src/world/crowd";
@@ -113,6 +112,11 @@ export const bayCarsMisturned = (parks: readonly Area[], cars: readonly ParkedCa
     return wrong ? [{ at: near(c.x, c.z), what: `${c.model} in ${park.id} (${orientation}) ${wrong}` }] : [];
   });
 
+/**
+ * Bays along a kerb, this far apart (m), as the scan's own reading of a painted Lublin strip: a car
+ * and the room to get out along it; a 2.6 m bay across it; that bay slanted at 60° aslant.
+ */
+const BAY_STEP: Readonly<Record<"parallel" | "perpendicular" | "diagonal", number>> = { parallel: 6.2, perpendicular: 2.6, diagonal: 3 };
 /** Share of a kerb car park's bays taken (`parked-cars`' occupancy, as Plac Zamkowy's). */
 const TAKEN = 0.8;
 /** Furniture or a footway this near a strip's outline, outside it, stands at its kerb (m). */
