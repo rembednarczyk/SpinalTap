@@ -158,3 +158,39 @@ export const withShape = (hash: number, kind: StreetPropKind, shape: number): nu
   const v = h - (h % n) + shape;
   return v > 0xffff ? v - n : v;
 };
+
+/** Kinds that may stand on a building outline: the wall-mounted ones. */
+export const ON_BUILDINGS: ReadonlySet<StreetPropKind> = new Set(["lamp-wall-lantern", "cctv"]);
+
+/** How far the bulky free-standing pieces keep from the walls (m): about their footprint's radius. */
+export const WALL_ROOM: Partial<Record<StreetPropKind, number>> = {
+  artwork: 1.5,
+  monument: 1.5,
+  kiosk: 1.7,
+  "bus-shelter": 2,
+  bench: 1.2,
+  "vending-machine": 0.7,
+  "advertising-column": 0.8,
+  floodlight: 0.4,
+  // ADR-0058 stage 2: a cash machine's back by the wall, a rack with its bikes, the long pieces
+  // by the radius of their solid less the glitch scan's 0.3 m.
+  atm: 0.5,
+  "bike-rack": 1.1,
+  "food-cart": 1.9,
+  container: 3,
+  // ADR-0058 stage 3: a booth's centre 1.35 m out with its back posts by the wall, the stock by its stall.
+  "food-stall": 1.3,
+  "market-goods": 0.5,
+};
+
+/**
+ * How far a piece may be moved out from a wall (m), beyond the default 4: the plan sketches the
+ * floodlights on the lit building's outline, up to 8 m inside the Trinitarian Tower.
+ */
+export const WALL_REACH: Partial<Record<StreetPropKind, number>> = { floodlight: 10 };
+
+/** How far a piece may end up from its point in the plan (m), at most. */
+export const MAX_MOVE: Partial<Record<StreetPropKind, number>> = { hydrant: 3, "food-stall": 1, "market-goods": 0.1 };
+
+/** Kinds of ADR-0058 stages 2 and 3 that never stand in the carriageway, even moved out of a wall. */
+export const KERB_SHY: ReadonlySet<StreetPropKind> = new Set(["atm", "hydrant", "food-cart", "container", "market-goods", "food-stall"]);

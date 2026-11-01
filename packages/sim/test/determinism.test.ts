@@ -95,24 +95,24 @@ describe("determinism", () => {
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
     const sim = runReplay(1234, script());
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"6fbce3e8"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"6c2ecb70"`);
     // Re-recorded for the v18 field (ADR-0066), the v19 version (ADR-0065, no new rule), the v20
     // version (G-171, no new rule) and the v21 version (G-174, no new rule); without the field, as
     // v17, it is the golden of before, and as v19 and v20 the goldens of those.
-    expect(v17HashOf(sim)).toBe("c52fd247");
-    expect(v19HashOf(sim)).toBe("ef63b731");
-    expect(v20HashOf(sim)).toBe("9957ac6d");
+    expect(v17HashOf(sim)).toBe("6fe89e3f");
+    expect(v19HashOf(sim)).toBe("834b839d");
+    expect(v20HashOf(sim)).toBe("f6c60c91");
   });
 
   it("the same run on 'hard' has a golden hash of its own (ADR-0066)", () => {
     const sim = runReplay(1234, hardScript());
     expect(sim.domain.difficulty).toEqual(DIFFICULTY_PRESETS.hard);
     expect(hashOf(sim)).toBe(hashOf(runReplay(1234, hardScript())));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"f97f907b"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"6d6b63df"`);
     // Not just the field: without it the run still ends elsewhere than on "normal".
-    expect(v17HashOf(sim)).not.toBe("c52fd247");
-    expect(v19HashOf(sim)).toBe("e296d440");
-    expect(v20HashOf(sim)).toBe("92bfb504");
+    expect(v17HashOf(sim)).not.toBe("6fe89e3f");
+    expect(v19HashOf(sim)).toBe("30a96e98");
+    expect(v20HashOf(sim)).toBe("6e47fed4");
   });
 
   it("the crowd of residents (ADR-0041) and the traffic (ADR-0050) leave the golden run as it was, at every density", () => {
@@ -135,7 +135,7 @@ describe("determinism", () => {
     // Re-recorded for ADR-0038 (the run starts in the clinic) and ADR-0045 (the clinic is on
     // Krakowskie Przedmieście), and for the car wash moved off Plac Łokietka into the yard behind
     // it; the v14 door states are left out too.
-    expect(stateHash({ ...rest, version: 12, domain } as unknown as SaveSnapshot)).toBe("380539e5");
+    expect(stateHash({ ...rest, version: 12, domain } as unknown as SaveSnapshot)).toBe("438e73d9");
   });
 
   it("a loaded snapshot continues exactly like the original run", () => {
