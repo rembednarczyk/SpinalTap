@@ -572,6 +572,19 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: próbka czerwieni w palecie i przepieczenie plików modeli ulicznych (osobny PR, budżet rozmiaru GLB)
 - Pakiet właściciela: packages/engine (paleta), tools (wypiek)
 
+### G-164 Menu postaci zmienia broń przy niesieniu ciała
+- Status: zgłoszone (1.11, weryfikator ADR-0065 etap 3)
+- Ważność: S4 · Zasięg: komendy `equip-item` i `unequip-item` z menu postaci przy `carrying`
+- Objaw: z ciałem na ramieniu menu dobywa albo chowa broń (sonda S7), choć ADR-0065 mówi „bez zmiany broni”; broń nie strzela, więc skutek mały
+- Poprawka: odrzucić `equip-item`/`unequip-item` broni przy niesieniu (albo zablokować przycisk w menu), test sesji
+- Pakiet właściciela: packages/sim, packages/ui
+
+### G-165 `BodyFound` emitowane przy każdym nowym oglądającym zwłoki
+- Status: zgłoszone (1.11, weryfikator ADR-0065 etap 3); dziś nikt nie słucha zdarzenia
+- Ważność: S4 · Zasięg: każde zwłoki oglądane przez kilku NPC (np. przechodzień, potem patrol)
+- Poprawka: jedno `BodyFound` na ciało albo jawne pole „pierwszy znalazca”, zanim UI zacznie z niego korzystać
+- Pakiet właściciela: packages/sim (body-watch)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
