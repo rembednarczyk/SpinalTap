@@ -119,6 +119,14 @@ export interface LublinServiceWayData {
   readonly width: number;
 }
 
+/** A footway or a path mapped on its own (not a sidewalk, not a crossing): room kept clear of parked cars (G-143). */
+export interface LublinFootWayData {
+  /** World polyline, clipped to the chunk. */
+  readonly line: FlatPoints;
+  /** Its width (m). */
+  readonly width: number;
+}
+
 export interface LublinChunkData {
   readonly id: string;
   readonly district: "shinsekai-7" | "kanal" | "targ" | "doki";
@@ -136,6 +144,8 @@ export interface LublinChunkData {
   readonly passages?: readonly LublinPassageData[];
   /** Unnamed service roads, when it has any (named ones are among `streets`). */
   readonly serviceWays?: readonly LublinServiceWayData[];
+  /** Footways and paths mapped on their own, when it has any. */
+  readonly footWays?: readonly LublinFootWayData[];
 }
 
 /**
