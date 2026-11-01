@@ -1,0 +1,1 @@
+Na Radziwiłłowskiej stoją trzy auta zamiast jednego: parkometr za krawężnikiem pasa postojowego nie wypycha już aut z zatok, a zatoka, w której wylosowane auto się nie mieści, dostaje krótszy model; w kilku innych pasach przybyło przez to po kilka aut (G-189).

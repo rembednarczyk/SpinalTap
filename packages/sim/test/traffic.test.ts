@@ -4,8 +4,8 @@ import { Simulation, ground, runReplay, stateHash, type Entity } from "../src";
 import { TRAFFIC_LANES, TRAFFIC_ROUTES, TURN_SPEED, type TrafficRoute, pointAt, projectOn } from "../src/content/traffic";
 import { ROAD_CHAINS, onRoad, polylineLength } from "../src/content/lublin/roads";
 import { PARKED_CARS } from "../src/content/parked-cars";
-import { furnitureClearance } from "../src/content/furniture-index";
-import { furnitureRadius } from "../src/content/lublin/furniture";
+import { furnitureClearance, furnitureNear } from "../src/content/furniture-index";
+import { furniturePrisms, furnitureRadius } from "../src/content/lublin/furniture";
 import { inBuilding } from "../src/content/lublin/places";
 import { MAP_CHUNKS } from "../src/content/lublin/sites";
 import { lanePose, timetable, vehicleCount, vehiclePlan } from "../src/world/traffic";
@@ -157,9 +157,16 @@ describe("the lanes of the traffic (ADR-0050)", () => {
     for (const c of PARKED_CARS) {
       expect(inBuilding(c.x, c.z), `${c.x},${c.z}`).toBe(false);
       for (const r of TRAFFIC_ROUTES) if (r.use === "cars") expect(projectOn(r.points, c.x, c.z).d, `${c.x},${c.z} on ${r.id}`).toBeGreaterThan(1.7);
-      // No stall, cabinet or lamp inside its body.
+      // No stall, cabinet or lamp inside its body: its rectangle, sampled 9 by 9, not its axis grown by half its width, which reaches past its nose over the kerb (G-189).
       const { width, length } = VEHICLE_SIZE[c.model];
-      for (const t of [-0.5, 0, 0.5]) expect(furnitureClearance(c.x + Math.sin(c.yaw) * length * t, c.z + Math.cos(c.yaw) * length * t), `${c.x},${c.z}`).toBeGreaterThan(width / 2);
+      const [fx, fz] = [Math.sin(c.yaw), Math.cos(c.yaw)];
+      const k = [0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => i / 8 - 0.5);
+      for (const a of k) for (const b of k) expect(furnitureClearance(c.x + fz * width * a + fx * length * b, c.z - fx * width * a + fz * length * b), `${c.x},${c.z}`).toBeGreaterThan(0);
+      for (const f of furnitureNear(c.x, c.z))
+        for (const q of furniturePrisms(f.item).flatMap((p) => p.points)) {
+          const [dx, dz] = [f.item.x + q.x - c.x, f.item.z + q.z - c.z];
+          expect(Math.abs(dx * fz - dz * fx) > width / 2 || Math.abs(dx * fx + dz * fz) > length / 2, `${c.x},${c.z} by ${f.item.prop}`).toBe(true);
+        }
     }
   });
 

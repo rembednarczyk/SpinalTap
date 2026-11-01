@@ -127,6 +127,8 @@ export interface SessionWatch {
   ram: number | null;
   /** Seconds until the next reinforcement may come in. */
   reinforce: number;
+  /** Reinforcements sent in since the heat came up (G-179): the last one's `n`; 0 once all have gone. */
+  sent: number;
 }
 
 export const freshSession = (): SessionState => ({
@@ -136,7 +138,7 @@ export const freshSession = (): SessionState => ({
   focusPrompt: null,
   lastThreat: null,
   street: { disturbances: [], offences: [], incidents: 0 },
-  watch: { district: null, playerHp: null, focus: null, ram: null, reinforce: 0 },
+  watch: { district: null, playerHp: null, focus: null, ram: null, reinforce: 0, sent: 0 },
   passenger: null,
   street2: { encounter: null, npcs: {}, micro: null, district: null },
   interior: undefined,
