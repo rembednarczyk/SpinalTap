@@ -809,7 +809,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools (city_vehicles), packages/engine (vehicle-models)
 
 ### G-252 Złote hashe i testy nie pilnują terenu Trasy Podziemnej; pad wykopu zależy od rozdzielczości siatki
-- Status: zgłoszone (2.11, weryfikator G-236)
+- Status: w naprawie (2.11, naprawiacz, gałąź `ccr-ec2c4269-ilh8k8-g252`; zgłoszone przez weryfikatora G-236)
 - Ważność: S3 (luka w testach przy ryzykownym obszarze) · Zasięg: przebiegi `determinism.test.ts` nie przechodzą przez Trasę Podziemną ani Rynek przy Trybunale, więc zmiana kształtu terenu tam nie zmienia hasha; pad Trasy Podziemnej (`sites.ts:159`, blend 0,01) jest ustawiony pod węzły siatki 5 m chunka `stare-miasto-0-0`, każda zmiana komórki (także w imporcie) po cichu przesuwa ściany wykopu
 - Poprawka: test „grunt pod stopniami Trasy Podziemnej z zapasem ≥ 1 m pod rampą kolizyjną” i „bruk nie wystaje nad stopnie”; pad niezależny od rozdzielczości siatki (granice w metrach, nie w węzłach)
 - Pakiet właściciela: packages/sim (content/lublin)
