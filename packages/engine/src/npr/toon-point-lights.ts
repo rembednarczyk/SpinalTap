@@ -9,6 +9,20 @@ import { MAX_POINT_LIGHTS } from "./toon-shader";
  */
 export const LIGHT_SLOT_DISTANCE = 50;
 
+/** The clip of a light without one: farther than any light's range. */
+const NO_CLIP = 1e9;
+
+/**
+ * How much of a light the toon shader lets fall on a point, before the surface's facing: its
+ * attenuation, 0 outside its range or its clip rectangle (the shader's loop, for tests).
+ */
+export const pointLightAt = (l: PointLightDef, p: { x: number; y: number; z: number }): number => {
+  const c = l.clip;
+  if (c && (p.x < c.minX || p.x > c.maxX || p.z < c.minZ || p.z > c.maxZ)) return 0;
+  const att = Math.max(0, Math.min(1, 1 - Math.hypot(p.x - l.position.x, p.y - l.position.y, p.z - l.position.z) / l.range));
+  return att * att;
+};
+
 /**
  * Point lights registered by key and the ones bound to the shader's slots. Only
  * MAX_POINT_LIGHTS fit: slots go in registration order, first to lights within
@@ -36,6 +50,11 @@ export class ToonPointLights {
     return this.select();
   }
 
+  /** The light registered under a key (tests, debug). */
+  get(key: string): PointLightDef | undefined {
+    return this.lights.get(key);
+  }
+
   /** Lights currently bound to shader slots. */
   get count(): number {
     return this.active.length;
@@ -45,18 +64,24 @@ export class ToonPointLights {
   apply(m: ShaderMaterial): void {
     const pos: number[] = [];
     const col: number[] = [];
+    const clip: number[] = [];
     for (const l of this.active) {
       const c = hex(l.color);
+      const r = l.clip;
       pos.push(l.position.x, l.position.y, l.position.z, l.range);
       col.push(c.r, c.g, c.b, l.intensity);
+      if (r) clip.push(r.minX, r.minZ, r.maxX, r.maxZ);
+      else clip.push(-NO_CLIP, -NO_CLIP, NO_CLIP, NO_CLIP);
     }
     // Uniform arrays must be fully sized.
     while (pos.length < MAX_POINT_LIGHTS * 4) {
       pos.push(0, -1000, 0, 1);
       col.push(0, 0, 0, 0);
+      clip.push(-NO_CLIP, -NO_CLIP, NO_CLIP, NO_CLIP);
     }
     m.setArray4("pointPos", pos);
     m.setArray4("pointColor", col);
+    m.setArray4("pointClip", clip);
     m.setFloat("pointCount", this.active.length);
   }
 

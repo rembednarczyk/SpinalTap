@@ -18,3 +18,23 @@ export const plainLampsByStyled = (props: readonly Lamp[], reach: number): { rea
       return by ? [{ at: `${i.x.toFixed(0)},${i.z.toFixed(0)}`, what: `${i.prop} ${Math.hypot(by.x - i.x, by.z - i.z).toFixed(1)} m from ${by.prop}` }] : [];
     });
 };
+
+type Way = { readonly id: number; readonly pts: readonly { readonly x: number; readonly z: number }[] };
+
+/**
+ * Every way along which the lamps change look (G-266): plain and styled lamps both within
+ * `reach` metres of its axis, away from its ends by `endGap` (where the side streets' lamps
+ * stand at their mouths). One OSM way is one street of one kind, lit one way.
+ */
+export const mixedLampWays = (ways: readonly Way[], props: readonly Lamp[], reach: number, endGap: number): { readonly at: string; readonly what: string }[] =>
+  ways.flatMap((w) => {
+    const inner = w.pts.filter((p) => Math.hypot(p.x - w.pts[0]!.x, p.z - w.pts[0]!.z) > endGap && Math.hypot(p.x - w.pts[w.pts.length - 1]!.x, p.z - w.pts[w.pts.length - 1]!.z) > endGap);
+    const along = props.filter((i) => (PLAIN.has(i.prop) || STYLED.has(i.prop)) && inner.some((p) => Math.hypot(p.x - i.x, p.z - i.z) < reach));
+    const plain = along.filter((i) => PLAIN.has(i.prop));
+    const styled = along.length - plain.length;
+    return plain.length > 0 && styled > 0 ? [{ at: `${plain[0]!.x.toFixed(0)},${plain[0]!.z.toFixed(0)}`, what: `w${w.id}: ${plain.length} plain and ${styled} styled lamps` }] : [];
+  });
+
+/** Every plain lamp inside the walled Old Town (G-264), where the city's lamps are styled. */
+export const plainLampsIn = (props: readonly Lamp[], inside: (p: { readonly x: number; readonly z: number }) => boolean): { readonly at: string; readonly what: string }[] =>
+  props.filter((i) => PLAIN.has(i.prop) && inside(i)).map((i) => ({ at: `${i.x.toFixed(0)},${i.z.toFixed(0)}`, what: `${i.prop} in the Old Town` }));

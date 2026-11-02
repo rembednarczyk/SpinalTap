@@ -53,6 +53,13 @@ export interface LublinBuildingData {
    * whatever its size, where a short one would pass for a tenement.
    */
   readonly tower?: true;
+  /**
+   * OSM `building:material` of its own element (G-244): `brick` (the Gothic keep and bastion,
+   * the Trinity Chapel), `stone` or `plaster`. The renderer draws brick and stone walls bare.
+   */
+  readonly material?: "brick" | "stone" | "plaster";
+  /** OSM `building:colour` of its own element as `#rrggbb` (G-244): the renderer's wall colour nearest it. */
+  readonly colour?: string;
   /** Where the height came from: the `height` tag, `building:levels`, or the district's defaults. */
   readonly source: "height" | "levels" | "default";
   /** Venues in or at it (ADR-0064 stage 4): a point relative to (x, z), the kind, the 2077 name and the neon. */

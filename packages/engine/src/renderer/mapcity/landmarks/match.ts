@@ -1,4 +1,5 @@
 import { LUBLIN_CHUNKS, type LublinBuildingData, type LublinChunkData } from "@seki/sim/lublin";
+import type { WallMaterial } from "../facade-style";
 import { type P2, centroid, pointInRing } from "../polygon";
 import { type CableAnchor, type LandmarkPart, RECIPE_BY_OSM } from "./recipes";
 
@@ -73,4 +74,20 @@ let towers: ReadonlySet<string> | null = null;
 export const towerAt = (x: number, z: number, corners: number): boolean => {
   towers ??= new Set(LUBLIN_CHUNKS.flatMap((c) => c.buildings.flatMap((b) => (b.tower ? [keyOf(b.x, b.z, b.outline.length / 2)] : []))));
   return towers.has(keyOf(x, z, corners));
+};
+
+/** The walls the map gives a building (G-244): `building:material` and `building:colour`. */
+export interface MappedWall {
+  readonly material?: WallMaterial;
+  readonly wallColour?: string;
+}
+
+let walls: ReadonlyMap<string, MappedWall> | null = null;
+
+/** The walls of the map building standing at (x, z) with an outline of `corners` points, empty where the map is silent. */
+export const wallAt = (x: number, z: number, corners: number): MappedWall => {
+  walls ??= new Map(
+    LUBLIN_CHUNKS.flatMap((c) => c.buildings.flatMap((b): [string, MappedWall][] => (b.material || b.colour ? [[keyOf(b.x, b.z, b.outline.length / 2), { ...(b.material ? { material: b.material } : {}), ...(b.colour ? { wallColour: b.colour } : {}) }]] : []))),
+  );
+  return walls.get(keyOf(x, z, corners)) ?? {};
 };
