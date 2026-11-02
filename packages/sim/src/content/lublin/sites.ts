@@ -152,11 +152,12 @@ export const PADS: readonly Pad[] = [
   { rect: DOCKS_BASIN, y: DOCKS_PLACE.y - 3, blend: 1.5 },
   { rect: grow(CAR_WASH_AREA, 5), y: CAR_WASH_PLACE.y, blend: 3 },
   ...ROOM_SITES.map((r): Pad => ({ rect: grow(r.rect, 5), y: r.floor, blend: 2 })),
-  // Dug out under the Trybunał for Trasa Podziemna (ADR-0048): the grid points x 575..585,
-  // z -65..-55 of the 5 m grid, so the cells between them are below the cellars' floor and the
-  // slope into the cells around stays inside the Trybunał's walls. 2 m under the floor: the
-  // Rynek's paving, draped in 5 m triangles, then stays under the floor up to the cellars' walls.
-  { rect: { minX: 574, maxX: 586, minZ: -66, maxZ: -54 }, y: TRASA_PODZIEMNA.floor - 2, blend: 0.01 },
+  // Dug out under the Trybunał for Trasa Podziemna (ADR-0048): level over x 575..585, z -65..-55,
+  // sloping up to the Rynek over 5 m, so the slope stays inside the Trybunał's walls. In metres,
+  // not on a grid's points (G-252): on any grid of up to 5 m the stairs keep a metre of ground
+  // under them, and on the import's 5 m grid its points are as they were. 2 m under the floor:
+  // the Rynek's paving, draped in 5 m triangles, then stays under the floor up to the cellars' walls.
+  { rect: { minX: 575, maxX: 585, minZ: -65, maxZ: -55 }, y: TRASA_PODZIEMNA.floor - 2, blend: 5 },
 ];
 
 /** Even ramps along the steps of the map (ADR-0045). */
