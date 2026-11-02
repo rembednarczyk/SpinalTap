@@ -156,6 +156,9 @@ export class BabylonRenderer implements RenderPort {
     this.rig.onBodyVisibility = (visible) => {
       if (this.cameraTarget !== null) this.characters.setBodyVisible(this.cameraTarget, visible);
     };
+    this.rig.onBodyFade = (amount) => {
+      if (this.cameraTarget !== null) this.characters.setBodyFade(this.cameraTarget, amount);
+    };
     this.activities = new CharacterActivities(scene, this.materials, () => this.rig.camera.position);
     this.characters = new CharacterViews({
       scene,

@@ -1,8 +1,9 @@
 import { type AbstractMesh, FreeCamera, MeshBuilder, Ray, type Scene, TransformNode, Vector3 } from "../babylon";
 import { type CameraMode, FOV_REFERENCE_ASPECT, type Transform, type Vec3, type WeaponLook, degToRad, directionFromAngles, verticalFov } from "@seki/core";
-import { TPP_HEIGHT_OFFSET, TPP_SHOULDER_OFFSET, eyeHeightAt } from "@seki/sim";
+import { eyeHeightAt, tppShoulderOffset } from "@seki/sim";
 import { applyOutline } from "../npr/outline";
 import type { ToonMaterials } from "../npr/toon-material";
+import { FADE_MAX, bodyFadeTarget } from "./body-fade";
 
 /** Over-the-shoulder distance behind the pivot (ADR-0049: 2.7 m before). */
 const TPP_DISTANCE = 2.2;
@@ -23,6 +24,9 @@ const TPP_ADS_PULL = 0.45;
 const VIEWMODEL_GUARD = { x: 0.08, y: -0.12, z: 0.5 } as const;
 /** Seconds from the end of a windup to the end of the follow-through (matches the rig). */
 const VIEW_STRIKE = 0.09;
+/** Height of the figure the TPP camera fades when it is in the way (G-275), standing and crouched. */
+const FIGURE_HEIGHT = 1.85;
+const FIGURE_CROUCHED = 1.3;
 
 /** Field of view for an aim of 0..1 with a weapon zooming by `zoom` at full aim. */
 export const aimedFov = (aim: number, zoom: number, base: number = BASE_FOV): number => base * (1 + (zoom - 1) * Math.min(1, Math.max(0, aim)));
@@ -115,6 +119,10 @@ export class CameraRig {
   private reference: { position: Vector3; target: Vector3 } | null = null;
   private occluder: CameraOccluder | null = null;
   onBodyVisibility: (visible: boolean) => void = () => {};
+  /** Eased halftone fade of the figure in the TPP view, 0..FADE_MAX (G-275). */
+  private fade = 0;
+  /** Fade of the player's figure in front of the camera, 0 solid .. 1 gone; called when it changes. */
+  onBodyFade: (amount: number) => void = () => {};
 
   constructor(
     private readonly scene: Scene,
@@ -295,6 +303,7 @@ export class CameraRig {
       this.camera.fov = this.hipFov;
       this.viewmodel.setEnabled(false);
       this.onBodyVisibility(true);
+      this.updateFade(0, 1);
       return;
     }
     if (!target) return;
@@ -304,14 +313,15 @@ export class CameraRig {
 
     const { position: p, yaw, pitch } = target;
     const dir = directionFromAngles(yaw, pitch);
-    // Same curve as the simulation's aim origin, so the crosshair stays exact while crouching.
-    const eye = new Vector3(p.x, p.y + eyeHeightAt(target.crouch ?? 0), p.z);
-    const shoulder = eye.add(new Vector3(Math.cos(yaw) * TPP_SHOULDER_OFFSET, TPP_HEIGHT_OFFSET, -Math.sin(yaw) * TPP_SHOULDER_OFFSET).scale(this.blend));
-    const back = new Vector3(-dir.x, -dir.y, -dir.z);
-
     // Aiming down sights (ADR-0019): the zoom follows the simulation's eased aim exactly, so the
     // HUD crosshair (which uses the same numbers) stays calibrated.
     const aim = Math.min(1, Math.max(0, target.aim ?? 0));
+    const crouch = target.crouch ?? 0;
+    // Same curves as the simulation's aim origin, so the crosshair stays exact while crouching and aimed.
+    const eye = new Vector3(p.x, p.y + eyeHeightAt(crouch), p.z);
+    const off = tppShoulderOffset(aim, crouch);
+    const shoulder = eye.add(new Vector3(Math.cos(yaw) * off.side, off.up, -Math.sin(yaw) * off.side).scale(this.blend));
+    const back = new Vector3(-dir.x, -dir.y, -dir.z);
     const adsFov = aimedFov(aim, target.aimZoom ?? 1, this.hipFov);
     let distance = TPP_DISTANCE * this.blend * (1 - TPP_ADS_PULL * smooth(aim));
     if (distance > 0.01) {
@@ -370,5 +380,16 @@ export class CameraRig {
     // The guard turns the weapon flat across the view.
     this.viewmodel.rotation.z = Math.sin(t) * 0.02 * bob + reloading * 0.7 + guard * 1.25 + sw.rz;
     this.onBodyVisibility(!fpp);
+    this.updateFade(fpp ? 0 : bodyFadeTarget(pos, dir, p, FIGURE_HEIGHT + (FIGURE_CROUCHED - FIGURE_HEIGHT) * Math.min(1, Math.max(0, crouch))), dt);
+  }
+
+  private updateFade(want: number, dt: number): void {
+    const goal = want * FADE_MAX;
+    const next = this.fade + (goal - this.fade) * Math.min(1, dt * 10);
+    // Snapped once close, so a settled fade stops calling back every frame.
+    const fade = Math.abs(goal - next) < 0.01 ? goal : next;
+    if (fade === this.fade) return;
+    this.fade = fade;
+    this.onBodyFade(fade);
   }
 }

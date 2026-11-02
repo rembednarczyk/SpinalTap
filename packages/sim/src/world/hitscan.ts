@@ -111,14 +111,44 @@ export const chestOf = (e: Entity): Vec3 => {
  */
 export const TPP_SHOULDER_OFFSET = 0.55;
 export const TPP_HEIGHT_OFFSET = 0;
+/**
+ * Aimed in or crouched, the aim line moves further out over the shoulder and a little up (G-275):
+ * close up, the figure with the gun held out leaves the crosshair and the target for the side of
+ * the view instead of standing in front of them.
+ */
+export const TPP_AIM_SHOULDER_OFFSET = 0.8;
+export const TPP_AIM_HEIGHT_OFFSET = 0.1;
+
+export interface ShoulderOffset {
+  /** Sideways from the eye, positive to the right of the facing. */
+  readonly side: number;
+  readonly up: number;
+}
+
+const clamp01 = (v: number): number => Math.min(1, Math.max(0, v));
+
+/**
+ * Offset of the TPP aim line from the eye for an aim and a crouch of 0..1. Shared by the camera
+ * and the shots, so what is under the crosshair is what the shot hits.
+ */
+export const tppShoulderOffset = (aim: number, crouch: number): ShoulderOffset => {
+  const a = clamp01(aim);
+  // Eased like the camera's aim pull-in.
+  const k = Math.max(a * a * (3 - 2 * a), clamp01(crouch));
+  return {
+    side: TPP_SHOULDER_OFFSET + (TPP_AIM_SHOULDER_OFFSET - TPP_SHOULDER_OFFSET) * k,
+    up: TPP_HEIGHT_OFFSET + (TPP_AIM_HEIGHT_OFFSET - TPP_HEIGHT_OFFSET) * k,
+  };
+};
 
 /** Where the player's shots start: the eye in FPP, the camera shoulder line in TPP. */
 export const aimOrigin = (e: Entity, mode: CameraMode): Vec3 => {
   const eye = eyeOf(e);
   if (mode === "FPP") return eye;
+  const o = tppShoulderOffset(e.posture?.aim ?? 0, crouchOf(e));
   return {
-    x: eye.x + Math.cos(e.yaw) * TPP_SHOULDER_OFFSET,
-    y: eye.y + TPP_HEIGHT_OFFSET,
-    z: eye.z - Math.sin(e.yaw) * TPP_SHOULDER_OFFSET,
+    x: eye.x + Math.cos(e.yaw) * o.side,
+    y: eye.y + o.up,
+    z: eye.z - Math.sin(e.yaw) * o.side,
   };
 };

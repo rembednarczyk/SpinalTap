@@ -1,0 +1,1 @@
+W TPP przy celowaniu i w kucaniu kamera odsuwa się dalej przez ramię i lekko w górę, a postać, która zasłania widok tuż przed kamerą, przechodzi w półton kropek; strzał trafia nadal pod celownik (G-275).
