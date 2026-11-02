@@ -50,7 +50,11 @@ const LETTERS: Readonly<Record<string, string>> = {
   h: "cefg",
 };
 
-/** A character of seven segments `w` x `h` with its lower left corner at (x, y). */
+/**
+ * A character of seven segments `w` x `h` with its lower left corner at (x, y), x as the reader in
+ * front of the wall counts it, to the right. The piece's local +x is the reader's left (`bake` turns
+ * its +z out of the wall, and Babylon's frame is left-handed), so the segments go down at -x.
+ */
 const segments = (sink: MeshSink, segs: string, x: number, y: number, w: number, h: number, t: number, z: number): void => {
   const m = y + h / 2;
   const at: Record<string, [number, number, number, number]> = {
@@ -64,7 +68,7 @@ const segments = (sink: MeshSink, segs: string, x: number, y: number, w: number,
   };
   for (const s of segs) {
     const r = at[s];
-    if (r) flat(sink, r[0], r[1], r[2], r[3], z, WHITE);
+    if (r) flat(sink, -r[2], r[1], -r[0], r[3], z, WHITE);
   }
 };
 

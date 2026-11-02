@@ -1,10 +1,11 @@
 import { DRAIN_GRATE, GRAFFITI_DESIGNS, HOUSE_PLATE, STICKER, STICKER_HOSTS, type StreetPropItem, grateVariant, graffitiVariant, hostFace, hostFaces, plateVariant, stickerVariant } from "@seki/core";
 import { describe, expect, it } from "vitest";
-import type { MeshSink } from "../src/renderer/mesh-sink";
-import { STICKER_OUT, decalModel, grateModel, plateModel, stickerModel } from "../src/renderer/mapcity/decal-models";
+import { Matrix, Vector3 } from "../src/babylon";
+import { MeshSink } from "../src/renderer/mesh-sink";
+import { PLATE_OUT, STICKER_OUT, decalModel, grateModel, plateModel, stickerModel } from "../src/renderer/mapcity/decal-models";
 import { LAYER, graffitiModel } from "../src/renderer/mapcity/decal-paint";
 import { PLINTH_BAND } from "../src/renderer/mapcity/facade-frame";
-import { toWorld } from "../src/renderer/mapcity/prop-batch";
+import { type WorldProp, bake, toWorld } from "../src/renderer/mapcity/prop-batch";
 import { buildPropModel } from "../src/renderer/mapcity/prop-models";
 
 /**
@@ -65,6 +66,30 @@ describe("graffiti (ADR-0058 stage 6)", () => {
 });
 
 describe("house number plates", () => {
+  it("reads left to right for a passer-by in front of its wall: the first digit on the left", () => {
+    // 17 on a wall facing yaw 0.7, seen by Babylon's left-handed camera 3 m in front of it.
+    for (const yaw of [0.7, -2.4]) {
+      const sink = new MeshSink();
+      const p: WorldProp = { prop: "house-plate", x: 4, y: 1, z: -2, yaw, shape: 0, scale: 1, variant: plateVariant({ number: 17, letter: 0, lift: 2.2 }) };
+      bake(sink, plateModel(p.variant!), p);
+      const n = { x: Math.sin(yaw), z: Math.cos(yaw) };
+      const target = new Vector3(p.x, p.y + 2.3, p.z);
+      const view = Matrix.LookAtLH(target.add(new Vector3(n.x * 3, 0, n.z * 3)), target, Vector3.Up());
+      // The digits: white quads under the rule for the street's name.
+      const xs: number[] = [];
+      for (let q = 0; q < sink.vertexCount; q += 4) {
+        const at = (i: number) => new Vector3(sink.positions[i * 3]!, sink.positions[i * 3 + 1]!, sink.positions[i * 3 + 2]!);
+        const c = at(q).add(at(q + 1)).add(at(q + 2)).add(at(q + 3)).scale(0.25);
+        const white = sink.colors[q * 4]! > 0.9 && sink.colors[q * 4 + 2]! > 0.9;
+        const out = (c.x - p.x) * n.x + (c.z - p.z) * n.z;
+        if (white && Math.abs(out - PLATE_OUT.digits) < 1e-3 && c.y < p.y + 2.2 + HOUSE_PLATE.height - 0.06 && c.y > p.y + 2.2 + 0.02) xs.push(Vector3.TransformCoordinates(c, view).x);
+      }
+      // "1" is two segments, "7" three: two on the viewer's left (view x < 0), three on the right.
+      expect(xs.filter((x) => x < 0), `yaw ${yaw}`).toHaveLength(2);
+      expect(xs.filter((x) => x > 0), `yaw ${yaw}`).toHaveLength(3);
+    }
+  });
+
   it("stands its plate inside its rectangle on the wall, the number on it", () => {
     for (const [number, letter] of [
       [7, 0],
