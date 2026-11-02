@@ -793,7 +793,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer)
 
 ### G-255 Garb w biegu schodów w56965515 przy pomoście wiaduktu Zamkowej: uskok 2,9 m i bieg pod prąd
-- Status: w PR #233 (2.11, runda 4 @ 223dedc PRZYJĘTE z uwagami (dług w G-273), kurator w toku; runda 5 @ defc2a0 w weryfikacji: wydajność nawigacji i G-274; runda 3 @ d03bb2d: podrzut z podestu; runda 2 @ 0e075bb: NPC w pościgu; runda 1 @ daaca9f: pod górę 4/30; pochyły pomost biegu zamiast rampy terenu; zgłoszone przez kuratora przy #219)
+- Status: w PR #233 (2.11, runda 4 @ 223dedc PRZYJĘTE z uwagami (dług w G-273), kurator w toku; runda 6 u autora; runda 5 @ defc2a0 NIE PRZYJĘTE: w obrysie wiaduktu renderer rysuje stopnie biegu, a symulacja daje płytę albo teren pod nią (24 z 63 przejść źle), testy omijały ten pas; G-274 naprawione; runda 3 @ d03bb2d: podrzut z podestu; runda 2 @ 0e075bb: NPC w pościgu; runda 1 @ daaca9f: pod górę 4/30; pochyły pomost biegu zamiast rampy terenu; zgłoszone przez kuratora przy #219)
 - Ważność: S3 (proponowana: uskok 2,9 m w środku schodów, gracz spada albo AI się zatrzymuje) · Zasięg: 1 droga (3 kawałki pasa w dwóch chunkach), możliwe dalsze z kontroli `steps-riser-tall` · Koszt: mały do średniego
 - Gdzie: T-131; w56965515 bieg węzeł 2 → 3 (734,1; 163,9) → (729,5; 159,9), Podzamcze/Stare Miasto, granica chunków z = 160
 - Dowód: `planSteps` na `groundY` (sonda `topo-g236-flight.txt`, 5757fae): stopnie na pomoście y −13,48 do x ≈ 733,4, potem podstopnica 2,92 m na teren −16,41, dalej stopnie w górę do −15,28 przy węźle 3 (flight ma `incline=down`); kawałek tego biegu w `stare-miasto-1-1` (730,8; 159,6) leży płasko na pomoście −13,51 obok −15,4 za granicą chunka. Stan sprzed #219 identyczny
@@ -803,7 +803,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: profil biegów w56965515 maleje od −13,5 do −17,1 bez podstopnicy ponad 0,3 m; kontrola `steps-riser-tall` (podstopnica `planSteps` na `groundY` > 0,5 m) baza 7 → co najwyżej 6
 
 ### G-257 Obrys cerkwi św. Jozafata (nawa i wieża) w OSM ok. 0,9 m na północ od rzeczywistego
-- Status: w naprawie w PR #233 (regresja G-255, 2.11, runda 5 u autora; zgłoszone przez kuratora, przegląd #233)
+- Status: w naprawie w PR #233 (regresja G-255, 2.11, naprawione w rundzie 5 @ defc2a0, czeka na całość #233; zgłoszone przez kuratora, przegląd #233)
 - Ważność: S4 · Zasięg: 2 budynki, nawa w69916021 (284,4; −11,9) i wieża w1382552285 (270; −9,2), Krakowskie, przy Zielonej · Koszt: mały (OSM) do średniego (przesunięcie obrysu w imporcie)
 - Gdzie: T-129
 - Dowód: NMPT GUGiK 0,5 m (kafel `topo-g210/dl-nmpt/jozaf.asc`, sonda `topo-g246-scripts/topo-edges.py`): rzut wieży ok. 0,9 m na południe i 0,2–0,3 m na zachód od obrysu OSM (krawędź północna 0,1–0,4 m wewnątrz obrysu, południowo-zachodnia 1,1–1,4 m na zewnątrz); południowa elewacja nawy 1,4–2,1 m na zewnątrz obrysu (z okapem ok. 0,5 m). Wierzchołek dachu wieży NMPT y 9,4 w (269,7; −10,0), w grze nad środkiem obrysu (269,99; −9,16); ortofoto PZGiK: dach symetryczny, więc przesunięty jest obrys, nie dach. Kotwica gry nie jest winna (sąsiedni w232805913 na tym samym kaflu ok. 0,4 m, Brygidki T-060 co do 0,5 m)
