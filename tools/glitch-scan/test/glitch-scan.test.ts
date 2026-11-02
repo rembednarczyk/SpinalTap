@@ -2,7 +2,6 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import { type StreetPropItem, VEHICLE_SIZE, terrainHeightAt } from "../../../packages/core/src";
-import { planSteps } from "../../../packages/engine/src/renderer/mapcity/steps-plan";
 import { lampWallLantern } from "../../../packages/engine/src/renderer/mapcity/prop-lamps";
 import { facadeFrame } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
 import { planFarBuilding } from "../../../packages/engine/src/renderer/mapcity/facade-plan";
@@ -28,6 +27,7 @@ import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAt
 import { bandAcross, lampsOnSteps, stepsNarrowerThanWalls } from "./steps-walls";
 import { drawnFlight, stepsAcross, stepsHidden, stepsRunsBare } from "./steps-runs";
 import { stepsInclineAgainst } from "./steps-incline";
+import { flightUnderpass, riserOf, stepFaces } from "./steps-faces";
 import { cityChurches, cityFakeTowers, cityTowers, doubleTowers, dwellingTowers, towersOffBuilding } from "./landmark-towers";
 import { EMPTY_STRIPS_KNOWN, bayCarsMisturned, bayCarsOutOfPark, bayStripsEmptyKnown, bayStripsSparse, crowdLanesOnParking, kerbParksOf, kerbStripsOffCarStreets } from "./kerb-bays";
 import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alone.ts";
@@ -56,10 +56,10 @@ import { mapHeight } from "../../../packages/sim/src/content/lublin/shape";
 import { groundY, surfaceY } from "../../../packages/sim/src/content/lublin/terrain";
 import { BRIDGE_DECKS, bridgeDeckAt } from "../../../packages/sim/src/content/lublin/decks";
 import { WORLD_CHUNKS, WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
-import { type GroundDeck, deckAt } from "../../../packages/sim/src/world/deck";
+import { DECK_DEPTH, type GroundDeck, deckAt } from "../../../packages/sim/src/world/deck";
 import { GroundField } from "../../../packages/sim/src/world/ground";
 import { type Prism, circleTouchesPrism, makePrism, prismsAt } from "../../../packages/sim/src/world/prism";
-import { groundAt } from "../../../packages/sim/src/systems/movement-system";
+import { STEP_HEIGHT, groundAt } from "../../../packages/sim/src/systems/movement-system";
 import { PARKED_CARS } from "../../../packages/sim/src/content/parked-cars";
 import { GAME_PROPS, WORLD_STREET_PROPS } from "../../../packages/sim/src/content/street-props";
 import { crossingBands, inCrossingBand } from "../../../packages/sim/src/content/lublin/crossing-bands";
@@ -273,15 +273,7 @@ const BANDS = crossingBands(MAP_CHUNKS);
 const risersOf = (outline: readonly number[]) => {
   const ring: Pt[] = [];
   for (let i = 0; i + 1 < outline.length; i += 2) ring.push({ x: outline[i]!, z: outline[i + 1]! });
-  const sink = new MeshSink();
-  planSteps(sink, ring, groundY);
-  const out: { readonly h: number; readonly x: number; readonly z: number }[] = [];
-  for (let v = 0; v < sink.vertexCount; v += 4) {
-    if (Math.abs(sink.normals[v * 3 + 1]!) > 0.5) continue;
-    const ys = [0, 1, 2, 3].map((k) => sink.positions[(v + k) * 3 + 1]!);
-    out.push({ h: Math.max(...ys) - Math.min(...ys), x: (sink.positions[v * 3]! + sink.positions[(v + 1) * 3]!) / 2, z: (sink.positions[v * 3 + 2]! + sink.positions[(v + 1) * 3 + 2]!) / 2 });
-  }
-  return out;
+  return stepFaces(ring, groundY).flatMap((f) => (f.up ? [] : [riserOf(f)]));
 };
 /** The heights of the risers of a map steps surface, metres (`risersOf`). */
 const riserHeights = (outline: readonly number[]) => risersOf(outline).map((r) => r.h);
@@ -937,6 +929,24 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
           const tall = risersOf(g.outline).reduce<{ h: number; x: number; z: number } | null>((m, r) => (r.h > TALL_RISER && (!m || r.h > m.h) ? r : m), null);
           return tall ? [{ at: near(tall.x, tall.z), what: `${c.id} riser ${tall.h.toFixed(2)} m` }] : [];
         }),
+    ),
+  /**
+   * A band of map steps a walker coming along the terrain gets under, its body through the drawn
+   * treads (G-255): the ground there for feet on the terrain lies more than a step and less than a
+   * body and a deck's slab under them. Not the treads on a bridge's own deck (G-062's headroom).
+   */
+  "flight-underpass": () =>
+    flightUnderpass(
+      MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.surface === "steps").map((g) => ({ id: c.id, ring: worldOutline({ x: 0, z: 0, outline: g.outline }) }))),
+      groundY,
+      (x, z) => {
+        const g = FIELD.gridAt(x, z);
+        const t = g ? terrainHeightAt(g, x, z) : 0;
+        return FIELD.heightAt(x, z, t + STEP_HEIGHT);
+      },
+      (x, z, y) => Math.abs((bridgeDeckAt(x, z) ?? -Infinity) - y) < 0.01,
+      STEP_HEIGHT,
+      DECK_DEPTH,
     ),
   /** A run of map steps between two parallel walls further apart than the steps the game lays plus 1 m (G-203). */
   "steps-narrower-than-walls": () => {
