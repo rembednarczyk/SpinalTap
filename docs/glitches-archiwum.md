@@ -2,6 +2,14 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-098 Wieże zmapowane jako `man_made=tower` bez `building` pominięte
+- Status: naprawione w #216 (2.11, PRZYJĘTE; kurator ZGODNE Z UWAGAMI: hełm rysowany czterospadowo zamiast ostrosłupa, cegła, okna; wieże Pałacu Lubomirskich w G-249) · Ważność: S3 (od 2.11, przegląd #198: po G-212 Brygidki nie mają żadnej wieży, a prawdziwa ok. 34 m jest dominantą Narutowicza) · Zasięg: 1 obrys w Krakowskim (dawniej 3; wieże pałacu w G-249) · Koszt: mały–średni
+- Wysokość: OSM nie ma `height`; z NMPT wieża Brygidek do y 32,4 (teren y ok. −1,2), w imporcie korekta `height` 31,5 i `roof:height` 9,1 z odsyłaczem T-060
+- Uwagi kuratora (S4, nie blokują, T-060): hełm rysowany z kalenicą ok. 1,5 m, a NMPT ma jeden wierzchołek (`roof:shape=pyramidal` w tej samej korekcie); cegła bez `building:material` w OSM (G-244); okna dzwonnicy poza G-245, bo część nie ma `tower: true`
+- Gdzie: w1090997970 (wieża Brygidek, 161, −229); T-060
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: kontrola `tower-area-missing` 3 → 2 (zostają w1002739983 i w1002739984, G-249); szczyt w1090997970 y 32,4 ± 0,5 m
+
 ### G-248 „Doktor Mori” po polsku także w angielskiej wersji
 - Status: naprawione w #218 (2.11, orkiestrator): `shop.clinic.title` w skanerze, test w `wave1-hud.test.ts`
 - Ważność: S4 · Zasięg: `packages/app/src/scan-view.ts:20` `"Doktor Mori"` pokazywany graczowi niezależnie od języka; skan go nie liczy (to nie JSX, a „Doktor” nie ma polskich znaków)

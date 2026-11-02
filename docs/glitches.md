@@ -305,14 +305,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (decyzja o prostokątach: Architekt, ADR-0042)
 - Test przyjęcia: w66335239 i w66293168 w `MAP_CHUNKS`, bez uskoku gruntu na x = 460; propozycja: `stare-miasto` minZ −270 z `zEdges` [−270, −40, 160] (rząd 230 m, identyfikatory chunków bez zmian); kontrola `historic-cut-by-edge` (budynek zabytkowy z obrysem w prostokącie dzielnicy i środkiem poza wszystkimi) 4 → 1 (Pałac Tarłów zostaje, T-057)
 
-### G-098 Wieże zmapowane jako `man_made=tower` bez `building` pominięte
-- Status: w PR #216 (2.11, weryfikator PRZYJĘTE, kurator ZGODNE Z UWAGAMI): wieża Brygidek z NMPT jako część podniesiona kościoła (korona y 23,3, szczyt y 32,4, zgodne z NMPT co do 0,5 m); wieże Pałacu Lubomirskich wydzielone do G-249 · Ważność: S3 (od 2.11, przegląd #198: po G-212 Brygidki nie mają żadnej wieży, a prawdziwa ok. 34 m jest dominantą Narutowicza) · Zasięg: 1 obrys w Krakowskim (dawniej 3; wieże pałacu w G-249) · Koszt: mały–średni
-- Wysokość: OSM nie ma `height`; z NMPT wieża Brygidek do y 32,4 (teren y ok. −1,2), w imporcie korekta `height` 31,5 i `roof:height` 9,1 z odsyłaczem T-060
-- Uwagi kuratora (S4, nie blokują, T-060): hełm rysowany z kalenicą ok. 1,5 m, a NMPT ma jeden wierzchołek (`roof:shape=pyramidal` w tej samej korekcie); cegła bez `building:material` w OSM (G-244); okna dzwonnicy poza G-245, bo część nie ma `tower: true`
-- Gdzie: w1090997970 (wieża Brygidek, 161, −229); T-060
-- Pakiet właściciela: tools/osm-import
-- Test przyjęcia: kontrola `tower-area-missing` 3 → 2 (zostają w1002739983 i w1002739984, G-249); szczyt w1090997970 y 32,4 ± 0,5 m
-
 ### G-099 Pas poszerzenia Krakowskiego bez mebli z planu (latarnie, obeliski)
 - Status: zgłoszone (z przeglądu kuratora G-052) · Ważność: S3 (proponowana; ciemne ulice nocą) · Zasięg: pas 660 × 70 m · Koszt: mały–średni
 - Gdzie: T-061 (Narutowicza, Peowiaków, Zesłańców Sybiru, Bernardyńska; obeliski na Placu Kochanowskiego)
