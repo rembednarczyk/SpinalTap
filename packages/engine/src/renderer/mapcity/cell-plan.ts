@@ -1,4 +1,5 @@
 import type { MeshSink } from "../mesh-sink";
+import { doorwayFrames } from "./doorway-frame";
 import type { FacadeFrame } from "./facade-frame";
 import { type ObstacleQuery, type PropPlacer, planFacadeExtras } from "./facade-props";
 import { planFarBuilding, planNearBuilding } from "./facade-plan";
@@ -10,8 +11,8 @@ import { planWallClutter } from "./wall-clutter";
 
 /**
  * The buildings of a map city cell, planned into its sinks: a landmark from its recipe
- * (ADR-0062), every other building from the facade plan with its superstructure (ADR-0051),
- * clutter and signs.
+ * (ADR-0062), every other building from the facade plan with the surrounds of its doorways
+ * (G-270), its superstructure (ADR-0051), clutter and signs.
  */
 
 /**
@@ -41,6 +42,7 @@ export const planNearFrames = (sink: MeshSink, frames: readonly FacadeFrame[], l
       continue;
     }
     planNearBuilding(sink, f);
+    doorwayFrames(sink, f);
     planNearVertical(sink, f, place);
     if (!lite) planWallClutter(sink, f, place);
     if (!lite && place) planFacadeExtras(f, place, obstacles);
