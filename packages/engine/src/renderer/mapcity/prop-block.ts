@@ -6,6 +6,7 @@ import { sinkToMesh } from "../dressing";
 import { MeshSink } from "../mesh-sink";
 import { FINE_DECALS, bakeDecal } from "./decal-models";
 import { bakeDoor } from "./door-models";
+import { bakeFigure } from "./figure-models";
 import { cellBounds } from "./map-index";
 import { type WorldProp, bake } from "./prop-batch";
 import { chainModel, farModel, propModel } from "./prop-models";
@@ -108,6 +109,11 @@ export const bakeNear = (deps: PropBakeDeps, block: PropBlock): void => {
     // A door on a facade (ADR-0058 stage 9) at its own size, its leaf a model where they have loaded.
     if (p.prop === "door") {
       bakeDoor(sink, models, p);
+      continue;
+    }
+    // A still figure (ADR-0058 stage 8): a model of the crowd's file on every quality, nobody before it loads.
+    if (p.prop === "figure") {
+      bakeFigure(sink, poles.props, p, deps.quality);
       continue;
     }
     if (models && bakeStreetModel(sink, models, p)) continue;
