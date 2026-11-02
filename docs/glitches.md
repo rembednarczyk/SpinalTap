@@ -859,7 +859,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Także (kurator, T-138): na bruku Jezuickiej plama sięga ok. 2,3 m przed fasadę, a Wieży Trynitarskiej (8,5 m) nie dosięga; poza tym topografia jest zgodna
 
 ### G-264 Latarnie OSM na Archidiakońskiej (Stare Miasto) rysowane jako drogowe
-- Status: w PR #236 (2.11, @ 3437308 w weryfikacji; zgłoszone przez autora i weryfikatora G-259)
+- Status: w PR #236 (2.11, @ 3437308 PRZYJĘTE, czeka na kuratora; zgłoszone przez autora i weryfikatora G-259)
 - Ważność: S4 · Zasięg: 2 latarnie `grodzka.street-lamp` → `lamp-road`: (653,9; 39,3), (653,5; 46,6), przy Placu po Farze, 9,8 i 14,9 m od latarni ściennej · Koszt: mały
 - Przyczyna: mapowanie `street-lamp → lamp-road` w `tools/osm-import/src/props-kinds.ts:56` („OSM street lamps away from the old town are road lamps”) nie patrzy na miejsce; na Starym Mieście (decyzja użytkownika 2.11: wiodą latarnie stylizowane) powinny być stylizowane
 - Poprawka: `street-lamp` w strefie Starego Miasta → stylizowana (np. latarnia ścienna albo pastorał, styl do potwierdzenia przez kuratora); przegląd `topography-curator`
@@ -874,7 +874,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (props)
 
 ### G-266 Na pierzei Krakowskiego przy Placu Litewskim styl latarni zmienia się przy x 20 bez oparcia w OSM
-- Status: w PR #236 (2.11, @ 3437308, razem z G-264, czeka na weryfikację; zgłoszone przez kuratora, przegląd #235)
+- Status: w PR #236 (2.11, @ 3437308 PRZYJĘTE razem z G-264, czeka na kuratora; zgłoszone przez kuratora, przegląd #235)
 - Ważność: S4 · Zasięg: Krakowskie Przedmieście x −87…130 (drogi w598108789 i w40049340 z tagami placu w1054556917, nie deptaka); `lamps.kp-deptak` (pastorały) sięga x 20, choć opis planu mówi „od Kapucyńskiej” (tagi deptaka od x 129,7) · Koszt: mały
 - Poprawka (decyzja użytkownika 2.11: pastorały): pastorały na całej pierzei placu od x −87 do Kapucyńskiej (`lamps.kp-deptak` wydłużony na zachód), słupy nowoczesne tylko na alejkach wewnątrz placu; kontrola skanu na później: zmiana stylu latarni na osi jednej drogi OSM o tych samych tagach
 - Pakiet właściciela: docs/world (plan), tools/osm-import (props)
@@ -901,7 +901,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Dane: `scratchpad/g263-fix/clinic-koi.txt`
 
 ### G-270 Drzwi bez widocznych futryn
-- Status: zgłoszone (2.11, użytkownik; potwierdzone przez orkiestratora na zrzucie `shots/tlum/palacy-przy-drzwiach-dzien.png`), pierwszeństwo w kolejce
+- Status: w naprawie (2.11, naprawiacz, gałąź `ccr-ec2c4269-ilh8k8-g270`; zgłoszone przez użytkownika)
 - Ważność: S3 (zgłoszenie gracza, wszystkie drzwi miasta) · Zasięg: drzwi na fasadach (ADR-0058 etap 9): ościeżnica i nadproże `DOOR_FRAME` (`packages/engine/src/renderer/mapcity/prop-door.ts`: `side` 0,08 m, `lintel` 0,1 m, `depth` 0,2 m) w tym samym kolorze `FRAME_COLOR` #2a2e36 co ciemne skrzydła, więc z kilku metrów skrzydło i futryna to jedna płaszczyzna; drzwi gry (klinika, Neon Koi, ADR-0038) i wejście pokoju kapsułowego (#234) bez obramowania · Koszt: mały do średniego
 - Poprawka: widoczna futryna i opaska: szersza ościeżnica (ok. 0,12–0,15 m) i nadproże, opaska wystająca kilka cm przed lico ściany, kolor kontrastujący ze skrzydłem i ścianą (np. jaśniejszy kamienny/tynkowy dla kamienic, metalowy dla sklepów, z palety kitu), próg; te same reguły dla drzwi gry i otworu pokoju kapsułowego; bez nowych wywołań rysowania (w siatce bloku mebli); drzwi nie mogą przez to wejść w szyby, szyldy ani przejazdy (kontrole `door-*` bez wzrostu)
 - Pakiet właściciela: packages/engine (renderer/mapcity, rooms, wnętrza gry)
