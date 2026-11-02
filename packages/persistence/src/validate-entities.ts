@@ -18,6 +18,15 @@ const isGun = (v: unknown, most = MOST_ROUNDS): boolean =>
   isObject(v) && Number.isInteger(v.loaded) && (v.loaded as number) >= 0 && (v.loaded as number) <= most && isTime(v.reloading) && isTime(v.drawing) && isTime(v.bloom);
 const isSniper = (v: unknown): boolean => isObject(v) && SNIPER_PHASES.includes(v.phase) && isTime(v.timer) && Number.isInteger(v.perch) && (v.perch as number) >= 0;
 
+/** Most characters a repath goes round (G-208): those within a few metres of a stuck walker. */
+const MOST_AVOIDED = 256;
+const isTick = (v: unknown): boolean => Number.isInteger(v) && (v as number) >= 0;
+const isPlan = (v: unknown): boolean =>
+  isObject(v) && isVec(v.from) && isVec(v.goal) && Array.isArray(v.avoid) && v.avoid.length <= MOST_AVOIDED && v.avoid.every(isVec);
+/** G-208: a walker's stuck check: where and when its stretch began, until when it gets unstuck, its side, its repath. */
+const isWalk = (v: unknown): boolean =>
+  isObject(v) && isNum(v.x) && isNum(v.z) && isTick(v.since) && isTick(v.unstickUntil) && (v.side === 1 || v.side === -1) && (v.plan === undefined || isPlan(v.plan));
+
 const BODY_FLAGS = ["fought", "found", "reported", "dead", "carried", "hidden"] as const;
 
 /** A body of ADR-0065: where the player stood, and its flags. */
@@ -39,6 +48,7 @@ export const findEntityError = (e: unknown): string | null => {
   if (e.away !== undefined && !(isNum(e.away) && e.away >= 0)) return `entity ${e.key} away`;
   if (e.gun !== undefined && !isGun(e.gun)) return `entity ${e.key} gun`;
   if (e.sniper !== undefined && !isSniper(e.sniper)) return `entity ${e.key} sniper`;
+  if (e.walk !== undefined && !isWalk(e.walk)) return `entity ${e.key} walk`;
   return null;
 };
 
