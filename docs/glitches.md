@@ -825,12 +825,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: test „grunt pod stopniami Trasy Podziemnej z zapasem ≥ 1 m pod rampą kolizyjną” i „bruk nie wystaje nad stopnie”; pad niezależny od rozdzielczości siatki (granice w metrach, nie w węzłach)
 - Pakiet właściciela: packages/sim (content/lublin)
 
-### G-253 Zapis w trakcie obezwładnienia: chwyt poza zapisem
-- Status: w PR #225 (2.11, @ db5d939 PRZYJĘTE, czeka na CI; zgłoszone przez naprawiacza G-240)
-- Ważność: S4 · Zasięg: `session.takedown` nie trafia do migawki, a `canSave` nie blokuje zapisu w chwycie; gra wczytana nie ma chwytu, a gra, z której zapisano, go kończy (rozjazd jak G-240)
-- Poprawka: `canSave`/autozapis czeka na koniec chwytu (prościej) albo chwyt w zapisie; test hash po zapisie w chwycie
-- Pakiet właściciela: packages/app (save-controller, autosave), packages/sim (takedown)
-
 ### G-254 Drony liczą czas z zegara klatki (latają w pauzie)
 - Status: zgłoszone (2.11, weryfikator ADR-0058 etap 7)
 - Ważność: S4 · Zasięg: `packages/engine/src/renderer/drones/*` biorą `dt` klatki renderera, nie czas świata; w pauzie drony dalej lecą (tak samo tłum renderera)

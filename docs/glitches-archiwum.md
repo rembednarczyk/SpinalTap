@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-253 Zapis w trakcie obezwładnienia: chwyt poza zapisem
+- Status: naprawione w #225 (2.11, PRZYJĘTE; zapis ręczny w chwycie odmawia, autozapis czeka do końca chwytu; migawka debugowa w G-256)
+- Ważność: S4 · Zasięg: `session.takedown` nie trafia do migawki, a `canSave` nie blokuje zapisu w chwycie; gra wczytana nie ma chwytu, a gra, z której zapisano, go kończy (rozjazd jak G-240)
+- Poprawka: `canSave`/autozapis czeka na koniec chwytu (prościej) albo chwyt w zapisie; test hash po zapisie w chwycie
+- Pakiet właściciela: packages/app (save-controller, autosave), packages/sim (takedown)
+
 ### G-240 Panika tłumu nie trafia do zapisu: wczytana gra rozjeżdża się zaraz po walce
 - Status: naprawione w #221 (2.11, PRZYJĘTE; zapis rozlicza zgłoszenia świadków i uspokaja ulicę w obu grach; chwyt przy zapisie w G-253)
 - Ważność: S4 · Zasięg: `crowd.state: fleeing` (np. Hideo po walce) poza zapisem; wczytana gra różni się od gry bez zapisu do uspokojenia tłumu (ok. 12 s)
