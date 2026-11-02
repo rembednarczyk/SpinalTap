@@ -43,6 +43,7 @@ import { cityVenueBoards } from "../../osm-import/src/venue-boards.ts";
 import { CROWD_LANES } from "../../../packages/sim/src/content/crowd";
 import { INTERIORS, interiorAt } from "../../../packages/sim/src/content/interior-areas";
 import { CLINIC_DOOR, KOI_DOOR } from "../../../packages/sim/src/content/interiors";
+import { CAPSULE_DOOR, CAPSULE_SITE } from "../../../packages/sim/src/content/capsule-room";
 import { furnitureNear } from "../../../packages/sim/src/content/furniture-index";
 import { BOLLARD, alongSegment, anchors, chainSegments, chainThrough, distanceToPiece, furniturePrisms, furnitureRadius, turnLocal } from "../../../packages/sim/src/content/lublin/furniture";
 import { LUBLIN_CHUNKS, LUBLIN_STREET_PROPS, buildingView, isLandmark } from "../../../packages/sim/src/content/lublin";
@@ -1406,8 +1407,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       if (i.building === null) return [];
       const b = MAP_CHUNKS.flatMap((c) => c.buildings).find((m) => m.id === i.building);
       if (!b) return [{ at: i.id, what: `${i.building} not on the map` }];
-      const doors = ROOM_SITES.filter((s) => s.building === i.building).flatMap((s) =>
-        [CLINIC_DOOR, KOI_DOOR].filter((d) => d.at.x > s.rect.minX && d.at.x < s.rect.maxX && Math.abs(d.at.z - s.front) < 1.5).map((d) => ({ x: d.at.x, y: d.at.y, z: d.at.z - s.faces * 0.3 })),
+      const doors = [...ROOM_SITES, CAPSULE_SITE].filter((s) => s.building === i.building).flatMap((s) =>
+        [CLINIC_DOOR, KOI_DOOR, CAPSULE_DOOR].filter((d) => d.at.x > s.rect.minX && d.at.x < s.rect.maxX && Math.abs(d.at.z - s.front) < 1.5).map((d) => ({ x: d.at.x, y: d.at.y, z: d.at.z - s.faces * 0.3 })),
       );
       const passages = PASSAGES.filter((p) => p.building === i.building).flatMap((p) => {
         const len = Math.hypot(p.to.x - p.from.x, p.to.z - p.from.z);

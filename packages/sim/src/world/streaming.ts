@@ -13,7 +13,7 @@ import { restoreEntities } from "./dormant-restore";
 import { syncPresence } from "./presence-sync";
 import { StreamCatalog, type Template } from "./stream-catalog";
 
-export { STREET_ID_BASE, STREET_IDS_PER_CHUNK } from "./stream-catalog";
+export { ROOM_ID_BASE, ROOM_IDS_PER_CHUNK, STREET_ID_BASE, STREET_IDS_PER_CHUNK } from "./stream-catalog";
 export { PINNED_AWAY_SECONDS } from "./chunk-unload";
 
 /**

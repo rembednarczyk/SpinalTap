@@ -43,7 +43,7 @@ const quiet = (seed = 3): Simulation => {
 
 describe("interiors as areas (ADR-0061)", () => {
   it("names every interior in the catalogues and keeps the ids unique", () => {
-    expect(INTERIORS.map((i) => i.id)).toEqual(["clinic", "neon-koi", "tessen-office", "trasa-podziemna"]);
+    expect(INTERIORS.map((i) => i.id)).toEqual(["clinic", "neon-koi", "tessen-office", "trasa-podziemna", "capsule"]);
     for (const i of INTERIORS) expect(i.name).toBe(`interior.${i.id}`);
   });
 

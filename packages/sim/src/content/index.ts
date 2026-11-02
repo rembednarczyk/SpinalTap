@@ -11,6 +11,7 @@ export * from "./devices";
 export * from "./doors";
 export * from "./interiors";
 export * from "./interior-areas";
+export * from "./capsule-room";
 export * from "./metro";
 export * from "./encounters";
 export * from "./contract-hooks";
