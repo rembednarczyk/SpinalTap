@@ -5,6 +5,12 @@ Zmiany widoczne dla gracza, od najnowszych. Wersja gry i commit są na ekranie t
 ## Nieopublikowane (0.1.0)
 
 ### 1 listopada 2026
+- Kaplica Trójcy i Donżon na Zamku mają wysokości z pomiaru NMPT GUGiK: niższy okap i wyższy, stromy dach kaplicy, korona wieży o ok. 1,7 m niżej (G-204).
+- Quickhack wgrywany w posiłek ochrony w chwili zapisu po wczytaniu kończy się w tym samym posiłku albo jest przerwany (z połową RAM-u z powrotem), nigdy nie trafia w innego (G-194).
+- Strażnicy, którzy gonili gracza, uspokajają się i zasypiają, gdy gracz jest daleko (najpóźniej po 30 s poza wczytanymi fragmentami miasta); nie stoją już w świecie do końca sesji, a zapis i wczytanie dają to samo co gra (G-188).
+- Strażnik obok gracza nie znika już na jego oczach, gdy usypia się fragment miasta strażnika: ani gdy gracz stoi na terenie poza fragmentami miasta (np. na północ od Nabrzeża), ani gdy strażnik stoi przy graczu w innym wczytanym fragmencie; zasypia dopiero, gdy odejdzie od gracza dalej niż na 30 m, a zapis i wczytanie dają to samo co gra (G-201).
+- Posiłki ochrony dają XP za quickhack, każdy raz, jak strażnik z kluczem; ten sam posiłek drugi raz nic, także po zapisie i wczytaniu, a posiłek kolejnego heatu znów płaci (G-202, zapis v26).
+- Zapis w trakcie hakowania pod ostrzałem pamięta stan broni strażników i celowanie snajpera: po wczytaniu fala strzela wtedy, kiedy strzelałaby w grze bez zapisu (G-185, zapis v25).
 - Drzwi na fasadach: budynki Lublina mają wejścia. Tam, gdzie mapa zna wejście, drzwi stoją w jego miejscu; pod szyldem każdego lokalu są drzwi sklepu (przy bankach pancerne, na kod), a kamienice od ulicy mają drzwi klatki. Drzwi stoją między oknami albo w miejscu całego okna czy witryny, nigdy w połowie okna, pod szyldem ani w bramie przejazdu. Skrzydła to modele z drugiej paczki użytkownika (CC-BY, na ekranie „Autorzy”); na telefonie są prostsze (ADR-0058 etap 9).
 - Miejsce wykonanego i opłaconego zlecenia zostaje oczyszczone: ciała i ocaleni strażnicy znikają, gdy gracz odejdzie, i nie wracają aż do następnego zlecenia (G-195).
 - Powalony, ale żywy posiłek ochrony nie znika po końcu heatu: leży (albo zostaje schowany) tam, gdzie był, także po zapisie i wczytaniu, i nie zajmuje miejsca następnego posiłku; do domu wracają tylko ci na nogach (G-196).

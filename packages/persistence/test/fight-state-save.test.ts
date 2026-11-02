@@ -57,7 +57,7 @@ describe("an NPC's gun and a sniper's aim in the save (v24 to v25, G-185)", () =
     const reinforced = (loaded: number) =>
       findSchemaError({
         ...snapshot({
-          reinforcements: { sent: 1, wait: 0, people: [{ n: 1, type: "hebi_lookout", home: SNIPER.position, state: { ...SNIPER, key: "security:1", gun: { ...GUN, loaded } } }] },
+          reinforcements: { sent: 1, wait: 0, people: [{ n: 1, since: 0, type: "hebi_lookout", home: SNIPER.position, state: { ...SNIPER, key: "security:1", gun: { ...GUN, loaded } } }] },
         }),
       } as unknown as Record<string, unknown>);
     expect(reinforced(pistol)).toBeNull();

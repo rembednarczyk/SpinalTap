@@ -5,6 +5,8 @@ import type { Contract } from "../contracts/contracts";
 import type { EnemyTypeId } from "../items/enemies";
 
 /**
+ * v26: each of the heat's reinforcements with the tick it came in at (G-202), so a quickhack on
+ * it pays XP once; an older save's ones are taken as come in at the save's tick.
  * v25: an NPC's gun mid-fight (rounds left, reload, draw, bloom) and a sniper's aim, rest or
  * perch (G-185); an older save has every NPC with a full magazine and every sniper idle.
  * v24: an AI pinned in the world while its chunk sleeps (G-188) is marked with its time outside
@@ -34,7 +36,7 @@ import type { EnemyTypeId } from "../items/enemies";
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 25;
+export const SAVE_SCHEMA_VERSION = 26;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {
@@ -139,6 +141,8 @@ export interface ContractOnSite {
 export interface ReinforcementSnapshot {
   /** Which of the heat's it is, from 1: what spreads the searchers and picks the enforcers. */
   readonly n: number;
+  /** The tick it came in at (G-202): with `n`, what tells it from one of another heat. */
+  readonly since: number;
   readonly type: EnemyTypeId;
   /** The entry it came in by. */
   readonly home: Vec3;

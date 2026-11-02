@@ -24,7 +24,7 @@ const knockedOut = (seed: number): Simulation => {
   p.posture!.crouched = true;
   p.posture!.amount = 1;
   p.posture!.prevAmount = 1;
-  const g = sim.world.add(reinforcementEntity(ID, 1, "hebi_ganger", offset(sim, 0, 1.2), sim.domain.difficulty.npcHealth));
+  const g = sim.world.add(reinforcementEntity(ID, 1, sim.tick, "hebi_ganger", offset(sim, 0, 1.2), sim.domain.difficulty.npcHealth));
   g.hackFx = { pinged: 0, blind: 100, crippled: 0 };
   sim.session.watch.sent = 1;
   takeDown(sim, false);
