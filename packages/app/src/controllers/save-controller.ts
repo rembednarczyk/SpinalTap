@@ -118,6 +118,8 @@ export class SaveController {
   snapshot(): SaveSnapshot {
     const sim = this.deps.sim();
     const { objective } = describeObjective(sim.domain, this.locale);
+    // The street calms down as the loaded game would (G-240): the game goes on as after a load.
+    sim.calmForSave();
     return sim.snapshot(this.deps.narrative.saveState(), slotDateLabel(this.deps.now(), this.locale), objective ?? "");
   }
 

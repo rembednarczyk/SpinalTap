@@ -57,6 +57,20 @@ export const scare = (ctx: SimContext, c: Entity, state: CrowdState, from: Vec3)
   ctx.bus.emit("CrowdReacted", { entityId: c.id, state });
 };
 
+/**
+ * Calms the street for a save (G-240). The crowd's fear is not saved and a loaded game starts
+ * calm (ADR-0029), so the game it is saved from calms down too: both go on the same. A call in
+ * progress goes with it, in both, as a load drops it.
+ */
+export const calmStreet = (ctx: SimContext): void => {
+  for (const c of inCreationOrder(ctx.world.with("civilian"))) {
+    const mind = c.civilian.crowd;
+    if (!mind) continue;
+    delete c.civilian.crowd;
+    if (mind.state !== "calm") ctx.bus.emit("CrowdReacted", { entityId: c.id, state: "calm" });
+  }
+};
+
 type Civilian = Entity & { civilian: NonNullable<Entity["civilian"]>; velocity: NonNullable<Entity["velocity"]> };
 
 const hasRoutine = (c: Civilian): c is Civilian & { passerby: NonNullable<Entity["passerby"]> } => c.passerby !== undefined;

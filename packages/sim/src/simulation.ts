@@ -37,6 +37,7 @@ import { withCarry } from "./world/bodies";
 import { resumeSession } from "./world/session-resume";
 import { reinforcementsSnapshot, restoreReinforcements } from "./world/reinforcements";
 import { restoreStrayBodies, strayBodiesSnapshot } from "./world/stray-bodies";
+import { calmStreet } from "./systems/ai/civilian-ai-system";
 
 export { BREACH_DATAMINE_EDDIES, BREACH_ICEPICK_SECONDS, BREACH_MARK_SECONDS } from "./world/contract-commands";
 export { SIM_DT, SIM_HZ } from "./step-rate";
@@ -223,6 +224,14 @@ export class Simulation {
 
   private applyCommands(ctx: SimContext): void {
     for (const cmd of this.commands.splice(0)) applyCommand(ctx, cmd);
+  }
+
+  /**
+   * Settles what a save does not keep, before the save (G-240): the street's fear (ADR-0029), so
+   * the game saved from goes on as the loaded one. Not part of `snapshot`, which hashes read.
+   */
+  calmForSave(): void {
+    calmStreet(this.context(EMPTY_INPUT));
   }
 
   snapshot(narrative: string | null, label: string, objective: string): SaveSnapshot {
