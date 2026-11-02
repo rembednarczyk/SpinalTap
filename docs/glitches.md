@@ -646,7 +646,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim, packages/persistence
 
 ### G-212 Podwójne wieże: proceduralna obok wieży z OSM
-- Status: zgłoszone (2.11, naprawiacz G-210)
+- Status: w PR #198 (2.11, w weryfikacji, potem kurator): `mappedTower` z OSM i wieże tylko w obrysie; Brygidki bez wieży do G-098, Karmelici Bosi bez wież na trawie
 - Ważność: S4 · Zasięg: cerkiew św. Jozafata w69916021 (wieża z OSM w1382552285 przy (270; −9)) i kościół św. Mikołaja w66258180 (dzwonnica z OSM w680377807 przy (879; 545)) dostają dodatkowo proceduralną wieżę (`roof-plan` `addTowers`); Brygidki w66264082: proceduralne wieże, prawdziwa w1090997970 niezaimportowana (G-098)
 - Poprawka: `addTowers` pomija kościół, przy którym (w obrysie albo do 10 m) stoi wieża z OSM; rozszerzyć kontrolę `landmark-fake-tower` albo nowa `landmark-double-tower`
 - Pakiet właściciela: packages/engine (renderer/mapcity), tools/glitch-scan
