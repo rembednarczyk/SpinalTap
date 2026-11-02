@@ -648,7 +648,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim, packages/core
 
 ### G-210 Proceduralna dzwonnica z iglicą na Kaplicy Trójcy
-- Status: w PR #190 (2.11, w weryfikacji, potem kurator): `TOWERLESS_OSM` (Kaplica i Bernardyni), kontrola `landmark-fake-tower` baza 0
+- Status: w PR #190 (2.11, PRZYJĘTE przez weryfikatora, przegląd kuratora w toku): `TOWERLESS_OSM` (Kaplica i Bernardyni), kontrola `landmark-fake-tower` baza 0
 - Ważność: S3 (proponowana: fałszywa iglica jest najwyższym akcentem wzgórza zamkowego zamiast Donżonu) · Zasięg: Kaplica w66258167 (941; 214,6), możliwe inne kościoły z listy zabytków bez części i bez `tower` w OSM
 - Przyczyna: `packages/engine/src/renderer/mapcity/roof-plan.ts` (`towerSpots`/`addTowers`) dokłada wieżę kościołom bez `building:part`, więc wyłączenie z G-057 nie działa; korona wieży ok. y 19,0, iglica do ok. y 28–30 (Donżon 16,9; prawdziwa Kaplica bez wieży, szczyt zachodni ok. y 16,9)
 - Poprawka: bez proceduralnej wieży na zabytkach z `LANDMARK_BUILDINGS` bez `tower` w OSM (albo przepis Z3); kontrola skanu `landmark-fake-tower` (baza ≥ 1); migawka NPR świadomie
