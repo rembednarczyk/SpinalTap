@@ -1,13 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { TRASA_PODZIEMNA, TRASA_PODZIEMNA_PROPS, groundY } from "../src";
+import { type TerrainGrid, terrainHeightAt } from "@seki/core";
+import { MAP_CHUNKS, TRASA_PODZIEMNA, TRASA_PODZIEMNA_PROPS, groundY } from "../src";
 import { surfaceLiftAt } from "../src/content/lublin/roads";
-import { STEP_RISE } from "../src/content/lublin/shape";
+import { STEP_RISE, flightGrid, shapeGrid } from "../src/content/lublin/shape";
+import { FLIGHT_RAMPS, PADS, RAMPS } from "../src/content/lublin/sites";
 import { topAt } from "../src/world/collision";
 
 /**
  * The ground under Trasa Podziemna's stairs (G-252): the dig of `PADS` must keep the terrain a
  * metre or more under the stairs' collision ramp, and the Rynek's paving, draped on it in
- * triangles of up to 5 m (the renderer's `DRAPE_STEP`), under the treads.
+ * triangles of up to 5 m (the renderer's `DRAPE_STEP`), under the treads. On the import's grid
+ * and on any other of up to 5 m: the pad is laid out in metres, not on the grid's points.
  */
 
 type HeightAt = (x: number, z: number) => number;
@@ -84,5 +87,40 @@ describe("the ground under Trasa Podziemna's stairs (G-252)", () => {
 
   it("keeps the Rynek's paving, draped in 5 m triangles, under the treads", () => {
     expect(pavingOverTreads(groundY)).toBeLessThan(0);
+  });
+});
+
+const CHUNK = MAP_CHUNKS.find((c) => c.id === "stare-miasto-0-0")!;
+
+/** The chunk's map terrain resampled on a grid of `cell` whose points are `shift` off the chunk's corner. */
+const resampled = (cell: number, shift: number): TerrainGrid => {
+  const { minX, maxX, minZ, maxZ } = CHUNK.bounds;
+  const [originX, originZ] = [minX - shift, minZ - shift];
+  const cols = Math.ceil((maxX - originX) / cell) + 1;
+  const rows = Math.ceil((maxZ - originZ) / cell) + 1;
+  const heights: number[] = [];
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) heights.push(terrainHeightAt(CHUNK.terrain, originX + c * cell, originZ + r * cell));
+  return { originX, originZ, cell, cols, rows, heights };
+};
+
+describe.each([
+  [5, 0],
+  [5, 2.5],
+  [4, 0],
+  [2.5, 0],
+  [2.5, 1.25],
+  [1, 0],
+  [1, 0.5],
+])("the ground under Trasa Podziemna's stairs on a grid of %s m shifted %s m (G-252)", (cell, shift) => {
+  // Shaped as `SHAPED_TERRAIN` shapes the import's grid.
+  const shaped = shapeGrid(flightGrid(shapeGrid(resampled(cell, shift), PADS, RAMPS), FLIGHT_RAMPS), [], FLIGHT_RAMPS);
+  const ground: HeightAt = (x, z) => terrainHeightAt(shaped, x, z);
+
+  it("keeps the ground a metre or more under the stairs' collision ramp", () => {
+    expect(rampClearance(ground)).toBeGreaterThanOrEqual(1);
+  });
+
+  it("keeps the Rynek's paving, draped in 5 m triangles, under the treads", () => {
+    expect(pavingOverTreads(ground)).toBeLessThan(0);
   });
 });
