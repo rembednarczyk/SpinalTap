@@ -757,12 +757,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 - Test przyjęcia: kontrola `church-part-below-roof` 5 → 0; okap i kalenica nawy w grze dalej w 1,5 m od `CHURCH_SURFACE`
 
-### G-239 Ciało napastnika po wygranym napadzie znika po odejściu gracza ok. 400 m
-- Status: w PR #229 (2.11, @ 904b1eb w weryfikacji; zgłoszone przez naprawiacza G-233)
-- Ważność: S4 · Zasięg: po „won” ciało nie ma klucza, a ma chunk ofiary, więc uśpienie chunka zdejmuje je bez stanu (analogia G-219); tak samo po wczytaniu
-- Poprawka: jak G-219 (ciało bez chunku), z oceną nagromadzenia ciał (G-196); test z odejściem 400 m
-- Pakiet właściciela: packages/sim (micro-events, streaming)
-
 ### G-241 Obaleni albo zabici takedownem przechodnie bez klucza mogą ginąć przy zapisie (do potwierdzenia)
 - Status: zgłoszone (2.11), prawdopodobnie nie do odtworzenia: weryfikator G-233 ustalił, że `takedownDistance` odrzuca `passerby` i `interactable`, a obalani cywile mają klucz; zamknąć po sondzie
 - Ważność: S4 · Zasięg: cywile bez klucza nie mają `enemy`, więc `strayBodies` (G-233) ich nie bierze
@@ -799,12 +793,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: rola `headlight` z przodu obu modeli; `-lite` z kołami jako osobnymi prostymi bryłami; pominięcie zdegenerowanych wielokątów w `ear_clip` z testem
 - Pakiet właściciela: tools (city_vehicles), packages/engine (vehicle-models)
 
-### G-252 Złote hashe i testy nie pilnują terenu Trasy Podziemnej; pad wykopu zależy od rozdzielczości siatki
-- Status: w PR #230 (2.11, @ 084ac7c w weryfikacji; teren bitowo bez zmian; zgłoszone przez weryfikatora G-236)
-- Ważność: S3 (luka w testach przy ryzykownym obszarze) · Zasięg: przebiegi `determinism.test.ts` nie przechodzą przez Trasę Podziemną ani Rynek przy Trybunale, więc zmiana kształtu terenu tam nie zmienia hasha; pad Trasy Podziemnej (`sites.ts:159`, blend 0,01) jest ustawiony pod węzły siatki 5 m chunka `stare-miasto-0-0`, każda zmiana komórki (także w imporcie) po cichu przesuwa ściany wykopu
-- Poprawka: test „grunt pod stopniami Trasy Podziemnej z zapasem ≥ 1 m pod rampą kolizyjną” i „bruk nie wystaje nad stopnie”; pad niezależny od rozdzielczości siatki (granice w metrach, nie w węzłach)
-- Pakiet właściciela: packages/sim (content/lublin)
-
 ### G-254 Drony liczą czas z zegara klatki (latają w pauzie)
 - Status: zgłoszone (2.11, weryfikator ADR-0058 etap 7)
 - Ważność: S4 · Zasięg: `packages/engine/src/renderer/drones/*` biorą `dt` klatki renderera, nie czas świata; w pauzie drony dalej lecą (tak samo tłum renderera)
@@ -838,6 +826,27 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: rekwizyty na chodniku stawiane na wysokości nawierzchni (teren + `SURFACE_LIFT`), jak ludzie i pasy chodu; po poprawce siedzący z ławki mogą wrócić do zwykłej pozy siedzącej
 - Pakiet właściciela: tools/osm-import (props), packages/engine (renderer/mapcity), packages/sim (jeśli wysokość w tabeli)
 - Test przyjęcia: kontrola skanu `prop-sunk` (rekwizyt z podstawą ponad 5 cm pod nawierzchnią w swoim punkcie) baza z main → 0
+
+### G-259 Na deptaku Krakowskiego Przedmieścia nowoczesne słupy stoją 1 m od pastorałów
+- Status: zgłoszone (2.11, użytkownik; potwierdzone sondą orkiestratora na `props.generated.ts`)
+- Ważność: S3 (zgłoszenie gracza: charakterystyczne lubelskie latarnie przy deptaku dublowane fabrycznymi) · Zasięg: 16 par `lamp-modern-pole` + `lamp-pastoral` w `krakowskie-1-0` (x 32..227, z −68..−44), odstęp 0,9–2,7 m; do sprawdzenia 2 × `lamp-road` 6,9 m od pastorału w `krakowskie-2-0` (279,7; −89,3), (362,3; −104,3) · Koszt: mały
+- Przyczyna: dwa wpisy planu `docs/world/lublin-props.todo.json` mają te same osie deptaka: `lamps.kp-deptak` (pastorał, x 20..440) i `lamps.plac-litewski` (słup nowoczesny), którego `lines` obejmują też odcinki deptaka x 20..240 (`[129.7,-54.9,82.4,-56.3]`, `[240,-66.5,…,129.7,-54.9]`, `[82.4,-56.3,20,-59.4]`), a nie tylko alejki placu
+- Poprawka: na deptaku prowadzą latarnie stylizowane (decyzja użytkownika 2.11): odcinki deptaka zdjęte z `lamps.plac-litewski` (słupy zostają na alejkach i obrysie placu), `count` przeliczony; w generatorze reguła: latarnia zwykła (`lamp-road`, `lamp-modern-pole`) nie staje bliżej niż ok. 8 m od stylizowanej (`lamp-pastoral`, `lamp-candelabra`, `lamp-wall-lantern`) przy tej samej ulicy
+- Pakiet właściciela: tools/osm-import (props), docs/world (plan)
+- Test przyjęcia: kontrola skanu `lamp-plain-by-styled` (zwykła latarnia bliżej niż 8 m od stylizowanej) baza 16+ → 0; tabela z `pnpm osm:props`
+
+### G-260 Po zapisie przy przypiętym, zaalarmowanym strażniku i odejściu 600 m `ai.lost` różni się o krok
+- Status: zgłoszone (2.11, weryfikator G-239)
+- Ważność: S4 · Zasięg: `hebi-bramowa`, ziarna 7 i 13, gracz teleportowany 600 m po zapisie i wczytaniu; `ai.lost` 1,55 vs 1,567, hash się rozjeżdża; tak samo na cb6c014 bez zmian G-239
+- Poprawka: do ustalenia (licznik `lost` przypiętego AI liczony przed/po kroku wczytania)
+- Pakiet właściciela: packages/sim (AI, streaming)
+- Uwaga: ocucony napastnik bez klucza po zaalarmowaniu jest przypięty bez limitu (`sleepPinned` obsługuje tylko AI z kluczem; z czytania kodu, niesprawdzone)
+
+### G-261 Żaden test nie pilnuje Rynku poza obrysem Trybunału przy wykopie Trasy Podziemnej
+- Status: zgłoszone (2.11, weryfikator G-252)
+- Ważność: S4 (luka w testach) · Zasięg: mutacja `blend: 10` w padzie Trasy (dół 2,5–2,8 m na Rynku) przechodzi wszystkie testy; dziś Rynek przy narożniku Trybunału (571,25; −68,75) jest 0,36 m niżej poza obrysem budynku (siatka 4 m: 0,50 m), a komentarz w `sites.ts` mówi „slope stays inside the Trybunał's walls”
+- Poprawka: test „Rynek poza obrysem w66264159 nie niżej niż X cm od NMT” i poprawa komentarza albo padu
+- Pakiet właściciela: packages/sim (content/lublin)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)

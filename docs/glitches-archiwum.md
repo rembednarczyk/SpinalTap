@@ -2,6 +2,18 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-252 Złote hashe i testy nie pilnują terenu Trasy Podziemnej; pad wykopu zależy od rozdzielczości siatki
+- Status: naprawione w #230 (2.11, PRZYJĘTE z uwagą: pad w metrach, testy pod stopniami, teren bitowo bez zmian; Rynek przy Trybunale bez testu w G-261)
+- Ważność: S3 (luka w testach przy ryzykownym obszarze) · Zasięg: przebiegi `determinism.test.ts` nie przechodzą przez Trasę Podziemną ani Rynek przy Trybunale, więc zmiana kształtu terenu tam nie zmienia hasha; pad Trasy Podziemnej (`sites.ts:159`, blend 0,01) jest ustawiony pod węzły siatki 5 m chunka `stare-miasto-0-0`, każda zmiana komórki (także w imporcie) po cichu przesuwa ściany wykopu
+- Poprawka: test „grunt pod stopniami Trasy Podziemnej z zapasem ≥ 1 m pod rampą kolizyjną” i „bruk nie wystaje nad stopnie”; pad niezależny od rozdzielczości siatki (granice w metrach, nie w węzłach)
+- Pakiet właściciela: packages/sim (content/lublin)
+
+### G-239 Ciało napastnika po wygranym napadzie znika po odejściu gracza ok. 400 m
+- Status: naprawione w #229 (2.11, PRZYJĘTE; ciała wroga bez klucza nie są usypiane z chunkiem; nagromadzenie: najwyżej kilka ciał na 30 min, koszt kroku pomijalny)
+- Ważność: S4 · Zasięg: po „won” ciało nie ma klucza, a ma chunk ofiary, więc uśpienie chunka zdejmuje je bez stanu (analogia G-219); tak samo po wczytaniu
+- Poprawka: jak G-219 (ciało bez chunku), z oceną nagromadzenia ciał (G-196); test z odejściem 400 m
+- Pakiet właściciela: packages/sim (micro-events, streaming)
+
 ### G-246 Dach namiotowy wieży cerkwi św. Jozafata za stromy, okap ok. 1,5 m za nisko
 - Status: naprawione w #226 (2.11, PRZYJĘTE; kurator ZGODNE Z UWAGAMI: okap y 8,1, szczyt y 9,5, ostrosłup; przesunięcie obrysu cerkwi w OSM w G-257)
 - Ważność: S4 · Zasięg: 1 budynek, w1382552285 (270; −9,2), Krakowskie · Koszt: mały (korekta danych)
