@@ -41,6 +41,7 @@
   "under-deck-blocked": 0,
   "landmark-overbuilt": 0,
   "landmark-missing": 0,
+  "landmark-default-height": 2,
   "monument-shape-off-tags": 0,
   "passage-blocked": 0,
   "small-freestanding-tall": 2,

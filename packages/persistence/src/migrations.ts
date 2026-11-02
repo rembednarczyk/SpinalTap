@@ -355,6 +355,9 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
   // outside every loaded chunk (`away`, optional). An older save has none marked: its pinned AIs
   // load by their alert, as before.
   23: (old) => ({ ...old, version: 24 }),
+  // v24 -> v25 (G-185): an NPC's gun mid-fight and a sniper's state are saved (optional). An older
+  // save has every NPC's gun loaded and at rest and every sniper idle, as it loaded before.
+  24: (old) => ({ ...old, version: 25 }),
 };
 
 export class MigrationError extends Error {}

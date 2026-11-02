@@ -19,6 +19,7 @@ import { doorChecks } from "./door-pieces";
 import { marketChecks } from "./market-pieces";
 import { signsInNeighbours } from "./sign-neighbours";
 import { lanternsByPassages } from "./passage-lanterns";
+import { landmarksAtDefaultHeight } from "./landmark-heights";
 import { EMPTY_STRIPS_KNOWN, bayCarsMisturned, bayCarsOutOfPark, bayStripsEmptyKnown, bayStripsSparse, crowdLanesOnParking, kerbParksOf, kerbStripsOffCarStreets } from "./kerb-bays";
 import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alone.ts";
 import { extractFeatures } from "../../osm-import/src/features.ts";
@@ -979,6 +980,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     });
     return [...buildings, ...statues];
   },
+  /** A landmark from the curator's list at the district's default height, not a mapped or measured one (G-204). */
+  "landmark-default-height": () => landmarksAtDefaultHeight(LANDMARK_BUILDINGS, MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)))),
   /**
    * A monument or an artwork whose shape its OSM tags do not bear out (G-149), judged by the
    * tagged node nearest within 3 m: anything standing for a plaque, a stumbling stone, a mural or
@@ -1554,6 +1557,14 @@ describe("the glitch scan (ADR-0054)", () => {
     expect(tiers.length).toBeGreaterThan(0);
     const gateTop = gate.y + gate.height + (gate.roof ?? 0);
     for (const t of tiers) if (t.y1 > gateTop) expect(ringGap(t.ring, worldOutline(gate))).toBeGreaterThanOrEqual(5);
+  });
+
+  it("finds a listed landmark at a default height, and no landmark at a mapped height or building off the list (G-204)", () => {
+    const chapel = { id: "w66258167", x: 941, z: 214.6, source: "default" as const, name: "Kaplica" };
+    expect(landmarksAtDefaultHeight(["w66258167"], [chapel])).toEqual([{ at: "941,215", what: "w66258167 Kaplica" }]);
+    expect(landmarksAtDefaultHeight(["w66258167"], [{ ...chapel, id: "w66258167/1" }])).toHaveLength(1);
+    expect(landmarksAtDefaultHeight(["w66258167"], [{ ...chapel, source: "height" }, { ...chapel, source: "levels" }])).toEqual([]);
+    expect(landmarksAtDefaultHeight(["w450180469"], [chapel])).toEqual([]);
   });
 
   it("finds a wall lantern within 2 m of a gate's axis cut by hand, in its vault or its mouth, and none on the street past its fronts (G-183)", () => {
