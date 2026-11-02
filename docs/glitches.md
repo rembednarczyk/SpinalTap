@@ -795,7 +795,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (micro-events)
 
 ### G-243 Skan i18n nie łapie polskich słów bez polskich znaków
-- Status: w PR #214 (2.11, w weryfikacji; „ruch” poprawione w #213): flaga `shown` dla tekstu JSX i atrybutów, nowa reguła znalazła jeszcze 2 teksty (minimapa, skaner), przeniesione do katalogów
+- Status: w PR #214 (2.11, PRZYJĘTE; uwagi weryfikatora poprawione w a521d24, czeka na CI)
 - Ważność: S4 (luka w narzędziu) · Zasięg: `tools/i18n-scan` liczy literały z polskimi znakami; „ruch” w `touch-controls.tsx` przeszedł, baza była 0
 - Poprawka: w JSX liczyć każdy tekst węzła (i `aria-label`, `title`, `placeholder`) poza wywołaniami `t()`, z listą dozwolonych (nazwy własne, symbole); baza z nowej reguły, potem w dół
 - Pakiet właściciela: tools/i18n-scan
@@ -826,6 +826,18 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: korekta w `tools/osm-import/src/corrections.ts` z odsyłaczem T-129: `roof:shape=pyramidal`, `roof:height` 1,4 i `height` tak, by szczyt został y 9,5
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: okap w1382552285 y 8,0 ± 0,5, szczyt y 9,5 ± 0,5
+
+### G-247 Skan i18n nie widzi tekstu w propsach, stałych i `toast`
+- Status: zgłoszone (2.11, weryfikator G-243)
+- Ważność: S4 (luka w narzędziu) · Zasięg: `tools/i18n-scan` po #214 nie liczy literałów w propsach własnych komponentów (`<Button label="move">`), stałych i obiektach przekazanych do JSX (`{L}`, `{LABELS[k]}`), `.map` po tablicy literałów, `{"x" as string}`, `?:` w `${}` szablonu, `{["Open", x]}`, `toast("Saved")`; dziś w kodzie nic takiego nie ma (przegląd weryfikatora), ale reguła tego nie pilnuje
+- Poprawka: śledzić literały płynące do propsów i do znanych funkcji tekstu (toast, notify); testy dodatnie i ujemne
+- Pakiet właściciela: tools/i18n-scan
+
+### G-248 „Doktor Mori” po polsku także w angielskiej wersji
+- Status: zgłoszone (2.11, weryfikator G-243)
+- Ważność: S4 · Zasięg: `packages/app/src/scan-view.ts:20` `"Doktor Mori"` pokazywany graczowi niezależnie od języka; skan go nie liczy (to nie JSX, a „Doktor” nie ma polskich znaków)
+- Poprawka: tytuł z katalogu (en „Doctor Mori”, pl „Doktor Mori”) albo nazwa własna z decyzją w katalogu; przy okazji podglądy deweloperskie (`lublin-preview/preview-main.ts:40`, `props-gallery.ts:32`) bez zmian, gracz ich nie widzi
+- Pakiet właściciela: packages/app, packages/ui (i18n)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
