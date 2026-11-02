@@ -164,6 +164,11 @@ export class ToonMaterials {
     if (this.lights.setFocus(x, z)) this.pushLights();
   }
 
+  /** The point light registered under a key (tests, debug). */
+  light(key: string): PointLightDef | undefined {
+    return this.lights.get(key);
+  }
+
   /** Lights currently bound to shader slots. */
   get lightCount(): number {
     return this.lights.count;

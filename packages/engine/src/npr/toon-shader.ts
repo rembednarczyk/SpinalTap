@@ -102,6 +102,8 @@ uniform vec3 fogColor;
 uniform float fogDensity;
 uniform vec4 pointPos[${MAX_POINT_LIGHTS}];
 uniform vec4 pointColor[${MAX_POINT_LIGHTS}];
+/** Ground rectangle each light reaches (min x, min z, max x, max z), as pointLightAt in toon-point-lights. */
+uniform vec4 pointClip[${MAX_POINT_LIGHTS}];
 uniform float pointCount;
 uniform sampler2D shadowSampler;
 /** x: depth bias, y: texel size, z: shadow strength (0 disables). */
@@ -305,6 +307,8 @@ void main(void) {
     vec3 l = toL / max(d, 0.0001);
     float att = clamp(1.0 - d / pointPos[i].w, 0.0, 1.0);
     att *= att;
+    vec4 clip = pointClip[i];
+    att *= step(clip.x, vWorldPos.x) * step(vWorldPos.x, clip.z) * step(clip.y, vWorldPos.z) * step(vWorldPos.z, clip.w);
     float ndl = max(dot(n, l), 0.0);
     lit += pointColor[i].rgb * pointColor[i].a * band(ndl * att * 1.8);
     if (g > 0.0) {

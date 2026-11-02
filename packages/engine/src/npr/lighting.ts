@@ -4,6 +4,19 @@ export interface PointLightDef {
   readonly color: string;
   readonly range: number;
   readonly intensity: number;
+  /**
+   * The ground rectangle (world x, z) the light reaches, for a light behind walls: the shader's
+   * point lights have no occlusion, so a room's lamp would light the street through its facade.
+   * Without it the light reaches its whole range.
+   */
+  readonly clip?: LightClip;
+}
+
+export interface LightClip {
+  readonly minX: number;
+  readonly maxX: number;
+  readonly minZ: number;
+  readonly maxZ: number;
 }
 
 export interface LightingRig {

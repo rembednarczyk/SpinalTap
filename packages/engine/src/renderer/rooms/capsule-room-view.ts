@@ -1,5 +1,5 @@
 import type { Vec3 } from "@seki/core";
-import { CAPSULE_CEILING, CAPSULE_ORIGIN } from "@seki/sim";
+import { CAPSULE_CEILING, CAPSULE_INTERIOR_ROOM, CAPSULE_ORIGIN } from "@seki/sim";
 import { type Mesh, MeshClass, type Scene, VertexBuffer } from "../../babylon";
 import type { ToonMaterials } from "../../npr/toon-material";
 import type { CityKit } from "../city-kit";
@@ -14,9 +14,21 @@ import { capsuleGeometry } from "./capsule-geometry";
 export const CAPSULE_DRAW = 45;
 const CAPSULE_HOLD = 5;
 
-/** The room's lamp: warm, under the ceiling, as far as its corners. */
-const LAMP = { color: "#ffd9a8", range: 5.5, intensity: 1.1 } as const;
-const LAMP_KEY = "capsule-room";
+/**
+ * The room's lamp: warm, under the ceiling, as far as its corners, and only inside its walls
+ * (G-263: the toon shader's lights have no occlusion; the margin keeps the walls' inner faces
+ * lit, their outer faces are 0.2 m or more out).
+ */
+const LAMP = {
+  color: "#ffd9a8",
+  range: 5.5,
+  intensity: 1.1,
+  position: { x: CAPSULE_ORIGIN.x, y: CAPSULE_ORIGIN.y + CAPSULE_CEILING - 0.3, z: CAPSULE_ORIGIN.z },
+  clip: { minX: CAPSULE_INTERIOR_ROOM.minX - 0.05, maxX: CAPSULE_INTERIOR_ROOM.maxX + 0.05, minZ: CAPSULE_INTERIOR_ROOM.minZ - 0.05, maxZ: CAPSULE_INTERIOR_ROOM.maxZ + 0.05 },
+} as const;
+export const CAPSULE_LAMP_KEY = "capsule-room";
+/** Over these metres up to CAPSULE_DRAW the lamp fades out, so it does not go on in one step with the mesh. */
+const LAMP_FADE = 10;
 
 export interface CapsuleRoomDeps {
   readonly scene: Scene;
@@ -35,14 +47,14 @@ export interface CapsuleRoomDeps {
  * and its model in one mesh on the city kit's material, one draw call (two with the G-buffer),
  * on only near the room, so the street's draw calls stay as they were. No moon shadow, no glow
  * layer: the room stands under three storeys and its screens and strips are bright in the kit's
- * own emissive colour; its lamp is a point light while the mesh is on.
+ * own emissive colour; its lamp is a point light inside its walls, fading in on the way to it.
  */
 export class CapsuleRoomView {
   private mesh: Mesh | null = null;
   private kitSeen: CityKit | null = null;
   private propsSeen: CityProps | null = null;
   private model = false;
-  private lit = false;
+  private level = 0;
 
   constructor(private readonly deps: CapsuleRoomDeps) {}
 
@@ -63,7 +75,7 @@ export class CapsuleRoomView {
     const d = Math.hypot(e.x - CAPSULE_ORIGIN.x, e.z - CAPSULE_ORIGIN.z);
     const want = d < CAPSULE_DRAW + (this.mesh?.isEnabled(false) ? CAPSULE_HOLD : 0);
     if (want && (kit !== this.kitSeen || this.deps.props() !== this.propsSeen)) this.build(kit);
-    this.show(want);
+    this.show(want, Math.max(0, Math.min(1, (CAPSULE_DRAW - d) / LAMP_FADE)));
   }
 
   private build(kit: CityKit): void {
@@ -85,12 +97,12 @@ export class CapsuleRoomView {
     this.mesh = mesh;
   }
 
-  private show(on: boolean): void {
+  private show(on: boolean, fade = 0): void {
     if (this.mesh && this.mesh.isEnabled(false) !== on) this.mesh.setEnabled(on);
-    const lit = on && this.mesh !== null;
-    if (lit === this.lit) return;
-    this.lit = lit;
-    if (lit) this.deps.materials.addLight(LAMP_KEY, { ...LAMP, position: { x: CAPSULE_ORIGIN.x, y: CAPSULE_ORIGIN.y + CAPSULE_CEILING - 0.3, z: CAPSULE_ORIGIN.z } });
-    else this.deps.materials.removeLight(LAMP_KEY);
+    const level = on && this.mesh !== null ? fade : 0;
+    if (level === this.level) return;
+    this.level = level;
+    if (level > 0) this.deps.materials.addLight(CAPSULE_LAMP_KEY, { ...LAMP, intensity: LAMP.intensity * level });
+    else this.deps.materials.removeLight(CAPSULE_LAMP_KEY);
   }
 }
