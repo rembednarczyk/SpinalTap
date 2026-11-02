@@ -36,7 +36,7 @@ Ograniczenia jak zawsze: determinizm (bez `Math.random` i zegara ściennego, los
   - patrol, czyli członek ochrony dystryktu, który nie walczy, widzi gracza (zasięg wzroku, stożek strażnika), zgłasza od razu (`patrol`) i dostaje trop;
   - cywil, który widzi gracza (`CIVILIAN_SIGHT` = 22 m dookoła, bez przeszkód), zaczyna dzwonić (`WitnessCalling`, `WITNESS_CALL_SECONDS` = 5 s czasu świata) i ucieka. Po upływie czasu zgłasza (`CrimeReported`, `civilian`). Kilku świadków jednego zdarzenia daje jedno zgłoszenie: pierwsze, które dojdzie, kasuje resztę.
 - Telefon się nie uda, gdy świadek zginie, gdy zniknie z wczytanego świata (ucieknie poza zasięg streamingu) albo gdy gracz wyceluje w niego z dobytą bronią z bliska (`INTIMIDATE_RANGE` = 6 m, stożek 0,3 rad). Zastraszyć można tylko kogoś już wystraszonego albo dzwoniącego: spokojny przechodzień, obok którego gracz przechodzi z bronią, nie zmienia stanu (inaczej przejściowy stan tłumu rozjeżdżałby grę po wczytaniu). Zastraszony kuli się i przez `INTIMIDATED_SECONDS` = 25 s nie dzwoni. To jest „wyprzedzony przez gracza” z ADR-0028.
-- Stan tłumu i rozmowy są przejściowe (jak stan walki wręcz): wczytana gra zaczyna spokojnie. Zgłoszenie w toku przepada przy zapisie i wczytaniu.
+- Stan tłumu i rozmowy są przejściowe (jak stan walki wręcz): wczytana gra zaczyna spokojnie. Zgłoszenie w toku przepada przy zapisie i wczytaniu. Od G-240 (2.11) zapis uspokaja ulicę także w grze, z której zapisano (`calmForSave()` w `SaveController.snapshot()`), więc obie gry idą dalej identycznie; przepada też zgłoszenie świadka w toku.
 
 ## Decyzja: heat 0..3
 - `DomainState.heat`: poziom, frakcja ścigająca, `searching`, `lastKnown`, `searchLeft`, `cooldown`. Reguły w `core/src/crime/rules.ts`.
