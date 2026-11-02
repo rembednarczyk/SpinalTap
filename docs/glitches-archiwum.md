@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-197 Drzwi klatek od podwórza: Trasa Podziemna liczona jako ulica
+- Status: naprawione w #201 (2.11, PRZYJĘTE przez weryfikatora; kurator: ZGODNE Z UWAGAMI, T-110 poprawione): `undergroundWays` z ekstraktów, kontrola `door-faces-underground` 2 → 0; Złota 6 dostaje drzwi od Złotej; drugie zdjęte drzwi (654,9; 9,0) były na Grodzkiej 7 r3119721, która zostaje bez drzwi (G-227); w66293533 bez drzwi już przed zmianą (G-221)
+- Ważność: S4 · Zasięg: 2 drzwi: Złota 6 (667,7; −31,0), Grodzka 7 r3119721 (654,9; 9,0)
+- Przyczyna: `facesStreet` w `tools/osm-import/src/props-doors.ts` bierze drogi z `tunnel=yes`, `layer=-1` (Trasa Podziemna, w chunkach zwykły `footway`), więc ściana od podwórza wygląda na ścianę od ulicy
+- Poprawka: `facesStreet` pomija drogi z `layer<0` albo `tunnel`; kontrola skanu `door-faces-underground` (baza dziś 2) → 0
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
 ### G-208 Pamięć utknięcia gangera poza zapisem: posiłki w heacie rozjeżdżają się po wczytaniu
 - Status: naprawione w #195 (2.11, zapis v27; runda 2 PRZYJĘTE: strona odchylenia posiłku z `n` nazwana zmianą reguły, walidator `since`/`unstickUntil`, `avoid` do 256 najbliższych; świadomy kompromis: ponad 256 postaci w 8 m da inne obejście po wczytaniu)
 - Ważność: S4 · Zasięg: posiłki ochrony w heacie (seed 21 i 5, zapis po 300, 450 i 700 krokach, rozjazd w krokach 209, 59 i 50); `sec2` wciśnięty w `sec1` przy (415,6; −98,9), obejście (unstick) zaczyna się w innym kroku

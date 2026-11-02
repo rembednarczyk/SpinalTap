@@ -589,13 +589,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: odsyłanie tylko posiłków na nogach; powaleni zostają jak ciała; ciała posiłków sprzątane razem z chunkiem, w którym leżą; test jednej sesji
 - Pakiet właściciela: packages/sim
 
-### G-197 Drzwi klatek od podwórza: Trasa Podziemna liczona jako ulica
-- Status: w PR #201 (2.11, PRZYJĘTE przez weryfikatora; kurator: ZGODNE Z UWAGAMI, T-110 poprawione): `undergroundWays` z ekstraktów, kontrola `door-faces-underground` 2 → 0; Złota 6 dostaje drzwi od Złotej; drugie zdjęte drzwi (654,9; 9,0) były na Grodzkiej 7 r3119721, która zostaje bez drzwi (G-227); w66293533 bez drzwi już przed zmianą (G-221)
-- Ważność: S4 · Zasięg: 2 drzwi: Złota 6 (667,7; −31,0), Grodzka 7 r3119721 (654,9; 9,0)
-- Przyczyna: `facesStreet` w `tools/osm-import/src/props-doors.ts` bierze drogi z `tunnel=yes`, `layer=-1` (Trasa Podziemna, w chunkach zwykły `footway`), więc ściana od podwórza wygląda na ścianę od ulicy
-- Poprawka: `facesStreet` pomija drogi z `layer<0` albo `tunnel`; kontrola skanu `door-faces-underground` (baza dziś 2) → 0
-- Pakiet właściciela: tools/osm-import, tools/glitch-scan
-
 ### G-198 Wejście OSM bez drzwi, a drzwi zastępcze na innej ścianie
 - Status: zgłoszone (1.11, kurator #167, T-111)
 - Ważność: S4 · Zasięg: wejście główne n12776690896 (−143,1; 32,2): brak gniazda drzwi w promieniu 1,5 m, reguła zastępcza stawia drzwi klatki 16 m dalej na innej ścianie
