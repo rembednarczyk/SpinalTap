@@ -130,9 +130,10 @@ const Witness = ({ at, view }: { at: { x: number; z: number }; view: MapView }) 
 /** Where the enemies last saw the player: a hollow silhouette (Deus Ex style). */
 const Silhouette = ({ at, view }: { at: { x: number; z: number }; view: MapView }) => {
   const o = markerOffset(at, view);
+  const t = useT();
   return (
     <g className="minimap__ghost" transform={`translate(${o.x.toFixed(2)} ${o.y.toFixed(2)})`} data-testid="minimap-last-known">
-      <title>Ostatnia znana pozycja</title>
+      <title>{t("map.lastKnown")}</title>
       <circle cx={0} cy={-2.2} r={1.1} />
       <path d="M-1.6 2.8 V0.4 Q-1.6 -0.8 0 -0.8 Q1.6 -0.8 1.6 0.4 V2.8 Z" />
     </g>
