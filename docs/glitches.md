@@ -854,7 +854,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (props), tools/glitch-scan
 
 ### G-268 Kable przęseł nad ulicą wiszą za nisko, kilka pod ziemią
-- Status: w PR #244 (2.11, @ 66a8942 w weryfikacji)
+- Status: w PR #244 (2.11, runda 2 u autora; runda 1 @ 66a8942 NIE PRZYJĘTE: niskie kable naprawione, ale warunek gzymsu przy lift = 0 usuwa ok. 9% zwykłych kabli)
 - Ważność: S4 (S3, jeśli kabel przecina przechodniów na wysokości głowy) · Zasięg: 11 przęseł niżej niż 2,5 m nad rysowaną nawierzchnią, m.in. x≈996, z≈568 (do −7,8 m, pod ziemią), x≈520, z≈171 (−2,6 m), x≈634, z≈124 (2,1 m) · Koszt: mały
 - Przyczyna (do potwierdzenia): wysokość przęsła liczona od podstawy budynku na zboczu, nie od nawierzchni pod przęsłem
 - Poprawka: najniższy punkt przęsła ≥ ok. 3,5 m nad nawierzchnią pod nim (albo przęsło pominięte); kontrola skanu `cable-low` (punkt przęsła < 2,5 m nad nawierzchnią) baza z main → 0
