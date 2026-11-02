@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { MICRO_EVENT_CHANCE, MICRO_EVENT_REWARD, SECONDS_PER_HOUR, type SaveSnapshot } from "@seki/core";
 import { Simulation, deriveRandom, ground } from "../src";
 import { ALLEY_START, byKey, collect, input, run, teleportPlayer } from "./helpers";
+import { takeDown } from "./takedown-scenes";
 
 /** Shiro's lamp on Plac Litewski and the salaryman's pavement by Neon Koi (ADR-0045). */
 const POET = { x: 102, z: -23 };
@@ -107,6 +108,33 @@ describe("micro-events (ADR-0034)", () => {
     // The thanks of the street, less what the kills themselves cost with the civilians.
     expect(sim.domain.reputation.civilians).toBeGreaterThan(civ);
     expect(sim.domain.flags.filter((f) => f.includes("micro:"))).toEqual([]);
+  });
+
+  it.each([false, true])("a mugger taken down (lethal: %s) counts as beaten: one payout, kept over a save (G-231)", (lethal) => {
+    const { sim, ended } = enterKanal("mugging");
+    const run0 = sim.session.street2.micro!;
+    const [m0, m1] = run0.attackers;
+    // One shot down, the other taken down from behind: its body stays in the world.
+    for (const e of [...sim.world]) if (e.id === m1) e.health = { current: 0, max: 80 };
+    sim.step();
+    const a = [...sim.world].find((e) => e.id === m0)!;
+    const p = sim.player()!;
+    p.posture = { ...p.posture!, crouched: true, amount: 1, prevAmount: 1 };
+    teleportPlayer(sim, { x: a.position.x - Math.sin(a.yaw), y: a.position.y, z: a.position.z - Math.cos(a.yaw) }, a.yaw);
+    const eddies = sim.domain.wallet.eddies;
+    takeDown(sim, lethal);
+    expect([...sim.world].find((e) => e.id === m0)?.downed).toBeDefined();
+    run(sim, 2);
+    expect(ended).toEqual([{ encounterId: run0.id, outcome: "won" }]);
+    expect(sim.domain.wallet.eddies).toBe(eddies + MICRO_EVENT_REWARD.mugging.eddies);
+    const loaded = Simulation.fromSnapshot(roundTrip(sim.snapshot(null, "t", "")));
+    const again = collect(loaded, "EncounterEnded");
+    teleportPlayer(sim, ALLEY_START);
+    teleportPlayer(loaded, ALLEY_START);
+    run(sim, 2);
+    run(loaded, 2);
+    expect([ended.length, again]).toEqual([1, []]);
+    expect([sim.domain.wallet.eddies, loaded.domain.wallet.eddies]).toEqual([eddies + MICRO_EVENT_REWARD.mugging.eddies, eddies + MICRO_EVENT_REWARD.mugging.eddies]);
   });
 
   it("an aid: help the passer-by with the interact key; walking away ends a mugging with nothing", () => {
