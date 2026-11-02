@@ -1,1 +1,0 @@
-Decale w mieście: graffiti na ścianach bez okien, cokołach i ścianach szczytowych (Podzamcze, Nabrzeże, mniej na deptaku, bez Starego Miasta), tabliczki z numerami domów z mapy, wlepki na latarniach, sygnalizatorach, słupach trakcji i szafkach oraz kratki ściekowe przy krawężnikach i przejściach (ADR-0058 etap 6).

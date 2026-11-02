@@ -4,7 +4,15 @@ Zmiany widoczne dla gracza, od najnowszych. Wersja gry i commit są na ekranie t
 
 ## Nieopublikowane (0.1.0)
 
+### 2 listopada 2026
+- Kaplica Trójcy na Zamku nie ma już zmyślonej przez renderer dzwonnicy z iglicą, więc najwyższym akcentem wzgórza zamkowego jest Donżon. Kościół Bernardynów stracił dwie wieże proceduralne w złym miejscu; jego prawdziwa wieża przy południowej ścianie wróci z G-214 (G-210).
+- Posiłki ochrony, które już odeszły, nie wypychają z pamięci hacków urządzeń i strażników: po setkach hacków posiłków kamera zhakowana na początku dalej nie płaci XP drugi raz (G-209).
+- Schody z Placu Zamkowego na Wzgórze Zamkowe mają ok. 10 m szerokości jak ich murki, a podesty łączą się z biegami bez trawy pomiędzy (G-203).
+- Cerkiew św. Jozafata, kościół św. Mikołaja i Brygidki nie dostają już zmyślonej wieży obok prawdziwej z mapy, a renderer nie stawia wieży kościoła poza jego obrysem, np. na trawie u Karmelitów Bosych (G-212).
+- Posiłki ochrony, które utknęły na sobie w heacie, po wczytaniu zapisu obchodzą się w tych samych krokach co w grze bez zapisu (G-208, zapis v27).
+
 ### 1 listopada 2026
+- Decale w mieście: graffiti na ścianach bez okien, cokołach i ścianach szczytowych (Podzamcze, Nabrzeże, mniej na deptaku, bez Starego Miasta), tabliczki z numerami domów z mapy, wlepki na latarniach, sygnalizatorach, słupach trakcji i szafkach oraz kratki ściekowe przy krawężnikach i przejściach (ADR-0058 etap 6).
 - Kaplica Trójcy i Donżon na Zamku mają wysokości z pomiaru NMPT GUGiK: niższy okap i wyższy, stromy dach kaplicy, korona wieży o ok. 1,7 m niżej (G-204).
 - Quickhack wgrywany w posiłek ochrony w chwili zapisu po wczytaniu kończy się w tym samym posiłku albo jest przerwany (z połową RAM-u z powrotem), nigdy nie trafia w innego (G-194).
 - Strażnicy, którzy gonili gracza, uspokajają się i zasypiają, gdy gracz jest daleko (najpóźniej po 30 s poza wczytanymi fragmentami miasta); nie stoją już w świecie do końca sesji, a zapis i wczytanie dają to samo co gra (G-188).
