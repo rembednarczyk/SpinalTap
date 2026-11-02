@@ -624,7 +624,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: ≥ 1 drzewo na 150 m² zbocza obu skarp, 0 drzew na ścieżkach i schodach
 
 ### G-213 Biegi schodów krótsze niż szerokie rysowane w poprzek
-- Status: zgłoszone (2.11, naprawiacz G-203)
+- Status: w PR #204 (2.11, w weryfikacji, potem kurator): `flightStrips` tnie wzdłuż biegu, kontrole `steps-across-run` 28 → 0 i `steps-run-bare` 0; stopnie na różnej wysokości i płaskie krótkie biegi wydzielone do G-228 i G-229
 - Ważność: S4 · Zasięg: 36 ze 121 biegów w mieście jest krótszych niż ich pas 3 m, więc renderer bierze dłuższy bok pasa za kierunek biegu i rysuje stopnie w poprzek (np. w66258166 przy Donżonie, w1312664177)
 - Poprawka: zdjąć warunek `w > PATHS.steps` w `flightStrips` (tools/osm-import/src/ground.ts, po #194), żeby każdy bieg krótszy niż szeroki był dzielony na pasy; kontrola skanu „bieg w poprzek”
 - Poboczne: wyciąg `krakowskie.json` bez murków (nieaktualny cache kafli, `osm:fetch --only=krakowskie` z siecią); pas bez nawierzchni między brukiem Placu Zamkowego (x ok. 759) a ścieżką w56965514 (x ok. 765)
@@ -743,6 +743,18 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: drzwi klatki na ścianie od Grodzkiej (adres); kontrola skanu `tenement-no-door` (kamienica z adresem i ścianą do 6 m od osi nazwanej ulicy bez drzwi; baza do policzenia, co najmniej 2: r3119721, w66293533 z G-221)
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 - Test przyjęcia: r3119721 ma drzwi na ścianie od Grodzkiej albo Archidiakońskiej; `tenement-no-door` spada
+
+### G-228 Stopnie sąsiednich pasów jednego biegu na różnej wysokości
+- Status: zgłoszone (2.11, naprawiacz G-213)
+- Ważność: S4 · Zasięg: biegi szersze niż pas, dzielone na pasy (G-203, G-213): `planSteps` próbkuje teren osobno na osi każdego pasa, więc stopnie sąsiednich pasów rozjeżdżają się o 2–3 cm (np. w48304281x), na schodach zamkowych do ok. 0,06 m
+- Poprawka: renderer zna cały bieg (nowe pole w `GroundOut`/`GroundSurface`, kontrakt w core) i liczy stopnie raz na bieg; test na dwóch pasach jednego biegu
+- Pakiet właściciela: tools/osm-import, packages/core (kontrakt), packages/engine
+
+### G-229 Krótkie biegi schodów z OSM leżą płasko na wygładzonym terenie
+- Status: zgłoszone (2.11, naprawiacz G-213)
+- Ważność: S4 · Zasięg: 51 dróg schodów, np. w1435832499 (1,3 m, schody zamkowe): reguła G-018 w `planSteps` nie daje stopni, gdy NMT nie daje 4,5 cm na stopień
+- Poprawka: bieg z `highway=steps` dostaje stopnie mimo płaskiego NMT (np. minimalna wysokość z `step_count` albo z sąsiednich podestów); kontrola skanu „schody bez stopni”
+- Pakiet właściciela: packages/engine (terrain), tools/osm-import
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
