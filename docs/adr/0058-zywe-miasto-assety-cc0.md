@@ -58,7 +58,8 @@ Modele są low-poly i mają kolory w palecie albo w płaskich materiałach, czyl
   6. Decale: graffiti, wlepki, tabliczki, kratki ściekowe.
      - Proceduralne, w kolorach wierzchołków, pieczone do siatek bloków mebli ulicy (bez pobranych assetów i tekstur). Decal idzie tylko do bloku, który meble już wypełniają.
      - Rozstawienie z reguł w `pnpm osm:props` (`props-decals*.ts`), kontrole `decal-*` w skanie glitchy z bazą 0.
-     - Graffiti i tabliczki tylko na ścianach, na których shader fasady nie maluje szkła wcale, oraz w cokołach pod parterem. Ściany z oknami (w tym przemysłowe Nabrzeża) czekają na wspólny port maski szyb z etapu 9.
+     - Graffiti i tabliczki tylko na ścianach, na których shader fasady nie maluje szkła wcale, oraz na licu pasa cokołu (graffiti na budynkach na stoku). Decal na samej ścianie zaczyna się nad pasem cokołu, który by go zasłonił.
+     - Skan sprawdza decale wspólnym portem maski szyb z etapu 9 (`shaderGlass`, już w main). Rozstawienie na ścianach z oknami (między szybami, w tym przemysłowe Nabrzeża) to kolejny krok: reguła generatora jeszcze z portu nie korzysta.
   7. Drony nad kanionami ulic.
   8. Tłum: statyczne pozy (Posed Humans) na ławkach i w kolejkach. Riggowane Modular Men/Women tylko dla nazwanych NPC, bo bez LOD są za ciężkie na wspólną siatkę tłumu.
   9. **Drzwi automatyczne i rozsuwane** (dodane 31.10): modele skrzydeł, ram, paneli z kodem i podświetlenia zamiast proceduralnych skrzydeł z ADR-0038, dla kliniki, Neon Koi, biura Tessen i kolejnych wnętrz.

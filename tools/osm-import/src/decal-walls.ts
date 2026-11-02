@@ -20,7 +20,9 @@ import { type DrawnView, cityFrames, framedBoards } from "./venue-boards.ts";
  * Does the facade shader paint no glass anywhere on the wall? `facadeGlass` returns nothing for a
  * wall whose storey decodes under 0.05 (`facadeDecode`): the plan bakes that for a wall without
  * bays (`wallMeta`: a garage's, a firewall's, one too short for a window). Its first test, not the
- * mask: the mask's port for the panes themselves is ADR-0058 stage 9's (PR #167).
+ * mask. The glitch scan checks the decals against the mask's shared port (`shaderGlass` in
+ * `packages/engine/test/facade-glass-mask.ts`, ADR-0058 stage 9), and `facade-glass-pin.test.ts`
+ * pins the GLSL this rule reads.
  */
 export const glassFree = (f: FacadeFrame, w: Wall): boolean => Math.floor(frameWallMeta(f, w)[0] + 0.0005) / 10 < 0.05;
 
