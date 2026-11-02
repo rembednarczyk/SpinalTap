@@ -7,7 +7,7 @@ import { BEAM_FROM, type PatrolPose } from "./patrol-flight";
  */
 
 /** The pool lies this much over the paving (m), clear of its lift's flicker. */
-export const POOL_LIFT = 0.04;
+export const POOL_LIFT = 0.02;
 /** The pool's radius for each metre of drop (m). */
 export const BEAM_SPREAD = 0.3;
 
@@ -18,9 +18,25 @@ export const poolDrop = (p: PatrolPose): number | null => {
 };
 
 /** A point of the unit disc (x, z in the drone's frame) on the paving under a pose with the searchlight `drop` metres long. */
-export const poolPoint = (p: PatrolPose, drop: number, x: number, z: number, _surfaceAt: (x: number, z: number) => number): { x: number; y: number; z: number } => {
+export const poolPoint = (p: PatrolPose, drop: number, x: number, z: number, surfaceAt: (x: number, z: number) => number): { x: number; y: number; z: number } => {
   const c = Math.cos(p.yaw);
   const s = Math.sin(p.yaw);
   const r = drop * BEAM_SPREAD;
-  return { x: p.x + (x * c + z * s) * r, y: p.y - drop, z: p.z + (-x * s + z * c) * r };
+  const wx = p.x + (x * c + z * s) * r;
+  const wz = p.z + (-x * s + z * c) * r;
+  // Each point on the paving where it lies: the pool follows a slope or a kerb, not the height under the drone.
+  return { x: wx, y: pavingAt(surfaceAt, wx, wz) + POOL_LIFT, z: wz };
+};
+
+/** How far round a point the paving is read (m): a seam narrower than this between two pieces of paving is not the paving. */
+export const PAVING_READ = 0.1;
+
+/**
+ * The paving's height at (x, z): the middle of five readings, at the point and `PAVING_READ` either
+ * way along x and z, so a hairline seam between two pieces (where the terrain shows a few
+ * centimetres lower) does not pull a point of the pool down, while a slope or a kerb still does.
+ */
+export const pavingAt = (surfaceAt: (x: number, z: number) => number, x: number, z: number): number => {
+  const h = [surfaceAt(x, z), surfaceAt(x + PAVING_READ, z), surfaceAt(x - PAVING_READ, z), surfaceAt(x, z + PAVING_READ), surfaceAt(x, z - PAVING_READ)].sort((a, b) => a - b);
+  return h[2] as number;
 };

@@ -27,7 +27,8 @@ import {
   patrolPose,
 } from "../src/renderer/drones/patrol-flight";
 import { MIN_LANE, type PatrolWorld, planPatrolLanes } from "../src/renderer/drones/patrol-lanes";
-import { patrolTemplates } from "../src/renderer/drones/patrol-models";
+import { POOL_SEGMENTS, patrolTemplates } from "../src/renderer/drones/patrol-models";
+import { POOL_LIFT } from "../src/renderer/drones/patrol-pool";
 import type { P2 } from "../src/renderer/mapcity/polygon";
 
 const file = (name: string): ArrayBuffer => {
@@ -186,7 +187,7 @@ describe("low patrol views (ADR-0058 stage 7b)", () => {
     const setup = (quality: "high" | "low") => {
       const scene = new Scene(new NullEngine());
       const kit = new CityKit(scene, new ToonMaterials(scene), null, kitData, { labels: false });
-      const world = street();
+      const world = { ...street(), surfaceAt: (x: number) => 2 + (x - 40) * 0.01 };
       const patrol = lane(80, 2);
       const views = new DroneViews({ scene, kit: () => kit, props: () => props, world: () => null, patrolWorld: () => world, patrolPlan: () => [patrol], eye: () => ({ x: 40, y: 2, z: 10 }), quality });
       return { scene, views };
@@ -205,12 +206,15 @@ describe("low patrol views (ADR-0058 stage 7b)", () => {
     const meshes = scene.meshes.filter((m) => m.name === "drones");
     expect(meshes).toHaveLength(1);
     const pos = meshes[0]!.getVerticesData("position")!;
-    // The patrol's slot round it (the empty slots lie folded at the origin).
-    let minY = Infinity;
-    for (let i = 0; i < pos.length; i += 3) if (Math.hypot(pos[i]! - pose!.x, pos[i + 2]! - pose!.z) < 4) minY = Math.min(minY, pos[i + 1]!);
-    // The pool lies on the paving, just over it.
-    expect(minY).toBeGreaterThan(2);
-    expect(minY).toBeLessThan(2.1);
+    // The patrol's slot round it (the empty slots lie folded at the origin): its pool's points lie on
+    // the sloping paving, each just over it, not flat at the height under the drone.
+    let pool = 0;
+    for (let i = 0; i < pos.length; i += 3) {
+      if (Math.hypot(pos[i]! - pose!.x, pos[i + 2]! - pose!.z) > 4 || pos[i + 1]! > pose!.y - 2) continue;
+      pool++;
+      expect(pos[i + 1]!).toBeCloseTo(2 + (pos[i]! - 40) * 0.01 + POOL_LIFT, 4);
+    }
+    expect(pool).toBeGreaterThan(POOL_SEGMENTS);
     // Frozen, it holds still.
     const before = views.patrolPoses();
     views.update(1, true);

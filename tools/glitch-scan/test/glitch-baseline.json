@@ -122,7 +122,7 @@
   "drone-over-building": 0,
   "drone-low-clearance": 0,
   "drone-low-pop": 12,
-  "drone-low-pool": 13,
+  "drone-low-pool": 0,
   "figure-in-building": 0,
   "figure-on-road": 0,
   "figure-in-piece": 0,

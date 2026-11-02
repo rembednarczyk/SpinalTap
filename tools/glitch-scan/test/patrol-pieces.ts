@@ -1,6 +1,6 @@
 import { PATROL_CLIMB, PATROL_REACH, PATROL_SIZE, PATROL_SPEED, type PatrolLane, type PatrolPose, patrolCycle, patrolOf, patrolPose } from "../../../packages/engine/src/renderer/drones/patrol-flight";
 import { POOL_SEGMENTS } from "../../../packages/engine/src/renderer/drones/patrol-models";
-import { poolDrop, poolPoint } from "../../../packages/engine/src/renderer/drones/patrol-pool";
+import { pavingAt, poolDrop, poolPoint } from "../../../packages/engine/src/renderer/drones/patrol-pool";
 import { type Box2, type P2, boundsOf } from "../../../packages/engine/src/renderer/mapcity/polygon";
 import type { AirMesh } from "./patrol-mesh";
 
@@ -113,12 +113,15 @@ export const zonesOf = (lanes: readonly PatrolLane[]): Box2[] =>
 
 /** How far the searchlight pool's drawn rim may lie off the paving (m). */
 export const POOL_TOLERANCE = 0.05;
+/** Two corners of the rim lie on one level of the paving when their heights differ by no more (m). */
+const LEVEL = 0.02;
 
 /**
  * Where a pool's drawn rim lies furthest off the paving under a pose: its corners and the middles
- * of the chords between them, as drawn (straight between the corners); null with the light off.
+ * of the chords between corners on one level, as drawn (straight between the corners), against the
+ * paving round them (`pavingAt`: no hairline seams); null with the light off.
  */
-export const poolOff = (pose: PatrolPose, surfaceAt: (x: number, z: number) => number): { off: number; x: number; z: number } | null => {
+export const poolOff = (pose: PatrolPose, surfaceAt: (x: number, z: number) => number, paved: (x: number, z: number) => boolean = () => true): { off: number; x: number; z: number } | null => {
   const drop = poolDrop(pose);
   if (drop === null) return null;
   const corner = (k: number) => {
@@ -129,8 +132,13 @@ export const poolOff = (pose: PatrolPose, surfaceAt: (x: number, z: number) => n
   for (let k = 0; k < POOL_SEGMENTS; k++) {
     const a = corner(k);
     const b = corner(k + 1);
-    for (const q of [a, { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, z: (a.z + b.z) / 2 }]) {
-      const off = q.y - surfaceAt(q.x, q.z);
+    // A chord's middle where the paving runs on level between its corners; over a kerb's step (its
+    // corners on levels apart) the straight chord bridges the step like the paving's own edge, and over
+    // a hole in the paving (no piece of it there) it bridges the hole: there only its corners count.
+    const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, z: (a.z + b.z) / 2 };
+    const level = Math.abs(pavingAt(surfaceAt, a.x, a.z) - pavingAt(surfaceAt, b.x, b.z)) <= LEVEL && paved(mid.x, mid.z);
+    for (const q of level ? [a, mid] : [a]) {
+      const off = q.y - pavingAt(surfaceAt, q.x, q.z);
       if (Math.abs(off) > Math.abs(worst.off)) worst = { off, x: q.x, z: q.z };
     }
   }
@@ -141,14 +149,19 @@ export const poolOff = (pose: PatrolPose, surfaceAt: (x: number, z: number) => n
  * The low patrols' checks: `drone-low-clearance` against the drawn geometry round the lanes (the
  * scenery's, unless a test hands its own mesh), and `drone-low-pool` against the paving.
  */
-export const patrolChecks = (lanes: () => readonly PatrolLane[], mesh: (zones: readonly Box2[]) => AirMesh, surfaceAt: (x: number, z: number) => number): Readonly<Record<string, () => Finding[]>> => ({
+export const patrolChecks = (
+  lanes: () => readonly PatrolLane[],
+  mesh: (zones: readonly Box2[]) => AirMesh,
+  surfaceAt: (x: number, z: number) => number,
+  paved: (x: number, z: number) => boolean = () => true,
+): Readonly<Record<string, () => Finding[]>> => ({
   /** A patrol's box with `CLEARANCE` round it meeting a lamp, a tree, a parasol, a sign, a balcony, a cable or a wall. */
   "drone-low-clearance": () => lowClearance(lanes(), mesh(zonesOf(lanes()))),
   /** A searchlight pool whose rim lies more than `POOL_TOLERANCE` under or over the paving (sunk into a slope, floating over it). */
   "drone-low-pool": () =>
     lanes().flatMap((lane) => {
       for (const f of patrolPoints(lane)) {
-        const w = poolOff(f.pose, surfaceAt);
+        const w = poolOff(f.pose, surfaceAt, paved);
         if (w && Math.abs(w.off) > POOL_TOLERANCE) return [{ at: `patrol lane from ${lane.points[0]!.x.toFixed(0)},${lane.points[0]!.z.toFixed(0)} at ${w.x.toFixed(1)},${w.z.toFixed(1)}`, what: `pool's rim ${w.off.toFixed(2)} m off the paving` }];
       }
       return [];
