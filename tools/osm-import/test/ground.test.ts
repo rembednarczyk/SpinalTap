@@ -108,6 +108,46 @@ describe("flights of steps (G-203, G-213)", () => {
     for (const s of strips) expect(s.along).toBeGreaterThan(s.across);
   });
 
+  it("cuts a piece 0.5-0.65 m long into strips no narrower than the renderer draws, or leaves it whole", () => {
+    for (const [width, run] of [[undefined, 0.5], [undefined, 0.55], [undefined, 0.6], [undefined, 0.65], ["10", 0.5], ["10", 0.6]] as const) {
+      const strips = pieces(steps(width, [0, 0], [run, 0]));
+      // planSteps draws no flight on a band under 0.4 m wide or STEP_DEPTH long.
+      for (const s of strips.map(box)) {
+        expect(Math.min(s.along, s.across)).toBeGreaterThanOrEqual(0.4);
+        if (strips.length > 1) expect(s.along).toBeGreaterThan(s.across);
+      }
+      // The import rounds corners to 0.1 m.
+      expect(Math.abs(strips.reduce((a, s) => a + area(s), 0) - Number(width ?? 3) * run)).toBeLessThan(Number(width ?? 3) * 0.1);
+    }
+  });
+
+  it("cuts a slanted piece a chunk's edge leaves into strips the renderer draws, and leaves a corner too small to cut whole", () => {
+    const cut = (deg: number, inside: number) => {
+      const [ux, uz] = [Math.cos((deg * Math.PI) / 180), Math.sin((deg * Math.PI) / 180)];
+      const strips = pieces(steps(undefined, [-inside * ux, -inside * uz], [4 * ux, 4 * uz]), { minX: -10, minZ: -10, maxX: 0, maxZ: 10 });
+      return strips.map((s) => box(s.map((p) => ({ x: p.x * ux + p.z * uz, z: -p.x * uz + p.z * ux }))));
+    };
+    // The edge 10° off square to the run, 1.5 m of it in the chunk: a trapezoid.
+    const slanted = cut(10, 1.5);
+    expect(slanted.length).toBeGreaterThan(1);
+    for (const b of slanted) {
+      expect(b.across).toBeGreaterThanOrEqual(0.4);
+      expect(b.along).toBeGreaterThan(b.across);
+    }
+    // 60° off, 1.2 m in: a triangle whose strips would have tips too short to draw; it stays one piece.
+    expect(cut(60, 1.2)).toHaveLength(1);
+  });
+
+  it("drops a piece a chunk's edge leaves under 0.5 m², and keeps all strips of a piece over it however small", () => {
+    // 0.15 m of a run in the chunk: 0.45 m², a sliver.
+    expect(pieces(steps(undefined, [-0.15, 0], [3, 0]), { minX: -10, minZ: -10, maxX: 0, maxZ: 10 })).toEqual([]);
+    // A 0.7 m run 3 m wide: each strip under 0.5 m², all of them kept.
+    const strips = pieces(steps(undefined, [0, 0], [0.7, 0]));
+    expect(strips.length).toBeGreaterThan(1);
+    for (const s of strips) expect(area(s)).toBeLessThan(0.5);
+    expect(strips.reduce((a, s) => a + area(s), 0)).toBeCloseTo(2.1, 1);
+  });
+
   it("takes a bend of a few centimetres for no new run, so no run is left too short to cut", () => {
     // w1435832512: 0.65 m and 0.37 m, the bend 5 mm off the line.
     const strips = pieces(steps(undefined, [0, 0], [0.65, 0.005], [1.02, 0])).map(box);

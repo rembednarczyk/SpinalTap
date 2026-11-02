@@ -52,15 +52,23 @@ const STEPS_BEND = 0.05;
 
 const underground = (t: Tags) => t.tunnel === "yes" || t.tunnel === "culvert" || t.indoor === "yes" || Number(t.layer ?? 0) < 0 || t.location === "underground";
 
-/** The shortest piece of steps cut into strips (m): a strip under 0.8 of it would be too narrow for the renderer to draw a flight on. */
-const MIN_CUT_RUN = 0.5;
+/**
+ * The narrowest strip of steps (m): the renderer draws no flight on a band under 0.4 m wide
+ * (`planSteps`), and the import rounds its corners to 0.1 m.
+ */
+const MIN_STRIP = 0.45;
+/** The shortest strip of steps along its run (m): a flight under one tread's depth is not drawn (`planSteps`). */
+const STEP_RUN = 0.35;
 
 /**
  * A piece of a band of steps on the run `a`-`b`, as the renderer is to read it. The renderer
  * takes a band's long side for the run, so a piece shorter along the run than it is wide (a short
  * run of any flight: the castle stairs T-113, G-213; or what a chunk's edge leaves of a longer
  * one) is cut along the run into strips each at most 0.8 of the piece's length wide; together
- * they cover the same piece.
+ * they cover the same piece. A strip is never under `MIN_STRIP`: a piece too short for that is
+ * cut into strips up to 0.9 of its length wide, and left whole when even those would be too narrow.
+ * A strip the piece's shape leaves narrower or shorter (the tip of a corner a chunk's edge cuts
+ * off) joins the next, so the renderer draws all of the piece.
  */
 export const flightStrips = (piece: readonly Pt[], a: Pt, b: Pt): Pt[][] => {
   const run = Math.hypot(b.x - a.x, b.z - a.z);
@@ -70,10 +78,24 @@ export const flightStrips = (piece: readonly Pt[], a: Pt, b: Pt): Pt[][] => {
   const local = piece.map((p) => ({ x: (p.x - a.x) * ux + (p.z - a.z) * uz, z: -(p.x - a.x) * uz + (p.z - a.z) * ux }));
   const [x0, x1] = [Math.min(...local.map((p) => p.x)), Math.max(...local.map((p) => p.x))];
   const [z0, z1] = [Math.min(...local.map((p) => p.z)), Math.max(...local.map((p) => p.z))];
-  const k = x1 - x0 >= MIN_CUT_RUN ? Math.ceil((z1 - z0) / (0.8 * (x1 - x0))) : 1;
-  if (k <= 1) return [[...piece]];
-  const strip = (i: number) => clipRingToRect(local, { minX: x0, maxX: x1, minZ: z0 + ((z1 - z0) * i) / k, maxZ: z0 + ((z1 - z0) * (i + 1)) / k });
-  return Array.from({ length: k }, (_, i) => strip(i).map((p) => ({ x: a.x + p.x * ux - p.z * uz, z: a.z + p.x * uz + p.z * ux }))).filter((r) => r.length >= 3);
+  const [along, across] = [x1 - x0, z1 - z0];
+  let k = Math.ceil(across / (0.8 * along));
+  if (across / k < MIN_STRIP) k = Math.floor(across / MIN_STRIP);
+  if (k <= 1 || across / k > 0.9 * along) return [[...piece]];
+  const strip = (from: number, to: number) => clipRingToRect(local, { minX: x0, maxX: x1, minZ: from, maxZ: to });
+  const drawn = (r: readonly Pt[]) => {
+    const [l, w] = [Math.max(...r.map((p) => p.x)) - Math.min(...r.map((p) => p.x)), Math.max(...r.map((p) => p.z)) - Math.min(...r.map((p) => p.z))];
+    return r.length >= 3 && w >= MIN_STRIP && l > w && l >= STEP_RUN;
+  };
+  const cuts = Array.from({ length: k + 1 }, (_, i) => z0 + (across * i) / k);
+  // The last strip joins the one before it, and that one is looked at again.
+  for (let i = 0; i + 1 < cuts.length && cuts.length > 2; ) {
+    if (drawn(strip(cuts[i]!, cuts[i + 1]!))) i++;
+    else if (i + 2 < cuts.length) cuts.splice(i + 1, 1);
+    else cuts.splice(i--, 1);
+  }
+  if (cuts.length <= 2) return [[...piece]];
+  return cuts.slice(1).map((to, i) => strip(cuts[i]!, to).map((p) => ({ x: a.x + p.x * ux - p.z * uz, z: a.z + p.x * uz + p.z * ux })));
 };
 
 /** A path's width (m): its `width`, else by type. */

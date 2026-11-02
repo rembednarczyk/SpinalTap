@@ -22,7 +22,7 @@ import { signsInNeighbours } from "./sign-neighbours";
 import { lanternsByPassages } from "./passage-lanterns";
 import { landmarksAtDefaultHeight } from "./landmark-heights";
 import { bandAcross, lampsOnSteps, stepsNarrowerThanWalls } from "./steps-walls";
-import { stepsAcross, stepsRunsBare } from "./steps-runs";
+import { drawnFlight, stepsAcross, stepsHidden, stepsRunsBare } from "./steps-runs";
 import { cityChurches, cityFakeTowers, doubleTowers, towersOffBuilding } from "./landmark-towers";
 import { EMPTY_STRIPS_KNOWN, bayCarsMisturned, bayCarsOutOfPark, bayStripsEmptyKnown, bayStripsSparse, crowdLanesOnParking, kerbParksOf, kerbStripsOffCarStreets } from "./kerb-bays";
 import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alone.ts";
@@ -928,10 +928,12 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     ),
   /** A run of map steps on the map's chunks with no steps band across its middle (G-213: a strip dropped as a sliver). */
   "steps-run-bare": () => {
-    const flights = MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.surface === "steps").map((g) => worldOutline({ x: 0, z: 0, outline: g.outline })));
+    const flights = MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.surface === "steps").map((g) => worldOutline({ x: 0, z: 0, outline: g.outline }))).filter(drawnFlight);
     const onMap = (p: Pt) => MAP_CHUNKS.some((c) => p.x >= c.bounds.minX && p.x <= c.bounds.maxX && p.z >= c.bounds.minZ && p.z <= c.bounds.maxZ);
     return stepsRunsBare(extractFeatures(SOURCE_OSM).lines.map((l) => correctedLine(l)), (w) => pathWidth(w.tags), (p) => flights.some((r) => pointInRing(p, r)), onMap);
   },
+  /** A band of map steps the renderer draws nothing on, too short or too narrow for a flight: a hole in the steps (G-213). */
+  "steps-band-hidden": () => stepsHidden(MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.surface === "steps").map((g) => worldOutline({ x: 0, z: 0, outline: g.outline })))),
   /** A lamp or a candelabrum of the generator's table standing inside a band of steps (G-203). */
   "lamp-on-steps": () => {
     const flights = MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.surface === "steps").map((g) => worldOutline({ x: 0, z: 0, outline: g.outline })));
