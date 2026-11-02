@@ -601,7 +601,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-203 Schody zamkowe mają 3 m zamiast ok. 10 m szerokości
-- Status: w PR #194 (2.11, w weryfikacji, potem kurator): `correctedLine` z `width=10` dla 5 biegów i 6 podestów, kontrola `steps-narrower-than-walls` baza 0
+- Status: w PR #194 (2.11, PRZYJĘTE przez weryfikatora, kurator w toku): `correctedLine` z `width=10` dla 5 biegów i 6 podestów, kontrola `steps-narrower-than-walls` baza 0
 - Ważność: S3 (proponowana) · Zasięg: lokalny, ale to oś widokowa Placu Zamkowego · Koszt: mały–średni
 - Gdzie: biegi w1435832499, w1305940836, w1305889408, w1305940837, w1306105687, x 766..829, z 238..246
 - Dowód: `ground.ts` `PATHS.steps = 3`; murki OSM w231832094 i w231832095 stoją ok. 9,9 m od siebie, na ortofoto PZGiK ok. 11 m; zrzut `zamek-schody`
@@ -668,6 +668,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: 36 ze 121 biegów w mieście jest krótszych niż ich pas 3 m, więc renderer bierze dłuższy bok pasa za kierunek biegu i rysuje stopnie w poprzek (np. w66258166 przy Donżonie, w1312664177)
 - Poprawka: zdjąć warunek `w > PATHS.steps` w `flightStrips` (tools/osm-import/src/ground.ts, po #194), żeby każdy bieg krótszy niż szeroki był dzielony na pasy; kontrola skanu „bieg w poprzek”
 - Poboczne: wyciąg `krakowskie.json` bez murków (nieaktualny cache kafli, `osm:fetch --only=krakowskie` z siecią); pas bez nawierzchni między brukiem Placu Zamkowego (x ok. 759) a ścieżką w56965514 (x ok. 765)
+- Z weryfikacji #194: sąsiednie pasy krótkiego biegu dają stopnie przesunięte w pionie do ok. 0,06 m (`planSteps` próbkuje teren osobno na osi każdego pasa); najkrótszy bieg w1435832499 (1,3 m) wychodzi płaski (rise/count < `MIN_RISER`)
 - Pakiet właściciela: tools/osm-import
 
 ### G-214 Kościół Bernardynów bez swojej wieży i sygnaturki, za wysoka nawa
