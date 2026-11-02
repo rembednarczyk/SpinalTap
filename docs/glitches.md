@@ -717,7 +717,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-226 E2E `npr-perf` „the Rynek in TPP” przekracza 90 s na `citySettled` przy load 12–15
-- Status: zgłoszone (2.11, weryfikator G-197)
+- Status: zbadane (2.11, naprawiacz): przepustowość maszyny, nie regresja. Klatka pod SwiftShaderem 2–3 s przy load 10, 4–7 s przy 15–19 (skoki 10–16 s); miasto dochodzi do `citySettled` w 1–3 klatki; main vs. przed #186 i #167: wywołania i siatki identyczne, trójkąty +1 %, czas w szumie. Propozycje: (1) wspólna strona dla scen TPP (zmienia historię próbki, decyzja), (2) klatki na żądanie w `freeze` (`__seki.draw(n)`, ADR-0046), żeby `page.evaluate` nie czekało za klatkami w tle (pomoże też G-132), (3) orkiestrator wstrzymuje ciężkie zadania na czas e2e perf. W toku: (2); raport `scratchpad/g226-raport.md`
 - Ważność: S3 (test, czerwony CI kosztuje cykl) · Zasięg: `e2e/npr-perf.spec.ts:89` (Rynek TPP), także „Krakowskie Przedmieście TPP” i „market under the viaduct” (weryfikator #199: timeout 90 s przy load 13–17; viaduct na main 1,4 min przy load 15–21); powtórki same przechodzą
 - Poprawka: ślad (trace) i pomiar, co trzyma `citySettled` (wczytywanie chunków, kafle, decale z #186?); bez podnoszenia limitu (ADR-0046)
 - Pakiet właściciela: e2e (QA), engine
