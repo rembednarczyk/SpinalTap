@@ -751,7 +751,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (micro-events, streaming)
 
 ### G-231 Mikrozdarzenie: obaj napastnicy powaleni żywcem nie dają wygranej (do potwierdzenia)
-- Status: zgłoszone (2.11, weryfikator G-219), do potwierdzenia prawdziwym takedownem
+- Status: w PR #206 (2.11, w weryfikacji; potwierdzone prawdziwym `takedown`, także śmiertelnym: zwłoki trzymają id)
 - Ważność: S3 (proponowana: brak nagrody za wykonaną akcję) · Zasięg: `runMicroEvent` sprawdza `attackers.every((id) => !byId(…))`, więc powaleni, ale obecni napastnicy nie liczą się jako pokonani; po odejściu gracza „left” bez nagrody i usunięcie powalonych (sonda przez `restoreDowned`)
 - Poprawka: pokonany = nieobecny albo powalony; test z prawdziwym takedownem obu
 - Pakiet właściciela: packages/sim (micro-events)
