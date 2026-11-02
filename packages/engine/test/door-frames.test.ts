@@ -7,7 +7,7 @@ import { MeshSink } from "../src/renderer/mesh-sink";
 import { planNearFrames } from "../src/renderer/mapcity/cell-plan";
 import { bakeDoor } from "../src/renderer/mapcity/door-models";
 import { type MapBuilding, facadeFrame } from "../src/renderer/mapcity/facade-frame";
-import { facadeStyle } from "../src/renderer/mapcity/facade-style";
+import { type StyleInput, facadeStyle } from "../src/renderer/mapcity/facade-style";
 import { cleanRing } from "../src/renderer/mapcity/polygon";
 import type { WorldProp } from "../src/renderer/mapcity/prop-batch";
 
@@ -50,13 +50,21 @@ const mean = (vs: readonly V[]) => vs.reduce((s, v) => s + v.l, 0) / vs.length;
 
 const piece = (model: DoorModel, width: number, height: number): WorldProp => ({ prop: "door", x: 0, y: 0, z: 0, yaw: 0, shape: DOOR_MODELS.indexOf(model), scale: 1, variant: doorVariant({ model, width, height }) });
 
-/** The plasters of every facade a door may stand on (no church's). */
+const style = (s: Partial<StyleInput>) => facadeStyle({ use: "residential", levels: 4, height: 16, roof: 4, look: 0, area: 300, width: 12, ...s }).plaster;
+const hex = (r: number, g: number, b: number) => `#${[r, g, b].map((c) => c.toString(16).padStart(2, "0")).join("")}`;
+const STEPS = [0, 51, 102, 153, 204, 255];
+
+/**
+ * Every wall colour a facade can have, as a door does not know its own wall's: the plasters the
+ * uses draw from, and the walls the map colours (G-244): its bare brick and stone, and a plaster
+ * nearest any colour it gives (`#f5f5dc` beige, white, a grid over the colours).
+ */
 const PLASTERS = [
-  ...new Set(
-    (["residential", "commercial", "historic", "other", "civic", "industrial", "garage"] as BuildingUse[]).flatMap((use) =>
-      Array.from({ length: 200 }, (_, look) => facadeStyle({ use, levels: 4, height: 16, roof: 4, look, area: 300, width: 12 }).plaster),
-    ),
-  ),
+  ...new Set([
+    ...(["residential", "commercial", "historic", "other", "civic", "industrial", "garage", "church"] as BuildingUse[]).flatMap((use) => Array.from({ length: 200 }, (_, look) => style({ use, look }))),
+    ...(["brick", "stone"] as const).flatMap((material) => Array.from({ length: 16 }, (_, k) => style({ material, look: k * 256 }))),
+    ...["#f5f5dc", "#ffffff", ...STEPS.flatMap((r) => STEPS.flatMap((g) => STEPS.map((b) => hex(r, g, b))))].flatMap((colour) => [style({ colour }), style({ colour, material: "plaster" })]),
+  ]),
 ];
 
 /** A door's jambs, its leaf and how they read: the jamb's colour is the one on its outer face at x = w/2. */

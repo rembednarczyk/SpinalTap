@@ -23,13 +23,18 @@ import { block, glow, paint } from "./prop-kit";
 export const DOOR_FRAME = { depth: 0.2, side: 0.13, lintel: 0.14, leafAt: 0.08, leafDepth: 0.08 } as const;
 /** The narrowest leaf: a narrow door's jambs get thinner instead (m). */
 const MIN_LEAF = 0.64;
-/** The surround's colours: stone, aluminium (G-270). Light, so the leaves' dark and the plaster both stand off it. */
-export const DOOR_STONE = "#efe9de";
-export const DOOR_METAL = "#dfe5ea";
+/**
+ * The surround's colours: stone, aluminium, and the sill's (G-270). Near white, so the leaves' dark
+ * and every wall stand off them, the palest plaster a map's colour picks (`#e8e2d6`) too: a door
+ * does not know its wall's colour, so the frame clears the lightest one.
+ */
+export const DOOR_STONE = "#f7f4ee";
+export const DOOR_METAL = "#eef3f7";
+export const DOOR_SILL = "#c9c2b4";
 /** The tallest a leaf is drawn; a taller door gets a transom and a fanlight over it (m). */
 export const LEAF_TOP = 2.3;
 
-const SILL = paint("#c9c2b4");
+const SILL = paint(DOOR_SILL);
 const HOUSING = paint("#2a2e36");
 const STEEL = paint("#4a515c");
 const DARK = paint("#1b1d22");

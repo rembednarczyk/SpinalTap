@@ -1,7 +1,7 @@
 import { DRESS_FLAG, type MeshSink, hexColor } from "../mesh-sink";
 import { type FacadeFrame, hiddenWall, trimMeta } from "./facade-frame";
 import { doorwaysOn } from "./facade-plan";
-import { DOOR_METAL, DOOR_STONE } from "./prop-door";
+import { DOOR_METAL, DOOR_SILL, DOOR_STONE } from "./prop-door";
 
 /**
  * The surround of the game's doorways (G-270): the clinic's, Neon Koi's (ADR-0038) and the capsule
@@ -19,7 +19,7 @@ export const doorwayFrames = (sink: MeshSink, f: FacadeFrame): void => {
   const doorways = f.b.doorways ?? [];
   if (doorways.length === 0 || (f.b.passages?.length ?? 0) > 0) return;
   const color = hexColor(f.style.shopfront ? DOOR_METAL : DOOR_STONE, DRESS_FLAG.solid);
-  const sill = hexColor("#c9c2b4", DRESS_FLAG.solid);
+  const sill = hexColor(DOOR_SILL, DRESS_FLAG.solid);
   const meta = trimMeta(f.style.seed);
   const { side, out } = DOORWAY_FRAME;
   for (const w of f.walls) {
