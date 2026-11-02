@@ -26,6 +26,7 @@ const UNIFORMS = [
   "fogDensity",
   "pointPos",
   "pointColor",
+  "pointClip",
   "pointCount",
   "selfLit",
   "envStrength",

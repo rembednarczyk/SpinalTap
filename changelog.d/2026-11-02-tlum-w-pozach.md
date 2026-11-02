@@ -1,1 +1,0 @@
-Na ławkach, w ogródkach i przy budkach z jedzeniem, na przystankach i przed drzwiami lokali są ludzie w nieruchomych pozach: siedzą, czekają w kolejce, palą; na telefonie (jakość niska) jest ich połowa, w prostszej wersji (ADR-0058 etap 8).

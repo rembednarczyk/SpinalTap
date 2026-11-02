@@ -24,18 +24,20 @@ import { vehicleChecks } from "./vehicle-pieces";
 import { figureChecks } from "./figure-pieces";
 import { signsInNeighbours } from "./sign-neighbours";
 import { lanternsByPassages } from "./passage-lanterns";
-import { plainLampsByStyled } from "./lamp-styles";
+import { mixedLampWays, plainLampsByStyled, plainLampsIn } from "./lamp-styles";
 import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight, towersSkipped } from "./landmark-heights";
 import { bandAcross, lampsOnSteps, stepsNarrowerThanWalls } from "./steps-walls";
 import { drawnFlight, stepsAcross, stepsHidden, stepsRunsBare } from "./steps-runs";
 import { stepsInclineAgainst } from "./steps-incline";
 import { cityChurches, cityFakeTowers, cityTowers, doubleTowers, dwellingTowers, towersOffBuilding } from "./landmark-towers";
+import { cityBricks, plasteredWalls } from "./wall-materials";
 import { EMPTY_STRIPS_KNOWN, bayCarsMisturned, bayCarsOutOfPark, bayStripsEmptyKnown, bayStripsSparse, crowdLanesOnParking, kerbParksOf, kerbStripsOffCarStreets } from "./kerb-bays";
 import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alone.ts";
 import { correctedLine } from "../../osm-import/src/corrections.ts";
 import { extractFeatures } from "../../osm-import/src/features.ts";
 import { pathWidth, roadWidth } from "../../osm-import/src/ground.ts";
 import { oneway } from "../../osm-import/src/markings.ts";
+import { OLD_TOWN_RING } from "../../osm-import/src/old-town.ts";
 import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
 import { loadEntrances } from "../../osm-import/src/props-doors.ts";
 import { SHAPES } from "../../osm-import/src/props-kinds.ts";
@@ -971,6 +973,19 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * one street nearer than the 7 m that merges two of a kind read as one light point doubled.
    */
   "lamp-plain-by-styled": () => plainLampsByStyled(Object.values(LUBLIN_STREET_PROPS).flat(), 8),
+  /**
+   * A street of the map (one OSM way, so one kind and one set of tags) whose lamps change look
+   * along it (G-266): a plain lamp and a styled one both within 8 m of its axis, 15 m off its ends.
+   */
+  "lamp-style-change-on-way": () =>
+    mixedLampWays(
+      [...SOURCE_OSM.ways.values()].filter((w) => w.tags?.highway).map((w) => ({ id: w.id, pts: wayPoints(w.nodes) })),
+      Object.values(LUBLIN_STREET_PROPS).flat(),
+      8,
+      15,
+    ),
+  /** A road lamp or a modern pole of the generator's table inside the walled Old Town, where Lublin's lamps are styled (G-264). */
+  "lamp-road-in-old-town": () => plainLampsIn(Object.values(LUBLIN_STREET_PROPS).flat(), (p) => pointInRing(p, OLD_TOWN_RING)),
   /** A piece of road or path on a bridge laid on the valley instead of a deck. */
   "bridge-without-deck": () => MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.bridge && !g.deck).map((g) => ({ at: near(g.outline[0]!, g.outline[1]!), what: g.surface }))),
   /**
@@ -1077,6 +1092,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "church-tower-off-building": () => towersOffBuilding(cityChurches(SOURCE_OSM)),
   /** A tower of the map (`man_made=tower`, `tower:type`, `building=tower`) drawn as a tenement: flats' windows or shop fronts (G-232). */
   "tower-dwelling-windows": () => dwellingTowers(cityTowers(SOURCE_OSM)),
+  /** A building or a lifted part `building:material=brick` in OSM drawn in a plaster of the facades or the landmark kit (G-244). */
+  "brick-plastered": () => plasteredWalls(cityBricks(SOURCE_OSM)),
   /**
    * A monument or an artwork whose shape its OSM tags do not bear out (G-149), judged by the
    * tagged node nearest within 3 m: anything standing for a plaque, a stumbling stone, a mural or
@@ -1757,6 +1774,31 @@ describe("the glitch scan (ADR-0054)", () => {
     expect(plainLampsByStyled([pastoral, { ...pole, x: 9 }], 8)).toEqual([]);
     expect(plainLampsByStyled([{ ...pastoral, prop: "lamp-road" }, pole], 8)).toEqual([]);
     expect(plainLampsByStyled([{ ...pastoral, prop: "lamp-park" }, pole], 8)).toEqual([]);
+  });
+
+  it("finds a plain lamp inside the Old Town's walls, and none outside them or of a styled kind (G-264)", () => {
+    const square = [{ x: 0, z: 0 }, { x: 10, z: 0 }, { x: 10, z: 10 }, { x: 0, z: 10 }];
+    const inside = (p: { x: number; z: number }) => pointInRing(p, square);
+    expect(plainLampsIn([{ prop: "lamp-road", x: 5, z: 5 }], inside)).toEqual([{ at: "5,5", what: "lamp-road in the Old Town" }]);
+    expect(plainLampsIn([{ prop: "lamp-modern-pole", x: 1, z: 9 }], inside)).toHaveLength(1);
+    expect(plainLampsIn([{ prop: "lamp-road", x: 15, z: 5 }], inside)).toEqual([]);
+    expect(plainLampsIn([{ prop: "lamp-pastoral", x: 5, z: 5 }], inside)).toEqual([]);
+  });
+
+  it("finds a way whose lamps change from styled to plain along it, and none at its ends or lit one way (G-266)", () => {
+    const way = { id: 1, pts: Array.from({ length: 101 }, (_, k) => ({ x: k, z: 0 })) };
+    const pastoral = { prop: "lamp-pastoral", x: 30, z: 5 };
+    const pole = { prop: "lamp-modern-pole", x: 70, z: -5 };
+    expect(mixedLampWays([way], [pastoral, pole], 8, 15)).toEqual([{ at: "70,-5", what: "w1: 1 plain and 1 styled lamps" }]);
+    expect(mixedLampWays([way], [pastoral, { ...pole, x: 95 }], 8, 15)).toEqual([]);
+    expect(mixedLampWays([way], [pastoral, { ...pole, z: -12 }], 8, 15)).toEqual([]);
+    expect(mixedLampWays([way], [pastoral, { ...pole, prop: "lamp-pastoral" }], 8, 15)).toEqual([]);
+  });
+
+  it("keeps Plac po Farze and the Rynek inside the Old Town's ring and the streets past its walls out of it (G-264)", () => {
+    for (const p of [{ x: 653.9, z: 39.3 }, { x: 653.5, z: 46.6 }, { x: 582.4, z: -61.2 }]) expect(pointInRing(p, OLD_TOWN_RING)).toBe(true);
+    // Królewska, the road east of the walls and Kowalska: the plan's road lamps of the Old Town's edges.
+    for (const p of [{ x: 655.1, z: -204.1 }, { x: 749.8, z: 7.8 }, { x: 729.1, z: 126.2 }, { x: 622, z: 152.9 }]) expect(pointInRing(p, OLD_TOWN_RING)).toBe(false);
   });
 
   it("finds a wall lantern within 2 m of a gate's axis cut by hand, in its vault or its mouth, and none on the street past its fronts (G-183)", () => {

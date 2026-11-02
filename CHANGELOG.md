@@ -5,6 +5,12 @@ Zmiany widoczne dla gracza, od najnowszych. Wersja gry i commit są na ekranie t
 ## Nieopublikowane (0.1.0)
 
 ### 2 listopada 2026
+- Budynki ceglane z mapy (Donżon, Baszta Gotycka, Kaplica Trójcy) mają ściany z gołej cegły zamiast tynku, a budynki z kolorem fasady w OSM (m.in. Urząd Miasta, Trybunał Koronny, Archikatedra, Zamek) dostają najbliższy mu tynk z palety (G-244).
+- Na deptaku Krakowskiego Przedmieścia świecą same pastorały: znika 16 nowoczesnych słupów, które stały metr od nich, i 2 latarnie drogowe u wylotów bocznych ulic; generator nie stawia zwykłej latarni bliżej niż 8 m od stylizowanej (G-259).
+- Na pierzei Krakowskiego Przedmieścia przy Placu Litewskim stoją same pastorały, od zachodniego końca placu do Kapucyńskiej: 8 nowoczesnych słupów ustępuje pastorałom w rozstawie deptaka, słupy zostają na alejkach placu (G-266).
+- Na Starym Mieście w murach nie ma już latarni drogowych: dwie latarnie z OSM na Archidiakońskiej przy Placu po Farze są stylizowanymi pastorałami w tych samych miejscach (G-264).
+- Przy Jezuickiej 14 na Starym Mieście można wejść do pokoju kapsułowego na wynajem (kuchnia, łóżko we wnęce pod szafkami, ekrany); wejście zapisuje grę jak w innych lokalach (ADR-0063 etap 3).
+- Na ławkach, w ogródkach i przy budkach z jedzeniem, na przystankach i przed drzwiami lokali są ludzie w nieruchomych pozach: siedzą, czekają w kolejce, palą; na telefonie (jakość niska) jest ich połowa, w prostszej wersji (ADR-0058 etap 8).
 - Ciało napastnika z wygranego napadu (obalonego albo zabitego takedownem) nie znika, gdy gracz odejdzie kilkaset metrów: po powrocie, także po zapisie i wczytaniu, leży tam, gdzie upadło; ocucony napastnik znów odchodzi z ulicą jak zwykły przechodzień (G-239).
 - Wieża cerkwi św. Jozafata dostaje niski dach namiotowy z NMPT: okap y 8,1 zamiast 6,5, szczyt bez zmian na y 9,5 (G-246).
 - Niska przybudówka Pałacu Lubomirskich od Placu Litewskiego ma płaski dach ok. 5,5 m nad ziemią, jak w numerycznym modelu pokrycia terenu, zamiast bryły równej pałacowi; parter i pierwsze piętro fasady pałacu są znów widoczne (G-251).
