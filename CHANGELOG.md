@@ -5,6 +5,11 @@ Zmiany widoczne dla gracza, od najnowszych. Wersja gry i commit są na ekranie t
 ## Nieopublikowane (0.1.0)
 
 ### 2 listopada 2026
+- Kamienica przy Złotej 6 ma drzwi klatki od Złotej zamiast od parkingu, a Grodzka 7 nie ma już drzwi od zamkniętego podwórza: Trasa Podziemna pod Starym Miastem nie liczy się jako ulica przed ścianą (G-197).
+- Napad na przechodnia kończy się wygraną i nagrodą także wtedy, gdy napastnik został obalony albo zabity takedownem i jego ciało leży na ulicy; nagroda jest jedna, także po zapisie i wczytaniu (G-231).
+- Posiłek ochrony powalony żywcem nie znika już, gdy gracz odejdzie kilkaset metrów: leży w świecie jak ciało posiłku, a licznik wezwanych posiłków zostaje (G-219).
+- Wieża cerkwi św. Jozafata jest o ok. 2,7 m niższa, jak w numerycznym modelu pokrycia terenu (G-224).
+- Dziewięć kościołów bez wysokości w OSM (m.in. cerkiew św. Jozafata, Bernardyni, Brygidki, św. Piotra, św. Mikołaja) ma okap i kalenicę z numerycznego modelu pokrycia terenu zamiast domyślnych 16 m ścian i sięga o 3–16 m niżej; wieża cerkwi św. Jozafata nie ginie już pod dachem nawy (G-216).
 - Kaplica Trójcy na Zamku nie ma już zmyślonej przez renderer dzwonnicy z iglicą, więc najwyższym akcentem wzgórza zamkowego jest Donżon. Kościół Bernardynów stracił dwie wieże proceduralne w złym miejscu; jego prawdziwa wieża przy południowej ścianie wróci z G-214 (G-210).
 - Posiłki ochrony, które już odeszły, nie wypychają z pamięci hacków urządzeń i strażników: po setkach hacków posiłków kamera zhakowana na początku dalej nie płaci XP drugi raz (G-209).
 - Schody z Placu Zamkowego na Wzgórze Zamkowe mają ok. 10 m szerokości jak ich murki, a podesty łączą się z biegami bez trawy pomiędzy (G-203).
