@@ -3,7 +3,7 @@ import { type Line } from "./features.ts";
 import { type Pt, type Rect, clipLineToRect, inRect, lineLength, r1, simplifyLine } from "./geometry.ts";
 import { pathWidth, roadWidth } from "./ground.ts";
 import { oneway } from "./markings.ts";
-import { type FootWayOut, type PoiKind, type PoiOut, type ServiceWayOut, type StreetOut } from "./model.ts";
+import { type FlightOut, type FootWayOut, type PoiKind, type PoiOut, type ServiceWayOut, type StreetOut } from "./model.ts";
 import { type OsmData, type Tags } from "./osm.ts";
 import { geoToWorld } from "./project.ts";
 
@@ -114,6 +114,24 @@ export const chunkFootWays = (lines: readonly Line[], rect: Rect): FootWayOut[] 
       if (lineLength(piece) < 0.1) continue;
       out.push({ line: simplifyLine(piece, 0.5).flatMap((p) => [r1(p.x), r1(p.z)]), width });
     }
+  }
+  return out;
+};
+
+/**
+ * The flights of steps reaching into the chunk whose way the map tags with `incline=up` or
+ * `down` (G-236), turned to run from foot to top. The game's terrain is the smoothed NMT, which
+ * under a building or a bridge is interpolated: the direction the map gives is kept for the
+ * terrain to follow.
+ */
+export const chunkFlights = (lines: readonly Line[], rect: Rect): FlightOut[] => {
+  const out: FlightOut[] = [];
+  for (const l of lines) {
+    const incline = l.tags.incline;
+    if (l.tags.highway !== "steps" || (incline !== "up" && incline !== "down") || clipLineToRect(l.line, rect).length === 0) continue;
+    const line = incline === "up" ? l.line : [...l.line].reverse();
+    const steps = Number(l.tags.step_count);
+    out.push({ id: l.id, line: line.flatMap((p) => [r1(p.x), r1(p.z)]), ...(Number.isInteger(steps) && steps > 0 ? { steps } : {}) });
   }
   return out;
 };
