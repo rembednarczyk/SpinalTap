@@ -2,6 +2,17 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-216 Kościoły z wysokości domyślnej o 3–15 m za wysokie
+- Status: naprawione w #208 (2.11, PRZYJĘTE przez weryfikatora; kurator: ZGODNE Z UWAGAMI, nie blokuje; okap Mikołaja 8,5 zostaje, niższe części obrysu w G-238, wieże proceduralne w G-215): 9 kościołów z NMPT (dach potwierdzony niezależną sondą u wszystkich 9), kontrola `church-over-nmpt` 9 → 0 (w tabeli kontroli dawna nazwa `church-default-height`); kontrola łapie rachunek i domyślne wysokości, nie zły pomiar; do kuratora: okap św. Mikołaja może być 1–1,5 m za wysoko, Świętego Ducha: 16,5 to okap, kalenica 20,4
+- Ważność: S3 (proponowana) · Zasięg: szeroki (9 kościołów w trzech dzielnicach) · Koszt: mały (dane)
+- Gdzie: T-122 (lista i wysokości)
+- Dowód: kalenice w grze przed #208 (`y + height + roof`, `height` zawiera cokół) a kalenice NMPT: Bernardyni 27,7/24,5, Brygidki 27,7/22,0, Świętego Ducha 25,1/20,4 (okap 16,5), Niecała 4 18,0/1,8, św. Jozafata 22,6/11,4, Karmelici 23,0/14,5, św. Piotra 23,3/19,7, św. Mikołaja 21,1/12,5, cerkiew Przemienienia 5,4/−4,3 (T-122)
+- Priorytet (kurator, przegląd #207): wyżej, zacząć od św. Jozafata w69916021. Po G-224 wieża (szczyt y 9,5) stoi 6,3 m pod okapem nawy (y 15,8) i 13,1 m pod kalenicą, w rzeczywistości ok. 3,8 m pod szczytem kościoła; bez obniżenia nawy poprawna wieża jest niewidoczna z ulicy. U św. Mikołaja kalenicę mierzyć z dala od koron drzew (por. G-235)
+- Przyczyna: `building=church` bez `height` i `building:levels` dostaje 4 kondygnacje i cokół
+- Poprawka: korekty `height`/`roof:height` z NMPT w `corrections.ts` (jak G-204)
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: kontrola `church-over-nmpt` spada z 9 do 0
+
 ### G-213 Biegi schodów krótsze niż szerokie rysowane w poprzek
 - Status: naprawione w #204 (2.11, runda 3 @ 0995c9d PRZYJĘTE; kurator ZGODNE Z UWAGAMI: każdy pas leży wzdłuż biegu swojej drogi poza znanymi brzegami chunków G-234, uproszczenie usuwa wierzchołki do 4,2 cm; odstępstwa sprzed zmiany T-131 (G-236), T-132 (G-237)): pasy ≥ 0,45 m, kontrola `steps-band-hidden`; bazy `steps-across-run` 1 i `steps-band-hidden` 1 to stan sprzed G-213 na brzegach chunków (G-234)
 - Ważność: S4 · Zasięg: 36 ze 121 biegów w mieście jest krótszych niż ich pas 3 m, więc renderer bierze dłuższy bok pasa za kierunek biegu i rysuje stopnie w poprzek (np. w66258166 przy Donżonie, w1312664177)
