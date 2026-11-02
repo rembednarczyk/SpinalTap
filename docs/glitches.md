@@ -853,15 +853,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: reguła odstępu latarni od drzewa w generatorze (latarenka poza bryłą korony) albo przesunięcie latarni wzdłuż linii; kontrola skanu `lamp-in-crown` (punkt latarenki w bryle korony drzewa), baza z main → 0
 - Pakiet właściciela: tools/osm-import (props), tools/glitch-scan
 
-### G-268 Kable przęseł nad ulicą wiszą za nisko, kilka pod ziemią
-- Status: w PR #244 (2.11, runda 2 u autora; runda 1 @ 66a8942 NIE PRZYJĘTE: niskie kable naprawione, ale warunek gzymsu przy lift = 0 usuwa ok. 9% zwykłych kabli)
-- Ważność: S4 (S3, jeśli kabel przecina przechodniów na wysokości głowy) · Zasięg: 11 przęseł niżej niż 2,5 m nad rysowaną nawierzchnią, m.in. x≈996, z≈568 (do −7,8 m, pod ziemią), x≈520, z≈171 (−2,6 m), x≈634, z≈124 (2,1 m) · Koszt: mały
-- Przyczyna (do potwierdzenia): wysokość przęsła liczona od podstawy budynku na zboczu, nie od nawierzchni pod przęsłem
-- Poprawka: najniższy punkt przęsła ≥ ok. 3,5 m nad nawierzchnią pod nim (albo przęsło pominięte); kontrola skanu `cable-low` (punkt przęsła < 2,5 m nad nawierzchnią) baza z main → 0
-- Pakiet właściciela: packages/engine (renderer/mapcity, `spanCables`)
-- Także: na zrzucie dolnej Grodzkiej (x≈615, z≈15) linia na wysokości ramion przechodnia, źródło nieustalone
-
-- Potwierdzone (weryfikator #238): (996; 568) −7,78 m, (996; 569) −6,22, (995; 576) −5,60, (995; 568) −4,41, (520; 171) −2,65, (520; 172) −2,23, (635; 124) 2,12 m; linia na Grodzkiej (615; 15) to nie kabel przęsła (może kable słupów).
 ### G-269 Neony we wnętrzach kliniki i Neon Koi świecą przez ściany na ulicę
 - Status: zgłoszone (2.11, naprawiacz G-263)
 - Ważność: S4 · Zasięg: każdy `neon` z `S7_INTERIORS` dostaje w `buildNeon` światło punktowe 11 m, 1,2 m przed szyldem; szacunek zasięgu na bruku przed fasadą: klinika „NUMER 7” ok. 5,7 m, dwa `#eafcff` ok. 1,5 m, „PULS 48” i `#ff4d6d` ok. 0,6 m; Koi „KOI LIVE” ok. 4,4 m, `#ff2e88` ok. 1,3 m, „JUKE” ok. 0,5 m; neony wnętrz stale zajmują sloty świateł (8 na scenę), także z ulicy · Koszt: mały do średniego

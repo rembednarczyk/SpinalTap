@@ -2,6 +2,15 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-268 Kable przęseł nad ulicą wiszą za nisko, kilka pod ziemią
+- Status: naprawione w #244 (2.11, b225f89; runda 2 @ ae0a0f2 PRZYJĘTE; przęsła < 3,45 m: 21 → 0, telefon 5 → 0; kontrola `cable-low` baza 0)
+- Ważność: S4 (S3, jeśli kabel przecina przechodniów na wysokości głowy) · Zasięg: 11 przęseł niżej niż 2,5 m nad rysowaną nawierzchnią, m.in. x≈996, z≈568 (do −7,8 m, pod ziemią), x≈520, z≈171 (−2,6 m), x≈634, z≈124 (2,1 m) · Koszt: mały
+- Przyczyna (do potwierdzenia): wysokość przęsła liczona od podstawy budynku na zboczu, nie od nawierzchni pod przęsłem
+- Poprawka: najniższy punkt przęsła ≥ ok. 3,5 m nad nawierzchnią pod nim (albo przęsło pominięte); kontrola skanu `cable-low` (punkt przęsła < 2,5 m nad nawierzchnią) baza z main → 0
+- Pakiet właściciela: packages/engine (renderer/mapcity, `spanCables`)
+- Także: na zrzucie dolnej Grodzkiej (x≈615, z≈15) linia na wysokości ramion przechodnia, źródło nieustalone
+
+- Potwierdzone (weryfikator #238): (996; 568) −7,78 m, (996; 569) −6,22, (995; 576) −5,60, (995; 568) −4,41, (520; 171) −2,65, (520; 172) −2,23, (635; 124) 2,12 m; linia na Grodzkiej (615; 15) to nie kabel przęsła (może kable słupów).
 ### G-270 Drzwi bez widocznych futryn
 - Status: naprawione w #241 (2.11, c10b1ab; runda 2 @ d818ffb PRZYJĘTE; zgłoszone przez użytkownika)
 - Ważność: S3 (zgłoszenie gracza, wszystkie drzwi miasta) · Zasięg: drzwi na fasadach (ADR-0058 etap 9): ościeżnica i nadproże `DOOR_FRAME` (`packages/engine/src/renderer/mapcity/prop-door.ts`: `side` 0,08 m, `lintel` 0,1 m, `depth` 0,2 m) w tym samym kolorze `FRAME_COLOR` #2a2e36 co ciemne skrzydła, więc z kilku metrów skrzydło i futryna to jedna płaszczyzna; drzwi gry (klinika, Neon Koi, ADR-0038) i wejście pokoju kapsułowego (#234) bez obramowania · Koszt: mały do średniego
