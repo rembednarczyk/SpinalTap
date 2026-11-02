@@ -873,6 +873,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: `street-lamp` w strefie Starego Miasta → stylizowana (np. latarnia ścienna albo pastorał, styl do potwierdzenia przez kuratora); przegląd `topography-curator`
 - Pakiet właściciela: tools/osm-import (props)
 - Test przyjęcia: kontrola skanu `lamp-road-in-old-town` (zwykła latarnia w obrysie strefy Starego Miasta) 2 → 0
+- Także (kurator, T-141): węzły n5830072379 i n5830072380 (`highway=street_lamp`, `layer=1`, bez tagów typu) są wolnostojące, 5–11 m od osi Archidiakońskiej, daleko od ściany. Styl: latarnia stylizowana wolnostojąca (pastorał albo niska latarenka na słupie) w punkcie OSM, nie kinkiet. Te dwa węzły to jedyne latarnie OSM na Starym Mieście
 
 ### G-265 Reguła G-259 zdejmuje zwykłą latarnię przy stylizowanej, która potem odpada
 - Status: zgłoszone (2.11, weryfikator G-259)
