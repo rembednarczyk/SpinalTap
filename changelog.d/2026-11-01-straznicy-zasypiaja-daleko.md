@@ -1,1 +1,0 @@
-Strażnicy, którzy gonili gracza, uspokajają się i zasypiają, gdy gracz jest daleko (najpóźniej po 30 s poza wczytanymi fragmentami miasta); nie stoją już w świecie do końca sesji, a zapis i wczytanie dają to samo co gra (G-188).

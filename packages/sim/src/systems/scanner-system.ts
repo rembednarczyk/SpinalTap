@@ -99,6 +99,13 @@ const targetRef = (e: Entity): string => e.key ?? (e.security ? `security:${e.se
 
 const SECURITY_REF = /^security:(\d+)$/;
 
+/**
+ * What a quickhack's XP remembers the target by, across saves (G-202): its key, or a
+ * reinforcement's `n` with the tick it came in at, as `n` counts again from 1 in the next heat.
+ * Nothing for the others, who are not remembered across a save.
+ */
+const xpKey = (e: Entity): string | undefined => e.key ?? (e.security ? `security:${e.security.n}@${e.security.since}` : undefined);
+
 const findTarget = (ctx: SimContext, ref: string): Entity | null => {
   if (ref.startsWith("#")) {
     const id = Number(ref.slice(1));
@@ -276,7 +283,7 @@ const apply = (ctx: SimContext, player: Entity, hackId: QuickhackId, target: Ent
   }
   noteHacked(ctx);
   ctx.bus.emit("QuickhackApplied", { hackId, targetId: target.id, duration: def.duration });
-  grantQuickhackXp(ctx, target.key);
+  grantQuickhackXp(ctx, xpKey(target));
 };
 
 /** Starts the n-th hack of the focused target's list (ADR-0028: RAM is paid at the start). */

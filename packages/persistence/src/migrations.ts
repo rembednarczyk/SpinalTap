@@ -358,6 +358,17 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
   // v24 -> v25 (G-185): an NPC's gun mid-fight and a sniper's state are saved (optional). An older
   // save has every NPC's gun loaded and at rest and every sniper idle, as it loaded before.
   24: (old) => ({ ...old, version: 25 }),
+  // v25 -> v26 (G-202): each of the heat's reinforcements is saved with the tick it came in at,
+  // which tells it from one of another heat with the same `n` (the XP for a quickhack on it is
+  // paid once). An older save's came in no later than it was saved: they are given the save's
+  // tick, those who come in after the load a later one. None of them paid XP before.
+  25: (old) => {
+    const r = old.reinforcements;
+    if (!isObject(r) || !Array.isArray(r.people)) return { ...old, version: 26 };
+    const since = Number.isInteger(old.tick) ? Math.max(0, old.tick as number) : 0;
+    const people = r.people.map((p: unknown) => (isObject(p) ? { ...p, since } : p));
+    return { ...old, version: 26, reinforcements: { ...r, people } };
+  },
 };
 
 export class MigrationError extends Error {}

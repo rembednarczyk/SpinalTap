@@ -12,6 +12,7 @@ const wrap = (payload: unknown) => {
 
 const ONE: ReinforcementSnapshot = {
   n: 1,
+  since: 1200,
   type: "hebi_ganger",
   home: { x: 423.5, y: 0.07, z: -99.8 },
   state: { key: "security:1", position: { x: 421, y: 0.07, z: -98 }, yaw: 0, pitch: 0, hp: 80, cooldown: 0, alerted: false, lastKnown: { x: 400, y: 0, z: -97 }, search: 0, lost: 0 },
@@ -21,7 +22,8 @@ const SENT: ReinforcementsSnapshot = { sent: 3, wait: 3.5, people: [ONE, TWO] };
 
 describe("the heat's reinforcements in the save (v22 to v23, G-179)", () => {
   it("is schema v23 or later", () => {
-    // v24 (G-188, the pinned AIs marked) walks on from here with no change to the reinforcements.
+    // v24 (G-188, the pinned AIs marked) walks on from here with no change to the reinforcements;
+    // v26 (G-202) gives them the tick they came in at.
     expect(SAVE_SCHEMA_VERSION).toBeGreaterThanOrEqual(23);
   });
 
@@ -64,6 +66,9 @@ describe("the heat's reinforcements in the save (v22 to v23, G-179)", () => {
       { sent: 1, wait: 0, people: null },
       one({ n: 0 }),
       one({ n: 2.5 }),
+      one({ since: -1 }),
+      one({ since: 3.5 }),
+      one({ since: undefined }),
       one({ type: "cop" }),
       one({ home: { x: 1, y: 2 } }),
       one({ state: { ...ONE.state, key: "security:9" } }),

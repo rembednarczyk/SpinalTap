@@ -375,7 +375,7 @@ const runReinforcements = (ctx: SimContext, player: Entity | null, dt: number): 
   // The difficulty brings them in more or less often (`reinforce`, ADR-0066).
   watch.reinforce = REINFORCE_INTERVAL / difficultyOf(ctx).reinforce;
   watch.sent += 1;
-  const g = reinforcementEntity(ctx.streamer.takeId(), watch.sent, type, at, difficultyOf(ctx).npcHealth);
+  const g = reinforcementEntity(ctx.streamer.takeId(), watch.sent, ctx.tick, type, at, difficultyOf(ctx).npcHealth);
   if (g.ai) g.ai.lastKnown = heat.lastKnown ? { ...heat.lastKnown } : { ...player.position };
   ctx.world.add(g);
 };
