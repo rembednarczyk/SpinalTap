@@ -39,8 +39,8 @@ export const FACADE_ROOM = 1.0;
 const MAST = 9;
 /** A utility pole's top (its model is 7.5 to 10 m, ADR-0063). */
 const POLE_TOP = 10;
-/** Buildings this near a pedestrian street are framed for their spans (m): the widest span and a margin. */
-const FRAME_NEAR = 40;
+/** Buildings and furniture this near a pedestrian street count (m): the widest span (34 m) reaches over its axis from walls 17 m off it at most. */
+const FRAME_NEAR = 32;
 /** A cable's radius as a post (m): the thickest is 0.07 m. */
 const CABLE_R = 0.05;
 /** The glazed box of a footbridge over its floor (m, `canyon-plan.ts`). */
@@ -67,8 +67,30 @@ const modelEnvelope = (kind: StreetPropKind, shape: number): { r: number; top: n
   return e;
 };
 
-/** The street furniture as posts, the poles and the cables between them (as the city strings each block's poles). */
-const furniturePosts = (items: readonly Item[]): AirPost[] => {
+/** Whether a point lies within `FRAME_NEAR` of an axis, by 16 m cells (up to 16 m further at their edges). */
+const nearAxes = (axes: readonly (readonly P2[])[]): ((x: number, z: number) => boolean) => {
+  const cells = new Set<string>();
+  const reach = Math.ceil(FRAME_NEAR / 16);
+  for (const line of axes) {
+    for (let i = 0; i + 1 < line.length; i++) {
+      const a = line[i] as P2;
+      const b = line[i + 1] as P2;
+      const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 8));
+      for (let k = 0; k <= n; k++) {
+        const cx = Math.floor((a.x + ((b.x - a.x) * k) / n) / 16);
+        const cz = Math.floor((a.z + ((b.z - a.z) * k) / n) / 16);
+        for (let dx = -reach; dx <= reach; dx++) for (let dz = -reach; dz <= reach; dz++) cells.add(`${cx + dx}:${cz + dz}`);
+      }
+    }
+  }
+  return (x, z) => cells.has(`${Math.floor(x / 16)}:${Math.floor(z / 16)}`);
+};
+
+/**
+ * The street furniture near the axes as posts, and every pole with the cables between them (as the
+ * city strings each block's poles, so a pair is the one drawn even where one pole stands far off).
+ */
+const furniturePosts = (items: readonly Item[], near: (x: number, z: number) => boolean): AirPost[] => {
   const posts: AirPost[] = [];
   const poles = new Map<string, WorldProp[]>();
   for (const { view, at } of items) {
@@ -76,6 +98,7 @@ const furniturePosts = (items: readonly Item[]): AirPost[] => {
     for (const item of view.items) {
       // The still crowd stands under the patrols and the decals are flat on the walls and the paving.
       if (item.prop === "figure" || DECAL_KINDS.has(item.prop)) continue;
+      if (item.prop !== "lamp-road" && !near(item.x + at.x, item.z + at.z)) continue;
       const w = toWorld([item], at)[0] as WorldProp;
       if (isPoleLamp(w)) {
         posts.push({ x: w.x, z: w.z, r: POLE_REACH, bottom: w.y, top: w.y + POLE_TOP });
@@ -109,7 +132,7 @@ const solidEnvelope = (item: StreetPropItem): { r: number; top: number } => {
 };
 
 /** The buildings' solids and what hangs over the streets between them near the given axes. */
-const buildingAir = (items: readonly Item[], axes: readonly (readonly P2[])[]): { prisms: AirPrism[]; posts: AirPost[] } => {
+const buildingAir = (items: readonly Item[], near: (x: number, z: number) => boolean): { prisms: AirPrism[]; posts: AirPost[] } => {
   const entries = new MapEntries();
   const prisms: AirPrism[] = [];
   const posts: AirPost[] = [];
@@ -121,11 +144,10 @@ const buildingAir = (items: readonly Item[], axes: readonly (readonly P2[])[]): 
     const top = at.y + view.height + Math.max(0, view.vertical?.rise ?? 0) + Math.max(0, view.roof ?? 0) + (view.vertical ? MAST : 0);
     prisms.push({ ring, bottom: at.y + (view.soffit ?? 0), top, pad: FACADE_ROOM });
   });
-  const near = new Set<number>();
-  for (const line of axes) for (const p of line) for (const id of entries.buildingIndex.within({ minX: p.x - FRAME_NEAR, maxX: p.x + FRAME_NEAR, minZ: p.z - FRAME_NEAR, maxZ: p.z + FRAME_NEAR })) near.add(id);
-  for (const id of [...near].sort((a, b) => a - b)) {
-    const e = entries.buildings.get(id);
-    if (!e) continue;
+  // In the order of their ids, as a cell frames them.
+  for (const [id, e] of entries.buildings) {
+    const b = e.bounds;
+    if (![b.minX, b.maxX].some((x) => [b.minZ, b.maxZ].some((z) => near(x, z)))) continue;
     const f = withLandmark(facadeFrame(entries.building(id, e), entries.neighbourAt, entries.neighboursNear), e.landmark);
     if (isLandmarkFrame(f)) {
       for (const r of cableRuns(f)) posts.push(...runPosts((t) => cablePoint(r, t), Math.hypot(r.b.x - r.a.x, r.b.z - r.a.z), CABLE_R, 0));
@@ -158,8 +180,9 @@ export const patrolWorldOf = (items: readonly Item[], axes: readonly (readonly P
     const ring = worldRing(view.outline, at);
     if (ring.length >= 3) roads.push(ring);
   }
-  const built = buildingAir(items, axes);
-  const air = new PatrolAir(built.prisms, [...built.posts, ...furniturePosts(items)]);
+  const near = nearAxes(axes);
+  const built = buildingAir(items, near);
+  const air = new PatrolAir(built.prisms, [...built.posts, ...furniturePosts(items, near)]);
   return { axes, roads, air, groundAt, quietAt, surfaceAt };
 };
 
