@@ -28,7 +28,8 @@ test.describe("M0 smoke", () => {
     test.info().annotations.push({ type: "start", description: `new game on screen ${startMs} ms after the click` });
     expect(await page.evaluate(() => (window as unknown as { __loadingSeen: boolean }).__loadingSeen)).toBe(true);
     await expect(page.getByTestId("hud")).toBeVisible();
-    await freeze(page);
+    // Frames on demand (G-226, G-132): a step, F5 or F9 does not wait behind a frame drawn meanwhile.
+    await freeze(page, { onDemand: true });
     expect((await gameState(page)).screen).toBe("playing");
 
     // Movement goes through the whole loop: off the chair, east across the clinic (ADR-0045).
@@ -76,7 +77,7 @@ test.describe("M0 smoke", () => {
     await page.getByRole("button", { name: /^Quicksave/ }).click();
     await waitForPlay(page);
     await expect(page.getByTestId("hud")).toBeVisible();
-    await freeze(page);
+    await freeze(page, { onDemand: true });
     const restored = await gameState(page);
     expect(restored.alias).toBe("Seki Senshi");
     expect(restored.player).toEqual(saved.player);
@@ -89,7 +90,7 @@ test.describe("M0 smoke", () => {
     await waitForGame(page);
     await newGame(page);
     await waitForPlay(page);
-    await freeze(page);
+    await freeze(page, { onDemand: true });
     await step(page, 1, { toggleCamera: true });
     await expect(page.getByText("TPP · [V]")).toBeVisible();
     expect((await gameState(page)).cameraMode).toBe("TPP");
@@ -103,7 +104,7 @@ test("ripperdoc clinic sells a medkit through the UI", async ({ page }) => {
   await waitForGame(page);
   await newGame(page);
   await waitForPlay(page);
-  await freeze(page);
+  await freeze(page, { onDemand: true });
   // Mori at his monitors behind the chair (ADR-0038).
   await teleportTo(page, await place(page, "clinic", -15.2, 5.2), 0);
   await step(page, 1);
@@ -140,7 +141,7 @@ test("journal, minimap and settings", async ({ page }) => {
   await waitForGame(page);
   await newGame(page);
   await waitForPlay(page);
-  await freeze(page);
+  await freeze(page, { onDemand: true });
   await step(page, 1);
 
   await expect(page.getByTestId("minimap")).toBeVisible();
@@ -232,7 +233,7 @@ test("touch layout keeps the minimap off the pad", async ({ page }) => {
   await waitForGame(page);
   await newGame(page);
   await waitForPlay(page);
-  await freeze(page);
+  await freeze(page, { onDemand: true });
   await step(page, 1);
   const map = await page.getByTestId("minimap").boundingBox();
   expect(map).not.toBeNull();
@@ -254,7 +255,7 @@ test("touch layout keeps the weapon strip off the pad and the minimap", async ({
   await waitForGame(page);
   await newGame(page);
   await waitForPlay(page);
-  await freeze(page);
+  await freeze(page, { onDemand: true });
   await step(page, 1);
   const strip = await page.getByTestId("weapon-strip").boundingBox();
   expect(strip).not.toBeNull();

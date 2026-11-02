@@ -51,4 +51,37 @@ export const teleportTo = (page: Page, p: { x: number; y: number; z: number }, y
 /** Sprints along (x, z) waypoints in the page; returns how many it reached. */
 export const walk = (page: Page, route: readonly (readonly [number, number])[]) => page.evaluate((r) => window.__seki!.walk(r), route);
 
-export const freeze = (page: Page) => page.evaluate(() => window.__seki!.setPaused(true));
+/**
+ * Freezes the real-time loop. With `onDemand` the frozen loop also stops drawing by itself
+ * (G-226): a teleport or a step no longer waits behind a seconds-long SwiftShader frame drawn
+ * from the old spot, and the test draws the frames it needs with `drawFrames`.
+ */
+export const freeze = (page: Page, { onDemand = false } = {}) => page.evaluate((d) => window.__seki!.setPaused(true, d), onDemand);
+
+/** Draws `n` frames in a loop frozen on demand and waits for them; returns the frame count reached. */
+export const drawFrames = (page: Page, n: number) =>
+  page.evaluate(async (count) => {
+    const seki = window.__seki!;
+    const target = seki.draw(count);
+    while (seki.frames!() < target) await new Promise((r) => requestAnimationFrame(r));
+    return seki.frames!();
+  }, n);
+
+/**
+ * In a loop frozen on demand, draws one frame at a time until Lublin is drawn in detail round the
+ * camera (`citySettled`, which the renderer reads in its last frame, G-013), at most `max` frames.
+ * Returns the frame count and the wet probe's renders as of the frame it settled in (G-114).
+ */
+export const drawUntilSettled = async (page: Page, max = 60) => {
+  const settled = await page.evaluate(async (limit) => {
+    const seki = window.__seki!;
+    for (let i = 0; i < limit; i++) {
+      const target = seki.draw(1);
+      while (seki.frames!() < target) await new Promise((r) => requestAnimationFrame(r));
+      if (seki.citySettled()) return [seki.frames!(), seki.probeRenders!()] as const;
+    }
+    return null;
+  }, max);
+  if (!settled) throw new Error(`the city did not settle in ${max} drawn frames`);
+  return { drawn: settled[0], probed: settled[1] };
+};
