@@ -590,8 +590,8 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim
 
 ### G-197 Drzwi klatek od podwórza: Trasa Podziemna liczona jako ulica
-- Status: w PR #201 (2.11, PRZYJĘTE przez weryfikatora, kurator w toku): `undergroundWays` z ekstraktów, kontrola `door-faces-underground` 2 → 0; Złota 6 dostaje drzwi od Złotej, w66293533 bez drzwi (G-221)
-- Ważność: S4 · Zasięg: 2 drzwi: Złota 6 (667,7; −31,0), Archidiakońska (654,9; 9,0)
+- Status: w PR #201 (2.11, PRZYJĘTE przez weryfikatora; kurator: ZGODNE Z UWAGAMI, T-110 poprawione): `undergroundWays` z ekstraktów, kontrola `door-faces-underground` 2 → 0; Złota 6 dostaje drzwi od Złotej; drugie zdjęte drzwi (654,9; 9,0) były na Grodzkiej 7 r3119721, która zostaje bez drzwi (G-227); w66293533 bez drzwi już przed zmianą (G-221)
+- Ważność: S4 · Zasięg: 2 drzwi: Złota 6 (667,7; −31,0), Grodzka 7 r3119721 (654,9; 9,0)
 - Przyczyna: `facesStreet` w `tools/osm-import/src/props-doors.ts` bierze drogi z `tunnel=yes`, `layer=-1` (Trasa Podziemna, w chunkach zwykły `footway`), więc ściana od podwórza wygląda na ścianę od ulicy
 - Poprawka: `facesStreet` pomija drogi z `layer<0` albo `tunnel`; kontrola skanu `door-faces-underground` (baza dziś 2) → 0
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
@@ -701,8 +701,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim
 
 ### G-221 Kamienica przy Archidiakońskiej w66293533 bez żadnych drzwi
-- Status: zgłoszone (2.11, naprawiacz G-197)
-- Ważność: S4 · Zasięg: w66293533 (ok. 655; 9): po G-197 drzwi od podwórza znikają, a ściana 8,9 m od Archidiakońskiej (oś 2,2 m) nie dostaje gniazda drzwi; T-110 oczekuje wejścia od Archidiakońskiej
+- Status: zgłoszone (2.11, naprawiacz G-197; kurator #201: stan sprzed G-197, nie jego skutek)
+- Uwaga kuratora (#201): zdjęte drzwi (654,9; 9,0) stały na Grodzkiej 7 r3119721 (G-227), a w66293533 (ok. 664; 12,5) nie miała drzwi ani przed, ani po; jej wejście OSM n2969572872 (667,8; 15,0) na rogu od Archidiakońskiej odpada na stopniu 1,15 m (T-109). Poprawka najlepiej przez to wejście (próg albo stopień przed drzwiami), nie przez gniazda reguły klatek
+- Ważność: S4 · Zasięg: w66293533: ściana 8,9 m od Archidiakońskiej (oś 2,2 m) nie dostaje gniazda drzwi; T-110 oczekuje wejścia od Archidiakońskiej
 - Poprawka: ustalić, czemu reguły gniazd nie stawiają drzwi na ścianie od Archidiakońskiej; kontrola skanu „kamienica przy ulicy bez drzwi”
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
@@ -739,6 +740,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 (test, czerwony CI kosztuje cykl) · Zasięg: `e2e/npr-perf.spec.ts:89` (Rynek TPP), także „Krakowskie Przedmieście TPP” i „market under the viaduct” (weryfikator #199: timeout 90 s przy load 13–17; viaduct na main 1,4 min przy load 15–21); powtórki same przechodzą
 - Poprawka: ślad (trace) i pomiar, co trzyma `citySettled` (wczytywanie chunków, kafle, decale z #186?); bez podnoszenia limitu (ADR-0046)
 - Pakiet właściciela: e2e (QA), engine
+
+### G-227 Grodzka 7 (Warsztaty Kultury) r3119721 bez żadnych drzwi po G-197
+- Status: zgłoszone (2.11, kurator #201, T-130)
+- Ważność: S4 · Zasięg: 1 kamienica na Grodzkiej przy Placu po Farze (ok. 641; 21) · Koszt: mały–średni (reguły drzwi)
+- Gdzie: r3119721 (multipolygon z patio w232362988); ściany od Grodzkiej 23,7 m (oś w293488505 2,9 m) i od Archidiakońskiej 30,4 m (oś w173565359 4,6 m)
+- Dowód: tabela drzwi przed PR #201 miała tu tylko (654,9; 8,95) na ścianie SE od zamkniętego podwórza (przez Trasę Podziemną, G-197); po #201 0 drzwi na obrysie (sonda `topo-g197-doors.py`). Lokale w OSM: Warsztaty Kultury n6335671428 i n2604112432, Poczta n4466716892, Trakt Królewski n9874495717, Bubble.Vibe n10931435786
+- Przyczyna: do ustalenia: reguła 3 odrzuca obie ściany od ulicy (`facesStreet`: próbki 2/6/10 m przed ścianą w budynku po drugiej stronie wąskiej Grodzkiej? brak gniazd?), a reguła 2 nie stawia drzwi pod szyldami tych lokali
+- Poprawka: drzwi klatki na ścianie od Grodzkiej (adres); kontrola skanu `tenement-no-door` (kamienica z adresem i ścianą do 6 m od osi nazwanej ulicy bez drzwi; baza do policzenia, co najmniej 2: r3119721, w66293533 z G-221)
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+- Test przyjęcia: r3119721 ma drzwi na ścianie od Grodzkiej albo Archidiakońskiej; `tenement-no-door` spada
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
