@@ -23,7 +23,7 @@ import { lanternsByPassages } from "./passage-lanterns";
 import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight } from "./landmark-heights";
 import { bandAcross, lampsOnSteps, stepsNarrowerThanWalls } from "./steps-walls";
 import { drawnFlight, stepsAcross, stepsHidden, stepsRunsBare } from "./steps-runs";
-import { cityChurches, cityFakeTowers, doubleTowers, towersOffBuilding } from "./landmark-towers";
+import { cityChurches, cityFakeTowers, cityTowers, doubleTowers, dwellingTowers, towersOffBuilding } from "./landmark-towers";
 import { EMPTY_STRIPS_KNOWN, bayCarsMisturned, bayCarsOutOfPark, bayStripsEmptyKnown, bayStripsSparse, crowdLanesOnParking, kerbParksOf, kerbStripsOffCarStreets } from "./kerb-bays";
 import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alone.ts";
 import { correctedLine } from "../../osm-import/src/corrections.ts";
@@ -1028,6 +1028,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "landmark-double-tower": () => doubleTowers(cityChurches(SOURCE_OSM)),
   /** A bell tower of the renderer's standing with its middle outside the church's outline, on the grass or the square (G-212). */
   "church-tower-off-building": () => towersOffBuilding(cityChurches(SOURCE_OSM)),
+  /** A tower of the map (`man_made=tower`, `tower:type`, `building=tower`) drawn as a tenement: flats' windows or shop fronts (G-232). */
+  "tower-dwelling-windows": () => dwellingTowers(cityTowers(SOURCE_OSM)),
   /**
    * A monument or an artwork whose shape its OSM tags do not bear out (G-149), judged by the
    * tagged node nearest within 3 m: anything standing for a plaque, a stumbling stone, a mural or

@@ -47,6 +47,12 @@ export interface LublinBuildingData {
    * from its walls, imported or not (G-212). The renderer adds no bell towers of its own to it.
    */
   readonly mappedTower?: true;
+  /**
+   * A tower of the map standing as a building of its own: `man_made=tower`, `tower:type`,
+   * `building=tower|bell_tower` in its own tags (G-232). The renderer gives it a tower's facade
+   * whatever its size, where a short one would pass for a tenement.
+   */
+  readonly tower?: true;
   /** Where the height came from: the `height` tag, `building:levels`, or the district's defaults. */
   readonly source: "height" | "levels" | "default";
   /** Venues in or at it (ADR-0064 stage 4): a point relative to (x, z), the kind, the 2077 name and the neon. */

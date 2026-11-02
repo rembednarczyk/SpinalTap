@@ -2,10 +2,11 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { type MapBuilding, facadeFrame } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
+import { WINDOW_STYLE } from "../../../packages/engine/src/renderer/mapcity/facade-style";
 import { cleanRing, pointInRing } from "../../../packages/engine/src/renderer/mapcity/polygon";
 import { type Tags, mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
 import { type BuildingSource } from "../../../packages/engine/src/renderer/mapcity/map-building";
-import { type TowerEntry, doubleTowers, fakeTowers, hasParts, mappedTowers, towerMapped, towerTips, towersOffBuilding } from "./landmark-towers";
+import { type TowerEntry, doubleTowers, dwellingTowers, fakeTowers, hasParts, mappedTowers, towerMapped, towerTips, towersOffBuilding } from "./landmark-towers";
 
 /**
  * The glitch scan's check `landmark-fake-tower` (G-210): a church of its own far from the map's
@@ -91,6 +92,23 @@ describe("landmark-fake-tower (G-210)", () => {
     expect(towersOffBuilding([boxed()]), "towers of the box on the L").toEqual([{ at: `${grass[0]!.x.toFixed(0)},${grass[0]!.z.toFixed(0)}`, what: "w1 Kościół: a tower off the building" }]);
     expect(towersOffBuilding([boxed({ ring: box })]), "on the box itself").toEqual([]);
     expect(towersOffBuilding([boxed({}, { use: "historic" })]), "no towers from the renderer").toEqual([]);
+  });
+
+  it("tower-dwelling-windows (G-232): finds a tower drawn with flats' windows or shop fronts, not one drawn as a tower", () => {
+    // St Nicholas's belfry: 7 x 2.2 m, under the 20 m the renderer told a tower by.
+    const slim = cleanRing([
+      { x: 5000, z: 5000 },
+      { x: 5007, z: 5000 },
+      { x: 5007, z: 5002.2 },
+      { x: 5000, z: 5002.2 },
+    ]);
+    const plain = facadeFrame({ ...church, ring: slim, use: "historic", height: 15, levels: 1, name: "Dzwonnica" }, () => null);
+    const belfry = (window: number, shopfront: boolean): TowerEntry => ({ id: "w1", x: 5003.5, z: 5001.1, ring: slim, frame: { ...plain, style: { ...plain.style, window, shopfront } }, parts: false, mapped: true });
+    expect(dwellingTowers([belfry(WINDOW_STYLE.tenement, false)])).toEqual([{ at: "5004,5001", what: "w1 Dzwonnica: a tower with flats' windows" }]);
+    expect(dwellingTowers([belfry(WINDOW_STYLE.block, false)])).toHaveLength(1);
+    expect(dwellingTowers([belfry(WINDOW_STYLE.civic, true)])).toEqual([{ at: "5004,5001", what: "w1 Dzwonnica: a tower with shop fronts" }]);
+    expect(dwellingTowers([belfry(WINDOW_STYLE.civic, false)]), "a tower's windows").toEqual([]);
+    expect(dwellingTowers([entry()]), "a church's lancets").toEqual([]);
   });
 
   it("reads the map's tower ways: the Brigittines' bell tower by their church", () => {
