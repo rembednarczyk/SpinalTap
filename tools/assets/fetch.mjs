@@ -41,9 +41,6 @@ const refused = (s) => {
   return null;
 };
 
-/** Who is asking, the same as the OSM tools (`tools/osm-import`). */
-const USER_AGENT = "SekiSenshi-topo/1.0";
-
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 
 /** A path inside DIR: no absolute paths and no `..` from the table. */
@@ -53,12 +50,16 @@ const inside = (...parts) => {
   return join(out, rel);
 };
 
+/** The User-Agent of every download of the project's tools (the same as the map tools). */
+const USER_AGENT = "SekiSenshi-topo/1.0";
+
 const fetchChecked = async (url, dst, expected) => {
   if (existsSync(dst) && sha256(readFileSync(dst)) === expected) {
     console.log(`ok    ${dst}`);
     return false;
   }
-  // One try per run: a 429 or any other refusal fails the source, with no retries (ADR-0063).
+  // One request per file, with the project's User-Agent, and no retry: an HTTP 429 (or any error)
+  // stops this file, so a rate limit is never hammered.
   const res = await globalThis.fetch(url, { redirect: "follow", headers: { "User-Agent": USER_AGENT } });
   if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
   const bytes = Buffer.from(await res.arrayBuffer());

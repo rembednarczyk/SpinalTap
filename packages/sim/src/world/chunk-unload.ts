@@ -38,8 +38,8 @@ export type NearPlayer = (p: Vec3) => boolean;
 
 /**
  * Puts chunks to sleep: their entities leave the ECS world, keyed ones leaving their state
- * behind as a dormant snapshot. An alerted AI, a carried body and a keyed AI near the player
- * (G-201, then `sleepPinned`'s) stay (pinned).
+ * behind as a dormant snapshot. An alerted AI, a carried body, an unkeyed body (G-239) and a keyed
+ * AI near the player (G-201, then `sleepPinned`'s) stay (pinned).
  */
 export const unloadChunks = (
   world: World<Entity>,
@@ -61,6 +61,10 @@ export const unloadChunks = (
     // Chasing or looking for the player (ADR-0029), or on her shoulder (ADR-0065): it stays.
     if (e.ai?.alerted || e.ai?.lastKnown || e.downed?.carried) continue;
     if (e.ai && e.key && near(e.position)) continue;
+    // A won mugging's mugger lies unkeyed (G-233): with no state to leave behind it would be gone
+    // for good, so its body stays in the world as a reinforcement's does (G-239). Woken, it sleeps
+    // with its chunk again, an ordinary passer-by.
+    if (e.downed && e.enemy && !e.key) continue;
     putToSleep(world, state, e, forgotten);
   }
   for (const id of chunkIds) state.resident.delete(id);
