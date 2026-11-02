@@ -1,0 +1,1 @@
+Ciało napastnika z wygranego napadu (obalonego albo zabitego takedownem) nie znika, gdy gracz odejdzie kilkaset metrów: po powrocie, także po zapisie i wczytaniu, leży tam, gdzie upadło; ocucony napastnik znów odchodzi z ulicą jak zwykły przechodzień (G-239).
