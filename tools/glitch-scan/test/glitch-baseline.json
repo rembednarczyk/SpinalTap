@@ -108,5 +108,9 @@
   "door-in-board": 0,
   "door-in-passage": 0,
   "door-on-game-door": 0,
-  "door-faces-underground": 0
+  "door-faces-underground": 0,
+  "drone-in-building": 0,
+  "drone-by-landmark": 0,
+  "drone-off-street": 0,
+  "drone-over-building": 0
 }
