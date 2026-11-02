@@ -637,7 +637,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim, packages/persistence
 
 ### G-212 Podwójne wieże: proceduralna obok wieży z OSM
-- Status: w PR #198 (2.11, w weryfikacji, potem kurator): `mappedTower` z OSM i wieże tylko w obrysie; Brygidki bez wieży do G-098, Karmelici Bosi bez wież na trawie
+- Status: w PR #198 (2.11, PRZYJĘTE przez weryfikatora, kurator w toku): `mappedTower` z OSM i wieże tylko w obrysie; Brygidki bez wieży do G-098, Karmelici Bosi bez wież na trawie
 - Ważność: S4 · Zasięg: cerkiew św. Jozafata w69916021 (wieża z OSM w1382552285 przy (270; −9)) i kościół św. Mikołaja w66258180 (dzwonnica z OSM w680377807 przy (879; 545)) dostają dodatkowo proceduralną wieżę (`roof-plan` `addTowers`); Brygidki w66264082: proceduralne wieże, prawdziwa w1090997970 niezaimportowana (G-098)
 - Poprawka: `addTowers` pomija kościół, przy którym (w obrysie albo do 10 m) stoi wieża z OSM; rozszerzyć kontrolę `landmark-fake-tower` albo nowa `landmark-double-tower`
 - Pakiet właściciela: packages/engine (renderer/mapcity), tools/glitch-scan
@@ -717,6 +717,18 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: w66293533 (ok. 655; 9): po G-197 drzwi od podwórza znikają, a ściana 8,9 m od Archidiakońskiej (oś 2,2 m) nie dostaje gniazda drzwi; T-110 oczekuje wejścia od Archidiakońskiej
 - Poprawka: ustalić, czemu reguły gniazd nie stawiają drzwi na ścianie od Archidiakońskiej; kontrola skanu „kamienica przy ulicy bez drzwi”
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+### G-222 Reguła wieży z OSM: krawędzie (bok wieży, maszty, wieże różnej wysokości)
+- Status: zgłoszone (2.11, weryfikator G-212); dziś bez skutku w mieście
+- Ważność: S4 · Zasięg: `tools/osm-import/src/building-towers.ts:59` mierzy od wierzchołków wieży do ścian kościoła (wieża bokiem bliżej niż 10 m zostanie pominięta); `isTowerTags` uznaje każde `tower:type` i `man_made=tower` (maszt albo wieża ciśnień obok kościoła zdjęłaby mu wieże); `towerTips` w skanie sprawdza tylko najwyższy poziom bryły (wieże różnej wysokości ominęłyby `church-tower-off-building`)
+- Poprawka: odległość odcinek–odcinek; `tower:type` z listy (bell_tower, church) i bez `man_made=tower` z `tower:type=communication`/`water`; `towerTips` po wszystkich wieżach; testy dla każdego przypadku
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+### G-223 Test skanu `market-piece-on-crowd-lane` przekracza 20 s przy load ponad 20
+- Status: zgłoszone (2.11, weryfikator G-212)
+- Ważność: S4 (test, nie gra) · Zasięg: `tools/glitch-scan`, kontrola `market-piece-on-crowd-lane`; sama przy load 15 przechodzi
+- Poprawka: pomiar i przyspieszenie (indeks przestrzenny jak w G-200), bez podnoszenia limitu (ADR-0046)
+- Pakiet właściciela: tools/glitch-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
