@@ -164,9 +164,19 @@ describe("a tower mapped without building (G-098)", () => {
     expect(pointInRing({ x: 161.2, z: -228.4 }, ring(church))).toBe(true);
   });
 
-  it("gives the Lubomirski Palace's towers no height of their own while none is measured: the palace stands as it was", () => {
-    for (const id of ["w1002739983", "w1002739984"]) expect(byId(id), id).toBeUndefined();
+  it("raises the Lubomirski Palace's towers out of its roof to their flat tops at y 17.9 of the surface model (G-249)", () => {
     const palace = byId("w67508859")!;
-    expect(peakAt(all, { x: 83.5, z: 99.3 })).toBeCloseTo(palace.y + palace.height + (palace.roof ?? 0), 6);
+    const roofTop = palace.y + palace.height + (palace.roof ?? 0);
+    for (const [id, at] of [["w1002739983", { x: 83.5, z: 99.3 }], ["w1002739984", { x: 40.3, z: 102.7 }]] as const) {
+      const tower = byId(id);
+      expect(tower, id).toBeDefined();
+      expect(tower!.soffit, id).toBeDefined();
+      expect(tower!.roof ?? 0, id).toBe(0);
+      expect(Math.abs(tower!.y + tower!.height - 17.9), id).toBeLessThanOrEqual(1);
+      expect(peakAt(all, at) - roofTop, id).toBeGreaterThan(3);
+    }
+    // NMPT: the roof's median y 11.9 over the outline, eaves at y 11, the inner roof at y 13.1.
+    expect(Math.abs(roofTop - 11.9)).toBeLessThanOrEqual(1.5);
+    expect(Math.abs(palace.y + palace.height - 11)).toBeLessThanOrEqual(0.5);
   });
 });
