@@ -600,15 +600,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: budynek z wejściem OSM przy rysowanej ścianie dostaje drzwi w najbliższym gnieździe tej ściany albo żadnych zastępczych; kontrola `entrance-door-elsewhere` (baza dziś 1) → 0. Przy okazji do rozważenia: wybór ściany drzwi klatki wg `addr:street` (40 ze 179 drzwi patrzy na inną ulicę niż adres, np. Pałac Lubomirskich (60,4; 99,3) od Radziwiłłowskiej) i kontrola `door-on-osm-passage` (drzwi do 3 m od osi `tunnel=building_passage`/`covered=yes`, baza 1: Niecała 4, T-109)
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
-### G-203 Schody zamkowe mają 3 m zamiast ok. 10 m szerokości
-- Status: w PR #194 (2.11, PRZYJĘTE przez weryfikatora i kuratora z uwagami): `correctedLine` z `width=10` dla 5 biegów i 6 podestów, kontrola `steps-narrower-than-walls` baza 0. Uwagi kuratora (ortofoto PZGiK): bieg 2 i bieg 5 przed bramą mają w rzeczywistości ok. 15 m (T-126, G-217); kandelabr (826,2; 235,8) na biegu 5 (T-127, G-205)
-- Ważność: S3 (proponowana) · Zasięg: lokalny, ale to oś widokowa Placu Zamkowego · Koszt: mały–średni
-- Gdzie: biegi w1435832499, w1305940836, w1305889408, w1305940837, w1306105687, x 766..829, z 238..246
-- Dowód: `ground.ts` `PATHS.steps = 3`; murki OSM w231832094 i w231832095 stoją ok. 9,9 m od siebie, na ortofoto PZGiK ok. 11 m; zrzut `zamek-schody`
-- Przyczyna: OSM nie ma `width` na biegach; import bierze szerokość domyślną. `TAG_CORRECTIONS` zna tylko obszary, nie linie (to samo potrzebne dla T-050)
-- Pakiet właściciela: tools/osm-import (korekta `width` dla linii albo szerokość biegu ze ściskających go murków)
-- Test przyjęcia: pas `steps` każdego biegu ma ≥ 9,5 m, a podesty łączą się z biegami bez trawy pomiędzy; kontrola `steps-narrower-than-walls` (baza 1) → 0
-
 ### G-205 Dolne kandelabry schodów zamkowych stoją na skarpie zamiast na murkach u stóp schodów
 - Status: zgłoszone (1.11, audyt zespołu zamkowego, T-115)
 - Ważność: S4 · Zasięg: lokalny · Koszt: mały

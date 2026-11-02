@@ -2,6 +2,15 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-203 Schody zamkowe mają 3 m zamiast ok. 10 m szerokości
+- Status: naprawione w #194 (2.11, PRZYJĘTE przez weryfikatora i kuratora z uwagami): `correctedLine` z `width=10` dla 5 biegów i 6 podestów, kontrola `steps-narrower-than-walls` baza 0. Uwagi kuratora (ortofoto PZGiK): bieg 2 i bieg 5 przed bramą mają w rzeczywistości ok. 15 m (T-126, G-217); kandelabr (826,2; 235,8) na biegu 5 (T-127, G-205)
+- Ważność: S3 (proponowana) · Zasięg: lokalny, ale to oś widokowa Placu Zamkowego · Koszt: mały–średni
+- Gdzie: biegi w1435832499, w1305940836, w1305889408, w1305940837, w1306105687, x 766..829, z 238..246
+- Dowód: `ground.ts` `PATHS.steps = 3`; murki OSM w231832094 i w231832095 stoją ok. 9,9 m od siebie, na ortofoto PZGiK ok. 11 m; zrzut `zamek-schody`
+- Przyczyna: OSM nie ma `width` na biegach; import bierze szerokość domyślną. `TAG_CORRECTIONS` zna tylko obszary, nie linie (to samo potrzebne dla T-050)
+- Pakiet właściciela: tools/osm-import (korekta `width` dla linii albo szerokość biegu ze ściskających go murków)
+- Test przyjęcia: pas `steps` każdego biegu ma ≥ 9,5 m, a podesty łączą się z biegami bez trawy pomiędzy; kontrola `steps-narrower-than-walls` (baza 1) → 0
+
 ### G-209 Cel uploadu `security:<n>` niejednoznaczny przy dwóch posiłkach z tym samym numerem; pamięć hacków 256
 - Status: naprawione w #196 (2.11, PRZYJĘTE): część 2 (pamięć hacków) naprawiona przez zapominanie odeszłych posiłków; część 1 nie odtwarza się (`sent` i walidator wykluczają powtórzone `n`)
 - Ważność: S4 · Zasięg: gdy żyje powalony posiłek z poprzedniego heatu i nowy posiłek z tym samym `n`, `findTarget` (G-194, `scanner-system.ts`) może trafić w niewłaściwy; `HACKED_MEMORY = 256` (`packages/core/src/progression/progression.ts`): po 256 hackach posiłków (każdy dodaje klucz) najstarsze urządzenia z kluczem wypadają z pamięci i płacą ponownie
