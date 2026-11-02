@@ -122,6 +122,9 @@ z OSM, które stoją w ścianach, są dziś wolnostojącymi terminalami 0,5 m od
 - **E4: drony i roboty.** `cyberpunk_drone_concept_design` jako dron patrolowy Tessen (widok postaci
   albo pojazdu z AI, z ADR-em do kontraktu widoku). `cyberpunk_robot` przez potok postaci (szkielet,
   animacje), poza `city_kit`.
+  - Zrobione (ADR-0058 etap 7, 2.11): dron jako dekoracja nad kanionami ulic w `drone-props.glb`, trzy
+    odmiany z jednego płatowca (patrol, kurier, reklama), ruch tylko w rendererze. Dron patrolowy jako
+    postać z AI (widok w symulacji) i `cyberpunk_robot` dalej czekają.
 - **E5: pojazdy.** `cyberpunk_car` i `dirty_car` do `city-kit.glb` obok aut Kenneya (oś Z w górę
   obrócona, lakier jako `paint`, światła z emisji), z kontrolą budżetu trójkątów ruchu ulicznego.
 - **E6: wnętrza** (etap 3 ADR-0063). `neon_bedroom` jako kryjówka Seki albo pokój do wynajęcia,
