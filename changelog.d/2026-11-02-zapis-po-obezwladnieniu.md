@@ -1,0 +1,1 @@
+Zapis czeka na koniec obezwładnienia, bo chwytu nie ma w zapisie: zapis ręczny w chwycie jest odmówiony jak w rozmowie, a autozapis zapisuje się zaraz po chwycie, więc gra wczytana i ta, z której zapisano, toczą się dalej tak samo (G-253).

@@ -13,7 +13,7 @@ export interface SaveControllerDeps {
   readonly narrative: NarrativeRuntime;
   readonly sim: SimRef;
   readonly now: () => Date;
-  /** A save is allowed now: no conversation, shop or bag open, and a game running. */
+  /** A save is allowed now: no conversation, shop or bag open, no takedown under way, and a game running. */
   readonly canSave: () => boolean;
   /** Replaces the running game with a loaded snapshot. */
   readonly restore: (snapshot: SaveSnapshot) => void;
@@ -113,6 +113,11 @@ export class SaveController {
       pushToastTimed(ui, "system", this.t("save.exportFailed"), text, true);
       return false;
     }
+  }
+
+  /** The gate of every save of the player's (a takedown, a panel, a ride, death, the title). */
+  canSave(): boolean {
+    return this.deps.canSave();
   }
 
   snapshot(): SaveSnapshot {
