@@ -112,5 +112,11 @@
   "door-faces-underground": 0,
   "vehicle-off-body": 0,
   "vehicle-short-of-body": 0,
-  "vehicle-floating": 0
+  "vehicle-floating": 0,
+  "figure-in-building": 0,
+  "figure-on-road": 0,
+  "figure-in-piece": 0,
+  "figure-off-seat": 0,
+  "figure-floating": 0,
+  "figure-in-crowd": 0
 }
