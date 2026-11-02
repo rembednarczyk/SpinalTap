@@ -738,7 +738,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: szczyt bryły w680377807 (`y + height + roof`) ± 1 m od wartości ze źródła, `source: height`; kontrola `osm-tower-default-height` 1 → 0
 
 ### G-236 Schody z `incline` z OSM wznoszą się w grze w drugą stronę
-- Status: w PR #219 (2.11, weryfikator PRZYJĘTE; runda 2 u autora: garb ok. 10 × 10 m na Placu Katedralnym z interpolacji rampy na siatce 5 m; potem kurator): `flights` z `incline` i rampa terenu dla w66335060; w56965515 to błąd OSM (korekta `incline=down`, sprzeczna z dawnym wpisem T-131: kurator sprawdzi na ortofoto); otwarte: garb biegu 1 w56965515 pod pomostem (G-062), portal katedry bez widocznych stopni (siatka 5 m, G-229)
+- Status: w PR #219 (2.11, runda 2 NIE PRZYJĘTE: zagęszczenie siatki przed padami przesunęło teren w całym `stare-miasto-0-0`, bruk Rynku wystaje nad górne stopnie Trasy Podziemnej; runda 3 u autora: pady na siatce 5 m, potem `refineGrid`, potem rampy; potem kurator)
 - Ważność: S4 · Zasięg: 2 z 48 dróg schodów z `incline` w prostokątach map · Koszt: mały do średniego
 - Gdzie: T-131; w56965515 pod wiaduktem Zamkowej (736,8; 161,0) → (727,3; 164,0), Podzamcze/Stare Miasto, brzeg chunka z = 160; w66335060 (603,5; −184,6) → (597,3; −185,3), Stare Miasto
 - Dowód: teren gry (`SHAPED_TERRAIN`, bez pomostu wiaduktu) na węzłach w56965515: −15,87, −16,76, −15,33, −17,13 przy OSM `incline=up` (od Podwala w górę skarpy); w66335060: −2,70 → −2,30 przy `incline=down`, `step_count=7`. `planSteps` stawia stopnie po terenie, więc schody idą w dół tam, gdzie w Lublinie idą w górę
@@ -842,6 +842,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `veh-cyber` i `veh-dirty` nie mają roli `headlight` (nocą tylko neon i bursztyn); modele `-lite` SUV-a i śmieciarki mają po uproszczeniu stopione koła (telefon); `tools/city_vehicles.py:230` (`ear_clip`): zdegenerowany wielokąt w Bus.obj daje zerową normalną i NaN w UV (`RuntimeWarning`), wynik powtarzalny
 - Poprawka: rola `headlight` z przodu obu modeli; `-lite` z kołami jako osobnymi prostymi bryłami; pominięcie zdegenerowanych wielokątów w `ear_clip` z testem
 - Pakiet właściciela: tools (city_vehicles), packages/engine (vehicle-models)
+
+### G-252 Złote hashe i testy nie pilnują terenu Trasy Podziemnej; pad wykopu zależy od rozdzielczości siatki
+- Status: zgłoszone (2.11, weryfikator G-236)
+- Ważność: S3 (luka w testach przy ryzykownym obszarze) · Zasięg: przebiegi `determinism.test.ts` nie przechodzą przez Trasę Podziemną ani Rynek przy Trybunale, więc zmiana kształtu terenu tam nie zmienia hasha; pad Trasy Podziemnej (`sites.ts:159`, blend 0,01) jest ustawiony pod węzły siatki 5 m chunka `stare-miasto-0-0`, każda zmiana komórki (także w imporcie) po cichu przesuwa ściany wykopu
+- Poprawka: test „grunt pod stopniami Trasy Podziemnej z zapasem ≥ 1 m pod rampą kolizyjną” i „bruk nie wystaje nad stopnie”; pad niezależny od rozdzielczości siatki (granice w metrach, nie w węzłach)
+- Pakiet właściciela: packages/sim (content/lublin)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
