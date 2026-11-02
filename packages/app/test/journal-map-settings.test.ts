@@ -302,6 +302,23 @@ describe("settings", () => {
     expect(sanitizeSettings({ autosave: false }).autosave).toBe(false);
   });
 
+  it("keeps the TPP shoulder with the settings: right by default and for old entries, saved, no reload (G-275)", () => {
+    expect(DEFAULT_SETTINGS.shoulder).toBe("right");
+    expect(sanitizeSettings({ quality: "low" }).shoulder).toBe("right");
+    expect(sanitizeSettings({ shoulder: "middle" }).shoulder).toBe("right");
+    const st = memoryStorage();
+    saveSettings(st, { ...DEFAULT_SETTINGS, shoulder: "left" });
+    expect(loadSettings(st).shoulder).toBe("left");
+    const host = { applied: DEFAULT_SETTINGS, save: vi.fn(), reload: vi.fn() };
+    const { s, ui } = session(host);
+    s.intents.changeSettings({ shoulder: "left" });
+    expect(ui.getState().settings.shoulder).toBe("left");
+    expect(host.save).toHaveBeenLastCalledWith(expect.objectContaining({ shoulder: "left" }));
+    expect(ui.getState().reloadNeeded).toBe(false);
+    // The swap is a remappable control, listed with the others.
+    expect(ui.getState().controls.some((c) => c.action === "swapShoulder" && c.codes.includes("KeyG"))).toBe(true);
+  });
+
   it("keeps the language with the settings: English by default and for old entries, saved, no reload (ADR-0056)", () => {
     expect(DEFAULT_SETTINGS.locale).toBe("en");
     expect(sanitizeSettings({ quality: "low", volume: 0.3 }).locale).toBe("en");

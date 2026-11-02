@@ -41,7 +41,7 @@ export interface DeflectedShot {
 export const deflectShot = (ctx: SimContext, shot: DeflectedShot, defenderOf: (e: Entity) => DefenderProfile, rng: RandomPort): void => {
   const { defender, weapon } = shot;
   if (defender.perks) defender.perks.stamina = Math.max(0, defender.perks.stamina - DEFLECT_COST / Math.max(1, weapon.pellets));
-  const origin = aimOrigin(defender, ctx.state.domain.preferences.cameraMode);
+  const origin = aimOrigin(defender, ctx.state.domain.preferences.cameraMode, ctx.input.leftShoulder === true);
   const result = hitscan(ctx.world, origin, directionFromAngles(defender.yaw, defender.pitch), weapon.range, defender.id);
   const target = result.entity;
   ctx.bus.emit("ProjectileReflected", { defenderId: defender.id, attackerId: shot.shooter.id, at: shot.at, to: result.point, hitEntity: target?.id ?? null });

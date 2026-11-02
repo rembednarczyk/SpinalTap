@@ -107,6 +107,7 @@ export const en = {
   "control.nextWeapon": "Next weapon",
   "control.prevWeapon": "Previous weapon",
   "control.toggleCamera": "FPP / TPP view",
+  "control.swapShoulder": "Swap shoulder (TPP)",
   // Settings.
   "settings.heading": "Settings",
   "settings.tab.general": "General",
@@ -145,6 +146,9 @@ export const en = {
   "settings.sprintMode": "Sprint",
   "settings.mode.hold": "Hold",
   "settings.mode.toggle": "Toggle",
+  "settings.shoulder": "TPP camera shoulder",
+  "settings.shoulder.right": "Right",
+  "settings.shoulder.left": "Left",
   "settings.hudScale": "HUD scale",
   "settings.subtitleScale": "Subtitle size",
   "settings.subtitleBackground": "Solid subtitle background",

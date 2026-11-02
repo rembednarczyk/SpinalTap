@@ -128,24 +128,25 @@ export interface ShoulderOffset {
 const clamp01 = (v: number): number => Math.min(1, Math.max(0, v));
 
 /**
- * Offset of the TPP aim line from the eye for an aim and a crouch of 0..1. Shared by the camera
- * and the shots, so what is under the crosshair is what the shot hits.
+ * Offset of the TPP aim line from the eye for an aim and a crouch of 0..1, over the right
+ * (`shoulder` 1) or the left (-1) shoulder; the camera passes the values between as it swings
+ * across. Shared by the camera and the shots, so what is under the crosshair is what the shot hits.
  */
-export const tppShoulderOffset = (aim: number, crouch: number): ShoulderOffset => {
+export const tppShoulderOffset = (aim: number, crouch: number, shoulder = 1): ShoulderOffset => {
   const a = clamp01(aim);
   // Eased like the camera's aim pull-in.
   const k = Math.max(a * a * (3 - 2 * a), clamp01(crouch));
   return {
-    side: TPP_SHOULDER_OFFSET + (TPP_AIM_SHOULDER_OFFSET - TPP_SHOULDER_OFFSET) * k,
+    side: shoulder * (TPP_SHOULDER_OFFSET + (TPP_AIM_SHOULDER_OFFSET - TPP_SHOULDER_OFFSET) * k),
     up: TPP_HEIGHT_OFFSET + (TPP_AIM_HEIGHT_OFFSET - TPP_HEIGHT_OFFSET) * k,
   };
 };
 
-/** Where the player's shots start: the eye in FPP, the camera shoulder line in TPP. */
-export const aimOrigin = (e: Entity, mode: CameraMode): Vec3 => {
+/** Where the player's shots start: the eye in FPP, the camera shoulder line in TPP (the left one with `left`). */
+export const aimOrigin = (e: Entity, mode: CameraMode, left = false): Vec3 => {
   const eye = eyeOf(e);
   if (mode === "FPP") return eye;
-  const o = tppShoulderOffset(e.posture?.aim ?? 0, crouchOf(e));
+  const o = tppShoulderOffset(e.posture?.aim ?? 0, crouchOf(e), left ? -1 : 1);
   return {
     x: eye.x + Math.cos(e.yaw) * o.side,
     y: eye.y + o.up,

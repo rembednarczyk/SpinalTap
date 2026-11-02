@@ -1,6 +1,6 @@
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import { type Transform, type Vec3, directionFromAngles } from "@seki/core";
-import { type Entity, aimOrigin } from "@seki/sim";
+import { type Entity, TPP_AIM_SHOULDER_OFFSET, aimOrigin } from "@seki/sim";
 import { describe, expect, it } from "vitest";
 import { Matrix, Scene, Vector3 } from "../src/babylon";
 import { CameraRig } from "../src/camera/camera-rig";
@@ -163,22 +163,26 @@ const shooter = (yaw: number, pitch: number, crouch: number, aim: number): Entit
 
 describe("the crosshair is where the shot goes (G-275)", () => {
   it.each([
-    [0, 0],
-    [0, 1],
-    [1, 0],
-    [1, 1],
-    [0.5, 0.4],
-  ])("crouch %s, aim %s: the camera sits on the line of the simulation's shot", (crouch, aim) => {
+    [0, 0, false],
+    [0, 1, false],
+    [1, 0, false],
+    [1, 1, false],
+    [0.5, 0.4, false],
+    [0, 1, true],
+    [1, 1, true],
+    [1, 0, true],
+  ])("crouch %s, aim %s, left shoulder %s: the camera sits on the line of the simulation's shot", (crouch, aim, left) => {
     const scene = newScene();
     const camera = new CameraRig(scene, new ToonMaterials(scene), () => false);
     camera.setMode("TPP");
+    camera.shoulder.target = left ? -1 : 1;
     for (const [yaw, pitch] of [
       [0.3, 0.2],
       [-2.4, -0.3],
     ] as const) {
       const at = { x: 3, y: 0.5, z: -2 };
       settle(camera, { position: at, yaw, pitch, speed: 0, crouch, aim });
-      const origin = aimOrigin(shooter(yaw, pitch, crouch, aim), "TPP");
+      const origin = aimOrigin(shooter(yaw, pitch, crouch, aim), "TPP", left);
       const dir = directionFromAngles(yaw, pitch);
       const off = camera.camera.position.subtract(new Vector3(origin.x, origin.y, origin.z));
       // On the shot's line, behind its start: what the crosshair covers is what the shot hits.
@@ -187,5 +191,25 @@ describe("the crosshair is where the shot goes (G-275)", () => {
       const fwd = forwardOf(camera);
       expect(Vector3.Dot(fwd, new Vector3(dir.x, dir.y, dir.z))).toBeCloseTo(1, 6);
     }
+  });
+
+  it("swings over to the other shoulder smoothly and stays on the aim line there", () => {
+    const scene = newScene();
+    const camera = new CameraRig(scene, new ToonMaterials(scene), () => false);
+    camera.setMode("TPP");
+    const aimed: Transform = { position: { x: 0, y: 0, z: 0 }, yaw: 0, pitch: 0, speed: 0, crouch: 1, aim: 1 };
+    settle(camera, aimed);
+    const right = camera.camera.position.x;
+    expect(right).toBeCloseTo(TPP_AIM_SHOULDER_OFFSET, 3);
+    camera.shoulder.target = -1;
+    const xs: number[] = [];
+    for (let i = 0; i < 12; i++) {
+      camera.update(aimed, 1 / 30);
+      xs.push(camera.camera.position.x);
+    }
+    // Across in about a third of a second, through the values between rather than in one jump.
+    expect(xs.at(-1)).toBeCloseTo(-TPP_AIM_SHOULDER_OFFSET, 3);
+    expect(xs.some((x) => Math.abs(x) < 0.5)).toBe(true);
+    for (let i = 1; i < xs.length; i++) expect(xs[i - 1]! - xs[i]!).toBeLessThan(0.35);
   });
 });

@@ -134,6 +134,9 @@ const session = new GameSession({
 // own ray through its solids, handed to the camera through the app.
 renderer.rig.setOccluder((origin, dir, maxDist) => rayGeometry(session.sim.world, origin, dir, maxDist, true));
 
+// The shoulder key swaps the TPP side in play; the settings remember it like the menu's choice (G-275).
+input.shoulder.onChange = (left) => session.intents.changeSettings({ shoulder: left ? "left" : "right" });
+
 /** Controls from the settings: key bindings, hold or toggle buttons and the field of view. */
 let controlsFor: unknown = null;
 const applyControls = (s: typeof settings) => {
@@ -141,6 +144,8 @@ const applyControls = (s: typeof settings) => {
   controlsFor = s;
   input.keymap = keymapFor(s.bindings);
   input.setButtonModes({ aim: s.aimMode, crouch: s.crouchMode, sprint: s.sprintMode });
+  input.shoulder.left = s.shoulder === "left";
+  renderer.rig.shoulder.target = s.shoulder === "left" ? -1 : 1;
   renderer.rig.horizontalFov = degToRad(s.horizontalFov);
   renderer.rig.cameraMotion = s.cameraMotion;
   applyEffects(renderer, s);

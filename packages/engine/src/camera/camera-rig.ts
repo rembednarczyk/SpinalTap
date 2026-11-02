@@ -4,6 +4,7 @@ import { eyeHeightAt, tppShoulderOffset } from "@seki/sim";
 import { applyOutline } from "../npr/outline";
 import type { ToonMaterials } from "../npr/toon-material";
 import { BodyFade, bodyFadeTarget } from "./body-fade";
+import { ShoulderSwing } from "./shoulder-swing";
 
 /** Over-the-shoulder distance behind the pivot (ADR-0049: 2.7 m before). */
 const TPP_DISTANCE = 2.2;
@@ -121,6 +122,8 @@ export class CameraRig {
   onBodyVisibility: (visible: boolean) => void = () => {};
   /** Halftone fade of the player's figure when it is in the way of the TPP view (G-275). */
   readonly bodyFade = new BodyFade();
+  /** Shoulder the TPP camera looks over (G-275): the settings set its target. */
+  readonly shoulder = new ShoulderSwing();
 
   constructor(
     private readonly scene: Scene,
@@ -317,7 +320,7 @@ export class CameraRig {
     const crouch = target.crouch ?? 0;
     // Same curves as the simulation's aim origin, so the crosshair stays exact while crouching and aimed.
     const eye = new Vector3(p.x, p.y + eyeHeightAt(crouch), p.z);
-    const off = tppShoulderOffset(aim, crouch);
+    const off = tppShoulderOffset(aim, crouch, this.shoulder.update(dt, this.blend > 0));
     const shoulder = eye.add(new Vector3(Math.cos(yaw) * off.side, off.up, -Math.sin(yaw) * off.side).scale(this.blend));
     const back = new Vector3(-dir.x, -dir.y, -dir.z);
     const adsFov = aimedFov(aim, target.aimZoom ?? 1, this.hipFov);

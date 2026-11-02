@@ -1,1 +1,1 @@
-W TPP przy celowaniu i w kucaniu kamera odsuwa się dalej przez ramię i lekko w górę, a postać, która zasłania widok tuż przed kamerą, przechodzi w półton kropek; strzał trafia nadal pod celownik (G-275).
+W TPP przy celowaniu i w kucaniu kamera odsuwa się dalej przez ramię i lekko w górę, a postać, która zasłania widok tuż przed kamerą, przechodzi w półton kropek; klawisz G (na padzie lewa gałka przy celowaniu) i opcja w ustawieniach przenoszą kamerę na drugie ramię, a strzał trafia zawsze pod celownik (G-275).
