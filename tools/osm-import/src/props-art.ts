@@ -78,3 +78,12 @@ export const loadNodeTags = (root = REPO): ReadonlyMap<string, Tags> => {
   for (const n of osm.nodes.values()) if (n.tags) out.set(`n${n.id}`, n.tags);
   return out;
 };
+
+/** The tags of the map's ways and relations by the game's building id (`w…`, `r…`): the buildings' addresses and protection (ADR-0058 stage 6). */
+export const loadBuildingTags = (root = REPO): ReadonlyMap<string, Tags> => {
+  const osm = mergeOsm(DISTRICTS.map((d) => parseExtract(readFileSync(join(root, "data/osm", `${d.slug}.json`), "utf8"))));
+  const out = new Map<string, Tags>();
+  for (const w of osm.ways.values()) if (w.tags) out.set(`w${w.id}`, w.tags);
+  for (const r of osm.relations.values()) if (r.tags) out.set(`r${r.id}`, r.tags);
+  return out;
+};

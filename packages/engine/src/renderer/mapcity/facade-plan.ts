@@ -1,6 +1,6 @@
 import { prng } from "../city-kit-data";
 import { DRESS_FLAG, type MeshSink, type Rgba, hexColor } from "../mesh-sink";
-import { type FacadeFrame, type Palette, type Wall, type WorldDoorway, frameWallMeta, hiddenWall, roofMeta, trimMeta } from "./facade-frame";
+import { type FacadeFrame, PLINTH_BAND, type Palette, type Wall, type WorldDoorway, frameWallMeta, hiddenWall, plinthBand, roofMeta, trimMeta } from "./facade-frame";
 import { planBrackets } from "./bracket-plan";
 import { DOWN, band, slab, wallQuad } from "./facade-parts";
 import { planPassages } from "./passage-plan";
@@ -132,7 +132,10 @@ export const planNearBuilding = (sink: MeshSink, f: FacadeFrame): void => {
   if (f.top > f.eave + 0.01) atticFaces(sink, f, p.wall);
   // Plinth: dark stone around the foot, up to the window sills of the ground floor (none across a doorway).
   if (b.lifted) soffit(sink, f, p.plinth);
-  else if (!b.doorways?.length) band(sink, ring, 0.06, b.foot - 0.2, b.base + 0.55, p.plinth, trim, b.base);
+  else {
+    const plinth = plinthBand(b);
+    if (plinth) band(sink, ring, PLINTH_BAND.out, plinth.bottom, plinth.top, p.plinth, trim, b.base);
+  }
   if (s.stringCourse && !b.lifted && f.ground + 0.6 < f.eave - b.base) band(sink, ring, 0.12, b.base + f.ground, b.base + f.ground + 0.22, p.trim, trim, b.base);
   if (s.cornice) {
     band(sink, ring, 0.18, f.eave - 0.55, f.eave - 0.3, p.trim, trim, b.base);
