@@ -89,7 +89,7 @@ const check = (label: string, w: Walk, R: number) => {
 
 describe("walking the steps from the viaduct of Zamkowa (G-255)", () => {
   const sim = Simulation.create({ seed: 3 });
-  for (const off of [-1, -0.5, 0, 0.5, 1]) {
+  for (const off of [-1.2, -1, -0.5, 0, 0.5, 1, 1.2]) {
     it(`gets up and down them ${off} m to the side of the line, walking and running`, () => {
       for (const R of [0.2, 0.6, 1.2]) {
         for (const run of [false, true]) {
