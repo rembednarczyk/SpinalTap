@@ -787,15 +787,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import (przeniesienie `tower:type`)
 - Test przyjęcia: kontrola skanu `tower-lit-tiers` (budynek z `tower: true` i `tower:type` defensive albo bell_tower z oświetlanymi oknami poniżej górnej kondygnacji) 2 → 0
 
-### G-246 Dach namiotowy wieży cerkwi św. Jozafata za stromy, okap ok. 1,5 m za nisko
-- Status: w PR #226 (2.11, @ bf0d2dd PRZYJĘTE; kurator ZGODNE Z UWAGAMI: przesunięcie obrysu w G-257; main dołączony b8d2fbf, czeka na CI)
-- Ważność: S4 · Zasięg: 1 budynek, w1382552285 (270; −9,2), Krakowskie · Koszt: mały (korekta danych)
-- Gdzie: T-129
-- Dowód: po #209 ściana 8,1 m (okap y 6,5) i dach namiotowy 3 m (stała importu dla wieży bez dachu w OSM), szczyt y 9,5. NMPT GUGiK 0,5 m: wierzchołek y 9,4 w (269,5; −10), okap ok. y 8,0–8,2 przy krawędziach, czyli ok. 1,4 m dachu (ok. 22°); ortofoto PZGiK: jasny blaszany dach namiotowy, rodzaj zgodny
-- Poprawka: korekta w `tools/osm-import/src/corrections.ts` z odsyłaczem T-129: `roof:shape=pyramidal`, `roof:height` 1,4 i `height` tak, by szczyt został y 9,5
-- Pakiet właściciela: tools/osm-import
-- Test przyjęcia: okap w1382552285 y 8,0 ± 0,5, szczyt y 9,5 ± 0,5
-
 ### G-247 Skan i18n nie widzi tekstu w propsach, stałych i `toast`
 - Status: zgłoszone (2.11, weryfikator G-243)
 - Ważność: S4 (luka w narzędziu) · Zasięg: `tools/i18n-scan` po #214 nie liczy literałów w propsach własnych komponentów (`<Button label="move">`), stałych i obiektach przekazanych do JSX (`{L}`, `{LABELS[k]}`), `.map` po tablicy literałów, `{"x" as string}`, `?:` w `${}` szablonu, `{["Open", x]}`, `toast("Saved")`; dziś w kodzie nic takiego nie ma (przegląd weryfikatora), ale reguła tego nie pilnuje

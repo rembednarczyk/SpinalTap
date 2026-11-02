@@ -2,6 +2,15 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-246 Dach namiotowy wieży cerkwi św. Jozafata za stromy, okap ok. 1,5 m za nisko
+- Status: naprawione w #226 (2.11, PRZYJĘTE; kurator ZGODNE Z UWAGAMI: okap y 8,1, szczyt y 9,5, ostrosłup; przesunięcie obrysu cerkwi w OSM w G-257)
+- Ważność: S4 · Zasięg: 1 budynek, w1382552285 (270; −9,2), Krakowskie · Koszt: mały (korekta danych)
+- Gdzie: T-129
+- Dowód: po #209 ściana 8,1 m (okap y 6,5) i dach namiotowy 3 m (stała importu dla wieży bez dachu w OSM), szczyt y 9,5. NMPT GUGiK 0,5 m: wierzchołek y 9,4 w (269,5; −10), okap ok. y 8,0–8,2 przy krawędziach, czyli ok. 1,4 m dachu (ok. 22°); ortofoto PZGiK: jasny blaszany dach namiotowy, rodzaj zgodny
+- Poprawka: korekta w `tools/osm-import/src/corrections.ts` z odsyłaczem T-129: `roof:shape=pyramidal`, `roof:height` 1,4 i `height` tak, by szczyt został y 9,5
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: okap w1382552285 y 8,0 ± 0,5, szczyt y 9,5 ± 0,5
+
 ### G-256 Skok debugowy robi migawkę z pominięciem `canSave`
 - Status: naprawione w #227 (2.11, PRZYJĘTE; `jump` pyta tę samą bramkę `canSave`; sonda weryfikatora: zapis ręczny w walce z `hebi_ganger` bez rozjazdu przez 300 kroków, strażnicy Tessen i pociski w locie niesprawdzone)
 - Ważność: S4 (tylko narzędzie debugowe; gracz tego nie widzi) · Zasięg: `packages/app/src/debug-api.ts:154` (`saves.snapshot()`) · Koszt: mały
