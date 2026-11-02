@@ -1,9 +1,10 @@
-import type { EntityId, StreetPropItem, StreetPropKind, Vec3 } from "@seki/core";
+import { DECAL_KINDS, type EntityId, type StreetPropItem, type StreetPropKind, type Vec3 } from "@seki/core";
 import type { Mesh, Scene } from "../../babylon";
 import type { RenderQuality } from "../../npr/quality";
 import type { ToonMaterials } from "../../npr/toon-material";
 import { sinkToMesh } from "../dressing";
 import { MeshSink } from "../mesh-sink";
+import { FINE_DECALS, bakeDecal } from "./decal-models";
 import { bakeDoor } from "./door-models";
 import { cellBounds, cellKey } from "./map-index";
 import { type WorldProp, bake, placePoint, planHalos, toWorld } from "./prop-batch";
@@ -337,6 +338,11 @@ export class StreetProps {
     const models = this.deps.quality === "low" ? null : this.cityProps;
     for (const p of pieces) {
       if (this.isPole(p)) continue;
+      // The decals (ADR-0058 stage 6) by their layouts; the phones go without the small ones.
+      if (DECAL_KINDS.has(p.prop)) {
+        if (this.deps.quality !== "low" || !FINE_DECALS.has(p.prop)) bakeDecal(sink, p);
+        continue;
+      }
       // A door on a facade (ADR-0058 stage 9) at its own size, its leaf a model where they have loaded.
       if (p.prop === "door") {
         bakeDoor(sink, models, p);

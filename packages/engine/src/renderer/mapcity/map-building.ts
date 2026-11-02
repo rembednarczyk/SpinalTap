@@ -1,5 +1,6 @@
 import type { BuildingPassage, EntityId, Vec3, ViewDescriptor } from "@seki/core";
 import type { MapBuilding, WorldPassage } from "./facade-frame";
+import { towerlessAt } from "./landmarks/match";
 import { type P2, centroid, pointInRing } from "./polygon";
 
 /** A building view of the map city, with its clean ring in world metres. */
@@ -57,6 +58,7 @@ export const mapBuilding = (id: EntityId, e: BuildingSource, heightAt: (x: numbe
     ...(v.passages?.length ? { passages: v.passages.map((p) => worldPassage(p, e.at)) } : {}),
     ...(v.soffit !== undefined ? { lifted: true } : {}),
     ...(carriesPart(e, around) ? { carriesParts: true } : {}),
+    ...(towerlessAt(e.at.x, e.at.z, v.outline.length) ? { towerless: true } : {}),
     ...(v.signs === "bracket" ? { bracketSigns: true } : {}),
     ...(v.vertical ? { rise: Math.max(0, v.vertical.rise), clutter: Math.min(1, Math.max(0, v.vertical.clutter)) } : {}),
     ...(v.venues?.length ? { venues: v.venues.map((u) => ({ x: u.at.x + e.at.x, z: u.at.z + e.at.z, name: u.name, color: u.color })) } : {}),

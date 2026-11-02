@@ -10,7 +10,10 @@ import { GATE_PASSAGES } from "../../../packages/sim/src/content/lublin/gate-pas
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
 import { REPO } from "../src/paths.ts";
 import { emitProps } from "../src/props-emit.ts";
-import { loadNodeTags } from "../src/props-art.ts";
+import { loadBuildingTags, loadNodeTags } from "../src/props-art.ts";
+import { furnitureBlock, groundY, lublinDecalWalls, poleLampAt, surfaceY } from "../src/decal-walls.ts";
+import { addDecals } from "../src/props-decals.ts";
+import type { Pt } from "../src/geometry.ts";
 import { type PropsPlan, generateProps } from "../src/props-gen.ts";
 import { SHAPES, knownKind, propOf, withShape } from "../src/props-kinds.ts";
 import { evenStations, offRoad, offWall, scatter, sideOffset, stations } from "../src/props-place.ts";
@@ -21,7 +24,6 @@ import { loadCarriageways } from "../src/props-roads.ts";
 import { lublinVenueBoards } from "../src/venue-boards.ts";
 import { lublinDoorWalls } from "../src/door-walls.ts";
 import { addDoors, loadEntrances } from "../src/props-doors.ts";
-import { surfaceY } from "../../../packages/sim/src/content/lublin/terrain";
 
 const CHUNKS = [...KRAKOWSKIE_CHUNKS, ...STARE_MIASTO_CHUNKS, ...PODZAMCZE_CHUNKS, ...NABRZEZE_CHUNKS];
 const PLAN = JSON.parse(readFileSync(join(REPO, "docs/world/lublin-props.todo.json"), "utf8")) as PropsPlan;
@@ -72,8 +74,10 @@ describe("street furniture generator (ADR-0047)", () => {
     const committed = readFileSync(join(REPO, "packages/sim/src/content/lublin/props.generated.ts"), "utf8");
     const market = { roads: loadCarriageways(), doors: gameDoors() };
     const table = generateProps(PLAN, CHUNKS, loadNodeTags(), lublinVenueBoards(), market).byChunk as Map<string, StreetPropItem[]>;
-    // The doors on the facades (ADR-0058 stage 9) after the furniture, as `pnpm osm:props` adds them.
+    // The doors on the facades (ADR-0058 stage 9) after the furniture, then the decals (stage 6), as `pnpm osm:props` adds them.
     addDoors(table, new Site(CHUNKS), lublinDoorWalls(), loadEntrances(), { surfaceY: (p) => surfaceY(p.x, p.z), gameDoors: gameDoors() });
+    const ctx = { groundY: (p: Pt) => groundY(p.x, p.z), surfaceY: (p: Pt) => surfaceY(p.x, p.z), buildingTags: loadBuildingTags(), poleLamp: poleLampAt, blockOf: furnitureBlock };
+    addDecals(table, new Site(CHUNKS), lublinDecalWalls(), ctx);
     expect(emitProps(table)).toBe(committed);
   });
 
