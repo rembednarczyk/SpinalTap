@@ -3,7 +3,7 @@ import { DRAIN_GRATE, HOUSE_PLATE, STICKER_HOSTS, grateLayout, graffitiLayout, h
 import { doorVariant } from "../../../packages/core/src/world/doors.ts";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
 import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
-import { DOOR_FRAME, type DecalContext, type DecalWall, END_ROOM, MURAL_LIFT, PLATE_LIFT, STREET_LIFT, addDecals } from "../src/props-decals.ts";
+import { BAND_ROOM, DOOR_FRAME, type DecalContext, type DecalWall, END_ROOM, MURAL_LIFT, PLATE_LIFT, STREET_LIFT, addDecals } from "../src/props-decals.ts";
 import { GRATE_SPACING, KERB_GAP, STICKER_GAP, grateCorners } from "../src/props-decals-street.ts";
 import { Site } from "../src/props-site.ts";
 import type { Tags } from "../src/osm.ts";
@@ -70,6 +70,8 @@ const wall = (x0: number, patch: Partial<DecalWall> = {}): DecalWall => ({
   passages: false,
   neighbourTop: () => null,
   boards: [],
+  // The renderer's plinth band: 0.2 m under the foot to 0.55 m over the ground floor's line.
+  band: { bottom: -0.2, top: (patch.base ?? 0) + 0.55 },
   ...patch,
 });
 
@@ -136,16 +138,33 @@ describe("graffiti (ADR-0058 stage 6)", () => {
     }
   });
 
-  it("goes on a glazed wall only in its plinth, under its ground floor, where the plinth is tall enough", () => {
+  it("goes on a glazed wall only on its plinth band's face, where the band stands tall enough over the paving", () => {
     expect(decals(row({ glassFree: false })).of("graffiti")).toHaveLength(0);
-    expect(decals(row({ glassFree: false, base: 0.8 })).of("graffiti")).toHaveLength(0);
+    expect(decals(row({ glassFree: false, base: 0.3 })).of("graffiti")).toHaveLength(0);
+    // No band drawn (a building with the game's doorways is turned down anyway): no plinth piece.
+    expect(decals(row({ glassFree: false, base: 1.6, band: null })).of("graffiti")).toHaveLength(0);
     const g = decals(row({ glassFree: false, base: 1.6 })).of("graffiti");
     expect(g.length).toBeGreaterThan(5);
     for (const i of g) {
       const l = graffitiLayout(i.variant);
-      expect(i.y + l.lift + l.height).toBeLessThanOrEqual(1.6 - 0.06 + 1e-6);
+      expect(l.band).toBe(true);
+      expect(i.y + l.lift + l.height).toBeLessThanOrEqual(1.6 + 0.55 - 0.05 + 1e-6);
       expect(i.y + l.lift).toBeGreaterThanOrEqual(0.12 - 1e-6);
     }
+  });
+
+  it("starts a piece on the wall itself, a mural and a plate over the plinth band, which would hide it", () => {
+    const tags = new Map(row().map((w): [string, Tags] => [w.osm, { "addr:housenumber": "5" }]));
+    const { items } = decals(row({ base: 1.2, top: 5 }), { buildingTags: tags });
+    const walls = items.filter((i) => i.prop === "house-plate" || (i.prop === "graffiti" && !graffitiLayout(i.variant).band));
+    expect(walls.length).toBeGreaterThan(20);
+    for (const i of walls) {
+      const lift = i.prop === "house-plate" ? plateLayout(i.variant).lift : graffitiLayout(i.variant).lift;
+      expect(i.y + lift, i.prop).toBeGreaterThanOrEqual(1.2 + 0.55 + BAND_ROOM - 1e-6);
+    }
+    const murals = decals(row({ blind: true, from: 0, top: 9 })).of("graffiti");
+    expect(murals.length).toBeGreaterThan(5);
+    for (const i of murals) expect(i.y + graffitiLayout(i.variant).lift).toBeGreaterThanOrEqual(0.55 + BAND_ROOM - 1e-6);
   });
 
   it("paints a firewall over its neighbour as a mural, never where a holo-ad may hang", () => {
@@ -260,6 +279,14 @@ describe("house number plates", () => {
     expect([l.number, l.letter]).toEqual([12, 1]);
     expect(p[0]!.y + l.lift).toBeCloseTo(PLATE_LIFT, 1);
     onItsWall(p[0]!, walls, HOUSE_PLATE.width);
+  });
+
+  it("lifts the plate over the plinth band, but not out of sight over a steep street", () => {
+    const tags = new Map([["w0", { "addr:housenumber": "9" }]]);
+    const over = decals([wall(0, { base: 2, top: 9 })], { buildingTags: tags }).of("house-plate");
+    expect(over).toHaveLength(1);
+    expect(over[0]!.y + plateLayout(over[0]!.variant).lift).toBeGreaterThanOrEqual(2 + 0.55 + BAND_ROOM - 1e-6);
+    expect(decals([wall(0, { base: 2.9, top: 9 })], { buildingTags: tags }).of("house-plate")).toHaveLength(0);
   });
 
   it("puts none without a number, on a glazed wall, a landmark or a wall facing no street; on the old town's houses it does", () => {

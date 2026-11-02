@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { MeshSink } from "../src/renderer/mesh-sink";
 import { STICKER_OUT, decalModel, grateModel, plateModel, stickerModel } from "../src/renderer/mapcity/decal-models";
 import { LAYER, graffitiModel } from "../src/renderer/mapcity/decal-paint";
+import { PLINTH_BAND } from "../src/renderer/mapcity/facade-frame";
 import { toWorld } from "../src/renderer/mapcity/prop-batch";
 import { buildPropModel } from "../src/renderer/mapcity/prop-models";
 
@@ -40,6 +41,19 @@ describe("graffiti (ADR-0058 stage 6)", () => {
         for (let i = 0; i < g.vertexCount; i++) expect([g.normals[i * 3], g.normals[i * 3 + 1], g.normals[i * 3 + 2]]).toEqual([0, 0, 1]);
         // The same layout, the same paint.
         expect(graffitiModel({ design, width, height, lift }).positions).toEqual(g.positions);
+      }
+    }
+  });
+
+  it("lies on the plinth band's face when painted on the band, in front of the band the facade draws", () => {
+    for (let design = 0; design < GRAFFITI_DESIGNS; design++) {
+      const flat = graffitiModel({ design, width: 1.4, height: 0.5, lift: 0.2 });
+      const onBand = graffitiModel({ design, width: 1.4, height: 0.5, lift: 0.2, band: true });
+      expect(onBand.vertexCount).toBe(flat.vertexCount);
+      for (let i = 0; i < onBand.vertexCount; i++) {
+        expect(onBand.positions[i * 3]).toBe(flat.positions[i * 3]);
+        expect(onBand.positions[i * 3 + 2]! - flat.positions[i * 3 + 2]!).toBeCloseTo(PLINTH_BAND.out, 9);
+        expect(onBand.positions[i * 3 + 2]!).toBeGreaterThan(PLINTH_BAND.out + 0.01);
       }
     }
   });

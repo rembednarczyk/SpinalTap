@@ -88,6 +88,7 @@
   "decal-on-crossing": 0,
   "decal-alone-in-block": 0,
   "decal-on-decal": 0,
+  "decal-under-plinth": 0,
   "door-off-wall": 0,
   "door-floating": 0,
   "door-in-window": 0,

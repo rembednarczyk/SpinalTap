@@ -23,18 +23,25 @@ export interface GraffitiLayout {
   readonly width: number;
   readonly height: number;
   readonly lift: number;
+  /** Painted on the face of the building's plinth band (the renderer's dark stone round its foot), not on the wall behind it. */
+  readonly band?: boolean;
 }
 
 export const GRAFFITI_DESIGNS = 8;
+/** The highest lift a graffiti variant and a plate variant hold (m). */
+export const GRAFFITI_MAX_LIFT = 51.1;
+export const PLATE_MAX_LIFT = 6.3;
 
-/** Bits 0-2 the design, 3-8 the width (dm), 9-14 the height (dm), 15-23 the lift (dm). */
-export const graffitiVariant = (g: GraffitiLayout): number => (g.design & 7) | (dm(g.width, 6) << 3) | (dm(g.height, 6) << 9) | (dm(g.lift, 9) << 15);
+/** Bits 0-2 the design, 3-8 the width (dm), 9-14 the height (dm), 15-23 the lift (dm), 24 on the plinth band. */
+export const graffitiVariant = (g: GraffitiLayout): number =>
+  ((g.design & 7) | (dm(g.width, 6) << 3) | (dm(g.height, 6) << 9) | (dm(g.lift, 9) << 15) | (g.band ? 1 << 24 : 0)) >>> 0;
 
 export const graffitiLayout = (v: number): GraffitiLayout => ({
   design: v & 7,
   width: ((v >> 3) & 63) / 10,
   height: ((v >> 9) & 63) / 10,
   lift: ((v >> 15) & 511) / 10,
+  ...((v >> 24) & 1 ? { band: true } : {}),
 });
 
 /** A house number plate: the size every plate has (m), its number and letter from the map. */
@@ -71,7 +78,7 @@ export const parseHouseNumber = (v: string | undefined): { number: number; lette
 
 /**
  * What a sticker may be stuck on, as the renderer draws it (`renderer/mapcity/prop-lamps.ts`,
- * `prop-street.ts`; `decal-hosts.test.ts` holds the two together): a box's faces (half sizes in the
+ * `prop-street.ts`; `packages/engine/test/decal-models.test.ts` holds the two together): a box's faces (half sizes in the
  * host's frame, the faces a sticker may take: 0 +x, 1 -x, 2 +z, 3 -z) or a prism's (sides, its
  * radius at the foot `y0` and at `y1`, all its faces), and the heights a sticker's middle keeps to.
  */

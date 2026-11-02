@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { type BuildingUse, type StreetPropItem, type ViewDescriptor, doorVariant, grateVariant, graffitiVariant, plateVariant, stickerVariant } from "../../../packages/core/src";
-import type { Wall } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
+import { type Wall, frameWallMeta } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
+import { shaderGlass } from "../../../packages/engine/test/facade-glass-mask";
 import { RECIPE_BY_OSM } from "../../../packages/engine/src/renderer/mapcity/landmarks/recipes";
 import { shopBoardHeight, shopBoardOn } from "../../../packages/engine/src/renderer/mapcity/sign-plan";
 import { crossingBand } from "../../../packages/sim/src/content/lublin/crossing-bands";
@@ -94,6 +95,8 @@ const on = (w: Wall, prop: StreetPropItem["prop"], s: number, variant: number, {
 };
 const graffiti = (width: number, height: number, lift: number) => graffitiVariant({ design: 1, width, height, lift });
 const plate = (lift: number) => plateVariant({ number: 12, letter: 0, lift });
+/** Graffiti on the face of the building's plinth band. */
+const onBand = (width: number, height: number, lift: number) => graffitiVariant({ design: 1, width, height, lift, band: true });
 
 const GARAGE_S = wallOf(5, 3, 0, -1);
 const RAISED_S = wallOf(5, 33, 0, -1);
@@ -153,13 +156,12 @@ const none = (items: readonly StreetPropItem[], patch: Partial<DecalWorld> = {})
 describe("the glitch scan's decal checks (ADR-0058 stage 6)", () => {
   it("finds nothing on decals put right", () => {
     none([
-      on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.3)),
+      on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.6)),
       on(GARAGE_S, "house-plate", 1, plate(2.2)),
       on(FIREWALL, "graffiti", 3, graffiti(3, 2, 4.5)),
       // In the tenement's and the church's plinths, under their ground floors at 1.2 m.
-      on(TENEMENT_S, "graffiti", 27.5, graffiti(1.2, 0.6, 0.3)),
-      on(CHURCH_S, "house-plate", 45, plateVariant({ number: 3, letter: 0, lift: 0.3 })),
-      on(RAISED_S, "graffiti", 3, graffiti(2, 1, 0.3), { y: 1 }),
+      on(TENEMENT_S, "graffiti", 27.5, onBand(1.2, 0.6, 0.3)),
+      on(RAISED_S, "graffiti", 3, graffiti(2, 1, 0.6), { y: 1 }),
     ]);
     // A plate on a protected building is no graffiti.
     none([on(GARAGE_S, "house-plate", 1, plate(2.2))], {
@@ -169,19 +171,34 @@ describe("the glitch scan's decal checks (ADR-0058 stage 6)", () => {
   });
 
   it("finds a wall decal off the wall's face, turned off its normal, past its ends, over its top, under the wall in view or under the paving", () => {
-    only("decal-off-wall", [on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.3), { out: 0.1 })]);
-    only("decal-off-wall", [on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.3), { turn: 0.1 })]);
-    only("decal-off-wall", [on(GARAGE_S, "graffiti", 1.5, graffiti(4, 1, 0.3))]);
+    only("decal-off-wall", [on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.6), { out: 0.1 })]);
+    only("decal-off-wall", [on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.6), { turn: 0.1 })]);
+    only("decal-off-wall", [on(GARAGE_S, "graffiti", 1.5, graffiti(4, 1, 0.6))]);
     only("decal-off-wall", [on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 2.3))]);
-    only("decal-off-wall", [on(RAISED_S, "graffiti", 3, graffiti(2, 1, 0.3), { y: 0.5 })]);
-    only("decal-off-wall", [on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.3))], {
-      surfaceY: () => 0.4,
+    // Under the raised garage's foot: behind its plinth band as well.
+    expect(run([on(RAISED_S, "graffiti", 3, graffiti(2, 1, 0.3), { y: 0.5 })])["decal-off-wall"]).toBe(1);
+    only("decal-off-wall", [on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.6))], {
+      surfaceY: () => 0.7,
     });
   });
 
-  it("finds a wall decal over the ground floor of a glazed wall", () => {
-    only("decal-in-window", [on(TENEMENT_S, "graffiti", 27.5, graffiti(1.2, 0.6, 0.8))]);
-    only("decal-in-window", [on(TENEMENT_S, "house-plate", 27.5, plate(2.2))]);
+  it("finds a wall decal over the panes of a glazed wall, as the shared port of the shader's mask paints them, and none between them", () => {
+    const f = frameAt(25, 5).frame;
+    const meta = frameWallMeta(f, TENEMENT_S);
+    const along = (s: number) => Math.abs(s - TENEMENT_S.a.x);
+    const glass = (s: number, y: number) => shaderGlass({ x: along(s), y: y - f.b.base }, meta) !== null;
+    const spots = Array.from({ length: 100 }, (_, k) => 20.5 + k * 0.09);
+    const pane = spots.find((s) => glass(s, 2.3))!;
+    const pier = spots.find((s) => [-0.2, 0, 0.2].every((d) => [2.2, 2.3, 2.4, 2.45].every((y) => !glass(s + d, y))))!;
+    expect(pane).toBeDefined();
+    expect(pier).toBeDefined();
+    only("decal-in-window", [on(TENEMENT_S, "graffiti", 25, graffiti(6, 1.5, 1.8))]);
+    only("decal-in-window", [on(TENEMENT_S, "house-plate", pane, plate(2.2))]);
+    none([on(TENEMENT_S, "house-plate", pier, plate(2.2))]);
+    // On the plinth band's face over the tenement's gate and panes: the band hides them.
+    none([on(TENEMENT_S, "graffiti", 25, onBand(9, 0.5, 1.2))]);
+    // Under the ground floor's line the shader paints no glass (the band hides such a piece: another check's).
+    expect(run([on(TENEMENT_S, "graffiti", 25, graffiti(9, 0.6, 0.3))])["decal-in-window"]).toBe(0);
   });
 
   it("finds a decal on a landmark, and graffiti on a protected building or in the Old Town", () => {
@@ -193,20 +210,34 @@ describe("the glitch scan's decal checks (ADR-0058 stage 6)", () => {
       x: (w.a.x + w.b.x) / 2,
       z: (w.a.z + w.b.z) / 2,
     };
-    only("decal-on-landmark", [lm], { surfaceY: () => -100 });
-    only("decal-on-landmark", [on(CHURCH_S, "graffiti", 45, graffiti(1, 0.5, 0.3))]);
-    only("decal-on-landmark", [on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.3))], { tagsAt: () => ({ historic: "yes" }) });
-    only("decal-on-landmark", [on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.3))], { tagsAt: () => ({ heritage: "2" }) });
-    only("decal-on-landmark", [on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.3))], { districtAt: () => "kanal" });
+    expect(run([lm], { surfaceY: () => -100 })["decal-on-landmark"]).toBe(1);
+    only("decal-on-landmark", [on(CHURCH_S, "graffiti", 45, onBand(1, 0.5, 0.3))]);
+    only("decal-on-landmark", [on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.6))], { tagsAt: () => ({ historic: "yes" }) });
+    only("decal-on-landmark", [on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.6))], { tagsAt: () => ({ heritage: "2" }) });
+    only("decal-on-landmark", [on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.6))], { districtAt: () => "kanal" });
+  });
+
+  it("finds a wall decal behind the plinth band, one on the band reaching past it, and none on a band not drawn", () => {
+    // The garages' band up to 0.55 m, the tenement's from -0.2 to 1.75 m.
+    only("decal-under-plinth", [on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.5))]);
+    only("decal-under-plinth", [on(GARAGE_S, "house-plate", 1, plate(0.3))]);
+    only("decal-under-plinth", [on(TENEMENT_S, "graffiti", 27.5, onBand(1.2, 0.6, 1.2))]);
+    expect(run([on(TENEMENT_S, "graffiti", 27.5, onBand(1.2, 0.6, 0.3), { y: -0.6 })])["decal-under-plinth"]).toBe(1);
+    none([on(TENEMENT_S, "graffiti", 27.5, onBand(1.2, 0.6, 1.1))]);
+    // A building with the game's doorways has no band: graffiti on its wall is clear of one, and none can be on it.
+    const gate = building(box(0, 0, 10, 6), 3, "garage", { doorways: [{ at: { x: 0, z: -3 }, width: 2, bottom: 0, top: 2.5 }] });
+    const views = [gate, ...VIEWS.slice(1)];
+    expect(run([on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.3))], { views })["decal-under-plinth"]).toBe(0);
+    expect(run([on(GARAGE_S, "graffiti", 3, onBand(2, 0.3, 0.2))], { views })["decal-under-plinth"]).toBe(1);
   });
 
   it("finds a wall decal reaching into a taller neighbour", () => {
-    only("decal-in-neighbour", [on(GARAGE_S, "graffiti", 8.9, graffiti(1.6, 1, 0.3))]);
+    only("decal-in-neighbour", [on(GARAGE_S, "graffiti", 8.9, graffiti(1.6, 1, 0.6))]);
   });
 
   it("finds a wall decal under a venue's board, in a shop board's band or on a holo-ad's wall", () => {
     only("decal-on-sign", [on(HOLO_WALL, "graffiti", 4, graffiti(3, 2, 4.5))]);
-    only("decal-on-sign", [on(TENEMENT_S, "graffiti", 24, graffiti(1, 0.6, 0.3))], { boards: [{ ...BOARD, bottom: 0.5, top: 1.0 }] });
+    only("decal-on-sign", [on(TENEMENT_S, "graffiti", 24, onBand(1, 0.6, 0.3))], { boards: [{ ...BOARD, bottom: 0.5, top: 1.0 }] });
     // A shop's street wall with its board's band (glazed, so the window's check finds it too).
     // The first look whose facade hangs a shop board.
     const shop = Array.from({ length: 64 }, (_, look) =>
@@ -235,11 +266,11 @@ describe("the glitch scan's decal checks (ADR-0058 stage 6)", () => {
   });
 
   it("finds a wall decal by a passage, or on a building with the game's doorways", () => {
-    only("decal-in-passage", [on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.3))], { passages: [{ from: { x: 4, z: -3 }, to: { x: 4, z: 3 }, width: 2 }] });
+    only("decal-in-passage", [on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.6))], { passages: [{ from: { x: 4, z: -3 }, to: { x: 4, z: 3 }, width: 2 }] });
     const gate = building(box(0, 0, 10, 6), 3, "garage", {
       doorways: [{ at: { x: 0, z: -3 }, width: 2, bottom: 0, top: 2.5 }],
     });
-    only("decal-in-passage", [on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.3))], { views: [gate, ...VIEWS.slice(1)] });
+    only("decal-in-passage", [on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.6))], { views: [gate, ...VIEWS.slice(1)] });
   });
 
   const lamp: StreetPropItem = {
@@ -309,22 +340,22 @@ describe("the glitch scan's decal checks (ADR-0058 stage 6)", () => {
   });
 
   it("finds a wall decal over another on the same wall, and none side by side, one over the other or on two walls", () => {
-    only("decal-on-decal", [on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.3)), on(GARAGE_S, "house-plate", 3.5, plate(0.8))], {}, 1);
-    only("decal-on-decal", [on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.3)), on(GARAGE_S, "graffiti", 4.5, graffiti(2, 0.6, 1.0))], {}, 1);
-    none([on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.3)), on(GARAGE_S, "graffiti", 5.2, graffiti(2, 1, 0.3))]);
-    none([on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.3)), on(GARAGE_S, "house-plate", 3, plate(1.4))]);
+    only("decal-on-decal", [on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.6)), on(GARAGE_S, "house-plate", 3.5, plate(0.8))], {}, 1);
+    only("decal-on-decal", [on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.6)), on(GARAGE_S, "graffiti", 4.5, graffiti(2, 0.6, 1.0))], {}, 1);
+    none([on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.6)), on(GARAGE_S, "graffiti", 5.2, graffiti(2, 1, 0.6))]);
+    none([on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.6)), on(GARAGE_S, "house-plate", 3, plate(1.7))]);
     const west = wallOf(5, 3, -1, 0);
-    none([on(GARAGE_S, "graffiti", 1, graffiti(1.2, 1, 0.3)), on(west, "graffiti", 0.8, graffiti(1.2, 1, 0.3))]);
+    none([on(GARAGE_S, "graffiti", 1, graffiti(1.2, 1, 0.6)), on(west, "graffiti", 0.8, graffiti(1.2, 1, 0.6))]);
     // Two garages' walls alike along them, the pieces at the same place on each and at heights that meet.
-    none([on(GARAGE_S, "graffiti", 3, graffiti(2, 1.5, 0.3)), on(RAISED_S, "graffiti", 3, graffiti(2, 1, 0.3), { y: 1 })]);
+    none([on(GARAGE_S, "graffiti", 3, graffiti(2, 1.5, 0.6)), on(RAISED_S, "graffiti", 3, graffiti(2, 1, 0.6), { y: 1 })]);
   });
 
   it("finds a wall decal over a door of its wall, and none beside it", () => {
     const door = (s: number): StreetPropItem => ({ ...on(GARAGE_S, "door", s, doorVariant({ model: "shutter", width: 1.2, height: 2.3 })), prop: "door" });
-    only("decal-on-decal", [on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.3)), door(3.5)], {}, 1);
-    none([on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.3)), door(5.5)]);
+    only("decal-on-decal", [on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.6)), door(3.5)], {}, 1);
+    none([on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.6)), door(5.5)]);
     // A door on another wall at the same place along it.
-    none([on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.3)), { ...door(3.5), z: door(3.5).z + 30 }]);
+    none([on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.6)), { ...door(3.5), z: door(3.5).z + 30 }]);
   });
 
   it("finds a decal in a furniture block no other piece is in", () => {

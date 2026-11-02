@@ -6,7 +6,7 @@
  * glass on it at all, the venues' boards on it and whether a holo-ad may hang on it. It reads the
  * renderer's modules: Node loads it through Vite's module runner (`props.ts`), the tests directly.
  */
-import { type FacadeFrame, type Wall, frameWallMeta, hiddenWall } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
+import { type FacadeFrame, type Wall, frameWallMeta, hiddenWall, plinthBand } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
 import { cellKey } from "../../../packages/engine/src/renderer/mapcity/map-index";
 import { PROP_BLOCK } from "../../../packages/engine/src/renderer/mapcity/prop-shapes";
 import { isPoleLamp } from "../../../packages/engine/src/renderer/mapcity/utility-poles";
@@ -65,6 +65,7 @@ export const cityDecalWalls = (views: readonly DrawnView[]): DecalWall[] => {
           blind: w.blind,
           glassFree: glassFree(f, w),
           holo: holoMayHang(f, w),
+          band: plinthBand(f.b),
           passages: (f.b.passages?.length ?? 0) + (f.b.doorways?.length ?? 0) > 0,
           neighbourTop: (x, z) => f.neighbour(x, z, f.b.id),
           boards: boards

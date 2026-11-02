@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   DECAL_KINDS,
+  GRAFFITI_MAX_LIFT,
+  PLATE_MAX_LIFT,
   STICKER_HOSTS,
   WALL_DECALS,
   grateLayout,
@@ -34,6 +36,16 @@ describe("decal layouts", () => {
     ]) {
       expect(Number.isInteger(v) && v >= 0 && v < 2 ** 31).toBe(true);
     }
+  });
+
+  it("holds the highest lifts it names and graffiti on the plinth band", () => {
+    expect(graffitiLayout(graffitiVariant({ design: 2, width: 1, height: 0.5, lift: GRAFFITI_MAX_LIFT })).lift).toBe(GRAFFITI_MAX_LIFT);
+    expect(plateLayout(plateVariant({ number: 1, letter: 0, lift: PLATE_MAX_LIFT })).lift).toBe(PLATE_MAX_LIFT);
+    expect(plateLayout(plateVariant({ number: 1, letter: 0, lift: PLATE_MAX_LIFT + 1 })).lift).toBe(PLATE_MAX_LIFT);
+    const banded = graffitiVariant({ design: 7, width: 6.3, height: 6.3, lift: GRAFFITI_MAX_LIFT, band: true });
+    expect(graffitiLayout(banded)).toEqual({ design: 7, width: 6.3, height: 6.3, lift: GRAFFITI_MAX_LIFT, band: true });
+    expect(Number.isInteger(banded) && banded > 0 && banded < 2 ** 31).toBe(true);
+    expect(graffitiLayout(graffitiVariant({ design: 7, width: 1, height: 1, lift: 1 })).band).toBeUndefined();
   });
 
   it("reads the map's house numbers: the first number and its letter, none without a number", () => {

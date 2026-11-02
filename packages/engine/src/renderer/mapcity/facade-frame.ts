@@ -177,6 +177,13 @@ export const frameWallMeta = (f: FacadeFrame, w: Wall): Uv => wallMeta(f.storey,
 /** Walls a neighbour hides up to this building's top: not worth drawing. */
 export const hiddenWall = (f: FacadeFrame, w: Wall): boolean => w.blind && w.coveredTo >= f.top - 0.1;
 
+/** The plinth band round a building's foot (`planNearBuilding`): dark stone `out` metres off its walls, from `below` under its foot to `above` over its ground floor's line. */
+export const PLINTH_BAND = { out: 0.06, below: 0.2, above: 0.55 } as const;
+
+/** Where a building's plinth band runs (world y), or null: none on a lifted building or across the game's doorways. */
+export const plinthBand = (b: MapBuilding): { readonly bottom: number; readonly top: number } | null =>
+  b.lifted || b.doorways?.length ? null : { bottom: b.foot - PLINTH_BAND.below, top: b.base + PLINTH_BAND.above };
+
 /** Colours of a building's parts, with the dressing flag in alpha. */
 export interface Palette {
   readonly wall: Rgba;

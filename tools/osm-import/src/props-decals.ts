@@ -10,8 +10,11 @@
  *      outline), the piece from `STREET_LIFT` over the pavement;
  *    - `mural`: a firewall over its lower neighbour where no holo-ad may hang (`holoMayHang`),
  *      from `MURAL_LIFT` over the neighbour's top;
- *    - `plinth`: the plinth of a building on a slope, under its ground floor (the shader's glass
- *      starts over it), where it is at least `PLINTH_MIN` tall over the paving.
+ *    - `plinth`: on the face of the plinth band the renderer draws round a building's foot
+ *      (`plinthBand`: dark stone 6 cm off the wall, up to 0.55 m over the ground floor's line),
+ *      where the ground floor stands at least `PLINTH_MIN` over the paving: a building on a slope.
+ *    The band hides the wall behind it, so a piece on the wall itself (the street's, a mural, a
+ *    plate) starts `BAND_ROOM` over the band's top.
  *    A wall takes one piece per `WALL_STEP` of its length at most, by a hash of the building's
  *    place, the wall and the zone against the district's share.
  * 2. **A house number** (`addr:housenumber` of the building's outline in the map) on one street wall
@@ -25,7 +28,7 @@
  * block of the renderer's furniture (`blockOf`) the furniture leaves empty: it would be a mesh more.
  */
 import type { StreetPropItem, StreetPropKind } from "../../../packages/core/src/world/city-geo.ts";
-import { GRAFFITI_DESIGNS, HOUSE_PLATE, graffitiVariant, parseHouseNumber, plateVariant } from "../../../packages/core/src/world/decals.ts";
+import { GRAFFITI_DESIGNS, GRAFFITI_MAX_LIFT, HOUSE_PLATE, PLATE_MAX_LIFT, graffitiVariant, parseHouseNumber, plateVariant } from "../../../packages/core/src/world/decals.ts";
 import { doorLayout } from "../../../packages/core/src/world/doors.ts";
 import type { Pt } from "./geometry.ts";
 import type { Tags } from "./osm.ts";
@@ -57,6 +60,8 @@ export interface DecalWall {
   readonly glassFree: boolean;
   /** A holo-ad may hang on it (`holoMayHang`). */
   readonly holo: boolean;
+  /** The renderer's plinth band round the building's foot (world y), or null (`plinthBand`). */
+  readonly band: { readonly bottom: number; readonly top: number } | null;
   /** Its building has the game's doorways or passages. */
   readonly passages: boolean;
   /** The top (world y) of another building over a point, or null. */
@@ -115,11 +120,15 @@ const TOP_ROOM = 0.3;
 /** The least plinth that takes graffiti, its bottom over the paving and its top under the ground floor (m). */
 export const PLINTH_MIN = 0.9;
 const PLINTH_FOOT = 0.12;
-const PLINTH_HEAD = 0.06;
+const PLINTH_HEAD = 0.05;
+/** A piece on the wall itself keeps this far over the plinth band's top (m). */
+export const BAND_ROOM = 0.05;
 /** A piece per this much wall at most (m). */
 export const WALL_STEP = 9;
 /** A house plate's bottom over the pavement (m), and how far in front of its wall a street's axis may run. */
 export const PLATE_LIFT = 2.2;
+/** The highest a plate's bottom goes over the pavement, over a plinth band on a slope (m). */
+export const PLATE_HIGHEST = 3.2;
 export const STREET_REACH = 14;
 /** How far in front of a decal the ground must be open, and the corners' look-out for neighbours (m). */
 export const FRONT = 0.4;
@@ -142,6 +151,8 @@ interface WallSpot {
   readonly bottom: number;
   readonly top: number;
   readonly variant: (lift: number, height: number) => number;
+  /** The highest lift its variant holds (m). */
+  readonly maxLift: number;
 }
 
 /** Why a spot was turned down, for the importer's report. */
@@ -187,7 +198,7 @@ const settle = (site: Site, w: DecalWall, s: WallSpot, ctx: DecalContext, street
   const y = r2(ctx.groundY(at));
   const lift = dmUp(s.bottom - y);
   const height = dmDown(s.top - (y + lift));
-  if (height < MIN_HEIGHT || lift < 0) return "top";
+  if (height < MIN_HEIGHT || lift < 0 || lift > s.maxLift + 1e-6) return "top";
   const bottom = y + lift;
   const top = bottom + height;
   for (const u of [u0, u1]) {
@@ -229,17 +240,18 @@ const graffitiSpots = (w: DecalWall, zone: DecalZone, ctx: DecalContext, key: st
     const u = k * slot + END_ROOM + width / 2 + unit(`${kk}:u`) * (room - width);
     let bottom: number;
     let top: number;
+    const overBand = (w.band?.top ?? -Infinity) + BAND_ROOM;
     if (zone === "mural") {
-      bottom = w.from + MURAL_LIFT;
+      bottom = Math.max(w.from + MURAL_LIFT, overBand);
       top = Math.min(w.top - TOP_ROOM, bottom + 1.5 + unit(`${kk}:h`) * 2.5);
     } else if (zone === "street") {
-      bottom = pavingUnder(ctx, w, u - width / 2, u + width / 2) + STREET_LIFT;
+      bottom = Math.max(pavingUnder(ctx, w, u - width / 2, u + width / 2) + STREET_LIFT, overBand);
       top = Math.min(w.top - TOP_ROOM, bottom + 0.5 + unit(`${kk}:h`) * 1.1);
     } else {
       const paving = pavingUnder(ctx, w, u - width / 2, u + width / 2);
-      if (w.base - paving < PLINTH_MIN) continue;
-      bottom = paving + PLINTH_FOOT;
-      top = w.base - PLINTH_HEAD;
+      if (!w.band || w.base - paving < PLINTH_MIN) continue;
+      bottom = Math.max(paving + PLINTH_FOOT, w.band.bottom);
+      top = w.band.top - PLINTH_HEAD;
     }
     const design = fnv(`${kk}:d`) % GRAFFITI_DESIGNS;
     out.push({
@@ -248,7 +260,8 @@ const graffitiSpots = (w: DecalWall, zone: DecalZone, ctx: DecalContext, key: st
       width,
       bottom,
       top,
-      variant: (lift, height) => graffitiVariant({ design, width, height, lift }),
+      variant: (lift, height) => graffitiVariant({ design, width, height, lift, ...(zone === "plinth" ? { band: true } : {}) }),
+      maxLift: GRAFFITI_MAX_LIFT,
     });
   }
   return out;
@@ -285,7 +298,10 @@ const plateSpot = (site: Site, walls: readonly DecalWall[], tags: Tags, ctx: Dec
   const pick = facing[0]?.w;
   if (!pick) return null;
   const u = pick.length / 2;
-  const bottom = pavingUnder(ctx, pick, u - HOUSE_PLATE.width / 2, u + HOUSE_PLATE.width / 2) + PLATE_LIFT;
+  const paving = pavingUnder(ctx, pick, u - HOUSE_PLATE.width / 2, u + HOUSE_PLATE.width / 2);
+  const bottom = Math.max(paving + PLATE_LIFT, (pick.band?.top ?? -Infinity) + BAND_ROOM);
+  // A plinth band high over a steep street would lift the plate out of a passer-by's sight.
+  if (bottom > paving + PLATE_HIGHEST) return null;
   return {
     w: pick,
     s: {
@@ -295,6 +311,7 @@ const plateSpot = (site: Site, walls: readonly DecalWall[], tags: Tags, ctx: Dec
       bottom,
       top: Math.min(bottom + HOUSE_PLATE.height + 0.1, pick.top - 0.2),
       variant: (lift) => plateVariant({ ...no, lift }),
+      maxLift: PLATE_MAX_LIFT,
     },
   };
 };

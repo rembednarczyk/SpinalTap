@@ -1,6 +1,7 @@
 import { type GraffitiLayout, graffitiVariant } from "@seki/core";
 import { prng } from "../city-kit-data";
 import { MeshSink, type Rgba, type Vec } from "../mesh-sink";
+import { PLINTH_BAND } from "./facade-frame";
 import { face, vertex } from "./sink-ops";
 import { paint } from "./prop-kit";
 
@@ -223,10 +224,11 @@ const arrows = (sink: MeshSink, b: Box, rand: () => number): void => {
 
 const DESIGNS = [throwUp, tag, piece, stencil, drips, kana, mural, arrows] as const;
 
-/** A piece of graffiti in its own frame (see the module's doc). */
+/** A piece of graffiti in its own frame (see the module's doc); one on the plinth band lies on the band's face, `PLINTH_BAND.out` further out. */
 export const graffitiModel = (g: GraffitiLayout): MeshSink => {
   const sink = new MeshSink();
-  const rand = prng(graffitiVariant(g) ^ 0x6a5f1);
+  const rand = prng(graffitiVariant({ ...g, band: false }) ^ 0x6a5f1);
   DESIGNS[g.design % DESIGNS.length]!(sink, { w: g.width, y0: g.lift, y1: g.lift + g.height }, rand);
+  if (g.band) for (let i = 2; i < sink.positions.length; i += 3) sink.positions[i] = sink.positions[i]! + PLINTH_BAND.out;
   return sink;
 };

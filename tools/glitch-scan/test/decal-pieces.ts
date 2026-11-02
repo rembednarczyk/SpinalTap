@@ -1,5 +1,6 @@
 import { DECAL_KINDS, DRAIN_GRATE, HOUSE_PLATE, doorLayout, STICKER_HOSTS, type StreetPropItem, WALL_DECALS, grateLayout, graffitiLayout, hostFaces, plateLayout, stickerLayout } from "../../../packages/core/src";
-import { type FacadeFrame, type Wall, frameWallMeta, hiddenWall } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
+import { type Wall, frameWallMeta, hiddenWall, plinthBand } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
+import { shaderGlass } from "../../../packages/engine/test/facade-glass-mask";
 import { holoMayHang, shopBoardHeight, shopBoardOn } from "../../../packages/engine/src/renderer/mapcity/sign-plan";
 import { type CrossingBand, inCrossingBand } from "../../../packages/sim/src/content/lublin/crossing-bands";
 import type { BoardSpan } from "../../osm-import/src/props-boards.ts";
@@ -121,8 +122,19 @@ export const decalWall = (frames: readonly FramedBuilding[], i: StreetPropItem):
   return null;
 };
 
-/** Does the facade shader paint glass on the wall anywhere (its storey decodes to 0.05 or more)? */
-const glazed = (f: FacadeFrame, w: Wall): boolean => Math.floor(frameWallMeta(f, w)[0] + 0.0005) / 10 >= 0.05;
+/**
+ * The panes the facade shader paints under a wall decal (`shaderGlass`, the shared port of its glass
+ * mask, ADR-0058 stage 9): sampled every 5 cm over the decal, in metres along the wall and over the
+ * ground floor's line, as the wall's UVs give them to the shader.
+ */
+const panesUnder = (on: OnWall): number => {
+  const meta = frameWallMeta(on.b.frame, on.wall);
+  let n = 0;
+  for (let x = on.u - on.half; x <= on.u + on.half + 1e-6; x += 0.05) {
+    for (let y = on.bottom; y <= on.top + 1e-6; y += 0.05) if (shaderGlass({ x, y: y - on.b.frame.b.base }, meta)) n++;
+  }
+  return n;
+};
 
 const PROTECTED_USE: ReadonlySet<string> = new Set(["historic", "church", "civic"]);
 
@@ -190,9 +202,12 @@ export const decalChecks = (all: readonly StreetPropItem[], world: DecalWorld): 
         return [];
       }),
     /** A wall decal over the ground floor's line of a wall the facade shader glazes. */
-    "decal-in-window": placed((i, on) =>
-      glazed(on.b.frame, on.wall) && on.top > on.b.frame.b.base + 1e-6 ? `on a glazed wall up to ${(on.top - on.b.frame.b.base).toFixed(2)} m over its ground floor` : null,
-    ),
+    "decal-in-window": placed((i, on) => {
+      // Graffiti on the plinth band's face lies over the band, whose stone hides the wall behind it.
+      if (i.prop === "graffiti" && graffitiLayout(i.variant).band) return null;
+      const n = panesUnder(on);
+      return n > 0 ? `over the facade's panes (${n} samples of 5 cm)` : null;
+    }),
     /** A decal on a landmark; graffiti on a building of historic, sacred or civic use, one the map tags historic or heritage, or in the Old Town. */
     "decal-on-landmark": placed((i, on) => {
       if (on.b.landmark) return "on a landmark";
@@ -210,6 +225,20 @@ export const decalChecks = (all: readonly StreetPropItem[], world: DecalWorld): 
         if (top !== null && top > on.bottom + 1e-6) return `in a neighbour ${(top - on.bottom).toFixed(2)} m over its bottom`;
       }
       return null;
+    }),
+    /**
+     * A wall decal the plinth band round the building's foot hides (`plinthBand`: the renderer's
+     * dark stone 6 cm off the wall), or one painted on the band's face reaching past the band or
+     * on a band the building does not have.
+     */
+    "decal-under-plinth": placed((i, on) => {
+      const band = plinthBand(on.b.frame.b);
+      const onBand = i.prop === "graffiti" && graffitiLayout(i.variant).band === true;
+      if (onBand) {
+        if (!band) return "on a plinth band the building has not";
+        return on.top > band.top + 1e-6 || on.bottom < band.bottom - 1e-6 ? `on the plinth band reaching past it (${on.bottom.toFixed(2)}..${on.top.toFixed(2)} of ${band.bottom.toFixed(2)}..${band.top.toFixed(2)})` : null;
+      }
+      return band && on.bottom < band.top - 1e-6 ? `behind the plinth band up to ${(band.top - on.bottom).toFixed(2)} m over its bottom` : null;
     }),
     /** A wall decal under a venue's board, in a shop board's band or on a wall a holo-ad may cover. */
     "decal-on-sign": placed((_i, on) => {
