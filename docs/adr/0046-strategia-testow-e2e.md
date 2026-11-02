@@ -43,6 +43,7 @@ Po falach 2 i 3 oraz przy przenosinach do Lublina e2e blokowały pracę i niewie
 2. **Bez czasu rzeczywistego w testach.**
    - Testy krokują symulację z testu (`freeze` + `step`) i czekają na stan gry, nie na zegar.
    - Spec zależny od pętli czasu rzeczywistego przepisujemy na krokowanie albo przenosimy do testów sesji.
+   - Klatki na żądanie (G-226, G-132, 2.11): `freeze(page, { onDemand: true })` (`__seki.setPaused(true, true)`) zatrzymuje też rysowanie w tle, a test prosi o klatki przez `drawFrames(page, n)` / `drawUntilSettled(page)` (`__seki.draw(n)` zwraca stan `frames()`, na który czeka). Pod SwiftShaderem klatka Lublina trwa 2–7 s, a każde `page.evaluate` (teleport, `step`, F5/F9) czekało za klatką rysowaną ze starego miejsca. Ekran wczytywania i podgląd menu postaci rysują się dalej, bo ich klatki to praca. Stan wdrożenia: `npr-perf` (sceny TPP) i `smoke`; zwykły `freeze` rysuje jak dotąd, bo `glitch-shots`, `gpu-queue`, `models` i `touch-layout` czekają na klatki albo robią zrzuty ekranu. Do przeniesienia, gdy ich helpery zaczną prosić o klatki.
 3. **Czas klatki to raport, nie bramka.** Pod SwiftShaderem w CI czas klatki mierzy wydajność runnera, a nie gry.
    - Bramką CI zostają wywołania rysowania i aktywne siatki, bo są deterministyczne.
    - Czas klatki trafia do `reports/perf.json`.
