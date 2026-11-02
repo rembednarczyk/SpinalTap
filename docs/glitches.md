@@ -624,7 +624,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: ≥ 1 drzewo na 150 m² zbocza obu skarp, 0 drzew na ścieżkach i schodach
 
 ### G-213 Biegi schodów krótsze niż szerokie rysowane w poprzek
-- Status: w PR #204 (2.11, weryfikacja PRZYJĘTE z defektem brzegowym: krótki kawałek 0,5–0,65 m tnie się na pasy < 0,4 m niewidoczne dla `planSteps`; runda 2 u autora, potem kurator): `flightStrips` tnie wzdłuż biegu, kontrole `steps-across-run` 28 → 0 i `steps-run-bare` 0; stopnie na różnej wysokości i płaskie krótkie biegi wydzielone do G-228 i G-229
+- Status: w PR #204 (2.11, runda 2 @ 55c759c w ponownej weryfikacji, potem kurator): pasy ≥ 0,45 m, kontrola `steps-band-hidden`; bazy `steps-across-run` 1 i `steps-band-hidden` 1 to stan sprzed G-213 na brzegach chunków (G-234)
 - Ważność: S4 · Zasięg: 36 ze 121 biegów w mieście jest krótszych niż ich pas 3 m, więc renderer bierze dłuższy bok pasa za kierunek biegu i rysuje stopnie w poprzek (np. w66258166 przy Donżonie, w1312664177)
 - Poprawka: zdjąć warunek `w > PATHS.steps` w `flightStrips` (tools/osm-import/src/ground.ts, po #194), żeby każdy bieg krótszy niż szeroki był dzielony na pasy; kontrola skanu „bieg w poprzek”
 - Poboczne: wyciąg `krakowskie.json` bez murków (nieaktualny cache kafli, `osm:fetch --only=krakowskie` z siecią); pas bez nawierzchni między brukiem Placu Zamkowego (x ok. 759) a ścieżką w56965514 (x ok. 765)
@@ -761,6 +761,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: napad (mugging): ciało napastnika niesione przez gracza (`carrying` ustawione) po zapisie i wczytaniu: `carrying` null, 0 ciał. Przed „won” ciało ma klucz `micro:` i odpada w `isMicroKey`, po „won” klucza nie ma i dalej ginie
 - Poprawka: ciało napastnika po zakończeniu zdarzenia staje się zwykłym ciałem w zapisie (jak ciała posiłków, G-193); test zapis/wczytanie z niesionym ciałem
 - Pakiet właściciela: packages/sim (micro-events, bodies), packages/persistence
+
+### G-234 Pasy schodów ucięte brzegiem chunka: klin rysowany w poprzek albo niewidoczny
+- Status: zgłoszone (2.11, naprawiacz G-213); stan sprzed G-213, bazy skanu 1 i 1
+- Ważność: S4 · Zasięg: w56965515 przy (729; 160): trójkąt 1,6 × 0,9 m z brzegu z = 160 rysowany w poprzek (`steps-across-run` 1); w80139527 przy (−200; 125): pas 3 × 0,2 m przy brzegu x = −200, którego `planSteps` nie rysuje (`steps-band-hidden` 1)
+- Poprawka: schody nie przycinane do chunka, tylko całe do chunka ze środkiem pasa (zmienia zasadę „outline clipped to the chunk” z `model.ts`, sprawdzić szew chunków); bazy obu kontroli → 0
+- Pakiet właściciela: tools/osm-import (ground, model), tools/glitch-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
