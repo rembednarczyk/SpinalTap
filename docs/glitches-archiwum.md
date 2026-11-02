@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-242 Napastnik po wygranym napadzie zachowuje `ai.victim` w grze, ale nie po wczytaniu
+- Status: naprawione w #215 (2.11, PRZYJĘTE; luka: brak testu dla „failed” z ogłuszonym napastnikiem, mutacja „czyść tylko przy won” przeżywa; po „failed” żywy napastnik bez klucza teraz rezygnuje z pościgu)
+- Ważność: S4 · Zasięg: `close()` przy „won” nie czyści `ai.victim` (np. `micro:mugging:11:victim`), a zapis tego pola nie trzyma; po przebudzeniu ogłuszonego napastnika `isEngaged` (street.ts:45), `freeToLook` (body-watch-system.ts:31) i `interrupted` (activity.ts:18) różnią się między grą bez wczytania i po wczytaniu (atak na niego jest napaścią tylko po wczytaniu); hash tego nie łapie
+- Poprawka: czyścić `ai.victim` w `close()`; test zapis/wczytanie z obudzonym napastnikiem
+- Pakiet właściciela: packages/sim (micro-events)
+
 ### G-232 Wolnostojące dzwonnice i wieże z `use: historic` rysowane jak kamienice
 - Status: naprawione w #209 (2.11, PRZYJĘTE; kurator: ZGODNE Z UWAGAMI, uwagi w G-244 (cegła), G-245 (okna wież), G-246 (dach Jozafata za stromy))
 - Ważność: S3 (proponowana: zabytek wygląda jak blok) · Zasięg: dzwonnica św. Mikołaja w680377807, wieża cerkwi św. Jozafata w1382552285 (po G-224 z wysokością z NMPT): rzędy oświetlonych okien i płaski szczyt (zrzut `scratchpad/g224/shots/g224-mikolaj-po.png`)

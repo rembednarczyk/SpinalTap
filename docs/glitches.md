@@ -788,12 +788,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: sonda zapis/wczytanie z obalonym cywilem; jeśli ginie, rozszerzyć `strayBodies` z testem
 - Pakiet właściciela: packages/sim, packages/persistence
 
-### G-242 Napastnik po wygranym napadzie zachowuje `ai.victim` w grze, ale nie po wczytaniu
-- Status: w PR #215 (2.11, w weryfikacji): `close()` zdejmuje `ai.victim`; poprawny był stan po wczytaniu (bez wczytania napastnik zostawał na zawsze `alerted`)
-- Ważność: S4 · Zasięg: `close()` przy „won” nie czyści `ai.victim` (np. `micro:mugging:11:victim`), a zapis tego pola nie trzyma; po przebudzeniu ogłuszonego napastnika `isEngaged` (street.ts:45), `freeToLook` (body-watch-system.ts:31) i `interrupted` (activity.ts:18) różnią się między grą bez wczytania i po wczytaniu (atak na niego jest napaścią tylko po wczytaniu); hash tego nie łapie
-- Poprawka: czyścić `ai.victim` w `close()`; test zapis/wczytanie z obudzonym napastnikiem
-- Pakiet właściciela: packages/sim (micro-events)
-
 ### G-243 Skan i18n nie łapie polskich słów bez polskich znaków
 - Status: w PR #214 (2.11, PRZYJĘTE; uwagi weryfikatora poprawione w a521d24, czeka na CI)
 - Ważność: S4 (luka w narzędziu) · Zasięg: `tools/i18n-scan` liczy literały z polskimi znakami; „ruch” w `touch-controls.tsx` przeszedł, baza była 0
@@ -834,7 +828,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/i18n-scan
 
 ### G-248 „Doktor Mori” po polsku także w angielskiej wersji
-- Status: zgłoszone (2.11, weryfikator G-243)
+- Status: w PR #218 (2.11, orkiestrator): `shop.clinic.title` w skanerze
 - Ważność: S4 · Zasięg: `packages/app/src/scan-view.ts:20` `"Doktor Mori"` pokazywany graczowi niezależnie od języka; skan go nie liczy (to nie JSX, a „Doktor” nie ma polskich znaków)
 - Poprawka: tytuł z katalogu (en „Doctor Mori”, pl „Doktor Mori”) albo nazwa własna z decyzją w katalogu; przy okazji podglądy deweloperskie (`lublin-preview/preview-main.ts:40`, `props-gallery.ts:32`) bez zmian, gracz ich nie widzi
 - Pakiet właściciela: packages/app, packages/ui (i18n)
