@@ -7,8 +7,10 @@ import { type BuildingSource, mapBuilding } from "../src/renderer/mapcity/map-bu
 import { cleanRing } from "../src/renderer/mapcity/polygon";
 
 /**
- * Landmarks the map shows whole and without a tower (G-210): the Trinity Chapel by the keep, the
- * Bernardine church. The renderer's bell towers of a church (`roof-plan`) match nothing there.
+ * Landmarks the map shows whole and without a tower (G-210): the Trinity Chapel by the keep has
+ * none, so the renderer's bell towers of a church (`roof-plan`) match nothing there. The
+ * Bernardine church has a real one by its south wall (about (378.1, -247.7)), which waits for its
+ * part (G-214); the renderer's two at its west end would stand in the wrong place.
  */
 
 const all = LUBLIN_CHUNKS.flatMap((c) => c.buildings);
@@ -52,7 +54,7 @@ describe("a landmark the map shows without a tower (G-210)", () => {
     }
   });
 
-  it("nor over the Bernardine church", () => {
+  it("nor over the Bernardine church, whose real tower waits for its part (G-214)", () => {
     const church = sourceOf(byId(BERNARDINES));
     expect(church.view.use).toBe("church");
     for (const near of [false, true]) expect(blockTop(church, near), `near ${near}`).toBeLessThanOrEqual(roofTop(church));

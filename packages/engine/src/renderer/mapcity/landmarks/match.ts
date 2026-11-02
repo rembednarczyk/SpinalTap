@@ -47,9 +47,11 @@ export const landmarkAt = (x: number, z: number, corners: number): LandmarkPart 
 
 /**
  * Landmarks of the curator's list the map shows whole and without a tower (G-210): no
- * `building:part`, no `tower:*` and no tower mapped at them. Bell towers of the renderer's would
- * be the tallest thing about them and match nothing: the Trinity Chapel has none (T-119, NMPT),
- * and the Bernardine church none in the map either (the curator confirms it on a photograph).
+ * `building:part`, no `tower:*` and no tower mapped at them. The Trinity Chapel has none (T-119,
+ * NMPT). The Bernardine church has one, but not where the renderer's would stand: by its south
+ * wall where the nave meets the chancel (about (378.1, -247.7), 5.5 x 5.5 m, helmet to y 39.2 in
+ * NMPT), with a ridge turret at (375.4, -240.1) to y 31.8. Without it is the lesser error than
+ * two made-up towers at its west end, until the tower comes in as a part (G-214) and the entry goes.
  */
 const TOWERLESS_OSM: ReadonlySet<string> = new Set(["w66258167", "w66330578"]);
 
