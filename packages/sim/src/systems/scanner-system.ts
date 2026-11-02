@@ -27,6 +27,7 @@ import type { SimContext, System } from "../world/context";
 import { chestOf, eyeOf, lineOfSight } from "../world/hitscan";
 import { inCreationOrder } from "../world/ordering";
 import { grantQuickhackXp } from "../world/progression-ops";
+import { securityKey } from "../world/reinforcements";
 import { alertedNear, disturb, hackFxOf, isEngaged, noteDetected, noteHacked, noteViolence } from "../world/street";
 import { scanning, worldTimeScale } from "./ability-system";
 import { SEARCH_SECONDS, TRACK_GRACE, effectiveAggroRange, giveLead, guardSees } from "./ai/ganger-perception";
@@ -104,7 +105,7 @@ const SECURITY_REF = /^security:(\d+)$/;
  * reinforcement's `n` with the tick it came in at, as `n` counts again from 1 in the next heat.
  * Nothing for the others, who are not remembered across a save.
  */
-const xpKey = (e: Entity): string | undefined => e.key ?? (e.security ? `security:${e.security.n}@${e.security.since}` : undefined);
+const xpKey = (e: Entity): string | undefined => e.key ?? (e.security ? securityKey(e.security) : undefined);
 
 const findTarget = (ctx: SimContext, ref: string): Entity | null => {
   if (ref.startsWith("#")) {
