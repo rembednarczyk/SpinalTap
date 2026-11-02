@@ -842,7 +842,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: profil biegów w56965515 maleje od −13,5 do −17,1 bez podstopnicy ponad 0,3 m; kontrola `steps-riser-tall` (podstopnica `planSteps` na `groundY` > 0,5 m) baza 7 → co najwyżej 6
 
 ### G-256 Skok debugowy robi migawkę z pominięciem `canSave`
-- Status: w naprawie (2.11, naprawiacz, gałąź `ccr-ec2c4269-ilh8k8-g256`; zgłoszone przez weryfikatora G-253)
+- Status: w PR #227 (2.11, @ 3770e32 w weryfikacji; zgłoszone przez weryfikatora G-253)
 - Ważność: S4 (tylko narzędzie debugowe; gracz tego nie widzi) · Zasięg: `packages/app/src/debug-api.ts:154` (`saves.snapshot()`) · Koszt: mały
 - Dowód: po #225 wszystkie ścieżki zapisu gracza (slot, szybki zapis, autozapis, ukrycie strony) idą przez `canSave`, a skok debugowy bierze migawkę bez tej bramki, także w chwycie i w walce; skok z takiej migawki odtwarza rozjazd G-253 i G-240 w testach e2e, które go używają
 - Poprawka: debugowa migawka przez tę samą bramkę (odmowa z powodem) albo jawny parametr `force` z ostrzeżeniem w logu
