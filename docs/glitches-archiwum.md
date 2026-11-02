@@ -2,6 +2,14 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-208 Pamięć utknięcia gangera poza zapisem: posiłki w heacie rozjeżdżają się po wczytaniu
+- Status: naprawione w #195 (2.11, zapis v27; runda 2 PRZYJĘTE: strona odchylenia posiłku z `n` nazwana zmianą reguły, walidator `since`/`unstickUntil`, `avoid` do 256 najbliższych; świadomy kompromis: ponad 256 postaci w 8 m da inne obejście po wczytaniu)
+- Ważność: S4 · Zasięg: posiłki ochrony w heacie (seed 21 i 5, zapis po 300, 450 i 700 krokach, rozjazd w krokach 209, 59 i 50); `sec2` wciśnięty w `sec1` przy (415,6; −98,9), obejście (unstick) zaczyna się w innym kroku
+- Przyczyna: przejściowa pamięć postępu `Progress` w `createGangerAiSystem` (ADR-0025) nie jest komponentem i nie trafia do zapisu
+- Poprawka: `Progress` jako komponent z zapisem (nowa wersja zapisu) albo pamięć wyliczana z zapisanego stanu; test zapis–wczytanie dla posiłków w heacie
+- Poboczne: `gameOver`, `session.lastThreat`, `player.lastHitBy` (id encji) i `velocity` NPC poza zapisem; stan lotu gracza (`fall`, `airPeak`, `jump`) poza zapisem, więc zapis w powietrzu rozjeżdża się w 1. kroku (weryfikator #185: (2440;545), (490;180), seed 8; pokrewne G-201); walidator przyjmuje `gun.loaded` ponad magazynek i `sniper.perch` spoza tabeli; testy zapisujące martwego gracza porównują stan, którego w grze nie ma
+- Pakiet właściciela: packages/sim, packages/persistence
+
 ### G-212 Podwójne wieże: proceduralna obok wieży z OSM
 - Status: naprawione w #198 (2.11, PRZYJĘTE przez weryfikatora, kurator: ZGODNE Z UWAGAMI, uwagi w T-129/G-224 i G-098): `mappedTower` z OSM i wieże tylko w obrysie; Brygidki bez wieży do G-098, Karmelici Bosi bez wież na trawie
 - Ważność: S4 · Zasięg: cerkiew św. Jozafata w69916021 (wieża z OSM w1382552285 przy (270; −9)) i kościół św. Mikołaja w66258180 (dzwonnica z OSM w680377807 przy (879; 545)) dostają dodatkowo proceduralną wieżę (`roof-plan` `addTowers`); Brygidki w66264082: proceduralne wieże, prawdziwa w1090997970 niezaimportowana (G-098)

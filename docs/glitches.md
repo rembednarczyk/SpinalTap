@@ -630,14 +630,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (rekwizyty)
 - Test przyjęcia: ≥ 1 drzewo na 150 m² zbocza obu skarp, 0 drzew na ścieżkach i schodach
 
-### G-208 Pamięć utknięcia gangera poza zapisem: posiłki w heacie rozjeżdżają się po wczytaniu
-- Status: w PR #195 (2.11, zapis v27; weryfikacja: NIE PRZYJĘTE, runda 2 w naprawie: strona odchylenia z `n` to nienazwana zmiana reguły, walidator `since`/`unstickUntil` i `avoid`, test `chunk-unload`): komponent `walk` i `EntitySnapshot.walk`, trasa przeliczana po wczytaniu
-- Ważność: S4 · Zasięg: posiłki ochrony w heacie (seed 21 i 5, zapis po 300, 450 i 700 krokach, rozjazd w krokach 209, 59 i 50); `sec2` wciśnięty w `sec1` przy (415,6; −98,9), obejście (unstick) zaczyna się w innym kroku
-- Przyczyna: przejściowa pamięć postępu `Progress` w `createGangerAiSystem` (ADR-0025) nie jest komponentem i nie trafia do zapisu
-- Poprawka: `Progress` jako komponent z zapisem (nowa wersja zapisu) albo pamięć wyliczana z zapisanego stanu; test zapis–wczytanie dla posiłków w heacie
-- Poboczne: `gameOver`, `session.lastThreat`, `player.lastHitBy` (id encji) i `velocity` NPC poza zapisem; stan lotu gracza (`fall`, `airPeak`, `jump`) poza zapisem, więc zapis w powietrzu rozjeżdża się w 1. kroku (weryfikator #185: (2440;545), (490;180), seed 8; pokrewne G-201); walidator przyjmuje `gun.loaded` ponad magazynek i `sniper.perch` spoza tabeli; testy zapisujące martwego gracza porównują stan, którego w grze nie ma
-- Pakiet właściciela: packages/sim, packages/persistence
-
 ### G-213 Biegi schodów krótsze niż szerokie rysowane w poprzek
 - Status: zgłoszone (2.11, naprawiacz G-203)
 - Ważność: S4 · Zasięg: 36 ze 121 biegów w mieście jest krótszych niż ich pas 3 m, więc renderer bierze dłuższy bok pasa za kierunek biegu i rysuje stopnie w poprzek (np. w66258166 przy Donżonie, w1312664177)
