@@ -78,6 +78,8 @@ export interface DoorContext {
   readonly gameDoors?: readonly DoorSpan[];
   /** The street furniture placed before (its solids keep the doors' fronts clear). */
   readonly furniture?: readonly StreetPropItem[];
+  /** The axes of the ways under ground (`loadUndergroundWays`): no tenement is entered from them. */
+  readonly underground?: readonly (readonly Pt[])[];
 }
 
 /** A door placed: its piece (point on the wall's face, facing out) and why it is there. */
@@ -225,22 +227,34 @@ const venueDoors = (rules: DoorRules, walls: readonly DoorWall[]): void => {
   }
 };
 
-/** Does a wall face a street: a street's axis within `STREET_REACH` in front of its middle, nothing built between? */
-const facesStreet = (site: Site, w: DoorWall): boolean => {
+/** How far a street's simplified axis (1 m, `chunkStreets`) may stray from the map's way it was drawn from (m). */
+const ALONG = 1.2;
+
+/** Does a street's segment run along a way under ground: its ends and middle within `ALONG` of one? */
+const underground = (under: readonly (readonly Pt[])[], a: Pt, b: Pt): boolean => {
+  const mid = { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 };
+  return under.some((l) => [a, b, mid].every((p) => l.slice(1).some((q, i) => segGap(p, l[i]!, q) <= ALONG)));
+};
+
+/**
+ * Does a wall face a street: a street's axis within `STREET_REACH` in front of its middle, nothing built
+ * between? A way under ground (Trasa Podziemna runs beneath the Old Town's yards) is not one (G-197).
+ */
+const facesStreet = (site: Site, w: DoorWall, under: readonly (readonly Pt[])[]): boolean => {
   const steps = [2, 6, 10].map((k) => pointOn(w, w.length / 2, k));
   if (steps.some((q) => site.surfaceAt(q) === "building")) return false;
   const front = pointOn(w, w.length / 2, STREET_REACH / 2);
-  return site.streets.some((s) => s.line.slice(1).some((b, i) => segGap(front, s.line[i]!, b) < STREET_REACH / 2));
+  return site.streets.some((s) => s.line.slice(1).some((b, i) => segGap(front, s.line[i]!, b) < STREET_REACH / 2 && !underground(under, s.line[i]!, b)));
 };
 
 /** Rule 3: the staircase's door of each tenement without a door, on its longest wall facing a street. */
-const staircaseDoors = (rules: DoorRules, site: Site, walls: readonly DoorWall[]): void => {
+const staircaseDoors = (rules: DoorRules, site: Site, walls: readonly DoorWall[], under: readonly (readonly Pt[])[]): void => {
   const byBuilding = new Map<string, DoorWall[]>();
   for (const w of walls) if (TENEMENTS.has(w.use)) byBuilding.set(w.building, [...(byBuilding.get(w.building) ?? []), w]);
   for (const [building, own] of [...byBuilding].sort((a, b) => (a[0] < b[0] ? -1 : 1))) {
     const has = rules.placed.some((d) => own.some((w) => onWall(w, d.item).off < 0.1 && onWall(w, d.item).u > -0.1 && onWall(w, d.item).u < w.length + 0.1));
     if (has) continue;
-    for (const w of [...own].sort((p, q) => q.length - p.length).filter((x) => facesStreet(site, x))) {
+    for (const w of [...own].sort((p, q) => q.length - p.length).filter((x) => facesStreet(site, x, under))) {
       const item = slotsNear(w, w.length / 2, Infinity)
         .map((s) => rules.fit(w, s, entranceModel({ entrance: "staircase", door: "" }, s, false)))
         .find((x) => x !== null);
@@ -291,6 +305,6 @@ export const placeDoorsWithStats = (site: Site, walls: readonly DoorWall[], entr
   const rules = new DoorRules(site, ctx);
   entranceDoors(rules, walls, entrances);
   venueDoors(rules, walls);
-  staircaseDoors(rules, site, walls);
+  staircaseDoors(rules, site, walls, ctx.underground ?? []);
   return { doors: rules.placed, rejected: rules.rejected };
 };

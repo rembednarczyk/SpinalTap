@@ -101,5 +101,6 @@
   "door-in-window": 0,
   "door-in-board": 0,
   "door-in-passage": 0,
-  "door-on-game-door": 0
+  "door-on-game-door": 0,
+  "door-faces-underground": 0
 }
