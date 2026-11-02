@@ -1,1 +1,0 @@
-Na deptaku Krakowskiego Przedmieścia świecą same pastorały: znika 16 nowoczesnych słupów, które stały metr od nich, i 2 latarnie drogowe u wylotów bocznych ulic; generator nie stawia zwykłej latarni bliżej niż 8 m od stylizowanej (G-259).
