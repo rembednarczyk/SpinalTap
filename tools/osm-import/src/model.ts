@@ -38,6 +38,8 @@ export interface BuildingOut {
   readonly shopfront?: true;
   /** A church with a tower of the map in its outline or by its walls (G-212): the renderer adds none of its own. */
   readonly mappedTower?: true;
+  /** A tower of the map standing as a building of its own (`man_made=tower`, `tower:type`, G-232): a tower's facade, not a tenement's. */
+  readonly tower?: true;
   /** Where the height came from. */
   readonly source: "height" | "levels" | "default";
   /** Venues in or at it (ADR-0064 stage 4), relative to (x, z), with their 2077 names. */

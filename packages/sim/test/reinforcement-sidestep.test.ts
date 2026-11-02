@@ -27,9 +27,10 @@ const onTheRoof = (seed: number, level: HeatLevel): Simulation => {
 };
 
 describe("a reinforcement leans to the side of its number (G-208)", () => {
-  for (const [seed, level, golden] of [
-    [21, 2, "6d25ba81"],
-    [5, 3, "ab60fb91"],
+  // With the hash of the run as schema v27 wrote it (G-233 changes only the version here).
+  for (const [seed, level, golden, v27] of [
+    [21, 2, "942db7fe", "6d25ba81"],
+    [5, 3, "86f75272", "ab60fb91"],
   ] as const) {
     it(`seed ${seed}, ${level} stars, the player on a roof in the docks`, () => {
       const sim = onTheRoof(seed, level);
@@ -49,7 +50,9 @@ describe("a reinforcement leans to the side of its number (G-208)", () => {
         expect({ n: e.security.n, side: first.get(e.id) }).toEqual({ n: e.security.n, side: e.security.n % 2 === 0 ? 1 : -1 });
       }
       // The run with the rule (seed 21: by the ids it parts otherwise some 510 steps in).
-      expect(stateHash(sim.snapshot(null, "t", ""))).toBe(golden);
+      const snap = sim.snapshot(null, "t", "");
+      expect(stateHash(snap)).toBe(golden);
+      expect([snap.strayBodies, stateHash({ ...snap, version: 27 } as unknown as SaveSnapshot)]).toEqual([undefined, v27]);
     });
   }
 });

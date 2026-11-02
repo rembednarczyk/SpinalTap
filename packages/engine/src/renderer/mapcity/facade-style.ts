@@ -117,6 +117,8 @@ export interface StyleInput {
   readonly lifted?: boolean;
   /** The roof's shape from the map (ADR-0064); absent, a hipped roof or now and then a dome. */
   readonly shape?: RoofShape;
+  /** Tagged a tower in the map (G-232): a tower however short or broad. */
+  readonly tower?: boolean;
 }
 
 const windowFor = (use: BuildingUse, levels: number, rand: () => number): number => {
@@ -168,11 +170,12 @@ const roofKindFor = (s: StyleInput, rand: () => number): RoofKind => {
 
 /**
  * A free-standing tower of the old town (Wieża Trynitarska): historic, sacred or civic, at
- * least 20 m tall and two and a half times as tall as it is wide. It gets the tall, widely
- * spaced windows of a civic building in tiers of about 8 m, a church's pale plaster and roof,
- * no shops and no signs, instead of a tenement's grid of storeys.
+ * least 20 m tall and two and a half times as tall as it is wide, or tagged a tower in the map
+ * (St Nicholas's belfry, the keep, G-232). It gets the tall, widely spaced windows of a civic
+ * building in tiers of about 8 m, a church's pale plaster and roof, no shops and no signs,
+ * instead of a tenement's grid of storeys.
  */
-const isTower = (s: StyleInput): boolean => (s.use === "historic" || s.use === "church" || s.use === "civic") && s.height >= 20 && s.height >= 2.5 * s.width;
+const isTower = (s: StyleInput): boolean => s.tower === true || ((s.use === "historic" || s.use === "church" || s.use === "civic") && s.height >= 20 && s.height >= 2.5 * s.width);
 
 /** The facade of a building from its descriptor: deterministic in `look`. */
 export const facadeStyle = (s: StyleInput): FacadeStyle => {

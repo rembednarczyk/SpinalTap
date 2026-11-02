@@ -85,3 +85,49 @@ describe("a church the map has a tower by (G-212)", () => {
     expect(buildingsWithTowers([church], [{ ...belfry, ring: [] }]).has("w1"), "its middle alone, over 12 m off").toBe(false);
   });
 });
+
+describe("a tower of the map standing as a building of its own (G-232)", () => {
+  const towers = () => {
+    next = 1;
+    return parseOsmXml(
+      [
+        "<osm>",
+        // St Nicholas's belfry: tower tags and no more.
+        ...box(1, 0, 0, 7, 3, BELFRY),
+        // Measured to its top.
+        ...box(2, 100, 0, 106, 6, { ...BELFRY, height: "18" }),
+        // The keep: a flat crown in the map.
+        ...box(3, 200, 0, 215, 15, { ...BELFRY, "tower:type": "defensive", height: "25", "roof:shape": "flat" }),
+        // The Trinity Tower: its helmet is a part standing on it.
+        ...box(4, 300, 0, 314, 14, { ...BELFRY, height: "40" }),
+        ...box(5, 304, 4, 310, 10, { "building:part": "yes", min_height: "40", height: "60", "roof:shape": "pyramidal" }),
+        // A house: no tower.
+        ...box(6, 400, 0, 410, 8, { building: "house" }),
+        "</osm>",
+      ].join("\n"),
+    );
+  };
+  const out = () => generate(towers(), () => 200, chunk).chunks[0]!.buildings;
+  const byId = (id: string) => out().find((o) => o.id === id)!;
+
+  it("is marked by the import, a house is not", () => {
+    expect(out().filter((o) => o.tower).map((o) => o.id)).toEqual(["w1", "w2", "w3", "w4"]);
+  });
+
+  it("gets a tented roof when the map gives none, its top where the map has it", () => {
+    for (const id of ["w1", "w2"]) {
+      expect(byId(id).roofShape, id).toBe("pyramidal");
+      expect(byId(id).roof ?? 0, id).toBeGreaterThan(2);
+    }
+    const measured = byId("w2");
+    expect(measured.height + (measured.roof ?? 0)).toBeCloseTo(18, 5);
+  });
+
+  it("keeps the map's flat crown, and the roof of the parts standing on it", () => {
+    expect(byId("w3").roof).toBeUndefined();
+    expect(byId("w3").roofShape).toBe("flat");
+    expect(byId("w4").roof).toBeUndefined();
+    expect(byId("w4").roofShape).toBeUndefined();
+    expect(byId("w4").height).toBeCloseTo(40, 5);
+  });
+});

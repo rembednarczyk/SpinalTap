@@ -372,6 +372,9 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
   // v26 -> v27 (G-208): a walking NPC's stuck check is saved (`walk`, optional). An older save has
   // none: every NPC starts a new stretch of its walk on loading, as it did before.
   26: (old) => ({ ...old, version: 27 }),
+  // v27 -> v28 (G-233): the bodies of a won mugging's muggers are saved (`strayBodies`, optional).
+  // An older save has none: they were gone on loading, and still are.
+  27: (old) => ({ ...old, version: 28 }),
 };
 
 export class MigrationError extends Error {}

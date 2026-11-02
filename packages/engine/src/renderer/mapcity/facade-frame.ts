@@ -38,6 +38,8 @@ export interface MapBuilding {
   readonly carriesParts?: boolean;
   /** A landmark the map shows without a tower (G-210), or a church the map has a tower by (G-212): no bell towers of the renderer's. */
   readonly towerless?: boolean;
+  /** A tower of the map standing as a building of its own (G-232): a tower's facade whatever its size. */
+  readonly freeTower?: boolean;
   /** Shop signs hang from wrought-iron brackets (the Old Town, ADR-0048). */
   readonly bracketSigns?: boolean;
   /** Metres of Lublin 2077's superstructure over `top` (ADR-0051). */
@@ -143,7 +145,7 @@ const classify = (b: MapBuilding, a: P2, c: P2, neighbour: NeighbourAt): { blind
 export const facadeFrame = (b: MapBuilding, neighbour: NeighbourAt, near: NeighboursNear = () => null): FacadeFrame => {
   const box = orientedBox(b.ring);
   const area = Math.abs(signedArea(b.ring));
-  const style = facadeStyle({ use: b.use, levels: b.levels, height: b.height, ...(b.roof !== undefined ? { roof: b.roof } : {}), look: b.look, area, width: box.halfShort * 2, ...(b.shopfront !== undefined ? { shopfront: b.shopfront } : {}), ...(b.lifted ? { lifted: true } : {}), ...(b.roofShape ? { shape: b.roofShape } : {}) });
+  const style = facadeStyle({ use: b.use, levels: b.levels, height: b.height, ...(b.roof !== undefined ? { roof: b.roof } : {}), look: b.look, area, width: box.halfShort * 2, ...(b.shopfront !== undefined ? { shopfront: b.shopfront } : {}), ...(b.lifted ? { lifted: true } : {}), ...(b.roofShape ? { shape: b.roofShape } : {}), ...(b.freeTower ? { tower: true } : {}) });
   const top = b.base + b.height;
   const eave = top - style.atticHeight;
   const levels = Math.max(1, Math.round(b.levels));

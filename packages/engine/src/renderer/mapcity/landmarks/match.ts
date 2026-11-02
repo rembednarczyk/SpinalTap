@@ -66,3 +66,11 @@ export const towerlessAt = (x: number, z: number, corners: number): boolean => {
   towerless ??= new Set(LUBLIN_CHUNKS.flatMap((c) => c.buildings.flatMap((b) => (TOWERLESS_OSM.has(b.id) || b.mappedTower ? [keyOf(b.x, b.z, b.outline.length / 2)] : []))));
   return towerless.has(keyOf(x, z, corners));
 };
+
+let towers: ReadonlySet<string> | null = null;
+
+/** Whether the map building standing at (x, z) with an outline of `corners` points is a tower of the map (`tower`, G-232). */
+export const towerAt = (x: number, z: number, corners: number): boolean => {
+  towers ??= new Set(LUBLIN_CHUNKS.flatMap((c) => c.buildings.flatMap((b) => (b.tower ? [keyOf(b.x, b.z, b.outline.length / 2)] : []))));
+  return towers.has(keyOf(x, z, corners));
+};

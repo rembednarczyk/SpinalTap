@@ -18,7 +18,7 @@ import { findItemsError } from "./validate-items";
 import { findContractError, findContractOnSiteError, findFormerContractsError } from "./validate-contract";
 import { findContractWave2Error, findEncountersError, findMetroError } from "./validate-wave2";
 import { findProgressionError } from "./validate-progression";
-import { findEntityError, findReinforcementsError } from "./validate-entities";
+import { findEntityError, findReinforcementsError, findStrayBodiesError } from "./validate-entities";
 
 type Json = Record<string, unknown>;
 
@@ -37,6 +37,8 @@ export const findSchemaError = (s: Json): string | null => {
   }
   const reinforcementsError = findReinforcementsError(s.reinforcements, s.tick);
   if (reinforcementsError) return reinforcementsError;
+  const strayError = findStrayBodiesError(s.strayBodies, s.tick);
+  if (strayError) return strayError;
   const st = s.streaming;
   if (!isObject(st) || !Array.isArray(st.loadedChunks) || !st.loadedChunks.every((c) => typeof c === "string")) return "streaming";
   // ADR-0038: leaves of resident doors that are moving or about to close.

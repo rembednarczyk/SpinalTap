@@ -1,1 +1,0 @@
-Kamienica przy Złotej 6 ma drzwi klatki od Złotej zamiast od parkingu, a Grodzka 7 nie ma już drzwi od zamkniętego podwórza: Trasa Podziemna pod Starym Miastem nie liczy się jako ulica przed ścianą (G-197).
