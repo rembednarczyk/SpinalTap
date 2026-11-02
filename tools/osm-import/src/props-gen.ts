@@ -17,6 +17,7 @@ import { Clearances, GOODS_KEY, type MarketContext, foodStalls, stallGoods } fro
 import { marketEntrances, marketStalls } from "./props-market.ts";
 import { type SideMode, type Station, evenStations, fnv, offRoad, offWall, openFacing, scatter, sideOffset, stations, towardsStreet, unit, yawOf } from "./props-place.ts";
 import { type BoardSpan, boardBehind, offBoards } from "./props-boards.ts";
+import { byStyledLamp } from "./props-lamp-looks.ts";
 import { type BollardRef, stringBollards } from "./props-rows.ts";
 import { Site } from "./props-site.ts";
 import { SolidIndex, clearSpot } from "./props-solid.ts";
@@ -372,6 +373,7 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
   const site = new Site(chunks);
   const skipped: Record<string, number> = {};
   const { placed, fromLine } = placeAll(site, plan, skipped, tags, boards, market);
+  const styledBy = byStyledLamp(placed);
   const byChunk = new Map<string, StreetPropItem[]>(chunks.map((c) => [c.id, []]));
   const perKind: Record<string, number> = {};
   const perDistrict: Record<string, number> = {};
@@ -445,7 +447,7 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
     }
     const same = kept.get(x.prop) ?? [];
     const gap = minGap(x.prop, fromLine.has(x));
-    if (same.some((q) => Math.hypot(q.x - x.p.x, q.z - x.p.z) < gap)) {
+    if (same.some((q) => Math.hypot(q.x - x.p.x, q.z - x.p.z) < gap) || styledBy(x.prop, x.p)) {
       merged++;
       continue;
     }

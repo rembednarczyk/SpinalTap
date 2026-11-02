@@ -24,6 +24,7 @@ import { vehicleChecks } from "./vehicle-pieces";
 import { figureChecks } from "./figure-pieces";
 import { signsInNeighbours } from "./sign-neighbours";
 import { lanternsByPassages } from "./passage-lanterns";
+import { plainLampsByStyled } from "./lamp-styles";
 import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight, towersSkipped } from "./landmark-heights";
 import { bandAcross, lampsOnSteps, stepsNarrowerThanWalls } from "./steps-walls";
 import { drawnFlight, stepsAcross, stepsHidden, stepsRunsBare } from "./steps-runs";
@@ -964,6 +965,11 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     const flights = MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.surface === "steps").map((g) => worldOutline({ x: 0, z: 0, outline: g.outline })));
     return lampsOnSteps(Object.values(LUBLIN_STREET_PROPS).flat(), (p) => flights.some((r) => pointInRing(p, r)));
   },
+  /**
+   * A plain town lamp of the generator's table within 8 m of a styled one (G-259): two lamps of
+   * one street nearer than the 7 m that merges two of a kind read as one light point doubled.
+   */
+  "lamp-plain-by-styled": () => plainLampsByStyled(Object.values(LUBLIN_STREET_PROPS).flat(), 8),
   /** A piece of road or path on a bridge laid on the valley instead of a deck. */
   "bridge-without-deck": () => MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.bridge && !g.deck).map((g) => ({ at: near(g.outline[0]!, g.outline[1]!), what: g.surface }))),
   /**
@@ -1740,6 +1746,16 @@ describe("the glitch scan (ADR-0054)", () => {
     expect(lampsOnSteps([{ ...lamp, prop: "lamp-pastoral" }], flight)).toHaveLength(1);
     expect(lampsOnSteps([{ ...lamp, z: 5.5 }], flight)).toEqual([]);
     expect(lampsOnSteps([{ ...lamp, prop: "shrubs" }], flight)).toEqual([]);
+  });
+
+  it("finds a plain lamp beside a styled one, and none farther off or beside another plain one (G-259)", () => {
+    const pastoral = { prop: "lamp-pastoral", x: 0, z: 0 };
+    const pole = { prop: "lamp-modern-pole", x: 1, z: 0 };
+    expect(plainLampsByStyled([pastoral, pole], 8)).toEqual([{ at: "1,0", what: "lamp-modern-pole 1.0 m from lamp-pastoral" }]);
+    expect(plainLampsByStyled([{ ...pastoral, prop: "lamp-wall-lantern" }, { ...pole, prop: "lamp-road", x: 7 }], 8)).toHaveLength(1);
+    expect(plainLampsByStyled([pastoral, { ...pole, x: 9 }], 8)).toEqual([]);
+    expect(plainLampsByStyled([{ ...pastoral, prop: "lamp-road" }, pole], 8)).toEqual([]);
+    expect(plainLampsByStyled([{ ...pastoral, prop: "lamp-park" }, pole], 8)).toEqual([]);
   });
 
   it("finds a wall lantern within 2 m of a gate's axis cut by hand, in its vault or its mouth, and none on the street past its fronts (G-183)", () => {
