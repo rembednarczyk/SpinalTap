@@ -855,6 +855,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (props)
 - Test przyjęcia: stojąca postać nie dalej niż 0,5 m w pionie od `y` gospodarza (miejsce odrzucone z powodem np. `host level`); kontrola skanu `figure-off-host-level` 1 → 0; tabela z `pnpm osm:props`
 
+- Dług z weryfikacji #228 (do tego samego kroku albo osobno): `FIGURE_SOLES` (x ±0,12) węższe niż buty mężczyzny (±0,18, z ręką na biodrze ±0,23), dziś 1 róg buta 0,15 m w chodniku (palący 589,34; 570,29); stopy siedzących i `figure-off-seat` sprawdzają jeden punkt pod stopami (dziś bez przekroczeń, rozrzut do 5,6 cm); postacie bez brył (świadome w ADR-0058).
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
