@@ -41,6 +41,9 @@ const refused = (s) => {
   return null;
 };
 
+/** Who is asking, the same as the OSM tools (`tools/osm-import`). */
+const USER_AGENT = "SekiSenshi-topo/1.0";
+
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 
 /** A path inside DIR: no absolute paths and no `..` from the table. */
@@ -55,7 +58,8 @@ const fetchChecked = async (url, dst, expected) => {
     console.log(`ok    ${dst}`);
     return false;
   }
-  const res = await globalThis.fetch(url, { redirect: "follow" });
+  // One try per run: a 429 or any other refusal fails the source, with no retries (ADR-0063).
+  const res = await globalThis.fetch(url, { redirect: "follow", headers: { "User-Agent": USER_AGENT } });
   if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
   const bytes = Buffer.from(await res.arrayBuffer());
   const got = sha256(bytes);
