@@ -71,7 +71,7 @@ Modele są low-poly i mają kolory w palecie albo w płaskich materiałach, czyl
 
 ## Konsekwencje
 - Miasto będzie gęstsze i bardziej kolorowe bez nowych wywołań rysowania (poza dronami). Rośnie liczba trójkątów i wierzchołków w siatkach bloków i komórek, co mierzy `npr-perf` na scenach Lublina i telefonie.
-- Plik rekwizytów to szacunkowo 1–1,5 MB po kwantyzacji. Ekran ładowania pokazuje go jako osobny etap.
+- Plik rekwizytów to szacunkowo 1–1,5 MB po kwantyzacji. Ekran ładowania pokazuje go jako osobny etap. Stan po etapie 4: pięć plików rekwizytów (city, street, market, door, vehicle) waży razem ok. 1,9 MB (1 932 792 B), czyli ponad szacunek; kolejne etapy mierzą sumę i ją tu zapisują.
 - Migawka NPR zmienia się na każdym etapie, świadomie.
 - Brakuje w CC0: hulajnóg, trolejbusu i parasoli ogródkowych w lekkiej wersji. Trolejbus powstaje z autobusu i proceduralnych odbieraków, parasole z płótna Survival Kit. Cięższe paczki (Downtown City MegaKit 223 MB, loafbrr Park Furniture 88 MB) są do ręcznego pobrania później.
 
@@ -82,3 +82,16 @@ Decyzja użytkownika z 1.11 („assety z regułami rozstawienia przed nowymi dzi
 - **Reguły** (`tools/osm-import/src/props-doors.ts`, `pnpm osm:props`): 1) węzeł `entrance=*`/`door=*` (`data/osm/points/entrances.json`, `pnpm osm:entrances`) do 1,5 m od narysowanej ściany: drzwi w najbliższym miejscu do 1,5 m wzdłuż ściany; 2) szyld lokalu bez drzwi pod nim: drzwi sklepu (banku: na kod) w zasięgu szyldu, bo OSM ma wejścia dla niewielu budynków (59 węzłów na ok. 300 szyldów); 3) kamienica (`residential`, `historic`) bez drzwi: drzwi klatki na najdłuższej ścianie od ulicy, najbliżej jej środka. Wszystkie: 3 m od drzwi gry i osi przejazdów, otwarty grunt przed drzwiami, nawierzchnia do 0,8 m od parteru i spadek w poprzek do 0,12 m, 1 m przed drzwiami bez brył mebli, 0,6 m między drzwiami.
 - **Modele**: skrzydła z E7 paczki 2 (CC-BY: carlcapu9, vanillao03, Jesus Fernandez Garcia) w `door-props.glb`; ościeżnicę, nadproże, próg i naświetle rysuje renderer. Wszystko w siatce bloku mebli: bez nowych wywołań rysowania. Telefon (`low`) ma skrzydła proceduralne.
 - **Skan** (`tools/glitch-scan/test/door-pieces.ts`, baza 0): `door-off-wall`, `door-floating`, `door-in-window` (port maski szyb shadera), `door-in-board`, `door-in-passage` (przejazdy i brama kamienicy), `door-on-game-door`.
+
+## Wdrożenie (etap 4, 2.11): pojazdy
+- **Wygląd zamiast nowych brył.** Symulacja zostaje bez zmian: pojazd ma bryłę (`VehicleModel`, `VEHICLE_SIZE`: kolizja i wymiary) i ziarno, a renderer wybiera z ziarna jeden z wyglądów tej bryły (`engine/.../vehicle-variants.ts`) i wpasowuje model w bryłę (szerokość i długość dokładnie, wysokość najwyżej bryły). Złote hashe i kontrakty bez zmian.
+  - `sedan`: auto kitu albo stary sedan (`veh-dirty`, Dirty car, 3D Error 404, CC-BY);
+  - `hatchback`: auto kitu albo sportowe (`veh-cyber`, Cyberpunk car, 4d_Bob, CC-BY, niskie: wysokość w proporcji do długości);
+  - `van`: van, SUV albo pickup (`veh-suv`, `veh-pickup`, Kenney Car Kit 2.0, CC0);
+  - `delivery`: furgon albo co piąty bursztynowa śmieciarka (`veh-garbage`, Kenney, CC0);
+  - `trolleybus`: autobus Quaterniusa (CC0) wydłużony w środku do 12 m, w barwach lubelskich, z proceduralnymi odbierakami jak dotąd.
+- **Rozstawienie** zostaje z reguł OSM symulacji, bez list współrzędnych: auta na ulicach i w zatokach parkingowych, trasy dostaw na deptakach (`deliveries`: furgony i śmieciarki), linie trolejbusowe. Nowe miejsca (śmieciarka przy pojemnikach, dostawczak w zatoce dostaw `parking:*=loading`) wymagają nowych brył w symulacji, czyli osobnej decyzji ze zmianą złotego hasha.
+- **LOD-y.** Każdy wygląd (także auta kitu) ma w `vehicle-props.glb` wersję daleką `-far` (60–150 trójkątów: prostopadłościany po sylwetce modelu, plaster po plastrze) i telefoniczną `-lite` (do 350 trójkątów, jakość `low`); blisko do 1000 trójkątów. Bez pliku zostają auta kitu, trolejbus proceduralny i dalekie pudełka.
+- **Budżety** (`npr-perf`, przed i po): wywołania rysowania i aktywne siatki bez zmian w każdej scenie (pojazdy dalej w dwóch wspólnych siatkach); trójkąty klatki Krakowskie 3,86 → 3,76 mln, Podzamcze 3,54 → 3,41 mln, Rynek i Nabrzeże ok. −1 %. Siatka zaparkowanych aut całego miasta (80 aut): 196 → 208 tys. wierzchołków i 173 → 144 tys. trójkątów, na telefonie 88 tys. i 34 tys. Plik 600 KiB, suma plików rekwizytów ok. 1,9 MB (ekran ładowania czeka na niego w etapie rekwizytów).
+- **Skan** (`tools/glitch-scan/test/vehicle-pieces.ts`, baza 0): `vehicle-off-body`, `vehicle-short-of-body`, `vehicle-floating`, dla każdego zaparkowanego auta w jego wyglądzie i każdego wyglądu ruchu.
+- **Migawka NPR** bez zmian: w kadrze referencyjnym (ulica przed Neon Koi) nie ma pojazdów.

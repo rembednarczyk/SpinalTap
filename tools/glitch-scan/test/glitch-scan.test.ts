@@ -18,6 +18,7 @@ import { lublinDecalWorld } from "./decal-world";
 import { doorChecks } from "./door-pieces";
 import { doorsFacingUnderground } from "./door-streets";
 import { marketChecks } from "./market-pieces";
+import { vehicleChecks } from "./vehicle-pieces";
 import { signsInNeighbours } from "./sign-neighbours";
 import { lanternsByPassages } from "./passage-lanterns";
 import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight, towersSkipped } from "./landmark-heights";
@@ -1542,6 +1543,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /** A staircase's door on a wall facing only a way under ground, a yard's wall (G-197, `door-streets.ts`). */
   "door-faces-underground": () =>
     doorsFacingUnderground(WORLD_SCENERY, Object.values(WORLD_STREET_PROPS).flat(), cityVenueBoards(WORLD_SCENERY), extractFeatures(SOURCE_OSM).lines, loadEntrances().map((e) => e.p)),
+  // The vehicles of ADR-0058 stage 4 as drawn against their bodies in the simulation (`vehicle-pieces.ts`).
+  ...vehicleChecks(PARKED_CARS),
 };
 
 /** A building's own tags in the map data, by the game's id (`w…`, `r…`, a split's `/n` dropped). */
