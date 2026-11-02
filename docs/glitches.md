@@ -115,6 +115,8 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | `vehicle-on-pavement` | Pojazd jak wyżej z ≥ 1 narożnikiem na `sidewalk`, `footway`, `steps` albo `square` bez `road` i `cobble`, poza listą celowych z rejestru (T-077: wrak (152.6, −51), furgonetka (112, −42)) | 3 bez listy (2 auta z 1/5 narożnika na `footway` przy (922.9, 430.6) i (745.9, 447.7), blok `car` (400.5, −23.5)); 0 po dopisaniu do rejestru albo poprawce |
 | `small-freestanding-tall` | Obrys `source: "default"` o polu do `SMALL_ALONE_AREA` = 50 m², bez innego obrysu bliżej niż 1 m, z `levels` > 1 | 2 (G-127; zostają przybudówki z G-134) |
 | `landmark-monument-generic` | Pomnik z `LANDMARK_MONUMENTS`, którego rekwizyt `monument` ma kształt ogólny (`figure` albo `abstract`) zamiast własnego | 2 (G-128) |
+| `old-town-ring-cuts-block` | Budynek z `addr:street` ∈ {Rynek, Grodzka (na zachód od Bramy Grodzkiej, x < 705), Jezuicka, Złota, Dominikańska, Archidiakońska} ze środkiem poza `OLD_TOWN_RING`; para: `outside-ring-in-old-town` (budynek z adresem Królewskiej, Podwala, Kowalskiej, Lubartowskiej albo Noworybnej, bez `historic=city_gate`, ze środkiem w obrysie) | 22 i 0 (G-271, T-142) |
+| `green-wall-plastered` | Budynek albo część z zielonym `building:colour` w OSM (green, darkgreen, #rgb z przewagą G) i zielonym `roof:colour` albo `building:part=tower`, którego kolor ściany (`style.plaster`) leży w paletach tynku (`PLASTER_SWATCHES`); węższy przypadek `landmark-colour-ignored` | 3 (w618268118, w617763432, w619138854; G-272, T-143) |
 - Źródło: audyt topografii 1 (kurator, 31.10); `part-buried-in-roof`…`landmark-colour-ignored`: audyt gmachów publicznych (kurator, 31.10); cztery ostatnie: audyt Placu Litewskiego i Pedetu (kurator, 31.10).
 
 ### G-055 Liczba wywołań rysowania skacze między klatkami w ustalonym mieście
@@ -907,6 +909,26 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: widoczna futryna i opaska: szersza ościeżnica (ok. 0,12–0,15 m) i nadproże, opaska wystająca kilka cm przed lico ściany, kolor kontrastujący ze skrzydłem i ścianą (np. jaśniejszy kamienny/tynkowy dla kamienic, metalowy dla sklepów, z palety kitu), próg; te same reguły dla drzwi gry i otworu pokoju kapsułowego; bez nowych wywołań rysowania (w siatce bloku mebli); drzwi nie mogą przez to wejść w szyby, szyldy ani przejazdy (kontrole `door-*` bez wzrostu)
 - Pakiet właściciela: packages/engine (renderer/mapcity, rooms, wnętrza gry)
 - Test przyjęcia: test engine: futryna szersza od progu i w kolorze różnym od skrzydła i ściany; zrzuty przed/po (kamienica, sklep, klinika, kapsuła) dla użytkownika; budżety i migawka (świadomie, jeśli drzwi w kadrze)
+
+### G-271 Obrys Starego Miasta `OLD_TOWN_RING` odcina pierzeje wewnątrz murów (Rynek 3–5, Grodzka, Dominikanie, Jezuicka)
+- Status: zgłoszone (2.11, kurator, przegląd PR #236; T-142)
+- Ważność: S4 (dziś bez skutku w grze: żadna latarnia w odciętych pasach) · Zasięg: reguła importu `oldTownLook` i kontrola skanu `lamp-road-in-old-town`; 22 budynki z adresem ulic wewnątrz murów mają środek poza obrysem · Koszt: mały (dane wielokąta i test)
+- Gdzie: `tools/osm-import/src/old-town.ts`; Rynek 3, 4, 5 (w66309785 (540; −30), w66309787, w66293437), Grodzka 18–36 pierzeja północna (w66293367 (634; 79) … w66293349 (701; 144)), Grodzka 2 w232362888 (570; 2), Bazylika Dominikanów w66286338 (727; −55), Archidiakońska 9 w66293665, Dominikańska 3 w66286347, Jezuicka 15, 17, 19, 21 (w66286344, w66286327, w66286329, w66286331, w813194693); także język Placu Łokietka w177524462 przy południowej ścianie Bramy Krakowskiej (x 464–482, z −95…−107) wewnątrz obrysu
+- Dowód: sonda kuratora `topo-ring` (scratchpad sesji): budynki z `addr:street` ∈ {Rynek, Grodzka (x < 705), Jezuicka, Złota, Dominikańska, Archidiakońska} ze środkiem poza obrysem = 22; budynki z adresem Królewskiej, Podwala, Kowalskiej, Lubartowskiej i Noworybnej w obrysie = 0
+- Przyczyna: obrys prowadzony cięciwami między bramami i dwoma odcinkami `barrier=city_wall` (w609951474, w232362994; w żywym OSM, nie w `data/osm`), zamiast za tyłami pierzei
+- Poprawka: wierzchołki za tyłami działek: północ za Rynkiem 3–5 i za północną pierzeją Grodzkiej (między nią a Rybną 11–13 i Kowalską), wschód po krawędzi skarpy za Dominikanami (x ok. 765), południe za Jezuicką 15–21 (z ok. −167), od Bramy Krakowskiej na południowy wschód po jej ścianie (bez języka Placu Łokietka); Królewska, Podwale, Kowalska i Rybna za Bramą Rybną zostają na zewnątrz. Komentarz w `old-town.ts`: oba odcinki muru są w OSM, ale poza wyciągiem `data/osm`. Przegląd `topography-curator`
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: kontrola skanu `old-town-ring-cuts-block` 22 → 0 przy `outside-ring-in-old-town` (adresy Królewskiej, Podwala, Kowalskiej, Lubartowskiej, Noworybnej w obrysie) = 0; `lamp-road-in-old-town` = 0
+
+### G-272 Miedziane zwieńczenia wież (`building:colour=green`) rysowane miętowym tynkiem
+- Status: zgłoszone (2.11, kurator, przegląd PR #237; T-143)
+- Ważność: S4 (rozpoznawalny punkt orientacyjny, widoczny z daleka, ale mały element) · Zasięg: 3 części: Wieża Trynitarska w618268118 (50–55 m) i w617763432 (55–60 m), wieża Ratusza w619138854 · Koszt: mały
+- Gdzie: Stare Miasto (591,3; −147,3), Krakowskie (415,0; −79,3)
+- Dowód: od #237 `mappedWall` (`packages/engine/src/renderer/mapcity/facade-style.ts`) zamienia nasycony kolor z mapy na pastel i bierze najbliższy tynk: `green` → #a9c2a8, z jasnymi tynkowymi gzymsami (`lighten`). W OSM te części mają też `roof:colour=green` i nie mają `building:material`; w rzeczywistości to blacha miedziana z patyną (wiedza ogólna, zdjęcia niepotwierdzone: Commons 429)
+- Przyczyna: reguła „kolor nasycony = pastelowy tynk” nie rozróżnia pokrycia metalowego na zwieńczeniu wieży
+- Poprawka: ściana części z zielonym `building:colour` i zielonym `roof:colour` (albo części wieży ponad dachem korpusu) w kolorze miedzi z patyną z `ROOFS_COPPER`, z gzymsami ciemniejszymi (jak cegła), nie z tynkowych; reszta `building:colour` bez zmian. Przegląd `topography-curator`
+- Pakiet właściciela: packages/engine (renderer/mapcity); ewentualnie tools/osm-import, gdyby materiał `metal`/`copper` miał przyjść z danych
+- Test przyjęcia: test engine: część z `colour` zielonym i dachem zielonym ma ścianę z palety miedzi; kontrola skanu `green-wall-plastered` 3 → 0
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
