@@ -830,6 +830,15 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (dane `data/osm`)
 - Test przyjęcia: przesunięcie obrysu w69916021 i w1382552285 dopasowane do skoków NMPT ≤ 0,5 m; wierzchołek wieży w grze ≤ 0,5 m od (269,7; −10,0)
 
+### G-258 Ławki na chodniku stoją ok. 16 cm w nawierzchni
+- Status: zgłoszone (2.11, autor ADR-0058 etap 8, PR #228)
+- Ważność: S4 (siedzisko 0,29 m nad chodnikiem zamiast ok. 0,45 m; nogi ławki znikają w płycie) · Zasięg: ławki rekwizytów na chodnikach (liczba do ustalenia sondą, tabela `props.generated.ts`) · Koszt: mały
+- Dowód: przy etapie 8 siedzące postacie wymagały pozy „przysiad” (łydki cofnięte o 50°), bo ławka stoi na terenie pod chodnikiem, a chodnik jest podniesiony o `SURFACE_LIFT`; różnica ok. 0,16 m
+- Przyczyna (do potwierdzenia): wysokość rekwizytu z `groundY` terenu bez podniesienia nawierzchni chodnika
+- Poprawka: rekwizyty na chodniku stawiane na wysokości nawierzchni (teren + `SURFACE_LIFT`), jak ludzie i pasy chodu; po poprawce siedzący z ławki mogą wrócić do zwykłej pozy siedzącej
+- Pakiet właściciela: tools/osm-import (props), packages/engine (renderer/mapcity), packages/sim (jeśli wysokość w tabeli)
+- Test przyjęcia: kontrola skanu `prop-sunk` (rekwizyt z podstawą ponad 5 cm pod nawierzchnią w swoim punkcie) baza z main → 0
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
