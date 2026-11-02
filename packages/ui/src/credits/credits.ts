@@ -44,6 +44,7 @@ const STREET = ["city/street-props.glb"] as const;
 const MARKET = ["city/market-props.glb"] as const;
 const DOORS = ["city/door-props.glb"] as const;
 const VEHICLES = ["city/vehicle-props.glb"] as const;
+const DRONES = ["city/drone-props.glb"] as const;
 const CROWD = ["city/crowd-props.glb"] as const;
 /** `audio/<name>-000.ogg` ... for the numbers given. */
 const ogg = (name: string, ...n: number[]): string[] => n.map((i) => `audio/${name}-${String(i).padStart(3, "0")}.ogg`);
@@ -94,6 +95,8 @@ export const CREDITS: readonly Credit[] = [
   { id: "sketchfab-dirty-car", section: "street", title: "Dirty car", author: "3D Error 404", authorUrl: "https://sketchfab.com/3DError404", url: "https://sketchfab.com/3d-models/dirty-car-da77a8c75ddd4d7a8391912ba35735b8", license: "CC-BY-4.0", files: VEHICLES, changed: true },
   // CC0 (ADR-0058 stage 4): SUV, pickup and garbage truck, also in vehicle-props.glb (with the far and phone versions of the city kit cars, Car Kit 3.1).
   { id: "kenney-car-kit-2", section: "street", title: "Car Kit 2.0", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://opengameart.org/content/car-kit", license: "CC0-1.0", files: VEHICLES, changed: true },
+  // CC-BY 4.0 (ADR-0058 stage 7, E4 of the second pack): the drones over the street canyons, drone-props.glb.
+  { id: "sketchfab-cyberpunk-drone", section: "city", title: "Cyberpunk Drone Concept Design", author: "Berk Gedik", authorUrl: "https://sketchfab.com/berkgedik", url: "https://sketchfab.com/3d-models/cyberpunk-drone-concept-design-09e7406fc76248a2866209025588dad0", license: "CC-BY-4.0", files: DRONES, changed: true },
   // The cast (VRoid Project samples) and the weapons.
   { id: "vroid-samples", section: "characters", title: "VRoid Studio sample models (AvatarSample_D, AvatarSample_F, Sakurada Fumiriya, Sendagaya Shino, Base_Male)", author: "pixiv / VRoid Project", url: "https://opengameart.org/content/vroid-studio-cc0-models", license: "VRoid-Hub-1.0", files: ["models/seki.vrm", "models/kaito.vrm", "models/ganger.vrm", "models/civilian.vrm", "models/mori.vrm"], changed: true },
   { id: "quaternius-ultimate-gun-pack", section: "weapons", title: "Ultimate Gun Pack", author: "Quaternius", authorUrl: "https://quaternius.com", url: "https://opengameart.org/content/ultimate-gun-pack", license: "CC0-1.0", files: ["weapons/pistol.glb", "weapons/smg.glb"], changed: true },

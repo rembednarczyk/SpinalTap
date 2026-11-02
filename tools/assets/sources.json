@@ -1,5 +1,5 @@
 {
-  "about": "Packs and models baked into packages/app/public/city/city-props.glb, street-props.glb, market-props.glb, door-props.glb, vehicle-props.glb and crowd-props.glb: CC0 (ADR-0058) and CC-BY 4.0, credited in packages/ui/src/credits/credits.ts (ADR-0063). tools/assets/fetch.mjs downloads them and checks sha256; the zips, unpacked packs and source models are not committed.",
+  "about": "Packs and models baked into packages/app/public/city/city-props.glb, street-props.glb, market-props.glb, door-props.glb, vehicle-props.glb, drone-props.glb and crowd-props.glb: CC0 (ADR-0058) and CC-BY 4.0, credited in packages/ui/src/credits/credits.ts (ADR-0063). tools/assets/fetch.mjs downloads them and checks sha256; the zips, unpacked packs and source models are not committed.",
   "sources": [
     {
       "id": "kenney-modular-buildings",
@@ -462,7 +462,7 @@
       "files": [
         { "path": "cyberpunk_drone_concept_design.glb", "url": "https://drive.usercontent.google.com/download?id=1hX_FBNpVGBQDJXV6Muh4N5gLIbnf3fP4&export=download&confirm=t", "sha256": "882d9a0406f5e8412e0aa259cd4dd959d61af9d5e159eacdacedf9105bbfa737" }
       ],
-      "used": []
+      "used": ["drone-patrol", "drone-delivery", "drone-ad"]
     },
     {
       "id": "sketchfab-cyberpunk-led-neon-sign",

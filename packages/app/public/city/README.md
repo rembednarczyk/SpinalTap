@@ -196,6 +196,25 @@ NODE_USE_ENV_PROXY=1 node tools/assets/fetch.mjs /tmp/city-assets --only sketchf
 python3 -I -B tools/city_kit.py --doors /tmp/city-assets --out packages/app/public/city
 ```
 
+## Drony nad kanionami ulic na licencji CC-BY 4.0: `drone-props.glb` (ADR-0058 etap 7)
+
+Jeden płatowiec z E4 drugiej paczki ze Sketchfaba (`docs/plany/assety-paczka-2.md`) na licencji
+**CC-BY 4.0** (`tools/city_drones.py`) w trzech odmianach, w piątym pliku rekwizytów na tej samej palecie.
+Gra wczytuje go po kicie razem z pozostałymi. Węzeł modelu ma `extras.credit`, podpis jest na ekranie
+„Autorzy”. Daleką wersję (kilka prostopadłościanów) rysuje renderer (`drones/drone-models.ts`); bez pliku
+drony są z prostopadłościanów także z bliska. Telefon (`low`) dronów nie rysuje.
+
+| Klucz w pliku | Tytuł | Autor | Źródło | Licencja | Zmiany |
+|---|---|---|---|---|---|
+| `drone-patrol`, `drone-delivery`, `drone-ad` (dron patrolowy policji lub korporacji, kurier, dron reklamowy) | Cyberpunk Drone Concept Design | [Berk Gedik](https://sketchfab.com/berkgedik) | [Sketchfab](https://sketchfab.com/3d-models/cyberpunk-drone-concept-design-09e7406fc76248a2866209025588dad0) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | uproszczony z 21,2 tys. do ok. 900 trójkątów, przeskalowany do 3,4 m (patrol) i 3,0 m (kurier, reklama) rozpiętości, kolory z tekstury sprowadzone do palety; kadłub w barwach odmiany (srebrny, bursztynowy, czarny); dorysowane prostopadłościany: światła pozycyjne na wirnikach (czerwone i zielone), światło pod kadłubem w kolorze odmiany, belka świateł czerwono-niebieskich (patrol), paczka pod kadłubem (kurier), ekran z pasami neonu bez napisów (reklama); bez tekstur |
+
+Odtworzenie pliku:
+
+```
+NODE_USE_ENV_PROXY=1 node tools/assets/fetch.mjs /tmp/city-assets --only sketchfab-cyberpunk-drone
+python3 -I -B tools/city_kit.py --drones /tmp/city-assets --out packages/app/public/city
+```
+
 ## Targ i budki z jedzeniem: `market-props.glb` (ADR-0058 etap 3)
 
 Osiem modeli złożonych z części paczek **CC0** Kenneya (`tools/city_market.py`), w trzecim pliku na tej
