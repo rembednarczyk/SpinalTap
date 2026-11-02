@@ -765,15 +765,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: sonda zapis/wczytanie z obalonym cywilem; jeśli ginie, rozszerzyć `strayBodies` z testem
 - Pakiet właściciela: packages/sim, packages/persistence
 
-### G-244 Budynki ceglane z OSM rysowane w tynku: `building:material` nie trafia do gry
-- Status: w PR #237 (2.11, @ 36cb2fb w weryfikacji, potem kurator; `brick-plastered` 3 → 0 (Brama Krakowska już ceglana z landmarku); przeniesione też `building:colour` 16 budynków; zgłoszone przez kuratora przy #209)
-- Ważność: S3 (proponowana: rozpoznawalne zabytki w złym materiale) · Zasięg: 4 budynki (6 elementów OSM z `building:material=brick`): Donżon w450180469, Baszta Gotycka w66286376, Kaplica Trójcy w66258167, Brama Krakowska r7224409 (części w617597406, w617597407) · Koszt: średni (pole w danych + paleta fasady)
-- Gdzie: T-134; Podzamcze (893,1; 214,6), (941; 214,6), Stare Miasto (512,6; −143), Krakowskie (472,6; −91,2)
-- Dowód: import nie przenosi `building:material` ani `building:colour` (tylko `roof:colour` w części dachów); kolor fasady z palety użycia. Po #209 Donżon i Baszta w jasnym tynku kościelnym (zrzut `g232-shots/g232-donzon-po.png`), przed #209 w szarofioletowym tynku `historic`. W rzeczywistości nietynkowana cegła (Brama Krakowska: cegła w części gotyckiej, tynk w nadbudowie)
-- Poprawka: import przenosi `building:material` (brick, stone, plaster) i `building:colour` (11 budynków) do danych budynku i części; fasada bierze z nich kolor ściany przed paletą użycia (cegła: czerwonobrązowa, bez tynku); Brama Krakowska rozdzielona po częściach
-- Pakiet właściciela: tools/osm-import, packages/engine (renderer/mapcity)
-- Test przyjęcia: budynek z `building:material=brick` ma kolor ściany z rodziny cegły; kontrola skanu `brick-plastered` (budynek lub część z `building:material=brick` w OSM z kolorem ściany z palety tynku) 6 → 0
-
 ### G-245 Wieże z OSM z rzędami świecących okien co ok. 8 m zamiast strzelnic i otworów dzwonnych
 - Status: zgłoszone (2.11, kurator, przegląd #209)
 - Ważność: S4 · Zasięg: Donżon w450180469, Baszta Gotycka w66286376 (wieże obronne); dzwonnice w680377807 i w1382552285 do sprawdzenia po G-235/G-246; Wieża Trynitarska zgodna (okna na kondygnacjach) · Koszt: mały do średniego

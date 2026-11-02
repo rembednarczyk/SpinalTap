@@ -2,6 +2,15 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-244 Budynki ceglane z OSM rysowane w tynku: `building:material` nie trafia do gry
+- Status: naprawione w #237 (2.11, PRZYJĘTE; kurator ZGODNE Z UWAGAMI: cegła Baszty, Donżonu i Kaplicy; 19 kolorów ścian z OSM; miedziane hełmy w G-272)
+- Ważność: S3 (proponowana: rozpoznawalne zabytki w złym materiale) · Zasięg: 4 budynki (6 elementów OSM z `building:material=brick`): Donżon w450180469, Baszta Gotycka w66286376, Kaplica Trójcy w66258167, Brama Krakowska r7224409 (części w617597406, w617597407) · Koszt: średni (pole w danych + paleta fasady)
+- Gdzie: T-134; Podzamcze (893,1; 214,6), (941; 214,6), Stare Miasto (512,6; −143), Krakowskie (472,6; −91,2)
+- Dowód: import nie przenosi `building:material` ani `building:colour` (tylko `roof:colour` w części dachów); kolor fasady z palety użycia. Po #209 Donżon i Baszta w jasnym tynku kościelnym (zrzut `g232-shots/g232-donzon-po.png`), przed #209 w szarofioletowym tynku `historic`. W rzeczywistości nietynkowana cegła (Brama Krakowska: cegła w części gotyckiej, tynk w nadbudowie)
+- Poprawka: import przenosi `building:material` (brick, stone, plaster) i `building:colour` (11 budynków) do danych budynku i części; fasada bierze z nich kolor ściany przed paletą użycia (cegła: czerwonobrązowa, bez tynku); Brama Krakowska rozdzielona po częściach
+- Pakiet właściciela: tools/osm-import, packages/engine (renderer/mapcity)
+- Test przyjęcia: budynek z `building:material=brick` ma kolor ściany z rodziny cegły; kontrola skanu `brick-plastered` (budynek lub część z `building:material=brick` w OSM z kolorem ściany z palety tynku) 6 → 0
+
 ### G-266 Na pierzei Krakowskiego przy Placu Litewskim styl latarni zmienia się przy x 20 bez oparcia w OSM
 - Status: naprawione w #236 (2.11, PRZYJĘTE; kurator ZGODNE Z UWAGAMI: pastorały na całej pierzei placu, decyzja użytkownika)
 - Ważność: S4 · Zasięg: Krakowskie Przedmieście x −87…130 (drogi w598108789 i w40049340 z tagami placu w1054556917, nie deptaka); `lamps.kp-deptak` (pastorały) sięga x 20, choć opis planu mówi „od Kapucyńskiej” (tagi deptaka od x 129,7) · Koszt: mały
