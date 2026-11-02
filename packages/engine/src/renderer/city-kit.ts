@@ -208,6 +208,11 @@ export class CityKit {
     }
   }
 
+  /** The props files on the kit's UVs once they have loaded: the street's vehicles take their looks from them too (ADR-0058 stage 4). */
+  get loadedProps(): { readonly data: CityProps; readonly uvs: readonly (readonly [number, number])[] } | null {
+    return this.props;
+  }
+
   /** The facade props have loaded: every cell is rebuilt with them. */
   setProps(props: CityProps): void {
     this.props = { data: props, uvs: kitUvs(props, this.data) };

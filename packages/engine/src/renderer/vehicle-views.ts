@@ -3,6 +3,7 @@ import { type GlowLayer, type Mesh, MeshClass, type Scene, Vector3, VertexBuffer
 import type { RenderQuality } from "../npr/quality";
 import type { CityKit } from "./city-kit";
 import { type VehicleTemplate, paintOf, vehicleTemplates } from "./vehicle-models";
+import { pickVariant } from "./vehicle-variants";
 
 export type VehicleDescriptor = Extract<ViewDescriptor, { kind: "vehicle" }>;
 
@@ -58,6 +59,7 @@ class Fleet {
   private readonly min = new Vector3();
   private readonly max = new Vector3();
   private kitSeen: CityKit | null = null;
+  private propsSeen: CityKit["loadedProps"] = null;
 
   constructor(
     private readonly deps: VehicleViewsDeps,
@@ -109,8 +111,10 @@ class Fleet {
 
   /** Moves everyone in range and rebuilds the buffers when vehicles came or went. Call once per frame. */
   update(kit: CityKit, eye: { x: number; z: number }): void {
-    if (kit !== this.kitSeen) {
+    // The vehicles' looks come with the props files (ADR-0058 stage 4), after the kit.
+    if (kit !== this.kitSeen || kit.loadedProps !== this.propsSeen) {
       this.kitSeen = kit;
+      this.propsSeen = kit.loadedProps;
       this.templates.clear();
       this.dirty = true;
     }
@@ -119,9 +123,11 @@ class Fleet {
   }
 
   private pairOf(kit: CityKit, view: VehicleDescriptor): Pair | null {
-    const paint = paintOf(view.model, view.tint);
-    const key = `${view.model}:${paint}`;
-    if (!this.templates.has(key)) this.templates.set(key, vehicleTemplates(kit.data, view.model, paint));
+    const props = kit.loadedProps;
+    const variant = pickVariant(view.model, view.tint, (k) => kit.data.models.has(k) || (props?.data.models.has(k) ?? false));
+    const paint = variant?.paint ?? paintOf(view.model, view.tint);
+    const key = `${view.model}:${variant?.key ?? ""}:${paint}`;
+    if (!this.templates.has(key)) this.templates.set(key, vehicleTemplates(kit.data, view.model, paint, { props, variant, lite: this.deps.quality === "low" }));
     return this.templates.get(key) ?? null;
   }
 
@@ -253,7 +259,8 @@ class Fleet {
  * The street's vehicles (ADR-0050), drawn in bulk on the city kit's material: the driving ones in
  * one shared mesh, moved on the CPU each frame, the parked cars of the whole city in another;
  * one draw call per pass each however many there are. Near ones are the kit's models, far ones a
- * few boxes, the farthest folded away. Their lamps glow. No moon shadow, no outline: like the
+ * few boxes, the farthest folded away; with `vehicle-props.glb` each has the look its seed picks
+ * (ADR-0058 stage 4), its far version after its silhouette and, on phones, its light version. Their lamps glow. No moon shadow, no outline: like the
  * kit's buildings.
  */
 export class VehicleViews {
