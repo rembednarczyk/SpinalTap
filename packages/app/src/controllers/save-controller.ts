@@ -115,6 +115,11 @@ export class SaveController {
     }
   }
 
+  /** The gate of every save of the player's (a takedown, a panel, a ride, death, the title). */
+  canSave(): boolean {
+    return this.deps.canSave();
+  }
+
   snapshot(): SaveSnapshot {
     const sim = this.deps.sim();
     const { objective } = describeObjective(sim.domain, this.locale);
