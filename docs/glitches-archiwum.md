@@ -2,6 +2,14 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-213 Biegi schodów krótsze niż szerokie rysowane w poprzek
+- Status: naprawione w #204 (2.11, runda 3 @ 0995c9d PRZYJĘTE; kurator ZGODNE Z UWAGAMI: każdy pas leży wzdłuż biegu swojej drogi poza znanymi brzegami chunków G-234, uproszczenie usuwa wierzchołki do 4,2 cm; odstępstwa sprzed zmiany T-131 (G-236), T-132 (G-237)): pasy ≥ 0,45 m, kontrola `steps-band-hidden`; bazy `steps-across-run` 1 i `steps-band-hidden` 1 to stan sprzed G-213 na brzegach chunków (G-234)
+- Ważność: S4 · Zasięg: 36 ze 121 biegów w mieście jest krótszych niż ich pas 3 m, więc renderer bierze dłuższy bok pasa za kierunek biegu i rysuje stopnie w poprzek (np. w66258166 przy Donżonie, w1312664177)
+- Poprawka: zdjąć warunek `w > PATHS.steps` w `flightStrips` (tools/osm-import/src/ground.ts, po #194), żeby każdy bieg krótszy niż szeroki był dzielony na pasy; kontrola skanu „bieg w poprzek”
+- Poboczne: wyciąg `krakowskie.json` bez murków (nieaktualny cache kafli, `osm:fetch --only=krakowskie` z siecią); pas bez nawierzchni między brukiem Placu Zamkowego (x ok. 759) a ścieżką w56965514 (x ok. 765)
+- Z weryfikacji #194: sąsiednie pasy krótkiego biegu dają stopnie przesunięte w pionie do ok. 0,06 m (`planSteps` próbkuje teren osobno na osi każdego pasa); najkrótszy bieg w1435832499 (1,3 m) wychodzi płaski (rise/count < `MIN_RISER`)
+- Pakiet właściciela: tools/osm-import
+
 ### G-224 Wieże kościołów z OSM z wysokości domyślnej (wieża cerkwi św. Jozafata; dzwonnica św. Mikołaja w G-235)
 - Status: naprawione w #207 (2.11, runda 2 PRZYJĘTE; kurator: ZGODNE Z UWAGAMI): tylko wieża cerkwi św. Jozafata (szczyt y 9,5); dzwonnica św. Mikołaja wydzielona do G-235, nawa Jozafata do G-216
 - Ważność: S3 (proponowana; po G-212 to jedyna wieża cerkwi) · Zasięg: 1 wieża (Krakowskie) · Koszt: mały (dane)
