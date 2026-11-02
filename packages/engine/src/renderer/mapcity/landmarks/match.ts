@@ -44,3 +44,21 @@ export const landmarkAt = (x: number, z: number, corners: number): LandmarkPart 
   index ??= landmarkIndex(LUBLIN_CHUNKS);
   return index.get(keyOf(x, z, corners)) ?? null;
 };
+
+/**
+ * Landmarks of the curator's list the map shows whole and without a tower (G-210): no
+ * `building:part`, no `tower:*` and no tower mapped at them. The Trinity Chapel has none (T-119,
+ * NMPT). The Bernardine church has one, but not where the renderer's would stand: by its south
+ * wall where the nave meets the chancel (about (378.1, -247.7), 5.5 x 5.5 m, helmet to y 39.2 in
+ * NMPT), with a ridge turret at (375.4, -240.1) to y 31.8. Without it is the lesser error than
+ * two made-up towers at its west end, until the tower comes in as a part (G-214) and the entry goes.
+ */
+const TOWERLESS_OSM: ReadonlySet<string> = new Set(["w66258167", "w66330578"]);
+
+let towerless: ReadonlySet<string> | null = null;
+
+/** Whether the map building standing at (x, z) with an outline of `corners` points is a landmark without a tower. */
+export const towerlessAt = (x: number, z: number, corners: number): boolean => {
+  towerless ??= new Set(LUBLIN_CHUNKS.flatMap((c) => c.buildings.flatMap((b) => (TOWERLESS_OSM.has(b.id) ? [keyOf(b.x, b.z, b.outline.length / 2)] : []))));
+  return towerless.has(keyOf(x, z, corners));
+};

@@ -18,6 +18,7 @@ import { marketChecks } from "./market-pieces";
 import { signsInNeighbours } from "./sign-neighbours";
 import { lanternsByPassages } from "./passage-lanterns";
 import { landmarksAtDefaultHeight } from "./landmark-heights";
+import { cityFakeTowers } from "./landmark-towers";
 import { EMPTY_STRIPS_KNOWN, bayCarsMisturned, bayCarsOutOfPark, bayStripsEmptyKnown, bayStripsSparse, crowdLanesOnParking, kerbParksOf, kerbStripsOffCarStreets } from "./kerb-bays";
 import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alone.ts";
 import { extractFeatures } from "../../osm-import/src/features.ts";
@@ -980,6 +981,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   },
   /** A landmark from the curator's list at the district's default height, not a mapped or measured one (G-204). */
   "landmark-default-height": () => landmarksAtDefaultHeight(LANDMARK_BUILDINGS, MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)))),
+  /** A landmark of the list the map shows whole and without a tower, crowned by the renderer's bell towers (G-210). */
+  "landmark-fake-tower": () => cityFakeTowers(LANDMARK_BUILDINGS, SOURCE_OSM),
   /**
    * A monument or an artwork whose shape its OSM tags do not bear out (G-149), judged by the
    * tagged node nearest within 3 m: anything standing for a plaque, a stumbling stone, a mural or

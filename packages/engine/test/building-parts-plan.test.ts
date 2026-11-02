@@ -111,6 +111,8 @@ describe("a church whose parts come from the map (G-057)", () => {
   });
 
   it("over the whole centre: no church a part stands on keeps towers, every other church does", () => {
+    // The landmarks the map shows without a tower (G-210) keep none either: landmark-towers.test.ts.
+    const towerless = ["w66258167", "w66330578"].map(byId);
     const sources = all.map(sourceOf);
     const lifted = sources.filter((s) => s.view.soffit !== undefined);
     const churches = sources.filter((s) => s.view.use === "church" && s.view.soffit === undefined);
@@ -118,7 +120,7 @@ describe("a church whose parts come from the map (G-057)", () => {
     expect(carrying.length).toBe(2);
     for (const c of churches) {
       const top = blockTop(c, sources);
-      if (carrying.includes(c)) expect(top).toBeLessThanOrEqual(roofTop(c));
+      if (carrying.includes(c) || towerless.some((t) => t.at.x === c.at.x && t.at.z === c.at.z)) expect(top).toBeLessThanOrEqual(roofTop(c));
       else expect(top).toBeGreaterThan(roofTop(c));
     }
   });
