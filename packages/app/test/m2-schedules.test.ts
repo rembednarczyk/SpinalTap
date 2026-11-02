@@ -130,7 +130,7 @@ describe("M2: day clock and schedules through the game loop", () => {
     session.newGame();
     wait(session, 9 * 60 + 30); // 06:30
     frames(session, 1);
-    expect(await session.saveAsync("slot-1")).toBe(true);
+    expect(await session.saves.saveAsync("slot-1")).toBe(true);
     const lit = render.light().at(-1)?.daylight ?? 0;
     expect(lit).toBeGreaterThan(0);
 
@@ -138,7 +138,7 @@ describe("M2: day clock and schedules through the game loop", () => {
     expect(render.light().at(-1)?.daylight).toBe(0);
     expect(ui.getState().clock).toBe("21:00");
 
-    expect(await session.loadAsync("slot-1")).toBe(true);
+    expect(await session.saves.loadAsync("slot-1")).toBe(true);
     expect(ui.getState()).toMatchObject({ clock: "06:30", dayPhase: "dawn" });
     expect(render.light().at(-1)?.daylight).toBe(lit);
   });

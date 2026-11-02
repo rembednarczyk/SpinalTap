@@ -1,4 +1,4 @@
-import type { BreachDaemonId, CyberwareId, CyberwareSlot, EquipSlot, ItemRef, MetroStationId, ModSlot, QuickhackSlotInput, ShopItemId } from "@seki/core";
+import type { BreachDaemonId, CyberwareId, CyberwareSlot, DifficultyProfile, EquipSlot, ItemRef, MetroStationId, ModSlot, QuickhackSlotInput, ShopItemId } from "@seki/core";
 import type { CharacterTab, RadioStationId, SettingsVm } from "./store/ui-store";
 
 /** Where the 3D preview of the character screen is drawn, in CSS pixels of the page. */
@@ -11,7 +11,8 @@ export interface PreviewRect {
 
 /** The game as a whole: a new game, pause, the title screen, saves (ADR-0031). */
 export interface SessionIntents {
-  newGame(): void;
+  /** A new game on `difficulty` (ADR-0066), "normal" without. */
+  newGame(difficulty?: DifficultyProfile): void;
   resume(): void;
   pause(): void;
   save(slot: string): void;
@@ -89,6 +90,12 @@ export interface SettingsIntents {
   reload(): void;
 }
 
+/** The difficulty of the running game (ADR-0066), from the pause menu. */
+export interface DifficultyIntents {
+  /** Asks for the whole profile: in force at once, or after the fight when one is on. */
+  setDifficulty(profile: DifficultyProfile): void;
+}
+
 /** The game camera (ADR-0049). */
 export interface CameraIntents {
   /** Horizontal field of view from the hip, degrees; the app clamps it to the allowed range and saves it. */
@@ -136,6 +143,7 @@ export type UiIntents = SessionIntents &
   LootIntents &
   CharacterIntents &
   SettingsIntents &
+  DifficultyIntents &
   CameraIntents &
   PhoneIntents &
   ContractIntents &

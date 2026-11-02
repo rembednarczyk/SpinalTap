@@ -7,8 +7,8 @@ import type { RenderQuality } from "../../npr/quality";
  * pins down); the next ones scale trees and shrubs.
  */
 export const PROP_SHAPES: Readonly<Partial<Record<StreetPropKind, number>>> = {
-  monument: 4,
-  artwork: 4,
+  monument: 6,
+  artwork: 6,
   flagpole: 2,
   tree: 3,
   bench: 2,
@@ -18,10 +18,17 @@ export const PROP_SHAPES: Readonly<Partial<Record<StreetPropKind, number>>> = {
   "cafe-garden": 3,
   "advertising-column": 2,
   "vending-machine": 3,
+  // ADR-0058 stage 2: what a rack's two slots hold (`RACK_SHAPES`), a container's colour.
+  "bike-rack": 4,
+  container: 2,
+  // ADR-0058 stage 3: the market's stock (cartons, barrels, crates, goods under a canvas).
+  "market-goods": 4,
+  // ADR-0058 stage 9: a door's model (`DOOR_MODELS`); its size is in the bits above.
+  door: 8,
 };
 
 /** Monument and artwork shapes. */
-export const MONUMENT_SHAPE = { obelisk: 0, figure: 1, koziolek: 2, abstract: 3 } as const;
+export const MONUMENT_SHAPE = { obelisk: 0, figure: 1, koziolek: 2, abstract: 3, stele: 4, shrine: 5 } as const;
 
 /** Tree species. */
 export const TREE_SHAPE = { lime: 0, maple: 1, chestnut: 2 } as const;
@@ -71,6 +78,7 @@ const SMALL: ReadonlySet<StreetPropKind> = new Set([
   "street-cabinet",
   "shrubs",
   "floodlight",
+  "hydrant",
 ]);
 
 export const bandOf = (kind: StreetPropKind): PropBand => (TALL.has(kind) ? "tall" : SMALL.has(kind) ? "small" : "medium");

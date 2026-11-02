@@ -4,8 +4,6 @@ import {
   QUICKHACK_IDS,
   isBuffId,
   isFactionId,
-  isContractKind,
-  isContractSiteId,
   SAVE_SCHEMA_VERSION,
   type SaveSnapshot,
   isCyberwareId,
@@ -17,8 +15,10 @@ import {
   isDifficultyProfile,
 } from "@seki/core";
 import { findItemsError } from "./validate-items";
+import { findContractError, findContractOnSiteError, findFormerContractsError } from "./validate-contract";
 import { findContractWave2Error, findEncountersError, findMetroError } from "./validate-wave2";
 import { findProgressionError } from "./validate-progression";
+import { findEntityError, findReinforcementsError } from "./validate-entities";
 
 type Json = Record<string, unknown>;
 
@@ -32,18 +32,22 @@ export const findSchemaError = (s: Json): string | null => {
   if (!isNum(s.seed) || !isNum(s.rngState) || !isNum(s.tick)) return "seed/rngState/tick";
   if (!Array.isArray(s.entities)) return "entities";
   for (const e of s.entities) {
-    if (!isObject(e) || typeof e.key !== "string" || !isVec(e.position)) return "entity shape";
-    if (!isNum(e.yaw) || !isNum(e.pitch) || !isNum(e.cooldown) || typeof e.alerted !== "boolean") return `entity ${e.key}`;
-    if (e.hp !== null && !isNum(e.hp)) return `entity ${e.key} hp`;
-    if (e.maxHp !== undefined && !(isNum(e.maxHp) && e.maxHp > 0)) return `entity ${e.key} hp`;
-    if ((e.lastKnown !== undefined && !isVec(e.lastKnown)) || (e.search !== undefined && !isNum(e.search)) || (e.lost !== undefined && !isNum(e.lost))) {
-      return `entity ${e.key} search`;
-    }
+    const error = findEntityError(e);
+    if (error) return error;
   }
+  const reinforcementsError = findReinforcementsError(s.reinforcements);
+  if (reinforcementsError) return reinforcementsError;
   const st = s.streaming;
   if (!isObject(st) || !Array.isArray(st.loadedChunks) || !st.loadedChunks.every((c) => typeof c === "string")) return "streaming";
   // ADR-0038: leaves of resident doors that are moving or about to close.
   if (!Array.isArray(s.doors) || !s.doors.every((x) => isObject(x) && typeof x.key === "string" && isNum(x.open) && isNum(x.idle))) return "doors";
+  // G-171: a profile waiting for the end of a fight, when there is one, is a valid one.
+  if (s.pendingDifficulty !== undefined && !isDifficultyProfile(s.pendingDifficulty)) return "pending difficulty";
+  // G-178: a job over whose people are still in the world is a whole contract, as a running one.
+  if (s.endedContract !== undefined && findContractOnSiteError(s.endedContract)) return "ended contract";
+  // None twice, and none the job in the log or the ended one.
+  const taken = [isObject(s.domain) && isObject(s.domain.contracts) ? s.domain.contracts.active : null, isObject(s.endedContract) ? s.endedContract.contract : null];
+  if (s.formerContracts !== undefined && findFormerContractsError(s.formerContracts, taken)) return "former contracts";
   const d = s.domain;
   if (!isObject(d)) return "domain";
   const c = d.character;
@@ -64,24 +68,8 @@ export const findSchemaError = (s: Json): string | null => {
   if (itemsError) return itemsError;
   const contracts = d.contracts;
   if (!isObject(contracts) || !Number.isInteger(contracts.completed) || (contracts.completed as number) < 0) return "contracts";
-  const active = contracts.active;
-  if (active !== null) {
-    if (!isObject(active) || typeof active.id !== "string" || typeof active.siteId !== "string" || !isContractSiteId(active.siteId)) {
-      return "contracts";
-    }
-    if (!Number.isInteger(active.targets) || !Number.isInteger(active.reward) || (active.status !== "active" && active.status !== "cleared")) {
-      return "contracts";
-    }
-    // M4 fields are optional, so v6 saves from before them stay valid as they are.
-    if (active.kind !== undefined && (typeof active.kind !== "string" || !isContractKind(active.kind))) return "contract kind";
-    if (active.deadlineTick !== undefined && (!Number.isInteger(active.deadlineTick) || (active.deadlineTick as number) < 0)) return "contract deadline";
-    // A hack's clock (ADR-0024): ticks connected and ticks away, both whole and not negative.
-    for (const field of ["progress", "away"] as const) {
-      const n = active[field];
-      if (n !== undefined && (!Number.isInteger(n) || (n as number) < 0)) return "contract progress";
-    }
-    if (active.breach !== undefined && (!Array.isArray(active.breach) || !active.breach.every((x) => typeof x === "string"))) return "contract breach";
-  }
+  const activeError = contracts.active === null ? null : findContractError(contracts.active);
+  if (activeError) return activeError;
   if (contracts.tally !== undefined && contracts.tally !== null && findTallyError(contracts.tally)) return "contract tally";
   const heatError = findHeatError(d.heat) ?? findNetrunError(d.netrun);
   if (heatError) return heatError;

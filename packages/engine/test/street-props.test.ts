@@ -19,7 +19,7 @@ const valid = (s: MeshSink): boolean =>
 
 describe("street furniture models (ADR-0047)", () => {
   it("has a valid model for every kind and shape, and the same variant always gives the same geometry", () => {
-    expect(PROP_KINDS).toHaveLength(36);
+    expect(PROP_KINDS).toHaveLength(47);
     for (const kind of PROP_KINDS) {
       for (let s = 0; s < (PROP_SHAPES[kind] ?? 1); s++) {
         const a = buildPropModel(kind, s);
@@ -33,7 +33,7 @@ describe("street furniture models (ADR-0047)", () => {
     // Variants pick shapes: the three tree species differ.
     const trees = [0, 1, 2].map((s) => JSON.stringify(buildPropModel("tree", s).sink.positions));
     expect(new Set(trees).size).toBe(3);
-    expect(shapeOf("monument", 4 * 1234 + 2)).toBe(2);
+    expect(shapeOf("monument", 6 * 1234 + 2)).toBe(2);
   });
 
   it("draws a bollard as big as its solid and its chain from its face to the next post's (G-032)", () => {

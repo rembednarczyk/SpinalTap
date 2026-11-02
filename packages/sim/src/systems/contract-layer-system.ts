@@ -44,7 +44,7 @@ export const contractLayerSystem: System = {
     if (district === null) return;
     const before = watch.district;
     watch.district = district;
-    // The first step after a start or a load only takes note of where the player is.
+    // The first step of a new game, or of one loaded in the metro, only takes note of where she is.
     if (before === null || before === district || ctx.state.domain.contracts.active) return;
     for (const giver of Object.keys(FIXER_HOME) as ContractGiverId[]) {
       const home = FIXER_HOME[giver];

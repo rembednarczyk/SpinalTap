@@ -50,6 +50,9 @@ const PATHS: Record<string, number> = { footway: 2.5, path: 2, cycleway: 2, step
 
 const underground = (t: Tags) => t.tunnel === "yes" || t.tunnel === "culvert" || t.indoor === "yes" || Number(t.layer ?? 0) < 0 || t.location === "underground";
 
+/** A path's width (m): its `width`, else by type. */
+export const pathWidth = (t: Tags): number => parseLength(t.width) ?? PATHS[t.highway ?? ""] ?? 2;
+
 export const roadWidth = (t: Tags): number => {
   const w = parseLength(t.width ?? t["width:carriageway"]);
   if (w !== null) return w;
@@ -133,7 +136,7 @@ export const lineBands = (l: Line, mappedSidewalkNear: boolean, water: readonly 
       if (sides.right) add("sidewalk", stripAlong(l.line, -w / 2 - sw, sw), { along: { line: l.line, from: -w / 2 - sw, width: sw } });
     } else if (hw === "pedestrian") add(cobbled(t) ? "cobble" : "square", bufferLine(l.line, parseLength(t.width) ?? 8));
     else if (PATHS[hw] !== undefined) {
-      const w = parseLength(t.width) ?? PATHS[hw]!;
+      const w = pathWidth(t);
       // Steps: one band per straight run, so the renderer reads the flight's direction off it.
       if (hw === "steps") for (let i = 0; i + 1 < l.line.length; i++) add("steps", bufferLine([l.line[i]!, l.line[i + 1]!], w));
       // A path's crossing of a carriageway: a zebra where it is marked, the road itself where not.

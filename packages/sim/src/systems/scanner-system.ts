@@ -2,6 +2,7 @@ import {
   BASE_RAM,
   COMBAT_RADIUS,
   DISTRACT_RADIUS,
+  type DomainState,
   type EntityId,
   FACTIONS,
   type HackTargetKind,
@@ -90,13 +91,32 @@ export const scanFocus = (ctx: SimContext, player: Entity): Entity | null => {
 };
 
 
-const targetRef = (e: Entity): string => e.key ?? `#${e.id}`;
+/**
+ * How the upload names its target in the save: the entity's key, a reinforcement's place in the
+ * heat (`security:<n>`, G-194: unkeyed, its id changes on loading), else `#<id>`, good only for this session.
+ */
+const targetRef = (e: Entity): string => e.key ?? (e.security ? `security:${e.security.n}` : `#${e.id}`);
+
+const SECURITY_REF = /^security:(\d+)$/;
+
+/**
+ * What a quickhack's XP remembers the target by, across saves (G-202): its key, or a
+ * reinforcement's `n` with the tick it came in at, as `n` counts again from 1 in the next heat.
+ * Nothing for the others, who are not remembered across a save.
+ */
+const xpKey = (e: Entity): string | undefined => e.key ?? (e.security ? `security:${e.security.n}@${e.security.since}` : undefined);
 
 const findTarget = (ctx: SimContext, ref: string): Entity | null => {
   if (ref.startsWith("#")) {
     const id = Number(ref.slice(1));
+    if (id !== ctx.session.watch.uploadId) return null;
     for (const e of ctx.world) if (e.id === id) return e;
     return null;
+  }
+  const security = SECURITY_REF.exec(ref);
+  if (security) {
+    const n = Number(security[1]);
+    return ctx.world.with("security").entities.find((e) => e.security.n === n) ?? null;
   }
   for (const e of ctx.world) if (e.key === ref) return e;
   return null;
@@ -108,9 +128,12 @@ const setRam = (ctx: SimContext, ram: number): void => {
   ctx.state.domain = { ...ctx.state.domain, netrun: { ...netrun, ram } };
 };
 
+/** The whole number of RAM the HUD shows. */
+export const wholeRam = (domain: DomainState): number => Math.floor(domain.netrun.ram + 1e-9);
+
 /** RamChanged whenever the whole number of RAM changes (spending, refunds, regeneration). */
 const reportRam = (ctx: SimContext): void => {
-  const current = Math.floor(ctx.state.domain.netrun.ram + 1e-9);
+  const current = wholeRam(ctx.state.domain);
   if (ctx.session.watch.ram === current) return;
   const first = ctx.session.watch.ram === null;
   ctx.session.watch.ram = current;
@@ -260,7 +283,7 @@ const apply = (ctx: SimContext, player: Entity, hackId: QuickhackId, target: Ent
   }
   noteHacked(ctx);
   ctx.bus.emit("QuickhackApplied", { hackId, targetId: target.id, duration: def.duration });
-  grantQuickhackXp(ctx, target.key);
+  grantQuickhackXp(ctx, xpKey(target));
 };
 
 /** Starts the n-th hack of the focused target's list (ADR-0028: RAM is paid at the start). */
@@ -276,6 +299,7 @@ const start = (ctx: SimContext, focus: Entity, slot: number): void => {
   if (netrun.ram + 1e-9 < ram) return fail("no-ram");
   const upload = QUICKHACKS[hackId].upload;
   ctx.state.domain = { ...ctx.state.domain, netrun: { ram: netrun.ram - ram, upload: { hackId, target: targetRef(focus), left: upload, ram } } };
+  ctx.session.watch.uploadId = focus.id;
   ctx.bus.emit("QuickhackStarted", { hackId, targetId: focus.id, upload, ram });
 };
 

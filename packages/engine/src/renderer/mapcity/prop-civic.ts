@@ -6,7 +6,8 @@ import { MONUMENT_SHAPE } from "./prop-shapes";
  * Bigger street furniture (ADR-0047), front +z: the glass bus shelter with an ad screen, stop
  * posts, ticket and vending machines (rows of them like in Kabuki), the 24H kiosk, café gardens
  * with a parasol, market stalls, the jets of the dry fountains, and monuments: the Union
- * obelisk with holo-rings, a figure on a plinth, the Koziołek and an abstract sculpture.
+ * obelisk with holo-rings, a figure on a plinth, the Koziołek, an abstract sculpture, a stele
+ * with a tablet and a wayside shrine.
  */
 
 const DARK = paint("#24272d");
@@ -102,8 +103,11 @@ export const cafeGarden = (shape: number): MeshSink => {
 
 const CANVAS = ["#c8452f", "#2c6d8a", "#d9a12e"];
 
-/** A wooden market stall with a canvas roof, a counter and a string of lights. */
-export const marketStall = (shape: number): MeshSink => {
+/**
+ * A wooden market stall with a canvas roof, a counter and a string of lights; `goods` the boxes on
+ * its counter (none where the goods of `market-props.glb` stand on it, ADR-0058 stage 3).
+ */
+export const marketStall = (shape: number, goods = true): MeshSink => {
   const sink = new MeshSink();
   const wood = paint("#7b5537");
   for (const x of [-1.0, 1.0]) for (const z of [-0.7, 0.7]) block(sink, x, -0.1, z, 0.08, 2.3, 0.08, wood);
@@ -112,7 +116,7 @@ export const marketStall = (shape: number): MeshSink => {
   sink.box(v3(0, 2.35, 0), 2.4, 0.06, 1.8, paint(CANVAS[shape] ?? CANVAS[0]!), { tilt: 0 });
   pyramid(sink, v3(0, 2.38, 0), 2.4, 1.8, 0.45, paint(CANVAS[shape] ?? CANVAS[0]!));
   for (let i = 0; i < 6; i++) blob(sink, v3(-1.0 + i * 0.4, 2.2 - Math.sin((i / 5) * Math.PI) * 0.12, 0.92), 0.05, 0.05, 0.05, glow("#ffd27a"), 4, 2);
-  for (let i = 0; i < 4; i++) block(sink, -0.6 + i * 0.4, 1.03, 0.55, 0.3, 0.18, 0.3, paint(["#d9a33a", "#a8c94a", "#c84a3a", "#e8e0c8"][i]!));
+  if (goods) for (let i = 0; i < 4; i++) block(sink, -0.6 + i * 0.4, 1.03, 0.55, 0.3, 0.18, 0.3, paint(["#d9a33a", "#a8c94a", "#c84a3a", "#e8e0c8"][i]!));
   return sink;
 };
 
@@ -157,10 +161,40 @@ const koziolek = (sink: MeshSink): void => {
   for (const z of [-0.04, 0.04]) path(sink, [v3(0.32, 1.1, z), v3(0.26, 1.24, z * 2), v3(0.16, 1.26, z * 3), v3(0.12, 1.16, z * 3)], 0.016, b, 4);
 };
 
-/** Monuments and artworks by shape: obelisk, figure on a plinth, Koziołek, abstract. */
+const WHITEWASH = paint("#d8d2c4");
+
+/**
+ * The neutral memorial for one whose tags name no figure (G-149): a granite stele on a low base
+ * with a bronze tablet on its front and a thin holo line under it.
+ */
+const stele = (sink: MeshSink): void => {
+  block(sink, 0, -0.2, 0, 1.3, 0.4, 0.7, paint("#76756f"));
+  block(sink, 0, 0.2, 0, 0.9, 1.35, 0.4, GRANITE);
+  sink.box(v3(0, 1.59, 0), 1.0, 0.08, 0.5, paint("#76756f"));
+  sink.box(v3(0, 1.05, 0.205), 0.6, 0.45, 0.02, BRONZE);
+  sink.box(v3(0, 0.74, 0.205), 0.6, 0.03, 0.01, HOLO);
+};
+
+/** A wayside shrine: a whitewashed pillar, a niche lit by a candle, a tin roof and a cross. */
+const shrine = (sink: MeshSink): void => {
+  block(sink, 0, -0.2, 0, 0.9, 0.5, 0.9, paint("#76756f"));
+  block(sink, 0, 0.3, 0, 0.6, 1.6, 0.6, WHITEWASH);
+  block(sink, 0, 1.9, 0, 0.75, 0.75, 0.75, WHITEWASH);
+  sink.box(v3(0, 2.27, 0.38), 0.4, 0.5, 0.01, glow("#ffcf7a"));
+  pyramid(sink, v3(0, 2.65, 0), 0.95, 0.95, 0.45, paint("#3a3d42"));
+  const iron = paint("#2a2c2e");
+  sink.box(v3(0, 3.3, 0), 0.05, 0.4, 0.05, iron);
+  sink.box(v3(0, 3.38, 0), 0.24, 0.05, 0.05, iron);
+};
+
+/** Monuments and artworks by shape: obelisk, figure on a plinth, Koziołek, abstract, stele, shrine. */
 export const monument = (shape: number): MeshSink => {
   const sink = new MeshSink();
-  if (shape === MONUMENT_SHAPE.obelisk) {
+  if (shape === MONUMENT_SHAPE.stele) {
+    stele(sink);
+  } else if (shape === MONUMENT_SHAPE.shrine) {
+    shrine(sink);
+  } else if (shape === MONUMENT_SHAPE.obelisk) {
     plinth(sink, 2.4, 2.0);
     const iron = paint("#2a2c2e");
     frustum(sink, v3(0, 2.1, 0), 1.05, 0.54, 9.5, iron);
@@ -181,13 +215,17 @@ export const monument = (shape: number): MeshSink => {
   return sink;
 };
 
-/** The far monument: the obelisk as a column with its lower ring, the rest as a plinth block. */
+/** The far monument: the obelisk as a column with its lower ring, the shrine as its pillar, the rest as a plinth block. */
 export const farMonument = (shape: number): MeshSink => {
   const sink = new MeshSink();
   if (shape === MONUMENT_SHAPE.obelisk) {
     block(sink, 0, -0.2, 0, 2.6, 2.2, 2.6, GRANITE);
     frustum(sink, v3(0, 2.0, 0), 1.05, 0.3, 10.5, paint("#2a2c2e"));
     ring(sink, v3(0, 6.0, 0), 1.25, 0.05, HOLO, 10);
+  } else if (shape === MONUMENT_SHAPE.shrine) {
+    block(sink, 0, -0.2, 0, 0.75, 3.3, 0.75, WHITEWASH);
+  } else if (shape === MONUMENT_SHAPE.stele) {
+    block(sink, 0, -0.2, 0, 1.0, 1.8, 0.5, GRANITE);
   } else {
     block(sink, 0, -0.2, 0, 1.4, shape === MONUMENT_SHAPE.figure ? 3.8 : 1.2, 1.4, GRANITE);
   }

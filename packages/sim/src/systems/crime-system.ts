@@ -2,7 +2,6 @@ import {
   type AwarenessState,
   CIVILIAN_SIGHT,
   type CrimeKind,
-  ENEMY_TYPES,
   type EntityId,
   type FactionId,
   HEAT_REINFORCEMENTS,
@@ -26,7 +25,7 @@ import {
 import { SECURITY_ENTRIES } from "../content/devices";
 import type { Entity } from "../world/components";
 import type { Offence, SimContext, StreetDisturbance, System } from "../world/context";
-import { gangerEntity, toughen } from "../world/factory";
+import { reinforcementEntity } from "../world/reinforcements";
 import { chestOf, eyeOf, lineOfSight } from "../world/hitscan";
 import { inCreationOrder } from "../world/ordering";
 import { codeKnown } from "../world/hook-tracker";
@@ -333,18 +332,21 @@ const entryFor = (ctx: SimContext, player: Entity, near: Vec3): Vec3 | null => {
   return best;
 };
 
-/** Where one searcher looks: around the last known position, spread by its id. */
-const searchPoint = (heat: HeatState, e: Entity): Vec3 | null => {
+/** Where one searcher looks: around the last known position, spread by which of the heat's it is (G-179). */
+const searchPoint = (heat: HeatState, n: number): Vec3 | null => {
   const at = heat.lastKnown;
   if (!at) return null;
-  const a = e.id * 2.4;
+  const a = n * 2.4;
   return { x: at.x + Math.sin(a) * SEARCH_SPREAD, y: at.y, z: at.z + Math.cos(a) * SEARCH_SPREAD };
 };
 
 /** The heat's reinforcements: brought in out of sight while the heat is up, sent home after. */
 const runReinforcements = (ctx: SimContext, player: Entity | null, dt: number): void => {
   const heat = ctx.state.domain.heat;
-  const live = [...inCreationOrder(ctx.world.with("security"))];
+  // The bodies of theirs (G-193), and those knocked out alive with their mind still on (G-196),
+  // neither count, nor search, nor go home: only the ones on their feet do.
+  const all = inCreationOrder(ctx.world.with("security"));
+  const live = all.filter((e) => !!e.ai && !e.downed);
   const watch = ctx.session.watch;
   watch.reinforce = Math.max(0, watch.reinforce - dt);
   if (heat.level === 0 || !heat.faction) {
@@ -352,11 +354,14 @@ const runReinforcements = (ctx: SimContext, player: Entity | null, dt: number): 
       const far = !player || Math.hypot(e.position.x - player.position.x, e.position.z - player.position.z) >= SPAWN_MIN;
       if (!e.ai?.alerted && far && (!player || !inPlayerView(ctx, player, e.position))) ctx.world.remove(e);
     }
+    // All gone home: the next heat counts its own from 1 (G-179), after those of the bodies left lying.
+    const left = ctx.world.with("security").entities;
+    if (left.every((e) => !e.ai || e.downed)) watch.sent = Math.max(0, ...left.map((e) => e.security.n));
     return;
   }
   // The searchers keep combing the area around the last known position.
   for (const e of live) {
-    const p = searchPoint(heat, e);
+    const p = searchPoint(heat, e.security.n);
     if (p && e.ai && !e.ai.alerted && !e.ai.lastKnown) giveLead(e, p);
   }
   const type = SECURITY_ENEMY[heat.faction];
@@ -369,11 +374,10 @@ const runReinforcements = (ctx: SimContext, player: Entity | null, dt: number): 
   }
   // The difficulty brings them in more or less often (`reinforce`, ADR-0066).
   watch.reinforce = REINFORCE_INTERVAL / difficultyOf(ctx).reinforce;
-  const g = gangerEntity(ctx.streamer.takeId(), { key: "", position: at, yaw: 0 }, null, ENEMY_TYPES[type].hp, "", undefined, type);
-  delete g.key;
-  g.security = true;
+  watch.sent += 1;
+  const g = reinforcementEntity(ctx.streamer.takeId(), watch.sent, ctx.tick, type, at, difficultyOf(ctx).npcHealth);
   if (g.ai) g.ai.lastKnown = heat.lastKnown ? { ...heat.lastKnown } : { ...player.position };
-  ctx.world.add(toughen(g, difficultyOf(ctx).npcHealth));
+  ctx.world.add(g);
 };
 
 /**

@@ -124,6 +124,9 @@ const mergeGroups = (b: RigBuilder, root: TransformNode, skeleton: Skeleton, gro
  */
 export const skinCharacter = (b: RigBuilder, root: TransformNode, joints: TransformNode[]): Mesh[] => {
   const { skeleton, boneOf } = buildSkeleton(b, joints);
+  // A disposed mesh only lets go of its skeleton, which stays in the scene: without this every
+  // character streamed out or cleared by a new game left one behind (G-184).
+  root.onDisposeObservable.addOnce(() => skeleton.dispose());
   root.computeWorldMatrix(true);
   const rootInverse = Matrix.Invert(root.getWorldMatrix());
 

@@ -1,8 +1,10 @@
 import type { CrimeKind, CrowdState, EntityId, Vec3 } from "@seki/core";
+import type { CharacterBody } from "./body";
 
 /**
- * What the street knows about someone knocked out (ADR-0065), next to its `unconscious`. Transient
- * like the knock-out itself (stage 3 of the ADR saves both).
+ * What the street knows about a body (ADR-0065), next to its `unconscious`: someone knocked out,
+ * or killed in a takedown and left lying. Saved with the entity (`BodySnapshot`) but for the
+ * finder and the waking, which start again after a load.
  */
 export interface DownedBody {
   /** Where the player stood when she took it down: what it knows once woken. */
@@ -17,7 +19,23 @@ export interface DownedBody {
   finder: EntityId | null;
   /** Seconds the finder has spent at its side; at `WAKE_TIME` it wakes. */
   wake: number;
+  /** Killed, not knocked out: nobody wakes it, the finder only looks and starts the search. */
+  dead: boolean;
+  /**
+   * Who has looked at it dead already (an NPC walks over only once): the others still may, so a
+   * passer-by does not keep the security from finding it. Not saved.
+   */
+  lookedBy: readonly EntityId[];
+  /** On the player's shoulder (stage 3): it follows her and nobody sees it lie. */
+  carried: boolean;
+  /** In a hiding place: out of everybody's sight for good. */
+  hidden: boolean;
+  /** Its own body while carried or hidden (it pushes nobody then), put back when it is dropped. */
+  frame: CharacterBody | null;
 }
+
+/** What a hiding place for bodies is (ADR-0065); one body fits in each. */
+export type HideKind = "container" | "dumpster" | "locker";
 
 export interface GangerAi {
   readonly home: Vec3;
@@ -40,7 +58,7 @@ export interface GangerAi {
    * and decides at once, as before.
    */
   readonly cone?: true;
-  /** How sure the guard is that it saw someone, 0..1; at 1 it is alerted. Transient, not saved. */
+  /** How sure the guard is that it saw someone, 0..1; at 1 it is alerted. Saved while above 0 (G-174). */
   suspicion?: number;
   /** A guard on a post looks around: its facing sweeps around `yaw` (ADR-0024). */
   readonly watch?: { readonly yaw: number; readonly phase: number; readonly period?: number };
@@ -52,9 +70,17 @@ export interface GangerAi {
   lastKnown?: Vec3 | null;
   /** Seconds it still looks around `lastKnown` before going back to its post. Saved. */
   search?: number;
-  /** Seconds the player has been out of its sight while alerted. Transient. */
+  /** Seconds the player has been out of its sight while alerted. Saved (`EntitySnapshot.lost`, since v11). */
   lost?: number;
-  /** It saw the player this step (read by the heat after the AI ran). Transient. */
+  /**
+   * Pinned in the world while its chunk sleeps (G-188): seconds it has spent outside every loaded
+   * chunk, 0 in a loaded one. Absent while its chunk is loaded. Saved (`EntitySnapshot.away`).
+   */
+  away?: number;
+  /**
+   * It saw the player this step (read by the heat after the AI ran). Transient: perception sets it
+   * every step before it is read, so it is not saved.
+   */
   sees?: boolean;
   /**
    * Sees through disguises (ADR-0033): a Tessen shift boss, every third Hebi. Fixed at spawn
@@ -73,8 +99,8 @@ export interface GangerAi {
 /**
  * A sniper (ADR-0024): no behaviour tree, a small state machine. It keeps to a perch high up,
  * aims for `AIM_TIME` with the laser on (the telegraph), fires, waits, and walks to the perch
- * farthest from the player once the player gets close. Transient like the melee state: a game
- * loaded mid-aim starts idle on its saved position.
+ * farthest from the player once the player gets close. Saved (`EntitySnapshot.sniper`, G-185):
+ * a game loaded mid-aim fires when the saved one would; asleep with its chunk it wakes idle.
  */
 export interface SniperState {
   readonly perches: readonly Vec3[];
@@ -83,6 +109,11 @@ export interface SniperState {
   timer: number;
   /** Perch it holds or walks to (index into `perches`). */
   perch: number;
+  /**
+   * Loaded mid-aim (G-185): the laser, drawn from `SniperAimed` only, is turned on again in its
+   * first step. Transient, never saved.
+   */
+  relight?: true;
 }
 
 /** A defector walked to the boat (ADR-0024): follows `route` while the player is close. */

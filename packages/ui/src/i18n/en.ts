@@ -3,6 +3,7 @@ import type { Message } from "./message";
 import { enTrade } from "./en/trade";
 import { enDomain } from "./en/domain";
 import { enContent } from "./en/content";
+import { enDifficulty } from "./en/difficulty";
 
 /**
  * English, the default language and the source of every key (ADR-0056). The Polish catalog must
@@ -175,6 +176,7 @@ export const en = {
   ...enWorld,
   ...enDomain,
   ...enContent,
+  ...enDifficulty,
 } as const satisfies Readonly<Record<string, Message>>;
 
 export type MessageKey = keyof typeof en;

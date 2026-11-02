@@ -1,6 +1,6 @@
 import type { BuildingUse, RoofShape } from "@seki/core";
 import { type FacadeStyle, ROOF_STYLE, SHOPFRONT_BIT, WINDOW_STYLE, facadeStyle } from "./facade-style";
-import { type Obb, type P2, orientedBox, signedArea } from "./polygon";
+import { type Box2, type Obb, type P2, orientedBox, signedArea } from "./polygon";
 import type { Rgba } from "../mesh-sink";
 import type { Uv } from "./sink-ops";
 
@@ -36,6 +36,8 @@ export interface MapBuilding {
   readonly lifted?: boolean;
   /** Parts of it from the map stand on it, lifted (G-049): its towers and turrets are theirs. */
   readonly carriesParts?: boolean;
+  /** A landmark the map shows without a tower (G-210): no bell towers of the renderer's. */
+  readonly towerless?: boolean;
   /** Shop signs hang from wrought-iron brackets (the Old Town, ADR-0048). */
   readonly bracketSigns?: boolean;
   /** Metres of Lublin 2077's superstructure over `top` (ADR-0051). */
@@ -102,10 +104,17 @@ export interface FacadeFrame {
   readonly storey: number;
   /** Height of the ground floor (1.25 storeys; the whole wall for a church). */
   readonly ground: number;
+  /** The lookup of the buildings round it the walls were classified with: the signs keep out of them (`sign-room`). */
+  readonly neighbour: NeighbourAt;
+  /** The bounds of the buildings round it, so the signs sample `neighbour` only where one may stand. */
+  readonly near: NeighboursNear;
 }
 
 /** Top (world y) of another building whose outline contains (x, z), or null. */
 export type NeighbourAt = (x: number, z: number, self: number) => number | null;
+
+/** The bounds of the other buildings that meet the box, or null where they are not known. */
+export type NeighboursNear = (box: Box2, self: number) => readonly Box2[] | null;
 
 /** The seed in the middle of one of 256 bins: the shader reads it back exactly. */
 export const seedBin = (seed: number): number => (Math.min(Math.floor(Math.max(seed, 0) * 256), 255) + 0.5) / 256;
@@ -131,7 +140,7 @@ const classify = (b: MapBuilding, a: P2, c: P2, neighbour: NeighbourAt): { blind
   return { blind: true, coveredTo: covered };
 };
 
-export const facadeFrame = (b: MapBuilding, neighbour: NeighbourAt): FacadeFrame => {
+export const facadeFrame = (b: MapBuilding, neighbour: NeighbourAt, near: NeighboursNear = () => null): FacadeFrame => {
   const box = orientedBox(b.ring);
   const area = Math.abs(signedArea(b.ring));
   const style = facadeStyle({ use: b.use, levels: b.levels, height: b.height, ...(b.roof !== undefined ? { roof: b.roof } : {}), look: b.look, area, width: box.halfShort * 2, ...(b.shopfront !== undefined ? { shopfront: b.shopfront } : {}), ...(b.lifted ? { lifted: true } : {}), ...(b.roofShape ? { shape: b.roofShape } : {}) });
@@ -161,7 +170,7 @@ export const facadeFrame = (b: MapBuilding, neighbour: NeighbourAt): FacadeFrame
       bay: blind || length < 1.4 || style.window === WINDOW_STYLE.none ? 0 : length / n,
     });
   }
-  return { b, style, box, walls, eave, top, storey, ground: storey * 1.25 };
+  return { b, style, box, walls, eave, top, storey, ground: storey * 1.25, neighbour, near };
 };
 
 /** uv2 of the walls of this frame (the window style with the shop bit). */
@@ -169,6 +178,13 @@ export const frameWallMeta = (f: FacadeFrame, w: Wall): Uv => wallMeta(f.storey,
 
 /** Walls a neighbour hides up to this building's top: not worth drawing. */
 export const hiddenWall = (f: FacadeFrame, w: Wall): boolean => w.blind && w.coveredTo >= f.top - 0.1;
+
+/** The plinth band round a building's foot (`planNearBuilding`): dark stone `out` metres off its walls, from `below` under its foot to `above` over its ground floor's line. */
+export const PLINTH_BAND = { out: 0.06, below: 0.2, above: 0.55 } as const;
+
+/** Where a building's plinth band runs (world y), or null: none on a lifted building or across the game's doorways. */
+export const plinthBand = (b: MapBuilding): { readonly bottom: number; readonly top: number } | null =>
+  b.lifted || b.doorways?.length ? null : { bottom: b.foot - PLINTH_BAND.below, top: b.base + PLINTH_BAND.above };
 
 /** Colours of a building's parts, with the dressing flag in alpha. */
 export interface Palette {

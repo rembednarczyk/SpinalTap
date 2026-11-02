@@ -9,9 +9,14 @@ import type { StreetPropItem, StreetPropKind } from "../../../packages/core/src/
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
 import { crossingBands } from "../../../packages/sim/src/content/lublin/crossing-bands.ts";
 import { type Pt, centroid } from "./geometry.ts";
-import { MAPPED, propOf, withShape } from "./props-kinds.ts";
-import { marketStalls } from "./props-market.ts";
+import type { Tags } from "./osm.ts";
+import { ART_SHAPE, artShape } from "./props-art.ts";
+import { KERB_SHY, MAPPED, MAX_MOVE, ON_BUILDINGS, WALL_REACH, WALL_ROOM, propOf, withShape } from "./props-kinds.ts";
+import { bulkyPieces } from "./props-bulky.ts";
+import { Clearances, GOODS_KEY, type MarketContext, foodStalls, stallGoods } from "./props-food.ts";
+import { marketEntrances, marketStalls } from "./props-market.ts";
 import { type SideMode, type Station, evenStations, fnv, offRoad, offWall, openFacing, scatter, sideOffset, stations, towardsStreet, unit, yawOf } from "./props-place.ts";
+import { type BoardSpan, boardBehind, offBoards } from "./props-boards.ts";
 import { type BollardRef, stringBollards } from "./props-rows.ts";
 import { Site } from "./props-site.ts";
 import { SolidIndex, clearSpot } from "./props-solid.ts";
@@ -54,7 +59,7 @@ export interface PropsStats {
   /** Pieces per kind and per district. */
   readonly perKind: Record<string, number>;
   readonly perDistrict: Record<string, number>;
-  /** Pieces the plan asked for in groups that were left out, per plan kind. */
+  /** Pieces the plan asked for in groups that were left out, per plan kind, and monuments left out by their tags, per `SKIPPED_ART` key. */
   readonly skipped: Record<string, number>;
   /** Plan kinds drawn as another kind. */
   readonly mapped: Record<string, string>;
@@ -67,9 +72,15 @@ export interface PropsStats {
   readonly merged: number;
   /** Pieces dropped because their solid ran into one placed before, with no clear spot beside. */
   readonly crowded: number;
+  /** Wall lanterns slid along the wall off a venue's board, and dropped with no wall beside it. */
+  readonly offBoard: number;
+  readonly onBoard: number;
   /** Per group of the plan: pieces asked for and pieces placed. */
   readonly perItem: Record<string, [number, number]>;
 }
+
+/** OSM tags of the plan's nodes by id (`n123`), for the shapes of monuments (`loadNodeTags`). */
+export type NodeTags = ReadonlyMap<string, Tags>;
 
 export interface PropsOut {
   readonly byChunk: ReadonlyMap<string, StreetPropItem[]>;
@@ -93,7 +104,7 @@ const FALLBACK: Partial<Record<StreetPropKind, number>> = { "lamp-pastoral": 5, 
 const ROW_SPACING: Partial<Record<StreetPropKind, number>> = { tree: 9, shrubs: 6 };
 
 /** Least distance between two pieces of the same kind placed from lines or areas. */
-const AREA_GAP: Partial<Record<StreetPropKind, number>> = { "market-stall": 3.6, "cafe-garden": 4.5, "fountain-jets": 2.2 };
+const AREA_GAP: Partial<Record<StreetPropKind, number>> = { "market-stall": 3.6, "cafe-garden": 4.5, "fountain-jets": 2.2, "food-cart": 6, container: 7 };
 
 /** Jets a fountain basin gets (the plan counts the fountain, not its jets). */
 const JETS: Readonly<Record<string, number>> = { "fountain-multimedia": 16, fountain: 6 };
@@ -131,6 +142,9 @@ const SLIDES = [0, 2.5, -2.5, 5, -5];
 /** How far a lamp set off an axis with no carriageway drawn keeps from a car street's axis (m): the widest lane's offset, a car's half and the lamp's own. */
 const LAMP_TRAFFIC_REACH = 3.6;
 
+/** How far a wall lantern keeps from a passage's axis (m): past half the widest passage. */
+const PASSAGE_REACH = 2;
+
 const besideLine = (site: Site, item: PlanItem, prop: StreetPropKind, slots: readonly Slot[], obstacles: readonly Obstacle[]): Placed[] => {
   const { mode } = lineMode(item, prop);
   const out: Placed[] = [];
@@ -138,8 +152,10 @@ const besideLine = (site: Site, item: PlanItem, prop: StreetPropKind, slots: rea
   // Off a road the offset is a guess, not a measured kerb: on a paved square cars still drive the
   // axes of its streets (Plac Zamkowy's cobbles, G-004), so the guess keeps clear of their lanes.
   const lamp = prop.startsWith("lamp-") && mode !== "facade";
+  // From an axis under a building (a gate, Ku Farze) a wall lantern finds the vault's wall or none
+  // and would hang in the solid or the vault (G-173): it slides along the line or goes.
   const clear = (at: Pt, p: Pt) =>
-    mode === "facade" || (!blocked(obstacles, p) && (!lamp || site.surfaceAt(at) === "road" || !nearTraffic(site, p, LAMP_TRAFFIC_REACH)));
+    mode === "facade" ? site.surfaceAt(p) !== "building" && !site.nearPassage(p, PASSAGE_REACH) : !blocked(obstacles, p) && (!lamp || site.surfaceAt(at) === "road" || !nearTraffic(site, p, LAMP_TRAFFIC_REACH));
   for (const { st, side, key } of slots) {
     if (mode === "axis") {
       out.push({ prop, p: st.p, yaw: null, key });
@@ -205,7 +221,14 @@ const SINGLE_OUTLINE: ReadonlySet<StreetPropKind> = new Set(["kiosk", "bus-shelt
 /** How far scattered pieces keep from a car street's axis (m): its two lanes, a car's half and the piece's own. */
 const TRAFFIC_REACH = 4.5;
 
-const placeItem = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: readonly Obstacle[]): Placed[] => {
+/** The long pieces placed so far as items with their solids, for the stalls to keep clear of. */
+const bulkyItems = (placed: readonly Placed[]): StreetPropItem[] =>
+  placed.filter((x) => BULKY.has(x.prop)).map((x) => ({ prop: x.prop, x: x.p.x, y: 0, z: x.p.z, yaw: x.yaw ?? 0, variant: 0 }));
+
+/** Long pieces set on an outline by their whole footprint (ADR-0058 stage 2), not scattered. */
+const BULKY: ReadonlySet<StreetPropKind> = new Set(["food-cart", "container"]);
+
+const placeItem = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: readonly Obstacle[], placed: readonly Placed[]): Placed[] => {
   if (item.position) return [{ prop, p: item.position, yaw: item.yaw === undefined ? null : (item.yaw * Math.PI) / 180, key: typeof item.osm === "string" ? item.osm : item.id }];
   if (item.points) return item.points.map((q, i) => ({ prop, p: { x: q[0], z: q[1] }, yaw: null, key: osmAt(item, i) }));
   if (item.polygon) {
@@ -213,7 +236,8 @@ const placeItem = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: 
     // A kiosk or a shelter whose outline the importer already raised as a building would stand inside its own double.
     if (SINGLE_OUTLINE.has(prop)) return site.surfaceAt(centroid(ring)) === "building" ? [] : [onOutline(site, item, prop, ring)];
     // A marketplace's count is the place, not its stalls: they fill it in rows.
-    if (item.kind === "market") return marketStalls(site, ring).map((s, k) => ({ prop, p: s.p, yaw: s.yaw, key: `${item.id}~${k}` }));
+    if (item.kind === "market") return marketStalls(site, ring, bulkyItems(placed)).map((s, k) => ({ prop, p: s.p, yaw: s.yaw, key: `${item.id}~${k}` }));
+    if (BULKY.has(prop)) return bulkyPieces(site, ring, prop, item.count ?? 1, item.id, placed);
     const count = JETS[item.kind] ?? item.count ?? 1;
     // Off the lanes of the streets crossing the area (the car park of Plac Zamkowy under its flea market).
     const clear = { surfaceAt: (p: Pt) => site.surfaceAt(p), standable: (p: Pt) => site.standable(p) && !nearTraffic(site, p, TRAFFIC_REACH) } as Site;
@@ -253,24 +277,28 @@ const fillPlace = (site: Site, item: PlanItem, prop: StreetPropKind, obstacles: 
 /** What a lamp beside a line keeps clear of, and how far (m): trees by their crowns. */
 const OBSTACLE: Partial<Record<StreetPropKind, number>> = { tree: 3.4, bench: 1.8, "advertising-column": 1.8, kiosk: 2.5, "bus-shelter": 2.5, monument: 2.5, artwork: 1.8, "cafe-garden": 3, "fountain-jets": 1.8 };
 
-/** Shapes the plan pins down: the Union obelisk, Koziołki, shrines, the tall mast. */
-const shapeOf = (item: PlanItem, prop: StreetPropKind, key: string): number | undefined => {
-  const text = `${item.id} ${item.look ?? ""}`.toLowerCase();
+/**
+ * Shapes pinned down: the tall mast, the yellow column, and every monument and artwork by its
+ * OSM tags or the table of known ones (`artShape`, G-149); a monument left out gives the reason's
+ * key in `SKIPPED_ART`.
+ */
+const shapeOf = (item: PlanItem, prop: StreetPropKind, key: string, tags: NodeTags): number | string | undefined => {
   if (prop === "flagpole") return item.kind === "flagpole-tall" ? 1 : 0;
-  if (prop === "advertising-column") return text.includes("żółty") ? 1 : 0;
+  if (prop === "advertising-column") return `${item.id} ${item.look ?? ""}`.toLowerCase().includes("żółty") ? 1 : 0;
   if (prop !== "monument" && prop !== "artwork") return undefined;
-  if (text.includes("obelisk") || item.id.endsWith("pomnik-unii")) return 0;
-  if (text.includes("koziołek") || text.includes("koziolek")) return item.points ? [2, 3, 1][fnv(key) % 3] : 2;
-  if (item.kind === "shrine" || prop === "monument") return 1;
-  return [1, 3][fnv(key) % 2];
+  const pick = artShape(key, tags.get(key), item.kind);
+  return "shape" in pick ? ART_SHAPE[pick.shape] : pick.skip;
 };
 
 /** Who stands where it can be approached and faces open pavement (benches, machines, bins). */
-const FACES_OPEN: ReadonlySet<StreetPropKind> = new Set(["bench", "vending-machine", "ticket-machine", "bike-rack", "bike-station", "waste-bin", "a-frame-sign", "advertising-column", "street-cabinet", "street-plate", "planter"]);
+const FACES_OPEN: ReadonlySet<StreetPropKind> = new Set(["bench", "vending-machine", "ticket-machine", "bike-rack", "bike-station", "waste-bin", "a-frame-sign", "advertising-column", "street-cabinet", "street-plate", "planter", "atm", "food-cart"]);
 const FACES_STREET: ReadonlySet<StreetPropKind> = new Set(["bus-stop", "bus-shelter", "traffic-signal", "monument", "kiosk", "cctv", "floodlight"]);
 
 /** The yaw of a piece the plan gives no direction for. */
 export const facingOf = (site: Site, x: Placed): number => {
+  // A wall lantern's arm stands out square from its wall, not along it over a board (G-158).
+  const wall = x.prop === "lamp-wall-lantern" ? site.awayFromWall(x.p) : null;
+  if (wall) return yawOf(wall.x, wall.z);
   if (x.yaw !== null) return x.yaw;
   const open = FACES_OPEN.has(x.prop) ? openFacing(site, x.p) : null;
   const street = FACES_OPEN.has(x.prop) || FACES_STREET.has(x.prop) ? towardsStreet(site, x.p) : null;
@@ -281,17 +309,8 @@ export const facingOf = (site: Site, x: Placed): number => {
 const r2 = (v: number): number => Math.round(v * 100) / 100 + 0;
 const r1 = (v: number): number => Math.round(v * 10) / 10 + 0;
 
-/** Kinds that may stand on a building outline: the wall-mounted ones. */
-const ON_BUILDINGS: ReadonlySet<StreetPropKind> = new Set(["lamp-wall-lantern", "cctv"]);
-
-/** How far the bulky free-standing pieces keep from the walls (m): about their footprint's radius. */
-const WALL_ROOM: Partial<Record<StreetPropKind, number>> = { artwork: 1.5, monument: 1.5, kiosk: 1.7, "bus-shelter": 2, bench: 1.2, "vending-machine": 0.7, "advertising-column": 0.8, floodlight: 0.4 };
-
-/**
- * How far a piece may be moved out from a wall (m), beyond the default 4: the plan sketches the
- * floodlights on the lit building's outline, up to 8 m inside the Trinitarian Tower.
- */
-const WALL_REACH: Partial<Record<StreetPropKind, number>> = { floodlight: 10 };
+/** The rule's name in `perItem` for the food booths, which no group of the plan asks for. */
+export const FOOD_STALLS = "rule.food-stalls";
 
 /** Kinds that belong on the carriageway: covers in it, bollards closing it. */
 const ON_ROAD: ReadonlySet<StreetPropKind> = new Set(["manhole", "bollard"]);
@@ -300,8 +319,9 @@ const ON_ROAD: ReadonlySet<StreetPropKind> = new Set(["manhole", "bollard"]);
 const minGap = (prop: StreetPropKind, fromLine: boolean): number => (prop.startsWith("lamp-") && fromLine ? 7 : prop === "trolley-pole" ? 10 : 0.3);
 
 /** The plan's groups placed (before the chunks): every piece with its prop, point, yaw and key. */
-const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>): { placed: Placed[]; fromLine: Set<Placed> } => {
+const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, tags: NodeTags, boards: readonly BoardSpan[], market: MarketContext): { placed: Placed[]; fromLine: Set<Placed> } => {
   const placed: Placed[] = [];
+  const clear = new Clearances(site.chunks, market);
   const fromLine = new Set<Placed>();
   const deferred: PlanItem[] = [];
   for (const item of plan.items) {
@@ -316,23 +336,42 @@ const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>):
       continue;
     }
     const obstacles = placed.flatMap((x) => (OBSTACLE[x.prop] ? [{ x: x.p.x, z: x.p.z, r: OBSTACLE[x.prop]! }] : []));
-    for (const x of placeItem(site, item, prop, obstacles)) {
-      const shape = shapeOf(item, prop, x.key);
+    for (const x of placeItem(site, item, prop, obstacles, placed)) {
+      const shape = shapeOf(item, prop, x.key, tags);
+      if (typeof shape === "string") {
+        skipped[shape] = (skipped[shape] ?? 0) + 1;
+        continue;
+      }
       const p = shape === undefined ? { ...x, from: item.id } : { ...x, shape, from: item.id };
       placed.push(p);
       if (item.line || item.lines) fromLine.add(p);
     }
+    // The stock beside a market's stalls (ADR-0058 stage 3), within its outline.
+    if (prop === "market-stall" && item.polygon) {
+      const ring = flat(item.polygon);
+      // A flea market's scattered stalls take their facing now, so their stock stands by their side.
+      placed.forEach((x, k) => {
+        if (x.from === item.id && x.yaw === null) placed[k] = { ...x, yaw: facingOf(site, x) };
+      });
+      const stalls = placed.filter((x) => x.from === item.id);
+      for (const g of stallGoods(site, clear, stalls, ring, marketEntrances(site, ring), placed)) placed.push({ ...g, from: item.id });
+    }
   }
   // Baskets hang on the lamps, the street groups follow the streets and the benches.
   for (const item of deferred) for (const x of placeStreetGroup(site, item, placed, (q) => facingOf(site, q))) placed.push({ ...x, from: item.id });
+  // The food booths by the fast-food venues' boards (ADR-0058 stage 3), after everything the plan places.
+  for (const x of foodStalls(site, clear, boards, placed)) placed.push({ ...x, from: FOOD_STALLS });
   return { placed, fromLine };
 };
 
-/** Every group of the plan as street furniture per chunk, with the control numbers. */
-export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[]): PropsOut => {
+/**
+ * Every group of the plan as street furniture per chunk, with the control numbers; the wall lanterns
+ * keep off the venues' `boards`, the market's furniture off the carriageways and the game's doors (`market`).
+ */
+export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[], tags: NodeTags = new Map(), boards: readonly BoardSpan[] = [], market: MarketContext = {}): PropsOut => {
   const site = new Site(chunks);
   const skipped: Record<string, number> = {};
-  const { placed, fromLine } = placeAll(site, plan, skipped);
+  const { placed, fromLine } = placeAll(site, plan, skipped, tags, boards, market);
   const byChunk = new Map<string, StreetPropItem[]>(chunks.map((c) => [c.id, []]));
   const perKind: Record<string, number> = {};
   const perDistrict: Record<string, number> = {};
@@ -349,15 +388,21 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
   let crowded = 0;
   let moved = 0;
   let onRoad = 0;
+  let offBoard = 0;
+  let onBoard = 0;
   // Where each lamp ended up: its basket was picked before the lamps were merged or moved.
   const lampAt = new Map<string, Pt>();
+  // How far each stall moved from where it was placed: its stock moves with it (ADR-0058 stage 3).
+  const stallShift = new Map<string, Pt>();
   for (const piece of placed) {
     const lamp = piece.prop === "hanging-basket" ? lampAt.get(piece.key.slice(0, -BASKET.length)) : undefined;
-    if (piece.prop === "hanging-basket" && !lamp) {
+    const shift = piece.prop === "market-goods" ? stallShift.get(piece.key.slice(0, -GOODS_KEY.length)) : undefined;
+    // A basket whose lamp, or stock whose stall, was left out goes with it.
+    if ((piece.prop === "hanging-basket" && !lamp) || (piece.prop === "market-goods" && !shift)) {
       merged++;
       continue;
     }
-    const placedAt = lamp ? { ...piece, p: lamp } : piece;
+    const placedAt = lamp ? { ...piece, p: lamp } : shift ? { ...piece, p: { x: piece.p.x + shift.x, z: piece.p.z + shift.z } } : piece;
     // A light, a machine or a tree from a node in the road stands on the nearest pavement.
     // Judged where it ends up, at the 0.1 m the chunks keep.
     const at = { x: r1(placedAt.p.x), z: r1(placedAt.p.z) };
@@ -373,8 +418,22 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
       inBuilding++;
       continue;
     }
+    // Out of a wall into the carriageway (a cash machine in a facade by the kerb): left out.
+    if (KERB_SHY.has(placedAt.prop) && site.surfaceAt(free) === "road") {
+      onRoad++;
+      continue;
+    }
     if (free !== at) moved++;
-    const x = free === at ? placedAt : { ...placedAt, p: { x: r1(free.x), z: r1(free.z) } };
+    const freed = free === at ? placedAt : { ...placedAt, p: { x: r1(free.x), z: r1(free.z) } };
+    // A lantern in front of a venue's board (G-158) slides along the wall past its end, or goes.
+    const lantern = freed.prop === "lamp-wall-lantern";
+    const lit = lantern ? offBoards(boards, freed.p, site.heightAt(freed.p), (q) => site.awayFromWall(q), (q) => site.surfaceAt(q) === "building") : freed.p;
+    if (!lit) {
+      onBoard++;
+      continue;
+    }
+    if (lit !== freed.p) offBoard++;
+    const x = lit === freed.p ? freed : { ...freed, p: { x: r1(lit.x), z: r1(lit.z) } };
     const chunk = site.chunkAt(x.p);
     if (!chunk) {
       outside++;
@@ -395,13 +454,18 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
     const variant = x.prop === "bollard" ? 0 : x.shape === undefined ? hash : withShape(hash, x.prop, x.shape);
     // Earlier groups win: a bin beside a bench steps aside from a tree's trunk, on the same ground.
     const surface = site.surfaceAt(x.p);
-    const fits = (q: Pt) => site.surfaceAt(q) === surface && site.chunkAt(q) === chunk && (room === undefined || offWall(site, q, room) === q);
+    // A lantern stepped aside from a solid keeps off the boards too.
+    const clearOfBoards = (q: Pt) => !lantern || !boardBehind(boards, q, site.heightAt(q), site.awayFromWall(q));
+    const fits = (q: Pt) => site.surfaceAt(q) === surface && site.chunkAt(q) === chunk && (room === undefined || offWall(site, q, room) === q) && clearOfBoards(q);
     const item = clearSpot(solids, { prop: x.prop, x: r1(x.p.x), y: 0, z: r1(x.p.z), yaw: r2(facingOf(site, x)), variant }, fits);
-    if (!item) {
+    // A piece from an OSM node that may not wander off it (a hydrant on its water main).
+    const reach = MAX_MOVE[x.prop];
+    if (!item || (reach !== undefined && Math.hypot(item.x - placedAt.p.x, item.z - placedAt.p.z) > reach)) {
       crowded++;
       continue;
     }
     if (BASKET_LAMPS.has(x.prop)) lampAt.set(x.key, { x: item.x, z: item.z });
+    if (x.prop === "market-stall") stallShift.set(x.key, { x: item.x - piece.p.x, z: item.z - piece.p.z });
     same.push({ x: item.x, z: item.z });
     kept.set(x.prop, same);
     solids.add(item);
@@ -423,5 +487,5 @@ export const generateProps = (plan: PropsPlan, chunks: readonly LublinChunkData[
   for (const [id, list] of table) byChunk.set(id, list.filter((i): i is StreetPropItem => i !== undefined));
   const mapped: Record<string, string> = {};
   for (const item of plan.items) if (MAPPED[item.kind]) mapped[item.kind] = MAPPED[item.kind]!.prop;
-  return { byChunk, stats: { perKind, perDistrict, skipped, mapped, outside, inBuilding, offRoad: moved, onRoad, merged, crowded, perItem } };
+  return { byChunk, stats: { perKind, perDistrict, skipped, mapped, outside, inBuilding, offRoad: moved, onRoad, merged, crowded, offBoard, onBoard, perItem } };
 };

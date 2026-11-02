@@ -2,7 +2,7 @@ import type { ActivityId, EnemyTypeId, EntityId, FactionId, Health, Slope, Vec3,
 import type { Passerby } from "../activity-types";
 import type { Aabb } from "../collision";
 import type { Prism } from "../prism";
-import type { CivilianAi, DownedBody, EscortAi, GangerAi, SniperState } from "./ai";
+import type { CivilianAi, DownedBody, EscortAi, GangerAi, HideKind, SniperState } from "./ai";
 import type { CharacterBody, Combatant, MeleeState, Posture } from "./body";
 import type { Device, HackEffects } from "./devices";
 import type { DoorLeaf, Elevator, ElevatorGate, Interactable, LadderDef } from "./interaction";
@@ -91,18 +91,24 @@ export interface Entity {
   device?: Device;
   /** Quickhack effects (ADR-0029). */
   hackFx?: HackEffects;
-  /** Sent in by the district's security because of the heat (ADR-0029); unkeyed, not saved. */
-  security?: true;
+  /**
+   * Sent in by the district's security because of the heat (ADR-0029); unkeyed, saved on its own
+   * (G-179). `n`: which of the heat's it is, from 1; its id is another after a load. `since`: the
+   * tick it came in at, saved: `n` counts again from 1 in the next heat, the pair never (G-202).
+   */
+  security?: { readonly n: number; readonly since: number };
   /** The player hurt it while it was not fighting them: its death is a crime (ADR-0029). Transient. */
   wronged?: true;
   /**
    * Knocked out by a takedown (ADR-0065): lies still, sees and hears nothing, does not fight and
-   * is nobody's target. Not saved yet (stage 3 of the ADR): a load or a chunk streamed back in
-   * brings it round.
+   * is nobody's target. A body killed in a takedown is `unconscious` too, for good. Saved with
+   * `downed` (stage 3 of the ADR).
    */
   unconscious?: true;
-  /** The finding and the waking of the knocked out (ADR-0065). Transient, with `unconscious`. */
+  /** The finding, the waking, the carrying and the hiding of a body (ADR-0065), with `unconscious`. */
   downed?: DownedBody;
+  /** A hiding place for a body (ADR-0065): a container, a dumpster, a locker of the content. */
+  hide?: HideKind;
   /**
    * What the character does where it stands (ADR-0040), set by the activity system from its
    * plan, its spot or its role. Derived from the clock and the content every step: not saved.

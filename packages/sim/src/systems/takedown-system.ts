@@ -5,6 +5,7 @@ import { chestOf, eyeOf, lineOfSight } from "../world/hitscan";
 import { inCreationOrder } from "../world/ordering";
 import { isEngaged, noteViolence } from "../world/street";
 import { playerHeld } from "../world/takedown";
+import { freshDowned } from "../world/bodies";
 import { awarenessOf } from "./ai/ganger-perception";
 import { seenCommitting } from "./crime-system";
 
@@ -60,10 +61,12 @@ const reachOf = (ctx: SimContext, player: Entity, e: Target): number | null => {
 /**
  * Whom the player could take down now: the nearest NPC with a weapon (or a civilian) and health
  * in reach, from behind, or from any side when it is stunned or unaware of her. Ties go to the
- * older entity. Nobody while she cannot act, hangs on a ladder or a ledge, or is in the air.
+ * older entity. Nobody while she cannot act, carries a body, hangs on a ladder or a ledge, or is
+ * in the air.
  */
 export const takedownCandidate = (ctx: SimContext, player: Entity): { target: Target; distance: number } | null => {
-  if (playerHeld(ctx) || player.climb || player.mantle || player.fall !== undefined) return null;
+  // Not with a body on her shoulder either: both hands are full (stage 3).
+  if (playerHeld(ctx) || ctx.session.carrying !== null || player.climb || player.mantle || player.fall !== undefined) return null;
   let best: { target: Target; distance: number } | null = null;
   for (const e of inCreationOrder(ctx.world.with("health"))) {
     const distance = reachOf(ctx, player, e);
@@ -113,7 +116,7 @@ const breakFree = (target: Target, player: Entity): void => {
  */
 const knockOut = (ctx: SimContext, target: Target, player: Entity, fought: boolean): void => {
   ctx.world.addComponent(target, "unconscious", true);
-  ctx.world.addComponent(target, "downed", { playerAt: { ...player.position }, fought, found: false, reported: false, finder: null, wake: 0 });
+  ctx.world.addComponent(target, "downed", freshDowned(player.position, fought));
   hold(target);
   if (target.ai) {
     target.ai.alerted = false;
@@ -127,8 +130,12 @@ const knockOut = (ctx: SimContext, target: Target, player: Entity, fought: boole
   }
 };
 
-/** Killed: the death system takes it from here, as after a blow in a fight. */
-const kill = (ctx: SimContext, target: Target, player: Entity): void => {
+/**
+ * Killed: the death system takes it from here, as after a blow in a fight, but leaves its body
+ * lying (stage 3): `downed` tells it so, with where she stood, for whoever finds the body.
+ */
+const kill = (ctx: SimContext, target: Target, player: Entity, fought: boolean): void => {
+  ctx.world.addComponent(target, "downed", freshDowned(player.position, fought, true));
   const amount = target.health.current;
   target.health = { current: 0, max: target.health.max };
   target.lastHitBy = player.id;
@@ -159,12 +166,12 @@ const advance = (ctx: SimContext, run: TakedownRun, player: Entity | null): void
   const lethal = run.lethal || run.held * 2 > run.steps;
   ctx.session.attackLock = ctx.input.fire;
   const engaged = isEngaged(target);
-  if (lethal) kill(ctx, target, player);
+  if (lethal) kill(ctx, target, player, engaged);
   else knockOut(ctx, target, player, engaged);
   // On someone not fighting her it is an assault (ADR-0029), a crime once a witness sees it; a
   // kill's death is then a murder. The crime system finds the witnesses at the end of the step
   // and marks the body reported once the report is made (a civilian's call can be cut off).
-  noteViolence(ctx, target, engaged, target.position, lethal ? undefined : target.id);
+  noteViolence(ctx, target, engaged, target.position, target.id);
   ctx.bus.emit("TakedownDone", { target: target.id, lethal, witnessed: seenCommitting(ctx, player, target.position) });
 };
 

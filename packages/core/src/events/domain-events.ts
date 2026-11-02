@@ -235,6 +235,8 @@ export interface DomainEvents {
    * over to wake it, the security or a camera reports it, the street around it takes fright.
    */
   BodyFound: { body: EntityId; finder: EntityId };
+  /** The player put `body` into the hiding place `spot` (a container, a dumpster, a locker): nobody finds it there. */
+  BodyHidden: { body: EntityId; spot: EntityId };
 }
 
 /** Why a takedown did not finish (ADR-0065). */

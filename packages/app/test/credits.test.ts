@@ -42,14 +42,19 @@ describe("credits (ADR-0063)", () => {
     const glbs = ASSETS.filter((f) => f.endsWith(".glb"));
     const found = glbs.flatMap((f) => creditsIn(f).map((id) => ({ f, id })));
     expect([...new Set(found.map((x) => x.id))].sort()).toEqual([
+      "sketchfab-avika-street-food-cart",
       "sketchfab-cctv-camera",
+      "sketchfab-cyberpunk-doors-and-windows",
+      "sketchfab-cyberpunk-scifi-door-3",
       "sketchfab-electric-pole",
       "sketchfab-megacity-cluster",
       "sketchfab-paper-lantern-chochin",
+      "sketchfab-psx-garage-doors",
       "sketchfab-ramen-vending-machine",
       "sketchfab-reston-b2-terminal",
       "sketchfab-robotic-animal",
       "sketchfab-scifi-kiosk",
+      "sketchfab-shipping-container",
       "sketchfab-vending-machine",
     ]);
     for (const { f, id } of found) {

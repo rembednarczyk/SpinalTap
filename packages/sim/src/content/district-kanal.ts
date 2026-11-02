@@ -15,10 +15,15 @@ import { ground, groundY } from "./lublin/terrain";
  * additions, in world coordinates.
  */
 
-/** A neon sign on the facade nearest to (x, z), facing out of it. */
+/**
+ * A neon sign on the facade nearest to (x, z), facing out of it. The plate runs along the axis
+ * nearest the wall, as the neon view has no turn (G-160): on the Rynek's slanting walls only a
+ * narrow plate, upright for a long label, keeps both its ends on the wall. Its middle stands
+ * 0.16 m out, so that the wall hides little of the letters drawn there.
+ */
 const facadeNeon = (x: number, z: number, y: number, width: number, height: number, color: string, label: string): StaticProp => {
-  const w = againstWall(x, z, 0.12);
-  const alongX = Math.abs(Math.sin(w.yaw)) < 0.5;
+  const w = againstWall(x, z, 0.16);
+  const alongX = Math.abs(Math.sin(w.yaw)) < Math.SQRT1_2;
   const facing = alongX ? (Math.cos(w.yaw) > 0 ? "z+" : "z-") : Math.sin(w.yaw) > 0 ? "x+" : "x-";
   return {
     center: { x: w.at.x, y: w.at.y + y, z: w.at.z },
@@ -92,9 +97,10 @@ export const GRODZKA_WALK: readonly Vec3[] = [
 ].map(([x, z]) => ground(x as number, z as number));
 
 export const KANAL_PROPS: readonly StaticProp[] = [
-  facadeNeon(546, -73, 3.2, 0.9 * 1.4, 3.6, "#ffb000", "SAKE"),
-  facadeNeon(556, -36.5, 4.2, 6, 1.2, "#ff2e88", "KARAOKE"),
-  facadeNeon(571, -29.5, 4.6, 5, 1.2, "#00e5ff", "DENKI"),
+  // SAKE a metre south of the inner corner by PUB PERON, where the next house would cut it.
+  facadeNeon(546.56, -74.23, 2.8, 0.55, 2.8, "#ffb000", "SAKE"),
+  facadeNeon(556, -36.5, 6.4, 0.55, 4.2, "#ff2e88", "KARAOKE"),
+  facadeNeon(571, -29.5, 5.7, 0.55, 3.2, "#00e5ff", "DENKI"),
   // Over the Trybunał's door into Trasa Podziemna (ADR-0048), clear of the slanting facade.
   { center: v(566.8, TRASA_PODZIEMNA.door + 4.35, -57), view: { kind: "neon", size: v(0.15, 0.5, 1.8), color: "#ffcf8a", label: "TRASA PODZIEMNA", facing: "x-" }, solid: false },
   streetLamp(552, -48, "#9ad7ff", "x+"),
@@ -103,7 +109,8 @@ export const KANAL_PROPS: readonly StaticProp[] = [
   // Tetsu's table of gadgets in front of DENKI, and crates under the footbridge where Hebi meet
   // (Kaito's site `kanal_bridge`).
   { ...crate(0, 0, 1.4, 0.9, 0.7), center: { ...ground(KANAL_SPOTS.tetsu.x + 0.8, KANAL_SPOTS.tetsu.z - 1), y: groundY(KANAL_SPOTS.tetsu.x + 0.8, KANAL_SPOTS.tetsu.z - 1) + 0.45 } },
-  { ...crate(0, 0, 1.2, 0.9, 1.0), center: { ...ground(655.5, 76.5), y: groundY(655.5, 76.5) + 0.45 } },
+  // By the Hebi post on Grodzka: a body fits in (ADR-0065).
+  { ...crate(0, 0, 1.2, 0.9, 1.0), center: { ...ground(655.5, 76.5), y: groundY(655.5, 76.5) + 0.45 }, hide: "container" },
   { ...crate(0, 0, 0.9, 0.8, 0.9), center: { ...ground(663, 71.5), y: groundY(663, 71.5) + 0.4 } },
 ];
 

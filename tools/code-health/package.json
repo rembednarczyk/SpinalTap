@@ -1,0 +1,13 @@
+{
+  "name": "@seki/code-health",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The god-object ratchet (ADR-0031): classes with more methods than the limit, counted and held to a baseline that only falls.",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}

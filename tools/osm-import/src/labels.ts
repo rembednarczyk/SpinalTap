@@ -1,9 +1,9 @@
 /** Street names for the minimap and texts, and named points of interest for placing content later. */
 import { type Line } from "./features.ts";
 import { type Pt, type Rect, clipLineToRect, inRect, lineLength, r1, simplifyLine } from "./geometry.ts";
-import { roadWidth } from "./ground.ts";
+import { pathWidth, roadWidth } from "./ground.ts";
 import { oneway } from "./markings.ts";
-import { type PoiKind, type PoiOut, type ServiceWayOut, type StreetOut } from "./model.ts";
+import { type FootWayOut, type PoiKind, type PoiOut, type ServiceWayOut, type StreetOut } from "./model.ts";
 import { type OsmData, type Tags } from "./osm.ts";
 import { geoToWorld } from "./project.ts";
 
@@ -80,6 +80,36 @@ export const chunkServiceWays = (lines: readonly Line[], rect: Rect): ServiceWay
     const t = l.tags;
     if (t.highway !== "service" || t.name || t.service === "parking_aisle" || t.area === "yes" || Number(t.layer ?? 0) < 0) continue;
     const width = r1(roadWidth(t));
+    for (const piece of clipLineToRect(l.line, rect)) {
+      if (lineLength(piece) < 0.1) continue;
+      out.push({ line: simplifyLine(piece, 0.5).flatMap((p) => [r1(p.x), r1(p.z)]), width });
+    }
+  }
+  return out;
+};
+
+/** A footway or a path walked on the ground on its own: not a sidewalk along a kerb, a crossing, an area, a bridge or a tunnel. */
+const ownFootWay = (t: Tags): boolean =>
+  (t.highway === "footway" || t.highway === "path") &&
+  t.footway !== "sidewalk" &&
+  t.path !== "sidewalk" &&
+  t.footway !== "crossing" &&
+  t.path !== "crossing" &&
+  t.area !== "yes" &&
+  t.tunnel === undefined &&
+  t.covered === undefined &&
+  (t.bridge === undefined || t.bridge === "no") &&
+  Number(t.layer ?? 0) === 0;
+
+/**
+ * The axes of the footways and paths mapped on their own, named or not, with their width: the
+ * game's ground draws them over the asphalt where they meet a street, and no car parks on them (G-143).
+ */
+export const chunkFootWays = (lines: readonly Line[], rect: Rect): FootWayOut[] => {
+  const out: FootWayOut[] = [];
+  for (const l of lines) {
+    if (!ownFootWay(l.tags)) continue;
+    const width = r1(pathWidth(l.tags));
     for (const piece of clipLineToRect(l.line, rect)) {
       if (lineLength(piece) < 0.1) continue;
       out.push({ line: simplifyLine(piece, 0.5).flatMap((p) => [r1(p.x), r1(p.z)]), width });

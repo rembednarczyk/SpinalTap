@@ -110,7 +110,7 @@ describe("loot loop: kill, bag, take, save, load (plan E6)", () => {
     expect(panel.owner).toBe("ganger");
     expect(panel.lines[0]).toMatchObject({ kind: "eddies", label: "€$", qty: eddies });
     expect(session.inControl).toBe(false);
-    expect(await session.saveAsync("slot-1")).toBe(false);
+    expect(await session.saves.saveAsync("slot-1")).toBe(false);
 
     session.intents.takeLoot("all");
     steps(session, 1);
@@ -124,9 +124,9 @@ describe("loot loop: kill, bag, take, save, load (plan E6)", () => {
     expect(ui.getState().toasts.some((t) => t.text === "Przelew od Kaito")).toBe(false);
 
     const pockets = { wallet: session.sim.domain.wallet, inventory: session.sim.domain.inventory, ammo: session.sim.domain.ammo };
-    expect(await session.saveAsync("slot-1")).toBe(true);
+    expect(await session.saves.saveAsync("slot-1")).toBe(true);
     session.newGame();
-    expect(await session.loadAsync("slot-1")).toBe(true);
+    expect(await session.saves.loadAsync("slot-1")).toBe(true);
     expect({ wallet: session.sim.domain.wallet, inventory: session.sim.domain.inventory, ammo: session.sim.domain.ammo }).toEqual(pockets);
     expect((await persistence.load("slot-1"))?.domain.flags).toContain("dead:guard");
   });
@@ -135,9 +135,9 @@ describe("loot loop: kill, bag, take, save, load (plan E6)", () => {
     const { session } = setup();
     shootGuard(session);
     steps(session, 1);
-    expect(await session.saveAsync("slot-2")).toBe(true);
+    expect(await session.saves.saveAsync("slot-2")).toBe(true);
     session.newGame();
-    expect(await session.loadAsync("slot-2")).toBe(true);
+    expect(await session.saves.loadAsync("slot-2")).toBe(true);
     steps(session, 1);
     expect(session.sim.domain.loot.containers.map((c) => c.key).filter((k) => !k.startsWith("stash:"))).toEqual(["loot:guard"]);
     expect([...session.sim.world.with("lootBag")].filter((b) => !b.lootBag.key.startsWith("stash:"))).toHaveLength(1);

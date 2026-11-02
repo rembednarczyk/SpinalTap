@@ -49,7 +49,7 @@ const setup = async () => {
   const persistence = new SavePersistence(new MemorySaveStore());
   const session = new GameSession({ render, audio, persistence, ui, story: STORY_SOURCE, seed: () => 41, now: () => new Date(2026, 9, 27) });
   session.newGame();
-  const snap = session.snapshot();
+  const snap = session.saves.snapshot();
   await persistence.save("start", {
     ...snap,
     domain: {
@@ -61,7 +61,7 @@ const setup = async () => {
       wallet: { eddies: 400 },
     },
   });
-  await session.loadAsync("start");
+  await session.saves.loadAsync("start");
   return { session, ui, persistence };
 };
 
@@ -234,11 +234,11 @@ describe("M4 acceptance: market contracts → eddies → cyberware", () => {
     choose(session, ui, "Masz coś do przewiezienia?");
     close(session);
     steps(session, 600);
-    expect(await session.saveAsync("quick")).toBe(true);
+    expect(await session.saves.saveAsync("quick")).toBe(true);
     const objective = ui.getState().objective;
     const tick = session.sim.tick;
     steps(session, 600);
-    expect(await session.loadAsync("quick")).toBe(true);
+    expect(await session.saves.loadAsync("quick")).toBe(true);
     expect(session.sim.tick).toBe(tick);
     expect(ui.getState().objective).toBe(objective);
     // Kaito sees the same clock.

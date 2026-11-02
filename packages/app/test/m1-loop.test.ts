@@ -44,7 +44,7 @@ const setup = async () => {
   const session = new GameSession({ render, audio, persistence, ui, story: STORY_SOURCE, seed: () => 99, now: () => new Date(2026, 9, 27) });
   session.newGame();
   // Start from the end of M0: the first contract is done and paid.
-  const snap = session.snapshot();
+  const snap = session.saves.snapshot();
   await persistence.save("m0-done", {
     ...snap,
     domain: {
@@ -57,7 +57,7 @@ const setup = async () => {
       ammo: { "9mm": 180 },
     },
   });
-  await session.loadAsync("m0-done");
+  await session.saves.loadAsync("m0-done");
   return { session, ui };
 };
 
@@ -172,7 +172,7 @@ describe("M1 acceptance: contract → eddies → cyberware → stronger in comba
     const mori = [...session.sim.world].find((e) => e.key === "mori")!;
     teleport(session, mori.position.x + 1.5, mori.position.z);
     steps(session, 1, frame({ interact: true }));
-    expect(await session.saveAsync("slot-1")).toBe(false);
+    expect(await session.saves.saveAsync("slot-1")).toBe(false);
     expect(session.inControl).toBe(false);
     session.intents.closeShop();
     expect(session.inControl).toBe(true);

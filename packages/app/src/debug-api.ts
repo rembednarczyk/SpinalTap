@@ -151,7 +151,7 @@ export const createDebugApi = (
     p.pitch = pitch;
   },
   jump(domain) {
-    const snapshot = session.snapshot();
+    const snapshot = session.saves.snapshot();
     // Straight into play: a test jumping mid-story steps at once, no loading screen (ADR-0057).
     session.restore({ ...snapshot, domain: { ...snapshot.domain, ...domain } }, false);
   },
@@ -166,10 +166,10 @@ export const createDebugApi = (
     session.syncHud();
   },
   breach(terminalKey, daemons) {
-    session.openBreach(terminalKey, daemons);
+    session.debug.openBreach(terminalKey, daemons);
   },
   metro(from) {
-    session.openMetro(from);
+    session.debug.openMetro(from);
   },
   wait(minutes) {
     session.sim.enqueue({ type: "wait", minutes });

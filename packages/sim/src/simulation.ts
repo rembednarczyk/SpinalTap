@@ -1,4 +1,5 @@
 import {
+  type DifficultyProfile,
   type DomainEvents,
   type DomainState,
   EMPTY_INPUT,
@@ -9,7 +10,10 @@ import {
   type InputFrame,
   type SaveSnapshot,
   SAVE_SCHEMA_VERSION,
+  contractFailedFlag,
   createDomainState,
+  difficultyProfile,
+  isDifficultyProfile,
 } from "@seki/core";
 import { World } from "miniplex";
 import { SeededRandom } from "./rng/seeded-random";
@@ -27,9 +31,11 @@ import { SIM_DT } from "./step-rate";
 import { CROWD_CAP, type CrowdDensity } from "./content/crowd";
 import type { TrafficDensity } from "./content/traffic";
 import { isMicroKey } from "./world/micro-events";
-import { hasAmbush } from "./world/contract-plan";
 import { doorSnapshots, restoreDoors } from "./systems/door-system";
 import { withAttackLock } from "./world/takedown";
+import { withCarry } from "./world/bodies";
+import { resumeSession } from "./world/session-resume";
+import { reinforcementsSnapshot, restoreReinforcements } from "./world/reinforcements";
 
 export { BREACH_DATAMINE_EDDIES, BREACH_ICEPICK_SECONDS, BREACH_MARK_SECONDS } from "./world/contract-commands";
 export { SIM_DT, SIM_HZ } from "./step-rate";
@@ -46,6 +52,11 @@ export interface SimulationOptions {
    * small world of their own here (ADR-0043: a chunk with terrain and prisms).
    */
   readonly chunks?: readonly ChunkDef[];
+  /**
+   * The difficulty a new game starts on (ADR-0066); "normal" without. In the domain before the
+   * world is built, so the enemies round the start already appear with its health.
+   */
+  readonly difficulty?: DifficultyProfile;
 }
 
 /**
@@ -81,16 +92,26 @@ export class Simulation {
     this.streamer = chunks ? new WorldStreamer(ids, chunks) : new WorldStreamer(ids);
     bindGround(this.world, this.streamer.ground);
     this.streamer.enemyHealth = () => this.holder.domain.difficulty.npcHealth;
-    const contract = domain.contracts.active;
-    // A done job with an ambush by the way out (ADR-0034) still has people in the world.
-    if (contract && (contract.status === "active" || hasAmbush(contract))) this.streamer.registerContract(this.world, domain.flags, domain.contracts.completed, contract);
+    // The people of a job stay in the world after it ends, done or lost, until the next is taken
+    // (G-178): the guards of an alarm fight on, an ambush waits by the way out (ADR-0034).
+    // An ended one is made with the jobs done when it was taken: its pay counts one more since.
+    // Replaced jobs first, as they were taken: their saved people come back with them.
+    for (const f of saved?.formerContracts ?? []) this.streamer.restoreFormer(f);
+    const active = domain.contracts.active;
+    const site = active ? { contract: active, completed: domain.contracts.completed } : saved?.endedContract;
+    if (site) this.streamer.registerContract(this.world, domain.flags, site.completed, site.contract);
+    // An ended job not failed was paid: its site is cleared (G-195), before any chunk wakes.
+    if (!active && site && !domain.flags.includes(contractFailedFlag(site.contract.id))) this.streamer.clearSite();
     const focus = saved?.entities.find((e) => e.key === "player")?.position ?? PLAYER_SPAWN.position;
     this.streamer.loadInitial(this.world, domain.flags, focus, saved?.streaming.loadedChunks ?? [], domain.clock, () => this.world.add(player));
     if (player.combatant) syncPlayerWeapon(domain, player.combatant);
   }
 
   static create(options: SimulationOptions): Simulation {
-    const sim = new Simulation(options.seed, createDomainState(), options.bus ?? new EventBus<DomainEvents>(), undefined, options.chunks);
+    const fresh = createDomainState();
+    // A profile out of range is refused, as the `set-difficulty` command refuses it.
+    const domain = options.difficulty && isDifficultyProfile(options.difficulty) ? { ...fresh, difficulty: difficultyProfile(options.difficulty) } : fresh;
+    const sim = new Simulation(options.seed, domain, options.bus ?? new EventBus<DomainEvents>(), undefined, options.chunks);
     sim.setCrowd(options.crowd ?? "off");
     sim.setTraffic(options.traffic ?? options.crowd ?? "off");
     return sim;
@@ -104,6 +125,13 @@ export class Simulation {
     sim.tickCount = snapshot.tick;
     sim.streamer.restoreEntities(sim.world, snapshot.domain.flags, snapshot.entities);
     restoreDoors(sim, snapshot.doors ?? []);
+    // The heat's reinforcements (G-179), before the body on her shoulder: it may be one of them.
+    restoreReinforcements(sim.world, sim.session.watch, snapshot.reinforcements, () => sim.streamer.takeId(), sim.domain.difficulty.npcHealth);
+    // The body on her shoulder (ADR-0065) is saved on the body.
+    sim.session.carrying = sim.world.with("downed").entities.find((b) => b.downed.carried)?.id ?? null;
+    // A profile asked for in the fight still waits for its end (G-171).
+    sim.session.pendingDifficulty = snapshot.pendingDifficulty ?? null;
+    resumeSession(sim.session, sim.domain, sim.player(), sim.streamer);
     return sim;
   }
 
@@ -156,7 +184,7 @@ export class Simulation {
 
   /** Advances the simulation by one fixed step of SIM_DT seconds. */
   step(input: InputFrame = EMPTY_INPUT): void {
-    const ctx = this.context(withAttackLock(this.session, input));
+    const ctx = this.context(withCarry(this.session.carrying, withAttackLock(this.session, input)));
     this.applyCommands(ctx);
     for (const system of this.systems) system.run(ctx);
     this.tickCount += 1;
@@ -203,6 +231,9 @@ export class Simulation {
     if (rider?.key) entities.push(entitySnapshotOf({ ...rider, key: rider.key }));
     // Sorted by key: world iteration order is not stable across removals.
     entities.sort((a, b) => a.key.localeCompare(b.key));
+    const ended = this.holder.domain.contracts.active ? null : this.streamer.registeredContract;
+    const former = this.streamer.formerSnapshots(this.world);
+    const reinforcements = reinforcementsSnapshot(this.world, this.session.watch);
     return {
       version: SAVE_SCHEMA_VERSION,
       seed: this.seed,
@@ -212,6 +243,10 @@ export class Simulation {
       streaming: { loadedChunks: this.streamer.loadedChunks },
       doors: doorSnapshots(this),
       domain: this.holder.domain,
+      ...(this.session.pendingDifficulty ? { pendingDifficulty: this.session.pendingDifficulty } : {}),
+      ...(ended ? { endedContract: ended } : {}),
+      ...(former.length > 0 ? { formerContracts: former } : {}),
+      ...(reinforcements ? { reinforcements } : {}),
       narrative,
       meta: { label, objective },
     };

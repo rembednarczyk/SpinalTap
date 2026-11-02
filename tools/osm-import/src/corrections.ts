@@ -39,6 +39,24 @@ export const TAG_CORRECTIONS: readonly TagCorrection[] = [
     reason: "ośmiobok Bramy Krakowskiej ok. 7,5 m średnicy wobec 6,6 m obrysu OSM",
     ref: "T-032",
   },
+  {
+    // The Trinity Chapel: OSM has no height, so it stood at a church's default 16 m walls with a
+    // 4.4 m roof. NMPT GUGiK puts the eaves at about y 7 (13.3 m over the 1.3 m plinth) and the
+    // nave's ridge at y 15.3 (a steep 8.3 m roof). `height` runs to the ridge, roof included,
+    // hence 13.3 + 8.3. The lower chancel is a part of its own later (plan Z3).
+    id: "w66258167",
+    tags: { height: "21.6", "roof:height": "8.3" },
+    reason: "Kaplica Trójcy: okap ok. y 7 i kalenica y 15,3 z NMPT wobec domyślnych 16 m ścian i 4,4 m dachu",
+    ref: "T-114",
+  },
+  {
+    // The keep: OSM `height=25` over the 1 m plinth put its flat top at y 18.6; NMPT GUGiK has
+    // the crown at y 16.4..16.9. The stair house on the terrace (to about y 22) is the recipe's.
+    id: "w450180469",
+    tags: { height: "23.3" },
+    reason: "Donżon: korona ok. y 16,4–16,9 z NMPT wobec y 18,6 z height=25",
+    ref: "T-114",
+  },
 ];
 
 const BY_ID: ReadonlyMap<string, TagCorrection> = new Map(TAG_CORRECTIONS.map((c) => [c.id, c]));

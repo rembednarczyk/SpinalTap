@@ -1,11 +1,15 @@
-import type { StreetPropKind } from "@seki/core";
+import { type StreetPropKind, grateVariant, graffitiVariant, plateVariant, stickerVariant } from "@seki/core";
 import { MeshSink } from "../mesh-sink";
+import { decalModel } from "./decal-models";
 import { busShelter, busStop, cafeGarden, farMonument, fountainJets, kiosk, marketStall, monument, ticketMachine, vendingMachine } from "./prop-civic";
+import { atm, bikeRackWithBikes, container, foodCart, hydrant } from "./prop-e2";
 import { farTree, hangingBasket, planter, shrubs, tree } from "./prop-green";
+import { doorOfShape } from "./prop-door";
+import { foodStall, marketGoods } from "./prop-market";
 import { glow, paint, v3 } from "./prop-kit";
 import { type PropLight, type PropModel, floodlight, lampCandelabra, lampModernPole, lampPark, lampPastoral, lampRoad, lampWallLantern } from "./prop-lamps";
 import { PROP_SHAPES } from "./prop-shapes";
-import { aFrameSign, advertisingColumn, bench, bikeRack, bikeStation, bollard, bollardChain, cctv, flagpole, graniteBlock, manhole, streetCabinet, streetPlate, trafficSignal, trolleyPole, wasteBin } from "./prop-street";
+import { aFrameSign, advertisingColumn, bench, bikeStation, bollard, bollardChain, cctv, flagpole, graniteBlock, manhole, streetCabinet, streetPlate, trafficSignal, trolleyPole, wasteBin } from "./prop-street";
 
 export type { PropLight, PropModel };
 
@@ -27,7 +31,7 @@ const MODELS: Readonly<Record<StreetPropKind, (shape: number) => PropModel>> = {
   planter: () => plain(planter()),
   "hanging-basket": () => plain(hangingBasket()),
   "waste-bin": (s) => plain(wasteBin(s)),
-  "bike-rack": () => plain(bikeRack()),
+  "bike-rack": (s) => plain(bikeRackWithBikes(s)),
   "bike-station": () => plain(bikeStation()),
   "advertising-column": (s) => plain(advertisingColumn(s)),
   "a-frame-sign": () => plain(aFrameSign()),
@@ -49,6 +53,19 @@ const MODELS: Readonly<Record<StreetPropKind, (shape: number) => PropModel>> = {
   monument: (s) => plain(monument(s)),
   artwork: (s) => plain(monument(s)),
   cctv: () => plain(cctv()),
+  atm: () => plain(atm()),
+  hydrant: () => plain(hydrant()),
+  "food-cart": () => plain(foodCart()),
+  container: (s) => plain(container(s)),
+  "market-goods": (s) => plain(marketGoods(s)),
+  "food-stall": () => plain(foodStall()),
+  // ADR-0058 stage 6: the decals; the city builds each from its variant (`decal-models.ts`), these are their layout 0.
+  graffiti: () => plain(decalModel("graffiti", graffitiVariant({ design: 0, width: 1.6, height: 0.8, lift: 0.3 }))!),
+  "house-plate": () => plain(decalModel("house-plate", plateVariant({ number: 12, letter: 1, lift: 2.2 }))!),
+  sticker: () => plain(decalModel("sticker", stickerVariant({ design: 0, host: 0, face: 0, lift: 1.5 }))!),
+  "drain-grate": () => plain(decalModel("drain-grate", grateVariant({ casting: 0, slopeX: 0, slopeZ: 0 }))!),
+  // A 1.2 x 2.3 m door of the model; the city bakes each door at its own size (`door-models.ts`).
+  door: (s) => plain(doorOfShape(s)),
 };
 
 /** Every kind of the contract, in the order of `StreetPropKind` (the gallery's row). */

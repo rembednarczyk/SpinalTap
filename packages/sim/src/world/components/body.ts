@@ -18,9 +18,9 @@ export interface Combatant {
   /** The player's active weapon instance; undefined before the first sync, null for NPCs. */
   uid?: string | null;
   slot: WeaponSlot;
-  /** Rounds in the magazine of an NPC. Not saved: NPC magazines come back full. */
+  /** Rounds in the magazine of an NPC. Saved mid-fight (`EntitySnapshot.gun`, G-185); asleep with its chunk it wakes full. */
   loaded: number;
-  /** Seconds left of a reload step, 0 when not reloading. Not saved. */
+  /** Seconds left of a reload step, 0 when not reloading. Saved for NPCs (G-185), not for the player. */
   reloading: number;
   /** Seconds until the next shot is allowed. */
   cooldown: number;
@@ -28,7 +28,7 @@ export interface Combatant {
   holstered: boolean;
   /** Seconds left of the draw; shots wait for it. */
   drawing: number;
-  /** Extra spread from recent shots in radians; recovers over time. Not saved (ADR-0016). */
+  /** Extra spread from recent shots in radians; recovers over time. Saved for NPCs (G-185), not for the player (ADR-0016). */
   bloom: number;
   /** An NPC that is fighting this step holds its weapon up (presentation only, not saved). */
   engaged?: boolean;

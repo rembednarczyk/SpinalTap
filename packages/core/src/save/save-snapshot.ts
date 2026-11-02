@@ -1,7 +1,27 @@
 import type { Vec3 } from "../math/vec3";
+import type { DifficultyProfile } from "../difficulty/difficulty";
 import type { DomainState } from "../state/domain-state";
+import type { Contract } from "../contracts/contracts";
+import type { EnemyTypeId } from "../items/enemies";
 
 /**
+ * v26: each of the heat's reinforcements with the tick it came in at (G-202), so a quickhack on
+ * it pays XP once; an older save's ones are taken as come in at the save's tick.
+ * v25: an NPC's gun mid-fight (rounds left, reload, draw, bloom) and a sniper's aim, rest or
+ * perch (G-185); an older save has every NPC with a full magazine and every sniper idle.
+ * v24: an AI pinned in the world while its chunk sleeps (G-188) is marked with its time outside
+ * every loaded chunk; an older save has none marked, its pinned AIs loaded by their alert as before.
+ * v23: the heat's reinforcements (G-179), who are in no content table, with how many came in and
+ * the wait for the next one; an older save has none, its reinforcements gone on loading as before.
+ * v22: the contract whose people are still in the world after it ended (G-178), failed or paid,
+ * until the next is taken, and the jobs replaced by a newer one while some of their people are
+ * still about; an older save has none, their guards gone on loading as before.
+ * v21: how sure a guard is that it saw someone (G-174), while it is not sure yet; an older save
+ * has every guard calm.
+ * v20: a difficulty profile asked for in a fight, waiting for its end (G-171); an older save has
+ * none waiting.
+ * v19: bodies (ADR-0065): the knocked out and the dead of a takedown lie where they were left,
+ * carried by the player or hidden; an older save has none.
  * v18: the difficulty profile (ADR-0066); older saves play on "normal".
  * v17: character progression (ADR-0059): XP, level, attributes, perks and the points to spend.
  * v16: Kaito is at the Neon Koi counter from the start (G-034): no new fields, but a save from
@@ -16,7 +36,7 @@ import type { DomainState } from "../state/domain-state";
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 18;
+export const SAVE_SCHEMA_VERSION = 26;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {
@@ -41,6 +61,57 @@ export interface EntitySnapshot {
   readonly search?: number;
   /** Seconds out of its sight while alerted. */
   readonly lost?: number;
+  /**
+   * How sure a guard is that it saw the player (or saw through her disguise), 0..1 (G-174): it
+   * fills over several steps, so a load must not start it from 0. Absent when 0.
+   */
+  readonly suspicion?: number;
+  /**
+   * An AI in the world while its chunk sleeps (G-188): seconds it has spent outside every loaded
+   * chunk, 0 in a loaded one. Absent for everyone else, so a loaded game tells it from a sleeper.
+   */
+  readonly away?: number;
+  /** Knocked out, or killed in a takedown and left lying (ADR-0065). Absent for everyone else. */
+  readonly downed?: BodySnapshot;
+  /** An NPC's gun not at rest with a full magazine (G-185). Absent for the player and at rest. */
+  readonly gun?: GunSnapshot;
+  /** A sniper's state (G-185): it may be about to fire. Absent for everyone else. */
+  readonly sniper?: SniperSnapshot;
+}
+
+/** An NPC's gun between two shots (G-185): a loaded game fires when the saved one would. */
+export interface GunSnapshot {
+  /** Rounds left in the magazine. */
+  readonly loaded: number;
+  /** Seconds left of a reload, of the draw, and the spread of recent shots in radians. */
+  readonly reloading: number;
+  readonly drawing: number;
+  readonly bloom: number;
+}
+
+/** A sniper (ADR-0024, G-185): idle, aiming, resting or on the way, the seconds left, its perch. */
+export interface SniperSnapshot {
+  readonly phase: "idle" | "aim" | "rest" | "move";
+  readonly timer: number;
+  /** Index into its perches. */
+  readonly perch: number;
+}
+
+/** A body (ADR-0065): what the street knows of it and where the player put it. */
+export interface BodySnapshot {
+  /** Where the player stood when she took it down. */
+  readonly playerAt: Vec3;
+  /** It was fighting her: its body sends the security looking, no report. */
+  readonly fought: boolean;
+  /** Somebody noticed it already; the security was told. */
+  readonly found: boolean;
+  readonly reported: boolean;
+  /** Dead, not knocked out: nobody wakes it. */
+  readonly dead: boolean;
+  /** On the player's shoulder. */
+  readonly carried: boolean;
+  /** In a hiding place: out of everybody's sight. */
+  readonly hidden: boolean;
 }
 
 /** An automatic door's leaf (ADR-0038): how far open (0..1) and seconds its sensor has been empty. */
@@ -57,6 +128,38 @@ export interface StreamingSnapshot {
   readonly loadedChunks: readonly string[];
 }
 
+/**
+ * A contract as its targets were made (G-178): with the count of jobs done at the time, which
+ * toughens them, so a job paid since (one more done) rebuilds them as they were.
+ */
+export interface ContractOnSite {
+  readonly contract: Contract;
+  readonly completed: number;
+}
+
+/** One of the heat's reinforcements (G-179): sent in at run time, so made again from this. */
+export interface ReinforcementSnapshot {
+  /** Which of the heat's it is, from 1: what spreads the searchers and picks the enforcers. */
+  readonly n: number;
+  /** The tick it came in at (G-202): with `n`, what tells it from one of another heat. */
+  readonly since: number;
+  readonly type: EnemyTypeId;
+  /** The entry it came in by. */
+  readonly home: Vec3;
+  /** Its state, keyed `security:<n>`. */
+  readonly state: EntitySnapshot;
+}
+
+/**
+ * The heat's reinforcements (G-179): those in the world, how many came in since the heat came up
+ * (the next is one more) and the seconds until the next may come.
+ */
+export interface ReinforcementsSnapshot {
+  readonly sent: number;
+  readonly wait: number;
+  readonly people: readonly ReinforcementSnapshot[];
+}
+
 export interface SaveSnapshot {
   readonly version: typeof SAVE_SCHEMA_VERSION;
   readonly seed: number;
@@ -69,6 +172,27 @@ export interface SaveSnapshot {
   /** Leaves of resident doors that are moving or about to close; every other door is shut. */
   readonly doors: readonly DoorSnapshot[];
   readonly domain: DomainState;
+  /**
+   * A profile asked for in a fight (ADR-0066): it takes effect when the fight is over, after
+   * loading too. Absent when none is waiting.
+   */
+  readonly pendingDifficulty?: DifficultyProfile;
+  /**
+   * The contract that ended (failed, or paid) while no other was taken since (G-178): its targets
+   * are rebuilt from it on loading, so the guards of an alarm fight on. Absent while a contract
+   * is in the log, running or cleared (its targets come from there), and before the first is taken.
+   * A paid one (no failed flag) has its site cleared (G-195): only its people saved return, and
+   * those of them asleep in an older save are left out.
+   */
+  readonly endedContract?: ContractOnSite;
+  /**
+   * Jobs replaced by a newer one while some of their people are still in the world (G-178), in
+   * the order taken: no chunk brings them back, so only those saved return. Who of them falls
+   * asleep with a chunk is gone for good, and the job with him once nobody is left. Absent when none.
+   */
+  readonly formerContracts?: readonly ContractOnSite[];
+  /** The heat's reinforcements (G-179). Absent with none about and none due. */
+  readonly reinforcements?: ReinforcementsSnapshot;
   /** Serialized ink story state (inkjs JSON). */
   readonly narrative: string | null;
   readonly meta: { readonly label: string; readonly objective: string };

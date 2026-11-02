@@ -4,6 +4,8 @@
  * the streets and the entrances where they come in. No randomness: the rows' phase is the one
  * that fits the most stalls, the first on a tie.
  */
+import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
+import { distanceToPiece } from "../../../packages/sim/src/content/lublin/furniture.ts";
 import { type Pt, pointInRing, ringBounds } from "./geometry.ts";
 import { yawOf } from "./props-place.ts";
 import type { Site } from "./props-site.ts";
@@ -28,6 +30,11 @@ const PATH_ROOM = 1.5;
 const ENTRANCE_ROOM = 6;
 /** How far a stall keeps from a car street's axis (m), as the scattered pieces do. */
 const TRAFFIC_REACH = 4.5;
+/** How far a stall's canvas keeps from the solid of a container or cart set before it (m): a walkway. */
+const WALKWAY = 1;
+/** The step of the canvas samples checked against them (m). */
+const CANVAS_STEP = 0.3;
+
 /** Phases tried along and across the rows, in parts of a period. */
 const PHASES = 4;
 
@@ -62,7 +69,7 @@ const openGround = (site: Site, ring: readonly Pt[]): Pt[] => {
 };
 
 /** The longer axis of the ground (its principal direction), as a unit vector with x ≥ 0. */
-const longAxis = (pts: readonly Pt[]): Pt => {
+export const longAxis = (pts: readonly Pt[]): Pt => {
   const mx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
   const mz = pts.reduce((s, p) => s + p.z, 0) / pts.length;
   let xx = 0;
@@ -79,7 +86,7 @@ const longAxis = (pts: readonly Pt[]): Pt => {
 };
 
 /** Where paths and streets cross the outline's edge, every metre along it. */
-const entrances = (site: Site, ring: readonly Pt[]): Pt[] => {
+export const marketEntrances = (site: Site, ring: readonly Pt[]): Pt[] => {
   const out: Pt[] = [];
   for (let i = 0; i < ring.length; i++) {
     const a = ring[i]!;
@@ -93,9 +100,26 @@ const entrances = (site: Site, ring: readonly Pt[]): Pt[] => {
   return out;
 };
 
-/** Is a stall at p (its counter along u) clear: its canvas with a margin on the outline's open ground, off paths, streets and entrances? */
-const fits = (site: Site, ring: readonly Pt[], gates: readonly Pt[], p: Pt, u: Pt): boolean => {
+/** Does a stall's canvas at p (its counter along u) keep a walkway from every piece set before it? */
+const clearOf = (pieces: readonly StreetPropItem[], p: Pt, u: Pt): boolean => {
+  const near = pieces.filter((o) => Math.hypot(o.x - p.x, o.z - p.z) < 8);
+  if (near.length === 0) return true;
+  const v = { x: -u.z, z: u.x };
+  for (let a = -STALL_W / 2; a <= STALL_W / 2 + 1e-9; a += CANVAS_STEP)
+    for (let b = -STALL_D / 2; b <= STALL_D / 2 + 1e-9; b += CANVAS_STEP) {
+      const q = { x: p.x + u.x * a + v.x * b, z: p.z + u.z * a + v.z * b };
+      if (near.some((o) => distanceToPiece(o, q.x, q.z) < WALKWAY)) return false;
+    }
+  return true;
+};
+
+/** Is a stall at p (its counter along u) clear: its canvas with a margin on the outline's open ground, off paths, streets, entrances and the pieces set before? */
+const fits = (site: Site, ring: readonly Pt[], gates: readonly Pt[], p: Pt, u: Pt, pieces: readonly StreetPropItem[]): boolean => {
+  // The canvas's middle sample is p itself: most rows' stalls fall off the outline, so it goes
+  // before the checks against every street of the city (G-200).
+  if (!pointInRing(p, ring)) return false;
   if (gates.some((g) => Math.hypot(g.x - p.x, g.z - p.z) < ENTRANCE_ROOM) || nearTraffic(site, p, TRAFFIC_REACH)) return false;
+  if (!clearOf(pieces, p, u)) return false;
   const hw = STALL_W / 2 + EDGE;
   const hd = STALL_D / 2 + EDGE;
   const v = { x: -u.z, z: u.x };
@@ -109,7 +133,16 @@ const fits = (site: Site, ring: readonly Pt[], gates: readonly Pt[], p: Pt, u: P
 };
 
 /** The stalls of one phase of the rows over the ground's extent along u and v. */
-const layout = (site: Site, ring: readonly Pt[], gates: readonly Pt[], u: Pt, span: { u0: number; u1: number; v0: number; v1: number }, du: number, dv: number): MarketStall[] => {
+const layout = (
+  site: Site,
+  ring: readonly Pt[],
+  gates: readonly Pt[],
+  pieces: readonly StreetPropItem[],
+  u: Pt,
+  span: { u0: number; u1: number; v0: number; v1: number },
+  du: number,
+  dv: number,
+): MarketStall[] => {
   const v = { x: -u.z, z: u.x };
   const out: MarketStall[] = [];
   for (let vc = span.v0 + dv; vc <= span.v1 + PERIOD_V; vc += PERIOD_V)
@@ -120,24 +153,27 @@ const layout = (site: Site, ring: readonly Pt[], gates: readonly Pt[], u: Pt, sp
         const sv = vc + (side * BACK) / 2;
         const p = { x: u.x * uc + v.x * sv, z: u.z * uc + v.z * sv };
         // Back to back: each row's counters face its own aisle.
-        if (fits(site, ring, gates, p, u)) out.push({ p, yaw: yawOf(v.x * side, v.z * side) });
+        if (fits(site, ring, gates, p, u, pieces)) out.push({ p, yaw: yawOf(v.x * side, v.z * side) });
       }
   return out;
 };
 
-/** Rows of stalls on a marketplace's outline (empty when none fits). */
-export const marketStalls = (site: Site, ring: readonly Pt[]): MarketStall[] => {
+/**
+ * Rows of stalls on a marketplace's outline (empty when none fits), their canvases a walkway clear
+ * of `pieces` set on it before them (the containers of a flea market, ADR-0058 stage 2).
+ */
+export const marketStalls = (site: Site, ring: readonly Pt[], pieces: readonly StreetPropItem[] = []): MarketStall[] => {
   const ground = openGround(site, ring);
   if (ground.length === 0) return [];
   const u = longAxis(ground);
   const us = ground.map((p) => p.x * u.x + p.z * u.z);
   const vs = ground.map((p) => -p.x * u.z + p.z * u.x);
   const span = { u0: Math.min(...us) - PERIOD_U, u1: Math.max(...us), v0: Math.min(...vs) - PERIOD_V, v1: Math.max(...vs) };
-  const gates = entrances(site, ring);
+  const gates = marketEntrances(site, ring);
   let best: MarketStall[] = [];
   for (let i = 0; i < PHASES; i++)
     for (let k = 0; k < PHASES; k++) {
-      const stalls = layout(site, ring, gates, u, span, (PERIOD_U * i) / PHASES, (PERIOD_V * k) / PHASES);
+      const stalls = layout(site, ring, gates, pieces, u, span, (PERIOD_U * i) / PHASES, (PERIOD_V * k) / PHASES);
       if (stalls.length > best.length) best = stalls;
     }
   return best;

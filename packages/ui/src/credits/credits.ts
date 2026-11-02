@@ -41,6 +41,8 @@ export const CREDIT_SECTIONS: readonly CreditSection[] = ["street", "city", "cha
 const CITY = ["city/city-kit.glb"] as const;
 const PROPS = ["city/city-props.glb"] as const;
 const STREET = ["city/street-props.glb"] as const;
+const MARKET = ["city/market-props.glb"] as const;
+const DOORS = ["city/door-props.glb"] as const;
 /** `audio/<name>-000.ogg` ... for the numbers given. */
 const ogg = (name: string, ...n: number[]): string[] => n.map((i) => `audio/${name}-${String(i).padStart(3, "0")}.ogg`);
 
@@ -55,6 +57,9 @@ export const CREDITS: readonly Credit[] = [
   { id: "sketchfab-scifi-kiosk", section: "street", title: "Scifi Kiosk", author: "Martin Ibbett", authorUrl: "https://sketchfab.com/unyxium", url: "https://sketchfab.com/3d-models/scifi-kiosk-835aac31a9114203b5cb04952f9a273b", license: "CC-BY-4.0", files: STREET, changed: true },
   { id: "sketchfab-cctv-camera", section: "street", title: "CCTV Camera", author: "Smoggybeard", authorUrl: "https://sketchfab.com/Smoggybeard", url: "https://sketchfab.com/3d-models/cctv-camera-e69d5eb37ffb4f188e4d3c84a5d79cdc", license: "CC-BY-4.0", files: STREET, changed: true },
   { id: "sketchfab-paper-lantern-chochin", section: "street", title: "Chinese \\ Japanese paper lantern chochin", author: "DeepDown", authorUrl: "https://sketchfab.com/deepdown", url: "https://sketchfab.com/3d-models/chinese-japanese-paper-lantern-chochin-20bcc5d20f2847f88aef3a267275d16c", license: "CC-BY-4.0", files: STREET, changed: true },
+  // CC-BY 4.0 (ADR-0058 stage 2, E2 of the second pack): the food cart and the container, also in street-props.glb.
+  { id: "sketchfab-avika-street-food-cart", section: "street", title: "Avika Street Food Cart", author: "AVIKA", authorUrl: "https://sketchfab.com/a-v-i-k-a", url: "https://sketchfab.com/3d-models/avika-street-food-cart-d54005c378fa45c3a06090d65a53fb23", license: "CC-BY-4.0", files: STREET, changed: true },
+  { id: "sketchfab-shipping-container", section: "street", title: "Classic Shipping Container (Free/Gameready)", author: "Sebastian Webster", authorUrl: "https://sketchfab.com/Sebastian.Hamish.Webster", url: "https://sketchfab.com/3d-models/classic-shipping-container-freegameready-772f4be391a245f699c54e6cf157c58d", license: "CC-BY-4.0", files: STREET, changed: true },
   // CC-BY 4.0 (ADR-0063 stage 2): the skyline's megatowers, also in city-props.glb.
   { id: "sketchfab-megacity-cluster", section: "city", title: "Sci-Fi Megacity Cluster – Free  Asset Pac", author: "TRYFIELD", authorUrl: "https://sketchfab.com/tryfield", url: "https://sketchfab.com/3d-models/sci-fi-megacity-cluster-free-asset-pac-458380c745dc4e05ae5e0f6e7b4c69b2", license: "CC-BY-4.0", files: PROPS, changed: true },
   // CC0 (ADR-0022, ADR-0058): the city kit and the facade props.
@@ -65,6 +70,21 @@ export const CREDITS: readonly Credit[] = [
   { id: "quaternius-cyberpunk-kit", section: "city", title: "Cyberpunk Game Kit", author: "Quaternius", authorUrl: "https://quaternius.com", url: "https://drive.google.com/drive/folders/1GyKLypoBxrpLN6GERF9U610Wiub48v9y", license: "CC0-1.0", files: PROPS, changed: true },
   { id: "kenney-modular-buildings", section: "city", title: "Modular Buildings 2.1", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://opengameart.org/content/modular-buildings", license: "CC0-1.0", files: PROPS, changed: true },
   { id: "kenney-retro-urban-kit", section: "city", title: "Retro Urban Kit 2.0", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://opengameart.org/content/retro-urban-kit", license: "CC0-1.0", files: PROPS, changed: true },
+  // CC0 (ADR-0058 stage 2): the street furniture of street-props.glb.
+  { id: "oga-pixelmannen-atms", section: "street", title: "Low poly ATMs", author: "pixelmannen", url: "https://opengameart.org/content/low-poly-atms", license: "CC0-1.0", files: STREET, changed: true },
+  { id: "quaternius-zombie-kit", section: "street", title: "Zombie Apocalypse Kit", author: "Quaternius", authorUrl: "https://quaternius.com", url: "https://quaternius.com/packs/zombieapocalypsekit.html", license: "CC0-1.0", files: STREET, changed: true },
+  { id: "kenney-nature-kit", section: "street", title: "Nature Kit 2.1", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://opengameart.org/content/nature-kit", license: "CC0-1.0", files: STREET, changed: true },
+  { id: "quaternius-public-transport", section: "street", title: "Public Transport Pack", author: "Quaternius", authorUrl: "https://quaternius.com", url: "https://quaternius.com/packs/publictransport.html", license: "CC0-1.0", files: STREET, changed: true },
+  { id: "oga-lyricsz-bike", section: "street", title: "bike", author: "lyricsz", url: "https://opengameart.org/content/bike-0", license: "CC0-1.0", files: STREET, changed: true },
+  // CC0 (ADR-0058 stage 3): the market's stock, the food booths and the goods on the counters of market-props.glb.
+  { id: "kenney-food-kit", section: "street", title: "Food Kit 2.0", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://opengameart.org/content/food-kit", license: "CC0-1.0", files: MARKET, changed: true },
+  { id: "kenney-mini-market", section: "street", title: "Mini Market 1.0", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://opengameart.org/content/mini-market", license: "CC0-1.0", files: MARKET, changed: true },
+  { id: "kenney-survival-kit", section: "street", title: "Survival Kit 2.0", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://opengameart.org/content/survival-kit", license: "CC0-1.0", files: MARKET, changed: true },
+  { id: "kenney-furniture-kit", section: "street", title: "Furniture Pack 1.0", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://opengameart.org/content/furniture-kit", license: "CC0-1.0", files: MARKET, changed: true },
+  // CC-BY 4.0 (ADR-0058 stage 9, E7 of the second pack): the leaves of the doors on the facades, door-props.glb.
+  { id: "sketchfab-cyberpunk-doors-and-windows", section: "street", title: "Cyberpunk City Assets Pack 3# Doors and Windows", author: "carlcapu9", authorUrl: "https://sketchfab.com/carlcapu9", url: "https://sketchfab.com/3d-models/cyberpunk-city-assets-pack-3-doors-and-windows-c6cdc4f6715e4d8eae61eeb81fe636c8", license: "CC-BY-4.0", files: DOORS, changed: true },
+  { id: "sketchfab-psx-garage-doors", section: "street", title: "Low-Poly PSX Style Garage Doors Pack", author: "vanillao03", authorUrl: "https://sketchfab.com/vanillao03", url: "https://sketchfab.com/3d-models/low-poly-psx-style-garage-doors-pack-6cd3bb88d27e44ac96f080e533d7015a", license: "CC-BY-4.0", files: DOORS, changed: true },
+  { id: "sketchfab-cyberpunk-scifi-door-3", section: "street", title: "Cyberpunk Sci-fi Door 3 - Free", author: "Jesus Fernandez Garcia", authorUrl: "https://sketchfab.com/jamyzgenius", url: "https://sketchfab.com/3d-models/cyberpunk-sci-fi-door-3-free-df980eee6f0f42aaa52d70b668001b4d", license: "CC-BY-4.0", files: DOORS, changed: true },
   // The cast (VRoid Project samples) and the weapons.
   { id: "vroid-samples", section: "characters", title: "VRoid Studio sample models (AvatarSample_D, AvatarSample_F, Sakurada Fumiriya, Sendagaya Shino, Base_Male)", author: "pixiv / VRoid Project", url: "https://opengameart.org/content/vroid-studio-cc0-models", license: "VRoid-Hub-1.0", files: ["models/seki.vrm", "models/kaito.vrm", "models/ganger.vrm", "models/civilian.vrm", "models/mori.vrm"], changed: true },
   { id: "quaternius-ultimate-gun-pack", section: "weapons", title: "Ultimate Gun Pack", author: "Quaternius", authorUrl: "https://quaternius.com", url: "https://opengameart.org/content/ultimate-gun-pack", license: "CC0-1.0", files: ["weapons/pistol.glb", "weapons/smg.glb"], changed: true },

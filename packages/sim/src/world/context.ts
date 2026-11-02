@@ -24,7 +24,8 @@ export interface SessionState {
   street2: StreetScenes;
   /**
    * The interior the player is in (ADR-0061): its id, null outside, undefined until the first
-   * step of a new game or a load has read it from the position. Transient, not saved.
+   * step of a new game has read it from the position; a load reads it from the saved one (G-174).
+   * Not saved.
    */
   interior: string | null | undefined;
   /** The takedown under way (ADR-0065), null when none. Transient, not saved. */
@@ -40,6 +41,15 @@ export interface SessionState {
    * let go. Transient, not saved.
    */
   attackLock: boolean;
+  /** The body on the player's shoulder (ADR-0065), null when none. Saved on the body (`downed.carried`). */
+  carrying: EntityId | null;
+  /**
+   * The body the interact key would pick up now, null when none: named by the carry system, kept
+   * by the interaction system only when it holds the prompt, like `takedownTarget`.
+   */
+  bodyTarget: { readonly id: EntityId; readonly distance: number } | null;
+  /** The free hiding place in reach of the carried body, null when none: the key hides it there. */
+  hideSpot: EntityId | null;
   /**
    * A difficulty asked for during a fight (ADR-0066): it takes effect when the fight is over.
    * Transient, not saved.
@@ -117,6 +127,13 @@ export interface SessionWatch {
   ram: number | null;
   /** Seconds until the next reinforcement may come in. */
   reinforce: number;
+  /** Reinforcements sent in since the heat came up (G-179): the last one's `n`; 0 once all have gone. */
+  sent: number;
+  /**
+   * The entity the upload in progress went into in this session (G-194). Not saved: a loaded game
+   * gives other ids, so an upload saved by `#<id>` is cut off instead of going into another one.
+   */
+  uploadId: EntityId | null;
 }
 
 export const freshSession = (): SessionState => ({
@@ -126,13 +143,16 @@ export const freshSession = (): SessionState => ({
   focusPrompt: null,
   lastThreat: null,
   street: { disturbances: [], offences: [], incidents: 0 },
-  watch: { district: null, playerHp: null, focus: null, ram: null, reinforce: 0 },
+  watch: { district: null, playerHp: null, focus: null, ram: null, reinforce: 0, sent: 0, uploadId: null },
   passenger: null,
   street2: { encounter: null, npcs: {}, micro: null, district: null },
   interior: undefined,
   takedown: null,
   takedownTarget: null,
   attackLock: false,
+  carrying: null,
+  bodyTarget: null,
+  hideSpot: null,
   pendingDifficulty: null,
 });
 

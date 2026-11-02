@@ -26,12 +26,14 @@ export const findEncountersError = (e: unknown): string | null => {
   return Object.values(e.nights).every((n) => Number.isInteger(n)) ? null : "encounters";
 };
 
-/** The optional wave 2 fields of a contract and its log: the variation and the hooks found. */
-export const findContractWave2Error = (contracts: Json): string | null => {
-  if (contracts.hooks !== undefined && !isStringList(contracts.hooks)) return "contract hooks";
-  const active = contracts.active;
-  if (!isObject(active) || active.variation === undefined) return null;
-  const v = active.variation;
+/** The optional wave 2 field of the contract log: the hooks found. */
+export const findContractWave2Error = (contracts: Json): string | null =>
+  contracts.hooks !== undefined && !isStringList(contracts.hooks) ? "contract hooks" : null;
+
+/** The optional wave 2 field of a contract (ADR-0034): its variation. */
+export const findVariationError = (contract: Json): string | null => {
+  if (contract.variation === undefined) return null;
+  const v = contract.variation;
   if (!isObject(v) || !Array.isArray(v.modifiers) || !v.modifiers.every((m) => typeof m === "string" && MODIFIERS.includes(m))) return "contract variation";
   if (typeof v.security !== "string" || !SECURITY.includes(v.security)) return "contract variation";
   if (v.trait !== undefined && (typeof v.trait !== "string" || !TRAITS.includes(v.trait))) return "contract variation";

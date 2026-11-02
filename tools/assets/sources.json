@@ -1,5 +1,5 @@
 {
-  "about": "Packs and models baked into packages/app/public/city/city-props.glb: CC0 (ADR-0058) and CC-BY 4.0, credited in packages/ui/src/credits/credits.ts (ADR-0063). tools/assets/fetch.mjs downloads them and checks sha256; the zips, unpacked packs and source models are not committed.",
+  "about": "Packs and models baked into packages/app/public/city/city-props.glb, street-props.glb and market-props.glb: CC0 (ADR-0058) and CC-BY 4.0, credited in packages/ui/src/credits/credits.ts (ADR-0063). tools/assets/fetch.mjs downloads them and checks sha256; the zips, unpacked packs and source models are not committed.",
   "sources": [
     {
       "id": "kenney-modular-buildings",
@@ -44,6 +44,122 @@
         { "path": "Platforms/Pipe_1.gltf", "url": "https://drive.usercontent.google.com/download?id=1-hhtKUwroDLlY_17kR2HwR4iczYR42DW&export=download&confirm=t", "sha256": "63ded98e33fc83718f2117eebec79341ba82c89b0da072394829478f52bab45d" },
         { "path": "Platforms/Pipe_Corner.gltf", "url": "https://drive.usercontent.google.com/download?id=1stVoDPtUdYE3-vvuKZvMwDE9DEAHItPc&export=download&confirm=t", "sha256": "355e192edd933df06dc553255fb3a382387556fc71a0049165dde8bc9f6d947e" }
       ]
+    },
+    {
+      "id": "oga-pixelmannen-atms",
+      "title": "Low poly ATMs",
+      "author": "pixelmannen",
+      "page": "https://opengameart.org/content/low-poly-atms",
+      "license": "CC0",
+      "licenseQuote": "License(s): CC0 (strona OpenGameArt; paczka nie ma pliku licencji)",
+      "url": "https://opengameart.org/sites/default/files/ATMs.zip",
+      "file": "atms.zip",
+      "sha256": "fc1a7cb87067516269e095617077e8fa5df542a9715e575d5299a26aa66c523f",
+      "unzip": "x",
+      "used": ["st-atm"]
+    },
+    {
+      "id": "oga-lyricsz-bike",
+      "title": "bike",
+      "author": "lyricsz",
+      "page": "https://opengameart.org/content/bike-0",
+      "license": "CC0",
+      "licenseQuote": "License(s): CC0 (strona OpenGameArt; paczka nie ma pliku licencji)",
+      "url": "https://opengameart.org/sites/default/files/bike.zip",
+      "file": "bike.zip",
+      "sha256": "bc940f936090bf741c68dfd2e63414047fa4cb790724199ef6bd0eae128da419",
+      "unzip": "x",
+      "used": ["st-scooter"]
+    },
+    {
+      "id": "kenney-nature-kit",
+      "title": "Nature Kit 2.1",
+      "author": "Kenney (www.kenney.nl)",
+      "page": "https://opengameart.org/content/nature-kit",
+      "license": "CC0",
+      "licenseQuote": "License: (Creative Commons Zero, CC0) http://creativecommons.org/publicdomain/zero/1.0/ This content is free to use in personal, educational and commercial projects.",
+      "url": "https://opengameart.org/sites/default/files/Nature%20Kit%20%282.1%29.zip",
+      "file": "nature.zip",
+      "sha256": "fa7974a0d342bfe63c38664ba9f8ec1a4aab8ea25f099bdc56870e33588c4d9d",
+      "unzip": "x",
+      "used": ["st-planter"]
+    },
+    {
+      "id": "kenney-food-kit",
+      "title": "Food Kit 2.0",
+      "author": "Kenney (www.kenney.nl)",
+      "page": "https://opengameart.org/content/food-kit",
+      "license": "CC0",
+      "licenseQuote": "License: (Creative Commons Zero, CC0) http://creativecommons.org/publicdomain/zero/1.0/ You can use this content for personal, educational, and commercial purposes.",
+      "url": "https://opengameart.org/sites/default/files/kenney_food-kit.zip",
+      "file": "food.zip",
+      "sha256": "cdad90853682499b94c9fda2f87678b24bfd8f3264e0ed323f6b6a27fd7c6f6f",
+      "unzip": "x",
+      "used": ["mk-yatai", "mk-counter-ramen", "mk-counter-produce", "mk-counter-drinks"]
+    },
+    {
+      "id": "kenney-mini-market",
+      "title": "Mini Market 1.0",
+      "author": "Kenney (www.kenney.nl), with Fleur Keijsers and Guus Vermeulen",
+      "page": "https://opengameart.org/content/mini-market",
+      "license": "CC0",
+      "licenseQuote": "License: (Creative Commons Zero, CC0) http://creativecommons.org/publicdomain/zero/1.0/ You can use this content for personal, educational, and commercial purposes.",
+      "url": "https://opengameart.org/sites/default/files/kenney_mini-market.zip",
+      "file": "mini-market.zip",
+      "sha256": "6f2e69090e359204ace43e4c98dc3fb8639b75e423109672b5c890d194c45203",
+      "unzip": "x",
+      "used": ["mk-crates"]
+    },
+    {
+      "id": "kenney-survival-kit",
+      "title": "Survival Kit 2.0",
+      "author": "Kenney (www.kenney.nl)",
+      "page": "https://opengameart.org/content/survival-kit",
+      "license": "CC0",
+      "licenseQuote": "License: (Creative Commons Zero, CC0) http://creativecommons.org/publicdomain/zero/1.0/ You can use this content for personal, educational, and commercial purposes.",
+      "url": "https://opengameart.org/sites/default/files/kenney_survival-kit.zip",
+      "file": "survival.zip",
+      "sha256": "c3586341b5932c87eb43d75d915434f47daed168b17ed36a03e8ca9977c7443e",
+      "unzip": "x",
+      "used": ["mk-cartons", "mk-barrels", "mk-canvas", "mk-yatai"]
+    },
+    {
+      "id": "kenney-furniture-kit",
+      "title": "Furniture Pack 1.0",
+      "author": "Kenney (www.kenney.nl)",
+      "page": "https://opengameart.org/content/furniture-kit",
+      "license": "CC0",
+      "licenseQuote": "License: (Creative Commons Zero, CC0) http://creativecommons.org/publicdomain/zero/1.0/ This content is free to use in personal, educational and commercial projects.",
+      "url": "https://opengameart.org/sites/default/files/kenney_furniturePack.zip",
+      "file": "furniture.zip",
+      "sha256": "68afa4e6dc8a53942379fb47f1e84ec735d46b77bb1c1ceb968e245693dde067",
+      "unzip": "x",
+      "used": ["mk-yatai"]
+    },
+    {
+      "id": "quaternius-public-transport",
+      "title": "Public Transport Pack",
+      "author": "Quaternius (quaternius.com)",
+      "page": "https://quaternius.com/packs/publictransport.html",
+      "license": "CC0",
+      "licenseQuote": "CC0 (strona paczki i https://quaternius.com/license.html)",
+      "files": [
+        { "path": "OBJ/Bicycle.obj", "url": "https://drive.usercontent.google.com/download?id=1xcDStoR92udBmnrmk3OKl9LrAG_akHhU&export=download&confirm=t", "sha256": "0fbaab4418722d8f1baf11be05d099d79bfe704fb109a555924d49171fa39b92" },
+        { "path": "OBJ/Bicycle.mtl", "url": "https://drive.usercontent.google.com/download?id=19tHnIOgjZweeaPARNlEKlSkrOtIfbciZ&export=download&confirm=t", "sha256": "19b75b81f388cf465cd7f16f443af0dca81678a6b31a01681578e24fe346072e" }
+      ],
+      "used": ["st-bike"]
+    },
+    {
+      "id": "quaternius-zombie-kit",
+      "title": "Zombie Apocalypse Kit",
+      "author": "Quaternius (quaternius.com)",
+      "page": "https://quaternius.com/packs/zombieapocalypsekit.html",
+      "license": "CC0",
+      "licenseQuote": "CC0 (strona paczki i https://quaternius.com/license.html); License.txt w folderze paczki ma nagłówek innej paczki (Ultimate Platformer Pack), więc nie jest tu cytowany",
+      "files": [
+        { "path": "Environment/glTF/FireHydrant.gltf", "url": "https://drive.usercontent.google.com/download?id=12eTSrvHAa4D5Sr-_oFnMEHWYY65jwDGo&export=download&confirm=t", "sha256": "505de841fda684aee3dd9dd9c594dcc5bfa328bb492e82c7a9cc28979c9fe257" }
+      ],
+      "used": ["st-hydrant"]
     },
     {
       "id": "sketchfab-electric-pole",
@@ -239,7 +355,7 @@
       "files": [
         { "path": "avika_street_food_cart.glb", "url": "https://drive.usercontent.google.com/download?id=1Spjv86iIJZEZxN_00nsCky-1gHwSbiKf&export=download&confirm=t", "sha256": "1c758906f63f34b3e9eb9ebf5f2cea871423bb94efb75d64eebb86802d6b85c2" }
       ],
-      "used": []
+      "used": ["st-food-cart"]
     },
     {
       "id": "sketchfab-cyberpunk-apartment",
@@ -295,7 +411,7 @@
       "files": [
         { "path": "cyberpunk_city_assets_pack_3_doors_and_windows.glb", "url": "https://drive.usercontent.google.com/download?id=1PWF2e3O522u415z1or9OK3jQomv8PvAN&export=download&confirm=t", "sha256": "ae5a0e9f7c8eec7aae5be1365cc243168bd532520098d642ecd4135583ddcd96" }
       ],
-      "used": []
+      "used": ["dr-steel", "dr-steel-double"]
     },
     {
       "id": "sketchfab-cyberpunk-drone",
@@ -351,7 +467,7 @@
       "files": [
         { "path": "cyberpunk_sci-fi_door_3_-_free.glb", "url": "https://drive.usercontent.google.com/download?id=1aJyyT5VHvme0kWGNZ9YuqLgVtx9Bz4yT&export=download&confirm=t", "sha256": "714c6a3df6d1fe6f1ec2e3905cce84bb46ef051582c1072b0ec7dc7df09b100d" }
       ],
-      "used": []
+      "used": ["dr-code"]
     },
     {
       "id": "sketchfab-dirty-car",
@@ -449,7 +565,7 @@
       "files": [
         { "path": "low-poly_psx_style_garage_doors_pack.glb", "url": "https://drive.usercontent.google.com/download?id=1yRycCWlT-D68NOriTHOPYeCeDMgGP5uj&export=download&confirm=t", "sha256": "fdb0690fdecb4bb54c0da6576b61280f189b6e37796257060a4710cd688a9f3a" }
       ],
-      "used": []
+      "used": ["dr-shop", "dr-tall", "dr-shutter"]
     },
     {
       "id": "sketchfab-satellite-comms",
@@ -477,7 +593,7 @@
       "files": [
         { "path": "classic_shipping_container_freegameready.glb", "url": "https://drive.usercontent.google.com/download?id=1CdTDTAn7TnF8Fz5BfEIjGkpr9WuXvbhS&export=download&confirm=t", "sha256": "0abaf6cb53f31e9cba40ca3a84ce537101cbcc7ea8d8f3c0ccb9e2efc7136134" }
       ],
-      "used": []
+      "used": ["st-container-rust", "st-container-dumpster"]
     },
     {
       "id": "sketchfab-street-asset-pack",

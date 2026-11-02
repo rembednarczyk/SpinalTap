@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { PODZAMCZE_CHUNKS } from "../../../packages/sim/src/content/lublin/podzamcze.generated.ts";
 import { STOREY } from "../src/building-tags.ts";
 import { partTier } from "../src/building-parts.ts";
 import { TAG_CORRECTIONS, corrected } from "../src/corrections.ts";
@@ -28,5 +29,16 @@ describe("tag corrections (ADR-0042)", () => {
     // Other elements and the other tags stay as mapped.
     expect(corrected({ ...annex, id: "w617597407" }).tags).toEqual(annex.tags);
     expect(corrected(annex).tags["roof:colour"]).toBe("brown");
+  });
+
+  // NMPT GUGiK 0.5 m (T-114), world y: the chapel's eaves about 7 and its nave's ridge 15.3, the keep's crown 16.4..16.9.
+  it("puts the Trinity Chapel's eaves and ridge and the keep's crown in the game's data within 1 m of the surface model (G-204)", () => {
+    const building = (id: string) => PODZAMCZE_CHUNKS.flatMap((c) => c.buildings).find((b) => b.id === id)!;
+    const chapel = building("w66258167");
+    expect(chapel.source).toBe("height");
+    expect(Math.abs(chapel.y + chapel.height - 7)).toBeLessThanOrEqual(1);
+    expect(Math.abs(chapel.y + chapel.height + (chapel.roof ?? 0) - 15.3)).toBeLessThanOrEqual(1);
+    const keep = building("w450180469");
+    expect(Math.abs(keep.y + keep.height + (keep.roof ?? 0) - 16.65)).toBeLessThanOrEqual(1);
   });
 });

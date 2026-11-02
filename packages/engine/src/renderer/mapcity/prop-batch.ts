@@ -1,4 +1,4 @@
-import type { StreetPropItem, StreetPropKind, Vec3 } from "@seki/core";
+import { DECAL_KINDS, type StreetPropItem, type StreetPropKind, type Vec3 } from "@seki/core";
 import { type BollardChain, bollardChains } from "@seki/sim";
 import type { MeshSink } from "../mesh-sink";
 import type { PropLight } from "./prop-lamps";
@@ -23,10 +23,22 @@ export interface WorldProp {
   readonly chains?: readonly BollardChain[];
   /** A road lamp drawn as a utility pole (ADR-0063, `utility-poles.ts`). */
   readonly pole?: boolean;
+  /** A door's variant: its model and size (ADR-0058 stage 9, `doorLayout`); a decal's layout (stage 6, `decals.ts` in `@seki/core`). */
+  readonly variant?: number;
 }
 
 export const toWorld = (items: readonly StreetPropItem[], at: Vec3): WorldProp[] =>
-  items.map((i) => ({ prop: i.prop, x: i.x + at.x, y: i.y + at.y, z: i.z + at.z, yaw: i.yaw, shape: shapeOf(i.prop, i.variant), scale: scaleOf(i.prop, i.variant), chains: bollardChains(i) }));
+  items.map((i) => ({
+    prop: i.prop,
+    x: i.x + at.x,
+    y: i.y + at.y,
+    z: i.z + at.z,
+    yaw: i.yaw,
+    shape: shapeOf(i.prop, i.variant),
+    scale: scaleOf(i.prop, i.variant),
+    chains: bollardChains(i),
+    ...(i.prop === "door" || DECAL_KINDS.has(i.prop) ? { variant: i.variant } : {}),
+  }));
 
 /** One instanced mesh per kind and shape. */
 export const groupKey = (kind: StreetPropKind, shape: number): string => `${kind}:${shape}`;

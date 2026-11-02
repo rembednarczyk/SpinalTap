@@ -5,6 +5,45 @@ Zmiany widoczne dla gracza, od najnowszych. Wersja gry i commit są na ekranie t
 ## Nieopublikowane (0.1.0)
 
 ### 1 listopada 2026
+- Kaplica Trójcy i Donżon na Zamku mają wysokości z pomiaru NMPT GUGiK: niższy okap i wyższy, stromy dach kaplicy, korona wieży o ok. 1,7 m niżej (G-204).
+- Quickhack wgrywany w posiłek ochrony w chwili zapisu po wczytaniu kończy się w tym samym posiłku albo jest przerwany (z połową RAM-u z powrotem), nigdy nie trafia w innego (G-194).
+- Strażnicy, którzy gonili gracza, uspokajają się i zasypiają, gdy gracz jest daleko (najpóźniej po 30 s poza wczytanymi fragmentami miasta); nie stoją już w świecie do końca sesji, a zapis i wczytanie dają to samo co gra (G-188).
+- Strażnik obok gracza nie znika już na jego oczach, gdy usypia się fragment miasta strażnika: ani gdy gracz stoi na terenie poza fragmentami miasta (np. na północ od Nabrzeża), ani gdy strażnik stoi przy graczu w innym wczytanym fragmencie; zasypia dopiero, gdy odejdzie od gracza dalej niż na 30 m, a zapis i wczytanie dają to samo co gra (G-201).
+- Posiłki ochrony dają XP za quickhack, każdy raz, jak strażnik z kluczem; ten sam posiłek drugi raz nic, także po zapisie i wczytaniu, a posiłek kolejnego heatu znów płaci (G-202, zapis v26).
+- Zapis w trakcie hakowania pod ostrzałem pamięta stan broni strażników i celowanie snajpera: po wczytaniu fala strzela wtedy, kiedy strzelałaby w grze bez zapisu (G-185, zapis v25).
+- Drzwi na fasadach: budynki Lublina mają wejścia. Tam, gdzie mapa zna wejście, drzwi stoją w jego miejscu; pod szyldem każdego lokalu są drzwi sklepu (przy bankach pancerne, na kod), a kamienice od ulicy mają drzwi klatki. Drzwi stoją między oknami albo w miejscu całego okna czy witryny, nigdy w połowie okna, pod szyldem ani w bramie przejazdu. Skrzydła to modele z drugiej paczki użytkownika (CC-BY, na ekranie „Autorzy”); na telefonie są prostsze (ADR-0058 etap 9).
+- Miejsce wykonanego i opłaconego zlecenia zostaje oczyszczone: ciała i ocaleni strażnicy znikają, gdy gracz odejdzie, i nie wracają aż do następnego zlecenia (G-195).
+- Powalony, ale żywy posiłek ochrony nie znika po końcu heatu: leży (albo zostaje schowany) tam, gdzie był, także po zapisie i wczytaniu, i nie zajmuje miejsca następnego posiłku; do domu wracają tylko ci na nogach (G-196).
+- Ciało zabitego posiłku ochrony (po powaleniu albo w trakcie obalenia) leży po wczytaniu tam, gdzie było, także niesione i schowane, i ochrona je znajduje jak przed zapisem (G-193).
+- Neony DENKI, KARAOKE i SAKE na skośnych ścianach Rynku i Grodzkiej są wąskie i pionowe, przylegają do muru zamiast jednym końcem tkwić w ścianie, a drugim wisieć w powietrzu (G-160).
+- Posiłki ochrony wezwane przy heacie zostają w świecie po wczytaniu, tam gdzie były, z tym samym zdrowiem i tym, co wiedzą o graczce, a następne przychodzą wtedy, kiedy przyszłyby bez zapisu: wczytanie nie usuwa już pościgu ani nie sprowadza od razu nowego posiłku w innym miejscu (G-179, zapis v23).
+- Na Radziwiłłowskiej stoją trzy auta zamiast jednego: parkometr za krawężnikiem pasa postojowego nie wypycha już aut z zatok, a zatoka, w której wylosowane auto się nie mieści, dostaje krótszy model; w kilku innych pasach przybyło przez to po kilka aut (G-189).
+- Auta w głębokich pasach postojowych bez oznaczenia stoją skośnie pod 60°, nosem do chodnika w stronę ruchu, jak na Krakowskim Przedmieściu i Radziwiłłowskiej (G-187).
+- Strażnicy zleceń zakończonych porażką albo wykonanych zostają w świecie po wczytaniu, także gdy w trakcie walki przyjęto nowe zlecenie: zaalarmowani po nieudanej infiltracji walczą dalej, więc zapis nie pozwala już uciec z walki, a zabici nie wracają (G-178, zapis v22).
+- Targ i budki z jedzeniem: przy straganach Targu na Ruskiej, Bazaru, Giełdy na Kresowej i pchlego targu na Placu Zamkowym stoją kartony na paletach, beczki, skrzynki z owocami i towar pod płótnem, na ladach leżą ramen, warzywa i napoje, a pod płachtami wiszą noreny; przed barami z fast foodem na Krakowskim i Podzamczu stoją budki yatai z ladą, stołkami, norenem i lampionami. Wszystko ma bryłę, a rozstawiają to reguły z danych mapy. Modele CC0 Kenneya są na ekranie „Autorzy” (ADR-0058 etap 3).
+- Auta na pasach postojowych z mapy stoją przy krawężniku całą bryłą w obrysie, a na pasach z `orientation=perpendicular` i głębokich bez tagu w poprzek ulicy (G-177).
+- Zapis i wczytanie w trakcie infiltracji nie zerują czujności strażników: kto zaczął dostrzegać Seki, po wczytaniu dalej ją dostrzega, a gra toczy się dalej tak samo jak bez wczytania (G-174, zapis v21).
+- Latarnie ścienne Starego Miasta nie wiszą już w przejazdach Bramy Krakowskiej, Bramy Grodzkiej i Ku Farze, a latarnia z wylotu przejścia pod Wieżą Trynitarską przeszła na ścianę obok (G-173).
+- Neonowe rurki pod gzymsem kończą się przed sąsiednim budynkiem, który wystaje przed ścianę, zamiast wchodzić w jego mur (G-170).
+- Szkielety postaci znikają razem z nimi: każda nowa gra i każda postać spoza zasięgu nie zostawia już szkieletu w pamięci (G-184).
+- Przechodnie z placów i alejek chodzą chodnikiem obok pasów postojowych, nie po nich (Kowalska, Świętoduska; G-177).
+- Zaparkowane auta na pasach postojowych zmapowanych w OSM wzdłuż krawężnika (`parking=street_side`, `lane`), 17 aut więcej.
+- Zaparkowane auta nie stoją na przystankach autobusowych ani 15 m przed i za słupkiem, jak każe art. 49 PoRD (G-156).
+- Zaparkowane auta nie stoją przy krawężniku ulic o dwóch pasach i więcej w każdą stronę poza zmapowanymi parkingami, jak 3 Maja (G-155).
+- Latarnie ścienne nie zasłaniają już tablic lokali: wiszą prostopadle do ściany i przesuwają się poza tablicę, a jedna bez miejsca wypada (G-158).
+- Poziom trudności do wyboru przy nowej grze i w pauzie: Opowieść, Normalny, Trudny albo Własny z suwakami, zmiana w walce czeka do jej końca, a slot zapisu pokazuje poziom (ADR-0066 etap 2).
+- Tablice lokali nie wchodzą już w sąsiedni budynek, który wystaje przed ścianę: przesuwają się, ściskają albo idą na inną ścianę (G-159).
+- Poziom trudności zmieniony w walce („Zmieni się po walce”) przetrwa zapis i wczytanie gry i wejdzie po końcu walki (G-171, zapis v20).
+- Banery, holo-reklamy i wysięgniki nie wchodzą już w sąsiednie budynki, które wystają przed ścianę: przesuwają się po niej, zwężają albo znikają (G-157).
+- Zaparkowane auta nie stoją na samodzielnych ścieżkach pieszych, np. taksówki przy postoju na Podzamczu (G-143).
+- Z ciałem na ramieniu menu postaci nie dobywa ani nie chowa broni (G-164).
+- Grę można zainstalować na telefonie: ikona na ekranie głównym i start na pełnym ekranie w poziomie (bez trybu offline).
+- Meble deptaka: wolnostojące bankomaty z OSM, hydranty nadziemne z OSM, donice z krzakami i kwiatami, rowery i skutery przy stojakach, wózki z jedzeniem przy Targu na Ruskiej i na Giełdzie na Kresowej, kontenery Tessen na Giełdzie; wszystkie z bryłą, z modeli CC0 i CC-BY na ekranie „Autorzy” (ADR-0058 etap 2).
+- Ciała ogłuszonych i zabitych w obezwładnieniu można podnieść, przenieść i ukryć w kontenerze albo śmietniku, a zapis gry je pamięta (ADR-0065 etap 3).
+- Podpowiedzi systemowe: zasady Breach w nakładce do pierwszego wyboru, pierwszy heat (zerwij kontakt wzrokowy i przeczekaj poszukiwania) i pierwsze przebranie (strażnicy przepuszczają, bieg, walka albo kręcenie się obok zdradzają).
+- Pomniki i rzeźby z OSM mają kształt z tagów i z tabeli znanych pomników Lublina zamiast losowego z hasha: Koziołki jako Koziołki, figury jako postacie, pomniki wojenne i instalacje jako stela z tablicą, kapliczki jako kapliczki; murale, mozaiki, neon na fasadzie i Sztukmistrz na linie nie stoją już jako wolnostojące bryły (G-149).
+- Domyślnie grafika High na każdym urządzeniu i liczby obrażeń przy każdym trafieniu (także dla starszych ustawień, jednorazowo); przycisk Ustawienia na ekranie tytułowym.
+- Megabloki osaczają Lublin: rząd 41 megawież 309–520 m z kładkami i reklamami tuż za miastem, odcinek wokół Nabrzeża i pierścień prostszych megabloków za nimi, z dala od cmentarzy żydowskich, Ogrodu Saskiego i Bystrzycy, z otwartym widokiem z Placu Litewskiego na Wieżę Trynitarską i katedrę; na telefonie panorama jak dotąd, tylko wieże znad Zalewu stoją w Zemborzycach, z dala od rzeki (ADR-0067 etap 1).
 - Prawdziwe lokale z OSM (332: sklepy, kawiarnie, bary, banki, apteki, kluby) mają szyld z neonową nazwą Lublina 2077 na swojej elewacji, w kolorze zbliżonym do prawdziwego (ADR-0064 etap 4).
 - Przejazd Bramy Grodzkiej w osi obu frontów, nad łukiem trzy osie okien co 2 m i podświetlenie po obu stronach łuku (G-136).
 - Blokada kursora nie wyłącza się na stałe, gdy panel zamknięty Esc przed pierwszym kliknięciem po ładowaniu poprosi o nią bez gestu (G-135).

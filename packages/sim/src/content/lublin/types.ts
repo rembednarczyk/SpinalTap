@@ -119,6 +119,26 @@ export interface LublinServiceWayData {
   readonly width: number;
 }
 
+/** A footway or a path mapped on its own (not a sidewalk, not a crossing): room kept clear of parked cars (G-143). */
+export interface LublinFootWayData {
+  /** World polyline, clipped to the chunk. */
+  readonly line: FlatPoints;
+  /** Its width (m). */
+  readonly width: number;
+}
+
+/** A car park mapped as an area (on the ground): the kerbs and yards where the map says cars park. */
+export interface LublinCarParkData {
+  /** Its map id; one reaching over a chunk's edge is in both chunks. */
+  readonly id: string;
+  /** Its `parking` kind: `street_side`, `lane`, `half_on_kerb`, `surface`… */
+  readonly kind: string;
+  /** Its bays' `orientation` when mapped: `parallel`, `perpendicular` or `diagonal` (G-177). */
+  readonly orientation?: string;
+  /** World outline. */
+  readonly outline: FlatPoints;
+}
+
 export interface LublinChunkData {
   readonly id: string;
   readonly district: "shinsekai-7" | "kanal" | "targ" | "doki";
@@ -136,6 +156,14 @@ export interface LublinChunkData {
   readonly passages?: readonly LublinPassageData[];
   /** Unnamed service roads, when it has any (named ones are among `streets`). */
   readonly serviceWays?: readonly LublinServiceWayData[];
+  /** Footways and paths mapped on their own, when it has any. */
+  readonly footWays?: readonly LublinFootWayData[];
+  /** Car parks reaching into it, when it has any. */
+  readonly carParks?: readonly LublinCarParkData[];
+  /** Bus stops' posts by it (and up to 25 m past its edge), when it has any: no car parks 15 m either side of one (G-156). */
+  readonly busStops?: FlatPoints;
+  /** Axes of the streets of two lanes or more a way, clipped to the chunk, when it has any: no car parks by their kerbs outside a car park (G-155). */
+  readonly multiLaneWays?: readonly { readonly line: FlatPoints }[];
 }
 
 /**

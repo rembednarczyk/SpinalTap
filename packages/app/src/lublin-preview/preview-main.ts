@@ -109,7 +109,7 @@ const start = async (): Promise<void> => {
   const asset = (f: string) => new URL(`city/${f}`, document.baseURI).href;
   const renderer = new BabylonRenderer(stage, {
     cityKit: kit ? asset("city-kit.glb") : null,
-    cityProps: kit ? [asset("city-props.glb"), asset("street-props.glb")] : null,
+    cityProps: kit ? [asset("city-props.glb"), asset("street-props.glb"), asset("market-props.glb"), asset("door-props.glb")] : null,
     world: [],
     fogScale: fog,
   });
@@ -145,12 +145,12 @@ const start = async (): Promise<void> => {
       if (!v) return;
       cam.look(lift(v.position), lift(v.target));
       setHour(v.hour);
-      renderer.setFogScale(v.fog ?? fog);
+      renderer.effects.setFogScale(v.fog ?? fog);
     },
     setHour,
     camera: (position, target) => cam.look(position, target),
     perf: () => probe.sample(),
-    map: () => renderer.mapStats,
+    map: () => renderer.stats.mapStats,
   };
   window.__lublin = api;
   api.view(params.get("view") ?? home);
@@ -166,7 +166,7 @@ const start = async (): Promise<void> => {
     renderer.rig.setReferenceView(cam.position, cam.target);
     renderer.frame(dt);
     stage.scene.render();
-    if (++frames % 30 === 0) overlay.show(fixture.attribution, hour, probe.sample(), renderer.mapStats);
+    if (++frames % 30 === 0) overlay.show(fixture.attribution, hour, probe.sample(), renderer.stats.mapStats);
     // Ready once the cells have been built and the shaders compiled.
     if (!api.ready && frames > 30 && stage.scene.isReady()) api.ready = true;
   });

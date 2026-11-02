@@ -4,8 +4,8 @@ import { Simulation, ground, runReplay, stateHash, type Entity } from "../src";
 import { TRAFFIC_LANES, TRAFFIC_ROUTES, TURN_SPEED, type TrafficRoute, pointAt, projectOn } from "../src/content/traffic";
 import { ROAD_CHAINS, onRoad, polylineLength } from "../src/content/lublin/roads";
 import { PARKED_CARS } from "../src/content/parked-cars";
-import { furnitureClearance } from "../src/content/furniture-index";
-import { furnitureRadius } from "../src/content/lublin/furniture";
+import { furnitureClearance, furnitureNear } from "../src/content/furniture-index";
+import { furniturePrisms, furnitureRadius } from "../src/content/lublin/furniture";
 import { inBuilding } from "../src/content/lublin/places";
 import { MAP_CHUNKS } from "../src/content/lublin/sites";
 import { lanePose, timetable, vehicleCount, vehiclePlan } from "../src/world/traffic";
@@ -157,10 +157,77 @@ describe("the lanes of the traffic (ADR-0050)", () => {
     for (const c of PARKED_CARS) {
       expect(inBuilding(c.x, c.z), `${c.x},${c.z}`).toBe(false);
       for (const r of TRAFFIC_ROUTES) if (r.use === "cars") expect(projectOn(r.points, c.x, c.z).d, `${c.x},${c.z} on ${r.id}`).toBeGreaterThan(1.7);
-      // No stall, cabinet or lamp inside its body.
+      // No stall, cabinet or lamp inside its body: its rectangle, sampled 9 by 9, not its axis grown by half its width, which reaches past its nose over the kerb (G-189).
       const { width, length } = VEHICLE_SIZE[c.model];
-      for (const t of [-0.5, 0, 0.5]) expect(furnitureClearance(c.x + Math.sin(c.yaw) * length * t, c.z + Math.cos(c.yaw) * length * t), `${c.x},${c.z}`).toBeGreaterThan(width / 2);
+      const [fx, fz] = [Math.sin(c.yaw), Math.cos(c.yaw)];
+      const k = [0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => i / 8 - 0.5);
+      for (const a of k) for (const b of k) expect(furnitureClearance(c.x + fz * width * a + fx * length * b, c.z - fx * width * a + fz * length * b), `${c.x},${c.z}`).toBeGreaterThan(0);
+      for (const f of furnitureNear(c.x, c.z))
+        for (const q of furniturePrisms(f.item).flatMap((p) => p.points)) {
+          const [dx, dz] = [f.item.x + q.x - c.x, f.item.z + q.z - c.z];
+          expect(Math.abs(dx * fz - dz * fx) > width / 2 || Math.abs(dx * fx + dz * fz) > length / 2, `${c.x},${c.z} by ${f.item.prop}`).toBe(true);
+        }
     }
+  });
+
+  it("parked cars fill the car parks the map draws along a kerb, along their street, aslant or across it as the strip says (G-177, G-187)", () => {
+    const inside = (x: number, z: number, o: readonly number[]) => {
+      let on = false;
+      for (let i = 0, j = o.length - 2; i < o.length; j = i, i += 2)
+        if (o[i + 1]! > z !== o[j + 1]! > z && x < ((o[j]! - o[i]!) * (z - o[i + 1]!)) / (o[j + 1]! - o[i + 1]!) + o[i]!) on = !on;
+      return on;
+    };
+    const kerbParks = MAP_CHUNKS.flatMap((c) => c.carParks ?? []).filter((p) => p.kind === "street_side" || p.kind === "lane");
+    // Peowiaków's strip, Radziwiłłowska's, Kalinowszczyzna's by the river and Ruska's parking lane.
+    for (const id of ["w471191535", "w883991779", "w1000912202", "w1024029951"]) {
+      const park = kerbParks.find((p) => p.id === id)!;
+      expect(PARKED_CARS.some((c) => inside(c.x, c.z, park.outline)), id).toBe(true);
+    }
+    const inBays = PARKED_CARS.flatMap((c) => kerbParks.filter((p) => inside(c.x, c.z, p.outline)).map((park) => ({ c, park })));
+    expect(inBays.length).toBeGreaterThan(20);
+    let turned = 0;
+    for (const { c, park } of inBays) {
+      const street = ROAD_CHAINS.filter((r) => r.use === "cars").map((r) => ({ r, q: projectOn(r.points, c.x, c.z) })).sort((a, b) => a.q.d - b.q.d)[0]!;
+      const t = pointAt(street.r.points, street.q.s);
+      const along = Math.abs(t.tx * Math.sin(c.yaw) + t.tz * Math.cos(c.yaw));
+      // Along the kerb, aslant at 60° (cos 0.5) or across it, never askew otherwise; aslant or across
+      // only where the strip is mapped so or has no `orientation` (G-187: aslant first, across where it does not fit).
+      const aslant = Math.abs(along - 0.5) < 0.05;
+      if (park.orientation === "perpendicular") expect(along, `${c.x},${c.z} in ${park.id}`).toBeLessThan(0.1);
+      else if (park.orientation === "diagonal") expect(aslant, `${c.x},${c.z} in ${park.id}: ${along.toFixed(2)}`).toBe(true);
+      else if (park.orientation === "parallel") expect(along, `${c.x},${c.z} in ${park.id}`).toBeGreaterThan(0.9);
+      else expect(along > 0.9 || along < 0.1 || aslant, `${c.x},${c.z} in ${park.id}: ${along.toFixed(2)}`).toBe(true);
+      if (along < 0.9) turned++;
+    }
+    expect(turned).toBeGreaterThan(10);
+  });
+
+  it("parked cars of a kerb car park stand with their whole body in it, by its kerb (G-177)", () => {
+    const ring = (o: readonly number[]) => Array.from({ length: o.length / 2 }, (_, i): readonly [number, number] => [o[2 * i]!, o[2 * i + 1]!]);
+    const inRing = (x: number, z: number, r: readonly (readonly [number, number])[]) => {
+      let on = false;
+      for (let i = 0, j = r.length - 1; i < r.length; j = i++) if (r[i]![1] > z !== r[j]![1] > z && x < ((r[j]![0] - r[i]![0]) * (z - r[i]![1])) / (r[j]![1] - r[i]![1]) + r[i]![0]) on = !on;
+      return on;
+    };
+    const parks = MAP_CHUNKS.flatMap((c) => c.carParks ?? []).filter((p) => p.kind === "street_side" || p.kind === "lane").map((p) => ({ id: p.id, ring: ring(p.outline) }));
+    let checked = 0;
+    for (const c of PARKED_CARS) {
+      const park = parks.find((p) => inRing(c.x, c.z, p.ring));
+      if (!park) continue;
+      checked++;
+      const { width, length } = VEHICLE_SIZE[c.model];
+      const [fx, fz] = [Math.sin(c.yaw), Math.cos(c.yaw)];
+      for (const [a, b] of [[-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5]] as const) {
+        // A corner pulled 0.15 m in: the bay is the strip's to its edge, with a hand's breadth of slack.
+        const [px, pz] = [c.x + fz * (width * a - 0.15 * Math.sign(a)) + fx * (length * b - 0.15 * Math.sign(b)), c.z - fx * (width * a - 0.15 * Math.sign(a)) + fz * (length * b - 0.15 * Math.sign(b))];
+        expect(inRing(px, pz, park.ring), `${c.model} ${c.x},${c.z} in ${park.id}`).toBe(true);
+      }
+    }
+    expect(checked).toBeGreaterThan(20);
+    // Kalinowszczyzna's strip by the river is mapped `orientation=perpendicular`: its cars stand across the kerb.
+    const kalinowszczyzna = parks.find((p) => p.id === "w1000912163")!;
+    const there = PARKED_CARS.filter((c) => inRing(c.x, c.z, kalinowszczyzna.ring));
+    expect(there.length).toBeGreaterThan(0);
   });
 
   it("parked cars leave the mouths of driveways and service lanes free: half their width and 0.5 m off the axis (G-140)", () => {

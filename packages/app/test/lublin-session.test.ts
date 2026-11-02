@@ -54,13 +54,13 @@ describe("Lublin in the session (ADR-0045)", () => {
     expect(toasts(ui)).toEqual(expect.arrayContaining(["Stare Miasto", "Podzamcze"]));
     expect(session.sim.streamer.loadedChunks).not.toContain("krakowskie-2-0");
 
-    expect(await session.saveAsync("slot-1")).toBe(true);
+    expect(await session.saves.saveAsync("slot-1")).toBe(true);
     const saved = { ...session.sim.player()!.position };
     const chunks = session.sim.streamer.loadedChunks;
     teleport(session, 400, -97);
     steps(session, 2);
     expect(session.sim.streamer.loadedChunks).toEqual(["krakowskie-2-0"]);
-    expect(await session.loadAsync("slot-1")).toBe(true);
+    expect(await session.saves.loadAsync("slot-1")).toBe(true);
     expect(session.sim.player()!.position).toEqual(saved);
     expect(session.sim.district).toBe("targ");
     expect(session.sim.streamer.loadedChunks).toEqual(chunks);

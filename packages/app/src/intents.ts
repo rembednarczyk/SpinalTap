@@ -3,6 +3,7 @@ import type {
   CharacterIntents,
   ContractIntents,
   DialogueIntents,
+  DifficultyIntents,
   HackIntents,
   JournalIntents,
   LootIntents,
@@ -33,7 +34,11 @@ const part = <I extends object>(impl: I, keys: Keys<I>): I => {
   return out as I;
 };
 
-const SESSION: Keys<SessionIntents> = { newGame: true, resume: true, pause: true, save: true, load: true, exportSave: true, importSave: true, quitToTitle: true };
+/** The session's intents in two parts: the course of the game (`SessionFlow`) and the saves (`SaveController`). */
+export type SaveIntents = Pick<SessionIntents, "save" | "load" | "exportSave" | "importSave">;
+export type FlowIntents = Omit<SessionIntents, keyof SaveIntents>;
+const FLOW: Keys<FlowIntents> = { newGame: true, resume: true, pause: true, quitToTitle: true };
+const SAVES: Keys<SaveIntents> = { save: true, load: true, exportSave: true, importSave: true };
 const DIALOGUE: Keys<DialogueIntents> = { choose: true, closeDialogue: true };
 const SHOP: Keys<ShopIntents> = {
   buyCyberware: true,
@@ -61,6 +66,7 @@ const CHARACTER: Keys<CharacterIntents> = {
   removeMod: true,
 };
 const SETTINGS: Keys<SettingsIntents> = { changeSettings: true, bindKey: true, resetControls: true, reload: true };
+const DIFFICULTY: Keys<DifficultyIntents> = { setDifficulty: true };
 const CAMERA: Keys<CameraIntents> = { setFieldOfView: true };
 const PHONE: Keys<PhoneIntents> = { openPhone: true, closePhone: true, readThread: true };
 const CONTRACT: Keys<ContractIntents> = { dismissDebrief: true };
@@ -81,6 +87,7 @@ export const controllerIntents = (c: Controllers, sim: SimRef): ControllerIntent
   ...part<CharacterIntents>(c.character, CHARACTER),
   ...part<SettingsIntents>(c.settings, SETTINGS),
   ...part<CameraIntents>(c.settings, CAMERA),
+  ...part<DifficultyIntents>(c.difficulty, DIFFICULTY),
   ...part<PhoneIntents>(c.phone, PHONE),
   ...part<ContractIntents>(c.hud, CONTRACT),
   ...journalIntents(sim),
@@ -90,7 +97,8 @@ export const controllerIntents = (c: Controllers, sim: SimRef): ControllerIntent
 });
 
 /** What the UI gets (`GameUi`'s `intents`): the session's own intents and the controllers' parts. */
-export const composeIntents = (session: SessionIntents, controllers: ControllerIntents): UiIntents => ({
-  ...part<SessionIntents>(session, SESSION),
+export const composeIntents = (flow: FlowIntents, saves: SaveIntents, controllers: ControllerIntents): UiIntents => ({
+  ...part<FlowIntents>(flow, FLOW),
+  ...part<SaveIntents>(saves, SAVES),
   ...controllers,
 });

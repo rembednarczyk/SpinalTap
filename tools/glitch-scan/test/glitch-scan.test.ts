@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import { type StreetPropItem, VEHICLE_SIZE, terrainHeightAt } from "../../../packages/core/src";
 import { planSteps } from "../../../packages/engine/src/renderer/mapcity/steps-plan";
+import { lampWallLantern } from "../../../packages/engine/src/renderer/mapcity/prop-lamps";
 import { facadeFrame } from "../../../packages/engine/src/renderer/mapcity/facade-frame";
 import { planFarBuilding } from "../../../packages/engine/src/renderer/mapcity/facade-plan";
 import { landmarkAt } from "../../../packages/engine/src/renderer/mapcity/landmarks";
@@ -11,26 +12,38 @@ import { type BuildingSource, mapBuilding } from "../../../packages/engine/src/r
 import { centroid, cleanRing, pointInRing } from "../../../packages/engine/src/renderer/mapcity/polygon";
 import { stackTiers } from "../../../packages/engine/src/renderer/mapcity/vertical-plan";
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
+import { MAP_SIGN_KIND } from "../../../packages/engine/src/renderer/mapcity/sign-plan";
+import { decalChecks } from "./decal-pieces";
+import { lublinDecalWorld } from "./decal-world";
+import { doorChecks } from "./door-pieces";
+import { marketChecks } from "./market-pieces";
+import { signsInNeighbours } from "./sign-neighbours";
+import { lanternsByPassages } from "./passage-lanterns";
+import { landmarksAtDefaultHeight } from "./landmark-heights";
+import { cityFakeTowers } from "./landmark-towers";
+import { EMPTY_STRIPS_KNOWN, bayCarsMisturned, bayCarsOutOfPark, bayStripsEmptyKnown, bayStripsSparse, crowdLanesOnParking, kerbParksOf, kerbStripsOffCarStreets } from "./kerb-bays";
 import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alone.ts";
 import { extractFeatures } from "../../osm-import/src/features.ts";
-import { roadWidth } from "../../osm-import/src/ground.ts";
+import { pathWidth, roadWidth } from "../../osm-import/src/ground.ts";
 import { oneway } from "../../osm-import/src/markings.ts";
 import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
+import { SHAPES } from "../../osm-import/src/props-kinds.ts";
 import { addressOf } from "../../osm-import/src/labels.ts";
 import { geoToWorld } from "../../osm-import/src/project.ts";
+import { cityVenueBoards } from "../../osm-import/src/venue-boards.ts";
 import { CROWD_LANES } from "../../../packages/sim/src/content/crowd";
 import { INTERIORS, interiorAt } from "../../../packages/sim/src/content/interior-areas";
 import { CLINIC_DOOR, KOI_DOOR } from "../../../packages/sim/src/content/interiors";
-import { furnitureClearance } from "../../../packages/sim/src/content/furniture-index";
-import { BOLLARD, alongSegment, anchors, chainSegments, chainThrough, distanceToPiece, furniturePrisms, furnitureRadius } from "../../../packages/sim/src/content/lublin/furniture";
-import { buildingView, isLandmark } from "../../../packages/sim/src/content/lublin";
+import { furnitureNear } from "../../../packages/sim/src/content/furniture-index";
+import { BOLLARD, alongSegment, anchors, chainSegments, chainThrough, distanceToPiece, furniturePrisms, furnitureRadius, turnLocal } from "../../../packages/sim/src/content/lublin/furniture";
+import { LUBLIN_STREET_PROPS, buildingView, isLandmark } from "../../../packages/sim/src/content/lublin";
 import { inBuilding, nearestWall } from "../../../packages/sim/src/content/lublin/places";
 import { ROAD_CHAINS, type RoadChain, polylineLength, surfaceLiftAt, surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
 import { clearedBuilding } from "../../../packages/sim/src/content/cleared-buildings";
-import { CLEARED_BUILDINGS, MAP_CHUNKS, PASSAGES, ROOM_SITES } from "../../../packages/sim/src/content/lublin/sites";
+import { CLEARED_BUILDINGS, GATE_PASSAGES, MAP_CHUNKS, PASSAGES, ROOM_SITES, ROOM_STOREY } from "../../../packages/sim/src/content/lublin/sites";
 import { groundY } from "../../../packages/sim/src/content/lublin/terrain";
 import { BRIDGE_DECKS, bridgeDeckAt } from "../../../packages/sim/src/content/lublin/decks";
-import { WORLD_CHUNKS } from "../../../packages/sim/src/content/world-map";
+import { WORLD_CHUNKS, WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
 import { type GroundDeck, deckAt } from "../../../packages/sim/src/world/deck";
 import { GroundField } from "../../../packages/sim/src/world/ground";
 import { type Prism, circleTouchesPrism, makePrism, prismsAt } from "../../../packages/sim/src/world/prism";
@@ -109,8 +122,20 @@ const LANDMARK_BUILDINGS = [
 const LANDMARK_MONUMENTS = ["n481952877", "n481952879", "n481952880"];
 
 const near = (x: number, z: number) => `${x.toFixed(0)},${z.toFixed(0)}`;
+
+/** The wall lantern's model, plate and arm and lantern, in the piece's frame. */
+const LANTERN_MODEL = (() => {
+  const p = lampWallLantern(0).sink.positions;
+  const out: { x: number; y: number; z: number }[] = [];
+  for (let k = 0; k < p.length; k += 3) out.push({ x: p[k]!, y: p[k + 1]!, z: p[k + 2]! });
+  return out;
+})();
+/** The lantern of the wall lantern's model (its points over 0.5 m out from the wall plate). */
+const LANTERN_HEAD = LANTERN_MODEL.filter((v) => v.z > 0.5);
 const inMap = (x: number, z: number) => MAP_CHUNKS.some((c) => x > c.bounds.minX + 1 && x < c.bounds.maxX - 1 && z > c.bounds.minZ + 1 && z < c.bounds.maxZ - 1);
 const onChunk = (x: number, z: number) => MAP_CHUNKS.some(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ);
+/** How far the import's simplified axis of a footway (`simplifyLine`, 0.5 m) lies off the mapped one in the city (m): 0.09 m at most by the parked cars. */
+const AXIS_SLACK = 0.1;
 /** Distance from (x, z) to the segment a-b. */
 const segmentGap = (x: number, z: number, a: { x: number; z: number }, b: { x: number; z: number }) => {
   const dx = b.x - a.x;
@@ -372,6 +397,26 @@ const standingVehicles = (() => {
   };
 })();
 
+/** The map buildings' signs of these kinds in another building (G-157, G-159). */
+const signsIn = (kinds: readonly number[]): Finding[] =>
+  signsInNeighbours()
+    .filter((s) => kinds.includes(s.kind))
+    .map((s) => ({ at: near(s.x, s.z), what: `${s.building} kind ${s.kind} at y ${s.y.toFixed(1)} in ${s.neighbour} (${s.points} points)` }));
+
+/** Tag values of things on a facade or in the paving, not free-standing (G-149). */
+const FLAT_ART = new Set(["plaque", "stolperstein", "mural", "mosaic", "graffiti", "relief"]);
+
+/** Do a monument's tags bear out its shape (`monument-shape-off-tags`)? */
+const tagsBearOut = (shape: string, t: Readonly<Record<string, string>>): boolean => {
+  if (FLAT_ART.has(t.memorial ?? "") || FLAT_ART.has(t.artwork_type ?? "")) return false;
+  const kozio = /kozio/i.test(t.name ?? "");
+  if (shape === "obelisk") return t.memorial === "obelisk" || /obelisk|unii/i.test(t.name ?? "");
+  if (shape === "figure") return !kozio && (["statue", "bust"].includes(t.memorial ?? "") || ["statue", "bust", "sculpture"].includes(t.artwork_type ?? ""));
+  if (shape === "koziolek") return kozio;
+  if (shape === "abstract") return !kozio && t.artwork_type === "sculpture";
+  return true;
+};
+
 const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   /**
    * A car lane off every road surface (on grass, a square, a pavement), away from the map's edges.
@@ -471,8 +516,28 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "furniture-in-wall": () =>
     Object.values(WORLD_STREET_PROPS)
       .flat()
-      .filter((i) => ["artwork", "monument", "kiosk", "bus-shelter", "bench", "vending-machine", "advertising-column"].includes(i.prop))
+      .filter((i) => ["artwork", "monument", "kiosk", "bus-shelter", "bench", "vending-machine", "advertising-column", "atm", "bike-rack", "food-cart", "container"].includes(i.prop))
       .flatMap((i) => (nearestWall(i.x, i.z).d < furnitureRadius(i) - 0.3 ? [{ at: near(i.x, i.z), what: i.prop }] : [])),
+  /**
+   * A market stall whose canvas (2.4 x 1.8 m at 2.35 m) reaches over a container or a food cart
+   * (ADR-0058 stage 2): the cart's roof and the container's wall stand higher than the canvas.
+   */
+  "stall-canvas-over-piece": () => {
+    const all = Object.values(WORLD_STREET_PROPS).flat();
+    const pieces = all.filter((i) => i.prop === "container" || i.prop === "food-cart");
+    return all
+      .filter((s) => s.prop === "market-stall")
+      .flatMap((s) => {
+        const close = pieces.filter((o) => Math.hypot(o.x - s.x, o.z - s.z) < 8);
+        for (let a = -1.2; a <= 1.2 + 1e-9; a += 0.1)
+          for (let b = -0.9; b <= 0.9 + 1e-9; b += 0.1) {
+            const q = turnLocal(s.yaw, a, b);
+            const hit = close.find((o) => distanceToPiece(o, s.x + q.x, s.z + q.z) === 0);
+            if (hit) return [{ at: near(s.x, s.z), what: hit.prop }];
+          }
+        return [];
+      });
+  },
   /**
    * Two solid pieces (bollards aside, they stand in rows) whose footprints run more than 5 cm into
    * each other. Judged on the real prisms, not their radii, which reach far past a long bench's
@@ -545,12 +610,23 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       .flat()
       .filter((i) => i.prop !== "lamp-wall-lantern" && inBuilding(i.x, i.z) && nearestWall(i.x, i.z).d > 0.5)
       .map((i) => ({ at: near(i.x, i.z), what: `${i.prop} ${nearestWall(i.x, i.z).d.toFixed(1)} m` })),
-  /** A parked car with a piece of furniture inside its body. */
+  /**
+   * A parked car with a piece of furniture inside its body: a point of its footprint (sampled 9
+   * by 9) in the piece's solid, or a corner of the solid in the footprint. The body is its
+   * rectangle, not its axis grown by half its width: that would reach half a car's width past its
+   * nose, over the kerb onto a meter on the pavement (G-189).
+   */
   "parked-car-in-furniture": () =>
     PARKED_CARS.flatMap((c) => {
       const { width, length } = VEHICLE_SIZE[c.model];
-      const hit = [-0.5, 0, 0.5].some((t) => furnitureClearance(c.x + Math.sin(c.yaw) * length * t, c.z + Math.cos(c.yaw) * length * t) < width / 2);
-      return hit ? [{ at: near(c.x, c.z), what: c.model }] : [];
+      const [fx, fz] = [Math.sin(c.yaw), Math.cos(c.yaw)];
+      const k = [0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => i / 8 - 0.5);
+      const body = k.flatMap((a) => k.map((b) => ({ x: c.x + fz * width * a + fx * length * b, z: c.z - fx * width * a + fz * length * b })));
+      const inBody = (x: number, z: number) => Math.abs((x - c.x) * fz - (z - c.z) * fx) <= width / 2 && Math.abs((x - c.x) * fx + (z - c.z) * fz) <= length / 2;
+      const hit = furnitureNear(c.x, c.z).find(
+        (f) => body.some((p) => distanceToPiece(f.item, p.x, p.z) === 0) || furniturePrisms(f.item).some((pr) => pr.points.some((q) => inBody(f.item.x + q.x, f.item.z + q.z))),
+      );
+      return hit ? [{ at: near(c.x, c.z), what: `${c.model} on ${hit.item.prop}` }] : [];
     }),
   /** A parked car with a corner or its middle off the carriageway and the squares (on grass, a pavement). */
   "parked-car-off-road": () =>
@@ -577,19 +653,24 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     }),
   /**
    * A parked car on a one-way street (or a roundabout) facing against its traffic: its street is
-   * the car road whose axis runs nearest alongside it. Plac Zamkowy's car park aside.
+   * the car road whose axis runs nearest alongside it. Plac Zamkowy's car park aside, and a car
+   * standing across the kerb of the car road nearest it (within 12 m, within 20° of square to it,
+   * a bay across the kerb, G-177): it faces no traffic's way.
    */
   "parked-car-against-traffic": () =>
     PARKED_CARS.filter((c) => !(c.x > 712 && c.x < 762 && c.z > 188 && c.z < 300)).flatMap((c) => {
       const fx = Math.sin(c.yaw);
       const fz = Math.cos(c.yaw);
       let street: { name: string; d: number; dot: number; directed: boolean } | undefined;
+      let nearest: { d: number; dot: number } | undefined;
       for (const r of carStreets) {
         const q = projectOn(r.points, c.x, c.z);
         const t = pointAt(r.points, q.s);
         const dot = t.tx * fx + t.tz * fz;
+        if (!nearest || q.d < nearest.d) nearest = { d: q.d, dot };
         if (Math.abs(dot) >= 0.7 && (!street || q.d < street.d)) street = { name: r.name, d: q.d, dot, directed: r.oneway || r.name.startsWith("Rondo") };
       }
+      if (nearest && nearest.d < 12 && Math.abs(nearest.dot) < Math.sin((20 * Math.PI) / 180)) return [];
       return street?.directed && street.dot < 0 ? [{ at: near(c.x, c.z), what: `${c.model} against ${street.name}` }] : [];
     }),
   /**
@@ -633,12 +714,152 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       return hit ? [{ at: near(c.x, c.z), what: `${c.model} on ${hit.id}` }] : [];
     });
   },
+  /**
+   * A parked car whose body (sampled every eighth of its length and width) comes nearer than half
+   * the mapped width (`width`, else 2.5 m for a footway, 2 m for a path) or 1 m to the axis of a
+   * footway, path, pedestrian street or cycleway of the map data mapped on its own (not a sidewalk
+   * along a kerb, not a crossing; on the ground, off bridges and tunnels): it stands on the
+   * walkers' or the riders' way (G-143, G-156, G-189). The game keeps cars that far off the axis
+   * as the import simplifies it, which may lie `AXIS_SLACK` off the mapped one.
+   */
+  "parked-car-on-footway": () => {
+    const ways = extractFeatures(SOURCE_OSM).lines.filter(
+      ({ tags: t }) =>
+        (t.highway === "footway" || t.highway === "path" || t.highway === "pedestrian" || t.highway === "cycleway") &&
+        t.footway !== "sidewalk" &&
+        t.path !== "sidewalk" &&
+        t.footway !== "crossing" &&
+        t.path !== "crossing" &&
+        t.cycleway !== "crossing" &&
+        t.area !== "yes" &&
+        t.tunnel === undefined &&
+        t.covered === undefined &&
+        (t.bridge === undefined || t.bridge === "no") &&
+        Number(t.layer ?? 0) === 0,
+    );
+    const segs = ways.flatMap((l) => l.line.slice(1).map((b, i) => ({ id: l.id, a: l.line[i]!, b, reach: Math.max(1, pathWidth(l.tags) / 2 - AXIS_SLACK) })));
+    return PARKED_CARS.flatMap((c) => {
+      const { width, length } = VEHICLE_SIZE[c.model];
+      const fx = Math.sin(c.yaw);
+      const fz = Math.cos(c.yaw);
+      const body = [0, 1, 2, 3, 4, 5, 6, 7, 8].flatMap((i) => [0, 1, 2, 3, 4, 5, 6, 7, 8].map((k) => ({ x: c.x + fz * width * (i / 8 - 0.5) + fx * length * (k / 8 - 0.5), z: c.z - fx * width * (i / 8 - 0.5) + fz * length * (k / 8 - 0.5) })));
+      const hit = segs.find(({ a, b, reach }) => Math.max(a.x, b.x) > c.x - 8 && Math.min(a.x, b.x) < c.x + 8 && Math.max(a.z, b.z) > c.z - 8 && Math.min(a.z, b.z) < c.z + 8 && body.some((p) => segmentGap(p.x, p.z, a, b) < reach));
+      return hit ? [{ at: near(c.x, c.z), what: `${c.model} on ${hit.id}` }] : [];
+    });
+  },
+  /**
+   * A parked car at a bus stop of the map data (a `highway=bus_stop` or `public_transport=platform`
+   * node, or a platform way's vertex): its middle nearer the stop's post than 15 m and half its
+   * length along the street the post stands by (its nearest car road, within 20 m), less than 7 m
+   * across, on the post's side of that street. The Polish code (art. 49 ust. 1 pkt 9 PoRD) bans
+   * stopping there (G-156).
+   */
+  "parked-car-at-bus-stop": () => {
+    const { lines, areas } = extractFeatures(SOURCE_OSM);
+    const platform = (t: Readonly<Record<string, string>>) => t.highway === "bus_stop" || t.public_transport === "platform" || t.highway === "platform";
+    const posts = [
+      ...[...SOURCE_OSM.nodes.values()].filter((n) => n.tags && platform(n.tags)).map((n) => ({ id: `n${n.id}`, ...geoToWorld(n.lat, n.lon) })),
+      ...[...lines.map((l) => ({ id: l.id, tags: l.tags, pts: l.line })), ...areas.map((a) => ({ id: a.id, tags: a.tags, pts: a.ring }))].filter((w) => platform(w.tags)).flatMap((w) => w.pts.map((p) => ({ id: w.id, ...p }))),
+    ];
+    const roadKinds = new Set(["primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link", "residential", "unclassified", "living_street"]);
+    const segs = lines.filter((l) => roadKinds.has(l.tags.highway ?? "")).flatMap((l) => l.line.slice(1).map((b, i) => ({ a: l.line[i]!, b })));
+    return PARKED_CARS.flatMap((c) => {
+      const hit = posts.find((p) => {
+        if (Math.hypot(p.x - c.x, p.z - c.z) > 30) return false;
+        const by = segs.map((s) => ({ s, d: segmentGap(p.x, p.z, s.a, s.b) })).filter((q) => q.d < 20).sort((x, y) => x.d - y.d)[0]?.s;
+        if (!by) return false;
+        const len = Math.hypot(by.b.x - by.a.x, by.b.z - by.a.z);
+        const [tx, tz] = [(by.b.x - by.a.x) / len, (by.b.z - by.a.z) / len];
+        const sideOf = (x: number, z: number) => Math.sign((x - by.a.x) * tz - (z - by.a.z) * tx);
+        const along = Math.abs((c.x - p.x) * tx + (c.z - p.z) * tz);
+        const across = Math.abs((c.x - p.x) * tz - (c.z - p.z) * tx);
+        return sideOf(c.x, c.z) === sideOf(p.x, p.z) && along < 15 + VEHICLE_SIZE[c.model].length / 2 && across < 7;
+      });
+      return hit ? [{ at: near(c.x, c.z), what: `${c.model} ${Math.hypot(hit.x - c.x, hit.z - c.z).toFixed(1)} m from ${hit.id}` }] : [];
+    });
+  },
+  /**
+   * A parked car by the kerb of a street with two lanes or more a way (`lanes` 4 or more, or
+   * `lanes:forward` or `lanes:backward` 2 or more) and outside every car park (`amenity=parking`)
+   * of the map data: it stands on the outer lane (G-155). Its street is the car road of the map
+   * data whose axis runs nearest within 12 m and within 20° of the car.
+   */
+  "parked-car-multilane-kerb": () => {
+    const { lines, areas } = extractFeatures(SOURCE_OSM);
+    const roadKinds = new Set(["primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link", "residential", "unclassified", "living_street"]);
+    const segs = lines.filter((l) => roadKinds.has(l.tags.highway ?? "")).flatMap((l) => l.line.slice(1).map((b, i) => ({ way: l, a: l.line[i]!, b })));
+    const parks = areas.filter((a) => a.tags.amenity === "parking");
+    const multiLane = (t: Readonly<Record<string, string>>) => Number(t.lanes ?? 0) >= 4 || Number(t["lanes:forward"] ?? 0) >= 2 || Number(t["lanes:backward"] ?? 0) >= 2;
+    return PARKED_CARS.flatMap((c) => {
+      const fx = Math.sin(c.yaw);
+      const fz = Math.cos(c.yaw);
+      const by = segs
+        .map((s) => ({ s, d: segmentGap(c.x, c.z, s.a, s.b), len: Math.hypot(s.b.x - s.a.x, s.b.z - s.a.z) }))
+        .filter((q) => q.d < 12 && q.len > 0 && Math.abs(((q.s.b.x - q.s.a.x) * fx + (q.s.b.z - q.s.a.z) * fz) / q.len) >= Math.cos((20 * Math.PI) / 180))
+        .sort((x, y) => x.d - y.d)[0];
+      if (!by || !multiLane(by.s.way.tags) || parks.some((p) => pointInRing({ x: c.x, z: c.z }, p.ring))) return [];
+      return [{ at: near(c.x, c.z), what: `${c.model} ${by.d.toFixed(1)} m from ${by.s.way.id} (lanes ${by.s.way.tags.lanes ?? "?"})` }];
+    });
+  },
+  /** A car in a kerb car park of the map data (`parking=lane|street_side`) with a corner over 0.3 m out of its outline (G-177). */
+  "bay-car-out-of-park": () => bayCarsOutOfPark(kerbParksOf(SOURCE_OSM), PARKED_CARS),
+  /** A car in a kerb car park turned against its bays: along one mapped `perpendicular|diagonal` (G-177), off 60° in a `diagonal` one, across an untagged deep one (G-187) or along it beside a car aslant (G-189). */
+  "bay-car-orientation": () => bayCarsMisturned(kerbParksOf(SOURCE_OSM), PARKED_CARS),
+  /** A kerb car park 15 m long or more, a meter or a footway just past its kerb, with under half the cars of its bays (G-189), an empty one too unless known (G-190). */
+  "bay-strip-sparse": () =>
+    bayStripsSparse(
+      kerbParksOf(SOURCE_OSM),
+      PARKED_CARS,
+      carStreets.map((c) => c.points),
+      {
+        furniture: Object.values(WORLD_STREET_PROPS)
+          .flat()
+          .map((i) => ({ x: i.x, z: i.z, r: furnitureRadius(i) }))
+          .filter((f) => f.r > 0),
+        footways: extractFeatures(SOURCE_OSM)
+          .lines.filter(({ tags: t }) => (t.highway === "footway" || t.highway === "path" || t.highway === "pedestrian") && t.area !== "yes" && t.tunnel === undefined && t.covered === undefined && (t.bridge === undefined || t.bridge === "no"))
+          .map((l) => l.line),
+      },
+      EMPTY_STRIPS_KNOWN,
+    ),
+  /** A kerb car park the game leaves empty for a known reason: too shallow for its tag's layout, its bays on a slope (G-190, G-133). */
+  "bay-strip-empty-known": () => bayStripsEmptyKnown(kerbParksOf(SOURCE_OSM), PARKED_CARS, EMPTY_STRIPS_KNOWN),
+  /** A kerb car park with over 10 m by a street for deliveries (no car traffic in the game) and no parked car there (G-190). */
+  "kerb-strip-no-car-street": () =>
+    kerbStripsOffCarStreets(
+      kerbParksOf(SOURCE_OSM),
+      ROAD_CHAINS.map((c) => ({ points: c.points, cars: c.use === "cars" })),
+      PARKED_CARS,
+    ),
+  /** A crowd lane walked a metre or more inside a kerb car park, on its cars' strip (G-177). */
+  "crowd-lane-on-parking": () => crowdLanesOnParking(kerbParksOf(SOURCE_OSM), CROWD_LANES),
   /** A game block standing on the ground (not an awning or a deck) that floats or sinks. */
   "prop-off-ground": () =>
     GAME_PROPS.flatMap((p) => {
       if (p.view.kind !== "block" || !p.solid || p.view.size.y < 0.8) return [];
       const gap = p.center.y - p.view.size.y / 2 - groundY(p.center.x, p.center.z);
       return (gap > 0.15 && gap < 1) || gap < -0.3 ? [{ at: near(p.center.x, p.center.z), what: `${p.view.skin?.style ?? p.view.material} ${gap.toFixed(2)} m` }] : [];
+    }),
+  /**
+   * A game neon set against a wall (its centre within 0.2 m of one) whose plate, square to an
+   * axis, leaves the slanting wall (G-160): an end of its long side over 0.4 m out in the air
+   * (measured to that end's nearest wall), or over 15% of its width in a building, sampled along
+   * the plate's middle, where the renderer draws the sign (the wall cuts the letters there).
+   * Not a sign on a room's cut storey: there the room's front, square to an axis, stands for the
+   * building's wall (`ROOM_STOREY`).
+   */
+  "neon-off-wall": () =>
+    GAME_PROPS.flatMap(({ center: c, view }) => {
+      if (view.kind !== "neon" || nearestWall(c.x, c.z).d > 0.2) return [];
+      if (ROOM_SITES.some((r) => c.x >= r.rect.minX && c.x <= r.rect.maxX && Math.abs(c.z - r.front) < 1 && c.y < r.floor + ROOM_STOREY)) return [];
+      const along = view.size.x >= view.size.z;
+      const width = along ? view.size.x : view.size.z;
+      const at = (t: number) => (along ? { x: c.x + t * width, z: c.z } : { x: c.x, z: c.z + t * width });
+      const air = [-0.5, 0.5].map(at).filter((e) => !inBuilding(e.x, e.z) && nearestWall(e.x, e.z).d > 0.4);
+      const samples = Array.from({ length: 40 }, (_, i) => at((i + 0.5) / 40 - 0.5));
+      const inside = samples.filter((q) => inBuilding(q.x, q.z)).length / samples.length;
+      if (air.length === 0 && inside <= 0.15) return [];
+      return [{ at: near(c.x, c.z), what: `${view.label ?? "neon"} ${(inside * 100).toFixed(0)}% in, ${air.length} end(s) off` }];
     }),
   /**
    * A vehicle (a parked car, a set piece's car, van or wreck) whose bottom lies more than 0.1 m
@@ -759,6 +980,33 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       return [{ at: at ? near(at.x, at.z) : "?", what: `${id} ${n?.tags?.name ?? ""}`.trim() }];
     });
     return [...buildings, ...statues];
+  },
+  /** A landmark from the curator's list at the district's default height, not a mapped or measured one (G-204). */
+  "landmark-default-height": () => landmarksAtDefaultHeight(LANDMARK_BUILDINGS, MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)))),
+  /** A landmark of the list the map shows whole and without a tower, crowned by the renderer's bell towers (G-210). */
+  "landmark-fake-tower": () => cityFakeTowers(LANDMARK_BUILDINGS, SOURCE_OSM),
+  /**
+   * A monument or an artwork whose shape its OSM tags do not bear out (G-149), judged by the
+   * tagged node nearest within 3 m: anything standing for a plaque, a stumbling stone, a mural or
+   * a mosaic; an obelisk not named one (or the Union); a figure not tagged statue, bust or
+   * sculpture, or a Koziołek as a figure; a Koziołek not named one; an abstract sculpture not
+   * tagged `artwork_type=sculpture` (with no node near either). Other shapes are neutral.
+   */
+  "monument-shape-off-tags": () => {
+    const nodes = [...SOURCE_OSM.nodes.values()].flatMap((n) => {
+      const t = n.tags ?? {};
+      return t.tourism === "artwork" || t.historic === "memorial" || t.historic === "monument" || t.historic === "wayside_shrine" || t.historic === "wayside_cross" ? [{ t, ...geoToWorld(n.lat, n.lon) }] : [];
+    });
+    return Object.values(WORLD_STREET_PROPS)
+      .flat()
+      .filter((i) => i.prop === "monument" || i.prop === "artwork")
+      .flatMap((i) => {
+        const shape = ["obelisk", "figure", "koziolek", "abstract"][i.variant % (SHAPES[i.prop] ?? 1)] ?? "neutral";
+        const by = nodes.map((n) => ({ n, d: Math.hypot(n.x - i.x, n.z - i.z) })).filter((q) => q.d < 3).sort((a, b) => a.d - b.d)[0]?.n;
+        const ok = by ? tagsBearOut(shape, by.t) : shape !== "abstract";
+        const t = by?.t ?? {};
+        return ok ? [] : [{ at: near(i.x, i.z), what: `${i.prop} ${shape}: ${t.name ?? "no tagged node"} ${t.memorial ?? t.artwork_type ?? ""}`.trim() }];
+      });
   },
   /**
    * A way of the map through a gateway, a tunnel or a covered lane under a building
@@ -893,6 +1141,70 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       .flat()
       .filter((i) => i.prop === "lamp-wall-lantern")
       .flatMap((i) => PASSAGES.filter((p) => Math.abs(underVault(p, i.x, i.z)?.off ?? Infinity) < p.width / 2 + 0.5).map((p) => ({ at: near(i.x, i.z), what: `lamp-wall-lantern in ${p.building}` }))),
+  /**
+   * A wall lantern of the map's furniture (the generator's table, which the preview draws whole;
+   * the game hides some by its own rules) with its drawn model (`prop-lamps.ts`, turned by the
+   * piece's yaw) in a building's outline, or hung within 2 m of the axis of a way the map has
+   * under a building (`tunnel=building_passage`): in a gate's vault or a gap between houses (G-173).
+   */
+  "wall-lantern-in-building": () => {
+    const rings = MAP_CHUNKS.flatMap((c) => c.buildings).map((b) => {
+      const r = worldOutline(b);
+      return { r, x0: Math.min(...r.map((p) => p.x)), x1: Math.max(...r.map((p) => p.x)), z0: Math.min(...r.map((p) => p.z)), z1: Math.max(...r.map((p) => p.z)) };
+    });
+    const vaults = [...SOURCE_OSM.ways.values()].flatMap((w) => {
+      if (w.tags?.tunnel !== "building_passage") return [];
+      const pts = w.nodes.flatMap((id) => {
+        const n = SOURCE_OSM.nodes.get(id);
+        return n ? [geoToWorld(n.lat, n.lon)] : [];
+      });
+      return pts.slice(1).map((b, k) => ({ a: pts[k]!, b, id: w.id }));
+    });
+    return Object.values(LUBLIN_STREET_PROPS)
+      .flat()
+      .filter((i) => i.prop === "lamp-wall-lantern")
+      .flatMap((i) => {
+        const model = LANTERN_MODEL.map((v) => ({ x: i.x + v.x * Math.cos(i.yaw) + v.z * Math.sin(i.yaw), z: i.z - v.x * Math.sin(i.yaw) + v.z * Math.cos(i.yaw) }));
+        const inside = rings.some((g) => model.some((p) => p.x > g.x0 && p.x < g.x1 && p.z > g.z0 && p.z < g.z1 && pointInRing(p, g.r)));
+        const vault = vaults.find((s) => segmentGap(i.x, i.z, s.a, s.b) < 2);
+        return inside || vault ? [{ at: near(i.x, i.z), what: `lamp-wall-lantern ${inside ? "in a building" : ""}${vault ? ` by w${vault.id}` : ""}`.trim() }] : [];
+      });
+  },
+  /**
+   * A wall lantern of the generator's table hung within 2 m of the axis of a passage of the game's
+   * own data (G-183), across its stretch under the passage's building and half a metre of each
+   * mouth: the chunks' passages and the gates cut by hand (`GATE_PASSAGES`), which
+   * `wall-lantern-in-building` misses with its `tunnel=building_passage` ways.
+   */
+  "wall-lantern-by-passage": () => {
+    const passages = [...GATE_PASSAGES, ...MAP_CHUNKS.flatMap((c) => c.passages ?? [])].map((p) => ({ ...p, rings: passageRings(p.building) }));
+    const lanterns = Object.values(LUBLIN_STREET_PROPS)
+      .flat()
+      .filter((i) => i.prop === "lamp-wall-lantern");
+    return lanternsByPassages(lanterns, passages).map((l) => ({ at: near(l.x, l.z), what: `lamp-wall-lantern ${l.gap.toFixed(2)} m off the axis through ${l.building}` }));
+  },
+  /**
+   * A wall lantern hung in front of a venue's board (G-158): the lantern of the drawn model
+   * (`prop-lamps.ts`, turned by the piece's yaw) out in front of the board's face and over it,
+   * along the wall and in height.
+   */
+  "wall-lantern-over-venue-board": () => {
+    const boards = cityVenueBoards(WORLD_SCENERY);
+    return Object.values(WORLD_STREET_PROPS)
+      .flat()
+      .filter((i) => i.prop === "lamp-wall-lantern")
+      .flatMap((i) => {
+        const head = LANTERN_HEAD.map((v) => ({ x: i.x + v.x * Math.cos(i.yaw) + v.z * Math.sin(i.yaw), y: i.y + v.y, z: i.z - v.x * Math.sin(i.yaw) + v.z * Math.cos(i.yaw) }));
+        const b = boards.find((s) => {
+          const len = Math.hypot(s.b.x - s.a.x, s.b.z - s.a.z);
+          const along = head.map((v) => ((v.x - s.a.x) * (s.b.x - s.a.x) + (v.z - s.a.z) * (s.b.z - s.a.z)) / len);
+          const off = head.map((v) => (v.x - s.a.x) * s.nx + (v.z - s.a.z) * s.nz);
+          const ys = head.map((v) => v.y);
+          return Math.max(...off) > 0.13 && Math.min(...off) < 3 && Math.max(...along) > 0 && Math.min(...along) < len && Math.max(...ys) > s.bottom && Math.min(...ys) < s.top;
+        });
+        return b ? [{ at: near(i.x, i.z), what: `lamp-wall-lantern over ${b.text}` }] : [];
+      });
+  },
   /** A passage through a building with an end off every chunk, where there is no ground to come out on. */
   "passage-off-map": () =>
     PASSAGES.filter((p) => [p.from, p.to].some(({ x, z }) => !MAP_CHUNKS.some(({ bounds: b }) => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ))).map((p) => ({
@@ -1143,6 +1455,20 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "kerb-fit-sparse": () => FITTED().flatMap((r) => (r.cover * 2 < 1 ? [{ at: r.at, what: `${r.id} ${r.name}: ${r.width.toFixed(1)} m, sidewalks along ${(r.cover * 100).toFixed(0)} %` }] : [])),
   /** A two-way street (no `oneway`) narrowed to its mapped sidewalks below two 2.25 m lanes (G-113). */
   "two-way-fit-narrow": () => FITTED().flatMap((r) => (!r.oneway && r.width < 4.4 ? [{ at: r.at, what: `${r.id} ${r.name}: ${r.width.toFixed(1)} m` }] : [])),
+  /** A venue's board (ADR-0064 stage 4) reaching into the building next door, which stands out in front of its wall (G-159). */
+  "venue-board-in-neighbour": () => signsIn([MAP_SIGN_KIND.venue]),
+  /** A banner or a superstructure's ad (ADR-0051) sticking into the building next door (G-157). */
+  "banner-in-neighbour": () => signsIn([MAP_SIGN_KIND.ad]),
+  /** A holo-ad or a blade sign (ADR-0044) sticking into the building next door (G-157). */
+  "holo-or-blade-in-neighbour": () => signsIn([MAP_SIGN_KIND.holo, MAP_SIGN_KIND.blade]),
+  /** A neon tube under the cornice (ADR-0044) running on into the building next door (G-170). */
+  "tube-in-neighbour": () => signsIn([MAP_SIGN_KIND.tube]),
+  // The market's furniture of ADR-0058 stage 3 against the map data (`market-pieces.ts`).
+  ...marketChecks(SOURCE_OSM, Object.values(WORLD_STREET_PROPS).flat(), CROWD_LANES),
+  // The decals of ADR-0058 stage 6 against the drawn walls, signs, hosts and carriageways (`decal-pieces.ts`).
+  ...decalChecks(Object.values(WORLD_STREET_PROPS).flat(), lublinDecalWorld()),
+  // The doors on the facades of ADR-0058 stage 9 against the drawn walls, panes, boards and passages (`door-pieces.ts`).
+  ...doorChecks(WORLD_SCENERY, Object.values(WORLD_STREET_PROPS).flat(), cityVenueBoards(WORLD_SCENERY)),
 };
 
 /** A building's own tags in the map data, by the game's id (`w…`, `r…`, a split's `/n` dropped). */
@@ -1234,6 +1560,80 @@ describe("the glitch scan (ADR-0054)", () => {
     expect(tiers.length).toBeGreaterThan(0);
     const gateTop = gate.y + gate.height + (gate.roof ?? 0);
     for (const t of tiers) if (t.y1 > gateTop) expect(ringGap(t.ring, worldOutline(gate))).toBeGreaterThanOrEqual(5);
+  });
+
+  it("finds a listed landmark at a default height, and no landmark at a mapped height or building off the list (G-204)", () => {
+    const chapel = { id: "w66258167", x: 941, z: 214.6, source: "default" as const, name: "Kaplica" };
+    expect(landmarksAtDefaultHeight(["w66258167"], [chapel])).toEqual([{ at: "941,215", what: "w66258167 Kaplica" }]);
+    expect(landmarksAtDefaultHeight(["w66258167"], [{ ...chapel, id: "w66258167/1" }])).toHaveLength(1);
+    expect(landmarksAtDefaultHeight(["w66258167"], [{ ...chapel, source: "height" }, { ...chapel, source: "levels" }])).toEqual([]);
+    expect(landmarksAtDefaultHeight(["w450180469"], [chapel])).toEqual([]);
+  });
+
+  it("finds a wall lantern within 2 m of a gate's axis cut by hand, in its vault or its mouth, and none on the street past its fronts (G-183)", () => {
+    // Brama Krakowska's axis from GATE_PASSAGES, under a gate house whose fronts cross it 6.45 and 26.55 m along, as the map's.
+    const { from, to } = GATE_PASSAGES.find((p) => p.building === "r7224409")!;
+    const len = Math.hypot(to.x - from.x, to.z - from.z);
+    const [ux, uz] = [(to.x - from.x) / len, (to.z - from.z) / len];
+    const at = (s: number, off: number) => ({ x: from.x + ux * s - uz * off, z: from.z + uz * s + ux * off });
+    const gate = { building: "r7224409", from, to, rings: [[at(6.45, -8), at(26.55, -8), at(26.55, 8), at(6.45, 8)]] };
+    const [mouth, vault, aside, pastFront, onStreet] = [at(26.8, 1.6), at(16, -1.2), at(16, 2.5), at(27.55, 1), at(30.2, 1.6)];
+    const found = lanternsByPassages([mouth, vault, aside, pastFront, onStreet], [gate]);
+    expect(found.map((f) => [f.x, f.z, f.building])).toEqual([
+      [mouth.x, mouth.z, "r7224409"],
+      [vault.x, vault.z, "r7224409"],
+    ]);
+    expect(lanternsByPassages([vault], [{ ...gate, rings: [] }])).toEqual([]);
+    expect(lanternsByPassages([vault], [])).toEqual([]);
+  });
+
+  describe("kerb car parks (G-189)", () => {
+    const street = [[0, 0] as const, [40, 0] as const];
+    const park = (orientation: string | undefined, ring: readonly [number, number][]) => ({
+      id: "w1",
+      osmId: 1,
+      tags: { amenity: "parking", parking: "street_side", ...(orientation ? { orientation } : {}) },
+      ring: ring.map(([x, z]) => ({ x, z })),
+      holes: 0,
+    });
+    const car = (x: number, z: number, yaw: number) => ({ chunk: "c", x, y: 0, z, yaw, model: "sedan" as const, tint: 0 });
+    const deep = park(undefined, [[10, 4], [30, 4], [30, 10], [10, 10]]);
+    const [along, aslant, across] = [Math.PI / 2, Math.PI / 6, 0];
+
+    it("finds a deep untagged strip's car across the kerb, and one along it beside a car aslant", () => {
+      expect(bayCarsMisturned([deep], [car(15, 7, across)]).map((f) => f.what)).toEqual(["sedan in w1 (untagged deep) across the kerb, not aslant"]);
+      expect(bayCarsMisturned([deep], [car(15, 7, along), car(22, 7, aslant)]).map((f) => f.what)).toEqual(["sedan in w1 (untagged deep) along the kerb beside a car aslant"]);
+      expect(bayCarsMisturned([deep], [car(15, 7, along)])).toEqual([]);
+      expect(bayCarsMisturned([deep], [car(15, 7, aslant), car(22, 7, aslant)])).toEqual([]);
+    });
+
+    it("finds a strip by a meter past its kerb holding under half its bays' cars, and only that", () => {
+      const meter = { furniture: [{ x: 20, z: 10.5, r: 0.3 }], footways: [] };
+      const none = { furniture: [], footways: [] };
+      const one = [car(15, 7, aslant)];
+      const three = [car(15, 7, aslant), car(20, 7, aslant), car(25, 7, aslant)];
+      expect(bayStripsSparse([deep], one, [street], meter)).toHaveLength(1);
+      expect(bayStripsSparse([deep], three, [street], meter)).toEqual([]);
+      expect(bayStripsSparse([deep], one, [street], none)).toEqual([]);
+      expect(bayStripsSparse([deep], [], [street], meter).map((f) => f.what)).toEqual(["w1 (untagged deep, 20.0 m): 0 cars of 4.8"]);
+      expect(bayStripsSparse([deep], [], [street], meter, { w1: "known" })).toEqual([]);
+      expect(bayStripsSparse([deep], one, [street], meter, { w1: "known" })).toHaveLength(1);
+      expect(bayStripsEmptyKnown([deep], [], { w1: "known" }).map((f) => f.what)).toEqual(["w1: known"]);
+      expect(bayStripsEmptyKnown([deep], one, { w1: "known" })).toEqual([]);
+      expect(bayStripsEmptyKnown([deep], [], {})).toEqual([]);
+      expect(bayStripsSparse([deep], one, [street], { furniture: [], footways: [[{ x: 5, z: 11 }, { x: 35, z: 11 }]] })).toHaveLength(1);
+    });
+
+    it("finds a strip's stretch over 10 m by a street for deliveries with no car parked in it (G-190)", () => {
+      const lane = park(undefined, [[0, 4], [30, 4], [30, 6.5], [0, 6.5]]);
+      const deliveries = { points: street, cars: false };
+      const parallel = (x: number) => car(x, 5.2, Math.PI / 2);
+      expect(kerbStripsOffCarStreets([lane], [deliveries], []).map((f) => f.what)).toEqual(["w1: 30.0 m by a street for deliveries without a car"]);
+      expect(kerbStripsOffCarStreets([lane], [deliveries], [3, 10, 17, 24].map(parallel))).toEqual([]);
+      expect(kerbStripsOffCarStreets([lane], [deliveries], [3, 10].map(parallel))).toHaveLength(1);
+      expect(kerbStripsOffCarStreets([lane], [{ points: street, cars: true }], [])).toEqual([]);
+      expect(kerbStripsOffCarStreets([lane], [deliveries, { points: [[0, 5.5] as const, [40, 5.5] as const], cars: true }], [])).toEqual([]);
+    });
   });
 });
 

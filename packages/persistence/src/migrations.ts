@@ -335,6 +335,40 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
     const normal = { damageTaken: 1, npcAccuracy: 1, awareness: 1, reinforce: 1, npcHealth: 1, snipeTell: 1 };
     return { ...old, version: 18, domain: { ...domain, difficulty: normal } };
   },
+  // v18 -> v19 (ADR-0065, stage 3): bodies are saved (`downed` of an entity, optional). An older
+  // save has none: whoever was knocked out in it was saved as awake and wakes up so, and the
+  // dead of a takedown had vanished. Nothing to change but the version.
+  18: (old) => ({ ...old, version: 19 }),
+  // v19 -> v20 (G-171): a difficulty profile asked for in a fight is saved while it waits for the
+  // fight's end (optional). An older save has none waiting: what was asked was lost already.
+  19: (old) => ({ ...old, version: 20 }),
+  // v20 -> v21 (G-174): a guard's suspicion is saved while it builds up (optional). An older save
+  // has every guard calm, as it loaded before.
+  20: (old) => ({ ...old, version: 21 }),
+  // v21 -> v22 (G-178): the contract ended with its people still in the world is saved (optional).
+  // An older save has none: its guards were gone on loading, as they are now.
+  21: (old) => ({ ...old, version: 22 }),
+  // v22 -> v23 (G-179): the heat's reinforcements are saved (optional). An older save has none:
+  // its reinforcements were gone on loading, and still are.
+  22: (old) => ({ ...old, version: 23 }),
+  // v23 -> v24 (G-188): an AI pinned in the world while its chunk sleeps is marked with its time
+  // outside every loaded chunk (`away`, optional). An older save has none marked: its pinned AIs
+  // load by their alert, as before.
+  23: (old) => ({ ...old, version: 24 }),
+  // v24 -> v25 (G-185): an NPC's gun mid-fight and a sniper's state are saved (optional). An older
+  // save has every NPC's gun loaded and at rest and every sniper idle, as it loaded before.
+  24: (old) => ({ ...old, version: 25 }),
+  // v25 -> v26 (G-202): each of the heat's reinforcements is saved with the tick it came in at,
+  // which tells it from one of another heat with the same `n` (the XP for a quickhack on it is
+  // paid once). An older save's came in no later than it was saved: they are given the save's
+  // tick, those who come in after the load a later one. None of them paid XP before.
+  25: (old) => {
+    const r = old.reinforcements;
+    if (!isObject(r) || !Array.isArray(r.people)) return { ...old, version: 26 };
+    const since = Number.isInteger(old.tick) ? Math.max(0, old.tick as number) : 0;
+    const people = r.people.map((p: unknown) => (isObject(p) ? { ...p, since } : p));
+    return { ...old, version: 26, reinforcements: { ...r, people } };
+  },
 };
 
 export class MigrationError extends Error {}

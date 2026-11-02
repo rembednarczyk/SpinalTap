@@ -17,7 +17,8 @@ const v17 = (): Record<string, unknown> => {
 
 describe("the difficulty in the save (v17 to v18, ADR-0066)", () => {
   it("an old save plays on 'normal' and is a valid current snapshot", () => {
-    expect(SAVE_SCHEMA_VERSION).toBe(18);
+    // v19 (ADR-0065, bodies) walks on from here with no change to the difficulty.
+    expect(SAVE_SCHEMA_VERSION).toBeGreaterThanOrEqual(18);
     const loaded = decodeSave("v17", wrap(v17()));
     expect(loaded.version).toBe(SAVE_SCHEMA_VERSION);
     expect(loaded.domain.difficulty).toEqual(NORMAL_DIFFICULTY);

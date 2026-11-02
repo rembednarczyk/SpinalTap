@@ -115,18 +115,18 @@ describe("loading screen (ADR-0057)", () => {
     session.newGame();
     render.calls[0]!.resolve();
     await settle();
-    expect(await session.saveAsync("slot-1")).toBe(true);
-    const saved = session.snapshot();
-    expect(await session.loadAsync("slot-1")).toBe(true);
+    expect(await session.saves.saveAsync("slot-1")).toBe(true);
+    const saved = session.saves.snapshot();
+    expect(await session.saves.loadAsync("slot-1")).toBe(true);
     expect(session.screen).toBe("loading");
     expect(render.calls).toHaveLength(2);
     expect(render.calls[1]!.at).toEqual(session.sim.player()!.position);
     // No saving from behind the loading screen.
-    expect(await session.saveAsync("slot-2")).toBe(false);
+    expect(await session.saves.saveAsync("slot-2")).toBe(false);
     render.calls[1]!.resolve();
     await settle();
     expect(session.screen).toBe("playing");
-    expect(session.snapshot().domain).toEqual(saved.domain);
+    expect(session.saves.snapshot().domain).toEqual(saved.domain);
   });
 
   it("a newer start voids the one still loading, and so does going back to the title", async () => {
