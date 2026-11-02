@@ -1,1 +1,1 @@
-Zapis w trakcie paniki po walce uspokaja ulicę także w grze, z której zapisano, więc gra wczytana i niewczytana dalej toczą się tak samo (G-240).
+Zapis w trakcie paniki po walce uspokaja ulicę także w grze, z której zapisano, a telefon świadka w toku dochodzi od razu przy zapisie (zgłoszenie i heat jak bez zapisu), więc gra wczytana i niewczytana dalej toczą się tak samo (G-240).

@@ -59,8 +59,9 @@ export const scare = (ctx: SimContext, c: Entity, state: CrowdState, from: Vec3)
 
 /**
  * Calms the street for a save (G-240). The crowd's fear is not saved and a loaded game starts
- * calm (ADR-0029), so the game it is saved from calms down too: both go on the same. A call in
- * progress goes with it, in both, as a load drops it.
+ * calm (ADR-0029), so the game it is saved from calms down too: both go on the same. Calls in
+ * progress are settled first (`settleCalls`). Being scared off the phone (`scared`) goes too: it
+ * is not in the save either, and only lets a witness call sooner.
  */
 export const calmStreet = (ctx: SimContext): void => {
   for (const c of inCreationOrder(ctx.world.with("civilian"))) {
