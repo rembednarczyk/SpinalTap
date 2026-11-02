@@ -159,6 +159,7 @@ export const PADS: readonly Pad[] = [
   { rect: { minX: 574, maxX: 586, minZ: -66, maxZ: -54 }, y: TRASA_PODZIEMNA.floor - 2, blend: 0.01 },
 ];
 
-/** Even ramps along the steps of the map (ADR-0045), and along the flights the terrain climbs against their `incline` (G-236, T-131). */
+/** Even ramps along the steps of the map (ADR-0045). */
+export const RAMPS: readonly Ramp[] = stepRamps(MAP_CHUNKS);
+/** Ramps along the flights the terrain climbs against their `incline` (G-236, T-131), laid last on a finer grid (`terrain.ts`). */
 export const FLIGHT_RAMPS: readonly Ramp[] = flightRamps(MAP_CHUNKS);
-export const RAMPS: readonly Ramp[] = [...stepRamps(MAP_CHUNKS), ...FLIGHT_RAMPS];

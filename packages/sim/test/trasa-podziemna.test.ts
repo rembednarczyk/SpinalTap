@@ -58,6 +58,15 @@ describe("Trasa Podziemna (ADR-0048)", () => {
     expect(groundY(LOCH_SPOT.x, LOCH_SPOT.z)).toBeLessThan(TRASA_PODZIEMNA.floor);
   });
 
+  it("keeps the ground a metre or more under the stairs down from the door (G-236 round 3)", () => {
+    const { door, floor, stairs } = TRASA_PODZIEMNA;
+    // The stairs run from the door's level at x 572 down to the cellars' floor at 583.
+    const stairY = (x: number) => door - ((Math.min(x, 583) - 572) / 11) * (door - floor);
+    for (let x = 572.5; x <= 583; x += 0.25) {
+      for (let z = stairs.minZ + 0.2; z <= stairs.maxZ - 0.2; z += 0.4) expect(stairY(x) - groundY(x, z), `(${x}, ${z.toFixed(1)})`).toBeGreaterThanOrEqual(1);
+    }
+  });
+
   it("is walked in from the Rynek: the door, the stairs down, the corridors and the loch, where a bag waits", () => {
     const sim = Simulation.create({ seed: 2 });
     const [x0, z0] = TRASA_PODZIEMNA_WALK[0]!;

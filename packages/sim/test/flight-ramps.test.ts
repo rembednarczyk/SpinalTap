@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { terrainHeightAt } from "@seki/core";
-import { STEP_RISE, flightRamps, refineGrid, shapeGrid } from "../src/content/lublin/shape";
+import { FLIGHT_CELL, STEP_RISE, flightRamps, refineGrid, shapeGrid } from "../src/content/lublin/shape";
 import { inBuilding } from "../src/content/lublin/places";
-import { FLIGHT_RAMPS, MAP_CHUNKS } from "../src/content/lublin/sites";
+import { FLIGHT_RAMPS, MAP_CHUNKS, PADS, RAMPS } from "../src/content/lublin/sites";
 import { SHAPED_TERRAIN } from "../src/content/lublin/terrain";
 import type { LublinChunkData, LublinFlightData } from "../src/content/lublin/types";
 
@@ -92,6 +92,28 @@ describe("flights' ramps in the city (G-236)", () => {
       }
     }
     expect(checked).toBeGreaterThan(500);
+  });
+
+  it("leaves every chunk's terrain a cell or more off a flight's band as the pads and the steps' ramps shape it on the import's grid (G-236 round 3)", () => {
+    // A point of the finer grid is moved only within a band; bilinear, it moves the ground up to a cell's diagonal past it.
+    const reach = (r: (typeof FLIGHT_RAMPS)[number]) => r.width / 2 + FLIGHT_CELL * Math.SQRT2 + 0.05;
+    const near = (x: number, z: number) =>
+      FLIGHT_RAMPS.some((r) => {
+        const [dx, dz] = [r.b.x - r.a.x, r.b.z - r.a.z];
+        const t = Math.max(0, Math.min(1, ((x - r.a.x) * dx + (z - r.a.z) * dz) / (dx * dx + dz * dz)));
+        return Math.hypot(x - r.a.x - t * dx, z - r.a.z - t * dz) < reach(r);
+      });
+    let worst = 0;
+    for (const c of MAP_CHUNKS) {
+      const before = shapeGrid(c.terrain, PADS, RAMPS);
+      const after = SHAPED_TERRAIN.get(c.id)!;
+      for (let x = c.bounds.minX; x <= c.bounds.maxX; x += 0.5) {
+        for (let z = c.bounds.minZ; z <= c.bounds.maxZ; z += 0.5) {
+          if (!near(x, z)) worst = Math.max(worst, Math.abs(terrainHeightAt(after, x, z) - terrainHeightAt(before, x, z)));
+        }
+      }
+    }
+    expect(worst).toBeLessThan(1e-6);
   });
 
   it("refines a grid by a whole factor without moving its surface", () => {
