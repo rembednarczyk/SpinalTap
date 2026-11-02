@@ -645,12 +645,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poboczne: `gameOver`, `session.lastThreat`, `player.lastHitBy` (id encji) i `velocity` NPC poza zapisem; stan lotu gracza (`fall`, `airPeak`, `jump`) poza zapisem, więc zapis w powietrzu rozjeżdża się w 1. kroku (weryfikator #185: (2440;545), (490;180), seed 8; pokrewne G-201); walidator przyjmuje `gun.loaded` ponad magazynek i `sniper.perch` spoza tabeli; testy zapisujące martwego gracza porównują stan, którego w grze nie ma
 - Pakiet właściciela: packages/sim, packages/persistence
 
-### G-209 Cel uploadu `security:<n>` niejednoznaczny przy dwóch posiłkach z tym samym numerem; pamięć hacków 256
-- Status: w PR #196 (2.11, w weryfikacji): część 2 (pamięć hacków) naprawiona przez zapominanie odeszłych posiłków; część 1 nie odtwarza się (`sent` i walidator wykluczają powtórzone `n`)
-- Ważność: S4 · Zasięg: gdy żyje powalony posiłek z poprzedniego heatu i nowy posiłek z tym samym `n`, `findTarget` (G-194, `scanner-system.ts`) może trafić w niewłaściwy; `HACKED_MEMORY = 256` (`packages/core/src/progression/progression.ts`): po 256 hackach posiłków (każdy dodaje klucz) najstarsze urządzenia z kluczem wypadają z pamięci i płacą ponownie
-- Poprawka: cel uploadu jako `security:<n>@<since>` (klucz z G-202); pamięć hacków osobno dla posiłków albo większa granica z testem; przy balansie (ADR-0059 etap 8) ocenić XP za posiłki w długim heacie
-- Pakiet właściciela: packages/sim, packages/core
-
 ### G-212 Podwójne wieże: proceduralna obok wieży z OSM
 - Status: zgłoszone (2.11, naprawiacz G-210)
 - Ważność: S4 · Zasięg: cerkiew św. Jozafata w69916021 (wieża z OSM w1382552285 przy (270; −9)) i kościół św. Mikołaja w66258180 (dzwonnica z OSM w680377807 przy (879; 545)) dostają dodatkowo proceduralną wieżę (`roof-plan` `addTowers`); Brygidki w66264082: proceduralne wieże, prawdziwa w1090997970 niezaimportowana (G-098)
@@ -720,6 +714,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: posiłek powalony żywcem ma `chunk: ""`; `chunk-unload` usypia go po chunku, w którym leży, a bez klucza nie zostaje po nim stan, więc znika na zawsze, a `sent` spada do 0 (sonda, ziarno 7: 100 m nadal jest, 300 m już nie, po powrocie brak); pokrewne G-196 (ciała posiłków bez chunku)
 - Poprawka: powaleni i ciała posiłków przypisani do chunka, w którym leżą, z zapisem przy uśpieniu i powrotem przy wczytaniu chunka (wtedy `goneReinforcement` z G-209 musi uwzględnić uśpionych, żeby nie płacili XP drugi raz)
 - Pakiet właściciela: packages/sim (streaming, reinforcements)
+
+### G-220 Brak testu: powalony, niesiony albo schowany posiłek nie jest „odeszły” dla pamięci hacków
+- Status: zgłoszone (2.11, weryfikator G-209)
+- Ważność: S4 (luka w testach) · Zasięg: `goneReinforcement` (`packages/sim/src/world/reinforcements.ts`); mutacja `present` bez powalonych (`filter(!e.downed)`) przechodzi testy G-209, łapie ją tylko sonda weryfikatora
+- Poprawka: test, w którym powalony, niesiony i schowany posiłek zostaje w pamięci po zapełnieniu jej odeszłymi (pada z mutacją)
+- Pakiet właściciela: packages/sim
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)

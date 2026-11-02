@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-209 Cel uploadu `security:<n>` niejednoznaczny przy dwóch posiłkach z tym samym numerem; pamięć hacków 256
+- Status: naprawione w #196 (2.11, PRZYJĘTE): część 2 (pamięć hacków) naprawiona przez zapominanie odeszłych posiłków; część 1 nie odtwarza się (`sent` i walidator wykluczają powtórzone `n`)
+- Ważność: S4 · Zasięg: gdy żyje powalony posiłek z poprzedniego heatu i nowy posiłek z tym samym `n`, `findTarget` (G-194, `scanner-system.ts`) może trafić w niewłaściwy; `HACKED_MEMORY = 256` (`packages/core/src/progression/progression.ts`): po 256 hackach posiłków (każdy dodaje klucz) najstarsze urządzenia z kluczem wypadają z pamięci i płacą ponownie
+- Poprawka: cel uploadu jako `security:<n>@<since>` (klucz z G-202); pamięć hacków osobno dla posiłków albo większa granica z testem; przy balansie (ADR-0059 etap 8) ocenić XP za posiłki w długim heacie
+- Pakiet właściciela: packages/sim, packages/core
+
 ### G-210 Proceduralna dzwonnica z iglicą na Kaplicy Trójcy
 - Status: naprawione w #190 (2.11, PRZYJĘTE; Bernardyni na liście do czasu G-214, bo ich prawdziwa wieża stoi przy południowej ścianie)
 - Ważność: S3 (proponowana: fałszywa iglica jest najwyższym akcentem wzgórza zamkowego zamiast Donżonu) · Zasięg: Kaplica w66258167 (941; 214,6), możliwe inne kościoły z listy zabytków bez części i bez `tower` w OSM
