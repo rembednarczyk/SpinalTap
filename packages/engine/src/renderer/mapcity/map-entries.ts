@@ -53,13 +53,17 @@ export class MapEntries {
   /** Every surface but water, for the lift of the feet standing on one (ADR-0045). */
   private readonly surfaceIndex = new BinIndex();
   readonly decks = new Decks();
+  /** Changes whenever a building or a ground surface comes or goes (the drones' lanes, ADR-0058 stage 7). */
+  version = 0;
 
   addBuilding(id: EntityId, e: BuildingEntry): void {
+    this.version++;
     this.buildings.set(id, e);
     this.buildingIndex.add(id, e.bounds);
   }
 
   addGround(id: EntityId, g: GroundEntry): void {
+    this.version++;
     this.grounds.set(id, g);
     if (g.marking) return;
     if (g.deck) this.decks.add(id, g.ring, g.deck);
@@ -69,6 +73,7 @@ export class MapEntries {
 
   /** Forgets a building or a ground surface (not a terrain). */
   remove(id: EntityId): void {
+    this.version++;
     this.buildings.delete(id);
     this.grounds.delete(id);
     this.decks.remove(id);
