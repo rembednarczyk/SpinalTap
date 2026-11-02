@@ -43,6 +43,7 @@ const PROPS = ["city/city-props.glb"] as const;
 const STREET = ["city/street-props.glb"] as const;
 const MARKET = ["city/market-props.glb"] as const;
 const DOORS = ["city/door-props.glb"] as const;
+const DRONES = ["city/drone-props.glb"] as const;
 /** `audio/<name>-000.ogg` ... for the numbers given. */
 const ogg = (name: string, ...n: number[]): string[] => n.map((i) => `audio/${name}-${String(i).padStart(3, "0")}.ogg`);
 
@@ -85,6 +86,8 @@ export const CREDITS: readonly Credit[] = [
   { id: "sketchfab-cyberpunk-doors-and-windows", section: "street", title: "Cyberpunk City Assets Pack 3# Doors and Windows", author: "carlcapu9", authorUrl: "https://sketchfab.com/carlcapu9", url: "https://sketchfab.com/3d-models/cyberpunk-city-assets-pack-3-doors-and-windows-c6cdc4f6715e4d8eae61eeb81fe636c8", license: "CC-BY-4.0", files: DOORS, changed: true },
   { id: "sketchfab-psx-garage-doors", section: "street", title: "Low-Poly PSX Style Garage Doors Pack", author: "vanillao03", authorUrl: "https://sketchfab.com/vanillao03", url: "https://sketchfab.com/3d-models/low-poly-psx-style-garage-doors-pack-6cd3bb88d27e44ac96f080e533d7015a", license: "CC-BY-4.0", files: DOORS, changed: true },
   { id: "sketchfab-cyberpunk-scifi-door-3", section: "street", title: "Cyberpunk Sci-fi Door 3 - Free", author: "Jesus Fernandez Garcia", authorUrl: "https://sketchfab.com/jamyzgenius", url: "https://sketchfab.com/3d-models/cyberpunk-sci-fi-door-3-free-df980eee6f0f42aaa52d70b668001b4d", license: "CC-BY-4.0", files: DOORS, changed: true },
+  // CC-BY 4.0 (ADR-0058 stage 7, E4 of the second pack): the drones over the street canyons, drone-props.glb.
+  { id: "sketchfab-cyberpunk-drone", section: "city", title: "Cyberpunk Drone Concept Design", author: "Berk Gedik", authorUrl: "https://sketchfab.com/berkgedik", url: "https://sketchfab.com/3d-models/cyberpunk-drone-concept-design-09e7406fc76248a2866209025588dad0", license: "CC-BY-4.0", files: DRONES, changed: true },
   // The cast (VRoid Project samples) and the weapons.
   { id: "vroid-samples", section: "characters", title: "VRoid Studio sample models (AvatarSample_D, AvatarSample_F, Sakurada Fumiriya, Sendagaya Shino, Base_Male)", author: "pixiv / VRoid Project", url: "https://opengameart.org/content/vroid-studio-cc0-models", license: "VRoid-Hub-1.0", files: ["models/seki.vrm", "models/kaito.vrm", "models/ganger.vrm", "models/civilian.vrm", "models/mori.vrm"], changed: true },
   { id: "quaternius-ultimate-gun-pack", section: "weapons", title: "Ultimate Gun Pack", author: "Quaternius", authorUrl: "https://quaternius.com", url: "https://opengameart.org/content/ultimate-gun-pack", license: "CC0-1.0", files: ["weapons/pistol.glb", "weapons/smg.glb"], changed: true },

@@ -425,7 +425,7 @@
       "files": [
         { "path": "cyberpunk_drone_concept_design.glb", "url": "https://drive.usercontent.google.com/download?id=1hX_FBNpVGBQDJXV6Muh4N5gLIbnf3fP4&export=download&confirm=t", "sha256": "882d9a0406f5e8412e0aa259cd4dd959d61af9d5e159eacdacedf9105bbfa737" }
       ],
-      "used": []
+      "used": ["drone-patrol", "drone-delivery", "drone-ad"]
     },
     {
       "id": "sketchfab-cyberpunk-led-neon-sign",
