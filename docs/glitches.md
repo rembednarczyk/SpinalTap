@@ -602,13 +602,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: budynek z wejściem OSM przy rysowanej ścianie dostaje drzwi w najbliższym gnieździe tej ściany albo żadnych zastępczych; kontrola `entrance-door-elsewhere` (baza dziś 1) → 0. Przy okazji do rozważenia: wybór ściany drzwi klatki wg `addr:street` (40 ze 179 drzwi patrzy na inną ulicę niż adres, np. Pałac Lubomirskich (60,4; 99,3) od Radziwiłłowskiej) i kontrola `door-on-osm-passage` (drzwi do 3 m od osi `tunnel=building_passage`/`covered=yes`, baza 1: Niecała 4, T-109)
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
-### G-201 Teren poza chunkami dostępny: reguła „poza wczytanym chunkiem” usypia strażnika obok gracza
-- Status: w PR #189 (2.11, w weryfikacji): `nearFocus` (30 m od gracza) w `unloadChunks` i `sleepPinned`; zostaje osobno: spokojny nieprzypięty strażnik w innym wczytanym chunku dalej niż 30 m znika przy uśpieniu własnego (może zmienić złoty hash, osobny PR)
-- Ważność: S4 · Zasięg: obszary bez chunków, a z terenem, np. (2440; 545) na północ od Nabrzeża albo pas x 460–520, z > 160 między Starym Miastem a Podzamczem; żywy gracz stoi tam (hp 96), spokojny przypięty strażnik 6 m od niego znika w 1. s, zaalarmowany po 30 s (`sleepPinned`, G-188)
-- Poprawka: odległość od gracza zamiast samej przynależności do chunku albo brak dostępnego terenu poza chunkami; pokrewne: spokojny nieprzypięty strażnik w innym wczytanym chunku znika przy uśpieniu własnego (`standing` w `unloadChunks` tylko dla planów dnia i ciał); `ai.victim` z szablonu nie trafia do zapisu; `goAway()` w `contract-site-cleared.test.ts` stawia gracza poza mapą (testy G-195 z martwym graczem); `keepFormer` bez testu integracyjnego
-- Weryfikator #189: próg poza chunkami to 30 m (`loadRadius`), w chunkach praktycznie 44 m (histereza usypiania), więc spokojny strażnik 31 m od gracza poza chunkami znika w jednym kroku; w `micro-events.ts` uśpienie obu napastników zamknęłoby zdarzenie jako „won” z nagrodą (dziś wyklucza to geometria `MICRO_SPOTS`, ale nic tego nie pilnuje)
-- Pakiet właściciela: packages/sim (streaming)
-
 ### G-203 Schody zamkowe mają 3 m zamiast ok. 10 m szerokości
 - Status: zgłoszone (1.11, audyt zespołu zamkowego, T-113)
 - Ważność: S3 (proponowana) · Zasięg: lokalny, ale to oś widokowa Placu Zamkowego · Koszt: mały–średni
@@ -660,7 +653,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim, packages/core
 
 ### G-210 Proceduralna dzwonnica z iglicą na Kaplicy Trójcy
-- Status: zgłoszone (2.11, kurator #188, T-119)
+- Status: w PR #190 (2.11, w weryfikacji, potem kurator): `TOWERLESS_OSM` (Kaplica i Bernardyni), kontrola `landmark-fake-tower` baza 0
 - Ważność: S3 (proponowana: fałszywa iglica jest najwyższym akcentem wzgórza zamkowego zamiast Donżonu) · Zasięg: Kaplica w66258167 (941; 214,6), możliwe inne kościoły z listy zabytków bez części i bez `tower` w OSM
 - Przyczyna: `packages/engine/src/renderer/mapcity/roof-plan.ts` (`towerSpots`/`addTowers`) dokłada wieżę kościołom bez `building:part`, więc wyłączenie z G-057 nie działa; korona wieży ok. y 19,0, iglica do ok. y 28–30 (Donżon 16,9; prawdziwa Kaplica bez wieży, szczyt zachodni ok. y 16,9)
 - Poprawka: bez proceduralnej wieży na zabytkach z `LANDMARK_BUILDINGS` bez `tower` w OSM (albo przepis Z3); kontrola skanu `landmark-fake-tower` (baza ≥ 1); migawka NPR świadomie
@@ -671,6 +664,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: teleport na (2689; 247) w dokach i (550; 281) na targu kończy się w niebieskim pokoju wnętrza (ADR-0061) zamiast na ulicy
 - Do zrobienia: sprawdzić, czy to obszar `INTERIORS` sięgający poza obrys budynku (glitch topografii) czy tylko punkt w obrysie (wtedy zamknąć jako niepotwierdzone)
 - Pakiet właściciela: packages/sim (interiors) albo e2e (narzędzie zrzutów)
+
+### G-212 Podwójne wieże: proceduralna obok wieży z OSM
+- Status: zgłoszone (2.11, naprawiacz G-210)
+- Ważność: S4 · Zasięg: cerkiew św. Jozafata w69916021 (wieża z OSM w1382552285 przy (270; −9)) i kościół św. Mikołaja w66258180 (dzwonnica z OSM w680377807 przy (879; 545)) dostają dodatkowo proceduralną wieżę (`roof-plan` `addTowers`); Brygidki w66264082: proceduralne wieże, prawdziwa w1090997970 niezaimportowana (G-098)
+- Poprawka: `addTowers` pomija kościół, przy którym (w obrysie albo do 10 m) stoi wieża z OSM; rozszerzyć kontrolę `landmark-fake-tower` albo nowa `landmark-double-tower`
+- Pakiet właściciela: packages/engine (renderer/mapcity), tools/glitch-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
