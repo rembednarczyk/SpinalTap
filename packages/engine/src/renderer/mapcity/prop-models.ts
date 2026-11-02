@@ -5,6 +5,7 @@ import { busShelter, busStop, cafeGarden, farMonument, fountainJets, kiosk, mark
 import { atm, bikeRackWithBikes, container, foodCart, hydrant } from "./prop-e2";
 import { farTree, hangingBasket, planter, shrubs, tree } from "./prop-green";
 import { doorOfShape } from "./prop-door";
+import { figureStandIn } from "./figure-models";
 import { foodStall, marketGoods } from "./prop-market";
 import { glow, paint, v3 } from "./prop-kit";
 import { type PropLight, type PropModel, floodlight, lampCandelabra, lampModernPole, lampPark, lampPastoral, lampRoad, lampWallLantern } from "./prop-lamps";
@@ -66,6 +67,8 @@ const MODELS: Readonly<Record<StreetPropKind, (shape: number) => PropModel>> = {
   "drain-grate": () => plain(decalModel("drain-grate", grateVariant({ casting: 0, slopeX: 0, slopeZ: 0 }))!),
   // A 1.2 x 2.3 m door of the model; the city bakes each door at its own size (`door-models.ts`).
   door: (s) => plain(doorOfShape(s)),
+  // ADR-0058 stage 8: the city bakes a still figure only as a model of `crowd-props.glb` (`figure-models.ts`); this is the gallery's stand-in.
+  figure: () => plain(figureStandIn()),
 };
 
 /** Every kind of the contract, in the order of `StreetPropKind` (the gallery's row). */

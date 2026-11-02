@@ -22,6 +22,8 @@ import { MAPPED, SKIPPED, SKIPPED_ART } from "./props-kinds.ts";
 import type * as GameDoors from "./game-doors.ts";
 import { loadCarriageways, loadUndergroundWays } from "./props-roads.ts";
 import { addDoors, loadEntrances } from "./props-doors.ts";
+import type * as CrowdClear from "./crowd-clear.ts";
+import { addFigures } from "./props-figures.ts";
 
 const PLAN = join(REPO, "docs/world/lublin-props.todo.json");
 const OUT = join(REPO, "packages/sim/src/content/lublin/props.generated.ts");
@@ -47,6 +49,16 @@ const decals = addDecals(byChunk as Map<string, StreetPropItem[]>, new Site(chun
   poleLamp: decalWalls.poleLampAt,
   blockOf: decalWalls.furnitureBlock,
 });
+// The still crowd (ADR-0058 stage 8) last: it keeps clear of every piece, and of the simulation's moving
+// crowd, read through the module runner from the table as committed (the crowd does not read the figures).
+const { module: crowd } = await runnerImport<typeof CrowdClear>(join(REPO, "tools/osm-import/src/crowd-clear.ts"), { root: REPO, configFile: false, logLevel: "warn" });
+const figures = addFigures(byChunk as Map<string, StreetPropItem[]>, new Site(chunks), {
+  groundY: (p) => decalWalls.groundY(p.x, p.z),
+  surfaceY: (p) => decalWalls.surfaceY(p.x, p.z),
+  crowd: crowd.crowdClear(),
+  gameDoors: doors.gameDoors(),
+  blockOf: decalWalls.furnitureBlock,
+});
 writeFileSync(OUT, emitProps(byChunk));
 const total = Object.values(stats.perKind).reduce((a, b) => a + b, 0);
 console.log(`props.generated.ts: ${(statSync(OUT).size / 1024).toFixed(0)} KiB, ${total} pieces in ${byChunk.size} chunks`);
@@ -58,6 +70,8 @@ console.log("decals (ADR-0058 stage 6):", Object.entries(decals.per).map(([k, by
 console.log("  spots turned down:", Object.entries(decals.rejected).sort().map(([k, n]) => `${k} ${n}`).join(", "));
 console.log("doors (ADR-0058 stage 9):", Object.entries(doorsPer).sort().map(([k, n]) => `${k} ${n}`).join(", "));
 console.log(`  from ${entrances.length} entrances and ${doorWalls.reduce((n, w) => n + w.boards.length, 0)} boards on ${doorWalls.length} walls with slots; slots turned down:`, Object.entries(rejected).map(([k, n]) => `${k} ${n}`).join(", "));
+console.log("figures (ADR-0058 stage 8) by host:", Object.entries(figures.per).sort().map(([k, n]) => `${k} ${n}`).join(", "));
+console.log("  spots turned down:", Object.entries(figures.rejected).sort().map(([k, n]) => `${k} ${n}`).join(", "));
 console.log(`wall lanterns slid off a venue's board: ${stats.offBoard}, dropped with no wall beside it: ${stats.onBoard}`);
 console.log("mapped:", Object.entries(stats.mapped).map(([k, v]) => `${k} -> ${v} (${MAPPED[k]?.why ?? ""})`).join("; "));
 console.log("skipped:", Object.entries(stats.skipped).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n} (${SKIPPED[k] ?? (SKIPPED_ART as Record<string, string>)[k] ?? "unknown kind"})`).join("; "));

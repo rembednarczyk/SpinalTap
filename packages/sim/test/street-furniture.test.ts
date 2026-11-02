@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { StreetPropItem } from "@seki/core";
-import { CROWD_SPOTS, Simulation, WORLD_CHUNKS, WORLD_SCENERY, WORLD_STREET_PROPS, ground, groundY, rayGeometry, residentOf } from "../src";
+import { type StreetPropItem, figureLayout, isSitting, seatAt } from "@seki/core";
+import { CROWD_SPOTS, Simulation, WORLD_CHUNKS, WORLD_SCENERY, WORLD_STREET_PROPS, ground, groundY, rayGeometry, residentOf, surfaceY } from "../src";
 import { SOLID_FURNITURE, distanceToPiece, furniturePrisms, turnLocal } from "../src/content/lublin/furniture";
 import { seatGroups } from "../src/content/lublin/seats";
 import { STREET_ID_BASE } from "../src/world/streaming";
@@ -23,7 +23,20 @@ describe("street furniture in the game (ADR-0050)", () => {
       if (v.view.kind !== "street-props") continue;
       total += v.view.items.length;
       // A door on a facade (ADR-0058 stage 9) keeps its foot on the paving the import measured (the glitch scan's `door-floating`).
-      for (const i of v.view.items) if (i.prop !== "door") expect(i.y).toBeCloseTo(groundY(i.x, i.z), 1);
+      // A still figure (stage 8): one standing on the paving at its feet, a sitter on its seat's piece.
+      for (const i of v.view.items) if (i.prop !== "door" && i.prop !== "figure") expect(i.y).toBeCloseTo(groundY(i.x, i.z), 1);
+    }
+    const all = Object.values(WORLD_STREET_PROPS).flat();
+    const figures = all.filter((i) => i.prop === "figure");
+    expect(figures.length).toBeGreaterThan(200);
+    for (const f of figures) {
+      if (!isSitting(figureLayout(f.variant).pose)) {
+        expect(f.y).toBeCloseTo(surfaceY(f.x, f.z), 1);
+        continue;
+      }
+      const host = all.find((h) => Math.abs(h.x - f.x) < 3 && Math.abs(h.z - f.z) < 3 && seatAt(h, f.x, f.z) !== null);
+      expect(host, `sitter at ${f.x}, ${f.z}`).toBeDefined();
+      expect(f.y).toBe(host!.y);
     }
     expect(total).toBeGreaterThan(3000);
     // Nothing in the market under the viaduct (its own stalls and kiosk stand there).

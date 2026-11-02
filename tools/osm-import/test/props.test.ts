@@ -78,7 +78,9 @@ describe("street furniture generator (ADR-0047)", () => {
     addDoors(table, new Site(CHUNKS), lublinDoorWalls(), loadEntrances(), { surfaceY: (p) => surfaceY(p.x, p.z), gameDoors: gameDoors(), underground: loadUndergroundWays() });
     const ctx = { groundY: (p: Pt) => groundY(p.x, p.z), surfaceY: (p: Pt) => surfaceY(p.x, p.z), buildingTags: loadBuildingTags(), poleLamp: poleLampAt, blockOf: furnitureBlock };
     addDecals(table, new Site(CHUNKS), lublinDecalWalls(), ctx);
-    expect(emitProps(table)).toBe(committed);
+    // The still crowd (ADR-0058 stage 8) comes last, from the simulation's crowd as well: `props-figures.test.ts` checks its rows.
+    const others = (text: string) => text.split("\n").filter((l) => !l.startsWith('    "figure": ')).join("\n");
+    expect(others(emitProps(table))).toBe(others(committed));
   });
 
   it("stands lamps on the pavement beside the road on both sides, their arms towards it, and lanterns on the facades", () => {
