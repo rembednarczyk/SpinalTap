@@ -121,6 +121,17 @@ describe("level ups and points (ADR-0059)", () => {
     expect(s.hacked?.[0]).toBe("k1");
   });
 
+  it("forgets first the targets that are gone for good, so they take no room from the rest (G-209)", () => {
+    let s: ProgressionState = rememberHack(INITIAL_PROGRESSION, "dev:doki-speaker")!;
+    for (let i = 1; i < HACKED_MEMORY; i++) s = rememberHack(s, `security:${i}@${i}`) ?? s;
+    expect(s.hacked).toHaveLength(HACKED_MEMORY);
+    const gone = (k: string): boolean => k.startsWith("security:") && k !== "security:7@7";
+    const next = rememberHack(s, "security:1@900", gone);
+    expect(next?.hacked).toEqual(["dev:doki-speaker", "security:7@7", "security:1@900"]);
+    // Something gone is never paid for again: a key already there is still refused.
+    expect(next && rememberHack(next, "security:7@7", gone)).toBeNull();
+  });
+
   it("a state is consistent only when its level and points follow from its XP", () => {
     expect(isConsistentProgression(INITIAL_PROGRESSION)).toBe(true);
     const ten = progressionFromXp(xpForLevel(10));

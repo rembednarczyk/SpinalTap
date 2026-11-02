@@ -88,12 +88,14 @@ export const HACKED_MEMORY = 256;
 
 /**
  * The first successful quickhack on target `key` pays XP (ADR-0059: a successful hack, not every
- * upload): returns the state that remembers it, or null when that target already paid.
+ * upload): returns the state that remembers it, or null when that target already paid. `gone`
+ * names the remembered targets that can never be hacked again (G-209: a reinforcement of a heat
+ * over, whose key never comes back); they are forgotten first, so they take no room from the rest.
  */
-export const rememberHack = (state: ProgressionState, key: string): ProgressionState | null => {
+export const rememberHack = (state: ProgressionState, key: string, gone: (key: string) => boolean = () => false): ProgressionState | null => {
   const hacked = state.hacked ?? [];
   if (hacked.includes(key)) return null;
-  return { ...state, hacked: [...hacked, key].slice(-HACKED_MEMORY) };
+  return { ...state, hacked: [...hacked.filter((k) => !gone(k)), key].slice(-HACKED_MEMORY) };
 };
 
 /**
