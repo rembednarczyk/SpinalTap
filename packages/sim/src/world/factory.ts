@@ -1,4 +1,4 @@
-import { ENEMY_TYPES, type EnemyTypeId, type EntityId, type EntitySnapshot, type GunSnapshot, type Vec3, type WeaponId, npcWeapon } from "@seki/core";
+import { ENEMY_TYPES, type EnemyTypeId, MOST_AVOIDED, type EntityId, type EntitySnapshot, type GunSnapshot, type Vec3, type WalkSnapshot, type WeaponId, npcWeapon } from "@seki/core";
 import { PLAYER_SPAWN } from "../content/district-m0";
 import { SNIPER_PERCHES } from "../content/district-doki";
 import type { ActorDef, ActorSpawn, StaticProp } from "../content/builders";
@@ -7,7 +7,7 @@ import { DOOR_CLOSE_DELAY } from "../content/doors";
 import { SCHEDULES } from "../content/schedules";
 import { aabbFromCenter } from "./collision";
 import { type PrismDef, boundsOfPrisms, isConvex, prismsAt } from "./prism";
-import type { Combatant, Entity, MeleeState } from "./components";
+import type { Combatant, Entity, MeleeState, WalkProgress } from "./components";
 import { isEnforcer } from "./enforcer";
 import { bodySnapshotOf } from "./bodies";
 
@@ -340,6 +340,24 @@ const withFight = (e: Entity, s: EntitySnapshot): EntitySnapshot => {
   return e.sniper ? { ...armed, sniper: { phase: e.sniper.phase, timer: e.sniper.timer, perch: e.sniper.perch } } : armed;
 };
 
+/**
+ * A ganger's stuck check (G-208), copied: the saved one and the live one never share a point. A
+ * save holds no more than `MOST_AVOIDED` characters round which it repaths, the nearest ones.
+ */
+const walkSnapshotOf = (w: WalkProgress): WalkSnapshot => {
+  const { x, z, since, unstickUntil, side, plan } = w;
+  const s = { x, z, since, unstickUntil, side };
+  if (!plan) return s;
+  const near = (a: Vec3) => Math.hypot(a.x - plan.from.x, a.z - plan.from.z);
+  const avoid = plan.avoid.length > MOST_AVOIDED ? [...plan.avoid].sort((a, b) => near(a) - near(b)).slice(0, MOST_AVOIDED) : plan.avoid;
+  return { ...s, plan: { from: { ...plan.from }, goal: { ...plan.goal }, avoid: avoid.map((a) => ({ ...a })) } };
+};
+
+const walkOf = (s: WalkSnapshot): WalkProgress => {
+  const plan = s.plan ? { from: { ...s.plan.from }, goal: { ...s.plan.goal }, avoid: s.plan.avoid.map((a) => ({ ...a })) } : null;
+  return { x: s.x, z: s.z, since: s.since, unstickUntil: s.unstickUntil, side: s.side, plan };
+};
+
 /** The saveable state of a keyed entity. */
 export const entitySnapshotOf = (e: Entity & { key: string }): EntitySnapshot => {
   // A toughened enemy (ADR-0066) keeps the maximum it had, for the share of it on load.
@@ -361,7 +379,9 @@ export const entitySnapshotOf = (e: Entity & { key: string }): EntitySnapshot =>
   // A body (ADR-0065): knocked out or dead, where the player left it.
   const lying = e.downed ? { ...pinned, downed: bodySnapshotOf(e.downed) } : pinned;
   // Mid-fight (G-185): an NPC's gun and a sniper's aim go on as they were.
-  const body = withFight(e, lying);
+  const fighting = withFight(e, lying);
+  // Walking (G-208): its stuck check goes on, so it takes the way around in the same step.
+  const body = e.walk ? { ...fighting, walk: walkSnapshotOf(e.walk) } : fighting;
   // Looking for the player (ADR-0029): where, for how long, and how long out of sight.
   const ai = e.ai;
   if (!ai?.lastKnown) return body;
@@ -392,6 +412,7 @@ export const applyEntitySnapshot = (e: Entity, s: EntitySnapshot): void => {
   if (e.sniper && s.sniper && s.sniper.perch < e.sniper.perches.length) {
     e.sniper = { ...e.sniper, ...s.sniper, ...(s.sniper.phase === "aim" ? { relight: true as const } : {}) };
   }
+  if (e.ai && s.walk) e.walk = walkOf(s.walk);
   if (e.ai) {
     e.ai.alerted = s.alerted;
     e.ai.lastKnown = s.lastKnown ? { ...s.lastKnown } : null;

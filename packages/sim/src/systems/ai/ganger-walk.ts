@@ -1,4 +1,4 @@
-import type { Vec3 } from "@seki/core";
+import { MOST_UNSTICK_STEPS, type Vec3 } from "@seki/core";
 import { aboveGround, heightApart } from "../../world/ground";
 import type { SimContext } from "../../world/context";
 import { inCreationOrder } from "../../world/ordering";
@@ -6,6 +6,7 @@ import { WORLD_NAV } from "../../content/world-map";
 import { LEVEL_GAP, firingPosition, routeAcrossLevels } from "../../world/nav";
 import { type Detour, SAME_FLOOR, detourStep, followDetour, planDetour, straightWalk } from "./steering";
 import type { Ganger } from "./ganger-perception";
+import type { WalkPlan } from "../../world/components";
 
 /*
  * How a ganger gets somewhere (ADR-0021, ADR-0025): straight or round the obstacle on its floor,
@@ -39,23 +40,29 @@ export interface GangerBinding {
 }
 
 /**
- * Transient progress memory of one walker (like the melee state, not saved): where it stood
- * when the current stretch began, and until when it is getting unstuck.
+ * The way round of a repath, made again from what it is made of when not at hand (a loaded game):
+ * `planDetour` is a pure function of the static solids and its inputs, so it is the same way.
  */
-interface Progress {
-  x: number;
-  z: number;
-  since: number;
-  unstickUntil: number;
-  /** Side of the sidestep, flipped every time it gets stuck again. */
-  side: 1 | -1;
-  /** The repath made when it got stuck: round the static obstacles and the other characters. */
-  plan: Detour | null;
-}
+const detours = new WeakMap<WalkPlan, Detour | null>();
+
+const detourOf = (ctx: SimContext, plan: WalkPlan | null): Detour | null => {
+  if (!plan) return null;
+  let detour = detours.get(plan);
+  if (detour === undefined) {
+    detour = planDetour(ctx.world, plan.from, plan.goal, plan.avoid);
+    detours.set(plan, detour);
+  }
+  return detour;
+};
+
+/**
+ * The side of its first sidestep: by its id, but a reinforcement's by which of the heat's it is,
+ * since a loaded game gives it another id (G-208).
+ */
+const firstSide = (g: Ganger): 1 | -1 => ((g.security?.n ?? g.id) % 2 === 0 ? 1 : -1);
 
 /** The legs of one ganger: where it walks this step and whether it gets anywhere. */
 export class GangerWalk {
-  progress: Progress | null = null;
   /** Set by every walk this step; read by the stuck check after the tree has run. */
   walking = false;
   /** Where the last walk this step was headed. */
@@ -112,8 +119,8 @@ export class GangerWalk {
     if (!ctx || !self) return null;
     const from = self.position;
     if (heightApart(ctx.world, goal, from) > SAME_FLOOR) return goal;
-    const plan = this.progress?.plan;
-    if (this.unsticking() && plan && Math.hypot(plan.goal.x - goal.x, plan.goal.z - goal.z) < PLAN_DRIFT) {
+    const plan = this.unsticking() ? detourOf(ctx, self.walk?.plan ?? null) : null;
+    if (plan && Math.hypot(plan.goal.x - goal.x, plan.goal.z - goal.z) < PLAN_DRIFT) {
       const p = followDetour(plan, from);
       if (p) return p;
     }
@@ -122,8 +129,8 @@ export class GangerWalk {
   }
 
   private unsticking(): boolean {
-    const { ctx } = this.at;
-    const progress = this.progress;
+    const { ctx, self } = this.at;
+    const progress = self?.walk;
     return !!ctx && !!progress && ctx.tick < progress.unstickUntil;
   }
 
@@ -141,7 +148,7 @@ export class GangerWalk {
     this.walking = true;
     let ux = dx / d;
     let uz = dz / d;
-    const p = this.progress;
+    const p = self.walk;
     if (p && !p.plan && this.unsticking()) {
       // Getting unstuck: lean to one side of the way, so two walkers jammed in a gap part.
       const sx = ux + -uz * p.side * SIDESTEP;
@@ -161,9 +168,9 @@ export class GangerWalk {
     const { ctx, self, timeScale } = this.at;
     if (!ctx || !self) return;
     const { x, z } = self.position;
-    const p = this.progress;
+    const p = self.walk;
     if (!this.walking || !p) {
-      this.progress = { x, z, since: ctx.tick, unstickUntil: p?.unstickUntil ?? 0, side: p?.side ?? (self.id % 2 === 0 ? 1 : -1), plan: p?.plan ?? null };
+      self.walk = { x, z, since: ctx.tick, unstickUntil: p?.unstickUntil ?? 0, side: p?.side ?? firstSide(self), plan: p?.plan ?? null };
       return;
     }
     if (Math.hypot(x - p.x, z - p.z) >= STUCK_DISTANCE) {
@@ -173,14 +180,19 @@ export class GangerWalk {
       return;
     }
     if ((ctx.tick - p.since) * ctx.dt * timeScale < STUCK_TIME || ctx.tick < p.unstickUntil) return;
-    p.unstickUntil = ctx.tick + Math.ceil(UNSTICK_TIME / (ctx.dt * Math.max(timeScale, 1e-3)));
+    // Capped so that a save holds it (G-208): far past the slowest time an NPC walks in.
+    p.unstickUntil = ctx.tick + Math.min(Math.ceil(UNSTICK_TIME / (ctx.dt * Math.max(timeScale, 1e-3))), MOST_UNSTICK_STEPS);
     p.side = p.side === 1 ? -1 : 1;
     p.since = ctx.tick;
     const crowd: Vec3[] = [];
     for (const e of inCreationOrder(ctx.world.with("body"))) {
       if (e === self || e.player || e.passerby || Math.hypot(e.position.x - x, e.position.z - z) > CROWD_RADIUS) continue;
-      crowd.push(e.position);
+      crowd.push({ ...e.position });
     }
-    p.plan = this.goal ? planDetour(ctx.world, self.position, this.goal, crowd) : null;
+    const plan = this.goal ? { from: { ...self.position }, goal: { ...this.goal }, avoid: crowd } : null;
+    const detour = plan ? planDetour(ctx.world, plan.from, plan.goal, plan.avoid) : null;
+    // Only a repath that leads somewhere is kept: without one it leans to the side instead.
+    p.plan = detour ? plan : null;
+    if (plan && detour) detours.set(plan, detour);
   }
 }
