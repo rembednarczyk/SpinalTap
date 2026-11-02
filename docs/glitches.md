@@ -764,7 +764,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim, packages/persistence
 
 ### G-244 Budynki ceglane z OSM rysowane w tynku: `building:material` nie trafia do gry
-- Status: w PR #237 (2.11, @ 36cb2fb, czeka na weryfikację i kuratora; `brick-plastered` 3 → 0 (Brama Krakowska już ceglana z landmarku); przeniesione też `building:colour` 16 budynków; zgłoszone przez kuratora przy #209)
+- Status: w PR #237 (2.11, @ 36cb2fb w weryfikacji, potem kurator; `brick-plastered` 3 → 0 (Brama Krakowska już ceglana z landmarku); przeniesione też `building:colour` 16 budynków; zgłoszone przez kuratora przy #209)
 - Ważność: S3 (proponowana: rozpoznawalne zabytki w złym materiale) · Zasięg: 4 budynki (6 elementów OSM z `building:material=brick`): Donżon w450180469, Baszta Gotycka w66286376, Kaplica Trójcy w66258167, Brama Krakowska r7224409 (części w617597406, w617597407) · Koszt: średni (pole w danych + paleta fasady)
 - Gdzie: T-134; Podzamcze (893,1; 214,6), (941; 214,6), Stare Miasto (512,6; −143), Krakowskie (472,6; −91,2)
 - Dowód: import nie przenosi `building:material` ani `building:colour` (tylko `roof:colour` w części dachów); kolor fasady z palety użycia. Po #209 Donżon i Baszta w jasnym tynku kościelnym (zrzut `g232-shots/g232-donzon-po.png`), przed #209 w szarofioletowym tynku `historic`. W rzeczywistości nietynkowana cegła (Brama Krakowska: cegła w części gotyckiej, tynk w nadbudowie)
@@ -849,7 +849,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 - Dług z weryfikacji #228 (do tego samego kroku albo osobno): `FIGURE_SOLES` (x ±0,12) węższe niż buty mężczyzny (±0,18, z ręką na biodrze ±0,23), dziś 1 róg buta 0,15 m w chodniku (palący 589,34; 570,29); stopy siedzących i `figure-off-seat` sprawdzają jeden punkt pod stopami (dziś bez przekroczeń, rozrzut do 5,6 cm); postacie bez brył (świadome w ADR-0058).
 ### G-263 Lampy wnętrz świecą przez ściany na ulicę
-- Status: w naprawie (2.11, naprawiacz, gałąź `ccr-ec2c4269-ilh8k8-g263`; zgłoszone przez weryfikatora ADR-0063 etap 3)
+- Status: w PR #239 (2.11, @ 50c2777, czeka na weryfikację; zgłoszone przez weryfikatora ADR-0063 etap 3)
 - Ważność: S4 · Zasięg: światła punktowe wnętrz (pokój kapsułowy `capsule-room-view.ts` `LAMP` 5,5 m, ok. 2,5 m za fasadą Jezuickiej 14; do sprawdzenia klinika i Neon Koi) · Koszt: mały do średniego
 - Dowód: światła punktowe shadera toon nie mają przesłaniania, więc lampa wnętrza oświetla też bruk i fasadę przed budynkiem; przy 45–50 m od pokoju włącza się i wyłącza skokowo (wiązanie z siatką wnętrza)
 - Poprawka: światło wnętrza tylko dla siatek wnętrza (`includedOnlyMeshes`) albo zasięg przycięty do pokoju; włączanie z płynnym wygaszaniem
@@ -892,6 +892,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: najniższy punkt przęsła ≥ ok. 3,5 m nad nawierzchnią pod nim (albo przęsło pominięte); kontrola skanu `cable-low` (punkt przęsła < 2,5 m nad nawierzchnią) baza z main → 0
 - Pakiet właściciela: packages/engine (renderer/mapcity, `spanCables`)
 - Także: na zrzucie dolnej Grodzkiej (x≈615, z≈15) linia na wysokości ramion przechodnia, źródło nieustalone
+
+### G-269 Neony we wnętrzach kliniki i Neon Koi świecą przez ściany na ulicę
+- Status: zgłoszone (2.11, naprawiacz G-263)
+- Ważność: S4 · Zasięg: każdy `neon` z `S7_INTERIORS` dostaje w `buildNeon` światło punktowe 11 m, 1,2 m przed szyldem; szacunek zasięgu na bruku przed fasadą: klinika „NUMER 7” ok. 5,7 m, dwa `#eafcff` ok. 1,5 m, „PULS 48” i `#ff4d6d` ok. 0,6 m; Koi „KOI LIVE” ok. 4,4 m, `#ff2e88` ok. 1,3 m, „JUKE” ok. 0,5 m; neony wnętrz stale zajmują sloty świateł (8 na scenę), także z ulicy · Koszt: mały do średniego
+- Poprawka: mechanizm `clip` (prostokąt światła) z G-263 dla świateł neonów wnętrz; engine potrzebuje prostokąta pokoju z deskryptora propa (pole w widoku neonu albo `RoomSite` w engine: zmiana w sim, kontrakt widoku); sloty świateł wnętrz tylko w pobliżu pokoju
+- Pakiet właściciela: packages/engine (npr, renderer), packages/sim (widok neonu)
+- Dane: `scratchpad/g263-fix/clinic-koi.txt`
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
