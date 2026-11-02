@@ -869,13 +869,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (npr, renderer), packages/sim (widok neonu)
 - Dane: `scratchpad/g263-fix/clinic-koi.txt`
 
-### G-270 Drzwi bez widocznych futryn
-- Status: w PR #241 (2.11, runda 2 @ d818ffb PRZYJĘTE, czeka na CI; runda 1 @ 64ec573 NIE PRZYJĘTE: migawka NPR; zgłoszone przez użytkownika)
-- Ważność: S3 (zgłoszenie gracza, wszystkie drzwi miasta) · Zasięg: drzwi na fasadach (ADR-0058 etap 9): ościeżnica i nadproże `DOOR_FRAME` (`packages/engine/src/renderer/mapcity/prop-door.ts`: `side` 0,08 m, `lintel` 0,1 m, `depth` 0,2 m) w tym samym kolorze `FRAME_COLOR` #2a2e36 co ciemne skrzydła, więc z kilku metrów skrzydło i futryna to jedna płaszczyzna; drzwi gry (klinika, Neon Koi, ADR-0038) i wejście pokoju kapsułowego (#234) bez obramowania · Koszt: mały do średniego
-- Poprawka: widoczna futryna i opaska: szersza ościeżnica (ok. 0,12–0,15 m) i nadproże, opaska wystająca kilka cm przed lico ściany, kolor kontrastujący ze skrzydłem i ścianą (np. jaśniejszy kamienny/tynkowy dla kamienic, metalowy dla sklepów, z palety kitu), próg; te same reguły dla drzwi gry i otworu pokoju kapsułowego; bez nowych wywołań rysowania (w siatce bloku mebli); drzwi nie mogą przez to wejść w szyby, szyldy ani przejazdy (kontrole `door-*` bez wzrostu)
-- Pakiet właściciela: packages/engine (renderer/mapcity, rooms, wnętrza gry)
-- Test przyjęcia: test engine: futryna szersza od progu i w kolorze różnym od skrzydła i ściany; zrzuty przed/po (kamienica, sklep, klinika, kapsuła) dla użytkownika; budżety i migawka (świadomie, jeśli drzwi w kadrze)
-
 ### G-271 Obrys Starego Miasta `OLD_TOWN_RING` odcina pierzeje wewnątrz murów (Rynek 3–5, Grodzka, Dominikanie, Jezuicka)
 - Status: zgłoszone (2.11, kurator, przegląd PR #236; T-142)
 - Ważność: S4 (dziś bez skutku w grze: żadna latarnia w odciętych pasach) · Zasięg: reguła importu `oldTownLook` i kontrola skanu `lamp-road-in-old-town`; 22 budynki z adresem ulic wewnątrz murów mają środek poza obrysem · Koszt: mały (dane wielokąta i test)
