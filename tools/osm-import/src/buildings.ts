@@ -2,6 +2,7 @@
 import { terrainHeightAt, type TerrainGrid } from "../../../packages/core/src/world/city-geo.ts";
 import { type Lifted, partTier, stackParts } from "./building-parts.ts";
 import { landmarkName, lookOf, massing, buildingUse } from "./building-tags.ts";
+import { isTowerTags } from "./building-towers.ts";
 import { convexParts, isConvex } from "./convex.ts";
 import { type HeightSource } from "./dtm.ts";
 import { type Area } from "./features.ts";
@@ -140,7 +141,11 @@ export const makeBuilding = (a: Area, ctx: BuildingContext, ownParts: readonly A
   const tags = civic ? { ...a.tags, amenity: civic.amenity } : a.tags;
   const use = buildingUse(tags);
   const shops = use !== "commercial" && ctx.shopPoints.some((p) => pointInRing(p, world));
-  const own = massing(tags, { area, shops: shops || use === "commercial", range: ctx.range, look, alone: ctx.alone?.has(a.id) ?? false });
+  const tower = isTowerTags(a.tags);
+  // A tower the map gives no roof (St Nicholas's belfry, G-232) has a tented one, within its height;
+  // one with parts standing on it (the Trinity Tower's helmet) is crowned by them.
+  const roofless = a.tags["roof:shape"] === undefined && a.tags["roof:height"] === undefined && a.tags["roof:levels"] === undefined;
+  const own = massing(tower && roofless && ownParts.length === 0 ? { ...tags, "roof:shape": "pyramidal" } : tags, { area, shops: shops || use === "commercial", range: ctx.range, look, alone: ctx.alone?.has(a.id) ?? false });
   const { base: m, lifted } = stackParts(world, own, ownParts.flatMap((p) => partTier(p, use) ?? []));
   const name = landmarkName(tags, use) ?? (a.tags.name ? undefined : (ctx.namedPoints.find((p) => pointInRing(p.at, world) && sameAddress(p.addr, a.tags))?.name ?? civic?.name));
   const ok: BuildingOut = {
@@ -161,6 +166,7 @@ export const makeBuilding = (a: Area, ctx: BuildingContext, ownParts: readonly A
     look,
     ...(shops ? { shopfront: true as const } : {}),
     ...(use === "church" && ctx.towered?.has(a.id) ? { mappedTower: true as const } : {}),
+    ...(tower ? { tower: true as const } : {}),
     source: m.source,
   };
   return { ok, lifted: lifted.flatMap((l) => liftedPart(l, ok)) };
