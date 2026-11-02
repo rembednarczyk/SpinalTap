@@ -1,12 +1,16 @@
 import { VEHICLE_SIZE, type Vec3, type VehicleModel } from "@seki/core";
-import { type CityKitData, GeometrySink, hexRgb, swatchUv } from "./city-kit-data";
+import { type CityKitData, GeometrySink, type KitModel, hexRgb, swatchUv } from "./city-kit-data";
+import { type CityProps, swatchAt } from "./city-props";
+import { TROLLEY_LIVERY, type VehicleVariant } from "./vehicle-variants";
 
 /**
  * The street's vehicles (ADR-0050) as geometry on the city kit's texture (ADR-0022), in the
  * vehicle's own frame: front +z, wheels on y = 0, centred. The cars are the kit's Car Kit models
  * stretched to real sizes (VEHICLE_SIZE); the trolleybus is procedural, white and green with a
  * red roof like Lublin's, with its two booms up to the wires. Each has a far version of a few
- * boxes. Pure data, no Babylon.
+ * boxes. With `vehicle-props.glb` (ADR-0058 stage 4) a vehicle has the look its variant picks,
+ * fitted to its body, with that model's phone (`-lite`) and far (`-far`) versions; the
+ * trolleybus is then Quaternius' bus lengthened, with the same booms. Pure data, no Babylon.
  */
 
 export interface VehicleTemplate {
@@ -66,6 +70,42 @@ const rod = (sink: GeometrySink, data: CityKitData, a: Vec3, b: Vec3, r: number,
   box(sink, data, { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, z: (a.z + b.z) / 2 }, [r, r, len / 2], swatch, undefined, [side, up, u]);
 };
 
+/** The props files as the kit sees them (ADR-0058): their models and the kit's UV of each of their swatches. */
+export interface VehicleProps {
+  readonly data: CityProps;
+  readonly uvs: readonly (readonly [number, number])[];
+}
+
+/** How a vehicle is drawn: its look, from the props when they have it, and the phone's versions. */
+export interface VehicleLook {
+  readonly props?: VehicleProps | null;
+  readonly variant?: VehicleVariant | null;
+  /** Phones (`low`): the variant's `-lite` model near. */
+  readonly lite?: boolean;
+}
+
+/**
+ * A model of the props stretched to the body's footprint and never above its height (the
+ * trolleybus's booms aside), on the kit's UVs; each vertex coloured by its swatch (`color`), which
+ * only the tinted swatches show.
+ */
+const propsVehicle = (props: VehicleProps, m: KitModel, model: VehicleModel, color: (swatch: string) => string, extra?: (sink: GeometrySink) => void): VehicleTemplate => {
+  const size = VEHICLE_SIZE[model];
+  const sink = new GeometrySink();
+  // Front +z in the file is -z once parsed (like the kit's cars): turned round.
+  sink.addModel(m, { key: m.key, x: 0, y: 0, z: 0, turn: Math.PI, sx: size.width / m.size.x, sy: Math.min(1, size.height / m.size.y), sz: size.length / m.size.z, tint: "#ffffff" });
+  for (let v = 0; v * 2 < m.uvs.length; v++) {
+    const s = swatchAt(props.data, m.uvs[v * 2] ?? 0, m.uvs[v * 2 + 1] ?? 0);
+    const uv = props.uvs[s] ?? [0, 0];
+    sink.uvs[v * 2] = uv[0];
+    sink.uvs[v * 2 + 1] = uv[1];
+    const [r, g, b] = hexRgb(color(props.data.swatches[s]?.name ?? ""));
+    sink.colors.splice(v * 4, 3, r, g, b);
+  }
+  extra?.(sink);
+  return toTemplate(sink);
+};
+
 /** A car of the kit stretched to its real size, its paint in the vertex colour. */
 const kitCar = (data: CityKitData, model: VehicleModel, paint: string): VehicleTemplate | null => {
   const key = KIT_CARS[model];
@@ -76,6 +116,20 @@ const kitCar = (data: CityKitData, model: VehicleModel, paint: string): VehicleT
   // The kit's cars face -z: turned round to face +z.
   sink.addModel(m, { key: m.key, x: 0, y: 0, z: 0, turn: Math.PI, sx: size.width / m.size.x, sy: size.height / m.size.y, sz: size.length / m.size.z, tint: paint });
   return toTemplate(sink);
+};
+
+/** The trolleybus's gear over any body: the roof's box, two booms up to the wires, a cyan strip along each side, the destination sign. */
+const trolleyGear = (sink: GeometrySink, data: CityKitData): void => {
+  const { width, length } = VEHICLE_SIZE.trolleybus;
+  const hw = width / 2;
+  const hl = length / 2;
+  box(sink, data, { x: 0, y: 3.18, z: -1.5 }, [0.8, 0.14, 2.4], "metal");
+  for (const sx of [-1, 1]) {
+    rod(sink, data, { x: sx * 0.32, y: 3.32, z: 0.8 }, { x: sx * 0.32, y: 6.05, z: -4.6 }, 0.04, "dark");
+    // 2077: a cyan strip along each side under the windows.
+    box(sink, data, { x: sx * (hw + 0.02), y: 1.38, z: 0 }, [0.01, 0.03, hl - 0.6], "neon-cyan");
+  }
+  box(sink, data, { x: 0, y: 2.72, z: hl + 0.02 }, [0.95, 0.15, 0.02], "neon-amber");
 };
 
 /** Lublin's trolleybus: white over a green skirt, a red roof, dark glass, two booms up to the wires. */
@@ -89,16 +143,12 @@ const trolleybus = (data: CityKitData): VehicleTemplate => {
   box(sink, data, { x: 0, y: 1.95, z: -0.3 }, [hw + 0.015, 0.5, hl - 0.5], "glass-dark");
   box(sink, data, { x: 0, y: 1.8, z: hl + 0.01 }, [hw - 0.15, 0.75, 0.02], "glass-blue");
   box(sink, data, { x: 0, y: 2.97, z: 0 }, [hw - 0.08, 0.08, hl - 0.2], "paint", "#b0242c");
-  box(sink, data, { x: 0, y: 3.18, z: -1.5 }, [0.8, 0.14, 2.4], "metal");
   for (const sx of [-1, 1]) {
-    rod(sink, data, { x: sx * 0.32, y: 3.32, z: 0.8 }, { x: sx * 0.32, y: 6.05, z: -4.6 }, 0.04, "dark");
     box(sink, data, { x: sx * 0.85, y: 0.9, z: hl + 0.02 }, [0.2, 0.09, 0.02], "headlight");
     box(sink, data, { x: sx * 0.95, y: 0.95, z: -hl - 0.02 }, [0.14, 0.12, 0.02], "taillight");
-    // 2077: a cyan strip along each side under the windows.
-    box(sink, data, { x: sx * (hw + 0.02), y: 1.38, z: 0 }, [0.01, 0.03, hl - 0.6], "neon-cyan");
     for (const z of [-3.9, 3.6]) box(sink, data, { x: sx * (hw - 0.12), y: 0.5, z }, [0.16, 0.5, 0.5], "tyre");
   }
-  box(sink, data, { x: 0, y: 2.72, z: hl + 0.02 }, [0.95, 0.15, 0.02], "neon-amber");
+  trolleyGear(sink, data);
   return toTemplate(sink);
 };
 
@@ -120,9 +170,21 @@ const farVehicle = (data: CityKitData, model: VehicleModel, paint: string): Vehi
   return toTemplate(sink);
 };
 
-/** The near and far geometry of a model in a paint (index into PAINTS); null for a car the kit lacks. */
-export const vehicleTemplates = (data: CityKitData, model: VehicleModel, paint: number): { readonly near: VehicleTemplate; readonly far: VehicleTemplate } | null => {
+/**
+ * The near and far geometry of a model in a paint (index into PAINTS), in the look given; null for
+ * a car the kit lacks. A look's model missing from the props falls back to the kit's car (or the
+ * procedural trolleybus), and its far version to the boxes.
+ */
+export const vehicleTemplates = (data: CityKitData, model: VehicleModel, paint: number, look: VehicleLook = {}): { readonly near: VehicleTemplate; readonly far: VehicleTemplate } | null => {
   const color = PAINTS[paint] ?? PAINTS[0];
-  const near = model === "trolleybus" ? trolleybus(data) : kitCar(data, model, color);
-  return near ? { near, far: farVehicle(data, model, color) } : null;
+  const props = look.props ?? null;
+  const key = look.variant?.key;
+  const fromProps = (k: string): KitModel | undefined => (props && key !== undefined ? props.data.models.get(k) : undefined);
+  const tintOf = (swatch: string): string => (model === "trolleybus" ? (TROLLEY_LIVERY[swatch] ?? color) : color);
+  const gear = model === "trolleybus" ? (sink: GeometrySink) => trolleyGear(sink, data) : undefined;
+  const nearModel = (look.lite ? fromProps(`${key}-lite`) : undefined) ?? fromProps(key ?? "");
+  const near = props && nearModel ? propsVehicle(props, nearModel, model, tintOf, gear) : model === "trolleybus" ? trolleybus(data) : kitCar(data, model, color);
+  const farModel = fromProps(`${key}-far`);
+  const far = props && farModel ? propsVehicle(props, farModel, model, tintOf) : farVehicle(data, model, color);
+  return near ? { near, far } : null;
 };

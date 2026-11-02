@@ -34,8 +34,8 @@ bryła i duże płaszczyzny koloru, a nie detal namalowany w teksturze.
 | `asian_shop_pack_free_gameready` | abhayexe | 22,7 MB | 38,9 tys. | 28 | 24,3 × 6 × 6,4 | parter z witrynami i markizami | słaby: fasada jest w teksturach ze zdjęć, a tekstury mają **prawdziwe marki** (Standard Chartered, McDonald's, 7-Eleven) i prawdziwe koreańskie szyldy; po palecie zostaje płaska ściana | odrzucony z planu (zostaje tylko wpis w `sources.json`) |
 | `cyberpunk_drone_concept_design` | Berk Gedik | 7,7 MB | 21,2 tys. | 7 | 2 × 0,61 × 0,95 | dron jako NPC/patrol (Tessen) | dobry: czerwony kadłub, cztery wirniki | E4 (drony) |
 | `cyberpunk_robot` | Doink | 4,5 MB | 12,5 tys. | 4 | 108 × 164 × 33 | postać humanoidalna (androidka), NPC | dobry, ale to postać ze szkieletem: przez potok postaci, nie przez `city_kit` | E4 (NPC) |
-| `cyberpunk_car` | 4d_Bob | 2,5 MB | 11,4 tys. | 4 | 223 × 141 × 541 (Z w górę) | pojazd: sportowe auto, ruch uliczny | dobry: ciemny lakier, felgi z neonem | E5 (pojazdy) |
-| `dirty_car` | 3D Error 404 | 6,8 MB | 16,7 tys. | 7 | 262 × 179 × 601 (Z w górę) | pojazd: stary sedan, wrak, parkujące auta | dobry, rdza z tekstury znika (lakier z palety) | E5 (pojazdy) |
+| `cyberpunk_car` | 4d_Bob | 2,5 MB | 11,4 tys. | 4 | 223 × 141 × 541 (Z w górę) | pojazd: sportowe auto, ruch uliczny | dobry: ciemny lakier, felgi z neonem | **w kodzie** (`veh-cyber`) |
+| `dirty_car` | 3D Error 404 | 6,8 MB | 16,7 tys. | 7 | 262 × 179 × 601 (Z w górę) | pojazd: stary sedan, wrak, parkujące auta | dobry, rdza z tekstury znika (lakier z palety) | **w kodzie** (`veh-dirty`) |
 | `cyberpunk_apartment` | Jiaxing | 3,3 MB | 11,3 tys. | 5 | 0,31 × 0,14 × 0,38 (skala do poprawy) | wnętrze kapsuły/mieszkania (etap 3 ADR-0063) | średni: mało koloru, 131 siatek, animacja kamery do pominięcia | E6 (wnętrza) |
 | `neon_bedroom` | dylanheyes | 6,6 MB | 33,6 tys. | 11 | 6,2 × 3,8 × 8 | wnętrze: sypialnia z neonami (kryjówka Seki, pokój do wynajęcia) | dobry: fiolet i magenta, neony na ścianach (napis ogólny, fikcyjny) | E6 (wnętrza) |
 | `fire_escape__exit_doors` | blue man group | 1,8 MB | 3,9 tys. | 5 | 0,11 × 1,57 × 1,45 | drzwi: wyjście ewakuacyjne w podwórzach i na zapleczach | dobry | E7 (drzwi i okna) |
@@ -122,8 +122,9 @@ z OSM, które stoją w ścianach, są dziś wolnostojącymi terminalami 0,5 m od
 - **E4: drony i roboty.** `cyberpunk_drone_concept_design` jako dron patrolowy Tessen (widok postaci
   albo pojazdu z AI, z ADR-em do kontraktu widoku). `cyberpunk_robot` przez potok postaci (szkielet,
   animacje), poza `city_kit`.
-- **E5: pojazdy.** `cyberpunk_car` i `dirty_car` do `city-kit.glb` obok aut Kenneya (oś Z w górę
-  obrócona, lakier jako `paint`, światła z emisji), z kontrolą budżetu trójkątów ruchu ulicznego.
+- **E5: pojazdy** (w kodzie, ADR-0058 etap 4). `cyberpunk_car` (`veh-cyber`, wygląd bryły `hatchback`) i
+  `dirty_car` (`veh-dirty`, bryła `sedan`) w osobnym `vehicle-props.glb` zamiast w `city-kit.glb` (kit zostaje
+  bez przepiekania), lakier jako `paint`, światła i felgi z emisji jako neon, z wersjami `-lite` i `-far`.
 - **E6: wnętrza** (etap 3 ADR-0063). `neon_bedroom` jako kryjówka Seki albo pokój do wynajęcia,
   `cyberpunk_apartment` jako druga kapsuła (skala ×~25, bez animacji kamery).
 - **E7: drzwi i okna.** `fire_escape__exit_doors`, `cyberpunk_city_assets_pack_3_doors_and_windows`,
