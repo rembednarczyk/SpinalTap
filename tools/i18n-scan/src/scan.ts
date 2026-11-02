@@ -5,7 +5,8 @@ import { textsOf } from "./texts";
 /**
  * The language scan (ADR-0056): lines of `packages/<name>/src` whose string literals, template
  * text or JSX text (as the TypeScript parser sees them) read as Polish: a Polish letter or a word
- * from `POLISH_WORDS`. Text with neither is not counted. The catalogs (`i18n/`), the ink sources, generated files and
+ * from `POLISH_WORDS`. Text JSX shows as it is (G-243) counts whatever its letters, unless it is
+ * made of `SHOWN_WORDS` and signs; other text with neither is not counted. The catalogs (`i18n/`), the ink sources, generated files and
  * tests are not counted, nor are the data files of Lublin's proper names listed in `EXCEPTIONS`.
  */
 
@@ -27,6 +28,9 @@ export const POLISH_WORDS: readonly string[] = [
   "nie", "jest", "oraz", "albo", "tylko", "przez", "teraz", "gdzie", "jeszcze", "dla", "bez", "jak", "czy", "lub", "ale",
   "tak", "przy", "nad", "pod", "mnie", "ciebie", "nowa", "nowy", "gra", "gry", "wczytaj", "zapisz", "wyjdz", "kup", "sprzedaj",
   "zadanie", "kontrakt", "zlecenie", "dzien", "noc", "broni", "bron", "klawisz", "ustawienia", "wroc", "pomoc", "zamknij", "pusty", "brak", "zapis",
+  "ruch", "skan", "pozycja", "ostatnia", "znana", "mapa", "gracz", "postac", "dalej", "wstecz", "anuluj", "potwierdz", "wybierz", "strzal", "skok", "kucnij",
+  "biegnij", "atak", "przeladuj", "dziennik", "zadania", "ekwipunek", "sklep", "pieniadze", "zycie", "pancerz", "wrog", "wrogowie", "wyjscie", "pauza",
+  "opcje", "sterowanie", "dzwiek", "muzyka", "glosnosc", "jezyk", "trudnosc", "rozmawiaj", "otworz", "uzyj", "podnies", "wez", "idz", "juz", "sie",
 ];
 const WORDS = new RegExp(`(?:^|[^\\p{L}])(?:${POLISH_WORDS.join("|")})(?![\\p{L}])`, "iu");
 
@@ -34,6 +38,34 @@ const WORDS = new RegExp(`(?:^|[^\\p{L}])(?:${POLISH_WORDS.join("|")})(?![\\p{L}
 const ID = /^[\w-]*[-_.:/][\w./:-]*$/;
 
 export const isPolish = (text: string): boolean => DIACRITICS.test(text) || (!ID.test(text.trim()) && WORDS.test(text));
+
+/**
+ * Words JSX may show as they are, the same in every language (ADR-0056), each with its reason.
+ * Keys, units and the game's own names: a shown text made only of these, of single capital
+ * letters (key caps such as "E") and of signs (digits, "€$", "·", "✕") needs no catalog. A
+ * sentence never belongs here: it goes to the catalogs.
+ */
+export const SHOWN_WORDS: readonly (readonly [word: string, why: string])[] = [
+  ["Enter", "The key cap of a contract's accept key, as printed on the keyboard."],
+  ["Tab", "The key cap of the tab switch in the journal and the character sheet."],
+  ["II", "The pause glyph of the touch pad: two bars, not a word."],
+  ["s", "The seconds unit after a cooldown number in the body HUD."],
+  ["m", "The metres unit after a distance number on the minimap."],
+  ["HP", "Hit points, the genre's abbreviation, the same in the Polish catalog."],
+  ["RAM", "The cyberdeck's memory, kept as RAM in the Polish catalog too (scan.ram)."],
+  ["SEKI", "The game's title, SEKI SENSHI, on the title screen."],
+  ["SENSHI", "The game's title, SEKI SENSHI, on the title screen."],
+  ["関", "The game's title in Japanese, 関 戦士, on the title screen."],
+  ["戦士", "The game's title in Japanese, 関 戦士, on the title screen."],
+  ["KIROSHI", "The brand of the scanner optics, an in-world name."],
+  ["Breach", "Breach Protocol, the name of the hacking minigame, kept in both catalogs."],
+  ["Protocol", "Breach Protocol, the name of the hacking minigame, kept in both catalogs."],
+  ["FLATLINE", "The genre's word for death on the death screen, an in-world term."],
+];
+const SHOWN = new Set(SHOWN_WORDS.map(([w]) => w));
+
+/** Whether a text JSX shows as it is needs the catalog: it has a word that is no key, unit or name. */
+export const needsCatalog = (text: string): boolean => (text.match(/\p{L}+/gu) ?? []).some((w) => !SHOWN.has(w) && !/^\p{Lu}$/u.test(w));
 
 /** Directories and files never scanned: the catalogs themselves, ink, generated code. */
 const SKIPPED_DIRS = new Set(["i18n", "ink", "node_modules", "test"]);
@@ -67,10 +99,10 @@ const sourceFiles = (dir: string): string[] => {
   return out;
 };
 
-/** Polish lines of one source file, at most one finding per line. */
+/** Polish lines of one source file and lines JSX shows outside the catalogs, at most one finding per line. */
 export const scanSource = (file: string, src: string): Finding[] => {
   const lines = new Map<number, string>();
-  for (const t of textsOf(file, src)) if (!lines.has(t.line) && isPolish(t.text)) lines.set(t.line, t.text);
+  for (const t of textsOf(file, src)) if (!lines.has(t.line) && (isPolish(t.text) || (t.shown && needsCatalog(t.text)))) lines.set(t.line, t.text);
   return [...lines].sort(([a], [b]) => a - b).map(([line, text]) => ({ file, line, text: text.trim().slice(0, 120) }));
 };
 
