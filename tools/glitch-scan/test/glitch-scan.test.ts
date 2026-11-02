@@ -30,6 +30,7 @@ import { drawnFlight, stepsAcross, stepsHidden, stepsRunsBare } from "./steps-ru
 import { stepsInclineAgainst } from "./steps-incline";
 import { flightUnderpass, riserOf, stepFaces } from "./steps-faces";
 import { cityChurches, cityFakeTowers, cityTowers, doubleTowers, dwellingTowers, towersOffBuilding } from "./landmark-towers";
+import { cityBricks, plasteredWalls } from "./wall-materials";
 import { EMPTY_STRIPS_KNOWN, bayCarsMisturned, bayCarsOutOfPark, bayStripsEmptyKnown, bayStripsSparse, crowdLanesOnParking, kerbParksOf, kerbStripsOffCarStreets } from "./kerb-bays";
 import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alone.ts";
 import { correctedLine } from "../../osm-import/src/corrections.ts";
@@ -1145,6 +1146,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "church-tower-off-building": () => towersOffBuilding(cityChurches(SOURCE_OSM)),
   /** A tower of the map (`man_made=tower`, `tower:type`, `building=tower`) drawn as a tenement: flats' windows or shop fronts (G-232). */
   "tower-dwelling-windows": () => dwellingTowers(cityTowers(SOURCE_OSM)),
+  /** A building or a lifted part `building:material=brick` in OSM drawn in a plaster of the facades or the landmark kit (G-244). */
+  "brick-plastered": () => plasteredWalls(cityBricks(SOURCE_OSM)),
   /**
    * A monument or an artwork whose shape its OSM tags do not bear out (G-149), judged by the
    * tagged node nearest within 3 m: anything standing for a plaque, a stumbling stone, a mural or

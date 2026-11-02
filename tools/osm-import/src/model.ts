@@ -6,6 +6,7 @@
 import { type MarkingOut } from "./markings.ts";
 import { type PassageOut } from "./passages.ts";
 import { type VenueOut } from "./venues.ts";
+import { type WallMaterial } from "./building-wall.ts";
 import type { RoofShape } from "../../../packages/core/src/ports/types.ts";
 import { type BuildingUse, type GroundSurface, type TerrainGrid } from "../../../packages/core/src/world/city-geo.ts";
 
@@ -40,6 +41,10 @@ export interface BuildingOut {
   readonly mappedTower?: true;
   /** A tower of the map standing as a building of its own (`man_made=tower`, `tower:type`, G-232): a tower's facade, not a tenement's. */
   readonly tower?: true;
+  /** `building:material` of its own element (G-244): the walls' material where the map has it. */
+  readonly material?: WallMaterial;
+  /** `building:colour` of its own element as `#rrggbb` (G-244). */
+  readonly colour?: string;
   /** Where the height came from. */
   readonly source: "height" | "levels" | "default";
   /** Venues in or at it (ADR-0064 stage 4), relative to (x, z), with their 2077 names. */

@@ -5,11 +5,13 @@ import { describe, expect, it } from "vitest";
 import { CAPSULE_CEILING, CAPSULE_DOOR, CAPSULE_FURNITURE, CAPSULE_HALF_DEPTH, CAPSULE_HALF_WIDTH, CAPSULE_INTERIOR_ROOM, CAPSULE_ORIGIN } from "@seki/sim";
 import { Scene } from "../src/babylon";
 import { ToonMaterials } from "../src/npr/toon-material";
+import { ToonPointLights, pointLightAt } from "../src/npr/toon-point-lights";
+import { MAX_POINT_LIGHTS, TOON_FRAGMENT } from "../src/npr/toon-shader";
 import { CityKit } from "../src/renderer/city-kit";
 import { parseCityKit } from "../src/renderer/city-kit-data";
 import { mergeCityProps, parseCityProps, triangleCount } from "../src/renderer/city-props";
 import { CAPSULE_MODEL, capsuleGeometry } from "../src/renderer/rooms/capsule-geometry";
-import { CAPSULE_DRAW, CapsuleRoomView } from "../src/renderer/rooms/capsule-room-view";
+import { CAPSULE_DRAW, CAPSULE_LAMP_KEY, CapsuleRoomView } from "../src/renderer/rooms/capsule-room-view";
 
 const file = (name: string): ArrayBuffer => {
   const b = (readFileSync as (url: URL) => Uint8Array)(new URL(`../../app/public/city/${name}`, import.meta.url));
@@ -126,5 +128,81 @@ describe("the capsule room's view (ADR-0063 stage 3)", () => {
     box.props = props;
     view.update();
     expect(view.stats.model).toBe(true);
+  });
+
+  // G-263: the toon shader's point lights have no occlusion, so the lamp lit the street through
+  // the facade (some 2.3 m of paving in front of it) and switched on in one step at 45 m.
+  it("lights only the room inside its walls, not the street, the facade or the walls' outer faces (G-263)", () => {
+    const { materials, view } = setup();
+    view.update();
+    const lamp = materials.light(CAPSULE_LAMP_KEY)!;
+    expect(lamp).toBeDefined();
+    const r = CAPSULE_INTERIOR_ROOM;
+    const y = CAPSULE_ORIGIN.y;
+    // Inside: the floor, the walls' inner faces, the bed alcove.
+    for (const p of [
+      { x: CAPSULE_ORIGIN.x, y, z: CAPSULE_ORIGIN.z },
+      { x: r.minX, y: y + 1.2, z: CAPSULE_ORIGIN.z },
+      { x: CAPSULE_ORIGIN.x, y: y + 1.2, z: r.minZ },
+      { x: CAPSULE_ORIGIN.x + 1, y: y + 0.6, z: r.maxZ - 0.3 },
+    ])
+      expect(pointLightAt(lamp, p), JSON.stringify(p)).toBeGreaterThan(0);
+    // Outside, in reach of the light's sphere: every point a street mesh, the facade or a
+    // neighbour's wall could have, on a 10 cm grid around the room and from the paving up.
+    let probed = 0;
+    for (let x = r.minX - 3; x <= r.maxX + 3; x += 0.1)
+      for (let z = r.minZ - 3; z <= r.maxZ + 3; z += 0.1) {
+        // The walls are 0.2 m thick or more: their inner faces may stay lit, their bodies and outer faces not.
+        if (x > r.minX - 0.1 && x < r.maxX + 0.1 && z > r.minZ - 0.1 && z < r.maxZ + 0.1) continue;
+        for (const h of [-0.2, 0, 0.5, 1.5, 2.5]) {
+          const p = { x, y: y + h, z };
+          if (Math.hypot(p.x - lamp.position.x, p.y - lamp.position.y, p.z - lamp.position.z) < lamp.range) probed++;
+          expect(pointLightAt(lamp, p), JSON.stringify(p)).toBe(0);
+        }
+      }
+    expect(probed).toBeGreaterThan(1000);
+    // The paving of Jezuicka 2.3 m in front of the facade, where the lamp's patch reached.
+    expect(pointLightAt(lamp, { x: CAPSULE_DOOR.at.x, y: CAPSULE_DOOR.at.y, z: CAPSULE_DOOR.at.z - 2.3 })).toBe(0);
+  });
+
+  it("fades the lamp in with the distance before the room's draw distance, no step (G-263)", () => {
+    const { materials, view, eye } = setup();
+    const levels: number[] = [];
+    for (let d = 30; d <= CAPSULE_DRAW + 8; d += 0.25) {
+      eye.z = CAPSULE_ORIGIN.z - d;
+      view.update();
+      levels.push(materials.light(CAPSULE_LAMP_KEY)?.intensity ?? 0);
+    }
+    const full = levels[0]!;
+    expect(full).toBeGreaterThan(1);
+    for (let i = 1; i < levels.length; i++) expect(Math.abs(levels[i]! - levels[i - 1]!), `step ${i}`).toBeLessThanOrEqual(0.03 * full);
+    // Going out the room stays drawn a few metres more; the lamp is dark before it goes.
+    expect(view.stats.meshes).toBe(0);
+    for (let d = CAPSULE_DRAW + 8; d >= 30; d -= 0.25) {
+      eye.z = CAPSULE_ORIGIN.z - d;
+      view.update();
+      const now = materials.light(CAPSULE_LAMP_KEY)?.intensity ?? 0;
+      if (d >= CAPSULE_DRAW) expect(now).toBe(0);
+      if (now > 0) expect(view.stats.meshes).toBe(1);
+    }
+    expect(materials.light(CAPSULE_LAMP_KEY)?.intensity).toBe(full);
+  });
+
+  it("binds the lamp's walls into the toon shader's slot, the other lights unclipped (G-263)", () => {
+    const { materials, view } = setup();
+    view.update();
+    const lamp = materials.light(CAPSULE_LAMP_KEY)!;
+    const slots = new ToonPointLights();
+    slots.add("street", { position: { x: 0, y: 5, z: 0 }, color: "#ffffff", range: 14, intensity: 0.85 });
+    slots.add(CAPSULE_LAMP_KEY, lamp);
+    const arrays = new Map<string, number[]>();
+    slots.apply({ setArray4: (k: string, v: number[]) => arrays.set(k, v), setFloat: () => undefined } as unknown as Parameters<ToonPointLights["apply"]>[0]);
+    const clip = arrays.get("pointClip")!;
+    expect(clip).toHaveLength(MAX_POINT_LIGHTS * 4);
+    expect(clip[0]).toBeLessThan(-1e6);
+    expect(clip[2]).toBeGreaterThan(1e6);
+    expect(clip.slice(4, 8)).toEqual([lamp.clip!.minX, lamp.clip!.minZ, lamp.clip!.maxX, lamp.clip!.maxZ]);
+    expect(TOON_FRAGMENT).toMatch(/uniform vec4 pointClip\[/);
+    expect(TOON_FRAGMENT).toMatch(/att \*= step\(clip\.x, vWorldPos\.x\)/);
   });
 });
