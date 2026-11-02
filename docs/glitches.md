@@ -793,7 +793,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer)
 
 ### G-255 Garb w biegu schodów w56965515 przy pomoście wiaduktu Zamkowej: uskok 2,9 m i bieg pod prąd
-- Status: w PR #233 (2.11, runda 4 @ 223dedc PRZYJĘTE z uwagami (dług w G-273), kurator w toku; runda 6 @ 96cfc6a w weryfikacji (wnęka w pomoście wiaduktu na pasmo biegu, kurator do przeglądu); runda 5 @ defc2a0 NIE PRZYJĘTE: w obrysie wiaduktu renderer rysuje stopnie biegu, a symulacja daje płytę albo teren pod nią (24 z 63 przejść źle), testy omijały ten pas; G-274 naprawione; runda 3 @ d03bb2d: podrzut z podestu; runda 2 @ 0e075bb: NPC w pościgu; runda 1 @ daaca9f: pod górę 4/30; pochyły pomost biegu zamiast rampy terenu; zgłoszone przez kuratora przy #219)
+- Status: w PR #233 (2.11, runda 4 @ 223dedc PRZYJĘTE z uwagami (dług w G-273), kurator w toku; runda 7 u nowego autora (limit rund); runda 6 @ 96cfc6a NIE PRZYJĘTE: reguła ściany w `steering.ts` na całe okno psuje pościg z Podwala, reszta (wnęka, dash, chód 126/126) dobra; runda 5 @ defc2a0 NIE PRZYJĘTE: w obrysie wiaduktu renderer rysuje stopnie biegu, a symulacja daje płytę albo teren pod nią (24 z 63 przejść źle), testy omijały ten pas; G-274 naprawione; runda 3 @ d03bb2d: podrzut z podestu; runda 2 @ 0e075bb: NPC w pościgu; runda 1 @ daaca9f: pod górę 4/30; pochyły pomost biegu zamiast rampy terenu; zgłoszone przez kuratora przy #219)
 - Ważność: S3 (proponowana: uskok 2,9 m w środku schodów, gracz spada albo AI się zatrzymuje) · Zasięg: 1 droga (3 kawałki pasa w dwóch chunkach), możliwe dalsze z kontroli `steps-riser-tall` · Koszt: mały do średniego
 - Gdzie: T-131; w56965515 bieg węzeł 2 → 3 (734,1; 163,9) → (729,5; 159,9), Podzamcze/Stare Miasto, granica chunków z = 160
 - Dowód: `planSteps` na `groundY` (sonda `topo-g236-flight.txt`, 5757fae): stopnie na pomoście y −13,48 do x ≈ 733,4, potem podstopnica 2,92 m na teren −16,41, dalej stopnie w górę do −15,28 przy węźle 3 (flight ma `incline=down`); kawałek tego biegu w `stare-miasto-1-1` (730,8; 159,6) leży płasko na pomoście −13,51 obok −15,4 za granicą chunka. Stan sprzed #219 identyczny
@@ -854,7 +854,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (props), tools/glitch-scan
 
 ### G-268 Kable przęseł nad ulicą wiszą za nisko, kilka pod ziemią
-- Status: zgłoszone (2.11, autor ADR-0058 etapu 7b; do potwierdzenia przez weryfikatora #238)
+- Status: w PR #244 (2.11, @ 66a8942 w weryfikacji)
 - Ważność: S4 (S3, jeśli kabel przecina przechodniów na wysokości głowy) · Zasięg: 11 przęseł niżej niż 2,5 m nad rysowaną nawierzchnią, m.in. x≈996, z≈568 (do −7,8 m, pod ziemią), x≈520, z≈171 (−2,6 m), x≈634, z≈124 (2,1 m) · Koszt: mały
 - Przyczyna (do potwierdzenia): wysokość przęsła liczona od podstawy budynku na zboczu, nie od nawierzchni pod przęsłem
 - Poprawka: najniższy punkt przęsła ≥ ok. 3,5 m nad nawierzchnią pod nim (albo przęsło pominięte); kontrola skanu `cable-low` (punkt przęsła < 2,5 m nad nawierzchnią) baza z main → 0
@@ -907,7 +907,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: w obrysie każdego kawałka mostu `groundY` nie leży niżej niż pomost o więcej niż `STEP_HEIGHT` poza przejściami pod mostem (G-062); kontrola skanu `deck-drawn-over-flight` 40 → 0; testy G-255 (`flight-walk`, `flight-chase`) dalej zielone
 
 ### G-275 W TPP przy celowaniu z bliska (zwłaszcza w kucaniu) postać zasłania cel
-- Status: w naprawie (2.11, naprawiacz, gałąź `ccr-ec2c4269-ilh8k8-g275`; zgłoszone przez użytkownika)
+- Status: w PR #243 (2.11, @ f97804c w weryfikacji)
 - Ważność: S3 (zgłoszenie gracza, podstawowa mechanika strzelania) · Zasięg: kamera TPP (`packages/engine/src/camera/camera-rig.ts`: `TPP_DISTANCE` 2,2 m, `TPP_SHOULDER_OFFSET` 0,55 m z `packages/sim/src/world/hitscan.ts`, `TPP_HEIGHT_OFFSET` 0, `TPP_ADS_PULL` 0,45; w kucaniu kamera tylko obniża się z `eyeHeightAt`), cel z przyłożenia i do kilku metrów · Koszt: średni
 - Rozwiązania branżowe do połączenia: (1) przy celowaniu i w kucaniu większe przesunięcie przez ramię i lekko w górę (postać ucieka na bok kadru); (2) zmiana ramienia klawiszem/padem (akcja wejścia, i18n, opcje sterowania); (3) przezroczystość albo wzór kropek (dither, pasuje do NPR) postaci, gdy zasłania celownik lub kamera jest blisko; (4) strzał z promienia kamery z poprawką lufy, żeby trafienie było tam, gdzie celownik, przy dużych przesunięciach (hitscan w `sim` już liczy punkt startu z kucaniem: sprawdzić zgodność, bo stałe przesunięcia są w `sim`)
 - Pakiet właściciela: packages/engine (camera, npr), packages/sim (hitscan: stałe przesunięć, jeśli się zmieniają; złote hashe), packages/engine/src/input (zmiana ramienia), packages/ui (opcje)
