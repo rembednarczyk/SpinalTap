@@ -3,7 +3,7 @@ import { DRAIN_GRATE, HOUSE_PLATE, STICKER_HOSTS, grateLayout, graffitiLayout, h
 import { doorVariant } from "../../../packages/core/src/world/doors.ts";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
 import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
-import { BAND_ROOM, DOOR_FRAME, type DecalContext, type DecalWall, END_ROOM, MURAL_LIFT, PLATE_LIFT, STREET_LIFT, addDecals } from "../src/props-decals.ts";
+import { BAND_ROOM, DOOR_FRAME, type DecalContext, doorsOn, type DecalWall, END_ROOM, MURAL_LIFT, PLATE_LIFT, STREET_LIFT, addDecals } from "../src/props-decals.ts";
 import { GRATE_SPACING, KERB_GAP, STICKER_GAP, grateCorners } from "../src/props-decals-street.ts";
 import { Site } from "../src/props-site.ts";
 import type { Tags } from "../src/osm.ts";
@@ -83,8 +83,9 @@ const ctx = (patch: Partial<DecalContext> = {}): DecalContext => ({
   ...patch,
 });
 
-const decals = (walls: readonly DecalWall[], c: Partial<DecalContext> = {}, district: LublinChunkData["district"] = "targ", furniture: StreetPropItem[] = [], heights?: number[]) => {
-  const site = new Site([chunk(district, heights)]);
+const decals = (walls: readonly DecalWall[], c: Partial<DecalContext> = {}, district: LublinChunkData["district"] = "targ", furniture: StreetPropItem[] = [], heights?: number[], more: Partial<LublinChunkData> = {}) => {
+  const base = chunk(district, heights);
+  const site = new Site([{ ...base, ...more, streets: [...base.streets, ...(more.streets ?? [])] }]);
   const byChunk = new Map<string, StreetPropItem[]>([["t-0-0", [...furniture]]]);
   const out = addDecals(byChunk, site, walls, ctx(c));
   const items = byChunk.get("t-0-0")!.filter((i) => !furniture.includes(i));
@@ -241,6 +242,40 @@ describe("decals on one wall", () => {
   });
 });
 
+describe("the rooms a wall decal keeps", () => {
+  it("keeps 0.3 m (`BOARD_ROOM`) under a venue's board over it", () => {
+    // A board along every wall from 2.35 m: the highest pieces (to 2.2 m) come within 0.3 m of it.
+    const g = decals(row({ boards: [{ u0: 0, u1: 8, bottom: 2.35, top: 2.9 }] })).of("graffiti");
+    expect(g.length).toBeGreaterThan(10);
+    for (const i of g) {
+      const l = graffitiLayout(i.variant);
+      expect(i.y + l.lift + l.height).toBeLessThanOrEqual(2.35 - 0.3 + 1e-6);
+    }
+  });
+
+  it("keeps 3 m (`PASSAGE_ROOM`) from a passage's axis", () => {
+    // A passage through the middle of every wall.
+    const passages = row().map((w) => ({ building: w.building, from: { x: w.a.x + 4, z: 38 }, to: { x: w.a.x + 4, z: 50 }, width: 3, height: 3, rise: 0.5 }));
+    const g = decals(row(), {}, "targ", [], undefined, { passages }).of("graffiti");
+    for (const i of g) expect(Math.abs(((i.x % 10) + 10) % 10 - 4), `${i.x}`).toBeGreaterThanOrEqual(3 - 1e-6);
+    // Without them the middles are painted.
+    expect(decals(row()).of("graffiti").some((i) => Math.abs((i.x % 10) - 4) < 3)).toBe(true);
+  });
+
+  it("counts a door's frame (`DOOR_FRAME`, 0.15 m) round its leaf", () => {
+    const w = wall(0);
+    const door: StreetPropItem = { prop: "door", x: 3, y: 0.1, z: 40, yaw: Math.PI, variant: doorVariant({ model: "steel", width: 1.2, height: 2.3 }) };
+    const [r] = doorsOn(w, [door]);
+    expect(r!.u0).toBeCloseTo(3 - 0.6 - 0.15, 6);
+    expect(r!.u1).toBeCloseTo(3 + 0.6 + 0.15, 6);
+    expect(r!.bottom).toBeCloseTo(0.1 - 0.15, 6);
+    expect(r!.top).toBeCloseTo(0.1 + 2.3 + 0.15, 6);
+    // A door of another wall (turned away, or off the face) is not this wall's.
+    expect(doorsOn(w, [{ ...door, yaw: 0 }])).toEqual([]);
+    expect(doorsOn(w, [{ ...door, z: 40.5 }])).toEqual([]);
+  });
+});
+
 describe("decals and the doors of the facades (ADR-0058 stage 9)", () => {
   it("keep off a door of their wall, its frame included", () => {
     // A roller shutter 2.4 m wide in the middle of every wall, its foot on the pavement.
@@ -279,6 +314,23 @@ describe("house number plates", () => {
     expect([l.number, l.letter]).toEqual([12, 1]);
     expect(p[0]!.y + l.lift).toBeCloseTo(PLATE_LIFT, 1);
     onItsWall(p[0]!, walls, HOUSE_PLATE.width);
+  });
+
+  it("puts the plate on the wall facing the street of its `addr:street`, the longest street wall otherwise", () => {
+    // The building's south wall (8 m) faces Testowa, its east wall (6 m) Boczna along x = 15.
+    const south = wall(0);
+    const east = wall(0, { a: { x: 8, z: 40 }, b: { x: 8, z: 46 }, nx: 1, nz: 0, length: 6 });
+    // No row of buildings behind them here: both walls look onto open ground.
+    const boczna = { buildings: [], streets: [{ name: "Boczna", kind: "residential", line: [15, 0, 15, 60] }] };
+    const plateOn = (street?: string) => {
+      const tags = new Map([["w0", { "addr:housenumber": "4", ...(street ? { "addr:street": street } : {}) }]]);
+      const p = decals([south, east], { buildingTags: tags }, "targ", [], undefined, boczna).of("house-plate");
+      expect(p).toHaveLength(1);
+      return Math.abs(p[0]!.x - 8) < 0.01 ? "east" : "south";
+    };
+    expect(plateOn("Boczna")).toBe("east");
+    expect(plateOn("Testowa")).toBe("south");
+    expect(plateOn()).toBe("south");
   });
 
   it("lifts the plate over the plinth band, but not out of sight over a steep street", () => {
