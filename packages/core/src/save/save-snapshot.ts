@@ -5,6 +5,9 @@ import type { Contract } from "../contracts/contracts";
 import type { EnemyTypeId } from "../items/enemies";
 
 /**
+ * v27: a walking NPC's stuck check (ADR-0025, G-208): where its current stretch began, until when
+ * it gets round the obstacle, the side it leans to and its repath; an older save has every NPC
+ * starting a new stretch, as it loaded before.
  * v26: each of the heat's reinforcements with the tick it came in at (G-202), so a quickhack on
  * it pays XP once; an older save's ones are taken as come in at the save's tick.
  * v25: an NPC's gun mid-fight (rounds left, reload, draw, bloom) and a sniper's aim, rest or
@@ -36,7 +39,7 @@ import type { EnemyTypeId } from "../items/enemies";
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 26;
+export const SAVE_SCHEMA_VERSION = 27;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {
@@ -77,6 +80,41 @@ export interface EntitySnapshot {
   readonly gun?: GunSnapshot;
   /** A sniper's state (G-185): it may be about to fire. Absent for everyone else. */
   readonly sniper?: SniperSnapshot;
+  /** A walking NPC's stuck check (G-208). Absent for one that never walked since it was made. */
+  readonly walk?: WalkSnapshot;
+}
+
+/**
+ * The stuck check of a walking NPC (ADR-0025, G-208): it takes the way around in other steps
+ * when a load starts it afresh. Ticks are the save's own `tick`'s.
+ */
+export interface WalkSnapshot {
+  /** Where it stood when the current stretch began, and the tick then, before the save's. */
+  readonly x: number;
+  readonly z: number;
+  readonly since: number;
+  /** It is getting unstuck until this tick, at most `MOST_UNSTICK_STEPS` past the save's. */
+  readonly unstickUntil: number;
+  /** The side it leans to while getting unstuck. */
+  readonly side: 1 | -1;
+  /** The repath made when it got stuck: from where, to where, round which characters (at most `MOST_AVOIDED`). */
+  readonly plan?: WalkPlanSnapshot;
+}
+
+/**
+ * The longest a walker gets unstuck for, in steps (ADR-0025, G-208): a minute, far past its 1.2 s
+ * at the slowest time of the overdrive. A save's `unstickUntil` is no further past its `tick`.
+ */
+export const MOST_UNSTICK_STEPS = 3600;
+
+/** The most characters a saved repath goes round (G-208): those within a few metres of a stuck walker. */
+export const MOST_AVOIDED = 256;
+
+/** What a repath round the obstacles is made of (G-208): a loaded game makes the same one again. */
+export interface WalkPlanSnapshot {
+  readonly from: Vec3;
+  readonly goal: Vec3;
+  readonly avoid: readonly Vec3[];
 }
 
 /** An NPC's gun between two shots (G-185): a loaded game fires when the saved one would. */
