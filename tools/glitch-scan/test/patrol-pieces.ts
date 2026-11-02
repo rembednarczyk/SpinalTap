@@ -113,8 +113,8 @@ export const zonesOf = (lanes: readonly PatrolLane[]): Box2[] =>
 
 /** How far the searchlight pool's drawn rim may lie off the paving (m). */
 export const POOL_TOLERANCE = 0.05;
-/** How far the pool moves between two places of it checked (m): a slope or a kerb under it is wider. */
-const POOL_STEP = 0.5;
+/** The cells of the pool's way it is checked once in (m): a slope or a kerb under it is wider than one, and the pool (2.8 m) wider still. */
+const POOL_STEP = 1;
 /** The paving runs on even between two corners of the rim when its height halfway is within this of their mean (m). */
 const EVEN = 0.02;
 
@@ -162,15 +162,16 @@ export const patrolChecks = (
   /** A searchlight pool whose rim lies more than `POOL_TOLERANCE` under or over the paving (sunk into a slope, floating over it). */
   "drone-low-pool": () =>
     lanes().flatMap((lane) => {
-      // Every `POOL_STEP` of the pool's way and at every radius it takes: it does not turn, and while
-      // the drone hangs it lies where it lay.
-      let last: { x: number; z: number; r: number } | null = null;
+      // Once per `POOL_STEP` cell of the pool's way and per 0.1 m of its radius (the views lay it again
+      // only past that): it does not turn, lies where it lay while the drone hangs, and the way back
+      // goes over the way out.
+      const seen = new Set<string>();
       for (const f of patrolPoints(lane)) {
         const drop = poolDrop(f.pose);
         if (drop === null) continue;
-        const r = poolRadius(drop);
-        if (last && last.r === r && Math.hypot(f.pose.x - last.x, f.pose.z - last.z) < POOL_STEP) continue;
-        last = { x: f.pose.x, z: f.pose.z, r };
+        const key = `${Math.round(f.pose.x / POOL_STEP)},${Math.round(f.pose.z / POOL_STEP)},${Math.round(poolRadius(drop) * 10)}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
         const w = poolOff(f.pose, surfaceAt);
         if (w && Math.abs(w.off) > POOL_TOLERANCE) return [{ at: `patrol lane from ${lane.points[0]!.x.toFixed(0)},${lane.points[0]!.z.toFixed(0)} at ${w.x.toFixed(1)},${w.z.toFixed(1)}`, what: `pool's rim ${w.off.toFixed(2)} m off the paving` }];
       }
