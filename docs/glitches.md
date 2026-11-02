@@ -725,16 +725,10 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (micro-events, streaming)
 
 ### G-232 Wolnostojące dzwonnice i wieże z `use: historic` rysowane jak kamienice
-- Status: w PR #209 (2.11, weryfikacja czeka na slot, potem kurator): `tower: true` z tagów OSM, fasada wieży i dach namiotowy, kontrola `tower-dwelling-windows` 4 → 0 (Jozafat, Mikołaj, Baszta Gotycka, Donżon); do kuratora: Donżon i Baszta dostają tynk i okna wieży (Donżon w rzeczywistości ceglany), okna wieży świecą nocą w kondygnacjach
+- Status: w PR #209 (2.11, PRZYJĘTE przez weryfikatora, kurator w toku): `tower: true` dla 5 wież, kontrola `tower-dwelling-windows` 4 → 0
 - Ważność: S3 (proponowana: zabytek wygląda jak blok) · Zasięg: dzwonnica św. Mikołaja w680377807, wieża cerkwi św. Jozafata w1382552285 (po G-224 z wysokością z NMPT): rzędy oświetlonych okien i płaski szczyt (zrzut `scratchpad/g224/shots/g224-mikolaj-po.png`)
 - Poprawka: budynek z `man_made=tower`/`tower:type=bell_tower` dostaje fasadę wieży (bez okien mieszkań, okna dzwonnicy u góry) i dach namiotowy/hełm; kontrola skanu „wieża z oknami mieszkań”
 - Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import (use)
-
-### G-233 Ciało napastnika mikrozdarzenia niesione na ramieniu znika przy zapisie i wczytaniu
-- Status: w PR #211 (2.11, zapis v28, w weryfikacji): `strayBodies` w zapisie; ciało niesione w trakcie napadu: zapis zamyka napad jak „left”
-- Ważność: S4 · Zasięg: napad (mugging): ciało napastnika niesione przez gracza (`carrying` ustawione) po zapisie i wczytaniu: `carrying` null, 0 ciał. Przed „won” ciało ma klucz `micro:` i odpada w `isMicroKey`, po „won” klucza nie ma i dalej ginie
-- Poprawka: ciało napastnika po zakończeniu zdarzenia staje się zwykłym ciałem w zapisie (jak ciała posiłków, G-193); test zapis/wczytanie z niesionym ciałem
-- Pakiet właściciela: packages/sim (micro-events, bodies), packages/persistence
 
 ### G-234 Pasy schodów ucięte brzegiem chunka: klin rysowany w poprzek albo niewidoczny
 - Status: zgłoszone (2.11, naprawiacz G-213); stan sprzed G-213, bazy skanu 1 i 1
@@ -795,10 +789,22 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (crowd), packages/persistence
 
 ### G-241 Obaleni albo zabici takedownem przechodnie bez klucza mogą ginąć przy zapisie (do potwierdzenia)
-- Status: zgłoszone (2.11, naprawiacz G-233), niepotwierdzone
+- Status: zgłoszone (2.11), prawdopodobnie nie do odtworzenia: weryfikator G-233 ustalił, że `takedownDistance` odrzuca `passerby` i `interactable`, a obalani cywile mają klucz; zamknąć po sondzie
 - Ważność: S4 · Zasięg: cywile bez klucza nie mają `enemy`, więc `strayBodies` (G-233) ich nie bierze
 - Poprawka: sonda zapis/wczytanie z obalonym cywilem; jeśli ginie, rozszerzyć `strayBodies` z testem
 - Pakiet właściciela: packages/sim, packages/persistence
+
+### G-242 Napastnik po wygranym napadzie zachowuje `ai.victim` w grze, ale nie po wczytaniu
+- Status: zgłoszone (2.11, weryfikator G-233)
+- Ważność: S4 · Zasięg: `close()` przy „won” nie czyści `ai.victim` (np. `micro:mugging:11:victim`), a zapis tego pola nie trzyma; po przebudzeniu ogłuszonego napastnika `isEngaged` (street.ts:45), `freeToLook` (body-watch-system.ts:31) i `interrupted` (activity.ts:18) różnią się między grą bez wczytania i po wczytaniu (atak na niego jest napaścią tylko po wczytaniu); hash tego nie łapie
+- Poprawka: czyścić `ai.victim` w `close()`; test zapis/wczytanie z obudzonym napastnikiem
+- Pakiet właściciela: packages/sim (micro-events)
+
+### G-243 Skan i18n nie łapie polskich słów bez polskich znaków
+- Status: zgłoszone (2.11, zgłoszenie użytkownika: „ruch” na padzie; naprawione w #213)
+- Ważność: S4 (luka w narzędziu) · Zasięg: `tools/i18n-scan` liczy literały z polskimi znakami; „ruch” w `touch-controls.tsx` przeszedł, baza była 0
+- Poprawka: w JSX liczyć każdy tekst węzła (i `aria-label`, `title`, `placeholder`) poza wywołaniami `t()`, z listą dozwolonych (nazwy własne, symbole); baza z nowej reguły, potem w dół
+- Pakiet właściciela: tools/i18n-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)

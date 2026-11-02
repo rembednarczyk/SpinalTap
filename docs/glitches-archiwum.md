@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-233 Ciało napastnika mikrozdarzenia niesione na ramieniu znika przy zapisie i wczytaniu
+- Status: naprawione w #211 (2.11, zapis v28, PRZYJĘTE): `strayBodies`; ciało niesione w trakcie napadu: zapis zamyka napad jak „left”
+- Ważność: S4 · Zasięg: napad (mugging): ciało napastnika niesione przez gracza (`carrying` ustawione) po zapisie i wczytaniu: `carrying` null, 0 ciał. Przed „won” ciało ma klucz `micro:` i odpada w `isMicroKey`, po „won” klucza nie ma i dalej ginie
+- Poprawka: ciało napastnika po zakończeniu zdarzenia staje się zwykłym ciałem w zapisie (jak ciała posiłków, G-193); test zapis/wczytanie z niesionym ciałem
+- Pakiet właściciela: packages/sim (micro-events, bodies), packages/persistence
+
 ### G-216 Kościoły z wysokości domyślnej o 3–15 m za wysokie
 - Status: naprawione w #208 (2.11, PRZYJĘTE przez weryfikatora; kurator: ZGODNE Z UWAGAMI, nie blokuje; okap Mikołaja 8,5 zostaje, niższe części obrysu w G-238, wieże proceduralne w G-215): 9 kościołów z NMPT (dach potwierdzony niezależną sondą u wszystkich 9), kontrola `church-over-nmpt` 9 → 0 (w tabeli kontroli dawna nazwa `church-default-height`); kontrola łapie rachunek i domyślne wysokości, nie zły pomiar; do kuratora: okap św. Mikołaja może być 1–1,5 m za wysoko, Świętego Ducha: 16,5 to okap, kalenica 20,4
 - Ważność: S3 (proponowana) · Zasięg: szeroki (9 kościołów w trzech dzielnicach) · Koszt: mały (dane)
