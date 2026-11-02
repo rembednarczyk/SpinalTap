@@ -793,7 +793,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer)
 
 ### G-255 Garb w biegu schodów w56965515 przy pomoście wiaduktu Zamkowej: uskok 2,9 m i bieg pod prąd
-- Status: w PR #233 (2.11, runda 4 @ 223dedc PRZYJĘTE z uwagami (dług w G-273), kurator w toku; runda 6 u autora; runda 5 @ defc2a0 NIE PRZYJĘTE: w obrysie wiaduktu renderer rysuje stopnie biegu, a symulacja daje płytę albo teren pod nią (24 z 63 przejść źle), testy omijały ten pas; G-274 naprawione; runda 3 @ d03bb2d: podrzut z podestu; runda 2 @ 0e075bb: NPC w pościgu; runda 1 @ daaca9f: pod górę 4/30; pochyły pomost biegu zamiast rampy terenu; zgłoszone przez kuratora przy #219)
+- Status: w PR #233 (2.11, runda 4 @ 223dedc PRZYJĘTE z uwagami (dług w G-273), kurator w toku; runda 6 @ 96cfc6a w weryfikacji (wnęka w pomoście wiaduktu na pasmo biegu, kurator do przeglądu); runda 5 @ defc2a0 NIE PRZYJĘTE: w obrysie wiaduktu renderer rysuje stopnie biegu, a symulacja daje płytę albo teren pod nią (24 z 63 przejść źle), testy omijały ten pas; G-274 naprawione; runda 3 @ d03bb2d: podrzut z podestu; runda 2 @ 0e075bb: NPC w pościgu; runda 1 @ daaca9f: pod górę 4/30; pochyły pomost biegu zamiast rampy terenu; zgłoszone przez kuratora przy #219)
 - Ważność: S3 (proponowana: uskok 2,9 m w środku schodów, gracz spada albo AI się zatrzymuje) · Zasięg: 1 droga (3 kawałki pasa w dwóch chunkach), możliwe dalsze z kontroli `steps-riser-tall` · Koszt: mały do średniego
 - Gdzie: T-131; w56965515 bieg węzeł 2 → 3 (734,1; 163,9) → (729,5; 159,9), Podzamcze/Stare Miasto, granica chunków z = 160
 - Dowód: `planSteps` na `groundY` (sonda `topo-g236-flight.txt`, 5757fae): stopnie na pomoście y −13,48 do x ≈ 733,4, potem podstopnica 2,92 m na teren −16,41, dalej stopnie w górę do −15,28 przy węźle 3 (flight ma `incline=down`); kawałek tego biegu w `stare-miasto-1-1` (730,8; 159,6) leży płasko na pomoście −13,51 obok −15,4 za granicą chunka. Stan sprzed #219 identyczny
@@ -926,7 +926,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (ground), packages/engine (renderer/mapcity)
 
 ### G-278 Wyszukiwanie pomostu na szwie chunków bierze tylko pierwszy chunk
-- Status: zgłoszone (2.11, autor G-255 runda 5; do potwierdzenia)
+- Status: potwierdzone (2.11, autor G-255 runda 6 na main 8b8ee07: `GroundField` bierze pomosty tylko chunka pierwszego w tabeli, w (735; 160) teren −15,14 zamiast pomostu −13,55)
 - Ważność: S4 · Zasięg: punkty dokładnie na granicy chunków (np. z = 160 przy wiadukcie Zamkowej): wyszukiwanie pomostu (`decksAt`/most) patrzy tylko w pomosty pierwszego chunka, więc w tych punktach bieg schodów wychodzi bez płyty wiaduktu nad nim · Koszt: mały
 - Poprawka: na szwie brać pomosty obu chunków (albo indeks pomostów niezależny od chunka); test w punktach z = granica
 - Pakiet właściciela: packages/sim (world/deck)
