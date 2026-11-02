@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-248 „Doktor Mori” po polsku także w angielskiej wersji
+- Status: naprawione w #218 (2.11, orkiestrator): `shop.clinic.title` w skanerze, test w `wave1-hud.test.ts`
+- Ważność: S4 · Zasięg: `packages/app/src/scan-view.ts:20` `"Doktor Mori"` pokazywany graczowi niezależnie od języka; skan go nie liczy (to nie JSX, a „Doktor” nie ma polskich znaków)
+- Poprawka: tytuł z katalogu (en „Doctor Mori”, pl „Doktor Mori”) albo nazwa własna z decyzją w katalogu; przy okazji podglądy deweloperskie (`lublin-preview/preview-main.ts:40`, `props-gallery.ts:32`) bez zmian, gracz ich nie widzi
+- Pakiet właściciela: packages/app, packages/ui (i18n)
+
 ### G-243 Skan i18n nie łapie polskich słów bez polskich znaków
 - Status: naprawione w #214 (2.11, PRZYJĘTE; „ruch” w #213; nowa reguła `shown` znalazła jeszcze 2 teksty, przeniesione do katalogów; reszta luk w G-247)
 - Ważność: S4 (luka w narzędziu) · Zasięg: `tools/i18n-scan` liczy literały z polskimi znakami; „ruch” w `touch-controls.tsx` przeszedł, baza była 0
