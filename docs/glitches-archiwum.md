@@ -2,6 +2,16 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-263 Lampy wnętrz świecą przez ściany na ulicę
+- Status: naprawione w #239 (2.11, PRZYJĘTE; prostokąt światła `clip` w shaderze toon, płynna moc 35–45 m; klinika i Neon Koi w G-269; próg drzwi nieoświetlony: drobna uwaga)
+- Ważność: S4 · Zasięg: światła punktowe wnętrz (pokój kapsułowy `capsule-room-view.ts` `LAMP` 5,5 m, ok. 2,5 m za fasadą Jezuickiej 14; do sprawdzenia klinika i Neon Koi) · Koszt: mały do średniego
+- Dowód: światła punktowe shadera toon nie mają przesłaniania, więc lampa wnętrza oświetla też bruk i fasadę przed budynkiem; przy 45–50 m od pokoju włącza się i wyłącza skokowo (wiązanie z siatką wnętrza)
+- Poprawka: światło wnętrza tylko dla siatek wnętrza (`includedOnlyMeshes`) albo zasięg przycięty do pokoju; włączanie z płynnym wygaszaniem
+- Pakiet właściciela: packages/engine (renderer, rooms)
+- Test przyjęcia: zrzut nocą przed drzwiami z lampą i bez: różnica oświetlenia bruku poza progiem drzwi ≤ próg; test, że lampa nie ma w zasięgu siatek ulicy
+- Także (weryfikator): pokój nie jest w `ROOM_SITES` (bez zwolnień w `crowd.test` i `neon-off-wall`; dziś bez skutku); niski element modelu wystaje 0,2 m poza bryłę kuchni
+- Także (kurator, T-138): na bruku Jezuickiej plama sięga ok. 2,3 m przed fasadę, a Wieży Trynitarskiej (8,5 m) nie dosięga; poza tym topografia jest zgodna
+
 ### G-244 Budynki ceglane z OSM rysowane w tynku: `building:material` nie trafia do gry
 - Status: naprawione w #237 (2.11, PRZYJĘTE; kurator ZGODNE Z UWAGAMI: cegła Baszty, Donżonu i Kaplicy; 19 kolorów ścian z OSM; miedziane hełmy w G-272)
 - Ważność: S3 (proponowana: rozpoznawalne zabytki w złym materiale) · Zasięg: 4 budynki (6 elementów OSM z `building:material=brick`): Donżon w450180469, Baszta Gotycka w66286376, Kaplica Trójcy w66258167, Brama Krakowska r7224409 (części w617597406, w617597407) · Koszt: średni (pole w danych + paleta fasady)
