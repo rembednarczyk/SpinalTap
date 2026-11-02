@@ -96,6 +96,29 @@ export const TAG_CORRECTIONS: readonly TagCorrection[] = [
     reason: "wieża Brygidek: hełm do y 32,4 i korona y 23,2–23,5 z NMPT, w OSM bez wysokości",
     ref: "T-060",
   },
+  {
+    // The Lubomirski Palace: OSM has no height, so it stood at the default three storeys with a
+    // flat top at y 8.5. NMPT GUGiK (roof cells off trees and towers) has the eaves at y 11.0 along
+    // the walls and a roof that rises slowly inwards (11.5 at 2-3 m, 12.1 at 4-5 m, 13-14 past 6 m).
+    // The game's hipped roof on this outline is level already about 1 m in from the walls, so a
+    // 1 m roof (top y 12.0) fits the measured surface best over the whole outline (mean error
+    // about 0 m; a 2.1 m roof stood about 1 m too high over half of it). `height` runs over the
+    // 1 m plinth to that top, roof included.
+    id: "w67508859",
+    tags: { height: "13.1", "roof:height": "1.0", "building:levels": "3" },
+    reason: "Pałac Lubomirskich: okap y 11,0 i dach do y 12,0 z NMPT wobec domyślnego płaskiego wierzchu y 8,5",
+    ref: "T-136",
+  },
+  // Its two towers on the northern corners: `man_made=tower` with no height, so the import left
+  // them in the palace's body (G-098). NMPT GUGiK has both tops flat at y 17.8..17.9; a part's
+  // `height` counts over the palace's base, the top of its plinth at y -1.1. Their outlines lie
+  // 2-4 m east of the surface model's: OSM's data, left as mapped.
+  ...["w1002739983", "w1002739984"].map((id) => ({
+    id,
+    tags: { height: "19", "roof:shape": "flat" },
+    reason: "wieża Pałacu Lubomirskich: płaski wierzch y 17,9 z NMPT, w OSM bez wysokości",
+    ref: "T-136",
+  })),
   // St Josaphat's nave first: at the default it stood 6.3 m over its tower's top (y 9.5, T-129).
   church("w69916021", 11.6, 4.6, "cerkiew św. Jozafata", 6.8, 11.4),
   church("w66330578", 24.8, 12, "Bernardyni, nawa (wieża osobno)", 12.5, 24.5),
