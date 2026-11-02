@@ -6,7 +6,7 @@ import { LUBLIN_ANCHOR } from "../../../packages/core/src/world/city-geo.ts";
 import { asBuilding, isPart, orphanParts, partsByBuilding } from "./building-parts.ts";
 import { smallAlone } from "./building-alone.ts";
 import { makeBuilding } from "./buildings.ts";
-import { corrected } from "./corrections.ts";
+import { corrected, correctedLine } from "./corrections.ts";
 import { ALL_CHUNKS, type ChunkSpec } from "./config.ts";
 import { type HeightSource } from "./dtm.ts";
 import { type Area, type Line, extractFeatures } from "./features.ts";
@@ -255,9 +255,10 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   const features = extractFeatures(data);
   // The explicit corrections of estimated tags (corrections.ts), before anything reads them.
   const areas = features.areas.map((a) => corrected(a));
+  const mapLines = features.lines.map((l) => correctedLine(l));
   // A street of default width ends where the sidewalks mapped along it begin (T-046).
-  const sidewalks = sidewalkIndex(features.lines);
-  const lines = features.lines.map((l) => (l.tags.highway ? { ...l, tags: fitToKerb(l.tags, sidewalks.kerb(l), oneway(l.tags)) } : l));
+  const sidewalks = sidewalkIndex(mapLines);
+  const lines = mapLines.map((l) => (l.tags.highway ? { ...l, tags: fitToKerb(l.tags, sidewalks.kerb(l), oneway(l.tags)) } : l));
   const outlines = buildingAreas(areas, data);
   const partAreas = areas.filter(isPart);
   const orphans = new Set(orphanParts(outlines, partAreas));
@@ -276,7 +277,7 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   for (const [k, l] of lines.entries()) {
     if (!near(l.line)) continue;
     // Whether sidewalks are mapped along it: read off the street's width by type, as before it was fitted.
-    for (const b of lineBands(l, l.tags.highway ? sidewalks.along(features.lines[k]!) : false, water, atStreet.has(l.osmId))) bands.push({ ...b, box: ringBounds(b.ring) });
+    for (const b of lineBands(l, l.tags.highway ? sidewalks.along(mapLines[k]!) : false, water, atStreet.has(l.osmId))) bands.push({ ...b, box: ringBounds(b.ring) });
   }
   // Zebras at the crossing nodes of the carriageways, in node order.
   const roads = lines.filter((l) => l.tags.highway !== undefined && near(l.line));
@@ -318,7 +319,7 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   // All of them, so a building at a chunk's edge gets the same venues whichever chunks are built.
   const venues = assignVenues(allVenues(data, areas), buildings.map((b) => ({ id: b.id, ring: b.ring })));
   const mapped = allVenues(data, areas).filter((v) => chunks.some((c) => inRect(v.at, c.rect)));
-  const kerb = { carParks: areas, busStops: busStopPosts(data, features.lines, areas) };
+  const kerb = { carParks: areas, busStops: busStopPosts(data, mapLines, areas) };
   const results = chunks.map((c) => generateChunk(c, src, buildings, bands, lines, pois, markings, passages, parts, alone, venues, kerb));
   const count = (f: (v: WorldVenue) => boolean) => mapped.filter(f).length;
   const venueStats: VenueStats = {

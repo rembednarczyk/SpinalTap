@@ -37,6 +37,8 @@
   "vehicle-off-surface": 0,
   "building-in-set-piece": 0,
   "steps-micro-riser": 0,
+  "steps-narrower-than-walls": 0,
+  "lamp-on-steps": 0,
   "bridge-without-deck": 0,
   "under-deck-blocked": 0,
   "landmark-overbuilt": 0,
