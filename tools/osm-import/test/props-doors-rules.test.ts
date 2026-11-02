@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { type StreetPropItem, doorLayout } from "../../../packages/core/src";
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
 import { type DoorContext, type DoorWall, type Entrance, type PlacedDoor, type WallSlot, entranceModel, placeDoors } from "../src/props-doors.ts";
+import type { OsmData, Tags } from "../src/osm.ts";
+import { undergroundWays } from "../src/props-roads.ts";
 import { Site } from "../src/props-site.ts";
 
 /**
@@ -104,6 +106,36 @@ describe("the doors on the facades (ADR-0058 stage 9)", () => {
     expect(doors([wall({ use: "commercial" })])).toEqual([]);
     // Not when it has a door already.
     expect(xs(doors([wall({ use: "historic" })], [entrance(3.9)]))).toEqual([4]);
+  });
+
+  it("a way under ground in front of a tenement is no street: no staircase's door facing only it (G-197)", () => {
+    // The street along z 20 is a tunnel (Trasa Podziemna: `tunnel=yes`, `layer=-1`, a footway in the chunks).
+    const under = { underground: [[{ x: -30, z: 20 }, { x: 10, z: 20 }, { x: 50, z: 20 }]] };
+    expect(doors([wall({ use: "residential" })], [], under)).toEqual([]);
+    // A tunnel crossing under the street, or beside it, leaves the street a street.
+    const across = { underground: [[{ x: 10, z: 30 }, { x: 10, z: 0 }]] };
+    expect(xs(doors([wall({ use: "residential" })], [], across))).toEqual([10]);
+    const beside = { underground: [[{ x: -30, z: 23 }, { x: 50, z: 23 }]] };
+    expect(xs(doors([wall({ use: "residential" })], [], beside))).toEqual([10]);
+    // Only the staircases' rule looks at the street: an entrance and a board keep their doors.
+    expect(xs(doors([wall({ use: "residential" })], [entrance(13.4)], under))).toEqual([14]);
+    expect(doors([wall({ boards: [{ u0: 5, u1: 9.5, kind: "shop" }] })], [], under)).toHaveLength(1);
+  });
+
+  it("the ways under ground of the map data: a tunnel or a negative layer, not a gateway's passage", () => {
+    const ways: { id: number; tags: Tags }[] = [
+      { id: 10, tags: { highway: "footway", name: "Trasa Podziemna", tunnel: "yes", layer: "-1" } },
+      { id: 11, tags: { highway: "path", layer: "-1" } },
+      { id: 12, tags: { highway: "pedestrian", name: "Bramowa", tunnel: "building_passage" } },
+      { id: 13, tags: { highway: "residential", name: "Złota" } },
+      { id: 14, tags: { highway: "service", tunnel: "yes" } },
+    ];
+    const osm: OsmData = {
+      nodes: new Map([1, 2, 3].map((id) => [id, { id, lat: 51.248 + id * 1e-4, lon: 22.568 }])),
+      ways: new Map(ways.map((w) => [w.id, { ...w, nodes: [1, 2, 3] }])),
+      relations: new Map(),
+    };
+    expect(undergroundWays(osm)).toHaveLength(3);
   });
 
   // A long board over the wall's middle: its door goes to the slot nearest u 10 (x 10) the rules let it.

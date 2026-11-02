@@ -52,6 +52,23 @@ export const carriageways = (osm: OsmData): Carriageway[] =>
 export const loadCarriageways = (root = REPO): Carriageway[] =>
   carriageways(mergeOsm(DISTRICTS.map((d) => parseExtract(readFileSync(join(root, "data/osm", `${d.slug}.json`), "utf8")))));
 
+/**
+ * The axes of the map's ways under ground: in a tunnel (not a gateway's `building_passage`, at street
+ * level) or on a negative layer. The chunks keep them as streets with neither tag (Trasa Podziemna
+ * is a footway there), so the staircases' doors look them up here (G-197).
+ */
+export const undergroundWays = (osm: OsmData): (readonly Pt[])[] =>
+  extractFeatures(osm)
+    .lines.filter((l) => {
+      const t = l.tags;
+      return t.highway !== undefined && (Number(t.layer ?? 0) < 0 || (t.tunnel !== undefined && t.tunnel !== "no" && t.tunnel !== "building_passage"));
+    })
+    .map((l) => l.line);
+
+/** The ways under ground of the districts' extracts in `data/osm`. */
+export const loadUndergroundWays = (root = REPO): (readonly Pt[])[] =>
+  undergroundWays(mergeOsm(DISTRICTS.map((d) => parseExtract(readFileSync(join(root, "data/osm", `${d.slug}.json`), "utf8")))));
+
 /** A door of the game's content (sim `DoorDef`: the middle of its opening, the wall's axis, its width) as its jambs. */
 export const doorSpan = (d: { readonly at: { readonly x: number; readonly z: number }; readonly along: "x" | "z"; readonly width: number }): DoorSpan => {
   const h = d.width / 2;
