@@ -167,6 +167,87 @@ describe("a paid job's guard far from the player is gone (G-188 with G-195)", ()
   });
 });
 
+describe("a guard near the player stays when his chunk falls asleep (G-201)", () => {
+  /** Where she stands outside every chunk, alive, on the terrain that goes on past them. */
+  const OFF_MAP: readonly (readonly [number, number])[] = [
+    [2440, 545],
+    [490, 180],
+  ];
+  const calm = (e: NonNullable<ReturnType<typeof byKey>>): void => {
+    e.ai = { ...e.ai!, alerted: false, lastKnown: null, search: 0, lost: 0, suspicion: 0 };
+  };
+  /**
+   * The lost infiltration at the docks, her standing at (x, z) and its guard g1 calm 6 m from
+   * her: calm already when his chunk falls asleep, or pinned (alerted then) and calm after.
+   */
+  const beside = (x: number, z: number, calmFirst: boolean): { sim: Simulation; id: string; key: string } => {
+    const { sim, id } = alarmed(10);
+    // The game's ground, not `ground()`: that is 0 outside the chunks.
+    const y = sim.streamer.ground.heightAt(x, z);
+    const calmAll = (): void => {
+      for (const k of peopleOf(sim, id)) calm(byKey(sim, k)!);
+    };
+    if (calmFirst) calmAll();
+    teleportPlayer(sim, { x, y, z });
+    if (!calmFirst) {
+      sim.step();
+      expect(byKey(sim, `${id}-g1`)?.ai?.away).toBeDefined();
+      calmAll();
+    }
+    const key = `${id}-g1`;
+    const g = byKey(sim, key)!;
+    g.position = { x: x + 6, y, z };
+    g.prevPosition = g.position;
+    sim.step();
+    expect(sim.streamer.chunkIdAt(sim.player()!.position)).toBe("");
+    expect(sim.streamer.isLoaded(g.chunk!)).toBe(false);
+    return { sim, id, key };
+  };
+
+  for (const [x, z] of OFF_MAP) {
+    for (const calmFirst of [false, true]) {
+      it(`at (${x}; ${z}), calm ${calmFirst ? "when his chunk falls asleep" : "after it"}, he stays by her, after a load too`, () => {
+        const { sim, id, key } = beside(x, z, calmFirst);
+        run(sim, seconds(1));
+        const p = sim.player()!;
+        expect(p.health!.current).toBeGreaterThan(0);
+        expect(Math.abs(p.position.y - p.prevPosition.y)).toBeLessThan(0.01);
+        expect(byKey(sim, key)).toBeDefined();
+        const loaded = reload(sim);
+        expect(byKey(loaded, key)).toBeDefined();
+        for (const s of [sim, loaded]) {
+          run(s, seconds(1));
+          expect(byKey(s, key)).toBeDefined();
+        }
+        // Walking home he leaves her: out of her reach (in ~10 s) he sleeps, in both at the same time.
+        expect(parting(sim, loaded, id, seconds(15))).toBeNull();
+        expect(byKey(sim, key)).toBeUndefined();
+      });
+    }
+  }
+
+  it("inside the chunks too: calm in a loaded chunk not his own when his falls asleep, by her, he stays, after a load too", () => {
+    const { sim, id } = alarmed(10);
+    for (const k of peopleOf(sim, id)) {
+      const e = byKey(sim, k)!;
+      e.ai = { ...e.ai!, alerted: false, lastKnown: null, search: 0, lost: 0, suspicion: 0 };
+    }
+    // Her in the west of the docks, him 6 m from her: his own chunk falls asleep in this step.
+    teleportPlayer(sim, ground(2330, 300));
+    const key = `${id}-g1`;
+    const g = byKey(sim, key)!;
+    g.position = ground(2336, 300);
+    g.prevPosition = g.position;
+    sim.step();
+    expect(sim.streamer.isLoaded(g.chunk!)).toBe(false);
+    expect(sim.streamer.isLoaded(sim.streamer.chunkIdAt(g.position))).toBe(true);
+    expect(byKey(sim, key)).toBeDefined();
+    const loaded = reload(sim);
+    expect(byKey(loaded, key)).toBeDefined();
+    expect(parting(sim, loaded, id, seconds(15))).toBeNull();
+  });
+});
+
 describe("the templates of replaced jobs (G-188)", () => {
   it("are forgotten but those of people still about, so they do not pile up job after job", () => {
     const catalog = new StreamCatalog(new IdAllocator(), [], [], []);
