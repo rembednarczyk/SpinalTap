@@ -1,0 +1,1 @@
+Strażnik obok gracza nie znika już, gdy gracz stoi na terenie poza fragmentami miasta (np. na północ od Nabrzeża): zasypia dopiero, gdy odejdzie od gracza dalej niż na 30 m, a zapis i wczytanie dają to samo co gra (G-201).

@@ -7,7 +7,7 @@ import type { Entity } from "./components";
 import type { IdAllocator } from "./factory";
 import { GroundField } from "./ground";
 import { ActorSpawner, type StreamState } from "./actor-spawner";
-import { sleepPinned, unloadChunks } from "./chunk-unload";
+import { type NearPlayer, sleepPinned, unloadChunks } from "./chunk-unload";
 import { contractTemplates } from "./contract-templates";
 import { restoreEntities } from "./dormant-restore";
 import { syncPresence } from "./presence-sync";
@@ -243,8 +243,14 @@ export class WorldStreamer {
    */
   update(world: World<Entity>, flags: readonly string[], focus: Vec3, clock: GameClock, dt: number): StreamingChange {
     const change = this.stream(world, flags, focus, clock);
-    sleepPinned(world, this.state, (p) => this.chunkIdAt(p), this.formerKeys, dt);
+    sleepPinned(world, this.state, (p) => this.chunkIdAt(p), this.formerKeys, this.nearFocus(focus), dt);
     return change;
+  }
+
+  /** Within the load radius of `focus` (G-201): where, inside the chunks, every chunk is loaded. */
+  private nearFocus(focus: Vec3): NearPlayer {
+    const r = this.radii.loadRadius;
+    return (p) => (p.x - focus.x) ** 2 + (p.z - focus.z) ** 2 <= r * r;
   }
 
   private stream(world: World<Entity>, flags: readonly string[], focus: Vec3, clock: GameClock): StreamingChange {
@@ -261,7 +267,7 @@ export class WorldStreamer {
       else if (!resident.has(c.id) && d <= this.radii.loadRadius) (loaded ??= []).push(c.id);
     }
     if (!unloaded && !loaded) return NO_CHANGE;
-    if (unloaded) unloadChunks(world, this.state, new Set(unloaded), (p) => this.chunkIdAt(p), this.formerKeys);
+    if (unloaded) unloadChunks(world, this.state, new Set(unloaded), (p) => this.chunkIdAt(p), this.formerKeys, this.nearFocus(focus));
     for (const id of loaded ?? []) {
       resident.add(id);
       this.spawner.spawnProps(world, id);
