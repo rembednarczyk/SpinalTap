@@ -129,12 +129,32 @@ export const cable = (sink: MeshSink, a: Vec, b: Vec, sag: number, color: Rgba, 
   }
 };
 
-/** Cables across one span at different heights and angles, some strung with lanterns. */
-const spanCables = (sink: MeshSink, s: Span, rand: () => number, lite: boolean): void => {
+/** A cable across a span: its ends, its sag and the colour of the lanterns strung on it (null for none). */
+export interface SpanCable {
+  readonly a: Vec;
+  readonly b: Vec;
+  readonly sag: number;
+  readonly lanterns: string | null;
+}
+
+/** A point of a sagging cable `t` of the way from `a` to `b` (0..1). */
+export const cablePoint = (c: Pick<SpanCable, "a" | "b" | "sag">, t: number): Vec => lerp(c.a, c.b, t, c.sag);
+
+/** How far a cable's lanterns hang under it (m): the box's centre 0.2 m down, half its 0.26 m height. */
+export const LANTERN_DROP = 0.33;
+
+/**
+ * The cables across one span at different heights and angles, some strung with lanterns
+ * (`lite`, a phone: fewer, none strung). Pure: the drawing and the low patrols' air (ADR-0058
+ * stage 7b) read the same cables.
+ */
+export const spanCables = (s: Span, lite: boolean): SpanCable[] => {
+  const rand = prng(Math.floor(s.seed * 0xfffffff) ^ 0xc0de);
   const count = Math.round(s.clutter * (lite ? 1.5 : 5) * (0.5 + rand()));
   const low = s.base + 4.5;
   const high = s.top - 1;
-  if (high <= low) return;
+  if (high <= low) return [];
+  const out: SpanCable[] = [];
   for (let k = 0; k < count; k++) {
     const y = low + rand() * (high - low);
     const o1 = (rand() - 0.5) * 6;
@@ -142,12 +162,21 @@ const spanCables = (sink: MeshSink, s: Span, rand: () => number, lite: boolean):
     const a = { x: s.a.x + s.along.x * o1, y, z: s.a.z + s.along.z * o1 };
     const b = { x: s.b.x + s.along.x * o2, y: y + (rand() - 0.5) * 2.5, z: s.b.z + s.along.z * o2 };
     const sag = 0.25 + rand() * 0.05 * s.width;
-    cable(sink, a, b, sag, DARK);
-    if (lite || rand() > s.clutter * 0.6) continue;
-    const color = hexColor(LANTERNS[Math.floor(rand() * LANTERNS.length)] ?? "#ffb000", DRESS_FLAG.lit);
+    const lanterns = lite || rand() > s.clutter * 0.6 ? null : (LANTERNS[Math.floor(rand() * LANTERNS.length)] ?? "#ffb000");
+    out.push({ a, b, sag, lanterns });
+  }
+  return out;
+};
+
+/** Draws the cables of a span, the lanterns hung under those strung with them. */
+const drawSpanCables = (sink: MeshSink, s: Span, lite: boolean): void => {
+  for (const c of spanCables(s, lite)) {
+    cable(sink, c.a, c.b, c.sag, DARK);
+    if (c.lanterns === null) continue;
+    const color = hexColor(c.lanterns, DRESS_FLAG.lit);
     const n = Math.max(3, Math.floor(s.width / 1.6));
     for (let i = 1; i < n; i++) {
-      const p = lerp(a, b, i / n, sag);
+      const p = lerp(c.a, c.b, i / n, c.sag);
       sink.box({ x: p.x, y: p.y - 0.2, z: p.z }, 0.2, 0.26, 0.2, color, { bottom: true });
     }
   }
@@ -228,8 +257,7 @@ const footbridge = (sink: MeshSink, fb: { y: number; ring: P2[] }, seed: number)
 /** Near geometry over the streets from a cell's spans. `lite` (a phone): fewer cables, no lanterns. */
 export const planNearCanyon = (sink: MeshSink, spans: readonly Span[], lite: boolean): void => {
   for (const s of spans) {
-    const rand = prng(Math.floor(s.seed * 0xfffffff) ^ 0xc0de);
-    spanCables(sink, s, rand, lite);
+    drawSpanCables(sink, s, lite);
     const bb = spanBillboard(s);
     if (bb) billboardFrame(sink, s, bb);
     const fb = spanFootbridge(s);
