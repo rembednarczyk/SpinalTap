@@ -9,6 +9,7 @@ import { DEFAULT_SETTINGS, GameUi, createUiStore, translate } from "@seki/ui";
 import { createRoot } from "react-dom/client";
 import { browserClock } from "./browser-clock";
 import { type DebugApi, createDebugApi } from "./debug-api";
+import { FrameGate } from "./frame-gate";
 import { GameSession } from "./game-session";
 import { keymapFor } from "./controls";
 import { pushToastTimed } from "./controllers/shared";
@@ -146,8 +147,8 @@ const applyControls = (s: typeof settings) => {
   applyEffects(renderer, s);
 };
 
-/** Frames drawn after the renderer updated its camera and city in them (debug `frames()`, G-013). */
-let framesDrawn = 0;
+/** Frames drawn after the renderer updated its camera and city in them (debug `frames()`, G-013); on demand in a frozen test (G-226). */
+const frameGate = new FrameGate();
 /** False while the reference frame waits for its start: the frames update the scene but draw nothing. */
 let drawScene = !reference;
 /**
@@ -187,7 +188,7 @@ const loop = new FixedStepLoop(browserClock, {
     if (!drawScene || session.preparing || (!reference && !stage.pacer.canDraw)) return;
     stage.scene.render();
     if (!reference) stage.pacer.drawn();
-    framesDrawn++;
+    frameGate.frameDrawn();
   },
 });
 
@@ -277,13 +278,14 @@ const debug = createDebugApi(session, ui, loop, () => probe.sample(), (position,
   () => preview.state,
   () => renderer.stats.modelsLoading,
   () => renderer.stats.citySettled,
+  frameGate,
 );
 debug.capture = () => renderer.captureFrame();
 debug.camera = () => {
   const { position: p, rotation: r } = renderer.rig.camera;
   return { x: p.x, y: p.y, z: p.z, yaw: r.y, pitch: r.x };
 };
-debug.frames = () => framesDrawn;
+debug.frames = () => frameGate.drawn;
 debug.probeRenders = () => renderer.stats.wetProbeRenders;
 window.__seki = debug;
 
@@ -325,6 +327,8 @@ if (reference) {
  */
 stage.engine.runRenderLoop(() => {
   if (reference) drawScene = session.screen === "playing";
+  // A test frozen on demand draws only the frames it asks for (G-226).
+  else if (!frameGate.runs(session)) return;
   loop.frame();
   if (!reference || !drawScene || !stage.scene.isReady(true)) return;
   stage.engine.stopRenderLoop();

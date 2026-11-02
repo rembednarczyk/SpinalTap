@@ -2,6 +2,7 @@ import { type BreachDaemonId, type DomainEvents, type DomainState, EMPTY_INPUT, 
 import type { PerfSample, PreviewState } from "@seki/engine";
 import { type FixedStepLoop, clinicPoint, docks, koiPoint, market } from "@seki/sim";
 import type { UiStore } from "@seki/ui";
+import { FrameGate } from "./frame-gate";
 import type { GameSession } from "./game-session";
 
 /** Test hook exposed as window.__seki. Used by Playwright smoke, snapshot and perf checks. */
@@ -45,7 +46,13 @@ export interface DebugApi {
     vehicles: number;
   };
   perf(): PerfSample;
-  setPaused(paused: boolean): void;
+  /**
+   * Freezes or resumes the real-time loop. With `onDemand` a frozen loop also stops drawing by
+   * itself (G-226): it draws only the frames `draw` asks for; resuming ends that.
+   */
+  setPaused(paused: boolean, onDemand?: boolean): void;
+  /** Asks a loop frozen on demand for `n` more drawn frames; returns the `frames()` count to wait for. */
+  draw(n: number): number;
   /** Moves the player; `y` is the floor to stand on (a roof, the overpass deck), Lublin's ground by default. */
   teleport(x: number, z: number, yaw?: number, pitch?: number, y?: number): void;
   /**
@@ -108,6 +115,7 @@ export const createDebugApi = (
   preview: () => PreviewState | null = () => null,
   modelsLoading: () => number = () => 0,
   citySettled: () => boolean = () => true,
+  gate: FrameGate = new FrameGate(),
 ): DebugApi => ({
   ready: false,
   still: false,
@@ -137,8 +145,12 @@ export const createDebugApi = (
     };
   },
   perf,
-  setPaused(paused) {
+  setPaused(paused, onDemand = false) {
     loop.paused = paused;
+    gate.hold(paused && onDemand);
+  },
+  draw(n) {
+    return gate.request(n);
   },
   teleport(x, z, yaw = 0, pitch = 0, y) {
     const p = session.sim.player();
