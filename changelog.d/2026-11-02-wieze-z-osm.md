@@ -1,1 +1,0 @@
-Cerkiew św. Jozafata, kościół św. Mikołaja i Brygidki nie dostają już zmyślonej wieży obok prawdziwej z mapy, a renderer nie stawia wieży kościoła poza jego obrysem, np. na trawie u Karmelitów Bosych (G-212).

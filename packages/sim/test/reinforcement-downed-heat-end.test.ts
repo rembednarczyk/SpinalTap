@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { HeatState, SaveSnapshot } from "@seki/core";
+import { HACKED_MEMORY, type HeatState, type SaveSnapshot, rememberHack } from "@seki/core";
 import { SIM_HZ, Simulation, stateHash } from "../src";
-import { reinforcementEntity } from "../src/world/reinforcements";
+import { goneReinforcement, reinforcementEntity, securityKey } from "../src/world/reinforcements";
 import { run, teleportPlayer } from "./helpers";
 import { CROUCH, offset, quietStreet, takeDown } from "./takedown-scenes";
 
@@ -43,6 +43,29 @@ const awayTillCold = (sim: Simulation): void => {
 
 const theDowned = (sim: Simulation) => sim.world.with("downed").entities.find((b) => b.security?.n === 1);
 
+/** Picks the knocked-out one up by a dumpster 2 m east and, with `hide`, puts it in. */
+const carryToDumpster = (sim: Simulation, hide: boolean): void => {
+  const p = sim.player()!.position;
+  const c = { x: p.x + 2, y: p.y + 0.7, z: p.z };
+  sim.world.add({
+    id: 4500,
+    position: c,
+    prevPosition: c,
+    yaw: 0,
+    prevYaw: 0,
+    pitch: 0,
+    view: { kind: "block", size: { x: 2.4, y: 1.4, z: 1.4 }, material: "metal" },
+    solid: { min: { x: c.x - 1.2, y: p.y, z: c.z - 0.7 }, max: { x: c.x + 1.2, y: p.y + 1.4, z: c.z + 0.7 } },
+    hide: "dumpster",
+  });
+  sim.step(CROUCH);
+  sim.enqueue({ type: "carry-body" });
+  sim.step(CROUCH);
+  if (!hide) return;
+  sim.enqueue({ type: "drop-body" });
+  sim.step(CROUCH);
+};
+
 describe("a reinforcement knocked out when the heat is over (G-196)", () => {
   for (const seed of [7, 3]) {
     it(`seed ${seed}: it lies where it fell, the ones on their feet are gone home`, () => {
@@ -61,24 +84,7 @@ describe("a reinforcement knocked out when the heat is over (G-196)", () => {
 
   it("hidden alive in a dumpster: it is still in there when the heat is over", () => {
     const sim = knockedOut(11);
-    const p = sim.player()!.position;
-    const c = { x: p.x + 2, y: p.y + 0.7, z: p.z };
-    sim.world.add({
-      id: 4500,
-      position: c,
-      prevPosition: c,
-      yaw: 0,
-      prevYaw: 0,
-      pitch: 0,
-      view: { kind: "block", size: { x: 2.4, y: 1.4, z: 1.4 }, material: "metal" },
-      solid: { min: { x: c.x - 1.2, y: p.y, z: c.z - 0.7 }, max: { x: c.x + 1.2, y: p.y + 1.4, z: c.z + 0.7 } },
-      hide: "dumpster",
-    });
-    sim.step(CROUCH);
-    sim.enqueue({ type: "carry-body" });
-    sim.step(CROUCH);
-    sim.enqueue({ type: "drop-body" });
-    sim.step(CROUCH);
+    carryToDumpster(sim, true);
     expect(theDowned(sim)!.downed).toMatchObject({ hidden: true, dead: false });
     awayTillCold(sim);
     expect(theDowned(sim)?.downed.hidden).toBe(true);
@@ -111,4 +117,26 @@ describe("a reinforcement knocked out when the heat is over (G-196)", () => {
     expect(theDowned(loaded)).toBeDefined();
     expect(hash(loaded)).toBe(hash(sim));
   });
+});
+
+describe("the hack memory keeps one knocked out (G-220)", () => {
+  // Lying, on her shoulder or in a dumpster, it is still about: hacked once, it never pays again.
+  for (const [how, stow] of [
+    ["lying", (_sim: Simulation): void => undefined],
+    ["carried", (sim: Simulation): void => carryToDumpster(sim, false)],
+    ["hidden", (sim: Simulation): void => carryToDumpster(sim, true)],
+  ] as const) {
+    it(`${how}: it stays in a memory full of the gone ones`, () => {
+      const sim = knockedOut(11);
+      stow(sim);
+      const body = theDowned(sim)!;
+      expect(body.downed).toMatchObject({ dead: false, carried: how === "carried", hidden: how === "hidden" });
+      const key = securityKey(body.security!);
+      const gone = Array.from({ length: HACKED_MEMORY - 1 }, (_, i) => `security:${1000 + i}@${i}`);
+      const progression = { ...sim.domain.progression, hacked: [key, ...gone] };
+      const remembered = rememberHack(progression, "g220-camera", goneReinforcement(sim.world));
+      expect(remembered?.hacked).toEqual([key, "g220-camera"]);
+      expect(rememberHack(remembered!, key, goneReinforcement(sim.world))).toBeNull();
+    });
+  }
 });
