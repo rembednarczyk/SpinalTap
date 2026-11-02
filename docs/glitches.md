@@ -601,7 +601,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 
 ### G-203 Schody zamkowe mają 3 m zamiast ok. 10 m szerokości
-- Status: w PR #194 (2.11, PRZYJĘTE przez weryfikatora, kurator w toku): `correctedLine` z `width=10` dla 5 biegów i 6 podestów, kontrola `steps-narrower-than-walls` baza 0
+- Status: w PR #194 (2.11, PRZYJĘTE przez weryfikatora i kuratora z uwagami): `correctedLine` z `width=10` dla 5 biegów i 6 podestów, kontrola `steps-narrower-than-walls` baza 0. Uwagi kuratora (ortofoto PZGiK): bieg 2 i bieg 5 przed bramą mają w rzeczywistości ok. 15 m (T-126, G-217); kandelabr (826,2; 235,8) na biegu 5 (T-127, G-205)
 - Ważność: S3 (proponowana) · Zasięg: lokalny, ale to oś widokowa Placu Zamkowego · Koszt: mały–średni
 - Gdzie: biegi w1435832499, w1305940836, w1305889408, w1305940837, w1306105687, x 766..829, z 238..246
 - Dowód: `ground.ts` `PATHS.steps = 3`; murki OSM w231832094 i w231832095 stoją ok. 9,9 m od siebie, na ortofoto PZGiK ok. 11 m; zrzut `zamek-schody`
@@ -613,6 +613,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (1.11, audyt zespołu zamkowego, T-115)
 - Ważność: S4 · Zasięg: lokalny · Koszt: mały
 - Gdzie: (770,9; 224,3), (773,6; 211,8), (775,3; 233,4), (780,3; 225,3), (784,7; 234,4); wpis planu `zamek.stairs-lamps`
+- Po #194 (T-115, T-127): (826,2; 235,8) stoi 1 m w głąb pasa biegu 5 w1306105687, na stopniach; (792,0; 248,5) i (796,4; 237,2) 0,55–0,85 m za osią murków biegu głównego, na trawie zbocza (latarnie na balustradzie dopiero w Z4). Test przyjęcia rozszerzony: żaden kandelabr nie stoi na pasie `steps`
 - Przyczyna: wpis planu ma jedną linię od schodów w65351905 do biegu głównego i 16 sztuk rozłożonych wzdłuż niej
 - Poprawka: dwa wpisy: 10 pojedynczych przy balustradach biegu głównego i 6 podwójnych na murkach po obu stronach stóp schodów (ok. x 762..768, z 233..252)
 - Pakiet właściciela: tools/osm-import (`docs/world/lublin-props.todo.json`)
@@ -693,6 +694,26 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: korekty `height`/`roof:height` z NMPT w `corrections.ts` (jak G-204)
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: kontrola `church-default-height` spada z 9 do 0
+
+### G-217 Bieg 2 i bieg przed bramą schodów zamkowych węższe niż w rzeczywistości
+- Status: zgłoszone (2.11, kurator, przegląd #194)
+- Ważność: S4 (proponowana) · Zasięg: lokalny, oś widokowa Placu Zamkowego · Koszt: mały (dane)
+- Gdzie: T-126; w1305940836 (x 776,8..781,4), w1306105687 (x 824,9..829,2), podest w56965512
+- Dowód: ortofoto PZGiK (siatka 2 m): bieg 2 ok. 15,5 m (z 236,8..252,5), bieg 5 ok. 15 m (z 231..247); w grze po #194 po 10 m, obok biegu 2 trawa (779; 251)
+- Przyczyna: `width=10` z rozstawu murków biegu głównego nadane wszystkim biegom; OSM nie ma `width`
+- Poprawka: w `TAG_CORRECTIONS` `width=15` dla w1305940836 i w1306105687 (oś OSM bliska środka pasa z ortofoto, do sprawdzenia przy poprawce), podest w56965512 i w1305889407 co najmniej tyle co sąsiedni bieg; sprawdzić, czy kandelabry i kosze przy biegach nie lądują na stopniach
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: pas `steps` biegu 2 i 5 ≥ 14,5 m; punkty bez nawierzchni na osi poprzecznej biegu 2 (±7,5 m) = 0; żaden rekwizyt na pasie `steps`
+
+### G-218 Pas bez nawierzchni między brukiem Placu Zamkowego a stopą schodów zamkowych
+- Status: zgłoszone (2.11, kurator, przegląd #194; wcześniej jako poboczne w G-213)
+- Ważność: S4 (proponowana) · Zasięg: lokalny, pierwszy plan widoku z placu na schody · Koszt: mały
+- Gdzie: T-128; x ok. 759..765, z ok. 233..256
+- Dowód: sonda nawierzchni (762; 245) i (760; 245): żaden obrys; zrzut `g203-plac` (ciemny pas przed schodami); ortofoto: ciągły chodnik z płyt
+- Przyczyna: luka w OSM (żaden obszar nie pokrywa chodnika między parkingiem w294103450 a ścieżką w56965514)
+- Poprawka: obszar chodnika w korektach importu (np. `footway` / plac pieszy z obrysem od krawędzi parkingu do pierwszego stopnia) z wpisem T-128, albo uzupełnienie OSM i ponowne pobranie
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: punkty bez nawierzchni w prostokącie x 758..766, z 236..254 (co 0,5 m) = 0
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
