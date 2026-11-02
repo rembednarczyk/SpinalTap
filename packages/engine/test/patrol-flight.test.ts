@@ -8,7 +8,7 @@ import { CityKit } from "../src/renderer/city-kit";
 import { parseCityKit } from "../src/renderer/city-kit-data";
 import { mergeCityProps, parseCityProps } from "../src/renderer/city-props";
 import { DRONE_SIZE } from "../src/renderer/drones/drone-flight";
-import { MIN_AGL } from "../src/renderer/drones/drone-lanes";
+import { type DroneLane, MIN_AGL } from "../src/renderer/drones/drone-lanes";
 import { DroneViews, PATROL_LOD } from "../src/renderer/drones/drone-views";
 import { PatrolAir } from "../src/renderer/drones/patrol-air";
 import {
@@ -26,7 +26,7 @@ import {
   patrolOf,
   patrolPose,
 } from "../src/renderer/drones/patrol-flight";
-import { MIN_LANE, type PatrolWorld, planPatrolLanes } from "../src/renderer/drones/patrol-lanes";
+import { MIN_LANE, type PatrolWorld, ROOF_ROOM, planPatrolLanes } from "../src/renderer/drones/patrol-lanes";
 import { POOL_SEGMENTS, patrolTemplates } from "../src/renderer/drones/patrol-models";
 import { POOL_LIFT } from "../src/renderer/drones/patrol-pool";
 import type { P2 } from "../src/renderer/mapcity/polygon";
@@ -41,7 +41,7 @@ const props = mergeCityProps(parseCityProps(file("city-props.glb")), parseCityPr
 /** A straight lane along +x from (0, 0), `length` m, the paving at `ground`. */
 const lane = (length: number, ground = 0, quiet = false, seed = 7): PatrolLane => {
   const n = length / 4;
-  return { points: Array.from({ length: n + 1 }, (_, i) => ({ x: i * 4, z: 0 })), grounds: Array.from({ length: n + 1 }, () => ground), length, seed, quiet };
+  return { points: Array.from({ length: n + 1 }, (_, i) => ({ x: i * 4, z: 0 })), grounds: Array.from({ length: n + 1 }, () => ground), length, seed, quiet, square: 0, ceilings: [ground + PATROL_CEILING, ground + PATROL_CEILING + 6] };
 };
 
 const rect = (x0: number, z0: number, x1: number, z1: number): P2[] => [
@@ -94,7 +94,8 @@ describe("low patrol models (ADR-0058 stage 7b)", () => {
 });
 
 describe("low patrol flight (ADR-0058 stage 7b)", () => {
-  it("comes down from the ceiling, flies the lane over the heads, hangs, climbs away and stays away a while", () => {
+  it("comes into sight at its ceilings, flies the lane over the heads, hangs, climbs away and stays away a while", () => {
+    // Its ceilings: 18 m over the start, 24 m over the end (the roofs round it).
     const p = patrolOf(lane(80, 3));
     const cycle = patrolCycle(p);
     let prev = patrolPose(p, -p.offset);
@@ -106,15 +107,21 @@ describe("low patrol flight (ADR-0058 stage 7b)", () => {
       const q = patrolPose(p, t - p.offset);
       if (!q) {
         away += dt;
+        // It goes only once shrunk to nothing.
+        if (prev) expect(prev.scale).toBeLessThan(0.01);
         if (prev) flights++;
         prev = q;
         continue;
       }
       expect(q.y - q.ground).toBeGreaterThanOrEqual(PATROL_ALTITUDE - PATROL_BOB - 1e-6);
-      expect(q.y - q.ground).toBeLessThanOrEqual(PATROL_CEILING + PATROL_BOB + 1e-6);
+      expect(q.y - q.ground).toBeLessThanOrEqual(PATROL_CEILING + 6 + PATROL_BOB + 1e-6);
+      // It grows from nothing and shrinks to nothing only at a ceiling, never under it.
+      if (q.scale < 1) expect(Math.min(Math.abs(q.y - p.lane.ceilings[0]), Math.abs(q.y - p.lane.ceilings[1]))).toBeLessThanOrEqual(PATROL_BOB + 1e-6);
+      if (!prev) expect(q.scale).toBeLessThan(0.01);
       expect(q.ground).toBe(3);
       if (q.y - q.ground < PATROL_ALTITUDE + PATROL_BOB + 1e-6) low += dt;
       if (prev) expect(Math.hypot(q.x - prev.x, q.y - prev.y, q.z - prev.z)).toBeLessThan(0.3);
+      if (prev) expect(Math.abs(q.scale - prev.scale)).toBeLessThan(0.1);
       // On the lane's axis, never past its ends.
       expect(q.z).toBeCloseTo(0, 9);
       expect(q.x).toBeGreaterThanOrEqual(-1e-6);
@@ -125,7 +132,7 @@ describe("low patrol flight (ADR-0058 stage 7b)", () => {
     expect(flights).toBe(2);
     expect(away).toBeCloseTo(p.pauses[0] + p.pauses[1], 0);
     expect(low).toBeGreaterThan((2 * 80) / 3.5 + 2 * p.hover - 2);
-    // Its climb ends under the canyon drones' lowest level.
+    // Its least ceiling lies under the canyon drones' lowest level.
     expect(PATROL_CEILING + PATROL_SIZE.height + PATROL_BOB).toBeLessThan(MIN_AGL - 0.35);
   });
 
@@ -151,6 +158,9 @@ describe("low patrol flight (ADR-0058 stage 7b)", () => {
     // The longest lanes, the same ones on both.
     for (const p of medium) expect(high.map((h) => h.lane)).toContain(p.lane);
     expect(patrolFleet(lanes, "low")).toEqual([]);
+    // Over the Old Town a short lane over a square (the Rynek) comes before the longer side streets.
+    const rynek = { ...lane(40, 0, true, 99), square: 1 };
+    expect(patrolFleet([...lanes, rynek], "medium").map((p) => p.lane)).toContain(rynek);
   });
 });
 
@@ -179,6 +189,25 @@ describe("low patrol lanes (ADR-0058 stage 7b)", () => {
     // The same cable at 5 m cuts the lane.
     const low = planPatrolLanes(street({ posts: cable.map((c) => ({ ...c, bottom: 4.95, top: 5.05 })) }));
     for (const l of low) for (const p of l.points) expect(Math.abs(p.x - 20)).toBeGreaterThan(2);
+  });
+});
+
+describe("low patrol ceilings (ADR-0058 stage 7b)", () => {
+  it("come into sight over the roofs round the lane's ends, and keep under the canyon drones", () => {
+    const plain = planPatrolLanes(street());
+    // 15 m roofs: the least ceiling, 18 m over the paving.
+    expect(plain[0]!.ceilings).toEqual([PATROL_CEILING, PATROL_CEILING]);
+    // A 30 m tower by the street's west end: that end's ceiling 2 m over it.
+    const world = street();
+    const tall = { ...world, air: new PatrolAir([...world.air.prisms, { ring: rect(0, 7, 18, 20), bottom: 0, top: 30, pad: 1 }], []) };
+    const lanes = planPatrolLanes(tall);
+    const west = lanes[0]!.points[0]!.x < lanes[0]!.points.at(-1)!.x ? 0 : 1;
+    expect(lanes[0]!.ceilings[west]).toBeCloseTo(30 + ROOF_ROOM, 6);
+    expect(lanes[0]!.ceilings[1 - west]).toBe(PATROL_CEILING);
+    // A canyon drone lane at 20 m over the west half (a column 18.85 m tall and the 2 m gap reach over it): no end under it.
+    const canyon: DroneLane = { points: Array.from({ length: 26 }, (_, i) => ({ x: i * 4, z: 0 })), levels: Array.from({ length: 26 }, () => 20), length: 100, seed: 1 };
+    const under = planPatrolLanes(tall, [canyon]);
+    for (const l of under) for (const end of [l.points[0]!, l.points.at(-1)!]) expect(end.x).toBeGreaterThan(100);
   });
 });
 

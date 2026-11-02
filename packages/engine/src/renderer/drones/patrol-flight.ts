@@ -19,14 +19,20 @@ export const PATROL_SIZE = { width: BASE.width * PATROL_SCALE, height: BASE.heig
 export const PATROL_REACH = Math.hypot(PATROL_SIZE.width, PATROL_SIZE.length) / 2;
 /** Its foot over the paving on a lane (m): 4.6 to 5.35 m with the box, bobbing included 4.5 to 5.45 m. */
 export const PATROL_ALTITUDE = 4.6;
-/** Where it comes from and climbs to over the street (m): under the canyon drones' 22 m (ADR-0058 stage 7). */
+/**
+ * The least height over the paving it comes from and climbs to (m). The planner puts each end's
+ * ceiling over the roofs round it (`ROOF_ROOM` over the highest within `POP_ROOM`), under the canyon
+ * drones (ADR-0058 stage 7): from the street it never comes into sight or goes in the open air.
+ */
 export const PATROL_CEILING = 18;
+/** Seconds it takes to come into sight at its ceiling (growing from nothing) and to go (shrinking). */
+export const PATROL_APPEAR = 1.5;
 /** Bobbing up and down (m) over `BOB_PERIOD` seconds. */
 export const PATROL_BOB = 0.1;
 const BOB_PERIOD = 2.6;
 /** Speeds (m/s): along the lane, and down and up. */
 export const PATROL_SPEED = 3.5;
-export const PATROL_CLIMB = 2.5;
+export const PATROL_CLIMB = 4;
 /** The searchlight shows from this far over the paving (m) down. */
 export const BEAM_FROM = 8;
 /** The sway of its heading while it hangs over the street (rad), over this period (s). */
@@ -53,6 +59,10 @@ export interface PatrolLane {
   readonly seed: number;
   /** Over the Old Town: long pauses. */
   readonly quiet: boolean;
+  /** Its share over a square's paving (0..1): over the Old Town the squares come first (the Rynek). */
+  readonly square: number;
+  /** Where its foot comes into sight and goes over its start and its end (y, m). */
+  readonly ceilings: readonly [number, number];
 }
 
 export interface Patrol {
@@ -89,17 +99,30 @@ export const patrolOf = (lane: PatrolLane): Patrol => {
   return { ...p, offset: patrolCycle(p) * unit(h, 6) };
 };
 
-/** Seconds of one flight: down, along with its hover, up. */
-const flightTime = (p: Patrol): number => (2 * (PATROL_CEILING - PATROL_ALTITUDE)) / PATROL_CLIMB + p.lane.length / PATROL_SPEED + p.hover;
+/** How far it comes down at the lane's start and climbs at its end, from and to their ceilings (m). */
+const rises = (lane: PatrolLane): readonly [number, number] => [
+  Math.max(0, lane.ceilings[0] - (lane.grounds[0] as number) - PATROL_ALTITUDE),
+  Math.max(0, lane.ceilings[1] - (lane.grounds[lane.grounds.length - 1] as number) - PATROL_ALTITUDE),
+];
+
+/** Seconds of one flight: coming into sight, down, along with its hover, up, going. */
+const flightTime = (p: Patrol): number => {
+  const [a, b] = rises(p.lane);
+  return 2 * PATROL_APPEAR + (a + b) / PATROL_CLIMB + p.lane.length / PATROL_SPEED + p.hover;
+};
 
 /** Seconds of a patrol's cycle: out, away, back, away. */
 export const patrolCycle = (p: Patrol): number => 2 * flightTime(p) + p.pauses[0] + p.pauses[1];
 
-/** The patrols of the lanes for a quality: the longest lanes, `PATROL_COUNT.quiet` of them over the Old Town at most. */
+/**
+ * The patrols of the lanes for a quality: the longest lanes, `PATROL_COUNT.quiet` of them over the
+ * Old Town at most, there those mostly over a square first (the Rynek before the side streets).
+ */
 export const patrolFleet = (lanes: readonly PatrolLane[], quality: RenderQuality): Patrol[] => {
   const { total, quiet } = PATROL_COUNT[quality];
   const longest = (l: readonly PatrolLane[]) => [...l].sort((a, b) => b.length - a.length || a.seed - b.seed);
-  const old = longest(lanes.filter((l) => l.quiet)).slice(0, quiet);
+  const squaresFirst = (l: readonly PatrolLane[]) => [...longest(l)].sort((a, b) => Number(b.square > 0.5) - Number(a.square > 0.5));
+  const old = squaresFirst(lanes.filter((l) => l.quiet)).slice(0, quiet);
   const busy = longest(lanes.filter((l) => !l.quiet)).slice(0, total - old.length);
   return [...old, ...busy].map(patrolOf);
 };
@@ -119,20 +142,37 @@ export const patrolLaneAt = (lane: PatrolLane, s: number): { readonly p: P2; rea
   return { p: { x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t }, dx: (b.x - a.x) / d, dz: (b.z - a.z) / d, ground: ga + (gb - ga) * t };
 };
 
-/** Along a flight `t` seconds in: how far along the lane (m), how high over the lane's level (m) and whether it hangs. */
-const flightAt = (p: Patrol, t: number): { s: number; up: number; hovering: number | null } => {
-  const fall = (PATROL_CEILING - PATROL_ALTITUDE) / PATROL_CLIMB;
+/** A smooth step from 0 to 1. */
+const ease = (t: number): number => {
+  const k = Math.max(0, Math.min(1, t));
+  return k * k * (3 - 2 * k);
+};
+
+/**
+ * Along a flight `t` seconds in (the way back when `back`): how far along its way (m), how high over
+ * the lane's level (m), whether it hangs, and how large it is drawn.
+ */
+const flightAt = (p: Patrol, t: number, back: boolean): { s: number; up: number; hovering: number | null; scale: number } => {
+  const [a, b] = rises(p.lane);
+  const [first, last] = back ? [b, a] : [a, b];
   const L = p.lane.length;
-  if (t < fall) return { s: 0, up: (fall - t) * PATROL_CLIMB, hovering: null };
-  let u = t - fall;
-  const toHover = p.hoverAt / PATROL_SPEED;
-  if (u < toHover) return { s: u * PATROL_SPEED, up: 0, hovering: null };
+  if (t < PATROL_APPEAR) return { s: 0, up: first, hovering: null, scale: ease(t / PATROL_APPEAR) };
+  let u = t - PATROL_APPEAR;
+  const fall = first / PATROL_CLIMB;
+  if (u < fall) return { s: 0, up: first - u * PATROL_CLIMB, hovering: null, scale: 1 };
+  u -= fall;
+  const hoverAt = p.hoverAt;
+  const toHover = hoverAt / PATROL_SPEED;
+  if (u < toHover) return { s: u * PATROL_SPEED, up: 0, hovering: null, scale: 1 };
   u -= toHover;
-  if (u < p.hover) return { s: p.hoverAt, up: 0, hovering: u };
+  if (u < p.hover) return { s: hoverAt, up: 0, hovering: u, scale: 1 };
   u -= p.hover;
-  const rest = (L - p.hoverAt) / PATROL_SPEED;
-  if (u < rest) return { s: p.hoverAt + u * PATROL_SPEED, up: 0, hovering: null };
-  return { s: L, up: Math.min(PATROL_CEILING - PATROL_ALTITUDE, (u - rest) * PATROL_CLIMB), hovering: null };
+  const rest = (L - hoverAt) / PATROL_SPEED;
+  if (u < rest) return { s: hoverAt + u * PATROL_SPEED, up: 0, hovering: null, scale: 1 };
+  u -= rest;
+  const climb = last / PATROL_CLIMB;
+  if (u < climb) return { s: L, up: u * PATROL_CLIMB, hovering: null, scale: 1 };
+  return { s: L, up: last, hovering: null, scale: ease(1 - (u - climb) / PATROL_APPEAR) };
 };
 
 /** Where a patrol is at `time` seconds, or null while it is away. */
@@ -146,11 +186,11 @@ export const patrolPose = (p: Patrol, time: number): PatrolPose | null => {
     back = true;
   }
   if (t >= flight) return null;
-  const f = flightAt(p, t);
+  const f = flightAt(p, t, back);
   const s = back ? p.lane.length - f.s : f.s;
   const at = patrolLaneAt(p.lane, s);
   const sway = f.hovering === null ? 0 : HOVER_SWAY * Math.sin((f.hovering / SWAY_PERIOD) * 2 * Math.PI);
   const heading = Math.atan2(at.dx, at.dz) + (back ? Math.PI : 0) + sway;
   const bob = PATROL_BOB * Math.sin(((time / BOB_PERIOD + p.bob) * 2 * Math.PI) % (2 * Math.PI));
-  return { x: at.p.x, y: at.ground + PATROL_ALTITUDE + f.up + bob, z: at.p.z, yaw: heading, ground: at.ground, scale: 1 };
+  return { x: at.p.x, y: at.ground + PATROL_ALTITUDE + f.up + bob, z: at.p.z, yaw: heading, ground: at.ground, scale: f.scale };
 };

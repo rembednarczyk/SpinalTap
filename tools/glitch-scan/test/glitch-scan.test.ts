@@ -15,6 +15,7 @@ import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 import { MAP_SIGN_KIND } from "../../../packages/engine/src/renderer/mapcity/sign-plan";
 import { streetAxes } from "../../../packages/engine/src/renderer/drones/drone-world";
 import { planDroneLanes } from "../../../packages/engine/src/renderer/drones/drone-lanes";
+import { droneWorldOf } from "../../../packages/engine/src/renderer/drones/drone-world";
 import type { PatrolLane } from "../../../packages/engine/src/renderer/drones/patrol-flight";
 import { planPatrolLanes } from "../../../packages/engine/src/renderer/drones/patrol-lanes";
 import { PATROL_STREETS, patrolWorldOf, quietAt } from "../../../packages/engine/src/renderer/drones/patrol-world";
@@ -440,7 +441,8 @@ const tagsBearOut = (shape: string, t: Readonly<Record<string, string>>): boolea
 /** The low patrols' lanes (ADR-0058 stage 7b) as the renderer plans them from the whole scenery, once. */
 const PATROL_LANES = (() => {
   let memo: readonly PatrolLane[] | null = null;
-  return () => (memo ??= planPatrolLanes(patrolWorldOf(WORLD_SCENERY, streetAxes(LUBLIN_CHUNKS, PATROL_STREETS), groundY, quietAt, surfaceY)));
+  // Under the canyon drones' lanes, as the renderer plans them.
+  return () => (memo ??= planPatrolLanes(patrolWorldOf(WORLD_SCENERY, streetAxes(LUBLIN_CHUNKS, PATROL_STREETS), groundY, quietAt, surfaceY), planDroneLanes(droneWorldOf(WORLD_SCENERY, streetAxes(LUBLIN_CHUNKS), groundY))));
 })();
 
 const CHECKS: Readonly<Record<string, () => Finding[]>> = {
@@ -1581,7 +1583,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   // The drones of ADR-0058 stage 7 flown round the lanes the renderer plans from the scenery, and the
   // low patrols of stage 7b through theirs (`drone-pieces.ts`, `patrol-pieces.ts`).
   ...droneChecks(WORLD_SCENERY, streetAxes(LUBLIN_CHUNKS), groundY, planDroneLanes, PATROL_LANES),
-  ...patrolChecks(PATROL_LANES, (zones) => airMesh(WORLD_SCENERY, zones), surfaceY, (x, z) => surfacesAt(x, z).length > 0),
+  ...patrolChecks(PATROL_LANES, (zones) => airMesh(WORLD_SCENERY, zones), surfaceY),
   // The still crowd of ADR-0058 stage 8 against the game's buildings, roads, paving, kept furniture and moving crowd (`figure-pieces.ts`).
   ...figureChecks(Object.values(WORLD_STREET_PROPS).flat(), {
     inBuilding,

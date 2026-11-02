@@ -112,7 +112,36 @@ export const droneChecks = (
       }
       return [];
     });
+  /** Every point of every canyon drone's loop, by 8 m cells. */
+  const canyonMemo: { cells?: Map<string, ReturnType<typeof flown>> } = {};
+  const canyonCells = () => {
+    if (canyonMemo.cells) return canyonMemo.cells;
+    const cells = new Map<string, ReturnType<typeof flown>>();
+    for (const lane of lanes()) {
+      for (const kind of DRONE_KINDS) {
+        for (const f of flown(lane, kind)) {
+          const k = `${Math.floor(f.p.x / 8)}:${Math.floor(f.p.z / 8)}`;
+          cells.set(k, [...(cells.get(k) ?? []), f]);
+        }
+      }
+    }
+    return (canyonMemo.cells = cells);
+  };
   return {
+    /** A low patrol's box (down, along, up) within a metre of a canyon drone's way, under it or in it (ADR-0058 stage 7 and 7b). */
+    "drone-low-canyon": () =>
+      perPatrol((f) => {
+        const cx = Math.floor(f.p.x / 8);
+        const cz = Math.floor(f.p.z / 8);
+        for (let i = cx - 1; i <= cx + 1; i++) {
+          for (let j = cz - 1; j <= cz + 1; j++) {
+            for (const c of canyonCells().get(`${i}:${j}`) ?? []) {
+              if (Math.hypot(c.p.x - f.p.x, c.p.z - f.p.z) < f.reach + c.reach + 1 && f.top + 1 > c.bottom && f.bottom < c.top + 1) return `meets the canyon drones' way at ${c.bottom.toFixed(1)} m`;
+            }
+          }
+        }
+        return null;
+      }),
     /** A drone's box in a building's solid: its walls, superstructure, roof or masts. */
     "drone-in-building": () => [
       ...perLane((lane, kind) => {

@@ -49,7 +49,7 @@ export interface DroneViewsDeps {
   /** The city the low patrols' lanes are planned from (ADR-0058 stage 7b), null without map data or none. */
   readonly patrolWorld?: () => PatrolWorld | null;
   /** Plans the low patrols' lanes (default `planPatrolLanes`; tests hand fixed ones). */
-  readonly patrolPlan?: (world: PatrolWorld) => readonly PatrolLane[];
+  readonly patrolPlan?: (world: PatrolWorld, canyon: readonly DroneLane[]) => readonly PatrolLane[];
 }
 
 /** What a slot holds: a canyon drone of a kind, or a low patrol (`watch`). */
@@ -86,6 +86,7 @@ export class DroneViews {
   private patrolLanes: readonly PatrolLane[] = [];
   private patrols: readonly Patrol[] = [];
   private patrolsPlanned: PatrolWorld | null = null;
+  private patrolsUnder: readonly DroneLane[] = [];
   private drawnPatrols = 0;
   private time = 0;
   private mesh: Mesh | null = null;
@@ -159,9 +160,11 @@ export class DroneViews {
       this.fleet = droneFleet(this.lanes, this.deps.quality);
     }
     const patrolWorld = this.deps.patrolWorld?.() ?? null;
-    if (patrolWorld !== this.patrolsPlanned) {
+    // The low patrols keep under the canyon drones: planned again with them.
+    if (patrolWorld !== this.patrolsPlanned || this.lanes !== this.patrolsUnder) {
       this.patrolsPlanned = patrolWorld;
-      this.patrolLanes = patrolWorld ? (this.deps.patrolPlan ?? planPatrolLanes)(patrolWorld) : [];
+      this.patrolsUnder = this.lanes;
+      this.patrolLanes = patrolWorld ? (this.deps.patrolPlan ?? planPatrolLanes)(patrolWorld, this.lanes) : [];
       this.patrols = patrolFleet(this.patrolLanes, this.deps.quality);
     }
   }

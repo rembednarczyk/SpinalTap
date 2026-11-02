@@ -59,6 +59,16 @@ export class PatrolAir {
     posts.forEach((p, i) => this.postIndex.add(i, around(p, p.r)));
   }
 
+  /** The highest top of what stands within `r` of (x, z), -Infinity for nothing. */
+  highest(p: P2, r: number): number {
+    let top = -Infinity;
+    for (const i of this.prismIndex.within(around(p, r))) {
+      const s = this.prisms[i] as AirPrism;
+      if (s.top > top && toRing(p, s.ring) <= r) top = s.top;
+    }
+    return top;
+  }
+
   /**
    * Whether an upright cylinder `room` metres round (x, z) from `bottom` to `top` meets nothing:
    * no prism within its pad and no post within its radius, where their heights overlap.

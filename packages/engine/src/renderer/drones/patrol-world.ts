@@ -7,8 +7,8 @@ import { facadeFrame } from "../mapcity/facade-frame";
 import { isLandmarkFrame, landmarkAt, withLandmark } from "../mapcity/landmarks";
 import { cableRuns } from "../mapcity/landmarks/cables";
 import { MapEntries } from "../mapcity/map-entries";
-import { cellKey } from "../mapcity/map-index";
-import { type P2, boundsOf, cleanRing } from "../mapcity/polygon";
+import { BinIndex, cellKey } from "../mapcity/map-index";
+import { type P2, boundsOf, cleanRing, pointInRing } from "../mapcity/polygon";
 import { type WorldProp, toWorld } from "../mapcity/prop-batch";
 import { propModel } from "../mapcity/prop-models";
 import { PROP_BLOCK } from "../mapcity/prop-shapes";
@@ -175,15 +175,20 @@ const buildingAir = (items: readonly Item[], near: (x: number, z: number) => boo
 /** The low patrols' world from views and where they stand, and the pedestrian streets' axes. */
 export const patrolWorldOf = (items: readonly Item[], axes: readonly (readonly P2[])[], groundAt: (x: number, z: number) => number | null, quietAt: (x: number, z: number) => boolean, surfaceAt: (x: number, z: number) => number): PatrolWorld => {
   const roads: P2[][] = [];
+  const squares = new BinIndex();
+  const squareRings: P2[][] = [];
   for (const { view, at } of items) {
     if (view.kind !== "ground" || !DRONE_SURFACES.has(view.surface)) continue;
     const ring = worldRing(view.outline, at);
-    if (ring.length >= 3) roads.push(ring);
+    if (ring.length < 3) continue;
+    roads.push(ring);
+    if (view.surface === "square") squares.add(squareRings.push(ring) - 1, boundsOf(ring));
   }
+  const squareAt = (x: number, z: number) => [...squares.at(x, z)].some((i) => pointInRing({ x, z }, squareRings[i] as P2[]));
   const near = nearAxes(axes);
   const built = buildingAir(items, near);
   const air = new PatrolAir(built.prisms, [...built.posts, ...furniturePosts(items, near)]);
-  return { axes, roads, air, groundAt, quietAt, surfaceAt };
+  return { axes, roads, air, groundAt, quietAt, surfaceAt, squareAt };
 };
 
 /** The Old Town keeps its calm (ADR-0058): the patrols come down over it now and then. */
