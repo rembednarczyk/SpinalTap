@@ -4,12 +4,13 @@ import { landmarkAt, withLandmark } from "../../../packages/engine/src/renderer/
 import { type BuildingSource, mapBuilding } from "../../../packages/engine/src/renderer/mapcity/map-building";
 import { type P2, centroid, cleanRing, pointInRing } from "../../../packages/engine/src/renderer/mapcity/polygon";
 import { addTowers } from "../../../packages/engine/src/renderer/mapcity/roof-plan";
+import { WINDOW_STYLE } from "../../../packages/engine/src/renderer/mapcity/facade-style";
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 import { clearedBuilding } from "../../../packages/sim/src/content/cleared-buildings";
 import { buildingView } from "../../../packages/sim/src/content/lublin";
 import { MAP_CHUNKS } from "../../../packages/sim/src/content/lublin/sites";
-import { mappedTowers, towerMapped } from "../../osm-import/src/building-towers.ts";
-import type { OsmData } from "../../osm-import/src/osm.ts";
+import { isTowerTags, mappedTowers, towerMapped } from "../../osm-import/src/building-towers.ts";
+import type { OsmData, Tags } from "../../osm-import/src/osm.ts";
 
 /**
  * Landmarks of the curator's list the renderer crowns with bell towers of its own (G-210) while
@@ -90,6 +91,24 @@ export const towersOffBuilding = (entries: readonly TowerEntry[]): { readonly at
       .map((t) => ({ at: `${t.x.toFixed(0)},${t.z.toFixed(0)}`, what: `${e.id} ${e.frame.b.name ?? ""}: a tower off the building`.trim() })),
   );
 
+/** Window styles of homes and offices: a tenement's, a block's, an office's. */
+const DWELLING: ReadonlySet<number> = new Set([WINDOW_STYLE.tenement, WINDOW_STYLE.modern, WINDOW_STYLE.block]);
+
+/** Each tower of the map drawn with the windows of flats or offices, or shop fronts, as a tenement (G-232). */
+export const dwellingTowers = (entries: readonly TowerEntry[]): { readonly at: string; readonly what: string }[] =>
+  entries.flatMap((e) => {
+    const s = e.frame.style;
+    if (!DWELLING.has(s.window) && !s.shopfront) return [];
+    return [{ at: `${e.x.toFixed(0)},${e.z.toFixed(0)}`, what: `${e.id} ${e.frame.b.name ?? ""}: a tower with ${s.shopfront ? "shop fronts" : "flats' windows"}`.trim() }];
+  });
+
+/** The map's own tags of a building of the data, by its id (`w<id>`, `r<id>`, a split piece `r<id>/<k>`). */
+const ownTags = (osm: OsmData, id: string): Tags => {
+  const m = /^([wr])(\d+)/.exec(id);
+  const el = m ? (m[1] === "w" ? osm.ways.get(Number(m[2])) : osm.relations.get(Number(m[2]))) : undefined;
+  return el?.tags ?? {};
+};
+
 /** The buildings of the city `keep` takes, framed as the map city frames them, with the map's towers. */
 const cityEntries = (keep: (id: string, s: BuildingSource) => boolean, osm: OsmData): TowerEntry[] => {
   const data = MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)));
@@ -102,10 +121,8 @@ const cityEntries = (keep: (id: string, s: BuildingSource) => boolean, osm: OsmD
   return sources.flatMap((s, i): TowerEntry[] => {
     const id = data[i]!.id;
     if (!keep(id, s)) return [];
-    const m = /^([wr])(\d+)/.exec(id);
-    const el = m ? (m[1] === "w" ? osm.ways.get(Number(m[2])) : osm.relations.get(Number(m[2]))) : undefined;
     const frame = withLandmark(facadeFrame(mapBuilding(i + 1, s, () => null, lifted), () => null), landmarkAt(s.at.x, s.at.z, s.view.outline.length));
-    return [{ id, x: s.at.x, z: s.at.z, ring: s.ring, frame, parts: hasParts(s, lifted), mapped: towerMapped(el?.tags ?? {}, s.ring, towers) }];
+    return [{ id, x: s.at.x, z: s.at.z, ring: s.ring, frame, parts: hasParts(s, lifted), mapped: towerMapped(ownTags(osm, id), s.ring, towers) }];
   });
 };
 
@@ -117,3 +134,6 @@ export const cityFakeTowers = (ids: readonly string[], osm: OsmData): { readonly
 
 /** The city's churches, framed as the map city frames them, with the map's towers. */
 export const cityChurches = (osm: OsmData): TowerEntry[] => cityEntries((_, s) => s.view.use === "church", osm);
+
+/** The city's towers drawn as buildings of their own, tagged a tower in the map, framed as the map city frames them. */
+export const cityTowers = (osm: OsmData): TowerEntry[] => cityEntries((id) => isTowerTags(ownTags(osm, id)), osm);
