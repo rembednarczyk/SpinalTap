@@ -624,15 +624,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (korekta `width` dla linii albo szerokość biegu ze ściskających go murków)
 - Test przyjęcia: pas `steps` każdego biegu ma ≥ 9,5 m, a podesty łączą się z biegami bez trawy pomiędzy; kontrola `steps-narrower-than-walls` (baza 1) → 0
 
-### G-204 Wysokości Kaplicy Trójcy (domyślna) i Donżonu niezgodne z NMPT
-- Status: w PR #188 (1.11, w weryfikacji, potem kurator): korekty `height`/`roof:height` w `TAG_CORRECTIONS`, kontrola `landmark-default-height` baza 2
-- Ważność: S3 (proponowana) · Zasięg: lokalny (sylwetka Zamku) · Koszt: mały
-- Gdzie: Kaplica w66258167 (941; 214,6), Donżon w450180469 (893,1; 214,6)
-- Dowód: NMPT GUGiK 0,5 m. Kaplica: okap ok. y 7 wobec 9,7 w grze, kalenica y 15,3 wobec 14,1; prezbiterium niższe (kalenica ok. y 11). Donżon: korona ok. y 16,4–16,9 wobec 18,6
-- Poprawka: `corrections.ts`: Kaplica `height` 21,6 (ściany 13,3 + dach 8,3, wzór importera: walls = height − min(roof, height/2)), `roof:height` 8,3; Donżon `height` ok. 23,3; prezbiterium Kaplicy jako część w etapie Z3 planu
-- Pakiet właściciela: tools/osm-import
-- Test przyjęcia: kontrola `landmark-default-height` (baza 3) spada do 2; okap i kalenica Kaplicy oraz korona Donżonu w danych gry co do 1 m z NMPT
-
 ### G-205 Dolne kandelabry schodów zamkowych stoją na skarpie zamiast na murkach u stóp schodów
 - Status: zgłoszone (1.11, audyt zespołu zamkowego, T-115)
 - Ważność: S4 · Zasięg: lokalny · Koszt: mały
@@ -673,6 +664,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: gdy żyje powalony posiłek z poprzedniego heatu i nowy posiłek z tym samym `n`, `findTarget` (G-194, `scanner-system.ts`) może trafić w niewłaściwy; `HACKED_MEMORY = 256` (`packages/core/src/progression/progression.ts`): po 256 hackach posiłków (każdy dodaje klucz) najstarsze urządzenia z kluczem wypadają z pamięci i płacą ponownie
 - Poprawka: cel uploadu jako `security:<n>@<since>` (klucz z G-202); pamięć hacków osobno dla posiłków albo większa granica z testem; przy balansie (ADR-0059 etap 8) ocenić XP za posiłki w długim heacie
 - Pakiet właściciela: packages/sim, packages/core
+
+### G-210 Proceduralna dzwonnica z iglicą na Kaplicy Trójcy
+- Status: zgłoszone (2.11, kurator #188, T-119)
+- Ważność: S3 (proponowana: fałszywa iglica jest najwyższym akcentem wzgórza zamkowego zamiast Donżonu) · Zasięg: Kaplica w66258167 (941; 214,6), możliwe inne kościoły z listy zabytków bez części i bez `tower` w OSM
+- Przyczyna: `packages/engine/src/renderer/mapcity/roof-plan.ts` (`towerSpots`/`addTowers`) dokłada wieżę kościołom bez `building:part`, więc wyłączenie z G-057 nie działa; korona wieży ok. y 19,0, iglica do ok. y 28–30 (Donżon 16,9; prawdziwa Kaplica bez wieży, szczyt zachodni ok. y 16,9)
+- Poprawka: bez proceduralnej wieży na zabytkach z `LANDMARK_BUILDINGS` bez `tower` w OSM (albo przepis Z3); kontrola skanu `landmark-fake-tower` (baza ≥ 1); migawka NPR świadomie
+- Pakiet właściciela: packages/engine (renderer/mapcity), tools/glitch-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)

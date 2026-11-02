@@ -2,6 +2,15 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-204 Wysokości Kaplicy Trójcy (domyślna) i Donżonu niezgodne z NMPT
+- Status: naprawione w #188 (2.11, PRZYJĘTE; kurator: wysokości zgodne z NMPT, korona Donżonu na parapecie 16,9)
+- Ważność: S3 (proponowana) · Zasięg: lokalny (sylwetka Zamku) · Koszt: mały
+- Gdzie: Kaplica w66258167 (941; 214,6), Donżon w450180469 (893,1; 214,6)
+- Dowód: NMPT GUGiK 0,5 m. Kaplica: okap ok. y 7 wobec 9,7 w grze, kalenica y 15,3 wobec 14,1; prezbiterium niższe (kalenica ok. y 11). Donżon: korona ok. y 16,4–16,9 wobec 18,6
+- Poprawka: `corrections.ts`: Kaplica `height` 21,6 (ściany 13,3 + dach 8,3, wzór importera: walls = height − min(roof, height/2)), `roof:height` 8,3; Donżon `height` ok. 23,3; prezbiterium Kaplicy jako część w etapie Z3 planu
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: kontrola `landmark-default-height` (baza 3) spada do 2; okap i kalenica Kaplicy oraz korona Donżonu w danych gry co do 1 m z NMPT
+
 ### G-185 Stan strażników kontraktu po wczytaniu (hack w toku, uśpieni)
 - Status: (a) naprawione w #185 (1.11, PRZYJĘTE w rundzie 2; zapis v25: broń NPC i stan snajpera w zapisie, laser po wczytaniu w fazie `aim`, walidator naboi); (b) i (c) nie odtwarzają się z żywym graczem (artefakt martwego gracza poza mapą), test `save-load-away-guards.test.ts` pilnuje; (d)/(e) w G-208. Zgłoszenie zamknięte.
 - Ważność: S3 · Zasięg: (a) hack w toku: seed 9, zlecenie `hack` przy Genzo, połączenie z `quay_terminal`, zapis 565 kroków po połączeniu: w 1. kroku `c1-g1.cooldown` 2,583 w oryginale i 0 po wczytaniu, gracz hp 6 vs 37, inny `rngState`; zapis po 660 krokach: `c1-g2` po wczytaniu stoi na posterunku (2576; −28,6; 421), w oryginale się rusza; (b) `lost` zaalarmowanego strażnika zapisanego poza chunkiem o 1/60 wyżej (`dormant-restore`; seed 77, 10 kroków po alarmie, teleport Genzo+2000, 120 kroków, zapis); (c) `suspicion` uśpionego strażnika: seed 8, aktywny `infiltrate`, wyjście z doków, zapis, powrót na `docks(0,0,120)` i 5 kroków: `c1-g0.suspicion` 0,0266 vs 0,0183 (d) z weryfikacji #165: zapis w trakcie wymiany ognia rozjeżdża się po ok. 150–210 krokach, z posiłkami i z kluczowanym NPC (courier, seed 21: krok 33 na main i HEAD); zapis gubi m.in. `combatant.loaded`, `bloom`, `velocity`, `session.lastThreat` i przechodniów tłumu; (e) z weryfikacji #172: zapis z żywymi, walczącymi posiłkami w trwającym heacie rozjeżdża się w 9. kroku po wczytaniu, także bez ciał (`rngState`, `hp`, `cooldown` broni; stany w `scratchpad/v-g193-c.json`, `v-g193-d.json`)
