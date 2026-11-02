@@ -825,7 +825,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (content/lublin)
 
 ### G-253 Zapis w trakcie obezwładnienia: chwyt poza zapisem
-- Status: w naprawie (2.11, naprawiacz, gałąź `ccr-ec2c4269-ilh8k8-g253`; zgłoszone przez naprawiacza G-240)
+- Status: w PR #225 (2.11, @ db5d939 w weryfikacji; zgłoszone przez naprawiacza G-240)
 - Ważność: S4 · Zasięg: `session.takedown` nie trafia do migawki, a `canSave` nie blokuje zapisu w chwycie; gra wczytana nie ma chwytu, a gra, z której zapisano, go kończy (rozjazd jak G-240)
 - Poprawka: `canSave`/autozapis czeka na koniec chwytu (prościej) albo chwyt w zapisie; test hash po zapisie w chwycie
 - Pakiet właściciela: packages/app (save-controller, autosave), packages/sim (takedown)
