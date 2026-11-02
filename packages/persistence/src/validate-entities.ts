@@ -42,9 +42,13 @@ export const findEntityError = (e: unknown): string | null => {
   return null;
 };
 
-/** One reinforcement (G-179): which of the heat's, a known enemy type, its entry and its state, keyed by `n`. */
+/**
+ * One reinforcement (G-179): which of the heat's, the tick it came in at (G-202), a known enemy
+ * type, its entry and its state, keyed by `n`.
+ */
 const findReinforcementError = (p: unknown): string | null => {
-  if (!isObject(p) || !isCount(p.n) || typeof p.type !== "string" || !Object.hasOwn(ENEMY_TYPES, p.type) || !isVec(p.home)) return "reinforcements";
+  if (!isObject(p) || !isCount(p.n) || !Number.isInteger(p.since) || (p.since as number) < 0) return "reinforcements";
+  if (typeof p.type !== "string" || !Object.hasOwn(ENEMY_TYPES, p.type) || !isVec(p.home)) return "reinforcements";
   if (findEntityError(p.state) || (p.state as Json).key !== `security:${p.n}`) return "reinforcements";
   // Its weapon is its type's: no more rounds than that magazine holds (G-185).
   const gun = (p.state as Json).gun;

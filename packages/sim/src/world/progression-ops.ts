@@ -17,8 +17,8 @@ export const grantXp = (ctx: SimContext, amount: number, source: XpSource): void
 
 /**
  * A quickhack landed on the target with `key`: only the first one on each target pays (no farming
- * a speaker every second). Targets without a key (passers-by) are not remembered across a save,
- * so they pay nothing.
+ * a speaker every second). Targets without one (passers-by; the scanner gives the heat's
+ * reinforcements one, G-202) are not remembered across a save, so they pay nothing.
  */
 export const grantQuickhackXp = (ctx: SimContext, key: string | undefined): void => {
   if (!key) return;

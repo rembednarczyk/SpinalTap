@@ -28,8 +28,17 @@ const putToSleep = (world: World<Entity>, state: StreamState, e: Entity, forgott
 };
 
 /**
+ * Whether a point is near the player, within the load radius (G-201). Outside the chunks the
+ * terrain goes on (the nearest chunk's) and she may stand on it, with no chunk loaded there; and
+ * a keyed AI near her may stand in a loaded chunk not his own when his falls asleep. Either way,
+ * what is near her stays before her eyes, pinned, and `sleepPinned` puts it to sleep once away.
+ */
+export type NearPlayer = (p: Vec3) => boolean;
+
+/**
  * Puts chunks to sleep: their entities leave the ECS world, keyed ones leaving their state
- * behind as a dormant snapshot. An alerted AI and a carried body stay (pinned).
+ * behind as a dormant snapshot. An alerted AI, a carried body and a keyed AI near the player
+ * (G-201, then `sleepPinned`'s) stay (pinned).
  */
 export const unloadChunks = (
   world: World<Entity>,
@@ -37,6 +46,7 @@ export const unloadChunks = (
   chunkIds: ReadonlySet<string>,
   chunkIdAt: (p: Vec3) => string,
   forgotten: ReadonlySet<string> = new Set(),
+  near: NearPlayer = () => false,
 ): void => {
   const staying = (id: string | undefined): boolean => id !== undefined && state.resident.has(id) && !chunkIds.has(id);
   // A character on a daily plan walks out of its chunk (300 m down Grodzka in Lublin, ADR-0045):
@@ -49,6 +59,7 @@ export const unloadChunks = (
   for (const e of leaving) {
     // Chasing or looking for the player (ADR-0029), or on her shoulder (ADR-0065): it stays.
     if (e.ai?.alerted || e.ai?.lastKnown || e.downed?.carried) continue;
+    if (e.ai && e.key && near(e.position)) continue;
     putToSleep(world, state, e, forgotten);
   }
   for (const id of chunkIds) state.resident.delete(id);
@@ -65,17 +76,24 @@ const calmDown = (ai: GangerAi): void => {
 
 /**
  * The keyed AIs pinned in the world while their chunk sleeps (G-188), every step. One standing
- * in a loaded chunk stays as it is. Outside every loaded chunk a calm one falls asleep at once,
- * as it would have with its chunk, and one still after the player does after
+ * in a loaded chunk or near the player (G-201) stays as it is. Outside every loaded chunk a calm
+ * one falls asleep at once, as it would have with its chunk, and one still after the player does after
  * `PINNED_AWAY_SECONDS`, calmed down: the session keeps nobody about for good. `ai.away` (saved)
  * counts that time and marks it pinned, so a save tells it from the sleepers.
  */
-export const sleepPinned = (world: World<Entity>, state: StreamState, chunkIdAt: (p: Vec3) => string, forgotten: ReadonlySet<string>, dt: number): void => {
+export const sleepPinned = (
+  world: World<Entity>,
+  state: StreamState,
+  chunkIdAt: (p: Vec3) => string,
+  forgotten: ReadonlySet<string>,
+  near: NearPlayer,
+  dt: number,
+): void => {
   const strays: (Entity & { ai: GangerAi })[] = [];
   for (const e of world.with("ai")) {
     if (!e.key || e.chunk === undefined || state.resident.has(e.chunk)) {
       if (e.ai.away !== undefined) delete e.ai.away;
-    } else if (state.resident.has(chunkIdAt(e.position))) {
+    } else if (state.resident.has(chunkIdAt(e.position)) || near(e.position)) {
       e.ai.away = 0;
     } else {
       e.ai.away = (e.ai.away ?? 0) + dt;
