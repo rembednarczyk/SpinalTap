@@ -11,7 +11,7 @@ import { type DroneTemplate, droneTemplates } from "./drone-models";
  * each kind are drawn at once near and far, per quality. Phones draw none (`DRONE_SPACING`).
  */
 export const DRONE_LOD: Readonly<Record<RenderQuality, { readonly near: number; readonly draw: number; readonly nearSlots: number; readonly farSlots: number }>> = {
-  high: { near: 120, draw: 420, nearSlots: 4, farSlots: 8 },
+  high: { near: 120, draw: 420, nearSlots: 4, farSlots: 10 },
   medium: { near: 90, draw: 300, nearSlots: 2, farSlots: 5 },
   low: { near: 0, draw: 0, nearSlots: 0, farSlots: 0 },
 };

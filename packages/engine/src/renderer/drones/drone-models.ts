@@ -34,31 +34,37 @@ const AXES: readonly [Vec3, Vec3, Vec3] = [
   { x: 0, y: 0, z: 1 },
 ];
 
-/** Each kind's hull and lights on the kit's swatches. */
-const LOOK: Readonly<Record<DroneKind, { readonly hull: string; readonly lights: readonly [string, string] }>> = {
-  patrol: { hull: "paint", lights: ["neon-red", "neon-blue"] },
-  delivery: { hull: "fabric-amber", lights: ["neon-amber", "neon-amber"] },
-  ad: { hull: "dark", lights: ["neon-pink", "neon-cyan"] },
+/** Each kind's hull, the lights on its top and the light under it on the kit's swatches. */
+const LOOK: Readonly<Record<DroneKind, { readonly hull: string; readonly lights: readonly [string, string]; readonly belly: string }>> = {
+  patrol: { hull: "paint", lights: ["neon-red", "neon-blue"], belly: "neon-blue" },
+  delivery: { hull: "fabric-amber", lights: ["neon-amber", "neon-amber"], belly: "neon-amber" },
+  ad: { hull: "dark", lights: ["neon-pink", "neon-cyan"], belly: "neon-pink" },
 };
+
+/** The airframe's height for its fans' span (the model's proportions). */
+const FRAME_HEIGHT = 0.303;
 
 /**
  * The far drone, and the near one without the props file: a hull between two fans, the lights on
- * top, the parcel or the screen under it. Some 100 triangles.
+ * top, the navigation lights on the fans and the light under the hull, the parcel or the screen
+ * under it. Some 150 triangles.
  */
 export const boxDrone = (data: CityKitData, kind: DroneKind): DroneTemplate => {
   const sink = new GeometrySink();
-  const { width, height, length } = DRONE_SIZE[kind];
+  const { width, height, length, frame: span } = DRONE_SIZE[kind];
   const look = LOOK[kind];
   const box = (x: number, y: number, z: number, hx: number, hy: number, hz: number, swatch: string) => sink.box({ x, y, z }, AXES, [hx, hy, hz], swatchUv(data, swatch));
   // The frame: patrols are all frame, the others carry their gear under it.
-  const frame = kind === "patrol" ? height : Math.min(height, (width / 3.2) * 0.97);
+  const frame = kind === "patrol" ? height : Math.min(height, span * FRAME_HEIGHT);
   const y0 = height - frame;
-  const fan = Math.min(length / 2, width / 6);
-  box(0, y0 + frame * 0.45, 0, width * 0.1, frame * 0.35, length * 0.45, look.hull);
+  const fan = Math.min(length / 2, span / 6);
+  box(0, y0 + frame * 0.45, 0, span * 0.1, frame * 0.35, length * 0.45, look.hull);
   for (const sx of [-1, 1]) {
-    box(sx * (width / 2 - fan), y0 + frame * 0.4, 0, fan, frame * 0.12, fan, "trim");
-    box(sx * width * 0.15, y0 + frame * 0.45, 0, width * 0.1, 0.04, 0.06, "metal");
+    box(sx * (span / 2 - fan), y0 + frame * 0.4, 0, fan, frame * 0.12, fan, "trim");
+    box(sx * span * 0.15, y0 + frame * 0.45, 0, span * 0.1, 0.04, 0.06, "metal");
+    box(sx * (span / 2 - 0.12), y0 + frame * 0.4, 0, 0.11, 0.06, 0.11, sx < 0 ? "neon-red" : "neon-green");
   }
+  box(0, y0 + 0.045, 0, 0.18, 0.025, 0.4, look.belly);
   box(-0.16, y0 + frame * 0.85, 0, 0.15, 0.04, 0.11, look.lights[0]);
   box(0.16, y0 + frame * 0.85, 0, 0.15, 0.04, 0.11, look.lights[1]);
   if (kind === "delivery") box(0, y0 * 0.45, 0, 0.4, y0 * 0.42, 0.4, "dumpster");

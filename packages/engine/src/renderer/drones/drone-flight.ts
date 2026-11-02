@@ -13,11 +13,14 @@ import { type DroneLane, LEG, STEP } from "./drone-lanes";
 export type DroneKind = "patrol" | "delivery" | "ad";
 export const DRONE_KINDS: readonly DroneKind[] = ["patrol", "delivery", "ad"];
 
-/** Each kind's box (m), its foot at the flight level, centred across and along: tools/city_drones.py fits the models into it. */
-export const DRONE_SIZE: Readonly<Record<DroneKind, { readonly width: number; readonly height: number; readonly length: number }>> = {
-  patrol: { width: 3.2, height: 1.1, length: 1.55 },
-  delivery: { width: 2.6, height: 1.6, length: 1.3 },
-  ad: { width: 3.4, height: 3.0, length: 1.3 },
+/**
+ * Each kind's box (m), its foot at the flight level, centred across and along, and the span of its
+ * airframe's fans (`frame`; the rest is its gear): tools/city_drones.py fits the models into it.
+ */
+export const DRONE_SIZE: Readonly<Record<DroneKind, { readonly width: number; readonly height: number; readonly length: number; readonly frame: number }>> = {
+  patrol: { width: 3.4, height: 1.25, length: 1.65, frame: 3.4 },
+  delivery: { width: 3.0, height: 1.85, length: 1.45, frame: 3.0 },
+  ad: { width: 3.4, height: 3.1, length: 1.45, frame: 3.0 },
 };
 
 /**
@@ -33,7 +36,7 @@ export const DRONE_LAYER: Readonly<Record<DroneKind, { readonly speed: number; r
 };
 
 /** Metres of lane per drone, per quality; phones get none (ADR-0058: their draw calls stay as they were). */
-export const DRONE_SPACING: Readonly<Record<RenderQuality, number | null>> = { high: 150, medium: 260, low: null };
+export const DRONE_SPACING: Readonly<Record<RenderQuality, number | null>> = { high: 70, medium: 140, low: null };
 
 /** How the bobbing goes: up and down this much (m) over this many seconds. */
 export const BOB = 0.35;

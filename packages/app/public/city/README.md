@@ -206,7 +206,7 @@ drony są z prostopadłościanów także z bliska. Telefon (`low`) dronów nie r
 
 | Klucz w pliku | Tytuł | Autor | Źródło | Licencja | Zmiany |
 |---|---|---|---|---|---|
-| `drone-patrol`, `drone-delivery`, `drone-ad` (dron patrolowy policji lub korporacji, kurier, dron reklamowy) | Cyberpunk Drone Concept Design | [Berk Gedik](https://sketchfab.com/berkgedik) | [Sketchfab](https://sketchfab.com/3d-models/cyberpunk-drone-concept-design-09e7406fc76248a2866209025588dad0) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | uproszczony z 21,2 tys. do ok. 900 trójkątów, przeskalowany do 3,2 m (patrol) i 2,6 m (kurier, reklama) rozpiętości, kolory z tekstury sprowadzone do palety; kadłub w barwach odmiany (srebrny, bursztynowy, czarny); dorysowane prostopadłościany: belka świateł czerwono-niebieskich (patrol), paczka pod kadłubem (kurier), ekran z pasami neonu bez napisów (reklama); bez tekstur |
+| `drone-patrol`, `drone-delivery`, `drone-ad` (dron patrolowy policji lub korporacji, kurier, dron reklamowy) | Cyberpunk Drone Concept Design | [Berk Gedik](https://sketchfab.com/berkgedik) | [Sketchfab](https://sketchfab.com/3d-models/cyberpunk-drone-concept-design-09e7406fc76248a2866209025588dad0) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | uproszczony z 21,2 tys. do ok. 900 trójkątów, przeskalowany do 3,4 m (patrol) i 3,0 m (kurier, reklama) rozpiętości, kolory z tekstury sprowadzone do palety; kadłub w barwach odmiany (srebrny, bursztynowy, czarny); dorysowane prostopadłościany: światła pozycyjne na wirnikach (czerwone i zielone), światło pod kadłubem w kolorze odmiany, belka świateł czerwono-niebieskich (patrol), paczka pod kadłubem (kurier), ekran z pasami neonu bez napisów (reklama); bez tekstur |
 
 Odtworzenie pliku:
 

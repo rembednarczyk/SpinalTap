@@ -3,7 +3,8 @@ kit's swatch palette like the other props files (the engine loads it after them 
 
 One airframe for all three kinds: Berk Gedik's Cyberpunk Drone Concept Design (CC-BY 4.0, E4 of the user's second
 pack, docs/plany/assety-paczka-2.md): a hull between two ducted fans, front to +Z. Each kind gets its livery from
-the hull's role and its own gear drawn here as boxes, style `drone-<kind>`:
+the hull's role, navigation lights on its fans (red and green), a light under its hull in the kind's colour
+and its own gear, drawn here as boxes, style `drone-<kind>`:
 - `drone-patrol`: police or corporate patrol (Tessen), a silver hull with a red and blue light bar on top;
 - `drone-delivery`: a courier, an amber hull with a dark teal parcel hung under it;
 - `drone-ad`: an advertising drone, a dark hull with a screen hung under it (neon stripes on a black face, both
@@ -29,12 +30,14 @@ from city_street_e2 import drop_specks
 
 SOURCE = ('sketchfab-cyberpunk-drone', 'cyberpunk_drone_concept_design.glb')
 
-# (width, height, length) m: DRONE_SIZE of packages/engine/src/renderer/drones/drone-flight.ts.
-SIZE = {'patrol': (3.2, 1.1, 1.55), 'delivery': (2.6, 1.6, 1.3), 'ad': (3.4, 3.0, 1.3)}
+# (width, height, length) m and the fans' span (FRAME): DRONE_SIZE of packages/engine/src/renderer/drones/drone-flight.ts.
+SIZE = {'patrol': (3.4, 1.25, 1.65), 'delivery': (3.0, 1.85, 1.45), 'ad': (3.4, 3.1, 1.45)}
 # The airframe's width per kind (its fans' span); the rest of the size is the kind's gear.
-FRAME = {'patrol': 3.2, 'delivery': 2.6, 'ad': 2.6}
+FRAME = {'patrol': 3.4, 'delivery': 3.0, 'ad': 3.0}
 # The hull's livery per kind.
 HULL = {'patrol': 'paint', 'delivery': 'fabric-amber', 'ad': 'dark'}
+# The light under the hull per kind: what the street sees of a drone at night.
+BELLY = {'patrol': 'neon-blue', 'delivery': 'neon-amber', 'ad': 'neon-pink'}
 
 NEAR_TRIS = 900
 MAX_TRIS = 1500
@@ -121,7 +124,13 @@ def drone(kind, P0, roles0):
     frame_h = float(P.reshape(-1, 3)[:, 1].max())
     lift = 0.0 if kind == 'patrol' else h - frame_h
     P = P + np.array([0, lift, 0])
-    parts = gear(kind, lift, frame_h)
+    half = FRAME[kind] / 2
+    # Navigation lights on the fans' outer rims (red port, green starboard) and the belly light.
+    parts = gear(kind, lift, frame_h) + [
+        (closed_box(-half + 0.12, lift + frame_h * 0.35, 0, 0.22, 0.12, 0.22), 'neon-red'),
+        (closed_box(half - 0.12, lift + frame_h * 0.35, 0, 0.22, 0.12, 0.22), 'neon-green'),
+        (closed_box(0, lift + 0.02, 0, 0.35, 0.05, 0.8), BELLY[kind]),
+    ]
     P, roles = drop_specks(*simplify(P, roles, NEAR_TRIS - sum(len(t) for t, _ in parts)))
     P = np.concatenate([P] + [t for t, _ in parts])
     roles = list(roles) + [r for t, r in parts for _ in range(len(t))]
