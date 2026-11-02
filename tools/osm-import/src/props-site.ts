@@ -27,6 +27,8 @@ interface Shape {
   readonly surface: SiteSurface;
   /** A footpath's outline: walk, but a way through, not ground to set things on. */
   readonly path?: boolean;
+  /** A flight of steps (with the rails in `surface`). */
+  readonly steps?: boolean;
 }
 
 export interface SiteStreet {
@@ -60,7 +62,7 @@ export class Site {
     const streets: SiteStreet[] = [];
     for (const c of chunks) {
       for (const b of c.buildings) this.add({ ring: flat(b.outline, b.x, b.z), surface: "building", box: { minX: 0, minZ: 0, maxX: 0, maxZ: 0 } });
-      for (const g of c.ground) if (!g.bridge) this.add({ ring: flat(g.outline), surface: surfaceOf(g.surface), path: g.surface === "footway", box: { minX: 0, minZ: 0, maxX: 0, maxZ: 0 } });
+      for (const g of c.ground) if (!g.bridge) this.add({ ring: flat(g.outline), surface: surfaceOf(g.surface), path: g.surface === "footway", steps: g.surface === "steps", box: { minX: 0, minZ: 0, maxX: 0, maxZ: 0 } });
       for (const s of c.streets) streets.push({ name: s.name, kind: s.kind, line: flat(s.line), chunk: c.id });
     }
     this.streets = streets;
@@ -122,6 +124,12 @@ export class Site {
   onPath(p: Pt): boolean {
     const list = this.bins.get(`${Math.floor(p.x / BIN)}:${Math.floor(p.z / BIN)}`) ?? [];
     return list.some((s) => s.path === true && p.x >= s.box.minX && p.x <= s.box.maxX && p.z >= s.box.minZ && p.z <= s.box.maxZ && pointInRing(p, s.ring));
+  }
+
+  /** Whether p lies on a flight of steps. */
+  onSteps(p: Pt): boolean {
+    const list = this.bins.get(`${Math.floor(p.x / BIN)}:${Math.floor(p.z / BIN)}`) ?? [];
+    return list.some((s) => s.steps === true && p.x >= s.box.minX && p.x <= s.box.maxX && p.z >= s.box.minZ && p.z <= s.box.maxZ && pointInRing(p, s.ring));
   }
 
   /** Unit vector from the nearest building wall within `reach` metres out to p (a wall lantern's arm), or null. */
