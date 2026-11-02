@@ -15,6 +15,7 @@ interface Drag {
 
 /** Floating stick: appears where the left thumb lands. */
 const Stick = ({ pad }: { pad: TouchPadSink }) => {
+  const t = useT();
   const [origin, setOrigin] = useState<Drag | null>(null);
   const [knob, setKnob] = useState({ x: 0, y: 0 });
 
@@ -53,7 +54,7 @@ const Stick = ({ pad }: { pad: TouchPadSink }) => {
           <div className="touch__knob" style={{ transform: `translate(${knob.x}px, ${knob.y}px)` }} />
         </div>
       )}
-      {!origin && <div className="touch__stick-hint">ruch</div>}
+      {!origin && <div className="touch__stick-hint">{t("touch.move")}</div>}
     </div>
   );
 };
