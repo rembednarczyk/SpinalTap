@@ -773,7 +773,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (micro-events, streaming)
 
 ### G-240 Panika tłumu nie trafia do zapisu: wczytana gra rozjeżdża się zaraz po walce
-- Status: w PR #221 (2.11, w weryfikacji): zapis uspokaja ulicę w obu grach (`calmForSave`, zgodnie z ADR-0029), bez zmiany schematu
+- Status: w PR #221 (2.11, weryfikacja NIE PRZYJĘTE: autozapis po ogłuszeniu przy świadku kasował telefon świadka i heat nie przychodził bez wczytania; runda 2: zapis najpierw rozstrzyga zgłoszenie w toku, potem uspokaja ulicę)
 - Ważność: S4 · Zasięg: `crowd.state: fleeing` (np. Hideo po walce) poza zapisem; wczytana gra różni się od gry bez zapisu do uspokojenia tłumu (ok. 12 s)
 - Poprawka: stan ucieczki tłumu w migawce encji (zapis + migracja) albo wyliczany z zapisanych zdarzeń; test hash co krok po zapisie w trakcie paniki
 - Pakiet właściciela: packages/sim (crowd), packages/persistence
