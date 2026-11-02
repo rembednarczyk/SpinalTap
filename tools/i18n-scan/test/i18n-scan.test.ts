@@ -73,8 +73,10 @@ describe("what counts as Polish", () => {
       'const i = <p>{on ? "On" : t("off")}</p>;',
       "const j = <p>{`Slot ${n}`}</p>;",
       'const k = <p>{busy && "Wait"}</p>;',
+      'const l = <p>{"Unknown" || name}</p>;',
+      'const m = <p>{"None" ?? name}</p>;',
     ].join("\n");
-    expect(scanSource("x.tsx", src).map((f) => f.line)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+    expect(scanSource("x.tsx", src).map((f) => f.line)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
     const code = [
       'const a = <div className="touch__stick-hint" data-testid="stick-hint" id="hint" role="note">{t("touch.move")}</div>;',
       'const b = <i title={t("map.witness")} aria-label={label} className={on ? "x--on" : "x--off"} />;',

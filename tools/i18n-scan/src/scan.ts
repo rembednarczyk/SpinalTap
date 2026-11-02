@@ -57,9 +57,8 @@ export const SHOWN_WORDS: readonly (readonly [word: string, why: string])[] = [
   ["SENSHI", "The game's title, SEKI SENSHI, on the title screen."],
   ["関", "The game's title in Japanese, 関 戦士, on the title screen."],
   ["戦士", "The game's title in Japanese, 関 戦士, on the title screen."],
-  ["KIROSHI", "The brand of the scanner optics, an in-world name."],
-  ["Breach", "Breach Protocol, the name of the hacking minigame, kept in both catalogs."],
-  ["Protocol", "Breach Protocol, the name of the hacking minigame, kept in both catalogs."],
+  ["Breach", "Breach Protocol, the name of the hacking minigame, shown as is in both languages (breach-panel.tsx)."],
+  ["Protocol", "Breach Protocol, the name of the hacking minigame, shown as is in both languages (breach-panel.tsx)."],
   ["FLATLINE", "The genre's word for death on the death screen, an in-world term."],
 ];
 const SHOWN = new Set(SHOWN_WORDS.map(([w]) => w));
