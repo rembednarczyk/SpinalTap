@@ -57,7 +57,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Gdzie: ok. (756, 345) · Dowód: naprawiacz G-006: półokręgi o różnym promieniu sięgają tego samego wierzchołka; 24 zdarzenia kolizji na seedach 1–2 już na starej bazie (rodzina G-025/G-026, `turnRound`/`uTurn`).
 
 ### G-037 Pas Andersy kończy się na pasach Mełgiewskiej: auta czekają na siebie
-- Status: w naprawie razem z G-006 (koniec Andersy staje 5 m przed pasami Mełgiewskiej; blokada istniała na bazie)
+- Status: zgłoszone; było „w naprawie razem z G-006”, ale G-006 scalono w #47 bez zamknięcia G-037 (1.11: do sprawdzenia, czy blokada nadal występuje; ruch aut odłożony decyzją użytkownika z 31.10)
 - Ważność: S3 · Gdzie: ok. (2401, 282) · Dowód: kąt 31°, pojazdy obu tras biorą się nawzajem za „auto przed sobą”, resynchronizacja co ok. 40 m.
 
 ### G-041 Wzór bruku placu przesuwa się na granicy chunków
@@ -72,12 +72,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 (proponowana) · Zasięg: 15 pasów schodów w 100% pod `square`/`cobble`, np. krakowskie-2-0 (414, −90), podzamcze-1-0 (886, 223), stare-miasto-0-0 (575, −70) · Koszt: mały
 - Dowód: naprawiacz G-018. Importer stawia schody na wierzchu (`ORDER` steps: 8), a renderer pod placem (stopnie +0,05, `square` +0,08). Do decyzji, która warstwa wygrywa. Osobno: 15 stromych biegów z płaskimi odcinkami ma pojedyncze podstopnie < 4,5 cm (np. stare-miasto-1-0 (680, −193)), których `steps-micro-riser` nie liczy.
 - Pakiet właściciela: packages/engine (renderer/mapcity) / tools/osm-import
-
-### G-043 Zatwierdzona migawka NPR nie zgadza się z tym, co rysuje main
-- Status: zgłoszone (z G-030)
-- Ważność: S3 (proponowana: migawka przestaje pilnować wyglądu) · Koszt: mały
-- Dowód: naprawiacz i weryfikator G-030: `e2e/__snapshots__/npr-perf.spec.ts/reference-m0.png` różni się od deterministycznej klatki main (b5507ce) o 39 806 px poza Seki (bbox 0,0–1280,533); m.in. brak białej smugi odblasku na lewym oknie Neon Koi (y ok. 290). Test przechodzi tylko dzięki `maxDiffPixelRatio: 0.02`. Ustalić, który commit zmienił klatkę: regresja czy niezaktualizowana migawka.
-- Pakiet właściciela: packages/engine / e2e (QA)
 
 ### G-007 Strzałki na pasach i napis BUS
 - Status: później (ADR-0052 „Na później”)
@@ -95,6 +89,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 | Kontrola | Definicja | Baza |
 |---|---|---|
+| `landmark-default-height` | Budynek z listy zabytków skanu (`LANDMARK_BUILDINGS`) z `source: "default"` (wysokość z wartości domyślnej dzielnicy) | 3 (w66258167 Kaplica Trójcy, w67508958 Teatr Osterwy, w66330578 kościół Nawrócenia św. Pawła); G-204 |
+| `church-fake-tower` | Kościół (`use: church`), któremu `addTowers` dokłada wierzchołki wież, a nie ma go na liście kościołów z prawdziwą wieżą (NMPT/OSM; dziś: Brygidki w66264082, św. Jozafata w69916021, św. Mikołaja w66258180, Świętego Ducha w66264126, cerkiew Przemienienia w66264148, Bernardyni w66330578) | 5 (Kapucyni, Karmelici, św. Piotra, św. Wojciecha, Niecała 4); G-215 |
+| `church-tower-off-building` | Środek wieży proceduralnej (`towerSpots`) poza obrysem swojego budynku | 5 (Brygidki 2, św. Jozafata 1, Karmelici 2); G-215, G-212 |
+| `church-default-height` | Budynek `use: church` z `source: "default"` (szersza wersja `landmark-default-height`) | 9; G-216 |
+| `steps-narrower-than-walls` | Bieg `highway=steps` między dwoma równoległymi `barrier=wall` (do 15 m od osi po obu stronach), gdy odstęp murków przekracza szerokość pasa `steps` w grze o ponad 1 m. Wymaga murków w wyciągu | 1 (schody zamkowe); G-203 |
+| `plan-prop-off-target` | Rekwizyt z wpisu planu z `points` przesunięty przez generator o ponad 4 m od swojego punktu albo na drugą stronę ściany budynku | 2 (reflektory Zamku); G-206 |
 | `landmark-missing` | Lista ID z OSM: r7224409, w66286371, w66286341, w66264159, w66264120, w232362876, w66286338, r2366732, w48500136, w450180469, w66258167, w67508958, w66330578. Liczy ID, których nie ma w `MAP_CHUNKS` albo które usuwa `clearedBuilding`. Do tego monumenty Placu Litewskiego (n481952877, n481952879, n481952880) wśród rekwizytów `monument` w promieniu 1 m | 2 (Osterwy, Bernardyni) |
 | `landmark-overbuilt` | Budynek z `verticalOf(...).rise > 0` w promieniu 30 m od środka landmarku, którego nazwa pasuje do /brama\|wieża\|trybuna\|katedr\|ratusz\|zamek\|donżon\|kościół\|bazylika\|kaplica/i, i którego `y + height + roof + rise` przekracza szczyt landmarku | 2 (w66293355 przy Bramie Grodzkiej, w66324576 przy Kościele Ewangelicznym). Dla pełnego `isLandmark` baza wynosi 12 (m.in. pałace i urzędy w Krakowskim) |
 | `terrain-off-pads` | `\|groundY − rawHeight\| > 0,3 m` na siatce co 5 m poza `PADS` (z `blend`), rampami schodów i pomostami | 0 |
@@ -203,6 +203,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (audyt bram i przejazdów) · Ważność: S4 · Koszt: mały
 - Gdzie: brama wjazdowa Zamku, 2,4 × 3,4 m domyślnie; T-040
 - Test przyjęcia: wymiar zmierzony ze zdjęcia jako korekta w `corrections.ts` (ADR-0042)
+- Pomiar (kurator, 1.11): portal ok. 3,8 × 5,8 m (zdjęcie Commons z wiaduktu Zamkowej, skala z osób, ±0,7 m); plan `docs/plany/zamek-lubelski.md`, etap Z0
 
 ### G-079 Wypełnione wirydarze klasztorów Kapucynów i Dominikanów
 - Status: zgłoszone (audyt bram i przejazdów) · Ważność: S4 · Koszt: średni (dziury multipoligonów)
@@ -414,6 +415,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-133 Pojazdy na stromych ulicach bez pochylenia: dolny koniec odstaje od bruku
 - Status: zgłoszone (1.11, naprawiacz G-130); odłożone razem z pracami nad autami
+- Z G-190 (1.11): przy poprawce wcielić łatkę `docs/plany/g190-zatoki-przy-ulicach-dostaw.patch` (zatoki pasów postojowych wzdłuż wszystkich ulic, omijanie tras dostawczaków); sonda z łatką i progiem spadku 0,6 m: +6 aut Kowalska x 643..668, +2 Rybna w895572841; też w1517184173 (Ruska, północ, 46 m) pusty przez spadek 0,23–0,43 m; Kowalska x 643..655: chodnik 2,5 m zachodzi 0,25 m na pas
 - Ważność: S4 · Zasięg: 8 pojazdów odstaje ponad 0,2 m, najgorzej dostawczak (544.7, 167.7) o 0,44 m; też Plac Zamkowy, (450, 40), (550, 165), (810, 481)
 - Przyczyna: pojazdy stoją poziomo (`pitch: 0`), a po G-130 opierają się na najwyższym punkcie nawierzchni pod obrysem
 - Poprawka wymaga pochylenia i przechyłu w kontrakcie `Transform`/`SceneryItem` oraz w `VehicleViews` (zmiana kontraktu, ADR); auta jadące mają też y z terenu w środku bez `SURFACE_LIFT`
@@ -438,13 +440,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer)
 - Poprawka do wyboru: większy atlas, zwalnianie wierszy przy wyładowaniu komórki albo atlas na chunk; budżet tekstur na telefonie
 - Test przyjęcia: wszystkie nazwy z wczytanych komórek mają wiersz; test ładowania w różnej kolejności
-
-### G-143 Taksówki na osi chodnika przy Podzamczu
-- Status: w PR #125; weryfikator PRZYJĘTE (1.11), czeka na przegląd kuratora (zmiana importu); 3ab42ad, skan `parked-car-on-footway` 3 → 0; część o postoju taxi odpada, bo gra nie stawia taksówek na postojach
-- Ważność: S4 · Zasięg: taxi (928.6, 452.2) 0,01 m od osi `highway=footway` w809962786, taxi (922.9, 430.6) 0,80 m od niej
-- Ustalone (1.11, orkiestrator, dane `data/osm/podzamcze.json`): w809962786 to samodzielna ścieżka piesza 52 m (`highway=footway`, bez `footway=sidewalk`/`crossing`, oświetlona, asfalt), co najmniej 7,8 m od osi Cerkiewnej i dróg serwisowych; łączy się z postojem taxi w471549002 (`amenity=taxi`, obszar), placem w66323033 (`area:highway`), chodnikiem w1517184174 i przejściem w1054556913. Taksówka 0,01 m od jej osi stoi więc na ścieżce pieszych obok postoju, nie na jezdni: glitch prawdziwy
-- Poprawka: zaparkowane auta trzymają odstęp od osi samodzielnych ścieżek `footway`/`path` (poza `sidewalk` wzdłuż krawężnika), a taksówki z postoju `amenity=taxi` stoją wewnątrz jego obszaru; kontrola skanu „auto bliżej niż 1 m od osi ścieżki pieszej”
-- Pakiet właściciela: packages/sim (content), przegląd kuratora
 
 ### G-144 Szczeliny w asfalcie na styku dróg OSM na załamaniu
 - Status: zgłoszone (1.11, naprawiacz G-138)
@@ -471,39 +466,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: test, że żaden fragment wieży nie wypada bliżej niż skorupa przy danych miasta w kierunku kamery, albo osobna skala dla stopy; przy okazji kontrole `megablock-*` przenieść do `tools/glitch-scan` z bazą w `glitch-baseline.json` (dziś w teście engine)
 - Pakiet właściciela: packages/engine (renderer), tools/glitch-scan
 
-### G-148 Szyldy i neony wcięte w fasady i narożniki
-- Status: zgłoszone (1.11, gracz, telefon, zrzuty `scratchpad/gracz-1-11/`)
-- Ważność: S3 · Zasięg: Stare Miasto (Grodzka, okolice Bramy Krakowskiej: Bramowa, Jezuicka, Szambelańska), prawdopodobnie całe miasto
-- Objawy: świecąca rama szyldu „DEN…” przechodzi przez narożnik budynku (Grodzka); ciemna płyta wystaje ze ściany obok szyldu „…AJNIA SMAKU” (Bramowa); pionowe neony nachodzą na sąsiednie elewacje
-- Do ustalenia: które to szyldy (lokale ADR-0064 etap 4, #118, czy starsze neony dressingu) i czy szyld wychodzi poza odcinek elewacji przy narożniku
-- Poprawka: szyld mieści się w swoim odcinku elewacji z marginesem od narożnika, a wysięgnik nie wchodzi w sąsiedni budynek; kontrola skanu „szyld poza swoją elewacją”
-- Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import (venues)
-
-### G-149 Pomniki i rzeźby z OSM mają przypadkowy kształt
-- Status: zgłoszone (1.11, gracz: „strategia stawiania assetów wydaje się randomowa”)
-- Ważność: S3 · Zasięg: 27 pomników i rzeźb z planu (`docs/world/lublin-props.todo.json`) i wszystkie `memorial`/`artwork` z OSM
-- Przyczyna: ADR-0047 bierze pozycję z OSM, ale kształt z hasha id (`variant`, `SHAPES.monument = 4`): obelisk, postać na cokole, Koziołek albo abstrakcja; poza kilkoma wymuszonymi w planie prawdziwy pomnik dostaje losową bryłę (np. stos sześcianów albo postać na czarnym bloku w wąskiej uliczce)
-- Poprawka: kształt z tagów OSM (`memorial=plaque|statue|bust|stone`, `artwork_type`, `historic`) i z ręcznej tabeli znanych pomników Lublina; tablica pamiątkowa na fasadzie zamiast wolnostojącej bryły; bez dopasowania: neutralna tablica albo kapliczka, nie abstrakcja; przegląd kuratora
-- Pakiet właściciela: tools/osm-import (props-kinds, props-gen), packages/engine (prop-civic)
-
-### G-150 Źle położone dachy na Starym Mieście
-- Status: zgłoszone (1.11, gracz, bez dokładnych miejsc); do łowcy
-- Ważność: S3 · Zasięg: do ustalenia
-- Objawy z opisu gracza: dachy przesunięte albo nachodzące na sąsiednie budynki, gzymsy wystające poza fasadę
-- Poprawka: najpierw łowca (przegląd dachów Starego Miasta zrzutami i skanem), potem osobne wpisy
-
-### G-151 Hydranty stawiane regułą zamiast z OSM
-- Status: w poprawkach PR #124 (1.11, kurator)
-- Ważność: S3 · Zasięg: 33 hydranty w grze, żaden w prawdziwym miejscu (mediana 143 m od najbliższego nadziemnego)
-- Przyczyna: `filterOsm` (`tools/osm-import/src/osm.ts:151`) zostawia tylko węzły z `name`, a hydranty nazwy nie mają; żywe OSM ma w chunkach 77 (6 `pillar`, 71 podziemnych, import z 2015 z `ref`)
-- Poprawka: hydranty nadziemne z OSM (do 3 m od węzła), podziemne świadomie pominięte albo jako pokrywa; kontrola skanu „hydrant dalej niż 3 m od `pillar` z OSM”
-- Pakiet właściciela: tools/osm-import
-
-### G-152 Kontenery w ogrodzonym parku na Nabrzeżu
-- Status: w poprawkach PR #124 (1.11, kurator)
-- Ważność: S3 · Zasięg: 5 z 8 kontenerów w parku w154191322 (`leisure=park`, `natural=scrub`, `barrier=fence`), jeden w poprzek płotu
-- Poprawka: kontenery poza parkiem, najlepiej na Giełdzie na Kresowej (plan ulic: „kontenery Tessen”); kontrola skanu „mebel w obrysie `leisure=park`/`natural=*` albo na `barrier=fence`”
-- Pakiet właściciela: tools/osm-import (props-bulky)
+### G-150 Źle położone dachy (zgłoszenie gracza niepotwierdzone)
+- Status: zgłoszone, niepotwierdzone (1.11, łowca): z kadru gracza 922af477 nie da się wskazać usterki; potrzebne miejsce albo nowy zrzut
+- Ważność: S4 dla znalezionych kandydatów · Zasięg: rzadki
+- Kandydaci: 10 dachów niekościelnych ponad 0,7 m poza obrysem (Hotel Hostel Królewska (517,0; −144,8) 1,05 m, nr 487 mansarda (720,6; 300,8) 0,91 m, (451,3; −20,6) 0,84 m, Teatr NN (724,1; 145,2) i inne); okapy w bryle wyższego sąsiada: G-162
+- Przyczyna (przypuszczalna): `offsetRing(ring, 0.35)` w `roof-plan.ts` i `roof-shapes.ts` daje mitrę bez ograniczenia przy ostrych kątach
+- Kontrola skanu: `roof-out-of-outline` (bez kościołów), baza 10
+- Pakiet właściciela: packages/engine (renderer/mapcity)
 
 ### G-153 Skan `furniture-overlap` pomija słupki
 - Status: zgłoszone (1.11, weryfikator #124)
@@ -516,6 +485,241 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: 88 `footway=crossing` i 17 `path=crossing` bez zebry
 - Poprawka: odstęp zaparkowanych aut od przejść bez zebry jak od zebr; kontrola skanu
 - Pakiet właściciela: packages/sim (parked-cars), tools/osm-import
+
+### G-161 Markiza zasłania dolny rząd liter tablicy lokalu
+- Status: zgłoszone (1.11, łowca G-148)
+- Ważność: S4 · Zasięg: zależny od kadru; np. STAJNIA SMAKU (489,2; −76,3), zrzut g148-k-stajnia
+- Przyczyna: góra markizy 0,08 m (`AWNING_GAP`) pod tablicą przy wysięgu 1,0 m; z oczu gracza bliżej niż ok. 10 m zasłania litery
+- Pakiet właściciela: packages/engine (facade-props.ts)
+
+### G-162 Okapy dachów w bryłach wyższych sąsiadów
+- Status: zgłoszone (1.11, łowca G-150)
+- Ważność: S4 · Zasięg: 50 z 112 dachów niepłaskich, np. Zamek (945,9; 209,6), Brama Rybna (569,5; −12,6), Hotel Avatary Miasta (551,2; −36,8); w większości ukryte w murze
+- Przyczyna: stały `EAVES = 0.35` bez sprawdzenia ściany wspólnej
+- Pakiet właściciela: packages/engine (roof-plan.ts, roof-shapes.ts); „później” dopuszczalne po ocenie kuratora
+
+### G-163 Hydrant magentowy zamiast czerwonego (brak czerwieni w palecie)
+- Status: zgłoszone (1.11, weryfikator #124)
+- Ważność: S4 · Zasięg: 6 hydrantów nadziemnych (`st-hydrant`)
+- Przyczyna: paleta modeli ulicznych nie ma czerwieni; najbliższa próbka `fabric-magenta` #8e2457 w dzień wygląda różowo
+- Poprawka: próbka czerwieni w palecie i przepieczenie plików modeli ulicznych (osobny PR, budżet rozmiaru GLB)
+- Pakiet właściciela: packages/engine (paleta), tools (wypiek)
+
+### G-166 Sztukmistrz na linie nad Grodzką
+- Status: zgłoszone (1.11, kurator przy G-149)
+- Ważność: S3 · Zasięg: Grodzka (617.1, 25.8), n7168903380; plan ulic P1 („model do zrobienia + lina”)
+- Stan: od #132 pominięty (`SKIPPED_ART.rope`), wcześniej postać na cokole w uliczce
+- Poprawka: figura linoskoczka na linie ok. 6–8 m nad ulicą między w66293391/w66293395 a Warsztatami Kultury r3119721, bez kolizji z graczem; T-096
+- Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import
+
+### G-167 Wolnostojące pomniki z grup `plaque` pominięte
+- Status: zgłoszone (1.11, kurator przy G-149)
+- Ważność: S3 · Zasięg: Pomnik Ofiar Getta (66.7, 129.6), stela Popiełuszki (475.3, −195.4), kamienie Maharszal (870.5, 298.8), Hołodomor (1044.8, 423.9), Glatsztejn (996.6, 283.0)
+- Przyczyna: grupa `plaque` pomijana w całości (`SKIPPED.plaque`), choć `artShape` daje im stelę, a tablice odrzuca
+- Poprawka: `kind=plaque` przez `artShape`; kontrola skanu `memorial-freestanding-missing` (baza ok. 12, w tym 5 w pasie z < −200 z G-099, św. Józef n10803415137, wodopój n4348652375); T-100
+- Pakiet właściciela: tools/osm-import
+
+### G-168 Neon „Przypadek? Nie sądzę!” niewidoczny
+- Status: zgłoszone (1.11, kurator przy G-149)
+- Ważność: S4 · Zasięg: Stare Miasto (485.6, 11.4), n9382021599
+- Przyczyna: `SKIPPED_ART.neon` podaje, że wisi z szyldami fasad (ADR-0044), ale wśród szyldów go nie ma; jest tylko etykieta `sight`
+- Poprawka: dodać do szyldów fasad albo poprawić powód; T-099
+- Pakiet właściciela: tools/osm-import, packages/engine
+
+### G-169 Kontenery w środku Giełdy na Kresowej rozbijają rzędy straganów
+- Status: zgłoszone (1.11, kurator #124, rekomendacja nieblokująca)
+- Ważność: S4 · Zasięg: 3 z 6 kontenerów w środku placu, 9,5–14,8 m od krawędzi: (2331.5, 228.5), (2320.5, 240.5), (2332.5, 245.5); zachodnia część placu w odłamkach po 1–3 stragany; straganów 158 zamiast 180
+- Poprawka: kontenery przy skraju obrysu, przed straganami; wolne miejsca kuratora: (2302.5, 248.5), (2313.5, 255.5), (2340.5, 211.5), (2357.5, 255.5), (2319.5, 252.5), (2327.5, 252.5); wtedy 178 straganów (sonda `scratchpad/topo-r3/topo-alt.ts`)
+- Pakiet właściciela: tools/osm-import (props-bulky)
+
+### G-172 Etykieta poziomu na slocie może być nieaktualna po zapisie z innej karty
+- Status: zgłoszone (1.11, weryfikator ADR-0066 etap 2)
+- Ważność: S4 · Zasięg: `SlotDifficulties` (`packages/app/src/presenters/difficulty.ts:41`) rozpoznaje slot po dacie z dokładnością do minuty; `refreshSlots` dekoduje nieznane sloty dwa razy
+- Poprawka: profil w `SaveSlotInfo` (zmiana portu `core/src/ports`, zgoda architekta) zamiast drugiego odczytu
+- Pakiet właściciela: packages/core (ports), packages/app
+
+### G-175 Odstęp zaparkowanego auta od pasa ruchu liczony od środka, nie od narożnika
+- Status: zgłoszone (1.11, weryfikator #143); było przed #143
+- Ważność: S4 · Zasięg: `fits` (`tools/osm-import/src/parked-cars.ts`) mierzy `LANE_CLEAR` 1,4 m od środka auta; narożnik auta przy Placu Zamkowym (739; 233,2) 0,92 m od osi pasa, auto na pasie postojowym Ruskiej (963,5; 472,1) 1,30 m; jadące auto ma 0,27–0,43 m luzu
+- Poprawka: odstęp od narożników prostokąta auta; kontrola skanu z bazą
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+### G-176 Skan aut przy krawężniku luźniejszy niż generator
+- Status: zgłoszone (1.11, weryfikator #143)
+- Ważność: S4 (narzędzie) · Zasięg: `parked-car-multilane-kerb` zwalnia auto w każdym `amenity=parking`, także podziemnym i dachowym, a generator tylko w naziemnych; `parked-car-on-footway` liczy `pedestrian` i `cycleway`, których generator (`footWays`, `clearOfKeptWays`) nie pomija; po #143 `clearOfStops` nie zmienia tabeli (te same auta zdejmuje G-155), więc G-156 pilnuje tylko skan
+- Poprawka: wyrównać zbiory dróg i parkingów między skanem a generatorem; test generatora dla przystanku niezależny od G-155
+- Pakiet właściciela: tools/glitch-scan, tools/osm-import
+
+### G-181 Drobne pola sesji po wczytaniu
+- Status: zgłoszone (1.11, weryfikator #145)
+- Ważność: S4 · Zasięg: (a) wczytanie w metrze gubi ofertę fixera po przyjeździe (seed 2, `met_genzo`, jazda shinsekai → doki, zapis w trakcie; oryginał dostaje `phone_genzo_offer` w kroku 658, wczytana gra nie, `watch.district` null); (b) histereza wnętrza w progu (`INTERIOR_KEEP`) nie jest odtwarzana, `interiorAt` w `session-resume.ts:23` liczy bez poprzedniego wnętrza, więc wczytanie 0,1 m za ścianą kliniki daje fałszywe `InteriorEntered`; (c) `session.lastThreat` poza zapisem (regeneracja RAM w walce), rozjazdu nie zmierzono
+- Pakiet właściciela: packages/sim
+
+### G-186 Obserwator `onReadyObservable` przybywa przy każdej nowej grze (do sprawdzenia w przeglądarce)
+- Status: zgłoszone (1.11, autor i weryfikator #151); możliwy artefakt NullEngine
+- Ważność: S4 · Zasięg: na NullEngine `scene.onReadyObservable` rośnie o 1 na każde newGame (9 → 13 w 5 cyklach); źródło prawdopodobnie `scene.whenReadyAsync(true)` w `packages/engine/src/renderer/start-prep.ts:181`, które na NullEngine się nie rozwiązuje
+- Weryfikator #171: liczba obserwatorów waha się między przebiegami tego samego kodu (0 albo 1 w fazach `city` i `prepared`), więc sondy sesji powinny ją pomijać albo czekać na `isReady`
+- Poprawka: sprawdzić w przeglądarce (nowa gra przed gotowością sceny); jeśli rośnie, anulowanie oczekiwania przy `cancelPrepare`/clear
+- Pakiet właściciela: packages/engine (renderer)
+
+### G-190 Puste pasy postojowe OSM
+- Status: skan w main (1.11, #169: `kerb-strip-no-car-street` baza 3, `bay-strip-empty-known` baza 4, `bay-strip-sparse` 0); zostaje poprawka generatora: łatka zatok przy ulicach dostaw (`docs/plany/g190-zatoki-przy-ulicach-dostaw.patch`) razem z G-133; Łęczyńska w1159135271 (OSM `capacity=23`, w grze 0: obrys płytszy niż auto w poprzek) do decyzji, np. nadwozie nad krawężnikiem
+- Ważność: S4 · Zasięg: w232362980 (Kowalska, lane, 2,2 m: spadek, nawierzchnia, wyjście poza obrys), w232362991 (Kowalska, diagonal, 3,4–3,9 m: za płytki na skos z tagu, 8 z 12 zatok bez modelu), w356947938 (najbliższa droga z ruchem 75 m dalej), w1159135271 (Łęczyńska, perpendicular, 3,4 m: za płytki na układ prostopadły), w1514058885 (Świętoduska, parallel, 2,45 m: 18 zatok na spadku, G-133)
+- Poprawka: płytki pas z tagiem `diagonal`/`perpendicular` → mniejszy kąt albo krótszy model; spadek przez G-133 (pochylenie aut); `bay-strip-sparse` dziś pomija pasy bez auta
+- Kurator #162: także odcinek Kowalskiej w232362980 x 644..668 bez zatok, bo ulica ma `use: deliveries`, a `bayCars` bierze tylko `CAR_STREETS` (T-107); zatoka w1544340690 s=24,8 (689,2; 171,8) odrzucona przez odstęp od chodnika w173566578, a na ortofoto stoi tam auto. Proponowane kontrole: `kerb-strip-no-car-street` (baza ≥ 1) i `bay-strip-sparse` także dla pasów bez aut (baza ≥ 5)
+- Pakiet właściciela: packages/sim (kerb-bays), tools/glitch-scan
+
+### G-191 Gzymsy wystają poza obrys OSM i przycinają płaskie płyty znaków
+- Status: zgłoszone (1.11, autor G-160)
+- Ważność: S4 · Zasięg: gzymsy w mapcity sięgają poza obrys budynku z OSM; płaska płyta (neon, szyld) na ich wysokości wchodzi w gzyms (tak był ucięty róg SAKE przed runda 2 G-160); kontrole oparte na `inBuilding` i obrysie tego nie widzą, a przy lokalach (`ROOM_SITES`, wycięta kondygnacja) dają fałszywe trafienia
+- Poprawka: kontrola skanu „płyta znaku w bryle gzymsu” (geometria gzymsu z planu fasady); kontrole na obrysie uwzględniają fronty lokali
+- Pakiet właściciela: tools/glitch-scan, packages/engine (mapcity)
+
+### G-192 Uproszczona oś chodnika: auta kilka cm w zmapowanej szerokości
+- Status: zgłoszone (1.11, autor G-189)
+- Ważność: S4 · Zasięg: `simplifyLine` 0,5 m w imporcie przesuwa oś chodnika do ok. 0,09 m; auta z main (np. taxi (922,53; 430,5) i dwa na Kalinowszczyźnie) wchodzą o kilka cm w szerokość chodnika z OSM; skan ma margines `AXIS_SLACK` 0,1 m
+- Poprawka: dokładniejsza oś dla chodników przy pasach postojowych albo odstęp liczony od osi z OSM
+- Pakiet właściciela: tools/osm-import, packages/sim
+
+### G-196 Ciała i powaleni posiłkowie ochrony zostają do końca sesji
+- Status: częściowo naprawione w #174 (1.11, PRZYJĘTE): powalony żywy posiłek nie znika już po końcu heatu i nie zajmuje limitu; zostaje otwarte: ciała i powaleni posiłkowie nie mają chunku, leżą do końca sesji, a `sent` rośnie w kolejnych heatach
+- Ważność: S4 · Zasięg: powalony, ale żywy posiłek ma AI; po końcu heatu, gdy jest daleko i poza wzrokiem, `runReinforcements` (`packages/sim/src/systems/crime-system.ts`) usuwa go jak żywego, więc ciało znika ze świata bez zapisu; do tego ciała posiłków nie mają chunku i zostają do końca sesji, a `sent` rośnie w kolejnych heatach (wpływ na wybór enforcerów od `n`)
+- Poprawka: odsyłanie tylko posiłków na nogach; powaleni zostają jak ciała; ciała posiłków sprzątane razem z chunkiem, w którym leżą; test jednej sesji
+- Pakiet właściciela: packages/sim
+
+### G-197 Drzwi klatek od podwórza: Trasa Podziemna liczona jako ulica
+- Status: zgłoszone (1.11, kurator #167, T-110)
+- Ważność: S4 · Zasięg: 2 drzwi: Złota 6 (667,7; −31,0), Archidiakońska (654,9; 9,0)
+- Przyczyna: `facesStreet` w `tools/osm-import/src/props-doors.ts` bierze drogi z `tunnel=yes`, `layer=-1` (Trasa Podziemna, w chunkach zwykły `footway`), więc ściana od podwórza wygląda na ścianę od ulicy
+- Poprawka: `facesStreet` pomija drogi z `layer<0` albo `tunnel`; kontrola skanu `door-faces-underground` (baza dziś 2) → 0
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+### G-198 Wejście OSM bez drzwi, a drzwi zastępcze na innej ścianie
+- Status: zgłoszone (1.11, kurator #167, T-111)
+- Ważność: S4 · Zasięg: wejście główne n12776690896 (−143,1; 32,2): brak gniazda drzwi w promieniu 1,5 m, reguła zastępcza stawia drzwi klatki 16 m dalej na innej ścianie
+- Poprawka: budynek z wejściem OSM przy rysowanej ścianie dostaje drzwi w najbliższym gnieździe tej ściany albo żadnych zastępczych; kontrola `entrance-door-elsewhere` (baza dziś 1) → 0. Przy okazji do rozważenia: wybór ściany drzwi klatki wg `addr:street` (40 ze 179 drzwi patrzy na inną ulicę niż adres, np. Pałac Lubomirskich (60,4; 99,3) od Radziwiłłowskiej) i kontrola `door-on-osm-passage` (drzwi do 3 m od osi `tunnel=building_passage`/`covered=yes`, baza 1: Niecała 4, T-109)
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+### G-203 Schody zamkowe mają 3 m zamiast ok. 10 m szerokości
+- Status: w PR #194 (2.11, PRZYJĘTE przez weryfikatora i kuratora z uwagami): `correctedLine` z `width=10` dla 5 biegów i 6 podestów, kontrola `steps-narrower-than-walls` baza 0. Uwagi kuratora (ortofoto PZGiK): bieg 2 i bieg 5 przed bramą mają w rzeczywistości ok. 15 m (T-126, G-217); kandelabr (826,2; 235,8) na biegu 5 (T-127, G-205)
+- Ważność: S3 (proponowana) · Zasięg: lokalny, ale to oś widokowa Placu Zamkowego · Koszt: mały–średni
+- Gdzie: biegi w1435832499, w1305940836, w1305889408, w1305940837, w1306105687, x 766..829, z 238..246
+- Dowód: `ground.ts` `PATHS.steps = 3`; murki OSM w231832094 i w231832095 stoją ok. 9,9 m od siebie, na ortofoto PZGiK ok. 11 m; zrzut `zamek-schody`
+- Przyczyna: OSM nie ma `width` na biegach; import bierze szerokość domyślną. `TAG_CORRECTIONS` zna tylko obszary, nie linie (to samo potrzebne dla T-050)
+- Pakiet właściciela: tools/osm-import (korekta `width` dla linii albo szerokość biegu ze ściskających go murków)
+- Test przyjęcia: pas `steps` każdego biegu ma ≥ 9,5 m, a podesty łączą się z biegami bez trawy pomiędzy; kontrola `steps-narrower-than-walls` (baza 1) → 0
+
+### G-205 Dolne kandelabry schodów zamkowych stoją na skarpie zamiast na murkach u stóp schodów
+- Status: zgłoszone (1.11, audyt zespołu zamkowego, T-115)
+- Ważność: S4 · Zasięg: lokalny · Koszt: mały
+- Gdzie: (770,9; 224,3), (773,6; 211,8), (775,3; 233,4), (780,3; 225,3), (784,7; 234,4); wpis planu `zamek.stairs-lamps`
+- Po #194 (T-115, T-127): (826,2; 235,8) stoi 1 m w głąb pasa biegu 5 w1306105687, na stopniach; (792,0; 248,5) i (796,4; 237,2) 0,55–0,85 m za osią murków biegu głównego, na trawie zbocza (latarnie na balustradzie dopiero w Z4). Test przyjęcia rozszerzony: żaden kandelabr nie stoi na pasie `steps`
+- Przyczyna: wpis planu ma jedną linię od schodów w65351905 do biegu głównego i 16 sztuk rozłożonych wzdłuż niej
+- Poprawka: dwa wpisy: 10 pojedynczych przy balustradach biegu głównego i 6 podwójnych na murkach po obu stronach stóp schodów (ok. x 762..768, z 233..252)
+- Pakiet właściciela: tools/osm-import (`docs/world/lublin-props.todo.json`)
+- Test przyjęcia: żaden kandelabr schodów nie stoi dalej niż 6 m od biegu albo murka
+
+### G-206 Reflektory fasady zachodniej Zamku świecą na dziedziniec
+- Status: zgłoszone (1.11, audyt zespołu zamkowego, T-116)
+- Ważność: S4 · Zasięg: lokalny (nocny widok z placu) · Koszt: mały
+- Gdzie: (850,3; 222), (852,5; 240); plan `zamek.floodlights` (x 846 w bryle)
+- Przyczyna: punkty planu leżą w obrysie Zamku, a generator przenosi je na najbliższy wolny grunt, tu za ścianą
+- Poprawka: punkty planu na przedpolu bramy (x ok. 828..834); w generatorze nie przenosić rekwizytu przez ścianę budynku
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: kontrola `plan-prop-off-target` (baza 2) → 0
+
+### G-207 Skarpy Wzgórza Zamkowego prawie bez drzew
+- Status: zgłoszone (1.11, audyt zespołu zamkowego, T-117)
+- Ważność: S3 (proponowana) · Zasięg: lokalny (tło Zamku z placu, alei i Błoni) · Koszt: średni
+- Gdzie: skarpa północna x 840..1010, z 255..300 (2 drzewa), południowa x 830..1010, z 140..200 (0)
+- Dowód: ortofoto PZGiK: gęsty drzewostan; drzewa w grze tylko z węzłów OSM `natural=tree`
+- Poprawka: reguła drzew na zboczach w zieleni (`leisure=park`, `landuse=grass`) z gęstością z ortofoto, poza ścieżkami, schodami, klifami i osią widokową schodów
+- Pakiet właściciela: tools/osm-import (rekwizyty)
+- Test przyjęcia: ≥ 1 drzewo na 150 m² zbocza obu skarp, 0 drzew na ścieżkach i schodach
+
+### G-208 Pamięć utknięcia gangera poza zapisem: posiłki w heacie rozjeżdżają się po wczytaniu
+- Status: w PR #195 (2.11, w weryfikacji; zapis v27): komponent `walk` i `EntitySnapshot.walk`, trasa przeliczana po wczytaniu
+- Ważność: S4 · Zasięg: posiłki ochrony w heacie (seed 21 i 5, zapis po 300, 450 i 700 krokach, rozjazd w krokach 209, 59 i 50); `sec2` wciśnięty w `sec1` przy (415,6; −98,9), obejście (unstick) zaczyna się w innym kroku
+- Przyczyna: przejściowa pamięć postępu `Progress` w `createGangerAiSystem` (ADR-0025) nie jest komponentem i nie trafia do zapisu
+- Poprawka: `Progress` jako komponent z zapisem (nowa wersja zapisu) albo pamięć wyliczana z zapisanego stanu; test zapis–wczytanie dla posiłków w heacie
+- Poboczne: `gameOver`, `session.lastThreat`, `player.lastHitBy` (id encji) i `velocity` NPC poza zapisem; stan lotu gracza (`fall`, `airPeak`, `jump`) poza zapisem, więc zapis w powietrzu rozjeżdża się w 1. kroku (weryfikator #185: (2440;545), (490;180), seed 8; pokrewne G-201); walidator przyjmuje `gun.loaded` ponad magazynek i `sniper.perch` spoza tabeli; testy zapisujące martwego gracza porównują stan, którego w grze nie ma
+- Pakiet właściciela: packages/sim, packages/persistence
+
+### G-209 Cel uploadu `security:<n>` niejednoznaczny przy dwóch posiłkach z tym samym numerem; pamięć hacków 256
+- Status: w PR #196 (2.11, w weryfikacji): część 2 (pamięć hacków) naprawiona przez zapominanie odeszłych posiłków; część 1 nie odtwarza się (`sent` i walidator wykluczają powtórzone `n`)
+- Ważność: S4 · Zasięg: gdy żyje powalony posiłek z poprzedniego heatu i nowy posiłek z tym samym `n`, `findTarget` (G-194, `scanner-system.ts`) może trafić w niewłaściwy; `HACKED_MEMORY = 256` (`packages/core/src/progression/progression.ts`): po 256 hackach posiłków (każdy dodaje klucz) najstarsze urządzenia z kluczem wypadają z pamięci i płacą ponownie
+- Poprawka: cel uploadu jako `security:<n>@<since>` (klucz z G-202); pamięć hacków osobno dla posiłków albo większa granica z testem; przy balansie (ADR-0059 etap 8) ocenić XP za posiłki w długim heacie
+- Pakiet właściciela: packages/sim, packages/core
+
+### G-212 Podwójne wieże: proceduralna obok wieży z OSM
+- Status: zgłoszone (2.11, naprawiacz G-210)
+- Ważność: S4 · Zasięg: cerkiew św. Jozafata w69916021 (wieża z OSM w1382552285 przy (270; −9)) i kościół św. Mikołaja w66258180 (dzwonnica z OSM w680377807 przy (879; 545)) dostają dodatkowo proceduralną wieżę (`roof-plan` `addTowers`); Brygidki w66264082: proceduralne wieże, prawdziwa w1090997970 niezaimportowana (G-098)
+- Poprawka: `addTowers` pomija kościół, przy którym (w obrysie albo do 10 m) stoi wieża z OSM; rozszerzyć kontrolę `landmark-fake-tower` albo nowa `landmark-double-tower`
+- Pakiet właściciela: packages/engine (renderer/mapcity), tools/glitch-scan
+
+### G-213 Biegi schodów krótsze niż szerokie rysowane w poprzek
+- Status: zgłoszone (2.11, naprawiacz G-203)
+- Ważność: S4 · Zasięg: 36 ze 121 biegów w mieście jest krótszych niż ich pas 3 m, więc renderer bierze dłuższy bok pasa za kierunek biegu i rysuje stopnie w poprzek (np. w66258166 przy Donżonie, w1312664177)
+- Poprawka: zdjąć warunek `w > PATHS.steps` w `flightStrips` (tools/osm-import/src/ground.ts, po #194), żeby każdy bieg krótszy niż szeroki był dzielony na pasy; kontrola skanu „bieg w poprzek”
+- Poboczne: wyciąg `krakowskie.json` bez murków (nieaktualny cache kafli, `osm:fetch --only=krakowskie` z siecią); pas bez nawierzchni między brukiem Placu Zamkowego (x ok. 759) a ścieżką w56965514 (x ok. 765)
+- Z weryfikacji #194: sąsiednie pasy krótkiego biegu dają stopnie przesunięte w pionie do ok. 0,06 m (`planSteps` próbkuje teren osobno na osi każdego pasa); najkrótszy bieg w1435832499 (1,3 m) wychodzi płaski (rise/count < `MIN_RISER`)
+- Pakiet właściciela: tools/osm-import
+
+### G-214 Kościół Bernardynów bez swojej wieży i sygnaturki, za wysoka nawa
+- Status: zgłoszone (2.11, kurator, przegląd #190)
+- Ważność: S3 (proponowana) · Zasięg: lokalny (Bernardyńska, widok z Krakowskiego Przedmieścia i Placu Wolności) · Koszt: mały
+- Gdzie: w66330578 (364,7; −239,8), Krakowskie; T-120
+- Dowód: NMPT GUGiK 0,5 m: wieża (378,1; −247,7), ok. 5,5 × 5,5 m, hełm do y 39,2; sygnaturka (375,4; −240,1) do y 31,8; kalenica nawy y 24,5 (gra 30,1, `source: default`). Po #190 gra nie ma żadnej wieży, przed #190 miała dwie na zachodzie
+- Przyczyna: OSM nie ma wieży jako części; renderer zgaduje wieże przy zachodnim szczycie
+- Poprawka: korekta importu: część `building:part=tower` (korpus do y ok. 32,5, hełm do 39,2) i sygnaturka; `height`/`roof:height` nawy z NMPT; potem zdjąć w66330578 z `TOWERLESS_OSM` (G-049 sam wyłącza wieże proceduralne)
+- Pakiet właściciela: tools/osm-import (corrections), packages/engine (lista)
+- Test przyjęcia: najwyższy wierzchołek bryły w promieniu 4 m od (378,1; −247,7) ma y 39,2 ± 1, poza nim nic nie przekracza y 32; dziś pada (brak wieży, kalenica 30,1)
+
+### G-215 Proceduralne wieże na kościołach, które ich nie mają albo mają inne
+- Status: zgłoszone (2.11, kurator, przegląd #190)
+- Ważność: S3 (proponowana) · Zasięg: szeroki (7 kościołów, m.in. deptak: Kapucyni i Świętego Ducha) · Koszt: średni
+- Gdzie: T-121: Kapucyni w67508932, Karmelici r5420467 (wieże na trawie poza obrysem, bez kolizji), św. Piotra w66335226, św. Wojciecha w61102109, Niecała 4 w232674421, Świętego Ducha w66264126 (2 wieże zamiast 1 smukłej na narożu SW do y 26,5), cerkiew Przemienienia w66264148 (wieża 13 m za wysoka)
+- Dowód: sonda `topo-g210-probe` (towerSpots w świecie) i NMPT GUGiK 0,5 m, wartości w T-121
+- Przyczyna: `roof-plan` `addTowers` stawia wieże każdemu kościołowi bez części; zachód obrysu i szerokość > 22 m decydują o liczbie i miejscu, wysokość 1,7 × ściany do 65 m
+- Poprawka: wieża proceduralna tylko dla kościołów z tabeli wież (dane: położenie, rzut, wysokość z NMPT albo `building:part` w korektach importu); pozostałe bez wieży (rozszerzyć `TOWERLESS_OSM` do odwrotnej listy); co najmniej: środek wieży w obrysie
+- Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import, tools/glitch-scan
+- Test przyjęcia: kontrole `church-fake-tower` i `church-tower-off-building` (niżej) spadają do 0
+
+### G-216 Kościoły z wysokości domyślnej o 5–15 m za wysokie
+- Status: zgłoszone (2.11, kurator, przegląd #190)
+- Ważność: S3 (proponowana) · Zasięg: szeroki (9 kościołów w trzech dzielnicach) · Koszt: mały (dane)
+- Gdzie: T-122 (lista i wysokości)
+- Dowód: kalenice w grze a NMPT: Bernardyni 30,1/24,5, Świętego Ducha 26,5/16,5, Niecała 4 18,5/ok. 3, św. Jozafata 24,2/13,3, Karmelici 28,6/14,5, św. Mikołaja 21,8/12,4, cerkiew Przemienienia 5,9/−4,3
+- Przyczyna: `building=church` bez `height` i `building:levels` dostaje 4 kondygnacje i cokół
+- Poprawka: korekty `height`/`roof:height` z NMPT w `corrections.ts` (jak G-204)
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: kontrola `church-default-height` spada z 9 do 0
+
+### G-217 Bieg 2 i bieg przed bramą schodów zamkowych węższe niż w rzeczywistości
+- Status: zgłoszone (2.11, kurator, przegląd #194)
+- Ważność: S4 (proponowana) · Zasięg: lokalny, oś widokowa Placu Zamkowego · Koszt: mały (dane)
+- Gdzie: T-126; w1305940836 (x 776,8..781,4), w1306105687 (x 824,9..829,2), podest w56965512
+- Dowód: ortofoto PZGiK (siatka 2 m): bieg 2 ok. 15,5 m (z 236,8..252,5), bieg 5 ok. 15 m (z 231..247); w grze po #194 po 10 m, obok biegu 2 trawa (779; 251)
+- Przyczyna: `width=10` z rozstawu murków biegu głównego nadane wszystkim biegom; OSM nie ma `width`
+- Poprawka: w `TAG_CORRECTIONS` `width=15` dla w1305940836 i w1306105687 (oś OSM bliska środka pasa z ortofoto, do sprawdzenia przy poprawce), podest w56965512 i w1305889407 co najmniej tyle co sąsiedni bieg; sprawdzić, czy kandelabry i kosze przy biegach nie lądują na stopniach
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: pas `steps` biegu 2 i 5 ≥ 14,5 m; punkty bez nawierzchni na osi poprzecznej biegu 2 (±7,5 m) = 0; żaden rekwizyt na pasie `steps`
+
+### G-218 Pas bez nawierzchni między brukiem Placu Zamkowego a stopą schodów zamkowych
+- Status: zgłoszone (2.11, kurator, przegląd #194; wcześniej jako poboczne w G-213)
+- Ważność: S4 (proponowana) · Zasięg: lokalny, pierwszy plan widoku z placu na schody · Koszt: mały
+- Gdzie: T-128; x ok. 759..765, z ok. 233..256
+- Dowód: sonda nawierzchni (762; 245) i (760; 245): żaden obrys; zrzut `g203-plac` (ciemny pas przed schodami); ortofoto: ciągły chodnik z płyt
+- Przyczyna: luka w OSM (żaden obszar nie pokrywa chodnika między parkingiem w294103450 a ścieżką w56965514)
+- Poprawka: obszar chodnika w korektach importu (np. `footway` / plac pieszy z obrysem od krawędzi parkingu do pierwszego stopnia) z wpisem T-128, albo uzupełnienie OSM i ponowne pobranie
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: punkty bez nawierzchni w prostokącie x 758..766, z 236..254 (co 0,5 m) = 0
+
+### G-219 Powalony żywy posiłek ochrony znika po odejściu gracza ok. 300 m
+- Status: zgłoszone (2.11, naprawiacz G-209)
+- Ważność: S4 · Zasięg: posiłek powalony żywcem ma `chunk: ""`; `chunk-unload` usypia go po chunku, w którym leży, a bez klucza nie zostaje po nim stan, więc znika na zawsze, a `sent` spada do 0 (sonda, ziarno 7: 100 m nadal jest, 300 m już nie, po powrocie brak); pokrewne G-196 (ciała posiłków bez chunku)
+- Poprawka: powaleni i ciała posiłków przypisani do chunka, w którym leżą, z zapisem przy uśpieniu i powrotem przy wczytaniu chunka (wtedy `goneReinforcement` z G-209 musi uwzględnić uśpionych, żeby nie płacili XP drugi raz)
+- Pakiet właściciela: packages/sim (streaming, reinforcements)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
