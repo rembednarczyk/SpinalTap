@@ -20,7 +20,7 @@ import { evenStations, offRoad, offWall, scatter, sideOffset, stations } from ".
 import { Site } from "../src/props-site.ts";
 import { SolidIndex, clearSpot } from "../src/props-solid.ts";
 import { gameDoors } from "../src/game-doors.ts";
-import { loadCarriageways } from "../src/props-roads.ts";
+import { loadCarriageways, loadUndergroundWays } from "../src/props-roads.ts";
 import { lublinVenueBoards } from "../src/venue-boards.ts";
 import { lublinDoorWalls } from "../src/door-walls.ts";
 import { addDoors, loadEntrances } from "../src/props-doors.ts";
@@ -75,7 +75,7 @@ describe("street furniture generator (ADR-0047)", () => {
     const market = { roads: loadCarriageways(), doors: gameDoors() };
     const table = generateProps(PLAN, CHUNKS, loadNodeTags(), lublinVenueBoards(), market).byChunk as Map<string, StreetPropItem[]>;
     // The doors on the facades (ADR-0058 stage 9) after the furniture, then the decals (stage 6), as `pnpm osm:props` adds them.
-    addDoors(table, new Site(CHUNKS), lublinDoorWalls(), loadEntrances(), { surfaceY: (p) => surfaceY(p.x, p.z), gameDoors: gameDoors() });
+    addDoors(table, new Site(CHUNKS), lublinDoorWalls(), loadEntrances(), { surfaceY: (p) => surfaceY(p.x, p.z), gameDoors: gameDoors(), underground: loadUndergroundWays() });
     const ctx = { groundY: (p: Pt) => groundY(p.x, p.z), surfaceY: (p: Pt) => surfaceY(p.x, p.z), buildingTags: loadBuildingTags(), poleLamp: poleLampAt, blockOf: furnitureBlock };
     addDecals(table, new Site(CHUNKS), lublinDecalWalls(), ctx);
     expect(emitProps(table)).toBe(committed);
