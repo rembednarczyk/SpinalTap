@@ -247,7 +247,7 @@ export class WorldStreamer {
     return change;
   }
 
-  /** Within the load radius of `focus` (G-201): where, inside the chunks, every chunk is loaded. */
+  /** Within the load radius of `focus` (G-201): near the player, inside the chunks or outside them. */
   private nearFocus(focus: Vec3): NearPlayer {
     const r = this.radii.loadRadius;
     return (p) => (p.x - focus.x) ** 2 + (p.z - focus.z) ** 2 <= r * r;

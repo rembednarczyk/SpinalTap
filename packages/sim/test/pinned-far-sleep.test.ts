@@ -167,7 +167,7 @@ describe("a paid job's guard far from the player is gone (G-188 with G-195)", ()
   });
 });
 
-describe("a guard near the player outside every chunk stays (G-201)", () => {
+describe("a guard near the player stays when his chunk falls asleep (G-201)", () => {
   /** Where she stands outside every chunk, alive, on the terrain that goes on past them. */
   const OFF_MAP: readonly (readonly [number, number])[] = [
     [2440, 545],
@@ -225,6 +225,27 @@ describe("a guard near the player outside every chunk stays (G-201)", () => {
       });
     }
   }
+
+  it("inside the chunks too: calm in a loaded chunk not his own when his falls asleep, by her, he stays, after a load too", () => {
+    const { sim, id } = alarmed(10);
+    for (const k of peopleOf(sim, id)) {
+      const e = byKey(sim, k)!;
+      e.ai = { ...e.ai!, alerted: false, lastKnown: null, search: 0, lost: 0, suspicion: 0 };
+    }
+    // Her in the west of the docks, him 6 m from her: his own chunk falls asleep in this step.
+    teleportPlayer(sim, ground(2330, 300));
+    const key = `${id}-g1`;
+    const g = byKey(sim, key)!;
+    g.position = ground(2336, 300);
+    g.prevPosition = g.position;
+    sim.step();
+    expect(sim.streamer.isLoaded(g.chunk!)).toBe(false);
+    expect(sim.streamer.isLoaded(sim.streamer.chunkIdAt(g.position))).toBe(true);
+    expect(byKey(sim, key)).toBeDefined();
+    const loaded = reload(sim);
+    expect(byKey(loaded, key)).toBeDefined();
+    expect(parting(sim, loaded, id, seconds(15))).toBeNull();
+  });
 });
 
 describe("the templates of replaced jobs (G-188)", () => {

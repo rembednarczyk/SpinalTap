@@ -28,9 +28,10 @@ const putToSleep = (world: World<Entity>, state: StreamState, e: Entity, forgott
 };
 
 /**
- * Whether a point is near the player, within the load radius: there, inside the chunks, every
- * chunk is loaded, but outside them the terrain goes on (the nearest chunk's) and she may stand
- * on it (G-201). What is near her stays, as it would in a loaded chunk.
+ * Whether a point is near the player, within the load radius (G-201). Outside the chunks the
+ * terrain goes on (the nearest chunk's) and she may stand on it, with no chunk loaded there; and
+ * a keyed AI near her may stand in a loaded chunk not his own when his falls asleep. Either way,
+ * what is near her stays before her eyes, pinned, and `sleepPinned` puts it to sleep once away.
  */
 export type NearPlayer = (p: Vec3) => boolean;
 
