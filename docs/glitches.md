@@ -738,7 +738,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: szczyt bryły w680377807 (`y + height + roof`) ± 1 m od wartości ze źródła, `source: height`; kontrola `osm-tower-default-height` 1 → 0
 
 ### G-236 Schody z `incline` z OSM wznoszą się w grze w drugą stronę
-- Status: w PR #219 (2.11, runda 2 NIE PRZYJĘTE: zagęszczenie siatki przed padami przesunęło teren w całym `stare-miasto-0-0`, bruk Rynku wystaje nad górne stopnie Trasy Podziemnej; runda 3 u autora: pady na siatce 5 m, potem `refineGrid`, potem rampy; potem kurator)
+- Status: w PR #219 (2.11, runda 3 @ 5757fae PRZYJĘTE: pady na siatce 5 m, potem zagęszczenie, potem rampy; teren poza pasem biegu bez zmian, Trasa Podziemna z zapasem ≥ 1,92 m; kurator w toku)
 - Ważność: S4 · Zasięg: 2 z 48 dróg schodów z `incline` w prostokątach map · Koszt: mały do średniego
 - Gdzie: T-131; w56965515 pod wiaduktem Zamkowej (736,8; 161,0) → (727,3; 164,0), Podzamcze/Stare Miasto, brzeg chunka z = 160; w66335060 (603,5; −184,6) → (597,3; −185,3), Stare Miasto
 - Dowód: teren gry (`SHAPED_TERRAIN`, bez pomostu wiaduktu) na węzłach w56965515: −15,87, −16,76, −15,33, −17,13 przy OSM `incline=up` (od Podwala w górę skarpy); w66335060: −2,70 → −2,30 przy `incline=down`, `step_count=7`. `planSteps` stawia stopnie po terenie, więc schody idą w dół tam, gdzie w Lublinie idą w górę
@@ -773,7 +773,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (micro-events, streaming)
 
 ### G-240 Panika tłumu nie trafia do zapisu: wczytana gra rozjeżdża się zaraz po walce
-- Status: w PR #221 (2.11, runda 2 @ ebfae5e w ponownej weryfikacji): `settleCalls` rozstrzyga telefony świadków przed zapisem (zgłoszenie i heat jak bez zapisu; ogłuszony nie dzwoni, w chwycie dzwoni), potem `calmStreet`; `scared` przepada
+- Status: w PR #221 (2.11, runda 2 PRZYJĘTE; test dwóch świadków dopisany przez orkiestratora, b064fb5, czeka na CI)
 - Ważność: S4 · Zasięg: `crowd.state: fleeing` (np. Hideo po walce) poza zapisem; wczytana gra różni się od gry bez zapisu do uspokojenia tłumu (ok. 12 s)
 - Poprawka: stan ucieczki tłumu w migawce encji (zapis + migracja) albo wyliczany z zapisanych zdarzeń; test hash co krok po zapisie w trakcie paniki
 - Pakiet właściciela: packages/sim (crowd), packages/persistence
