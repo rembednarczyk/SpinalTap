@@ -130,3 +130,15 @@ export const seatAt = (
   }
   return null;
 };
+
+/**
+ * Where a standing figure's soles meet the ground, in its frame (front +z): the heel and the toe of
+ * each foot, as the shoes of the standing models of `crowd-props.glb` lie (x within ±0.13 to ±0.23 m,
+ * z within ±0.13 m). The paving under all four is what it stands on.
+ */
+export const FIGURE_SOLES: readonly { readonly x: number; readonly z: number }[] = [
+  { x: -0.12, z: -0.11 },
+  { x: 0.12, z: -0.11 },
+  { x: -0.12, z: 0.11 },
+  { x: 0.12, z: 0.11 },
+];

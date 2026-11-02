@@ -49,6 +49,13 @@ describe("the still crowd's checks (ADR-0058 stage 8)", () => {
     expect(faults([figure(15, 5)])).toEqual(["figure-in-building"]);
     expect(faults([figure(0, 30.1)])).toEqual(["figure-on-road"]);
     expect(faults([figure(3, 0, {}, 0.2)])).toEqual(["figure-floating"]);
+    // On the paving at its middle, its toes in a kerb 0.16 m higher 5 cm in front: the soles, not the middle, decide.
+    const kerb: FigureWorld = { ...world, surfaceY: (_x, z) => (z > 5.05 ? 0.24 : 0.08) };
+    const atKerb = Object.entries(figureChecks([figure(3, 5)], kerb)).filter(([, run]) => run().length > 0);
+    expect(atKerb.map(([k]) => k)).toEqual(["figure-floating"]);
+    expect(atKerb[0]![1]()[0]!.what).toBe("stand figure a sole -0.16 m off the paving");
+    // Turned away from the kerb, its heels are in it.
+    expect(Object.entries(figureChecks([figure(3, 4.95, {}, 0.08, Math.PI)], kerb)).filter(([, run]) => run().length > 0).map(([k]) => k)).toEqual(["figure-floating"]);
     expect(faults([figure(0.4, -10)])).toEqual(["figure-in-crowd"]);
     expect(faults([figure(5, -19.3)])).toEqual(["figure-in-crowd"]);
   });

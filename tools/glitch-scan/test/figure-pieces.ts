@@ -1,4 +1,4 @@
-import { FIGURE_SEAT, type FigureLayout, type StreetPropItem, figureFootprint, figureLayout, isSitting, seatAt } from "../../../packages/core/src";
+import { FIGURE_SEAT, FIGURE_SOLES, type FigureLayout, type StreetPropItem, figureFootprint, figureLayout, isSitting, seatAt } from "../../../packages/core/src";
 import { distanceToPiece, furnitureRadius, turnLocal } from "../../../packages/sim/src/content/lublin/furniture";
 
 /**
@@ -53,13 +53,13 @@ const lineGap = (p: Pt, line: readonly Pt[]): number => {
   return best;
 };
 
-/** A figure's circles in the world, and the points round each (its middle and eight on its rim). */
+/** A figure's circles in the world, and the points round each (its middle and sixteen on its rim). */
 const circlesOf = (i: StreetPropItem, f: FigureLayout) =>
   figureFootprint(f).map((c) => {
     const q = turnLocal(i.yaw, c.x, c.z);
     return { x: i.x + q.x, z: i.z + q.z, r: c.r };
   });
-const rim = (c: { x: number; z: number; r: number }): Pt[] => [c, ...Array.from({ length: 8 }, (_, k) => ({ x: c.x + Math.cos((k / 8) * Math.PI * 2) * c.r, z: c.z + Math.sin((k / 8) * Math.PI * 2) * c.r }))];
+const rim = (c: { x: number; z: number; r: number }): Pt[] => [c, ...Array.from({ length: 16 }, (_, k) => ({ x: c.x + Math.cos((k / 16) * Math.PI * 2) * c.r, z: c.z + Math.sin((k / 16) * Math.PI * 2) * c.r }))];
 
 const angle = (a: number): number => Math.abs(Math.atan2(Math.sin(a), Math.cos(a)));
 
@@ -116,12 +116,17 @@ export const figureChecks = (all: readonly StreetPropItem[], world: FigureWorld)
         const drop = i.y + f.seat - FIGURE_SEAT[f.pose][f.body] - floor;
         return drop > FEET_OVER || drop < -FEET_UNDER ? `feet ${drop.toFixed(2)} m off the ground` : null;
       }),
-    /** A standing figure's soles off the paving drawn under it. */
+    /** A standing figure with a sole (a heel or a toe) more than `OFF_FOOT` off the paving drawn under it. */
     "figure-floating": () =>
       each((i, f) => {
         if (isSitting(f.pose)) return null;
-        const d = i.y - world.surfaceY(i.x, i.z);
-        return Math.abs(d) > OFF_FOOT ? `soles ${d.toFixed(2)} m off the paving` : null;
+        // Every heel and toe (`FIGURE_SOLES`, turned by its yaw) on the paving under it: none over a lower one, none sunk in a higher.
+        const off = FIGURE_SOLES.map((s) => {
+          const q = turnLocal(i.yaw, s.x, s.z);
+          return i.y - world.surfaceY(i.x + q.x, i.z + q.z);
+        });
+        const worst = off.reduce((a, b) => (Math.abs(b) > Math.abs(a) ? b : a), 0);
+        return Math.abs(worst) > OFF_FOOT ? `a sole ${worst.toFixed(2)} m off the paving` : null;
       }),
     /** A figure where the simulation's moving crowd stands or walks: a resident's spot, a walker's lane. */
     "figure-in-crowd": () =>
