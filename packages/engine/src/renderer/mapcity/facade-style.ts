@@ -82,6 +82,8 @@ const CIVIC_PLASTER = ["#d6d0c2", "#c9c2b0", "#d9cbb0", "#bfc4c4"] as const;
 const CHURCH_PLASTER = ["#e4ddcc", "#ddd2b8", "#e8e2d6"] as const;
 const PLAIN_PLASTER = ["#9ea3a6", "#a8a395", "#8f9aa3", "#b0a89a", "#9a9488"] as const;
 const INDUSTRIAL_PLASTER = ["#8a8f96", "#7d7a74", "#6f7780", "#857565"] as const;
+/** Every plaster the facades pick from by use. */
+export const PLASTER_SWATCHES: readonly string[] = [...TENEMENT_PLASTER, ...CIVIC_PLASTER, ...CHURCH_PLASTER, ...PLAIN_PLASTER, ...INDUSTRIAL_PLASTER];
 const ROOFS_TILE = ["#7a3b2e", "#6e3a2c", "#84442f", "#5b3a33"] as const;
 const ROOFS_METAL = ["#3d4048", "#2f3238", "#46494f"] as const;
 const ROOFS_COPPER = ["#4f7f6f", "#5b8a78", "#46705f"] as const;

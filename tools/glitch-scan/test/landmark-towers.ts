@@ -103,14 +103,14 @@ export const dwellingTowers = (entries: readonly TowerEntry[]): { readonly at: s
   });
 
 /** The map's own tags of a building of the data, by its id (`w<id>`, `r<id>`, a split piece `r<id>/<k>`). */
-const ownTags = (osm: OsmData, id: string): Tags => {
+export const ownTags = (osm: OsmData, id: string): Tags => {
   const m = /^([wr])(\d+)/.exec(id);
   const el = m ? (m[1] === "w" ? osm.ways.get(Number(m[2])) : osm.relations.get(Number(m[2]))) : undefined;
   return el?.tags ?? {};
 };
 
 /** The buildings of the city `keep` takes, framed as the map city frames them, with the map's towers. */
-const cityEntries = (keep: (id: string, s: BuildingSource) => boolean, osm: OsmData): TowerEntry[] => {
+export const cityEntries = (keep: (id: string, s: BuildingSource) => boolean, osm: OsmData): TowerEntry[] => {
   const data = MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)));
   const sources = data.map((b): BuildingSource => {
     const view = buildingView(b) as BuildingSource["view"];
