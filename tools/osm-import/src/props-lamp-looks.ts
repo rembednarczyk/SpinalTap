@@ -5,7 +5,8 @@
  * came from. The styled lamp stays, the plain one goes.
  */
 import type { StreetPropKind } from "../../../packages/core/src/world/city-geo.ts";
-import type { Pt } from "./geometry.ts";
+import { type Pt, pointInRing } from "./geometry.ts";
+import { OLD_TOWN_RING } from "./old-town.ts";
 import type { Placed } from "./props-gen.ts";
 
 const PLAIN: ReadonlySet<StreetPropKind> = new Set(["lamp-road", "lamp-modern-pole"]);
@@ -24,3 +25,10 @@ export const byStyledLamp = (placed: readonly Placed[]): ((prop: StreetPropKind,
   const styled = placed.filter((x) => STYLED.has(x.prop)).map((x) => x.p);
   return (prop, p) => PLAIN.has(prop) && styled.some((q) => Math.hypot(q.x - p.x, q.z - p.z) < PLAIN_BY_STYLED);
 };
+
+/**
+ * An OSM street lamp inside the walled Old Town is one of its styled lamps (G-264): OSM gives no
+ * type, and inside the walls the city set no road lamps. Free-standing, so a pastoral on its
+ * own post where OSM has it, not a wall lantern; past the walls it stays a road lamp.
+ */
+export const oldTownLook = (kind: string, prop: StreetPropKind, p: Pt): StreetPropKind => (kind === "street-lamp" && pointInRing(p, OLD_TOWN_RING) ? "lamp-pastoral" : prop);

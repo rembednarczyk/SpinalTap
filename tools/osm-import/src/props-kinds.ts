@@ -53,7 +53,7 @@ export const MAPPED: Readonly<Record<string, { readonly prop: StreetPropKind; re
   "tree-row": { prop: "tree", why: "a row of trees along the line" },
   hedge: { prop: "shrubs", why: "clipped shrubs along the line" },
   "lamp-memorial": { prop: "lamp-pastoral", why: "the pre-war lantern on a post shares the pastoral's lantern" },
-  "street-lamp": { prop: "lamp-road", why: "OSM street lamps away from the old town are road lamps" },
+  "street-lamp": { prop: "lamp-road", why: "OSM street lamps past the Old Town's walls are road lamps; inside them pastorals (G-264)" },
   "flagpole-tall": { prop: "flagpole", why: "the 35 m Maszt Niepodległości, the tall shape of the flagpole" },
   fountain: { prop: "fountain-jets", why: "jets in the basin; the water itself is a ground surface" },
   "fountain-multimedia": { prop: "fountain-jets", why: "jets in the leaf-shaped basin; the water itself is a ground surface" },
