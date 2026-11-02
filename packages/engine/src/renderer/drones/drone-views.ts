@@ -5,9 +5,10 @@ import type { CityProps } from "../city-props";
 import { type Drone, type DroneKind, DRONE_KINDS, type DronePose, droneFleet, dronePose } from "./drone-flight";
 import { type DroneLane, type DroneWorld, planDroneLanes } from "./drone-lanes";
 import { type DroneTemplate, droneTemplates } from "./drone-models";
-import { BEAM_FROM, type Patrol, type PatrolLane, type PatrolPose, patrolFleet, patrolPose } from "./patrol-flight";
+import { type Patrol, type PatrolLane, type PatrolPose, patrolFleet, patrolPose } from "./patrol-flight";
 import { type PatrolWorld, planPatrolLanes } from "./patrol-lanes";
 import { type PatrolTemplate, patrolTemplates } from "./patrol-models";
+import { poolDrop, poolPoint } from "./patrol-pool";
 
 /**
  * How far drones are drawn (m from the camera), where the far version takes over, and how many of
@@ -29,11 +30,6 @@ export const PATROL_LOD: Readonly<Record<RenderQuality, { readonly near: number;
   medium: { near: 50, draw: 200, nearSlots: 2, farSlots: 2 },
   low: { near: 0, draw: 0, nearSlots: 0, farSlots: 0 },
 };
-
-/** The searchlight's pool lies this much over the paving (m), clear of its lift's flicker. */
-const POOL_LIFT = 0.04;
-/** The pool's radius for each metre of drop (m). */
-const BEAM_SPREAD = 0.3;
 
 export interface DroneViewsDeps {
   readonly scene: Scene;
@@ -279,9 +275,9 @@ export class DroneViews {
   }
 
   /**
-   * Writes a slot's template turned by the yaw and moved to the pose. A patrol's searchlight is
-   * stretched from its foot down to the paving, its pool widening with the drop; higher than
-   * `BEAM_FROM` it is off (folded into the drone's foot).
+   * Writes a slot's template turned by the yaw and moved to the pose. A patrol's searchlight pool
+   * lies on the paving under it (`poolPoint`), wider the higher the drone; off higher than
+   * `BEAM_FROM` (folded into the drone's foot).
    */
   private place(slot: Slot, p: DronePose | PatrolPose): void {
     const c = Math.cos(p.yaw);
@@ -289,18 +285,23 @@ export class DroneViews {
     const src = slot.template.positions;
     const nsrc = slot.template.normals;
     const beam = "beam" in slot.template ? slot.template.beam * 3 : src.length;
-    const drop = "ground" in p ? p.y - p.ground - POOL_LIFT : Infinity;
-    const lit = drop <= BEAM_FROM;
-    const spread = drop * BEAM_SPREAD;
+    const drop = "ground" in p ? poolDrop(p) : null;
+    const surfaceAt = this.patrolsPlanned?.surfaceAt ?? (() => 0);
     let o = slot.offset * 3;
     for (let i = 0; i < src.length; i += 3, o += 3) {
-      const r = i < beam ? 1 : lit ? spread : 0;
-      const x = (src[i] as number) * r;
-      const z = (src[i + 2] as number) * r;
-      const y = i < beam ? (src[i + 1] as number) : lit ? (src[i + 1] as number) * drop : 0;
-      this.positions[o] = p.x + x * c + z * s;
-      this.positions[o + 1] = p.y + y;
-      this.positions[o + 2] = p.z - x * s + z * c;
+      if (i < beam || drop === null || !("ground" in p)) {
+        const r = i < beam ? 1 : 0;
+        const x = (src[i] as number) * r;
+        const z = (src[i + 2] as number) * r;
+        this.positions[o] = p.x + x * c + z * s;
+        this.positions[o + 1] = p.y + (src[i + 1] as number) * r;
+        this.positions[o + 2] = p.z - x * s + z * c;
+      } else {
+        const q = poolPoint(p, drop, src[i] as number, src[i + 2] as number, surfaceAt);
+        this.positions[o] = q.x;
+        this.positions[o + 1] = q.y;
+        this.positions[o + 2] = q.z;
+      }
       const nx = nsrc[i] as number;
       const nz = nsrc[i + 2] as number;
       this.normals[o] = nx * c + nz * s;

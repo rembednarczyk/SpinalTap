@@ -5,7 +5,7 @@ import { droneWorldOf } from "../../../packages/engine/src/renderer/drones/drone
 import type { PatrolLane } from "../../../packages/engine/src/renderer/drones/patrol-flight";
 import { landmarkAt } from "../../../packages/engine/src/renderer/mapcity/landmarks";
 import { type P2, boundsOf, cleanRing, pointInRing } from "../../../packages/engine/src/renderer/mapcity/polygon";
-import { patrolPoints } from "./patrol-pieces";
+import { type PatrolPoint, patrolPoints } from "./patrol-pieces";
 
 /**
  * The drones over the street canyons of ADR-0058 stage 7, flown round every lane the renderer
@@ -30,6 +30,8 @@ const MAST = 9;
 const LANDMARK_ROOM = 30;
 /** Metres between the points of a loop flown. */
 const STEP = 1;
+/** How near the roofs a low patrol coming into sight or going out of it must clear (m). */
+const POP_ROOM = 25;
 /** Every kind flies the same line over the ground: the checks of the ground fly one. */
 const XZ: readonly DroneKind[] = ["patrol"];
 
@@ -102,7 +104,7 @@ export const droneChecks = (
     });
   const inBuilding = (f: { p: P2; bottom: number; top: number; reach: number }) => near(f.p, f.reach + 2).find((b) => f.bottom < b.top && f.top > b.bottom && gapTo(f.p, b.ring) < f.reach);
   /** One finding per patrol lane: the first point of its flight where `bad` says what is wrong. */
-  const perPatrol = (bad: (f: { p: P2; bottom: number; top: number; reach: number }) => string | null): Finding[] =>
+  const perPatrol = (bad: (f: PatrolPoint) => string | null): Finding[] =>
     patrols().flatMap((lane) => {
       for (const f of patrolPoints(lane)) {
         const what = bad(f);
@@ -138,6 +140,16 @@ export const droneChecks = (
       }, XZ)(),
       ...perPatrol((f) => (onStreet(f.p) ? null : "over no street")),
     ],
+    /**
+     * A low patrol coming into sight or going out of it under the roofs within `POP_ROOM` of it: from
+     * the street a drone must not appear or vanish in the air, only over the roofs round it.
+     */
+    "drone-low-pop": () =>
+      perPatrol((f) => {
+        if (!("edge" in f) || !f.edge) return null;
+        const roof = Math.max(-Infinity, ...near(f.p, POP_ROOM).filter((b) => gapTo(f.p, b.ring) <= POP_ROOM).map((b) => b.top));
+        return f.bottom < roof ? `comes or goes at ${f.bottom.toFixed(1)} m under the roofs up to ${roof.toFixed(1)} m within ${POP_ROOM} m` : null;
+      }),
     /** A drone's middle over a house: the route must keep to the streets even above the roofs. */
     "drone-over-building": () => [
       ...perLane((lane, kind) => {

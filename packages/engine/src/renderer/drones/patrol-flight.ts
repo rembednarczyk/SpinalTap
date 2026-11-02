@@ -74,6 +74,8 @@ export interface PatrolPose {
   readonly yaw: number;
   /** The paving under it, for the searchlight. */
   readonly ground: number;
+  /** How large it is drawn (1: its size; less while it comes into sight or goes). */
+  readonly scale: number;
 }
 
 const unit = (h: number, salt: number): number => (propHash(h, salt) % 10000) / 10000;
@@ -150,5 +152,5 @@ export const patrolPose = (p: Patrol, time: number): PatrolPose | null => {
   const sway = f.hovering === null ? 0 : HOVER_SWAY * Math.sin((f.hovering / SWAY_PERIOD) * 2 * Math.PI);
   const heading = Math.atan2(at.dx, at.dz) + (back ? Math.PI : 0) + sway;
   const bob = PATROL_BOB * Math.sin(((time / BOB_PERIOD + p.bob) * 2 * Math.PI) % (2 * Math.PI));
-  return { x: at.p.x, y: at.ground + PATROL_ALTITUDE + f.up + bob, z: at.p.z, yaw: heading, ground: at.ground };
+  return { x: at.p.x, y: at.ground + PATROL_ALTITUDE + f.up + bob, z: at.p.z, yaw: heading, ground: at.ground, scale: 1 };
 };

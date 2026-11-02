@@ -1,4 +1,6 @@
-import { PATROL_CLIMB, PATROL_REACH, PATROL_SIZE, PATROL_SPEED, type PatrolLane, patrolCycle, patrolOf, patrolPose } from "../../../packages/engine/src/renderer/drones/patrol-flight";
+import { PATROL_CLIMB, PATROL_REACH, PATROL_SIZE, PATROL_SPEED, type PatrolLane, type PatrolPose, patrolCycle, patrolOf, patrolPose } from "../../../packages/engine/src/renderer/drones/patrol-flight";
+import { POOL_SEGMENTS } from "../../../packages/engine/src/renderer/drones/patrol-models";
+import { poolDrop, poolPoint } from "../../../packages/engine/src/renderer/drones/patrol-pool";
 import { type Box2, type P2, boundsOf } from "../../../packages/engine/src/renderer/mapcity/polygon";
 import type { AirMesh } from "./patrol-mesh";
 
@@ -17,13 +19,19 @@ export const CLEARANCE = 0.25;
 /** Most a patrol moves between two points flown (m). */
 const STEP = 0.25;
 
-/** A point of a patrol's flight: its middle, its box's foot and top (its bob at that moment), its heading and its reach round the middle. */
+/**
+ * A point of a patrol's flight: its middle, its box's foot and top (its bob at that moment), its
+ * heading, its reach round the middle, its pose, and whether it comes into sight or goes out of it
+ * there (`edge`: next to a moment it is away, or drawn smaller than it is).
+ */
 export interface PatrolPoint {
   readonly p: P2;
   readonly bottom: number;
   readonly top: number;
   readonly yaw: number;
   readonly reach: number;
+  readonly pose: PatrolPose;
+  readonly edge: boolean;
 }
 
 /** Every point of a lane's patrol through one cycle while it flies (not away), as the renderer poses it. */
@@ -32,10 +40,12 @@ export const patrolPoints = (lane: PatrolLane): PatrolPoint[] => {
   const cycle = patrolCycle(patrol);
   const dt = STEP / Math.max(PATROL_SPEED, PATROL_CLIMB);
   const out: PatrolPoint[] = [];
+  const at = (t: number) => patrolPose(patrol, t - patrol.offset);
   for (let t = 0; t < cycle; t += dt) {
-    const pose = patrolPose(patrol, t - patrol.offset);
+    const pose = at(t);
     if (!pose) continue;
-    out.push({ p: { x: pose.x, z: pose.z }, bottom: pose.y, top: pose.y + PATROL_SIZE.height, yaw: pose.yaw, reach: PATROL_REACH });
+    const edge = pose.scale < 1 || !at(t - dt) || !at(t + dt);
+    out.push({ p: { x: pose.x, z: pose.z }, bottom: pose.y, top: pose.y + PATROL_SIZE.height, yaw: pose.yaw, reach: PATROL_REACH, pose, edge });
   }
   return out;
 };
@@ -101,11 +111,46 @@ export const zonesOf = (lanes: readonly PatrolLane[]): Box2[] =>
     return { minX: b.minX - r, maxX: b.maxX + r, minZ: b.minZ - r, maxZ: b.maxZ + r };
   });
 
+/** How far the searchlight pool's drawn rim may lie off the paving (m). */
+export const POOL_TOLERANCE = 0.05;
+
+/**
+ * Where a pool's drawn rim lies furthest off the paving under a pose: its corners and the middles
+ * of the chords between them, as drawn (straight between the corners); null with the light off.
+ */
+export const poolOff = (pose: PatrolPose, surfaceAt: (x: number, z: number) => number): { off: number; x: number; z: number } | null => {
+  const drop = poolDrop(pose);
+  if (drop === null) return null;
+  const corner = (k: number) => {
+    const a = (k / POOL_SEGMENTS) * 2 * Math.PI;
+    return poolPoint(pose, drop, Math.sin(a), Math.cos(a), surfaceAt);
+  };
+  let worst = { off: 0, x: pose.x, z: pose.z };
+  for (let k = 0; k < POOL_SEGMENTS; k++) {
+    const a = corner(k);
+    const b = corner(k + 1);
+    for (const q of [a, { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, z: (a.z + b.z) / 2 }]) {
+      const off = q.y - surfaceAt(q.x, q.z);
+      if (Math.abs(off) > Math.abs(worst.off)) worst = { off, x: q.x, z: q.z };
+    }
+  }
+  return worst;
+};
+
 /**
  * The low patrols' checks: `drone-low-clearance` against the drawn geometry round the lanes (the
- * scenery's, unless a test hands its own mesh).
+ * scenery's, unless a test hands its own mesh), and `drone-low-pool` against the paving.
  */
-export const patrolChecks = (lanes: () => readonly PatrolLane[], mesh: (zones: readonly Box2[]) => AirMesh): Readonly<Record<string, () => Finding[]>> => ({
+export const patrolChecks = (lanes: () => readonly PatrolLane[], mesh: (zones: readonly Box2[]) => AirMesh, surfaceAt: (x: number, z: number) => number): Readonly<Record<string, () => Finding[]>> => ({
   /** A patrol's box with `CLEARANCE` round it meeting a lamp, a tree, a parasol, a sign, a balcony, a cable or a wall. */
   "drone-low-clearance": () => lowClearance(lanes(), mesh(zonesOf(lanes()))),
+  /** A searchlight pool whose rim lies more than `POOL_TOLERANCE` under or over the paving (sunk into a slope, floating over it). */
+  "drone-low-pool": () =>
+    lanes().flatMap((lane) => {
+      for (const f of patrolPoints(lane)) {
+        const w = poolOff(f.pose, surfaceAt);
+        if (w && Math.abs(w.off) > POOL_TOLERANCE) return [{ at: `patrol lane from ${lane.points[0]!.x.toFixed(0)},${lane.points[0]!.z.toFixed(0)} at ${w.x.toFixed(1)},${w.z.toFixed(1)}`, what: `pool's rim ${w.off.toFixed(2)} m off the paving` }];
+      }
+      return [];
+    }),
 });

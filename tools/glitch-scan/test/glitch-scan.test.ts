@@ -1581,7 +1581,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   // The drones of ADR-0058 stage 7 flown round the lanes the renderer plans from the scenery, and the
   // low patrols of stage 7b through theirs (`drone-pieces.ts`, `patrol-pieces.ts`).
   ...droneChecks(WORLD_SCENERY, streetAxes(LUBLIN_CHUNKS), groundY, planDroneLanes, PATROL_LANES),
-  ...patrolChecks(PATROL_LANES, (zones) => airMesh(WORLD_SCENERY, zones)),
+  ...patrolChecks(PATROL_LANES, (zones) => airMesh(WORLD_SCENERY, zones), surfaceY),
   // The still crowd of ADR-0058 stage 8 against the game's buildings, roads, paving, kept furniture and moving crowd (`figure-pieces.ts`).
   ...figureChecks(Object.values(WORLD_STREET_PROPS).flat(), {
     inBuilding,

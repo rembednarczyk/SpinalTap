@@ -21,8 +21,8 @@ export interface PatrolTemplate extends DroneTemplate {
 
 /** The pool's swatch: the cold white of the lit windows. */
 const BEAM_SWATCH = "win-white";
-/** Segments of the pool. */
-const POOL = 16;
+/** Segments of the pool's rim. */
+export const POOL_SEGMENTS = 16;
 const UP: Vec3 = { x: 0, y: 1, z: 0 };
 
 /** A template scaled about its foot, with the searchlight's pool after it. */
@@ -35,9 +35,9 @@ const withBeam = (data: CityKitData, t: DroneTemplate): PatrolTemplate => {
   sink.indices.push(...t.indices);
   const beam = sink.vertexCount;
   const uv = swatchUv(data, BEAM_SWATCH);
-  const rim = (k: number): Vec3 => ({ x: Math.sin((k / POOL) * 2 * Math.PI), y: -1, z: Math.cos((k / POOL) * 2 * Math.PI) });
+  const rim = (k: number): Vec3 => ({ x: Math.sin((k / POOL_SEGMENTS) * 2 * Math.PI), y: -1, z: Math.cos((k / POOL_SEGMENTS) * 2 * Math.PI) });
   // A fan of triangles (quads with two corners as one) facing up.
-  for (let k = 0; k < POOL; k++) sink.quad({ x: 0, y: -1, z: 0 }, rim(k), rim(k + 1), rim(k + 1), UP, uv);
+  for (let k = 0; k < POOL_SEGMENTS; k++) sink.quad({ x: 0, y: -1, z: 0 }, rim(k), rim(k + 1), rim(k + 1), UP, uv);
   return {
     positions: Float32Array.from(sink.positions),
     normals: Float32Array.from(sink.normals),
