@@ -89,10 +89,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 | Kontrola | Definicja | Baza |
 |---|---|---|
-| `landmark-default-height` | Budynek z listy zabytków skanu (`LANDMARK_BUILDINGS`) z `source: "default"` (wysokość z wartości domyślnej dzielnicy) | 3 (w66258167 Kaplica Trójcy, w67508958 Teatr Osterwy, w66330578 kościół Nawrócenia św. Pawła); G-204 |
+| `landmark-default-height` | Budynek z listy zabytków skanu (`LANDMARK_BUILDINGS`) z `source: "default"` (wysokość z wartości domyślnej dzielnicy) | 3 (w66258167 Kaplica Trójcy, w67508958 Teatr Osterwy, w66330578 kościół Nawrócenia św. Pawła); 2 po G-204, 1 po #208 (Teatr Osterwy); G-204 |
 | `church-fake-tower` | Kościół (`use: church`), któremu `addTowers` dokłada wierzchołki wież, a nie ma go na liście kościołów z prawdziwą wieżą (NMPT/OSM; dziś: Brygidki w66264082, św. Jozafata w69916021, św. Mikołaja w66258180, Świętego Ducha w66264126, cerkiew Przemienienia w66264148, Bernardyni w66330578) | 4 po #198 (Kapucyni, św. Piotra, św. Wojciecha, Niecała 4; Karmelici zdjęci w #198); G-215 |
 | `church-tower-off-building` | Środek wieży proceduralnej (`towerSpots`) poza obrysem swojego budynku | 0 po #198 (w skanie od #198); G-212 |
-| `church-default-height` | Budynek `use: church` z `source: "default"` (szersza wersja `landmark-default-height`) | 9; G-216 |
+| `church-over-nmpt` | Budynek `use: church` z `source: "default"` bez pomiaru albo z okapem lub kalenicą ponad 1,5 m nad pomiarem NMPT (`CHURCH_SURFACE`); dawniej proponowana jako `church-default-height` | 9 przed #208, 0 po #208; G-216 |
+| `church-part-below-roof` | Kościół z pomiarem NMPT, w którego obrysie ponad 15 % komórek leży co najmniej 2 m nad terenem i ponad 3 m pod okapem gry (niższa część na wysokości nawy); dane z siatki NMPT jak `CHURCH_SURFACE` albo lista udziałów | 5 (szacunek z sondy #208: Świętego Ducha, św. Piotra, Brygidki, Karmelici, św. Mikołaja); G-238 |
 | `osm-tower-default-height` | Budynek z OSM z `man_made=tower` albo `tower:type` bez `height` i `building:levels` (wysokość z wartości domyślnej dzielnicy) | 1 (w680377807 dzwonnica św. Mikołaja, G-235; w1382552285 wieża św. Jozafata poprawiona w #207); G-224 |
 | `steps-narrower-than-walls` | Bieg `highway=steps` między dwoma równoległymi `barrier=wall` (do 15 m od osi po obu stronach), gdy odstęp murków przekracza szerokość pasa `steps` w grze o ponad 1 m. Wymaga murków w wyciągu | 1 (schody zamkowe); G-203 |
 | `plan-prop-off-target` | Rekwizyt z wpisu planu z `points` przesunięty przez generator o ponad 4 m od swojego punktu albo na drugą stronę ściany budynku | 2 (reflektory Zamku); G-206 |
@@ -636,6 +637,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-215 Proceduralne wieże na kościołach, które ich nie mają albo mają inne
 - Status: zgłoszone (2.11, kurator, przegląd #190)
 - Ważność: S3 (proponowana) · Zasięg: szeroki (7 kościołów, m.in. deptak: Kapucyni i Świętego Ducha) · Koszt: średni
+- Priorytet (kurator, przegląd #208): wyżej. Wieże skalują się ze ścianami, więc po G-216 Niecała 4 w232674421 ma wieżę do y ok. 13 na budynku ok. 3,7 m (ponad trzy razy wyżej niż budynek bez wieży), a Świętego Ducha dwie wieże do y 28,5 przy kalenicy 20,4. Najtańszy pierwszy krok: kościoły bez wieży w rzeczywistości (Niecała 4, Kapucyni, św. Piotra, św. Wojciecha) na liście bez wieży, z odsyłaczem T-121
 - Gdzie: T-121: Kapucyni w67508932, Karmelici r5420467 (poprawione w #198: wieże poza obrysem zdjęte), św. Piotra w66335226, św. Wojciecha w61102109, Niecała 4 w232674421, Świętego Ducha w66264126 (2 wieże zamiast 1 smukłej na narożu SW do y 26,5), cerkiew Przemienienia w66264148 (wieża 13 m za wysoka)
 - Dowód: sonda `topo-g210-probe` (towerSpots w świecie) i NMPT GUGiK 0,5 m, wartości w T-121
 - Przyczyna: `roof-plan` `addTowers` stawia wieże każdemu kościołowi bez części; zachód obrysu i szerokość > 22 m decydują o liczbie i miejscu, wysokość 1,7 × ściany do 65 m
@@ -644,15 +646,15 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrole `church-fake-tower` i `church-tower-off-building` (niżej) spadają do 0
 
 ### G-216 Kościoły z wysokości domyślnej o 3–15 m za wysokie
-- Status: w PR #208 (2.11, PRZYJĘTE przez weryfikatora; kurator czeka na slot): 9 kościołów z NMPT (dach potwierdzony niezależną sondą u wszystkich 9), kontrola `church-over-nmpt` 9 → 0 (w tabeli kontroli dawna nazwa `church-default-height`); kontrola łapie rachunek i domyślne wysokości, nie zły pomiar; do kuratora: okap św. Mikołaja może być 1–1,5 m za wysoko, Świętego Ducha: 16,5 to okap, kalenica 20,4
+- Status: w PR #208 (2.11, PRZYJĘTE przez weryfikatora; kurator: ZGODNE Z UWAGAMI, nie blokuje; okap Mikołaja 8,5 zostaje, niższe części obrysu w G-238, wieże proceduralne w G-215): 9 kościołów z NMPT (dach potwierdzony niezależną sondą u wszystkich 9), kontrola `church-over-nmpt` 9 → 0 (w tabeli kontroli dawna nazwa `church-default-height`); kontrola łapie rachunek i domyślne wysokości, nie zły pomiar; do kuratora: okap św. Mikołaja może być 1–1,5 m za wysoko, Świętego Ducha: 16,5 to okap, kalenica 20,4
 - Ważność: S3 (proponowana) · Zasięg: szeroki (9 kościołów w trzech dzielnicach) · Koszt: mały (dane)
 - Gdzie: T-122 (lista i wysokości)
-- Dowód: kalenice w grze (`y + height + roof`, `height` zawiera cokół; wcześniejsze liczby liczyły go dwa razy) a NMPT: Bernardyni 27,7/24,5, Świętego Ducha 25,1/16,5, Niecała 4 18,0/ok. 3, św. Jozafata 22,6/13,3, Karmelici 23,0/14,5, św. Piotra 23,3/18,4–19,7, św. Mikołaja 21,1/12,4, cerkiew Przemienienia 5,4/−4,3
+- Dowód: kalenice w grze przed #208 (`y + height + roof`, `height` zawiera cokół) a kalenice NMPT: Bernardyni 27,7/24,5, Brygidki 27,7/22,0, Świętego Ducha 25,1/20,4 (okap 16,5), Niecała 4 18,0/1,8, św. Jozafata 22,6/11,4, Karmelici 23,0/14,5, św. Piotra 23,3/19,7, św. Mikołaja 21,1/12,5, cerkiew Przemienienia 5,4/−4,3 (T-122)
 - Priorytet (kurator, przegląd #207): wyżej, zacząć od św. Jozafata w69916021. Po G-224 wieża (szczyt y 9,5) stoi 6,3 m pod okapem nawy (y 15,8) i 13,1 m pod kalenicą, w rzeczywistości ok. 3,8 m pod szczytem kościoła; bez obniżenia nawy poprawna wieża jest niewidoczna z ulicy. U św. Mikołaja kalenicę mierzyć z dala od koron drzew (por. G-235)
 - Przyczyna: `building=church` bez `height` i `building:levels` dostaje 4 kondygnacje i cokół
 - Poprawka: korekty `height`/`roof:height` z NMPT w `corrections.ts` (jak G-204)
 - Pakiet właściciela: tools/osm-import
-- Test przyjęcia: kontrola `church-default-height` spada z 9 do 0
+- Test przyjęcia: kontrola `church-over-nmpt` spada z 9 do 0
 
 ### G-217 Bieg 2 i bieg przed bramą schodów zamkowych węższe niż w rzeczywistości
 - Status: zgłoszone (2.11, kurator, przegląd #194)
@@ -780,6 +782,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: szerokość schodów bez `width` z kontekstu (np. bieg przy `entrance` albo krótki ze `step_count` ≤ 12: 1,5 m; metalowe `surface=metal`: 1,2 m), korekty z ortofoto w `TAG_CORRECTIONS` dla Donżonu i w888479969; pas biegu na zakręcie przycięty do dwusiecznej kąta, bez nakładania na sąsiedni bieg
 - Pakiet właściciela: tools/osm-import (ground)
 - Test przyjęcia: pas w66258166 ≤ 1,5 m i bez części w obrysie w450180469; żaden pas schodów nie nachodzi ponad 0,1 m² na pas innego biegu tej samej drogi; kontrola `steps-runs-overlap` liczy takie pary (baza do ustalenia przy wdrożeniu)
+
+### G-238 Niższe części kościoła w jednym obrysie stoją na wysokości nawy
+- Status: zgłoszone (2.11, kurator, przegląd #208)
+- Ważność: S4 (proponowana: sylwetka bryły, nie zabytek z listy) · Zasięg: 5 kościołów (Świętego Ducha i Brygidki przy deptaku i Narutowicza, św. Piotra, Karmelici Bosi, św. Mikołaja) · Koszt: średni (obrysy części z NMPT)
+- Gdzie: T-133; w66264126 (383,1; −78,5), w66335226 (464,2; −210), w66264082, r5420467 (366,2; 116,7), w66258180 (880; 563)
+- Dowód: sonda weryfikatora #208 (`v-g216-out.txt`, NMPT GUGiK 0,5 m): udział obrysu ≥ 2 m nad terenem i > 3 m pod okapem gry: 58 %, 33 %, 31 %, 29 %, 17 %; przybudówki, prezbiteria i skrzydła klasztoru (Karmelici) stoją w grze 5–9 m za wysoko
+- Przyczyna: OSM ma jeden obrys bez `building:part`, korekta G-216 daje jedną wysokość głównej bryły
+- Poprawka: części `building:part` z wysokością z NMPT w korektach importu (`tools/osm-import/src/corrections.ts`, odsyłacz T-133), co najmniej kościół Karmelitów osobno od skrzydeł; bez zmiany wysokości nawy
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+- Test przyjęcia: kontrola `church-part-below-roof` 5 → 0; okap i kalenica nawy w grze dalej w 1,5 m od `CHURCH_SURFACE`
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
