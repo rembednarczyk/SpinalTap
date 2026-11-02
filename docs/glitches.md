@@ -590,7 +590,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim
 
 ### G-197 Drzwi klatek od podwórza: Trasa Podziemna liczona jako ulica
-- Status: w PR #201 (2.11, w weryfikacji, potem kurator): `undergroundWays` z ekstraktów, kontrola `door-faces-underground` 2 → 0; Złota 6 dostaje drzwi od Złotej, w66293533 bez drzwi (G-221)
+- Status: w PR #201 (2.11, PRZYJĘTE przez weryfikatora, kurator w toku): `undergroundWays` z ekstraktów, kontrola `door-faces-underground` 2 → 0; Złota 6 dostaje drzwi od Złotej, w66293533 bez drzwi (G-221)
 - Ważność: S4 · Zasięg: 2 drzwi: Złota 6 (667,7; −31,0), Archidiakońska (654,9; 9,0)
 - Przyczyna: `facesStreet` w `tools/osm-import/src/props-doors.ts` bierze drogi z `tunnel=yes`, `layer=-1` (Trasa Podziemna, w chunkach zwykły `footway`), więc ściana od podwórza wygląda na ścianę od ulicy
 - Poprawka: `facesStreet` pomija drogi z `layer<0` albo `tunnel`; kontrola skanu `door-faces-underground` (baza dziś 2) → 0
@@ -727,6 +727,18 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: korekty `height` (i ewentualnie `roof:shape`/`roof:height` hełmu) z NMPT w `corrections.ts`, każda z odsyłaczem T-129; to samo dla wieży Brygidek przy G-098
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 - Test przyjęcia: najwyższy wierzchołek bryły w680377807 y 15,7 ± 1, w1382552285 y 10,1 ± 1; kontrola `osm-tower-default-height` 2 → 0
+
+### G-225 Reguła drogi pod ziemią (G-197) zdejmuje też nawierzchnię nad tunelem i przejazdy bramne
+- Status: zgłoszone (2.11, weryfikator G-197); dziś bez skutku dla drzwi
+- Ważność: S4 · Zasięg: `tools/osm-import/src/props-doors.ts:234`: odcinek ulicy z chunków pokrywający się w rzucie z drogą pod ziemią przestaje być ulicą; Rynek nad Trasą Podziemną traci 2 odcinki (609,1; −50,9)→(617,9; −48,7), Teodora Gruella w298307007 (przejazd bramny `tunnel=yes`, `layer=-1`, por. G-076) 1 odcinek. Kamienica stojąca tylko od takiego odcinka straciłaby drzwi, a `door-faces-underground` tego nie wykryje. Testy nie łapią mutacji „tylko końce” i `ALONG=0.3`
+- Poprawka: odróżniać drogę pod ziemią od nawierzchni po id/nazwie drogi (chunki niosą id OSM?), przejazdy bramne z tagiem `tunnel=yes` krótsze niż ok. 20 m pod budynkiem traktować jak `building_passage`; testy warunku środka i progu
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+### G-226 E2E `npr-perf` „the Rynek in TPP” przekracza 90 s na `citySettled` przy load 12–15
+- Status: zgłoszone (2.11, weryfikator G-197)
+- Ważność: S3 (test, czerwony CI kosztuje cykl) · Zasięg: `e2e/npr-perf.spec.ts:89`; powtórka sama przechodzi w 1,2 min
+- Poprawka: ślad (trace) i pomiar, co trzyma `citySettled` (wczytywanie chunków, kafle, decale z #186?); bez podnoszenia limitu (ADR-0046)
+- Pakiet właściciela: e2e (QA), engine
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
