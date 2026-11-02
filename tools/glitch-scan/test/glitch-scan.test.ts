@@ -13,11 +13,14 @@ import { centroid, cleanRing, pointInRing } from "../../../packages/engine/src/r
 import { stackTiers } from "../../../packages/engine/src/renderer/mapcity/vertical-plan";
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 import { MAP_SIGN_KIND } from "../../../packages/engine/src/renderer/mapcity/sign-plan";
+import { decalChecks } from "./decal-pieces";
+import { lublinDecalWorld } from "./decal-world";
 import { doorChecks } from "./door-pieces";
 import { marketChecks } from "./market-pieces";
 import { signsInNeighbours } from "./sign-neighbours";
 import { lanternsByPassages } from "./passage-lanterns";
 import { landmarksAtDefaultHeight } from "./landmark-heights";
+import { bandAcross, lampsOnSteps, stepsNarrowerThanWalls } from "./steps-walls";
 import { cityChurches, cityFakeTowers, doubleTowers, towersOffBuilding } from "./landmark-towers";
 import { EMPTY_STRIPS_KNOWN, bayCarsMisturned, bayCarsOutOfPark, bayStripsEmptyKnown, bayStripsSparse, crowdLanesOnParking, kerbParksOf, kerbStripsOffCarStreets } from "./kerb-bays";
 import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alone.ts";
@@ -906,6 +909,17 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
           return low * 2 > risers.length ? [{ at: near(g.outline[0]!, g.outline[1]!), what: `${c.id} ${low} of ${risers.length} risers under 4.5 cm` }] : [];
         }),
     ),
+  /** A run of map steps between two parallel walls further apart than the steps the game lays plus 1 m (G-203). */
+  "steps-narrower-than-walls": () => {
+    const flights = MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.surface === "steps").map((g) => worldOutline({ x: 0, z: 0, outline: g.outline })));
+    const onSteps = (p: Pt) => flights.some((r) => pointInRing(p, r));
+    return stepsNarrowerThanWalls(extractFeatures(SOURCE_OSM).lines, (m, n) => bandAcross(onSteps, m, n));
+  },
+  /** A lamp or a candelabrum of the generator's table standing inside a band of steps (G-203). */
+  "lamp-on-steps": () => {
+    const flights = MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.surface === "steps").map((g) => worldOutline({ x: 0, z: 0, outline: g.outline })));
+    return lampsOnSteps(Object.values(LUBLIN_STREET_PROPS).flat(), (p) => flights.some((r) => pointInRing(p, r)));
+  },
   /** A piece of road or path on a bridge laid on the valley instead of a deck. */
   "bridge-without-deck": () => MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.bridge && !g.deck).map((g) => ({ at: near(g.outline[0]!, g.outline[1]!), what: g.surface }))),
   /**
@@ -1467,6 +1481,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "tube-in-neighbour": () => signsIn([MAP_SIGN_KIND.tube]),
   // The market's furniture of ADR-0058 stage 3 against the map data (`market-pieces.ts`).
   ...marketChecks(SOURCE_OSM, Object.values(WORLD_STREET_PROPS).flat(), CROWD_LANES),
+  // The decals of ADR-0058 stage 6 against the drawn walls, signs, hosts and carriageways (`decal-pieces.ts`).
+  ...decalChecks(Object.values(WORLD_STREET_PROPS).flat(), lublinDecalWorld()),
   // The doors on the facades of ADR-0058 stage 9 against the drawn walls, panes, boards and passages (`door-pieces.ts`).
   ...doorChecks(WORLD_SCENERY, Object.values(WORLD_STREET_PROPS).flat(), cityVenueBoards(WORLD_SCENERY)),
 };
@@ -1568,6 +1584,46 @@ describe("the glitch scan (ADR-0054)", () => {
     expect(landmarksAtDefaultHeight(["w66258167"], [{ ...chapel, id: "w66258167/1" }])).toHaveLength(1);
     expect(landmarksAtDefaultHeight(["w66258167"], [{ ...chapel, source: "height" }, { ...chapel, source: "levels" }])).toEqual([]);
     expect(landmarksAtDefaultHeight(["w450180469"], [chapel])).toEqual([]);
+  });
+
+  it("finds a flight of steps between parallel walls further apart than its band plus 1 m, and none past each condition (G-203)", () => {
+    // A 16 m run along x, walls 4.9 m to its left and right: 9.8 m apart.
+    const way = (id: string, tags: Record<string, string>, ...pts: [number, number][]) => ({ id, tags, line: pts.map(([x, z]) => ({ x, z })) });
+    const run = way("w1", { highway: "steps" }, [0, 0], [16, 0]);
+    const left = way("w2", { barrier: "wall" }, [-1, 4.9], [17, 4.9]);
+    const right = way("w3", { barrier: "retaining_wall" }, [17, -4.9], [-1, -4.9]);
+    const band = (w: number) => () => w;
+    expect(stepsNarrowerThanWalls([run, left, right], band(3))).toEqual([{ at: "8,0", what: "w1 3.0 m between walls 9.8 m apart" }]);
+    // The walls no further apart than the band plus 1 m.
+    expect(stepsNarrowerThanWalls([run, left, right], band(8.8))).toEqual([]);
+    expect(stepsNarrowerThanWalls([run, left, right], band(8.7))).toHaveLength(1);
+    // Not steps, not walls.
+    expect(stepsNarrowerThanWalls([{ ...run, tags: { highway: "footway" } }, left, right], band(3))).toEqual([]);
+    expect(stepsNarrowerThanWalls([run, { ...left, tags: { barrier: "fence" } }, right], band(3))).toEqual([]);
+    // Another way between the walls: they flank both (twin flights round a middle wall).
+    expect(stepsNarrowerThanWalls([run, left, right, way("w8", { highway: "steps" }, [8, 3], [12, 3])], band(3))).toHaveLength(1);
+    expect(stepsNarrowerThanWalls([run, left, right, way("w8", { highway: "steps" }, [6, 3], [10, 3])], band(3))).toEqual([]);
+    // A wall on one side only, or both on the same side.
+    expect(stepsNarrowerThanWalls([run, left], band(3))).toEqual([]);
+    expect(stepsNarrowerThanWalls([run, left, way("w4", { barrier: "wall" }, [-1, 2], [17, 2])], band(1))).toEqual([]);
+    // A wall past 15 m off the axis, one turned 40° from the run, one that ends before the run's middle.
+    expect(stepsNarrowerThanWalls([run, left, way("w5", { barrier: "wall" }, [17, -15.5], [-1, -15.5])], band(3))).toEqual([]);
+    expect(stepsNarrowerThanWalls([run, left, way("w6", { barrier: "wall" }, [8 - 6, -4.9 - 5], [8 + 6, -4.9 + 5])], band(3))).toEqual([]);
+    expect(stepsNarrowerThanWalls([run, left, way("w7", { barrier: "wall" }, [-1, -4.9], [7, -4.9])], band(3))).toEqual([]);
+    // The band across a run: the points on its surface either side of the middle, none when the middle is off it.
+    const strip = (half: number) => (p: { x: number; z: number }) => Math.abs(p.z) <= half;
+    expect(bandAcross(strip(5), { x: 8, z: 0 }, { x: 0, z: 1 })).toBeCloseTo(10, 0);
+    expect(bandAcross(strip(1.5), { x: 8, z: 0 }, { x: 0, z: 1 })).toBeCloseTo(3, 0);
+    expect(bandAcross(() => false, { x: 8, z: 0 }, { x: 0, z: 1 })).toBe(0);
+  });
+
+  it("finds a lamp or a candelabrum inside a band of steps, and no lamp off it or other piece on it (G-203)", () => {
+    const flight = (p: { x: number; z: number }) => p.x > 0 && p.x < 16 && Math.abs(p.z) < 5;
+    const lamp = { prop: "lamp-candelabra", x: 8, z: 4 };
+    expect(lampsOnSteps([lamp], flight)).toEqual([{ at: "8,4", what: "lamp-candelabra on steps" }]);
+    expect(lampsOnSteps([{ ...lamp, prop: "lamp-pastoral" }], flight)).toHaveLength(1);
+    expect(lampsOnSteps([{ ...lamp, z: 5.5 }], flight)).toEqual([]);
+    expect(lampsOnSteps([{ ...lamp, prop: "shrubs" }], flight)).toEqual([]);
   });
 
   it("finds a wall lantern within 2 m of a gate's axis cut by hand, in its vault or its mouth, and none on the street past its fronts (G-183)", () => {

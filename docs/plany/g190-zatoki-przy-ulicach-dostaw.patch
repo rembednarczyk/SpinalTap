@@ -1,0 +1,42 @@
+diff --git a/packages/sim/src/content/parked-cars.ts b/packages/sim/src/content/parked-cars.ts
+index 15150b6..cb3b649 100644
+--- a/packages/sim/src/content/parked-cars.ts
++++ b/packages/sim/src/content/parked-cars.ts
+@@ -221,8 +221,9 @@ const fits = (x: number, z: number, yaw: number, model: VehicleModel, own?: Road
+     const pz = z + fz * length * t;
+     if (inBuilding(px, pz) || nearestWall(px, pz).d < width / 2 + 0.4) return false;
+   }
+-  // Off every lane cars drive (a junction, a bend of a crossing street).
+-  for (const r of TRAFFIC_ROUTES) if (r.use !== "deliveries" && projectOn(r.points, x, z).d < LANE_CLEAR + width / 2) return false;
++  // Off every lane cars drive (a junction, a bend of a crossing street); a kerb car park's car,
++  // by a street for deliveries too (G-190), off the delivery vans' lanes as well.
++  for (const r of TRAFFIC_ROUTES) if ((strip || r.use !== "deliveries") && projectOn(r.points, x, z).d < LANE_CLEAR + width / 2) return false;
+   if (own && !offOtherRoads(x, z, width / 2, own)) return false;
+   return clearOfGame(x, z, length / 2, length / 2) && chunkOf(x, z) !== "";
+ };
+@@ -279,7 +280,7 @@ const endsOffLanes = (x: number, z: number, yaw: number, model: VehicleModel): b
+   const { width, length } = VEHICLE_SIZE[model];
+   return [-0.5, 0.5].every((t) => {
+     const [px, pz] = [x + Math.sin(yaw) * length * t, z + Math.cos(yaw) * length * t];
+-    return TRAFFIC_ROUTES.every((r) => r.use === "deliveries" || projectOn(r.points, px, pz).d >= LANE_CLEAR + width / 2);
++    return TRAFFIC_ROUTES.every((r) => projectOn(r.points, px, pz).d >= LANE_CLEAR + width / 2);
+   });
+ };
+ 
+@@ -334,12 +335,14 @@ const stripCars = (park: KerbPark, c: RoadChain, side: 1 | -1, layout: BayLayout
+  * `half_on_kerb`), walked along the street's axis on each side the area covers: by the kerb, as
+  * full as Plac Zamkowy's, along it, aslant or across it as `bayLayouts` reads the area's
+  * `orientation` and depth, the first layout any car fits in. The kerb line of `kerbCars` is the
+- * street's median one and misses a strip that only widens the carriageway in places.
++ * street's median one and misses a strip that only widens the carriageway in places. A street
++ * for deliveries has its strips' cars too (G-190, Kowalska): they are parked, not driven, and
++ * keep off its vans' lane as off any other (`fits`).
+  */
+ const bayCars = (): ParkedCar[] => {
+   const out: ParkedCar[] = [];
+   for (const park of KERB_PARKS) {
+-    for (const c of CAR_STREETS) {
++    for (const c of ROAD_CHAINS) {
+       if (!park.ring.some(([x, z]) => projectOn(c.points, x, z).d < BAY_REACH)) continue;
+       for (const side of [1, -1] as const) {
+         const depth = stripDepth(park.ring, c.points, side, BAY_REACH);

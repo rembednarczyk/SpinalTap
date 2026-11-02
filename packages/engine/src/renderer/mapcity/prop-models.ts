@@ -1,5 +1,6 @@
-import type { StreetPropKind } from "@seki/core";
+import { type StreetPropKind, grateVariant, graffitiVariant, plateVariant, stickerVariant } from "@seki/core";
 import { MeshSink } from "../mesh-sink";
+import { decalModel } from "./decal-models";
 import { busShelter, busStop, cafeGarden, farMonument, fountainJets, kiosk, marketStall, monument, ticketMachine, vendingMachine } from "./prop-civic";
 import { atm, bikeRackWithBikes, container, foodCart, hydrant } from "./prop-e2";
 import { farTree, hangingBasket, planter, shrubs, tree } from "./prop-green";
@@ -58,6 +59,11 @@ const MODELS: Readonly<Record<StreetPropKind, (shape: number) => PropModel>> = {
   container: (s) => plain(container(s)),
   "market-goods": (s) => plain(marketGoods(s)),
   "food-stall": () => plain(foodStall()),
+  // ADR-0058 stage 6: the decals; the city builds each from its variant (`decal-models.ts`), these are their layout 0.
+  graffiti: () => plain(decalModel("graffiti", graffitiVariant({ design: 0, width: 1.6, height: 0.8, lift: 0.3 }))!),
+  "house-plate": () => plain(decalModel("house-plate", plateVariant({ number: 12, letter: 1, lift: 2.2 }))!),
+  sticker: () => plain(decalModel("sticker", stickerVariant({ design: 0, host: 0, face: 0, lift: 1.5 }))!),
+  "drain-grate": () => plain(decalModel("drain-grate", grateVariant({ casting: 0, slopeX: 0, slopeZ: 0 }))!),
   // A 1.2 x 2.3 m door of the model; the city bakes each door at its own size (`door-models.ts`).
   door: (s) => plain(doorOfShape(s)),
 };
