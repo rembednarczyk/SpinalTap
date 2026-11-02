@@ -1,0 +1,1 @@
+Budynki ceglane z mapy (Donżon, Baszta Gotycka, Kaplica Trójcy) mają ściany z gołej cegły zamiast tynku, a budynki z kolorem fasady w OSM (m.in. Urząd Miasta, Trybunał Koronny, Archikatedra, Zamek) dostają najbliższy mu tynk z palety (G-244).

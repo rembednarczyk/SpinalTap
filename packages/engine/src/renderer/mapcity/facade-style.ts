@@ -31,6 +31,9 @@ export const SHOPFRONT_BIT = 8;
 /** Style code of roof surfaces (tile rows in the shader). */
 export const ROOF_STYLE = 16;
 
+/** A wall's material from the map (`building:material`, G-244). */
+export type WallMaterial = "brick" | "stone" | "plaster";
+
 export type AtticKind = "none" | "parapet" | "crenel";
 export type RoofKind = "flat" | "hip" | "dome" | "gable" | "half-hip" | "mansard" | "pyramid" | "skillion" | "onion";
 
@@ -82,6 +85,11 @@ const CIVIC_PLASTER = ["#d6d0c2", "#c9c2b0", "#d9cbb0", "#bfc4c4"] as const;
 const CHURCH_PLASTER = ["#e4ddcc", "#ddd2b8", "#e8e2d6"] as const;
 const PLAIN_PLASTER = ["#9ea3a6", "#a8a395", "#8f9aa3", "#b0a89a", "#9a9488"] as const;
 const INDUSTRIAL_PLASTER = ["#8a8f96", "#7d7a74", "#6f7780", "#857565"] as const;
+/** Every plaster the facades pick from by use. */
+export const PLASTER_SWATCHES: readonly string[] = [...TENEMENT_PLASTER, ...CIVIC_PLASTER, ...CHURCH_PLASTER, ...PLAIN_PLASTER, ...INDUSTRIAL_PLASTER];
+/** Bare walls of the map's material (G-244): Lublin's Gothic brick (the landmark kit's first) and limestone. */
+const BRICK = ["#8b4632", "#93503a", "#7e4030"] as const;
+const STONE = ["#a09a8c", "#aaa392", "#948e81"] as const;
 const ROOFS_TILE = ["#7a3b2e", "#6e3a2c", "#84442f", "#5b3a33"] as const;
 const ROOFS_METAL = ["#3d4048", "#2f3238", "#46494f"] as const;
 const ROOFS_COPPER = ["#4f7f6f", "#5b8a78", "#46705f"] as const;
@@ -119,6 +127,9 @@ export interface StyleInput {
   readonly shape?: RoofShape;
   /** Tagged a tower in the map (G-232): a tower however short or broad. */
   readonly tower?: boolean;
+  /** The walls' material and `#rrggbb` colour from the map (G-244); absent, a plaster of the use's palette. */
+  readonly material?: WallMaterial;
+  readonly colour?: string;
 }
 
 const windowFor = (use: BuildingUse, levels: number, rand: () => number): number => {
@@ -158,6 +169,39 @@ const plasterFor = (use: BuildingUse, rand: () => number): string => {
   }
 };
 
+const channels = (hex: string): [number, number, number] => {
+  const n = parseInt(hex.slice(1, 7), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+};
+
+/** The swatch nearest a colour, by distance in RGB. */
+const nearest = (hex: string, swatches: readonly string[]): string => {
+  const [r, g, b] = channels(hex);
+  let best = swatches[0] as string;
+  let dist = Infinity;
+  for (const w of swatches) {
+    const [r1, g1, b1] = channels(w);
+    const d = (r1 - r) ** 2 + (g1 - g) ** 2 + (b1 - b) ** 2;
+    if (d < dist) [best, dist] = [w, d];
+  }
+  return best;
+};
+
+/**
+ * The wall colour the map gives (G-244), or null for the use's palette: bare brick or stone in
+ * the swatch nearest the map's colour (by `look` without one), a plaster of any use nearest the
+ * map's colour. A saturated colour stands for its pastel (`green` is a mint plaster, not paint).
+ */
+const mappedWall = (s: StyleInput): string | null => {
+  const bare = s.material === "brick" ? BRICK : s.material === "stone" ? STONE : null;
+  if (bare) return s.colour ? nearest(s.colour, bare) : (bare[(s.look >>> 8) % bare.length] as string);
+  if (!s.colour) return null;
+  const [r, g, b] = channels(s.colour);
+  const max = Math.max(r, g, b);
+  const sat = max === 0 ? 0 : (max - Math.min(r, g, b)) / max;
+  return nearest(lighten(s.colour, 0.6 * sat), PLASTER_SWATCHES);
+};
+
 const roofKindFor = (s: StyleInput, rand: () => number): RoofKind => {
   if (!s.roof || s.roof <= 0.3) return "flat";
   // The map's parts carry no roof shape the view could tell (G-049): a hipped roof is a pyramid on a
@@ -183,7 +227,10 @@ export const facadeStyle = (s: StyleInput): FacadeStyle => {
   const tower = isTower(s);
   const sacred = tower ? "church" : s.use;
   const window = windowFor(tower ? "civic" : s.use, s.levels, rand);
-  const plaster = plasterFor(sacred, rand);
+  // Drawn either way, so a building the map colours keeps the rest of its looks.
+  const drawn = plasterFor(sacred, rand);
+  const plaster = mappedWall(s) ?? drawn;
+  const bare = s.material === "brick" || s.material === "stone";
   const oldTown = s.use === "historic" || s.use === "residential" || s.use === "commercial";
   const shopfront = tower ? false : s.shopfront !== undefined ? s.shopfront : s.use === "commercial" ? true : s.use === "residential" || s.use === "historic" ? rand() < 0.55 : s.use === "other" ? rand() < 0.25 : false;
   // The old choice draws first either way, so a tagged building keeps the colours it had.
@@ -196,7 +243,8 @@ export const facadeStyle = (s: StyleInput): FacadeStyle => {
   const lively = !tower && (s.use === "commercial" || shopfront);
   return {
     plaster,
-    trim: lighten(plaster, 0.35),
+    // Bare brick or stone has no light plaster mouldings: its trims are a darker course of it.
+    trim: bare ? darken(plaster, 0.22) : lighten(plaster, 0.35),
     plinth: darken(plaster, 0.45),
     roofColor,
     window,
