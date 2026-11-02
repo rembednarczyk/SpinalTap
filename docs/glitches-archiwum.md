@@ -2,6 +2,17 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-224 Wieże kościołów z OSM z wysokości domyślnej (wieża cerkwi św. Jozafata; dzwonnica św. Mikołaja w G-235)
+- Status: naprawione w #207 (2.11, runda 2 PRZYJĘTE; kurator: ZGODNE Z UWAGAMI): tylko wieża cerkwi św. Jozafata (szczyt y 9,5); dzwonnica św. Mikołaja wydzielona do G-235, nawa Jozafata do G-216
+- Ważność: S3 (proponowana; po G-212 to jedyna wieża cerkwi) · Zasięg: 1 wieża (Krakowskie) · Koszt: mały (dane)
+- Gdzie: T-129; w1382552285 (270; −9,2), wieża cerkwi św. Jozafata
+- Dowód: w grze `source: default`: 13,8 m z cokołem 1 m, szczyt y 12,2; NMPT GUGiK 0,5 m: maks. w obrysie y 9,5 (10,1 w promieniu 4 m od środka to krawędź nawy)
+- Przyczyna: OSM ma tylko `building=yes`, `man_made=tower`, `tower:type=bell_tower`, bez `height` i `building:levels`
+- Poprawka: korekta `height` 10,1 (nad cokołem) z NMPT w `corrections.ts` z odsyłaczem T-129; to samo dla wieży Brygidek przy G-098
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+- Test przyjęcia: najwyższy wierzchołek bryły w1382552285 (`y + height + roof`) y 9,5 ± 1, `source: height`; kontrola `osm-tower-default-height` z bazą 1 (zostaje w680377807, G-235). Wcześniejsze kryterium „w680377807 y 15,7 ± 1” było błędne (korona drzewa)
+- Uwaga kuratora: wieża jest teraz 6,3 m pod okapem nawy w69916021 z wysokości domyślnej (w rzeczywistości 3,8 m pod szczytem kościoła); pełna zgodność dopiero z G-216
+
 ### G-231 Mikrozdarzenie: obaj napastnicy powaleni żywcem nie dają wygranej (do potwierdzenia)
 - Status: naprawione w #206 (2.11, PRZYJĘTE; potwierdzone prawdziwym `takedown`, ogłuszającym i śmiertelnym; `out()` = brak encji albo `downed`)
 - Ważność: S3 (proponowana: brak nagrody za wykonaną akcję) · Zasięg: `runMicroEvent` sprawdza `attackers.every((id) => !byId(…))`, więc powaleni, ale obecni napastnicy nie liczą się jako pokonani; po odejściu gracza „left” bez nagrody i usunięcie powalonych (sonda przez `restoreDowned`)

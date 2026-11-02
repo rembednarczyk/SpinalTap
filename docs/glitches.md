@@ -701,17 +701,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: pomiar i przyspieszenie (indeks przestrzenny jak w G-200), bez podnoszenia limitu (ADR-0046)
 - Pakiet właściciela: tools/glitch-scan
 
-### G-224 Wieże kościołów z OSM z wysokości domyślnej (wieża cerkwi św. Jozafata; dzwonnica św. Mikołaja w G-235)
-- Status: w PR #207 (2.11; runda 1 NIE PRZYJĘTE dla Mikołaja: NMPT 15,7 w obrysie w680377807 to korona drzewa (odbicia od gruntu w obrysie, odchylenie 4–6 m, drzewa obok do 18,2); runda 2: tylko Jozafat, weryfikator PRZYJĘTE, kurator ZGODNE Z UWAGAMI (T-129); Mikołaj wydzielony do G-235)
-- Ważność: S3 (proponowana; po G-212 to jedyna wieża cerkwi) · Zasięg: 1 wieża (Krakowskie) · Koszt: mały (dane)
-- Gdzie: T-129; w1382552285 (270; −9,2), wieża cerkwi św. Jozafata
-- Dowód: w grze `source: default`: 13,8 m z cokołem 1 m, szczyt y 12,2; NMPT GUGiK 0,5 m: maks. w obrysie y 9,5 (10,1 w promieniu 4 m od środka to krawędź nawy)
-- Przyczyna: OSM ma tylko `building=yes`, `man_made=tower`, `tower:type=bell_tower`, bez `height` i `building:levels`
-- Poprawka: korekta `height` 10,1 (nad cokołem) z NMPT w `corrections.ts` z odsyłaczem T-129; to samo dla wieży Brygidek przy G-098
-- Pakiet właściciela: tools/osm-import, tools/glitch-scan
-- Test przyjęcia: najwyższy wierzchołek bryły w1382552285 (`y + height + roof`) y 9,5 ± 1, `source: height`; kontrola `osm-tower-default-height` z bazą 1 (zostaje w680377807, G-235). Wcześniejsze kryterium „w680377807 y 15,7 ± 1” było błędne (korona drzewa)
-- Uwaga kuratora: wieża jest teraz 6,3 m pod okapem nawy w69916021 z wysokości domyślnej (w rzeczywistości 3,8 m pod szczytem kościoła); pełna zgodność dopiero z G-216
-
 ### G-225 Reguła drogi pod ziemią (G-197) zdejmuje też nawierzchnię nad tunelem i przejazdy bramne
 - Status: zgłoszone (2.11, weryfikator G-197); dziś bez skutku dla drzwi
 - Ważność: S4 · Zasięg: `tools/osm-import/src/props-doors.ts:234`: odcinek ulicy z chunków pokrywający się w rzucie z drogą pod ziemią przestaje być ulicą; Rynek nad Trasą Podziemną traci 2 odcinki (609,1; −50,9)→(617,9; −48,7), Teodora Gruella w298307007 (przejazd bramny `tunnel=yes`, `layer=-1`, por. G-076) 1 odcinek. Kamienica stojąca tylko od takiego odcinka straciłaby drzwi, a `door-faces-underground` tego nie wykryje. Testy nie łapią mutacji „tylko końce” i `ALONG=0.3`
