@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-232 Wolnostojące dzwonnice i wieże z `use: historic` rysowane jak kamienice
+- Status: naprawione w #209 (2.11, PRZYJĘTE; kurator: ZGODNE Z UWAGAMI, uwagi w G-244 (cegła), G-245 (okna wież), G-246 (dach Jozafata za stromy))
+- Ważność: S3 (proponowana: zabytek wygląda jak blok) · Zasięg: dzwonnica św. Mikołaja w680377807, wieża cerkwi św. Jozafata w1382552285 (po G-224 z wysokością z NMPT): rzędy oświetlonych okien i płaski szczyt (zrzut `scratchpad/g224/shots/g224-mikolaj-po.png`)
+- Poprawka: budynek z `man_made=tower`/`tower:type=bell_tower` dostaje fasadę wieży (bez okien mieszkań, okna dzwonnicy u góry) i dach namiotowy/hełm; kontrola skanu „wieża z oknami mieszkań”
+- Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import (use)
+
 ### G-233 Ciało napastnika mikrozdarzenia niesione na ramieniu znika przy zapisie i wczytaniu
 - Status: naprawione w #211 (2.11, zapis v28, PRZYJĘTE): `strayBodies`; ciało niesione w trakcie napadu: zapis zamyka napad jak „left”
 - Ważność: S4 · Zasięg: napad (mugging): ciało napastnika niesione przez gracza (`carrying` ustawione) po zapisie i wczytaniu: `carrying` null, 0 ciał. Przed „won” ciało ma klucz `micro:` i odpada w `isMicroKey`, po „won” klucza nie ma i dalej ginie

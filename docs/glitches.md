@@ -304,7 +304,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: w66335239 i w66293168 w `MAP_CHUNKS`, bez uskoku gruntu na x = 460; propozycja: `stare-miasto` minZ −270 z `zEdges` [−270, −40, 160] (rząd 230 m, identyfikatory chunków bez zmian); kontrola `historic-cut-by-edge` (budynek zabytkowy z obrysem w prostokącie dzielnicy i środkiem poza wszystkimi) 4 → 1 (Pałac Tarłów zostaje, T-057)
 
 ### G-098 Wieże zmapowane jako `man_made=tower` bez `building` pominięte
-- Status: zgłoszone (z przeglądu kuratora G-052) · Ważność: S3 (od 2.11, przegląd #198: po G-212 Brygidki nie mają żadnej wieży, a prawdziwa ok. 34 m jest dominantą Narutowicza) · Zasięg: 3 obrysy w Krakowskim · Koszt: mały–średni
+- Status: w naprawie (2.11, `fix/g098`): wieża Brygidek z NMPT (szczyt y 32,4) jako część podniesiona kościoła; wieże Pałacu Lubomirskich bez pomiaru NMPT (kontrola `tower-area-missing` 3 → 2); autor wciąga main (konflikt złotych hashy z v28) · Ważność: S3 (od 2.11, przegląd #198: po G-212 Brygidki nie mają żadnej wieży, a prawdziwa ok. 34 m jest dominantą Narutowicza) · Zasięg: 3 obrysy w Krakowskim · Koszt: mały–średni
 - Wysokość: OSM nie ma `height`; z NMPT wieża Brygidek do y 32,4 (teren y ok. −1,2), w imporcie korekta `height` z odsyłaczem T-060, inaczej wyjdzie z wartości domyślnej jak w G-224
 - Gdzie: w1090997970 (wieża Brygidek, 161, −229), w1002739983 (84, 99), w1002739984 (40, 103); T-060
 - Pakiet właściciela: tools/osm-import
@@ -723,12 +723,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: skok o ok. 600 m w jednym kroku (metro, teleport): chunk zasypia przed zamknięciem „left”, napastnicy i ofiara (`micro:mugging:5:m0/m1/victim`) zostają w `state.dormant` i nic ich nie budzi; do zapisu nie trafiają (`isMicroKey`), więc to wyciek pamięci w sesji
 - Poprawka: przy usypianiu chunka zamknąć trwające mikrozdarzenie (jak „left”) albo nie usypiać kluczy `micro:`; test z teleportem
 - Pakiet właściciela: packages/sim (micro-events, streaming)
-
-### G-232 Wolnostojące dzwonnice i wieże z `use: historic` rysowane jak kamienice
-- Status: w PR #209 (2.11, PRZYJĘTE przez weryfikatora; kurator ZGODNE Z UWAGAMI, nie blokuje): `tower: true` dla 5 wież, kontrola `tower-dwelling-windows` 4 → 0. Uwagi wydzielone: materiał ceglany (G-244, T-134), okna wieży w kondygnacjach zamiast otworów u góry (G-245, T-135), za stromy dach wieży Jozafata (G-246, T-129)
-- Ważność: S3 (proponowana: zabytek wygląda jak blok) · Zasięg: dzwonnica św. Mikołaja w680377807, wieża cerkwi św. Jozafata w1382552285 (po G-224 z wysokością z NMPT): rzędy oświetlonych okien i płaski szczyt (zrzut `scratchpad/g224/shots/g224-mikolaj-po.png`)
-- Poprawka: budynek z `man_made=tower`/`tower:type=bell_tower` dostaje fasadę wieży (bez okien mieszkań, okna dzwonnicy u góry) i dach namiotowy/hełm; kontrola skanu „wieża z oknami mieszkań”
-- Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import (use)
 
 ### G-234 Pasy schodów ucięte brzegiem chunka: klin rysowany w poprzek albo niewidoczny
 - Status: zgłoszone (2.11, naprawiacz G-213); stan sprzed G-213, bazy skanu 1 i 1
