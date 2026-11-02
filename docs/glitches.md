@@ -701,7 +701,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/glitch-scan
 
 ### G-224 Wieże kościołów z OSM z wysokości domyślnej (dzwonnica św. Mikołaja 3,3 m zamiast ok. 18 m)
-- Status: zgłoszone (2.11, kurator, przegląd #198)
+- Status: w PR #207 (2.11, w weryfikacji, potem kurator): korekty `height` z NMPT, kontrola `osm-tower-default-height` 2 → 0; uwaga: wieża Jozafata była za wysoka o 2,7 m (szczyt y 12,2, nie 13,2: cokół liczony dwa razy we wpisie)
 - Ważność: S3 (proponowana; po G-212 to jedyne wieże tych kościołów) · Zasięg: 2 wieże (Podzamcze, Krakowskie) · Koszt: mały (dane)
 - Gdzie: T-129; w680377807 (879,1; 545), dzwonnica kościoła św. Mikołaja; w1382552285 (270; −9,2), wieża cerkwi św. Jozafata
 - Dowód: w grze `source: default`: 3,3 m (1 kondygnacja) i 13,8 m + cokół 1 m; NMPT GUGiK 0,5 m: do y 15,7 (ok. 18 m nad terenem) i do y 10,1 (ok. 11,7 m)
@@ -755,6 +755,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 (proponowana: brak nagrody za wykonaną akcję) · Zasięg: `runMicroEvent` sprawdza `attackers.every((id) => !byId(…))`, więc powaleni, ale obecni napastnicy nie liczą się jako pokonani; po odejściu gracza „left” bez nagrody i usunięcie powalonych (sonda przez `restoreDowned`)
 - Poprawka: pokonany = nieobecny albo powalony; test z prawdziwym takedownem obu
 - Pakiet właściciela: packages/sim (micro-events)
+
+### G-232 Wolnostojące dzwonnice i wieże z `use: historic` rysowane jak kamienice
+- Status: zgłoszone (2.11, naprawiacz G-224)
+- Ważność: S3 (proponowana: zabytek wygląda jak blok) · Zasięg: dzwonnica św. Mikołaja w680377807, wieża cerkwi św. Jozafata w1382552285 (po G-224 z właściwą wysokością): rzędy oświetlonych okien i płaski szczyt (zrzut `scratchpad/g224/shots/g224-mikolaj-po.png`)
+- Poprawka: budynek z `man_made=tower`/`tower:type=bell_tower` dostaje fasadę wieży (bez okien mieszkań, okna dzwonnicy u góry) i dach namiotowy/hełm; kontrola skanu „wieża z oknami mieszkań”
+- Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import (use)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
