@@ -10,6 +10,7 @@ import { CLINIC_DOOR, KOI_DOOR, S7_NAV } from "./interiors";
 import { DOKI_NAV } from "./district-doki";
 import { type RoomCut, type SceneryItem, chunkBuildings, chunkScenery } from "./lublin/city";
 import { BUILDING_CUTS, CLINIC_SITE, KOI_SITE, MAP_CHUNKS, PASSAGES } from "./lublin/sites";
+import { CAPSULE_DOOR, CAPSULE_PROPS, CAPSULE_SITE } from "./capsule-room";
 import { SHAPED_TERRAIN } from "./lublin/terrain";
 import { GROUND_DECKS } from "./lublin/decks";
 import type { GroundDeck } from "../world/deck";
@@ -52,6 +53,12 @@ export interface ChunkDef {
    * Their ids come from `STREET_ID_BASE`, not the allocator, so no id of the content moves.
    */
   readonly street?: readonly StaticProp[];
+  /**
+   * Solids of rooms cut into the map's buildings after their own data (the capsule room, ADR-0063):
+   * walls, ceiling, floor and furniture, drawn by the engine's room. Their ids come from
+   * `ROOM_ID_BASE`, not the allocator, so no id of the content moves.
+   */
+  readonly rooms?: readonly StaticProp[];
 }
 
 /** Horizontal distance from a point to a rectangle; 0 inside. */
@@ -73,11 +80,18 @@ const mapChunkOf = (x: number, z: number): string => {
   return best;
 };
 
-/** The rooms cut into the tenements of Krakowskie Przedmieście, with their doors (ADR-0045). */
+/**
+ * The rooms cut into the map's tenements, with their doors: the clinic and Neon Koi on
+ * Krakowskie Przedmieście (ADR-0045), the capsule room on Jezuicka (ADR-0063).
+ */
 const ROOM_CUTS: readonly RoomCut[] = [
   { site: CLINIC_SITE, doors: [{ x: CLINIC_DOOR.at.x, width: CLINIC_DOOR.width, height: CLINIC_DOOR.height }] },
   { site: KOI_SITE, doors: [{ x: KOI_DOOR.at.x, width: KOI_DOOR.width, height: KOI_DOOR.height }] },
+  { site: CAPSULE_SITE, doors: [{ x: CAPSULE_DOOR.at.x, width: CAPSULE_DOOR.width, height: CAPSULE_DOOR.height }] },
 ];
+
+/** The chunk of the map holding the capsule room's door: its solids stream in with it. */
+export const CAPSULE_CHUNK = mapChunkOf(CAPSULE_DOOR.at.x, CAPSULE_DOOR.at.z);
 
 const MAP_BUILDINGS: ReadonlyMap<string, readonly StaticProp[]> = new Map(MAP_CHUNKS.map((c) => [c.id, chunkBuildings(c, ROOM_CUTS, PASSAGES, BUILDING_CUTS)]));
 
@@ -98,6 +112,7 @@ export const WORLD_CHUNKS: readonly ChunkDef[] = [
       ...(terrain ? { terrain } : {}),
       ...((GROUND_DECKS.get(c.id) ?? []).length > 0 ? { decks: GROUND_DECKS.get(c.id) } : {}),
       street: [...furnitureProps(WORLD_STREET_PROPS[c.id] ?? []), ...basinRimProps(c), ...PARKED_CARS.filter((p) => p.chunk === c.id).map(parkedProp)],
+      ...(c.id === CAPSULE_CHUNK ? { rooms: CAPSULE_PROPS } : {}),
     };
   }),
   // Trasa Podziemna (ADR-0048): a chunk of its own over the cellars, last in the table, so it
