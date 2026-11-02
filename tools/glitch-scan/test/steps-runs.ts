@@ -22,12 +22,12 @@ const SLACK = 0.2;
 /** A band's long side turned further than this from its run (cosine of 45°) lies across it. */
 const ALONG = Math.SQRT1_2;
 
-/** Whether `m` lies on the band of the run, and whether the run's direction is along `u`. */
-const onRun = (m: Pt, u: Pt, r: Run): { readonly on: boolean; readonly along: boolean } => {
+/** Whether `p` lies on the band of the run `r`, and whether the run's direction is along `u`. */
+const onRun = (p: Pt, u: Pt, r: Run): { readonly on: boolean; readonly along: boolean } => {
   const len = Math.hypot(r.b.x - r.a.x, r.b.z - r.a.z);
   const [dx, dz] = [(r.b.x - r.a.x) / len, (r.b.z - r.a.z) / len];
-  const s = (m.x - r.a.x) * dx + (m.z - r.a.z) * dz;
-  const off = Math.abs((m.z - r.a.z) * dx - (m.x - r.a.x) * dz);
+  const s = (p.x - r.a.x) * dx + (p.z - r.a.z) * dz;
+  const off = Math.abs((p.z - r.a.z) * dx - (p.x - r.a.x) * dz);
   return { on: s >= -SLACK && s <= len + SLACK && off <= r.width / 2 + SLACK, along: Math.abs(u.x * dx + u.z * dz) >= ALONG };
 };
 
@@ -49,7 +49,7 @@ export const stepsHidden = (bands: readonly (readonly Pt[])[]): { readonly at: s
 /**
  * Each steps band (world ring) the renderer draws as a flight whose long side lies across every
  * run of `ways` (`width` m wide each) whose band holds its middle. Where two runs' bands overlap
- * (a turn of the flight), a band along either is drawn right.
+ * (a turn of the flight), a band along either is drawn right if all of it lies on bands of runs along it.
  */
 export const stepsAcross = (ways: readonly MapWay[], width: (w: MapWay) => number, bands: readonly (readonly Pt[])[]): { readonly at: string; readonly what: string }[] => {
   const runs: Run[] = ways
@@ -60,9 +60,14 @@ export const stepsAcross = (ways: readonly MapWay[], width: (w: MapWay) => numbe
     if (!drawnFlight(ring)) return [];
     const box = orientedBox(ring);
     const m = { x: box.cx, z: box.cz };
-    const under = runs.map((r) => ({ r, ...onRun(m, { x: box.ux, z: box.uz }, r) })).filter((o) => o.on);
-    if (under.length === 0 || under.some((o) => o.along)) return [];
-    const { a, b, id } = under[0]!.r;
+    const u = { x: box.ux, z: box.uz };
+    const under = runs.filter((r) => onRun(m, u, r).on);
+    // Drawn right: each corner on the band of a run along it (its own run, or collinear runs the
+    // import joins), so a short run's band lying along the longer run it turns off is still found.
+    const alongAt = (p: Pt) => runs.some((r) => onRun(p, u, r).on && onRun(p, u, r).along);
+    if (under.length === 0 || ring.every(alongAt)) return [];
+    // Named by the run it lies across.
+    const { a, b, id } = under.find((r) => !onRun(m, u, r).along) ?? under[0]!;
     return [{ at: `${box.cx.toFixed(0)},${box.cz.toFixed(0)}`, what: `${id} run ${Math.hypot(b.x - a.x, b.z - a.z).toFixed(1)} m drawn across, band ${(box.halfLong * 2).toFixed(1)} × ${(box.halfShort * 2).toFixed(1)} m` }];
   });
 };

@@ -108,17 +108,41 @@ describe("flights of steps (G-203, G-213)", () => {
     for (const s of strips) expect(s.along).toBeGreaterThan(s.across);
   });
 
-  it("cuts a piece 0.5-0.65 m long into strips no narrower than the renderer draws, or leaves it whole", () => {
-    for (const [width, run] of [[undefined, 0.5], [undefined, 0.55], [undefined, 0.6], [undefined, 0.65], ["10", 0.5], ["10", 0.6]] as const) {
+  it("cuts a piece 0.6-0.65 m long into strips no narrower than the renderer draws, and leaves one of 0.5-0.55 m whole", () => {
+    // Cut: 0.8 of the run leaves strips under 0.45 m, so they are made 0.45 m and more, up to 0.9 of the run.
+    // Whole: even strips 0.9 of the run wide would be under 0.45 m.
+    for (const [width, run, cut] of [[undefined, 0.5, false], [undefined, 0.55, false], [undefined, 0.6, true], [undefined, 0.65, true], ["10", 0.5, false], ["10", 0.6, true]] as const) {
       const strips = pieces(steps(width, [0, 0], [run, 0]));
+      expect(strips.length > 1, `${width ?? 3} m wide, ${run} m long`).toBe(cut);
       // planSteps draws no flight on a band under 0.4 m wide or STEP_DEPTH long.
       for (const s of strips.map(box)) {
         expect(Math.min(s.along, s.across)).toBeGreaterThanOrEqual(0.4);
-        if (strips.length > 1) expect(s.along).toBeGreaterThan(s.across);
+        if (cut) expect(s.along).toBeGreaterThan(s.across);
       }
       // The import rounds corners to 0.1 m.
       expect(Math.abs(strips.reduce((a, s) => a + area(s), 0) - Number(width ?? 3) * run)).toBeLessThan(Number(width ?? 3) * 0.1);
     }
+  });
+
+  it("cuts the short run of w293370649 where it turns off the long one into strips along it", () => {
+    // Stare Miasto (571; -69): a 3.46 m run and a 0.61 m one turning 90° off it, both 3 m wide.
+    const line = steps(undefined, [573.83, -71], [570.85, -69.24], [571.17, -68.72]);
+    const [a, b] = [line.line[1]!, line.line[2]!];
+    const len = Math.hypot(b.x - a.x, b.z - a.z);
+    const [ux, uz] = [(b.x - a.x) / len, (b.z - a.z) / len];
+    const short = chunkGround([lineBands(line, false)[1]!], { minX: 500, minZ: -100, maxX: 650, maxZ: 0 }).map((g) => Array.from({ length: g.outline.length / 2 }, (_, i) => ({ x: g.outline[2 * i]! - a.x, z: g.outline[2 * i + 1]! - a.z })));
+    expect(short.length).toBeGreaterThan(1);
+    for (const s of short) {
+      const b2 = box(s.map((p) => ({ x: p.x * ux + p.z * uz, z: -p.x * uz + p.z * ux })));
+      expect(b2.across).toBeGreaterThanOrEqual(0.4);
+      expect(b2.along).toBeGreaterThan(b2.across);
+    }
+  });
+
+  it("leaves the corner of w56965515 a chunk's edge cuts off whole, not cut into strips longer across than along", () => {
+    // Podzamcze (729; 160): the head of its last run under the chunks' edge z = 160, a triangle about 1.6 x 0.9 m.
+    const pieces160 = pieces(steps(undefined, [729.51, 159.94], [727.29, 164.03]), { minX: 610, minZ: -40, maxX: 760, maxZ: 160 });
+    expect(pieces160).toHaveLength(1);
   });
 
   it("cuts a slanted piece a chunk's edge leaves into strips the renderer draws, and leaves a corner too small to cut whole", () => {

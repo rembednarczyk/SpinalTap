@@ -31,8 +31,21 @@ describe("steps drawn across their run (G-213)", () => {
     expect(stepsAcross([{ ...run, tags: { highway: "footway" } }], three, [rect(0, -1.5, 1.5, 1.5)])).toEqual([]);
     expect(stepsAcross([run], three, [rect(20, -1.5, 21.5, 1.5)])).toEqual([]);
     expect(stepsAcross([run], three, [rect(0, -1.5, 0.3, 1.5)])).toEqual([]);
-    // The turn onto a run along z: the band lies along it.
-    expect(stepsAcross([run, way("w2", { highway: "steps" }, [1.5, 0], [1.5, 6])], three, [rect(0, -1.5, 1.5, 1.5)])).toEqual([]);
+  });
+
+  it("lets a strip at a turn lie along either run, but finds a short run's band along the long run it turns off (w293370649)", () => {
+    // A 4 m run along x turning onto a 1.5 m run along z.
+    const long = way("w1", { highway: "steps" }, [0, 0], [4, 0]);
+    const short = way("w2", { highway: "steps" }, [4, 0], [4, 1.5]);
+    // The short run cut into strips along z, one of them over the long run's band.
+    expect(stepsAcross([long, short], three, [rect(2.5, 0, 3, 1.5), rect(3, 0, 3.5, 1.5)])).toEqual([]);
+    // The long run's strip by the turn, over the short run's band.
+    expect(stepsAcross([long, short], three, [rect(2.5, -1.5, 4, 0)])).toEqual([]);
+    // The short run left whole: its long side along x sticks out past the long run's end.
+    expect(stepsAcross([long, short], three, [rect(2.5, 0, 5.5, 1.5)])).toEqual([{ at: "4,1", what: "w2 run 1.5 m drawn across, band 3.0 × 1.5 m" }]);
+    // Two collinear runs (the import joins them): a band along both is drawn right.
+    const next = way("w3", { highway: "steps" }, [4, 0], [8, 0]);
+    expect(stepsAcross([long, next], three, [rect(0, -1.5, 8, 1.5)])).toEqual([]);
   });
 
   it("finds a band across a run of a wider flight by its width", () => {

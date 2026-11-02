@@ -57,8 +57,6 @@ const underground = (t: Tags) => t.tunnel === "yes" || t.tunnel === "culvert" ||
  * (`planSteps`), and the import rounds its corners to 0.1 m.
  */
 const MIN_STRIP = 0.45;
-/** The shortest strip of steps along its run (m): a flight under one tread's depth is not drawn (`planSteps`). */
-const STEP_RUN = 0.35;
 
 /**
  * A piece of a band of steps on the run `a`-`b`, as the renderer is to read it. The renderer
@@ -83,9 +81,10 @@ export const flightStrips = (piece: readonly Pt[], a: Pt, b: Pt): Pt[][] => {
   if (across / k < MIN_STRIP) k = Math.floor(across / MIN_STRIP);
   if (k <= 1 || across / k > 0.9 * along) return [[...piece]];
   const strip = (from: number, to: number) => clipRingToRect(local, { minX: x0, maxX: x1, minZ: from, maxZ: to });
+  // Drawn along the run: at least `MIN_STRIP` wide and longer than wide, so longer than a tread too.
   const drawn = (r: readonly Pt[]) => {
     const [l, w] = [Math.max(...r.map((p) => p.x)) - Math.min(...r.map((p) => p.x)), Math.max(...r.map((p) => p.z)) - Math.min(...r.map((p) => p.z))];
-    return r.length >= 3 && w >= MIN_STRIP && l > w && l >= STEP_RUN;
+    return r.length >= 3 && w >= MIN_STRIP && l > w;
   };
   const cuts = Array.from({ length: k + 1 }, (_, i) => z0 + (across * i) / k);
   // The last strip joins the one before it, and that one is looked at again.
