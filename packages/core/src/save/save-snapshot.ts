@@ -89,17 +89,26 @@ export interface EntitySnapshot {
  * when a load starts it afresh. Ticks are the save's own `tick`'s.
  */
 export interface WalkSnapshot {
-  /** Where it stood when the current stretch began, and the tick then. */
+  /** Where it stood when the current stretch began, and the tick then, before the save's. */
   readonly x: number;
   readonly z: number;
   readonly since: number;
-  /** It is getting unstuck until this tick. */
+  /** It is getting unstuck until this tick, at most `MOST_UNSTICK_STEPS` past the save's. */
   readonly unstickUntil: number;
   /** The side it leans to while getting unstuck. */
   readonly side: 1 | -1;
-  /** The repath made when it got stuck: from where, to where, round which characters. */
+  /** The repath made when it got stuck: from where, to where, round which characters (at most `MOST_AVOIDED`). */
   readonly plan?: WalkPlanSnapshot;
 }
+
+/**
+ * The longest a walker gets unstuck for, in steps (ADR-0025, G-208): a minute, far past its 1.2 s
+ * at the slowest time of the overdrive. A save's `unstickUntil` is no further past its `tick`.
+ */
+export const MOST_UNSTICK_STEPS = 3600;
+
+/** The most characters a saved repath goes round (G-208): those within a few metres of a stuck walker. */
+export const MOST_AVOIDED = 256;
 
 /** What a repath round the obstacles is made of (G-208): a loaded game makes the same one again. */
 export interface WalkPlanSnapshot {

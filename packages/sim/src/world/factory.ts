@@ -1,4 +1,4 @@
-import { ENEMY_TYPES, type EnemyTypeId, type EntityId, type EntitySnapshot, type GunSnapshot, type Vec3, type WalkSnapshot, type WeaponId, npcWeapon } from "@seki/core";
+import { ENEMY_TYPES, type EnemyTypeId, MOST_AVOIDED, type EntityId, type EntitySnapshot, type GunSnapshot, type Vec3, type WalkSnapshot, type WeaponId, npcWeapon } from "@seki/core";
 import { PLAYER_SPAWN } from "../content/district-m0";
 import { SNIPER_PERCHES } from "../content/district-doki";
 import type { ActorDef, ActorSpawn, StaticProp } from "../content/builders";
@@ -340,11 +340,17 @@ const withFight = (e: Entity, s: EntitySnapshot): EntitySnapshot => {
   return e.sniper ? { ...armed, sniper: { phase: e.sniper.phase, timer: e.sniper.timer, perch: e.sniper.perch } } : armed;
 };
 
-/** A ganger's stuck check (G-208), copied: the saved one and the live one never share a point. */
+/**
+ * A ganger's stuck check (G-208), copied: the saved one and the live one never share a point. A
+ * save holds no more than `MOST_AVOIDED` characters round which it repaths, the nearest ones.
+ */
 const walkSnapshotOf = (w: WalkProgress): WalkSnapshot => {
   const { x, z, since, unstickUntil, side, plan } = w;
   const s = { x, z, since, unstickUntil, side };
-  return plan ? { ...s, plan: { from: { ...plan.from }, goal: { ...plan.goal }, avoid: plan.avoid.map((a) => ({ ...a })) } } : s;
+  if (!plan) return s;
+  const near = (a: Vec3) => Math.hypot(a.x - plan.from.x, a.z - plan.from.z);
+  const avoid = plan.avoid.length > MOST_AVOIDED ? [...plan.avoid].sort((a, b) => near(a) - near(b)).slice(0, MOST_AVOIDED) : plan.avoid;
+  return { ...s, plan: { from: { ...plan.from }, goal: { ...plan.goal }, avoid: avoid.map((a) => ({ ...a })) } };
 };
 
 const walkOf = (s: WalkSnapshot): WalkProgress => {

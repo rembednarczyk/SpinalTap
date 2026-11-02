@@ -1,4 +1,4 @@
-import { ENEMY_TYPES, type EnemyTypeId, npcWeapon } from "@seki/core";
+import { ENEMY_TYPES, type EnemyTypeId, MOST_AVOIDED, MOST_UNSTICK_STEPS, npcWeapon } from "@seki/core";
 
 type Json = Record<string, unknown>;
 
@@ -18,14 +18,23 @@ const isGun = (v: unknown, most = MOST_ROUNDS): boolean =>
   isObject(v) && Number.isInteger(v.loaded) && (v.loaded as number) >= 0 && (v.loaded as number) <= most && isTime(v.reloading) && isTime(v.drawing) && isTime(v.bloom);
 const isSniper = (v: unknown): boolean => isObject(v) && SNIPER_PHASES.includes(v.phase) && isTime(v.timer) && Number.isInteger(v.perch) && (v.perch as number) >= 0;
 
-/** Most characters a repath goes round (G-208): those within a few metres of a stuck walker. */
-const MOST_AVOIDED = 256;
 const isTick = (v: unknown): boolean => Number.isInteger(v) && (v as number) >= 0;
 const isPlan = (v: unknown): boolean =>
   isObject(v) && isVec(v.from) && isVec(v.goal) && Array.isArray(v.avoid) && v.avoid.length <= MOST_AVOIDED && v.avoid.every(isVec);
-/** G-208: a walker's stuck check: where and when its stretch began, until when it gets unstuck, its side, its repath. */
-const isWalk = (v: unknown): boolean =>
-  isObject(v) && isNum(v.x) && isNum(v.z) && isTick(v.since) && isTick(v.unstickUntil) && (v.side === 1 || v.side === -1) && (v.plan === undefined || isPlan(v.plan));
+/**
+ * G-208: a walker's stuck check: where and when its stretch began (not after the save's `tick`),
+ * until when it gets unstuck (not longer than any NPC does), its side, its repath.
+ */
+const isWalk = (v: unknown, tick: number): boolean =>
+  isObject(v) &&
+  isNum(v.x) &&
+  isNum(v.z) &&
+  isTick(v.since) &&
+  (v.since as number) <= tick &&
+  isTick(v.unstickUntil) &&
+  (v.unstickUntil as number) <= tick + MOST_UNSTICK_STEPS &&
+  (v.side === 1 || v.side === -1) &&
+  (v.plan === undefined || isPlan(v.plan));
 
 const BODY_FLAGS = ["fought", "found", "reported", "dead", "carried", "hidden"] as const;
 
@@ -33,7 +42,7 @@ const BODY_FLAGS = ["fought", "found", "reported", "dead", "carried", "hidden"] 
 const isBody = (v: unknown): boolean => isObject(v) && isVec(v.playerAt) && BODY_FLAGS.every((k) => typeof v[k] === "boolean");
 
 /** The saved state of one entity: keyed, or one of the heat's reinforcements (G-179). */
-export const findEntityError = (e: unknown): string | null => {
+export const findEntityError = (e: unknown, tick: number): string | null => {
   if (!isObject(e) || typeof e.key !== "string" || !isVec(e.position)) return "entity shape";
   if (!isNum(e.yaw) || !isNum(e.pitch) || !isNum(e.cooldown) || typeof e.alerted !== "boolean") return `entity ${e.key}`;
   if (e.hp !== null && !isNum(e.hp)) return `entity ${e.key} hp`;
@@ -48,7 +57,7 @@ export const findEntityError = (e: unknown): string | null => {
   if (e.away !== undefined && !(isNum(e.away) && e.away >= 0)) return `entity ${e.key} away`;
   if (e.gun !== undefined && !isGun(e.gun)) return `entity ${e.key} gun`;
   if (e.sniper !== undefined && !isSniper(e.sniper)) return `entity ${e.key} sniper`;
-  if (e.walk !== undefined && !isWalk(e.walk)) return `entity ${e.key} walk`;
+  if (e.walk !== undefined && !isWalk(e.walk, tick)) return `entity ${e.key} walk`;
   return null;
 };
 
@@ -56,10 +65,10 @@ export const findEntityError = (e: unknown): string | null => {
  * One reinforcement (G-179): which of the heat's, the tick it came in at (G-202), a known enemy
  * type, its entry and its state, keyed by `n`.
  */
-const findReinforcementError = (p: unknown): string | null => {
+const findReinforcementError = (p: unknown, tick: number): string | null => {
   if (!isObject(p) || !isCount(p.n) || !Number.isInteger(p.since) || (p.since as number) < 0) return "reinforcements";
   if (typeof p.type !== "string" || !Object.hasOwn(ENEMY_TYPES, p.type) || !isVec(p.home)) return "reinforcements";
-  if (findEntityError(p.state) || (p.state as Json).key !== `security:${p.n}`) return "reinforcements";
+  if (findEntityError(p.state, tick) || (p.state as Json).key !== `security:${p.n}`) return "reinforcements";
   // Its weapon is its type's: no more rounds than that magazine holds (G-185).
   const gun = (p.state as Json).gun;
   if (gun !== undefined && !isGun(gun, npcWeapon(ENEMY_TYPES[p.type as EnemyTypeId].weapon).magazine)) return "reinforcements";
@@ -67,12 +76,12 @@ const findReinforcementError = (p: unknown): string | null => {
 };
 
 /** The heat's reinforcements (G-179): a count sent and a wait not negative, none twice and none past the count. */
-export const findReinforcementsError = (r: unknown): string | null => {
+export const findReinforcementsError = (r: unknown, tick: number): string | null => {
   if (r === undefined) return null;
   if (!isObject(r) || !Number.isInteger(r.sent) || (r.sent as number) < 0 || !isNum(r.wait) || r.wait < 0 || !Array.isArray(r.people)) return "reinforcements";
   const seen = new Set<number>();
   for (const p of r.people) {
-    const error = findReinforcementError(p);
+    const error = findReinforcementError(p, tick);
     if (error) return error;
     const n = (p as Json).n as number;
     if (seen.has(n) || n > (r.sent as number)) return "reinforcements";

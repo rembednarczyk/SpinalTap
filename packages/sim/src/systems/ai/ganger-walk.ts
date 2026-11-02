@@ -1,4 +1,4 @@
-import type { Vec3 } from "@seki/core";
+import { MOST_UNSTICK_STEPS, type Vec3 } from "@seki/core";
 import { aboveGround, heightApart } from "../../world/ground";
 import type { SimContext } from "../../world/context";
 import { inCreationOrder } from "../../world/ordering";
@@ -180,7 +180,8 @@ export class GangerWalk {
       return;
     }
     if ((ctx.tick - p.since) * ctx.dt * timeScale < STUCK_TIME || ctx.tick < p.unstickUntil) return;
-    p.unstickUntil = ctx.tick + Math.ceil(UNSTICK_TIME / (ctx.dt * Math.max(timeScale, 1e-3)));
+    // Capped so that a save holds it (G-208): far past the slowest time an NPC walks in.
+    p.unstickUntil = ctx.tick + Math.min(Math.ceil(UNSTICK_TIME / (ctx.dt * Math.max(timeScale, 1e-3))), MOST_UNSTICK_STEPS);
     p.side = p.side === 1 ? -1 : 1;
     p.since = ctx.tick;
     const crowd: Vec3[] = [];

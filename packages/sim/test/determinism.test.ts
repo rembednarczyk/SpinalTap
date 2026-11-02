@@ -45,7 +45,8 @@ const hashOf = (sim: Simulation) => stateHash(sim.snapshot(null, "test", ""));
 
 /**
  * The snapshot of a run as v26 wrote it, before a walker's stuck check was saved (G-208): without
- * it. Saving it changes no rule, so the hashes of the older schemas stand.
+ * it. Saving it changes no rule; the rule G-208 changes (the side a reinforcement first leans to)
+ * does not show in these runs, so the hashes of the older schemas stand.
  */
 const beforeV27 = (sim: Simulation): SaveSnapshot => {
   const snap = sim.snapshot(null, "test", "");
@@ -179,9 +180,12 @@ describe("determinism", () => {
     // no new rule) and the v23 reinforcements (G-179: the run's are saved now, the keyed world ends
     // as before), the v24 version (G-188, no new rule in this run), the v25 guns of the NPCs
     // (G-185, saved, no new rule), the v26 tick each reinforcement came in at (G-202, saved, no
-    // new rule: nobody in the run hacks one) and the v27 stuck check of the walkers (G-208, saved,
-    // no new rule); without the field, as v17, it is the golden of before, and as v19 to v26 the
-    // goldens of those.
+    // new rule: nobody in the run hacks one) and the v27 stuck check of the walkers (G-208, saved).
+    // G-208 also changes a rule: a reinforcement first leans to the side of its number in the heat
+    // (`security.n`), not of its id, since a loaded game gives it another id. It shows where a
+    // stuck reinforcement has no repath and leans (the player on a warehouse roof in the docks,
+    // `reinforcement-sidestep.test.ts`), not in this run: without the field, as v17, it is the
+    // golden of before, and as v19 to v26 the goldens of those.
     expect(v17HashOf(sim)).toBe("c52fd247");
     expect(v19HashOf(sim)).toBe("ef63b731");
     expect(v20HashOf(sim)).toBe("9957ac6d");
