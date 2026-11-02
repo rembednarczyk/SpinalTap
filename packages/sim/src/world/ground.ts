@@ -2,7 +2,7 @@ import { type TerrainGrid, type Vec3, terrainHeightAt } from "@seki/core";
 import type { World } from "miniplex";
 import type { Rect } from "../content/builders";
 import type { Entity } from "./components";
-import { type GroundDeck, deckCeiling, groundOver } from "./deck";
+import { type GroundDeck, deckCeiling, flightGradientAt, groundOver } from "./deck";
 
 /** What the ground needs of a chunk: where it is and, optionally, its terrain (ADR-0043). */
 export interface GroundChunk {
@@ -116,7 +116,7 @@ export class GroundField {
   /**
    * Gradient of the ground at (x, z), written into `out`: central differences over 0.5 m, a
    * smoothed normal that ignores bumps finer than that. Zero on the street plane. `reach` as in
-   * `heightAt`.
+   * `heightAt`. On a flight of steps hung off a bridge in reach, the flight's own grade (G-255).
    */
   gradientAt(x: number, z: number, out: { x: number; z: number }, reach = Infinity): { x: number; z: number } {
     if (!this.hasTerrain || !this.gridAt(x, z)) {
@@ -124,6 +124,8 @@ export class GroundField {
       out.z = 0;
       return out;
     }
+    const decks = this.chunks[this.chunkIndex(x, z)]?.decks;
+    if (decks && flightGradientAt(decks, x, z, reach, out)) return out;
     const h = SLOPE_HALF_SPAN;
     out.x = (this.heightAt(x + h, z, reach) - this.heightAt(x - h, z, reach)) / (2 * h);
     out.z = (this.heightAt(x, z + h, reach) - this.heightAt(x, z - h, reach)) / (2 * h);

@@ -293,6 +293,8 @@ const BRIDGES = (() => {
   }
   return groups;
 })();
+/** The nodes of the map's bridges' ways: a way sharing one is joined to the bridge there. */
+const BRIDGE_NODES: ReadonlySet<number> = new Set([...SOURCE_OSM.ways.values()].flatMap((w) => (w.tags?.bridge && w.tags.bridge !== "no" ? w.nodes : [])));
 /** A map way's points every half metre, world x and z. */
 const wayPoints = (nodes: readonly number[]) => {
   const pts = nodes.flatMap((id) => {
@@ -998,12 +1000,16 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * A way of the map off the bridge (a street, a path, steps) under a bridge's deck more than 2 m
    * over the terrain, which a walker cannot follow under it (G-062): walked on the simulation's
    * ground from 5 m before the deck to 5 m past it, the feet jump by more than 0.5 m in a step.
+   * A way joined to a bridge's way at an end (steps down from a viaduct, G-255) is walked from
+   * that end, its feet starting on the deck there, not on the terrain under it.
    */
   "under-deck-blocked": () =>
     [...SOURCE_OSM.ways.values()].flatMap((w) => {
       const t = w.tags ?? {};
       if (!t.highway || (t.bridge && t.bridge !== "no")) return [];
-      const pts = wayPoints(w.nodes);
+      const first = BRIDGE_NODES.has(w.nodes[0]!);
+      const joined = first || BRIDGE_NODES.has(w.nodes[w.nodes.length - 1]!);
+      const pts = wayPoints(joined && !first ? [...w.nodes].reverse() : w.nodes);
       return BRIDGES.flatMap((bridge) => {
         const terrain = (p: { x: number; z: number }) => {
           const g = FIELD.gridAt(p.x, p.z);
@@ -1012,7 +1018,7 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
         const under = pts.flatMap((p, i) => ((deckAt(bridge, p.x, p.z) ?? -Infinity) - terrain(p) > 2 ? [i] : []));
         if (under.length === 0) return [];
         const walk = pts.slice(Math.max(0, under[0]! - 10), under[under.length - 1]! + 11);
-        let feet = terrain(walk[0]!);
+        let feet = (joined && under[0]! < 10 ? deckAt(bridge, walk[0]!.x, walk[0]!.z) : null) ?? terrain(walk[0]!);
         let jump = 0;
         for (const p of walk) {
           const y = groundAt([], FIELD, p.x, p.z, feet);

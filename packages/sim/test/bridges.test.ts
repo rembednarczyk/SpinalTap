@@ -3,7 +3,7 @@ import { Simulation, groundY } from "../src";
 import { BRIDGE_DECKS } from "../src/content/lublin/decks";
 import { SHAPED_TERRAIN } from "../src/content/lublin/terrain";
 import { TRAFFIC_ROUTES, pointAt } from "../src/content/traffic";
-import { type GroundDeck, deckAt, groundOver, makeDeck } from "../src/world/deck";
+import { type GroundDeck, deckAt, flightGradientAt, groundOver, makeDeck } from "../src/world/deck";
 import { terrainHeightAt } from "@seki/core";
 
 /** Mełgiewska over the Bystrzyca: its two carriageways' bridges, the river some 5 m below. */
@@ -50,19 +50,23 @@ describe("bridges' decks (ADR-0053)", () => {
     // Off the flight's band the deck and the terrain are the ground as before.
     expect(groundOver([deck, flight], 5, 3, 0)).toBeCloseTo(3, 5);
     expect(groundOver([deck, flight], 5, -3, 0.5)).toBeCloseTo(0.5, 5);
-    // Feet under the flight stay on the terrain where it is out of their reach, though under 2 m
-    // over it (2.8 at x 9, 1.4 at x 2), and step onto it once it is within the reach.
-    expect(groundOver([deck, flight], 9, -0.5, 0, 0.45)).toBeCloseTo(0, 5);
-    expect(groundOver([deck, flight], 2, -0.5, 0, 0.45)).toBeCloseTo(0, 5);
-    expect(groundOver([deck, flight], 2, -0.5, 1.2, 1.65)).toBeCloseTo(1.4, 5);
+    // No room under the flight, as under a bridge: feet far under it get it too, and a body
+    // walking up to it from below finds a bank too steep to walk, not a way under it.
+    expect(groundOver([deck, flight], 9, -0.5, 0, 0.45)).toBeCloseTo(2.8, 5);
+    expect(groundOver([deck, flight], 2, -0.5, 0, 0.45)).toBeCloseTo(1.4, 5);
+    const out = { x: 0, z: 0 };
+    // On it within reach, its own grade (0.2), not the seam with the terrain beside it.
+    expect(flightGradientAt([deck, flight], 5, 0.9, 2.5, out)).toEqual({ x: 0.2, z: 0 });
+    expect(flightGradientAt([deck, flight], 5, 0.9, 1.5, out)).toBeNull();
+    expect(flightGradientAt([deck, flight], 5, 3, Infinity, out)).toBeNull();
   });
 
   it("let the steps from the viaduct of Zamkowa down beside it on their grade, for the walkers as for the ground (G-255)", () => {
     const sim = Simulation.create({ seed: 1 });
     // On the run from the bend (729.5, 159.9) up to the deck's edge (734.1, 163.9): its middle, and its side over the deck's outline.
     for (const [x, z, y] of [
-      [731.8, 161.9, -14.43],
-      [730.8, 159.6, -15.09],
+      [731.8, 161.9, -14.55],
+      [730.8, 159.6, -15.31],
     ] as const) {
       expect(groundY(x, z), `${x}, ${z}`).toBeCloseTo(y, 1);
       expect(sim.streamer.ground.heightAt(x, z), `${x}, ${z}`).toBeCloseTo(groundY(x, z), 5);

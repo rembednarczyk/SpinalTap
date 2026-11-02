@@ -15,9 +15,9 @@ export interface GroundDeck {
   readonly box: { readonly minX: number; readonly maxX: number; readonly minZ: number; readonly maxZ: number };
   /**
    * A flight of steps hung off a bridge's deck down to the terrain (G-255), not a bridge's piece:
-   * the ground on its outline even where the terrain rises over it, the flight cut into the bank,
-   * but only for feet within reach of it: under it, where it comes down to the terrain, the feet
-   * stay on the terrain until the flight is a step over them, not lifted onto it at 2 m (G-062).
+   * the ground on its outline for all feet, even where the terrain rises over it (the flight cut
+   * into the bank). No headroom under it as under a bridge (G-062): the flight stands on its own
+   * solid, so nobody gets under it, and from beside it rises as a bank too steep to walk (ADR-0043).
    */
   readonly flight?: boolean;
   /** The flights down beside the deck that its outline reaches over (G-255): over one, the deck above it is not the ground, the flight is. */
@@ -57,7 +57,7 @@ const decksAt = (decks: readonly GroundDeck[], x: number, z: number, reach: numb
   for (const d of decks) {
     if (!over(d, x, z)) continue;
     const y = deckHeight(d, x, z);
-    if (y > reach && (d.flight === true || y - terrain > DECK_HEADROOM)) continue;
+    if (y > reach && d.flight !== true && y - terrain > DECK_HEADROOM) continue;
     if (d.beside?.some((f) => over(f, x, z) && y > deckHeight(f, x, z))) continue;
     flight ||= d.flight === true;
     if (best === null || y > best) best = y;
@@ -68,7 +68,8 @@ const decksAt = (decks: readonly GroundDeck[], x: number, z: number, reach: numb
 /**
  * The highest deck over (x, z) that is ground for feet reaching up to `reach`, or null where no
  * deck is. A deck with headroom under it (over `terrain` there) and above the reach is overhead,
- * not ground: the feet stay on the way under the bridge. Over a flight of steps down beside it, a
+ * not ground: the feet stay on the way under the bridge; not so a flight hung off one (G-255),
+ * which has no room under it. Over a flight of steps down beside it, a
  * deck above the flight is not ground either: the flight is (G-255).
  */
 export const deckAt = (decks: readonly GroundDeck[], x: number, z: number, reach = Infinity, terrain = -Infinity): number | null => decksAt(decks, x, z, reach, terrain).y;
@@ -81,6 +82,25 @@ export const deckAt = (decks: readonly GroundDeck[], x: number, z: number, reach
 export const groundOver = (decks: readonly GroundDeck[], x: number, z: number, terrain: number, reach = Infinity): number => {
   const { y, flight } = decksAt(decks, x, z, reach, terrain);
   return y !== null && (y > terrain || flight) ? y : terrain;
+};
+
+/**
+ * The gradient at (x, z) of a flight of steps hung off a bridge (G-255) that feet reaching up to
+ * `reach` walk on there, written into `out`, or null off one: its own grade, so its seams with
+ * the terrain beside it, a step or less where the feet get on, are no bank (ADR-0043). A flight
+ * out of reach keeps the ground's gradient, a bank too steep to walk up.
+ */
+export const flightGradientAt = (decks: readonly GroundDeck[], x: number, z: number, reach: number, out: { x: number; z: number }): { x: number; z: number } | null => {
+  const d = decks.find((f) => f.flight === true && over(f, x, z) && deckHeight(f, x, z) <= reach);
+  if (!d) return null;
+  const dx = d.b.x - d.a.x;
+  const dz = d.b.z - d.a.z;
+  const len2 = dx * dx + dz * dz || 1;
+  const t = ((x - d.a.x) * dx + (z - d.a.z) * dz) / len2;
+  const k = t > 0 && t < 1 ? (d.yb - d.ya) / len2 : 0;
+  out.x = dx * k;
+  out.z = dz * k;
+  return out;
 };
 
 /** How deep a deck hangs below its surface, its fascia and underside as drawn (ADR-0053), metres. */
