@@ -859,7 +859,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Także (kurator, T-138): na bruku Jezuickiej plama sięga ok. 2,3 m przed fasadę, a Wieży Trynitarskiej (8,5 m) nie dosięga; poza tym topografia jest zgodna
 
 ### G-264 Latarnie OSM na Archidiakońskiej (Stare Miasto) rysowane jako drogowe
-- Status: w naprawie (2.11, naprawiacz, gałąź `ccr-ec2c4269-ilh8k8-g264`; zgłoszone przez autora i weryfikatora G-259)
+- Status: w PR #236 (2.11, @ 3437308, czeka na weryfikację; zgłoszone przez autora i weryfikatora G-259)
 - Ważność: S4 · Zasięg: 2 latarnie `grodzka.street-lamp` → `lamp-road`: (653,9; 39,3), (653,5; 46,6), przy Placu po Farze, 9,8 i 14,9 m od latarni ściennej · Koszt: mały
 - Przyczyna: mapowanie `street-lamp → lamp-road` w `tools/osm-import/src/props-kinds.ts:56` („OSM street lamps away from the old town are road lamps”) nie patrzy na miejsce; na Starym Mieście (decyzja użytkownika 2.11: wiodą latarnie stylizowane) powinny być stylizowane
 - Poprawka: `street-lamp` w strefie Starego Miasta → stylizowana (np. latarnia ścienna albo pastorał, styl do potwierdzenia przez kuratora); przegląd `topography-curator`
@@ -874,10 +874,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (props)
 
 ### G-266 Na pierzei Krakowskiego przy Placu Litewskim styl latarni zmienia się przy x 20 bez oparcia w OSM
-- Status: zgłoszone (2.11, kurator, przegląd #235, T-140)
+- Status: w PR #236 (2.11, @ 3437308, razem z G-264, czeka na weryfikację; zgłoszone przez kuratora, przegląd #235)
 - Ważność: S4 · Zasięg: Krakowskie Przedmieście x −87…130 (drogi w598108789 i w40049340 z tagami placu w1054556917, nie deptaka); `lamps.kp-deptak` (pastorały) sięga x 20, choć opis planu mówi „od Kapucyńskiej” (tagi deptaka od x 129,7) · Koszt: mały
 - Poprawka (decyzja użytkownika 2.11: pastorały): pastorały na całej pierzei placu od x −87 do Kapucyńskiej (`lamps.kp-deptak` wydłużony na zachód), słupy nowoczesne tylko na alejkach wewnątrz placu; kontrola skanu na później: zmiana stylu latarni na osi jednej drogi OSM o tych samych tagach
 - Pakiet właściciela: docs/world (plan), tools/osm-import (props)
+
+### G-267 Latarenki pastorałów wchodzą w korony drzew
+- Status: zgłoszone (2.11, naprawiacz G-264/G-266; widoczne na zrzucie `shots/g264/g266-after-pierzeja-east.png`)
+- Ważność: S4 · Zasięg: pastorały przy drzewach na pierzei Placu Litewskiego (m.in. x ≈ −80 i 8) i prawdopodobnie na deptaku; wyższe słupy miały oprawy nad koronami · Koszt: mały
+- Poprawka: reguła odstępu latarni od drzewa w generatorze (latarenka poza bryłą korony) albo przesunięcie latarni wzdłuż linii; kontrola skanu `lamp-in-crown` (punkt latarenki w bryle korony drzewa), baza z main → 0
+- Pakiet właściciela: tools/osm-import (props), tools/glitch-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
