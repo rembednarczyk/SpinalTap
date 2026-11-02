@@ -9,14 +9,14 @@
  *   bank's), from the spots of `STANDS` in the piece's frame.
  * A share of each kind of furniture gets people (`SHARE`, a hash of the piece's point: no randomness).
  * A figure stands only where its footprint (`figureFootprint`) is on open ground (no building, road,
- * water, rails or steps, no passage), clear of every solid of the furniture but its own seat, of the
+ * water, rails or steps, no passage; a standing one's soles on paving even to `SOLE_STEP`, it on the highest), clear of every solid of the furniture but its own seat, of the
  * other figures, of the simulation's crowd (its spots and lanes, so the moving people never walk
  * through or sit on a still one) and of the game's doors, and in a block of the renderer's furniture
  * the furniture already fills (no mesh more). A sitter's piece is put on its seat's host (`y` its
  * foot, the seat over it in the variant); a standing one's on the paving at its feet.
  */
 import type { StreetPropItem, StreetPropKind } from "../../../packages/core/src/world/city-geo.ts";
-import { FIGURE_SEATS, FIGURE_SEAT, FIGURE_SEAT_SHAPES, type FigureBody, type FigureLayout, type FigurePose, figureFootprint, figureVariant } from "../../../packages/core/src/world/figures.ts";
+import { FIGURE_SEATS, FIGURE_SEAT, FIGURE_SEAT_SHAPES, FIGURE_SOLES, type FigureBody, type FigureLayout, type FigurePose, figureFootprint, figureVariant } from "../../../packages/core/src/world/figures.ts";
 import { doorLayout } from "../../../packages/core/src/world/doors.ts";
 import { distanceToPiece, furnitureRadius, turnLocal } from "../../../packages/sim/src/content/lublin/furniture.ts";
 import type { Pt } from "./geometry.ts";
@@ -62,6 +62,14 @@ export const WALKER = 0.6;
 /** And from the game's doors, and between its circles and another figure's (m). */
 export const GAME_DOOR_ROOM = 2;
 export const FIGURE_GAP = 0.05;
+/**
+ * How far the paving under a standing figure's soles (`FIGURE_SOLES`) may differ (m): more is a kerb or
+ * a step under it, and the spot is turned down; within it the figure stands on the highest, so no sole
+ * sinks and none hangs more than this.
+ */
+export const SOLE_STEP = 0.05;
+/** Points on a circle's rim the ground is read at (with its middle). */
+const RIM = 16;
 
 /** A standing spot in a piece's frame: point, facing turned from the piece's front, pose. */
 interface Stand {
@@ -149,9 +157,9 @@ class Clear {
   /** Why the circles cannot take a figure, or null. */
   why(circles: readonly { x: number; z: number; r: number }[], host: StreetPropItem, sitting: boolean): string | null {
     for (const c of circles) {
-      for (let k = 0; k <= 6; k++) {
-        const a = (k / 6) * Math.PI * 2;
-        const q = k === 6 ? c : { x: c.x + Math.cos(a) * c.r, z: c.z + Math.sin(a) * c.r };
+      for (let k = 0; k <= RIM; k++) {
+        const a = (k / RIM) * Math.PI * 2;
+        const q = k === RIM ? c : { x: c.x + Math.cos(a) * c.r, z: c.z + Math.sin(a) * c.r };
         const s = this.site.surfaceAt(q);
         // No surface drawn there is the bare terrain, open ground within the chunks.
         if (s === "building" || s === "road" || s === "water" || s === "rail" || (s === null && !this.site.chunkAt(q))) return `ground ${s ?? "outside"}`;
@@ -231,7 +239,16 @@ export const addFigures = (byChunk: Map<string, StreetPropItem[]>, site: Site, c
           const s = spot.stand!;
           const p = at(host, s.x, s.z);
           layout = { pose: s.pose === "stand" && n % 3 === 0 ? "hips" : s.pose, body: first, seat: 0, look };
-          item = { prop: "figure", x: r2(p.x), y: r2(ctx.surfaceY(p)), z: r2(p.z), yaw: r2(host.yaw + s.turn), variant: figureVariant(layout) };
+          const yaw = r2(host.yaw + s.turn);
+          const soles = FIGURE_SOLES.map((f) => {
+            const q = turnLocal(yaw, f.x, f.z);
+            return ctx.surfaceY({ x: r2(p.x) + q.x, z: r2(p.z) + q.z });
+          });
+          if (Math.max(...soles) - Math.min(...soles) > SOLE_STEP) {
+            turn("soles step");
+            continue;
+          }
+          item = { prop: "figure", x: r2(p.x), y: r2(Math.max(...soles)), z: r2(p.z), yaw, variant: figureVariant(layout) };
         }
         const circles = worldCircles(item, layout);
         const why = ctx.blockOf && !blocks.has(ctx.blockOf(item)) ? "block" : clear.why(circles, host, spot.seat !== null);

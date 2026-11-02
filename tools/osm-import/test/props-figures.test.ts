@@ -113,6 +113,15 @@ describe("the still crowd (ADR-0058 stage 8)", () => {
     for (const f of got) for (const g of got) if (f !== g) expect(Math.hypot(f.x - g.x, f.z - g.z)).toBeGreaterThan(0.5);
   });
 
+  it("stands nobody across a kerb: the paving under the soles even, the figure on the highest", () => {
+    // The booth's queue at z 1.3 behind it: a kerb 0.12 m up at z 1.35 runs under their soles.
+    expect(figuresOf([piece("food-stall", 0, 0, 0)], { surfaceY: (p) => (p.z > 1.35 ? 0.2 : 0.08) })).toEqual([]);
+    // A step of 4 cm stays under `SOLE_STEP`: they stand on its top, no sole sunk.
+    const got = figuresOf([piece("food-stall", 0, 0, 0)], { surfaceY: (p) => (p.z > 1.35 ? 0.12 : 0.08) });
+    expect(got.length).toBeGreaterThan(0);
+    for (const f of got) expect(f.y).toBe(0.12);
+  });
+
   it("stands a smoker beside a shop's door and none by a garage's", () => {
     const shop = piece("door", 0, 10, 0, doorVariant({ model: "shop", width: 1.8, height: 2.2 }));
     const garage = piece("door", 20, 10, 0, doorVariant({ model: "shutter", width: 2.5, height: 2.2 }));
