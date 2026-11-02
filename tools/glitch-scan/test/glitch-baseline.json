@@ -45,6 +45,8 @@
   "flight-ramp-lift": 0,
   "lamp-on-steps": 0,
   "lamp-plain-by-styled": 0,
+  "lamp-road-in-old-town": 0,
+  "lamp-style-change-on-way": 5,
   "bridge-without-deck": 0,
   "under-deck-blocked": 0,
   "landmark-overbuilt": 0,
