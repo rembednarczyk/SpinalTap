@@ -2,6 +2,18 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-219 Powalony żywy posiłek ochrony znika po odejściu gracza ok. 300 m
+- Status: naprawione w #203 (2.11, PRZYJĘTE; posiłki bez `chunk` jak ciała, nie są usypiane; sprzątanie powalonych i ciał zostaje w G-196)
+- Ważność: S4 · Zasięg: posiłek powalony żywcem ma `chunk: ""`; `chunk-unload` usypia go po chunku, w którym leży, a bez klucza nie zostaje po nim stan, więc znika na zawsze, a `sent` spada do 0 (sonda, ziarno 7: 100 m nadal jest, 300 m już nie, po powrocie brak); pokrewne G-196 (ciała posiłków bez chunku)
+- Poprawka: powaleni i ciała posiłków przypisani do chunka, w którym leżą, z zapisem przy uśpieniu i powrotem przy wczytaniu chunka (wtedy `goneReinforcement` z G-209 musi uwzględnić uśpionych, żeby nie płacili XP drugi raz)
+- Pakiet właściciela: packages/sim (streaming, reinforcements)
+
+### G-220 Brak testu: powalony, niesiony albo schowany posiłek nie jest „odeszły” dla pamięci hacków
+- Status: naprawione w #203 (2.11, PRZYJĘTE; test powalonego, niesionego i schowanego posiłku łapie mutację `filter(!e.downed)`)
+- Ważność: S4 (luka w testach) · Zasięg: `goneReinforcement` (`packages/sim/src/world/reinforcements.ts`); mutacja `present` bez powalonych (`filter(!e.downed)`) przechodzi testy G-209, łapie ją tylko sonda weryfikatora
+- Poprawka: test, w którym powalony, niesiony i schowany posiłek zostaje w pamięci po zapełnieniu jej odeszłymi (pada z mutacją)
+- Pakiet właściciela: packages/sim
+
 ### G-197 Drzwi klatek od podwórza: Trasa Podziemna liczona jako ulica
 - Status: naprawione w #201 (2.11, PRZYJĘTE przez weryfikatora; kurator: ZGODNE Z UWAGAMI, T-110 poprawione): `undergroundWays` z ekstraktów, kontrola `door-faces-underground` 2 → 0; Złota 6 dostaje drzwi od Złotej; drugie zdjęte drzwi (654,9; 9,0) były na Grodzkiej 7 r3119721, która zostaje bez drzwi (G-227); w66293533 bez drzwi już przed zmianą (G-221)
 - Ważność: S4 · Zasięg: 2 drzwi: Złota 6 (667,7; −31,0), Grodzka 7 r3119721 (654,9; 9,0)

@@ -681,18 +681,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: punkty bez nawierzchni w prostokącie x 758..766, z 236..254 (co 0,5 m) = 0
 
-### G-219 Powalony żywy posiłek ochrony znika po odejściu gracza ok. 300 m
-- Status: w PR #203 (2.11, w weryfikacji)
-- Ważność: S4 · Zasięg: posiłek powalony żywcem ma `chunk: ""`; `chunk-unload` usypia go po chunku, w którym leży, a bez klucza nie zostaje po nim stan, więc znika na zawsze, a `sent` spada do 0 (sonda, ziarno 7: 100 m nadal jest, 300 m już nie, po powrocie brak); pokrewne G-196 (ciała posiłków bez chunku)
-- Poprawka: powaleni i ciała posiłków przypisani do chunka, w którym leżą, z zapisem przy uśpieniu i powrotem przy wczytaniu chunka (wtedy `goneReinforcement` z G-209 musi uwzględnić uśpionych, żeby nie płacili XP drugi raz)
-- Pakiet właściciela: packages/sim (streaming, reinforcements)
-
-### G-220 Brak testu: powalony, niesiony albo schowany posiłek nie jest „odeszły” dla pamięci hacków
-- Status: w PR #203 (2.11, w weryfikacji)
-- Ważność: S4 (luka w testach) · Zasięg: `goneReinforcement` (`packages/sim/src/world/reinforcements.ts`); mutacja `present` bez powalonych (`filter(!e.downed)`) przechodzi testy G-209, łapie ją tylko sonda weryfikatora
-- Poprawka: test, w którym powalony, niesiony i schowany posiłek zostaje w pamięci po zapełnieniu jej odeszłymi (pada z mutacją)
-- Pakiet właściciela: packages/sim
-
 ### G-221 Kamienica przy Archidiakońskiej w66293533 bez żadnych drzwi
 - Status: zgłoszone (2.11, naprawiacz G-197; kurator #201: stan sprzed G-197, nie jego skutek)
 - Uwaga kuratora (#201): zdjęte drzwi (654,9; 9,0) stały na Grodzkiej 7 r3119721 (G-227), a w66293533 (ok. 664; 12,5) nie miała drzwi ani przed, ani po; jej wejście OSM n2969572872 (667,8; 15,0) na rogu od Archidiakońskiej odpada na stopniu 1,15 m (T-109). Poprawka najlepiej przez to wejście (próg albo stopień przed drzwiami), nie przez gniazda reguły klatek
@@ -755,6 +743,18 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: 51 dróg schodów, np. w1435832499 (1,3 m, schody zamkowe): reguła G-018 w `planSteps` nie daje stopni, gdy NMT nie daje 4,5 cm na stopień
 - Poprawka: bieg z `highway=steps` dostaje stopnie mimo płaskiego NMT (np. minimalna wysokość z `step_count` albo z sąsiednich podestów); kontrola skanu „schody bez stopni”
 - Pakiet właściciela: packages/engine (terrain), tools/osm-import
+
+### G-230 Mikrozdarzenie po skoku gracza o ponad 300 m zostaje w uśpionych do końca sesji
+- Status: zgłoszone (2.11, weryfikator G-219)
+- Ważność: S4 · Zasięg: skok o ok. 600 m w jednym kroku (metro, teleport): chunk zasypia przed zamknięciem „left”, napastnicy i ofiara (`micro:mugging:5:m0/m1/victim`) zostają w `state.dormant` i nic ich nie budzi; do zapisu nie trafiają (`isMicroKey`), więc to wyciek pamięci w sesji
+- Poprawka: przy usypianiu chunka zamknąć trwające mikrozdarzenie (jak „left”) albo nie usypiać kluczy `micro:`; test z teleportem
+- Pakiet właściciela: packages/sim (micro-events, streaming)
+
+### G-231 Mikrozdarzenie: obaj napastnicy powaleni żywcem nie dają wygranej (do potwierdzenia)
+- Status: zgłoszone (2.11, weryfikator G-219), do potwierdzenia prawdziwym takedownem
+- Ważność: S3 (proponowana: brak nagrody za wykonaną akcję) · Zasięg: `runMicroEvent` sprawdza `attackers.every((id) => !byId(…))`, więc powaleni, ale obecni napastnicy nie liczą się jako pokonani; po odejściu gracza „left” bez nagrody i usunięcie powalonych (sonda przez `restoreDowned`)
+- Poprawka: pokonany = nieobecny albo powalony; test z prawdziwym takedownem obu
+- Pakiet właściciela: packages/sim (micro-events)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
