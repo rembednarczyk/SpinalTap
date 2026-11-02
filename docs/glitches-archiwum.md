@@ -2,6 +2,14 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-256 Skok debugowy robi migawkę z pominięciem `canSave`
+- Status: naprawione w #227 (2.11, PRZYJĘTE; `jump` pyta tę samą bramkę `canSave`; sonda weryfikatora: zapis ręczny w walce z `hebi_ganger` bez rozjazdu przez 300 kroków, strażnicy Tessen i pociski w locie niesprawdzone)
+- Ważność: S4 (tylko narzędzie debugowe; gracz tego nie widzi) · Zasięg: `packages/app/src/debug-api.ts:154` (`saves.snapshot()`) · Koszt: mały
+- Dowód: po #225 wszystkie ścieżki zapisu gracza (slot, szybki zapis, autozapis, ukrycie strony) idą przez `canSave`, a skok debugowy bierze migawkę bez tej bramki, także w chwycie i w walce; skok z takiej migawki odtwarza rozjazd G-253 i G-240 w testach e2e, które go używają
+- Poprawka: debugowa migawka przez tę samą bramkę (odmowa z powodem) albo jawny parametr `force` z ostrzeżeniem w logu
+- Pakiet właściciela: packages/app
+- Test przyjęcia: test sesji: skok debugowy w chwycie odmawia (albo z `force` ostrzega), poza chwytem działa jak dziś
+
 ### G-251 Przybudówka Pałacu Lubomirskich w232805924 ok. 6,5 m za wysoka
 - Status: naprawione w #224 (2.11, PRZYJĘTE; kurator ZGODNE Z UWAGAMI: płaski dach y 4,6 w rundzie 2, przesunięcie obrysów zespołu ok. 1 m opisane w T-137, `building:levels` 2 niepotwierdzone)
 - Ważność: S4 (proponowana: przy fasadzie południowej od Placu Litewskiego stoi bryła 4 kondygnacji równa pałacowi zamiast niskiej przybudówki; zasłania parter i pierwsze piętro fasady) · Zasięg: 1 budynek · Koszt: mały (korekta tagów, regeneracja `krakowskie`)
