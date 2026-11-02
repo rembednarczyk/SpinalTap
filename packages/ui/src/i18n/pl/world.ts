@@ -330,6 +330,7 @@ export const plWorld = {
   "touch.medkit": "Apteczka ({count})",
   "touch.nextWeapon": "Następna broń",
   "touch.camera": "Kamera FPP/TPP",
+  "touch.move": "ruch",
   "touch.holster": "Schowaj lub wyciągnij broń",
   "touch.use": "Użyj",
   "touch.interact": "Interakcja: {what}",

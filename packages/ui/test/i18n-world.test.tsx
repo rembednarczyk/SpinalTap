@@ -10,6 +10,8 @@ import { JournalPanel } from "../src/journal/journal-panel";
 import { SaveSlots } from "../src/menus/save-slots";
 import { MetroMap, MetroRide } from "../src/metro/metro-panel";
 import { PhonePanel } from "../src/phone/phone";
+import { TouchControls } from "../src/touch/touch-controls";
+import type { TouchPadSink } from "../src/touch/touch-pad-sink";
 import { UiContext } from "../src/use-ui";
 
 /**
@@ -218,5 +220,15 @@ describe("save slots", () => {
 
   it("is English by default", () => {
     expect(DEFAULT_SETTINGS.locale).toBe("en");
+  });
+});
+
+describe("touch stick", () => {
+  it("labels the move stick in the chosen language", () => {
+    const pad = new Proxy({}, { get: () => vi.fn() }) as unknown as TouchPadSink;
+    const store = mount(<TouchControls pad={pad} />);
+    expect(screen.getByTestId("touch-stick").textContent).toBe("Move");
+    speak(store, "pl");
+    expect(screen.getByTestId("touch-stick").textContent).toBe("ruch");
   });
 });
