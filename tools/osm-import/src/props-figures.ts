@@ -184,7 +184,8 @@ export const addFigures = (byChunk: Map<string, StreetPropItem[]>, site: Site, c
   const clear = new Clear(site, all, ctx);
   const turn = (why: string) => (rejected[why] = (rejected[why] ?? 0) + 1);
   for (const [chunk, items] of byChunk) {
-    const added: StreetPropItem[] = [];
+    // Each figure goes to the chunk its point is in (a host by a chunk's edge may seat it over the edge).
+    const added: [string, StreetPropItem][] = [];
     // The hosts in an order of their own (kind, then point), not the table's: the committed table gives the same figures.
     const shares = ctx.share ?? SHARE;
     const hosts = items.filter((h) => shares[h.prop]).sort((a, b) => (a.prop < b.prop ? -1 : a.prop > b.prop ? 1 : a.x - b.x || a.z - b.z));
@@ -239,13 +240,12 @@ export const addFigures = (byChunk: Map<string, StreetPropItem[]>, site: Site, c
           continue;
         }
         clear.figures.push({ item, circles });
-        added.push(item);
+        added.push([site.chunkAt(item)?.id ?? chunk, item]);
         placed++;
         per[host.prop] = (per[host.prop] ?? 0) + 1;
       }
     }
-    items.push(...added);
-    byChunk.set(chunk, items);
+    for (const [id, item] of added) byChunk.set(id, [...(byChunk.get(id) ?? []), item]);
   }
   return { per, rejected };
 };
