@@ -17,7 +17,6 @@ const ENEMY_NAMES: Readonly<Record<EnemyTypeId, MessageKey>> = {
 const NAMED: Readonly<Record<string, string>> = {
   fixer: "Kaito",
   kaito: "Kaito",
-  mori: "Doktor Mori",
   oyaji: "Oyaji",
   hana: "Hana",
   genzo: "Genzō",
@@ -72,7 +71,9 @@ export const scanTargetVm = (e: Entity, locale: Locale): ScanTargetVm => {
   const faction = e.faction ? translate(locale, FACTIONS[e.faction]) : null;
   if (kind === "camera") return { id: e.id, kind, name: translate(locale, "scan.camera"), faction, profile: null, hostile: false };
   if (kind === "device") return { id: e.id, kind, name: translate(locale, e.interactable?.kind === "terminal" ? "scan.terminal" : "scan.device"), faction, profile: null, hostile: false };
-  const named = e.interactable ? NAMED[e.interactable.dialogueId] : undefined;
+  const dialogue = e.interactable?.dialogueId;
+  // Mori carries a title, so her name comes from the catalog in the player's language (G-248).
+  const named = dialogue === "mori" ? translate(locale, "shop.clinic.title") : dialogue ? NAMED[dialogue] : undefined;
   if (named) return { id: e.id, kind, name: named, faction, profile: null, hostile };
   if (e.enemy) return { id: e.id, kind, name: translate(locale, ENEMY_NAMES[e.enemy.type]), faction, profile: [translate(locale, from(QUIRKS, e.id, 5))], hostile };
   const p = passerBy(e.id, locale);
