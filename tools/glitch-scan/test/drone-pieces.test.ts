@@ -52,17 +52,17 @@ describe("drone checks (ADR-0058 stage 7)", () => {
     const lanes = planDroneLanes(droneWorldOf(ITEMS, AXES, () => 0));
     expect(lanes).toHaveLength(1);
     expect(lanes[0]!.points.every((p) => p.x < 300)).toBe(true);
-    expect(run()).toEqual({ "drone-in-building": 0, "drone-by-landmark": 0, "drone-off-street": 0, "drone-low-pop": 0, "drone-low-canyon": 0, "drone-over-building": 0 });
+    expect(run()).toEqual({ "drone-in-building": 0, "drone-by-landmark": 0, "drone-off-street": 0, "drone-low-canyon": 0, "drone-over-building": 0 });
   });
 
   it("find a drone in a house, over the lawn, by the church and over a house", () => {
     /** A lane across the street at x 100, from z -30 to 30, through the houses on both sides. */
     const across = (level: number): DroneLane => ({ ...lane(0, 60, level), points: lane(0, 60, level).points.map((p) => ({ x: 100, z: p.x - 30 })) });
-    expect(run([across(5)])).toEqual({ "drone-in-building": 1, "drone-by-landmark": 0, "drone-off-street": 1, "drone-low-pop": 0, "drone-low-canyon": 0, "drone-over-building": 1 });
+    expect(run([across(5)])).toEqual({ "drone-in-building": 1, "drone-by-landmark": 0, "drone-off-street": 1, "drone-low-canyon": 0, "drone-over-building": 1 });
     // Over the 12 m roofs it is clear of them, but still over the houses and off the street.
-    expect(run([across(13)])).toEqual({ "drone-in-building": 0, "drone-by-landmark": 0, "drone-off-street": 1, "drone-low-pop": 0, "drone-low-canyon": 0, "drone-over-building": 1 });
+    expect(run([across(13)])).toEqual({ "drone-in-building": 0, "drone-by-landmark": 0, "drone-off-street": 1, "drone-low-canyon": 0, "drone-over-building": 1 });
     // Low in the canyon between the walls: in no house.
-    expect(run([lane(40, 200, 2)])).toEqual({ "drone-in-building": 0, "drone-by-landmark": 0, "drone-off-street": 0, "drone-low-pop": 0, "drone-low-canyon": 0, "drone-over-building": 0 });
+    expect(run([lane(40, 200, 2)])).toEqual({ "drone-in-building": 0, "drone-by-landmark": 0, "drone-off-street": 0, "drone-low-canyon": 0, "drone-over-building": 0 });
     expect(run([lane(250, 340, 40)])).toMatchObject({ "drone-off-street": 1, "drone-in-building": 0 });
     expect(run([lane(450, 560, 60)])).toMatchObject({ "drone-by-landmark": 1, "drone-off-street": 0 });
   });
@@ -112,13 +112,11 @@ describe("low patrol checks (ADR-0058 stage 7b)", () => {
       const checks = droneChecks(ITEMS, AXES, () => 0, () => [], () => lanes);
       return Object.fromEntries(Object.entries(checks).map(([k, f]) => [k, f().length]));
     };
-    expect(run2([patrol(40, 200)])).toEqual({ "drone-in-building": 0, "drone-by-landmark": 0, "drone-off-street": 0, "drone-low-pop": 0, "drone-low-canyon": 0, "drone-over-building": 0 });
+    expect(run2([patrol(40, 200)])).toEqual({ "drone-in-building": 0, "drone-by-landmark": 0, "drone-off-street": 0, "drone-low-canyon": 0, "drone-over-building": 0 });
     // Into the houses north of the street, over the lawn, by the church.
     expect(run2([patrol(40, 200, 10)])).toMatchObject({ "drone-in-building": 1, "drone-over-building": 1, "drone-off-street": 1 });
     expect(run2([patrol(310, 370)])).toMatchObject({ "drone-off-street": 1, "drone-in-building": 0 });
-    // By the church, not checked for it; but it comes into sight at 18 m within 25 m of its 30 m roof,
-    // and over it at 32 m it does not.
-    expect(run2([patrol(450, 560, 0, 32)])["drone-low-pop"]).toBe(0);
-    expect(run2([patrol(450, 560)])).toEqual({ "drone-in-building": 0, "drone-by-landmark": 0, "drone-off-street": 0, "drone-low-pop": 1, "drone-low-canyon": 0, "drone-over-building": 0 });
+    // By the church: not checked for it.
+    expect(run2([patrol(450, 560)])).toEqual({ "drone-in-building": 0, "drone-by-landmark": 0, "drone-off-street": 0, "drone-low-canyon": 0, "drone-over-building": 0 });
   });
 });

@@ -46,6 +46,20 @@ export const PATROL_COUNT: Readonly<Record<RenderQuality, { readonly total: numb
   low: { total: 0, quiet: 0 },
 };
 
+/**
+ * The low patrols' (ADR-0058 stage 7b): where the far version takes over, how far they are drawn
+ * and how many near and far at once. They fly over the heads: the near model shows further than a
+ * canyon drone's.
+ */
+export const PATROL_LOD: Readonly<Record<RenderQuality, { readonly near: number; readonly draw: number; readonly nearSlots: number; readonly farSlots: number }>> = {
+  high: { near: 70, draw: 260, nearSlots: 3, farSlots: 3 },
+  medium: { near: 50, draw: 200, nearSlots: 2, farSlots: 2 },
+  low: { near: 0, draw: 0, nearSlots: 0, farSlots: 0 },
+};
+
+/** How large a patrol is drawn at a distance on `high` (1 its size, 0 not drawn): the reference of `patrol-sight.ts`. */
+export const patrolFade = (d: number): number => (d <= PATROL_LOD.high.draw ? 1 : 0);
+
 /** Seconds away between two flights: long over the Old Town, short over the deptak and the squares. */
 export const PATROL_PAUSE: Readonly<Record<"quiet" | "busy", readonly [number, number]>> = { quiet: [45, 180], busy: [10, 45] };
 /** Seconds hanging over the street on a flight. */

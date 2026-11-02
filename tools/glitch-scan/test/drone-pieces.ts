@@ -30,8 +30,6 @@ const MAST = 9;
 const LANDMARK_ROOM = 30;
 /** Metres between the points of a loop flown. */
 const STEP = 1;
-/** How near the roofs a low patrol coming into sight or going out of it must clear (m). */
-const POP_ROOM = 25;
 /** Every kind flies the same line over the ground: the checks of the ground fly one. */
 const XZ: readonly DroneKind[] = ["patrol"];
 
@@ -169,16 +167,6 @@ export const droneChecks = (
       }, XZ)(),
       ...perPatrol((f) => (onStreet(f.p) ? null : "over no street")),
     ],
-    /**
-     * A low patrol coming into sight or going out of it under the roofs within `POP_ROOM` of it: from
-     * the street a drone must not appear or vanish in the air, only over the roofs round it.
-     */
-    "drone-low-pop": () =>
-      perPatrol((f) => {
-        if (!("edge" in f) || !f.edge) return null;
-        const roof = Math.max(-Infinity, ...near(f.p, POP_ROOM).filter((b) => gapTo(f.p, b.ring) <= POP_ROOM).map((b) => b.top));
-        return f.bottom < roof ? `comes or goes at ${f.bottom.toFixed(1)} m under the roofs up to ${roof.toFixed(1)} m within ${POP_ROOM} m` : null;
-      }),
     /** A drone's middle over a house: the route must keep to the streets even above the roofs. */
     "drone-over-building": () => [
       ...perLane((lane, kind) => {

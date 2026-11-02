@@ -5,7 +5,9 @@ import type { CityProps } from "../city-props";
 import { type Drone, type DroneKind, DRONE_KINDS, type DronePose, droneFleet, dronePose } from "./drone-flight";
 import { type DroneLane, type DroneWorld, planDroneLanes } from "./drone-lanes";
 import { type DroneTemplate, droneTemplates } from "./drone-models";
-import { type Patrol, type PatrolLane, type PatrolPose, patrolFleet, patrolPose } from "./patrol-flight";
+import { PATROL_LOD, type Patrol, type PatrolLane, type PatrolPose, patrolFleet, patrolPose } from "./patrol-flight";
+
+export { PATROL_LOD };
 import { type PatrolWorld, planPatrolLanes } from "./patrol-lanes";
 import { type PatrolTemplate, patrolTemplates } from "./patrol-models";
 import { poolDrop, poolPoint, poolRadius } from "./patrol-pool";
@@ -17,17 +19,6 @@ import { poolDrop, poolPoint, poolRadius } from "./patrol-pool";
 export const DRONE_LOD: Readonly<Record<RenderQuality, { readonly near: number; readonly draw: number; readonly nearSlots: number; readonly farSlots: number }>> = {
   high: { near: 120, draw: 420, nearSlots: 3, farSlots: 6 },
   medium: { near: 90, draw: 300, nearSlots: 2, farSlots: 4 },
-  low: { near: 0, draw: 0, nearSlots: 0, farSlots: 0 },
-};
-
-/**
- * The low patrols' (ADR-0058 stage 7b): where the far version takes over, how far they are drawn
- * and how many near and far at once. They fly over the heads: the near model shows further than a
- * canyon drone's.
- */
-export const PATROL_LOD: Readonly<Record<RenderQuality, { readonly near: number; readonly draw: number; readonly nearSlots: number; readonly farSlots: number }>> = {
-  high: { near: 70, draw: 260, nearSlots: 3, farSlots: 3 },
-  medium: { near: 50, draw: 200, nearSlots: 2, farSlots: 2 },
   low: { near: 0, draw: 0, nearSlots: 0, farSlots: 0 },
 };
 
