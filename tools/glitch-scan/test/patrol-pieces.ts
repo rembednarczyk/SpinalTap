@@ -1,6 +1,6 @@
 import { PATROL_CLIMB, PATROL_REACH, PATROL_SIZE, PATROL_SPEED, type PatrolLane, type PatrolPose, patrolCycle, patrolOf, patrolPose } from "../../../packages/engine/src/renderer/drones/patrol-flight";
 import { POOL_SEGMENTS } from "../../../packages/engine/src/renderer/drones/patrol-models";
-import { pavingAt, poolDrop, poolPoint } from "../../../packages/engine/src/renderer/drones/patrol-pool";
+import { pavingAt, poolDrop, poolPoint, poolRadius } from "../../../packages/engine/src/renderer/drones/patrol-pool";
 import { type Box2, type P2, boundsOf } from "../../../packages/engine/src/renderer/mapcity/polygon";
 import type { AirMesh } from "./patrol-mesh";
 
@@ -113,6 +113,8 @@ export const zonesOf = (lanes: readonly PatrolLane[]): Box2[] =>
 
 /** How far the searchlight pool's drawn rim may lie off the paving (m). */
 export const POOL_TOLERANCE = 0.05;
+/** How far the pool moves between two places of it checked (m): a slope or a kerb under it is wider. */
+const POOL_STEP = 0.5;
 /** The paving runs on even between two corners of the rim when its height halfway is within this of their mean (m). */
 const EVEN = 0.02;
 
@@ -124,23 +126,25 @@ const EVEN = 0.02;
 export const poolOff = (pose: PatrolPose, surfaceAt: (x: number, z: number) => number): { off: number; x: number; z: number } | null => {
   const drop = poolDrop(pose);
   if (drop === null) return null;
-  const corner = (k: number) => {
+  // The corners as drawn, with the paving under each read once.
+  const corners = Array.from({ length: POOL_SEGMENTS }, (_, k) => {
     const a = (k / POOL_SEGMENTS) * 2 * Math.PI;
-    return poolPoint(pose, drop, Math.sin(a), Math.cos(a), surfaceAt);
-  };
+    const q = poolPoint(pose, drop, Math.sin(a), Math.cos(a), surfaceAt);
+    return { ...q, paving: pavingAt(surfaceAt, q.x, q.z) };
+  });
   let worst = { off: 0, x: pose.x, z: pose.z };
-  for (let k = 0; k < POOL_SEGMENTS; k++) {
-    const a = corner(k);
-    const b = corner(k + 1);
+  const see = (y: number, paving: number, x: number, z: number) => {
+    if (Math.abs(y - paving) > Math.abs(worst.off)) worst = { off: y - paving, x, z };
+  };
+  corners.forEach((a, k) => {
+    const b = corners[(k + 1) % POOL_SEGMENTS]!;
+    see(a.y, a.paving, a.x, a.z);
     // A chord's middle where the paving runs on even between its corners (flat or sloping); over a
     // kerb, a gutter or a seam between them the straight chord bridges the step, and its corners count.
     const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, z: (a.z + b.z) / 2 };
-    const even = Math.abs(pavingAt(surfaceAt, mid.x, mid.z) - (pavingAt(surfaceAt, a.x, a.z) + pavingAt(surfaceAt, b.x, b.z)) / 2) <= EVEN;
-    for (const q of even ? [a, mid] : [a]) {
-      const off = q.y - pavingAt(surfaceAt, q.x, q.z);
-      if (Math.abs(off) > Math.abs(worst.off)) worst = { off, x: q.x, z: q.z };
-    }
-  }
+    const paving = pavingAt(surfaceAt, mid.x, mid.z);
+    if (Math.abs(paving - (a.paving + b.paving) / 2) <= EVEN) see(mid.y, paving, mid.x, mid.z);
+  });
   return worst;
 };
 
@@ -158,7 +162,15 @@ export const patrolChecks = (
   /** A searchlight pool whose rim lies more than `POOL_TOLERANCE` under or over the paving (sunk into a slope, floating over it). */
   "drone-low-pool": () =>
     lanes().flatMap((lane) => {
+      // Every `POOL_STEP` of the pool's way and at every radius it takes: it does not turn, and while
+      // the drone hangs it lies where it lay.
+      let last: { x: number; z: number; r: number } | null = null;
       for (const f of patrolPoints(lane)) {
+        const drop = poolDrop(f.pose);
+        if (drop === null) continue;
+        const r = poolRadius(drop);
+        if (last && last.r === r && Math.hypot(f.pose.x - last.x, f.pose.z - last.z) < POOL_STEP) continue;
+        last = { x: f.pose.x, z: f.pose.z, r };
         const w = poolOff(f.pose, surfaceAt);
         if (w && Math.abs(w.off) > POOL_TOLERANCE) return [{ at: `patrol lane from ${lane.points[0]!.x.toFixed(0)},${lane.points[0]!.z.toFixed(0)} at ${w.x.toFixed(1)},${w.z.toFixed(1)}`, what: `pool's rim ${w.off.toFixed(2)} m off the paving` }];
       }
