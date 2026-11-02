@@ -119,6 +119,7 @@
   "drone-by-landmark": 0,
   "drone-off-street": 0,
   "drone-over-building": 0,
+  "drone-low-clearance": 0,
   "figure-in-building": 0,
   "figure-on-road": 0,
   "figure-in-piece": 0,

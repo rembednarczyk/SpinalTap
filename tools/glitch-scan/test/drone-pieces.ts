@@ -2,8 +2,10 @@ import type { GroundSurface, Vec3, ViewDescriptor } from "../../../packages/core
 import { DRONE_KINDS, DRONE_SIZE, type DroneKind, BOB, dronePose, loopLength } from "../../../packages/engine/src/renderer/drones/drone-flight";
 import { type DroneLane, type DroneWorld, planDroneLanes } from "../../../packages/engine/src/renderer/drones/drone-lanes";
 import { droneWorldOf } from "../../../packages/engine/src/renderer/drones/drone-world";
+import type { PatrolLane } from "../../../packages/engine/src/renderer/drones/patrol-flight";
 import { landmarkAt } from "../../../packages/engine/src/renderer/mapcity/landmarks";
 import { type P2, boundsOf, cleanRing, pointInRing } from "../../../packages/engine/src/renderer/mapcity/polygon";
+import { patrolPoints } from "./patrol-pieces";
 
 /**
  * The drones over the street canyons of ADR-0058 stage 7, flown round every lane the renderer
@@ -11,6 +13,10 @@ import { type P2, boundsOf, cleanRing, pointInRing } from "../../../packages/eng
  * its box: never in a building's solid (its superstructure, roof and the masts on it included),
  * never near a landmark, always over the street's surfaces and never over a house. The planner
  * samples every 4 m with its own corridor; this flies the drones' real loop, turns included.
+ *
+ * The low patrols of stage 7b (`patrols`) fly the same checks of the buildings and the streets
+ * through their whole cycle, down from the ceiling and up again; not the landmarks' (the user's
+ * exception for them), and their clearance from what is drawn is `drone-low-clearance`.
  */
 
 type Finding = { readonly at: string; readonly what: string };
@@ -70,6 +76,7 @@ export const droneChecks = (
   axes: readonly (readonly P2[])[],
   groundAt: (x: number, z: number) => number | null,
   plan: (world: DroneWorld) => readonly DroneLane[] = planDroneLanes,
+  patrols: () => readonly PatrolLane[] = () => [],
 ): Readonly<Record<string, () => Finding[]>> => {
   const memo: { lanes?: readonly DroneLane[] } = {};
   const lanes = () => (memo.lanes ??= plan(droneWorldOf(items, axes, groundAt)));
@@ -83,7 +90,7 @@ export const droneChecks = (
   const streets = items.flatMap(({ view, at }) => (view.kind === "ground" && STREET.has(view.surface) ? [ringOf(view.outline, at)] : [])).map((ring) => ({ ring, box: boundsOf(ring) }));
   const onStreet = (p: P2) => streets.some(({ ring, box }) => p.x >= box.minX && p.x <= box.maxX && p.z >= box.minZ && p.z <= box.maxZ && pointInRing(p, ring));
   const near = (p: P2, r: number) => solids.filter((s) => p.x >= s.box.minX - r && p.x <= s.box.maxX + r && p.z >= s.box.minZ - r && p.z <= s.box.maxZ + r);
-  const where = (lane: DroneLane, p: P2) => `lane from ${lane.points[0]!.x.toFixed(0)},${lane.points[0]!.z.toFixed(0)} at ${p.x.toFixed(0)},${p.z.toFixed(0)}`;
+  const where = (lane: { readonly points: readonly P2[] }, p: P2) => `lane from ${lane.points[0]!.x.toFixed(0)},${lane.points[0]!.z.toFixed(0)} at ${p.x.toFixed(0)},${p.z.toFixed(0)}`;
   /** One finding per lane: the first point of its loop where `bad` says what is wrong. */
   const perLane = (bad: (lane: DroneLane, kind: DroneKind) => { p: P2; what: string } | null, kinds: readonly DroneKind[] = DRONE_KINDS) => (): Finding[] =>
     lanes().flatMap((lane) => {
@@ -93,29 +100,51 @@ export const droneChecks = (
       }
       return [];
     });
+  const inBuilding = (f: { p: P2; bottom: number; top: number; reach: number }) => near(f.p, f.reach + 2).find((b) => f.bottom < b.top && f.top > b.bottom && gapTo(f.p, b.ring) < f.reach);
+  /** One finding per patrol lane: the first point of its flight where `bad` says what is wrong. */
+  const perPatrol = (bad: (f: { p: P2; bottom: number; top: number; reach: number }) => string | null): Finding[] =>
+    patrols().flatMap((lane) => {
+      for (const f of patrolPoints(lane)) {
+        const what = bad(f);
+        if (what) return [{ at: `patrol ${where(lane, f.p)}`, what: `patrol: ${what}` }];
+      }
+      return [];
+    });
   return {
     /** A drone's box in a building's solid: its walls, superstructure, roof or masts. */
-    "drone-in-building": perLane((lane, kind) => {
-      for (const f of flown(lane, kind)) {
-        const s = near(f.p, f.reach + 2).find((b) => f.bottom < b.top && f.top > b.bottom && gapTo(f.p, b.ring) < f.reach);
-        if (s) return { p: f.p, what: `in a building up to ${s.top.toFixed(1)} m, its foot at ${f.bottom.toFixed(1)} m` };
-      }
-      return null;
-    }),
+    "drone-in-building": () => [
+      ...perLane((lane, kind) => {
+        for (const f of flown(lane, kind)) {
+          const s = inBuilding(f);
+          if (s) return { p: f.p, what: `in a building up to ${s.top.toFixed(1)} m, its foot at ${f.bottom.toFixed(1)} m` };
+        }
+        return null;
+      })(),
+      ...perPatrol((f) => {
+        const s = inBuilding(f);
+        return s ? `in a building up to ${s.top.toFixed(1)} m, its foot at ${f.bottom.toFixed(1)} m` : null;
+      }),
+    ],
     /** A drone within `LANDMARK_ROOM` of a landmark's outline (ADR-0058: the landmarks and the Old Town stay calm). */
     "drone-by-landmark": perLane((lane, kind) => {
       for (const f of flown(lane, kind)) if (near(f.p, LANDMARK_ROOM).some((b) => b.landmark && gapTo(f.p, b.ring) < LANDMARK_ROOM)) return { p: f.p, what: "by a landmark" };
       return null;
     }),
     /** A drone over no surface of a street (a lawn, the river, beyond the map). */
-    "drone-off-street": perLane((lane, kind) => {
-      for (const f of flown(lane, kind)) if (!onStreet(f.p)) return { p: f.p, what: "over no street" };
-      return null;
-    }, XZ),
+    "drone-off-street": () => [
+      ...perLane((lane, kind) => {
+        for (const f of flown(lane, kind)) if (!onStreet(f.p)) return { p: f.p, what: "over no street" };
+        return null;
+      }, XZ)(),
+      ...perPatrol((f) => (onStreet(f.p) ? null : "over no street")),
+    ],
     /** A drone's middle over a house: the route must keep to the streets even above the roofs. */
-    "drone-over-building": perLane((lane, kind) => {
-      for (const f of flown(lane, kind)) if (near(f.p, 0).some((b) => pointInRing(f.p, b.ring))) return { p: f.p, what: "over a building" };
-      return null;
-    }, XZ),
+    "drone-over-building": () => [
+      ...perLane((lane, kind) => {
+        for (const f of flown(lane, kind)) if (near(f.p, 0).some((b) => pointInRing(f.p, b.ring))) return { p: f.p, what: "over a building" };
+        return null;
+      }, XZ)(),
+      ...perPatrol((f) => (near(f.p, 0).some((b) => pointInRing(f.p, b.ring)) ? "over a building" : null)),
+    ],
   };
 };

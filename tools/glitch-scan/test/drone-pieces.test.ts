@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 import type { BuildingUse, GroundSurface, Vec3, ViewDescriptor } from "../../../packages/core/src";
 import { type DroneLane, STEP, planDroneLanes } from "../../../packages/engine/src/renderer/drones/drone-lanes";
 import { droneWorldOf } from "../../../packages/engine/src/renderer/drones/drone-world";
+import type { PatrolLane } from "../../../packages/engine/src/renderer/drones/patrol-flight";
 import { droneChecks } from "./drone-pieces";
+import type { AirMesh } from "./patrol-mesh";
+import { CLEARANCE, patrolChecks } from "./patrol-pieces";
 
 /**
  * The glitch scan's checks of the drones (ADR-0058 stage 7) on a small world of their own: a
@@ -62,5 +65,50 @@ describe("drone checks (ADR-0058 stage 7)", () => {
     expect(run([lane(40, 200, 2)])).toEqual({ "drone-in-building": 0, "drone-by-landmark": 0, "drone-off-street": 0, "drone-over-building": 0 });
     expect(run([lane(250, 340, 40)])).toMatchObject({ "drone-off-street": 1, "drone-in-building": 0 });
     expect(run([lane(450, 560, 60)])).toMatchObject({ "drone-by-landmark": 1, "drone-off-street": 0 });
+  });
+});
+
+describe("low patrol checks (ADR-0058 stage 7b)", () => {
+  /** A patrol lane along z = `z` from x0 to x1 over paving at 0. */
+  const patrol = (x0: number, x1: number, z = 0): PatrolLane => {
+    const n = Math.round((x1 - x0) / 4);
+    return { points: Array.from({ length: n + 1 }, (_, i) => ({ x: x0 + i * 4, z })), grounds: Array.from({ length: n + 1 }, () => 0), length: n * 4, seed: 3, quiet: false };
+  };
+  /** A mesh of the given triangles. */
+  const mesh = (tris: readonly number[][]): AirMesh => ({
+    triangles: tris.length,
+    near: (box, bottom, top) =>
+      tris
+        .filter((t) => Math.max(t[1]!, t[4]!, t[7]!) >= bottom && Math.min(t[1]!, t[4]!, t[7]!) <= top && Math.max(t[0]!, t[3]!, t[6]!) >= box.minX && Math.min(t[0]!, t[3]!, t[6]!) <= box.maxX)
+        .map((t) => ({ tri: Float32Array.from(t), what: "a lamp's head" })),
+  });
+  /** A lamp's head: a small horizontal triangle round (x, y, z). */
+  const head = (x: number, y: number, z = 0) => [x - 0.3, y, z - 0.3, x + 0.3, y, z - 0.3, x, y, z + 0.3];
+  const clearance = (lanes: readonly PatrolLane[], tris: readonly number[][]) => patrolChecks(() => lanes, () => mesh(tris))["drone-low-clearance"]!().length;
+
+  it("find a lamp's head in a patrol's band or its column, and nothing beside it or over the column", () => {
+    expect(clearance([patrol(40, 120)], [])).toBe(0);
+    // In the band over the lane (the box is 4.6 to 5.35 m over the paving).
+    expect(clearance([patrol(40, 120)], [head(80, 5)])).toBe(1);
+    // Beside it within its half width and the clearance (the head reaches 0.3 m towards it), or past them.
+    expect(clearance([patrol(40, 120)], [head(80, 5, 1.02 + CLEARANCE + 0.2)])).toBe(1);
+    expect(clearance([patrol(40, 120)], [head(80, 5, 1.02 + CLEARANCE + 0.4)])).toBe(0);
+    // Under it: clear.
+    expect(clearance([patrol(40, 120)], [head(80, 4)])).toBe(0);
+    // Over the lane's middle at 12 m: clear; over its end, in the column it comes down: found.
+    expect(clearance([patrol(40, 120)], [head(80, 12)])).toBe(0);
+    expect(clearance([patrol(40, 120)], [head(40, 12)])).toBe(1);
+  });
+
+  it("fly the patrols through the buildings' and streets' checks, but not the landmarks'", () => {
+    const run2 = (lanes: readonly PatrolLane[]) => {
+      const checks = droneChecks(ITEMS, AXES, () => 0, () => [], () => lanes);
+      return Object.fromEntries(Object.entries(checks).map(([k, f]) => [k, f().length]));
+    };
+    expect(run2([patrol(40, 200)])).toEqual({ "drone-in-building": 0, "drone-by-landmark": 0, "drone-off-street": 0, "drone-over-building": 0 });
+    // Into the houses north of the street, over the lawn, by the church.
+    expect(run2([patrol(40, 200, 10)])).toMatchObject({ "drone-in-building": 1, "drone-over-building": 1, "drone-off-street": 1 });
+    expect(run2([patrol(310, 370)])).toMatchObject({ "drone-off-street": 1, "drone-in-building": 0 });
+    expect(run2([patrol(450, 560)])).toEqual({ "drone-in-building": 0, "drone-by-landmark": 0, "drone-off-street": 0, "drone-over-building": 0 });
   });
 });
