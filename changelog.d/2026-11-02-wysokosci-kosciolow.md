@@ -1,0 +1,1 @@
+Dziewięć kościołów bez wysokości w OSM (m.in. cerkiew św. Jozafata, Bernardyni, Brygidki, św. Piotra, św. Mikołaja) ma okap i kalenicę z numerycznego modelu pokrycia terenu zamiast domyślnych 16 m ścian i sięga o 3–16 m niżej; wieża cerkwi św. Jozafata nie ginie już pod dachem nawy (G-216).
