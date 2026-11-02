@@ -758,7 +758,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `church-part-below-roof` 5 → 0; okap i kalenica nawy w grze dalej w 1,5 m od `CHURCH_SURFACE`
 
 ### G-239 Ciało napastnika po wygranym napadzie znika po odejściu gracza ok. 400 m
-- Status: zgłoszone (2.11, naprawiacz G-233)
+- Status: w naprawie (2.11, naprawiacz, gałąź `ccr-ec2c4269-ilh8k8-g239`; zgłoszone przez naprawiacza G-233)
 - Ważność: S4 · Zasięg: po „won” ciało nie ma klucza, a ma chunk ofiary, więc uśpienie chunka zdejmuje je bez stanu (analogia G-219); tak samo po wczytaniu
 - Poprawka: jak G-219 (ciało bez chunku), z oceną nagromadzenia ciał (G-196); test z odejściem 400 m
 - Pakiet właściciela: packages/sim (micro-events, streaming)
