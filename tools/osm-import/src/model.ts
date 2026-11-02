@@ -72,6 +72,16 @@ export interface ServiceWayOut {
   readonly width: number;
 }
 
+/**
+ * A flight of steps the map tags with `incline=up` or `down` (G-236): its way's whole polyline
+ * (world, not clipped to the chunk) from its foot to its top, and its `step_count` when mapped.
+ */
+export interface FlightOut {
+  readonly id: string;
+  readonly line: readonly number[];
+  readonly steps?: number;
+}
+
 /** A footway's or a path's axis mapped on its own (world polyline, clipped to the chunk) and its width (m). */
 export interface FootWayOut {
   readonly line: readonly number[];
@@ -120,6 +130,8 @@ export interface ChunkOut {
   readonly serviceWays?: readonly ServiceWayOut[];
   /** Footways and paths mapped on their own (G-143), when it has any. */
   readonly footWays?: readonly FootWayOut[];
+  /** Flights of steps with a mapped `incline` reaching into it (G-236), when it has any. */
+  readonly flights?: readonly FlightOut[];
   /** Car parks reaching into it, when it has any. */
   readonly carParks?: readonly CarParkOut[];
   /** Bus stops' posts by it, flat x, z (G-156), when it has any. */

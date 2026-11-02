@@ -4,7 +4,7 @@ import { NABRZEZE_CHUNKS } from "./nabrzeze.generated";
 import { PODZAMCZE_CHUNKS } from "./podzamcze.generated";
 import { STARE_MIASTO_CHUNKS } from "./stare-miasto.generated";
 import { GATE_PASSAGES, type PassageSite } from "./gate-passages";
-import { type GroundRect, type Pad, type Ramp, mapHeight, stepRamps } from "./shape";
+import { type GroundRect, type Pad, type Ramp, flightRamps, mapHeight, stepRamps } from "./shape";
 import type { LublinChunkData } from "./types";
 
 /**
@@ -161,3 +161,5 @@ export const PADS: readonly Pad[] = [
 
 /** Even ramps along the steps of the map (ADR-0045). */
 export const RAMPS: readonly Ramp[] = stepRamps(MAP_CHUNKS);
+/** Ramps along the flights the terrain climbs against their `incline` (G-236, T-131), laid last on a finer grid (`terrain.ts`). */
+export const FLIGHT_RAMPS: readonly Ramp[] = flightRamps(MAP_CHUNKS);
