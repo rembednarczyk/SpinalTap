@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { MICRO_EVENT_CHANCE, MICRO_EVENT_REWARD, SECONDS_PER_HOUR, type SaveSnapshot } from "@seki/core";
-import { Simulation, deriveRandom, ground } from "../src";
+import { MICRO_EVENT_REWARD, type SaveSnapshot } from "@seki/core";
+import { Simulation, ground } from "../src";
 import { ALLEY_START, byKey, collect, input, run, teleportPlayer } from "./helpers";
+import { enterKanal, street } from "./micro-scenes";
 import { takeDown } from "./takedown-scenes";
 
 /** Shiro's lamp on Plac Litewski and the salaryman's pavement by Neon Koi (ADR-0045). */
@@ -9,14 +10,6 @@ const POET = { x: 102, z: -23 };
 const SALARYMAN = { x: 328, z: -91 };
 
 const roundTrip = (s: SaveSnapshot): SaveSnapshot => JSON.parse(JSON.stringify(s)) as SaveSnapshot;
-
-/** After the prologue (Kaito met), at `hour`. */
-const street = (hour: number, seed = 6): Simulation => {
-  const snap = Simulation.create({ seed }).snapshot(null, "t", "");
-  const sim = Simulation.fromSnapshot({ ...snap, domain: { ...snap.domain, flags: ["met_fixer"], clock: { seconds: hour * SECONDS_PER_HOUR } } });
-  run(sim, 1);
-  return sim;
-};
 
 describe("street encounters (ADR-0034)", () => {
   it("the poet stands under his lamp in the evening and the scene starts up close", () => {
@@ -66,30 +59,6 @@ describe("street encounters (ADR-0034)", () => {
     expect(night.domain.wallet.eddies).toBe(eddies + 60);
   });
 });
-
-/** The first tick from `from` whose micro-event roll starts one of `kind`. */
-const tickFor = (seed: number, from: number, kind: "mugging" | "aid"): number => {
-  for (let t = from; ; t++) {
-    const r = deriveRandom(seed, `micro:${t}`);
-    const roll = r.next();
-    const mugging = r.next() < 0.6;
-    if (roll < MICRO_EVENT_CHANCE && mugging === (kind === "mugging")) return t;
-  }
-};
-
-/** Walks from Krakowskie through Brama Krakowska into the Old Town on the step whose roll starts `kind`. */
-const enterKanal = (kind: "mugging" | "aid") => {
-  const sim = street(21, 13);
-  teleportPlayer(sim, ground(450, -96));
-  run(sim, 2);
-  const t = tickFor(sim.seed, sim.tick + 1, kind);
-  while (sim.tick < t) sim.step();
-  const started = collect<{ encounterId: string; npcId: number }>(sim, "EncounterStarted");
-  const ended = collect<{ encounterId: string; outcome: string }>(sim, "EncounterEnded");
-  teleportPlayer(sim, ground(497, -79));
-  sim.step();
-  return { sim, started, ended };
-};
 
 describe("micro-events (ADR-0034)", () => {
   it("a mugging on entering the district: down the gang, save the passer-by, get paid", () => {

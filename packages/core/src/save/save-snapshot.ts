@@ -5,6 +5,8 @@ import type { Contract } from "../contracts/contracts";
 import type { EnemyTypeId } from "../items/enemies";
 
 /**
+ * v28: the bodies of a won mugging's muggers (G-233), who are in no content table and none of the
+ * heat's; an older save has none, they were gone on loading as before.
  * v27: a walking NPC's stuck check (ADR-0025, G-208): where its current stretch began, until when
  * it gets round the obstacle, the side it leans to and its repath; an older save has every NPC
  * starting a new stretch, as it loaded before.
@@ -39,7 +41,7 @@ import type { EnemyTypeId } from "../items/enemies";
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 27;
+export const SAVE_SCHEMA_VERSION = 28;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {
@@ -198,6 +200,22 @@ export interface ReinforcementsSnapshot {
   readonly people: readonly ReinforcementSnapshot[];
 }
 
+/**
+ * The body of a micro-event's mugger (G-233), left lying (or carried, hidden) once the mugging was
+ * won: unkeyed and in no content table, so made again from this, as a reinforcement is.
+ */
+export interface StrayBodySnapshot {
+  readonly type: EnemyTypeId;
+  /** Whether it is an enforcer (ADR-0033): its key and id decided it, both gone. */
+  readonly enforcer: boolean;
+  /** Where it goes back to when it wakes. */
+  readonly home: Vec3;
+  /** The chunk it goes to sleep with. */
+  readonly chunk: string;
+  /** Its state, keyed `stray:<index>`, with its body (`downed`). */
+  readonly state: EntitySnapshot;
+}
+
 export interface SaveSnapshot {
   readonly version: typeof SAVE_SCHEMA_VERSION;
   readonly seed: number;
@@ -231,6 +249,8 @@ export interface SaveSnapshot {
   readonly formerContracts?: readonly ContractOnSite[];
   /** The heat's reinforcements (G-179). Absent with none about and none due. */
   readonly reinforcements?: ReinforcementsSnapshot;
+  /** Bodies of nobody keyed and none of the heat's (G-233): a won mugging's. Absent with none. */
+  readonly strayBodies?: readonly StrayBodySnapshot[];
   /** Serialized ink story state (inkjs JSON). */
   readonly narrative: string | null;
   readonly meta: { readonly label: string; readonly objective: string };

@@ -36,6 +36,7 @@ import { withAttackLock } from "./world/takedown";
 import { withCarry } from "./world/bodies";
 import { resumeSession } from "./world/session-resume";
 import { reinforcementsSnapshot, restoreReinforcements } from "./world/reinforcements";
+import { restoreStrayBodies, strayBodiesSnapshot } from "./world/stray-bodies";
 
 export { BREACH_DATAMINE_EDDIES, BREACH_ICEPICK_SECONDS, BREACH_MARK_SECONDS } from "./world/contract-commands";
 export { SIM_DT, SIM_HZ } from "./step-rate";
@@ -127,6 +128,8 @@ export class Simulation {
     restoreDoors(sim, snapshot.doors ?? []);
     // The heat's reinforcements (G-179), before the body on her shoulder: it may be one of them.
     restoreReinforcements(sim.world, sim.session.watch, snapshot.reinforcements, () => sim.streamer.takeId(), sim.domain.difficulty.npcHealth);
+    // And the bodies of a won mugging (G-233): one of them may be on her shoulder too.
+    restoreStrayBodies(sim.world, snapshot.strayBodies, () => sim.streamer.takeId(), sim.domain.difficulty.npcHealth);
     // The body on her shoulder (ADR-0065) is saved on the body.
     sim.session.carrying = sim.world.with("downed").entities.find((b) => b.downed.carried)?.id ?? null;
     // A profile asked for in the fight still waits for its end (G-171).
@@ -234,6 +237,7 @@ export class Simulation {
     const ended = this.holder.domain.contracts.active ? null : this.streamer.registeredContract;
     const former = this.streamer.formerSnapshots(this.world);
     const reinforcements = reinforcementsSnapshot(this.world, this.session.watch);
+    const strayBodies = strayBodiesSnapshot(this.world);
     return {
       version: SAVE_SCHEMA_VERSION,
       seed: this.seed,
@@ -247,6 +251,7 @@ export class Simulation {
       ...(ended ? { endedContract: ended } : {}),
       ...(former.length > 0 ? { formerContracts: former } : {}),
       ...(reinforcements ? { reinforcements } : {}),
+      ...(strayBodies.length > 0 ? { strayBodies } : {}),
       narrative,
       meta: { label, objective },
     };
