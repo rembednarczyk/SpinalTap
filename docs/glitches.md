@@ -876,7 +876,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-266 Na pierzei Krakowskiego przy Placu Litewskim styl latarni zmienia się przy x 20 bez oparcia w OSM
 - Status: zgłoszone (2.11, kurator, przegląd #235, T-140)
 - Ważność: S4 · Zasięg: Krakowskie Przedmieście x −87…130 (drogi w598108789 i w40049340 z tagami placu w1054556917, nie deptaka); `lamps.kp-deptak` (pastorały) sięga x 20, choć opis planu mówi „od Kapucyńskiej” (tagi deptaka od x 129,7) · Koszt: mały
-- Poprawka: jeden styl na całej pierzei placu; decyzja użytkownika (2.11: tam, gdzie stylizowane, nie fabryczne) i zdjęcie stanu z 2017 r.: albo pastorały od x −87, albo słupy placu do Kapucyńskiej (x 129,7); kontrola skanu na później: zmiana stylu latarni na osi jednej drogi OSM o tych samych tagach
+- Poprawka (decyzja użytkownika 2.11: pastorały): pastorały na całej pierzei placu od x −87 do Kapucyńskiej (`lamps.kp-deptak` wydłużony na zachód), słupy nowoczesne tylko na alejkach wewnątrz placu; kontrola skanu na później: zmiana stylu latarni na osi jednej drogi OSM o tych samych tagach
 - Pakiet właściciela: docs/world (plan), tools/osm-import (props)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
