@@ -369,6 +369,9 @@ export const MIGRATIONS: Readonly<Record<number, (old: Json) => Json>> = {
     const people = r.people.map((p: unknown) => (isObject(p) ? { ...p, since } : p));
     return { ...old, version: 26, reinforcements: { ...r, people } };
   },
+  // v26 -> v27 (G-208): a walking NPC's stuck check is saved (`walk`, optional). An older save has
+  // none: every NPC starts a new stretch of its walk on loading, as it did before.
+  26: (old) => ({ ...old, version: 27 }),
 };
 
 export class MigrationError extends Error {}

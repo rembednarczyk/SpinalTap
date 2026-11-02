@@ -47,6 +47,8 @@
   "landmark-missing": 0,
   "landmark-default-height": 2,
   "landmark-fake-tower": 0,
+  "landmark-double-tower": 0,
+  "church-tower-off-building": 0,
   "monument-shape-off-tags": 0,
   "passage-blocked": 0,
   "small-freestanding-tall": 2,
@@ -101,5 +103,6 @@
   "door-in-window": 0,
   "door-in-board": 0,
   "door-in-passage": 0,
-  "door-on-game-door": 0
+  "door-on-game-door": 0,
+  "door-faces-underground": 0
 }

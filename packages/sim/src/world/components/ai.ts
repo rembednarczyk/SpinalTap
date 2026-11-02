@@ -97,6 +97,32 @@ export interface GangerAi {
 }
 
 /**
+ * The stuck check of a walking ganger (ADR-0025): where it stood when the current stretch began,
+ * and until when it is getting unstuck. Saved (`EntitySnapshot.walk`, G-208); asleep with its
+ * chunk it wakes without, as a new stretch.
+ */
+export interface WalkProgress {
+  x: number;
+  z: number;
+  since: number;
+  unstickUntil: number;
+  /** Side of the sidestep, flipped every time it gets stuck again. */
+  side: 1 | -1;
+  /**
+   * The repath made when it got stuck, round the static obstacles and the other characters: what
+   * it is made of (the way itself is made again from that), null without one.
+   */
+  plan: WalkPlan | null;
+}
+
+/** What a repath is made of: from where, to where, round which characters. */
+export interface WalkPlan {
+  readonly from: Vec3;
+  readonly goal: Vec3;
+  readonly avoid: readonly Vec3[];
+}
+
+/**
  * A sniper (ADR-0024): no behaviour tree, a small state machine. It keeps to a perch high up,
  * aims for `AIM_TIME` with the laser on (the telegraph), fires, waits, and walks to the perch
  * farthest from the player once the player gets close. Saved (`EntitySnapshot.sniper`, G-185):

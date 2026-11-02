@@ -42,6 +42,11 @@ export interface LublinBuildingData {
   readonly look: number;
   /** Shops on the ground floor (a 4 m storey). */
   readonly shopfront?: true;
+  /**
+   * A church with a tower of the map: in its tags, or a tower way in its outline or up to 10 m
+   * from its walls, imported or not (G-212). The renderer adds no bell towers of its own to it.
+   */
+  readonly mappedTower?: true;
   /** Where the height came from: the `height` tag, `building:levels`, or the district's defaults. */
   readonly source: "height" | "levels" | "default";
   /** Venues in or at it (ADR-0064 stage 4): a point relative to (x, z), the kind, the 2077 name and the neon. */

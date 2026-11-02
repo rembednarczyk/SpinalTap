@@ -2,7 +2,7 @@ import type { ActivityId, EnemyTypeId, EntityId, FactionId, Health, Slope, Vec3,
 import type { Passerby } from "../activity-types";
 import type { Aabb } from "../collision";
 import type { Prism } from "../prism";
-import type { CivilianAi, DownedBody, EscortAi, GangerAi, HideKind, SniperState } from "./ai";
+import type { CivilianAi, DownedBody, EscortAi, GangerAi, HideKind, SniperState, WalkProgress } from "./ai";
 import type { CharacterBody, Combatant, MeleeState, Posture } from "./body";
 import type { Device, HackEffects } from "./devices";
 import type { DoorLeaf, Elevator, ElevatorGate, Interactable, LadderDef } from "./interaction";
@@ -78,6 +78,8 @@ export interface Entity {
   combatant?: Combatant;
   melee?: MeleeState;
   ai?: GangerAi;
+  /** A ganger's stuck check (ADR-0025), once it has run its tree. Saved (G-208). */
+  walk?: WalkProgress;
   /** Enemy type (ADR-0015): weapon, outfit and loot table come from it. */
   enemy?: { readonly type: EnemyTypeId };
   civilian?: CivilianAi;

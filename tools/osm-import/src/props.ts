@@ -20,7 +20,7 @@ import { Site } from "./props-site.ts";
 import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.ts";
 import { MAPPED, SKIPPED, SKIPPED_ART } from "./props-kinds.ts";
 import type * as GameDoors from "./game-doors.ts";
-import { loadCarriageways } from "./props-roads.ts";
+import { loadCarriageways, loadUndergroundWays } from "./props-roads.ts";
 import { addDoors, loadEntrances } from "./props-doors.ts";
 
 const PLAN = join(REPO, "docs/world/lublin-props.todo.json");
@@ -37,7 +37,7 @@ const { byChunk, stats } = generateProps(plan, chunks, loadNodeTags(), decalWall
 // The doors on the facades (ADR-0058 stage 9), after the furniture, whose solids keep their fronts clear.
 const doorWalls = decalWalls.lublinDoorWalls();
 const entrances = loadEntrances();
-const { per: doorsPer, rejected } = addDoors(byChunk as Map<string, StreetPropItem[]>, new Site(chunks), doorWalls, entrances, { surfaceY: (p) => decalWalls.surfaceY(p.x, p.z), gameDoors: doors.gameDoors() });
+const { per: doorsPer, rejected } = addDoors(byChunk as Map<string, StreetPropItem[]>, new Site(chunks), doorWalls, entrances, { surfaceY: (p) => decalWalls.surfaceY(p.x, p.z), gameDoors: doors.gameDoors(), underground: loadUndergroundWays() });
 // The decals (ADR-0058 stage 6) after the furniture and the doors: the stickers go on its poles, the
 // grates keep off its manholes, the wall decals off the doors.
 const decals = addDecals(byChunk as Map<string, StreetPropItem[]>, new Site(chunks), decalWalls.lublinDecalWalls(), {

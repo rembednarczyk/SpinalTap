@@ -16,13 +16,14 @@ import { MAP_SIGN_KIND } from "../../../packages/engine/src/renderer/mapcity/sig
 import { decalChecks } from "./decal-pieces";
 import { lublinDecalWorld } from "./decal-world";
 import { doorChecks } from "./door-pieces";
+import { doorsFacingUnderground } from "./door-streets";
 import { marketChecks } from "./market-pieces";
 import { signsInNeighbours } from "./sign-neighbours";
 import { lanternsByPassages } from "./passage-lanterns";
 import { landmarksAtDefaultHeight } from "./landmark-heights";
 import { bandAcross, lampsOnSteps, stepsNarrowerThanWalls } from "./steps-walls";
 import { stepsAcross, stepsRunsBare } from "./steps-runs";
-import { cityFakeTowers } from "./landmark-towers";
+import { cityChurches, cityFakeTowers, doubleTowers, towersOffBuilding } from "./landmark-towers";
 import { EMPTY_STRIPS_KNOWN, bayCarsMisturned, bayCarsOutOfPark, bayStripsEmptyKnown, bayStripsSparse, crowdLanesOnParking, kerbParksOf, kerbStripsOffCarStreets } from "./kerb-bays";
 import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alone.ts";
 import { correctedLine } from "../../osm-import/src/corrections.ts";
@@ -30,6 +31,7 @@ import { extractFeatures } from "../../osm-import/src/features.ts";
 import { pathWidth, roadWidth } from "../../osm-import/src/ground.ts";
 import { oneway } from "../../osm-import/src/markings.ts";
 import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
+import { loadEntrances } from "../../osm-import/src/props-doors.ts";
 import { SHAPES } from "../../osm-import/src/props-kinds.ts";
 import { addressOf } from "../../osm-import/src/labels.ts";
 import { geoToWorld } from "../../osm-import/src/project.ts";
@@ -1012,6 +1014,10 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "landmark-default-height": () => landmarksAtDefaultHeight(LANDMARK_BUILDINGS, MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)))),
   /** A landmark of the list the map shows whole and without a tower, crowned by the renderer's bell towers (G-210). */
   "landmark-fake-tower": () => cityFakeTowers(LANDMARK_BUILDINGS, SOURCE_OSM),
+  /** A church with a tower of the map in its outline or by its walls, crowned by the renderer's bell towers besides (G-212). */
+  "landmark-double-tower": () => doubleTowers(cityChurches(SOURCE_OSM)),
+  /** A bell tower of the renderer's standing with its middle outside the church's outline, on the grass or the square (G-212). */
+  "church-tower-off-building": () => towersOffBuilding(cityChurches(SOURCE_OSM)),
   /**
    * A monument or an artwork whose shape its OSM tags do not bear out (G-149), judged by the
    * tagged node nearest within 3 m: anything standing for a plaque, a stumbling stone, a mural or
@@ -1496,6 +1502,9 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   ...decalChecks(Object.values(WORLD_STREET_PROPS).flat(), lublinDecalWorld()),
   // The doors on the facades of ADR-0058 stage 9 against the drawn walls, panes, boards and passages (`door-pieces.ts`).
   ...doorChecks(WORLD_SCENERY, Object.values(WORLD_STREET_PROPS).flat(), cityVenueBoards(WORLD_SCENERY)),
+  /** A staircase's door on a wall facing only a way under ground, a yard's wall (G-197, `door-streets.ts`). */
+  "door-faces-underground": () =>
+    doorsFacingUnderground(WORLD_SCENERY, Object.values(WORLD_STREET_PROPS).flat(), cityVenueBoards(WORLD_SCENERY), extractFeatures(SOURCE_OSM).lines, loadEntrances().map((e) => e.p)),
 };
 
 /** A building's own tags in the map data, by the game's id (`w…`, `r…`, a split's `/n` dropped). */

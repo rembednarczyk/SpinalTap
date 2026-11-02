@@ -32,10 +32,10 @@ export const findSchemaError = (s: Json): string | null => {
   if (!isNum(s.seed) || !isNum(s.rngState) || !isNum(s.tick)) return "seed/rngState/tick";
   if (!Array.isArray(s.entities)) return "entities";
   for (const e of s.entities) {
-    const error = findEntityError(e);
+    const error = findEntityError(e, s.tick);
     if (error) return error;
   }
-  const reinforcementsError = findReinforcementsError(s.reinforcements);
+  const reinforcementsError = findReinforcementsError(s.reinforcements, s.tick);
   if (reinforcementsError) return reinforcementsError;
   const st = s.streaming;
   if (!isObject(st) || !Array.isArray(st.loadedChunks) || !st.loadedChunks.every((c) => typeof c === "string")) return "streaming";

@@ -36,7 +36,7 @@ export interface MapBuilding {
   readonly lifted?: boolean;
   /** Parts of it from the map stand on it, lifted (G-049): its towers and turrets are theirs. */
   readonly carriesParts?: boolean;
-  /** A landmark the map shows without a tower (G-210): no bell towers of the renderer's. */
+  /** A landmark the map shows without a tower (G-210), or a church the map has a tower by (G-212): no bell towers of the renderer's. */
   readonly towerless?: boolean;
   /** Shop signs hang from wrought-iron brackets (the Old Town, ADR-0048). */
   readonly bracketSigns?: boolean;

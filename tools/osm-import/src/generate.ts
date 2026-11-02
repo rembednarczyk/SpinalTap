@@ -5,6 +5,7 @@
 import { LUBLIN_ANCHOR } from "../../../packages/core/src/world/city-geo.ts";
 import { asBuilding, isPart, orphanParts, partsByBuilding } from "./building-parts.ts";
 import { smallAlone } from "./building-alone.ts";
+import { buildingsWithTowers, mappedTowers } from "./building-towers.ts";
 import { makeBuilding } from "./buildings.ts";
 import { corrected, correctedLine } from "./corrections.ts";
 import { ALL_CHUNKS, type ChunkSpec } from "./config.ts";
@@ -171,6 +172,7 @@ const generateChunk = (
   passages: readonly PassageOut[],
   parts: ReadonlyMap<string, readonly Area[]>,
   alone: ReadonlySet<string>,
+  towered: ReadonlySet<string>,
   venues: ReadonlyMap<string, readonly WorldVenue[]>,
   kerb: { readonly carParks: readonly Area[]; readonly busStops: readonly Pt[] },
 ) => {
@@ -186,7 +188,7 @@ const generateChunk = (
   let withHoles = 0;
   for (const a of buildings) {
     if (!inRect(centroid(a.ring), spec.rect)) continue;
-    const r = makeBuilding(a, { src, grid: t.grid, altitude, range: spec.district.defaultLevels, shopPoints, namedPoints, civicPoints, alone }, parts.get(a.id));
+    const r = makeBuilding(a, { src, grid: t.grid, altitude, range: spec.district.defaultLevels, shopPoints, namedPoints, civicPoints, alone, towered }, parts.get(a.id));
     if ("skipped" in r) {
       skipped++;
       continue;
@@ -315,12 +317,14 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   const parts = partsByBuilding(buildings, partAreas.filter((p) => !orphans.has(p)));
   // Standing alone is a property of the whole map, not of a chunk: one pass for all of them.
   const alone = smallAlone(buildings);
+  // The map's towers stand for the whole map too: a church's belfry may be mapped across a chunk's edge.
+  const towered = buildingsWithTowers(buildings, mappedTowers(data));
   // Shops, cafés, bars and the rest on the buildings they are in or at (ADR-0064 stage 4).
   // All of them, so a building at a chunk's edge gets the same venues whichever chunks are built.
   const venues = assignVenues(allVenues(data, areas), buildings.map((b) => ({ id: b.id, ring: b.ring })));
   const mapped = allVenues(data, areas).filter((v) => chunks.some((c) => inRect(v.at, c.rect)));
   const kerb = { carParks: areas, busStops: busStopPosts(data, mapLines, areas) };
-  const results = chunks.map((c) => generateChunk(c, src, buildings, bands, lines, pois, markings, passages, parts, alone, venues, kerb));
+  const results = chunks.map((c) => generateChunk(c, src, buildings, bands, lines, pois, markings, passages, parts, alone, towered, venues, kerb));
   const count = (f: (v: WorldVenue) => boolean) => mapped.filter(f).length;
   const venueStats: VenueStats = {
     total: mapped.length,
