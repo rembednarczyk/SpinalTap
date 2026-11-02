@@ -37,3 +37,20 @@ export const towersAtDefaultHeight = (
     if (!tower || sized || b.source !== "default") return [];
     return [{ at: `${b.x.toFixed(0)},${b.z.toFixed(0)}`, what: `${b.id} ${t["tower:type"] ?? t["man_made"] ?? ""}`.trim() }];
   });
+
+interface MapTower {
+  readonly id: string;
+  readonly x: number;
+  readonly z: number;
+  readonly tags: Readonly<Record<string, string>>;
+}
+
+/**
+ * Each tower the map draws round an outline of its own (`man_made=tower`) that the game has no
+ * building of, its own or a split piece of it (G-098): a bell tower mapped without `building`,
+ * left out of the import with the silhouette it gives its church.
+ */
+export const towersSkipped = (towers: readonly MapTower[], built: ReadonlySet<string>): { readonly at: string; readonly what: string }[] =>
+  towers
+    .filter((t) => t.tags["man_made"] === "tower" && !built.has(t.id))
+    .map((t) => ({ at: `${t.x.toFixed(0)},${t.z.toFixed(0)}`, what: `${t.id} ${t.tags["tower:type"] ?? t.tags["man_made"]}` }));

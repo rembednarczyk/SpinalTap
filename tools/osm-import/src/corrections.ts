@@ -73,6 +73,17 @@ export const TAG_CORRECTIONS: readonly TagCorrection[] = [
     reason: "wieża cerkwi św. Jozafata: szczyt y 9,5 z NMPT wobec y 12,2 z domyślnych 4 kondygnacji",
     ref: "T-129",
   },
+  {
+    // The Brigittines' bell tower: OSM has only `man_made=tower` and `tower:type=bell_tower`, a
+    // part of the church w66264082 without a height. NMPT GUGiK has the helmet's top at y 32.4 in
+    // the middle of the outline over the tower's crown at y 23.2..23.5 along its walls. A part's
+    // `height` counts over its church's base, the top of the church's plinth at y 0.9, hence
+    // 32.4 - 0.9, of it 9.1 the helmet.
+    id: "w1090997970",
+    tags: { height: "31.5", "roof:height": "9.1" },
+    reason: "wieża Brygidek: hełm do y 32,4 i korona y 23,2–23,5 z NMPT, w OSM bez wysokości",
+    ref: "T-060",
+  },
   // The castle stairs (Brabander, 1954): OSM has no `width` on their flights and landings, so they
   // were 3 m and 2-2.5 m bands, a dark strip up the slope. Their walls w231832094 and w231832095
   // stand 9.6..10.1 m apart (centre lines), about 11 m with the balustrades on the orthophoto.

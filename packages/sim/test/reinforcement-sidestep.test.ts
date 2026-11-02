@@ -18,7 +18,12 @@ const onTheRoof = (seed: number, level: HeatLevel): Simulation => {
   teleportPlayer(start, ROOF);
   const fresh = start.snapshot(null, "t", "");
   const heat: HeatState = { level, faction: "tessen", searching: true, lastKnown: ROOF, searchLeft: 30, cooldown: 0 };
-  return Simulation.fromSnapshot(roundTrip({ ...fresh, domain: { ...fresh.domain, heat } }));
+  const sim = Simulation.fromSnapshot(roundTrip({ ...fresh, domain: { ...fresh.domain, heat } }));
+  // The reinforcements' ids follow the city's entities, so a building more in the map (G-098)
+  // flips their parity. Ids spent here give the first one (number 1) an even id: by its id it
+  // would lean the other way, whatever the map.
+  if (sim.streamer.takeId() % 2 === 0) sim.streamer.takeId();
+  return sim;
 };
 
 describe("a reinforcement leans to the side of its number (G-208)", () => {

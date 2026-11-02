@@ -174,7 +174,7 @@ describe("determinism", () => {
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
     const sim = runReplay(1234, script());
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"8b844ee7"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"96d8aafb"`);
     // Re-recorded for the v18 field (ADR-0066), the v19 version (ADR-0065, no new rule), the v20
     // version (G-171, no new rule), the v21 version (G-174, no new rule), the v22 version (G-178,
     // no new rule) and the v23 reinforcements (G-179: the run's are saved now, the keyed world ends
@@ -186,6 +186,9 @@ describe("determinism", () => {
     // stuck reinforcement has no repath and leans (the player on a warehouse roof in the docks,
     // `reinforcement-sidestep.test.ts`), not in this run: without the field, as v17, it is the
     // golden of before, and as v19 to v26 the goldens of those.
+    // Re-recorded (with the "hard" one) for G-098, no new rule: the Brigittines' bell tower is a
+    // building more in the map, so the ids of the run's entities come one later and a stuck
+    // ganger's first side (by its id) flips: only the saved `walk` differs, the v26 hash stands.
     expect(v17HashOf(sim)).toBe("c52fd247");
     expect(v19HashOf(sim)).toBe("ef63b731");
     expect(v20HashOf(sim)).toBe("9957ac6d");
@@ -201,7 +204,7 @@ describe("determinism", () => {
     const sim = runReplay(1234, hardScript());
     expect(sim.domain.difficulty).toEqual(DIFFICULTY_PRESETS.hard);
     expect(hashOf(sim)).toBe(hashOf(runReplay(1234, hardScript())));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"48dd0c70"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"f8ea7928"`);
     // Not just the field: without it the run still ends elsewhere than on "normal".
     expect(v17HashOf(sim)).not.toBe("c52fd247");
     expect(v19HashOf(sim)).toBe("e296d440");
