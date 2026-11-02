@@ -650,13 +650,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: cel uploadu jako `security:<n>@<since>` (klucz z G-202); pamięć hacków osobno dla posiłków albo większa granica z testem; przy balansie (ADR-0059 etap 8) ocenić XP za posiłki w długim heacie
 - Pakiet właściciela: packages/sim, packages/core
 
-### G-210 Proceduralna dzwonnica z iglicą na Kaplicy Trójcy
-- Status: w PR #190 (2.11, PRZYJĘTE przez weryfikatora; kurator: NIE PRZYJĘTE z uwagami): `TOWERLESS_OSM` (Kaplica i Bernardyni), kontrola `landmark-fake-tower` baza 0. Kaplica zgodna. Bernardyni mają prawdziwą wieżę (T-120, G-214): poprawić komentarz w `landmarks/match.ts` i opis testu albo zdjąć ich z listy
-- Ważność: S3 (proponowana: fałszywa iglica jest najwyższym akcentem wzgórza zamkowego zamiast Donżonu) · Zasięg: Kaplica w66258167 (941; 214,6), możliwe inne kościoły z listy zabytków bez części i bez `tower` w OSM
-- Przyczyna: `packages/engine/src/renderer/mapcity/roof-plan.ts` (`towerSpots`/`addTowers`) dokłada wieżę kościołom bez `building:part`, więc wyłączenie z G-057 nie działa; korona wieży ok. y 19,0, iglica do ok. y 28–30 (Donżon 16,9; prawdziwa Kaplica bez wieży, szczyt zachodni ok. y 16,9)
-- Poprawka: bez proceduralnej wieży na zabytkach z `LANDMARK_BUILDINGS` bez `tower` w OSM (albo przepis Z3); kontrola skanu `landmark-fake-tower` (baza ≥ 1); migawka NPR świadomie
-- Pakiet właściciela: packages/engine (renderer/mapcity), tools/glitch-scan
-
 ### G-212 Podwójne wieże: proceduralna obok wieży z OSM
 - Status: zgłoszone (2.11, naprawiacz G-210)
 - Ważność: S4 · Zasięg: cerkiew św. Jozafata w69916021 (wieża z OSM w1382552285 przy (270; −9)) i kościół św. Mikołaja w66258180 (dzwonnica z OSM w680377807 przy (879; 545)) dostają dodatkowo proceduralną wieżę (`roof-plan` `addTowers`); Brygidki w66264082: proceduralne wieże, prawdziwa w1090997970 niezaimportowana (G-098)

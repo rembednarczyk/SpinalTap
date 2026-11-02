@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-210 Proceduralna dzwonnica z iglicą na Kaplicy Trójcy
+- Status: naprawione w #190 (2.11, PRZYJĘTE; Bernardyni na liście do czasu G-214, bo ich prawdziwa wieża stoi przy południowej ścianie)
+- Ważność: S3 (proponowana: fałszywa iglica jest najwyższym akcentem wzgórza zamkowego zamiast Donżonu) · Zasięg: Kaplica w66258167 (941; 214,6), możliwe inne kościoły z listy zabytków bez części i bez `tower` w OSM
+- Przyczyna: `packages/engine/src/renderer/mapcity/roof-plan.ts` (`towerSpots`/`addTowers`) dokłada wieżę kościołom bez `building:part`, więc wyłączenie z G-057 nie działa; korona wieży ok. y 19,0, iglica do ok. y 28–30 (Donżon 16,9; prawdziwa Kaplica bez wieży, szczyt zachodni ok. y 16,9)
+- Poprawka: bez proceduralnej wieży na zabytkach z `LANDMARK_BUILDINGS` bez `tower` w OSM (albo przepis Z3); kontrola skanu `landmark-fake-tower` (baza ≥ 1); migawka NPR świadomie
+- Pakiet właściciela: packages/engine (renderer/mapcity), tools/glitch-scan
+
 ### G-211 Teleport (narzędzie zrzutów) na targu i w dokach ląduje we wnętrzu
 - Status: niepotwierdzone (2.11, łowca na origin/main 421a10b; do zamknięcia jako odrzucone, nie do odtworzenia)
 - Ważność: S4 (gdyby się potwierdziło) · Zasięg: zgłoszone (2689; 247) w dokach i (550; 281) na targu
