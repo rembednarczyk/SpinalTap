@@ -1,1 +1,0 @@
-Wolnostojące wieże z mapy (dzwonnica św. Mikołaja, wieża cerkwi św. Jozafata, Baszta Gotycka, Donżon) mają fasadę wieży zamiast rzędów okien mieszkań, a dzwonnice bez dachu w mapie dostają dach namiotowy (G-232).

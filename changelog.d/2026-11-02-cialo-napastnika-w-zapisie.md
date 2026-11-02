@@ -1,1 +1,0 @@
-Ciało napastnika z wygranego napadu (obalonego albo zabitego takedownem) zostaje po zapisie i wczytaniu tam, gdzie było: na ulicy, na ramieniu gracza albo w kryjówce; zapis w trakcie napadu kończy go jak odejście (G-233).
