@@ -50,12 +50,17 @@ const inside = (...parts) => {
   return join(out, rel);
 };
 
+/** The User-Agent of every download of the project's tools (the same as the map tools). */
+const USER_AGENT = "SekiSenshi-topo/1.0";
+
 const fetchChecked = async (url, dst, expected) => {
   if (existsSync(dst) && sha256(readFileSync(dst)) === expected) {
     console.log(`ok    ${dst}`);
     return false;
   }
-  const res = await globalThis.fetch(url, { redirect: "follow" });
+  // One request per file, with the project's User-Agent, and no retry: an HTTP 429 (or any error)
+  // stops this file, so a rate limit is never hammered.
+  const res = await globalThis.fetch(url, { redirect: "follow", headers: { "User-Agent": USER_AGENT } });
   if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
   const bytes = Buffer.from(await res.arrayBuffer());
   const got = sha256(bytes);
