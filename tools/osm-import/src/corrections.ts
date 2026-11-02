@@ -96,6 +96,16 @@ export const TAG_CORRECTIONS: readonly TagCorrection[] = [
   church("w66335226", 21.4, 7.2, "św. Piotra, nawa (szczyt fasady do y 20,9)", 12.5, 19.7),
   church("w66258180", 14.6, 4, "św. Mikołaja, nawa z dala od drzew", 8.5, 12.5),
   church("w66264148", 12.6, 2.7, "cerkiew Przemienienia, nawa (dzwonnica osobno)", -7, -4.3),
+  {
+    // The steps off the Zamkowa viaduct's north side: the way starts on a node of the viaduct
+    // w232362907 (deck y -13.5) and ends on the path w714035045 down to Plac Zamkowy (y -19);
+    // the NMT falls 1.6 m along it and the twin flight on the south side, w294098693, from the
+    // viaduct's next node, is tagged `incline=down`. Its `incline=up` was the way drawn top down.
+    id: "w56965515",
+    tags: { incline: "down" },
+    reason: "schody z wiaduktu Zamkowej w dół do ścieżki ku Placowi Zamkowemu: węzeł na wiadukcie, NMT −1,6 m, bliźniacze w294098693 incline=down",
+    ref: "T-131",
+  },
   // The castle stairs (Brabander, 1954): OSM has no `width` on their flights and landings, so they
   // were 3 m and 2-2.5 m bands, a dark strip up the slope. Their walls w231832094 and w231832095
   // stand 9.6..10.1 m apart (centre lines), about 11 m with the balustrades on the orthophoto.

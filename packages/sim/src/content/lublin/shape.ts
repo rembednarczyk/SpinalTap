@@ -146,3 +146,42 @@ export const stepRamps = (chunks: readonly LublinChunkData[], width = 3, blend =
   }
   return out;
 };
+
+/** The rise of one outdoor step (m): what a flight's mapped `step_count` climbs by. */
+export const STEP_RISE = 0.16;
+/** How far a flight's top may lie under its foot and the terrain be left as it is (m): a flight about level is G-229's. */
+const TOP_UNDER_FOOT = 0.1;
+
+/**
+ * Ramps along the flights of steps whose map `incline` the terrain contradicts (G-236): the NMT
+ * under a building is interpolated, so the ground at a church's portal may lie below the foot of
+ * the steps up to it. Such a flight gets an even grade from its foot, kept at the terrain's
+ * height, up its `step_count` risers (or as far as the terrain fell), one ramp per segment. The
+ * others are left to the terrain, which climbs them the right way.
+ */
+export const flightRamps = (chunks: readonly LublinChunkData[], width = 3, blend = 1.5): Ramp[] => {
+  const out: Ramp[] = [];
+  const seen = new Set<string>();
+  for (const c of chunks) {
+    for (const f of c.flights ?? []) {
+      if (seen.has(f.id)) continue;
+      seen.add(f.id);
+      const pts: GroundPoint[] = [];
+      for (let i = 0; i + 1 < f.line.length; i += 2) pts.push({ x: f.line[i]!, z: f.line[i + 1]! });
+      const foot = pts[0];
+      const top = pts[pts.length - 1];
+      if (!foot || !top || pts.length < 2) continue;
+      const yFoot = mapHeight(chunks, foot.x, foot.z);
+      const fall = yFoot - mapHeight(chunks, top.x, top.z);
+      if (fall <= TOP_UNDER_FOOT) continue;
+      const rise = f.steps !== undefined ? f.steps * STEP_RISE : fall;
+      const along = [0];
+      for (let i = 1; i < pts.length; i++) along.push(along[i - 1]! + Math.hypot(pts[i]!.x - pts[i - 1]!.x, pts[i]!.z - pts[i - 1]!.z));
+      const length = along[along.length - 1]! || 1;
+      for (let i = 0; i + 1 < pts.length; i++) {
+        out.push({ a: pts[i]!, b: pts[i + 1]!, ya: yFoot + (rise * along[i]!) / length, yb: yFoot + (rise * along[i + 1]!) / length, width, blend });
+      }
+    }
+  }
+  return out;
+};

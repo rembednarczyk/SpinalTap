@@ -23,6 +23,7 @@ import { lanternsByPassages } from "./passage-lanterns";
 import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight } from "./landmark-heights";
 import { bandAcross, lampsOnSteps, stepsNarrowerThanWalls } from "./steps-walls";
 import { drawnFlight, stepsAcross, stepsHidden, stepsRunsBare } from "./steps-runs";
+import { stepsInclineAgainst } from "./steps-incline";
 import { cityChurches, cityFakeTowers, cityTowers, doubleTowers, dwellingTowers, towersOffBuilding } from "./landmark-towers";
 import { EMPTY_STRIPS_KNOWN, bayCarsMisturned, bayCarsOutOfPark, bayStripsEmptyKnown, bayStripsSparse, crowdLanesOnParking, kerbParksOf, kerbStripsOffCarStreets } from "./kerb-bays";
 import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alone.ts";
@@ -934,6 +935,15 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   },
   /** A band of map steps the renderer draws nothing on, too short or too narrow for a flight: a hole in the steps (G-213). */
   "steps-band-hidden": () => stepsHidden(MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.surface === "steps").map((g) => worldOutline({ x: 0, z: 0, outline: g.outline })))),
+  /** A flight of map steps whose game terrain falls against its `incline` by 0.3 m or more, end to end (G-236). */
+  "steps-incline-against": () => {
+    const terrain = (p: Pt) => {
+      const g = FIELD.gridAt(p.x, p.z);
+      return g ? terrainHeightAt(g, p.x, p.z) : 0;
+    };
+    const onMap = (p: Pt) => MAP_CHUNKS.some((c) => p.x >= c.bounds.minX && p.x <= c.bounds.maxX && p.z >= c.bounds.minZ && p.z <= c.bounds.maxZ);
+    return stepsInclineAgainst(extractFeatures(SOURCE_OSM).lines.map((l) => correctedLine(l)), terrain, onMap);
+  },
   /** A lamp or a candelabrum of the generator's table standing inside a band of steps (G-203). */
   "lamp-on-steps": () => {
     const flights = MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.surface === "steps").map((g) => worldOutline({ x: 0, z: 0, outline: g.outline })));
