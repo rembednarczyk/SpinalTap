@@ -22,21 +22,23 @@ const BUCKET = 64;
 const inside = (r: Rect, x: number, z: number): boolean => x >= r.minX && x <= r.maxX && z >= r.minZ && z <= r.maxZ;
 const distanceTo = (r: Rect, x: number, z: number): number => Math.hypot(Math.max(r.minX - x, 0, x - r.maxX), Math.max(r.minZ - z, 0, z - r.maxZ));
 
-/**
- * The ground of the world (ADR-0043): the terrain of the chunk a point lies in (the first one in
- * table order, like `chunkAt`), or the street plane y = 0 in a chunk without terrain. Outside
- * every chunk, the nearest chunk's ground. Pure content, never saved; a lookup is a bucket of a
- * fixed grid and a bilinear sample, without allocation.
- */
-/** The point and its four samples of the gradient, in half spans. */
+/** The step a character walks up without noticing (the movement's `STEP_HEIGHT`): a seam beside a flight no higher is no bank (G-255). */
+const SEAM_STEP = 0.45;
+
+/** The four samples of the gradient, in half spans: east, west, north, south. */
 const AROUND: readonly (readonly [number, number])[] = [
-  [0, 0],
   [1, 0],
   [-1, 0],
   [0, 1],
   [0, -1],
 ];
 
+/**
+ * The ground of the world (ADR-0043): the terrain of the chunk a point lies in (the first one in
+ * table order, like `chunkAt`), or the street plane y = 0 in a chunk without terrain. Outside
+ * every chunk, the nearest chunk's ground. Pure content, never saved; a lookup is a bucket of a
+ * fixed grid and a bilinear sample, without allocation.
+ */
 export class GroundField {
   /** Some chunk has terrain; without it every query is the old flat street. */
   readonly hasTerrain: boolean;
@@ -125,8 +127,9 @@ export class GroundField {
   /**
    * Gradient of the ground at (x, z), written into `out`: central differences over 0.5 m, a
    * smoothed normal that ignores bumps finer than that. Zero on the street plane. `reach` as in
-   * `heightAt`. On a flight of steps hung off a bridge in reach, or with a sample on one, the
-   * flight's own grade (G-255).
+   * `heightAt`. On a flight of steps hung off a bridge in reach, the flight's own grade (G-255);
+   * and beside one, where a sample lies on it, when no sample is more than a step off the point:
+   * its seam with the terrain is no bank, but a wall above a step past the flight still is.
    */
   gradientAt(x: number, z: number, out: { x: number; z: number }, reach = Infinity): { x: number; z: number } {
     if (!this.hasTerrain || !this.gridAt(x, z)) {
@@ -136,10 +139,18 @@ export class GroundField {
     }
     const decks = this.chunks[this.chunkIndex(x, z)]?.decks;
     const h = SLOPE_HALF_SPAN;
-    // Beside the flight too, where the samples reach onto it: a seam a step or less high is no bank.
-    if (decks) for (const [dx, dz] of AROUND) if (flightGradientAt(decks, x + dx * h, z + dz * h, reach, out)) return out;
-    out.x = (this.heightAt(x + h, z, reach) - this.heightAt(x - h, z, reach)) / (2 * h);
-    out.z = (this.heightAt(x, z + h, reach) - this.heightAt(x, z - h, reach)) / (2 * h);
+    if (decks && flightGradientAt(decks, x, z, reach, out)) return out;
+    const east = this.heightAt(x + h, z, reach);
+    const west = this.heightAt(x - h, z, reach);
+    const north = this.heightAt(x, z + h, reach);
+    const south = this.heightAt(x, z - h, reach);
+    if (decks) {
+      const here = this.heightAt(x, z, reach);
+      const seam = Math.max(Math.abs(east - here), Math.abs(west - here), Math.abs(north - here), Math.abs(south - here)) <= SEAM_STEP;
+      if (seam) for (const [dx, dz] of AROUND) if (flightGradientAt(decks, x + dx * h, z + dz * h, reach, out)) return out;
+    }
+    out.x = (east - west) / (2 * h);
+    out.z = (north - south) / (2 * h);
     return out;
   }
 

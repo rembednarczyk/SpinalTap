@@ -115,6 +115,62 @@ describe("walking the steps from the viaduct of Zamkowa (G-255)", () => {
     }
   }, 60_000);
 
+  it("keeps the viaduct's deck a wall from the bend's landing: no step up onto it over a step", () => {
+    // From the landing (−15.31) towards the deck 1.6–1.8 m higher beside it, walking, running, crouching.
+    for (const [fx, fz, tx, tz] of [
+      [731.6, 159.4, 731.27, 158.79],
+      [729.9, 158.6, 729.37, 157.25],
+      [729.2, 158.4, 728.61, 157.45],
+      [732.5, 160.1, 732.19, 159.59],
+    ] as const) {
+      for (const mode of [{}, { sprint: true }, { crouch: true }]) {
+        teleportPlayer(sim, { x: fx, y: sim.streamer.ground.heightAt(fx, fz, -15.31 + STEP_HEIGHT), z: fz });
+        sim.step();
+        let up = 0;
+        for (let i = 0; i < 120; i++) {
+          const p = sim.player()!;
+          p.yaw = Math.atan2(tx - fx, tz - fz);
+          const y = p.position.y;
+          sim.step(input({ moveZ: 1, ...mode }));
+          up = Math.max(up, sim.player()!.position.y - y);
+        }
+        expect(up, `(${fx}, ${fz}) ${JSON.stringify(mode)}`).toBeLessThanOrEqual(STEP_HEIGHT);
+      }
+    }
+  }, 60_000);
+
+  it("keeps the flight's sides a wall: a body pushed into them from 4 m off never steps up more than a step", () => {
+    const bad: string[] = [];
+    for (let seg = 1; seg <= 3; seg++) {
+      const [a, b] = [LINE[seg]!, LINE[seg + 1]!];
+      const l = Math.hypot(b.x - a.x, b.z - a.z);
+      const u = { x: (b.x - a.x) / l, z: (b.z - a.z) / l };
+      for (const s of [0.1, 0.3, 0.5, 0.7, 0.9]) {
+        for (const side of [1, -1]) {
+          for (const v of [1.4, 3, 6]) {
+            for (const ang of [0, 0.6]) {
+              const from = { x: a.x + u.x * s * l - u.z * 4 * side, z: a.z + u.z * s * l + u.x * 4 * side };
+              const y0 = sim.streamer.ground.heightAt(from.x, from.z, sim.streamer.ground.heightAt(from.x, from.z, -1e9) + STEP_HEIGHT);
+              const e = sim.world.add({ id: 9_256, position: { ...from, y: y0 }, prevPosition: { ...from, y: y0 }, yaw: 0, prevYaw: 0, pitch: 0, body: { radius: 0.38, height: 1.8 }, velocity: { x: 0, y: 0, z: 0 } });
+              const d0 = { x: u.z * side, z: -u.x * side };
+              const d = { x: d0.x * Math.cos(ang) - d0.z * Math.sin(ang), z: d0.x * Math.sin(ang) + d0.z * Math.cos(ang) };
+              let up = 0;
+              for (let i = 0; i < 90; i++) {
+                const y = e.position.y;
+                e.velocity = { x: d.x * v, y: e.velocity?.y ?? 0, z: d.z * v };
+                sim.step();
+                up = Math.max(up, e.position.y - y);
+              }
+              sim.world.remove(e);
+              if (up > STEP_HEIGHT) bad.push(`run ${seg} at ${s} side ${side} ${v} m/s ${ang}: ${up.toFixed(2)} m`);
+            }
+          }
+        }
+      }
+    }
+    expect(bad).toEqual([]);
+  }, 120_000);
+
   it("lets a body the AI steers (by its velocity) up them as the player", () => {
     const way = aside(0);
     const start = way[0]!;
