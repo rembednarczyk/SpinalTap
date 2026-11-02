@@ -100,7 +100,7 @@ describe("TPP camera aimed from close up (G-275)", () => {
   ])("crouched, aimed at a target %s m ahead at %s m: the figure stays out of 15 degrees round the crosshair, or fades", (distance, height) => {
     const { camera, figure } = aimedFigure(1);
     let fade = 0;
-    camera.onBodyFade = (f) => (fade = f);
+    camera.bodyFade.onChange = (f) => (fade = f);
     figure.root.rotation.y = aimAt(camera, { x: 0, y: height, z: distance }, 1).yaw;
     // Before G-275 the gun hand and the head came within 10-15 degrees of it.
     if (fade < 0.5) expect(clearance(camera, figure)).toBeGreaterThan(15);
@@ -109,7 +109,7 @@ describe("TPP camera aimed from close up (G-275)", () => {
   it("keeps the figure solid while it is out of the way", () => {
     const { camera } = aimedFigure(1);
     let fade = 0;
-    camera.onBodyFade = (f) => (fade = f);
+    camera.bodyFade.onChange = (f) => (fade = f);
     settle(camera, { position: { x: 0, y: 0, z: 0 }, yaw: 0, pitch: 0, speed: 0, crouch: 1, aim: 1 });
     expect(fade).toBe(0);
     settle(camera, { position: { x: 0, y: 0, z: 0 }, yaw: 0, pitch: 0, speed: 0 });
@@ -119,7 +119,7 @@ describe("TPP camera aimed from close up (G-275)", () => {
   it("fades the figure to dots when a wall pulls the camera in close to it, and brings it back", () => {
     const { camera } = aimedFigure(0);
     const fades: number[] = [];
-    camera.onBodyFade = (f) => fades.push(f);
+    camera.bodyFade.onChange = (f) => fades.push(f);
     camera.setOccluder(() => 0.5);
     settle(camera, { position: { x: 0, y: 0, z: 0 }, yaw: 0, pitch: 0, speed: 0 });
     expect(Math.hypot(camera.camera.position.x, camera.camera.position.z)).toBeLessThan(1);
@@ -135,7 +135,7 @@ describe("TPP camera aimed from close up (G-275)", () => {
   it("never fades the figure in first person or in the reference view", () => {
     const { camera } = aimedFigure(0);
     let fade = 0;
-    camera.onBodyFade = (f) => (fade = f);
+    camera.bodyFade.onChange = (f) => (fade = f);
     camera.setOccluder(() => 0.5);
     settle(camera, { position: { x: 0, y: 0, z: 0 }, yaw: 0, pitch: 0, speed: 0 });
     expect(fade).toBeGreaterThan(0.5);

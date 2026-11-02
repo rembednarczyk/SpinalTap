@@ -223,12 +223,6 @@ export class CharacterViews implements FxActors {
     if (v.rig.root.isEnabled() !== visible) v.rig.root.setEnabled(visible);
   }
 
-  /** Halftone fade of the player's figure in front of the TPP camera (G-275); 0 makes it solid again. */
-  setBodyFade(id: EntityId, amount: number): void {
-    const v = this.views.get(id);
-    if (v) fadeFigure(v.rig.root, amount);
-  }
-
   /** Every character with its scan class; the meshes of the dressed model when there is one. */
   scanTargets(visit: ScanVisitor): void {
     for (const [id, v] of this.views) visit(id, v.scan, () => this.models.of(v.rig)?.model.meshes ?? v.rig.meshes);

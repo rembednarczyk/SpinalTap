@@ -3,7 +3,7 @@ import { type CameraMode, FOV_REFERENCE_ASPECT, type Transform, type Vec3, type 
 import { eyeHeightAt, tppShoulderOffset } from "@seki/sim";
 import { applyOutline } from "../npr/outline";
 import type { ToonMaterials } from "../npr/toon-material";
-import { FADE_MAX, bodyFadeTarget } from "./body-fade";
+import { BodyFade, bodyFadeTarget } from "./body-fade";
 
 /** Over-the-shoulder distance behind the pivot (ADR-0049: 2.7 m before). */
 const TPP_DISTANCE = 2.2;
@@ -119,10 +119,8 @@ export class CameraRig {
   private reference: { position: Vector3; target: Vector3 } | null = null;
   private occluder: CameraOccluder | null = null;
   onBodyVisibility: (visible: boolean) => void = () => {};
-  /** Eased halftone fade of the figure in the TPP view, 0..FADE_MAX (G-275). */
-  private fade = 0;
-  /** Fade of the player's figure in front of the camera, 0 solid .. 1 gone; called when it changes. */
-  onBodyFade: (amount: number) => void = () => {};
+  /** Halftone fade of the player's figure when it is in the way of the TPP view (G-275). */
+  readonly bodyFade = new BodyFade();
 
   constructor(
     private readonly scene: Scene,
@@ -303,7 +301,7 @@ export class CameraRig {
       this.camera.fov = this.hipFov;
       this.viewmodel.setEnabled(false);
       this.onBodyVisibility(true);
-      this.updateFade(0, 1);
+      this.bodyFade.update(0, 1);
       return;
     }
     if (!target) return;
@@ -380,16 +378,6 @@ export class CameraRig {
     // The guard turns the weapon flat across the view.
     this.viewmodel.rotation.z = Math.sin(t) * 0.02 * bob + reloading * 0.7 + guard * 1.25 + sw.rz;
     this.onBodyVisibility(!fpp);
-    this.updateFade(fpp ? 0 : bodyFadeTarget(pos, dir, p, FIGURE_HEIGHT + (FIGURE_CROUCHED - FIGURE_HEIGHT) * Math.min(1, Math.max(0, crouch))), dt);
-  }
-
-  private updateFade(want: number, dt: number): void {
-    const goal = want * FADE_MAX;
-    const next = this.fade + (goal - this.fade) * Math.min(1, dt * 10);
-    // Snapped once close, so a settled fade stops calling back every frame.
-    const fade = Math.abs(goal - next) < 0.01 ? goal : next;
-    if (fade === this.fade) return;
-    this.fade = fade;
-    this.onBodyFade(fade);
+    this.bodyFade.update(fpp ? 0 : bodyFadeTarget(pos, dir, p, FIGURE_HEIGHT + (FIGURE_CROUCHED - FIGURE_HEIGHT) * Math.min(1, Math.max(0, crouch))), dt);
   }
 }
