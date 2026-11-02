@@ -629,7 +629,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 (proponowana) · Zasięg: lokalny (sylwetka Zamku) · Koszt: mały
 - Gdzie: Kaplica w66258167 (941; 214,6), Donżon w450180469 (893,1; 214,6)
 - Dowód: NMPT GUGiK 0,5 m. Kaplica: okap ok. y 7 wobec 9,7 w grze, kalenica y 15,3 wobec 14,1; prezbiterium niższe (kalenica ok. y 11). Donżon: korona ok. y 16,4–16,9 wobec 18,6
-- Poprawka: `corrections.ts`: Kaplica `height` ok. 13,3 (nad cokołem 1,3), `roof:height` ok. 8,3; Donżon `height` ok. 23,3; prezbiterium Kaplicy jako część w etapie Z3 planu
+- Poprawka: `corrections.ts`: Kaplica `height` 21,6 (ściany 13,3 + dach 8,3, wzór importera: walls = height − min(roof, height/2)), `roof:height` 8,3; Donżon `height` ok. 23,3; prezbiterium Kaplicy jako część w etapie Z3 planu
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: kontrola `landmark-default-height` (baza 3) spada do 2; okap i kalenica Kaplicy oraz korona Donżonu w danych gry co do 1 m z NMPT
 
