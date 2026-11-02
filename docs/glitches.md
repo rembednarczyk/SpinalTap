@@ -95,7 +95,8 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | `church-over-nmpt` | Budynek `use: church` z `source: "default"` bez pomiaru albo z okapem lub kalenicą ponad 1,5 m nad pomiarem NMPT (`CHURCH_SURFACE`); dawniej proponowana jako `church-default-height` | 9 przed #208, 0 po #208; G-216 |
 | `church-part-below-roof` | Kościół z pomiarem NMPT, w którego obrysie ponad 15 % komórek leży co najmniej 2 m nad terenem i ponad 3 m pod okapem gry (niższa część na wysokości nawy); dane z siatki NMPT jak `CHURCH_SURFACE` albo lista udziałów | 5 (szacunek z sondy #208: Świętego Ducha, św. Piotra, Brygidki, Karmelici, św. Mikołaja); G-238 |
 | `osm-tower-default-height` | Budynek z OSM z `man_made=tower` albo `tower:type` bez `height` i `building:levels` (wysokość z wartości domyślnej dzielnicy) | 1 (w680377807 dzwonnica św. Mikołaja, G-235; w1382552285 wieża św. Jozafata poprawiona w #207); G-224 |
-| `tower-area-missing` | Obrys z OSM `man_made=tower` (zamknięta droga, środek w mapie) bez budynku gry o tym ID, ani własnego, ani części innego | 2 (w1002739983, w1002739984 Pałac Lubomirskich, G-249); 3 przed #216 (G-098) |
+| `tower-area-missing` | Obrys z OSM `man_made=tower` (zamknięta droga, środek w mapie) bez budynku gry o tym ID, ani własnego, ani części innego | 2 (w1002739983, w1002739984 Pałac Lubomirskich, G-249); 3 przed #216 (G-098); 0 po #220 |
+| `measured-over-nmpt` | Budynek albo część z pomiarem NMPT w tabeli jak `CHURCH_SURFACE` (rozszerzonej o budynki niekościelne: Pałac Lubomirskich w67508859 okap 11,0 i wierzch 12,0, wieże w1002739983/4 wierzch 17,9, w232805924 wierzch 5,1), którego okap albo wierzch w grze odbiega od pomiaru o ponad 1,5 m | 1 (w232805924, G-251); 0 po G-251; T-136, T-137 |
 | `tower-roof-ridge` | Część albo budynek z `man_made=tower` lub `tower:type`, z dachem (`roof` > 0) i bez `roofShape`, który renderer rysuje jako czterospadowy z kalenicą, choć NMPT ma jeden wierzchołek | 1 (szacunek: w1090997970 Brygidki, T-060) |
 | `steps-narrower-than-walls` | Bieg `highway=steps` między dwoma równoległymi `barrier=wall` (do 15 m od osi po obu stronach), gdy odstęp murków przekracza szerokość pasa `steps` w grze o ponad 1 m. Wymaga murków w wyciągu | 1 (schody zamkowe); G-203 |
 | `plan-prop-off-target` | Rekwizyt z wpisu planu z `points` przesunięty przez generator o ponad 4 m od swojego punktu albo na drugą stronę ściany budynku | 2 (reflektory Zamku); G-206 |
@@ -817,7 +818,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/i18n-scan
 
 ### G-249 Wieże Pałacu Lubomirskich bez bryły, pałac z wysokości domyślnej 3–4 m za niski
-- Status: w PR #220 (2.11, PRZYJĘTE przez weryfikatora; dach pałacu 2,1 → 1,0 m po jego uwadze (d44494a); kurator w toku): wieże wierzch y 17,9, pałac okap y 11,0 / wierzch y 13,1, `tower-area-missing` 2 → 0; do decyzji kuratora: 4 rzędy okien zamiast 3 (`building:levels`?)
+- Status: w PR #220 (2.11, PRZYJĘTE przez weryfikatora; dach pałacu 2,1 → 1,0 m po jego uwadze (d44494a); kurator: ZGODNE Z UWAGAMI, T-136): wieże wierzch y 17,9, pałac okap y 11,0 / wierzch y 12,0, `tower-area-missing` 2 → 0. Uwaga kuratora do dołożenia w tym PR albo osobno: `building:levels: "3"` w korekcie w67508859 (dziś 4 rzędy okien, fasada ma 3 kondygnacje)
 - Ważność: S4 (proponowana: dwie wieże ok. 20 m stoją 4–6 m nad dachem pałacu przy Placu Litewskim; bez nich i przy za niskim dachu sylwetka pałacu jest płaska) · Zasięg: 1 budynek, 2 wieże · Koszt: mały (korekty tagów jak w T-060, regeneracja `krakowskie`)
 - Gdzie: T-136; w1002739983 (83,5; 99,3), w1002739984 (40,3; 102,7), pałac w67508859 (55,8; 87,4)
 - Dowód: NMPT GUGiK 0,5 m (kafel `scratchpad/topo-g098/dl-nmpt/lubom.asc`, środek świata (60; 95), ±45 m; pobrany 2.11): wieża zachodnia x 34–40,5, z 99–106, p50 y 17,8; wschodnia x 78–84,5, z 96–102,5, p50 y 17,9, maks. y 19,0; wierzchy płaskie. Dach pałacu p50 y 11,9 (p10 10,8, p90 14,1), w grze wierzch y 8,5 (`source: default`, `height` 10,6, płaski). Obrysy wież z OSM 2–4 m na wschód od NMPT
@@ -825,6 +826,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: korekty w `TAG_CORRECTIONS` z odsyłaczem T-136. Wieże: `height` od podstawy pałacu (y −2,1 i cokół 1 m, czyli y −1,1) ok. 19,0, aby wierzch wypadł na y 17,9, oraz `roof:shape=flat`. Pałac: `height` i `roof:height` z profilu NMPT (okap ok. y 11, wierzch dachu y 12–14). Obrysy zostają z OSM, a przesunięcie 2–4 m to sprawa danych OSM, nie gry
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: `tower-area-missing` 2 → 0; wierzch obu wież y 17,9 ± 1 m; wierzch pałacu w ± 1,5 m od NMPT p50 (y 11,9) w środkowym bloku
+
+### G-251 Przybudówka Pałacu Lubomirskich w232805924 ok. 6,5 m za wysoka
+- Status: zgłoszone (2.11, kurator, przegląd PR #220)
+- Ważność: S4 (proponowana: przy fasadzie południowej od Placu Litewskiego stoi bryła 4 kondygnacji równa pałacowi zamiast niskiej przybudówki; zasłania parter i pierwsze piętro fasady) · Zasięg: 1 budynek · Koszt: mały (korekta tagów, regeneracja `krakowskie`)
+- Gdzie: T-137; w232805924 (57,9; 74,3), teren y −1,4
+- Dowód: OSM `building=yes`, `layer=1`, bez `height` i `building:levels`; w grze `source: default`, `height` 13, `levels` 4, wierzch y 11,6 (okap pałacu y 11,0). NMPT GUGiK 0,5 m (`scratchpad/topo-g098/dl-nmpt/lubom.asc`, sonda `scratchpad/topo-g249/topo-probe.py`): p10 y 4,6, p50 y 5,1 (p90 12,7 to ściana pałacu w obrysie)
+- Przyczyna: OSM bez wysokości, import daje wartość domyślną dzielnicy
+- Poprawka: korekta w `TAG_CORRECTIONS` z odsyłaczem T-137: `height` ok. 6,5 (wierzch y 5,1), `roof:shape=flat`, `building:levels` 1 albo 2 według elewacji. Nazwa z tablicy n12281417452 (węzeł obrysu) to G-065, nie mieszać w jednym commicie
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: wierzch w232805924 y 5,1 ± 1 m i co najmniej 4 m pod okapem pałacu; graffiti przy tej ścianie może wrócić (ściana odsłonięta), sprawdzić tabelę `props.generated.ts`
 
 ### G-250 Pojazdy z paczki CC-BY bez przednich świateł, koła `-lite` stopione, NaN w UV przy wypieku
 - Status: zgłoszone (2.11, weryfikator ADR-0058 etap 4, PR #217)
