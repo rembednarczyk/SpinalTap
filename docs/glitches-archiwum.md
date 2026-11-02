@@ -2,6 +2,16 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-236 Schody z `incline` z OSM wznoszą się w grze w drugą stronę
+- Status: naprawione w #219 (2.11, runda 3 @ 5757fae PRZYJĘTE; kurator ZGODNE Z UWAGAMI: korekta w56965515 na `incline=down` słuszna, topologia wiaduktu; T-131 poprawiony; garb pod pomostem w G-255, portal bez stopni w G-229)
+- Ważność: S4 · Zasięg: 2 z 48 dróg schodów z `incline` w prostokątach map · Koszt: mały do średniego
+- Gdzie: T-131; w56965515 pod wiaduktem Zamkowej (736,8; 161,0) → (727,3; 164,0), Podzamcze/Stare Miasto, brzeg chunka z = 160; w66335060 (603,5; −184,6) → (597,3; −185,3), Stare Miasto
+- Dowód: teren gry (`SHAPED_TERRAIN`, bez pomostu wiaduktu) na węzłach w56965515: −15,87, −16,76, −15,33, −17,13 przy OSM `incline=up` (sprostowanie kuratora przy #219: droga zaczyna się na pomoście wiaduktu i schodzi, więc błędny był tag OSM, nie teren); w66335060: −2,70 → −2,30 przy `incline=down`, `step_count=7`. `planSteps` stawia stopnie po terenie, więc przy portalu katedry schody szły w dół tam, gdzie w Lublinie idą w górę
+- Przyczyna: NMT pod wiaduktem i przy murach to interpolacja (mosty i obiekty usunięte), a schody nie dostają własnego spadku
+- Poprawka: dla biegu z `incline` (i `step_count`) wysokości końców z kierunku OSM: wyrównanie terenu wzdłuż schodów (`RAMPS`/`PADS` z uzasadnieniem w T-131) albo spadek biegu liczony w imporcie; razem z G-229
+- Pakiet właściciela: tools/osm-import, packages/sim/src/content/lublin (`sites.ts`), packages/engine (steps-plan)
+- Test przyjęcia: teren na końcach każdego biegu z `incline` rośnie w kierunku OSM o ≥ 0,1 m na bieg ze stopniami; kontrola `steps-incline-against` 2 → 0
+
 ### G-249 Wieże Pałacu Lubomirskich bez bryły, pałac z wysokości domyślnej 3–4 m za niski
 - Status: naprawione w #220 (2.11, PRZYJĘTE; kurator ZGODNE Z UWAGAMI; dach pałacu 1,0 m i `building:levels=3` dopisane przez orkiestratora; przybudówka w232805924 w G-251)
 - Ważność: S4 (proponowana: dwie wieże ok. 20 m stoją 4–6 m nad dachem pałacu przy Placu Litewskim; bez nich i przy za niskim dachu sylwetka pałacu jest płaska) · Zasięg: 1 budynek, 2 wieże · Koszt: mały (korekty tagów jak w T-060, regeneracja `krakowskie`)

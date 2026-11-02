@@ -738,16 +738,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: szczyt bryły w680377807 (`y + height + roof`) ± 1 m od wartości ze źródła, `source: height`; kontrola `osm-tower-default-height` 1 → 0
 
-### G-236 Schody z `incline` z OSM wznoszą się w grze w drugą stronę
-- Status: w PR #219 (2.11, runda 3 @ 5757fae PRZYJĘTE; kurator ZGODNE Z UWAGAMI: korekta w56965515 na `incline=down` słuszna, topologia wiaduktu; T-131 poprawiony; garb pod pomostem w G-255, portal bez stopni w G-229)
-- Ważność: S4 · Zasięg: 2 z 48 dróg schodów z `incline` w prostokątach map · Koszt: mały do średniego
-- Gdzie: T-131; w56965515 pod wiaduktem Zamkowej (736,8; 161,0) → (727,3; 164,0), Podzamcze/Stare Miasto, brzeg chunka z = 160; w66335060 (603,5; −184,6) → (597,3; −185,3), Stare Miasto
-- Dowód: teren gry (`SHAPED_TERRAIN`, bez pomostu wiaduktu) na węzłach w56965515: −15,87, −16,76, −15,33, −17,13 przy OSM `incline=up` (sprostowanie kuratora przy #219: droga zaczyna się na pomoście wiaduktu i schodzi, więc błędny był tag OSM, nie teren); w66335060: −2,70 → −2,30 przy `incline=down`, `step_count=7`. `planSteps` stawia stopnie po terenie, więc przy portalu katedry schody szły w dół tam, gdzie w Lublinie idą w górę
-- Przyczyna: NMT pod wiaduktem i przy murach to interpolacja (mosty i obiekty usunięte), a schody nie dostają własnego spadku
-- Poprawka: dla biegu z `incline` (i `step_count`) wysokości końców z kierunku OSM: wyrównanie terenu wzdłuż schodów (`RAMPS`/`PADS` z uzasadnieniem w T-131) albo spadek biegu liczony w imporcie; razem z G-229
-- Pakiet właściciela: tools/osm-import, packages/sim/src/content/lublin (`sites.ts`), packages/engine (steps-plan)
-- Test przyjęcia: teren na końcach każdego biegu z `incline` rośnie w kierunku OSM o ≥ 0,1 m na bieg ze stopniami; kontrola `steps-incline-against` 2 → 0
-
 ### G-237 Schody bez `width` z OSM rysowane na 3 m: nachodzą na siebie na zakrętach i wchodzą w budynki
 - Status: zgłoszone (2.11, kurator, przegląd #204; stan sprzed G-213)
 - Ważność: S4 · Zasięg: wszystkie 87 dróg `highway=steps` w wyciągach poza schodami zamkowymi (żadna nie ma `width`) · Koszt: średni
