@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-202 Posiłki ochrony nie dają XP za quickhack
+- Status: naprawione w #187 (2.11, PRZYJĘTE; zapis v26): klucz XP `security:<n>@<since>`, decyzja użytkownika „zgodnie ze standardem”
+- Ważność: S4 · Zasięg: `grantQuickhackXp` (`packages/sim/src/world/progression-ops.ts`) zaczyna się od `if (!key) return;`, więc posiłek ochrony (bez klucza) nigdy nie daje XP, a strażnik z kluczem daje raz
+- Oczekiwane (standard gatunku, bez farmienia): każdy posiłek daje XP za quickhack raz, także po zapisie i wczytaniu; ten sam posiłek drugi raz nic
+- Poprawka: klucz XP posiłku z trwałego numeru (`security:<n>` z G-194) z rozróżnieniem kolejnych heatów, jeśli `n` może się powtórzyć po resecie `sent` (np. numer heatu w kluczu); test jednej sesji i zapisu; złoty hash świadomie, jeśli się zmieni
+- Pakiet właściciela: packages/sim
+
 ### G-204 Wysokości Kaplicy Trójcy (domyślna) i Donżonu niezgodne z NMPT
 - Status: naprawione w #188 (2.11, PRZYJĘTE; kurator: wysokości zgodne z NMPT, korona Donżonu na parapecie 16,9)
 - Ważność: S3 (proponowana) · Zasięg: lokalny (sylwetka Zamku) · Koszt: mały

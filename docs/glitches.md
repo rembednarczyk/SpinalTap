@@ -609,13 +609,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Weryfikator #189: próg poza chunkami to 30 m (`loadRadius`), w chunkach praktycznie 44 m (histereza usypiania), więc spokojny strażnik 31 m od gracza poza chunkami znika w jednym kroku; w `micro-events.ts` uśpienie obu napastników zamknęłoby zdarzenie jako „won” z nagrodą (dziś wyklucza to geometria `MICRO_SPOTS`, ale nic tego nie pilnuje)
 - Pakiet właściciela: packages/sim (streaming)
 
-### G-202 Posiłki ochrony nie dają XP za quickhack
-- Status: w PR #187 (1.11, PRZYJĘTE, czeka na scalenie #185; zapis v26): klucz XP `security:<n>@<since>`
-- Ważność: S4 · Zasięg: `grantQuickhackXp` (`packages/sim/src/world/progression-ops.ts`) zaczyna się od `if (!key) return;`, więc posiłek ochrony (bez klucza) nigdy nie daje XP, a strażnik z kluczem daje raz
-- Oczekiwane (standard gatunku, bez farmienia): każdy posiłek daje XP za quickhack raz, także po zapisie i wczytaniu; ten sam posiłek drugi raz nic
-- Poprawka: klucz XP posiłku z trwałego numeru (`security:<n>` z G-194) z rozróżnieniem kolejnych heatów, jeśli `n` może się powtórzyć po resecie `sent` (np. numer heatu w kluczu); test jednej sesji i zapisu; złoty hash świadomie, jeśli się zmieni
-- Pakiet właściciela: packages/sim
-
 ### G-203 Schody zamkowe mają 3 m zamiast ok. 10 m szerokości
 - Status: zgłoszone (1.11, audyt zespołu zamkowego, T-113)
 - Ważność: S3 (proponowana) · Zasięg: lokalny, ale to oś widokowa Placu Zamkowego · Koszt: mały–średni
