@@ -17,7 +17,7 @@ import { Clearances, GOODS_KEY, type MarketContext, foodStalls, stallGoods } fro
 import { marketEntrances, marketStalls } from "./props-market.ts";
 import { type SideMode, type Station, evenStations, fnv, offRoad, offWall, openFacing, scatter, sideOffset, stations, towardsStreet, unit, yawOf } from "./props-place.ts";
 import { type BoardSpan, boardBehind, offBoards } from "./props-boards.ts";
-import { byStyledLamp } from "./props-lamp-looks.ts";
+import { byStyledLamp, oldTownLook } from "./props-lamp-looks.ts";
 import { type BollardRef, stringBollards } from "./props-rows.ts";
 import { Site } from "./props-site.ts";
 import { SolidIndex, clearSpot } from "./props-solid.ts";
@@ -337,7 +337,8 @@ const placeAll = (site: Site, plan: PropsPlan, skipped: Record<string, number>, 
       continue;
     }
     const obstacles = placed.flatMap((x) => (OBSTACLE[x.prop] ? [{ x: x.p.x, z: x.p.z, r: OBSTACLE[x.prop]! }] : []));
-    for (const x of placeItem(site, item, prop, obstacles, placed)) {
+    for (const at of placeItem(site, item, prop, obstacles, placed)) {
+      const x = { ...at, prop: oldTownLook(item.kind, at.prop, at.p) };
       const shape = shapeOf(item, prop, x.key, tags);
       if (typeof shape === "string") {
         skipped[shape] = (skipped[shape] ?? 0) + 1;
