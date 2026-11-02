@@ -701,7 +701,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/glitch-scan
 
 ### G-224 Wieże kościołów z OSM z wysokości domyślnej (dzwonnica św. Mikołaja 3,3 m zamiast ok. 18 m)
-- Status: w PR #207 (2.11, w weryfikacji, potem kurator): korekty `height` z NMPT, kontrola `osm-tower-default-height` 2 → 0; uwaga: wieża Jozafata była za wysoka o 2,7 m (szczyt y 12,2, nie 13,2: cokół liczony dwa razy we wpisie)
+- Status: w PR #207 (2.11, weryfikacja: NIE PRZYJĘTE dla Mikołaja: NMPT 15,7 w obrysie w680377807 to korona drzewa (odbicia od gruntu w obrysie, odchylenie 4–6 m, drzewa obok do 18,2); runda 2: tylko Jozafat (szczyt y 9,5 = maks. w obrysie), Mikołaj zostaje z wysokością domyślną do czasu innego źródła (LAS z klasą budynku, opis, zdjęcie); kryterium „y 15,7 ± 1” było błędne)
 - Ważność: S3 (proponowana; po G-212 to jedyne wieże tych kościołów) · Zasięg: 2 wieże (Podzamcze, Krakowskie) · Koszt: mały (dane)
 - Gdzie: T-129; w680377807 (879,1; 545), dzwonnica kościoła św. Mikołaja; w1382552285 (270; −9,2), wieża cerkwi św. Jozafata
 - Dowód: w grze `source: default`: 3,3 m (1 kondygnacja) i 13,8 m + cokół 1 m; NMPT GUGiK 0,5 m: do y 15,7 (ok. 18 m nad terenem) i do y 10,1 (ok. 11,7 m)
