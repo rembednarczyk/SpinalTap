@@ -817,16 +817,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: śledzić literały płynące do propsów i do znanych funkcji tekstu (toast, notify); testy dodatnie i ujemne
 - Pakiet właściciela: tools/i18n-scan
 
-### G-249 Wieże Pałacu Lubomirskich bez bryły, pałac z wysokości domyślnej 3–4 m za niski
-- Status: w PR #220 (2.11, PRZYJĘTE przez weryfikatora; dach pałacu 2,1 → 1,0 m po jego uwadze (d44494a); kurator: ZGODNE Z UWAGAMI, T-136): wieże wierzch y 17,9, pałac okap y 11,0 / wierzch y 12,0, `tower-area-missing` 2 → 0. Uwaga kuratora do dołożenia w tym PR albo osobno: `building:levels: "3"` w korekcie w67508859 (dziś 4 rzędy okien, fasada ma 3 kondygnacje)
-- Ważność: S4 (proponowana: dwie wieże ok. 20 m stoją 4–6 m nad dachem pałacu przy Placu Litewskim; bez nich i przy za niskim dachu sylwetka pałacu jest płaska) · Zasięg: 1 budynek, 2 wieże · Koszt: mały (korekty tagów jak w T-060, regeneracja `krakowskie`)
-- Gdzie: T-136; w1002739983 (83,5; 99,3), w1002739984 (40,3; 102,7), pałac w67508859 (55,8; 87,4)
-- Dowód: NMPT GUGiK 0,5 m (kafel `scratchpad/topo-g098/dl-nmpt/lubom.asc`, środek świata (60; 95), ±45 m; pobrany 2.11): wieża zachodnia x 34–40,5, z 99–106, p50 y 17,8; wschodnia x 78–84,5, z 96–102,5, p50 y 17,9, maks. y 19,0; wierzchy płaskie. Dach pałacu p50 y 11,9 (p10 10,8, p90 14,1), w grze wierzch y 8,5 (`source: default`, `height` 10,6, płaski). Obrysy wież z OSM 2–4 m na wschód od NMPT
-- Przyczyna: OSM bez `height` dla wież i pałacu; od #216 wieża `man_made=tower` staje się częścią budynku, ale tylko z korektą wysokości (bez niej kontrola `tower-area-missing` ją liczy)
-- Poprawka: korekty w `TAG_CORRECTIONS` z odsyłaczem T-136. Wieże: `height` od podstawy pałacu (y −2,1 i cokół 1 m, czyli y −1,1) ok. 19,0, aby wierzch wypadł na y 17,9, oraz `roof:shape=flat`. Pałac: `height` i `roof:height` z profilu NMPT (okap ok. y 11, wierzch dachu y 12–14). Obrysy zostają z OSM, a przesunięcie 2–4 m to sprawa danych OSM, nie gry
-- Pakiet właściciela: tools/osm-import
-- Test przyjęcia: `tower-area-missing` 2 → 0; wierzch obu wież y 17,9 ± 1 m; wierzch pałacu w ± 1,5 m od NMPT p50 (y 11,9) w środkowym bloku
-
 ### G-251 Przybudówka Pałacu Lubomirskich w232805924 ok. 6,5 m za wysoka
 - Status: zgłoszone (2.11, kurator, przegląd PR #220)
 - Ważność: S4 (proponowana: przy fasadzie południowej od Placu Litewskiego stoi bryła 4 kondygnacji równa pałacowi zamiast niskiej przybudówki; zasłania parter i pierwsze piętro fasady) · Zasięg: 1 budynek · Koszt: mały (korekta tagów, regeneracja `krakowskie`)

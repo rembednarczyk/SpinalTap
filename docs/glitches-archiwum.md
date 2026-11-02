@@ -2,6 +2,16 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-249 Wieże Pałacu Lubomirskich bez bryły, pałac z wysokości domyślnej 3–4 m za niski
+- Status: naprawione w #220 (2.11, PRZYJĘTE; kurator ZGODNE Z UWAGAMI; dach pałacu 1,0 m i `building:levels=3` dopisane przez orkiestratora; przybudówka w232805924 w G-251)
+- Ważność: S4 (proponowana: dwie wieże ok. 20 m stoją 4–6 m nad dachem pałacu przy Placu Litewskim; bez nich i przy za niskim dachu sylwetka pałacu jest płaska) · Zasięg: 1 budynek, 2 wieże · Koszt: mały (korekty tagów jak w T-060, regeneracja `krakowskie`)
+- Gdzie: T-136; w1002739983 (83,5; 99,3), w1002739984 (40,3; 102,7), pałac w67508859 (55,8; 87,4)
+- Dowód: NMPT GUGiK 0,5 m (kafel `scratchpad/topo-g098/dl-nmpt/lubom.asc`, środek świata (60; 95), ±45 m; pobrany 2.11): wieża zachodnia x 34–40,5, z 99–106, p50 y 17,8; wschodnia x 78–84,5, z 96–102,5, p50 y 17,9, maks. y 19,0; wierzchy płaskie. Dach pałacu p50 y 11,9 (p10 10,8, p90 14,1), w grze wierzch y 8,5 (`source: default`, `height` 10,6, płaski). Obrysy wież z OSM 2–4 m na wschód od NMPT
+- Przyczyna: OSM bez `height` dla wież i pałacu; od #216 wieża `man_made=tower` staje się częścią budynku, ale tylko z korektą wysokości (bez niej kontrola `tower-area-missing` ją liczy)
+- Poprawka: korekty w `TAG_CORRECTIONS` z odsyłaczem T-136. Wieże: `height` od podstawy pałacu (y −2,1 i cokół 1 m, czyli y −1,1) ok. 19,0, aby wierzch wypadł na y 17,9, oraz `roof:shape=flat`. Pałac: `height` i `roof:height` z profilu NMPT (okap ok. y 11, wierzch dachu y 12–14). Obrysy zostają z OSM, a przesunięcie 2–4 m to sprawa danych OSM, nie gry
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: `tower-area-missing` 2 → 0; wierzch obu wież y 17,9 ± 1 m; wierzch pałacu w ± 1,5 m od NMPT p50 (y 11,9) w środkowym bloku
+
 ### G-098 Wieże zmapowane jako `man_made=tower` bez `building` pominięte
 - Status: naprawione w #216 (2.11, PRZYJĘTE; kurator ZGODNE Z UWAGAMI: hełm rysowany czterospadowo zamiast ostrosłupa, cegła, okna; wieże Pałacu Lubomirskich w G-249) · Ważność: S3 (od 2.11, przegląd #198: po G-212 Brygidki nie mają żadnej wieży, a prawdziwa ok. 34 m jest dominantą Narutowicza) · Zasięg: 1 obrys w Krakowskim (dawniej 3; wieże pałacu w G-249) · Koszt: mały–średni
 - Wysokość: OSM nie ma `height`; z NMPT wieża Brygidek do y 32,4 (teren y ok. −1,2), w imporcie korekta `height` 31,5 i `roof:height` 9,1 z odsyłaczem T-060
