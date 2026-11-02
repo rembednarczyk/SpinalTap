@@ -196,7 +196,7 @@
         { "path": "Female/Female Hairstyles/OBJ/Female_Hairstyle_1.obj", "url": "https://drive.usercontent.google.com/download?id=1lLF_OUcoF3aBsEIXo9UYK8NMFANB5JXh&export=download&confirm=t", "sha256": "7cc4dc5fc09317c82e645d59dc9de02be951e184d9650373ab3a5b28da7f3b8b" },
         { "path": "Female/Female Hairstyles/OBJ/Female_Hairstyle_3.obj", "url": "https://drive.usercontent.google.com/download?id=1PHH3gNXkP_OhmwULVrJfLueR-MDveBf9&export=download&confirm=t", "sha256": "a8c072ce051a71e3d9e6a5704107581cd2f193e0d2eb80facaf818acc87961b6" }
       ],
-      "used": ["cr-sit", "cr-stand", "cr-hips"]
+      "used": ["cr-sit", "cr-perch", "cr-stand", "cr-hips"]
     },
     {
       "id": "sketchfab-electric-pole",
