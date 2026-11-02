@@ -997,7 +997,11 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   },
   /** A landmark from the curator's list at the district's default height, not a mapped or measured one (G-204). */
   "landmark-default-height": () => landmarksAtDefaultHeight(LANDMARK_BUILDINGS, MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)))),
-  /** A tower of the map with no height in its tags at the district's default height (G-224). */
+  /**
+   * A tower of the map with no height in its tags at the district's default height (G-224). The
+   * baseline's one is St Nicholas's belfry w680377807: it waits for a source of its height, as the
+   * surface model over it is tree crowns.
+   */
   "osm-tower-default-height": () => towersAtDefaultHeight(MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b))), osmTags),
   /** A landmark of the list the map shows whole and without a tower, crowned by the renderer's bell towers (G-210). */
   "landmark-fake-tower": () => cityFakeTowers(LANDMARK_BUILDINGS, SOURCE_OSM),

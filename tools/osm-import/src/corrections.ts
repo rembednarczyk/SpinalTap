@@ -63,21 +63,14 @@ export const TAG_CORRECTIONS: readonly TagCorrection[] = [
     ref: "T-114",
   },
   {
-    // St Nicholas's belfry: OSM has only `man_made=tower` and `tower:type=bell_tower`, so it stood
-    // one default storey, 3.3 m, its top at y 0.8. NMPT GUGiK has it to y 15.7, the foot is at
-    // y -2.5 with a 0.1 m plinth; `height` counts over the plinth, hence 15.7 + 2.5 - 0.1.
-    id: "w680377807",
-    tags: { height: "18.1" },
-    reason: "dzwonnica św. Mikołaja: szczyt y 15,7 z NMPT (ok. 18 m nad terenem) wobec domyślnej 1 kondygnacji (3,3 m)",
-    ref: "T-129",
-  },
-  {
-    // St Josaphat's tower: tagged as the belfry above, it stood at the district's default 4 storeys
-    // with its top at y 12.2. NMPT GUGiK has its top at y 9.5 in the outline (10.1 within 4 m of
-    // its middle, the nave's edge), the foot at y -1.6 with a 1 m plinth: 9.5 + 1.6 - 1.
+    // St Josaphat's tower: OSM has only `man_made=tower` and `tower:type=bell_tower`, so it stood
+    // at the district's default 4 storeys with its top at y 12.2. NMPT GUGiK has its top at y 9.5
+    // in the outline (the 10.1 within 4 m of its middle is the nave's edge), the foot at y -1.6
+    // with a 1 m plinth; `height` counts over the plinth, hence 9.5 + 1.6 - 1.
+    // St Nicholas's belfry w680377807 waits for a source: the surface model there is tree crowns.
     id: "w1382552285",
     tags: { height: "10.1" },
-    reason: "wieża cerkwi św. Jozafata: szczyt ok. y 9,5–10,1 z NMPT wobec y 12,2 z domyślnych 4 kondygnacji",
+    reason: "wieża cerkwi św. Jozafata: szczyt y 9,5 z NMPT wobec y 12,2 z domyślnych 4 kondygnacji",
     ref: "T-129",
   },
   // The castle stairs (Brabander, 1954): OSM has no `width` on their flights and landings, so they

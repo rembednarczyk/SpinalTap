@@ -53,17 +53,13 @@ describe("tag corrections (ADR-0042)", () => {
     expect(Math.abs(keep.y + keep.height + (keep.roof ?? 0) - 16.65)).toBeLessThanOrEqual(1);
   });
 
-  // NMPT GUGiK 0.5 m (T-129), world y: St Nicholas's belfry to 15.7 (about 18 m over the ground at
-  // y -2.5); St Josaphat's tower to 9.5 in its outline, 10.1 within 4 m of its middle, some 3 m
-  // under the church's ridge (y 13.3).
-  it("puts the tops of St Nicholas's belfry and St Josaphat's tower in the game's data within 1 m of the surface model (G-224)", () => {
-    const top = (chunks: typeof PODZAMCZE_CHUNKS, id: string) => {
-      const b = chunks.flatMap((c) => c.buildings).find((o) => o.id === id)!;
-      expect(b.source, id).toBe("height");
-      return b.y + b.height + (b.roof ?? 0);
-    };
-    expect(Math.abs(top(PODZAMCZE_CHUNKS, "w680377807") - 15.7)).toBeLessThanOrEqual(1);
-    expect(Math.abs(top(KRAKOWSKIE_CHUNKS, "w1382552285") - 10.1)).toBeLessThanOrEqual(1);
+  // NMPT GUGiK 0.5 m (T-129), world y: St Josaphat's tower to 9.5, the highest cell in its outline,
+  // some 4 m under the church's ridge (y 13.3). St Nicholas's belfry waits for a source (G-224):
+  // the surface model over it is tree crowns.
+  it("puts the top of St Josaphat's tower in the game's data within 1 m of the surface model (G-224)", () => {
+    const tower = KRAKOWSKIE_CHUNKS.flatMap((c) => c.buildings).find((o) => o.id === "w1382552285")!;
+    expect(tower.source).toBe("height");
+    expect(Math.abs(tower.y + tower.height + (tower.roof ?? 0) - 9.5)).toBeLessThanOrEqual(1);
   });
 
   // The flights and landings of the castle stairs, from Plac Zamkowy up to the gate's bridge (T-113),
