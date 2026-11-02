@@ -180,12 +180,12 @@ describe("a tower mapped without building (G-098)", () => {
     expect(Math.abs(palace.y + palace.height - 11)).toBeLessThanOrEqual(0.5);
   });
 
-  it("keeps the palace's annex w232805924 at its flat top at y 5.1 of the surface model, under the palace's eaves (G-251)", () => {
+  it("keeps the palace's annex w232805924 at its flat roof at y 4.6 of the surface model, under the palace's eaves (G-251)", () => {
     const annex = byId("w232805924")!;
     const palace = byId("w67508859")!;
     const top = annex.y + annex.height + (annex.roof ?? 0);
-    // NMPT GUGiK 0.5 m over the annex's outline: p10 y 4.6, p50 y 5.1 (its p90 is the palace's wall).
-    expect(Math.abs(top - 5.1)).toBeLessThanOrEqual(1);
+    // NMPT GUGiK 0.5 m: the flat roof at y 4.6 off the palace's wall (the outline's p50 5.1 takes the wall in).
+    expect(Math.abs(top - 4.6)).toBeLessThanOrEqual(1);
     expect(palace.y + palace.height - top).toBeGreaterThanOrEqual(4);
     expect(annex.levels).toBeLessThanOrEqual(2);
   });

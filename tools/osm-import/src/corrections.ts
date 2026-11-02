@@ -122,11 +122,12 @@ export const TAG_CORRECTIONS: readonly TagCorrection[] = [
   {
     // The palace's annex on its south side: `building=yes` and `layer=1` with no height, so it stood
     // at the district's default 4 storeys with a flat top at y 11.6, over the palace's eaves (y 11.0).
-    // NMPT GUGiK has its roof at y 4.6..5.1 (p10, p50; the p90 is the palace's wall in the outline).
-    // `height` counts from the base over the 0.2 m plinth, hence 5.1 + 1.4 - 0.2.
+    // NMPT GUGiK 0.5 m has a flat roof at y 4.6 in every cell of its strip off the palace (z 72.5-74,
+    // x 49-64.5); the outline's median 5.1 takes in the palace's wall, which it overlaps (T-137).
+    // `height` counts from the base over the 0.2 m plinth, hence 4.6 + 1.4 - 0.2.
     id: "w232805924",
-    tags: { height: "6.3", "roof:shape": "flat", "building:levels": "2" },
-    reason: "przybudówka Pałacu Lubomirskich: płaski wierzch y 5,1 z NMPT wobec y 11,6 z domyślnych 4 kondygnacji",
+    tags: { height: "5.8", "roof:shape": "flat", "building:levels": "2" },
+    reason: "przybudówka Pałacu Lubomirskich: płaski dach y 4,6 z NMPT wobec y 11,6 z domyślnych 4 kondygnacji",
     ref: "T-137",
   },
   // St Josaphat's nave first: at the default it stood 6.3 m over its tower's top (y 9.5, T-129).
