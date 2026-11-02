@@ -349,7 +349,7 @@ export const DEFAULT_SETTINGS: SettingsVm = {
   locale: DEFAULT_LOCALE,
 };
 
-/** A first-run hint: the keys (as labels) and the action, e.g. ["W", "A", "S", "D"] "ruch". */
+/** A first-run hint: the keys (as labels) and the action, e.g. ["W", "A", "S", "D"] and a catalog key for "move". */
 export interface HintVm {
   readonly id: string;
   readonly keys: readonly string[];
