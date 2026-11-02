@@ -148,18 +148,11 @@ const touches = (a: GroundDeck["box"], b: GroundDeck["box"]): boolean => a.minX 
 
 /**
  * The bridges' decks of the map (ADR-0053), by chunk: each piece of a road or path the map has
- * on a bridge, level from abutment to abutment at the terrain's height there, over the valley,
- * with the flights down beside it that its outline reaches over (G-255).
+ * on a bridge, level from abutment to abutment at the terrain's height there, over the valley.
+ * Over a flight down beside it that its outline reaches over, the deck stays the ground, higher
+ * than the flight: it is drawn there, so the walk along its edge goes on (G-274).
  */
-export const BRIDGE_DECKS: ReadonlyMap<string, readonly GroundDeck[]> = new Map(
-  [...MAP_DECKS].map(([id, decks]) => [
-    id,
-    decks.map((d) => {
-      const beside = FLIGHT_DECKS.filter((f) => touches(f.box, d.box));
-      return beside.length > 0 ? { ...d, beside } : d;
-    }),
-  ]),
-);
+export const BRIDGE_DECKS: ReadonlyMap<string, readonly GroundDeck[]> = MAP_DECKS;
 
 /** The ground's decks of the map by chunk: its bridges' pieces and the flights hung off them that reach into it (G-255). */
 export const GROUND_DECKS: ReadonlyMap<string, readonly GroundDeck[]> = new Map(
@@ -175,5 +168,5 @@ export const bridgeDeckAt = (x: number, z: number): number | null => deckAt(ALL_
 /** The ground at (x, z) over the terrain at `terrain` there: a bridge's deck, or a flight hung off one (G-255), or the terrain. */
 export const deckGroundAt = (x: number, z: number, terrain: number): number => groundOver(ALL_GROUND, x, z, terrain);
 
-/** The flight hung off a bridge (G-255) whose band holds (x, z), or null. */
-export const flightDeckAt = (x: number, z: number): GroundDeck | null => FLIGHT_DECKS.find((f) => deckAt([f], x, z) !== null) ?? null;
+/** The flight hung off a bridge (G-255) whose band holds (x, z) off the bridges' decks (G-274), or null. */
+export const flightDeckAt = (x: number, z: number): GroundDeck | null => (deckAt(ALL_DECKS, x, z) === null ? (FLIGHT_DECKS.find((f) => deckAt([f], x, z) !== null) ?? null) : null);

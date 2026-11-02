@@ -3,7 +3,7 @@ import { Simulation, groundY } from "../src";
 import { BRIDGE_DECKS } from "../src/content/lublin/decks";
 import { SHAPED_TERRAIN } from "../src/content/lublin/terrain";
 import { TRAFFIC_ROUTES, pointAt } from "../src/content/traffic";
-import { type GroundDeck, deckAt, flightGradientAt, groundOver, makeDeck } from "../src/world/deck";
+import { type GroundDeck, deckAt, flightGradientAt, groundOver, makeDeck, onFlight } from "../src/world/deck";
 import { terrainHeightAt } from "@seki/core";
 
 /** Mełgiewska over the Bystrzyca: its two carriageways' bridges, the river some 5 m below. */
@@ -34,7 +34,7 @@ describe("bridges' decks (ADR-0053)", () => {
     }
   });
 
-  it("yield over a flight of steps hung off them to the flight, which is the ground on its band even under the terrain (G-255)", () => {
+  it("stay the ground over a flight of steps hung off them, which is the ground on its band off them even under the terrain (G-255, G-274)", () => {
     // A flight 2 m wide down from y 3 at x 10 to y 1 at x 0, beside a deck at y 3 reaching 1 m over its band.
     const ring = [
       { x: 0, z: -1 },
@@ -43,8 +43,12 @@ describe("bridges' decks (ADR-0053)", () => {
       { x: 0, z: 1 },
     ];
     const flight: GroundDeck = { ring, a: { x: 0, z: 0 }, b: { x: 10, z: 0 }, ya: 1, yb: 3, box: { minX: 0, maxX: 10, minZ: -1, maxZ: 1 }, flight: true };
-    const deck: GroundDeck = { ...makeDeck([0, 0, 20, 0, 20, 8, 0, 8], [0, 4, 20, 4], () => 3), beside: [flight] };
-    expect(groundOver([deck, flight], 5, 0.5, 0)).toBeCloseTo(2, 5);
+    const deck: GroundDeck = makeDeck([0, 0, 20, 0, 20, 8, 0, 8], [0, 4, 20, 4], () => 3);
+    // In the deck's outline the deck, drawn there, is the ground; off it the flight.
+    expect(groundOver([deck, flight], 5, 0.5, 0)).toBeCloseTo(3, 5);
+    expect(groundOver([deck, flight], 5, -0.5, 0)).toBeCloseTo(2, 5);
+    expect(onFlight([deck, flight], 5, 0.5)).toBe(false);
+    expect(onFlight([deck, flight], 5, -0.5)).toBe(true);
     // Cut into a bank: the terrain over the flight is not the ground there.
     expect(groundOver([deck, flight], 2, -0.5, 2)).toBeCloseTo(1.4, 5);
     // Off the flight's band the deck and the terrain are the ground as before.
@@ -56,17 +60,19 @@ describe("bridges' decks (ADR-0053)", () => {
     expect(groundOver([deck, flight], 2, -0.5, 0, 0.45)).toBeCloseTo(1.4, 5);
     const out = { x: 0, z: 0 };
     // On it within reach, its own grade (0.2), not the seam with the terrain beside it.
-    expect(flightGradientAt([deck, flight], 5, 0.9, 2.5, out)).toEqual({ x: 0.2, z: 0 });
-    expect(flightGradientAt([deck, flight], 5, 0.9, 1.5, out)).toBeNull();
+    expect(flightGradientAt([deck, flight], 5, -0.9, 2.5, out)).toEqual({ x: 0.2, z: 0 });
+    expect(flightGradientAt([deck, flight], 5, -0.9, 1.5, out)).toBeNull();
+    expect(flightGradientAt([deck, flight], 5, 0.5, Infinity, out)).toBeNull();
     expect(flightGradientAt([deck, flight], 5, 3, Infinity, out)).toBeNull();
   });
 
   it("let the steps from the viaduct of Zamkowa down beside it on their grade, for the walkers as for the ground (G-255)", () => {
     const sim = Simulation.create({ seed: 1 });
-    // On the run from the bend (729.5, 159.9) up to the deck's edge (734.1, 163.9): its middle, and its side over the deck's outline.
+    // On the run from the bend (729.5, 159.9) up to the deck's edge (734.1, 163.9): its middle on
+    // the flight's grade, and its side over the deck's outline on the viaduct's sidewalk (G-274).
     for (const [x, z, y] of [
       [731.8, 161.9, -14.55],
-      [730.8, 159.6, -15.31],
+      [730.8, 159.6, -13.56],
     ] as const) {
       expect(groundY(x, z), `${x}, ${z}`).toBeCloseTo(y, 1);
       expect(sim.streamer.ground.heightAt(x, z), `${x}, ${z}`).toBeCloseTo(groundY(x, z), 5);

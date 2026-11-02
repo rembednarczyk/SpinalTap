@@ -23,7 +23,7 @@ const inside = (r: Rect, x: number, z: number): boolean => x >= r.minX && x <= r
 const distanceTo = (r: Rect, x: number, z: number): number => Math.hypot(Math.max(r.minX - x, 0, x - r.maxX), Math.max(r.minZ - z, 0, z - r.maxZ));
 
 /** The step a character walks up without noticing (the movement's `STEP_HEIGHT`): a seam beside a flight no higher is no bank (G-255). */
-const SEAM_STEP = 0.45;
+export const SEAM_STEP = 0.45;
 
 /** The four samples of the gradient, in half spans: east, west, north, south. */
 const AROUND: readonly (readonly [number, number])[] = [
@@ -52,6 +52,8 @@ export class GroundField {
   private readonly cols: number;
   private readonly rows: number;
   private readonly buckets: readonly (readonly number[])[];
+  /** The boxes of the flights of steps hung off a bridge (G-255) in the chunks' decks: almost everywhere none is near. */
+  private readonly flightBoxes: readonly GroundDeck["box"][];
 
   constructor(chunks: readonly GroundChunk[]) {
     this.chunks = chunks;
@@ -76,6 +78,13 @@ export class GroundField {
       });
     }
     this.buckets = buckets;
+    this.flightBoxes = [...new Set(chunks.flatMap((c) => (c.decks ?? []).filter((d) => d.flight === true)))].map((d) => d.box);
+  }
+
+  /** Is a flight of steps hung off a bridge (G-255) within `margin` of the box (`maxX`, `maxZ` default to the point)? */
+  nearFlight(minX: number, minZ: number, margin: number, maxX = minX, maxZ = minZ): boolean {
+    for (const b of this.flightBoxes) if (minX <= b.maxX + margin && maxX >= b.minX - margin && minZ <= b.maxZ + margin && maxZ >= b.minZ - margin) return true;
+    return false;
   }
 
   /** Index of the chunk whose ground is used at (x, z), or -1 with no chunks. */
@@ -137,8 +146,8 @@ export class GroundField {
       out.z = 0;
       return out;
     }
-    const decks = this.chunks[this.chunkIndex(x, z)]?.decks;
     const h = SLOPE_HALF_SPAN;
+    const decks = this.nearFlight(x, z, h) ? this.chunks[this.chunkIndex(x, z)]?.decks : undefined;
     if (decks && flightGradientAt(decks, x, z, reach, out)) return out;
     const east = this.heightAt(x + h, z, reach);
     const west = this.heightAt(x - h, z, reach);
@@ -162,7 +171,7 @@ export class GroundField {
 
   /** Is (x, z) on a flight of steps hung off a bridge (G-255)? */
   onFlight(x: number, z: number): boolean {
-    const decks = this.hasTerrain ? this.chunks[this.chunkIndex(x, z)]?.decks : undefined;
+    const decks = this.hasTerrain && this.nearFlight(x, z, 0) ? this.chunks[this.chunkIndex(x, z)]?.decks : undefined;
     return !!decks && onFlight(decks, x, z);
   }
 
