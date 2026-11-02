@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-240 Panika tłumu nie trafia do zapisu: wczytana gra rozjeżdża się zaraz po walce
+- Status: naprawione w #221 (2.11, PRZYJĘTE; zapis rozlicza zgłoszenia świadków i uspokaja ulicę w obu grach; chwyt przy zapisie w G-253)
+- Ważność: S4 · Zasięg: `crowd.state: fleeing` (np. Hideo po walce) poza zapisem; wczytana gra różni się od gry bez zapisu do uspokojenia tłumu (ok. 12 s)
+- Poprawka: stan ucieczki tłumu w migawce encji (zapis + migracja) albo wyliczany z zapisanych zdarzeń; test hash co krok po zapisie w trakcie paniki
+- Pakiet właściciela: packages/sim (crowd), packages/persistence
+
 ### G-236 Schody z `incline` z OSM wznoszą się w grze w drugą stronę
 - Status: naprawione w #219 (2.11, runda 3 @ 5757fae PRZYJĘTE; kurator ZGODNE Z UWAGAMI: korekta w56965515 na `incline=down` słuszna, topologia wiaduktu; T-131 poprawiony; garb pod pomostem w G-255, portal bez stopni w G-229)
 - Ważność: S4 · Zasięg: 2 z 48 dróg schodów z `incline` w prostokątach map · Koszt: mały do średniego
