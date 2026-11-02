@@ -1,1 +1,0 @@
-Strażnik obok gracza nie znika już na jego oczach, gdy usypia się fragment miasta strażnika: ani gdy gracz stoi na terenie poza fragmentami miasta (np. na północ od Nabrzeża), ani gdy strażnik stoi przy graczu w innym wczytanym fragmencie; zasypia dopiero, gdy odejdzie od gracza dalej niż na 30 m, a zapis i wczytanie dają to samo co gra (G-201).
