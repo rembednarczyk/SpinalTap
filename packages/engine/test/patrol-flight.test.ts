@@ -79,7 +79,7 @@ describe("low patrol models (ADR-0058 stage 7b)", () => {
       expect(maxX - minX).toBeLessThanOrEqual(PATROL_SIZE.width + 1e-3);
       expect(minY).toBeGreaterThanOrEqual(-1e-3);
       expect(maxY).toBeLessThanOrEqual(PATROL_SIZE.height + 1e-3);
-      // The searchlight: from the foot down to a unit under it, a unit wide.
+      // The searchlight's pool: a unit under the foot, a unit wide.
       for (let i = t.beam * 3; i < t.positions.length; i += 3) {
         expect(t.positions[i + 1]!).toBeGreaterThanOrEqual(-1 - 1e-6);
         expect(t.positions[i + 1]!).toBeLessThanOrEqual(1e-6);
