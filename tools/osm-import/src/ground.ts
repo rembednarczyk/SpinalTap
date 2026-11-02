@@ -6,7 +6,7 @@
 import { type GroundSurface } from "../../../packages/core/src/world/city-geo.ts";
 import { parseLength } from "./building-tags.ts";
 import { type Area, type Line } from "./features.ts";
-import { type Pt, type Rect, bufferLine, ccw, clipRingToRect, lineLength, offsetLine, pointAlong, pointInRing, r1, removeCollinear, signedArea, simplifyRing, sliceLine, stripAlong } from "./geometry.ts";
+import { type Pt, type Rect, bufferLine, ccw, clipRingToRect, lineLength, offsetLine, pointAlong, pointInRing, r1, removeCollinear, signedArea, simplifyLine, simplifyRing, sliceLine, stripAlong } from "./geometry.ts";
 import { type GroundOut } from "./model.ts";
 import { type Tags } from "./osm.ts";
 
@@ -47,19 +47,33 @@ const ROAD_WIDTH: Record<string, number> = {
 /** Streets that get sidewalks where the map has none. */
 const URBAN = new Set(["primary", "secondary", "tertiary", "unclassified", "residential", "living_street"]);
 const PATHS: Record<string, number> = { footway: 2.5, path: 2, cycleway: 2, steps: 3, bridleway: 2 };
+/** The most a vertex of a steps way may lie off the line through its neighbours and start no new run (m). */
+const STEPS_BEND = 0.05;
 
 const underground = (t: Tags) => t.tunnel === "yes" || t.tunnel === "culvert" || t.indoor === "yes" || Number(t.layer ?? 0) < 0 || t.location === "underground";
 
+/** The shortest piece of steps cut into strips (m): a strip under 0.8 of it would be too narrow for the renderer to draw a flight on. */
+const MIN_CUT_RUN = 0.5;
+
 /**
- * The bands of one straight run of steps `w` wide. The renderer takes a band's long side for the
- * run, so a flight wider than the default and shorter than it is wide (the castle stairs, T-113)
- * is cut along the run into strips narrower than the run is long; together they cover the same
- * band. A default-width band stays whole: its short runs are a glitch of their own.
+ * A piece of a band of steps on the run `a`-`b`, as the renderer is to read it. The renderer
+ * takes a band's long side for the run, so a piece shorter along the run than it is wide (a short
+ * run of any flight: the castle stairs T-113, G-213; or what a chunk's edge leaves of a longer
+ * one) is cut along the run into strips each at most 0.8 of the piece's length wide; together
+ * they cover the same piece.
  */
-export const flightStrips = (a: Pt, b: Pt, w: number): Pt[][] => {
+export const flightStrips = (piece: readonly Pt[], a: Pt, b: Pt): Pt[][] => {
   const run = Math.hypot(b.x - a.x, b.z - a.z);
-  const k = w > PATHS.steps! && run >= 0.5 && run < w ? Math.ceil(w / (0.8 * run)) : 1;
-  return Array.from({ length: k }, (_, i) => stripAlong([a, b], -w / 2 + (i * w) / k, w / k));
+  if (run < 1e-6) return [[...piece]];
+  const [ux, uz] = [(b.x - a.x) / run, (b.z - a.z) / run];
+  // In the run's frame: x along it from a, z across it to the left.
+  const local = piece.map((p) => ({ x: (p.x - a.x) * ux + (p.z - a.z) * uz, z: -(p.x - a.x) * uz + (p.z - a.z) * ux }));
+  const [x0, x1] = [Math.min(...local.map((p) => p.x)), Math.max(...local.map((p) => p.x))];
+  const [z0, z1] = [Math.min(...local.map((p) => p.z)), Math.max(...local.map((p) => p.z))];
+  const k = x1 - x0 >= MIN_CUT_RUN ? Math.ceil((z1 - z0) / (0.8 * (x1 - x0))) : 1;
+  if (k <= 1) return [[...piece]];
+  const strip = (i: number) => clipRingToRect(local, { minX: x0, maxX: x1, minZ: z0 + ((z1 - z0) * i) / k, maxZ: z0 + ((z1 - z0) * (i + 1)) / k });
+  return Array.from({ length: k }, (_, i) => strip(i).map((p) => ({ x: a.x + p.x * ux - p.z * uz, z: a.z + p.x * uz + p.z * ux }))).filter((r) => r.length >= 3);
 };
 
 /** A path's width (m): its `width`, else by type. */
@@ -100,6 +114,8 @@ export interface Band {
   readonly carriageway?: true;
   /** A sidewalk's line (laid along a road, or mapped on its own): `width` wide from `from` metres off `line`. */
   readonly along?: { readonly line: readonly Pt[]; readonly from: number; readonly width: number };
+  /** A band of steps' run, end to end: what its pieces in a chunk are cut along (`flightStrips`). */
+  readonly run?: readonly [Pt, Pt];
 }
 
 /** Sidewalk sides a road gets: tagged ones, or both on city streets without tags and without mapped sidewalks nearby. */
@@ -134,7 +150,7 @@ export const lineBands = (l: Line, mappedSidewalkNear: boolean, water: readonly 
   const bridge = t.bridge !== undefined && t.bridge !== "no";
   const deck = bridge ? ([l.line[0]!, l.line[l.line.length - 1]!] as const) : undefined;
   const out: Band[] = [];
-  const add = (surface: GroundSurface, ring: Pt[], extra: Pick<Band, "carriageway" | "along"> = {}) => {
+  const add = (surface: GroundSurface, ring: Pt[], extra: Pick<Band, "carriageway" | "along" | "run"> = {}) => {
     if (ring.length >= 3) out.push({ surface, ring, bridge, ...(deck ? { deck } : {}), source: l.id, ...extra });
   };
   const hw = t.highway;
@@ -149,8 +165,12 @@ export const lineBands = (l: Line, mappedSidewalkNear: boolean, water: readonly 
     } else if (hw === "pedestrian") add(cobbled(t) ? "cobble" : "square", bufferLine(l.line, parseLength(t.width) ?? 8));
     else if (PATHS[hw] !== undefined) {
       const w = pathWidth(t);
-      // Steps: one band per straight run, so the renderer reads the flight's direction off it.
-      if (hw === "steps") for (let i = 0; i + 1 < l.line.length; i++) for (const strip of flightStrips(l.line[i]!, l.line[i + 1]!, w)) add("steps", strip);
+      // Steps: one band per straight run, so the renderer reads the flight's direction off it. A
+      // bend of a few centimetres starts no new run: it would leave one too short to draw (G-213).
+      if (hw === "steps") {
+        const runs = simplifyLine(l.line, STEPS_BEND);
+        for (let i = 0; i + 1 < runs.length; i++) add("steps", bufferLine([runs[i]!, runs[i + 1]!], w), { run: [runs[i]!, runs[i + 1]!] });
+      }
       // A path's crossing of a carriageway: a zebra where it is marked, the road itself where not.
       else if (crossingWay(t)) {
         if (markedCrossing({ ...t, highway: "crossing" })) add("crossing", bufferLine(l.line, Math.max(w, CROSSING_ALONG)));
@@ -248,17 +268,21 @@ const ORDER: Record<GroundSurface, number> = { water: 0, grass: 1, square: 2, ro
 /** Clips bands to a chunk, simplifies and rounds them, in draw order then by source id. */
 export const chunkGround = (bands: readonly Band[], rect: Rect): GroundOut[] => {
   const out: { g: GroundOut; order: number; source: string; k: number }[] = [];
+  const round = (ring: readonly Pt[]) => removeCollinear(ring.map((p) => ({ x: r1(p.x), z: r1(p.z) })), 0.02);
   bands.forEach((b, k) => {
     const clipped = clipRingToRect(ccw(b.ring), rect);
     if (clipped.length < 3) return;
-    const simple = removeCollinear(
-      simplifyRing(clipped, 0.3).map((p) => ({ x: r1(p.x), z: r1(p.z) })),
-      0.02,
-    );
-    if (simple.length < 3 || Math.abs(signedArea(simple)) < 0.5) return;
-    const ring = ccw(simple);
+    const simple = simplifyRing(clipped, 0.3);
+    if (Math.abs(signedArea(round(simple))) < 0.5) return;
+    // Steps are cut into strips in the chunk, so a piece its edge cuts short is cut too; the
+    // strips of a piece kept are all kept, however small, or the flight would have gaps.
+    const pieces = b.run ? flightStrips(simple, ...b.run).map(round) : [round(simple)];
     const deck = b.deck ? { deck: [r1(b.deck[0].x), r1(b.deck[0].z), r1(b.deck[1].x), r1(b.deck[1].z)] } : {};
-    out.push({ g: { surface: b.surface, outline: ring.flatMap((p) => [p.x, p.z]), ...(b.bridge ? { bridge: true as const } : {}), ...deck }, order: ORDER[b.surface], source: b.source, k });
+    for (const p of pieces) {
+      if (p.length < 3) continue;
+      const ring = ccw(p);
+      out.push({ g: { surface: b.surface, outline: ring.flatMap((q) => [q.x, q.z]), ...(b.bridge ? { bridge: true as const } : {}), ...deck }, order: ORDER[b.surface], source: b.source, k });
+    }
   });
   out.sort((a, b) => a.order - b.order || (a.source < b.source ? -1 : a.source > b.source ? 1 : a.k - b.k));
   return out.map((o) => o.g);
