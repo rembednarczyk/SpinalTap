@@ -129,7 +129,7 @@ const seesTarget = (ctx: SimContext, self: Sniper, player: Entity): boolean => {
 };
 
 /** On the perch: rest, start aiming, track the target and fire when the aim time is up. */
-const shoot = (ctx: SimContext, self: Sniper, player: Entity, inLine: boolean, dt: number): void => {
+const shoot = (ctx: SimContext, self: Sniper, player: Entity, inLine: boolean, dt: number, relight: boolean): void => {
   const s = self.sniper;
   if (s.phase === "rest") {
     s.timer = Math.max(0, s.timer - dt);
@@ -152,6 +152,8 @@ const shoot = (ctx: SimContext, self: Sniper, player: Entity, inLine: boolean, d
     s.timer = LOST_SIGHT_REST;
     return;
   }
+  // Loaded mid-aim (G-185): the warning is on again for the time left, as the player saw it.
+  if (relight) ctx.bus.emit("SniperAimed", { entityId: self.id, targetId: player.id, duration: s.timer });
   face(self, player.position, TURN_RATE * dt);
   if (self.combatant) self.combatant.engaged = true;
   s.timer = Math.max(0, s.timer - dt);
@@ -179,6 +181,9 @@ export const sniperAiSystem: System = {
     const dt = ctx.dt * scale;
     for (const self of inCreationOrder(ctx.world.with("sniper", "velocity"))) {
       const s = self.sniper;
+      // Only the first step after loading relights the laser, whatever it does in it.
+      const relight = s.relight === true && s.phase === "aim";
+      delete s.relight;
       if (self.combatant) self.combatant.engaged = false;
       self.velocity = { x: 0, y: 0, z: 0 };
       const perch = s.perches[s.perch];
@@ -189,7 +194,7 @@ export const sniperAiSystem: System = {
         continue;
       }
       if (reposition(ctx, self, player, perch)) continue;
-      shoot(ctx, self, player, seesTarget(ctx, self, player), dt);
+      shoot(ctx, self, player, seesTarget(ctx, self, player), dt, relight);
     }
   },
 };

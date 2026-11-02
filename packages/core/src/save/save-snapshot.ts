@@ -5,6 +5,8 @@ import type { Contract } from "../contracts/contracts";
 import type { EnemyTypeId } from "../items/enemies";
 
 /**
+ * v25: an NPC's gun mid-fight (rounds left, reload, draw, bloom) and a sniper's aim, rest or
+ * perch (G-185); an older save has every NPC with a full magazine and every sniper idle.
  * v24: an AI pinned in the world while its chunk sleeps (G-188) is marked with its time outside
  * every loaded chunk; an older save has none marked, its pinned AIs loaded by their alert as before.
  * v23: the heat's reinforcements (G-179), who are in no content table, with how many came in and
@@ -32,7 +34,7 @@ import type { EnemyTypeId } from "../items/enemies";
  * v10: Tessen's standing in the reputation (the docks, ADR-0024), after v9's act II state
  * (Kagami's standing and the act II ending, ADR-0023) and the inventory of v8 (ADR-0015).
  */
-export const SAVE_SCHEMA_VERSION = 24;
+export const SAVE_SCHEMA_VERSION = 25;
 
 /** Serializable state of one dynamic entity. Static level geometry is rebuilt from content. */
 export interface EntitySnapshot {
@@ -69,6 +71,28 @@ export interface EntitySnapshot {
   readonly away?: number;
   /** Knocked out, or killed in a takedown and left lying (ADR-0065). Absent for everyone else. */
   readonly downed?: BodySnapshot;
+  /** An NPC's gun not at rest with a full magazine (G-185). Absent for the player and at rest. */
+  readonly gun?: GunSnapshot;
+  /** A sniper's state (G-185): it may be about to fire. Absent for everyone else. */
+  readonly sniper?: SniperSnapshot;
+}
+
+/** An NPC's gun between two shots (G-185): a loaded game fires when the saved one would. */
+export interface GunSnapshot {
+  /** Rounds left in the magazine. */
+  readonly loaded: number;
+  /** Seconds left of a reload, of the draw, and the spread of recent shots in radians. */
+  readonly reloading: number;
+  readonly drawing: number;
+  readonly bloom: number;
+}
+
+/** A sniper (ADR-0024, G-185): idle, aiming, resting or on the way, the seconds left, its perch. */
+export interface SniperSnapshot {
+  readonly phase: "idle" | "aim" | "rest" | "move";
+  readonly timer: number;
+  /** Index into its perches. */
+  readonly perch: number;
 }
 
 /** A body (ADR-0065): what the street knows of it and where the player put it. */
