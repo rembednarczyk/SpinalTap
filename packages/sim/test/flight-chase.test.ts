@@ -45,6 +45,7 @@ describe("chasing the player over the steps from the viaduct of Zamkowa (G-255)"
     ["the viaduct and the foot", TOP, FOOT],
     ["the foot and the middle", FOOT, MID],
     ["the foot and the bend", FOOT, BEND],
+    ["the bend and the viaduct", BEND, TOP],
     ["the square beside them and the middle", BESIDE, MID],
   ] as const) {
     it(`gets between ${name}, either way`, () => {

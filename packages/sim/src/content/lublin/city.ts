@@ -6,7 +6,7 @@ import { clearedBuilding } from "../cleared-buildings";
 import { buildingView, groundView, markingView, toPoints } from "./index";
 import { type GroundRect } from "./shape";
 import { type BuildingCut, CLEARED, type PassageSite, ROOM_STOREY, type RoomSite, rawHeight } from "./sites";
-import { flightDeckAt } from "./decks";
+import { bridgePieces, flightDeckAt } from "./decks";
 import { SHAPED_TERRAIN, groundY } from "./terrain";
 import type { LublinBuildingData, LublinChunkData, LublinGroundData } from "./types";
 
@@ -197,14 +197,19 @@ const flightUnder = (pts: readonly GroundPoint[]) =>
 /**
  * A piece of ground, on a bridge with its deck's axis and heights (ADR-0053), and so is a band
  * of steps on a flight hung off a bridge (G-255): the renderer lays its treads on the flight's
- * grade, as the simulation walks it, not on the terrain under it or on the bridge beside it.
+ * grade, as the simulation walks it, not on the terrain under it or on the bridge beside it. A
+ * bridge's piece is drawn without the niches of such flights (`bridgePieces`, G-274), as walked.
  */
-const bridgeView = (g: LublinGroundData): ViewDescriptor => {
+const bridgeViews = (g: LublinGroundData): ViewDescriptor[] => {
   const view = groundView(g);
-  if (view.kind !== "ground") return view;
+  if (view.kind !== "ground") return [view];
   const d = g.deck ? makeDeck(g.outline, g.deck, rawHeight) : g.surface === "steps" ? flightUnder(toPoints(g.outline)) : null;
-  if (!d) return view;
-  return { ...view, deck: { a: { x: d.a.x, y: d.ya, z: d.a.z }, b: { x: d.b.x, y: d.yb, z: d.b.z } } };
+  if (!d) return [view];
+  const deck = { a: { x: d.a.x, y: d.ya, z: d.a.z }, b: { x: d.b.x, y: d.yb, z: d.b.z } };
+  if (!g.deck) return [{ ...view, deck }];
+  const pieces = bridgePieces(g.outline);
+  if (pieces.length === 1 && pieces[0]!.length * 2 === g.outline.length) return [{ ...view, deck }];
+  return pieces.map((ring) => ({ ...view, outline: ring, deck }));
 };
 
 /**
@@ -280,7 +285,7 @@ export const chunkScenery = (c: LublinChunkData, buildings: readonly StaticProp[
   const terrain = SHAPED_TERRAIN.get(c.id) ?? c.terrain;
   return [
     { chunk: c.id, view: { kind: "terrain", grid: terrain }, at: ORIGIN },
-    ...c.ground.filter((g) => !clearedSurface(toPoints(g.outline))).map((g): SceneryItem => ({ chunk: c.id, view: bridgeView(g), at: ORIGIN })),
+    ...c.ground.filter((g) => !clearedSurface(toPoints(g.outline))).flatMap((g): SceneryItem[] => bridgeViews(g).map((view) => ({ chunk: c.id, view, at: ORIGIN }))),
     ...c.markings.map((m): SceneryItem => ({ chunk: c.id, view: markingView(m), at: ORIGIN })),
     ...buildings.map((p): SceneryItem => ({ chunk: c.id, view: p.view, at: p.center })),
   ];

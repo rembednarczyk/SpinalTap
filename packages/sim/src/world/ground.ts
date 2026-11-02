@@ -177,7 +177,12 @@ export class GroundField {
 
   /** Too steep to walk on (a bank, ADR-0043)? */
   steepAt(x: number, z: number, reach = Infinity): boolean {
-    return this.hasTerrain && this.slopeAt(x, z, reach) > MAX_WALK_SLOPE;
+    if (!this.hasTerrain) return false;
+    // By a flight hung off a bridge, ground more than a step over the feet (the reach) is a wall
+    // however level it is there: a dash of 0.23 m a step reaches past the samples of the slope,
+    // onto the flight's side or the deck over its landing (G-255).
+    if (Number.isFinite(reach) && this.nearFlight(x, z, SLOPE_HALF_SPAN) && this.heightAt(x, z, reach) > reach) return true;
+    return this.slopeAt(x, z, reach) > MAX_WALK_SLOPE;
   }
 
   /** Height of the ray above the ground at distance t (the street plane counts as -Infinity below). */

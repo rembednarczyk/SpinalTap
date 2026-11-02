@@ -9,12 +9,11 @@ import { input, teleportPlayer } from "./helpers";
 /**
  * Walking the steps from the viaduct of Zamkowa (G-255, OSM w56965515), up and down, as the
  * player does: along the map's line from Plac Zamkowy below its foot, by its bend, up to where
- * it leaves the deck and on along the viaduct, on it or up to 1.2 m to its outer side, at a walk
- * and at a run, turning to each point within 0.2 to 1.2 m of it. The line's other side lies in
- * the viaduct's outline, which is the viaduct's sidewalk (G-274), not the steps. Each walk gets
- * to its end, no step of it climbs or drops more than a step, and the feet are never under the
- * ground the treads are drawn on (`groundY`) off the bridges' decks (under them their headroom
- * rule holds, G-062): nobody walks under the flight, through its treads.
+ * it leaves the deck and on along the viaduct, on it or up to 1.2 m either side of it, at a walk
+ * and at a run, turning to each point within 0.2 to 1.2 m of it. The steps' band is a niche in
+ * the viaduct's sidewalk (G-274): drawn and walked alike. Each walk gets to its end, no step of
+ * it climbs or drops more than a step, and the feet are never under the ground drawn there
+ * (`groundY`, the viaduct's deck too): nobody walks under the flight or the deck, through them.
  */
 
 type P = { readonly x: number; readonly z: number };
@@ -62,7 +61,7 @@ const walk = (sim: Simulation, body: () => Entity, steer: (e: Entity, to: P) => 
     steer(e, to);
     const q = body().position;
     step = Math.max(step, Math.abs(q.y - y));
-    const under = bridgeDeckAt(q.x, q.z) === null ? groundY(q.x, q.z) - q.y : 0;
+    const under = groundY(q.x, q.z) - q.y;
     if (under > sunk) [sunk, at] = [under, `(${q.x.toFixed(2)}, ${q.z.toFixed(2)}) feet ${q.y.toFixed(2)} drawn ${groundY(q.x, q.z).toFixed(2)}`];
   }
   const end = way[way.length - 1]!;
@@ -97,7 +96,7 @@ it("measures the seam beside a flight in the step the movement climbs (G-273)", 
 
 describe("walking the steps from the viaduct of Zamkowa (G-255)", () => {
   const sim = Simulation.create({ seed: 3 });
-  for (const off of [0, 0.4, 0.8, 1.2]) {
+  for (const off of [-1.2, -1, -0.5, 0, 0.5, 1, 1.2]) {
     it(`gets up and down them ${off} m to the side of the line, walking and running`, () => {
       for (const R of [0.2, 0.6, 1.2]) {
         for (const run of [false, true]) {
@@ -120,6 +119,29 @@ describe("walking the steps from the viaduct of Zamkowa (G-255)", () => {
         const w = playerWalk(sim, [at(s, 4 * side), at(s, -4 * side)], 0.6, false);
         expect(w.sunk, `across at ${s} from ${side}: ${w.at}`).toBeLessThan(0.05);
       }
+    }
+  }, 60_000);
+
+  it("keeps the viaduct's deck a wall from the bend's landing to a dash too: a body at 14 m/s steps up no more than a step", () => {
+    for (const [fx, fz, tx, tz] of [
+      [731.6, 159.4, 731.27, 158.79],
+      [729.9, 158.6, 729.37, 157.25],
+      [729.2, 158.4, 728.61, 157.45],
+      [732.5, 160.1, 732.19, 159.59],
+      [730.6, 160.6, 730.24, 159.97],
+    ] as const) {
+      const y0 = sim.streamer.ground.heightAt(fx, fz, -15.31 + STEP_HEIGHT);
+      const e = sim.world.add({ id: 9_257, position: { x: fx, y: y0, z: fz }, prevPosition: { x: fx, y: y0, z: fz }, yaw: 0, prevYaw: 0, pitch: 0, body: { radius: 0.38, height: 1.8 }, velocity: { x: 0, y: 0, z: 0 } });
+      const l = Math.hypot(tx - fx, tz - fz);
+      let up = 0;
+      for (let i = 0; i < 60; i++) {
+        const y = e.position.y;
+        e.velocity = { x: ((tx - fx) / l) * 14, y: e.velocity?.y ?? 0, z: ((tz - fz) / l) * 14 };
+        sim.step();
+        up = Math.max(up, e.position.y - y);
+      }
+      sim.world.remove(e);
+      expect(up, `(${fx}, ${fz})`).toBeLessThanOrEqual(STEP_HEIGHT);
     }
   }, 60_000);
 
@@ -155,7 +177,10 @@ describe("walking the steps from the viaduct of Zamkowa (G-255)", () => {
       const u = { x: (b.x - a.x) / l, z: (b.z - a.z) / l };
       for (const s of [0.1, 0.3, 0.5, 0.7, 0.9]) {
         for (const side of [1, -1]) {
-          for (const v of [1.4, 3, 6]) {
+          for (const v of [1.4, 3, 6, 14]) {
+            // The run on the viaduct has the viaduct's edges for sides: a dash onto a deck with
+            // under 2 m of room under it lifts onto it as on main (G-062), not the flight's doing.
+            if (seg === 3 && v > 6) continue;
             for (const ang of [0, 0.6]) {
               const from = { x: a.x + u.x * s * l - u.z * 4 * side, z: a.z + u.z * s * l + u.x * 4 * side };
               const y0 = sim.streamer.ground.heightAt(from.x, from.z, sim.streamer.ground.heightAt(from.x, from.z, -1e9) + STEP_HEIGHT);
@@ -179,7 +204,7 @@ describe("walking the steps from the viaduct of Zamkowa (G-255)", () => {
     expect(bad).toEqual([]);
   }, 120_000);
 
-  it("keeps the viaduct's sidewalk over the flight: its edge walked past the steps stays on the deck (G-274)", () => {
+  it("keeps a floor under the viaduct's sidewalk by the niche: its edge walked past the steps never sinks under the deck or the steps drawn (G-274)", () => {
     // Zamkowa's axis on the viaduct (OSM w232362907), and its deck's edge on the steps' side ~4 m off it.
     const [a, b] = [
       { x: 761, z: 185.6 },
@@ -188,16 +213,15 @@ describe("walking the steps from the viaduct of Zamkowa (G-255)", () => {
     const l = Math.hypot(b.x - a.x, b.z - a.z);
     const u = { x: (b.x - a.x) / l, z: (b.z - a.z) / l };
     const side = (734.1 - a.x) * -u.z + (163.9 - a.z) * u.x > 0 ? 1 : -1;
-    for (const off of [3.0, 3.5]) {
+    for (const off of [2.5, 3.0, 3.5]) {
       const at = (t: number): P => ({ x: a.x + u.x * l * t - u.z * off * side, z: a.z + u.z * l * t + u.x * off * side });
       for (const way of [
         [at(0.6), at(0.95)],
         [at(0.95), at(0.6)],
       ]) {
+        // Along the deck's edge it may step down into the niche, onto the steps drawn there.
         const w = playerWalk(sim, way, 0.6, false);
-        expect(w.left, `${off} m off: ${w.left.toFixed(2)} m short`).toBeLessThan(1.1);
-        expect(w.step, `${off} m off: a step of ${w.step.toFixed(2)} m`).toBeLessThanOrEqual(STEP_HEIGHT);
-        expect(Math.abs(sim.player()!.position.y - (bridgeDeckAt(sim.player()!.position.x, sim.player()!.position.z) ?? Infinity))).toBeLessThan(0.1);
+        expect(w.sunk, `${off} m off: ${w.at}`).toBeLessThan(0.05);
       }
     }
   }, 60_000);
@@ -205,7 +229,8 @@ describe("walking the steps from the viaduct of Zamkowa (G-255)", () => {
   it("hangs no slab of the viaduct over the flight or its landings: where the flight is the ground, no deck is over it (G-274)", () => {
     const over: string[] = [];
     for (let x = 724; x <= 738; x += 0.25) {
-      // Off the chunks' seam at z = 160, where the deck lookup takes the first chunk's pieces only.
+      // Off the line z = 160 itself: there `GroundField` takes the decks of the chunk south of it
+      // only, and the viaduct's piece north of it is missing (a seam of main, reported apart).
       for (let z = 155.125; z <= 167; z += 0.25) {
         if (sim.streamer.ground.onFlight(x, z) && bridgeDeckAt(x, z) !== null) over.push(`(${x}, ${z})`);
       }

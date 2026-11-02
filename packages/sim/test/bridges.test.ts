@@ -1,10 +1,22 @@
 import { describe, expect, it } from "vitest";
 import { Simulation, groundY } from "../src";
-import { BRIDGE_DECKS } from "../src/content/lublin/decks";
+import { BRIDGE_DECKS, bridgeDeckAt, flightDeckAt } from "../src/content/lublin/decks";
+import { chunkScenery } from "../src/content/lublin/city";
+import { MAP_CHUNKS } from "../src/content/lublin/sites";
 import { SHAPED_TERRAIN } from "../src/content/lublin/terrain";
 import { TRAFFIC_ROUTES, pointAt } from "../src/content/traffic";
 import { type GroundDeck, deckAt, flightGradientAt, groundOver, makeDeck, onFlight } from "../src/world/deck";
 import { terrainHeightAt } from "@seki/core";
+
+const pointInRing = (p: { x: number; z: number }, ring: readonly { x: number; z: number }[]): boolean => {
+  let c = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const a = ring[i]!;
+    const b = ring[j]!;
+    if (a.z > p.z !== b.z > p.z && p.x < ((b.x - a.x) * (p.z - a.z)) / (b.z - a.z) + a.x) c = !c;
+  }
+  return c;
+};
 
 /** Mełgiewska over the Bystrzyca: its two carriageways' bridges, the river some 5 m below. */
 const OVER_RIVER = { x: 2428, z: 262 };
@@ -69,13 +81,35 @@ describe("bridges' decks (ADR-0053)", () => {
   it("let the steps from the viaduct of Zamkowa down beside it on their grade, for the walkers as for the ground (G-255)", () => {
     const sim = Simulation.create({ seed: 1 });
     // On the run from the bend (729.5, 159.9) up to the deck's edge (734.1, 163.9): its middle on
-    // the flight's grade, and its side over the deck's outline on the viaduct's sidewalk (G-274).
+    // the flight's grade, its side in the map's outline of the viaduct on the bend's landing, in
+    // the niche the steps have in the viaduct's sidewalk (G-274).
     for (const [x, z, y] of [
       [731.8, 161.9, -14.55],
-      [730.8, 159.6, -13.56],
+      [730.8, 159.6, -15.31],
     ] as const) {
       expect(groundY(x, z), `${x}, ${z}`).toBeCloseTo(y, 1);
       expect(sim.streamer.ground.heightAt(x, z), `${x}, ${z}`).toBeCloseTo(groundY(x, z), 5);
     }
+  });
+
+  it("lay no steps on a flight's grade where a bridge's deck is the ground, nor a deck over the steps: one or the other, drawn as walked (G-274)", () => {
+    const both: string[] = [];
+    for (const c of MAP_CHUNKS) {
+      for (const item of chunkScenery(c, [])) {
+        const v = item.view;
+        if (v.kind !== "ground" || !v.deck) continue;
+        const xs = v.outline.map((p) => p.x);
+        const zs = v.outline.map((p) => p.z);
+        for (let x = Math.min(...xs); x <= Math.max(...xs); x += 0.25) {
+          for (let z = Math.min(...zs); z <= Math.max(...zs); z += 0.25) {
+            if (!pointInRing({ x, z }, v.outline)) continue;
+            // A band of steps on a flight's grade over a bridge's deck, or a bridge's piece over a flight.
+            if (v.surface === "steps" && flightDeckAt(x, z) === null && bridgeDeckAt(x, z) !== null) both.push(`steps over the deck at (${x.toFixed(2)}, ${z.toFixed(2)})`);
+            if (v.surface !== "steps" && flightDeckAt(x, z) !== null) both.push(`deck over the flight at (${x.toFixed(2)}, ${z.toFixed(2)})`);
+          }
+        }
+      }
+    }
+    expect(both).toEqual([]);
   });
 });

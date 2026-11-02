@@ -4,7 +4,6 @@ import { deckHeight } from "../../../packages/engine/src/renderer/mapcity/deck-p
 import { chunkScenery } from "../../../packages/sim/src/content/lublin/city";
 import { MAP_CHUNKS } from "../../../packages/sim/src/content/lublin/sites";
 import { groundY } from "../../../packages/sim/src/content/lublin/terrain";
-import { bridgeDeckAt } from "../../../packages/sim/src/content/lublin/decks";
 
 type Pt = { readonly x: number; readonly z: number };
 
@@ -41,8 +40,7 @@ const flight = (id: string) => {
         const q = face.corners;
         const m = { x: (q[0].x + q[1].x + q[2].x) / 3, z: (q[0].z + q[1].z + q[2].z) / 3 };
         const at = `${c.id} (${m.x.toFixed(1)}, ${m.z.toFixed(1)})`;
-        // A tread in the viaduct's outline is on its sidewalk, drawn there (G-274), not on the flight.
-        if (face.up && bridgeDeckAt(m.x, m.z) === null) treads.push({ s: along(line, m).s, y: Math.max(q[0].y, q[1].y, q[2].y), at });
+        if (face.up) treads.push({ s: along(line, m).s, y: Math.max(q[0].y, q[1].y, q[2].y), at });
         else risers.push({ h: riserOf(face).h, at });
       }
     }
@@ -85,11 +83,10 @@ describe("that flight off the viaduct as the renderer lays it (G-255)", () => {
   // Off the deck: from where the flight leaves it (734.1, 163.9), 4.0 m from the top, down to the foot.
   const from = Math.hypot(line[3]!.x - line[2]!.x, line[3]!.z - line[2]!.z);
   const views = MAP_CHUNKS.flatMap((c) => chunkScenery(c, []).flatMap((s) => (s.view.kind === "ground" && s.view.surface === "steps" ? [s.view] : [])));
-  // A band in the viaduct's outline is on its sidewalk (G-274), laid on its deck as on main.
   const off = views.filter((v) => {
     const mid = { x: v.outline.reduce((a, p) => a + p.x, 0) / v.outline.length, z: v.outline.reduce((a, p) => a + p.z, 0) / v.outline.length };
     const at = along(line, mid);
-    return at.off < 1.5 && at.s > from + 0.1 && bridgeDeckAt(mid.x, mid.z) === null;
+    return at.off < 1.5 && at.s > from + 0.1;
   });
 
   it("lays every band off the deck on the flight's grade, as the simulation walks it, from −13.5 down to −17.1", () => {
@@ -107,8 +104,7 @@ describe("that flight off the viaduct as the renderer lays it (G-255)", () => {
         // riser at a tread's middle (a tread is level at its higher end).
         const [a, b, c] = face.corners;
         const m = { x: (a.x + b.x + c.x) / 3, z: (a.z + b.z + c.z) / 3 };
-        // Off the viaduct's outline, where its slab hides the treads under it (G-274).
-        if (face.up && bridgeDeckAt(m.x, m.z) === null) expect(Math.abs(a.y - 0.05 - groundY(m.x, m.z)), `${m.x}, ${m.z}`).toBeLessThan(RISER);
+        if (face.up) expect(Math.abs(a.y - 0.05 - groundY(m.x, m.z)), `${m.x}, ${m.z}`).toBeLessThan(RISER);
       }
     }
   });

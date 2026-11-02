@@ -1,11 +1,14 @@
 import type { GroundPoint } from "@seki/core";
+import { minusConvex } from "../../world/convex-clip";
 import { DECK_DEPTH, type GroundDeck, deckAt, groundOver, makeDeck } from "../../world/deck";
 import { MAP_CHUNKS, rawHeight } from "./sites";
+import type { FlatPoints } from "./types";
 
-/** The bridges' pieces of each chunk as the map has them, before the flights down beside them. */
+/** The bridges' pieces of each chunk as the map has them, before the niches of the flights down beside them. */
 const MAP_DECKS: ReadonlyMap<string, readonly GroundDeck[]> = new Map(
   MAP_CHUNKS.map((c) => [c.id, c.ground.flatMap((g) => (g.deck ? [makeDeck(g.outline, g.deck, rawHeight)] : []))]),
 );
+const touches = (a: GroundDeck["box"], b: GroundDeck["box"]): boolean => a.minX <= b.maxX && b.minX <= a.maxX && a.minZ <= b.maxZ && b.minZ <= a.maxZ;
 
 /** Half the band of a flight of steps the import lays (m). */
 const BAND_HALF = 1.5;
@@ -14,6 +17,8 @@ const BAND_HALF = 1.5;
  * drawn treads all lie on it and a walker stands on them while its body is over them.
  */
 const FLIGHT_HALF = BAND_HALF + 0.4;
+/** The import rounds the steps' bands to 0.1 m: a niche takes them whole. */
+const ROUNDING = 0.1;
 
 const cross = (p: GroundPoint, q: GroundPoint): number => p.x * q.z - p.z * q.x;
 
@@ -47,9 +52,10 @@ interface RunBand {
  * the bend's inner side the margin past the band stops level with the landing's end, the rest
  * of the corner being the bend's landing (`bendLanding`). At the deck the band goes on square
  * `past` m beyond `b`, level there, over both corners of the turn onto the deck's run (else a
- * hole to the terrain 3.5 m down between the two bands).
+ * hole to the terrain 3.5 m down between the two bands). `half` m either side of the axis, the
+ * landings measured on the band `band` m either side (a niche takes both at its own width).
  */
-const runBand = (a: GroundPoint, b: GroundPoint, before?: GroundPoint, after?: GroundPoint, past = 0): RunBand => {
+const runBand = (a: GroundPoint, b: GroundPoint, before?: GroundPoint, after?: GroundPoint, past = 0, half = FLIGHT_HALF, band = BAND_HALF): RunBand => {
   const len = Math.hypot(b.x - a.x, b.z - a.z);
   const u = { x: (b.x - a.x) / len, z: (b.z - a.z) / len };
   const n = { x: -u.z, z: u.x };
@@ -58,11 +64,11 @@ const runBand = (a: GroundPoint, b: GroundPoint, before?: GroundPoint, after?: G
   const at = (p: GroundPoint, s: number, t: number) => ({ x: p.x + n.x * s + u.x * t, z: p.z + n.z * s + u.z * t });
   // `into` is +1 at `a` (the run goes on along u) and -1 at `b`.
   const bend = (p: GroundPoint, m: GroundPoint | null, into: number): { readonly end: BendEnd | null; readonly corners: (side: number) => GroundPoint[] } => {
-    if (!m) return { end: null, corners: (s) => [at(p, s * FLIGHT_HALF, into < 0 ? past : 0)] };
-    const inner = along(BAND_HALF, m) * into > 0 ? 1 : -1;
-    const land = Math.abs(along(BAND_HALF, m));
-    const end = { land, onBand: at(p, inner * BAND_HALF, along(inner * BAND_HALF, m)), onMargin: at(p, inner * FLIGHT_HALF, along(inner * FLIGHT_HALF, m)), cut: at(p, inner * FLIGHT_HALF, into * land) };
-    return { end, corners: (s) => (s === inner ? [end.onBand, end.cut] : [at(p, s * FLIGHT_HALF, along(s * FLIGHT_HALF, m))]) };
+    if (!m) return { end: null, corners: (s) => [at(p, s * half, into < 0 ? past : 0)] };
+    const inner = along(band, m) * into > 0 ? 1 : -1;
+    const land = Math.abs(along(band, m));
+    const end = { land, onBand: at(p, inner * band, along(inner * band, m)), onMargin: at(p, inner * half, along(inner * half, m)), cut: at(p, inner * half, into * land) };
+    return { end, corners: (s) => (s === inner ? [end.onBand, end.cut] : [at(p, s * half, along(s * half, m))]) };
   };
   const ea = bend(a, bisector(a, u, before), 1);
   const eb = bend(b, past > 0 ? null : bisector(b, { x: -u.x, z: -u.z }, after), -1);
@@ -112,10 +118,11 @@ const bendLanding = (p: GroundPoint, y: number, below: BendEnd, above: BendEnd):
  * runs on the deck stay on it. Not a ramp of the terrain: on its 2.5 m grid a band 3 m wide
  * standing 3 m over the ground beside it comes out up to 1.6 m low (bilinear, G-236 round 2).
  */
-const FLIGHT_DECKS: readonly GroundDeck[] = (() => {
+const [FLIGHT_DECKS, NICHES] = ((): [GroundDeck[], GroundPoint[][]] => {
   const bridges = [...MAP_DECKS.values()].flat();
   const seen = new Set<string>();
   const out: GroundDeck[] = [];
+  const niches: GroundPoint[][] = [];
   for (const f of MAP_CHUNKS.flatMap((c) => c.flights ?? [])) {
     if (seen.has(f.id)) continue;
     seen.add(f.id);
@@ -129,6 +136,8 @@ const FLIGHT_DECKS: readonly GroundDeck[] = (() => {
     const yFoot = rawHeight(pts[0]!.x, pts[0]!.z);
     if (y - rawHeight(top.x, top.z) <= DECK_DEPTH || y <= yFoot) continue;
     const bands = pts.slice(0, k).map((p, i) => runBand(p, pts[i + 1]!, pts[i - 1], pts[i + 2], i + 1 < k ? 0 : FLIGHT_HALF));
+    // Its niche in the bridges' decks: the steps' band, to the run's top, no further (G-274).
+    for (let i = 0; i < k; i++) niches.push([...runBand(pts[i]!, pts[i + 1]!, pts[i - 1], i + 1 < k ? pts[i + 2] : undefined, 0, BAND_HALF + ROUNDING, BAND_HALF + ROUNDING).ring]);
     // The grade is even over the runs between the landings.
     const climb = bands.map((band, i) => Math.max(0, Math.hypot(pts[i + 1]!.x - pts[i]!.x, pts[i + 1]!.z - pts[i]!.z) - (band.endA?.land ?? 0) - (band.endB?.land ?? 0)));
     const total = climb.reduce((a, c) => a + c, 0) || 1;
@@ -141,18 +150,43 @@ const FLIGHT_DECKS: readonly GroundDeck[] = (() => {
       yA = yB;
     });
   }
-  return out;
+  return [out, niches];
 })();
 
-const touches = (a: GroundDeck["box"], b: GroundDeck["box"]): boolean => a.minX <= b.maxX && b.minX <= a.maxX && a.minZ <= b.maxZ && b.minZ <= a.maxZ;
+
+
+/**
+ * A bridge's piece (its outline) without the niches of the flights of steps hung off it (G-274):
+ * the steps from the viaduct of Zamkowa run down in a niche of its sidewalk, by the north-west
+ * balustrade, and the map's outline of the viaduct reaches 1–1.5 m over the steps' band. Where
+ * the band is, the steps are drawn and walked, not the sidewalk's slab over them; elsewhere the
+ * deck as the map has it. Convex pieces, the outline as it is where no niche reaches it.
+ */
+export const bridgePieces = (outline: FlatPoints): GroundPoint[][] => {
+  const ring: GroundPoint[] = [];
+  for (let i = 0; i + 1 < outline.length; i += 2) ring.push({ x: outline[i]!, z: outline[i + 1]! });
+  const box = boxOf(ring);
+  let pieces = [ring];
+  for (const n of NICHES) if (touches(boxOf(n), box)) pieces = pieces.flatMap((p) => minusConvex(p, n));
+  return pieces;
+};
 
 /**
  * The bridges' decks of the map (ADR-0053), by chunk: each piece of a road or path the map has
- * on a bridge, level from abutment to abutment at the terrain's height there, over the valley.
- * Over a flight down beside it that its outline reaches over, the deck stays the ground, higher
- * than the flight: it is drawn there, so the walk along its edge goes on (G-274).
+ * on a bridge, level from abutment to abutment at the terrain's height there, over the valley,
+ * without the niches of the flights down beside it (`bridgePieces`, G-274): drawn and walked alike.
  */
-export const BRIDGE_DECKS: ReadonlyMap<string, readonly GroundDeck[]> = MAP_DECKS;
+export const BRIDGE_DECKS: ReadonlyMap<string, readonly GroundDeck[]> = new Map(
+  MAP_CHUNKS.map((c) => [
+    c.id,
+    c.ground.flatMap((g) => {
+      if (!g.deck) return [];
+      const d = makeDeck(g.outline, g.deck, rawHeight);
+      const pieces = bridgePieces(g.outline);
+      return pieces.length === 1 && pieces[0]!.length === d.ring.length ? [d] : pieces.map((ring) => ({ ...d, ring, box: boxOf(ring) }));
+    }),
+  ]),
+);
 
 /** The ground's decks of the map by chunk: its bridges' pieces and the flights hung off them that reach into it (G-255). */
 export const GROUND_DECKS: ReadonlyMap<string, readonly GroundDeck[]> = new Map(

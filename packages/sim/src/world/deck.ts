@@ -51,16 +51,24 @@ export const DECK_HEADROOM = 2;
 /** Is (x, z) on a bridge's own deck, not a flight's? There the bridge is the ground, over a flight beside it too (G-274). */
 const onBridge = (decks: readonly GroundDeck[], x: number, z: number): boolean => decks.some((d) => d.flight !== true && over(d, x, z));
 
+/**
+ * How far round a flight hung off a bridge its deck has no room under it (m): the flight's band
+ * and its margin, as boxes. From the flight under the deck beside it is the niche's wall (G-274).
+ */
+const BY_FLIGHT = 1;
+
 /** The highest deck over (x, z) that is ground for feet reaching up to `reach` (`deckAt`), and whether a flight's is among them. */
 const decksAt = (decks: readonly GroundDeck[], x: number, z: number, reach: number, terrain: number): { readonly y: number | null; readonly flight: boolean } => {
   let best: number | null = null;
   let flight = false;
+  // By a flight hung off a bridge, in the niche's walls (G-274), no room under the deck either.
+  const byFlight = decks.some((f) => f.flight === true && x >= f.box.minX - BY_FLIGHT && x <= f.box.maxX + BY_FLIGHT && z >= f.box.minZ - BY_FLIGHT && z <= f.box.maxZ + BY_FLIGHT);
   for (const d of decks) {
     if (!over(d, x, z)) continue;
     // A flight's band ends at a bridge's outline (G-274): the deck drawn there is the bridge's.
     if (d.flight === true && onBridge(decks, x, z)) continue;
     const y = deckHeight(d, x, z);
-    if (y > reach && d.flight !== true && y - terrain > DECK_HEADROOM) continue;
+    if (y > reach && d.flight !== true && !byFlight && y - terrain > DECK_HEADROOM) continue;
     flight ||= d.flight === true;
     if (best === null || y > best) best = y;
   }

@@ -302,7 +302,7 @@ const passable = (r: Raster, c: number, dx: number, dz: number, out: boolean): n
   if (dx !== 0 && dz !== 0 && (!open[iz * CELLS + nx] || !open[nz * CELLS + ix])) return -1;
   // Near a flight, not up a wall in the ground more than a step high, as a bridge's deck over the
   // terrain by its landing (G-274): the movement makes it a bank. Down it may (`out`: from `c`).
-  if (r.base && r.flight && ((r.flight[c] ?? 0) > 0 || (r.flight[n] ?? 0) > 0)) {
+  if (r.base && r.flight) {
     const [from, to] = out ? [c, n] : [n, c];
     if ((r.base[to] ?? 0) - (r.base[from] ?? 0) > (dx !== 0 && dz !== 0 ? WALL_DIAGONAL : STEP_HEIGHT)) return -1;
   }
@@ -388,15 +388,14 @@ const nearest = (c: number, reach: number, ok: (n: number) => boolean): number =
 const walkable = (r: Raster, a: Vec3, b: Vec3): boolean => {
   const len = Math.hypot(b.x - a.x, b.z - a.z);
   const n = Math.ceil(len / SAMPLE);
-  const start = cellIndex(r, a.x, a.z);
-  let last = r.base && start >= 0 ? (r.base[start] ?? a.y) : a.y;
+  let last = a.y;
   for (let i = 1; i <= n; i++) {
     const t = i / n;
     const c = cellIndex(r, a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t);
     if (c < 0) return false;
     if (r.base && r.flight) {
       const h = r.base[c] ?? 0;
-      if ((r.flight[c] ?? 0) > 0 && h - last > STEP_HEIGHT) return false;
+      if (h - last > STEP_HEIGHT) return false;
       last = h;
     }
     if (t * len >= NEAR_SKIP && !r.open[c]) return false;
