@@ -788,12 +788,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: sonda zapis/wczytanie z obalonym cywilem; jeśli ginie, rozszerzyć `strayBodies` z testem
 - Pakiet właściciela: packages/sim, packages/persistence
 
-### G-243 Skan i18n nie łapie polskich słów bez polskich znaków
-- Status: w PR #214 (2.11, PRZYJĘTE; uwagi weryfikatora poprawione w a521d24, czeka na CI)
-- Ważność: S4 (luka w narzędziu) · Zasięg: `tools/i18n-scan` liczy literały z polskimi znakami; „ruch” w `touch-controls.tsx` przeszedł, baza była 0
-- Poprawka: w JSX liczyć każdy tekst węzła (i `aria-label`, `title`, `placeholder`) poza wywołaniami `t()`, z listą dozwolonych (nazwy własne, symbole); baza z nowej reguły, potem w dół
-- Pakiet właściciela: tools/i18n-scan
-
 ### G-244 Budynki ceglane z OSM rysowane w tynku: `building:material` nie trafia do gry
 - Status: zgłoszone (2.11, kurator, przegląd #209)
 - Ważność: S3 (proponowana: rozpoznawalne zabytki w złym materiale) · Zasięg: 4 budynki (6 elementów OSM z `building:material=brick`): Donżon w450180469, Baszta Gotycka w66286376, Kaplica Trójcy w66258167, Brama Krakowska r7224409 (części w617597406, w617597407) · Koszt: średni (pole w danych + paleta fasady)

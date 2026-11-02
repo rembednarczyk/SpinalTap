@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-243 Skan i18n nie łapie polskich słów bez polskich znaków
+- Status: naprawione w #214 (2.11, PRZYJĘTE; „ruch” w #213; nowa reguła `shown` znalazła jeszcze 2 teksty, przeniesione do katalogów; reszta luk w G-247)
+- Ważność: S4 (luka w narzędziu) · Zasięg: `tools/i18n-scan` liczy literały z polskimi znakami; „ruch” w `touch-controls.tsx` przeszedł, baza była 0
+- Poprawka: w JSX liczyć każdy tekst węzła (i `aria-label`, `title`, `placeholder`) poza wywołaniami `t()`, z listą dozwolonych (nazwy własne, symbole); baza z nowej reguły, potem w dół
+- Pakiet właściciela: tools/i18n-scan
+
 ### G-242 Napastnik po wygranym napadzie zachowuje `ai.victim` w grze, ale nie po wczytaniu
 - Status: naprawione w #215 (2.11, PRZYJĘTE; luka: brak testu dla „failed” z ogłuszonym napastnikiem, mutacja „czyść tylko przy won” przeżywa; po „failed” żywy napastnik bez klucza teraz rezygnuje z pościgu)
 - Ważność: S4 · Zasięg: `close()` przy „won” nie czyści `ai.victim` (np. `micro:mugging:11:victim`), a zapis tego pola nie trzyma; po przebudzeniu ogłuszonego napastnika `isEngaged` (street.ts:45), `freeToLook` (body-watch-system.ts:31) i `interrupted` (activity.ts:18) różnią się między grą bez wczytania i po wczytaniu (atak na niego jest napaścią tylko po wczytaniu); hash tego nie łapie
