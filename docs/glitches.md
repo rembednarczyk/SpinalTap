@@ -864,6 +864,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer, rooms)
 - Test przyjęcia: zrzut nocą przed drzwiami z lampą i bez: różnica oświetlenia bruku poza progiem drzwi ≤ próg; test, że lampa nie ma w zasięgu siatek ulicy
 - Także (weryfikator): pokój nie jest w `ROOM_SITES` (bez zwolnień w `crowd.test` i `neon-off-wall`; dziś bez skutku); niski element modelu wystaje 0,2 m poza bryłę kuchni
+- Także (kurator, T-138): na bruku Jezuickiej plama sięga ok. 2,3 m przed fasadę, a Wieży Trynitarskiej (8,5 m) nie dosięga; poza tym topografia jest zgodna
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
