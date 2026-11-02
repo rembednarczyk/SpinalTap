@@ -21,6 +21,7 @@ Usage (each source an unpacked kit; the zips are listed in the README next to th
   python3 -I tools/city_kit.py --street DIR --out DIR
   python3 -I tools/city_kit.py --market DIR --out DIR
   python3 -I tools/city_kit.py --doors DIR --out DIR
+  python3 -I tools/city_kit.py --vehicles DIR --out DIR
 DIR for Kenney kits is the folder holding the .glb files and Textures/colormap.png. The second
 form bakes city-props.glb (ADR-0058, tools/city_props.py): --props is the folder
 `tools/assets/fetch.mjs` filled (one unpacked Kenney kit per source id), --quaternius the
@@ -29,6 +30,8 @@ Cyberpunk Game Kit's folder holding Platforms/, --ccby the same folder for the C
 street furniture of the second Sketchfab pack (tools/city_street.py), from the same kind of folder.
 The fourth bakes market-props.glb, the market's furniture of ADR-0058 stage 3 (tools/city_market.py).
 The fifth bakes door-props.glb, the leaves of the doors on the facades of ADR-0058 stage 9 (tools/city_doors.py).
+The sixth bakes vehicle-props.glb, the vehicles of ADR-0058 stage 4 and the far and phone versions of the kit's
+cars (tools/city_vehicles.py).
 """
 import argparse, os, sys, zlib
 import numpy as np
@@ -57,6 +60,19 @@ def kenney_vehicle_role(rgb, paint_hue):
     if 40 <= hd < 65 and v > 0.85:
         return 'headlight'
     return 'trim'
+
+
+def car_roles(P, src):
+    """The roles of a Kenney car's triangles from their colours: the paint is the most used saturated colour."""
+    area = np.linalg.norm(np.cross(P[:, 1] - P[:, 0], P[:, 2] - P[:, 0]), axis=1)
+    acc = {}
+    for c, a in zip(map(tuple, src), area):
+        hh, ss, _ = hsv(c)
+        if ss > 0.3:
+            b = int(hh * 36)
+            acc[b] = acc.get(b, 0) + a
+    paint_hue = (max(acc, key=acc.get) + 0.5) * 10 if acc else None
+    return [kenney_vehicle_role(tuple(c), paint_hue) for c in src]
 
 
 NEON_TOWN_ROLES = {
@@ -166,16 +182,7 @@ def bake(key, kit, path, yaw, tex):
         py = np.clip((uv[:, 1] % 1) * h, 0, h - 1).astype(int)
         src = tex[py, px, :3]
         if kit == 'cars':
-            # The paint is the most used saturated colour.
-            area = np.linalg.norm(np.cross(P[:, 1] - P[:, 0], P[:, 2] - P[:, 0]), axis=1)
-            acc = {}
-            for c, a in zip(map(tuple, src), area):
-                hh, ss, _ = hsv(c)
-                if ss > 0.3:
-                    b = int(hh * 36)
-                    acc[b] = acc.get(b, 0) + a
-            paint_hue = (max(acc, key=acc.get) + 0.5) * 10 if acc else None
-            roles = [kenney_vehicle_role(tuple(c), paint_hue) for c in src]
+            roles = car_roles(P, src)
         else:
             roles = [kenney_building_role(tuple(c)) for c in src]
     rng = np.random.default_rng(zlib.crc32(key.encode()))
@@ -245,7 +252,7 @@ def build_kit(dirs, out_dir):
 def main():
     ap = argparse.ArgumentParser()
     kit_args = ('commercial', 'cars', 'roads', 'neontown')
-    for k in kit_args + ('props', 'quaternius', 'ccby', 'street', 'market', 'doors'):
+    for k in kit_args + ('props', 'quaternius', 'ccby', 'street', 'market', 'doors', 'vehicles'):
         ap.add_argument('--' + k)
     ap.add_argument('--out', required=True)
     args = ap.parse_args()
@@ -255,7 +262,7 @@ def main():
         ap.error('the city kit needs all of --commercial --cars --roads --neontown')
     if any(props) and not all(props):
         ap.error('the props need all of --props --quaternius --ccby')
-    if not any(kit) and not any(props) and not args.street and not args.market and not args.doors:
+    if not any(kit) and not any(props) and not args.street and not args.market and not args.doors and not args.vehicles:
         ap.error('nothing to build')
     os.makedirs(args.out, exist_ok=True)
     if all(kit):
@@ -272,6 +279,9 @@ def main():
     if args.doors:
         from city_doors import build_doors
         build_doors(args.doors, args.out)
+    if args.vehicles:
+        from city_vehicles import build_vehicles
+        build_vehicles(args.vehicles, args.out)
 
 
 if __name__ == '__main__':
