@@ -23,7 +23,7 @@ import {
   tickHeat,
 } from "@seki/core";
 import { SECURITY_ENTRIES } from "../content/devices";
-import type { Entity } from "../world/components";
+import type { Entity, WitnessCall } from "../world/components";
 import type { Offence, SimContext, StreetDisturbance, System } from "../world/context";
 import { reinforcementEntity } from "../world/reinforcements";
 import { chestOf, eyeOf, lineOfSight } from "../world/hitscan";
@@ -250,9 +250,26 @@ const runCalls = (ctx: SimContext, player: Entity | null, dt: number): void => {
     if (!call) continue;
     call.left -= dt;
     if (call.left > 0) continue;
-    dropCalls(ctx, call.incident);
-    report(ctx, call.crime, "civilian", c.id, player?.id ?? 0, call.at);
-    bodyReported(ctx, call.body);
+    callThrough(ctx, c.id, call, player);
+  }
+};
+
+const callThrough = (ctx: SimContext, witnessId: EntityId, call: WitnessCall, player: Entity | null): void => {
+  dropCalls(ctx, call.incident);
+  report(ctx, call.crime, "civilian", witnessId, player?.id ?? 0, call.at);
+  bodyReported(ctx, call.body);
+};
+
+/**
+ * Calls in progress before a save (G-240): the crowd is not saved (ADR-0029), so each call goes
+ * through now, as at its end, in the game saved from and in the loaded one alike; a save is no
+ * way out of a report. One knocked out has none; one held in a takedown still has it (G-141).
+ */
+export const settleCalls = (ctx: SimContext): void => {
+  const player = ctx.session.gameOver ? null : (ctx.world.with("player").first ?? null);
+  for (const c of inCreationOrder(ctx.world.with("civilian"))) {
+    const call = c.civilian.crowd?.call;
+    if (call && !c.unconscious) callThrough(ctx, c.id, call, player);
   }
 };
 

@@ -51,6 +51,7 @@ export interface DebugApi {
   /**
    * Restarts the running game from its own snapshot with part of the domain replaced, e.g. to
    * start a test in the middle of the main thread. The world is rebuilt as a load would.
+   * Throws where the player cannot save (the same gate, G-256).
    */
   jump(domain: Partial<DomainState>): void;
   step(n: number, input?: Partial<InputFrame>): void;
@@ -151,6 +152,9 @@ export const createDebugApi = (
     p.pitch = pitch;
   },
   jump(domain) {
+    // A snapshot the player could not save (in a grip, a ride, a panel) loads into a game that
+    // drifts from this one (G-256, G-253): a test would start from a state no load can give.
+    if (!session.saves.canSave()) throw new Error("jump: can't save right now (a takedown, a panel, a ride, death or the title)");
     const snapshot = session.saves.snapshot();
     // Straight into play: a test jumping mid-story steps at once, no loading screen (ADR-0057).
     session.restore({ ...snapshot, domain: { ...snapshot.domain, ...domain } }, false);

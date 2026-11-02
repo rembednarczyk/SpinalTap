@@ -13,7 +13,7 @@ export interface SaveControllerDeps {
   readonly narrative: NarrativeRuntime;
   readonly sim: SimRef;
   readonly now: () => Date;
-  /** A save is allowed now: no conversation, shop or bag open, and a game running. */
+  /** A save is allowed now: no conversation, shop or bag open, no takedown under way, and a game running. */
   readonly canSave: () => boolean;
   /** Replaces the running game with a loaded snapshot. */
   readonly restore: (snapshot: SaveSnapshot) => void;
@@ -115,9 +115,16 @@ export class SaveController {
     }
   }
 
+  /** The gate of every save of the player's (a takedown, a panel, a ride, death, the title). */
+  canSave(): boolean {
+    return this.deps.canSave();
+  }
+
   snapshot(): SaveSnapshot {
     const sim = this.deps.sim();
     const { objective } = describeObjective(sim.domain, this.locale);
+    // The street calms down as the loaded game would (G-240): the game goes on as after a load.
+    sim.calmForSave();
     return sim.snapshot(this.deps.narrative.saveState(), slotDateLabel(this.deps.now(), this.locale), objective ?? "");
   }
 

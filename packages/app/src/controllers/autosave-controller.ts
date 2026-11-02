@@ -33,7 +33,7 @@ export interface AutosaveControllerDeps {
   readonly enabled: () => boolean;
   /**
    * A save now could be loaded into: playing, in control (no conversation, shop, bag, breach,
-   * kiosk or menu), out of combat, alive. Anything else and the save waits.
+   * kiosk or menu), no takedown under way, out of combat, alive. Anything else and the save waits.
    */
   readonly safe: () => boolean;
   /**
