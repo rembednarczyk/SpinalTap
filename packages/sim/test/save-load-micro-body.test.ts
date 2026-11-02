@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { SaveSnapshot } from "@seki/core";
-import { SIM_HZ, Simulation, stateHash, type Entity } from "../src";
+import { SIM_HZ, Simulation, WAKE_TIME, stateHash, type Entity } from "../src";
+import { isEngaged } from "../src/world/street";
 import { run, teleportPlayer } from "./helpers";
 import { enterKanal } from "./micro-scenes";
-import { CROUCH, takeDown } from "./takedown-scenes";
+import { CROUCH, takeDown, ticks } from "./takedown-scenes";
 
 /**
  * The body of a mugger of a micro-event (G-233): once the mugging is won, an ordinary body in the
@@ -100,5 +101,42 @@ describe("the body of a micro-event's mugger in the save (G-233)", () => {
     expect(sim.session.carrying).not.toBeNull();
     const loaded = load(sim);
     expect([loaded.session.carrying, bodies(loaded).length, loaded.session.street2.micro]).toEqual([null, 0, null]);
+  });
+
+  it("won, knocked out: woken after a load or without one, the mugger is the same (G-242)", () => {
+    const { sim, m1 } = oneDown(false);
+    win(sim, m1);
+    run(sim, CALM, CROUCH);
+    // The scene's hack is not saved (ADR-0029): it wakes seeing in both.
+    for (const b of bodies(sim)) b.hackFx = { pinged: 0, blind: 0, crippled: 0 };
+    const loaded = load(sim);
+    // Its victim went with the mugging: sent after nobody, in the game as after a load.
+    expect(bodies(sim).map((b) => b.ai?.victim)).toEqual([undefined]);
+    for (const s of [sim, loaded]) {
+      // The security sent to the body (it fought her) leaves; a passer-by both games have comes by and wakes it.
+      const [body] = bodies(s);
+      for (const g of [...s.world.with("ai")]) if (g.key && g.ai.alerted) s.world.remove(g);
+      const mei = s.world.with("civilian").entities.find((c) => c.key === "mei")!;
+      mei.position = { ...body!.position, x: body!.position.x + 1 };
+      mei.prevPosition = { ...mei.position };
+      delete mei.civilian!.crowd;
+    }
+    const woken = (s: Simulation) => [...s.world].find((e) => !e.key && !!e.enemy && !!e.ai && !e.downed && (e.health?.current ?? 0) > 0)!;
+    run(sim, ticks(WAKE_TIME + 1), CROUCH);
+    run(loaded, ticks(WAKE_TIME + 1), CROUCH);
+    expect([woken(sim), woken(loaded)].map((e) => [e.ai?.alerted, isEngaged(e)])).toEqual([
+      [true, true],
+      [true, true],
+    ]);
+    // Blinded by her hack, it loses her; past giving up the search it calms down in both: no longer
+    // fighting, so hitting it is an assault.
+    for (const s of [sim, loaded]) woken(s).hackFx = { pinged: 0, blind: 60, crippled: 0 };
+    run(sim, ticks(40), CROUCH);
+    run(loaded, ticks(40), CROUCH);
+    expect([woken(sim), woken(loaded)].map((e) => [e.ai?.alerted, isEngaged(e)])).toEqual([
+      [false, false],
+      [false, false],
+    ]);
+    expect(hash(loaded)).toBe(hash(sim));
   });
 });

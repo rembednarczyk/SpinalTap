@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { EXCEPTIONS, isPolish, scanPackages, scanSource } from "../src/scan";
+import { EXCEPTIONS, SHOWN_WORDS, isPolish, needsCatalog, scanPackages, scanSource } from "../src/scan";
 
 /**
  * The language ratchet (ADR-0056): Polish text written into `packages/<name>/src` outside the
@@ -31,7 +31,7 @@ const STAGE_2A_PANELS = [
 
 describe("what counts as Polish", () => {
   it("takes diacritics and frequent Polish words, not English or code", () => {
-    for (const t of ["Wróć do gry", "Nowa gra", "Kontrakt dla Kaito", "nie", "Zapisz"]) expect(isPolish(t), t).toBe(true);
+    for (const t of ["Wróć do gry", "Nowa gra", "Kontrakt dla Kaito", "nie", "Zapisz", "ruch", "Ostatnia znana pozycja", "KIROSHI · SKAN"]) expect(isPolish(t), t).toBe(true);
     for (const t of ["New Game", "Back", "settings__option", "slot-1", "Mouse0", "../i18n/t", "pending", "dialog", "ladder", "tokens"]) expect(isPolish(t), t).toBe(false);
   });
 
@@ -58,6 +58,46 @@ describe("what counts as Polish", () => {
     expect(scanSource("x.tsx", src).map((f) => f.line)).toEqual([4, 5, 6, 10, 13, 14, 15, 16, 17]);
     // A .ts file has no JSX: bare words on a line are code there.
     expect(scanSource("x.ts", "const x = 1;\n  Wróć\n").map((f) => f.line)).toEqual([]);
+  });
+
+  it("counts text JSX shows outside the catalogs whatever its letters (G-243)", () => {
+    const src = [
+      'const a = <div className="touch__stick-hint">move</div>;',
+      "const b = <div>pchnij</div>;",
+      'const c = <button aria-label="Pause" />;',
+      "const d = <g><title>Last seen</title></g>;",
+      'const e = <input placeholder="Search" />;',
+      'const f = <img alt="Map" />;',
+      'const g = <i title={"Open"} />;',
+      'const h = <p>{"Paused"}</p>;',
+      'const i = <p>{on ? "On" : t("off")}</p>;',
+      "const j = <p>{`Slot ${n}`}</p>;",
+      'const k = <p>{busy && "Wait"}</p>;',
+      'const l = <p>{"Unknown" || name}</p>;',
+      'const m = <p>{"None" ?? name}</p>;',
+    ].join("\n");
+    expect(scanSource("x.tsx", src).map((f) => f.line)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+    const code = [
+      'const a = <div className="touch__stick-hint" data-testid="stick-hint" id="hint" role="note">{t("touch.move")}</div>;',
+      'const b = <i title={t("map.witness")} aria-label={label} className={on ? "x--on" : "x--off"} />;',
+      "const c = <kbd>E</kbd>;",
+      "const d = <span>Tab · I · J</span>;",
+      "const e = <b>€$ {n} ✕ · [{k}] → 3/4 +</b>;",
+      "const f = <span>{n} m · {s} s</span>;",
+      "const g = <h1>SEKI SENSHI 関 戦士</h1>;",
+      'const h = <p>{cond && t("hud.e")}</p>;',
+      'const i = <p key="row" type="text">{t(on ? "a.on" : "a.off")}</p>;',
+      'const j = label("Move");',
+    ].join("\n");
+    expect(scanSource("x.tsx", code)).toEqual([]);
+    // Outside JSX a bare English word is code (a key, a CSS class); a Polish word still counts.
+    expect(scanSource("x.ts", 'const a = "Move";\nconst b = "ruch";\n').map((f) => f.line)).toEqual([2]);
+  });
+
+  it("lets JSX show only keys, units, signs and the game's names as they are", () => {
+    for (const t of ["E", "Tab", "Enter", "II", "€$", "✕", "· [", "s", "m", "HP", "RAM", "FLATLINE", "Breach Protocol", "SEKI SENSHI", "関 戦士"]) expect(needsCatalog(t), t).toBe(false);
+    for (const t of ["ruch", "move", "KIROSHI · SKAN", "Press E", "Tab to switch", "ok"]) expect(needsCatalog(t), t).toBe(true);
+    for (const [word, why] of SHOWN_WORDS) expect(why.length, word).toBeGreaterThan(20);
   });
 
   it("explains every exception", () => {
@@ -103,5 +143,14 @@ describe("i18n scan (ADR-0056)", () => {
     const planted = src.replace(/(<h2 className="screen__heading">.*<\/h2>)/, "$1\n      <p>Wróć do gry {tab}</p>");
     expect(planted).not.toBe(src);
     expect(scanSource(file, planted).map((f) => f.text)).toEqual(["Wróć do gry"]);
+  });
+
+  it("would turn red on the touch pad's stick hint written in, in any language (G-243)", () => {
+    const file = "packages/ui/src/touch/touch-controls.tsx";
+    const src = readFileSync(join(ROOT, file), "utf8");
+    const hint = /(<div className="touch__stick-hint">).*?(<\/div>)/;
+    expect(src).toMatch(hint);
+    const line = src.slice(0, src.search(hint)).split("\n").length;
+    for (const word of ["ruch", "move"]) expect(scanSource(file, src.replace(hint, `$1${word}$2`))).toContainEqual({ file, line, text: word });
   });
 });

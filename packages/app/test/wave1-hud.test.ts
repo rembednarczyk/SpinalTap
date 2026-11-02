@@ -153,6 +153,9 @@ describe("scanner view models", () => {
     expect(scanTargetVm(enemy, "pl")).toMatchObject({ name: "Strażnik Tessen" });
     const kaito = { ...base, id: 33, health: { current: 50, max: 50 }, interactable: { kind: "dialogue", dialogueId: "fixer" } } as unknown as Entity;
     expect(scanTargetVm(kaito, "en")).toMatchObject({ name: "Kaito", profile: null });
+    const mori = { ...base, id: 37, health: { current: 50, max: 50 }, interactable: { kind: "shop", dialogueId: "mori" } } as unknown as Entity;
+    expect(scanTargetVm(mori, "en")).toMatchObject({ name: "Doctor Mori", profile: null });
+    expect(scanTargetVm(mori, "pl")).toMatchObject({ name: "Doktor Mori" });
     const terminal = { ...base, id: 34, interactable: { kind: "terminal", dialogueId: "crane" } } as unknown as Entity;
     expect(scanTargetVm(terminal, "en")).toMatchObject({ kind: "device", name: "Terminal" });
     const sign = { ...base, id: 36 } as unknown as Entity;

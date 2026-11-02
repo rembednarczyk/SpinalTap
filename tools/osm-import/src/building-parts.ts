@@ -11,8 +11,14 @@ import { STOREY, type Massing, parseLength, parseLevels, roofHeight, roofShapeOf
 import { type Area } from "./features.ts";
 import { type Pt, centroid, pointInRing, ringBounds, signedArea } from "./geometry.ts";
 
+/**
+ * A tower drawn round an outline of its own without `building` (`man_made=tower`, G-098): the
+ * Brigittines' bell tower lies inside its church's outline, so it is a part of it, rising out of it.
+ */
+const isTowerWay = (a: Area): boolean => a.tags["man_made"] === "tower" && a.tags.building === undefined && a.tags["building:part"] === undefined;
+
 /** A way or multipolygon tagged as a part of a building, not a building itself. */
-export const isPart = (a: Area): boolean => a.tags["building:part"] !== undefined && a.tags["building:part"] !== "no" && a.tags.building === undefined;
+export const isPart = (a: Area): boolean => isTowerWay(a) || (a.tags["building:part"] !== undefined && a.tags["building:part"] !== "no" && a.tags.building === undefined);
 
 /** The parts of each building, by the building's id: a part goes to the smallest outline holding its centroid. */
 export const partsByBuilding = (buildings: readonly Area[], parts: readonly Area[]): Map<string, Area[]> => {
@@ -29,9 +35,10 @@ export const partsByBuilding = (buildings: readonly Area[], parts: readonly Area
 
 /**
  * Parts standing on no building outline (G-061): a pavilion mapped only as `building:part`. They
- * become buildings of their own, with the part's value as the building's kind.
+ * become buildings of their own, with the part's value as the building's kind. A tower way on no
+ * outline is no pavilion: its one storey would be a guess (the scan's `tower-area-missing` counts it).
  */
-export const orphanParts = (buildings: readonly Area[], parts: readonly Area[]): Area[] => parts.filter((p) => !buildings.some((b) => pointInRing(centroid(p.ring), b.ring)));
+export const orphanParts = (buildings: readonly Area[], parts: readonly Area[]): Area[] => parts.filter((p) => !isTowerWay(p) && !buildings.some((b) => pointInRing(centroid(p.ring), b.ring)));
 
 /**
  * An orphan part as a building: `building:part=yes` becomes `building=yes` (a restaurant pavilion

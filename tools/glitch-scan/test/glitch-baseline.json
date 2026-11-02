@@ -49,6 +49,7 @@
   "landmark-missing": 0,
   "landmark-default-height": 1,
   "osm-tower-default-height": 1,
+  "tower-area-missing": 2,
   "church-over-nmpt": 0,
   "landmark-fake-tower": 0,
   "landmark-double-tower": 0,

@@ -145,3 +145,28 @@ describe("a part on no outline (G-061)", () => {
     expect(bona!.use).toBe("commercial");
   });
 });
+
+describe("a tower mapped without building (G-098)", () => {
+  const inputs = loadInputs();
+  const specs = [...new Set([{ x: 161.2, z: -228.4 }, { x: 83.5, z: 99.3 }].flatMap((p) => ALL_CHUNKS.filter((c) => inRect(p, c.rect))))];
+  const all = generate(inputs.osm, inputs.src, specs).chunks.flatMap((c) => c.buildings);
+  const byId = (id: string) => all.find((b) => b.id === id);
+
+  it("raises the Brigittines' bell tower out of its church to the helmet's y 32.4 of the surface model", () => {
+    const tower = byId("w1090997970");
+    expect(tower).toBeDefined();
+    expect(tower!.soffit).toBeDefined();
+    expect(tower!.source).toBe("height");
+    expect(Math.abs(tower!.y + tower!.height + (tower!.roof ?? 0) - 32.4)).toBeLessThanOrEqual(0.5);
+    expect(peakAt(all, { x: 161.2, z: -228.4 })).toBeGreaterThan(32);
+    const church = byId("w66264082")!;
+    expect(church.mappedTower).toBe(true);
+    expect(pointInRing({ x: 161.2, z: -228.4 }, ring(church))).toBe(true);
+  });
+
+  it("gives the Lubomirski Palace's towers no height of their own while none is measured: the palace stands as it was", () => {
+    for (const id of ["w1002739983", "w1002739984"]) expect(byId(id), id).toBeUndefined();
+    const palace = byId("w67508859")!;
+    expect(peakAt(all, { x: 83.5, z: 99.3 })).toBeCloseTo(palace.y + palace.height + (palace.roof ?? 0), 6);
+  });
+});

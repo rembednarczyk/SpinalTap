@@ -89,7 +89,14 @@ const close = (ctx: SimContext, run: MicroEventRun, outcome: "won" | "helped" | 
     if (e && outcome === "left") ctx.world.remove(e);
     // Whoever stays is an ordinary passer-by now, gone with its chunk; a mugger's body is saved
     // unkeyed (G-233, `strayBodiesSnapshot`).
-    else if (e) delete e.key;
+    else if (e) {
+      delete e.key;
+      // The victim's key went with it, so a mugger is sent after nobody: none, as the save has it (G-242).
+      if (e.ai?.victim !== undefined) {
+        const { victim: _victim, ...ai } = e.ai;
+        e.ai = ai;
+      }
+    }
   }
   for (const key of [`${run.id}:victim`, `${run.id}:m0`, `${run.id}:m1`]) lowerFlag(ctx, deadFlag(key));
   if (outcome === "won" || outcome === "helped") {
