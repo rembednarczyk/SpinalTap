@@ -4,19 +4,24 @@
  * right. Each entry names the OSM element, what it replaces, why, and the register entry; the raw data in
  * `data/osm` stays as downloaded, so a new extract keeps the correction until OSM agrees.
  */
-import { type Area } from "./features.ts";
+import { type Area, type Line } from "./features.ts";
 import { centroid } from "./geometry.ts";
 import { type Tags } from "./osm.ts";
 
 export interface TagCorrection {
-  /** `w<id>` or `r<id>`, as `Area.id`. */
+  /** `w<id>` or `r<id>`, as `Area.id` or `Line.id`. */
   readonly id: string;
   readonly tags: Tags;
-  /** The outline scaled round its centroid by this factor (a mapped outline too small against the photograph). */
+  /** The outline scaled round its centroid by this factor (a mapped outline too small against the photograph); areas only. */
   readonly scale?: number;
   readonly reason: string;
   /** The entry of `docs/topografia.md` it answers. */
   readonly ref: string;
+}
+
+/** The castle stairs' ways at 10 m, as wide as their walls stand (T-113). */
+function stairs(ids: readonly string[], what: string): TagCorrection[] {
+  return ids.map((id) => ({ id, tags: { width: "10" }, reason: `schody zamkowe (${what}) ok. 10 m szerokości jak murki w231832094/5 wobec domyślnych 2–3 m`, ref: "T-113" }));
 }
 
 export const TAG_CORRECTIONS: readonly TagCorrection[] = [
@@ -57,6 +62,11 @@ export const TAG_CORRECTIONS: readonly TagCorrection[] = [
     reason: "Donżon: korona ok. y 16,4–16,9 z NMPT wobec y 18,6 z height=25",
     ref: "T-114",
   },
+  // The castle stairs (Brabander, 1954): OSM has no `width` on their flights and landings, so they
+  // were 3 m and 2-2.5 m bands, a dark strip up the slope. Their walls w231832094 and w231832095
+  // stand 9.6..10.1 m apart (centre lines), about 11 m with the balustrades on the orthophoto.
+  ...stairs(["w1435832499", "w1305940836", "w1305889408", "w1305940837", "w1306105687"], "biegi"),
+  ...stairs(["w1435832498", "w56965512", "w1305889407", "w1305940838", "w48500135", "w1306105686"], "podesty"),
 ];
 
 const BY_ID: ReadonlyMap<string, TagCorrection> = new Map(TAG_CORRECTIONS.map((c) => [c.id, c]));
@@ -68,4 +78,10 @@ export const corrected = (a: Area, corrections: ReadonlyMap<string, TagCorrectio
   const k = c.scale ?? 1;
   const o = centroid(a.ring);
   return { ...a, tags: { ...a.tags, ...c.tags }, ring: k === 1 ? a.ring : a.ring.map((p) => ({ x: o.x + (p.x - o.x) * k, z: o.z + (p.z - o.z) * k })) };
+};
+
+/** The line with its corrected tags (a way's width or type the map gets wrong), or as it is. */
+export const correctedLine = (l: Line, corrections: ReadonlyMap<string, TagCorrection> = BY_ID): Line => {
+  const c = corrections.get(l.id);
+  return c ? { ...l, tags: { ...l.tags, ...c.tags } } : l;
 };

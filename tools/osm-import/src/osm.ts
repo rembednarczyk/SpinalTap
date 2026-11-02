@@ -126,6 +126,8 @@ const crossingTags = (tags: Tags): Tags => {
 };
 
 const keeps = (tags: Tags | undefined, keys: readonly string[]): boolean => !!tags && keys.some((k) => tags[k] !== undefined);
+/** Walls kept for the checks that read them (steps between walls, G-203); fences and hedges stay out. */
+const WALLS = new Set(["wall", "retaining_wall"]);
 
 /** Only what the generator reads: map features, multipolygons, their nodes and named points of interest. */
 export const filterOsm = (data: OsmData): OsmData => {
@@ -141,7 +143,7 @@ export const filterOsm = (data: OsmData): OsmData => {
   const ways = new Map<number, OsmWay>();
   const nodeIds = new Set<number>();
   for (const w of data.ways.values()) {
-    if (!wayIds.has(w.id) && !keeps(w.tags, AREA_OR_LINE_KEYS)) continue;
+    if (!wayIds.has(w.id) && !keeps(w.tags, AREA_OR_LINE_KEYS) && !WALLS.has(w.tags?.barrier ?? "")) continue;
     const tags = cleanTags(w.tags);
     ways.set(w.id, { id: w.id, nodes: w.nodes, ...(tags ? { tags } : {}) });
     for (const n of w.nodes) nodeIds.add(n);

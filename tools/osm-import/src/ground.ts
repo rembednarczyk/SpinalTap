@@ -50,6 +50,18 @@ const PATHS: Record<string, number> = { footway: 2.5, path: 2, cycleway: 2, step
 
 const underground = (t: Tags) => t.tunnel === "yes" || t.tunnel === "culvert" || t.indoor === "yes" || Number(t.layer ?? 0) < 0 || t.location === "underground";
 
+/**
+ * The bands of one straight run of steps `w` wide. The renderer takes a band's long side for the
+ * run, so a flight wider than the default and shorter than it is wide (the castle stairs, T-113)
+ * is cut along the run into strips narrower than the run is long; together they cover the same
+ * band. A default-width band stays whole: its short runs are a glitch of their own.
+ */
+export const flightStrips = (a: Pt, b: Pt, w: number): Pt[][] => {
+  const run = Math.hypot(b.x - a.x, b.z - a.z);
+  const k = w > PATHS.steps! && run >= 0.5 && run < w ? Math.ceil(w / (0.8 * run)) : 1;
+  return Array.from({ length: k }, (_, i) => stripAlong([a, b], -w / 2 + (i * w) / k, w / k));
+};
+
 /** A path's width (m): its `width`, else by type. */
 export const pathWidth = (t: Tags): number => parseLength(t.width) ?? PATHS[t.highway ?? ""] ?? 2;
 
@@ -138,7 +150,7 @@ export const lineBands = (l: Line, mappedSidewalkNear: boolean, water: readonly 
     else if (PATHS[hw] !== undefined) {
       const w = pathWidth(t);
       // Steps: one band per straight run, so the renderer reads the flight's direction off it.
-      if (hw === "steps") for (let i = 0; i + 1 < l.line.length; i++) add("steps", bufferLine([l.line[i]!, l.line[i + 1]!], w));
+      if (hw === "steps") for (let i = 0; i + 1 < l.line.length; i++) for (const strip of flightStrips(l.line[i]!, l.line[i + 1]!, w)) add("steps", strip);
       // A path's crossing of a carriageway: a zebra where it is marked, the road itself where not.
       else if (crossingWay(t)) {
         if (markedCrossing({ ...t, highway: "crossing" })) add("crossing", bufferLine(l.line, Math.max(w, CROSSING_ALONG)));

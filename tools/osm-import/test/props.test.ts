@@ -10,10 +10,13 @@ import { GATE_PASSAGES } from "../../../packages/sim/src/content/lublin/gate-pas
 import type { LublinChunkData } from "../../../packages/sim/src/content/lublin/types.ts";
 import { REPO } from "../src/paths.ts";
 import { emitProps } from "../src/props-emit.ts";
-import { loadNodeTags } from "../src/props-art.ts";
+import { loadBuildingTags, loadNodeTags } from "../src/props-art.ts";
+import { furnitureBlock, groundY, lublinDecalWalls, poleLampAt, surfaceY } from "../src/decal-walls.ts";
+import { addDecals } from "../src/props-decals.ts";
+import type { Pt } from "../src/geometry.ts";
 import { type PropsPlan, generateProps } from "../src/props-gen.ts";
 import { SHAPES, knownKind, propOf, withShape } from "../src/props-kinds.ts";
-import { evenStations, offRoad, offWall, scatter, stations } from "../src/props-place.ts";
+import { evenStations, offRoad, offWall, scatter, sideOffset, stations } from "../src/props-place.ts";
 import { Site } from "../src/props-site.ts";
 import { SolidIndex, clearSpot } from "../src/props-solid.ts";
 import { gameDoors } from "../src/game-doors.ts";
@@ -21,7 +24,6 @@ import { loadCarriageways } from "../src/props-roads.ts";
 import { lublinVenueBoards } from "../src/venue-boards.ts";
 import { lublinDoorWalls } from "../src/door-walls.ts";
 import { addDoors, loadEntrances } from "../src/props-doors.ts";
-import { surfaceY } from "../../../packages/sim/src/content/lublin/terrain";
 
 const CHUNKS = [...KRAKOWSKIE_CHUNKS, ...STARE_MIASTO_CHUNKS, ...PODZAMCZE_CHUNKS, ...NABRZEZE_CHUNKS];
 const PLAN = JSON.parse(readFileSync(join(REPO, "docs/world/lublin-props.todo.json"), "utf8")) as PropsPlan;
@@ -72,8 +74,10 @@ describe("street furniture generator (ADR-0047)", () => {
     const committed = readFileSync(join(REPO, "packages/sim/src/content/lublin/props.generated.ts"), "utf8");
     const market = { roads: loadCarriageways(), doors: gameDoors() };
     const table = generateProps(PLAN, CHUNKS, loadNodeTags(), lublinVenueBoards(), market).byChunk as Map<string, StreetPropItem[]>;
-    // The doors on the facades (ADR-0058 stage 9) after the furniture, as `pnpm osm:props` adds them.
+    // The doors on the facades (ADR-0058 stage 9) after the furniture, then the decals (stage 6), as `pnpm osm:props` adds them.
     addDoors(table, new Site(CHUNKS), lublinDoorWalls(), loadEntrances(), { surfaceY: (p) => surfaceY(p.x, p.z), gameDoors: gameDoors() });
+    const ctx = { groundY: (p: Pt) => groundY(p.x, p.z), surfaceY: (p: Pt) => surfaceY(p.x, p.z), buildingTags: loadBuildingTags(), poleLamp: poleLampAt, blockOf: furnitureBlock };
+    addDecals(table, new Site(CHUNKS), lublinDecalWalls(), ctx);
     expect(emitProps(table)).toBe(committed);
   });
 
@@ -203,6 +207,30 @@ describe("street furniture generator (ADR-0047)", () => {
     expect(a).toEqual(scatter(site, ring, 20, "stalls", 3));
     expect(a).toHaveLength(20);
     for (const p of a) expect(site.surfaceAt(p)).not.toBe("building");
+  });
+
+  it("stands a lamp beside a flight wider than its offset just past the flight's edge, not on a landing (G-203)", () => {
+    // A flight 16 m long and 10 m wide along x on z = 30, a landing past its east end.
+    const chunk: LublinChunkData = {
+      ...street(),
+      buildings: [],
+      ground: [
+        { surface: "steps", outline: [0, 25, 16, 25, 16, 35, 0, 35] },
+        { surface: "footway", outline: [16, 25, 20, 25, 20, 35, 16, 35] },
+      ],
+    };
+    const site = new Site([chunk]);
+    const d = sideOffset(site, { x: 8, z: 30 }, { x: 0, z: 1 }, "path", 4)!;
+    expect(d).toBeGreaterThanOrEqual(5);
+    expect(d).toBeLessThanOrEqual(5.5);
+    expect(sideOffset(site, { x: 8, z: 30 }, { x: 0, z: -1 }, "path", 4)).toBeGreaterThanOrEqual(5);
+    // Beside the landing as before; along the flight towards the landing, no place.
+    expect(sideOffset(site, { x: 18, z: 30 }, { x: 0, z: 1 }, "path", 4)).toBe(4);
+    expect(sideOffset(site, { x: 8, z: 30 }, { x: 1, z: 0 }, "path", 4)).toBeNull();
+    // The same flight laid over a paved square, which ranks over it: still off the treads (G-203, Zamkowa's top flight).
+    const paved = new Site([{ ...chunk, ground: [{ surface: "square", outline: [-10, 15, 30, 15, 30, 45, -10, 45] }, ...chunk.ground] }]);
+    expect(paved.surfaceAt({ x: 8, z: 34 })).toBe("walk");
+    expect(sideOffset(paved, { x: 8, z: 30 }, { x: 0, z: 1 }, "path", 4)).toBeGreaterThanOrEqual(5);
   });
 
   it("moves a traffic light from its node in the road's axis onto the pavement; covers and bollards stay", () => {

@@ -1,5 +1,6 @@
 import { type GameCommand, QUICKHACK_XP, type XpSource, gainXp, isAttributeId, rememberHack, spendAttributePoint } from "@seki/core";
 import type { SimContext } from "./context";
+import { goneReinforcement } from "./reinforcements";
 
 /**
  * Character progression in the simulation (ADR-0059, stage 1). Every source of experience goes
@@ -22,7 +23,7 @@ export const grantXp = (ctx: SimContext, amount: number, source: XpSource): void
  */
 export const grantQuickhackXp = (ctx: SimContext, key: string | undefined): void => {
   if (!key) return;
-  const remembered = rememberHack(ctx.state.domain.progression, key);
+  const remembered = rememberHack(ctx.state.domain.progression, key, goneReinforcement(ctx.world));
   if (!remembered) return;
   ctx.state.domain = { ...ctx.state.domain, progression: remembered };
   grantXp(ctx, QUICKHACK_XP, "hack");

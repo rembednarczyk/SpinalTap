@@ -117,13 +117,18 @@ const namePlaque = (sink: MeshSink, f: FacadeFrame, slot: number): void => {
 /** Narrowest a holo-ad gets where a neighbour leaves less of the wall clear (G-157), metres. */
 const HOLO_MIN = 3;
 
+/**
+ * May a holo-ad hang on this wall (`holos`: seven in ten of them do)? A firewall at least 7 m long
+ * with 7 m of it in view over its neighbour. The decals keep off it (ADR-0058 stage 6).
+ */
+export const holoMayHang = (f: FacadeFrame, w: Wall): boolean => w.blind && !hiddenWall(f, w) && w.length >= 7 && f.top - Math.max(w.coveredTo, f.b.base) >= 7;
+
 /** Holo-ads: on firewalls that rise over lower neighbours, and high on tall buildings. */
 const holos = (sink: MeshSink, f: FacadeFrame, rand: () => number): void => {
   for (const w of f.walls) {
-    if (!w.blind || hiddenWall(f, w) || w.length < 7) continue;
+    if (!holoMayHang(f, w) || rand() > 0.7) continue;
     const from = Math.max(w.coveredTo, f.b.base);
     const exposed = f.top - from;
-    if (exposed < 7 || rand() > 0.7) continue;
     const color = signTint(NEON[Math.floor(rand() * NEON.length)] ?? "#00e5ff", 1);
     const seed = rand();
     // A neighbour taller than the one against the wall may stand out in front of its end (G-157).

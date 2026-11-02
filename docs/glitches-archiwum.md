@@ -2,6 +2,276 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-210 Proceduralna dzwonnica z iglicą na Kaplicy Trójcy
+- Status: naprawione w #190 (2.11, PRZYJĘTE; Bernardyni na liście do czasu G-214, bo ich prawdziwa wieża stoi przy południowej ścianie)
+- Ważność: S3 (proponowana: fałszywa iglica jest najwyższym akcentem wzgórza zamkowego zamiast Donżonu) · Zasięg: Kaplica w66258167 (941; 214,6), możliwe inne kościoły z listy zabytków bez części i bez `tower` w OSM
+- Przyczyna: `packages/engine/src/renderer/mapcity/roof-plan.ts` (`towerSpots`/`addTowers`) dokłada wieżę kościołom bez `building:part`, więc wyłączenie z G-057 nie działa; korona wieży ok. y 19,0, iglica do ok. y 28–30 (Donżon 16,9; prawdziwa Kaplica bez wieży, szczyt zachodni ok. y 16,9)
+- Poprawka: bez proceduralnej wieży na zabytkach z `LANDMARK_BUILDINGS` bez `tower` w OSM (albo przepis Z3); kontrola skanu `landmark-fake-tower` (baza ≥ 1); migawka NPR świadomie
+- Pakiet właściciela: packages/engine (renderer/mapcity), tools/glitch-scan
+
+### G-211 Teleport (narzędzie zrzutów) na targu i w dokach ląduje we wnętrzu
+- Status: niepotwierdzone (2.11, łowca na origin/main 421a10b; do zamknięcia jako odrzucone, nie do odtworzenia)
+- Ważność: S4 (gdyby się potwierdziło) · Zasięg: zgłoszone (2689; 247) w dokach i (550; 281) na targu
+- Dowód (dane): żaden z dwóch punktów nie leży w żadnym pokoju `INTERIORS` (7 pokoi w 4 wnętrzach: clinic x 318–325, neon-koi x 307–324, trasa-podziemna x 568–585 z ok. -64 do -56, tessen-office x 2530–2542, z 428–438; najbliższy (2689; 247) to Tessen, ok. 190 m dalej; `interiorAt` na y gruntu +0,1 i +1 daje null w obu punktach). Żaden nie leży w obrysie budynku OSM (docki: w173489049 środek 17 m, obrys nie obejmuje punktu; targ: najbliższy w66324547 20,7 m, w66324546 22 m) ani w obszarze set piece (MARKET_AREA x 755–815, DOCKS_AREA x 2520–2594). Wysokość: `groundY` = -22,744 (docki) i -18,44 (targ), `teleport` stawia gracza na `streamer.ground.heightAt` (zrzut JSON: y -22,744, kamera y -21,124), czyli nie pod terenem
+- Dowód (zrzuty z gry, `glitch-shots`, yaw 0, pitch 0): docki `/tmp/claude-0/-home-user-SpinalTap/ddc6f520-6741-5c4a-a4fb-ad093091508f/scratchpad/g211-shots/g211-docks.png`: plac przy ścianie budynku (ciemna ściana po prawej), z lewej granatowa woda/niecka, żadnego wnętrza; targ `.../g211-market.png`: ulica z zabudową, żadnego wnętrza. Niebieski kadr, który widział weryfikator, to najpewniej woda (docki) lub kadr z innego yaw/y; nie odtworzono
+- Kontrola `interior-outside-building` (baza 0, tolerancja 0,3 m) nie ma tu nic do zgłoszenia: żadne wnętrze nie sięga tych punktów
+- Do zrobienia: zamknąć jako odrzucone (nie do odtworzenia); jeśli weryfikator ma kadr, niech poda yaw, pitch i y teleportu. Opcjonalnie test przyjęcia na przyszłość (QA): `interiorAt` dla (2689; 247) i (550; 281) na gruncie zwraca null
+- Pakiet właściciela: bez (packages/sim ani e2e bez zmian)
+
+### G-180 Zapis po śmierci gracza wczytuje się bez game over
+- Status: niepotwierdzone (2.11, naprawiacz): żadna ścieżka w app nie zapisuje martwego gracza (obrażenia przed `deathSystem`, `canSave` odrzuca ekran `dead`, pauza wymaga `inControl`, autozapis wymaga `!gameOver` i hp > 0); strażnik `packages/app/test/death-save.test.ts` w PR #193. Poboczne: import spreparowanego zapisu z hp 0 może dać podwójne `PlayerDied` (walidator mógłby odrzucać hp ≤ 0)
+- Ważność: S3 do potwierdzenia · Zasięg: zapis przy hp 0 wczytuje się z `gameOver=false` i drugi raz emituje `PlayerDied`
+- Pakiet właściciela: packages/sim, packages/app
+
+### G-201 Teren poza chunkami dostępny: reguła „poza wczytanym chunkiem” usypia strażnika obok gracza
+- Status: naprawione w #189 (2.11, PRZYJĘTE): `nearFocus` 30 m w `unloadChunks` i `sleepPinned`, także w chunkach; zostaje osobno: strażnik dalej niż 30 m w obcym chunku znika przy uśpieniu własnego
+- Ważność: S4 · Zasięg: obszary bez chunków, a z terenem, np. (2440; 545) na północ od Nabrzeża albo pas x 460–520, z > 160 między Starym Miastem a Podzamczem; żywy gracz stoi tam (hp 96), spokojny przypięty strażnik 6 m od niego znika w 1. s, zaalarmowany po 30 s (`sleepPinned`, G-188)
+- Poprawka: odległość od gracza zamiast samej przynależności do chunku albo brak dostępnego terenu poza chunkami; pokrewne: spokojny nieprzypięty strażnik w innym wczytanym chunku znika przy uśpieniu własnego (`standing` w `unloadChunks` tylko dla planów dnia i ciał); `ai.victim` z szablonu nie trafia do zapisu; `goAway()` w `contract-site-cleared.test.ts` stawia gracza poza mapą (testy G-195 z martwym graczem); `keepFormer` bez testu integracyjnego
+- Weryfikator #189: próg poza chunkami to 30 m (`loadRadius`), w chunkach praktycznie 44 m (histereza usypiania), więc spokojny strażnik 31 m od gracza poza chunkami znika w jednym kroku; w `micro-events.ts` uśpienie obu napastników zamknęłoby zdarzenie jako „won” z nagrodą (dziś wyklucza to geometria `MICRO_SPOTS`, ale nic tego nie pilnuje)
+- Pakiet właściciela: packages/sim (streaming)
+
+### G-202 Posiłki ochrony nie dają XP za quickhack
+- Status: naprawione w #187 (2.11, PRZYJĘTE; zapis v26): klucz XP `security:<n>@<since>`, decyzja użytkownika „zgodnie ze standardem”
+- Ważność: S4 · Zasięg: `grantQuickhackXp` (`packages/sim/src/world/progression-ops.ts`) zaczyna się od `if (!key) return;`, więc posiłek ochrony (bez klucza) nigdy nie daje XP, a strażnik z kluczem daje raz
+- Oczekiwane (standard gatunku, bez farmienia): każdy posiłek daje XP za quickhack raz, także po zapisie i wczytaniu; ten sam posiłek drugi raz nic
+- Poprawka: klucz XP posiłku z trwałego numeru (`security:<n>` z G-194) z rozróżnieniem kolejnych heatów, jeśli `n` może się powtórzyć po resecie `sent` (np. numer heatu w kluczu); test jednej sesji i zapisu; złoty hash świadomie, jeśli się zmieni
+- Pakiet właściciela: packages/sim
+
+### G-204 Wysokości Kaplicy Trójcy (domyślna) i Donżonu niezgodne z NMPT
+- Status: naprawione w #188 (2.11, PRZYJĘTE; kurator: wysokości zgodne z NMPT, korona Donżonu na parapecie 16,9)
+- Ważność: S3 (proponowana) · Zasięg: lokalny (sylwetka Zamku) · Koszt: mały
+- Gdzie: Kaplica w66258167 (941; 214,6), Donżon w450180469 (893,1; 214,6)
+- Dowód: NMPT GUGiK 0,5 m. Kaplica: okap ok. y 7 wobec 9,7 w grze, kalenica y 15,3 wobec 14,1; prezbiterium niższe (kalenica ok. y 11). Donżon: korona ok. y 16,4–16,9 wobec 18,6
+- Poprawka: `corrections.ts`: Kaplica `height` 21,6 (ściany 13,3 + dach 8,3, wzór importera: walls = height − min(roof, height/2)), `roof:height` 8,3; Donżon `height` ok. 23,3; prezbiterium Kaplicy jako część w etapie Z3 planu
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: kontrola `landmark-default-height` (baza 3) spada do 2; okap i kalenica Kaplicy oraz korona Donżonu w danych gry co do 1 m z NMPT
+
+### G-185 Stan strażników kontraktu po wczytaniu (hack w toku, uśpieni)
+- Status: (a) naprawione w #185 (1.11, PRZYJĘTE w rundzie 2; zapis v25: broń NPC i stan snajpera w zapisie, laser po wczytaniu w fazie `aim`, walidator naboi); (b) i (c) nie odtwarzają się z żywym graczem (artefakt martwego gracza poza mapą), test `save-load-away-guards.test.ts` pilnuje; (d)/(e) w G-208. Zgłoszenie zamknięte.
+- Ważność: S3 · Zasięg: (a) hack w toku: seed 9, zlecenie `hack` przy Genzo, połączenie z `quay_terminal`, zapis 565 kroków po połączeniu: w 1. kroku `c1-g1.cooldown` 2,583 w oryginale i 0 po wczytaniu, gracz hp 6 vs 37, inny `rngState`; zapis po 660 krokach: `c1-g2` po wczytaniu stoi na posterunku (2576; −28,6; 421), w oryginale się rusza; (b) `lost` zaalarmowanego strażnika zapisanego poza chunkiem o 1/60 wyżej (`dormant-restore`; seed 77, 10 kroków po alarmie, teleport Genzo+2000, 120 kroków, zapis); (c) `suspicion` uśpionego strażnika: seed 8, aktywny `infiltrate`, wyjście z doków, zapis, powrót na `docks(0,0,120)` i 5 kroków: `c1-g0.suspicion` 0,0266 vs 0,0183 (d) z weryfikacji #165: zapis w trakcie wymiany ognia rozjeżdża się po ok. 150–210 krokach, z posiłkami i z kluczowanym NPC (courier, seed 21: krok 33 na main i HEAD); zapis gubi m.in. `combatant.loaded`, `bloom`, `velocity`, `session.lastThreat` i przechodniów tłumu; (e) z weryfikacji #172: zapis z żywymi, walczącymi posiłkami w trwającym heacie rozjeżdża się w 9. kroku po wczytaniu, także bez ciał (`rngState`, `hp`, `cooldown` broni; stany w `scratchpad/v-g193-c.json`, `v-g193-d.json`)
+- Poprawka: cooldown/stan walki strażników w zapisie albo odtwarzane; `dormant-restore` bez dodatkowego kroku; test zapis–wczytanie dla każdego wariantu
+- Pakiet właściciela: packages/sim, packages/persistence
+
+### G-200 Test tabeli rekwizytów blisko limitu 20 s w CI po drzwiach
+- Status: naprawione w #183 (1.11, PRZYJĘTE; main czerwony od #167 do #183): przyczyna z profilu: `neighbour` w `cityFrames` przeglądał wszystkie 3662 budynki na próbkę co 10 cm, #167 dodał drugie ramkowanie; poprawka przez `BinIndex` i wczesne odrzucenie w `fits`, tabela bajt w bajt, 9,3 → 3,0 s pod `--coverage`. Poboczne: `determinism.test.ts` „golden run… at every density” 27 s pod load 24–27; `DoorRules.fit` filtruje wszystkie rekwizyty na slot; `cityFrames` liczy szczyt sąsiada z `at.y + height`, renderer z `base + height`: sprawdzone przez orkiestratora, to to samo (`MapCity` wpisuje `base: at.y`, `map-city.ts:125`); różni się za to `heightAt` w `mapBuilding`: `cityFrames` podaje `() => null`, więc `foot` = `base`, a renderer bierze najniższy teren pod obrysem; do sprawdzenia przy G-197/G-198, czy `facadeFrame` zależy od `foot` w miejscach drzwi i szyldów na spadku
+- Weryfikator #183: na tym samym hoście 2,7–4,5 s zamiast 9,2–13,5 s; w pełnym `test:coverage` 6,7 s; do obserwacji: `traffic-junction-drive.test.ts` „by Ruska and Lwowska (seed 3)” 17,5 s pod coverage przy load 18 (domyślny limit 20 s?) i „is deterministic…” w props.test.ts 10,3 s
+- Ważność: S3 (test, czerwony CI kosztuje cykl) · Zasięg: `tools/osm-import/test/props.test.ts` „matches the committed table” przekroczył 20 s w `test:coverage` na CI (przebieg 714 s zamiast ok. 550 s); lokalnie 3,1–3,2 s przy load 17
+- Przyczyna do ustalenia: generator rekwizytów urósł o reguły drzwi (#167) i targu (#153); test przelicza całą tabelę pod pokryciem
+- Poprawka: pomiar czasu generacji przed i po #167 (profil), przyspieszenie generatora albo wspólne wyliczenie tabeli dla testów; bez podnoszenia limitu (ADR-0046)
+- Pakiet właściciela: tools/osm-import (QA)
+
+### G-194 Quickhack w toku na encji bez klucza trafia po wczytaniu w inną encję
+- Status: naprawione w #179 (1.11, PRZYJĘTE): posiłek jako `security:<n>`, inne encje bez klucza przerwane po wczytaniu (`SessionWatch.uploadId`), schemat bez zmian
+- Ważność: S4 · Zasięg: `packages/sim/src/systems/scanner-system.ts:94` zapisuje cel jako `#<id>` w `domain.netrun.upload`; po wczytaniu id są przydzielane od nowa (worki z łupem biorą nowe), więc upload trafia w inną encję albo w nic
+- Poprawka: cel uploadu przez klucz (np. `security:<n>`) albo odrzucenie uploadu na encji bez klucza przy zapisie
+- Pakiet właściciela: packages/sim
+
+### G-188 Zaalarmowani strażnicy zlecenia przypięci w świecie daleko od gracza
+- Status: naprawione w #181 (1.11, PRZYJĘTE; zapis v24): `sleepPinned` usypia przypiętych poza wczytanymi chunkami (zaalarmowanych po 30 s), znacznik `away` w zapisie, `dormant-restore` po znaczniku, `keepFormer` przycina szablony
+- Ważność: S4 · Zasięg: zaalarmowani strażnicy zleceń (np. c1-g2, c3-g3) zostają przypięci w świecie ponad 4000 ticków, gdy gracz jest 2 km dalej; przez to zastąpione zlecenia trwale siedzą w `formerContracts` zapisu
+- Z weryfikacji #175 (G-195): uspokojony przypięty strażnik, którego chunk już śpi, zostaje w świecie do końca sesji, a po wczytaniu znika (sesja i zapis się rozchodzą); `dormant-restore.ts` sprawdza chunk szablonu (`former.chunk`), a nie chunk, w którym strażnik stoi, więc uspokojony strażnik oczyszczonego miejsca w innym, załadowanym chunku znika po wczytaniu na oczach gracza; `StreamCatalog.former` nie jest przycinana i rośnie z każdym wypłaconym zleceniem
+- Poprawka: zaalarmowany strażnik daleko od gracza (poza zasięgiem chunków przez N s) uspokaja się i zasypia; test jednej sesji i zapisu
+- Pakiet właściciela: packages/sim (streaming, dormant-restore)
+
+### G-199 XP za quickhack na celu bez klucza: możliwe wielokrotne zbieranie
+- Status: niepotwierdzone (1.11, sonda naprawiacza): `grantQuickhackXp` zaczyna się od `if (!key) return;`, więc cel bez klucza nigdy nie daje XP (posiłek n=1 hackowany 3 razy i 2 razy po wczytaniu: 0 XP); cele z kluczem płacą raz (`progression.hacked` w zapisie). Do decyzji użytkownika (poza rejestrem): czy posiłki ochrony mają płacić raz, pamięć po `security:<n>`
+- Ważność: S4 (proponowana) · Zasięg: `grantQuickhackXp(ctx, target.key)` w `packages/sim/src/systems/scanner-system.ts`; posiłki ochrony i inne cele bez klucza nie mają klucza, więc gra nie zapamiętuje, że cel już dał XP
+- Do zrobienia: sonda (ten sam posiłek hackowany kilka razy, także po zapisie i wczytaniu); jeśli XP rośnie za każdym razem, pamięć po `security:<n>` jak w G-194
+- Uwaga: po wczytaniu trwający upload jest przerwany w 1. kroku, gdy gracz nie trzyma skanu (zachowanie sprzed G-194)
+- Pakiet właściciela: packages/sim
+
+### G-195 Strażnicy wykonanego kontraktu wracają po ponownym wejściu
+- Status: naprawione w #175 (1.11, PRZYJĘTE; decyzja użytkownika: „jak w innych grach tego typu”): `clearSite()` przy wypłacie i przy wczytaniu; przegrane jak dotąd; schemat v23 bez migracji
+- Ważność: S3 · Zasięg: po wykonaniu kontraktu jego strażnicy odradzają się przy ponownym wejściu w chunk, dopóki miejsce nie dostanie następnego kontraktu (zastąpione zlecenia żyją w `formerContracts`, `packages/sim/src/simulation.ts:98`, `:245`)
+- Oczekiwane (wzór gier z gigami i posterunkami): miejsce wykonanego kontraktu zostaje oczyszczone; zabici i obezwładnieni nie wracają, ocaleni odchodzą przy wyjściu gracza z zasięgu; nowi strażnicy pojawiają się tylko z następnym kontraktem w tym miejscu; ciała znikają po wyjściu z zasięgu chunków
+- Poprawka: strażnicy wykonanego kontraktu nie trafiają do `formerContracts` przy uśpieniu (albo wpis oznaczony jako oczyszczony); test jednej sesji (wyjście i powrót) i zapisu; złoty hash zmieni się świadomie; razem z G-188 (ten sam mechanizm uśpienia)
+- Pakiet właściciela: packages/sim (streaming, contracts), packages/persistence
+
+### G-183 Skan latarni ściennych nie widzi przejść spoza `building_passage`
+- Status: naprawione w #168 (1.11, PRZYJĘTE w rundzie 2): kontrola `wall-lantern-by-passage` (baza 0) i `Site.nearPassage` przycinają oś `GATE_PASSAGES` do sklepienia; tabela rozstawienia bez zmian (runda 1 była fałszywym alarmem). Poboczne: skan pomija przejścia bez obrysu `p.building`
+- Ważność: S4 (narzędzie) · Zasięg: `wall-lantern-in-building` bierze osie tylko z `tunnel=building_passage`; przejście Gruella pod Wieżą Trynitarską (w298307007, `tunnel=yes`, `layer=-1`) i ręczne bramy `GATE_PASSAGES` pilnuje tylko generator (`Site.nearPassage` zna przejazdy chunków, nie zna `GATE_PASSAGES`); dziś 0 trafień
+- Poprawka: kontrola „latarnia ścienna bliżej niż 2 m od osi przejścia z danych gry” (`PASSAGES` i `GATE_PASSAGES`, odcinek przycięty do końców), baza 0; `nearPassage` także dla `GATE_PASSAGES`. Uwaga: pas wokół `tunnel=yes|covered=yes` z OSM łapie Trasę Podziemną (w293370650), więc nie z OSM
+- Pakiet właściciela: tools/glitch-scan, tools/osm-import
+
+### G-193 Zwłoki posiłku ochrony znikają po wczytaniu
+- Status: naprawione w #172 (1.11, PRZYJĘTE): `corpseOf` zachowuje `security`, zapis obejmuje ciała posiłków, `crime-system` liczy tylko żywych; schemat v23 bez zmian
+- Ważność: S3 · Zasięg: posiłek zabity po powaleniu albo w trakcie obalenia zostawia ciało bez klucza i bez `security` (`corpseOf`, `packages/sim/src/world/bodies.ts:64`); ciało nie trafia ani do `entities`, ani do `reinforcements`, więc po wczytaniu nie ma go do znalezienia ani zgłoszenia
+- Poprawka: zwłoki posiłków w zapisie (z `n`) albo `corpseOf` przenosi klucz `security:<n>`; test zapis–wczytanie
+- Pakiet właściciela: packages/sim, packages/persistence
+
+### G-148 Szyldy i neony wcięte w fasady (parasol)
+- Status: zamknięte (1.11, orkiestrator): G-157, G-158, G-159 i G-160 naprawione (w archiwum), a kontrole `venue-board-in-neighbour`, `banner-in-neighbour`, `holo-or-blade-in-neighbour` i `wall-lantern-over-venue-board` mają w main bazę 0 (wcześniej 7, 31, 4, 17); zostaje osobno G-161 (markiza nad literami)
+- Ważność: S3 · Zasięg: całe miasto, najgęściej Stare Miasto
+- Pomiar w całym mieście (660 budynków, 319 tablic lokali): 7 tablic lokali w sąsiedzie (G-159), 31 banerów `canyon-signs`, 3 holo i 1 `blade` w sąsiedzie (G-157), 17 latarni ściennych na tablicach (G-158), płyta „DEN…” o nieznanym źródle (G-160), markiza zasłaniająca dolny rząd liter z oczu gracza (G-161)
+- Dowód: zrzuty `scratchpad/g148-shots/` (g148-e/f/h/j przy OKRUSZEK, g148-k przy STAJNIA SMAKU, g148-r2/r4 na Rynku), pomiary `scratchpad/g148-measure.json`, `g148-venue.json`
+- Proponowane kontrole skanu (baza dziś): `venue-board-in-neighbour` 7, `banner-in-neighbour` 31, `holo-or-blade-in-neighbour` 4, `wall-lantern-over-venue-board` 17
+- Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import
+
+### G-043 Zatwierdzona migawka NPR nie zgadza się z tym, co rysuje main
+- Status: zamknięte (1.11, orkiestrator): migawka przepisana od zgłoszenia co najmniej 5 razy (ostatnio #153); na main 1592dab `npr-perf` „reference” z `maxDiffPixelRatio: 0` (próg piksela 0,2) przechodzi 2/2, więc klatka main zgadza się z migawką; tolerancja 0,02 zostaje jako zapas na SwiftShader
+- Ważność: S3 (proponowana: migawka przestaje pilnować wyglądu) · Koszt: mały
+- Dowód: naprawiacz i weryfikator G-030: `e2e/__snapshots__/npr-perf.spec.ts/reference-m0.png` różni się od deterministycznej klatki main (b5507ce) o 39 806 px poza Seki (bbox 0,0–1280,533); m.in. brak białej smugi odblasku na lewym oknie Neon Koi (y ok. 290). Test przechodzi tylko dzięki `maxDiffPixelRatio: 0.02`. Ustalić, który commit zmienił klatkę: regresja czy niezaktualizowana migawka.
+- Pakiet właściciela: packages/engine / e2e (QA)
+
+### G-179 Posiłki ochrony przy heacie poza zapisem
+- Status: naprawione (1.11, #165: zapis v23 z `reinforcements`, `watch.sent`, rozrzut i enforcer z `n` zamiast id; złote hashe tylko przez posiłki w zapisie; weryfikacja PRZYJĘTE)
+- Ważność: S3 · Zasięg: encje `security` bez klucza i `session.watch.reinforce` nie wchodzą do zapisu; `stateHash` nie widzi encji bez klucza
+- Dane: alleySim seed 21, `heat {level 2, faction hebi, lastKnown ALLEY_START}`, krok do pojawienia się posiłków i 30 dalej, zapis: oryginał 1 posiłek, `reinforce=3.5`; wczytana gra 0 i od razu nowy gdzie indziej; rozjazd w 130. kroku
+- Pakiet właściciela: packages/sim, packages/persistence
+
+### G-189 Radziwiłłowska: jedno auto na sześć miejsc postojowych
+- Status: naprawione (1.11, #162: ulga za krawężnikiem tylko dla mebli, pełny odstęp od chodnika, krótszy model w zatoce; `bay-strip-sparse` 1 → 0; `PARKED_CARS` 72 → 80; dwie rundy weryfikacji, kurator ZGODNE Z UWAGAMI, T-102..T-104, T-107, T-108)
+- Ważność: S4 · Zasięg: w883991779 ma 1 auto na 6 stanowisk; bay s=36 odrzuca `furnitureClearance` 0,75 m przy nosie (mebel w obrysie pasa), s=39 `clearOfKeptWays` (ścieżka w obrysie), s=30 i 33 pomija hash zajętości 0,8
+- Poprawka: sprawdzić mebel i ścieżkę w obrysie postoju (czy to błąd danych gry, czy OSM); ewentualnie meble poza obrysem pasa postojowego
+- Uwagi: kontrola `bay-car-orientation` bierze kierunek pasa z najdłuższej krawędzi obrysu, w Ciasnej w227679486 ta krawędź biegnie w poprzek ulicy (kontrola słaba); dla pasa bez tagu łapie tylko auta > 75°
+- Z weryfikacji #158: skan i generator mają różne reguły dla pasa ≥ 4,5 m bez tagu (skan liczy auto w poprzek jako znalezisko, generator cofa się do układu w poprzek, gdy skośny się nie mieści); auto Ciasnej (628,96; 551,62) stoi pod 2,4° do najbliższej ulicy z ruchem aut; fallback `perpendicular` chroni tylko test jednostkowy `bayLayouts`
+- Kurator #158: mebel (parkometr n9596788047) i chodnik o szerokości 2,5 m są prawdziwe i stoją za krawędzią pasa; w Lublinie zajęte są wszystkie 6 zatok; poprawka przez marginesy (np. przy nosie jak `KERB_GAP` dla mebla i chodnika poza obrysem), bez usuwania danych (T-104). Proponowana kontrola: pas OSM ≥ 15 m, mniej niż 50% zatok możliwych przy `BAY_STEP` po odjęciu hasha zajętości, odrzucenia tylko przez mebel lub chodnik spoza obrysu (baza ok. 1)
+- Pakiet właściciela: packages/sim (parked-cars, kerb-bays), tools/glitch-scan
+
+### G-160 Neon DENKI (i KARAOKE, SAKE) osiowy na ukośnej ścianie: koniec w murze, koniec w powietrzu
+- Status: naprawione (1.11, #161: oś bliższa ścianie, płyty 0,55 m pionowo 0,16 m od ściany, SAKE z narożnika na płaski odcinek; `neon-off-wall` z częścią płyty w bryle ≤ 15%, 3 → 0; dwie rundy weryfikacji). Opcja B (`yaw` w widoku `neon`, ADR) dla szerszych płyt na skośnych ścianach zostaje do decyzji
+- Ważność: S3 · Zasięg: lokalny (Rynek/Grodzka, trasa kanału Tetsu, widoczne z deptaka) · Koszt: mały
+- Gdzie: DENKI (567,3; −24,9) y 4,1, odsunięcie końca od ściany 1,95 m; KARAOKE (554,0; −33,8) 2,41 m; SAKE (545,0; −74,0) 0,45 m; w mieście 3 z 8 neonów przy ścianach
+- Dowód: kąt osi płyty do stycznej ściany 51°/53°/46°; zrzuty `scratchpad/g160-shots/g160-h.png`, `g160-i.png`
+- Przyczyna: `facadeNeon()` (`packages/sim/src/content/district-kanal.ts`) zamienia `againstWall().yaw` na `facing` o jednej z czterech osi; widok `neon` (`packages/core/src/ports/types.ts:195`) nie ma obrotu, a ściana jest ukośna
+- Poprawka: A (teraz) dane: przestawić albo skrócić trzy neony na płaski odcinek ściany; B (później, ADR) opcjonalny `yaw` w widoku `neon`
+- Test przyjęcia: kontrola skanu `neon-off-wall` (baza 3 → 0)
+- Pakiet właściciela: packages/sim (district-kanal.ts), tools/glitch-scan
+
+### G-187 Auta w głębokich pasach postojowych bez `orientation` w poprzek zamiast skośnie
+- Status: naprawione (1.11, #158: pod 60°, rozstaw 3,0 m, nosem do chodnika; `PARKED_CARS` 75 → 72; weryfikacja PRZYJĘTE, kurator ZGODNE Z UWAGAMI, T-103 poprawione, T-104)
+- Ważność: S4 · Zasięg: 2 pasy: Krakowskie Przedmieście w55897048 (15 aut, w rzeczywistości ok. 60°), Radziwiłłowska w883991779 (1 auto, w rzeczywistości 6 miejsc ok. 65–70°), nosem do chodnika (ortofoto PZGiK)
+- Poprawka (do wyboru): (a) domyślny układ dla obrysu ≥ 4,5 m bez tagu `diagonal`; (b) kąt `diagonal` parametrem (60° zamiast 45°); (c) tabela `KERB_ORIENTATION` w `sites.ts` ze źródłem albo `orientation=diagonal` w OSM i ponowny import; z (c) kontrola „auto poza ±20° od kąta z tabeli”, baza 0
+- Uwagi z weryfikacji #152: test pasa bez tagu nie sprawdza, że pas płytszy niż 4,5 m trzyma auta wzdłuż; układ `diagonal` nie ma auta na danych (tylko test `bayYaw`); kierunek auta na Ruskiej (963,8; 473,0) ze stycznej osi zamiast krawędzi obrysu (4–7°); `offKerbParks` zagęszcza punkty trasy przy przesunięciach kilku cm (18 → 604); `clearRun` odrzuca odsunięty odcinek krakowskie-2-1-square-1, przyczyna nieustalona
+- Pakiet właściciela: packages/sim (kerb-bays.ts, crowd-kerb-parks.ts)
+
+### G-178 Strażnicy nieudanej infiltracji znikają po wczytaniu
+- Status: naprawione (1.11, #150: `endedContract` i `formerContracts` w zapisie v22, `completed` z chwili rejestracji, czyszczenie zastąpionych zleceń, unikalność id; trzy rundy weryfikacji). Otwarta decyzja projektowa użytkownika: szablony zakończonego zlecenia respawnują nietkniętych strażników przy ponownym wejściu na teren, aż do następnego zlecenia (tak było przed poprawką)
+- Ważność: S2 (zapis pozwala uciec z walki) · Zasięg: kontrakt infiltrate zakończony alarmem (`contracts.active` null), strażnicy `c3-*` (5 encji) dalej walczą; po wczytaniu ich nie ma
+- Dane: seed 77, `completed: 2`, gracz w `docks(6,0,110)`, 30 kroków, `accept-contract infiltrate`, teleport 6 m przed `c3-g1`, kroki do alarmu i 60 dalej, zapis; w 1. kroku oryginał: gracz ginie (hp 0), wczytana gra: hp 84
+- Przyczyna: konstruktor `Simulation` rejestruje kontrakt tylko przy `status==="active" || hasAmbush`
+- Pakiet właściciela: packages/sim, packages/persistence
+
+### G-182 `MapEntries.neighboursNear` bez własnego testu
+- Status: naprawione (1.11, #155: test na prawdziwym `MapEntries`, pada przy zawężonym zapytaniu indeksu)
+- Ważność: S4 (test) · Zasięg: skan i test jednostkowy G-170 używają kopii logiki odsiania, więc ścieżki gry (`map-entries.ts`) nic nie pilnuje; dziś poprawna (sonda: 7298 czworokątów identycznych z `near` i bez)
+- Poprawka: test `neighboursNear` na prawdziwym `MapEntries` (sąsiad na granicy komórek, ściana skośna, sąsiad wyższą częścią)
+- Pakiet właściciela: packages/engine (mapcity)
+
+### G-177 Auta na pasach postojowych OSM równolegle na środku głębokości obrysu
+- Status: naprawione (1.11, #152: auta przy krawężniku i w poprzek, tłum 1 m od pasów; kontrole `bay-car-out-of-park` 1 → 0, `bay-car-orientation` 1 → 0, `crowd-lane-on-parking` 3 → 0; weryfikacja PRZYJĘTE, kurator ZGODNE Z UWAGAMI, T-102, T-103)
+- Ważność: S4 · Zasięg: auta z `bayCars` (`tools/osm-import/src/parked-cars.ts`): Kowalska w232362980 (683,7; 161,0) odsunięta 0,8 m ku jezdni (narożniki 0,31 i 0,56 m poza obrysem), bo trasa tłumu `stare-miasto-1-1-square-2` biegnie po krawężniku pasa; obrysy 4,7–8 m głębokości (Ruska w1024029951, Radziwiłłowska w883991779, Ciasna w227679486) i Kalinowszczyzna w1000912163 (`orientation=perpendicular`, 4–5 miejsc) mają po jednym aucie równolegle
+- Poprawka: auto przy zewnętrznej krawędzi obrysu (krawężnik), w obrysie ≥4,5 m albo z `orientation=perpendicular|diagonal` w poprzek (tag `orientation` do `CarParkOut`); trasa tłumu na osi chodnika w173566577; kontrole skanu `bay-car-out-of-park` (baza 1), `bay-car-orientation` (baza 1), `crowd-lane-on-parking`
+- Uwaga: `offMultiLaneKerbs` nie patrzy na stronę ulicy; na drogach 1+2 (Krakowskie w154962958, Lubartowska, Radziwiłłowska w331453920) wyklucza też krawężnik od strony jednego pasa; dziś bez skutku
+- Pakiet właściciela: tools/osm-import, packages/sim (crowd), tools/glitch-scan
+
+### G-184 Szkielety modeli przybywają przy każdym cyklu nowa gra / clear
+- Status: naprawione (1.11, #151: szkielet postaci proceduralnej zwalniany z rigiem; szkielety po clear 34/43/52/61 → 25 stale; pula VRM zamierzona, ograniczona szczytem jednoczesnych postaci; weryfikacja PRZYJĘTE)
+- Ważność: S3 do potwierdzenia (możliwy wyciek pamięci) · Zasięg: liczba szkieletów w scenie rośnie o 12 na cykl newGame/clear (67 → 79) na NullEngine z modelami VRM; sprawdzić, czy to zamierzona pula
+- Poprawka: dispose szkieletów postaci przy clear (`CharacterViews`) albo udokumentowana pula; test sesji: dwa cykle, ta sama liczba szkieletów
+- Pakiet właściciela: packages/engine (renderer)
+
+### G-173 Latarnie ścienne w przejazdach bramnych i szczelinach
+- Status: naprawione (1.11, #147: kontrola `wall-lantern-in-building` 4 → 0, rozstawienie 3774 → 3770, 1 latarnia przesunięta przy Wieży Trynitarskiej; piąta zgłoszona (Grodzka 20, (653,4; 80,8)) wisi przed fasadą, szczeliny w danych nie ma; weryfikacja PRZYJĘTE, kurator ZGODNE Z UWAGAMI)
+- Ważność: S4 · Zasięg: 5 latarni: przejazd Bramy Krakowskiej (475,2; −90,1), Bramy Grodzkiej (713,5; 138,9), (718,6; 144,5), Ku Farze pod Grodzką 14 (621,8; 40,4), szczelina Grodzka 18/20 (653,4; 80,8); 4 były przed #137, (621,8; 40,4) wróciła w #137 przez odstęp od przesuniętej sąsiadki
+- Przyczyna: linia planu `lamps.stare-miasto-wall` (rozstaw 15 m) stawia latarnie na osi dróg `tunnel=building_passage`; głowica 3,1–4,5 m wchodzi w sklepienie (4–4,2 m); `furniture-in-building` pomija `lamp-wall-lantern`
+- Poprawka: linia planu nie stawia latarni ściennej w obrysie budynku ani w pasie 2 m wokół osi `building_passage`; kontrola skanu `wall-lantern-in-building` (baza 4 → 0); przy okazji latarnia KUCHNI POD KOPYTEM może przejść na sąsiednią ścianę Grodzkiej 20
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+
+### G-170 Neonowe rurki pod gzymsem wchodzą w sąsiednie budynki
+- Status: naprawione (1.11, #148: rurki tylko na wolnych odcinkach ściany, odsianie sąsiadów; skan `tube-in-neighbour` 65 → 0; weryfikacja PRZYJĘTE)
+- Ważność: S4 · Zasięg: 58 rurek w 49 budynkach (`tubes` w `sign-plan.ts`), w większości ukryte w bryle sąsiada
+- Poprawka: rurka kończy się przed sąsiadem wystającym przed ścianę (to samo `sign-room` co banery z G-157); kontrola skanu z bazą
+- Pakiet właściciela: packages/engine (sign-plan.ts)
+
+### G-174 Zapis i wczytanie nie odtwarzają stanu przy kontrakcie infiltrate
+- Status: naprawione (1.11, #145: `ai.suspicion` w zapisie v21, pola pochodne sesji odtwarzane przez `resumeSession`; weryfikacja PRZYJĘTE)
+- Ważność: S3 · Zasięg: każdy aktywny kontrakt infiltrate przy strażnikach z widzeniem stożkowym, nie tylko `time_limit`; bez kontraktu rozjazdu nie ma
+- Dane: `Simulation.create({ seed: 4242 })`, `fromSnapshot` z `contracts: { active: null, completed: 5 }` (albo 0), `teleportPlayer(sim, docks(0, 0, 120))`, 30 kroków, `accept-contract infiltrate`, 1 krok, zapis i `fromSnapshot`, oba przebiegi krokowane razem: hash równy zaraz po wczytaniu, rozjazd w 42. kroku (`rngState`, strażnicy c6-g* zaalarmowani tylko w oryginale)
+- Przyczyna: `ai.suspicion` (np. c6-g3 = 0,0229) i `ai.sees` nie wchodzą do zapisu, po wczytaniu podejrzliwość startuje od 0; różnią się też pola sesji `watch`, `street2`, `interior`
+- Poprawka: podejrzliwość i widzenie strażników (oraz brakujące pola sesji) w zapisie albo świadoma decyzja, że wczytanie zeruje czujność; zmiana schematu z migracją; test zapis–wczytanie z tym scenariuszem
+- Pakiet właściciela: packages/sim, packages/persistence
+
+### G-155 Auta przy krawężniku na ulicach wielopasowych bez parkowania
+- Status: naprawione (1.11, #143: kontrola skanu do 0; weryfikacja PRZYJĘTE, kurator ZGODNE Z UWAGAMI, T-102 i G-177)
+- Ważność: S4 · Zasięg: 3 Maja w40050974/w757848901 (x −116..−103, z −33..32): 13 aut 4,1–5,4 m od osi, na skrajnych pasach (`lanes=4`, brak `parking:*`)
+- Poprawka: bez parkowania przy krawężniku dróg z `lanes>=4` albo `lanes:forward|backward>=2` poza `amenity=parking`; kontrola skanu `parked-car-multilane-kerb`, baza 13 → 0
+- Pakiet właściciela: packages/sim (parked-cars), tools/glitch-scan
+
+### G-156 Auta na przystankach
+- Status: naprawione (1.11, #143: kontrola skanu do 0; weryfikacja PRZYJĘTE, kurator ZGODNE Z UWAGAMI, T-102 i G-177)
+- Ważność: S4 · Zasięg: przystanek „Plac Litewski 02” (słupek n836158674 (−100.3, 3.6)): van 0,7 m, van 11,7 m, hatchback 13,1 m od słupka po stronie przystanku
+- Poprawka: zakaz postoju do 15 m od słupka (art. 49 PoRD); kontrola skanu `parked-car-at-bus-stop`, baza 3 → 0; przy okazji `path=sidewalk` poza `footWays` i `pedestrian`/`cycleway` w `parked-car-on-footway`
+- Pakiet właściciela: packages/sim (parked-cars), tools/osm-import, tools/glitch-scan
+
+### G-171 Odroczona zmiana poziomu trudności ginie przy zapisie
+- Status: naprawione (1.11, #142: czekający profil w zapisie, schemat v20 z migracją; weryfikacja PRZYJĘTE)
+- Ważność: S3 · Zasięg: zmiana poziomu w walce („Zmieni się po walce”), potem zapis i wczytanie przed końcem walki
+- Przyczyna: `pendingDifficulty` nie wchodzi do zapisu (etap 1); po wczytaniu gracz jest na starym poziomie bez informacji, a slot ma etykietę starego
+- Poprawka: odroczony profil w zapisie (zmiana schematu: `SAVE_SCHEMA_VERSION` + migracja + test) albo zastosowanie go przy zapisie; test sesji
+- Pakiet właściciela: packages/sim, packages/persistence
+
+### G-158 Latarnie ścienne zasłaniają tablice lokali
+- Status: naprawione (1.11, #137: niezależna kontrola 14 → 0, latarnie ścienne prostopadle do ściany; weryfikacja w 2 rundach, kurator zgodne)
+- Ważność: S3 · Zasięg: 17 z 169 latarni ściennych, np. WIEJSKI RAJ (564,0; −88,9), KORZEŃ CZAROWNICY (611,4; −74,9), PUB ZA KURTYNĄ (599,6; −2,6); zrzuty g148-r2-rynek-e, g148-r4-rynek-s
+- Przyczyna: rozstaw `lamp-wall-lantern` (ADR-0047) nie zna tablic lokali (ADR-0064 etap 4); markiza je zna (`venueBoardOn`)
+- Test przyjęcia: `wall-lantern-over-venue-board` 17 → 0
+- Pakiet właściciela: tools/osm-import (props-gen), packages/engine
+
+### G-159 Tablica lokalu wchodzi w sąsiedni budynek
+- Status: naprawione (1.11, #138: tablica w wolnym odcinku ściany, skan 7 → 0)
+- Ważność: S3 · Zasięg: 7: KUCHNIA SPOD ARARATU (600,8; −21,8), ZIELONY CZAROWNIK (168,0; −99,2), SZAFA PÓŁWIECZE (112,5; −111,8), ZJEDZ I ZNIKAJ (622,2; −6,8), WULKANIZACJA PIASTA (580,9; 552,6), KAMBUZ (828,6; 496,4), KLUB ZEBRANIE (205,8; −105,3)
+- Przyczyna: `venueBoards` (`venue-plan.ts`) mieści tablicę w ścianie z marginesem 0,3 m, bez sprawdzenia sąsiada przed płaszczyzną ściany
+- Test przyjęcia: `venue-board-in-neighbour` 7 → 0
+- Pakiet właściciela: packages/engine (venue-plan.ts)
+
+### G-157 Banery, holo-reklamy i wysięgniki wchodzą w sąsiednie budynki
+- Status: naprawione (1.11, #138: banery, holo i wysięgniki poza sąsiadem, skan 33 i 4 → 0; wąskie wieże zachowują holo)
+- Ważność: S3 · Zasięg: 31 banerów w 29 budynkach, 3 holo, 1 `blade`; np. (−190,6; −3,3), (195,5; −98,8), (228,3; −39,9), (309,8; −70,8); holo (577,3; 540,8), (494,9; −140,2); `blade` (578; 161,6)
+- Przyczyna: `banners` w `canyon-signs.ts` (1,2 m od końca ściany, 1 m od niej) i `holos` (0,45 m) nie sprawdzają, czy sąsiad wystaje przed płaszczyznę ściany
+- Test przyjęcia: `banner-in-neighbour` 31 → 0, `holo-or-blade-in-neighbour` 4 → 0
+- Pakiet właściciela: packages/engine (canyon-signs.ts, sign-plan.ts)
+
+### G-164 Menu postaci zmienia broń przy niesieniu ciała
+- Status: naprawione (1.11, #134, 7b27ff1: przy niesieniu ciała `equip-item`/`unequip-item` nie ruszają slotów broni; test w `takedown-carry-limits.test.ts`)
+- Ważność: S4 · Zasięg: komendy `equip-item` i `unequip-item` z menu postaci przy `carrying`
+- Objaw: z ciałem na ramieniu menu dobywa albo chowa broń (sonda S7), choć ADR-0065 mówi „bez zmiany broni”; broń nie strzela, więc skutek mały
+- Poprawka: odrzucić `equip-item`/`unequip-item` broni przy niesieniu (albo zablokować przycisk w menu), test sesji
+- Pakiet właściciela: packages/sim, packages/ui
+
+### G-165 `BodyFound` emitowane przy każdym nowym oglądającym zwłoki
+- Status: zamknięte jako zamierzone (1.11, orkiestrator): `BodyFound { body, finder }` to „ten NPC znalazł ciało”; każdy NPC ogląda ciało raz (`lookedBy`), więc para ciało–znalazca się nie powtarza, a kolejne znalezienia są potrzebne (patrol zgłasza zwłoki po przechodniu; 8 testów stage 2–3 na tym stoi). UI, które zechce jednego zdarzenia na ciało, filtruje po `body`
+- Ważność: S4 · Zasięg: każde zwłoki oglądane przez kilku NPC (np. przechodzień, potem patrol)
+- Poprawka: jedno `BodyFound` na ciało albo jawne pole „pierwszy znalazca”, zanim UI zacznie z niego korzystać
+- Pakiet właściciela: packages/sim (body-watch)
+
+### G-152 Kontenery w ogrodzonym parku na Nabrzeżu
+- Status: naprawione (1.11, #124: 6 kontenerów na Giełdzie na Kresowej, park pusty; dalej G-169)
+- Ważność: S3 · Zasięg: 5 z 8 kontenerów w parku w154191322 (`leisure=park`, `natural=scrub`, `barrier=fence`), jeden w poprzek płotu
+- Poprawka: kontenery poza parkiem, najlepiej na Giełdzie na Kresowej (plan ulic: „kontenery Tessen”); kontrola skanu „mebel w obrysie `leisure=park`/`natural=*` albo na `barrier=fence`”
+- Pakiet właściciela: tools/osm-import (props-bulky)
+
+### G-151 Hydranty stawiane regułą zamiast z OSM
+- Status: naprawione (1.11, #124: 6 hydrantów nadziemnych z OSM na węzłach, reguła usunięta)
+- Ważność: S3 · Zasięg: 33 hydranty w grze, żaden w prawdziwym miejscu (mediana 143 m od najbliższego nadziemnego)
+- Przyczyna: `filterOsm` (`tools/osm-import/src/osm.ts:151`) zostawia tylko węzły z `name`, a hydranty nazwy nie mają; żywe OSM ma w chunkach 77 (6 `pillar`, 71 podziemnych, import z 2015 z `ref`)
+- Poprawka: hydranty nadziemne z OSM (do 3 m od węzła), podziemne świadomie pominięte albo jako pokrywa; kontrola skanu „hydrant dalej niż 3 m od `pillar` z OSM”
+- Pakiet właściciela: tools/osm-import
+
+### G-149 Pomniki i rzeźby z OSM mają przypadkowy kształt
+- Status: naprawione (1.11, #132, 67fc8a1; weryfikator PRZYJĘTE, kurator zgodne z trzema nieblokującymi uwagami → G-166…G-168, T-096…T-100); skan `monument-shape-off-tags` 48 → 0; uwaga weryfikatora: kontrola przepuszcza każdą stelę
+- Ważność: S3 · Zasięg: 27 pomników i rzeźb z planu (`docs/world/lublin-props.todo.json`) i wszystkie `memorial`/`artwork` z OSM
+- Przyczyna: ADR-0047 bierze pozycję z OSM, ale kształt z hasha id (`variant`, `SHAPES.monument = 4`): obelisk, postać na cokole, Koziołek albo abstrakcja; poza kilkoma wymuszonymi w planie prawdziwy pomnik dostaje losową bryłę (np. stos sześcianów albo postać na czarnym bloku w wąskiej uliczce)
+- Poprawka: kształt z tagów OSM (`memorial=plaque|statue|bust|stone`, `artwork_type`, `historic`) i z ręcznej tabeli znanych pomników Lublina; tablica pamiątkowa na fasadzie zamiast wolnostojącej bryły; bez dopasowania: neutralna tablica albo kapliczka, nie abstrakcja; przegląd kuratora
+- Pakiet właściciela: tools/osm-import (props-kinds, props-gen), packages/engine (prop-civic)
+
+### G-143 Taksówki na osi chodnika przy Podzamczu
+- Status: naprawione (1.11, #125, aee0832; weryfikator PRZYJĘTE, kurator bez zastrzeżeń)
+- Ważność: S4 · Zasięg: taxi (928.6, 452.2) 0,01 m od osi `highway=footway` w809962786, taxi (922.9, 430.6) 0,80 m od niej
+- Ustalone (1.11, orkiestrator, dane `data/osm/podzamcze.json`): w809962786 to samodzielna ścieżka piesza 52 m (`highway=footway`, bez `footway=sidewalk`/`crossing`, oświetlona, asfalt), co najmniej 7,8 m od osi Cerkiewnej i dróg serwisowych; łączy się z postojem taxi w471549002 (`amenity=taxi`, obszar), placem w66323033 (`area:highway`), chodnikiem w1517184174 i przejściem w1054556913. Taksówka 0,01 m od jej osi stoi więc na ścieżce pieszych obok postoju, nie na jezdni: glitch prawdziwy
+- Poprawka: zaparkowane auta trzymają odstęp od osi samodzielnych ścieżek `footway`/`path` (poza `sidewalk` wzdłuż krawężnika), a taksówki z postoju `amenity=taxi` stoją wewnątrz jego obszaru; kontrola skanu „auto bliżej niż 1 m od osi ścieżki pieszej”
+- Pakiet właściciela: packages/sim (content), przegląd kuratora
+
 ### G-145 Megabloki na zabytkach, w parku, nad Bystrzycą i na osiach widokowych
 - Status: naprawione (1.11, #123, a56b621; weryfikator i dwa przeglądy kuratora)
 - Ważność: S3 · Zasięg: wiele miejsc poza danymi miasta

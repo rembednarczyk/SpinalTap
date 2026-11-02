@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BASE_RAM, type DomainEvents, type DomainState, type HeatState, NO_HEAT, QUICKHACK_XP, QUICKHACKS, type SaveSnapshot } from "@seki/core";
+import { BASE_RAM, type DomainEvents, type DomainState, HACKED_MEMORY, type HeatState, NO_HEAT, QUICKHACK_XP, QUICKHACKS, type SaveSnapshot } from "@seki/core";
 import { type Entity, SIM_HZ, Simulation, gangerEntity } from "../src";
 import { ALLEY_START, alleySim, collect, input } from "./helpers";
 
@@ -98,6 +98,34 @@ describe("XP for a quickhack on the heat's reinforcements (G-202)", () => {
     expect(loaded.domain.progression.xp).toBe(paid);
     ping(loaded, security(loaded, 2));
     expect(xp()).toEqual([QUICKHACK_XP]);
+  });
+
+  it("the ones of past heats, gone, do not push the city's targets out of the memory (G-209)", () => {
+    const sim = started();
+    const guard = sim.world.add(gangerEntity(90022, { key: "g209-guard", position: { ...ALLEY_START, x: ALLEY_START.x + 8, z: ALLEY_START.z - 1.5 }, yaw: 0 }, null, 110, ""));
+    ping(sim, security(sim, 2));
+    // A long game: a guard hacked first, then hundreds of reinforcements of heats long over.
+    const gone = Array.from({ length: HACKED_MEMORY - 2 }, (_, i) => `security:${1000 + i}@${i}`);
+    setDomain(sim, (d) => ({ ...d, progression: { ...d.progression, hacked: ["g209-guard", ...gone, ...(d.progression.hacked ?? [])] } }));
+    const xp = hackXp(sim);
+    ping(sim, security(sim, 1));
+    expect(xp()).toEqual([QUICKHACK_XP]);
+    ping(sim, guard);
+    ping(sim, security(sim, 2));
+    expect(xp()).toEqual([QUICKHACK_XP]);
+    expect(sim.domain.progression.hacked).not.toContain(gone[0]);
+  });
+
+  it("after a load, the ones still about are not taken for gone (G-209)", () => {
+    const sim = started();
+    ping(sim, security(sim, 1));
+    const loaded = Simulation.fromSnapshot(roundTrip(sim.snapshot(null, "t", "")));
+    setDomain(loaded, (d) => ({ ...d, progression: { ...d.progression, hacked: ["security:1000@0", ...(d.progression.hacked ?? [])] } }));
+    const xp = hackXp(loaded);
+    ping(loaded, security(loaded, 2));
+    ping(loaded, security(loaded, 1));
+    expect(xp()).toEqual([QUICKHACK_XP]);
+    expect(loaded.domain.progression.hacked).toEqual([`security:1@${security(loaded, 1).security!.since}`, `security:2@${security(loaded, 2).security!.since}`]);
   });
 
   it("another unkeyed one, not of the heat, still pays nothing", () => {

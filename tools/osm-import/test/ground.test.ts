@@ -61,3 +61,23 @@ describe("sidewalks at the streets they meet (ADR-0042)", () => {
     expect(cutSidewalk(side[0]!, () => false)).toEqual([side[0]]);
   });
 });
+
+describe("flights of steps (G-203)", () => {
+  const box = (ring: readonly { x: number; z: number }[]) => ({
+    along: Math.max(...ring.map((p) => p.x)) - Math.min(...ring.map((p) => p.x)),
+    across: Math.max(...ring.map((p) => p.z)) - Math.min(...ring.map((p) => p.z)),
+  });
+  const steps = (width: string | undefined, length: number): Line => ({ id: "w1", osmId: 1, tags: { highway: "steps", ...(width ? { width } : {}) }, line: [{ x: 0, z: 0 }, { x: length, z: 0 }] });
+
+  it("cuts a run shorter than its width into strips each longer along the run than across, covering the whole width", () => {
+    const strips = lineBands(steps("10", 4), false).map((b) => box(b.ring));
+    expect(strips.length).toBeGreaterThan(1);
+    for (const s of strips) expect(s.along).toBeGreaterThan(s.across);
+    expect(strips.reduce((w, s) => w + s.across, 0)).toBeCloseTo(10, 6);
+  });
+
+  it("keeps a run longer than its width, and a default-width run, in one band", () => {
+    expect(lineBands(steps("10", 16), false).map((b) => box(b.ring))).toEqual([{ along: 16, across: 10 }]);
+    expect(lineBands(steps(undefined, 2), false).map((b) => box(b.ring))).toEqual([{ along: 2, across: 3 }]);
+  });
+});
