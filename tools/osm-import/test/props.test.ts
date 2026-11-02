@@ -173,6 +173,23 @@ describe("street furniture generator (ADR-0047)", () => {
     for (const l of lamps) expect(Math.hypot(Math.max(l.x - 20, 0), l.z - 34), `lamp at ${l.x}, ${l.z}`).toBeGreaterThan(3);
   });
 
+  it("leaves out a plain lamp within 8 m of a styled one, whichever group came first, and keeps it farther off (G-259)", () => {
+    // The OSM road lamps come before the pastorals in the plan; the memorial lantern is drawn as a pastoral.
+    const plan: PropsPlan = {
+      items: [
+        { id: "osm", kind: "street-lamp", points: [[27, 24], [40, 24], [61, 24], [82, 36]] },
+        { id: "poles", kind: "lamp-modern-pole", points: [[21, 24], [60, 24]] },
+        { id: "pastorals", kind: "lamp-pastoral", points: [[20, 24]] },
+        { id: "memorial", kind: "lamp-memorial", position: { x: 80, z: 36 } },
+      ],
+    };
+    const lamps = generateProps(plan, [street()]).byChunk.get("test-0-0")!.filter((i) => i.prop.startsWith("lamp-"));
+    const at = (prop: string) => lamps.filter((i) => i.prop === prop).map((i) => [i.x, i.z]);
+    expect(at("lamp-pastoral")).toEqual([[20, 24], [80, 36]]);
+    expect(at("lamp-road")).toEqual([[40, 24], [61, 24]]);
+    expect(at("lamp-modern-pole")).toEqual([[60, 24]]);
+  });
+
   it("hangs a basket only on a lamp that stays, where it stands (G-004)", () => {
     // The second row runs 3 m behind the first, so its lamps are merged away; the baskets were picked from both.
     const plan: PropsPlan = {

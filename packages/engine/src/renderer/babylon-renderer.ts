@@ -18,6 +18,7 @@ import { CrowdViews } from "./crowd-views";
 import { DroneViews } from "./drones/drone-views";
 import { cityDroneWorld } from "./drones/drone-world";
 import { cityPatrolWorld } from "./drones/patrol-world";
+import { CapsuleRoomView } from "./rooms/capsule-room-view";
 import { WorldDressing } from "./dressing";
 import { FarCity } from "./far-city";
 import { MapCitySlot } from "./map-city-slot";
@@ -111,6 +112,8 @@ export class BabylonRenderer implements RenderPort {
   private readonly vehicles: VehicleViews;
   /** The drones over the street canyons, one shared mesh (ADR-0058 stage 7). */
   private readonly drones: DroneViews;
+  /** The capsule room on Jezuicka, one mesh near it (ADR-0063 stage 3). */
+  private readonly capsule: CapsuleRoomView;
   private readonly fx: ScreenFx;
   private readonly cityKit: CityKitLoader;
   /** The metro car between districts (ADR-0036). */
@@ -206,6 +209,14 @@ export class BabylonRenderer implements RenderPort {
       patrolWorld: () => (this.map.current ? cityPatrolWorld() : null),
       eye: () => eye,
       quality: stage.options.quality ?? "high",
+    });
+    this.capsule = new CapsuleRoomView({
+      scene,
+      materials: this.materials,
+      kit: () => this.cityKit.kit,
+      props: () => this.cityKit.props,
+      city: () => this.map.current !== null,
+      eye: () => eye,
     });
     warmUpMaterials(scene, this.materials, this.signage);
     this.fx = new ScreenFx({
@@ -334,6 +345,7 @@ export class BabylonRenderer implements RenderPort {
     this.crowd.update(dt, this.stage.options.reference);
     this.vehicles.update();
     this.drones.update(dt, this.stage.options.reference);
+    this.capsule.update();
     const target = this.cameraTargetTransform;
     this.rig.update(target, dt);
     this.metro.afterCamera();

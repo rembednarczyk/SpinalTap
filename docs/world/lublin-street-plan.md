@@ -58,7 +58,7 @@ Wygląd dziś (po rewitalizacji 2017):
 | Pomnik Piłsudskiego (konny) | 1 | (-45.9, -13.3) | P1 | kontur konia w neonie, graffiti AR na cokole | model do zrobienia | `plac-litewski.pomnik-pilsudskiego` |
 | Pomnik Konstytucji 3 Maja | 1 | (-87.1, -22.6) | P1 | orzeł jako migocząca projekcja | model do zrobienia (mały) | `plac-litewski.pomnik-3-maja` |
 | Grób Nieznanego Żołnierza | 1 | (-57.5, -21.4) | P1 | plazmowy znicz, warta dronów | proceduralny + cząsteczki | `plac-litewski.grob-nieznanego` |
-| Latarnie nowoczesne | 36 | alejki placu i deptak przy placu | P1 | paski LED, holo-flagi, kamery | proceduralny (łatwy) | `lamps.plac-litewski` |
+| Latarnie nowoczesne | 18 | alejki i obrys placu (na deptaku pastorały `lamps.kp-deptak`, G-259) | P1 | paski LED, holo-flagi, kamery | proceduralny (łatwy) | `lamps.plac-litewski` |
 | Ławki i ławy na obrzeżach | 134 | punkty z OSM | P2 | listwy podświetlone od spodu, port ładowania | proceduralny (łuk z obrysu rabaty) | `plac-litewski.bench` |
 | Granitowe bloki | 70 | punkty z OSM | P2 | panel świetlny w górnej ścianie | proceduralny | `plac-litewski.granite-block` |
 | Maszty flagowe | 13 | [-73..-43, -21..-6] | P2 | holo-flagi | proceduralny + shader wiatru | `plac-litewski.flagpole` |
