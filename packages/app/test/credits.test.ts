@@ -50,6 +50,7 @@ describe("credits (ADR-0063)", () => {
       "sketchfab-cyberpunk-scifi-door-3",
       "sketchfab-dirty-car",
       "sketchfab-electric-pole",
+      "sketchfab-futuristic-compact-room",
       "sketchfab-megacity-cluster",
       "sketchfab-paper-lantern-chochin",
       "sketchfab-psx-garage-doors",

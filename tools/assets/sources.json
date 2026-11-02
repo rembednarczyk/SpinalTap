@@ -1,5 +1,5 @@
 {
-  "about": "Packs and models baked into packages/app/public/city/city-props.glb, street-props.glb, market-props.glb, door-props.glb, vehicle-props.glb and drone-props.glb: CC0 (ADR-0058) and CC-BY 4.0, credited in packages/ui/src/credits/credits.ts (ADR-0063). tools/assets/fetch.mjs downloads them and checks sha256; the zips, unpacked packs and source models are not committed.",
+  "about": "Packs and models baked into packages/app/public/city/city-props.glb, street-props.glb, market-props.glb, door-props.glb, vehicle-props.glb, drone-props.glb and room-props.glb: CC0 (ADR-0058) and CC-BY 4.0, credited in packages/ui/src/credits/credits.ts (ADR-0063). tools/assets/fetch.mjs downloads them and checks sha256; the zips, unpacked packs and source models are not committed.",
   "sources": [
     {
       "id": "kenney-modular-buildings",
@@ -230,7 +230,7 @@
       "files": [
         { "path": "futuristic_compact_room.glb", "url": "https://drive.usercontent.google.com/download?id=1LWL6tdudHXCxDUU4-_yHnKaDo0qvjdli&export=download&confirm=t", "sha256": "ec3cc9033680e18a17289adfeb5126ae621756d7d8480c1b83547a9a7fb9d0a6" }
       ],
-      "used": []
+      "used": ["room-capsule"]
     },
     {
       "id": "sketchfab-hw4-cyberpunk-building",

@@ -215,6 +215,26 @@ NODE_USE_ENV_PROXY=1 node tools/assets/fetch.mjs /tmp/city-assets --only sketchf
 python3 -I -B tools/city_kit.py --drones /tmp/city-assets --out packages/app/public/city
 ```
 
+## Pokój kapsułowy na licencji CC-BY 4.0: `room-props.glb` (ADR-0063 etap 3)
+
+Wnętrze kapsułowego mieszkania z paczki użytkownika (ADR-0063) na licencji **CC-BY 4.0**
+(`tools/city_room.py`), w szóstym pliku rekwizytów na tej samej palecie. Gra wczytuje go po kicie razem z
+pozostałymi. Pokój stoi w parterze kamienicy przy Jezuickiej 14 (`capsule-room.ts` w `sim`); ściany, których
+model nie ma (front z drzwiami, ściana wschodnia, tył), sufit i podłogę dokłada renderer z brył symulacji
+(`rooms/capsule-geometry.ts`), a bez pliku rysuje meble jako prostopadłościany. Węzeł modelu ma
+`extras.credit`, podpis jest na ekranie „Autorzy”.
+
+| Klucz w pliku | Tytuł | Autor | Źródło | Licencja | Zmiany |
+|---|---|---|---|---|---|
+| `room-capsule` (pokój kapsułowy na wynajem przy Jezuickiej) | Futuristic Compact Room | [igor.tesV](https://sketchfab.com/igor.tesV) | [Sketchfab](https://sketchfab.com/3d-models/futuristic-compact-room-f49b4d0fbd45427bb47484b0a9ccfe75) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | bez okna-kapsuły za ścianą boczną i płyt pod podłogą, uproszczony z 14,1 do 5,9 tys. trójkątów (świecące pasy i ekrany bez upraszczania), skala 0,2 (3,66 × 2,75 × 4,41 m), kolory z tekstur sprowadzone do palety, emisja jako `neon-cyan`, bez tekstur |
+
+Odtworzenie pliku (bajt w bajt):
+
+```
+NODE_USE_ENV_PROXY=1 node tools/assets/fetch.mjs /tmp/city-assets --only sketchfab-futuristic-compact-room
+python3 -I -B tools/city_kit.py --room /tmp/city-assets --out packages/app/public/city
+```
+
 ## Targ i budki z jedzeniem: `market-props.glb` (ADR-0058 etap 3)
 
 Osiem modeli złożonych z części paczek **CC0** Kenneya (`tools/city_market.py`), w trzecim pliku na tej
