@@ -62,6 +62,10 @@ interface Raster {
   readonly reach: number;
   /** 1 where a body can stand, row-major by z then x. */
   readonly open: Uint8Array;
+  /** The ground floor's height at each cell on terrain (ADR-0043), else null. */
+  readonly base: Float64Array | null;
+  /** 1 where a cell lies on a flight of steps hung off a bridge (G-255), with `base`. */
+  readonly flight: Uint8Array | null;
 }
 
 interface Field {
@@ -154,14 +158,37 @@ const terrainOf = (ground: GroundField, x0: number, z0: number, reach: number): 
   return base;
 };
 
-/** Cells of the ground floor on a bank too steep to walk (ADR-0043) are closed. */
-const closeBanks = (open: Uint8Array, base: Float64Array, ground: GroundField, x0: number, z0: number, reach: number): void => {
+/** A diagonal neighbour more than this higher is a wall: a step, or the steepest walkable slope over the diagonal if more. */
+const WALL_DIAGONAL = Math.max(STEP_HEIGHT, MAX_WALK_SLOPE * NAV_CELL * Math.SQRT2);
+
+/** Which cells of the window lie on a flight of steps hung off a bridge (G-255). */
+const flightsOf = (ground: GroundField, x0: number, z0: number): Uint8Array => {
+  const out = new Uint8Array(CELLS * CELLS);
+  for (let iz = 0; iz < CELLS; iz++) for (let ix = 0; ix < CELLS; ix++) out[iz * CELLS + ix] = ground.onFlight(centre(ix, x0), centre(iz, z0)) ? 1 : 0;
+  return out;
+};
+
+/**
+ * Cells of the ground floor on a bank too steep to walk (ADR-0043) are closed, and so are those
+ * at the foot of a flight of steps hung off a bridge (G-255) more than a step over them: its side
+ * is a wall on one line, which the slope at the cells' middles, either side of it, does not see.
+ * The edges of a bridge's deck keep the headroom rule (G-062).
+ */
+const closeBanks = (open: Uint8Array, base: Float64Array, flight: Uint8Array, ground: GroundField, x0: number, z0: number, reach: number): void => {
   // A cheap test on the cell grid first (half the limit, over two cells, edges one-sided);
   // the movement system's own slope decides the rest.
   const rough = 0.5 * MAX_WALK_SLOPE * NAV_CELL;
-  const at = (ix: number, iz: number) => base[Math.min(CELLS - 1, Math.max(0, iz)) * CELLS + Math.min(CELLS - 1, Math.max(0, ix))] ?? 0;
+  const index = (ix: number, iz: number) => Math.min(CELLS - 1, Math.max(0, iz)) * CELLS + Math.min(CELLS - 1, Math.max(0, ix));
+  const at = (ix: number, iz: number) => base[index(ix, iz)] ?? 0;
+  // A neighbour on a flight more than `limit` higher.
+  const wall = (ix: number, iz: number, h: number, limit: number) => flight[index(ix, iz)] === 1 && at(ix, iz) - h > limit;
   for (let iz = 0; iz < CELLS; iz++) {
     for (let ix = 0; ix < CELLS; ix++) {
+      const h = at(ix, iz);
+      const straight = wall(ix + 1, iz, h, STEP_HEIGHT) || wall(ix - 1, iz, h, STEP_HEIGHT) || wall(ix, iz + 1, h, STEP_HEIGHT) || wall(ix, iz - 1, h, STEP_HEIGHT);
+      const diagonal = wall(ix + 1, iz + 1, h, WALL_DIAGONAL) || wall(ix - 1, iz + 1, h, WALL_DIAGONAL) || wall(ix + 1, iz - 1, h, WALL_DIAGONAL) || wall(ix - 1, iz - 1, h, WALL_DIAGONAL);
+      if (straight || diagonal) open[iz * CELLS + ix] = 0;
+      if (!open[iz * CELLS + ix]) continue;
       const gx = Math.abs(at(ix + 1, iz) - at(ix - 1, iz));
       const gz = Math.abs(at(ix, iz + 1) - at(ix, iz - 1));
       if (Math.hypot(gx, gz) < rough) continue;
@@ -175,9 +202,10 @@ const near = { x: 0, z: 0 };
 const rasterise = (solids: readonly Collider[], floor: number, reach: number, x0: number, z0: number, ground: GroundField): Raster => {
   const open = new Uint8Array(CELLS * CELLS);
   const base = terrainOf(ground, x0, z0, reach);
+  const flight = base && floor === 0 ? flightsOf(ground, x0, z0) : null;
   if (floor === 0) {
     open.fill(1);
-    if (base) closeBanks(open, base, ground, x0, z0, reach);
+    if (base && flight) closeBanks(open, base, flight, ground, x0, z0, reach);
   } else {
     // Above the street only tops at about this height are floor; everything else is a drop.
     for (const c of solids) {
@@ -217,7 +245,7 @@ const rasterise = (solids: readonly Collider[], floor: number, reach: number, x0
       }
     }
   }
-  return { x0, z0, floor, reach, open };
+  return { x0, z0, floor, reach, open, base: relative ? base : null, flight: relative ? flight : null };
 };
 
 /** Distance of a cell the field does not reach. */
@@ -319,15 +347,25 @@ const nearest = (c: number, reach: number, ok: (n: number) => boolean): number =
   return -1;
 };
 
-/** True when a body walks from `a` to `b` through open cells only (the first `NEAR_SKIP` metres excepted). */
+/**
+ * True when a body walks from `a` to `b` through open cells only (the first `NEAR_SKIP` metres
+ * excepted), on terrain never climbing more than a step onto a flight hung off a bridge between
+ * two samples (its side, G-255, whose foot is closed only a cell wide).
+ */
 const walkable = (r: Raster, a: Vec3, b: Vec3): boolean => {
   const len = Math.hypot(b.x - a.x, b.z - a.z);
   const n = Math.ceil(len / SAMPLE);
+  let last = a.y;
   for (let i = 1; i <= n; i++) {
     const t = i / n;
-    if (t * len < NEAR_SKIP) continue;
     const c = cellIndex(r, a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t);
-    if (c < 0 || !r.open[c]) return false;
+    if (c < 0) return false;
+    if (r.base && r.flight) {
+      const h = r.base[c] ?? 0;
+      if (r.flight[c] === 1 && h - last > STEP_HEIGHT) return false;
+      last = h;
+    }
+    if (t * len >= NEAR_SKIP && !r.open[c]) return false;
   }
   return true;
 };
@@ -364,13 +402,22 @@ export const straightWalk = (world: World<Entity>, from: Vec3, to: Vec3): boolea
   return lineOfSight(world, knee(from), knee(to), false) && !bankBetween(ground, from, to, deckReach(ground, from, to));
 };
 
-/** Does the way from `a` to `b` on the ground cross a bank too steep to walk? Sampled every half cell. */
+/**
+ * Does the way from `a` to `b` on the ground cross a bank too steep to walk, or climb onto a
+ * flight hung off a bridge more than a step high (its side, G-255, which the slope at the
+ * samples steps over)? Sampled every half cell.
+ */
 const bankBetween = (ground: GroundField, a: Vec3, b: Vec3, reach: number): boolean => {
   const len = Math.hypot(b.x - a.x, b.z - a.z);
   const n = Math.ceil(len / NAV_CELL);
+  let last = ground.heightAt(a.x, a.z, reach);
   for (let i = 1; i <= n; i++) {
     const t = i / n;
-    if (ground.steepAt(a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t, reach)) return true;
+    const [x, z] = [a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t];
+    if (ground.steepAt(x, z, reach)) return true;
+    const h = ground.heightAt(x, z, reach);
+    if (h - last > STEP_HEIGHT && ground.onFlight(x, z)) return true;
+    last = h;
   }
   return false;
 };
@@ -425,7 +472,9 @@ export const followDetour = (detour: Detour, from: Vec3): Vec3 | null => {
   const here = cellIndex(raster, from.x, from.z);
   if (here < 0) return null;
   // Pressed against a wall its own cell may be closed: start from the best open cell next to it.
-  const start = (dist[here] ?? FAR) < FAR ? here : nearest(here, 2, (n) => (dist[n] ?? FAR) < FAR);
+  // Not across a wall in the ground (a flight's side, G-255): a cell within a step of the feet.
+  const reachable = (n: number) => (dist[n] ?? FAR) < FAR && (!raster.base || raster.flight?.[n] !== 1 || Math.abs((raster.base[n] ?? 0) - from.y) <= STEP_HEIGHT);
+  const start = (dist[here] ?? FAR) < FAR ? here : nearest(here, 2, reachable);
   if (start < 0) return null;
   const way: number[] = [start];
   for (let c = start; way.length < LOOKAHEAD && (dist[c] ?? 0) > 0; ) {

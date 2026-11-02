@@ -2,7 +2,7 @@ import { type TerrainGrid, type Vec3, terrainHeightAt } from "@seki/core";
 import type { World } from "miniplex";
 import type { Rect } from "../content/builders";
 import type { Entity } from "./components";
-import { type GroundDeck, deckCeiling, flightGradientAt, groundOver } from "./deck";
+import { type GroundDeck, deckCeiling, flightGradientAt, groundOver, onFlight } from "./deck";
 
 /** What the ground needs of a chunk: where it is and, optionally, its terrain (ADR-0043). */
 export interface GroundChunk {
@@ -28,6 +28,15 @@ const distanceTo = (r: Rect, x: number, z: number): number => Math.hypot(Math.ma
  * every chunk, the nearest chunk's ground. Pure content, never saved; a lookup is a bucket of a
  * fixed grid and a bilinear sample, without allocation.
  */
+/** The point and its four samples of the gradient, in half spans. */
+const AROUND: readonly (readonly [number, number])[] = [
+  [0, 0],
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+];
+
 export class GroundField {
   /** Some chunk has terrain; without it every query is the old flat street. */
   readonly hasTerrain: boolean;
@@ -116,7 +125,8 @@ export class GroundField {
   /**
    * Gradient of the ground at (x, z), written into `out`: central differences over 0.5 m, a
    * smoothed normal that ignores bumps finer than that. Zero on the street plane. `reach` as in
-   * `heightAt`. On a flight of steps hung off a bridge in reach, the flight's own grade (G-255).
+   * `heightAt`. On a flight of steps hung off a bridge in reach, or with a sample on one, the
+   * flight's own grade (G-255).
    */
   gradientAt(x: number, z: number, out: { x: number; z: number }, reach = Infinity): { x: number; z: number } {
     if (!this.hasTerrain || !this.gridAt(x, z)) {
@@ -125,8 +135,9 @@ export class GroundField {
       return out;
     }
     const decks = this.chunks[this.chunkIndex(x, z)]?.decks;
-    if (decks && flightGradientAt(decks, x, z, reach, out)) return out;
     const h = SLOPE_HALF_SPAN;
+    // Beside the flight too, where the samples reach onto it: a seam a step or less high is no bank.
+    if (decks) for (const [dx, dz] of AROUND) if (flightGradientAt(decks, x + dx * h, z + dz * h, reach, out)) return out;
     out.x = (this.heightAt(x + h, z, reach) - this.heightAt(x - h, z, reach)) / (2 * h);
     out.z = (this.heightAt(x, z + h, reach) - this.heightAt(x, z - h, reach)) / (2 * h);
     return out;
@@ -136,6 +147,12 @@ export class GroundField {
   slopeAt(x: number, z: number, reach = Infinity): number {
     const g = this.gradientAt(x, z, gradScratch, reach);
     return Math.hypot(g.x, g.z);
+  }
+
+  /** Is (x, z) on a flight of steps hung off a bridge (G-255)? */
+  onFlight(x: number, z: number): boolean {
+    const decks = this.hasTerrain ? this.chunks[this.chunkIndex(x, z)]?.decks : undefined;
+    return !!decks && onFlight(decks, x, z);
   }
 
   /** Too steep to walk on (a bank, ADR-0043)? */

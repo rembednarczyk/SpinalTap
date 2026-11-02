@@ -74,6 +74,9 @@ const decksAt = (decks: readonly GroundDeck[], x: number, z: number, reach: numb
  */
 export const deckAt = (decks: readonly GroundDeck[], x: number, z: number, reach = Infinity, terrain = -Infinity): number | null => decksAt(decks, x, z, reach, terrain).y;
 
+/** Is (x, z) on a flight of steps hung off a bridge (G-255)? */
+export const onFlight = (decks: readonly GroundDeck[], x: number, z: number): boolean => decks.some((d) => d.flight === true && over(d, x, z));
+
 /**
  * The ground at (x, z) over the terrain at `terrain` there, for feet reaching up to `reach`: the
  * highest deck that is ground (`deckAt`) where it lies over the terrain, or on a flight of steps
