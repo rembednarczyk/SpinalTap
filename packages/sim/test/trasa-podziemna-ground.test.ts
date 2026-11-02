@@ -13,10 +13,13 @@ import { topAt } from "../src/world/collision";
 type HeightAt = (x: number, z: number) => number;
 
 const STAIRS = TRASA_PODZIEMNA_PROPS.find((p) => p.view.kind === "block" && p.view.slope !== undefined)!;
-const SLOPE = STAIRS.view.kind === "block" ? STAIRS.view.slope : undefined;
+const VIEW = STAIRS.view.kind === "block" ? STAIRS.view : null;
+const SLOPE = VIEW!.slope;
+const { center: C } = STAIRS;
+const { size: S } = VIEW!;
 const BOX = {
-  min: { x: STAIRS.center.x - STAIRS.view.size.x / 2, y: STAIRS.center.y - STAIRS.view.size.y / 2, z: STAIRS.center.z - STAIRS.view.size.z / 2 },
-  max: { x: STAIRS.center.x + STAIRS.view.size.x / 2, y: STAIRS.center.y + STAIRS.view.size.y / 2, z: STAIRS.center.z + STAIRS.view.size.z / 2 },
+  min: { x: C.x - S.x / 2, y: C.y - S.y / 2, z: C.z - S.z / 2 },
+  max: { x: C.x + S.x / 2, y: C.y + S.y / 2, z: C.z + S.z / 2 },
 };
 /** The top of the stairs' collision ramp at (x, z). */
 const rampY: HeightAt = (x, z) => topAt(BOX, SLOPE, x, z);
