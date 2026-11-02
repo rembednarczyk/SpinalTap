@@ -24,6 +24,18 @@ function stairs(ids: readonly string[], what: string): TagCorrection[] {
   return ids.map((id) => ({ id, tags: { width: "10" }, reason: `schody zamkowe (${what}) ok. 10 m szerokości jak murki w231832094/5 wobec domyślnych 2–3 m`, ref: "T-113" }));
 }
 
+/**
+ * A church with no height in OSM stood at the default 16 m walls with a roof a third of its size,
+ * 3-15 m over the surface model (T-122). NMPT GUGiK 0.5 m gives its main body's eaves and ridge
+ * (world y) where the surface is a roof, not trees; towers and lower annexes are left out.
+ * `height` counts from the base over the plinth to the ridge, hence ridge - y - plinth of the
+ * game's data, and `roof:height` is ridge - eaves.
+ */
+function church(id: string, height: number, roof: number, what: string, eaves: number, ridge: number): TagCorrection {
+  const y = (v: number) => String(v).replace(".", ",");
+  return { id, tags: { height: String(height), "roof:height": String(roof) }, reason: `${what}: okap y ${y(eaves)} i kalenica y ${y(ridge)} z NMPT wobec domyślnych 16 m ścian`, ref: "T-122" };
+}
+
 export const TAG_CORRECTIONS: readonly TagCorrection[] = [
   {
     // Brama Krakowska's annex (przedbramie): OSM has only `building:levels=2` (`source: levels`,
@@ -73,6 +85,17 @@ export const TAG_CORRECTIONS: readonly TagCorrection[] = [
     reason: "wieża cerkwi św. Jozafata: szczyt y 9,5 z NMPT wobec y 12,2 z domyślnych 4 kondygnacji",
     ref: "T-129",
   },
+  // St Josaphat's nave first: at the default it stood 6.3 m over its tower's top (y 9.5, T-129).
+  church("w69916021", 11.6, 4.6, "cerkiew św. Jozafata", 6.8, 11.4),
+  church("w66330578", 24.8, 12, "Bernardyni, nawa (wieża osobno)", 12.5, 24.5),
+  church("w66264082", 21.1, 10.5, "Brygidki, nawa (wieża osobno)", 11.5, 22),
+  church("w66264126", 19.5, 3.9, "Świętego Ducha, nawa (wieża osobno)", 16.5, 20.4),
+  church("w232674421", 3.8, 0.6, "Niecała 4, niski budynek w podwórzu", 1.2, 1.8),
+  // The Carmelites' outline is the whole cloister: its wings' eaves, the church's ridge.
+  church("r5420467", 19.5, 9.5, "Karmelici, okap skrzydeł i kalenica kościoła", 5, 14.5),
+  church("w66335226", 21.4, 7.2, "św. Piotra, nawa (szczyt fasady do y 20,9)", 12.5, 19.7),
+  church("w66258180", 14.6, 4, "św. Mikołaja, nawa z dala od drzew", 8.5, 12.5),
+  church("w66264148", 12.6, 2.7, "cerkiew Przemienienia, nawa (dzwonnica osobno)", -7, -4.3),
   // The castle stairs (Brabander, 1954): OSM has no `width` on their flights and landings, so they
   // were 3 m and 2-2.5 m bands, a dark strip up the slope. Their walls w231832094 and w231832095
   // stand 9.6..10.1 m apart (centre lines), about 11 m with the balustrades on the orthophoto.

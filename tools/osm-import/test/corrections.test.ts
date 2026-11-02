@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { KRAKOWSKIE_CHUNKS } from "../../../packages/sim/src/content/lublin/krakowskie.generated.ts";
+import { NABRZEZE_CHUNKS } from "../../../packages/sim/src/content/lublin/nabrzeze.generated.ts";
 import { PODZAMCZE_CHUNKS } from "../../../packages/sim/src/content/lublin/podzamcze.generated.ts";
+import { STARE_MIASTO_CHUNKS } from "../../../packages/sim/src/content/lublin/stare-miasto.generated.ts";
 import { STOREY } from "../src/building-tags.ts";
 import { partTier } from "../src/building-parts.ts";
 import { TAG_CORRECTIONS, corrected, correctedLine } from "../src/corrections.ts";
@@ -60,6 +62,28 @@ describe("tag corrections (ADR-0042)", () => {
     const tower = KRAKOWSKIE_CHUNKS.flatMap((c) => c.buildings).find((o) => o.id === "w1382552285")!;
     expect(tower.source).toBe("height");
     expect(Math.abs(tower.y + tower.height + (tower.roof ?? 0) - 9.5)).toBeLessThanOrEqual(1);
+  });
+
+  // NMPT GUGiK 0.5 m (T-122), world y: eaves and ridge of each church's main body where the surface is a roof, not trees.
+  const CHURCHES: readonly (readonly [string, number, number])[] = [
+    ["w69916021", 6.8, 11.4], // cerkiew św. Jozafata
+    ["w66330578", 12.5, 24.5], // Bernardyni
+    ["w66264082", 11.5, 22], // Brygidki
+    ["w66264126", 16.5, 20.4], // Świętego Ducha
+    ["w232674421", 1.2, 1.8], // Niecała 4
+    ["r5420467", 5, 14.5], // Karmelici
+    ["w66335226", 12.5, 19.7], // św. Piotra
+    ["w66258180", 8.5, 12.5], // św. Mikołaja
+    ["w66264148", -7, -4.3], // cerkiew Przemienienia
+  ];
+  it("puts the eaves and ridges of the churches without a height in OSM within 1 m of the surface model (G-216)", () => {
+    const all = [...KRAKOWSKIE_CHUNKS, ...STARE_MIASTO_CHUNKS, ...PODZAMCZE_CHUNKS, ...NABRZEZE_CHUNKS].flatMap((c) => c.buildings);
+    for (const [id, eaves, ridge] of CHURCHES) {
+      const b = all.find((o) => o.id === id)!;
+      expect(b.source, id).toBe("height");
+      expect(Math.abs(b.y + b.height - eaves), `${id} eaves`).toBeLessThanOrEqual(1);
+      expect(Math.abs(b.y + b.height + (b.roof ?? 0) - ridge), `${id} ridge`).toBeLessThanOrEqual(1);
+    }
   });
 
   // The flights and landings of the castle stairs, from Plac Zamkowy up to the gate's bridge (T-113),

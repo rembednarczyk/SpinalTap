@@ -20,7 +20,7 @@ import { doorsFacingUnderground } from "./door-streets";
 import { marketChecks } from "./market-pieces";
 import { signsInNeighbours } from "./sign-neighbours";
 import { lanternsByPassages } from "./passage-lanterns";
-import { landmarksAtDefaultHeight, towersAtDefaultHeight } from "./landmark-heights";
+import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight } from "./landmark-heights";
 import { bandAcross, lampsOnSteps, stepsNarrowerThanWalls } from "./steps-walls";
 import { cityChurches, cityFakeTowers, doubleTowers, towersOffBuilding } from "./landmark-towers";
 import { EMPTY_STRIPS_KNOWN, bayCarsMisturned, bayCarsOutOfPark, bayStripsEmptyKnown, bayStripsSparse, crowdLanesOnParking, kerbParksOf, kerbStripsOffCarStreets } from "./kerb-bays";
@@ -1003,6 +1003,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * surface model over it is tree crowns.
    */
   "osm-tower-default-height": () => towersAtDefaultHeight(MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b))), osmTags),
+  /** A church at the default height with no measured roof, or standing clearly over the surface model's roof (G-216). */
+  "church-over-nmpt": () => churchesOverSurface(CHURCH_SURFACE, MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)))),
   /** A landmark of the list the map shows whole and without a tower, crowned by the renderer's bell towers (G-210). */
   "landmark-fake-tower": () => cityFakeTowers(LANDMARK_BUILDINGS, SOURCE_OSM),
   /** A church with a tower of the map in its outline or by its walls, crowned by the renderer's bell towers besides (G-212). */
@@ -1606,6 +1608,19 @@ describe("the glitch scan (ADR-0054)", () => {
     expect(towersAtDefaultHeight([{ ...belfry, source: "height" }, { ...belfry, source: "levels" }], () => tags), "corrected or sized").toEqual([]);
     for (const k of ["height", "building:height", "building:levels"]) expect(towersAtDefaultHeight([belfry], () => ({ ...tags, [k]: "18" })), k).toEqual([]);
     expect(towersAtDefaultHeight([belfry], () => ({ building: "church" })), "no tower").toEqual([]);
+  });
+
+  it("finds a church at a default height unmeasured or clearly over its measured roof, and none within the margin nor a plain building (G-216)", () => {
+    const nave = { id: "w69916021", x: 284.4, z: -11.9, y: -1.8, height: 17.6, roof: 6.8, use: "church", source: "default" as const, name: "Cerkiew" };
+    const roof = { w69916021: { eaves: 6.8, ridge: 11.4 } };
+    expect(churchesOverSurface(roof, [nave])).toEqual([{ at: "284,-12", what: "w69916021 Cerkiew eaves 15.8/6.8, ridge 22.6/11.4" }]);
+    expect(churchesOverSurface({}, [nave]), "unmeasured").toEqual([{ at: "284,-12", what: "w69916021 Cerkiew default, unmeasured" }]);
+    expect(churchesOverSurface({}, [{ ...nave, source: "height" }]), "unmeasured, mapped").toEqual([]);
+    const fitted = { ...nave, height: 8.6, roof: 4.6, source: "height" as const };
+    expect(churchesOverSurface(roof, [fitted, { ...fitted, id: "w69916021/1", height: 10, roof: 3.2 }]), "within 1.5 m").toEqual([]);
+    expect(churchesOverSurface(roof, [{ ...fitted, id: "w69916021/1", height: 10.2 }]), "eaves over, split piece").toHaveLength(1);
+    expect(churchesOverSurface(roof, [{ ...fitted, roof: 6.2 }]), "ridge over").toHaveLength(1);
+    expect(churchesOverSurface(roof, [{ ...nave, use: "residential" }]), "not a church").toEqual([]);
   });
 
   it("finds a flight of steps between parallel walls further apart than its band plus 1 m, and none past each condition (G-203)", () => {
