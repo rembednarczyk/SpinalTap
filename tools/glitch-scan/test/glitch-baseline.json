@@ -38,6 +38,8 @@
   "building-in-set-piece": 0,
   "steps-micro-riser": 0,
   "steps-narrower-than-walls": 0,
+  "steps-across-run": 0,
+  "steps-run-bare": 0,
   "lamp-on-steps": 0,
   "bridge-without-deck": 0,
   "under-deck-blocked": 0,

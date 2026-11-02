@@ -22,9 +22,11 @@ import { signsInNeighbours } from "./sign-neighbours";
 import { lanternsByPassages } from "./passage-lanterns";
 import { landmarksAtDefaultHeight } from "./landmark-heights";
 import { bandAcross, lampsOnSteps, stepsNarrowerThanWalls } from "./steps-walls";
+import { stepsAcross, stepsRunsBare } from "./steps-runs";
 import { cityChurches, cityFakeTowers, doubleTowers, towersOffBuilding } from "./landmark-towers";
 import { EMPTY_STRIPS_KNOWN, bayCarsMisturned, bayCarsOutOfPark, bayStripsEmptyKnown, bayStripsSparse, crowdLanesOnParking, kerbParksOf, kerbStripsOffCarStreets } from "./kerb-bays";
 import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alone.ts";
+import { correctedLine } from "../../osm-import/src/corrections.ts";
 import { extractFeatures } from "../../osm-import/src/features.ts";
 import { pathWidth, roadWidth } from "../../osm-import/src/ground.ts";
 import { oneway } from "../../osm-import/src/markings.ts";
@@ -916,6 +918,19 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     const flights = MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.surface === "steps").map((g) => worldOutline({ x: 0, z: 0, outline: g.outline })));
     const onSteps = (p: Pt) => flights.some((r) => pointInRing(p, r));
     return stepsNarrowerThanWalls(extractFeatures(SOURCE_OSM).lines, (m, n) => bandAcross(onSteps, m, n));
+  },
+  /** A band of map steps whose long side, the run the renderer draws, lies across the map's run (G-213). */
+  "steps-across-run": () =>
+    stepsAcross(
+      extractFeatures(SOURCE_OSM).lines.map((l) => correctedLine(l)),
+      (w) => pathWidth(w.tags),
+      MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.surface === "steps").map((g) => worldOutline({ x: 0, z: 0, outline: g.outline }))),
+    ),
+  /** A run of map steps on the map's chunks with no steps band across its middle (G-213: a strip dropped as a sliver). */
+  "steps-run-bare": () => {
+    const flights = MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.surface === "steps").map((g) => worldOutline({ x: 0, z: 0, outline: g.outline })));
+    const onMap = (p: Pt) => MAP_CHUNKS.some((c) => p.x >= c.bounds.minX && p.x <= c.bounds.maxX && p.z >= c.bounds.minZ && p.z <= c.bounds.maxZ);
+    return stepsRunsBare(extractFeatures(SOURCE_OSM).lines.map((l) => correctedLine(l)), (w) => pathWidth(w.tags), (p) => flights.some((r) => pointInRing(p, r)), onMap);
   },
   /** A lamp or a candelabrum of the generator's table standing inside a band of steps (G-203). */
   "lamp-on-steps": () => {
