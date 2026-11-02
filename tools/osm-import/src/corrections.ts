@@ -105,7 +105,7 @@ export const TAG_CORRECTIONS: readonly TagCorrection[] = [
     // about 0 m; a 2.1 m roof stood about 1 m too high over half of it). `height` runs over the
     // 1 m plinth to that top, roof included.
     id: "w67508859",
-    tags: { height: "13.1", "roof:height": "1.0" },
+    tags: { height: "13.1", "roof:height": "1.0", "building:levels": "3" },
     reason: "Pałac Lubomirskich: okap y 11,0 i dach do y 12,0 z NMPT wobec domyślnego płaskiego wierzchu y 8,5",
     ref: "T-136",
   },
