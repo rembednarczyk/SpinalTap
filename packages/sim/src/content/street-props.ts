@@ -1,4 +1,4 @@
-import type { StreetPropItem } from "@seki/core";
+import { FIGURE_HOSTS, FIGURE_REACH, type StreetPropItem, figureLayout, isSitting, seatAt } from "@seki/core";
 import type { ActorDef, Rect, StaticProp } from "./builders";
 import { DISTRICT_M0_ACTORS, DISTRICT_M0_PROPS } from "./district-m0";
 import { KANAL_ACTORS, KANAL_PROPS } from "./district-kanal";
@@ -115,13 +115,35 @@ const keptStalls = Object.values(clear)
 /** The stock whose stall gave way to the game goes with it: no pallet of a stall that is not there. */
 const withStall = (i: StreetPropItem): boolean => i.prop !== "market-goods" || keptStalls.some((s) => Math.hypot(s.x - i.x, s.z - i.z) <= STOCK_REACH);
 
+/** Every piece the still crowd keeps to that the game kept (ADR-0058 stage 8), of all chunks. */
+const keptHosts = Object.values(clear)
+  .flat()
+  .filter((i) => FIGURE_HOSTS.has(i.prop));
+
+/**
+ * A still figure goes with its furniture: a sitter with the piece whose seat it is on, one standing
+ * with a piece it stands at within `FIGURE_REACH`. No one sits on a bench that is not there.
+ */
+const withHost = (i: StreetPropItem): boolean => {
+  if (i.prop !== "figure") return true;
+  const sitting = isSitting(figureLayout(i.variant).pose);
+  return keptHosts.some((h) => Math.hypot(h.x - i.x, h.z - i.z) <= FIGURE_REACH && (!sitting || seatAt(h, i.x, i.z) !== null));
+};
+
 /**
  * The map's pieces clear of the game, on the shaped terrain. A door on a facade (ADR-0058 stage 9)
  * keeps the foot the import measured on the paving drawn under it: its top was fitted to the
- * facade's windows from there.
+ * facade's windows from there. So does a still figure (stage 8): a sitter the foot of its seat's
+ * piece, one standing the paving at its feet, both measured on this terrain.
  */
 const kept: Readonly<Record<string, readonly StreetPropItem[]>> = Object.fromEntries(
-  Object.entries(clear).map(([id, items]) => [id, items.filter(withStall).map((i) => (i.prop === "door" ? i : { ...i, y: Math.round(groundY(i.x, i.z) * 100) / 100 }))]),
+  Object.entries(clear).map(([id, items]) => [
+    id,
+    items
+      .filter(withStall)
+      .filter(withHost)
+      .map((i) => (i.prop === "door" || i.prop === "figure" ? i : { ...i, y: Math.round(groundY(i.x, i.z) * 100) / 100 })),
+  ]),
 );
 
 const keptPieces = Object.values(kept).flat();
