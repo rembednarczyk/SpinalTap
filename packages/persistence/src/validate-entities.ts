@@ -89,3 +89,19 @@ export const findReinforcementsError = (r: unknown, tick: number): string | null
   }
   return null;
 };
+
+/**
+ * The bodies of a won mugging (G-233): a known enemy type, its home and chunk, and its state keyed
+ * by its place in the list, with a body (`downed`): nobody else is saved so.
+ */
+export const findStrayBodiesError = (b: unknown, tick: number): string | null => {
+  if (b === undefined) return null;
+  if (!Array.isArray(b)) return "stray bodies";
+  const bad = b.some((s: unknown, i) => {
+    if (!isObject(s) || typeof s.type !== "string" || !Object.hasOwn(ENEMY_TYPES, s.type) || typeof s.enforcer !== "boolean") return true;
+    if (!isVec(s.home) || typeof s.chunk !== "string" || findEntityError(s.state, tick)) return true;
+    const state = s.state as Json;
+    return state.key !== `stray:${i}` || state.downed === undefined;
+  });
+  return bad ? "stray bodies" : null;
+};

@@ -87,7 +87,8 @@ const close = (ctx: SimContext, run: MicroEventRun, outcome: "won" | "helped" | 
   for (const id of [run.victim, ...run.attackers]) {
     const e = byId(ctx, id);
     if (e && outcome === "left") ctx.world.remove(e);
-    // Whoever stays is an ordinary passer-by now, gone with its chunk and never saved.
+    // Whoever stays is an ordinary passer-by now, gone with its chunk; a mugger's body is saved
+    // unkeyed (G-233, `strayBodiesSnapshot`).
     else if (e) delete e.key;
   }
   for (const key of [`${run.id}:victim`, `${run.id}:m0`, `${run.id}:m1`]) lowerFlag(ctx, deadFlag(key));

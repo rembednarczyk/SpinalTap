@@ -44,6 +44,15 @@ const script = (): ReplayFrame[] => {
 const hashOf = (sim: Simulation) => stateHash(sim.snapshot(null, "test", ""));
 
 /**
+ * The hash of a run as schema v27 had it (G-233): without the bodies of a won mugging, of which
+ * these runs have none (no micro-event starts in them), so only the version differs from v28.
+ */
+const v27HashOf = (sim: Simulation) => {
+  const { strayBodies: _b, ...snap } = sim.snapshot(null, "test", "");
+  return stateHash({ ...snap, version: 27 } as unknown as SaveSnapshot);
+};
+
+/**
  * The snapshot of a run as v26 wrote it, before a walker's stuck check was saved (G-208): without
  * it. Saving it changes no rule; the rule G-208 changes (the side a reinforcement first leans to)
  * does not show in these runs, so the hashes of the older schemas stand.
@@ -174,18 +183,19 @@ describe("determinism", () => {
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
     const sim = runReplay(1234, script());
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"8b844ee7"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"dc1fe904"`);
     // Re-recorded for the v18 field (ADR-0066), the v19 version (ADR-0065, no new rule), the v20
     // version (G-171, no new rule), the v21 version (G-174, no new rule), the v22 version (G-178,
     // no new rule) and the v23 reinforcements (G-179: the run's are saved now, the keyed world ends
     // as before), the v24 version (G-188, no new rule in this run), the v25 guns of the NPCs
     // (G-185, saved, no new rule), the v26 tick each reinforcement came in at (G-202, saved, no
-    // new rule: nobody in the run hacks one) and the v27 stuck check of the walkers (G-208, saved).
+    // new rule: nobody in the run hacks one), the v27 stuck check of the walkers (G-208, saved)
+    // and the v28 version (G-233: the bodies of a won mugging, none in the run, no new rule).
     // G-208 also changes a rule: a reinforcement first leans to the side of its number in the heat
     // (`security.n`), not of its id, since a loaded game gives it another id. It shows where a
     // stuck reinforcement has no repath and leans (the player on a warehouse roof in the docks,
     // `reinforcement-sidestep.test.ts`), not in this run: without the field, as v17, it is the
-    // golden of before, and as v19 to v26 the goldens of those.
+    // golden of before, and as v19 to v27 the goldens of those.
     expect(v17HashOf(sim)).toBe("c52fd247");
     expect(v19HashOf(sim)).toBe("ef63b731");
     expect(v20HashOf(sim)).toBe("9957ac6d");
@@ -195,13 +205,14 @@ describe("determinism", () => {
     expect(v24HashOf(sim)).toBe("87658f95");
     expect(v25HashOf(sim)).toBe("7d2a6a8c");
     expect(v26HashOf(sim)).toBe("7e87ff25");
+    expect(v27HashOf(sim)).toBe("8b844ee7");
   });
 
   it("the same run on 'hard' has a golden hash of its own (ADR-0066)", () => {
     const sim = runReplay(1234, hardScript());
     expect(sim.domain.difficulty).toEqual(DIFFICULTY_PRESETS.hard);
     expect(hashOf(sim)).toBe(hashOf(runReplay(1234, hardScript())));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"48dd0c70"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"0403ee55"`);
     // Not just the field: without it the run still ends elsewhere than on "normal".
     expect(v17HashOf(sim)).not.toBe("c52fd247");
     expect(v19HashOf(sim)).toBe("e296d440");
@@ -212,6 +223,7 @@ describe("determinism", () => {
     expect(v24HashOf(sim)).toBe("98554720");
     expect(v25HashOf(sim)).toBe("21d187bf");
     expect(v26HashOf(sim)).toBe("aa2ed010");
+    expect(v27HashOf(sim)).toBe("48dd0c70");
   });
 
   it("the crowd of residents (ADR-0041) and the traffic (ADR-0050) leave the golden run as it was, at every density", () => {
@@ -278,7 +290,7 @@ describe("determinism", () => {
     // Swings both ways, a blocked blow and staggers: the duel exercises the whole package.
     for (const t of ["MeleeSwing", "AttackBlocked", "Staggered", "DamageDealt"]) expect(seen).toContain(t);
     expect(hashOf(sim)).toBe(hashOf(duel().sim));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"740e342a"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"3e5b6e59"`);
     expect(v17HashOf(sim)).toBe("62992d7b");
     expect(v19HashOf(sim)).toBe("36a75c45");
     expect(v20HashOf(sim)).toBe("1d2880c1");
@@ -288,6 +300,7 @@ describe("determinism", () => {
     expect(v24HashOf(sim)).toBe("7ec2e45d");
     expect(v25HashOf(sim)).toBe("f92c26ec");
     expect(v26HashOf(sim)).toBe("8f19fb83");
+    expect(v27HashOf(sim)).toBe("740e342a");
   });
 
   it("restores killed NPCs as absent", () => {
