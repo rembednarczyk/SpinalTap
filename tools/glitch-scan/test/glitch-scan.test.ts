@@ -20,7 +20,7 @@ import { doorsFacingUnderground } from "./door-streets";
 import { marketChecks } from "./market-pieces";
 import { signsInNeighbours } from "./sign-neighbours";
 import { lanternsByPassages } from "./passage-lanterns";
-import { landmarksAtDefaultHeight } from "./landmark-heights";
+import { landmarksAtDefaultHeight, towersAtDefaultHeight } from "./landmark-heights";
 import { bandAcross, lampsOnSteps, stepsNarrowerThanWalls } from "./steps-walls";
 import { cityChurches, cityFakeTowers, doubleTowers, towersOffBuilding } from "./landmark-towers";
 import { EMPTY_STRIPS_KNOWN, bayCarsMisturned, bayCarsOutOfPark, bayStripsEmptyKnown, bayStripsSparse, crowdLanesOnParking, kerbParksOf, kerbStripsOffCarStreets } from "./kerb-bays";
@@ -997,6 +997,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   },
   /** A landmark from the curator's list at the district's default height, not a mapped or measured one (G-204). */
   "landmark-default-height": () => landmarksAtDefaultHeight(LANDMARK_BUILDINGS, MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)))),
+  /** A tower of the map with no height in its tags at the district's default height (G-224). */
+  "osm-tower-default-height": () => towersAtDefaultHeight(MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b))), osmTags),
   /** A landmark of the list the map shows whole and without a tower, crowned by the renderer's bell towers (G-210). */
   "landmark-fake-tower": () => cityFakeTowers(LANDMARK_BUILDINGS, SOURCE_OSM),
   /** A church with a tower of the map in its outline or by its walls, crowned by the renderer's bell towers besides (G-212). */
@@ -1589,6 +1591,17 @@ describe("the glitch scan (ADR-0054)", () => {
     expect(landmarksAtDefaultHeight(["w66258167"], [{ ...chapel, id: "w66258167/1" }])).toHaveLength(1);
     expect(landmarksAtDefaultHeight(["w66258167"], [{ ...chapel, source: "height" }, { ...chapel, source: "levels" }])).toEqual([]);
     expect(landmarksAtDefaultHeight(["w450180469"], [chapel])).toEqual([]);
+  });
+
+  it("finds a tower of the map without a height at a default one, and none with a height mapped or measured, nor a plain building (G-224)", () => {
+    const belfry = { id: "w680377807", x: 879.1, z: 545, source: "default" as const };
+    const tags = { building: "yes", man_made: "tower", "tower:type": "bell_tower" };
+    expect(towersAtDefaultHeight([belfry], () => tags)).toEqual([{ at: "879,545", what: "w680377807 bell_tower" }]);
+    expect(towersAtDefaultHeight([{ ...belfry, id: "w680377807/1" }], () => ({ building: "yes", man_made: "tower" }))).toHaveLength(1);
+    expect(towersAtDefaultHeight([belfry], () => ({ building: "yes", "tower:type": "bell_tower" }))).toHaveLength(1);
+    expect(towersAtDefaultHeight([{ ...belfry, source: "height" }, { ...belfry, source: "levels" }], () => tags), "corrected or sized").toEqual([]);
+    for (const k of ["height", "building:height", "building:levels"]) expect(towersAtDefaultHeight([belfry], () => ({ ...tags, [k]: "18" })), k).toEqual([]);
+    expect(towersAtDefaultHeight([belfry], () => ({ building: "church" })), "no tower").toEqual([]);
   });
 
   it("finds a flight of steps between parallel walls further apart than its band plus 1 m, and none past each condition (G-203)", () => {
