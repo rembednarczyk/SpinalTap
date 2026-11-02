@@ -926,6 +926,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: ustalić przyczynę (format tekstury palety/emisji na WebGL1, render target), wnętrze czytelne na WebGL1
 - Pakiet właściciela: packages/engine (rooms, npr)
 
+### G-277 Pasy bez nawierzchni w bruku (rynsztok/dziura ok. 0,2–0,3 m)
+- Status: zgłoszone (2.11, autor ADR-0058 etapu 7b)
+- Ważność: S4 · Zasięg: pas szer. ok. 0,2–0,3 m, 7 cm niżej, częściowo bez nawierzchni: Zamkowa (760,6; 186,0), deptak (404,9; −98,2) · Koszt: do ustalenia
+- Poprawka: ustalić źródło (szew pasów nawierzchni, krawężnik, rynsztok z importu) i domknąć nawierzchnię; kontrola skanu na szczeliny nawierzchni (punkt chodnika bez nawierzchni otoczony nawierzchnią)
+- Pakiet właściciela: tools/osm-import (ground), packages/engine (renderer/mapcity)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
