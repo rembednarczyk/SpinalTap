@@ -44,6 +44,7 @@ const STREET = ["city/street-props.glb"] as const;
 const MARKET = ["city/market-props.glb"] as const;
 const DOORS = ["city/door-props.glb"] as const;
 const VEHICLES = ["city/vehicle-props.glb"] as const;
+const CROWD = ["city/crowd-props.glb"] as const;
 /** `audio/<name>-000.ogg` ... for the numbers given. */
 const ogg = (name: string, ...n: number[]): string[] => n.map((i) => `audio/${name}-${String(i).padStart(3, "0")}.ogg`);
 
@@ -82,6 +83,8 @@ export const CREDITS: readonly Credit[] = [
   { id: "kenney-mini-market", section: "street", title: "Mini Market 1.0", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://opengameart.org/content/mini-market", license: "CC0-1.0", files: MARKET, changed: true },
   { id: "kenney-survival-kit", section: "street", title: "Survival Kit 2.0", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://opengameart.org/content/survival-kit", license: "CC0-1.0", files: MARKET, changed: true },
   { id: "kenney-furniture-kit", section: "street", title: "Furniture Pack 1.0", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://opengameart.org/content/furniture-kit", license: "CC0-1.0", files: MARKET, changed: true },
+  // CC0 (ADR-0058 stage 8): the still crowd of crowd-props.glb.
+  { id: "quaternius-posed-humans", section: "street", title: "Background Posed Humans", author: "Quaternius", authorUrl: "https://quaternius.com", url: "https://quaternius.com/packs/backgroundposedhumans.html", license: "CC0-1.0", files: CROWD, changed: true },
   // CC-BY 4.0 (ADR-0058 stage 9, E7 of the second pack): the leaves of the doors on the facades, door-props.glb.
   { id: "sketchfab-cyberpunk-doors-and-windows", section: "street", title: "Cyberpunk City Assets Pack 3# Doors and Windows", author: "carlcapu9", authorUrl: "https://sketchfab.com/carlcapu9", url: "https://sketchfab.com/3d-models/cyberpunk-city-assets-pack-3-doors-and-windows-c6cdc4f6715e4d8eae61eeb81fe636c8", license: "CC-BY-4.0", files: DOORS, changed: true },
   { id: "sketchfab-psx-garage-doors", section: "street", title: "Low-Poly PSX Style Garage Doors Pack", author: "vanillao03", authorUrl: "https://sketchfab.com/vanillao03", url: "https://sketchfab.com/3d-models/low-poly-psx-style-garage-doors-pack-6cd3bb88d27e44ac96f080e533d7015a", license: "CC-BY-4.0", files: DOORS, changed: true },

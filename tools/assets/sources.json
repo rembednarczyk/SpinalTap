@@ -1,5 +1,5 @@
 {
-  "about": "Packs and models baked into packages/app/public/city/city-props.glb, street-props.glb, market-props.glb, door-props.glb and vehicle-props.glb: CC0 (ADR-0058) and CC-BY 4.0, credited in packages/ui/src/credits/credits.ts (ADR-0063). tools/assets/fetch.mjs downloads them and checks sha256; the zips, unpacked packs and source models are not committed.",
+  "about": "Packs and models baked into packages/app/public/city/city-props.glb, street-props.glb, market-props.glb, door-props.glb, vehicle-props.glb and crowd-props.glb: CC0 (ADR-0058) and CC-BY 4.0, credited in packages/ui/src/credits/credits.ts (ADR-0063). tools/assets/fetch.mjs downloads them and checks sha256; the zips, unpacked packs and source models are not committed.",
   "sources": [
     {
       "id": "kenney-modular-buildings",
@@ -175,6 +175,28 @@
         { "path": "Environment/glTF/FireHydrant.gltf", "url": "https://drive.usercontent.google.com/download?id=12eTSrvHAa4D5Sr-_oFnMEHWYY65jwDGo&export=download&confirm=t", "sha256": "505de841fda684aee3dd9dd9c594dcc5bfa328bb492e82c7a9cc28979c9fe257" }
       ],
       "used": ["st-hydrant"]
+    },
+    {
+      "id": "quaternius-posed-humans",
+      "title": "Background Posed Humans",
+      "author": "Quaternius (quaternius.com)",
+      "page": "https://quaternius.com/packs/backgroundposedhumans.html",
+      "license": "CC0",
+      "licenseQuote": "CC0 (strona paczki i https://quaternius.com/license.html); License.txt w folderze paczki ma nagłówek innej paczki (Knight Pack), ale tę samą licencję CC0 1.0 Universal",
+      "files": [
+        { "path": "License.txt", "url": "https://drive.usercontent.google.com/download?id=1K6M5kb7ugqrPROrSx6O6dUBJA366xq-j&export=download&confirm=t", "sha256": "d26d24393ccf99517fe161cbd304a2fc847f1a017328be94d92c7bc1d289cce3" },
+        { "path": "Male/Male Poses/OBJ/Male_Sitting.obj", "url": "https://drive.usercontent.google.com/download?id=183uU-nqxzQJP1N1ykKOXVbjdHwdEaBs_&export=download&confirm=t", "sha256": "b84719a16eb744178cdef559cdc2c2084e9c20100159bd00a47b19ea3b9ce72a" },
+        { "path": "Male/Male Poses/OBJ/Male_Standing.obj", "url": "https://drive.usercontent.google.com/download?id=1sYxmvLuMH9CkwwLGyTAhZsN_-tFIhbHu&export=download&confirm=t", "sha256": "ddc3f919357f5e6aa91f124821336d52c88408782c8584233f4214175bc7b1d0" },
+        { "path": "Male/Male Poses/OBJ/Male_Standing_Hips.obj", "url": "https://drive.usercontent.google.com/download?id=1QWmxUAwW2c0kBdvxxVkyYBn3gZOUY5_d&export=download&confirm=t", "sha256": "3ab35eea2dc8e725589f98a389f81bb0400f08a2e612e9d68d346cbdff50b619" },
+        { "path": "Male/Male Hairstyles/OBJ/Male_Hairstyle_1.obj", "url": "https://drive.usercontent.google.com/download?id=1ITsZj3OhCHyIx9va025Drd6USpYn7ZUp&export=download&confirm=t", "sha256": "e49019079467be52bbf5fbe2133aaed5bf6bf1a2fb526625a745aa782aa8c29d" },
+        { "path": "Male/Male Hairstyles/OBJ/Male_Hairstyle_3.obj", "url": "https://drive.usercontent.google.com/download?id=1-kf_HYqtQooOZ3p7Sj1p9TNPOqbI3tXH&export=download&confirm=t", "sha256": "839c21fa3a47ae4dd29694a24c46e15a09691fd87797a5fc6bc7aa30c71c4d8e" },
+        { "path": "Female/Female Poses/OBJ/Female_Sitting.obj", "url": "https://drive.usercontent.google.com/download?id=1tsH40mlqGXeI7igey4i_gMDKx2wvTGRn&export=download&confirm=t", "sha256": "b9488206def8218d93d4326ae2990ee4af7e94f771d1dcc14e7fe384440cb5f8" },
+        { "path": "Female/Female Poses/OBJ/Female_Standing.obj", "url": "https://drive.usercontent.google.com/download?id=13oLeT8urbcq_6W2C1cQq49tqTLKuG69b&export=download&confirm=t", "sha256": "4d3d8e6bb79abaed94f4c301c40920bce5fb445efac9a6c23223073c9012acfd" },
+        { "path": "Female/Female Poses/OBJ/Female_Standing_Hips.obj", "url": "https://drive.usercontent.google.com/download?id=1zWqorz5XIv6nEPY44dQuCSn62EhtKmg7&export=download&confirm=t", "sha256": "daff5dab2f4d369d97b7856152b0db0e9f55042273606978bf624b94838d011a" },
+        { "path": "Female/Female Hairstyles/OBJ/Female_Hairstyle_1.obj", "url": "https://drive.usercontent.google.com/download?id=1lLF_OUcoF3aBsEIXo9UYK8NMFANB5JXh&export=download&confirm=t", "sha256": "7cc4dc5fc09317c82e645d59dc9de02be951e184d9650373ab3a5b28da7f3b8b" },
+        { "path": "Female/Female Hairstyles/OBJ/Female_Hairstyle_3.obj", "url": "https://drive.usercontent.google.com/download?id=1PHH3gNXkP_OhmwULVrJfLueR-MDveBf9&export=download&confirm=t", "sha256": "a8c072ce051a71e3d9e6a5704107581cd2f193e0d2eb80facaf818acc87961b6" }
+      ],
+      "used": ["cr-sit", "cr-stand", "cr-hips"]
     },
     {
       "id": "sketchfab-electric-pole",
