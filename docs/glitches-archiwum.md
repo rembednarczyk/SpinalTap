@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-231 Mikrozdarzenie: obaj napastnicy powaleni żywcem nie dają wygranej (do potwierdzenia)
+- Status: naprawione w #206 (2.11, PRZYJĘTE; potwierdzone prawdziwym `takedown`, ogłuszającym i śmiertelnym; `out()` = brak encji albo `downed`)
+- Ważność: S3 (proponowana: brak nagrody za wykonaną akcję) · Zasięg: `runMicroEvent` sprawdza `attackers.every((id) => !byId(…))`, więc powaleni, ale obecni napastnicy nie liczą się jako pokonani; po odejściu gracza „left” bez nagrody i usunięcie powalonych (sonda przez `restoreDowned`)
+- Poprawka: pokonany = nieobecny albo powalony; test z prawdziwym takedownem obu
+- Pakiet właściciela: packages/sim (micro-events)
+
 ### G-219 Powalony żywy posiłek ochrony znika po odejściu gracza ok. 300 m
 - Status: naprawione w #203 (2.11, PRZYJĘTE; posiłki bez `chunk` jak ciała, nie są usypiane; sprzątanie powalonych i ciał zostaje w G-196)
 - Ważność: S4 · Zasięg: posiłek powalony żywcem ma `chunk: ""`; `chunk-unload` usypia go po chunku, w którym leży, a bez klucza nie zostaje po nim stan, więc znika na zawsze, a `sent` spada do 0 (sonda, ziarno 7: 100 m nadal jest, 300 m już nie, po powrocie brak); pokrewne G-196 (ciała posiłków bez chunku)

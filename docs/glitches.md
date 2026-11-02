@@ -750,17 +750,17 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: przy usypianiu chunka zamknąć trwające mikrozdarzenie (jak „left”) albo nie usypiać kluczy `micro:`; test z teleportem
 - Pakiet właściciela: packages/sim (micro-events, streaming)
 
-### G-231 Mikrozdarzenie: obaj napastnicy powaleni żywcem nie dają wygranej (do potwierdzenia)
-- Status: w PR #206 (2.11, w weryfikacji; potwierdzone prawdziwym `takedown`, także śmiertelnym: zwłoki trzymają id)
-- Ważność: S3 (proponowana: brak nagrody za wykonaną akcję) · Zasięg: `runMicroEvent` sprawdza `attackers.every((id) => !byId(…))`, więc powaleni, ale obecni napastnicy nie liczą się jako pokonani; po odejściu gracza „left” bez nagrody i usunięcie powalonych (sonda przez `restoreDowned`)
-- Poprawka: pokonany = nieobecny albo powalony; test z prawdziwym takedownem obu
-- Pakiet właściciela: packages/sim (micro-events)
-
 ### G-232 Wolnostojące dzwonnice i wieże z `use: historic` rysowane jak kamienice
 - Status: zgłoszone (2.11, naprawiacz G-224)
 - Ważność: S3 (proponowana: zabytek wygląda jak blok) · Zasięg: dzwonnica św. Mikołaja w680377807, wieża cerkwi św. Jozafata w1382552285 (po G-224 z właściwą wysokością): rzędy oświetlonych okien i płaski szczyt (zrzut `scratchpad/g224/shots/g224-mikolaj-po.png`)
 - Poprawka: budynek z `man_made=tower`/`tower:type=bell_tower` dostaje fasadę wieży (bez okien mieszkań, okna dzwonnicy u góry) i dach namiotowy/hełm; kontrola skanu „wieża z oknami mieszkań”
 - Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import (use)
+
+### G-233 Ciało napastnika mikrozdarzenia niesione na ramieniu znika przy zapisie i wczytaniu
+- Status: zgłoszone (2.11, weryfikator G-231)
+- Ważność: S4 · Zasięg: napad (mugging): ciało napastnika niesione przez gracza (`carrying` ustawione) po zapisie i wczytaniu: `carrying` null, 0 ciał. Przed „won” ciało ma klucz `micro:` i odpada w `isMicroKey`, po „won” klucza nie ma i dalej ginie
+- Poprawka: ciało napastnika po zakończeniu zdarzenia staje się zwykłym ciałem w zapisie (jak ciała posiłków, G-193); test zapis/wczytanie z niesionym ciałem
+- Pakiet właściciela: packages/sim (micro-events, bodies), packages/persistence
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
