@@ -99,11 +99,14 @@ export const TAG_CORRECTIONS: readonly TagCorrection[] = [
   {
     // The Lubomirski Palace: OSM has no height, so it stood at the default three storeys with a
     // flat top at y 8.5. NMPT GUGiK (roof cells off trees and towers) has the eaves at y 11.0 along
-    // the walls and the roof at y 13.1 (median) more than 5 m inside them, where the game's hipped
-    // roof is level. `height` runs over the 1 m plinth at y -2.1 to that top, roof included.
+    // the walls and a roof that rises slowly inwards (11.5 at 2-3 m, 12.1 at 4-5 m, 13-14 past 6 m).
+    // The game's hipped roof on this outline is level already about 1 m in from the walls, so a
+    // 1 m roof (top y 12.0) fits the measured surface best over the whole outline (mean error
+    // about 0 m; a 2.1 m roof stood about 1 m too high over half of it). `height` runs over the
+    // 1 m plinth to that top, roof included.
     id: "w67508859",
-    tags: { height: "14.2", "roof:height": "2.1" },
-    reason: "Pałac Lubomirskich: okap y 11,0 i dach y 13,1 z NMPT wobec domyślnego płaskiego wierzchu y 8,5",
+    tags: { height: "13.1", "roof:height": "1.0" },
+    reason: "Pałac Lubomirskich: okap y 11,0 i dach do y 12,0 z NMPT wobec domyślnego płaskiego wierzchu y 8,5",
     ref: "T-136",
   },
   // Its two towers on the northern corners: `man_made=tower` with no height, so the import left
