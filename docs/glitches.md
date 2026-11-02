@@ -773,7 +773,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (micro-events, streaming)
 
 ### G-240 Panika tłumu nie trafia do zapisu: wczytana gra rozjeżdża się zaraz po walce
-- Status: w PR #221 (2.11, weryfikacja NIE PRZYJĘTE: autozapis po ogłuszeniu przy świadku kasował telefon świadka i heat nie przychodził bez wczytania; runda 2: zapis najpierw rozstrzyga zgłoszenie w toku, potem uspokaja ulicę)
+- Status: w PR #221 (2.11, runda 2 @ ebfae5e w ponownej weryfikacji): `settleCalls` rozstrzyga telefony świadków przed zapisem (zgłoszenie i heat jak bez zapisu; ogłuszony nie dzwoni, w chwycie dzwoni), potem `calmStreet`; `scared` przepada
 - Ważność: S4 · Zasięg: `crowd.state: fleeing` (np. Hideo po walce) poza zapisem; wczytana gra różni się od gry bez zapisu do uspokojenia tłumu (ok. 12 s)
 - Poprawka: stan ucieczki tłumu w migawce encji (zapis + migracja) albo wyliczany z zapisanych zdarzeń; test hash co krok po zapisie w trakcie paniki
 - Pakiet właściciela: packages/sim (crowd), packages/persistence
@@ -838,6 +838,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 (luka w testach przy ryzykownym obszarze) · Zasięg: przebiegi `determinism.test.ts` nie przechodzą przez Trasę Podziemną ani Rynek przy Trybunale, więc zmiana kształtu terenu tam nie zmienia hasha; pad Trasy Podziemnej (`sites.ts:159`, blend 0,01) jest ustawiony pod węzły siatki 5 m chunka `stare-miasto-0-0`, każda zmiana komórki (także w imporcie) po cichu przesuwa ściany wykopu
 - Poprawka: test „grunt pod stopniami Trasy Podziemnej z zapasem ≥ 1 m pod rampą kolizyjną” i „bruk nie wystaje nad stopnie”; pad niezależny od rozdzielczości siatki (granice w metrach, nie w węzłach)
 - Pakiet właściciela: packages/sim (content/lublin)
+
+### G-253 Zapis w trakcie obezwładnienia: chwyt poza zapisem
+- Status: zgłoszone (2.11, naprawiacz G-240)
+- Ważność: S4 · Zasięg: `session.takedown` nie trafia do migawki, a `canSave` nie blokuje zapisu w chwycie; gra wczytana nie ma chwytu, a gra, z której zapisano, go kończy (rozjazd jak G-240)
+- Poprawka: `canSave`/autozapis czeka na koniec chwytu (prościej) albo chwyt w zapisie; test hash po zapisie w chwycie
+- Pakiet właściciela: packages/app (save-controller, autosave), packages/sim (takedown)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
