@@ -119,6 +119,16 @@ export const TAG_CORRECTIONS: readonly TagCorrection[] = [
     reason: "wieża Pałacu Lubomirskich: płaski wierzch y 17,9 z NMPT, w OSM bez wysokości",
     ref: "T-136",
   })),
+  {
+    // The palace's annex on its south side: `building=yes` and `layer=1` with no height, so it stood
+    // at the district's default 4 storeys with a flat top at y 11.6, over the palace's eaves (y 11.0).
+    // NMPT GUGiK has its roof at y 4.6..5.1 (p10, p50; the p90 is the palace's wall in the outline).
+    // `height` counts from the base over the 0.2 m plinth, hence 5.1 + 1.4 - 0.2.
+    id: "w232805924",
+    tags: { height: "6.3", "roof:shape": "flat", "building:levels": "2" },
+    reason: "przybudówka Pałacu Lubomirskich: płaski wierzch y 5,1 z NMPT wobec y 11,6 z domyślnych 4 kondygnacji",
+    ref: "T-137",
+  },
   // St Josaphat's nave first: at the default it stood 6.3 m over its tower's top (y 9.5, T-129).
   church("w69916021", 11.6, 4.6, "cerkiew św. Jozafata", 6.8, 11.4),
   church("w66330578", 24.8, 12, "Bernardyni, nawa (wieża osobno)", 12.5, 24.5),
