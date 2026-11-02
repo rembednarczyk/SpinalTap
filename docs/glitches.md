@@ -795,7 +795,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (micro-events)
 
 ### G-243 Skan i18n nie łapie polskich słów bez polskich znaków
-- Status: zgłoszone (2.11, zgłoszenie użytkownika: „ruch” na padzie; naprawione w #213)
+- Status: w PR #214 (2.11, w weryfikacji; „ruch” poprawione w #213): flaga `shown` dla tekstu JSX i atrybutów, nowa reguła znalazła jeszcze 2 teksty (minimapa, skaner), przeniesione do katalogów
 - Ważność: S4 (luka w narzędziu) · Zasięg: `tools/i18n-scan` liczy literały z polskimi znakami; „ruch” w `touch-controls.tsx` przeszedł, baza była 0
 - Poprawka: w JSX liczyć każdy tekst węzła (i `aria-label`, `title`, `placeholder`) poza wywołaniami `t()`, z listą dozwolonych (nazwy własne, symbole); baza z nowej reguły, potem w dół
 - Pakiet właściciela: tools/i18n-scan
