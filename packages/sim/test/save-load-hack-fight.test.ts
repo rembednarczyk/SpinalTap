@@ -23,7 +23,7 @@ const shooters = (sim: Simulation, id: string) =>
   [...sim.world]
     .filter((e) => e.key?.startsWith(`${id}-g`) && e.combatant)
     .sort((a, b) => a.key!.localeCompare(b.key!))
-    .map((e) => ({ key: e.key, cooldown: e.combatant!.cooldown, loaded: e.combatant!.loaded, bloom: e.combatant!.bloom, sniper: e.sniper && { ...e.sniper, perches: undefined } }));
+    .map((e) => ({ key: e.key, cooldown: e.combatant!.cooldown, loaded: e.combatant!.loaded, bloom: e.combatant!.bloom, sniper: e.sniper && { phase: e.sniper.phase, timer: e.sniper.timer, perch: e.sniper.perch } }));
 
 describe("save and load during a hack under fire (G-185)", () => {
   for (const [seed, steps] of [
@@ -78,4 +78,32 @@ describe("save and load during a hack under fire (G-185)", () => {
     expect(byKey(loaded, sniper.key!)!.combatant!.cooldown).toBe(sniper.combatant!.cooldown);
     expect(loaded.player()!.health!.current).toBe(sim.player()!.health!.current);
   });
+
+  for (const seed of [9, 21]) {
+    it(`loaded mid-aim, the sniper turns its laser on again before it fires: the warning of ADR-0024 (seed ${seed})`, () => {
+      const { sim, id } = hacking(seed, 0);
+      const key = `${id}-g1`;
+      for (let i = 0; i < 20 * 60 && byKey(sim, key)?.sniper?.phase !== "aim"; i++) sim.step();
+      const left = byKey(sim, key)!.sniper!;
+      expect(left.phase).toBe("aim");
+      expect(left.timer).toBeGreaterThan(1);
+      const loaded = reload(sim);
+      const sniper = byKey(loaded, key)!;
+      const seen: string[] = [];
+      loaded.bus.on("SniperAimed", (e) => {
+        if (e.entityId === sniper.id) seen.push(e.duration > 0 ? `laser ${e.duration.toFixed(4)}` : "off");
+      });
+      loaded.bus.on("ShotFired", (e) => {
+        if (e.shooterId === sniper.id) seen.push("shot");
+      });
+      const timer = left.timer;
+      for (let i = 0; i < 4 * 60 && !seen.includes("shot"); i++) {
+        sim.step();
+        loaded.step();
+        // The laser is for the eye only: both games go on as one.
+        expect(hash(loaded)).toBe(hash(sim));
+      }
+      expect(seen.slice(0, 3)).toEqual([`laser ${timer.toFixed(4)}`, "shot", "off"]);
+    });
+  }
 });

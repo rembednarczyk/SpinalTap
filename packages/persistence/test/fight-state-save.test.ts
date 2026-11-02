@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SAVE_SCHEMA_VERSION, type EntitySnapshot, type SaveSnapshot } from "@seki/core";
+import { ENEMY_TYPES, SAVE_SCHEMA_VERSION, type EntitySnapshot, type SaveSnapshot, npcWeapon } from "@seki/core";
 import { MIGRATIONS, checksum, decodeSave, encodeSave, findSchemaError } from "../src";
 import { snapshot } from "./fixtures";
 
@@ -46,6 +46,22 @@ describe("an NPC's gun and a sniper's aim in the save (v24 to v25, G-185)", () =
     const back = decodeSave("slot", encodeSave(s)).entities[0];
     expect(back?.gun).toEqual(GUN);
     expect(back?.sniper).toEqual(AIM);
+  });
+
+  it("refuses more rounds than any NPC's magazine holds, and a reinforcement's more than its own weapon's", () => {
+    const most = Math.max(...Object.values(ENEMY_TYPES).map((t) => npcWeapon(t.weapon).magazine));
+    expect(errorOf({ gun: { ...GUN, loaded: most } })).toBeNull();
+    expect(errorOf({ gun: { ...GUN, loaded: most + 1 } })).toBe("entity c1-g1 gun");
+    const pistol = npcWeapon(ENEMY_TYPES.hebi_lookout.weapon).magazine;
+    expect(pistol).toBeLessThan(most);
+    const reinforced = (loaded: number) =>
+      findSchemaError({
+        ...snapshot({
+          reinforcements: { sent: 1, wait: 0, people: [{ n: 1, since: 0, type: "hebi_lookout", home: SNIPER.position, state: { ...SNIPER, key: "security:1", gun: { ...GUN, loaded } } }] },
+        }),
+      } as unknown as Record<string, unknown>);
+    expect(reinforced(pistol)).toBeNull();
+    expect(reinforced(pistol + 1)).toBe("reinforcements");
   });
 
   it("refuses a gun or a sniper that is not one", () => {

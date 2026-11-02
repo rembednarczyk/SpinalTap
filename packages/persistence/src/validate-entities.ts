@@ -1,4 +1,4 @@
-import { ENEMY_TYPES } from "@seki/core";
+import { ENEMY_TYPES, type EnemyTypeId, npcWeapon } from "@seki/core";
 
 type Json = Record<string, unknown>;
 
@@ -10,8 +10,12 @@ const isCount = (v: unknown): v is number => Number.isInteger(v) && (v as number
 const isTime = (v: unknown): boolean => isNum(v) && v >= 0;
 const SNIPER_PHASES: readonly unknown[] = ["idle", "aim", "rest", "move"];
 
-/** G-185: an NPC's gun between shots, and a sniper's phase, seconds left and perch. */
-const isGun = (v: unknown): boolean => isObject(v) && Number.isInteger(v.loaded) && (v.loaded as number) >= 0 && isTime(v.reloading) && isTime(v.drawing) && isTime(v.bloom);
+/** The most rounds an NPC's magazine holds (G-185): a keyed NPC's weapon is the content's, not the save's. */
+const MOST_ROUNDS = Math.max(...Object.values(ENEMY_TYPES).map((t) => npcWeapon(t.weapon).magazine));
+
+/** G-185: an NPC's gun between shots, with no more rounds than `most`; a sniper's phase, seconds left and perch. */
+const isGun = (v: unknown, most = MOST_ROUNDS): boolean =>
+  isObject(v) && Number.isInteger(v.loaded) && (v.loaded as number) >= 0 && (v.loaded as number) <= most && isTime(v.reloading) && isTime(v.drawing) && isTime(v.bloom);
 const isSniper = (v: unknown): boolean => isObject(v) && SNIPER_PHASES.includes(v.phase) && isTime(v.timer) && Number.isInteger(v.perch) && (v.perch as number) >= 0;
 
 const BODY_FLAGS = ["fought", "found", "reported", "dead", "carried", "hidden"] as const;
@@ -46,6 +50,9 @@ const findReinforcementError = (p: unknown): string | null => {
   if (!isObject(p) || !isCount(p.n) || !Number.isInteger(p.since) || (p.since as number) < 0) return "reinforcements";
   if (typeof p.type !== "string" || !Object.hasOwn(ENEMY_TYPES, p.type) || !isVec(p.home)) return "reinforcements";
   if (findEntityError(p.state) || (p.state as Json).key !== `security:${p.n}`) return "reinforcements";
+  // Its weapon is its type's: no more rounds than that magazine holds (G-185).
+  const gun = (p.state as Json).gun;
+  if (gun !== undefined && !isGun(gun, npcWeapon(ENEMY_TYPES[p.type as EnemyTypeId].weapon).magazine)) return "reinforcements";
   return null;
 };
 

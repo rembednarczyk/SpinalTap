@@ -109,6 +109,11 @@ export interface SniperState {
   timer: number;
   /** Perch it holds or walks to (index into `perches`). */
   perch: number;
+  /**
+   * Loaded mid-aim (G-185): the laser, drawn from `SniperAimed` only, is turned on again in its
+   * first step. Transient, never saved.
+   */
+  relight?: true;
 }
 
 /** A defector walked to the boat (ADR-0024): follows `route` while the player is close. */
