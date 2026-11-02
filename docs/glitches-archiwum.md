@@ -2,6 +2,21 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-266 Na pierzei Krakowskiego przy Placu Litewskim styl latarni zmienia się przy x 20 bez oparcia w OSM
+- Status: naprawione w #236 (2.11, PRZYJĘTE; kurator ZGODNE Z UWAGAMI: pastorały na całej pierzei placu, decyzja użytkownika)
+- Ważność: S4 · Zasięg: Krakowskie Przedmieście x −87…130 (drogi w598108789 i w40049340 z tagami placu w1054556917, nie deptaka); `lamps.kp-deptak` (pastorały) sięga x 20, choć opis planu mówi „od Kapucyńskiej” (tagi deptaka od x 129,7) · Koszt: mały
+- Poprawka (decyzja użytkownika 2.11: pastorały): pastorały na całej pierzei placu od x −87 do Kapucyńskiej (`lamps.kp-deptak` wydłużony na zachód), słupy nowoczesne tylko na alejkach wewnątrz placu; kontrola skanu na później: zmiana stylu latarni na osi jednej drogi OSM o tych samych tagach
+- Pakiet właściciela: docs/world (plan), tools/osm-import (props)
+
+### G-264 Latarnie OSM na Archidiakońskiej (Stare Miasto) rysowane jako drogowe
+- Status: naprawione w #236 (2.11, PRZYJĘTE; kurator ZGODNE Z UWAGAMI: latarnie OSM w obrysie Starego Miasta jako pastorały; obrys odcina 22 budynki w G-271)
+- Ważność: S4 · Zasięg: 2 latarnie `grodzka.street-lamp` → `lamp-road`: (653,9; 39,3), (653,5; 46,6), przy Placu po Farze, 9,8 i 14,9 m od latarni ściennej · Koszt: mały
+- Przyczyna: mapowanie `street-lamp → lamp-road` w `tools/osm-import/src/props-kinds.ts:56` („OSM street lamps away from the old town are road lamps”) nie patrzy na miejsce; na Starym Mieście (decyzja użytkownika 2.11: wiodą latarnie stylizowane) powinny być stylizowane
+- Poprawka: `street-lamp` w strefie Starego Miasta → stylizowana (np. latarnia ścienna albo pastorał, styl do potwierdzenia przez kuratora); przegląd `topography-curator`
+- Pakiet właściciela: tools/osm-import (props)
+- Test przyjęcia: kontrola skanu `lamp-road-in-old-town` (zwykła latarnia w obrysie strefy Starego Miasta) 2 → 0
+- Także (kurator, T-141): węzły n5830072379 i n5830072380 (`highway=street_lamp`, `layer=1`, bez tagów typu) są wolnostojące, 5–11 m od osi Archidiakońskiej, daleko od ściany. Styl: latarnia stylizowana wolnostojąca (pastorał albo niska latarenka na słupie) w punkcie OSM, nie kinkiet. Te dwa węzły to jedyne latarnie OSM na Starym Mieście
+
 ### G-259 Na deptaku Krakowskiego Przedmieścia nowoczesne słupy stoją 1 m od pastorałów
 - Status: naprawione w #235 (2.11, PRZYJĘTE; kurator ZGODNE Z UWAGAMI: na deptaku same pastorały, słupy nowoczesne tylko na alejkach placu; granica stylu przy x 20 w G-266, Archidiakońska w G-264)
 - Ważność: S3 (zgłoszenie gracza: charakterystyczne lubelskie latarnie przy deptaku dublowane fabrycznymi) · Zasięg: 16 par `lamp-modern-pole` + `lamp-pastoral` w `krakowskie-1-0` (x 32..227, z −68..−44), odstęp 0,9–2,7 m; do sprawdzenia 2 × `lamp-road` 6,9 m od pastorału w `krakowskie-2-0` (279,7; −89,3), (362,3; −104,3) · Koszt: mały

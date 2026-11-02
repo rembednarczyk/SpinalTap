@@ -851,7 +851,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 - Dług z weryfikacji #228 (do tego samego kroku albo osobno): `FIGURE_SOLES` (x ±0,12) węższe niż buty mężczyzny (±0,18, z ręką na biodrze ±0,23), dziś 1 róg buta 0,15 m w chodniku (palący 589,34; 570,29); stopy siedzących i `figure-off-seat` sprawdzają jeden punkt pod stopami (dziś bez przekroczeń, rozrzut do 5,6 cm); postacie bez brył (świadome w ADR-0058).
 ### G-263 Lampy wnętrz świecą przez ściany na ulicę
-- Status: w PR #239 (2.11, @ 50c2777, czeka na weryfikację; zgłoszone przez weryfikatora ADR-0063 etap 3)
+- Status: w PR #239 (2.11, @ 50c2777 w weryfikacji; zgłoszone przez weryfikatora ADR-0063 etap 3)
 - Ważność: S4 · Zasięg: światła punktowe wnętrz (pokój kapsułowy `capsule-room-view.ts` `LAMP` 5,5 m, ok. 2,5 m za fasadą Jezuickiej 14; do sprawdzenia klinika i Neon Koi) · Koszt: mały do średniego
 - Dowód: światła punktowe shadera toon nie mają przesłaniania, więc lampa wnętrza oświetla też bruk i fasadę przed budynkiem; przy 45–50 m od pokoju włącza się i wyłącza skokowo (wiązanie z siatką wnętrza)
 - Poprawka: światło wnętrza tylko dla siatek wnętrza (`includedOnlyMeshes`) albo zasięg przycięty do pokoju; włączanie z płynnym wygaszaniem
@@ -860,26 +860,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Także (weryfikator): pokój nie jest w `ROOM_SITES` (bez zwolnień w `crowd.test` i `neon-off-wall`; dziś bez skutku); niski element modelu wystaje 0,2 m poza bryłę kuchni
 - Także (kurator, T-138): na bruku Jezuickiej plama sięga ok. 2,3 m przed fasadę, a Wieży Trynitarskiej (8,5 m) nie dosięga; poza tym topografia jest zgodna
 
-### G-264 Latarnie OSM na Archidiakońskiej (Stare Miasto) rysowane jako drogowe
-- Status: w PR #236 (2.11, @ 3437308 PRZYJĘTE, czeka na kuratora; zgłoszone przez autora i weryfikatora G-259)
-- Ważność: S4 · Zasięg: 2 latarnie `grodzka.street-lamp` → `lamp-road`: (653,9; 39,3), (653,5; 46,6), przy Placu po Farze, 9,8 i 14,9 m od latarni ściennej · Koszt: mały
-- Przyczyna: mapowanie `street-lamp → lamp-road` w `tools/osm-import/src/props-kinds.ts:56` („OSM street lamps away from the old town are road lamps”) nie patrzy na miejsce; na Starym Mieście (decyzja użytkownika 2.11: wiodą latarnie stylizowane) powinny być stylizowane
-- Poprawka: `street-lamp` w strefie Starego Miasta → stylizowana (np. latarnia ścienna albo pastorał, styl do potwierdzenia przez kuratora); przegląd `topography-curator`
-- Pakiet właściciela: tools/osm-import (props)
-- Test przyjęcia: kontrola skanu `lamp-road-in-old-town` (zwykła latarnia w obrysie strefy Starego Miasta) 2 → 0
-- Także (kurator, T-141): węzły n5830072379 i n5830072380 (`highway=street_lamp`, `layer=1`, bez tagów typu) są wolnostojące, 5–11 m od osi Archidiakońskiej, daleko od ściany. Styl: latarnia stylizowana wolnostojąca (pastorał albo niska latarenka na słupie) w punkcie OSM, nie kinkiet. Te dwa węzły to jedyne latarnie OSM na Starym Mieście
-
 ### G-265 Reguła G-259 zdejmuje zwykłą latarnię przy stylizowanej, która potem odpada
 - Status: zgłoszone (2.11, weryfikator G-259)
 - Ważność: S4 (dziś 0 przypadków w danych) · Zasięg: `byStyledLamp` (`tools/osm-import/src/props-lamp-looks.ts:23-26`, `props-gen.ts:376`) liczy stylizowane latarnie z `placed`, przed odrzuceniem (poza chunkiem, w budynku, przed szyldem, `crowded`), więc może zostawić ciemne miejsce
 - Poprawka: lista stylizowanych z końcowej tabeli (po odrzuceniach); kontrola `lamp-gap` (miejsce, gdzie przed regułą stała latarnia, bez żadnej latarni w N m) albo test sondy weryfikatora (pastorał poza chunkiem, `street-lamp` w chunku)
 - Pakiet właściciela: tools/osm-import (props)
-
-### G-266 Na pierzei Krakowskiego przy Placu Litewskim styl latarni zmienia się przy x 20 bez oparcia w OSM
-- Status: w PR #236 (2.11, @ 3437308 PRZYJĘTE razem z G-264, czeka na kuratora; zgłoszone przez kuratora, przegląd #235)
-- Ważność: S4 · Zasięg: Krakowskie Przedmieście x −87…130 (drogi w598108789 i w40049340 z tagami placu w1054556917, nie deptaka); `lamps.kp-deptak` (pastorały) sięga x 20, choć opis planu mówi „od Kapucyńskiej” (tagi deptaka od x 129,7) · Koszt: mały
-- Poprawka (decyzja użytkownika 2.11: pastorały): pastorały na całej pierzei placu od x −87 do Kapucyńskiej (`lamps.kp-deptak` wydłużony na zachód), słupy nowoczesne tylko na alejkach wewnątrz placu; kontrola skanu na później: zmiana stylu latarni na osi jednej drogi OSM o tych samych tagach
-- Pakiet właściciela: docs/world (plan), tools/osm-import (props)
 
 ### G-267 Latarenki pastorałów wchodzą w korony drzew
 - Status: zgłoszone (2.11, naprawiacz G-264/G-266; widoczne na zrzucie `shots/g264/g266-after-pierzeja-east.png`)
