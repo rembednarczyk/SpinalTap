@@ -46,6 +46,7 @@ export const plContent = {
   "interior.neon-koi": "Neon Koi",
   "interior.tessen-office": "Biuro Tessen",
   "interior.trasa-podziemna": "Trasa Podziemna",
+  "interior.capsule": "Pokój kapsułowy na wynajem",
   "prompt.loot": "Przeszukaj",
   // Observation hooks of contracts (ADR-0032): the tracker line once found.
   "hook.eliminate_1": "Szef ekipy co godzinę odchodzi sam na bok",

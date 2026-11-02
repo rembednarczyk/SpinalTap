@@ -1,0 +1,1 @@
+Na pierzei Krakowskiego Przedmieścia przy Placu Litewskim stoją same pastorały, od zachodniego końca placu do Kapucyńskiej: 8 nowoczesnych słupów ustępuje pastorałom w rozstawie deptaka, słupy zostają na alejkach placu (G-266).

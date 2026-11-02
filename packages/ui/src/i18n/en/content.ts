@@ -49,6 +49,7 @@ export const enContent = {
   "interior.neon-koi": "Neon Koi",
   "interior.tessen-office": "Tessen office",
   "interior.trasa-podziemna": "Trasa Podziemna",
+  "interior.capsule": "Capsule room to let",
   "prompt.loot": "Search",
   // Observation hooks of contracts (ADR-0032): the tracker line once found.
   "hook.eliminate_1": "Every hour the crew boss steps aside on his own",

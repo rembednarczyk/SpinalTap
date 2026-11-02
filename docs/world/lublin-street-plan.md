@@ -58,7 +58,7 @@ Wygląd dziś (po rewitalizacji 2017):
 | Pomnik Piłsudskiego (konny) | 1 | (-45.9, -13.3) | P1 | kontur konia w neonie, graffiti AR na cokole | model do zrobienia | `plac-litewski.pomnik-pilsudskiego` |
 | Pomnik Konstytucji 3 Maja | 1 | (-87.1, -22.6) | P1 | orzeł jako migocząca projekcja | model do zrobienia (mały) | `plac-litewski.pomnik-3-maja` |
 | Grób Nieznanego Żołnierza | 1 | (-57.5, -21.4) | P1 | plazmowy znicz, warta dronów | proceduralny + cząsteczki | `plac-litewski.grob-nieznanego` |
-| Latarnie nowoczesne | 36 | alejki placu i deptak przy placu | P1 | paski LED, holo-flagi, kamery | proceduralny (łatwy) | `lamps.plac-litewski` |
+| Latarnie nowoczesne | 10 | alejki i obrys placu (na deptaku i pierzei Krakowskiego przy placu od x -87 pastorały `lamps.kp-deptak`, G-259, G-266) | P1 | paski LED, holo-flagi, kamery | proceduralny (łatwy) | `lamps.plac-litewski` |
 | Ławki i ławy na obrzeżach | 134 | punkty z OSM | P2 | listwy podświetlone od spodu, port ładowania | proceduralny (łuk z obrysu rabaty) | `plac-litewski.bench` |
 | Granitowe bloki | 70 | punkty z OSM | P2 | panel świetlny w górnej ścianie | proceduralny | `plac-litewski.granite-block` |
 | Maszty flagowe | 13 | [-73..-43, -21..-6] | P2 | holo-flagi | proceduralny + shader wiatru | `plac-litewski.flagpole` |
@@ -79,7 +79,7 @@ Wygląd dziś (po rewitalizacji 2017):
 
 | Obiekt | Szt. | Gdzie | Prio | Lublin 2077 | Asset | id |
 |---|---|---|---|---|---|---|
-| Latarnie pastorałowe | 34 | oś deptaka, obie strony co 25 m | P1 | holo-pierścień pod latarenką, kamera w ramieniu | **model do zrobienia** (latarnia lubelska) | `lamps.kp-deptak` |
+| Latarnie pastorałowe | 42 | oś deptaka i pierzei Placu Litewskiego od x -87, obie strony co 25 m | P1 | holo-pierścień pod latarenką, kamera w ramieniu | **model do zrobienia** (latarnia lubelska) | `lamps.kp-deptak` |
 | Ogródki kawiarniane | 18 | wzdłuż fasad, x 130..405 | P2 | parasole świecące od spodu, holo-menu, grzałki IR | Kenney Furniture Kit + parasol proceduralny | `kp-deptak.cafe-gardens` |
 | Ławki | 32 | punkty z OSM | P2 | pas neonu pod siedziskiem | proceduralny | `kp-deptak.bench` |
 | Donice i konstrukcje kwiatowe | 15 | oś deptaka | P2 | hydroponika z fioletowymi lampami | proceduralny | `kp-deptak.planters` |
@@ -259,8 +259,8 @@ W OSM latarni prawie nie ma (7 węzłów), więc JSON podaje je jako linie ulic 
 
 | Typ (`kind`) | Gdzie | Wygląd | Lublin 2077 | Szt. |
 |---|---|---|---|---|
-| `lamp-pastoral` | deptak, Plac Łokietka, Królewska, Zamkowa | czarny żeliwny słup, ramię wygięte jak pastorał, zawieszona latarenka, latem kosze z kwiatami | holo-pierścień pod latarenką, kamera i głośnik | 76 |
-| `lamp-modern-pole` | Plac Litewski | smukły grafitowy słup około 8 m z poprzeczką i płaskimi oprawami LED | paski LED, holo-flagi | 36 |
+| `lamp-pastoral` | deptak z pierzeją Placu Litewskiego, Plac Łokietka, Królewska, Zamkowa | czarny żeliwny słup, ramię wygięte jak pastorał, zawieszona latarenka, latem kosze z kwiatami | holo-pierścień pod latarenką, kamera i głośnik | 84 |
+| `lamp-modern-pole` | Plac Litewski | smukły grafitowy słup około 8 m z poprzeczką i płaskimi oprawami LED | paski LED, holo-flagi | 28 |
 | `lamp-wall-lantern` | Rynek i uliczki Starego Miasta | czterościenna latarenka „gazowa” na kutym wysięgniku z fasady | zimny LED albo neon w starej latarence | 236 |
 | `lamp-candelabra` | Plac Zamkowy, schody na Zamek | wieloramienny kandelabr z kloszami, kosze kwiatów | klosze w różnych kolorach neonu | 38 |
 | `lamp-road` | jezdnie, Tysiąclecia, Nabrzeże | wysoki stalowy słup z wysięgnikiem | sodowe światło, banery, kamery | według długości ulic |
@@ -315,7 +315,7 @@ Znane paczki z `docs/assets-research.md` i ADR-0022 pokrywają tylko część li
 | Poly Haven `street_lamp_01/02`, `utility_box_*` | CC0 | zapasowe latarnie i szafki | P3 |
 
 **Do zrobienia samodzielnie** (żadna paczka CC0 tego nie ma, a bez tego miejsca są nierozpoznawalne):
-1. **Latarnia lubelska „pastorał”** z latarenką i wariantem z koszem kwiatów (76 szt.) oraz **latarenka ścienna** na kutym wysięgniku (236 szt.), ze wspólnym kloszem. To największy zysk z jednego modelu.
+1. **Latarnia lubelska „pastorał”** z latarenką i wariantem z koszem kwiatów (84 szt.) oraz **latarenka ścienna** na kutym wysięgniku (236 szt.), ze wspólnym kloszem. To największy zysk z jednego modelu.
 2. **Kandelabr Placu Zamkowego** (38 szt. z latarniami przy schodach).
 3. **Fontanna multimedialna**: niecka z obrysu OSM, balustrada czaszy, system cząsteczek dysz (227) i świateł. Do tego fontanna kaskadowa i suche fontanny.
 4. **Pomniki Placu Litewskiego:** obelisk Unii (prosty), pomnik konny Piłsudskiego (najtrudniejszy), orzeł 3 Maja, Grób Nieznanego Żołnierza.

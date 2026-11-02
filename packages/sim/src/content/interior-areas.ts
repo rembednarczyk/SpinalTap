@@ -2,6 +2,7 @@ import type { Vec3 } from "@seki/core";
 import { placeRect } from "./builders";
 import { ROOM_CEILING, clinicPoint, koiPoint } from "./interiors";
 import { TRASA_PODZIEMNA_ROOMS } from "./kanal-underground";
+import { CAPSULE_INTERIOR_ROOM, CAPSULE_SITE } from "./capsule-room";
 import { CLINIC_SITE, DOCKS_PLACE, KOI_SITE, TRASA_PODZIEMNA } from "./lublin/sites";
 
 /**
@@ -51,6 +52,7 @@ export const INTERIORS: readonly InteriorDef[] = [
   { id: "neon-koi", name: "interior.neon-koi", building: KOI_SITE.building, rooms: [oldRoom(koiPoint, 7.3, 17, -6.7, 10.7, KOI_SITE.floor)] },
   { id: "tessen-office", name: "interior.tessen-office", building: null, rooms: [TESSEN_OFFICE_ROOM] },
   { id: "trasa-podziemna", name: "interior.trasa-podziemna", building: TRASA_PODZIEMNA.building, rooms: TRASA_PODZIEMNA_ROOMS },
+  { id: "capsule", name: "interior.capsule", building: CAPSULE_SITE.building, rooms: [CAPSULE_INTERIOR_ROOM] },
 ];
 
 /** Feet this far under a room's floor still count (a floor slab, a step down the stairs). */
