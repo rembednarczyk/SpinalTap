@@ -830,6 +830,15 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (content/lublin: shape, decks), packages/engine (steps-plan)
 - Test przyjęcia: profil biegów w56965515 maleje od −13,5 do −17,1 bez podstopnicy ponad 0,3 m; kontrola `steps-riser-tall` (podstopnica `planSteps` na `groundY` > 0,5 m) baza 7 → co najwyżej 6
 
+### G-257 Obrys cerkwi św. Jozafata (nawa i wieża) w OSM ok. 0,9 m na północ od rzeczywistego
+- Status: zgłoszone (2.11, kurator przy przeglądzie #226)
+- Ważność: S4 · Zasięg: 2 budynki, nawa w69916021 (284,4; −11,9) i wieża w1382552285 (270; −9,2), Krakowskie, przy Zielonej · Koszt: mały (OSM) do średniego (przesunięcie obrysu w imporcie)
+- Gdzie: T-129
+- Dowód: NMPT GUGiK 0,5 m (kafel `topo-g210/dl-nmpt/jozaf.asc`, sonda `topo-g246-scripts/topo-edges.py`): rzut wieży ok. 0,9 m na południe i 0,2–0,3 m na zachód od obrysu OSM (krawędź północna 0,1–0,4 m wewnątrz obrysu, południowo-zachodnia 1,1–1,4 m na zewnątrz); południowa elewacja nawy 1,4–2,1 m na zewnątrz obrysu (z okapem ok. 0,5 m). Wierzchołek dachu wieży NMPT y 9,4 w (269,7; −10,0), w grze nad środkiem obrysu (269,99; −9,16); ortofoto PZGiK: dach symetryczny, więc przesunięty jest obrys, nie dach. Kotwica gry nie jest winna (sąsiedni w232805913 na tym samym kaflu ok. 0,4 m, Brygidki T-060 co do 0,5 m)
+- Poprawka: najlepiej u źródła, poprawka obrysów w OSM według ortofoto i NMPT (dane GUGiK są otwarte), potem ponowny import; inaczej korekta z przesunięciem obrysu (`TAG_CORRECTIONS` umie dziś tylko skalę) dla obu budynków razem, z odsyłaczem T-129
+- Pakiet właściciela: tools/osm-import (dane `data/osm`)
+- Test przyjęcia: przesunięcie obrysu w69916021 i w1382552285 dopasowane do skoków NMPT ≤ 0,5 m; wierzchołek wieży w grze ≤ 0,5 m od (269,7; −10,0)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
