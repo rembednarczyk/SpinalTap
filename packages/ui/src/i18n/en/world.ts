@@ -330,6 +330,7 @@ export const enWorld = {
   "touch.medkit": "Medkit ({count})",
   "touch.nextWeapon": "Next weapon",
   "touch.camera": "Camera FPP/TPP",
+  "touch.move": "Move",
   "touch.holster": "Holster or draw weapon",
   "touch.use": "Use",
   "touch.interact": "Interact: {what}",
