@@ -2,6 +2,17 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-251 Przybudówka Pałacu Lubomirskich w232805924 ok. 6,5 m za wysoka
+- Status: naprawione w #224 (2.11, PRZYJĘTE; kurator ZGODNE Z UWAGAMI: płaski dach y 4,6 w rundzie 2, przesunięcie obrysów zespołu ok. 1 m opisane w T-137, `building:levels` 2 niepotwierdzone)
+- Ważność: S4 (proponowana: przy fasadzie południowej od Placu Litewskiego stoi bryła 4 kondygnacji równa pałacowi zamiast niskiej przybudówki; zasłania parter i pierwsze piętro fasady) · Zasięg: 1 budynek · Koszt: mały (korekta tagów, regeneracja `krakowskie`)
+- Gdzie: T-137; w232805924 (57,9; 74,3), teren y −1,4
+- Dowód: OSM `building=yes`, `layer=1`, bez `height` i `building:levels`; w grze `source: default`, `height` 13, `levels` 4, wierzch y 11,6 (okap pałacu y 11,0). NMPT GUGiK 0,5 m (`scratchpad/topo-g098/dl-nmpt/lubom.asc`, sonda `scratchpad/topo-g249/topo-probe.py`): p10 y 4,6, p50 y 5,1 (p90 12,7 to ściana pałacu w obrysie)
+- Przyczyna: OSM bez wysokości, import daje wartość domyślną dzielnicy
+- Poprawka: korekta w `TAG_CORRECTIONS` z odsyłaczem T-137: `height` ok. 6,5 (wierzch y 5,1), `roof:shape=flat`, `building:levels` 1 albo 2 według elewacji. Nazwa z tablicy n12281417452 (węzeł obrysu) to G-065, nie mieszać w jednym commicie
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: wierzch w232805924 y 5,1 ± 1 m i co najmniej 4 m pod okapem pałacu; graffiti przy tej ścianie może wrócić (ściana odsłonięta), sprawdzić tabelę `props.generated.ts`
+- Przegląd topografii PR #224 (2.11, @ 8e7db42): ZGODNE Z UWAGAMI, nie blokuje. Dach przybudówki w NMPT jest płaski na y 4,6 (p50 5,1 zawiera ścianę pałacu): zalecane `height` 5,8 i cel testu 4,6; `building:levels` 2 niepotwierdzone (1 równie prawdopodobne); przesunięcie obrysów OSM ok. 1 m to T-136, bez nowego glitcha; `props.generated.ts` aktualny (T-137)
+
 ### G-253 Zapis w trakcie obezwładnienia: chwyt poza zapisem
 - Status: naprawione w #225 (2.11, PRZYJĘTE; zapis ręczny w chwycie odmawia, autozapis czeka do końca chwytu; migawka debugowa w G-256)
 - Ważność: S4 · Zasięg: `session.takedown` nie trafia do migawki, a `canSave` nie blokuje zapisu w chwycie; gra wczytana nie ma chwytu, a gra, z której zapisano, go kończy (rozjazd jak G-240)
