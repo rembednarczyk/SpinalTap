@@ -547,11 +547,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: wyrównać zbiory dróg i parkingów między skanem a generatorem; test generatora dla przystanku niezależny od G-155
 - Pakiet właściciela: tools/glitch-scan, tools/osm-import
 
-### G-180 Zapis po śmierci gracza wczytuje się bez game over
-- Status: zgłoszone (1.11, weryfikator #145), do potwierdzenia w app (czy zapis lub autozapis po śmierci jest możliwy)
-- Ważność: S3 do potwierdzenia · Zasięg: zapis przy hp 0 wczytuje się z `gameOver=false` i drugi raz emituje `PlayerDied`
-- Pakiet właściciela: packages/sim, packages/app
-
 ### G-181 Drobne pola sesji po wczytaniu
 - Status: zgłoszone (1.11, weryfikator #145)
 - Ważność: S4 · Zasięg: (a) wczytanie w metrze gubi ofertę fixera po przyjeździe (seed 2, `met_genzo`, jazda shinsekai → doki, zapis w trakcie; oryginał dostaje `phone_genzo_offer` w kroku 658, wczytana gra nie, `watch.district` null); (b) histereza wnętrza w progu (`INTERIOR_KEEP`) nie jest odtwarzana, `interiorAt` w `session-resume.ts:23` liczy bez poprzedniego wnętrza, więc wczytanie 0,1 m za ścianą kliniki daje fałszywe `InteriorEntered`; (c) `session.lastThreat` poza zapisem (regeneracja RAM w walce), rozjazdu nie zmierzono

@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-180 Zapis po śmierci gracza wczytuje się bez game over
+- Status: niepotwierdzone (2.11, naprawiacz): żadna ścieżka w app nie zapisuje martwego gracza (obrażenia przed `deathSystem`, `canSave` odrzuca ekran `dead`, pauza wymaga `inControl`, autozapis wymaga `!gameOver` i hp > 0); strażnik `packages/app/test/death-save.test.ts` w PR #193. Poboczne: import spreparowanego zapisu z hp 0 może dać podwójne `PlayerDied` (walidator mógłby odrzucać hp ≤ 0)
+- Ważność: S3 do potwierdzenia · Zasięg: zapis przy hp 0 wczytuje się z `gameOver=false` i drugi raz emituje `PlayerDied`
+- Pakiet właściciela: packages/sim, packages/app
+
 ### G-201 Teren poza chunkami dostępny: reguła „poza wczytanym chunkiem” usypia strażnika obok gracza
 - Status: naprawione w #189 (2.11, PRZYJĘTE): `nearFocus` 30 m w `unloadChunks` i `sleepPinned`, także w chunkach; zostaje osobno: strażnik dalej niż 30 m w obcym chunku znika przy uśpieniu własnego
 - Ważność: S4 · Zasięg: obszary bez chunków, a z terenem, np. (2440; 545) na północ od Nabrzeża albo pas x 460–520, z > 160 między Starym Miastem a Podzamczem; żywy gracz stoi tam (hp 96), spokojny przypięty strażnik 6 m od niego znika w 1. s, zaalarmowany po 30 s (`sleepPinned`, G-188)
