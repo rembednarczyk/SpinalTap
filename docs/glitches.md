@@ -90,9 +90,10 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | Kontrola | Definicja | Baza |
 |---|---|---|
 | `landmark-default-height` | Budynek z listy zabytków skanu (`LANDMARK_BUILDINGS`) z `source: "default"` (wysokość z wartości domyślnej dzielnicy) | 3 (w66258167 Kaplica Trójcy, w67508958 Teatr Osterwy, w66330578 kościół Nawrócenia św. Pawła); G-204 |
-| `church-fake-tower` | Kościół (`use: church`), któremu `addTowers` dokłada wierzchołki wież, a nie ma go na liście kościołów z prawdziwą wieżą (NMPT/OSM; dziś: Brygidki w66264082, św. Jozafata w69916021, św. Mikołaja w66258180, Świętego Ducha w66264126, cerkiew Przemienienia w66264148, Bernardyni w66330578) | 5 (Kapucyni, Karmelici, św. Piotra, św. Wojciecha, Niecała 4); G-215 |
-| `church-tower-off-building` | Środek wieży proceduralnej (`towerSpots`) poza obrysem swojego budynku | 5 (Brygidki 2, św. Jozafata 1, Karmelici 2); G-215, G-212 |
+| `church-fake-tower` | Kościół (`use: church`), któremu `addTowers` dokłada wierzchołki wież, a nie ma go na liście kościołów z prawdziwą wieżą (NMPT/OSM; dziś: Brygidki w66264082, św. Jozafata w69916021, św. Mikołaja w66258180, Świętego Ducha w66264126, cerkiew Przemienienia w66264148, Bernardyni w66330578) | 4 po #198 (Kapucyni, św. Piotra, św. Wojciecha, Niecała 4; Karmelici zdjęci w #198); G-215 |
+| `church-tower-off-building` | Środek wieży proceduralnej (`towerSpots`) poza obrysem swojego budynku | 0 po #198 (w skanie od #198); G-212 |
 | `church-default-height` | Budynek `use: church` z `source: "default"` (szersza wersja `landmark-default-height`) | 9; G-216 |
+| `osm-tower-default-height` | Budynek z OSM z `man_made=tower` albo `tower:type` bez `height` i `building:levels` (wysokość z wartości domyślnej dzielnicy) | 2 (w680377807 dzwonnica św. Mikołaja, w1382552285 wieża św. Jozafata); G-224 |
 | `steps-narrower-than-walls` | Bieg `highway=steps` między dwoma równoległymi `barrier=wall` (do 15 m od osi po obu stronach), gdy odstęp murków przekracza szerokość pasa `steps` w grze o ponad 1 m. Wymaga murków w wyciągu | 1 (schody zamkowe); G-203 |
 | `plan-prop-off-target` | Rekwizyt z wpisu planu z `points` przesunięty przez generator o ponad 4 m od swojego punktu albo na drugą stronę ściany budynku | 2 (reflektory Zamku); G-206 |
 | `landmark-missing` | Lista ID z OSM: r7224409, w66286371, w66286341, w66264159, w66264120, w232362876, w66286338, r2366732, w48500136, w450180469, w66258167, w67508958, w66330578. Liczy ID, których nie ma w `MAP_CHUNKS` albo które usuwa `clearedBuilding`. Do tego monumenty Placu Litewskiego (n481952877, n481952879, n481952880) wśród rekwizytów `monument` w promieniu 1 m | 2 (Osterwy, Bernardyni) |
@@ -302,7 +303,8 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: w66335239 i w66293168 w `MAP_CHUNKS`, bez uskoku gruntu na x = 460; propozycja: `stare-miasto` minZ −270 z `zEdges` [−270, −40, 160] (rząd 230 m, identyfikatory chunków bez zmian); kontrola `historic-cut-by-edge` (budynek zabytkowy z obrysem w prostokącie dzielnicy i środkiem poza wszystkimi) 4 → 1 (Pałac Tarłów zostaje, T-057)
 
 ### G-098 Wieże zmapowane jako `man_made=tower` bez `building` pominięte
-- Status: zgłoszone (z przeglądu kuratora G-052) · Ważność: S4 · Zasięg: 3 obrysy w Krakowskim · Koszt: mały–średni
+- Status: zgłoszone (z przeglądu kuratora G-052) · Ważność: S3 (od 2.11, przegląd #198: po G-212 Brygidki nie mają żadnej wieży, a prawdziwa ok. 34 m jest dominantą Narutowicza) · Zasięg: 3 obrysy w Krakowskim · Koszt: mały–średni
+- Wysokość: OSM nie ma `height`; z NMPT wieża Brygidek do y 32,4 (teren y ok. −1,2), w imporcie korekta `height` z odsyłaczem T-060, inaczej wyjdzie z wartości domyślnej jak w G-224
 - Gdzie: w1090997970 (wieża Brygidek, 161, −229), w1002739983 (84, 99), w1002739984 (40, 103); T-060
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: kontrola `tower-area-missing` 3 → 0
@@ -637,7 +639,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim, packages/persistence
 
 ### G-212 Podwójne wieże: proceduralna obok wieży z OSM
-- Status: w PR #198 (2.11, PRZYJĘTE przez weryfikatora, kurator w toku): `mappedTower` z OSM i wieże tylko w obrysie; Brygidki bez wieży do G-098, Karmelici Bosi bez wież na trawie
+- Status: w PR #198 (2.11, PRZYJĘTE przez weryfikatora, kurator: ZGODNE Z UWAGAMI, uwagi w T-129/G-224 i G-098): `mappedTower` z OSM i wieże tylko w obrysie; Brygidki bez wieży do G-098, Karmelici Bosi bez wież na trawie
 - Ważność: S4 · Zasięg: cerkiew św. Jozafata w69916021 (wieża z OSM w1382552285 przy (270; −9)) i kościół św. Mikołaja w66258180 (dzwonnica z OSM w680377807 przy (879; 545)) dostają dodatkowo proceduralną wieżę (`roof-plan` `addTowers`); Brygidki w66264082: proceduralne wieże, prawdziwa w1090997970 niezaimportowana (G-098)
 - Poprawka: `addTowers` pomija kościół, przy którym (w obrysie albo do 10 m) stoi wieża z OSM; rozszerzyć kontrolę `landmark-fake-tower` albo nowa `landmark-double-tower`
 - Pakiet właściciela: packages/engine (renderer/mapcity), tools/glitch-scan
@@ -663,7 +665,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-215 Proceduralne wieże na kościołach, które ich nie mają albo mają inne
 - Status: zgłoszone (2.11, kurator, przegląd #190)
 - Ważność: S3 (proponowana) · Zasięg: szeroki (7 kościołów, m.in. deptak: Kapucyni i Świętego Ducha) · Koszt: średni
-- Gdzie: T-121: Kapucyni w67508932, Karmelici r5420467 (wieże na trawie poza obrysem, bez kolizji), św. Piotra w66335226, św. Wojciecha w61102109, Niecała 4 w232674421, Świętego Ducha w66264126 (2 wieże zamiast 1 smukłej na narożu SW do y 26,5), cerkiew Przemienienia w66264148 (wieża 13 m za wysoka)
+- Gdzie: T-121: Kapucyni w67508932, Karmelici r5420467 (poprawione w #198: wieże poza obrysem zdjęte), św. Piotra w66335226, św. Wojciecha w61102109, Niecała 4 w232674421, Świętego Ducha w66264126 (2 wieże zamiast 1 smukłej na narożu SW do y 26,5), cerkiew Przemienienia w66264148 (wieża 13 m za wysoka)
 - Dowód: sonda `topo-g210-probe` (towerSpots w świecie) i NMPT GUGiK 0,5 m, wartości w T-121
 - Przyczyna: `roof-plan` `addTowers` stawia wieże każdemu kościołowi bez części; zachód obrysu i szerokość > 22 m decydują o liczbie i miejscu, wysokość 1,7 × ściany do 65 m
 - Poprawka: wieża proceduralna tylko dla kościołów z tabeli wież (dane: położenie, rzut, wysokość z NMPT albo `building:part` w korektach importu); pozostałe bez wieży (rozszerzyć `TOWERLESS_OSM` do odwrotnej listy); co najmniej: środek wieży w obrysie
@@ -729,6 +731,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 (test, nie gra) · Zasięg: `tools/glitch-scan`, kontrola `market-piece-on-crowd-lane`; sama przy load 15 przechodzi
 - Poprawka: pomiar i przyspieszenie (indeks przestrzenny jak w G-200), bez podnoszenia limitu (ADR-0046)
 - Pakiet właściciela: tools/glitch-scan
+
+### G-224 Wieże kościołów z OSM z wysokości domyślnej (dzwonnica św. Mikołaja 3,3 m zamiast ok. 18 m)
+- Status: zgłoszone (2.11, kurator, przegląd #198)
+- Ważność: S3 (proponowana; po G-212 to jedyne wieże tych kościołów) · Zasięg: 2 wieże (Podzamcze, Krakowskie) · Koszt: mały (dane)
+- Gdzie: T-129; w680377807 (879,1; 545), dzwonnica kościoła św. Mikołaja; w1382552285 (270; −9,2), wieża cerkwi św. Jozafata
+- Dowód: w grze `source: default`: 3,3 m (1 kondygnacja) i 13,8 m + cokół 1 m; NMPT GUGiK 0,5 m: do y 15,7 (ok. 18 m nad terenem) i do y 10,1 (ok. 11,7 m)
+- Przyczyna: OSM ma tylko `building=yes`, `man_made=tower`, `tower:type=bell_tower`, bez `height` i `building:levels`
+- Poprawka: korekty `height` (i ewentualnie `roof:shape`/`roof:height` hełmu) z NMPT w `corrections.ts`, każda z odsyłaczem T-129; to samo dla wieży Brygidek przy G-098
+- Pakiet właściciela: tools/osm-import, tools/glitch-scan
+- Test przyjęcia: najwyższy wierzchołek bryły w680377807 y 15,7 ± 1, w1382552285 y 10,1 ± 1; kontrola `osm-tower-default-height` 2 → 0
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
