@@ -106,7 +106,9 @@ export const sideOffset = (site: Site, p: Pt, n: Pt, mode: SideMode, fallback: n
   if (mode === "path") {
     // Beside a path: the given side, else the other, else on the path itself. On a flight wider
     // than the offset (the castle stairs, T-113) a lamp stands just past its edge, on its side,
-    // unless a landing or another path goes on from there.
+    // unless a landing or another path goes on from there. A flight laid over a square ranks
+    // under the square's walk (the top flight under Zamkowa's paving), so steps are asked for apart.
+    const free = (q: Pt) => site.standable(q) && !site.onSteps(q);
     const pastSteps = (d: number) => {
       for (let e = Math.abs(d) + 0.5; e <= 2 * fallback; e += 0.5) {
         const q = at(Math.sign(d) * e);
@@ -116,7 +118,7 @@ export const sideOffset = (site: Site, p: Pt, n: Pt, mode: SideMode, fallback: n
       return null;
     };
     for (const d of [fallback, -fallback, 0]) {
-      if (site.standable(at(d))) return d;
+      if (free(at(d))) return d;
       const past = d !== 0 && site.onSteps(at(d)) ? pastSteps(d) : null;
       if (past !== null) return past;
     }

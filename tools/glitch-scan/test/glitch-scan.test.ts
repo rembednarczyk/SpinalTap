@@ -18,7 +18,7 @@ import { marketChecks } from "./market-pieces";
 import { signsInNeighbours } from "./sign-neighbours";
 import { lanternsByPassages } from "./passage-lanterns";
 import { landmarksAtDefaultHeight } from "./landmark-heights";
-import { bandAcross, stepsNarrowerThanWalls } from "./steps-walls";
+import { bandAcross, lampsOnSteps, stepsNarrowerThanWalls } from "./steps-walls";
 import { EMPTY_STRIPS_KNOWN, bayCarsMisturned, bayCarsOutOfPark, bayStripsEmptyKnown, bayStripsSparse, crowdLanesOnParking, kerbParksOf, kerbStripsOffCarStreets } from "./kerb-bays";
 import { SMALL_ALONE_AREA, smallAlone } from "../../osm-import/src/building-alone.ts";
 import { extractFeatures } from "../../osm-import/src/features.ts";
@@ -912,6 +912,11 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     const onSteps = (p: Pt) => flights.some((r) => pointInRing(p, r));
     return stepsNarrowerThanWalls(extractFeatures(SOURCE_OSM).lines, (m, n) => bandAcross(onSteps, m, n));
   },
+  /** A lamp or a candelabrum of the generator's table standing inside a band of steps (G-203). */
+  "lamp-on-steps": () => {
+    const flights = MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.surface === "steps").map((g) => worldOutline({ x: 0, z: 0, outline: g.outline })));
+    return lampsOnSteps(Object.values(LUBLIN_STREET_PROPS).flat(), (p) => flights.some((r) => pointInRing(p, r)));
+  },
   /** A piece of road or path on a bridge laid on the valley instead of a deck. */
   "bridge-without-deck": () => MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.bridge && !g.deck).map((g) => ({ at: near(g.outline[0]!, g.outline[1]!), what: g.surface }))),
   /**
@@ -1599,6 +1604,15 @@ describe("the glitch scan (ADR-0054)", () => {
     expect(bandAcross(strip(5), { x: 8, z: 0 }, { x: 0, z: 1 })).toBeCloseTo(10, 0);
     expect(bandAcross(strip(1.5), { x: 8, z: 0 }, { x: 0, z: 1 })).toBeCloseTo(3, 0);
     expect(bandAcross(() => false, { x: 8, z: 0 }, { x: 0, z: 1 })).toBe(0);
+  });
+
+  it("finds a lamp or a candelabrum inside a band of steps, and no lamp off it or other piece on it (G-203)", () => {
+    const flight = (p: { x: number; z: number }) => p.x > 0 && p.x < 16 && Math.abs(p.z) < 5;
+    const lamp = { prop: "lamp-candelabra", x: 8, z: 4 };
+    expect(lampsOnSteps([lamp], flight)).toEqual([{ at: "8,4", what: "lamp-candelabra on steps" }]);
+    expect(lampsOnSteps([{ ...lamp, prop: "lamp-pastoral" }], flight)).toHaveLength(1);
+    expect(lampsOnSteps([{ ...lamp, z: 5.5 }], flight)).toEqual([]);
+    expect(lampsOnSteps([{ ...lamp, prop: "shrubs" }], flight)).toEqual([]);
   });
 
   it("finds a wall lantern within 2 m of a gate's axis cut by hand, in its vault or its mouth, and none on the street past its fronts (G-183)", () => {

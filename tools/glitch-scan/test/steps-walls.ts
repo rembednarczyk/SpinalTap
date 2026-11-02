@@ -85,3 +85,7 @@ export const bandAcross = (on: (p: Pt) => boolean, m: Pt, n: Pt): number => {
   while (right < REACH && at(-right - 0.1)) right += 0.1;
   return left + right;
 };
+
+/** A lamp or a candelabrum (any `lamp-*`) standing inside a band of steps (G-203): on the treads, where a walker goes. */
+export const lampsOnSteps = (props: readonly { readonly prop: string; readonly x: number; readonly z: number }[], onSteps: (p: Pt) => boolean): { readonly at: string; readonly what: string }[] =>
+  props.filter((i) => i.prop.startsWith("lamp-") && onSteps(i)).map((i) => ({ at: `${i.x.toFixed(0)},${i.z.toFixed(0)}`, what: `${i.prop} on steps` }));

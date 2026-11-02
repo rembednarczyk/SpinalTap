@@ -223,6 +223,10 @@ describe("street furniture generator (ADR-0047)", () => {
     // Beside the landing as before; along the flight towards the landing, no place.
     expect(sideOffset(site, { x: 18, z: 30 }, { x: 0, z: 1 }, "path", 4)).toBe(4);
     expect(sideOffset(site, { x: 8, z: 30 }, { x: 1, z: 0 }, "path", 4)).toBeNull();
+    // The same flight laid over a paved square, which ranks over it: still off the treads (G-203, Zamkowa's top flight).
+    const paved = new Site([{ ...chunk, ground: [{ surface: "square", outline: [-10, 15, 30, 15, 30, 45, -10, 45] }, ...chunk.ground] }]);
+    expect(paved.surfaceAt({ x: 8, z: 34 })).toBe("walk");
+    expect(sideOffset(paved, { x: 8, z: 30 }, { x: 0, z: 1 }, "path", 4)).toBeGreaterThanOrEqual(5);
   });
 
   it("moves a traffic light from its node in the road's axis onto the pavement; covers and bollards stay", () => {
