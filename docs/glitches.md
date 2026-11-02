@@ -849,7 +849,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 - Dług z weryfikacji #228 (do tego samego kroku albo osobno): `FIGURE_SOLES` (x ±0,12) węższe niż buty mężczyzny (±0,18, z ręką na biodrze ±0,23), dziś 1 róg buta 0,15 m w chodniku (palący 589,34; 570,29); stopy siedzących i `figure-off-seat` sprawdzają jeden punkt pod stopami (dziś bez przekroczeń, rozrzut do 5,6 cm); postacie bez brył (świadome w ADR-0058).
 ### G-263 Lampy wnętrz świecą przez ściany na ulicę
-- Status: zgłoszone (2.11, weryfikator ADR-0063 etap 3)
+- Status: w naprawie (2.11, naprawiacz, gałąź `ccr-ec2c4269-ilh8k8-g263`; zgłoszone przez weryfikatora ADR-0063 etap 3)
 - Ważność: S4 · Zasięg: światła punktowe wnętrz (pokój kapsułowy `capsule-room-view.ts` `LAMP` 5,5 m, ok. 2,5 m za fasadą Jezuickiej 14; do sprawdzenia klinika i Neon Koi) · Koszt: mały do średniego
 - Dowód: światła punktowe shadera toon nie mają przesłaniania, więc lampa wnętrza oświetla też bruk i fasadę przed budynkiem; przy 45–50 m od pokoju włącza się i wyłącza skokowo (wiązanie z siatką wnętrza)
 - Poprawka: światło wnętrza tylko dla siatek wnętrza (`includedOnlyMeshes`) albo zasięg przycięty do pokoju; włączanie z płynnym wygaszaniem
