@@ -1,1 +1,0 @@
-Napad na przechodnia kończy się wygraną i nagrodą także wtedy, gdy napastnik został obalony albo zabity takedownem i jego ciało leży na ulicy; nagroda jest jedna, także po zapisie i wczytaniu (G-231).
