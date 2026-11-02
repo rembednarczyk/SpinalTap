@@ -48,8 +48,10 @@ interface ChurchBuilding extends LandmarkBuilding {
 /**
  * NMPT GUGiK 0.5 m (2.11, T-122), world y: the eaves and the ridge of each church's main body
  * where the surface over its outline is a roof (a plateau, under 1 m off a plane in 3 x 3 m
- * blocks), not tree crowns. Towers, spires and lower annexes are left out. Measured, not taken
- * from the corrections, so a wrong correction shows here as well.
+ * blocks), not tree crowns. Towers, spires and lower annexes are left out. The same survey
+ * feeds the corrections in `corrections.ts`, so this check catches a wrong height/roof sum, the
+ * plinth and any church left at the default height, but not a wrong measurement; it only looks
+ * upwards (a church too low is caught by the corrections test, within 1 m).
  */
 export const CHURCH_SURFACE: Readonly<Record<string, { readonly eaves: number; readonly ridge: number }>> = {
   w69916021: { eaves: 6.8, ridge: 11.4 }, // cerkiew św. Jozafata, its tower w1382552285 to y 9.5
