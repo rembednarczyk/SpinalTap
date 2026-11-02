@@ -644,7 +644,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrole `church-fake-tower` i `church-tower-off-building` (niżej) spadają do 0
 
 ### G-216 Kościoły z wysokości domyślnej o 3–15 m za wysokie
-- Status: w PR #208 (2.11, w weryfikacji, potem kurator): 9 kościołów z NMPT, kontrola `church-over-nmpt` 9 → 0 (w rejestrze proponowana jako `church-default-height`)
+- Status: w PR #208 (2.11, PRZYJĘTE przez weryfikatora; kurator czeka na slot): 9 kościołów z NMPT (dach potwierdzony niezależną sondą u wszystkich 9), kontrola `church-over-nmpt` 9 → 0 (w tabeli kontroli dawna nazwa `church-default-height`); kontrola łapie rachunek i domyślne wysokości, nie zły pomiar; do kuratora: okap św. Mikołaja może być 1–1,5 m za wysoko, Świętego Ducha: 16,5 to okap, kalenica 20,4
 - Ważność: S3 (proponowana) · Zasięg: szeroki (9 kościołów w trzech dzielnicach) · Koszt: mały (dane)
 - Gdzie: T-122 (lista i wysokości)
 - Dowód: kalenice w grze (`y + height + roof`, `height` zawiera cokół; wcześniejsze liczby liczyły go dwa razy) a NMPT: Bernardyni 27,7/24,5, Świętego Ducha 25,1/16,5, Niecała 4 18,0/ok. 3, św. Jozafata 22,6/13,3, Karmelici 23,0/14,5, św. Piotra 23,3/18,4–19,7, św. Mikołaja 21,1/12,4, cerkiew Przemienienia 5,4/−4,3
