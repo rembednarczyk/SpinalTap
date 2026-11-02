@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
-import { SIM_DT, Simulation, TAKEDOWN_TIME, clinicPoint, gangerEntity, stateHash } from "@seki/sim";
+import { FixedStepLoop, SIM_DT, Simulation, TAKEDOWN_TIME, clinicPoint, gangerEntity, stateHash } from "@seki/sim";
 import { AUTOSAVE_SLOT } from "../src/controllers/autosave-controller";
+import { createDebugApi } from "../src/debug-api";
 import type { GameSession } from "../src/game-session";
 import { frame, setup, steps, teleport } from "./story-helpers";
 
@@ -99,5 +100,23 @@ describe("a save during a takedown (G-253)", () => {
       loaded.step(CROUCH);
       expect(hash(loaded), `step ${i}`).toBe(hash(session.sim));
     }
+  });
+
+  it("the debug jump goes through the same gate (G-256): refused in the grip, as before out of it", () => {
+    const { session, ui } = behindGuard(new CountingStore());
+    const loop = new FixedStepLoop({ now: () => 0 }, { update() {}, render() {} });
+    const seki = createDebugApi(session, ui, loop, () => ({ fps: 0, frameTimeMs: 0, drawCalls: 0, activeMeshes: 0, activeTriangles: 0, totalMeshes: 0, materials: 0, particles: 0, byName: {} }), () => {});
+    const rich = () => ({ wallet: { ...session.sim.domain.wallet, eddies: 4321 } });
+    grip(session);
+    const tick = session.sim.tick;
+    expect(() => seki.jump(rich())).toThrow(/can't save/i);
+    // Nothing restored: the grip goes on in the same game.
+    expect(session.sim.session.takedown).not.toBeNull();
+    expect(session.sim.tick).toBe(tick);
+    expect(session.sim.domain.wallet.eddies).not.toBe(4321);
+    steps(session, GRIP, CROUCH);
+    expect(session.sim.session.takedown).toBeNull();
+    seki.jump(rich());
+    expect(session.sim.domain.wallet.eddies).toBe(4321);
   });
 });

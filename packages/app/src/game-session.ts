@@ -27,7 +27,7 @@ export type { GameSessionDeps, HintsHost, SettingsHost } from "./session-deps";
 /** The saves of a session (`SaveController`): slots, files and the snapshot of the running game. */
 export type SessionSaves = Pick<
   SaveController,
-  "save" | "load" | "exportSave" | "exportAsync" | "importSave" | "importAsync" | "snapshot" | "saveAsync" | "loadAsync" | "refreshSlots"
+  "save" | "load" | "exportSave" | "exportAsync" | "importSave" | "importAsync" | "canSave" | "snapshot" | "saveAsync" | "loadAsync" | "refreshSlots"
 >;
 
 /** What only the debug API opens by hand (`debug-api.ts`); the simulation opens them by interaction. */
