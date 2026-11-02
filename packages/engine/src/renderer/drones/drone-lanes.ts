@@ -57,7 +57,7 @@ const SEPARATION = 16;
 export const ROOF_CLEAR = 11;
 /** Buildings this near the axis count for the flight level (m): the legs, the widest drone and a margin. */
 export const CORRIDOR = 9;
-const MIN_AGL = 22;
+export const MIN_AGL = 22;
 const MAX_AGL = 85;
 const RISE_AHEAD = 40;
 const SMOOTH = 16;

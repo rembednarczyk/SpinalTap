@@ -5,6 +5,9 @@ import type { CityProps } from "../city-props";
 import { type Drone, type DroneKind, DRONE_KINDS, type DronePose, droneFleet, dronePose } from "./drone-flight";
 import { type DroneLane, type DroneWorld, planDroneLanes } from "./drone-lanes";
 import { type DroneTemplate, droneTemplates } from "./drone-models";
+import { BEAM_FROM, type Patrol, type PatrolLane, type PatrolPose, patrolFleet, patrolPose } from "./patrol-flight";
+import { type PatrolWorld, planPatrolLanes } from "./patrol-lanes";
+import { type PatrolTemplate, patrolTemplates } from "./patrol-models";
 
 /**
  * How far drones are drawn (m from the camera), where the far version takes over, and how many of
@@ -15,6 +18,22 @@ export const DRONE_LOD: Readonly<Record<RenderQuality, { readonly near: number; 
   medium: { near: 90, draw: 300, nearSlots: 2, farSlots: 4 },
   low: { near: 0, draw: 0, nearSlots: 0, farSlots: 0 },
 };
+
+/**
+ * The low patrols' (ADR-0058 stage 7b): where the far version takes over, how far they are drawn
+ * and how many near and far at once. They fly over the heads: the near model shows further than a
+ * canyon drone's.
+ */
+export const PATROL_LOD: Readonly<Record<RenderQuality, { readonly near: number; readonly draw: number; readonly nearSlots: number; readonly farSlots: number }>> = {
+  high: { near: 70, draw: 260, nearSlots: 3, farSlots: 3 },
+  medium: { near: 50, draw: 200, nearSlots: 2, farSlots: 2 },
+  low: { near: 0, draw: 0, nearSlots: 0, farSlots: 0 },
+};
+
+/** The searchlight's pool lies this much over the paving (m), clear of its lift's flicker. */
+const POOL_LIFT = 0.04;
+/** The pool's radius for each metre of drop (m). */
+const BEAM_SPREAD = 0.3;
 
 export interface DroneViewsDeps {
   readonly scene: Scene;
@@ -31,13 +50,20 @@ export interface DroneViewsDeps {
   readonly quality: RenderQuality;
   /** Plans the lanes (default `planDroneLanes`; tests hand fixed ones). */
   readonly plan?: (world: DroneWorld) => readonly DroneLane[];
+  /** The city the low patrols' lanes are planned from (ADR-0058 stage 7b), null without map data or none. */
+  readonly patrolWorld?: () => PatrolWorld | null;
+  /** Plans the low patrols' lanes (default `planPatrolLanes`; tests hand fixed ones). */
+  readonly patrolPlan?: (world: PatrolWorld) => readonly PatrolLane[];
 }
+
+/** What a slot holds: a canyon drone of a kind, or a low patrol (`watch`). */
+type SlotKind = DroneKind | "watch";
 
 /** A place in the shared buffers for one drone of a kind at one level of detail. */
 interface Slot {
-  readonly kind: DroneKind;
+  readonly kind: SlotKind;
   readonly near: boolean;
-  readonly template: DroneTemplate;
+  readonly template: DroneTemplate | PatrolTemplate;
   readonly offset: number;
   shown: boolean;
 }
@@ -52,12 +78,17 @@ const PAD = 4;
  * per kind, near and far; each frame the nearest drones take them and the rest are not drawn. The
  * lanes are planned once for the whole city, not per streamed chunk. No moon shadow, no outline and
  * no glow layer (ADR-0058: one draw call, two with the G-buffer): the lights are bright in the
- * kit's own emissive colour.
+ * kit's own emissive colour. The low patrols over the pedestrian streets (stage 7b) take slots of
+ * their own in the same mesh, their searchlight stretched to the paving: no draw call more.
  */
 export class DroneViews {
   private lanes: readonly DroneLane[] = [];
   private fleet: readonly Drone[] = [];
   private planned: DroneWorld | null = null;
+  private patrolLanes: readonly PatrolLane[] = [];
+  private patrols: readonly Patrol[] = [];
+  private patrolsPlanned: PatrolWorld | null = null;
+  private drawnPatrols = 0;
   private time = 0;
   private mesh: Mesh | null = null;
   private slots: Slot[] = [];
@@ -73,8 +104,31 @@ export class DroneViews {
   constructor(private readonly deps: DroneViewsDeps) {}
 
   /** Lanes and drones planned, those drawn last frame near and far, and the meshes drawn (debug, tests). */
-  get stats(): { readonly lanes: number; readonly drones: number; readonly near: number; readonly far: number; readonly meshes: number } {
-    return { lanes: this.lanes.length, drones: this.fleet.length, near: this.drawnNear, far: this.drawnFar, meshes: this.mesh?.isEnabled() ? 1 : 0 };
+  get stats(): {
+    readonly lanes: number;
+    readonly drones: number;
+    readonly near: number;
+    readonly far: number;
+    readonly meshes: number;
+    readonly patrolLanes: number;
+    readonly patrols: number;
+    readonly patrolsDrawn: number;
+  } {
+    return {
+      lanes: this.lanes.length,
+      drones: this.fleet.length,
+      near: this.drawnNear,
+      far: this.drawnFar,
+      meshes: this.mesh?.isEnabled() ? 1 : 0,
+      patrolLanes: this.patrolLanes.length,
+      patrols: this.patrols.length,
+      patrolsDrawn: this.drawnPatrols,
+    };
+  }
+
+  /** Where each low patrol is now, null while away (debug, tests). */
+  patrolPoses(): (PatrolPose | null)[] {
+    return this.patrols.map((p) => patrolPose(p, this.time));
   }
 
   /** Where each drone is now (debug, tests). */
@@ -88,7 +142,7 @@ export class DroneViews {
     this.plan();
     const kit = this.deps.kit();
     if (!kit) return;
-    if (this.fleet.length === 0) {
+    if (this.fleet.length === 0 && this.patrols.length === 0) {
       this.hide();
       return;
     }
@@ -98,13 +152,20 @@ export class DroneViews {
     this.draw();
   }
 
-  /** Plans the lanes of a world not planned yet; without one, none fly. */
+  /** Plans the lanes of a world not planned yet, the canyon drones' and the low patrols'; without one, none fly. */
   private plan(): void {
     const world = this.deps.world();
-    if (world === this.planned) return;
-    this.planned = world;
-    this.lanes = world ? (this.deps.plan ?? planDroneLanes)(world) : [];
-    this.fleet = droneFleet(this.lanes, this.deps.quality);
+    if (world !== this.planned) {
+      this.planned = world;
+      this.lanes = world ? (this.deps.plan ?? planDroneLanes)(world) : [];
+      this.fleet = droneFleet(this.lanes, this.deps.quality);
+    }
+    const patrolWorld = this.deps.patrolWorld?.() ?? null;
+    if (patrolWorld !== this.patrolsPlanned) {
+      this.patrolsPlanned = patrolWorld;
+      this.patrolLanes = patrolWorld ? (this.deps.patrolPlan ?? planPatrolLanes)(patrolWorld) : [];
+      this.patrols = patrolFleet(this.patrolLanes, this.deps.quality);
+    }
   }
 
   /** No drones to draw: the slots fold away and the mesh goes off. */
@@ -115,6 +176,7 @@ export class DroneViews {
     }
     this.drawnNear = 0;
     this.drawnFar = 0;
+    this.drawnPatrols = 0;
     this.mesh?.setEnabled(false);
   }
 
@@ -133,6 +195,15 @@ export class DroneViews {
           this.slots.push({ kind, near, template, offset: total, shown: false });
           total += template.vertexCount;
         }
+      }
+    }
+    const watch = patrolTemplates(kit.data, props);
+    const plod = PATROL_LOD[this.deps.quality];
+    for (const near of [true, false]) {
+      for (let k = 0; k < (near ? plod.nearSlots : plod.farSlots); k++) {
+        const template = near ? watch.near : watch.far;
+        this.slots.push({ kind: "watch", near, template, offset: total, shown: false });
+        total += template.vertexCount;
       }
     }
     this.positions = new Float32Array(total * 3);
@@ -155,33 +226,44 @@ export class DroneViews {
     mesh.setEnabled(false);
   }
 
+  /** The drones and the low patrols in sight now, nearest first, with the distance their near model shows within. */
+  private inSight(): { readonly kind: SlotKind; readonly p: DronePose | PatrolPose; readonly dist: number; readonly near: number }[] {
+    const lod = DRONE_LOD[this.deps.quality];
+    const plod = PATROL_LOD[this.deps.quality];
+    const eye = this.deps.eye();
+    const dist = (p: { x: number; y: number; z: number }) => Math.hypot(p.x - eye.x, p.y - eye.y, p.z - eye.z);
+    const drones = this.fleet.map((d) => {
+      const p = dronePose(d, this.time);
+      return { kind: d.kind as SlotKind, p: p as DronePose | PatrolPose, dist: dist(p), near: lod.near, draw: lod.draw };
+    });
+    const patrols = this.patrols.flatMap((d) => {
+      const p = patrolPose(d, this.time);
+      return p ? [{ kind: "watch" as SlotKind, p, dist: dist(p), near: plod.near, draw: plod.draw }] : [];
+    });
+    return [...drones, ...patrols].filter((s) => s.dist <= s.draw).sort((a, b) => a.dist - b.dist);
+  }
+
   /** The nearest drones of each kind into its slots, near ones first; the slots left over fold away. */
   private draw(): void {
     const mesh = this.mesh;
     if (!mesh) return;
-    const lod = DRONE_LOD[this.deps.quality];
-    const eye = this.deps.eye();
-    const seen = this.fleet
-      .map((d) => {
-        const p = dronePose(d, this.time);
-        return { kind: d.kind, p, dist: Math.hypot(p.x - eye.x, p.y - eye.y, p.z - eye.z) };
-      })
-      .filter((s) => s.dist <= lod.draw)
-      .sort((a, b) => a.dist - b.dist);
     this.min.set(Infinity, Infinity, Infinity);
     this.max.set(-Infinity, -Infinity, -Infinity);
     this.drawnNear = 0;
     this.drawnFar = 0;
+    this.drawnPatrols = 0;
     const used = new Set<Slot>();
-    const take = (kind: DroneKind, near: boolean): Slot | undefined => this.slots.find((f) => f.kind === kind && f.near === near && !used.has(f));
-    for (const s of seen) {
-      const slot = (s.dist <= lod.near ? take(s.kind, true) : undefined) ?? take(s.kind, false);
+    const take = (kind: SlotKind, near: boolean): Slot | undefined => this.slots.find((f) => f.kind === kind && f.near === near && !used.has(f));
+    for (const s of this.inSight()) {
+      const slot = (s.dist <= s.near ? take(s.kind, true) : undefined) ?? take(s.kind, false);
       if (!slot) continue;
       used.add(slot);
-      if (slot.near) this.drawnNear++;
+      if (slot.kind === "watch") this.drawnPatrols++;
+      else if (slot.near) this.drawnNear++;
       else this.drawnFar++;
       this.place(slot, s.p);
-      this.min.set(Math.min(this.min.x, s.p.x - PAD), Math.min(this.min.y, s.p.y - 1), Math.min(this.min.z, s.p.z - PAD));
+      const low = "ground" in s.p ? Math.min(s.p.y, s.p.ground) : s.p.y;
+      this.min.set(Math.min(this.min.x, s.p.x - PAD), Math.min(this.min.y, low - 1), Math.min(this.min.z, s.p.z - PAD));
       this.max.set(Math.max(this.max.x, s.p.x + PAD), Math.max(this.max.y, s.p.y + PAD), Math.max(this.max.z, s.p.z + PAD));
     }
     for (const slot of this.slots) {
@@ -196,18 +278,28 @@ export class DroneViews {
     mesh.buildBoundingInfo(this.min, this.max);
   }
 
-  /** Writes a slot's template turned by the yaw and moved to the pose. */
-  private place(slot: Slot, p: DronePose): void {
+  /**
+   * Writes a slot's template turned by the yaw and moved to the pose. A patrol's searchlight is
+   * stretched from its foot down to the paving, its pool widening with the drop; higher than
+   * `BEAM_FROM` it is off (folded into the drone's foot).
+   */
+  private place(slot: Slot, p: DronePose | PatrolPose): void {
     const c = Math.cos(p.yaw);
     const s = Math.sin(p.yaw);
     const src = slot.template.positions;
     const nsrc = slot.template.normals;
+    const beam = "beam" in slot.template ? slot.template.beam * 3 : src.length;
+    const drop = "ground" in p ? p.y - p.ground - POOL_LIFT : Infinity;
+    const lit = drop <= BEAM_FROM;
+    const spread = drop * BEAM_SPREAD;
     let o = slot.offset * 3;
     for (let i = 0; i < src.length; i += 3, o += 3) {
-      const x = src[i] as number;
-      const z = src[i + 2] as number;
+      const r = i < beam ? 1 : lit ? spread : 0;
+      const x = (src[i] as number) * r;
+      const z = (src[i + 2] as number) * r;
+      const y = i < beam ? (src[i + 1] as number) : lit ? (src[i + 1] as number) * drop : 0;
       this.positions[o] = p.x + x * c + z * s;
-      this.positions[o + 1] = p.y + (src[i + 1] as number);
+      this.positions[o + 1] = p.y + y;
       this.positions[o + 2] = p.z - x * s + z * c;
       const nx = nsrc[i] as number;
       const nz = nsrc[i + 2] as number;
