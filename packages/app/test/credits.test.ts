@@ -46,6 +46,7 @@ describe("credits (ADR-0063)", () => {
       "sketchfab-cctv-camera",
       "sketchfab-cyberpunk-car",
       "sketchfab-cyberpunk-doors-and-windows",
+      "sketchfab-cyberpunk-drone",
       "sketchfab-cyberpunk-scifi-door-3",
       "sketchfab-dirty-car",
       "sketchfab-electric-pole",

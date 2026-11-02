@@ -8,9 +8,10 @@ import { surfaceLiftAt } from "./roads";
 /**
  * The terrain of the game's Lublin (ADR-0045): the map's grids with the pads and ramps of
  * `sites.ts` applied, by chunk id. The simulation walks on these and the renderer draws them.
- * The pads and the steps' ramps are shaped on the import's grid, which some pads are fitted to
- * (Trasa Podziemna's dig, G-236 round 3); only then is a grid under a flight's ramp refined,
- * which keeps that surface as it is, and the flights' ramps laid on the finer points.
+ * The pads and the steps' ramps are shaped on the import's grid (G-236 round 3; Trasa
+ * Podziemna's dig is in metres and holds on any grid of up to 5 m, G-252); only then is a grid
+ * under a flight's ramp refined, which keeps that surface as it is, and the flights' ramps laid
+ * on the finer points.
  */
 export const SHAPED_TERRAIN: ReadonlyMap<string, TerrainGrid> = new Map(
   MAP_CHUNKS.map((c) => [c.id, shapeGrid(flightGrid(shapeGrid(c.terrain, PADS, RAMPS), FLIGHT_RAMPS), [], FLIGHT_RAMPS)]),

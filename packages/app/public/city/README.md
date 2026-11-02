@@ -196,6 +196,25 @@ NODE_USE_ENV_PROXY=1 node tools/assets/fetch.mjs /tmp/city-assets --only sketchf
 python3 -I -B tools/city_kit.py --doors /tmp/city-assets --out packages/app/public/city
 ```
 
+## Drony nad kanionami ulic na licencji CC-BY 4.0: `drone-props.glb` (ADR-0058 etap 7)
+
+Jeden płatowiec z E4 drugiej paczki ze Sketchfaba (`docs/plany/assety-paczka-2.md`) na licencji
+**CC-BY 4.0** (`tools/city_drones.py`) w trzech odmianach, w piątym pliku rekwizytów na tej samej palecie.
+Gra wczytuje go po kicie razem z pozostałymi. Węzeł modelu ma `extras.credit`, podpis jest na ekranie
+„Autorzy”. Daleką wersję (kilka prostopadłościanów) rysuje renderer (`drones/drone-models.ts`); bez pliku
+drony są z prostopadłościanów także z bliska. Telefon (`low`) dronów nie rysuje.
+
+| Klucz w pliku | Tytuł | Autor | Źródło | Licencja | Zmiany |
+|---|---|---|---|---|---|
+| `drone-patrol`, `drone-delivery`, `drone-ad` (dron patrolowy policji lub korporacji, kurier, dron reklamowy) | Cyberpunk Drone Concept Design | [Berk Gedik](https://sketchfab.com/berkgedik) | [Sketchfab](https://sketchfab.com/3d-models/cyberpunk-drone-concept-design-09e7406fc76248a2866209025588dad0) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | uproszczony z 21,2 tys. do ok. 900 trójkątów, przeskalowany do 3,4 m (patrol) i 3,0 m (kurier, reklama) rozpiętości, kolory z tekstury sprowadzone do palety; kadłub w barwach odmiany (srebrny, bursztynowy, czarny); dorysowane prostopadłościany: światła pozycyjne na wirnikach (czerwone i zielone), światło pod kadłubem w kolorze odmiany, belka świateł czerwono-niebieskich (patrol), paczka pod kadłubem (kurier), ekran z pasami neonu bez napisów (reklama); bez tekstur |
+
+Odtworzenie pliku:
+
+```
+NODE_USE_ENV_PROXY=1 node tools/assets/fetch.mjs /tmp/city-assets --only sketchfab-cyberpunk-drone
+python3 -I -B tools/city_kit.py --drones /tmp/city-assets --out packages/app/public/city
+```
+
 ## Targ i budki z jedzeniem: `market-props.glb` (ADR-0058 etap 3)
 
 Osiem modeli złożonych z części paczek **CC0** Kenneya (`tools/city_market.py`), w trzecim pliku na tej
@@ -260,6 +279,34 @@ Odtworzenie pliku:
 ```
 NODE_USE_ENV_PROXY=1 node tools/assets/fetch.mjs /tmp/city-assets --only sketchfab-cyberpunk-car,sketchfab-dirty-car,kenney-car-kit-2,quaternius-public-transport
 python3 -I -B tools/city_kit.py --vehicles /tmp/city-assets --out packages/app/public/city
+```
+
+## Tłum w pozach: `crowd-props.glb` (ADR-0058 etap 8)
+
+Ludzie w nieruchomych pozach w siódmym pliku na tej samej palecie (`tools/city_crowd.py`): mężczyzna i kobieta,
+każde siedząc, przysiadając (siedząc z łydkami cofniętymi pod siedzisko, na ławkę niską nad nawierzchnią),
+stojąc i stojąc z ręką na biodrze, każda poza z dwiema fryzurami tej sylwetki (`cr-<poza>-<a|b><n>`,
+`extras.styles`: `figure-<poza>-<a|b>`), i wersja na telefon pierwszej fryzury każdej pozy (`-lite`, styl `lite`).
+Bez `extras.credit`: źródło jest CC0.
+
+| Klucze w pliku | Źródło (pobranie) | Autor | Licencja (cytat) |
+|---|---|---|---|
+| `cr-sit-*`, `cr-perch-*`, `cr-stand-*`, `cr-hips-*` (siedzący, przysiadający, stojący, z ręką na biodrze) | [Background Posed Humans](https://quaternius.com/packs/backgroundposedhumans.html), `Male/Male Poses/OBJ/Male_Sitting`, `Male_Standing`, `Male_Standing_Hips`, `Female/Female Poses/OBJ/Female_Sitting`, `Female_Standing`, `Female_Standing_Hips`, fryzury `Male_Hairstyle_1`, `_3`, `Female_Hairstyle_1`, `_3` (`.obj`, pliki z `drive.usercontent.google.com`, id w `sources.json`) | Quaternius | CC0 (strona paczki i https://quaternius.com/license.html; `License.txt` w folderze paczki ma nagłówek innej paczki, Knight Pack, i tekst CC0 1.0 Universal) |
+
+Zmiany względem oryginałów: fryzura posadzona na głowie każdej pozy (czubek i środek głowy jak w pozie stojącej),
+skala do 1,76 m (mężczyzna) i 1,66 m (kobieta) na stojąco, w pozie przysiadającej łydki obrócone o 50° w kolanach
+i stopy z powrotem płasko w kostkach (siedzisko 0,30–0,31 m zamiast 0,38–0,42 m nad stopami), kobieta uproszczona przez grupowanie wierzchołków do
+1,1 tys. trójkątów (mężczyzna bez zmian, 1,06–1,1 tys.), wersje na telefon do 0,26 tys., normalne wygładzone,
+bez tekstur. Materiały paczki służą tylko za role (skóra `brick`, góra `fabric-teal`, spodnie `trim`, buty `tyre`,
+włosy `dark`): renderer maluje każdą postać z jej wyglądu (`figure-models.ts`), więc żaden kolor paczki nie
+zostaje. Postać siedząca ma początek układu pod biodrami na siedzisku (`extras.seat`: wysokość siedziska nad
+stopami), stojąca pod stopami; `extras.lights[0]` stojącej to prawa dłoń (żar papierosa palacza).
+
+Odtworzenie pliku:
+
+```
+NODE_USE_ENV_PROXY=1 node tools/assets/fetch.mjs /tmp/city-assets --only quaternius-posed-humans
+python3 -I -B tools/city_kit.py --crowd /tmp/city-assets --out packages/app/public/city
 ```
 
 Wyłączenie w grze: `?city=off` (zostają gołe bryły, bez kitu i bez rekwizytów wszystkich plików).

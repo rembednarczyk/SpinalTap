@@ -15,6 +15,8 @@ import { CharacterActivities } from "./character-activities";
 import { type CharacterDescriptor, CharacterViews } from "./character-views";
 import { CityKitLoader } from "./city-kit-loader";
 import { CrowdViews } from "./crowd-views";
+import { DroneViews } from "./drones/drone-views";
+import { cityDroneWorld } from "./drones/drone-world";
 import { WorldDressing } from "./dressing";
 import { FarCity } from "./far-city";
 import { MapCitySlot } from "./map-city-slot";
@@ -106,6 +108,8 @@ export class BabylonRenderer implements RenderPort {
   private readonly crowd: CrowdViews;
   /** The street's traffic and parked cars on the city kit (ADR-0050). */
   private readonly vehicles: VehicleViews;
+  /** The drones over the street canyons, one shared mesh (ADR-0058 stage 7). */
+  private readonly drones: DroneViews;
   private readonly fx: ScreenFx;
   private readonly cityKit: CityKitLoader;
   /** The metro car between districts (ADR-0036). */
@@ -191,6 +195,15 @@ export class BabylonRenderer implements RenderPort {
       groundAt: (x, z) => this.map.current?.heightAt(x, z) ?? null,
     });
     this.vehicles = new VehicleViews({ scene, kit: () => this.cityKit.kit, glow: stage.glow, eye: () => eye, quality: stage.options.quality ?? "high" });
+    this.drones = new DroneViews({
+      scene,
+      kit: () => this.cityKit.kit,
+      props: () => this.cityKit.props,
+      // Lublin's lanes once the map city draws (no drones over the old test streets).
+      world: () => (this.map.current ? cityDroneWorld() : null),
+      eye: () => eye,
+      quality: stage.options.quality ?? "high",
+    });
     warmUpMaterials(scene, this.materials, this.signage);
     this.fx = new ScreenFx({
       stage,
@@ -221,8 +234,8 @@ export class BabylonRenderer implements RenderPort {
       cityKit: () => this.cityKit.ready,
       cityWaiting: () => this.map.current?.waiting ?? 0,
     });
-    const { characters, activities, props, crowd, vehicles, cityKit, map, metro, fx, wet } = this;
-    this.stats = new RendererStats({ characters, activities, props, crowd, vehicles, cityKit, map, metro, fx, wet });
+    const { characters, activities, props, crowd, vehicles, drones, cityKit, map, metro, fx, wet } = this;
+    this.stats = new RendererStats({ characters, activities, props, crowd, vehicles, drones, cityKit, map, metro, fx, wet });
   }
 
   /** The start of a game behind the loading screen (ADR-0057); the moon shadow goes on `at` first. */
@@ -317,6 +330,7 @@ export class BabylonRenderer implements RenderPort {
     this.characters.update(dt, this.stage.options.reference);
     this.crowd.update(dt, this.stage.options.reference);
     this.vehicles.update();
+    this.drones.update(dt, this.stage.options.reference);
     const target = this.cameraTargetTransform;
     this.rig.update(target, dt);
     this.metro.afterCamera();

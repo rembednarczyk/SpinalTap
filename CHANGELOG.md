@@ -5,6 +5,11 @@ Zmiany widoczne dla gracza, od najnowszych. Wersja gry i commit są na ekranie t
 ## Nieopublikowane (0.1.0)
 
 ### 2 listopada 2026
+- Ciało napastnika z wygranego napadu (obalonego albo zabitego takedownem) nie znika, gdy gracz odejdzie kilkaset metrów: po powrocie, także po zapisie i wczytaniu, leży tam, gdzie upadło; ocucony napastnik znów odchodzi z ulicą jak zwykły przechodzień (G-239).
+- Wieża cerkwi św. Jozafata dostaje niski dach namiotowy z NMPT: okap y 8,1 zamiast 6,5, szczyt bez zmian na y 9,5 (G-246).
+- Niska przybudówka Pałacu Lubomirskich od Placu Litewskiego ma płaski dach ok. 5,5 m nad ziemią, jak w numerycznym modelu pokrycia terenu, zamiast bryły równej pałacowi; parter i pierwsze piętro fasady pałacu są znów widoczne (G-251).
+- Nad dachami ulic Lublina latają drony: patrole policji i korporacji ze światłami, kurierzy z paczkami i drony z ekranami reklamowymi; na telefonie (jakość niska) ich nie ma (ADR-0058 etap 7).
+- Zapis czeka na koniec obezwładnienia, bo chwytu nie ma w zapisie: zapis ręczny w chwycie jest odmówiony jak w rozmowie, a autozapis zapisuje się zaraz po chwycie, więc gra wczytana i ta, z której zapisano, toczą się dalej tak samo (G-253).
 - Ciało napastnika z wygranego napadu (obalonego albo zabitego takedownem) zostaje po zapisie i wczytaniu tam, gdzie było: na ulicy, na ramieniu gracza albo w kryjówce; zapis w trakcie napadu kończy go jak odejście (G-233).
 - Podpowiedź na drążku ruchu na telefonie jest po angielsku („Move”), a po polsku tylko przy wybranym polskim w opcjach.
 - Pojazdy z paczki 2 i Kenneya: stary sedan, sportowe auto, SUV, pickup, śmieciarka i trolejbus z autobusu, z prostszymi wersjami na telefon i z daleka (ADR-0058 etap 4).

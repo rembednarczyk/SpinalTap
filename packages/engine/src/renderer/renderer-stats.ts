@@ -4,6 +4,7 @@ import type { CharacterActivities } from "./character-activities";
 import type { CharacterViews } from "./character-views";
 import type { CityKitLoader } from "./city-kit-loader";
 import type { CrowdViews } from "./crowd-views";
+import type { DroneViews } from "./drones/drone-views";
 import type { MapCitySlot } from "./map-city-slot";
 import type { MapCityStats } from "./mapcity/map-city";
 import type { MetroRide } from "./metro-ride";
@@ -18,6 +19,7 @@ export interface RendererStatsDeps {
   readonly props: PropViews;
   readonly crowd: CrowdViews;
   readonly vehicles: VehicleViews;
+  readonly drones: DroneViews;
   readonly cityKit: CityKitLoader;
   readonly map: MapCitySlot;
   readonly metro: MetroRide;
@@ -61,6 +63,11 @@ export class RendererStats {
   /** The street's vehicles: driving, drawn near and far, parked, and their meshes. */
   get vehicleStats(): VehicleViews["stats"] {
     return this.deps.vehicles.stats;
+  }
+
+  /** The drones over the street canyons (ADR-0058 stage 7): lanes, drones, drawn near and far, and their mesh. */
+  get droneStats(): DroneViews["stats"] {
+    return this.deps.drones.stats;
   }
 
   /** Kit meshes built for skinned blocks. */
