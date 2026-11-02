@@ -764,7 +764,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim, packages/persistence
 
 ### G-244 Budynki ceglane z OSM rysowane w tynku: `building:material` nie trafia do gry
-- Status: w naprawie (2.11, naprawiacz, gałąź `ccr-ec2c4269-ilh8k8-g244`; zgłoszone przez kuratora przy #209)
+- Status: w PR #237 (2.11, @ 36cb2fb, czeka na weryfikację i kuratora; `brick-plastered` 3 → 0 (Brama Krakowska już ceglana z landmarku); przeniesione też `building:colour` 16 budynków; zgłoszone przez kuratora przy #209)
 - Ważność: S3 (proponowana: rozpoznawalne zabytki w złym materiale) · Zasięg: 4 budynki (6 elementów OSM z `building:material=brick`): Donżon w450180469, Baszta Gotycka w66286376, Kaplica Trójcy w66258167, Brama Krakowska r7224409 (części w617597406, w617597407) · Koszt: średni (pole w danych + paleta fasady)
 - Gdzie: T-134; Podzamcze (893,1; 214,6), (941; 214,6), Stare Miasto (512,6; −143), Krakowskie (472,6; −91,2)
 - Dowód: import nie przenosi `building:material` ani `building:colour` (tylko `roof:colour` w części dachów); kolor fasady z palety użycia. Po #209 Donżon i Baszta w jasnym tynku kościelnym (zrzut `g232-shots/g232-donzon-po.png`), przed #209 w szarofioletowym tynku `historic`. W rzeczywistości nietynkowana cegła (Brama Krakowska: cegła w części gotyckiej, tynk w nadbudowie)
@@ -859,7 +859,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Także (kurator, T-138): na bruku Jezuickiej plama sięga ok. 2,3 m przed fasadę, a Wieży Trynitarskiej (8,5 m) nie dosięga; poza tym topografia jest zgodna
 
 ### G-264 Latarnie OSM na Archidiakońskiej (Stare Miasto) rysowane jako drogowe
-- Status: w PR #236 (2.11, @ 3437308, czeka na weryfikację; zgłoszone przez autora i weryfikatora G-259)
+- Status: w PR #236 (2.11, @ 3437308 w weryfikacji; zgłoszone przez autora i weryfikatora G-259)
 - Ważność: S4 · Zasięg: 2 latarnie `grodzka.street-lamp` → `lamp-road`: (653,9; 39,3), (653,5; 46,6), przy Placu po Farze, 9,8 i 14,9 m od latarni ściennej · Koszt: mały
 - Przyczyna: mapowanie `street-lamp → lamp-road` w `tools/osm-import/src/props-kinds.ts:56` („OSM street lamps away from the old town are road lamps”) nie patrzy na miejsce; na Starym Mieście (decyzja użytkownika 2.11: wiodą latarnie stylizowane) powinny być stylizowane
 - Poprawka: `street-lamp` w strefie Starego Miasta → stylizowana (np. latarnia ścienna albo pastorał, styl do potwierdzenia przez kuratora); przegląd `topography-curator`
