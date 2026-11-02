@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { LUBLIN_CHUNKS, buildingView } from "@seki/sim/lublin";
+import { prng } from "../src/renderer/city-kit-data";
 import { MeshSink } from "../src/renderer/mesh-sink";
 import { type AcrossAt, type Span, findSpans, planFarCanyon, planNearCanyon, spanFootbridge } from "../src/renderer/mapcity/canyon-plan";
 import { planCanyonSigns } from "../src/renderer/mapcity/canyon-signs";
@@ -187,5 +188,24 @@ describe("the cables of a span over the paving (G-268)", () => {
     const sink = new MeshSink();
     planNearCanyon(sink, [span(0.3, 12)], false, () => 9);
     expect(sink.empty).toBe(true);
+  });
+
+  it("draws every cable as before where the paving needs none lifted", () => {
+    // One cable is 6 segments of 3 ribbons; on a phone there are no lanterns.
+    const RIBBONS = 6 * 3 * 4;
+    const narrow = (seed: number): Span => ({ a: { x: 0, z: 0 }, b: { x: 0, z: 14 }, along: { x: 1, z: 0 }, width: 14, base: 0, top: 20, clutter: 0.35, main: false, seed });
+    for (let k = 0; k < 400; k++) {
+      const s = narrow(k / 400);
+      const count = Math.round(s.clutter * 1.5 * (0.5 + prng(Math.floor(s.seed * 0xfffffff) ^ 0xc0de)()));
+      for (const ground of [() => null, () => -100]) {
+        const sink = new MeshSink();
+        planNearCanyon(sink, [s], true, ground);
+        expect(sink.vertexCount, `seed ${k}/400`).toBe(count * RIBBONS);
+      }
+    }
+    // The same span in full, as drawn before G-268: four cables and their lanterns.
+    const full = new MeshSink();
+    planNearCanyon(full, [narrow(33 / 400)], false, () => -100);
+    expect(full.vertexCount).toBe(384);
   });
 });

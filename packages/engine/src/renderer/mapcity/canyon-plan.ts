@@ -171,7 +171,7 @@ const spanCables = (sink: MeshSink, s: Span, rand: () => number, lite: boolean, 
     const lit = !lite && rand() <= s.clutter * 0.6;
     const color = lit ? hexColor(LANTERNS[Math.floor(rand() * LANTERNS.length)] ?? "#ffb000", DRESS_FLAG.lit) : null;
     const lift = Math.max(0, CABLE_CLEARANCE + (color ? LANTERN_DROP : RIBBON_HALF) - clearance(a0, b0, sag, ground));
-    if (Math.max(a0.y, b0.y) + lift > high) continue;
+    if (lift > 0 && Math.max(a0.y, b0.y) + lift > high) continue;
     const a = { ...a0, y: a0.y + lift };
     const b = { ...b0, y: b0.y + lift };
     cable(sink, a, b, sag, DARK);
