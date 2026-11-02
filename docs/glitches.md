@@ -817,7 +817,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/i18n-scan
 
 ### G-249 Wieże Pałacu Lubomirskich bez bryły, pałac z wysokości domyślnej 3–4 m za niski
-- Status: w PR #220 (2.11, w weryfikacji, potem kurator): wieże wierzch y 17,9, pałac okap y 11,0 / wierzch y 13,1, `tower-area-missing` 2 → 0; do decyzji kuratora: 4 rzędy okien zamiast 3 (`building:levels`?)
+- Status: w PR #220 (2.11, PRZYJĘTE przez weryfikatora; dach pałacu 2,1 → 1,0 m po jego uwadze (d44494a); kurator w toku): wieże wierzch y 17,9, pałac okap y 11,0 / wierzch y 13,1, `tower-area-missing` 2 → 0; do decyzji kuratora: 4 rzędy okien zamiast 3 (`building:levels`?)
 - Ważność: S4 (proponowana: dwie wieże ok. 20 m stoją 4–6 m nad dachem pałacu przy Placu Litewskim; bez nich i przy za niskim dachu sylwetka pałacu jest płaska) · Zasięg: 1 budynek, 2 wieże · Koszt: mały (korekty tagów jak w T-060, regeneracja `krakowskie`)
 - Gdzie: T-136; w1002739983 (83,5; 99,3), w1002739984 (40,3; 102,7), pałac w67508859 (55,8; 87,4)
 - Dowód: NMPT GUGiK 0,5 m (kafel `scratchpad/topo-g098/dl-nmpt/lubom.asc`, środek świata (60; 95), ±45 m; pobrany 2.11): wieża zachodnia x 34–40,5, z 99–106, p50 y 17,8; wschodnia x 78–84,5, z 96–102,5, p50 y 17,9, maks. y 19,0; wierzchy płaskie. Dach pałacu p50 y 11,9 (p10 10,8, p90 14,1), w grze wierzch y 8,5 (`source: default`, `height` 10,6, płaski). Obrysy wież z OSM 2–4 m na wschód od NMPT
