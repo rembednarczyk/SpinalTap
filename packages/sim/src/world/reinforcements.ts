@@ -18,6 +18,27 @@ export const reinforcementEntity = (id: EntityId, n: number, since: number, type
   return toughen(g, npcHealth);
 };
 
+/**
+ * What a reinforcement is remembered by across saves (G-202): its `n` with the tick it came in
+ * at, as `n` counts again from 1 in the next heat. Unique for the whole life of a save.
+ */
+export const securityKey = (s: { readonly n: number; readonly since: number }): string => `security:${s.n}@${s.since}`;
+
+const SECURITY_KEY = /^security:\d+@\d+$/;
+
+/**
+ * Is `key` that of a reinforcement no longer in the world (G-209)? It went home, or died leaving
+ * no body, and none other ever has its key, so it can never be hacked again.
+ */
+export const goneReinforcement = (world: World<Entity>): ((key: string) => boolean) => {
+  let present: Set<string> | null = null;
+  return (key) => {
+    if (!SECURITY_KEY.test(key)) return false;
+    present ??= new Set(world.with("security").entities.map((e) => securityKey(e.security)));
+    return !present.has(key);
+  };
+};
+
 /** The reinforcements in the world, alive or dead, the count sent and the wait for the next (G-179); null with none of them. */
 export const reinforcementsSnapshot = (world: World<Entity>, watch: SessionWatch): ReinforcementsSnapshot | null => {
   const people = [...world.with("security")]
