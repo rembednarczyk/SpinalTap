@@ -13,6 +13,8 @@ import { centroid, cleanRing, pointInRing } from "../../../packages/engine/src/r
 import { stackTiers } from "../../../packages/engine/src/renderer/mapcity/vertical-plan";
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 import { MAP_SIGN_KIND } from "../../../packages/engine/src/renderer/mapcity/sign-plan";
+import { decalChecks } from "./decal-pieces";
+import { lublinDecalWorld } from "./decal-world";
 import { doorChecks } from "./door-pieces";
 import { marketChecks } from "./market-pieces";
 import { signsInNeighbours } from "./sign-neighbours";
@@ -1463,6 +1465,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "tube-in-neighbour": () => signsIn([MAP_SIGN_KIND.tube]),
   // The market's furniture of ADR-0058 stage 3 against the map data (`market-pieces.ts`).
   ...marketChecks(SOURCE_OSM, Object.values(WORLD_STREET_PROPS).flat(), CROWD_LANES),
+  // The decals of ADR-0058 stage 6 against the drawn walls, signs, hosts and carriageways (`decal-pieces.ts`).
+  ...decalChecks(Object.values(WORLD_STREET_PROPS).flat(), lublinDecalWorld()),
   // The doors on the facades of ADR-0058 stage 9 against the drawn walls, panes, boards and passages (`door-pieces.ts`).
   ...doorChecks(WORLD_SCENERY, Object.values(WORLD_STREET_PROPS).flat(), cityVenueBoards(WORLD_SCENERY)),
 };

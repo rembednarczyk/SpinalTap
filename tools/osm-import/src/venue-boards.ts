@@ -11,7 +11,7 @@ import { landmarkAt } from "../../../packages/engine/src/renderer/mapcity/landma
 import { mapBuilding } from "../../../packages/engine/src/renderer/mapcity/map-building";
 import { BinIndex } from "../../../packages/engine/src/renderer/mapcity/map-index";
 import { boundsOf, cleanRing, pointInRing } from "../../../packages/engine/src/renderer/mapcity/polygon";
-import { venueBoards } from "../../../packages/engine/src/renderer/mapcity/venue-plan";
+import { type VenueBoard, venueBoards } from "../../../packages/engine/src/renderer/mapcity/venue-plan";
 import { WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
 import type { BoardSpan } from "./props-boards.ts";
 
@@ -33,6 +33,18 @@ export interface FramedBuilding {
 
 /** Every building view among `views` framed as the map city frames it. */
 export const cityFrames = (views: readonly DrawnView[]): FramedBuilding[] => {
+  // Framed once per list of views: the boards, the decals' walls and the glitch scan share one city (G-200).
+  let framed = FRAMED.get(views);
+  if (!framed) {
+    framed = frameViews(views);
+    FRAMED.set(views, framed);
+  }
+  return framed;
+};
+
+const FRAMED = new WeakMap<readonly DrawnView[], FramedBuilding[]>();
+
+const frameViews = (views: readonly DrawnView[]): FramedBuilding[] => {
   const buildings = views.flatMap(({ view, at }) => {
     if (view.kind !== "building") return [];
     const ring = cleanRing(view.outline.map((p) => ({ x: p.x + at.x, z: p.z + at.z })));
@@ -53,11 +65,23 @@ export const cityFrames = (views: readonly DrawnView[]): FramedBuilding[] => {
   return buildings.map((b, i) => ({ frame: facadeFrame(mapBuilding(i + 1, b, () => null), neighbour), view: b.view, at: b.at, landmark: landmarkAt(b.at.x, b.at.z, b.view.outline.length) !== null }));
 };
 
+const BOARDS = new WeakMap<FramedBuilding, VenueBoard[]>();
+
+/** A framed building's venue boards (`venueBoards`), worked out once: the furniture and the decals both read them. */
+export const framedBoards = (b: FramedBuilding): VenueBoard[] => {
+  let boards = BOARDS.get(b);
+  if (!boards) {
+    boards = venueBoards(b.frame);
+    BOARDS.set(b, boards);
+  }
+  return boards;
+};
+
 /** Every venue board of the city's buildings among `views`. */
 export const cityVenueBoards = (views: readonly DrawnView[]): BoardSpan[] =>
   cityFrames(views).flatMap((b) => {
     if (!b.view.venues?.length || b.landmark) return [];
-    return venueBoards(b.frame).map((v) => ({
+    return framedBoards(b).map((v) => ({
       a: point(v.wall, v.u - v.width / 2),
       b: point(v.wall, v.u + v.width / 2),
       nx: v.wall.nx,
