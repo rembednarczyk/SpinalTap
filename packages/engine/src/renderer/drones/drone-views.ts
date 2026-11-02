@@ -1,4 +1,4 @@
-import { type GlowLayer, type Mesh, MeshClass, type Scene, Vector3, VertexBuffer } from "../../babylon";
+import { type Mesh, MeshClass, type Scene, Vector3, VertexBuffer } from "../../babylon";
 import type { RenderQuality } from "../../npr/quality";
 import type { CityKit } from "../city-kit";
 import type { CityProps } from "../city-props";
@@ -16,21 +16,17 @@ export const DRONE_LOD: Readonly<Record<RenderQuality, { readonly near: number; 
   low: { near: 0, draw: 0, nearSlots: 0, farSlots: 0 },
 };
 
-/** The map's world for the lanes and a count that changes whenever it does. */
-export interface DroneSource {
-  readonly version: number;
-  readonly world: () => DroneWorld;
-}
-
 export interface DroneViewsDeps {
   readonly scene: Scene;
   /** The city kit once it has loaded: its material (ADR-0022). */
   readonly kit: () => CityKit | null;
   /** The props files once they have loaded: the drones' models (`drone-props.glb`). */
   readonly props: () => CityProps | null;
-  /** The map city's buildings and streets, null without map data. */
-  readonly source: () => DroneSource | null;
-  readonly glow: GlowLayer | null;
+  /**
+   * The city the lanes are planned from, null without map data. Planned once per world: a new
+   * world (another object) plans again.
+   */
+  readonly world: () => DroneWorld | null;
   readonly eye: () => { readonly x: number; readonly y: number; readonly z: number };
   readonly quality: RenderQuality;
   /** Plans the lanes (default `planDroneLanes`; tests hand fixed ones). */
@@ -54,13 +50,14 @@ const PAD = 4;
  * of them in one shared mesh on the city kit's material, moved on the CPU each frame, so one draw
  * call per pass however many fly (the only new draw calls of ADR-0058). The mesh holds a few slots
  * per kind, near and far; each frame the nearest drones take them and the rest are not drawn. The
- * lanes are planned once the map's views stop changing. No moon shadow, no outline; the lights glow.
+ * lanes are planned once for the whole city, not per streamed chunk. No moon shadow, no outline and
+ * no glow layer (ADR-0058: one draw call, two with the G-buffer): the lights are bright in the
+ * kit's own emissive colour.
  */
 export class DroneViews {
   private lanes: readonly DroneLane[] = [];
   private fleet: readonly Drone[] = [];
-  private planned = -1;
-  private seen = -1;
+  private planned: DroneWorld | null = null;
   private time = 0;
   private mesh: Mesh | null = null;
   private slots: Slot[] = [];
@@ -90,24 +87,35 @@ export class DroneViews {
     if (DRONE_LOD[this.deps.quality].nearSlots === 0) return;
     this.plan();
     const kit = this.deps.kit();
-    if (!kit || this.fleet.length === 0) return;
+    if (!kit) return;
+    if (this.fleet.length === 0) {
+      this.hide();
+      return;
+    }
     const props = this.deps.props();
     if (kit !== this.kitSeen || props !== this.propsSeen) this.layout(kit, props);
     if (!frozen) this.time += dt;
     this.draw();
   }
 
-  /** Plans the lanes when the map's views changed and then held still for a frame. */
+  /** Plans the lanes of a world not planned yet; without one, none fly. */
   private plan(): void {
-    const source = this.deps.source();
-    if (!source) return;
-    const version = source.version;
-    if (version !== this.planned && version === this.seen) {
-      this.planned = version;
-      this.lanes = (this.deps.plan ?? planDroneLanes)(source.world());
-      this.fleet = droneFleet(this.lanes, this.deps.quality);
+    const world = this.deps.world();
+    if (world === this.planned) return;
+    this.planned = world;
+    this.lanes = world ? (this.deps.plan ?? planDroneLanes)(world) : [];
+    this.fleet = droneFleet(this.lanes, this.deps.quality);
+  }
+
+  /** No drones to draw: the slots fold away and the mesh goes off. */
+  private hide(): void {
+    for (const slot of this.slots) {
+      if (slot.shown) this.fold(slot);
+      slot.shown = false;
     }
-    this.seen = version;
+    this.drawnNear = 0;
+    this.drawnFar = 0;
+    this.mesh?.setEnabled(false);
   }
 
   /** Lays out the shared buffers: per kind its near slots, then its far ones. */
@@ -227,7 +235,6 @@ export class DroneViews {
     mesh.isPickable = false;
     mesh.doNotSyncBoundingInfo = true;
     mesh.freezeWorldMatrix();
-    this.deps.glow?.addIncludedOnlyMesh(mesh);
     this.mesh = mesh;
     return mesh;
   }

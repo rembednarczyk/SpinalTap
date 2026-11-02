@@ -16,6 +16,7 @@ import { type CharacterDescriptor, CharacterViews } from "./character-views";
 import { CityKitLoader } from "./city-kit-loader";
 import { CrowdViews } from "./crowd-views";
 import { DroneViews } from "./drones/drone-views";
+import { cityDroneWorld } from "./drones/drone-world";
 import { WorldDressing } from "./dressing";
 import { FarCity } from "./far-city";
 import { MapCitySlot } from "./map-city-slot";
@@ -198,8 +199,8 @@ export class BabylonRenderer implements RenderPort {
       scene,
       kit: () => this.cityKit.kit,
       props: () => this.cityKit.props,
-      source: () => this.map.current?.droneSource ?? null,
-      glow: stage.glow,
+      // Lublin's lanes once the map city draws (no drones over the old test streets).
+      world: () => (this.map.current ? cityDroneWorld() : null),
       eye: () => eye,
       quality: stage.options.quality ?? "high",
     });

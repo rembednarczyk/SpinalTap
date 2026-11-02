@@ -1,12 +1,13 @@
 import type { GroundPoint, GroundSurface, Vec3, ViewDescriptor } from "@seki/core";
-import type { LublinChunkData } from "@seki/sim/lublin";
+import { WORLD_SCENERY, groundY } from "@seki/sim";
+import { LUBLIN_CHUNKS, type LublinChunkData } from "@seki/sim/lublin";
 import { landmarkAt } from "../mapcity/landmarks";
 import { type P2, cleanRing } from "../mapcity/polygon";
 import type { DroneBuilding, DroneWorld } from "./drone-lanes";
 
 /**
- * What the drones' lanes are planned from (ADR-0058 stage 7), out of the map city's views: the same
- * for the renderer (`MapCity.droneWorld`) and the glitch scan (from the scenery). Pure.
+ * What the drones' lanes are planned from (ADR-0058 stage 7), out of the map's views: the same
+ * for the renderer (`cityDroneWorld`) and the glitch scan (from the scenery). Pure but for the memo.
  */
 
 type BuildingView = Extract<ViewDescriptor, { kind: "building" }>;
@@ -56,3 +57,12 @@ export const droneWorldOf = (items: Iterable<{ readonly view: ViewDescriptor; re
   }
   return { axes, roads, buildings, groundAt };
 };
+
+let city: DroneWorld | null = null;
+
+/**
+ * Lublin as the drones see it, once: the scenery the simulation hands the renderer (all of it, not
+ * just the chunks streamed in), the streets' axes and the terrain. The lanes are planned from it
+ * once for the whole city, the same world the glitch scan flies them through.
+ */
+export const cityDroneWorld = (): DroneWorld => (city ??= droneWorldOf(WORLD_SCENERY, streetAxes(LUBLIN_CHUNKS), groundY));

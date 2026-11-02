@@ -3,10 +3,7 @@ import type { BaseTexture, Mesh, Scene } from "../../babylon";
 import type { MoonShadow } from "../../npr/moon-shadow";
 import type { RenderQuality } from "../../npr/quality";
 import type { ToonMaterials } from "../../npr/toon-material";
-import { LUBLIN_CHUNKS } from "@seki/sim/lublin";
 import type { CityProps } from "../city-props";
-import type { DroneSource } from "../drones/drone-views";
-import { DRONE_SURFACES, droneBuilding, streetAxes } from "../drones/drone-world";
 import { SPAN_MAX } from "./canyon-plan";
 import { CellBuilder } from "./cell-builder";
 import { type MapLod, streamCells } from "./cell-stream";
@@ -235,23 +232,6 @@ export class MapCity {
 
   setReduceFlashes(on: boolean): void {
     this.look.setReduceFlashes(on);
-  }
-
-  /**
-   * What the drones' lanes are planned from (ADR-0058 stage 7): the buildings and the street's
-   * surfaces drawn, the streets' axes of the map data, the terrain.
-   */
-  get droneSource(): DroneSource {
-    const e = this.entries;
-    return {
-      version: e.version,
-      world: () => ({
-        buildings: [...e.buildings.values()].map((b) => droneBuilding(b.view, b.at, b.ring)),
-        roads: [...e.grounds.values()].filter((g) => !g.marking && DRONE_SURFACES.has(g.surface)).map((g) => g.ring),
-        axes: streetAxes(LUBLIN_CHUNKS),
-        groundAt: (x, z) => e.heightAt(x, z),
-      }),
-    };
   }
 
   /** Level of the cell around (x, z) (debug and tests). */

@@ -8,7 +8,7 @@ import { CityKit } from "../src/renderer/city-kit";
 import { parseCityKit } from "../src/renderer/city-kit-data";
 import { mergeCityProps, parseCityProps, triangleCount } from "../src/renderer/city-props";
 import { BOB, DRONE_KINDS, DRONE_LAYER, DRONE_SIZE, type Drone, droneFleet, dronePose, loopLength } from "../src/renderer/drones/drone-flight";
-import { type DroneLane, LEG, STEP } from "../src/renderer/drones/drone-lanes";
+import { type DroneLane, type DroneWorld, LEG, STEP } from "../src/renderer/drones/drone-lanes";
 import { boxDrone, droneTemplates } from "../src/renderer/drones/drone-models";
 import { DRONE_LOD, DroneViews } from "../src/renderer/drones/drone-views";
 
@@ -118,26 +118,32 @@ describe("drone flight (ADR-0058 stage 7)", () => {
 });
 
 describe("drone views (ADR-0058 stage 7)", () => {
-  const setup = (quality: "high" | "low", lanes: readonly DroneLane[] = [LANE]) => {
+  const setup = (quality: "high" | "low") => {
     const scene = new Scene(new NullEngine());
     const kit = new CityKit(scene, new ToonMaterials(scene), null, kitData, { labels: false });
     const eye = { x: 100, y: 2, z: 30 };
-    let version = 1;
-    const world = { axes: [], roads: [], buildings: [], groundAt: () => 0 };
+    const box = { world: null as DroneWorld | null, lanes: [LANE] as readonly DroneLane[], plans: 0 };
     // Fixed lanes in place of the planner: the views draw what the plan gives.
-    const views = new DroneViews({ scene, kit: () => kit, props: () => props, source: () => ({ version, world: () => world }), glow: null, eye: () => eye, quality, plan: () => lanes });
-    return { scene, views, eye, bump: () => version++ };
+    const plan = () => {
+      box.plans++;
+      return box.lanes;
+    };
+    const views = new DroneViews({ scene, kit: () => kit, props: () => props, world: () => box.world, eye: () => eye, quality, plan });
+    const mesh = () => scene.meshes.find((m) => m.name === "drones");
+    return { scene, views, eye, box, mesh };
   };
+  const world = (): DroneWorld => ({ axes: [], roads: [], buildings: [], groundAt: () => 0 });
 
-  it("draws the drones in one mesh, plans once the map holds still, and draws nothing on a phone", () => {
-    const { scene, views, eye } = setup("high");
+  it("draws the drones in one mesh, planned once per world, and nothing on a phone", () => {
+    const { scene, views, eye, box, mesh } = setup("high");
     views.update(0.016, false);
-    // The first frame only sees the map; the plan waits for it to hold still.
+    // Without the map city: no plan, no mesh.
     expect(views.stats.drones).toBe(0);
-    views.update(0.016, false);
+    expect(mesh()).toBeUndefined();
+    box.world = world();
+    for (let i = 0; i < 5; i++) views.update(0.016, false);
+    expect(box.plans).toBe(1);
     expect(views.stats.lanes).toBe(1);
-    expect(views.stats.drones).toBeGreaterThan(0);
-    views.update(0.016, false);
     expect(views.stats.meshes).toBe(1);
     expect(views.stats.near + views.stats.far).toBe(views.stats.drones);
     expect(scene.meshes.filter((m) => m.name === "drones")).toHaveLength(1);
@@ -146,15 +152,36 @@ describe("drone views (ADR-0058 stage 7)", () => {
     views.update(0.016, false);
     expect(views.stats).toMatchObject({ near: 0, far: 0, meshes: 0 });
     const low = setup("low");
+    low.box.world = world();
     for (let i = 0; i < 3; i++) low.views.update(0.016, false);
     expect(low.views.stats).toMatchObject({ drones: 0, meshes: 0 });
-    expect(low.scene.meshes.filter((m) => m.name === "drones")).toHaveLength(0);
+    expect(low.box.plans).toBe(0);
+    expect(low.mesh()).toBeUndefined();
     expect(DRONE_LOD.low.nearSlots).toBe(0);
   });
 
-  it("holds still in the reference still and moves otherwise", () => {
-    const { views } = setup("high");
+  it("turns the mesh off when a new plan has no lanes or the map is gone, drones not left frozen in the air", () => {
+    const { views, box, mesh } = setup("high");
+    box.world = world();
+    for (let i = 0; i < 3; i++) views.update(0.016, false);
+    expect(views.stats.meshes).toBe(1);
+    box.lanes = [];
+    box.world = world();
     views.update(0.016, false);
+    expect(views.stats).toEqual({ lanes: 0, drones: 0, near: 0, far: 0, meshes: 0 });
+    expect(mesh()!.isEnabled(false)).toBe(false);
+    box.lanes = [LANE];
+    box.world = world();
+    views.update(0.016, false);
+    expect(views.stats.meshes).toBe(1);
+    box.world = null;
+    views.update(0.016, false);
+    expect(views.stats).toMatchObject({ lanes: 0, drones: 0, meshes: 0 });
+  });
+
+  it("holds still in the reference still and moves otherwise", () => {
+    const { views, box } = setup("high");
+    box.world = world();
     views.update(0.016, false);
     const before = views.poses();
     views.update(1, true);
