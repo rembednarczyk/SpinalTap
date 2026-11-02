@@ -16,6 +16,13 @@ import { metroPieces } from "./metro-pieces";
  */
 export const STREET_ID_BASE = 2_000_000;
 export const STREET_IDS_PER_CHUNK = 4_000;
+/**
+ * Ids of the rooms cut into the map's buildings (ADR-0063, the capsule room): `ROOM_IDS_PER_CHUNK`
+ * per chunk in table order from here, outside the allocator like the street's, between the
+ * vehicles' (3 000 000) and the scenery's (5 000 000).
+ */
+export const ROOM_ID_BASE = 4_000_000;
+export const ROOM_IDS_PER_CHUNK = 1_000;
 
 /** A recipe for one entity with an id reserved up front, so reloading gives it the same id. */
 export interface Template {
@@ -59,6 +66,10 @@ export class StreamCatalog {
       }
       (chunk.street ?? []).slice(0, STREET_IDS_PER_CHUNK).forEach((prop, i) => {
         const id = STREET_ID_BASE + order * STREET_IDS_PER_CHUNK + i;
+        list.push({ id, chunk: chunk.id, key: null, make: () => propEntity(id, prop, chunk.id) });
+      });
+      (chunk.rooms ?? []).slice(0, ROOM_IDS_PER_CHUNK).forEach((prop, i) => {
+        const id = ROOM_ID_BASE + order * ROOM_IDS_PER_CHUNK + i;
         list.push({ id, chunk: chunk.id, key: null, make: () => propEntity(id, prop, chunk.id) });
       });
       this.content.set(chunk.id, list);
