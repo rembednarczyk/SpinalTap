@@ -880,7 +880,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Dane: `scratchpad/g263-fix/clinic-koi.txt`
 
 ### G-270 Drzwi bez widocznych futryn
-- Status: w naprawie (2.11, naprawiacz, gałąź `ccr-ec2c4269-ilh8k8-g270`; zgłoszone przez użytkownika)
+- Status: w PR #241 (2.11, @ 64ec573 w weryfikacji; zgłoszone przez użytkownika)
 - Ważność: S3 (zgłoszenie gracza, wszystkie drzwi miasta) · Zasięg: drzwi na fasadach (ADR-0058 etap 9): ościeżnica i nadproże `DOOR_FRAME` (`packages/engine/src/renderer/mapcity/prop-door.ts`: `side` 0,08 m, `lintel` 0,1 m, `depth` 0,2 m) w tym samym kolorze `FRAME_COLOR` #2a2e36 co ciemne skrzydła, więc z kilku metrów skrzydło i futryna to jedna płaszczyzna; drzwi gry (klinika, Neon Koi, ADR-0038) i wejście pokoju kapsułowego (#234) bez obramowania · Koszt: mały do średniego
 - Poprawka: widoczna futryna i opaska: szersza ościeżnica (ok. 0,12–0,15 m) i nadproże, opaska wystająca kilka cm przed lico ściany, kolor kontrastujący ze skrzydłem i ścianą (np. jaśniejszy kamienny/tynkowy dla kamienic, metalowy dla sklepów, z palety kitu), próg; te same reguły dla drzwi gry i otworu pokoju kapsułowego; bez nowych wywołań rysowania (w siatce bloku mebli); drzwi nie mogą przez to wejść w szyby, szyldy ani przejazdy (kontrole `door-*` bez wzrostu)
 - Pakiet właściciela: packages/engine (renderer/mapcity, rooms, wnętrza gry)
