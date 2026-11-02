@@ -121,6 +121,9 @@ export type RoadMarkingKind = "centre-dash" | "centre-double" | "lane-dash" | "e
  * `doorVariant`). Drawn only: the walls behind them are the building's solid already. ADR-0058
  * stage 6 adds the decals, drawn only (`decals.ts`): `graffiti` on walls without glass,
  * `house-plate` with the map's house number, `sticker` on a pole or a cabinet, `drain-grate` at the kerb.
+ * ADR-0058 stage 8 adds the still crowd, drawn only (`figures.ts`): a `figure` sitting on a bench or a
+ * stool, queueing at a booth, waiting at a stop or smoking by a door; its variant holds its pose, build,
+ * seat and look (`figureVariant`).
  */
 export type StreetPropKind =
   | "lamp-pastoral"
@@ -169,7 +172,8 @@ export type StreetPropKind =
   | "house-plate"
   | "sticker"
   | "drain-grate"
-  | "door";
+  | "door"
+  | "figure";
 
 /** One piece of street furniture, in world metres relative to its chunk entity's position. */
 export interface StreetPropItem {
