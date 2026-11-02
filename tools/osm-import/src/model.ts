@@ -36,6 +36,8 @@ export interface BuildingOut {
   readonly look: number;
   /** Shops on the ground floor (a 4 m storey). */
   readonly shopfront?: true;
+  /** A church with a tower of the map in its outline or by its walls (G-212): the renderer adds none of its own. */
+  readonly mappedTower?: true;
   /** Where the height came from. */
   readonly source: "height" | "levels" | "default";
   /** Venues in or at it (ADR-0064 stage 4), relative to (x, z), with their 2077 names. */
