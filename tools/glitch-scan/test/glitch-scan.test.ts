@@ -265,20 +265,24 @@ const setPieceBlocks: readonly Rect[] = GAME_PROPS.flatMap((p) => {
 /** The mouths of the zebra crossings (G-032). */
 const BANDS = crossingBands(MAP_CHUNKS);
 
-/** The risers of a map steps surface as the renderer draws it on the game's terrain: each one's height, metres. */
-const riserHeights = (outline: readonly number[]) => {
+/** The risers of a map steps surface as the renderer draws it on the game's ground (`groundY`): each one's height, metres, and its middle. */
+const risersOf = (outline: readonly number[]) => {
   const ring: Pt[] = [];
   for (let i = 0; i + 1 < outline.length; i += 2) ring.push({ x: outline[i]!, z: outline[i + 1]! });
   const sink = new MeshSink();
   planSteps(sink, ring, groundY);
-  const out: number[] = [];
+  const out: { readonly h: number; readonly x: number; readonly z: number }[] = [];
   for (let v = 0; v < sink.vertexCount; v += 4) {
     if (Math.abs(sink.normals[v * 3 + 1]!) > 0.5) continue;
     const ys = [0, 1, 2, 3].map((k) => sink.positions[(v + k) * 3 + 1]!);
-    out.push(Math.max(...ys) - Math.min(...ys));
+    out.push({ h: Math.max(...ys) - Math.min(...ys), x: (sink.positions[v * 3]! + sink.positions[(v + 1) * 3]!) / 2, z: (sink.positions[v * 3 + 2]! + sink.positions[(v + 1) * 3 + 2]!) / 2 });
   }
   return out;
 };
+/** The heights of the risers of a map steps surface, metres (`risersOf`). */
+const riserHeights = (outline: readonly number[]) => risersOf(outline).map((r) => r.h);
+/** A riser of a flight of steps taller than this is a wall in the flight, not a step (m): outdoor steps rise 0.15–0.18 m. */
+const TALL_RISER = 0.5;
 
 /** The ground the simulation walks (ADR-0043, ADR-0053), terrain and decks of every chunk. */
 const FIELD = new GroundField(WORLD_CHUNKS);
@@ -914,6 +918,20 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
           const risers = riserHeights(g.outline);
           const low = risers.filter((h) => h < 0.045).length;
           return low * 2 > risers.length ? [{ at: near(g.outline[0]!, g.outline[1]!), what: `${c.id} ${low} of ${risers.length} risers under 4.5 cm` }] : [];
+        }),
+    ),
+  /**
+   * A band of map steps with a riser over `TALL_RISER` as the renderer draws it on the game's
+   * ground (G-255): the treads drop off a bridge's deck onto the terrain under it, or climb a
+   * kerb of the terrain, a wall in the flight. One per band, its tallest riser.
+   */
+  "steps-riser-tall": () =>
+    MAP_CHUNKS.flatMap((c) =>
+      c.ground
+        .filter((g) => g.surface === "steps")
+        .flatMap((g) => {
+          const tall = risersOf(g.outline).reduce<{ h: number; x: number; z: number } | null>((m, r) => (r.h > TALL_RISER && (!m || r.h > m.h) ? r : m), null);
+          return tall ? [{ at: near(tall.x, tall.z), what: `${c.id} riser ${tall.h.toFixed(2)} m` }] : [];
         }),
     ),
   /** A run of map steps between two parallel walls further apart than the steps the game lays plus 1 m (G-203). */

@@ -37,6 +37,7 @@
   "vehicle-off-surface": 0,
   "building-in-set-piece": 0,
   "steps-micro-riser": 0,
+  "steps-riser-tall": 7,
   "steps-narrower-than-walls": 0,
   "steps-across-run": 1,
   "steps-run-bare": 0,
