@@ -2,6 +2,14 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-259 Na deptaku Krakowskiego Przedmieścia nowoczesne słupy stoją 1 m od pastorałów
+- Status: naprawione w #235 (2.11, PRZYJĘTE; kurator ZGODNE Z UWAGAMI: na deptaku same pastorały, słupy nowoczesne tylko na alejkach placu; granica stylu przy x 20 w G-266, Archidiakońska w G-264)
+- Ważność: S3 (zgłoszenie gracza: charakterystyczne lubelskie latarnie przy deptaku dublowane fabrycznymi) · Zasięg: 16 par `lamp-modern-pole` + `lamp-pastoral` w `krakowskie-1-0` (x 32..227, z −68..−44), odstęp 0,9–2,7 m; do sprawdzenia 2 × `lamp-road` 6,9 m od pastorału w `krakowskie-2-0` (279,7; −89,3), (362,3; −104,3) · Koszt: mały
+- Przyczyna: dwa wpisy planu `docs/world/lublin-props.todo.json` mają te same osie deptaka: `lamps.kp-deptak` (pastorał, x 20..440) i `lamps.plac-litewski` (słup nowoczesny), którego `lines` obejmują też odcinki deptaka x 20..240 (`[129.7,-54.9,82.4,-56.3]`, `[240,-66.5,…,129.7,-54.9]`, `[82.4,-56.3,20,-59.4]`), a nie tylko alejki placu
+- Poprawka: na deptaku prowadzą latarnie stylizowane (decyzja użytkownika 2.11): odcinki deptaka zdjęte z `lamps.plac-litewski` (słupy zostają na alejkach i obrysie placu), `count` przeliczony; w generatorze reguła: latarnia zwykła (`lamp-road`, `lamp-modern-pole`) nie staje bliżej niż ok. 8 m od stylizowanej (`lamp-pastoral`, `lamp-candelabra`, `lamp-wall-lantern`) przy tej samej ulicy
+- Pakiet właściciela: tools/osm-import (props), docs/world (plan)
+- Test przyjęcia: kontrola skanu `lamp-plain-by-styled` (zwykła latarnia bliżej niż 8 m od stylizowanej) baza 16+ → 0; tabela z `pnpm osm:props`
+
 ### G-252 Złote hashe i testy nie pilnują terenu Trasy Podziemnej; pad wykopu zależy od rozdzielczości siatki
 - Status: naprawione w #230 (2.11, PRZYJĘTE z uwagą: pad w metrach, testy pod stopniami, teren bitowo bez zmian; Rynek przy Trybunale bez testu w G-261)
 - Ważność: S3 (luka w testach przy ryzykownym obszarze) · Zasięg: przebiegi `determinism.test.ts` nie przechodzą przez Trasę Podziemną ani Rynek przy Trybunale, więc zmiana kształtu terenu tam nie zmienia hasha; pad Trasy Podziemnej (`sites.ts:159`, blend 0,01) jest ustawiony pod węzły siatki 5 m chunka `stare-miasto-0-0`, każda zmiana komórki (także w imporcie) po cichu przesuwa ściany wykopu

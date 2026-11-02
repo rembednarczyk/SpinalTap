@@ -827,14 +827,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (props), packages/engine (renderer/mapcity), packages/sim (jeśli wysokość w tabeli)
 - Test przyjęcia: kontrola skanu `prop-sunk` (rekwizyt z podstawą ponad 5 cm pod nawierzchnią w swoim punkcie) baza z main → 0
 
-### G-259 Na deptaku Krakowskiego Przedmieścia nowoczesne słupy stoją 1 m od pastorałów
-- Status: w PR #235 (2.11, @ 635837a PRZYJĘTE, przegląd kuratora w toku; zgłoszone przez użytkownika)
-- Ważność: S3 (zgłoszenie gracza: charakterystyczne lubelskie latarnie przy deptaku dublowane fabrycznymi) · Zasięg: 16 par `lamp-modern-pole` + `lamp-pastoral` w `krakowskie-1-0` (x 32..227, z −68..−44), odstęp 0,9–2,7 m; do sprawdzenia 2 × `lamp-road` 6,9 m od pastorału w `krakowskie-2-0` (279,7; −89,3), (362,3; −104,3) · Koszt: mały
-- Przyczyna: dwa wpisy planu `docs/world/lublin-props.todo.json` mają te same osie deptaka: `lamps.kp-deptak` (pastorał, x 20..440) i `lamps.plac-litewski` (słup nowoczesny), którego `lines` obejmują też odcinki deptaka x 20..240 (`[129.7,-54.9,82.4,-56.3]`, `[240,-66.5,…,129.7,-54.9]`, `[82.4,-56.3,20,-59.4]`), a nie tylko alejki placu
-- Poprawka: na deptaku prowadzą latarnie stylizowane (decyzja użytkownika 2.11): odcinki deptaka zdjęte z `lamps.plac-litewski` (słupy zostają na alejkach i obrysie placu), `count` przeliczony; w generatorze reguła: latarnia zwykła (`lamp-road`, `lamp-modern-pole`) nie staje bliżej niż ok. 8 m od stylizowanej (`lamp-pastoral`, `lamp-candelabra`, `lamp-wall-lantern`) przy tej samej ulicy
-- Pakiet właściciela: tools/osm-import (props), docs/world (plan)
-- Test przyjęcia: kontrola skanu `lamp-plain-by-styled` (zwykła latarnia bliżej niż 8 m od stylizowanej) baza 16+ → 0; tabela z `pnpm osm:props`
-
 ### G-260 Po zapisie przy przypiętym, zaalarmowanym strażniku i odejściu 600 m `ai.lost` różni się o krok
 - Status: zgłoszone (2.11, weryfikator G-239)
 - Ważność: S4 · Zasięg: `hebi-bramowa`, ziarna 7 i 13, gracz teleportowany 600 m po zapisie i wczytaniu; `ai.lost` 1,55 vs 1,567, hash się rozjeżdża; tak samo na cb6c014 bez zmian G-239
@@ -867,7 +859,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Także (kurator, T-138): na bruku Jezuickiej plama sięga ok. 2,3 m przed fasadę, a Wieży Trynitarskiej (8,5 m) nie dosięga; poza tym topografia jest zgodna
 
 ### G-264 Latarnie OSM na Archidiakońskiej (Stare Miasto) rysowane jako drogowe
-- Status: zgłoszone (2.11, autor i weryfikator G-259)
+- Status: w naprawie (2.11, naprawiacz, gałąź `ccr-ec2c4269-ilh8k8-g264`; zgłoszone przez autora i weryfikatora G-259)
 - Ważność: S4 · Zasięg: 2 latarnie `grodzka.street-lamp` → `lamp-road`: (653,9; 39,3), (653,5; 46,6), przy Placu po Farze, 9,8 i 14,9 m od latarni ściennej · Koszt: mały
 - Przyczyna: mapowanie `street-lamp → lamp-road` w `tools/osm-import/src/props-kinds.ts:56` („OSM street lamps away from the old town are road lamps”) nie patrzy na miejsce; na Starym Mieście (decyzja użytkownika 2.11: wiodą latarnie stylizowane) powinny być stylizowane
 - Poprawka: `street-lamp` w strefie Starego Miasta → stylizowana (np. latarnia ścienna albo pastorał, styl do potwierdzenia przez kuratora); przegląd `topography-curator`
@@ -880,6 +872,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 (dziś 0 przypadków w danych) · Zasięg: `byStyledLamp` (`tools/osm-import/src/props-lamp-looks.ts:23-26`, `props-gen.ts:376`) liczy stylizowane latarnie z `placed`, przed odrzuceniem (poza chunkiem, w budynku, przed szyldem, `crowded`), więc może zostawić ciemne miejsce
 - Poprawka: lista stylizowanych z końcowej tabeli (po odrzuceniach); kontrola `lamp-gap` (miejsce, gdzie przed regułą stała latarnia, bez żadnej latarni w N m) albo test sondy weryfikatora (pastorał poza chunkiem, `street-lamp` w chunku)
 - Pakiet właściciela: tools/osm-import (props)
+
+### G-266 Na pierzei Krakowskiego przy Placu Litewskim styl latarni zmienia się przy x 20 bez oparcia w OSM
+- Status: zgłoszone (2.11, kurator, przegląd #235, T-140)
+- Ważność: S4 · Zasięg: Krakowskie Przedmieście x −87…130 (drogi w598108789 i w40049340 z tagami placu w1054556917, nie deptaka); `lamps.kp-deptak` (pastorały) sięga x 20, choć opis planu mówi „od Kapucyńskiej” (tagi deptaka od x 129,7) · Koszt: mały
+- Poprawka: jeden styl na całej pierzei placu; decyzja użytkownika (2.11: tam, gdzie stylizowane, nie fabryczne) i zdjęcie stanu z 2017 r.: albo pastorały od x −87, albo słupy placu do Kapucyńskiej (x 129,7); kontrola skanu na później: zmiana stylu latarni na osi jednej drogi OSM o tych samych tagach
+- Pakiet właściciela: docs/world (plan), tools/osm-import (props)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
