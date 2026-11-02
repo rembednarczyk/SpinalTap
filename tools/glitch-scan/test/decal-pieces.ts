@@ -26,6 +26,8 @@ const OFF_PLANE = 0.012;
 /** How far the corners look out of the wall for a neighbour (m), and a passage's reach past its half width. */
 const LOOK_OUT = 0.05;
 const PASSAGE_ROOM = 1;
+/** How far in front of a plate's wall the axis of its address's street may run (m). */
+const PLATE_STREET_REACH = 14;
 /** A grate's kerb side must meet the road's edge within this (m). */
 const KERB_REACH = 0.12;
 
@@ -51,6 +53,10 @@ export interface DecalWorld {
   readonly districtAt: (p: Pt) => string;
   readonly tagsAt: (at: Pt) => Readonly<Record<string, string>>;
   readonly poleLamp: (p: Pt) => boolean;
+  /** The map's streets (their names and axes). */
+  readonly streets: readonly { readonly name: string; readonly line: readonly Pt[] }[];
+  /** Is the building at its entity's place on the list of listed buildings the map does not tag (`LISTED_BUILDINGS`)? */
+  readonly listedAt: (at: Pt) => boolean;
   /** The renderer's block of the street furniture a point is in (one mesh each). */
   readonly blockOf: (p: Pt) => string;
 }
@@ -346,6 +352,24 @@ export const decalChecks = (all: readonly StreetPropItem[], world: DecalWorld): 
         return door ? [{ at: near(i), what: `${i.prop} over a door of its wall` }] : [];
       });
     },
+    /**
+     * A house plate on a wall that does not face the street of its building's `addr:street` (an axis
+     * of a street of that name within `PLATE_STREET_REACH` in front of it), or of a building with no
+     * street in its address: its number alone reads as another street's (T-125).
+     */
+    "decal-plate-street": placed((i, on) => {
+      if (i.prop !== "house-plate") return null;
+      const street = world.tagsAt(on.b.at)["addr:street"];
+      if (!street) return "of a building with no addr:street";
+      const lines = world.streets.filter((s) => s.name === street);
+      for (let d = 1; d <= PLATE_STREET_REACH; d++) {
+        const q = pointOn(on.wall, on.u, d);
+        if (lines.some((s) => s.line.some((a, k) => k + 1 < s.line.length && segGap(q, a, s.line[k + 1]!) < 1.5))) return null;
+      }
+      return `not facing ${street}`;
+    }),
+    /** Graffiti on a listed building the map does not tag (`LISTED_BUILDINGS`, T-124). */
+    "decal-graffiti-heritage-list": placed((i, on) => (i.prop === "graffiti" && world.listedAt(on.b.at) ? "on a listed building" : null)),
     /** A decal in a block of the renderer's furniture no other piece is in: its mesh a mesh more for decals alone. */
     "decal-alone-in-block": () => {
       const filled = new Set(all.filter((i) => !DECAL_KINDS.has(i.prop)).map(world.blockOf));

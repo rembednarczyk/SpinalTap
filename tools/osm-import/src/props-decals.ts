@@ -4,8 +4,8 @@
  * 1. **Graffiti** goes where the facade shader paints no glass, on the buildings of the districts
  *    that take it (`PAINT`: the market under the viaduct and the riverside most, the deptak some,
  *    the Old Town and the Rynek none, as the districts' character in ADR-0058), never on a
- *    landmark, a building of historic, sacred or civic use or one the map tags `historic` or
- *    `heritage`. Three places on a wall:
+ *    landmark, a building of historic, sacred or civic use, one the map tags `historic` or
+ *    `heritage` or one of the listed buildings the map does not tag (`LISTED_BUILDINGS`). Three places on a wall:
  *    - `street`: a wall without glass from the ground up (a garage's, a short stretch of an
  *      outline), the piece from `STREET_LIFT` over the pavement;
  *    - `mural`: a firewall over its lower neighbour where no holo-ad may hang (`holoMayHang`),
@@ -17,8 +17,8 @@
  *    plate) starts `BAND_ROOM` over the band's top.
  *    A wall takes one piece per `WALL_STEP` of its length at most, by a hash of the building's
  *    place, the wall and the zone against the district's share.
- * 2. **A house number** (`addr:housenumber` of the building's outline in the map) on one street wall
- *    without glass of its building, the one facing a street of its `addr:street` first, its plate
+ * 2. **A house number** (`addr:housenumber` of the building's outline in the map) on one wall
+ *    without glass of its building facing the street of its `addr:street` (none without one), its plate
  *    `PLATE_LIFT` over the pavement. The plate shows the map's number. Not on landmarks.
  * Every wall decal keeps `END_ROOM` from its wall's ends, its corners out of the neighbours taller
  * than it, its span off the venues' boards on the wall (`BOARD_ROOM`), its middle `PASSAGE_ROOM`
@@ -33,6 +33,7 @@ import { doorLayout } from "../../../packages/core/src/world/doors.ts";
 import type { Pt } from "./geometry.ts";
 import type { Tags } from "./osm.ts";
 import { addStreetDecals } from "./props-decals-street.ts";
+import { LISTED_BUILDINGS } from "./listed-buildings.ts";
 import { fnv, unit, yawOf } from "./props-place.ts";
 import type { Site } from "./props-site.ts";
 
@@ -107,7 +108,8 @@ const ZONE_SHARE: Readonly<Record<DecalZone, number>> = {
 };
 /** Uses and tags of the buildings no graffiti goes on. */
 export const PROTECTED_USE: ReadonlySet<string> = new Set(["historic", "church", "civic"]);
-export const isProtected = (w: DecalWall, tags: Tags | undefined): boolean => w.landmark || PROTECTED_USE.has(w.use) || tags?.historic !== undefined || tags?.heritage !== undefined;
+export const isProtected = (w: DecalWall, tags: Tags | undefined): boolean =>
+  w.landmark || PROTECTED_USE.has(w.use) || tags?.historic !== undefined || tags?.heritage !== undefined || LISTED_BUILDINGS.has(w.osm.split("/")[0]!);
 
 /** From a wall's ends, the venues' boards' ends and a passage's axis (m). */
 export const END_ROOM = 0.3;
@@ -270,8 +272,9 @@ const graffitiSpots = (w: DecalWall, zone: DecalZone, ctx: DecalContext, key: st
 /** The zones a wall offers graffiti. */
 export const zonesOf = (w: DecalWall): DecalZone[] => [...(w.glassFree && !w.blind ? ["street" as const] : []), ...(w.glassFree && w.blind && !w.holo ? ["mural" as const] : []), "plinth"];
 
-/** Does a street's axis run in front of the wall's middle, within `STREET_REACH`? Its name, or null. */
-export const streetInFront = (site: Site, w: DecalWall): string | null => {
+/** The names of the streets whose axes run in front of the wall's middle, within `STREET_REACH`. */
+export const streetsInFront = (site: Site, w: DecalWall): Set<string> => {
+  const out = new Set<string>();
   for (let d = 1; d <= STREET_REACH; d += 1) {
     const q = pointOn(w, w.length / 2, d);
     for (const st of site.streets) {
@@ -281,21 +284,27 @@ export const streetInFront = (site: Site, w: DecalWall): string | null => {
         const dx = b.x - a.x;
         const dz = b.z - a.z;
         const t = Math.max(0, Math.min(1, ((q.x - a.x) * dx + (q.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
-        if (Math.hypot(a.x + dx * t - q.x, a.z + dz * t - q.z) < 1) return st.name;
+        if (st.name && Math.hypot(a.x + dx * t - q.x, a.z + dz * t - q.z) < 1) out.add(st.name);
       }
     }
   }
-  return null;
+  return out;
 };
 
-/** The house plate of a building: on its street wall without glass, the one on its `addr:street` first. */
+/**
+ * The house plate of a building: on its longest wall without glass that faces the street of its
+ * `addr:street`; none without one (a plate shows the number alone, so on a wall of another street it
+ * would read as that street's: T-125).
+ */
 const plateSpot = (site: Site, walls: readonly DecalWall[], tags: Tags, ctx: DecalContext): { w: DecalWall; s: WallSpot } | null => {
   const no = parseHouseNumber(tags["addr:housenumber"]);
   if (!no) return null;
   const fits = walls.filter((w) => !w.landmark && w.glassFree && !w.blind && w.length >= HOUSE_PLATE.width + 2 * END_ROOM);
-  const facing = fits.map((w) => ({ w, street: streetInFront(site, w) })).filter((f) => f.street !== null);
-  facing.sort((p, q) => Number(q.street === tags["addr:street"]) - Number(p.street === tags["addr:street"]) || q.w.length - p.w.length);
-  const pick = facing[0]?.w;
+  const street = tags["addr:street"];
+  if (!street) return null;
+  const facing = fits.filter((w) => streetsInFront(site, w).has(street));
+  facing.sort((p, q) => q.length - p.length);
+  const pick = facing[0];
   if (!pick) return null;
   const u = pick.length / 2;
   const paving = pavingUnder(ctx, pick, u - HOUSE_PLATE.width / 2, u + HOUSE_PLATE.width / 2);

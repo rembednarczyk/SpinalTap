@@ -6,6 +6,7 @@ import type { StreetPropItem } from "../../../packages/core/src/world/city-geo.t
 import { BAND_ROOM, DOOR_FRAME, type DecalContext, doorsOn, type DecalWall, END_ROOM, MURAL_LIFT, PLATE_LIFT, STREET_LIFT, addDecals } from "../src/props-decals.ts";
 import { GRATE_SPACING, KERB_GAP, STICKER_GAP, grateCorners } from "../src/props-decals-street.ts";
 import { Site } from "../src/props-site.ts";
+import { LISTED_BUILDINGS } from "../src/listed-buildings.ts";
 import type { Tags } from "../src/osm.ts";
 
 /**
@@ -131,6 +132,15 @@ describe("graffiti (ADR-0058 stage 6)", () => {
     expect(decals(row(), {}, "kanal").of("graffiti")).toHaveLength(0);
   });
 
+  it("spares the listed buildings the map does not tag (`LISTED_BUILDINGS`, T-124)", () => {
+    const listed = [...LISTED_BUILDINGS.keys()][0]!;
+    expect(listed).toBe("r1071051");
+    // The first wall the listed building's, the second a split part of it (`r…/1`), the others plain.
+    const walls = row().map((w, k) => (k === 0 ? { ...w, osm: listed } : k === 1 ? { ...w, osm: `${listed}/1` } : w));
+    expect(decals(row()).of("graffiti").filter((i) => i.x < 20).length).toBeGreaterThan(0);
+    expect(decals(walls).of("graffiti").filter((i) => i.x < 20)).toHaveLength(0);
+  });
+
   it("spares landmarks, buildings of historic, sacred or civic use and those the map tags historic or heritage", () => {
     for (const patch of [{ landmark: true }, { use: "historic" }, { use: "church" }, { use: "civic" }]) expect(decals(row(patch)).of("graffiti"), JSON.stringify(patch)).toHaveLength(0);
     for (const t of [{ historic: "building" }, { heritage: "2" }] as Tags[]) {
@@ -155,7 +165,7 @@ describe("graffiti (ADR-0058 stage 6)", () => {
   });
 
   it("starts a piece on the wall itself, a mural and a plate over the plinth band, which would hide it", () => {
-    const tags = new Map(row().map((w): [string, Tags] => [w.osm, { "addr:housenumber": "5" }]));
+    const tags = new Map(row().map((w): [string, Tags] => [w.osm, { "addr:housenumber": "5", "addr:street": "Testowa" }]));
     const { items } = decals(row({ base: 1.2, top: 5 }), { buildingTags: tags });
     const walls = items.filter((i) => i.prop === "house-plate" || (i.prop === "graffiti" && !graffitiLayout(i.variant).band));
     expect(walls.length).toBeGreaterThan(20);
@@ -217,7 +227,7 @@ describe("decals on one wall", () => {
   it("keep apart: the plate first, the graffiti of the street and of the plinth round it", () => {
     // Walls without glass on a 1.6 m plinth: both zones offer graffiti; the first wall also a plate.
     const walls = row({ base: 1.6, top: 6 });
-    const { items } = decals(walls, { buildingTags: new Map(walls.map((w): [string, Tags] => [w.osm, { "addr:housenumber": "3" }])) });
+    const { items } = decals(walls, { buildingTags: new Map(walls.map((w): [string, Tags] => [w.osm, { "addr:housenumber": "3", "addr:street": "Testowa" }])) });
     expect(items.filter((i) => i.prop === "house-plate").length).toBeGreaterThan(20);
     const rect = (i: StreetPropItem) => {
       if (i.prop === "house-plate") {
@@ -307,7 +317,7 @@ describe("house number plates", () => {
   it("puts the map's number on the building's street wall without glass, the plate over the pavement", () => {
     const walls = [wall(0)];
     const p = decals(walls, {
-      buildingTags: new Map([["w0", { "addr:housenumber": "12a" }]]),
+      buildingTags: new Map([["w0", { "addr:housenumber": "12a", "addr:street": "Testowa" }]]),
     }).of("house-plate");
     expect(p).toHaveLength(1);
     const l = plateLayout(p[0]!.variant);
@@ -316,7 +326,7 @@ describe("house number plates", () => {
     onItsWall(p[0]!, walls, HOUSE_PLATE.width);
   });
 
-  it("puts the plate on the wall facing the street of its `addr:street`, the longest street wall otherwise", () => {
+  it("puts the plate only on a wall facing the street of its `addr:street` (T-125)", () => {
     // The building's south wall (8 m) faces Testowa, its east wall (6 m) Boczna along x = 15.
     const south = wall(0);
     const east = wall(0, { a: { x: 8, z: 40 }, b: { x: 8, z: 46 }, nx: 1, nz: 0, length: 6 });
@@ -325,16 +335,20 @@ describe("house number plates", () => {
     const plateOn = (street?: string) => {
       const tags = new Map([["w0", { "addr:housenumber": "4", ...(street ? { "addr:street": street } : {}) }]]);
       const p = decals([south, east], { buildingTags: tags }, "targ", [], undefined, boczna).of("house-plate");
-      expect(p).toHaveLength(1);
-      return Math.abs(p[0]!.x - 8) < 0.01 ? "east" : "south";
+      return p.length === 0 ? "none" : p.length === 1 ? (Math.abs(p[0]!.x - 8) < 0.01 ? "east" : "south") : "both";
     };
     expect(plateOn("Boczna")).toBe("east");
     expect(plateOn("Testowa")).toBe("south");
-    expect(plateOn()).toBe("south");
+    // No street in the address, or one the building does not face: no plate (a number on another street reads as its).
+    expect(plateOn()).toBe("none");
+    expect(plateOn("Inna")).toBe("none");
+    // Only the east wall to take a plate, the address on Testowa: none on Boczna's side.
+    const tags = new Map([["w0", { "addr:housenumber": "4", "addr:street": "Testowa" }]]);
+    expect(decals([east], { buildingTags: tags }, "targ", [], undefined, boczna).of("house-plate")).toHaveLength(0);
   });
 
   it("lifts the plate over the plinth band, but not out of sight over a steep street", () => {
-    const tags = new Map([["w0", { "addr:housenumber": "9" }]]);
+    const tags = new Map([["w0", { "addr:housenumber": "9", "addr:street": "Testowa" }]]);
     const over = decals([wall(0, { base: 2, top: 9 })], { buildingTags: tags }).of("house-plate");
     expect(over).toHaveLength(1);
     expect(over[0]!.y + plateLayout(over[0]!.variant).lift).toBeGreaterThanOrEqual(2 + 0.55 + BAND_ROOM - 1e-6);
@@ -342,11 +356,11 @@ describe("house number plates", () => {
   });
 
   it("puts none without a number, on a glazed wall, a landmark or a wall facing no street; on the old town's houses it does", () => {
-    const tags = new Map([["w0", { "addr:housenumber": "7" }]]);
+    const tags = new Map([["w0", { "addr:housenumber": "7", "addr:street": "Testowa" }]]);
     expect(decals([wall(0)], {}).of("house-plate")).toHaveLength(0);
     expect(
       decals([wall(0)], {
-        buildingTags: new Map([["w0", { "addr:housenumber": "bez numeru" }]]),
+        buildingTags: new Map([["w0", { "addr:housenumber": "bez numeru", "addr:street": "Testowa" }]]),
       }).of("house-plate"),
     ).toHaveLength(0);
     expect(decals([wall(0, { glassFree: false })], { buildingTags: tags }).of("house-plate")).toHaveLength(0);

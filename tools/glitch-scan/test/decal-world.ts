@@ -5,6 +5,7 @@ import { crossingBands } from "../../../packages/sim/src/content/lublin/crossing
 import { MAP_CHUNKS, PASSAGES } from "../../../packages/sim/src/content/lublin/sites";
 import { groundY, surfaceY } from "../../../packages/sim/src/content/lublin/terrain";
 import { WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
+import { LISTED_BUILDINGS } from "../../osm-import/src/listed-buildings.ts";
 import { loadBuildingTags } from "../../osm-import/src/props-art.ts";
 import { cityVenueBoards } from "../../osm-import/src/venue-boards.ts";
 import type { DecalWorld } from "./decal-pieces";
@@ -37,6 +38,8 @@ export const lublinDecalWorld = (): DecalWorld => {
     districtAt: (p) => MAP_CHUNKS.find((c) => p.x >= c.bounds.minX && p.x < c.bounds.maxX && p.z >= c.bounds.minZ && p.z < c.bounds.maxZ)?.district ?? "",
     tagsAt: (at) => tags.get((ids.get(`${at.x.toFixed(2)},${at.z.toFixed(2)}`) ?? "").split("/")[0]!) ?? {},
     blockOf: (p) => cellKey(p.x, p.z, PROP_BLOCK),
+    streets: MAP_CHUNKS.flatMap((c) => c.streets.map((s) => ({ name: s.name, line: ring(s.line) }))),
+    listedAt: (at) => LISTED_BUILDINGS.has((ids.get(`${at.x.toFixed(2)},${at.z.toFixed(2)}`) ?? "").split("/")[0]!),
     poleLamp: (p) =>
       isPoleLamp({
         prop: "lamp-road",

@@ -132,8 +132,11 @@ const world = (patch: Partial<DecalWorld> = {}): DecalWorld => ({
   groundY: () => 0,
   surfaceY: () => 0,
   districtAt: () => "targ",
-  tagsAt: () => ({}),
+  // The buildings' address: Testowa, its axis along z = -8 in front of their south walls.
+  tagsAt: () => ({ "addr:street": "Testowa" }),
   poleLamp: () => false,
+  streets: [{ name: "Testowa", line: [{ x: -20, z: -8 }, { x: 140, z: -8 }] }],
+  listedAt: () => false,
   // One block: the furniture and the decals all in it.
   blockOf: () => "0",
   ...patch,
@@ -165,7 +168,7 @@ describe("the glitch scan's decal checks (ADR-0058 stage 6)", () => {
     ]);
     // A plate on a protected building is no graffiti.
     none([on(GARAGE_S, "house-plate", 1, plate(2.2))], {
-      tagsAt: () => ({ historic: "yes" }),
+      tagsAt: () => ({ historic: "yes", "addr:street": "Testowa" }),
       districtAt: () => "kanal",
     });
   });
@@ -229,6 +232,23 @@ describe("the glitch scan's decal checks (ADR-0058 stage 6)", () => {
     const views = [gate, ...VIEWS.slice(1)];
     expect(run([on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.3))], { views })["decal-under-plinth"]).toBe(0);
     expect(run([on(GARAGE_S, "graffiti", 3, onBand(2, 0.3, 0.2))], { views })["decal-under-plinth"]).toBe(1);
+  });
+
+  it("finds a house plate on a wall that does not face the street of its address (T-125)", () => {
+    none([on(GARAGE_S, "house-plate", 1, plate(2.2))]);
+    only("decal-plate-street", [on(GARAGE_S, "house-plate", 1, plate(2.2))], { tagsAt: () => ({ "addr:street": "Inna" }) });
+    only("decal-plate-street", [on(GARAGE_S, "house-plate", 1, plate(2.2))], { tagsAt: () => ({}) });
+    // The garage's west wall faces x < 0, away from Testowa.
+    only("decal-plate-street", [on(wallOf(5, 3, -1, 0), "house-plate", 3, plate(2.2))]);
+    // Graffiti is no plate.
+    none([on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.6))], { tagsAt: () => ({}) });
+  });
+
+  it("finds graffiti on a listed building the map does not tag (T-124), not a plate on it", () => {
+    only("decal-graffiti-heritage-list", [on(GARAGE_S, "graffiti", 3, graffiti(2, 1, 0.6))], { listedAt: () => true });
+    none([on(GARAGE_S, "house-plate", 1, plate(2.2))], { listedAt: () => true });
+    // Only the garage at its place is listed: graffiti on the firewall's building is not on it.
+    none([on(FIREWALL, "graffiti", 3, graffiti(3, 2, 4.5))], { listedAt: (at) => Math.abs(at.x - 5) < 0.01 });
   });
 
   it("finds a wall decal reaching into a taller neighbour", () => {
