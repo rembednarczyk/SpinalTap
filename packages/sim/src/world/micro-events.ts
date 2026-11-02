@@ -76,6 +76,12 @@ export const rollMicroEvent = (ctx: SimContext, district: DistrictId, player: En
 
 const byId = (ctx: SimContext, id: number): Entity | undefined => [...ctx.world].find((e) => e.id === id);
 
+/** Out of it: gone, or a body on the ground (knocked out, or killed in a takedown), which stays in the world (G-231). */
+const out = (ctx: SimContext, id: number): boolean => {
+  const e = byId(ctx, id);
+  return !e || !!e.downed;
+};
+
 /** Ends the micro-event: its people go (the living ones), the dead leave no flag behind. */
 const close = (ctx: SimContext, run: MicroEventRun, outcome: "won" | "helped" | "failed" | "left"): void => {
   for (const id of [run.victim, ...run.attackers]) {
@@ -112,9 +118,9 @@ export const runMicroEvent = (ctx: SimContext, player: Entity | null): void => {
     close(ctx, run, "left");
     return;
   }
-  if (!byId(ctx, run.victim)) {
+  if (out(ctx, run.victim)) {
     close(ctx, run, "failed");
     return;
   }
-  if (run.kind === "mugging" && run.attackers.every((id) => !byId(ctx, id))) close(ctx, run, "won");
+  if (run.kind === "mugging" && run.attackers.every((id) => out(ctx, id))) close(ctx, run, "won");
 };
