@@ -2,6 +2,15 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-211 Teleport (narzędzie zrzutów) na targu i w dokach ląduje we wnętrzu
+- Status: niepotwierdzone (2.11, łowca na origin/main 421a10b; do zamknięcia jako odrzucone, nie do odtworzenia)
+- Ważność: S4 (gdyby się potwierdziło) · Zasięg: zgłoszone (2689; 247) w dokach i (550; 281) na targu
+- Dowód (dane): żaden z dwóch punktów nie leży w żadnym pokoju `INTERIORS` (7 pokoi w 4 wnętrzach: clinic x 318–325, neon-koi x 307–324, trasa-podziemna x 568–585 z ok. -64 do -56, tessen-office x 2530–2542, z 428–438; najbliższy (2689; 247) to Tessen, ok. 190 m dalej; `interiorAt` na y gruntu +0,1 i +1 daje null w obu punktach). Żaden nie leży w obrysie budynku OSM (docki: w173489049 środek 17 m, obrys nie obejmuje punktu; targ: najbliższy w66324547 20,7 m, w66324546 22 m) ani w obszarze set piece (MARKET_AREA x 755–815, DOCKS_AREA x 2520–2594). Wysokość: `groundY` = -22,744 (docki) i -18,44 (targ), `teleport` stawia gracza na `streamer.ground.heightAt` (zrzut JSON: y -22,744, kamera y -21,124), czyli nie pod terenem
+- Dowód (zrzuty z gry, `glitch-shots`, yaw 0, pitch 0): docki `/tmp/claude-0/-home-user-SpinalTap/ddc6f520-6741-5c4a-a4fb-ad093091508f/scratchpad/g211-shots/g211-docks.png`: plac przy ścianie budynku (ciemna ściana po prawej), z lewej granatowa woda/niecka, żadnego wnętrza; targ `.../g211-market.png`: ulica z zabudową, żadnego wnętrza. Niebieski kadr, który widział weryfikator, to najpewniej woda (docki) lub kadr z innego yaw/y; nie odtworzono
+- Kontrola `interior-outside-building` (baza 0, tolerancja 0,3 m) nie ma tu nic do zgłoszenia: żadne wnętrze nie sięga tych punktów
+- Do zrobienia: zamknąć jako odrzucone (nie do odtworzenia); jeśli weryfikator ma kadr, niech poda yaw, pitch i y teleportu. Opcjonalnie test przyjęcia na przyszłość (QA): `interiorAt` dla (2689; 247) i (550; 281) na gruncie zwraca null
+- Pakiet właściciela: bez (packages/sim ani e2e bez zmian)
+
 ### G-180 Zapis po śmierci gracza wczytuje się bez game over
 - Status: niepotwierdzone (2.11, naprawiacz): żadna ścieżka w app nie zapisuje martwego gracza (obrażenia przed `deathSystem`, `canSave` odrzuca ekran `dead`, pauza wymaga `inControl`, autozapis wymaga `!gameOver` i hp > 0); strażnik `packages/app/test/death-save.test.ts` w PR #193. Poboczne: import spreparowanego zapisu z hp 0 może dać podwójne `PlayerDied` (walidator mógłby odrzucać hp ≤ 0)
 - Ważność: S3 do potwierdzenia · Zasięg: zapis przy hp 0 wczytuje się z `gameOver=false` i drugi raz emituje `PlayerDied`
