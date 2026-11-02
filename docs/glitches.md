@@ -624,7 +624,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: ≥ 1 drzewo na 150 m² zbocza obu skarp, 0 drzew na ścieżkach i schodach
 
 ### G-213 Biegi schodów krótsze niż szerokie rysowane w poprzek
-- Status: w PR #204 (2.11, runda 3 @ 0995c9d PRZYJĘTE, kurator w toku): pasy ≥ 0,45 m, kontrola `steps-band-hidden`; bazy `steps-across-run` 1 i `steps-band-hidden` 1 to stan sprzed G-213 na brzegach chunków (G-234)
+- Status: w PR #204 (2.11, runda 3 @ 0995c9d PRZYJĘTE; kurator ZGODNE Z UWAGAMI: każdy pas leży wzdłuż biegu swojej drogi poza znanymi brzegami chunków G-234, uproszczenie usuwa wierzchołki do 4,2 cm; odstępstwa sprzed zmiany T-131 (G-236), T-132 (G-237)): pasy ≥ 0,45 m, kontrola `steps-band-hidden`; bazy `steps-across-run` 1 i `steps-band-hidden` 1 to stan sprzed G-213 na brzegach chunków (G-234)
 - Ważność: S4 · Zasięg: 36 ze 121 biegów w mieście jest krótszych niż ich pas 3 m, więc renderer bierze dłuższy bok pasa za kierunek biegu i rysuje stopnie w poprzek (np. w66258166 przy Donżonie, w1312664177)
 - Poprawka: zdjąć warunek `w > PATHS.steps` w `flightStrips` (tools/osm-import/src/ground.ts, po #194), żeby każdy bieg krótszy niż szeroki był dzielony na pasy; kontrola skanu „bieg w poprzek”
 - Poboczne: wyciąg `krakowskie.json` bez murków (nieaktualny cache kafli, `osm:fetch --only=krakowskie` z siecią); pas bez nawierzchni między brukiem Placu Zamkowego (x ok. 759) a ścieżką w56965514 (x ok. 765)
@@ -769,6 +769,25 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: korekta `height` (ewentualnie `roof:shape`/`roof:height` hełmu) w `tools/osm-import/src/corrections.ts` z odsyłaczem T-129 i źródłem w komentarzu
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: szczyt bryły w680377807 (`y + height + roof`) ± 1 m od wartości ze źródła, `source: height`; kontrola `osm-tower-default-height` 1 → 0
+
+### G-236 Schody z `incline` z OSM wznoszą się w grze w drugą stronę
+- Status: zgłoszone (2.11, kurator, przegląd #204; stan sprzed G-213)
+- Ważność: S4 · Zasięg: 2 z 48 dróg schodów z `incline` w prostokątach map · Koszt: mały do średniego
+- Gdzie: T-131; w56965515 pod wiaduktem Zamkowej (736,8; 161,0) → (727,3; 164,0), Podzamcze/Stare Miasto, brzeg chunka z = 160; w66335060 (603,5; −184,6) → (597,3; −185,3), Stare Miasto
+- Dowód: teren gry (`SHAPED_TERRAIN`, bez pomostu wiaduktu) na węzłach w56965515: −15,87, −16,76, −15,33, −17,13 przy OSM `incline=up` (od Podwala w górę skarpy); w66335060: −2,70 → −2,30 przy `incline=down`, `step_count=7`. `planSteps` stawia stopnie po terenie, więc schody idą w dół tam, gdzie w Lublinie idą w górę
+- Przyczyna: NMT pod wiaduktem i przy murach to interpolacja (mosty i obiekty usunięte), a schody nie dostają własnego spadku
+- Poprawka: dla biegu z `incline` (i `step_count`) wysokości końców z kierunku OSM: wyrównanie terenu wzdłuż schodów (`RAMPS`/`PADS` z uzasadnieniem w T-131) albo spadek biegu liczony w imporcie; razem z G-229
+- Pakiet właściciela: tools/osm-import, packages/sim/src/content/lublin (`sites.ts`), packages/engine (steps-plan)
+- Test przyjęcia: teren na końcach każdego biegu z `incline` rośnie w kierunku OSM o ≥ 0,1 m na bieg ze stopniami; kontrola `steps-incline-against` 2 → 0
+
+### G-237 Schody bez `width` z OSM rysowane na 3 m: nachodzą na siebie na zakrętach i wchodzą w budynki
+- Status: zgłoszone (2.11, kurator, przegląd #204; stan sprzed G-213)
+- Ważność: S4 · Zasięg: wszystkie 87 dróg `highway=steps` w wyciągach poza schodami zamkowymi (żadna nie ma `width`) · Koszt: średni
+- Gdzie: T-132; metalowe schody do wejścia Donżonu w66258166 (884,5..887; 218..222), w888479969 (754..763; −150,5..−145,5), zakręt w293370649 (572; −69,5)
+- Dowód: ortofoto PZGiK (2.11): schody Donżonu ok. 1–1,2 m, w888479969 ok. 1,2–1,6 m; w grze pas 3 m (`PATHS.steps`). Przy Donżonie pasy trzech biegów po 1,9 m nachodzą na siebie i 1,5 m w obrys wieży. Przy w293370649 pasy biegu 0,6 m na zakręcie leżą na górnych 1,5 m biegu 3,5 m i po #204 ich stopnie idą w poprzek stopni tamtego biegu
+- Poprawka: szerokość schodów bez `width` z kontekstu (np. bieg przy `entrance` albo krótki ze `step_count` ≤ 12: 1,5 m; metalowe `surface=metal`: 1,2 m), korekty z ortofoto w `TAG_CORRECTIONS` dla Donżonu i w888479969; pas biegu na zakręcie przycięty do dwusiecznej kąta, bez nakładania na sąsiedni bieg
+- Pakiet właściciela: tools/osm-import (ground)
+- Test przyjęcia: pas w66258166 ≤ 1,5 m i bez części w obrysie w450180469; żaden pas schodów nie nachodzi ponad 0,1 m² na pas innego biegu tej samej drogi; kontrola `steps-runs-overlap` liczy takie pary (baza do ustalenia przy wdrożeniu)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
