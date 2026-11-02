@@ -17,13 +17,17 @@ export const poolDrop = (p: PatrolPose): number | null => {
   return drop <= BEAM_FROM ? drop : null;
 };
 
-/** A point of the unit disc (x, z in the drone's frame) on the paving under a pose with the searchlight `drop` metres long. */
+/** The pool's radius for a drop (m): in 5 cm steps of the drop, so the bob does not stir it while the drone hangs. */
+export const poolRadius = (drop: number): number => Math.round(drop / 0.05) * 0.05 * BEAM_SPREAD;
+
+/**
+ * A point of the unit disc (x along world x, z along world z: a round pool needs no heading, so it
+ * stays put while the drone sways) on the paving under a pose with the searchlight `drop` metres long.
+ */
 export const poolPoint = (p: PatrolPose, drop: number, x: number, z: number, surfaceAt: (x: number, z: number) => number): { x: number; y: number; z: number } => {
-  const c = Math.cos(p.yaw);
-  const s = Math.sin(p.yaw);
-  const r = drop * BEAM_SPREAD;
-  const wx = p.x + (x * c + z * s) * r;
-  const wz = p.z + (-x * s + z * c) * r;
+  const r = poolRadius(drop);
+  const wx = p.x + x * r;
+  const wz = p.z + z * r;
   // Each point on the paving where it lies: the pool follows a slope or a kerb, not the height under the drone.
   return { x: wx, y: pavingAt(surfaceAt, wx, wz) + POOL_LIFT, z: wz };
 };

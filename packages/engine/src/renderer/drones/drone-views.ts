@@ -8,7 +8,7 @@ import { type DroneTemplate, droneTemplates } from "./drone-models";
 import { type Patrol, type PatrolLane, type PatrolPose, patrolFleet, patrolPose } from "./patrol-flight";
 import { type PatrolWorld, planPatrolLanes } from "./patrol-lanes";
 import { type PatrolTemplate, patrolTemplates } from "./patrol-models";
-import { poolDrop, poolPoint } from "./patrol-pool";
+import { poolDrop, poolPoint, poolRadius } from "./patrol-pool";
 
 /**
  * How far drones are drawn (m from the camera), where the far version takes over, and how many of
@@ -62,6 +62,8 @@ interface Slot {
   readonly template: DroneTemplate | PatrolTemplate;
   readonly offset: number;
   shown: boolean;
+  /** Where a patrol's pool was laid on the paving last (its place and radius), "" for nowhere. */
+  pool: string;
 }
 
 /** Room round a drone for the mesh's bounds (m). */
@@ -188,7 +190,7 @@ export class DroneViews {
       for (const near of [true, false]) {
         const template = near ? templates[kind].near : templates[kind].far;
         for (let k = 0; k < (near ? lod.nearSlots : lod.farSlots); k++) {
-          this.slots.push({ kind, near, template, offset: total, shown: false });
+          this.slots.push({ kind, near, template, offset: total, shown: false, pool: "" });
           total += template.vertexCount;
         }
       }
@@ -198,7 +200,7 @@ export class DroneViews {
     for (const near of [true, false]) {
       for (let k = 0; k < (near ? plod.nearSlots : plod.farSlots); k++) {
         const template = near ? watch.near : watch.far;
-        this.slots.push({ kind: "watch", near, template, offset: total, shown: false });
+        this.slots.push({ kind: "watch", near, template, offset: total, shown: false, pool: "" });
         total += template.vertexCount;
       }
     }
@@ -275,9 +277,9 @@ export class DroneViews {
   }
 
   /**
-   * Writes a slot's template turned by the yaw and moved to the pose. A patrol's searchlight pool
-   * lies on the paving under it (`poolPoint`), wider the higher the drone; off higher than
-   * `BEAM_FROM` (folded into the drone's foot).
+   * Writes a slot's template turned by the yaw, scaled and moved to the pose. A patrol's searchlight
+   * pool lies on the paving under it (`poolPoint`), wider the higher the drone, laid again only when
+   * it moves; off higher than `BEAM_FROM` (folded into the drone's foot).
    */
   private place(slot: Slot, p: DronePose | PatrolPose): void {
     const c = Math.cos(p.yaw);
@@ -286,17 +288,22 @@ export class DroneViews {
     const nsrc = slot.template.normals;
     const beam = "beam" in slot.template ? slot.template.beam * 3 : src.length;
     const drop = "ground" in p ? poolDrop(p) : null;
+    const scale = "scale" in p ? p.scale : 1;
     const surfaceAt = this.patrolsPlanned?.surfaceAt ?? (() => 0);
+    // The pool where it lay last frame (a drone hanging still): its points are on the paving already.
+    const pool = drop === null ? "" : `${p.x.toFixed(3)},${p.z.toFixed(3)},${poolRadius(drop)}`;
+    const kept = pool !== "" && pool === slot.pool;
+    slot.pool = pool;
     let o = slot.offset * 3;
     for (let i = 0; i < src.length; i += 3, o += 3) {
       if (i < beam || drop === null || !("ground" in p)) {
-        const r = i < beam ? 1 : 0;
+        const r = i < beam ? scale : 0;
         const x = (src[i] as number) * r;
         const z = (src[i + 2] as number) * r;
         this.positions[o] = p.x + x * c + z * s;
         this.positions[o + 1] = p.y + (src[i + 1] as number) * r;
         this.positions[o + 2] = p.z - x * s + z * c;
-      } else {
+      } else if (!kept) {
         const q = poolPoint(p, drop, src[i] as number, src[i + 2] as number, surfaceAt);
         this.positions[o] = q.x;
         this.positions[o + 1] = q.y;
@@ -312,6 +319,7 @@ export class DroneViews {
 
   /** Folds a slot's vertices into one point, so its triangles draw nothing. */
   private fold(slot: Slot): void {
+    slot.pool = "";
     const start = slot.offset * 3;
     const end = start + slot.template.vertexCount * 3;
     const [x, y, z] = [this.positions[start] ?? 0, this.positions[start + 1] ?? 0, this.positions[start + 2] ?? 0];
