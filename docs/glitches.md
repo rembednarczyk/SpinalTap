@@ -734,7 +734,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (micro-events, streaming)
 
 ### G-232 Wolnostojące dzwonnice i wieże z `use: historic` rysowane jak kamienice
-- Status: zgłoszone (2.11, naprawiacz G-224)
+- Status: w PR #209 (2.11, weryfikacja czeka na slot, potem kurator): `tower: true` z tagów OSM, fasada wieży i dach namiotowy, kontrola `tower-dwelling-windows` 4 → 0 (Jozafat, Mikołaj, Baszta Gotycka, Donżon); do kuratora: Donżon i Baszta dostają tynk i okna wieży (Donżon w rzeczywistości ceglany), okna wieży świecą nocą w kondygnacjach
 - Ważność: S3 (proponowana: zabytek wygląda jak blok) · Zasięg: dzwonnica św. Mikołaja w680377807, wieża cerkwi św. Jozafata w1382552285 (po G-224 z wysokością z NMPT): rzędy oświetlonych okien i płaski szczyt (zrzut `scratchpad/g224/shots/g224-mikolaj-po.png`)
 - Poprawka: budynek z `man_made=tower`/`tower:type=bell_tower` dostaje fasadę wieży (bez okien mieszkań, okna dzwonnicy u góry) i dach namiotowy/hełm; kontrola skanu „wieża z oknami mieszkań”
 - Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import (use)
