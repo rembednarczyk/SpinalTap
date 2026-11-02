@@ -731,7 +731,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import (use)
 
 ### G-233 Ciało napastnika mikrozdarzenia niesione na ramieniu znika przy zapisie i wczytaniu
-- Status: zgłoszone (2.11, weryfikator G-231)
+- Status: w PR #211 (2.11, zapis v28, w weryfikacji): `strayBodies` w zapisie; ciało niesione w trakcie napadu: zapis zamyka napad jak „left”
 - Ważność: S4 · Zasięg: napad (mugging): ciało napastnika niesione przez gracza (`carrying` ustawione) po zapisie i wczytaniu: `carrying` null, 0 ciał. Przed „won” ciało ma klucz `micro:` i odpada w `isMicroKey`, po „won” klucza nie ma i dalej ginie
 - Poprawka: ciało napastnika po zakończeniu zdarzenia staje się zwykłym ciałem w zapisie (jak ciała posiłków, G-193); test zapis/wczytanie z niesionym ciałem
 - Pakiet właściciela: packages/sim (micro-events, bodies), packages/persistence
@@ -781,6 +781,24 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: części `building:part` z wysokością z NMPT w korektach importu (`tools/osm-import/src/corrections.ts`, odsyłacz T-133), co najmniej kościół Karmelitów osobno od skrzydeł; bez zmiany wysokości nawy
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
 - Test przyjęcia: kontrola `church-part-below-roof` 5 → 0; okap i kalenica nawy w grze dalej w 1,5 m od `CHURCH_SURFACE`
+
+### G-239 Ciało napastnika po wygranym napadzie znika po odejściu gracza ok. 400 m
+- Status: zgłoszone (2.11, naprawiacz G-233)
+- Ważność: S4 · Zasięg: po „won” ciało nie ma klucza, a ma chunk ofiary, więc uśpienie chunka zdejmuje je bez stanu (analogia G-219); tak samo po wczytaniu
+- Poprawka: jak G-219 (ciało bez chunku), z oceną nagromadzenia ciał (G-196); test z odejściem 400 m
+- Pakiet właściciela: packages/sim (micro-events, streaming)
+
+### G-240 Panika tłumu nie trafia do zapisu: wczytana gra rozjeżdża się zaraz po walce
+- Status: zgłoszone (2.11, naprawiacz G-233)
+- Ważność: S4 · Zasięg: `crowd.state: fleeing` (np. Hideo po walce) poza zapisem; wczytana gra różni się od gry bez zapisu do uspokojenia tłumu (ok. 12 s)
+- Poprawka: stan ucieczki tłumu w migawce encji (zapis + migracja) albo wyliczany z zapisanych zdarzeń; test hash co krok po zapisie w trakcie paniki
+- Pakiet właściciela: packages/sim (crowd), packages/persistence
+
+### G-241 Obaleni albo zabici takedownem przechodnie bez klucza mogą ginąć przy zapisie (do potwierdzenia)
+- Status: zgłoszone (2.11, naprawiacz G-233), niepotwierdzone
+- Ważność: S4 · Zasięg: cywile bez klucza nie mają `enemy`, więc `strayBodies` (G-233) ich nie bierze
+- Poprawka: sonda zapis/wczytanie z obalonym cywilem; jeśli ginie, rozszerzyć `strayBodies` z testem
+- Pakiet właściciela: packages/sim, packages/persistence
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
