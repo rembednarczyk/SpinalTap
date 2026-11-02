@@ -725,7 +725,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (micro-events, streaming)
 
 ### G-232 Wolnostojące dzwonnice i wieże z `use: historic` rysowane jak kamienice
-- Status: w PR #209 (2.11, PRZYJĘTE przez weryfikatora, kurator w toku): `tower: true` dla 5 wież, kontrola `tower-dwelling-windows` 4 → 0
+- Status: w PR #209 (2.11, PRZYJĘTE przez weryfikatora; kurator ZGODNE Z UWAGAMI, nie blokuje): `tower: true` dla 5 wież, kontrola `tower-dwelling-windows` 4 → 0. Uwagi wydzielone: materiał ceglany (G-244, T-134), okna wieży w kondygnacjach zamiast otworów u góry (G-245, T-135), za stromy dach wieży Jozafata (G-246, T-129)
 - Ważność: S3 (proponowana: zabytek wygląda jak blok) · Zasięg: dzwonnica św. Mikołaja w680377807, wieża cerkwi św. Jozafata w1382552285 (po G-224 z wysokością z NMPT): rzędy oświetlonych okien i płaski szczyt (zrzut `scratchpad/g224/shots/g224-mikolaj-po.png`)
 - Poprawka: budynek z `man_made=tower`/`tower:type=bell_tower` dostaje fasadę wieży (bez okien mieszkań, okna dzwonnicy u góry) i dach namiotowy/hełm; kontrola skanu „wieża z oknami mieszkań”
 - Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import (use)
@@ -739,7 +739,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 ### G-235 Dzwonnica kościoła św. Mikołaja z wysokości domyślnej, wysokość bez źródła
 - Status: zgłoszone (2.11, kurator, przegląd #207; wydzielone z G-224)
 - Ważność: S3 (proponowana: kościół na Czwartku bez pionowego akcentu) · Zasięg: 1 budynek (Podzamcze) · Koszt: średni (najpierw źródło, potem dane)
-- Gdzie: T-129; w680377807 (879,1; 545), wolnostojąca dzwonnica ok. 5 m na południe od kościoła w66258180, rzut ok. 7 × 7 m
+- Gdzie: T-129; w680377807 (879,1; 545), wolnostojąca dzwonnica ok. 5 m na południe od kościoła w66258180, rzut wydłużony ok. 7–7,5 × 2,5–3 m z dachem czterospadowym (ortofoto PZGiK, przegląd #209; dawne „ok. 7 × 7 m” błędne, obrys OSM 6,8 × 2,2 m poprawny co do kształtu). Po #209 dach namiotowy 3 m nad ścianą 3,3 m (szczyt y 3,8)
 - Dowód: w grze `source: default`, 3,3 m (1 kondygnacja), szczyt y 0,8 przy terenie y −2,5. OSM: `building=yes`, `man_made=tower`, `tower:type=bell_tower`, bez `height` i `building:levels`
 - Czego brak: wysokości. NMPT GUGiK nie nadaje się: maks. y 15,7 w obrysie to korona drzewa (odbicia od gruntu w obrysie, odchylenie 4–6 m, drzewa obok do y 18,2). Pl. Wikipedia nie podaje wysokości. Nie zgadywać
 - Źródła do sprawdzenia (kolejno, bez łamania licencji i zabezpieczeń): (1) chmura punktów LAS GUGiK (te same dane otwarte co NMT/NMPT) z klasyfikacją: punkty klasy 6 (budynek) w obrysie, maks. wysokość minus teren; drzewa (klasy 3–5) odpadają same; (2) zdjęcia z kategorii Commons „Belfry of Church of Saint Nicholas in Lublin” (licencja każdego pliku osobno): liczba kondygnacji i proporcja do kalenicy kościoła lub sąsiedniej kamienicy z `height`/`building:levels` w OSM; (3) karta zabytku NID A/226 (zespół kościoła) w zabytek.pl, jeśli opis podaje wysokość lub kondygnacje. Wynik i źródło wpisać do T-129
@@ -805,6 +805,33 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 (luka w narzędziu) · Zasięg: `tools/i18n-scan` liczy literały z polskimi znakami; „ruch” w `touch-controls.tsx` przeszedł, baza była 0
 - Poprawka: w JSX liczyć każdy tekst węzła (i `aria-label`, `title`, `placeholder`) poza wywołaniami `t()`, z listą dozwolonych (nazwy własne, symbole); baza z nowej reguły, potem w dół
 - Pakiet właściciela: tools/i18n-scan
+
+### G-244 Budynki ceglane z OSM rysowane w tynku: `building:material` nie trafia do gry
+- Status: zgłoszone (2.11, kurator, przegląd #209)
+- Ważność: S3 (proponowana: rozpoznawalne zabytki w złym materiale) · Zasięg: 4 budynki (6 elementów OSM z `building:material=brick`): Donżon w450180469, Baszta Gotycka w66286376, Kaplica Trójcy w66258167, Brama Krakowska r7224409 (części w617597406, w617597407) · Koszt: średni (pole w danych + paleta fasady)
+- Gdzie: T-134; Podzamcze (893,1; 214,6), (941; 214,6), Stare Miasto (512,6; −143), Krakowskie (472,6; −91,2)
+- Dowód: import nie przenosi `building:material` ani `building:colour` (tylko `roof:colour` w części dachów); kolor fasady z palety użycia. Po #209 Donżon i Baszta w jasnym tynku kościelnym (zrzut `g232-shots/g232-donzon-po.png`), przed #209 w szarofioletowym tynku `historic`. W rzeczywistości nietynkowana cegła (Brama Krakowska: cegła w części gotyckiej, tynk w nadbudowie)
+- Poprawka: import przenosi `building:material` (brick, stone, plaster) i `building:colour` (11 budynków) do danych budynku i części; fasada bierze z nich kolor ściany przed paletą użycia (cegła: czerwonobrązowa, bez tynku); Brama Krakowska rozdzielona po częściach
+- Pakiet właściciela: tools/osm-import, packages/engine (renderer/mapcity)
+- Test przyjęcia: budynek z `building:material=brick` ma kolor ściany z rodziny cegły; kontrola skanu `brick-plastered` (budynek lub część z `building:material=brick` w OSM z kolorem ściany z palety tynku) 6 → 0
+
+### G-245 Wieże z OSM z rzędami świecących okien co ok. 8 m zamiast strzelnic i otworów dzwonnych
+- Status: zgłoszone (2.11, kurator, przegląd #209)
+- Ważność: S4 · Zasięg: Donżon w450180469, Baszta Gotycka w66286376 (wieże obronne); dzwonnice w680377807 i w1382552285 do sprawdzenia po G-235/G-246; Wieża Trynitarska zgodna (okna na kondygnacjach) · Koszt: mały do średniego
+- Gdzie: T-135; Podzamcze (893,1; 214,6), Stare Miasto (512,6; −143)
+- Dowód: fasada wieży (`freeTower`) daje wysokie okna „civic” w kondygnacjach co ok. 8 m, nocą oświetlone; Donżon dwa rzędy dookoła (zrzut `g232-shots/g232-donzon-po.png`, ten sam układ przed #209). Rzeczywistość: Donżon i Baszta mają małe otwory i strzelnice, dzwonnice otwory na dzwony tylko u góry
+- Poprawka: dla `tower:type=defensive` małe ciemne otwory (strzelnice) bez świecenia; dla `tower:type=bell_tower` otwory dzwonne w górnej kondygnacji, niżej ślepa ściana; Wieża Trynitarska bez zmian
+- Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import (przeniesienie `tower:type`)
+- Test przyjęcia: kontrola skanu `tower-lit-tiers` (budynek z `tower: true` i `tower:type` defensive albo bell_tower z oświetlanymi oknami poniżej górnej kondygnacji) 2 → 0
+
+### G-246 Dach namiotowy wieży cerkwi św. Jozafata za stromy, okap ok. 1,5 m za nisko
+- Status: zgłoszone (2.11, kurator, przegląd #209)
+- Ważność: S4 · Zasięg: 1 budynek, w1382552285 (270; −9,2), Krakowskie · Koszt: mały (korekta danych)
+- Gdzie: T-129
+- Dowód: po #209 ściana 8,1 m (okap y 6,5) i dach namiotowy 3 m (stała importu dla wieży bez dachu w OSM), szczyt y 9,5. NMPT GUGiK 0,5 m: wierzchołek y 9,4 w (269,5; −10), okap ok. y 8,0–8,2 przy krawędziach, czyli ok. 1,4 m dachu (ok. 22°); ortofoto PZGiK: jasny blaszany dach namiotowy, rodzaj zgodny
+- Poprawka: korekta w `tools/osm-import/src/corrections.ts` z odsyłaczem T-129: `roof:shape=pyramidal`, `roof:height` 1,4 i `height` tak, by szczyt został y 9,5
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: okap w1382552285 y 8,0 ± 0,5, szczyt y 9,5 ± 0,5
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
