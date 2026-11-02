@@ -25,11 +25,25 @@ export const poolRadius = (drop: number): number => Math.round(drop / 0.05) * 0.
  * stays put while the drone sways) on the paving under a pose with the searchlight `drop` metres long.
  */
 export const poolPoint = (p: PatrolPose, drop: number, x: number, z: number, surfaceAt: (x: number, z: number) => number): { x: number; y: number; z: number } => {
-  const r = poolRadius(drop);
-  const wx = p.x + x * r;
-  const wz = p.z + z * r;
-  // Each point on the paving where it lies: the pool follows a slope or a kerb, not the height under the drone.
-  return { x: wx, y: pavingAt(surfaceAt, wx, wz) + POOL_LIFT, z: wz };
+  // The views' own laying (`layPool`) for one point.
+  const out = new Float32Array(3);
+  layPool(p.x, p.z, poolRadius(drop), Float32Array.of(x, z), surfaceAt, out);
+  return { x: out[0] as number, y: out[1] as number, z: out[2] as number };
+};
+
+/**
+ * The pool's distinct points (unit disc, x, z pairs) laid on the paving round (x, z) at radius `r`:
+ * x, y, z of each, every point read once (`pavingAt`), whatever many triangles share it.
+ */
+export const layPool = (x: number, z: number, r: number, points: Float32Array, surfaceAt: (x: number, z: number) => number, out: Float32Array): void => {
+  for (let k = 0; k * 2 < points.length; k++) {
+    const wx = x + (points[k * 2] as number) * r;
+    const wz = z + (points[k * 2 + 1] as number) * r;
+    out[k * 3] = wx;
+    // Each point on the paving where it lies: the pool follows a slope or a kerb, not the height under the drone.
+    out[k * 3 + 1] = pavingAt(surfaceAt, wx, wz) + POOL_LIFT;
+    out[k * 3 + 2] = wz;
+  }
 };
 
 /** How far round a point the paving is read (m): a seam narrower than this between two pieces of paving is not the paving. */

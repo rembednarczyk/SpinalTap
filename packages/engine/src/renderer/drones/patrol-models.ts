@@ -17,7 +17,31 @@ import { PATROL_SCALE } from "./patrol-flight";
 export interface PatrolTemplate extends DroneTemplate {
   /** The first vertex of the searchlight's pool. */
   readonly beam: number;
+  /** The pool's points on the unit disc, each once (x, z pairs): its middle and its two rings. */
+  readonly poolPoints: Float32Array;
+  /** For each vertex of the pool (from `beam` on), its point in `poolPoints`. */
+  readonly poolIndex: Uint16Array;
 }
+
+/** The pool's vertices as distinct points of the unit disc and, per vertex, which one it is. */
+const poolOf = (positions: readonly number[], beam: number): { poolPoints: Float32Array; poolIndex: Uint16Array } => {
+  const keys = new Map<string, number>();
+  const points: number[] = [];
+  const index: number[] = [];
+  for (let i = beam * 3; i < positions.length; i += 3) {
+    const x = positions[i] as number;
+    const z = positions[i + 2] as number;
+    const key = `${Math.round(x * 1e5)},${Math.round(z * 1e5)}`;
+    let k = keys.get(key);
+    if (k === undefined) {
+      k = points.length / 2;
+      keys.set(key, k);
+      points.push(x, z);
+    }
+    index.push(k);
+  }
+  return { poolPoints: Float32Array.from(points), poolIndex: Uint16Array.from(index) };
+};
 
 /** The pool's swatch: the cold white of the lit windows. */
 const BEAM_SWATCH = "win-white";
@@ -50,6 +74,7 @@ const withBeam = (data: CityKitData, t: DroneTemplate): PatrolTemplate => {
     indices: Uint32Array.from(sink.indices),
     vertexCount: sink.vertexCount,
     beam,
+    ...poolOf(sink.positions, beam),
   };
 };
 

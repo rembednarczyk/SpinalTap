@@ -10,7 +10,12 @@ import { PATROL_LOD, type Patrol, patrolFade, type PatrolLane, type PatrolPose, 
 export { PATROL_LOD };
 import { type PatrolWorld, planPatrolLanes } from "./patrol-lanes";
 import { type PatrolTemplate, patrolTemplates } from "./patrol-models";
-import { poolDrop, poolPoint, poolRadius } from "./patrol-pool";
+import { layPool, poolDrop, poolRadius } from "./patrol-pool";
+
+/** The pool shrinks to nothing over this many metres short of the near model's distance: far slots draw none (m). */
+const POOL_FADE = 20;
+/** A pool is laid again when its radius changes by more than this (m): not with the drone's bob. */
+const POOL_RELAY = 0.1;
 
 /**
  * How far drones are drawn (m from the camera), where the far version takes over, and how many of
@@ -53,8 +58,8 @@ interface Slot {
   readonly template: DroneTemplate | PatrolTemplate;
   readonly offset: number;
   shown: boolean;
-  /** Where a patrol's pool was laid on the paving last (its place and radius), "" for nowhere. */
-  pool: string;
+  /** Where a patrol's pool was laid on the paving last (its place and radius), null for nowhere. */
+  pool: { readonly x: number; readonly z: number; readonly r: number } | null;
 }
 
 /** Room round a drone for the mesh's bounds (m). */
@@ -88,6 +93,7 @@ export class DroneViews {
   private propsSeen: CityProps | null = null;
   private drawnNear = 0;
   private drawnFar = 0;
+  private poolScratch = new Float32Array(0);
   private readonly min = new Vector3();
   private readonly max = new Vector3();
 
@@ -184,7 +190,7 @@ export class DroneViews {
       for (const near of [true, false]) {
         const template = near ? templates[kind].near : templates[kind].far;
         for (let k = 0; k < (near ? lod.nearSlots : lod.farSlots); k++) {
-          this.slots.push({ kind, near, template, offset: total, shown: false, pool: "" });
+          this.slots.push({ kind, near, template, offset: total, shown: false, pool: null });
           total += template.vertexCount;
         }
       }
@@ -194,7 +200,7 @@ export class DroneViews {
     for (const near of [true, false]) {
       for (let k = 0; k < (near ? plod.nearSlots : plod.farSlots); k++) {
         const template = near ? watch.near : watch.far;
-        this.slots.push({ kind: "watch", near, template, offset: total, shown: false, pool: "" });
+        this.slots.push({ kind: "watch", near, template, offset: total, shown: false, pool: null });
         total += template.vertexCount;
       }
     }
@@ -257,7 +263,7 @@ export class DroneViews {
       if (slot.kind === "watch") this.drawnPatrols++;
       else if (slot.near) this.drawnNear++;
       else this.drawnFar++;
-      this.place(slot, s.p);
+      this.place(slot, s.p, s.dist);
       const low = "ground" in s.p ? Math.min(s.p.y, s.p.ground) : s.p.y;
       this.min.set(Math.min(this.min.x, s.p.x - PAD), Math.min(this.min.y, low - 1), Math.min(this.min.z, s.p.z - PAD));
       this.max.set(Math.max(this.max.x, s.p.x + PAD), Math.max(this.max.y, s.p.y + PAD), Math.max(this.max.z, s.p.z + PAD));
@@ -274,38 +280,22 @@ export class DroneViews {
     mesh.buildBoundingInfo(this.min, this.max);
   }
 
-  /**
-   * Writes a slot's template turned by the yaw, scaled and moved to the pose. A patrol's searchlight
-   * pool lies on the paving under it (`poolPoint`), wider the higher the drone, laid again only when
-   * it moves; off higher than `BEAM_FROM` (folded into the drone's foot).
-   */
-  private place(slot: Slot, p: DronePose | PatrolPose): void {
+  /** Writes a slot's template turned by the yaw, scaled and moved to the pose; a patrol's pool after it (`placePool`). */
+  private place(slot: Slot, p: DronePose | PatrolPose, dist: number): void {
     const c = Math.cos(p.yaw);
     const s = Math.sin(p.yaw);
     const src = slot.template.positions;
     const nsrc = slot.template.normals;
     const beam = "beam" in slot.template ? slot.template.beam * 3 : src.length;
-    const drop = "ground" in p ? poolDrop(p) : null;
     const scale = "scale" in p ? p.scale : 1;
-    const surfaceAt = this.patrolsPlanned?.surfaceAt ?? (() => 0);
-    // The pool where it lay last frame (a drone hanging still): its points are on the paving already.
-    const pool = drop === null ? "" : `${p.x.toFixed(3)},${p.z.toFixed(3)},${poolRadius(drop)}`;
-    const kept = pool !== "" && pool === slot.pool;
-    slot.pool = pool;
     let o = slot.offset * 3;
     for (let i = 0; i < src.length; i += 3, o += 3) {
-      if (i < beam || drop === null || !("ground" in p)) {
-        const r = i < beam ? scale : 0;
-        const x = (src[i] as number) * r;
-        const z = (src[i + 2] as number) * r;
+      if (i < beam) {
+        const x = (src[i] as number) * scale;
+        const z = (src[i + 2] as number) * scale;
         this.positions[o] = p.x + x * c + z * s;
-        this.positions[o + 1] = p.y + (src[i + 1] as number) * r;
+        this.positions[o + 1] = p.y + (src[i + 1] as number) * scale;
         this.positions[o + 2] = p.z - x * s + z * c;
-      } else if (!kept) {
-        const q = poolPoint(p, drop, src[i] as number, src[i + 2] as number, surfaceAt);
-        this.positions[o] = q.x;
-        this.positions[o + 1] = q.y;
-        this.positions[o + 2] = q.z;
       }
       const nx = nsrc[i] as number;
       const nz = nsrc[i + 2] as number;
@@ -313,11 +303,46 @@ export class DroneViews {
       this.normals[o + 1] = nsrc[i + 1] as number;
       this.normals[o + 2] = -nx * s + nz * c;
     }
+    if ("beam" in slot.template && "ground" in p) this.placePool(slot, slot.template, p, dist);
+  }
+
+  /**
+   * A patrol's searchlight pool on the paving under it (`layPool`: each distinct point read once),
+   * wider the higher the drone, shrinking to nothing from `POOL_FADE` short of the near model's
+   * distance; none in a far slot or higher than `BEAM_FROM` (folded into the drone's foot). Laid
+   * again only when the drone moves or the radius changes by over `POOL_RELAY`, not with its bob.
+   */
+  private placePool(slot: Slot, t: PatrolTemplate, p: PatrolPose, dist: number): void {
+    const drop = poolDrop(p);
+    const near = PATROL_LOD[this.deps.quality].near;
+    const r = drop === null || !slot.near ? 0 : poolRadius(drop) * Math.max(0, Math.min(1, (near - dist) / POOL_FADE));
+    const start = (slot.offset + t.beam) * 3;
+    const end = (slot.offset + t.vertexCount) * 3;
+    if (r <= 0) {
+      for (let o = start; o < end; o += 3) {
+        this.positions[o] = p.x;
+        this.positions[o + 1] = p.y;
+        this.positions[o + 2] = p.z;
+      }
+      slot.pool = null;
+      return;
+    }
+    const last = slot.pool;
+    if (last && Math.hypot(p.x - last.x, p.z - last.z) < 0.01 && Math.abs(r - last.r) < POOL_RELAY) return;
+    slot.pool = { x: p.x, z: p.z, r };
+    if (this.poolScratch.length < t.poolPoints.length * 1.5) this.poolScratch = new Float32Array(t.poolPoints.length * 1.5);
+    layPool(p.x, p.z, r, t.poolPoints, this.patrolsPlanned?.surfaceAt ?? (() => 0), this.poolScratch);
+    for (let j = 0, o = start; o < end; j++, o += 3) {
+      const k = (t.poolIndex[j] as number) * 3;
+      this.positions[o] = this.poolScratch[k] as number;
+      this.positions[o + 1] = this.poolScratch[k + 1] as number;
+      this.positions[o + 2] = this.poolScratch[k + 2] as number;
+    }
   }
 
   /** Folds a slot's vertices into one point, so its triangles draw nothing. */
   private fold(slot: Slot): void {
-    slot.pool = "";
+    slot.pool = null;
     const start = slot.offset * 3;
     const end = start + slot.template.vertexCount * 3;
     const [x, y, z] = [this.positions[start] ?? 0, this.positions[start + 1] ?? 0, this.positions[start + 2] ?? 0];
