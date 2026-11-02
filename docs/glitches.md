@@ -672,6 +672,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: bez proceduralnej wieży na zabytkach z `LANDMARK_BUILDINGS` bez `tower` w OSM (albo przepis Z3); kontrola skanu `landmark-fake-tower` (baza ≥ 1); migawka NPR świadomie
 - Pakiet właściciela: packages/engine (renderer/mapcity), tools/glitch-scan
 
+### G-211 Teleport (narzędzie zrzutów) na targu i w dokach ląduje we wnętrzu
+- Status: do sprawdzenia (2.11, weryfikator #186)
+- Ważność: S4 · Zasięg: teleport na (2689; 247) w dokach i (550; 281) na targu kończy się w niebieskim pokoju wnętrza (ADR-0061) zamiast na ulicy
+- Do zrobienia: sprawdzić, czy to obszar `INTERIORS` sięgający poza obrys budynku (glitch topografii) czy tylko punkt w obrysie (wtedy zamknąć jako niepotwierdzone)
+- Pakiet właściciela: packages/sim (interiors) albo e2e (narzędzie zrzutów)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
