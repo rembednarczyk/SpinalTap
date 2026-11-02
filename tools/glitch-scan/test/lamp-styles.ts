@@ -18,3 +18,7 @@ export const plainLampsByStyled = (props: readonly Lamp[], reach: number): { rea
       return by ? [{ at: `${i.x.toFixed(0)},${i.z.toFixed(0)}`, what: `${i.prop} ${Math.hypot(by.x - i.x, by.z - i.z).toFixed(1)} m from ${by.prop}` }] : [];
     });
 };
+
+/** Every plain lamp inside the walled Old Town (G-264), where the city's lamps are styled. */
+export const plainLampsIn = (props: readonly Lamp[], inside: (p: { readonly x: number; readonly z: number }) => boolean): { readonly at: string; readonly what: string }[] =>
+  props.filter((i) => PLAIN.has(i.prop) && inside(i)).map((i) => ({ at: `${i.x.toFixed(0)},${i.z.toFixed(0)}`, what: `${i.prop} in the Old Town` }));
