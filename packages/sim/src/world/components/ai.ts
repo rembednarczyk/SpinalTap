@@ -99,8 +99,8 @@ export interface GangerAi {
 /**
  * A sniper (ADR-0024): no behaviour tree, a small state machine. It keeps to a perch high up,
  * aims for `AIM_TIME` with the laser on (the telegraph), fires, waits, and walks to the perch
- * farthest from the player once the player gets close. Transient like the melee state: a game
- * loaded mid-aim starts idle on its saved position.
+ * farthest from the player once the player gets close. Saved (`EntitySnapshot.sniper`, G-185):
+ * a game loaded mid-aim fires when the saved one would; asleep with its chunk it wakes idle.
  */
 export interface SniperState {
   readonly perches: readonly Vec3[];
@@ -109,6 +109,11 @@ export interface SniperState {
   timer: number;
   /** Perch it holds or walks to (index into `perches`). */
   perch: number;
+  /**
+   * Loaded mid-aim (G-185): the laser, drawn from `SniperAimed` only, is turned on again in its
+   * first step. Transient, never saved.
+   */
+  relight?: true;
 }
 
 /** A defector walked to the boat (ADR-0024): follows `route` while the player is close. */

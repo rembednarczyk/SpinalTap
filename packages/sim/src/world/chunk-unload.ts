@@ -17,8 +17,12 @@ export const PINNED_AWAY_SECONDS = 30;
 const putToSleep = (world: World<Entity>, state: StreamState, e: Entity, forgotten: ReadonlySet<string>): void => {
   // Asleep, it is no longer pinned (G-188).
   if (e.ai?.away !== undefined) delete e.ai.away;
-  // A replaced job's person (G-178) never wakes again: he leaves no state behind.
-  if (e.key && !forgotten.has(e.key)) state.dormant.set(e.key, entitySnapshotOf({ ...e, key: e.key }));
+  // A replaced job's person (G-178) never wakes again: he leaves no state behind. The others wake
+  // with their gun at rest and loaded and a sniper idle (G-185 saves the fight, not the sleep).
+  if (e.key && !forgotten.has(e.key)) {
+    const { gun: _gun, sniper: _sniper, ...asleep } = entitySnapshotOf({ ...e, key: e.key });
+    state.dormant.set(e.key, asleep);
+  }
   world.remove(e);
   state.streamedOut.add(e.id);
 };

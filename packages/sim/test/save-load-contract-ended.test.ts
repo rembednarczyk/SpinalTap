@@ -33,8 +33,9 @@ describe("save and load after a contract has ended (G-178)", () => {
     const loaded = reload(sim);
     expect(peopleOf(loaded, id)).toEqual(peopleOf(sim, id));
     expect(hash(loaded)).toBe(hash(sim));
-    // Only the people are compared from here: an alerted guard saved out of his chunk counts
-    // the time he has lost her a step on after loading (dormant-restore pins him), not G-178.
+    // Only the people are compared from here: 2 km east of Genzō is off the map, she dies of the
+    // fall, and a save of a dead player (the game makes none) loads her alive, so the alerted
+    // guards count the time they have lost her on (G-185; alive on the map they do not part).
     for (const s of [sim, loaded]) {
       teleportPlayer(s, docks(0, 0, 120));
       run(s, 5);
@@ -101,8 +102,8 @@ describe("save and load after a contract has ended (G-178)", () => {
     const loaded = reload(sim);
     expect(peopleOf(loaded, c.id)).toEqual(wave);
     expect(hash(loaded)).toBe(hash(sim));
-    // The wave fires a step earlier after a load here, with the job still running as well (a
-    // state of the shooters the save leaves out, not G-178): the people are what is compared.
+    // The wave has shot her dead by now, and a save of a dead player (the game makes none) loads
+    // her alive, so the wave goes on firing at her (G-185): the people are what is compared.
     for (let i = 0; i < 10 * 60; i++) {
       sim.step();
       loaded.step();
