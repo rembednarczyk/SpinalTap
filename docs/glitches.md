@@ -793,7 +793,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer)
 
 ### G-255 Garb w biegu schodów w56965515 przy pomoście wiaduktu Zamkowej: uskok 2,9 m i bieg pod prąd
-- Status: w PR #233 (2.11, runda 3 @ d03bb2d NIE PRZYJĘTE: podrzut 1,75 m z podestu na wiadukt przez `gradientAt`; NPC i gracz przechodzą; runda 4 u autora; runda 2 @ 0e075bb: NPC w pościgu; runda 1 @ daaca9f: pod górę 4/30; pochyły pomost biegu zamiast rampy terenu; zgłoszone przez kuratora przy #219)
+- Status: w PR #233 (2.11, runda 4 @ 223dedc PRZYJĘTE z uwagami (dług w G-273), przegląd kuratora w toku; runda 3 @ d03bb2d: podrzut z podestu; runda 2 @ 0e075bb: NPC w pościgu; runda 1 @ daaca9f: pod górę 4/30; pochyły pomost biegu zamiast rampy terenu; zgłoszone przez kuratora przy #219)
 - Ważność: S3 (proponowana: uskok 2,9 m w środku schodów, gracz spada albo AI się zatrzymuje) · Zasięg: 1 droga (3 kawałki pasa w dwóch chunkach), możliwe dalsze z kontroli `steps-riser-tall` · Koszt: mały do średniego
 - Gdzie: T-131; w56965515 bieg węzeł 2 → 3 (734,1; 163,9) → (729,5; 159,9), Podzamcze/Stare Miasto, granica chunków z = 160
 - Dowód: `planSteps` na `groundY` (sonda `topo-g236-flight.txt`, 5757fae): stopnie na pomoście y −13,48 do x ≈ 733,4, potem podstopnica 2,92 m na teren −16,41, dalej stopnie w górę do −15,28 przy węźle 3 (flight ma `incline=down`); kawałek tego biegu w `stare-miasto-1-1` (730,8; 159,6) leży płasko na pomoście −13,51 obok −15,4 za granicą chunka. Stan sprzed #219 identyczny
@@ -905,6 +905,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: ściana części z zielonym `building:colour` i zielonym `roof:colour` (albo części wieży ponad dachem korpusu) w kolorze miedzi z patyną z `ROOFS_COPPER`, z gzymsami ciemniejszymi (jak cegła), nie z tynkowych; reszta `building:colour` bez zmian. Przegląd `topography-curator`
 - Pakiet właściciela: packages/engine (renderer/mapcity); ewentualnie tools/osm-import, gdyby materiał `metal`/`copper` miał przyjść z danych
 - Test przyjęcia: test engine: część z `colour` zielonym i dachem zielonym ma ścianę z palety miedzi; kontrola skanu `green-wall-plastered` 3 → 0
+
+### G-273 Kroki wyższe niż STEP_HEIGHT na biegu w56965515 po G-255; SEAM_STEP bez testu
+- Status: zgłoszone (2.11, weryfikator G-255 runda 4, dług po #233)
+- Ważność: S4 · Zasięg: krok 0,56–0,58 m przy chodzie w wewnętrznym narożniku zakrętu (729,89; 162,80) −15,63 → (729,96) −15,07 (styk pomostów odcinków w marginesie 1,9 m poza rysowanym pasmem); krok 0,56–0,60 m przy szczycie biegu na wiadukt (733,6; 160,9) −14,1 → −13,55 (na main tego nie było); `SEAM_STEP` (0,45) w `packages/sim/src/world/ground.ts:26` to ręczna kopia `STEP_HEIGHT` bez testu zgodności · Koszt: mały
+- Poprawka: wyrównanie styku pomostów w narożniku i u szczytu do ≤ STEP_HEIGHT; test `SEAM_STEP === STEP_HEIGHT` (albo stała we wspólnym module bez cyklu)
+- Pakiet właściciela: packages/sim (content/lublin decks, world/ground)
+- Także (stare, nie z G-255): podrzut 1,0 m na wiadukt przy (727,67; 157,66) (reguła G-062); 1,73 m (728,88; 156,77) i 2,0 m (736,68; 159,97) tylko przy wymuszonej prędkości 10–14 m/s
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
