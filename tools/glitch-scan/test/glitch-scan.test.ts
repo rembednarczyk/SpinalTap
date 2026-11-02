@@ -24,7 +24,7 @@ import { vehicleChecks } from "./vehicle-pieces";
 import { figureChecks } from "./figure-pieces";
 import { signsInNeighbours } from "./sign-neighbours";
 import { lanternsByPassages } from "./passage-lanterns";
-import { plainLampsByStyled, plainLampsIn } from "./lamp-styles";
+import { mixedLampWays, plainLampsByStyled, plainLampsIn } from "./lamp-styles";
 import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight, towersSkipped } from "./landmark-heights";
 import { bandAcross, lampsOnSteps, stepsNarrowerThanWalls } from "./steps-walls";
 import { drawnFlight, stepsAcross, stepsHidden, stepsRunsBare } from "./steps-runs";
@@ -971,6 +971,17 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * one street nearer than the 7 m that merges two of a kind read as one light point doubled.
    */
   "lamp-plain-by-styled": () => plainLampsByStyled(Object.values(LUBLIN_STREET_PROPS).flat(), 8),
+  /**
+   * A street of the map (one OSM way, so one kind and one set of tags) whose lamps change look
+   * along it (G-266): a plain lamp and a styled one both within 8 m of its axis, 15 m off its ends.
+   */
+  "lamp-style-change-on-way": () =>
+    mixedLampWays(
+      [...SOURCE_OSM.ways.values()].filter((w) => w.tags?.highway).map((w) => ({ id: w.id, pts: wayPoints(w.nodes) })),
+      Object.values(LUBLIN_STREET_PROPS).flat(),
+      8,
+      15,
+    ),
   /** A road lamp or a modern pole of the generator's table inside the walled Old Town, where Lublin's lamps are styled (G-264). */
   "lamp-road-in-old-town": () => plainLampsIn(Object.values(LUBLIN_STREET_PROPS).flat(), (p) => pointInRing(p, OLD_TOWN_RING)),
   /** A piece of road or path on a bridge laid on the valley instead of a deck. */
@@ -1768,6 +1779,16 @@ describe("the glitch scan (ADR-0054)", () => {
     expect(plainLampsIn([{ prop: "lamp-modern-pole", x: 1, z: 9 }], inside)).toHaveLength(1);
     expect(plainLampsIn([{ prop: "lamp-road", x: 15, z: 5 }], inside)).toEqual([]);
     expect(plainLampsIn([{ prop: "lamp-pastoral", x: 5, z: 5 }], inside)).toEqual([]);
+  });
+
+  it("finds a way whose lamps change from styled to plain along it, and none at its ends or lit one way (G-266)", () => {
+    const way = { id: 1, pts: Array.from({ length: 101 }, (_, k) => ({ x: k, z: 0 })) };
+    const pastoral = { prop: "lamp-pastoral", x: 30, z: 5 };
+    const pole = { prop: "lamp-modern-pole", x: 70, z: -5 };
+    expect(mixedLampWays([way], [pastoral, pole], 8, 15)).toEqual([{ at: "70,-5", what: "w1: 1 plain and 1 styled lamps" }]);
+    expect(mixedLampWays([way], [pastoral, { ...pole, x: 95 }], 8, 15)).toEqual([]);
+    expect(mixedLampWays([way], [pastoral, { ...pole, z: -12 }], 8, 15)).toEqual([]);
+    expect(mixedLampWays([way], [pastoral, { ...pole, prop: "lamp-pastoral" }], 8, 15)).toEqual([]);
   });
 
   it("keeps Plac po Farze and the Rynek inside the Old Town's ring and the streets past its walls out of it (G-264)", () => {
