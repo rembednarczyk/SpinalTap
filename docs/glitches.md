@@ -624,7 +624,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: ≥ 1 drzewo na 150 m² zbocza obu skarp, 0 drzew na ścieżkach i schodach
 
 ### G-213 Biegi schodów krótsze niż szerokie rysowane w poprzek
-- Status: w PR #204 (2.11, w weryfikacji, potem kurator): `flightStrips` tnie wzdłuż biegu, kontrole `steps-across-run` 28 → 0 i `steps-run-bare` 0; stopnie na różnej wysokości i płaskie krótkie biegi wydzielone do G-228 i G-229
+- Status: w PR #204 (2.11, weryfikacja PRZYJĘTE z defektem brzegowym: krótki kawałek 0,5–0,65 m tnie się na pasy < 0,4 m niewidoczne dla `planSteps`; runda 2 u autora, potem kurator): `flightStrips` tnie wzdłuż biegu, kontrole `steps-across-run` 28 → 0 i `steps-run-bare` 0; stopnie na różnej wysokości i płaskie krótkie biegi wydzielone do G-228 i G-229
 - Ważność: S4 · Zasięg: 36 ze 121 biegów w mieście jest krótszych niż ich pas 3 m, więc renderer bierze dłuższy bok pasa za kierunek biegu i rysuje stopnie w poprzek (np. w66258166 przy Donżonie, w1312664177)
 - Poprawka: zdjąć warunek `w > PATHS.steps` w `flightStrips` (tools/osm-import/src/ground.ts, po #194), żeby każdy bieg krótszy niż szeroki był dzielony na pasy; kontrola skanu „bieg w poprzek”
 - Poboczne: wyciąg `krakowskie.json` bez murków (nieaktualny cache kafli, `osm:fetch --only=krakowskie` z siecią); pas bez nawierzchni między brukiem Placu Zamkowego (x ok. 759) a ścieżką w56965514 (x ok. 765)
