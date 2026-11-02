@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { terrainHeightAt } from "@seki/core";
-import { STEP_RISE, flightRamps, shapeGrid } from "../src/content/lublin/shape";
+import { STEP_RISE, flightRamps, refineGrid, shapeGrid } from "../src/content/lublin/shape";
+import { inBuilding } from "../src/content/lublin/places";
+import { FLIGHT_RAMPS, MAP_CHUNKS } from "../src/content/lublin/sites";
+import { SHAPED_TERRAIN } from "../src/content/lublin/terrain";
 import type { LublinChunkData, LublinFlightData } from "../src/content/lublin/types";
 
 /**
@@ -37,7 +40,7 @@ describe("ramps along flights of steps against their incline (G-236)", () => {
     ] as const) {
       const c = chunk("c", [flight]);
       const ramps = flightRamps([c]);
-      expect(ramps).toHaveLength(2);
+      expect(ramps).toHaveLength(3);
       const shaped = shapeGrid(c.terrain, [], ramps);
       const h = (x: number, z: number) => terrainHeightAt(shaped, x, z);
       expect(h(4, 10)).toBeCloseTo(-0.4, 6);
@@ -51,6 +54,52 @@ describe("ramps along flights of steps against their incline (G-236)", () => {
   it("leaves a flight the terrain climbs or about level, and takes one in two chunks once", () => {
     expect(flightRamps([chunk("c", [{ id: "w2", line: [10, 10, 4, 10] }])])).toEqual([]);
     expect(flightRamps([chunk("c", [{ id: "w3", line: [4, 10, 5, 10] }])])).toEqual([]);
-    expect(flightRamps([chunk("a", [against]), chunk("b", [against])])).toHaveLength(2);
+    expect(flightRamps([chunk("a", [against]), chunk("b", [against])])).toHaveLength(3);
+  });
+});
+
+describe("flights' ramps in the city (G-236)", () => {
+  const chunkAt = (x: number, z: number) => MAP_CHUNKS.find((c) => x >= c.bounds.minX && x <= c.bounds.maxX && z >= c.bounds.minZ && z <= c.bounds.maxZ)!;
+  const map = (x: number, z: number) => terrainHeightAt(chunkAt(x, z).terrain, x, z);
+  const game = (x: number, z: number) => terrainHeightAt(SHAPED_TERRAIN.get(chunkAt(x, z).id)!, x, z);
+
+  it("ramps the cathedral's portal steps w66335060 from their foot on the square up 7 risers", () => {
+    // The flight and the landing past its top.
+    expect(FLIGHT_RAMPS).toHaveLength(2);
+    const { a, b, ya, yb } = FLIGHT_RAMPS.find((r) => r.ya !== r.yb)!;
+    expect([a.x, a.z, b.x, b.z]).toEqual([597.3, -185.3, 603.5, -184.6]);
+    expect(yb - ya).toBeCloseTo(7 * STEP_RISE, 6);
+    // The foot stays on the square's terrain; the top climbs 0.76 of 1.12 m: the grid row 2.1 m off
+    // the axis, beside the band, keeps the map's height and pulls the top down bilinearly.
+    expect(Math.abs(game(a.x, a.z) - map(a.x, a.z))).toBeLessThanOrEqual(0.05);
+    expect(game(b.x, b.z) - game(a.x, a.z)).toBeGreaterThan(0.7);
+  });
+
+  it("leaves the ground 2 m or more off a flight's band as the map has it, but in the building it climbs into", () => {
+    const off = (x: number, z: number, r: (typeof FLIGHT_RAMPS)[number]) => {
+      const [dx, dz] = [r.b.x - r.a.x, r.b.z - r.a.z];
+      const t = Math.max(0, Math.min(1, ((x - r.a.x) * dx + (z - r.a.z) * dz) / (dx * dx + dz * dz)));
+      return Math.hypot(x - r.a.x - t * dx, z - r.a.z - t * dz) - r.width / 2;
+    };
+    let checked = 0;
+    for (const r of FLIGHT_RAMPS) {
+      for (let x = Math.min(r.a.x, r.b.x) - 12; x <= Math.max(r.a.x, r.b.x) + 12; x += 0.5) {
+        for (let z = Math.min(r.a.z, r.b.z) - 12; z <= Math.max(r.a.z, r.b.z) + 12; z += 0.5) {
+          if (FLIGHT_RAMPS.some((q) => off(x, z, q) < 2) || inBuilding(x, z)) continue;
+          checked++;
+          expect(Math.abs(game(x, z) - map(x, z)), `(${x.toFixed(1)}, ${z.toFixed(1)})`).toBeLessThanOrEqual(0.05);
+        }
+      }
+    }
+    expect(checked).toBeGreaterThan(500);
+  });
+
+  it("refines a grid by a whole factor without moving its surface", () => {
+    const g = { originX: 0, originZ: 0, cell: 5, cols: 3, rows: 2, heights: [0, 1, 3, 2, -1, 4] };
+    const fine = refineGrid(g, 2.5);
+    expect([fine.cols, fine.rows, fine.cell]).toEqual([5, 3, 2.5]);
+    for (const [x, z] of [[1.3, 0.7], [6.2, 4.9], [10, 5], [3.75, 2.5]] as const) expect(terrainHeightAt(fine, x, z)).toBeCloseTo(terrainHeightAt(g, x, z), 9);
+    expect(refineGrid(g, 2)).toBe(g);
+    expect(refineGrid(fine, 2.5)).toBe(fine);
   });
 });

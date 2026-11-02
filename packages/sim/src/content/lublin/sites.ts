@@ -160,4 +160,5 @@ export const PADS: readonly Pad[] = [
 ];
 
 /** Even ramps along the steps of the map (ADR-0045), and along the flights the terrain climbs against their `incline` (G-236, T-131). */
-export const RAMPS: readonly Ramp[] = [...stepRamps(MAP_CHUNKS), ...flightRamps(MAP_CHUNKS)];
+export const FLIGHT_RAMPS: readonly Ramp[] = flightRamps(MAP_CHUNKS);
+export const RAMPS: readonly Ramp[] = [...stepRamps(MAP_CHUNKS), ...FLIGHT_RAMPS];

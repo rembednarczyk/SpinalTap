@@ -47,7 +47,8 @@ import { LUBLIN_STREET_PROPS, buildingView, isLandmark } from "../../../packages
 import { inBuilding, nearestWall } from "../../../packages/sim/src/content/lublin/places";
 import { ROAD_CHAINS, type RoadChain, polylineLength, surfaceLiftAt, surfacesAt } from "../../../packages/sim/src/content/lublin/roads";
 import { clearedBuilding } from "../../../packages/sim/src/content/cleared-buildings";
-import { CLEARED_BUILDINGS, GATE_PASSAGES, MAP_CHUNKS, PASSAGES, ROOM_SITES, ROOM_STOREY } from "../../../packages/sim/src/content/lublin/sites";
+import { CLEARED_BUILDINGS, FLIGHT_RAMPS, GATE_PASSAGES, MAP_CHUNKS, PASSAGES, ROOM_SITES, ROOM_STOREY } from "../../../packages/sim/src/content/lublin/sites";
+import { mapHeight } from "../../../packages/sim/src/content/lublin/shape";
 import { groundY } from "../../../packages/sim/src/content/lublin/terrain";
 import { BRIDGE_DECKS, bridgeDeckAt } from "../../../packages/sim/src/content/lublin/decks";
 import { WORLD_CHUNKS, WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
@@ -945,6 +946,15 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
     const onMap = (p: Pt) => MAP_CHUNKS.some((c) => p.x >= c.bounds.minX && p.x <= c.bounds.maxX && p.z >= c.bounds.minZ && p.z <= c.bounds.maxZ);
     return stepsInclineAgainst(extractFeatures(SOURCE_OSM).lines.map((l) => correctedLine(l)), terrain, onMap);
   },
+  /**
+   * A flight's ramp (G-236) lifting the terrain over 2 m above the map's at an end: a wrong
+   * `incline` in a new extract (`osm:fetch`) would raise a mound up the flight unnoticed.
+   */
+  "flight-ramp-lift": () =>
+    FLIGHT_RAMPS.flatMap((r) => {
+      const lift = Math.max(r.ya - mapHeight(MAP_CHUNKS, r.a.x, r.a.z), r.yb - mapHeight(MAP_CHUNKS, r.b.x, r.b.z));
+      return lift > 2 ? [{ at: near(r.a.x, r.a.z), what: `flight ramp lifts the terrain ${lift.toFixed(2)} m` }] : [];
+    }),
   /** A lamp or a candelabrum of the generator's table standing inside a band of steps (G-203). */
   "lamp-on-steps": () => {
     const flights = MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.surface === "steps").map((g) => worldOutline({ x: 0, z: 0, outline: g.outline })));

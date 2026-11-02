@@ -1,15 +1,16 @@
 import { type BlockStyle, type TerrainGrid, type Vec3, terrainHeightAt } from "@seki/core";
 import type { StaticProp } from "../builders";
-import { shapeGrid } from "./shape";
+import { flightGrid, shapeGrid } from "./shape";
 import { bridgeDeckAt } from "./decks";
-import { MAP_CHUNKS, PADS, RAMPS } from "./sites";
+import { FLIGHT_RAMPS, MAP_CHUNKS, PADS, RAMPS } from "./sites";
 import { surfaceLiftAt } from "./roads";
 
 /**
  * The terrain of the game's Lublin (ADR-0045): the map's grids with the pads and ramps of
- * `sites.ts` applied, by chunk id. The simulation walks on these and the renderer draws them.
+ * `sites.ts` applied, by chunk id, on a finer grid under a flight's ramp (G-236). The simulation
+ * walks on these and the renderer draws them.
  */
-export const SHAPED_TERRAIN: ReadonlyMap<string, TerrainGrid> = new Map(MAP_CHUNKS.map((c) => [c.id, shapeGrid(c.terrain, PADS, RAMPS)]));
+export const SHAPED_TERRAIN: ReadonlyMap<string, TerrainGrid> = new Map(MAP_CHUNKS.map((c) => [c.id, shapeGrid(flightGrid(c.terrain, FLIGHT_RAMPS), PADS, RAMPS)]));
 
 const inside = (b: { minX: number; maxX: number; minZ: number; maxZ: number }, x: number, z: number): boolean => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ;
 

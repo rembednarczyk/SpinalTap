@@ -42,6 +42,7 @@
   "steps-run-bare": 0,
   "steps-band-hidden": 1,
   "steps-incline-against": 0,
+  "flight-ramp-lift": 0,
   "lamp-on-steps": 0,
   "bridge-without-deck": 0,
   "under-deck-blocked": 0,
