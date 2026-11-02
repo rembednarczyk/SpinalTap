@@ -14,6 +14,9 @@ import { restoreDowned } from "./bodies";
 export const reinforcementEntity = (id: EntityId, n: number, since: number, type: EnemyTypeId, at: Vec3, npcHealth: number): Entity => {
   const g: Entity = { ...gangerEntity(n, { key: "", position: at, yaw: 0 }, null, ENEMY_TYPES[type].hp, "", undefined, type), id };
   delete g.key;
+  // No chunk either (G-219): sent across the city, it stays in the world as its body does, so one
+  // knocked out alive does not fall asleep with the chunk it lies in, unkeyed, gone for good.
+  delete g.chunk;
   g.security = { n, since };
   return toughen(g, npcHealth);
 };
