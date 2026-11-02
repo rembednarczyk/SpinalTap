@@ -83,7 +83,7 @@ export const lowCables = (under = 2.5): { spans: number; low: LowCable[] } => {
       spans++;
       // Not a main span: its billboard and footbridge stay out, only the cables and lanterns are drawn.
       const sink = new MeshSink();
-      planNearCanyon(sink, [{ ...span, main: false }], false);
+      planNearCanyon(sink, [{ ...span, main: false }], false, surfaceY);
       if (sink.empty) continue;
       const l = lowest(sink);
       low.push({ ...l, building: data[i]!.b.id });

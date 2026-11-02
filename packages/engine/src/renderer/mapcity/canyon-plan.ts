@@ -129,8 +129,34 @@ export const cable = (sink: MeshSink, a: Vec, b: Vec, sag: number, color: Rgba, 
   }
 };
 
-/** Cables across one span at different heights and angles, some strung with lanterns. */
-const spanCables = (sink: MeshSink, s: Span, rand: () => number, lite: boolean): void => {
+/** The drawn paving at (x, z), or null off the terrain. */
+export type CanyonGround = (x: number, z: number) => number | null;
+
+/** The least a cable's or a lantern's lowest point clears the paving under it (m), G-268. */
+const CABLE_CLEARANCE = 3.5;
+/** How far under a cable a lantern's bottom hangs and the ribbon's half thickness, a little to spare for the samples (m). */
+const LANTERN_DROP = 0.36;
+const RIBBON_HALF = 0.05;
+
+/** The least height of a cable over the paving under it, along its whole sag (m). */
+const clearance = (a: Vec, b: Vec, sag: number, ground: CanyonGround): number => {
+  const n = Math.max(8, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 0.5));
+  let low = Infinity;
+  for (let i = 0; i <= n; i++) {
+    const p = lerp(a, b, i / n, sag);
+    const g = ground(p.x, p.z);
+    if (g !== null) low = Math.min(low, p.y - g);
+  }
+  return low;
+};
+
+/**
+ * Cables across one span at different heights and angles, some strung with lanterns. The heights
+ * go from the building's ground floor, which on a slope may lie metres under the street (G-268):
+ * a cable that comes too near the paving under it is lifted clear of it, or left out when that
+ * would take it over the lower cornice. Every draw from `rand` is kept, so the others stay put.
+ */
+const spanCables = (sink: MeshSink, s: Span, rand: () => number, lite: boolean, ground: CanyonGround): void => {
   const count = Math.round(s.clutter * (lite ? 1.5 : 5) * (0.5 + rand()));
   const low = s.base + 4.5;
   const high = s.top - 1;
@@ -139,12 +165,17 @@ const spanCables = (sink: MeshSink, s: Span, rand: () => number, lite: boolean):
     const y = low + rand() * (high - low);
     const o1 = (rand() - 0.5) * 6;
     const o2 = o1 + (rand() - 0.5) * 5;
-    const a = { x: s.a.x + s.along.x * o1, y, z: s.a.z + s.along.z * o1 };
-    const b = { x: s.b.x + s.along.x * o2, y: y + (rand() - 0.5) * 2.5, z: s.b.z + s.along.z * o2 };
+    const a0 = { x: s.a.x + s.along.x * o1, y, z: s.a.z + s.along.z * o1 };
+    const b0 = { x: s.b.x + s.along.x * o2, y: y + (rand() - 0.5) * 2.5, z: s.b.z + s.along.z * o2 };
     const sag = 0.25 + rand() * 0.05 * s.width;
+    const lit = !lite && rand() <= s.clutter * 0.6;
+    const color = lit ? hexColor(LANTERNS[Math.floor(rand() * LANTERNS.length)] ?? "#ffb000", DRESS_FLAG.lit) : null;
+    const lift = Math.max(0, CABLE_CLEARANCE + (color ? LANTERN_DROP : RIBBON_HALF) - clearance(a0, b0, sag, ground));
+    if (Math.max(a0.y, b0.y) + lift > high) continue;
+    const a = { ...a0, y: a0.y + lift };
+    const b = { ...b0, y: b0.y + lift };
     cable(sink, a, b, sag, DARK);
-    if (lite || rand() > s.clutter * 0.6) continue;
-    const color = hexColor(LANTERNS[Math.floor(rand() * LANTERNS.length)] ?? "#ffb000", DRESS_FLAG.lit);
+    if (!color) continue;
     const n = Math.max(3, Math.floor(s.width / 1.6));
     for (let i = 1; i < n; i++) {
       const p = lerp(a, b, i / n, sag);
@@ -225,11 +256,14 @@ const footbridge = (sink: MeshSink, fb: { y: number; ring: P2[] }, seed: number)
   quadUv(sink, [under[0] as Vec, under[1] as Vec, under[2] as Vec, under[3] as Vec], DOWN, hexColor("#5ce1ff", DRESS_FLAG.lit), [[0, 0], [1, 0], [1, 1], [0, 1]], trimMeta(seed));
 };
 
-/** Near geometry over the streets from a cell's spans. `lite` (a phone): fewer cables, no lanterns. */
-export const planNearCanyon = (sink: MeshSink, spans: readonly Span[], lite: boolean): void => {
+/**
+ * Near geometry over the streets from a cell's spans. `lite` (a phone): fewer cables, no lanterns.
+ * `ground` is the drawn paving the cables keep clear of.
+ */
+export const planNearCanyon = (sink: MeshSink, spans: readonly Span[], lite: boolean, ground: CanyonGround): void => {
   for (const s of spans) {
     const rand = prng(Math.floor(s.seed * 0xfffffff) ^ 0xc0de);
-    spanCables(sink, s, rand, lite);
+    spanCables(sink, s, rand, lite, ground);
     const bb = spanBillboard(s);
     if (bb) billboardFrame(sink, s, bb);
     const fb = spanFootbridge(s);
