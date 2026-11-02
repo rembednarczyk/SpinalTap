@@ -78,11 +78,13 @@ export const TAG_CORRECTIONS: readonly TagCorrection[] = [
     // St Josaphat's tower: OSM has only `man_made=tower` and `tower:type=bell_tower`, so it stood
     // at the district's default 4 storeys with its top at y 12.2. NMPT GUGiK has its top at y 9.5
     // in the outline (the 10.1 within 4 m of its middle is the nave's edge), the foot at y -1.6
-    // with a 1 m plinth; `height` counts over the plinth, hence 9.5 + 1.6 - 1.
+    // with a 1 m plinth; `height` counts over the plinth, hence 9.5 + 1.6 - 1. Its tin pyramid is
+    // low: the apex at y 9.4 over the middle, the eaves at y 8.0..8.2 along the walls (G-246), so
+    // 1.4 m of roof where a roofless tower gets the import's 3 m.
     // St Nicholas's belfry w680377807 waits for a source: the surface model there is tree crowns.
     id: "w1382552285",
-    tags: { height: "10.1" },
-    reason: "wieża cerkwi św. Jozafata: szczyt y 9,5 z NMPT wobec y 12,2 z domyślnych 4 kondygnacji",
+    tags: { height: "10.1", "roof:shape": "pyramidal", "roof:height": "1.4" },
+    reason: "wieża cerkwi św. Jozafata: szczyt y 9,5 i okap ok. y 8,1 z NMPT wobec y 12,2 z domyślnych 4 kondygnacji i 3 m dachu",
     ref: "T-129",
   },
   {

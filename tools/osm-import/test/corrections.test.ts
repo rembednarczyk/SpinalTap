@@ -64,6 +64,16 @@ describe("tag corrections (ADR-0042)", () => {
     expect(Math.abs(tower.y + tower.height + (tower.roof ?? 0) - 9.5)).toBeLessThanOrEqual(1);
   });
 
+  // NMPT GUGiK 0.5 m (T-129): the apex at y 9.4 over the middle, the eaves at y 8.0..8.2 along the
+  // walls, a light tin pyramid on the photograph; the import's 3 m roof for a roofless tower stood
+  // its eaves 1.5 m too low.
+  it("gives St Josaphat's tower the surface model's low pyramid roof (G-246)", () => {
+    const tower = KRAKOWSKIE_CHUNKS.flatMap((c) => c.buildings).find((o) => o.id === "w1382552285")!;
+    expect(tower.roofShape).toBe("pyramidal");
+    expect(Math.abs(tower.y + tower.height - 8)).toBeLessThanOrEqual(0.5);
+    expect(Math.abs(tower.y + tower.height + (tower.roof ?? 0) - 9.5)).toBeLessThanOrEqual(0.5);
+  });
+
   // NMPT GUGiK 0.5 m (T-122), world y: eaves and ridge of each church's main body where the surface is a roof, not trees.
   const CHURCHES: readonly (readonly [string, number, number])[] = [
     ["w69916021", 6.8, 11.4], // cerkiew św. Jozafata
