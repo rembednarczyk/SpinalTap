@@ -85,6 +85,17 @@ export const TAG_CORRECTIONS: readonly TagCorrection[] = [
     reason: "wieża cerkwi św. Jozafata: szczyt y 9,5 z NMPT wobec y 12,2 z domyślnych 4 kondygnacji",
     ref: "T-129",
   },
+  {
+    // The Brigittines' bell tower: OSM has only `man_made=tower` and `tower:type=bell_tower`, a
+    // part of the church w66264082 without a height. NMPT GUGiK has the helmet's top at y 32.4 in
+    // the middle of the outline over the tower's crown at y 23.2..23.5 along its walls. A part's
+    // `height` counts over its church's base, the top of the church's plinth at y 0.9, hence
+    // 32.4 - 0.9, of it 9.1 the helmet.
+    id: "w1090997970",
+    tags: { height: "31.5", "roof:height": "9.1" },
+    reason: "wieża Brygidek: hełm do y 32,4 i korona y 23,2–23,5 z NMPT, w OSM bez wysokości",
+    ref: "T-060",
+  },
   // St Josaphat's nave first: at the default it stood 6.3 m over its tower's top (y 9.5, T-129).
   church("w69916021", 11.6, 4.6, "cerkiew św. Jozafata", 6.8, 11.4),
   church("w66330578", 24.8, 12, "Bernardyni, nawa (wieża osobno)", 12.5, 24.5),

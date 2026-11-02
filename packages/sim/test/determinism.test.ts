@@ -183,7 +183,7 @@ describe("determinism", () => {
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
     const sim = runReplay(1234, script());
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"dc1fe904"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"3729b6d4"`);
     // Re-recorded for the v18 field (ADR-0066), the v19 version (ADR-0065, no new rule), the v20
     // version (G-171, no new rule), the v21 version (G-174, no new rule), the v22 version (G-178,
     // no new rule) and the v23 reinforcements (G-179: the run's are saved now, the keyed world ends
@@ -196,6 +196,9 @@ describe("determinism", () => {
     // stuck reinforcement has no repath and leans (the player on a warehouse roof in the docks,
     // `reinforcement-sidestep.test.ts`), not in this run: without the field, as v17, it is the
     // golden of before, and as v19 to v27 the goldens of those.
+    // Re-recorded (with the "hard" one, v27 included) for G-098, no new rule: the Brigittines' bell
+    // tower is a building more in the map, so the ids of the run's entities come one later and a
+    // stuck ganger's first side (by its id) flips: only the saved `walk` differs, v26 stands.
     expect(v17HashOf(sim)).toBe("c52fd247");
     expect(v19HashOf(sim)).toBe("ef63b731");
     expect(v20HashOf(sim)).toBe("9957ac6d");
@@ -205,14 +208,14 @@ describe("determinism", () => {
     expect(v24HashOf(sim)).toBe("87658f95");
     expect(v25HashOf(sim)).toBe("7d2a6a8c");
     expect(v26HashOf(sim)).toBe("7e87ff25");
-    expect(v27HashOf(sim)).toBe("8b844ee7");
+    expect(v27HashOf(sim)).toBe("96d8aafb");
   });
 
   it("the same run on 'hard' has a golden hash of its own (ADR-0066)", () => {
     const sim = runReplay(1234, hardScript());
     expect(sim.domain.difficulty).toEqual(DIFFICULTY_PRESETS.hard);
     expect(hashOf(sim)).toBe(hashOf(runReplay(1234, hardScript())));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"0403ee55"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"a8ef0089"`);
     // Not just the field: without it the run still ends elsewhere than on "normal".
     expect(v17HashOf(sim)).not.toBe("c52fd247");
     expect(v19HashOf(sim)).toBe("e296d440");
@@ -223,7 +226,7 @@ describe("determinism", () => {
     expect(v24HashOf(sim)).toBe("98554720");
     expect(v25HashOf(sim)).toBe("21d187bf");
     expect(v26HashOf(sim)).toBe("aa2ed010");
-    expect(v27HashOf(sim)).toBe("48dd0c70");
+    expect(v27HashOf(sim)).toBe("f8ea7928");
   });
 
   it("the crowd of residents (ADR-0041) and the traffic (ADR-0050) leave the golden run as it was, at every density", () => {

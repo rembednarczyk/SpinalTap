@@ -20,7 +20,7 @@ import { doorsFacingUnderground } from "./door-streets";
 import { marketChecks } from "./market-pieces";
 import { signsInNeighbours } from "./sign-neighbours";
 import { lanternsByPassages } from "./passage-lanterns";
-import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight } from "./landmark-heights";
+import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight, towersSkipped } from "./landmark-heights";
 import { bandAcross, lampsOnSteps, stepsNarrowerThanWalls } from "./steps-walls";
 import { drawnFlight, stepsAcross, stepsHidden, stepsRunsBare } from "./steps-runs";
 import { cityChurches, cityFakeTowers, cityTowers, doubleTowers, dwellingTowers, towersOffBuilding } from "./landmark-towers";
@@ -1020,6 +1020,21 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
    * surface model over it is tree crowns.
    */
   "osm-tower-default-height": () => towersAtDefaultHeight(MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b))), osmTags),
+  /** A tower of the map drawn round an outline of its own with no building of the game for it (G-098). */
+  "tower-area-missing": () => {
+    const built = new Set(MAP_CHUNKS.flatMap((c) => c.buildings.map((b) => b.id.split("/")[0]!)));
+    const towers = [...SOURCE_OSM.ways.values()].flatMap((w) => {
+      if (w.tags?.["man_made"] !== "tower" || w.nodes.length < 4 || w.nodes[0] !== w.nodes[w.nodes.length - 1]) return [];
+      const pts = w.nodes.slice(1).flatMap((id) => {
+        const n = SOURCE_OSM.nodes.get(id);
+        return n ? [geoToWorld(n.lat, n.lon)] : [];
+      });
+      if (pts.length === 0) return [];
+      const c = { x: pts.reduce((s, p) => s + p.x, 0) / pts.length, z: pts.reduce((s, p) => s + p.z, 0) / pts.length };
+      return inMap(c.x, c.z) ? [{ id: `w${w.id}`, ...c, tags: w.tags }] : [];
+    });
+    return towersSkipped(towers, built);
+  },
   /** A church at the default height with no measured roof, or standing clearly over the surface model's roof (G-216). */
   "church-over-nmpt": () => churchesOverSurface(CHURCH_SURFACE, MAP_CHUNKS.flatMap((c) => c.buildings.filter((b) => !clearedBuilding(b)))),
   /** A landmark of the list the map shows whole and without a tower, crowned by the renderer's bell towers (G-210). */
@@ -1627,6 +1642,14 @@ describe("the glitch scan (ADR-0054)", () => {
     expect(towersAtDefaultHeight([{ ...belfry, source: "height" }, { ...belfry, source: "levels" }], () => tags), "corrected or sized").toEqual([]);
     for (const k of ["height", "building:height", "building:levels"]) expect(towersAtDefaultHeight([belfry], () => ({ ...tags, [k]: "18" })), k).toEqual([]);
     expect(towersAtDefaultHeight([belfry], () => ({ building: "church" })), "no tower").toEqual([]);
+  });
+
+  it("finds a tower of the map with no building of the game for it, and none built whole or split, nor a way that is no tower (G-098)", () => {
+    const belfry = { id: "w1090997970", x: 161.2, z: -228.4, tags: { man_made: "tower", "tower:type": "bell_tower" } };
+    expect(towersSkipped([belfry], new Set())).toEqual([{ at: "161,-228", what: "w1090997970 bell_tower" }]);
+    expect(towersSkipped([{ ...belfry, tags: { man_made: "tower" } }], new Set(["w66264082"])), "no tower:type").toEqual([{ at: "161,-228", what: "w1090997970 tower" }]);
+    expect(towersSkipped([belfry], new Set(["w1090997970"])), "built").toEqual([]);
+    expect(towersSkipped([{ ...belfry, tags: { "tower:type": "bell_tower", building: "yes" } }], new Set()), "no man_made=tower").toEqual([]);
   });
 
   it("finds a church at a default height unmeasured or clearly over its measured roof, and none within the margin nor a plain building (G-216)", () => {

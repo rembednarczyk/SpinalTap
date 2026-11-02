@@ -119,7 +119,8 @@ describe("a church whose parts come from the map (G-057)", () => {
     const lifted = sources.filter((s) => s.view.soffit !== undefined);
     const churches = sources.filter((s) => s.view.use === "church" && s.view.soffit === undefined);
     const carrying = churches.filter((c) => lifted.some((p) => pointInRing(centroid(p.ring), c.ring)));
-    expect(carrying.length).toBe(2);
+    // The Archikatedra, the Dominicans and the Brigittines with their bell tower of the map (G-098).
+    expect(carrying.length).toBe(3);
     for (const c of churches) {
       const top = blockTop(c, sources);
       if (carrying.includes(c) || towerless.some((t) => t.at.x === c.at.x && t.at.z === c.at.z)) expect(top).toBeLessThanOrEqual(roofTop(c));
