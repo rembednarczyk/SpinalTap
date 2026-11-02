@@ -93,7 +93,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | `church-fake-tower` | Kościół (`use: church`), któremu `addTowers` dokłada wierzchołki wież, a nie ma go na liście kościołów z prawdziwą wieżą (NMPT/OSM; dziś: Brygidki w66264082, św. Jozafata w69916021, św. Mikołaja w66258180, Świętego Ducha w66264126, cerkiew Przemienienia w66264148, Bernardyni w66330578) | 4 po #198 (Kapucyni, św. Piotra, św. Wojciecha, Niecała 4; Karmelici zdjęci w #198); G-215 |
 | `church-tower-off-building` | Środek wieży proceduralnej (`towerSpots`) poza obrysem swojego budynku | 0 po #198 (w skanie od #198); G-212 |
 | `church-default-height` | Budynek `use: church` z `source: "default"` (szersza wersja `landmark-default-height`) | 9; G-216 |
-| `osm-tower-default-height` | Budynek z OSM z `man_made=tower` albo `tower:type` bez `height` i `building:levels` (wysokość z wartości domyślnej dzielnicy) | 2 (w680377807 dzwonnica św. Mikołaja, w1382552285 wieża św. Jozafata); G-224 |
+| `osm-tower-default-height` | Budynek z OSM z `man_made=tower` albo `tower:type` bez `height` i `building:levels` (wysokość z wartości domyślnej dzielnicy) | 1 (w680377807 dzwonnica św. Mikołaja, G-235; w1382552285 wieża św. Jozafata poprawiona w #207); G-224 |
 | `steps-narrower-than-walls` | Bieg `highway=steps` między dwoma równoległymi `barrier=wall` (do 15 m od osi po obu stronach), gdy odstęp murków przekracza szerokość pasa `steps` w grze o ponad 1 m. Wymaga murków w wyciągu | 1 (schody zamkowe); G-203 |
 | `plan-prop-off-target` | Rekwizyt z wpisu planu z `points` przesunięty przez generator o ponad 4 m od swojego punktu albo na drugą stronę ściany budynku | 2 (reflektory Zamku); G-206 |
 | `landmark-missing` | Lista ID z OSM: r7224409, w66286371, w66286341, w66264159, w66264120, w232362876, w66286338, r2366732, w48500136, w450180469, w66258167, w67508958, w66330578. Liczy ID, których nie ma w `MAP_CHUNKS` albo które usuwa `clearedBuilding`. Do tego monumenty Placu Litewskiego (n481952877, n481952879, n481952880) wśród rekwizytów `monument` w promieniu 1 m | 2 (Osterwy, Bernardyni) |
@@ -651,11 +651,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import, tools/glitch-scan
 - Test przyjęcia: kontrole `church-fake-tower` i `church-tower-off-building` (niżej) spadają do 0
 
-### G-216 Kościoły z wysokości domyślnej o 5–15 m za wysokie
+### G-216 Kościoły z wysokości domyślnej o 3–15 m za wysokie
 - Status: zgłoszone (2.11, kurator, przegląd #190)
 - Ważność: S3 (proponowana) · Zasięg: szeroki (9 kościołów w trzech dzielnicach) · Koszt: mały (dane)
 - Gdzie: T-122 (lista i wysokości)
-- Dowód: kalenice w grze a NMPT: Bernardyni 30,1/24,5, Świętego Ducha 26,5/16,5, Niecała 4 18,5/ok. 3, św. Jozafata 24,2/13,3, Karmelici 28,6/14,5, św. Mikołaja 21,8/12,4, cerkiew Przemienienia 5,9/−4,3
+- Dowód: kalenice w grze (`y + height + roof`, `height` zawiera cokół; wcześniejsze liczby liczyły go dwa razy) a NMPT: Bernardyni 27,7/24,5, Świętego Ducha 25,1/16,5, Niecała 4 18,0/ok. 3, św. Jozafata 22,6/13,3, Karmelici 23,0/14,5, św. Piotra 23,3/18,4–19,7, św. Mikołaja 21,1/12,4, cerkiew Przemienienia 5,4/−4,3
+- Priorytet (kurator, przegląd #207): wyżej, zacząć od św. Jozafata w69916021. Po G-224 wieża (szczyt y 9,5) stoi 6,3 m pod okapem nawy (y 15,8) i 13,1 m pod kalenicą, w rzeczywistości ok. 3,8 m pod szczytem kościoła; bez obniżenia nawy poprawna wieża jest niewidoczna z ulicy. U św. Mikołaja kalenicę mierzyć z dala od koron drzew (por. G-235)
 - Przyczyna: `building=church` bez `height` i `building:levels` dostaje 4 kondygnacje i cokół
 - Poprawka: korekty `height`/`roof:height` z NMPT w `corrections.ts` (jak G-204)
 - Pakiet właściciela: tools/osm-import
@@ -700,15 +701,16 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: pomiar i przyspieszenie (indeks przestrzenny jak w G-200), bez podnoszenia limitu (ADR-0046)
 - Pakiet właściciela: tools/glitch-scan
 
-### G-224 Wieże kościołów z OSM z wysokości domyślnej (dzwonnica św. Mikołaja 3,3 m zamiast ok. 18 m)
-- Status: w PR #207 (2.11, weryfikacja: NIE PRZYJĘTE dla Mikołaja: NMPT 15,7 w obrysie w680377807 to korona drzewa (odbicia od gruntu w obrysie, odchylenie 4–6 m, drzewa obok do 18,2); runda 2: tylko Jozafat (szczyt y 9,5 = maks. w obrysie), Mikołaj zostaje z wysokością domyślną do czasu innego źródła (LAS z klasą budynku, opis, zdjęcie); kryterium „y 15,7 ± 1” było błędne)
-- Ważność: S3 (proponowana; po G-212 to jedyne wieże tych kościołów) · Zasięg: 2 wieże (Podzamcze, Krakowskie) · Koszt: mały (dane)
-- Gdzie: T-129; w680377807 (879,1; 545), dzwonnica kościoła św. Mikołaja; w1382552285 (270; −9,2), wieża cerkwi św. Jozafata
-- Dowód: w grze `source: default`: 3,3 m (1 kondygnacja) i 13,8 m + cokół 1 m; NMPT GUGiK 0,5 m: do y 15,7 (ok. 18 m nad terenem) i do y 10,1 (ok. 11,7 m)
+### G-224 Wieże kościołów z OSM z wysokości domyślnej (wieża cerkwi św. Jozafata; dzwonnica św. Mikołaja w G-235)
+- Status: w PR #207 (2.11; runda 1 NIE PRZYJĘTE dla Mikołaja: NMPT 15,7 w obrysie w680377807 to korona drzewa (odbicia od gruntu w obrysie, odchylenie 4–6 m, drzewa obok do 18,2); runda 2: tylko Jozafat, weryfikator PRZYJĘTE, kurator ZGODNE Z UWAGAMI (T-129); Mikołaj wydzielony do G-235)
+- Ważność: S3 (proponowana; po G-212 to jedyna wieża cerkwi) · Zasięg: 1 wieża (Krakowskie) · Koszt: mały (dane)
+- Gdzie: T-129; w1382552285 (270; −9,2), wieża cerkwi św. Jozafata
+- Dowód: w grze `source: default`: 13,8 m z cokołem 1 m, szczyt y 12,2; NMPT GUGiK 0,5 m: maks. w obrysie y 9,5 (10,1 w promieniu 4 m od środka to krawędź nawy)
 - Przyczyna: OSM ma tylko `building=yes`, `man_made=tower`, `tower:type=bell_tower`, bez `height` i `building:levels`
-- Poprawka: korekty `height` (i ewentualnie `roof:shape`/`roof:height` hełmu) z NMPT w `corrections.ts`, każda z odsyłaczem T-129; to samo dla wieży Brygidek przy G-098
+- Poprawka: korekta `height` 10,1 (nad cokołem) z NMPT w `corrections.ts` z odsyłaczem T-129; to samo dla wieży Brygidek przy G-098
 - Pakiet właściciela: tools/osm-import, tools/glitch-scan
-- Test przyjęcia: najwyższy wierzchołek bryły w680377807 y 15,7 ± 1, w1382552285 y 10,1 ± 1; kontrola `osm-tower-default-height` 2 → 0
+- Test przyjęcia: najwyższy wierzchołek bryły w1382552285 (`y + height + roof`) y 9,5 ± 1, `source: height`; kontrola `osm-tower-default-height` z bazą 1 (zostaje w680377807, G-235). Wcześniejsze kryterium „w680377807 y 15,7 ± 1” było błędne (korona drzewa)
+- Uwaga kuratora: wieża jest teraz 6,3 m pod okapem nawy w69916021 z wysokości domyślnej (w rzeczywistości 3,8 m pod szczytem kościoła); pełna zgodność dopiero z G-216
 
 ### G-225 Reguła drogi pod ziemią (G-197) zdejmuje też nawierzchnię nad tunelem i przejazdy bramne
 - Status: zgłoszone (2.11, weryfikator G-197); dziś bez skutku dla drzwi
@@ -752,7 +754,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-232 Wolnostojące dzwonnice i wieże z `use: historic` rysowane jak kamienice
 - Status: zgłoszone (2.11, naprawiacz G-224)
-- Ważność: S3 (proponowana: zabytek wygląda jak blok) · Zasięg: dzwonnica św. Mikołaja w680377807, wieża cerkwi św. Jozafata w1382552285 (po G-224 z właściwą wysokością): rzędy oświetlonych okien i płaski szczyt (zrzut `scratchpad/g224/shots/g224-mikolaj-po.png`)
+- Ważność: S3 (proponowana: zabytek wygląda jak blok) · Zasięg: dzwonnica św. Mikołaja w680377807, wieża cerkwi św. Jozafata w1382552285 (po G-224 z wysokością z NMPT): rzędy oświetlonych okien i płaski szczyt (zrzut `scratchpad/g224/shots/g224-mikolaj-po.png`)
 - Poprawka: budynek z `man_made=tower`/`tower:type=bell_tower` dostaje fasadę wieży (bez okien mieszkań, okna dzwonnicy u góry) i dach namiotowy/hełm; kontrola skanu „wieża z oknami mieszkań”
 - Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import (use)
 
@@ -767,6 +769,17 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: w56965515 przy (729; 160): trójkąt 1,6 × 0,9 m z brzegu z = 160 rysowany w poprzek (`steps-across-run` 1); w80139527 przy (−200; 125): pas 3 × 0,2 m przy brzegu x = −200, którego `planSteps` nie rysuje (`steps-band-hidden` 1)
 - Poprawka: schody nie przycinane do chunka, tylko całe do chunka ze środkiem pasa (zmienia zasadę „outline clipped to the chunk” z `model.ts`, sprawdzić szew chunków); bazy obu kontroli → 0
 - Pakiet właściciela: tools/osm-import (ground, model), tools/glitch-scan
+
+### G-235 Dzwonnica kościoła św. Mikołaja z wysokości domyślnej, wysokość bez źródła
+- Status: zgłoszone (2.11, kurator, przegląd #207; wydzielone z G-224)
+- Ważność: S3 (proponowana: kościół na Czwartku bez pionowego akcentu) · Zasięg: 1 budynek (Podzamcze) · Koszt: średni (najpierw źródło, potem dane)
+- Gdzie: T-129; w680377807 (879,1; 545), wolnostojąca dzwonnica ok. 5 m na południe od kościoła w66258180, rzut ok. 7 × 7 m
+- Dowód: w grze `source: default`, 3,3 m (1 kondygnacja), szczyt y 0,8 przy terenie y −2,5. OSM: `building=yes`, `man_made=tower`, `tower:type=bell_tower`, bez `height` i `building:levels`
+- Czego brak: wysokości. NMPT GUGiK nie nadaje się: maks. y 15,7 w obrysie to korona drzewa (odbicia od gruntu w obrysie, odchylenie 4–6 m, drzewa obok do y 18,2). Pl. Wikipedia nie podaje wysokości. Nie zgadywać
+- Źródła do sprawdzenia (kolejno, bez łamania licencji i zabezpieczeń): (1) chmura punktów LAS GUGiK (te same dane otwarte co NMT/NMPT) z klasyfikacją: punkty klasy 6 (budynek) w obrysie, maks. wysokość minus teren; drzewa (klasy 3–5) odpadają same; (2) zdjęcia z kategorii Commons „Belfry of Church of Saint Nicholas in Lublin” (licencja każdego pliku osobno): liczba kondygnacji i proporcja do kalenicy kościoła lub sąsiedniej kamienicy z `height`/`building:levels` w OSM; (3) karta zabytku NID A/226 (zespół kościoła) w zabytek.pl, jeśli opis podaje wysokość lub kondygnacje. Wynik i źródło wpisać do T-129
+- Poprawka: korekta `height` (ewentualnie `roof:shape`/`roof:height` hełmu) w `tools/osm-import/src/corrections.ts` z odsyłaczem T-129 i źródłem w komentarzu
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: szczyt bryły w680377807 (`y + height + roof`) ± 1 m od wartości ze źródła, `source: height`; kontrola `osm-tower-default-height` 1 → 0
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
