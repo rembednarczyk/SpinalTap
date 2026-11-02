@@ -758,7 +758,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: kontrola `church-part-below-roof` 5 → 0; okap i kalenica nawy w grze dalej w 1,5 m od `CHURCH_SURFACE`
 
 ### G-239 Ciało napastnika po wygranym napadzie znika po odejściu gracza ok. 400 m
-- Status: w PR #229 (2.11, @ 904b1eb, czeka na weryfikację; zgłoszone przez naprawiacza G-233)
+- Status: w PR #229 (2.11, @ 904b1eb w weryfikacji; zgłoszone przez naprawiacza G-233)
 - Ważność: S4 · Zasięg: po „won” ciało nie ma klucza, a ma chunk ofiary, więc uśpienie chunka zdejmuje je bez stanu (analogia G-219); tak samo po wczytaniu
 - Poprawka: jak G-219 (ciało bez chunku), z oceną nagromadzenia ciał (G-196); test z odejściem 400 m
 - Pakiet właściciela: packages/sim (micro-events, streaming)
@@ -800,7 +800,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools (city_vehicles), packages/engine (vehicle-models)
 
 ### G-252 Złote hashe i testy nie pilnują terenu Trasy Podziemnej; pad wykopu zależy od rozdzielczości siatki
-- Status: w naprawie (2.11, naprawiacz, gałąź `ccr-ec2c4269-ilh8k8-g252`; zgłoszone przez weryfikatora G-236)
+- Status: w PR #230 (2.11, @ 084ac7c w weryfikacji; teren bitowo bez zmian; zgłoszone przez weryfikatora G-236)
 - Ważność: S3 (luka w testach przy ryzykownym obszarze) · Zasięg: przebiegi `determinism.test.ts` nie przechodzą przez Trasę Podziemną ani Rynek przy Trybunale, więc zmiana kształtu terenu tam nie zmienia hasha; pad Trasy Podziemnej (`sites.ts:159`, blend 0,01) jest ustawiony pod węzły siatki 5 m chunka `stare-miasto-0-0`, każda zmiana komórki (także w imporcie) po cichu przesuwa ściany wykopu
 - Poprawka: test „grunt pod stopniami Trasy Podziemnej z zapasem ≥ 1 m pod rampą kolizyjną” i „bruk nie wystaje nad stopnie”; pad niezależny od rozdzielczości siatki (granice w metrach, nie w węzłach)
 - Pakiet właściciela: packages/sim (content/lublin)
