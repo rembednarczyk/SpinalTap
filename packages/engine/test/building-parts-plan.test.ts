@@ -111,8 +111,10 @@ describe("a church whose parts come from the map (G-057)", () => {
   });
 
   it("over the whole centre: no church a part stands on keeps towers, every other church does", () => {
-    // The landmarks the map shows without a tower (G-210) keep none either: landmark-towers.test.ts.
-    const towerless = ["w66258167", "w66330578"].map(byId);
+    // The landmarks the map shows without a tower (G-210) and the churches the map has a tower by
+    // (G-212) keep none either: landmark-towers.test.ts. The Discalced Carmelites' outline is the
+    // whole friary, its box's west end on the grass (G-212): no tower stands there.
+    const towerless = ["w66258167", "w66330578", "w69916021", "w66258180", "w66264082", "r5420467"].map(byId);
     const sources = all.map(sourceOf);
     const lifted = sources.filter((s) => s.view.soffit !== undefined);
     const churches = sources.filter((s) => s.view.use === "church" && s.view.soffit === undefined);
