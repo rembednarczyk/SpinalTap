@@ -2,7 +2,7 @@ import { type TerrainGrid, type Vec3, terrainHeightAt } from "@seki/core";
 import type { World } from "miniplex";
 import type { Rect } from "../content/builders";
 import type { Entity } from "./components";
-import { type GroundDeck, deckAt, deckCeiling } from "./deck";
+import { type GroundDeck, deckCeiling, groundOver } from "./deck";
 
 /** What the ground needs of a chunk: where it is and, optionally, its terrain (ADR-0043). */
 export interface GroundChunk {
@@ -93,17 +93,16 @@ export class GroundField {
   }
 
   /**
-   * Ground height at (x, z): the terrain, or a bridge's deck over it (ADR-0053), or 0. For feet
-   * reaching up to `reach`, a deck high over the terrain and above the reach is overhead: under
-   * it the ground is the terrain (G-062).
+   * Ground height at (x, z): the terrain, or a bridge's deck over it (ADR-0053) or a flight of
+   * steps hung off one (G-255), or 0. For feet reaching up to `reach`, a deck high over the
+   * terrain and above the reach is overhead: under it the ground is the terrain (G-062).
    */
   heightAt(x: number, z: number, reach = Infinity): number {
     if (!this.hasTerrain) return 0;
     const chunk = this.chunks[this.chunkIndex(x, z)];
     const grid = chunk?.terrain;
     const h = grid ? terrainHeightAt(grid, x, z) : 0;
-    const deck = chunk?.decks ? deckAt(chunk.decks, x, z, reach, h) : null;
-    return deck !== null && deck > h ? deck : h;
+    return chunk?.decks ? groundOver(chunk.decks, x, z, h, reach) : h;
   }
 
   /** The lowest underside of a bridge's deck over (x, z) at or above `head`, or Infinity (G-062). */

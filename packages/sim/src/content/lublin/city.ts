@@ -6,6 +6,7 @@ import { clearedBuilding } from "../cleared-buildings";
 import { buildingView, groundView, markingView, toPoints } from "./index";
 import { type GroundRect } from "./shape";
 import { type BuildingCut, CLEARED, type PassageSite, ROOM_STOREY, type RoomSite, rawHeight } from "./sites";
+import { flightDeckAt } from "./decks";
 import { SHAPED_TERRAIN, groundY } from "./terrain";
 import type { LublinBuildingData, LublinChunkData, LublinGroundData } from "./types";
 
@@ -189,11 +190,20 @@ interface Carve {
   readonly bottom: number;
 }
 
-/** A piece of ground, on a bridge with its deck's axis and heights (ADR-0053). */
+/** The flight hung off a bridge (G-255) whose band holds the middle of `pts`, or null. */
+const flightUnder = (pts: readonly GroundPoint[]) =>
+  pts.length > 0 ? flightDeckAt(pts.reduce((a, p) => a + p.x, 0) / pts.length, pts.reduce((a, p) => a + p.z, 0) / pts.length) : null;
+
+/**
+ * A piece of ground, on a bridge with its deck's axis and heights (ADR-0053), and so is a band
+ * of steps on a flight hung off a bridge (G-255): the renderer lays its treads on the flight's
+ * grade, as the simulation walks it, not on the terrain under it or on the bridge beside it.
+ */
 const bridgeView = (g: LublinGroundData): ViewDescriptor => {
   const view = groundView(g);
-  if (!g.deck || view.kind !== "ground") return view;
-  const d = makeDeck(g.outline, g.deck, rawHeight);
+  if (view.kind !== "ground") return view;
+  const d = g.deck ? makeDeck(g.outline, g.deck, rawHeight) : g.surface === "steps" ? flightUnder(toPoints(g.outline)) : null;
+  if (!d) return view;
   return { ...view, deck: { a: { x: d.a.x, y: d.ya, z: d.a.z }, b: { x: d.b.x, y: d.yb, z: d.b.z } } };
 };
 

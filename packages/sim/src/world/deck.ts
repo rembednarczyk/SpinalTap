@@ -13,6 +13,15 @@ export interface GroundDeck {
   readonly ya: number;
   readonly yb: number;
   readonly box: { readonly minX: number; readonly maxX: number; readonly minZ: number; readonly maxZ: number };
+  /**
+   * A flight of steps hung off a bridge's deck down to the terrain (G-255), not a bridge's piece:
+   * the ground on its outline even where the terrain rises over it, the flight cut into the bank,
+   * but only for feet within reach of it: under it, where it comes down to the terrain, the feet
+   * stay on the terrain until the flight is a step over them, not lifted onto it at 2 m (G-062).
+   */
+  readonly flight?: boolean;
+  /** The flights down beside the deck that its outline reaches over (G-255): over one, the deck above it is not the ground, the flight is. */
+  readonly beside?: readonly GroundDeck[];
 }
 
 const insideRing = (ring: readonly GroundPoint[], x: number, z: number): boolean => {
@@ -24,6 +33,8 @@ const insideRing = (ring: readonly GroundPoint[], x: number, z: number): boolean
   }
   return c;
 };
+
+const over = (d: GroundDeck, x: number, z: number): boolean => x >= d.box.minX && x <= d.box.maxX && z >= d.box.minZ && z <= d.box.maxZ && insideRing(d.ring, x, z);
 
 /** The deck's height over (x, z), level across its axis and clamped at its abutments. */
 export const deckHeight = (d: GroundDeck, x: number, z: number): number => {
@@ -39,20 +50,37 @@ export const deckHeight = (d: GroundDeck, x: number, z: number): number => {
  */
 export const DECK_HEADROOM = 2;
 
+/** The highest deck over (x, z) that is ground for feet reaching up to `reach` (`deckAt`), and whether a flight's is among them. */
+const decksAt = (decks: readonly GroundDeck[], x: number, z: number, reach: number, terrain: number): { readonly y: number | null; readonly flight: boolean } => {
+  let best: number | null = null;
+  let flight = false;
+  for (const d of decks) {
+    if (!over(d, x, z)) continue;
+    const y = deckHeight(d, x, z);
+    if (y > reach && (d.flight === true || y - terrain > DECK_HEADROOM)) continue;
+    if (d.beside?.some((f) => over(f, x, z) && y > deckHeight(f, x, z))) continue;
+    flight ||= d.flight === true;
+    if (best === null || y > best) best = y;
+  }
+  return { y: best, flight };
+};
+
 /**
  * The highest deck over (x, z) that is ground for feet reaching up to `reach`, or null where no
  * deck is. A deck with headroom under it (over `terrain` there) and above the reach is overhead,
- * not ground: the feet stay on the way under the bridge.
+ * not ground: the feet stay on the way under the bridge. Over a flight of steps down beside it, a
+ * deck above the flight is not ground either: the flight is (G-255).
  */
-export const deckAt = (decks: readonly GroundDeck[], x: number, z: number, reach = Infinity, terrain = -Infinity): number | null => {
-  let best: number | null = null;
-  for (const d of decks) {
-    if (x < d.box.minX || x > d.box.maxX || z < d.box.minZ || z > d.box.maxZ || !insideRing(d.ring, x, z)) continue;
-    const y = deckHeight(d, x, z);
-    if (y > reach && y - terrain > DECK_HEADROOM) continue;
-    if (best === null || y > best) best = y;
-  }
-  return best;
+export const deckAt = (decks: readonly GroundDeck[], x: number, z: number, reach = Infinity, terrain = -Infinity): number | null => decksAt(decks, x, z, reach, terrain).y;
+
+/**
+ * The ground at (x, z) over the terrain at `terrain` there, for feet reaching up to `reach`: the
+ * highest deck that is ground (`deckAt`) where it lies over the terrain, or on a flight of steps
+ * hung off a bridge, which is cut into the terrain where that rises over it (G-255); else the terrain.
+ */
+export const groundOver = (decks: readonly GroundDeck[], x: number, z: number, terrain: number, reach = Infinity): number => {
+  const { y, flight } = decksAt(decks, x, z, reach, terrain);
+  return y !== null && (y > terrain || flight) ? y : terrain;
 };
 
 /** How deep a deck hangs below its surface, its fascia and underside as drawn (ADR-0053), metres. */
