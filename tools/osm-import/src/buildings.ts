@@ -66,6 +66,8 @@ export interface BuildingContext {
   readonly civicPoints?: readonly { readonly at: Pt; readonly name: string; readonly amenity: string; readonly addr?: string }[];
   /** Small buildings standing on their own (`smallAlone`, G-127): one storey when the map gives no height. */
   readonly alone?: ReadonlySet<string>;
+  /** Buildings with a tower of the map in their tags, in their outline or by their walls (`buildingsWithTowers`, G-212). */
+  readonly towered?: ReadonlySet<string>;
 }
 
 /** A building and the parts of it lifted onto it (`building:part`, G-049). */
@@ -158,6 +160,7 @@ export const makeBuilding = (a: Area, ctx: BuildingContext, ownParts: readonly A
     ...(name ? { name } : {}),
     look,
     ...(shops ? { shopfront: true as const } : {}),
+    ...(use === "church" && ctx.towered?.has(a.id) ? { mappedTower: true as const } : {}),
     source: m.source,
   };
   return { ok, lifted: lifted.flatMap((l) => liftedPart(l, ok)) };

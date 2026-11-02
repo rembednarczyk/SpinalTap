@@ -57,8 +57,12 @@ const TOWERLESS_OSM: ReadonlySet<string> = new Set(["w66258167", "w66330578"]);
 
 let towerless: ReadonlySet<string> | null = null;
 
-/** Whether the map building standing at (x, z) with an outline of `corners` points is a landmark without a tower. */
+/**
+ * Whether the map building standing at (x, z) with an outline of `corners` points takes no bell
+ * towers of the renderer's: a landmark without a tower, or a church whose tower the map has by
+ * it (`mappedTower`, G-212), so a made-up one would stand beside the real one.
+ */
 export const towerlessAt = (x: number, z: number, corners: number): boolean => {
-  towerless ??= new Set(LUBLIN_CHUNKS.flatMap((c) => c.buildings.flatMap((b) => (TOWERLESS_OSM.has(b.id) ? [keyOf(b.x, b.z, b.outline.length / 2)] : []))));
+  towerless ??= new Set(LUBLIN_CHUNKS.flatMap((c) => c.buildings.flatMap((b) => (TOWERLESS_OSM.has(b.id) || b.mappedTower ? [keyOf(b.x, b.z, b.outline.length / 2)] : []))));
   return towerless.has(keyOf(x, z, corners));
 };

@@ -175,12 +175,14 @@ const spire = (sink: MeshSink, ring: readonly P2[], y: number, h: number, color:
 export const addTowers = (sink: MeshSink, f: FacadeFrame, p: Palette, near: boolean): void => {
   // A lifted part of a church (its nave or a chapel, G-049) stands on the church: the towers are the church's.
   // A church with such parts takes its shape from the map (G-057): towers made up beside them match nothing there.
-  // A landmark the map shows whole without one (G-210) keeps the silhouette the map gives it.
+  // A landmark the map shows whole without one (G-210), or with its tower beside it (G-212), keeps the silhouette the map gives it.
   if (f.b.lifted || f.b.carriesParts || f.b.towerless) return;
   const rand = prng((f.b.look ^ 0x70e4) >>> 0);
   const helmet = rand() < 0.5;
   for (const t of towerSpots(f)) {
     const ring = towerRing(f, t.u, t.v, t.half);
+    // The outline's oriented box overhangs a bent or L-shaped outline: a tower there would stand on the grass (G-212).
+    if (!pointInRing(centroid(ring), f.b.ring)) continue;
     const top = f.b.base + t.height;
     const meta = wallMeta(4.6, t.half, WINDOW_STYLE.civic, f.style.seed);
     for (let i = 0; i < 4; i++) {
