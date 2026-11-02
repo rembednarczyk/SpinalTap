@@ -62,6 +62,17 @@ export const TAG_CORRECTIONS: readonly TagCorrection[] = [
     reason: "Donżon: korona ok. y 16,4–16,9 z NMPT wobec y 18,6 z height=25",
     ref: "T-114",
   },
+  {
+    // St Josaphat's tower: OSM has only `man_made=tower` and `tower:type=bell_tower`, so it stood
+    // at the district's default 4 storeys with its top at y 12.2. NMPT GUGiK has its top at y 9.5
+    // in the outline (the 10.1 within 4 m of its middle is the nave's edge), the foot at y -1.6
+    // with a 1 m plinth; `height` counts over the plinth, hence 9.5 + 1.6 - 1.
+    // St Nicholas's belfry w680377807 waits for a source: the surface model there is tree crowns.
+    id: "w1382552285",
+    tags: { height: "10.1" },
+    reason: "wieża cerkwi św. Jozafata: szczyt y 9,5 z NMPT wobec y 12,2 z domyślnych 4 kondygnacji",
+    ref: "T-129",
+  },
   // The castle stairs (Brabander, 1954): OSM has no `width` on their flights and landings, so they
   // were 3 m and 2-2.5 m bands, a dark strip up the slope. Their walls w231832094 and w231832095
   // stand 9.6..10.1 m apart (centre lines), about 11 m with the balustrades on the orthophoto.

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { KRAKOWSKIE_CHUNKS } from "../../../packages/sim/src/content/lublin/krakowskie.generated.ts";
 import { PODZAMCZE_CHUNKS } from "../../../packages/sim/src/content/lublin/podzamcze.generated.ts";
 import { STOREY } from "../src/building-tags.ts";
 import { partTier } from "../src/building-parts.ts";
@@ -50,6 +51,15 @@ describe("tag corrections (ADR-0042)", () => {
     expect(Math.abs(chapel.y + chapel.height + (chapel.roof ?? 0) - 15.3)).toBeLessThanOrEqual(1);
     const keep = building("w450180469");
     expect(Math.abs(keep.y + keep.height + (keep.roof ?? 0) - 16.65)).toBeLessThanOrEqual(1);
+  });
+
+  // NMPT GUGiK 0.5 m (T-129), world y: St Josaphat's tower to 9.5, the highest cell in its outline,
+  // some 4 m under the church's ridge (y 13.3). St Nicholas's belfry waits for a source (G-224):
+  // the surface model over it is tree crowns.
+  it("puts the top of St Josaphat's tower in the game's data within 1 m of the surface model (G-224)", () => {
+    const tower = KRAKOWSKIE_CHUNKS.flatMap((c) => c.buildings).find((o) => o.id === "w1382552285")!;
+    expect(tower.source).toBe("height");
+    expect(Math.abs(tower.y + tower.height + (tower.roof ?? 0) - 9.5)).toBeLessThanOrEqual(1);
   });
 
   // The flights and landings of the castle stairs, from Plac Zamkowy up to the gate's bridge (T-113),
