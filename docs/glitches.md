@@ -826,6 +826,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import
 - Test przyjęcia: `tower-area-missing` 2 → 0; wierzch obu wież y 17,9 ± 1 m; wierzch pałacu w ± 1,5 m od NMPT p50 (y 11,9) w środkowym bloku
 
+### G-250 Pojazdy z paczki CC-BY bez przednich świateł, koła `-lite` stopione, NaN w UV przy wypieku
+- Status: zgłoszone (2.11, weryfikator ADR-0058 etap 4, PR #217)
+- Ważność: S4 · Zasięg: `veh-cyber` i `veh-dirty` nie mają roli `headlight` (nocą tylko neon i bursztyn); modele `-lite` SUV-a i śmieciarki mają po uproszczeniu stopione koła (telefon); `tools/city_vehicles.py:230` (`ear_clip`): zdegenerowany wielokąt w Bus.obj daje zerową normalną i NaN w UV (`RuntimeWarning`), wynik powtarzalny
+- Poprawka: rola `headlight` z przodu obu modeli; `-lite` z kołami jako osobnymi prostymi bryłami; pominięcie zdegenerowanych wielokątów w `ear_clip` z testem
+- Pakiet właściciela: tools (city_vehicles), packages/engine (vehicle-models)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
