@@ -90,6 +90,9 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 | Kontrola | Definicja | Baza |
 |---|---|---|
 | `landmark-default-height` | Budynek z listy zabytków skanu (`LANDMARK_BUILDINGS`) z `source: "default"` (wysokość z wartości domyślnej dzielnicy) | 3 (w66258167 Kaplica Trójcy, w67508958 Teatr Osterwy, w66330578 kościół Nawrócenia św. Pawła); G-204 |
+| `church-fake-tower` | Kościół (`use: church`), któremu `addTowers` dokłada wierzchołki wież, a nie ma go na liście kościołów z prawdziwą wieżą (NMPT/OSM; dziś: Brygidki w66264082, św. Jozafata w69916021, św. Mikołaja w66258180, Świętego Ducha w66264126, cerkiew Przemienienia w66264148, Bernardyni w66330578) | 5 (Kapucyni, Karmelici, św. Piotra, św. Wojciecha, Niecała 4); G-215 |
+| `church-tower-off-building` | Środek wieży proceduralnej (`towerSpots`) poza obrysem swojego budynku | 5 (Brygidki 2, św. Jozafata 1, Karmelici 2); G-215, G-212 |
+| `church-default-height` | Budynek `use: church` z `source: "default"` (szersza wersja `landmark-default-height`) | 9; G-216 |
 | `steps-narrower-than-walls` | Bieg `highway=steps` między dwoma równoległymi `barrier=wall` (do 15 m od osi po obu stronach), gdy odstęp murków przekracza szerokość pasa `steps` w grze o ponad 1 m. Wymaga murków w wyciągu | 1 (schody zamkowe); G-203 |
 | `plan-prop-off-target` | Rekwizyt z wpisu planu z `points` przesunięty przez generator o ponad 4 m od swojego punktu albo na drugą stronę ściany budynku | 2 (reflektory Zamku); G-206 |
 | `landmark-missing` | Lista ID z OSM: r7224409, w66286371, w66286341, w66264159, w66264120, w232362876, w66286338, r2366732, w48500136, w450180469, w66258167, w67508958, w66330578. Liczy ID, których nie ma w `MAP_CHUNKS` albo które usuwa `clearedBuilding`. Do tego monumenty Placu Litewskiego (n481952877, n481952879, n481952880) wśród rekwizytów `monument` w promieniu 1 m | 2 (Osterwy, Bernardyni) |
@@ -648,7 +651,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim, packages/core
 
 ### G-210 Proceduralna dzwonnica z iglicą na Kaplicy Trójcy
-- Status: w PR #190 (2.11, PRZYJĘTE przez weryfikatora, przegląd kuratora w toku): `TOWERLESS_OSM` (Kaplica i Bernardyni), kontrola `landmark-fake-tower` baza 0
+- Status: w PR #190 (2.11, PRZYJĘTE przez weryfikatora; kurator: NIE PRZYJĘTE z uwagami): `TOWERLESS_OSM` (Kaplica i Bernardyni), kontrola `landmark-fake-tower` baza 0. Kaplica zgodna. Bernardyni mają prawdziwą wieżę (T-120, G-214): poprawić komentarz w `landmarks/match.ts` i opis testu albo zdjąć ich z listy
 - Ważność: S3 (proponowana: fałszywa iglica jest najwyższym akcentem wzgórza zamkowego zamiast Donżonu) · Zasięg: Kaplica w66258167 (941; 214,6), możliwe inne kościoły z listy zabytków bez części i bez `tower` w OSM
 - Przyczyna: `packages/engine/src/renderer/mapcity/roof-plan.ts` (`towerSpots`/`addTowers`) dokłada wieżę kościołom bez `building:part`, więc wyłączenie z G-057 nie działa; korona wieży ok. y 19,0, iglica do ok. y 28–30 (Donżon 16,9; prawdziwa Kaplica bez wieży, szczyt zachodni ok. y 16,9)
 - Poprawka: bez proceduralnej wieży na zabytkach z `LANDMARK_BUILDINGS` bez `tower` w OSM (albo przepis Z3); kontrola skanu `landmark-fake-tower` (baza ≥ 1); migawka NPR świadomie
@@ -672,6 +675,36 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: zdjąć warunek `w > PATHS.steps` w `flightStrips` (tools/osm-import/src/ground.ts, po #194), żeby każdy bieg krótszy niż szeroki był dzielony na pasy; kontrola skanu „bieg w poprzek”
 - Poboczne: wyciąg `krakowskie.json` bez murków (nieaktualny cache kafli, `osm:fetch --only=krakowskie` z siecią); pas bez nawierzchni między brukiem Placu Zamkowego (x ok. 759) a ścieżką w56965514 (x ok. 765)
 - Pakiet właściciela: tools/osm-import
+
+### G-214 Kościół Bernardynów bez swojej wieży i sygnaturki, za wysoka nawa
+- Status: zgłoszone (2.11, kurator, przegląd #190)
+- Ważność: S3 (proponowana) · Zasięg: lokalny (Bernardyńska, widok z Krakowskiego Przedmieścia i Placu Wolności) · Koszt: mały
+- Gdzie: w66330578 (364,7; −239,8), Krakowskie; T-120
+- Dowód: NMPT GUGiK 0,5 m: wieża (378,1; −247,7), ok. 5,5 × 5,5 m, hełm do y 39,2; sygnaturka (375,4; −240,1) do y 31,8; kalenica nawy y 24,5 (gra 30,1, `source: default`). Po #190 gra nie ma żadnej wieży, przed #190 miała dwie na zachodzie
+- Przyczyna: OSM nie ma wieży jako części; renderer zgaduje wieże przy zachodnim szczycie
+- Poprawka: korekta importu: część `building:part=tower` (korpus do y ok. 32,5, hełm do 39,2) i sygnaturka; `height`/`roof:height` nawy z NMPT; potem zdjąć w66330578 z `TOWERLESS_OSM` (G-049 sam wyłącza wieże proceduralne)
+- Pakiet właściciela: tools/osm-import (corrections), packages/engine (lista)
+- Test przyjęcia: najwyższy wierzchołek bryły w promieniu 4 m od (378,1; −247,7) ma y 39,2 ± 1, poza nim nic nie przekracza y 32; dziś pada (brak wieży, kalenica 30,1)
+
+### G-215 Proceduralne wieże na kościołach, które ich nie mają albo mają inne
+- Status: zgłoszone (2.11, kurator, przegląd #190)
+- Ważność: S3 (proponowana) · Zasięg: szeroki (7 kościołów, m.in. deptak: Kapucyni i Świętego Ducha) · Koszt: średni
+- Gdzie: T-121: Kapucyni w67508932, Karmelici r5420467 (wieże na trawie poza obrysem, bez kolizji), św. Piotra w66335226, św. Wojciecha w61102109, Niecała 4 w232674421, Świętego Ducha w66264126 (2 wieże zamiast 1 smukłej na narożu SW do y 26,5), cerkiew Przemienienia w66264148 (wieża 13 m za wysoka)
+- Dowód: sonda `topo-g210-probe` (towerSpots w świecie) i NMPT GUGiK 0,5 m, wartości w T-121
+- Przyczyna: `roof-plan` `addTowers` stawia wieże każdemu kościołowi bez części; zachód obrysu i szerokość > 22 m decydują o liczbie i miejscu, wysokość 1,7 × ściany do 65 m
+- Poprawka: wieża proceduralna tylko dla kościołów z tabeli wież (dane: położenie, rzut, wysokość z NMPT albo `building:part` w korektach importu); pozostałe bez wieży (rozszerzyć `TOWERLESS_OSM` do odwrotnej listy); co najmniej: środek wieży w obrysie
+- Pakiet właściciela: packages/engine (renderer/mapcity), tools/osm-import, tools/glitch-scan
+- Test przyjęcia: kontrole `church-fake-tower` i `church-tower-off-building` (niżej) spadają do 0
+
+### G-216 Kościoły z wysokości domyślnej o 5–15 m za wysokie
+- Status: zgłoszone (2.11, kurator, przegląd #190)
+- Ważność: S3 (proponowana) · Zasięg: szeroki (9 kościołów w trzech dzielnicach) · Koszt: mały (dane)
+- Gdzie: T-122 (lista i wysokości)
+- Dowód: kalenice w grze a NMPT: Bernardyni 30,1/24,5, Świętego Ducha 26,5/16,5, Niecała 4 18,5/ok. 3, św. Jozafata 24,2/13,3, Karmelici 28,6/14,5, św. Mikołaja 21,8/12,4, cerkiew Przemienienia 5,9/−4,3
+- Przyczyna: `building=church` bez `height` i `building:levels` dostaje 4 kondygnacje i cokół
+- Poprawka: korekty `height`/`roof:height` z NMPT w `corrections.ts` (jak G-204)
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: kontrola `church-default-height` spada z 9 do 0
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
