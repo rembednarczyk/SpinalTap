@@ -20,9 +20,11 @@ export const PATROL_REACH = Math.hypot(PATROL_SIZE.width, PATROL_SIZE.length) / 
 /** Its foot over the paving on a lane (m): 4.6 to 5.35 m with the box, bobbing included 4.5 to 5.45 m. */
 export const PATROL_ALTITUDE = 4.6;
 /**
- * The least height over the paving it comes from and climbs to (m). The planner puts each end's
- * ceiling over the roofs round it (`ROOF_ROOM` over the highest within `POP_ROOM`), under the canyon
- * drones (ADR-0058 stage 7): from the street it never comes into sight or goes in the open air.
+ * The least height over the paving of its column over a lane's end (m). The planner sets two heights
+ * there (`patrol-lanes.ts`): its roofs (`roofs`, over the roofs round the end, under the canyon drones
+ * of ADR-0058 stage 7), under which it climbs slowly, and its ceiling (`ceilings`), where it comes into
+ * sight and goes: so high over everyone on the pedestrian streets round it that none sees it there
+ * (over 40 degrees over their horizon or under 2 px, `patrol-sight.ts`). It climbs fast between them.
  */
 export const PATROL_CEILING = 18;
 /** Seconds it takes to come into sight at its ceiling (growing from nothing) and to go (shrinking). */
@@ -30,9 +32,10 @@ export const PATROL_APPEAR = 1.5;
 /** Bobbing up and down (m) over `BOB_PERIOD` seconds. */
 export const PATROL_BOB = 0.1;
 const BOB_PERIOD = 2.6;
-/** Speeds (m/s): along the lane, and down and up. */
+/** Speeds (m/s): along the lane, down and up under the roofs' height, and fast over it. */
 export const PATROL_SPEED = 3.5;
 export const PATROL_CLIMB = 4;
+export const PATROL_SOAR = 10;
 /** The searchlight shows from this far over the paving (m) down. */
 export const BEAM_FROM = 8;
 /** The sway of its heading while it hangs over the street (rad), over this period (s). */
@@ -52,13 +55,19 @@ export const PATROL_COUNT: Readonly<Record<RenderQuality, { readonly total: numb
  * canyon drone's.
  */
 export const PATROL_LOD: Readonly<Record<RenderQuality, { readonly near: number; readonly draw: number; readonly nearSlots: number; readonly farSlots: number }>> = {
-  high: { near: 70, draw: 260, nearSlots: 3, farSlots: 3 },
+  high: { near: 70, draw: 220, nearSlots: 3, farSlots: 3 },
   medium: { near: 50, draw: 200, nearSlots: 2, farSlots: 2 },
   low: { near: 0, draw: 0, nearSlots: 0, farSlots: 0 },
 };
 
-/** How large a patrol is drawn at a distance on `high` (1 its size, 0 not drawn): the reference of `patrol-sight.ts`. */
-export const patrolFade = (d: number): number => (d <= PATROL_LOD.high.draw ? 1 : 0);
+/** Over this many metres short of its quality's draw distance a patrol shrinks to nothing, so it never pops out of sight. */
+export const PATROL_FADE = 80;
+
+/** How large a patrol is drawn at a distance (1 its size, 0 not drawn); `high` is the reference of `patrol-sight.ts`. */
+export const patrolFade = (d: number, quality: RenderQuality = "high"): number => {
+  const draw = PATROL_LOD[quality].draw;
+  return Math.max(0, Math.min(1, (draw - d) / PATROL_FADE));
+};
 
 /** Seconds away between two flights: long over the Old Town, short over the deptak and the squares. */
 export const PATROL_PAUSE: Readonly<Record<"quiet" | "busy", readonly [number, number]>> = { quiet: [45, 180], busy: [10, 45] };
@@ -77,6 +86,8 @@ export interface PatrolLane {
   readonly square: number;
   /** Where its foot comes into sight and goes over its start and its end (y, m). */
   readonly ceilings: readonly [number, number];
+  /** Up to where over its start and its end it climbs slowly, over the roofs round them (y, m). */
+  readonly roofs: readonly [number, number];
 }
 
 export interface Patrol {
@@ -113,16 +124,32 @@ export const patrolOf = (lane: PatrolLane): Patrol => {
   return { ...p, offset: patrolCycle(p) * unit(h, 6) };
 };
 
-/** How far it comes down at the lane's start and climbs at its end, from and to their ceilings (m). */
-const rises = (lane: PatrolLane): readonly [number, number] => [
-  Math.max(0, lane.ceilings[0] - (lane.grounds[0] as number) - PATROL_ALTITUDE),
-  Math.max(0, lane.ceilings[1] - (lane.grounds[lane.grounds.length - 1] as number) - PATROL_ALTITUDE),
-];
+/** A column over a lane's end: how far it comes down or climbs there (m), the slow part of it under the roofs' height. */
+interface Rise {
+  readonly all: number;
+  readonly slow: number;
+}
+
+/** The columns over the lane's start and end. */
+const rises = (lane: PatrolLane): readonly [Rise, Rise] => {
+  const at = (k: 0 | 1): Rise => {
+    const foot = (lane.grounds[k === 0 ? 0 : lane.grounds.length - 1] as number) + PATROL_ALTITUDE;
+    const all = Math.max(0, lane.ceilings[k] - foot);
+    return { all, slow: Math.min(all, Math.max(0, lane.roofs[k] - foot)) };
+  };
+  return [at(0), at(1)];
+};
+
+/** Seconds to come down or climb a column. */
+const riseTime = (r: Rise): number => (r.all - r.slow) / PATROL_SOAR + r.slow / PATROL_CLIMB;
+
+/** Height over the lane's level `t` seconds into climbing a column (from its foot). */
+const climbed = (r: Rise, t: number): number => (t < r.slow / PATROL_CLIMB ? t * PATROL_CLIMB : Math.min(r.all, r.slow + (t - r.slow / PATROL_CLIMB) * PATROL_SOAR));
 
 /** Seconds of one flight: coming into sight, down, along with its hover, up, going. */
 const flightTime = (p: Patrol): number => {
   const [a, b] = rises(p.lane);
-  return 2 * PATROL_APPEAR + (a + b) / PATROL_CLIMB + p.lane.length / PATROL_SPEED + p.hover;
+  return 2 * PATROL_APPEAR + riseTime(a) + riseTime(b) + p.lane.length / PATROL_SPEED + p.hover;
 };
 
 /** Seconds of a patrol's cycle: out, away, back, away. */
@@ -170,10 +197,10 @@ const flightAt = (p: Patrol, t: number, back: boolean): { s: number; up: number;
   const [a, b] = rises(p.lane);
   const [first, last] = back ? [b, a] : [a, b];
   const L = p.lane.length;
-  if (t < PATROL_APPEAR) return { s: 0, up: first, hovering: null, scale: ease(t / PATROL_APPEAR) };
+  if (t < PATROL_APPEAR) return { s: 0, up: first.all, hovering: null, scale: ease(t / PATROL_APPEAR) };
   let u = t - PATROL_APPEAR;
-  const fall = first / PATROL_CLIMB;
-  if (u < fall) return { s: 0, up: first - u * PATROL_CLIMB, hovering: null, scale: 1 };
+  const fall = riseTime(first);
+  if (u < fall) return { s: 0, up: climbed(first, fall - u), hovering: null, scale: 1 };
   u -= fall;
   const hoverAt = p.hoverAt;
   const toHover = hoverAt / PATROL_SPEED;
@@ -184,9 +211,9 @@ const flightAt = (p: Patrol, t: number, back: boolean): { s: number; up: number;
   const rest = (L - hoverAt) / PATROL_SPEED;
   if (u < rest) return { s: hoverAt + u * PATROL_SPEED, up: 0, hovering: null, scale: 1 };
   u -= rest;
-  const climb = last / PATROL_CLIMB;
-  if (u < climb) return { s: L, up: u * PATROL_CLIMB, hovering: null, scale: 1 };
-  return { s: L, up: last, hovering: null, scale: ease(1 - (u - climb) / PATROL_APPEAR) };
+  const climb = riseTime(last);
+  if (u < climb) return { s: L, up: climbed(last, u), hovering: null, scale: 1 };
+  return { s: L, up: last.all, hovering: null, scale: ease(1 - (u - climb) / PATROL_APPEAR) };
 };
 
 /** Where a patrol is at `time` seconds, or null while it is away. */

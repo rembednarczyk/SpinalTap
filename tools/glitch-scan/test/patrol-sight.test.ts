@@ -14,7 +14,7 @@ const house = (x0: number, z0: number, x1: number, z1: number, height: number): 
   view: { kind: "building", outline: [{ x: x0, z: z0 }, { x: x1, z: z0 }, { x: x1, z: z1 }, { x: x0, z: z1 }], height, levels: 4, use: "residential", look: 1 },
   at: O,
 });
-const lane: PatrolLane = { points: Array.from({ length: 16 }, (_, i) => ({ x: i * 4, z: 0 })), grounds: Array.from({ length: 16 }, () => 0), length: 60, seed: 5, quiet: false, square: 0, ceilings: [PATROL_CEILING, PATROL_CEILING] };
+const lane: PatrolLane = { points: Array.from({ length: 16 }, (_, i) => ({ x: i * 4, z: 0 })), grounds: Array.from({ length: 16 }, () => 0), length: 60, seed: 5, quiet: false, square: 0, ceilings: [PATROL_CEILING, PATROL_CEILING], roofs: [PATROL_CEILING, PATROL_CEILING] };
 const eye = (x: number, z: number) => ({ x, z, eye: SIGHT_EYE });
 
 describe("drone-low-pop (ADR-0058 stage 7b)", () => {

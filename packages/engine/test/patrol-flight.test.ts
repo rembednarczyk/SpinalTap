@@ -19,6 +19,7 @@ import {
   PATROL_COUNT,
   PATROL_PAUSE,
   PATROL_SCALE,
+  PATROL_SOAR,
   PATROL_SIZE,
   type PatrolLane,
   patrolCycle,
@@ -28,6 +29,7 @@ import {
 } from "../src/renderer/drones/patrol-flight";
 import { MIN_LANE, type PatrolWorld, ROOF_ROOM, planPatrolLanes } from "../src/renderer/drones/patrol-lanes";
 import { POOL_SEGMENTS, patrolTemplates } from "../src/renderer/drones/patrol-models";
+import { inView, observersOf } from "../src/renderer/drones/patrol-sight";
 import { POOL_LIFT } from "../src/renderer/drones/patrol-pool";
 import type { P2 } from "../src/renderer/mapcity/polygon";
 
@@ -41,7 +43,7 @@ const props = mergeCityProps(parseCityProps(file("city-props.glb")), parseCityPr
 /** A straight lane along +x from (0, 0), `length` m, the paving at `ground`. */
 const lane = (length: number, ground = 0, quiet = false, seed = 7): PatrolLane => {
   const n = length / 4;
-  return { points: Array.from({ length: n + 1 }, (_, i) => ({ x: i * 4, z: 0 })), grounds: Array.from({ length: n + 1 }, () => ground), length, seed, quiet, square: 0, ceilings: [ground + PATROL_CEILING, ground + PATROL_CEILING + 6] };
+  return { points: Array.from({ length: n + 1 }, (_, i) => ({ x: i * 4, z: 0 })), grounds: Array.from({ length: n + 1 }, () => ground), length, seed, quiet, square: 0, ceilings: [ground + PATROL_CEILING, ground + PATROL_CEILING + 6], roofs: [ground + PATROL_CEILING, ground + PATROL_CEILING] };
 };
 
 const rect = (x0: number, z0: number, x1: number, z1: number): P2[] => [
@@ -120,7 +122,8 @@ describe("low patrol flight (ADR-0058 stage 7b)", () => {
       if (!prev) expect(q.scale).toBeLessThan(0.01);
       expect(q.ground).toBe(3);
       if (q.y - q.ground < PATROL_ALTITUDE + PATROL_BOB + 1e-6) low += dt;
-      if (prev) expect(Math.hypot(q.x - prev.x, q.y - prev.y, q.z - prev.z)).toBeLessThan(0.3);
+      // No jump: at most the fast climb over the roofs (`PATROL_SOAR`) in a step, and the bob.
+      if (prev) expect(Math.hypot(q.x - prev.x, q.y - prev.y, q.z - prev.z)).toBeLessThan(PATROL_SOAR * dt + 0.05);
       if (prev) expect(Math.abs(q.scale - prev.scale)).toBeLessThan(0.1);
       // On the lane's axis, never past its ends.
       expect(q.z).toBeCloseTo(0, 9);
@@ -193,18 +196,25 @@ describe("low patrol lanes (ADR-0058 stage 7b)", () => {
 });
 
 describe("low patrol ceilings (ADR-0058 stage 7b)", () => {
-  it("come into sight over the roofs round the lane's ends, and keep under the canyon drones", () => {
+  it("climb slowly over the roofs round the lane's ends, come into sight out of everyone's view, and keep under the canyon drones", () => {
     const plain = planPatrolLanes(street());
-    // 15 m roofs: the least ceiling, 18 m over the paving.
-    expect(plain[0]!.ceilings).toEqual([PATROL_CEILING, PATROL_CEILING]);
-    // A 30 m tower by the street's west end: that end's ceiling 2 m over it.
+    // 15 m roofs: the least roof height, 18 m over the paving.
+    expect(plain[0]!.roofs).toEqual([PATROL_CEILING, PATROL_CEILING]);
+    // Its ceilings: no one on the street sees it there by height and distance.
+    const observers = observersOf(street().axes, () => 0);
+    for (const [k, end] of [plain[0]!.points[0]!, plain[0]!.points.at(-1)!].entries()) {
+      const y = plain[0]!.ceilings[k]!;
+      expect(y).toBeGreaterThan(PATROL_CEILING);
+      expect(observers.filter((o) => inView(o, end.x, y - PATROL_BOB, end.z))).toEqual([]);
+    }
+    // A 30 m tower by the street's west end: that end's roofs 2 m over it.
     const world = street();
     const tall = { ...world, air: new PatrolAir([...world.air.prisms, { ring: rect(0, 7, 18, 20), bottom: 0, top: 30, pad: 1 }], []) };
     const lanes = planPatrolLanes(tall);
     const west = lanes[0]!.points[0]!.x < lanes[0]!.points.at(-1)!.x ? 0 : 1;
-    expect(lanes[0]!.ceilings[west]).toBeCloseTo(30 + ROOF_ROOM, 6);
-    expect(lanes[0]!.ceilings[1 - west]).toBe(PATROL_CEILING);
-    // A canyon drone lane at 20 m over the west half (a column 18.85 m tall and the 2 m gap reach over it): no end under it.
+    expect(lanes[0]!.roofs[west]).toBeCloseTo(30 + ROOF_ROOM, 6);
+    expect(lanes[0]!.roofs[1 - west]).toBe(PATROL_CEILING);
+    // A canyon drone lane at 20 m over the west half (the columns reach far over it): no end under it.
     const canyon: DroneLane = { points: Array.from({ length: 26 }, (_, i) => ({ x: i * 4, z: 0 })), levels: Array.from({ length: 26 }, () => 20), length: 100, seed: 1 };
     const under = planPatrolLanes(tall, [canyon]);
     for (const l of under) for (const end of [l.points[0]!, l.points.at(-1)!]) expect(end.x).toBeGreaterThan(100);

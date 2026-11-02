@@ -72,7 +72,7 @@ describe("low patrol checks (ADR-0058 stage 7b)", () => {
   /** A patrol lane along z = `z` from x0 to x1 over paving at 0. */
   const patrol = (x0: number, x1: number, z = 0, ceiling = 18): PatrolLane => {
     const n = Math.round((x1 - x0) / 4);
-    return { points: Array.from({ length: n + 1 }, (_, i) => ({ x: x0 + i * 4, z })), grounds: Array.from({ length: n + 1 }, () => 0), length: n * 4, seed: 3, quiet: false, square: 0, ceilings: [ceiling, ceiling] };
+    return { points: Array.from({ length: n + 1 }, (_, i) => ({ x: x0 + i * 4, z })), grounds: Array.from({ length: n + 1 }, () => 0), length: n * 4, seed: 3, quiet: false, square: 0, ceilings: [ceiling, ceiling], roofs: [ceiling, ceiling] };
   };
   /** A mesh of the given triangles. */
   const mesh = (tris: readonly number[][]): AirMesh => ({

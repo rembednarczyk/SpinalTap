@@ -5,7 +5,7 @@ import type { CityProps } from "../city-props";
 import { type Drone, type DroneKind, DRONE_KINDS, type DronePose, droneFleet, dronePose } from "./drone-flight";
 import { type DroneLane, type DroneWorld, planDroneLanes } from "./drone-lanes";
 import { type DroneTemplate, droneTemplates } from "./drone-models";
-import { PATROL_LOD, type Patrol, type PatrolLane, type PatrolPose, patrolFleet, patrolPose } from "./patrol-flight";
+import { PATROL_LOD, type Patrol, patrolFade, type PatrolLane, type PatrolPose, patrolFleet, patrolPose } from "./patrol-flight";
 
 export { PATROL_LOD };
 import { type PatrolWorld, planPatrolLanes } from "./patrol-lanes";
@@ -228,9 +228,13 @@ export class DroneViews {
       const p = dronePose(d, this.time);
       return { kind: d.kind as SlotKind, p: p as DronePose | PatrolPose, dist: dist(p), near: lod.near, draw: lod.draw };
     });
+    // A patrol shrinks to nothing short of its draw distance (`patrolFade`): it never pops out of sight.
     const patrols = this.patrols.flatMap((d) => {
-      const p = patrolPose(d, this.time);
-      return p ? [{ kind: "watch" as SlotKind, p, dist: dist(p), near: plod.near, draw: plod.draw }] : [];
+      const pose = patrolPose(d, this.time);
+      if (!pose) return [];
+      const far = dist(pose);
+      const p = { ...pose, scale: pose.scale * patrolFade(far, this.deps.quality) };
+      return p.scale > 0 ? [{ kind: "watch" as SlotKind, p, dist: far, near: plod.near, draw: plod.draw }] : [];
     });
     return [...drones, ...patrols].filter((s) => s.dist <= s.draw).sort((a, b) => a.dist - b.dist);
   }
