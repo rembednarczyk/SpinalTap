@@ -43,6 +43,7 @@ const PROPS = ["city/city-props.glb"] as const;
 const STREET = ["city/street-props.glb"] as const;
 const MARKET = ["city/market-props.glb"] as const;
 const DOORS = ["city/door-props.glb"] as const;
+const VEHICLES = ["city/vehicle-props.glb"] as const;
 const DRONES = ["city/drone-props.glb"] as const;
 /** `audio/<name>-000.ogg` ... for the numbers given. */
 const ogg = (name: string, ...n: number[]): string[] => n.map((i) => `audio/${name}-${String(i).padStart(3, "0")}.ogg`);
@@ -65,7 +66,7 @@ export const CREDITS: readonly Credit[] = [
   { id: "sketchfab-megacity-cluster", section: "city", title: "Sci-Fi Megacity Cluster – Free  Asset Pac", author: "TRYFIELD", authorUrl: "https://sketchfab.com/tryfield", url: "https://sketchfab.com/3d-models/sci-fi-megacity-cluster-free-asset-pac-458380c745dc4e05ae5e0f6e7b4c69b2", license: "CC-BY-4.0", files: PROPS, changed: true },
   // CC0 (ADR-0022, ADR-0058): the city kit and the facade props.
   { id: "kenney-city-kit-commercial", section: "city", title: "City Kit Commercial 2.1", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://kenney.nl/assets/city-kit-commercial", license: "CC0-1.0", files: CITY, changed: true },
-  { id: "kenney-car-kit", section: "city", title: "Car Kit 3.1", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://kenney.nl/assets/car-kit", license: "CC0-1.0", files: CITY, changed: true },
+  { id: "kenney-car-kit", section: "city", title: "Car Kit 3.1", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://kenney.nl/assets/car-kit", license: "CC0-1.0", files: [...CITY, ...VEHICLES], changed: true },
   { id: "kenney-city-kit-roads", section: "city", title: "City Kit Roads", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://kenney.nl/assets/city-kit-roads", license: "CC0-1.0", files: CITY, changed: true },
   { id: "neon-town", section: "city", title: "Neon Town", author: "leonkin", url: "https://opengameart.org/content/neon-town", license: "CC0-1.0", files: CITY, changed: true },
   { id: "quaternius-cyberpunk-kit", section: "city", title: "Cyberpunk Game Kit", author: "Quaternius", authorUrl: "https://quaternius.com", url: "https://drive.google.com/drive/folders/1GyKLypoBxrpLN6GERF9U610Wiub48v9y", license: "CC0-1.0", files: PROPS, changed: true },
@@ -75,7 +76,7 @@ export const CREDITS: readonly Credit[] = [
   { id: "oga-pixelmannen-atms", section: "street", title: "Low poly ATMs", author: "pixelmannen", url: "https://opengameart.org/content/low-poly-atms", license: "CC0-1.0", files: STREET, changed: true },
   { id: "quaternius-zombie-kit", section: "street", title: "Zombie Apocalypse Kit", author: "Quaternius", authorUrl: "https://quaternius.com", url: "https://quaternius.com/packs/zombieapocalypsekit.html", license: "CC0-1.0", files: STREET, changed: true },
   { id: "kenney-nature-kit", section: "street", title: "Nature Kit 2.1", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://opengameart.org/content/nature-kit", license: "CC0-1.0", files: STREET, changed: true },
-  { id: "quaternius-public-transport", section: "street", title: "Public Transport Pack", author: "Quaternius", authorUrl: "https://quaternius.com", url: "https://quaternius.com/packs/publictransport.html", license: "CC0-1.0", files: STREET, changed: true },
+  { id: "quaternius-public-transport", section: "street", title: "Public Transport Pack", author: "Quaternius", authorUrl: "https://quaternius.com", url: "https://quaternius.com/packs/publictransport.html", license: "CC0-1.0", files: [...STREET, ...VEHICLES], changed: true },
   { id: "oga-lyricsz-bike", section: "street", title: "bike", author: "lyricsz", url: "https://opengameart.org/content/bike-0", license: "CC0-1.0", files: STREET, changed: true },
   // CC0 (ADR-0058 stage 3): the market's stock, the food booths and the goods on the counters of market-props.glb.
   { id: "kenney-food-kit", section: "street", title: "Food Kit 2.0", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://opengameart.org/content/food-kit", license: "CC0-1.0", files: MARKET, changed: true },
@@ -86,6 +87,11 @@ export const CREDITS: readonly Credit[] = [
   { id: "sketchfab-cyberpunk-doors-and-windows", section: "street", title: "Cyberpunk City Assets Pack 3# Doors and Windows", author: "carlcapu9", authorUrl: "https://sketchfab.com/carlcapu9", url: "https://sketchfab.com/3d-models/cyberpunk-city-assets-pack-3-doors-and-windows-c6cdc4f6715e4d8eae61eeb81fe636c8", license: "CC-BY-4.0", files: DOORS, changed: true },
   { id: "sketchfab-psx-garage-doors", section: "street", title: "Low-Poly PSX Style Garage Doors Pack", author: "vanillao03", authorUrl: "https://sketchfab.com/vanillao03", url: "https://sketchfab.com/3d-models/low-poly-psx-style-garage-doors-pack-6cd3bb88d27e44ac96f080e533d7015a", license: "CC-BY-4.0", files: DOORS, changed: true },
   { id: "sketchfab-cyberpunk-scifi-door-3", section: "street", title: "Cyberpunk Sci-fi Door 3 - Free", author: "Jesus Fernandez Garcia", authorUrl: "https://sketchfab.com/jamyzgenius", url: "https://sketchfab.com/3d-models/cyberpunk-sci-fi-door-3-free-df980eee6f0f42aaa52d70b668001b4d", license: "CC-BY-4.0", files: DOORS, changed: true },
+  // CC-BY 4.0 (ADR-0058 stage 4, E5 of the second pack): the street's cars, vehicle-props.glb.
+  { id: "sketchfab-cyberpunk-car", section: "street", title: "Cyberpunk car", author: "4d_Bob", authorUrl: "https://sketchfab.com/3d_Bob", url: "https://sketchfab.com/3d-models/cyberpunk-car-b4301ff99d214d16a7a43708a5866bf0", license: "CC-BY-4.0", files: VEHICLES, changed: true },
+  { id: "sketchfab-dirty-car", section: "street", title: "Dirty car", author: "3D Error 404", authorUrl: "https://sketchfab.com/3DError404", url: "https://sketchfab.com/3d-models/dirty-car-da77a8c75ddd4d7a8391912ba35735b8", license: "CC-BY-4.0", files: VEHICLES, changed: true },
+  // CC0 (ADR-0058 stage 4): SUV, pickup and garbage truck, also in vehicle-props.glb (with the far and phone versions of the city kit cars, Car Kit 3.1).
+  { id: "kenney-car-kit-2", section: "street", title: "Car Kit 2.0", author: "Kenney", authorUrl: "https://kenney.nl", url: "https://opengameart.org/content/car-kit", license: "CC0-1.0", files: VEHICLES, changed: true },
   // CC-BY 4.0 (ADR-0058 stage 7, E4 of the second pack): the drones over the street canyons, drone-props.glb.
   { id: "sketchfab-cyberpunk-drone", section: "city", title: "Cyberpunk Drone Concept Design", author: "Berk Gedik", authorUrl: "https://sketchfab.com/berkgedik", url: "https://sketchfab.com/3d-models/cyberpunk-drone-concept-design-09e7406fc76248a2866209025588dad0", license: "CC-BY-4.0", files: DRONES, changed: true },
   // The cast (VRoid Project samples) and the weapons.

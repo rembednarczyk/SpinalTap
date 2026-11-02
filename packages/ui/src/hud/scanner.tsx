@@ -122,6 +122,7 @@ export const ScannerHud = ({ touch = false }: { touch?: boolean }) => {
   const scanning = useUi((s) => s.scanning);
   const uploading = useUi((s) => s.upload !== null);
   const ram = useUi((s) => s.ram);
+  const t = useT();
   return (
     <>
       {scanning && (
@@ -131,7 +132,7 @@ export const ScannerHud = ({ touch = false }: { touch?: boolean }) => {
             <span className="scanner__corner scanner__corner--tr" />
             <span className="scanner__corner scanner__corner--bl" />
             <span className="scanner__corner scanner__corner--br" />
-            <span className="scanner__brand">KIROSHI · SKAN</span>
+            <span className="scanner__brand">{t("scan.brand")}</span>
           </div>
           <div className="scanner__panel">
             <ScanTarget touch={touch} />

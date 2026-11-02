@@ -246,4 +246,39 @@ NODE_USE_ENV_PROXY=1 node tools/assets/fetch.mjs /tmp/city-assets --only kenney-
 python3 -I -B tools/city_kit.py --market /tmp/city-assets --out packages/app/public/city
 ```
 
+## Pojazdy: `vehicle-props.glb` (ADR-0058 etap 4)
+
+Wygląd pojazdów ulicy w piątym pliku na tej samej palecie (`tools/city_vehicles.py`). Symulacja daje pojazdowi
+bryłę (`VehicleModel`, `VEHICLE_SIZE`: kolizja i wymiary) i ziarno; renderer wybiera z ziarna jeden z wyglądów
+tej bryły (`vehicle-variants.ts`) i wpasowuje model w bryłę, więc miejsca, kolizje i złote hashe się nie zmieniają.
+Każdy model ma wersję na telefon (`-lite`, ok. 0,25–0,35 tys. trójkątów) i daleką (`-far`, 60–150 trójkątów:
+kilka prostopadłościanów po sylwetce modelu, plaster po plastrze wzdłuż długości); takie same wersje dostają auta
+z kitu (`car-*-lite`, `car-*-far`, z ich modeli w `city-kit.glb`). Bez pliku zostają auta kitu, trolejbus
+proceduralny i dalekie pudełka.
+
+| Klucz w pliku | Tytuł | Autor | Źródło | Licencja | Zmiany |
+|---|---|---|---|---|---|
+| `veh-cyber` (sportowe auto, bryła `hatchback`) | Cyberpunk car | [4d_Bob](https://sketchfab.com/3d_Bob) | [Sketchfab](https://sketchfab.com/3d-models/cyberpunk-car-b4301ff99d214d16a7a43708a5866bf0) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | obrócony frontem do +Z, wpasowany w bryłę 1,75 × 4,1 m (wysokość w proporcji do długości: 1 m, niski jak sportowe auto), z 11,4 tys. do 1 tys. trójkątów (telefon 0,35 tys.), kolory z jasności tekstury sprowadzone do palety (lakier `paint` barwiony per auto), szyby nad linią okien z geometrii, świecące felgi i lampy jako neon, bez tekstur |
+| `veh-dirty` (stary sedan, bryła `sedan`) | Dirty car | [3D Error 404](https://sketchfab.com/3DError404) | [Sketchfab](https://sketchfab.com/3d-models/dirty-car-da77a8c75ddd4d7a8391912ba35735b8) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | wpasowany w bryłę 1,82 × 4,5 m (wysokość w proporcji do długości: 1,3 m), z 16,7 tys. do 1 tys. trójkątów (telefon 0,35 tys.), rdza i brud z tekstury znikają (lakier z palety), szyby i koła z materiałów, bez tekstur |
+
+| Klucze w pliku | Źródło (pobranie) | Autor | Licencja (cytat) |
+|---|---|---|---|
+| `veh-suv`, `veh-pickup` (bryła `van`), `veh-garbage` (śmieciarka, bryła `delivery`, bursztynowa) | [Car Kit 2.0](https://opengameart.org/content/car-kit), `suv`, `truck`, `garbage-truck`; `https://opengameart.org/sites/default/files/kenney_car-kit.zip` | Kenney | CC0: „License: (Creative Commons Zero, CC0) http://creativecommons.org/publicdomain/zero/1.0/ You can use this content for personal, educational, and commercial purposes.” |
+| `veh-trolleybus` (trolejbus) | [Public Transport Pack](https://quaternius.com/packs/publictransport.html), `OBJ/Bus.obj` (plik z `drive.usercontent.google.com`, id w `sources.json`) | Quaternius | CC0 (strona paczki i https://quaternius.com/license.html) |
+| `car-*-lite`, `car-*-far` | modele aut z `city-kit.glb` (Car Kit 3.1, wyżej) | Kenney | CC0 |
+
+Zmiany względem oryginałów: wpasowanie w bryłę symulacji (szerokość i długość dokładnie, wysokość najwyżej
+bryły), uproszczenie przez grupowanie wierzchołków z lampami, neonem i oponami upraszczanymi osobno (żeby nie
+znikały), normalne płaskie, bez tekstur. Autobus Quaterniusa (4,1 m) jest wydłużony do 12 m tylko w środku
+(kabina i tył bez zmian), wielokąty OBJ są dzielone metodą obcinania uszu, a barwy to malowanie lubelskiego
+trolejbusu: biały lakier, czerwony dach (`wall`), zielony pas na dole (`wall-dark`). Dach z urządzeniami,
+odbieraki do sieci, pas neonu i tablicę kierunkową rysuje renderer jak dotąd.
+
+Odtworzenie pliku:
+
+```
+NODE_USE_ENV_PROXY=1 node tools/assets/fetch.mjs /tmp/city-assets --only sketchfab-cyberpunk-car,sketchfab-dirty-car,kenney-car-kit-2,quaternius-public-transport
+python3 -I -B tools/city_kit.py --vehicles /tmp/city-assets --out packages/app/public/city
+```
+
 Wyłączenie w grze: `?city=off` (zostają gołe bryły, bez kitu i bez rekwizytów wszystkich plików).

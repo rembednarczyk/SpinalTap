@@ -1,5 +1,5 @@
 {
-  "about": "Packs and models baked into packages/app/public/city/city-props.glb, street-props.glb and market-props.glb: CC0 (ADR-0058) and CC-BY 4.0, credited in packages/ui/src/credits/credits.ts (ADR-0063). tools/assets/fetch.mjs downloads them and checks sha256; the zips, unpacked packs and source models are not committed.",
+  "about": "Packs and models baked into packages/app/public/city/city-props.glb, street-props.glb, market-props.glb, door-props.glb, vehicle-props.glb and drone-props.glb: CC0 (ADR-0058) and CC-BY 4.0, credited in packages/ui/src/credits/credits.ts (ADR-0063). tools/assets/fetch.mjs downloads them and checks sha256; the zips, unpacked packs and source models are not committed.",
   "sources": [
     {
       "id": "kenney-modular-buildings",
@@ -145,9 +145,24 @@
       "licenseQuote": "CC0 (strona paczki i https://quaternius.com/license.html)",
       "files": [
         { "path": "OBJ/Bicycle.obj", "url": "https://drive.usercontent.google.com/download?id=1xcDStoR92udBmnrmk3OKl9LrAG_akHhU&export=download&confirm=t", "sha256": "0fbaab4418722d8f1baf11be05d099d79bfe704fb109a555924d49171fa39b92" },
-        { "path": "OBJ/Bicycle.mtl", "url": "https://drive.usercontent.google.com/download?id=19tHnIOgjZweeaPARNlEKlSkrOtIfbciZ&export=download&confirm=t", "sha256": "19b75b81f388cf465cd7f16f443af0dca81678a6b31a01681578e24fe346072e" }
+        { "path": "OBJ/Bicycle.mtl", "url": "https://drive.usercontent.google.com/download?id=19tHnIOgjZweeaPARNlEKlSkrOtIfbciZ&export=download&confirm=t", "sha256": "19b75b81f388cf465cd7f16f443af0dca81678a6b31a01681578e24fe346072e" },
+        { "path": "OBJ/Bus.obj", "url": "https://drive.usercontent.google.com/download?id=1jVrZEPeLP0Inr4oVurmKDF1vAbJwAIOp&export=download&confirm=t", "sha256": "04120821058586326c4db9abb455f8d680d2aadf6e2d59a6bf3e1ac0f3f74490" },
+        { "path": "OBJ/Bus.mtl", "url": "https://drive.usercontent.google.com/download?id=1loWXJGVX5_W1jrFnZEYr1C2PyDRGaweg&export=download&confirm=t", "sha256": "5f82e1cf7bda2ca1b26e0faff32420e575cd33118964739b81de7e4351d003c0" }
       ],
-      "used": ["st-bike"]
+      "used": ["st-bike", "veh-trolleybus"]
+    },
+    {
+      "id": "kenney-car-kit-2",
+      "title": "Car Kit 2.0",
+      "author": "Kenney (www.kenney.nl)",
+      "page": "https://opengameart.org/content/car-kit",
+      "license": "CC0",
+      "licenseQuote": "License: (Creative Commons Zero, CC0) http://creativecommons.org/publicdomain/zero/1.0/ You can use this content for personal, educational, and commercial purposes.",
+      "url": "https://opengameart.org/sites/default/files/kenney_car-kit.zip",
+      "file": "car-kit.zip",
+      "sha256": "f8a69b83fbf94c9850079bc6e078ea3d8ba4c7393dd9f57f8ba544963d1b1d14",
+      "unzip": "x",
+      "used": ["veh-suv", "veh-pickup", "veh-garbage"]
     },
     {
       "id": "quaternius-zombie-kit",
@@ -383,7 +398,7 @@
       "files": [
         { "path": "cyberpunk_car.glb", "url": "https://drive.usercontent.google.com/download?id=1Tyhvx7WSYQqNvuq6MAYbf1aPhMlmuJo-&export=download&confirm=t", "sha256": "16dec5200c2f5f882e3ce90ee59bdf6b2e467c863fb57aa32e861facfe7a4101" }
       ],
-      "used": []
+      "used": ["veh-cyber"]
     },
     {
       "id": "sketchfab-cyberpunk-diner-sign-japanese",
@@ -481,7 +496,7 @@
       "files": [
         { "path": "dirty_car.glb", "url": "https://drive.usercontent.google.com/download?id=1Mfx7AfpvwbaRTv8Cws4LHMMQA_3QsnbG&export=download&confirm=t", "sha256": "781dadeb7df4da96fd4e75609147a5ff7740cf93522afb544576f1baf66577fc" }
       ],
-      "used": []
+      "used": ["veh-dirty"]
     },
     {
       "id": "sketchfab-fire-escape-doors",
