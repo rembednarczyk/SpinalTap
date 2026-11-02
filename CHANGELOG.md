@@ -14,7 +14,7 @@ Zmiany widoczne dla gracza, od najnowszych. Wersja gry i commit są na ekranie t
 - Pałac Lubomirskich przy Placu Litewskim ma dwie wieże i dach na wysokości z numerycznego modelu pokrycia terenu zamiast płaskiej bryły o domyślnej wysokości (G-249).
 - Schody z kierunkiem w mapie wznoszą się w tę stronę co w Lublinie: także schody przy portalu Archikatedry i schody z wiaduktu Zamkowej (G-236).
 - Wieża kościoła Brygidek przy Narutowicza stoi w grze z wysokością ok. 34 m z numerycznego modelu pokrycia terenu; wieże zmapowane bez `building` nie są już pomijane (G-098).
-- Schody na mapie mają stopnie wzdłuż biegu i pas co najmniej 0,45 m, a nie płaskie plamy w poprzek drogi (G-213).
+- Schody na mapie mają stopnie ułożone wzdłuż biegu i widoczny pas szeroki na co najmniej 0,45 m (G-213).
 - Kamienica przy Złotej 6 ma drzwi klatki od Złotej zamiast od parkingu, a Grodzka 7 nie ma już drzwi od zamkniętego podwórza: Trasa Podziemna pod Starym Miastem nie liczy się jako ulica przed ścianą (G-197).
 - Napad na przechodnia kończy się wygraną i nagrodą także wtedy, gdy napastnik został obalony albo zabity takedownem i jego ciało leży na ulicy; nagroda jest jedna, także po zapisie i wczytaniu (G-231).
 - Posiłek ochrony powalony żywcem nie znika już, gdy gracz odejdzie kilkaset metrów: leży w świecie jak ciało posiłku, a licznik wezwanych posiłków zostaje (G-219).
