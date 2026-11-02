@@ -59,7 +59,7 @@ import { mapHeight } from "../../../packages/sim/src/content/lublin/shape";
 import { groundY, surfaceY } from "../../../packages/sim/src/content/lublin/terrain";
 import { BRIDGE_DECKS, bridgeDeckAt } from "../../../packages/sim/src/content/lublin/decks";
 import { WORLD_CHUNKS, WORLD_SCENERY } from "../../../packages/sim/src/content/world-map";
-import { DECK_DEPTH, type GroundDeck, deckAt } from "../../../packages/sim/src/world/deck";
+import { DECK_DEPTH, type GroundDeck, deckAt, deckHeight } from "../../../packages/sim/src/world/deck";
 import { GroundField } from "../../../packages/sim/src/world/ground";
 import { type Prism, circleTouchesPrism, makePrism, prismsAt } from "../../../packages/sim/src/world/prism";
 import { STEP_HEIGHT, groundAt } from "../../../packages/sim/src/systems/movement-system";
@@ -953,6 +953,26 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       STEP_HEIGHT,
       DECK_DEPTH,
     ),
+  /**
+   * A point of a bridge's deck as the renderer draws it (its piece's outline, every 0.5 m) where
+   * the ground the game walks (`groundY`) lies more than a step under the deck (G-274): the
+   * walker falls through the paving drawn there, or stands with its head in the slab. `groundY`
+   * takes a deck high over a way under it as the ground too, so the ways under bridges (G-062)
+   * are not counted.
+   */
+  "deck-drawn-over-flight": () =>
+    [...BRIDGE_DECKS.values()].flat().flatMap((d) => {
+      const out: Finding[] = [];
+      for (let x = Math.ceil(d.box.minX * 2) / 2; x <= d.box.maxX; x += 0.5) {
+        for (let z = Math.ceil(d.box.minZ * 2) / 2; z <= d.box.maxZ; z += 0.5) {
+          if (!pointInRing({ x, z }, d.ring)) continue;
+          const y = deckHeight(d, x, z);
+          const g = groundY(x, z);
+          if (y - g > STEP_HEIGHT) out.push({ at: near(x, z), what: `ground ${g.toFixed(2)} under the deck drawn at ${y.toFixed(2)}` });
+        }
+      }
+      return out;
+    }),
   /** A run of map steps between two parallel walls further apart than the steps the game lays plus 1 m (G-203). */
   "steps-narrower-than-walls": () => {
     const flights = MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.surface === "steps").map((g) => worldOutline({ x: 0, z: 0, outline: g.outline })));
