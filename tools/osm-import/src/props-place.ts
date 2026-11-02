@@ -104,8 +104,22 @@ const facadeAt = (site: Site, at: (d: number) => Pt, inside: number): number => 
 export const sideOffset = (site: Site, p: Pt, n: Pt, mode: SideMode, fallback: number): number | null => {
   const at = (d: number): Pt => ({ x: p.x + n.x * d, z: p.z + n.z * d });
   if (mode === "path") {
-    // Beside a path: the given side, else the other, else on the path itself.
-    for (const d of [fallback, -fallback, 0]) if (site.standable(at(d))) return d;
+    // Beside a path: the given side, else the other, else on the path itself. On a flight wider
+    // than the offset (the castle stairs, T-113) a lamp stands just past its edge, on its side,
+    // unless a landing or another path goes on from there.
+    const pastSteps = (d: number) => {
+      for (let e = Math.abs(d) + 0.5; e <= 2 * fallback; e += 0.5) {
+        const q = at(Math.sign(d) * e);
+        if (site.onSteps(q)) continue;
+        return site.standable(q) && !site.onPath(q) ? Math.sign(d) * e : null;
+      }
+      return null;
+    };
+    for (const d of [fallback, -fallback, 0]) {
+      if (site.standable(at(d))) return d;
+      const past = d !== 0 && site.onSteps(at(d)) ? pastSteps(d) : null;
+      if (past !== null) return past;
+    }
     return null;
   }
   const axisRoad = site.surfaceAt(p) === "road";

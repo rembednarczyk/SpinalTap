@@ -13,7 +13,7 @@ import { emitProps } from "../src/props-emit.ts";
 import { loadNodeTags } from "../src/props-art.ts";
 import { type PropsPlan, generateProps } from "../src/props-gen.ts";
 import { SHAPES, knownKind, propOf, withShape } from "../src/props-kinds.ts";
-import { evenStations, offRoad, offWall, scatter, stations } from "../src/props-place.ts";
+import { evenStations, offRoad, offWall, scatter, sideOffset, stations } from "../src/props-place.ts";
 import { Site } from "../src/props-site.ts";
 import { SolidIndex, clearSpot } from "../src/props-solid.ts";
 import { gameDoors } from "../src/game-doors.ts";
@@ -203,6 +203,26 @@ describe("street furniture generator (ADR-0047)", () => {
     expect(a).toEqual(scatter(site, ring, 20, "stalls", 3));
     expect(a).toHaveLength(20);
     for (const p of a) expect(site.surfaceAt(p)).not.toBe("building");
+  });
+
+  it("stands a lamp beside a flight wider than its offset just past the flight's edge, not on a landing (G-203)", () => {
+    // A flight 16 m long and 10 m wide along x on z = 30, a landing past its east end.
+    const chunk: LublinChunkData = {
+      ...street(),
+      buildings: [],
+      ground: [
+        { surface: "steps", outline: [0, 25, 16, 25, 16, 35, 0, 35] },
+        { surface: "footway", outline: [16, 25, 20, 25, 20, 35, 16, 35] },
+      ],
+    };
+    const site = new Site([chunk]);
+    const d = sideOffset(site, { x: 8, z: 30 }, { x: 0, z: 1 }, "path", 4)!;
+    expect(d).toBeGreaterThanOrEqual(5);
+    expect(d).toBeLessThanOrEqual(5.5);
+    expect(sideOffset(site, { x: 8, z: 30 }, { x: 0, z: -1 }, "path", 4)).toBeGreaterThanOrEqual(5);
+    // Beside the landing as before; along the flight towards the landing, no place.
+    expect(sideOffset(site, { x: 18, z: 30 }, { x: 0, z: 1 }, "path", 4)).toBe(4);
+    expect(sideOffset(site, { x: 8, z: 30 }, { x: 1, z: 0 }, "path", 4)).toBeNull();
   });
 
   it("moves a traffic light from its node in the road's axis onto the pavement; covers and bollards stay", () => {

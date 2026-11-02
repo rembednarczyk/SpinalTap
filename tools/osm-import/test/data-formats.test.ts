@@ -55,6 +55,14 @@ describe("OSM data", () => {
     expect(serializeOsm(back, { test: true })).toBe(text);
   });
 
+  it("keeps walls for the scan's steps between walls (G-203), not fences", () => {
+    const xml = XML.replace('<tag k="barrier" v="fence"/>', '<tag k="barrier" v="wall"/>');
+    const f = filterOsm(parseOsmXml(xml));
+    expect(f.ways.get(11)!.tags).toEqual({ barrier: "wall" });
+    expect(f.nodes.has(5)).toBe(true);
+    expect(filterOsm(parseOsmXml(xml.replace('v="wall"', 'v="retaining_wall"'))).ways.has(11)).toBe(true);
+  });
+
   it("assembles multipolygon rings from pieces in any direction", () => {
     expect(assembleRings([[1, 2, 3], [5, 4, 3], [5, 1]])).toEqual([[1, 2, 3, 4, 5, 1]]);
     expect(assembleRings([[1, 2, 3]])).toEqual([]);
