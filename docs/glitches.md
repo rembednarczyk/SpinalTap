@@ -682,13 +682,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: punkty bez nawierzchni w prostokącie x 758..766, z 236..254 (co 0,5 m) = 0
 
 ### G-219 Powalony żywy posiłek ochrony znika po odejściu gracza ok. 300 m
-- Status: zgłoszone (2.11, naprawiacz G-209)
+- Status: w PR #203 (2.11, w weryfikacji)
 - Ważność: S4 · Zasięg: posiłek powalony żywcem ma `chunk: ""`; `chunk-unload` usypia go po chunku, w którym leży, a bez klucza nie zostaje po nim stan, więc znika na zawsze, a `sent` spada do 0 (sonda, ziarno 7: 100 m nadal jest, 300 m już nie, po powrocie brak); pokrewne G-196 (ciała posiłków bez chunku)
 - Poprawka: powaleni i ciała posiłków przypisani do chunka, w którym leżą, z zapisem przy uśpieniu i powrotem przy wczytaniu chunka (wtedy `goneReinforcement` z G-209 musi uwzględnić uśpionych, żeby nie płacili XP drugi raz)
 - Pakiet właściciela: packages/sim (streaming, reinforcements)
 
 ### G-220 Brak testu: powalony, niesiony albo schowany posiłek nie jest „odeszły” dla pamięci hacków
-- Status: zgłoszone (2.11, weryfikator G-209)
+- Status: w PR #203 (2.11, w weryfikacji)
 - Ważność: S4 (luka w testach) · Zasięg: `goneReinforcement` (`packages/sim/src/world/reinforcements.ts`); mutacja `present` bez powalonych (`filter(!e.downed)`) przechodzi testy G-209, łapie ją tylko sonda weryfikatora
 - Poprawka: test, w którym powalony, niesiony i schowany posiłek zostaje w pamięci po zapełnieniu jej odeszłymi (pada z mutacją)
 - Pakiet właściciela: packages/sim
