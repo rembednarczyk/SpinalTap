@@ -304,7 +304,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: w66335239 i w66293168 w `MAP_CHUNKS`, bez uskoku gruntu na x = 460; propozycja: `stare-miasto` minZ −270 z `zEdges` [−270, −40, 160] (rząd 230 m, identyfikatory chunków bez zmian); kontrola `historic-cut-by-edge` (budynek zabytkowy z obrysem w prostokącie dzielnicy i środkiem poza wszystkimi) 4 → 1 (Pałac Tarłów zostaje, T-057)
 
 ### G-098 Wieże zmapowane jako `man_made=tower` bez `building` pominięte
-- Status: w naprawie (2.11, `fix/g098`): wieża Brygidek z NMPT (szczyt y 32,4) jako część podniesiona kościoła; wieże Pałacu Lubomirskich bez pomiaru NMPT (kontrola `tower-area-missing` 3 → 2); autor wciąga main (konflikt złotych hashy z v28) · Ważność: S3 (od 2.11, przegląd #198: po G-212 Brygidki nie mają żadnej wieży, a prawdziwa ok. 34 m jest dominantą Narutowicza) · Zasięg: 3 obrysy w Krakowskim · Koszt: mały–średni
+- Status: w PR #216 (2.11, w weryfikacji, potem kurator): wieża Brygidek z NMPT (szczyt y 32,4) jako część podniesiona kościoła; wieże Pałacu Lubomirskich bez pomiaru NMPT (kontrola `tower-area-missing` 3 → 2); autor wciąga main (konflikt złotych hashy z v28) · Ważność: S3 (od 2.11, przegląd #198: po G-212 Brygidki nie mają żadnej wieży, a prawdziwa ok. 34 m jest dominantą Narutowicza) · Zasięg: 3 obrysy w Krakowskim · Koszt: mały–średni
 - Wysokość: OSM nie ma `height`; z NMPT wieża Brygidek do y 32,4 (teren y ok. −1,2), w imporcie korekta `height` z odsyłaczem T-060, inaczej wyjdzie z wartości domyślnej jak w G-224
 - Gdzie: w1090997970 (wieża Brygidek, 161, −229), w1002739983 (84, 99), w1002739984 (40, 103); T-060
 - Pakiet właściciela: tools/osm-import
