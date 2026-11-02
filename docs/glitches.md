@@ -848,6 +848,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: test „Rynek poza obrysem w66264159 nie niżej niż X cm od NMT” i poprawa komentarza albo padu
 - Pakiet właściciela: packages/sim (content/lublin)
 
+### G-262 Postać z kolejki do straganu pod wiaduktem Zamkowej stoi na pomoście, 2,75 m nad ladą
+- Status: zgłoszone (2.11, przegląd topografii PR #228, T-139)
+- Ważność: S4 (proponowana; widoczne z Podwala i z wiaduktu) · Zasięg: 1 postać, `stare-miasto-1-1` (751,27; −13,32; 178,30), gospodarz stragan (750,1; −16,07; 177,7) · Koszt: mały
+- Dowód: `addFigures` (`tools/osm-import/src/props-figures.ts`) stawia stojącą postać na `max(surfaceY)` pod podeszwami i sprawdza tylko ich wzajemną różnicę (`SOLE_STEP`), nie poziom gospodarza; `surfaceY` przy wiadukcie zwraca pomost (jak G-069), więc kolejka trafia na wiadukt, zwrócona do straganu pod nim
+- Pakiet właściciela: tools/osm-import (props)
+- Test przyjęcia: stojąca postać nie dalej niż 0,5 m w pionie od `y` gospodarza (miejsce odrzucone z powodem np. `host level`); kontrola skanu `figure-off-host-level` 1 → 0; tabela z `pnpm osm:props`
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
