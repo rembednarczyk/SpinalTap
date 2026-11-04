@@ -114,6 +114,7 @@ export const createControllers = (deps: GameSessionDeps, s: SessionHooks): Contr
   let free = (): boolean => false;
   bindEventPresenter(bus, render, audio, ui, {
     playerId: () => sim().player()?.id ?? null,
+    playSeconds: () => sim().tick / SIM_HZ,
     onDialogue: (id) => dialogue.open(id),
     // A ticket kiosk opens the line map, not ink (ADR-0034, ADR-0035).
     onMetro: (station) => {

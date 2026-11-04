@@ -56,6 +56,8 @@ export interface Toast {
   readonly text: string;
   /** Outlives ordinary toasts when too many come at once (a level up, a failed load). */
   readonly keep?: boolean;
+  /** How many identical toasts this one stands for while on screen (G-281); one when absent. */
+  readonly count?: number;
 }
 
 export interface JournalStepVm {
