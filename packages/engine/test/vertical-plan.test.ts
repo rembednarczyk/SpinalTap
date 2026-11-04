@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { LUBLIN_CHUNKS, buildingView } from "@seki/sim/lublin";
+import { prng } from "../src/renderer/city-kit-data";
 import { MeshSink } from "../src/renderer/mesh-sink";
 import { type AcrossAt, type Span, findSpans, planFarCanyon, planNearCanyon, spanFootbridge } from "../src/renderer/mapcity/canyon-plan";
 import { planCanyonSigns } from "../src/renderer/mapcity/canyon-signs";
@@ -14,6 +15,7 @@ import { planWallClutter } from "../src/renderer/mapcity/wall-clutter";
 const ring = (pts: readonly [number, number][]): P2[] => cleanRing(pts.map(([x, z]) => ({ x, z })));
 const rect = (x0: number, z0: number, x1: number, z1: number) => ring([[x0, z0], [x1, z0], [x1, z1], [x0, z1]]);
 const none = () => null;
+const flat = () => 0;
 
 const tenement = (extra: Partial<MapBuilding> = {}): MapBuilding => ({ id: 3, ring: rect(0, 0, 24, 14), base: 0, foot: 0, height: 13, levels: 4, use: "residential", look: 0x2077, rise: 15, clutter: 0.8, ...extra });
 
@@ -128,8 +130,8 @@ describe("over the streets (ADR-0051)", () => {
     const spans: Span[] = findSpans(left, across);
     const full = new MeshSink();
     const lite = new MeshSink();
-    planNearCanyon(full, spans, false);
-    planNearCanyon(lite, spans, true);
+    planNearCanyon(full, spans, false, flat);
+    planNearCanyon(lite, spans, true, flat);
     expect(full.vertexCount).toBeGreaterThan(lite.vertexCount);
     const far = new MeshSink();
     planFarCanyon(far, spans);
@@ -158,5 +160,52 @@ describe("over the streets (ADR-0051)", () => {
     expect(spans.length).toBeGreaterThan(100);
     expect(bridges).toBeGreaterThanOrEqual(3);
     expect(bridges).toBeLessThanOrEqual(15);
+  });
+});
+
+describe("the cables of a span over the paving (G-268)", () => {
+  /** A span over an 18 m street from a building whose ground floor is 10 m under the street. */
+  const span = (seed: number, top = 30): Span => ({ a: { x: 0, z: 0 }, b: { x: 0, z: 18 }, along: { x: 1, z: 0 }, width: 18, base: 0, top, clutter: 1, main: false, seed });
+  const lowest = (sink: MeshSink, ground: (x: number, z: number) => number) => {
+    let low = Infinity;
+    for (let i = 0; i < sink.vertexCount; i++) low = Math.min(low, sink.positions[i * 3 + 1]! - ground(sink.positions[i * 3]!, sink.positions[i * 3 + 2]!));
+    return low;
+  };
+
+  it("hangs every cable and lantern at least 3.5 m over the paving under it, flat or up the slope", () => {
+    const street = (_x: number, z: number) => (z > 2 && z < 16 ? 10 : 10 - Math.abs(z - 9) / 3);
+    for (let k = 0; k < 40; k++) {
+      for (const ground of [flat, street]) {
+        const sink = new MeshSink();
+        planNearCanyon(sink, [span(k / 40)], false, ground);
+        expect(sink.empty).toBe(false);
+        expect(lowest(sink, ground)).toBeGreaterThanOrEqual(3.5 - 1e-6);
+      }
+    }
+  });
+
+  it("leaves out the cables that cannot clear the paving under the lower cornice", () => {
+    const sink = new MeshSink();
+    planNearCanyon(sink, [span(0.3, 12)], false, () => 9);
+    expect(sink.empty).toBe(true);
+  });
+
+  it("draws every cable as before where the paving needs none lifted", () => {
+    // One cable is 6 segments of 3 ribbons; on a phone there are no lanterns.
+    const RIBBONS = 6 * 3 * 4;
+    const narrow = (seed: number): Span => ({ a: { x: 0, z: 0 }, b: { x: 0, z: 14 }, along: { x: 1, z: 0 }, width: 14, base: 0, top: 20, clutter: 0.35, main: false, seed });
+    for (let k = 0; k < 400; k++) {
+      const s = narrow(k / 400);
+      const count = Math.round(s.clutter * 1.5 * (0.5 + prng(Math.floor(s.seed * 0xfffffff) ^ 0xc0de)()));
+      for (const ground of [() => null, () => -100]) {
+        const sink = new MeshSink();
+        planNearCanyon(sink, [s], true, ground);
+        expect(sink.vertexCount, `seed ${k}/400`).toBe(count * RIBBONS);
+      }
+    }
+    // The same span in full, as drawn before G-268: four cables and their lanterns.
+    const full = new MeshSink();
+    planNearCanyon(full, [narrow(33 / 400)], false, () => -100);
+    expect(full.vertexCount).toBe(384);
   });
 });
