@@ -17,8 +17,22 @@ const gangerShots = (sim: Simulation) => {
 /** The M0 guard's post in the yard behind the car wash on Plac Łokietka (ADR-0045). */
 const POST = KRAKOWSKIE_SITE_POINTS.car_wash(-2.5, 39.5);
 
+/**
+ * Turns the guard towards `at`: he faces into the yard, and the mouth of it is behind his back
+ * (since ADR-0069 every ganger sees in a cone, so "in plain view" means in front of him).
+ */
+const guardFacing = (sim: Simulation, at: { x: number; z: number }) => {
+  const g = byKey(sim, "guard")!;
+  g.yaw = Math.atan2(at.x - g.position.x, at.z - g.position.z);
+  g.prevYaw = g.yaw;
+};
+
 /** Stands the player at the mouth of the yard on Plac Łokietka, in plain view of the guard. */
-const intoAlley = (sim: Simulation) => teleportPlayer(sim, ground(POST.x + 0.5, POST.z + 7));
+const intoAlley = (sim: Simulation) => {
+  const at = ground(POST.x + 0.5, POST.z + 7);
+  guardFacing(sim, at);
+  teleportPlayer(sim, at);
+};
 
 describe("reputation from deeds", () => {
   it("killing a ganger costs standing with Hebi and the street", () => {
@@ -134,13 +148,16 @@ describe("gangers and Hebi's stance", () => {
     expect(effectiveAggroRange(17, "friendly")).toBe(17);
     // 21 m from the guard, straight out over Plac Łokietka: beyond the base range, within the hostile one.
     const at = ground(POST.x, POST.z + 21);
+    // He looks out at her; it takes him a moment to make her out (ADR-0069), so both get two seconds.
     const neutral = simWith({});
+    guardFacing(neutral, at);
     teleportPlayer(neutral, at);
-    run(neutral, 5);
+    run(neutral, 100);
     expect(byKey(neutral, "guard")?.ai?.alerted).toBe(false);
     const hostile = simWith({ hebi: -40 });
+    guardFacing(hostile, at);
     teleportPlayer(hostile, at);
-    run(hostile, 5);
+    run(hostile, 100);
     expect(byKey(hostile, "guard")?.ai?.alerted).toBe(true);
   });
 });

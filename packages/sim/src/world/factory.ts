@@ -1,4 +1,4 @@
-import { ENEMY_TYPES, type EnemyTypeId, MOST_AVOIDED, type EntityId, type EntitySnapshot, type GunSnapshot, type Vec3, type WalkSnapshot, type WeaponId, npcWeapon } from "@seki/core";
+import { ENEMY_TYPES, type EnemyTypeId, MOST_AVOIDED, sightOf, type EntityId, type EntitySnapshot, type GunSnapshot, type Vec3, type WalkSnapshot, type WeaponId, npcWeapon } from "@seki/core";
 import { PLAYER_SPAWN } from "../content/district-m0";
 import { SNIPER_PERCHES } from "../content/district-doki";
 import type { ActorDef, ActorSpawn, StaticProp } from "../content/builders";
@@ -159,20 +159,20 @@ export const gangerEntity = (
     health: { current: maxHp, max: maxHp },
     combatant: npcCombatant(def.weapon),
     melee: idleMelee(),
-    // A melee fighter has to close in: it attacks from inside its weapon's reach. Tessen's guards
-    // (ADR-0024) see in a cone and fire their rifles from a little further out.
-    ai:
-      def.faction === "tessen"
-        ? { home: spawn.position, aggroRange: GUARD_SIGHT, attackRange: 20, alerted: false, cone: true, ...(victim ? { victim } : {}) }
-        : { home: spawn.position, aggroRange: 17, attackRange: meleeAttackRange(def.weapon) ?? 15, alerted: false, ...(victim ? { victim } : {}) },
+    // It sees as far as its type's profile (ADR-0069). A melee fighter has to close in: it attacks
+    // from inside its weapon's reach. Tessen's guards (ADR-0024) fire their rifles from a little further out.
+    ai: {
+      home: spawn.position,
+      aggroRange: sightOf(type).sight,
+      attackRange: def.faction === "tessen" ? 20 : (meleeAttackRange(def.weapon) ?? 15),
+      alerted: false,
+      ...(victim ? { victim } : {}),
+    },
   };
   if (tag) e.tag = tag;
   if (enforcer && e.ai) e.ai = { ...e.ai, enforcer: true };
   return e;
 };
-
-/** How far a corporate guard sees a standing player in front of it, metres. */
-export const GUARD_SIGHT = 18;
 
 /** Index of the perch nearest to `p`. */
 export const nearestPerch = (perches: readonly Vec3[], p: Vec3): number => {

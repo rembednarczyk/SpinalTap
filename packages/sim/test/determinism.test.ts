@@ -183,7 +183,7 @@ describe("determinism", () => {
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
     const sim = runReplay(1234, script());
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"3729b6d4"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"86840115"`);
     // Re-recorded for the v18 field (ADR-0066), the v19 version (ADR-0065, no new rule), the v20
     // version (G-171, no new rule), the v21 version (G-174, no new rule), the v22 version (G-178,
     // no new rule) and the v23 reinforcements (G-179: the run's are saved now, the keyed world ends
@@ -199,34 +199,37 @@ describe("determinism", () => {
     // Re-recorded (with the "hard" one, v27 included) for G-098, no new rule: the Brigittines' bell
     // tower is a building more in the map, so the ids of the run's entities come one later and a
     // stuck ganger's first side (by its id) flips: only the saved `walk` differs, v26 stands.
-    expect(v17HashOf(sim)).toBe("c52fd247");
-    expect(v19HashOf(sim)).toBe("ef63b731");
-    expect(v20HashOf(sim)).toBe("9957ac6d");
-    expect(v21HashOf(sim)).toBe("6fbce3e8");
-    expect(v22HashOf(sim)).toBe("9c7d29c3");
-    expect(v23HashOf(sim)).toBe("c16d972e");
-    expect(v24HashOf(sim)).toBe("87658f95");
-    expect(v25HashOf(sim)).toBe("7d2a6a8c");
-    expect(v26HashOf(sim)).toBe("7e87ff25");
-    expect(v27HashOf(sim)).toBe("96d8aafb");
+    // Re-recorded (all of them, "hard" too) for ADR-0069, a new rule: every ganger of the run sees
+    // in its type's cone, a crouching player from half as far, and fills a suspicion before the
+    // alarm (it turns to her on the first of it) instead of alerting in the step it has a clear line.
+    expect(v17HashOf(sim)).toBe("5a9c018b");
+    expect(v19HashOf(sim)).toBe("22c30879");
+    expect(v20HashOf(sim)).toBe("67241ea5");
+    expect(v21HashOf(sim)).toBe("5810094a");
+    expect(v22HashOf(sim)).toBe("3341d9b7");
+    expect(v23HashOf(sim)).toBe("1b9fcc95");
+    expect(v24HashOf(sim)).toBe("19de5630");
+    expect(v25HashOf(sim)).toBe("9fbb5107");
+    expect(v26HashOf(sim)).toBe("c1c26364");
+    expect(v27HashOf(sim)).toBe("45287876");
   });
 
   it("the same run on 'hard' has a golden hash of its own (ADR-0066)", () => {
     const sim = runReplay(1234, hardScript());
     expect(sim.domain.difficulty).toEqual(DIFFICULTY_PRESETS.hard);
     expect(hashOf(sim)).toBe(hashOf(runReplay(1234, hardScript())));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"a8ef0089"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"146d8e34"`);
     // Not just the field: without it the run still ends elsewhere than on "normal".
-    expect(v17HashOf(sim)).not.toBe("c52fd247");
-    expect(v19HashOf(sim)).toBe("e296d440");
-    expect(v20HashOf(sim)).toBe("92bfb504");
-    expect(v21HashOf(sim)).toBe("f97f907b");
-    expect(v22HashOf(sim)).toBe("39c6139a");
-    expect(v23HashOf(sim)).toBe("4f999211");
-    expect(v24HashOf(sim)).toBe("98554720");
-    expect(v25HashOf(sim)).toBe("21d187bf");
-    expect(v26HashOf(sim)).toBe("aa2ed010");
-    expect(v27HashOf(sim)).toBe("f8ea7928");
+    expect(v17HashOf(sim)).not.toBe("5a9c018b");
+    expect(v19HashOf(sim)).toBe("f62f14e2");
+    expect(v20HashOf(sim)).toBe("b3e4022e");
+    expect(v21HashOf(sim)).toBe("634e023f");
+    expect(v22HashOf(sim)).toBe("e7760674");
+    expect(v23HashOf(sim)).toBe("1bbedee8");
+    expect(v24HashOf(sim)).toBe("ef2db45d");
+    expect(v25HashOf(sim)).toBe("5ffa21ae");
+    expect(v26HashOf(sim)).toBe("98a62e95");
+    expect(v27HashOf(sim)).toBe("e6f92f9b");
   });
 
   it("the crowd of residents (ADR-0041) and the traffic (ADR-0050) leave the golden run as it was, at every density", () => {
@@ -248,8 +251,9 @@ describe("determinism", () => {
     const { doors: _doors, ...rest } = snap;
     // Re-recorded for ADR-0038 (the run starts in the clinic) and ADR-0045 (the clinic is on
     // Krakowskie Przedmieście), and for the car wash moved off Plac Łokietka into the yard behind
-    // it; the v14 door states are left out too.
-    expect(stateHash({ ...rest, version: 12, domain } as unknown as SaveSnapshot)).toBe("380539e5");
+    // it; the v14 door states are left out too. Re-recorded for ADR-0069: the gangers of the run see
+    // in a cone and fill a suspicion before the alarm.
+    expect(stateHash({ ...rest, version: 12, domain } as unknown as SaveSnapshot)).toBe("14ee0143");
   });
 
   it("a loaded snapshot continues exactly like the original run", () => {

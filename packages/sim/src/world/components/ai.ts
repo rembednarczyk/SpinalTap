@@ -53,12 +53,9 @@ export interface GangerAi {
    */
   readonly victim?: string;
   /**
-   * Corporate guard (ADR-0024): sees only in front of it, notices a crouching player late and
-   * needs a moment of looking before it raises the alarm. Without it the ganger sees all round
-   * and decides at once, as before.
+   * How sure it is that it saw someone, 0..1; at 1 it is alerted (ADR-0069: every type, by its
+   * sight profile). Saved while above 0 (G-174).
    */
-  readonly cone?: true;
-  /** How sure the guard is that it saw someone, 0..1; at 1 it is alerted. Saved while above 0 (G-174). */
   suspicion?: number;
   /** A guard on a post looks around: its facing sweeps around `yaw` (ADR-0024). */
   readonly watch?: { readonly yaw: number; readonly phase: number; readonly period?: number };

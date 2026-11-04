@@ -22,8 +22,8 @@ describe("witnesses of a takedown (ADR-0065)", () => {
     for (const lethal of [false, true]) {
       const sim = quietStreet();
       const guard = victim(sim);
-      // Ten metres east, looking at her.
-      const w = patrol(sim, 4100, offset(sim, 10, 0), -Math.PI / 2);
+      // Seven metres east, looking at her: within the half range a crouching player is seen from (ADR-0069).
+      const w = patrol(sim, 4100, offset(sim, 7, 0), -Math.PI / 2);
       const done = collect<DomainEvents["TakedownDone"]>(sim, "TakedownDone");
       const reports = collect<DomainEvents["CrimeReported"]>(sim, "CrimeReported");
       takeDown(sim, lethal);
@@ -55,7 +55,7 @@ describe("witnesses of a takedown (ADR-0065)", () => {
     guard.ai!.alerted = true;
     guard.melee!.stagger = 2;
     guard.melee!.stunned = true;
-    patrol(sim, 4100, offset(sim, 10, 0), -Math.PI / 2);
+    patrol(sim, 4100, offset(sim, 7, 0), -Math.PI / 2);
     const done = collect<DomainEvents["TakedownDone"]>(sim, "TakedownDone");
     const reports = collect(sim, "CrimeReported");
     takeDown(sim);

@@ -43,7 +43,8 @@ describe("last known position (ADR-0029)", () => {
     tough(sim);
     // On the deptak west of Neon Koi, by the passage to the yards behind it (ADR-0045).
     const home = at(292, -84);
-    const g = gangerEntity(90001, { key: "watcher", position: home, yaw: 0 }, null, 80, "krakowskie-2-0");
+    // It looks south at where she stands (since ADR-0069 a ganger sees in a cone).
+    const g = gangerEntity(90001, { key: "watcher", position: home, yaw: Math.PI }, null, 80, "krakowskie-2-0");
     sim.world.add(g);
     const seen = collect<DomainEvents["AwarenessChanged"]>(sim, "AwarenessChanged");
     teleportPlayer(sim, at(292, -91), Math.PI);

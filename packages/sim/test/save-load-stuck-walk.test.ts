@@ -47,7 +47,8 @@ describe("save and load with reinforcements stuck on each other (G-208)", () => 
   }
 
   it("a reinforcement getting unstuck is saved so, with its repath", () => {
-    const sim = withReinforcements(21, 2, 300);
+    // Since ADR-0069 they see her in a cone and after a moment: they jam each other later, on seed 5.
+    const sim = withReinforcements(5, 3, 700);
     let snap: SaveSnapshot | null = null;
     for (let i = 0; i < 10 * SIM_HZ && !snap; i++) {
       sim.step();
