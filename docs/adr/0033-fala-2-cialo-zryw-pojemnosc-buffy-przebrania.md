@@ -112,7 +112,8 @@ ADR-0032 ustalił kontrakty fali 2. Ten ADR opisuje część „ruch, walka, cia
   - dobyta broń;
   - sprint albo zryw;
   - obecność w aktywnej strefie zakazanej tej frakcji bez wstępu.
-- Tempo przyrostu: egzekutor 0,4/s, czyn zabroniony 1,4/s, oba razy (1,5 − odległość/zasięg wzroku). Spadek 0,5/s.
+  - Decyzja użytkownika 4.11: zryw w przebraniu jest czynem zabronionym o mniejszej wadze niż sprint; pojedynczy zryw nie demaskuje (G-280). Zryw liczy się przez całe odnowienie (1,5 s, z kawą 1 s) z wagą `DASH_FORBIDDEN_WEIGHT` 0,08, więc zryw za zrywem się sumuje, a pojedynczy nie. Egzekutor przy zrywie nie rośnie wolniej niż przy samym patrzeniu.
+- Tempo przyrostu: egzekutor 0,4/s, czyn zabroniony 1,4/s (zryw 1,4 × 0,08), oba razy (1,5 − odległość/zasięg wzroku). Spadek 0,5/s.
 - Liczby z testów: szef zmiany z 6 m demaskuje spokojnego gracza po ok. 2,1 s, a dobyta broń z 6 m po ok. 0,6 s.
 - AI, które już walczy (strzał, trafienie, fala), widzi przez przebranie od razu.
 - Pełne podejrzenie emituje `DisguiseBlown`, liczy się jak wykrycie (licznik `detected` zlecenia) i działa do zmiany ubrania. Dalej obowiązują zwykłe reguły z ADR-0024 i ADR-0029.

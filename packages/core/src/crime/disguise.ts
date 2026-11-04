@@ -53,14 +53,22 @@ export const ENFORCER_SUSPICION_RATE = 0.4;
 export const FORBIDDEN_SUSPICION_RATE = 1.4;
 /** Suspicion drained per second out of sight or with nothing to see. */
 export const DISGUISE_SUSPICION_DECAY = 0.5;
+/**
+ * Weight of a dash among the forbidden acts (user's decision 4.11, G-280): it counts for its whole
+ * cooldown, but at this share of the rate, so one dash never gives a disguise away while dash after
+ * dash still does, more slowly than a sprint.
+ */
+export const DASH_FORBIDDEN_WEIGHT = 0.08;
 
 /**
  * Change of an observer's suspicion per second: it grows when the observer sees the player and
- * either is an enforcer or sees a forbidden act, faster the closer it is (`distance` against
- * its `sight`); otherwise it drains.
+ * either is an enforcer or sees a forbidden act (of `weight`, 1 but for a dash), faster the closer
+ * it is (`distance` against its `sight`); otherwise it drains. An enforcer never grows slower
+ * than at its own rate.
  */
-export const disguiseSuspicionRate = (sees: boolean, enforcer: boolean, forbidden: boolean, distance: number, sight: number): number => {
+export const disguiseSuspicionRate = (sees: boolean, enforcer: boolean, forbidden: boolean, distance: number, sight: number, weight = 1): number => {
   if (!sees || (!enforcer && !forbidden)) return -DISGUISE_SUSPICION_DECAY;
   const near = 1.5 - Math.min(1, distance / Math.max(1e-6, sight));
-  return (forbidden ? FORBIDDEN_SUSPICION_RATE : ENFORCER_SUSPICION_RATE) * near;
+  const act = forbidden ? FORBIDDEN_SUSPICION_RATE * weight : 0;
+  return Math.max(act, enforcer ? ENFORCER_SUSPICION_RATE : 0) * near;
 };

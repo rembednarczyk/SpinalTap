@@ -1,0 +1,1 @@
+Zryw w przebraniu słabiej zwraca uwagę strażników: pojedynczy zryw nie demaskuje przebrania na żadnym poziomie trudności, a zryw za zrywem pod okiem strażnika nadal je zdradza, choć dużo wolniej niż sprint (G-280).

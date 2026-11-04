@@ -1,4 +1,4 @@
-import { DISGUISE_FACTION, ZONE_ACCESS, contractKind, disguiseHolds, type EntityId, type FactionId } from "@seki/core";
+import { DASH_FORBIDDEN_WEIGHT, DISGUISE_FACTION, ZONE_ACCESS, contractKind, disguiseHolds, type EntityId, type FactionId } from "@seki/core";
 
 export { isEnforcer } from "./enforcer";
 import type { Device, Entity } from "./components";
@@ -32,16 +32,19 @@ export const inNoGoZone = (ctx: SimContext, player: Entity, faction: FactionId):
 export const coveredFrom = (ctx: SimContext, faction: FactionId | undefined): boolean => disguiseHolds(ctx.state.domain.disguise, faction);
 
 /**
- * A forbidden act in front of `faction` (ADR-0033): a weapon drawn, a sprint or a dash, or a
- * no-go zone the role has no business in. A shot alerts whoever hears it, which gives the
- * disguise away to anyone of the faction who then sees her (see `perceiveInDisguise`).
+ * The weight of a forbidden act in front of `faction` (ADR-0033), 0 for none: a weapon drawn, a
+ * sprint or a no-go zone the role has no business in weigh 1; a dash weighs DASH_FORBIDDEN_WEIGHT
+ * until its cooldown is over (G-280), so a run of dashes adds up and a single one does not. A shot
+ * alerts whoever hears it, which gives the disguise away to anyone of the faction who then sees
+ * her (see `perceiveInDisguise`).
  */
-export const forbiddenAct = (ctx: SimContext, player: Entity, faction: FactionId): boolean => {
+export const forbiddenAct = (ctx: SimContext, player: Entity, faction: FactionId): number => {
   const c = player.combatant;
-  if (c?.weapon && !c.holstered) return true;
-  if (player.posture?.sprinting || (player.perks?.dash ?? 0) > 0) return true;
+  if (c?.weapon && !c.holstered) return 1;
+  if (player.posture?.sprinting) return 1;
   const role = ctx.state.domain.disguise.role;
-  return role !== null && !ZONE_ACCESS[role] && DISGUISE_FACTION[role] === faction && inNoGoZone(ctx, player, faction);
+  if (role !== null && !ZONE_ACCESS[role] && DISGUISE_FACTION[role] === faction && inNoGoZone(ctx, player, faction)) return 1;
+  return (player.perks?.dashCooldown ?? 0) > 0 ? DASH_FORBIDDEN_WEIGHT : 0;
 };
 
 /** Someone saw through the disguise: it protects nobody until she changes, and it counts as detection. */

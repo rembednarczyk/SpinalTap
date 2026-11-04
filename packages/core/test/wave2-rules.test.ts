@@ -4,6 +4,7 @@ import {
   BASE_CYBER_CAPACITY,
   BUFF_CATALOG,
   CYBERWARE_CATALOG,
+  DASH_FORBIDDEN_WEIGHT,
   DISGUISE_SUSPICION_DECAY,
   ENFORCER_SUSPICION_RATE,
   FORBIDDEN_SUSPICION_RATE,
@@ -191,5 +192,13 @@ describe("disguises (ADR-0033)", () => {
     expect(disguiseSuspicionRate(true, true, false, 18, 18)).toBeCloseTo(ENFORCER_SUSPICION_RATE * 0.5);
     expect(disguiseSuspicionRate(true, true, false, 0, 18)).toBeCloseTo(ENFORCER_SUSPICION_RATE * 1.5);
     expect(disguiseSuspicionRate(true, false, true, 0, 18)).toBeCloseTo(FORBIDDEN_SUSPICION_RATE * 1.5);
+  });
+
+  it("a dash weighs less than the other forbidden acts, never less than an enforcer's look (G-280)", () => {
+    expect(DASH_FORBIDDEN_WEIGHT).toBeGreaterThan(0);
+    expect(DASH_FORBIDDEN_WEIGHT).toBeLessThan(1);
+    expect(disguiseSuspicionRate(true, false, true, 0, 18, DASH_FORBIDDEN_WEIGHT)).toBeCloseTo(FORBIDDEN_SUSPICION_RATE * DASH_FORBIDDEN_WEIGHT * 1.5);
+    expect(disguiseSuspicionRate(true, true, true, 0, 18, DASH_FORBIDDEN_WEIGHT)).toBeCloseTo(Math.max(ENFORCER_SUSPICION_RATE, FORBIDDEN_SUSPICION_RATE * DASH_FORBIDDEN_WEIGHT) * 1.5);
+    expect(disguiseSuspicionRate(false, false, true, 0, 18, DASH_FORBIDDEN_WEIGHT)).toBe(-DISGUISE_SUSPICION_DECAY);
   });
 });
