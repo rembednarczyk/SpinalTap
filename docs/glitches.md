@@ -898,7 +898,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: w obrysie każdego kawałka mostu `groundY` nie leży niżej niż pomost o więcej niż `STEP_HEIGHT` poza przejściami pod mostem (G-062); kontrola skanu `deck-drawn-over-flight` 40 → 0; testy G-255 (`flight-walk`, `flight-chase`) dalej zielone
 
 ### G-275 W TPP przy celowaniu z bliska (zwłaszcza w kucaniu) postać zasłania cel
-- Status: w PR #243 (2.11, @ f97804c w weryfikacji)
+- Status: w PR #243 (4.11, runda 1 @ f97804c NIE PRZYJĘTE: przesunięcie ramienia 0,8 m bez sprawdzenia ściany pozwala strzelać i patrzeć przez ścianę (388/739 pozycji we wnętrzach, było 8), strzał i celownik rozjeżdżają się 0,22 s przy zmianie ramienia, objaw w TPP nieodtworzony (zasłona ≤ 9%); użytkownik 4.11: objaw był w FPP (broń w widoku z pierwszej osoby zasłania cel); runda 2 nowy autor po wolnym slocie: FPP + cofnięcie 0,8 m albo przycięcie do ściany)
 - Ważność: S3 (zgłoszenie gracza, podstawowa mechanika strzelania) · Zasięg: kamera TPP (`packages/engine/src/camera/camera-rig.ts`: `TPP_DISTANCE` 2,2 m, `TPP_SHOULDER_OFFSET` 0,55 m z `packages/sim/src/world/hitscan.ts`, `TPP_HEIGHT_OFFSET` 0, `TPP_ADS_PULL` 0,45; w kucaniu kamera tylko obniża się z `eyeHeightAt`), cel z przyłożenia i do kilku metrów · Koszt: średni
 - Rozwiązania branżowe do połączenia: (1) przy celowaniu i w kucaniu większe przesunięcie przez ramię i lekko w górę (postać ucieka na bok kadru); (2) zmiana ramienia klawiszem/padem (akcja wejścia, i18n, opcje sterowania); (3) przezroczystość albo wzór kropek (dither, pasuje do NPR) postaci, gdy zasłania celownik lub kamera jest blisko; (4) strzał z promienia kamery z poprawką lufy, żeby trafienie było tam, gdzie celownik, przy dużych przesunięciach (hitscan w `sim` już liczy punkt startu z kucaniem: sprawdzić zgodność, bo stałe przesunięcia są w `sim`)
 - Pakiet właściciela: packages/engine (camera, npr), packages/sim (hitscan: stałe przesunięć, jeśli się zmieniają; złote hashe), packages/engine/src/input (zmiana ramienia), packages/ui (opcje)
@@ -923,7 +923,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (world/deck)
 
 ### G-279 Kamera przechyla się w osi i obrót kręci całym obrazem zamiast postacią
-- Status: zgłoszone (4.11, użytkownik, testowy przebieg; do odtworzenia)
+- Status: w PR #246 (4.11, @ 87d664e w weryfikacji; `upVector` Babylona nie wraca po rollu wstrząsu i metra)
 - Ważność: S2 (proponowana: utrata sterowania) · Zasięg: niejasny, „w pewnym momencie” gry; do odtworzenia (ślad, nagranie)
 - Pakiet właściciela: packages/engine (camera)
 
@@ -933,7 +933,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (systemy przestępstw i ochrony)
 
 ### G-281 Przy złej reputacji setki powiadomień bez przerwy
-- Status: zgłoszone (4.11, użytkownik, testowy przebieg; do odtworzenia)
+- Status: w naprawie (4.11, priorytet użytkownika)
 - Ważność: S2 (proponowana: zalewa ekran) · Zasięg: zła reputacja w mieście; każdy uciekający lub reagujący NPC zdaje się generować własne powiadomienie
 - Poprawka: scalanie i limit powiadomień tego samego rodzaju; decyzja o samej panice w backlogu (reputacja)
 - Pakiet właściciela: packages/ui (powiadomienia) i packages/sim (źródło zdarzeń)
