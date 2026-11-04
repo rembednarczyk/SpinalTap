@@ -4,7 +4,7 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
 
 ## Następne
 
-- **Uwagi użytkownika z testowego przebiegu (4.11).** Błędy trafiły do rejestru jako G-279–G-285, reszta czeka tutaj na triage, ADR albo decyzję.
+- **Uwagi użytkownika z testowego przebiegu (4.11).** Błędy trafiły do rejestru jako G-279–G-285, reszta czeka tutaj na triage, ADR albo decyzję. Kolejność (decyzja użytkownika 4.11): najpierw G-281, potem G-279, dalej G-285 ze skradaniem i G-280; reputacja i metro jako ADR-y do akceptacji.
   - **Reputacja i reakcje mieszkańców (do ADR, decyzja użytkownika).**
     - Przy złej reputacji uciekają wszyscy, także sprzedawcy, co psuje immersję. Propozycja użytkownika: u sprzedawców wystarczy kara (gorsze ceny, odmowa części oferty) zamiast paniki. Lawina powiadomień to osobny błąd G-281.
     - Likwidowanie gangerów powinno podnosić reputację w Lublinie.
