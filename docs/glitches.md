@@ -922,6 +922,43 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: na szwie brać pomosty obu chunków (albo indeks pomostów niezależny od chunka); test w punktach z = granica
 - Pakiet właściciela: packages/sim (world/deck)
 
+### G-279 Kamera przechyla się w osi i obrót kręci całym obrazem zamiast postacią
+- Status: zgłoszone (4.11, użytkownik, testowy przebieg; do odtworzenia)
+- Ważność: S2 (proponowana: utrata sterowania) · Zasięg: niejasny, „w pewnym momencie” gry; do odtworzenia (ślad, nagranie)
+- Pakiet właściciela: packages/engine (camera)
+
+### G-280 Dash uruchamia ochronę Tessen (security) w siedzibie Tessen
+- Status: zgłoszone (4.11, użytkownik, testowy przebieg; do odtworzenia)
+- Ważność: S3 · Zasięg: użycie umiejętności Dash na terenie Tessen; prawdopodobnie ruch umiejętności liczony jako wtargnięcie albo atak
+- Pakiet właściciela: packages/sim (systemy przestępstw i ochrony)
+
+### G-281 Przy złej reputacji setki powiadomień bez przerwy
+- Status: zgłoszone (4.11, użytkownik, testowy przebieg; do odtworzenia)
+- Ważność: S2 (proponowana: zalewa ekran) · Zasięg: zła reputacja w mieście; każdy uciekający lub reagujący NPC zdaje się generować własne powiadomienie
+- Poprawka: scalanie i limit powiadomień tego samego rodzaju; decyzja o samej panice w backlogu (reputacja)
+- Pakiet właściciela: packages/ui (powiadomienia) i packages/sim (źródło zdarzeń)
+
+### G-282 Karabin Tessen w FPP ma model pistoletu
+- Status: zgłoszone (4.11, użytkownik, testowy przebieg; do odtworzenia)
+- Ważność: S3 · Zasięg: widok FPP z karabinem Tessen; możliwe także inne rodzaje broni bez własnego modelu
+- Pakiet właściciela: packages/engine (renderer, broń) i assety
+
+### G-283 Okno dialogowe od razu przewija się w dół i często się scrolluje
+- Status: zgłoszone (4.11, użytkownik, testowy przebieg; do odtworzenia)
+- Ważność: S3 · Zasięg: dialogi z NPC
+- Pakiet właściciela: packages/ui
+
+### G-284 Winda nie działa albo jej nie ma
+- Status: zgłoszone (4.11, użytkownik, testowy przebieg; do odtworzenia)
+- Ważność: S3 · Zasięg: winda z treści (estakada, ADR windy z bramkami); do ustalenia, która i gdzie
+- Pakiet właściciela: packages/sim i treść lublin; docelowo winda w Alchemii (backlog)
+
+### G-285 Przeciwnicy wykrywają gracza natychmiast, takedown niemożliwy
+- Status: zgłoszone (4.11, użytkownik, testowy przebieg; do odtworzenia)
+- Ważność: S2 (proponowana: blokuje mechanikę) · Zasięg: walka z gangerami; czujność NPC i kamer (`AWARENESS_STEP`, `GUARD_CONE`, `ganger-perception.ts`)
+- Do ustalenia: błąd w czujności czy brak trybu skradania (backlog, skradanie)
+- Pakiet właściciela: packages/sim/src/systems/ai
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
