@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-280 Dash uruchamia ochronę Tessen (security) w siedzibie Tessen
+- Status: naprawione w #249 (4.11, bff2d26; zryw w przebraniu z wagą 0,08 przez odnowienie, pojedynczy nie demaskuje, seria 5–8,5 s wobec sprintu 0,5–1,6 s; decyzja użytkownika, notka w ADR-0033)
+- Ważność: S3 · Zasięg: użycie umiejętności Dash na terenie Tessen; prawdopodobnie ruch umiejętności liczony jako wtargnięcie albo atak
+- Pakiet właściciela: packages/sim (systemy przestępstw i ochrony)
+
 ### G-281 Przy złej reputacji setki powiadomień bez przerwy
 - Status: naprawione w #248 (4.11, afa615c; znacznik ucieczki resetowany dopiero 14 m od gracza, scalanie identycznych toastów „×N”, 30 s ciszy dla tej samej reakcji frakcji; 696 → 1 w teście sesji; zgłoszone przez użytkownika)
 - Ważność: S2 (proponowana: zalewa ekran) · Zasięg: zła reputacja w mieście; każdy uciekający lub reagujący NPC zdaje się generować własne powiadomienie

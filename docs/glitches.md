@@ -922,11 +922,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: na szwie brać pomosty obu chunków (albo indeks pomostów niezależny od chunka); test w punktach z = granica
 - Pakiet właściciela: packages/sim (world/deck)
 
-### G-280 Dash uruchamia ochronę Tessen (security) w siedzibie Tessen
-- Status: w naprawie (4.11; przyczyna: ADR-0033, zryw w przebraniu to czyn zabroniony; użytkownik miał mundur Tessen; decyzja użytkownika 4.11: reakcja zostaje, ale słabsza niż przy sprincie, pojedynczy zryw nie demaskuje)
-- Ważność: S3 · Zasięg: użycie umiejętności Dash na terenie Tessen; prawdopodobnie ruch umiejętności liczony jako wtargnięcie albo atak
-- Pakiet właściciela: packages/sim (systemy przestępstw i ochrony)
-
 ### G-282 Karabin Tessen w FPP ma model pistoletu
 - Status: zgłoszone (4.11, użytkownik, testowy przebieg; do odtworzenia)
 - Ważność: S3 · Zasięg: widok FPP z karabinem Tessen; możliwe także inne rodzaje broni bez własnego modelu
