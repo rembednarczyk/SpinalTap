@@ -923,7 +923,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (world/deck)
 
 ### G-280 Dash uruchamia ochronę Tessen (security) w siedzibie Tessen
-- Status: zgłoszone (4.11, użytkownik, testowy przebieg; do odtworzenia)
+- Status: w naprawie (4.11; przyczyna: ADR-0033, zryw w przebraniu to czyn zabroniony; użytkownik miał mundur Tessen; decyzja użytkownika 4.11: reakcja zostaje, ale słabsza niż przy sprincie, pojedynczy zryw nie demaskuje)
 - Ważność: S3 · Zasięg: użycie umiejętności Dash na terenie Tessen; prawdopodobnie ruch umiejętności liczony jako wtargnięcie albo atak
 - Pakiet właściciela: packages/sim (systemy przestępstw i ochrony)
 
@@ -952,6 +952,26 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (4.11, weryfikator G-281)
 - Ważność: S4 · Zasięg: każdy scalany toast; identyczne powiadomienie po 4,4 s widać ułamek sekundy; `sameToast` pomija flagę `keep` (dziś teoretyczne)
 - Pakiet właściciela: packages/ui (store, toasty)
+
+### G-287 Drzwi i witryny stoisk Alchemii wiszą nad brukiem od Świętoduskiej
+- Status: zgłoszone (4.11, weryfikator i kurator PR #247; przed otwarciem wejść)
+- Ważność: S3 · Zasięg: podłoga 1,04–1,24 m nad brukiem przy środku frontu stoisk 2, 3, 5, w rogach do 1,88 m; brak stopni i ramp; `placeAlchemiaModule` stawia moduł na najwyższym punkcie rzutu
+- Pakiet właściciela: packages/sim (content/alchemia.ts)
+
+### G-288 Zewnętrzne schody hali Alchemii to pełny prostopadłościan do 7,35 m
+- Status: zgłoszone (4.11, weryfikator PR #247)
+- Ważność: S4 · Zasięg: `HALL_PARTS[2]`: widać otwarte stopnie, nie da się wejść, pod biegiem niewidzialna ściana; żaden test nie pilnuje, że części hali nie wystają ponad dach
+- Pakiet właściciela: packages/sim (content/alchemia.ts)
+
+### G-289 Z dachu Alchemii nie ma bezpiecznego zejścia
+- Status: zgłoszone (4.11, weryfikator PR #247; dług na etap z windą i Rin na dachu)
+- Ważność: S4 · Zasięg: zeskok z 11–13 m kosztuje 48–96 HP; dziś dach nieosiągalny
+- Pakiet właściciela: packages/sim (content/alchemia.ts)
+
+### G-290 Strażnicy liczą obecność w strefie w mundurze jako czyn zabroniony mimo znanego kodu
+- Status: zgłoszone (4.11, naprawiacz G-280; do sprawdzenia, czy zamierzone)
+- Ważność: S4 · Zasięg: `zoneActive` w `world/disguise.ts` nie uwzględnia `codeKnown` (jego odpowiednik w `crime-system.ts` tak); przy przyjaznej postawie Tessen „Cover blown” bez skutku
+- Pakiet właściciela: packages/sim (world/disguise.ts)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
