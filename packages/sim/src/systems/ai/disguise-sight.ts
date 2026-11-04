@@ -19,8 +19,8 @@ export const disguisedSight = (ctx: SimContext, g: Watcher, player: Entity, sees
     if (sees) blowDisguise(ctx, g.id);
     return sees;
   }
-  const forbidden = sees && forbiddenAct(ctx, player, g.faction ?? "hebi");
-  const base = disguiseSuspicionRate(sees, !!g.ai.enforcer, forbidden, distance, sight);
+  const weight = sees ? forbiddenAct(ctx, player, g.faction ?? "hebi") : 0;
+  const base = disguiseSuspicionRate(sees, !!g.ai.enforcer, weight > 0, distance, sight, weight);
   // It grows at the difficulty's pace (`awareness`, ADR-0066) and drains as ever.
   const rate = base > 0 ? base * difficultyOf(ctx).awareness : base;
   g.ai.suspicion = Math.max(0, Math.min(1, (g.ai.suspicion ?? 0) + rate * ctx.dt * timeScale));
