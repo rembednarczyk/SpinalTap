@@ -127,6 +127,10 @@ export class CameraRig {
     this.camera.fov = BASE_FOV;
     this.materials = materials;
     this.camera.inputs.clear();
+    // Babylon otherwise re-derives the up vector only when `rotation.z` changes and keeps it
+    // between such frames: a roll from the hit shake or the metro car then leaves the old
+    // yaw's and pitch's up behind, and every later turn rolls the view about it (G-279).
+    this.camera.updateUpVectorFromRotation = true;
     scene.activeCamera = this.camera;
 
     this.viewmodel = new TransformNode("viewmodel", scene);
