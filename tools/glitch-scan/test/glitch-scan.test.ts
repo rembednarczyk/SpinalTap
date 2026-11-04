@@ -25,8 +25,7 @@ import { doorChecks } from "./door-pieces";
 import { droneChecks } from "./drone-pieces";
 import { airMesh } from "./patrol-mesh";
 import { patrolChecks } from "./patrol-pieces";
-import { popSight, sightLines } from "./patrol-sight";
-import { observersOf } from "../../../packages/engine/src/renderer/drones/patrol-sight";
+import { patrolModelSpan, popSight, streetEyes } from "./patrol-sight";
 import { doorsFacingUnderground } from "./door-streets";
 import { marketChecks } from "./market-pieces";
 import { vehicleChecks } from "./vehicle-pieces";
@@ -1606,8 +1605,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   // low patrols of stage 7b through theirs (`drone-pieces.ts`, `patrol-pieces.ts`).
   ...droneChecks(WORLD_SCENERY, streetAxes(LUBLIN_CHUNKS), groundY, planDroneLanes, PATROL_LANES),
   ...patrolChecks(PATROL_LANES, (zones) => airMesh(WORLD_SCENERY, zones), surfaceY),
-  /** A low patrol coming into sight or going in the view of someone on a pedestrian street (`patrol-sight.ts`). */
-  "drone-low-pop": () => popSight(PATROL_LANES(), observersOf(streetAxes(LUBLIN_CHUNKS, PATROL_STREETS), surfaceY), sightLines(WORLD_SCENERY, groundY)),
+  /** A low patrol coming into sight or going 2 px large or more from anywhere on a street (`patrol-sight.ts`). */
+  "drone-low-pop": () => popSight(PATROL_LANES(), streetEyes(WORLD_SCENERY, surfaceY), patrolModelSpan()),
   // The still crowd of ADR-0058 stage 8 against the game's buildings, roads, paving, kept furniture and moving crowd (`figure-pieces.ts`).
   ...figureChecks(Object.values(WORLD_STREET_PROPS).flat(), {
     inBuilding,

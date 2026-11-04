@@ -1,36 +1,40 @@
 import { describe, expect, it } from "vitest";
 import type { Vec3, ViewDescriptor } from "../../../packages/core/src";
-import { PATROL_CEILING, type PatrolLane } from "../../../packages/engine/src/renderer/drones/patrol-flight";
-import { PATROL_UNSEEN, SIGHT_EYE } from "../../../packages/engine/src/renderer/drones/patrol-sight";
-import { popSight, sightLines } from "./patrol-sight";
+import type { PatrolLane } from "../../../packages/engine/src/renderer/drones/patrol-flight";
+import { PIXELS_PER_RADIAN, patrolModelSpan, popPixels, popSight, streetEyes } from "./patrol-sight";
 
 /**
- * The view of the low patrols from the pedestrian streets (ADR-0058 stage 7b, `drone-low-pop`) on a
- * small world: a patrol lane along x from 0 to 60, coming into sight and going 18 m over its ends.
+ * The size of the low patrols where they come into sight and go, from anywhere on a street
+ * (ADR-0058 stage 7b, `drone-low-pop`), on a small world: a patrol lane along x from 0 to 60 on a
+ * flat street, coming into sight and going `ceiling` metres over its ends.
  */
 
 const O: Vec3 = { x: 0, y: 0, z: 0 };
-const house = (x0: number, z0: number, x1: number, z1: number, height: number): { view: ViewDescriptor; at: Vec3 } => ({
-  view: { kind: "building", outline: [{ x: x0, z: z0 }, { x: x1, z: z0 }, { x: x1, z: z1 }, { x: x0, z: z1 }], height, levels: 4, use: "residential", look: 1 },
-  at: O,
-});
-const lane: PatrolLane = { points: Array.from({ length: 16 }, (_, i) => ({ x: i * 4, z: 0 })), grounds: Array.from({ length: 16 }, () => 0), length: 60, seed: 5, quiet: false, square: 0, ceilings: [PATROL_CEILING, PATROL_CEILING], roofs: [PATROL_CEILING, PATROL_CEILING] };
-const eye = (x: number, z: number) => ({ x, z, eye: SIGHT_EYE });
+const ground = (surface: string, x0: number, z0: number, x1: number, z1: number): { view: ViewDescriptor; at: Vec3 } =>
+  ({ view: { kind: "ground", surface, outline: [{ x: x0, z: z0 }, { x: x1, z: z0 }, { x: x1, z: z1 }, { x: x0, z: z1 }] }, at: O }) as { view: ViewDescriptor; at: Vec3 };
+const lane = (ceiling: number): PatrolLane => ({ points: Array.from({ length: 16 }, (_, i) => ({ x: i * 4, z: 0 })), grounds: Array.from({ length: 16 }, () => 0), length: 60, seed: 5, quiet: false, square: 0, ceilings: [ceiling, ceiling], roofs: [18, 18] });
 
 describe("drone-low-pop (ADR-0058 stage 7b)", () => {
-  const run = (observers: ReturnType<typeof eye>[], items: { view: ViewDescriptor; at: Vec3 }[] = []) => popSight([lane], observers, sightLines(items, () => 0)).length;
+  const span = patrolModelSpan();
 
-  it("finds a patrol coming into sight in view of someone on the street, and none behind a wall, high over them or too far", () => {
-    // 60 m off along the street: 15 degrees up, in plain view.
-    expect(run([eye(-60, 0)])).toBe(1);
-    // A 30 m house between them.
-    expect(run([eye(-60, 0)], [house(-40, -20, -20, 20, 30)])).toBe(0);
-    // Right under one end (beyond 40 degrees up), a tower hiding the other.
-    expect(run([eye(-3, 2)], [house(10, -20, 50, 20, 60)])).toBe(0);
-    expect(run([eye(-3, 2)])).toBe(1);
-    // Further than it takes 2 px.
-    expect(run([eye(-PATROL_UNSEEN - 10, 0)])).toBe(0);
-    // Behind a hill.
-    expect(popSight([lane], [eye(-60, 0)], sightLines([], (x) => (x < -30 && x > -50 ? 25 : 0)))).toHaveLength(0);
+  it("reads the patrol's size off its model: a couple of metres across", () => {
+    expect(span).toBeGreaterThan(1.5);
+    expect(span).toBeLessThan(3);
+    // The frame's corner draws a small thing near twice as large as its middle (80 degrees, 16:9).
+    expect(PIXELS_PER_RADIAN).toBeGreaterThan(2100);
+    expect(PIXELS_PER_RADIAN).toBeLessThan(2300);
+    expect(popPixels(span, 20)).toBeGreaterThan(100);
+  });
+
+  it("finds a patrol popping low over any street surface, whatever the street, and none where it pops out of draw", () => {
+    const run = (items: { view: ViewDescriptor; at: Vec3 }[], ceiling: number) => popSight([lane(ceiling)], streetEyes(items, () => 0), span);
+    // A residential road under it: the type of the street does not matter.
+    expect(run([ground("road", -10, -6, 70, 6)], 30)).toHaveLength(1);
+    // A pavement 150 m off, the patrol 30 m up: still several pixels.
+    expect(run([ground("sidewalk", -200, -6, -150, 6)], 30)).toHaveLength(1);
+    // Grass is no street.
+    expect(run([ground("grass", -10, -6, 70, 6)], 30)).toHaveLength(0);
+    // High enough over everyone it is drawn at no size.
+    expect(run([ground("road", -10, -6, 70, 6)], 400)).toHaveLength(0);
   });
 });
