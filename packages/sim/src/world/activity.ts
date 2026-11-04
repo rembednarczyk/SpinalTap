@@ -50,6 +50,6 @@ export const activityOf = (e: Entity, clock: GameClock, talking = false): Activi
   const own = e.key ? ACTOR_ACTIVITIES[e.key] : undefined;
   if (own !== undefined) return planActivity(own, clock);
   // A guard on a post (ADR-0024) stands watch.
-  if (e.ai?.cone && e.ai.watch) return "guard";
+  if (e.enemy?.type === "tessen_guard" && e.ai?.watch) return "guard";
   return null;
 };

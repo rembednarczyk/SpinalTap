@@ -126,11 +126,17 @@ class GangerAgent {
 
   /**
    * Holds its post, or walks its daily plan (a night patrol) when it has one. A guard on watch
-   * looks around its post; one that half saw something turns towards it instead.
+   * looks around its post. One that half saw something stops and turns towards it instead
+   * (ADR-0069), so it is no longer unaware of her.
    */
   HoldPosition = (): State => {
     const { self, ctx } = this;
     if (!self) return State.FAILED;
+    if ((self.ai.suspicion ?? 0) > 0 && this.seen.player) {
+      self.velocity = { x: 0, y: 0, z: 0 };
+      faceTowards(this, this.seen.player);
+      return State.SUCCEEDED;
+    }
     const pose = self.schedule?.pose;
     if (pose && ctx) {
       followSchedule(self, pose, GANGER_SPEED, ctx.dt * this.timeScale);
@@ -140,8 +146,7 @@ class GangerAgent {
     if (d > 0.3) this.walk.walkTo(self.ai.home);
     else self.velocity = { x: 0, y: 0, z: 0 };
     const watch = self.ai.watch;
-    if ((self.ai.suspicion ?? 0) > 0 && this.seen.player) faceTowards(this, this.seen.player);
-    else if (watch && ctx && d <= 0.3) self.yaw = watch.yaw + WATCH_SWEEP * Math.sin((2 * Math.PI * ctx.tick * ctx.dt) / (watch.period ?? WATCH_PERIOD) + watch.phase);
+    if (watch && ctx && d <= 0.3) self.yaw = watch.yaw + WATCH_SWEEP * Math.sin((2 * Math.PI * ctx.tick * ctx.dt) / (watch.period ?? WATCH_PERIOD) + watch.phase);
     return State.SUCCEEDED;
   };
 }

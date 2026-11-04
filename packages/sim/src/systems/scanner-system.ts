@@ -30,7 +30,7 @@ import { grantQuickhackXp } from "../world/progression-ops";
 import { securityKey } from "../world/reinforcements";
 import { alertedNear, disturb, hackFxOf, isEngaged, noteDetected, noteHacked, noteViolence } from "../world/street";
 import { scanning, worldTimeScale } from "./ability-system";
-import { SEARCH_SECONDS, TRACK_GRACE, effectiveAggroRange, giveLead, guardSees } from "./ai/ganger-perception";
+import { SEARCH_SECONDS, TRACK_GRACE, effectiveAggroRange, enemySees, giveLead } from "./ai/ganger-perception";
 import { cameraSees } from "./crime-system";
 
 /** Seconds a `short_circuit` knocks a device out. */
@@ -169,8 +169,8 @@ const tickEffects = (ctx: SimContext): void => {
 };
 
 /**
- * Enemies and cameras that see the player right now (the trace of an upload). A cone-sighted
- * guard needs its cone; the target of `reboot_optics` goes dark before it can look.
+ * Enemies and cameras that see the player right now (the trace of an upload). An unalerted enemy
+ * needs its cone (ADR-0069); the target of `reboot_optics` goes dark before it can look.
  */
 const watchers = (ctx: SimContext, player: Entity, except: Entity | null): Entity[] => {
   const out: Entity[] = [];
@@ -184,7 +184,7 @@ const watchers = (ctx: SimContext, player: Entity, except: Entity | null): Entit
     const distance = Math.hypot(player.position.x - g.position.x, player.position.z - g.position.z);
     const sight = effectiveAggroRange(g.ai.aggroRange, stance);
     if (distance > sight || !lineOfSight(ctx.world, eyeOf(g), chest)) continue;
-    if (g.ai.cone && !guardSees(g, player, distance, true, sight)) continue;
+    if (!enemySees(g, player, distance, true, sight)) continue;
     out.push(g);
   }
   for (const c of inCreationOrder(ctx.world.with("device"))) {

@@ -35,7 +35,7 @@ import { coveredFrom } from "../world/disguise";
 import { difficultyOf } from "../world/difficulty";
 import { worldTimeScale } from "./ability-system";
 import { COWER_RADIUS, scare } from "./ai/civilian-ai-system";
-import { effectiveAggroRange, giveLead, guardSees } from "./ai/ganger-perception";
+import { effectiveAggroRange, enemySees, giveLead } from "./ai/ganger-perception";
 
 /**
  * Cameras (ADR-0029): they see `CAMERA_RANGE` metres in a cone of `CAMERA_CONE` either side of
@@ -91,14 +91,14 @@ export const inPlayerView = (ctx: SimContext, player: Entity, p: Vec3): boolean 
 const civilianSees = (ctx: SimContext, c: Entity, player: Entity): boolean =>
   Math.hypot(player.position.x - c.position.x, player.position.z - c.position.z) <= CIVILIAN_SIGHT && lineOfSight(ctx.world, eyeOf(c), chestOf(player));
 
-/** Does a member of the security see the player (its sight range, its cone for a guard)? */
+/** Does a member of the security see the player (its sight range, its cone until alerted, ADR-0069)? */
 const patrolSees = (ctx: SimContext, g: Entity, player: Entity): boolean => {
   if (!g.ai || (g.hackFx?.blind ?? 0) > 0) return false;
   const stance = factionStance(ctx.state.domain.reputation, g.faction ?? "hebi");
   const sight = effectiveAggroRange(g.ai.aggroRange, stance);
   const distance = Math.hypot(player.position.x - g.position.x, player.position.z - g.position.z);
   if (distance > sight || !lineOfSight(ctx.world, eyeOf(g), chestOf(player))) return false;
-  return !g.ai.cone || guardSees(g, player, distance, true, sight);
+  return enemySees(g, player, distance, true, sight);
 };
 
 const setHeat = (ctx: SimContext, heat: HeatState, force = false): void => {

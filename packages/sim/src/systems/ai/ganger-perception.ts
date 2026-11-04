@@ -1,4 +1,4 @@
-import { type AwarenessState, DISGUISE_FACTION, type DomainState, type FactionStance, type Vec3, angleTo, factionStance } from "@seki/core";
+import { type AwarenessState, DISGUISE_FACTION, type DomainState, type FactionStance, type SightProfile, type Vec3, angleTo, factionStance, sightOf } from "@seki/core";
 import type { Entity } from "../../world/components";
 import type { SimContext } from "../../world/context";
 import { chestOf, eyeOf, lineOfSight } from "../../world/hitscan";
@@ -15,24 +15,43 @@ import { difficultyOf } from "../../world/difficulty";
  */
 
 /**
- * Sight of a corporate guard (ADR-0024). It sees in a cone in front of it, a crouching player
- * only from half as far, and anyone standing right next to it whatever the facing (unless they
- * crouch). Seeing fills its suspicion, faster the closer the player is; at 1 it raises the alarm.
- * Out of sight the suspicion drains again.
+ * Sight of an enemy with the AI of a ganger (ADR-0069, from ADR-0024's guard): the profile of its
+ * type (`ENEMY_TYPES[type].vision`). Unalerted it sees in a cone in front of it, a crouching
+ * player only from `crouchSight` of its range, and anyone standing within `near` whatever its
+ * facing (unless they crouch). Seeing fills its suspicion, faster the closer the player is; at 1
+ * it raises the alarm. Out of sight the suspicion drains again. Alerted it sees all round.
  */
-export const GUARD_CONE = 1.05;
-export const GUARD_CROUCH_SIGHT = 0.5;
-export const GUARD_NEAR = 2.2;
-const SUSPICION_RATE = 1.4;
 const SUSPICION_DECAY = 0.5;
 
-/** Whether a cone-sighted guard notices the player this step (pure; the caller keeps the meter). */
-export const guardSees = (g: Entity, player: Entity, distance: number, inSight: boolean, sight: number): boolean => {
+/** The sight profile of an AI (a Hebi ganger's for anything untyped). */
+export const visionOf = (g: Entity): SightProfile => sightOf(g.enemy?.type);
+
+/** Whether a point `distance` m off is in the cone of `g` or close enough to be seen whatever its facing. */
+export const inSightCone = (g: Entity, x: number, z: number, distance: number): boolean => {
+  const v = visionOf(g);
+  return distance <= v.near || Math.abs(angleTo({ x: g.position.x, z: g.position.z, yaw: g.yaw }, x, z)) <= v.cone;
+};
+
+/**
+ * Whether an enemy notices the player this step (pure; the caller keeps the meter). `inSight` is
+ * a clear line within `sight`, the range under the faction's stance. Alerted it needs no more.
+ */
+export const enemySees = (g: Entity, player: Entity, distance: number, inSight: boolean, sight: number): boolean => {
   if (!inSight) return false;
+  if (g.ai?.alerted) return true;
+  const v = visionOf(g);
   const crouched = (player.posture?.amount ?? 0) > 0.5;
-  if (distance <= GUARD_NEAR && !crouched) return true;
-  if (distance > sight * (crouched ? GUARD_CROUCH_SIGHT : 1)) return false;
-  return Math.abs(angleTo({ x: g.position.x, z: g.position.z, yaw: g.yaw }, player.position.x, player.position.z)) <= GUARD_CONE;
+  if (distance <= v.near && !crouched) return true;
+  if (distance > sight * (crouched ? v.crouchSight : 1)) return false;
+  return Math.abs(angleTo({ x: g.position.x, z: g.position.z, yaw: g.yaw }, player.position.x, player.position.z)) <= v.cone;
+};
+
+/** Fills or drains the suspicion of `g` for this step; returns whether it believes its eyes (full). */
+const suspect = (ctx: SimContext, g: Ganger, sees: boolean, distance: number, sight: number, timeScale: number): boolean => {
+  // It fills at the difficulty's pace (`awareness`, ADR-0066) and drains as ever.
+  const rate = sees ? visionOf(g).suspicionRate * difficultyOf(ctx).awareness * (1.5 - Math.min(1, distance / sight)) : -SUSPICION_DECAY;
+  g.ai.suspicion = Math.max(0, Math.min(1, (g.ai.suspicion ?? 0) + rate * ctx.dt * timeScale));
+  return g.ai.suspicion >= 1;
 };
 
 /**
@@ -157,10 +176,12 @@ const tolerates = (ctx: SimContext, g: Ganger, stance: FactionStance, hunted: bo
 };
 
 /**
- * What a ganger makes of the player this step: how far they are and whether it sees them. A
- * cone-sighted guard fills its suspicion first and believes its eyes only at 1. Seeing a player
- * its faction dislikes alerts it, and so does being the security that hunts them (ADR-0029).
- * In a disguise of its faction (ADR-0033) it sees one of its own until the disguise is blown.
+ * What a ganger makes of the player this step: how far they are and whether it sees them. An
+ * unalerted one fills its suspicion first and believes its eyes only at 1 (ADR-0069); one that
+ * would not attack her anyway (friendly, a tolerant patrol) just watches what it sees. Seeing a
+ * player its faction dislikes alerts it, and so does being the security that hunts them
+ * (ADR-0029). In a disguise of its faction (ADR-0033) it sees one of its own until the disguise
+ * is blown.
  */
 export const perceivePlayer = (
   ctx: SimContext,
@@ -173,25 +194,22 @@ export const perceivePlayer = (
   const stance = factionStance(reputation, g.faction ?? "hebi");
   const aggro = effectiveAggroRange(g.ai.aggroRange, stance);
   const blind = (g.hackFx?.blind ?? 0) > 0;
-  let visible = !blind && !!player && distance <= aggro && lineOfSight(ctx.world, eyeOf(g), chestOf(player));
-  if (player && coveredFrom(ctx, g.faction)) {
-    const sees = g.ai.cone && !g.ai.alerted ? guardSees(g, player, distance, visible, aggro) : visible;
-    visible = disguisedSight(ctx, g, player, sees, distance, aggro, timeScale);
-  } else if (!g.ai.cone && (g.ai.suspicion ?? 0) > 0) {
-    // Suspicion of a disguise that is gone (blown, or taken off) drains away.
-    g.ai.suspicion = Math.max(0, (g.ai.suspicion ?? 0) - SUSPICION_DECAY * ctx.dt * timeScale);
-  } else if (g.ai.cone && player && !g.ai.alerted) {
-    // A corporate guard needs a moment of looking before it believes its eyes.
-    const sees = guardSees(g, player, distance, visible, aggro);
-    const before = g.ai.suspicion ?? 0;
-    // It fills at the difficulty's pace (`awareness`, ADR-0066) and drains as ever.
-    const rate = sees ? SUSPICION_RATE * difficultyOf(ctx).awareness * (1.5 - Math.min(1, distance / aggro)) : -SUSPICION_DECAY;
-    g.ai.suspicion = Math.max(0, Math.min(1, before + rate * ctx.dt * timeScale));
-    visible = g.ai.suspicion >= 1;
-  }
+  const inSight = !blind && !!player && distance <= aggro && lineOfSight(ctx.world, eyeOf(g), chestOf(player));
   // The district's security hunting the player (ADR-0029) attacks on sight whatever the stance.
   const hunted = heat.level > 0 && heat.faction === (g.faction ?? "hebi");
-  if (visible && (stance !== "friendly" || hunted) && !tolerates(ctx, g, stance, hunted)) g.ai.alerted = true;
+  const lenient = (stance === "friendly" && !hunted) || tolerates(ctx, g, stance, hunted);
+  let visible = inSight;
+  if (player) {
+    const sees = enemySees(g, player, distance, inSight, aggro);
+    if (coveredFrom(ctx, g.faction)) visible = disguisedSight(ctx, g, player, sees, distance, aggro, timeScale);
+    else if (g.ai.alerted) visible = sees;
+    else if (lenient) {
+      // It only watches her: no meter to fill, and what was in it drains away.
+      g.ai.suspicion = Math.max(0, (g.ai.suspicion ?? 0) - SUSPICION_DECAY * ctx.dt * timeScale);
+      visible = sees;
+    } else visible = suspect(ctx, g, sees, distance, aggro, timeScale);
+  }
+  if (visible && !lenient) g.ai.alerted = true;
   g.ai.sees = visible;
   return { player, distance, visible };
 };

@@ -54,9 +54,11 @@ const scanAfterLoad = (snap: SaveSnapshot, n: number): Outcome => {
   const failed = collect<DomainEvents["QuickhackFailed"]>(loaded, "QuickhackFailed");
   // The two stand in a line from the player, the second at the end of the scanner's range: the
   // one scanned comes nearer, the other steps aside, out of the scanner's cone.
+  // They have made her out, as they did at once before ADR-0069: a fight, so no RAM comes back meanwhile.
   const place = (e: Entity, dx: number, dz: number): void => {
     e.position = { x: ALLEY_START.x + dx, y: e.position.y, z: ALLEY_START.z + dz };
     e.prevPosition = { ...e.position };
+    if (e.ai) e.ai.alerted = true;
   };
   place(security(loaded, n), 12, -1.5);
   place(security(loaded, 3 - n), 16, 6);
