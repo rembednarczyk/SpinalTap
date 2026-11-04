@@ -1,0 +1,1 @@
+Napisy rozmowy pokazują tylko bieżącą kwestię, czytaną od góry, i nie przewijają się przy każdym kroku; okno mieści zwykłą kwestię bez przewijania na telefonie i na komputerze, a wcześniejsze linie otwiera przycisk „Wcześniejsze kwestie” (G-283).

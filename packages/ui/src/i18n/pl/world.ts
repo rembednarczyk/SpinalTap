@@ -95,6 +95,7 @@ export const plWorld = {
   // Dialogue: the interface around the ink text.
   "dialogue.reply": "Odpowiedź",
   "dialogue.log": "Rozmowa",
+  "dialogue.history": "Wcześniejsze kwestie",
   "dialogue.end": "Zakończ rozmowę",
   "dialogue.tone.main": "wątek główny",
   "dialogue.tone.optional": "pytanie",

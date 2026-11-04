@@ -70,7 +70,7 @@ describe("wheel layout", () => {
 });
 
 describe("dialogue wheel", () => {
-  it("shows every option as a button with its tone, icon and colour class; history and lines below", () => {
+  it("shows every option as a button with its tone, icon and colour class; the lines below", () => {
     const { options } = mount();
     const buttons = options();
     expect(buttons.map((b) => b.dataset.tone)).toEqual(["main", "optional", "lifepath", "leave"]);
@@ -78,9 +78,7 @@ describe("dialogue wheel", () => {
     expect(buttons[0]?.textContent).toContain("◆");
     expect(buttons[3]?.className).toContain("wheel__opt--leave");
     expect(screen.getByRole("button", { name: /Co wiesz o Kagami Biotech\?.*from the past/ })).toBeTruthy();
-    const log = screen.getByRole("log", { name: "Conversation" });
-    expect(within(log).getByText("No proszę.").className).toContain("subs__line--past");
-    expect(within(log).getByText("Robota czeka.").className).not.toContain("subs__line--past");
+    expect(within(screen.getByRole("log", { name: "Conversation" })).getByText("Robota czeka.")).toBeTruthy();
   });
 
   it("keyboard: arrows move the highlight round the arc, Enter, Space and E pick it, digits pick at once", () => {
@@ -147,6 +145,40 @@ describe("dialogue wheel", () => {
     act(() => vi.advanceTimersByTime(800));
     fireEvent.click(option);
     expect(choose).toHaveBeenCalledWith(2);
+  });
+
+  it("shows only the lines of the current step, with the options outside it, and never scrolls them (G-283)", () => {
+    const scrolled = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollTop", { configurable: true, get: () => 0, set: scrolled });
+    try {
+      const { store } = mount();
+      const log = screen.getByRole("log", { name: "Conversation" });
+      expect(within(log).getByText("Robota czeka.")).toBeTruthy();
+      expect(within(log).queryByText("No proszę.")).toBeNull();
+      expect(log.contains(screen.getByRole("group", { name: "Reply" }))).toBe(false);
+      act(() => patchUi(store, { dialogue: { ...dialogue, lines: [{ speaker: "Kaito", text: "Dalej." }], history: [...(dialogue.history ?? []), ...dialogue.lines] } }));
+      expect(within(log).getByText("Dalej.")).toBeTruthy();
+      expect(within(log).queryByText("Robota czeka.")).toBeNull();
+      expect(scrolled).not.toHaveBeenCalled();
+    } finally {
+      // Back to jsdom's own scrollTop on Element.
+      delete (HTMLElement.prototype as { scrollTop?: number }).scrollTop;
+    }
+  });
+
+  it("earlier lines of the talk open behind a button, dimmed, and close at the next step", () => {
+    const { store } = mount();
+    const log = screen.getByRole("log", { name: "Conversation" });
+    const toggle = screen.getByRole("button", { name: "Earlier lines" });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(within(log).getByText("No proszę.").className).toContain("subs__line--past");
+    expect(within(log).getByText("Robota czeka.").className).not.toContain("subs__line--past");
+    act(() => patchUi(store, { dialogue: { ...dialogue, lines: [{ speaker: "Kaito", text: "Dalej." }] } }));
+    expect(within(log).queryByText("No proszę.")).toBeNull();
+    act(() => patchUi(store, { dialogue: { ...dialogue, history: [] } }));
+    expect(screen.queryByRole("button", { name: "Earlier lines" })).toBeNull();
   });
 
   it("leaves the screen with the talk", () => {

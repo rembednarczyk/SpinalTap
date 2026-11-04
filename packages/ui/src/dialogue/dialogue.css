@@ -133,7 +133,8 @@
   to { opacity: 1; translate: 0 0; }
 }
 
-/* Subtitles: the last lines at the bottom, earlier ones above them, dimmed and scrollable. */
+/* Subtitles: the lines of the last step at the bottom, tall enough for a usual step (four or five
+   lines) without scrolling (G-283); the earlier ones, dimmed, only on request. */
 .subs {
   position: absolute;
   left: 50%;
@@ -141,7 +142,7 @@
   transform: translateX(-50%);
   box-sizing: border-box;
   width: min(760px, calc(100% - 32px));
-  max-height: calc(24vh / var(--s));
+  max-height: calc(30vh / var(--s));
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
@@ -151,6 +152,23 @@
   pointer-events: auto;
   outline: none;
 }
+.subs__history {
+  position: sticky;
+  top: 0;
+  float: right;
+  margin: 0 -8px 4px 12px;
+  padding: 2px 8px;
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  background: rgba(6, 10, 16, 0.9);
+  border: 1px solid rgba(159, 179, 184, 0.3);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.subs__history[aria-expanded="true"] { color: var(--cyan); border-color: var(--cyan); }
 .subs__line { margin: 0 0 6px; font-size: calc(18px * var(--subs-scale, 1)); line-height: 1.35; }
 .subs-solid .subs { background: rgb(2, 4, 8); }
 .subs__line--past { opacity: 0.55; }
@@ -189,11 +207,13 @@
     bottom: 8px;
     transform: none;
     width: calc(44% - 28px - max(12px, env(safe-area-inset-left, 0px)));
-    max-height: 44%;
+    /* Up to just under the objective in the top left corner: the pad hides during a talk. */
+    max-height: calc(100% - 64px);
     padding: 8px 10px 2px;
   }
   .subs__line { font-size: calc(14px * var(--subs-scale, 1)); margin-bottom: 4px; }
-  .subs__speaker { display: block; min-width: 0; margin: 0; font-size: calc(12px * var(--subs-scale, 1)); }
+  .subs__speaker { min-width: 0; margin-right: 6px; font-size: calc(12px * var(--subs-scale, 1)); }
+  .subs__history { font-size: 11px; }
 }
 
 /* No slide or pulse with reduced flashes (Dostępność) or a system-wide reduced motion. */
