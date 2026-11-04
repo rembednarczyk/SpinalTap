@@ -3,6 +3,7 @@ import { type CameraMode, FOV_REFERENCE_ASPECT, type Transform, type Vec3, type 
 import { TPP_HEIGHT_OFFSET, TPP_SHOULDER_OFFSET, eyeHeightAt } from "@seki/sim";
 import { applyOutline } from "../npr/outline";
 import type { ToonMaterials } from "../npr/toon-material";
+import { BodyFade, bodyFadeTarget } from "./body-fade";
 
 /** Over-the-shoulder distance behind the pivot (ADR-0049: 2.7 m before). */
 const TPP_DISTANCE = 2.2;
@@ -15,14 +16,21 @@ export const DEFAULT_HORIZONTAL_FOV = degToRad(80);
 export const BASE_FOV = verticalFov(DEFAULT_HORIZONTAL_FOV, FOV_REFERENCE_ASPECT);
 /** Sprint widens the view by this share; eased in and out. */
 const SPRINT_WIDEN = 0.1;
-/** Viewmodel aimed down sights: centred, the sights on the eye line, pulled in (ADR-0019). */
-const VIEWMODEL_ADS = { x: 0, y: -0.078, z: 0.4 } as const;
+/**
+ * Viewmodel aimed down sights: centred and pulled in (ADR-0019), with the top of the sights a
+ * little under the eye line (G-275): on the line, the pistol model rose over the crosshair and hid
+ * a target a metre ahead. Its muzzle stays more than 3 degrees below the centre of the view.
+ */
+const VIEWMODEL_ADS = { x: 0, y: -0.118, z: 0.4 } as const;
 /** How much closer the TPP camera comes over the shoulder at full aim. */
 const TPP_ADS_PULL = 0.45;
 /** FPP melee guard: the weapon across the view, a little left of centre. */
 const VIEWMODEL_GUARD = { x: 0.08, y: -0.12, z: 0.5 } as const;
 /** Seconds from the end of a windup to the end of the follow-through (matches the rig). */
 const VIEW_STRIKE = 0.09;
+/** Height of the figure the TPP camera fades when it is in the way (G-275), standing and crouched. */
+const FIGURE_HEIGHT = 1.85;
+const FIGURE_CROUCHED = 1.3;
 
 /** Field of view for an aim of 0..1 with a weapon zooming by `zoom` at full aim. */
 export const aimedFov = (aim: number, zoom: number, base: number = BASE_FOV): number => base * (1 + (zoom - 1) * Math.min(1, Math.max(0, aim)));
@@ -115,6 +123,13 @@ export class CameraRig {
   private reference: { position: Vector3; target: Vector3 } | null = null;
   private occluder: CameraOccluder | null = null;
   onBodyVisibility: (visible: boolean) => void = () => {};
+  /** Halftone fade of the player's figure when it is in the way of the TPP view (G-275). */
+  readonly bodyFade = new BodyFade();
+  /**
+   * The TPP camera looks over the left shoulder (G-275). It changes at once, with the side in the
+   * input frame the simulation shoots from: an eased swing left the crosshair off the shot line.
+   */
+  leftShoulder = false;
 
   constructor(
     private readonly scene: Scene,
@@ -299,6 +314,7 @@ export class CameraRig {
       this.camera.fov = this.hipFov;
       this.viewmodel.setEnabled(false);
       this.onBodyVisibility(true);
+      this.bodyFade.update(0, 1);
       return;
     }
     if (!target) return;
@@ -308,14 +324,15 @@ export class CameraRig {
 
     const { position: p, yaw, pitch } = target;
     const dir = directionFromAngles(yaw, pitch);
-    // Same curve as the simulation's aim origin, so the crosshair stays exact while crouching.
-    const eye = new Vector3(p.x, p.y + eyeHeightAt(target.crouch ?? 0), p.z);
-    const shoulder = eye.add(new Vector3(Math.cos(yaw) * TPP_SHOULDER_OFFSET, TPP_HEIGHT_OFFSET, -Math.sin(yaw) * TPP_SHOULDER_OFFSET).scale(this.blend));
-    const back = new Vector3(-dir.x, -dir.y, -dir.z);
-
     // Aiming down sights (ADR-0019): the zoom follows the simulation's eased aim exactly, so the
     // HUD crosshair (which uses the same numbers) stays calibrated.
     const aim = Math.min(1, Math.max(0, target.aim ?? 0));
+    const crouch = target.crouch ?? 0;
+    // Same curve as the simulation's aim origin, so the crosshair stays exact while crouching.
+    const eye = new Vector3(p.x, p.y + eyeHeightAt(crouch), p.z);
+    const side = this.leftShoulder ? -TPP_SHOULDER_OFFSET : TPP_SHOULDER_OFFSET;
+    const shoulder = eye.add(new Vector3(Math.cos(yaw) * side, TPP_HEIGHT_OFFSET, -Math.sin(yaw) * side).scale(this.blend));
+    const back = new Vector3(-dir.x, -dir.y, -dir.z);
     const adsFov = aimedFov(aim, target.aimZoom ?? 1, this.hipFov);
     let distance = TPP_DISTANCE * this.blend * (1 - TPP_ADS_PULL * smooth(aim));
     if (distance > 0.01) {
@@ -369,10 +386,12 @@ export class CameraRig {
     this.viewmodel.position.x = base.x + Math.sin(t) * 0.012 * bob + sw.x;
     this.viewmodel.position.y = base.y - Math.abs(Math.cos(t)) * 0.01 * bob - away * 0.32 + sw.y;
     this.viewmodel.position.z = base.z - this.recoil * 0.035 * (1 - 0.5 * ads) + sw.z;
-    this.viewmodel.rotation.x = -this.recoil * 0.25 * (1 - 0.5 * ads) + away * 0.9 + sw.rx;
+    // Aimed in, the kick goes straight back: tipping up, the muzzle would rise over the crosshair.
+    this.viewmodel.rotation.x = -this.recoil * 0.25 * (1 - ads) + away * 0.9 + sw.rx;
     this.viewmodel.rotation.y = sw.ry;
     // The guard turns the weapon flat across the view.
     this.viewmodel.rotation.z = Math.sin(t) * 0.02 * bob + reloading * 0.7 + guard * 1.25 + sw.rz;
     this.onBodyVisibility(!fpp);
+    this.bodyFade.update(fpp ? 0 : bodyFadeTarget(pos, dir, p, FIGURE_HEIGHT + (FIGURE_CROUCHED - FIGURE_HEIGHT) * Math.min(1, Math.max(0, crouch))), dt);
   }
 }

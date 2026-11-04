@@ -3,6 +3,7 @@ import type { ActivityId, AppearanceDescriptor, CameraMode, DespawnReason, Effec
 import type { ChunkDef } from "@seki/sim";
 import { WORLD_CHUNKS } from "@seki/sim";
 import { CameraRig } from "../camera/camera-rig";
+import { fadeFigure } from "../npr/body-dither";
 import type { Grading } from "../npr/grading";
 import { LineArt } from "../npr/line-art";
 import { SpeedLines } from "../npr/speed-lines";
@@ -159,6 +160,11 @@ export class BabylonRenderer implements RenderPort {
     this.rig = new CameraRig(scene, this.materials, (m) => this.props.isBlocker(m));
     this.rig.onBodyVisibility = (visible) => {
       if (this.cameraTarget !== null) this.characters.setBodyVisible(this.cameraTarget, visible);
+    };
+    // The player's figure as a halftone while it is in the way of the TPP view (G-275).
+    this.rig.bodyFade.onChange = (amount) => {
+      const figure = this.cameraTarget === null ? null : this.characters.rigOf(this.cameraTarget);
+      if (figure) fadeFigure(figure.root, amount);
     };
     this.activities = new CharacterActivities(scene, this.materials, () => this.rig.camera.position);
     this.characters = new CharacterViews({

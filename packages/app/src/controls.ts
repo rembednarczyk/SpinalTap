@@ -28,6 +28,7 @@ export const CONTROL_LABELS: readonly (readonly [Action, string])[] = [
   ["nextWeapon", "Next weapon"],
   ["prevWeapon", "Previous weapon"],
   ["toggleCamera", "FPP / TPP view"],
+  ["swapShoulder", "Swap shoulder (TPP)"],
 ];
 
 const isAction = (a: string): a is Action => a in DEFAULT_KEYMAP;

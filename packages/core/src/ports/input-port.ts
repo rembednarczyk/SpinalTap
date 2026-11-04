@@ -41,6 +41,12 @@ export interface InputFrame {
   readonly quickhack: QuickhackSlotInput;
   /** Edge-triggered: dash (ADR-0032), on the ground or in the air with the right legs cyberware. */
   readonly dash: boolean;
+  /**
+   * The TPP camera looks over the left shoulder, and the shots start there (G-275). A side, not
+   * a press: the input adapter keeps it, the settings remember it. Absent (older frames and
+   * replays): the right shoulder.
+   */
+  readonly leftShoulder?: boolean;
 }
 
 export type QuickhackSlotInput = 0 | 1 | 2 | 3 | 4 | 5;

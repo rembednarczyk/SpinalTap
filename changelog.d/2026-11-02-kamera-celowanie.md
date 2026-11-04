@@ -1,0 +1,1 @@
+W FPP pistolet przy celowaniu siedzi pod celownikiem, a odrzut przy celowaniu idzie prosto w tył, więc broń i dłoń nie zasłaniają celu z bliska; w TPP postać, która zasłania widok tuż przed kamerą, przechodzi w półton kropek; klawisz G (na padzie lewa gałka przy celowaniu) i opcja w ustawieniach przenoszą kamerę na drugie ramię razem z linią strzału (G-275).

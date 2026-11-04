@@ -1,6 +1,7 @@
 import { type AudioScenePort, FOV_REFERENCE_ASPECT, type InputFrame, degToRad, horizontalFovOf, isLocale, radToDeg } from "@seki/core";
 import {
   type AimMode,
+  type CameraShoulder,
   type ColorblindMode,
   DEFAULT_SETTINGS,
   type DamageNumbersMode,
@@ -41,6 +42,7 @@ const clamp = (v: unknown, min: number, max: number, fallback: number): number =
 
 const isQuality = (v: unknown): v is GraphicsQuality => v === "high" || v === "medium" || v === "low";
 const isAimMode = (v: unknown): v is AimMode => v === "hold" || v === "toggle";
+const isShoulder = (v: unknown): v is CameraShoulder => v === "right" || v === "left";
 const isDamageMode = (v: unknown): v is DamageNumbersMode => v === "off" || v === "hit" || v === "total";
 const isColorblind = (v: unknown): v is ColorblindMode => v === "off" || v === "protan" || v === "deutan" || v === "tritan";
 const bool = (v: unknown, fallback: boolean): boolean => (typeof v === "boolean" ? v : fallback);
@@ -81,6 +83,8 @@ export const sanitizeSettings = (raw: unknown, defaults: SettingsVm = DEFAULT_SE
     aimMode: isAimMode(r.aimMode) ? r.aimMode : defaults.aimMode,
     crouchMode: isAimMode(r.crouchMode) ? r.crouchMode : defaults.crouchMode,
     sprintMode: isAimMode(r.sprintMode) ? r.sprintMode : defaults.sprintMode,
+    // G-275: entries saved before the setting look over the right shoulder.
+    shoulder: isShoulder(r.shoulder) ? r.shoulder : defaults.shoulder,
     mouseSensitivity: clamp(r.mouseSensitivity, 0.2, 3, defaults.mouseSensitivity),
     adsSensitivity: clamp(r.adsSensitivity, 0.3, 2, defaults.adsSensitivity),
     invertY: typeof r.invertY === "boolean" ? r.invertY : defaults.invertY,

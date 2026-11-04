@@ -61,6 +61,19 @@ describe("BrowserInput (InputPort contract)", () => {
     window.dispatchEvent(new Event("blur"));
     expect(i.poll().moveX).toBe(0);
   });
+
+  it("swaps the TPP shoulder on G and keeps the side in every frame, menus included (G-275)", () => {
+    const i = make();
+    const told: boolean[] = [];
+    i.shoulder.onChange = (left) => told.push(left);
+    expect(i.poll().leftShoulder).toBeUndefined();
+    key("keydown", "KeyG");
+    expect(i.poll().leftShoulder).toBe(true);
+    expect(i.poll().leftShoulder).toBe(true);
+    i.enabled = false;
+    expect(i.poll()).toEqual({ ...EMPTY_INPUT, leftShoulder: true });
+    expect(told).toEqual([true]);
+  });
 });
 
 describe("BrowserInput without pointer lock", () => {

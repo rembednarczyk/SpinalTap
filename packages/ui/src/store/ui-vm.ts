@@ -246,6 +246,9 @@ export type GraphicsQuality = "high" | "medium" | "low";
 /** The aim button held down, or pressed once to aim and again to stop (ADR-0019). */
 export type AimMode = "hold" | "toggle";
 
+/** The shoulder the TPP camera looks over (G-275). */
+export type CameraShoulder = "right" | "left";
+
 export interface SettingsVm {
   readonly quality: GraphicsQuality;
   readonly aimMode: AimMode;
@@ -253,6 +256,8 @@ export interface SettingsVm {
   readonly crouchMode: AimMode;
   /** Sprint key: held (default), or pressed once to run until stopping. */
   readonly sprintMode: AimMode;
+  /** TPP camera over the right (default) or the left shoulder; a key swaps it in play. */
+  readonly shoulder: CameraShoulder;
   /** Look speed multiplier, 1 = default. */
   readonly mouseSensitivity: number;
   /** Extra look speed multiplier while aiming down sights (on top of the zoom's own slowdown). */
@@ -323,6 +328,7 @@ export const DEFAULT_SETTINGS: SettingsVm = {
   aimMode: "hold",
   crouchMode: "toggle",
   sprintMode: "hold",
+  shoulder: "right",
   mouseSensitivity: 1,
   adsSensitivity: 1,
   invertY: false,

@@ -27,7 +27,8 @@ export type Action =
   | "nextWeapon"
   | "prevWeapon"
   | "scan"
-  | "dash";
+  | "dash"
+  | "swapShoulder";
 
 /**
  * Action → physical codes (KeyboardEvent.code, "Mouse0".."Mouse4", or "WheelUp"/"WheelDown").
@@ -64,6 +65,8 @@ export const DEFAULT_KEYMAP: KeyMap = {
   scan: ["KeyZ", "Mouse1"],
   // Dash (ADR-0032). Alt as in many PC action games; the browser's own Alt menu is suppressed.
   dash: ["AltLeft"],
+  // Over the other shoulder in TPP (G-275); G sits next to V, which switches the view.
+  swapShoulder: ["KeyG"],
 };
 
 export const remap = (

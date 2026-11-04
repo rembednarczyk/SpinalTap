@@ -253,7 +253,7 @@ export const combatSystem: System = {
         ctx,
         {
           shooter: p,
-          origin: aimOrigin(p, ctx.state.domain.preferences.cameraMode),
+          origin: aimOrigin(p, ctx.state.domain.preferences.cameraMode, ctx.input.leftShoulder === true),
           dir: directionFromAngles(p.yaw, p.pitch),
           spread: aimSpreadOf(p, stats),
           critChance: stats.critChance,

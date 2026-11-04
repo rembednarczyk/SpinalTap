@@ -4,7 +4,7 @@ import type { MessageKey } from "../i18n/en";
 import { type Translate, isMessageKey } from "../i18n/t";
 import { useT } from "../i18n/use-t";
 import { type ColorblindMode, type DamageNumbersMode, HUD_SCALE_RANGE, SUBTITLE_SCALE_RANGE } from "../store/hud-vm";
-import type { AimMode, ControlBindingVm, GraphicsQuality, SettingsVm } from "../store/ui-store";
+import type { AimMode, CameraShoulder, ControlBindingVm, GraphicsQuality, SettingsVm } from "../store/ui-store";
 import { TOKENS } from "../hud/tokens";
 import { useSettingsIntents, useUi } from "../use-ui";
 import { RESERVED_KEYS, keyLabel } from "./key-label";
@@ -25,6 +25,11 @@ const AIM_MODES: Options<AimMode> = [
 ];
 
 /** Each language under its own name, so a player can find theirs whatever is set now. */
+const SHOULDERS: Options<CameraShoulder> = [
+  ["right", "settings.shoulder.right"],
+  ["left", "settings.shoulder.left"],
+];
+
 const LANGUAGES: Options<Locale> = LOCALES.map((l) => [l, `settings.language.${l}`] as const);
 
 const Slider = ({
@@ -191,6 +196,7 @@ const MouseAndCamera = ({ settings, set }: SectionProps) => {
       <Choice label="settings.aimMode" value={settings.aimMode} options={AIM_MODES} onChange={(aimMode) => set({ aimMode })} />
       <Choice label="settings.crouchMode" value={settings.crouchMode} options={AIM_MODES} onChange={(crouchMode) => set({ crouchMode })} />
       <Choice label="settings.sprintMode" value={settings.sprintMode} options={AIM_MODES} onChange={(sprintMode) => set({ sprintMode })} />
+      <Choice label="settings.shoulder" value={settings.shoulder} options={SHOULDERS} onChange={(shoulder) => set({ shoulder })} />
     </>
   );
 };

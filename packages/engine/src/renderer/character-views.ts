@@ -1,6 +1,7 @@
 import type { Scene } from "../babylon";
 import type { AppearanceDescriptor, EntityId, Transform, ViewDescriptor, WeaponLook } from "@seki/core";
 import type { CameraRig } from "../camera/camera-rig";
+import { fadeFigure } from "../npr/body-dither";
 import type { MoonShadow } from "../npr/moon-shadow";
 import type { ToonMaterials } from "../npr/toon-material";
 import { CharacterDeaths } from "./character-deaths";
@@ -167,6 +168,8 @@ export class CharacterViews implements FxActors {
     if (!v) return;
     this.views.delete(id);
     this.kit.forget(id);
+    // A pooled model must not come back faded on someone else.
+    fadeFigure(v.rig.root, 0);
     if (fall) {
       this.deaths.fall(v.rig);
     } else {

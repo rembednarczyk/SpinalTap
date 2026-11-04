@@ -1,5 +1,6 @@
 import { EMPTY_INPUT, type InputFrame, type InputPort } from "@seki/core";
 import { type ButtonMode, DEFAULT_KEYMAP, DoubleTap, InputLatches, type KeyMap, mapGamepad, mapKeyboardMouse, mergeFrames } from "./keymap";
+import { PAD_LEFT_STICK, ShoulderSwitch } from "./shoulder-switch";
 import { VirtualPad } from "./virtual-pad";
 
 const MOUSE_SENSITIVITY = 0.0022;
@@ -16,6 +17,8 @@ export class BrowserInput implements InputPort {
   keymap: KeyMap = DEFAULT_KEYMAP;
   /** On-screen touch gamepad; merged with keyboard, mouse and physical pads. */
   readonly virtualPad = new VirtualPad();
+  /** The TPP shoulder (G-275): the settings set its side and hear about a swap. */
+  readonly shoulder = new ShoulderSwitch();
   private lastTouchAt = -Infinity;
   private active = false;
   /** Set when pointer lock is refused (some embedded frames): mouse look then works on plain movement. */
@@ -33,6 +36,8 @@ export class BrowserInput implements InputPort {
   /** Whether the pointer was locked at the last mouse move. */
   private movedLocked = false;
   private padPrev: boolean[] = [];
+  /** The pad's left stick went down in the last poll. */
+  private padStick = false;
   /** B tapped twice dashes (ADR-0036). */
   private readonly padDash = new DoubleTap();
   private lastPoll: number | null = null;
@@ -174,14 +179,16 @@ export class BrowserInput implements InputPort {
     this.lastPoll = now;
     if (!this.active) {
       this.clearBuffered();
-      return EMPTY_INPUT;
+      // Menus and dialogue keep the side: a deflected shot still starts over the shoulder shown.
+      return this.shoulder.left ? { ...EMPTY_INPUT, leftShoulder: true } : EMPTY_INPUT;
     }
     const km = mapKeyboardMouse({ held: this.held, pressed: this.pressed }, { yaw: this.yaw, pitch: this.pitch }, this.keymap);
+    const swapKey = this.keymap.swapShoulder.some((c) => this.pressed.has(c));
     this.clearDeviceBuffers();
     // The pad consumes its own edges and look deltas while polling.
     const withTouch = mergeFrames(km, this.virtualPad.poll());
     const pad = this.pollPad(dt);
-    return this.latches.apply(pad ? mergeFrames(withTouch, pad) : withTouch);
+    return this.shoulder.apply(this.latches.apply(pad ? mergeFrames(withTouch, pad) : withTouch), swapKey, pad !== null && this.padStick);
   }
 
   dispose(): void {
@@ -212,6 +219,7 @@ export class BrowserInput implements InputPort {
     const buttons = pad.buttons.map((b) => b.pressed);
     const pressed = buttons.map((b, i) => b && !this.padPrev[i]);
     this.padPrev = buttons;
+    this.padStick = pressed[PAD_LEFT_STICK] ?? false;
     const dash = this.padDash.update(pressed[1] ?? false, dt);
     return mapGamepad({ axes: pad.axes, buttons, pressed, dash }, dt);
   }
