@@ -1,34 +1,28 @@
-// @ts-expect-error The engine is typed for the browser; the test reads the file off disk.
-import { readFileSync } from "node:fs";
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
-import type { Transform } from "@seki/core";
+import type { Transform, WeaponLook } from "@seki/core";
 import { eyeHeightAt } from "@seki/sim";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { type AbstractMesh, Matrix, MeshBuilder, Ray, Scene, Vector3 } from "../src/babylon";
 import { CameraRig } from "../src/camera/camera-rig";
 import { ToonMaterials } from "../src/npr/toon-material";
 import { ModelLibrary } from "../src/renderer/model-library";
+import { ViewWeapon } from "../src/renderer/view-weapon";
 import { WeaponMounts } from "../src/renderer/weapon-mount";
-
-const pistolUrl = (): string => {
-  const bytes = (readFileSync as (url: URL) => Uint8Array)(new URL("../../app/public/weapons/pistol.glb", import.meta.url));
-  let text = "";
-  for (let i = 0; i < bytes.length; i += 0x8000) text += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-  return `data:model/gltf-binary;base64,${btoa(text)}`;
-};
+import { weaponUrl } from "./weapon-files";
 
 /** Half angle of the circle round the crosshair that the FPP weapon must leave free (degrees). */
 const SIGHT_CIRCLE = 3;
 
-/** The FPP rig with the pistol model in the viewmodel, as the game mounts it. */
-const fppRig = async (model: boolean) => {
+/** The FPP rig with the weapon in hand, its model in the viewmodel as the game mounts it, or the box pistol. */
+const fppRig = async (look: WeaponLook, model: boolean) => {
   const scene = new Scene(new NullEngine({ renderWidth: 1280, renderHeight: 720, textureSize: 256, deterministicLockstep: false, lockstepMaxSteps: 1 }));
   const materials = new ToonMaterials(scene);
   const rig = new CameraRig(scene, materials, () => false);
+  rig.setHeldWeapon(look);
   if (model) {
-    const pivot = await new WeaponMounts(new ModelLibrary(scene, materials), { pistol: pistolUrl() }).mount(rig.weaponMount, "pistol", "vm-weapon", "view");
-    expect(pivot).not.toBeNull();
-    rig.hidePlaceholderGun();
+    const view = new ViewWeapon(new WeaponMounts(new ModelLibrary(scene, materials), { pistol: weaponUrl("pistol"), smg: weaponUrl("smg") }), rig);
+    view.show(look);
+    await vi.waitFor(() => expect(scene.getMeshByName("vm-gun")?.isEnabled()).toBe(false));
   }
   return { scene, rig };
 };
@@ -74,33 +68,42 @@ const CASES = [0.5, 1, 1.5].flatMap((d) =>
   [false, true].flatMap((crouched) => [0, 1].flatMap((aim) => [false, true].map((fired) => ({ d, crouched, aim, fired })))),
 );
 
-describe("FPP weapon leaves the crosshair free (G-275)", () => {
-  it.each([
-    ["the pistol model", true],
-    ["the box placeholder", false],
-  ])("%s: crouched, a standing or crouched target 0.5-1.5 m ahead, from the hip, aimed and just fired", async (_, model) => {
-    const { scene, rig } = await fppRig(model);
-    const rows: string[] = [];
-    let worst = 0;
-    for (const { d, crouched, aim, fired } of CASES) {
-      const h = crouched ? 1.2 : 1.75;
-      const target = MeshBuilder.CreateCapsule("target", { height: h, radius: 0.25 }, scene);
-      target.position.set(0, h / 2, d + 0.25);
-      const eye = eyeHeightAt(1);
-      const chest = h * 0.72;
-      const t: Transform = { position: { x: 0, y: 0, z: 0 }, yaw: 0, pitch: -Math.atan2(chest - eye, d), speed: 0, crouch: 1, aim, aimZoom: 0.8 };
-      for (let k = 0; k < 60; k++) rig.update(t, 1 / 30);
-      // The frame after a shot, with the recoil at its height.
-      if (fired) {
-        rig.kick();
-        rig.update(t, 1 / 60);
-      }
-      const share = hiddenShare(scene, rig, target);
-      rows.push(`d=${d} crouched=${crouched} aim=${aim} fired=${fired}: ${(share * 100).toFixed(0)}%`);
-      worst = Math.max(worst, share);
-      target.dispose();
+const GUNS = ["pistol", "revolver", "smg", "shotgun", "rifle"] as const;
+
+/** The largest share of the circle the viewmodel hides over every case, with the case rows. */
+const worstHidden = async (look: WeaponLook, model: boolean): Promise<{ worst: number; rows: string[] }> => {
+  const { scene, rig } = await fppRig(look, model);
+  const rows: string[] = [];
+  let worst = 0;
+  for (const { d, crouched, aim, fired } of CASES) {
+    const h = crouched ? 1.2 : 1.75;
+    const target = MeshBuilder.CreateCapsule("target", { height: h, radius: 0.25 }, scene);
+    target.position.set(0, h / 2, d + 0.25);
+    const eye = eyeHeightAt(1);
+    const chest = h * 0.72;
+    const t: Transform = { position: { x: 0, y: 0, z: 0 }, yaw: 0, pitch: -Math.atan2(chest - eye, d), speed: 0, crouch: 1, aim, aimZoom: 0.8 };
+    for (let k = 0; k < 60; k++) rig.update(t, 1 / 30);
+    // The frame after a shot, with the recoil at its height.
+    if (fired) {
+      rig.kick();
+      rig.update(t, 1 / 60);
     }
-    // Before G-275, aimed in: the model hid 66% of the circle and 85% the frame after a shot.
-    expect(worst, rows.join("\n")).toBe(0);
-  });
+    const share = hiddenShare(scene, rig, target);
+    rows.push(`d=${d} crouched=${crouched} aim=${aim} fired=${fired}: ${(share * 100).toFixed(1)}%`);
+    worst = Math.max(worst, share);
+    target.dispose();
+  }
+  return { worst, rows };
+};
+
+describe("FPP weapon leaves the crosshair free (G-275, every gun G-282)", () => {
+  it.each(GUNS.flatMap((look) => [[look, "its model", true] as const, [look, "the box placeholder", false] as const]))(
+    "%s, %s: crouched, a standing or crouched target 0.5-1.5 m ahead, from the hip, aimed and just fired",
+    async (look, _, model) => {
+      const { worst, rows } = await worstHidden(look, model);
+      // Before G-275, aimed in: the pistol model hid 66% of the circle and 85% the frame after a
+      // shot. Before G-282, the SMG, shotgun and rifle models aimed in the pistol's pose hid 100%.
+      expect(worst, rows.join("\n")).toBe(0);
+    },
+  );
 });

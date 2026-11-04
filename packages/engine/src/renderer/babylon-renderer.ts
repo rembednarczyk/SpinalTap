@@ -310,7 +310,7 @@ export class BabylonRenderer implements RenderPort {
 
   attachCamera(id: EntityId): void {
     this.cameraTarget = id;
-    this.rig.setHeldWeapon(this.characters.heldOf(id));
+    this.characters.holdInView(id);
   }
 
   playEffect(effect: EffectDescriptor): void {

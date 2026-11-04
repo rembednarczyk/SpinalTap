@@ -1,7 +1,22 @@
 import { Quaternion, TransformNode, Vector3 } from "../babylon";
+import type { WeaponLook } from "@seki/core";
 import type { ModelInstance, ModelLibrary } from "./model-library";
 
 export type WeaponKind = "pistol" | "smg";
+
+/**
+ * Weapon model and size for a look, in hand and in the FPP viewmodel alike; melee weapons are
+ * simple shapes for now.
+ */
+export const WEAPON_MODEL: Readonly<Record<WeaponLook, { readonly kind: WeaponKind | null; readonly scale: number }>> = {
+  pistol: { kind: "pistol", scale: 1 },
+  revolver: { kind: "pistol", scale: 1.08 },
+  smg: { kind: "smg", scale: 1 },
+  shotgun: { kind: "smg", scale: 1.35 },
+  rifle: { kind: "smg", scale: 1.5 },
+  baton: { kind: null, scale: 1 },
+  blade: { kind: null, scale: 1 },
+};
 
 /** URLs of the weapon models (glTF/GLB) by kind. */
 export type WeaponManifest = Partial<Record<WeaponKind, string>>;

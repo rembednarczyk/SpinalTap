@@ -6,6 +6,7 @@ import type { ToonMaterials } from "../npr/toon-material";
 import type { CharacterRig } from "./characters";
 import { Loadouts } from "./loadout";
 import type { ModelLibrary } from "./model-library";
+import { ViewWeapon } from "./view-weapon";
 import { type WeaponManifest, WeaponMounts } from "./weapon-mount";
 
 export interface CharacterKitDeps {
@@ -27,9 +28,11 @@ export class CharacterKit {
   /** Weapons and garment add-ons per character, from `setAppearance`. */
   readonly loadouts: Loadouts;
   private readonly held = new Map<EntityId, WeaponLook | null>();
+  private readonly view: ViewWeapon;
 
   constructor(private readonly deps: CharacterKitDeps) {
     this.weapons = new WeaponMounts(deps.library);
+    this.view = new ViewWeapon(this.weapons, deps.camera);
     this.loadouts = new Loadouts(deps.scene, deps.materials, this.weapons, (meshes) => {
       for (const m of meshes) deps.shadow.addCaster(m);
     });
@@ -44,16 +47,18 @@ export class CharacterKit {
     this.held.delete(id);
   }
 
+  /** The FPP viewmodel takes the weapon in the hand of `id` (the character the camera follows). */
+  holdInView(id: EntityId): void {
+    const look = this.heldOf(id);
+    this.deps.camera.setHeldWeapon(look);
+    this.view.show(look);
+  }
+
   /** Weapon models instead of the placeholder box pistols; characters on screen are re-armed. */
   setWeaponModels(manifest: WeaponManifest): void {
-    const camera = this.deps.camera;
     this.weapons.setManifest(manifest);
     this.loadouts.remountAll();
-    if (this.weapons.has("pistol")) {
-      void this.weapons.mount(camera.weaponMount, "pistol", "vm-weapon", "view").then((pivot) => {
-        if (pivot) camera.hidePlaceholderGun();
-      });
-    }
+    this.view.reset();
   }
 
   /** Starts loading every weapon file, one promise per file (ADR-0057). */
@@ -67,7 +72,7 @@ export class CharacterKit {
     // A baton or blade in hand swings and guards instead of aiming (ADR-0019).
     rig.melee = w.active === "melee" && w.melee !== null;
     this.held.set(id, w[w.active]);
-    if (id === this.deps.cameraTarget()) this.deps.camera.setHeldWeapon(w[w.active]);
+    if (id === this.deps.cameraTarget()) this.holdInView(id);
     this.loadouts.set(rig, appearance, name);
   }
 }

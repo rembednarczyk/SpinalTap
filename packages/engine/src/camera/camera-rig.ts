@@ -4,24 +4,18 @@ import { TPP_HEIGHT_OFFSET, TPP_SHOULDER_OFFSET, eyeHeightAt } from "@seki/sim";
 import { applyOutline } from "../npr/outline";
 import type { ToonMaterials } from "../npr/toon-material";
 import { BodyFade, bodyFadeTarget } from "./body-fade";
+import { type ViewmodelPose, viewmodelPose } from "./viewmodel-poses";
 
 /** Over-the-shoulder distance behind the pivot (ADR-0049: 2.7 m before). */
 const TPP_DISTANCE = 2.2;
 const WALL_MARGIN = 0.25;
 const BLEND_SPEED = 6;
-const VIEWMODEL = { x: 0.2, y: -0.22, z: 0.62 } as const;
 /** Horizontal field of view from the hip by default (ADR-0049); the settings change it. */
 export const DEFAULT_HORIZONTAL_FOV = degToRad(80);
 /** Vertical field of view from the hip at 16:9 (the HUD calibrates the crosshair against the same numbers). */
 export const BASE_FOV = verticalFov(DEFAULT_HORIZONTAL_FOV, FOV_REFERENCE_ASPECT);
 /** Sprint widens the view by this share; eased in and out. */
 const SPRINT_WIDEN = 0.1;
-/**
- * Viewmodel aimed down sights: centred and pulled in (ADR-0019), with the top of the sights a
- * little under the eye line (G-275): on the line, the pistol model rose over the crosshair and hid
- * a target a metre ahead. Its muzzle stays more than 3 degrees below the centre of the view.
- */
-const VIEWMODEL_ADS = { x: 0, y: -0.118, z: 0.4 } as const;
 /** How much closer the TPP camera comes over the shoulder at full aim. */
 const TPP_ADS_PULL = 0.45;
 /** FPP melee guard: the weapon across the view, a little left of centre. */
@@ -119,7 +113,10 @@ export class CameraRig {
   private readonly meleeHolder: TransformNode;
   private meleeLook: WeaponLook | null = null;
   private meleeMesh: AbstractMesh | null = null;
+  /** Hip and aimed positions of the gun in hand (G-282). */
+  private pose: ViewmodelPose = viewmodelPose(null);
   private readonly materials: ToonMaterials;
+  private readonly placeholderGun: AbstractMesh;
   private reference: { position: Vector3; target: Vector3 } | null = null;
   private occluder: CameraOccluder | null = null;
   onBodyVisibility: (visible: boolean) => void = () => {};
@@ -182,10 +179,8 @@ export class CameraRig {
       m.isPickable = false;
       applyOutline(m, 0.004);
     }
-    this.viewmodel.position.set(VIEWMODEL.x, VIEWMODEL.y, VIEWMODEL.z);
+    this.viewmodel.position.set(this.pose.hip.x, this.pose.hip.y, this.pose.hip.z);
   }
-
-  private placeholderGun: AbstractMesh | null = null;
 
   /** Node a weapon model is mounted under in the FPP viewmodel. */
   get weaponMount(): TransformNode {
@@ -209,6 +204,7 @@ export class CameraRig {
   setHeldWeapon(look: WeaponLook | null): void {
     const melee = look === "baton" || look === "blade";
     this.melee = melee;
+    this.pose = viewmodelPose(look);
     this.gunHolder.setEnabled(!melee);
     this.meleeHolder.setEnabled(melee);
     if (!melee || look === this.meleeLook) return;
@@ -231,10 +227,9 @@ export class CameraRig {
     this.swing = { strike, windup, recovery, elapsed: 0 };
   }
 
-  /** Drops the box pistol once a weapon model is mounted. */
-  hidePlaceholderGun(): void {
-    this.placeholderGun?.dispose();
-    this.placeholderGun = null;
+  /** The box pistol, shown while the weapon in hand has no model mounted (G-282). */
+  setPlaceholderGun(visible: boolean): void {
+    this.placeholderGun.setEnabled(visible);
   }
 
   /** What else stops the TPP camera besides the scene's blockers (null: the blockers alone). */
@@ -260,7 +255,8 @@ export class CameraRig {
   muzzlePosition(): Vector3 | null {
     if (this.blend > 0.5 || this.reference) return null;
     this.viewmodel.computeWorldMatrix(true);
-    return Vector3.TransformCoordinates(new Vector3(0, 0.04, 0.17), this.viewmodel.getWorldMatrix());
+    const m = this.pose.muzzle;
+    return Vector3.TransformCoordinates(new Vector3(m.x, m.y, m.z), this.viewmodel.getWorldMatrix());
   }
 
   kick(): void {
@@ -377,10 +373,11 @@ export class CameraRig {
     const ads = this.melee ? 0 : smooth(aim);
     const guard = this.updateGuard(target.guard ?? 0, dt);
     const sw = this.updateSwing(dt);
+    const { hip, ads: aimed } = this.pose;
     const base = {
-      x: VIEWMODEL.x + (VIEWMODEL_ADS.x - VIEWMODEL.x) * ads + (VIEWMODEL_GUARD.x - VIEWMODEL.x) * guard,
-      y: VIEWMODEL.y + (VIEWMODEL_ADS.y - VIEWMODEL.y) * ads + (VIEWMODEL_GUARD.y - VIEWMODEL.y) * guard,
-      z: VIEWMODEL.z + (VIEWMODEL_ADS.z - VIEWMODEL.z) * ads + (VIEWMODEL_GUARD.z - VIEWMODEL.z) * guard,
+      x: hip.x + (aimed.x - hip.x) * ads + (VIEWMODEL_GUARD.x - hip.x) * guard,
+      y: hip.y + (aimed.y - hip.y) * ads + (VIEWMODEL_GUARD.y - hip.y) * guard,
+      z: hip.z + (aimed.z - hip.z) * ads + (VIEWMODEL_GUARD.z - hip.z) * guard,
     };
     // Weapon sways with the walk, sinks and tips down when put away.
     this.viewmodel.position.x = base.x + Math.sin(t) * 0.012 * bob + sw.x;
