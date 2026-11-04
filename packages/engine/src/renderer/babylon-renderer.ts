@@ -18,6 +18,7 @@ import { CrowdViews } from "./crowd-views";
 import { DroneViews } from "./drones/drone-views";
 import { cityDroneWorld } from "./drones/drone-world";
 import { CapsuleRoomView } from "./rooms/capsule-room-view";
+import { AlchemiaView } from "./alchemia/alchemia-view";
 import { WorldDressing } from "./dressing";
 import { FarCity } from "./far-city";
 import { MapCitySlot } from "./map-city-slot";
@@ -113,6 +114,8 @@ export class BabylonRenderer implements RenderPort {
   private readonly drones: DroneViews;
   /** The capsule room on Jezuicka, one mesh near it (ADR-0063 stage 3). */
   private readonly capsule: CapsuleRoomView;
+  /** Alchemia on Plac Ofiar Getta, one mesh near it (ADR-0063 stage 4). */
+  private readonly alchemia: AlchemiaView;
   private readonly fx: ScreenFx;
   private readonly cityKit: CityKitLoader;
   /** The metro car between districts (ADR-0036). */
@@ -215,6 +218,7 @@ export class BabylonRenderer implements RenderPort {
       city: () => this.map.current !== null,
       eye: () => eye,
     });
+    this.alchemia = new AlchemiaView({ scene, kit: () => this.cityKit.kit, props: () => this.cityKit.props, city: () => this.map.current !== null, eye: () => eye });
     warmUpMaterials(scene, this.materials, this.signage);
     this.fx = new ScreenFx({
       stage,
@@ -343,6 +347,7 @@ export class BabylonRenderer implements RenderPort {
     this.vehicles.update();
     this.drones.update(dt, this.stage.options.reference);
     this.capsule.update();
+    this.alchemia.update();
     const target = this.cameraTargetTransform;
     this.rig.update(target, dt);
     this.metro.afterCamera();

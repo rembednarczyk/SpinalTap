@@ -44,6 +44,7 @@ describe("credits (ADR-0063)", () => {
     expect([...new Set(found.map((x) => x.id))].sort()).toEqual([
       "sketchfab-avika-street-food-cart",
       "sketchfab-cctv-camera",
+      "sketchfab-cyberpunk-building",
       "sketchfab-cyberpunk-car",
       "sketchfab-cyberpunk-doors-and-windows",
       "sketchfab-cyberpunk-drone",
@@ -51,6 +52,7 @@ describe("credits (ADR-0063)", () => {
       "sketchfab-dirty-car",
       "sketchfab-electric-pole",
       "sketchfab-futuristic-compact-room",
+      "sketchfab-hw4-cyberpunk-building",
       "sketchfab-megacity-cluster",
       "sketchfab-paper-lantern-chochin",
       "sketchfab-psx-garage-doors",
