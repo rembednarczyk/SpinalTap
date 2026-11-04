@@ -112,6 +112,8 @@ uniform vec3 shadowParams;
 uniform vec4 flashLight;
 /** City kit: brightness of self-lit swatches (1 at night, dimmer by day). */
 uniform float selfLit;
+/** Halftone fade of this mesh (body-dither.ts): 0 solid .. 1 gone. */
+uniform float dither;
 #ifdef ENV_REFLECT
 /** Static wet-asphalt probe (ADR-0036): neon, signs, far city and sky, seen from under the street. */
 uniform samplerCube envSampler;
@@ -239,6 +241,8 @@ float moonShadow() {
 }
 
 void main(void) {
+  // Dots of a 4 px grid grow with the fade and are left out (G-275): screen-door, no blending.
+  if (dither > 0.0 && length(fract(gl_FragCoord.xy * 0.25) - 0.5) < dither * 0.71) discard;
   vec3 n = normalize(vNormal);
   if (!gl_FrontFacing) n = -n;
   vec3 v = normalize(cameraPosition - vWorldPos);

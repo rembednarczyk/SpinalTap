@@ -54,7 +54,7 @@ export const newBlock = (key: string): PropBlock => ({
 });
 
 /** A block's pieces by entity id, so a block bakes the same whatever order its entities came in. */
-export const sortedPieces = (block: PropBlock): WorldProp[] =>
+export const sortedPieces = (block: Pick<PropBlock, "pieces">): WorldProp[] =>
   [...block.pieces.keys()].sort((a, b) => a - b).flatMap((id) => block.pieces.get(id)!);
 
 const blockMesh = (deps: PropBakeDeps, name: string, sink: MeshSink): Mesh | null => {
@@ -76,7 +76,7 @@ export const buildFar = (deps: PropBakeDeps, block: PropBlock): void => {
 };
 
 /** The robot dogs of a block (ADR-0063): by its stalls and by the gateways in it; none on phones. */
-const bakeBlockDogs = (deps: PropBakeDeps, sink: MeshSink, block: PropBlock, pieces: readonly WorldProp[]): void => {
+const bakeBlockDogs = (deps: Pick<PropBakeDeps, "poles">, sink: MeshSink, block: Pick<PropBlock, "bounds">, pieces: readonly WorldProp[]): void => {
   const dog = deps.poles.dog;
   const cityProps = deps.poles.props;
   if (!dog || !cityProps) return;
@@ -91,9 +91,11 @@ const bakeBlockDogs = (deps: PropBakeDeps, sink: MeshSink, block: PropBlock, pie
   bakeDogs(sink, cityProps, dog, spots);
 };
 
-/** Bakes a block's detailed pieces into one mesh on the street props' material (ADR-0050). */
-export const bakeNear = (deps: PropBakeDeps, block: PropBlock): void => {
-  block.baked = true;
+/**
+ * A block's detailed pieces as one sink (ADR-0050), as `bakeNear` draws them: pure, so the glitch
+ * scan flies the low patrols (ADR-0058 stage 7b) through the furniture the city draws.
+ */
+export const nearSink = (deps: Pick<PropBakeDeps, "quality" | "poles">, block: Pick<PropBlock, "pieces" | "bounds">): MeshSink => {
   const sink = new MeshSink();
   const { poles } = deps;
   const pole = poles.pole;
@@ -122,5 +124,11 @@ export const bakeNear = (deps: PropBakeDeps, block: PropBlock): void => {
   }
   if (pole && poles.props) bakePoles(sink, poles.props, pole, pieces.filter((p) => poles.isPole(p)));
   bakeBlockDogs(deps, sink, block, pieces);
-  block.near = blockMesh(deps, `props-${block.key}`, sink);
+  return sink;
+};
+
+/** Bakes a block's detailed pieces into one mesh on the street props' material (ADR-0050). */
+export const bakeNear = (deps: PropBakeDeps, block: PropBlock): void => {
+  block.baked = true;
+  block.near = blockMesh(deps, `props-${block.key}`, nearSink(deps, block));
 };

@@ -70,14 +70,43 @@ const billboard = (sink: MeshSink, s: Span, lite: boolean): void => {
   quadUv(sink, corners, { x: -n.x, y: 0, z: -n.z }, tint(bb.color, 0.5), UV, [s.seed, MAP_SIGN_KIND.beam]);
 };
 
-/** A curtain of neon strips hanging from a line across the street. */
-const curtain = (sink: MeshSink, s: Span, rand: () => number): void => {
+/** The longest strip of a curtain (m): 1.2 m and up to 3.2 m more (`curtain`). */
+export const CURTAIN_DROP = 4.4;
+
+/** Where a curtain hangs: the line's height, its offset along the street and its reach across from the span's start. */
+export interface CurtainLine {
+  readonly y: number;
+  readonly off: number;
+  readonly from: number;
+  readonly to: number;
+}
+
+/** The line of a curtain from the span's random draws, or null when it would hang too low. */
+const curtainLine = (s: Span, rand: () => number): CurtainLine | null => {
   const y = Math.min(s.top - 1.5, s.base + 6 + rand() * 6);
-  if (y < s.base + 5) return;
-  const across = { x: (s.b.x - s.a.x) / s.width, z: (s.b.z - s.a.z) / s.width };
+  if (y < s.base + 5) return null;
   const off = (rand() - 0.5) * 6;
   const from = s.width * (0.1 + rand() * 0.3);
   const to = s.width * (0.6 + rand() * 0.3);
+  return { y, off, from, to };
+};
+
+/**
+ * The curtain a span hangs (`planCanyonSigns`'s own draws), or null: none on a phone or by chance.
+ * Its strips hang up to `CURTAIN_DROP` under its line. For the low patrols' air (ADR-0058 stage 7b).
+ */
+export const spanCurtain = (s: Span, lite: boolean): CurtainLine | null => {
+  if (lite) return null;
+  const rand = prng(Math.floor(s.seed * 0xfffffff) ^ 0x5c1);
+  return rand() < s.clutter * 0.5 ? curtainLine(s, rand) : null;
+};
+
+/** A curtain of neon strips hanging from a line across the street. */
+const curtain = (sink: MeshSink, s: Span, rand: () => number): void => {
+  const line = curtainLine(s, rand);
+  if (!line) return;
+  const { y, off, from, to } = line;
+  const across = { x: (s.b.x - s.a.x) / s.width, z: (s.b.z - s.a.z) / s.width };
   const colors = [NEON[Math.floor(rand() * NEON.length)] ?? "#ff2e88", NEON[Math.floor(rand() * NEON.length)] ?? "#00e5ff"];
   for (let t = from, k = 0; t < to; t += 0.45, k++) {
     const len = 1.2 + rand() * 3.2;

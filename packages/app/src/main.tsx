@@ -66,8 +66,8 @@ const stage = new Stage(canvas, { reference, quality: renderQuality });
 const cityOn = params.get("city") !== "off";
 const renderer = new BabylonRenderer(stage, {
   cityKit: cityOn ? new URL("city/city-kit.glb", document.baseURI).href : null,
-  // Facade props (ADR-0058), the CC-BY street furniture (ADR-0063), the vehicles (ADR-0058 stage 4), the drones (stage 7), the still crowd (stage 8) and the capsule room (ADR-0063 stage 3), after the kit; ?city=off leaves them out too.
-  cityProps: cityOn ? ["city/city-props.glb", "city/street-props.glb", "city/market-props.glb", "city/door-props.glb", "city/vehicle-props.glb", "city/drone-props.glb", "city/crowd-props.glb", "city/room-props.glb"].map((f) => new URL(f, document.baseURI).href) : null,
+  // Facade props (ADR-0058), the CC-BY street furniture (ADR-0063), the vehicles (ADR-0058 stage 4), the drones (stage 7), the still crowd (stage 8), the capsule room (ADR-0063 stage 3) and Alchemia (stage 4), after the kit; ?city=off leaves them out too.
+  cityProps: cityOn ? ["city/city-props.glb", "city/street-props.glb", "city/market-props.glb", "city/door-props.glb", "city/vehicle-props.glb", "city/drone-props.glb", "city/crowd-props.glb", "city/room-props.glb", "city/alchemia-props.glb"].map((f) => new URL(f, document.baseURI).href) : null,
   farCity: false,
 });
 // The character menu's 3D preview: a second scene on the same engine and canvas (ADR-0015).
@@ -134,6 +134,9 @@ const session = new GameSession({
 // own ray through its solids, handed to the camera through the app.
 renderer.rig.setOccluder((origin, dir, maxDist) => rayGeometry(session.sim.world, origin, dir, maxDist, true));
 
+// The shoulder key swaps the TPP side in play; the settings remember it like the menu's choice (G-275).
+input.shoulder.onChange = (left) => session.intents.changeSettings({ shoulder: left ? "left" : "right" });
+
 /** Controls from the settings: key bindings, hold or toggle buttons and the field of view. */
 let controlsFor: unknown = null;
 const applyControls = (s: typeof settings) => {
@@ -141,6 +144,7 @@ const applyControls = (s: typeof settings) => {
   controlsFor = s;
   input.keymap = keymapFor(s.bindings);
   input.setButtonModes({ aim: s.aimMode, crouch: s.crouchMode, sprint: s.sprintMode });
+  input.shoulder.left = s.shoulder === "left";
   renderer.rig.horizontalFov = degToRad(s.horizontalFov);
   renderer.rig.cameraMotion = s.cameraMotion;
   applyEffects(renderer, s);
@@ -162,7 +166,10 @@ const loop = new FixedStepLoop(browserClock, {
     // Zoomed in, the look slows with the field of view (ADR-0019); the ADS setting on top.
     const zoom = renderer.rig.lookScale;
     const ads = zoom < 0.999 ? s.adsSensitivity : 1;
-    session.step(scaleLook(input.poll(), (touchDevice ? s.touchSensitivity : s.mouseSensitivity) * zoom * ads, s.invertY));
+    const frame = input.poll();
+    // The camera takes the shoulder of the frame the shots start from, in the same step (G-275).
+    renderer.rig.leftShoulder = frame.leftShoulder === true;
+    session.step(scaleLook(frame, (touchDevice ? s.touchSensitivity : s.mouseSensitivity) * zoom * ads, s.invertY));
   },
   render: (alpha) => {
     if (session.preparing !== loadingPainted) {

@@ -1,7 +1,7 @@
 import { type BlockStyle, type TerrainGrid, type Vec3, terrainHeightAt } from "@seki/core";
 import type { StaticProp } from "../builders";
 import { flightGrid, shapeGrid } from "./shape";
-import { bridgeDeckAt } from "./decks";
+import { bridgeDeckAt, deckGroundAt } from "./decks";
 import { FLIGHT_RAMPS, MAP_CHUNKS, PADS, RAMPS } from "./sites";
 import { surfaceLiftAt } from "./roads";
 
@@ -19,15 +19,16 @@ export const SHAPED_TERRAIN: ReadonlyMap<string, TerrainGrid> = new Map(
 
 const inside = (b: { minX: number; maxX: number; minZ: number; maxZ: number }, x: number, z: number): boolean => x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ;
 
-/** Ground height of the game's terrain at (x, z): the first chunk holding the point, or a bridge's deck over it, as the simulation's ground does. */
+/**
+ * Ground height of the game's terrain at (x, z): the first chunk holding the point, or a bridge's
+ * deck over it or a flight of steps hung off one (G-255), as the simulation's ground does.
+ */
 export const groundY = (x: number, z: number): number => {
   for (const c of MAP_CHUNKS) {
     if (!inside(c.bounds, x, z)) continue;
     const g = SHAPED_TERRAIN.get(c.id);
     if (!g) return 0;
-    const h = terrainHeightAt(g, x, z);
-    const deck = bridgeDeckAt(x, z);
-    return deck !== null && deck > h ? deck : h;
+    return deckGroundAt(x, z, terrainHeightAt(g, x, z));
   }
   return 0;
 };

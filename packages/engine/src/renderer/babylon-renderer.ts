@@ -3,6 +3,7 @@ import type { ActivityId, AppearanceDescriptor, CameraMode, DespawnReason, Effec
 import type { ChunkDef } from "@seki/sim";
 import { WORLD_CHUNKS } from "@seki/sim";
 import { CameraRig } from "../camera/camera-rig";
+import { fadeFigure } from "../npr/body-dither";
 import type { Grading } from "../npr/grading";
 import { LineArt } from "../npr/line-art";
 import { SpeedLines } from "../npr/speed-lines";
@@ -17,7 +18,9 @@ import { CityKitLoader } from "./city-kit-loader";
 import { CrowdViews } from "./crowd-views";
 import { DroneViews } from "./drones/drone-views";
 import { cityDroneWorld } from "./drones/drone-world";
+import { cityPatrolWorld } from "./drones/patrol-world";
 import { CapsuleRoomView } from "./rooms/capsule-room-view";
+import { AlchemiaView } from "./alchemia/alchemia-view";
 import { WorldDressing } from "./dressing";
 import { FarCity } from "./far-city";
 import { MapCitySlot } from "./map-city-slot";
@@ -113,6 +116,8 @@ export class BabylonRenderer implements RenderPort {
   private readonly drones: DroneViews;
   /** The capsule room on Jezuicka, one mesh near it (ADR-0063 stage 3). */
   private readonly capsule: CapsuleRoomView;
+  /** Alchemia on Plac Ofiar Getta, one mesh near it (ADR-0063 stage 4). */
+  private readonly alchemia: AlchemiaView;
   private readonly fx: ScreenFx;
   private readonly cityKit: CityKitLoader;
   /** The metro car between districts (ADR-0036). */
@@ -155,6 +160,11 @@ export class BabylonRenderer implements RenderPort {
     this.rig = new CameraRig(scene, this.materials, (m) => this.props.isBlocker(m));
     this.rig.onBodyVisibility = (visible) => {
       if (this.cameraTarget !== null) this.characters.setBodyVisible(this.cameraTarget, visible);
+    };
+    // The player's figure as a halftone while it is in the way of the TPP view (G-275).
+    this.rig.bodyFade.onChange = (amount) => {
+      const figure = this.cameraTarget === null ? null : this.characters.rigOf(this.cameraTarget);
+      if (figure) fadeFigure(figure.root, amount);
     };
     this.activities = new CharacterActivities(scene, this.materials, () => this.rig.camera.position);
     this.characters = new CharacterViews({
@@ -204,6 +214,8 @@ export class BabylonRenderer implements RenderPort {
       props: () => this.cityKit.props,
       // Lublin's lanes once the map city draws (no drones over the old test streets).
       world: () => (this.map.current ? cityDroneWorld() : null),
+      // And the low patrols' over the pedestrian streets (ADR-0058 stage 7b).
+      patrolWorld: () => (this.map.current ? cityPatrolWorld() : null),
       eye: () => eye,
       quality: stage.options.quality ?? "high",
     });
@@ -215,6 +227,7 @@ export class BabylonRenderer implements RenderPort {
       city: () => this.map.current !== null,
       eye: () => eye,
     });
+    this.alchemia = new AlchemiaView({ scene, kit: () => this.cityKit.kit, props: () => this.cityKit.props, city: () => this.map.current !== null, eye: () => eye });
     warmUpMaterials(scene, this.materials, this.signage);
     this.fx = new ScreenFx({
       stage,
@@ -343,6 +356,7 @@ export class BabylonRenderer implements RenderPort {
     this.vehicles.update();
     this.drones.update(dt, this.stage.options.reference);
     this.capsule.update();
+    this.alchemia.update();
     const target = this.cameraTargetTransform;
     this.rig.update(target, dt);
     this.metro.afterCamera();

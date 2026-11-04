@@ -104,6 +104,7 @@ export const pl = {
   "control.nextWeapon": "Następna broń",
   "control.prevWeapon": "Poprzednia broń",
   "control.toggleCamera": "Widok FPP / TPP",
+  "control.swapShoulder": "Zmiana ramienia (TPP)",
   // Settings.
   "settings.heading": "Ustawienia",
   "settings.tab.general": "Ogólne",
@@ -142,6 +143,9 @@ export const pl = {
   "settings.sprintMode": "Sprint",
   "settings.mode.hold": "Przytrzymaj",
   "settings.mode.toggle": "Przełącz",
+  "settings.shoulder": "Ramię kamery TPP",
+  "settings.shoulder.right": "Prawe",
+  "settings.shoulder.left": "Lewe",
   "settings.hudScale": "Skala HUD",
   "settings.subtitleScale": "Rozmiar napisów",
   "settings.subtitleBackground": "Pełne tło napisów",

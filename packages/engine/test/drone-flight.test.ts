@@ -168,7 +168,7 @@ describe("drone views (ADR-0058 stage 7)", () => {
     box.lanes = [];
     box.world = world();
     views.update(0.016, false);
-    expect(views.stats).toEqual({ lanes: 0, drones: 0, near: 0, far: 0, meshes: 0 });
+    expect(views.stats).toEqual({ lanes: 0, drones: 0, near: 0, far: 0, meshes: 0, patrolLanes: 0, patrols: 0, patrolsDrawn: 0 });
     expect(mesh()!.isEnabled(false)).toBe(false);
     box.lanes = [LANE];
     box.world = world();

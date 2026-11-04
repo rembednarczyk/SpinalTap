@@ -288,6 +288,9 @@ describe("settings", () => {
     expect(i.changeSettings).toHaveBeenCalledWith({ aimMode: "toggle" });
     fireEvent.click(within(screen.getByRole("radiogroup", { name: "Crouch" })).getByRole("radio", { name: "Hold" }));
     expect(i.changeSettings).toHaveBeenCalledWith({ crouchMode: "hold" });
+    // G-275: the TPP camera over the left shoulder.
+    fireEvent.click(within(screen.getByRole("radiogroup", { name: "TPP camera shoulder" })).getByRole("radio", { name: "Left" }));
+    expect(i.changeSettings).toHaveBeenCalledWith({ shoulder: "left" });
     fireEvent.click(within(screen.getByRole("radiogroup", { name: "Invert Y axis" })).getByRole("radio", { name: "On" }));
     expect(i.changeSettings).toHaveBeenCalledWith({ invertY: true });
     // Field of view (ADR-0049): horizontal degrees, 70..100, through the camera intent.

@@ -18,11 +18,11 @@ export const DRONE_STREETS: ReadonlySet<string> = new Set(["primary", "secondary
 /** The street's surfaces a drone may fly over (ADR-0042): carriageway, pavements, squares; not lawns, water or rails. */
 export const DRONE_SURFACES: ReadonlySet<GroundSurface> = new Set(["road", "sidewalk", "square", "cobble", "footway", "steps", "crossing"]);
 
-/** The axes of the map's streets (OSM, clipped per chunk; `joinAxes` joins them again). */
-export const streetAxes = (chunks: readonly LublinChunkData[]): P2[][] =>
+/** The axes of the map's streets of the kinds given (OSM, clipped per chunk; `joinAxes` joins them again). */
+export const streetAxes = (chunks: readonly LublinChunkData[], kinds: ReadonlySet<string> = DRONE_STREETS): P2[][] =>
   chunks.flatMap((c) =>
     c.streets.flatMap((st) => {
-      if (!DRONE_STREETS.has(st.kind)) return [];
+      if (!kinds.has(st.kind)) return [];
       const pts: P2[] = [];
       for (let i = 0; i + 1 < st.line.length; i += 2) pts.push({ x: st.line[i] as number, z: st.line[i + 1] as number });
       return pts.length >= 2 ? [pts] : [];

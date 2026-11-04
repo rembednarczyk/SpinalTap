@@ -112,13 +112,14 @@ export const chestOf = (e: Entity): Vec3 => {
 export const TPP_SHOULDER_OFFSET = 0.55;
 export const TPP_HEIGHT_OFFSET = 0;
 
-/** Where the player's shots start: the eye in FPP, the camera shoulder line in TPP. */
-export const aimOrigin = (e: Entity, mode: CameraMode): Vec3 => {
+/** Where the player's shots start: the eye in FPP, the camera shoulder line in TPP (the left one with `left`). */
+export const aimOrigin = (e: Entity, mode: CameraMode, left = false): Vec3 => {
   const eye = eyeOf(e);
   if (mode === "FPP") return eye;
+  const side = left ? -TPP_SHOULDER_OFFSET : TPP_SHOULDER_OFFSET;
   return {
-    x: eye.x + Math.cos(e.yaw) * TPP_SHOULDER_OFFSET,
+    x: eye.x + Math.cos(e.yaw) * side,
     y: eye.y + TPP_HEIGHT_OFFSET,
-    z: eye.z - Math.sin(e.yaw) * TPP_SHOULDER_OFFSET,
+    z: eye.z - Math.sin(e.yaw) * side,
   };
 };
