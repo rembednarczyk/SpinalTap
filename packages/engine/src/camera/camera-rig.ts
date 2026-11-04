@@ -17,8 +17,12 @@ export const DEFAULT_HORIZONTAL_FOV = degToRad(80);
 export const BASE_FOV = verticalFov(DEFAULT_HORIZONTAL_FOV, FOV_REFERENCE_ASPECT);
 /** Sprint widens the view by this share; eased in and out. */
 const SPRINT_WIDEN = 0.1;
-/** Viewmodel aimed down sights: centred, the sights on the eye line, pulled in (ADR-0019). */
-const VIEWMODEL_ADS = { x: 0, y: -0.078, z: 0.4 } as const;
+/**
+ * Viewmodel aimed down sights: centred and pulled in (ADR-0019), with the top of the sights a
+ * little under the eye line (G-275): on the line, the pistol model rose over the crosshair and hid
+ * a target a metre ahead. Its muzzle stays more than 3 degrees below the centre of the view.
+ */
+const VIEWMODEL_ADS = { x: 0, y: -0.118, z: 0.4 } as const;
 /** How much closer the TPP camera comes over the shoulder at full aim. */
 const TPP_ADS_PULL = 0.45;
 /** FPP melee guard: the weapon across the view, a little left of centre. */
@@ -376,7 +380,8 @@ export class CameraRig {
     this.viewmodel.position.x = base.x + Math.sin(t) * 0.012 * bob + sw.x;
     this.viewmodel.position.y = base.y - Math.abs(Math.cos(t)) * 0.01 * bob - away * 0.32 + sw.y;
     this.viewmodel.position.z = base.z - this.recoil * 0.035 * (1 - 0.5 * ads) + sw.z;
-    this.viewmodel.rotation.x = -this.recoil * 0.25 * (1 - 0.5 * ads) + away * 0.9 + sw.rx;
+    // Aimed in, the kick goes straight back: tipping up, the muzzle would rise over the crosshair.
+    this.viewmodel.rotation.x = -this.recoil * 0.25 * (1 - ads) + away * 0.9 + sw.rx;
     this.viewmodel.rotation.y = sw.ry;
     // The guard turns the weapon flat across the view.
     this.viewmodel.rotation.z = Math.sin(t) * 0.02 * bob + reloading * 0.7 + guard * 1.25 + sw.rz;
