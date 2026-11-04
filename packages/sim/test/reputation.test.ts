@@ -177,6 +177,23 @@ describe("civilians and the street's opinion", () => {
     expect(ume.velocity).toEqual({ x: 0, y: 0, z: 0 });
   });
 
+  it("cue one escape however long they hover at the flee radius, a new one after a real break (G-281)", () => {
+    const sim = simWith({ civilians: -30 });
+    const reactions = collect<{ reaction: string }>(sim, "NpcReacted");
+    const home = byKey(sim, "ume")!.position;
+    teleportPlayer(sim, { x: home.x + 2, y: home.y, z: home.z });
+    // Run off, then step back towards her spot and off again at the edge of the radius.
+    run(sim, 1200);
+    expect(umeDistance(sim)).toBeGreaterThan(FLEE_RADIUS - 0.5);
+    expect(umeDistance(sim)).toBeLessThan(FLEE_RADIUS + 0.5);
+    expect(reactions).toHaveLength(1);
+    teleportPlayer(sim, ground(290, -88));
+    run(sim, 900);
+    teleportPlayer(sim, { x: home.x + 2, y: home.y, z: home.z });
+    run(sim, 60);
+    expect(reactions).toHaveLength(2);
+  });
+
   it("only flee within the flee radius", () => {
     const sim = simWith({ civilians: -30 });
     const home = byKey(sim, "ume")!.position;

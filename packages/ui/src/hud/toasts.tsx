@@ -10,7 +10,10 @@ export const Toasts = () => {
         <div key={t.id} className={`toast toast--${t.kind}`}>
           <span className="toast__icon">{ICON[t.kind]}</span>
           <div>
-            <div className="toast__title">{t.title}</div>
+            <div className="toast__title">
+              {t.title}
+              {(t.count ?? 1) > 1 && <span className="toast__count"> ×{t.count}</span>}
+            </div>
             {t.text && <div className="toast__text">{t.text}</div>}
           </div>
         </div>

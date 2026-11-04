@@ -5,6 +5,8 @@ export const TOAST_MS = 4500;
 
 export interface PresenterHooks {
   playerId(): EntityId | null;
+  /** Seconds of play so far (the sim's steps): reaction toasts keep a quiet gap in it; none without. */
+  playSeconds?(): number;
   onDialogue(dialogueId: string): void;
   /** A shop counter opened; `dialogueId` is its keeper's ink knot. */
   onShop(shopId: ShopId, dialogueId: string): void;
