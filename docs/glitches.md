@@ -793,7 +793,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer)
 
 ### G-255 Garb w biegu schodów w56965515 przy pomoście wiaduktu Zamkowej: uskok 2,9 m i bieg pod prąd
-- Status: w PR #233 (2.11, runda 4 @ 223dedc PRZYJĘTE z uwagami (dług w G-273), kurator w toku; runda 8 czeka na slot (po G-281 i G-279, decyzja użytkownika 4.11); runda 7 @ f3f7060 NIE PRZYJĘTE: `walkable` sprawdza ścianę w całym oknie 80 m i NPC staje na przyczółku wschodnim (756,7; 158,3) → (738,3; 182,8), main 8/8, gałąź 0/8; kierunek: zamknąć w polu uskoki pomostu przy obu przyczółkach, `walkable` jak w defc2a0; raport scratchpad/v-g255r7-raport.md; runda 6 @ 96cfc6a NIE PRZYJĘTE: reguła ściany w `steering.ts` na całe okno psuje pościg z Podwala, reszta (wnęka, dash, chód 126/126) dobra; runda 5 @ defc2a0 NIE PRZYJĘTE: w obrysie wiaduktu renderer rysuje stopnie biegu, a symulacja daje płytę albo teren pod nią (24 z 63 przejść źle), testy omijały ten pas; G-274 naprawione; runda 3 @ d03bb2d: podrzut z podestu; runda 2 @ 0e075bb: NPC w pościgu; runda 1 @ daaca9f: pod górę 4/30; pochyły pomost biegu zamiast rampy terenu; zgłoszone przez kuratora przy #219)
+- Status: w PR #233 (2.11, runda 4 @ 223dedc PRZYJĘTE z uwagami (dług w G-273), kurator w toku; runda 8 @ b80179d w weryfikacji (maska `ledges`: krawędź pomostu bez prześwitu jako ściana dla drogi NPC; 8/8 wariantów, Mełgiewska 29/96 wobec 30/96 na main); runda 7 @ f3f7060 NIE PRZYJĘTE: `walkable` sprawdza ścianę w całym oknie 80 m i NPC staje na przyczółku wschodnim (756,7; 158,3) → (738,3; 182,8), main 8/8, gałąź 0/8; kierunek: zamknąć w polu uskoki pomostu przy obu przyczółkach, `walkable` jak w defc2a0; raport scratchpad/v-g255r7-raport.md; runda 6 @ 96cfc6a NIE PRZYJĘTE: reguła ściany w `steering.ts` na całe okno psuje pościg z Podwala, reszta (wnęka, dash, chód 126/126) dobra; runda 5 @ defc2a0 NIE PRZYJĘTE: w obrysie wiaduktu renderer rysuje stopnie biegu, a symulacja daje płytę albo teren pod nią (24 z 63 przejść źle), testy omijały ten pas; G-274 naprawione; runda 3 @ d03bb2d: podrzut z podestu; runda 2 @ 0e075bb: NPC w pościgu; runda 1 @ daaca9f: pod górę 4/30; pochyły pomost biegu zamiast rampy terenu; zgłoszone przez kuratora przy #219)
 - Ważność: S3 (proponowana: uskok 2,9 m w środku schodów, gracz spada albo AI się zatrzymuje) · Zasięg: 1 droga (3 kawałki pasa w dwóch chunkach), możliwe dalsze z kontroli `steps-riser-tall` · Koszt: mały do średniego
 - Gdzie: T-131; w56965515 bieg węzeł 2 → 3 (734,1; 163,9) → (729,5; 159,9), Podzamcze/Stare Miasto, granica chunków z = 160
 - Dowód: `planSteps` na `groundY` (sonda `topo-g236-flight.txt`, 5757fae): stopnie na pomoście y −13,48 do x ≈ 733,4, potem podstopnica 2,92 m na teren −16,41, dalej stopnie w górę do −15,28 przy węźle 3 (flight ma `incline=down`); kawałek tego biegu w `stare-miasto-1-1` (730,8; 159,6) leży płasko na pomoście −13,51 obok −15,4 za granicą chunka. Stan sprzed #219 identyczny
@@ -978,6 +978,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: przesunięcie ramienia 0,55 m bez przycinania; 8/739 pozycji we wnętrzach startuje strzał za ścianą, kamera widzi przez ścianę (kapsuła z = −134,37 przy ścianie −134,2…−134,5)
 - Poprawka: przycinać ramię do pierwszej przeszkody (`rayGeometry`), wspólnie dla sim (`aimOrigin`) i kamery
 - Pakiet właściciela: packages/sim (world/hitscan) i packages/engine (camera)
+
+### G-292 Pole nawigacji prowadzi NPC wzdłuż stóp krawędzi niskiego pomostu Mełgiewskiej, gdzie ruch staje
+- Status: zgłoszone (4.11, autor G-255 runda 8; także na main)
+- Ważność: S4 · Zasięg: (2457,9; 311,4), stok terenu plus krawędź w zasięgu próbek dają „za stromo”; pościg (738,3; 182,8) → (756,7; 158,3) pod wiaduktem Zamkowej nie dochodzi także na main
+- Pakiet właściciela: packages/sim/src/systems/ai (steering)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
