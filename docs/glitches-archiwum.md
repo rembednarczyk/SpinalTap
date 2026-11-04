@@ -2,6 +2,13 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-275 W TPP przy celowaniu z bliska (zwłaszcza w kucaniu) postać zasłania cel
+- Status: naprawione w #243 (4.11, 93568a1; FPP: ADS 4 cm niżej i bez podrzutu lufy, zasłonięcie 66–85% → 0%; TPP ramię 0,55 m, zmiana ramienia bez rozjazdu; zgłoszone przez użytkownika)
+- Ważność: S3 (zgłoszenie gracza, podstawowa mechanika strzelania) · Zasięg: kamera TPP (`packages/engine/src/camera/camera-rig.ts`: `TPP_DISTANCE` 2,2 m, `TPP_SHOULDER_OFFSET` 0,55 m z `packages/sim/src/world/hitscan.ts`, `TPP_HEIGHT_OFFSET` 0, `TPP_ADS_PULL` 0,45; w kucaniu kamera tylko obniża się z `eyeHeightAt`), cel z przyłożenia i do kilku metrów · Koszt: średni
+- Rozwiązania branżowe do połączenia: (1) przy celowaniu i w kucaniu większe przesunięcie przez ramię i lekko w górę (postać ucieka na bok kadru); (2) zmiana ramienia klawiszem/padem (akcja wejścia, i18n, opcje sterowania); (3) przezroczystość albo wzór kropek (dither, pasuje do NPR) postaci, gdy zasłania celownik lub kamera jest blisko; (4) strzał z promienia kamery z poprawką lufy, żeby trafienie było tam, gdzie celownik, przy dużych przesunięciach (hitscan w `sim` już liczy punkt startu z kucaniem: sprawdzić zgodność, bo stałe przesunięcia są w `sim`)
+- Pakiet właściciela: packages/engine (camera, npr), packages/sim (hitscan: stałe przesunięć, jeśli się zmieniają; złote hashe), packages/engine/src/input (zmiana ramienia), packages/ui (opcje)
+- Test przyjęcia: test kamery bez renderera: w kucaniu z celem 1–3 m przed postacią celownik nie leży w rzucie sylwetki postaci (albo postać jest w tym czasie wygaszona); test trafienia: punkt trafienia = punkt pod celownikiem przy obu ramionach; zrzuty przed/po (stanie, kucanie, cel z bliska, oba ramiona) dla użytkownika; budżety bez wzrostu
+
 ### G-280 Dash uruchamia ochronę Tessen (security) w siedzibie Tessen
 - Status: naprawione w #249 (4.11, bff2d26; zryw w przebraniu z wagą 0,08 przez odnowienie, pojedynczy nie demaskuje, seria 5–8,5 s wobec sprintu 0,5–1,6 s; decyzja użytkownika, notka w ADR-0033)
 - Ważność: S3 · Zasięg: użycie umiejętności Dash na terenie Tessen; prawdopodobnie ruch umiejętności liczony jako wtargnięcie albo atak

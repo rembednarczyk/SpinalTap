@@ -897,13 +897,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (content/lublin/decks.ts, world/deck.ts)
 - Test przyjęcia: w obrysie każdego kawałka mostu `groundY` nie leży niżej niż pomost o więcej niż `STEP_HEIGHT` poza przejściami pod mostem (G-062); kontrola skanu `deck-drawn-over-flight` 40 → 0; testy G-255 (`flight-walk`, `flight-chase`) dalej zielone
 
-### G-275 W TPP przy celowaniu z bliska (zwłaszcza w kucaniu) postać zasłania cel
-- Status: w PR #243 (4.11, runda 2 @ 1515af6 w weryfikacji: FPP ADS 4 cm niżej i bez podrzutu lufy, zasłonięcie 66–85% → 0%; TPP z powrotem 0,55 m; zmiana ramienia bez rozjazdu; runda 1 @ f97804c NIE PRZYJĘTE; objaw w FPP według użytkownika)
-- Ważność: S3 (zgłoszenie gracza, podstawowa mechanika strzelania) · Zasięg: kamera TPP (`packages/engine/src/camera/camera-rig.ts`: `TPP_DISTANCE` 2,2 m, `TPP_SHOULDER_OFFSET` 0,55 m z `packages/sim/src/world/hitscan.ts`, `TPP_HEIGHT_OFFSET` 0, `TPP_ADS_PULL` 0,45; w kucaniu kamera tylko obniża się z `eyeHeightAt`), cel z przyłożenia i do kilku metrów · Koszt: średni
-- Rozwiązania branżowe do połączenia: (1) przy celowaniu i w kucaniu większe przesunięcie przez ramię i lekko w górę (postać ucieka na bok kadru); (2) zmiana ramienia klawiszem/padem (akcja wejścia, i18n, opcje sterowania); (3) przezroczystość albo wzór kropek (dither, pasuje do NPR) postaci, gdy zasłania celownik lub kamera jest blisko; (4) strzał z promienia kamery z poprawką lufy, żeby trafienie było tam, gdzie celownik, przy dużych przesunięciach (hitscan w `sim` już liczy punkt startu z kucaniem: sprawdzić zgodność, bo stałe przesunięcia są w `sim`)
-- Pakiet właściciela: packages/engine (camera, npr), packages/sim (hitscan: stałe przesunięć, jeśli się zmieniają; złote hashe), packages/engine/src/input (zmiana ramienia), packages/ui (opcje)
-- Test przyjęcia: test kamery bez renderera: w kucaniu z celem 1–3 m przed postacią celownik nie leży w rzucie sylwetki postaci (albo postać jest w tym czasie wygaszona); test trafienia: punkt trafienia = punkt pod celownikiem przy obu ramionach; zrzuty przed/po (stanie, kucanie, cel z bliska, oba ramiona) dla użytkownika; budżety bez wzrostu
-
 ### G-276 Na WebGL1 wnętrze pokoju kapsułowego prawie czarne
 - Status: zgłoszone (2.11, weryfikator G-263; także na main 8b8ee07, nie regresja)
 - Ważność: S4 · Zasięg: przeglądarki bez WebGL2: brak cyjanowego paska i oświetlonych mebli w pokoju kapsułowym; ostrzeżenia `texImage2D: invalid format` i framebuffer o zerowym rozmiarze (te same na main) · Koszt: do ustalenia
@@ -923,7 +916,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (world/deck)
 
 ### G-282 Karabin Tessen w FPP ma model pistoletu
-- Status: zgłoszone (4.11, użytkownik, testowy przebieg; do odtworzenia)
+- Status: potwierdzone (4.11, weryfikator G-275: FPP zawsze montuje pistolet, `character-kit.ts:52` montuje tylko `"pistol"`, także przy aktywnym SMG albo karabinie; pozycja ADS z #243 dla SMG zasłaniałaby cel w 100%, więc każda broń potrzebuje własnego przesunięcia)
 - Ważność: S3 · Zasięg: widok FPP z karabinem Tessen; możliwe także inne rodzaje broni bez własnego modelu
 - Pakiet właściciela: packages/engine (renderer, broń) i assety
 
