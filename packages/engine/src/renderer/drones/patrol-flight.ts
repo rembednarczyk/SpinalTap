@@ -75,7 +75,7 @@ export const PATROL_LOD: Readonly<Record<RenderQuality, { readonly near: number;
 /** Over this many metres short of its quality's draw distance a patrol shrinks to nothing, so it never pops out of sight. */
 export const PATROL_FADE = 80;
 
-/** How large a patrol is drawn at a distance (1 its size, 0 not drawn); `high` is the reference of `patrol-sight.ts`. */
+/** How large a patrol is drawn at a distance (1 its size, 0 not drawn); `high` draws furthest, the reference of `PATROL_POP`. */
 export const patrolFade = (d: number, quality: RenderQuality = "high"): number => {
   const draw = PATROL_LOD[quality].draw;
   return Math.max(0, Math.min(1, (draw - d) / PATROL_FADE));
@@ -83,8 +83,12 @@ export const patrolFade = (d: number, quality: RenderQuality = "high"): number =
 
 /** Seconds away between two flights: long over the Old Town, short over the deptak and the squares. */
 export const PATROL_PAUSE: Readonly<Record<"quiet" | "busy", readonly [number, number]>> = { quiet: [45, 180], busy: [10, 45] };
-/** Seconds hanging over the street on a flight. */
-export const PATROL_HOVER: readonly [number, number] = [8, 16];
+/**
+ * Seconds hanging over the street on a flight. A minute or more: coming down from `PATROL_POP` and
+ * climbing back there take some 40 s each at `PATROL_SOAR`, four times a cycle, and the patrol is to
+ * spend longer over the street than in its columns (`patrol-flight.test.ts`).
+ */
+export const PATROL_HOVER: readonly [number, number] = [60, 100];
 
 /** A lane of the low patrols: its axis every few metres, the paving's height under each point, and where it may hang. */
 export interface PatrolLane {

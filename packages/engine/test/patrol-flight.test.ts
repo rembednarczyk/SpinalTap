@@ -150,6 +150,31 @@ describe("low patrol flight (ADR-0058 stage 7b)", () => {
     expect(BEAM_FROM).toBeLessThan(PATROL_CEILING);
   });
 
+  it("spends longer over the street than coming down from its ceiling and climbing back, and most of it in sight", () => {
+    // The shortest lane, its roofs 30 m over the paving, its ceilings at `PATROL_POP`.
+    const short: PatrolLane = { ...lane(40), ceilings: [PATROL_POP, PATROL_POP], roofs: [30, 30] };
+    for (let seed = 1; seed < 50; seed++) {
+      const p = patrolOf({ ...short, seed });
+      const cycle = patrolCycle(p);
+      let street = 0;
+      let column = 0;
+      let unseen = 0;
+      const dt = 0.1;
+      for (let t = 0; t < cycle; t += dt) {
+        const q = patrolPose(p, t - p.offset);
+        if (!q) continue;
+        if (q.y - q.ground <= PATROL_ALTITUDE + PATROL_BOB + 1e-6) street += dt;
+        else column += dt;
+        if (q.y - q.ground > PATROL_LOD.high.draw) unseen += dt;
+      }
+      // Four columns of some 40 s each, a minute or more twice over the street.
+      expect(column, `seed ${seed}`).toBeGreaterThan(160);
+      expect(column, `seed ${seed}`).toBeLessThan(180);
+      expect(street, `seed ${seed}`).toBeGreaterThan(column - unseen);
+      expect(column / cycle, `seed ${seed}`).toBeLessThan(0.55);
+    }
+  });
+
   it("puts about ten on high, three of them over the Old Town, half on medium and none on a phone", () => {
     const lanes = [...Array.from({ length: 6 }, (_, i) => lane(40 + i * 8, 0, true, i + 1)), ...Array.from({ length: 9 }, (_, i) => lane(40 + i * 8, 0, false, i + 20))];
     const high = patrolFleet(lanes, "high");
