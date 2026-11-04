@@ -17,5 +17,6 @@ describe("sight profiles of the enemies (ADR-0069)", () => {
   it("leave the sniper its own sight, and anything untyped sees as a Hebi ganger", () => {
     expect("vision" in ENEMY_TYPES.tessen_sniper).toBe(false);
     expect(sightOf(undefined)).toBe(sightOf("hebi_ganger"));
+    expect(sightOf("tessen_sniper")).toEqual(sightOf("hebi_ganger"));
   });
 });
