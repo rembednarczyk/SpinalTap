@@ -70,10 +70,10 @@ const STALL = { width: 8.79, depth: 8.79, height: 8.96 } as const;
  */
 export const ALCHEMIA_HALL_ROOF = 11.51;
 const BODY_X1 = 2.9;
-const BEVEL_Z = 1.0;
+const BEVEL_Z = 2.9;
 const HALL_PARTS: readonly AlchemiaPart[] = [
   { x0: -HALL.width / 2, x1: BODY_X1, z0: -HALL.depth / 2, z1: BEVEL_Z, top: ALCHEMIA_HALL_ROOF },
-  { x0: -HALL.width / 2, x1: BODY_X1, z0: BEVEL_Z, z1: HALL.depth / 2, top: 9.6 },
+  { x0: -HALL.width / 2, x1: BODY_X1, z0: BEVEL_Z, z1: HALL.depth / 2, top: 9.9 },
   { x0: BODY_X1, x1: HALL.width / 2, z0: -HALL.depth / 2, z1: HALL.depth / 2, top: 7.35 },
 ];
 
