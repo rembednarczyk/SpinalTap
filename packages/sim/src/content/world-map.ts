@@ -11,6 +11,7 @@ import { DOKI_NAV } from "./district-doki";
 import { type RoomCut, type SceneryItem, chunkBuildings, chunkScenery } from "./lublin/city";
 import { BUILDING_CUTS, CLINIC_SITE, KOI_SITE, MAP_CHUNKS, PASSAGES } from "./lublin/sites";
 import { CAPSULE_DOOR, CAPSULE_PROPS, CAPSULE_SITE } from "./capsule-room";
+import { ALCHEMIA_CENTRE, ALCHEMIA_PROPS } from "./alchemia";
 import { SHAPED_TERRAIN } from "./lublin/terrain";
 import { BRIDGE_DECKS } from "./lublin/decks";
 import type { GroundDeck } from "../world/deck";
@@ -54,9 +55,10 @@ export interface ChunkDef {
    */
   readonly street?: readonly StaticProp[];
   /**
-   * Solids of rooms cut into the map's buildings after their own data (the capsule room, ADR-0063):
-   * walls, ceiling, floor and furniture, drawn by the engine's room. Their ids come from
-   * `ROOM_ID_BASE`, not the allocator, so no id of the content moves.
+   * Solids the game adds to the map after its own data (ADR-0063): the rooms cut into its buildings
+   * (the capsule room: walls, ceiling, floor and furniture) and the buildings of 2077 on its empty
+   * plots (Alchemia), drawn by the engine. Their ids come from `ROOM_ID_BASE`, not the allocator,
+   * so no id of the content moves.
    */
   readonly rooms?: readonly StaticProp[];
 }
@@ -92,6 +94,11 @@ const ROOM_CUTS: readonly RoomCut[] = [
 
 /** The chunk of the map holding the capsule room's door: its solids stream in with it. */
 export const CAPSULE_CHUNK = mapChunkOf(CAPSULE_DOOR.at.x, CAPSULE_DOOR.at.z);
+/** The chunk of the map holding Alchemia (ADR-0063 stage 4): its solids stream in with it. */
+export const ALCHEMIA_CHUNK = mapChunkOf(ALCHEMIA_CENTRE.x, ALCHEMIA_CENTRE.z);
+
+/** The game's own solids in a chunk of the map, after its data (`ChunkDef.rooms`). */
+const roomsOf = (id: string): readonly StaticProp[] => [...(id === CAPSULE_CHUNK ? CAPSULE_PROPS : []), ...(id === ALCHEMIA_CHUNK ? ALCHEMIA_PROPS : [])];
 
 const MAP_BUILDINGS: ReadonlyMap<string, readonly StaticProp[]> = new Map(MAP_CHUNKS.map((c) => [c.id, chunkBuildings(c, ROOM_CUTS, PASSAGES, BUILDING_CUTS)]));
 
@@ -112,7 +119,7 @@ export const WORLD_CHUNKS: readonly ChunkDef[] = [
       ...(terrain ? { terrain } : {}),
       ...((BRIDGE_DECKS.get(c.id) ?? []).length > 0 ? { decks: BRIDGE_DECKS.get(c.id) } : {}),
       street: [...furnitureProps(WORLD_STREET_PROPS[c.id] ?? []), ...basinRimProps(c), ...PARKED_CARS.filter((p) => p.chunk === c.id).map(parkedProp)],
-      ...(c.id === CAPSULE_CHUNK ? { rooms: CAPSULE_PROPS } : {}),
+      ...(roomsOf(c.id).length > 0 ? { rooms: roomsOf(c.id) } : {}),
     };
   }),
   // Trasa Podziemna (ADR-0048): a chunk of its own over the cellars, last in the table, so it
