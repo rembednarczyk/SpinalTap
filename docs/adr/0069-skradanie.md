@@ -25,7 +25,8 @@ Użytkownik zgłosił po testowym przebiegu 4.11 (G-285), że przeciwnicy wykryw
 
 Przyczyna „natychmiast” nie jest błędem czujności, tylko brakiem mechaniki. Stożek, kucanie i licznik podejrzeń (ADR-0024) ma wyłącznie ochrona Tessen (`ai.cone`, `factory.ts`). Każdy inny wróg z AI gangera (Hebi: ganger, lookout, enforcer, brawler; Kagami) widzi dookoła i alarmuje w kroku, w którym ma linię wzroku (`perceivePlayer`, `ganger-perception.ts`). Z Hebi gracz styka się najczęściej: zlecenia eliminacji, odzyskanie poza Dokami, posterunki. ADR-0065 nazywa odzyskanie zleceniem skradania, a jego strażnicy to `hebi_ganger`. Kod robi to, co zapisano w ADR-0024, więc to luka projektu, a nie glitch do poprawki. Model wykrywania dla wszystkich wrogów to decyzja użytkownika.
 
-## Decyzja (do akceptacji)
+## Decyzja
+Zaakceptowana przez użytkownika 4.11 w całości (wzrok i kucanie dla wszystkich wrogów, słuch kroków, bez cienia i reakcji grupowej).
 - **Jeden model wzroku dla każdego wroga z AI gangera.** Licznik podejrzeń z ADR-0024 przestaje być wyjątkiem ochrony. Każdy typ wroga ma w `ENEMY_TYPES` (`core/src/items/enemies.ts`) profil wzroku, a `ai.cone` znika na rzecz tego profilu:
 
   | Pole | Hebi (ganger, lookout, brawler) | Hebi enforcer | Kagami cleaner | Tessen guard (dziś) |
