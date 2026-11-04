@@ -202,9 +202,11 @@ const ON_LEDGE = 1;
 /**
  * Which cells of the window top the edge of a bridge's deck over the terrain with no room under
  * it (G-062), more than `LEDGE` (`LEDGE` · √2 diagonally) over a neighbour (`ON_LEDGE`), or null
- * when none is: by the abutments of the viaduct of Zamkowa (G-255) as by any bridge's. The field
- * keeps the cells at their foot open, a way along the edge (between two decks of Mełgiewska,
- * G-068), so the walk does not climb onto them. The deck is looked up only at such a rise.
+ * when none is: by the abutments of the viaduct of Zamkowa (G-255). Only in a window with a
+ * flight (`flight`): elsewhere the walk keeps its old ways along and onto the bridges' edges
+ * (Mełgiewska, G-068; the footbridge of podzamcze-2-0), and no raster pays for it. The field keeps
+ * the cells at their foot open, so the walk does not climb onto them. The deck is looked up only
+ * at such a rise.
  */
 const ledgesOf = (base: Float64Array, ground: GroundField, x0: number, z0: number): Uint8Array | null => {
   let out: Uint8Array | null = null;
@@ -264,7 +266,7 @@ const rasterise = (solids: readonly Collider[], floor: number, reach: number, x0
   const open = new Uint8Array(CELLS * CELLS);
   const base = terrainOf(ground, x0, z0, reach);
   const flight = base && floor === 0 ? flightsOf(ground, x0, z0) : null;
-  const ledges = base && floor === 0 ? ledgesOf(base, ground, x0, z0) : null;
+  const ledges = base && flight ? ledgesOf(base, ground, x0, z0) : null;
   if (floor === 0) {
     open.fill(1);
     if (base) closeBanks(open, base, flight, ground, x0, z0, reach);
