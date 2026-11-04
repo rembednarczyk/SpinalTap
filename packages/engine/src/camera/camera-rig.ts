@@ -1,10 +1,9 @@
 import { type AbstractMesh, FreeCamera, MeshBuilder, Ray, type Scene, TransformNode, Vector3 } from "../babylon";
 import { type CameraMode, FOV_REFERENCE_ASPECT, type Transform, type Vec3, type WeaponLook, degToRad, directionFromAngles, verticalFov } from "@seki/core";
-import { eyeHeightAt, tppShoulderOffset } from "@seki/sim";
+import { TPP_HEIGHT_OFFSET, TPP_SHOULDER_OFFSET, eyeHeightAt } from "@seki/sim";
 import { applyOutline } from "../npr/outline";
 import type { ToonMaterials } from "../npr/toon-material";
 import { BodyFade, bodyFadeTarget } from "./body-fade";
-import { ShoulderSwing } from "./shoulder-swing";
 
 /** Over-the-shoulder distance behind the pivot (ADR-0049: 2.7 m before). */
 const TPP_DISTANCE = 2.2;
@@ -126,8 +125,11 @@ export class CameraRig {
   onBodyVisibility: (visible: boolean) => void = () => {};
   /** Halftone fade of the player's figure when it is in the way of the TPP view (G-275). */
   readonly bodyFade = new BodyFade();
-  /** Shoulder the TPP camera looks over (G-275): the settings set its target. */
-  readonly shoulder = new ShoulderSwing();
+  /**
+   * The TPP camera looks over the left shoulder (G-275). It changes at once, with the side in the
+   * input frame the simulation shoots from: an eased swing left the crosshair off the shot line.
+   */
+  leftShoulder = false;
 
   constructor(
     private readonly scene: Scene,
@@ -322,10 +324,10 @@ export class CameraRig {
     // HUD crosshair (which uses the same numbers) stays calibrated.
     const aim = Math.min(1, Math.max(0, target.aim ?? 0));
     const crouch = target.crouch ?? 0;
-    // Same curves as the simulation's aim origin, so the crosshair stays exact while crouching and aimed.
+    // Same curve as the simulation's aim origin, so the crosshair stays exact while crouching.
     const eye = new Vector3(p.x, p.y + eyeHeightAt(crouch), p.z);
-    const off = tppShoulderOffset(aim, crouch, this.shoulder.update(dt, this.blend > 0));
-    const shoulder = eye.add(new Vector3(Math.cos(yaw) * off.side, off.up, -Math.sin(yaw) * off.side).scale(this.blend));
+    const side = this.leftShoulder ? -TPP_SHOULDER_OFFSET : TPP_SHOULDER_OFFSET;
+    const shoulder = eye.add(new Vector3(Math.cos(yaw) * side, TPP_HEIGHT_OFFSET, -Math.sin(yaw) * side).scale(this.blend));
     const back = new Vector3(-dir.x, -dir.y, -dir.z);
     const adsFov = aimedFov(aim, target.aimZoom ?? 1, this.hipFov);
     let distance = TPP_DISTANCE * this.blend * (1 - TPP_ADS_PULL * smooth(aim));

@@ -145,7 +145,6 @@ const applyControls = (s: typeof settings) => {
   input.keymap = keymapFor(s.bindings);
   input.setButtonModes({ aim: s.aimMode, crouch: s.crouchMode, sprint: s.sprintMode });
   input.shoulder.left = s.shoulder === "left";
-  renderer.rig.shoulder.target = s.shoulder === "left" ? -1 : 1;
   renderer.rig.horizontalFov = degToRad(s.horizontalFov);
   renderer.rig.cameraMotion = s.cameraMotion;
   applyEffects(renderer, s);
@@ -167,7 +166,10 @@ const loop = new FixedStepLoop(browserClock, {
     // Zoomed in, the look slows with the field of view (ADR-0019); the ADS setting on top.
     const zoom = renderer.rig.lookScale;
     const ads = zoom < 0.999 ? s.adsSensitivity : 1;
-    session.step(scaleLook(input.poll(), (touchDevice ? s.touchSensitivity : s.mouseSensitivity) * zoom * ads, s.invertY));
+    const frame = input.poll();
+    // The camera takes the shoulder of the frame the shots start from, in the same step (G-275).
+    renderer.rig.leftShoulder = frame.leftShoulder === true;
+    session.step(scaleLook(frame, (touchDevice ? s.touchSensitivity : s.mouseSensitivity) * zoom * ads, s.invertY));
   },
   render: (alpha) => {
     if (session.preparing !== loadingPainted) {

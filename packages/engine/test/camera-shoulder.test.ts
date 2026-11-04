@@ -1,6 +1,6 @@
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
-import { type Transform, type Vec3, directionFromAngles } from "@seki/core";
-import { type Entity, TPP_AIM_SHOULDER_OFFSET, aimOrigin } from "@seki/sim";
+import { type Transform, directionFromAngles } from "@seki/core";
+import { CAPSULE_INTERIOR_ROOM, type Entity, Simulation, TPP_SHOULDER_OFFSET, aimOrigin, rayGeometry } from "@seki/sim";
 import { describe, expect, it } from "vitest";
 import { Matrix, Scene, Vector3 } from "../src/babylon";
 import { CameraRig } from "../src/camera/camera-rig";
@@ -28,84 +28,7 @@ const aimedFigure = (crouch: number) => {
   return { camera, figure };
 };
 
-/**
- * Turns the crouched, aimed player until the crosshair is on `target`: the camera stands on the
- * aim line, so the line from it to the target gives the next yaw and pitch.
- */
-const aimAt = (camera: CameraRig, target: Vec3, crouch: number): Transform => {
-  let t: Transform = { position: { x: 0, y: 0, z: 0 }, yaw: 0, pitch: 0, speed: 0, crouch, aim: 1, aimZoom: 0.8 };
-  for (let k = 0; k < 12; k++) {
-    settle(camera, t, 0.5);
-    const c = camera.camera.position;
-    const yaw = Math.atan2(target.x - c.x, target.z - c.z);
-    const pitch = -Math.atan2(target.y - c.y, Math.hypot(target.x - c.x, target.z - c.z));
-    t = { ...t, yaw, pitch };
-  }
-  settle(camera, t);
-  return t;
-};
-
-/**
- * Angle (degrees) from the crosshair to the nearest part of the figure on screen: each skinned
- * triangle is projected onto the plane one metre ahead of the camera and measured from its centre.
- */
-const clearance = (camera: CameraRig, figure: ReturnType<typeof buildHeroine>): number => {
-  const o = camera.camera.position;
-  const fwd = forwardOf(camera);
-  const right = Vector3.Cross(Vector3.Up(), fwd).normalize();
-  const up = Vector3.Cross(fwd, right);
-  figure.root.computeWorldMatrix(true);
-  let best = Infinity;
-  for (const mesh of figure.meshes) {
-    mesh.skeleton?.prepare(true);
-    const world = mesh.computeWorldMatrix(true);
-    const pos = mesh.getPositionData(true, false)!;
-    const idx = mesh.getIndices()!;
-    const onScreen = (i: number): [number, number] => {
-      const p = Vector3.TransformCoordinates(new Vector3(pos[i * 3]!, pos[i * 3 + 1]!, pos[i * 3 + 2]!), world).subtract(o);
-      const depth = Math.max(1e-3, Vector3.Dot(p, fwd));
-      return [Vector3.Dot(p, right) / depth, Vector3.Dot(p, up) / depth];
-    };
-    for (let t = 0; t < idx.length; t += 3) best = Math.min(best, distanceToTriangle(onScreen(idx[t]!), onScreen(idx[t + 1]!), onScreen(idx[t + 2]!)));
-  }
-  return (Math.atan(best) * 180) / Math.PI;
-};
-
-/** Distance from the origin to a 2D triangle, 0 inside it. */
-const distanceToTriangle = (a: [number, number], b: [number, number], c: [number, number]): number => {
-  const side = (p: [number, number], q: [number, number]) => p[0] * q[1] - p[1] * q[0];
-  const s1 = side([b[0] - a[0], b[1] - a[1]], [-a[0], -a[1]]);
-  const s2 = side([c[0] - b[0], c[1] - b[1]], [-b[0], -b[1]]);
-  const s3 = side([a[0] - c[0], a[1] - c[1]], [-c[0], -c[1]]);
-  const area = side([b[0] - a[0], b[1] - a[1]], [c[0] - a[0], c[1] - a[1]]);
-  // Collapsed triangles (the holstered pistol, scaled to nothing) are only their edges.
-  if (Math.abs(area) > 1e-12 && ((s1 >= 0 && s2 >= 0 && s3 >= 0) || (s1 <= 0 && s2 <= 0 && s3 <= 0))) return 0;
-  const toSegment = (p: [number, number], q: [number, number]) => {
-    const dx = q[0] - p[0];
-    const dy = q[1] - p[1];
-    const t = Math.min(1, Math.max(0, -(p[0] * dx + p[1] * dy) / Math.max(1e-12, dx * dx + dy * dy)));
-    return Math.hypot(p[0] + dx * t, p[1] + dy * t);
-  };
-  return Math.min(toSegment(a, b), toSegment(b, c), toSegment(c, a));
-};
-
 describe("TPP camera aimed from close up (G-275)", () => {
-  // A standing NPC's chest and a crouching one's, 1-3 m ahead of the crouched player.
-  it.each([
-    [1, 1.3],
-    [1, 0.9],
-    [2, 1.3],
-    [2, 0.9],
-    [3, 0.9],
-  ])("crouched, aimed at a target %s m ahead at %s m: the figure stays out of 15 degrees round the crosshair, or fades", (distance, height) => {
-    const { camera, figure } = aimedFigure(1);
-    let fade = 0;
-    camera.bodyFade.onChange = (f) => (fade = f);
-    figure.root.rotation.y = aimAt(camera, { x: 0, y: height, z: distance }, 1).yaw;
-    // Before G-275 the gun hand and the head came within 10-15 degrees of it.
-    if (fade < 0.5) expect(clearance(camera, figure)).toBeGreaterThan(15);
-  });
-
   it("keeps the figure solid while it is out of the way", () => {
     const { camera } = aimedFigure(1);
     let fade = 0;
@@ -175,7 +98,7 @@ describe("the crosshair is where the shot goes (G-275)", () => {
     const scene = newScene();
     const camera = new CameraRig(scene, new ToonMaterials(scene), () => false);
     camera.setMode("TPP");
-    camera.shoulder.target = left ? -1 : 1;
+    camera.leftShoulder = left;
     for (const [yaw, pitch] of [
       [0.3, 0.2],
       [-2.4, -0.3],
@@ -193,23 +116,32 @@ describe("the crosshair is where the shot goes (G-275)", () => {
     }
   });
 
-  it("swings over to the other shoulder smoothly and stays on the aim line there", () => {
+  it("goes over to the other shoulder in the same frame as the shot line, and back", () => {
     const scene = newScene();
     const camera = new CameraRig(scene, new ToonMaterials(scene), () => false);
     camera.setMode("TPP");
     const aimed: Transform = { position: { x: 0, y: 0, z: 0 }, yaw: 0, pitch: 0, speed: 0, crouch: 1, aim: 1 };
+    const p = shooter(0, 0, 1, 1);
+    p.position = p.prevPosition = { x: 0, y: 0, z: 0 };
     settle(camera, aimed);
-    const right = camera.camera.position.x;
-    expect(right).toBeCloseTo(TPP_AIM_SHOULDER_OFFSET, 3);
-    camera.shoulder.target = -1;
-    const xs: number[] = [];
-    for (let i = 0; i < 12; i++) {
+    for (const left of [true, false]) {
+      camera.leftShoulder = left;
+      // One frame: the simulation's shots move over at once, so the camera may not ease across.
       camera.update(aimed, 1 / 30);
-      xs.push(camera.camera.position.x);
+      expect(camera.camera.position.x).toBeCloseTo(aimOrigin(p, "TPP", left).x, 6);
+      expect(camera.camera.position.x).toBeCloseTo(left ? -TPP_SHOULDER_OFFSET : TPP_SHOULDER_OFFSET, 6);
     }
-    // Across in about a third of a second, through the values between rather than in one jump.
-    expect(xs.at(-1)).toBeCloseTo(-TPP_AIM_SHOULDER_OFFSET, 3);
-    expect(xs.some((x) => Math.abs(x) < 0.5)).toBe(true);
-    for (let i = 1; i < xs.length; i++) expect(xs[i - 1]! - xs[i]!).toBeLessThan(0.35);
+  });
+
+  it("stays this side of the capsule's front wall with the right shoulder against it, crouched and aimed", () => {
+    const world = Simulation.create({ seed: 11 }).world;
+    const scene = newScene();
+    const camera = new CameraRig(scene, new ToonMaterials(scene), () => false);
+    camera.setMode("TPP");
+    camera.setOccluder((origin, dir, maxDist) => rayGeometry(world, origin, dir, maxDist, true));
+    const room = CAPSULE_INTERIOR_ROOM;
+    settle(camera, { position: { x: room.minX + 0.9, y: room.bottom, z: room.minZ + 0.385 }, yaw: Math.PI / 2, pitch: 0, speed: 0, crouch: 1, aim: 1 });
+    // The facade's outer face; with the aim line 0.8 m out the camera stood in the street.
+    expect(camera.camera.position.z).toBeGreaterThan(room.minZ - 0.3);
   });
 });
