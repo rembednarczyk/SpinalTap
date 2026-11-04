@@ -18,6 +18,7 @@ import {
   PATROL_CEILING,
   PATROL_COUNT,
   PATROL_PAUSE,
+  PATROL_POP,
   PATROL_SCALE,
   PATROL_SOAR,
   PATROL_SIZE,
@@ -29,7 +30,6 @@ import {
 } from "../src/renderer/drones/patrol-flight";
 import { MIN_LANE, type PatrolWorld, ROOF_ROOM, planPatrolLanes } from "../src/renderer/drones/patrol-lanes";
 import { POOL_SEGMENTS, patrolTemplates } from "../src/renderer/drones/patrol-models";
-import { inView, observersOf } from "../src/renderer/drones/patrol-sight";
 import { POOL_LIFT } from "../src/renderer/drones/patrol-pool";
 import type { P2 } from "../src/renderer/mapcity/polygon";
 
@@ -196,17 +196,17 @@ describe("low patrol lanes (ADR-0058 stage 7b)", () => {
 });
 
 describe("low patrol ceilings (ADR-0058 stage 7b)", () => {
-  it("climb slowly over the roofs round the lane's ends, come into sight out of everyone's view, and keep under the canyon drones", () => {
+  it("climb slowly over the roofs round the lane's ends, come into sight out of draw from everyone, and keep clear of the canyon drones", () => {
     const plain = planPatrolLanes(street());
     // 15 m roofs: the least roof height, 18 m over the paving.
     expect(plain[0]!.roofs).toEqual([PATROL_CEILING, PATROL_CEILING]);
-    // Its ceilings: no one on the street sees it there by height and distance.
-    const observers = observersOf(street().axes, () => 0);
-    for (const [k, end] of [plain[0]!.points[0]!, plain[0]!.points.at(-1)!].entries()) {
-      const y = plain[0]!.ceilings[k]!;
-      expect(y).toBeGreaterThan(PATROL_CEILING);
-      expect(observers.filter((o) => inView(o, end.x, y - PATROL_BOB, end.z))).toEqual([]);
-    }
+    // Its ceilings: `PATROL_POP` over the paving, whatever the street round it.
+    expect(plain[0]!.ceilings).toEqual([PATROL_POP, PATROL_POP]);
+    const hilly = { ...street(), surfaceAt: (x: number) => x * 0.1 };
+    const sloped = planPatrolLanes(hilly)[0]!;
+    for (const [k, end] of [sloped.points[0]!, sloped.points.at(-1)!].entries()) expect(sloped.ceilings[k]).toBeCloseTo(end.x * 0.1 + PATROL_POP, 6);
+    // There it is past every quality's draw distance from the street under it, with room for the terrain round it.
+    for (const q of Object.values(PATROL_LOD)) expect(PATROL_POP - 100).toBeGreaterThan(q.draw);
     // A 30 m tower by the street's west end: that end's roofs 2 m over it.
     const world = street();
     const tall = { ...world, air: new PatrolAir([...world.air.prisms, { ring: rect(0, 7, 18, 20), bottom: 0, top: 30, pad: 1 }], []) };

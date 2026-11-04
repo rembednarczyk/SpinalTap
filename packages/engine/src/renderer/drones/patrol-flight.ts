@@ -21,12 +21,24 @@ export const PATROL_REACH = Math.hypot(PATROL_SIZE.width, PATROL_SIZE.length) / 
 export const PATROL_ALTITUDE = 4.6;
 /**
  * The least height over the paving of its column over a lane's end (m). The planner sets two heights
- * there (`patrol-lanes.ts`): its roofs (`roofs`, over the roofs round the end, under the canyon drones
- * of ADR-0058 stage 7), under which it climbs slowly, and its ceiling (`ceilings`), where it comes into
- * sight and goes: so high over everyone on the pedestrian streets round it that none sees it there
- * (over 40 degrees over their horizon or under 2 px, `patrol-sight.ts`). It climbs fast between them.
+ * there (`patrol-lanes.ts`): its roofs (`roofs`, over the roofs round the end and this much over the
+ * paving at least), under which it climbs slowly, and its ceiling (`ceilings`, `PATROL_POP` over the
+ * paving), where it comes into sight and goes. It climbs fast between them.
  */
 export const PATROL_CEILING = 18;
+/**
+ * How high over the paving under its column a patrol comes into sight and goes, growing from nothing
+ * and shrinking to it (m): so high that it takes under 2 px from anywhere on any street, whatever
+ * way the camera looks. Its model is 2.3 m across its box's diagonal; on the reference screen
+ * (1920 px across at 80 degrees, 16:9) that takes 2 px only 1.3 km off in the frame's middle and
+ * 2.6 km off in its corner, where a small thing is drawn largest. The views draw it at no size past
+ * its quality's draw distance, though (`PATROL_LOD`: 220 m at most, shrinking from 140 m on,
+ * `patrolFade`): 400 m keeps it past that from every eye on the streets round it with some 180 m to
+ * spare (more than the terrain round a column rises, or a wider draw distance would take), so it
+ * comes and goes at no size at all and only its climb and its descent are seen. The glitch scan
+ * (`drone-low-pop`) measures it from the model, from every street and square.
+ */
+export const PATROL_POP = 400;
 /** Seconds it takes to come into sight at its ceiling (growing from nothing) and to go (shrinking). */
 export const PATROL_APPEAR = 1.5;
 /** Bobbing up and down (m) over `BOB_PERIOD` seconds. */

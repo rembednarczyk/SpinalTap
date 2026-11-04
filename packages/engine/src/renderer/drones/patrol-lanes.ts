@@ -2,8 +2,7 @@ import { BinIndex } from "../mapcity/map-index";
 import { type Box2, type P2, boundsOf, pointInRing } from "../mapcity/polygon";
 import { type DroneLane, STEP, joinAxes, resample } from "./drone-lanes";
 import type { PatrolAir } from "./patrol-air";
-import { PATROL_ALTITUDE, PATROL_BOB, PATROL_CEILING, PATROL_REACH, PATROL_SIZE, type PatrolLane } from "./patrol-flight";
-import { type Observer, PATROL_UNSEEN, SIGHT_ELEVATION, observersOf } from "./patrol-sight";
+import { PATROL_ALTITUDE, PATROL_BOB, PATROL_CEILING, PATROL_POP, PATROL_REACH, PATROL_SIZE, type PatrolLane } from "./patrol-flight";
 
 /**
  * The low patrols' lanes over the pedestrian streets (ADR-0058 stage 7b), from rules on the map's
@@ -17,8 +16,8 @@ import { type Observer, PATROL_UNSEEN, SIGHT_ELEVATION, observersOf } from "./pa
  *   (`PatrolAir`: buildings with their facades' room, furniture, poles, cables, curtains, billboards);
  * - not within `SEPARATION` metres of a lane already planned, so two patrols never meet.
  * Runs of good samples between two samples whose whole column up to their ceiling is clear (where a
- * patrol comes into sight, comes down, climbs and goes: over the roofs round it, under the canyon
- * drones), at least `MIN_LANE` long, make the lanes. Unlike the canyon
+ * patrol comes into sight high over everyone, comes down, climbs and goes: clear of the buildings and
+ * of the canyon drones' lanes), at least `MIN_LANE` long, make the lanes. Unlike the canyon
  * drones (ADR-0058 stage 7) they may come near the landmarks: the user's decision for the low
  * patrols only.
  */
@@ -49,8 +48,6 @@ export const ROOF_ROOM = 2;
 export const POP_ROOM = 25;
 /** Its column's top keeps this far under the lowest canyon drone flying within `CANYON_ROOM` of it (m). */
 export const CANYON_GAP = 2;
-/** Over the height where no one sees it, this much more (m). */
-const SIGHT_MARGIN = 1;
 /** The canyon drones' loops reach `LEG` past their axis and half the widest drone more; with the patrol's reach and a margin (m). */
 const CANYON_ROOM = 8;
 
@@ -62,23 +59,6 @@ const queries = (world: PatrolWorld, canyon: readonly DroneLane[]) => {
   const floorIndex = new BinIndex();
   floors.forEach((f, i) => floorIndex.add(i, around(f.p, 0)));
   /** The lowest foot of a canyon drone flying near `p`: its lane's level (the advertisers fly on it, ADR-0058 stage 7). */
-  const observers = observersOf(world.axes, world.surfaceAt);
-  const observerIndex = new BinIndex();
-  observers.forEach((o, i) => observerIndex.add(i, around(o, 0)));
-  /**
-   * The lowest foot over `p` that no one on the pedestrian streets sees by height and distance alone
-   * (walls aside: over `SIGHT_ELEVATION` over their horizon or past `PATROL_UNSEEN`), the bob and
-   * `SIGHT_MARGIN` included.
-   */
-  const seenUpTo = (p: P2): number => {
-    let foot = -Infinity;
-    for (const i of observerIndex.within(around(p, PATROL_UNSEEN))) {
-      const o = observers[i] as Observer;
-      const d = Math.hypot(o.x - p.x, o.z - p.z);
-      if (d < PATROL_UNSEEN) foot = Math.max(foot, o.eye + Math.min(Math.tan(SIGHT_ELEVATION) * d, Math.sqrt(PATROL_UNSEEN ** 2 - d * d)));
-    }
-    return foot + PATROL_BOB + SIGHT_MARGIN;
-  };
   const canyonFloor = (p: P2): number => Math.min(Infinity, ...[...floorIndex.within(around(p, CANYON_ROOM))].map((i) => (floors[i] as { level: number }).level));
   const roads = world.roads.map((ring) => ({ ring }));
   const index = new BinIndex();
@@ -100,14 +80,14 @@ const queries = (world: PatrolWorld, canyon: readonly DroneLane[]) => {
     },
     /**
      * The column over `p` (the foot's y): its roofs, `ROOF_ROOM` over the roofs round it and
-     * `PATROL_CEILING` over the paving at least, and its ceiling, where a patrol comes into sight and goes
-     * out of everyone's view (`seenUpTo`); null where the column up to the ceiling is not clear or
-     * reaches a canyon drone.
+     * `PATROL_CEILING` over the paving at least, and its ceiling, `PATROL_POP` over the paving, where a
+     * patrol comes into sight and goes at no size; null where the column up to the ceiling is not clear
+     * or reaches a canyon drone.
      */
     column: (p: P2): { readonly roof: number; readonly ceiling: number } | null => {
       const ground = world.surfaceAt(p.x, p.z);
       const roof = Math.max(ground + PATROL_CEILING, world.air.highest(p, POP_ROOM) + ROOF_ROOM);
-      const ceiling = Math.max(roof, seenUpTo(p));
+      const ceiling = Math.max(roof, ground + PATROL_POP);
       const top = ceiling + PATROL_SIZE.height + PATROL_BOB;
       if (top + CANYON_GAP > canyonFloor(p)) return null;
       return band(p, ceiling - ground + PATROL_SIZE.height) ? { roof, ceiling } : null;
