@@ -2,6 +2,26 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-274 Skraj wiaduktu Zamkowej nad biegiem w56965515 rysowany, ale bez podłogi: spadek 1,7 m przez bruk (po #233)
+- Status: naprawione w #233 (4.11, cfd3a73, razem z G-255)
+- Ważność: S2 (proponowana: gracz spada przez widoczną nawierzchnię na trasie Brama Grodzka–Zamek) · Zasięg: lokalny, trasa główna · Koszt: mały
+- Gdzie: T-144; pas 1,5–2 m wzdłuż północno-zachodniej krawędzi pomostu w232362907 od (729,0; 157,0) do (733,5; 162,0), `stare-miasto-1-1` i `podzamcze-1-0`, ok. 10 m²; w mieście 1 miejsce
+- Dowód: sonda `topo-cross` (przekroje w poprzek osi wiaduktu co 1 m od przyczółka): na 223dedc `groundY` spada z −13,57 na −15,31 między 2,0 a 2,5 m od osi, a `deckAt` obrysu wiaduktu (rysowanego) sięga 4,0 m; uskok 1,74 m (t = 2–5), 1,2 m (t = 6), 0,57 m (t = 7). Siatka 0,5 m: 40 punktów obrysu wiaduktu z gruntem niżej o ponad 0,25 m. Na main 8b8ee07 pomost do 4,0 m bez uskoku. Zrzut autora `shots/g255/tpp-z-dolu.png`: stopnie biegu 2 wchodzą pod płytę pomostu
+- Przyczyna: `FLIGHT_DECKS` (`content/lublin/decks.ts`) kładzie pas biegu 3,8 m (`FLIGHT_HALF` 1,9) na osi z OSM, a ta leży ok. 3,9 m od osi wiaduktu, na krawędzi obrysu pomostu (pół szerokości 4 m); `beside` w `deckAt` oddaje bieg stopom w całej części wspólnej, a renderer (`Decks.heightAt`, `planSurface` kawałka mostu) rysuje płytę wiaduktu na całym obrysie i nie stawia fasady na tej krawędzi (sąsiedni pomost biegu)
+- Poprawka: pas biegu przy moście przycięty do obrysu pomostu (bieg zaczyna się za krawędzią wiaduktu, jak we wnęce na ortofoto PZGiK) albo przesunięty na zewnątrz o część wspólną; `beside` tylko tam, gdzie pomost biegu jest nad gruntem poza obrysem mostu. Bez zmiany obrysu wiaduktu (zgodny z balustradą na ortofoto)
+- Pakiet właściciela: packages/sim (content/lublin/decks.ts, world/deck.ts)
+- Test przyjęcia: w obrysie każdego kawałka mostu `groundY` nie leży niżej niż pomost o więcej niż `STEP_HEIGHT` poza przejściami pod mostem (G-062); kontrola skanu `deck-drawn-over-flight` 40 → 0; testy G-255 (`flight-walk`, `flight-chase`) dalej zielone
+
+### G-255 Garb w biegu schodów w56965515 przy pomoście wiaduktu Zamkowej: uskok 2,9 m i bieg pod prąd
+- Status: naprawione w #233 (4.11, cfd3a73; 9 rund: wnęka w pomoście wiaduktu T-147, pomost biegu zgodny z rysunkiem, nawigacja NPC z maską krawędzi pomostu przy biegach; kurator: zgodne z uwagami)
+- Ważność: S3 (proponowana: uskok 2,9 m w środku schodów, gracz spada albo AI się zatrzymuje) · Zasięg: 1 droga (3 kawałki pasa w dwóch chunkach), możliwe dalsze z kontroli `steps-riser-tall` · Koszt: mały do średniego
+- Gdzie: T-131; w56965515 bieg węzeł 2 → 3 (734,1; 163,9) → (729,5; 159,9), Podzamcze/Stare Miasto, granica chunków z = 160
+- Dowód: `planSteps` na `groundY` (sonda `topo-g236-flight.txt`, 5757fae): stopnie na pomoście y −13,48 do x ≈ 733,4, potem podstopnica 2,92 m na teren −16,41, dalej stopnie w górę do −15,28 przy węźle 3 (flight ma `incline=down`); kawałek tego biegu w `stare-miasto-1-1` (730,8; 159,6) leży płasko na pomoście −13,51 obok −15,4 za granicą chunka. Stan sprzed #219 identyczny
+- Przyczyna: pas biegu 3 m idzie ok. 4 m od osi wiaduktu i częściowo leży w obrysie pomostu, więc `groundY` daje tam pomost (stopnie w kawałku pasa nad nim stoją na pomoście, reguła sufitu G-062 tego nie zmienia), a tuż za krawędzią pomostu interpolowany NMT spod wiaduktu (−16,4..−16,8), niższy od końca biegu
+- Poprawka: bieg ze `incline` przy pomoście dostaje rampę od wysokości pomostu na węźle wiaduktu do terenu na końcu (jak `flightRamps`, ale z pomostem jako górą), a schody nie biorą pomostu z `groundY` poza węzłem na wiadukcie; razem z G-062
+- Pakiet właściciela: packages/sim (content/lublin: shape, decks), packages/engine (steps-plan)
+- Test przyjęcia: profil biegów w56965515 maleje od −13,5 do −17,1 bez podstopnicy ponad 0,3 m; kontrola `steps-riser-tall` (podstopnica `planSteps` na `groundY` > 0,5 m) baza 7 → co najwyżej 6
+
 ### G-275 W TPP przy celowaniu z bliska (zwłaszcza w kucaniu) postać zasłania cel
 - Status: naprawione w #243 (4.11, 93568a1; FPP: ADS 4 cm niżej i bez podrzutu lufy, zasłonięcie 66–85% → 0%; TPP ramię 0,55 m, zmiana ramienia bez rozjazdu; zgłoszone przez użytkownika)
 - Ważność: S3 (zgłoszenie gracza, podstawowa mechanika strzelania) · Zasięg: kamera TPP (`packages/engine/src/camera/camera-rig.ts`: `TPP_DISTANCE` 2,2 m, `TPP_SHOULDER_OFFSET` 0,55 m z `packages/sim/src/world/hitscan.ts`, `TPP_HEIGHT_OFFSET` 0, `TPP_ADS_PULL` 0,45; w kucaniu kamera tylko obniża się z `eyeHeightAt`), cel z przyłożenia i do kilku metrów · Koszt: średni

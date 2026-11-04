@@ -792,16 +792,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: czas dronów (i tłumu) z czasu świata przez `RenderPort`, zatrzymany w pauzie; test
 - Pakiet właściciela: packages/engine (renderer)
 
-### G-255 Garb w biegu schodów w56965515 przy pomoście wiaduktu Zamkowej: uskok 2,9 m i bieg pod prąd
-- Status: w PR #233 (2.11, runda 4 @ 223dedc PRZYJĘTE z uwagami (dług w G-273), kurator w toku; runda 9 @ 316a951 PRZYJĘTE (4.11; mosty jak main, Zamkowa 8/8, wydajność CPU w szumie), przegląd kuratora w toku; runda 8 @ b80179d NIE PRZYJĘTE: Zamkowa 8/8, ale `ledges` działa przy każdym moście: Mełgiewska 143/204 wobec 161/204 na main, kładka podzamcze-2-0 42/56 wobec 45/56, `pinned-far-sleep` +28%; runda 7 @ f3f7060 NIE PRZYJĘTE: `walkable` sprawdza ścianę w całym oknie 80 m i NPC staje na przyczółku wschodnim (756,7; 158,3) → (738,3; 182,8), main 8/8, gałąź 0/8; kierunek: zamknąć w polu uskoki pomostu przy obu przyczółkach, `walkable` jak w defc2a0; raport scratchpad/v-g255r7-raport.md; runda 6 @ 96cfc6a NIE PRZYJĘTE: reguła ściany w `steering.ts` na całe okno psuje pościg z Podwala, reszta (wnęka, dash, chód 126/126) dobra; runda 5 @ defc2a0 NIE PRZYJĘTE: w obrysie wiaduktu renderer rysuje stopnie biegu, a symulacja daje płytę albo teren pod nią (24 z 63 przejść źle), testy omijały ten pas; G-274 naprawione; runda 3 @ d03bb2d: podrzut z podestu; runda 2 @ 0e075bb: NPC w pościgu; runda 1 @ daaca9f: pod górę 4/30; pochyły pomost biegu zamiast rampy terenu; zgłoszone przez kuratora przy #219)
-- Ważność: S3 (proponowana: uskok 2,9 m w środku schodów, gracz spada albo AI się zatrzymuje) · Zasięg: 1 droga (3 kawałki pasa w dwóch chunkach), możliwe dalsze z kontroli `steps-riser-tall` · Koszt: mały do średniego
-- Gdzie: T-131; w56965515 bieg węzeł 2 → 3 (734,1; 163,9) → (729,5; 159,9), Podzamcze/Stare Miasto, granica chunków z = 160
-- Dowód: `planSteps` na `groundY` (sonda `topo-g236-flight.txt`, 5757fae): stopnie na pomoście y −13,48 do x ≈ 733,4, potem podstopnica 2,92 m na teren −16,41, dalej stopnie w górę do −15,28 przy węźle 3 (flight ma `incline=down`); kawałek tego biegu w `stare-miasto-1-1` (730,8; 159,6) leży płasko na pomoście −13,51 obok −15,4 za granicą chunka. Stan sprzed #219 identyczny
-- Przyczyna: pas biegu 3 m idzie ok. 4 m od osi wiaduktu i częściowo leży w obrysie pomostu, więc `groundY` daje tam pomost (stopnie w kawałku pasa nad nim stoją na pomoście, reguła sufitu G-062 tego nie zmienia), a tuż za krawędzią pomostu interpolowany NMT spod wiaduktu (−16,4..−16,8), niższy od końca biegu
-- Poprawka: bieg ze `incline` przy pomoście dostaje rampę od wysokości pomostu na węźle wiaduktu do terenu na końcu (jak `flightRamps`, ale z pomostem jako górą), a schody nie biorą pomostu z `groundY` poza węzłem na wiadukcie; razem z G-062
-- Pakiet właściciela: packages/sim (content/lublin: shape, decks), packages/engine (steps-plan)
-- Test przyjęcia: profil biegów w56965515 maleje od −13,5 do −17,1 bez podstopnicy ponad 0,3 m; kontrola `steps-riser-tall` (podstopnica `planSteps` na `groundY` > 0,5 m) baza 7 → co najwyżej 6
-
 ### G-257 Obrys cerkwi św. Jozafata (nawa i wieża) w OSM ok. 0,9 m na północ od rzeczywistego
 - Status: zgłoszone (2.11, kurator przy przeglądzie #226)
 - Ważność: S4 · Zasięg: 2 budynki, nawa w69916021 (284,4; −11,9) i wieża w1382552285 (270; −9,2), Krakowskie, przy Zielonej · Koszt: mały (OSM) do średniego (przesunięcie obrysu w imporcie)
@@ -886,16 +876,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: wyrównanie styku pomostów w narożniku i u szczytu do ≤ STEP_HEIGHT; test `SEAM_STEP === STEP_HEIGHT` (albo stała we wspólnym module bez cyklu)
 - Pakiet właściciela: packages/sim (content/lublin decks, world/ground)
 - Także (stare, nie z G-255): podrzut 1,0 m na wiadukt przy (727,67; 157,66) (reguła G-062); 1,73 m (728,88; 156,77) i 2,0 m (736,68; 159,97) tylko przy wymuszonej prędkości 10–14 m/s
-
-### G-274 Skraj wiaduktu Zamkowej nad biegiem w56965515 rysowany, ale bez podłogi: spadek 1,7 m przez bruk (po #233)
-- Status: w naprawie w PR #233 (2.11; naprawione w rundzie 5 @ defc2a0, czeka na całość #233; zgłoszone przez kuratora przy przeglądzie #233 @ 223dedc; wprowadzone przez G-255)
-- Ważność: S2 (proponowana: gracz spada przez widoczną nawierzchnię na trasie Brama Grodzka–Zamek) · Zasięg: lokalny, trasa główna · Koszt: mały
-- Gdzie: T-144; pas 1,5–2 m wzdłuż północno-zachodniej krawędzi pomostu w232362907 od (729,0; 157,0) do (733,5; 162,0), `stare-miasto-1-1` i `podzamcze-1-0`, ok. 10 m²; w mieście 1 miejsce
-- Dowód: sonda `topo-cross` (przekroje w poprzek osi wiaduktu co 1 m od przyczółka): na 223dedc `groundY` spada z −13,57 na −15,31 między 2,0 a 2,5 m od osi, a `deckAt` obrysu wiaduktu (rysowanego) sięga 4,0 m; uskok 1,74 m (t = 2–5), 1,2 m (t = 6), 0,57 m (t = 7). Siatka 0,5 m: 40 punktów obrysu wiaduktu z gruntem niżej o ponad 0,25 m. Na main 8b8ee07 pomost do 4,0 m bez uskoku. Zrzut autora `shots/g255/tpp-z-dolu.png`: stopnie biegu 2 wchodzą pod płytę pomostu
-- Przyczyna: `FLIGHT_DECKS` (`content/lublin/decks.ts`) kładzie pas biegu 3,8 m (`FLIGHT_HALF` 1,9) na osi z OSM, a ta leży ok. 3,9 m od osi wiaduktu, na krawędzi obrysu pomostu (pół szerokości 4 m); `beside` w `deckAt` oddaje bieg stopom w całej części wspólnej, a renderer (`Decks.heightAt`, `planSurface` kawałka mostu) rysuje płytę wiaduktu na całym obrysie i nie stawia fasady na tej krawędzi (sąsiedni pomost biegu)
-- Poprawka: pas biegu przy moście przycięty do obrysu pomostu (bieg zaczyna się za krawędzią wiaduktu, jak we wnęce na ortofoto PZGiK) albo przesunięty na zewnątrz o część wspólną; `beside` tylko tam, gdzie pomost biegu jest nad gruntem poza obrysem mostu. Bez zmiany obrysu wiaduktu (zgodny z balustradą na ortofoto)
-- Pakiet właściciela: packages/sim (content/lublin/decks.ts, world/deck.ts)
-- Test przyjęcia: w obrysie każdego kawałka mostu `groundY` nie leży niżej niż pomost o więcej niż `STEP_HEIGHT` poza przejściami pod mostem (G-062); kontrola skanu `deck-drawn-over-flight` 40 → 0; testy G-255 (`flight-walk`, `flight-chase`) dalej zielone
 
 ### G-276 Na WebGL1 wnętrze pokoju kapsułowego prawie czarne
 - Status: zgłoszone (2.11, weryfikator G-263; także na main 8b8ee07, nie regresja)
