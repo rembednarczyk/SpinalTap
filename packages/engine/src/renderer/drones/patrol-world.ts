@@ -132,7 +132,7 @@ const solidEnvelope = (item: StreetPropItem): { r: number; top: number } => {
 };
 
 /** The buildings' solids and what hangs over the streets between them near the given axes. */
-const buildingAir = (items: readonly Item[], near: (x: number, z: number) => boolean): { prisms: AirPrism[]; posts: AirPost[] } => {
+const buildingAir = (items: readonly Item[], near: (x: number, z: number) => boolean, surfaceAt: (x: number, z: number) => number): { prisms: AirPrism[]; posts: AirPost[] } => {
   const entries = new MapEntries();
   const prisms: AirPrism[] = [];
   const posts: AirPost[] = [];
@@ -154,7 +154,7 @@ const buildingAir = (items: readonly Item[], near: (x: number, z: number) => boo
       continue;
     }
     for (const s of findSpans(f, entries.acrossAt)) {
-      for (const c of spanCables(s, false)) posts.push(...runPosts((t) => cablePoint(c, t), Math.hypot(c.b.x - c.a.x, c.b.z - c.a.z), CABLE_R, c.lanterns ? LANTERN_DROP : 0));
+      for (const c of spanCables(s, false, surfaceAt)) posts.push(...runPosts((t) => cablePoint(c, t), Math.hypot(c.b.x - c.a.x, c.b.z - c.a.z), CABLE_R, c.lanterns ? LANTERN_DROP : 0));
       const across = { x: (s.b.x - s.a.x) / s.width, z: (s.b.z - s.a.z) / s.width };
       const mid = { x: (s.a.x + s.b.x) / 2, z: (s.a.z + s.b.z) / 2 };
       const bb = spanBillboard(s);
@@ -186,7 +186,7 @@ export const patrolWorldOf = (items: readonly Item[], axes: readonly (readonly P
   }
   const squareAt = (x: number, z: number) => [...squares.at(x, z)].some((i) => pointInRing({ x, z }, squareRings[i] as P2[]));
   const near = nearAxes(axes);
-  const built = buildingAir(items, near);
+  const built = buildingAir(items, near, surfaceAt);
   const air = new PatrolAir(built.prisms, [...built.posts, ...furniturePosts(items, near)]);
   return { axes, roads, air, groundAt, quietAt, surfaceAt, squareAt };
 };

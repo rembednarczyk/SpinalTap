@@ -1,0 +1,1 @@
+Przy złej reputacji tłum nie zasypuje już ekranu powiadomieniami: uciekający przechodnie dają jedno powiadomienie z licznikiem, potem 30 s ciszy, a jednakowe powiadomienia scalają się w jedno (G-281).

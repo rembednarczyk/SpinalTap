@@ -93,7 +93,7 @@ export const airMesh = (items: readonly Item[], zones: readonly Box2[], props: C
     planNearFrames(sink, [f], false, (s) => slots.push(s) > 0, obstacles);
     bakeSlots(sink, props, slots, false);
     const spans = findSpans(f, entries.acrossAt);
-    planNearCanyon(sink, spans, false);
+    planNearCanyon(sink, spans, false, entries.drawnGround);
     sinks.push({ sink, what: `building ${ids[k]} and its spans` });
     const signs = new MeshSink();
     planBuildingSigns(signs, f, () => null, entries.drawnGround);
