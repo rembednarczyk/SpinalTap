@@ -132,10 +132,21 @@ export const cable = (sink: MeshSink, a: Vec, b: Vec, sag: number, color: Rgba, 
 /** The drawn paving at (x, z), or null off the terrain. */
 export type CanyonGround = (x: number, z: number) => number | null;
 
+/** A cable across a span: its ends, its sag and the colour of the lanterns strung on it (null for none). */
+export interface SpanCable {
+  readonly a: Vec;
+  readonly b: Vec;
+  readonly sag: number;
+  readonly lanterns: string | null;
+}
+
+/** A point of a sagging cable `t` of the way from `a` to `b` (0..1). */
+export const cablePoint = (c: Pick<SpanCable, "a" | "b" | "sag">, t: number): Vec => lerp(c.a, c.b, t, c.sag);
+
 /** The least a cable's or a lantern's lowest point clears the paving under it (m), G-268. */
 const CABLE_CLEARANCE = 3.5;
 /** How far under a cable a lantern's bottom hangs and the ribbon's half thickness, a little to spare for the samples (m). */
-const LANTERN_DROP = 0.36;
+export const LANTERN_DROP = 0.36;
 const RIBBON_HALF = 0.05;
 
 /** The least height of a cable over the paving under it, along its whole sag (m). */
@@ -151,16 +162,20 @@ const clearance = (a: Vec, b: Vec, sag: number, ground: CanyonGround): number =>
 };
 
 /**
- * Cables across one span at different heights and angles, some strung with lanterns. The heights
- * go from the building's ground floor, which on a slope may lie metres under the street (G-268):
- * a cable that comes too near the paving under it is lifted clear of it, or left out when that
- * would take it over the lower cornice. Every draw from `rand` is kept, so the others stay put.
+ * The cables across one span at different heights and angles, some strung with lanterns
+ * (`lite`, a phone: fewer, none strung). The heights go from the building's ground floor, which
+ * on a slope may lie metres under the street (G-268): a cable that comes too near the paving
+ * under it is lifted clear of it, or left out when that would take it over the lower cornice.
+ * Every draw from the span's random is kept, so the others stay put. Pure: the drawing and the
+ * low patrols' air (ADR-0058 stage 7b) read the same cables.
  */
-const spanCables = (sink: MeshSink, s: Span, rand: () => number, lite: boolean, ground: CanyonGround): void => {
+export const spanCables = (s: Span, lite: boolean, ground: CanyonGround): SpanCable[] => {
+  const rand = prng(Math.floor(s.seed * 0xfffffff) ^ 0xc0de);
   const count = Math.round(s.clutter * (lite ? 1.5 : 5) * (0.5 + rand()));
   const low = s.base + 4.5;
   const high = s.top - 1;
-  if (high <= low) return;
+  if (high <= low) return [];
+  const out: SpanCable[] = [];
   for (let k = 0; k < count; k++) {
     const y = low + rand() * (high - low);
     const o1 = (rand() - 0.5) * 6;
@@ -168,17 +183,23 @@ const spanCables = (sink: MeshSink, s: Span, rand: () => number, lite: boolean, 
     const a0 = { x: s.a.x + s.along.x * o1, y, z: s.a.z + s.along.z * o1 };
     const b0 = { x: s.b.x + s.along.x * o2, y: y + (rand() - 0.5) * 2.5, z: s.b.z + s.along.z * o2 };
     const sag = 0.25 + rand() * 0.05 * s.width;
-    const lit = !lite && rand() <= s.clutter * 0.6;
-    const color = lit ? hexColor(LANTERNS[Math.floor(rand() * LANTERNS.length)] ?? "#ffb000", DRESS_FLAG.lit) : null;
-    const lift = Math.max(0, CABLE_CLEARANCE + (color ? LANTERN_DROP : RIBBON_HALF) - clearance(a0, b0, sag, ground));
+    const lanterns = lite || rand() > s.clutter * 0.6 ? null : (LANTERNS[Math.floor(rand() * LANTERNS.length)] ?? "#ffb000");
+    const lift = Math.max(0, CABLE_CLEARANCE + (lanterns ? LANTERN_DROP : RIBBON_HALF) - clearance(a0, b0, sag, ground));
     if (lift > 0 && Math.max(a0.y, b0.y) + lift > high) continue;
-    const a = { ...a0, y: a0.y + lift };
-    const b = { ...b0, y: b0.y + lift };
-    cable(sink, a, b, sag, DARK);
-    if (!color) continue;
+    out.push({ a: { ...a0, y: a0.y + lift }, b: { ...b0, y: b0.y + lift }, sag, lanterns });
+  }
+  return out;
+};
+
+/** Draws the cables of a span, the lanterns hung under those strung with them. */
+const drawSpanCables = (sink: MeshSink, s: Span, lite: boolean, ground: CanyonGround): void => {
+  for (const c of spanCables(s, lite, ground)) {
+    cable(sink, c.a, c.b, c.sag, DARK);
+    if (c.lanterns === null) continue;
+    const color = hexColor(c.lanterns, DRESS_FLAG.lit);
     const n = Math.max(3, Math.floor(s.width / 1.6));
     for (let i = 1; i < n; i++) {
-      const p = lerp(a, b, i / n, sag);
+      const p = lerp(c.a, c.b, i / n, c.sag);
       sink.box({ x: p.x, y: p.y - 0.2, z: p.z }, 0.2, 0.26, 0.2, color, { bottom: true });
     }
   }
@@ -262,8 +283,7 @@ const footbridge = (sink: MeshSink, fb: { y: number; ring: P2[] }, seed: number)
  */
 export const planNearCanyon = (sink: MeshSink, spans: readonly Span[], lite: boolean, ground: CanyonGround): void => {
   for (const s of spans) {
-    const rand = prng(Math.floor(s.seed * 0xfffffff) ^ 0xc0de);
-    spanCables(sink, s, rand, lite, ground);
+    drawSpanCables(sink, s, lite, ground);
     const bb = spanBillboard(s);
     if (bb) billboardFrame(sink, s, bb);
     const fb = spanFootbridge(s);
