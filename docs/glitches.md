@@ -906,7 +906,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/ui
 
 ### G-284 Winda nie działa albo jej nie ma
-- Status: zgłoszone (4.11, użytkownik, testowy przebieg; do odtworzenia)
+- Status: nie odtwarza się (4.11): jedyna winda (`targ-lift`, targ pod wiaduktem al. Tysiąclecia, ok. (797; 345,7)) działa; zgłoszenie prawdopodobnie dotyczy brakującej windy w Alchemii (backlog, ADR-0063); luka w `levels-ui.test.tsx`: test nie sprawdza jazdy platformy
 - Ważność: S3 · Zasięg: winda z treści (estakada, ADR windy z bramkami); do ustalenia, która i gdzie
 - Pakiet właściciela: packages/sim i treść lublin; docelowo winda w Alchemii (backlog)
 
