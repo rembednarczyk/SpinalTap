@@ -235,6 +235,27 @@ NODE_USE_ENV_PROXY=1 node tools/assets/fetch.mjs /tmp/city-assets --only sketchf
 python3 -I -B tools/city_kit.py --room /tmp/city-assets --out packages/app/public/city
 ```
 
+## Alchemia 2077 na licencji CC-BY 4.0: `alchemia-props.glb` (ADR-0063 etap 4)
+
+Food hall Alchemia na Placu Ofiar Getta złożony z dwóch budynków z paczki użytkownika (ADR-0063) na licencji
+**CC-BY 4.0** (`tools/city_alchemia.py`), w osobnym pliku rekwizytów na tej samej palecie (`city-props.glb` jest blisko
+limitu 512 KiB). Gra wczytuje go po kicie razem z pozostałymi. Rozstawienie i bryły kolizji są w `sim`
+(`alchemia.ts`), a renderer stawia modele i cokoły pod nimi (`alchemia/alchemia-view.ts`). Węzły mają
+`extras.credit`, podpisy są na ekranie „Autorzy”. Napis ALCHEMIA na dachu hali to rurki neonu dołożone przy
+wypieku (nazwa własna, bez tłumaczenia).
+
+| Klucz w pliku | Tytuł | Autor | Źródło | Licencja | Zmiany |
+|---|---|---|---|---|---|
+| `alchemia-hall` (hala z napisem na dachu) | Cyberpunk Building | [igor.tesV](https://sketchfab.com/igor.tesV) | [Sketchfab](https://sketchfab.com/3d-models/cyberpunk-building-e79154e588bd4a6c84fa07e9a53f3ff9) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | uproszczony z 11,4 do 3,8 tys. trójkątów (z napisem), skala 0,7 (11,0 × 12,9 × 12,2 m), kolory z tekstur sprowadzone do palety, emisja jako neony, a duże świecące szyby jako przyciemnione witryny (`shop-*`), napis ALCHEMIA z rurek `neon-cyan`, bez tekstur |
+| `alchemia-stall-1` … `alchemia-stall-5` (pięć stoisk) | HW 4 Cyberpunk Sci-fi Building | [Eh (Just_Eh)](https://sketchfab.com/Just_Eh) | [Sketchfab](https://sketchfab.com/3d-models/hw-4-cyberpunk-sci-fi-building-99bc36183ca94ca2bd493218566d1209) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) | pięć sklepików z pliku rozdzielonych na osobne modele, każdy uproszczony z 22–53 do ok. 1,5 tys. trójkątów, skala 1,25 (8,8 × 9,0 × 8,8 m), kolory z tekstur i materiałów sprowadzone do palety, świecące materiały jako neony, szkło jako witryna `shop-teal`, bez tekstur |
+
+Odtworzenie pliku (bajt w bajt):
+
+```
+NODE_USE_ENV_PROXY=1 node tools/assets/fetch.mjs /tmp/city-assets --only sketchfab-cyberpunk-building,sketchfab-hw4-cyberpunk-building
+python3 -I -B tools/city_kit.py --alchemia /tmp/city-assets --out packages/app/public/city
+```
+
 ## Targ i budki z jedzeniem: `market-props.glb` (ADR-0058 etap 3)
 
 Osiem modeli złożonych z części paczek **CC0** Kenneya (`tools/city_market.py`), w trzecim pliku na tej

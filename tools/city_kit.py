@@ -25,6 +25,7 @@ Usage (each source an unpacked kit; the zips are listed in the README next to th
   python3 -I tools/city_kit.py --drones DIR --out DIR
   python3 -I tools/city_kit.py --crowd DIR --out DIR
   python3 -I tools/city_kit.py --room DIR --out DIR
+  python3 -I tools/city_kit.py --alchemia DIR --out DIR
 DIR for Kenney kits is the folder holding the .glb files and Textures/colormap.png. The second
 form bakes city-props.glb (ADR-0058, tools/city_props.py): --props is the folder
 `tools/assets/fetch.mjs` filled (one unpacked Kenney kit per source id), --quaternius the
@@ -37,7 +38,8 @@ The sixth bakes vehicle-props.glb, the vehicles of ADR-0058 stage 4 and the far 
 cars (tools/city_vehicles.py).
 The seventh bakes drone-props.glb, the drones over the street canyons of ADR-0058 stage 7 (tools/city_drones.py).
 The eighth bakes crowd-props.glb, the still crowd of ADR-0058 stage 8 (tools/city_crowd.py).
-The last bakes room-props.glb, the capsule room of ADR-0063 stage 3 (tools/city_room.py).
+The ninth bakes room-props.glb, the capsule room of ADR-0063 stage 3 (tools/city_room.py).
+The last bakes alchemia-props.glb, the food hall on Plac Ofiar Getta of ADR-0063 stage 4 (tools/city_alchemia.py).
 """
 import argparse, os, sys, zlib
 import numpy as np
@@ -258,7 +260,7 @@ def build_kit(dirs, out_dir):
 def main():
     ap = argparse.ArgumentParser()
     kit_args = ('commercial', 'cars', 'roads', 'neontown')
-    for k in kit_args + ('props', 'quaternius', 'ccby', 'street', 'market', 'doors', 'vehicles', 'drones', 'crowd', 'room'):
+    for k in kit_args + ('props', 'quaternius', 'ccby', 'street', 'market', 'doors', 'vehicles', 'drones', 'crowd', 'room', 'alchemia'):
         ap.add_argument('--' + k)
     ap.add_argument('--out', required=True)
     args = ap.parse_args()
@@ -268,7 +270,7 @@ def main():
         ap.error('the city kit needs all of --commercial --cars --roads --neontown')
     if any(props) and not all(props):
         ap.error('the props need all of --props --quaternius --ccby')
-    if not any(kit) and not any(props) and not args.street and not args.market and not args.doors and not args.vehicles and not args.drones and not args.crowd and not args.room:
+    if not any(kit) and not any(props) and not args.street and not args.market and not args.doors and not args.vehicles and not args.drones and not args.crowd and not args.room and not args.alchemia:
         ap.error('nothing to build')
     os.makedirs(args.out, exist_ok=True)
     if all(kit):
@@ -297,6 +299,9 @@ def main():
     if args.room:
         from city_room import build_room
         build_room(args.room, args.out)
+    if args.alchemia:
+        from city_alchemia import build_alchemia
+        build_alchemia(args.alchemia, args.out)
 
 
 if __name__ == '__main__':
