@@ -927,12 +927,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: użycie umiejętności Dash na terenie Tessen; prawdopodobnie ruch umiejętności liczony jako wtargnięcie albo atak
 - Pakiet właściciela: packages/sim (systemy przestępstw i ochrony)
 
-### G-281 Przy złej reputacji setki powiadomień bez przerwy
-- Status: w naprawie (4.11, priorytet użytkownika)
-- Ważność: S2 (proponowana: zalewa ekran) · Zasięg: zła reputacja w mieście; każdy uciekający lub reagujący NPC zdaje się generować własne powiadomienie
-- Poprawka: scalanie i limit powiadomień tego samego rodzaju; decyzja o samej panice w backlogu (reputacja)
-- Pakiet właściciela: packages/ui (powiadomienia) i packages/sim (źródło zdarzeń)
-
 ### G-282 Karabin Tessen w FPP ma model pistoletu
 - Status: zgłoszone (4.11, użytkownik, testowy przebieg; do odtworzenia)
 - Ważność: S3 · Zasięg: widok FPP z karabinem Tessen; możliwe także inne rodzaje broni bez własnego modelu
@@ -953,6 +947,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S2 (proponowana: blokuje mechanikę) · Zasięg: walka z gangerami; czujność NPC i kamer (`AWARENESS_STEP`, `GUARD_CONE`, `ganger-perception.ts`)
 - Do ustalenia: błąd w czujności czy brak trybu skradania (backlog, skradanie)
 - Pakiet właściciela: packages/sim/src/systems/ai
+
+### G-286 Scalony toast „×N” znika 4,5 s od pierwszego zdarzenia, nie od ostatniego
+- Status: zgłoszone (4.11, weryfikator G-281)
+- Ważność: S4 · Zasięg: każdy scalany toast; identyczne powiadomienie po 4,4 s widać ułamek sekundy; `sameToast` pomija flagę `keep` (dziś teoretyczne)
+- Pakiet właściciela: packages/ui (store, toasty)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)

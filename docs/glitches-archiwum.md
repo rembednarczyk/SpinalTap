@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-281 Przy złej reputacji setki powiadomień bez przerwy
+- Status: naprawione w #248 (4.11, afa615c; znacznik ucieczki resetowany dopiero 14 m od gracza, scalanie identycznych toastów „×N”, 30 s ciszy dla tej samej reakcji frakcji; 696 → 1 w teście sesji; zgłoszone przez użytkownika)
+- Ważność: S2 (proponowana: zalewa ekran) · Zasięg: zła reputacja w mieście; każdy uciekający lub reagujący NPC zdaje się generować własne powiadomienie
+- Poprawka: scalanie i limit powiadomień tego samego rodzaju; decyzja o samej panice w backlogu (reputacja)
+- Pakiet właściciela: packages/ui (powiadomienia) i packages/sim (źródło zdarzeń)
+
 ### G-279 Kamera przechyla się w osi i obrót kręci całym obrazem zamiast postacią
 - Status: naprawione w #246 (4.11, 45aad32; `updateUpVectorFromRotation`: wektor „góry” kamery z bieżącego obrotu w każdej klatce; zgłoszone przez użytkownika)
 - Ważność: S2 (proponowana: utrata sterowania) · Zasięg: niejasny, „w pewnym momencie” gry; do odtworzenia (ślad, nagranie)
