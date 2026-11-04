@@ -2,7 +2,7 @@ import { type TerrainGrid, type Vec3, terrainHeightAt } from "@seki/core";
 import type { World } from "miniplex";
 import type { Rect } from "../content/builders";
 import type { Entity } from "./components";
-import { type GroundDeck, deckCeiling, flightGradientAt, groundOver, onFlight } from "./deck";
+import { type GroundDeck, deckCeiling, flightGradientAt, flightsIn, groundOver, onFlight } from "./deck";
 
 /** What the ground needs of a chunk: where it is and, optionally, its terrain (ADR-0043). */
 export interface GroundChunk {
@@ -54,6 +54,10 @@ export class GroundField {
   private readonly buckets: readonly (readonly number[])[];
   /** The boxes of the flights of steps hung off a bridge (G-255) in the chunks' decks: almost everywhere none is near. */
   private readonly flightBoxes: readonly GroundDeck["box"][];
+  /** All of them in one box: a query far from it (almost all) is answered by one test. */
+  private readonly flightsBox: GroundDeck["box"];
+  /** The flights among each chunk's decks, found once: a height then costs what it did without them. */
+  private readonly chunkFlights: readonly (readonly GroundDeck[])[];
 
   constructor(chunks: readonly GroundChunk[]) {
     this.chunks = chunks;
@@ -79,10 +83,20 @@ export class GroundField {
     }
     this.buckets = buckets;
     this.flightBoxes = [...new Set(chunks.flatMap((c) => (c.decks ?? []).filter((d) => d.flight === true)))].map((d) => d.box);
+    this.chunkFlights = chunks.map((c) => flightsIn(c.decks ?? []));
+    const boxes = this.flightBoxes;
+    this.flightsBox = {
+      minX: Math.min(...boxes.map((b) => b.minX)),
+      maxX: Math.max(...boxes.map((b) => b.maxX)),
+      minZ: Math.min(...boxes.map((b) => b.minZ)),
+      maxZ: Math.max(...boxes.map((b) => b.maxZ)),
+    };
   }
 
   /** Is a flight of steps hung off a bridge (G-255) within `margin` of the box (`maxX`, `maxZ` default to the point)? */
   nearFlight(minX: number, minZ: number, margin: number, maxX = minX, maxZ = minZ): boolean {
+    const all = this.flightsBox;
+    if (minX > all.maxX + margin || maxX < all.minX - margin || minZ > all.maxZ + margin || maxZ < all.minZ - margin) return false;
     for (const b of this.flightBoxes) if (minX <= b.maxX + margin && maxX >= b.minX - margin && minZ <= b.maxZ + margin && maxZ >= b.minZ - margin) return true;
     return false;
   }
@@ -119,10 +133,11 @@ export class GroundField {
    */
   heightAt(x: number, z: number, reach = Infinity): number {
     if (!this.hasTerrain) return 0;
-    const chunk = this.chunks[this.chunkIndex(x, z)];
+    const i = this.chunkIndex(x, z);
+    const chunk = this.chunks[i];
     const grid = chunk?.terrain;
     const h = grid ? terrainHeightAt(grid, x, z) : 0;
-    return chunk?.decks ? groundOver(chunk.decks, x, z, h, reach) : h;
+    return chunk?.decks ? groundOver(chunk.decks, x, z, h, reach, this.chunkFlights[i]) : h;
   }
 
   /** The lowest underside of a bridge's deck over (x, z) at or above `head`, or Infinity (G-062). */
@@ -173,6 +188,18 @@ export class GroundField {
   onFlight(x: number, z: number): boolean {
     const decks = this.hasTerrain && this.nearFlight(x, z, 0) ? this.chunks[this.chunkIndex(x, z)]?.decks : undefined;
     return !!decks && onFlight(decks, x, z);
+  }
+
+  /**
+   * Is the ground at (x, z) a bridge's deck over the terrain with no room under it (G-062), by its
+   * abutments: ground for all feet, whose edge is a wall to the feet beside it more than a step low?
+   */
+  onLowDeck(x: number, z: number): boolean {
+    if (!this.hasTerrain) return false;
+    const chunk = this.chunks[this.chunkIndex(x, z)];
+    if (!chunk?.decks) return false;
+    const h = chunk.terrain ? terrainHeightAt(chunk.terrain, x, z) : 0;
+    return groundOver(chunk.decks, x, z, h, -Infinity) > h;
   }
 
   /** Too steep to walk on (a bank, ADR-0043)? */

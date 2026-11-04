@@ -87,6 +87,19 @@ describe("chasing the player over the steps from the viaduct of Zamkowa (G-255)"
     }
   }, 120_000);
 
+  // Under the viaduct from the street south-east of it to the one north-west: on main about
+  // 8-12 s (under the deck, so below the ground drawn there). The deck's edges at its abutments
+  // are walls more than a step high; a way that climbs them stops on the eastern abutment.
+  it("gets under the viaduct of Zamkowa from the south-east to the north-west", () => {
+    for (const [from, to] of [
+      [{ x: 756.7, z: 158.3 }, { x: 738.3, z: 182.8 }],
+      [{ x: 758, z: 157 }, { x: 740, z: 181 }],
+      [{ x: 752.6, z: 163 }, { x: 738.3, z: 182.8 }],
+    ] as const) {
+      expect(chase(from, to, "podzamcze-1-0", 20).time, `(${from.x}, ${from.z}) → (${to.x}, ${to.z})`).not.toBeNull();
+    }
+  }, 120_000);
+
   // From the viaduct's deck east of the flight's top to the foot: on main about
   // 7 s, the time to walk it. A wall in the ground there is measured cell to cell, not from the
   // feet, which on the treads lie off the cells' heights (round 6 stopped by the lower run).

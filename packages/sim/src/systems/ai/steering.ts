@@ -69,6 +69,8 @@ interface Raster {
    * on one, `NEAR_FLIGHT` within `FLIGHT_MARGIN` of one, else 0; null when none is near the window.
    */
   readonly flight: Uint8Array | null;
+  /** With `base`, `ON_LEDGE` where a cell tops the edge of a bridge's deck with no room under it (`ledgesOf`), else 0; null when none is in the window. */
+  readonly ledges: Uint8Array | null;
 }
 
 interface Field {
@@ -190,6 +192,39 @@ const flightsOf = (ground: GroundField, x0: number, z0: number): Uint8Array | nu
 };
 
 /**
+ * The steepest rise from a cell to its neighbour that a walker climbs (m): the movement's slope
+ * over the half metre it measures (ADR-0043). Onto a bridge's deck over its edge, by its
+ * abutments, a rise more than that is a wall, a step of 0.44 m too.
+ */
+const LEDGE = MAX_WALK_SLOPE * NAV_CELL;
+const ON_LEDGE = 1;
+
+/**
+ * Which cells of the window top the edge of a bridge's deck over the terrain with no room under
+ * it (G-062), more than `LEDGE` (`LEDGE` · √2 diagonally) over a neighbour (`ON_LEDGE`), or null
+ * when none is: by the abutments of the viaduct of Zamkowa (G-255) as by any bridge's. The field
+ * keeps the cells at their foot open, a way along the edge (between two decks of Mełgiewska,
+ * G-068), so the walk does not climb onto them. The deck is looked up only at such a rise.
+ */
+const ledgesOf = (base: Float64Array, ground: GroundField, x0: number, z0: number): Uint8Array | null => {
+  let out: Uint8Array | null = null;
+  for (let iz = 0; iz < CELLS; iz++) {
+    for (let ix = 0; ix < CELLS; ix++) {
+      const h = base[iz * CELLS + ix] ?? 0;
+      let edge = false;
+      for (const [dx, dz] of STEPS) {
+        const nx = ix + dx;
+        const nz = iz + dz;
+        if (nx >= 0 && nz >= 0 && nx < CELLS && nz < CELLS) edge ||= h - (base[nz * CELLS + nx] ?? 0) > (dx !== 0 && dz !== 0 ? LEDGE * Math.SQRT2 : LEDGE);
+      }
+      if (!edge || !ground.onLowDeck(centre(ix, x0), centre(iz, z0))) continue;
+      (out ??= new Uint8Array(CELLS * CELLS))[iz * CELLS + ix] = ON_LEDGE;
+    }
+  }
+  return out;
+};
+
+/**
  * Cells of the ground floor on a bank too steep to walk (ADR-0043) are closed, and so are those
  * at the foot of a flight of steps hung off a bridge (G-255) more than a step over them: its side
  * is a wall on one line, which the slope at the cells' middles, either side of it, does not see.
@@ -229,6 +264,7 @@ const rasterise = (solids: readonly Collider[], floor: number, reach: number, x0
   const open = new Uint8Array(CELLS * CELLS);
   const base = terrainOf(ground, x0, z0, reach);
   const flight = base && floor === 0 ? flightsOf(ground, x0, z0) : null;
+  const ledges = base && floor === 0 ? ledgesOf(base, ground, x0, z0) : null;
   if (floor === 0) {
     open.fill(1);
     if (base) closeBanks(open, base, flight, ground, x0, z0, reach);
@@ -271,7 +307,7 @@ const rasterise = (solids: readonly Collider[], floor: number, reach: number, x0
       }
     }
   }
-  return { x0, z0, floor, reach, open, base: relative ? base : null, flight: relative ? flight : null };
+  return { x0, z0, floor, reach, open, base: relative ? base : null, flight: relative ? flight : null, ledges: relative ? ledges : null };
 };
 
 /** Distance of a cell the field does not reach. */
@@ -383,9 +419,10 @@ const nearest = (c: number, reach: number, ok: (n: number) => boolean): number =
 /**
  * True when a body walks from `a` to `b` through open cells only (the first `NEAR_SKIP` metres
  * excepted), in a window with a flight hung off a bridge never climbing more than a step between
- * two samples: its side (G-255, whose foot is closed only a cell wide), and a bridge's deck over
- * the terrain beyond its margin, which the field does not close (the viaduct's abutment by
- * w294098693, 0.56 m, where the chase along Podwale stopped).
+ * two samples onto one or by it: its side (G-255, whose foot is closed only a cell wide); nor
+ * onto a bridge's deck over its edge (`ledgesOf`) more than a walkable rise, which the open
+ * cells do not show: the chase along Podwale stopped at the viaduct's western abutment by
+ * w294098693 (0.56 m), and one under the viaduct at its eastern one.
  */
 const walkable = (r: Raster, a: Vec3, b: Vec3): boolean => {
   const len = Math.hypot(b.x - a.x, b.z - a.z);
@@ -397,9 +434,10 @@ const walkable = (r: Raster, a: Vec3, b: Vec3): boolean => {
     const t = i / n;
     const c = cellIndex(r, a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t);
     if (c < 0) return false;
-    if (r.base && r.flight) {
+    if (r.base && (r.flight || r.ledges)) {
       const h = r.base[c] ?? 0;
-      if (h - last > STEP_HEIGHT) return false;
+      if ((r.flight?.[c] ?? 0) > 0 && h - last > STEP_HEIGHT) return false;
+      if (r.ledges?.[c] === ON_LEDGE && h - last > LEDGE) return false;
       last = h;
     }
     if (t * len >= NEAR_SKIP && !r.open[c]) return false;
