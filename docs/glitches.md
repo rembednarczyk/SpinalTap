@@ -898,7 +898,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Test przyjęcia: w obrysie każdego kawałka mostu `groundY` nie leży niżej niż pomost o więcej niż `STEP_HEIGHT` poza przejściami pod mostem (G-062); kontrola skanu `deck-drawn-over-flight` 40 → 0; testy G-255 (`flight-walk`, `flight-chase`) dalej zielone
 
 ### G-275 W TPP przy celowaniu z bliska (zwłaszcza w kucaniu) postać zasłania cel
-- Status: w PR #243 (4.11, runda 1 @ f97804c NIE PRZYJĘTE: przesunięcie ramienia 0,8 m bez sprawdzenia ściany pozwala strzelać i patrzeć przez ścianę (388/739 pozycji we wnętrzach, było 8), strzał i celownik rozjeżdżają się 0,22 s przy zmianie ramienia, objaw w TPP nieodtworzony (zasłona ≤ 9%); użytkownik 4.11: objaw był w FPP (broń w widoku z pierwszej osoby zasłania cel); runda 2 nowy autor po wolnym slocie: FPP + cofnięcie 0,8 m albo przycięcie do ściany)
+- Status: w PR #243 (4.11, runda 2 @ 1515af6 w weryfikacji: FPP ADS 4 cm niżej i bez podrzutu lufy, zasłonięcie 66–85% → 0%; TPP z powrotem 0,55 m; zmiana ramienia bez rozjazdu; runda 1 @ f97804c NIE PRZYJĘTE; objaw w FPP według użytkownika)
 - Ważność: S3 (zgłoszenie gracza, podstawowa mechanika strzelania) · Zasięg: kamera TPP (`packages/engine/src/camera/camera-rig.ts`: `TPP_DISTANCE` 2,2 m, `TPP_SHOULDER_OFFSET` 0,55 m z `packages/sim/src/world/hitscan.ts`, `TPP_HEIGHT_OFFSET` 0, `TPP_ADS_PULL` 0,45; w kucaniu kamera tylko obniża się z `eyeHeightAt`), cel z przyłożenia i do kilku metrów · Koszt: średni
 - Rozwiązania branżowe do połączenia: (1) przy celowaniu i w kucaniu większe przesunięcie przez ramię i lekko w górę (postać ucieka na bok kadru); (2) zmiana ramienia klawiszem/padem (akcja wejścia, i18n, opcje sterowania); (3) przezroczystość albo wzór kropek (dither, pasuje do NPR) postaci, gdy zasłania celownik lub kamera jest blisko; (4) strzał z promienia kamery z poprawką lufy, żeby trafienie było tam, gdzie celownik, przy dużych przesunięciach (hitscan w `sim` już liczy punkt startu z kucaniem: sprawdzić zgodność, bo stałe przesunięcia są w `sim`)
 - Pakiet właściciela: packages/engine (camera, npr), packages/sim (hitscan: stałe przesunięć, jeśli się zmieniają; złote hashe), packages/engine/src/input (zmiana ramienia), packages/ui (opcje)
@@ -972,6 +972,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (4.11, naprawiacz G-280; do sprawdzenia, czy zamierzone)
 - Ważność: S4 · Zasięg: `zoneActive` w `world/disguise.ts` nie uwzględnia `codeKnown` (jego odpowiednik w `crime-system.ts` tak); przy przyjaznej postawie Tessen „Cover blown” bez skutku
 - Pakiet właściciela: packages/sim (world/disguise.ts)
+
+### G-291 Kamera i start strzału TPP w bryle ściany przy ramieniu dociśniętym do ściany
+- Status: zgłoszone (4.11, autor G-275 runda 2; stan sprzed G-275)
+- Ważność: S3 · Zasięg: przesunięcie ramienia 0,55 m bez przycinania; 8/739 pozycji we wnętrzach startuje strzał za ścianą, kamera widzi przez ścianę (kapsuła z = −134,37 przy ścianie −134,2…−134,5)
+- Poprawka: przycinać ramię do pierwszej przeszkody (`rayGeometry`), wspólnie dla sim (`aimOrigin`) i kamery
+- Pakiet właściciela: packages/sim (world/hitscan) i packages/engine (camera)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
