@@ -911,7 +911,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim i treść lublin; docelowo winda w Alchemii (backlog)
 
 ### G-285 Przeciwnicy wykrywają gracza natychmiast, takedown niemożliwy
-- Status: w pracy przez ADR-0069 (4.11: diagnoza: brak mechaniki skradania; stożek, kucanie i licznik podejrzeń ma tylko ochrona Tessen, Hebi i Kagami widzą dookoła na 17 m i alarmują od razu; ADR-0069 zaakceptowany przez użytkownika, PR #250; etap 1 w budowie)
+- Status: etap 1 ADR-0069 w main #252 (4.11, 75eda14: stożek, kucanie i licznik dla wszystkich wrogów; kucanie od tyłu kończy się obezwładnieniem); etap 2 (słuch kroków) w kolejce
 - Ważność: S2 (proponowana: blokuje mechanikę) · Zasięg: walka z gangerami; czujność NPC i kamer (`AWARENESS_STEP`, `GUARD_CONE`, `ganger-perception.ts`)
 - Do ustalenia: błąd w czujności czy brak trybu skradania (backlog, skradanie)
 - Pakiet właściciela: packages/sim/src/systems/ai
