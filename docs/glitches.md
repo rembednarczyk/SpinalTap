@@ -922,11 +922,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: na szwie brać pomosty obu chunków (albo indeks pomostów niezależny od chunka); test w punktach z = granica
 - Pakiet właściciela: packages/sim (world/deck)
 
-### G-279 Kamera przechyla się w osi i obrót kręci całym obrazem zamiast postacią
-- Status: w PR #246 (4.11, @ 87d664e w weryfikacji; `upVector` Babylona nie wraca po rollu wstrząsu i metra)
-- Ważność: S2 (proponowana: utrata sterowania) · Zasięg: niejasny, „w pewnym momencie” gry; do odtworzenia (ślad, nagranie)
-- Pakiet właściciela: packages/engine (camera)
-
 ### G-280 Dash uruchamia ochronę Tessen (security) w siedzibie Tessen
 - Status: zgłoszone (4.11, użytkownik, testowy przebieg; do odtworzenia)
 - Ważność: S3 · Zasięg: użycie umiejętności Dash na terenie Tessen; prawdopodobnie ruch umiejętności liczony jako wtargnięcie albo atak

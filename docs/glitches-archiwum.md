@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-279 Kamera przechyla się w osi i obrót kręci całym obrazem zamiast postacią
+- Status: naprawione w #246 (4.11, 45aad32; `updateUpVectorFromRotation`: wektor „góry” kamery z bieżącego obrotu w każdej klatce; zgłoszone przez użytkownika)
+- Ważność: S2 (proponowana: utrata sterowania) · Zasięg: niejasny, „w pewnym momencie” gry; do odtworzenia (ślad, nagranie)
+- Pakiet właściciela: packages/engine (camera)
+
 ### G-268 Kable przęseł nad ulicą wiszą za nisko, kilka pod ziemią
 - Status: naprawione w #244 (2.11, b225f89; runda 2 @ ae0a0f2 PRZYJĘTE; przęsła < 3,45 m: 21 → 0, telefon 5 → 0; kontrola `cable-low` baza 0)
 - Ważność: S4 (S3, jeśli kabel przecina przechodniów na wysokości głowy) · Zasięg: 11 przęseł niżej niż 2,5 m nad rysowaną nawierzchnią, m.in. x≈996, z≈568 (do −7,8 m, pod ziemią), x≈520, z≈171 (−2,6 m), x≈634, z≈124 (2,1 m) · Koszt: mały
