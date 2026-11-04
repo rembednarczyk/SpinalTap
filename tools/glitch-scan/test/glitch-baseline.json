@@ -92,6 +92,7 @@
   "banner-in-neighbour": 0,
   "holo-or-blade-in-neighbour": 0,
   "tube-in-neighbour": 0,
+  "cable-low": 0,
   "market-piece-in-building": 0,
   "market-piece-on-road": 0,
   "market-piece-in-crossing": 0,

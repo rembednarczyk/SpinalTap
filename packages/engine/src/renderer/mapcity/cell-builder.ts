@@ -113,7 +113,7 @@ export class CellBuilder {
     const place = facadeProps ? (s: PropSlot) => slots.push(s) > 0 : undefined;
     planNearFrames(sink, cell.frames, lite, place, obstacles);
     if (facadeProps) bakeSlots(sink, facadeProps, slots, lite);
-    planNearCanyon(sink, cell.spans, lite);
+    planNearCanyon(sink, cell.spans, lite, this.deps.entries.drawnGround);
     if (sink.empty) return;
     const m = this.mesh(`map-near-${cell.key}`, sink, "facade");
     m.setEnabled(false);
