@@ -23,6 +23,7 @@ import { marketChecks } from "./market-pieces";
 import { vehicleChecks } from "./vehicle-pieces";
 import { figureChecks } from "./figure-pieces";
 import { signsInNeighbours } from "./sign-neighbours";
+import { lowCables } from "./cable-spans";
 import { lanternsByPassages } from "./passage-lanterns";
 import { mixedLampWays, plainLampsByStyled, plainLampsIn } from "./lamp-styles";
 import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight, towersSkipped } from "./landmark-heights";
@@ -1572,6 +1573,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "holo-or-blade-in-neighbour": () => signsIn([MAP_SIGN_KIND.holo, MAP_SIGN_KIND.blade]),
   /** A neon tube under the cornice (ADR-0044) running on into the building next door (G-170). */
   "tube-in-neighbour": () => signsIn([MAP_SIGN_KIND.tube]),
+  /** A span's cable or lantern over the street (ADR-0051) under 2.5 m over the paving drawn under it, or in it (G-268). */
+  "cable-low": () => lowCables().low.map((l) => ({ at: near(l.x, l.z), what: `${l.building}: ${l.clearance.toFixed(2)} m over the paving` })),
   // The market's furniture of ADR-0058 stage 3 against the map data (`market-pieces.ts`).
   ...marketChecks(SOURCE_OSM, Object.values(WORLD_STREET_PROPS).flat(), CROWD_LANES),
   // The decals of ADR-0058 stage 6 against the drawn walls, signs, hosts and carriageways (`decal-pieces.ts`).
