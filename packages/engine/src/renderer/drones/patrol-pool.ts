@@ -17,8 +17,19 @@ export const poolDrop = (p: PatrolPose): number | null => {
   return drop <= BEAM_FROM ? drop : null;
 };
 
-/** The pool's radius for a drop (m): in 5 cm steps of the drop, so the bob does not stir it while the drone hangs. */
-export const poolRadius = (drop: number): number => Math.round(drop / 0.05) * 0.05 * BEAM_SPREAD;
+/**
+ * Over this many metres of the drop under `BEAM_FROM` the pool grows from nothing (m): to its full
+ * size 5 m over the paving, over the bob of the 4.6 m it hangs at. Over the 3 m its radius,
+ * `BEAM_SPREAD` drop (BEAM_FROM - drop) / BEAM_GROW, only grows as the drone comes down (it would
+ * shrink only under 4 m), so the pool never flashes wider than it lies under the hanging drone.
+ */
+export const BEAM_GROW = 3;
+
+/** The pool's radius for a drop (m): in 5 cm steps of the drop, so the bob does not stir it while the drone hangs; from nothing at `BEAM_FROM`. */
+export const poolRadius = (drop: number): number => {
+  const d = Math.round(drop / 0.05) * 0.05;
+  return d * BEAM_SPREAD * Math.max(0, Math.min(1, (BEAM_FROM - d) / BEAM_GROW));
+};
 
 /**
  * A point of the unit disc (x along world x, z along world z: a round pool needs no heading, so it

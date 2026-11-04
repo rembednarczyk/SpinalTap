@@ -30,7 +30,7 @@ import {
 } from "../src/renderer/drones/patrol-flight";
 import { MIN_LANE, type PatrolWorld, ROOF_ROOM, planPatrolLanes } from "../src/renderer/drones/patrol-lanes";
 import { POOL_SEGMENTS, patrolTemplates } from "../src/renderer/drones/patrol-models";
-import { POOL_LIFT } from "../src/renderer/drones/patrol-pool";
+import { BEAM_SPREAD, POOL_LIFT, poolDrop, poolRadius } from "../src/renderer/drones/patrol-pool";
 import type { P2 } from "../src/renderer/mapcity/polygon";
 
 const file = (name: string): ArrayBuffer => {
@@ -173,6 +173,30 @@ describe("low patrol flight (ADR-0058 stage 7b)", () => {
       expect(street, `seed ${seed}`).toBeGreaterThan(column - unseen);
       expect(column / cycle, `seed ${seed}`).toBeLessThan(0.55);
     }
+  });
+
+  it("grows its searchlight's pool from nothing as it comes down under the beam's height, never wider than under the hanging drone", () => {
+    expect(poolRadius(BEAM_FROM)).toBe(0);
+    expect(poolRadius(BEAM_FROM - 0.05)).toBeLessThan(0.05);
+    // Hanging, bob included: its full radius, unstirred by the bob's 5 cm steps.
+    const hang = poolRadius(PATROL_ALTITUDE);
+    expect(hang).toBeCloseTo(PATROL_ALTITUDE * BEAM_SPREAD, 6);
+    // Down a patrol's descent, step by step: from nothing, no jump, never wider than 10 % over its hanging pool.
+    const p = patrolOf(lane(80, 3));
+    let prev: number | null = null;
+    let lit = 0;
+    for (let t = 0; t < patrolCycle(p); t += 0.01) {
+      const q = patrolPose(p, t - p.offset);
+      const drop = q && poolDrop(q);
+      const r = drop === null || drop === undefined ? null : poolRadius(drop);
+      if (r !== null && prev === null) expect(r, `t ${t}`).toBeLessThan(0.05);
+      if (r !== null && prev !== null) expect(Math.abs(r - prev), `t ${t}`).toBeLessThan(0.05);
+      if (r !== null) expect(r).toBeLessThanOrEqual(hang * 1.1);
+      if (r !== null && prev === null) lit++;
+      prev = r;
+    }
+    // Lit on both ways down.
+    expect(lit).toBe(2);
   });
 
   it("puts about ten on high, three of them over the Old Town, half on medium and none on a phone", () => {
