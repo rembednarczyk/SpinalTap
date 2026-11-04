@@ -7,10 +7,27 @@ const LANDING_SOUND_DROP = 0.5;
 
 const REFUSAL: Partial<Record<FactionId, MessageKey>> = { clinic: "world.refusal.clinic", civilians: "world.refusal.civilians" };
 
+/**
+ * After a reaction toast (passers-by run, the gang warns) has gone, the same reaction stays
+ * quiet this long (s of play): in a crowd that fears the player every passer-by reacts, and one
+ * toast says it for all of them (G-281). While the toast is up, the others are counted on it.
+ */
+const REACTION_GAP = 30;
+
 /** The world around the player: interactions, death, movement sounds, the camera, NPC reactions and time. */
 export const presentWorld: Presenter = ({ bus, render, audio, ui, hooks, toast, isPlayer }) => {
   // A toast is written in the language of the moment it appears (ADR-0056).
   const t: Translate = (key, params) => translate(ui.getState().settings.locale, key, params);
+  const reacted = new Map<string, { at: number; id: number }>();
+  const reactionToast = (key: string, title: string, text: string) => {
+    const now = hooks.playSeconds?.() ?? 0;
+    const last = reacted.get(key);
+    const onScreen = last !== undefined && ui.getState().toasts.some((x) => x.id === last.id);
+    // A load can take the clock back: the gap then counts from the load on.
+    const quiet = hooks.playSeconds !== undefined && last !== undefined && now >= last.at && now - last.at < REACTION_GAP;
+    if (!onScreen && quiet) return;
+    reacted.set(key, { at: onScreen ? last.at : now, id: toast("reputation", title, text) });
+  };
   return [
     // Jumps and landings (ADR-0021): the player's own; a step off a kerb stays silent.
     bus.on("Jumped", (e) => {
@@ -41,8 +58,9 @@ export const presentWorld: Presenter = ({ bus, render, audio, ui, hooks, toast, 
       audio.play("denied");
     }),
     bus.on("NpcReacted", (e) => {
-      if (e.reaction === "warn") toast("reputation", t("world.hebiWarn"), t("world.hebiLetPass"));
-      else toast("reputation", t("world.fleeing"), t("world.afraid", { faction: t(FACTIONS[e.faction]) }));
+      const key = `${e.reaction}:${e.faction}`;
+      if (e.reaction === "warn") reactionToast(key, t("world.hebiWarn"), t("world.hebiLetPass"));
+      else reactionToast(key, t("world.fleeing"), t("world.afraid", { faction: t(FACTIONS[e.faction]) }));
     }),
     bus.on("CameraModeChanged", (e) => render.setCameraMode(e.mode)),
     // A car held up by the player sounds its horn (ADR-0050).

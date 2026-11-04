@@ -14,6 +14,12 @@ type Agent = ConstructorParameters<typeof BehaviourTree>[1];
 
 /** Civilians run from a feared player closer than this (metres). */
 export const FLEE_RADIUS = 7;
+/**
+ * An escape from the player ends (and the next one gets its own cue) only this far from them or
+ * once the street stops fearing them: a passer-by going back to its spot steps over FLEE_RADIUS
+ * again and again, and each step used to cue a new escape (G-281).
+ */
+const FLEE_CUE_RESET = 2 * FLEE_RADIUS;
 export const CIVILIAN_FLEE_SPEED = 3.4;
 const CIVILIAN_WALK_SPEED = 1.4;
 /** Fastest a civilian hurries to catch up with its daily plan (after fleeing, say). */
@@ -161,7 +167,7 @@ class CivilianAgent {
   ReturnHome = (): State => {
     const { self, ctx } = this;
     if (!self) return State.FAILED;
-    this.fleeing = false;
+    if (this.distance > FLEE_CUE_RESET || !this.FearsPlayer()) this.fleeing = false;
     // A background passer-by goes on with its routine (ADR-0040).
     if (ctx && hasRoutine(self)) {
       walkRoutine(ctx, self, ctx.dt);

@@ -402,12 +402,20 @@ let toastSeq = 0;
  */
 const isKeptToast = (t: Toast): boolean => t.kind === "quest" || t.kind === "memory" || t.keep === true;
 
+const sameToast = (a: Omit<Toast, "id">, b: Omit<Toast, "id">): boolean => a.kind === b.kind && a.title === b.title && a.text === b.text;
+
 /**
  * Shows a toast; over TOAST_LIMIT the oldest toast goes, but one that is not kept first, so a
  * burst (an ending with its reputation, level-up and quest toasts) does not push the ending out.
- * When every toast is kept, the oldest goes.
+ * When every toast is kept, the oldest goes. A toast identical to one on screen does not take a
+ * place of its own: the one on screen counts it and its id comes back (G-281).
  */
 export const pushToast = (store: UiStore, toast: Omit<Toast, "id">): number => {
+  const twin = store.getState().toasts.find((t) => sameToast(t, toast));
+  if (twin) {
+    store.setState((s) => ({ toasts: s.toasts.map((t) => (t.id === twin.id ? { ...t, count: (t.count ?? 1) + 1 } : t)) }));
+    return twin.id;
+  }
   const id = ++toastSeq;
   store.setState((s) => {
     const toasts = [...s.toasts, { ...toast, id }];
