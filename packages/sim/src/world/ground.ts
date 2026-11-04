@@ -2,7 +2,7 @@ import { type TerrainGrid, type Vec3, terrainHeightAt } from "@seki/core";
 import type { World } from "miniplex";
 import type { Rect } from "../content/builders";
 import type { Entity } from "./components";
-import { type GroundDeck, deckAt, deckCeiling } from "./deck";
+import { type GroundDeck, deckCeiling, flightGradientAt, flightsIn, groundOver, onFlight } from "./deck";
 
 /** What the ground needs of a chunk: where it is and, optionally, its terrain (ADR-0043). */
 export interface GroundChunk {
@@ -21,6 +21,17 @@ const BUCKET = 64;
 
 const inside = (r: Rect, x: number, z: number): boolean => x >= r.minX && x <= r.maxX && z >= r.minZ && z <= r.maxZ;
 const distanceTo = (r: Rect, x: number, z: number): number => Math.hypot(Math.max(r.minX - x, 0, x - r.maxX), Math.max(r.minZ - z, 0, z - r.maxZ));
+
+/** The step a character walks up without noticing (the movement's `STEP_HEIGHT`): a seam beside a flight no higher is no bank (G-255). */
+export const SEAM_STEP = 0.45;
+
+/** The four samples of the gradient, in half spans: east, west, north, south. */
+const AROUND: readonly (readonly [number, number])[] = [
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+];
 
 /**
  * The ground of the world (ADR-0043): the terrain of the chunk a point lies in (the first one in
@@ -41,6 +52,12 @@ export class GroundField {
   private readonly cols: number;
   private readonly rows: number;
   private readonly buckets: readonly (readonly number[])[];
+  /** The boxes of the flights of steps hung off a bridge (G-255) in the chunks' decks: almost everywhere none is near. */
+  private readonly flightBoxes: readonly GroundDeck["box"][];
+  /** All of them in one box: a query far from it (almost all) is answered by one test. */
+  private readonly flightsBox: GroundDeck["box"];
+  /** The flights among each chunk's decks, found once: a height then costs what it did without them. */
+  private readonly chunkFlights: readonly (readonly GroundDeck[])[];
 
   constructor(chunks: readonly GroundChunk[]) {
     this.chunks = chunks;
@@ -65,6 +82,23 @@ export class GroundField {
       });
     }
     this.buckets = buckets;
+    this.flightBoxes = [...new Set(chunks.flatMap((c) => (c.decks ?? []).filter((d) => d.flight === true)))].map((d) => d.box);
+    this.chunkFlights = chunks.map((c) => flightsIn(c.decks ?? []));
+    const boxes = this.flightBoxes;
+    this.flightsBox = {
+      minX: Math.min(...boxes.map((b) => b.minX)),
+      maxX: Math.max(...boxes.map((b) => b.maxX)),
+      minZ: Math.min(...boxes.map((b) => b.minZ)),
+      maxZ: Math.max(...boxes.map((b) => b.maxZ)),
+    };
+  }
+
+  /** Is a flight of steps hung off a bridge (G-255) within `margin` of the box (`maxX`, `maxZ` default to the point)? */
+  nearFlight(minX: number, minZ: number, margin: number, maxX = minX, maxZ = minZ): boolean {
+    const all = this.flightsBox;
+    if (minX > all.maxX + margin || maxX < all.minX - margin || minZ > all.maxZ + margin || maxZ < all.minZ - margin) return false;
+    for (const b of this.flightBoxes) if (minX <= b.maxX + margin && maxX >= b.minX - margin && minZ <= b.maxZ + margin && maxZ >= b.minZ - margin) return true;
+    return false;
   }
 
   /** Index of the chunk whose ground is used at (x, z), or -1 with no chunks. */
@@ -93,17 +127,17 @@ export class GroundField {
   }
 
   /**
-   * Ground height at (x, z): the terrain, or a bridge's deck over it (ADR-0053), or 0. For feet
-   * reaching up to `reach`, a deck high over the terrain and above the reach is overhead: under
-   * it the ground is the terrain (G-062).
+   * Ground height at (x, z): the terrain, or a bridge's deck over it (ADR-0053) or a flight of
+   * steps hung off one (G-255), or 0. For feet reaching up to `reach`, a deck high over the
+   * terrain and above the reach is overhead: under it the ground is the terrain (G-062).
    */
   heightAt(x: number, z: number, reach = Infinity): number {
     if (!this.hasTerrain) return 0;
-    const chunk = this.chunks[this.chunkIndex(x, z)];
+    const i = this.chunkIndex(x, z);
+    const chunk = this.chunks[i];
     const grid = chunk?.terrain;
     const h = grid ? terrainHeightAt(grid, x, z) : 0;
-    const deck = chunk?.decks ? deckAt(chunk.decks, x, z, reach, h) : null;
-    return deck !== null && deck > h ? deck : h;
+    return chunk?.decks ? groundOver(chunk.decks, x, z, h, reach, this.chunkFlights[i]) : h;
   }
 
   /** The lowest underside of a bridge's deck over (x, z) at or above `head`, or Infinity (G-062). */
@@ -117,7 +151,9 @@ export class GroundField {
   /**
    * Gradient of the ground at (x, z), written into `out`: central differences over 0.5 m, a
    * smoothed normal that ignores bumps finer than that. Zero on the street plane. `reach` as in
-   * `heightAt`.
+   * `heightAt`. On a flight of steps hung off a bridge in reach, the flight's own grade (G-255);
+   * and beside one, where a sample lies on it, when no sample is more than a step off the point:
+   * its seam with the terrain is no bank, but a wall above a step past the flight still is.
    */
   gradientAt(x: number, z: number, out: { x: number; z: number }, reach = Infinity): { x: number; z: number } {
     if (!this.hasTerrain || !this.gridAt(x, z)) {
@@ -126,8 +162,19 @@ export class GroundField {
       return out;
     }
     const h = SLOPE_HALF_SPAN;
-    out.x = (this.heightAt(x + h, z, reach) - this.heightAt(x - h, z, reach)) / (2 * h);
-    out.z = (this.heightAt(x, z + h, reach) - this.heightAt(x, z - h, reach)) / (2 * h);
+    const decks = this.nearFlight(x, z, h) ? this.chunks[this.chunkIndex(x, z)]?.decks : undefined;
+    if (decks && flightGradientAt(decks, x, z, reach, out)) return out;
+    const east = this.heightAt(x + h, z, reach);
+    const west = this.heightAt(x - h, z, reach);
+    const north = this.heightAt(x, z + h, reach);
+    const south = this.heightAt(x, z - h, reach);
+    if (decks) {
+      const here = this.heightAt(x, z, reach);
+      const seam = Math.max(Math.abs(east - here), Math.abs(west - here), Math.abs(north - here), Math.abs(south - here)) <= SEAM_STEP;
+      if (seam) for (const [dx, dz] of AROUND) if (flightGradientAt(decks, x + dx * h, z + dz * h, reach, out)) return out;
+    }
+    out.x = (east - west) / (2 * h);
+    out.z = (north - south) / (2 * h);
     return out;
   }
 
@@ -137,9 +184,32 @@ export class GroundField {
     return Math.hypot(g.x, g.z);
   }
 
+  /** Is (x, z) on a flight of steps hung off a bridge (G-255)? */
+  onFlight(x: number, z: number): boolean {
+    const decks = this.hasTerrain && this.nearFlight(x, z, 0) ? this.chunks[this.chunkIndex(x, z)]?.decks : undefined;
+    return !!decks && onFlight(decks, x, z);
+  }
+
+  /**
+   * Is the ground at (x, z) a bridge's deck over the terrain with no room under it (G-062), by its
+   * abutments: ground for all feet, whose edge is a wall to the feet beside it more than a step low?
+   */
+  onLowDeck(x: number, z: number): boolean {
+    if (!this.hasTerrain) return false;
+    const chunk = this.chunks[this.chunkIndex(x, z)];
+    if (!chunk?.decks) return false;
+    const h = chunk.terrain ? terrainHeightAt(chunk.terrain, x, z) : 0;
+    return groundOver(chunk.decks, x, z, h, -Infinity) > h;
+  }
+
   /** Too steep to walk on (a bank, ADR-0043)? */
   steepAt(x: number, z: number, reach = Infinity): boolean {
-    return this.hasTerrain && this.slopeAt(x, z, reach) > MAX_WALK_SLOPE;
+    if (!this.hasTerrain) return false;
+    // By a flight hung off a bridge, ground more than a step over the feet (the reach) is a wall
+    // however level it is there: a dash of 0.23 m a step reaches past the samples of the slope,
+    // onto the flight's side or the deck over its landing (G-255).
+    if (Number.isFinite(reach) && this.nearFlight(x, z, SLOPE_HALF_SPAN) && this.heightAt(x, z, reach) > reach) return true;
+    return this.slopeAt(x, z, reach) > MAX_WALK_SLOPE;
   }
 
   /** Height of the ray above the ground at distance t (the street plane counts as -Infinity below). */
