@@ -160,9 +160,9 @@ describe("Alchemia on Plac Ofiar Getta (ADR-0063 stage 4)", () => {
     const body = ALCHEMIA_PROPS[0]!.prisms![0]!;
     expect(body.top + hall.base).toBeCloseTo(ALCHEMIA_ROOF.y, 6);
     expect(ALCHEMIA_ROOF.y - hall.floor).toBeCloseTo(ALCHEMIA_HALL_ROOF, 6);
-    // Some 6 × 7 m of roof, inside the hall's footprint.
+    // Some 8 × 9 m of roof, inside the hall's footprint.
     const [a, b, c] = ALCHEMIA_ROOF.corners;
-    expect(Math.hypot(b!.x - a!.x, b!.z - a!.z) * Math.hypot(c!.x - b!.x, c!.z - b!.z)).toBeGreaterThan(40);
+    expect(Math.hypot(b!.x - a!.x, b!.z - a!.z) * Math.hypot(c!.x - b!.x, c!.z - b!.z)).toBeGreaterThan(60);
     for (const q of ALCHEMIA_ROOF.corners) expect(inModule(q, hall, 1e-6)).toBe(true);
     // The lift: 3 × 3 m against the hall's back, inside the plot, off the stalls, the paths and the map's buildings.
     const lift = { key: "lift", x: ALCHEMIA_LIFT_SITE.centre.x, z: ALCHEMIA_LIFT_SITE.centre.z, yaw: ALCHEMIA_LIFT_SITE.yaw, width: ALCHEMIA_LIFT_SITE.size, depth: ALCHEMIA_LIFT_SITE.size, height: 12 };
