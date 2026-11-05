@@ -61,8 +61,12 @@ const LIFTED = 0.3;
 /**
  * Paint by and on the decks against the surface it lies on: `paint-under-deck` (one per marking,
  * zebra or flight, at its deepest point under the deck's carriageway) and `paint-lifted-by-deck`
- * (its highest over the terrain beside the deck, pulled up to it). Only the triangles wholly on a
- * deck or wholly off every one: a triangle across a deck's outline runs between the two by design.
+ * (its highest over the terrain beside the deck, pulled up to it). A triangle across a deck's
+ * outline counts for the first by its points on the deck (G-330: a line's end past the outline
+ * pulled down the step to the terrain, a flight's band on the deck laid on the terrain under it),
+ * not for the second: past the outline it may run on at the deck's height, a line cut at the
+ * bridge's end and rounded past it. A way's paint under a deck with headroom over it (G-062) is
+ * off the deck (`top`): a way under a bridge does not count.
  */
 export const deckPaint = (entries: MapEntries): { under: Finding[]; lifted: Finding[] } => {
   const decks = [...entries.grounds.values()].filter((g) => g.deck).map((g) => g.bounds);
@@ -80,16 +84,15 @@ export const deckPaint = (entries: MapEntries): { under: Finding[]; lifted: Find
     const worst = { sunk: { by: SUNK, x: 0, z: 0 }, lifted: { by: LIFTED, x: 0, z: 0 } };
     for (let t = 0; t + 2 < sink.indices.length; t += 3) {
       const [a, b, c] = [0, 1, 2].map((k) => sink.indices[t + k]! * 3).map((i) => ({ x: p[i]!, y: p[i + 1]!, z: p[i + 2]! })) as [Vec3, Vec3, Vec3];
-      const on = [a, b, c].map((q) => top(q.x, q.z) !== null);
-      if (on.some((o) => o !== on[0])) continue;
+      const off = [a, b, c].every((q) => top(q.x, q.z) === null);
       for (const [u, v] of [[1 / 3, 1 / 3], [0.5, 0], [0, 0.5], [0.5, 0.5]] as const) {
         const x = a.x + (b.x - a.x) * u + (c.x - a.x) * v;
         const z = a.z + (b.z - a.z) * u + (c.z - a.z) * v;
         const y = a.y + (b.y - a.y) * u + (c.y - a.y) * v;
         const deck = top(x, z);
-        if (on[0] && deck !== null && deck + lift - y > worst.sunk.by) worst.sunk = { by: deck + lift - y, x, z };
+        if (deck !== null && deck + lift - y > worst.sunk.by) worst.sunk = { by: deck + lift - y, x, z };
         // A flight's treads stand level over the slope by design (`planSteps`).
-        if (!on[0] && deck === null && g.surface !== "steps" && y - terrain(x, z) - lift > worst.lifted.by) worst.lifted = { by: y - terrain(x, z) - lift, x, z };
+        if (off && deck === null && g.surface !== "steps" && y - terrain(x, z) - lift > worst.lifted.by) worst.lifted = { by: y - terrain(x, z) - lift, x, z };
       }
     }
     const at = (w: { x: number; z: number }) => `${g.marking ?? g.surface} at ${w.x.toFixed(1)},${w.z.toFixed(1)}`;

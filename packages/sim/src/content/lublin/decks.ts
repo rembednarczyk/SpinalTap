@@ -118,11 +118,12 @@ const bendLanding = (p: GroundPoint, y: number, below: BendEnd, above: BendEnd):
  * runs on the deck stay on it. Not a ramp of the terrain: on its 2.5 m grid a band 3 m wide
  * standing 3 m over the ground beside it comes out up to 1.6 m low (bilinear, G-236 round 2).
  */
-const [FLIGHT_DECKS, NICHES] = ((): [GroundDeck[], GroundPoint[][]] => {
+const [FLIGHT_DECKS, NICHES, TOPS] = ((): [GroundDeck[], GroundPoint[][], GroundDeck[]] => {
   const bridges = [...MAP_DECKS.values()].flat();
   const seen = new Set<string>();
   const out: GroundDeck[] = [];
   const niches: GroundPoint[][] = [];
+  const tops: GroundDeck[] = [];
   for (const f of MAP_CHUNKS.flatMap((c) => c.flights ?? [])) {
     if (seen.has(f.id)) continue;
     seen.add(f.id);
@@ -138,6 +139,10 @@ const [FLIGHT_DECKS, NICHES] = ((): [GroundDeck[], GroundPoint[][]] => {
     const bands = pts.slice(0, k).map((p, i) => runBand(p, pts[i + 1]!, pts[i - 1], pts[i + 2], i + 1 < k ? 0 : FLIGHT_HALF));
     // Its niche in the bridges' decks: the steps' band, to the run's top, no further (G-274).
     for (let i = 0; i < k; i++) niches.push([...runBand(pts[i]!, pts[i + 1]!, pts[i - 1], i + 1 < k ? pts[i + 2] : undefined, 0, BAND_HALF + ROUNDING, BAND_HALF + ROUNDING).ring]);
+    for (let i = k; i + 1 < pts.length; i++) {
+      const ring = runBand(pts[i]!, pts[i + 1]!, pts[i - 1], pts[i + 2], 0, BAND_HALF + ROUNDING, BAND_HALF + ROUNDING).ring;
+      tops.push({ ring, a: pts[i]!, b: pts[i + 1]!, ya: y, yb: y, box: boxOf(ring) });
+    }
     // The grade is even over the runs between the landings.
     const climb = bands.map((band, i) => Math.max(0, Math.hypot(pts[i + 1]!.x - pts[i]!.x, pts[i + 1]!.z - pts[i]!.z) - (band.endA?.land ?? 0) - (band.endB?.land ?? 0)));
     const total = climb.reduce((a, c) => a + c, 0) || 1;
@@ -150,7 +155,7 @@ const [FLIGHT_DECKS, NICHES] = ((): [GroundDeck[], GroundPoint[][]] => {
       yA = yB;
     });
   }
-  return [out, niches];
+  return [out, niches, tops];
 })();
 
 
@@ -201,6 +206,15 @@ export const bridgeDeckAt = (x: number, z: number): number | null => deckAt(ALL_
 
 /** The ground at (x, z) over the terrain at `terrain` there: a bridge's deck, or a flight hung off one (G-255), or the terrain. */
 export const deckGroundAt = (x: number, z: number, terrain: number): number => groundOver(ALL_GROUND, x, z, terrain);
+
+/**
+ * The bridge's deck under (x, z) where a run of a flight hung off it (G-255) stays on the deck,
+ * or null: the top run of the steps from the viaduct of Zamkowa is its upper landing on the
+ * sidewalk, while the terrain 2-3 m under the deck there would leave it room for a way under the
+ * bridge (G-062), and its steps were laid down there (G-330).
+ */
+export const flightTopAt = (x: number, z: number): GroundDeck | null =>
+  TOPS.some((t) => deckAt([t], x, z) !== null) ? (ALL_DECKS.find((d) => deckAt([d], x, z) !== null) ?? null) : null;
 
 /** The flight hung off a bridge (G-255) whose band holds (x, z) off the bridges' decks (G-274), or null. */
 export const flightDeckAt = (x: number, z: number): GroundDeck | null => (deckAt(ALL_DECKS, x, z) === null ? (FLIGHT_DECKS.find((f) => deckAt([f], x, z) !== null) ?? null) : null);

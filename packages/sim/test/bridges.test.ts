@@ -5,7 +5,7 @@ import { chunkScenery } from "../src/content/lublin/city";
 import { MAP_CHUNKS } from "../src/content/lublin/sites";
 import { SHAPED_TERRAIN } from "../src/content/lublin/terrain";
 import { TRAFFIC_ROUTES, pointAt } from "../src/content/traffic";
-import { type GroundDeck, deckAt, flightGradientAt, groundOver, makeDeck, onFlight } from "../src/world/deck";
+import { type GroundDeck, deckAt, deckHeight, flightGradientAt, groundOver, makeDeck, onFlight } from "../src/world/deck";
 import { terrainHeightAt } from "@seki/core";
 import { input, teleportPlayer } from "./helpers";
 
@@ -99,13 +99,17 @@ describe("bridges' decks (ADR-0053)", () => {
       for (const item of chunkScenery(c, [])) {
         const v = item.view;
         if (v.kind !== "ground" || !v.deck) continue;
+        const { a, b } = v.deck;
+        const drawn: GroundDeck = { ring: v.outline, a, b, ya: a.y, yb: b.y, box: { minX: 0, maxX: 0, minZ: 0, maxZ: 0 } };
         const xs = v.outline.map((p) => p.x);
         const zs = v.outline.map((p) => p.z);
         for (let x = Math.min(...xs); x <= Math.max(...xs); x += 0.25) {
           for (let z = Math.min(...zs); z <= Math.max(...zs); z += 0.25) {
             if (!pointInRing({ x, z }, v.outline)) continue;
             // A band of steps on a flight's grade over a bridge's deck, or a bridge's piece over a flight.
-            if (v.surface === "steps" && flightDeckAt(x, z) === null && bridgeDeckAt(x, z) !== null) both.push(`steps over the deck at (${x.toFixed(2)}, ${z.toFixed(2)})`);
+            // A flight's run that stays on the deck lies on the deck (G-330).
+            const bridge = bridgeDeckAt(x, z);
+            if (v.surface === "steps" && flightDeckAt(x, z) === null && bridge !== null && Math.abs(deckHeight(drawn, x, z) - bridge) > 0.05) both.push(`steps over the deck at (${x.toFixed(2)}, ${z.toFixed(2)})`);
             if (v.surface !== "steps" && flightDeckAt(x, z) !== null) both.push(`deck over the flight at (${x.toFixed(2)}, ${z.toFixed(2)})`);
           }
         }
