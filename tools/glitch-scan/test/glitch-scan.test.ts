@@ -35,6 +35,7 @@ import { figureChecks } from "./figure-pieces";
 import { signsInNeighbours } from "./sign-neighbours";
 import { lowCables } from "./cable-spans";
 import { metroLineProtected } from "./metro-line";
+import { metroBlocked, metroInBuilding, metroNearHeritage, metroShaftOpen } from "./metro-entrances";
 import { lanternsByPassages } from "./passage-lanterns";
 import { mixedLampWays, plainLampsByStyled, plainLampsIn } from "./lamp-styles";
 import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight, towersSkipped } from "./landmark-heights";
@@ -1662,6 +1663,14 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "cable-low": () => lowCables().low.map((l) => ({ at: near(l.x, l.z), what: `${l.building}: ${l.clearance.toFixed(2)} m over the paving` })),
   /** The metro line on the map (ADR-0071) under a protected area or a historic building or church, sampled every 5 m (G-314, G-315). */
   "metro-line-protected": () => metroLineProtected().map((f) => ({ at: near(f.x, f.z), what: `${f.line}: under ${f.what}` })),
+  /** A metro pavilion (ADR-0071 stage 2) standing in a building of the map. */
+  "metro-entrance-in-building": () => metroInBuilding(),
+  /** A metro pavilion under 15 m from a monument, church or public building, 10 m from a memorial, artwork or fountain, its dig 3 m from an archaeological site. */
+  "metro-entrance-near-heritage": () => metroNearHeritage(SOURCE_OSM, (id) => { const t = osmTags(id); return t.historic !== undefined || t.heritage !== undefined || t.amenity === "place_of_worship"; }),
+  /** A metro pavilion's opening without 3 m free in front, furniture in it, a walkers' lane through it or a car's lane closer than a pavement. */
+  "metro-entrance-blocked": () => metroBlocked(Object.values(WORLD_STREET_PROPS).flat(), CROWD_LANES, cars),
+  /** A metro pavilion's shaft dug beyond its outline or without a wall on a side other than the opening. */
+  "metro-shaft-open": () => metroShaftOpen(),
   // The market's furniture of ADR-0058 stage 3 against the map data (`market-pieces.ts`).
   ...marketChecks(SOURCE_OSM, Object.values(WORLD_STREET_PROPS).flat(), CROWD_LANES),
   // The decals of ADR-0058 stage 6 against the drawn walls, signs, hosts and carriageways (`decal-pieces.ts`).

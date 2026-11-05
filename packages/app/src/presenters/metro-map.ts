@@ -16,8 +16,9 @@ import {
 } from "@seki/ui";
 
 /**
- * The metro on the map (ADR-0071 stage 1): the line as a layer, built once from the simulation's
- * content, and the kiosk with the route and the preview of the chosen destination. The station
+ * The metro on the map (ADR-0071 stages 1 and 2): the line as a layer, built once from the
+ * simulation's content, and the ticket machine with the route and the preview of the chosen
+ * destination. The station
  * and entrance names are Lublin's; the UI translates everything else.
  */
 
@@ -25,26 +26,23 @@ const round = (v: number) => Math.round(v * 10) / 10;
 const flat = (points: readonly MetroMapPoint[]): MapPolygon => points.flatMap((p) => [round(p.x), round(p.z)]);
 const length = (points: readonly MetroMapPoint[]): number => points.slice(1).reduce((sum, p, i) => sum + Math.hypot(p.x - (points[i] as MetroMapPoint).x, p.z - (points[i] as MetroMapPoint).z), 0);
 
-/** Stage 1 keeps today's kiosks as the only entrance of each station (stage 2 moves them). */
-const entrances = (id: MetroStationId): MapMetroEntranceVm[] => {
-  const s = metroStation(id);
-  return [{ label: "A", name: s.name, x: round(s.kiosk.x), z: round(s.kiosk.z) }];
-};
+/** A station's entrances (ADR-0071 stage 2): the pavilions, by their middles. */
+const entrances = (id: MetroStationId): MapMetroEntranceVm[] => metroStation(id).entrances.map((e) => ({ label: e.label, name: e.name, x: round(e.spot.x), z: round(e.spot.z) }));
 
 const stationVm = (id: MetroStationId): MapMetroStationVm => {
   const s = metroStation(id);
-  return { id, name: s.name, district: DISTRICTS[s.district].name, x: round(s.kiosk.x), z: round(s.kiosk.z), entrances: entrances(id) };
+  return { id, name: s.name, district: DISTRICTS[s.district].name, x: round(s.node.x), z: round(s.node.z), entrances: entrances(id) };
 };
 
 /** The tunnel from `from` up to `at`, for a possible station on the line itself. */
 const alongTunnel = (p: (typeof METRO_PLANNED)[number]): MetroMapPoint[] => {
   const via = METRO_TUNNEL.find((t) => t.from === p.from)?.via ?? [];
   const end = via.findIndex((v) => v.x === p.at.x && v.z === p.at.z);
-  return [metroStation(p.from).kiosk, ...(end < 0 ? [] : via.slice(0, end)), p.at];
+  return [metroStation(p.from).node, ...(end < 0 ? [] : via.slice(0, end)), p.at];
 };
 
 const plannedVm = (p: (typeof METRO_PLANNED)[number]): MapMetroPlannedVm => {
-  const path = p.onLine ? alongTunnel(p) : [metroStation(p.from).kiosk, ...p.via, p.at];
+  const path = p.onLine ? alongTunnel(p) : [metroStation(p.from).node, ...p.via, p.at];
   // A station on the line has no branch of its own: only the hollow ring on the tunnel.
   return { id: p.id, name: p.name, from: p.from, x: p.at.x, z: p.at.z, path: p.onLine ? [] : flat(path), distance: Math.round(length(path) / 10) * 10 };
 };
@@ -52,7 +50,7 @@ const plannedVm = (p: (typeof METRO_PLANNED)[number]): MapMetroPlannedVm => {
 /** The layer of the city map, the minimap and the kiosk. */
 export const metroLayerVm = (): MapMetroVm => ({
   stations: METRO_STATION_IDS.map(stationVm),
-  legs: METRO_TUNNEL.map((t) => flat([metroStation(t.from).kiosk, ...t.via, metroStation(t.to).kiosk])),
+  legs: METRO_TUNNEL.map((t) => flat([metroStation(t.from).node, ...t.via, metroStation(t.to).node])),
   planned: METRO_PLANNED.map(plannedVm),
 });
 
@@ -79,7 +77,7 @@ const NEAR_POINTS: readonly NearPoint[] = [
 
 /** Up to four things within 150 m of the station, the nearest first. */
 export const metroNear = (id: MetroStationId, points: readonly NearPoint[] = NEAR_POINTS): MetroNearVm[] => {
-  const at = metroStation(id).kiosk;
+  const at = metroStation(id).node;
   return points
     .map((p) => ({ ...p, x: round(p.x), z: round(p.z), distance: Math.hypot(p.x - at.x, p.z - at.z) }))
     .filter((p) => p.distance <= NEAR_RADIUS)

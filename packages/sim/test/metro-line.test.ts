@@ -11,7 +11,7 @@ describe("metro line on the map", () => {
 
   it("keeps its legs short: no jump over 700 m between the points of a tunnel", () => {
     for (const t of METRO_TUNNEL) {
-      const pts = [METRO_STATIONS.find((s) => s.id === t.from)!.kiosk, ...t.via, METRO_STATIONS.find((s) => s.id === t.to)!.kiosk];
+      const pts = [METRO_STATIONS.find((s) => s.id === t.from)!.node, ...t.via, METRO_STATIONS.find((s) => s.id === t.to)!.node];
       for (let i = 1; i < pts.length; i++) expect(Math.hypot(pts[i]!.x - pts[i - 1]!.x, pts[i]!.z - pts[i - 1]!.z)).toBeLessThan(700);
     }
   });

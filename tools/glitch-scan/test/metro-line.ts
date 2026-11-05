@@ -38,10 +38,10 @@ const sample = (points: readonly P2[]): P2[] => {
   return out;
 };
 
-/** The lines of the map: each tunnel between its stations' kiosks, each possible station's branch. */
+/** The lines of the map: each tunnel between its stations, each possible station's branch. */
 export const metroLines = (): { readonly name: string; readonly points: readonly P2[] }[] => [
-  ...METRO_TUNNEL.map((t) => ({ name: `tunnel ${t.from}-${t.to}`, points: [metroStation(t.from).kiosk, ...t.via, metroStation(t.to).kiosk] })),
-  ...METRO_PLANNED.filter((p) => !p.onLine).map((p) => ({ name: `planned ${p.id}`, points: [metroStation(p.from).kiosk, ...p.via, p.at] })),
+  ...METRO_TUNNEL.map((t) => ({ name: `tunnel ${t.from}-${t.to}`, points: [metroStation(t.from).node, ...t.via, metroStation(t.to).node] })),
+  ...METRO_PLANNED.filter((p) => !p.onLine).map((p) => ({ name: `planned ${p.id}`, points: [metroStation(p.from).node, ...p.via, p.at] })),
 ];
 
 export const metroLineProtected = (lines = metroLines()): MetroLineFinding[] => {
