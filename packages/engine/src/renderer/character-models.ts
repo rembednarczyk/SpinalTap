@@ -89,6 +89,7 @@ export class CharacterModels {
     const d = this.dressed.get(rig);
     if (d) this.pooled(d.model, d.url);
     this.dressed.delete(rig);
+    rig.reach = null;
   }
 
   /** Follows the rigs: retargeted bones, springs and faces of the models on screen. */
@@ -113,6 +114,8 @@ export class CharacterModels {
     for (const m of model.meshes) if (m.getTotalVertices() > 0) this.deps.addCaster(m);
     const springs = SpringBones.create(model.root, { vrm: model.springs, prefix: model.prefix, colliders: humanoidColliders(model.root, model.prefix) });
     this.dressed.set(rig, { model, retarget, springs, url });
+    // The rig solves a two-handed hold for the model's arms, which it no longer shows itself.
+    rig.reach = retarget.reach;
     // The gun in the model's hand and the garment add-ons on its bones.
     this.deps.loadouts.setModel(rig, { retarget, meshes: model.meshes });
   }

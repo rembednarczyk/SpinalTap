@@ -19,6 +19,9 @@ const mixPose = (a: ArmPose, b: ArmPose, t: number): ArmPose => ({
 
 export const smooth = (t: number): number => t * t * (3 - 2 * t);
 
+/** 0..1..0 over a reload: how far the weapon is down and the left hand away fetching a magazine. */
+export const reloadPhase = (rig: CharacterRig): number => (rig.reloadTotal > 0 && rig.reload > 0 ? Math.sin(Math.PI * (1 - rig.reload / rig.reloadTotal)) : 0);
+
 /**
  * Right arm of an armed character. Holstered it swings like anyone's; drawn it carries the
  * pistol at low ready (muzzle down and forward, the arm loose and swaying with the walk) and
@@ -44,7 +47,7 @@ export const poseWeaponArms = (rig: CharacterRig, swing: number, amount: number,
   const aimed: ArmPose = { armX: -1.42 + Math.abs(sway) * 0.05, armZ: 0, elbowX: -0.05 };
   // Reloading: pistol down to the chest, tipped in, while the left hand fetches a magazine.
   rig.reload = Math.max(0, rig.reload - dt);
-  const reloading = rig.reloadTotal > 0 && rig.reload > 0 ? Math.sin(Math.PI * (1 - rig.reload / rig.reloadTotal)) : 0;
+  const reloading = reloadPhase(rig);
   if (reloading > 0) rig.aim *= 1 - reloading;
   const chest: ArmPose = { armX: -0.55, armZ: -0.18, elbowX: -1.35 };
   const ready = mixPose(mixPose(lowReady, aimed, smooth(rig.aim)), chest, reloading);
