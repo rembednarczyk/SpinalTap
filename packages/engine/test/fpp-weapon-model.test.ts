@@ -95,4 +95,23 @@ describe("FPP viewmodel carries the weapon in hand (G-282)", () => {
     await vi.waitFor(() => expect(length(camera)).toBeCloseTo(LENGTH.pistol!, 2));
     expect(placeholder(camera)).toBe(false);
   });
+
+  it.each(["baton", "blade"] as const)("%s: the viewmodel swings its model, not the stand-in box, and the gun comes back on a switch", async (melee) => {
+    const { camera, kit, player, rig } = setup();
+    const inHand = (look: "baton" | "blade" | null): AppearanceDescriptor => ({
+      weapons: { primary: "rifle", secondary: "pistol", melee, active: look ? "melee" : "secondary" },
+      garments: {},
+      implants: [],
+    });
+    const meleeShown = () => camera.meleeMount.getChildMeshes(false).filter((m) => m.isEnabled() && m.getTotalVertices() > 0);
+    kit.arm(player, rig, "hero", inHand(melee));
+    // Before: the melee holder showed a plain box; now the weapon's model hangs under it.
+    await vi.waitFor(() => expect(new Set(meleeShown().map(pivotOf))).toEqual(new Set([`vm-${melee}-pivot`])));
+    expect(meleeShown().some((m) => m.name === `vm-${melee}`)).toBe(false);
+    expect(camera.weaponMount.isEnabled()).toBe(false);
+    kit.arm(player, rig, "hero", inHand(null));
+    await vi.waitFor(() => expect(length(camera)).toBeCloseTo(LENGTH.pistol!, 2));
+    expect(placeholder(camera)).toBe(false);
+    expect(camera.meleeMount.isEnabled()).toBe(false);
+  });
 });

@@ -1,5 +1,6 @@
 import type { CharacterRig } from "./character-rig";
-import { AIM_HOLD, applyStagger, applySwingBody, poseMeleeArms, poseWeaponArms, reloadPhase, smooth } from "./character-poses";
+import { AIM_HOLD, applyStagger, poseWeaponArms, reloadPhase, smooth } from "./character-poses";
+import { applySwingBody, poseMeleeArms } from "./melee-poses";
 import { bladeOf, holdLongGun, holdWeight } from "./two-hand-hold";
 
 const DEATH_FALL = 0.65;

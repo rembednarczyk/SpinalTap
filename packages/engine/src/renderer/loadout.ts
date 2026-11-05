@@ -1,5 +1,5 @@
 import type { AppearanceDescriptor, GarmentMeshId, GarmentSlot, PaletteKey, WeaponLook, WeaponSlot } from "@seki/core";
-import { type AbstractMesh, type Mesh, MeshBuilder, type Scene, TransformNode, Vector3 } from "../babylon";
+import { type AbstractMesh, type Mesh, MeshBuilder, Quaternion, type Scene, TransformNode, Vector3 } from "../babylon";
 import { applyOutline } from "../npr/outline";
 import type { PresetName } from "../npr/presets";
 import type { ToonMaterials } from "../npr/toon-material";
@@ -8,8 +8,9 @@ import { ADD_ONS } from "./garment-addons";
 import { recolorSkin } from "./character-skin";
 import { toonSourceOf } from "./model-library";
 import type { AnchorBone, HumanoidRetarget } from "./model-rig";
+import { meleeWrist } from "./melee-poses";
 import { longGunInHands } from "./two-hand-hold";
-import { LONG_GUN, WEAPON_MODEL, type WeaponMounts } from "./weapon-mount";
+import { LONG_GUN, MELEE_HOLD, WEAPON_MODEL, type WeaponMounts, isMeleeKind } from "./weapon-mount";
 
 type Place = "hand" | "hip" | "hipL" | "back" | "model" | "long";
 
@@ -19,6 +20,13 @@ type Place = "hand" | "hip" | "hipL" | "back" | "model" | "long";
  * to the palm side, and up, so that the closed fingers go round the middle of the grip.
  */
 const IN_FIST = { side: -0.018, ahead: 0.035, up: 0.01 };
+
+/**
+ * The blade is carried on the back (the baton hangs in the left hip holster): its holder sits
+ * on the sling, turned against the long gun's diagonal so the two cross, the handle over the
+ * right shoulder for the right hand, the blade flat on the back and a little off it, clear of the gun.
+ */
+const BLADE_ON_BACK = { z: -0.035, turn: -1.4 } as const;
 
 interface Mounted {
   readonly look: WeaponLook;
@@ -204,6 +212,11 @@ export class Loadouts {
     const inHands = longGunInHands(rig);
     this.show(s.mounted.back, stowed("primary") || (rig.grip !== null && w.active === "primary" && !inHands));
     this.show(s.mounted.long, inHands);
+    // A baton or blade in hand is cocked across the fist by the pose's wrist (melee-poses.ts); the
+    // curved blade by its chord, as its handle leaves the blade's line at MELEE_HOLD's angle.
+    const kind = w.active === "melee" && w.melee ? WEAPON_MODEL[w.melee].kind : null;
+    const wrist = kind && isMeleeKind(kind) ? -meleeWrist(rig, MELEE_HOLD[kind].handle) : 0;
+    for (const m of [s.mounted.hand, s.mounted.model]) if (m) m.node.rotation.x = wrist;
   }
 
   dispose(rig: CharacterRig): void {
@@ -279,7 +292,7 @@ export class Loadouts {
     this.place(s, "hand", long ? null : rig.gunHand, active);
     this.place(s, "long", long ? rig.gunHold : null, active);
     this.place(s, "hip", s.holsterR, w.secondary);
-    this.place(s, "hipL", s.holsterL, w.melee);
+    this.place(s, "hipL", w.melee === "blade" ? (s.back.parent as TransformNode) : s.holsterL, w.melee);
     this.place(s, "back", s.back, w.primary);
     this.place(s, "model", long ? null : (s.model?.fist ?? null), active);
   }
@@ -297,6 +310,11 @@ export class Loadouts {
     if (!parent || !look) return;
     const holder = new TransformNode(`${s.name}-${place}-${look}`, this.scene);
     holder.parent = parent;
+    if (place === "hipL" && look === "blade") {
+      holder.position.z = BLADE_ON_BACK.z;
+      // Turned on the back first, then laid flat about its own length.
+      holder.rotationQuaternion = Quaternion.RotationAxis(new Vector3(0, 0, 1), BLADE_ON_BACK.turn).multiply(Quaternion.RotationAxis(new Vector3(0, 1, 0), Math.PI / 2));
+    }
     holder.setEnabled(false);
     const mounted: Mounted = { look, node: holder };
     s.mounted[place] = mounted;
