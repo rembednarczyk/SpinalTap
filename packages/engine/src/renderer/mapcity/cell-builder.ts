@@ -9,7 +9,7 @@ import { findSpans, planFarCanyon, planNearCanyon } from "./canyon-plan";
 import { planCanyonSigns } from "./canyon-signs";
 import { planFarFrames, planNearFrames } from "./cell-plan";
 import { planCrossing } from "./crossing-plan";
-import { deckHeight, planDeckEdges, planDeckUnderside } from "./deck-plan";
+import { planDeckEdges, planDeckUnderside } from "./deck-plan";
 import { facadeFrame } from "./facade-frame";
 import { type ObstacleQuery, type PropSlot, bakeSlots } from "./facade-props";
 import { SURFACE_LIFT, planBasin, planSurface, planTerrain, planWater } from "./ground-plan";
@@ -77,12 +77,9 @@ export class CellBuilder {
     for (const id of [...cell.grounds].sort((a, b) => a - b)) {
       const g = entries.grounds.get(id);
       if (!g) continue;
-      const terrain = (x: number, z: number) => entries.heightAt(x, z) ?? g.y;
-      // Laid on a bridge's deck where there is one (ADR-0053); the river stays on the terrain, and
-      // so does a way under the bridge where the deck has headroom over it (G-062). A piece of the
-      // deck follows its own axis: on its outline the test for the ring may fall either way.
-      const own = g.deck;
-      const h = own ? (x: number, z: number) => deckHeight(own, x, z) : (x: number, z: number) => entries.decks.heightAt(x, z, g.marking ? undefined : terrain(x, z)) ?? terrain(x, z);
+      const terrain = entries.terrainOf(g);
+      // On a bridge's deck where there is one (`groundHeight`); the river stays on the terrain.
+      const h = entries.groundHeight(g, terrain);
       if (g.deck && g.surface !== "water") {
         planDeckEdges(ground, g.ring, h, SURFACE_LIFT[g.surface], (x, z) => entries.decks.heightAt(x, z) !== null, terrain);
         planDeckUnderside(ground, g.ring, h, SURFACE_LIFT[g.surface], terrain);

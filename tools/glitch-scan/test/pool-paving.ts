@@ -3,17 +3,16 @@ import { worldRing } from "../../../packages/engine/src/renderer/drones/drone-wo
 import type { PatrolLane } from "../../../packages/engine/src/renderer/drones/patrol-flight";
 import { POOL_SEGMENTS } from "../../../packages/engine/src/renderer/drones/patrol-models";
 import { POOL_LIFT, poolDrop, poolPoint, poolRadius } from "../../../packages/engine/src/renderer/drones/patrol-pool";
-import { drapeTriangles } from "../../../packages/engine/src/renderer/mapcity/ground-plan";
 import { BinIndex } from "../../../packages/engine/src/renderer/mapcity/map-index";
 import { type P2, boundsOf } from "../../../packages/engine/src/renderer/mapcity/polygon";
+import { drapedTriangles } from "./paving-overlap";
 import { patrolPoints } from "./patrol-pieces";
 
 /**
  * The searchlight pool of the low patrols (ADR-0058 stage 7b) against the paving as the renderer
- * draws it (G-293): every ground surface of the scenery cut by `drapeTriangles` into the triangles
- * `drape` lays, straight between their corners at the ground's height and the surface's lift. The
- * terrain bends between those corners, so in a hollow the drawn paving runs over the height the
- * simulation reads there (`surfaceY`), and a pool laid on that height sinks into it.
+ * draws it (G-293): every ground surface of the scenery as `drape` lays it, read off its mesh. The
+ * terrain bends between the corners of its triangles, so in a hollow the drawn paving runs over the
+ * height the simulation reads there (`surfaceY`), and a pool laid on that height sinks into it.
  */
 
 type Finding = { readonly at: string; readonly what: string };
@@ -54,9 +53,8 @@ export const drawnPaving = (items: readonly Item[], groundAt: (x: number, z: num
   const lay = (p: (typeof pieces)[number]): Map<number, Tri[]> => {
     if (p.cells) return p.cells;
     const cells = new Map<number, Tri[]>();
-    for (const t of drapeTriangles(p.ring)) {
-      const tri = t.map((q) => ({ x: q.x, y: groundAt(q.x, q.z) + p.lift, z: q.z })) as unknown as Tri;
-      const b = boundsOf(t);
+    for (const tri of drapedTriangles(p.ring, groundAt, p.lift)) {
+      const b = boundsOf(tri);
       for (let i = Math.floor(b.minX / CELL); i <= Math.floor(b.maxX / CELL); i++) {
         for (let k = Math.floor(b.minZ / CELL); k <= Math.floor(b.maxZ / CELL); k++) {
           const list = cells.get(cellOf(i * CELL, k * CELL));

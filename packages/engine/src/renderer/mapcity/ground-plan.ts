@@ -1,14 +1,15 @@
 import { type GroundSurface, SURFACE_LIFT, type TerrainGrid, type TerrainOpenSides, terrainHeightAt } from "@seki/core";
 import { DRESS_FLAG, type MeshSink, type Rgba, type Vec, hexColor } from "../mesh-sink";
-import { type P2, obbLocal, orientedBox, pointInRing, signedArea, triangulate } from "./polygon";
+import { type P2, boundsOf, obbLocal, orientedBox, pointInRing, signedArea, triangulate } from "./polygon";
 import { face, quadUv, vertex } from "./sink-ops";
 
 /**
  * Terrain and the surfaces laid on it (ADR-0044). The terrain of a chunk is one mesh sampled
  * with `terrainHeightAt` (the simulation's interpolation) on a grid of at most 5 m, with a
  * skirt along its edges so neighbouring chunks never show a crack. Surfaces are triangulated,
- * subdivided to the same 5 m and draped: every vertex takes the terrain height plus a small lift
- * per surface (water lowest, the raised sidewalk highest), so they follow the slope.
+ * cut on a world grid of 2.5 m and draped: every vertex takes the height of the grid's plane
+ * through the terrain there (`drapeY`) plus a small lift per surface (water lowest, the raised
+ * sidewalk highest), so they follow the slope and overlapping pieces keep to their lifts.
  *
  * Encoding (ground shader): uv = metres in the surface's oriented box (along, across), uv2.x =
  * surface code, uv2.y = width of a long strip (road markings; 0 for none); colour a = flag
@@ -33,10 +34,15 @@ const KERB = hexColor("#a3a39e", DRESS_FLAG.solid);
 const TERRAIN = hexColor("#514c45", DRESS_FLAG.solid);
 export const WATER_COLOR = hexColor("#0b1822", DRESS_FLAG.wet);
 
-/** Longest edge of the draped triangles and of the terrain cells (m). */
+/** Longest edge of the terrain cells and of the kerbs' parts (m). */
 export const DRAPE_STEP = 5;
 
-export type HeightAt = (x: number, z: number) => number;
+/**
+ * The height of the ground at (x, z). Where it jumps from one surface to another (a bridge's deck
+ * over the terrain), `surfaceAt` gives the one under a point, carried on past its outline: `drape`
+ * reads the grid's corners round a point on it, which may lie on the other surface (G-301).
+ */
+export type HeightAt = ((x: number, z: number) => number) & { readonly surfaceAt?: (x: number, z: number) => (x: number, z: number) => number };
 
 /** Normal of the ground under (x, z), from central differences. */
 const groundNormal = (h: HeightAt, x: number, z: number): Vec => {
@@ -117,26 +123,93 @@ export const planTerrain = (sink: MeshSink, grid: TerrainGrid, open?: TerrainOpe
   if (open.east) apron(nx - 1, 0, 0, 1, nz, { x: 1, y: 0, z: 0 });
 };
 
-/** How many parts `drapeTriangles` cuts each edge of the triangle a, b, c into. */
-const drapeCuts = (a: P2, b: P2, c: P2, step: number): number => {
-  const longest = Math.max(Math.hypot(b.x - a.x, b.z - a.z), Math.hypot(c.x - b.x, c.z - b.z), Math.hypot(a.x - c.x, a.z - c.z));
-  return Math.min(Math.max(1, Math.ceil(longest / step)), 48);
+/**
+ * Side of the world grid the drapes are cut on (m), its lines on whole multiples of it: the
+ * points of the terrain grids of 5 and 2.5 m (their origins on whole 5 m) lie on it.
+ */
+export const DRAPE_GRID = 2.5;
+
+/**
+ * The drape of `h` at (x, z): straight across the triangles of the world grid of side `grid`, each
+ * cell cut corner to corner as `planTerrain` cuts its cells, between `h` at their corners. One
+ * surface for every piece laid on `h`: two pieces overlapping lie at the same height wherever
+ * they meet, whatever their outlines (G-301). On a terrain grid of the same cells it is the terrain drawn.
+ */
+export const drapeY = (h: HeightAt, x: number, z: number, grid = DRAPE_GRID): number => {
+  const i = Math.floor(x / grid);
+  const k = Math.floor(z / grid);
+  const fx = x / grid - i;
+  const fz = z / grid - k;
+  const x0 = i * grid;
+  const z0 = k * grid;
+  const a = h(x0, z0);
+  const c = h(x0 + grid, z0 + grid);
+  if (fx >= fz) {
+    const b = h(x0 + grid, z0);
+    return a + fx * (b - a) + fz * (c - b);
+  }
+  const d = h(x0, z0 + grid);
+  return a + fz * (d - a) + fx * (c - d);
 };
 
-/** Triangles of a ring, each cut into an n x n barycentric grid so no edge is longer than `step`. */
-export const drapeTriangles = (ring: readonly P2[], step = DRAPE_STEP): P2[][] => {
+/** The part of the convex polygon `poly` on the side of the line where `side` is not negative; `on` puts a cut point exactly on it. */
+const clipConvex = (poly: readonly P2[], side: (p: P2) => number, on?: (p: P2) => P2): P2[] => {
+  const out: P2[] = [];
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i] as P2;
+    const b = poly[(i + 1) % poly.length] as P2;
+    const sa = side(a);
+    const sb = side(b);
+    if (sa >= 0) out.push(a);
+    if ((sa > 0 && sb < 0) || (sa < 0 && sb > 0)) {
+      const t = sa / (sa - sb);
+      const p = { x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t };
+      out.push(on ? on(p) : p);
+    }
+  }
+  return out;
+};
+
+/** Twice the area of a convex polygon. */
+const area2 = (poly: readonly P2[]): number => {
+  let s = 0;
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i] as P2;
+    const b = poly[(i + 1) % poly.length] as P2;
+    s += a.x * b.z - b.x * a.z;
+  }
+  return Math.abs(s);
+};
+
+/**
+ * Triangles of a ring cut on the world grid of side `grid` (`drapeY`): each lies in one triangle
+ * of the grid, so drawn straight between its corners at `drapeY` it is that surface exactly.
+ */
+export const drapeTriangles = (ring: readonly P2[], grid = DRAPE_GRID): P2[][] => {
   const tris = triangulate(ring);
   const out: P2[][] = [];
+  const keep = (poly: readonly P2[]) => {
+    if (poly.length < 3 || area2(poly) < 1e-9) return;
+    for (let k = 1; k + 1 < poly.length; k++) out.push([poly[0] as P2, poly[k] as P2, poly[k + 1] as P2]);
+  };
   for (let t = 0; t + 2 < tris.length; t += 3) {
-    const a = ring[tris[t] as number] as P2;
-    const b = ring[tris[t + 1] as number] as P2;
-    const c = ring[tris[t + 2] as number] as P2;
-    const n = drapeCuts(a, b, c, step);
-    const p = (i: number, j: number): P2 => ({ x: a.x + ((b.x - a.x) * i + (c.x - a.x) * j) / n, z: a.z + ((b.z - a.z) * i + (c.z - a.z) * j) / n });
-    for (let j = 0; j < n; j++) {
-      for (let i = 0; i + j < n; i++) {
-        out.push([p(i, j), p(i + 1, j), p(i, j + 1)]);
-        if (i + j + 1 < n) out.push([p(i + 1, j), p(i + 1, j + 1), p(i, j + 1)]);
+    const tri = [ring[tris[t] as number] as P2, ring[tris[t + 1] as number] as P2, ring[tris[t + 2] as number] as P2];
+    const b = boundsOf(tri);
+    for (let i = Math.floor(b.minX / grid); i * grid < b.maxX; i++) {
+      const x0 = i * grid;
+      const x1 = x0 + grid;
+      const onX = (x: number) => (p: P2): P2 => ({ x, z: p.z });
+      const strip = clipConvex(clipConvex(tri, (p) => p.x - x0, onX(x0)), (p) => x1 - p.x, onX(x1));
+      if (strip.length < 3) continue;
+      for (let k = Math.floor(b.minZ / grid); k * grid < b.maxZ; k++) {
+        const z0 = k * grid;
+        const z1 = z0 + grid;
+        const onZ = (z: number) => (p: P2): P2 => ({ x: p.x, z });
+        const cell = clipConvex(clipConvex(strip, (p) => p.z - z0, onZ(z0)), (p) => z1 - p.z, onZ(z1));
+        if (cell.length < 3) continue;
+        // The cell's diagonal from (x0, z0) to (x1, z1), as `drapeY` and the terrain cut it.
+        keep(clipConvex(cell, (p) => p.x - x0 - (p.z - z0)));
+        keep(clipConvex(cell, (p) => p.z - z0 - (p.x - x0)));
       }
     }
   }
@@ -145,11 +218,10 @@ export const drapeTriangles = (ring: readonly P2[], step = DRAPE_STEP): P2[][] =
 
 /**
  * The height `drape` draws `ring` at over (x, z), null off it (`tris`: the ring's `triangulate`):
- * straight across the sub-triangle of `drapeTriangles` under the point, between its corners at `h`
- * plus `lift`. Not `h` + `lift` at the point: the terrain bends between corners up to 5 m apart,
- * and the paving runs a few centimetres over it in a hollow (G-293).
+ * `drapeY` plus `lift`. Not `h` + `lift` at the point: the terrain bends inside the grid's
+ * triangles, and the paving runs a few centimetres over it in a hollow (G-293).
  */
-export const drapeHeightAt = (ring: readonly P2[], tris: readonly number[], h: HeightAt, lift: number, x: number, z: number, step = DRAPE_STEP): number | null => {
+export const drapeHeightAt = (ring: readonly P2[], tris: readonly number[], h: HeightAt, lift: number, x: number, z: number): number | null => {
   for (let t = 0; t + 2 < tris.length; t += 3) {
     const a = ring[tris[t] as number] as P2;
     const b = ring[tris[t + 1] as number] as P2;
@@ -159,29 +231,40 @@ export const drapeHeightAt = (ring: readonly P2[], tris: readonly number[], h: H
     const u = ((x - a.x) * (c.z - a.z) - (c.x - a.x) * (z - a.z)) / det;
     const v = ((b.x - a.x) * (z - a.z) - (x - a.x) * (b.z - a.z)) / det;
     if (u < -1e-9 || v < -1e-9 || u + v > 1 + 1e-9) continue;
-    const n = drapeCuts(a, b, c, step);
-    const i = Math.min(Math.max(Math.floor(u * n), 0), n - 1);
-    const j = Math.min(Math.max(Math.floor(v * n), 0), n - 1 - i);
-    const s = u * n - i;
-    const r = v * n - j;
-    // The corners as `drapeTriangles` places them, read as `drape` reads them.
-    const at = (di: number, dj: number): number => h(a.x + ((b.x - a.x) * (i + di) + (c.x - a.x) * (j + dj)) / n, a.z + ((b.z - a.z) * (i + di) + (c.z - a.z) * (j + dj)) / n);
-    const y = s + r <= 1 || i + j + 1 >= n ? (1 - s - r) * at(0, 0) + s * at(1, 0) + r * at(0, 1) : (1 - r) * at(1, 0) + (s + r - 1) * at(1, 1) + (1 - s) * at(0, 1);
-    return y + lift;
+    return drapeY(h.surfaceAt?.(x, z) ?? h, x, z) + lift;
   }
   return null;
 };
 
-/** Lays `ring` on the ground at `lift` above it: shared vertices per sub-triangle grid point. */
+/** Lays `ring` on the ground at `lift` above it, at `drapeY`: shared vertices per corner of the cut triangles. */
 export const drape = (sink: MeshSink, ring: readonly P2[], h: HeightAt, lift: number, color: Rgba, uvOf: (p: P2) => readonly [number, number], meta: readonly [number, number]): void => {
-  const seen = new Map<string, number>();
+  const seen = new Map<number, Map<number, number>>();
   const up = { x: 0, y: 1, z: 0 };
+  // The grid's corners are shared by the vertices round them: each surface under each is read once.
+  const read = new Map<HeightAt, HeightAt>();
+  const corners = (surface: HeightAt): HeightAt => {
+    let at = read.get(surface);
+    if (at) return at;
+    const ys = new Map<number, number>();
+    at = (x, z) => {
+      const key = Math.round(x / DRAPE_GRID) * 1e6 + Math.round(z / DRAPE_GRID);
+      let y = ys.get(key);
+      if (y === undefined) ys.set(key, (y = surface(x, z)));
+      return y;
+    };
+    read.set(surface, at);
+    return at;
+  };
   const at = (p: P2): number => {
-    const key = `${p.x.toFixed(3)}:${p.z.toFixed(3)}`;
-    const known = seen.get(key);
+    // Hundredths of a millimetre: fine enough to keep the cut points apart on a corner of the grid.
+    const kx = Math.round(p.x * 1e5);
+    const kz = Math.round(p.z * 1e5);
+    let row = seen.get(kx);
+    if (!row) seen.set(kx, (row = new Map()));
+    const known = row.get(kz);
     if (known !== undefined) return known;
-    const i = vertex(sink, { x: p.x, y: h(p.x, p.z) + lift, z: p.z }, groundNormal(h, p.x, p.z), color, uvOf(p), meta);
-    seen.set(key, i);
+    const i = vertex(sink, { x: p.x, y: drapeY(corners(h.surfaceAt?.(p.x, p.z) ?? h), p.x, p.z) + lift, z: p.z }, groundNormal(h, p.x, p.z), color, uvOf(p), meta);
+    row.set(kz, i);
     return i;
   };
   for (const [a, b, c] of drapeTriangles(ring)) face(sink, at(a as P2), at(b as P2), at(c as P2), up);
