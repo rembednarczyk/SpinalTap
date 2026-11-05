@@ -101,6 +101,23 @@ Do akceptacji użytkownika. Liczby są startowe, poprawia je etap 8 ADR-0059. Re
 3. Czy klinika ma mieć karę jak sklepy, czy zostaje odmowa obsługi?
 4. Czy limit +25 z zabitych gangerów jest dobry?
 
+### Uzupełnienie 5.11: sprzedawcy karzą, nie uciekają
+Decyzja użytkownika z 5.11: przy złej reputacji sprzedawca (stragan, sklep, klinika, każdy NPC z ofertą handlu) nie ucieka jak przechodzień, tylko karze ceną i węższą ofertą. Etapy 1–3 już to robią; uzupełnienie zapisuje progi w jednym miejscu i rozstrzyga pytanie o klinikę.
+
+| Próg (`reputationTier` frakcji właściciela) | Kupno | Skup | Oferta (`ShopTerms.stock`) |
+|---|---|---|---|
+| zaufanie ≥ 50 | ×0,8 | ×1,2 | pełna |
+| przyjaźnie 11..49 | ×0,9 | ×1,1 | pełna |
+| neutralnie −10..10 | ×1 | ×1 | pełna |
+| nieufnie −49..−11 | ×1,25 | ×0,75 | pełna |
+| wrogo ≤ −50 | ×1,5 | ×0,5 | podstawy |
+
+- **Podstawy** (`offersEntry`, `offersStack` w `core/shop`): amunicja i stosy, które nie zmieniają ciała. U Oyajiego sama amunicja, u Fumiko całe jedzenie, u Mori apteczki, bandaże i stymulant Shizuka.
+- **Pod ladą przy wrogości:** broń, ubrania, mody (każda rzadkość), plecak, naprawy, wszczepy (kupno, montaż z torby, wyjęcie) i **shard pojemności**. Kupno kończy się `PurchaseFailure` „refused” z komunikatem `shop.failure.refused`, a panel pokazuje pozycję wyszarzoną z powodem (`shop.locked.reason`).
+- **Klinika i `capacity_shard` (pytanie 3 i pytanie z backlogu):** klinika ma karę jak sklepy, nie odmowę obsługi. Shard jest stosem, więc po etapie 3 wroga klinika go sprzedawała (675 €$ zamiast 450), choć nota mówiła, że Mori nie operuje. Rozstrzygnięcie: stos z `cyberCapacity` to praca przy cyberware, nie podstawa, więc wroga klinika go nie sprzedaje; od nieufności w górę sprzedaje go z mnożnikiem progu (nieufnie 563 €$). Reguła zależy od pola katalogu, a nie od listy id, więc obejmie też przyszłe przedmioty zmieniające pojemność. Nota `shop.clinic.basic` (en i pl) mówi to wprost.
+- **Ucieczka:** stali mieszkańcy (`civilian` z interakcją sklepu albo rozmowy) nie ruszają się z powodu reputacji na żadnym progu; przed strzałami, walką obok i ciałami (ADR-0029) uciekają jak dziś. Przechodzień przy wrogości dalej ucieka z 7 m.
+- Bez zmian reguł symulacji (złote hashe bez zmian) i bez zmiany zapisu (`SAVE_SCHEMA_VERSION` zostaje).
+
 ## Etapy (osobne PR-y)
 1. **Martwa strefa ucieczki** (`civilian-ai-system.ts`). Test sesji `sim` jak w pomiarze: Ume przy −30 robi najwyżej 2 zmiany kierunku w 30 s i stoi 7–9 m od gracza; wczytanie w trakcie daje ten sam hash; G-281 dalej daje jeden komunikat. Dowód: test pada na dzisiejszym kodzie (1095).
 2. **Progi przechodniów i stali mieszkańcy.** Przy nieufności przechodzień odsuwa się krokiem bez `NpcReacted`, przy wrogości ucieka. Stali mieszkańcy (`civilian` z `interactable`) nie ruszają się z powodu reputacji, ale dalej reagują na strzały. Testy: Oyaji przy −30 i −60 zostaje w 2 m; przechodzień przy −30 odchodzi na 3,5 m; strzał obok Oyajiego go płoszy. Testy `reputation.test.ts`, które zakładają ucieczkę Ume, zmieniają się świadomie, bo zmienia się zasada.
