@@ -1,8 +1,10 @@
 import { type Locale, METRO_STATION_IDS, type MetroRefusal, type MetroStationId, isMetroStationId, metroFare } from "@seki/core";
 import { metroStation } from "@seki/sim";
-import { type MessageKey, type MetroMapVm, translate } from "@seki/ui";
+import { type MessageKey, translate } from "@seki/ui";
+import { METRO_GUARDED } from "./presenters/metro-map";
 
 export { metroFare };
+export { METRO_GUARDED, metroMapVm } from "./presenters/metro-map";
 
 /** The one line of the city (ADR-0035), its stops in order along the track; the station names stay Polish (ADR-0056). */
 export const metroLine = (locale: Locale): string => translate(locale, "metro.line");
@@ -17,9 +19,6 @@ export const stationOfDistrict = (district: string | null): MetroStationId | nul
   return isMetroStationId(district) ? district : null;
 };
 
-/** Said at the kiosk while a contract is hot: the platform is watched (ADR-0032). */
-export const METRO_GUARDED: MessageKey = "metro.guarded";
-
 /** Why the kiosk refused a ticket (`MetroRefused`, ADR-0034), as the toast says it. */
 const METRO_REFUSAL: Readonly<Record<MetroRefusal, MessageKey>> = {
   riding: "metro.refusal.riding",
@@ -30,10 +29,3 @@ const METRO_REFUSAL: Readonly<Record<MetroRefusal, MessageKey>> = {
 };
 
 export const metroRefusalText = (locale: Locale, reason: MetroRefusal): string => translate(locale, METRO_REFUSAL[reason]);
-
-export const metroMapVm = (from: MetroStationId, guarded: boolean, locale: Locale): MetroMapVm => ({
-  line: metroLine(locale),
-  from,
-  stops: METRO_STATION_IDS.map((id) => ({ id, name: METRO_STATION_NAMES[id], fare: id === from ? 0 : metroFare(from, id), here: id === from })),
-  refusal: guarded ? translate(locale, METRO_GUARDED) : null,
-});

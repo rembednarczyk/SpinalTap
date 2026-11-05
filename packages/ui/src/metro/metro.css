@@ -1,0 +1,92 @@
+/* The metro layer (ADR-0071): map space is metres, sizes come from the layer's `k`. */
+.metro-layer text {
+  font-family: var(--font-mono);
+  text-anchor: middle;
+  dominant-baseline: middle;
+  paint-order: stroke;
+  stroke: rgba(4, 7, 12, 0.95);
+  stroke-width: 0.25em;
+  pointer-events: none;
+}
+.metro-layer__leg { fill: none; stroke: var(--amber); stroke-width: 4px; stroke-linejoin: round; stroke-linecap: round; opacity: 0.75; vector-effect: non-scaling-stroke; }
+.metro-layer__leg--route { stroke: #fff2c8; stroke-width: 7px; opacity: 1; filter: drop-shadow(0 0 4px rgba(255, 191, 74, 0.9)); }
+/* In map units on purpose (the layer sets the width and the dashes from `k`): a non-scaling stroke would keep the dashes in metres and the width in px. */
+.metro-layer__dash { fill: none; stroke: var(--amber); opacity: 0.7; }
+.metro-layer__ring { fill: #0b1016; stroke: var(--amber); stroke-width: 2.5px; vector-effect: non-scaling-stroke; }
+.metro-layer__ring--planned { fill: none; stroke-dasharray: 3 2; }
+.metro-layer__m { fill: var(--amber); font-weight: 700; stroke-width: 0; }
+.metro-layer__name { fill: #ffe4a8; font-weight: 700; letter-spacing: 0.04em; }
+.metro-layer__note { fill: var(--ink-dim); font-style: italic; }
+.metro-layer__planned .metro-layer__name { fill: var(--ink-dim); font-weight: 400; }
+.metro-layer__entrance rect { fill: var(--amber); stroke: rgba(4, 7, 12, 0.9); stroke-width: 1px; vector-effect: non-scaling-stroke; }
+.metro-layer__entrance text { fill: #0b1016; font-weight: 700; stroke-width: 0; }
+.metro-layer__station--here .metro-layer__ring { fill: var(--amber); }
+.metro-layer__station--here .metro-layer__m { fill: #0b1016; }
+.metro-layer__station--route .metro-layer__ring { stroke: #fff2c8; }
+.metro-layer__station--to .metro-layer__ring { fill: #fff2c8; stroke: #fff2c8; filter: drop-shadow(0 0 4px rgba(255, 191, 74, 0.9)); }
+.metro-layer__station--to .metro-layer__m { fill: #0b1016; }
+.metro-pick .metro-layer__station { cursor: pointer; }
+
+/* The minimap: the entrances only. */
+.minimap__metro-entrance rect { fill: var(--amber); stroke: rgba(4, 7, 12, 0.9); stroke-width: 0.4; }
+.minimap__metro-entrance text { fill: #0b1016; font-family: var(--font-mono); font-weight: 700; text-anchor: middle; dominant-baseline: central; }
+
+/* The kiosk: the map beside the list (under it on a phone), the card of the destination. */
+/* The head and the buttons stay put; only the part between them scrolls, so nothing runs under the buttons. */
+.metro--map { box-sizing: border-box; display: flex; flex-direction: column; width: min(980px, calc(100vw - 24px)); max-height: calc(100vh - 24px); overflow: hidden; }
+.metro__scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.metro__body { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: start; gap: 14px; margin-top: 12px; }
+.metro__chart { position: relative; aspect-ratio: 16 / 10; background: rgba(6, 10, 15, 0.92); border: 1px solid var(--panel-edge); }
+.metro__chart svg { display: block; width: 100%; height: 100%; }
+.metro__side { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.metro__body .metro__stops { margin: 0; }
+.metro__stop-btn {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 4px 10px;
+  color: var(--ink);
+  text-align: left;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--panel-edge);
+  cursor: pointer;
+}
+.metro__stop-btn[aria-pressed="true"] { border-color: var(--amber); background: rgba(255, 191, 74, 0.16); }
+.metro__stop--route .metro__dot { border-color: #fff2c8; }
+.metro__stop--to .metro__dot { background: #fff2c8; border-color: #fff2c8; }
+.metro__fare { font-family: var(--font-mono); font-size: 13px; color: var(--amber); white-space: nowrap; }
+.metro__hint { margin: 0; color: var(--ink-dim); font-size: 14px; }
+.metro__planned { margin: 0; padding: 0; list-style: none; font-size: 13px; color: var(--ink-dim); }
+.metro__planned li { padding: 3px 0 3px 22px; position: relative; }
+.metro__planned li::before { content: ""; position: absolute; left: 2px; top: 7px; width: 10px; height: 10px; border-radius: 50%; border: 2px dashed var(--amber); }
+.metro__planned-head { margin: 4px 0 0; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-dim); }
+.metro__card { padding: 10px 12px; border: 1px solid rgba(255, 191, 74, 0.45); background: rgba(255, 191, 74, 0.06); }
+.metro__card-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.metro__card-name { margin: 0; font-size: 20px; }
+.metro__card-district { font-size: 13px; color: var(--ink-dim); }
+.metro__card-ride { margin: 4px 0; font-family: var(--font-mono); font-size: 13px; color: var(--amber); }
+.metro__card-list { margin: 4px 0; padding: 0; list-style: none; font-size: 14px; }
+.metro__card-list li { display: flex; justify-content: space-between; gap: 8px; }
+.metro__card-list b { font-family: var(--font-mono); font-weight: 400; color: var(--ink-dim); }
+.metro__card-map { display: block; width: 100%; height: 150px; margin: 6px 0; background: rgba(6, 10, 15, 0.92); border: 1px solid var(--panel-edge); }
+.metro__card-radius { fill: none; stroke: var(--amber); stroke-width: 1px; stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; opacity: 0.7; }
+.metro__card-near circle { fill: var(--cyan); stroke: rgba(4, 7, 12, 0.9); stroke-width: 1px; vector-effect: non-scaling-stroke; }
+.metro__card-near--contract circle { fill: var(--amber); }
+.metro__card-near--hideout circle { fill: var(--magenta); }
+.metro__card-near text { fill: #0b1016; font-family: var(--font-mono); font-weight: 700; text-anchor: middle; dominant-baseline: central; }
+.metro__card-watch { margin: 6px 0 0; color: var(--danger); font-size: 13px; }
+.metro__actions { flex: none; display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--panel-edge); }
+.metro__buy { min-width: 180px; font-weight: 700; }
+
+.citymap__btn[aria-pressed="true"] { border-color: var(--amber); color: var(--amber); }
+
+@media (max-width: 760px), (max-height: 500px) {
+  .metro__body { grid-template-columns: 1fr; }
+  .metro__chart { aspect-ratio: auto; height: 220px; }
+  .metro--map { padding: 10px 14px; }
+  .metro--map .metro__line { font-size: 20px; }
+  .metro--map .metro__eyebrow { font-size: 11px; }
+}

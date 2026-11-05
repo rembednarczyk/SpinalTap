@@ -1,4 +1,4 @@
-import type { BuffId, DisguiseRole, MetroStationId, RadioStationId } from "@seki/core";
+import type { BuffId, DisguiseRole, RadioStationId } from "@seki/core";
 
 export type { RadioStationId };
 
@@ -8,26 +8,7 @@ export type { RadioStationId };
  * reads them.
  */
 
-// ---- metro ----
-
-export interface MetroStopVm {
-  readonly id: MetroStationId;
-  readonly name: string;
-  /** Ticket price from the platform the player stands on; 0 for that platform. */
-  readonly fare: number;
-  /** The platform the player stands on. */
-  readonly here: boolean;
-}
-
-/** The line map at the ticket kiosk. */
-export interface MetroMapVm {
-  readonly line: string;
-  readonly from: MetroStationId;
-  /** Every stop of the line in order. */
-  readonly stops: readonly MetroStopVm[];
-  /** Why the platform does not take the player now (security during a contract), null when it does. */
-  readonly refusal: string | null;
-}
+// ---- metro (the kiosk and the line on the map: metro-vm.ts) ----
 
 /** The ride screen between `MetroDeparted` and `MetroArrived`. */
 export interface MetroRideVm {
@@ -41,7 +22,6 @@ export interface MetroRideVm {
 }
 
 // ---- radio ----
-
 
 /**
  * Stations of the radio (ADR-0035) with their names, the same in every language (ADR-0056); ids

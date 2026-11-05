@@ -154,10 +154,12 @@ export type UiIntents = SessionIntents &
 
 // ---- Wave 2 (ADR-0035) ----
 
-/** The metro: the line map at the ticket kiosk. */
+/** The metro: the line map at the ticket kiosk, a ticket in two steps (ADR-0071). */
 export interface MetroIntents {
-  /** Buys a ticket at this platform and rides to `to` (the `travel-metro` command). */
-  travelMetro(to: MetroStationId): void;
+  /** First step: the destination, which shows the route and the preview of `to`. */
+  selectMetroStop(to: MetroStationId): void;
+  /** Second step: buys the ticket to the chosen stop and rides (the `travel-metro` command). */
+  buyMetroTicket(): void;
   /** Leaves the kiosk without a ticket. */
   closeMetro(): void;
 }

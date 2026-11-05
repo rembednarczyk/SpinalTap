@@ -1,4 +1,4 @@
-import type { MetroStationId, Vec3, ViewDescriptor } from "@seki/core";
+import { METRO_STATION_IDS, type MetroStationId, type Vec3, type ViewDescriptor } from "@seki/core";
 import { type StaticProp, placeAt, v } from "./builders";
 import { againstWall } from "./lublin/places";
 import { DOCKS_PLACE } from "./lublin/sites";
@@ -96,3 +96,104 @@ export const metroStation = (id: MetroStationId): MetroStationDef => {
 /** The station whose kiosk is within reach of `p` (and on its level), or null. */
 export const kioskAt = (p: Vec3, stations: readonly MetroStationDef[] = METRO_STATIONS): MetroStationDef | null =>
   stations.find((s) => Math.hypot(p.x - s.kiosk.x, p.z - s.kiosk.z) <= KIOSK_REACH && Math.abs(p.y - s.kiosk.y) <= 1.6) ?? null;
+
+// ---- the line on the map (ADR-0071 stage 1) ----
+
+/**
+ * The metro line as the map draws it (ADR-0071 stage 1): the tunnel between the stations and the
+ * stations the city may get later. Map data only, no geometry and no rules: the simulation never
+ * reads it, so it changes neither the state hash nor the save. Points are world metres (x east,
+ * z north), the stations themselves come from `METRO_STATIONS`.
+ */
+export interface MetroMapPoint {
+  readonly x: number;
+  readonly z: number;
+}
+
+/** The tunnel between two neighbouring stations of the line, without the stations themselves. */
+export interface MetroTunnelDef {
+  readonly from: MetroStationId;
+  readonly to: MetroStationId;
+  readonly via: readonly MetroMapPoint[];
+}
+
+/**
+ * The tunnel (ADR-0071, "Przebieg tunelu"): under Krakowskie Przedmieście to the Bramowa kiosk,
+ * back to Plac Łokietka and north under Lubartowska past Alchemia, down the valley of the
+ * Czechówka under Aleja Tysiąclecia to Plac Zamkowy, then east under the avenue and
+ * ul. Kalinowszczyzna, over the Bystrzyca by the Lutosławski bridge (w834402001) to Nabrzeże. It
+ * keeps off the Old Town's hill with its cellars, off the castle hill and at least 39 m off the Old
+ * Jewish Cemetery (w40049437, G-314). The points follow the streets of the map data (OSM) and the
+ * topography curator's review of ADR-0071 (T-150).
+ */
+export const METRO_TUNNEL: readonly MetroTunnelDef[] = [
+  { from: "shinsekai", to: "kanal", via: [{ x: 240, z: -66 }, { x: 342, z: -89 }, { x: 443, z: -94 }] },
+  {
+    from: "kanal",
+    to: "targ",
+    via: [{ x: 443, z: -90 }, { x: 442, z: -20 }, { x: 447, z: 16 }, { x: 460, z: 56 }, { x: 502, z: 160 }, { x: 550, z: 281 }, { x: 585, z: 362 }, { x: 680, z: 352 }],
+  },
+  {
+    from: "targ",
+    to: "doki",
+    via: [
+      { x: 743, z: 345 },
+      { x: 904, z: 325 },
+      { x: 1060, z: 300 },
+      { x: 1250, z: 290 },
+      { x: 1395, z: 270 },
+      { x: 1580, z: 232 },
+      { x: 1738, z: 386 },
+      { x: 2084, z: 384 },
+      { x: 2340, z: 428 },
+      { x: 2386, z: 414 },
+      { x: 2462, z: 420 },
+    ],
+  },
+];
+
+/**
+ * A station the line may get (ADR-0071, "możliwe stacje"): dashed on the map, without a ticket,
+ * "under construction". Not a `MetroStationId`, so neither the contract nor the save knows it;
+ * it becomes a station with the ADR of its district.
+ */
+export interface MetroPlannedDef {
+  readonly id: string;
+  /** Lublin's own name, the same in every language. */
+  readonly name: string;
+  /** The working station the extension starts from. */
+  readonly from: MetroStationId;
+  readonly at: MetroMapPoint;
+  /** The dashed line between `from` and `at`; empty for a station on the line itself (`onLine`). */
+  readonly via: readonly MetroMapPoint[];
+  /** A station on the tunnel between `from` and the next one: no branch, only its hollow ring. */
+  readonly onLine?: true;
+}
+
+/** The possible stations of ADR-0071, with the places of the topography curator's review (T-151…T-153). */
+export const METRO_PLANNED: readonly MetroPlannedDef[] = [
+  // Ogród Saski: the line carried on west along Krakowskie and Aleje Racławickie, under the avenue on the park's south edge (G-315).
+  { id: "ogrod-saski", name: "Ogród Saski", from: "shinsekai", at: { x: -630, z: -84 }, via: [{ x: 20, z: -59 }, { x: -242, z: -67 }, { x: -480, z: -88 }] },
+  // Lublin Główny: Plac Dworcowy between the railway station and the Dworzec Metropolitalny, a branch out through the gate as the
+  // tunnel runs, then from Plac Łokietka by Kozia and
+  // Bernardyńska, clear of St Peter's church (G-315); schematic south of the imported city.
+  {
+    id: "lublin-glowny",
+    name: "Lublin Główny",
+    from: "kanal",
+    at: { x: 590, z: -1840 },
+    via: [{ x: 443, z: -94 }, { x: 440, z: -110 }, { x: 420, z: -128 }, { x: 390, z: -144 }, { x: 368, z: -170 }, { x: 380, z: -210 }, { x: 413, z: -256 }, { x: 492, z: -370 }, { x: 506, z: -389 }],
+  },
+  // Kalinowszczyzna: on the line in the gap of T-022, under ul. Kalinowszczyzna by the stops "Tatarska" (T-153).
+  { id: "kalinowszczyzna", name: "Kalinowszczyzna", from: "targ", at: { x: 1738, z: 386 }, via: [], onLine: true },
+];
+
+/** The line's stations between `from` and `to` in the order of the ride, both ends included. */
+export const metroRoute = (from: MetroStationId, to: MetroStationId): MetroStationId[] => {
+  const a = METRO_STATION_IDS.indexOf(from);
+  const b = METRO_STATION_IDS.indexOf(to);
+  const step = b >= a ? 1 : -1;
+  const out: MetroStationId[] = [];
+  for (let i = a; i !== b + step; i += step) out.push(METRO_STATION_IDS[i] as MetroStationId);
+  return out;
+};
