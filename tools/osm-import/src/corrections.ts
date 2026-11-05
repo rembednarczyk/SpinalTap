@@ -182,7 +182,7 @@ export interface AddedArea {
 export const ADDED_AREAS: readonly AddedArea[] = [
   {
     // The square before the Dworzec Autobusowy and Nova, paved on the orthophoto (PZGiK), where OSM
-    // has only the north tip of `landuse=retail` w291844839: bare terrain from the footway
+    // has only the south tip of `landuse=retail` w291844839: bare terrain from the footway
     // w227698428 in the west to the footway w227698423 in the east, between the paths w227698424
     // and w1435832520 and the car park w175995587 and Nova w66264174, with the metro's `targ` B
     // opening onto it (T-159). Its corners are the map's nodes: the paths' and the west footway's
@@ -206,6 +206,57 @@ export const ADDED_AREAS: readonly AddedArea[] = [
     nodesOf: ["w227698424", "w1435832520", null, null, "w175995587", "w175995587", "w66264174", "w66264174", "w66264174", "w66264174", "w227698428"],
     reason: "plac pieszy przed Dworcem Autobusowym, wybrukowany na ortofoto PZGiK, w OSM tylko landuse=retail",
     ref: "T-162",
+  },
+  {
+    // The paving on both sides of the footway w227698423 by the Dworzec Autobusowy w66264171, bare in
+    // OSM: the strip along the car park w175995587's edge (dark red setts on the orthophoto) and the
+    // square of market stalls up to the station's west wall. Its west side is the car park's edge, its
+    // east the station's walls up to their north-west corner, where the footway w227698410 meets
+    // the car park; the south follows the path w227698420's axis along the station's front to its
+    // south-east corner, so no seam is left at the stalls' corner, and joins T-162/plac-dworca. Off the
+    // nodes: T-162's east corner, the path's axis abreast of the station's south-east corner and the
+    // car park's edge abreast of the footway's node.
+    id: "T-164/plac-przy-dworcu",
+    tags: { "area:highway": "pedestrian", surface: "paving_stones" },
+    ring: [
+      { x: 760.3, z: 376.3 },
+      { x: 763.7, z: 376.3 },
+      { x: 764.51, z: 375.67 },
+      { x: 803.59, z: 370.49 },
+      { x: 803.59, z: 374.05 },
+      { x: 790.12, z: 375.68 },
+      { x: 790.0, z: 374.78 },
+      { x: 787.69, z: 376.05 },
+      { x: 787.15, z: 375.07 },
+      { x: 784.29, z: 376.51 },
+      { x: 783.76, z: 375.48 },
+      { x: 781.48, z: 376.57 },
+      { x: 781.04, z: 375.62 },
+      { x: 778.46, z: 376.94 },
+      { x: 781.89, z: 403.04 },
+      { x: 784.65, z: 424.35 },
+      { x: 785.8, z: 429.26 },
+      { x: 785.01, z: 429.26 },
+    ],
+    nodesOf: ["w175995587", null, "w227698423", null, "w66264171", "w66264171", "w66264171", "w66264171", "w66264171", "w66264171", "w66264171", "w66264171", "w66264171", "w66264171", "w66264171", "w66264171", "w227698410", null],
+    reason: "kostka placu przy Dworcu Autobusowym (stragany, pas przy parkingu) na ortofoto PZGiK, w OSM bez obszaru",
+    ref: "T-164",
+  },
+  {
+    // The pavement along Nova w66264174's east wall, between it and the car park w175995587: setts on
+    // the orthophoto, bare in OSM. From T-162/plac-dworca up to Nova's north wall, whose line
+    // closes it at the car park's edge.
+    id: "T-164/chodnik-novy",
+    tags: { "area:highway": "footway", surface: "paving_stones" },
+    ring: [
+      { x: 746.7, z: 378.1 },
+      { x: 753.97, z: 427.59 },
+      { x: 750.98, z: 427.97 },
+      { x: 744.7, z: 379.8 },
+    ],
+    nodesOf: ["w175995587", null, "w66264174", "w66264174"],
+    reason: "chodnik z kostki wzdłuż ściany Novy na ortofoto PZGiK, w OSM bez obszaru",
+    ref: "T-164",
   },
 ];
 

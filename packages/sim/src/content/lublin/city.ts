@@ -6,7 +6,7 @@ import { clearedBuilding } from "../cleared-buildings";
 import { buildingView, groundView, markingView, toPoints } from "./index";
 import { type GroundRect } from "./shape";
 import { type BuildingCut, CLEARED, type PassageSite, ROOM_STOREY, type RoomSite, rawHeight } from "./sites";
-import { bridgePieces, flightDeckAt } from "./decks";
+import { bridgePieces, flightDeckAt, flightTopAt } from "./decks";
 import { SHAPED_TERRAIN, groundY } from "./terrain";
 import type { LublinBuildingData, LublinChunkData, LublinGroundData } from "./types";
 
@@ -190,9 +190,13 @@ interface Carve {
   readonly bottom: number;
 }
 
-/** The flight hung off a bridge (G-255) whose band holds the middle of `pts`, or null. */
-const flightUnder = (pts: readonly GroundPoint[]) =>
-  pts.length > 0 ? flightDeckAt(pts.reduce((a, p) => a + p.x, 0) / pts.length, pts.reduce((a, p) => a + p.z, 0) / pts.length) : null;
+/** The flight hung off a bridge (G-255) whose band holds the middle of `pts`, or the bridge's deck its run on the deck lies on (G-330), or null. */
+const flightUnder = (pts: readonly GroundPoint[]) => {
+  if (pts.length === 0) return null;
+  const x = pts.reduce((a, p) => a + p.x, 0) / pts.length;
+  const z = pts.reduce((a, p) => a + p.z, 0) / pts.length;
+  return flightDeckAt(x, z) ?? flightTopAt(x, z);
+};
 
 /**
  * A piece of ground, on a bridge with its deck's axis and heights (ADR-0053), and so is a band

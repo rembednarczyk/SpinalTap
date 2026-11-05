@@ -41,6 +41,19 @@ export interface TerrainEntry {
   mesh: Mesh | null;
 }
 
+/** The point halfway along a line. */
+const middleOf = (line: readonly P2[]): P2 => {
+  let rest = line.slice(1).reduce((s, p, i) => s + Math.hypot(p.x - line[i]!.x, p.z - line[i]!.z), 0) / 2;
+  for (let i = 0; i + 1 < line.length; i++) {
+    const a = line[i]!;
+    const b = line[i + 1]!;
+    const len = Math.hypot(b.x - a.x, b.z - a.z);
+    if (len >= rest && len > 0) return { x: a.x + ((b.x - a.x) * rest) / len, z: a.z + ((b.z - a.z) * rest) / len };
+    rest -= len;
+  }
+  return line[line.length - 1] ?? { x: 0, z: 0 };
+};
+
 /**
  * The map city's entities as measured data (ADR-0044) with their spatial indexes, and the
  * queries on them: heights, roofs, neighbours and roads. Draws nothing.
@@ -103,17 +116,24 @@ export class MapEntries {
 
   /**
    * The height a ground entry is laid at: on a bridge's deck where there is one (ADR-0053); a way
-   * under the bridge stays on the terrain where the deck has headroom over it (G-062), a marking
-   * does not. A piece of the deck follows its own axis: on its outline the test for the ring may
+   * under the bridge stays on the terrain where the deck has headroom over it (G-062); a marking
+   * lies wholly on the highest deck under its middle, or on the terrain. A piece of the deck follows its own axis: on its outline the test for the ring may
    * fall either way. Where it jumps between the terrain and a deck, `surfaceAt` keeps the drape
    * of a point on the one under it (G-301).
    */
   groundHeight(g: GroundEntry, terrain: HeightAt = this.terrainOf(g)): HeightAt {
     const own = g.deck;
     if (own) return (x, z) => deckHeight(own, x, z);
-    const under = (x: number, z: number) => (g.marking ? undefined : terrain(x, z));
-    return Object.assign((x: number, z: number) => this.decks.heightAt(x, z, under(x, z)) ?? terrain(x, z), {
-      surfaceAt: (x: number, z: number) => this.decks.surfaceAt(x, z, under(x, z)) ?? terrain,
+    if (g.marking) {
+      // The import cuts a road's lines at the bridge's ends, rounded to 0.1 m like the deck's
+      // outline: an end a centimetre past it would run down to the terrain over the last cut of
+      // the line (G-330). A line lies on the surface under its middle.
+      const mid = middleOf(g.ring);
+      const surface = this.decks.surfaceAt(mid.x, mid.z) ?? terrain;
+      return Object.assign((x: number, z: number) => surface(x, z), { surfaceAt: () => surface });
+    }
+    return Object.assign((x: number, z: number) => this.decks.heightAt(x, z, terrain(x, z)) ?? terrain(x, z), {
+      surfaceAt: (x: number, z: number) => this.decks.surfaceAt(x, z, terrain(x, z)) ?? terrain,
     });
   }
 
