@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-342 Zaplecze Novy bez nawierzchni (T-169)
+- Status: naprawione w #296 (5.11, 31f56ed; `T-169/zaplecze-novy`, kurator PRZYJĘTE)
+- Ważność: S4 · Zasięg: x 726–756, z 428–441, ok. 270 m² · Koszt: mały
+- Pakiet właściciela: tools/osm-import (`ADDED_AREAS`; nawierzchnia utwardzona, nie trawa)
+- Test przyjęcia: 0 gołych próbek 0,5 m poza budynkami w prostokącie; parking w227698438 i jezdnia w40050943 na wierzchu
+
 ### G-341 Gołe pasy wokół Dworca Autobusowego od północy i wschodu (T-168)
 - Status: naprawione w #294 (5.11, a5b773f; `T-168/peron-przy-dworcu` i `T-168/chodnik-przy-dworcu`, kurator PRZYJĘTE)
 - Ważność: S4 · Zasięg: x 785–797, z 422–430 (ok. 42 m²) i x 793–808, z 376–428 (ok. 325 m²) · Koszt: mały
