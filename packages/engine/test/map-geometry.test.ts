@@ -1,4 +1,4 @@
-import { type TerrainGrid, terrainHeightAt } from "@seki/core";
+import { type TerrainGrid, type Vec3, terrainHeightAt } from "@seki/core";
 import { describe, expect, it } from "vitest";
 import { MeshSink } from "../src/renderer/mesh-sink";
 import { SURFACE_CODE, SURFACE_LIFT, drapeTriangles, planSurface, planTerrain } from "../src/renderer/mapcity/ground-plan";
@@ -87,6 +87,20 @@ const grid = (originX: number, cell: number, cols: number, rows: number, f: (x: 
   return { originX, originZ: 0, cell, cols, rows, heights };
 };
 
+/** The height of the mesh in `sink` at (x, z), straight across the triangle there; null off it. */
+const heightOn = (sink: MeshSink, x: number, z: number): number | null => {
+  const p = sink.positions;
+  for (let t = 0; t + 2 < sink.indices.length; t += 3) {
+    const [a, b, c] = [sink.indices[t]!, sink.indices[t + 1]!, sink.indices[t + 2]!].map((i) => ({ x: p[i * 3]!, y: p[i * 3 + 1]!, z: p[i * 3 + 2]! })) as [Vec3, Vec3, Vec3];
+    const d = (b.z - c.z) * (a.x - c.x) + (c.x - b.x) * (a.z - c.z);
+    if (Math.abs(d) < 1e-12) continue;
+    const wa = ((b.z - c.z) * (x - c.x) + (c.x - b.x) * (z - c.z)) / d;
+    const wb = ((c.z - a.z) * (x - c.x) + (a.x - c.x) * (z - c.z)) / d;
+    if (wa >= -1e-9 && wb >= -1e-9 && wa + wb <= 1 + 1e-9) return wa * a.y + wb * b.y + (1 - wa - wb) * c.y;
+  }
+  return null;
+};
+
 const vertices = (sink: MeshSink) => Array.from({ length: sink.vertexCount }, (_, i) => ({ x: sink.positions[i * 3]!, y: sink.positions[i * 3 + 1]!, z: sink.positions[i * 3 + 2]!, code: sink.uvs2[i * 2]! }));
 
 describe("terrain and draped ground (ADR-0044)", () => {
@@ -138,6 +152,33 @@ describe("terrain and draped ground (ADR-0044)", () => {
       expect(v.y).toBeCloseTo(h(v.x, v.z) + SURFACE_LIFT.road, 9);
       expect(v.code).toBe(SURFACE_CODE.road);
     }
+  });
+
+  it("lays overlapping pieces at one height over a bending terrain where they meet (G-301)", () => {
+    // A twisted terrain: a 5 m drape straight between its own corners runs centimetres off another's.
+    const g = grid(0, 5, 11, 9, (x, z) => 0.004 * x * z + Math.sin(x / 4) * 0.6 + Math.cos(z / 3) * 0.4);
+    const h = (x: number, z: number) => terrainHeightAt(g, x, z);
+    const turn = (cx: number, cz: number, r: number, a: number, n: number) => Array.from({ length: n }, (_, k) => ({ x: cx + r * Math.cos(a + (k * 2 * Math.PI) / n), z: cz + r * Math.sin(a + (k * 2 * Math.PI) / n) }));
+    const pieces = [
+      { surface: "square", ring: [{ x: 3, z: 4 }, { x: 33, z: 4 }, { x: 33, z: 24 }, { x: 3, z: 24 }] },
+      { surface: "square", ring: turn(20, 16, 13, 0.4, 7) },
+      { surface: "footway", ring: [{ x: 1.3, z: 30 }, { x: 44, z: 2.2 }, { x: 38, z: 37 }] },
+    ] as const;
+    const laid = pieces.map(({ surface, ring }) => {
+      const sink = new MeshSink();
+      planSurface(sink, surface, ring, h, null);
+      return { ring, lift: SURFACE_LIFT[surface], at: (x: number, z: number) => heightOn(sink, x, z) };
+    });
+    let met = 0;
+    for (let x = 0.3; x < 45; x += 0.7) {
+      for (let z = 0.2; z < 38; z += 0.7) {
+        const over = laid.filter((p) => pointInRing({ x, z }, p.ring)).map((p) => (p.at(x, z) ?? Number.NaN) - p.lift);
+        if (over.length < 2) continue;
+        met++;
+        expect(Math.max(...over) - Math.min(...over), `${x.toFixed(1)}, ${z.toFixed(1)}`).toBeLessThan(1e-9);
+      }
+    }
+    expect(met).toBeGreaterThan(300);
   });
 
   it("puts a kerb on the sidewalk edge that faces a road, and none elsewhere", () => {

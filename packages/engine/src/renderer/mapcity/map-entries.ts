@@ -1,8 +1,9 @@
 import { type EntityId, type GroundSurface, type RoadMarkingKind, type TerrainGrid, type TerrainOpenSides, type Vec3, type ViewDescriptor, terrainHeightAt } from "@seki/core";
 import type { Mesh } from "../../babylon";
 import type { AcrossAt } from "./canyon-plan";
-import { type DeckAxis, Decks } from "./deck-plan";
+import { type DeckAxis, Decks, deckHeight } from "./deck-plan";
 import type { MapBuilding } from "./facade-frame";
+import type { HeightAt } from "./ground-plan";
 import type { LandmarkPart } from "./landmarks";
 import { mapBuilding } from "./map-building";
 import { BinIndex } from "./map-index";
@@ -93,6 +94,27 @@ export class MapEntries {
       if (x >= b.minX - 0.01 && x <= b.maxX + 0.01 && z >= b.minZ - 0.01 && z <= b.maxZ + 0.01) return terrainHeightAt(t.grid, x, z);
     }
     return null;
+  }
+
+  /** The terrain under a ground entry: the chunk's, or the entry's own height outside every terrain. */
+  terrainOf(g: GroundEntry): HeightAt {
+    return (x, z) => this.heightAt(x, z) ?? g.y;
+  }
+
+  /**
+   * The height a ground entry is laid at: on a bridge's deck where there is one (ADR-0053); a way
+   * under the bridge stays on the terrain where the deck has headroom over it (G-062), a marking
+   * does not. A piece of the deck follows its own axis: on its outline the test for the ring may
+   * fall either way. Where it jumps between the terrain and a deck, `surfaceAt` keeps the drape
+   * of a point on the one under it (G-301).
+   */
+  groundHeight(g: GroundEntry, terrain: HeightAt = this.terrainOf(g)): HeightAt {
+    const own = g.deck;
+    if (own) return (x, z) => deckHeight(own, x, z);
+    const under = (x: number, z: number) => (g.marking ? undefined : terrain(x, z));
+    return Object.assign((x: number, z: number) => this.decks.heightAt(x, z, under(x, z)) ?? terrain(x, z), {
+      surfaceAt: (x: number, z: number) => this.decks.surfaceAt(x, z, under(x, z)) ?? terrain,
+    });
   }
 
   /** How far the picture lifts feet at (x, y, z) above the terrain: `surfaceLiftAt`. */
