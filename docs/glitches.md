@@ -951,7 +951,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: reputacja −11..−49; w praktyce sklep zamknięty przed progiem odmowy
 - Pakiet właściciela: packages/sim (civilian-ai-system)
 
-### G-307 Kioski metra stoją przy zabytkach: Plac Litewski 3,6 m od upamiętnienia Andrzeja Struga, Brama Krakowska 10,8 m od Bramy w murach
+### G-307 Kioski metra stoją przy zabytkach: Plac Litewski 3,8 m od upamiętnienia Andrzeja Struga, Brama Krakowska 10,8 m od Bramy w murach i 2,1 m od tablicy Ludomira Michała Rogowskiego
 - Status: zgłoszone (5.11, autor szkicu ADR-0071); naprawa w etapie 2 ADR-0071 (nowe miejsca wejść co najmniej 18 m od zabytków)
 - Ważność: S3 · Zasięg: dwie stacje metra; zasłaniają zabytek i stoją w murach Starego Miasta (ADR-0042)
 - Pakiet właściciela: packages/sim (treść `lublin`, stacje metra), przegląd `topography-curator`
@@ -985,6 +985,18 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (5.11, weryfikator PR #269)
 - Ważność: S4 · Zasięg: pasek ok. 0,2 × 0,1 m przy krawędzi nad drabiną (t < 0,5 odcinka linia–wyjście, np. `targ-escape-2` (69,2; 9,1; 63,85–64,05)); bez upadku i straty zdrowia. Teoretycznie z ciałem na ramieniu (ADR-0065) system drabin ją pominie i spadnie. Przesunięcie `resumeOnLadderTop` sięga 0,61 m (`targ-escape-1`), a stały test obejmuje tylko `targ-escape-2`
 - Pakiet właściciela: packages/sim (`ladder-system.ts`, `resumeOnLadderTop`)
+
+### G-314 Linia metra na mapie przechodzi pod Starym cmentarzem żydowskim
+- Status: w PR #270 (5.11, kurator topografii; T-150)
+- Ważność: S3 · Zasięg: lokalny, odcinek `METRO_TUNNEL` (1120; 310) → (1700; 380), ok. 75 m pod w40049437 · Koszt: mały
+- Pakiet właściciela: packages/sim (`content/metro.ts`)
+- Test przyjęcia: każdy punkt `METRO_TUNNEL` co 5 m poza `PROTECTED_AREAS` i obrysami `historic`/`heritage`/`place_of_worship`; przebieg al. Tysiąclecia – Kalinowszczyzna – most Lutosławskiego (ADR-0071, przegląd kuratora)
+
+### G-315 Możliwe stacje Ogród Saski i Lublin Główny w złym miejscu
+- Status: w PR #270 (5.11, kurator topografii; T-151, T-152)
+- Ważność: S4 · Zasięg: mapa metra · Koszt: mały
+- Pakiet właściciela: packages/sim (`content/metro.ts`)
+- Test przyjęcia: Ogród Saski (−630; −84) poza obrysem parku i ≤ 30 m od Alej Racławickich; Lublin Główny (590; −1840) ≤ 80 m od w171203532; odgałęzienie z Placu Łokietka ulicami Kozią i Bernardyńską, poza obrysami zabytków
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
