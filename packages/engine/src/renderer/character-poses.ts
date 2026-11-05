@@ -20,6 +20,16 @@ const mixPose = (a: ArmPose, b: ArmPose, t: number): ArmPose => ({
 export const smooth = (t: number): number => t * t * (3 - 2 * t);
 
 /**
+ * Draws or holsters towards the weapon's state; on a ladder or pulling up onto a ledge (the
+ * ladder pose, ADR-0021) both hands are on the rungs, so the weapon goes back in the holster
+ * for the climb and comes out again after it.
+ */
+const easeDrawn = (rig: CharacterRig, dt: number): void => {
+  const target = rig.drawTarget && rig.climbBlend < 0.5 ? 1 : 0;
+  rig.drawn += Math.sign(target - rig.drawn) * Math.min(Math.abs(target - rig.drawn), dt / DRAW_SECONDS);
+};
+
+/**
  * Right arm of an armed character. Holstered it swings like anyone's; drawn it carries the
  * pistol at low ready (muzzle down and forward, the arm loose and swaying with the walk) and
  * comes up to aim after a shot, the left hand joining to support it. Drawing reaches for the
@@ -27,8 +37,7 @@ export const smooth = (t: number): number => t * t * (3 - 2 * t);
  * holster to hand at the middle of the move.
  */
 export const poseWeaponArms = (rig: CharacterRig, swing: number, amount: number, dt: number, run = 0, aiming = 0): void => {
-  const target = rig.drawTarget ? 1 : 0;
-  rig.drawn += Math.sign(target - rig.drawn) * Math.min(Math.abs(target - rig.drawn), dt / DRAW_SECONDS);
+  easeDrawn(rig, dt);
   rig.aimHold = Math.max(0, rig.aimHold - dt);
   const aimTarget = rig.aimHold > 0 && rig.drawTarget ? 1 : 0;
   // Snap up to aim, ease back down.
@@ -127,8 +136,7 @@ const mixSwing = (a: SwingPose, b: SwingPose, t: number): SwingPose => ({ ...mix
  * through the combo's poses and raises the guard; holstered it swings free like the pistol arm.
  */
 export const poseMeleeArms = (rig: CharacterRig, swing: number, dt: number, run: number, guard: number): void => {
-  const target = rig.drawTarget ? 1 : 0;
-  rig.drawn += Math.sign(target - rig.drawn) * Math.min(Math.abs(target - rig.drawn), dt / DRAW_SECONDS);
+  easeDrawn(rig, dt);
   rig.aim = 0;
   const wantGuard = guard > 0.5 && rig.drawTarget && !rig.swing ? 1 : 0;
   rig.guard += (wantGuard - rig.guard) * Math.min(1, dt * (wantGuard > rig.guard ? 16 : 8));

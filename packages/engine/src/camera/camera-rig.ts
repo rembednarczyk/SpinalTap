@@ -364,7 +364,9 @@ export class CameraRig {
     );
 
     const fpp = this.blend < 0.35;
-    this.draw += Math.sign((this.weaponDrawn ? 1 : 0) - this.draw) * Math.min(Math.abs((this.weaponDrawn ? 1 : 0) - this.draw), dt / 0.35);
+    // On a ladder (and pulling up onto a ledge) both hands hold on: the weapon drops out of view (ADR-0021).
+    const held = this.weaponDrawn && target.climb === undefined ? 1 : 0;
+    this.draw += Math.sign(held - this.draw) * Math.min(Math.abs(held - this.draw), dt / 0.35);
     this.reload = Math.max(0, this.reload - dt);
     const reloading = this.reloadTotal > 0 && this.reload > 0 ? Math.sin(Math.PI * (1 - this.reload / this.reloadTotal)) : 0;
     const away = 1 - this.draw * this.draw * (3 - 2 * this.draw) + reloading * 0.35;
