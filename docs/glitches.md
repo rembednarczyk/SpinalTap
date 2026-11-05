@@ -951,6 +951,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: `ganger-perception.ts` (`track`)
 - Pakiet właściciela: packages/sim/src/systems/ai
 
+### G-296 Pomost kładki podzamcze-2-0 kończy się na szwie z = 160 bez ciągu w chunku obok
+- Status: zgłoszone (5.11, naprawiacz G-278)
+- Ważność: S4 · Zasięg: kładka x 1073,8–1082,2, z 160–162,1; krawędź 0,03–1,9 m nad terenem; brak w danych importu
+- Pakiet właściciela: tools/osm-import (pomosty mostów)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
