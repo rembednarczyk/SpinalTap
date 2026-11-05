@@ -1,4 +1,4 @@
-import { MICRO_EVENT_CHANCE, MICRO_EVENT_REWARD, type MicroEventKind, type Vec3 } from "@seki/core";
+import { MICRO_EVENT_REWARD, type MicroEventKind, type Vec3, microEventChance } from "@seki/core";
 import { MICRO_SPOTS } from "../content/encounter-rewards";
 import type { DistrictId } from "../content/world-map";
 import { deriveRandom } from "../rng/derive-random";
@@ -69,7 +69,8 @@ export const rollMicroEvent = (ctx: SimContext, district: DistrictId, player: En
   const rng = deriveRandom(ctx.seed, `micro:${ctx.tick}`);
   const roll = rng.next();
   const kind: MicroEventKind = rng.next() < 0.6 ? "mugging" : "aid";
-  if (roll >= MICRO_EVENT_CHANCE) return;
+  // More often while the street thinks badly of the player (ADR-0070); the roll itself is the same.
+  if (roll >= microEventChance(ctx.state.domain.reputation.civilians)) return;
   const at = spotFor(district, player.position);
   if (at) s.micro = spawn(ctx, kind, at);
 };
