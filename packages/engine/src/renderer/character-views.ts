@@ -1,5 +1,5 @@
 import type { Scene } from "../babylon";
-import type { AppearanceDescriptor, EntityId, Transform, ViewDescriptor, WeaponLook } from "@seki/core";
+import type { AppearanceDescriptor, EntityId, Transform, ViewDescriptor } from "@seki/core";
 import type { CameraRig } from "../camera/camera-rig";
 import { fadeFigure } from "../npr/body-dither";
 import type { MoonShadow } from "../npr/moon-shadow";
@@ -127,10 +127,6 @@ export class CharacterViews implements FxActors {
 
   transformOf(id: EntityId): Transform | null {
     return this.views.get(id)?.transform ?? null;
-  }
-
-  heldOf(id: EntityId): WeaponLook | null {
-    return this.kit.heldOf(id);
   }
 
   /** The FPP viewmodel shows the weapon in the hand of `id`, whom the camera now follows. */
