@@ -27,6 +27,13 @@ const PUSH_OFF = 1.6;
  */
 const STEP_OFF_LIFT = 0.6;
 const STEP_OFF_TIME = 0.6;
+/**
+ * A walk over the edge by a ladder's top catches the rungs within this drop below the top
+ * (metres, about the first fifth of a second of the fall)...
+ */
+const TOP_CATCH_DROP = 0.3;
+/** ...this close to the ladder's line (metres, horizontally: the edge is 0.4-0.6 m from it). */
+const TOP_CATCH_REACH = 0.7;
 
 type Ladder = Entity & { ladder: LadderDef };
 
@@ -95,6 +102,21 @@ export const grabLadder = (ctx: SimContext, e: Entity, key: string, end: "bottom
 };
 
 /**
+ * The ladder whose top she has just walked off, forward, backwards or sideways: falling from the
+ * height of its top, not rising from a jump, and close to its line. Her hands catch it as the
+ * interact key would, instead of the fall. A sprint carries on: running off a roof is a leap,
+ * and at that speed she would be past the rungs before her hands reached them.
+ */
+const caughtAtTop = (p: Entity, all: readonly Ladder[]): LadderDef | undefined => {
+  if (p.fall === undefined || p.fall > 0 || p.posture?.sprinting) return undefined;
+  const peak = p.airPeak ?? p.position.y;
+  return all.find(
+    ({ ladder: l }) =>
+      Math.abs(peak - l.top) < 0.05 && l.top - p.position.y < TOP_CATCH_DROP && Math.hypot(p.position.x - l.x, p.position.z - l.z) <= TOP_CATCH_REACH,
+  )?.ladder;
+};
+
+/**
  * A climber standing in a ladder's line between its ends, the top included (a game saved
  * mid-climb, or in the last moment of the swing onto the rungs and the first of the pull-over).
  */
@@ -127,8 +149,8 @@ export const resumeOnLadderTop = (world: SimContext["world"], e: Entity): void =
 
 /**
  * Fire escape ladders (ADR-0021). Walking forward into the foot of a ladder, or the interact
- * key at either end, puts the player on it; forward climbs up, back climbs down, at the top
- * she pulls herself over onto the roof (a mantle), at the bottom steps onto the street. The jump button lets go. On the
+ * key at either end, or walking over the edge by its top, puts the player on it; forward
+ * climbs up, back climbs down, at the top she pulls herself over onto the roof (a mantle), at the bottom steps onto the street. The jump button lets go. On the
  * ladder there is no gravity and no walking; movement skips the climber. Runs after player
  * control (which sets the walk velocity this overrides) and before movement.
  */
@@ -142,7 +164,13 @@ export const ladderSystem: System = {
     for (const p of ctx.world.with("player", "velocity")) {
       if (!p.climb) {
         // No ladder with a body on her shoulder (ADR-0065): both hands are full.
-        if (frozen || p.fall !== undefined || p.mantle || ctx.session.carrying !== null) continue;
+        if (frozen || p.mantle || ctx.session.carrying !== null) continue;
+        const top = caughtAtTop(p, all);
+        if (top) {
+          hangOn(ctx, p, top, top.top - TOP_GRAB_DROP, { over: true, duration: TOP_GRAB_TIME });
+          continue;
+        }
+        if (p.fall !== undefined) continue;
         // A game saved on a ladder: back on it, where it was.
         const held = all.find((l) => onLadderLine(p, l.ladder));
         if (held) {
