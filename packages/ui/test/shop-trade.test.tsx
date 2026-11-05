@@ -223,6 +223,15 @@ describe("a hostile reputation narrows the counter instead of closing it (ADR-00
     expect(within(screen.getByTestId("shop-repair-line")).getByRole("button", { name: "Not for you" }).hasAttribute("disabled")).toBe(true);
   });
 
+  // With money and room to spare only the reputation can grey the SMG out.
+  it("a full wallet does not buy what is under the counter", () => {
+    const { i } = mount({ shopId: "oyaji", eddies: 100_000, reputation: standing({ civilians: -60 }) });
+    const buy = within(screen.getByTestId("stock-hebi_smg")).getByRole("button", { name: "Not for you" });
+    expect(buy.hasAttribute("disabled")).toBe(true);
+    fireEvent.click(buy);
+    expect(i.buyItem).not.toHaveBeenCalled();
+  });
+
   it("a wary street keeps the full offer", () => {
     mount({ shopId: "oyaji", reputation: standing({ civilians: -49 }) });
     expect(screen.queryByTestId("shop-basic")).toBeNull();
