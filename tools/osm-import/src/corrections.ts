@@ -258,6 +258,37 @@ export const ADDED_AREAS: readonly AddedArea[] = [
     reason: "chodnik z kostki wzdłuż ściany Novy na ortofoto PZGiK, w OSM bez obszaru",
     ref: "T-164",
   },
+  {
+    // Nova w66264174's back yard, paved with parked cars on the orthophoto (PZGiK), setts from the
+    // west, where OSM has only `landuse=retail` w291844839: bare terrain from Nova's north wall to
+    // Nowy Plac Targowy w40050943, between the footway w227698428 by Nova's west wall and the car
+    // park w175995587. It runs to the street's axis, so no seam is left at its edge, also along the
+    // car park's north edge to where its aisle leaves the street, and stops at the line of the car
+    // park w227698441's east edge. Off the nodes: T-164/chodnik-novy's corner on the car park's edge
+    // and the street's axis abreast of the car park w227698441's north-east corner. A square, not a
+    // service area: a carriageway would widen the street to Nova's wall, and its lamps lose their edge.
+    id: "T-169/zaplecze-novy",
+    tags: { "area:highway": "pedestrian", surface: "paving_stones" },
+    ring: [
+      { x: 726.96, z: 431.12 },
+      { x: 748.33, z: 428.31 },
+      { x: 750.98, z: 427.97 },
+      { x: 753.97, z: 427.59 },
+      { x: 755.2, z: 436.1 },
+      { x: 771.34, z: 433.88 },
+      { x: 772.74, z: 437.81 },
+      { x: 767.78, z: 438.11 },
+      { x: 762.26, z: 438.74 },
+      { x: 745.15, z: 441.69 },
+      { x: 726.12, z: 445.48 },
+      { x: 726.12, z: 440.8 },
+      { x: 725.42, z: 436.92 },
+      { x: 727.09, z: 434.91 },
+    ],
+    nodesOf: ["w66264174", "w66264174", "w66264174", null, "w175995587", "w175995587", "w40050943", "w40050943", "w40050943", "w40050943", null, "w227698441", "w227698441", "w227698428"],
+    reason: "utwardzony plac zaplecza Novy z zaparkowanymi autami na ortofoto PZGiK, w OSM tylko landuse=retail",
+    ref: "T-169",
+  },
 ];
 
 /** The added areas as the import reads the map's. */
