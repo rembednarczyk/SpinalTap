@@ -265,6 +265,23 @@ describe("witnesses of every kind: each assault costs, the murder only the rest 
     expect(sim.domain.reputation.civilians).toBe(-2);
   });
 
+  it("a patrol finds the body while a civilian is still calling it in: one murder reported, −2, heat raised once", () => {
+    const sim = streetWith({});
+    const g = ganger(sim, 4000);
+    takeDown(sim);
+    const caller = stallholder(sim, 4301, offset(sim, 2, 0));
+    const heat = collect<DomainEvents["HeatChanged"]>(sim, "HeatChanged");
+    finish(sim, g);
+    run(sim, ticks(0.5), CROUCH);
+    expect(caller.civilian?.crowd?.call).toBeTruthy();
+    // The patrol's report drops the civilian's call on the same body (`dropBodyCalls`).
+    const reports = foundByPatrol(sim);
+    run(sim, ticks(WITNESS_CALL_SECONDS + 1), CROUCH);
+    expect(reports.map((r) => [r.crime, r.channel])).toEqual([["murder", "patrol"]]);
+    expect(sim.domain.reputation.civilians).toBe(-2);
+    expect(heat.filter((h) => h.level > h.previous).map((h) => h.level)).toEqual([2]);
+  });
+
   it("saved before the body is found: after the load the murder costs a whole −2, −3 in all (accepted)", () => {
     const sim = killedUnseenAfterAssault();
     const loaded = reload(sim);
