@@ -2,6 +2,21 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-317 Ucieczka cywila pod ścianą drga: kąt skacze o ±0,8 rad co klatkę
+- Status: naprawione w #277 (5.11, 11ca247; histereza `fleeTurn` z `bendsBack`, ściana 23 → 3 skoki, pościg jak na main)
+- Ważność: S3 · Zasięg: ucieczka przy ścianie; ziarno 3, −60, przechodzień 1002004, gracz w 2 m: ok. 0,4 s, 24 skoki, bo przełącza się kierunek sondy wolnej drogi
+- Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, `runFrom`)
+
+### G-327 Testy „zapis bez ukrytego stanu” na przechodniach z tłumu nic nie dowodzą
+- Status: naprawione w #280 (5.11, ae546c8; testy wczytania porównują pola przechodnia; test `flee-wall` z #277 nie ma testu wczytania)
+- Ważność: S3 (test) · Zasięg: przechodnie z tłumu (bez `key`) nie są w zapisie ani w `stateHash`, więc hash po wczytaniu zgadza się przy dowolnym ukrytym stanie; przejrzeć testy wczytania w `flee-dead-zone`, `flee-wall`, `reputation-tiers` i podobne; porównywać `yaw` i pozycję konkretnego cywila albo używać cywila z `key`
+- Pakiet właściciela: packages/sim (testy)
+
+### G-325 Każda `GameSession` w testach kompiluje ink od nowa (ok. 150 ms)
+- Status: naprawione w #282 (5.11, fceb8ae; `loadInk`, kompilacja ink raz na źródło)
+- Ważność: S4 (czas testów) · Zasięg: prawie każdy test app; pamięć podręczna skompilowanej historii (`compileInk`) przyspieszyłaby cały zestaw
+- Pakiet właściciela: packages/narrative
+
 ### G-307 Kioski metra stoją przy zabytkach: Plac Litewski 3,8 m od upamiętnienia Andrzeja Struga, Brama Krakowska 10,8 m od Bramy w murach i 2,1 m od tablicy Ludomira Michała Rogowskiego
 - Status: naprawione w #279 (5.11, d5c2440; kioski zastąpione pawilonami ponad 80 m od tablic i 25 m od Bramy, T-154)
 - Ważność: S3 · Zasięg: dwie stacje metra; zasłaniają zabytek i stoją w murach Starego Miasta (ADR-0042)

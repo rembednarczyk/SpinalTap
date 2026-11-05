@@ -971,11 +971,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 (test, nie gra) · Zasięg: `SEATED` bez „sleep” (brak testu leżącego w pasie), `StayFacingPlayer` obracający siedzącego stałego mieszkańca przy −60 (brak testu), `holdLanePlace` bez `waypoint = null` (nic nie sprawdza)
 - Pakiet właściciela: packages/sim (testy `flee-dead-zone`, `reputation-tiers`)
 
-### G-317 Ucieczka cywila pod ścianą drga: kąt skacze o ±0,8 rad co klatkę
-- Status: w PR #277, runda 3 przyjęta przez orkiestratora na podstawie pomiarów (5.11, 9f71e9d; `bendsBack`, pościg w 27 wariantach jak na main, ściana 3/3/3/3)
-- Ważność: S3 · Zasięg: ucieczka przy ścianie; ziarno 3, −60, przechodzień 1002004, gracz w 2 m: ok. 0,4 s, 24 skoki, bo przełącza się kierunek sondy wolnej drogi
-- Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, `runFrom`)
-
 ### G-318 Zejście chodem z zachodniego dachu przy `targ-escape-2` przelatuje nad balkonem: upadek 9,1 m na posadzkę targu
 - Status: zgłoszone (5.11, naprawiacz G-308)
 - Ważność: S3 · Zasięg: `targ-escape-2`, balkon z 64–65,3; przy 4,1 m/s graczka mija balkon i ląduje na posadzce targu; do oceny, czy balkon ma łapać, czy krawędź ma być dalej
@@ -1006,20 +1001,10 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: chunk x 240..460, z −20..160; po #275 328 próbek bruku pod terenem, najgłębiej 0,35 m; także nieciągłość `h` na progu `DECK_HEADROOM` (G-062) daje „namiot” trawy pod końcami pomostów Mełgiewskiej (np. (2483,6; 416,1) 1,00 m) i kropkowane obrysy na spodzie pomostu
 - Pakiet właściciela: packages/engine (mapcity/ground-plan, cell-builder)
 
-### G-325 Każda `GameSession` w testach kompiluje ink od nowa (ok. 150 ms)
-- Status: w PR #282 (5.11; `loadInk`, kompilacja raz na źródło)
-- Ważność: S4 (czas testów) · Zasięg: prawie każdy test app; pamięć podręczna skompilowanej historii (`compileInk`) przyspieszyłaby cały zestaw
-- Pakiet właściciela: packages/narrative
-
 ### G-326 Uciekający cywil drga przy objeździe: `steerPoint` przełącza się między drogą prosto a objazdem
 - Status: zgłoszone (5.11, naprawiacz G-317)
 - Ważność: S3 · Zasięg: ziarno 17, −60, przechodzień 1002005, gracz 2 m (25 skoków kąta ok. 0,42 rad) i 1 m (42); `straightWalk` do punktu 6 m przed cywilem raz jest wolny, raz nie; także: w rogu (316; −95) `steerPoint` zawraca „prosto od gracza” niemal wprost na gracza (−1,25 rad), na main przy zatrzymaniu gracza ≥ 2 m ok. 465 skoków; drganie ±0,5 rad w miejscu przy stałym wyborze kierunku (ziarno 23, ok. (262; −81))
 - Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, `steerPoint`)
-
-### G-327 Testy „zapis bez ukrytego stanu” na przechodniach z tłumu nic nie dowodzą
-- Status: w PR #280 (5.11, 009e308); po scaleniu #277 przejrzeć test `flee-wall`
-- Ważność: S3 (test) · Zasięg: przechodnie z tłumu (bez `key`) nie są w zapisie ani w `stateHash`, więc hash po wczytaniu zgadza się przy dowolnym ukrytym stanie; przejrzeć testy wczytania w `flee-dead-zone`, `flee-wall`, `reputation-tiers` i podobne; porównywać `yaw` i pozycję konkretnego cywila albo używać cywila z `key`
-- Pakiet właściciela: packages/sim (testy)
 
 ### G-328 Cywil uciekający w ślepy zaułek biega w miejscu w promieniu ucieczki
 - Status: zgłoszone (5.11, weryfikator PR #277; było przed G-317)
@@ -1047,7 +1032,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (treść `lublin`, ręczna nawierzchnia) albo tools/osm-import
 
 ### G-333 Drobne usterki po etapie 2 metra (#279)
-- Status: zgłoszone (5.11, weryfikator PR #279)
+- Status: częściowo w PR #284 (5.11; kontrola `metro-shaft-open` i `cutGround`); okap Nabrzeża i stopień przy Alchemii do etapu 3, wróg w hali niesprawdzony
 - Ważność: S4 · Zasięg: kontrola `metro-shaft-open` (`tools/glitch-scan/test/metro-entrances.ts:131-135`) krucha na zaokrąglenie przy próbce na krawędzi (`z <= w.maxZ`), potrzebny epsilon; `cutGround` (`engine/.../ground-cut.ts:94-95`) liczy każdy trójkąt każdej siatki gruntu (106 ms CPU na 20 chunków), wystarczy wcześniej pominąć siatki bez otworu; Alchemia B: przy rogu otworu bruk 0,32 m pod progiem podestu; Nabrzeże A: okap 0,4 m w murze placu Tessen (T-160); niesprawdzone: wróg w pościgu schodzący za graczem do hali
 - Pakiet właściciela: tools/glitch-scan, packages/engine (mapcity), packages/sim
 
