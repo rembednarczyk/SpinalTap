@@ -258,6 +258,69 @@ export const ADDED_AREAS: readonly AddedArea[] = [
     reason: "chodnik z kostki wzdłuż ściany Novy na ortofoto PZGiK, w OSM bez obszaru",
     ref: "T-164",
   },
+  {
+    // The platform along the Dworzec Autobusowy w66264171's east wall, light paving with walkers on
+    // the orthophoto, bare in OSM: from the path w227698420's axis in the south (T-164's corner) by
+    // the footway w227698409 to the stands' asphalt w66323033, along its edge north to the footway
+    // w227698421 and the kiosk w73833929's east wall, and back by the station's north-east corner.
+    // The footways w227698427 and w227698418 run over it. In the east it takes the roofed
+    // platform w458862470's west tooth, cut at its node abreast on the footway's axis and the
+    // asphalt's edge (both off the nodes), so the strip leaves no bare corner at the stands.
+    id: "T-168/peron-przy-dworcu",
+    tags: { "area:highway": "pedestrian", surface: "paving_stones" },
+    ring: [
+      { x: 803.59, z: 374.05 },
+      { x: 803.59, z: 370.49 },
+      { x: 806.22, z: 370.14 },
+      { x: 808.0, z: 382.4 },
+      { x: 810.6, z: 382.1 },
+      { x: 810.6, z: 387.22 },
+      { x: 810.6, z: 392.04 },
+      { x: 805.8, z: 388.56 },
+      { x: 802.22, z: 389.53 },
+      { x: 807.09, z: 427.26 },
+      { x: 814.02, z: 435.29 },
+      { x: 806.78, z: 433.99 },
+      { x: 801.64, z: 431.86 },
+      { x: 801.26, z: 428.31 },
+      { x: 802.47, z: 426.1 },
+      { x: 796.61, z: 422.79 },
+      { x: 793.79, z: 401.25 },
+      { x: 791.73, z: 385.16 },
+      { x: 804.79, z: 383.56 },
+    ],
+    nodesOf: ["w66264171", null, "w227698420", "w227698409", null, "w458862470", null, "w66323033", "w66323033", "w66323033", "w66323033", "w227698421", "w73833929", "w73833929", "w227698418", "w66264171", "w66264171", "w66264171", "w66264171"],
+    reason: "peron z kostki wzdłuż wschodniej ściany Dworca Autobusowego na ortofoto PZGiK, w OSM bez obszaru",
+    ref: "T-168",
+  },
+  {
+    // The pavement along the Dworzec Autobusowy's north wall, under the footway w227698418, and the
+    // block of the kiosk w73833929 that the footways w227698410 and w227698421 close in the north:
+    // bare in OSM. It goes round the kiosk's south, west and north walls and leaves its east wall
+    // to T-168/peron-przy-dworcu, so neither covers the kiosk. Every corner is the map's node.
+    // Pedestrian, not footway: the props keep off a footway's outline as off a path, and the
+    // booth before the station's fast-food venue stands on this pavement.
+    id: "T-168/chodnik-przy-dworcu",
+    tags: { "area:highway": "pedestrian", surface: "paving_stones" },
+    ring: [
+      { x: 784.65, z: 424.35 },
+      { x: 796.61, z: 422.79 },
+      { x: 802.47, z: 426.1 },
+      { x: 801.26, z: 428.31 },
+      { x: 795.17, z: 428.97 },
+      { x: 795.27, z: 431.48 },
+      { x: 797.7, z: 431.31 },
+      { x: 797.8, z: 432.14 },
+      { x: 801.64, z: 431.86 },
+      { x: 806.78, z: 433.99 },
+      { x: 796.18, z: 438.06 },
+      { x: 790.83, z: 434.97 },
+      { x: 785.8, z: 429.26 },
+    ],
+    nodesOf: ["w66264171", "w66264171", "w227698418", "w73833929", "w73833929", "w73833929", "w73833929", "w73833929", "w73833929", "w227698421", "w227698421", "w227698410", "w227698410"],
+    reason: "chodnik wzdłuż północnej ściany Dworca Autobusowego i plac kiosku między chodnikami, w OSM bez obszaru",
+    ref: "T-168",
+  },
 ];
 
 /** The added areas as the import reads the map's. */
