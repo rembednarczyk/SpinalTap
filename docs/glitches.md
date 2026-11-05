@@ -1033,6 +1033,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 (test; czerwony CI kosztuje cykl) · Zasięg: `packages/app/test/reputation-toasts.test.ts` „gets one toast…”; także `save-crowd-calm` 10,4 s pod obciążeniem. Przyczyna do ustalenia pomiarem, bez podnoszenia limitu (ADR-0046)
 - Pakiet właściciela: packages/app (testy)
 
+### G-324 Chunk terenu z siatką 4 m nie zgadza się z siatką drapowania bruku 2,5 m
+- Status: zgłoszone (5.11, weryfikator PR #275)
+- Ważność: S4 · Zasięg: chunk x 240..460, z −20..160; po #275 328 próbek bruku pod terenem, najgłębiej 0,35 m; także nieciągłość `h` na progu `DECK_HEADROOM` (G-062) daje „namiot” trawy pod końcami pomostów Mełgiewskiej (np. (2483,6; 416,1) 1,00 m) i kropkowane obrysy na spodzie pomostu
+- Pakiet właściciela: packages/engine (mapcity/ground-plan, cell-builder)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
