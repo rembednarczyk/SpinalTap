@@ -1059,6 +1059,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (`ADDED_AREAS`; pas (a) asfalt jak jezdnia albo parking, nie kostka; klin (b) kostka chodnika)
 - Test przyjęcia: gołe próbki 0,1 m poza budynkami w x 672–727, z 434–449 ≤ 0,5 m² (szwy); parking w227698441, chodnik i jezdnia na wierzchu
 
+### G-348 Długi przebieg e2e z modelami pod SwiftShaderem rośnie do 6–7 GB i kończy się OOM; zatrzymany zegar Playwrighta blokuje rysowanie
+- Status: zgłoszone (5.11, autor broni białej)
+- Ważność: S4 (narzędzia testowe) · Zasięg: przebieg ok. 20 min z modelami: RSS 6–7 GB, OOM-kill (nie wiadomo, czy wyciek w grze, czy `toDataURL` co klatkę); `page.clock.pauseAt` + `runFor` blokuje rysowanie, bo `GpuPacer` dostaje fence od Chrome tylko przy prawdziwych klatkach; zrzuty z dokładnym czasem wymagają innej drogi
+- Pakiet właściciela: e2e (QA), packages/app (`GpuPacer`)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
