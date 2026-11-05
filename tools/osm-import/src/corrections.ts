@@ -264,8 +264,10 @@ export const ADDED_AREAS: readonly AddedArea[] = [
     // the footway w227698409 to the stands' asphalt w66323033, along its edge north to the footway
     // w227698421 and the kiosk w73833929's east wall, and back by the station's north-east corner.
     // The footways w227698427 and w227698418 run over it. In the east it takes the roofed
-    // platform w458862470's west tooth, cut at its node abreast on the footway's axis and the
-    // asphalt's edge (both off the nodes), so the strip leaves no bare corner at the stands.
+    // platform w458862470's west tooth up to the north-south line through its east node
+    // (810.6, 387.22), closed on that line at the footway w227698409's axis in the south and the
+    // asphalt's edge in the north (both off the nodes), so the strip leaves no bare corner at the
+    // stands. The rest of the platform's ground east of that line is not this strip's.
     id: "T-168/peron-przy-dworcu",
     tags: { "area:highway": "pedestrian", surface: "paving_stones" },
     ring: [

@@ -231,6 +231,9 @@ describe("tag corrections (ADR-0042)", () => {
     expect(surfaceAt(801.5, 415)).toBe("footway");
     expect(surfaceAt(797, 410)).toBe("square");
     expect(surfaceAt(797, 435)).toBe("square");
+    // The north footway w227698418 and the kiosk's east footway w227698421 stay on top of the pavement.
+    expect(surfaceAt(794, 427.7)).toBe("footway");
+    expect(surfaceAt(804.6, 430)).toBe("footway");
   });
 
   const OSM_DIR = join(__dirname, "../../../data/osm");
