@@ -35,4 +35,14 @@ describe("one deck across a bridge (G-340)", () => {
     expect(bridgeFills([bridge], bands(road, line(2, { highway: "footway", bridge: "yes" }, [5, -14], [35, -2])))).toEqual([]);
     expect(bridgeFills([bridge], bands(road, line(2, { highway: "footway" }, [0, -10], [40, -10])))).toEqual([]);
   });
+
+  it("fills beside a sidewalk turned up to 15° from the carriageway, not further: two ways crossing the bridge apart", () => {
+    // A sidewalk 10 m long round (20, -10), within the gap's limits at either angle: the turn alone decides.
+    const turned = (deg: number) => {
+      const [c, s] = [5 * Math.cos((deg * Math.PI) / 180), 5 * Math.sin((deg * Math.PI) / 180)];
+      return line(2, { highway: "footway", bridge: "yes" }, [20 - c, -10 - s], [20 + c, -10 + s]);
+    };
+    for (const deg of [0, 14, -14, 180 + 14]) expect(bridgeFills([bridge], bands(road, turned(deg))), `${deg}°`).toHaveLength(1);
+    for (const deg of [16, -16, 180 + 16]) expect(bridgeFills([bridge], bands(road, turned(deg))), `${deg}°`).toEqual([]);
+  });
 });

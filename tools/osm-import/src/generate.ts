@@ -6,6 +6,7 @@ import { LUBLIN_ANCHOR } from "../../../packages/core/src/world/city-geo.ts";
 import { asBuilding, isPart, orphanParts, partsByBuilding } from "./building-parts.ts";
 import { smallAlone } from "./building-alone.ts";
 import { buildingsWithTowers, mappedTowers } from "./building-towers.ts";
+import { toAbutments } from "./bridge-ends.ts";
 import { bridgeFills } from "./bridge-fill.ts";
 import { makeBuilding } from "./buildings.ts";
 import { addedAreas, corrected, correctedLine } from "./corrections.ts";
@@ -279,7 +280,9 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
   const tunnels = streetLevelTunnels(data);
   // Paved only where it runs through a building: elsewhere it may pass under a street of its own.
   const atStreet = new Set([...tunnels].filter((id) => lines.some((l) => l.osmId === id && buildingPassages([l], buildings, rects, tunnels).length > 0)));
-  for (const [k, l] of lines.entries()) {
+  // A bridge's deck reaches its abutment (G-344): level from bank to bank, not tilted down to the
+  // bank under the bridge. Its band only: the street, its markings and lanes end where the map has them.
+  for (const [k, l] of toAbutments(lines, areas).entries()) {
     if (!near(l.line)) continue;
     // Whether sidewalks are mapped along it: read off the street's width by type, as before it was fitted.
     for (const b of lineBands(l, l.tags.highway ? sidewalks.along(mapLines[k]!) : false, water, atStreet.has(l.osmId))) bands.push({ ...b, box: ringBounds(b.ring) });
