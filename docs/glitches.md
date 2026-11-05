@@ -1018,6 +1018,21 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: 69 par różnych nawierzchni z tym samym `SURFACE_LIFT` 0,08; dwa nakładające się `square` z różnym wzorem spoin dają słabe kropkowane linie (zrzut `shots/g301/after/g301-c.png`); trwale: rysować jeden kawałek z pary (przycięcie nakładek w imporcie)
 - Pakiet właściciela: tools/osm-import i packages/engine (mapcity/ground-plan)
 
+### G-321 Mapa M przy mocnym oddaleniu: nazwy dzielnic nakładają się („PRZEDSTARE MIASTO”)
+- Status: zgłoszone (5.11, weryfikator PR #270; było też przed tą zmianą)
+- Ważność: S4 · Zasięg: `liftDistricts` przesuwa „KRAKOWSKIE PRZEDMIEŚCIE” i „STARE MIASTO” na ten sam wiersz; na telefonie przy oddaleniu tłoczą się też etykiety zabytków
+- Pakiet właściciela: packages/ui (mapa miasta)
+
+### G-322 Panel kiosku metra i karta są półprzezroczyste: przez nie widać napisy HUD
+- Status: zgłoszone (5.11, weryfikator PR #270)
+- Ważność: S4 · Zasięg: powiadomienie dzielnicy, cel i podpowiedź dotyku prześwitują przez panel (`shots/metro1-v2/phone-kiosk-kanal-target.png`)
+- Pakiet właściciela: packages/ui (metro)
+
+### G-323 Test `reputation-toasts` na granicy limitu CI: 6,5 s pojedynczo, ok. 20 s pod obciążeniem
+- Status: zgłoszone (5.11, weryfikator PR #270)
+- Ważność: S3 (test; czerwony CI kosztuje cykl) · Zasięg: `packages/app/test/reputation-toasts.test.ts` „gets one toast…”; także `save-crowd-calm` 10,4 s pod obciążeniem. Przyczyna do ustalenia pomiarem, bez podnoszenia limitu (ADR-0046)
+- Pakiet właściciela: packages/app (testy)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
