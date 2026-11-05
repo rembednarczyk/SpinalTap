@@ -82,4 +82,22 @@ describe("bridges' decks (ADR-0053)", () => {
       }
     }
   });
+
+  it("paint a line cut at the bridge's end wholly on its surface, a centimetre past the outline too (G-330)", () => {
+    const entries = new MapEntries();
+    const heights = Array.from({ length: 21 * 9 }, () => 0);
+    entries.terrains.set(1, { grid: { originX: -20, originZ: -20, cell: 5, cols: 21, rows: 9, heights }, open: undefined, bounds: { minX: -20, maxX: 80, minZ: -20, maxZ: 20 }, mesh: null });
+    entries.addGround(2, { surface: "road", ring: road, y: 0, bounds: boundsOf(road), cell: "", deck: axis });
+    // The import rounds both the deck's outline and the lines to 0.1 m: the deck's line may end just past its end, the road's on beyond it just short of it.
+    for (const [from, to, on] of [[3, 40.02, true], [39.98, 60, false]] as const) {
+      const line = [{ x: from, z: 4 }, { x: to, z: 4 }];
+      const g = { surface: "road" as const, marking: "edge" as const, ring: line, y: 0, bounds: boundsOf(line), cell: "" };
+      const sink = new MeshSink();
+      planMarking(sink, "edge", line, entries.groundHeight(g));
+      for (let i = 0; i < sink.vertexCount; i++) {
+        const [x, y, vz] = [sink.positions[i * 3]!, sink.positions[i * 3 + 1]!, sink.positions[i * 3 + 2]!];
+        expect(y, `${x}, ${vz}`).toBeCloseTo((on ? deckHeight(axis, x, vz) : 0) + MARKING_LIFT, 6);
+      }
+    }
+  });
 });
