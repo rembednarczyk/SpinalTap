@@ -951,11 +951,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: dwie stacje metra; zasłaniają zabytek i stoją w murach Starego Miasta (ADR-0042)
 - Pakiet właściciela: packages/sim (treść `lublin`, stacje metra), przegląd `topography-curator`
 
-### G-308 Zejście z dachu na drabinę tylko klawiszem: wejście za krawędź przy drabinie kończy się upadkiem
-- Status: w PR #273 (5.11; `caughtAtTop`, łapie przy zejściu chodem i w kucki, sprint i skok dalej spadają)
-- Ważność: S3 · Zasięg: `targ-escape-2` i `targ-escape-3`; upadek z 3,6–4,6 m bez obrażeń, drabina nie łapie
-- Pakiet właściciela: packages/sim (ruch, drabiny)
-
 ### G-309 FPP w połowie drabiny: kadr w całości wypełnia szczebel, dłoni nie widać
 - Status: zgłoszone (5.11, autor poprawek drabin, PR #269)
 - Ważność: S3 · Zasięg: oko ok. 0,3 m za szczeblami; wymaga decyzji o widoku FPP na drabinie
@@ -980,18 +975,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (5.11, weryfikator PR #269)
 - Ważność: S4 · Zasięg: pasek ok. 0,2 × 0,1 m przy krawędzi nad drabiną (t < 0,5 odcinka linia–wyjście, np. `targ-escape-2` (69,2; 9,1; 63,85–64,05)); bez upadku i straty zdrowia. Teoretycznie z ciałem na ramieniu (ADR-0065) system drabin ją pominie i spadnie. Przesunięcie `resumeOnLadderTop` sięga 0,61 m (`targ-escape-1`), a stały test obejmuje tylko `targ-escape-2`
 - Pakiet właściciela: packages/sim (`ladder-system.ts`, `resumeOnLadderTop`)
-
-### G-314 Linia metra na mapie przechodzi pod Starym cmentarzem żydowskim
-- Status: naprawione w PR #270 (462f13f, kontrola `metro-line-protected`; T-150), do archiwum po scaleniu
-- Ważność: S3 · Zasięg: lokalny, odcinek `METRO_TUNNEL` (1120; 310) → (1700; 380), ok. 75 m pod w40049437 · Koszt: mały
-- Pakiet właściciela: packages/sim (`content/metro.ts`)
-- Test przyjęcia: każdy punkt `METRO_TUNNEL` co 5 m poza `PROTECTED_AREAS` i obrysami `historic`/`heritage`/`place_of_worship`; przebieg al. Tysiąclecia – Kalinowszczyzna – most Lutosławskiego (ADR-0071, przegląd kuratora)
-
-### G-315 Możliwe stacje Ogród Saski i Lublin Główny w złym miejscu
-- Status: naprawione w PR #270 (462f13f; T-151, T-152), do archiwum po scaleniu
-- Ważność: S4 · Zasięg: mapa metra · Koszt: mały
-- Pakiet właściciela: packages/sim (`content/metro.ts`)
-- Test przyjęcia: Ogród Saski (−630; −84) poza obrysem parku i ≤ 30 m od Alej Racławickich; Lublin Główny (590; −1840) ≤ 80 m od w171203532; odgałęzienie z Placu Łokietka ulicami Kozią i Bernardyńską, poza obrysami zabytków
 
 ### G-316 Luki w testach martwej strefy ADR-0070: trzy mutacje przeżywają
 - Status: zgłoszone (5.11, weryfikator PR #267)
@@ -1029,7 +1012,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/ui (metro)
 
 ### G-323 Test `reputation-toasts` na granicy limitu CI: 6,5 s pojedynczo, ok. 20 s pod obciążeniem
-- Status: zgłoszone (5.11, weryfikator PR #270)
+- Status: w PR #276 (5.11; chód 20 s, dokładnie 1 toast; pod pokryciem 6,5–7,0 s)
 - Ważność: S3 (test; czerwony CI kosztuje cykl) · Zasięg: `packages/app/test/reputation-toasts.test.ts` „gets one toast…”; także `save-crowd-calm` 10,4 s pod obciążeniem. Przyczyna do ustalenia pomiarem, bez podnoszenia limitu (ADR-0046)
 - Pakiet właściciela: packages/app (testy)
 
@@ -1037,6 +1020,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (5.11, weryfikator PR #275)
 - Ważność: S4 · Zasięg: chunk x 240..460, z −20..160; po #275 328 próbek bruku pod terenem, najgłębiej 0,35 m; także nieciągłość `h` na progu `DECK_HEADROOM` (G-062) daje „namiot” trawy pod końcami pomostów Mełgiewskiej (np. (2483,6; 416,1) 1,00 m) i kropkowane obrysy na spodzie pomostu
 - Pakiet właściciela: packages/engine (mapcity/ground-plan, cell-builder)
+
+### G-325 Każda `GameSession` w testach kompiluje ink od nowa (ok. 150 ms)
+- Status: zgłoszone (5.11, naprawiacz G-323)
+- Ważność: S4 (czas testów) · Zasięg: prawie każdy test app; pamięć podręczna skompilowanej historii (`compileInk`) przyspieszyłaby cały zestaw
+- Pakiet właściciela: packages/narrative
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)

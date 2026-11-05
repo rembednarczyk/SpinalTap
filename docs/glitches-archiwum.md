@@ -2,6 +2,23 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-308 Zejście z dachu na drabinę tylko klawiszem: wejście za krawędź przy drabinie kończy się upadkiem
+- Status: naprawione w #273 (5.11, 3e7ca0c; `caughtAtTop` przy zejściu tempem chodu, nigdy w locie po dashu)
+- Ważność: S3 · Zasięg: `targ-escape-2` i `targ-escape-3`; upadek z 3,6–4,6 m bez obrażeń, drabina nie łapie
+- Pakiet właściciela: packages/sim (ruch, drabiny)
+
+### G-314 Linia metra na mapie przechodzi pod Starym cmentarzem żydowskim
+- Status: naprawione w #270 (5.11, 02c7c6d; przebieg al. Tysiąclecia – Kalinowszczyzna – most Lutosławskiego, kontrola `metro-line-protected`)
+- Ważność: S3 · Zasięg: lokalny, odcinek `METRO_TUNNEL` (1120; 310) → (1700; 380), ok. 75 m pod w40049437 · Koszt: mały
+- Pakiet właściciela: packages/sim (`content/metro.ts`)
+- Test przyjęcia: każdy punkt `METRO_TUNNEL` co 5 m poza `PROTECTED_AREAS` i obrysami `historic`/`heritage`/`place_of_worship`; przebieg al. Tysiąclecia – Kalinowszczyzna – most Lutosławskiego (ADR-0071, przegląd kuratora)
+
+### G-315 Możliwe stacje Ogród Saski i Lublin Główny w złym miejscu
+- Status: naprawione w #270 (5.11, 02c7c6d; Ogród Saski (−630; −84), Lublin Główny (590; −1840))
+- Ważność: S4 · Zasięg: mapa metra · Koszt: mały
+- Pakiet właściciela: packages/sim (`content/metro.ts`)
+- Test przyjęcia: Ogród Saski (−630; −84) poza obrysem parku i ≤ 30 m od Alej Racławickich; Lublin Główny (590; −1840) ≤ 80 m od w171203532; odgałęzienie z Placu Łokietka ulicami Kozią i Bernardyńską, poza obrysami zabytków
+
 ### G-305 Oyaji przy nieufności ma otwarty sklep, ale trzyma się 7 m od gracza (interakcja z 3 m)
 - Status: naprawione w #267 (5.11, 8de6c8f; ADR-0070 etap 2, stali mieszkańcy nie odsuwają się z powodu reputacji)
 - Ważność: S3 · Zasięg: reputacja −11..−49; w praktyce sklep zamknięty przed progiem odmowy
