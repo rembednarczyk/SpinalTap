@@ -362,17 +362,24 @@ export const ADDED_AREAS: readonly AddedArea[] = [
     // and T-164 and T-168's corners. West of the Bazar w67502759 it takes the wedge up to
     // `landuse=retail` w291844839's edge, east of it the gap up to the footway w227698428 (red setts
     // from the hall's wall on the orthophoto, the footway's band narrower). Short of the beds of
-    // shrubs, left bare: a 2 m strip along the Bazar's south edge, and the bed before the Dworzec between
-    // the cycleway w1435832523 and the path w227698420 (x 773-803.6). Off the nodes: the beds'
-    // corners and the points on the road's axis abreast of the grass w818580988 and w227698409.
+    // shrubs, left bare: before the Bazar a 2.7 m bed 1-3.75 m south of its edge (the strip under
+    // the halls' eaves is T-165/okap-bazaru), broken at x 684-687 where the footway w227698415 goes
+    // in, and the bed before the Dworzec between the cycleway w1435832523 and the path w227698420
+    // (x 773-803.6). Off the nodes: the beds' corners and the points on the road's axis abreast of
+    // the grass w818580988 and w227698409.
     id: "T-165/chodnik-tysiaclecia",
     tags: { "area:highway": "pedestrian", surface: "paving_stones" },
     ring: [
       { x: 635.07, z: 384.66 },
       { x: 641.28, z: 387.48 },
       { x: 658.67, z: 386.8 },
-      { x: 659.71, z: 386.42 },
-      { x: 715.67, z: 377.57 },
+      { x: 659.55, z: 385.43 },
+      { x: 659.12, z: 382.72 },
+      { x: 684.0, z: 378.79 },
+      { x: 684.43, z: 381.5 },
+      { x: 687.43, z: 381.02 },
+      { x: 687.0, z: 378.31 },
+      { x: 715.08, z: 373.87 },
       { x: 715.98, z: 379.55 },
       { x: 716.94, z: 385.65 },
       { x: 720.84, z: 389.22 },
@@ -400,8 +407,24 @@ export const ADDED_AREAS: readonly AddedArea[] = [
       { x: 631.14, z: 379.32 },
       { x: 631.17, z: 380.49 },
     ],
-    nodesOf: ["w227698424", "w291844839", "w291844839", null, null, "w67502759", "w67502759", "w227698428", "w227698428", "w227698424", "w227698424", "w1435832520", "w227698423", null, "w1435832523", null, null, "w227698420", "w227698409", "w227698409", null, "w1004769663", "w1004769663", "w739432831", "w739432831", "w739432831", "w739432831", "w739432831", null, "w818580988", "w818580988"],
+    nodesOf: ["w227698424", "w291844839", "w291844839", null, null, null, null, null, null, null, "w67502759", "w67502759", "w227698428", "w227698428", "w227698424", "w227698424", "w1435832520", "w227698423", null, "w1435832523", null, null, "w227698420", "w227698409", "w227698409", null, "w1004769663", "w1004769663", "w739432831", "w739432831", "w739432831", "w739432831", "w739432831", null, "w818580988", "w818580988"],
     reason: "chodnik z kostki po północnej stronie al. Tysiąclecia (przystanek, front Bazaru i Dworca) na ortofoto PZGiK, w OSM tylko linie ścieżek",
+    ref: "T-165",
+  },
+  {
+    // The strip under the Bazar's eaves, between its south edge w67502759 and the bed of T-165
+    // (which the halls' roofs overhang in the game, 1 m south of the edge on the orthophoto): the
+    // same setts as the pavement, paved to the wall. Off the nodes: the bed's north corners.
+    id: "T-165/okap-bazaru",
+    tags: { "area:highway": "pedestrian", surface: "paving_stones" },
+    ring: [
+      { x: 659.55, z: 385.43 },
+      { x: 715.51, z: 376.58 },
+      { x: 715.98, z: 379.55 },
+      { x: 660.02, z: 388.4 },
+    ],
+    nodesOf: [null, null, "w67502759", "w67502759"],
+    reason: "pas kostki pod okapem hal Bazaru, od krawędzi targu do rabaty przed nim, na ortofoto PZGiK, w OSM bez obszaru",
     ref: "T-165",
   },
 ];
