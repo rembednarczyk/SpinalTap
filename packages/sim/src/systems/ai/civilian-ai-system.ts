@@ -64,6 +64,30 @@ const FLEE_PROBE = 2.5;
 const FLEE_SWITCH_MARGIN = 1;
 /** How close its heading has to be to a turn to count as running on it (radians). */
 const FLEE_HELD_TURN = Math.PI / 8;
+/**
+ * How far off the middle the side lines of a way run, of the body's radius: a gap between them
+ * (0.38 m) is too narrow to run through. 0.8 and 1 shut more ways by the walls of the deptak and
+ * swung more walkers than they stopped (seeds 3, 7, 17, 29, 43, G-338).
+ */
+const FLEE_PROBE_SIDE = 0.5;
+
+/**
+ * Is the way along `heading` open `reach` metres for the body, not just for a line through its
+ * middle (G-338)? Between a lamp post and a planter 0.2 m apart the knee-high line went through
+ * where the body, 0.76 m wide, did not: the probe of the way straight away opened and closed
+ * every step, the heading swung by a quarter turn 242 times and the walker stood still. So a
+ * way with something across both side lines too is shut. With one side on a wall it stays
+ * open: the body slides along it, and shutting it swung walkers along walls (flee-wall.test.ts).
+ */
+const bodyWalk = (ctx: SimContext, from: Vec3, heading: number, reach: number, radius: number): boolean => {
+  const [ux, uz] = [Math.sin(heading), Math.cos(heading)];
+  const line = (s: number): boolean => {
+    const start = { x: from.x + uz * s, y: from.y, z: from.z - ux * s };
+    return straightWalk(ctx.world, start, { x: start.x + ux * reach, y: from.y, z: start.z + uz * reach });
+  };
+  const side = radius * FLEE_PROBE_SIDE;
+  return line(0) && (side <= 0 || line(side) || line(-side));
+};
 
 /**
  * Does the walk along `turn` off `away`, round its obstacle as `steerPoint` takes it, bend back
@@ -90,11 +114,8 @@ const bendsBack = (ctx: SimContext, from: Vec3, away: number, turn: number): boo
  * is any heading kept past a way closer to straight away that `bendsBack`. Null when every way
  * is blocked.
  */
-const fleeTurn = (ctx: SimContext, from: Vec3, away: number, yaw: number, running: boolean): number | null => {
-  const open = (turn: number, reach: number): boolean => {
-    const probe = { x: from.x + Math.sin(away + turn) * reach, y: from.y, z: from.z + Math.cos(away + turn) * reach };
-    return straightWalk(ctx.world, from, probe);
-  };
+const fleeTurn = (ctx: SimContext, from: Vec3, away: number, yaw: number, running: boolean, radius: number): number | null => {
+  const open = (turn: number, reach: number): boolean => bodyWalk(ctx, from, away + turn, reach, radius);
   const best = FLEE_TURNS.find((t) => open(t, FLEE_PROBE));
   if (best === undefined || !running) return best ?? null;
   const runsOn = (t: number): boolean => Math.abs(Math.atan2(Math.sin(yaw - away - t), Math.cos(yaw - away - t))) <= FLEE_HELD_TURN;
@@ -325,7 +346,7 @@ class CivilianAgent {
     // Standing exactly on top of it: run along the street, away from the player's facing.
     const away = d < 1e-6 ? fallbackYaw : Math.atan2(dx, dz);
     const running = Math.hypot(self.velocity.x, self.velocity.z) > 0.9 * speed;
-    const turn = fleeTurn(ctx, self.position, away, self.yaw, running) ?? 0;
+    const turn = fleeTurn(ctx, self.position, away, self.yaw, running, self.body?.radius ?? 0) ?? 0;
     const ux = Math.sin(away + turn);
     const uz = Math.cos(away + turn);
     const ahead = { x: self.position.x + ux * FLEE_LOOKAHEAD, y: self.position.y, z: self.position.z + uz * FLEE_LOOKAHEAD };
