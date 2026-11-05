@@ -7,8 +7,11 @@ import { playerHeld } from "../world/takedown";
 import { SNAP_DOWN, groundAt } from "./movement-system";
 import { playerStatsOf } from "./player-control-system";
 
-/** Climbing speed on a ladder, m/s. */
-export const CLIMB_SPEED = 2.2;
+/**
+ * Climbing speed on a ladder, m/s. The hands go up two rungs (0.6 m) a cycle each (G-310): at
+ * this speed 2.5 cycles a second, about the arms of a sprint; 2.2 m/s took 3.7, a scramble.
+ */
+export const CLIMB_SPEED = 1.5;
 /** Walking into the foot of a ladder grabs it from this close (metres, horizontally)... */
 const GRAB_REACH = 0.6;
 /** ...facing it within this angle (radians). */

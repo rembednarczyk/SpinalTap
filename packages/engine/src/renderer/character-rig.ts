@@ -1,4 +1,5 @@
 import type { Mesh, TransformNode } from "../babylon";
+import type { LadderRungs } from "./ladder-rungs";
 import type { ArmReach, TwoHandGrip } from "./two-hand-grip";
 
 /** A procedurally built character with a jointed skeleton for procedural animation. */
@@ -74,6 +75,8 @@ export interface CharacterRig {
   /** 0..1 blend of the ladder pose, and the phase of the hand-over-hand cycle. */
   climbBlend: number;
   climbPhase: number;
+  /** The rungs of the ladder climbed last (null: none in view); the hands keep to them while the pose eases out. */
+  ladder: LadderRungs | null;
 }
 
 /** A melee swing in progress: strike `strike` of the combo, timed like the simulation's. */

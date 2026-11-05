@@ -82,6 +82,8 @@ export class PropViews {
   private readonly blockers = new Set<AbstractMesh>();
   /** Blocks in view, for the walked-roof test (ADR-0027, C8). */
   private readonly blocks = new Map<EntityId, DressBlock>();
+  /** The ladders among them, for the climbers' hands (G-310). */
+  private readonly ladders = new Map<EntityId, DressBlock>();
 
   /** Lit props waiting for the map city's terrain under them. */
   private readonly unsettled = new Map<EntityId, Unsettled>();
@@ -119,6 +121,10 @@ export class PropViews {
 
   blockViews(): Iterable<DressBlock> {
     return this.blocks.values();
+  }
+
+  ladderViews(): Iterable<DressBlock> {
+    return this.ladders.values();
   }
 
   spawn(id: EntityId, view: PropDescriptor, t: Transform): void {
@@ -227,7 +233,9 @@ export class PropViews {
   /** Dressing, the walked-roof record and the kit skin of a block. */
   private addBlock(id: EntityId, view: BlockView, at: Vector3, prop: PropView): void {
     this.deps.dressing.addBlock(id, view, at);
-    this.blocks.set(id, { center: { x: at.x, y: at.y, z: at.z }, size: view.size, material: view.material, ...(view.rungs ? { rungs: view.rungs } : {}) });
+    const block: DressBlock = { center: { x: at.x, y: at.y, z: at.z }, size: view.size, material: view.material, ...(view.rungs ? { rungs: view.rungs } : {}) };
+    this.blocks.set(id, block);
+    if (view.rungs) this.ladders.set(id, block);
     // A ladder, or a rail or crate up on a roof, can make a roof walked: rebuild the kit
     // cells around it. Anything else leaves built cells alone (rebuilding them stalls a frame).
     const raised = at.y - view.size.y / 2 > 2 && Math.min(view.size.x, view.size.z) < 3;
@@ -254,6 +262,7 @@ export class PropViews {
       this.interiors.remove(id);
       this.deps.dressing.remove(id);
       this.blocks.delete(id);
+    this.ladders.delete(id);
       return;
     }
     const e = this.props.get(id);
@@ -264,6 +273,7 @@ export class PropViews {
     this.deps.cityKit.remove(id);
     this.deps.dressing.remove(id);
     this.blocks.delete(id);
+    this.ladders.delete(id);
     for (const m of e.prop.blockers) this.blockers.delete(m);
     if (e.lightKey) materials.removeLight(e.lightKey);
     for (const m of e.decor.meshes) atmosphere.removeDecoration(m);

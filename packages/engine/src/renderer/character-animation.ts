@@ -1,4 +1,5 @@
 import type { CharacterRig } from "./character-rig";
+import { type LadderRungs, reachForRungs } from "./ladder-hands";
 import { AIM_HOLD, applyStagger, poseWeaponArms, reloadPhase, smooth } from "./character-poses";
 import { applySwingBody, poseMeleeArms } from "./melee-poses";
 import { bladeOf, holdLongGun, holdWeight } from "./two-hand-hold";
@@ -65,6 +66,8 @@ export interface RigMotion {
   readonly air?: number;
   /** Climbing speed on a ladder, m/s; absent off it. */
   readonly climb?: number;
+  /** The rungs of that ladder; without them the hands take rungs as the content spaces them, ahead. */
+  readonly rungs?: LadderRungs | null;
   /** Seconds the idle clock (breathing, flinch, stagger rock) moves on; `dt` when absent. */
   readonly clock?: number;
 }
@@ -88,16 +91,10 @@ export const jumpLegs = (air: number): { thigh: number; knee: number } => {
   return { thigh: -0.75 * up - 0.3 * down, knee: 1.25 * up + 0.35 * down + 0.2 };
 };
 
-/** Hand over hand, foot over foot: the ladder pose at phase `p`. */
-const climbPose = (rig: CharacterRig, w: number): void => {
+/** Foot over foot at the phase the hands set (`reachForRungs`). */
+const climbLegs = (rig: CharacterRig, w: number): void => {
   const s = Math.sin(rig.climbPhase);
   const mix = (from: number, to: number) => from + (to - from) * w;
-  rig.armL.rotation.x = mix(rig.armL.rotation.x, -2.5 + 0.4 * s);
-  rig.armR.rotation.x = mix(rig.armR.rotation.x, -2.5 - 0.4 * s);
-  rig.armL.rotation.z = mix(rig.armL.rotation.z, 0.12);
-  rig.armR.rotation.z = mix(rig.armR.rotation.z, -0.12);
-  rig.elbowL.rotation.x = mix(rig.elbowL.rotation.x, -0.55 - 0.35 * Math.max(0, -s));
-  rig.elbowR.rotation.x = mix(rig.elbowR.rotation.x, -0.55 - 0.35 * Math.max(0, s));
   rig.legL.rotation.x = mix(rig.legL.rotation.x, -0.55 - 0.5 * Math.max(0, s));
   rig.legR.rotation.x = mix(rig.legR.rotation.x, -0.55 - 0.5 * Math.max(0, -s));
   rig.kneeL.rotation.x = mix(rig.kneeL.rotation.x, 0.9 + 0.7 * Math.max(0, s));
@@ -143,7 +140,6 @@ const updateAirAndClimb = (rig: CharacterRig, dt: number, motion: RigMotion): nu
   const airTarget = air !== undefined && !climbing ? 1 : 0;
   rig.airBlend += (airTarget - rig.airBlend) * Math.min(1, dt * (airTarget > rig.airBlend ? AIR_BLEND_IN : AIR_BLEND_OUT));
   rig.climbBlend += ((climbing ? 1 : 0) - rig.climbBlend) * Math.min(1, dt * CLIMB_BLEND);
-  if (climbing) rig.climbPhase += dt * Math.abs(motion.climb ?? 0) * 3.4;
   return Math.max(rig.airBlend, rig.climbBlend);
 };
 
@@ -280,8 +276,12 @@ export const animateRig = (rig: CharacterRig, speed: number, dt: number, crouch 
   poseLegs(rig, gait);
   poseArms(rig, gait, dt, combat);
   if (rig.airBlend > 0.001) applyAirPose(rig, motion.air);
-  if (rig.climbBlend > 0.001) climbPose(rig, rig.climbBlend);
   poseBody(rig, gait, dt);
+  if (motion.climb !== undefined) rig.ladder = motion.rungs ?? null;
+  if (rig.climbBlend > 0.001) {
+    reachForRungs(rig, rig.climbBlend, rig.ladder);
+    climbLegs(rig, rig.climbBlend);
+  }
   if (rig.aiming && rig.melee) applySwingBody(rig);
   applyStagger(rig, dt);
 };
