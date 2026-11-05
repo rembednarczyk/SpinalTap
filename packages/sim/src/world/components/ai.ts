@@ -173,5 +173,7 @@ export interface WitnessCall {
   readonly incident: number;
   /** Someone knocked out in it (ADR-0065), marked reported when the call goes through. */
   readonly body?: EntityId;
+  /** Whom it was done to (ADR-0070, `Offence.victim`). */
+  readonly victim?: EntityId;
   left: number;
 }

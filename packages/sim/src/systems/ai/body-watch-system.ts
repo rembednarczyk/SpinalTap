@@ -68,7 +68,7 @@ const found = (ctx: SimContext, b: Body, finder: Entity, channel: "patrol" | "ca
   }
   const player = ctx.world.with("player").first;
   // A dead body is a murder (ADR-0029), someone knocked out an assault.
-  report(ctx, b.downed.dead ? "murder" : "assault", channel, finder.id, player?.id ?? 0, at);
+  report(ctx, b.downed.dead ? "murder" : "assault", channel, finder.id, player?.id ?? 0, at, b.id);
   dropBodyCalls(ctx, b.id);
 };
 

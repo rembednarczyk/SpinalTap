@@ -1,4 +1,5 @@
 import type { ContractKind } from "../contracts/kinds";
+import type { CrimeKind } from "../crime/heat";
 
 /**
  * Factions of Shinsekai, block 7. Each one is a group the player can be on good or bad
@@ -64,11 +65,30 @@ export const stanceOf = (value: number): FactionStance => {
 
 export const factionStance = (state: ReputationState, faction: FactionId): FactionStance => stanceOf(state[faction]);
 
+/** How someone died, as the street sees it (ADR-0070). Without it: in a fight, on the street. */
+export interface KillContext {
+  /** Hurt while not fighting (from behind, a takedown): its witnesses report a murder instead. */
+  readonly wronged?: boolean;
+  /** Sent in by the heat (ADR-0029): no farming the street's favour through the heat. */
+  readonly security?: boolean;
+  /** Of a contract's crew or a micro-event's muggers: the outcome of the job counts, not each body. */
+  readonly crew?: boolean;
+}
+
 /** Things the player does that the factions of the district notice. */
 export type ReputationCause =
-  | { readonly type: "member-killed"; readonly faction: FactionId }
-  /** Without `kind`: an elimination (the M1 rule). */
-  | { readonly type: "contract-completed"; readonly kind?: ContractKind }
+  | { readonly type: "member-killed"; readonly faction: FactionId; readonly how?: KillContext }
+  /**
+   * Without `kind`: an elimination (the M1 rule). `clean`: no alarm and nobody killed besides
+   * the targets (`ContractTally`, ADR-0029).
+   */
+  | { readonly type: "contract-completed"; readonly kind?: ContractKind; readonly clean?: boolean }
+  /**
+   * A crime of the player's reached the security (`CrimeReported`): the street judges what it
+   * sees. Each assault costs its own; `charged`: what the victim's reported assaults already
+   * cost the street (0 or less), so its murder costs only the rest of a murder, down to nothing.
+   */
+  | { readonly type: "crime-reported"; readonly crime: CrimeKind; readonly charged?: number }
   | { readonly type: "contract-failed"; readonly kind: ContractKind }
   | { readonly type: "clinic-purchase"; readonly kind: "cyberware" | "item" };
 
@@ -82,10 +102,11 @@ export interface ReputationDelta {
  * the street notices them most. The gangers killed on the way count on their own.
  */
 const CONTRACT_COMPLETED: Readonly<Record<ContractKind, readonly ReputationDelta[]>> = {
+  // The targets cost the street nothing on their own (ADR-0070): the job is judged as a whole.
   eliminate: [
     { faction: "fixers", delta: 3 },
     { faction: "hebi", delta: -5 },
-    { faction: "civilians", delta: 1 },
+    { faction: "civilians", delta: 2 },
   ],
   delivery: [
     { faction: "fixers", delta: 2 },
@@ -137,14 +158,45 @@ const CONTRACT_FAILED: Readonly<Record<ContractKind, readonly ReputationDelta[]>
   hack: [{ faction: "fixers", delta: -3 }],
 };
 
+/** What the street adds for a clean job (ADR-0070): the quiet kinds of work only. */
+export const CLEAN_JOB_BONUS: Readonly<Partial<Record<ContractKind, number>>> = { eliminate: 2, retrieve: 2 };
+
+/** A Hebi ganger killed in a fight on the street: the street's thanks, below `GANG_KILL_CEILING` (ADR-0070). */
+export const GANG_KILL_GAIN = 1;
+export const GANG_KILL_CEILING = 25;
+
+/** What a reported crime costs with the street (ADR-0070); the others only raise the heat. */
+export const CRIME_REPORTED_COST: Readonly<Partial<Record<CrimeKind, number>>> = { assault: -1, murder: -2 };
+
 /**
- * Who reacts to a cause, and by how much. Killing a ganger makes the gang angry and the
- * street a little more afraid of you; killing anyone else is far worse.
+ * The street's view of a dead ganger (ADR-0070): thanks for one killed in a fight, outside
+ * jobs, not of the heat's people, not a score between friends, and while it still has
+ * something to give.
  */
-export const reputationEffects = (cause: ReputationCause): readonly ReputationDelta[] => {
+const streetOnGangKill = (how: KillContext, standing: ReputationState): number => {
+  if (how.wronged || how.security || how.crew) return 0;
+  if (stanceOf(standing.hebi) === "friendly" || standing.civilians >= GANG_KILL_CEILING) return 0;
+  return GANG_KILL_GAIN;
+};
+
+const completed = (kind: ContractKind, clean: boolean): readonly ReputationDelta[] => {
+  const base = CONTRACT_COMPLETED[kind];
+  const bonus = clean ? (CLEAN_JOB_BONUS[kind] ?? 0) : 0;
+  return bonus === 0 ? base : base.map((d) => (d.faction === "civilians" ? { ...d, delta: d.delta + bonus } : d));
+};
+
+/**
+ * Who reacts to a cause, and by how much, given the standing before it (`standing`, read by
+ * the street's view of a dead ganger). Killing a ganger angers the gang and, in a fair fight,
+ * pleases the street; killing anyone else is far worse.
+ */
+export const reputationEffects = (cause: ReputationCause, standing: ReputationState = createReputation()): readonly ReputationDelta[] => {
   switch (cause.type) {
     case "member-killed":
-      if (cause.faction === "hebi") return [{ faction: "hebi", delta: -4 }, { faction: "civilians", delta: -1 }];
+      if (cause.faction === "hebi") {
+        const street = streetOnGangKill(cause.how ?? {}, standing);
+        return street === 0 ? [{ faction: "hebi", delta: -4 }] : [{ faction: "hebi", delta: -4 }, { faction: "civilians", delta: street }];
+      }
       if (cause.faction === "civilians") return [{ faction: "civilians", delta: -25 }];
       // Corporate cleaners: the street does not mourn them.
       if (cause.faction === "kagami") return [{ faction: "kagami", delta: -6 }];
@@ -152,7 +204,13 @@ export const reputationEffects = (cause: ReputationCause): readonly ReputationDe
       if (cause.faction === "tessen") return [{ faction: "tessen", delta: -4 }];
       return [{ faction: cause.faction, delta: -25 }, { faction: "civilians", delta: -10 }];
     case "contract-completed":
-      return CONTRACT_COMPLETED[cause.kind ?? "eliminate"];
+      return completed(cause.kind ?? "eliminate", cause.clean ?? false);
+    case "crime-reported": {
+      const cost = CRIME_REPORTED_COST[cause.crime] ?? 0;
+      // The murder of a victim whose assaults were reported: the rest of it, at most down to 0.
+      const delta = cause.crime === "murder" ? Math.min(0, cost - (cause.charged ?? 0)) : cost;
+      return delta === 0 ? [] : [{ faction: "civilians", delta }];
+    }
     case "contract-failed":
       return CONTRACT_FAILED[cause.kind];
     case "clinic-purchase":

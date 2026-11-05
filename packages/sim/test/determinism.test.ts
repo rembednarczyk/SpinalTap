@@ -297,17 +297,17 @@ describe("determinism", () => {
     // Swings both ways, a blocked blow and staggers: the duel exercises the whole package.
     for (const t of ["MeleeSwing", "AttackBlocked", "Staggered", "DamageDealt"]) expect(seen).toContain(t);
     expect(hashOf(sim)).toBe(hashOf(duel().sim));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"3e5b6e59"`);
-    expect(v17HashOf(sim)).toBe("62992d7b");
-    expect(v19HashOf(sim)).toBe("36a75c45");
-    expect(v20HashOf(sim)).toBe("1d2880c1");
-    expect(v21HashOf(sim)).toBe("8c13a3a0");
-    expect(v22HashOf(sim)).toBe("24c5de87");
-    expect(v23HashOf(sim)).toBe("e4247ade");
-    expect(v24HashOf(sim)).toBe("7ec2e45d");
-    expect(v25HashOf(sim)).toBe("f92c26ec");
-    expect(v26HashOf(sim)).toBe("8f19fb83");
-    expect(v27HashOf(sim)).toBe("740e342a");
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"402f2952"`);
+    expect(v17HashOf(sim)).toBe("3e78c5b2");
+    expect(v19HashOf(sim)).toBe("6ebebd7e");
+    expect(v20HashOf(sim)).toBe("116f9cfa");
+    expect(v21HashOf(sim)).toBe("ce560791");
+    expect(v22HashOf(sim)).toBe("7c4d11bc");
+    expect(v23HashOf(sim)).toBe("9398eab3");
+    expect(v24HashOf(sim)).toBe("2cbf3696");
+    expect(v25HashOf(sim)).toBe("66d7b85d");
+    expect(v26HashOf(sim)).toBe("94efe6f8");
+    expect(v27HashOf(sim)).toBe("de01c1cf");
   });
 
   it("restores killed NPCs as absent", () => {
