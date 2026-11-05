@@ -323,6 +323,56 @@ export const ADDED_AREAS: readonly AddedArea[] = [
     reason: "chodnik wzdłuż północnej ściany Dworca Autobusowego i plac kiosku między chodnikami, w OSM bez obszaru",
     ref: "T-168",
   },
+  {
+    // The north pavement of al. Tysiąclecia, beige setts from the kerb to the market and the
+    // Dworzec Autobusowy on the orthophoto (PZGiK), where OSM has only the lines of the paths:
+    // from the carriageway's axis (w739432831, w1004769663; the road is drawn over it) north to the
+    // path w227698424/w1435832520 and T-162, past the bus stop's shelters to the footway w227698409
+    // and T-164 and T-168's corners. West of the Bazar w67502759 it takes the wedge up to
+    // `landuse=retail` w291844839's edge, east of it the gap up to the footway w227698428 (red setts
+    // from the hall's wall on the orthophoto, the footway's band narrower). Short of the beds of
+    // shrubs, left bare: a 2 m strip along the Bazar's south edge, and the bed before the Dworzec between
+    // the cycleway w1435832523 and the path w227698420 (x 773-803.6). Off the nodes: the beds'
+    // corners and the points on the road's axis abreast of the grass w818580988 and w227698409.
+    id: "T-165/chodnik-tysiaclecia",
+    tags: { "area:highway": "pedestrian", surface: "paving_stones" },
+    ring: [
+      { x: 635.07, z: 384.66 },
+      { x: 641.28, z: 387.48 },
+      { x: 658.67, z: 386.8 },
+      { x: 659.71, z: 386.42 },
+      { x: 715.67, z: 377.57 },
+      { x: 715.98, z: 379.55 },
+      { x: 716.94, z: 385.65 },
+      { x: 720.84, z: 389.22 },
+      { x: 719.69, z: 380.84 },
+      { x: 718.09, z: 371.17 },
+      { x: 732.88, z: 370.41 },
+      { x: 761.91, z: 368.68 },
+      { x: 764.51, z: 375.67 },
+      { x: 773.0, z: 374.54 },
+      { x: 773.72, z: 368.93 },
+      { x: 803.59, z: 364.84 },
+      { x: 803.59, z: 370.49 },
+      { x: 806.22, z: 370.14 },
+      { x: 805.33, z: 364.6 },
+      { x: 804.67, z: 360.04 },
+      { x: 804.67, z: 347.54 },
+      { x: 761.8, z: 353.5 },
+      { x: 740.96, z: 356.4 },
+      { x: 730.75, z: 357.87 },
+      { x: 701.36, z: 361.98 },
+      { x: 684.14, z: 364.39 },
+      { x: 670.28, z: 366.33 },
+      { x: 652.23, z: 368.89 },
+      { x: 631.14, z: 371.84 },
+      { x: 631.14, z: 379.32 },
+      { x: 631.17, z: 380.49 },
+    ],
+    nodesOf: ["w227698424", "w291844839", "w291844839", null, null, "w67502759", "w67502759", "w227698428", "w227698428", "w227698424", "w227698424", "w1435832520", "w227698423", null, "w1435832523", null, null, "w227698420", "w227698409", "w227698409", null, "w1004769663", "w1004769663", "w739432831", "w739432831", "w739432831", "w739432831", "w739432831", null, "w818580988", "w818580988"],
+    reason: "chodnik z kostki po północnej stronie al. Tysiąclecia (przystanek, front Bazaru i Dworca) na ortofoto PZGiK, w OSM tylko linie ścieżek",
+    ref: "T-165",
+  },
 ];
 
 /** The added areas as the import reads the map's. */

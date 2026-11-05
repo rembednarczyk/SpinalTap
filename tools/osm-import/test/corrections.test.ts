@@ -9,7 +9,7 @@ import { STOREY } from "../src/building-tags.ts";
 import { partTier } from "../src/building-parts.ts";
 import { ADDED_AREAS, TAG_CORRECTIONS, addedAreas, corrected, correctedLine } from "../src/corrections.ts";
 import { type Area, type Line, extractFeatures } from "../src/features.ts";
-import { pointInRing } from "../src/geometry.ts";
+import { type Pt, pointInRing } from "../src/geometry.ts";
 import { areaSurface } from "../src/ground.ts";
 import { mergeOsm, parseExtract } from "../src/osm.ts";
 import { geoToWorld } from "../src/project.ts";
@@ -234,6 +234,35 @@ describe("tag corrections (ADR-0042)", () => {
     // The north footway w227698418 and the kiosk's east footway w227698421 stay on top of the pavement.
     expect(surfaceAt(794, 427.7)).toBe("footway");
     expect(surfaceAt(804.6, 430)).toBe("footway");
+  });
+
+  // The north pavement of al. Tysiąclecia (T-165): from the carriageway's axis to z 383, x 640-806,
+  // short of the beds the orthophoto shows (shrubs before the Bazar's halls in a 2 m strip south of
+  // w67502759, taken 0.5 m into it for its edge's rounding; before the Dworzec between the cycleway
+  // w1435832523 and the path w227698420, x 773-803). A bed may stay bare; the pavement may not.
+  const T165: readonly Pt[] = [
+    { x: 640, z: 370.6 },
+    { x: 741, z: 356.4 },
+    { x: 761.8, z: 353.5 },
+    { x: 804.6, z: 347.6 },
+    { x: 804.6, z: 370.4 },
+    { x: 806, z: 370.2 },
+    { x: 806, z: 383 },
+    { x: 640, z: 383 },
+  ];
+  const BEDS: readonly (readonly Pt[])[] = [
+    [{ x: 659.7, z: 386.4 }, { x: 715.6, z: 377.5 }, { x: 716.1, z: 380.05 }, { x: 660.1, z: 388.9 }],
+    [{ x: 773, z: 374.55 }, { x: 773.7, z: 368.9 }, { x: 803.6, z: 364.8 }, { x: 803.6, z: 370.5 }],
+  ];
+  it("paves the north pavement of al. Tysiąclecia from the carriageway to the paths and the beds, and leaves the beds and the paths on top (G-337)", () => {
+    const buildings = PODZAMCZE_CHUNKS.flatMap((c) => c.buildings).map((b) => b.outline.map((v, i) => v + (i % 2 === 0 ? b.x : b.z)));
+    const bare: string[] = [];
+    for (let x = 640; x <= 806; x += 0.5)
+      for (let z = 347.5; z <= 383; z += 0.5) {
+        if (!pointInRing({ x, z }, T165) || BEDS.some((b) => pointInRing({ x, z }, b)) || buildings.some((o) => inside(x, z, o))) continue;
+        if (surfaceAt(x, z) === null) bare.push(`${x},${z}`);
+      }
+    expect(bare.join(" ")).toEqual("");
   });
 
   const OSM_DIR = join(__dirname, "../../../data/osm");
