@@ -94,9 +94,36 @@ export const grabLadder = (ctx: SimContext, e: Entity, key: string, end: "bottom
   else hangOn(ctx, e, l, l.bottom, { over: false, duration: GRAB_TIME });
 };
 
-/** A climber standing in a ladder's line between its ends (a game saved mid-climb). */
+/**
+ * A climber standing in a ladder's line between its ends, the top included (a game saved
+ * mid-climb, or in the last moment of the swing onto the rungs and the first of the pull-over).
+ */
 const onLadderLine = (e: Entity, l: LadderDef): boolean =>
-  Math.hypot(e.position.x - l.x, e.position.z - l.z) < 0.05 && e.position.y > l.bottom + 0.05 && e.position.y < l.top - 0.05;
+  Math.hypot(e.position.x - l.x, e.position.z - l.z) < 0.05 && e.position.y > l.bottom + 0.05 && e.position.y < l.top + 0.05;
+
+/**
+ * A game saved in the step across the top of a ladder (the swing onto the rungs or the
+ * pull-over, neither saved) loads with her at the roof's height between the ladder's line and
+ * its exit, maybe over the gap in front of the wall: she goes to the nearer end, onto the rungs
+ * at the top or onto the exit, instead of dropping down the gap. Called once, on load.
+ */
+export const resumeOnLadderTop = (world: SimContext["world"], e: Entity): void => {
+  if (e.climb || e.mantle) return;
+  for (const { ladder: l } of inCreationOrder(world.with("ladder"))) {
+    if (Math.abs(e.position.y - l.top) >= 0.05) continue;
+    const dx = l.exit.x - l.x;
+    const dz = l.exit.z - l.z;
+    const len2 = dx * dx + dz * dz;
+    if (len2 < 1e-6) continue;
+    const t = ((e.position.x - l.x) * dx + (e.position.z - l.z) * dz) / len2;
+    const off = Math.hypot(e.position.x - (l.x + dx * t), e.position.z - (l.z + dz * t));
+    if (t < 0 || t > 1 || off >= 0.05) continue;
+    // On the rungs at the top: the ladder system takes her back on it in the first step.
+    e.position = t < 0.5 ? { x: l.x, y: l.top, z: l.z } : { ...l.exit };
+    e.yaw = t < 0.5 ? l.yaw : e.yaw;
+    return;
+  }
+};
 
 /**
  * Fire escape ladders (ADR-0021). Walking forward into the foot of a ladder, or the interact

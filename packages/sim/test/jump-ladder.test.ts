@@ -289,6 +289,42 @@ describe("fire escape ladders (ADR-0021)", () => {
     expect(loaded.player()!.position.y - MARKET_PLACE.y).toBeCloseTo(y, 5);
   });
 
+  it("a game saved in any step of the swing onto the rungs or the pull-over loads without a fall", () => {
+    /** Loads `sim` as saved now and lets it run: she is on the rungs or on the roof, unhurt. */
+    const loadsSafely = (sim: Simulation, what: string) => {
+      const loaded = Simulation.fromSnapshot(sim.snapshot(null, "ladder", ""));
+      const landed = collect<{ drop: number }>(loaded, "Landed");
+      run(loaded, 60);
+      const p = loaded.player()!;
+      const y = p.position.y - MARKET_PLACE.y;
+      const onRungs = p.climb?.ladder === "targ-escape-2";
+      expect(onRungs || Math.abs(y - ROOF_WEST_TOP) < 1e-6, `${what}: y ${y}`).toBe(true);
+      expect(landed.filter((l) => l.drop > 0.5), `${what}: fell`).toHaveLength(0);
+      expect(p.health?.current, what).toBe(100);
+    };
+    // Down: the interact key at the top, saved in every step of the swing.
+    for (let k = 1; k <= 40; k++) {
+      const sim = at(69.2, ROOF_WEST_TOP, 63.3, 0);
+      run(sim, 2);
+      sim.step(input({ interact: true }));
+      run(sim, k);
+      loadsSafely(sim, `swing, step ${k}`);
+    }
+    // Up: the pull-over at the top of the ladder, saved in every step of it.
+    const start = () => {
+      const sim = at(69.2, BALCONY_TOP, 64.4, SOUTH);
+      sim.step(input({ interact: true }));
+      for (let i = 0; i < 300 && player(sim).climb; i++) sim.step(input({ moveZ: 1 }));
+      expect(player(sim).mantle).toBeDefined();
+      return sim;
+    };
+    for (let k = 0; k <= 40; k++) {
+      const sim = start();
+      run(sim, k);
+      loadsSafely(sim, `pull-over, step ${k}`);
+    }
+  });
+
   it("the third ladder leads to Hebi's roof stash, placed once when the player comes near", () => {
     const sim = at(79.6, ROOF_WEST_TOP, 60.5, EAST);
     const bag = () => sim.world.with("lootBag").entities.find((e) => e.lootBag.key === TARG_ROOF_STASH.key);
