@@ -942,7 +942,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (renderer, two-hand-hold)
 
 ### G-307 Kioski metra stoją przy zabytkach: Plac Litewski 3,8 m od upamiętnienia Andrzeja Struga, Brama Krakowska 10,8 m od Bramy w murach i 2,1 m od tablicy Ludomira Michała Rogowskiego
-- Status: zgłoszone (5.11, autor szkicu ADR-0071); naprawa w etapie 2 ADR-0071 (nowe miejsca wejść co najmniej 18 m od zabytków)
+- Status: w PR #279 (5.11, ADR-0071 etap 2: pawilony w nowych miejscach)
 - Ważność: S3 · Zasięg: dwie stacje metra; zasłaniają zabytek i stoją w murach Starego Miasta (ADR-0042)
 - Pakiet właściciela: packages/sim (treść `lublin`, stacje metra), przegląd `topography-curator`
 
@@ -1040,6 +1040,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (5.11, weryfikator PR #275)
 - Ważność: S4 · Zasięg: przy (2446; 245,8) linia krawędzi przechodzi przez obrys pomostu (3 trójkąty, uskok 0,51 m na 0,38 m, niewidoczne); schody przy (732–735; 151–161) przy moście Zamkowej wchodzą pod pomost do 2,54 m pod jezdnią (tak samo na main; `paint-under-deck` pomija trójkąty przecinające obrys, być może celowo)
 - Pakiet właściciela: packages/engine (mapcity), tools/glitch-scan
+
+### G-331 Deszcz pada pod dachem pawilonu metra i w hali biletowej
+- Status: zgłoszone (5.11, autor ADR-0071 etap 2, PR #279)
+- Ważność: S4 · Zasięg: wszystkie wejścia metra (widać na zrzutach schodów `shots/metro2/`); do etapu 3 ADR-0071 albo osobno
+- Pakiet właściciela: packages/engine/src/effects (deszcz)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
