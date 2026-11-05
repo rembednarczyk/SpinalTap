@@ -232,16 +232,18 @@ describe("determinism", () => {
     expect(v27HashOf(sim)).toBe("d3bc9a3a");
   });
 
-  it("the crowd of residents (ADR-0041) and the traffic (ADR-0050) leave the golden run as it was, at every density", () => {
-    const golden = hashOf(runReplay(1234, script()));
-    for (const crowd of ["low", "high"] as const) {
+  // One case per density: three full replays in one case ran close to the 20 s limit under coverage.
+  let golden: string | undefined;
+  const goldenRun = (): string => (golden ??= hashOf(runReplay(1234, script())));
+  for (const crowd of ["low", "high"] as const) {
+    it(`the crowd of residents (ADR-0041) and the traffic (ADR-0050) leave the golden run as it was, at density ${crowd}`, () => {
       const sim = runReplay(1234, script(), crowd);
       expect([...sim.world].some((e) => e.view?.kind === "crowd")).toBe(true);
       // The traffic follows the crowd's density: cars on Lubartowska and Królewska by Plac Łokietka.
       if (crowd === "high") expect([...sim.world].some((e) => e.vehicle !== undefined)).toBe(true);
-      expect(hashOf(sim)).toBe(golden);
-    }
-  });
+      expect(hashOf(sim)).toBe(goldenRun());
+    });
+  }
 
   it("without the v13 fields of ADR-0033, the v17 progression and the v18 difficulty the replay hashes as with sim B of wave 2 (fields, not rules)", () => {
     const snap = beforeV23(runReplay(1234, script()));
