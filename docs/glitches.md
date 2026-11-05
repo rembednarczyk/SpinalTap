@@ -982,7 +982,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (testy `flee-dead-zone`, `reputation-tiers`)
 
 ### G-317 Ucieczka cywila pod ścianą drga: kąt skacze o ±0,8 rad co klatkę
-- Status: zgłoszone (5.11, weryfikator PR #267; stary kod `runFrom`)
+- Status: w PR #277 (5.11; histereza kierunku `fleeTurn`, skoki 23 → 3)
 - Ważność: S3 · Zasięg: ucieczka przy ścianie; ziarno 3, −60, przechodzień 1002004, gracz w 2 m: ok. 0,4 s, 24 skoki, bo przełącza się kierunek sondy wolnej drogi
 - Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, `runFrom`)
 
@@ -1025,6 +1025,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (5.11, naprawiacz G-323)
 - Ważność: S4 (czas testów) · Zasięg: prawie każdy test app; pamięć podręczna skompilowanej historii (`compileInk`) przyspieszyłaby cały zestaw
 - Pakiet właściciela: packages/narrative
+
+### G-326 Uciekający cywil drga przy objeździe: `steerPoint` przełącza się między drogą prosto a objazdem
+- Status: zgłoszone (5.11, naprawiacz G-317)
+- Ważność: S3 · Zasięg: ziarno 17, −60, przechodzień 1002005, gracz 2 m (25 skoków kąta ok. 0,42 rad) i 1 m (42); `straightWalk` do punktu 6 m przed cywilem raz jest wolny, raz nie
+- Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, `steerPoint`)
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
