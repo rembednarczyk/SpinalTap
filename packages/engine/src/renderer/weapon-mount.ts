@@ -22,14 +22,15 @@ export const WEAPON_MODEL: Readonly<Record<WeaponLook, { readonly kind: WeaponKi
 export type WeaponManifest = Partial<Record<WeaponKind, string>>;
 
 /**
- * Weapon models are authored lying along X (muzzle towards `MUZZLE_X`), top up along Y, and are
- * centred on their bounding box. A mount turns them into the frame of what holds them.
+ * Weapon files lie along X with the muzzle at +X and the top up along Y, centred on their bounding
+ * box (tools/obj2glb.py). The glTF loader's root turns the right-handed file into Babylon's frame
+ * by mirroring X, so under the root the muzzle points to -X. A mount turns that into the frame of
+ * what holds the gun.
  */
-const MUZZLE_X = 1;
+const MUZZLE_X = -1;
 
-/** Rotation that takes the model's X (barrel) and Y (top) onto `barrel` and `top`. */
-const orient = (barrel: Vector3, top: Vector3): Quaternion =>
-  Quaternion.RotationQuaternionFromAxis(barrel, top, Vector3.Cross(barrel, top));
+/** Rotation that takes the model's +X and +Y (top) onto `x` and `top`; the muzzle, at `MUZZLE_X`, follows. */
+const orient = (x: Vector3, top: Vector3): Quaternion => Quaternion.RotationQuaternionFromAxis(x, top, Vector3.Cross(x, top));
 
 /** Rig forearm / hand frame: the barrel runs along -Y (elbow to fingers), the top faces +Z. */
 const IN_HAND = orient(new Vector3(0, -MUZZLE_X, 0), new Vector3(0, 0, 1));
