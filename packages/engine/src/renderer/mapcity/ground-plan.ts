@@ -37,7 +37,12 @@ export const WATER_COLOR = hexColor("#0b1822", DRESS_FLAG.wet);
 /** Longest edge of the terrain cells and of the kerbs' parts (m). */
 export const DRAPE_STEP = 5;
 
-export type HeightAt = (x: number, z: number) => number;
+/**
+ * The height of the ground at (x, z). Where it jumps from one surface to another (a bridge's deck
+ * over the terrain), `surfaceAt` gives the one under a point, carried on past its outline: `drape`
+ * reads the grid's corners round a point on it, which may lie on the other surface (G-301).
+ */
+export type HeightAt = ((x: number, z: number) => number) & { readonly surfaceAt?: (x: number, z: number) => (x: number, z: number) => number };
 
 /** Normal of the ground under (x, z), from central differences. */
 const groundNormal = (h: HeightAt, x: number, z: number): Vec => {
@@ -226,30 +231,40 @@ export const drapeHeightAt = (ring: readonly P2[], tris: readonly number[], h: H
     const u = ((x - a.x) * (c.z - a.z) - (c.x - a.x) * (z - a.z)) / det;
     const v = ((b.x - a.x) * (z - a.z) - (x - a.x) * (b.z - a.z)) / det;
     if (u < -1e-9 || v < -1e-9 || u + v > 1 + 1e-9) continue;
-    return drapeY(h, x, z) + lift;
+    return drapeY(h.surfaceAt?.(x, z) ?? h, x, z) + lift;
   }
   return null;
 };
 
 /** Lays `ring` on the ground at `lift` above it, at `drapeY`: shared vertices per corner of the cut triangles. */
 export const drape = (sink: MeshSink, ring: readonly P2[], h: HeightAt, lift: number, color: Rgba, uvOf: (p: P2) => readonly [number, number], meta: readonly [number, number]): void => {
-  const seen = new Map<string, number>();
+  const seen = new Map<number, Map<number, number>>();
   const up = { x: 0, y: 1, z: 0 };
-  // The grid's corners are shared by the vertices round them: the ground under each is read once.
-  const corners = new Map<number, number>();
-  const corner: HeightAt = (x, z) => {
-    const key = Math.round(x / DRAPE_GRID) * 1e6 + Math.round(z / DRAPE_GRID);
-    let y = corners.get(key);
-    if (y === undefined) corners.set(key, (y = h(x, z)));
-    return y;
+  // The grid's corners are shared by the vertices round them: each surface under each is read once.
+  const read = new Map<HeightAt, HeightAt>();
+  const corners = (surface: HeightAt): HeightAt => {
+    let at = read.get(surface);
+    if (at) return at;
+    const ys = new Map<number, number>();
+    at = (x, z) => {
+      const key = Math.round(x / DRAPE_GRID) * 1e6 + Math.round(z / DRAPE_GRID);
+      let y = ys.get(key);
+      if (y === undefined) ys.set(key, (y = surface(x, z)));
+      return y;
+    };
+    read.set(surface, at);
+    return at;
   };
   const at = (p: P2): number => {
-    // Fine enough to keep the cut points a fraction of a millimetre apart on a corner of the grid.
-    const key = `${p.x.toFixed(5)}:${p.z.toFixed(5)}`;
-    const known = seen.get(key);
+    // Hundredths of a millimetre: fine enough to keep the cut points apart on a corner of the grid.
+    const kx = Math.round(p.x * 1e5);
+    const kz = Math.round(p.z * 1e5);
+    let row = seen.get(kx);
+    if (!row) seen.set(kx, (row = new Map()));
+    const known = row.get(kz);
     if (known !== undefined) return known;
-    const i = vertex(sink, { x: p.x, y: drapeY(corner, p.x, p.z) + lift, z: p.z }, groundNormal(h, p.x, p.z), color, uvOf(p), meta);
-    seen.set(key, i);
+    const i = vertex(sink, { x: p.x, y: drapeY(corners(h.surfaceAt?.(p.x, p.z) ?? h), p.x, p.z) + lift, z: p.z }, groundNormal(h, p.x, p.z), color, uvOf(p), meta);
+    row.set(kz, i);
     return i;
   };
   for (const [a, b, c] of drapeTriangles(ring)) face(sink, at(a as P2), at(b as P2), at(c as P2), up);

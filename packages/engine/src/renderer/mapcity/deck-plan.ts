@@ -29,31 +29,37 @@ export const deckHeight = (d: DeckAxis, x: number, z: number): number => {
 
 /** The decks of the spawned ground, for the height the pieces on them (and their markings) are laid at. */
 export class Decks {
-  private readonly pieces = new Map<EntityId, { readonly ring: readonly P2[]; readonly deck: DeckAxis; readonly bounds: Box2 }>();
+  private readonly pieces = new Map<EntityId, { readonly ring: readonly P2[]; readonly deck: DeckAxis; readonly bounds: Box2; readonly surface: (x: number, z: number) => number }>();
 
   add(id: EntityId, ring: readonly P2[], deck: DeckAxis): void {
-    this.pieces.set(id, { ring, deck, bounds: boundsOf(ring) });
+    this.pieces.set(id, { ring, deck, bounds: boundsOf(ring), surface: (x, z) => deckHeight(deck, x, z) });
   }
 
   remove(id: EntityId): void {
     this.pieces.delete(id);
   }
 
-  /**
-   * The highest deck over (x, z), or null off every bridge. For a way on the terrain at `under`,
-   * only the decks within DECK_HEADROOM of it: under a higher one it stays on the terrain (G-062).
-   */
-  readonly heightAt = (x: number, z: number, under?: number): number | null => {
-    let best: number | null = null;
+  /** The piece of the highest deck over (x, z) (within DECK_HEADROOM of `under`, see `heightAt`), null off every bridge. */
+  private highest(x: number, z: number, under?: number): { readonly y: number; readonly surface: (x: number, z: number) => number } | null {
+    let best: { y: number; surface: (x: number, z: number) => number } | null = null;
     for (const p of this.pieces.values()) {
       const b = p.bounds;
       if (x < b.minX || x > b.maxX || z < b.minZ || z > b.maxZ || !pointInRing({ x, z }, p.ring)) continue;
       const y = deckHeight(p.deck, x, z);
       if (under !== undefined && y - under > DECK_HEADROOM) continue;
-      if (best === null || y > best) best = y;
+      if (best === null || y > best.y) best = { y, surface: p.surface };
     }
     return best;
-  };
+  }
+
+  /**
+   * The highest deck over (x, z), or null off every bridge. For a way on the terrain at `under`,
+   * only the decks within DECK_HEADROOM of it: under a higher one it stays on the terrain (G-062).
+   */
+  readonly heightAt = (x: number, z: number, under?: number): number | null => this.highest(x, z, under)?.y ?? null;
+
+  /** That deck's height carried on past its outline (its axis), for `HeightAt.surfaceAt`; null off every bridge. */
+  readonly surfaceAt = (x: number, z: number, under?: number): ((x: number, z: number) => number) | null => this.highest(x, z, under)?.surface ?? null;
 }
 
 /**

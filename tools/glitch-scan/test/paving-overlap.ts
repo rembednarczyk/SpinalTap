@@ -2,7 +2,7 @@ import { type GroundSurface, SURFACE_LIFT, type Vec3, type ViewDescriptor } from
 import { worldRing } from "../../../packages/engine/src/renderer/drones/drone-world";
 import { drape } from "../../../packages/engine/src/renderer/mapcity/ground-plan";
 import { BinIndex } from "../../../packages/engine/src/renderer/mapcity/map-index";
-import { type P2, boundsOf, pointInRing } from "../../../packages/engine/src/renderer/mapcity/polygon";
+import { type P2, boundsOf } from "../../../packages/engine/src/renderer/mapcity/polygon";
 import { MeshSink } from "../../../packages/engine/src/renderer/mesh-sink";
 
 /**
@@ -112,14 +112,21 @@ export const pavingOverlapSteps = ({ pieces, index }: { pieces: readonly DrawnPi
       const minZ = Math.max(ba.minZ, bb.minZ);
       const maxZ = Math.min(ba.maxZ, bb.maxZ);
       let worst = { step: 0, x: 0, z: 0 };
-      for (let x = Math.ceil(minX / SAMPLE) * SAMPLE; x <= maxX; x += SAMPLE) {
-        for (let z = Math.ceil(minZ / SAMPLE) * SAMPLE; z <= maxZ; z += SAMPLE) {
-          if (!pointInRing({ x, z }, a.ring) || !pointInRing({ x, z }, b.ring)) continue;
-          const ya = pieceHeightAt(a, x, z);
-          const yb = pieceHeightAt(b, x, z);
-          if (ya === null || yb === null) continue;
-          const step = Math.abs(ya - a.lift - (yb - b.lift));
-          if (step > worst.step) worst = { step, x, z };
+      // Cell by cell, only those both pieces lay triangles in: off them a piece's height is null.
+      for (let ci = Math.floor(minX / CELL); ci * CELL <= maxX; ci++) {
+        for (let ck = Math.floor(minZ / CELL); ck * CELL <= maxZ; ck++) {
+          const key = cellOf(ci * CELL, ck * CELL);
+          if (!a.cells().has(key) || !b.cells().has(key)) continue;
+          for (let sx = Math.ceil(Math.max(minX, ci * CELL) / SAMPLE); sx * SAMPLE < (ci + 1) * CELL && sx * SAMPLE <= maxX; sx++) {
+            for (let sz = Math.ceil(Math.max(minZ, ck * CELL) / SAMPLE); sz * SAMPLE < (ck + 1) * CELL && sz * SAMPLE <= maxZ; sz++) {
+              const [x, z] = [sx * SAMPLE, sz * SAMPLE];
+              const ya = pieceHeightAt(a, x, z);
+              const yb = ya === null ? null : pieceHeightAt(b, x, z);
+              if (ya === null || yb === null) continue;
+              const step = Math.abs(ya - a.lift - (yb - b.lift));
+              if (step > worst.step) worst = { step, x, z };
+            }
+          }
         }
       }
       if (worst.step > OVERLAP_STEP) out.push({ at: `${a.surface} and ${b.surface} at ${worst.x.toFixed(1)},${worst.z.toFixed(1)}`, what: `${(worst.step * 100).toFixed(1)} cm apart over the ground` });
