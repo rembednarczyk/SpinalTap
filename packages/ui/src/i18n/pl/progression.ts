@@ -5,7 +5,7 @@ import type { Message } from "../message";
 export const plProgression = {
   "attribute.section": "Atrybuty",
   "attribute.level": "Poziom {level}",
-  "attribute.points": { one: "{count} punkt do rozdania", few: "{count} punkty do rozdania", many: "{count} punktów do rozdania", other: "{count} punktu do rozdania" },
+  "attribute.points": "Punkty do rozdania: {count}",
   "attribute.raise": "Podnieś: {name}",
   "attribute.might.name": "Krzepa",
   "attribute.might.effect": "+4 zdrowia i +2% obrażeń wręcz na punkt",

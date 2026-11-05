@@ -7,7 +7,7 @@ import type { Message } from "../message";
 export const enProgression = {
   "attribute.section": "Attributes",
   "attribute.level": "Level {level}",
-  "attribute.points": { one: "{count} point to spend", other: "{count} points to spend" },
+  "attribute.points": "Points to spend: {count}",
   "attribute.raise": "Raise {name}",
   "attribute.might.name": "Might",
   "attribute.might.effect": "+4 health and +2% melee damage per point",
