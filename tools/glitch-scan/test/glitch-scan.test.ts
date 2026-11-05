@@ -35,7 +35,7 @@ import { figureChecks } from "./figure-pieces";
 import { signsInNeighbours } from "./sign-neighbours";
 import { lowCables } from "./cable-spans";
 import { metroLineProtected } from "./metro-line";
-import { metroBlocked, metroInBuilding, metroNearHeritage, metroShaftOpen } from "./metro-entrances";
+import { metroBlocked, metroExitBare, metroInBuilding, metroNearHeritage, metroShaftOpen } from "./metro-entrances";
 import { lanternsByPassages } from "./passage-lanterns";
 import { mixedLampWays, plainLampsByStyled, plainLampsIn } from "./lamp-styles";
 import { CHURCH_SURFACE, churchesOverSurface, landmarksAtDefaultHeight, towersAtDefaultHeight, towersSkipped } from "./landmark-heights";
@@ -1671,6 +1671,8 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
   "metro-entrance-blocked": () => metroBlocked(Object.values(WORLD_STREET_PROPS).flat(), CROWD_LANES, cars),
   /** A metro pavilion's shaft dug beyond its outline or without a wall on a side other than the opening. */
   "metro-shaft-open": () => metroShaftOpen(),
+  /** A point of a 0.5 m grid in the 3 m in front of a metro pavilion's opening on no ground surface of the map: the exit onto bare terrain (G-332). */
+  "metro-exit-bare": () => metroExitBare(),
   // The market's furniture of ADR-0058 stage 3 against the map data (`market-pieces.ts`).
   ...marketChecks(SOURCE_OSM, Object.values(WORLD_STREET_PROPS).flat(), CROWD_LANES),
   // The decals of ADR-0058 stage 6 against the drawn walls, signs, hosts and carriageways (`decal-pieces.ts`).

@@ -12,7 +12,8 @@ import { geoToWorld } from "../../osm-import/src/project.ts";
  * pavilions' outlines (the topography curator's review, 5.11): in a building; near a monument,
  * a church or a public building (15 m), a memorial, an artwork or a fountain (10 m), or with the
  * dig near an archaeological site (3 m); the opening blocked (3 m free in front of it, furniture,
- * the walkers' lanes, a car's lane closer than a pavement); the shaft open beyond its walls.
+ * the walkers' lanes, a car's lane closer than a pavement); the shaft open beyond its walls; the
+ * opening onto bare terrain, no paving of the map in front of it (G-332).
  */
 
 type Rect = { readonly minX: number; readonly maxX: number; readonly minZ: number; readonly maxZ: number };
@@ -145,5 +146,26 @@ export const metroShaftOpen = (entrances: readonly Entrance[] = METRO_ENTRANCES)
         break;
       }
     }
+    return out;
+  });
+
+/** The map's ground pieces as rings. */
+const groundRings = (): P2[][] =>
+  MAP_CHUNKS.flatMap((c) =>
+    c.ground.map((g) => {
+      const ring: P2[] = [];
+      for (let i = 0; i + 1 < g.outline.length; i += 2) ring.push({ x: g.outline[i]!, z: g.outline[i + 1]! });
+      return ring;
+    }),
+  );
+
+/** A point of a 0.5 m grid in the 3 m in front of an opening on none of the map's ground pieces: the player walks out onto bare terrain. */
+export const metroExitBare = (entrances: readonly Entrance[] = METRO_ENTRANCES, ground: readonly (readonly P2[])[] = groundRings()): Finding[] =>
+  entrances.flatMap((e) => {
+    const f = frontOf(e);
+    const pieces = ground.filter((r) => ringToRect(r, f) < 0.5);
+    const out: Finding[] = [];
+    for (let x = f.minX + 0.25; x < f.maxX; x += 0.5)
+      for (let z = f.minZ + 0.25; z < f.maxZ; z += 0.5) if (!pieces.some((r) => pointInRing({ x, z }, r))) out.push({ at: `${x.toFixed(0)},${z.toFixed(0)}`, what: `${name(e)}: bare terrain at ${x.toFixed(2)},${z.toFixed(2)} in front of the opening` });
     return out;
   });

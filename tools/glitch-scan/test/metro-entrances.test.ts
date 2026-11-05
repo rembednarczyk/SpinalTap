@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { METRO_ENTRANCES } from "../../../packages/sim/src/content/metro";
 import { pavilion } from "../../../packages/sim/src/content/metro-pavilion";
 import { mergeOsm, parseExtract } from "../../osm-import/src/osm.ts";
-import { metroBlocked, metroNearHeritage, metroShaftOpen } from "./metro-entrances";
+import { metroBlocked, metroExitBare, metroNearHeritage, metroShaftOpen } from "./metro-entrances";
 
 const OSM_DIR = join(__dirname, "../../../data/osm");
 const OSM = mergeOsm(
@@ -39,5 +39,13 @@ describe("the metro entrances' checks (ADR-0071 stage 2)", () => {
     // The end wall's plinth: 0.25 m thick along the long side (x here).
     const walls = e.props.filter((p) => !(p.view.kind === "block" && p.view.material === "concrete" && Math.abs(p.view.size.x - 0.25) < 1e-6 && p.view.size.y > 2));
     expect(metroShaftOpen([{ ...e, props: walls }]).map((f) => f.what)).toEqual([expect.stringContaining("no wall")]);
+  });
+
+  it("finds the Dworzec Autobusowy's opening onto bare terrain and none where the ground is paved (G-332)", () => {
+    const dworzec = METRO_ENTRANCES.find((e) => e.station === "targ" && e.label === "B")!;
+    expect(metroExitBare([dworzec])).toEqual([]);
+    expect(metroExitBare([dworzec], [])).toHaveLength(30);
+    const paved = [{ x: 700, z: 360 }, { x: 800, z: 360 }, { x: 800, z: 400 }, { x: 700, z: 400 }];
+    expect(metroExitBare([dworzec], [paved])).toEqual([]);
   });
 });

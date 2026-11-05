@@ -5,7 +5,7 @@
  * `data/osm` stays as downloaded, so a new extract keeps the correction until OSM agrees.
  */
 import { type Area, type Line } from "./features.ts";
-import { centroid } from "./geometry.ts";
+import { type Pt, centroid } from "./geometry.ts";
 import { type Tags } from "./osm.ts";
 
 export interface TagCorrection {
@@ -159,6 +159,51 @@ export const TAG_CORRECTIONS: readonly TagCorrection[] = [
   ...stairs(["w1435832499", "w1305940836", "w1305889408", "w1305940837", "w1306105687"], "biegi"),
   ...stairs(["w1435832498", "w56965512", "w1305889407", "w1305940838", "w48500135", "w1306105686"], "podesty"),
 ];
+
+/**
+ * An area OSM does not map at all, where the orthophoto shows one: a correction of the map like
+ * the ones above, but with an outline of its own (world metres) instead of an element to change.
+ * Its outline meets the mapped neighbours' edges as the import lays them, and runs on under the
+ * paths drawn over it: their bands are rounded to 0.1 m and simplified each on its own, so an edge
+ * laid along theirs would leave a crack of bare terrain. A square is drawn under every paving but
+ * grass and water, so the part under a path does not show.
+ */
+export interface AddedArea {
+  /** `T-NNN/<name>`: no OSM id, so the register entry it answers. */
+  readonly id: string;
+  readonly tags: Tags;
+  readonly ring: readonly Pt[];
+  readonly reason: string;
+  readonly ref: string;
+}
+
+export const ADDED_AREAS: readonly AddedArea[] = [
+  {
+    // The square before the Dworzec Autobusowy, paved on the orthophoto (PZGiK), where OSM has only
+    // the north tip of `landuse=retail` w291844839: bare terrain between the path w1435832520 (its
+    // 2 m band's south edge), the footway w227698423 (its 2.5 m band's west edge), the car park
+    // w175995587 and Nova w66264174, with the metro's `targ` B opening onto it (T-159). The car
+    // park's and Nova's corners are the map's; the north side on the path's axis, the east side
+    // 0.1-0.7 m in from the footway's edge, the west side at x 740 as the curator measured it.
+    id: "T-162/plac-dworca",
+    tags: { "area:highway": "pedestrian", surface: "paving_stones" },
+    ring: [
+      { x: 740, z: 370 },
+      { x: 761.4, z: 368.8 },
+      { x: 763.7, z: 376.3 },
+      { x: 760.3, z: 376.3 },
+      { x: 746.7, z: 378.1 },
+      { x: 744.7, z: 379.8 },
+      { x: 741.7, z: 380.2 },
+      { x: 740, z: 380.5 },
+    ],
+    reason: "plac pieszy przed Dworcem Autobusowym, wybrukowany na ortofoto PZGiK, w OSM tylko landuse=retail",
+    ref: "T-162",
+  },
+];
+
+/** The added areas as the import reads the map's. */
+export const addedAreas = (added: readonly AddedArea[] = ADDED_AREAS): Area[] => added.map((a) => ({ id: a.id, osmId: 0, tags: a.tags, ring: a.ring, holes: 0 }));
 
 const BY_ID: ReadonlyMap<string, TagCorrection> = new Map(TAG_CORRECTIONS.map((c) => [c.id, c]));
 

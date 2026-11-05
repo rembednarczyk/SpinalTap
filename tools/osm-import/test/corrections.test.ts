@@ -5,8 +5,9 @@ import { PODZAMCZE_CHUNKS } from "../../../packages/sim/src/content/lublin/podza
 import { STARE_MIASTO_CHUNKS } from "../../../packages/sim/src/content/lublin/stare-miasto.generated.ts";
 import { STOREY } from "../src/building-tags.ts";
 import { partTier } from "../src/building-parts.ts";
-import { TAG_CORRECTIONS, corrected, correctedLine } from "../src/corrections.ts";
+import { ADDED_AREAS, TAG_CORRECTIONS, addedAreas, corrected, correctedLine } from "../src/corrections.ts";
 import { type Area, type Line } from "../src/features.ts";
+import { pointInRing } from "../src/geometry.ts";
 
 /** The explicit corrections of estimated OSM tags: documented, and applied to the right element only. */
 
@@ -146,5 +147,36 @@ describe("tag corrections (ADR-0042)", () => {
       }
     }
     expect(bare.join(" ")).toEqual("");
+  });
+
+  it("names each added area's reason and register entry, apart from the map's ids", () => {
+    expect(ADDED_AREAS.length).toBeGreaterThan(0);
+    for (const a of ADDED_AREAS) {
+      expect(a.ref).toMatch(/^T-\d{3}$/);
+      expect(a.id.startsWith(`${a.ref}/`)).toBe(true);
+      expect(a.reason.length).toBeGreaterThan(10);
+      expect(a.ring.length).toBeGreaterThanOrEqual(3);
+    }
+    expect(new Set(ADDED_AREAS.map((a) => a.id)).size).toBe(ADDED_AREAS.length);
+    expect(addedAreas().map((a) => a.id)).toEqual(ADDED_AREAS.map((a) => a.id));
+  });
+
+  // The square before the Dworzec Autobusowy (T-162): bare terrain in front of the metro's `targ` B
+  // between the path w1435832520, the footway w227698423, the car park w175995587 and Nova.
+  it("paves the square before the Dworzec Autobusowy under the paths and the car park, and none of them over (G-332)", () => {
+    const square = ADDED_AREAS.find((a) => a.ref === "T-162")!.ring;
+    const buildings = PODZAMCZE_CHUNKS.flatMap((c) => c.buildings).map((b) => b.outline.map((v, i) => v + (i % 2 === 0 ? b.x : b.z)));
+    const bare: string[] = [];
+    for (let x = 740.25; x < 764; x += 0.5)
+      for (let z = 368.75; z < 381; z += 0.5) {
+        if (!pointInRing({ x, z }, square) || buildings.some((o) => inside(x, z, o))) continue;
+        if (surfaceAt(x, z) === null) bare.push(`${x},${z}`);
+      }
+    expect(bare.join(" ")).toEqual("");
+    // Drawn under its neighbours: the path's, the footway's and the car park's ground stays on top.
+    expect(surfaceAt(750, 369.5)).toBe("footway");
+    expect(surfaceAt(762.5, 372)).toBe("footway");
+    expect(surfaceAt(755, 380)).toBe("road");
+    expect(surfaceAt(754, 373.9)).toBe("square");
   });
 });
