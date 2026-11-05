@@ -956,6 +956,31 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: dwie stacje metra; zasłaniają zabytek i stoją w murach Starego Miasta (ADR-0042)
 - Pakiet właściciela: packages/sim (treść `lublin`, stacje metra), przegląd `topography-curator`
 
+### G-308 Zejście z dachu na drabinę tylko klawiszem: wejście za krawędź przy drabinie kończy się upadkiem
+- Status: zgłoszone (5.11, autor poprawek drabin, PR #269)
+- Ważność: S3 · Zasięg: `targ-escape-2` i `targ-escape-3`; upadek z 3,6–4,6 m bez obrażeń, drabina nie łapie
+- Pakiet właściciela: packages/sim (ruch, drabiny)
+
+### G-309 FPP w połowie drabiny: kadr w całości wypełnia szczebel, dłoni nie widać
+- Status: zgłoszone (5.11, autor poprawek drabin, PR #269)
+- Ważność: S3 · Zasięg: oko ok. 0,3 m za szczeblami; wymaga decyzji o widoku FPP na drabinie
+- Pakiet właściciela: packages/engine/src/camera
+
+### G-310 Dłonie nie trafiają w szczeble: faza rąk 3,4 rad/m (cykl na 1,85 m) przy szczeblach co 0,3 m
+- Status: zgłoszone (5.11, autor poprawek drabin, PR #269)
+- Ważność: S3 · Zasięg: ręce zostają za ciałem i ślizgają się; faza niezwiązana z wysokością; przy 2,2 m/s pełne tempo dałoby ok. 3,7 cyklu/s, więc trzeba zmienić tempo albo prędkość wspinania
+- Pakiet właściciela: packages/engine/src/renderer (pozy postaci)
+
+### G-311 Rozglądanie się na drabinie obraca ciało dowolnie, także plecami do szczebli
+- Status: zgłoszone (5.11, autor poprawek drabin, PR #269)
+- Ważność: S3 · Zasięg: każda drabina; poprawka wymaga osobnego obrotu ciała w `Transform` (zmiana kontraktu, ADR)
+- Pakiet właściciela: packages/sim i packages/core (kontrakt `Transform`)
+
+### G-312 Drabina łapie tylko przy kącie podejścia do 52°; na wprost z 0,6 m już nie łapie
+- Status: zgłoszone (5.11, autor poprawek drabin, PR #269)
+- Ważność: S3 · Zasięg: każda drabina; do decyzji, jaki kąt i zasięg mają łapać
+- Pakiet właściciela: packages/sim (ruch, drabiny)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
