@@ -104,6 +104,8 @@ describe("levels in the game (ADR-0020, ADR-0021)", () => {
     walkUntil(g, () => false, 1);
     expect(g.seki.state().climbing).toBe("targ-escape-1");
     walkUntil(g, (p) => p.y - O.y > 4.4, 10);
+    // The step across onto the balcony plays out before she is put elsewhere on it.
+    g.step(40);
     // From the balcony, the interact key on the second ladder, then up onto the roof.
     standAt(g, { x: O.x + 69.2, y: O.y + 4.5, z: O.z + 64.6 }, Math.PI);
     g.step(1);
