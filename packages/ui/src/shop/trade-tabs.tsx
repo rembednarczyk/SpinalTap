@@ -11,9 +11,11 @@ import {
   type ShopTerms,
   type StockEntry,
   backpackPrice,
+  fullService,
   installFee,
   isCyberwareId,
   itemSummary,
+  offersEntry,
   priceWithTerms,
   repairQuote,
   sellPrice,
@@ -44,6 +46,18 @@ const eur = (locale: Locale, n: number) => `${formatNumber(locale, n)} €$`;
 
 const rarityClass = (item: { readonly rarity: TradeItemVm["rarity"] }) => (item.rarity && item.rarity !== "common" ? ` rarity--${item.rarity}` : "");
 
+/** Why an offer is greyed out: on basic terms it stays under the counter (ADR-0070). */
+const LockedWhy = () => {
+  const t = useT();
+  return (
+    <p className="shop__warn" data-testid="shop-locked-why">
+      {t("shop.locked.reason")}
+    </p>
+  );
+};
+
+const lockedClass = (locked: boolean) => (locked ? " shop__item--locked" : "");
+
 /** What the counter sells; at the clinic the implants first (bought and installed on the spot). */
 export const BuyTab = ({ shopId, terms }: { readonly shopId: ShopId; readonly terms: ShopTerms }) => {
   const shop = SHOPS[shopId];
@@ -53,7 +67,7 @@ export const BuyTab = ({ shopId, terms }: { readonly shopId: ShopId; readonly te
       {shop.stock.map((entry) => (
         <StockOffer key={entry.item} entry={entry} terms={terms} />
       ))}
-      {shop.backpacks && <BackpackOffer />}
+      {shop.backpacks && <BackpackOffer terms={terms} />}
     </div>
   );
 };
@@ -81,16 +95,18 @@ const ImplantOffer = ({ id, terms }: { readonly id: CyberwareId; readonly terms:
   const price = priceWithTerms(def.price, terms);
   const installed = loadout[def.slot] === id;
   const replaces = !installed ? loadout[def.slot] : undefined;
+  const locked = !installed && !fullService(terms);
   return (
-    <article className={`shop__item${installed ? " shop__item--installed" : ""}`} data-testid={`implant-${id}`}>
+    <article className={`shop__item${installed ? " shop__item--installed" : ""}${lockedClass(locked)}`} data-testid={`implant-${id}`}>
       <div className="shop__slot">{slotLabel(t, def.slot)}</div>
       <h3 className="shop__name">{tx(def.name)}</h3>
       <p className="shop__desc">{tx(def.description)}</p>
       <CapacityCost fit={fit} />
       {replaces && <p className="shop__warn">{t("shop.replaces", { name: tx(CYBERWARE_CATALOG[replaces].name) })}</p>}
       {replaces && freeCells < 1 && <p className="shop__warn">{t("shop.noRoomImplant")}</p>}
-      <button type="button" className="shop__buy" disabled={installed || eddies < price || fit.over} onClick={() => intents.buyCyberware(id)}>
-        {installed ? t("shop.installed") : fit.over ? t("shop.overLimit") : t("shop.implant", { price: eur(locale, price) })}
+      {locked && <LockedWhy />}
+      <button type="button" className="shop__buy" disabled={installed || locked || eddies < price || fit.over} onClick={() => intents.buyCyberware(id)}>
+        {installed ? t("shop.installed") : locked ? t("shop.locked") : fit.over ? t("shop.overLimit") : t("shop.implant", { price: eur(locale, price) })}
       </button>
     </article>
   );
@@ -106,6 +122,7 @@ const StockOffer = ({ entry, terms }: { readonly entry: StockEntry; readonly ter
   const trade = useUi((s) => s.trade);
   const intents = useShopIntents();
   const price = priceWithTerms(stockListPrice(entry), terms);
+  const locked = !offersEntry(entry, terms);
   let slot: string;
   let room = trade.freeCells > 0;
   if (entry.kind === "stack") {
@@ -120,31 +137,34 @@ const StockOffer = ({ entry, terms }: { readonly entry: StockEntry; readonly ter
   }
   const description = entry.kind === "stack" && entry.item === "medkit" ? `${tx(shopItemDescription(entry.item))} ${t("shop.medkitUse")}` : tx(shopItemDescription(entry.item));
   return (
-    <article className={`shop__item${entry.kind === "item" ? rarityClass(entry) : ""}`}>
+    <article className={`shop__item${entry.kind === "item" ? rarityClass(entry) : ""}${lockedClass(locked)}`} data-testid={`stock-${entry.item}`}>
       <div className="shop__slot">{slot}</div>
       <h3 className="shop__name">{tx(stockName(entry))}</h3>
       <p className="shop__desc">{description}</p>
-      <button type="button" className="shop__buy" disabled={eddies < price || !room} onClick={() => intents.buyItem(entry.item)}>
-        {t("shop.buy", { price: eur(locale, price) })}
+      {locked && <LockedWhy />}
+      <button type="button" className="shop__buy" disabled={locked || eddies < price || !room} onClick={() => intents.buyItem(entry.item)}>
+        {locked ? t("shop.locked") : t("shop.buy", { price: eur(locale, price) })}
       </button>
     </article>
   );
 };
 
-const BackpackOffer = () => {
+const BackpackOffer = ({ terms }: { readonly terms: ShopTerms }) => {
   const t = useT();
   const locale = useLocale();
   const eddies = useUi((s) => s.eddies);
   const capacity = useUi((s) => s.trade.capacity);
   const intents = useShopIntents();
   const price = backpackPrice({ capacity });
+  const locked = price !== null && !fullService(terms);
   return (
-    <article className="shop__item" data-testid="shop-backpack">
+    <article className={`shop__item${lockedClass(locked)}`} data-testid="shop-backpack">
       <div className="shop__slot">{t("shop.backpack.slot", { count: capacity })}</div>
       <h3 className="shop__name">{t("shop.backpack.name")}</h3>
       <p className="shop__desc">{t("shop.backpack.desc")}</p>
-      <button type="button" className="shop__buy" disabled={price === null || eddies < price} onClick={() => intents.upgradeBackpack()}>
-        {price === null ? t("shop.backpack.max") : t("shop.buy", { price: eur(locale, price) })}
+      {locked && <LockedWhy />}
+      <button type="button" className="shop__buy" disabled={price === null || locked || eddies < price} onClick={() => intents.upgradeBackpack()}>
+        {price === null ? t("shop.backpack.max") : locked ? t("shop.locked") : t("shop.buy", { price: eur(locale, price) })}
       </button>
     </article>
   );
@@ -189,7 +209,7 @@ export const SellTab = ({ shopId, terms }: { readonly shopId: ShopId; readonly t
 };
 
 /** Damaged clothes, worn or in the bag; weapon parts can go into the repair. */
-export const RepairTab = () => {
+export const RepairTab = ({ terms }: { readonly terms: ShopTerms }) => {
   const t = useT();
   const tx = useText();
   const locale = useLocale();
@@ -199,8 +219,10 @@ export const RepairTab = () => {
   const [useParts, setUseParts] = useState(true);
   const damaged = trade.items.filter((i) => i.category === "garment" && i.condition !== null && i.condition < 100);
   if (damaged.length === 0) return <p className="shop__empty">{t("shop.repair.none")}</p>;
+  const locked = !fullService(terms);
   return (
     <>
+      {locked && <LockedWhy />}
       <label className="shop__parts">
         <input type="checkbox" checked={useParts} disabled={trade.weaponParts === 0} onChange={(e) => setUseParts(e.target.checked)} />{" "}
         {t("shop.repair.parts", { count: trade.weaponParts })}
@@ -216,8 +238,8 @@ export const RepairTab = () => {
                 {t("shop.condition", { pct: item.condition ?? 100 })}
                 {quote.parts > 0 && ` · ${t("shop.repair.partsUsed", { count: quote.parts })}`}
               </span>
-              <button type="button" className="shop__buy" disabled={eddies < quote.price} onClick={() => intents.repairItem(item.key, parts)}>
-                {t("shop.repair", { price: eur(locale, quote.price) })}
+              <button type="button" className="shop__buy" disabled={locked || eddies < quote.price} onClick={() => intents.repairItem(item.key, parts)}>
+                {locked ? t("shop.locked") : t("shop.repair", { price: eur(locale, quote.price) })}
               </button>
             </li>
           );
@@ -241,6 +263,7 @@ const BagImplant = ({ item, terms }: { readonly item: TradeItemVm & { defId: Cyb
   const fee = installFee({ def: item.defId, rarity: item.rarity ?? "common" }, terms);
   const installed = loadout[def.slot] === item.defId;
   const replaces = installed ? undefined : loadout[def.slot];
+  const locked = !installed && !fullService(terms);
   return (
     <li className={`shop__line${rarityClass(item)}`} data-testid="shop-bag-implant">
       <span className="shop__line-name">{tx(def.name)}</span>
@@ -249,8 +272,8 @@ const BagImplant = ({ item, terms }: { readonly item: TradeItemVm & { defId: Cyb
         {replaces && ` · ${t("shop.replacesStowed", { name: tx(CYBERWARE_CATALOG[replaces].name) })}`}
       </span>
       <CapacityCost fit={fit} />
-      <button type="button" className="shop__buy" disabled={installed || eddies < fee || fit.over} onClick={() => intents.installCyberwareItem(item.key)}>
-        {installed ? t("shop.alreadyInstalled") : fit.over ? t("shop.overLimit") : t("shop.mount", { price: eur(locale, fee) })}
+      <button type="button" className="shop__buy" disabled={installed || locked || eddies < fee || fit.over} onClick={() => intents.installCyberwareItem(item.key)}>
+        {installed ? t("shop.alreadyInstalled") : locked ? t("shop.locked") : fit.over ? t("shop.overLimit") : t("shop.mount", { price: eur(locale, fee) })}
       </button>
     </li>
   );
@@ -263,9 +286,11 @@ export const ImplantsTab = ({ terms }: { readonly terms: ShopTerms }) => {
   const trade = useUi((s) => s.trade);
   const intents = useShopIntents();
   const bag = trade.items.filter((i): i is TradeItemVm & { defId: CyberwareId } => isCyberwareId(i.defId));
+  const locked = !fullService(terms);
   return (
     <>
       <CapacityBar />
+      {locked && <LockedWhy />}
       <h3 className="shop__section">{t("shop.fromBag")}</h3>
       {bag.length === 0 ? (
         <p className="shop__empty">{t("shop.bag.none")}</p>
@@ -285,8 +310,8 @@ export const ImplantsTab = ({ terms }: { readonly terms: ShopTerms }) => {
               <span className="shop__line-name">{id ? tx(CYBERWARE_CATALOG[id].name) : t("shop.empty")}</span>
               <span className="shop__line-meta">{slotLabel(t, slot)}</span>
               {id && (
-                <button type="button" className="shop__buy" disabled={trade.freeCells < 1} onClick={() => intents.removeCyberware(slot)}>
-                  {trade.freeCells < 1 ? t("shop.noRoom") : t("shop.remove")}
+                <button type="button" className="shop__buy" disabled={locked || trade.freeCells < 1} onClick={() => intents.removeCyberware(slot)}>
+                  {locked ? t("shop.locked") : trade.freeCells < 1 ? t("shop.noRoom") : t("shop.remove")}
                 </button>
               )}
             </li>

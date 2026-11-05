@@ -23,6 +23,7 @@ import {
   isMemoryId,
   isStoryChoiceId,
   isStoryOption,
+  reputationTier,
   resolveEnding,
   stanceOf,
 } from "@seki/core";
@@ -163,7 +164,11 @@ export class NarrativeRuntime {
     const left = contract && clock ? contractSecondsLeft(contract, clock.tick, clock.ticksPerSecond) : null;
     this.story.variablesState.$("contract_time_left", left ?? 0);
     this.story.variablesState.$("contract_variation", contract ? describeVariation(variation ?? variationOf(contract), this.text) : "");
-    for (const f of FACTION_IDS) this.story.variablesState.$(`${f}_stance`, stanceOf(domain.reputation[f]));
+    // Three stances for coarse reactions, five tiers where -50 differs from -11 (ADR-0070).
+    for (const f of FACTION_IDS) {
+      this.story.variablesState.$(`${f}_stance`, stanceOf(domain.reputation[f]));
+      this.story.variablesState.$(`${f}_tier`, reputationTier(domain.reputation[f]));
+    }
     // The domain owns the main-thread choices; ink sees them as plain string variables.
     for (const choice of Object.keys(STORY_CHOICES) as StoryChoiceId[]) {
       this.story.variablesState.$(`choice_${choice}`, domain.story.choices[choice] ?? "");

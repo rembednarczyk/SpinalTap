@@ -14,6 +14,13 @@ VAR fixers_stance = "neutral"
 VAR hebi_stance = "neutral"
 VAR civilians_stance = "neutral"
 VAR clinic_stance = "neutral"
+// ADR-0070: the five tiers next to the three stances; "hostile" here means -50 or worse.
+VAR fixers_tier = "neutral"
+VAR hebi_tier = "neutral"
+VAR civilians_tier = "neutral"
+VAR clinic_tier = "neutral"
+VAR kagami_tier = "neutral"
+VAR tessen_tier = "neutral"
 
 EXTERNAL set_flag(name)
 EXTERNAL has_flag(name)
@@ -212,9 +219,12 @@ KAITO: Słyszałem, że robisz coś dla Hany. Skończ u niej, potem pogadamy.
 -> contract_offer
 
 === ume ===
-{ civilians_stance == "hostile":
+{
+- civilians_tier == "hostile":
     UME: Nie podchodź do mnie. Widziałam, co robisz na tej ulicy.
     -> END
+- civilians_tier == "wary":
+    UME: A, to ty. Ludzie o tobie gadają, dziecko. Nie wiem, w co wierzyć.
 }
 // After 23:00 she stands in her doorway (daily schedule, ADR-0017).
 { game_hour >= 23 || game_hour < 6:
@@ -308,9 +318,12 @@ BARMAN: Neon Koi. Pijesz albo słuchasz, oba się liczą.
     -> END
 
 === koi_regular ===
-{ civilians_stance == "hostile":
+{
+- civilians_tier == "hostile":
     BYWALEC: Odsuń się. Słyszałem, co robisz na tej ulicy.
     -> END
+- civilians_tier == "wary":
+    BYWALEC: Słyszałem o tobie. Pij, jak chcesz, byle nie koło mnie.
 }
 { has_flag("reported_back"):
     BYWALEC: To ty zdjęłaś tego kuriera spod myjni? Postawiłbym ci drinka, ale Hebi mają tu uszy.

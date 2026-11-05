@@ -5,9 +5,12 @@
 
 // Hideo, a clerk from the Tessen office on the Bystrzyca. Over the Grodzka footbridge to work, back to SAKE at night.
 === hideo ===
-{ civilians_stance == "hostile":
+{
+- civilians_tier == "hostile":
     HIDEO: I don't have any money on me. Really. Please keep walking.
     -> END
+- civilians_tier == "wary":
+    HIDEO: Oh. It's you. Say what you want and let me go.
 }
 {
 - game_hour >= 2 && game_hour < 7:
@@ -37,9 +40,12 @@
 
 // Tetsu keeps DENKI, the electronics shop on the north kerb.
 === tetsu ===
-{ civilians_stance == "hostile":
+{
+- civilians_tier == "hostile":
     TETSU: Shutter's down. For you, DENKI is closed.
     -> END
+- civilians_tier == "wary":
+    TETSU: I'll serve you. I won't smile while I do it.
 }
 { not has_flag("met_tetsu"):
     TETSU: Tetsu, DENKI. I fix anything with a battery. Not people, that's Mori.
@@ -70,9 +76,12 @@
 
 // Mei sings at KARAOKE from eight in the evening to four in the morning.
 === mei ===
-{ civilians_stance == "hostile":
+{
+- civilians_tier == "hostile":
     MEI: Go find company somewhere else.
     -> END
+- civilians_tier == "wary":
+    MEI: You again. Fine, talk, but keep your hands where I can see them.
 }
 { game_hour >= 20 || game_hour < 4:
     MEI: Break between sets. Three songs about broken hearts and one about a train, because the boss likes it.
@@ -98,9 +107,12 @@
 
 // Sachiko keeps the kiosk at the market gate. She sees everyone who comes in.
 === sachiko ===
-{ civilians_stance == "hostile":
+{
+- civilians_tier == "hostile":
     SACHIKO: No papers, no cigarettes, nothing for you.
     -> END
+- civilians_tier == "wary":
+    SACHIKO: I hear things about you, sweetheart. None of them good.
 }
 { time_of_day == "night":
     SACHIKO: Night kiosk, sweetheart. Yesterday's papers, tomorrow's cigarettes.
@@ -131,9 +143,12 @@
 
 // Goro sells umbrellas at the east end of the north row.
 === goro ===
-{ civilians_stance == "hostile":
+{
+- civilians_tier == "hostile":
     GORO: No umbrella for you. Get wet.
     -> END
+- civilians_tier == "wary":
+    GORO: I sell umbrellas to everyone. Friendship, not so much.
 }
 { game_hour >= 8 && game_hour < 22:
     GORO: Umbrellas, raincoats, implant wrap. Here it rains even when it doesn't.
@@ -158,9 +173,12 @@
 
 // Kenta fries okonomiyaki in the north row, under the OKONOMI sign.
 === kenta ===
-{ civilians_stance == "hostile":
+{
+- civilians_tier == "hostile":
     KENTA: The griddle's hot, and I've got a spatula. Better move along.
     -> END
+- civilians_tier == "wary":
+    KENTA: Order and step back from the griddle. People are watching.
 }
 KENTA: Okonomiyaki! Cabbage, batter, sauce and whatever you like. Meat costs extra, because the meat's almost real.
 -> talk
@@ -183,9 +201,12 @@ KENTA: Okonomiyaki! Cabbage, batter, sauce and whatever you like. Meat costs ext
 // Fumiko's ramen stall, the market's food shop: 16:00 to 4:00. The shop panel opens first;
 // "Porozmawiaj z Fumiko" leads here. The rest of the day the schedule swaps in `fumiko_closed`.
 === fumiko ===
-{ civilians_stance == "hostile":
+{
+- civilians_tier == "hostile":
     FUMIKO: Eat somewhere else. My seats are for people who don't shoot at dinner.
     -> END
+- civilians_tier == "wary":
+    FUMIKO: Sit at the end of the counter. And keep it quiet.
 }
 { not has_flag("met_fumiko"):
     FUMIKO: Fumiko. Ramen from four in the afternoon to four in the morning. Whoever eats here doesn't get sick. Almost nobody.
@@ -214,9 +235,12 @@ KENTA: Okonomiyaki! Cabbage, batter, sauce and whatever you like. Meat costs ext
     -> END
 
 === fumiko_closed ===
-{ civilians_stance == "hostile":
+{
+- civilians_tier == "hostile":
     FUMIKO: Closed. And don't come back this evening either.
     -> END
+- civilians_tier == "wary":
+    FUMIKO: You again. Closed, either way.
 }
 FUMIKO: The pot's gone cold, the burner too. I open at four in the afternoon.
 { game_hour >= 4 && game_hour < 8:

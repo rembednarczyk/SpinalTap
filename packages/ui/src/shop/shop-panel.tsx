@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { SHOPS, type ShopId, type ShopTerms, shopTerms } from "@seki/core";
+import { SHOPS, type ShopId, type ShopTerms, fullService, offersEntry, shopTerms } from "@seki/core";
 import { formatNumber, useLocale } from "../i18n/number";
 import type { Translate } from "../i18n/t";
 import { useT } from "../i18n/use-t";
@@ -19,7 +19,14 @@ const TABS: Readonly<Record<ShopId, readonly Tab[]>> = {
 const termsNote = (t: Translate, terms: ShopTerms, shopId: ShopId): string | null => {
   if (terms.multiplier === 1) return null;
   const pct = Math.round(Math.abs(terms.multiplier - 1) * 100);
-  return terms.multiplier < 1 ? t("shop.terms.discount", { pct }) : t("shop.terms.surcharge", { who: t(`shop.${shopId}.surcharge`), pct });
+  if (terms.multiplier < 1) return t("shop.terms.discount", { pct });
+  return t("shop.terms.surcharge", { who: t(`shop.${shopId}.${fullService(terms) ? "surcharge" : "hostile"}`), pct });
+};
+
+/** Whether basic terms keep anything of this counter under it (ADR-0070); Fumiko's food never is. */
+const narrowed = (terms: ShopTerms, shopId: ShopId): boolean => {
+  const shop = SHOPS[shopId];
+  return !fullService(terms) && (shop.implants || shop.repairs || shop.backpacks || shop.stock.some((e) => !offersEntry(e, terms)));
 };
 
 /**
@@ -70,6 +77,11 @@ const ShopCounter = ({ shopId }: { readonly shopId: ShopId }) => {
           {note}
         </div>
       )}
+      {narrowed(terms, shopId) && (
+        <div className="shop__terms" data-testid="shop-basic">
+          {t(`shop.${shopId}.basic`)}
+        </div>
+      )}
       <div className="shop__tabs" role="tablist">
         {TABS[shopId].map((id) => (
           <button
@@ -89,7 +101,7 @@ const ShopCounter = ({ shopId }: { readonly shopId: ShopId }) => {
         {tab === "buy" && <BuyTab shopId={shopId} terms={terms} />}
         {tab === "implants" && <ImplantsTab terms={terms} />}
         {tab === "sell" && <SellTab shopId={shopId} terms={terms} />}
-        {tab === "repair" && <RepairTab />}
+        {tab === "repair" && <RepairTab terms={terms} />}
       </div>
       <div className="shop__actions">
         <button type="button" className="shop__talk" onClick={() => intents.talkToShopkeeper()}>

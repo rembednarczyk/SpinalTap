@@ -84,3 +84,28 @@ describe("Oyaji (E10, market stall)", () => {
     expect(seen.join("\n")).not.toMatch(/[–—]/);
   });
 });
+
+// ADR-0070: a hostile street (-50 or worse) gets the basics at half again the price, and Oyaji says so.
+describe("Oyaji to a feared Seki (ADR-0070)", () => {
+  it("names the narrower offer only at the hostile tier", () => {
+    const { runtime } = setup();
+    const known = { flags: ["met_oyaji"] };
+    const feared = text(runtime.start("oyaji", domain({ ...known, ...civilians(-60) })));
+    expect(feared).toContain("Naboje i tyle, o połowę drożej");
+    expect(feared).not.toContain("płacisz więcej");
+    const wary = text(runtime.start("oyaji", domain({ ...known, ...civilians(-30) })));
+    expect(wary).toContain("płacisz więcej");
+    expect(wary).not.toContain("Naboje i tyle");
+  });
+
+  it("keeps the backpack under the counter for a feared Seki", () => {
+    const { runtime } = setup();
+    runtime.start("oyaji", domain({ flags: ["met_oyaji"], ...civilians(-60) }));
+    const bag = runtime.choose(1);
+    expect(text(bag)).toContain("nie dla ciebie");
+    expect(text(bag)).not.toContain("sześćset");
+    expect(bag.ended).toBe(false);
+    runtime.start("oyaji", domain({ flags: ["met_oyaji"], ...civilians(-49) }));
+    expect(text(runtime.choose(1))).toContain("sześćset");
+  });
+});
