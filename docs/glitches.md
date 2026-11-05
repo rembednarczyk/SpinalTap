@@ -1098,6 +1098,12 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/app (debug API), e2e
 - Test przyjęcia: zrzut po `step` pokazuje stan po tym kroku
 
+### G-357 `pinned-far-sleep.test.ts` przekracza 20 s pod coverage w CI
+- Status: zgłoszone (5.11, orkiestrator, CI PR #298, test niezwiązany ze zmianą)
+- Ważność: S4 (narzędzia testowe) · Zasięg: „a calm guard whose chunk sleeps stays while he stands in a loaded one…” lokalnie ok. 3 s, plik ok. 30 s także na main; w CI pod coverage 20 s. Wzorzec jak #276 i #295: podzielić test albo zapamiętać wspólny przebieg, limitu nie podnosić
+- Pakiet właściciela: packages/sim (test)
+- Test przyjęcia: najdłuższy test pliku lokalnie ≤ 1,5 s
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
