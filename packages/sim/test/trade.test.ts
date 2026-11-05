@@ -71,15 +71,28 @@ describe("Oyaji's stall (E10)", () => {
     expect(shopOpen(dead.domain, "oyaji")).toBe(false);
   });
 
-  it("refuses a customer the street is wary of no more than a hostile one", () => {
+  it("buys from a hostile street at half price and from a wary one at three quarters (ADR-0070)", () => {
     const sim = simWith((d) => ({ inventory: withStack(d, "scrap", 1), reputation: { ...d.reputation, civilians: -80 } }));
-    const failed = collect(sim, "PurchaseFailed");
+    const hostileSold = collect<{ price: number }>(sim, "ItemSold");
     apply(sim, { type: "sell-item", shopId: "oyaji", ref: { stack: "scrap" }, qty: 1 });
-    expect(failed).toEqual([{ reason: "refused", shopId: "oyaji" }]);
+    expect(hostileSold.map((e) => e.price)).toEqual([6]);
     const wary = simWith((d) => ({ inventory: withStack(d, "scrap", 4), reputation: { ...d.reputation, civilians: -30 } }));
     const sold = collect<{ price: number }>(wary, "ItemSold");
     apply(wary, { type: "sell-item", shopId: "oyaji", ref: { stack: "scrap" }, qty: 4 });
     expect(sold[0]?.price).toBe(36);
+  });
+
+  it("sells a hostile street only ammo, at half again the price; pieces, repairs and backpacks are refused", () => {
+    const worn = (d: DomainState) => ({ ...d.inventory, items: d.inventory.items.map((i) => (i.uid === "i2" ? { ...i, condition: 0 } : i)) });
+    const sim = simWith((d) => ({ inventory: worn(d), reputation: { ...d.reputation, civilians: -60 } }));
+    const failed = collect<{ reason: string }>(sim, "PurchaseFailed");
+    const bought = collect<{ itemId: string; price: number }>(sim, "ItemBought");
+    apply(sim, { type: "buy-item", shopId: "oyaji", itemId: "9mm" }, { type: "buy-item", shopId: "oyaji", itemId: "hebi_smg" });
+    apply(sim, { type: "repair-item", uid: "i2", useParts: 0 }, { type: "upgrade-capacity" });
+    expect(bought).toEqual([{ itemId: "9mm", price: 36, shopId: "oyaji", qty: 24 }]);
+    expect(failed.map((e) => e.reason)).toEqual(["refused", "refused", "refused"]);
+    expect(sim.domain.wallet.eddies).toBe(3000 - 36);
+    expect(sim.domain.inventory.items.some((i) => i.def === "hebi_smg")).toBe(false);
   });
 
   it("mends a worn jacket with weapon parts", () => {

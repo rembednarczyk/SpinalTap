@@ -14,6 +14,13 @@ VAR fixers_stance = "neutral"
 VAR hebi_stance = "neutral"
 VAR civilians_stance = "neutral"
 VAR clinic_stance = "neutral"
+// ADR-0070: the five tiers next to the three stances; "hostile" here means -50 or worse.
+VAR fixers_tier = "neutral"
+VAR hebi_tier = "neutral"
+VAR civilians_tier = "neutral"
+VAR clinic_tier = "neutral"
+VAR kagami_tier = "neutral"
+VAR tessen_tier = "neutral"
 
 EXTERNAL set_flag(name)
 EXTERNAL has_flag(name)
@@ -212,9 +219,12 @@ KAITO: I hear you're doing something for Hana. Finish with her, then we'll talk.
 -> contract_offer
 
 === ume ===
-{ civilians_stance == "hostile":
+{
+- civilians_tier == "hostile":
     UME: Don't come near me. I've seen what you do on this street.
     -> END
+- civilians_tier == "wary":
+    UME: Oh, it's you. People talk about you, child. I don't know what to believe.
 }
 // After 23:00 she stands in her doorway (daily schedule, ADR-0017).
 { game_hour >= 23 || game_hour < 6:
@@ -308,9 +318,12 @@ BARMAN: Neon Koi. You drink or you listen, both count.
     -> END
 
 === koi_regular ===
-{ civilians_stance == "hostile":
+{
+- civilians_tier == "hostile":
     BYWALEC: Back off. I've heard what you do on this street.
     -> END
+- civilians_tier == "wary":
+    BYWALEC: Heard about you. Drink if you want, just not next to me.
 }
 { has_flag("reported_back"):
     BYWALEC: You're the one who took down that courier by the car wash? I'd buy you a drink, but the Hebi have ears in here.

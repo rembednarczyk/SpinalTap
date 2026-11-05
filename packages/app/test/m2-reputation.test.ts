@@ -22,13 +22,14 @@ const audio: AudioPort = { play: (cue) => void played.push(cue), stopAll() {} };
 const frame = (p: Partial<InputFrame> = {}): InputFrame => ({ ...EMPTY_INPUT, ...p });
 
 /** A running session whose standings were patched through a save, like a real reload. */
-const sessionWith = async (reputation: Partial<ReputationState>) => {
+const sessionWith = async (reputation: Partial<ReputationState>, eddies?: number) => {
   const ui = createUiStore();
   const persistence = new SavePersistence(new MemorySaveStore());
   const session = new GameSession({ render, audio, persistence, ui, story: STORY_SOURCE, seed: () => 5, now: () => new Date(2026, 9, 27) });
   session.newGame();
   const snap = session.saves.snapshot();
-  await persistence.save("rep", { ...snap, domain: { ...snap.domain, reputation: { ...snap.domain.reputation, ...reputation } } });
+  const wallet = eddies === undefined ? snap.domain.wallet : { eddies };
+  await persistence.save("rep", { ...snap, domain: { ...snap.domain, wallet, reputation: { ...snap.domain.reputation, ...reputation } } });
   await session.saves.loadAsync("rep");
   return { session, ui };
 };
@@ -47,16 +48,25 @@ const steps = (s: GameSession, n: number, input: InputFrame = EMPTY_INPUT) => {
 };
 
 describe("M2: NPCs react to reputation", () => {
-  it("a hostile clinic keeps its doors shut", async () => {
-    const { session, ui } = await sessionWith({ clinic: -70 });
+  it("a hostile clinic opens, but sells only the basics at half again the price (ADR-0070)", async () => {
+    const { session, ui } = await sessionWith({ clinic: -70 }, 2000);
     standNextTo(session, "mori");
     steps(session, 1);
     played.length = 0;
     steps(session, 1, frame({ interact: true }));
-    expect(ui.getState().shopOpen).toBe(false);
-    expect(session.inControl).toBe(true);
-    expect(ui.getState().toasts.map((t) => t.title)).toContain("Mori shuts the clinic door");
-    expect(played).toContain("denied");
+    expect(ui.getState().shopOpen).toBe(true);
+    expect(ui.getState().toasts.map((t) => t.title)).not.toContain("Mori shuts the clinic door");
+    const eddies = ui.getState().eddies;
+    session.intents.buyItem("medkit");
+    steps(session, 1);
+    // A medkit lists at 90 €$; a hostile clinic charges 135.
+    expect(ui.getState().eddies).toBe(eddies - 135);
+    session.intents.buyCyberware("steady_grip");
+    steps(session, 1);
+    expect(ui.getState().eddies).toBe(eddies - 135);
+    expect(ui.getState().cyberware.arms).toBeUndefined();
+    const refusal = ui.getState().toasts.find((t) => t.title === "Mori shakes his head");
+    expect(refusal?.text).toBe("Not for you. Ammo and basics, nothing more.");
   });
 
   // ADR-0070: the street runs only when it is hostile (≤ -50), and only its passers-by; Ume, who

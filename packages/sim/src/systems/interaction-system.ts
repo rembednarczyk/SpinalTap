@@ -1,4 +1,4 @@
-import { type EntityId, contractItemKey, contractKind, contractTerminalKey, shopTerms, takenFlag } from "@seki/core";
+import { type EntityId, contractItemKey, contractKind, contractTerminalKey, takenFlag } from "@seki/core";
 import { BREACH_DAEMONS } from "../world/street";
 import type { Entity } from "../world/components";
 import type { SimContext, System } from "../world/context";
@@ -70,8 +70,8 @@ const INTERACT_REACH_Y = 1.6;
 
 /**
  * Tracks the nearest interactable in reach and starts a dialogue on the interact edge; a
- * pickup is taken on the spot instead. A shop whose owner's faction is hostile to the player
- * refuses instead of opening. What an NPC on a daily plan offers can change with the hour
+ * pickup is taken on the spot instead. A shop opens on any standing: a hostile owner charges
+ * more and sells only the basics (ADR-0070). What an NPC on a daily plan offers can change with the hour
  * (see the schedule system). A takedown or a body (ADR-0065) nearer than anything else takes the
  * prompt, and a carried body always does; the app answers its interact key with the `takedown`,
  * `carry-body` or `drop-body` command, so the key does nothing here.
@@ -105,7 +105,7 @@ export const interactionSystem: System = {
       ctx.bus.emit("InteractionFocusChanged", { targetId: focusId, prompt });
     }
     if (best && !action && ctx.input.interact) {
-      const { interactable, faction } = best;
+      const { interactable } = best;
       if (interactable.kind === "elevator") {
         callElevator(ctx, interactable, player);
         return;
@@ -133,10 +133,6 @@ export const interactionSystem: System = {
       }
       if (interactable.kind === "help") {
         helpPasserBy(ctx, best);
-        return;
-      }
-      if (interactable.kind === "shop" && faction && !shopTerms(ctx.state.domain.reputation[faction]).open) {
-        ctx.bus.emit("InteractionRefused", { targetId: best.id, dialogueId: interactable.dialogueId, faction });
         return;
       }
       session.dialogueActive = true;

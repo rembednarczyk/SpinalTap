@@ -78,7 +78,8 @@ describe("Lublin in the session (ADR-0045)", () => {
     steps(session, 1, frame({ interact: true }));
     expect(ui.getState().metroMap?.from).toBe("targ");
     const eddies = session.sim.domain.wallet.eddies;
-    session.intents.travelMetro("doki");
+    session.intents.selectMetroStop("doki");
+    session.intents.buyMetroTicket();
     for (let i = 0; i < 60 * 30 && session.sim.district !== "doki"; i++) {
       session.step(EMPTY_INPUT);
       session.render(0);

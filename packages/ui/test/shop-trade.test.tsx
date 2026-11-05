@@ -50,7 +50,8 @@ const intents = (): UiIntents => ({
   setScan: vi.fn(),
   pickQuickhack: vi.fn(),
   submitBreach: vi.fn(),
-  travelMetro: vi.fn(),
+  selectMetroStop: vi.fn(),
+  buyMetroTicket: vi.fn(),
   closeMetro: vi.fn(),
   setRadioStation: vi.fn(),
   nextRadioStation: vi.fn(),
@@ -198,5 +199,72 @@ describe("clinic with implants from the bag (E11)", () => {
     expect(lines.map((l) => l.textContent)).toEqual([expect.stringContaining("Grip stabiliser"), expect.stringContaining("Hitomi Mk1 optics")]);
     fireEvent.click(within(lines[0]!).getByRole("button", { name: /Sell · 125 €\$/ }));
     expect(i.sellItem).toHaveBeenCalledWith({ uid: "i5" }, 1);
+  });
+});
+
+describe("a hostile reputation narrows the counter instead of closing it (ADR-0070)", () => {
+  const standing = (patch: Partial<ReturnType<typeof createReputation>>) => ({ ...createReputation(), ...patch });
+
+  it("Oyaji sells only ammo, at half again the price, and says why the rest is greyed out", () => {
+    const { i } = mount({ shopId: "oyaji", reputation: standing({ civilians: -60 }) });
+    expect(screen.getByTestId("shop-terms").textContent).toBe("The street fears you · 50% surcharge");
+    expect(screen.getByTestId("shop-basic").textContent).toContain("ammo only");
+    fireEvent.click(within(screen.getByTestId("stock-9mm")).getByRole("button", { name: /Buy · 36 €\$/ }));
+    expect(i.buyItem).toHaveBeenCalledWith("9mm");
+    const smg = screen.getByTestId("stock-hebi_smg");
+    expect(smg.className).toContain("shop__item--locked");
+    expect(within(smg).getByRole("button", { name: "Not for you" }).hasAttribute("disabled")).toBe(true);
+    expect(within(smg).getByTestId("shop-locked-why").textContent).toBe("Under the counter while your reputation is hostile.");
+    expect(screen.getByTestId("stock-9mm").className).not.toContain("shop__item--locked");
+    expect(within(screen.getByTestId("shop-backpack")).getByRole("button", { name: "Not for you" }).hasAttribute("disabled")).toBe(true);
+    fireEvent.click(screen.getByTestId("shop-tab-sell"));
+    // The uncommon SMG: 280 at list terms, half from a hostile trader.
+    expect(screen.getByTestId("shop-sell").textContent).toContain("Sell · 140 €$");
+    fireEvent.click(screen.getByTestId("shop-tab-repair"));
+    expect(within(screen.getByTestId("shop-repair-line")).getByRole("button", { name: "Not for you" }).hasAttribute("disabled")).toBe(true);
+  });
+
+  // With money and room to spare only the reputation can grey the SMG out.
+  it("a full wallet does not buy what is under the counter", () => {
+    const { i } = mount({ shopId: "oyaji", eddies: 100_000, reputation: standing({ civilians: -60 }) });
+    const buy = within(screen.getByTestId("stock-hebi_smg")).getByRole("button", { name: "Not for you" });
+    expect(buy.hasAttribute("disabled")).toBe(true);
+    fireEvent.click(buy);
+    expect(i.buyItem).not.toHaveBeenCalled();
+  });
+
+  it("a wary street keeps the full offer", () => {
+    mount({ shopId: "oyaji", reputation: standing({ civilians: -49 }) });
+    expect(screen.queryByTestId("shop-basic")).toBeNull();
+    expect(screen.queryByTestId("shop-locked-why")).toBeNull();
+    expect(within(screen.getByTestId("stock-hebi_smg")).getByRole("button", { name: /Buy · / })).toBeTruthy();
+  });
+
+  it("Mori sells medkits but no implants, and does not operate", () => {
+    mount({ shopId: "clinic", eddies: 5000, cyberware: { optics: "hitomi_optics_mk1" }, reputation: standing({ clinic: -60 }) });
+    expect(screen.getByTestId("shop-terms").textContent).toBe("The clinic sees you as a threat · 50% surcharge");
+    expect(screen.getByTestId("shop-basic").textContent).toContain("Mori won't put you on the table");
+    expect(within(screen.getByTestId("stock-medkit")).getByRole("button", { name: /Buy · 135 €\$/ }).hasAttribute("disabled")).toBe(false);
+    expect(within(screen.getByTestId("implant-steady_grip")).getByRole("button", { name: "Not for you" }).hasAttribute("disabled")).toBe(true);
+    fireEvent.click(screen.getByTestId("shop-tab-implants"));
+    const bag = screen.getAllByTestId("shop-bag-implant");
+    expect(within(bag[0]!).getByRole("button", { name: "Not for you" }).hasAttribute("disabled")).toBe(true);
+    expect(within(screen.getByTestId("shop-installed")).getByRole("button", { name: "Not for you" }).hasAttribute("disabled")).toBe(true);
+  });
+
+  it("Fumiko's food is all basics: a surcharge, nothing greyed out", () => {
+    mount({ shopId: "yatai", reputation: standing({ civilians: -60 }) });
+    expect(screen.getByTestId("shop-terms").textContent).toBe("The street fears you · 50% surcharge");
+    expect(screen.queryByTestId("shop-basic")).toBeNull();
+    expect(screen.queryByText("Not for you")).toBeNull();
+  });
+
+  it("says it in Polish too", () => {
+    mount({ shopId: "oyaji", reputation: standing({ civilians: -60 }), settings: { ...createUiStore().getState().settings, locale: "pl" } });
+    expect(screen.getByTestId("shop-terms").textContent).toBe("Ulica się ciebie boi · dopłata 50%");
+    expect(screen.getByTestId("shop-basic").textContent).toContain("tylko amunicja");
+    const smg = screen.getByTestId("stock-hebi_smg");
+    expect(within(smg).getByRole("button", { name: "Nie dla ciebie" })).toBeTruthy();
+    expect(within(smg).getByTestId("shop-locked-why").textContent).toBe("Pod ladą, dopóki masz wrogą reputację.");
   });
 });

@@ -13,12 +13,9 @@ EXTERNAL offer_contract(kind)
 EXTERNAL deliver_contract()
 
 === hana ===
-// G-304, ADR-0070: Hana is always the way back, so Kaito's run is taken before any refusal.
+// G-304, ADR-0070: Hana is always the way back: she takes Kaito's run and, even when the
+// street fears Seki, offers her own jobs (the greeting says why).
 { contract_kind == "delivery" && contract_state == "active": -> delivery }
-{ civilians_stance == "hostile":
-    HANA: I won't sell you so much as a screw. Everyone at the market knows what you do on the street.
-    -> END
-}
 {
 - contract_giver == "hana" && contract_state == "cleared": -> payday
 - contract_giver == "hana": -> running
@@ -33,6 +30,11 @@ EXTERNAL deliver_contract()
     ~ set_flag("met_hana")
 }
 {
+- civilians_tier == "hostile":
+    HANA: I won't sell you so much as a screw. Everyone at the market knows what you do on the street.
+    HANA: But I've got work. Prove you're on our side.
+- civilians_tier == "wary":
+    HANA: People at the market have started looking at you sideways. Work for me and they'll stop.
 - civilians_stance == "friendly":
     HANA: {alias}, good to see you. Oyaji says with you around, the Hebi steer clear of the market.
 - fixers_stance == "friendly":
@@ -63,7 +65,7 @@ EXTERNAL deliver_contract()
 
 = delivery
 { civilians_stance == "hostile":
-    HANA: It's Kaito's run, so I'll take it. Don't count on anything more.
+    HANA: It's Kaito's run, so I'll take it. Want the market back on your side? Come and work for me.
 - else:
     HANA: From Kaito? Hand it over before it warms up.
 }

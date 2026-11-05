@@ -7,6 +7,7 @@ import { mapView, markerOffset } from "../src/hud/minimap";
 import { nextWeaponKey } from "../src/touch/action-arc";
 import { itemActions } from "../src/inventory/actions";
 import { EMPTY_EQUIPMENT, EMPTY_INVENTORY } from "@seki/core";
+import { kioskVm } from "./metro-fixture";
 
 const intents = (): UiIntents & Record<string, ReturnType<typeof vi.fn>> => {
   const spies: Record<string | symbol, ReturnType<typeof vi.fn>> = {};
@@ -23,32 +24,22 @@ const mount = (state: Partial<UiState> = {}, touch = false) => {
 
 afterEach(() => cleanup());
 
-const metroMap: UiState["metroMap"] = {
-  line: "Linia Kanjō",
-  from: "kanal",
-  refusal: null,
-  stops: [
-    { id: "shinsekai", name: "Plac Litewski", fare: 25, here: false },
-    { id: "kanal", name: "Brama Krakowska", fare: 0, here: true },
-    { id: "targ", name: "Plac Zamkowy", fare: 25, here: false },
-    { id: "doki", name: "Nabrzeże Bystrzycy", fare: 35, here: false },
-  ],
-};
+const metroMap: UiState["metroMap"] = kioskVm("kanal", "targ");
 
 describe("metro", () => {
-  it("lists the stops with fares and buys a ticket", () => {
+  it("lists the stops with fares, chooses one and buys the ticket in a second step", () => {
     const { i } = mount({ metroMap, eddies: 30 });
     expect(screen.getByTestId("metro-stop-kanal").textContent).toContain("You are here");
+    fireEvent.click(screen.getByRole("button", { name: /Destination: Nabrzeże/ }));
+    expect(i.selectMetroStop).toHaveBeenCalledWith("doki");
     fireEvent.click(screen.getByRole("button", { name: /Ticket to: Plac Zamkowy/ }));
-    expect(i.travelMetro).toHaveBeenCalledWith("targ");
-    // 35 €$ is more than the wallet.
-    expect((screen.getByRole("button", { name: /Ticket to: Nabrzeże/ }) as HTMLButtonElement).disabled).toBe(true);
+    expect(i.buyMetroTicket).toHaveBeenCalled();
     fireEvent.keyDown(window, { code: "Escape" });
     expect(i.closeMetro).toHaveBeenCalled();
   });
 
   it("shows the refusal and blocks tickets on a watched platform", () => {
-    mount({ metroMap: { ...metroMap, refusal: "Ochrona pilnuje peronu." }, eddies: 500 });
+    mount({ metroMap: { ...metroMap!, refusal: "Ochrona pilnuje peronu." }, eddies: 500 });
     expect(screen.getByTestId("metro-refusal").textContent).toContain("Ochrona");
     expect((screen.getByRole("button", { name: /Ticket to: Plac Zamkowy/ }) as HTMLButtonElement).disabled).toBe(true);
   });

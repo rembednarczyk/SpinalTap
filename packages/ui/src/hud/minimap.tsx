@@ -4,6 +4,7 @@ import type { MapBox, MapLabelKind, MapLinkKind, MapLinkVm, MapMarkerKind, MapMa
 import { useUi } from "../use-ui";
 import { useT } from "../i18n/use-t";
 import { CityLabels, type CityIndex, CityShapes, indexCity, windowAround } from "./city-layer";
+import { MetroEntranceIcons } from "../metro/metro-layer";
 
 /** Metres from the player to the edge of the minimap. */
 export const MINIMAP_RANGE = 32;
@@ -50,6 +51,7 @@ const District = memo(({ map, city, window }: { map: MapVm; city: CityIndex; win
     {map.links?.map((l, i) => (
       <Link key={i} link={l} />
     ))}
+    {map.metro && <MetroEntranceIcons metro={map.metro} />}
     <CityLabels city={city} window={window} prefix="minimap" kinds={STREET_NAMES} size={NAME_SIZE} />
   </>
 ));

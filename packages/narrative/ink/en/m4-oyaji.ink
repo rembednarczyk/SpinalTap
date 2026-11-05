@@ -8,6 +8,9 @@
     ~ set_flag("met_oyaji")
 }
 {
+- civilians_tier == "hostile":
+    OYAJI: I can trade with you, I don't have to like you. People say you shoot first and ask later.
+    OYAJI: Ammo, and that's it, at half again the price. Guns and jackets stay under the counter.
 - civilians_stance == "hostile":
     OYAJI: I can trade with you, I don't have to like you. People say you shoot first and ask later.
     OYAJI: So you pay more, and you get less for your junk.
@@ -26,6 +29,10 @@
     -> talk
 + [Got a bigger backpack? #tone:optional]
     SEKI: Got a bigger backpack?
+    { civilians_tier == "hostile":
+        OYAJI: I've got two. Not for you, though, not while the street's afraid of you.
+        -> talk
+    }
     OYAJI: I've got two. One for six hundred, one for twelve hundred. After that, it's suitcases.
     -> talk
 + { not has_flag("oyaji_hebi") } [Do the Hebi give you trouble? #tone:optional]

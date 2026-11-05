@@ -17,7 +17,7 @@ export const DASH_EXIT_SPEED = 6;
 export const STAMINA_REGEN = 0.35;
 export const STAMINA_GUARD_REGEN = 0;
 
-export const freshPerks = (): PerkState => ({ dash: 0, dashDir: { x: 0, z: 1 }, dashCooldown: 0, airDash: false, iframes: 0, stamina: 1 });
+export const freshPerks = (): PerkState => ({ dash: 0, dashDir: { x: 0, z: 1 }, dashCooldown: 0, airDash: false, dashFlight: false, iframes: 0, stamina: 1 });
 
 /** The perk state of the player, created on first use. */
 export const perksOf = (p: Entity): PerkState => (p.perks ??= freshPerks());
@@ -71,8 +71,13 @@ export const perkSystem: System = {
       s.iframes = Math.max(0, s.iframes - ctx.dt);
       s.stamina = Math.min(1, s.stamina + ctx.dt * (p.melee?.guard ? STAMINA_GUARD_REGEN : STAMINA_REGEN));
       const grounded = p.fall === undefined && !p.climb && !p.mantle;
-      if (grounded) s.airDash = false;
+      if (grounded) {
+        s.airDash = false;
+        s.dashFlight = false;
+      }
       if (s.dash > 0) {
+        // Set on the ground too: the last step of a burst may carry her over an edge.
+        s.dashFlight = true;
         carryDash(p, s, ctx.dt);
         continue;
       }
@@ -81,6 +86,7 @@ export const perkSystem: System = {
       s.dash = DASH_TIME;
       s.dashCooldown = DASH_COOLDOWN;
       s.iframes = DASH_IFRAMES;
+      s.dashFlight = true;
       if (!grounded) {
         s.airDash = true;
         // The burst holds the body up for its start: a fall pauses, a rise goes on.

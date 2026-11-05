@@ -1,11 +1,9 @@
-import { FACTIONS, type FactionId, formatClock } from "@seki/core";
-import { type MessageKey, type Translate, translate } from "@seki/ui";
+import { FACTIONS, formatClock } from "@seki/core";
+import { type Translate, translate } from "@seki/ui";
 import type { Presenter } from "./context";
 
 /** Landings from lower than this (a kerb, a stair) make no sound of their own; footsteps cover them. */
 const LANDING_SOUND_DROP = 0.5;
-
-const REFUSAL: Partial<Record<FactionId, MessageKey>> = { clinic: "world.refusal.clinic", civilians: "world.refusal.civilians" };
 
 /**
  * After a reaction toast (passers-by run, the gang warns) has gone, the same reaction stays
@@ -51,11 +49,6 @@ export const presentWorld: Presenter = ({ bus, render, audio, ui, hooks, toast, 
       else if (e.kind === "loot") hooks.onLoot(e.dialogueId);
       else if (e.kind === "metro") hooks.onMetro?.(e.station ?? null);
       else hooks.onDialogue(e.dialogueId);
-    }),
-    bus.on("InteractionRefused", (e) => {
-      const own = REFUSAL[e.faction];
-      toast("reputation", own ? t(own) : t("world.refusal", { faction: t(FACTIONS[e.faction]) }), t("world.reputation"));
-      audio.play("denied");
     }),
     bus.on("NpcReacted", (e) => {
       const key = `${e.reaction}:${e.faction}`;

@@ -29,22 +29,33 @@ export type PurchaseFailure =
   | "empty-slot"
   | "over-capacity";
 
+/**
+ * What the counter offers (ADR-0070). "full": everything. "basic": only ammo and stacks (food,
+ * medkits, bandages); weapons, clothes, mods, backpacks, repairs and implants are refused.
+ */
+export type ShopStock = "full" | "basic";
+
 /** How a shop treats the player, derived from the shop owner's faction standing. */
 export interface ShopTerms {
-  /** False when the owner refuses to serve the player at all. */
-  readonly open: boolean;
   /** Applied to every list price (1 = list price). */
   readonly multiplier: number;
   readonly tier: ReputationTier;
+  readonly stock: ShopStock;
 }
 
-const MULTIPLIER: Readonly<Record<ReputationTier, number>> = { hostile: 1, wary: 1.25, neutral: 1, friendly: 0.9, trusted: 0.8 };
+const MULTIPLIER: Readonly<Record<ReputationTier, number>> = { hostile: 1.5, wary: 1.25, neutral: 1, friendly: 0.9, trusted: 0.8 };
 
-/** Hostile: no service. Wary: surcharge. Friendly and trusted: regulars' discount. */
+/**
+ * Traders never shut the door on reputation alone (ADR-0070): a hostile one charges half again
+ * and sells only the basics, a wary one adds a surcharge, friendly and trusted give a discount.
+ */
 export const shopTerms = (reputation: number): ShopTerms => {
   const tier = reputationTier(reputation);
-  return { open: tier !== "hostile", multiplier: MULTIPLIER[tier], tier };
+  return { multiplier: MULTIPLIER[tier], tier, stock: tier === "hostile" ? "basic" : "full" };
 };
+
+/** Whether the terms cover more than the basics: pieces, implants, repairs and backpacks. */
+export const fullService = (terms: ShopTerms): boolean => terms.stock === "full";
 
 export const STANDARD_TERMS: ShopTerms = shopTerms(0);
 
@@ -68,7 +79,7 @@ export const buyCyberware = (
   terms: ShopTerms = STANDARD_TERMS,
   capacity = Infinity,
 ): CyberwarePurchase => {
-  if (!terms.open) return { ok: false, reason: "refused" };
+  if (!fullService(terms)) return { ok: false, reason: "refused" };
   const def = CYBERWARE_CATALOG[id];
   if (character.cyberware[def.slot] === id) return { ok: false, reason: "already-installed" };
   if (!fitsCapacity(character.cyberware, id, capacity)) return { ok: false, reason: "over-capacity" };
@@ -83,7 +94,7 @@ export type ItemPurchase =
   | { readonly ok: true; readonly wallet: Wallet; readonly inventory: InventoryState; readonly price: number }
   | { readonly ok: false; readonly reason: PurchaseFailure };
 
-/** Buys one piece of a stackable item into the bag. */
+/** Buys one piece of a stackable item into the bag; stacks are basics, sold on any terms. */
 export const buyItem = (
   wallet: Wallet,
   inventory: InventoryState,
@@ -91,7 +102,6 @@ export const buyItem = (
   id: StackableId,
   terms: ShopTerms = STANDARD_TERMS,
 ): ItemPurchase => {
-  if (!terms.open) return { ok: false, reason: "refused" };
   const next = addStack(inventory, equipment, id, 1);
   if (next.added === 0) return { ok: false, reason: "inventory-full" };
   const price = priceWithTerms(STACKABLE_CATALOG[id].value, terms);

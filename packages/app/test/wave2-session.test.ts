@@ -12,6 +12,12 @@ describe("wave 2 in the session", () => {
     expect(ui.getState().metroMap?.from).toBe("kanal");
     expect(ui.getState().dialogue).toBeNull();
     expect(session.inControl).toBe(false);
+    // A ticket takes two steps (ADR-0071): without a destination the kiosk stays open, a choice only shows the route.
+    session.intents.buyMetroTicket();
+    expect(ui.getState().metroMap?.selected).toBeNull();
+    session.intents.selectMetroStop("doki");
+    expect(ui.getState().metroMap?.preview?.route).toEqual(["kanal", "targ", "doki"]);
+    expect(session.inControl).toBe(false);
     session.intents.closeMetro();
     expect(session.inControl).toBe(true);
     session.bus.emit("MetroDeparted", { from: "kanal", to: "doki", seconds: 1 });
@@ -29,7 +35,8 @@ describe("wave 2 in the session", () => {
     const from = METRO_STATIONS.find((s) => s.id === "shinsekai")!;
     teleport(session, from.kiosk.x + Math.sin(from.yaw) * 1.2, from.kiosk.z + Math.cos(from.yaw) * 1.2, from.yaw + Math.PI);
     session.debug.openMetro("shinsekai");
-    session.intents.travelMetro("kanal");
+    session.intents.selectMetroStop("kanal");
+    session.intents.buyMetroTicket();
     let rode = false;
     for (let i = 0; i < 60 * 12 && !rode; i++) {
       session.step(EMPTY_INPUT);

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   CYBERWARE_CATALOG,
   FACTION_IDS,
+  STACKABLE_CATALOG,
   STANDARD_TERMS,
   EMPTY_EQUIPMENT,
   EMPTY_INVENTORY,
@@ -104,12 +105,14 @@ describe("reputation", () => {
 });
 
 describe("shop terms", () => {
-  it("prices by the owner's standing and refuses hostile customers", () => {
-    expect(shopTerms(-60)).toEqual({ open: false, multiplier: 1, tier: "hostile" });
-    expect(shopTerms(-20)).toMatchObject({ open: true, multiplier: 1.25 });
+  it("prices by the owner's standing and sells hostile customers only the basics (ADR-0070)", () => {
+    expect(shopTerms(-60)).toEqual({ multiplier: 1.5, tier: "hostile", stock: "basic" });
+    expect(shopTerms(-50)).toMatchObject({ multiplier: 1.5, stock: "basic" });
+    expect(shopTerms(-49)).toEqual({ multiplier: 1.25, tier: "wary", stock: "full" });
+    expect(shopTerms(-20)).toMatchObject({ stock: "full", multiplier: 1.25 });
     expect(shopTerms(0)).toEqual(STANDARD_TERMS);
-    expect(shopTerms(20)).toMatchObject({ open: true, multiplier: 0.9 });
-    expect(shopTerms(80)).toMatchObject({ open: true, multiplier: 0.8 });
+    expect(shopTerms(20)).toMatchObject({ stock: "full", multiplier: 0.9 });
+    expect(shopTerms(80)).toMatchObject({ stock: "full", multiplier: 0.8 });
   });
 
   it("rounds to whole eddies and keeps free items free", () => {
@@ -125,6 +128,6 @@ describe("shop terms", () => {
     expect(discounted).toMatchObject({ ok: true, price: priceWithTerms(CYBERWARE_CATALOG.subdermal_weave.price, shopTerms(80)) });
     expect(buyCyberware({ eddies: 99999 }, c, "subdermal_weave", shopTerms(-80))).toEqual({ ok: false, reason: "refused" });
     expect(buyItem({ eddies: 81 }, EMPTY_INVENTORY, EMPTY_EQUIPMENT, "medkit", shopTerms(20))).toMatchObject({ ok: true, wallet: { eddies: 0 }, inventory: { stacks: { medkit: 1 } }, price: 81 });
-    expect(buyItem({ eddies: 99999 }, EMPTY_INVENTORY, EMPTY_EQUIPMENT, "medkit", shopTerms(-80))).toEqual({ ok: false, reason: "refused" });
+    expect(buyItem({ eddies: 99999 }, EMPTY_INVENTORY, EMPTY_EQUIPMENT, "medkit", shopTerms(-80))).toMatchObject({ ok: true, price: priceWithTerms(STACKABLE_CATALOG.medkit.value, shopTerms(-80)) });
   });
 });
