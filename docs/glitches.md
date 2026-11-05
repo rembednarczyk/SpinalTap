@@ -947,7 +947,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine/src/camera
 
 ### G-310 Dłonie nie trafiają w szczeble: faza rąk 3,4 rad/m (cykl na 1,85 m) przy szczeblach co 0,3 m
-- Status: zgłoszone (5.11, autor poprawek drabin, PR #269)
+- Status: w PR #289 (5.11; faza dłoni z wysokości, `CLIMB_SPEED` 2,2 → 1,5 m/s), w weryfikacji
 - Ważność: S3 · Zasięg: ręce zostają za ciałem i ślizgają się; faza niezwiązana z wysokością; przy 2,2 m/s pełne tempo dałoby ok. 3,7 cyklu/s, więc trzeba zmienić tempo albo prędkość wspinania
 - Pakiet właściciela: packages/engine/src/renderer (pozy postaci)
 
@@ -990,11 +990,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (5.11, weryfikator PR #275)
 - Ważność: S4 · Zasięg: chunk x 240..460, z −20..160; po #275 328 próbek bruku pod terenem, najgłębiej 0,35 m; także nieciągłość `h` na progu `DECK_HEADROOM` (G-062) daje „namiot” trawy pod końcami pomostów Mełgiewskiej (np. (2483,6; 416,1) 1,00 m) i kropkowane obrysy na spodzie pomostu
 - Pakiet właściciela: packages/engine (mapcity/ground-plan, cell-builder)
-
-### G-326 Uciekający cywil drga przy objeździe: `steerPoint` przełącza się między drogą prosto a objazdem
-- Status: w PR #286, przyjęte po rundzie 2 (5.11, bcac062; sama histereza objazdu, `wayRound` wycofany), czeka na CI
-- Ważność: S3 · Zasięg: ziarno 17, −60, przechodzień 1002005, gracz 2 m (25 skoków kąta ok. 0,42 rad) i 1 m (42); `straightWalk` do punktu 6 m przed cywilem raz jest wolny, raz nie; także: w rogu (316; −95) `steerPoint` zawraca „prosto od gracza” niemal wprost na gracza (−1,25 rad), na main przy zatrzymaniu gracza ≥ 2 m ok. 465 skoków; drganie ±0,5 rad w miejscu przy stałym wyborze kierunku (ziarno 23, ok. (262; −81))
-- Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, `steerPoint`)
 
 ### G-328 Cywil uciekający w ślepy zaułek biega w miejscu w promieniu ucieczki
 - Status: zgłoszone (5.11, weryfikator PR #277; było przed G-317)
