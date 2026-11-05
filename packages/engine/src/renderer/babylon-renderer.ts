@@ -27,6 +27,7 @@ import { MapCitySlot } from "./map-city-slot";
 import { isMapView } from "./mapcity/map-city";
 import { MetroRide, type MetroRideView, type RideCast } from "./metro-ride";
 import { VehicleViews } from "./vehicle-views";
+import { rungsNear } from "./ladder-hands";
 import { PropViews } from "./prop-views";
 import { RendererStats } from "./renderer-stats";
 import { ScreenFx } from "./screen-fx";
@@ -175,6 +176,7 @@ export class BabylonRenderer implements RenderPort {
       cameraTarget: () => this.cameraTarget,
       pose: (id, rig, speed, dt, retarget, clock) => this.activities.apply(id, rig, speed, dt, retarget, clock),
       lift: this.map.liftAt,
+      rungs: (x, y, z) => rungsNear(this.props.ladderViews(), x, y, z),
     });
     const eye = this.rig.camera.position;
     this.crowd = new CrowdViews({ scene, materials: this.materials, eye: () => eye, drawDistance: CROWD_DRAW_DISTANCE[stage.options.quality ?? "high"], lift: this.map.liftAt });

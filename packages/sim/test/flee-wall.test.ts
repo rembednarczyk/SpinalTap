@@ -122,3 +122,34 @@ describe("an escape along a wall (G-317)", () => {
     });
   }
 });
+
+// Walkers whose way away from the player grazes a corner: the knee-high line to the point
+// ahead opened and closed every step, and the walker swung between it and the way round.
+const PAST_A_CORNER = [
+  // Seed 17, walker 1002005, player 2 m off (G-326): 25 jumps of 0.42 rad.
+  { seed: 17, id: 1002005, dx: 2, dz: 0, was: 25 },
+  // The same 1 m off: 43 jumps.
+  { seed: 17, id: 1002005, dx: 1, dz: 0, was: 43 },
+  // Seed 23, walker 1002006 by (262; -81), on the same way away all along: 6 jumps of 0.5 rad.
+  { seed: 23, id: 1002006, dx: 0, dz: 1, was: 6 },
+  // Seed 29, walker 1002006: 258 jumps, stuck 2.46 m off. Its way round bends by more than
+  // 0.05 rad a step: with that tolerance it lets go of it again (67 jumps, 2.45 m off).
+  { seed: 29, id: 1002006, dx: 0, dz: 2, was: 258 },
+] as const;
+
+describe("an escape past a corner (G-326)", () => {
+  for (const { seed, id, dx, dz, was } of PAST_A_CORNER) {
+    it(`keeps to the way round instead of swinging back to the straight line (seed ${seed}, walker ${id}, ${was} jumps before)`, () => {
+      const w = watchEscape(seed, id, dx, dz);
+      expect(w.jumps).toBeLessThanOrEqual(2);
+      expect(w.distance).toBeGreaterThanOrEqual(FLEE_RADIUS);
+    });
+  }
+
+  // Seed 43, walker 1002008, player 2 m off by (309; -99): its way out leads round past the
+  // player. A rule that ran it on to the point a probe ahead when the way round turned back
+  // (since withdrawn) pinned it against a wall 2.69 m off the player, running on the spot.
+  it("takes the way round even when it leads back past the player (seed 43, walker 1002008)", () => {
+    expect(watchEscape(43, 1002008, 2).distance).toBeGreaterThanOrEqual(FLEE_RADIUS);
+  });
+});

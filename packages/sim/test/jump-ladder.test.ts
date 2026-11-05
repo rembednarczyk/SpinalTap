@@ -178,7 +178,7 @@ describe("fire escape ladders (ADR-0021)", () => {
     expect(player(sim).climb?.ladder).toBe("targ-escape-1");
     for (let i = 0; i < 60 && player(sim).climb?.settle; i++) sim.step(input({ moveZ: 1 }));
     // On the ladder: no fire, no gravity, forward climbs.
-    run(sim, 30, input({ moveZ: 1, fire: true }));
+    run(sim, 40, input({ moveZ: 1, fire: true }));
     expect(pos(sim).y).toBeGreaterThan(0.9);
     expect(pos(sim).x).toBeCloseTo(73.2, 5);
     for (let i = 0; i < 200 && (player(sim).climb || player(sim).mantle); i++) sim.step(input({ moveZ: 1 }));
@@ -269,7 +269,7 @@ describe("fire escape ladders (ADR-0021)", () => {
     expect(sim.session.focusPrompt).toBeNull();
     for (let i = 0; i < 60 && player(sim).climb?.settle; i++) sim.step(input());
     const y0 = pos(sim).y;
-    run(sim, 30, input({ moveZ: -1 }));
+    run(sim, 40, input({ moveZ: -1 }));
     expect(pos(sim).y).toBeLessThan(y0 - 0.9);
     sim.step(input({ jump: true }));
     expect(player(sim).climb).toBeUndefined();

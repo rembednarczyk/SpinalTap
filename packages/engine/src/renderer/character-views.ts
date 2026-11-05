@@ -11,6 +11,7 @@ import { CharacterModels } from "./character-models";
 import { type CharacterRig, animateRig, buildCivilian, buildCorpo, buildFixer, buildGanger, buildHeroine, buildRipperdoc } from "./characters";
 import { markEnforcer } from "./enforcer-mark";
 import { easeLift, groundLift } from "./ground-lift";
+import type { LadderRungs } from "./ladder-hands";
 import { type CharacterModelKey, type CharacterModelManifest, ModelLibrary } from "./model-library";
 import type { HumanoidRetarget } from "./model-rig";
 import { type ScanClass, scanClassOfView } from "./scan-highlight";
@@ -77,6 +78,8 @@ export interface CharacterViewsDeps {
   readonly cameraTarget: () => EntityId | null;
   /** Lays more over the walk animation of a character each frame (its activity, ADR-0040), before the model follows. */
   readonly pose?: (id: EntityId, rig: CharacterRig, speed: number, dt: number, retarget: HumanoidRetarget | null, clock: number) => void;
+  /** The rungs of the ladder a climber with the feet at (x, y, z) hangs on, for the hands (G-310). */
+  readonly rungs?: (x: number, y: number, z: number) => LadderRungs | null;
 }
 
 /**
@@ -207,7 +210,8 @@ export class CharacterViews implements FxActors {
         v.lift = lift;
         v.rig.root.position.y = t.position.y + lift;
       }
-      const motion = { ...(t.air !== undefined ? { air: t.air } : {}), ...(t.climb !== undefined ? { climb: t.climb } : {}), clock };
+      const climb = t.climb !== undefined ? { climb: t.climb, rungs: this.deps.rungs?.(t.position.x, t.position.y, t.position.z) ?? null } : {};
+      const motion = { ...(t.air !== undefined ? { air: t.air } : {}), ...climb, clock };
       animateRig(v.rig, t.speed, dt, t.crouch, { aim: t.aim ?? 0, guard: t.guard ?? 0 }, motion);
       this.deps.pose?.(id, v.rig, t.speed, dt, this.models.of(v.rig)?.retarget ?? null, clock);
     }

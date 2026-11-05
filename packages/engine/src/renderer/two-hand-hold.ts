@@ -259,13 +259,14 @@ export const holdLongGun = (rig: CharacterRig, g: TwoHandGrip, tilt: number, w: 
   // The mount's frame: barrel along -Y, top along +Z.
   const y = t.pose.barrel.negate();
   hold.rotationQuaternion = Quaternion.RotationQuaternionFromAxis(Vector3.Cross(y, t.pose.top), y, t.pose.top);
-  apply(rig.armR, rig.elbowR, rig.wristR, solveArm(reach.shoulderR, reach.upper, reach.fore, t.right.wrist, POLE_R, t.right.hand), w);
-  if (leftW > 0) apply(rig.armL, rig.elbowL, rig.wristL, solveArm(reach.shoulderL, reach.upper, reach.fore, t.left.wrist, POLE_L, t.left.hand), leftW);
+  applyArm(rig.armR, rig.elbowR, rig.wristR, solveArm(reach.shoulderR, reach.upper, reach.fore, t.right.wrist, POLE_R, t.right.hand), w);
+  if (leftW > 0) applyArm(rig.armL, rig.elbowL, rig.wristL, solveArm(reach.shoulderL, reach.upper, reach.fore, t.left.wrist, POLE_L, t.left.hand), leftW);
 };
 
 type Joint = CharacterRig["armR"];
 
-const apply = (arm: Joint, elbow: Joint, wrist: Joint, s: ArmSolution, w: number): void => {
+/** Turns an arm towards a solution by `w` (0 leaves it as it is). */
+export const applyArm = (arm: Joint, elbow: Joint, wrist: Joint, s: ArmSolution, w: number): void => {
   const mix = (from: number, to: number) => from + (to - from) * w;
   arm.rotation.set(mix(arm.rotation.x, s.arm.x), mix(arm.rotation.y, s.arm.y), mix(arm.rotation.z, s.arm.z));
   elbow.rotation.x = mix(elbow.rotation.x, s.elbow);
