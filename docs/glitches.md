@@ -956,6 +956,21 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: kładka x 1073,8–1082,2, z 160–162,1; krawędź 0,03–1,9 m nad terenem; brak w danych importu
 - Pakiet właściciela: tools/osm-import (pomosty mostów)
 
+### G-297 Niewidzialna ściana na krawędzi podestu hali Alchemii
+- Status: zgłoszone (5.11, weryfikator PR #257)
+- Ważność: S3 · Zasięg: x 2,24: model rysuje podłogę balkonu 6,64 na zachód (x 1–2,2, z 2,5–4), a kolizja korpusu i skosu dachu (9,9 i 11,51 m) ją zasłania
+- Pakiet właściciela: packages/sim (content/alchemia.ts)
+
+### G-298 Korpus kolizji hali Alchemii wystaje poza ściany modelu
+- Status: zgłoszone (5.11, weryfikator PR #257)
+- Ważność: S3 · Zasięg: z przodu z 5,2–6,1 ok. 0,9 m niewidzialnej ściany nad cokołem, z tyłu z −6,1…−5,54 ok. 0,5 m; także na main
+- Pakiet właściciela: packages/sim (content/alchemia.ts)
+
+### G-299 Wejście frontowe hali Alchemii na cokole 1,23 m bez stopni
+- Status: zgłoszone (5.11, weryfikator PR #257)
+- Ważność: S4 · Zasięg: front zasłonięty bryłą (G-298); model nie rysuje stopni
+- Pakiet właściciela: packages/sim (content/alchemia.ts)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
