@@ -20,6 +20,13 @@ export const FLEE_RADIUS = 7;
  * again and again, and each step used to cue a new escape (G-281).
  */
 const FLEE_CUE_RESET = 2 * FLEE_RADIUS;
+/**
+ * A civilian that fears the player and whose spot is within the flee radius plus this (metres)
+ * does not go back to it, only stands past the radius and watches the player (ADR-0070): going
+ * back stepped it over the radius again, and it turned in and out of it 36 times a second. The
+ * rule reads only positions and reputation, so a load mid-stand-off goes on the same.
+ */
+export const FLEE_DEAD_ZONE = 2;
 export const CIVILIAN_FLEE_SPEED = 3.4;
 const CIVILIAN_WALK_SPEED = 1.4;
 /** Fastest a civilian hurries to catch up with its daily plan (after fleeing, say). */
@@ -80,6 +87,15 @@ export const calmStreet = (ctx: SimContext): void => {
 
 type Civilian = Entity & { civilian: NonNullable<Entity["civilian"]>; velocity: NonNullable<Entity["velocity"]> };
 
+/**
+ * Where a civilian goes back to: its routine's spot, its daily plan's place or its home. A
+ * resident on a crowd route (ADR-0041) has no spot to wait for, it walks on.
+ */
+const spotOf = (c: Civilian): Vec3 | null => {
+  if (c.passerby) return c.passerby.lane ? null : c.passerby.goal;
+  return c.schedule?.pose?.position ?? c.civilian.home;
+};
+
 const hasRoutine = (c: Civilian): c is Civilian & { passerby: NonNullable<Entity["passerby"]> } => c.passerby !== undefined;
 
 class CivilianAgent {
@@ -97,6 +113,23 @@ class CivilianAgent {
 
   FearsPlayer = (): boolean => !!this.ctx && !!this.self && factionStance(this.ctx.state.domain.reputation, this.self.faction ?? "civilians") === "hostile";
   PlayerNearby = (): boolean => this.player !== null && this.distance <= FLEE_RADIUS;
+
+  /** Past the flee radius, in the dead zone, with its spot in it too: going back would step it in. */
+  SpotNearPlayer = (): boolean => {
+    const { self, player } = this;
+    if (!self || !player || this.distance > FLEE_RADIUS + FLEE_DEAD_ZONE) return false;
+    const spot = spotOf(self);
+    return spot !== null && Math.hypot(spot.x - player.position.x, spot.z - player.position.z) <= FLEE_RADIUS + FLEE_DEAD_ZONE;
+  };
+
+  /** Stands where it is and keeps an eye on the player. */
+  WatchPlayer = (): State => {
+    const { self, player } = this;
+    if (!self || !player) return State.FAILED;
+    self.velocity = { x: 0, y: 0, z: 0 };
+    self.yaw = Math.atan2(player.position.x - self.position.x, player.position.z - self.position.z);
+    return State.SUCCEEDED;
+  };
 
   /** Down on the ground, hands over the head: it stays where it is. */
   Cower = (): State => {
