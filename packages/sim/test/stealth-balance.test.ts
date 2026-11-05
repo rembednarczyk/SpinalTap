@@ -4,7 +4,7 @@ import { SIM_DT, Simulation, docks, gangerEntity, type Entity } from "../src";
 import { chestOf, eyeOf, lineOfSight } from "../src/world/hitscan";
 import { giveLead } from "../src/systems/ai/ganger-perception";
 import { input, run, teleportPlayer } from "./helpers";
-import { emptySquare, enemyAt, secondsToAlarm } from "./stealth-scenes";
+import { CROUCH, emptySquare, enemyAt, secondsToAlarm } from "./stealth-scenes";
 
 /*
  * Stage 3 of ADR-0069, the balance of sight and hearing: a lead heard through a wall follows her
@@ -79,6 +79,21 @@ describe("sight of a sprint in front (ADR-0069, stage 3)", () => {
       expect(s).not.toBeNull();
       expect(s!).toBeGreaterThanOrEqual(0.6);
       expect(s!).toBeLessThanOrEqual(0.7);
+    });
+  }
+
+  for (const type of ["hebi_ganger", "kagami_cleaner"] as const) {
+    it(`${type}: a sprint it sees still gives it a lead, so crouching just out of its crouched sight does not lose it`, () => {
+      const sim = emptySquare(false);
+      const p = sim.player()!;
+      p.yaw = Math.PI / 2;
+      p.prevYaw = p.yaw;
+      // 8.8 m is past its sight of a crouching player (17 × 0.5 = 8.5 m).
+      const g = enemyAt(sim, type, 8.8, true);
+      run(sim, Math.round(0.25 / SIM_DT), SPRINT);
+      expect(g.ai!.alerted).toBe(false);
+      expect(g.ai!.lastKnown).toBeTruthy();
+      expect(secondsToAlarm(sim, g, CROUCH)).not.toBeNull();
     });
   }
 });
