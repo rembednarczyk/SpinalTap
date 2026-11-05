@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CYBERWARE_CATALOG, STACKABLE_CATALOG, type ReputationState, priceWithTerms, shopTerms } from "@seki/core";
-import { FLEE_RADIUS, HOSTILE_AGGRO_MULTIPLIER, KRAKOWSKIE_SITE_POINTS, Simulation, effectiveAggroRange, ground, stateHash } from "../src";
+import { FLEE_DEAD_ZONE, FLEE_RADIUS, HOSTILE_AGGRO_MULTIPLIER, KRAKOWSKIE_SITE_POINTS, Simulation, effectiveAggroRange, ground, stateHash } from "../src";
 import { byKey, collect, input, passerbyOnDeptak, run, teleportPlayer } from "./helpers";
 
 /** A fresh game whose standings are patched in, built the way a load would build it. */
@@ -203,7 +203,7 @@ describe("civilians and the street's opinion", () => {
     // Runs off and stands past the radius, its spot within it (the dead zone, ADR-0070).
     run(sim, 1200);
     expect(walkerDistance(sim, walker.id)).toBeGreaterThanOrEqual(FLEE_RADIUS);
-    expect(walkerDistance(sim, walker.id)).toBeLessThanOrEqual(FLEE_RADIUS + 2);
+    expect(walkerDistance(sim, walker.id)).toBeLessThanOrEqual(FLEE_RADIUS + FLEE_DEAD_ZONE);
     expect(reactions).toHaveLength(1);
     teleportPlayer(sim, ground(290, -60));
     run(sim, 900);

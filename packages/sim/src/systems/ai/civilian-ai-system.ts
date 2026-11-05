@@ -5,8 +5,10 @@ import type { SimContext, System } from "../../world/context";
 import { inCreationOrder } from "../../world/ordering";
 import { followSchedule } from "../../world/schedule";
 import { incapacitated } from "../../world/takedown";
+import { activityOf } from "../../world/activity";
 import { worldTimeScale } from "../ability-system";
 import { CIVILIAN_TREE } from "./civilian-tree";
+import { type Walker, holdLanePlace, laneSpot } from "./crowd-walk";
 import { walkRoutine } from "./passerby-walk";
 import { steerPoint, straightWalk } from "./steering";
 
@@ -33,7 +35,7 @@ const FLEE_CUE_RESET = 2 * FLEE_RADIUS;
  */
 export const FLEE_DEAD_ZONE = 2;
 export const CIVILIAN_FLEE_SPEED = 3.4;
-const CIVILIAN_WALK_SPEED = 1.4;
+export const CIVILIAN_WALK_SPEED = 1.4;
 /** Fastest a civilian hurries to catch up with its daily plan (after fleeing, say). */
 const CIVILIAN_SCHEDULE_SPEED = 1.6;
 const HOME_TOLERANCE = 0.3;
@@ -92,13 +94,35 @@ export const calmStreet = (ctx: SimContext): void => {
 
 type Civilian = Entity & { civilian: NonNullable<Entity["civilian"]>; velocity: NonNullable<Entity["velocity"]> };
 
+const onLane = (c: Civilian): c is Civilian & Walker => !!c.passerby?.lane;
+
 /**
- * Where a civilian goes back to: its routine's spot, its daily plan's place or its home. A
- * resident on a crowd route (ADR-0041) has no spot to wait for, it walks on.
+ * Where a civilian goes back to: its routine's spot, its place on a crowd route (ADR-0041),
+ * its daily plan's place or its home.
  */
-const spotOf = (c: Civilian): Vec3 | null => {
-  if (c.passerby) return c.passerby.lane ? null : c.passerby.goal;
+const spotOf = (ctx: SimContext, c: Civilian): Vec3 | null => {
+  if (onLane(c)) return laneSpot(ctx, c);
+  if (c.passerby) return c.passerby.goal;
   return c.schedule?.pose?.position ?? c.civilian.home;
+};
+
+/** Activities done sitting or lying (ADR-0040): the figure keeps its heading on the seat. */
+const SEATED: ReadonlySet<string> = new Set(["sit", "sleep"]);
+
+/**
+ * Sitting (a bench, a stool, home) or lying down: the street's opinion does not turn it round
+ * (ADR-0070). Read from the activity rule itself, not the stored `activity`, so a load goes on
+ * the same.
+ */
+const seated = (ctx: SimContext, c: Civilian): boolean => {
+  const now = activityOf(c, ctx.state.domain.clock);
+  return now !== null && SEATED.has(now);
+};
+
+/** Turns `self` to look at the player, unless it sits. */
+const facePlayer = (ctx: SimContext, self: Civilian, player: Entity): void => {
+  if (seated(ctx, self)) return;
+  self.yaw = Math.atan2(player.position.x - self.position.x, player.position.z - self.position.z);
 };
 
 /**
@@ -139,10 +163,10 @@ class CivilianAgent {
 
   /** Past the flee radius, in the dead zone, with its spot in it too: going back would step it in. */
   SpotNearPlayer = (): boolean => {
-    const { self, player } = this;
+    const { ctx, self, player } = this;
     const reach = this.fearRadius() + FLEE_DEAD_ZONE;
-    if (!self || !player || this.distance > reach) return false;
-    const spot = spotOf(self);
+    if (!ctx || !self || !player || this.distance > reach) return false;
+    const spot = spotOf(ctx, self);
     return spot !== null && Math.hypot(spot.x - player.position.x, spot.z - player.position.z) <= reach;
   };
 
@@ -156,18 +180,22 @@ class CivilianAgent {
   /** Keeps to its spot and its plan, and turns to the player while it stands. */
   StayFacingPlayer = (): State => {
     const state = this.ReturnHome();
-    const { self, player } = this;
-    if (!self || !player || self.velocity.x !== 0 || self.velocity.z !== 0) return state;
-    self.yaw = Math.atan2(player.position.x - self.position.x, player.position.z - self.position.z);
+    const { ctx, self, player } = this;
+    if (!ctx || !self || !player || self.velocity.x !== 0 || self.velocity.z !== 0) return state;
+    facePlayer(ctx, self, player);
     return state;
   };
 
-  /** Stands where it is and keeps an eye on the player. */
+  /**
+   * Stands where it is and keeps an eye on the player (seated, it only stays put). A walker of
+   * a crowd route holds its place on it, or the clock would walk the place on without it.
+   */
   WatchPlayer = (): State => {
-    const { self, player } = this;
-    if (!self || !player) return State.FAILED;
+    const { ctx, self, player } = this;
+    if (!ctx || !self || !player) return State.FAILED;
+    if (onLane(self)) holdLanePlace(self);
+    facePlayer(ctx, self, player);
     self.velocity = { x: 0, y: 0, z: 0 };
-    self.yaw = Math.atan2(player.position.x - self.position.x, player.position.z - self.position.z);
     return State.SUCCEEDED;
   };
 

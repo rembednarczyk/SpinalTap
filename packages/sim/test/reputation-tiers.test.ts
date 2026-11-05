@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type DomainEvents, type ReputationState } from "@seki/core";
-import { SCHEDULES, Simulation } from "../src";
+import { CIVILIAN_WALK_SPEED, FLEE_DEAD_ZONE, SCHEDULES, Simulation, YIELD_RADIUS } from "../src";
 import { byKey, collect, input, offFacingPlayer, passerbyOnDeptak, run, teleportPlayer, watchStandOff } from "./helpers";
 
 /** A fresh game (21:00, Oyaji's stall still open) whose standings are patched in, the way a load would. */
@@ -14,9 +14,6 @@ const STALL = SCHEDULES.oyaji!.stops[0]!.path.at(-1)!;
 const AT_COUNTER = { x: STALL.x, y: STALL.y, z: STALL.z - 1.4 };
 const flat = (a: { x: number; z: number }, b: { x: number; z: number }) => Math.hypot(a.x - b.x, a.z - b.z);
 
-/** A passer-by makes way for a wary street's player this close, at a walk (ADR-0070). */
-const YIELD_RADIUS = 3.5;
-const CIVILIAN_WALK_SPEED = 1.4;
 /** A wary street (ADR-0070): −49..−11. */
 const WARY = { civilians: -30 };
 const HOSTILE = { civilians: -60 };
@@ -28,7 +25,7 @@ describe("a wary street makes way (ADR-0070)", () => {
     const walker = passerbyOnDeptak(sim);
     const w = watchStandOff(sim, walker.id, 1800);
     expect(w.min).toBeGreaterThanOrEqual(YIELD_RADIUS);
-    expect(w.max).toBeLessThanOrEqual(YIELD_RADIUS + 2);
+    expect(w.max).toBeLessThanOrEqual(YIELD_RADIUS + FLEE_DEAD_ZONE);
     expect(w.flips).toBeLessThanOrEqual(2);
     expect(w.speed).toBeLessThanOrEqual(CIVILIAN_WALK_SPEED + 1e-9);
     expect(reactions).toHaveLength(0);

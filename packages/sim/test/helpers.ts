@@ -61,15 +61,22 @@ export const debriefExtras = (sim: Simulation): (() => number) => {
   return () => cards.reduce((sum, c) => sum + c.bonus + c.styleBonus, 0);
 };
 
+type Passer = Entity & { passerby: NonNullable<Entity["passerby"]> };
+
+/** A passer-by standing at its stop (ADR-0040), not one walking a crowd route (ADR-0041). */
+export const atStop = (e: Passer): boolean => !e.passerby.lane;
+
 /**
- * A background passer-by standing at its stop on the deptak (ADR-0040), with no shop and no
- * conversation: the street's opinion moves it (ADR-0070). The player stands `gap` metres from it.
+ * A background passer-by on the deptak, with no shop and no conversation: the street's opinion
+ * moves it (ADR-0070). By default one standing at its stop; `pick` chooses another kind (a
+ * walker of a crowd route, one sitting on a bench). The player stands `gap` metres from it.
  */
-export const passerbyOnDeptak = (sim: Simulation, gap = 2): Entity => {
+export const passerbyOnDeptak = (sim: Simulation, gap = 2, pick: (e: Passer) => boolean = atStop): Entity => {
   teleportPlayer(sim, ground(300, -84));
   run(sim, 5);
   const walker = [...sim.world]
-    .filter((e) => e.civilian && e.passerby && !e.passerby.lane && !e.interactable && !e.vehicle)
+    .filter((e): e is Passer => !!e.civilian && !!e.passerby && !e.interactable && !e.vehicle)
+    .filter(pick)
     .sort((a, b) => a.id - b.id)[0];
   if (!walker) throw new Error("no passer-by on the deptak");
   teleportPlayer(sim, { x: walker.position.x + gap, y: walker.position.y, z: walker.position.z });

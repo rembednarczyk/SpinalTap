@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type ReputationState } from "@seki/core";
-import { FLEE_RADIUS, Simulation, stateHash } from "../src";
+import { FLEE_DEAD_ZONE, FLEE_RADIUS, Simulation, YIELD_RADIUS, stateHash } from "../src";
 import { collect, offFacingPlayer, passerbyOnDeptak, run, teleportPlayer, watchStandOff } from "./helpers";
 
 /** A fresh game whose standings are patched in, built the way a load would build it. */
@@ -9,8 +9,6 @@ const simWith = (reputation: Partial<ReputationState>, seed = 3): Simulation => 
   return Simulation.fromSnapshot({ ...snap, domain: { ...snap.domain, reputation: { ...snap.domain.reputation, ...reputation } } });
 };
 
-/** How far past the flee radius a scared civilian stands still rather than going back (ADR-0070). */
-const FLEE_DEAD_ZONE = 2;
 /** A street hostile to the player (ADR-0070): its passers-by run. */
 const HOSTILE = { civilians: -60 };
 
@@ -66,4 +64,73 @@ describe("the flee radius's dead zone (ADR-0070)", () => {
     const now = byId(sim, walker.id);
     expect(Math.hypot(now.position.x - spot.x, now.position.z - spot.z)).toBeLessThanOrEqual(0.5);
   });
+});
+
+/** The same, with the deptak's crowd out (ADR-0041): walkers of its routes and people on benches. */
+const crowdWith = (reputation: Partial<ReputationState>, seed = 3): Simulation => {
+  const snap = Simulation.create({ seed, crowd: "high" }).snapshot(null, "test", "");
+  return Simulation.fromSnapshot({ ...snap, domain: { ...snap.domain, reputation: { ...snap.domain.reputation, ...reputation } } }, undefined, "high");
+};
+
+const STREETS = [
+  ["hostile", HOSTILE, FLEE_RADIUS],
+  ["wary", { civilians: -30 }, YIELD_RADIUS],
+] as const;
+
+describe("the dead zone for the crowd (ADR-0070)", () => {
+  /** The walkers of the crowd routes on the deptak, by id, in a fresh game of `seed`. */
+  const laneWalkers = (seed: number): number[] => {
+    const sim = crowdWith({}, seed);
+    passerbyOnDeptak(sim);
+    return [...sim.world]
+      .filter((e) => e.civilian && e.passerby?.lane && !e.interactable)
+      .map((e) => e.id)
+      .sort((a, b) => a - b)
+      .slice(0, 3);
+  };
+
+  it("a walker of a crowd route goes on along it once the player is gone", () => {
+    const [id] = laneWalkers(3);
+    const sim = crowdWith(HOSTILE);
+    const walker = passerbyOnDeptak(sim, 2, (e) => e.id === id);
+    run(sim, 600);
+    expect(byId(sim, walker.id).velocity).toEqual({ x: 0, y: 0, z: 0 });
+    // The player steps 30 m off, further down the deptak, out of its sight and still in its chunk.
+    const at = byId(sim, walker.id).position;
+    const p = sim.player()!.position;
+    const d = Math.hypot(at.x - p.x, at.z - p.z);
+    teleportPlayer(sim, { x: at.x + ((at.x - p.x) / d) * 30, y: p.y, z: at.z + ((at.z - p.z) / d) * 30 });
+    run(sim, 300);
+    const now = byId(sim, walker.id);
+    expect(Math.hypot(now.velocity!.x, now.velocity!.z)).toBeGreaterThan(0.5);
+    expect(now.passerby!.lane!.rejoin).toBeNull();
+  });
+
+  for (const [tier, reputation, radius] of STREETS) {
+    it(`a walker of a crowd route stops past the radius of a ${tier} street, instead of stepping in and out of it`, () => {
+      const ids = laneWalkers(3);
+      expect(ids.length).toBeGreaterThan(0);
+      for (const id of ids) {
+        const sim = crowdWith(reputation);
+        const walker = passerbyOnDeptak(sim, 2, (e) => e.id === id);
+        const w = watchStandOff(sim, walker.id, 1800);
+        // The walkers kept on going back to their route: 1169-1512 turns in these 30 s.
+        expect(w.flips, `walker ${id}`).toBeLessThanOrEqual(2);
+        expect(w.min, `walker ${id}`).toBeGreaterThanOrEqual(radius);
+        expect(w.max, `walker ${id}`).toBeLessThanOrEqual(radius + FLEE_DEAD_ZONE);
+      }
+    });
+
+    it(`someone sitting on a bench does not turn round to a player of a ${tier} street in the dead zone`, () => {
+      const sim = crowdWith(reputation);
+      const sitter = passerbyOnDeptak(sim, radius + 1, (e) => !e.passerby.lane && e.passerby.activity === "sit");
+      // Its heading on the bench, before it knows the player is there.
+      const yaw = byId(sim, sitter.id).yaw;
+      run(sim, 60);
+      const now = byId(sim, sitter.id);
+      expect(now.yaw).toBe(yaw);
+      expect(now.velocity).toEqual({ x: 0, y: 0, z: 0 });
+      expect(now.activity).toBe("sit");
+    });
+  }
 });

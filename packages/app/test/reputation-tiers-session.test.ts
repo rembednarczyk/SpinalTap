@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { type EntityId, type ReputationState } from "@seki/core";
 import { STORY_SOURCE } from "@seki/narrative";
 import { MemorySaveStore, SavePersistence } from "@seki/persistence";
-import { SCHEDULES, SIM_HZ } from "@seki/sim";
+import { SCHEDULES, SIM_HZ, YIELD_RADIUS } from "@seki/sim";
 import { createUiStore } from "@seki/ui";
 import { GameSession } from "../src/game-session";
 import { FakeRender, frame, steps } from "./story-helpers";
@@ -46,7 +46,7 @@ describe("a wary street in play (ADR-0070)", () => {
     expect(walker, "a passer-by at its stop").toBeDefined();
     placePlayer(session, { ...walker!.position, x: walker!.position.x + 2 });
     steps(session, 10 * SIM_HZ);
-    expect(flat(walker!.position, session.sim.player()!.position)).toBeGreaterThanOrEqual(3.5);
+    expect(flat(walker!.position, session.sim.player()!.position)).toBeGreaterThanOrEqual(YIELD_RADIUS);
     expect(cues).toHaveLength(0);
     expect(ui.getState().toasts.map((t) => t.title)).not.toContain("Passers-by run away");
   });
