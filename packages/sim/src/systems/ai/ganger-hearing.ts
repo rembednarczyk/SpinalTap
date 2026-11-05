@@ -4,7 +4,7 @@ import type { SimContext } from "../../world/context";
 import { LEVEL_GAP } from "../../world/nav";
 import { incapacitated } from "../../world/takedown";
 import { difficultyOf } from "../../world/difficulty";
-import { giveLead, lenientTo } from "./ganger-perception";
+import { giveLead, glimpses, lenientTo } from "./ganger-perception";
 
 /*
  * Hearing the player's steps (ADR-0069, stage 2). Deterministic: a moving player makes a noise
@@ -36,15 +36,17 @@ export const footstepNoise = (p: Entity): number => {
  * A noise of the player's at `at`, heard `radius` m round on its level: every unalerted enemy
  * there that would go for her gets a lead to `at` and at least `NOISE_SUSPICION × awareness`.
  * One that only watches her (friendly, a tolerant patrol, her disguise of its faction) does not
- * come over for a step it hears.
+ * come over for a step it hears. Nor does one that has her in sight (stage 3): its eyes already
+ * fill its suspicion, and a sprint it sees is seen no sooner for being heard as well.
  */
 export const hearNoise = (ctx: SimContext, at: Vec3, radius: number): void => {
   if (radius <= 0) return;
   const level = Math.min(1, NOISE_SUSPICION * difficultyOf(ctx).awareness);
+  const player = ctx.world.with("player").first;
   for (const g of ctx.world.with("ai", "velocity")) {
     if (g.ai.alerted || g.unconscious || Math.abs(g.position.y - at.y) >= LEVEL_GAP) continue;
     if (Math.hypot(g.position.x - at.x, g.position.z - at.z) > radius) continue;
-    if (incapacitated(ctx, g) || lenientTo(ctx, g)) continue;
+    if (incapacitated(ctx, g) || lenientTo(ctx, g) || (player && glimpses(ctx, g, player))) continue;
     g.ai.suspicion = Math.max(g.ai.suspicion ?? 0, level);
     giveLead(g, at);
   }

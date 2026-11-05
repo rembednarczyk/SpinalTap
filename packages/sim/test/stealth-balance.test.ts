@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { angleTo } from "@seki/core";
+import { type EnemyTypeId, angleTo } from "@seki/core";
 import { SIM_DT, Simulation, docks, gangerEntity, type Entity } from "../src";
 import { chestOf, eyeOf, lineOfSight } from "../src/world/hitscan";
 import { giveLead } from "../src/systems/ai/ganger-perception";
@@ -67,4 +67,18 @@ describe("walking to a lead (ADR-0069, stage 3)", () => {
     expect(g.ai!.lastKnown).toBeTruthy();
     expect(secondsToAlarm(sim, g)).toBeLessThan(1.5);
   });
+});
+
+describe("sight of a sprint in front (ADR-0069, stage 3)", () => {
+  const trained: readonly EnemyTypeId[] = ["kagami_cleaner", "tessen_guard"];
+  for (const type of trained) {
+    it(`${type}: sees her sprint at it from 10 m in 0.6 to 0.7 s, the noise of a sprint it sees adding nothing`, () => {
+      const sim = emptySquare(false);
+      const g = enemyAt(sim, type, 10, true);
+      const s = secondsToAlarm(sim, g, SPRINT);
+      expect(s).not.toBeNull();
+      expect(s!).toBeGreaterThanOrEqual(0.6);
+      expect(s!).toBeLessThanOrEqual(0.7);
+    });
+  }
 });
