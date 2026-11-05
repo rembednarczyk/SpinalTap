@@ -1012,7 +1012,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (bodies, death-system, crime-system)
 
 ### G-337 Północny chodnik al. Tysiąclecia bez nawierzchni (T-165)
-- Status: zgłoszone (5.11, kurator, przegląd #285)
+- Status: w naprawie (5.11, PR #298; przegląd kuratora e522164: NIE PRZYJĘTE, rabaty przed Bazarem 1–3,75 m dalej na południe, pas pod okapem do zabrukowania, T-165)
 - Ważność: S4 · Zasięg: x ok. 640–790, z ok. 362–383, ok. 670 m² na samym x 705–790; przed halami Bazaru rabaty (nie brukować); także x 764–806 przed frontem Dworca (T-165 pkt 1–2): ok. 136 m² między drogą rowerową w1435832523 a ścieżką w227698420 (x 773–803 rabata, nie brukować) i ok. 50 m² między chodnikiem w1435832518 a drogą rowerową (kostka z wiatami)
 - Pakiet właściciela: tools/osm-import (`ADDED_AREAS`)
 - Test przyjęcia: 0 gołych próbek 0,5 m w obszarze T-165 poza rabatami; propozycja kontroli `paving-sliver` dla całego miasta
@@ -1056,6 +1056,30 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: pomost w50733068 przedłużony przez `bridge-ends.ts` jest poziomy na NMT końca osi (−25,72), a teren wzdłuż 13-metrowej krawędzi przyczółka opada na południe do −26,0…−26,14; na próbkach 0,5 m to skarpa (`MAX_WALK_SLOPE`, ADR-0043): postać idąca z Andersa na wschód 4,75–6,0 m na południe od osi staje w (2414,2–2414,7; 323,3–324,4); pas aut Andersa#126:0 schodzi z pomostu bokiem ze skokiem 0,17 m. Skan nie ma kontroli progu pomost–teren na przyczółkach; `bridge-ends.test.ts` nie pilnuje warunku węzła wspólnego (przypadek ze wspólnym węzłem bliżej niż 15 m od krawędzi)
 - Pakiet właściciela: tools/osm-import (`bridge-ends.ts`), packages/sim (terrain/decks), tools/glitch-scan
 - Test przyjęcia: postać przechodzi z Andersa na most na całej szerokości jezdni; kontrola progu pomost–teren na przyczółkach (> 0,25 m) = 0
+
+### G-350 Gołe podłoże przy al. Tysiąclecia na wschód od Dworca (T-173)
+- Status: zgłoszone (5.11, kurator, przegląd G-337)
+- Ważność: S4 · Zasięg: x 806–872, z ok. 343–360, ok. 470 m² · Koszt: mały
+- Pakiet właściciela: tools/osm-import (`ADDED_AREAS`)
+- Test przyjęcia: gołe próbki 0,5 m w obszarze ≤ 0,5 m² (szwy)
+
+### G-351 Pas dzielący al. Tysiąclecia za wąski i goły (T-174)
+- Status: zgłoszone (5.11, kurator, przegląd G-337)
+- Ważność: S4 · Zasięg: x 620–810 i dalej, ok. 250 m²; w grze 1,25–1,5 m, w rzeczywistości ok. 3 m z barierą · Koszt: średni (szerokość z geometrii jezdni)
+- Pakiet właściciela: tools/osm-import
+- Test przyjęcia: pas dzielący z nawierzchnią na całej długości, szerokość ok. 3 m
+
+### G-352 Chodnik przy wschodniej ścianie Bazaru za wąski (T-175)
+- Status: zgłoszone (5.11, kurator, przegląd G-337)
+- Ważność: S4 · Zasięg: x 716–721, z 389–413, ok. 30–35 m² · Koszt: mały
+- Pakiet właściciela: tools/osm-import (`ADDED_AREAS`)
+- Test przyjęcia: kostka od ściany hal ok. 5 m, gołe próbki 0
+
+### G-353 Plac `square` przy jezdni bez krawężnika i kratek (T-176)
+- Status: zgłoszone (5.11, kurator, przegląd G-337)
+- Ważność: S4 · Zasięg: północna krawędź al. Tysiąclecia 164,5 m (x 640–806), także T-162, T-164, T-169; renderer rysuje krawężnik tylko przy `sidewalk`, `grateAt` nie stawia kratek przy placu · Koszt: średni
+- Pakiet właściciela: packages/engine (`ground-plan.ts`), tools/osm-import (`grateAt`), tools/glitch-scan
+- Test przyjęcia: nowa kontrola skanu `square-road-no-kerb` (długość krawędzi jezdni, przy której z zewnątrz leży `square`/pedestrian, bez przejść) = 0
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
