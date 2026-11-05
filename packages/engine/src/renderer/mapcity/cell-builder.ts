@@ -87,7 +87,7 @@ export class CellBuilder {
       // On a bridge's deck where there is one (`groundHeight`); the river stays on the terrain.
       const h = entries.groundHeight(g, terrain);
       if (g.deck && g.surface !== "water") {
-        planDeckEdges(ground, g.ring, h, SURFACE_LIFT[g.surface], (x, z) => entries.decks.heightAt(x, z) !== null, terrain);
+        planDeckEdges(ground, g.ring, h, SURFACE_LIFT[g.surface], entries.decks.heightAt, terrain);
         planDeckUnderside(ground, g.ring, h, SURFACE_LIFT[g.surface], terrain);
       }
       if (g.marking) planMarking(ground, g.marking, g.ring, h);

@@ -6,6 +6,7 @@ import { LUBLIN_ANCHOR } from "../../../packages/core/src/world/city-geo.ts";
 import { asBuilding, isPart, orphanParts, partsByBuilding } from "./building-parts.ts";
 import { smallAlone } from "./building-alone.ts";
 import { buildingsWithTowers, mappedTowers } from "./building-towers.ts";
+import { bridgeFills } from "./bridge-fill.ts";
 import { makeBuilding } from "./buildings.ts";
 import { addedAreas, corrected, correctedLine } from "./corrections.ts";
 import { ALL_CHUNKS, type ChunkSpec } from "./config.ts";
@@ -303,6 +304,8 @@ export const generate = (data: OsmData, src: HeightSource, chunks: readonly Chun
     const pieces = cutSidewalk(b, (p) => others.some((c) => p.x >= c.box.minX && p.x <= c.box.maxX && p.z >= c.box.minZ && p.z <= c.box.maxZ && pointInRing(p, c.ring)));
     bands.splice(bands.indexOf(b), 1, ...pieces.map((x) => ({ ...x, box: ringBounds(x.ring) })));
   }
+  // A bridge is one deck: its outline fills the gap between its sidewalk and its carriageway (G-340).
+  for (const b of bridgeFills(areas, bands)) bands.push({ ...b, box: ringBounds(b.ring) });
   // Road markings (ADR-0052): cut where they run into another carriageway or a zebra.
   const zebras = bands.filter((b) => b.surface === "crossing");
   const onOther = (p: Pt, source: string) => carriageways.some((c) => c.source !== source && p.x >= c.box.minX && p.x <= c.box.maxX && p.z >= c.box.minZ && p.z <= c.box.maxZ && pointInRing(p, c.ring));

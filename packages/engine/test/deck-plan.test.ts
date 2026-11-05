@@ -32,7 +32,7 @@ describe("bridges' decks (ADR-0053)", () => {
     // A second piece north of it (the sidewalk on the same bridge): the shared edge stays open.
     decks.add(2, [{ x: 0, z: 5 }, { x: 40, z: 5 }, { x: 40, z: 8 }, { x: 0, z: 8 }], axis);
     const sink = new MeshSink();
-    planDeckEdges(sink, road, (x, z) => deckHeight(axis, x, z), 0.1, (x, z) => decks.heightAt(x, z) !== null);
+    planDeckEdges(sink, road, (x, z) => deckHeight(axis, x, z), 0.1, decks.heightAt);
     // The south side and the two ends: three quads.
     expect(sink.vertexCount).toBe(12);
     let low = Infinity;
@@ -41,6 +41,29 @@ describe("bridges' decks (ADR-0053)", () => {
       expect(sink.positions[i * 3 + 2]!).toBeLessThan(5.01);
     }
     expect(low).toBeCloseTo(2 + 0.1 - 0.9, 5);
+  });
+
+  it("close a step down onto a lower piece of the bridge with a face down to it, and leave a kerb open (G-340)", () => {
+    // The sidewalk north of the road at the road's height in the west, 1.6 m over it in the east.
+    const walk = [{ x: 0, z: 5 }, { x: 40, z: 5 }, { x: 40, z: 8 }, { x: 0, z: 8 }];
+    const level = { a: { x: 0, y: 2, z: 6.5 }, b: { x: 40, y: 5.6, z: 6.5 } };
+    const decks = new Decks();
+    decks.add(1, road, axis);
+    decks.add(2, walk, level);
+    const faces = (top: typeof level) => {
+      const sink = new MeshSink();
+      planDeckEdges(sink, walk, (x, z) => deckHeight(top, x, z), 0, decks.heightAt);
+      return Array.from({ length: sink.vertexCount }, (_, i) => ({ x: sink.positions[i * 3]!, y: sink.positions[i * 3 + 1]!, z: sink.positions[i * 3 + 2]! }));
+    };
+    const all = faces(level);
+    // Over the valley the north side and the two ends, a quad each; over the road a quad every 2 m.
+    expect(all).toHaveLength((3 + 20) * 4);
+    // The face over the road runs from the sidewalk down to the road: 1.52 m 2 m off the east end.
+    const step = all.filter((p) => Math.abs(p.z - 5) < 1e-6 && p.x > 1e-6 && p.x < 40 - 1e-6);
+    for (const p of step) expect([deckHeight(level, p.x, 5), deckHeight(axis, p.x, 0)].some((y) => Math.abs(p.y - y) < 1e-6)).toBe(true);
+    expect([...new Set(step.filter((p) => Math.abs(p.x - 38) < 1e-6).map((p) => p.y.toFixed(2)))].sort()).toEqual(["3.90", "5.42"]);
+    // A kerb of 0.2 m over the road: no face, the edge is the road going on.
+    expect(faces({ a: { x: 0, y: 2.2, z: 6.5 }, b: { x: 40, y: 4.2, z: 6.5 } })).toHaveLength(3 * 4);
   });
 
   it("leave a way under the bridge on the terrain, with room for a walker's head under the deck (G-062)", () => {
@@ -52,7 +75,7 @@ describe("bridges' decks (ADR-0053)", () => {
     expect(decks.heightAt(2, 0, valley(2))).toBeCloseTo(deckHeight(axis, 2, 0), 5);
     expect(decks.heightAt(20, 0)).toBeCloseTo(3, 5);
     const h = (x: number, z: number) => deckHeight(axis, x, z);
-    for (const plan of [(s: MeshSink) => planDeckEdges(s, road, h, 0, () => false, valley), (s: MeshSink) => planDeckUnderside(s, road, h, 0, valley)]) {
+    for (const plan of [(s: MeshSink) => planDeckEdges(s, road, h, 0, () => null, valley), (s: MeshSink) => planDeckUnderside(s, road, h, 0, valley)]) {
       const sink = new MeshSink();
       plan(sink);
       let headroom = Infinity;

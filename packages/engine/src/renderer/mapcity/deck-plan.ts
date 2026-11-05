@@ -62,11 +62,16 @@ export class Decks {
   readonly surfaceAt = (x: number, z: number, under?: number): ((x: number, z: number) => number) | null => this.highest(x, z, under)?.surface ?? null;
 }
 
+/** A deck beyond an edge lower than this under it is a step, not the same deck going on: the edge gets its face (m). */
+const STEP_FACE = 0.3;
+
 /**
  * The fascia along the edges of a deck piece that look out over the valley (no other deck beyond
- * them). With the `terrain`, it is thinner over a way under the bridge.
+ * them) or down a step onto a lower deck beyond (G-340: the sidewalk of Mełgiewska's south bridge
+ * stands up to 1.6 m over its carriageway): `beyond` gives the deck's height there, or null. Down
+ * a step the face reaches the lower deck. With the `terrain`, it is thinner over a way under the bridge.
  */
-export const planDeckEdges = (sink: MeshSink, ring: readonly P2[], h: HeightAt, lift: number, onDeck: (x: number, z: number) => boolean, terrain?: HeightAt): void => {
+export const planDeckEdges = (sink: MeshSink, ring: readonly P2[], h: HeightAt, lift: number, beyond: (x: number, z: number) => number | null, terrain?: HeightAt): void => {
   const meta = [SURFACE_CODE.kerb, 0] as const;
   for (let i = 0; i < ring.length; i++) {
     const a = ring[i] as P2;
@@ -76,13 +81,17 @@ export const planDeckEdges = (sink: MeshSink, ring: readonly P2[], h: HeightAt, 
     // Outward normal of a counter-clockwise ring.
     const nx = (b.z - a.z) / len;
     const nz = -(b.x - a.x) / len;
-    if (onDeck((a.x + b.x) / 2 + nx * 0.3, (a.z + b.z) / 2 + nz * 0.3)) continue;
-    const n = terrain ? Math.ceil(len / FASCIA_STEP) : 1;
+    const [mx, mz] = [(a.x + b.x) / 2, (a.z + b.z) / 2];
+    const next = beyond(mx + nx * 0.3, mz + nz * 0.3);
+    if (next !== null && next > h(mx, mz) - STEP_FACE) continue;
+    const n = terrain || next !== null ? Math.ceil(len / FASCIA_STEP) : 1;
     const at = (k: number) => {
       const x = a.x + ((b.x - a.x) * k) / n;
       const z = a.z + ((b.z - a.z) * k) / n;
       const y = h(x, z);
-      return { x, z, y: y + lift, depth: terrain ? deckDepth(y, terrain(x, z)) : DECK_DEPTH, u: (len * k) / n };
+      const below = next === null ? null : beyond(x + nx * 0.3, z + nz * 0.3);
+      const depth = below !== null ? Math.max(0, y - below) : terrain ? deckDepth(y, terrain(x, z)) : DECK_DEPTH;
+      return { x, z, y: y + lift, depth, u: (len * k) / n };
     };
     for (let k = 0; k < n; k++) {
       const [p, q] = [at(k), at(k + 1)];

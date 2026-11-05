@@ -7,6 +7,7 @@ import { SHAPED_TERRAIN } from "../src/content/lublin/terrain";
 import { TRAFFIC_ROUTES, pointAt } from "../src/content/traffic";
 import { type GroundDeck, deckAt, flightGradientAt, groundOver, makeDeck, onFlight } from "../src/world/deck";
 import { terrainHeightAt } from "@seki/core";
+import { input, teleportPlayer } from "./helpers";
 
 const pointInRing = (p: { x: number; z: number }, ring: readonly { x: number; z: number }[]): boolean => {
   let c = false;
@@ -141,5 +142,41 @@ describe("bridges' decks (ADR-0053)", () => {
     }
     expect(on).toBeGreaterThan(100);
     expect(off).toEqual([]);
+  });
+
+  it("carry a walker across Mełgiewska's bridges between the carriageway and the sidewalk: one deck, no slot to the valley (G-340)", () => {
+    type P = { readonly x: number; readonly z: number };
+    const lerp = (a: P, b: P, t: number): P => ({ x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t });
+    // The axes of the carriageways w172992144, w50733068 and of the sidewalks w230881194, w230881193 (OSM).
+    const north = { road: [{ x: 2407, z: 277.6 }, { x: 2449.6, z: 251 }], walk: [{ x: 2404.7, z: 267.3 }, { x: 2447.4, z: 241.2 }] };
+    const south = { road: [{ x: 2458.7, z: 302.7 }, { x: 2419, z: 316.5 }], walk: [{ x: 2459.3, z: 312.5 }, { x: 2413.5, z: 328.9 }] };
+    // On the north bridge the carriageway and the sidewalk lie level within a kerb: both ways. On the
+    // south one the carriageway falls 2.3 m along the bridge and the sidewalk does not: down from it.
+    const crossings: [P, P][] = [
+      ...[0.2, 0.5, 0.8].flatMap((t): [P, P][] => [
+        [lerp(north.road[0]!, north.road[1]!, t), lerp(north.walk[0]!, north.walk[1]!, t)],
+        [lerp(north.walk[0]!, north.walk[1]!, t), lerp(north.road[0]!, north.road[1]!, t)],
+      ]),
+      ...[0.05, 0.3, 0.5, 0.7].map((t): [P, P] => [lerp(south.walk[0]!, south.walk[1]!, t), lerp(south.road[0]!, south.road[1]!, t)]),
+    ];
+    for (const [from, to] of crossings) {
+      const sim = Simulation.create({ seed: 3 });
+      const deck = (p: P) => bridgeDeckAt(p.x, p.z)!;
+      teleportPlayer(sim, { x: from.x, y: deck(from), z: from.z }, Math.atan2(to.x - from.x, to.z - from.z));
+      // How far the feet get under the deck under them, or off every deck: in the valley.
+      let under = -Infinity;
+      for (let i = 0; i < 60 * 8; i++) {
+        const p = sim.player()!.position;
+        if (Math.hypot(to.x - p.x, to.z - p.z) < 0.5) break;
+        sim.player()!.yaw = Math.atan2(to.x - p.x, to.z - p.z);
+        sim.step(input({ moveZ: 1 }));
+        const q = sim.player()!.position;
+        under = Math.max(under, (bridgeDeckAt(q.x, q.z) ?? Infinity) - q.y);
+      }
+      const p = sim.player()!.position;
+      const where = `(${from.x.toFixed(1)}, ${from.z.toFixed(1)}) to (${to.x.toFixed(1)}, ${to.z.toFixed(1)})`;
+      expect(Math.hypot(to.x - p.x, to.z - p.z), where).toBeLessThan(0.5);
+      expect(under, where).toBeLessThan(0.2);
+    }
   });
 });

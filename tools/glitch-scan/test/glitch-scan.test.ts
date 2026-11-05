@@ -43,6 +43,7 @@ import { bandAcross, lampsOnSteps, stepsNarrowerThanWalls } from "./steps-walls"
 import { drawnFlight, stepsAcross, stepsHidden, stepsRunsBare } from "./steps-runs";
 import { stepsInclineAgainst } from "./steps-incline";
 import { flightUnderpass, riserOf, stepFaces } from "./steps-faces";
+import { deckSlots } from "./deck-slot";
 import { cityChurches, cityFakeTowers, cityTowers, doubleTowers, dwellingTowers, towersOffBuilding } from "./landmark-towers";
 import { cityBricks, plasteredWalls } from "./wall-materials";
 import { EMPTY_STRIPS_KNOWN, bayCarsMisturned, bayCarsOutOfPark, bayStripsEmptyKnown, bayStripsSparse, crowdLanesOnParking, kerbParksOf, kerbStripsOffCarStreets } from "./kerb-bays";
@@ -1007,6 +1008,19 @@ const CHECKS: Readonly<Record<string, () => Finding[]>> = {
       }
       return out;
     }),
+  /**
+   * A point (grid 0.25 m) off the bridges' decks with a deck on both sides within 2 m along x or
+   * z and the ground at least 0.5 m under the lower one (G-340): a slot between the carriageway
+   * and the sidewalk of one bridge, the walker falling through to the valley. Not the niche of
+   * the steps by the viaduct of Zamkowa, cut on purpose (T-147).
+   */
+  "deck-slot": () =>
+    deckSlots(
+      BRIDGES.map((g) => ({ minX: Math.min(...g.map((d) => d.box.minX)), maxX: Math.max(...g.map((d) => d.box.maxX)), minZ: Math.min(...g.map((d) => d.box.minZ)), maxZ: Math.max(...g.map((d) => d.box.maxZ)) })),
+      bridgeDeckAt,
+      groundY,
+      (p) => p.x >= 728.5 && p.x <= 735.1 && p.z >= 157.5 && p.z <= 163.8,
+    ),
   /** A run of map steps between two parallel walls further apart than the steps the game lays plus 1 m (G-203). */
   "steps-narrower-than-walls": () => {
     const flights = MAP_CHUNKS.flatMap((c) => c.ground.filter((g) => g.surface === "steps").map((g) => worldOutline({ x: 0, z: 0, outline: g.outline })));
