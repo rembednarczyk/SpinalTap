@@ -13,6 +13,12 @@ const GRAB_FACING = 0.9;
 const TOP_GRAB_DROP = 0.8;
 /** Letting go with the jump button pushes off the wall at this speed, m/s. */
 const PUSH_OFF = 1.6;
+/**
+ * At the top she pulls herself over onto the exit, from this far below the top (metres) and
+ * over this long (seconds): the last rungs and the step across, not a jump onto the roof.
+ */
+const STEP_OFF_LIFT = 0.6;
+const STEP_OFF_TIME = 0.6;
 
 type Ladder = Entity & { ladder: LadderDef };
 
@@ -56,7 +62,7 @@ const onLadderLine = (e: Entity, l: LadderDef): boolean =>
 /**
  * Fire escape ladders (ADR-0021). Walking forward into the foot of a ladder, or the interact
  * key at either end, puts the player on it; forward climbs up, back climbs down, at the top
- * she steps off onto the roof, at the bottom onto the street. The jump button lets go. On the
+ * she pulls herself over onto the roof (a mantle), at the bottom steps onto the street. The jump button lets go. On the
  * ladder there is no gravity and no walking; movement skips the climber. Runs after player
  * control (which sets the walk velocity this overrides) and before movement.
  */
@@ -70,7 +76,7 @@ export const ladderSystem: System = {
     for (const p of ctx.world.with("player", "velocity")) {
       if (!p.climb) {
         // No ladder with a body on her shoulder (ADR-0065): both hands are full.
-        if (frozen || p.fall !== undefined || ctx.session.carrying !== null) continue;
+        if (frozen || p.fall !== undefined || p.mantle || ctx.session.carrying !== null) continue;
         // A game saved on a ladder: back on it, where it was.
         const held = all.find((l) => onLadderLine(p, l.ladder));
         if (held) {
@@ -110,9 +116,10 @@ export const ladderSystem: System = {
       const speed = Math.max(-1, Math.min(1, input.moveZ)) * CLIMB_SPEED;
       p.climb.speed = speed;
       const y = p.position.y + speed * ctx.dt;
-      if (speed > 0 && y >= l.top) {
+      if (speed > 0 && y >= l.top - STEP_OFF_LIFT) {
+        // The pull-over plays in movement, as a mantle onto a ledge does.
         letGo(ctx, p, l.key);
-        p.position = { ...l.exit };
+        p.mantle = { from: { x: l.x, y, z: l.z }, to: { ...l.exit }, duration: STEP_OFF_TIME, t: 0 };
         continue;
       }
       if (speed < 0 && y <= l.bottom) {
