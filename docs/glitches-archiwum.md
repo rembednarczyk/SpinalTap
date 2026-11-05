@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-301 Nakładające się kawałki bruku mają różne drapowania (stopnie 1–3 cm, migotanie głębi)
+- Status: naprawione w #275 (5.11, cda5b7a; wspólna siatka drapowania 2,5 m, `drapeY` na powierzchni `surfaceAt`; kontrole `paving-overlap-step`, `paint-under-deck`, `paint-lifted-by-deck` z bazą 0; przy okazji znikają linie wiszące do 20 m nad terenem przy (1055; 162))
+- Ważność: S4 · Zasięg: np. dwa `square`; jaśniejsze i ciemniejsze łaty o prostych krawędziach; drzazga 8 cm przy (435,3; −94,6)
+- Pakiet właściciela: packages/engine (mapcity/ground-plan)
+
 ### G-323 Test `reputation-toasts` na granicy limitu CI: 6,5 s pojedynczo, ok. 20 s pod obciążeniem
 - Status: naprawione w #276 (5.11, af5e862; chód 20 s, dokładnie 1 toast; pod pokryciem 6,5–7,0 s)
 - Ważność: S3 (test; czerwony CI kosztuje cykl) · Zasięg: `packages/app/test/reputation-toasts.test.ts` „gets one toast…”; także `save-crowd-calm` 10,4 s pod obciążeniem. Przyczyna do ustalenia pomiarem, bez podnoszenia limitu (ADR-0046)

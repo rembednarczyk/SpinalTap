@@ -931,11 +931,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: wszędzie, gdzie `drape` (trójkąty do 5 m) odstaje od terenu; dotyczy aut (G-130), postaci i kontroli skanu; na deptaku (127; −55) do 4,5 cm
 - Pakiet właściciela: packages/engine (mapcity/ground-plan) i sim
 
-### G-301 Nakładające się kawałki bruku mają różne drapowania (stopnie 1–3 cm, migotanie głębi)
-- Status: w PR #275 (5.11; wspólna siatka drapowania 2,5 m, `drapeY`, kontrola `paving-overlap-step` 2842 → 0)
-- Ważność: S4 · Zasięg: np. dwa `square`; jaśniejsze i ciemniejsze łaty o prostych krawędziach; drzazga 8 cm przy (435,3; −94,6)
-- Pakiet właściciela: packages/engine (mapcity/ground-plan)
-
 ### G-302 Test kolizji hali Alchemii pomija pionowe ściany
 - Status: zgłoszone (5.11, weryfikator #259)
 - Ważność: S4 (luka w testach) · Zasięg: „makes solid what a body walking round the hall would bump into” liczy tylko powierzchnie niepionowe; przesunięcie zachodniej ściany bryły o 0,3 m do środka przechodzi przez cały zestaw
@@ -1040,6 +1035,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (5.11, weryfikator PR #277)
 - Ważność: S4 · Zasięg: nagrany przebieg `determinism.test.ts`, ticki ok. 1060–1159
 - Pakiet właściciela: packages/sim/src/systems/ai
+
+### G-330 Pozostałości farby przy pomostach po #275
+- Status: zgłoszone (5.11, weryfikator PR #275)
+- Ważność: S4 · Zasięg: przy (2446; 245,8) linia krawędzi przechodzi przez obrys pomostu (3 trójkąty, uskok 0,51 m na 0,38 m, niewidoczne); schody przy (732–735; 151–161) przy moście Zamkowej wchodzą pod pomost do 2,54 m pod jezdnią (tak samo na main; `paint-under-deck` pomija trójkąty przecinające obrys, być może celowo)
+- Pakiet właściciela: packages/engine (mapcity), tools/glitch-scan
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
