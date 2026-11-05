@@ -96,7 +96,9 @@ export class WorldStreamer {
     devices: readonly DeviceDef[] = WORLD_DEVICES,
     metro: readonly MetroStationDef[] = WORLD_METRO,
   ) {
-    this.ground = new GroundField(chunks);
+    // The shafts under the metro's pavilions (ADR-0071) that stand in these chunks.
+    const cuts = metro.flatMap((s) => s.entrances.filter((e) => chunks.some((c) => c.id === e.chunk)).map((e) => e.cut));
+    this.ground = new GroundField(chunks, cuts);
     this.catalog = new StreamCatalog(ids, chunks, devices, metro);
     this.passerbyIds = this.catalog.passerbyIds;
     this.streamedOut = this.state.streamedOut;
