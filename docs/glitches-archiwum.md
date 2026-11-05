@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-336 Pasy gołego podłoża przy Dworcu Autobusowym (T-164)
+- Status: naprawione w #291 (5.11, 5f49f0c; `T-164/plac-przy-dworcu` i `T-164/chodnik-novy`, kurator PRZYJĘTE)
+- Ważność: S4 · Zasięg: pas między parkingiem w175995587 a chodnikiem w227698423 (ok. 70 m²), plac między chodnikiem a ścianą Dworca w66264171 (ok. 250 m²), pas przy ścianie Novy (ok. 105 m²)
+- Pakiet właściciela: tools/osm-import (`ADDED_AREAS`)
+- Test przyjęcia: 0 gołych próbek 0,5 m w prostokątach T-164 poza rabatami
+
 ### G-330 Pozostałości farby przy pomostach po #275
 - Status: naprawione w #290 (5.11, fd3f7ce; linie na końcach mostu na powierzchni, bieg 3 w56965515 na pomoście, `paint-under-deck` z trójkątami na obrysie)
 - Ważność: S4 · Zasięg: przy (2446; 245,8) linia krawędzi przechodzi przez obrys pomostu (3 trójkąty, uskok 0,51 m na 0,38 m, niewidoczne); schody przy (732–735; 151–161) przy moście Zamkowej wchodzą pod pomost do 2,54 m pod jezdnią (tak samo na main; `paint-under-deck` pomija trójkąty przecinające obrys, być może celowo)

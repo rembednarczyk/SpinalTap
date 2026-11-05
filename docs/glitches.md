@@ -1011,12 +1011,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: `corpseOf` przenosi na zwłoki `reported` z nokautu (`bodies.ts:75`), więc patrol, który znajdzie świeże ciało, go nie zgłasza; po wczytaniu dobicie ogłuszonego na oczach patrolu też nie jest przestępstwem, bo `wronged` jest przejściowe, a `offend` w `death-system.ts:72` nie czyta `downed.fought`
 - Pakiet właściciela: packages/sim (bodies, death-system, crime-system)
 
-### G-336 Pasy gołego podłoża przy Dworcu Autobusowym (T-164)
-- Status: w PR #291 (d9c0742); przegląd kuratora 5.11: PRZYJĘTE, czeka na CI
-- Ważność: S4 · Zasięg: pas między parkingiem w175995587 a chodnikiem w227698423 (ok. 70 m²), plac między chodnikiem a ścianą Dworca w66264171 (ok. 250 m²), pas przy ścianie Novy (ok. 105 m²)
-- Pakiet właściciela: tools/osm-import (`ADDED_AREAS`)
-- Test przyjęcia: 0 gołych próbek 0,5 m w prostokątach T-164 poza rabatami
-
 ### G-337 Północny chodnik al. Tysiąclecia bez nawierzchni (T-165)
 - Status: zgłoszone (5.11, kurator, przegląd #285)
 - Ważność: S4 · Zasięg: x ok. 640–790, z ok. 362–383, ok. 670 m² na samym x 705–790; przed halami Bazaru rabaty (nie brukować); także x 764–806 przed frontem Dworca (T-165 pkt 1–2): ok. 136 m² między drogą rowerową w1435832523 a ścieżką w227698420 (x 773–803 rabata, nie brukować) i ok. 50 m² między chodnikiem w1435832518 a drogą rowerową (kostka z wiatami)
