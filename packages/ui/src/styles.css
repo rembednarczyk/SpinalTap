@@ -573,6 +573,7 @@ kbd {
 .sheet__memories { margin: 0; padding-left: 18px; font-size: 15px; }
 .sheet__empty { margin: 0; color: var(--ink-dim); font-style: italic; }
 .sheet__hint { font-size: 13px; color: var(--ink-dim); }
+.sheet__raise { margin-left: 8px; min-width: 32px; min-height: 32px; font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--magenta); cursor: pointer; }
 
 /* Journal */
 .journal { pointer-events: auto; max-height: calc(100vh - 140px); overflow-y: auto; }

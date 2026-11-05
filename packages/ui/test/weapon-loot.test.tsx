@@ -42,6 +42,7 @@ const intents = (): UiIntents => ({
   dropItem: vi.fn(),
   installMod: vi.fn(),
   removeMod: vi.fn(),
+  spendAttributePoint: vi.fn(),
   openPhone: vi.fn(),
   closePhone: vi.fn(),
   readThread: vi.fn(),
