@@ -252,6 +252,21 @@ describe("a hostile reputation narrows the counter instead of closing it (ADR-00
     expect(within(screen.getByTestId("shop-installed")).getByRole("button", { name: "Not for you" }).hasAttribute("disabled")).toBe(true);
   });
 
+  // Decision 5.11 (ADR-0070): the capacity shard is cyberware work, so it greys out with the implants.
+  it("Mori keeps the capacity shard under the counter but sells the stim", () => {
+    mount({ shopId: "clinic", eddies: 5000, reputation: standing({ clinic: -60 }) });
+    expect(screen.getByTestId("shop-basic").textContent).toContain("capacity shard");
+    const shard = screen.getByTestId("stock-capacity_shard");
+    expect(shard.className).toContain("shop__item--locked");
+    expect(within(shard).getByRole("button", { name: "Not for you" }).hasAttribute("disabled")).toBe(true);
+    expect(within(screen.getByTestId("stock-steady_stim")).getByRole("button", { name: /Buy · 105 €\$/ }).hasAttribute("disabled")).toBe(false);
+  });
+
+  it("a wary clinic still sells the shard, dearer", () => {
+    mount({ shopId: "clinic", eddies: 5000, reputation: standing({ clinic: -49 }) });
+    expect(within(screen.getByTestId("stock-capacity_shard")).getByRole("button", { name: /Buy · 563 €\$/ }).hasAttribute("disabled")).toBe(false);
+  });
+
   it("Fumiko's food is all basics: a surcharge, nothing greyed out", () => {
     mount({ shopId: "yatai", reputation: standing({ civilians: -60 }) });
     expect(screen.getByTestId("shop-terms").textContent).toBe("The street fears you · 50% surcharge");
@@ -266,5 +281,10 @@ describe("a hostile reputation narrows the counter instead of closing it (ADR-00
     const smg = screen.getByTestId("stock-hebi_smg");
     expect(within(smg).getByRole("button", { name: "Nie dla ciebie" })).toBeTruthy();
     expect(within(smg).getByTestId("shop-locked-why").textContent).toBe("Pod ladą, dopóki masz wrogą reputację.");
+  });
+
+  it("Mori names the shard in Polish too", () => {
+    mount({ shopId: "clinic", reputation: standing({ clinic: -60 }), settings: { ...createUiStore().getState().settings, locale: "pl" } });
+    expect(screen.getByTestId("shop-basic").textContent).toContain("sharda pojemności");
   });
 });

@@ -258,8 +258,16 @@ describe("shop stock", () => {
     const basics = (shop: ShopId) => SHOPS[shop].stock.filter((e) => offersEntry(e, HOSTILE)).map((e) => e.item);
     expect(basics("oyaji")).toEqual(["9mm", "44", "12g", "556"]);
     expect(basics("yatai")).toEqual(["ramen", "yakitori", "synth_coffee"]);
-    expect(basics("clinic")).toEqual(["medkit", "bandage", "steady_stim", "capacity_shard"]);
+    expect(basics("clinic")).toEqual(["medkit", "bandage", "steady_stim"]);
     expect(SHOPS.oyaji.stock.every((e) => offersEntry(e, shopTerms(-49)))).toBe(true);
+  });
+
+  // ADR-0070, decision 5.11: the shard is cyberware work (it raises the capacity for good), not a
+  // basic like a medkit, so a hostile Mori keeps it under the counter with the implants.
+  it("a hostile clinic keeps the capacity shard under the counter; a wary one sells it dearer", () => {
+    expect(buyStock(state(), "clinic", "capacity_shard", HOSTILE)).toEqual({ ok: false, reason: "refused" });
+    expect(buyStock(state(), "clinic", "capacity_shard", shopTerms(-49))).toMatchObject({ ok: true, price: Math.round(STACKABLE_CATALOG.capacity_shard.value * 1.25) });
+    expect(buyStock(state(), "clinic", "steady_stim", HOSTILE)).toMatchObject({ ok: true, price: Math.round(STACKABLE_CATALOG.steady_stim.value * 1.5) });
   });
 });
 
