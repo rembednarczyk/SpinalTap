@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-307 Kioski metra stoją przy zabytkach: Plac Litewski 3,8 m od upamiętnienia Andrzeja Struga, Brama Krakowska 10,8 m od Bramy w murach i 2,1 m od tablicy Ludomira Michała Rogowskiego
+- Status: naprawione w #279 (5.11, d5c2440; kioski zastąpione pawilonami ponad 80 m od tablic i 25 m od Bramy, T-154)
+- Ważność: S3 · Zasięg: dwie stacje metra; zasłaniają zabytek i stoją w murach Starego Miasta (ADR-0042)
+- Pakiet właściciela: packages/sim (treść `lublin`, stacje metra), przegląd `topography-curator`
+
 ### G-301 Nakładające się kawałki bruku mają różne drapowania (stopnie 1–3 cm, migotanie głębi)
 - Status: naprawione w #275 (5.11, cda5b7a; wspólna siatka drapowania 2,5 m, `drapeY` na powierzchni `surfaceAt`; kontrole `paving-overlap-step`, `paint-under-deck`, `paint-lifted-by-deck` z bazą 0; przy okazji znikają linie wiszące do 20 m nad terenem przy (1055; 162))
 - Ważność: S4 · Zasięg: np. dwa `square`; jaśniejsze i ciemniejsze łaty o prostych krawędziach; drzazga 8 cm przy (435,3; −94,6)

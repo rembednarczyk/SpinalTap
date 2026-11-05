@@ -941,11 +941,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: dobycie i chowanie w przysiadzie (`drawn` 0,50–0,67) przedramię w kolbie 1–2 cm; heroine z rifle w przysiadzie z celowaniem kolba w ramieniu < 1 cm; przy `drawn` 0,5 broń przeskakuje z pleców do rąk w jednej klatce; wejście i wyjście z drabiny lub mantle obraca tors skokowo do 37°; ślizg stopy w przysiadzie z celowaniem 0,07
 - Pakiet właściciela: packages/engine (renderer, two-hand-hold)
 
-### G-307 Kioski metra stoją przy zabytkach: Plac Litewski 3,8 m od upamiętnienia Andrzeja Struga, Brama Krakowska 10,8 m od Bramy w murach i 2,1 m od tablicy Ludomira Michała Rogowskiego
-- Status: w PR #279 (5.11, ADR-0071 etap 2: pawilony w nowych miejscach)
-- Ważność: S3 · Zasięg: dwie stacje metra; zasłaniają zabytek i stoją w murach Starego Miasta (ADR-0042)
-- Pakiet właściciela: packages/sim (treść `lublin`, stacje metra), przegląd `topography-curator`
-
 ### G-309 FPP w połowie drabiny: kadr w całości wypełnia szczebel, dłoni nie widać
 - Status: zgłoszone (5.11, autor poprawek drabin, PR #269)
 - Ważność: S3 · Zasięg: oko ok. 0,3 m za szczeblami; wymaga decyzji o widoku FPP na drabinie
@@ -1022,7 +1017,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, `steerPoint`)
 
 ### G-327 Testy „zapis bez ukrytego stanu” na przechodniach z tłumu nic nie dowodzą
-- Status: poprawka na gałęzi `ccr-ec2c4269-ilh8k8-g327` (009e308, 5.11), PR do otwarcia (GitHub zwracał 500); po scaleniu #277 przejrzeć test `flee-wall`
+- Status: w PR #280 (5.11, 009e308); po scaleniu #277 przejrzeć test `flee-wall`
 - Ważność: S3 (test) · Zasięg: przechodnie z tłumu (bez `key`) nie są w zapisie ani w `stateHash`, więc hash po wczytaniu zgadza się przy dowolnym ukrytym stanie; przejrzeć testy wczytania w `flee-dead-zone`, `flee-wall`, `reputation-tiers` i podobne; porównywać `yaw` i pozycję konkretnego cywila albo używać cywila z `key`
 - Pakiet właściciela: packages/sim (testy)
 
