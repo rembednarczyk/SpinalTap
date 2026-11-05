@@ -179,3 +179,35 @@ describe("the AI's raster on terrain and prisms (ADR-0043, ADR-0025)", () => {
     expect(NAV_CELL).toBe(0.5);
   });
 });
+
+describe("a shaft cut into the ground (ADR-0071 stage 2)", () => {
+  const slope = (x: number, z: number) => 0.05 * x + 0.02 * z;
+  const chunk = { bounds: { minX: 0, maxX: 40, minZ: 0, maxZ: 40 }, terrain: gridOf(0, 0, 5, 9, 9, slope) };
+  const cut = { bounds: { minX: 10, maxX: 17, minZ: 20, maxZ: 22.4 }, floor: -5 };
+  const dug = new GroundField([chunk], [cut]);
+  const whole = new GroundField([chunk]);
+
+  it("lies at its floor inside its bounds and leaves the terrain as it was outside", () => {
+    expect(dug.heightAt(13, 21)).toBeCloseTo(-5, 9);
+    for (const [x, z] of [[9.9, 21], [17.1, 21], [13, 19.9], [13, 22.5], [30, 5]] as const) expect(dug.heightAt(x, z)).toBeCloseTo(whole.heightAt(x, z), 9);
+  });
+
+  it("is no bank to feet beside it, and only the street's own slope counts there", () => {
+    for (const [x, z] of [[9.9, 21], [17.1, 21], [13, 19.9], [13, 22.5]] as const) {
+      expect(dug.steepAt(x, z)).toBe(false);
+      expect(dug.slopeAt(x, z)).toBeCloseTo(whole.slopeAt(x, z), 6);
+    }
+    expect(dug.slopeAt(13, 21)).toBe(0);
+  });
+
+  it("lets a ray through its hole and stops one going into the terrain round it", () => {
+    expect(dug.rayHit({ x: 11, y: -3, z: 21 }, { x: 1, y: 0, z: 0 }, 5)).toBeNull();
+    expect(whole.rayHit({ x: 11, y: -3, z: 21 }, { x: 1, y: 0, z: 0 }, 5)).toBe(0);
+    const t = dug.rayHit({ x: 11, y: -3, z: 21 }, { x: 1, y: 0, z: 0 }, 10);
+    expect(t).toBeCloseTo(6, 4);
+  });
+
+  it("never stands in for a chunk far off", () => {
+    expect(dug.heightAt(60, 21)).toBeCloseTo(whole.heightAt(60, 21), 9);
+  });
+});
