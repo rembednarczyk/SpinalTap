@@ -183,7 +183,7 @@ describe("determinism", () => {
 
   it("matches the recorded golden hash (update deliberately when rules change)", () => {
     const sim = runReplay(1234, script());
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"86840115"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"9d763354"`);
     // Re-recorded for the v18 field (ADR-0066), the v19 version (ADR-0065, no new rule), the v20
     // version (G-171, no new rule), the v21 version (G-174, no new rule), the v22 version (G-178,
     // no new rule) and the v23 reinforcements (G-179: the run's are saved now, the keyed world ends
@@ -202,34 +202,34 @@ describe("determinism", () => {
     // Re-recorded (all of them, "hard" too) for ADR-0069, a new rule: every ganger of the run sees
     // in its type's cone, a crouching player from half as far, and fills a suspicion before the
     // alarm (it turns to her on the first of it) instead of alerting in the step it has a clear line.
-    expect(v17HashOf(sim)).toBe("5a9c018b");
-    expect(v19HashOf(sim)).toBe("22c30879");
-    expect(v20HashOf(sim)).toBe("67241ea5");
-    expect(v21HashOf(sim)).toBe("5810094a");
-    expect(v22HashOf(sim)).toBe("3341d9b7");
-    expect(v23HashOf(sim)).toBe("1b9fcc95");
-    expect(v24HashOf(sim)).toBe("19de5630");
-    expect(v25HashOf(sim)).toBe("9fbb5107");
-    expect(v26HashOf(sim)).toBe("c1c26364");
-    expect(v27HashOf(sim)).toBe("45287876");
+    expect(v17HashOf(sim)).toBe("d4830d20");
+    expect(v19HashOf(sim)).toBe("f9c128b4");
+    expect(v20HashOf(sim)).toBe("5ac09d28");
+    expect(v21HashOf(sim)).toBe("3f560b07");
+    expect(v22HashOf(sim)).toBe("4bc49192");
+    expect(v23HashOf(sim)).toBe("a7c7d458");
+    expect(v24HashOf(sim)).toBe("fe433abd");
+    expect(v25HashOf(sim)).toBe("f34ce692");
+    expect(v26HashOf(sim)).toBe("c8154729");
+    expect(v27HashOf(sim)).toBe("41e3424f");
   });
 
   it("the same run on 'hard' has a golden hash of its own (ADR-0066)", () => {
     const sim = runReplay(1234, hardScript());
     expect(sim.domain.difficulty).toEqual(DIFFICULTY_PRESETS.hard);
     expect(hashOf(sim)).toBe(hashOf(runReplay(1234, hardScript())));
-    expect(hashOf(sim)).toMatchInlineSnapshot(`"146d8e34"`);
+    expect(hashOf(sim)).toMatchInlineSnapshot(`"bff8cbcd"`);
     // Not just the field: without it the run still ends elsewhere than on "normal".
-    expect(v17HashOf(sim)).not.toBe("5a9c018b");
-    expect(v19HashOf(sim)).toBe("f62f14e2");
-    expect(v20HashOf(sim)).toBe("b3e4022e");
-    expect(v21HashOf(sim)).toBe("634e023f");
-    expect(v22HashOf(sim)).toBe("e7760674");
-    expect(v23HashOf(sim)).toBe("1bbedee8");
-    expect(v24HashOf(sim)).toBe("ef2db45d");
-    expect(v25HashOf(sim)).toBe("5ffa21ae");
-    expect(v26HashOf(sim)).toBe("98a62e95");
-    expect(v27HashOf(sim)).toBe("e6f92f9b");
+    expect(v17HashOf(sim)).not.toBe("d4830d20");
+    expect(v19HashOf(sim)).toBe("ebaf4525");
+    expect(v20HashOf(sim)).toBe("1685ef39");
+    expect(v21HashOf(sim)).toBe("7e038b84");
+    expect(v22HashOf(sim)).toBe("1cefd41f");
+    expect(v23HashOf(sim)).toBe("b770c8fd");
+    expect(v24HashOf(sim)).toBe("c86b30b0");
+    expect(v25HashOf(sim)).toBe("bb917473");
+    expect(v26HashOf(sim)).toBe("740f89d0");
+    expect(v27HashOf(sim)).toBe("d3bc9a3a");
   });
 
   it("the crowd of residents (ADR-0041) and the traffic (ADR-0050) leave the golden run as it was, at every density", () => {
@@ -253,7 +253,7 @@ describe("determinism", () => {
     // Krakowskie Przedmieście), and for the car wash moved off Plac Łokietka into the yard behind
     // it; the v14 door states are left out too. Re-recorded for ADR-0069: the gangers of the run see
     // in a cone and fill a suspicion before the alarm.
-    expect(stateHash({ ...rest, version: 12, domain } as unknown as SaveSnapshot)).toBe("14ee0143");
+    expect(stateHash({ ...rest, version: 12, domain } as unknown as SaveSnapshot)).toBe("7160875a");
   });
 
   it("a loaded snapshot continues exactly like the original run", () => {
