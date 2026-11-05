@@ -1050,6 +1050,11 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: ziarno 7, 1002001, gracz 2 m, ok. (309; −99,5): ściana tuż przy końcu sondy 2,5 m, a objazd „na wprost” prowadzi z powrotem obok gracza (242 skoki); ziarno 3, 1002001/1002003, gracz 1 m, ok. (326; −29): `fleeStep` biegnie na zablokowany punkt 6 m dalej (`steerPoint` oddaje cel, objazd pusty), na zmianę z objazdem przy +π/2 (183/186 skoków)
 - Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, `fleeStep`, `bendsBack`)
 
+### G-344 Most południowy Mełgiewskiej (w50733068): stopień do 1,65 m między jezdnią a chodnikiem
+- Status: zgłoszone (5.11, naprawiacz G-340)
+- Ważność: S3 · Zasięg: jezdnia opada wzdłuż mostu o ok. 2,2 m, pomost chodnika prawie poziomy; z jezdni na chodnik nie da się wejść, po G-340 w rysowaniu stoi tam szara ściana; w Lublinie oba na jednym poziomie. Docelowo wspólny pomost dla obu dróg mostu (por. G-339, T-166)
+- Pakiet właściciela: tools/osm-import (pomosty mostów), packages/sim (content/lublin decks)
+
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
 - Ważność: S3 (test, nie gra); priorytet średni, bo czerwony CI kosztuje cykl
