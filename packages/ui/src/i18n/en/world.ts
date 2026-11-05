@@ -97,6 +97,7 @@ export const enWorld = {
   // Dialogue: the interface around the ink text.
   "dialogue.reply": "Reply",
   "dialogue.log": "Conversation",
+  "dialogue.history": "Earlier lines",
   "dialogue.end": "End conversation",
   "dialogue.tone.main": "main story",
   "dialogue.tone.optional": "question",

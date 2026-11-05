@@ -229,9 +229,8 @@ describe("walking the steps from the viaduct of Zamkowa (G-255)", () => {
   it("hangs no slab of the viaduct over the flight or its landings: where the flight is the ground, no deck is over it (G-274)", () => {
     const over: string[] = [];
     for (let x = 724; x <= 738; x += 0.25) {
-      // Off the line z = 160 itself: there `GroundField` takes the decks of the chunk south of it
-      // only, and the viaduct's piece north of it is missing (a seam of main, reported apart).
-      for (let z = 155.125; z <= 167; z += 0.25) {
+      // On the line z = 160 too, the seam of two chunks: there the ground has both chunks' decks (G-278).
+      for (let z = 155; z <= 167; z += 0.25) {
         if (sim.streamer.ground.onFlight(x, z) && bridgeDeckAt(x, z) !== null) over.push(`(${x}, ${z})`);
       }
     }

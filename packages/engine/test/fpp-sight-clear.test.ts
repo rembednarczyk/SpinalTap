@@ -8,7 +8,7 @@ import { ToonMaterials } from "../src/npr/toon-material";
 import { ModelLibrary } from "../src/renderer/model-library";
 import { ViewWeapon } from "../src/renderer/view-weapon";
 import { WeaponMounts } from "../src/renderer/weapon-mount";
-import { weaponUrl } from "./weapon-files";
+import { allWeaponUrls } from "./weapon-files";
 
 /** Half angle of the circle round the crosshair that the FPP weapon must leave free (degrees). */
 const SIGHT_CIRCLE = 3;
@@ -20,7 +20,7 @@ const fppRig = async (look: WeaponLook, model: boolean) => {
   const rig = new CameraRig(scene, materials, () => false);
   rig.setHeldWeapon(look);
   if (model) {
-    const view = new ViewWeapon(new WeaponMounts(new ModelLibrary(scene, materials), { pistol: weaponUrl("pistol"), smg: weaponUrl("smg") }), rig);
+    const view = new ViewWeapon(new WeaponMounts(new ModelLibrary(scene, materials), allWeaponUrls()), rig);
     view.show(look);
     await vi.waitFor(() => expect(scene.getMeshByName("vm-gun")?.isEnabled()).toBe(false));
   }
