@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-330 Pozostałości farby przy pomostach po #275
+- Status: naprawione w #290 (5.11, fd3f7ce; linie na końcach mostu na powierzchni, bieg 3 w56965515 na pomoście, `paint-under-deck` z trójkątami na obrysie)
+- Ważność: S4 · Zasięg: przy (2446; 245,8) linia krawędzi przechodzi przez obrys pomostu (3 trójkąty, uskok 0,51 m na 0,38 m, niewidoczne); schody przy (732–735; 151–161) przy moście Zamkowej wchodzą pod pomost do 2,54 m pod jezdnią (tak samo na main; `paint-under-deck` pomija trójkąty przecinające obrys, być może celowo)
+- Pakiet właściciela: packages/engine (mapcity), tools/glitch-scan
+
 ### G-310 Dłonie nie trafiają w szczeble: faza rąk 3,4 rad/m (cykl na 1,85 m) przy szczeblach co 0,3 m
 - Status: naprawione w #289 (5.11, 2b87fc7; dłonie trzymają szczeble, faza z wysokości, `CLIMB_SPEED` 1,5 m/s)
 - Ważność: S3 · Zasięg: ręce zostają za ciałem i ślizgają się; faza niezwiązana z wysokością; przy 2,2 m/s pełne tempo dałoby ok. 3,7 cyklu/s, więc trzeba zmienić tempo albo prędkość wspinania

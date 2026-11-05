@@ -996,11 +996,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: nagrany przebieg `determinism.test.ts`, ticki ok. 1060–1159
 - Pakiet właściciela: packages/sim/src/systems/ai
 
-### G-330 Pozostałości farby przy pomostach po #275
-- Status: w PR #290, kurator PRZYJĘTE (5.11), czeka na CI
-- Ważność: S4 · Zasięg: przy (2446; 245,8) linia krawędzi przechodzi przez obrys pomostu (3 trójkąty, uskok 0,51 m na 0,38 m, niewidoczne); schody przy (732–735; 151–161) przy moście Zamkowej wchodzą pod pomost do 2,54 m pod jezdnią (tak samo na main; `paint-under-deck` pomija trójkąty przecinające obrys, być może celowo)
-- Pakiet właściciela: packages/engine (mapcity), tools/glitch-scan
-
 ### G-331 Deszcz pada pod dachem pawilonu metra i w hali biletowej
 - Status: zgłoszone (5.11, autor ADR-0071 etap 2, PR #279)
 - Ważność: S4 · Zasięg: wszystkie wejścia metra (widać na zrzutach schodów `shots/metro2/`); do etapu 3 ADR-0071 albo osobno
