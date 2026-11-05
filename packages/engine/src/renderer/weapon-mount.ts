@@ -2,18 +2,18 @@ import { Quaternion, TransformNode, Vector3 } from "../babylon";
 import type { WeaponLook } from "@seki/core";
 import type { ModelInstance, ModelLibrary } from "./model-library";
 
-export type WeaponKind = "pistol" | "smg";
+export type WeaponKind = "pistol" | "revolver" | "smg" | "shotgun" | "rifle";
 
 /**
  * Weapon model and size for a look, in hand and in the FPP viewmodel alike; melee weapons are
- * simple shapes for now.
+ * simple shapes for now. Every gun has its own file (G-282); the DMR shares the rifle's look.
  */
 export const WEAPON_MODEL: Readonly<Record<WeaponLook, { readonly kind: WeaponKind | null; readonly scale: number }>> = {
   pistol: { kind: "pistol", scale: 1 },
-  revolver: { kind: "pistol", scale: 1.08 },
+  revolver: { kind: "revolver", scale: 1 },
   smg: { kind: "smg", scale: 1 },
-  shotgun: { kind: "smg", scale: 1.35 },
-  rifle: { kind: "smg", scale: 1.5 },
+  shotgun: { kind: "shotgun", scale: 1 },
+  rifle: { kind: "rifle", scale: 1 },
   baton: { kind: null, scale: 1 },
   blade: { kind: null, scale: 1 },
 };
@@ -22,14 +22,15 @@ export const WEAPON_MODEL: Readonly<Record<WeaponLook, { readonly kind: WeaponKi
 export type WeaponManifest = Partial<Record<WeaponKind, string>>;
 
 /**
- * Weapon models are authored lying along X (muzzle towards `MUZZLE_X`), top up along Y, and are
- * centred on their bounding box. A mount turns them into the frame of what holds them.
+ * Weapon files lie along X with the muzzle at +X and the top up along Y, centred on their bounding
+ * box (tools/obj2glb.py). The glTF loader's root turns the right-handed file into Babylon's frame
+ * by mirroring X, so under the root the muzzle points to -X. A mount turns that into the frame of
+ * what holds the gun.
  */
-const MUZZLE_X = 1;
+const MUZZLE_X = -1;
 
-/** Rotation that takes the model's X (barrel) and Y (top) onto `barrel` and `top`. */
-const orient = (barrel: Vector3, top: Vector3): Quaternion =>
-  Quaternion.RotationQuaternionFromAxis(barrel, top, Vector3.Cross(barrel, top));
+/** Rotation that takes the model's +X and +Y (top) onto `x` and `top`; the muzzle, at `MUZZLE_X`, follows. */
+const orient = (x: Vector3, top: Vector3): Quaternion => Quaternion.RotationQuaternionFromAxis(x, top, Vector3.Cross(x, top));
 
 /** Rig forearm / hand frame: the barrel runs along -Y (elbow to fingers), the top faces +Z. */
 const IN_HAND = orient(new Vector3(0, -MUZZLE_X, 0), new Vector3(0, 0, 1));
@@ -38,11 +39,21 @@ const IN_VIEW = orient(new Vector3(0, 0, MUZZLE_X), new Vector3(0, 1, 0));
 
 export type MountSpace = "hand" | "view";
 
-/** Where the model's centre sits relative to the holding point (grip in the hand). */
-const OFFSET: Record<MountSpace, Vector3> = {
-  hand: new Vector3(0, -0.055, 0.03),
-  view: new Vector3(0, 0.035, 0.07),
+/**
+ * Where the hand closes on each model (G-282): the front of the grip, under the back of the trigger
+ * guard, in the file's frame (metres at file size, muzzle at +X).
+ * The model hangs from this point, so the hand holds the grip of every gun at any size.
+ */
+export const GRIP: Readonly<Record<WeaponKind, { readonly x: number; readonly y: number }>> = {
+  pistol: { x: -0.055, y: -0.03 },
+  revolver: { x: -0.075, y: -0.03 },
+  smg: { x: -0.115, y: -0.02 },
+  shotgun: { x: -0.205, y: -0.03 },
+  rifle: { x: -0.115, y: -0.015 },
 };
+
+/** The grip sits this much further back and lower in the viewmodel (file frame), where the hand is a ball. */
+const VIEW_SHIFT = { x: -0.015, y: -0.005 };
 
 /**
  * Loads weapon models once and mounts instances under hands, holsters and the viewmodel. The
@@ -85,11 +96,16 @@ export class WeaponMounts {
       model.dispose();
       return null;
     }
+    // The pivot sits on the holding point and carries the turn and the size; the grip node under
+    // it moves the model so that its grip is on that point.
     const pivot = new TransformNode(`${name}-pivot`, parent.getScene());
     pivot.parent = parent;
     pivot.rotationQuaternion = (space === "hand" ? IN_HAND : IN_VIEW).clone();
-    pivot.position.copyFrom(OFFSET[space]);
-    model.root.parent = pivot;
+    const grip = new TransformNode(`${name}-grip`, parent.getScene());
+    grip.parent = pivot;
+    const shift = space === "view" ? VIEW_SHIFT : { x: 0, y: 0 };
+    grip.position.set(-MUZZLE_X * (GRIP[kind].x + shift.x), -(GRIP[kind].y + shift.y), 0);
+    model.root.parent = grip;
     for (const m of model.meshes) m.isPickable = false;
     return pivot;
   }

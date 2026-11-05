@@ -1,5 +1,5 @@
 {
-  "about": "Packs and models baked into packages/app/public/city/city-props.glb, street-props.glb, market-props.glb, door-props.glb, vehicle-props.glb, drone-props.glb, crowd-props.glb, room-props.glb and alchemia-props.glb: CC0 (ADR-0058) and CC-BY 4.0, credited in packages/ui/src/credits/credits.ts (ADR-0063). tools/assets/fetch.mjs downloads them and checks sha256; the zips, unpacked packs and source models are not committed.",
+  "about": "Packs and models baked into packages/app/public/city/city-props.glb, street-props.glb, market-props.glb, door-props.glb, vehicle-props.glb, drone-props.glb, crowd-props.glb, room-props.glb and alchemia-props.glb, and the guns of packages/app/public/weapons: CC0 (ADR-0058) and CC-BY 4.0, credited in packages/ui/src/credits/credits.ts (ADR-0063). tools/assets/fetch.mjs downloads them and checks sha256; the zips, unpacked packs and source models are not committed.",
   "sources": [
     {
       "id": "kenney-modular-buildings",
@@ -26,6 +26,19 @@
       "sha256": "19201cbcb0d90080dfc33b54f5b4be2089de927c2a23274180798e7166d6b6ca",
       "unzip": "x",
       "used": ["detail-awning-wide", "detail-awning-small"]
+    },
+    {
+      "id": "quaternius-ultimate-gun-pack",
+      "title": "Ultimate Gun Pack",
+      "author": "Quaternius (quaternius.com)",
+      "page": "https://opengameart.org/content/ultimate-gun-pack",
+      "license": "CC0",
+      "licenseQuote": "CC0 (strona paczki na OpenGameArt i https://quaternius.com/license.html, przegląd w docs/assets-research.md §3); zip nie ma pliku licencji",
+      "url": "https://opengameart.org/sites/default/files/ultimate_gun_pack_by_quaternius.zip",
+      "file": "ultimate-gun-pack.zip",
+      "sha256": "6bbae4cd42a520bd2ed95881394293e90804a63abdaf121e3b55fa08b7311737",
+      "unzip": "x",
+      "used": ["Pistol_6", "Revolver_3", "SubmachineGun_1", "Shotgun_ShortStock", "AssaultRifle2_2"]
     },
     {
       "id": "quaternius-cyberpunk-kit",
