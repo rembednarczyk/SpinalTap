@@ -83,13 +83,15 @@ export class StreamCatalog {
       list.push(t);
       this.byKey.set(def.key, t);
     }
-    // Metro platforms (ADR-0034) after the devices, so every id above stays what it was.
+    // Metro entrances (ADR-0071) after the devices, so every id above stays what it was.
     for (const station of metro) {
-      const list = this.content.get(station.chunk);
-      if (!list) continue;
-      for (const make of metroPieces(station)) {
-        const id = ids.take();
-        list.push({ id, chunk: station.chunk, key: null, make: () => make(id) });
+      for (const entrance of station.entrances) {
+        const list = this.content.get(entrance.chunk);
+        if (!list) continue;
+        for (const make of metroPieces(station.id, entrance)) {
+          const id = ids.take();
+          list.push({ id, chunk: entrance.chunk, key: null, make: () => make(id) });
+        }
       }
     }
     // Passers-by (ADR-0040) last, so every id above stays what it was.

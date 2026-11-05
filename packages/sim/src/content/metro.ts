@@ -1,90 +1,78 @@
-import { METRO_STATION_IDS, type MetroStationId, type Vec3, type ViewDescriptor } from "@seki/core";
-import { type StaticProp, placeAt, v } from "./builders";
-import { againstWall } from "./lublin/places";
-import { DOCKS_PLACE } from "./lublin/sites";
-import { groundY } from "./lublin/terrain";
+import { METRO_STATION_IDS, type MetroStationId, type Vec3 } from "@seki/core";
+import type { GroundCut } from "../world/ground";
+import type { Rect } from "./builders";
+import { type Pavilion, type PavilionSpot, pavilion, pavilionChunk } from "./metro-pavilion";
+
 /** District ids as world-map.ts names them (kept local: world-map imports this table). */
 type DistrictId = "shinsekai-7" | "kanal" | "targ" | "doki";
 
 /**
- * Metro platforms (ADR-0034, moved into Lublin by ADR-0045): one per district, each a ticket
- * kiosk against a facade with a canopy over the stairs down, and the point where a rider comes
- * up again. Kept apart from the district tables (one entry in world-map.ts hooks them up), like
- * the devices of wave 1. The kiosk is the only solid, everything else is drawn.
+ * The metro's stations (ADR-0034, moved into Lublin by ADR-0045, entrances by ADR-0071 stage 2):
+ * one per district, each with one or two entrances. An entrance is a pavilion on the street with
+ * stairs down to a hall 2.7 m lower and the ticket machine there (`metro-pavilion.ts`); a ride
+ * ends in the hall of the destination's first entrance. Kept apart from the district tables (one
+ * entry in world-map.ts hooks them up), like the devices of wave 1.
  */
+export interface MetroEntranceDef extends Pavilion {
+  readonly label: "A" | "B";
+  /** Lublin's name of the place, the same in every language. */
+  readonly name: string;
+  readonly spot: PavilionSpot;
+  /** The map chunk the pavilion stands in: its blocks stream in with it. */
+  readonly chunk: string;
+}
+
 export interface MetroStationDef {
   readonly id: MetroStationId;
   readonly name: string;
   readonly district: DistrictId;
-  readonly chunk: string;
-  /** Centre of the kiosk's foot; it faces `yaw` (0 faces +Z), its back to the wall. */
-  readonly kiosk: Vec3;
-  readonly yaw: number;
-  /** Where a rider comes up, and the way they face. */
+  /** The station on the map and the line: between its entrances, over the platform-to-be. */
+  readonly node: { readonly x: number; readonly z: number };
+  readonly entrances: readonly [MetroEntranceDef, ...MetroEntranceDef[]];
+  /** Where a rider comes up (entrance A's hall), and the way they face. */
   readonly arrival: Vec3;
   readonly arrivalYaw: number;
-  /** The drawn platform: canopy, the stairwell's edge, a sign. */
-  readonly props: readonly StaticProp[];
 }
 
-/** The kiosk: 0.8 m wide, 0.6 m deep, as tall as a person. */
-export const KIOSK_SIZE: Vec3 = v(0.8, 1.9, 0.6);
-
-/** The ticket can be bought this close to the kiosk (horizontally). */
+/** The ticket can be bought this close to the machine (horizontally). */
 export const KIOSK_REACH = 2.2;
 
-export const kioskView: ViewDescriptor = { kind: "block", size: KIOSK_SIZE, material: "glass" };
+const entrance = (label: "A" | "B", name: string, spot: PavilionSpot): MetroEntranceDef => ({ label, name, spot, chunk: pavilionChunk(spot.x, spot.z), ...pavilion(spot) });
+
+const station = (id: MetroStationId, name: string, district: DistrictId, node: { x: number; z: number }, entrances: readonly [MetroEntranceDef, ...MetroEntranceDef[]]): MetroStationDef => ({
+  id,
+  name,
+  district,
+  node,
+  entrances,
+  arrival: entrances[0].arrival,
+  arrivalYaw: entrances[0].arrivalYaw,
+});
 
 /**
- * A platform against the facade nearest to (x, z) (ADR-0045): the kiosk with its back to the
- * wall, the canopy over the stairs down beside it (to the kiosk's right), the rider coming up in
- * front of it. The canopy and the stairwell's edge are drawn only.
+ * The entrances of ADR-0071 variant A with the places of the topography curator's review (5.11),
+ * moved where the drawn map asks for it (stage 2): each one's long side, its opening and why.
  */
-const station = (id: MetroStationId, name: string, district: DistrictId, chunk: string, x: number, z: number, sign?: string): MetroStationDef => {
-  const wall = againstWall(x, z, 0.36);
-  const yaw = wall.yaw;
-  const fx = Math.sin(yaw);
-  const fz = Math.cos(yaw);
-  // The kiosk's right, seen from the street: the facing turned a quarter clockwise on the map.
-  const rx = fz;
-  const rz = -fx;
-  const k = wall.at;
-  const along = Math.abs(fx) > Math.abs(fz) ? "z" : "x";
-  const canopy = v(along === "x" ? 4.4 : 2, 0.15, along === "x" ? 2 : 4.4);
-  const edge = v(along === "x" ? 2.6 : 1.6, 0.04, along === "x" ? 1.6 : 2.6);
-  const props: StaticProp[] = [
-    // Over the stairs down: high enough to walk under.
-    { center: v(k.x + rx * 2.2 + fx * 0.65, k.y + 2.9, k.z + rz * 2.2 + fz * 0.65), view: { kind: "block", size: canopy, material: "glass" }, solid: false },
-    // The stairwell's edge on the pavement, flush with the ground.
-    { center: v(k.x + rx * 3.5 + fx * 0.55, k.y + 0.02, k.z + rz * 3.5 + fz * 0.55), view: { kind: "block", size: edge, material: "metal" }, solid: false },
-  ];
-  if (sign) {
-    const facing = along === "x" ? (fz > 0 ? "z+" : "z-") : fx > 0 ? "x+" : "x-";
-    props.push({ center: v(k.x - rx * 1.6 - fx * 0.2, k.y + 3.6, k.z - rz * 1.6 - fz * 0.2), view: { kind: "neon", size: along === "x" ? v(2.4, 0.6, 0.12) : v(0.12, 0.6, 2.4), color: "#36c5ff", label: sign, facing }, solid: false });
-  }
-  const ax = k.x + fx * 1.5;
-  const az = k.z + fz * 1.5;
-  return { id, name, district, chunk, kiosk: k, yaw, arrival: v(ax, groundY(ax, az), az), arrivalYaw: yaw, props };
-};
-
-/** The docks' platform stays where the set piece had it: the yard's south edge by its wall. */
-const docksStation = (): MetroStationDef => {
-  const local = (x: number, y: number, z: number) => placeAt(DOCKS_PLACE, v(x, y, z));
-  const props: StaticProp[] = [
-    { center: local(-33 + 2.2, 2.9, 91.2 + 1.0), view: { kind: "block", size: v(4.4, 0.15, 2.0), material: "glass" }, solid: false },
-    { center: local(-33 + 2.2 * 1.6, 0.02, 91.2 + 0.9), view: { kind: "block", size: v(2.6, 0.04, 1.6), material: "metal" }, solid: false },
-  ];
-  return { id: "doki", name: "Nabrzeże Bystrzycy", district: "doki", chunk: "nabrzeze-1-1", kiosk: local(-33, 0, 91.55), yaw: 0, arrival: local(-33, 0, 92.9), arrivalYaw: Math.PI / 2, props };
-};
-
 export const METRO_STATIONS: readonly MetroStationDef[] = [
-  // Plac Litewski: against the house on the corner of the square and the deptak.
-  station("shinsekai", "Plac Litewski", "shinsekai-7", "krakowskie-1-0", 158, -58.5, "METRO"),
-  // Brama Krakowska: on Bramowa, inside the gate, on the Old Town's side.
-  station("kanal", "Brama Krakowska", "kanal", "stare-miasto-0-0", 492, -80, "METRO"),
-  // Plac Zamkowy: against the houses on the west side of the square, by the market.
-  station("targ", "Plac Zamkowy", "targ", "podzamcze-0-0", 717.5, 296, "METRO"),
-  docksStation(),
+  // Plac Litewski: the square's east part, on the lawn south of the UMCS weather station (w633015047): the long side
+  // east-west, so the station's garden keeps 1.5 m; the opening east, to the crossing of the square's paths.
+  station("shinsekai", "Plac Litewski", "shinsekai-7", { x: 74, z: 16.9 }, [entrance("A", "Plac Litewski", { x: 74, z: 16.9, along: "x", opens: 1 })]),
+  // Brama Krakowska: the node on Lubartowska's axis between its two entrances. A on Plac Łokietka west of the
+  // carriageway as drawn (Królewska and Lubartowska meet 11 m wide there), along it, open north to the deptak;
+  // B on the car park before Alchemia, 3 m off the archaeological site (w1559354344), open east to Lubartowska.
+  station("kanal", "Brama Krakowska", "kanal", { x: 442, z: -40 }, [
+    entrance("A", "Plac Łokietka", { x: 433, z: -107, along: "z", opens: 1 }),
+    entrance("B", "Alchemia", { x: 428, z: 28, along: "x", opens: 1 }),
+  ]),
+  // Plac Zamkowy: the node on Aleja Tysiąclecia. A on the square's car park by the west houses, open north to
+  // their pavement; B between the Dworzec Autobusowy and the avenue, open south to the avenue's path.
+  station("targ", "Plac Zamkowy", "targ", { x: 740, z: 335 }, [
+    entrance("A", "Plac Zamkowy", { x: 722, z: 286, along: "z", opens: 1 }),
+    entrance("B", "Dworzec Autobusowy", { x: 754, z: 379, along: "z", opens: -1 }),
+  ]),
+  // Nabrzeże Bystrzycy: outside the Tessen yard, its back to the yard's south wall (the old kiosk stood in the
+  // 2.8 m between that wall and the warehouse), open east to the yard's gate.
+  station("doki", "Nabrzeże Bystrzycy", "doki", { x: 2527, z: 388 }, [entrance("A", "Nabrzeże", { x: 2527, z: 388, along: "x", opens: 1 })]),
 ];
 
 export const metroStation = (id: MetroStationId): MetroStationDef => {
@@ -93,9 +81,18 @@ export const metroStation = (id: MetroStationId): MetroStationDef => {
   return s;
 };
 
-/** The station whose kiosk is within reach of `p` (and on its level), or null. */
+/** Every entrance with its station. */
+export const METRO_ENTRANCES: readonly (MetroEntranceDef & { readonly station: MetroStationId })[] = METRO_STATIONS.flatMap((s) => s.entrances.map((e) => ({ ...e, station: s.id })));
+
+/** The pavilions' outlines: crowd routes, traffic and the map's furniture keep off them. */
+export const METRO_FOOTPRINTS: readonly Rect[] = METRO_ENTRANCES.map((e) => e.outline);
+
+/** The ground dug out under the pavilions' stairs and halls (`GroundField`, and the renderer's terrain and paving). */
+export const METRO_CUTS: readonly GroundCut[] = METRO_ENTRANCES.map((e) => e.cut);
+
+/** The station whose ticket machine is within reach of `p` (and on its level), or null. */
 export const kioskAt = (p: Vec3, stations: readonly MetroStationDef[] = METRO_STATIONS): MetroStationDef | null =>
-  stations.find((s) => Math.hypot(p.x - s.kiosk.x, p.z - s.kiosk.z) <= KIOSK_REACH && Math.abs(p.y - s.kiosk.y) <= 1.6) ?? null;
+  stations.find((s) => s.entrances.some((e) => Math.hypot(p.x - e.machine.x, p.z - e.machine.z) <= KIOSK_REACH && Math.abs(p.y - e.machine.y) <= 1.6)) ?? null;
 
 // ---- the line on the map (ADR-0071 stage 1) ----
 
@@ -103,7 +100,7 @@ export const kioskAt = (p: Vec3, stations: readonly MetroStationDef[] = METRO_ST
  * The metro line as the map draws it (ADR-0071 stage 1): the tunnel between the stations and the
  * stations the city may get later. Map data only, no geometry and no rules: the simulation never
  * reads it, so it changes neither the state hash nor the save. Points are world metres (x east,
- * z north), the stations themselves come from `METRO_STATIONS`.
+ * z north), the stations themselves are the `node`s of `METRO_STATIONS`.
  */
 export interface MetroMapPoint {
   readonly x: number;
@@ -118,8 +115,9 @@ export interface MetroTunnelDef {
 }
 
 /**
- * The tunnel (ADR-0071, "Przebieg tunelu"): under Krakowskie Przedmieście to the Bramowa kiosk,
- * back to Plac Łokietka and north under Lubartowska past Alchemia, down the valley of the
+ * The tunnel (ADR-0071, "Przebieg tunelu"): from Plac Litewski down its path to Krakowskie
+ * Przedmieście, under the deptak to Plac Łokietka and north under Lubartowska to the station
+ * between its two entrances (stage 2, T-149), on past Alchemia, down the valley of the
  * Czechówka under Aleja Tysiąclecia to Plac Zamkowy, then east under the avenue and
  * ul. Kalinowszczyzna, over the Bystrzyca by the Lutosławski bridge (w834402001) to Nabrzeże. It
  * keeps off the Old Town's hill with its cellars, off the castle hill and at least 39 m off the Old
@@ -127,11 +125,11 @@ export interface MetroTunnelDef {
  * topography curator's review of ADR-0071 (T-150).
  */
 export const METRO_TUNNEL: readonly MetroTunnelDef[] = [
-  { from: "shinsekai", to: "kanal", via: [{ x: 240, z: -66 }, { x: 342, z: -89 }, { x: 443, z: -94 }] },
+  { from: "shinsekai", to: "kanal", via: [{ x: 78, z: -15 }, { x: 88, z: -60 }, { x: 240, z: -66 }, { x: 342, z: -89 }, { x: 443, z: -94 }] },
   {
     from: "kanal",
     to: "targ",
-    via: [{ x: 443, z: -90 }, { x: 442, z: -20 }, { x: 447, z: 16 }, { x: 460, z: 56 }, { x: 502, z: 160 }, { x: 550, z: 281 }, { x: 585, z: 362 }, { x: 680, z: 352 }],
+    via: [{ x: 442, z: -20 }, { x: 447, z: 16 }, { x: 460, z: 56 }, { x: 502, z: 160 }, { x: 550, z: 281 }, { x: 585, z: 362 }, { x: 680, z: 352 }],
   },
   {
     from: "targ",
@@ -173,9 +171,9 @@ export interface MetroPlannedDef {
 /** The possible stations of ADR-0071, with the places of the topography curator's review (T-151…T-153). */
 export const METRO_PLANNED: readonly MetroPlannedDef[] = [
   // Ogród Saski: the line carried on west along Krakowskie and Aleje Racławickie, under the avenue on the park's south edge (G-315).
-  { id: "ogrod-saski", name: "Ogród Saski", from: "shinsekai", at: { x: -630, z: -84 }, via: [{ x: 20, z: -59 }, { x: -242, z: -67 }, { x: -480, z: -88 }] },
-  // Lublin Główny: Plac Dworcowy between the railway station and the Dworzec Metropolitalny, a branch out through the gate as the
-  // tunnel runs, then from Plac Łokietka by Kozia and
+  { id: "ogrod-saski", name: "Ogród Saski", from: "shinsekai", at: { x: -630, z: -84 }, via: [{ x: 78, z: -15 }, { x: 50, z: -57 }, { x: 20, z: -59 }, { x: -242, z: -67 }, { x: -480, z: -88 }] },
+  // Lublin Główny: Plac Dworcowy between the railway station and the Dworzec Metropolitalny, a branch south from the
+  // station under Lubartowska to Plac Łokietka, then by Kozia and
   // Bernardyńska, clear of St Peter's church (G-315); schematic south of the imported city.
   {
     id: "lublin-glowny",

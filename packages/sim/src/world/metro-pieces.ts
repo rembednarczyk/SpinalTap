@@ -1,26 +1,30 @@
-import type { EntityId } from "@seki/core";
-import { KIOSK_SIZE, type MetroStationDef, kioskView } from "../content/metro";
+import type { EntityId, MetroStationId } from "@seki/core";
+import type { MetroEntranceDef } from "../content/metro";
 import { aabbFromCenter } from "./collision";
 import type { Entity } from "./components";
 import { propEntity } from "./factory";
 
-/** Makers of a metro platform's entities (ADR-0034): its props and the kiosk, unkeyed content. */
-export const metroPieces = (station: MetroStationDef): ((id: EntityId) => Entity)[] => [
-  ...station.props.map((prop) => (id: EntityId) => propEntity(id, prop, station.chunk)),
+/**
+ * Makers of a metro entrance's entities (ADR-0071 stage 2): the pavilion's blocks and the ticket
+ * machine in its hall, unkeyed content of the entrance's chunk.
+ */
+export const metroPieces = (station: MetroStationId, entrance: MetroEntranceDef): ((id: EntityId) => Entity)[] => [
+  ...entrance.props.map((prop) => (id: EntityId) => propEntity(id, prop, entrance.chunk)),
   (id: EntityId): Entity => {
-    const centre = { x: station.kiosk.x, y: station.kiosk.y + KIOSK_SIZE.y / 2, z: station.kiosk.z };
+    const size = entrance.machineSize;
+    const centre = { x: entrance.machine.x, y: entrance.machine.y + size.y / 2, z: entrance.machine.z };
     return {
       id,
-      chunk: station.chunk,
+      chunk: entrance.chunk,
       position: centre,
       prevPosition: centre,
-      yaw: station.yaw,
-      prevYaw: station.yaw,
+      yaw: entrance.machineYaw,
+      prevYaw: entrance.machineYaw,
       pitch: 0,
-      view: kioskView,
-      solid: aabbFromCenter(centre, KIOSK_SIZE),
-      // Centred at chest height: the interaction's height check keeps it to the ground level.
-      interactable: { kind: "metro", station: station.id, dialogueId: `metro_${station.id}`, prompt: "prompt.metro", radius: 1.8 },
+      view: { kind: "block", size, material: "metal", interior: true },
+      solid: aabbFromCenter(centre, size),
+      // Centred at chest height: the interaction's height check keeps it to the hall.
+      interactable: { kind: "metro", station, dialogueId: `metro_${station}`, prompt: "prompt.metro", radius: 1.8 },
     };
   },
 ];

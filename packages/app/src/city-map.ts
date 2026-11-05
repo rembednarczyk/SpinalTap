@@ -108,7 +108,7 @@ export const buildCityMap = (chunks: readonly LublinChunkData[] = MAP_CHUNKS): M
   const labels: MapLabelVm[] = [
     ...places.map((p) => ({ kind: "district" as const, text: p.name, x: p.x, z: p.z, angle: 0 })),
     ...landmarkLabels(chunks),
-    ...WORLD_METRO.map((s) => ({ kind: "station" as const, text: `Ⓜ ${s.name}`, x: s.kiosk.x, z: s.kiosk.z, angle: 0 })),
+    ...WORLD_METRO.map((s) => ({ kind: "station" as const, text: `Ⓜ ${s.name}`, x: s.node.x, z: s.node.z, angle: 0 })),
     ...streetLabels(chunks),
   ];
   return {
