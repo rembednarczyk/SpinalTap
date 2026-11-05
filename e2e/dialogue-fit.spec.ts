@@ -7,6 +7,7 @@ import { freeze, place, step, teleportTo, newGame, waitForGame, waitForPlay } fr
  * Every step of every conversation in both languages fits the subtitle box without scrolling
  * (G-283), next to a full wheel of six options and never under it. Each step's lines go into
  * the box of a real conversation; a step that still overflows must show that it goes on below.
+ * Nothing of the HUD shows under the box, neither with the opening lines nor grown to full height.
  */
 
 /**
@@ -53,9 +54,14 @@ const openTalk = async (page: Page) => {
   }, arcLayout(WHEEL));
 };
 
-/** Puts each step into the box in turn and measures it. */
-const measure = (page: Page, steps: readonly Step[]) =>
-  page.evaluate(async (all) => {
+/**
+ * Puts each step into the box in turn and measures it. Reading the size forces the layout, so the
+ * overflow needs no frame; only the arrow, which React shows after the scroll event, waits two
+ * frames. Under SwiftShader a frame of the game costs ~0.1-0.2 s (more on a phone at DPR 2), so
+ * waiting on all 532 steps took minutes: with `sign` off a step costs a layout pass only.
+ */
+const measure = (page: Page, steps: readonly Step[], sign = true) =>
+  page.evaluate(async ({ all, sign }) => {
     const box = document.querySelector<HTMLElement>("[data-dialogue-log]");
     if (!box) throw new Error("no subtitles");
     for (const own of box.querySelectorAll<HTMLElement>(".subs__line")) own.style.display = "none";
@@ -77,42 +83,22 @@ const measure = (page: Page, steps: readonly Step[]) =>
         box.append(p);
       }
       box.scrollTop = 0;
-      box.dispatchEvent(new Event("scroll"));
-      await new Promise(requestAnimationFrame);
-      await new Promise(requestAnimationFrame);
+      if (sign) {
+        box.dispatchEvent(new Event("scroll"));
+        await new Promise(requestAnimationFrame);
+        await new Promise(requestAnimationFrame);
+      }
       const r = box.getBoundingClientRect();
       const more = document.querySelector(".subs__more");
       out.push({
         at: s.at,
         over: box.scrollHeight - box.clientHeight,
-        more: more !== null && getComputedStyle(more).visibility !== "hidden" && getComputedStyle(more).display !== "none",
+        more: sign && more !== null && getComputedStyle(more).visibility !== "hidden" && getComputedStyle(more).display !== "none",
         covers: options.some((o) => o.left < r.right && o.right > r.left && o.top < r.bottom && o.bottom > r.top),
       });
     }
     return out;
-  }, steps);
-
-const check = async (page: Page, view: string) => {
-  test.setTimeout(240_000);
-  await openTalk(page);
-  for (const locale of ["en", "pl"] as const) {
-    const steps = STEPS[locale];
-    const fits = await measure(page, steps);
-    const over: Fit[] = fits.flatMap((f, i) => (f.over > 1 ? [{ ...f, chars: chars(steps[i] ?? { at: "", lines: [] }) }] : []));
-    const summary = `${over.length} of ${steps.length} steps scroll: ${over.map((f) => `${f.at} (${f.chars} chars, +${f.over} px)`).join(", ")}`;
-    test.info().annotations.push({ type: `${view} ${locale}`, description: summary });
-    console.log(`${view} ${locale}: ${summary}`);
-    expect.soft(fits.filter((f) => f.covers).map((f) => f.at), "box under the wheel").toEqual([]);
-    expect.soft(over.filter((f) => f.chars <= LONG_STEP).map((f) => f.at), "usual steps that scroll").toEqual([]);
-    expect.soft(over.filter((f) => !f.more).map((f) => f.at), "overflow without a sign").toEqual([]);
-    expect.soft(fits.filter((f) => f.over <= 1 && f.more).map((f) => f.at), "a sign without overflow").toEqual([]);
-  }
-  // Longer than any step (and than the box): the arrow says the text goes on below.
-  const longest = STEPS.pl.reduce((a, b) => (chars(b) > chars(a) ? b : a));
-  const [tooLong] = await measure(page, [{ at: "three finales", lines: [...longest.lines, ...longest.lines, ...longest.lines] }]);
-  expect(tooLong?.over).toBeGreaterThan(1);
-  expect(tooLong?.more, "overflow without a sign").toBe(true);
-};
+  }, { all: steps, sign });
 
 /**
  * Rectangles of the visible HUD pieces and wheel options that cross the subtitle box. A piece is
@@ -138,23 +124,41 @@ const overlaps = (page: Page) =>
       .map((el) => el.className.toString().split(" ")[0] ?? el.tagName);
   });
 
-/** Nothing of the HUD or the wheel shows under the subtitles, with the opening lines and with a box grown to its full height. */
-const clearOfHud = async (page: Page) => {
+const check = async (page: Page, view: string) => {
+  test.setTimeout(240_000);
   await openTalk(page);
-  expect(await overlaps(page), "under the opening lines").toEqual([]);
-  const longest = STEPS.en.reduce((a, b) => (chars(b) > chars(a) ? b : a));
-  await measure(page, [{ at: "three finales", lines: [...longest.lines, ...longest.lines, ...longest.lines] }]);
-  expect(await overlaps(page), "under a full box").toEqual([]);
+  expect(await overlaps(page), "HUD under the opening lines").toEqual([]);
+  for (const locale of ["en", "pl"] as const) {
+    const steps = STEPS[locale];
+    const fits = await measure(page, steps, false);
+    const over: Fit[] = fits.flatMap((f, i) => (f.over > 1 ? [{ ...f, chars: chars(steps[i] ?? { at: "", lines: [] }) }] : []));
+    // The arrow on every step that scrolls, and off on the one that fits with the least room
+    // left: the arrow compares the same heights, so a step with more room cannot show it either.
+    const tightest = fits.reduce((t, f, i) => (f.over <= 1 && f.over > (fits[t]?.over ?? -Infinity) ? i : t), -1);
+    const signs = await measure(page, steps.filter((_, i) => i === tightest || (fits[i]?.over ?? 0) > 1));
+    const summary = `${over.length} of ${steps.length} steps scroll: ${over.map((f) => `${f.at} (${f.chars} chars, +${f.over} px)`).join(", ")}`;
+    test.info().annotations.push({ type: `${view} ${locale}`, description: summary });
+    console.log(`${view} ${locale}: ${summary}`);
+    expect.soft(fits.filter((f) => f.covers).map((f) => f.at), "box under the wheel").toEqual([]);
+    expect.soft(over.filter((f) => f.chars <= LONG_STEP).map((f) => f.at), "usual steps that scroll").toEqual([]);
+    expect.soft(signs.filter((f) => f.over > 1 && !f.more).map((f) => f.at), "overflow without a sign").toEqual([]);
+    expect.soft(signs.filter((f) => f.over <= 1 && f.more).map((f) => f.at), "a sign without overflow").toEqual([]);
+    expect(signs.length, "steps checked for the arrow").toBe(over.length + 1);
+  }
+  // Longer than any step (and than the box): the arrow says the text goes on below.
+  const longest = STEPS.pl.reduce((a, b) => (chars(b) > chars(a) ? b : a));
+  const [tooLong] = await measure(page, [{ at: "three finales", lines: [...longest.lines, ...longest.lines, ...longest.lines] }]);
+  expect(tooLong?.over).toBeGreaterThan(1);
+  expect(tooLong?.more, "overflow without a sign").toBe(true);
+  expect(await overlaps(page), "HUD under a full box").toEqual([]);
 };
 
 test.describe("desktop", () => {
   test.use({ viewport: { width: 1280, height: 720 } });
-  test("dialogue steps fit the subtitles on a desktop", async ({ page }) => check(page, "desktop"));
-  test("nothing of the HUD shows under the subtitles on a desktop", async ({ page }) => clearOfHud(page));
+  test("dialogue steps fit the subtitles, clear of the HUD, on a desktop", async ({ page }) => check(page, "desktop"));
 });
 
 test.describe("phone", () => {
   test.use({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
-  test("dialogue steps fit the subtitles on a phone", async ({ page }) => check(page, "phone"));
-  test("nothing of the HUD shows under the subtitles on a phone", async ({ page }) => clearOfHud(page));
+  test("dialogue steps fit the subtitles, clear of the HUD, on a phone", async ({ page }) => check(page, "phone"));
 });
