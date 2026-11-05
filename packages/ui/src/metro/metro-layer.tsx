@@ -5,7 +5,7 @@ import { useT } from "../i18n/use-t";
 import { formatNumber, useLocale } from "../i18n/number";
 import { type MapBox, svgPoints } from "../store/map-vm";
 import type { MapMetroEntranceVm, MapMetroPlannedVm, MapMetroStationVm, MapMetroVm } from "../store/metro-vm";
-import { type NameItem, type NamePlace, nameOffset, placeNames } from "./metro-labels";
+import { type NameItem, type NamePlace, type Placed, nameOffset, noteOffset, pinToView, placeNames } from "./metro-labels";
 
 export type { NamePlace } from "./metro-labels";
 
@@ -29,7 +29,7 @@ export interface MetroLayerProps {
   readonly onPick?: (id: MetroStationId) => void;
   /** Prefix of the test ids, for a second layer on the same screen (the card's close-up). */
   readonly scope?: string;
-  /** The view: a possible station outside it is pinned to its edge, its line running on out of view. */
+  /** The view: a possible station outside it is pinned where its branch leaves the view, the branch ending there. */
   readonly clamp?: MapBox;
 }
 
@@ -37,6 +37,11 @@ const STATION_RING = 7;
 const PLANNED_RING = 6;
 const NAME = 11;
 const NOTE = 9;
+/** An entrance's letter and its tag, icon units: as big on screen as the stations' names. */
+const LETTER = NAME;
+const TAG = 13;
+/** How far inside the view a pinned possible station sits, icon units: room for its name and note stacked under or over it. */
+const PIN_INSET = 34;
 
 /** A distance in kilometres to one decimal, as the language writes it. */
 export const kmOf = (locale: Locale, metres: number): string => formatNumber(locale, Math.round(metres / 100) / 10, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -45,20 +50,17 @@ const xy = (x: number, z: number) => `translate(${x.toFixed(1)} ${(-z).toFixed(1
 
 const Leg = ({ points, lit }: { points: readonly number[]; lit: boolean }) => <polyline className={`metro-layer__leg${lit ? " metro-layer__leg--route" : ""}`} points={svgPoints(points)} />;
 
-/** A possible station's ring, kept inside the view by `inset` metres. */
-const pinned = (p: MapMetroPlannedVm, clamp: MapBox | undefined, inset: number): { x: number; z: number } => {
-  if (!clamp) return { x: p.x, z: p.z };
-  return { x: Math.min(clamp.maxX - inset, Math.max(clamp.minX + inset, p.x)), z: Math.min(clamp.maxZ - inset, Math.max(clamp.minZ + inset, p.z)) };
-};
+/** Where a possible station's ring is drawn and its branch up to it. */
+type Pin = { x: number; z: number; path: readonly number[] };
 
 interface PlannedProps {
   readonly p: MapMetroPlannedVm;
-  readonly at: { x: number; z: number };
+  readonly at: Pin;
   readonly k: number;
   readonly from: string;
   readonly scope: string;
-  readonly name: NamePlace;
-  readonly note: NamePlace;
+  readonly name: Placed | null;
+  readonly note: Placed | null;
 }
 
 const Planned = ({ p, at, k, from, scope, name, note }: PlannedProps) => {
@@ -67,17 +69,17 @@ const Planned = ({ p, at, k, from, scope, name, note }: PlannedProps) => {
   const km = kmOf(locale, p.distance);
   return (
     <g className="metro-layer__planned" data-testid={`${scope}-planned-${p.id}`}>
-      {p.path.length > 0 && <polyline className="metro-layer__dash" points={svgPoints(p.path)} strokeWidth={2 * k} strokeDasharray={`${(7 * k).toFixed(1)} ${(4 * k).toFixed(1)}`} />}
+      {at.path.length > 0 && <polyline className="metro-layer__dash" points={svgPoints(at.path)} strokeWidth={2 * k} strokeDasharray={`${(7 * k).toFixed(1)} ${(4 * k).toFixed(1)}`} />}
       <g transform={xy(at.x, at.z)}>
         <title>{`${p.name}: ${t("metro.planned")}, ${t("metro.planned.distance", { km, station: from })}`}</title>
         <circle className="metro-layer__ring metro-layer__ring--planned" r={PLANNED_RING * k} />
         {name && (
-          <text className="metro-layer__name" y={nameOffset(PLANNED_RING, NAME, name) * k} fontSize={NAME * k}>
+          <text className="metro-layer__name" x={name.dx * k} y={nameOffset(PLANNED_RING, NAME, name.side) * k} fontSize={NAME * k}>
             {p.name}
           </text>
         )}
         {note && (
-          <text className="metro-layer__note" y={nameOffset(PLANNED_RING, NOTE, note) * k} fontSize={NOTE * k}>
+          <text className="metro-layer__note" x={note.dx * k} y={noteOffset(PLANNED_RING, NAME, NOTE, note.side, name?.side ?? null) * k} fontSize={NOTE * k}>
             {t("metro.planned.short", { km })}
           </text>
         )}
@@ -89,10 +91,11 @@ const Planned = ({ p, at, k, from, scope, name, note }: PlannedProps) => {
 const Entrance = ({ e, k }: { e: MapMetroEntranceVm; k: number }) => {
   const t = useT();
   return (
-    <g className="metro-layer__entrance" transform={`${xy(e.x, e.z)} translate(${(8 * k).toFixed(1)} ${(-8 * k).toFixed(1)})`}>
+    // East of the ring, between the bands of the names over and under it.
+    <g className="metro-layer__entrance" transform={`${xy(e.x, e.z)} translate(${((STATION_RING + 2 + TAG / 2) * k).toFixed(1)} 0)`}>
       <title>{t("metro.entrance", { label: e.label, name: e.name })}</title>
-      <rect x={-3.5 * k} y={-3.5 * k} width={7 * k} height={7 * k} rx={1 * k} />
-      <text fontSize={6 * k}>{e.label}</text>
+      <rect x={(-TAG / 2) * k} y={(-TAG / 2) * k} width={TAG * k} height={TAG * k} rx={2 * k} />
+      <text fontSize={LETTER * k}>{e.label}</text>
     </g>
   );
 };
@@ -101,7 +104,7 @@ interface StationProps {
   readonly s: MapMetroStationVm;
   readonly k: number;
   readonly state: string;
-  readonly named: NamePlace;
+  readonly named: Placed | null;
   readonly scope: string;
   readonly onPick?: (id: MetroStationId) => void;
 }
@@ -118,7 +121,7 @@ const Station = ({ s, k, state, named, scope, onPick }: StationProps) => (
         M
       </text>
       {named && (
-        <text className="metro-layer__name" y={nameOffset(STATION_RING, NAME, named) * k} fontSize={NAME * k}>
+        <text className="metro-layer__name" x={named.dx * k} y={nameOffset(STATION_RING, NAME, named.side) * k} fontSize={NAME * k}>
           {s.name}
         </text>
       )}
@@ -133,14 +136,14 @@ const stateOf = (id: MetroStationId, p: MetroLayerProps): string => {
 };
 
 /** The names to place, the platform and the destination first, the possible stations' notes last. */
-const nameItems = (p: MetroLayerProps, pins: ReadonlyMap<string, { x: number; z: number }>, note: (pl: MapMetroPlannedVm) => string): NameItem[] => {
+const nameItems = (p: MetroLayerProps, pins: ReadonlyMap<string, Pin>, note: (pl: MapMetroPlannedVm) => string): NameItem[] => {
   const first = (id: MetroStationId) => (id === p.here || id === p.selected ? 0 : 1);
   const stations = [...p.metro.stations].sort((a, b) => first(a.id) - first(b.id));
   const planned = p.metro.planned.map((pl) => ({ pl, at: pins.get(pl.id) ?? pl }));
   return [
     ...stations.map((s): NameItem => ({ id: s.id, name: s.name, x: s.x, z: s.z, ring: STATION_RING, size: NAME, prefer: p.names ? p.names(s.id) : "above" })),
     ...planned.map(({ pl, at }): NameItem => ({ id: `planned:${pl.id}`, name: pl.name, x: at.x, z: at.z, ring: PLANNED_RING, size: NAME, prefer: "above" })),
-    ...planned.map(({ pl, at }): NameItem => ({ id: `note:${pl.id}`, name: note(pl), x: at.x, z: at.z, ring: PLANNED_RING, size: NOTE, prefer: "below", only: true })),
+    ...planned.map(({ pl, at }): NameItem => ({ id: `note:${pl.id}`, name: note(pl), x: at.x, z: at.z, ring: PLANNED_RING, size: NOTE, prefer: "below", noteOf: `planned:${pl.id}` })),
   ];
 };
 
@@ -151,10 +154,13 @@ export const MetroLayer = memo((p: MetroLayerProps) => {
   const scope = p.scope ?? "metro";
   const lit = (i: number) => (route ?? []).includes(metro.stations[i]?.id as MetroStationId) && (route ?? []).includes(metro.stations[i + 1]?.id as MetroStationId);
   const nameOf = (id: MetroStationId) => metro.stations.find((s) => s.id === id)?.name ?? id;
-  const pins = useMemo(() => new Map(metro.planned.map((pl) => [pl.id, pinned(pl, p.clamp, 30 * k)])), [metro, p.clamp, k]);
+  const pins = useMemo(() => new Map(metro.planned.map((pl): [string, Pin] => [pl.id, pinToView(pl, pl.path, p.clamp, PIN_INSET * k)])), [metro, p.clamp, k]);
+  // The names keep off the tunnel and the branches as drawn.
+  const lines = [...metro.legs, ...[...pins.values()].map((pin) => pin.path)];
   const places = placeNames(
     nameItems(p, pins, (pl) => t("metro.planned.short", { km: kmOf(locale, pl.distance) })),
     k,
+    lines,
   );
   return (
     <g className="metro-layer" data-testid={`${scope}-layer`}>
@@ -163,7 +169,7 @@ export const MetroLayer = memo((p: MetroLayerProps) => {
       ))}
       {/* Over the tunnel: a possible station on the line keeps its ring and name on top of a lit route. */}
       {metro.planned.map((pl) => (
-        <Planned key={pl.id} p={pl} at={pins.get(pl.id) ?? pl} k={k} from={nameOf(pl.from)} scope={scope} name={places.get(`planned:${pl.id}`) ?? null} note={places.get(`note:${pl.id}`) ?? null} />
+        <Planned key={pl.id} p={pl} at={pins.get(pl.id) ?? { x: pl.x, z: pl.z, path: pl.path }} k={k} from={nameOf(pl.from)} scope={scope} name={places.get(`planned:${pl.id}`) ?? null} note={places.get(`note:${pl.id}`) ?? null} />
       ))}
       {metro.stations.map((s) => (
         <Station key={s.id} s={s} k={k} state={stateOf(s.id, p)} named={places.get(s.id) ?? null} scope={scope} onPick={p.onPick} />

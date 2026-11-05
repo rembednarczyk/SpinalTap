@@ -11,8 +11,8 @@ describe("the names of the metro layer", () => {
   it("writes the platform under its ring and the destination over its own when they are close", () => {
     // Plac Litewski and Brama Krakowska 330 m apart at 7 m a pixel: 47 px.
     const places = placeNames([station("kanal", "Brama Krakowska", 490, -76, "below"), station("shinsekai", "Plac Litewski", 158, -58)], 7);
-    expect(places.get("kanal")).toBe("below");
-    expect(places.get("shinsekai")).toBe("above");
+    expect(places.get("kanal")?.side).toBe("below");
+    expect(places.get("shinsekai")?.side).toBe("above");
   });
 
   it("drops the names that would run into the ones placed first, far out", () => {
@@ -29,7 +29,17 @@ describe("the names of the metro layer", () => {
     // B's name over its ring would cover A's ring 20 m to the north: it goes under.
     const places = placeNames([station("a", "A", 0, 20, null), station("b", "Long name here", 0, 0)], 1);
     expect(places.get("a")).toBeNull();
-    expect(places.get("b")).toBe("below");
+    expect(places.get("b")?.side).toBe("below");
+  });
+
+  it("pulls a name aside to keep it off the line when the other side is taken", () => {
+    // Over B: A's name 80 m east is in the way; under B: the line running south. West over B is free.
+    const items = [station("a", "AAAAAAAAAA", 80, 0), station("b", "Long name here", 0, 0)];
+    const places = placeNames(items, 1, [[0, 0, 0, -100]]);
+    expect(places.get("b")?.side).toBe("above");
+    expect(places.get("b")?.dx).toBeLessThan(0);
+    // Without the line the name stays centred under its ring.
+    expect(placeNames(items, 1).get("b")).toEqual({ side: "below", dx: 0 });
   });
 
   it("moves a district's name off a station on the map tab", () => {
