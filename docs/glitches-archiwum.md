@@ -2,6 +2,22 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-288 Zewnętrzne schody hali Alchemii to pełny prostopadłościan do 7,35 m
+- Status: naprawione w #257 (5.11, 3a5b56d; schody hali chodzone do podestu 6,64 m)
+- Ważność: S4 · Zasięg: `HALL_PARTS[2]`: widać otwarte stopnie, nie da się wejść, pod biegiem niewidzialna ściana; żaden test nie pilnuje, że części hali nie wystają ponad dach
+- Pakiet właściciela: packages/sim (content/alchemia.ts)
+
+### G-287 Drzwi i witryny stoisk Alchemii wiszą nad brukiem od Świętoduskiej
+- Status: naprawione w #257 (5.11, 3a5b56d; stopnie z bruku do każdego stoiska)
+- Ważność: S3 · Zasięg: podłoga 1,04–1,24 m nad brukiem przy środku frontu stoisk 2, 3, 5, w rogach do 1,88 m; brak stopni i ramp; `placeAlchemiaModule` stawia moduł na najwyższym punkcie rzutu
+- Pakiet właściciela: packages/sim (content/alchemia.ts)
+
+### G-278 Wyszukiwanie pomostu na szwie chunków bierze tylko pierwszy chunk
+- Status: naprawione w #256 (5.11, 2ec6e1f; pomosty sąsiadów sięgające granic chunka)
+- Ważność: S4 · Zasięg: punkty dokładnie na granicy chunków (np. z = 160 przy wiadukcie Zamkowej): wyszukiwanie pomostu (`decksAt`/most) patrzy tylko w pomosty pierwszego chunka, więc w tych punktach bieg schodów wychodzi bez płyty wiaduktu nad nim · Koszt: mały
+- Poprawka: na szwie brać pomosty obu chunków (albo indeks pomostów niezależny od chunka); test w punktach z = granica
+- Pakiet właściciela: packages/sim (world/deck)
+
 ### G-294 Wróg z podejrzeniem obraca się do gracza, którego nie widzi
 - Status: naprawione w #254 (5.11, d695c0e; podejrzliwy wróg obraca się tylko do widzianego gracza)
 - Ważność: S3 · Zasięg: każdy niezaalarmowany wróg z podejrzeniem > 0 (`HoldPosition`, `ganger-ai-system.ts:135`, `faceTowards(this, this.seen.player)`); gracz 25 m w bok za ścianą: obrót 1,47 → 0 rad w 0,25 s; powinien patrzeć na ostatnie widziane miejsce

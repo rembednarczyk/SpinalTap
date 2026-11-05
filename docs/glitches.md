@@ -889,12 +889,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: ustalić źródło (szew pasów nawierzchni, krawężnik, rynsztok z importu) i domknąć nawierzchnię; kontrola skanu na szczeliny nawierzchni (punkt chodnika bez nawierzchni otoczony nawierzchnią)
 - Pakiet właściciela: tools/osm-import (ground), packages/engine (renderer/mapcity)
 
-### G-278 Wyszukiwanie pomostu na szwie chunków bierze tylko pierwszy chunk
-- Status: potwierdzone (2.11, autor G-255 runda 6 na main 8b8ee07: `GroundField` bierze pomosty tylko chunka pierwszego w tabeli, w (735; 160) teren −15,14 zamiast pomostu −13,55)
-- Ważność: S4 · Zasięg: punkty dokładnie na granicy chunków (np. z = 160 przy wiadukcie Zamkowej): wyszukiwanie pomostu (`decksAt`/most) patrzy tylko w pomosty pierwszego chunka, więc w tych punktach bieg schodów wychodzi bez płyty wiaduktu nad nim · Koszt: mały
-- Poprawka: na szwie brać pomosty obu chunków (albo indeks pomostów niezależny od chunka); test w punktach z = granica
-- Pakiet właściciela: packages/sim (world/deck)
-
 ### G-285 Przeciwnicy wykrywają gracza natychmiast, takedown niemożliwy
 - Status: naprawione przez ADR-0069 etap 1 (#252) i 2 (#254, 5.11, słuch kroków); balans w etapie 3 (trop co krok za ścianą, sprint przed Kagami i Tessen 0,6–0,7 s)
 - Ważność: S2 (proponowana: blokuje mechanikę) · Zasięg: walka z gangerami; czujność NPC i kamer (`AWARENESS_STEP`, `GUARD_CONE`, `ganger-perception.ts`)
@@ -905,16 +899,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Status: zgłoszone (4.11, weryfikator G-281)
 - Ważność: S4 · Zasięg: każdy scalany toast; identyczne powiadomienie po 4,4 s widać ułamek sekundy; `sameToast` pomija flagę `keep` (dziś teoretyczne)
 - Pakiet właściciela: packages/ui (store, toasty)
-
-### G-287 Drzwi i witryny stoisk Alchemii wiszą nad brukiem od Świętoduskiej
-- Status: zgłoszone (4.11, weryfikator i kurator PR #247; przed otwarciem wejść)
-- Ważność: S3 · Zasięg: podłoga 1,04–1,24 m nad brukiem przy środku frontu stoisk 2, 3, 5, w rogach do 1,88 m; brak stopni i ramp; `placeAlchemiaModule` stawia moduł na najwyższym punkcie rzutu
-- Pakiet właściciela: packages/sim (content/alchemia.ts)
-
-### G-288 Zewnętrzne schody hali Alchemii to pełny prostopadłościan do 7,35 m
-- Status: zgłoszone (4.11, weryfikator PR #247)
-- Ważność: S4 · Zasięg: `HALL_PARTS[2]`: widać otwarte stopnie, nie da się wejść, pod biegiem niewidzialna ściana; żaden test nie pilnuje, że części hali nie wystają ponad dach
-- Pakiet właściciela: packages/sim (content/alchemia.ts)
 
 ### G-289 Z dachu Alchemii nie ma bezpiecznego zejścia
 - Status: zgłoszone (4.11, weryfikator PR #247; dług na etap z windą i Rin na dachu)
