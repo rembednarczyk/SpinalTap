@@ -45,6 +45,7 @@ const near = (p: AlchemiaPart, q: Pt, pad: number): boolean => {
 };
 
 type Pt3 = { readonly x: number; readonly y: number; readonly z: number };
+type Tri = readonly [Pt3, Pt3, Pt3];
 
 /** True when a point of the model's frame lies in the part's (convex) outline. */
 const insidePart = (p: AlchemiaPart, x: number, z: number): boolean => {
@@ -62,6 +63,95 @@ const insidePart = (p: AlchemiaPart, x: number, z: number): boolean => {
 /** The world vertices of the module's model in the geometry (they follow its plinth's and its steps' 24 each). */
 const modelVertices = (positions: readonly number[], start: number, count: number): { x: number; y: number; z: number }[] =>
   Array.from({ length: count }, (_, i) => ({ x: positions[3 * (start + i)]!, y: positions[3 * (start + i) + 1]!, z: positions[3 * (start + i) + 2]! }));
+
+/** The hall model's triangles in the geometry, in its own frame (y over its floor). */
+const hallFaces = (): Tri[] => {
+  const { sink } = alchemiaGeometry(kitData, props);
+  const hall = ALCHEMIA_MODULES[0]!;
+  const from = 24 * (1 + hall.steps.length);
+  const to = from + alchemia.models.get(hall.key)!.positions.length / 3;
+  const at = (k: number): Pt3 => {
+    const w = { x: sink.positions[3 * k]!, y: sink.positions[3 * k + 1]!, z: sink.positions[3 * k + 2]! };
+    const q = local(hall, w);
+    return { x: q.x, y: w.y - hall.floor, z: q.z };
+  };
+  const tris: Tri[] = [];
+  for (let i = 0; i < sink.indices.length; i += 3) {
+    const ids = [sink.indices[i]!, sink.indices[i + 1]!, sink.indices[i + 2]!];
+    if (ids.every((k) => k >= from && k < to)) tris.push([at(ids[0]!), at(ids[1]!), at(ids[2]!)]);
+  }
+  return tris;
+};
+
+/** The heights of the faces drawn over a point of the model's frame. */
+const facesAt = (tris: readonly Tri[], x: number, z: number): number[] => {
+  const hs: number[] = [];
+  for (const [a, b, c] of tris) {
+    const d = (b.z - c.z) * (a.x - c.x) + (c.x - b.x) * (a.z - c.z);
+    if (Math.abs(d) < 1e-9) continue;
+    const u = ((b.z - c.z) * (x - c.x) + (c.x - b.x) * (z - c.z)) / d;
+    const v = ((c.z - a.z) * (x - c.x) + (a.x - c.x) * (z - c.z)) / d;
+    if (u < 0 || v < 0 || u + v > 1) continue;
+    hs.push(u * a.y + v * b.y + (1 - u - v) * c.y);
+  }
+  return hs.sort((p, q) => p - q);
+};
+
+/** The distance from a point to a segment. */
+const segDist = (p: Pt, a: Pt, b: Pt): number => {
+  const dx = b.x - a.x;
+  const dz = b.z - a.z;
+  const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+  return Math.hypot(p.x - a.x - t * dx, p.z - a.z - t * dz);
+};
+
+/** Where the drawn walls (the faces standing upright) cut the level `y`: segments of the model's frame. */
+const wallsAt = (tris: readonly Tri[], y: number): [Pt, Pt][] => {
+  const out: [Pt, Pt][] = [];
+  for (const t of tris) {
+    const [a, b, c] = t;
+    const ny = (b.z - a.z) * (c.x - a.x) - (b.x - a.x) * (c.z - a.z);
+    const n = Math.hypot((b.y - a.y) * (c.z - a.z) - (b.z - a.z) * (c.y - a.y), ny, (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x));
+    if (n < 1e-9 || Math.abs(ny) / n > 0.2) continue;
+    const cut: Pt[] = [];
+    for (let i = 0; i < 3; i++) {
+      const p = t[i]!;
+      const q = t[(i + 1) % 3]!;
+      if ((p.y - y) * (q.y - y) >= 0) continue;
+      const u = (y - p.y) / (q.y - p.y);
+      cut.push({ x: p.x + u * (q.x - p.x), z: p.z + u * (q.z - p.z) });
+    }
+    if (cut.length === 2) out.push([cut[0]!, cut[1]!]);
+  }
+  return out;
+};
+
+/** What a body meets round the hall's model: the walls cutting a level, ways out of the footprint from a point, walls by it. */
+const hallWays = (tris: readonly Tri[]) => {
+  const walls = new Map<number, [Pt, Pt][]>();
+  const wallsOver = (y: number) => {
+    const key = Math.round(y * 20) / 20;
+    if (!walls.has(key)) walls.set(key, wallsAt(tris, key));
+    return walls.get(key)!;
+  };
+  // Outside: a straight way out of the footprint from the point at a body's chest, along x or z, through no wall.
+  const outside = (x: number, z: number, y: number): boolean => {
+    const cuts = wallsOver(y);
+    const blocked = (dir: 0 | 1 | 2 | 3) =>
+      cuts.some(([a, b]) => {
+        const along = dir < 2 ? [a.z - z, b.z - z, a.x, b.x] : [a.x - x, b.x - x, a.z, b.z];
+        const [p, q, s, t] = along as [number, number, number, number];
+        if (p * q > 0 || p === q) return false;
+        const at = s + ((t - s) * p) / (p - q);
+        return dir % 2 === 0 ? at > (dir < 2 ? x : z) : at < (dir < 2 ? x : z);
+      });
+    return ([0, 1, 2, 3] as const).some((d) => !blocked(d));
+  };
+  // A drawn wall (or the riser of a step) within `r` of the point between a body's feet and its head.
+  const byWall = (x: number, z: number, y: number, r: number) =>
+    [y + 0.3, y + 1, y + 1.6].some((h) => wallsOver(h).some(([a, b]) => segDist({ x, z }, a, b) < r));
+  return { outside, byWall };
+};
 
 describe("alchemia-props.glb (ADR-0063 stage 4)", () => {
   it("holds the hall and five stalls, CC-BY with their credits, within a building's budget each and small", () => {
@@ -130,33 +220,9 @@ describe("Alchemia's geometry (ADR-0063 stage 4)", () => {
   });
 
   it("makes the hall's outside stair no higher than it is drawn: no wall over its podium, its run or its landing (G-288)", () => {
-    const { sink } = alchemiaGeometry(kitData, props);
     const hall = ALCHEMIA_MODULES[0]!;
-    const from = 24 * (1 + hall.steps.length);
-    const to = from + alchemia.models.get(hall.key)!.positions.length / 3;
-    const at = (k: number) => {
-      const w = { x: sink.positions[3 * k]!, y: sink.positions[3 * k + 1]!, z: sink.positions[3 * k + 2]! };
-      const q = local(hall, w);
-      return { x: q.x, y: w.y - hall.floor, z: q.z };
-    };
-    const tris: { x: number; y: number; z: number }[][] = [];
-    for (let i = 0; i < sink.indices.length; i += 3) {
-      const ids = [sink.indices[i]!, sink.indices[i + 1]!, sink.indices[i + 2]!];
-      if (ids.every((k) => k >= from && k < to)) tris.push(ids.map(at));
-    }
-    // The model's highest face over a point of its frame (0: the foot).
-    const drawn = (x: number, z: number): number => {
-      let top = 0;
-      for (const [a, b, c] of tris as [Pt3, Pt3, Pt3][]) {
-        const d = (b.z - c.z) * (a.x - c.x) + (c.x - b.x) * (a.z - c.z);
-        if (Math.abs(d) < 1e-9) continue;
-        const u = ((b.z - c.z) * (x - c.x) + (c.x - b.x) * (z - c.z)) / d;
-        const v = ((c.z - a.z) * (x - c.x) + (a.x - c.x) * (z - c.z)) / d;
-        if (u < 0 || v < 0 || u + v > 1) continue;
-        top = Math.max(top, u * a.y + v * b.y + (1 - u - v) * c.y);
-      }
-      return top;
-    };
+    const tris = hallFaces();
+    const drawn = (x: number, z: number): number => Math.max(0, ...facesAt(tris, x, z));
     let checked = 0;
     // Over the stair's side of the hall, from the wall of its ground storey out to the podium's edge.
     for (let x = 2.35; x < 5.45; x += 0.25) {
@@ -172,6 +238,86 @@ describe("Alchemia's geometry (ADR-0063 stage 4)", () => {
       }
     }
     expect(checked).toBeGreaterThan(400);
+  });
+
+  it("keeps the hall's solid within its drawn walls wherever a body stands outside them: the podium, the porch, the balcony (G-297, G-298)", () => {
+    const hall = ALCHEMIA_MODULES[0]!;
+    const tris = hallFaces();
+    const [x0, x1, z0, z1] = [-hall.width / 2, hall.width / 2, -hall.depth / 2, hall.depth / 2];
+    const { outside, byWall } = hallWays(tris);
+    // Room for a body over a floor: nothing drawn under its head there, nor over a step higher a body's radius (0.38 m) round it.
+    const room = (x: number, z: number, y: number, over: number | undefined) =>
+      (over === undefined || over >= y + 1.8) &&
+      [[0.38, 0], [-0.38, 0], [0, 0.38], [0, -0.38]].every(([dx, dz]) => !facesAt(tris, x + dx!, z + dz!).some((h) => h > y + 0.45 && h < y + 1.8));
+    let standing = 0;
+    const stuck: string[] = [];
+    for (let x = x0 + 0.1; x < x1; x += 0.25) {
+      for (let z = z0 + 0.1; z < z1; z += 0.25) {
+        const hs = facesAt(tris, x, z);
+        for (const [i, y] of hs.entries()) {
+          if (!room(x, z, y, hs.slice(i + 1).find((h) => h > y + 0.05)) || !outside(x, z, y + 1.2) || byWall(x, z, y, 0.12)) continue;
+          standing++;
+          for (const p of alchemiaParts(hall))
+            if (insidePart(p, x, z) && (p.bottom ?? -Infinity) < y + 1.8 && p.top > y + 0.45) stuck.push(`(${x.toFixed(2)}, ${z.toFixed(2)}) on ${y.toFixed(2)} under ${p.top.toFixed(2)}`);
+        }
+      }
+    }
+    expect(stuck).toEqual([]);
+    expect(standing).toBeGreaterThan(800);
+  });
+
+  it("makes solid what a body walking round the hall would bump into: the porch's counter and stand, the stair's stringer (G-298)", () => {
+    const hall = ALCHEMIA_MODULES[0]!;
+    const tris = hallFaces();
+    const { outside } = hallWays(tris);
+    // The movement's step (STEP_HEIGHT of the simulation) and a body's height and radius.
+    const [step, head, reach, grid] = [0.45, 1.8, 0.4, 0.1];
+    const RISER = 0.65;
+    const nx = Math.floor(hall.width / grid);
+    const nz = Math.floor(hall.depth / grid);
+    const at = (i: number, k: number) => ({ x: -hall.width / 2 + (i + 0.5) * grid, z: -hall.depth / 2 + (k + 0.5) * grid });
+    const faces = Array.from({ length: nx }, (_, i) => Array.from({ length: nz }, (_, k) => facesAt(tris, at(i, k).x, at(i, k).z)));
+    // The floors a body reaches from the podium's edge outside the walls, a drawn riser (0.6 m) at a time: room for its head over them.
+    const room = faces.map((col, i) => col.map((hs, k) => hs.filter((y, j) => !hs.slice(j + 1).some((h) => h > y + 0.05 && h < y + head) && outside(at(i, k).x, at(i, k).z, y + 1.2))));
+    const floors = room.map((col) => col.map((): number[] => []));
+    const queue: [number, number, number][] = [];
+    const reached = (i: number, k: number, y: number) => {
+      if (floors[i]![k]!.includes(y)) return;
+      floors[i]![k]!.push(y);
+      queue.push([i, k, y]);
+    };
+    for (let i = 0; i < nx; i++) for (let k = 0; k < nz; k++) if (i === 0 || k === 0 || i === nx - 1 || k === nz - 1) for (const y of room[i]![k]!) reached(i, k, y);
+    while (queue.length > 0) {
+      const [i, k, y] = queue.pop()!;
+      for (const [di, dk] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) for (const f of room[i + di]?.[k + dk] ?? []) if (Math.abs(f - y) < RISER) reached(i + di, k + dk, f);
+    }
+    // Over a point, a part that stops a body standing at `y` there, or carries it near what is drawn at `t`, within 0.1 m.
+    const solid = (x: number, z: number, y: number, t: number) =>
+      alchemiaParts(hall).some(
+        (p) =>
+          [[0, 0], [0.1, 0], [-0.1, 0], [0, 0.1], [0, -0.1]].some(([dx, dz]) => insidePart(p, x + dx!, z + dz!)) &&
+          (p.bottom ?? -Infinity) < y + head &&
+          p.top > Math.min(y + step, t - step),
+      );
+    const open = new Set<string>();
+    let checked = 0;
+    const r = Math.ceil(reach / grid);
+    for (let i = 0; i < nx; i++)
+      for (let k = 0; k < nz; k++) {
+        const { x, z } = at(i, k);
+        for (const t of faces[i]![k]!) {
+          // The highest floor within a body's radius under it by more than a step and less than a head.
+          let y = -Infinity;
+          for (let di = -r; di <= r; di++)
+            for (let dk = -r; dk <= r; dk++)
+              if (Math.hypot(di, dk) * grid <= reach) for (const f of floors[i + di]?.[k + dk] ?? []) if (f < t - step && f > t - head) y = Math.max(y, f);
+          if (y === -Infinity) continue;
+          checked++;
+          if (!solid(x, z, y, t)) open.add(`(${x.toFixed(1)}, ${z.toFixed(1)}) ${t.toFixed(1)} over ${y.toFixed(1)}`);
+        }
+      }
+    expect([...open]).toEqual([]);
+    expect(checked).toBeGreaterThan(1000);
   });
 });
 
