@@ -6,6 +6,7 @@ import type { SimContext, System } from "../world/context";
 import { inCreationOrder } from "../world/ordering";
 import { solidIndexOf } from "../world/solid-index";
 import { worldTimeScale } from "./ability-system";
+import { NOISE_LANDING, hearNoise } from "./ai/ganger-hearing";
 
 const ITERATIONS = 2;
 /** How far around a mover's step its colliders are gathered, beyond its radius, metres. */
@@ -144,6 +145,8 @@ const land = (ctx: SimContext, e: Entity, ground: number): void => {
     ctx.bus.emit("DamageDealt", { sourceId: e.id, targetId: e.id, amount: damage, critical: false, zone: "leg", at });
   }
   ctx.bus.emit("Landed", { entityId: e.id, drop, hard, damage, at });
+  // The player's landing is heard around (ADR-0069), from a jump or a drop past a step down.
+  if (e.player && drop > SNAP_DOWN) hearNoise(ctx, at, NOISE_LANDING);
 };
 
 const slope = { x: 0, z: 0 };
