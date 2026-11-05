@@ -402,21 +402,39 @@ let toastSeq = 0;
  */
 const isKeptToast = (t: Toast): boolean => t.kind === "quest" || t.kind === "memory" || t.keep === true;
 
-const sameToast = (a: Omit<Toast, "id">, b: Omit<Toast, "id">): boolean => a.kind === b.kind && a.title === b.title && a.text === b.text;
+// `keep` too: counting a failed load into an ordinary toast would let it go first in a burst (G-286).
+const sameToast = (a: Omit<Toast, "id">, b: Omit<Toast, "id">): boolean =>
+  a.kind === b.kind && a.title === b.title && a.text === b.text && (a.keep === true) === (b.keep === true);
+
+/**
+ * Pushes per toast on screen whose time has not run out yet: a counted toast stays until the
+ * last of them expires, so an identical one just before the first runs out gets its full time (G-286).
+ */
+const toastLeases = new WeakMap<UiStore, Map<number, number>>();
+
+const leasesOf = (store: UiStore): Map<number, number> => {
+  let leases = toastLeases.get(store);
+  if (!leases) toastLeases.set(store, (leases = new Map()));
+  return leases;
+};
 
 /**
  * Shows a toast; over TOAST_LIMIT the oldest toast goes, but one that is not kept first, so a
  * burst (an ending with its reputation, level-up and quest toasts) does not push the ending out.
  * When every toast is kept, the oldest goes. A toast identical to one on screen does not take a
- * place of its own: the one on screen counts it and its id comes back (G-281).
+ * place of its own: the one on screen counts it and its id comes back (G-281); time it with
+ * `expireToast`, one call per push.
  */
 export const pushToast = (store: UiStore, toast: Omit<Toast, "id">): number => {
   const twin = store.getState().toasts.find((t) => sameToast(t, toast));
   if (twin) {
     store.setState((s) => ({ toasts: s.toasts.map((t) => (t.id === twin.id ? { ...t, count: (t.count ?? 1) + 1 } : t)) }));
+    const leases = leasesOf(store);
+    leases.set(twin.id, (leases.get(twin.id) ?? 1) + 1);
     return twin.id;
   }
   const id = ++toastSeq;
+  leasesOf(store).set(id, 1);
   store.setState((s) => {
     const toasts = [...s.toasts, { ...toast, id }];
     while (toasts.length > TOAST_LIMIT) {
@@ -428,6 +446,15 @@ export const pushToast = (store: UiStore, toast: Omit<Toast, "id">): number => {
   return id;
 };
 
+/** Takes a toast down at once, however many pushes it counts. */
 export const dismissToast = (store: UiStore, id: number): void => {
+  leasesOf(store).delete(id);
   store.setState((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }));
+};
+
+/** The time of one push of toast `id` ran out: it goes once no other push of it is still running. */
+export const expireToast = (store: UiStore, id: number): void => {
+  const left = (leasesOf(store).get(id) ?? 1) - 1;
+  if (left > 0) leasesOf(store).set(id, left);
+  else dismissToast(store, id);
 };

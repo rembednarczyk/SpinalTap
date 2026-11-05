@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_HORIZONTAL_FOV, GameUi, createUiStore, dismissToast, hipVerticalFov, patchUi, pushToast, type UiIntents, type UiState } from "../src";
+import { DEFAULT_HORIZONTAL_FOV, GameUi, createUiStore, dismissToast, expireToast, hipVerticalFov, patchUi, pushToast, type UiIntents, type UiState } from "../src";
 import { NORMAL_DIFFICULTY } from "@seki/core";
 import { HUD_CAMERA_FOV, spreadToScreen } from "../src/hud/hud";
 
@@ -238,6 +238,34 @@ describe("HUD", () => {
     act(() => dismissToast(store, ids[0]!));
     act(() => void pushToast(store, { kind: "reputation", title: "Passers-by run away", text: "Civilians are afraid of you" }));
     expect(store.getState().toasts.map((t) => t.count ?? 1)).toEqual([1, 1]);
+  });
+
+  it("a counted toast stays until the last of its pushes runs out, not the first (G-286)", () => {
+    const store = createUiStore();
+    const first = pushToast(store, { kind: "reputation", title: "Passers-by run away", text: "" });
+    const second = pushToast(store, { kind: "reputation", title: "Passers-by run away", text: "" });
+    expect(second).toBe(first);
+    expireToast(store, first);
+    expect(store.getState().toasts.map((t) => [t.title, t.count ?? 1])).toEqual([["Passers-by run away", 2]]);
+    expireToast(store, second);
+    expect(store.getState().toasts).toEqual([]);
+    // A toast taken down by hand goes at once, however many pushes it counts.
+    const id = pushToast(store, { kind: "system", title: "Saved", text: "" });
+    pushToast(store, { kind: "system", title: "Saved", text: "" });
+    dismissToast(store, id);
+    expect(store.getState().toasts).toEqual([]);
+    expireToast(store, id);
+    expect(pushToast(store, { kind: "system", title: "Saved", text: "" })).not.toBe(id);
+  });
+
+  it("does not count a kept toast together with an ordinary one (G-286)", () => {
+    const store = createUiStore();
+    pushToast(store, { kind: "system", title: "Couldn't load the game", text: "" });
+    pushToast(store, { kind: "system", title: "Couldn't load the game", text: "", keep: true });
+    expect(store.getState().toasts.map((t) => [t.keep === true, t.count ?? 1])).toEqual([
+      [false, 1],
+      [true, 1],
+    ]);
   });
 
   it("over the limit drops the oldest toast that is not quest, memory or kept first (ADR-0059: a level up beside an ending)", () => {
