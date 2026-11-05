@@ -117,8 +117,10 @@ export interface StreetLog {
   /** Incidents so far (ids of offences); transient, a loaded game counts from 0 again. */
   incidents: number;
   /**
-   * What the reported crimes against each victim have cost the street so far (ADR-0070).
-   * Transient like `wronged`: a loaded game knows no wronged victims, so nothing to count twice.
+   * What the reported assaults on each victim have cost the street so far (ADR-0070), until
+   * its murder is reported. Not saved, like `wronged`: after a load the bodies get new ids, so
+   * the murder of a victim whose assault was reported before the save costs a whole murder
+   * (−3 instead of −2 in all). Accepted, limited to −1 (ADR-0070, „Zapis”).
    */
   charged: Map<EntityId, number>;
 }

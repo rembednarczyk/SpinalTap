@@ -27,7 +27,8 @@ const dropEnemyLoot = (ctx: Ctx, e: Entity): void => {
 
 /** How the street sees this death (ADR-0070): from behind, of the heat's people, of a job's crew. */
 const killContext = (ctx: Ctx, e: Entity): KillContext => ({
-  wronged: !!e.wronged,
+  // A body knocked out with no fight (ADR-0065) is saved with that, `wronged` is not.
+  wronged: !!e.wronged || (!!e.downed && !e.downed.fought),
   security: !!e.security,
   crew: isContractTarget(ctx, e) || (ctx.session.street2.micro?.attackers.includes(e.id) ?? false),
 });
@@ -66,8 +67,9 @@ export const deathSystem: System = {
       }
       if (e.key) raiseFlag(ctx, deadFlag(e.key));
       const byPlayer = playerId !== undefined && e.lastHitBy === playerId;
-      // Killing someone who was not fighting is a murder once someone sees it (ADR-0029).
-      if (byPlayer && e.wronged) offend(ctx, "murder", e.position, undefined, e.id);
+      // Killing someone who was not fighting is a murder once someone sees it (ADR-0029). A body
+      // left lying (below) is that murder's: once reported, it brings no second report.
+      if (byPlayer && e.wronged) offend(ctx, "murder", e.position, e.downed ? e.id : undefined, e.id);
       if (byPlayer && !isContractTarget(ctx, e)) noteTally(ctx, (t) => ({ ...t, extraKills: t.extraKills + 1 }));
       disturb(ctx, "body", e.position, BODY_NOISE, e.id);
       if (e.tag) raiseFlag(ctx, killedFlag(e.tag));

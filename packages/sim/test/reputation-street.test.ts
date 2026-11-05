@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { type DomainEvents, type ReputationState, contractTag } from "@seki/core";
+import { type Contract, type DomainEvents, type ReputationState, WITNESS_CALL_SECONDS, contractTag, freshTally } from "@seki/core";
 import { CONTRACT_SITE_SPAWNS, Simulation, gangerEntity, type Entity } from "../src";
 import { collect, run, teleportPlayer } from "./helpers";
-import { CROUCH, offset, patrol, quietStreet, takeDown, ticks } from "./takedown-scenes";
+import { CROUCH, camera, offset, patrol, quietStreet, stallholder, takeDown, ticks } from "./takedown-scenes";
 
 /**
  * ADR-0070, stage 4: the street thanks the player for a Hebi ganger killed in a fight, not for
@@ -134,6 +134,158 @@ describe("witnesses: one deed costs the street once (ADR-0070)", () => {
   });
 });
 
+describe("witnesses of every kind: each assault costs, the murder only the rest (ADR-0070)", () => {
+  /** It comes round where it lies, its back to her again, nobody fighting. */
+  const wakeUp = (sim: Simulation, g: Entity): void => {
+    sim.world.removeComponent(g, "downed");
+    sim.world.removeComponent(g, "unconscious");
+    g.ai = { ...g.ai!, alerted: false, lastKnown: null };
+  };
+
+  const finish = (sim: Simulation, g: Entity): void => {
+    g.lastHitBy = sim.player()!.id;
+    g.health = { current: 0, max: g.health!.max };
+    sim.step(CROUCH);
+  };
+
+  /** A ganger nobody's content knows (as a mugger's, G-233): its body is saved by itself. */
+  const stray = (sim: Simulation): Entity => {
+    const g = ganger(sim, 4000);
+    delete g.key;
+    return g;
+  };
+
+  /** Saved and loaded, with nobody armed on the square but the bodies. */
+  const reload = (sim: Simulation): Simulation => {
+    const loaded = Simulation.fromSnapshot(JSON.parse(JSON.stringify(sim.snapshot(null, "t", ""))));
+    for (const g of [...loaded.world.with("ai")]) if (!g.downed) loaded.world.remove(g);
+    return loaded;
+  };
+
+  it("a camera: a second assault on the same victim costs −1 again, its murder after two nothing", () => {
+    const sim = streetWith({});
+    const g = ganger(sim, 4000);
+    // Six metres south of her, looking north at her.
+    camera(sim, 4200, offset(sim, 0, -6), 0);
+    const reports = collect<DomainEvents["CrimeReported"]>(sim, "CrimeReported");
+    takeDown(sim);
+    expect(sim.domain.reputation.civilians).toBe(-1);
+    wakeUp(sim, g);
+    takeDown(sim);
+    expect(sim.domain.reputation.civilians).toBe(-2);
+    finish(sim, g);
+    expect(reports.map((r) => [r.crime, r.channel])).toEqual([
+      ["assault", "camera"],
+      ["assault", "camera"],
+      ["murder", "camera"],
+    ]);
+    expect(sim.domain.reputation.civilians).toBe(-2);
+  });
+
+  it("a body nobody reported, finished in sight of a camera: one murder reported, −2, not again for the body", () => {
+    const sim = streetWith({});
+    const g = ganger(sim, 4000);
+    takeDown(sim);
+    expect(sim.domain.reputation.civilians).toBe(0);
+    camera(sim, 4200, offset(sim, 0, -6), 0);
+    const reports = collect<DomainEvents["CrimeReported"]>(sim, "CrimeReported");
+    finish(sim, g);
+    run(sim, ticks(1), CROUCH);
+    expect(reports.map((r) => [r.crime, r.channel])).toEqual([["murder", "camera"]]);
+    expect(sim.domain.reputation.civilians).toBe(-2);
+  });
+
+  it("a murder settles its victim's account: one of the crowd back with the same id costs a whole murder again", () => {
+    const sim = streetWith({});
+    camera(sim, 4200, offset(sim, 0, -6), 0);
+    const reports = collect<DomainEvents["CrimeReported"]>(sim, "CrimeReported");
+    const cost: number[] = [];
+    // A resident of the crowd killed, then come back with its id (`residentId`) and killed again.
+    for (let i = 0; i < 2; i++) {
+      const before = sim.domain.reputation.civilians;
+      const c = stallholder(sim, 4000, offset(sim, 0, 3));
+      c.wronged = true;
+      finish(sim, c);
+      cost.push(sim.domain.reputation.civilians - before);
+    }
+    expect(reports.map((r) => r.crime)).toEqual(["murder", "murder"]);
+    expect(cost[0]).toBeLessThanOrEqual(-2);
+    expect(cost[1]).toBe(cost[0]);
+  });
+
+  it("a civilian's call: the murder of the victim of its reported assault costs the rest, −2 in all", () => {
+    const sim = streetWith({});
+    const g = ganger(sim, 4000);
+    // A bystander two metres west of her, seeing it all.
+    stallholder(sim, 4300, offset(sim, -2, 0));
+    const reports = collect<DomainEvents["CrimeReported"]>(sim, "CrimeReported");
+    takeDown(sim);
+    run(sim, ticks(WITNESS_CALL_SECONDS + 1), CROUCH);
+    expect(sim.domain.reputation.civilians).toBe(-1);
+    // Another one, calm, by her side when she finishes it.
+    stallholder(sim, 4301, offset(sim, 2, 0));
+    finish(sim, g);
+    run(sim, ticks(WITNESS_CALL_SECONDS + 1), CROUCH);
+    expect(reports.map((r) => [r.crime, r.channel])).toEqual([
+      ["assault", "civilian"],
+      ["murder", "civilian"],
+    ]);
+    expect(sim.domain.reputation.civilians).toBe(-2);
+  });
+
+  /**
+   * Knocked out in sight of a patrol (an assault reported), it comes round, she kills it from
+   * behind with nobody about; a patrol that comes later finds the body: the murder.
+   */
+  const killedUnseenAfterAssault = () => {
+    const sim = streetWith({});
+    const g = stray(sim);
+    const w = patrol(sim, 4100, offset(sim, 7, 0), -Math.PI / 2);
+    takeDown(sim);
+    expect(sim.domain.reputation.civilians).toBe(-1);
+    sim.world.remove(w);
+    wakeUp(sim, g);
+    takeDown(sim, true);
+    run(sim, ticks(1), CROUCH);
+    expect(sim.domain.reputation.civilians).toBe(-1);
+    return sim;
+  };
+
+  const foundByPatrol = (sim: Simulation): DomainEvents["CrimeReported"][] => {
+    const reports = collect<DomainEvents["CrimeReported"]>(sim, "CrimeReported");
+    patrol(sim, 4101, offset(sim, 7, 1.2), -Math.PI / 2);
+    run(sim, ticks(1), CROUCH);
+    return reports;
+  };
+
+  it("the body found by a patrol: the murder costs the rest, −2 in all", () => {
+    const sim = killedUnseenAfterAssault();
+    const reports = foundByPatrol(sim);
+    expect(reports.map((r) => [r.crime, r.channel])).toEqual([["murder", "patrol"]]);
+    expect(sim.domain.reputation.civilians).toBe(-2);
+  });
+
+  it("saved before the body is found: after the load the murder costs a whole −2, −3 in all (accepted)", () => {
+    const sim = killedUnseenAfterAssault();
+    const loaded = reload(sim);
+    const reports = foundByPatrol(loaded);
+    expect(reports.map((r) => [r.crime, r.channel])).toEqual([["murder", "patrol"]]);
+    expect(loaded.domain.reputation.civilians).toBe(-3);
+  });
+
+  it("one knocked out with no fight and killed after a load: no thanks from the street", () => {
+    const sim = streetWith({});
+    const g = stray(sim);
+    takeDown(sim);
+    expect(g.downed?.fought).toBe(false);
+    const loaded = reload(sim);
+    const body = loaded.world.with("downed").first!;
+    expect(body.wronged).toBeUndefined();
+    finish(loaded, body);
+    expect(loaded.domain.reputation).toMatchObject({ hebi: -4, civilians: 0 });
+  });
+});
+
 describe("the street's balance of a job (ADR-0070)", () => {
   /** Kaito's job, the player at its site (as `m1.test.ts` does it). */
   const atTheJob = () => {
@@ -177,5 +329,19 @@ describe("the street's balance of a job (ADR-0070)", () => {
     expect(sim.domain.contracts.tally?.extraKills).toBe(1);
     finish(sim, targets);
     expect(sim.domain.reputation.civilians).toBe(3);
+  });
+
+  it("an alarm raised on the job: +2 without the clean bonus, even with nobody else killed", () => {
+    const cleared: Contract = { id: "c1", kind: "eliminate", siteId: "east_lot", targets: 3, reward: 600, status: "cleared" };
+    for (const alarm of [false, true]) {
+      const base = Simulation.create({ seed: 31 });
+      const snap = base.snapshot(null, "t", "");
+      const tally = { ...freshTally(0), alarm };
+      const sim = Simulation.fromSnapshot({ ...snap, domain: { ...snap.domain, contracts: { active: cleared, completed: 0, tally } } });
+      sim.enqueue({ type: "complete-contract" });
+      sim.step();
+      expect(sim.domain.contracts.completed, `alarm: ${alarm}`).toBe(1);
+      expect(sim.domain.reputation.civilians, `alarm: ${alarm}`).toBe(alarm ? 2 : 4);
+    }
   });
 });

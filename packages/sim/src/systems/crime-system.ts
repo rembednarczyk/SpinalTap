@@ -138,17 +138,18 @@ export const report = (
 };
 
 /**
- * What a report costs the street (ADR-0070): one per incident (ADR-0029), and one deed once: the
- * murder of a victim whose assault was reported costs only the rest of a murder, an assault
- * reported after its victim's murder nothing.
+ * What a report costs the street (ADR-0070): one per incident (ADR-0029). Each reported assault
+ * costs its own; the murder of a victim whose assaults were reported costs only the rest of a
+ * murder (at most down to nothing), and its victim's account is then settled.
  */
 const chargeStreet = (ctx: SimContext, crime: CrimeKind, victim: EntityId | undefined): void => {
   const charged = ctx.session.street.charged;
   const before = victim === undefined ? 0 : (charged.get(victim) ?? 0);
   const civilians = ctx.state.domain.reputation.civilians;
   applyReputationCause(ctx, { type: "crime-reported", crime, charged: before });
-  const cost = ctx.state.domain.reputation.civilians - civilians;
-  if (victim !== undefined && cost !== 0) charged.set(victim, before + cost);
+  if (victim === undefined) return;
+  if (crime === "murder") charged.delete(victim);
+  else charged.set(victim, before + ctx.state.domain.reputation.civilians - civilians);
 };
 
 /** The security of `faction` within `REPORT_LEAD_RADIUS` of `at` goes to look there. */

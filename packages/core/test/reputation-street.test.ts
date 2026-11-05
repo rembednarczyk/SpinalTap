@@ -64,14 +64,16 @@ describe("witnesses (ADR-0070)", () => {
     for (const crime of ["gunfire", "trespass", "hacking"] as const) expect(reputationEffects({ type: "crime-reported", crime })).toEqual([]);
   });
 
-  it("one deed once: a victim's crimes cost the worst of them, whatever the order of the reports", () => {
-    // The assault reported first, then the murder of the same victim: the rest of a murder.
+  it("each reported assault costs its own; a murder only the rest of what its victim's assaults cost", () => {
+    // A second assault on the same victim costs again, whatever was charged.
+    for (const charged of [0, -1, -2]) {
+      expect(reputationEffects({ type: "crime-reported", crime: "assault", charged })).toEqual([{ faction: "civilians", delta: -1 }]);
+    }
+    // The murder after one reported assault: the rest of a murder; after two or more: nothing.
+    expect(reputationEffects({ type: "crime-reported", crime: "murder", charged: 0 })).toEqual([{ faction: "civilians", delta: -2 }]);
     expect(reputationEffects({ type: "crime-reported", crime: "murder", charged: -1 })).toEqual([{ faction: "civilians", delta: -1 }]);
-    // The murder first: its assault costs nothing more, nor does a second murder report.
-    expect(reputationEffects({ type: "crime-reported", crime: "assault", charged: -2 })).toEqual([]);
     expect(reputationEffects({ type: "crime-reported", crime: "murder", charged: -2 })).toEqual([]);
-    expect(reputationEffects({ type: "crime-reported", crime: "assault", charged: -1 })).toEqual([]);
-    expect(reputationEffects({ type: "crime-reported", crime: "assault", charged: 0 })).toEqual([{ faction: "civilians", delta: -1 }]);
+    expect(reputationEffects({ type: "crime-reported", crime: "murder", charged: -3 })).toEqual([]);
   });
 });
 
