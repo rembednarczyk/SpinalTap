@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-305 Oyaji przy nieufności ma otwarty sklep, ale trzyma się 7 m od gracza (interakcja z 3 m)
+- Status: naprawione w #267 (5.11, 8de6c8f; ADR-0070 etap 2, stali mieszkańcy nie odsuwają się z powodu reputacji)
+- Ważność: S3 · Zasięg: reputacja −11..−49; w praktyce sklep zamknięty przed progiem odmowy
+- Pakiet właściciela: packages/sim (civilian-ai-system)
+
 ### G-286 Scalony toast „×N” znika 4,5 s od pierwszego zdarzenia, nie od ostatniego
 - Status: naprawione w #265 (5.11, 975fdb2; `expireToast` liczy żywe wpisy, `sameToast` porównuje `keep`)
 - Ważność: S4 · Zasięg: każdy scalany toast; identyczne powiadomienie po 4,4 s widać ułamek sekundy; `sameToast` pomija flagę `keep` (dziś teoretyczne)
