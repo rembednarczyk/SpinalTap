@@ -977,7 +977,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/sim (testy `flee-dead-zone`, `reputation-tiers`)
 
 ### G-317 Ucieczka cywila pod ścianą drga: kąt skacze o ±0,8 rad co klatkę
-- Status: w PR #277 (5.11; histereza kierunku `fleeTurn`, skoki 23 → 3)
+- Status: w PR #277, runda 3 (5.11; reguła przyjęta przy stojącym graczu, poprawiana regresja w pościgu: utknięcie w rogu (316,3; −95,2)). Nieobjęte: `FleeFromDanger` bez testu, przy −30 histereza nie działa (`yaw` na gracza)
 - Ważność: S3 · Zasięg: ucieczka przy ścianie; ziarno 3, −60, przechodzień 1002004, gracz w 2 m: ok. 0,4 s, 24 skoki, bo przełącza się kierunek sondy wolnej drogi
 - Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, `runFrom`)
 
@@ -1028,7 +1028,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 
 ### G-328 Cywil uciekający w ślepy zaułek biega w miejscu w promieniu ucieczki
 - Status: zgłoszone (5.11, weryfikator PR #277; było przed G-317)
-- Ważność: S3 · Zasięg: zaułek ok. (308,4; −101,5), ziarno 11, przechodzień 1002001, gracz o (0,2): przez 10 s nie wychodzi z promienia
+- Ważność: S3 · Zasięg: zaułek ok. (308,4; −101,5), ziarno 11, przechodzień 1002001, gracz o (0,2): przez 10 s nie wychodzi z promienia; także w pościgu: zaułek przy (316; −95) zatrzymuje uciekającego na main (465 skoków kąta)
 - Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, `runFrom`)
 
 ### G-329 Cywil 294 (koi-regular-2) drga w miejscu podczas paniki po strzałach
