@@ -71,6 +71,9 @@ class GangerAgent {
       return State.SUCCEEDED;
     }
     this.walk.pursueTo(lead);
+    // It turns the way it walks (ADR-0069): it goes to look, not backwards with its eyes on its post.
+    const v = self.velocity;
+    if (Math.hypot(v.x, v.z) > 1e-6) faceTowards(this, { position: { x: self.position.x + v.x, y: self.position.y, z: self.position.z + v.z } });
     return State.SUCCEEDED;
   };
 

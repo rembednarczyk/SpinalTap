@@ -1,5 +1,5 @@
 import type { MessageKey } from "../i18n/en";
-import { type Translate, translator } from "../i18n/t";
+import type { Translate } from "../i18n/t";
 
 /** Keys whose name depends on the language (ADR-0056). */
 const LOCALIZED: Readonly<Record<string, MessageKey>> = {
@@ -44,14 +44,11 @@ const NAMED: Readonly<Record<string, string>> = {
   Backslash: "\\",
 };
 
-/** The HUD's key hints are still Polish until stage 2 of ADR-0056 hands them a translator. */
-const POLISH = translator("pl");
-
 /**
  * A physical code as a player reads it in the translator's language: "KeyW" -> "W",
  * "Mouse2" -> "RMB", "Numpad1" -> "Num 1".
  */
-export const keyLabel = (code: string, t: Translate = POLISH): string => {
+export const keyLabel = (code: string, t: Translate): string => {
   const localized = LOCALIZED[code];
   if (localized) return t(localized);
   const named = NAMED[code];

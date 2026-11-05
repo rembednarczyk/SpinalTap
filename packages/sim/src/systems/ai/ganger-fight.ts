@@ -14,8 +14,8 @@ export const MELEE_REST = 0.45;
 const MELEE_REST_JITTER = 0.4;
 const TURN_RATE = 6;
 
-/** Turns the ganger towards the target, no faster than its turn rate. */
-export const faceTowards = ({ self, ctx, timeScale }: GangerBinding, target: Entity): void => {
+/** Turns the ganger towards the target (or a point), no faster than its turn rate. */
+export const faceTowards = ({ self, ctx, timeScale }: GangerBinding, target: Pick<Entity, "position">): void => {
   if (!self || !ctx) return;
   const desired = Math.atan2(target.position.x - self.position.x, target.position.z - self.position.z);
   let delta = (desired - self.yaw) % (Math.PI * 2);
