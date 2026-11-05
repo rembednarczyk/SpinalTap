@@ -16,6 +16,10 @@ const DECK = {
   view: { kind: "ground", surface: "road", outline: [{ x: 0, z: 0.3 }, { x: 40, z: 0.3 }, { x: 40, z: 10.3 }, { x: 0, z: 10.3 }], deck: { a: { x: 0, y: 5, z: 5.3 }, b: { x: 40, y: 5, z: 5.3 } } },
   at: O,
 };
+/** The same deck 1.5 m over the valley, within a way's headroom (G-062): the ground of a way under it. */
+const LOW_DECK = { ...DECK, view: { ...DECK.view, deck: { a: { x: 0, y: 1.5, z: 5.3 }, b: { x: 40, y: 1.5, z: 5.3 } } } };
+/** A level band of steps along the deck's edge, across it, its axis (z 10.7) off the deck. */
+const BAND = { view: { kind: "ground", surface: "steps", outline: [{ x: 5, z: 9.8 }, { x: 15, z: 9.8 }, { x: 15, z: 11.6 }, { x: 5, z: 11.6 }] }, at: O };
 const line = (z: number) => ({ view: { kind: "road-marking", marking: "edge", line: [{ x: 3, z }, { x: 37, z }] }, at: O });
 const world = (...items: { view: unknown; at: Vec3 }[]) => mapGround(items as { view: ViewDescriptor; at: Vec3 }[]);
 
@@ -26,6 +30,10 @@ describe("paint on and by the decks (G-301)", () => {
 
   it("keeps a line beside the deck on the terrain", () => {
     expect(deckPaint(world(VALLEY, DECK, line(11), line(-0.5))).lifted).toEqual([]);
+  });
+
+  it("finds a band across the deck's outline laid on the terrain under its carriageway (G-330)", () => {
+    expect(deckPaint(world(VALLEY, LOW_DECK, BAND)).under).toEqual([{ at: expect.stringMatching(/^steps at /), what: "148 cm under the deck's carriageway" }]);
   });
 
   it("finds none in the city", () => {
