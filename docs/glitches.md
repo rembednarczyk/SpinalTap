@@ -1022,7 +1022,7 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine/src/effects (deszcz)
 
 ### G-332 Plac przed Dworcem Autobusowym bez nawierzchni: wyjście pawilonu metra na gołe podłoże
-- Status: w PR #285, do poprawki zachodniego boku obrysu (kurator 5.11: plac sięga w227698428)
+- Status: w PR #285, przyjęte (5.11, baf0e4b; obrys kuratora), czeka na CI
 - Ważność: S4 · Zasięg: Podzamcze, x ok. 740–764, z ok. 370–377 (ok. 170 m²), wyjście `targ` B (T-162, T-159)
 - Pakiet właściciela: packages/sim (treść `lublin`, ręczna nawierzchnia) albo tools/osm-import
 
