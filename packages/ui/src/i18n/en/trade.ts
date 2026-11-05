@@ -190,6 +190,7 @@ export const enTrade = {
   "shop.yatai.leave": "Step away from the stall",
   "shop.yatai.surcharge": "Fumiko doesn't trust you",
   "shop.yatai.hostile": "The street fears you",
+  "shop.yatai.basic": "Hostile reputation: plain food only.",
   "shop.terms.discount": "Regular customer · {pct}% off",
   "shop.terms.surcharge": "{who} · {pct}% surcharge",
   "shop.category.weapon": "Weapon",

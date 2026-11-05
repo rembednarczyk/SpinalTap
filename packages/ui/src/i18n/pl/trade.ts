@@ -187,6 +187,7 @@ export const plTrade = {
   "shop.yatai.leave": "Odejdź od straganu",
   "shop.yatai.surcharge": "Fumiko ci nie ufa",
   "shop.yatai.hostile": "Ulica się ciebie boi",
+  "shop.yatai.basic": "Wroga reputacja: tylko zwykłe jedzenie.",
   "shop.terms.discount": "Stała klientka · rabat {pct}%",
   "shop.terms.surcharge": "{who} · dopłata {pct}%",
   "shop.category.weapon": "Broń",
