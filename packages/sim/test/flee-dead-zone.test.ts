@@ -89,6 +89,10 @@ describe("the dead zone for the crowd (ADR-0070)", () => {
       .slice(0, 3);
   };
 
+  /** The first three walkers of seed 3, found once for all the cases below. */
+  let walkers: number[] | undefined;
+  const firstWalkers = (): number[] => (walkers ??= laneWalkers(3));
+
   it("a walker of a crowd route goes on along it once the player is gone", () => {
     const [id] = laneWalkers(3);
     const sim = crowdWith(HOSTILE);
@@ -107,10 +111,11 @@ describe("the dead zone for the crowd (ADR-0070)", () => {
   });
 
   for (const [tier, reputation, radius] of STREETS) {
-    it(`a walker of a crowd route stops past the radius of a ${tier} street, instead of stepping in and out of it`, () => {
-      const ids = laneWalkers(3);
-      expect(ids.length).toBeGreaterThan(0);
-      for (const id of ids) {
+    // One case per walker: each runs 30 s of a crowded deptak, too much for one case under coverage.
+    for (const n of [0, 1, 2]) {
+      it(`a walker of a crowd route (${n + 1} of 3) stops past the radius of a ${tier} street, instead of stepping in and out of it`, () => {
+        const id = firstWalkers()[n];
+        expect(id).toBeDefined();
         const sim = crowdWith(reputation);
         const walker = passerbyOnDeptak(sim, 2, (e) => e.id === id);
         const w = watchStandOff(sim, walker.id, 1800);
@@ -118,8 +123,8 @@ describe("the dead zone for the crowd (ADR-0070)", () => {
         expect(w.flips, `walker ${id}`).toBeLessThanOrEqual(2);
         expect(w.min, `walker ${id}`).toBeGreaterThanOrEqual(radius);
         expect(w.max, `walker ${id}`).toBeLessThanOrEqual(radius + FLEE_DEAD_ZONE);
-      }
-    });
+      });
+    }
 
     it(`someone sitting on a bench does not turn round to a player of a ${tier} street in the dead zone`, () => {
       const sim = crowdWith(reputation);
