@@ -1017,11 +1017,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (`ADDED_AREAS`)
 - Test przyjęcia: 0 gołych próbek 0,5 m w obszarze T-165 poza rabatami; propozycja kontroli `paving-sliver` dla całego miasta
 
-### G-338 Uciekający cywil stoi w miejscu, a kierunek przeskakuje 0 ↔ −π/2
-- Status: w PR (5.11, 4f766a4; `bodyWalk`: sonda ucieczki z szerokością ciała; ziarno 17, 1002008: 242 → 2 skoki); przypadki ziaren 3 i 7 w G-343
-- Ważność: S4 · Zasięg: ziarno 17, przechodzień 1002008, pościg 4 m/s do 2 m, ok. (248,2; −65): sonda 2,5 m pokazuje wolną drogę, a ruch jest zablokowany (242 skoki); także ziarno 3, 1002001/1002003, gracz 1 m, ok. (326,5; −29), 183–186 skoków; ziarno 7, 1002001, gracz 2 m
-- Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system)
-
 ### G-339 Uskok na końcach pomostów: pomost poziomy w poprzek, droga obok na terenie (T-166)
 - Status: zgłoszone (5.11, kurator, przegląd G-330)
 - Ważność: S4 · Zasięg: 8 końców (Mełgiewska, wiadukt Zamkowej, kładka Podzamcza) · Koszt: średni

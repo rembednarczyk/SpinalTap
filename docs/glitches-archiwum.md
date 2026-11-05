@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-338 Uciekający cywil stoi w miejscu, a kierunek przeskakuje 0 ↔ −π/2
+- Status: naprawione w #292 (5.11, c49ab71; `bodyWalk`, sonda ucieczki z szerokością ciała; ziarna 3 i 7 w G-343)
+- Ważność: S4 · Zasięg: ziarno 17, przechodzień 1002008, pościg 4 m/s do 2 m, ok. (248,2; −65): sonda 2,5 m pokazuje wolną drogę, a ruch jest zablokowany (242 skoki); także ziarno 3, 1002001/1002003, gracz 1 m, ok. (326,5; −29), 183–186 skoków; ziarno 7, 1002001, gracz 2 m
+- Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system)
+
 ### G-336 Pasy gołego podłoża przy Dworcu Autobusowym (T-164)
 - Status: naprawione w #291 (5.11, 5f49f0c; `T-164/plac-przy-dworcu` i `T-164/chodnik-novy`, kurator PRZYJĘTE)
 - Ważność: S4 · Zasięg: pas między parkingiem w175995587 a chodnikiem w227698423 (ok. 70 m²), plac między chodnikiem a ścianą Dworca w66264171 (ok. 250 m²), pas przy ścianie Novy (ok. 105 m²)
