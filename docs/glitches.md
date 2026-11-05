@@ -1033,12 +1033,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: tools/osm-import (pomosty z obrysu `man_made=bridge`)
 - Test przyjęcia: kontrola `deck-slot` (punkt poza pomostami z pomostem po obu stronach do 2 m i ziemią ≥ 0,5 m niżej) = 0 poza wnęką T-147
 
-### G-341 Gołe pasy wokół Dworca Autobusowego od północy i wschodu (T-168)
-- Status: w PR #294 (2832816); przegląd kuratora 5.11: PRZYJĘTE, czeka na CI
-- Ważność: S4 · Zasięg: x 785–797, z 422–430 (ok. 42 m²) i x 793–808, z 376–428 (ok. 325 m²) · Koszt: mały
-- Pakiet właściciela: tools/osm-import (`ADDED_AREAS`)
-- Test przyjęcia: 0 gołych próbek 0,5 m poza budynkami w obu prostokątach; asfalt stanowisk w66323033 i chodniki zostają na wierzchu
-
 ### G-342 Zaplecze Novy bez nawierzchni (T-169)
 - Status: zgłoszone (5.11, kurator, przegląd G-336)
 - Ważność: S4 · Zasięg: x 726–756, z 428–441, ok. 270 m² · Koszt: mały

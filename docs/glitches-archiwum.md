@@ -2,6 +2,12 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-341 Gołe pasy wokół Dworca Autobusowego od północy i wschodu (T-168)
+- Status: naprawione w #294 (5.11, a5b773f; `T-168/peron-przy-dworcu` i `T-168/chodnik-przy-dworcu`, kurator PRZYJĘTE)
+- Ważność: S4 · Zasięg: x 785–797, z 422–430 (ok. 42 m²) i x 793–808, z 376–428 (ok. 325 m²) · Koszt: mały
+- Pakiet właściciela: tools/osm-import (`ADDED_AREAS`)
+- Test przyjęcia: 0 gołych próbek 0,5 m poza budynkami w obu prostokątach; asfalt stanowisk w66323033 i chodniki zostają na wierzchu
+
 ### G-338 Uciekający cywil stoi w miejscu, a kierunek przeskakuje 0 ↔ −π/2
 - Status: naprawione w #292 (5.11, c49ab71; `bodyWalk`, sonda ucieczki z szerokością ciała; ziarna 3 i 7 w G-343)
 - Ważność: S4 · Zasięg: ziarno 17, przechodzień 1002008, pościg 4 m/s do 2 m, ok. (248,2; −65): sonda 2,5 m pokazuje wolną drogę, a ruch jest zablokowany (242 skoki); także ziarno 3, 1002001/1002003, gracz 1 m, ok. (326,5; −29), 183–186 skoków; ziarno 7, 1002001, gracz 2 m
