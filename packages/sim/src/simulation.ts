@@ -32,6 +32,7 @@ import { CROWD_CAP, type CrowdDensity } from "./content/crowd";
 import type { TrafficDensity } from "./content/traffic";
 import { isMicroKey } from "./world/micro-events";
 import { doorSnapshots, restoreDoors } from "./systems/door-system";
+import { resumeOnLadderTop } from "./systems/ladder-system";
 import { withAttackLock } from "./world/takedown";
 import { withCarry } from "./world/bodies";
 import { resumeSession } from "./world/session-resume";
@@ -137,6 +138,9 @@ export class Simulation {
     // A profile asked for in the fight still waits for its end (G-171).
     sim.session.pendingDifficulty = snapshot.pendingDifficulty ?? null;
     resumeSession(sim.session, sim.domain, sim.player(), sim.streamer);
+    // Saved in the step across the top of a ladder (ADR-0021): onto the rungs or the roof.
+    const player = sim.player();
+    if (player) resumeOnLadderTop(sim.world, player);
     return sim;
   }
 

@@ -39,6 +39,21 @@ const pos = (sim: Simulation) => {
   return { x: p.x - MARKET_PLACE.x, y: p.y - MARKET_PLACE.y, z: p.z - MARKET_PLACE.z };
 };
 
+/**
+ * Steps `frame` while `going` holds (at most `limit` steps) and returns the longest move of the
+ * player in one step, metres: a climber eased on and off a ladder never jumps further than a run.
+ */
+const longestStep = (sim: Simulation, frame: Parameters<Simulation["step"]>[0], going: () => boolean, limit = 400): number => {
+  let longest = 0;
+  for (let i = 0; i < limit && going(); i++) {
+    const from = { ...player(sim).position };
+    sim.step(frame);
+    const to = player(sim).position;
+    longest = Math.max(longest, Math.hypot(to.x - from.x, to.y - from.y, to.z - from.z));
+  }
+  return longest;
+};
+
 /** A market stall counter, 1 m high, x ∈ [95.4, 98], z ∈ [67.35, 68.65]. */
 const COUNTER = { x: 96.7, front: 69.2, top: 1 } as const;
 
@@ -161,11 +176,12 @@ describe("fire escape ladders (ADR-0021)", () => {
     const climbs = collect<{ on: boolean }>(sim, "LadderClimb");
     for (let i = 0; i < 60 && !player(sim).climb; i++) sim.step(input({ moveZ: 1 }));
     expect(player(sim).climb?.ladder).toBe("targ-escape-1");
+    for (let i = 0; i < 60 && player(sim).climb?.settle; i++) sim.step(input({ moveZ: 1 }));
     // On the ladder: no fire, no gravity, forward climbs.
     run(sim, 30, input({ moveZ: 1, fire: true }));
     expect(pos(sim).y).toBeGreaterThan(0.9);
     expect(pos(sim).x).toBeCloseTo(73.2, 5);
-    for (let i = 0; i < 200 && player(sim).climb; i++) sim.step(input({ moveZ: 1 }));
+    for (let i = 0; i < 200 && (player(sim).climb || player(sim).mantle); i++) sim.step(input({ moveZ: 1 }));
     expect(pos(sim).y).toBeCloseTo(BALCONY_TOP, 5);
     run(sim, 5);
     expect(pos(sim).y).toBeCloseTo(BALCONY_TOP, 5);
@@ -175,10 +191,72 @@ describe("fire escape ladders (ADR-0021)", () => {
     player(sim).yaw = SOUTH;
     for (let i = 0; i < 30 && !player(sim).climb; i++) sim.step(input({ moveZ: 1 }));
     expect(player(sim).climb?.ladder).toBe("targ-escape-2");
-    for (let i = 0; i < 300 && player(sim).climb; i++) sim.step(input({ moveZ: 1 }));
+    for (let i = 0; i < 300 && (player(sim).climb || player(sim).mantle); i++) sim.step(input({ moveZ: 1 }));
     expect(pos(sim).y).toBeCloseTo(ROOF_WEST_TOP, 5);
     expect(pos(sim).z).toBeLessThan(64);
     expect(climbs.map((c) => c.on)).toEqual([true, false, true, false]);
+  });
+
+  it("walking into the foot from an angle eases her onto the rungs, the view turning with her", () => {
+    // 30 degrees off the ladder and a hand's width to its side.
+    const a = SOUTH + 0.52;
+    const sim = at(73.2 - Math.sin(a) * 1.2 + 0.2, 0, 64.4 - Math.cos(a) * 1.2, a);
+    let longestTurn = 0;
+    const turnOf = () => player(sim).yaw;
+    const onTheWay = () => !player(sim).climb || player(sim).climb?.settle !== undefined;
+    let longest = 0;
+    for (let i = 0; i < 90 && onTheWay(); i++) {
+      const yaw = turnOf();
+      longest = Math.max(longest, longestStep(sim, input({ moveZ: 1 }), () => true, 1));
+      longestTurn = Math.max(longestTurn, Math.abs(Math.atan2(Math.sin(turnOf() - yaw), Math.cos(turnOf() - yaw))));
+    }
+    expect(player(sim).climb?.ladder).toBe("targ-escape-1");
+    // Before: 0.57 m sideways and the whole 30 degrees in the step she caught it.
+    expect(longest).toBeLessThan(0.12);
+    expect(longestTurn).toBeLessThan(0.1);
+    expect(pos(sim).x).toBeCloseTo(73.2, 5);
+    expect(pos(sim).z).toBeCloseTo(64.4, 5);
+    expect(player(sim).yaw).toBeCloseTo(SOUTH, 5);
+  });
+
+  it("steps off at the top in a pull-over, not a jump onto the roof", () => {
+    const sim = at(69.2, BALCONY_TOP, 64.4, SOUTH);
+    sim.step(input({ interact: true }));
+    expect(player(sim).climb?.ladder).toBe("targ-escape-2");
+    const climbing = () => player(sim).climb !== undefined || player(sim).mantle !== undefined;
+    // Before: the last rung put her 1.1 m over onto the roof in one step.
+    expect(longestStep(sim, input({ moveZ: 1 }), climbing)).toBeLessThan(0.2);
+    expect(climbing()).toBe(false);
+    expect(pos(sim).y).toBeCloseTo(ROOF_WEST_TOP, 5);
+    expect(pos(sim).z).toBeCloseTo(63.3, 5);
+    run(sim, 10);
+    expect(pos(sim).y).toBeCloseTo(ROOF_WEST_TOP, 5);
+  });
+
+  it("from the top she swings over the edge onto the rungs, not a jump onto them", () => {
+    const sim = at(69.2, ROOF_WEST_TOP, 63.3, 0);
+    run(sim, 2);
+    const from = { ...player(sim).position };
+    sim.step(input({ interact: true }));
+    expect(player(sim).climb?.ladder).toBe("targ-escape-2");
+    // Before: the key put her 1.1 m out and 0.8 m down in one step.
+    const moved = Math.hypot(player(sim).position.x - from.x, player(sim).position.y - from.y, player(sim).position.z - from.z);
+    const settling = () => player(sim).climb?.settle !== undefined;
+    expect(Math.max(moved, longestStep(sim, input(), settling))).toBeLessThan(0.2);
+    // On the rungs, facing the wall, a little below the top.
+    expect(pos(sim).z).toBeCloseTo(64.4, 5);
+    expect(pos(sim).y).toBeCloseTo(ROOF_WEST_TOP - 0.8, 5);
+    expect(player(sim).yaw).toBeCloseTo(SOUTH, 5);
+    // Over the roof first, then down: never inside the wall below the roof's edge.
+    const edge = 64;
+    const back = at(69.2, ROOF_WEST_TOP, 63.3, 0);
+    run(back, 2);
+    back.step(input({ interact: true }));
+    for (let i = 0; i < 60 && back.player()!.climb?.settle; i++) {
+      const p = back.player()!.position;
+      if (p.z - MARKET_PLACE.z < edge + 0.3) expect(p.y - MARKET_PLACE.y).toBeCloseTo(ROOF_WEST_TOP, 5);
+      back.step(input());
+    }
   });
 
   it("the interact key climbs down from the top; back steps down, and jump lets go", () => {
@@ -189,6 +267,7 @@ describe("fire escape ladders (ADR-0021)", () => {
     expect(player(sim).climb?.ladder).toBe("targ-escape-2");
     run(sim, 1);
     expect(sim.session.focusPrompt).toBeNull();
+    for (let i = 0; i < 60 && player(sim).climb?.settle; i++) sim.step(input());
     const y0 = pos(sim).y;
     run(sim, 30, input({ moveZ: -1 }));
     expect(pos(sim).y).toBeLessThan(y0 - 0.9);
@@ -210,6 +289,42 @@ describe("fire escape ladders (ADR-0021)", () => {
     expect(loaded.player()!.position.y - MARKET_PLACE.y).toBeCloseTo(y, 5);
   });
 
+  it("a game saved in any step of the swing onto the rungs or the pull-over loads without a fall", () => {
+    /** Loads `sim` as saved now and lets it run: she is on the rungs or on the roof, unhurt. */
+    const loadsSafely = (sim: Simulation, what: string) => {
+      const loaded = Simulation.fromSnapshot(sim.snapshot(null, "ladder", ""));
+      const landed = collect<{ drop: number }>(loaded, "Landed");
+      run(loaded, 60);
+      const p = loaded.player()!;
+      const y = p.position.y - MARKET_PLACE.y;
+      const onRungs = p.climb?.ladder === "targ-escape-2";
+      expect(onRungs || Math.abs(y - ROOF_WEST_TOP) < 1e-6, `${what}: y ${y}`).toBe(true);
+      expect(landed.filter((l) => l.drop > 0.5), `${what}: fell`).toHaveLength(0);
+      expect(p.health?.current, what).toBe(100);
+    };
+    // Down: the interact key at the top, saved in every step of the swing.
+    for (let k = 1; k <= 40; k++) {
+      const sim = at(69.2, ROOF_WEST_TOP, 63.3, 0);
+      run(sim, 2);
+      sim.step(input({ interact: true }));
+      run(sim, k);
+      loadsSafely(sim, `swing, step ${k}`);
+    }
+    // Up: the pull-over at the top of the ladder, saved in every step of it.
+    const start = () => {
+      const sim = at(69.2, BALCONY_TOP, 64.4, SOUTH);
+      sim.step(input({ interact: true }));
+      for (let i = 0; i < 300 && player(sim).climb; i++) sim.step(input({ moveZ: 1 }));
+      expect(player(sim).mantle).toBeDefined();
+      return sim;
+    };
+    for (let k = 0; k <= 40; k++) {
+      const sim = start();
+      run(sim, k);
+      loadsSafely(sim, `pull-over, step ${k}`);
+    }
+  });
+
   it("the third ladder leads to Hebi's roof stash, placed once when the player comes near", () => {
     const sim = at(79.6, ROOF_WEST_TOP, 60.5, EAST);
     const bag = () => sim.world.with("lootBag").entities.find((e) => e.lootBag.key === TARG_ROOF_STASH.key);
@@ -218,7 +333,7 @@ describe("fire escape ladders (ADR-0021)", () => {
     expect(bag()?.position.y).toBeCloseTo(ROOF_MID_TOP + MARKET_PLACE.y, 5);
     sim.step(input({ interact: true }));
     expect(player(sim).climb?.ladder).toBe("targ-escape-3");
-    for (let i = 0; i < 300 && player(sim).climb; i++) sim.step(input({ moveZ: 1 }));
+    for (let i = 0; i < 300 && (player(sim).climb || player(sim).mantle); i++) sim.step(input({ moveZ: 1 }));
     expect(pos(sim).y).toBeCloseTo(ROOF_MID_TOP, 5);
     // Placed once: walking about up here does not add another.
     run(sim, 30);

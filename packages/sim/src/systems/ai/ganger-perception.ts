@@ -192,6 +192,22 @@ export const lenientTo = (ctx: SimContext, g: Ganger): boolean => {
   return coveredFrom(ctx, g.faction) || watchesOnly(ctx, g, factionStance(reputation, g.faction ?? "hebi"), heat);
 };
 
+/** How far the player is from `g`, its range under its faction's stance and whether it has a clear line to her within it. */
+const sightLine = (ctx: SimContext, g: Ganger, player: Entity | null, reputation: DomainState["reputation"]) => {
+  const distance = player ? Math.hypot(player.position.x - g.position.x, player.position.z - g.position.z) : Infinity;
+  const stance = factionStance(reputation, g.faction ?? "hebi");
+  const aggro = effectiveAggroRange(g.ai.aggroRange, stance);
+  const blind = (g.hackFx?.blind ?? 0) > 0;
+  const inSight = !blind && !!player && distance <= aggro && lineOfSight(ctx.world, eyeOf(g), chestOf(player));
+  return { distance, stance, aggro, inSight };
+};
+
+/** Whether `g` has the player in its sight this step, though maybe not sure yet (pure: no meter moves). */
+export const glimpses = (ctx: SimContext, g: Ganger, player: Entity): boolean => {
+  const { distance, aggro, inSight } = sightLine(ctx, g, player, ctx.state.domain.reputation);
+  return enemySees(g, player, distance, inSight, aggro);
+};
+
 /**
  * What a ganger makes of the player this step: how far they are and whether it sees them. An
  * unalerted one fills its suspicion first and believes its eyes only at 1 (ADR-0069); one that
@@ -207,11 +223,7 @@ export const perceivePlayer = (
   { reputation, heat }: Pick<DomainState, "reputation" | "heat">,
   timeScale: number,
 ): Perception => {
-  const distance = player ? Math.hypot(player.position.x - g.position.x, player.position.z - g.position.z) : Infinity;
-  const stance = factionStance(reputation, g.faction ?? "hebi");
-  const aggro = effectiveAggroRange(g.ai.aggroRange, stance);
-  const blind = (g.hackFx?.blind ?? 0) > 0;
-  const inSight = !blind && !!player && distance <= aggro && lineOfSight(ctx.world, eyeOf(g), chestOf(player));
+  const { distance, stance, aggro, inSight } = sightLine(ctx, g, player, reputation);
   const lenient = watchesOnly(ctx, g, stance, heat);
   let visible = inSight;
   let glimpsed = false;

@@ -21,4 +21,20 @@ export interface Climbing {
   readonly ladder: string;
   /** Climbing speed this step, m/s, positive up (for the presentation). */
   speed: number;
+  /** Getting onto the rungs, eased from where she stood; the stick waits until it is done. */
+  settle?: LadderSettle;
+}
+
+/**
+ * The way onto a ladder, from where she stood (`from`, facing `fromYaw`) to her hold on the
+ * rungs at feet height `y`, over `duration` seconds. `over` swings across the edge first and
+ * then down (a grab from the top), else it goes straight.
+ */
+export interface LadderSettle {
+  readonly from: Vec3;
+  readonly fromYaw: number;
+  readonly y: number;
+  readonly over: boolean;
+  readonly duration: number;
+  t: number;
 }
