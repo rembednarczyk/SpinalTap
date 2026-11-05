@@ -1,7 +1,10 @@
 import type { Entity, LadderDef, LadderSettle } from "../world/components";
 import type { SimContext, System } from "../world/context";
+import { groundOf } from "../world/ground";
 import { inCreationOrder } from "../world/ordering";
+import { solidIndexOf } from "../world/solid-index";
 import { playerHeld } from "../world/takedown";
+import { SNAP_DOWN, groundAt } from "./movement-system";
 import { playerStatsOf } from "./player-control-system";
 
 /** Climbing speed on a ladder, m/s. */
@@ -34,6 +37,11 @@ const TOP_CATCH_REACH = 0.7;
 const TOP_CATCH_PACE = 1.1;
 /** Her feet left the floor within this of the ladder's top (metres). */
 const TOP_CATCH_LEVEL = 0.05;
+/**
+ * A game saved over the gap by a ladder's top this close to its line (metres, horizontally) loads
+ * on the rungs: the swing onto them starts within the grab point's reach (1.1 m) of the exit.
+ */
+const RESUME_REACH = 1.5;
 
 type Ladder = Entity & { ladder: LadderDef };
 
@@ -127,24 +135,24 @@ const onLadderLine = (e: Entity, l: LadderDef): boolean =>
 
 /**
  * A game saved in the step across the top of a ladder (the swing onto the rungs or the
- * pull-over, neither saved) loads with her at the roof's height between the ladder's line and
- * its exit, maybe over the gap in front of the wall: she goes to the nearer end, onto the rungs
- * at the top or onto the exit, instead of dropping down the gap. Called once, on load.
+ * pull-over, neither saved) loads with her at the roof's height by the ladder's top. On the roof
+ * she stays where she stood (G-313: the edge is 0.4-0.6 m from the line, so half the way to the
+ * exit is still roof). Over the gap in front of the wall (the line too) she goes onto the rungs
+ * where a grab from the top ends, instead of dropping down the gap or hanging with her feet at
+ * the roof's height; with a body on her shoulder (no ladder then, ADR-0065) onto the exit.
+ * Called once, on load.
  */
-export const resumeOnLadderTop = (world: SimContext["world"], e: Entity): void => {
+export const resumeOnLadderTop = (world: SimContext["world"], e: Entity, carrying: boolean): void => {
   if (e.climb || e.mantle) return;
+  const { x, y, z } = e.position;
   for (const { ladder: l } of inCreationOrder(world.with("ladder"))) {
-    if (Math.abs(e.position.y - l.top) >= 0.05) continue;
-    const dx = l.exit.x - l.x;
-    const dz = l.exit.z - l.z;
-    const len2 = dx * dx + dz * dz;
-    if (len2 < 1e-6) continue;
-    const t = ((e.position.x - l.x) * dx + (e.position.z - l.z) * dz) / len2;
-    const off = Math.hypot(e.position.x - (l.x + dx * t), e.position.z - (l.z + dz * t));
-    if (t < 0 || t > 1 || off >= 0.05) continue;
-    // On the rungs at the top: the ladder system takes her back on it in the first step.
-    e.position = t < 0.5 ? { x: l.x, y: l.top, z: l.z } : { ...l.exit };
-    e.yaw = t < 0.5 ? l.yaw : e.yaw;
+    if (Math.abs(y - l.top) >= 0.05 || Math.hypot(x - l.x, z - l.z) > RESUME_REACH) continue;
+    const solids = solidIndexOf(world).collidersNear(x - 1, z - 1, x + 1, z + 1);
+    // The floor a step of movement keeps her on: she stands there.
+    if (groundAt(solids, groundOf(world), x, z, y) >= y - SNAP_DOWN) return;
+    // The ladder system takes her back on the rungs in the first step.
+    e.position = carrying ? { ...l.exit } : { x: l.x, y: l.top - TOP_GRAB_DROP, z: l.z };
+    if (!carrying) e.yaw = l.yaw;
     return;
   }
 };

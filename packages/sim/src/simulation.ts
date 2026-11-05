@@ -140,7 +140,7 @@ export class Simulation {
     resumeSession(sim.session, sim.domain, sim.player(), sim.streamer);
     // Saved in the step across the top of a ladder (ADR-0021): onto the rungs or the roof.
     const player = sim.player();
-    if (player) resumeOnLadderTop(sim.world, player);
+    if (player) resumeOnLadderTop(sim.world, player, sim.session.carrying !== null);
     return sim;
   }
 
