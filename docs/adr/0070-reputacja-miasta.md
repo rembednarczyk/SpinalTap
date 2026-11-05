@@ -1,6 +1,6 @@
 # ADR-0070: Reputacja w mieście: progi reakcji, kara u sprzedawców, gangerzy i bilans zleceń
 
-Status: proponowana (szkic do akceptacji użytkownika; wynika z uwag z testowego przebiegu 4.11, backlog „Reputacja i reakcje mieszkańców”).
+Status: zaakceptowana przez użytkownika 5.11 w całości; otwarte pytania (ogłuszenie, odmowy rozmowy, klinika, limit +25) rozstrzyga orkiestrator w duchu szkicu. Wynika z uwag z testowego przebiegu 4.11, backlog „Reputacja i reakcje mieszkańców”.
 
 ## Kontekst
 Użytkownik zgłosił po przebiegu 4.11 trzy rzeczy: przy złej reputacji uciekają wszyscy, także sprzedawcy, co psuje immersję; likwidowanie gangerów powinno podnosić reputację w Lublinie; zlecenia dla Kaito obniżają reputację u mieszkańców i nie ma czym tego zrównoważyć. Lawinę powiadomień naprawił G-281 (#248). Został efekt uboczny: przechodzień drga na granicy ucieczki.
