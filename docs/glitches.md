@@ -961,11 +961,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S3 · Zasięg: każda drabina; do decyzji, jaki kąt i zasięg mają łapać
 - Pakiet właściciela: packages/sim (ruch, drabiny)
 
-### G-313 Wczytanie zapisu z paska dachu przy drabinie stawia graczkę na szczycie drabiny
-- Status: w PR #281, przyjęte po rundzie 2 (5.11, 0a2bc18; zasięg `TOP_CATCH_REACH` 0,7 m), czeka na CI
-- Ważność: S4 · Zasięg: pasek ok. 0,2 × 0,1 m przy krawędzi nad drabiną (t < 0,5 odcinka linia–wyjście, np. `targ-escape-2` (69,2; 9,1; 63,85–64,05)); bez upadku i straty zdrowia. Teoretycznie z ciałem na ramieniu (ADR-0065) system drabin ją pominie i spadnie. Przesunięcie `resumeOnLadderTop` sięga 0,61 m (`targ-escape-1`), a stały test obejmuje tylko `targ-escape-2`
-- Pakiet właściciela: packages/sim (`ladder-system.ts`, `resumeOnLadderTop`)
-
 ### G-316 Luki w testach martwej strefy ADR-0070: trzy mutacje przeżywają
 - Status: zgłoszone (5.11, weryfikator PR #267)
 - Ważność: S4 (test, nie gra) · Zasięg: `SEATED` bez „sleep” (brak testu leżącego w pasie), `StayFacingPlayer` obracający siedzącego stałego mieszkańca przy −60 (brak testu), `holdLanePlace` bez `waypoint = null` (nic nie sprawdza)

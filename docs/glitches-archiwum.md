@@ -2,6 +2,11 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-313 Wczytanie zapisu z paska dachu przy drabinie stawia graczkę na szczycie drabiny
+- Status: naprawione w #281 (5.11, d0d30d7; miejsce po podłodze pod graczką, zasięg `TOP_CATCH_REACH` 0,7 m)
+- Ważność: S4 · Zasięg: pasek ok. 0,2 × 0,1 m przy krawędzi nad drabiną (t < 0,5 odcinka linia–wyjście, np. `targ-escape-2` (69,2; 9,1; 63,85–64,05)); bez upadku i straty zdrowia. Teoretycznie z ciałem na ramieniu (ADR-0065) system drabin ją pominie i spadnie. Przesunięcie `resumeOnLadderTop` sięga 0,61 m (`targ-escape-1`), a stały test obejmuje tylko `targ-escape-2`
+- Pakiet właściciela: packages/sim (`ladder-system.ts`, `resumeOnLadderTop`)
+
 ### G-317 Ucieczka cywila pod ścianą drga: kąt skacze o ±0,8 rad co klatkę
 - Status: naprawione w #277 (5.11, 11ca247; histereza `fleeTurn` z `bendsBack`, ściana 23 → 3 skoki, pościg jak na main)
 - Ważność: S3 · Zasięg: ucieczka przy ścianie; ziarno 3, −60, przechodzień 1002004, gracz w 2 m: ok. 0,4 s, 24 skoki, bo przełącza się kierunek sondy wolnej drogi
