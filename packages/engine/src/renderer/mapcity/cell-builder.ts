@@ -1,4 +1,5 @@
 import type { EntityId } from "@seki/core";
+import { METRO_CUTS } from "@seki/sim";
 import type { Mesh, Scene } from "../../babylon";
 import type { MoonShadow } from "../../npr/moon-shadow";
 import type { ToonMaterials } from "../../npr/toon-material";
@@ -12,6 +13,7 @@ import { planCrossing } from "./crossing-plan";
 import { deckHeight, planDeckEdges, planDeckUnderside } from "./deck-plan";
 import { facadeFrame } from "./facade-frame";
 import { type ObstacleQuery, type PropSlot, bakeSlots } from "./facade-props";
+import { cutGround } from "./ground-cut";
 import { SURFACE_LIFT, planBasin, planSurface, planTerrain, planWater } from "./ground-plan";
 import { withLandmark } from "./landmarks";
 import type { Cell } from "./map-cells";
@@ -20,6 +22,9 @@ import type { MapSignMaterial } from "./map-signs";
 import type { MapWaterMaterial } from "./map-water";
 import { planMarking } from "./marking-plan";
 import { planSteps } from "./steps-plan";
+
+/** The ground dug out under the metro's pavilions (ADR-0071 stage 2): no terrain or paving over their stairs and halls. */
+const SHAFTS = METRO_CUTS.map((c) => c.bounds);
 
 export interface CellBuilderDeps {
   readonly scene: Scene;
@@ -42,6 +47,7 @@ export class CellBuilder {
   terrain(id: EntityId, t: TerrainEntry): Mesh | null {
     const sink = new MeshSink();
     planTerrain(sink, t.grid, t.open);
+    cutGround(sink, SHAFTS);
     return sink.empty ? null : this.mesh(`map-terrain-${id}`, sink, "mapTerrain");
   }
 
@@ -94,6 +100,7 @@ export class CellBuilder {
       else if (g.surface === "crossing") planCrossing(ground, g.ring, h);
       else planSurface(ground, g.surface, g.ring, h, g.surface === "sidewalk" ? entries.roadAt : null);
     }
+    cutGround(ground, SHAFTS);
     cell.ground = ground.empty ? null : this.mesh(`map-ground-${cell.key}`, ground, "mapGround");
     if (!water.empty) {
       const m = sinkToMesh(this.deps.scene, `map-water-${cell.key}`, water, false);
