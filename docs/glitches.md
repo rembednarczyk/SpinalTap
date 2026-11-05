@@ -895,21 +895,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Poprawka: na szwie brać pomosty obu chunków (albo indeks pomostów niezależny od chunka); test w punktach z = granica
 - Pakiet właściciela: packages/sim (world/deck)
 
-### G-282 Karabin Tessen w FPP ma model pistoletu
-- Status: potwierdzone (4.11, weryfikator G-275: FPP zawsze montuje pistolet, `character-kit.ts:52` montuje tylko `"pistol"`, także przy aktywnym SMG albo karabinie; pozycja ADS z #243 dla SMG zasłaniałaby cel w 100%, więc każda broń potrzebuje własnego przesunięcia)
-- Ważność: S3 · Zasięg: widok FPP z karabinem Tessen; możliwe także inne rodzaje broni bez własnego modelu
-- Pakiet właściciela: packages/engine (renderer, broń) i assety
-
-### G-283 Okno dialogowe od razu przewija się w dół i często się scrolluje
-- Status: zgłoszone (4.11, użytkownik, testowy przebieg; do odtworzenia)
-- Ważność: S3 · Zasięg: dialogi z NPC
-- Pakiet właściciela: packages/ui
-
-### G-284 Winda nie działa albo jej nie ma
-- Status: nie odtwarza się (4.11): jedyna winda (`targ-lift`, targ pod wiaduktem al. Tysiąclecia, ok. (797; 345,7)) działa; zgłoszenie prawdopodobnie dotyczy brakującej windy w Alchemii (backlog, ADR-0063); luka w `levels-ui.test.tsx`: test nie sprawdza jazdy platformy
-- Ważność: S3 · Zasięg: winda z treści (estakada, ADR windy z bramkami); do ustalenia, która i gdzie
-- Pakiet właściciela: packages/sim i treść lublin; docelowo winda w Alchemii (backlog)
-
 ### G-285 Przeciwnicy wykrywają gracza natychmiast, takedown niemożliwy
 - Status: etap 1 ADR-0069 w main #252 (4.11, 75eda14: stożek, kucanie i licznik dla wszystkich wrogów; kucanie od tyłu kończy się obezwładnieniem); etap 2 (słuch kroków) w kolejce
 - Ważność: S2 (proponowana: blokuje mechanikę) · Zasięg: walka z gangerami; czujność NPC i kamer (`AWARENESS_STEP`, `GUARD_CONE`, `ganger-perception.ts`)

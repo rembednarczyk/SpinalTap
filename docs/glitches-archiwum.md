@@ -2,6 +2,21 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-284 Winda nie działa albo jej nie ma
+- Status: nie odtwarza się (4.11; winda targu działa; winda w Alchemii w backlogu)
+- Ważność: S3 · Zasięg: winda z treści (estakada, ADR windy z bramkami); do ustalenia, która i gdzie
+- Pakiet właściciela: packages/sim i treść lublin; docelowo winda w Alchemii (backlog)
+
+### G-283 Okno dialogowe od razu przewija się w dół i często się scrolluje
+- Status: naprawione w #251 (5.11, 5ff20cc; napisy tylko bieżącego kroku w lewym dolnym rogu, historia za przyciskiem, HUD ukryty w rozmowie, strzałka przy przepełnieniu)
+- Ważność: S3 · Zasięg: dialogi z NPC
+- Pakiet właściciela: packages/ui
+
+### G-282 Karabin Tessen w FPP ma model pistoletu
+- Status: naprawione w #253 (5.11, 48c9546; FPP pokazuje model aktywnej broni z własną pozycją; własne modele rewolweru, strzelby i karabinu w pracy)
+- Ważność: S3 · Zasięg: widok FPP z karabinem Tessen; możliwe także inne rodzaje broni bez własnego modelu
+- Pakiet właściciela: packages/engine (renderer, broń) i assety
+
 ### G-274 Skraj wiaduktu Zamkowej nad biegiem w56965515 rysowany, ale bez podłogi: spadek 1,7 m przez bruk (po #233)
 - Status: naprawione w #233 (4.11, cfd3a73, razem z G-255)
 - Ważność: S2 (proponowana: gracz spada przez widoczną nawierzchnię na trasie Brama Grodzka–Zamek) · Zasięg: lokalny, trasa główna · Koszt: mały
