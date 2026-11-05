@@ -162,6 +162,42 @@ describe("loading a game saved by a ladder's top (G-313)", () => {
       }
       expect(Math.abs(down.player()!.position.y - l.top)).toBeLessThan(1e-6);
     });
+
+    it(`${key}: a game saved in the first steps of a fall off the edge about 1 m aside loads falling`, () => {
+      const sim = near(at);
+      const l = ladderIn(sim, key);
+      // Facing over the edge, the way from the exit to the ladder's line.
+      const yaw = Math.atan2(l.x - l.exit.x, l.z - l.exit.z);
+      let saves = 0;
+      for (const side of [-1, 1]) {
+        // Beyond the reach of the catch (0.7 m from the line): she falls past the rungs live too.
+        const start = { x: l.exit.x + Math.cos(yaw) * side, y: l.top, z: l.exit.z - Math.sin(yaw) * side };
+        const p = sim.player()!;
+        delete p.climb;
+        delete p.fall;
+        delete p.airPeak;
+        p.velocity = { x: 0, y: 0, z: 0 };
+        teleportPlayer(sim, start, yaw);
+        run(sim, 2);
+        for (let i = 0; i < 60 && p.position.y > l.top - 0.05; i++) {
+          sim.step(input({ moveZ: 1 }));
+          const aside = Math.hypot(p.position.x - l.x, p.position.z - l.z);
+          // Only off the edge well past the catch's reach (on the first ladder's balcony one
+          // side runs along the wall towards the line).
+          if (p.fall === undefined || p.position.y <= l.top - 0.05 || aside < 0.85) continue;
+          expect(p.climb, `${side} m aside, live`).toBeUndefined();
+          saves++;
+          const what = `${side} m aside, step ${i}, ${aside.toFixed(2)} m from the line`;
+          const { sim: loaded, saved } = loadAndRun(sim, 5);
+          const q = loaded.player()!;
+          // Before (a reach of 1.5 m): moved 1.25-1.48 m onto the rungs.
+          expect(q.climb, what).toBeUndefined();
+          expect(Math.hypot(q.position.x - saved.x, q.position.z - saved.z), what).toBeLessThan(0.3);
+          expect(q.position.y, what).toBeLessThan(saved.y);
+        }
+      }
+      expect(saves).toBeGreaterThan(0);
+    });
   }
 
   it("with a body on her shoulder, a game saved over the gap loads on the roof, not in a fall", () => {

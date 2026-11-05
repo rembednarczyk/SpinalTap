@@ -37,11 +37,6 @@ const TOP_CATCH_REACH = 0.7;
 const TOP_CATCH_PACE = 1.1;
 /** Her feet left the floor within this of the ladder's top (metres). */
 const TOP_CATCH_LEVEL = 0.05;
-/**
- * A game saved over the gap by a ladder's top this close to its line (metres, horizontally) loads
- * on the rungs: the swing onto them starts within the grab point's reach (1.1 m) of the exit.
- */
-const RESUME_REACH = 1.5;
 
 type Ladder = Entity & { ladder: LadderDef };
 
@@ -137,16 +132,17 @@ const onLadderLine = (e: Entity, l: LadderDef): boolean =>
  * A game saved in the step across the top of a ladder (the swing onto the rungs or the
  * pull-over, neither saved) loads with her at the roof's height by the ladder's top. On the roof
  * she stays where she stood (G-313: the edge is 0.4-0.6 m from the line, so half the way to the
- * exit is still roof). Over the gap in front of the wall (the line too) she goes onto the rungs
- * where a grab from the top ends, instead of dropping down the gap or hanging with her feet at
- * the roof's height; with a body on her shoulder (no ladder then, ADR-0065) onto the exit.
- * Called once, on load.
+ * exit is still roof). Over the gap in front of the wall (the line too), as close to the line as
+ * a walk over the edge is caught (TOP_CATCH_REACH: further aside she falls live too, and a save
+ * in that fall loads falling), she goes onto the rungs where a grab from the top ends, instead
+ * of dropping down the gap or hanging with her feet at the roof's height; with a body on her
+ * shoulder (no ladder then, ADR-0065) onto the exit. Called once, on load.
  */
 export const resumeOnLadderTop = (world: SimContext["world"], e: Entity, carrying: boolean): void => {
   if (e.climb || e.mantle) return;
   const { x, y, z } = e.position;
   for (const { ladder: l } of inCreationOrder(world.with("ladder"))) {
-    if (Math.abs(y - l.top) >= 0.05 || Math.hypot(x - l.x, z - l.z) > RESUME_REACH) continue;
+    if (Math.abs(y - l.top) >= 0.05 || Math.hypot(x - l.x, z - l.z) > TOP_CATCH_REACH) continue;
     const solids = solidIndexOf(world).collidersNear(x - 1, z - 1, x + 1, z + 1);
     // The floor a step of movement keeps her on: she stands there.
     if (groundAt(solids, groundOf(world), x, z, y) >= y - SNAP_DOWN) return;
