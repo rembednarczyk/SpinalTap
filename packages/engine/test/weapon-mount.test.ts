@@ -8,7 +8,7 @@ import { triangleGltf } from "./model-loader.test";
 import { allWeaponUrls } from "./weapon-files";
 
 /** Length of each weapon file (public/weapons/README.md). */
-const LENGTH: Readonly<Record<WeaponKind, number>> = { pistol: 0.22, revolver: 0.27, smg: 0.42, shotgun: 0.75, rifle: 0.8 };
+const LENGTH: Readonly<Record<WeaponKind, number>> = { pistol: 0.22, revolver: 0.27, smg: 0.42, shotgun: 0.75, rifle: 0.8, baton: 0.53, blade: 0.8 };
 
 describe("WeaponMounts", () => {
   const setup = () => {
@@ -34,8 +34,8 @@ describe("WeaponMounts", () => {
     expect(v.top.y).toBeCloseTo(1);
   });
 
-  it.each(["pistol", "revolver", "smg", "shotgun", "rifle"] as const)(
-    "%s: its own file, held at the grip with the muzzle away from the hand (G-282)",
+  it.each(["pistol", "revolver", "smg", "shotgun", "rifle", "baton", "blade"] as const)(
+    "%s: its own file, held at the grip with the muzzle (the tip) away from the hand (G-282)",
     async (kind) => {
       const scene = new Scene(new NullEngine());
       const mounts = new WeaponMounts(new ModelLibrary(scene, new ToonMaterials(scene)), allWeaponUrls());

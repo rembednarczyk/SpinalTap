@@ -49,10 +49,11 @@ describe("aiming characters (ADR-0019)", () => {
 });
 
 describe("melee swings, guard and stagger (ADR-0019)", () => {
-  it("phases a swing: wound up at the end of the windup, through after the strike, back after the recovery", () => {
+  it("phases a swing: wound up just before the landing, half way through when the simulation lands it, back after the recovery", () => {
     expect(swingPhase(0, 0.2, 0.3)).toEqual({ cock: 0, through: 0 });
-    expect(swingPhase(0.2, 0.2, 0.3)).toEqual({ cock: 1, through: 0 });
-    expect(swingPhase(0.2 + SWING_STRIKE, 0.2, 0.3)).toEqual({ cock: 1, through: 1 });
+    expect(swingPhase(0.2 - SWING_STRIKE / 2, 0.2, 0.3)).toEqual({ cock: 1, through: 0 });
+    expect(swingPhase(0.2, 0.2, 0.3).through).toBeCloseTo(0.5);
+    expect(swingPhase(0.2 + SWING_STRIKE / 2, 0.2, 0.3)).toEqual({ cock: 1, through: 1 });
     expect(swingPhase(0.5, 0.2, 0.3)).toEqual({ cock: 0, through: 0 });
   });
 
@@ -60,7 +61,7 @@ describe("melee swings, guard and stagger (ADR-0019)", () => {
     const rig = meleeRig("swing");
     const ready = rig.armR.rotation.z;
     startSwing(rig, 0, 0.2, 0.3);
-    play(rig, 0.2);
+    play(rig, 0.2 - SWING_STRIKE / 2);
     expect(rig.armR.rotation.z).toBeLessThan(-0.9);
     expect(rig.body.rotation.y).toBeGreaterThan(0.3);
     play(rig, SWING_STRIKE);
@@ -75,7 +76,7 @@ describe("melee swings, guard and stagger (ADR-0019)", () => {
     const pose = (strike: number) => {
       const rig = meleeRig(`combo-${strike}`);
       startSwing(rig, strike, 0.2, 0.4);
-      play(rig, 0.2);
+      play(rig, 0.2 - SWING_STRIKE / 2);
       return { armX: rig.armR.rotation.x, armZ: rig.armR.rotation.z };
     };
     const [fore, back, over] = [pose(0), pose(1), pose(2)];
@@ -88,11 +89,14 @@ describe("melee swings, guard and stagger (ADR-0019)", () => {
     const rig = meleeRig("guard");
     play(rig, 0.3, 1);
     expect(rig.guard).toBeGreaterThan(0.95);
-    expect(rig.armR.rotation.x).toBeLessThan(-1.4);
+    // The upper arm turns in and the elbow folds, the fist before the chest (melee-weapons.test.ts: the weapon across the face).
+    expect(rig.armR.rotation.y).toBeLessThan(-0.5);
     expect(rig.armR.rotation.z).toBeGreaterThan(0.4);
+    expect(rig.elbowR.rotation.x).toBeLessThan(-1.6);
     expect(rig.armL.rotation.x).toBeLessThan(-1.2);
     play(rig, 0.6, 0);
     expect(rig.guard).toBeLessThan(0.05);
+    expect(rig.armR.rotation.y).toBeCloseTo(0, 1);
   });
 
   it("staggers: the body rocks back and recovers, and a swing is cut short", () => {
@@ -146,7 +150,7 @@ describe("melee swings, guard and stagger (ADR-0019)", () => {
     const ready = handHeight();
     // The overhead finisher lifts the hand above the shoulder.
     startSwing(rig, 2, 0.25, 0.4);
-    play(rig, 0.25);
+    play(rig, 0.25 - SWING_STRIKE / 2);
     retarget.update();
     expect(handHeight()).toBeGreaterThan(0.2);
     expect(handHeight()).toBeGreaterThan(ready + 0.3);
@@ -156,9 +160,9 @@ describe("melee swings, guard and stagger (ADR-0019)", () => {
 describe("FPP melee viewmodel (ADR-0019)", () => {
   it("cocks the weapon to the right shoulder, sweeps it left and returns", () => {
     expect(viewSwingOffset(0, 0, 0.2, 0.3).x).toBeCloseTo(0);
-    expect(viewSwingOffset(0, 0.2, 0.2, 0.3).x).toBeGreaterThan(0.1);
-    expect(viewSwingOffset(0, 0.2 + 0.09, 0.2, 0.3).x).toBeLessThan(-0.3);
+    expect(viewSwingOffset(0, 0.2 - SWING_STRIKE / 2, 0.2, 0.3).x).toBeGreaterThan(0.1);
+    expect(viewSwingOffset(0, 0.2 + SWING_STRIKE / 2, 0.2, 0.3).x).toBeLessThan(-0.3);
     expect(viewSwingOffset(0, 0.6, 0.2, 0.3)).toEqual({ x: 0, y: 0, z: 0, rx: 0, ry: 0, rz: 0 });
-    expect(viewSwingOffset(2, 0.25, 0.25, 0.4).y).toBeGreaterThan(0.2);
+    expect(viewSwingOffset(2, 0.25 - SWING_STRIKE / 2, 0.25, 0.4).y).toBeGreaterThan(0.2);
   });
 });
