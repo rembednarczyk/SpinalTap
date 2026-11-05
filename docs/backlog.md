@@ -6,20 +6,20 @@ Zadania zgłoszone, jeszcze niezaczęte. Kolejność to propozycja, nie zobowią
 
 - **Oszczędzanie limitów (decyzja użytkownika 4.11):** raporty orkiestratora tylko przy scaleniu, odrzuceniu albo potrzebie decyzji, 2–4 zdania; bez subskrypcji zdarzeń PR (CI sprawdzane raz, przy raporcie weryfikatora); przebudzenie co godzinę; praca idzie sama: zawsze co najmniej 3 agenty w toku (najwyżej 4), kolejne pozycje z planu: priorytety użytkownika, potem slot assetów, glitche, ADR-y (korekta użytkownika 5.11).
 - **Uwagi użytkownika z testowego przebiegu (4.11).** Błędy trafiły do rejestru jako G-279–G-285, reszta czeka tutaj na triage, ADR albo decyzję. Kolejność (decyzja użytkownika 4.11): najpierw G-281, potem G-279, dalej G-285 ze skradaniem i G-280; reputacja i metro jako ADR-y do akceptacji.
-  - **Reputacja i reakcje mieszkańców (do ADR, decyzja użytkownika).**
+  - **Reputacja i reakcje mieszkańców (do ADR, decyzja użytkownika).** ADR-0070 przyjęty; etapy 1–2 w PR #267, dalej etapy 3–5.
     - Przy złej reputacji uciekają wszyscy, także sprzedawcy, co psuje immersję. Propozycja użytkownika: u sprzedawców wystarczy kara (gorsze ceny, odmowa części oferty) zamiast paniki. Lawina powiadomień to osobny błąd G-281.
     - Likwidowanie gangerów powinno podnosić reputację w Lublinie.
     - Zlecenia dla Kaito obniżają reputację u mieszkańców i nie ma czym tego zrównoważyć. Potrzeba więcej zleceń podnoszących reputację albo przeglądu bilansu.
-  - **Skradanie (ADR, etap walki).** Dziś przeciwnicy wykrywają gracza od razu (G-285), więc takedown jest praktycznie niemożliwy. Potrzebny tryb skradania: kucanie zmniejsza zasięg wykrycia, stożek widzenia, hałas, cień i światło, takedown od tyłu. Powiązane: ADR-0066 (`awareness`).
+  - **Skradanie (ADR, etap walki).** Dziś przeciwnicy wykrywają gracza od razu (G-285), więc takedown jest praktycznie niemożliwy. Potrzebny tryb skradania: kucanie zmniejsza zasięg wykrycia, stożek widzenia, hałas, cień i światło, takedown od tyłu. Powiązane: ADR-0066 (`awareness`). ADR-0069: etapy 1–2 w main, etap 3 (balans) w PR #268. Do decyzji: zaalarmowany wróg nie słyszy kroków (`hearNoise` i `giveLead` pomijają `alerted`), więc po zgubieniu gracza trop stoi w miejscu; doprecyzować w ADR-0069, że hałas nie dodaje podejrzenia wrogowi, który gracza widzi.
   - **Wygląd broni (assety).** Każdy rodzaj broni ma mieć własny model w FPP i TPP. Karabin Tessen wygląda dziś jak pistolet (G-282). Broń biała jest niedopracowana: potrzebny model, chwyt i animacje ciosu.
   - **Okno dialogowe (UI).** Dialog od razu przewija się w dół i często się scrolluje (G-283). Propozycja użytkownika: ujednolicić go z obecnym wygodnym systemem wyboru opcji dialogowych.
-  - **Metro (ADR, mapa i assety).**
+  - **Metro (ADR, mapa i assety).** ADR-0071 przyjęty 5.11 (wariant A, 4 stacje i 6 wejść); etapy jako osobne PR-y: 1 nakładka mapy, 2 wejścia ze schodami i halą (zamyka G-307), 3 wygląd pawilonu, 4 peron.
     - Stacje w stylu warszawskiego metra zamiast niewidocznych, nieintuicyjnych skrzynek; wejście może dalej działać jak skrzynka.
     - Mapa linii metra jako nakładka na obecną mapę, z zaplanowanymi przystankami, podglądem i możliwymi stacjami. Przegląd kuratora topografii.
   - **Targowisko na al. Tysiąclecia do likwidacji (decyzja użytkownika).** Stoi na środku jezdni i składa się z kilku ścian bez planu. Postacie i setting przenieść do Alchemii (ADR-0063 etap 4 i dalsze), Rin może stać na dachu Alchemii. Wymaga gotowej Alchemii.
   - **Drabiny:** dopracować wspinanie (wejście, zejście, animacja, kamera).
   - **Winda:** dziś nie działa albo jej nie ma (G-284). Poprawnie zamodelować ją w Alchemii.
-  - **Ekwipunek:** pokazywać pasek zdrowia, bo z ekwipunku można jeść i leczyć się.
+  - **Ekwipunek:** pasek zdrowia zrobiony w #262 (5.11).
 
 - **Stan prac (31.10, 19:10, dla nowej sesji).** W main: #72 (G-067), #74 (G-061), #75 (ADR-0062 etap 1, Brama Krakowska), #76 (G-064), #77 (ADR-0063 etap 1, słupy i ekran „Autorzy”), #78 (ADR-0064 etap 1, dachy z OSM, zamyka G-056), #79 (ADR-0061 etap 1, obszary `INTERIORS` i autozapis przy wejściu). W toku u agentów (praca w worktree ginie z kontenerem, więc przy nowej sesji sprawdź gałęzie `ccr-ec2c4269-ilh8k8-*` i `worktree-agent-*` i zacznij od nowa to, czego nie ma w PR): G-052 (poszerzenie Krakowskiego o pas ok. 60 m) z poprawkami ruchu G-074/G-075, G-076/G-077 (przejazdy `tunnel=yes`, budynek podziemny na Zamkowej: w weryfikacji, potem kurator), G-058 (dotyk w kole dialogu), ADR-0063 etap 2 (panorama megacity). Następne w kolejce: przegląd kuratora obszarów `INTERIORS` po #79, ADR-0064 etapy 2–15, ADR-0063 etapy 3–4, okna wnętrz, glitche z audytu dróg G-081…G-087, plan wnętrz zabytków (`docs/plany/wnetrza-zabytkow.md`, czeka na akceptację użytkownika), G-073, audyt prześwitów. Decyzja użytkownika do zebrania: reguła 45° dla nadbudów przy zabytkach (T-011).
 

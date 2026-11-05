@@ -2,6 +2,21 @@
 
 Pełne wpisy naprawionych, odrzuconych i zdublowanych glitchy, przeniesione z [rejestru](glitches.md), który trzyma tylko otwarte sprawy (ADR-0054).
 
+### G-286 Scalony toast „×N” znika 4,5 s od pierwszego zdarzenia, nie od ostatniego
+- Status: naprawione w #265 (5.11, 975fdb2; `expireToast` liczy żywe wpisy, `sameToast` porównuje `keep`)
+- Ważność: S4 · Zasięg: każdy scalany toast; identyczne powiadomienie po 4,4 s widać ułamek sekundy; `sameToast` pomija flagę `keep` (dziś teoretyczne)
+- Pakiet właściciela: packages/ui (store, toasty)
+
+### G-304 Przy wrogiej postawie Hana kończy rozmowę przed sprawdzeniem kursu od Kaito
+- Status: naprawione w #263 (5.11, f3c496d; dostawa od Kaito sprawdzana przed odmową)
+- Ważność: S3 · Zasięg: `m4-targ.ink`, knot `hana`; paczki nie da się oddać, kurs przepada z karą −4 u fixerów
+- Pakiet właściciela: packages/narrative
+
+### G-306 Blokada kursora zostaje na canvasie po otwarciu menu klawiszem I zaraz po starcie
+- Status: naprawione w #264 (5.11, 902d7a5; `wantsLock` i zwalnianie spóźnionej blokady)
+- Ważność: S3 · Zasięg: desktop; zgoda na blokadę przychodzi po naciśnięciu I, `releasePointerLock` nic nie robi, bo flaga `locked` jest jeszcze fałszywa; kliknięcia w ekwipunek trafiają w canvas
+- Pakiet właściciela: packages/engine/src/input (browser-input) i packages/app (pointer-focus)
+
 ### G-293 Plama reflektora niskiego patrolu ma ciemny środek: widać tylko jasny pierścień, miejscami przerwany
 - Status: naprawione w #260 (5.11, fbfac59; plama na rysowanym bruku, `drapeHeightAt`)
 - Ważność: S3 (proponowana; każdy zawis każdego patrolu, plama ma być jednolitym kręgiem światła) · Zasięg: wszystkie patrole na `high` i `medium` przy zawisie 4,6–7,7 m nad brukiem · Koszt: do ustalenia

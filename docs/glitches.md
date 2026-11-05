@@ -895,11 +895,6 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Do ustalenia: błąd w czujności czy brak trybu skradania (backlog, skradanie)
 - Pakiet właściciela: packages/sim/src/systems/ai
 
-### G-286 Scalony toast „×N” znika 4,5 s od pierwszego zdarzenia, nie od ostatniego
-- Status: zgłoszone (4.11, weryfikator G-281)
-- Ważność: S4 · Zasięg: każdy scalany toast; identyczne powiadomienie po 4,4 s widać ułamek sekundy; `sameToast` pomija flagę `keep` (dziś teoretyczne)
-- Pakiet właściciela: packages/ui (store, toasty)
-
 ### G-289 Z dachu Alchemii nie ma bezpiecznego zejścia
 - Status: zgłoszone (4.11, weryfikator PR #247; dług na etap z windą i Rin na dachu)
 - Ważność: S4 · Zasięg: zeskok z 11–13 m kosztuje 48–96 HP; dziś dach nieosiągalny
@@ -951,20 +946,15 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Ważność: S4 · Zasięg: dobycie i chowanie w przysiadzie (`drawn` 0,50–0,67) przedramię w kolbie 1–2 cm; heroine z rifle w przysiadzie z celowaniem kolba w ramieniu < 1 cm; przy `drawn` 0,5 broń przeskakuje z pleców do rąk w jednej klatce; wejście i wyjście z drabiny lub mantle obraca tors skokowo do 37°; ślizg stopy w przysiadzie z celowaniem 0,07
 - Pakiet właściciela: packages/engine (renderer, two-hand-hold)
 
-### G-304 Przy wrogiej postawie Hana kończy rozmowę przed sprawdzeniem kursu od Kaito
-- Status: zgłoszone (5.11, autor ADR-0070)
-- Ważność: S3 · Zasięg: `m4-targ.ink`, knot `hana`; paczki nie da się oddać, kurs przepada z karą −4 u fixerów
-- Pakiet właściciela: packages/narrative
-
 ### G-305 Oyaji przy nieufności ma otwarty sklep, ale trzyma się 7 m od gracza (interakcja z 3 m)
-- Status: zgłoszone (5.11, autor ADR-0070)
+- Status: w PR #267 (5.11, ADR-0070 etap 2; stali mieszkańcy nie odsuwają się z powodu reputacji)
 - Ważność: S3 · Zasięg: reputacja −11..−49; w praktyce sklep zamknięty przed progiem odmowy
 - Pakiet właściciela: packages/sim (civilian-ai-system)
 
-### G-306 Blokada kursora zostaje na canvasie po otwarciu menu klawiszem I zaraz po starcie
-- Status: zgłoszone (5.11, autor paska zdrowia w ekwipunku; odtworzone w Playwrighcie)
-- Ważność: S3 · Zasięg: desktop; zgoda na blokadę przychodzi po naciśnięciu I, `releasePointerLock` nic nie robi, bo flaga `locked` jest jeszcze fałszywa; kliknięcia w ekwipunek trafiają w canvas
-- Pakiet właściciela: packages/engine/src/input (browser-input) i packages/app (pointer-focus)
+### G-307 Kioski metra stoją przy zabytkach: Plac Litewski 3,6 m od upamiętnienia Andrzeja Struga, Brama Krakowska 10,8 m od Bramy w murach
+- Status: zgłoszone (5.11, autor szkicu ADR-0071); naprawa w etapie 2 ADR-0071 (nowe miejsca wejść co najmniej 18 m od zabytków)
+- Ważność: S3 · Zasięg: dwie stacje metra; zasłaniają zabytek i stoją w murach Starego Miasta (ADR-0042)
+- Pakiet właściciela: packages/sim (treść `lublin`, stacje metra), przegląd `topography-curator`
 
 ### G-132 Smoke „quicksave/quickload” flaky pod obciążeniem (także na main)
 - Status: nowe (weryfikator ADR-0057, 1.11)
