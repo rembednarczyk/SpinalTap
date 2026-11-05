@@ -6,9 +6,12 @@ VAR time_of_day = "night"
 
 // Oyaji's stall from 22:00 to 8:00: the schedule swaps his interaction for this knot.
 === oyaji_closed ===
-{ civilians_stance == "hostile":
+{
+- civilians_tier == "hostile":
     OYAJI: Closed. For you, always closed.
     -> END
+- civilians_tier == "wary":
+    OYAJI: Oh, it's you. Closed, and I'm not opening up just for you.
 }
 { game_hour >= 22 || game_hour < 1:
     OYAJI: Closed, closed. The pots have gone cold, shutter's down.

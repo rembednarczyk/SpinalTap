@@ -49,19 +49,39 @@ describe("Hana (M4, market)", () => {
     expect(text(runtime.start("hana", domain({ ...known, ...rep({ civilians: 20, fixers: 20 }) })))).not.toContain("Kaito dobrze");
   });
 
-  it("will not deal with someone the street fears", () => {
+  // ADR-0070: Hana never refuses. Hostile: she sells nothing but offers her two jobs as the way back.
+  it("offers her jobs even to someone the street fears, and says why", () => {
+    const { runtime } = setup();
+    const known = { flags: ["met_hana"] };
+    const feared = runtime.start("hana", domain({ ...known, ...rep({ civilians: -60 }) }));
+    expect(text(feared)).toContain("Nie sprzedam ci nawet śrubki");
+    expect(text(feared)).toContain("Udowodnij, że jesteś po naszej stronie");
+    expect(feared.ended).toBe(false);
+    expect(feared.choices.map((c) => c.text)).toEqual(["Co trzeba odzyskać?", "Ktoś potrzebuje ochrony?", "Nie teraz."]);
+    const wary = runtime.start("hana", domain({ ...known, ...rep({ civilians: -30 }) }));
+    expect(text(wary)).toContain("spode łba");
+    expect(text(wary)).not.toContain("śrubki");
+    expect(wary.choices).toHaveLength(3);
+    const en = new NarrativeRuntime(storySource("en"), () => {}).start("hana", domain({ ...known, ...rep({ civilians: -60 }) }));
+    expect(text(en)).toContain("Prove you're on our side.");
+    expect(en.choices.map((c) => c.text)).toEqual(["What needs recovering?", "Anyone need protecting?", "Not now."]);
+  });
+
+  it("a feared Seki can still take a job and get paid for it", () => {
     const { runtime, commands } = setup();
-    const view = runtime.start("hana", domain(rep({ civilians: -30 })));
-    expect(text(view)).toContain("Nie sprzedam ci nawet śrubki");
-    expect(view.ended).toBe(true);
-    expect(commands).toEqual([]);
+    runtime.start("hana", domain({ flags: ["met_hana"], ...rep({ civilians: -80 }) }));
+    runtime.choose(0);
+    expect(commands).toEqual([{ type: "accept-contract", kind: "retrieve" }]);
+    const paid = runtime.start("hana", domain({ active: retrieve("cleared"), ...rep({ civilians: -80 }) }));
+    expect(text(paid)).toContain("Jest moja skrzynka");
+    expect(commands).toContainEqual({ type: "complete-contract" });
   });
 
   // G-304, ADR-0070: Hana is always the way back, so she takes Kaito's run whatever the street thinks.
   it("takes Kaito's package even when the street fears Seki", () => {
     for (const [source, refusal, coldWelcome] of [
-      [storySource("pl"), "Nie sprzedam ci", "Na nic więcej nie licz"],
-      [storySource("en"), "I won't sell you", "Don't count on anything more"],
+      [storySource("pl"), "Nie sprzedam ci", "Przyjdź popracować dla mnie"],
+      [storySource("en"), "I won't sell you", "Come and work for me"],
     ] as const) {
       const commands: GameCommand[] = [];
       const runtime = new NarrativeRuntime(source, (c) => commands.push(c));

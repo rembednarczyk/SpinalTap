@@ -8,6 +8,9 @@
     ~ set_flag("met_oyaji")
 }
 {
+- civilians_tier == "hostile":
+    OYAJI: Handlować mogę, lubić nie muszę. Ludzie gadają, że najpierw strzelasz, potem pytasz.
+    OYAJI: Naboje i tyle, o połowę drożej. Broń i kurtki zostają pod ladą.
 - civilians_stance == "hostile":
     OYAJI: Handlować mogę, lubić nie muszę. Ludzie gadają, że najpierw strzelasz, potem pytasz.
     OYAJI: Dlatego płacisz więcej, a za twoje graty dostaniesz mniej.
@@ -26,6 +29,10 @@
     -> talk
 + [Masz większy plecak? #tone:optional]
     SEKI: Masz większy plecak?
+    { civilians_tier == "hostile":
+        OYAJI: Mam dwa. Ale nie dla ciebie, dopóki ulica się ciebie boi.
+        -> talk
+    }
     OYAJI: Mam dwa. Jeden za sześćset, drugi za tysiąc dwieście. Potem już tylko walizki.
     -> talk
 + { not has_flag("oyaji_hebi") } [Hebi ci nie dokuczają? #tone:optional]
