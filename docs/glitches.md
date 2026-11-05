@@ -997,13 +997,13 @@ Proces: [ADR-0054](adr/0054-proces-glitchy.md). Skala, priorytety i szablon: umi
 - Pakiet właściciela: packages/engine (mapcity/ground-plan, cell-builder)
 
 ### G-326 Uciekający cywil drga przy objeździe: `steerPoint` przełącza się między drogą prosto a objazdem
-- Status: w PR #286, runda 2 (5.11; histereza przyjęta, `wayRound` przypinał cywila do ściany przed stojącym graczem: ziarno 43, 1002008)
+- Status: w PR #286, przyjęte po rundzie 2 (5.11, bcac062; sama histereza objazdu, `wayRound` wycofany), czeka na CI
 - Ważność: S3 · Zasięg: ziarno 17, −60, przechodzień 1002005, gracz 2 m (25 skoków kąta ok. 0,42 rad) i 1 m (42); `straightWalk` do punktu 6 m przed cywilem raz jest wolny, raz nie; także: w rogu (316; −95) `steerPoint` zawraca „prosto od gracza” niemal wprost na gracza (−1,25 rad), na main przy zatrzymaniu gracza ≥ 2 m ok. 465 skoków; drganie ±0,5 rad w miejscu przy stałym wyborze kierunku (ziarno 23, ok. (262; −81))
 - Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, `steerPoint`)
 
 ### G-328 Cywil uciekający w ślepy zaułek biega w miejscu w promieniu ucieczki
 - Status: zgłoszone (5.11, weryfikator PR #277; było przed G-317)
-- Ważność: S3 · Zasięg: zaułek ok. (308,4; −101,5), ziarno 11, przechodzień 1002001, gracz o (0,2): przez 10 s nie wychodzi z promienia; także w pościgu: zaułek przy (316; −95) zatrzymuje uciekającego na main (465 skoków kąta); pościg w róg (316; −95) poprawiony w #286 (G-326), zostaje gracz stojący w zaułku przy (308; −101) (213 skoków)
+- Ważność: S3 · Zasięg: zaułek ok. (308,4; −101,5), ziarno 11, przechodzień 1002001, gracz o (0,2): przez 10 s nie wychodzi z promienia; także w pościgu: zaułek przy (316; −95) zatrzymuje uciekającego na main (465 skoków kąta); pościg w róg (316; −95) dalej ok. 465 skoków (poprawka z G-326 wycofana, bo przypinała cywila do ściany); także ziarno 43, 1002008, gracz 3 m: cywil staje 1,18 m od gracza; gracz stojący w zaułku przy (308; −101): 213 skoków
 - Pakiet właściciela: packages/sim/src/systems/ai (civilian-ai-system, `runFrom`)
 
 ### G-329 Cywil 294 (koi-regular-2) drga w miejscu podczas paniki po strzałach
