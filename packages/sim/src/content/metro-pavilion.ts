@@ -9,8 +9,9 @@ import { groundY } from "./lublin/terrain";
  * the street, open at one short end, with the stairs going down from the opening to a hall
  * 2.7 m lower, inside its walls. The ticket machine stands in the hall against the far wall. The
  * ground is dug out under the stairs and the hall only (`cut`), so the hole never shows outside
- * the walls. Stage 2 draws plain blocks: concrete under the street and as the plinth, glass above
- * it, a flat roof with its eaves; stage 3 dresses it.
+ * the walls. Stage 2 has plain blocks: concrete under the street and as the plinth, glass above
+ * it, a flat roof with its eaves; stage 3 dresses it. They are solids drawn by the scenery: the
+ * renderer bakes them into the street furniture's meshes (no draw call of their own).
  *
  * Pavilions stand square to the map's axes: the dug ground is a rectangle of the ground's own
  * grid (`GroundCut`) and the stairs a slope along an axis.
@@ -94,7 +95,7 @@ export const pavilion = (spot: PavilionSpot): Pavilion => {
   const floor = street - HALL_DEPTH;
   const box = (u0: number, u1: number, w0: number, w1: number, y0: number, y1: number, material: BlockMaterial, solid = true): StaticProp => {
     const r = rect(u0, u1, w0, w1);
-    return { center: v((r.minX + r.maxX) / 2, (y0 + y1) / 2, (r.minZ + r.maxZ) / 2), view: { kind: "block", size: v(r.maxX - r.minX, y1 - y0, r.maxZ - r.minZ), material, interior: true }, solid };
+    return { center: v((r.minX + r.maxX) / 2, (y0 + y1) / 2, (r.minZ + r.maxZ) / 2), view: { kind: "block", size: v(r.maxX - r.minX, y1 - y0, r.maxZ - r.minZ), material }, solid, scenery: true };
   };
   const L = PAVILION.length;
   const half = PAVILION.width / 2;
@@ -111,6 +112,7 @@ export const pavilion = (spot: PavilionSpot): Pavilion => {
       center: v((stairs.minX + stairs.maxX) / 2, (floor + street) / 2, (stairs.minZ + stairs.maxZ) / 2),
       view: { kind: "block", size: v(stairs.maxX - stairs.minX, street - floor, stairs.maxZ - stairs.minZ), material: "concrete", slope: { axis: along, dir: opens, low: 0, steps: STAIRS.steps } },
       solid: true,
+      scenery: true,
     },
     // The hall's floor.
     box(foot, hallEnd, -inner, inner, base, floor, "concrete"),
