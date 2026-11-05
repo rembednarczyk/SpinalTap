@@ -1,6 +1,6 @@
 # ADR-0071: Metro: stacje w stylu warszawskim i mapa linii jako nakładka
 
-Status: proponowana (szkic 5.11 do akceptacji użytkownika). Wynika z uwag z testowego przebiegu 4.11, backlog „Metro (ADR, mapa i assety)”.
+Status: przyjęta 5.11 (wariant A, decyzja użytkownika). Pozostałe pytania rozstrzyga orkiestrator w duchu szkicu. Wynika z uwag z testowego przebiegu 4.11, backlog „Metro (ADR, mapa i assety)”.
 
 ## Kontekst
 Użytkownik zgłosił po przebiegu 4.11 dwie rzeczy:
